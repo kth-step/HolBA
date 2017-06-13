@@ -1,1079 +1,1082 @@
 (* ========================================================================= *)
 (* FILE          : bilScript.sml                                             *)
 (* DESCRIPTION   : A model of BAP Intermediate Language.                     *)
-(*                 Based on Antony's Fox binary words treatment.             *)
+(*                 Based on Anthony Fox's binary words treatment.            *)
 (* AUTHOR        : (c) Roberto Metere, KTH - Royal Institute of Technology   *)
 (* DATE          : 2015                                                      *)
 (* ========================================================================= *)
 
-open HolKernel bossLib Parse;
-open wordsTheory;
+open HolKernel Parse boolLib bossLib;
+open wordsTheory bitstringTheory;
+open bil_auxiliaryTheory bil_immTheory bil_valuesTheory;
+open bil_imm_expTheory bil_mem_expTheory bil_envTheory;
+open bil_expTheory;
+open wordsLib;
 
 val _ = new_theory "bil";
-(* ------------------------------------------------------------------------- *)
+
 
 (* ------------------------------------------------------------------------- *)
-(*  Syntax of BIL, embedding as deep as makes sense                          *)
+(* Datatypes                                                                 *)
 (* ------------------------------------------------------------------------- *)
-Datatype `bil_regtype_t =
-  | Bit1
-  | Bit8
-  | Bit16
-  | Bit32
-  | Bit64
-`;
 
-Datatype `bil_type_t =
-    NoType
-  | Reg      bil_regtype_t
-  | MemByte  bil_regtype_t (* address type *)
-  | MemArray bil_regtype_t bil_regtype_t
-`;
-
-(* Shallow embedding for bil_int_t, here it's ok, because they are actually bit strings *)
-Datatype `bil_int_t =
-    Reg1  bool[1]
-  | Reg8  bool[8]
-  | Reg16 bool[16]
-  | Reg32 bool[32]
-  | Reg64 bool[64]
-`;
-
-Datatype `bil_label_t =
+val _ = Datatype `bil_label_t =
     Label string
-  | Address bil_int_t
+  | Address bil_imm_t
 `;
 
-(* Declaration of variable *)
-Datatype `bil_var_t =
-    Var string bil_type_t
-`;
-
-Datatype `bil_val_t =
-    Unknown
-  | Int   bil_int_t
-  | Mem   bil_regtype_t (bil_int_t -> bil_int_t) (* address type *)
-  | Array bil_regtype_t bil_regtype_t (bil_int_t -> bil_int_t)
-`;
-
-
-Datatype `bil_exp_t =
-    Const             bil_int_t
-  | Den               string (* this is a variable name *)
-                      
-  | Cast              bil_exp_t bil_regtype_t
-  | SignedCast        bil_exp_t bil_regtype_t
-  | HighCast          bil_exp_t bil_regtype_t
-  | LowCast           bil_exp_t bil_regtype_t
-                      
-  | ChangeSign        bil_exp_t
-  | Not               bil_exp_t
-                      
-  | Equal             bil_exp_t bil_exp_t
-  | NotEqual          bil_exp_t bil_exp_t
-  | LessThan          bil_exp_t bil_exp_t
-  | SignedLessThan    bil_exp_t bil_exp_t
-  | LessOrEqual       bil_exp_t bil_exp_t
-  | SignedLessOrEqual bil_exp_t bil_exp_t
-                      
-  | And               bil_exp_t bil_exp_t
-  | Or                bil_exp_t bil_exp_t
-  | Xor               bil_exp_t bil_exp_t
-                      
-  | Plus              bil_exp_t bil_exp_t
-  | Minus             bil_exp_t bil_exp_t
-  | Mult              bil_exp_t bil_exp_t
-  | Div               bil_exp_t bil_exp_t
-  | SignedDiv         bil_exp_t bil_exp_t
-  | Mod               bil_exp_t bil_exp_t
-  | SignedMod         bil_exp_t bil_exp_t
-  | LeftShift         bil_exp_t bil_exp_t
-  | RightShift        bil_exp_t bil_exp_t
-  | SignedRightShift  bil_exp_t bil_exp_t
-                      
-    (* For some reason if-then-else officially misses in BAP documentation *)
-  | IfThenElse        bil_exp_t bil_exp_t bil_exp_t
-                      
-  | Load              bil_exp_t bil_exp_t bil_exp_t bil_regtype_t
-  | Store             bil_exp_t bil_exp_t bil_exp_t bil_exp_t bil_regtype_t
-`;
-
-Datatype `bil_stmt_t =
+val _ = Datatype `bil_stmt_t =
   | Declare bil_var_t
-  | Assign  string bil_exp_t
-  | Jmp     bil_exp_t
-  | CJmp    bil_exp_t bil_exp_t bil_exp_t
+  | Assign  bil_var_t bil_exp_t
+  | Jmp     bil_label_t
+  | CJmp    bil_exp_t bil_label_t bil_label_t
   | Halt    bil_exp_t
   | Assert  bil_exp_t
+  | Assume  bil_exp_t
 `;
 
-(* As records *)
-Datatype `bil_block_t = <| label:bil_label_t ; statements:bil_stmt_t list |>`;
+val _ = Datatype `bil_block_t = <| label:bil_label_t ; statements:bil_stmt_t list |>`;
+val _ = Datatype `bil_program_t = BilProgram (bil_block_t list)`;
+val _ = Datatype `bil_programcounter_t = <| label:bil_label_t; index:num |>`;
 
-val _ = type_abbrev("program", ``:bil_block_t list``);
+val bil_pc_ss = rewrites (type_rws ``:bil_programcounter_t``);
+
+val _ = Datatype `bil_termcode_t =
+    Running
+  | Halted bil_val_t
+  | ReachedEnd
+  | ReachedUnknownLabel bil_label_t
+  | Failed
+  | AssumptionViolated`
+
+val _ = Datatype `bil_state_t = <|
+  pc       : bil_programcounter_t;
+  environ  : bil_var_environment_t;
+  termcode : bil_termcode_t;
+  debug    : string list;
+  execs    : num
+|>`;
+
+val bil_state_ss = rewrites (type_rws ``:bil_state_t``);
+val bil_termcode_ss = rewrites (type_rws ``:bil_termcode_t``);
+
 
 (* ------------------------------------------------------------------------- *)
-(*  Domain transforming maps : definitions                                   *)
-(* ------------------------------------------------------------------------- *)
-val b2n_def = Define `b2n t = case t of
-  | Reg1  w => w2n w
-  | Reg8  w => w2n w
-  | Reg16 w => w2n w
-  | Reg32 w => w2n w
-  | Reg64 w => w2n w
-`;
-
-val b2w_def = Define `b2w t = case t of
-  | Reg1  w => w2w w
-  | Reg8  w => w2w w
-  | Reg16 w => w2w w
-  | Reg32 w => w2w w
-  | Reg64 w => w2w w
-`;
-
-val b2n_def = Define `b2n t = case t of
-  | Reg1  w => w2n w
-  | Reg8  w => w2n w
-  | Reg16 w => w2n w
-  | Reg32 w => w2n w
-  | Reg64 w => w2n w
-`;
-
-val b2bool_def = Define `b2bool t = case t of
-  | Reg1  w => w ≠ 0w
-  | Reg8  w => w ≠ 0w
-  | Reg16 w => w ≠ 0w
-  | Reg32 w => w ≠ 0w
-  | Reg64 w => w ≠ 0w
-`;
-
-val w2bs_def = Define `w2bs w (s:num) =
-        if (s = 1 ) then Reg1  (w2w w)
-  else  if (s = 8 ) then Reg8  (w2w w)
-  else  if (s = 16) then Reg16 (w2w w)
-  else  if (s = 32) then Reg32 (w2w w)
-  else  if (s = 64) then Reg64 (w2w w)
-  else  Reg1 (w2w (word_mod w 2w))
-`;
-
-val w2b_def = Define `w2b w =
-        if (word_len w  = 1 ) then w2bs w 1
-  else  if (word_len w <= 8 ) then w2bs w 8
-  else  if (word_len w <= 16) then w2bs w 16
-  else  if (word_len w <= 32) then w2bs w 32
-  else  if (word_len w <= 64) then w2bs w 64
-  else  w2bs w 0
-`;
-
-val n2bs_def = Define `n2bs n (s:num) =
-        if (s = 1 ) ∧ (n < 2**s) then Reg1  (n2w n)
-  else  if (s = 8 ) ∧ (n < 2**s) then Reg8  (n2w n)
-  else  if (s = 16) ∧ (n < 2**s) then Reg16 (n2w n)
-  else  if (s = 32) ∧ (n < 2**s) then Reg32 (n2w n)
-  else  if (s = 64) ∧ (n < 2**s) then Reg64 (n2w n)
-  else  Reg1 (n2w (n MOD 2))
-`;
-
-val n2b_def = Define `n2b n =
-        if (n < 2**1 ) then n2bs n 1
-  else  if (n < 2**8 ) then n2bs n 8
-  else  if (n < 2**16) then n2bs n 16
-  else  if (n < 2**32) then n2bs n 32
-  else  if (n < 2**64) then n2bs n 64
-  else  n2bs n 0
-`;
-
-val bool2b_def = Define `bool2b b = if b then Reg1 1w else Reg1 0w`;
-
-val n2b_1_def  = Define `n2b_1  n = n2bs n 1`;
-val n2b_8_def  = Define `n2b_8  n = n2bs n 8`;
-val n2b_16_def = Define `n2b_16 n = n2bs n 16`;
-val n2b_32_def = Define `n2b_32 n = n2bs n 32`;
-val n2b_64_def = Define `n2b_64 n = n2bs n 64`;
-
-(* This definition is oriented to give an RX name to registers *)
-val r2s_def = Define `r2s = λ(w:bool[5]).STRCAT ("R") (w2s (10:num) HEX w)`;
-
-val _ = add_bare_numeral_form (#"x", SOME "n2b_64");
-val _ = add_bare_numeral_form (#"e", SOME "n2b_32");
-val _ = add_bare_numeral_form (#"d", SOME "n2b_16");
-val _ = add_bare_numeral_form (#"c", SOME "n2b_8");
-val _ = add_bare_numeral_form (#"b", SOME "n2b_1");
-
-(* ------------------------------------------------------------------------- *)
-(*  Environment (aka variable context)                                       *)
-(* ------------------------------------------------------------------------- *)
-(* Environment definition *)
-val _ = type_abbrev("environment", ``:string -> (bil_type_t # bil_val_t)``);
-
-(* Empty environment *)
-val env0_def = Define `env0 = (λx.(NoType, Unknown)):environment`;
-
-(* Error environment. env epsilon != (NoType,Unknown) *)
-val is_env_regular_def = Define `is_env_regular env = ((env "") = (NoType, Unknown))`;
-val set_env_irregular_def = Define `set_env_irregular env = ("" =+ (NoType, Int 0b)) env`;
-
-(* Get the type of a variable from environment *)
-val bil_env_read_type_def = Define `bil_env_read_type var (env:environment) = FST (env var)`;
-
-(* Get value of a variable from environment *)
-val bil_env_read_def = Define `bil_env_read var (env:environment) = SND (env var)`;
-
-(* ------------------------------------------------------------------------- *)
-(*  Type inference and sizes                                                 *)
+(* Programs                                                                  *)
 (* ------------------------------------------------------------------------- *)
 
-val bil_type_int_inf_def = Define `bil_type_int_inf n = case n of
-  | Reg1  _ => Reg Bit1
-  | Reg8  _ => Reg Bit8
-  | Reg16 _ => Reg Bit16
-  | Reg32 _ => Reg Bit32
-  | Reg64 _ => Reg Bit64
+val bil_block_stmts_count_def = Define `bil_block_stmts_count bl = LENGTH bl.statements`;
+val bil_program_stmts_count_def = Define`bil_program_stmts_count (BilProgram p) = SUM (MAP bil_block_stmts_count p)`;
+
+val bil_labels_of_program_def = Define `bil_labels_of_program (BilProgram p) =
+  MAP (\bl. bl.label) p`;
+
+val bil_is_valid_labels_def = Define `bil_is_valid_labels p =
+  ALL_DISTINCT (bil_labels_of_program p) /\ ~(MEM (Label "") (bil_labels_of_program p))`;
+
+val bil_is_valid_program_def = Define `bil_is_valid_program p <=>
+   (bil_is_valid_labels p /\ bil_program_stmts_count p > 0)`;
+
+
+val bil_is_valid_labels_blocks_EQ_EL = store_thm ("bil_is_valid_labels_blocks_EQ_EL",
+  ``!p n1 n2. (bil_is_valid_labels (BilProgram p) /\ n1 < LENGTH p /\ n2 < LENGTH p /\
+                ((EL n1 p).label = (EL n2 p).label)) ==> (n1 = n2)``,
+
+SIMP_TAC list_ss [bil_is_valid_labels_def, bil_labels_of_program_def] >>
+REPEAT STRIP_TAC >>
+MP_TAC (Q.ISPEC `MAP (\bl. bl.label) (p:bil_block_t list)` listTheory.EL_ALL_DISTINCT_EL_EQ) >>
+ASM_SIMP_TAC list_ss [GSYM LEFT_EXISTS_IMP_THM] >>
+Q.EXISTS_TAC `n1` >> Q.EXISTS_TAC `n2` >>
+ASM_SIMP_TAC list_ss [listTheory.EL_MAP]);
+
+
+val bil_is_valid_labels_blocks_EQ = store_thm ("bil_is_valid_labels_blocks_EQ",
+  ``!p bl1 bl2. (bil_is_valid_labels (BilProgram p) /\ MEM bl1 p /\ MEM bl2 p /\
+                (bl1.label = bl2.label)) ==> (bl1 = bl2)``,
+
+METIS_TAC [listTheory.MEM_EL, bil_is_valid_labels_blocks_EQ_EL]);
+
+
+
+val bil_get_program_block_info_by_label_def = Define `bil_get_program_block_info_by_label
+  (BilProgram p) l = INDEX_FIND 0 (\(x:bil_block_t). x.label = l) p
 `;
 
-val bil_type_val_int_inf_def = Define `bil_type_val_int_inf n = case n of
-  | Int (Reg1  _) => Reg Bit1
-  | Int (Reg8  _) => Reg Bit8
-  | Int (Reg16 _) => Reg Bit16
-  | Int (Reg32 _) => Reg Bit32
-  | Int (Reg64 _) => Reg Bit64
-`;
+val bil_get_program_block_info_by_label_THM = store_thm ("bil_get_program_block_info_by_label_THM",
+  ``(!p l. ((bil_get_program_block_info_by_label (BilProgram p) l = NONE) <=> (!bl. MEM bl p ==> (bl.label <> l)))) /\
 
-val bil_regtype_int_inf_def = Define `bil_regtype_int_inf n = case n of
-  | Reg1  _ => Bit1
-  | Reg8  _ => Bit8
-  | Reg16 _ => Bit16
-  | Reg32 _ => Bit32
-  | Reg64 _ => Bit64
-`;
+    (!p l i bl.
+          (bil_get_program_block_info_by_label (BilProgram p) l = SOME (i, bl)) <=>
+          ((((i:num) < LENGTH p) /\ (EL i p = bl) /\ (bl.label = l) /\
+             (!j'. j' < i ==> (EL j' p).label <> l))))``,
 
-(* Number of bytes of a t_reg *)
-val bil_sizeof_reg_def = Define `bil_sizeof_reg t = case t of
-  | Bit1  => Int 1c (* 1 bit has got size 8 - is it right? *)
-  | Bit8  => Int 1c
-  | Bit16 => Int 2c
-  | Bit32 => Int 4c
-  | Bit64 => Int 8c
-`;
+SIMP_TAC list_ss [bil_get_program_block_info_by_label_def, INDEX_FIND_EQ_NONE,
+  listTheory.EVERY_MEM, INDEX_FIND_EQ_SOME_0]);
 
-(* Number of bytes of a tau *)
-val bil_sizeof_def = Define `bil_sizeof t = case t of
-  | Reg n => bil_sizeof_reg n
-  | _     => Int 0c
-`;
+
+val bil_get_program_block_info_by_label_valid_THM = store_thm ("bil_get_program_block_info_by_label_valid_THM",
+  ``(!p l. ((bil_get_program_block_info_by_label (BilProgram p) l = NONE) <=> (!bl. MEM bl p ==> (bl.label <> l)))) /\
+
+    (!p l i bl. bil_is_valid_labels (BilProgram p) ==>
+          ((bil_get_program_block_info_by_label (BilProgram p) l = SOME (i, bl)) <=>
+           ((i:num) < LENGTH p) /\ (EL i p = bl) /\ (bl.label = l)))``,
+
+SIMP_TAC (list_ss++boolSimps.EQUIV_EXTRACT_ss) [bil_get_program_block_info_by_label_def,
+  INDEX_FIND_EQ_NONE, listTheory.EVERY_MEM, INDEX_FIND_EQ_SOME_0] >>
+REPEAT STRIP_TAC >>
+`j' < LENGTH p` by DECIDE_TAC >>
+`j' = i` by METIS_TAC[bil_is_valid_labels_blocks_EQ_EL] >>
+FULL_SIMP_TAC arith_ss []);
+
+
+val bil_get_program_block_info_by_label_valid_MEM = store_thm ("bil_get_program_block_info_by_label_valid_MEM",
+  ``!p l. bil_is_valid_labels p /\ MEM l (bil_labels_of_program p) ==>
+          (?i bl. bil_get_program_block_info_by_label p l = SOME (i, bl))``,
+
+Cases >> rename1 `BilProgram p` >>
+SIMP_TAC list_ss [bil_get_program_block_info_by_label_valid_THM,
+  bil_labels_of_program_def, listTheory.MEM_MAP] >>
+SIMP_TAC std_ss [listTheory.MEM_EL, GSYM RIGHT_EXISTS_AND_THM,
+  GSYM LEFT_FORALL_IMP_THM] >>
+METIS_TAC[]);
+
+
 
 (* ------------------------------------------------------------------------- *)
-(*  Unary operations                                                         *)
-(* ------------------------------------------------------------------------- *)
-val bil_not_def = Define `bil_not reg = case reg of
-  | Reg64 w => Reg64 (word_1comp w)
-  | Reg32 w => Reg32 (word_1comp w)
-  | Reg16 w => Reg16 (word_1comp w)
-  | Reg8  w => Reg8  (word_1comp w)
-  | Reg1  w => Reg1  (word_1comp w)
-`;
-
-val bil_neg_def = Define `bil_neg reg = case reg of
-  | Reg64 w => Reg64 (word_2comp w)
-  | Reg32 w => Reg32 (word_2comp w)
-  | Reg16 w => Reg16 (word_2comp w)
-  | Reg8  w => Reg8  (word_2comp w)
-  | Reg1  w => Reg1  (word_2comp w)
-`;
-
-val _ = overload_on ("~",               Term`$bil_not`);
-val _ = overload_on ("numeric_negate",  Term`$bil_neg`);
-val _ = overload_on ("¬",               Term`$bil_neg`);
-
-(* ------------------------------------------------------------------------- *)
-(*  Binary operations                                                        *)
-(* ------------------------------------------------------------------------- *)
-val bil_add_def = Define `bil_add a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (w1 + w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (w1 + w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (w1 + w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (w1 + w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (w1 + w2)
-`;
-
-val bil_sub_def = Define `bil_sub a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (w1 - w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (w1 - w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (w1 - w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (w1 - w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (w1 - w2)
-`;
-
-val bil_mul_def = Define `bil_mul a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (w1 * w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (w1 * w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (w1 * w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (w1 * w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (w1 * w2)
-`;
-
-val bil_div_def = Define `bil_div a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (w1 // w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (w1 // w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (w1 // w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (w1 // w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (w1 // w2)
-`;
-
-val bil_sdiv_def = Define `bil_sdiv a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (w1 / w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (w1 / w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (w1 / w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (w1 / w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (w1 / w2)
-`;
-
-val bil_mod_def = Define `bil_mod a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (word_mod w1 w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (word_mod w1 w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (word_mod w1 w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (word_mod w1 w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (word_mod w1 w2)
-`;
-
-val bil_smod_def = Define `bil_smod a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (word_smod w1 w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (word_smod w1 w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (word_smod w1 w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (word_smod w1 w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (word_smod w1 w2)
-`;
-
-val bil_lsl_def = Define `bil_lsl a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (word_lsl_bv w1 w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (word_lsl_bv w1 w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (word_lsl_bv w1 w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (word_lsl_bv w1 w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (word_lsl_bv w1 w2)
-`;
-
-val bil_lsr_def = Define `bil_lsr a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (word_lsr_bv w1 w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (word_lsr_bv w1 w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (word_lsr_bv w1 w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (word_lsr_bv w1 w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (word_lsr_bv w1 w2)
-`;
-
-val bil_asr_def = Define `bil_asr a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (word_asr_bv w1 w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (word_asr_bv w1 w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (word_asr_bv w1 w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (word_asr_bv w1 w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (word_asr_bv w1 w2)
-`;
-
-val bil_and_def = Define `bil_and a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (word_and w1 w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (word_and w1 w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (word_and w1 w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (word_and w1 w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (word_and w1 w2)
-`;
-
-val bil_or_def = Define `bil_or a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (word_or w1 w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (word_or w1 w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (word_or w1 w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (word_or w1 w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (word_or w1 w2)
-`;
-
-val bil_xor_def = Define `bil_xor a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => Reg64 (word_xor w1 w2)
-  | (Reg32 w1), (Reg32 w2) => Reg32 (word_xor w1 w2)
-  | (Reg16 w1), (Reg16 w2) => Reg16 (word_xor w1 w2)
-  | (Reg8  w1), (Reg8  w2) => Reg8  (word_xor w1 w2)
-  | (Reg1  w1), (Reg1  w2) => Reg1  (word_xor w1 w2)
-`;
-
-val bil_eq_def = Define `bil_eq a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => if (w1 = w2) then 1b else 0b
-  | (Reg32 w1), (Reg32 w2) => if (w1 = w2) then 1b else 0b
-  | (Reg16 w1), (Reg16 w2) => if (w1 = w2) then 1b else 0b
-  | (Reg8  w1), (Reg8  w2) => if (w1 = w2) then 1b else 0b
-  | (Reg1  w1), (Reg1  w2) => if (w1 = w2) then 1b else 0b
-  | _, _ => 0b
-`;
-
-val bil_neq_def = Define `bil_neq a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => if (w1 = w2) then 0b else 1b
-  | (Reg32 w1), (Reg32 w2) => if (w1 = w2) then 0b else 1b
-  | (Reg16 w1), (Reg16 w2) => if (w1 = w2) then 0b else 1b
-  | (Reg8  w1), (Reg8  w2) => if (w1 = w2) then 0b else 1b
-  | (Reg1  w1), (Reg1  w2) => if (w1 = w2) then 0b else 1b
-  | _, _ => 0b
-`;
-
-(* 
-
-signed less than:
-
-> val it = |- 127w < 0w ⇔ F: thm
-> val it = |- 128w < 0w ⇔ T: thm
-
-*)
-val bil_lt_def = Define `bil_lt a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => if (word_lt w1 w2) then 1b else 0b
-  | (Reg32 w1), (Reg32 w2) => if (word_lt w1 w2) then 1b else 0b
-  | (Reg16 w1), (Reg16 w2) => if (word_lt w1 w2) then 1b else 0b
-  | (Reg8  w1), (Reg8  w2) => if (word_lt w1 w2) then 1b else 0b
-  | (Reg1  w1), (Reg1  w2) => if (word_lt w1 w2) then 1b else 0b
-  | _, _ => 0b
-`;
-
-val bil_le_def = Define `bil_le a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => if (word_le w1 w2) then 1b else 0b
-  | (Reg32 w1), (Reg32 w2) => if (word_le w1 w2) then 1b else 0b
-  | (Reg16 w1), (Reg16 w2) => if (word_le w1 w2) then 1b else 0b
-  | (Reg8  w1), (Reg8  w2) => if (word_le w1 w2) then 1b else 0b
-  | (Reg1  w1), (Reg1  w2) => if (word_le w1 w2) then 1b else 0b
-  | _, _ => 0b
-`;
-
-val bil_ult_def = Define `bil_ult a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => if (word_lo w1 w2) then 1b else 0b
-  | (Reg32 w1), (Reg32 w2) => if (word_lo w1 w2) then 1b else 0b
-  | (Reg16 w1), (Reg16 w2) => if (word_lo w1 w2) then 1b else 0b
-  | (Reg8  w1), (Reg8  w2) => if (word_lo w1 w2) then 1b else 0b
-  | (Reg1  w1), (Reg1  w2) => if (word_lo w1 w2) then 1b else 0b
-  | _, _ => 0b
-`;
-
-val bil_ule_def = Define `bil_ule a b = case (a, b) of
-  | (Reg64 w1), (Reg64 w2) => if (word_ls w1 w2) then 1b else 0b
-  | (Reg32 w1), (Reg32 w2) => if (word_ls w1 w2) then 1b else 0b
-  | (Reg16 w1), (Reg16 w2) => if (word_ls w1 w2) then 1b else 0b
-  | (Reg8  w1), (Reg8  w2) => if (word_ls w1 w2) then 1b else 0b
-  | (Reg1  w1), (Reg1  w2) => if (word_ls w1 w2) then 1b else 0b
-  | _, _ => 0b
-`;
-
-val _ = add_infix("<<",  680, HOLgrammars.LEFT);
-val _ = add_infix(">>",  680, HOLgrammars.LEFT);
-val _ = add_infix(">>>", 680, HOLgrammars.LEFT);
-
-val _ = overload_on ("+",              Term`$bil_add`);
-val _ = overload_on ("-",              Term`$bil_sub`);
-val _ = overload_on ("*",              Term`$bil_mul`);
-val _ = overload_on ("//",             Term`$bil_div`);
-val _ = overload_on ("/",              Term`$bil_sdiv`);
-val _ = overload_on ("<<",             Term`$bil_lsl`);
-val _ = overload_on (">>>",            Term`$bil_lsr`);
-val _ = overload_on (">>",             Term`$bil_asr`);
-val _ = overload_on ("<",              Term`$bil_lt`);
-val _ = overload_on ("<=",             Term`$bil_le`);
-
-val _ = set_fixity "//" (Infixl 600);
-val _ = set_fixity "/"  (Infixl 600);
-
-(* ------------------------------------------------------------------------- *)
-(*  Casts                                                                    *)
-(* ------------------------------------------------------------------------- *)
-val bil_cast_def = Define `bil_cast a t = case (a, t) of
-  (* Not very casts *)
-  | (Reg1  w), Bit1  => Reg1  w
-  | (Reg8  w), Bit8  => Reg8  w
-  | (Reg16 w), Bit16 => Reg16 w
-  | (Reg32 w), Bit32 => Reg32 w
-  | (Reg64 w), Bit64 => Reg64 w
-  
-  (* Casts *)
-  | (Reg1  w), Bit8  => Reg8  ((0w:bool[7])  @@ w)
-  | (Reg1  w), Bit16 => Reg16 ((0w:bool[15]) @@ w)
-  | (Reg1  w), Bit32 => Reg32 ((0w:bool[31]) @@ w)
-  | (Reg1  w), Bit64 => Reg64 ((0w:bool[63]) @@ w)
-  | (Reg8  w), Bit16 => Reg16 ((0w:bool[8])  @@ w)
-  | (Reg8  w), Bit32 => Reg32 ((0w:bool[24]) @@ w)
-  | (Reg8  w), Bit64 => Reg64 ((0w:bool[56]) @@ w)
-  | (Reg16 w), Bit32 => Reg32 ((0w:bool[16]) @@ w)
-  | (Reg16 w), Bit64 => Reg64 ((0w:bool[48]) @@ w)
-  | (Reg32 w), Bit64 => Reg64 ((0w:bool[32]) @@ w)
-`;
-
-val bil_scast_def = Define `bil_scast a t = case (a, t) of
-  (* Not very casts *)
-  | (Reg1  w), Bit1  => Reg1  w
-  | (Reg8  w), Bit8  => Reg8  w
-  | (Reg16 w), Bit16 => Reg16 w
-  | (Reg32 w), Bit32 => Reg32 w
-  | (Reg64 w), Bit64 => Reg64 w
-  
-  (* Casts *)
-  | (Reg1  w), Bit8  => Reg8  ((if (word_msb w) then (0x7Fw:bool[7]) else  (0w:bool[7]) ) @@ w)
-  | (Reg1  w), Bit16 => Reg16 ((if (word_msb w) then (0x7FFFw:bool[15]) else  (0w:bool[15]) ) @@ w)
-  | (Reg1  w), Bit32 => Reg32 ((if (word_msb w) then (0x7FFFFFFFw:bool[31]) else  (0w:bool[31]) ) @@ w)
-  | (Reg1  w), Bit64 => Reg64 ((if (word_msb w) then (0x7FFFFFFFFFFFFFFFw:bool[63]) else  (0w:bool[63]) ) @@ w)
-  | (Reg8  w), Bit16 => Reg16 ((if (word_msb w) then (0xFFw:bool[8]) else  (0w:bool[8]) ) @@ w)
-  | (Reg8  w), Bit32 => Reg32 ((if (word_msb w) then (0xFFFFFFw:bool[24]) else (0w:bool[24])) @@ w)
-  | (Reg8  w), Bit64 => Reg64 ((if (word_msb w) then (0xFFFFFFFFFFFFFFw:bool[56]) else (0w:bool[56])) @@ w)
-  | (Reg16 w), Bit32 => Reg32 ((if (word_msb w) then (0xFFFFw:bool[16]) else (0w:bool[16])) @@ w)
-  | (Reg16 w), Bit64 => Reg64 ((if (word_msb w) then (0xFFFFFFFFFFFFw:bool[48]) else (0w:bool[48])) @@ w)
-  | (Reg32 w), Bit64 => Reg64 ((if (word_msb w) then (0xFFFFFFFFw:bool[32]) else (0w:bool[32])) @@ w)
-`;
-
-val bil_hcast_def = Define `bil_hcast a t = case (a, t) of
-  (* Not very casts *)
-  | (Reg1  w), Bit1  => Reg1  w
-  | (Reg8  w), Bit8  => Reg8  w
-  | (Reg16 w), Bit16 => Reg16 w
-  | (Reg32 w), Bit32 => Reg32 w
-  | (Reg64 w), Bit64 => Reg64 w
-  
-  (* Casts *)
-  | (Reg64 w), Bit32 => Reg32 (word_extract 63 32 w)
-  | (Reg64 w), Bit16 => Reg16 (word_extract 63 48 w)
-  | (Reg64 w), Bit8  => Reg8  (word_extract 63 56 w)
-  | (Reg64 w), Bit1  => Reg1  (word_extract 63 63 w)
-  | (Reg32 w), Bit16 => Reg16 (word_extract 31 16 w)
-  | (Reg32 w), Bit8  => Reg8  (word_extract 31 24 w)
-  | (Reg32 w), Bit1  => Reg1  (word_extract 31 31 w)
-  | (Reg16 w), Bit8  => Reg8  (word_extract 15 8  w)
-  | (Reg16 w), Bit1  => Reg1  (word_extract 15 15 w)
-  | (Reg8  w), Bit1  => Reg1  (word_extract 7  7  w)
-`;
-
-val bil_lcast_def = Define `bil_lcast a t = case (a, t) of
-  (* Not very casts *)
-  | (Reg1  w), Bit1  => Reg1  w
-  | (Reg8  w), Bit8  => Reg8  w
-  | (Reg16 w), Bit16 => Reg16 w
-  | (Reg32 w), Bit32 => Reg32 w
-  | (Reg64 w), Bit64 => Reg64 w
-  
-  (* Downcasts *)
-  | (Reg64 w), Bit32 => Reg32 (word_extract 31 0 w)
-  | (Reg64 w), Bit16 => Reg16 (word_extract 15 0 w)
-  | (Reg64 w), Bit8  => Reg8  (word_extract 7  0 w)
-  | (Reg64 w), Bit1  => Reg1  (word_extract 0  0 w)
-  | (Reg32 w), Bit16 => Reg16 (word_extract 15 0 w)
-  | (Reg32 w), Bit8  => Reg8  (word_extract 7  0 w)
-  | (Reg32 w), Bit1  => Reg1  (word_extract 0  0 w)
-  | (Reg16 w), Bit8  => Reg8  (word_extract 7  0 w)
-  | (Reg16 w), Bit1  => Reg1  (word_extract 0  0 w)
-  | (Reg8  w), Bit1  => Reg1  (word_extract 0  0 w)
-`;
-
-(* ------------------------------------------------------------------------- *)
-(*  Semantics of expressions                                                 *)
-(* ------------------------------------------------------------------------- *)
-val bil_eval_exp_def = Define `bil_eval_exp exp (env:environment) = case exp of
-  | Const n => Int n
-  | Den v => bil_env_read v env
-  
-  | Cast e t => (
-      case bil_eval_exp e env of
-          Int v => Int (bil_cast v t)
-        | _     => Unknown
-      )
-  | SignedCast e t => (
-      case bil_eval_exp e env of
-          Int v => Int (bil_scast v t)
-        | _     => Unknown
-      )
-  | HighCast e t => (
-      case bil_eval_exp e env of
-          Int v => Int (bil_hcast v t)
-        | _     => Unknown
-      )
-  | LowCast e t => (
-      case bil_eval_exp e env of
-          Int v => Int (bil_lcast v t)
-        | _     => Unknown
-      )
-  
-  | ChangeSign e => (
-      case bil_eval_exp e env of
-          Int v => Int (numeric_negate v)
-        | _     => Unknown
-      )
-  | Not e => (
-      case bil_eval_exp e env of
-          Int v => Int (bil_not v)
-        | _     => Unknown
-      )
-  
-  | Equal e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_eq v1 v2)
-        | _     => Unknown
-      )
-  | NotEqual e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_neq v1 v2)
-        | _     => Unknown
-      )
-  | LessThan e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_ult v1 v2)
-        | _     => Unknown
-      )
-  | SignedLessThan e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_lt v1 v2)
-        | _     => Unknown
-      )
-  | LessOrEqual e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_ule v1 v2)
-        | _     => Unknown
-      )
-  | SignedLessOrEqual e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_le v1 v2)
-        | _     => Unknown
-      )
-  
-  | And e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_and v1 v2)
-        | _     => Unknown
-      )
-  | Or e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_or v1 v2)
-        | _     => Unknown
-      )
-  | Xor e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_xor v1 v2)
-        | _     => Unknown
-      )
-  
-  | Plus e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_add v1 v2)
-        | _     => Unknown
-      )
-  | Minus e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_sub v1 v2)
-        | _     => Unknown
-      )
-  | Mult e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_mul v1 v2)
-        | _     => Unknown
-      )
-  | Div e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_div v1 v2)
-        | _     => Unknown
-      )
-  | SignedDiv e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_sdiv v1 v2)
-        | _     => Unknown
-      )
-  | Mod e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_mod v1 v2)
-        | _     => Unknown
-      )
-  | SignedMod e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_smod v1 v2)
-        | _     => Unknown
-      )
-  | LeftShift e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_lsl v1 v2)
-        | _     => Unknown
-      )
-  | RightShift e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_lsr v1 v2)
-        | _     => Unknown
-      )
-  | SignedRightShift e1 e2 => (
-      case (bil_eval_exp e1 env, bil_eval_exp e2 env) of
-          (Int v1, Int v2) => Int (bil_asr v1 v2)
-        | _     => Unknown
-      )
-      
-  | IfThenElse c et ee => (
-      case (bil_eval_exp c env) of
-          Int b => if (b = 1b)
-                      then bil_eval_exp et env
-                      else bil_eval_exp ee env
-        | _        => Unknown
-      )
-      
-  (* Memory *)
-  | Load  e1 e2 e3 t => (
-      let n = bil_sizeof_reg t in
-      if ~(n = Int 0c)
-      then
-        let mem = bil_eval_exp e1 env in
-        let address = bil_eval_exp e2 env in
-        let bigendian = bil_eval_exp e3 env in
-        case (mem, address, bigendian) of
-            (Mem ta mmap, Int a, Int be) => (
-              if ((bil_regtype_int_inf a) = ta)
-              then
-                case t of
-                    Bit1   => Int (if (mmap a) = 0c then 0b else 1b)
-                  | Bit8   => Int (mmap a)
-                  | Bit16  => if be = 0b
-                              then Int (
-                                bil_or
-                                  ((bil_cast (mmap (a + (bil_cast 1c ta))) Bit16) << 8d)
-                                  (bil_cast (mmap a) Bit16)
-                                )
-                              else Int (
-                                bil_or
-                                  ((bil_cast (mmap a) Bit16) << 8d)
-                                  (bil_cast (mmap (a + (bil_cast 1c ta))) Bit16)
-                                )
-                  | Bit32  => if be = 0b
-                              then Int (
-                                bil_or
-                                  (bil_or
-                                    ((bil_cast (mmap (a + (bil_cast 3c ta))) Bit32) << 24e)
-                                    ((bil_cast (mmap (a + (bil_cast 2c ta))) Bit32) << 16e)
-                                  )
-                                  (bil_or
-                                    ((bil_cast (mmap (a + (bil_cast 1c ta))) Bit32) << 8e)
-                                    (bil_cast (mmap a) Bit32)
-                                  )
-                                )
-                              else Int (
-                                bil_or
-                                  (bil_or
-                                    ((bil_cast (mmap a) Bit32) << 24e)
-                                    ((bil_cast (mmap (a + (bil_cast 1c ta))) Bit32) << 16e)
-                                  )
-                                  (bil_or
-                                    ((bil_cast (mmap (a + (bil_cast 2c ta))) Bit32) << 8e)
-                                    (bil_cast (mmap (a + (bil_cast 3c ta))) Bit32)
-                                  )
-                                )
-                  | Bit64  => if be = 0b
-                              then Int (
-                                bil_or
-                                  (bil_or
-                                    (bil_or
-                                      ((bil_cast (mmap (a + (bil_cast 7c ta))) Bit64) << 56x)
-                                      ((bil_cast (mmap (a + (bil_cast 6c ta))) Bit64) << 48x)
-                                    )
-                                    (bil_or
-                                      ((bil_cast (mmap (a + (bil_cast 5c ta))) Bit64) << 40x)
-                                      ((bil_cast (mmap (a + (bil_cast 4c ta))) Bit64) << 32x)
-                                    )
-                                  )
-                                  (bil_or
-                                    (bil_or
-                                      ((bil_cast (mmap (a + (bil_cast 3c ta))) Bit64) << 24x)
-                                      ((bil_cast (mmap (a + (bil_cast 2c ta))) Bit64) << 16x)
-                                    )
-                                    (bil_or
-                                      ((bil_cast (mmap (a + (bil_cast 1c ta))) Bit64) << 8x)
-                                      (bil_cast (mmap a) Bit64)
-                                    )
-                                  )
-                                )
-                              else Int (
-                                bil_or
-                                  (bil_or
-                                    (bil_or
-                                      ((bil_cast (mmap a) Bit64) << 56x)
-                                      ((bil_cast (mmap (a + (bil_cast 1c ta))) Bit64) << 48x)
-                                    )
-                                    (bil_or
-                                      ((bil_cast (mmap (a + (bil_cast 2c ta))) Bit64) << 40x)
-                                      ((bil_cast (mmap (a + (bil_cast 3c ta))) Bit64) << 32x)
-                                    )
-                                  )
-                                  (bil_or
-                                    (bil_or
-                                      ((bil_cast (mmap (a + (bil_cast 4c ta))) Bit64) << 24x)
-                                      ((bil_cast (mmap (a + (bil_cast 5c ta))) Bit64) << 16x)
-                                    )
-                                    (bil_or
-                                      ((bil_cast (mmap (a + (bil_cast 6c ta))) Bit64) << 8x)
-                                      (bil_cast (mmap (a + (bil_cast 7c ta))) Bit64)
-                                    )
-                                  )
-                                )
-                
-              (* Can't use addresses of different types *)
-              else Unknown
-              )
-          | (Array ta tv mmap, Int a, _) => (
-              if ((bil_regtype_int_inf a) = ta)
-              then
-                  Int (mmap a)
-                
-              (* Can't use addresses of different types *)
-              else Unknown
-              )
-          | _                                 => Unknown
-      else
-        (* Can't read less than 1 byte from memory *)
-        Unknown
-      )
-  | Store e1 e2 e3 e4 t => (
-      let n = bil_sizeof_reg t in
-      if ~(n = Int 0c)
-      then
-        let mem = bil_eval_exp e1 env in
-        let address = bil_eval_exp e2 env in
-        let newval = bil_eval_exp e3 env in
-        let bigendian = bil_eval_exp e4 env in
-        case (mem, address, newval, bigendian) of
-            (Mem ta mmap, Int a, Int v, Int be) => (
-              if ((bil_regtype_int_inf a) = ta) ∧ ((bil_regtype_int_inf v) = t)
-              then
-                case t of
-                    Bit1   => Mem ta ((a =+ (if v = 0b then 0c else 1c)) mmap)
-                  | Bit8   => Mem ta ((a =+ v) mmap)
-                  | Bit16  => if be = 0b
-                              then Mem ta ((a                     =+ (bil_lcast v Bit8)) (
-                                          ((a + (bil_cast 1c ta)) =+ (bil_hcast v Bit8))
-                                   mmap))
-                              else Mem ta ((a                     =+ (bil_hcast v Bit8)) (
-                                          ((a + (bil_cast 1c ta)) =+ (bil_lcast v Bit8))
-                                   mmap))
-                  | Bit32  => if be = 0b
-                              then Mem ta ((a                     =+ (bil_lcast v Bit8)) (
-                                          ((a + (bil_cast 1c ta)) =+ (bil_hcast (bil_lcast v Bit16) Bit8)) (
-                                          ((a + (bil_cast 2c ta)) =+ (bil_lcast (bil_hcast v Bit16) Bit8)) (
-                                          ((a + (bil_cast 3c ta)) =+ (bil_hcast v Bit8))
-                                   mmap))))
-                              else Mem ta ((a                     =+ (bil_hcast v Bit8)) (
-                                          ((a + (bil_cast 1c ta)) =+ (bil_lcast (bil_hcast v Bit16) Bit8)) (
-                                          ((a + (bil_cast 2c ta)) =+ (bil_hcast (bil_lcast v Bit16) Bit8)) (
-                                          ((a + (bil_cast 3c ta)) =+ (bil_lcast v Bit8))
-                                   mmap))))
-                  | Bit64  => if be = 0b
-                              then Mem ta ((a                     =+ (bil_lcast v Bit8)) (
-                                          ((a + (bil_cast 1c ta)) =+ (bil_hcast (bil_lcast v Bit16) Bit8)) (
-                                          ((a + (bil_cast 2c ta)) =+ (bil_lcast (bil_hcast (bil_lcast v Bit32) Bit16) Bit8)) (
-                                          ((a + (bil_cast 3c ta)) =+ (bil_hcast (bil_lcast v Bit32) Bit8)) (
-                                          ((a + (bil_cast 4c ta)) =+ (bil_lcast (bil_hcast v Bit32) Bit8)) (
-                                          ((a + (bil_cast 5c ta)) =+ (bil_hcast (bil_lcast (bil_hcast v Bit32) Bit16) Bit8)) (
-                                          ((a + (bil_cast 6c ta)) =+ (bil_lcast (bil_hcast v Bit16) Bit8)) (
-                                          ((a + (bil_cast 7c ta)) =+ (bil_hcast v Bit8))
-                                   mmap))))))))
-                              else Mem ta ((a                     =+ (bil_hcast v Bit8)) (
-                                          ((a + (bil_cast 1c ta)) =+ (bil_lcast (bil_hcast v Bit16) Bit8)) (
-                                          ((a + (bil_cast 2c ta)) =+ (bil_hcast (bil_lcast (bil_hcast v Bit32) Bit16) Bit8)) (
-                                          ((a + (bil_cast 3c ta)) =+ (bil_lcast (bil_hcast v Bit32) Bit8)) (
-                                          ((a + (bil_cast 4c ta)) =+ (bil_hcast (bil_lcast v Bit32) Bit8)) (
-                                          ((a + (bil_cast 5c ta)) =+ (bil_lcast (bil_hcast (bil_lcast v Bit32) Bit16) Bit8)) (
-                                          ((a + (bil_cast 6c ta)) =+ (bil_hcast (bil_lcast v Bit16) Bit8)) (
-                                          ((a + (bil_cast 7c ta)) =+ (bil_lcast v Bit8))
-                                   mmap))))))))
-                
-              (* Can't use addresses of different types *)
-              else Unknown
-              )
-          | (Array ta tv mmap, Int a, Int v, _) => (
-              if ((bil_regtype_int_inf a) = ta) ∧ ((bil_regtype_int_inf v) = tv)
-              then
-                  Array ta tv ((a =+ v) mmap)
-                
-              (* Can't use addresses of different types *)
-              else Unknown
-              )
-          | _                                 => Unknown
-      else
-        (* Can't store less than 1 byte from memory *)
-        Unknown
-      )
-  
-  (* out of BIL semantic *)
-  | _ => Unknown
-`;
-
-(* ------------------------------------------------------------------------- *)
-(*  Semantics of statements                                                  *)
+(*  Program Counter                                                          *)
 (* ------------------------------------------------------------------------- *)
 
-(* Execution of Jmp, CJmp, Halt, Assert doesn't change environment *)
-val bil_exec_stmt_def = Define `bil_exec_stmt stmt env = case stmt of
-  | Declare (Var s t) => (
-      case env s, t of
-          (NoType, Unknown), Reg _          => (s =+ (t, Unknown)) env
-        | (NoType, Unknown), MemByte ta     => (s =+ (t, Mem ta ((λx.(Reg8 0w)):bil_int_t -> bil_int_t))) env
-        | (NoType, Unknown), MemArray ta tv => (
-            case tv of
-                Bit1  => (s =+ (t, Array ta tv ((λx.(Reg1  0w)):bil_int_t -> bil_int_t))) env
-              | Bit8  => (s =+ (t, Array ta tv ((λx.(Reg8  0w)):bil_int_t -> bil_int_t))) env
-              | Bit16 => (s =+ (t, Array ta tv ((λx.(Reg16 0w)):bil_int_t -> bil_int_t))) env
-              | Bit32 => (s =+ (t, Array ta tv ((λx.(Reg32 0w)):bil_int_t -> bil_int_t))) env
-              | Bit64 => (s =+ (t, Array ta tv ((λx.(Reg64 0w)):bil_int_t -> bil_int_t))) env
-            )
-        | _ => env
-      )
-  | Assign v e => (
-      case env v, bil_eval_exp e env of
-          (t, _), Int nexp                        => let texp = bil_type_int_inf nexp in
-                                                    if (t = texp)
-                                                      then (v =+ (t, Int nexp)) env
-                                                      else set_env_irregular env
-        | (MemByte t, _), Mem ta mmap             => if (t = ta)
-                                                      then (v =+ (MemByte t, Mem ta mmap)) env
-                                                      else set_env_irregular env
-        | (MemArray ta tv, _), Array tta ttv mmap => if (ta = tta) ∧ (tv = ttv)
-                                                      then (v =+ (MemArray ta tv, Array tta ttv mmap)) env
-                                                      else set_env_irregular env
-        (* Kind of redeclarations... they seems to be out of BIL semantics *)
-(*         | (t, _), Unknown                        => (v =+ (t, Unknown)) env *)
-(*         | (MemByte t, _), Unknown                => (v =+ (MemByte t, Unknown)) env *)
-(*         | (MemArray ta tv, _), Unknown           => (v =+ (MemArray ta tv, Unknown)) env *)
-        
-        (* Other things don't change the environment, but are wrong in some way *)
-        | _, _                                   => set_env_irregular env
-      )
-  | _ => env
-`;
+val bil_is_valid_pc_def = Define `bil_is_valid_pc p pc =
+   (?i bl. (bil_get_program_block_info_by_label p (pc.label) = SOME (i, bl)) /\
+           (pc.index < LENGTH bl.statements))`;
+
+val bil_is_end_pc_def = Define `bil_is_end_pc (BilProgram p) pc =
+   (?i bl. (bil_get_program_block_info_by_label (BilProgram p) (pc.label) = SOME (i, bl)) /\
+           ~(pc.index < LENGTH bl.statements) /\
+      (!j. (i < j /\ j < LENGTH p) ==> (LENGTH ((EL j p).statements) = 0)))`;
 
 
-val debug_concat_def = Define `debug_concat l = CONCAT l`;
+val bil_is_valid_pc_not_end = store_thm ("bil_is_valid_pc_not_end",
+  ``!p pc. bil_is_valid_pc p pc ==> ~(bil_is_end_pc p pc)``,
+Cases >> rename1 `BilProgram p` >>
+SIMP_TAC std_ss [bil_is_valid_pc_def, bil_is_end_pc_def,
+  GSYM LEFT_FORALL_IMP_THM]);
 
 
-(* Statement to string (useful for debugging purposes) *)
-val bil_stmt_to_string_def = Define `bil_stmt_to_string stmt = case stmt of
-  | Declare (Var s t) => debug_concat ["Declaration of "; s]
-  | Assign v e => debug_concat ["Assignment of "; v]
-  | Jmp _ => "Jump"
-  | CJmp _ _ _ => "Conditional Jump"
-  | Halt _ => "Halt"
-  | Assert _ => "Assert"
-  | _ => "-- unsupported statement"
-`;
+val bil_is_valid_pc_of_valid_blocks = store_thm ("bil_is_valid_pc_of_valid_blocks",
+  ``!p pc. bil_is_valid_labels (BilProgram p) ==>
+           (bil_is_valid_pc (BilProgram p) pc <=> (?bl. MEM bl p /\ (pc.label = bl.label) /\
+             (pc.index < LENGTH bl.statements)))``,
+SIMP_TAC std_ss [bil_is_valid_pc_def, bil_get_program_block_info_by_label_valid_THM,
+  listTheory.MEM_EL, GSYM LEFT_EXISTS_AND_THM] >>
+METIS_TAC[]);
 
-(* Define PC record *)
-Datatype `programcounter = <| label:bil_label_t; index:num |>`;
 
-val bil_get_program_block_info_by_label_def = Define `bil_get_program_block_info_by_label p l =
-  INDEX_FIND 0 (\(x:bil_block_t). x.label = l) p
-`;
+val bil_get_program_block_info_by_label_valid_pc = store_thm ("bil_get_program_block_info_by_label_valid_pc",
+  ``!p pc. bil_is_valid_pc p pc ==> IS_SOME (bil_get_program_block_info_by_label p pc.label)``,
 
-val bil_nextblock_def = Define `bil_nextblock (p:program) (n, (bl:bil_block_t)) = if (n < LENGTH p - 1) 
-  then SOME (n + 1, EL (n + 1) p)
-  else NONE
-`;
+SIMP_TAC std_ss [bil_is_valid_pc_def, GSYM LEFT_FORALL_IMP_THM]);
 
-val bil_pcnext_def = Define `
-  (bil_pcnext p NONE = NONE) ∧
-  (bil_pcnext p (SOME pc) = case bil_get_program_block_info_by_label p (pc.label) of
-        SOME (n, bl) => if (pc.index < LENGTH bl.statements - 1)
-          then SOME <| label := pc.label ; index := (pc.index + 1) |>
+val bil_get_current_statement_def = Define `bil_get_current_statement p pc =
+  option_CASE (bil_get_program_block_info_by_label p pc.label) NONE
+     (\ (_, bl). if (pc.index < LENGTH bl.statements) then SOME (EL (pc.index) bl.statements) else NONE) `;
+
+
+val bil_get_current_statement_IS_SOME = store_thm ("bil_get_current_statement_IS_SOME",
+  ``!p pc. IS_SOME (bil_get_current_statement p pc) <=> bil_is_valid_pc p pc``,
+
+REPEAT GEN_TAC >>
+Cases_on `bil_get_program_block_info_by_label p pc.label` >> (
+  ASM_SIMP_TAC std_ss [bil_get_current_statement_def, bil_is_valid_pc_def]
+) >>
+SIMP_TAC (std_ss++QI_ss++pairSimps.gen_beta_ss++boolSimps.LIFT_COND_ss) []);
+
+
+val bil_pc_normalise_def = Define `
+  (bil_pc_normalise (BilProgram p) pc = case bil_get_program_block_info_by_label (BilProgram p) (pc.label) of
+        SOME (n, bl) => if (pc.index < LENGTH bl.statements)
+          then SOME pc
           else (
-            case bil_nextblock p (n, bl) of
-              | NONE => NONE
-              | SOME (_, nextblock) => if (LENGTH nextblock.statements = 0)
-                  then SOME <| label := Label "" ; index := 0 |>
-                  else SOME <| label := nextblock.label ; index := 0 |>
+            let p' = FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC n) p) in
+            case p' of
+              | [] => NONE
+              | (bl'::_) => SOME <| label := bl'.label ; index := 0 |>
             )
       | _ => NONE
   )
 `;
 
-Datatype `stepstate = <|
-  pco:programcounter option ;
-  pi:program ;
-  environ:environment ;
-  termcode:bil_val_t ;
-  debug:string list;
-  execs:num
-|>`;
 
-val bil_exec_step_def = Define `bil_exec_step state = case state.pco of
-  | NONE => state
-  | SOME (pc) => if pc.label = (Label "")
-      then state with <| pco := (bil_pcnext state.pi state.pco) ; debug := "Empty block not allowed"::state.debug ; execs := state.execs + 1 |>
-      else case bil_get_program_block_info_by_label state.pi pc.label of
-        | NONE => state with <| pco := NONE ; debug := "Wrong program counter"::state.debug ; execs := state.execs + 1 |>
-        | SOME (n, bl) => if (pc.index >= LENGTH bl.statements) \/ ~(state.termcode = Unknown)
-            then state with <| pco := NONE ; debug := "Program terminated"::state.debug ; execs := state.execs + 1 |>
-            else
-              let stmt = EL pc.index bl.statements in
-              let newenviron = bil_exec_stmt stmt state.environ in
-              if ~(is_env_regular newenviron)
-              then
-                state with <| pco := NONE ; debug := (debug_concat ["Irregular environment after "; bil_stmt_to_string stmt])::state.debug ; execs := state.execs + 1 |>
-              else
-                case stmt of
-                  | Jmp e        => (case bil_eval_exp e newenviron of
-                        (Int addr) =>
-                         state with <| pco := SOME (<| label := (Address addr) ; index := 0 |>) ; execs := state.execs + 1 |>
-                         | _ =>  state with <| pco := NONE ; debug := (debug_concat ["Wrong exp in jmp "; bil_stmt_to_string stmt])::state.debug ; execs := state.execs + 1 |>)
-                  | CJmp e e1 e2 => if (bil_eval_exp e newenviron) = Int 1b
-                         then (case bil_eval_exp e1 newenviron of
-                            (Int addr) =>
-                              state with <| pco := SOME (<| label := (Address addr) ; index := 0 |>) ; execs := state.execs + 1 |>
-                             | _ =>  state with <| pco := NONE ; debug := (debug_concat ["Wrong exp in jmp "; bil_stmt_to_string stmt])::state.debug ; execs := state.execs + 1 |>)
-                         else (case bil_eval_exp e2 newenviron of
-                            (Int addr) =>
-                              state with <| pco := SOME (<| label := (Address addr) ; index := 0 |>) ; execs := state.execs + 1 |>
-                             | _ =>  state with <| pco := NONE ; debug := (debug_concat ["Wrong exp in jmp "; bil_stmt_to_string stmt])::state.debug ; execs := state.execs + 1 |>)
-                  | Declare _    => state with <| pco := (bil_pcnext state.pi state.pco) ; environ := newenviron ; execs := state.execs + 1 |>
-                  | Assign _ _   => state with <| pco := (bil_pcnext state.pi state.pco) ; environ := newenviron ; execs := state.execs + 1 |>
-                  | Assert e     => if (bil_eval_exp e newenviron) = Int 1b
-                                    then state with <| pco := (bil_pcnext state.pi state.pco) ; execs := state.execs + 1 |>
-                                    else state with <| pco := NONE ; termcode := Unknown ; debug := "Assertion failed"::state.debug ; execs := state.execs + 1 |>
-                  | Halt e       => state with <| pco := NONE ; termcode := (bil_eval_exp e newenviron) ; debug := "Program halted"::state.debug ; execs := state.execs + 1 |>
-                  | _            => state with <| pco := NONE ; environ := newenviron ; termcode := Unknown ; debug := "Unknown statement"::state.debug ; execs := state.execs + 1 |>
+val bil_pc_next_def = Define `
+  bil_pc_next p pc = bil_pc_normalise p (pc with index updated_by SUC)`
+
+
+val bil_pc_normalise_EQ_SOME = store_thm ("bil_pc_normalise_EQ_SOME",
+``!p pc i bl pc'. (bil_get_program_block_info_by_label (BilProgram p) (pc.label) = SOME (i, bl)) ==>
+             ((bil_pc_normalise (BilProgram p) pc = SOME pc') <=>
+                (if (pc.index < LENGTH bl.statements) then (pc' = pc) else
+                (?j. (i < j /\ j < LENGTH p /\ (LENGTH ((EL j p).statements) <> 0) /\
+                     (pc' = <| label := (EL j p).label; index := 0 |>) /\
+                     (!j'. (i < j' /\ j' < j) ==> (LENGTH ((EL j' p).statements) = 0))))))``,
+
+SIMP_TAC std_ss [bil_pc_normalise_def, pairTheory.pair_case_thm] >>
+REPEAT STRIP_TAC >>
+Cases_on `pc.index < LENGTH bl.statements` >- (
+  ASM_SIMP_TAC arith_ss [] >> METIS_TAC[]
+) >>
+ASM_SIMP_TAC std_ss [LET_DEF] >>
+Cases_on `FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)` >| [
+  ASM_SIMP_TAC list_ss [LET_DEF] >>
+  CCONTR_TAC >>
+  FULL_SIMP_TAC std_ss [] >>
+  `MEM (EL j p) (DROP (SUC i) p)` by (
+     SIMP_TAC (list_ss++boolSimps.CONJ_ss) [listTheory.MEM_EL, rich_listTheory.EL_DROP] >>
+     Q.EXISTS_TAC `j - SUC i` >>
+     ASM_SIMP_TAC arith_ss []
+  ) >>
+  `~(MEM (EL j p) (FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)))` by
+    ASM_SIMP_TAC list_ss [] >>
+  FULL_SIMP_TAC list_ss [listTheory.MEM_FILTER] >>
+  FULL_SIMP_TAC std_ss [],
+
+
+  rename1 `FILTER _ _ = bl0::bls` >>
+  ASM_SIMP_TAC list_ss [LET_DEF] >>
+  `?p1 p2. (LENGTH p1 = SUC i) /\ (p = p1 ++ p2)` by (
+     Q.EXISTS_TAC `TAKE (SUC i) p` >>
+     Q.EXISTS_TAC `DROP (SUC i) p` >>
+     FULL_SIMP_TAC list_ss [bil_get_program_block_info_by_label_THM]
+  ) >>
+  FULL_SIMP_TAC list_ss [rich_listTheory.DROP_APPEND1, listTheory.DROP_LENGTH_TOO_LONG] >>
+  Q.PAT_X_ASSUM `p = _ ++ _` (K ALL_TAC) >>
+  Q.PAT_X_ASSUM `_ = SOME _` (K ALL_TAC) >>
+  Induct_on `p2` >- ASM_SIMP_TAC list_ss [] >>
+  CONV_TAC (RENAME_VARS_CONV ["bl1"]) >>
+  REPEAT STRIP_TAC >>
+  Cases_on `LENGTH (bl1.statements) > 0` >> FULL_SIMP_TAC list_ss [] >| [
+    REPEAT (BasicProvers.VAR_EQ_TAC) >>
+    EQ_TAC >> REPEAT STRIP_TAC >> REPEAT BasicProvers.VAR_EQ_TAC >> ASM_SIMP_TAC list_ss [] >| [
+      Q.EXISTS_TAC `SUC i` >>
+      ASM_SIMP_TAC list_ss [rich_listTheory.EL_APPEND2],
+
+      Cases_on `j = SUC i` >- ASM_SIMP_TAC list_ss [rich_listTheory.EL_APPEND2] >>
+      Q.PAT_X_ASSUM `!j'. _` (MP_TAC o Q.SPEC `SUC i`) >>
+      ASM_SIMP_TAC list_ss [rich_listTheory.EL_APPEND2]
+    ],
+
+    EQ_TAC >> STRIP_TAC >> REPEAT BasicProvers.VAR_EQ_TAC >| [
+      Q.EXISTS_TAC `SUC j` >>
+      Q.PAT_X_ASSUM `LENGTH _ <> 0` MP_TAC >>
+      Q.PAT_X_ASSUM `!j. _` MP_TAC >>
+      `j - i = SUC (j - SUC i)` by DECIDE_TAC >>
+      ASM_SIMP_TAC list_ss [rich_listTheory.EL_APPEND2] >>
+      REPEAT STRIP_TAC >>
+      Cases_on `j' = SUC i` >- ASM_SIMP_TAC list_ss [] >>
+      Q.PAT_X_ASSUM `!j. _` (MP_TAC o Q.SPEC `PRE j'`) >>
+      `j' - SUC i = SUC (PRE j' - SUC i)` by DECIDE_TAC >>
+      ASM_SIMP_TAC list_ss [],
+
+      Q.EXISTS_TAC `PRE j` >>
+      Q.PAT_X_ASSUM `LENGTH _ <> 0` MP_TAC >>
+      Q.PAT_X_ASSUM `!j. _` MP_TAC >>
+
+      Cases_on `j = SUC i` >- ASM_SIMP_TAC list_ss [rich_listTheory.EL_APPEND2] >>
+      `j - SUC i = SUC (PRE j - SUC i)` by DECIDE_TAC >>
+      ASM_SIMP_TAC list_ss [rich_listTheory.EL_APPEND2] >>
+      REPEAT STRIP_TAC >>
+      Q.PAT_X_ASSUM `!j. _` (MP_TAC o Q.SPEC `SUC j'`) >>
+      `j' - i = SUC (j' - SUC i)` by DECIDE_TAC >>
+      ASM_SIMP_TAC list_ss []
+    ]
+  ]
+]);
+
+
+val bil_pc_normalise_EQ_NONE = store_thm ("bil_pc_normalise_EQ_NONE",
+``!p pc i bl. (bil_get_program_block_info_by_label (BilProgram p) (pc.label) = SOME (i, bl)) ==>
+             ((bil_pc_normalise (BilProgram p) pc = NONE) <=> (
+                (LENGTH bl.statements <= pc.index) /\
+                (!j. (i < j /\ j < LENGTH p) ==> (LENGTH ((EL j p).statements) = 0))))``,
+
+SIMP_TAC std_ss [bil_pc_normalise_def, pairTheory.pair_case_thm] >>
+REPEAT STRIP_TAC >>
+Cases_on `pc.index < LENGTH bl.statements` >> (
+  ASM_SIMP_TAC arith_ss []
+) >>
+Cases_on `FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)` >| [
+  ASM_SIMP_TAC list_ss [LET_DEF] >>
+  REPEAT STRIP_TAC >>
+  `MEM (EL j p) (DROP (SUC i) p)` by (
+     SIMP_TAC (list_ss++boolSimps.CONJ_ss) [listTheory.MEM_EL, rich_listTheory.EL_DROP] >>
+     Q.EXISTS_TAC `j - SUC i` >>
+     ASM_SIMP_TAC arith_ss []
+  ) >>
+  `~(MEM (EL j p) (FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)))` by
+    ASM_SIMP_TAC list_ss [] >>
+  FULL_SIMP_TAC list_ss [listTheory.MEM_FILTER] >>
+  FULL_SIMP_TAC std_ss [],
+
+
+  rename1 `FILTER _ _ = bl0::bls` >>
+  ASM_SIMP_TAC list_ss [LET_DEF] >>
+  `MEM bl0 (FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p))` by
+    ASM_SIMP_TAC list_ss [] >>
+  POP_ASSUM MP_TAC >>
+  FULL_SIMP_TAC list_ss [listTheory.MEM_FILTER] >>
+  SIMP_TAC (list_ss++boolSimps.CONJ_ss) [listTheory.MEM_EL, rich_listTheory.EL_DROP] >>
+  REPEAT STRIP_TAC >>
+  rename1 `bl0 = EL (n + SUC i) p` >>
+  Q.EXISTS_TAC `n + SUC i` >>
+  FULL_SIMP_TAC list_ss []
+]);
+
+
+val bil_pc_normalise_EQ_NONE_is_end_pc = store_thm ("bil_pc_normalise_EQ_NONE_is_end_pc",
+``!p pc. bil_is_valid_labels p /\ MEM (pc.label) (bil_labels_of_program p) ==>
+         ((bil_pc_normalise p pc = NONE) <=> (
+           bil_is_end_pc p pc))``,
+
+REPEAT STRIP_TAC >>
+`?i bl. bil_get_program_block_info_by_label p pc.label = SOME (i, bl)` by
+  METIS_TAC[bil_get_program_block_info_by_label_valid_MEM] >>
+Cases_on `p` >> rename1 `BilProgram p` >>
+MP_TAC (Q.SPECL [`p`, `pc`, `i`, `bl`] bil_pc_normalise_EQ_NONE) >>
+ASM_SIMP_TAC arith_ss [bil_is_end_pc_def, arithmeticTheory.NOT_LESS]);
+
+
+val bil_pc_normalise_EQ_NONE_is_end_pc_IMP = store_thm ("bil_pc_normalise_EQ_NONE_is_end_pc_IMP",
+``!p pc. (bil_is_valid_labels p /\ MEM (pc.label) (bil_labels_of_program p) /\
+          (bil_pc_normalise p pc = NONE)) ==>
+         bil_is_end_pc p pc``,
+METIS_TAC[bil_pc_normalise_EQ_NONE_is_end_pc]);
+
+
+val bil_pc_normalise_valid = store_thm ("bil_pc_normalise_valid",
+``!p pc pc'. (bil_is_valid_labels p /\ (MEM pc.label (bil_labels_of_program p)) /\
+              (bil_pc_normalise p pc = SOME pc')) ==>
+             (bil_is_valid_pc p pc')``,
+
+Cases >> rename1 `BilProgram p` >>
+SIMP_TAC list_ss [bil_labels_of_program_def, bil_pc_normalise_EQ_SOME,
+  listTheory.MEM_MAP, GSYM RIGHT_EXISTS_AND_THM] >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [listTheory.MEM_EL] >>
+rename1 `bl = EL i p` >>
+`bil_get_program_block_info_by_label (BilProgram p) pc.label = SOME (i, bl)` by
+  METIS_TAC[bil_get_program_block_info_by_label_valid_THM] >>
+
+MP_TAC (Q.SPECL [`p`, `pc`, `i`, `bl`, `pc'`] bil_pc_normalise_EQ_SOME) >>
+FULL_SIMP_TAC std_ss [bil_is_valid_pc_def] >>
+Cases_on `pc.index < LENGTH (EL i p).statements` >| [
+  ASM_SIMP_TAC std_ss [] >> METIS_TAC[],
+
+  ASM_SIMP_TAC (std_ss++bil_pc_ss) [bil_get_program_block_info_by_label_valid_THM,
+    GSYM LEFT_FORALL_IMP_THM] >>
+  REPEAT STRIP_TAC >>
+  Q.EXISTS_TAC `j` >>
+  ASM_SIMP_TAC arith_ss []
+]);
+
+
+val bil_pc_next_valid = store_thm ("bil_pc_next_valid",
+``!p pc pc'. (bil_is_valid_labels p /\ bil_is_valid_pc p pc /\ (bil_pc_next p pc = SOME pc')) ==>
+             (bil_is_valid_pc p pc')``,
+
+REPEAT STRIP_TAC >>
+MATCH_MP_TAC bil_pc_normalise_valid >>
+Q.EXISTS_TAC `pc with index updated_by SUC` >>
+Cases_on `p` >>
+FULL_SIMP_TAC (std_ss++bil_pc_ss) [bil_pc_next_def, bil_is_valid_pc_def, bil_labels_of_program_def,
+  listTheory.MEM_MAP] >>
+METIS_TAC[listTheory.MEM_EL, bil_get_program_block_info_by_label_valid_THM]);
+
+
+val bil_pc_first_def = Define
+  `bil_pc_first (BilProgram p) = let bl = HD (FILTER (\bl. LENGTH (bl.statements) > 0) p) in
+    (<| label := bl.label; index := 0 |>):bil_programcounter_t`;
+
+val bil_pc_last_def = Define
+  `bil_pc_last (BilProgram p) = let bl = LAST (FILTER (\bl. LENGTH (bl.statements) > 0) p) in
+    (<| label := bl.label; index := LENGTH bl.statements - 1 |>):bil_programcounter_t`;
+
+
+val bil_program_stmts_count_FILTER_NEQ_NIL = store_thm ("bil_program_stmts_count_FILTER_NEQ_NIL",
+  ``!p. (bil_program_stmts_count (BilProgram p) > 0) ==>
+    (?bl0 bls. (FILTER (\bl. LENGTH bl.statements > 0) p = bl0 :: bls) /\
+              EVERY (\bl. (LENGTH bl.statements > 0) /\ MEM bl p) (bl0::bls))``,
+
+Induct_on `p` >> (
+  FULL_SIMP_TAC list_ss [bil_program_stmts_count_def, bil_block_stmts_count_def]
+) >>
+CONV_TAC (RENAME_VARS_CONV ["bl"]) >> GEN_TAC >>
+Cases_on `LENGTH bl.statements` >| [
+  SIMP_TAC list_ss [] >>
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC list_ss [listTheory.EVERY_MEM],
+
+  SIMP_TAC list_ss [listTheory.EVERY_FILTER] >>
+  ASM_SIMP_TAC list_ss [listTheory.EVERY_MEM]
+]);
+
+
+val bil_pc_first_valid = store_thm ("bil_pc_first_valid",
+  ``!p. bil_is_valid_program p ==> bil_is_valid_pc p (bil_pc_first p)``,
+
+Cases >> rename1 `BilProgram p` >>
+SIMP_TAC (std_ss++bil_pc_ss) [bil_is_valid_pc_of_valid_blocks, bil_is_valid_program_def,
+  bil_pc_first_def, LET_DEF] >>
+ASSUME_TAC (Q.SPEC `p` bil_program_stmts_count_FILTER_NEQ_NIL) >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC list_ss [] >>
+rename1 `LENGTH bl0.statements > 0` >>
+Q.EXISTS_TAC `bl0` >>
+ASM_SIMP_TAC list_ss []);
+
+
+val bil_pc_last_valid = store_thm ("bil_pc_last_valid",
+  ``!p. bil_is_valid_program p ==> bil_is_valid_pc p (bil_pc_last p)``,
+
+Cases >> rename1 `BilProgram p` >>
+SIMP_TAC (std_ss++bil_pc_ss) [bil_is_valid_pc_of_valid_blocks, bil_is_valid_program_def,
+  bil_pc_last_def, LET_DEF] >>
+ASSUME_TAC (Q.SPEC `p` bil_program_stmts_count_FILTER_NEQ_NIL) >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC list_ss [] >>
+rename1 `FILTER _ p = bl0::bls` >>
+Q.EXISTS_TAC `LAST (bl0::bls)` >>
+`MEM (LAST (bl0::bls)) (bl0::bls)` by MATCH_ACCEPT_TAC rich_listTheory.MEM_LAST >>
+FULL_SIMP_TAC list_ss [listTheory.EVERY_MEM, arithmeticTheory.GREATER_DEF]);
+
+
+val bil_is_valid_pc_label_OK = store_thm ("bil_is_valid_pc_label_OK",
+  ``!p pc. bil_is_valid_pc p pc ==> MEM pc.label (bil_labels_of_program p)``,
+
+Cases_on `p` >> rename1 `BilProgram p` >>
+SIMP_TAC std_ss [bil_is_valid_pc_def, listTheory.MEM_MAP,
+  GSYM LEFT_FORALL_IMP_THM, bil_labels_of_program_def,
+  bil_get_program_block_info_by_label_THM] >>
+SIMP_TAC std_ss [listTheory.MEM_EL, GSYM RIGHT_EXISTS_AND_THM] >>
+METIS_TAC[]);
+
+
+val bil_pc_next_valid_EQ_NONE = store_thm ("bil_pc_next_valid_EQ_NONE",
+``!p pc. (bil_is_valid_labels p /\ bil_is_valid_pc p pc) ==>
+          ((bil_pc_next p pc = NONE) <=> (pc = bil_pc_last p))``,
+
+REPEAT STRIP_TAC >>
+`MEM (pc with index updated_by SUC).label (bil_labels_of_program p)` by (
+  ASM_SIMP_TAC (std_ss++bil_pc_ss) [bil_is_valid_pc_label_OK]
+) >>
+ASM_SIMP_TAC std_ss [bil_pc_next_def, bil_pc_normalise_EQ_NONE_is_end_pc] >>
+
+
+Cases_on `p` >> rename1 `BilProgram p` >>
+ASM_SIMP_TAC (std_ss++bil_pc_ss) [bil_pc_last_def, LET_THM, bil_is_end_pc_def] >>
+
+`FILTER (\bl. LENGTH bl.statements > 0) p <> []` by (
+  STRIP_TAC  >>
+  FULL_SIMP_TAC std_ss [bil_is_valid_pc_def, bil_get_program_block_info_by_label_THM] >>
+  `MEM (EL i p) (FILTER (\bl. LENGTH bl.statements > 0) p)` suffices_by ASM_SIMP_TAC list_ss [] >>
+  SIMP_TAC list_ss [listTheory.MEM_FILTER, listTheory.MEM_EL] >>
+  REPEAT STRIP_TAC >| [
+    DECIDE_TAC,
+    METIS_TAC[]
+  ]
+) >>
+
+IMP_RES_TAC LAST_FILTER_EL >>
+FULL_SIMP_TAC (list_ss++bil_pc_ss) [DB.fetch "-" "bil_programcounter_t_component_equality",
+  bil_is_valid_pc_def] >>
+REV_FULL_SIMP_TAC std_ss [bil_get_program_block_info_by_label_valid_THM] >>
+EQ_TAC >> STRIP_TAC >| [
+  `~(i < i')` by (
+    STRIP_TAC >>
+    `~(LENGTH bl.statements > 0)` by METIS_TAC[] >>
+    DECIDE_TAC
+  ) >>
+  `~(i' < i)` by (
+    STRIP_TAC >>
+    `LENGTH (EL i p).statements = 0` by METIS_TAC[] >>
+    DECIDE_TAC
+  ) >>
+  `i' = i` by DECIDE_TAC >>
+  FULL_SIMP_TAC arith_ss [],
+
+  `bl = EL i p` by METIS_TAC [bil_is_valid_labels_blocks_EQ, listTheory.MEM_EL] >>
+  `i' = i` by METIS_TAC [bil_is_valid_labels_blocks_EQ_EL] >>
+  FULL_SIMP_TAC arith_ss [] >>
+  REPEAT STRIP_TAC >>
+  `~(LENGTH (EL j p).statements > 0)` by METIS_TAC[] >>
+  ASM_SIMP_TAC arith_ss []
+]);
+
+
+
+(* ------------------------------------------------------------------------- *)
+(* Auxiliary stuff                                                           *)
+(* ------------------------------------------------------------------------- *)
+
+(* This definition is oriented to give an RX name to registers *)
+val r2s_def = Define `r2s = \(w:bool[5]).STRCAT ("R") (w2s (10:num) HEX w)`;
+
+val r2s_REWRS = store_thm ("r2s_REWRS", ``
+  (r2s  0w = "R0" ) /\ (r2s  1w = "R1" ) /\ (r2s  2w = "R2" ) /\ (r2s  3w = "R3" ) /\
+  (r2s  4w = "R4" ) /\ (r2s  5w = "R5" ) /\ (r2s  6w = "R6" ) /\ (r2s  7w = "R7" ) /\
+  (r2s  8w = "R8" ) /\ (r2s  9w = "R9" ) /\ (r2s 10w = "R10") /\ (r2s 11w = "R11") /\
+  (r2s 12w = "R12") /\ (r2s 13w = "R13") /\ (r2s 14w = "R14") /\ (r2s 15w = "R15") /\
+  (r2s 16w = "R16") /\ (r2s 17w = "R17") /\ (r2s 18w = "R18") /\ (r2s 19w = "R19") /\
+  (r2s 20w = "R20") /\ (r2s 21w = "R21") /\ (r2s 22w = "R22") /\ (r2s 23w = "R23") /\
+  (r2s 24w = "R24") /\ (r2s 25w = "R25") /\ (r2s 26w = "R26") /\ (r2s 27w = "R27") /\
+  (r2s 28w = "R28") /\ (r2s 29w = "R29") /\ (r2s 30w = "R30") /\ (r2s 31w = "R31")``,
+EVAL_TAC);
+
+
+(* Statement to string (useful for debugging purposes) *)
+val bil_stmt_to_string_def = Define `bil_stmt_to_string stmt = case stmt of
+  | Declare (Var s _) => CONCAT ["Declaration of "; s]
+  | Assign (Var s _) _ => CONCAT ["Assignment of "; s]
+  | Jmp _ => "Jump"
+  | CJmp _ _ _ => "Conditional Jump"
+  | Halt _ => "Halt"
+  | Assert _ => "Assert"
+  | Assume _ => "Assume"
+  | _ => "-- unsupported statement"
 `;
 
-(* Multiple execution of step *)
-val bil_exec_step_n_def = Define `bil_exec_step_n state (n:num) =
-  if state.pco = NONE then state else
-  if (n = 0)
-    then state
-    else bil_exec_step_n (bil_exec_step state) (n - 1)
-`;
 
-(* Statements' counting and irregular program *)
-val bil_block_stmts_count_def = Define `bil_block_stmts_count bl = LENGTH bl.statements`;
+(* ------------------------------------------------------------------------- *)
+(*  Program State                                                            *)
+(* ------------------------------------------------------------------------- *)
 
-val bil_program_lbl_unique_def = Define`bil_program_lbl_unique (p:program) = ALL_DISTINCT (MAP (λbl.(bl.label)) p)`;
+val bil_state_add_execs_def = Define `bil_state_add_execs st n =
+  st with execs updated_by ($+ n)`
 
-val bil_program_no_empty_blocks_def = Define`bil_program_no_empty_blocks p = (FIND ($= 0) (FILTER (λl.l = 0) (MAP bil_block_stmts_count p)) = NONE)`;
+val bil_state_is_terminated_def = Define `bil_state_is_terminated st =
+  (st.termcode <> Running)`
 
-val bil_program_irregular_def = Define `bil_program_irregular p = ~(bil_program_lbl_unique p ∧ bil_program_no_empty_blocks p)`;
+val bil_state_is_failed_def = Define `bil_state_is_failed st =
+  (st.termcode = Failed)`
 
-val bil_pcinit_def = Define `bil_pcinit (p:program) = let bl = EL 0 p in <| label := bl.label ; index := 0 |>`;
+val bil_state_set_failed_def = Define `bil_state_set_failed st msg =
+  (st with termcode := Failed) with debug updated_by (\dbg. msg::dbg)`
 
-val bil_state_init_def = Define `bil_state_init (p:program) = <|
-    pco      := SOME (bil_pcinit p)
-  ; pi       := p
-  ; environ  := (λx.(NoType, Unknown)):environment
-  ; termcode := Unknown
-  ; debug    := if (bil_program_irregular p)
-                then ["Irregular program detected (duplicate labels or empty statements)"]
-                else []
+val bil_state_set_failed_is_failed = store_thm ("bil_state_set_failed_is_failed",
+  ``!st msg. bil_state_is_failed (bil_state_set_failed st msg)``,
+SIMP_TAC (std_ss ++ bil_state_ss) [bil_state_set_failed_def, bil_state_is_failed_def]);
+
+val bil_state_set_pc_def = Define `
+  (bil_state_set_pc (st:bil_state_t) NONE = st with termcode := ReachedEnd) /\
+  (bil_state_set_pc (st:bil_state_t) (SOME pc') = st with pc := pc')`
+
+
+val bil_state_normalise_pc_def = Define `bil_state_normalise_pc p (st:bil_state_t) =
+  case bil_pc_normalise p st.pc of
+    | SOME pc' => (st with pc := pc')
+    | NONE => (st with termcode := ReachedEnd)`;
+
+val bil_state_incr_pc_def = Define `bil_state_incr_pc p (st:bil_state_t) =
+  bil_state_normalise_pc p (st with pc := (st.pc with index updated_by SUC))`
+
+val bil_state_set_pc_def = Define `bil_state_set_pc p (st:bil_state_t) pc' =
+  bil_state_normalise_pc p (st with pc := pc')`;
+
+
+val bil_is_valid_state_def = Define `bil_is_valid_state p st <=>
+  ((is_valid_env st.environ) /\ (if st.termcode = ReachedEnd then bil_is_end_pc p st.pc else
+      bil_is_valid_pc p st.pc))`;
+
+val bil_state_init_def = Define `bil_state_init p = <|
+    pc       := bil_pc_first p
+  ; environ  := empty_env
+  ; termcode := Running
+  ; debug    := []
   ; execs    := 0
 |>`;
 
+val bil_state_init_valid = store_thm ("bil_state_init_valid",
+  ``!p. bil_is_valid_program p ==> bil_is_valid_state p (bil_state_init p)``,
+
+SIMP_TAC (std_ss++bil_state_ss++bil_termcode_ss) [bil_is_valid_state_def, bil_state_init_def,
+  bil_pc_first_valid, is_valid_env_empty]);
+
+
 
 (* ------------------------------------------------------------------------- *)
-(*  Misc Tools                                                               *)
+(*  Semantics of statements                                                  *)
 (* ------------------------------------------------------------------------- *)
-val bil_stepstate_pco_def = Define `bil_stepstate_pco s = s.pco`;
 
-val bil_stepstate_termcode_def = Define `bil_stepstate_termcode s = s.termcode`;
+(* Execution of Jmp, CJmp, Halt, Assert, Assume doesn't change environment *)
 
-val bil_program_stmts_count_def = Define`bil_program_stmts_count p = SUM (MAP bil_block_stmts_count p)`;
+val bil_declare_initial_value_def = Define `
+  (bil_declare_initial_value NoType = NONE) /\
+  (bil_declare_initial_value (ImmType _) = NONE) /\
+  (bil_declare_initial_value (MemType at vt) = SOME (Mem at vt (K 0)))`;
 
-val bil_read_address_label_def = Define `bil_read_address_label l = case l of
-  | Address n => n
-  | _ => 0b
+val bil_exec_stmt_declare_def = Define `bil_exec_stmt_declare p v ty (st : bil_state_t) =
+   let env = (
+      let vo = bil_declare_initial_value ty in
+      if bil_env_var_is_bound v st.environ then IrregularEnv else
+      bil_env_update v vo ty st.environ) in
+    if (is_env_regular env) then
+       bil_state_incr_pc p (st with environ := env)
+    else
+       bil_state_set_failed st (CONCAT ["irregular environment after "; bil_stmt_to_string
+          (Declare (Var v ty))])`;
+
+val bil_exec_stmt_assign_def = Define `bil_exec_stmt_assign p v ex (st : bil_state_t) =
+   let env = bil_env_write v (bil_eval_exp ex st.environ) st.environ in
+    if (is_env_regular env) then
+       bil_state_incr_pc p (st with environ := env)
+    else
+       bil_state_set_failed st (CONCAT ["irregular environment after "; bil_stmt_to_string
+          (Assign v ex)])`;
+
+val bil_exec_stmt_halt_def = Define `bil_exec_stmt_halt ex (st : bil_state_t) =
+    (st with termcode := Halted (bil_eval_exp ex st.environ))`
+
+val bil_exec_stmt_jmp_def = Define `bil_exec_stmt_jmp p l (st : bil_state_t) =
+    if (MEM l (bil_labels_of_program p)) then
+      bil_state_set_pc p st <| label := l; index := 0 |>
+    else (st with termcode := (ReachedUnknownLabel l))`;
+
+val bil_exec_stmt_cjmp_def = Define `bil_exec_stmt_cjmp p ex l1 l2 (st : bil_state_t) =
+  case (bil_dest_bool_val (bil_eval_exp ex st.environ)) of
+    | SOME T => bil_exec_stmt_jmp p l1 st
+    | SOME F => bil_exec_stmt_jmp p l2 st
+    | NONE => bil_state_set_failed st "condition of cjmp failed to evaluate"`;
+
+val bil_exec_stmt_assert_def = Define `bil_exec_stmt_assert p ex (st : bil_state_t) =
+  case (bil_dest_bool_val (bil_eval_exp ex st.environ)) of
+    | SOME T => bil_state_incr_pc p st
+    | SOME F => bil_state_set_failed st "assertion failed"
+    | NONE => bil_state_set_failed st "condition of assert failed to evaluate"`
+
+val bil_exec_stmt_assume_def = Define `bil_exec_stmt_assume p ex (st : bil_state_t) =
+  case (bil_dest_bool_val (bil_eval_exp ex st.environ)) of
+    | SOME T => bil_state_incr_pc p st
+    | SOME F => (st with termcode := AssumptionViolated)
+    | NONE => bil_state_set_failed st "condition of assume failed to evaluate"`;
+
+
+val bil_exec_stmt_def = Define `
+  (bil_exec_stmt p (Jmp l) st = bil_exec_stmt_jmp p l st) /\
+  (bil_exec_stmt p (CJmp e l1 l2) st = bil_exec_stmt_cjmp p e l1 l2 st) /\
+  (bil_exec_stmt p (Declare v) st = bil_exec_stmt_declare p (bil_var_name v) (bil_var_type v) st) /\
+  (bil_exec_stmt p (Assert ex) st = bil_exec_stmt_assert p ex st) /\
+  (bil_exec_stmt p (Assume ex) st = bil_exec_stmt_assume p ex st) /\
+  (bil_exec_stmt p (Assign v ex) st = bil_exec_stmt_assign p v ex st) /\
+  (bil_exec_stmt p (Halt ex) st = bil_exec_stmt_halt ex st)`;
+
+
+val bil_exec_step_def = Define `bil_exec_step p state =
+  if (bil_state_is_terminated state) then state else
+  case (bil_get_current_statement p state.pc) of
+    | NONE => bil_state_set_failed state "invalid program_counter"
+    | SOME stm => (bil_exec_stmt p stm state) with execs updated_by SUC
 `;
 
+val bil_is_valid_state_exec_ignore = store_thm ("bil_is_valid_state_exec_ignore",
+  ``!p st f. bil_is_valid_state p (st with execs updated_by f) =
+             bil_is_valid_state p st``,
+SIMP_TAC (std_ss++bil_state_ss) [bil_is_valid_state_def]);
+
+
+val bil_exec_step_valid_THM = store_thm ("bil_exec_step_valid_THM",
+ ``!p st. bil_is_valid_state p st ==>
+          (if bil_state_is_terminated st then
+             (bil_exec_step p st = st)
+           else
+             (bil_is_valid_pc p st.pc) /\
+             (?stmt. (bil_get_current_statement p st.pc = SOME stmt) /\
+                     (bil_exec_step p st = (bil_exec_stmt p stmt st with execs updated_by SUC))))``,
+
+REPEAT STRIP_TAC >>
+SIMP_TAC std_ss [bil_exec_step_def] >>
+Cases_on `bil_state_is_terminated st` >> ASM_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [] >>
+`st.termcode <> ReachedEnd` by (
+  STRIP_TAC >> FULL_SIMP_TAC (std_ss++bil_termcode_ss) [bil_state_is_terminated_def]
+) >>
+`?stm. bil_get_current_statement p st.pc = SOME stm` by (
+  `IS_SOME (bil_get_current_statement p st.pc)` suffices_by METIS_TAC[optionTheory.IS_SOME_EXISTS] >>
+  FULL_SIMP_TAC std_ss [bil_get_current_statement_IS_SOME,
+     bil_is_valid_state_def]
+) >>
+FULL_SIMP_TAC std_ss [bil_is_valid_state_def]);
+
+
+val bil_is_valid_state_set_failed = store_thm ("bil_is_valid_state_set_failed",
+  ``!p st msg. bil_is_valid_state p st /\ bil_is_valid_pc p st.pc ==>
+               bil_is_valid_state p (bil_state_set_failed st msg)``,
+SIMP_TAC (std_ss++bil_termcode_ss++bil_state_ss) [bil_is_valid_state_def, bil_state_set_failed_def]);
+
+
+val bil_is_valid_state_incr_pc = store_thm ("bil_is_valid_state_incr_pc",
+  ``!p st. bil_is_valid_program p /\ bil_is_valid_state p st /\ bil_is_valid_pc p st.pc ==>
+           bil_is_valid_state p (bil_state_incr_pc p st)``,
+SIMP_TAC (std_ss++bil_state_ss++boolSimps.CONJ_ss) [bil_state_incr_pc_def, bil_is_valid_state_def,
+  bil_state_normalise_pc_def, bil_is_valid_pc_not_end
+] >>
+REPEAT GEN_TAC >> STRIP_TAC >>
+Cases_on `bil_pc_normalise p (st.pc with index updated_by SUC)` >- (
+  ASM_SIMP_TAC (std_ss++bil_state_ss) [] >>
+  MATCH_MP_TAC bil_pc_normalise_EQ_NONE_is_end_pc_IMP >>
+  FULL_SIMP_TAC (std_ss++bil_pc_ss) [bil_is_valid_pc_label_OK,
+    bil_is_valid_program_def]
+) >>
+rename1 `_ = SOME pc'` >>
+ASM_SIMP_TAC (std_ss++bil_pc_ss++bil_state_ss) [] >>
+MATCH_MP_TAC bil_pc_normalise_valid >>
+Q.EXISTS_TAC `st.pc with index updated_by SUC` >>
+FULL_SIMP_TAC (std_ss++bil_pc_ss) [bil_is_valid_pc_label_OK,
+   bil_is_valid_program_def]);
+
+
+
+val bil_exec_step_valid_state_invar_declare = prove (
+  ``!p st v. (bil_is_valid_program p /\ bil_is_valid_state p st /\ bil_is_valid_pc p st.pc) ==>
+             bil_is_valid_state p (bil_exec_stmt p (Declare v) st)``,
+Cases_on `v` >> rename1 `Var v ty` >>
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bil_exec_stmt_def, bil_exec_stmt_declare_def, LET_THM,
+  bil_is_valid_state_set_failed, is_env_regular_def, bil_var_type_def, bil_var_name_def] >>
+REPEAT STRIP_TAC >>
+MATCH_MP_TAC bil_is_valid_state_incr_pc >>
+ASM_SIMP_TAC (std_ss++bil_state_ss) [] >>
+FULL_SIMP_TAC (std_ss++bil_state_ss) [bil_is_valid_state_def] >>
+Q.PAT_X_ASSUM `is_env_regular _` MP_TAC >>
+Cases_on `st.environ` >> SIMP_TAC std_ss [bil_env_update_def, is_env_regular_def] >>
+COND_CASES_TAC >- SIMP_TAC std_ss [is_env_regular_def] >>
+FULL_SIMP_TAC (std_ss) [is_env_regular_def, is_valid_env_def] >>
+ConseqConv.CONSEQ_REWRITE_TAC ([finite_mapTheory.FEVERY_STRENGTHEN_THM], [], []) >>
+Cases_on `bil_declare_initial_value ty` >> FULL_SIMP_TAC std_ss []);
+
+
+val bil_exec_step_valid_state_invar_assign = prove (
+  ``!p st v ex. (bil_is_valid_program p /\ bil_is_valid_state p st /\ bil_is_valid_pc p st.pc) ==>
+                 bil_is_valid_state p (bil_exec_stmt p (Assign v ex) st)``,
+Cases_on `v` >> rename1 `Var v ty` >>
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bil_exec_stmt_def, bil_exec_stmt_assign_def, LET_THM,
+  bil_is_valid_state_set_failed, is_env_regular_def] >>
+REPEAT STRIP_TAC >>
+MATCH_MP_TAC bil_is_valid_state_incr_pc >>
+ASM_SIMP_TAC (std_ss++bil_state_ss) [] >>
+FULL_SIMP_TAC (std_ss++bil_state_ss) [bil_is_valid_state_def] >>
+Q.PAT_X_ASSUM `is_env_regular _` MP_TAC >>
+SIMP_TAC std_ss [bil_env_write_def] >>
+COND_CASES_TAC >> SIMP_TAC std_ss [is_env_regular_def, bil_var_name_def, bil_var_type_def] >>
+Cases_on `st.environ` >> SIMP_TAC std_ss [bil_env_update_def, is_env_regular_def] >>
+COND_CASES_TAC >> SIMP_TAC std_ss [is_env_regular_def, is_valid_env_def] >>
+ConseqConv.CONSEQ_REWRITE_TAC ([finite_mapTheory.FEVERY_STRENGTHEN_THM], [], []) >>
+FULL_SIMP_TAC std_ss [is_valid_env_def]);
+
+
+val bil_exec_step_valid_state_invar_jmp' = prove (
+  ``!p st l. (bil_is_valid_program p /\ bil_is_valid_state p st /\ bil_is_valid_pc p st.pc) ==>
+             bil_is_valid_state p (bil_exec_stmt_jmp p l st)``,
+SIMP_TAC std_ss [bil_exec_stmt_jmp_def] >>
+REPEAT STRIP_TAC >>
+COND_CASES_TAC >| [
+  ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_is_valid_state_def, bil_state_set_pc_def,
+    bil_state_normalise_pc_def] >>
+  Cases_on `bil_pc_normalise p <|label := l; index := 0|>` >| [
+    FULL_SIMP_TAC (std_ss++bil_state_ss) [bil_is_valid_state_def] >>
+    MATCH_MP_TAC bil_pc_normalise_EQ_NONE_is_end_pc_IMP >>
+    FULL_SIMP_TAC (std_ss++bil_pc_ss) [bil_is_valid_program_def],
+
+    rename1 `_ = SOME pc'` >>
+    FULL_SIMP_TAC (std_ss++bil_pc_ss++bil_state_ss) [bil_is_valid_state_def,
+      bil_is_valid_pc_not_end] >>
+    MATCH_MP_TAC bil_pc_normalise_valid >>
+    Q.EXISTS_TAC `<|label := l; index := 0|>` >>
+    FULL_SIMP_TAC (std_ss++bil_pc_ss) [bil_is_valid_program_def]
+  ],
+
+  FULL_SIMP_TAC (std_ss++bil_state_ss++bil_termcode_ss) [bil_is_valid_state_def]
+]);
+
+val bil_exec_step_valid_state_invar_jmp = prove (
+  ``!p st l. (bil_is_valid_program p /\ bil_is_valid_state p st /\ bil_is_valid_pc p st.pc) ==>
+             bil_is_valid_state p (bil_exec_stmt p (Jmp l) st)``,
+SIMP_TAC std_ss [bil_exec_stmt_def, bil_exec_step_valid_state_invar_jmp']);
+
+
+val bil_exec_step_valid_state_invar_cjmp = prove (
+  ``!p st ex l1 l2.
+       (bil_is_valid_program p /\ bil_is_valid_state p st /\ bil_is_valid_pc p st.pc) ==>
+       bil_is_valid_state p (bil_exec_stmt p (CJmp ex l1 l2) st)``,
+SIMP_TAC std_ss [bil_exec_stmt_def, bil_exec_stmt_cjmp_def] >>
+REPEAT STRIP_TAC >>
+Cases_on `bil_dest_bool_val (bil_eval_exp ex st.environ)` >- (
+  ASM_SIMP_TAC std_ss [bil_is_valid_state_set_failed]
+) >>
+rename1 `SOME c` >>
+Cases_on `c` >> (
+  ASM_SIMP_TAC std_ss [bil_exec_step_valid_state_invar_jmp']
+));
+
+
+val bil_exec_step_valid_state_invar_halt = prove (
+  ``!p st ex. (bil_is_valid_program p /\ bil_is_valid_state p st /\ bil_is_valid_pc p st.pc) ==>
+               bil_is_valid_state p (bil_exec_stmt p (Halt ex) st)``,
+
+SIMP_TAC (std_ss++bil_state_ss++bil_termcode_ss) [bil_exec_stmt_def, bil_exec_stmt_halt_def,
+  bil_is_valid_state_def]);
+
+
+val bil_exec_step_valid_state_invar_assert = prove (
+  ``!p st ex. (bil_is_valid_program p /\ bil_is_valid_state p st /\ bil_is_valid_pc p st.pc) ==>
+               bil_is_valid_state p (bil_exec_stmt p (Assert ex) st)``,
+
+SIMP_TAC (std_ss++bil_state_ss++bil_termcode_ss) [bil_exec_stmt_def, bil_exec_stmt_assert_def] >>
+REPEAT GEN_TAC >> STRIP_TAC >>
+Cases_on `bil_dest_bool_val (bil_eval_exp ex st.environ)` >- (
+  ASM_SIMP_TAC std_ss [bil_is_valid_state_set_failed]
+) >>
+rename1 `SOME c` >>
+Cases_on `c` >| [
+  ASM_SIMP_TAC std_ss [bil_is_valid_state_incr_pc],
+  ASM_SIMP_TAC std_ss [bil_is_valid_state_set_failed]
+]);
+
+
+val bil_exec_step_valid_state_invar_assume = prove (
+  ``!p st ex. (bil_is_valid_program p /\ bil_is_valid_state p st /\ bil_is_valid_pc p st.pc) ==>
+               bil_is_valid_state p (bil_exec_stmt p (Assume ex) st)``,
+
+SIMP_TAC (std_ss++bil_state_ss++bil_termcode_ss) [bil_exec_stmt_def, bil_exec_stmt_assume_def] >>
+REPEAT GEN_TAC >> STRIP_TAC >>
+Cases_on `bil_dest_bool_val (bil_eval_exp ex st.environ)` >- (
+  ASM_SIMP_TAC std_ss [bil_is_valid_state_set_failed]
+) >>
+rename1 `SOME c` >>
+Cases_on `c` >| [
+  ASM_SIMP_TAC std_ss [bil_is_valid_state_incr_pc],
+  FULL_SIMP_TAC (std_ss++bil_state_ss++bil_termcode_ss) [bil_is_valid_state_def]
+]);
+
+
+val bil_exec_step_valid_state_invar = store_thm ("bil_exec_step_valid_state_invar",
+``!p st. bil_is_valid_program p /\ bil_is_valid_state p st ==>
+         bil_is_valid_state p (bil_exec_step p st)``,
+
+REPEAT STRIP_TAC >>
+IMP_RES_TAC bil_exec_step_valid_THM >>
+Cases_on `bil_state_is_terminated st` >> FULL_SIMP_TAC std_ss [bil_is_valid_state_exec_ignore] >>
+Cases_on `stmt` >> (
+  ASM_SIMP_TAC std_ss [bil_exec_step_valid_state_invar_declare,
+    bil_exec_step_valid_state_invar_assign,
+    bil_exec_step_valid_state_invar_cjmp,
+    bil_exec_step_valid_state_invar_jmp,
+    bil_exec_step_valid_state_invar_halt,
+    bil_exec_step_valid_state_invar_assume,
+    bil_exec_step_valid_state_invar_assert]
+));
+
+val bil_state_normalise_pc_execs = store_thm ("bil_state_normalise_pc_execs",
+  ``!p st. (bil_state_normalise_pc p st).execs = st.execs``,
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [bil_state_normalise_pc_def] >>
+Cases_on `bil_pc_normalise p st.pc` >> (
+  ASM_SIMP_TAC (std_ss++bil_state_ss) []
+));
+
+
+val bil_state_incr_pc_execs = store_thm ("bil_state_incr_pc_execs",
+  ``!p st. (bil_state_incr_pc p st).execs = st.execs``,
+SIMP_TAC (std_ss++bil_state_ss) [bil_state_incr_pc_def, bil_state_normalise_pc_execs]);
+
+
+val bil_state_set_failed_execs = store_thm ("bil_state_set_failed_execs",
+  ``!st msg. (bil_state_set_failed st msg).execs = st.execs``,
+SIMP_TAC (std_ss++bil_state_ss) [bil_state_set_failed_def]);
+
+
+val bil_state_set_pc_execs = store_thm ("bil_state_set_pc_execs",
+  ``!st p pc'. (bil_state_set_pc p st pc').execs = st.execs``,
+SIMP_TAC (std_ss++bil_state_ss) [bil_state_set_pc_def,
+  bil_state_normalise_pc_execs]);
+
+val bil_exec_step_execs = store_thm ("bil_exec_step_execs",
+``!p st. bil_is_valid_state p st ==>
+         (if bil_state_is_terminated st then
+           (bil_exec_step p st = st)
+         else ((bil_exec_step p st).execs = SUC (st.execs)))``,
+
+
+REPEAT STRIP_TAC >>
+IMP_RES_TAC bil_exec_step_valid_THM >>
+Cases_on `bil_state_is_terminated st` >> FULL_SIMP_TAC (std_ss++bil_state_ss) [] >>
+Cases_on `stmt` >> (
+  SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bil_state_ss) [bil_exec_stmt_def,
+    bil_exec_stmt_declare_def, bil_exec_stmt_cjmp_def,
+    bil_exec_stmt_assume_def, bil_exec_stmt_assign_def, bil_exec_stmt_jmp_def,
+    LET_THM, bil_exec_stmt_halt_def, bil_exec_stmt_assert_def] >>
+  REPEAT CASE_TAC >> (
+    SIMP_TAC (std_ss++bil_state_ss) [bil_state_incr_pc_execs, bil_state_set_failed_execs,
+      bil_state_set_pc_execs]
+  )
+));
+
+
+
+(* Multiple execution of step *)
+val bil_exec_steps_opt_def = Define `bil_exec_steps_opt p state b max_steps =
+   OWHILE (\ (n, st). option_CASE max_steps T (\m. n < (m:num)) /\
+                      ~(bil_state_is_terminated st)) (\ (n, st).
+     (SUC n, bil_exec_step p st)) (b, state)`;
+
+val bil_exec_step_n_def = Define `
+  bil_exec_step_n p state n = THE (bil_exec_steps_opt p state 0 (SOME n))`;
+
+val bil_exec_steps_def = Define `
+  (bil_exec_steps p state = bil_exec_steps_opt p state 0 NONE)`
+
+
+val bil_exec_steps_opt_NONE_REWRS = store_thm ("bil_exec_steps_opt_NONE_REWRS",
+  ``bil_exec_steps_opt p state b NONE =
+    (if bil_state_is_terminated state then SOME (b, state) else
+       bil_exec_steps_opt p (bil_exec_step p state) (SUC b) NONE)``,
+
+SIMP_TAC std_ss [Once whileTheory.OWHILE_THM, bil_exec_steps_opt_def] >>
+METIS_TAC[]);
+
+
+val bil_exec_steps_opt_SOME_REWRS = store_thm ("bil_exec_steps_opt_SOME_REWRS",
+  ``bil_exec_steps_opt p state b (SOME m) =
+    (if ((m <= b) \/ bil_state_is_terminated state) then SOME (b, state) else
+       bil_exec_steps_opt p (bil_exec_step p state) (SUC b) (SOME m))``,
+
+SIMP_TAC std_ss [Once whileTheory.OWHILE_THM, bil_exec_steps_opt_def] >>
+COND_CASES_TAC >> FULL_SIMP_TAC arith_ss []);
+
+
+val FUNPOW_bil_exec_steps_opt_REWR = store_thm ("FUNPOW_bil_exec_steps_opt_REWR",
+  ``!n b st. (FUNPOW (\(n,st). (SUC n,bil_exec_step p st)) n (b,st)) =
+      (b + n, FUNPOW (bil_exec_step p) n st)``,
+Induct >> ASM_SIMP_TAC arith_ss [arithmeticTheory.FUNPOW]);
+
+
+val bil_exec_steps_opt_EQ_NONE = store_thm ("bil_exec_steps_opt_EQ_NONE",
+  ``(bil_exec_steps_opt p state b mo = NONE) <=>
+    ((mo = NONE) /\ (!n. ~(bil_state_is_terminated (FUNPOW (bil_exec_step p) n state))))``,
+
+SIMP_TAC (std_ss ++ boolSimps.EQUIV_EXTRACT_ss) [bil_exec_steps_opt_def, whileTheory.OWHILE_EQ_NONE,
+  FUNPOW_bil_exec_steps_opt_REWR, FORALL_AND_THM] >>
+DISCH_TAC >> POP_ASSUM (K ALL_TAC) >>
+Cases_on `mo` >> SIMP_TAC std_ss [] >>
+Q.EXISTS_TAC `x` >> DECIDE_TAC);
+
+
+val bil_exec_steps_EQ_NONE = store_thm ("bil_exec_steps_EQ_NONE",
+  ``(bil_exec_steps p state = NONE) <=>
+    (!n. ~(bil_state_is_terminated (FUNPOW (bil_exec_step p) n state)))``,
+
+SIMP_TAC std_ss [bil_exec_steps_def, bil_exec_steps_opt_EQ_NONE]);
+
+
+val bil_exec_steps_opt_EQ_SOME = store_thm ("bil_exec_steps_opt_EQ_SOME",
+  ``(case mo of NONE => T | SOME m => (b <= m)) ==>
+    ((bil_exec_steps_opt p state b mo = SOME (c, state')) <=>
+    ((case mo of NONE => (bil_state_is_terminated state')
+               | SOME m => ((c <= m) /\ ((c < m) ==> (bil_state_is_terminated state')))) /\
+     (b <= c) /\
+     (state' = FUNPOW (bil_exec_step p) (c - b) state) /\
+     (!n. n < c-b ==> ~(bil_state_is_terminated (FUNPOW (bil_exec_step p) n state)))))``,
+
+SIMP_TAC std_ss [whileTheory.OWHILE_def, bil_exec_steps_opt_def, FUNPOW_bil_exec_steps_opt_REWR] >>
+STRIP_TAC >>
+Q.ABBREV_TAC `P = \n. ~(case mo of NONE => T | SOME m => b + n < m) \/
+  bil_state_is_terminated (FUNPOW (bil_exec_step p) n state)` >>
+Tactical.REVERSE (Cases_on `?n. P n`) >- (
+  UNABBREV_ALL_TAC >>
+  FULL_SIMP_TAC std_ss [FORALL_AND_THM] >>
+  Cases_on `mo` >| [
+    SIMP_TAC std_ss [] >> METIS_TAC[],
+
+    rename1 `SOME m` >>
+    FULL_SIMP_TAC arith_ss [] >>
+    Q.PAT_X_ASSUM `!n. b + n < m` (MP_TAC o Q.SPEC `m`) >>
+    SIMP_TAC arith_ss []
+  ]
+) >>
+FULL_SIMP_TAC std_ss [] >>
+Q.SUBGOAL_THEN `$? (P:num->bool)` (fn thm => REWRITE_TAC [thm]) >- (
+  UNABBREV_ALL_TAC >>
+  Q.EXISTS_TAC `n` >> FULL_SIMP_TAC std_ss []
+) >>
+Tactical.REVERSE (Cases_on `b <= c`) >> ASM_SIMP_TAC arith_ss [] >>
+Q.ABBREV_TAC `n' = c - b` >>
+`c = b + n'` by (UNABBREV_ALL_TAC >> DECIDE_TAC) >>
+ASM_SIMP_TAC (std_ss++boolSimps.CONJ_ss++boolSimps.EQUIV_EXTRACT_ss) [] >>
+STRIP_TAC >>
+EQ_TAC >| [
+  STRIP_TAC >>
+  `!n. n < n' ==> ~(P n)` by METIS_TAC [whileTheory.LESS_LEAST] >>
+  `P n'` by METIS_TAC[whileTheory.FULL_LEAST_INTRO] >>
+  NTAC 2 (POP_ASSUM MP_TAC) >>
+  Q.PAT_X_ASSUM `P n` (K ALL_TAC) >>
+  Q.PAT_X_ASSUM `$LEAST P = _` (K ALL_TAC) >>
+  Q.UNABBREV_TAC `P` >>
+  ASM_SIMP_TAC std_ss [] >>
+  Cases_on `mo` >> SIMP_TAC arith_ss [DISJ_IMP_THM] >>
+  Cases_on `b + n' <= x` >> ASM_SIMP_TAC std_ss [] >>
+  FULL_SIMP_TAC arith_ss [] >>
+  Cases_on `n'` >- FULL_SIMP_TAC arith_ss [] >>
+  rename1 `~(b + SUC n'' <= _)` >>
+  Q.EXISTS_TAC `n''` >>
+  ASM_SIMP_TAC arith_ss [],
+
+
+  STRIP_TAC >>
+  MATCH_MP_TAC bitTheory.LEAST_THM >>
+  Q.PAT_X_ASSUM `P n` (K ALL_TAC) >>
+  Q.UNABBREV_TAC `P` >>
+  ASM_SIMP_TAC std_ss [] >>
+  Cases_on `mo` >> FULL_SIMP_TAC arith_ss [] >>
+  METIS_TAC[]
+]);
+
+
+
+val bil_exec_steps_EQ_SOME = store_thm ("bil_exec_steps_EQ_SOME",
+  ``((bil_exec_steps p state = SOME (c, state')) <=>
+    ((bil_state_is_terminated state') /\
+     (state' = FUNPOW (bil_exec_step p) c state) /\
+     (!n. n < c ==> ~(bil_state_is_terminated (FUNPOW (bil_exec_step p) n state)))))``,
+
+SIMP_TAC std_ss [bil_exec_steps_def, bil_exec_steps_opt_EQ_SOME]);
+
+
+val bil_exec_step_n_EQ_THM = store_thm ("bil_exec_step_n_EQ_THM",
+  ``((bil_exec_step_n p state n = (c, state')) <=>
+     ((c <= n) /\ ((c < n) ==> (bil_state_is_terminated state'))) /\
+     (state' = FUNPOW (bil_exec_step p) c state) /\
+     (!n'. n' < c ==> ~(bil_state_is_terminated (FUNPOW (bil_exec_step p) n' state))))``,
+
+SIMP_TAC std_ss [bil_exec_step_n_def] >>
+Cases_on `bil_exec_steps_opt p state 0 (SOME n)` >- (
+  FULL_SIMP_TAC std_ss [bil_exec_steps_opt_EQ_NONE]
+) >>
+FULL_SIMP_TAC std_ss [] >>
+rename1 `x = (c, state')` >>
+Cases_on `x` >>
+rename1 `(c0, state'') = (c, state')` >>
+FULL_SIMP_TAC (std_ss) [bil_exec_steps_opt_EQ_SOME] >>
+EQ_TAC >> STRIP_TAC >- (
+  REPEAT (BasicProvers.VAR_EQ_TAC) >>
+  ASM_SIMP_TAC std_ss []
+) >>
+ASM_SIMP_TAC (std_ss ++ boolSimps.CONJ_ss) [] >>
+Cases_on `c < c0` >- (
+  `c < n` by DECIDE_TAC >>
+  METIS_TAC[]
+) >>
+Cases_on `c0 < c` >- (
+  `c0 < n` by DECIDE_TAC >>
+  METIS_TAC[]
+) >>
+DECIDE_TAC);
+
 
 (* ------------------------------------------------------------------------- *)
-(*  Theorems - not yet completed                                             *)
-(* ------------------------------------------------------------------------- *)
 
-
-(* ------------------------------------------------------------------------- *)
 val _ = export_theory();
