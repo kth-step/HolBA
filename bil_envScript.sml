@@ -32,7 +32,7 @@ val is_env_regular_def = Define `
 
 val is_valid_env_def = Define `(is_valid_env IrregularEnv = F) /\
   (is_valid_env (RegularEnv m) <=> FEVERY (\ (_, (ty, vo)).
-     (case vo of NONE => T | SOME v => (ty = type_of_bil_val v))) m)`
+     (case vo of NONE => T | SOME v => (SOME ty = type_of_bil_val v))) m)`;
 
 val is_valid_env_empty = store_thm ("is_valid_env_empty",
   ``is_valid_env empty_env``,
@@ -40,16 +40,16 @@ SIMP_TAC std_ss [is_valid_env_def, empty_env_def, finite_mapTheory.FEVERY_FEMPTY
 
 val is_env_regular_REWRS = store_thm ("is_env_regular_REWRS",
 ``!env. is_env_regular env <=> (env <> IrregularEnv)``,
-Cases >> SIMP_TAC (srw_ss()) [is_env_regular_def])
+Cases >> SIMP_TAC (srw_ss()) [is_env_regular_def]);
 
 val bil_env_lookup_def = Define `
   (bil_env_lookup varname IrregularEnv = NONE) /\
-  (bil_env_lookup varname (RegularEnv env) = FLOOKUP env varname)`
+  (bil_env_lookup varname (RegularEnv env) = FLOOKUP env varname)`;
 
 val bil_env_update_def = Define `
   (bil_env_update varname vo ty IrregularEnv = IrregularEnv) /\
-  (bil_env_update varname vo ty (RegularEnv env) = 
-    if (?v. (vo = SOME v) /\ (ty <> type_of_bil_val v)) then IrregularEnv else
+  (bil_env_update varname vo ty (RegularEnv env) =
+    if (?v. (vo = SOME v) /\ (SOME ty <> type_of_bil_val v)) then IrregularEnv else
     (RegularEnv (env |+ (varname, (ty, vo)))))`;
 
 
@@ -57,7 +57,7 @@ val bil_env_lookup_type_def = Define `
   bil_env_lookup_type var_name env = OPTION_MAP FST (bil_env_lookup var_name env)`;
 
 val bil_env_check_type_def = Define `
-  bil_env_check_type var env = 
+  bil_env_check_type var env =
     (bil_env_lookup_type (bil_var_name var) env = SOME (bil_var_type var))`
 
 
@@ -76,8 +76,9 @@ val bil_env_write_Irregular = store_thm ("bil_env_write_Irregular",
   ``!v va. (bil_env_write v va IrregularEnv) = IrregularEnv``,
 SIMP_TAC std_ss [bil_env_write_def, bil_env_update_def]);
 
+
 val bil_env_write_Irregular_WrongVal = store_thm ("bil_env_write_Irregular_WrongVal",
-  ``!v va env. (type_of_bil_val va <> bil_var_type v) ==>
+  ``!v va env. (type_of_bil_val va <> SOME (bil_var_type v)) ==>
                (bil_env_write v va env = IrregularEnv)``,
 
 REPEAT GEN_TAC >>
@@ -88,7 +89,7 @@ Cases_on `env` >> SIMP_TAC std_ss [bil_env_update_def])
 
 val bil_env_var_is_bound_def = Define `
   (bil_env_var_is_bound var IrregularEnv = F) /\
-  (bil_env_var_is_bound var (RegularEnv env) = (var IN FDOM env))` 
+  (bil_env_var_is_bound var (RegularEnv env) = (var IN FDOM env))`
 
 
 val bin_env_var_is_bound_ALT_DEF = store_thm ("bin_env_var_is_bound_ALT_DEF",

@@ -26,8 +26,7 @@ val _ = Datatype `bil_val_t =
 
 
 val _ = Datatype `bil_type_t =
-    NoType
-  | ImmType bil_immtype_t
+    ImmType bil_immtype_t
   | MemType bil_immtype_t (* Addr-Type *) bil_immtype_t (* Value-Type *)
 `;
 
@@ -106,15 +105,15 @@ SIMP_TAC (std_ss++bil_val_ss) [bil_val_is_Imm_def, bil_val_is_Bool_def,
 (* ------------------------------------------------------------------------- *)
 
 val type_of_bil_val_def = Define `
-  (type_of_bil_val Unknown = NoType) /\
-  (type_of_bil_val (Imm imm) = ImmType (type_of_bil_imm imm)) /\
-  (type_of_bil_val (Mem at vt _) = MemType at vt)`;
+  (type_of_bil_val Unknown = NONE) /\
+  (type_of_bil_val (Imm imm) = SOME (ImmType (type_of_bil_imm imm))) /\
+  (type_of_bil_val (Mem at vt _) = SOME (MemType at vt))`;
 
-val bil_type_is_NoType_def = Define `bil_type_is_NoType ty = (ty = NoType)`
-val bil_type_is_ImmType_def = Define `bil_type_is_ImmType ty = (?s. ty = ImmType s)`
-val bil_type_is_ImmType_s_def = Define `bil_type_is_ImmType_s s ty = (ty = ImmType s)`
-val bil_type_is_BoolType_def = Define `bil_type_is_BoolType ty = (ty = ImmType Bit1)`
-val bil_type_is_MemType_def = Define `bil_type_is_MemType ty = (?at vt. ty = MemType at vt)`;
+val bil_type_is_NoType_def = Define `bil_type_is_NoType tyo = (tyo = NONE)`
+val bil_type_is_ImmType_def = Define `bil_type_is_ImmType tyo = (?s. tyo = SOME (ImmType s))`
+val bil_type_is_ImmType_s_def = Define `bil_type_is_ImmType_s s tyo = (tyo = SOME (ImmType s))`
+val bil_type_is_BoolType_def = Define `bil_type_is_BoolType tyo = (tyo = SOME (ImmType Bit1))`
+val bil_type_is_MemType_def = Define `bil_type_is_MemType tyo = (?at vt. tyo = SOME (MemType at vt))`;
 
 val bil_type_checker_DEFS = save_thm ("bil_type_checker_DEFS", LIST_CONJ [
   bil_type_is_NoType_def, bil_type_is_ImmType_def, bil_type_is_ImmType_s_def,
@@ -122,25 +121,24 @@ val bil_type_checker_DEFS = save_thm ("bil_type_checker_DEFS", LIST_CONJ [
 
 
 val bil_type_checker_REWRS = store_thm ("bil_type_checker_REWRS",
-  ``bil_type_is_NoType NoType /\
-    (!b. ~bil_type_is_NoType (ImmType b)) /\
-    (!at vt. ~(bil_type_is_NoType (MemType at vt))) /\
+  ``bil_type_is_NoType NONE /\
+    (!ty. ~bil_type_is_NoType (SOME ty)) /\
 
-    ~(bil_type_is_ImmType NoType) /\
-    (!b. bil_type_is_ImmType (ImmType b)) /\
-    (!at vt. ~(bil_type_is_ImmType (MemType at vt))) /\
+    ~(bil_type_is_ImmType NONE) /\
+    (!b. bil_type_is_ImmType (SOME (ImmType b))) /\
+    (!at vt. ~(bil_type_is_ImmType (SOME (MemType at vt)))) /\
 
-    ~(bil_type_is_MemType NoType) /\
-    (!b. ~(bil_type_is_MemType (ImmType b))) /\
-    (!at vt. (bil_type_is_MemType (MemType at vt))) /\
+    ~(bil_type_is_MemType NONE) /\
+    (!b. ~(bil_type_is_MemType (SOME (ImmType b)))) /\
+    (!at vt. (bil_type_is_MemType (SOME (MemType at vt)))) /\
 
-    (!s. ~(bil_type_is_ImmType_s s NoType)) /\
-    (!s b. bil_type_is_ImmType_s s (ImmType b) <=> (b = s)) /\
-    (!s at vt. ~(bil_type_is_ImmType_s s (MemType at vt))) /\
+    (!s. ~(bil_type_is_ImmType_s s NONE)) /\
+    (!s b. bil_type_is_ImmType_s s (SOME (ImmType b)) <=> (b = s)) /\
+    (!s at vt. ~(bil_type_is_ImmType_s s (SOME (MemType at vt)))) /\
 
-    (~(bil_type_is_BoolType NoType)) /\
-    (!b. bil_type_is_BoolType (ImmType b) <=> (b = Bit1)) /\
-    (!at vt. ~(bil_type_is_BoolType (MemType at vt)))``,
+    (~(bil_type_is_BoolType NONE)) /\
+    (!b. bil_type_is_BoolType (SOME (ImmType b)) <=> (b = Bit1)) /\
+    (!at vt. ~(bil_type_is_BoolType (SOME (MemType at vt))))``,
 
   SIMP_TAC (std_ss ++ bil_type_ss) [bil_type_checker_DEFS]);
 

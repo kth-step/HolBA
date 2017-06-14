@@ -179,10 +179,10 @@ Cases_on `c` >> (
 val bil_eval_ifthenelse_TF_EQ = store_thm ("bil_eval_ifthenelse_TF_EQ",
 ``!c e.
      bil_eval_ifthenelse c e e =
-     if (type_of_bil_val c = ImmType Bit1) then e else Unknown``,
+     if (bil_val_is_Bool c) then e else Unknown``,
 Cases_on `c` >> (
   SIMP_TAC (std_ss++bil_imm_ss++bil_type_ss) [type_of_bil_imm_def, bil_eval_ifthenelse_REWRS,
-    type_of_bil_val_def]
+    bil_val_checker_REWRS]
 ));
 
 
