@@ -129,16 +129,25 @@ REPEAT STRIP_TAC >>
 FULL_SIMP_TAC arith_ss []);
 
 
-val bil_get_program_block_info_by_label_valid_MEM = store_thm ("bil_get_program_block_info_by_label_valid_MEM",
-  ``!p l. bil_is_valid_labels p /\ MEM l (bil_labels_of_program p) ==>
+
+val bil_get_program_block_info_by_label_MEM = store_thm ("bil_get_program_block_info_by_label_MEM",
+  ``!p l. MEM l (bil_labels_of_program p) <=>
           (?i bl. bil_get_program_block_info_by_label p l = SOME (i, bl))``,
 
-Cases >> rename1 `BilProgram p` >>
-SIMP_TAC list_ss [bil_get_program_block_info_by_label_valid_THM,
-  bil_labels_of_program_def, listTheory.MEM_MAP] >>
-SIMP_TAC std_ss [listTheory.MEM_EL, GSYM RIGHT_EXISTS_AND_THM,
-  GSYM LEFT_FORALL_IMP_THM] >>
-METIS_TAC[]);
+Cases_on `p` >> rename1 `BilProgram p` >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bil_labels_of_program_def, listTheory.MEM_MAP] >>
+Cases_on `bil_get_program_block_info_by_label (BilProgram p) l` >| [
+  FULL_SIMP_TAC std_ss [bil_get_program_block_info_by_label_THM] >>
+  METIS_TAC[],
+
+  rename1 `_ = SOME ibl` >>
+  Cases_on `ibl` >>
+  FULL_SIMP_TAC std_ss [bil_get_program_block_info_by_label_THM, listTheory.MEM_EL,
+    GSYM RIGHT_EXISTS_AND_THM] >>
+  METIS_TAC[]
+]);
+
 
 
 
@@ -152,14 +161,18 @@ val bil_is_valid_pc_def = Define `bil_is_valid_pc p pc =
 
 val bil_is_end_pc_def = Define `bil_is_end_pc (BilProgram p) pc =
    (?i bl. (bil_get_program_block_info_by_label (BilProgram p) (pc.label) = SOME (i, bl)) /\
-           ~(pc.index < LENGTH bl.statements) /\
+           (pc.index = LENGTH bl.statements) /\
       (!j. (i < j /\ j < LENGTH p) ==> (LENGTH ((EL j p).statements) = 0)))`;
+
+val bil_is_allowed_pc_def = Define `bil_is_allowed_pc p pc =
+   (?i bl. (bil_get_program_block_info_by_label p (pc.label) = SOME (i, bl)) /\
+           (pc.index <= LENGTH bl.statements))`;
 
 
 val bil_is_valid_pc_not_end = store_thm ("bil_is_valid_pc_not_end",
   ``!p pc. bil_is_valid_pc p pc ==> ~(bil_is_end_pc p pc)``,
 Cases >> rename1 `BilProgram p` >>
-SIMP_TAC std_ss [bil_is_valid_pc_def, bil_is_end_pc_def,
+SIMP_TAC arith_ss [bil_is_valid_pc_def, bil_is_end_pc_def,
   GSYM LEFT_FORALL_IMP_THM]);
 
 
@@ -170,6 +183,7 @@ val bil_is_valid_pc_of_valid_blocks = store_thm ("bil_is_valid_pc_of_valid_block
 SIMP_TAC std_ss [bil_is_valid_pc_def, bil_get_program_block_info_by_label_valid_THM,
   listTheory.MEM_EL, GSYM LEFT_EXISTS_AND_THM] >>
 METIS_TAC[]);
+
 
 
 val bil_get_program_block_info_by_label_valid_pc = store_thm ("bil_get_program_block_info_by_label_valid_pc",
@@ -208,7 +222,7 @@ val bil_pc_normalise_def = Define `
 
 
 val bil_pc_next_def = Define `
-  bil_pc_next p pc = bil_pc_normalise p (pc with index updated_by SUC)`
+  bil_pc_next p pc = bil_pc_normalise p (pc with index updated_by SUC)`;
 
 
 val bil_pc_normalise_EQ_SOME = store_thm ("bil_pc_normalise_EQ_SOME",
@@ -331,24 +345,39 @@ Cases_on `FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)` >| [
 ]);
 
 
+val bil_pc_normalise_EQ_NONE_not_is_valid = store_thm ("bil_pc_normalise_EQ_NONE_not_is_valid",
+``!p pc. (bil_pc_normalise p pc = NONE) ==> (
+         ~(bil_is_valid_pc p pc))``,
+
+Cases_on `p` >> rename1 `BilProgram p` >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bil_is_valid_pc_def, bil_pc_normalise_def] >>
+FULL_SIMP_TAC std_ss [pairTheory.pair_case_thm]);
+
+
 val bil_pc_normalise_EQ_NONE_is_end_pc = store_thm ("bil_pc_normalise_EQ_NONE_is_end_pc",
-``!p pc. bil_is_valid_labels p /\ MEM (pc.label) (bil_labels_of_program p) ==>
+``!p pc. bil_is_allowed_pc p pc ==>
          ((bil_pc_normalise p pc = NONE) <=> (
            bil_is_end_pc p pc))``,
 
-REPEAT STRIP_TAC >>
-`?i bl. bil_get_program_block_info_by_label p pc.label = SOME (i, bl)` by
-  METIS_TAC[bil_get_program_block_info_by_label_valid_MEM] >>
 Cases_on `p` >> rename1 `BilProgram p` >>
-MP_TAC (Q.SPECL [`p`, `pc`, `i`, `bl`] bil_pc_normalise_EQ_NONE) >>
-ASM_SIMP_TAC arith_ss [bil_is_end_pc_def, arithmeticTheory.NOT_LESS]);
+SIMP_TAC std_ss [bil_is_allowed_pc_def, GSYM LEFT_FORALL_IMP_THM] >>
+REPEAT STRIP_TAC >>
+MP_TAC (Q.SPECL [`p`, `pc`] bil_pc_normalise_EQ_NONE) >>
+FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss) [bil_is_end_pc_def]);
 
 
-val bil_pc_normalise_EQ_NONE_is_end_pc_IMP = store_thm ("bil_pc_normalise_EQ_NONE_is_end_pc_IMP",
-``!p pc. (bil_is_valid_labels p /\ MEM (pc.label) (bil_labels_of_program p) /\
-          (bil_pc_normalise p pc = NONE)) ==>
-         bil_is_end_pc p pc``,
-METIS_TAC[bil_pc_normalise_EQ_NONE_is_end_pc]);
+
+val bil_is_allowed_pc_inc_valid = store_thm ("bil_is_allowed_pc_inc_valid",
+``!p pc. bil_is_valid_pc p pc ==> bil_is_allowed_pc p (pc with index updated_by SUC)``,
+
+SIMP_TAC (arith_ss++bil_pc_ss) [bil_is_valid_pc_def, bil_is_allowed_pc_def, GSYM LEFT_FORALL_IMP_THM]);
+
+val bil_is_allowed_pc_jmp = store_thm ("bil_is_allowed_pc_jmp",
+``!l p. MEM l (bil_labels_of_program p) ==>
+        bil_is_allowed_pc p <| label := l; index := 0 |>``,
+
+SIMP_TAC (std_ss++bil_pc_ss) [bil_is_allowed_pc_def, GSYM bil_get_program_block_info_by_label_MEM]);
 
 
 val bil_pc_normalise_valid = store_thm ("bil_pc_normalise_valid",
@@ -448,6 +477,7 @@ Q.EXISTS_TAC `LAST (bl0::bls)` >>
 FULL_SIMP_TAC list_ss [listTheory.EVERY_MEM, arithmeticTheory.GREATER_DEF]);
 
 
+
 val bil_is_valid_pc_label_OK = store_thm ("bil_is_valid_pc_label_OK",
   ``!p pc. bil_is_valid_pc p pc ==> MEM pc.label (bil_labels_of_program p)``,
 
@@ -464,11 +494,8 @@ val bil_pc_next_valid_EQ_NONE = store_thm ("bil_pc_next_valid_EQ_NONE",
           ((bil_pc_next p pc = NONE) <=> (pc = bil_pc_last p))``,
 
 REPEAT STRIP_TAC >>
-`MEM (pc with index updated_by SUC).label (bil_labels_of_program p)` by (
-  ASM_SIMP_TAC (std_ss++bil_pc_ss) [bil_is_valid_pc_label_OK]
-) >>
-ASM_SIMP_TAC std_ss [bil_pc_next_def, bil_pc_normalise_EQ_NONE_is_end_pc] >>
-
+ASM_SIMP_TAC std_ss [bil_pc_next_def,
+  bil_pc_normalise_EQ_NONE_is_end_pc, bil_is_allowed_pc_inc_valid] >>
 
 Cases_on `p` >> rename1 `BilProgram p` >>
 ASM_SIMP_TAC (std_ss++bil_pc_ss) [bil_pc_last_def, LET_THM, bil_is_end_pc_def] >>
@@ -509,6 +536,9 @@ EQ_TAC >> STRIP_TAC >| [
   `~(LENGTH (EL j p).statements > 0)` by METIS_TAC[] >>
   ASM_SIMP_TAC arith_ss []
 ]);
+
+
+
 
 
 
@@ -718,10 +748,8 @@ SIMP_TAC (std_ss++bil_state_ss++boolSimps.CONJ_ss) [bil_state_incr_pc_def, bil_i
 ] >>
 REPEAT GEN_TAC >> STRIP_TAC >>
 Cases_on `bil_pc_normalise p (st.pc with index updated_by SUC)` >- (
-  ASM_SIMP_TAC (std_ss++bil_state_ss) [] >>
-  MATCH_MP_TAC bil_pc_normalise_EQ_NONE_is_end_pc_IMP >>
-  FULL_SIMP_TAC (std_ss++bil_pc_ss) [bil_is_valid_pc_label_OK,
-    bil_is_valid_program_def]
+  ASM_SIMP_TAC (std_ss++bil_state_ss) [GSYM bil_pc_normalise_EQ_NONE_is_end_pc,
+    bil_is_allowed_pc_inc_valid]
 ) >>
 rename1 `_ = SOME pc'` >>
 ASM_SIMP_TAC (std_ss++bil_pc_ss++bil_state_ss) [] >>
@@ -779,8 +807,8 @@ COND_CASES_TAC >| [
     bil_state_normalise_pc_def] >>
   Cases_on `bil_pc_normalise p <|label := l; index := 0|>` >| [
     FULL_SIMP_TAC (std_ss++bil_state_ss) [bil_is_valid_state_def] >>
-    MATCH_MP_TAC bil_pc_normalise_EQ_NONE_is_end_pc_IMP >>
-    FULL_SIMP_TAC (std_ss++bil_pc_ss) [bil_is_valid_program_def],
+    ASM_SIMP_TAC std_ss [GSYM bil_pc_normalise_EQ_NONE_is_end_pc,
+      bil_is_allowed_pc_jmp],
 
     rename1 `_ = SOME pc'` >>
     FULL_SIMP_TAC (std_ss++bil_pc_ss++bil_state_ss) [bil_is_valid_state_def,
