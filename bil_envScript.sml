@@ -100,4 +100,42 @@ Cases_on `env` >> (
     bil_env_lookup_type_def, bil_env_lookup_def, FLOOKUP_DEF]
 ));
 
+
+val is_valid_env_lookup = store_thm ("is_valid_env_lookup",
+  ``!env vn ty v. is_valid_env env ==>
+                  (bil_env_lookup vn env = SOME (ty, SOME v)) ==>
+                  (type_of_bil_val v = SOME ty)``,
+
+Cases >> SIMP_TAC std_ss [is_valid_env_def] >>
+rename1 `RegularEnv f` >>
+SIMP_TAC (std_ss++QI_ss) [bil_env_lookup_def, finite_mapTheory.FEVERY_ALL_FLOOKUP] >>
+REPEAT STRIP_TAC >>
+Q.PAT_X_ASSUM `!k. _` (MP_TAC o Q.SPEC `vn`) >>
+ASM_SIMP_TAC std_ss []);
+
+
+val is_valid_env_read = store_thm ("is_valid_env_read",
+  ``!env v ty r. is_valid_env env ==>
+                 (bil_env_read v env = r) ==>
+                 (r <> Unknown) ==>
+                 (type_of_bil_val r = SOME (bil_var_type v))``,
+
+SIMP_TAC std_ss [bil_env_read_def] >>
+REPEAT GEN_TAC >>
+REPEAT CASE_TAC >> FULL_SIMP_TAC std_ss [type_of_bil_val_def, pairTheory.pair_case_thm] >>
+METIS_TAC[is_valid_env_lookup]);
+
+val bil_env_read_EQ_Unknown = store_thm ("bil_env_read_EQ_Unknown",
+  ``!v env. is_valid_env env ==> (
+       (bil_env_read v env = Unknown) <=> (!r. (bil_env_lookup (bil_var_name v) env <> (SOME (bil_var_type v, SOME r)))))``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [bil_env_read_def] >>
+REPEAT CASE_TAC >>
+STRIP_TAC >>
+rename1 `r = Unknown` >>
+`type_of_bil_val r = SOME (bil_var_type v)` by METIS_TAC[is_valid_env_lookup] >>
+STRIP_TAC >>
+FULL_SIMP_TAC std_ss [type_of_bil_val_def]);
+
 val _ = export_theory();
