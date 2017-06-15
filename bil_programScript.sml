@@ -609,11 +609,6 @@ val bil_state_incr_pc_def = Define `bil_state_incr_pc p (st:bil_state_t) =
 val bil_state_set_pc_def = Define `bil_state_set_pc p (st:bil_state_t) pc' =
   bil_state_normalise_pc p (st with pc := pc')`;
 
-
-val bil_is_valid_state_def = Define `bil_is_valid_state p st <=>
-  ((is_valid_env st.environ) /\ (if st.termcode = ReachedEnd then bil_is_end_pc p st.pc else
-      bil_is_valid_pc p st.pc))`;
-
 val bil_state_init_def = Define `bil_state_init p = <|
     pc       := bil_pc_first p
   ; environ  := empty_env
@@ -621,13 +616,6 @@ val bil_state_init_def = Define `bil_state_init p = <|
   ; debug    := []
   ; execs    := 0
 |>`;
-
-val bil_state_init_valid = store_thm ("bil_state_init_valid",
-  ``!p. bil_is_valid_program p ==> bil_is_valid_state p (bil_state_init p)``,
-
-SIMP_TAC (std_ss++bil_state_ss++bil_termcode_ss) [bil_is_valid_state_def, bil_state_init_def,
-  bil_pc_first_valid, is_valid_env_empty]);
-
 
 
 (* ------------------------------------------------------------------------- *)
@@ -644,7 +632,7 @@ val bil_declare_initial_value_def = Define `
 val bil_exec_stmt_declare_def = Define `bil_exec_stmt_declare p v ty (st : bil_state_t) =
    let env = (
       let vo = bil_declare_initial_value ty in
-      if bil_env_var_is_bound v st.environ then IrregularEnv else
+      if bil_env_varname_is_bound st.environ v then IrregularEnv else
       bil_env_update v vo ty st.environ) in
     if (is_env_regular env) then
        bil_state_incr_pc p (st with environ := env)
@@ -703,6 +691,22 @@ val bil_exec_step_def = Define `bil_exec_step p state =
     | NONE => bil_state_set_failed state "invalid program_counter"
     | SOME stm => (bil_exec_stmt p stm state) with execs updated_by SUC
 `;
+
+
+(* ------------------------------------------------------------------------- *)
+(*  Semantics preserve validity of states                                    *)
+(* ------------------------------------------------------------------------- *)
+
+val bil_is_valid_state_def = Define `bil_is_valid_state p st <=>
+  ((is_valid_env st.environ) /\ (if st.termcode = ReachedEnd then bil_is_end_pc p st.pc else
+      bil_is_valid_pc p st.pc))`;
+
+val bil_state_init_valid = store_thm ("bil_state_init_valid",
+  ``!p. bil_is_valid_program p ==> bil_is_valid_state p (bil_state_init p)``,
+
+SIMP_TAC (std_ss++bil_state_ss++bil_termcode_ss) [bil_is_valid_state_def, bil_state_init_def,
+  bil_pc_first_valid, is_valid_env_empty]);
+
 
 val bil_is_valid_state_exec_ignore = store_thm ("bil_is_valid_state_exec_ignore",
   ``!p st f. bil_is_valid_state p (st with execs updated_by f) =
@@ -898,6 +902,23 @@ Cases_on `stmt` >> (
     bil_exec_step_valid_state_invar_assert]
 ));
 
+
+
+val bil_exec_step_FUNPOW_valid_state_invar = store_thm ("bil_exec_step_FUNPOW_valid_state_invar",
+``!p st n. bil_is_valid_program p /\ bil_is_valid_state p st ==>
+           bil_is_valid_state p (FUNPOW (bil_exec_step p) n st)``,
+
+Induct_on `n` >> (
+  ASM_SIMP_TAC std_ss [arithmeticTheory.FUNPOW, bil_exec_step_valid_state_invar]
+));
+
+
+
+
+(* ------------------------------------------------------------------------- *)
+(*  The execs field is just a counter                                        *)
+(* ------------------------------------------------------------------------- *)
+
 val bil_state_normalise_pc_execs = store_thm ("bil_state_normalise_pc_execs",
   ``!p st. (bil_state_normalise_pc p st).execs = st.execs``,
 REPEAT GEN_TAC >>
@@ -922,6 +943,7 @@ val bil_state_set_pc_execs = store_thm ("bil_state_set_pc_execs",
 SIMP_TAC (std_ss++bil_state_ss) [bil_state_set_pc_def,
   bil_state_normalise_pc_execs]);
 
+
 val bil_exec_step_execs = store_thm ("bil_exec_step_execs",
 ``!p st. bil_is_valid_state p st ==>
          (if bil_state_is_terminated st then
@@ -944,8 +966,151 @@ Cases_on `stmt` >> (
 ));
 
 
+val bil_state_EQ_EXCEPT_EXECS_def = Define `
+  bil_state_EQ_EXCEPT_EXECS st st' <=>
+  ((st' with execs := 0) = (st with execs := 0))`;
 
-(* Multiple execution of step *)
+val bil_state_EQ_EXCEPT_EXECS_ALT_DEF = save_thm ("bil_state_EQ_EXCEPT_EXECS_ALT_DEF",
+SIMP_RULE (std_ss++bil_state_ss) [DB.fetch "-" "bil_state_t_component_equality"]
+  bil_state_EQ_EXCEPT_EXECS_def);
+
+val bil_state_EQ_EXCEPT_EXECS_ALT_DEF = save_thm ("bil_state_EQ_EXCEPT_EXECS_ALT_DEF",
+SIMP_RULE (std_ss++bil_state_ss) [DB.fetch "-" "bil_state_t_component_equality"]
+  bil_state_EQ_EXCEPT_EXECS_def);
+
+
+val bil_state_EQ_EXCEPT_EXECS_IMP = save_thm ("bil_state_EQ_EXCEPT_EXECS_IMP",
+GEN_ALL (fst (EQ_IMP_RULE (SPEC_ALL bil_state_EQ_EXCEPT_EXECS_ALT_DEF))));
+
+
+val bil_state_normalise_pc_CHANGE_EXECS = store_thm ("bil_state_normalise_pc_CHANGE_EXECS",
+``!p st1 st2. bil_state_EQ_EXCEPT_EXECS st1 st2 ==>
+              bil_state_EQ_EXCEPT_EXECS (bil_state_normalise_pc p st1) (bil_state_normalise_pc p st2)``,
+
+SIMP_TAC std_ss [bil_state_normalise_pc_def, bil_state_EQ_EXCEPT_EXECS_ALT_DEF] >>
+REPEAT GEN_TAC >> STRIP_TAC >>
+CASE_TAC >> ASM_SIMP_TAC (std_ss++bil_state_ss) []);
+
+
+val bil_state_incr_pc_CHANGE_EXECS = store_thm ("bil_state_incr_pc_CHANGE_EXECS",
+``!p st1 st2. bil_state_EQ_EXCEPT_EXECS st1 st2 ==>
+              bil_state_EQ_EXCEPT_EXECS (bil_state_incr_pc p st1) (bil_state_incr_pc p st2)``,
+
+SIMP_TAC std_ss [bil_state_incr_pc_def, bil_state_normalise_pc_def, bil_state_EQ_EXCEPT_EXECS_ALT_DEF] >>
+REPEAT GEN_TAC >> STRIP_TAC >>
+CASE_TAC >> CASE_TAC >> FULL_SIMP_TAC (std_ss++bil_state_ss) []);
+
+
+val bil_state_set_pc_CHANGE_EXECS = store_thm ("bil_state_set_pc_CHANGE_EXECS",
+``!p st1 st2 l. bil_state_EQ_EXCEPT_EXECS st1 st2 ==>
+                bil_state_EQ_EXCEPT_EXECS (bil_state_set_pc p st1 l) (bil_state_set_pc p st2 l)``,
+
+REPEAT STRIP_TAC >>
+SIMP_TAC std_ss [bil_state_set_pc_def] >>
+MATCH_MP_TAC bil_state_normalise_pc_CHANGE_EXECS >>
+FULL_SIMP_TAC (std_ss++bil_state_ss) [bil_state_EQ_EXCEPT_EXECS_ALT_DEF]);
+
+
+val bil_exec_stmt_CHANGE_EXECS = store_thm ("bil_exec_stmt_CHANGE_EXECS",
+``!p st1 st2. bil_state_EQ_EXCEPT_EXECS st1 st2 ==>
+              (!stmt. bil_state_EQ_EXCEPT_EXECS (bil_exec_stmt p stmt st1) (bil_exec_stmt p stmt st2))``,
+
+Cases_on `p` >> rename1 `BilProgram p` >>
+SIMP_TAC std_ss [Once bil_state_EQ_EXCEPT_EXECS_ALT_DEF] >>
+REPEAT GEN_TAC >> STRIP_TAC >>
+Cases >> ASM_SIMP_TAC std_ss [bil_exec_stmt_def] >| [
+  ASM_SIMP_TAC std_ss [bil_exec_stmt_declare_def, LET_DEF] >>
+  Q.HO_MATCH_ABBREV_TAC `bil_state_EQ_EXCEPT_EXECS (if (is_env_regular env) then _ else _) _` >>
+  CASE_TAC >- (
+    MATCH_MP_TAC bil_state_incr_pc_CHANGE_EXECS >>
+    ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_state_EQ_EXCEPT_EXECS_ALT_DEF]
+  ) >>
+  ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_state_set_failed_def, bil_state_EQ_EXCEPT_EXECS_ALT_DEF],
+
+
+  ASM_SIMP_TAC std_ss [bil_exec_stmt_assign_def, LET_DEF] >>
+  Q.HO_MATCH_ABBREV_TAC `bil_state_EQ_EXCEPT_EXECS (if (is_env_regular env) then _ else _) _` >>
+  CASE_TAC >- (
+    MATCH_MP_TAC bil_state_incr_pc_CHANGE_EXECS >>
+    ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_state_EQ_EXCEPT_EXECS_ALT_DEF]
+  ) >>
+  ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_state_set_failed_def, bil_state_EQ_EXCEPT_EXECS_ALT_DEF],
+
+
+  ASM_SIMP_TAC std_ss [bil_exec_stmt_jmp_def] >>
+  CASE_TAC >- (
+    MATCH_MP_TAC bil_state_set_pc_CHANGE_EXECS >>
+    ASM_SIMP_TAC std_ss [bil_state_EQ_EXCEPT_EXECS_ALT_DEF]
+  ) >>
+  ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_state_EQ_EXCEPT_EXECS_ALT_DEF],
+
+
+  ASM_SIMP_TAC std_ss [bil_exec_stmt_cjmp_def, bil_exec_stmt_jmp_def] >>
+  REPEAT CASE_TAC >> TRY (
+    ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_state_set_failed_def,
+      bil_state_EQ_EXCEPT_EXECS_ALT_DEF] >>
+    NO_TAC
+  ) >> (
+    MATCH_MP_TAC bil_state_set_pc_CHANGE_EXECS >>
+    ASM_SIMP_TAC std_ss [bil_state_EQ_EXCEPT_EXECS_ALT_DEF]
+  ),
+
+
+  ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_exec_stmt_halt_def,
+    bil_state_EQ_EXCEPT_EXECS_ALT_DEF],
+
+  ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_exec_stmt_assert_def] >>
+  REPEAT CASE_TAC >> TRY (
+    ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_state_set_failed_def,
+      bil_state_EQ_EXCEPT_EXECS_ALT_DEF] >>
+    NO_TAC
+  ) >>
+  MATCH_MP_TAC bil_state_incr_pc_CHANGE_EXECS >>
+  ASM_SIMP_TAC std_ss [bil_state_EQ_EXCEPT_EXECS_ALT_DEF],
+
+
+  ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_exec_stmt_assume_def] >>
+  REPEAT CASE_TAC >> TRY (
+    ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_state_set_failed_def,
+      bil_state_EQ_EXCEPT_EXECS_ALT_DEF] >>
+    NO_TAC
+  ) >>
+  MATCH_MP_TAC bil_state_incr_pc_CHANGE_EXECS >>
+  ASM_SIMP_TAC std_ss [bil_state_EQ_EXCEPT_EXECS_ALT_DEF]
+]);
+
+
+
+val bil_exec_step_CHANGE_EXECS = store_thm ("bil_exec_step_CHANGE_EXECS",
+``!p st1 st2. bil_state_EQ_EXCEPT_EXECS st1 st2 ==>
+              bil_state_EQ_EXCEPT_EXECS (bil_exec_step p st1) (bil_exec_step p st2)``,
+
+SIMP_TAC std_ss [bil_exec_step_def, Once bil_state_EQ_EXCEPT_EXECS_ALT_DEF] >>
+REPEAT STRIP_TAC >>
+`bil_state_is_terminated st1 = bil_state_is_terminated st2` by
+  ASM_SIMP_TAC std_ss [bil_state_is_terminated_def] >>
+Cases_on `bil_state_is_terminated st2` >- (
+  ASM_SIMP_TAC std_ss [bil_state_EQ_EXCEPT_EXECS_ALT_DEF]
+) >>
+Cases_on `bil_get_current_statement p st1.pc` >- (
+  ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_state_EQ_EXCEPT_EXECS_ALT_DEF,
+    bil_state_set_failed_def]
+) >>
+rename1 `_ = SOME stmt` >>
+`bil_state_EQ_EXCEPT_EXECS
+   (bil_exec_stmt p stmt st1) (bil_exec_stmt p stmt st2)` suffices_by (
+  ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_state_EQ_EXCEPT_EXECS_ALT_DEF]
+) >>
+MATCH_MP_TAC bil_exec_stmt_CHANGE_EXECS >>
+ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_state_EQ_EXCEPT_EXECS_ALT_DEF]);
+
+
+
+
+(* ------------------------------------------------------------------------- *)
+(*  Executing multiple steps                                                 *)
+(* ------------------------------------------------------------------------- *)
+
 val bil_exec_steps_opt_def = Define `bil_exec_steps_opt p state b max_steps =
    OWHILE (\ (n, st). option_CASE max_steps T (\m. n < (m:num)) /\
                       ~(bil_state_is_terminated st)) (\ (n, st).
@@ -1104,6 +1269,226 @@ Cases_on `c0 < c` >- (
 DECIDE_TAC);
 
 
+val bil_exec_step_FUNPOW_EXECS_ADD = store_thm ("bil_exec_step_FUNPOW_EXECS_ADD",
+``!p state n.
+    bil_is_valid_state p state ==> bil_is_valid_program p ==>
+    (!i. i < n ==> ~(bil_state_is_terminated (FUNPOW (bil_exec_step p) i state))) ==>
+    ((FUNPOW (bil_exec_step p) n state).execs = state.execs + n)``,
+
+GEN_TAC >> GEN_TAC >>
+Induct_on `n` >- (
+  SIMP_TAC std_ss [arithmeticTheory.FUNPOW]
+) >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC arith_ss [arithmeticTheory.FUNPOW_SUC] >>
+Q.ABBREV_TAC `state' =  (FUNPOW (bil_exec_step p) n state)` >>
+MP_TAC (Q.SPECL [`p`, `state'`] bil_exec_step_execs) >>
+`bil_is_valid_state p state'` by METIS_TAC[bil_exec_step_FUNPOW_valid_state_invar] >>
+Q.PAT_X_ASSUM `!i. _` (MP_TAC o Q.SPEC `n`) >>
+ASM_SIMP_TAC arith_ss []);
+
+
+
+val bil_exec_steps_opt_EXECS_ADD = store_thm ("bil_exec_steps_opt_EXECS_ADD",
+``!p state state' b mo c.
+    bil_is_valid_state p state ==> bil_is_valid_program p ==>
+    (case mo of NONE => T | SOME m => b <= m) ==>
+    (bil_exec_steps_opt p state b mo = SOME (c, state')) ==>
+    (state'.execs = state.execs + (c - b))``,
+
+SIMP_TAC std_ss [bil_exec_steps_opt_EQ_SOME] >>
+REPEAT STRIP_TAC >>
+MATCH_MP_TAC (SIMP_RULE std_ss [AND_IMP_INTRO] bil_exec_step_FUNPOW_EXECS_ADD) >>
+ASM_SIMP_TAC std_ss []);
+
+
+
+val bil_exec_step_n_EXECS_ADD = store_thm ("bil_exec_step_n_EXECS_ADD",
+``!p state state' n c.
+    bil_is_valid_state p state ==> bil_is_valid_program p ==>
+    (bil_exec_step_n p state n = (c, state')) ==>
+    (state'.execs = state.execs + c)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bil_exec_step_n_EQ_THM] >>
+MATCH_MP_TAC (SIMP_RULE std_ss [AND_IMP_INTRO] bil_exec_step_FUNPOW_EXECS_ADD) >>
+ASM_SIMP_TAC std_ss []);
+
+
+
+val bil_exec_steps_EXECS_ADD = store_thm ("bil_exec_steps_EXECS_ADD",
+``!p state state' c.
+    bil_is_valid_state p state ==> bil_is_valid_program p ==>
+    (bil_exec_steps p state = SOME (c, state')) ==>
+    (state'.execs = state.execs + c)``,
+
+REPEAT STRIP_TAC >>
+MP_TAC (Q.SPECL [`p`, `state`, `state'`, `0`, `NONE`] bil_exec_steps_opt_EXECS_ADD) >>
+FULL_SIMP_TAC std_ss [bil_exec_steps_def]);
+
+
+
+
 (* ------------------------------------------------------------------------- *)
+(*  Environment Order                                                        *)
+(* ------------------------------------------------------------------------- *)
+
+
+val bil_state_set_failed_SAME_ENV = store_thm ("bil_state_set_failed_SAME_ENV",
+  ``!st msg. (bil_state_set_failed st msg).environ = st.environ``,
+SIMP_TAC (std_ss++bil_state_ss) [bil_state_set_failed_def]);
+
+
+val bil_state_normalise_pc_SAME_ENV = store_thm ("bil_state_normalise_pc_SAME_ENV",
+  ``!p st. (bil_state_normalise_pc p st).environ = st.environ``,
+REPEAT STRIP_TAC >>
+SIMP_TAC std_ss [bil_state_normalise_pc_def] >>
+CASE_TAC >> SIMP_TAC (std_ss++bil_state_ss) []);
+
+
+val bil_state_incr_pc_SAME_ENV = store_thm ("bil_state_incr_pc_SAME_ENV",
+  ``!p st. (bil_state_incr_pc p st).environ = st.environ``,
+SIMP_TAC (std_ss++bil_state_ss) [bil_state_incr_pc_def, bil_state_normalise_pc_SAME_ENV]);
+
+val bil_state_set_pc_SAME_ENV = store_thm ("bil_state_set_pc_SAME_ENV",
+  ``!p st l. (bil_state_set_pc p st l).environ = st.environ``,
+SIMP_TAC (std_ss++bil_state_ss) [bil_state_set_pc_def, bil_state_normalise_pc_SAME_ENV]);
+
+
+val bil_exec_stmt_jmp_SAME_ENV = store_thm("bil_exec_stmt_jmp_SAME_ENV",
+  ``!p st l. (bil_exec_stmt_jmp p l st).environ = st.environ``,
+SIMP_TAC std_ss [bil_exec_stmt_jmp_def] >>
+REPEAT STRIP_TAC >>
+COND_CASES_TAC >> SIMP_TAC (std_ss++bil_state_ss) [bil_state_set_pc_SAME_ENV]);
+
+
+
+val bil_exec_stmt_cjmp_SAME_ENV = store_thm("bil_exec_stmt_cjmp_SAME_ENV",
+  ``!p e st l1 l2. (bil_exec_stmt_cjmp p e l1 l2 st).environ = st.environ``,
+SIMP_TAC std_ss [bil_exec_stmt_cjmp_def] >>
+REPEAT STRIP_TAC >>
+REPEAT CASE_TAC >> SIMP_TAC (std_ss++bil_state_ss) [bil_exec_stmt_jmp_SAME_ENV,
+   bil_state_set_failed_SAME_ENV]
+);
+
+
+val bil_exec_stmt_halt_SAME_ENV = store_thm("bil_exec_stmt_halt_SAME_ENV",
+  ``!e st. (bil_exec_stmt_halt e st).environ = st.environ``,
+SIMP_TAC (std_ss++bil_state_ss) [bil_exec_stmt_halt_def]);
+
+
+val bil_exec_stmt_assert_SAME_ENV = store_thm("bil_exec_stmt_assert_SAME_ENV",
+  ``!p e st. (bil_exec_stmt_assert p e st).environ = st.environ``,
+SIMP_TAC (std_ss++bil_state_ss) [bil_exec_stmt_assert_def] >>
+REPEAT STRIP_TAC >>
+REPEAT CASE_TAC >> SIMP_TAC (std_ss++bil_state_ss) [bil_state_incr_pc_SAME_ENV,
+   bil_state_set_failed_SAME_ENV]
+);
+
+
+val bil_exec_stmt_assume_SAME_ENV = store_thm("bil_exec_stmt_assume_SAME_ENV",
+  ``!p e st. (bil_exec_stmt_assume p e st).environ = st.environ``,
+SIMP_TAC (std_ss++bil_state_ss) [bil_exec_stmt_assume_def] >>
+REPEAT STRIP_TAC >>
+REPEAT CASE_TAC >> SIMP_TAC (std_ss++bil_state_ss) [bil_state_incr_pc_SAME_ENV,
+   bil_state_set_failed_SAME_ENV]
+);
+
+
+val bil_exec_stmt_declare_ENV = store_thm("bil_exec_stmt_declare_ENV",
+  ``!p vn vty st. (bil_exec_stmt_declare p vn vty st).environ = 
+      if (bil_env_varname_is_bound st.environ vn) then st.environ else
+      (bil_env_update vn (bil_declare_initial_value vty) vty
+            st.environ)``,
+
+SIMP_TAC (std_ss++bil_state_ss) [bil_exec_stmt_declare_def, LET_DEF] >>
+REPEAT STRIP_TAC >>
+REPEAT CASE_TAC >> (
+   FULL_SIMP_TAC (std_ss++bil_state_ss) [bil_state_incr_pc_SAME_ENV,
+     bil_state_set_failed_SAME_ENV, is_env_regular_def]
+) >>
+Cases_on `st.environ` >> FULL_SIMP_TAC std_ss [bil_env_update_def] >>
+Cases_on `vty` >> FULL_SIMP_TAC std_ss [bil_declare_initial_value_def,
+  is_env_regular_def]);
+
+
+val bil_exec_stmt_assign_ENV = store_thm("bil_exec_stmt_assign_ENV",
+  ``!p v e st. 
+      (bil_exec_stmt_assign p v e st).environ = 
+      (if is_env_regular (bil_env_write v (bil_eval_exp e st.environ) st.environ) then
+         (bil_env_write v (bil_eval_exp e st.environ) st.environ)
+       else st.environ)``,
+
+SIMP_TAC (std_ss++bil_state_ss) [bil_exec_stmt_assign_def, LET_DEF] >>
+REPEAT STRIP_TAC >>
+REPEAT CASE_TAC >> (
+   ASM_SIMP_TAC (std_ss++bil_state_ss) [bil_state_incr_pc_SAME_ENV,
+     bil_state_set_failed_SAME_ENV]
+));
+
+
+val bil_exec_stmt_ENV_ORDER = store_thm ("bil_exec_stmt_ENV_ORDER",
+``!p st stmt. bil_env_order st.environ (bil_exec_stmt p stmt st).environ``,
+
+Cases_on `stmt` >> (
+  SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bil_exec_stmt_def, bil_exec_stmt_jmp_SAME_ENV,
+    bil_exec_stmt_cjmp_SAME_ENV, bil_exec_stmt_halt_SAME_ENV,
+    bil_exec_stmt_assert_SAME_ENV, bil_exec_stmt_assume_SAME_ENV,
+    bil_env_order_REFL, bil_exec_stmt_assign_ENV,  bil_exec_stmt_declare_ENV] 
+) >- (
+  REPEAT STRIP_TAC >>
+  rename1 `bil_var_name v` >>
+  Cases_on `bil_env_varname_is_bound st.environ (bil_var_name v)` >> ASM_REWRITE_TAC[] >>
+  MATCH_MP_TAC bil_env_order_update >>
+  ASM_REWRITE_TAC[] >>
+  Cases_on `bil_var_type v` >> (
+    ASM_SIMP_TAC std_ss [bil_declare_initial_value_def]
+  )
+) >- (
+  REPEAT STRIP_TAC >>
+  MATCH_MP_TAC bil_env_order_write >>
+  ASM_REWRITE_TAC[]
+));
+
+
+val bil_exec_step_ENV_ORDER = store_thm ("bil_exec_step_ENV_ORDER",
+``!p st. bil_env_order st.environ (bil_exec_step p st).environ``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [bil_exec_step_def] >>
+REPEAT CASE_TAC >> (
+  SIMP_TAC (std_ss++bil_state_ss) [bil_env_order_REFL, bil_state_set_failed_SAME_ENV,
+    bil_exec_stmt_ENV_ORDER]
+));
+
+
+
+val bil_exec_step_FUNPOW_ENV_ORDER = store_thm ("bil_exec_step_FUNPOW_ENV_ORDER",
+``!p n st. bil_env_order st.environ (FUNPOW (bil_exec_step p) n st).environ``,
+
+GEN_TAC >>
+Induct >> (
+  SIMP_TAC std_ss [arithmeticTheory.FUNPOW, bil_env_order_REFL]
+) >>
+GEN_TAC >>
+MATCH_MP_TAC (SIMP_RULE std_ss [AND_IMP_INTRO] bil_env_order_TRANS) >>
+Q.EXISTS_TAC `(bil_exec_step p st).environ` >>
+ASM_SIMP_TAC std_ss [bil_exec_step_ENV_ORDER]);
+
+
+
+val bil_exec_steps_ENV_ORDER = store_thm ("bil_exec_steps_ENV_ORDER",
+``!p c st st'. (bil_exec_steps p st = SOME (c, st')) ==>
+  bil_env_order st.environ st'.environ``,
+
+SIMP_TAC std_ss [bil_exec_steps_EQ_SOME, bil_exec_step_FUNPOW_ENV_ORDER]);
+
+
+val bil_exec_step_n_ENV_ORDER = store_thm ("bil_exec_step_n_ENV_ORDER",
+``!p c n st st'. (bil_exec_step_n p st n = (c, st')) ==>
+  bil_env_order st.environ st'.environ``,
+
+SIMP_TAC std_ss [bil_exec_step_n_EQ_THM, bil_exec_step_FUNPOW_ENV_ORDER]);
+
 
 val _ = export_theory();
