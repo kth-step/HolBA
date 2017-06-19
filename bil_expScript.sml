@@ -186,7 +186,7 @@ Cases_on `c` >> (
 ));
 
 
-val bil_eval_load_Unkown_REWRS1 = prove (
+val bil_eval_load_Unknown_REWRS1 = prove (
   ``(!mem en t. bil_eval_load mem Unknown en t = Unknown) /\
     (!mem en t aty vty mmap. bil_eval_load mem (Mem aty vty mmap) en t = Unknown)``,
 
@@ -194,13 +194,13 @@ SIMP_TAC std_ss [bil_eval_load_def] >>
 REPEAT CONJ_TAC >>
 Cases_on `mem` >> SIMP_TAC std_ss [bil_eval_load_def]);
 
-val bil_eval_load_Unkown_REWRS2 = prove (
+val bil_eval_load_Unknown_REWRS2 = prove (
   ``(!a en t. bil_eval_load Unknown a en t = Unknown) /\
     (!a en t i. bil_eval_load (Imm i) a en t = Unknown)``,
 
 SIMP_TAC std_ss [bil_eval_load_def]);
 
-val bil_eval_load_Unkown_REWRS3 = prove (
+val bil_eval_load_Unknown_REWRS3 = prove (
   ``!a en t i aty vty mmap.
       (type_of_bil_imm i <> aty) ==>
       (bil_eval_load (Mem aty vty mmap) (Imm i) en t = Unknown)``,
@@ -208,7 +208,7 @@ val bil_eval_load_Unkown_REWRS3 = prove (
 SIMP_TAC std_ss [bil_eval_load_def]);
 
 
-val bil_eval_load_Unkown_REWRS4 = prove (
+val bil_eval_load_Unknown_REWRS4 = prove (
   ``!a en t i aty vty mmap.
       (t <> vty) ==>
       (bil_eval_load (Mem aty vty mmap) (Imm i) NoEndian t = Unknown)``,
@@ -218,7 +218,7 @@ REPEAT STRIP_TAC >>
 COND_CASES_TAC >> SIMP_TAC std_ss [] >>
 ASM_SIMP_TAC std_ss [bil_load_from_mem_NO_ENDIAN]);
 
-val bil_eval_load_Unkown_REWRS5 = prove (
+val bil_eval_load_Unknown_REWRS5 = prove (
   ``!a en t i aty vty mmap en.
       (bil_number_of_mem_splits vty t = NONE) ==>
       (bil_eval_load (Mem aty vty mmap) (Imm i) en t = Unknown)``,
@@ -229,10 +229,10 @@ COND_CASES_TAC >> SIMP_TAC std_ss [] >>
 ASM_SIMP_TAC std_ss [bil_load_from_mem_def]);
 
 
-val bil_eval_load_Unkown_REWRS = save_thm ("bil_eval_load_Unkown_REWRS",
+val bil_eval_load_Unknown_REWRS = save_thm ("bil_eval_load_Unknown_REWRS",
   REWRITE_RULE [GSYM CONJ_ASSOC] (
-  LIST_CONJ [bil_eval_load_Unkown_REWRS1, bil_eval_load_Unkown_REWRS2, bil_eval_load_Unkown_REWRS3,
-             bil_eval_load_Unkown_REWRS4, bil_eval_load_Unkown_REWRS5]));
+  LIST_CONJ [bil_eval_load_Unknown_REWRS1, bil_eval_load_Unknown_REWRS2, bil_eval_load_Unknown_REWRS3,
+             bil_eval_load_Unknown_REWRS4, bil_eval_load_Unknown_REWRS5]));
 
 
 val bil_eval_load_SINGLE_REWR = store_thm ("bil_eval_load_SINGLE_REWR",
@@ -266,7 +266,7 @@ let
       (!tr tv.
       (bil_number_of_mem_splits tv tr = NONE) ==>
       (bil_eval_load (Mem ta tv mmap) (Imm i) en tr = Unknown))``,
-   SIMP_TAC std_ss [bil_eval_load_Unkown_REWRS])
+   SIMP_TAC std_ss [bil_eval_load_Unknown_REWRS])
 
   val thm_prune1 = SIMP_RULE (std_ss ++ bil_imm_ss ++ DatatypeSimps.expand_type_quants_ss [``:bil_immtype_t``, ``:bil_imm_t``]) [bil_number_of_mem_splits_REWRS, type_of_bil_imm_def] thm_prune0
 
@@ -288,7 +288,7 @@ let
 in thm4
 end);
 
-val bil_eval_store_Unkown_REWRS1 = prove (
+val bil_eval_store_Unknown_REWRS1 = prove (
   ``(!mem en v. bil_eval_store mem Unknown en v = Unknown) /\
     (!mem en v aty vty mmap. bil_eval_store mem (Mem aty vty mmap) en v = Unknown)``,
 
@@ -296,14 +296,14 @@ SIMP_TAC std_ss [bil_eval_store_def] >>
 REPEAT CONJ_TAC >>
 Cases_on `mem` >> SIMP_TAC std_ss [bil_eval_store_def]);
 
-val bil_eval_store_Unkown_REWRS2 = prove (
+val bil_eval_store_Unknown_REWRS2 = prove (
   ``(!a en v. bil_eval_store Unknown a en v = Unknown) /\
     (!a en v i. bil_eval_store (Imm i) a en v = Unknown)``,
 
 SIMP_TAC std_ss [bil_eval_store_def]);
 
 
-val bil_eval_store_Unkown_REWRS3 = prove (
+val bil_eval_store_Unknown_REWRS3 = prove (
   ``(!a en mem. bil_eval_store mem a en Unknown = Unknown) /\
     (!a en mem ta tv mmap. bil_eval_store mem a en (Mem ta tv mmap) = Unknown)``,
 
@@ -311,7 +311,7 @@ REPEAT CONJ_TAC >>
 Cases_on `mem` >> Cases_on `a` >> SIMP_TAC std_ss [bil_eval_store_def]);
 
 
-val bil_eval_store_Unkown_REWRS4 = prove (
+val bil_eval_store_Unknown_REWRS4 = prove (
   ``!en v i aty vty mmap.
       (type_of_bil_imm i <> aty) ==>
       (bil_eval_store (Mem aty vty mmap) (Imm i) en v = Unknown)``,
@@ -319,7 +319,7 @@ Cases_on `v` >>
 SIMP_TAC std_ss [bil_eval_store_def]);
 
 
-val bil_eval_store_Unkown_REWRS5 = prove (
+val bil_eval_store_Unknown_REWRS5 = prove (
   ``!a en v aty vty mmap.
       (type_of_bil_imm v <> vty) ==>
       (bil_eval_store (Mem aty vty mmap) a NoEndian (Imm v) = Unknown)``,
@@ -330,7 +330,7 @@ COND_CASES_TAC >> SIMP_TAC std_ss [] >>
 ASM_SIMP_TAC std_ss [bil_store_in_mem_NO_ENDIAN]);
 
 
-val bil_eval_store_Unkown_REWRS6 = prove (
+val bil_eval_store_Unknown_REWRS6 = prove (
   ``!a en v aty vty mmap en.
       (bil_number_of_mem_splits vty (type_of_bil_imm v) = NONE) ==>
       (bil_eval_store (Mem aty vty mmap) a en (Imm v) = Unknown)``,
@@ -341,10 +341,10 @@ COND_CASES_TAC >> SIMP_TAC std_ss [] >>
 ASM_SIMP_TAC std_ss [bil_store_in_mem_def, LET_DEF]);
 
 
-val bil_eval_store_Unkown_REWRS = save_thm ("bil_eval_store_Unkown_REWRS",
+val bil_eval_store_Unknown_REWRS = save_thm ("bil_eval_store_Unknown_REWRS",
   SIMP_RULE std_ss [GSYM CONJ_ASSOC] (
-  LIST_CONJ [bil_eval_store_Unkown_REWRS1, bil_eval_store_Unkown_REWRS2, bil_eval_store_Unkown_REWRS3,
-             bil_eval_store_Unkown_REWRS4, bil_eval_store_Unkown_REWRS5, bil_eval_store_Unkown_REWRS6]));
+  LIST_CONJ [bil_eval_store_Unknown_REWRS1, bil_eval_store_Unknown_REWRS2, bil_eval_store_Unknown_REWRS3,
+             bil_eval_store_Unknown_REWRS4, bil_eval_store_Unknown_REWRS5, bil_eval_store_Unknown_REWRS6]));
 
 val bil_eval_store_SINGLE_REWR = store_thm ("bil_eval_store_SINGLE_REWR",
   ``!a en t i aty v vty mmap en.
@@ -379,14 +379,14 @@ let
       (!i tv.
       (bil_number_of_mem_splits tv (type_of_bil_imm i) = NONE) ==>
       (bil_eval_store (Mem ta tv mmap) a en (Imm i) = Unknown))``,
-   SIMP_TAC std_ss [bil_eval_store_Unkown_REWRS])
+   SIMP_TAC std_ss [bil_eval_store_Unknown_REWRS])
 
   val thm_prune1 = SIMP_RULE (std_ss ++ bil_imm_ss ++ DatatypeSimps.expand_type_quants_ss [``:bil_immtype_t``, ``:bil_imm_t``]) [bil_number_of_mem_splits_REWRS, type_of_bil_imm_def] thm_prune0
 
   val thm_prune2 = SIMP_RULE std_ss [FORALL_AND_THM, GSYM CONJ_ASSOC] (GEN_ALL thm_prune1)
 
 
-  val thm0 = SIMP_RULE (std_ss) [bil_eval_store_Unkown_REWRS, FORALL_AND_THM] bil_eval_store_BASIC_REWR
+  val thm0 = SIMP_RULE (std_ss) [bil_eval_store_Unknown_REWRS, FORALL_AND_THM] bil_eval_store_BASIC_REWR
 
   val thm1 = SIMP_RULE (list_ss++ bil_imm_ss ++ DatatypeSimps.expand_type_quants_ss [``:bil_immtype_t``, ``:bil_imm_t``, ``:bil_endian_t``]) [ type_of_bil_imm_def, size_of_bil_immtype_def, bil_number_of_mem_splits_REWRS, bil_store_in_mem_REWRS, thm_prune2]
      thm0

@@ -593,11 +593,6 @@ val bil_state_set_failed_is_failed = store_thm ("bil_state_set_failed_is_failed"
   ``!st msg. bil_state_is_failed (bil_state_set_failed st msg)``,
 SIMP_TAC (std_ss ++ bil_state_ss) [bil_state_set_failed_def, bil_state_is_failed_def]);
 
-val bil_state_set_pc_def = Define `
-  (bil_state_set_pc (st:bil_state_t) NONE = st with termcode := ReachedEnd) /\
-  (bil_state_set_pc (st:bil_state_t) (SOME pc') = st with pc := pc')`
-
-
 val bil_state_normalise_pc_def = Define `bil_state_normalise_pc p (st:bil_state_t) =
   case bil_pc_normalise p st.pc of
     | SOME pc' => (st with pc := pc')

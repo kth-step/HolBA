@@ -105,13 +105,13 @@ Induct >> (
     CASE_TAC
   )
 ) >- (
-  FULL_SIMP_TAC std_ss [bil_eval_load_Unkown_REWRS] >>
+  FULL_SIMP_TAC std_ss [bil_eval_load_Unknown_REWRS] >>
   FULL_SIMP_TAC std_ss [type_of_bil_val_EQ_ELIMS, bil_eval_load_def] >>
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
     METIS_TAC[type_of_bil_load_from_mem]
   )
 ) >- (
-  FULL_SIMP_TAC std_ss [bil_eval_store_Unkown_REWRS] >>
+  FULL_SIMP_TAC std_ss [bil_eval_store_Unknown_REWRS] >>
   FULL_SIMP_TAC std_ss [type_of_bil_val_EQ_ELIMS, bil_eval_store_def] >>
   REPEAT GEN_TAC >> REPEAT CASE_TAC
 ));
@@ -365,64 +365,6 @@ REPEAT STRIP_TAC >>
 `MEM bl p` by METIS_TAC [bil_get_program_block_info_by_label_THM, listTheory.MEM_EL] >>
 FULL_SIMP_TAC std_ss [listTheory.EVERY_MEM] >>
 METIS_TAC[]);
-
-
-val type_of_bil_exp_THM_with_init_vars = store_thm ("type_of_bil_exp_THM_with_init_vars",
-  ``!env. (is_valid_env env) ==>
-          (!e ty. (type_of_bil_exp e = SOME ty) ==>
-                  (bil_env_vars_are_initialised env (bil_vars_of_exp e)) ==>
-                  (type_of_bil_val (bil_eval_exp e env) = SOME ty))``,
-
-GEN_TAC >> STRIP_TAC >> Induct >> (
-  SIMP_TAC (std_ss++bil_val_ss) [bil_eval_exp_def, BoolType_def,
-    type_of_bil_exp_EQ_SOME_REWRS, bil_vars_of_exp_def,
-    bil_env_vars_are_initialised_UNION, bil_env_vars_are_initialised_INSERT,
-    bil_env_vars_are_initialised_EMPTY, PULL_EXISTS, PULL_FORALL, bil_type_is_ImmType_def] >>
-  REPEAT STRIP_TAC >>
-  FULL_SIMP_TAC (std_ss++bil_val_ss) [type_of_bil_val_EQ_ELIMS, bil_type_is_ImmType_def]
-) >- (
-  rename1 `bil_env_read v env` >>
-  Cases_on `v` >>
-  FULL_SIMP_TAC std_ss [bil_env_read_def, bil_env_var_is_initialised_def, bil_var_name_def,
-    bil_var_type_def, pairTheory.pair_case_thm] >>
-  METIS_TAC[is_valid_env_lookup]
-) >- (
-  SIMP_TAC (std_ss++bil_val_ss) [bil_eval_cast_REWRS, type_of_bil_gencast]
-) >- (
-  ASM_SIMP_TAC (std_ss++bil_val_ss) [bil_eval_unary_exp_REWRS, type_of_bil_unary_exp]
-) >- (
-  ASM_SIMP_TAC (std_ss++bil_val_ss) [bil_eval_bin_exp_REWRS, type_of_bil_bin_exp]
-) >- (
-  ASM_SIMP_TAC (std_ss++bil_val_ss) [bil_eval_bin_pred_REWRS, type_of_bil_val_def,
-    type_of_bool2b, BoolType_def]
-) >- (
-  ASM_SIMP_TAC (std_ss++bil_val_ss) [bil_eval_ifthenelse_REWRS] >>
-  METIS_TAC[]
-) >- (
-  ASM_SIMP_TAC (std_ss++bil_val_ss) [bil_eval_load_BASIC_REWR] >>
-  rename1 `bil_load_from_mem vt ity mmap en (b2n i)` >>
-  Cases_on `bil_load_from_mem vt ity mmap en (b2n i)` >- (
-    POP_ASSUM MP_TAC >>
-    ASM_SIMP_TAC (std_ss++bil_val_ss) [bil_load_from_mem_EQ_NONE] >>
-    Cases_on `en = NoEndian` >> (
-       FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [bil_number_of_mem_splits_ID]
-    )
-  ) >>
-  ASM_SIMP_TAC (std_ss++bil_val_ss) [] >>
-  METIS_TAC [type_of_bil_load_from_mem]
-) >- (
-  ASM_SIMP_TAC (std_ss++bil_val_ss) [bil_eval_store_BASIC_REWR] >>
-  rename1 `bil_store_in_mem vt ity mmap en (b2n i)` >>
-  Cases_on `bil_store_in_mem vt ity mmap en (b2n i)` >- (
-    POP_ASSUM MP_TAC >>
-    ASM_SIMP_TAC (std_ss++bil_val_ss) [bil_store_in_mem_EQ_NONE] >>
-    Cases_on `en = NoEndian` >> (
-       FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [bil_number_of_mem_splits_ID]
-    )
-  ) >>
-  ASM_SIMP_TAC (std_ss++bil_val_ss) []
-));
-
 
 
 val _ = export_theory();
