@@ -210,7 +210,7 @@ val bil_pc_normalise_def = Define `
         SOME (n, bl) => if (pc.index < LENGTH bl.statements)
           then SOME pc
           else (
-            let p' = FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC n) p) in
+            let p' = FILTER (\bl. bl.statements <> []) (DROP (SUC n) p) in
             case p' of
               | [] => NONE
               | (bl'::_) => SOME <| label := bl'.label ; index := 0 |>
@@ -228,7 +228,7 @@ val bil_pc_normalise_EQ_SOME = store_thm ("bil_pc_normalise_EQ_SOME",
 ``!p pc i bl pc'. (bil_get_program_block_info_by_label (BilProgram p) (pc.label) = SOME (i, bl)) ==>
              ((bil_pc_normalise (BilProgram p) pc = SOME pc') <=>
                 (if (pc.index < LENGTH bl.statements) then (pc' = pc) else
-                (?j. (i < j /\ j < LENGTH p /\ (LENGTH ((EL j p).statements) <> 0) /\
+                (?j. (i < j /\ j < LENGTH p /\ ((EL j p).statements <> []) /\
                      (pc' = <| label := (EL j p).label; index := 0 |>) /\
                      (!j'. (i < j' /\ j' < j) ==> (LENGTH ((EL j' p).statements) = 0))))))``,
 
@@ -238,7 +238,7 @@ Cases_on `pc.index < LENGTH bl.statements` >- (
   ASM_SIMP_TAC arith_ss [] >> METIS_TAC[]
 ) >>
 ASM_SIMP_TAC std_ss [LET_DEF] >>
-Cases_on `FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)` >| [
+Cases_on `FILTER (\bl. bl.statements <> []) (DROP (SUC i) p)` >| [
   ASM_SIMP_TAC list_ss [LET_DEF] >>
   CCONTR_TAC >>
   FULL_SIMP_TAC std_ss [] >>
@@ -247,7 +247,7 @@ Cases_on `FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)` >| [
      Q.EXISTS_TAC `j - SUC i` >>
      ASM_SIMP_TAC arith_ss []
   ) >>
-  `~(MEM (EL j p) (FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)))` by
+  `~(MEM (EL j p) (FILTER (\bl. bl.statements <> []) (DROP (SUC i) p)))` by
     ASM_SIMP_TAC list_ss [] >>
   FULL_SIMP_TAC list_ss [listTheory.MEM_FILTER] >>
   FULL_SIMP_TAC std_ss [],
@@ -266,11 +266,11 @@ Cases_on `FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)` >| [
   Induct_on `p2` >- ASM_SIMP_TAC list_ss [] >>
   CONV_TAC (RENAME_VARS_CONV ["bl1"]) >>
   REPEAT STRIP_TAC >>
-  Cases_on `LENGTH (bl1.statements) > 0` >> FULL_SIMP_TAC list_ss [] >| [
+  Cases_on `(bl1.statements) <> []` >> FULL_SIMP_TAC list_ss [] >| [
     REPEAT (BasicProvers.VAR_EQ_TAC) >>
     EQ_TAC >> REPEAT STRIP_TAC >> REPEAT BasicProvers.VAR_EQ_TAC >> ASM_SIMP_TAC list_ss [] >| [
       Q.EXISTS_TAC `SUC i` >>
-      ASM_SIMP_TAC list_ss [rich_listTheory.EL_APPEND2],
+      ASM_SIMP_TAC (list_ss++QI_ss) [rich_listTheory.EL_APPEND2],
 
       Cases_on `j = SUC i` >- ASM_SIMP_TAC list_ss [rich_listTheory.EL_APPEND2] >>
       Q.PAT_X_ASSUM `!j'. _` (MP_TAC o Q.SPEC `SUC i`) >>
@@ -279,7 +279,7 @@ Cases_on `FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)` >| [
 
     EQ_TAC >> STRIP_TAC >> REPEAT BasicProvers.VAR_EQ_TAC >| [
       Q.EXISTS_TAC `SUC j` >>
-      Q.PAT_X_ASSUM `LENGTH _ <> 0` MP_TAC >>
+      Q.PAT_X_ASSUM `_ <> []` MP_TAC >>
       Q.PAT_X_ASSUM `!j. _` MP_TAC >>
       `j - i = SUC (j - SUC i)` by DECIDE_TAC >>
       ASM_SIMP_TAC list_ss [rich_listTheory.EL_APPEND2] >>
@@ -290,7 +290,7 @@ Cases_on `FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)` >| [
       ASM_SIMP_TAC list_ss [],
 
       Q.EXISTS_TAC `PRE j` >>
-      Q.PAT_X_ASSUM `LENGTH _ <> 0` MP_TAC >>
+      Q.PAT_X_ASSUM `_ <> []` MP_TAC >>
       Q.PAT_X_ASSUM `!j. _` MP_TAC >>
 
       Cases_on `j = SUC i` >- ASM_SIMP_TAC list_ss [rich_listTheory.EL_APPEND2] >>
@@ -316,7 +316,7 @@ REPEAT STRIP_TAC >>
 Cases_on `pc.index < LENGTH bl.statements` >> (
   ASM_SIMP_TAC arith_ss []
 ) >>
-Cases_on `FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)` >| [
+Cases_on `FILTER (\bl. bl.statements <> []) (DROP (SUC i) p)` >| [
   ASM_SIMP_TAC list_ss [LET_DEF] >>
   REPEAT STRIP_TAC >>
   `MEM (EL j p) (DROP (SUC i) p)` by (
@@ -324,7 +324,7 @@ Cases_on `FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)` >| [
      Q.EXISTS_TAC `j - SUC i` >>
      ASM_SIMP_TAC arith_ss []
   ) >>
-  `~(MEM (EL j p) (FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)))` by
+  `~(MEM (EL j p) (FILTER (\bl. bl.statements <> []) (DROP (SUC i) p)))` by
     ASM_SIMP_TAC list_ss [] >>
   FULL_SIMP_TAC list_ss [listTheory.MEM_FILTER] >>
   FULL_SIMP_TAC std_ss [],
@@ -332,7 +332,7 @@ Cases_on `FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p)` >| [
 
   rename1 `FILTER _ _ = bl0::bls` >>
   ASM_SIMP_TAC list_ss [LET_DEF] >>
-  `MEM bl0 (FILTER (\bl. LENGTH bl.statements > 0) (DROP (SUC i) p))` by
+  `MEM bl0 (FILTER (\bl. bl.statements <> []) (DROP (SUC i) p))` by
     ASM_SIMP_TAC list_ss [] >>
   POP_ASSUM MP_TAC >>
   FULL_SIMP_TAC list_ss [listTheory.MEM_FILTER] >>
@@ -402,7 +402,8 @@ Cases_on `pc.index < LENGTH (EL i p).statements` >| [
     GSYM LEFT_FORALL_IMP_THM] >>
   REPEAT STRIP_TAC >>
   Q.EXISTS_TAC `j` >>
-  ASM_SIMP_TAC arith_ss []
+  ASM_SIMP_TAC arith_ss [] >>
+  Cases_on `(EL j p).statements` >> FULL_SIMP_TAC list_ss []
 ]);
 
 
@@ -420,24 +421,24 @@ METIS_TAC[listTheory.MEM_EL, bil_get_program_block_info_by_label_valid_THM]);
 
 
 val bil_pc_first_def = Define
-  `bil_pc_first (BilProgram p) = let bl = HD (FILTER (\bl. LENGTH (bl.statements) > 0) p) in
+  `bil_pc_first (BilProgram p) = let bl = HD (FILTER (\bl. (bl.statements) <> []) p) in
     (<| label := bl.label; index := 0 |>):bil_programcounter_t`;
 
 val bil_pc_last_def = Define
-  `bil_pc_last (BilProgram p) = let bl = LAST (FILTER (\bl. LENGTH (bl.statements) > 0) p) in
+  `bil_pc_last (BilProgram p) = let bl = LAST (FILTER (\bl. (bl.statements) <> []) p) in
     (<| label := bl.label; index := LENGTH bl.statements - 1 |>):bil_programcounter_t`;
 
 
 val bil_program_stmts_count_FILTER_NEQ_NIL = store_thm ("bil_program_stmts_count_FILTER_NEQ_NIL",
   ``!p. (bil_program_stmts_count (BilProgram p) > 0) ==>
-    (?bl0 bls. (FILTER (\bl. LENGTH bl.statements > 0) p = bl0 :: bls) /\
-              EVERY (\bl. (LENGTH bl.statements > 0) /\ MEM bl p) (bl0::bls))``,
+    (?bl0 bls. (FILTER (\bl. bl.statements <> []) p = bl0 :: bls) /\
+              EVERY (\bl. (bl.statements <> []) /\ MEM bl p) (bl0::bls))``,
 
 Induct_on `p` >> (
   FULL_SIMP_TAC list_ss [bil_program_stmts_count_def, bil_block_stmts_count_def]
 ) >>
 CONV_TAC (RENAME_VARS_CONV ["bl"]) >> GEN_TAC >>
-Cases_on `LENGTH bl.statements` >| [
+Cases_on `bl.statements` >| [
   SIMP_TAC list_ss [] >>
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC list_ss [listTheory.EVERY_MEM],
@@ -456,9 +457,9 @@ SIMP_TAC (std_ss++bil_pc_ss) [bil_is_valid_pc_of_valid_blocks, bil_is_valid_prog
 ASSUME_TAC (Q.SPEC `p` bil_program_stmts_count_FILTER_NEQ_NIL) >>
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC list_ss [] >>
-rename1 `LENGTH bl0.statements > 0` >>
+rename1 `bl0.statements <> []` >>
 Q.EXISTS_TAC `bl0` >>
-ASM_SIMP_TAC list_ss []);
+Cases_on `bl0.statements` >> FULL_SIMP_TAC list_ss []);
 
 
 val bil_pc_last_valid = store_thm ("bil_pc_last_valid",
@@ -473,7 +474,8 @@ FULL_SIMP_TAC list_ss [] >>
 rename1 `FILTER _ p = bl0::bls` >>
 Q.EXISTS_TAC `LAST (bl0::bls)` >>
 `MEM (LAST (bl0::bls)) (bl0::bls)` by MATCH_ACCEPT_TAC rich_listTheory.MEM_LAST >>
-FULL_SIMP_TAC list_ss [listTheory.EVERY_MEM, arithmeticTheory.GREATER_DEF]);
+FULL_SIMP_TAC list_ss [listTheory.EVERY_MEM, arithmeticTheory.GREATER_DEF,
+  listTheory.NOT_NIL_EQ_LENGTH_NOT_0]);
 
 
 
@@ -499,13 +501,13 @@ ASM_SIMP_TAC std_ss [bil_pc_next_def,
 Cases_on `p` >> rename1 `BilProgram p` >>
 ASM_SIMP_TAC (std_ss++bil_pc_ss) [bil_pc_last_def, LET_THM, bil_is_end_pc_def] >>
 
-`FILTER (\bl. LENGTH bl.statements > 0) p <> []` by (
+`FILTER (\bl. bl.statements <> []) p <> []` by (
   STRIP_TAC  >>
   FULL_SIMP_TAC std_ss [bil_is_valid_pc_def, bil_get_program_block_info_by_label_THM] >>
-  `MEM (EL i p) (FILTER (\bl. LENGTH bl.statements > 0) p)` suffices_by ASM_SIMP_TAC list_ss [] >>
+  `MEM (EL i p) (FILTER (\bl. bl.statements <> []) p)` suffices_by ASM_SIMP_TAC list_ss [] >>
   SIMP_TAC list_ss [listTheory.MEM_FILTER, listTheory.MEM_EL] >>
   REPEAT STRIP_TAC >| [
-    DECIDE_TAC,
+    Cases_on `(EL i p).statements` >> FULL_SIMP_TAC list_ss [],
     METIS_TAC[]
   ]
 ) >>
@@ -517,13 +519,13 @@ REV_FULL_SIMP_TAC std_ss [bil_get_program_block_info_by_label_valid_THM] >>
 EQ_TAC >> STRIP_TAC >| [
   `~(i < i')` by (
     STRIP_TAC >>
-    `~(LENGTH bl.statements > 0)` by METIS_TAC[] >>
-    DECIDE_TAC
+    `bl.statements = []` by METIS_TAC[] >>
+    FULL_SIMP_TAC list_ss []
   ) >>
   `~(i' < i)` by (
     STRIP_TAC >>
-    `LENGTH (EL i p).statements = 0` by METIS_TAC[] >>
-    DECIDE_TAC
+    `(EL i p).statements = []` by METIS_TAC[] >>
+    FULL_SIMP_TAC list_ss []
   ) >>
   `i' = i` by DECIDE_TAC >>
   FULL_SIMP_TAC arith_ss [],
@@ -1391,7 +1393,7 @@ REPEAT CASE_TAC >> SIMP_TAC (std_ss++bil_state_ss) [bil_state_incr_pc_SAME_ENV,
 
 
 val bil_exec_stmt_declare_ENV = store_thm("bil_exec_stmt_declare_ENV",
-  ``!p vn vty st. (bil_exec_stmt_declare p vn vty st).environ = 
+  ``!p vn vty st. (bil_exec_stmt_declare p vn vty st).environ =
       if (bil_env_varname_is_bound st.environ vn) then st.environ else
       (bil_env_update vn (bil_declare_initial_value vty) vty
             st.environ)``,
@@ -1408,8 +1410,8 @@ Cases_on `vty` >> FULL_SIMP_TAC std_ss [bil_declare_initial_value_def,
 
 
 val bil_exec_stmt_assign_ENV = store_thm("bil_exec_stmt_assign_ENV",
-  ``!p v e st. 
-      (bil_exec_stmt_assign p v e st).environ = 
+  ``!p v e st.
+      (bil_exec_stmt_assign p v e st).environ =
       (if is_env_regular (bil_env_write v (bil_eval_exp e st.environ) st.environ) then
          (bil_env_write v (bil_eval_exp e st.environ) st.environ)
        else st.environ)``,
@@ -1429,7 +1431,7 @@ Cases_on `stmt` >> (
   SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bil_exec_stmt_def, bil_exec_stmt_jmp_SAME_ENV,
     bil_exec_stmt_cjmp_SAME_ENV, bil_exec_stmt_halt_SAME_ENV,
     bil_exec_stmt_assert_SAME_ENV, bil_exec_stmt_assume_SAME_ENV,
-    bil_env_order_REFL, bil_exec_stmt_assign_ENV,  bil_exec_stmt_declare_ENV] 
+    bil_env_order_REFL, bil_exec_stmt_assign_ENV,  bil_exec_stmt_declare_ENV]
 ) >- (
   REPEAT STRIP_TAC >>
   rename1 `bil_var_name v` >>
