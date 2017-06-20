@@ -622,7 +622,6 @@ val bil_state_init_def = Define `bil_state_init p = <|
 (* Execution of Jmp, CJmp, Halt, Assert, Assume doesn't change environment *)
 
 val bil_declare_initial_value_def = Define `
-  (bil_declare_initial_value NoType = NONE) /\
   (bil_declare_initial_value (ImmType _) = NONE) /\
   (bil_declare_initial_value (MemType at vt) = SOME (Mem at vt (K 0)))`;
 
@@ -1406,7 +1405,7 @@ REPEAT CASE_TAC >> (
 ) >>
 Cases_on `st.environ` >> FULL_SIMP_TAC std_ss [bil_env_update_def] >>
 Cases_on `vty` >> FULL_SIMP_TAC std_ss [bil_declare_initial_value_def,
-  is_env_regular_def]);
+  is_env_regular_def, type_of_bil_val_def]);
 
 
 val bil_exec_stmt_assign_ENV = store_thm("bil_exec_stmt_assign_ENV",
@@ -1439,7 +1438,7 @@ Cases_on `stmt` >> (
   MATCH_MP_TAC bil_env_order_update >>
   ASM_REWRITE_TAC[] >>
   Cases_on `bil_var_type v` >> (
-    ASM_SIMP_TAC std_ss [bil_declare_initial_value_def]
+    ASM_SIMP_TAC std_ss [bil_declare_initial_value_def, type_of_bil_val_def]
   )
 ) >- (
   REPEAT STRIP_TAC >>

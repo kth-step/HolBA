@@ -1,5 +1,5 @@
 (* ========================================================================= *)
-(* FILE          : bilScript.sml                                             *)
+(* FILE          : bil_immScript.sml                                             *)
 (* DESCRIPTION   : A model of immediates from BAP Intermediate Language.     *)
 (* AUTHOR        : (c) Thomas Tuerk <tuerk@kth.se> based on previous work    *)
 (*                 by Roberto Metere, KTH - Royal Institute of Technology    *)

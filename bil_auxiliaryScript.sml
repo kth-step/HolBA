@@ -1,5 +1,5 @@
 (* ========================================================================= *)
-(* FILE          : bil_auxilairyScript.sml                                   *)
+(* FILE          : bil_auxiliaryScript.sml                                   *)
 (* DESCRIPTION   : Auxiliary lemmata used by formalisation of                *)
 (*                 BAP Intermediate Language.                                *)
 (* AUTHOR        : (c) Thomas Tuerk <tuerk@kth.se> based on previous work    *)
