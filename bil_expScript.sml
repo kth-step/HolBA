@@ -164,6 +164,7 @@ CONJ_TAC >| [
   Cases_on `v` >> SIMP_TAC std_ss [bil_eval_bin_pred_def]
 ]);
 
+
 val bil_eval_ifthenelse_REWRS = store_thm ("bil_eval_ifthenelse_REWRS",
 ``(!c e1 e2. bil_eval_ifthenelse (Imm c) e1 e2 =
      if (type_of_bil_imm c = Bit1) then (
@@ -174,6 +175,16 @@ val bil_eval_ifthenelse_REWRS = store_thm ("bil_eval_ifthenelse_REWRS",
 SIMP_TAC std_ss [bil_eval_ifthenelse_def] >>
 Cases_on `c` >> (
   SIMP_TAC (std_ss++bil_imm_ss) [type_of_bil_imm_def, bil_eval_ifthenelse_def]
+));
+
+val bil_eval_ifthenelse_REWRS_Unknown = store_thm ("bil_eval_ifthenelse_REWRS_Unknown",
+``(!ec e1 e2. 
+     (type_of_bil_val ec <> SOME (ImmType Bit1)) ==>
+     (bil_eval_ifthenelse ec e1 e2 = Unknown))``,
+
+Cases_on `ec` >> (
+  SIMP_TAC (std_ss++bil_type_ss++bil_imm_ss) [type_of_bil_imm_def, type_of_bil_val_def, 
+    bil_eval_ifthenelse_REWRS]
 ));
 
 val bil_eval_ifthenelse_TF_EQ = store_thm ("bil_eval_ifthenelse_TF_EQ",

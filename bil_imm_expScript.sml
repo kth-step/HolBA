@@ -517,6 +517,11 @@ val bil_casts_ID = save_thm ("bil_casts_ID",
 REWRITE_RULE [bil_gencast_def] (
   inst_CONJ_THM bil_casts_list bil_gencast_ID));
 
+val type_of_bil_casts = save_thm ("type_of_bil_casts",
+REWRITE_RULE [bil_gencast_def] (
+   inst_CONJ_THM bil_casts_list type_of_bil_gencast));
+
+
 val bil_casts_Bit1 = store_thm ("bil_casts_Bit1",
   ``!ct b c. (type_of_bil_imm b = Bit1) ==>
              (bil_gencast ct b c = bil_cast b c)``,

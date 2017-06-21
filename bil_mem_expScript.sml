@@ -147,9 +147,10 @@ Cases_on `bil_number_of_mem_splits vty rty` >> (
 val bil_load_from_mem_EQ_NONE = store_thm ("bil_load_from_mem_EQ_NONE",
   ``!a en vty rty mmap. (bil_load_from_mem vty rty mmap en a = NONE) <=>
       ((bil_number_of_mem_splits vty rty = NONE) \/
-      ((bil_number_of_mem_splits vty rty <> SOME 1) /\ (en = NoEndian)))``,
+      ((vty <> rty) /\ (en = NoEndian)))``,
 
 REPEAT GEN_TAC >>
+ASM_REWRITE_TAC [GSYM bil_number_of_mem_splits_EQ_SOME1] >>
 Cases_on `bil_number_of_mem_splits vty rty` >> (
   ASM_SIMP_TAC std_ss [bil_load_from_mem_def, LET_DEF]
 ) >>
@@ -157,6 +158,14 @@ Cases_on `en` >> (
   ASM_SIMP_TAC (std_ss++bil_endian_ss) []
 ) >>
 Cases_on `x=1` >> ASM_SIMP_TAC std_ss []);
+
+
+val bil_load_from_mem_EQ_NONE_IMP = store_thm ("bil_load_from_mem_EQ_NONE_IMP",
+  ``!a en vty rty mmap. 
+      ((bil_number_of_mem_splits vty rty = NONE) \/
+      ((vty <> rty) /\ (en = NoEndian))) ==>
+      (bil_load_from_mem vty rty mmap en a = NONE)``,
+METIS_TAC[bil_load_from_mem_EQ_NONE]);
 
 
 val bil_load_from_mem_EQ_SOME = store_thm ("bil_load_from_mem_EQ_SOME",
@@ -187,6 +196,17 @@ val type_of_bil_load_from_mem = store_thm ("type_of_bil_load_from_mem",
 
 SIMP_TAC std_ss [bil_load_from_mem_EQ_SOME, GSYM LEFT_FORALL_IMP_THM,
   type_of_bil_mem_concat]);
+
+
+val bil_load_from_mem_NONE_REWRS = save_thm ("bil_load_from_mem_NONE_REWRS",
+let
+  val thm0 = bil_load_from_mem_EQ_NONE_IMP
+
+  val thm1 = SIMP_RULE (list_ss++DatatypeSimps.expand_type_quants_ss [``:bil_immtype_t``]) [
+    bil_number_of_mem_splits_REWRS] thm0
+
+  val thm2 = SIMP_RULE (std_ss++bil_imm_ss) [GSYM CONJ_ASSOC, FORALL_AND_THM] thm1
+in thm2 end);
 
 
 (* One first rewrite *)
@@ -280,7 +300,8 @@ val bil_load_from_mem_used_addrs_EMPTY = store_thm ("bil_load_from_mem_used_addr
       (bil_load_from_mem tv tr mmap en a = NONE)``,
 
 REPEAT GEN_TAC >>
-SIMP_TAC std_ss [bil_load_from_mem_EQ_NONE, bil_load_from_mem_used_addrs_def] >>
+SIMP_TAC std_ss [bil_load_from_mem_EQ_NONE, bil_load_from_mem_used_addrs_def,
+  GSYM bil_number_of_mem_splits_EQ_SOME1] >>
 Cases_on `bil_number_of_mem_splits tv tr` >> ASM_SIMP_TAC std_ss [] >>
 COND_CASES_TAC >> ASM_SIMP_TAC std_ss [] >>
 POP_ASSUM (K ALL_TAC) >>
@@ -559,9 +580,10 @@ Cases_on `bil_number_of_mem_splits vty (type_of_bil_imm v)` >> (
 val bil_store_in_mem_EQ_NONE = store_thm ("bil_store_in_mem_EQ_NONE",
   ``!a en vty v mmap. (bil_store_in_mem vty v mmap en a = NONE) <=>
       ((bil_number_of_mem_splits vty (type_of_bil_imm v) = NONE) \/
-      ((bil_number_of_mem_splits vty (type_of_bil_imm v) <> SOME 1) /\ (en = NoEndian)))``,
+      ((vty <> (type_of_bil_imm v)) /\ (en = NoEndian)))``,
 
 REPEAT GEN_TAC >>
+REWRITE_TAC[GSYM bil_number_of_mem_splits_EQ_SOME1] >>
 Cases_on `bil_number_of_mem_splits vty (type_of_bil_imm v)` >> (
   ASM_SIMP_TAC std_ss [bil_store_in_mem_def, LET_DEF]
 ) >>
@@ -569,6 +591,14 @@ Cases_on `en` >> (
   ASM_SIMP_TAC (std_ss++bil_endian_ss) []
 ) >>
 Cases_on `x=1` >> ASM_SIMP_TAC std_ss []);
+
+
+val bil_store_in_mem_EQ_NONE_IMP = store_thm ("bil_store_in_mem_EQ_NONE_IMP",
+  ``!a en vty v mmap. 
+      ((bil_number_of_mem_splits vty (type_of_bil_imm v) = NONE) \/
+       ((vty <> (type_of_bil_imm v)) /\ (en = NoEndian))) ==>
+      (bil_store_in_mem vty v mmap en a = NONE)``,
+METIS_TAC[bil_store_in_mem_EQ_NONE]);
 
 
 val bil_store_in_mem_EQ_SOME = store_thm ("bil_store_in_mem_EQ_SOME",
@@ -590,6 +620,20 @@ Cases_on `en` >> (
 Cases_on `x=1` >>
 ASM_SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) []);
 
+
+
+val bil_store_in_mem_NONE_REWRS = save_thm ("bil_store_in_mem_NONE_REWRS",
+let
+  val thm0 = bil_store_in_mem_EQ_NONE_IMP
+
+  val thm1 = SIMP_RULE (list_ss++bil_imm_ss++DatatypeSimps.expand_type_quants_ss [``:bil_immtype_t``,
+    ``:bil_imm_t``]) [type_of_bil_imm_def,
+    bil_number_of_mem_splits_REWRS] thm0
+
+  val thm2 = SIMP_RULE list_ss [GSYM CONJ_ASSOC, FORALL_AND_THM] thm1
+in
+  thm2
+end);
 
 
 val bil_store_in_mem_REWRS = save_thm ("bil_store_in_mem_REWRS",
@@ -669,7 +713,7 @@ val bil_store_in_mem_used_addrs_EMPTY = store_thm ("bil_store_in_mem_used_addrs_
 
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bil_store_in_mem_used_addrs_def, bil_store_in_mem_EQ_NONE,
-  bil_load_from_mem_used_addrs_def] >>
+  bil_load_from_mem_used_addrs_def, GSYM bil_number_of_mem_splits_EQ_SOME1] >>
 Cases_on `bil_number_of_mem_splits tv (type_of_bil_imm v)` >> ASM_SIMP_TAC std_ss [] >>
 COND_CASES_TAC >> ASM_SIMP_TAC std_ss [] >>
 POP_ASSUM (K ALL_TAC) >>

@@ -580,13 +580,18 @@ val bil_stmt_to_string_def = Define `bil_stmt_to_string stmt = case stmt of
 (* ------------------------------------------------------------------------- *)
 
 val bil_state_add_execs_def = Define `bil_state_add_execs st n =
-  st with execs updated_by ($+ n)`
+  st with execs updated_by ($+ n)`;
 
 val bil_state_is_terminated_def = Define `bil_state_is_terminated st =
-  (st.termcode <> Running)`
+  (st.termcode <> Running)`;
+
+val bil_state_is_terminated_IMP = store_thm ("bil_state_is_terminated_IMP",
+  ``(!st. (st.termcode = Running) ==> ~(bil_state_is_terminated st)) /\
+    (!st. (st.termcode <> Running) ==> (bil_state_is_terminated st))``, 
+  SIMP_TAC std_ss [bil_state_is_terminated_def]);
 
 val bil_state_is_failed_def = Define `bil_state_is_failed st =
-  (st.termcode = Failed)`
+  (st.termcode = Failed)`;
 
 val bil_state_set_failed_def = Define `bil_state_set_failed st msg =
   (st with termcode := Failed) with debug updated_by (\dbg. msg::dbg)`

@@ -63,7 +63,6 @@ val bil_immtype_of_size_def = Define `
 val is_valid_bil_immtype_size_def = Define `
   is_valid_bil_immtype_size n = ?b. n = size_of_bil_immtype b`;
 
-
 (* A few sanity checks *)
 val size_of_bil_immtype_INJ = store_thm ("size_of_bil_immtype_INJ",
   ``!b1 b2. (size_of_bil_immtype b1 = size_of_bil_immtype b2) <=> (b1 = b2)``,
@@ -75,6 +74,9 @@ Cases >> SIMP_TAC arith_ss [size_of_bil_immtype_def])
 
 val is_valid_bil_immtype_size_REWRS = save_thm ("is_valid_bil_immtype_size_REWRS",
   SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bil_immtype_t``]) [size_of_bil_immtype_def] is_valid_bil_immtype_size_def);
+
+val is_valid_bil_immtype_size_IMP = save_thm ("is_valid_bil_immtype_size_IMP",
+  snd (EQ_IMP_RULE (SPEC_ALL is_valid_bil_immtype_size_REWRS)));
 
 val is_valid_bil_immtype_size_IS_SOME = store_thm ("is_valid_bil_immtype_size_IS_SOME",
   ``!n. is_valid_bil_immtype_size n <=> IS_SOME (bil_immtype_of_size n)``,
