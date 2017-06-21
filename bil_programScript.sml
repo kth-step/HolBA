@@ -161,7 +161,7 @@ val bil_is_valid_pc_def = Define `bil_is_valid_pc p pc =
 val bil_is_end_pc_def = Define `bil_is_end_pc (BilProgram p) pc =
    (?i bl. (bil_get_program_block_info_by_label (BilProgram p) (pc.label) = SOME (i, bl)) /\
            (pc.index = LENGTH bl.statements) /\
-      (!j. (i < j /\ j < LENGTH p) ==> (LENGTH ((EL j p).statements) = 0)))`;
+      (!j. (i < j /\ j < LENGTH p) ==> (((EL j p).statements) = [])))`;
 
 val bil_is_allowed_pc_def = Define `bil_is_allowed_pc p pc =
    (?i bl. (bil_get_program_block_info_by_label p (pc.label) = SOME (i, bl)) /\
@@ -230,7 +230,7 @@ val bil_pc_normalise_EQ_SOME = store_thm ("bil_pc_normalise_EQ_SOME",
                 (if (pc.index < LENGTH bl.statements) then (pc' = pc) else
                 (?j. (i < j /\ j < LENGTH p /\ ((EL j p).statements <> []) /\
                      (pc' = <| label := (EL j p).label; index := 0 |>) /\
-                     (!j'. (i < j' /\ j' < j) ==> (LENGTH ((EL j' p).statements) = 0))))))``,
+                     (!j'. (i < j' /\ j' < j) ==> (((EL j' p).statements) = []))))))``,
 
 SIMP_TAC std_ss [bil_pc_normalise_def, pairTheory.pair_case_thm] >>
 REPEAT STRIP_TAC >>
@@ -309,7 +309,7 @@ val bil_pc_normalise_EQ_NONE = store_thm ("bil_pc_normalise_EQ_NONE",
 ``!p pc i bl. (bil_get_program_block_info_by_label (BilProgram p) (pc.label) = SOME (i, bl)) ==>
              ((bil_pc_normalise (BilProgram p) pc = NONE) <=> (
                 (LENGTH bl.statements <= pc.index) /\
-                (!j. (i < j /\ j < LENGTH p) ==> (LENGTH ((EL j p).statements) = 0))))``,
+                (!j. (i < j /\ j < LENGTH p) ==> (((EL j p).statements) = []))))``,
 
 SIMP_TAC std_ss [bil_pc_normalise_def, pairTheory.pair_case_thm] >>
 REPEAT STRIP_TAC >>
@@ -474,8 +474,8 @@ FULL_SIMP_TAC list_ss [] >>
 rename1 `FILTER _ p = bl0::bls` >>
 Q.EXISTS_TAC `LAST (bl0::bls)` >>
 `MEM (LAST (bl0::bls)) (bl0::bls)` by MATCH_ACCEPT_TAC rich_listTheory.MEM_LAST >>
-FULL_SIMP_TAC list_ss [listTheory.EVERY_MEM, arithmeticTheory.GREATER_DEF,
-  listTheory.NOT_NIL_EQ_LENGTH_NOT_0]);
+ASM_SIMP_TAC arith_ss [rich_listTheory.LENGTH_NOT_NULL, listTheory.NULL_EQ] >>
+FULL_SIMP_TAC list_ss [listTheory.EVERY_MEM]);
 
 
 
