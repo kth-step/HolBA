@@ -63,18 +63,18 @@ val bil_SIMPLE_REWRS_imm = rewrites [
   size_of_bil_immtype_INJ,
   size_of_bil_immtype_NEQ_0,
   is_valid_bil_immtype_size_IMP,
-  bil_immtype_of_num_inv 
+  bil_immtype_of_num_inv
 ];
 
 
 val bil_SIMPLE_REWRS_env = rewrites [
   bil_var_name_def,
   bil_var_type_def,
-  is_env_regular_def,
-  is_valid_env_empty,
+  bil_is_regular_env_def,
+  bil_is_valid_env_empty,
   bil_env_write_Irregular,
   bil_env_write_Irregular_WrongVal
-]
+];
 
 
 
@@ -130,7 +130,7 @@ val bil_SIMPLE_REWRS_mem_exp = rewrites [
   bil_store_in_mem_used_addrs_FINITE,
   bil_store_in_mem_used_addrs_EMPTY
 ];
-  
+
 
 
 val bil_SIMPLE_REWRS_mem_exp = rewrites [
@@ -154,13 +154,13 @@ val bil_SIMPLE_REWRS_mem_exp = rewrites [
   bil_store_in_mem_used_addrs_FINITE,
   bil_store_in_mem_used_addrs_EMPTY
 ];
-  
+
 
 val bil_SIMPLE_REWRS_values = rewrites [
   bil_val_checker_REWRS,
   type_of_bil_val_def,
   bil_type_checker_REWRS,
-  bil_type_is_BoolType_IMPL
+  bil_type_is_Bool_IMPL
 ];
 
 val bil_SIMPLE_REWRS_exp = rewrites [

@@ -20,12 +20,12 @@ val bil_imm_ss = rewrites ((type_rws ``:bil_imm_t``) @ (type_rws ``:bil_immtype_
 (* ------------------------------------------------------------------------- *)
 
 val _ = Datatype `bil_unary_exp_t =
-  | ChangeSign
-  | Not`;
+  | BIExp_ChangeSign
+  | BIExp_Not`;
 
 val bil_unary_exp_GET_OPER_def = Define
-  `(bil_unary_exp_GET_OPER Not = word_1comp) /\
-   (bil_unary_exp_GET_OPER ChangeSign = word_2comp)`
+  `(bil_unary_exp_GET_OPER BIExp_Not = word_1comp) /\
+   (bil_unary_exp_GET_OPER BiExp_ChangeSign = word_2comp)`;
 
 val bil_unary_exp_def = Define `
   (bil_unary_exp uo (Imm64 w) = Imm64 (bil_unary_exp_GET_OPER uo w)) /\
@@ -51,8 +51,8 @@ GEN_TAC >> Cases >> (
 
 
 (* Instantiate everything *)
-val bil_not_def = Define `bil_not = bil_unary_exp Not`
-val bil_neg_def = Define `bil_neg = bil_unary_exp ChangeSign`
+val bil_not_def = Define `bil_not = bil_unary_exp BIExp_Not`
+val bil_neg_def = Define `bil_neg = bil_unary_exp BIExp_ChangeSign`
 
 val bil_unary_exps_DEFS = save_thm ("bil_unary_exps_DEFS",
   LIST_CONJ [bil_not_def, bil_neg_def]);
@@ -78,34 +78,34 @@ SIMP_RULE std_ss [GSYM bil_unary_exps_DEFS, bil_unary_exp_GET_OPER_def] (
 (* ------------------------------------------------------------------------- *)
 
 val _ = Datatype `bil_bin_exp_t =
-  | And
-  | Or
-  | Xor
-  | Plus
-  | Minus
-  | Mult
-  | Div
-  | SignedDiv
-  | Mod
-  | SignedMod
-  | LeftShift
-  | RightShift
-  | SignedRightShift`;
+  | BIExp_And
+  | BIExp_Or
+  | BIExp_Xor
+  | BIExp_Plus
+  | BIExp_Minus
+  | BIExp_Mult
+  | BIExp_Div
+  | BIExp_SignedDiv
+  | BIExp_Mod
+  | BIExp_SignedMod
+  | BIExp_LeftShift
+  | BIExp_RightShift
+  | BIExp_SignedRightShift`;
 
 val bil_bin_exp_GET_OPER_def = Define
-  `(bil_bin_exp_GET_OPER And = word_and) /\
-   (bil_bin_exp_GET_OPER Or = word_or) /\
-   (bil_bin_exp_GET_OPER Xor = word_xor) /\
-   (bil_bin_exp_GET_OPER Plus = $+) /\
-   (bil_bin_exp_GET_OPER Minus = $-) /\
-   (bil_bin_exp_GET_OPER Mult = $*) /\
-   (bil_bin_exp_GET_OPER Div = $//) /\
-   (bil_bin_exp_GET_OPER SignedDiv = $/) /\
-   (bil_bin_exp_GET_OPER Mod =  word_mod) /\
-   (bil_bin_exp_GET_OPER SignedMod = word_smod) /\
-   (bil_bin_exp_GET_OPER LeftShift = word_lsl_bv) /\
-   (bil_bin_exp_GET_OPER RightShift = word_lsr_bv) /\
-   (bil_bin_exp_GET_OPER SignedRightShift = word_asr_bv) /\
+  `(bil_bin_exp_GET_OPER BIExp_And = word_and) /\
+   (bil_bin_exp_GET_OPER BIExp_Or = word_or) /\
+   (bil_bin_exp_GET_OPER BIExp_Xor = word_xor) /\
+   (bil_bin_exp_GET_OPER BIExp_Plus = $+) /\
+   (bil_bin_exp_GET_OPER BIExp_Minus = $-) /\
+   (bil_bin_exp_GET_OPER BIExp_Mult = $*) /\
+   (bil_bin_exp_GET_OPER BIExp_Div = $//) /\
+   (bil_bin_exp_GET_OPER BIExp_SignedDiv = $/) /\
+   (bil_bin_exp_GET_OPER BIExp_Mod =  word_mod) /\
+   (bil_bin_exp_GET_OPER BIExp_SignedMod = word_smod) /\
+   (bil_bin_exp_GET_OPER BIExp_LeftShift = word_lsl_bv) /\
+   (bil_bin_exp_GET_OPER BIExp_RightShift = word_lsr_bv) /\
+   (bil_bin_exp_GET_OPER BIExp_SignedRightShift = word_asr_bv) /\
    (bil_bin_exp_GET_OPER _ = ARB) (* Should never fire *)`;
 
 val bil_bin_exp_def = Define `
@@ -135,43 +135,27 @@ val type_of_bil_bin_exp = store_thm ("type_of_bil_bin_exp",
   ``!oper_r r1 r2. (type_of_bil_imm r1 = type_of_bil_imm r2) ==>
     (type_of_bil_imm (bil_bin_exp oper_r r1 r2) = type_of_bil_imm r1)``,
 REPEAT Cases >>
-SIMP_TAC (srw_ss()) [type_of_bil_imm_def, bil_bin_exp_REWRS])
+SIMP_TAC (srw_ss()) [type_of_bil_imm_def, bil_bin_exp_REWRS]);
 
 
-val bil_add_def  = Define `bil_add  = bil_bin_exp Plus`;
-val bil_sub_def  = Define `bil_sub  = bil_bin_exp Minus`;
-val bil_mul_def  = Define `bil_mul  = bil_bin_exp Mult`;
-val bil_div_def  = Define `bil_div  = bil_bin_exp Div`;
-val bil_sdiv_def = Define `bil_sdiv = bil_bin_exp SignedDiv`;
-val bil_mod_def  = Define `bil_mod  = bil_bin_exp Mod`
-val bil_smod_def = Define `bil_smod = bil_bin_exp SignedMod`
-val bil_lsl_def  = Define `bil_lsl  = bil_bin_exp LeftShift`
-val bil_lsr_def  = Define `bil_lsr  = bil_bin_exp RightShift`
-val bil_asr_def  = Define `bil_asr  = bil_bin_exp SignedRightShift`
-val bil_and_def  = Define `bil_and  = bil_bin_exp And`
-val bil_or_def   = Define `bil_or   = bil_bin_exp Or`
-val bil_xor_def  = Define `bil_xor  = bil_bin_exp Xor`;
+val bil_add_def  = Define `bil_add  = bil_bin_exp BIExp_Plus`;
+val bil_sub_def  = Define `bil_sub  = bil_bin_exp BIExp_Minus`;
+val bil_mul_def  = Define `bil_mul  = bil_bin_exp BIExp_Mult`;
+val bil_div_def  = Define `bil_div  = bil_bin_exp BIExp_Div`;
+val bil_sdiv_def = Define `bil_sdiv = bil_bin_exp BIExp_SignedDiv`;
+val bil_mod_def  = Define `bil_mod  = bil_bin_exp BIExp_Mod`
+val bil_smod_def = Define `bil_smod = bil_bin_exp BIExp_SignedMod`
+val bil_lsl_def  = Define `bil_lsl  = bil_bin_exp BIExp_LeftShift`
+val bil_lsr_def  = Define `bil_lsr  = bil_bin_exp BIExp_RightShift`
+val bil_asr_def  = Define `bil_asr  = bil_bin_exp BIExp_SignedRightShift`
+val bil_and_def  = Define `bil_and  = bil_bin_exp BIExp_And`
+val bil_or_def   = Define `bil_or   = bil_bin_exp BIExp_Or`
+val bil_xor_def  = Define `bil_xor  = bil_bin_exp BIExp_Xor`;
 
 val bil_bin_exps_DEFS = save_thm ("bil_bin_exps_DEFS",
   LIST_CONJ [bil_add_def, bil_sub_def, bil_mul_def, bil_div_def, bil_sdiv_def,
      bil_mod_def, bil_smod_def, bil_lsl_def, bil_lsr_def, bil_asr_def, bil_and_def,
      bil_or_def, bil_xor_def]);
-
-val _ = add_infix("<<",  680, HOLgrammars.LEFT);
-val _ = add_infix(">>",  680, HOLgrammars.LEFT);
-val _ = add_infix(">>>", 680, HOLgrammars.LEFT);
-val _ = set_fixity "//" (Infixl 600);
-val _ = set_fixity "/"  (Infixl 600);
-
-val _ = overload_on ("+",              Term`$bil_add`);
-val _ = overload_on ("-",              Term`$bil_sub`);
-val _ = overload_on ("*",              Term`$bil_mul`);
-val _ = overload_on ("//",             Term`$bil_div`);
-val _ = overload_on ("/",              Term`$bil_sdiv`);
-val _ = overload_on ("<<",             Term`$bil_lsl`);
-val _ = overload_on (">>>",            Term`$bil_lsr`);
-val _ = overload_on (">>",             Term`$bil_asr`);
-
 
 val bil_bin_exp_list = TypeBase.constructors_of ``:bil_bin_exp_t``;
 
@@ -189,21 +173,20 @@ SIMP_RULE (std_ss) [GSYM bil_bin_exps_DEFS, bil_bin_exp_GET_OPER_def] (
 (* ------------------------------------------------------------------------- *)
 
 val _ = Datatype `bil_bin_pred_t =
-  | Equal
-  | NotEqual
-  | LessThan
-  | SignedLessThan
-  | LessOrEqual
-  | SignedLessOrEqual`;
-
+  | BIExp_Equal
+  | BIExp_NotEqual
+  | BIExp_LessThan
+  | BIExp_SignedLessThan
+  | BIExp_LessOrEqual
+  | BIExp_SignedLessOrEqual`;
 
 val bil_bin_pred_GET_OPER_def = Define
-  `(bil_bin_pred_GET_OPER Equal = $=) /\
-   (bil_bin_pred_GET_OPER NotEqual = $<>) /\
-   (bil_bin_pred_GET_OPER LessThan = word_lo) /\
-   (bil_bin_pred_GET_OPER SignedLessThan = word_lt) /\
-   (bil_bin_pred_GET_OPER LessOrEqual = word_ls) /\
-   (bil_bin_pred_GET_OPER SignedLessOrEqual = word_le)`
+  `(bil_bin_pred_GET_OPER BIExp_Equal = $=) /\
+   (bil_bin_pred_GET_OPER BIExp_NotEqual = $<>) /\
+   (bil_bin_pred_GET_OPER BIExp_LessThan = word_lo) /\
+   (bil_bin_pred_GET_OPER BIExp_SignedLessThan = word_lt) /\
+   (bil_bin_pred_GET_OPER BIExp_LessOrEqual = word_ls) /\
+   (bil_bin_pred_GET_OPER BIExp_SignedLessOrEqual = word_le)`;
 
 val bil_bin_pred_def = Define `
   (bil_bin_pred uo (Imm64 w1) (Imm64 w2) = (bil_bin_pred_GET_OPER uo w1 w2)) /\
@@ -228,20 +211,16 @@ REPEAT Cases >> (
   SIMP_TAC (srw_ss()) [type_of_bil_imm_def, bil_bin_pred_def]
 ));
 
-val bil_eq_def  = Define `bil_eq  = bil_bin_pred Equal`
-val bil_neq_def = Define `bil_neq = bil_bin_pred NotEqual`
-val bil_lt_def  = Define `bil_lt  = bil_bin_pred SignedLessThan`
-val bil_le_def  = Define `bil_le  = bil_bin_pred SignedLessOrEqual`
-val bil_ult_def = Define `bil_ult = bil_bin_pred LessThan`
-val bil_ule_def = Define `bil_ule = bil_bin_pred LessOrEqual`
+val bil_eq_def  = Define `bil_eq  = bil_bin_pred BIExp_Equal`
+val bil_neq_def = Define `bil_neq = bil_bin_pred BIExp_NotEqual`
+val bil_lt_def  = Define `bil_lt  = bil_bin_pred BIExp_SignedLessThan`
+val bil_le_def  = Define `bil_le  = bil_bin_pred BIExp_SignedLessOrEqual`
+val bil_ult_def = Define `bil_ult = bil_bin_pred BIExp_LessThan`
+val bil_ule_def = Define `bil_ule = bil_bin_pred BIExp_LessOrEqual`
 
 val bil_bin_preds_DEFS = save_thm ("bil_bin_preds_DEFS",
   LIST_CONJ [bil_eq_def, bil_neq_def, bil_lt_def, bil_le_def, bil_ult_def,
      bil_ule_def]);
-
-val _ = overload_on ("<",              Term`$bil_lt`);
-val _ = overload_on ("<=",             Term`$bil_le`);
-
 
 val bil_bin_pred_list = TypeBase.constructors_of ``:bil_bin_pred_t``;
 
@@ -481,16 +460,16 @@ SIMP_TAC (std_ss) [bil_scast_REWRS0, w2w_id, sw2sw_id]);
 (* ============= *)
 
 val _ = Datatype `bil_cast_t =
-  | UnsignedCast
-  | SignedCast
-  | HighCast
-  | LowCast`;
+  | BIExp_UnsignedCast
+  | BIExp_SignedCast
+  | BIExp_HighCast
+  | BIExp_LowCast`;
 
 val bil_gencast_def = Define `
-  (bil_gencast UnsignedCast = bil_cast) /\
-  (bil_gencast SignedCast = bil_scast) /\
-  (bil_gencast HighCast = bil_hcast) /\
-  (bil_gencast LowCast = bil_lcast)`;
+  (bil_gencast BIExp_UnsignedCast = bil_cast) /\
+  (bil_gencast BIExp_SignedCast = bil_scast) /\
+  (bil_gencast BIExp_HighCast = bil_hcast) /\
+  (bil_gencast BIExp_LowCast = bil_lcast)`;
 
 val bil_casts_DEFS = save_thm ("bil_casts_DEFS",
   LIST_CONJ [bil_cast_def, bil_scast_def, bil_hcast_def, bil_lcast_def]);

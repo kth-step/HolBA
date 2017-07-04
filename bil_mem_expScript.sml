@@ -20,14 +20,14 @@ val bil_imm_ss = rewrites ((type_rws ``:bil_imm_t``) @ (type_rws ``:bil_immtype_
 (* ------------------------------------------------------------------------- *)
 
 val _ = Datatype `bil_endian_t =
-  | BigEndian
-  | LittleEndian
-  | NoEndian`
+  | BEnd_BigEndian
+  | BEnd_LittleEndian
+  | BEnd_NoEndian`
 
-val bil_endian_ss = rewrites (type_rws ``:bil_endian_t``)
+val bil_endian_ss = rewrites (type_rws ``:bil_endian_t``);
 
 val fold_bil_endian_THM = store_thm ("fold_bil_endian_THM", 
-  ``!P. (P BigEndian /\ P LittleEndian /\ P NoEndian) <=> (!en. P en)``,
+  ``!P. (P BEnd_BigEndian /\ P BEnd_LittleEndian /\ P BEnd_NoEndian) <=> (!en. P en)``,
     SIMP_TAC (std_ss++DatatypeSimps.expand_type_quants_ss [``:bil_endian_t``]) []);
 
 
@@ -106,9 +106,9 @@ val bil_load_from_mem_def = Define `bil_load_from_mem
     | NONE => NONE
     | SOME (n:num) => (
         let vs = MAP (\n. bil_load_bitstring_from_mmap value_ty mmap (a+n)) (COUNT_LIST n) in
-        let vs' = (case en of LittleEndian => SOME (REVERSE vs)
-                          |  BigEndian => SOME vs
-                          |  NoEndian => if (n = 1) then SOME vs else NONE) in
+        let vs' = (case en of BEnd_LittleEndian => SOME (REVERSE vs)
+                          |  BEnd_BigEndian => SOME vs
+                          |  BEnd_NoEndian => if (n = 1) then SOME vs else NONE) in
         case vs' of NONE => NONE
                  |  SOME vs'' => SOME (bil_mem_concat vs'' result_ty)
    )`;
@@ -126,7 +126,7 @@ Cases_on `en` >> (
 
 
 val bil_load_from_mem_NO_ENDIAN = store_thm ("bil_load_from_mem_NO_ENDIAN",
-  ``!a vty rty mmap. bil_load_from_mem vty rty mmap NoEndian a =
+  ``!a vty rty mmap. bil_load_from_mem vty rty mmap BEnd_NoEndian a =
     (if vty = rty then
       SOME (n2bs (mmap a) vty)
      else NONE)``,
@@ -147,7 +147,7 @@ Cases_on `bil_number_of_mem_splits vty rty` >> (
 val bil_load_from_mem_EQ_NONE = store_thm ("bil_load_from_mem_EQ_NONE",
   ``!a en vty rty mmap. (bil_load_from_mem vty rty mmap en a = NONE) <=>
       ((bil_number_of_mem_splits vty rty = NONE) \/
-      ((vty <> rty) /\ (en = NoEndian)))``,
+      ((vty <> rty) /\ (en = BEnd_NoEndian)))``,
 
 REPEAT GEN_TAC >>
 ASM_REWRITE_TAC [GSYM bil_number_of_mem_splits_EQ_SOME1] >>
@@ -163,7 +163,7 @@ Cases_on `x=1` >> ASM_SIMP_TAC std_ss []);
 val bil_load_from_mem_EQ_NONE_IMP = store_thm ("bil_load_from_mem_EQ_NONE_IMP",
   ``!a en vty rty mmap. 
       ((bil_number_of_mem_splits vty rty = NONE) \/
-      ((vty <> rty) /\ (en = NoEndian))) ==>
+      ((vty <> rty) /\ (en = BEnd_NoEndian))) ==>
       (bil_load_from_mem vty rty mmap en a = NONE)``,
 METIS_TAC[bil_load_from_mem_EQ_NONE]);
 
@@ -172,9 +172,9 @@ val bil_load_from_mem_EQ_SOME = store_thm ("bil_load_from_mem_EQ_SOME",
   ``!a en vty rty mmap res. (bil_load_from_mem vty rty mmap en a = SOME res) <=>
       (?n vs vs'. (bil_number_of_mem_splits vty rty = SOME n) /\
                   (vs = MAP (\n. bil_load_bitstring_from_mmap vty mmap (a+n)) (COUNT_LIST n)) /\
-                  ((en = BigEndian) /\ (vs' = vs) \/
-                   (en = LittleEndian) /\ (vs' = REVERSE vs) \/
-                   (en = NoEndian) /\ (n = 1) /\ (vs' = vs)) /\
+                  ((en = BEnd_BigEndian) /\ (vs' = vs) \/
+                   (en = BEnd_LittleEndian) /\ (vs' = REVERSE vs) \/
+                   (en = BEnd_NoEndian) /\ (n = 1) /\ (vs' = vs)) /\
                    (res = bil_mem_concat vs' rty))``,
 
 SIMP_TAC std_ss [bil_load_from_mem_def] >>
@@ -244,7 +244,7 @@ val bil_load_from_mem_used_addrs_def = Define
   `bil_load_from_mem_used_addrs tv tr en a =
    case (bil_number_of_mem_splits tv tr) of
     | NONE => {}
-    | SOME (n:num) => (if (n <> 1) /\ (en = NoEndian) then {} else
+    | SOME (n:num) => (if (n <> 1) /\ (en = BEnd_NoEndian) then {} else
         set (MAP (\n. a + n) (COUNT_LIST n)))`
 
 val bil_load_from_mem_used_addrs_THM = store_thm ("bil_load_from_mem_used_addrs_THM",
@@ -313,8 +313,8 @@ SIMP_TAC list_ss [rich_listTheory.COUNT_LIST_def]);
 
 val bil_load_from_mem_used_addrs_NoEndian = store_thm ("bil_load_from_mem_used_addrs_NoEndian",
   ``!tv tr a.
-      (bil_load_from_mem_used_addrs tv tr NoEndian a = {}) \/
-      (bil_load_from_mem_used_addrs tv tr NoEndian a = {a})``,
+      (bil_load_from_mem_used_addrs tv tr BEnd_NoEndian a = {}) \/
+      (bil_load_from_mem_used_addrs tv tr BEnd_NoEndian a = {a})``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bil_load_from_mem_EQ_NONE, bil_load_from_mem_used_addrs_def] >>
@@ -537,9 +537,9 @@ val bil_store_in_mem_def = Define `bil_store_in_mem
     | NONE => NONE
     | SOME (n:num) => (
         let vs = bitstring_split (size_of_bil_immtype value_ty) (b2v result) in
-        let vs' = (case en of LittleEndian => SOME (REVERSE vs)
-                          |  BigEndian => SOME vs
-                          |  NoEndian => if (n = 1) then SOME vs else NONE) in
+        let vs' = (case en of BEnd_LittleEndian => SOME (REVERSE vs)
+                          |  BEnd_BigEndian => SOME vs
+                          |  BEnd_NoEndian => if (n = 1) then SOME vs else NONE) in
 
         case vs' of NONE => NONE
                  |  SOME vs'' => SOME (bil_update_mmap mmap a vs'')
@@ -559,7 +559,7 @@ Cases_on `en` >> (
 
 
 val bil_store_in_mem_NO_ENDIAN = store_thm ("bil_store_in_mem_NO_ENDIAN",
-  ``!a vty v mmap. bil_store_in_mem vty v mmap NoEndian a =
+  ``!a vty v mmap. bil_store_in_mem vty v mmap BEnd_NoEndian a =
     (if vty = (type_of_bil_imm v) then
       SOME ((a =+ b2n v) mmap)
      else NONE)``,
@@ -580,7 +580,7 @@ Cases_on `bil_number_of_mem_splits vty (type_of_bil_imm v)` >> (
 val bil_store_in_mem_EQ_NONE = store_thm ("bil_store_in_mem_EQ_NONE",
   ``!a en vty v mmap. (bil_store_in_mem vty v mmap en a = NONE) <=>
       ((bil_number_of_mem_splits vty (type_of_bil_imm v) = NONE) \/
-      ((vty <> (type_of_bil_imm v)) /\ (en = NoEndian)))``,
+      ((vty <> (type_of_bil_imm v)) /\ (en = BEnd_NoEndian)))``,
 
 REPEAT GEN_TAC >>
 REWRITE_TAC[GSYM bil_number_of_mem_splits_EQ_SOME1] >>
@@ -596,7 +596,7 @@ Cases_on `x=1` >> ASM_SIMP_TAC std_ss []);
 val bil_store_in_mem_EQ_NONE_IMP = store_thm ("bil_store_in_mem_EQ_NONE_IMP",
   ``!a en vty v mmap. 
       ((bil_number_of_mem_splits vty (type_of_bil_imm v) = NONE) \/
-       ((vty <> (type_of_bil_imm v)) /\ (en = NoEndian))) ==>
+       ((vty <> (type_of_bil_imm v)) /\ (en = BEnd_NoEndian))) ==>
       (bil_store_in_mem vty v mmap en a = NONE)``,
 METIS_TAC[bil_store_in_mem_EQ_NONE]);
 
@@ -605,9 +605,9 @@ val bil_store_in_mem_EQ_SOME = store_thm ("bil_store_in_mem_EQ_SOME",
   ``!a en vty v mmap res. (bil_store_in_mem vty v mmap en a = SOME res) <=>
       (?n vs vs'. (bil_number_of_mem_splits vty (type_of_bil_imm v) = SOME n) /\
                   (vs = (bitstring_split (size_of_bil_immtype vty) (b2v v))) /\
-                  ((en = BigEndian) /\ (vs' = vs) \/
-                   (en = LittleEndian) /\ (vs' = REVERSE vs) \/
-                   (en = NoEndian) /\ (n = 1) /\ (vs' = vs)) /\
+                  ((en = BEnd_BigEndian) /\ (vs' = vs) \/
+                   (en = BEnd_LittleEndian) /\ (vs' = REVERSE vs) \/
+                   (en = BEnd_NoEndian) /\ (n = 1) /\ (vs' = vs)) /\
                    (res = bil_update_mmap mmap a vs'))``,
 
 REPEAT GEN_TAC >>
@@ -725,8 +725,8 @@ SIMP_TAC list_ss [rich_listTheory.COUNT_LIST_def]);
 
 val bil_store_in_mem_used_addrs_NoEndian = store_thm ("bil_store_in_mem_used_addrs_NoEndian",
   ``!tv v a.
-      (bil_store_in_mem_used_addrs tv v NoEndian a = {}) \/
-      (bil_store_in_mem_used_addrs tv v NoEndian a = {a})``,
+      (bil_store_in_mem_used_addrs tv v BEnd_NoEndian a = {}) \/
+      (bil_store_in_mem_used_addrs tv v BEnd_NoEndian a = {a})``,
 
 SIMP_TAC std_ss [bil_store_in_mem_used_addrs_def] >>
 METIS_TAC[bil_load_from_mem_used_addrs_NoEndian]);
