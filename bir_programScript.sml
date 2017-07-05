@@ -33,13 +33,15 @@ val _ = Datatype `bir_programcounter_t = <| bpc_label:bir_label_t; bpc_index:num
 
 val bir_pc_ss = rewrites (type_rws ``:bir_programcounter_t``);
 
+val _ = Datatype `bir_status_finished_t =
+    BSTF_Halted bir_val_t
+  | BSTF_ReachedEnd (bir_label_t option)`;
+
 val _ = Datatype `bir_status_t =
-    BST_Running
-  | BST_Halted bir_val_t
-  | BST_ReachedEnd
-  | BST_ReachedUnknownLabel bir_label_t
-  | BST_Failed
-  | BST_AssumptionViolated`
+    BST_Running (* BIR program is still running *)
+  | BST_Failed  (* BIR program execution failed *)
+  | BST_AssumptionViolated (* BIR program execution aborted, because assumption was violated *)
+  | BST_Finished bir_status_finished_t (* BIR program terminated successfully *)`
 
 val _ = Datatype `bir_state_t = <|
   bst_pc       : bir_programcounter_t;
@@ -48,7 +50,7 @@ val _ = Datatype `bir_state_t = <|
 |>`;
 
 val bir_state_ss = rewrites (type_rws ``:bir_state_t``);
-val bir_status_ss = rewrites (type_rws ``:bir_status_t``);
+val bir_status_ss = rewrites ((type_rws ``:bir_status_t``) @ (type_rws ``:bir_status_finished_t``));
 
 
 (* ------------------------------------------------------------------------- *)
@@ -555,7 +557,7 @@ SIMP_TAC (std_ss ++ bir_state_ss) [bir_state_set_failed_def, bir_state_is_failed
 val bir_state_normalise_pc_def = Define `bir_state_normalise_pc p (st:bir_state_t) =
   case bir_pc_normalise p st.bst_pc of
     | SOME pc' => (st with bst_pc := pc')
-    | NONE => (st with bst_status := BST_ReachedEnd)`;
+    | NONE => (st with bst_status := BST_Finished (BSTF_ReachedEnd NONE))`;
 
 val bir_state_incr_pc_def = Define `bir_state_incr_pc p (st:bir_state_t) =
   bir_state_normalise_pc p (st with bst_pc := (st.bst_pc with bpc_index updated_by SUC))`
@@ -595,12 +597,12 @@ val bir_exec_stmt_assign_def = Define `bir_exec_stmt_assign p v ex (st : bir_sta
      | NONE => bir_state_set_failed st`;
 
 val bir_exec_stmt_halt_def = Define `bir_exec_stmt_halt ex (st : bir_state_t) =
-    (st with bst_status := BST_Halted (bir_eval_exp ex st.bst_environ))`;
+    (st with bst_status := BST_Finished (BSTF_Halted (bir_eval_exp ex st.bst_environ)))`;
 
 val bir_exec_stmt_jmp_def = Define `bir_exec_stmt_jmp p l (st : bir_state_t) =
     if (MEM l (bir_labels_of_program p)) then
       bir_state_set_pc p st <| bpc_label := l; bpc_index := 0 |>
-    else (st with bst_status := (BST_ReachedUnknownLabel l))`;
+    else (st with bst_status := (BST_Finished (BSTF_ReachedEnd (SOME l))))`;
 
 val bir_exec_stmt_cjmp_def = Define `bir_exec_stmt_cjmp p ex l1 l2 (st : bir_state_t) =
   case (bir_dest_bool_val (bir_eval_exp ex st.bst_environ)) of
@@ -644,7 +646,7 @@ val bir_exec_step_def = Define `bir_exec_step p state =
 (* ------------------------------------------------------------------------- *)
 
 val bir_is_valid_state_def = Define `bir_is_valid_state p st <=>
-  ((bir_is_well_typed_env st.bst_environ) /\ (if st.bst_status = BST_ReachedEnd then bir_is_end_pc p st.bst_pc else
+  ((bir_is_well_typed_env st.bst_environ) /\ (if st.bst_status = BST_Finished (BSTF_ReachedEnd NONE) then bir_is_end_pc p st.bst_pc else
       bir_is_valid_pc p st.bst_pc))`;
 
 val bir_state_init_valid = store_thm ("bir_state_init_valid",
@@ -666,7 +668,7 @@ val bir_exec_step_valid_THM = store_thm ("bir_exec_step_valid_THM",
 REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [bir_exec_step_def] >>
 Cases_on `bir_state_is_terminated st` >> ASM_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [] >>
-`st.bst_status <> BST_ReachedEnd` by (
+`st.bst_status <> BST_Finished (BSTF_ReachedEnd NONE)` by (
   STRIP_TAC >> FULL_SIMP_TAC (std_ss++bir_status_ss) [bir_state_is_terminated_def]
 ) >>
 `?stm. bir_get_current_statement p st.bst_pc = SOME stm` by (
