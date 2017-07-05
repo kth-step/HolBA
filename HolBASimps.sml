@@ -30,7 +30,7 @@ val bir_list_of_types = [
    mk_thy_type {Tyop="bir_block_t",          Thy="bir_program", Args=[]},
    mk_thy_type {Tyop="bir_program_t",        Thy="bir_program", Args=[]},
    mk_thy_type {Tyop="bir_programcounter_t", Thy="bir_program", Args=[]},
-   mk_thy_type {Tyop="bir_termcode_t",       Thy="bir_program", Args=[]},
+   mk_thy_type {Tyop="bir_status_t",         Thy="bir_program", Args=[]},
    mk_thy_type {Tyop="bir_state_t",          Thy="bir_program", Args=[]}
 ];
 
@@ -176,8 +176,6 @@ val bir_SIMPLE_REWRS_exp = rewrites [
 ];
 
 val bir_SIMPLE_REWRS_program = rewrites [
-  bir_stmt_to_string_def,
-  r2s_REWRS,
   bir_state_is_terminated_IMP,
   bir_declare_initial_value_def
 ];
