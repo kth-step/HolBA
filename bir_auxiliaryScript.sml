@@ -1,15 +1,6 @@
-(* ========================================================================= *)
-(* FILE          : bil_auxiliaryScript.sml                                   *)
-(* DESCRIPTION   : Auxiliary lemmata used by formalisation of                *)
-(*                 BAP Intermediate Language.                                *)
-(* AUTHOR        : (c) Thomas Tuerk <tuerk@kth.se> based on previous work    *)
-(*                 by Roberto Metere, KTH - Royal Institute of Technology    *)
-(* DATE          : 2017                                                      *)
-(* ========================================================================= *)
-
 open HolKernel Parse boolLib bossLib;
 
-val _ = new_theory "bil_auxiliary";
+val _ = new_theory "bir_auxiliary";
 
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
