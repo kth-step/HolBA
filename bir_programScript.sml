@@ -814,6 +814,92 @@ DECIDE_TAC);
 
 
 
+val bir_exec_step_n_combine = store_thm ("bir_exec_step_n_combine",
+  ``!p state0 state1 state2 n1 n2 c1 c2.
+    (bir_exec_step_n p state0 n1 = (c1, state1)) ==>
+    (bir_exec_step_n p state1 n2 = (c2, state2)) ==>
+    (bir_exec_step_n p state0 (n1 + n2) = (c1+c2, state2))``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC arith_ss [bir_exec_step_n_EQ_THM] >>
+Cases_on `c1 < n1` >- (
+  `c2 = 0` by (
+     Cases_on `c2` >> FULL_SIMP_TAC arith_ss [] >>
+     Q.PAT_X_ASSUM `!n'. n' < SUC _ ==> _` (MP_TAC o Q.SPEC `0`) >>
+     ASM_SIMP_TAC std_ss [arithmeticTheory.FUNPOW]
+  ) >>
+  FULL_SIMP_TAC std_ss [arithmeticTheory.FUNPOW]
+) >>
+
+`c1 = n1` by DECIDE_TAC >>
+FULL_SIMP_TAC std_ss [] >> REV_FULL_SIMP_TAC std_ss [] >>
+REPEAT STRIP_TAC >- (
+  METIS_TAC[arithmeticTheory.FUNPOW_ADD, arithmeticTheory.ADD_COMM]
+) >>
+rename1 `nn < n1 + c2` >>
+`~(nn < n1)` by METIS_TAC[] >>
+`?nn2. nn = n1 + nn2` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS, arithmeticTheory.NOT_LESS] >>
+FULL_SIMP_TAC arith_ss [] >>
+Q.PAT_X_ASSUM `!n'. n' < c2 ==> _` (MP_TAC o Q.SPEC `nn2`) >>
+FULL_SIMP_TAC std_ss [] >>
+METIS_TAC[arithmeticTheory.FUNPOW_ADD, arithmeticTheory.ADD_COMM]
+);
+
+
+val bir_exec_step_n_add = store_thm ("bir_exec_step_n_add",
+  ``!p state0 n1 n2.
+    (bir_exec_step_n p state0 (n1 + n2) = 
+      let (c1, state1) = bir_exec_step_n p state0 n1 in
+      let (c2, state2) = bir_exec_step_n p state1 n2 in
+      (c1+c2, state2))``,
+
+REPEAT GEN_TAC >>
+Cases_on `bir_exec_step_n p state0 n1` >>
+rename1 `bir_exec_step_n p state0 n1 = (c1, state1)` >>
+Cases_on `bir_exec_step_n p state1 n2` >>
+rename1 `bir_exec_step_n p state1 n2 = (c2, state2)` >>
+ASM_SIMP_TAC std_ss [LET_THM] >>
+METIS_TAC[bir_exec_step_n_combine]);
+
+
+val bir_exec_steps_combine = store_thm ("bir_exec_steps_combine",
+  ``!p state0 state1 n1 c1.
+    (bir_exec_step_n p state0 n1 = (c1, state1)) ==>
+    (bir_exec_steps p state0 = 
+       (if c1 < n1 then SOME (c1, state1) else (
+       case (bir_exec_steps p state1) of
+         | NONE => NONE
+         | SOME (c2, state2) => SOME (c1+c2, state2))))``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_step_n_EQ_THM] >>
+Cases_on `c1 < n1` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_steps_EQ_SOME]
+) >>
+`c1 = n1` by DECIDE_TAC >>
+REPEAT BasicProvers.VAR_EQ_TAC >>
+FULL_SIMP_TAC std_ss [] >>
+Cases_on `bir_exec_steps p (FUNPOW (bir_exec_step p) c1 state0)` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_steps_EQ_NONE,
+    GSYM arithmeticTheory.FUNPOW_ADD] >>
+  GEN_TAC >>
+  METIS_TAC[arithmeticTheory.ADD_COMM, arithmeticTheory.NOT_LESS,
+    arithmeticTheory.LESS_EQ_EXISTS]
+) >>
+rename1 `_ = SOME xx` >> Cases_on `xx` >>
+rename1 `_ = SOME (c2, state2)` >>
+FULL_SIMP_TAC arith_ss [pairTheory.pair_case_thm, bir_exec_steps_EQ_SOME,
+   GSYM arithmeticTheory.FUNPOW_ADD] >>
+FULL_SIMP_TAC std_ss [] >>
+GEN_TAC >> STRIP_TAC >>
+Cases_on `n < c1` >> ASM_SIMP_TAC std_ss [] >>
+`?nn. n = c1 + nn` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS, arithmeticTheory.NOT_LESS] >>
+FULL_SIMP_TAC arith_ss []);
+
+
+
+
+
 (* ------------------------------------------------------------------------- *)
 (*  Environment Order                                                        *)
 (* ------------------------------------------------------------------------- *)
