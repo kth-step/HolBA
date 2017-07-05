@@ -581,21 +581,18 @@ val bir_declare_initial_value_def = Define `
   (bir_declare_initial_value (BType_Mem at vt) = SOME (BVal_Mem at vt (K 0)))`;
 
 val bir_exec_stmt_declare_def = Define `bir_exec_stmt_declare p v ty (st : bir_state_t) =
-   let env = (
-      let vo = bir_declare_initial_value ty in
-      if bir_env_varname_is_bound st.bst_environ v then BEnv_Irregular else
-      bir_env_update v vo ty st.bst_environ) in
-    if (bir_is_regular_env env) then
-       bir_state_incr_pc p (st with bst_environ := env)
-    else
-       bir_state_set_failed st`;
+   if bir_env_varname_is_bound st.bst_environ v then
+     bir_state_set_failed st
+   else (
+      case (bir_env_update v (bir_declare_initial_value ty) ty st.bst_environ) of
+        | SOME env => bir_state_incr_pc p (st with bst_environ := env)
+        | NONE => (* Cannot happen, since bir_declare_initial_value returns value of correct type *) ARB)`;
 
 val bir_exec_stmt_assign_def = Define `bir_exec_stmt_assign p v ex (st : bir_state_t) =
-   let env = bir_env_write v (bir_eval_exp ex st.bst_environ) st.bst_environ in
-    if (bir_is_regular_env env) then
-       bir_state_incr_pc p (st with bst_environ := env)
-    else
-       bir_state_set_failed st`;
+   let env_o = bir_env_write v (bir_eval_exp ex st.bst_environ) st.bst_environ in
+   case env_o of
+     | SOME env => bir_state_incr_pc p (st with bst_environ := env)
+     | NONE => bir_state_set_failed st`;
 
 val bir_exec_stmt_halt_def = Define `bir_exec_stmt_halt ex (st : bir_state_t) =
     (st with bst_status := BST_Halted (bir_eval_exp ex st.bst_environ))`;
@@ -637,7 +634,7 @@ val bir_exec_stmt_def = Define `
 val bir_exec_step_def = Define `bir_exec_step p state =
   if (bir_state_is_terminated state) then state else
   case (bir_get_current_statement p state.bst_pc) of
-    | NONE => bir_state_set_failed state 
+    | NONE => bir_state_set_failed state
     | SOME stm => (bir_exec_stmt p stm state)
 `;
 
@@ -709,38 +706,40 @@ FULL_SIMP_TAC (std_ss++bir_pc_ss) [bir_is_valid_pc_label_OK,
 val bir_exec_step_valid_state_invar_declare = prove (
   ``!p st v. (bir_is_valid_program p /\ bir_is_valid_state p st /\ bir_is_valid_pc p st.bst_pc) ==>
              bir_is_valid_state p (bir_exec_stmt p (BStmt_Declare v) st)``,
+
 Cases_on `v` >> rename1 `BVar v ty` >>
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_exec_stmt_def, bir_exec_stmt_declare_def, LET_THM,
-  bir_is_valid_state_set_failed, bir_is_regular_env_def, bir_var_type_def, bir_var_name_def] >>
+  bir_is_valid_state_set_failed, bir_var_type_def, bir_var_name_def] >>
 REPEAT STRIP_TAC >>
+Cases_on `bir_env_varname_is_bound st.bst_environ v` >> ASM_REWRITE_TAC[] >>
+
+`?env. (bir_env_update v (bir_declare_initial_value ty) ty st.bst_environ = SOME env)` by (
+  Cases_on `st.bst_environ` >>
+  Cases_on `ty` >> (
+    FULL_SIMP_TAC std_ss [bir_declare_initial_value_def, type_of_bir_val_def, bir_env_update_def]
+  )
+) >>
+ASM_SIMP_TAC std_ss [] >>
 MATCH_MP_TAC bir_is_valid_state_incr_pc >>
-ASM_SIMP_TAC (std_ss++bir_state_ss) [] >>
 FULL_SIMP_TAC (std_ss++bir_state_ss) [bir_is_valid_state_def] >>
-Q.PAT_X_ASSUM `bir_is_regular_env _` MP_TAC >>
-Cases_on `st.bst_environ` >> SIMP_TAC std_ss [bir_env_update_def, bir_is_regular_env_def] >>
-COND_CASES_TAC >- SIMP_TAC std_ss [bir_is_regular_env_def] >>
-FULL_SIMP_TAC (std_ss) [bir_is_regular_env_def, bir_is_well_typed_env_def] >>
-ConseqConv.CONSEQ_REWRITE_TAC ([finite_mapTheory.FEVERY_STRENGTHEN_THM], [], []) >>
-Cases_on `bir_declare_initial_value ty` >> FULL_SIMP_TAC std_ss []);
+METIS_TAC[bir_env_update_is_well_typed_env]);
+
 
 
 val bir_exec_step_valid_state_invar_assign = prove (
   ``!p st v ex. (bir_is_valid_program p /\ bir_is_valid_state p st /\ bir_is_valid_pc p st.bst_pc) ==>
                  bir_is_valid_state p (bir_exec_stmt p (BStmt_Assign v ex) st)``,
 Cases_on `v` >> rename1 `BVar v ty` >>
-SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_exec_stmt_def, bir_exec_stmt_assign_def, LET_THM,
-  bir_is_valid_state_set_failed, bir_is_regular_env_def] >>
 REPEAT STRIP_TAC >>
+SIMP_TAC std_ss [bir_exec_stmt_def, bir_exec_stmt_assign_def, LET_THM] >>
+Cases_on `bir_env_write (BVar v ty) (bir_eval_exp ex st.bst_environ)
+       st.bst_environ` >> (
+  ASM_SIMP_TAC std_ss [bir_is_valid_state_set_failed]
+) >>
 MATCH_MP_TAC bir_is_valid_state_incr_pc >>
 ASM_SIMP_TAC (std_ss++bir_state_ss) [] >>
 FULL_SIMP_TAC (std_ss++bir_state_ss) [bir_is_valid_state_def] >>
-Q.PAT_X_ASSUM `bir_is_regular_env _` MP_TAC >>
-SIMP_TAC std_ss [bir_env_write_def] >>
-COND_CASES_TAC >> SIMP_TAC std_ss [bir_is_regular_env_def, bir_var_name_def, bir_var_type_def] >>
-Cases_on `st.bst_environ` >> SIMP_TAC std_ss [bir_env_update_def, bir_is_regular_env_def] >>
-COND_CASES_TAC >> SIMP_TAC std_ss [bir_is_regular_env_def, bir_is_well_typed_env_def] >>
-ConseqConv.CONSEQ_REWRITE_TAC ([finite_mapTheory.FEVERY_STRENGTHEN_THM], [], []) >>
-FULL_SIMP_TAC std_ss [bir_is_well_typed_env_def]);
+METIS_TAC[bir_env_write_is_well_typed_env]);
 
 
 val bir_exec_step_valid_state_invar_jmp' = prove (
@@ -766,6 +765,7 @@ COND_CASES_TAC >| [
 
   FULL_SIMP_TAC (std_ss++bir_state_ss++bir_status_ss) [bir_is_valid_state_def]
 ]);
+
 
 val bir_exec_step_valid_state_invar_jmp = prove (
   ``!p st l. (bir_is_valid_program p /\ bir_is_valid_state p st /\ bir_is_valid_pc p st.bst_pc) ==>
@@ -1090,26 +1090,27 @@ REPEAT CASE_TAC >> SIMP_TAC (std_ss++bir_state_ss) [bir_state_incr_pc_SAME_ENV,
 val bir_exec_stmt_declare_ENV = store_thm("bir_exec_stmt_declare_ENV",
   ``!p vn vty st. (bir_exec_stmt_declare p vn vty st).bst_environ =
       if (bir_env_varname_is_bound st.bst_environ vn) then st.bst_environ else
-      (bir_env_update vn (bir_declare_initial_value vty) vty
+      THE (bir_env_update vn (bir_declare_initial_value vty) vty
             st.bst_environ)``,
 
 SIMP_TAC (std_ss++bir_state_ss) [bir_exec_stmt_declare_def, LET_DEF] >>
 REPEAT STRIP_TAC >>
 REPEAT CASE_TAC >> (
    FULL_SIMP_TAC (std_ss++bir_state_ss) [bir_state_incr_pc_SAME_ENV,
-     bir_state_set_failed_SAME_ENV, bir_is_regular_env_def]
+     bir_state_set_failed_SAME_ENV]
 ) >>
-Cases_on `st.bst_environ` >> FULL_SIMP_TAC std_ss [bir_env_update_def] >>
-Cases_on `vty` >> FULL_SIMP_TAC std_ss [bir_declare_initial_value_def,
-  bir_is_regular_env_def, type_of_bir_val_def]);
+Cases_on `st.bst_environ` >> Cases_on `vty` >> (
+  FULL_SIMP_TAC std_ss [bir_env_update_def, bir_declare_initial_value_def,
+     type_of_bir_val_def]
+));
 
 
 val bir_exec_stmt_assign_ENV = store_thm("bir_exec_stmt_assign_ENV",
   ``!p v e st.
       (bir_exec_stmt_assign p v e st).bst_environ =
-      (if bir_is_regular_env (bir_env_write v (bir_eval_exp e st.bst_environ) st.bst_environ) then
-         (bir_env_write v (bir_eval_exp e st.bst_environ) st.bst_environ)
-       else st.bst_environ)``,
+      (case bir_env_write v (bir_eval_exp e st.bst_environ) st.bst_environ of
+         | SOME env => env
+         | NONE => st.bst_environ)``,
 
 SIMP_TAC (std_ss++bir_state_ss) [bir_exec_stmt_assign_def, LET_DEF] >>
 REPEAT STRIP_TAC >>
@@ -1131,15 +1132,22 @@ Cases_on `stmt` >> (
   REPEAT STRIP_TAC >>
   rename1 `bir_var_name v` >>
   Cases_on `bir_env_varname_is_bound st.bst_environ (bir_var_name v)` >> ASM_REWRITE_TAC[] >>
-  MATCH_MP_TAC bir_env_order_update >>
-  ASM_REWRITE_TAC[] >>
-  Cases_on `bir_var_type v` >> (
-    ASM_SIMP_TAC std_ss [bir_declare_initial_value_def, type_of_bir_val_def]
-  )
+  `?env'. bir_env_update (bir_var_name v)
+            (bir_declare_initial_value (bir_var_type v)) (bir_var_type v)
+            st.bst_environ = SOME env'` by (
+    Cases_on `st.bst_environ` >> Cases_on `bir_var_type v` >> (
+      ASM_SIMP_TAC std_ss [bir_declare_initial_value_def, bir_env_update_def,
+        type_of_bir_val_def]
+    )
+  ) >>
+  ASM_SIMP_TAC std_ss [] >>
+  METIS_TAC[bir_env_order_update]
 ) >- (
   REPEAT STRIP_TAC >>
-  MATCH_MP_TAC bir_env_order_write >>
-  ASM_REWRITE_TAC[]
+  Cases_on `bir_env_write b (bir_eval_exp b0 st.bst_environ) st.bst_environ` >> (
+    ASM_SIMP_TAC std_ss [bir_env_order_REFL]
+  ) >>
+  METIS_TAC [bir_env_order_write]
 ));
 
 
