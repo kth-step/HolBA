@@ -63,7 +63,7 @@ val bir_eval_ifthenelse_def = Define `
 val bir_eval_load_def = Define `
   (bir_eval_load (BVal_Mem ta tv mmap) (BVal_Imm a) en t =
      if ((type_of_bir_imm a) = ta) then
-        (case (bir_load_from_mem tv t mmap en (b2n a)) of
+        (case (bir_load_from_mem tv t ta mmap en (b2n a)) of
            NONE => BVal_Unknown
          | SOME i => BVal_Imm i)
      else BVal_Unknown) /\
@@ -72,7 +72,7 @@ val bir_eval_load_def = Define `
 val bir_eval_store_def = Define `
   (bir_eval_store (BVal_Mem ta tv mmap) (BVal_Imm a) en (BVal_Imm v) =
      if ((type_of_bir_imm a) = ta) then
-        (case (bir_store_in_mem tv v mmap en (b2n a)) of
+        (case (bir_store_in_mem tv ta v mmap en (b2n a)) of
            NONE => BVal_Unknown
          | SOME mmap' => BVal_Mem ta tv mmap')
      else BVal_Unknown) /\
@@ -223,7 +223,7 @@ ASM_SIMP_TAC std_ss [bir_load_from_mem_NO_ENDIAN]);
 
 val bir_eval_load_Unknown_REWRS5 = prove (
   ``!a en t i aty vty mmap en.
-      (bir_number_of_mem_splits vty t = NONE) ==>
+      (bir_number_of_mem_splits vty t aty = NONE) ==>
       (bir_eval_load (BVal_Mem aty vty mmap) (BVal_Imm i) en t = BVal_Unknown)``,
 
 SIMP_TAC std_ss [bir_eval_load_def] >>
@@ -245,14 +245,20 @@ val bir_eval_load_SINGLE_REWR = store_thm ("bir_eval_load_SINGLE_REWR",
       ((if (type_of_bir_imm i = aty) then (BVal_Imm (n2bs (mmap (b2n i)) vty))
        else BVal_Unknown))``,
 
-SIMP_TAC arith_ss [bir_eval_load_def, bir_load_from_mem_SINGLE]);
+SIMP_TAC arith_ss [bir_eval_load_def, bir_load_from_mem_SINGLE] >>
+REPEAT STRIP_TAC >>
+COND_CASES_TAC >> ASM_REWRITE_TAC[] >>
+`bir_mem_addr aty (b2n i) = b2n i` suffices_by ASM_SIMP_TAC std_ss [] >>
+MATCH_MP_TAC bir_mem_addr_id >>
+METIS_TAC[b2n_lt]
+);
 
 
 val bir_eval_load_BASIC_REWR = store_thm ("bir_eval_load_BASIC_REWR",
   ``!a en t i aty vty ty mmap en.
       (bir_eval_load (BVal_Mem aty vty mmap) (BVal_Imm i) en ty) =
       (if type_of_bir_imm i = aty then
-        case bir_load_from_mem vty ty mmap en (b2n i) of
+        case bir_load_from_mem vty ty aty mmap en (b2n i) of
           NONE => BVal_Unknown
         | SOME i => BVal_Imm i
        else BVal_Unknown)``,
@@ -265,17 +271,22 @@ let
       (type_of_bir_imm a <> ta) ==>
       (bir_eval_load (BVal_Mem ta tv mmap) (BVal_Imm a) en tr = BVal_Unknown)) /\
       (!tr tv.
-      (tr <> tv) ==> (bir_number_of_mem_splits tv tr <> NONE) ==>
+      (tr <> tv) ==> (bir_number_of_mem_splits tv tr ta <> NONE) ==>
       (bir_eval_load (BVal_Mem ta tv mmap) (BVal_Imm i) BEnd_NoEndian tr = BVal_Unknown)) /\
       (!tr tv.
-      (bir_number_of_mem_splits tv tr = NONE) ==>
+      (bir_number_of_mem_splits tv tr ta = NONE) ==>
       (bir_eval_load (BVal_Mem ta tv mmap) (BVal_Imm i) en tr = BVal_Unknown))``,
    SIMP_TAC std_ss [bir_eval_load_Unknown_REWRS])
 
   val thm_prune1 = SIMP_RULE (std_ss ++ bir_imm_ss ++ DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``, ``:bir_imm_t``]) [bir_number_of_mem_splits_REWRS, type_of_bir_imm_def] thm_prune0
 
-  val thm_prune2 = SIMP_RULE std_ss [FORALL_AND_THM, GSYM CONJ_ASSOC] (GEN_ALL thm_prune1)
 
+  val (l1, l2) = partition (is_imp_only o concl) (CONJUNCTS thm_prune1)
+
+  val l1' = map (SIMP_RULE (list_ss++bir_imm_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``]) [bir_number_of_mem_splits_REWRS] o (Q.GEN `ta`)) l1
+
+  val thm_prune2 = SIMP_RULE std_ss [FORALL_AND_THM, GSYM CONJ_ASSOC] (GEN_ALL
+    (LIST_CONJ (l1' @ l2)))
 
   val thm0 = bir_eval_load_BASIC_REWR
 
@@ -288,7 +299,7 @@ let
      FORALL_AND_THM, b2n_MOD_2EXP, type_of_bir_imm_def, size_of_bir_immtype_def]
      thm2
 
-  val thm4 = REWRITE_RULE [b2n_def, GSYM CONJ_ASSOC] (CONJ thm3 thm_prune2)
+  val thm4 = REWRITE_RULE [b2n_def, bir_mem_addr_w2n_sizes, GSYM CONJ_ASSOC] (CONJ thm3 thm_prune2)
 in thm4
 end);
 
@@ -338,7 +349,7 @@ ASM_SIMP_TAC std_ss [bir_store_in_mem_NO_ENDIAN]);
 
 val bir_eval_store_Unknown_REWRS6 = prove (
   ``!a en v aty vty mmap en.
-      (bir_number_of_mem_splits vty (type_of_bir_imm v) = NONE) ==>
+      (bir_number_of_mem_splits vty (type_of_bir_imm v) aty = NONE) ==>
       (bir_eval_store (BVal_Mem aty vty mmap) a en (BVal_Imm v) = BVal_Unknown)``,
 
 Cases_on `a` >> SIMP_TAC std_ss [bir_eval_store_def, LET_DEF] >>
@@ -359,15 +370,18 @@ val bir_eval_store_SINGLE_REWR = store_thm ("bir_eval_store_SINGLE_REWR",
       (bir_eval_store (BVal_Mem aty vty mmap) (BVal_Imm i) en (BVal_Imm v) =
       (BVal_Mem aty vty ((b2n i =+ b2n v) mmap)))``,
 
-SIMP_TAC arith_ss [bir_eval_store_def, bir_store_in_mem_SINGLE]);
-
+SIMP_TAC arith_ss [bir_eval_store_def, bir_store_in_mem_SINGLE] >>
+REPEAT STRIP_TAC >>
+`bir_mem_addr (type_of_bir_imm i) (b2n i) = b2n i` suffices_by ASM_SIMP_TAC std_ss [] >>
+MATCH_MP_TAC bir_mem_addr_id >>
+METIS_TAC[b2n_lt]);
 
 
 val bir_eval_store_BASIC_REWR = store_thm ("bir_eval_store_BASIC_REWR",
   ``!a en t i aty v vty mmap en.
       (bir_eval_store (BVal_Mem aty vty mmap) (BVal_Imm i) en (BVal_Imm v) =
       (if type_of_bir_imm i = aty then
-         case bir_store_in_mem vty v mmap en (b2n i) of
+         case bir_store_in_mem vty aty v mmap en (b2n i) of
            NONE => BVal_Unknown
          | SOME mmap' => BVal_Mem aty vty mmap'
        else BVal_Unknown))``,
@@ -381,16 +395,21 @@ let
       (type_of_bir_imm a <> ta) ==>
       (bir_eval_store (BVal_Mem ta tv mmap) (BVal_Imm a) en v = BVal_Unknown)) /\
       (!i tv.
-      (type_of_bir_imm i <> tv) ==> (bir_number_of_mem_splits tv (type_of_bir_imm i) <> NONE) ==>
+      (type_of_bir_imm i <> tv) ==> (bir_number_of_mem_splits tv (type_of_bir_imm i) ta <> NONE) ==>
       (bir_eval_store (BVal_Mem ta tv mmap) a BEnd_NoEndian (BVal_Imm i) = BVal_Unknown)) /\
       (!i tv.
-      (bir_number_of_mem_splits tv (type_of_bir_imm i) = NONE) ==>
+      (bir_number_of_mem_splits tv (type_of_bir_imm i) ta = NONE) ==>
       (bir_eval_store (BVal_Mem ta tv mmap) a en (BVal_Imm i) = BVal_Unknown))``,
    SIMP_TAC std_ss [bir_eval_store_Unknown_REWRS])
 
-  val thm_prune1 = SIMP_RULE (std_ss ++ bir_imm_ss ++ DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``, ``:bir_imm_t``]) [bir_number_of_mem_splits_REWRS, type_of_bir_imm_def] thm_prune0
+  val thm_prune1 = SIMP_RULE (std_ss ++ bir_imm_ss ++ DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``, ``:bir_imm_t``]) [bir_number_of_mem_splits_REWRS, type_of_bir_imm_def, FORALL_AND_THM] thm_prune0
 
-  val thm_prune2 = SIMP_RULE std_ss [FORALL_AND_THM, GSYM CONJ_ASSOC] (GEN_ALL thm_prune1)
+  val (l1, l2) = partition (is_imp_only o snd o strip_forall o concl) (CONJUNCTS thm_prune1)
+
+  val l1' = map (SIMP_RULE (list_ss++bir_imm_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``]) [bir_number_of_mem_splits_REWRS] o (Q.GEN `ta`)) l1
+
+  val thm_prune2 = SIMP_RULE std_ss [FORALL_AND_THM, GSYM CONJ_ASSOC] (GEN_ALL
+    (LIST_CONJ (l1' @ l2)))
 
 
   val thm0 = SIMP_RULE (std_ss) [bir_eval_store_Unknown_REWRS, FORALL_AND_THM] bir_eval_store_BASIC_REWR
