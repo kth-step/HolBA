@@ -48,13 +48,13 @@ val type_of_bir_exp_def = Define `
 
   (type_of_bir_exp (BExp_Load me ae en rty) = (case (type_of_bir_exp me, type_of_bir_exp ae) of
        (SOME (BType_Mem aty vty), SOME (BType_Imm aty')) => (if (
-            (aty = aty') /\ (if en = BEnd_NoEndian then (vty = rty) else (bir_number_of_mem_splits vty rty <> NONE))
+            (aty = aty') /\ (if en = BEnd_NoEndian then (vty = rty) else (bir_number_of_mem_splits vty rty aty <> NONE))
            ) then SOME (BType_Imm rty) else NONE)
        | _, _ => NONE)) /\
 
   (type_of_bir_exp (BExp_Store me ae en v) = (case (type_of_bir_exp me, type_of_bir_exp ae, type_of_bir_exp v) of
        (SOME (BType_Mem aty vty), SOME (BType_Imm aty'), SOME (BType_Imm rty)) => (if (
-            (aty = aty') /\ (if en = BEnd_NoEndian then (vty = rty) else (bir_number_of_mem_splits vty rty <> NONE))
+            (aty = aty') /\ (if en = BEnd_NoEndian then (vty = rty) else (bir_number_of_mem_splits vty rty aty <> NONE))
            ) then SOME (BType_Mem aty vty) else NONE)
        | _, _, _ => NONE))`;
 
@@ -137,7 +137,7 @@ val type_of_bir_exp_EQ_SOME_REWRS = store_thm ("type_of_bir_exp_EQ_SOME_REWRS",`
      (ty = BType_Imm rty) /\ (?at vt. (type_of_bir_exp me = SOME (BType_Mem at vt)) /\
                             (type_of_bir_exp ae = SOME (BType_Imm at)) /\
                             (if en = BEnd_NoEndian then (vt = rty) else
-                                  (bir_number_of_mem_splits vt rty <> NONE))))) /\
+                                  (bir_number_of_mem_splits vt rty at <> NONE))))) /\
 
   (!ty ae en me v. (type_of_bir_exp (BExp_Store me ae en v) = SOME ty) <=> (
      ?at vt rty. (ty = BType_Mem at vt) /\
@@ -145,7 +145,7 @@ val type_of_bir_exp_EQ_SOME_REWRS = store_thm ("type_of_bir_exp_EQ_SOME_REWRS",`
              (type_of_bir_exp ae = SOME (BType_Imm at)) /\
              (type_of_bir_exp v = SOME (BType_Imm rty)) /\
              (if en = BEnd_NoEndian then (vt = rty) else
-                                  (bir_number_of_mem_splits vt rty <> NONE))))
+                                  (bir_number_of_mem_splits vt rty at <> NONE))))
 ``,
 
 REPEAT CONJ_TAC >> (
@@ -204,7 +204,7 @@ val type_of_bir_exp_EQ_NONE_REWRS = store_thm ("type_of_bir_exp_EQ_NONE_REWRS",`
      (!at vt. (type_of_bir_exp me = SOME (BType_Mem at vt)) /\
               (type_of_bir_exp ae = SOME (BType_Imm at)) ==>
               (if en = BEnd_NoEndian then (vt <> rty) else
-                   (bir_number_of_mem_splits vt rty = NONE))))) /\
+                   (bir_number_of_mem_splits vt rty at = NONE))))) /\
 
   (!ty ae en me v. (type_of_bir_exp (BExp_Store me ae en v) = NONE) <=> (
      !at vt rty.
@@ -212,7 +212,7 @@ val type_of_bir_exp_EQ_NONE_REWRS = store_thm ("type_of_bir_exp_EQ_NONE_REWRS",`
              (type_of_bir_exp ae = SOME (BType_Imm at)) /\
              (type_of_bir_exp v = SOME (BType_Imm rty)) ==>
              (if en = BEnd_NoEndian then (vt <> rty) else
-                                  (bir_number_of_mem_splits vt rty = NONE))))
+                                  (bir_number_of_mem_splits vt rty at = NONE))))
 ``,
 
 REPEAT CONJ_TAC >> (
@@ -295,8 +295,8 @@ GEN_TAC >> STRIP_TAC >> Induct >> (
   METIS_TAC[]
 ) >- (
   ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_load_BASIC_REWR] >>
-  rename1 `bir_load_from_mem vt ity mmap en (b2n i)` >>
-  Cases_on `bir_load_from_mem vt ity mmap en (b2n i)` >- (
+  rename1 `bir_load_from_mem vt ity at mmap en (b2n i)` >>
+  Cases_on `bir_load_from_mem vt ity at mmap en (b2n i)` >- (
     POP_ASSUM MP_TAC >>
     ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_load_from_mem_EQ_NONE] >>
     Cases_on `en = BEnd_NoEndian` >> (
@@ -307,8 +307,8 @@ GEN_TAC >> STRIP_TAC >> Induct >> (
   METIS_TAC [type_of_bir_load_from_mem]
 ) >- (
   ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_store_BASIC_REWR] >>
-  rename1 `bir_store_in_mem vt ity mmap en (b2n i)` >>
-  Cases_on `bir_store_in_mem vt ity mmap en (b2n i)` >- (
+  rename1 `bir_store_in_mem vt at ity mmap en (b2n i)` >>
+  Cases_on `bir_store_in_mem vt at ity mmap en (b2n i)` >- (
     POP_ASSUM MP_TAC >>
     ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_store_in_mem_EQ_NONE] >>
     Cases_on `en = BEnd_NoEndian` >> (
