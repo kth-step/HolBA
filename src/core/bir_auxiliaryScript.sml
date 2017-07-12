@@ -145,6 +145,197 @@ ASM_SIMP_TAC list_ss [rich_listTheory.DROP_EL_CONS, arithmeticTheory.ADD1]);
 
 
 (* -------------------------------------------------------------------------- *)
+(* While lemmata                                                              *)
+(* -------------------------------------------------------------------------- *)
+
+val LEAST_SUC = store_thm ("LEAST_SUC",
+``!P. ~(P 0) /\ (?i. P i) ==> ((LEAST i. P i) = SUC (LEAST i. P (SUC i)))``,
+
+REPEAT STRIP_TAC >>
+`?i'. i = SUC i'` by (
+  Cases_on `i` >> FULL_SIMP_TAC arith_ss []
+) >>
+BasicProvers.VAR_EQ_TAC >>
+DEEP_INTRO_TAC whileTheory.LEAST_ELIM >>
+REPEAT STRIP_TAC >- METIS_TAC[] >>
+DEEP_INTRO_TAC whileTheory.LEAST_ELIM >>
+REPEAT STRIP_TAC >- METIS_TAC[] >>
+rename1 `n1' = SUC n2` >>
+`?n1. n1' = SUC n1` by (
+  Cases_on `n1'` >> FULL_SIMP_TAC arith_ss []
+) >>
+BasicProvers.VAR_EQ_TAC >>
+
+`~(SUC n2 < SUC n1)` by METIS_TAC[] >>
+`~(n1 < n2)` by METIS_TAC[] >>
+DECIDE_TAC);
+
+
+(* -------------------------------------------------------------------------- *)
+(* Optional Minimum                                                           *)
+(* -------------------------------------------------------------------------- *)
+
+val OPT_NUM_MIN_def = Define `
+   (OPT_NUM_MIN NONE no2 = no2) /\
+   (OPT_NUM_MIN no1 NONE = no1) /\
+   (OPT_NUM_MIN (SOME n1) (SOME n2) = SOME (MIN n1 n2))`;
+
+
+val OPT_NUM_MIN_REWRS = store_thm ("OPT_NUM_MIN_REWRS",
+`` (!no. (OPT_NUM_MIN NONE no = no)) /\
+   (!no. (OPT_NUM_MIN no NONE = no)) /\
+   (!n1 n2. (OPT_NUM_MIN (SOME n1) (SOME n2) = SOME (MIN n1 n2)))``,
+
+REPEAT CONJ_TAC >> REPEAT Cases >>
+SIMP_TAC std_ss [OPT_NUM_MIN_def]);
+
+
+val OPT_NUM_MIN_COMM = store_thm ("OPT_NUM_MIN_COMM",
+``!no1 no2. (OPT_NUM_MIN no1 no2 = OPT_NUM_MIN no2 no1)``,
+
+Cases >> Cases >> SIMP_TAC std_ss [OPT_NUM_MIN_REWRS] >>
+METIS_TAC[arithmeticTheory.MIN_COMM]);
+
+
+val OPT_NUM_MIN_ASSOC = store_thm ("OPT_NUM_MIN_ASSOC",
+``!no1 no2 no3. (OPT_NUM_MIN no1 (OPT_NUM_MIN no2 no3)) = OPT_NUM_MIN (OPT_NUM_MIN no1 no2) no3``,
+
+Cases >> Cases >> Cases >> SIMP_TAC std_ss [OPT_NUM_MIN_REWRS] >>
+METIS_TAC[arithmeticTheory.MIN_ASSOC]);
+
+
+val OPT_NUM_MIN_SOME0 = store_thm ("OPT_NUM_MIN_SOME0",
+``(!no. (OPT_NUM_MIN no (SOME 0)) = SOME 0) /\
+  (!no. (OPT_NUM_MIN (SOME 0) no) = SOME 0)``,
+
+REPEAT CONJ_TAC >> (
+  Cases >> SIMP_TAC std_ss [OPT_NUM_MIN_REWRS]
+));
+
+
+val OPT_NUM_MIN_CASES = store_thm ("OPT_NUM_MIN_CASES",
+``!no1 no2. (OPT_NUM_MIN no1 no2 = no1) \/
+            (OPT_NUM_MIN no1 no2 = no2)``,
+
+REPEAT Cases >>
+SIMP_TAC std_ss [OPT_NUM_MIN_REWRS, arithmeticTheory.MIN_DEF] >>
+METIS_TAC[]);
+
+
+
+val OPT_NUM_PRE_def = Define `OPT_NUM_PRE = OPTION_MAP PRE`;
+val OPT_NUM_SUC_def = Define `OPT_NUM_SUC = OPTION_MAP SUC`;
+
+val OPT_NUM_PRE_SUC = store_thm ("OPT_NUM_PRE_SUC",
+  ``!no. OPT_NUM_PRE (OPT_NUM_SUC no) = no``,
+Cases >> SIMP_TAC std_ss [OPT_NUM_PRE_def, OPT_NUM_SUC_def]);
+
+
+val OPT_NUM_MIN_SOME_SUC_aux = prove (
+``(!no n. (OPT_NUM_MIN no (SOME (SUC n))) = if (no = SOME 0) then SOME 0 else
+     SOME (SUC (THE (OPT_NUM_MIN (OPT_NUM_PRE no) (SOME n)))))``,
+
+Cases >> (
+  SIMP_TAC std_ss [OPT_NUM_MIN_REWRS, arithmeticTheory.MIN_DEF, OPT_NUM_PRE_def]
+) >>
+GEN_TAC >>
+rename1 `x < SUC n` >>
+Cases_on `x` >> SIMP_TAC arith_ss []);
+
+
+val OPT_NUM_MIN_SOME_SUC = save_thm ("OPT_NUM_MIN_SOME_SUC",
+  CONJ OPT_NUM_MIN_SOME_SUC_aux
+       (ONCE_REWRITE_RULE [OPT_NUM_MIN_COMM] OPT_NUM_MIN_SOME_SUC_aux));
+
+
+val OPT_NUM_MIN_OPT_NUM_SUC_aux = prove (
+``(!no1 no2. (OPT_NUM_MIN no1 (OPT_NUM_SUC no2)) = if (no1 = SOME 0) then SOME 0 else
+     OPT_NUM_SUC (OPT_NUM_MIN (OPT_NUM_PRE no1) no2))``,
+
+Cases_on `no2` >- (
+  Cases_on `no1` >> (
+    SIMP_TAC std_ss [OPT_NUM_SUC_def, OPT_NUM_PRE_def, OPT_NUM_MIN_REWRS]
+  ) >>
+  rename1 `SOME n  = _` >> Cases_on `n` >> SIMP_TAC arith_ss []
+) >>
+SIMP_TAC std_ss [OPT_NUM_SUC_def, OPT_NUM_MIN_SOME_SUC] >>
+Cases_on `no1` >> (
+   SIMP_TAC std_ss [OPT_NUM_MIN_REWRS, OPT_NUM_PRE_def, OPT_NUM_SUC_def]
+));
+
+val OPT_NUM_MIN_OPT_NUM_SUC = save_thm ("OPT_NUM_MIN_OPT_NUM_SUC",
+  CONJ OPT_NUM_MIN_OPT_NUM_SUC_aux
+       (ONCE_REWRITE_RULE [OPT_NUM_MIN_COMM] OPT_NUM_MIN_OPT_NUM_SUC_aux));
+
+val OPT_CONS_def = Define `OPT_CONS eo l = option_CASE eo l (\e. CONS e l)`
+
+val OPT_CONS_REWRS = store_thm ("OPT_CONS_REWRS",
+  ``(!l. OPT_CONS NONE l = l) /\
+    (!e l. OPT_CONS (SOME e) l = e::l)``,
+SIMP_TAC std_ss [OPT_CONS_def]);
+
+
+val OPT_CONS_APPEND = store_thm ("OPT_CONS_APPEND",
+  ``!eo l1 l2. (OPT_CONS eo l1) ++ l2 =
+      OPT_CONS eo (l1 ++ l2)``,
+Cases >> SIMP_TAC list_ss [OPT_CONS_REWRS]);
+
+
+val OPT_CONS_REVERSE = store_thm ("OPT_CONS_REVERSE",
+  ``!eo l. REVERSE (OPT_CONS eo l) = REVERSE l ++ OPT_CONS eo []``,
+Cases >> SIMP_TAC list_ss [OPT_CONS_REWRS]);
+
+
+
+(* -------------------------------------------------------------------------- *)
+(* lazy lists                                                                 *)
+(* -------------------------------------------------------------------------- *)
+
+val LGENLIST_UNFOLD_NONE = store_thm ("LGENLIST_UNFOLD_NONE",
+  ``!f. LGENLIST f NONE = (f 0) ::: (LGENLIST (f o SUC) NONE)``,
+
+SIMP_TAC arith_ss [llistTheory.LGENLIST_EQ_CONS,
+  combinTheory.o_DEF, GSYM arithmeticTheory.ADD1]);
+
+
+val LGENLIST_UNFOLD_NEQ_SOME0 = store_thm ("LGENLIST_UNFOLD_NEQ_SOME0",
+  ``!no f. (no <> SOME 0) ==> (LGENLIST f no = (f 0) ::: (LGENLIST (f o SUC) (OPT_NUM_PRE no)))``,
+
+Cases >- (
+  SIMP_TAC std_ss [OPT_NUM_PRE_def] >>
+  METIS_TAC[LGENLIST_UNFOLD_NONE]
+) >>
+rename1 `SOME n <> SOME 0` >>
+Cases_on `n` >- (
+  SIMP_TAC std_ss []
+) >>
+rename1 `SOME (SUC n') <> SOME 0` >>
+SIMP_TAC std_ss [llistTheory.LGENLIST_SOME, OPT_NUM_PRE_def]);
+
+
+val OPT_LCONS_def = Define `OPT_LCONS eo l = option_CASE eo l (\e. LCONS e l)`
+
+val OPT_LCONS_REWRS = store_thm ("OPT_LCONS_REWRS",
+  ``(!ll. OPT_LCONS NONE ll = ll) /\
+    (!e ll. OPT_LCONS (SOME e) ll = e:::ll)``,
+SIMP_TAC std_ss [OPT_LCONS_def]);
+
+
+val OPT_CONS_fromList = store_thm ("OPT_CONS_fromList",
+  ``!eo l. fromList (OPT_CONS eo l) = OPT_LCONS eo (fromList l)``,
+
+Cases >> SIMP_TAC std_ss [OPT_CONS_REWRS, OPT_LCONS_REWRS, llistTheory.fromList_def]);
+
+
+val LMAP_EQ_LNIL = store_thm ("LMAP_EQ_LNIL",
+``!f ll. (LMAP f ll = LNIL) <=> (ll = LNIL)``,
+
+Cases_on `ll` >> (
+  SIMP_TAC std_ss [llistTheory.LMAP, llistTheory.LCONS_NOT_NIL]
+));
+
+
+(* -------------------------------------------------------------------------- *)
 (* Word lemmata                                                               *)
 (* -------------------------------------------------------------------------- *)
 

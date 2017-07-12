@@ -26,16 +26,16 @@ val bir_list_of_types = [
    mk_thy_type {Tyop="bir_env_cond_t",       Thy="bir_env", Args=[]},
 
    mk_thy_type {Tyop="bir_label_t",          Thy="bir_program", Args=[]},
+   mk_thy_type {Tyop="bir_label_exp_t",      Thy="bir_program", Args=[]},
    mk_thy_type {Tyop="bir_stmt_end_t",       Thy="bir_program", Args=[]},
-   mk_thy_type {Tyop="bir_stmt_basic_t",     Thy="bir_program", Args=[]},
-   mk_thy_type {Tyop="bir_stmt_t",           Thy="bir_program", Args=[]},
-   mk_thy_type {Tyop="bir_block_t",          Thy="bir_program", Args=[]},
-   mk_thy_type {Tyop="bir_program_t",        Thy="bir_program", Args=[]},
+   mk_thy_type {Tyop="bir_stmt_basic_t",     Thy="bir_program", Args=[Type.alpha]},
+   mk_thy_type {Tyop="bir_stmt_t",           Thy="bir_program", Args=[Type.alpha]},
+   mk_thy_type {Tyop="bir_block_t",          Thy="bir_program", Args=[Type.alpha]},
+   mk_thy_type {Tyop="bir_program_t",        Thy="bir_program", Args=[Type.alpha]},
    mk_thy_type {Tyop="bir_programcounter_t", Thy="bir_program", Args=[]},
    mk_thy_type {Tyop="bir_status_t",         Thy="bir_program", Args=[]},
    mk_thy_type {Tyop="bir_state_t",          Thy="bir_program", Args=[]}
 ];
-
 
 
 val bir_TYPES_ss = rewrites (flatten (map type_rws bir_list_of_types))

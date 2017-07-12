@@ -1,10 +1,10 @@
 open HolKernel Parse boolLib bossLib;
 open bir_envTheory bir_valuesTheory
 open bir_programTheory HolBACoreSimps;
+open bir_program_multistep_propsTheory;
 
 
 val _ = new_theory "bir_program_env_order";
-
 
 
 (* ------------------------------------------------------------------------- *)
@@ -17,20 +17,24 @@ val bir_exec_stmtE_env_unchanged = store_thm ("bir_exec_stmtE_env_unchanged",
 
 REPEAT GEN_TAC >>
 Cases_on `stmt` >> (
-  SIMP_TAC (std_ss++holBACore_ss++holBACore_ss) [
+  SIMP_TAC (std_ss++holBACore_ss) [
     bir_exec_stmtE_def, LET_DEF, bir_exec_stmt_cjmp_def,
-    bir_exec_stmt_jmp_def, bir_exec_stmt_halt_def, bir_state_set_failed_def] >>
+    bir_exec_stmt_jmp_def, bir_exec_stmt_jmp_to_label_def,
+    bir_exec_stmt_halt_def, bir_state_set_failed_def] >>
   REPEAT CASE_TAC >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss++holBACore_ss) []
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
 ));
+
 
 (* ------------------------------------------------------------------------- *)
 (*  Only declare and assign update the environment                           *)
 (* ------------------------------------------------------------------------- *)
 
+
 val bir_state_set_failed_SAME_ENV = store_thm ("bir_state_set_failed_SAME_ENV",
   ``!st. (bir_state_set_failed st).bst_environ = st.bst_environ``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def]);
+
 
 val bir_exec_stmt_assume_SAME_ENV = store_thm("bir_exec_stmt_assume_SAME_ENV",
   ``!e st. (bir_exec_stmt_assume e st).bst_environ = st.bst_environ``,
@@ -49,6 +53,14 @@ REPEAT CASE_TAC >> SIMP_TAC (std_ss++holBACore_ss) [
    bir_state_set_failed_SAME_ENV]
 );
 
+
+val bir_exec_stmt_observe_SAME_ENV = store_thm("bir_exec_stmt_observe_SAME_ENV",
+  ``!ec el obf st. (SND (bir_exec_stmt_observe ec el obf st)).bst_environ = st.bst_environ``,
+SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_observe_def] >>
+REPEAT STRIP_TAC >>
+REPEAT CASE_TAC >> SIMP_TAC (std_ss++holBACore_ss) [
+   bir_state_set_failed_SAME_ENV]
+);
 
 
 (* ------------------------------------------------------------------------- *)
@@ -93,16 +105,18 @@ REPEAT CASE_TAC >> (
 (* ------------------------------------------------------------------------- *)
 
 val bir_exec_stmt_ENV_ORDER = store_thm ("bir_exec_stmt_ENV_ORDER",
-``!p st stmt. bir_env_order st.bst_environ (bir_exec_stmt p stmt st).bst_environ``,
+``!p st stmt. bir_env_order st.bst_environ (bir_exec_stmt_state p stmt st).bst_environ``,
 
 Tactical.REVERSE (Cases_on `stmt`) >- (
-  SIMP_TAC std_ss [bir_exec_stmtE_env_unchanged, bir_exec_stmt_def, bir_env_order_REFL]
+  SIMP_TAC std_ss [bir_exec_stmt_state_def,
+    bir_exec_stmtE_env_unchanged, bir_exec_stmt_def, bir_env_order_REFL]
 ) >>
 rename1 `BStmtB stmt` >>
-SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++holBACore_ss) [bir_exec_stmt_def, LET_DEF,
+SIMP_TAC (std_ss++pairSimps.gen_beta_ss++boolSimps.LIFT_COND_ss++holBACore_ss) [
+   bir_exec_stmt_state_def, bir_exec_stmt_def, LET_DEF,
    bir_env_order_REFL] >>
 GEN_TAC >> Cases_on `stmt` >> (
-  SIMP_TAC std_ss [bir_exec_stmtB_def,
+  SIMP_TAC std_ss [bir_exec_stmtB_def, bir_exec_stmt_observe_SAME_ENV,
     bir_exec_stmt_assert_SAME_ENV, bir_exec_stmt_assume_SAME_ENV,
     bir_env_order_REFL, bir_exec_stmt_assign_ENV,  bir_exec_stmt_declare_ENV]
 ) >- (
@@ -128,43 +142,42 @@ GEN_TAC >> Cases_on `stmt` >> (
 
 
 val bir_exec_step_ENV_ORDER = store_thm ("bir_exec_step_ENV_ORDER",
-``!p st. bir_env_order st.bst_environ (bir_exec_step p st).bst_environ``,
+``!p st. bir_env_order st.bst_environ (bir_exec_step_state p st).bst_environ``,
 
 REPEAT GEN_TAC >>
-SIMP_TAC std_ss [bir_exec_step_def] >>
+SIMP_TAC std_ss [bir_exec_step_def, bir_exec_step_state_def] >>
 REPEAT CASE_TAC >> (
   SIMP_TAC (std_ss++holBACore_ss) [bir_env_order_REFL, bir_state_set_failed_SAME_ENV,
-    bir_exec_stmt_ENV_ORDER]
+    bir_exec_stmt_ENV_ORDER, GSYM bir_exec_stmt_state_def]
 ));
 
 
-
-val bir_exec_step_FUNPOW_ENV_ORDER = store_thm ("bir_exec_step_FUNPOW_ENV_ORDER",
-``!p n st. bir_env_order st.bst_environ (FUNPOW (bir_exec_step p) n st).bst_environ``,
+val bir_exec_infinite_steps_fun_ENV_ORDER = store_thm ("bir_exec_infinite_steps_fun_ENV_ORDER",
+``!p n st. bir_env_order st.bst_environ (bir_exec_infinite_steps_fun p st n).bst_environ``,
 
 GEN_TAC >>
 Induct >> (
-  SIMP_TAC std_ss [arithmeticTheory.FUNPOW, bir_env_order_REFL]
+  SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS, bir_env_order_REFL]
 ) >>
 GEN_TAC >>
 MATCH_MP_TAC (SIMP_RULE std_ss [AND_IMP_INTRO] bir_env_order_TRANS) >>
-Q.EXISTS_TAC `(bir_exec_step p st).bst_environ` >>
+Q.EXISTS_TAC `(bir_exec_step_state p st).bst_environ` >>
 ASM_SIMP_TAC std_ss [bir_exec_step_ENV_ORDER]);
 
 
-
 val bir_exec_steps_ENV_ORDER = store_thm ("bir_exec_steps_ENV_ORDER",
-``!p c st st'. (bir_exec_steps p st = SOME (c, st')) ==>
+``!p c st st' ll. (bir_exec_steps p st = (ll, SOME (c, st'))) ==>
   bir_env_order st.bst_environ st'.bst_environ``,
 
-SIMP_TAC std_ss [bir_exec_steps_EQ_SOME, bir_exec_step_FUNPOW_ENV_ORDER]);
+SIMP_TAC std_ss [bir_exec_steps_EQ_SOME, bir_exec_infinite_steps_fun_ENV_ORDER]);
 
 
 val bir_exec_step_n_ENV_ORDER = store_thm ("bir_exec_step_n_ENV_ORDER",
-``!p c n st st'. (bir_exec_step_n p st n = (c, st')) ==>
+``!p c n st st'. (bir_exec_step_n p st n = (l, c, st')) ==>
   bir_env_order st.bst_environ st'.bst_environ``,
 
-SIMP_TAC std_ss [bir_exec_step_n_EQ_THM, bir_exec_step_FUNPOW_ENV_ORDER]);
+SIMP_TAC std_ss [bir_exec_step_n_EQ_THM,
+  bir_exec_infinite_steps_fun_ENV_ORDER]);
 
 
 val _ = export_theory();

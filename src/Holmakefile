@@ -9,7 +9,8 @@ BARE_THYS = core/HolBACoreTheory core-props/bir_program_blocksTheory \
 	core-props/bir_program_env_orderTheory \
 	core-props/bir_program_valid_stateTheory \
 	core-props/bir_program_terminationTheory \
-	core-props/bir_program_blocksTheory
+	core-props/bir_program_multistep_propsTheory \
+	core-props/bir_program_no_observeTheory
 
 DEPS = $(patsubst %,%.uo,$(BARE_THYS))
 
