@@ -26,3 +26,7 @@ Branch policy:
 * suggestions
   * for long running feature branches keep in sync with base branch and rebase
   
+* HOL source code
+  * Spaces, no tabs
+  * No unicode
+  * name_surname_etc_etc
