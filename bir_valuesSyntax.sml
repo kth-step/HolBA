@@ -81,7 +81,7 @@ val (BType_Imm_tm,  mk_BType_Imm,  dest_BType_Imm,  is_BType_Imm)  = syntax_fns1
 val (BType_Mem_tm,  mk_BType_Mem,  dest_BType_Mem,  is_BType_Mem)  = syntax_fns2 "BType_Mem";
 val (BType_Bool_tm, is_BType_Bool) = syntax_fns0 "BType_Bool";
 
-fun gen_mk_BType_Imm n = mk_BType_Imm (bir_imm_type_t_of_size n);
+fun gen_mk_BType_Imm n = mk_BType_Imm (bir_immtype_t_of_size n);
 val gen_dest_BType_Imm = gen_dest_Imm o dest_BType_Imm
 fun gen_is_BType_Imm n t = (fst (gen_dest_BType_Imm t) = n) handle HOL_ERR _ => false;
 

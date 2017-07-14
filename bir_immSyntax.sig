@@ -78,19 +78,19 @@ sig
    val is_known_imm_size : int -> bool;
    val is_known_word_ty : hol_type -> bool;
 
-   (* getting the type of a size, e.g. bir_imm_type_t_of_size 8 = ``Bit8`` *)
-   val bir_imm_type_t_of_size : int -> term
+   (* getting the type of a size, e.g. bir_immtype_t_of_size 8 = ``Bit8`` *)
+   val bir_immtype_t_of_size : int -> term
 
-   (* and the inverse, e.g. size_of_bir_imm_type_t ``Bit8`` = 8 *)
-   val size_of_bir_imm_type_t : term -> int
+   (* and the inverse, e.g. size_of_bir_immtype_t ``Bit8`` = 8 *)
+   val size_of_bir_immtype_t : term -> int
 
    (* Same with words, e.g.
 
-      bir_imm_type_t_of_word_ty ``:word8`` = ``Bit8``
-      word_ty_of_bir_imm_type_t ``Bit8`` = ``:word8``
+      bir_immtype_t_of_word_ty ``:word8`` = ``Bit8``
+      word_ty_of_bir_immtype_t ``Bit8`` = ``:word8``
     *)
-   val bir_imm_type_t_of_word_ty : hol_type -> term
-   val word_ty_of_bir_imm_type_t : term -> hol_type
+   val bir_immtype_t_of_word_ty : hol_type -> term
+   val word_ty_of_bir_immtype_t : term -> hol_type
 
    (* Generalised mkImm. Given a word of a valid size,
       a boolean or a list of booleans of supported length,
@@ -110,6 +110,12 @@ sig
    (* making Imm from integers instead of nums *)
    val mk_Imm_of_int : int -> int -> term;
 
+   (* Various theorems link the word type and immtype via a precondition like
+      ``!s. (size_of_bir_immtype_t s = dimindex (:'a)) ==> ...``
+
+      MP_size_of_bir_immtype_t_EQ_dimindex instantiates "s" and "'a" with
+      all immtype values and corresponding types 'a and removes the precondition. *)
+   val MP_size_of_bir_immtype_t_EQ_dimindex : thm -> thm list
 
    (***************************)
    (* various functions       *)

@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
-open bir_auxiliaryTheory bir_immTheory;
+open bir_auxiliaryTheory bir_immTheory bir_immSyntax;
 
 val _ = new_theory "bir_mem_exp";
 
@@ -107,7 +107,7 @@ val type_of_bir_mem_concat = store_thm ("type_of_bir_mem_concat",
 SIMP_TAC std_ss [bir_mem_concat_def, type_of_v2bs]);
 
 val bir_load_bitstring_from_mmap_def = Define `
-  bir_load_bitstring_from_mmap value_ty mmap a =
+  bir_load_bitstring_from_mmap value_ty mmap (a:num) =
     fixwidth (size_of_bir_immtype value_ty) (n2v (mmap a))`
 
 val bir_load_bitstring_from_mmap_w2v = store_thm ("bir_load_bitstring_from_mmap_w2v",
@@ -117,17 +117,9 @@ val bir_load_bitstring_from_mmap_w2v = store_thm ("bir_load_bitstring_from_mmap_
 SIMP_TAC std_ss [bir_load_bitstring_from_mmap_def, GSYM w2v_v2w, v2w_n2v]);
 
 
-val bir_load_bitstring_from_mmap_w2v_THMS = store_thm ("bir_load_bitstring_from_mmap_w2v_THMS",
-``(!mmap a. (bir_load_bitstring_from_mmap Bit1  mmap a = (w2v ((n2w (mmap a)):word1)))) /\
-  (!mmap a. (bir_load_bitstring_from_mmap Bit8  mmap a = (w2v ((n2w (mmap a)):word8)))) /\
-  (!mmap a. (bir_load_bitstring_from_mmap Bit16 mmap a = (w2v ((n2w (mmap a)):word16)))) /\
-  (!mmap a. (bir_load_bitstring_from_mmap Bit32 mmap a = (w2v ((n2w (mmap a)):word32)))) /\
-  (!mmap a. (bir_load_bitstring_from_mmap Bit64 mmap a = (w2v ((n2w (mmap a)):word64))))``,
+val bir_load_bitstring_from_mmap_w2v_SIZES = save_thm ("bir_load_bitstring_from_mmap_w2v_SIZES",
+  LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex bir_load_bitstring_from_mmap_w2v));
 
-REPEAT STRIP_TAC >> (
-  MATCH_MP_TAC bir_load_bitstring_from_mmap_w2v >>
-  SIMP_TAC (std_ss++wordsLib.WORD_ss) [size_of_bir_immtype_def]
-));
 
 val bir_mem_addr_def = Define `
   bir_mem_addr aty a = MOD_2EXP (size_of_bir_immtype aty) a`;
@@ -147,6 +139,9 @@ Cases_on `c` >>
 FULL_SIMP_TAC std_ss [bir_mem_addr_def, w2n_n2w, dimword_def, bitTheory.MOD_2EXP_def]);
 
 
+val bir_mem_addr_w2n_SIZES = save_thm ("bir_mem_addr_w2n_SIZES",
+  LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex bir_mem_addr_w2n));
+
 
 val bir_mem_addr_w2n_add = store_thm ("bir_mem_addr_w2n_add",
  ``!s. (size_of_bir_immtype s = dimindex (:'a)) ==>
@@ -157,31 +152,8 @@ ASM_SIMP_TAC std_ss [bir_mem_addr_def, w2n_n2w, wordsTheory.word_add_n2w,
   dimword_def, bitTheory.MOD_2EXP_def]);
 
 
-
-val bir_mem_addr_w2n_sizes = save_thm ("bir_mem_addr_w2n_sizes",
-let
-  val thm0 = prove (``
-    !s. (size_of_bir_immtype s = dimindex (:'a)) ==> (
-        (!c. (bir_mem_addr s (w2n (c:'a word)) = w2n c)) /\
-        (!c n. (bir_mem_addr s (w2n (c:'a word) + n) = w2n (c + n2w n))))``,
-    SIMP_TAC std_ss [bir_mem_addr_w2n_add, bir_mem_addr_w2n]);
-
-  fun mk_thm (wty, st) = let
-     val thm = INST_TYPE [alpha |-> wty] (SPEC st thm0)
-     val pre = (fst o dest_imp_only o concl) thm
-     val pre_thm = simpLib.SIMP_PROVE (std_ss++wordsLib.WORD_ss) [size_of_bir_immtype_def] pre
-  in MP thm pre_thm end
-
-  val sizes = [(``:1``,  ``Bit1``),
-               (``:8``,  ``Bit8``),
-               (``:16``, ``Bit16``),
-               (``:32``, ``Bit32``),
-               (``:64``, ``Bit64``)]
-
-  val thm = Ho_Rewrite.REWRITE_RULE [GSYM CONJ_ASSOC] (LIST_CONJ (map mk_thm sizes))
-in thm end)
-
-
+val bir_mem_addr_w2n_add_SIZES = save_thm ("bir_mem_addr_w2n_add_SIZES",
+  LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex bir_mem_addr_w2n_add));
 
 
 val bir_load_from_mem_def = Define `bir_load_from_mem
@@ -320,7 +292,7 @@ let
   val thm2 = LIST_CONJ (l2 @ l1')
 
   val thm3 = SIMP_RULE list_ss [
-      rich_listTheory.count_list_sub1, rich_listTheory.COUNT_LIST_def, bir_load_bitstring_from_mmap_w2v_THMS] thm2
+      rich_listTheory.count_list_sub1, rich_listTheory.COUNT_LIST_def, bir_load_bitstring_from_mmap_w2v_SIZES] thm2
 
   val thm4 = SIMP_RULE (list_ss++bir_endian_ss++(DatatypeSimps.expand_type_quants_ss [``:bir_endian_t``])) [LET_DEF] thm3
 
@@ -586,7 +558,7 @@ SIMP_TAC std_ss [bir_mem_concat_def, bitstring_split_FLAT, v2bs_def, v2n_b2v, n2
 
 val bitstring_split_num_REWRS = save_thm ("bitstring_split_num_REWRS",
 let
-  val words_sizes = [1,8,16,32,64];
+  val words_sizes = bir_immSyntax.known_imm_sizes;
 
   val combined_sizes = flatten (map (fn sz1 => map (fn sz2 => (sz1, sz2)) words_sizes) words_sizes)
   val combined_sizes = filter (fn (sz1, sz2) => (sz1 <= sz2) andalso (sz2 mod sz1 = 0)) combined_sizes

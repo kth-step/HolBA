@@ -18,12 +18,12 @@ val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
 
 
 
-(* bir_imm_type_t *)
+(* bir_immtype_t *)
 
 val bir_immtype_t_ty = mk_type ("bir_immtype_t", []);
 val bir_immtype_t_list = TypeBase.constructors_of bir_immtype_t_ty;
 val _ = if ((length bir_immtype_t_list) = 5) then () else
-    (failwith "number of bir_imm_type_t constructors changed, please adapt")
+    (failwith "number of bir_immtype_t constructors changed, please adapt")
 
 val (Bit1_tm,  is_Bit1)  = syntax_fns0 "Bit1";
 val (Bit8_tm,  is_Bit8)  = syntax_fns0 "Bit8";
@@ -48,6 +48,7 @@ val (Imm32_tm, mk_Imm32, dest_Imm32, is_Imm32) = syntax_fns1 "Imm32";
 val (Imm64_tm, mk_Imm64, dest_Imm64, is_Imm64) = syntax_fns1 "Imm64";
 
 
+
 (* various functions *)
 
 val (b2v_tm, mk_b2v, dest_b2v, is_b2v)  = syntax_fns1 "b2v";
@@ -68,38 +69,38 @@ val (size_of_bir_immtype_tm, mk_size_of_bir_immtype, dest_size_of_bir_immtype, i
 
 (* immediate sizes *)
 
-val bir_imm_type_t_sizes_list =
+val bir_immtype_t_sizes_list =
   map (fn tm => let
     val n = numSyntax.int_of_term (rhs (concl (EVAL (mk_size_of_bir_immtype tm))))
   in (n, tm)
   end) bir_immtype_t_list;
 
-val known_imm_sizes = map fst bir_imm_type_t_sizes_list;
+val known_imm_sizes = map fst bir_immtype_t_sizes_list;
 
-fun bir_imm_type_t_of_size n = assoc n bir_imm_type_t_sizes_list handle HOL_ERR _ =>
-  raise ERR "bir_imm_type_t_of_size" "unknown size";
+fun bir_immtype_t_of_size n = assoc n bir_immtype_t_sizes_list handle HOL_ERR _ =>
+  raise ERR "bir_immtype_t_of_size" "unknown size";
 
-fun size_of_bir_imm_type_t tm = rev_assoc tm bir_imm_type_t_sizes_list handle HOL_ERR _ =>
-  raise ERR "size_of_bir_imm_type_t" "unknown value";
+fun size_of_bir_immtype_t tm = rev_assoc tm bir_immtype_t_sizes_list handle HOL_ERR _ =>
+  raise ERR "size_of_bir_immtype_t" "unknown value";
 
-val bir_imm_type_t_word_ty_list =
-  map (fn (n, tm) => (wordsSyntax.mk_int_word_type n, tm)) bir_imm_type_t_sizes_list;
+val bir_immtype_t_word_ty_list =
+  map (fn (n, tm) => (wordsSyntax.mk_int_word_type n, tm)) bir_immtype_t_sizes_list;
 
-fun bir_imm_type_t_of_word_ty wty = assoc wty bir_imm_type_t_word_ty_list handle HOL_ERR _ =>
-  raise ERR "bir_imm_type_t_of_word_ty" "unknown size";
+fun bir_immtype_t_of_word_ty wty = assoc wty bir_immtype_t_word_ty_list handle HOL_ERR _ =>
+  raise ERR "bir_immtype_t_of_word_ty" "unknown size";
 
-fun word_ty_of_bir_imm_type_t tm = rev_assoc tm bir_imm_type_t_word_ty_list handle HOL_ERR _ =>
-  raise ERR "word_ty_of_bir_imm_type_t" "unknown value";
+fun word_ty_of_bir_immtype_t tm = rev_assoc tm bir_immtype_t_word_ty_list handle HOL_ERR _ =>
+  raise ERR "word_ty_of_bir_immtype_t" "unknown value";
 
-val is_known_word_ty = can bir_imm_type_t_of_word_ty;
-val is_known_imm_size = can bir_imm_type_t_of_size;
+val is_known_word_ty = can bir_immtype_t_of_word_ty;
+val is_known_imm_size = can bir_immtype_t_of_size;
 
-val bir_imm_type_t_imm_list =
+val bir_immtype_t_imm_list =
   map (fn t => ((fst (dom_rng (type_of t))), t)) bir_imm_t_list;
 
 fun gen_mk_Imm tm =
   if (wordsSyntax.is_word_type (type_of tm)) then
-    (mk_comb (assoc (type_of tm) bir_imm_type_t_imm_list, tm) handle HOL_ERR _ =>
+    (mk_comb (assoc (type_of tm) bir_immtype_t_imm_list, tm) handle HOL_ERR _ =>
      raise (ERR "gen_mkImm" ("unsupported word-type ``"^(type_to_string (type_of tm))^"``")))
   else if (type_of tm = bool) then
     mk_bool2b tm
@@ -114,8 +115,8 @@ fun gen_mk_Imm tm =
 
 val bir_imm_t_sizes_list =
   map (fn (wty, t) => (t,
-    size_of_bir_imm_type_t (bir_imm_type_t_of_word_ty wty)))
-    bir_imm_type_t_imm_list;
+    size_of_bir_immtype_t (bir_immtype_t_of_word_ty wty)))
+    bir_immtype_t_imm_list;
 
 fun gen_dest_Imm tm = let
   val (c, arg) = dest_comb tm;
@@ -133,5 +134,18 @@ fun mk_Imm_of_num sz n =
 fun mk_Imm_of_int sz n =
   gen_mk_Imm (wordsSyntax.mk_wordii (n, sz));
 
+
+fun size_of_bir_immtype_t_dimindex_THM s = let
+  val n = size_of_bir_immtype_t s
+  val ty = fcpSyntax.mk_int_numeric_type n
+  val tm = mk_eq (mk_size_of_bir_immtype s, wordsSyntax.mk_dimindex ty)
+  val thm = simpLib.SIMP_PROVE (std_ss++wordsLib.WORD_ss) [size_of_bir_immtype_def] tm
+in (ty, thm) end
+
+fun MP_size_of_bir_immtype_t_EQ_dimindex thm = let
+  fun mk_thm s = MATCH_MP thm (snd (size_of_bir_immtype_t_dimindex_THM s))
+in
+  map mk_thm bir_immtype_t_list
+end;
 
 end
