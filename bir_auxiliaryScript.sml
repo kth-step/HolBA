@@ -157,7 +157,7 @@ val word_extract_bits_w2w = store_thm ("word_extract_bits_w2w",
   ``!h l a. ((h >< l) (a:'a word)) = w2w ((h -- l) a)``,
 SIMP_TAC std_ss [wordsTheory.word_extract_w2w_mask, wordsTheory.word_bits_mask])
 
-val sw2sw_w2w = store_thm ("w2wh_w2w", ``!w.
+val sw2sw_w2w_downcast = store_thm ("sw2sw_w2w_downcast", ``!w.
   (dimindex (:'b) <= dimindex (:'a)) ==> ((sw2sw (w : 'a word) : 'b word) = w2w w)``,
 
 REPEAT STRIP_TAC >>

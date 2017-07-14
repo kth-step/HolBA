@@ -354,7 +354,7 @@ val bir_scast_REWRS = save_thm ("bir_scast_REWRS", let
   val thms1 = flatten (map (MP_size_of_bir_immtype_t_EQ_dimindex) thms0)
   val thm0 = LIST_CONJ thms1
   val thm1 = SIMP_RULE (std_ss++wordsLib.WORD_ss++bir_imm_ss)
-    [GSYM CONJ_ASSOC, w2bs_REWRS, sw2sw_id, w2w_id, sw2sw_w2w] thm0
+    [GSYM CONJ_ASSOC, w2bs_REWRS, sw2sw_id, w2w_id, sw2sw_w2w_downcast] thm0
 in
   thm1
 end);
