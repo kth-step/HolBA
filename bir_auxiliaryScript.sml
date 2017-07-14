@@ -148,6 +148,27 @@ ASM_SIMP_TAC list_ss [rich_listTheory.DROP_EL_CONS, arithmeticTheory.ADD1]);
 (* Word lemmata                                                               *)
 (* -------------------------------------------------------------------------- *)
 
+
+val w2n_MOD_2EXP_ID = store_thm ("w2n_MOD_2EXP_ID",
+  ``!(w:'a word). (MOD_2EXP (dimindex (:'a)) (w2n w)) = w2n w``,
+SIMP_TAC std_ss [GSYM wordsTheory.MOD_2EXP_DIMINDEX, wordsTheory.w2n_lt]);
+
+val word_extract_bits_w2w = store_thm ("word_extract_bits_w2w",
+  ``!h l a. ((h >< l) (a:'a word)) = w2w ((h -- l) a)``,
+SIMP_TAC std_ss [wordsTheory.word_extract_w2w_mask, wordsTheory.word_bits_mask])
+
+val sw2sw_w2w = store_thm ("w2wh_w2w", ``!w.
+  (dimindex (:'b) <= dimindex (:'a)) ==> ((sw2sw (w : 'a word) : 'b word) = w2w w)``,
+
+REPEAT STRIP_TAC >>
+`(2**dimindex (:'b) <= 2**dimindex (:'a))` by METIS_TAC[bitTheory.TWOEXP_MONO2] >>
+`(2**dimindex (:'b) - 2**dimindex (:'a)) = 0` by DECIDE_TAC >>
+ASM_SIMP_TAC (arith_ss++wordsLib.WORD_ss) [sw2sw_def,
+  bitTheory.SIGN_EXTEND_def, LET_DEF, w2w_def,
+  wordsTheory.w2n_lt, GSYM wordsTheory.dimword_def
+]);
+
+
 val fixwidth_fixwidth_le = store_thm ("fixwidth_fixwidth_le",
   ``!v n m. n <= m ==> (fixwidth n (fixwidth m v) = fixwidth n v)``,
 
