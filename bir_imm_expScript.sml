@@ -42,29 +42,6 @@ GEN_TAC >> Cases >> (
 ));
 
 
-(* Instantiate everything *)
-val bir_not_def = Define `bir_not = bir_unary_exp BIExp_Not`
-val bir_neg_def = Define `bir_neg = bir_unary_exp BIExp_ChangeSign`
-
-val bir_unary_exps_DEFS = save_thm ("bir_unary_exps_DEFS",
-  LIST_CONJ [bir_not_def, bir_neg_def]);
-
-
-val bir_unary_exp_list = TypeBase.constructors_of ``:bir_unary_exp_t``;
-
-fun inst_CONJ_THM tms thm =
-  REWRITE_RULE [GSYM CONJ_ASSOC] (LIST_CONJ (map (fn t => SPEC t thm) tms));
-
-val type_of_bir_unary_exps = save_thm ("type_of_bir_unary_exps",
-SIMP_RULE (std_ss) [GSYM bir_unary_exps_DEFS] (
-  inst_CONJ_THM bir_unary_exp_list type_of_bir_unary_exp));
-
-val bir_unary_exps_REWRS = save_thm ("bir_unary_exps_REWRS",
-SIMP_RULE std_ss [GSYM bir_unary_exps_DEFS, bir_unary_exp_GET_OPER_def] (
-  inst_CONJ_THM bir_unary_exp_list bir_unary_exp_REWRS));
-
-
-
 (* ------------------------------------------------------------------------- *)
 (*  Binary expressions                                                       *)
 (* ------------------------------------------------------------------------- *)
@@ -130,35 +107,6 @@ REPEAT Cases >>
 SIMP_TAC (srw_ss()) [type_of_bir_imm_def, bir_bin_exp_REWRS]);
 
 
-val bir_add_def  = Define `bir_add  = bir_bin_exp BIExp_Plus`;
-val bir_sub_def  = Define `bir_sub  = bir_bin_exp BIExp_Minus`;
-val bir_mul_def  = Define `bir_mul  = bir_bin_exp BIExp_Mult`;
-val bir_div_def  = Define `bir_div  = bir_bin_exp BIExp_Div`;
-val bir_sdiv_def = Define `bir_sdiv = bir_bin_exp BIExp_SignedDiv`;
-val bir_mod_def  = Define `bir_mod  = bir_bin_exp BIExp_Mod`
-val bir_smod_def = Define `bir_smod = bir_bin_exp BIExp_SignedMod`
-val bir_lsl_def  = Define `bir_lsl  = bir_bin_exp BIExp_LeftShift`
-val bir_lsr_def  = Define `bir_lsr  = bir_bin_exp BIExp_RightShift`
-val bir_asr_def  = Define `bir_asr  = bir_bin_exp BIExp_SignedRightShift`
-val bir_and_def  = Define `bir_and  = bir_bin_exp BIExp_And`
-val bir_or_def   = Define `bir_or   = bir_bin_exp BIExp_Or`
-val bir_xor_def  = Define `bir_xor  = bir_bin_exp BIExp_Xor`;
-
-val bir_bin_exps_DEFS = save_thm ("bir_bin_exps_DEFS",
-  LIST_CONJ [bir_add_def, bir_sub_def, bir_mul_def, bir_div_def, bir_sdiv_def,
-     bir_mod_def, bir_smod_def, bir_lsl_def, bir_lsr_def, bir_asr_def, bir_and_def,
-     bir_or_def, bir_xor_def]);
-
-val bir_bin_exp_list = TypeBase.constructors_of ``:bir_bin_exp_t``;
-
-val type_of_bir_bin_exps = save_thm ("type_of_bir_bin_exps",
-REWRITE_RULE [GSYM bir_bin_exps_DEFS] (
-  inst_CONJ_THM bir_bin_exp_list type_of_bir_bin_exp));
-
-val bir_bin_exps_REWRS = save_thm ("bir_bin_exps_REWRS",
-SIMP_RULE (std_ss) [GSYM bir_bin_exps_DEFS, bir_bin_exp_GET_OPER_def] (
-  inst_CONJ_THM bir_bin_exp_list bir_bin_exp_REWRS));
-
 
 (* ------------------------------------------------------------------------- *)
 (*  Binary predicates                                                        *)
@@ -202,23 +150,6 @@ SIMP_TAC std_ss [bir_bin_pred_def] >>
 REPEAT Cases >> (
   SIMP_TAC (srw_ss()) [type_of_bir_imm_def, bir_bin_pred_def]
 ));
-
-val bir_eq_def  = Define `bir_eq  = bir_bin_pred BIExp_Equal`
-val bir_neq_def = Define `bir_neq = bir_bin_pred BIExp_NotEqual`
-val bir_lt_def  = Define `bir_lt  = bir_bin_pred BIExp_SignedLessThan`
-val bir_le_def  = Define `bir_le  = bir_bin_pred BIExp_SignedLessOrEqual`
-val bir_ult_def = Define `bir_ult = bir_bin_pred BIExp_LessThan`
-val bir_ule_def = Define `bir_ule = bir_bin_pred BIExp_LessOrEqual`
-
-val bir_bin_preds_DEFS = save_thm ("bir_bin_preds_DEFS",
-  LIST_CONJ [bir_eq_def, bir_neq_def, bir_lt_def, bir_le_def, bir_ult_def,
-     bir_ule_def]);
-
-val bir_bin_pred_list = TypeBase.constructors_of ``:bir_bin_pred_t``;
-
-val bir_bin_preds_REWRS = save_thm ("bir_bin_preds_REWRS",
-SIMP_RULE (std_ss) [GSYM bir_bin_preds_DEFS, bir_bin_pred_GET_OPER_def] (
-  inst_CONJ_THM bir_bin_pred_list bir_bin_pred_REWRS));
 
 
 
@@ -397,6 +328,9 @@ Cases >> Cases >> Cases >> (
 
 
 val bir_casts_list = TypeBase.constructors_of ``:bir_cast_t``;
+
+fun inst_CONJ_THM tms thm =
+  REWRITE_RULE [GSYM CONJ_ASSOC] (LIST_CONJ (map (fn t => SPEC t thm) tms));
 
 val bir_casts_ID = save_thm ("bir_casts_ID",
 REWRITE_RULE [bir_gencast_def] (
