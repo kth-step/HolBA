@@ -37,13 +37,13 @@ val type_of_bir_exp_def = Define `
 
   (type_of_bir_exp (BExp_BinPred pt e1 e2) = (case (type_of_bir_exp e1,
        type_of_bir_exp e2) of
-       (SOME ty1, SOME ty2) => (if ((bir_type_is_Imm ty1) /\ (ty2 = ty1)) then SOME BoolType else NONE)
+       (SOME ty1, SOME ty2) => (if ((bir_type_is_Imm ty1) /\ (ty2 = ty1)) then SOME BType_Bool else NONE)
        | _, _ => NONE)) /\
 
 
   (type_of_bir_exp (BExp_IfThenElse ec e1 e2) = (case (type_of_bir_exp ec, type_of_bir_exp e1,
        type_of_bir_exp e2) of
-       (SOME ect, SOME ty1, SOME ty2) => (if ((ect = BoolType) /\ (ty2 = ty1)) then SOME ty1 else NONE)
+       (SOME ect, SOME ty1, SOME ty2) => (if ((ect = BType_Bool) /\ (ty2 = ty1)) then SOME ty1 else NONE)
        | _, _, _ => NONE)) /\
 
   (type_of_bir_exp (BExp_Load me ae en rty) = (case (type_of_bir_exp me, type_of_bir_exp ae) of
@@ -86,14 +86,14 @@ Induct >> (
 ) >- (
   FULL_SIMP_TAC std_ss [bir_eval_bin_pred_REWRS, bir_type_is_Imm_def] >>
   FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_bin_pred_REWRS,
-    type_of_bir_val_def, BoolType_def, type_of_bool2b]
+    type_of_bir_val_def, BType_Bool_def, type_of_bool2b]
 ) >- (
   Cases_on `bir_eval_exp e env = BVal_Unknown` >- (
     ASM_SIMP_TAC std_ss [bir_eval_ifthenelse_REWRS]
   ) >>
   FULL_SIMP_TAC std_ss [bir_eval_ifthenelse_REWRS, bir_type_is_Imm_def] >> (
     FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_ifthenelse_REWRS,
-      BoolType_def] >>
+      BType_Bool_def] >>
     CASE_TAC
   )
 ) >- (
@@ -125,11 +125,11 @@ val type_of_bir_exp_EQ_SOME_REWRS = store_thm ("type_of_bir_exp_EQ_SOME_REWRS",`
      (bir_type_is_Imm ty) /\ (type_of_bir_exp e1 = SOME ty) /\ (type_of_bir_exp e2 = SOME ty))) /\
 
   (!pt e1 e2 ty. (type_of_bir_exp (BExp_BinPred pt e1 e2) = SOME ty) <=> (
-     (ty = BoolType) /\ (?it. (type_of_bir_exp e1 = SOME (BType_Imm it)) /\
+     (ty = BType_Bool) /\ (?it. (type_of_bir_exp e1 = SOME (BType_Imm it)) /\
                               (type_of_bir_exp e2 = SOME (BType_Imm it))))) /\
 
   (!ce e1 e2 ty. (type_of_bir_exp (BExp_IfThenElse ce e1 e2) = SOME ty) <=> (
-     (type_of_bir_exp ce = SOME BoolType) /\
+     (type_of_bir_exp ce = SOME BType_Bool) /\
      (type_of_bir_exp e1 = SOME ty) /\
      (type_of_bir_exp e2 = SOME ty))) /\
 
@@ -196,7 +196,7 @@ val type_of_bir_exp_EQ_NONE_REWRS = store_thm ("type_of_bir_exp_EQ_NONE_REWRS",`
      (type_of_bir_exp e2 <> SOME (BType_Imm ity))) /\
 
   (!ce e1 e2 ty. (type_of_bir_exp (BExp_IfThenElse ce e1 e2) = NONE) <=> (
-     (type_of_bir_exp ce <> SOME BoolType) \/
+     (type_of_bir_exp ce <> SOME BType_Bool) \/
      (type_of_bir_exp e1 = NONE) \/
      (type_of_bir_exp e2 <> type_of_bir_exp e1))) /\
 
@@ -269,7 +269,7 @@ val type_of_bir_exp_THM_with_init_vars = store_thm ("type_of_bir_exp_THM_with_in
                   (type_of_bir_val (bir_eval_exp e env) = SOME ty))``,
 
 GEN_TAC >> STRIP_TAC >> Induct >> (
-  SIMP_TAC (std_ss++bir_val_ss) [bir_eval_exp_def, BoolType_def,
+  SIMP_TAC (std_ss++bir_val_ss) [bir_eval_exp_def, BType_Bool_def,
     type_of_bir_exp_EQ_SOME_REWRS, bir_vars_of_exp_def,
     bir_env_vars_are_initialised_UNION, bir_env_vars_are_initialised_INSERT,
     bir_env_vars_are_initialised_EMPTY, PULL_EXISTS, PULL_FORALL, bir_type_is_Imm_def] >>
@@ -289,7 +289,7 @@ GEN_TAC >> STRIP_TAC >> Induct >> (
   ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_bin_exp_REWRS, type_of_bir_bin_exp]
 ) >- (
   ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_bin_pred_REWRS, type_of_bir_val_def,
-    type_of_bool2b, BoolType_def]
+    type_of_bool2b, BType_Bool_def]
 ) >- (
   ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_ifthenelse_REWRS] >>
   METIS_TAC[]
@@ -326,14 +326,14 @@ GEN_TAC >> STRIP_TAC >> Induct >> (
 
 val bir_is_well_typed_stmtE_def = Define `
   (bir_is_well_typed_stmtE (BStmt_Jmp _) = T) /\
-  (bir_is_well_typed_stmtE (BStmt_CJmp c _ _) = (type_of_bir_exp c = SOME BoolType)) /\
+  (bir_is_well_typed_stmtE (BStmt_CJmp c _ _) = (type_of_bir_exp c = SOME BType_Bool)) /\
   (bir_is_well_typed_stmtE (BStmt_Halt e) = (type_of_bir_exp e <> NONE))`
 
 val bir_is_well_typed_stmtB_def = Define `
   (bir_is_well_typed_stmtB (BStmt_Declare _) = T) /\
   (bir_is_well_typed_stmtB (BStmt_Assign v e) = (type_of_bir_exp e = SOME (bir_var_type v))) /\
-  (bir_is_well_typed_stmtB (BStmt_Assert e) = (type_of_bir_exp e = SOME BoolType)) /\
-  (bir_is_well_typed_stmtB (BStmt_Assume e) = (type_of_bir_exp e = SOME BoolType))`;
+  (bir_is_well_typed_stmtB (BStmt_Assert e) = (type_of_bir_exp e = SOME BType_Bool)) /\
+  (bir_is_well_typed_stmtB (BStmt_Assume e) = (type_of_bir_exp e = SOME BType_Bool))`;
 
 val bir_is_well_typed_stmt_def = Define `
   (bir_is_well_typed_stmt (BStmtE s) = bir_is_well_typed_stmtE s) /\

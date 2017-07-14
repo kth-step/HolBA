@@ -22,7 +22,7 @@ val _ = Datatype `bir_type_t =
   | BType_Mem bir_immtype_t (* Addr-Type *) bir_immtype_t (* Value-Type *)
 `;
 
-val BoolType_def = Define `BoolType = BType_Imm Bit1`;
+val BType_Bool_def = Define `BType_Bool = BType_Imm Bit1`;
 
 
 val bir_val_ss = rewrites (type_rws ``:bir_val_t``);
@@ -121,12 +121,12 @@ val bir_type_checker_REWRS = store_thm ("bir_type_checker_REWRS", ``
     (!s b. bir_type_is_Imm_s s (BType_Imm b) <=> (b = s)) /\
     (!s at vt. ~(bir_type_is_Imm_s s (BType_Mem at vt))) /\
 
-    (!b. bir_type_is_Bool BoolType <=> T) /\
+    (!b. bir_type_is_Bool BType_Bool <=> T) /\
 
     (!b. bir_type_is_Bool (BType_Imm b) <=> (b = Bit1)) /\
     (!at vt. ~(bir_type_is_Bool (BType_Mem at vt)))``,
 
-  SIMP_TAC (std_ss ++ bir_type_ss) [bir_type_checker_DEFS, BoolType_def]);
+  SIMP_TAC (std_ss ++ bir_type_ss) [bir_type_checker_DEFS, BType_Bool_def]);
 
 
 val bir_type_is_Imm_s_IMPL = store_thm ("bir_type_is_Imm_s_IMPL",
