@@ -1,15 +1,6 @@
-(* ========================================================================= *)
-(* FILE          : bil_auxiliaryScript.sml                                   *)
-(* DESCRIPTION   : Auxiliary lemmata used by formalisation of                *)
-(*                 BAP Intermediate Language.                                *)
-(* AUTHOR        : (c) Thomas Tuerk <tuerk@kth.se> based on previous work    *)
-(*                 by Roberto Metere, KTH - Royal Institute of Technology    *)
-(* DATE          : 2017                                                      *)
-(* ========================================================================= *)
-
 open HolKernel Parse boolLib bossLib;
 
-val _ = new_theory "bil_auxiliary";
+val _ = new_theory "bir_auxiliary";
 
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
@@ -87,7 +78,7 @@ REPEAT GEN_TAC >> COND_CASES_TAC >> ASM_SIMP_TAC list_ss []);
 val INDEX_FIND_EQ_SOME = store_thm ("INDEX_FIND_EQ_SOME",
   ``!l i P j e. (INDEX_FIND i P l = SOME (j, e)) <=> (
        (i <= j) /\ (j - i < LENGTH l) /\
-       (EL (j - i) l = e) /\ P e /\ 
+       (EL (j - i) l = e) /\ P e /\
        (!j'. (i <= j' /\ j' < j) ==> ~(P (EL (j' - i) l))))``,
 
 Induct >> SIMP_TAC list_ss [listTheory.INDEX_FIND_def] >>
@@ -137,12 +128,20 @@ REPEAT GEN_TAC >> COND_CASES_TAC >| [
 val INDEX_FIND_EQ_SOME_0 = store_thm ("INDEX_FIND_EQ_SOME_0",
   ``!l P j e. (INDEX_FIND 0 P l = SOME (j, e)) <=> (
        (j < LENGTH l) /\
-       (EL j l = e) /\ P e /\ 
+       (EL j l = e) /\ P e /\
        (!j'. j' < j ==> ~(P (EL j' l))))``,
 
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [INDEX_FIND_EQ_SOME] >>
 Cases_on `LENGTH l` >> SIMP_TAC std_ss []);
 
+
+val SEG_SUC_LENGTH = store_thm ("SEG_SUC_LENGTH",
+``!l n m. (n + m < LENGTH l) ==>
+          (SEG (SUC n) m l = (EL m l)::SEG n (SUC m) l)``,
+
+SIMP_TAC arith_ss [rich_listTheory.SEG_TAKE_BUTFISTN] >>
+REPEAT STRIP_TAC >>
+ASM_SIMP_TAC list_ss [rich_listTheory.DROP_EL_CONS, arithmeticTheory.ADD1]);
 
 
 (* -------------------------------------------------------------------------- *)
@@ -226,4 +225,3 @@ end)
 
 
 val _ = export_theory();
-
