@@ -299,7 +299,7 @@ let
      FORALL_AND_THM, b2n_MOD_2EXP, type_of_bir_imm_def, size_of_bir_immtype_def]
      thm2
 
-  val thm4 = REWRITE_RULE [b2n_def, bir_mem_addr_w2n_sizes, GSYM CONJ_ASSOC] (CONJ thm3 thm_prune2)
+  val thm4 = REWRITE_RULE [b2n_def, bir_mem_addr_w2n_SIZES, bir_mem_addr_w2n_add_SIZES, GSYM CONJ_ASSOC] (CONJ thm3 thm_prune2)
 in thm4
 end);
 

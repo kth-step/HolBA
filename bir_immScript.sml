@@ -145,7 +145,6 @@ Cases >> (
   SIMP_TAC std_ss [b2n_def, n2bs_def, type_of_bir_imm_def, n2w_w2n]
 ));
 
-
 val w2n_lt_trans = prove (``!w:'a word. dimword (:'a) <= m ==> (w2n w < m)``,
 METIS_TAC[w2n_lt, arithmeticTheory.LESS_LESS_EQ_TRANS]);
 
@@ -189,6 +188,13 @@ REPEAT GEN_TAC >> EQ_TAC >> STRIP_TAC >| [
   ASM_SIMP_TAC std_ss [type_of_n2bs]
 ]);
 
+
+val n2bs_MOD_size_of_bir_immtype = store_thm ("n2bs_MOD_size_of_bir_immtype",
+  ``!s n. n2bs (MOD_2EXP (size_of_bir_immtype s) n) s = n2bs n s``,
+
+REPEAT STRIP_TAC >>
+Q.SUBGOAL_THEN `n2bs n s = n2bs (b2n (n2bs n s)) s` SUBST1_TAC >- METIS_TAC[n2bs_b2n, type_of_n2bs] >>
+SIMP_TAC std_ss [b2n_n2bs]);
 
 
 (* ------------------------------------------------------------------------- *)

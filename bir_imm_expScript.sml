@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
-open bir_auxiliaryTheory bir_immTheory;
+open bir_auxiliaryTheory bir_immTheory bir_immSyntax;
 
 val _ = new_theory "bir_imm_exp";
 
@@ -232,36 +232,18 @@ SIMP_RULE (std_ss) [GSYM bir_bin_preds_DEFS, bir_bin_pred_GET_OPER_def] (
 
 val bir_cast_def = Define `bir_cast r s = n2bs (b2n r) s`
 
-val bir_cast_REWRS = store_thm ("bir_cast_REWRS", ``
-     (!w. bir_cast (Imm1  w) Bit1  = Imm1  w)
-  /\ (!w. bir_cast (Imm8  w) Bit8  = Imm8  w)
-  /\ (!w. bir_cast (Imm16 w) Bit16 = Imm16 w)
-  /\ (!w. bir_cast (Imm32 w) Bit32 = Imm32 w)
-  /\ (!w. bir_cast (Imm64 w) Bit64 = Imm64 w)
+val bir_cast_REWRS0_aux = prove (``!s1 s (w:'a word).
+  (size_of_bir_immtype s1 = dimindex (:'a)) ==>
+  (bir_cast (w2bs w s1) s = w2bs w s)``,
+SIMP_TAC std_ss [bir_cast_def, w2bs_def, b2n_n2bs, w2n_MOD_2EXP_ID]);
 
-  (* Casts *)
-  /\ (!w. bir_cast (Imm1  w) Bit8  = Imm8  (w2w w))
-  /\ (!w. bir_cast (Imm1  w) Bit16 = Imm16 (w2w w))
-  /\ (!w. bir_cast (Imm1  w) Bit32 = Imm32 (w2w w))
-  /\ (!w. bir_cast (Imm1  w) Bit64 = Imm64 (w2w w))
-  /\ (!w. bir_cast (Imm8  w) Bit1  = Imm1  (w2w w))
-  /\ (!w. bir_cast (Imm8  w) Bit16 = Imm16 (w2w w))
-  /\ (!w. bir_cast (Imm8  w) Bit32 = Imm32 (w2w w))
-  /\ (!w. bir_cast (Imm8  w) Bit64 = Imm64 (w2w w))
-  /\ (!w. bir_cast (Imm16 w) Bit1  = Imm1  (w2w w))
-  /\ (!w. bir_cast (Imm16 w) Bit8  = Imm8  (w2w w))
-  /\ (!w. bir_cast (Imm16 w) Bit32 = Imm32 (w2w w))
-  /\ (!w. bir_cast (Imm16 w) Bit64 = Imm64 (w2w w))
-  /\ (!w. bir_cast (Imm32 w) Bit1  = Imm1  (w2w w))
-  /\ (!w. bir_cast (Imm32 w) Bit8  = Imm8  (w2w w))
-  /\ (!w. bir_cast (Imm32 w) Bit16 = Imm16 (w2w w))
-  /\ (!w. bir_cast (Imm32 w) Bit64 = Imm64 (w2w w))
-  /\ (!w. bir_cast (Imm64 w) Bit1  = Imm1  (w2w w))
-  /\ (!w. bir_cast (Imm64 w) Bit8  = Imm8  (w2w w))
-  /\ (!w. bir_cast (Imm64 w) Bit16 = Imm16 (w2w w))
-  /\ (!w. bir_cast (Imm64 w) Bit32 = Imm32 (w2w w))
-``,
-SIMP_TAC std_ss [bir_cast_def, b2n_def, n2bs_def, GSYM w2w_def, w2w_id])
+val bir_cast_REWRS0 = save_thm ("bir_cast_REWRS0",
+  REWRITE_RULE [w2bs_REWRS, w2w_id] (LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex
+     bir_cast_REWRS0_aux)));
+
+val bir_cast_REWRS = save_thm ("bir_cast_REWRS",
+  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [bir_immtype_t_ty])
+    [GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id] bir_cast_REWRS0);
 
 
 (* ============= *)
@@ -269,6 +251,9 @@ SIMP_TAC std_ss [bir_cast_def, b2n_def, n2bs_def, GSYM w2w_def, w2w_id])
 (* ============= *)
 
 val bir_lcast_def = Define `bir_lcast = bir_cast`;
+
+val bir_lcast_REWRS0 = save_thm ("bir_lcast_REWRS0",
+  REWRITE_RULE [GSYM bir_lcast_def] bir_cast_REWRS0);
 
 val bir_lcast_REWRS = save_thm ("bir_lcast_REWRS",
   REWRITE_RULE [GSYM bir_lcast_def] bir_cast_REWRS);
@@ -296,81 +281,51 @@ REPEAT STRIP_TAC >>
 ASM_SIMP_TAC (arith_ss++wordsLib.WORD_ss) [w2wh_def, WORD_w2w_EXTRACT]);
 
 
-val bir_hcast_REWRS0 = store_thm ("bir_hcast_REWRS0", ``
-     (!w. bir_hcast (Imm1  w) Bit1  = Imm1  (w2wh w))
-  /\ (!w. bir_hcast (Imm1  w) Bit8  = Imm8  (w2wh w))
-  /\ (!w. bir_hcast (Imm1  w) Bit16 = Imm16 (w2wh w))
-  /\ (!w. bir_hcast (Imm1  w) Bit32 = Imm32 (w2wh w))
-  /\ (!w. bir_hcast (Imm1  w) Bit64 = Imm64 (w2wh w))
-  /\ (!w. bir_hcast (Imm8  w) Bit1  = Imm1  (w2wh w))
-  /\ (!w. bir_hcast (Imm8  w) Bit8  = Imm8  (w2wh w))
-  /\ (!w. bir_hcast (Imm8  w) Bit16 = Imm16 (w2wh w))
-  /\ (!w. bir_hcast (Imm8  w) Bit32 = Imm32 (w2wh w))
-  /\ (!w. bir_hcast (Imm8  w) Bit64 = Imm64 (w2wh w))
-  /\ (!w. bir_hcast (Imm16 w) Bit1  = Imm1  (w2wh w))
-  /\ (!w. bir_hcast (Imm16 w) Bit8  = Imm8  (w2wh w))
-  /\ (!w. bir_hcast (Imm16 w) Bit16 = Imm16 (w2wh w))
-  /\ (!w. bir_hcast (Imm16 w) Bit32 = Imm32 (w2wh w))
-  /\ (!w. bir_hcast (Imm16 w) Bit64 = Imm64 (w2wh w))
-  /\ (!w. bir_hcast (Imm32 w) Bit1  = Imm1  (w2wh w))
-  /\ (!w. bir_hcast (Imm32 w) Bit8  = Imm8  (w2wh w))
-  /\ (!w. bir_hcast (Imm32 w) Bit16 = Imm16 (w2wh w))
-  /\ (!w. bir_hcast (Imm32 w) Bit32 = Imm32 (w2wh w))
-  /\ (!w. bir_hcast (Imm32 w) Bit64 = Imm64 (w2wh w))
-  /\ (!w. bir_hcast (Imm64 w) Bit1  = Imm1  (w2wh w))
-  /\ (!w. bir_hcast (Imm64 w) Bit8  = Imm8  (w2wh w))
-  /\ (!w. bir_hcast (Imm64 w) Bit16 = Imm16 (w2wh w))
-  /\ (!w. bir_hcast (Imm64 w) Bit32 = Imm32 (w2wh w))
-  /\ (!w. bir_hcast (Imm64 w) Bit64 = Imm64 (w2wh w))
-``,
+val w2n_w2wh = store_thm ("w2n_w2wh",
+``!w:'a word.
+    w2n ((w2wh w):'b word) =
+    (DIV_2EXP (dimindex (:'a) - dimindex (:'b)) (w2n w))``,
 
-Q.ABBREV_TAC `MY_POW = \x. 2 ** x` >>
-`MY_POW 0 = 1` by (UNABBREV_ALL_TAC >> ASM_SIMP_TAC std_ss []) >>
-ASM_SIMP_TAC std_ss [bir_hcast_def, bitTheory.DIV_2EXP_def] >>
-ASM_SIMP_TAC (std_ss++bir_imm_ss++wordsLib.WORD_ss) [w2wh_def, n2bs_def,
-  b2n_def, size_of_bir_immtype_def, type_of_bir_imm_def, n2w_w2n] >>
-REPEAT CONJ_TAC >> Cases >> (
-  FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) [word_extract_mask, w2n_n2w] >>
-  blastLib.BBLAST_TAC >>
-  UNABBREV_ALL_TAC >> BETA_TAC >>
-  ASM_SIMP_TAC arith_ss [bitTheory.BIT_SHIFT_THM4, bitTheory.NOT_BIT_GT_TWOEXP] >>
-  METIS_TAC[]
-));
+REPEAT STRIP_TAC >>
+`0 < dimindex (:'a)` by METIS_TAC[wordsTheory.DIMINDEX_GT_0] >>
+`0 < dimindex (:'b)` by METIS_TAC[wordsTheory.DIMINDEX_GT_0] >>
+SIMP_TAC arith_ss [w2wh_def, bitTheory.DIV_2EXP_def, GSYM wordsTheory.w2n_lsr,
+  wordsTheory.word_lsr_n2w, word_extract_bits_w2w, w2n_n2w, w2w_def] >>
+
+`w2n ((dimindex (:'a) - 1 -- dimindex (:'a) - dimindex (:'b)) w) < dimword (:'b)`
+  suffices_by SIMP_TAC arith_ss [] >>
+
+`w2n ((dimindex (:'a) - 1 -- dimindex (:'a) - dimindex (:'b)) w) < 2**
+    (SUC (dimindex (:'a) - 1) - (dimindex (:'a) - dimindex (:'b)))` by
+  METIS_TAC[wordsTheory.WORD_BITS_LT] >>
+
+`SUC (dimindex (:'a) - 1) - (dimindex (:'a) - dimindex (:'b)) <= dimindex (:'b)` by
+  DECIDE_TAC >>
+
+ASM_SIMP_TAC arith_ss [wordsTheory.dimword_def] >>
+METIS_TAC[bitTheory.TWOEXP_MONO2, arithmeticTheory.LESS_LESS_EQ_TRANS]);
 
 
-val bir_hcast_REWRS = store_thm ("bir_hcast_REWRS", ``
-  (* Not very casts *)
-     (!w. bir_hcast (Imm1  w) Bit1  = Imm1  w)
-  /\ (!w. bir_hcast (Imm8  w) Bit8  = Imm8  w)
-  /\ (!w. bir_hcast (Imm16 w) Bit16 = Imm16 w)
-  /\ (!w. bir_hcast (Imm32 w) Bit32 = Imm32 w)
-  /\ (!w. bir_hcast (Imm64 w) Bit64 = Imm64 w)
 
-  (* Casts *)
-  /\ (!w. bir_hcast (Imm1  w) Bit8  = Imm8  (w2w w))
-  /\ (!w. bir_hcast (Imm1  w) Bit16 = Imm16 (w2w w))
-  /\ (!w. bir_hcast (Imm1  w) Bit32 = Imm32 (w2w w))
-  /\ (!w. bir_hcast (Imm1  w) Bit64 = Imm64 (w2w w))
-  /\ (!w. bir_hcast (Imm8  w) Bit1  = Imm1  (w2wh w))
-  /\ (!w. bir_hcast (Imm8  w) Bit16 = Imm16 (w2w w))
-  /\ (!w. bir_hcast (Imm8  w) Bit32 = Imm32 (w2w w))
-  /\ (!w. bir_hcast (Imm8  w) Bit64 = Imm64 (w2w w))
-  /\ (!w. bir_hcast (Imm16 w) Bit1  = Imm1  (w2wh w))
-  /\ (!w. bir_hcast (Imm16 w) Bit8  = Imm8  (w2wh w))
-  /\ (!w. bir_hcast (Imm16 w) Bit32 = Imm32 (w2w w))
-  /\ (!w. bir_hcast (Imm16 w) Bit64 = Imm64 (w2w w))
-  /\ (!w. bir_hcast (Imm32 w) Bit1  = Imm1  (w2wh w))
-  /\ (!w. bir_hcast (Imm32 w) Bit8  = Imm8  (w2wh w))
-  /\ (!w. bir_hcast (Imm32 w) Bit16 = Imm16 (w2wh w))
-  /\ (!w. bir_hcast (Imm32 w) Bit64 = Imm64 (w2w w))
-  /\ (!w. bir_hcast (Imm64 w) Bit1  = Imm1  (w2wh w))
-  /\ (!w. bir_hcast (Imm64 w) Bit8  = Imm8  (w2wh w))
-  /\ (!w. bir_hcast (Imm64 w) Bit16 = Imm16 (w2wh w))
-  /\ (!w. bir_hcast (Imm64 w) Bit32 = Imm32 (w2wh w))
-``,
+val bir_hcast_REWRS_aux = prove (``!s1 s2 (w:'a word).
+  (size_of_bir_immtype s1 = dimindex (:'a)) ==>
+  (size_of_bir_immtype s2 = dimindex (:'b)) ==>
+  (bir_hcast (w2bs w s1) s2 = w2bs ((w2wh w):'b word) s2)``,
 
-SIMP_TAC (std_ss++wordsLib.WORD_ss) [bir_hcast_REWRS0, w2wh_id,
- w2wh_w2w]);
+SIMP_TAC std_ss [bir_hcast_def, type_of_w2bs, w2bs_def, w2n_w2wh,
+  b2n_n2bs, w2n_MOD_2EXP_ID]);
+
+
+val bir_hcast_REWRS = save_thm ("bir_hcast_REWRS", let
+  val thms0 = MP_size_of_bir_immtype_t_EQ_dimindex bir_hcast_REWRS_aux
+  val thms1 = flatten (map (MP_size_of_bir_immtype_t_EQ_dimindex) thms0)
+  val thm0 = LIST_CONJ thms1
+  val thm1 = SIMP_RULE (std_ss++wordsLib.WORD_ss)
+    [GSYM CONJ_ASSOC, w2bs_REWRS, w2wh_id, w2w_id, w2wh_w2w] thm0
+in
+  thm1
+end);
+
 
 
 (* ============= *)
@@ -382,69 +337,28 @@ val bir_scast_def = Define `bir_scast r s =
      (SIGN_EXTEND (size_of_bir_immtype (type_of_bir_imm r))
                   (size_of_bir_immtype s) (b2n r))) s`;
 
-val bir_scast_REWRS0 = store_thm ("bir_scast_REWRS0", ``
-     (!w. bir_scast (Imm1  w) Bit1  = Imm1  (w2w w))
-  /\ (!w. bir_scast (Imm1  w) Bit8  = Imm8  (w2w w))
-  /\ (!w. bir_scast (Imm1  w) Bit16 = Imm16 (w2w w))
-  /\ (!w. bir_scast (Imm1  w) Bit32 = Imm32 (w2w w))
-  /\ (!w. bir_scast (Imm1  w) Bit64 = Imm64 (w2w w))
-  /\ (!w. bir_scast (Imm8  w) Bit1  = Imm1  (sw2sw w))
-  /\ (!w. bir_scast (Imm8  w) Bit8  = Imm8  (sw2sw w))
-  /\ (!w. bir_scast (Imm8  w) Bit16 = Imm16 (sw2sw w))
-  /\ (!w. bir_scast (Imm8  w) Bit32 = Imm32 (sw2sw w))
-  /\ (!w. bir_scast (Imm8  w) Bit64 = Imm64 (sw2sw w))
-  /\ (!w. bir_scast (Imm16 w) Bit1  = Imm1  (sw2sw w))
-  /\ (!w. bir_scast (Imm16 w) Bit8  = Imm8  (sw2sw w))
-  /\ (!w. bir_scast (Imm16 w) Bit16 = Imm16 (sw2sw w))
-  /\ (!w. bir_scast (Imm16 w) Bit32 = Imm32 (sw2sw w))
-  /\ (!w. bir_scast (Imm16 w) Bit64 = Imm64 (sw2sw w))
-  /\ (!w. bir_scast (Imm32 w) Bit1  = Imm1  (sw2sw w))
-  /\ (!w. bir_scast (Imm32 w) Bit8  = Imm8  (sw2sw w))
-  /\ (!w. bir_scast (Imm32 w) Bit16 = Imm16 (sw2sw w))
-  /\ (!w. bir_scast (Imm32 w) Bit32 = Imm32 (sw2sw w))
-  /\ (!w. bir_scast (Imm32 w) Bit64 = Imm64 (sw2sw w))
-  /\ (!w. bir_scast (Imm64 w) Bit1  = Imm1  (sw2sw w))
-  /\ (!w. bir_scast (Imm64 w) Bit8  = Imm8  (sw2sw w))
-  /\ (!w. bir_scast (Imm64 w) Bit16 = Imm16 (sw2sw w))
-  /\ (!w. bir_scast (Imm64 w) Bit32 = Imm32 (sw2sw w))
-  /\ (!w. bir_scast (Imm64 w) Bit64 = Imm64 (sw2sw w))
-``,
-SIMP_TAC (std_ss++bir_imm_ss++wordsLib.WORD_ss) [
-  bir_scast_def, n2bs_def, sw2sw_def,
-  size_of_bir_immtype_def, type_of_bir_imm_def, b2n_def, GSYM w2w_def]);
+
+val bir_scast_REWRS_aux = prove (``!s1 s2 (w:'a word).
+  (size_of_bir_immtype s1 = dimindex (:'a)) ==>
+  (size_of_bir_immtype s2 = dimindex (:'b)) ==>
+  (bir_scast (w2bs w s1) s2 = w2bs (if (s1 = Bit1) then (w2w w) else (sw2sw w):'b word) s2)``,
+
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_scast_def, type_of_w2bs, w2bs_def, w2w_def,
+  b2n_n2bs, w2n_MOD_2EXP_ID, wordsTheory.sw2sw_def, w2n_n2w, wordsTheory.dimword_def,
+  GSYM bitTheory.MOD_2EXP_def] >>
+METIS_TAC[n2bs_MOD_size_of_bir_immtype]);
 
 
-val bir_scast_REWRS = store_thm ("bir_scast_REWRS", ``
-  (* Indentity *)
-     (!w. bir_scast (Imm1  w) Bit1  = Imm1  w)
-  /\ (!w. bir_scast (Imm8  w) Bit8  = Imm8  w)
-  /\ (!w. bir_scast (Imm16 w) Bit16 = Imm16 w)
-  /\ (!w. bir_scast (Imm32 w) Bit32 = Imm32 w)
-  /\ (!w. bir_scast (Imm64 w) Bit64 = Imm64 w)
+val bir_scast_REWRS = save_thm ("bir_scast_REWRS", let
+  val thms0 = MP_size_of_bir_immtype_t_EQ_dimindex bir_scast_REWRS_aux
+  val thms1 = flatten (map (MP_size_of_bir_immtype_t_EQ_dimindex) thms0)
+  val thm0 = LIST_CONJ thms1
+  val thm1 = SIMP_RULE (std_ss++wordsLib.WORD_ss++bir_imm_ss)
+    [GSYM CONJ_ASSOC, w2bs_REWRS, sw2sw_id, w2w_id, sw2sw_w2w_downcast] thm0
+in
+  thm1
+end);
 
-  (* Casts *)
-  /\ (!w. bir_scast (Imm1  w) Bit8  = Imm8  (w2w w))
-  /\ (!w. bir_scast (Imm1  w) Bit16 = Imm16 (w2w w))
-  /\ (!w. bir_scast (Imm1  w) Bit32 = Imm32 (w2w w))
-  /\ (!w. bir_scast (Imm1  w) Bit64 = Imm64 (w2w w))
-  /\ (!w. bir_scast (Imm8  w) Bit1  = Imm1  (sw2sw w))
-  /\ (!w. bir_scast (Imm8  w) Bit16 = Imm16 (sw2sw w))
-  /\ (!w. bir_scast (Imm8  w) Bit32 = Imm32 (sw2sw w))
-  /\ (!w. bir_scast (Imm8  w) Bit64 = Imm64 (sw2sw w))
-  /\ (!w. bir_scast (Imm16 w) Bit1  = Imm1  (sw2sw w))
-  /\ (!w. bir_scast (Imm16 w) Bit8  = Imm8  (sw2sw w))
-  /\ (!w. bir_scast (Imm16 w) Bit32 = Imm32 (sw2sw w))
-  /\ (!w. bir_scast (Imm16 w) Bit64 = Imm64 (sw2sw w))
-  /\ (!w. bir_scast (Imm32 w) Bit1  = Imm1  (sw2sw w))
-  /\ (!w. bir_scast (Imm32 w) Bit8  = Imm8  (sw2sw w))
-  /\ (!w. bir_scast (Imm32 w) Bit16 = Imm16 (sw2sw w))
-  /\ (!w. bir_scast (Imm32 w) Bit64 = Imm64 (sw2sw w))
-  /\ (!w. bir_scast (Imm64 w) Bit1  = Imm1  (sw2sw w))
-  /\ (!w. bir_scast (Imm64 w) Bit8  = Imm8  (sw2sw w))
-  /\ (!w. bir_scast (Imm64 w) Bit16 = Imm16 (sw2sw w))
-  /\ (!w. bir_scast (Imm64 w) Bit32 = Imm32 (sw2sw w))
-``,
-SIMP_TAC (std_ss) [bir_scast_REWRS0, w2w_id, sw2sw_id]);
 
 
 (* ============= *)
