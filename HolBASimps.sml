@@ -88,13 +88,7 @@ val bir_SIMPLE_REWRS_imm_exp = rewrites [
   bir_bin_exp_REWRS,
 
   type_of_bir_unary_exp,
-  type_of_bir_unary_exps,
-  bir_unary_exps_REWRS,
   type_of_bir_bin_exp,
-  type_of_bir_bin_exps,
-  bir_bin_exps_REWRS,
-  bir_bin_pred_REWRS,
-  bir_bin_preds_REWRS,
 
   bir_cast_REWRS,
   bir_lcast_def,
