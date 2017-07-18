@@ -1,4 +1,4 @@
-signature HolBASimps =
+signature HolBACoreSimps =
 sig
    include Abbrev
 
