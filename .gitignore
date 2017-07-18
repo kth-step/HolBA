@@ -1,8 +1,9 @@
-/.HOLMK
-/.hollogs
+.HOLMK
+.hollogs
 *Theory.sig
 *Theory.sml
 *.ui
 *.uo
 *~
-/selftest.exe
+selftest.exe
+HolBA-heap

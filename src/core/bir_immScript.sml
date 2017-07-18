@@ -29,6 +29,12 @@ val _ = Datatype `bir_immtype_t =
 
 val bir_imm_ss = rewrites ((type_rws ``:bir_imm_t``) @ (type_rws ``:bir_immtype_t``));
 
+
+val fold_bir_immtype_THM = store_thm ("fold_bir_immtype_THM",
+  ``!P. ((P Bit1 /\ P Bit8 /\ P Bit16 /\ P Bit32 /\ P Bit64) <=> (!ty. P ty))``,
+    SIMP_TAC (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``]) []);
+
+
 val type_of_bir_imm_def = Define `
   (type_of_bir_imm (Imm1  _) = Bit1) /\
   (type_of_bir_imm (Imm8  _) = Bit8) /\

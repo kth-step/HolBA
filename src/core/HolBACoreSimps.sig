@@ -1,4 +1,4 @@
-signature HolBASimps =
+signature HolBACoreSimps =
 sig
    include Abbrev
 
@@ -9,5 +9,5 @@ sig
    val bir_SIMPLE_REWRS_ss : simpLib.ssfrag
 
    (* All holBA stuff *)
-   val holBA_ss : simpLib.ssfrag
+   val holBACore_ss : simpLib.ssfrag
 end

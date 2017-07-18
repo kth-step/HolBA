@@ -22,12 +22,6 @@ val fold_bir_endian_THM = store_thm ("fold_bir_endian_THM",
   ``!P. (P BEnd_BigEndian /\ P BEnd_LittleEndian /\ P BEnd_NoEndian) <=> (!en. P en)``,
     SIMP_TAC (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_endian_t``]) []);
 
-
-val fold_bir_immtype_THM = store_thm ("fold_bir_immtype_THM",
-  ``!P. ((P Bit1 /\ P Bit8 /\ P Bit16 /\ P Bit32 /\ P Bit64) <=> (!ty. P ty))``,
-    SIMP_TAC (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``]) []);
-
-
 (* ------------------------------------------------------------------------- *)
 (*  How many splits are needed                                               *)
 (* ------------------------------------------------------------------------- *)

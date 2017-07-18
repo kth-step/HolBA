@@ -1,11 +1,11 @@
-structure HolBASimps :> HolBASimps =
+structure HolBACoreSimps :> HolBACoreSimps =
 struct
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;
-open birTheory;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
 open bir_imm_expTheory bir_mem_expTheory bir_envTheory;
-open bir_expTheory bir_programTheory bir_typingTheory;
+open bir_expTheory bir_programTheory bir_typing_progTheory;
+open bir_typing_expTheory;
 
 val bir_list_of_types = [
    mk_thy_type {Tyop="bir_imm_t",            Thy="bir_imm", Args=[]},
@@ -174,7 +174,7 @@ val bir_SIMPLE_REWRS_program = rewrites [
   bir_declare_initial_value_def
 ];
 
-val bir_SIMPLE_REWRS_typing = rewrites [
+val bir_SIMPLE_REWRS_typing_exp = rewrites [
   type_of_bir_exp_EQ_SOME_REWRS,
   type_of_bir_exp_EQ_NONE_REWRS
 ];
@@ -188,9 +188,9 @@ val bir_SIMPLE_REWRS_ss = simpLib.merge_ss [
   bir_SIMPLE_REWRS_mem_exp,
   bir_SIMPLE_REWRS_exp,
   bir_SIMPLE_REWRS_program,
-  bir_SIMPLE_REWRS_typing
+  bir_SIMPLE_REWRS_typing_exp
 ];
 
-val holBA_ss = bir_SIMPLE_REWRS_ss;
+val holBACore_ss = bir_SIMPLE_REWRS_ss;
 
 end
