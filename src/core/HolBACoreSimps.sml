@@ -191,6 +191,6 @@ val bir_SIMPLE_REWRS_ss = simpLib.merge_ss [
   bir_SIMPLE_REWRS_typing_exp
 ];
 
-val holBA_ss = bir_SIMPLE_REWRS_ss;
+val holBACore_ss = bir_SIMPLE_REWRS_ss;
 
 end
