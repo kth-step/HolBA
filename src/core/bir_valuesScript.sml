@@ -93,6 +93,22 @@ SIMP_TAC (std_ss++bir_val_ss) [bir_val_is_Imm_def, bir_val_is_Bool_def,
 
 
 (* ------------------------------------------------------------------------- *)
+(*  Boolean Values                                                           *)
+(* ------------------------------------------------------------------------- *)
+
+val bir_dest_bool_val_def = Define `
+  (bir_dest_bool_val (BVal_Imm (Imm1 w)) = SOME (w = 1w)) /\
+  (bir_dest_bool_val _ = NONE)`
+
+val bir_dest_bool_val_EQ_NONE = store_thm ("bir_dest_bool_val_EQ_NONE",
+  ``!v. (bir_dest_bool_val v = NONE) <=> ~(bir_val_is_Bool v)``,
+Cases >> SIMP_TAC std_ss [bir_val_checker_REWRS, bir_dest_bool_val_def] >>
+Cases_on `b` >> SIMP_TAC (std_ss++bir_imm_ss) [bir_val_checker_REWRS, bir_dest_bool_val_def,
+  type_of_bir_imm_def]);
+
+
+
+(* ------------------------------------------------------------------------- *)
 (*  Some basic typing                                                        *)
 (* ------------------------------------------------------------------------- *)
 
