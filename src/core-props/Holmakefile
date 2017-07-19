@@ -4,7 +4,25 @@ OPTIONS = QUIT_ON_FAILURE
 THYFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
 TARGETS = $(patsubst %.sml,%.uo,$(THYFILES))
 
-all: $(TARGETS)
+ifdef POLY
+HOLHEAP = ../core/HolBACore-heap
+NEWHOLHEAP = HolBACoreProps-heap
+EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
+
+BARE_THYS = bir_program_blocksTheory \
+	    bir_program_env_orderTheory \
+	    bir_program_valid_stateTheory \
+	    bir_program_terminationTheory \
+	    bir_program_multistep_propsTheory \
+	    bir_program_no_observeTheory
+
+DEPS = $(patsubst %,%.uo,$(BARE_THYS))
+
+$(NEWHOLHEAP): $(DEPS)
+	$(protect $(HOLDIR)/bin/buildheap) -o $(NEWHOLHEAP) $(BARE_THYS)
+endif
+
+all: $(TARGETS) $(NEWHOLHEAP)
 .PHONY: all
 
 

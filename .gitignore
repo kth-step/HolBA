@@ -6,4 +6,4 @@
 *.uo
 *~
 selftest.exe
-HolBA-heap
+*-heap
