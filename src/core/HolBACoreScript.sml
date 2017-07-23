@@ -6,6 +6,7 @@ open bir_expTheory bir_programTheory;
 open bir_typing_expTheory bir_typing_progTheory;
 open bir_immSyntax bir_valuesSyntax bir_envSyntax bir_mem_expSyntax;
 open bir_imm_expSyntax bir_expSyntax;
+open bir_programSyntax;
 open wordsLib;
 
 val _ = new_theory "HolBACore";
