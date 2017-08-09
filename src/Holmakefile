@@ -1,6 +1,8 @@
 INCLUDES = core core-props
 OPTIONS = QUIT_ON_FAILURE
 
+default: all
+
 ifdef POLY
 HOLHEAP = ../core-props/HolBACoreProps-heap
 NEWHOLHEAP = HolBA-heap
@@ -14,5 +16,5 @@ $(NEWHOLHEAP): $(DEPS)
 endif
 
 all: $(TARGETS) $(NEWHOLHEAP)
-.PHONY: all cleanSubdirs
+.PHONY: all default
 

@@ -1,6 +1,8 @@
 INCLUDES = ../core 
 OPTIONS = QUIT_ON_FAILURE
 
+default: all
+
 THYFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
 TARGETS = $(patsubst %.sml,%.uo,$(THYFILES))
 
@@ -23,6 +25,4 @@ $(NEWHOLHEAP): $(DEPS)
 endif
 
 all: $(TARGETS) $(NEWHOLHEAP)
-.PHONY: all
-
-
+.PHONY: all default

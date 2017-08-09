@@ -4,17 +4,25 @@ THYFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
 TARGETS = $(patsubst %.sml,%.uo,$(THYFILES))
 EXTRA_CLEANS = selftest.exe
 
+default: all
+
 ifdef POLY
 NEWHOLHEAP = HolBACore-heap
 EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
 
-BARE_THYS = HolBACoreTheory
+BARE_THYS = HolBACoreTheory HolBACoreSimps\
+	    bir_valuesSyntax \
+	    bir_immSyntax \
+	    bir_expSyntax \
+	    bir_imm_expSyntax \
+	    bir_mem_expSyntax \
+	    bir_envSyntax
+
 DEPS = $(patsubst %,%.uo,$(BARE_THYS))
 
 $(NEWHOLHEAP): $(DEPS)
 	$(protect $(HOLDIR)/bin/buildheap) -o $(NEWHOLHEAP) $(BARE_THYS)
 endif
-
 
 all: $(TARGETS) selftest.exe $(NEWHOLHEAP)
 .PHONY: all
