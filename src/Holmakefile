@@ -3,16 +3,18 @@ OPTIONS = QUIT_ON_FAILURE
 
 default: all
 
+SMLFILES =
+TARGETS = $(patsubst %.sml,%.uo,$(SMLFILES))
+
 ifdef POLY
-HOLHEAP = ../core-props/HolBACoreProps-heap
+HOLHEAP = core-props/HolBACoreProps-heap
 NEWHOLHEAP = HolBA-heap
 EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
 
-BARE_THYS =
-DEPS = $(patsubst %,%.uo,$(BARE_THYS))
+HEAPINC =
 
-$(NEWHOLHEAP): $(DEPS)
-	$(protect $(HOLDIR)/bin/buildheap) -o $(NEWHOLHEAP) $(BARE_THYS)
+$(NEWHOLHEAP): $(TARGETS)
+	$(protect $(HOLDIR)/bin/buildheap) -b $(HOLHEAP) -o $(NEWHOLHEAP) $(HEAPINC)
 endif
 
 all: $(TARGETS) $(NEWHOLHEAP)

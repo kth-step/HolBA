@@ -3,25 +3,18 @@ OPTIONS = QUIT_ON_FAILURE
 
 default: all
 
-THYFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
-TARGETS = $(patsubst %.sml,%.uo,$(THYFILES))
+SMLFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
+TARGETS = $(patsubst %.sml,%.uo,$(SMLFILES))
 
 ifdef POLY
 HOLHEAP = ../core/HolBACore-heap
 NEWHOLHEAP = HolBACoreProps-heap
 EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
 
-BARE_THYS = bir_program_blocksTheory \
-	    bir_program_env_orderTheory \
-	    bir_program_valid_stateTheory \
-	    bir_program_terminationTheory \
-	    bir_program_multistep_propsTheory \
-	    bir_program_no_observeTheory
+HEAPINC = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml))
 
-DEPS = $(patsubst %,%.uo,$(BARE_THYS))
-
-$(NEWHOLHEAP): $(DEPS)
-	$(protect $(HOLDIR)/bin/buildheap) -o $(NEWHOLHEAP) $(BARE_THYS)
+$(NEWHOLHEAP): $(TARGETS)
+	$(protect $(HOLDIR)/bin/buildheap) -b $(HOLHEAP) -o $(NEWHOLHEAP) $(HEAPINC)
 endif
 
 all: $(TARGETS) $(NEWHOLHEAP)
