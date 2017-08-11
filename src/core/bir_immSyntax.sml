@@ -152,23 +152,22 @@ end;
 fun build_immtype_t_conj_gen sv wty tt = let
   fun build_conj is = let
     val sty = wordsSyntax.dest_word_type (word_ty_of_bir_immtype_t is)
-    val tt0 = inst [wty |-> sty] (subst [sv |-> is] tt)
+    val tt0 = inst [wty |-> sty] (subst [mk_var (sv, bir_immtype_t_ty) |-> is] tt)
   in
     tt0
   end
 
   val tt1 = list_mk_conj ((map build_conj bir_immtype_t_list))
-  val thm0 = PURE_REWRITE_CONV [w2bs_REWRS, wordsTheory.w2w_id,
-    n2bs_def] tt1
 in
-  rhs (concl thm0)
+  tt1
 end;
 
 
 fun build_immtype_t_conj tt = let
   val (v, tt0) = dest_forall tt
+  val (vs, _) = dest_var v;
 in
-  build_immtype_t_conj_gen v Type.alpha tt0
+  build_immtype_t_conj_gen vs Type.alpha tt0
 end;
 
 end

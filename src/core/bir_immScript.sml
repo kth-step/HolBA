@@ -93,6 +93,20 @@ REPEAT CONJ_TAC >| [
 ]);
 
 
+val bir_immtype_of_size_REWRS_SOME = save_thm ("bir_immtype_of_size_REWRS_SOME",
+  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``])
+            [size_of_bir_immtype_def] (CONJUNCT1 bir_immtype_of_num_inv));
+
+
+val bir_immtype_of_size_REWRS_NONE = save_thm ("bir_immtype_of_size_REWRS_NONE",
+let
+  val thm_none_aux = prove (``!n. ~(is_valid_bir_immtype_size n) ==> (bir_immtype_of_size n = NONE)``,
+    SIMP_TAC std_ss [is_valid_bir_immtype_size_IS_SOME]);
+  val thm_none = SIMP_RULE std_ss [is_valid_bir_immtype_size_REWRS] thm_none_aux
+in
+  thm_none
+end);
+
 
 (* ------------------------------------------------------------------------- *)
 (*  Transformation between immediates and numbers                            *)
@@ -276,6 +290,14 @@ FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) [] >>
 val type_of_bool2b = store_thm ("type_of_bool2b",
   ``!b. type_of_bir_imm (bool2b b) = Bit1``,
 Cases >> SIMP_TAC std_ss [bool2b_def, type_of_bir_imm_def]);
+
+val bool2b_EQ_IMM1_ELIMS = store_thm ("bool2b_EQ_IMM1_ELIMS",
+  ``(!b. (bool2b b = Imm1 1w) <=> b) /\
+    (!b. (bool2b b = Imm1 0w) <=> ~b) /\
+    (!b. (Imm1 1w = bool2b b) <=> b) /\
+    (!b. (Imm1 0w = bool2b b) <=> ~b)``,
+
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_imm_ss++wordsLib.WORD_ss) [bool2b_def]);
 
 
 (* ------------------------------------------------------------------------- *)

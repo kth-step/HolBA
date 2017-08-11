@@ -111,7 +111,7 @@ sig
    val mk_Imm_of_int : int -> int -> term;
 
    (* Various theorems link the word type and immtype via a precondition like
-      ``!s. (size_of_bir_immtype_t s = dimindex (:'a)) ==> ...``
+      ``!s. (size_of_bir_immtype s = dimindex (:'a)) ==> ...``
 
       MP_size_of_bir_immtype_t_EQ_dimindex instantiates "s" and "'a" with
       all immtype values and corresponding types 'a and removes the precondition. *)
@@ -130,7 +130,7 @@ sig
       with a immediate-size (e.g. Bit8) and the type wty with the corresponding word-type
       (e.g. word8). This is done for all sizes and the conjunction of the resulting
       terms returned. *)
-   val build_immtype_t_conj_gen : term -> hol_type -> term -> term
+   val build_immtype_t_conj_gen : string -> hol_type -> term -> term
 
    (* For convenience, one can ommit proving sw and wty in build_immtype_t_conj_gen.
       build_immtype_t_conj always uses 'a for wty and expects a term starting with a

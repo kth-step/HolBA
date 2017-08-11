@@ -1,4 +1,4 @@
-INCLUDES = core core-props
+INCLUDES = core core-props tools
 OPTIONS = QUIT_ON_FAILURE
 
 default: all
@@ -7,7 +7,7 @@ SMLFILES =
 TARGETS = $(patsubst %.sml,%.uo,$(SMLFILES))
 
 ifdef POLY
-HOLHEAP = core-props/HolBACoreProps-heap
+HOLHEAP = tools/HolBATools-heap
 NEWHOLHEAP = HolBA-heap
 EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
 

@@ -60,12 +60,14 @@ val bir_SIMPLE_REWRS_imm = rewrites [
   w2bs_b2w,
   v2n_w2v,
   bool2b_inv,
+  bool2b_EQ_IMM1_ELIMS,
   wordsTheory.n2w_w2n,
 
   size_of_bir_immtype_INJ,
   size_of_bir_immtype_NEQ_0,
   is_valid_bir_immtype_size_IMP,
-  bir_immtype_of_num_inv
+  bir_immtype_of_num_inv,
+  size_of_bir_immtype_def
 ];
 
 
@@ -78,7 +80,6 @@ val bir_SIMPLE_REWRS_env = rewrites [
 
 
 
-
 val bir_SIMPLE_REWRS_imm_exp = rewrites [
   bir_unary_exp_GET_OPER_def,
   bir_bin_exp_GET_OPER_def,
@@ -86,6 +87,7 @@ val bir_SIMPLE_REWRS_imm_exp = rewrites [
   bir_gencast_def,
   bir_unary_exp_REWRS,
   bir_bin_exp_REWRS,
+  bir_bin_pred_REWRS,
 
   type_of_bir_unary_exp,
   type_of_bir_bin_exp,
@@ -101,30 +103,6 @@ val bir_SIMPLE_REWRS_imm_exp = rewrites [
   bir_casts_Bit1,
   type_of_bir_casts
 ];
-
-
-val bir_SIMPLE_REWRS_mem_exp = rewrites [
-  bir_number_of_mem_splits_REWRS,
-  bir_number_of_mem_splits_NEQ_SOME0,
-  bir_number_of_mem_splits_ID,
-  bir_number_of_mem_splits_EQ_SOME1,
-
-  type_of_bir_mem_concat,
-  type_of_bir_load_from_mem,
-  bir_load_from_mem_NONE_REWRS,
-  bir_load_from_mem_EQ_NONE_IMP,
-
-  bir_load_from_mem_used_addrs_REWRS,
-  bir_load_from_mem_used_addrs_FINITE,
-  bir_load_from_mem_used_addrs_EMPTY,
-
-  bir_store_in_mem_NONE_REWRS,
-  bir_store_in_mem_EQ_NONE_IMP,
-  bir_store_in_mem_used_addrs_REWRS,
-  bir_store_in_mem_used_addrs_FINITE,
-  bir_store_in_mem_used_addrs_EMPTY
-];
-
 
 
 val bir_SIMPLE_REWRS_mem_exp = rewrites [
@@ -176,7 +154,8 @@ val bir_SIMPLE_REWRS_program = rewrites [
 
 val bir_SIMPLE_REWRS_typing_exp = rewrites [
   type_of_bir_exp_EQ_SOME_REWRS,
-  type_of_bir_exp_EQ_NONE_REWRS
+  type_of_bir_exp_EQ_NONE_REWRS,
+  bir_vars_of_exp_def
 ];
 
 val bir_SIMPLE_REWRS_ss = simpLib.merge_ss [
