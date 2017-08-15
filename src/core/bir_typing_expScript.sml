@@ -109,7 +109,6 @@ Induct >> (
 ));
 
 
-
 val type_of_bir_exp_EQ_SOME_REWRS = store_thm ("type_of_bir_exp_EQ_SOME_REWRS",``
   (!i ty. (type_of_bir_exp (BExp_Const i) = SOME ty) <=> (ty = BType_Imm (type_of_bir_imm i))) /\
 
@@ -259,16 +258,15 @@ val bir_vars_of_exp_def = Define `
   (bir_vars_of_exp (BExp_BinPred _ e1 e2) = (bir_vars_of_exp e1 UNION bir_vars_of_exp e2)) /\
   (bir_vars_of_exp (BExp_IfThenElse ec e1 e2) = (bir_vars_of_exp ec UNION bir_vars_of_exp e1 UNION bir_vars_of_exp e2)) /\
   (bir_vars_of_exp (BExp_Load me ae _ _) = (bir_vars_of_exp me UNION bir_vars_of_exp ae)) /\
-  (bir_vars_of_exp (BExp_Store me ae _ ve) = (bir_vars_of_exp me UNION bir_vars_of_exp ae UNION bir_vars_of_exp ve))`
+  (bir_vars_of_exp (BExp_Store me ae _ ve) = (bir_vars_of_exp me UNION bir_vars_of_exp ae UNION bir_vars_of_exp ve))`;
 
 
 val type_of_bir_exp_THM_with_init_vars = store_thm ("type_of_bir_exp_THM_with_init_vars",
-  ``!env. (bir_is_well_typed_env env) ==>
-          (!e ty. (type_of_bir_exp e = SOME ty) ==>
-                  (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
-                  (type_of_bir_val (bir_eval_exp e env) = SOME ty))``,
+  ``!env e ty. (type_of_bir_exp e = SOME ty) ==>
+               (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
+               (type_of_bir_val (bir_eval_exp e env) = SOME ty)``,
 
-GEN_TAC >> STRIP_TAC >> Induct >> (
+GEN_TAC >> Induct >> (
   SIMP_TAC (std_ss++bir_val_ss) [bir_eval_exp_def, BType_Bool_def,
     type_of_bir_exp_EQ_SOME_REWRS, bir_vars_of_exp_def,
     bir_env_vars_are_initialised_UNION, bir_env_vars_are_initialised_INSERT,
@@ -279,8 +277,7 @@ GEN_TAC >> STRIP_TAC >> Induct >> (
   rename1 `bir_env_read v env` >>
   Cases_on `v` >>
   FULL_SIMP_TAC std_ss [bir_env_read_def, bir_env_var_is_initialised_def, bir_var_name_def,
-    bir_var_type_def, pairTheory.pair_case_thm] >>
-  METIS_TAC[bir_is_well_typed_env_lookup]
+    bir_var_type_def, pairTheory.pair_case_thm]
 ) >- (
   SIMP_TAC (std_ss++bir_val_ss) [bir_eval_cast_REWRS, type_of_bir_gencast]
 ) >- (

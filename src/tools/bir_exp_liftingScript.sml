@@ -3,7 +3,7 @@ open bir_expTheory HolBACoreSimps;
 open bir_typing_expTheory bir_valuesTheory
 open bir_envTheory bir_immTheory bir_imm_expTheory
 open bir_immSyntax wordsTheory
-open bir_mem_expTheory;
+open bir_mem_expTheory bir_bool_expTheory
 
 val _ = new_theory "bir_exp_lifting";
 
@@ -377,6 +377,109 @@ val bir_is_lifted_imm_exp_LOAD_ARM_M0 = save_thm ("bir_is_lifted_imm_exp_LOAD_AR
   mk_bir_is_lifted_imm_exp_LOAD Bit32_tm Bit8_tm Bit32_tm bir_mem_expSyntax.BEnd_BigEndian_tm)
 
 
+(***************)
+(* boolean ops *)
+(***************)
+
+val bir_is_lifted_imm_exp_implies_is_bool_exp_env = store_thm ("bir_is_lifted_imm_exp_implies_is_bool_exp_env",
+``!env e b.
+    bir_is_lifted_imm_exp env e (bool2b b) ==>
+    bir_is_bool_exp_env env e``,
+
+SIMP_TAC std_ss [bir_is_lifted_imm_exp_def, bir_is_bool_exp_env_def,
+  bir_is_bool_exp_def, type_of_bool2b]);
+
+
+val bir_is_lifted_imm_exp_bool2b_TF = prove (
+``(!env. bir_is_lifted_imm_exp env bir_exp_true (bool2b T)) /\
+  (!env. bir_is_lifted_imm_exp env bir_exp_false (bool2b F))``,
+
+SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+  bir_exp_true_def, bir_exp_false_def, bir_env_vars_are_initialised_EMPTY]);
+
+
+val bir_is_lifted_imm_exp_bool2b_COND = prove (
+``!env c b1 b2 ec e1 e2.
+      bir_is_lifted_imm_exp env ec (bool2b c) ==>
+      bir_is_lifted_imm_exp env e1 (bool2b b1) ==>
+      bir_is_lifted_imm_exp env e2 (bool2b b2) ==>
+      bir_is_lifted_imm_exp env (BExp_IfThenElse ec e1 e2) (bool2b (if c then b1 else b2))``,
+
+SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
+  bir_env_vars_are_initialised_UNION, BType_Bool_def]);
+
+
+val bir_is_lifted_imm_exp_bool2b_UnaryExp0 = prove (
+``!uo bop env e b.
+      (bir_unary_exp_GET_BOOL_OPER uo = SOME (T, bop)) ==>
+      bir_is_lifted_imm_exp env e (bool2b b) ==>
+      bir_is_lifted_imm_exp env (BExp_UnaryExp uo e) (bool2b (bop b))``,
+
+REPEAT STRIP_TAC >>
+`bir_unary_exp uo (bool2b b) = bool2b (bop b)` by METIS_TAC[
+  bir_unary_exp_GET_BOOL_OPER_THM] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def]);
+
+
+val bir_is_lifted_imm_exp_bool2b_UnaryExp =
+  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_unary_exp_t``]) [
+    bir_unary_exp_GET_BOOL_OPER_def]
+    bir_is_lifted_imm_exp_bool2b_UnaryExp0;
+
+
+val bir_is_lifted_imm_exp_bool2b_BinExp0 = prove (
+``!uo bop env e1 e2 b1 b2.
+      (bir_bin_exp_GET_BOOL_OPER uo = SOME (T, bop)) ==>
+      bir_is_lifted_imm_exp env e1 (bool2b b1) ==>
+      bir_is_lifted_imm_exp env e2 (bool2b b2) ==>
+      bir_is_lifted_imm_exp env (BExp_BinExp uo e1 e2) (bool2b (bop b1 b2))``,
+
+REPEAT STRIP_TAC >>
+`bir_bin_exp uo (bool2b b1) (bool2b b2) = bool2b (bop b1 b2)` by METIS_TAC[
+  bir_bin_exp_GET_BOOL_OPER_THM] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+  bir_env_vars_are_initialised_UNION]);
+
+
+val bir_is_lifted_imm_exp_bool2b_BinExp =
+  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_bin_exp_t``]) [
+    bir_bin_exp_GET_BOOL_OPER_def]
+    bir_is_lifted_imm_exp_bool2b_BinExp0;
+
+
+
+
+val bir_is_lifted_imm_exp_bool2b_BinPred0 = prove (
+``!uo bop env e1 e2 b1 b2.
+      (bir_bin_pred_GET_BOOL_OPER uo = SOME (T, bop)) ==>
+      bir_is_lifted_imm_exp env e1 (bool2b b1) ==>
+      bir_is_lifted_imm_exp env e2 (bool2b b2) ==>
+      bir_is_lifted_imm_exp env (BExp_BinPred uo e1 e2) (bool2b (bop b1 b2))``,
+
+REPEAT STRIP_TAC >>
+`bir_bin_pred uo (bool2b b1) (bool2b b2) = bop b1 b2` by METIS_TAC[
+  bir_bin_pred_GET_BOOL_OPER_THM] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+  bir_env_vars_are_initialised_UNION, BType_Bool_def]);
+
+
+val bir_is_lifted_imm_exp_bool2b_BinPred =
+  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_bin_pred_t``]) [
+    bir_bin_pred_GET_BOOL_OPER_def]
+    bir_is_lifted_imm_exp_bool2b_BinPred0;
+
+
+
+
+val bir_is_lifted_imm_exp_bool2b = save_thm ("bir_is_lifted_imm_exp_bool2b",
+  LIST_CONJ [bir_is_lifted_imm_exp_bool2b_TF,
+             bir_is_lifted_imm_exp_bool2b_UnaryExp,
+             bir_is_lifted_imm_exp_bool2b_BinExp,
+             bir_is_lifted_imm_exp_bool2b_COND,
+             bir_is_lifted_imm_exp_bool2b_BinPred]);
+
+
+
 (****************)
 (* Combination  *)
 (****************)
@@ -385,6 +488,7 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
   LIST_CONJ [bir_is_lifted_imm_exp_UNARY_EXP,
              bir_is_lifted_imm_exp_BIN_EXP,
              bir_is_lifted_imm_exp_BIN_PRED,
+             bir_is_lifted_imm_exp_bool2b,
              bir_is_lifted_imm_exp_CASTS,
              bir_is_lifted_imm_exp_COND,
              bir_is_lifted_imm_exp_LOAD_ENDIAN]);

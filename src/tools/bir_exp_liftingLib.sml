@@ -488,6 +488,11 @@ bir_exp_lift env_t n ``(Imm16 (sw2sw (7w:word8)))``
 bir_exp_lift env_t n ``Imm32 (w2w ((v2w [F; F; F; F; T; F; F]):word8))``
 bir_exp_lift env_t n ``Imm32 (w2w ((v2w [F; F; F; F; T; F; F]):word7))``
 
+bir_exp_lift env_t n ``(w1:word32 < w2) /\ (w2 < w3)``
+bir_exp_lift env_t n ``(w1:word32 < w2) \/ (w2 < w3)``
+bir_exp_lift env_t n ``(w1:word32 < w2) ==> (w2 < w3)``
+
+
 bir_exp_lift env_t n ``if (w1:word32 < w2) then 0w:word16 else 16w``
 
 bir_exp_lift env_t n ``Imm32((((mem:word32 -> word8)
