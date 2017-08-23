@@ -43,9 +43,14 @@ val bir_env_update_def = Define `
     if (?v. (vo = SOME v) /\ (SOME ty <> type_of_bir_val v)) then NONE else
     SOME (BEnv (env |+ (varname, (ty, vo)))))`;
 
+val bir_env_lookup_UPDATE = store_thm ("bir_env_lookup_UPDATE",
+``bir_env_lookup vn (BEnv (env |+ (vn', ty, vo))) =
+   (if (vn' = vn) then SOME (ty, vo) else bir_env_lookup vn (BEnv env))``,
+SIMP_TAC std_ss [bir_env_lookup_def, FLOOKUP_UPDATE]);
 
 val bir_env_lookup_type_def = Define `
   bir_env_lookup_type var_name env = OPTION_MAP FST (bir_env_lookup var_name env)`;
+
 
 val bir_env_check_type_def = Define `
   bir_env_check_type var env =
@@ -57,6 +62,20 @@ val bir_env_read_def = Define `bir_env_read v env =
      NONE => BVal_Unknown
    | SOME (_, NONE) => BVal_Unknown
    | SOME (ty, SOME r) => if (ty = bir_var_type v) then r else BVal_Unknown`;
+
+
+val bir_env_read_UPDATE = store_thm ("bir_env_read_UPDATE",
+``bir_env_read v (BEnv (env |+ (vn, ty, vo))) =
+   (if (bir_var_name v = vn) then (
+      if (ty = bir_var_type v) then
+         (case vo of NONE => BVal_Unknown
+                   | SOME r => r)
+      else BVal_Unknown)
+ else bir_env_read v (BEnv env))``,
+
+SIMP_TAC std_ss [bir_env_read_def, bir_env_lookup_UPDATE] >>
+Cases_on `bir_var_name v = vn` >> ASM_SIMP_TAC std_ss [] >>
+Cases_on `vo` >> SIMP_TAC std_ss [pairTheory.pair_case_thm]);
 
 
 val bir_env_write_def = Define `bir_env_write v va env =
@@ -156,13 +175,20 @@ SIMP_TAC std_ss [bir_env_varname_is_bound_ALT_DEF, bir_env_lookup_type_def,
 
 
 val bir_env_var_is_declared_def = Define `
-  (bir_env_var_is_declared env (BVar vn ty) <=>
-  (bir_env_lookup_type vn env = SOME ty))`;
+  (bir_env_var_is_declared env v <=>
+  (bir_env_lookup_type (bir_var_name v) env = SOME (bir_var_type v)))`;
+
+(* This duplication is kept deliberately, because despite the same semantics, the intentention
+   of what you want to express is different *)
+val bir_env_var_is_declared_DEF_bir_env_check_type = store_thm ("bir_env_var_is_declared_ALT_DEF",
+  ``bir_env_var_is_declared env v = bir_env_check_type v env``,
+SIMP_TAC std_ss [bir_env_check_type_def, bir_env_var_is_declared_def]);
+
 
 val bir_env_var_is_initialised_def = Define `
-  (bir_env_var_is_initialised env (BVar vn ty) <=>
-  (?v. (bir_env_lookup vn env = SOME (ty, SOME v)) /\
-       (type_of_bir_val v = SOME ty)))`;
+  (bir_env_var_is_initialised env var <=>
+  (?v. (bir_env_lookup (bir_var_name var) env = SOME (bir_var_type var, SOME v)) /\
+       (type_of_bir_val v = SOME (bir_var_type var))))`;
 
 val bir_env_var_is_initialised_weaken = store_thm ("bir_env_var_is_initialised_weaken",
   ``!v env. bir_env_var_is_initialised env v ==> bir_env_var_is_declared env v``,

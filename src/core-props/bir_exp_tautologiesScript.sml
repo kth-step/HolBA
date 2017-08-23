@@ -239,7 +239,7 @@ EQ_TAC >> REPEAT STRIP_TAC >| [
   `bir_val_is_Bool (bir_eval_exp e env)` by (
      Q.PAT_X_ASSUM `!env. _` MATCH_MP_TAC >>
      ASM_SIMP_TAC std_ss [bir_env_vars_are_initialised_INSERT,
-       bir_env_var_is_initialised_def, type_of_bir_val_def]
+       bir_env_var_is_initialised_def, type_of_bir_val_def, bir_var_name_def, bir_var_type_def]
   ) >>
   `?i'. (bir_eval_exp ve env = BVal_Imm i') /\ (type_of_bir_imm i' = s)` by METIS_TAC[] >>
 
@@ -295,7 +295,8 @@ EQ_TAC >> REPEAT STRIP_TAC >| [
   `bir_val_is_Bool (bir_eval_exp e env')` by (
      Q.PAT_X_ASSUM `!env. _` MATCH_MP_TAC >>
      ASM_SIMP_TAC std_ss [bir_env_vars_are_initialised_INSERT,
-       bir_env_var_is_initialised_def, type_of_bir_val_def]
+       bir_env_var_is_initialised_def, type_of_bir_val_def,
+       bir_var_name_def, bir_var_type_def]
   ) >>
 
   Q.PAT_X_ASSUM `!env i. _ ==> _` (MP_TAC o Q.SPECL [`env'`, `i`]) >>
