@@ -261,6 +261,18 @@ val bir_vars_of_exp_def = Define `
   (bir_vars_of_exp (BExp_Store me ae _ ve) = (bir_vars_of_exp me UNION bir_vars_of_exp ae UNION bir_vars_of_exp ve))`;
 
 
+val bir_vars_of_exp_THM = store_thm ("bir_vars_of_exp_THM",
+``!env1 env2 e. (!v. v IN (bir_vars_of_exp e) ==>
+                     (bir_env_read v env1 = bir_env_read v env2)) ==>
+                (bir_eval_exp e env1 = bir_eval_exp e env2)``,
+
+GEN_TAC >> GEN_TAC >> Induct >> REPEAT STRIP_TAC >> (
+  FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pred_setTheory.IN_UNION,
+    pred_setTheory.NOT_IN_EMPTY, pred_setTheory.IN_INSERT,
+    bir_eval_exp_def]
+));
+
+
 val type_of_bir_exp_THM_with_init_vars = store_thm ("type_of_bir_exp_THM_with_init_vars",
   ``!env e ty. (type_of_bir_exp e = SOME ty) ==>
                (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
