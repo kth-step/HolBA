@@ -173,7 +173,7 @@ SIMP_TAC std_ss [bir_exec_steps_EQ_SOME, bir_exec_infinite_steps_fun_ENV_ORDER])
 
 
 val bir_exec_step_n_ENV_ORDER = store_thm ("bir_exec_step_n_ENV_ORDER",
-``!p c n st st'. (bir_exec_step_n p st n = (l, c, st')) ==>
+``!l p c n st st'. (bir_exec_step_n p st n = (l, c, st')) ==>
   bir_env_order st.bst_environ st'.bst_environ``,
 
 SIMP_TAC std_ss [bir_exec_step_n_EQ_THM,

@@ -151,7 +151,8 @@ val bir_env_var_is_declared_def = Define `
 
 val bir_env_var_is_initialised_def = Define `
   (bir_env_var_is_initialised env (BVar vn ty) <=>
-  (?v. bir_env_lookup vn env = SOME (ty, SOME v)))`;
+  (?v. (bir_env_lookup vn env = SOME (ty, SOME v)) /\
+       (type_of_bir_val v = SOME ty)))`;
 
 
 val bir_env_var_is_initialised_weaken = store_thm ("bir_env_var_is_initialised_weaken",
@@ -178,22 +179,50 @@ val bir_env_cond_eval_def = Define `
   (bir_env_cond_eval env (BEnvCond_var_declared v)    <=> bir_env_var_is_declared    env v)`;
 
 
+
 val bir_env_order_def = Define `
-  ((bir_env_order env1 env2) <=>
-     !vn ty vo. (bir_env_lookup vn env1 = SOME (ty, vo)) ==>
-                (?vo'. (bir_env_lookup vn env2 = SOME (ty, vo')) /\
-                       (IS_SOME vo ==> IS_SOME vo')))`;
+  (bir_env_order env1 env2) <=> !vn. (
+     (* new vars can be added and initialised, but only of the correct type *)
+     (!ty v. (bir_env_lookup vn env1 = NONE) ==>
+             (bir_env_lookup vn env2 = SOME (ty, SOME v)) ==>
+             (type_of_bir_val v = SOME ty)) /\
+
+     (* existing vars can be initialised with the right type *)
+     (!ty. (bir_env_lookup vn env1 = SOME (ty, NONE)) ==>
+           (?vo. (bir_env_lookup vn env2 = SOME (ty, vo)) /\
+                 (!v. (vo = SOME v) ==> (type_of_bir_val v = SOME ty)))) /\
+
+     (* The value of existing, already initialised vars can change, but if
+        their type was OK, it stays OK. *)
+     (!ty v. (bir_env_lookup vn env1 = SOME (ty, SOME v)) ==>
+             (?v'. (bir_env_lookup vn env2 = SOME (ty, SOME v')) /\
+                   ((type_of_bir_val v = SOME ty) ==>
+                    (type_of_bir_val v' = SOME ty)))))`;
+
 
 val bir_env_order_REFL = store_thm ("bir_env_order_REFL",
   ``!env. bir_env_order env env``,
 SIMP_TAC std_ss [bir_env_order_def]);
 
+
 val bir_env_order_TRANS = store_thm ("bir_env_order_TRANS",
   ``!env1 env2 env3.
        bir_env_order env1 env2 ==> bir_env_order env2 env3 ==>
        bir_env_order env1 env3``,
-SIMP_TAC std_ss [bir_env_order_def] >>
-METIS_TAC[]);
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_env_order_def] >>
+GEN_TAC >>
+REPEAT (Q.PAT_X_ASSUM `!vn. P vn` (MP_TAC o Q.SPEC `vn`)) >>
+REPEAT STRIP_TAC >> FULL_SIMP_TAC std_ss [] >> REV_FULL_SIMP_TAC std_ss [] >- (
+  Cases_on `bir_env_lookup vn env2` >> FULL_SIMP_TAC std_ss [] >>
+  rename1 `bir_env_lookup _ _ = SOME xx` >>
+  Cases_on `xx` >> FULL_SIMP_TAC std_ss [] >>
+  rename1 `bir_env_lookup _ _ = SOME (ty', vo')` >>
+  Cases_on `vo'` >> FULL_SIMP_TAC std_ss []
+) >- (
+  Cases_on `vo` >> FULL_SIMP_TAC std_ss []
+));
 
 
 val bir_env_varname_is_bound_ORDER = store_thm ("bir_env_varname_is_bound_ORDER",
@@ -202,7 +231,13 @@ val bir_env_varname_is_bound_ORDER = store_thm ("bir_env_varname_is_bound_ORDER"
                   bir_env_varname_is_bound env2 v``,
 SIMP_TAC (std_ss++QI_ss) [bir_env_varname_is_bound_ALT_DEF, bir_env_order_def,
   bir_env_lookup_type_def, optionTheory.IS_SOME_EXISTS] >>
-METIS_TAC[]);
+REPEAT STRIP_TAC >>
+rename1 `bir_env_lookup vn env1 = SOME (ty, vo)` >>
+Q.PAT_X_ASSUM `!vn. _` (MP_TAC o Q.SPEC `vn`) >>
+ASM_SIMP_TAC std_ss [] >>
+Cases_on `vo` >> (
+  SIMP_TAC std_ss [GSYM LEFT_FORALL_IMP_THM]
+));
 
 
 val bir_env_var_is_declared_ORDER = store_thm ("bir_env_var_is_declared_ORDER",
@@ -212,7 +247,13 @@ val bir_env_var_is_declared_ORDER = store_thm ("bir_env_var_is_declared_ORDER",
 Cases_on `v` >>
 SIMP_TAC (std_ss++QI_ss) [bir_env_var_is_declared_def, bir_env_order_def,
   bir_env_lookup_type_def] >>
-METIS_TAC[]);
+REPEAT STRIP_TAC >>
+rename1 `bir_env_lookup vn env1 = SOME (ty, vo)` >>
+Q.PAT_X_ASSUM `!vn. _` (MP_TAC o Q.SPEC `vn`) >>
+ASM_SIMP_TAC std_ss [] >>
+Cases_on `vo` >> (
+  SIMP_TAC std_ss [GSYM LEFT_FORALL_IMP_THM]
+));
 
 
 val bir_env_var_is_initialised_ORDER = store_thm ("bir_env_var_is_initialised_ORDER",
@@ -222,6 +263,10 @@ val bir_env_var_is_initialised_ORDER = store_thm ("bir_env_var_is_initialised_OR
 Cases_on `v` >>
 SIMP_TAC (std_ss) [bir_env_var_is_initialised_def, bir_env_order_def,
   optionTheory.IS_SOME_EXISTS] >>
+REPEAT STRIP_TAC >>
+rename1 `bir_env_lookup vn env1 = SOME (ty, SOME v)` >>
+Q.PAT_X_ASSUM `!vn. _` (MP_TAC o Q.SPEC `vn`) >>
+ASM_SIMP_TAC std_ss [] >>
 METIS_TAC[]);
 
 
@@ -282,16 +327,14 @@ val bir_env_order_update = store_thm ("bir_env_order_update",
     (bir_env_update vn vo ty env = SOME env') ==>
     bir_env_order env env'``,
 
-Cases_on `env` >> (
-SIMP_TAC std_ss [bir_env_update_def, bir_env_varname_is_bound_ALT_DEF]
-) >>
+Cases_on `env` >>
+SIMP_TAC std_ss [bir_env_update_def, bir_env_varname_is_bound_ALT_DEF] >>
 REPEAT STRIP_TAC >>
-Cases_on `vo` >> (
-  FULL_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [
-    bir_env_lookup_type_def,
-    bir_env_lookup_def, bir_env_order_def,
-    finite_mapTheory.FLOOKUP_UPDATE]
-));
+FULL_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++QI_ss) [
+  bir_env_lookup_type_def,
+  bir_env_lookup_def, bir_env_order_def,
+  finite_mapTheory.FLOOKUP_UPDATE] >>
+METIS_TAC[]);
 
 
 val bir_env_order_write = store_thm ("bir_env_order_write",
@@ -303,9 +346,33 @@ Cases >>
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_env_write_def, bir_env_update_def,
   bir_env_order_def, finite_mapTheory.FLOOKUP_UPDATE, bir_env_lookup_def,
   bir_env_check_type_def, bir_env_lookup_type_def,
-  PULL_EXISTS]
-);
+  PULL_EXISTS] >>
+SIMP_TAC (std_ss++QI_ss) []);
 
+
+val bir_env_order_well_typed = store_thm ("bir_env_order_well_typed",
+``!env env'. bir_is_well_typed_env env ==>
+             bir_env_order env env' ==>
+             bir_is_well_typed_env env'``,
+
+Cases >> Cases >>
+rename1 `bir_env_order (BEnv env_f) (BEnv env_f')` >>
+SIMP_TAC (std_ss++QI_ss) [bir_is_well_typed_env_def,
+  bir_env_order_def, bir_env_lookup_def, PULL_FORALL, PULL_EXISTS,
+  finite_mapTheory.FEVERY_ALL_FLOOKUP] >>
+REPEAT STRIP_TAC >>
+rename1 `FLOOKUP env_f' vn = SOME (ty, vo)` >>
+REPEAT (Q.PAT_X_ASSUM `!vn. _` (MP_TAC o Q.SPEC `vn`)) >>
+Cases_on `vo` >> SIMP_TAC std_ss [] >>
+rename1 `FLOOKUP env_f' vn = SOME (ty, SOME v')` >>
+ASM_SIMP_TAC std_ss [FORALL_AND_THM] >>
+Cases_on `FLOOKUP env_f vn` >- (
+  SIMP_TAC std_ss []
+) >>
+rename1 `FLOOKUP env_f vn = SOME (XXX)` >> Cases_on `XXX` >>
+rename1 `FLOOKUP env_f vn = SOME (ty', vo)` >>
+ASM_SIMP_TAC std_ss [] >>
+Cases_on `vo` >> SIMP_TAC std_ss []);
 
 
 val _ = export_theory();

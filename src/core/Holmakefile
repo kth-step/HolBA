@@ -1,20 +1,23 @@
 OPTIONS = QUIT_ON_FAILURE
 
-THYFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
-TARGETS = $(patsubst %.sml,%.uo,$(THYFILES))
+SMLFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
+TARGETS = $(patsubst %.sml,%.uo,$(SMLFILES))
 EXTRA_CLEANS = selftest.exe
+
+default: all
 
 ifdef POLY
 NEWHOLHEAP = HolBACore-heap
 EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
 
-BARE_THYS = HolBACoreTheory
-DEPS = $(patsubst %,%.uo,$(BARE_THYS))
+HEAPINC = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
+          $(patsubst %.sml,%,$(wildcard *Syntax.sml)) \
+          $(patsubst %.sml,%,$(wildcard *Simps.sml)) \
+          wordsLib
 
-$(NEWHOLHEAP): $(DEPS)
-	$(protect $(HOLDIR)/bin/buildheap) -o $(NEWHOLHEAP) $(BARE_THYS)
+$(NEWHOLHEAP): $(TARGETS)
+	$(protect $(HOLDIR)/bin/buildheap) -o $(NEWHOLHEAP) $(HEAPINC)
 endif
-
 
 all: $(TARGETS) selftest.exe $(NEWHOLHEAP)
 .PHONY: all

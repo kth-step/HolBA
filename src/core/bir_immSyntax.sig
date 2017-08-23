@@ -111,11 +111,32 @@ sig
    val mk_Imm_of_int : int -> int -> term;
 
    (* Various theorems link the word type and immtype via a precondition like
-      ``!s. (size_of_bir_immtype_t s = dimindex (:'a)) ==> ...``
+      ``!s. (size_of_bir_immtype s = dimindex (:'a)) ==> ...``
 
       MP_size_of_bir_immtype_t_EQ_dimindex instantiates "s" and "'a" with
       all immtype values and corresponding types 'a and removes the precondition. *)
    val MP_size_of_bir_immtype_t_EQ_dimindex : thm -> thm list
+
+
+   (* Somethimes MP_size_of_bir_immtype_t is not flexible enough. It always expects
+      a theorems which have the precondition of the right shape. If the theorem cannot
+      be proved un general with such a precondition about this size, one option is to
+      prove it manually for all immediate sizes. This however requires a lot of potentially
+      error prone typing or copy-and-paste. The function
+
+      build_immtype_t_conj_gen sv wty t
+
+      is helping with that. It replaces in term t all occourences of variable sw
+      with a immediate-size (e.g. Bit8) and the type wty with the corresponding word-type
+      (e.g. word8). This is done for all sizes and the conjunction of the resulting
+      terms returned. *)
+   val build_immtype_t_conj_gen : string -> hol_type -> term -> term
+
+   (* For convenience, one can ommit proving sw and wty in build_immtype_t_conj_gen.
+      build_immtype_t_conj always uses 'a for wty and expects a term starting with a
+      universal quantification over a size. This quantified size is instantiated. *)
+   val build_immtype_t_conj : term -> term
+
 
    (***************************)
    (* various functions       *)
