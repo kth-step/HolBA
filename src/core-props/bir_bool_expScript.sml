@@ -404,12 +404,12 @@ ASM_SIMP_TAC std_ss [bir_eval_bin_pred_def, bir_mk_bool_val_def,
 ASM_SIMP_TAC std_ss [bir_mk_bool_val_inv, GSYM bir_mk_bool_val_def]);
 
 
-val bir_eval_bool_exp_BExp_BinPred_REWRS = save_thm ("bir_eval_bool_exp_BExp_BinExp_REWRS",
+val bir_eval_bool_exp_BExp_BinPred_REWRS = save_thm ("bir_eval_bool_exp_BExp_BinPred_REWRS",
   SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_bin_pred_t``]) [
     bir_bin_pred_GET_BOOL_OPER_def, bir_is_bool_exp_env_REWRS, FORALL_AND_THM]
     bir_eval_bool_exp_BExp_BinPred);
 
-val bir_eval_bool_exp_BExp_BinPred_REWRS_GSYM = save_thm ("bir_eval_bool_exp_BExp_BinExp_REWRS_GSYM",
+val bir_eval_bool_exp_BExp_BinPred_REWRS_GSYM = save_thm ("bir_eval_bool_exp_BExp_BinPred_REWRS_GSYM",
   GSYM (SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_bin_pred_t``]) [
     bir_bin_pred_GET_BOOL_OPER_def, bir_is_bool_exp_env_REWRS, FORALL_AND_THM]
     (SPEC T bir_eval_bool_exp_BExp_BinPred)));
