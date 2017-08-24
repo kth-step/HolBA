@@ -273,6 +273,16 @@ GEN_TAC >> GEN_TAC >> Induct >> REPEAT STRIP_TAC >> (
 ));
 
 
+val bir_eval_exp_FINITE = store_thm ("bir_eval_exp_FINITE",
+``!e. FINITE (bir_vars_of_exp e)``,
+
+Induct >> (
+  ASM_SIMP_TAC std_ss [bir_vars_of_exp_def,
+    pred_setTheory.FINITE_INSERT, pred_setTheory.FINITE_EMPTY,
+    pred_setTheory.FINITE_UNION]
+));
+
+
 val type_of_bir_exp_THM_with_init_vars = store_thm ("type_of_bir_exp_THM_with_init_vars",
   ``!env e ty. (type_of_bir_exp e = SOME ty) ==>
                (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
