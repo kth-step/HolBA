@@ -9,6 +9,16 @@ val _ = Datatype `bir_var_t = BVar string bir_type_t`;
 
 val bir_var_name_def = Define `bir_var_name (BVar n _) = n`;
 val bir_var_type_def = Define `bir_var_type (BVar _ ty) = ty`;
+val bir_var_t_11 = DB.fetch "-" "bir_var_t_11";
+
+val bir_var_eq_EXPAND = store_thm ("bir_var_eq_EXPAND",
+  ``!v1 (v2:bir_var_t). (v1 = v2) <=>
+                        (bir_var_name v1 = bir_var_name v2) /\
+                        (bir_var_type v1 = bir_var_type v2)``,
+
+Cases >> Cases >>
+SIMP_TAC std_ss [bir_var_type_def, bir_var_name_def, bir_var_t_11])
+
 
 val _ = Datatype `bir_var_environment_t =
    BEnv (string |-> (bir_type_t # (bir_val_t option)))`;
