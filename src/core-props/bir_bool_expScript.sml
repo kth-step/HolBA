@@ -28,19 +28,47 @@ SIMP_TAC (std_ss++holBACore_ss) [bir_val_false_def, bir_val_true_def,
   BType_Bool_def]);
 
 
+val bir_val_is_Bool_bool2b_DEF = store_thm ("bir_val_is_Bool_bool2b_DEF",
+``!v. bir_val_is_Bool v <=> ?b. (v = BVal_Imm (bool2b b))``,
+
+SIMP_TAC (std_ss++holBACore_ss) [bir_val_is_Bool_def,
+  bir_val_is_Imm_s_def] >>
+REPEAT STRIP_TAC >> EQ_TAC >> STRIP_TAC >| [
+  Cases_on `(n2w n):word1` >>
+  Cases_on `(n'=0) \/ (n'=1)` >- METIS_TAC[bool2b_def, bool2w_def] >>
+  FULL_SIMP_TAC (arith_ss++wordsLib.WORD_ss) [],
+
+  ASM_SIMP_TAC std_ss [bool2b_def, bool2w_def] >>
+  METIS_TAC[]
+]);
+
+
+val BVal_Imm_bool2b_TF_DEF = store_thm ("BVal_Imm_bool2b_TF_DEF",
+  ``!b. (BVal_Imm (bool2b b) = if b then bir_val_true else bir_val_false)``,
+Cases >> SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def, bir_val_false_def]);
+
+val bir_val_TF_bool2b_DEF = store_thm ("bir_val_TF_bool2b_DEF",
+  ``(bir_val_true = BVal_Imm (bool2b T)) /\
+    (bir_val_false = BVal_Imm (bool2b F))``,
+SIMP_TAC std_ss [BVal_Imm_bool2b_TF_DEF]);
+
+val BVal_Imm_bool2b_TF_DEF = store_thm ("BVal_Imm_bool2b_TF_DEF",
+  ``!b. (BVal_Imm (bool2b b) = if b then bir_val_true else bir_val_false)``,
+Cases >> SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def, bir_val_false_def]);
+
+val BVal_Imm_bool2b_EQ_TF_REWRS = store_thm ("BVal_Imm_bool2b_EQ_TF_REWRS",
+  ``(!b. (BVal_Imm (bool2b b) = bir_val_true) <=> b) /\
+    (!b. (BVal_Imm (bool2b b) = bir_val_false) <=> ~b)``,
+
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [BVal_Imm_bool2b_TF_DEF,
+  bir_val_TF_dist]);
+
+
 val bir_val_is_Bool_ALT_DEF = store_thm ("bir_val_is_Bool_ALT_DEF",
 ``!v. bir_val_is_Bool v <=> ((v = bir_val_false) \/ (v = bir_val_true))``,
 
-SIMP_TAC (std_ss++holBACore_ss) [bir_val_is_Bool_def,
-  bir_val_is_Imm_s_def, bir_val_true_def, bir_val_false_def] >>
-REPEAT STRIP_TAC >> EQ_TAC >> STRIP_TAC >| [
-  Cases_on `(n2w n):word1` >>
-  Cases_on `(n'=0) \/ (n'=1)` >- METIS_TAC[] >>
-  FULL_SIMP_TAC (arith_ss++wordsLib.WORD_ss) [],
-
-  METIS_TAC[],
-  METIS_TAC[]
-]);
+SIMP_TAC std_ss [bir_val_is_Bool_bool2b_DEF, BVal_Imm_bool2b_TF_DEF] >>
+METIS_TAC[]);
 
 
 val bir_dest_bool_val_TF = store_thm ("bir_dest_bool_val_TF",
@@ -133,7 +161,8 @@ SIMP_TAC std_ss [bir_exp_false_def, bir_exp_true_def, bir_eval_exp_def,
 
 
 val bir_is_bool_exp_def = Define `
-  bir_is_bool_exp e <=> (type_of_bir_exp e = SOME (BType_Imm Bit1))`;
+  bir_is_bool_exp e <=>
+  (type_of_bir_exp e = SOME (BType_Imm Bit1))`;
 
 val bir_number_of_mem_splits_BitResult = store_thm ("bir_number_of_mem_splits_BitResult",
   ``!vty aty. bir_number_of_mem_splits vty Bit1 aty =
@@ -324,6 +353,10 @@ Cases_on `uo` >> (
   )
 ));
 
+val bir_bin_exp_BOOL_OPER_EVAL = save_thm ("bir_bin_exp_BOOL_OPER_EVAL",
+  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_bin_exp_t``]) [
+     FORALL_AND_THM, bir_bin_exp_GET_BOOL_OPER_def] bir_bin_exp_GET_BOOL_OPER_THM
+);
 
 
 val bir_eval_bool_exp_BExp_BinExp = store_thm ("bir_eval_bool_exp_BExp_BinExp",
@@ -382,6 +415,10 @@ Cases_on `uo` >> (
 ));
 
 
+val bir_bin_pred_BOOL_OPER_EVAL = save_thm ("bir_bin_pred_BOOL_OPER_EVAL",
+  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_bin_pred_t``]) [
+     FORALL_AND_THM, bir_bin_pred_GET_BOOL_OPER_def] bir_bin_pred_GET_BOOL_OPER_THM
+);
 
 val bir_eval_bool_exp_BExp_BinPred = store_thm ("bir_eval_bool_exp_BExp_BinPred",
   ``!de uo bop env e1 e2.
@@ -434,6 +471,11 @@ Cases_on `uo` >> (
   )
 ));
 
+
+val bir_unary_exp_BOOL_OPER_EVAL = save_thm ("bir_unary_exp_BOOL_OPER_EVAL",
+  SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_unary_exp_t``]) [
+     FORALL_AND_THM, bir_unary_exp_GET_BOOL_OPER_def] bir_unary_exp_GET_BOOL_OPER_THM
+);
 
 
 val bir_eval_bool_exp_BExp_UnaryExp = store_thm ("bir_eval_bool_exp_BExp_UnaryExp",

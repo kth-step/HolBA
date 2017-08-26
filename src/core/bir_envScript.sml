@@ -22,7 +22,7 @@ SIMP_TAC std_ss [bir_var_type_def, bir_var_name_def, bir_var_t_11])
 
 val _ = Datatype `bir_var_environment_t =
    BEnv (string |-> (bir_type_t # (bir_val_t option)))`;
-
+val bir_var_environment_t_11 = DB.fetch "-" "bir_var_environment_t_11";
 
 (* Empty environment *)
 val bir_empty_env_def = Define `bir_empty_env = BEnv FEMPTY`
@@ -163,7 +163,6 @@ val bir_env_var_is_initialised_def = Define `
   (bir_env_var_is_initialised env (BVar vn ty) <=>
   (?v. (bir_env_lookup vn env = SOME (ty, SOME v)) /\
        (type_of_bir_val v = SOME ty)))`;
-
 
 val bir_env_var_is_initialised_weaken = store_thm ("bir_env_var_is_initialised_weaken",
   ``!v env. bir_env_var_is_initialised env v ==> bir_env_var_is_declared env v``,
@@ -383,6 +382,86 @@ rename1 `FLOOKUP env_f vn = SOME (XXX)` >> Cases_on `XXX` >>
 rename1 `FLOOKUP env_f vn = SOME (ty', vo)` >>
 ASM_SIMP_TAC std_ss [] >>
 Cases_on `vo` >> SIMP_TAC std_ss []);
+
+
+
+(* domains *)
+
+val bir_env_domain_def = Define `bir_env_domain (BEnv env) = FDOM env`;
+
+val bir_env_domain_FINITE = store_thm ("bir_env_domain_FINITE",
+``!env. FINITE (bir_env_domain env)``,
+Cases >>
+SIMP_TAC std_ss [bir_env_domain_def, FDOM_FINITE])
+
+
+val bir_env_domain_LOOKUP = store_thm ("bir_env_domain_LOOKUP",
+``!env vn. (vn IN (bir_env_domain env)) <=> IS_SOME (bir_env_lookup vn env)``,
+
+Cases >> GEN_TAC >>
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_env_domain_def, bir_env_lookup_def, FLOOKUP_DEF]);
+
+
+
+(* subenvironments *)
+val bir_is_subenv_def = Define `bir_is_subenv (BEnv env1) (BEnv env2) <=> (env1 SUBMAP env2)`;
+
+val bir_is_subenv_EMPTY = store_thm ("bir_is_subenv_EMPTY",
+``!env. bir_is_subenv bir_empty_env env``,
+Cases >> SIMP_TAC std_ss [bir_is_subenv_def, bir_empty_env_def, SUBMAP_FEMPTY]);
+
+
+val bir_is_subenv_REFL = store_thm ("bir_is_subenv_REFL",
+  ``!env. bir_is_subenv env env``,
+Cases >> SIMP_TAC std_ss [bir_is_subenv_def, SUBMAP_REFL]);
+
+val bir_is_subenv_TRANS = store_thm ("bir_is_subenv_TRANS",
+  ``!env1 env2 env3. bir_is_subenv env1 env2 ==> bir_is_subenv env2 env3 ==> bir_is_subenv env1 env3``,
+REPEAT Cases >>
+SIMP_TAC std_ss [bir_is_subenv_def] >>
+METIS_TAC[SUBMAP_TRANS]);
+
+
+val bir_is_subenv_ANTISYM = store_thm ("bir_is_subenv_ANTISYM",
+  ``!env1 env2. (bir_is_subenv env1 env2 /\ bir_is_subenv env2 env1) <=> (env1 = env2)``,
+
+REPEAT Cases >>
+SIMP_TAC std_ss [bir_is_subenv_def, bir_var_environment_t_11] >>
+METIS_TAC[SUBMAP_ANTISYM]);
+
+
+val bir_is_subenv_domains = store_thm ("bir_is_subenv_domains",
+``!env1 env2. bir_is_subenv env1 env2 ==> (bir_env_domain env1 SUBSET bir_env_domain env2)``,
+REPEAT Cases >>
+SIMP_TAC std_ss [bir_is_subenv_def, bir_env_domain_def, SUBMAP_DEF, pred_setTheory.SUBSET_DEF]);
+
+
+
+val bir_is_subenv_LOOKUP = store_thm ("bir_is_subenv_LOOKUP",
+  ``!env1 env2 vn.
+       bir_is_subenv env1 env2 ==>
+       vn IN bir_env_domain env1 ==>
+       (bir_env_lookup vn env1 = bir_env_lookup vn env2)``,
+
+Cases >> Cases >> GEN_TAC >>
+SIMP_TAC std_ss [bir_is_subenv_def, bir_env_domain_def, bir_env_lookup_def,
+  SUBMAP_DEF, FLOOKUP_DEF])
+
+val bir_env_read_EQ_lookup_IMPL = store_thm ("bir_env_read_EQ_lookup_IMPL",
+``!env1 env2 v.
+   (bir_env_lookup (bir_var_name v) env1 = bir_env_lookup (bir_var_name v) env2) ==>
+   (bir_env_read v env1 = bir_env_read v env2)``,
+SIMP_TAC std_ss [bir_env_read_def]);
+
+
+val bir_is_subenv_READ = store_thm ("bir_is_subenv_READ",
+  ``!env1 env2 v.
+       bir_is_subenv env1 env2 ==>
+       (bir_var_name v) IN bir_env_domain env1 ==>
+       (bir_env_read v env1 = bir_env_read v env2)``,
+
+SIMP_TAC std_ss [bir_env_read_def] >>
+METIS_TAC[bir_is_subenv_LOOKUP]);
 
 
 val _ = export_theory();

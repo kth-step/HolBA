@@ -1,5 +1,5 @@
 open HolKernel Parse boolLib bossLib;
-open wordsTheory bitstringTheory;
+open wordsTheory bitstringTheory listTheory pred_setTheory;
 open bir_auxiliaryTheory bir_immTheory;
 
 val _ = new_theory "bir_values";
@@ -163,6 +163,51 @@ val type_of_bir_val_EQ_ELIMS = store_thm ("type_of_bir_val_EQ_ELIMS",
             (?f. (v = BVal_Mem aty vty f)))``,
 REPEAT CONJ_TAC >> Cases >> (
   SIMP_TAC (std_ss++bir_val_ss++bir_type_ss) [type_of_bir_val_def]
+));
+
+
+
+(* ------------------------------------------------------------------------- *)
+(*  Finiteness                                                               *)
+(* ------------------------------------------------------------------------- *)
+
+val bir_type_t_LIST_def = Define `bir_type_t_LIST =
+  (MAP BType_Imm bir_immtype_t_LIST) ++
+  (FLAT (MAP (\f. MAP f bir_immtype_t_LIST) (MAP BType_Mem bir_immtype_t_LIST)))`;
+
+val bir_type_t_LIST_EVAL = save_thm ("bir_type_t_LIST_EVAL", EVAL ``bir_type_t_LIST``);
+
+val bir_type_t_LIST_THM = store_thm ("bir_type_t_LIST_THM",
+  ``!ty. MEM ty bir_type_t_LIST``,
+
+SIMP_TAC list_ss [bir_type_t_LIST_def, MEM_MAP, MEM_FLAT, PULL_EXISTS,
+  bir_immtype_t_LIST_THM] >>
+Cases >> METIS_TAC[]);
+
+val bir_type_t_UNIV_SPEC = store_thm ("bir_type_t_UNIV_SPEC",
+  ``(UNIV:bir_type_t set) = set bir_type_t_LIST``,
+
+SIMP_TAC list_ss [EXTENSION, bir_type_t_LIST_THM, IN_UNIV]);
+
+
+val bir_type_t_FINITE_UNIV = store_thm ("bir_type_t_FINITE_UNIV",
+  ``FINITE (UNIV : (bir_type_t set))``,
+REWRITE_TAC[bir_type_t_UNIV_SPEC, listTheory.FINITE_LIST_TO_SET]);
+
+
+(* ------------------------------------------------------------------------- *)
+(*  Default value                                                            *)
+(* ------------------------------------------------------------------------- *)
+
+val bir_default_value_of_type_def = Define `
+  (bir_default_value_of_type (BType_Imm s) = BVal_Imm (n2bs 0 s)) /\
+  (bir_default_value_of_type (BType_Mem a_s v_s) = BVal_Mem a_s v_s (K 0))`;
+
+val bir_default_value_of_type_SPEC = store_thm ("bir_default_value_of_type_SPEC",
+  ``!ty. type_of_bir_val (bir_default_value_of_type ty) = SOME ty``,
+
+Cases >> (
+  SIMP_TAC std_ss [bir_default_value_of_type_def, type_of_bir_val_def, type_of_n2bs]
 ));
 
 
