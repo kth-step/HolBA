@@ -152,6 +152,21 @@ REPEAT Cases >> (
 ));
 
 
+val bir_bin_pred_Equal_REWR = store_thm ("bir_bin_pred_Equal_REWR",
+``!b1 b2. (bir_bin_pred BIExp_Equal b1 b2) <=> (b1 = b2)``,
+REPEAT Cases >> (
+  SIMP_TAC (std_ss++bir_imm_ss) [bir_bin_pred_def, bir_bin_pred_GET_OPER_def]
+));
+
+val bir_bin_pred_NotEqual_REWR = store_thm ("bir_bin_pred_NotEqual_REWR",
+``!b1 b2. (bir_bin_pred BIExp_NotEqual b1 b2) <=>
+          ((type_of_bir_imm b1 = type_of_bir_imm b2) /\ (b1 <> b2))``,
+REPEAT Cases >> (
+  SIMP_TAC (std_ss++bir_imm_ss) [bir_bin_pred_def, bir_bin_pred_GET_OPER_def,
+    type_of_bir_imm_def]
+));
+
+
 
 (* ------------------------------------------------------------------------- *)
 (*  Casts                                                                    *)

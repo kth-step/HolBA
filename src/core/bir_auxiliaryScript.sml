@@ -1,10 +1,8 @@
 open HolKernel Parse boolLib bossLib;
+open wordsTheory bitstringTheory ASCIInumbersTheory;
+open pred_setTheory;
 
 val _ = new_theory "bir_auxiliary";
-
-open HolKernel Parse boolLib bossLib;
-open wordsTheory bitstringTheory;
-
 
 (* -------------------------------------------------------------------------- *)
 (* List lemmata                                                               *)
@@ -434,6 +432,111 @@ let
 in
   thm1
 end)
+
+
+(* -------------------------------------------------------------------------- *)
+(* Fresh variable names                                                       *)
+(* -------------------------------------------------------------------------- *)
+
+val FRESH_INDEXED_STRING_MK_def = Define `FRESH_INDEXED_STRING_MK pre n =
+  (pre ++ (num_to_dec_string n))`;
+
+val FRESH_INDEXED_STRING_MK_11 = store_thm ("FRESH_INDEXED_STRING_MK_11",
+``!pre n1 n2. (FRESH_INDEXED_STRING_MK pre n1 = FRESH_INDEXED_STRING_MK pre n2) <=> (n1 = n2)``,
+SIMP_TAC list_ss [FRESH_INDEXED_STRING_MK_def, toString_11]);
+
+val FRESH_INDEXED_STRING_AUX_def = Define `
+  FRESH_INDEXED_STRING_AUX pre n s = (LEAST x. (n <= x) /\ ~((FRESH_INDEXED_STRING_MK pre x) IN s))`;
+
+val FRESH_INDEXED_STRING_def = Define `
+  FRESH_INDEXED_STRING pre n s = (FRESH_INDEXED_STRING_MK pre (FRESH_INDEXED_STRING_AUX pre n s))`;
+
+val FRESH_INDEXED_STRINGS_def = Define `
+  (FRESH_INDEXED_STRINGS pre n s 0 = []) /\
+  (FRESH_INDEXED_STRINGS pre n s (SUC m) =
+   let ns = (FRESH_INDEXED_STRING_AUX pre n s) in
+   let ss = FRESH_INDEXED_STRING_MK pre ns in
+   (ss::FRESH_INDEXED_STRINGS pre (SUC ns) s m))`;
+
+
+val FRESH_INDEXED_STRING_AUX_PROPS = prove (``!s pre n i.
+  FINITE s ==>
+  let i = FRESH_INDEXED_STRING_AUX pre n s in
+  (n <= i) /\ ~(FRESH_INDEXED_STRING_MK pre i IN s) /\
+  (!i'. (n <= i' /\ i' < i) ==> ((FRESH_INDEXED_STRING_MK pre i') IN s))``,
+
+SIMP_TAC std_ss [LET_THM, FRESH_INDEXED_STRING_AUX_def] >>
+REPEAT GEN_TAC >> STRIP_TAC >>
+numLib.LEAST_ELIM_TAC >>
+REPEAT STRIP_TAC >| [
+  ALL_TAC,
+  ASM_REWRITE_TAC[],
+  METIS_TAC[]
+] >>
+
+Q.ABBREV_TAC `S0 = count n` >>
+Q.ABBREV_TAC `S1 = (UNIV:num set) DIFF S0` >>
+Q.ABBREV_TAC `S2 = (IMAGE (FRESH_INDEXED_STRING_MK pre) S1)` >>
+
+
+`INFINITE S1` by METIS_TAC[FINITE_DIFF_down, FINITE_COUNT, INFINITE_NUM_UNIV] >>
+`INFINITE S2` by METIS_TAC[FRESH_INDEXED_STRING_MK_11, IMAGE_11_INFINITE] >>
+
+`?ns. ns IN S2 /\ ~(ns IN s)` by METIS_TAC[pred_setTheory.IN_INFINITE_NOT_FINITE] >>
+UNABBREV_ALL_TAC >>
+FULL_SIMP_TAC arith_ss [IN_IMAGE, IN_DIFF, IN_COUNT, IN_UNIV, arithmeticTheory.NOT_LESS] >>
+METIS_TAC[]);
+
+
+
+val FRESH_INDEXED_STRING_NOT_IN = store_thm ("FRESH_INDEXED_STRING_NOT_IN",
+  ``!s pre n. FINITE s ==> ~(FRESH_INDEXED_STRING pre n s IN s)``,
+SIMP_TAC std_ss [FRESH_INDEXED_STRING_def] >>
+METIS_TAC[FRESH_INDEXED_STRING_AUX_PROPS]);
+
+
+val FRESH_INDEXED_STRINGS_PROPS_INDICES = store_thm ("FRESH_INDEXED_STRINGS_PROPS_INDICES",
+  ``!s pre l n. FINITE s ==> (
+       ?nl. (FRESH_INDEXED_STRINGS pre n s l = MAP (FRESH_INDEXED_STRING_MK pre) nl) /\
+            (LENGTH nl = l) /\
+            (ALL_DISTINCT nl) /\
+            (EVERY ($<= n) nl) /\
+            (EVERY (\n. ~((FRESH_INDEXED_STRING_MK pre n) IN s)) nl))``,
+
+GEN_TAC >> GEN_TAC >>
+Induct >> (
+  SIMP_TAC list_ss [FRESH_INDEXED_STRINGS_def, LET_THM]
+) >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [] >>
+Q.ABBREV_TAC `n' = FRESH_INDEXED_STRING_AUX pre n s` >>
+Q.PAT_X_ASSUM `!n. _` (STRIP_ASSUME_TAC o Q.SPEC `SUC n'`) >>
+Q.EXISTS_TAC `n'::nl` >>
+FULL_SIMP_TAC list_ss [listTheory.EVERY_MEM] >>
+`n <= n' /\ ~(FRESH_INDEXED_STRING_MK pre n' IN s)` by METIS_TAC[FRESH_INDEXED_STRING_AUX_PROPS] >>
+ASM_REWRITE_TAC[] >>
+REPEAT STRIP_TAC >| [
+  `SUC n' <= n'` by PROVE_TAC[] >>
+  DECIDE_TAC,
+
+  `SUC n' <= e` by PROVE_TAC[] >>
+  DECIDE_TAC
+]);
+
+
+val FRESH_INDEXED_STRINGS_PROPS = store_thm ("FRESH_INDEXED_STRING_PROPS",
+  ``!s pre l n. FINITE s ==> (
+      (LENGTH (FRESH_INDEXED_STRINGS pre n s l) = l) /\
+      ALL_DISTINCT (FRESH_INDEXED_STRINGS pre n s l) /\
+      (EVERY (\n. ~(n IN s)) (FRESH_INDEXED_STRINGS pre n s l)))``,
+
+
+REPEAT GEN_TAC >>
+ASSUME_TAC (Q.SPECL [`s`, `pre`, `l`, `n`] FRESH_INDEXED_STRINGS_PROPS_INDICES) >>
+STRIP_TAC >>
+FULL_SIMP_TAC list_ss [listTheory.EVERY_MAP] >>
+MATCH_MP_TAC listTheory.ALL_DISTINCT_MAP_INJ >>
+ASM_SIMP_TAC std_ss [FRESH_INDEXED_STRING_MK_11]);
 
 
 val _ = export_theory();

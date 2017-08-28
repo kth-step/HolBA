@@ -1,5 +1,5 @@
 open HolKernel Parse boolLib bossLib;
-open wordsTheory bitstringTheory;
+open wordsTheory bitstringTheory pred_setTheory listTheory;
 open bir_auxiliaryTheory;
 
 val _ = new_theory "bir_imm";
@@ -229,6 +229,60 @@ val n2bs_MOD_size_of_bir_immtype = store_thm ("n2bs_MOD_size_of_bir_immtype",
 REPEAT STRIP_TAC >>
 Q.SUBGOAL_THEN `n2bs n s = n2bs (b2n (n2bs n s)) s` SUBST1_TAC >- METIS_TAC[n2bs_b2n, type_of_n2bs] >>
 SIMP_TAC std_ss [b2n_n2bs]);
+
+
+
+val n2bs_CASE = store_thm ("n2bs_CASE",
+  ``!b. (?n. (n < 2 ** (size_of_bir_immtype (type_of_bir_imm b))) /\
+             (b = n2bs n (type_of_bir_imm b)))``,
+
+REPEAT STRIP_TAC >>
+`?n. b = n2bs n (type_of_bir_imm b)` by METIS_TAC[type_of_bir_imm_n2bs_INTRO] >>
+Q.EXISTS_TAC `(MOD_2EXP (size_of_bir_immtype (type_of_bir_imm b)) n)` >>
+ASM_SIMP_TAC std_ss [n2bs_MOD_size_of_bir_immtype, bitTheory.MOD_2EXP_def]);
+
+
+
+(* ---------------------------- *)
+(*  finiteness of the datatypes *)
+(* ---------------------------- *)
+
+val bir_immtype_t_LIST_def = Define `bir_immtype_t_LIST = ^(listSyntax.mk_list (TypeBase.constructors_of ``:bir_immtype_t``, ``:bir_immtype_t``))`;
+
+
+val bir_immtype_t_LIST_THM = store_thm ("bir_immtype_t_LIST_THM",
+  ``!s. MEM s bir_immtype_t_LIST``,
+Cases >> SIMP_TAC list_ss [bir_immtype_t_LIST_def]);
+
+val bir_immtype_t_UNIV_SPEC = store_thm ("bir_immtype_t_UNIV_SPEC",
+  ``(UNIV:bir_immtype_t set) = set bir_immtype_t_LIST``,
+SIMP_TAC list_ss [EXTENSION, bir_immtype_t_LIST_THM, IN_UNIV]);
+
+val bir_immtype_t_FINITE_UNIV = store_thm ("bir_immtype_t_FINITE_UNIV",
+  ``FINITE (UNIV : (bir_immtype_t set))``,
+REWRITE_TAC[bir_immtype_t_UNIV_SPEC, listTheory.FINITE_LIST_TO_SET]);
+
+
+val bir_imm_t_LIST_def = Define `
+  bir_imm_t_LIST =
+     FLAT (MAP (\s. MAP (\n. n2bs n s) (COUNT_LIST (2 ** size_of_bir_immtype s))) bir_immtype_t_LIST)`
+
+
+val bir_imm_t_LIST_THM = store_thm ("bir_imm_t_LIST_THM",
+  ``!i. MEM i bir_imm_t_LIST``,
+
+SIMP_TAC list_ss [bir_imm_t_LIST_def, MEM_FLAT, MEM_MAP,
+  PULL_EXISTS, rich_listTheory.MEM_COUNT_LIST, bir_immtype_t_LIST_THM] >>
+METIS_TAC [n2bs_CASE]);
+
+
+val bir_imm_t_UNIV_SPEC = store_thm ("bir_imm_t_UNIV_SPEC",
+  ``(UNIV:bir_imm_t set) = set bir_imm_t_LIST``,
+SIMP_TAC list_ss [EXTENSION, bir_imm_t_LIST_THM, IN_UNIV]);
+
+val bir_imm_t_FINITE_UNIV = store_thm ("bir_imm_t_FINITE_UNIV",
+  ``FINITE (UNIV : (bir_imm_t set))``,
+REWRITE_TAC[bir_imm_t_UNIV_SPEC, listTheory.FINITE_LIST_TO_SET]);
 
 
 (* ------------------------------------------------------------------------- *)
@@ -470,5 +524,7 @@ COND_CASES_TAC >| [
   `LENGTH (dropWhile (\b. ~b) v) = LENGTH v` by DECIDE_TAC >>
   ASM_SIMP_TAC list_ss [rich_listTheory.LASTN_LENGTH_ID]
 ]);
+
+
 
 val _ = export_theory();
