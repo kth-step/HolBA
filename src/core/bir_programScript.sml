@@ -274,7 +274,7 @@ val bir_exec_stmtE_def = Define `
 
 
 val bir_exec_stmt_def = Define `
-  (bir_exec_stmt p (BStmtB bst) st =
+  (bir_exec_stmt (p:'a bir_program_t) (BStmtB (bst:'a bir_stmt_basic_t)) st =
      let (oo, st') = bir_exec_stmtB bst st in
      if (bir_state_is_terminated st') then (oo, st') else (oo, st' with bst_pc updated_by bir_pc_next)) /\
   (bir_exec_stmt p (BStmtE bst) st = (NONE, bir_exec_stmtE p bst st))`;
