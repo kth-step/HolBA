@@ -106,6 +106,10 @@ Cases >> SIMP_TAC std_ss [bir_val_checker_REWRS, bir_dest_bool_val_def] >>
 Cases_on `b` >> SIMP_TAC (std_ss++bir_imm_ss) [bir_val_checker_REWRS, bir_dest_bool_val_def,
   type_of_bir_imm_def]);
 
+val bir_dest_bool_val_bool2b = store_thm ("bir_dest_bool_val_bool2b",
+  ``bir_dest_bool_val (BVal_Imm (bool2b b)) = SOME b``,
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [
+  bool2b_def, bool2w_def, bir_dest_bool_val_def]);
 
 
 (* ------------------------------------------------------------------------- *)
