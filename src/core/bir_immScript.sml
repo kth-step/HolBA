@@ -368,6 +368,10 @@ val bool2w_EQ_ELIMS = store_thm ("bool2w_EQ_ELIMS",
 
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_imm_ss++wordsLib.WORD_ss) [bool2w_def]);
 
+val bool2w_11 = store_thm ("bool2w_11",
+  ``!b1 b2. (bool2w b1 = bool2w b2) <=> (b1 = b2)``,
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_imm_ss++wordsLib.WORD_ss) [bool2w_def]);
+
 
 val bool2b_EQ_IMM1_ELIMS = store_thm ("bool2b_EQ_IMM1_ELIMS",
   ``(!b. (bool2b b = Imm1 1w) <=> b) /\
@@ -376,6 +380,20 @@ val bool2b_EQ_IMM1_ELIMS = store_thm ("bool2b_EQ_IMM1_ELIMS",
     (!b. (Imm1 0w = bool2b b) <=> ~b)``,
 
 SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def, bool2w_EQ_ELIMS]);
+
+
+val bool2b_NEQ_IMM_ELIMS_AUX = prove (
+  ``(!i b. (type_of_bir_imm i <> Bit1) ==> (bool2b b <> i))``,
+Cases >> SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def, type_of_bir_imm_def]);
+
+val bool2b_NEQ_IMM_ELIMS = save_thm ("bool2b_NEQ_IMM_ELIMS",
+  SIMP_RULE (std_ss++bir_imm_ss++DatatypeSimps.expand_type_quants_ss [``:bir_imm_t``]) [
+    type_of_bir_imm_def]
+    bool2b_NEQ_IMM_ELIMS_AUX);
+
+val bool2b_11 = store_thm ("bool2b_11",
+``!b1 b2. (bool2b b1 = bool2b b2) <=> (b1 = b2)``,
+SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def, bool2w_11]);
 
 
 (* ------------------------------------------------------------------------- *)

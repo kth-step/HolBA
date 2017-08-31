@@ -100,6 +100,15 @@ val bir_dest_bool_val_def = Define `
   (bir_dest_bool_val (BVal_Imm (Imm1 w)) = SOME (w = 1w)) /\
   (bir_dest_bool_val _ = NONE)`
 
+val bir_dest_bool_val_EQ_SOME = store_thm ("bir_dest_bool_val_EQ_SOME",
+  ``!v b. (bir_dest_bool_val v = SOME b) <=> (v = BVal_Imm (bool2b b))``,
+Cases >> SIMP_TAC (std_ss++bir_val_ss) [bir_dest_bool_val_def] >>
+rename1 `BVal_Imm i` >>
+Cases_on `i` >> SIMP_TAC (std_ss++bir_imm_ss) [bir_dest_bool_val_def, bool2b_NEQ_IMM_ELIMS] >>
+SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def] >>
+Cases_on `b'` >> SIMP_TAC std_ss [bool2w_def] >>
+METIS_TAC[word1_dichotomy, word1_distinct]);
+
 val bir_dest_bool_val_EQ_NONE = store_thm ("bir_dest_bool_val_EQ_NONE",
   ``!v. (bir_dest_bool_val v = NONE) <=> ~(bir_val_is_Bool v)``,
 Cases >> SIMP_TAC std_ss [bir_val_checker_REWRS, bir_dest_bool_val_def] >>
@@ -110,7 +119,6 @@ val bir_dest_bool_val_bool2b = store_thm ("bir_dest_bool_val_bool2b",
   ``bir_dest_bool_val (BVal_Imm (bool2b b)) = SOME b``,
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [
   bool2b_def, bool2w_def, bir_dest_bool_val_def]);
-
 
 (* ------------------------------------------------------------------------- *)
 (*  Some basic typing                                                        *)
