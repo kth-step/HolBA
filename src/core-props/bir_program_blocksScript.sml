@@ -172,6 +172,23 @@ val bir_exec_stmtsB_REWRS_COND = store_thm ("bir_exec_stmtsB_REWRS_COND",
 METIS_TAC[bir_exec_stmtsB_REWRS]);
 
 
+val bir_exec_stmtsB_APPEND = store_thm ("bir_exec_stmtsB_APPEND",
+  ``!stmts1 stmts2 l c st. (bir_exec_stmtsB (stmts1 ++ stmts2) (l, c, st) =
+       let (l', c', st') = bir_exec_stmtsB stmts1 (l, c, st) in
+       bir_exec_stmtsB stmts2 (REVERSE l', c', st'))``,
+
+Induct >- (
+  SIMP_TAC list_ss [bir_exec_stmtsB_REWRS, LET_THM]
+) >>
+REPEAT GEN_TAC >>
+rename1 `stmt :: stmts1` >>
+Cases_on `bir_state_is_terminated st` >| [
+  ASM_SIMP_TAC list_ss [bir_exec_stmtsB_REWRS, LET_THM],
+
+  ASM_SIMP_TAC (list_ss++pairSimps.gen_beta_ss) [bir_exec_stmtsB_REWRS, LET_THM]
+]);
+
+
 val bir_exec_stmtsB_RESET_ACCUMULATOR = store_thm ("bir_exec_stmtsB_RESET_ACCUMULATOR",
   ``!l c stmts st. (bir_exec_stmtsB stmts (l, c, st) =
                    (let (l', c', st') = bir_exec_stmtsB stmts ([], c, st) in

@@ -413,7 +413,7 @@ val bir_env_vars_are_initialised_WELL_TYPED = store_thm ("bir_env_vars_are_initi
 
   `bir_env_var_is_initialised env (BVar vn2 vty1)` by METIS_TAC[] >>
   `bir_env_var_is_initialised env (BVar vn2 vty2)` by METIS_TAC[] >>
-  FULL_SIMP_TAC std_ss [bir_env_var_is_initialised_def] >>
+  FULL_SIMP_TAC std_ss [bir_env_var_is_initialised_def, bir_var_type_def, bir_var_name_def] >>
   FULL_SIMP_TAC std_ss []
 );
 
