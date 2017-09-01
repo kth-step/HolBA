@@ -137,8 +137,7 @@ METIS_TAC[bir_exec_step_terminates_no_change]);
 
 (* We can iterate with same effect *)
 val bir_exec_step_n_last_step_terminates = store_thm ("bir_exec_step_n_last_step_terminates",
-``!p st st' l i n.
-     ~(bir_state_is_terminated st) ==>
+``!p st n st' l i.
      (bir_exec_step_n p st n = (l, SUC i, st')) ==>
      (bir_state_is_terminated st') ==> (
      ?st''. (bir_exec_step_n p st i = (l, i, st'')) /\
@@ -146,7 +145,7 @@ val bir_exec_step_n_last_step_terminates = store_thm ("bir_exec_step_n_last_step
             (bir_exec_step p st'' = (NONE, st')))``,
 
 REPEAT STRIP_TAC >>
-`bir_exec_step_n p st (SUC i) = (l, SUC i, st')` by METIS_TAC[bir_exec_steps_LIMIT_STEP_NO] >>
+`bir_exec_step_n p st (SUC i) = (l, SUC i, st')` by METIS_TAC[bir_exec_step_n_LIMIT_STEP_NO] >>
 `(?l' c' st''. bir_exec_step_n p st i = (l', c', st''))` by
   METIS_TAC[pairTheory.PAIR] >>
 `c' <= i` by FULL_SIMP_TAC std_ss [bir_exec_step_n_EQ_THM] >>
@@ -340,6 +339,24 @@ CASE_TAC >> (
 METIS_TAC[bir_exec_stmt_status_jumped]);
 
 
+val bir_exec_step_n_status_jumped = store_thm ("bir_exec_step_n_status_jumped",
+``!st p n l ol n' st'.
+           (bir_exec_step_n p st n = (ol, SUC n', st')) ==>
+           (st'.bst_status = BST_JumpOutside l) ==>
+           ((~(MEM l (bir_labels_of_program p))) /\
+
+           (?stmt. (bir_get_current_statement p st'.bst_pc = SOME stmt) /\
+                   (bir_stmt_is_jmp_to_label st'.bst_environ l stmt)) /\
+           (?st''. (bir_exec_step_n p st n' = (ol, n', st'')) /\
+             (st'' = st' with bst_status := BST_Running) /\
+             (bir_exec_step p st'' = (NONE, st'))))``,
+
+REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
+MP_TAC (Q.SPECL [`p`, `st`, `n`] bir_exec_step_n_last_step_terminates) >>
+ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def] >>
+STRIP_TAC >>
+MP_TAC (Q.SPECL [`st' with bst_status := BST_Running`, `p`] bir_exec_step_status_jumped) >>
+ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_state_def]);
 
 
 (*****************************)
