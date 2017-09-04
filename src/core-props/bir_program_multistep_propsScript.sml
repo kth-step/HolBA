@@ -500,7 +500,6 @@ EQ_TAC >- (
 ));
 
 
-
 (***************************************************************)
 (* bir_exec_steps_n                                            *)
 (***************************************************************)
@@ -774,6 +773,38 @@ Cases_on `c1 < n1` >> ASM_REWRITE_TAC[] >>
 ) >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_REWR_TERMINATED, LET_THM,
   LAPPEND_NIL_2ND, pairTheory.pair_case_thm]);
+
+
+
+(***************************************************************)
+(* conversions to terminating executions                       *)
+(***************************************************************)
+
+(* If we terminate, we can use a finite number of steps to get exactly the same result *)
+val bir_exec_steps_opt_TO_bir_exec_step_n = store_thm ("bir_exec_steps_opt_TO_bir_exec_step_n",
+  ``!p st max_steps ll c.
+    (bir_exec_steps_opt p st max_steps = (ll, SOME (c, st))) ==>
+    (?l. (bir_exec_step_n p st c = (l, c, st)) /\ (ll = fromList l))``,
+
+SIMP_TAC std_ss [bir_exec_steps_opt_EQ_SOME, bir_exec_step_n_EQ_THM,
+  bir_exec_steps_observe_list_fromList]);
+
+
+val bir_exec_steps_TO_bir_exec_step_n = store_thm ("bir_exec_steps_TO_bir_exec_step_n",
+  ``!p st ll c.
+    (bir_exec_steps p st = (ll, SOME (c, st))) ==>
+    (?l. (bir_exec_step_n p st c = (l, c, st)) /\ (ll = fromList l))``,
+
+SIMP_TAC std_ss [bir_exec_steps_def] >>
+METIS_TAC[bir_exec_steps_opt_TO_bir_exec_step_n]);
+
+
+val bir_exec_steps_LIMIT_STEP_NO = store_thm ("bir_exec_steps_LIMIT_STEP_NO",
+  ``!p st n l st' c.
+    (bir_exec_step_n p st n = (l, c, st')) ==>
+    (bir_exec_step_n p st c = (l, c, st'))``,
+
+SIMP_TAC std_ss [bir_exec_step_n_EQ_THM]);
 
 
 val _ = export_theory();

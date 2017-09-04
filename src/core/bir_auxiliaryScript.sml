@@ -434,6 +434,17 @@ in
 end)
 
 
+val word1_dichotomy = store_thm ("word1_dichotomy",
+  ``!v:word1. (v = 1w) \/ (v = 0w)``,
+Cases >>
+FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) [wordsTheory.n2w_11] >>
+DECIDE_TAC);
+
+val word1_distinct = store_thm ("word1_distinct",
+  ``(1w:word1) <> 0w``,
+SIMP_TAC (std_ss++wordsLib.WORD_ss) []);
+
+
 (* -------------------------------------------------------------------------- *)
 (* Fresh variable names                                                       *)
 (* -------------------------------------------------------------------------- *)

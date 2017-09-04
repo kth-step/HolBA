@@ -61,6 +61,8 @@ val bir_SIMPLE_REWRS_imm = rewrites [
   v2n_w2v,
   bool2b_inv,
   bool2b_EQ_IMM1_ELIMS,
+  bool2b_NEQ_IMM_ELIMS,
+  bool2b_11,
   wordsTheory.n2w_w2n,
 
   size_of_bir_immtype_INJ,
@@ -132,7 +134,10 @@ val bir_SIMPLE_REWRS_values = rewrites [
   bir_val_checker_REWRS,
   type_of_bir_val_def,
   bir_type_checker_REWRS,
-  bir_type_is_Bool_IMPL
+  bir_type_is_Bool_IMPL,
+  bir_dest_bool_val_EQ_SOME,
+  bir_dest_bool_val_EQ_NONE,
+  bir_dest_bool_val_bool2b
 ];
 
 val bir_SIMPLE_REWRS_exp = rewrites [
