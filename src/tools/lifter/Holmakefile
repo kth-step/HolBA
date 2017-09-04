@@ -1,0 +1,10 @@
+INCLUDES = ../../core ../../core-props
+OPTIONS = QUIT_ON_FAILURE
+
+default: all
+
+SMLFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
+TARGETS = $(patsubst %.sml,%.uo,$(SMLFILES))
+
+all: $(TARGETS)
+.PHONY: all
