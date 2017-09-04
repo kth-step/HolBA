@@ -411,6 +411,17 @@ SIMP_TAC (std_ss++bir_TYPES_ss) [
   bir_state_t_component_equality]);
 
 
+val bir_jumped_outside_termination_cond_STATE_NEQ = store_thm (
+  "bir_jumped_outside_termination_cond_STATE_NEQ",
+``!p1 p2 st.
+    ~(bir_jumped_outside_termination_cond p1 p2 st st)``,
+
+SIMP_TAC (std_ss++bir_TYPES_ss) [
+  bir_jumped_outside_termination_cond_def,
+  bir_state_t_component_equality] >>
+REPEAT GEN_TAC >>
+Cases_on `st.bst_status` >> SIMP_TAC (std_ss++bir_TYPES_ss) []);
+
 
 (* Now the real lemma *)
 val bir_exec_stmtE_SUBPROGRAM = store_thm ("bir_exec_stmtE_SUBPROGRAM",
@@ -419,7 +430,10 @@ val bir_exec_stmtE_SUBPROGRAM = store_thm ("bir_exec_stmtE_SUBPROGRAM",
   ~(bir_state_is_terminated st) ==>
   (bir_exec_stmtE p1 stmt st = st1) ==>
   (bir_exec_stmtE p2 stmt st = st2) ==>
-  ~(bir_jumped_outside_termination_cond p1 p2 st1 st2) ==> (st1 = st2)``,
+  (bir_jumped_outside_termination_cond p1 p2 st1 st2) \/
+  ((!l. (st1.bst_status = BST_JumpOutside l) ==>
+       ~(MEM l (bir_labels_of_program p2))) /\
+   (st1 = st2))``,
 
 REPEAT GEN_TAC >> STRIP_TAC >>
 MP_TAC (Q.SPECL [`p1`, `p2`] bir_labels_of_program_SUBPROGRAM)  >>
@@ -427,10 +441,10 @@ ASM_REWRITE_TAC [] >> STRIP_TAC >>
 Cases_on `stmt` >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtE_def, bir_jumped_outside_termination_cond_def,
     bir_exec_stmt_jmp_def, LET_THM, bir_exec_stmt_jmp_to_label_def, bir_state_is_terminated_def,
-    bir_exec_stmt_cjmp_def] >>
+    bir_exec_stmt_cjmp_def, bir_exec_stmt_halt_def] >>
   REPEAT GEN_TAC >>
   REPEAT CASE_TAC >>
-  ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_state_t_component_equality] >>
+  ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_state_t_component_equality, bir_state_set_failed_def] >>
   METIS_TAC[]
 ));
 
@@ -441,28 +455,48 @@ val bir_exec_step_SUBPROGRAM = store_thm ("bir_exec_step_SUBPROGRAM",
   bir_is_subprogram p1 p2 ==>
   bir_is_valid_labels p2 ==>
   bir_is_valid_pc p1 st.bst_pc ==>
+  ~(bir_state_is_terminated st) ==>
   (bir_exec_step p1 st = (fe1, st1)) ==>
   (bir_exec_step p2 st = (fe2, st2)) ==>
   ((fe1 = fe2) /\
-  (~(bir_jumped_outside_termination_cond p1 p2 st1 st2) ==>
-   (st1 = st2)))``,
+  ((bir_jumped_outside_termination_cond p1 p2 st1 st2) \/
+  ((!l. (st1.bst_status = BST_JumpOutside l) ==>
+       ~(MEM l (bir_labels_of_program p2))) /\
+   (st1 = st2))))``,
 
 
 REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
-Cases_on `bir_state_is_terminated st` >> (
-  FULL_SIMP_TAC std_ss [bir_exec_step_def]
-) >>
 `?stmt. bir_get_current_statement p1 st.bst_pc = SOME stmt` by
   METIS_TAC[bir_get_current_statement_IS_SOME, optionTheory.IS_SOME_EXISTS] >>
 `bir_get_current_statement p2 st.bst_pc = SOME stmt` by
   METIS_TAC[bir_get_current_statement_SUBPROGRAM] >>
-FULL_SIMP_TAC std_ss [] >>
+FULL_SIMP_TAC std_ss [bir_exec_step_def] >>
+REV_FULL_SIMP_TAC std_ss [] >>
 
-Cases_on `stmt` >> (
-  FULL_SIMP_TAC std_ss [bir_exec_stmt_def]
+Tactical.REVERSE (Cases_on `stmt`) >- (
+  FULL_SIMP_TAC std_ss [bir_exec_stmt_def] >>
+  REPEAT BasicProvers.VAR_EQ_TAC >>
+  METIS_TAC[bir_exec_stmtE_SUBPROGRAM]
 ) >>
+
+FULL_SIMP_TAC std_ss [bir_exec_stmt_def] >>
+`!l. st1.bst_status <> BST_JumpOutside l` suffices_by METIS_TAC[] >>
+REPEAT STRIP_TAC >>
+`?oo st'. bir_exec_stmtB b st = (oo, st')` by METIS_TAC[pairTheory.PAIR] >>
+`st'.bst_status = BST_JumpOutside l` by (
+  Cases_on `bir_state_is_terminated st'` >> (
+    FULL_SIMP_TAC std_ss [LET_THM] >>
+    REPEAT BasicProvers.VAR_EQ_TAC >>
+    FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [LET_THM]
+  )
+) >>
+POP_ASSUM MP_TAC >>
+FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def, LET_THM] >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
-METIS_TAC[bir_exec_stmtE_SUBPROGRAM]);
+rename1 `bir_exec_stmtB stmtB st` >>
+MP_TAC (Q.SPECL [`st`, `stmtB`] bir_exec_stmtB_status_not_jumped) >>
+ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_stmtB_state_def]);
+
 
 
 val bir_exec_step_PROGRAM_EQ = store_thm ("bir_exec_step_PROGRAM_EQ",
@@ -475,6 +509,9 @@ REPEAT STRIP_TAC >>
 MP_TAC (Q.SPECL [`p1`, `p2`, `st`] bir_exec_step_SUBPROGRAM) >>
 MP_TAC (Q.SPECL [`p2`, `p1`, `st`] bir_exec_step_SUBPROGRAM) >>
 
+Cases_on `bir_state_is_terminated st` >- (
+  ASM_SIMP_TAC std_ss [bir_exec_step_def]
+) >>
 Cases_on `bir_exec_step p1 st` >>
 Cases_on `bir_exec_step p2 st` >>
 rename1 `(fe1, st1) = (fe2, st2)` >>
@@ -494,9 +531,12 @@ val bir_exec_step_state_SUBPROGRAM = store_thm ("bir_exec_step_state_SUBPROGRAM"
   bir_is_subprogram p1 p2 ==>
   bir_is_valid_labels p2 ==>
   bir_is_valid_pc p1 st.bst_pc ==>
+  ~(bir_state_is_terminated st) ==>
   (bir_exec_step_state p1 st = st1) ==>
   (bir_exec_step_state p2 st = st2) ==>
-  ((~(bir_jumped_outside_termination_cond p1 p2 st1 st2) ==>
+  ((bir_jumped_outside_termination_cond p1 p2 st1 st2) \/
+  ((!l. (st1.bst_status = BST_JumpOutside l) ==>
+       ~(MEM l (bir_labels_of_program p2))) /\
    (st1 = st2)))``,
 
 METIS_TAC[bir_exec_step_state_def, pairTheory.SND, pairTheory.PAIR,
@@ -512,27 +552,31 @@ val bir_exec_step_n_SUBPROGRAM = store_thm ("bir_exec_step_n_SUBPROGRAM",
   bir_is_subprogram p1 p2 ==>
   bir_is_valid_labels p2 ==>
   bir_is_valid_pc p1 st.bst_pc ==>
+  (!l. (st.bst_status = BST_JumpOutside l) ==>
+       ~(MEM l (bir_labels_of_program p2))) ==>
   (bir_exec_step_n p1 st c  = (l1, n1, st1)) ==>
   (bir_exec_step_n p2 st n1 = (l2, n2, st2)) ==>
   ((n2 = n1) /\ (l2 = l1) /\
-  (~(bir_jumped_outside_termination_cond p1 p2 st1 st2) ==>
-   (st1 = st2)))``,
+  ((bir_jumped_outside_termination_cond p1 p2 st1 st2) \/
+  ((!l. (st1.bst_status = BST_JumpOutside l) ==>
+       ~(MEM l (bir_labels_of_program p2))) /\
+   (st1 = st2))))``,
 
 SIMP_TAC std_ss [RIGHT_FORALL_IMP_THM] >>
 REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
 SIMP_TAC std_ss [GSYM RIGHT_FORALL_IMP_THM] >>
 Induct_on `c` >- (
-  SIMP_TAC std_ss [bir_exec_step_n_REWR_0]
+  SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_n_REWR_0]
 ) >>
 REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
-Cases_on `bir_state_is_terminated st` >- (
-  FULL_SIMP_TAC std_ss [bir_exec_step_n_REWRS]
-) >>
 `?fe1 st1'. bir_exec_step p1 st = (fe1, st1')` by METIS_TAC[pairTheory.PAIR] >>
 `?fe2 st2'. bir_exec_step p2 st = (fe2, st2')` by METIS_TAC[pairTheory.PAIR] >>
 `?l1' n1' st1''. bir_exec_step_n p1 st1' c = (l1', n1', st1'')` by METIS_TAC[pairTheory.PAIR] >>
 `?l2' n2' st2''. bir_exec_step_n p2 st2' n1' = (l2', n2', st2'')` by METIS_TAC[pairTheory.PAIR] >>
 
+Cases_on `bir_state_is_terminated st` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_step_n_REWRS]
+) >>
 FULL_SIMP_TAC std_ss [LET_THM, bir_exec_step_n_REWRS] >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
 FULL_SIMP_TAC std_ss [LET_THM, bir_exec_step_n_REWRS] >>
@@ -540,6 +584,8 @@ REPEAT BasicProvers.VAR_EQ_TAC >>
 
 `((fe1 = fe2) /\
  (~(bir_jumped_outside_termination_cond p1 p2 st1' st2') ==>
+  (!l. (st1'.bst_status = BST_JumpOutside l) ==>
+       ~(MEM l (bir_labels_of_program p2))) /\
   (st1' = st2')))` by METIS_TAC[bir_exec_step_SUBPROGRAM] >>
 
 Tactical.REVERSE (Cases_on `st2' = st1'`) >- (
@@ -553,10 +599,12 @@ Tactical.REVERSE (Cases_on `st2' = st1'`) >- (
   ASM_SIMP_TAC std_ss []
 ) >>
 
-FULL_SIMP_TAC std_ss [] >>
+FULL_SIMP_TAC std_ss [bir_jumped_outside_termination_cond_STATE_NEQ] >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
 
 (* We can use the induction hypothesis *)
+Q.PAT_X_ASSUM `!st st1 st2. _` (MP_TAC o Q.SPECL [`st1'`]) >>
+ASM_SIMP_TAC std_ss [] >>
 `bir_is_valid_pc p1 st1'.bst_pc` suffices_by METIS_TAC[] >>
 METIS_TAC[bir_exec_step_valid_pc, bir_exec_step_state_def,
   pairTheory.SND]);
@@ -590,12 +638,15 @@ val bir_exec_step_n_SUBPROGRAM_EQ = store_thm ("bir_exec_step_n_SUBPROGRAM_EQ",
   (bir_exec_step_n p2 st c = (l, n, st'))``,
 
 REPEAT STRIP_TAC >>
+Cases_on `bir_state_is_terminated st` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_step_n_REWRS]
+) >>
 `!st2. ~(bir_jumped_outside_termination_cond p1 p2 st' st2)` by (
   ASM_SIMP_TAC std_ss [bir_jumped_outside_termination_cond_def] >>
-  METIS_TAC[]
+  METIS_TAC[bir_labels_of_program_SUBPROGRAM]
 ) >>
 MP_TAC (Q.SPECL [`p1`, `p2`, `st`, `c`] bir_exec_step_n_SUBPROGRAM) >>
-ASM_SIMP_TAC std_ss [] >>
+FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def] >>
 STRIP_TAC >>
 `bir_exec_step_n p2 st n = (l,n,st')` by METIS_TAC[pairTheory.PAIR] >>
 FULL_SIMP_TAC std_ss [bir_exec_step_n_EQ_THM] >>
@@ -667,6 +718,11 @@ Q.ABBREV_TAC `st' = bir_exec_step_state p1 st` >>
   STRIP_TAC >>
   FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_TERMINATED_0]
 ) >>
+`~(bir_state_is_terminated st)` by (
+  Q.UNABBREV_TAC `st'` >>
+  STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [bir_exec_step_state_def, bir_exec_step_def]
+) >>
 `bir_is_valid_pc p1 st.bst_pc` by METIS_TAC[bir_state_is_terminated_step_not_valid_pc] >>
 `bir_exec_step_state p2 st = st'` by (
   MP_TAC (Q.SPECL [`p1`, `p2`, `st`] bir_exec_step_state_SUBPROGRAM) >>
@@ -735,8 +791,7 @@ METIS_TAC [bir_exec_step_n_PROGRAM_EQ, bir_exec_steps_TO_bir_exec_step_n]);
 (* Running stopped execution in larger program *)
 (***********************************************)
 
-(* This is a simple consequence of bir_exec_step_n_SUBPROGRAM,
-   combined with knowledge about termination. *)
+(* This is a simple consequence of bir_exec_step_n_SUBPROGRAM *)
 val bir_exec_step_n_JUMP_OUTSIDE_RECOVER = store_thm ("bir_exec_step_n_JUMP_OUTSIDE_RECOVER",
 ``!p1 p2 st c st' l la n'.
      bir_is_subprogram p1 p2 ==>
@@ -753,13 +808,8 @@ val bir_exec_step_n_JUMP_OUTSIDE_RECOVER = store_thm ("bir_exec_step_n_JUMP_OUTS
 REPEAT STRIP_TAC >>
 `?l2 n2 st2. bir_exec_step_n p2 st n' = (l2,n2,st2)` by METIS_TAC[pairTheory.PAIR] >>
 MP_TAC (Q.SPECL [`p1`, `p2`, `st`, `c`] bir_exec_step_n_SUBPROGRAM) >>
-ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_jumped_outside_termination_cond_def] >>
-`st' <> st2` suffices_by METIS_TAC[] >>
-STRIP_TAC >> REPEAT BasicProvers.VAR_EQ_TAC >>
-MP_TAC (Q.SPECL [`st`, `p2`, `n'`] bir_exec_step_n_status_jumped) >>
-ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
-Cases_on `n2` >> SIMP_TAC arith_ss [] >>
-FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_n_COUNT_0, bir_state_is_terminated_def]);
+FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_jumped_outside_termination_cond_def,
+  bir_state_is_terminated_def]);
 
 
 
