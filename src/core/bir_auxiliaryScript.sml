@@ -133,6 +133,24 @@ SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [INDEX_FIND_EQ_SOME] >>
 Cases_on `LENGTH l` >> SIMP_TAC std_ss []);
 
 
+val INDEX_FIND_INDEX_CHANGE = store_thm ("INDEX_FIND_INDEX_CHANGE",
+  ``!i P l. INDEX_FIND i P l = OPTION_MAP (\ (j, v). (j+i, v)) (INDEX_FIND 0 P l)``,
+
+REPEAT GEN_TAC >>
+Q.ID_SPEC_TAC `i` >>
+Induct_on `l` >> SIMP_TAC std_ss [listTheory.INDEX_FIND_def] >>
+REPEAT STRIP_TAC >>
+rename1 `P x` >>
+ONCE_ASM_REWRITE_TAC[] >>
+POP_ASSUM (K ALL_TAC) >>
+Cases_on `P x` >> (
+  ASM_SIMP_TAC std_ss []
+) >>
+Cases_on `INDEX_FIND 0 P l` >> (
+  ASM_SIMP_TAC (arith_ss++pairSimps.gen_beta_ss) []
+));
+
+
 val SEG_SUC_LENGTH = store_thm ("SEG_SUC_LENGTH",
 ``!l n m. (n + m < LENGTH l) ==>
           (SEG (SUC n) m l = (EL m l)::SEG n (SUC m) l)``,
@@ -535,7 +553,7 @@ REPEAT STRIP_TAC >| [
 ]);
 
 
-val FRESH_INDEXED_STRINGS_PROPS = store_thm ("FRESH_INDEXED_STRING_PROPS",
+val FRESH_INDEXED_STRINGS_PROPS = store_thm ("FRESH_INDEXED_STRINGS_PROPS",
   ``!s pre l n. FINITE s ==> (
       (LENGTH (FRESH_INDEXED_STRINGS pre n s l) = l) /\
       ALL_DISTINCT (FRESH_INDEXED_STRINGS pre n s l) /\

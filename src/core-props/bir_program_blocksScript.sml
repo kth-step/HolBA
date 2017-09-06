@@ -189,10 +189,10 @@ Cases_on `bir_state_is_terminated st` >| [
 ]);
 
 
-val bir_exec_stmtsB_RESET_ACCUMULATOR = store_thm ("bir_exec_stmtsB_RESET_ACCUMULATOR",
+val bir_exec_stmtsB_RESET_ACCUMULATOR_COUNTER = store_thm ("bir_exec_stmtsB_RESET_ACCUMULATOR_COUNTER",
   ``!l c stmts st. (bir_exec_stmtsB stmts (l, c, st) =
-                   (let (l', c', st') = bir_exec_stmtsB stmts ([], c, st) in
-                   ((REVERSE l) ++ l', c', st')))``,
+                   (let (l', c', st') = bir_exec_stmtsB stmts ([], 0, st) in
+                   ((REVERSE l) ++ l', c+c', st')))``,
 Induct_on `stmts` >- (
   SIMP_TAC list_ss [bir_exec_stmtsB_REWRS_COND, LET_DEF]
 ) >>
@@ -208,6 +208,23 @@ ASM_SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [LET_DEF] >>
 Cases_on `FST (bir_exec_stmtB stmt st)` >> (
   ASM_SIMP_TAC list_ss [OPT_CONS_REWRS]
 ));
+
+
+val bir_exec_stmtsB_RESET_ACCUMULATOR = store_thm ("bir_exec_stmtsB_RESET_ACCUMULATOR",
+  ``!l c stmts st. (bir_exec_stmtsB stmts (l, c, st) =
+                   (let (l', c', st') = bir_exec_stmtsB stmts ([], c, st) in
+                   ((REVERSE l) ++ l', c', st')))``,
+ONCE_REWRITE_TAC [bir_exec_stmtsB_RESET_ACCUMULATOR_COUNTER] >>
+SIMP_TAC (list_ss++pairSimps.gen_beta_ss) [LET_DEF]);
+
+
+val bir_exec_stmtsB_RESET_COUNTER = store_thm ("bir_exec_stmtsB_RESET_COUNTER",
+  ``!l c stmts st. (bir_exec_stmtsB stmts (l, c, st) =
+                   (let (l', c', st') = bir_exec_stmtsB stmts (l, 0, st) in
+                   (l', c+c', st')))``,
+ONCE_REWRITE_TAC [bir_exec_stmtsB_RESET_ACCUMULATOR_COUNTER] >>
+SIMP_TAC (list_ss++pairSimps.gen_beta_ss) [LET_DEF]);
+
 
 
 (* ------------------------------------------------------------------------- *)
@@ -297,6 +314,22 @@ COND_CASES_TAC >- (
 STRIP_TAC >>
 `SUC c <= c'` by METIS_TAC[] >>
 DECIDE_TAC);
+
+
+val bir_exec_stmtsB_COUNTER_EQ = store_thm ("bir_exec_stmtsB_COUNTER_EQ",
+  ``!stmts st l l' c c' st'. (bir_exec_stmtsB stmts (l, c, st) = (l', c, st')) ==>
+                             ((st' = st) /\ (l' = REVERSE l))``,
+
+Cases_on `stmts` >> (
+  SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [bir_exec_stmtsB_REWRS_COND, LET_THM]
+) >>
+REPEAT GEN_TAC >>
+COND_CASES_TAC >- (
+  ASM_SIMP_TAC arith_ss [bir_exec_stmtsB_REWRS]
+) >>
+STRIP_TAC >>
+`SUC c <= c` by METIS_TAC[bir_exec_stmtsB_COUNTER] >>
+FULL_SIMP_TAC arith_ss []);
 
 
 val bir_exec_stmtsB_not_terminated_COUNTER = store_thm ("bir_exec_stmtsB_not_terminated_COUNTER",
