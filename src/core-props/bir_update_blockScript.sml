@@ -833,7 +833,7 @@ MP_TAC (Q.SPECL [`st_init`, `c`, `[]:'a list`, `updates`]
 ) >>
 ASM_SIMP_TAC list_ss [LET_THM] >>
 STRIP_TAC >>
-rename1 `_ = ([], _ + _, st_end)` >>
+rename1 `_ = ([], (_:num) + _, st_end)` >>
 ASM_SIMP_TAC (list_ss++bir_TYPES_ss) [bir_block_pc_def] >>
 Q.ABBREV_TAC `st_final_without_pc = (bir_exec_stmtE p (bir_update_blockE_FINAL eup) st_end)` >>
 Q.ABBREV_TAC `st_final = (if bir_state_is_terminated st_final_without_pc then
