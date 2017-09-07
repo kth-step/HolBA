@@ -3,6 +3,7 @@ open wordsTheory bitstringTheory;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
 open bir_imm_expTheory bir_mem_expTheory bir_envTheory;
 open bir_expTheory bir_programTheory;
+open bir_program_valid_stateTheory;
 open llistTheory wordsLib;
 
 val _ = new_theory "bir_program_multistep_props";
@@ -60,7 +61,7 @@ Induct_on `n` >> (
 
 
 val bir_exec_infinite_steps_fun_TERMINATED = store_thm ("bir_exec_infinite_steps_fun_TERMINATED",
-  ``!p st n1 n2. bir_state_is_terminated (bir_exec_infinite_steps_fun p st n1) ==>
+  ``!p st n1. bir_state_is_terminated (bir_exec_infinite_steps_fun p st n1) ==>
                  (!n2. (n1 <= n2) ==> (bir_exec_infinite_steps_fun p st n2 =
                                        bir_exec_infinite_steps_fun p st n1))``,
 
@@ -68,6 +69,14 @@ REPEAT STRIP_TAC >>
 `?c. n2 = n1 + c` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS] >>
 ASM_SIMP_TAC std_ss [GSYM bir_exec_infinite_steps_fun_ADD,
   bir_exec_infinite_steps_fun_TERMINATED_0]);
+
+
+val bir_exec_infinite_steps_fun_valid_pc = store_thm ("bir_exec_infinite_steps_fun_valid_pc",
+``!p st n. bir_is_valid_pc p (bir_exec_infinite_steps_fun p st n).bst_pc <=>
+           bir_is_valid_pc p st.bst_pc``,
+
+Induct_on `n` >> REWRITE_TAC[bir_exec_infinite_steps_fun_REWRS2] >>
+ASM_SIMP_TAC std_ss [bir_exec_step_valid_pc]);
 
 
 (***************************************)
@@ -782,29 +791,36 @@ FULL_SIMP_TAC std_ss [bir_exec_steps_REWR_TERMINATED, LET_THM,
 
 (* If we terminate, we can use a finite number of steps to get exactly the same result *)
 val bir_exec_steps_opt_TO_bir_exec_step_n = store_thm ("bir_exec_steps_opt_TO_bir_exec_step_n",
-  ``!p st max_steps ll c.
-    (bir_exec_steps_opt p st max_steps = (ll, SOME (c, st))) ==>
-    (?l. (bir_exec_step_n p st c = (l, c, st)) /\ (ll = fromList l))``,
+  ``!p st st' max_steps ll c.
+    (bir_exec_steps_opt p st max_steps = (ll, SOME (c, st'))) <=>
+    (?l. (bir_exec_step_n p st c = (l, c, st')) /\ (ll = fromList l) /\
+         (!m. (max_steps = SOME m) ==> c <= m) /\
+         ((!m. (max_steps = SOME m) ==> c < m) ==>
+         (bir_state_is_terminated st')))``,
 
-SIMP_TAC std_ss [bir_exec_steps_opt_EQ_SOME, bir_exec_step_n_EQ_THM,
-  bir_exec_steps_observe_list_fromList]);
+SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_opt_EQ_SOME, bir_exec_step_n_EQ_THM,
+  bir_exec_steps_observe_list_fromList] >>
+REPEAT STRIP_TAC >>
+Cases_on `max_steps` >> ASM_SIMP_TAC std_ss []);
+
 
 
 val bir_exec_steps_TO_bir_exec_step_n = store_thm ("bir_exec_steps_TO_bir_exec_step_n",
-  ``!p st ll c.
-    (bir_exec_steps p st = (ll, SOME (c, st))) ==>
-    (?l. (bir_exec_step_n p st c = (l, c, st)) /\ (ll = fromList l))``,
+  ``!p st st' ll c.
+    (bir_exec_steps p st = (ll, SOME (c, st'))) <=>
+    (?l. (bir_exec_step_n p st c = (l, c, st')) /\ (ll = fromList l) /\
+         (bir_state_is_terminated st'))``,
 
-SIMP_TAC std_ss [bir_exec_steps_def] >>
-METIS_TAC[bir_exec_steps_opt_TO_bir_exec_step_n]);
+SIMP_TAC std_ss [bir_exec_steps_def, bir_exec_steps_opt_TO_bir_exec_step_n]);
 
 
-val bir_exec_steps_LIMIT_STEP_NO = store_thm ("bir_exec_steps_LIMIT_STEP_NO",
+val bir_exec_step_n_LIMIT_STEP_NO = store_thm ("bir_exec_step_n_LIMIT_STEP_NO",
   ``!p st n l st' c.
     (bir_exec_step_n p st n = (l, c, st')) ==>
     (bir_exec_step_n p st c = (l, c, st'))``,
 
-SIMP_TAC std_ss [bir_exec_step_n_EQ_THM]);
+SIMP_TAC std_ss [bir_exec_step_n_EQ_THM] >>
+METIS_TAC[]);
 
 
 val _ = export_theory();
