@@ -1,5 +1,14 @@
-INCLUDES = ../../core ../../core-props
+INCLUDES = ../../core ../../core-props \
+   $(HOLDIR)/examples/l3-machine-code/common \
+   $(HOLDIR)/examples/l3-machine-code/arm8/model \
+   $(HOLDIR)/examples/l3-machine-code/arm8/step \
+   $(HOLDIR)/examples/l3-machine-code/m0/model
+
 OPTIONS = QUIT_ON_FAILURE
+
+ifdef POLY
+HOLHEAP = ../../core-props/HolBACoreProps-heap
+endif
 
 default: all
 

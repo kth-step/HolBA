@@ -77,6 +77,14 @@ SIMP_TAC std_ss [bir_env_read_def, bir_env_lookup_UPDATE] >>
 Cases_on `bir_var_name v = vn` >> ASM_SIMP_TAC std_ss [] >>
 Cases_on `vo` >> SIMP_TAC std_ss [pairTheory.pair_case_thm]);
 
+val bir_env_read_NEQ_UNKNOWN = store_thm ("bir_env_read_NEQ_UNKNOWN",
+``!var env v.
+(v <> BVal_Unknown) ==>
+((bir_env_read var env = v) <=> (bir_env_lookup (bir_var_name var) env = SOME (bir_var_type var, SOME v)))``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [bir_env_read_def] >>
+REPEAT CASE_TAC);
 
 val bir_env_write_def = Define `bir_env_write v va env =
   if (bir_env_check_type v env) then bir_env_update (bir_var_name v) (SOME va) (bir_var_type v) env else NONE`;
