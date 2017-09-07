@@ -8,8 +8,8 @@ open bir_mem_expTheory bir_bool_expTheory
 open bir_exp_liftingTheory
 open bir_temp_varsTheory
 
-open arm8Theory;
-open m0Theory
+open arm8Theory arm8_stepTheory
+open m0Theory m0_stepTheory
 
 (* The lifting library is in principle able to lift
    machine code for multiple architectures. However,
@@ -221,7 +221,10 @@ val _ = Datatype `bir_lifting_machine_rec_t =
       bmr_pc : 'machine_state bir_machine_lifted_pc_t;
 
       (* Well formed state conditions, like we are in user mode ... *)
-      bmr_extra : 'machine_state -> bool
+      bmr_extra : 'machine_state -> bool;
+
+      (* The step function for this machine *)
+      bmr_step_fun : 'machine_state -> 'machine_state option
    |>`;
 
 val bmr_ss = rewrites (
@@ -359,6 +362,28 @@ REPEAT STRIP_TAC >| [
 ]);
 
 
+val bmr_lifted = store_thm ("bmr_lifted",
+``!r.
+   bmr_ok r ==>
+   !bs ms. bmr_rel r bs ms ==>
+
+     (EVERY (\i. case i of BMLI v lf =>
+        (bir_is_lifted_exp bs.bst_environ (BExp_Den v) (BLV_Imm (lf ms)))) r.bmr_imms /\
+     (case r.bmr_mem of BMLM v lf =>
+        (bir_is_lifted_exp bs.bst_environ (BExp_Den v) (BLV_Mem (lf ms)))))``,
+
+SIMP_TAC std_ss [bmr_ok_def, bmr_rel_def, EVERY_MEM] >>
+REPEAT STRIP_TAC >| [
+  `bir_machine_lifted_imm_OK i /\ bir_machine_lifted_imm i bs ms` by METIS_TAC[] >>
+  Cases_on `i` >>
+  FULL_SIMP_TAC (std_ss++bmr_ss) [] >>
+  METIS_TAC[bir_machine_lifted_imm_LIFTED],
+
+  Cases_on `r.bmr_mem` >>
+  FULL_SIMP_TAC (std_ss++bmr_ss) [] >>
+  METIS_TAC[bir_machine_lifted_mem_LIFTED]
+]);
+
 
 (**********)
 (* ARM 8  *)
@@ -414,7 +439,8 @@ val arm8_bmr_def = Define `arm8_bmr = <|
   bmr_extra := \ms. arm8_state_is_OK ms;
   bmr_imms := (arm8_REGS_lifted_imms_LIST ++ arm8_PSTATE_lifted_imms_LIST ++ arm8_EXTRA_lifted_imms_LIST);
   bmr_mem := arm8_lifted_mem;
-  bmr_pc := arm8_lifted_pc |>`;
+  bmr_pc := arm8_lifted_pc;
+  bmr_step_fun := NextStateARM8 |>`;
 
 val arm8_bmr_EVAL = save_thm ("arm8_bmr_EVAL",
   SIMP_CONV list_ss [arm8_bmr_def, arm8_state_is_OK_def,
@@ -423,7 +449,6 @@ val arm8_bmr_EVAL = save_thm ("arm8_bmr_EVAL",
     arm8_lifted_pc_def, bir_temp_var_name_def, arm8_state_is_OK_def]
     ``arm8_bmr``
 );
-
 
 
 val arm8_bmr_OK = store_thm ("arm8_bmr_OK",
@@ -450,34 +475,47 @@ SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, bmr_vars_def] ``bmr_vars arm8_bmr``)
 
 val arm8_brm_temp_vars_EVAL = save_thm ("arm8_brm_temp_vars_EVAL",
 SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
-  bir_temp_var_def, bir_temp_var_name_def] 
+  bir_temp_var_def, bir_temp_var_name_def]
   ``bmr_temp_vars arm8_bmr``);
 
+
+val arm8_brm_LIFTED = save_thm ("arm8_brm_LIFTED",
+let
+  val thm0 = MATCH_MP bmr_lifted arm8_bmr_OK
+  val c = SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, GSYM CONJ_ASSOC]
+  val thm1 = CONV_RULE (STRIP_QUANT_CONV (RAND_CONV c)) thm0
+in
+  thm1
+end);
 
 
 (**********)
 (* ARM M0 *)
 (**********)
-
 (* Lifting REGs *)
+
 val m0_REGS_lifted_imms_LIST_def = Define `
   m0_REGS_lifted_imms_LIST = [
-    (BMLI (BVar "R0" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_0)));
-    (BMLI (BVar "R1" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_1)));
-    (BMLI (BVar "R2" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_2)));
-    (BMLI (BVar "R3" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_3)));
-    (BMLI (BVar "R4" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_4)));
-    (BMLI (BVar "R5" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_5)));
-    (BMLI (BVar "R6" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_6)));
-    (BMLI (BVar "R7" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_7)));
-    (BMLI (BVar "R8" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_8)));
-    (BMLI (BVar "R9" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_9)));
-    (BMLI (BVar "R10" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_10)));
-    (BMLI (BVar "R11" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_11)));
-    (BMLI (BVar "R12" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_12)));
-    (BMLI (BVar "LR" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_LR)));
-    (BMLI (BVar "SP_main" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_SP_main)));
-    (BMLI (BVar "SP_process" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG RName_SP_process)))]`;
+    (BMLI (BVar "R0" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 0w))));
+    (BMLI (BVar "R1" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 1w))));
+    (BMLI (BVar "R2" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 2w))));
+    (BMLI (BVar "R3" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 3w))));
+    (BMLI (BVar "R4" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 4w))));
+    (BMLI (BVar "R5" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 5w))));
+    (BMLI (BVar "R6" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 6w))));
+    (BMLI (BVar "R7" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 7w))));
+    (BMLI (BVar "R8" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 8w))));
+    (BMLI (BVar "R9" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 9w))));
+    (BMLI (BVar "R10" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 10w))));
+    (BMLI (BVar "R11" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 11w))));
+    (BMLI (BVar "R12" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 12w))));
+    (BMLI (BVar "LR" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 14w))));
+    (BMLI (BVar "SP_main" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name F 13w))));
+    (BMLI (BVar "SP_process" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 13w))))]`;
+
+
+val m0_REGS_lifted_imms_LIST_REWRS = save_thm ("m0_REGS_lifted_imms_LIST_REWRS",
+  SIMP_RULE (std_ss++wordsLib.WORD_ss) [R_name_def] m0_REGS_lifted_imms_LIST_def);
 
 
 val m0_lifted_mem_def = Define `
@@ -494,7 +532,9 @@ val m0_bmr_def = Define `m0_bmr = <|
   bmr_extra := \ms:m0_state. T;
   bmr_imms := m0_REGS_lifted_imms_LIST;
   bmr_mem := m0_lifted_mem;
-  bmr_pc := m0_lifted_pc |>`;
+  bmr_pc := m0_lifted_pc;
+  bmr_step_fun := NextStateM0 |>`;
+
 
 val m0_bmr_EVAL = save_thm ("m0_bmr_EVAL",
   SIMP_CONV list_ss [m0_bmr_def,
@@ -511,6 +551,21 @@ SIMP_TAC (list_ss++bmr_ss++stringSimps.STRING_ss++wordsLib.WORD_ss++holBACore_ss
   bir_machine_lifted_mem_OK_def, bir_machine_lifted_imm_OK_def,
   bir_is_temp_var_name_def, BType_Bool_def,
   bir_machine_lifted_pc_OK_def]);
+
+
+
+val m0_brm_LIFTED = save_thm ("m0_brm_LIFTED",
+let
+  val thm0 = MATCH_MP bmr_lifted m0_bmr_OK
+  val c = SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, GSYM CONJ_ASSOC]
+  val thm1 = CONV_RULE (STRIP_QUANT_CONV (RAND_CONV c)) thm0
+  val thm2 = SIMP_RULE (std_ss++wordsLib.WORD_ss) [R_name_def] thm1
+
+  val thm3 = SIMP_RULE (std_ss++boolSimps.CONJ_ss) [GSYM FORALL_AND_THM, GSYM IMP_CONJ_THM, GSYM CONJ_ASSOC] (CONJ thm1 thm2)
+in
+  thm3
+end);
+
 
 
 val _ = export_theory();

@@ -12,10 +12,13 @@ HOLHEAP = ../core-props/HolBACoreProps-heap
 NEWHOLHEAP = HolBATools-heap
 EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
 
-HEAPINC = $(patsubst %Script.sml,%Theory,$(wildcard ./lifter/*Script.sml)) \
-          $(patsubst %.sml,%,$(wildcard ./lifter/*Lib.sml))
+HEAPSRC = $(wildcard ./lifter/*Script.sml) \
+          $(wildcard ./lifter/*Lib.sml)
 
-$(NEWHOLHEAP): $(TARGETS)
+HEAPINC  = $(patsubst %Lib.sml,%Lib, $(patsubst %Script.sml,%Theory,$(HEAPSRC)))
+HEAPDEPS = $(patsubst %Lib.sml,%Lib.uo, $(patsubst %Script.sml,%Theory.uo,$(HEAPSRC)))
+
+$(NEWHOLHEAP): $(HEAPDEPS)
 	$(protect $(HOLDIR)/bin/buildheap) -b $(HOLHEAP) -o $(NEWHOLHEAP) $(HEAPINC)
 
 endif
