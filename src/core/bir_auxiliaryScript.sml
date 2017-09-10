@@ -463,6 +463,29 @@ val word1_distinct = store_thm ("word1_distinct",
 SIMP_TAC (std_ss++wordsLib.WORD_ss) []);
 
 
+val BIT_ADD_WORD_CARRY = store_thm ("BIT_ADD_WORD_CARRY", ``
+!w0:'a word (w1:'a word).
+  BIT (dimindex (:'a)) (w2n w0 + w2n (w1)) <=>
+  ~(w2n w0 + w2n w1 < dimword (:'a))``,
+
+REPEAT GEN_TAC >>
+EQ_TAC >> REPEAT STRIP_TAC >- (
+  `dimword (:'a) <= w2n w0 + w2n w1` by METIS_TAC[bitTheory.BIT_IMP_GE_TWOEXP, dimword_def] >>
+  DECIDE_TAC
+) >>
+`?m. (m < dimword (:'a)) /\ (w2n w0 + w2n w1 = m + dimword (:'a))` by (
+  FULL_SIMP_TAC arith_ss [arithmeticTheory.NOT_LESS] >>
+  `?m. w2n w0 + w2n w1 = dimword (:'a) + m` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS] >>
+  Q.EXISTS_TAC `m` >>
+  `(w2n (w0:'a word) < dimword (:'a)) /\ (w2n (w1:'a word) < dimword (:'a))` by METIS_TAC[w2n_lt] >>
+  ASM_SIMP_TAC arith_ss []
+) >>
+
+MP_TAC (SPECL [``dimindex (:'a)``, ``SUC (dimindex (:'a))``, ``m + dimword (:'a)``] bitTheory.EXISTS_BIT_IN_RANGE) >>
+ASM_SIMP_TAC arith_ss [dimword_def, arithmeticTheory.EXP, GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC] >>
+METIS_TAC[arithmeticTheory.LESS_EQUAL_ANTISYM]);
+
+
 (* -------------------------------------------------------------------------- *)
 (* Fresh variable names                                                       *)
 (* -------------------------------------------------------------------------- *)

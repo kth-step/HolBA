@@ -1,6 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory
 open bir_nzcv_expTheory
+open m0_stepTheory
 
 (* ARM uses so called NZCV status flags for conditional execution. These were
    formalised in bir_nzcv_expTheory. However, the ARM step library partially evalutates
@@ -16,28 +17,6 @@ val _ = new_theory "bir_nzcv_intros";
 (* ARM 8 general cmp / sub *)
 (***************************)
 
-val nzcv_SUB_SUM_REWR = prove (
-``!w0 w1:'a word.
-  (w2n w0 + w2n (~w1) + 1) =
-  (if (w1 = 0w) then w2n w0 + dimword (:'a) else
-    (w2n w0 + w2n (~w1 + 1w)))``,
-
-REPEAT Cases >>
-ASM_SIMP_TAC arith_ss [w2n_n2w, word_1comp_n2w, word_add_n2w, n2w_11] >>
-CASE_TAC >>
-ASM_SIMP_TAC arith_ss []);
-
-
-val nzcv_SUB_SUM_REWR_MOD = prove (
-``!w0 w1:'a word.
-  (w2n w0 + w2n (~w1) + 1) MOD dimword (:'a) =
-  (w2n w0 + w2n (~w1 + 1w)) MOD dimword (:'a)``,
-
-SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [nzcv_SUB_SUM_REWR,
-  GSYM WORD_NEG, WORD_NEG_0, w2n_n2w, ZERO_LT_dimword,
-  arithmeticTheory.ADD_MODULUS]);
-
-
 val nzcv_SUB_V_fold_ARM8 = store_thm ("nzcv_SUB_V_fold_ARM8",
 ``!w1 w0:'a word.
   (word_msb w0 <=> word_msb (~w1)) /\
@@ -45,13 +24,8 @@ val nzcv_SUB_V_fold_ARM8 = store_thm ("nzcv_SUB_V_fold_ARM8",
   nzcv_BIR_SUB_V w0 w1``,
 
 REPEAT GEN_TAC >>
-SIMP_TAC std_ss [nzcv_def, LET_THM, nzcv_BIR_SUB_V_def,
- WORD_MSB_1COMP, GSYM word_msb_n2w, WORD_NEG] >>
-`(n2w (w2n w0 + w2n (~w1) + 1)):'a word =
- n2w (w2n w0 + w2n (~w1 + 1w))` by
-  METIS_TAC[n2w_mod, nzcv_SUB_SUM_REWR_MOD] >>
-ASM_SIMP_TAC std_ss [] >>
-METIS_TAC[]);
+SIMP_TAC std_ss [nzcv_BIR_SUB_V_CARRY_DEF,
+  add_with_carry_def, LET_THM, word_msb_n2w]);
 
 
 val nzcv_SUB_C_fold_ARM8 = store_thm ("nzcv_SUB_C_fold_ARM8",
@@ -61,38 +35,8 @@ val nzcv_SUB_C_fold_ARM8 = store_thm ("nzcv_SUB_C_fold_ARM8",
   w2n w0 + w2n (~w1) + 1) = nzcv_BIR_SUB_C w0 w1``,
 
 REPEAT GEN_TAC >>
-SIMP_TAC std_ss [nzcv_def, LET_THM, nzcv_BIR_SUB_C_def,
-  WORD_MSB_1COMP, GSYM word_msb_n2w, WORD_NEG,
-  nzcv_SUB_SUM_REWR] >>
-Cases_on `w1 = 0w` >> (
-  ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_MODULUS, ZERO_LT_dimword, w2n_lt]
-) >>
-Q.ABBREV_TAC `nn = w2n w0 + w2n (~w1 + 1w)` >>
-Cases_on `nn < dimword (:'a)` >- (
-  ASM_SIMP_TAC arith_ss [] >>
-  STRIP_TAC >>
-  `dimword (:'a) <= nn` by METIS_TAC[bitTheory.BIT_IMP_GE_TWOEXP, dimword_def] >>
-  DECIDE_TAC
-) >>
-
-`?m. (m < dimword (:'a)) /\ (nn = m + dimword (:'a))` by (
-  FULL_SIMP_TAC arith_ss [arithmeticTheory.NOT_LESS] >>
-  `?m. nn = dimword (:'a) + m` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS] >>
-  Q.EXISTS_TAC `m` >>
-  ASM_SIMP_TAC arith_ss [] >>
-  `nn < dimword (:'a) + dimword (:'a)` by (
-    Q.UNABBREV_TAC `nn` >>
-    MATCH_MP_TAC integerTheory.LT_ADD2 >>
-    METIS_TAC[w2n_lt]
-  ) >>
-  DECIDE_TAC
-) >>
-
-ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_MODULUS, ZERO_LT_dimword] >>
-
-MP_TAC (SPECL [``dimindex (:'a)``, ``SUC (dimindex (:'a))``, ``m + dimword (:'a)``] bitTheory.EXISTS_BIT_IN_RANGE) >>
-ASM_SIMP_TAC arith_ss [dimword_def, arithmeticTheory.EXP, GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC] >>
-METIS_TAC[arithmeticTheory.LESS_EQUAL_ANTISYM]);
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [nzcv_BIR_SUB_C_CARRY_DEF, add_with_carry_def, LET_THM,
+   ZERO_LT_dimword, w2n_n2w]);
 
 
 val nzcv_SUB_Z_fold_ARM8 = store_thm ("nzcv_SUB_Z_fold_ARM8",
@@ -115,15 +59,16 @@ val nzcv_SUB_FOLDS_ARM8_GEN = save_thm ("nzcv_SUB_FOLDS_ARM8_GEN",
 (* ARM 8 general add/cmn *)
 (*************************)
 
-(* cmp uses w2 - w1, we also need a version for w1 + w2 *)
+(* cmp uses w2 - w1, we also need a version for w1 + w2. *)
 
 val nzcv_ADD_V_fold_ARM8 = store_thm ("nzcv_ADD_V_fold_ARM8",
 ``!w1:'a word w0:'a word.
   (word_msb w0 <=> word_msb w1) /\
   (word_msb w0 <=/=> BIT (dimindex (:'a) - 1) (w2n w0 + w2n w1)) = nzcv_BIR_ADD_V w0 w1``,
 
-SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [nzcv_BIR_ADD_V_def,
-  GSYM word_msb_n2w, word_add_def]);
+SIMP_TAC std_ss [nzcv_BIR_ADD_V_CARRY_DEF,
+  add_with_carry_def, LET_THM, GSYM word_msb_n2w]);
+
 
 (* We need a special case for w0 = w1 *)
 val nzcv_ADD_V_fold_ARM8_ID = store_thm ("nzcv_ADD_V_fold_ARM8_ID",
@@ -140,33 +85,8 @@ val nzcv_ADD_C_fold_ARM8 = store_thm ("nzcv_ADD_C_fold_ARM8",
   w2n w0 + w2n w1) = nzcv_BIR_ADD_C w0 w1``,
 
 REPEAT GEN_TAC >>
-SIMP_TAC std_ss [nzcv_BIR_ADD_C_def] >>
-Q.ABBREV_TAC `nn = w2n w0 + w2n w1` >>
-Cases_on `nn < dimword (:'a)` >- (
-  ASM_SIMP_TAC arith_ss [] >>
-  STRIP_TAC >>
-  `dimword (:'a) <= nn` by METIS_TAC[bitTheory.BIT_IMP_GE_TWOEXP, dimword_def] >>
-  DECIDE_TAC
-) >>
-
-`?m. (m < dimword (:'a)) /\ (nn = m + dimword (:'a))` by (
-  FULL_SIMP_TAC arith_ss [arithmeticTheory.NOT_LESS] >>
-  `?m. nn = dimword (:'a) + m` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS] >>
-  Q.EXISTS_TAC `m` >>
-  ASM_SIMP_TAC arith_ss [] >>
-  `nn < dimword (:'a) + dimword (:'a)` by (
-    Q.UNABBREV_TAC `nn` >>
-    MATCH_MP_TAC integerTheory.LT_ADD2 >>
-    METIS_TAC[w2n_lt]
-  ) >>
-  DECIDE_TAC
-) >>
-
-ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_MODULUS, ZERO_LT_dimword] >>
-
-MP_TAC (SPECL [``dimindex (:'a)``, ``SUC (dimindex (:'a))``, ``m + dimword (:'a)``] bitTheory.EXISTS_BIT_IN_RANGE) >>
-ASM_SIMP_TAC arith_ss [dimword_def, arithmeticTheory.EXP, GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC] >>
-METIS_TAC[arithmeticTheory.LESS_EQUAL_ANTISYM]);
+SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [nzcv_BIR_ADD_C_CARRY_DEF, add_with_carry_def,
+  LET_THM, ZERO_LT_dimword, w2n_n2w]);
 
 
 val nzcv_ADD_Z_fold_ARM8 = store_thm ("nzcv_ADD_Z_fold_ARM8",
@@ -261,16 +181,11 @@ REPEAT STRIP_TAC >>
 ASM_SIMP_TAC std_ss [nzcv_BIR_ADD_N_def, word_2comp_n2w]);
 
 (* For 0 it does not matter, which constant is smaller, but SUB is more canonical *)
-val nzcv_ADD_Z_to_SUB_0 = store_thm ("nzcv_ADD_Z_to_SUB_0",
-``!(w0:'a word). (nzcv_BIR_ADD_Z w0 (n2w 0) <=>  nzcv_BIR_SUB_Z w0 (n2w 0))``,
+val nzcv_ADD_ZN_to_SUB_0 = store_thm ("nzcv_ADD_ZN_to_SUB_0",
+``(!(w0:'a word). (nzcv_BIR_ADD_Z w0 (n2w 0) <=>  nzcv_BIR_SUB_Z w0 (n2w 0))) /\
+  (!(w0:'a word). (nzcv_BIR_ADD_N w0 (n2w 0) <=>  nzcv_BIR_SUB_N w0 (n2w 0)))``,
 
-ASM_SIMP_TAC std_ss [nzcv_BIR_ADD_Z_def, word_2comp_n2w,
-  ZERO_LT_dimword, n2w_dimword]);
-
-val nzcv_ADD_N_to_SUB_0 = store_thm ("nzcv_ADD_N_to_SUB_0",
-``!(w0:'a word). (nzcv_BIR_ADD_N w0 (n2w 0) <=>  nzcv_BIR_SUB_N w0 (n2w 0))``,
-
-ASM_SIMP_TAC std_ss [nzcv_BIR_ADD_N_def, word_2comp_n2w,
+ASM_SIMP_TAC std_ss [nzcv_BIR_ADD_Z_def, nzcv_BIR_ADD_N_def, word_2comp_n2w,
   ZERO_LT_dimword, n2w_dimword]);
 
 
@@ -289,8 +204,7 @@ val nzcv_SUB_FOLDS_ARM8_CONST_GEN = save_thm ("nzcv_SUB_FOLDS_ARM8_CONST_GEN",
         nzcv_SUB_V_fold_ARM8_CONST,
         nzcv_ADD_N_to_SUB,
         nzcv_ADD_Z_to_SUB,
-        nzcv_ADD_N_to_SUB_0,
-        nzcv_ADD_Z_to_SUB_0]
+        nzcv_ADD_ZN_to_SUB_0]
 );
 
 
@@ -316,8 +230,6 @@ SIMP_RULE (std_ss++wordsLib.SIZES_ss) []  (
 (*********)
 (* Tests *)
 (*********)
-
-
 
 (*
 
@@ -350,8 +262,109 @@ test_nzcv_folds_code `subs w0, w1, w2`
 test_nzcv_folds_code `adds w0, w1, w1`
 test_nzcv_folds_code `bics w0, w1, w2`
 
+test_nzcv_folds_hex "1b000001"
 
-``w2w ((w2w (w:word64)):word32):word64``
+*)
+
+
+
+(*********)
+(* ARM 0 *)
+(*********)
+
+val nzcv_SUB_C_fold_M0 = store_thm ("nzcv_SUB_C_fold_M0",
+``!w1 w0. (CARRY_OUT w0 (~w1) T) = nzcv_BIR_SUB_C w0 w1``,
+REWRITE_TAC[nzcv_BIR_SUB_C_CARRY_DEF]);
+
+val nzcv_SUB_V_fold_M0 = store_thm ("nzcv_SUB_V_fold_M0",
+``!w1 w0. (OVERFLOW w0 (~w1) T) = nzcv_BIR_SUB_V w0 w1``,
+REWRITE_TAC[nzcv_BIR_SUB_V_CARRY_DEF])
+
+val nzcv_ADD_C_fold_M0 = store_thm ("nzcv_SUB_C_fold_M0",
+``!w1 w0. (CARRY_OUT w0 w1 F) = nzcv_BIR_ADD_C w0 w1``,
+REWRITE_TAC[nzcv_BIR_ADD_C_CARRY_DEF])
+
+val nzcv_ADD_V_fold_M0 = store_thm ("nzcv_ADD_V_fold_M0",
+``!w1 w0. (OVERFLOW w0 w1 F) = nzcv_BIR_ADD_V w0 w1``,
+REWRITE_TAC[nzcv_BIR_ADD_V_CARRY_DEF])
+
+val nzcv_SUB_N_fold_M0 = store_thm ("nzcv_SUB_N_fold_M0",
+``!w1:word32 w0. (word_bit 31 (w0 - w1)) = nzcv_BIR_SUB_N w0 w1``,
+SIMP_TAC (std_ss++wordsLib.SIZES_ss) [nzcv_BIR_SUB_N_def, nzcv_def, LET_THM, word_msb,
+  GSYM word_add_def, word_sub_def])
+
+val nzcv_ADD_N_fold_M0 = store_thm ("nzcv_ADD_N_fold_M0",
+``!w1:word32 w0. (word_bit 31 (w0 + w1)) = nzcv_BIR_ADD_N w0 w1``,
+SIMP_TAC std_ss [nzcv_BIR_ADD_N_def,
+  GSYM nzcv_SUB_N_fold_M0, word_sub_def, WORD_NEG_NEG]);
+
+val nzcv_SUB_Z_fold_M0 = store_thm ("nzcv_SUB_Z_fold_M0",
+``!w1 w0. (w0 - w1 = 0w) = nzcv_BIR_SUB_Z w0 w1``,
+REWRITE_TAC[nzcv_SUB_Z_fold_ARM8]);
+
+val nzcv_ADD_Z_fold_M0 = store_thm ("nzcv_SUB_Z_fold_M0",
+``!w1 w0. (w0 + w1 = 0w) = nzcv_BIR_ADD_Z w0 w1``,
+REWRITE_TAC[nzcv_ADD_Z_fold_ARM8]);
+
+val nzcv_FOLDS_M0 = save_thm ("nzcv_FOLDS_M0",
+ LIST_CONJ [nzcv_SUB_V_fold_M0, nzcv_SUB_C_fold_M0,
+            nzcv_ADD_V_fold_M0, nzcv_ADD_C_fold_M0,
+            nzcv_SUB_N_fold_M0, nzcv_ADD_N_fold_M0,
+            nzcv_SUB_Z_fold_M0, nzcv_ADD_Z_fold_M0]);
+
+(* Evaluate bitstring constants statically *)
+
+fun eval_immediates_M0 sz = let
+   val w_ty = wordsSyntax.mk_int_word_type sz
+   val w32_ty = ``:32``
+   val max = Arbnum.pow (Arbnum.two, Arbnum.fromInt sz)
+   fun mk_term n =
+      wordsSyntax.mk_w2w ((bitstringSyntax.padded_fixedwidth_of_num (Arbnum.fromInt n, sz)),
+                         w32_ty)
+   val my_convs = SIMP_CONV (std_ss++bitstringLib.v2w_n2w_ss++wordsLib.WORD_ss) []
+   val thms = List.tabulate (Arbnum.toInt max, (fn i => my_convs (mk_term i)))
+in
+   LIST_CONJ thms
+end;
+
+
+val w2w_v2w_immediates_eval_M0 = save_thm ("w2w_v2w_immediates_eval_M0",
+  LIST_CONJ [eval_immediates_M0 3,
+             eval_immediates_M0 8])
+
+
+val word4_list = List.tabulate (16, (fn i => wordsSyntax.mk_wordii (i, 4)))
+
+val R_name_T_EVAL = save_thm ("R_name_EVAL",
+  LIST_CONJ (map (fn w => EVAL ``R_name T ^w``) word4_list))
+
+val EQ_13w_EVAL = save_thm ("R_name_EVAL",
+  LIST_CONJ (map (fn w => EVAL ``^w = 13w:word4``) word4_list))
+
+val EQ_15w_EVAL = save_thm ("R_name_EVAL",
+  LIST_CONJ (map (fn w => EVAL ``^w = 15w:word4``) word4_list))
+
+val STEP_REWRS_M0 = save_thm ("FOLDS_M0",
+LIST_CONJ [nzcv_FOLDS_M0, nzcv_BIR_SIMPS,
+  R_name_T_EVAL, EQ_13w_EVAL,
+  w2w_v2w_immediates_eval_M0])
+
+
+(* Test
+
+open m0_stepLib
+
+val ev = thumb_step_code (true, true);
+fun test_nzcv_folds s =
+  (map (SIMP_RULE std_ss [STEP_REWRS_M0]) (flatten (ev s)));
+
+test_nzcv_folds `adds r2, #0`
+test_nzcv_folds `adds r2, #1`
+test_nzcv_folds `subs r2, r2`
+test_nzcv_folds `cmp r0, #3`
+test_nzcv_folds `cmn r0, r1`
+test_nzcv_folds `cmp r0, #0`
+
 *)
 
 val _ = export_theory();

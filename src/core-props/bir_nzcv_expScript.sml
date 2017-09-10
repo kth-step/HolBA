@@ -34,7 +34,6 @@ val _ = new_theory "bir_nzcv_exp";
 (*************)
 
 (* Let's instroduce constants for the components of the nzcv tuple. *)
-
 val nzcv_BIR_SUB_N_def = Define `nzcv_BIR_SUB_N w1 w2 = (let (n, z, c, v) = nzcv w1 w2 in n)`;
 val nzcv_BIR_SUB_Z_def = Define `nzcv_BIR_SUB_Z w1 w2 = (let (n, z, c, v) = nzcv w1 w2 in z)`;
 val nzcv_BIR_SUB_C_def = Define `nzcv_BIR_SUB_C w1 w2 = (let (n, z, c, v) = nzcv w1 w2 in c)`;
@@ -61,6 +60,31 @@ val nzcv_BIR_ADD_Z_def = Define `nzcv_BIR_ADD_Z (w1 : 'a word) (w2 : 'a word) <=
 
 val nzcv_BIR_ADD_N_def = Define `nzcv_BIR_ADD_N (w1 : 'a word) (w2 : 'a word) <=>
    nzcv_BIR_SUB_N w1 (-w2)`;
+
+(******************)
+(* add_with_carry *)
+(******************)
+
+val nzcv_BIR_SUB_C_CARRY_DEF = store_thm ("nzcv_BIR_SUB_C_CARRY_DEF",
+  ``!w1 w2. nzcv_BIR_SUB_C w1 w2 = FST (SND (add_with_carry (w1, ~w2, T)))``,
+SIMP_TAC std_ss [ADD_WITH_CARRY_SUB, nzcv_BIR_SUB_C_def, GSYM word_hs_def,
+  WORD_HIGHER_EQ]);
+
+val nzcv_BIR_SUB_V_CARRY_DEF = store_thm ("nzcv_BIR_SUB_V_CARRY_DEF",
+  ``!w1 w2. nzcv_BIR_SUB_V w1 w2 = SND (SND (add_with_carry (w1, ~w2, T)))``,
+SIMP_TAC std_ss [ADD_WITH_CARRY_SUB, nzcv_BIR_SUB_V_def, nzcv_def, LET_THM,
+  GSYM word_add_def, word_sub_def]);
+
+val nzcv_BIR_ADD_C_CARRY_DEF = store_thm ("nzcv_BIR_ADD_C_CARRY_DEF",
+  ``!w1 w2. nzcv_BIR_ADD_C w1 w2 = FST (SND (add_with_carry (w1, w2, F)))``,
+SIMP_TAC arith_ss [nzcv_BIR_ADD_C_def, add_with_carry_def, LET_THM,
+   bir_auxiliaryTheory.BIT_ADD_WORD_CARRY, w2n_n2w, ZERO_LT_dimword]);
+
+val nzcv_BIR_ADD_V_CARRY_DEF = store_thm ("nzcv_BIR_ADD_V_CARRY_DEF",
+  ``!w1 w2. nzcv_BIR_ADD_V w1 w2 = SND (SND (add_with_carry (w1, w2, F)))``,
+SIMP_TAC std_ss [add_with_carry_def, nzcv_BIR_ADD_V_def, LET_THM,
+  GSYM word_add_def] >>
+METIS_TAC[]);
 
 
 (***********************)
