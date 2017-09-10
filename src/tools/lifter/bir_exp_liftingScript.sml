@@ -4,6 +4,7 @@ open bir_typing_expTheory bir_valuesTheory
 open bir_envTheory bir_immTheory bir_imm_expTheory
 open bir_immSyntax wordsTheory
 open bir_mem_expTheory bir_bool_expTheory
+open bir_nzcv_expTheory
 
 val _ = new_theory "bir_exp_lifting";
 
@@ -480,6 +481,84 @@ val bir_is_lifted_imm_exp_bool2b = save_thm ("bir_is_lifted_imm_exp_bool2b",
 
 
 
+
+(********)
+(* nzcv *)
+(********)
+
+val thm_t = let
+  val exp_t = ``XXX_exp : bir_immtype_t -> bir_exp_t -> bir_exp_t -> bir_exp_t``
+  val val_t = ``XXX_val : 'a word -> 'a word -> bool``
+
+  val thm_t =
+  ``!s env (w1:'a word) w2 e1 e2.
+        bir_is_lifted_imm_exp env e1 (w2bs w1 s) ==>
+        bir_is_lifted_imm_exp env e2 (w2bs w2 s) ==>
+        bir_is_lifted_imm_exp env (^exp_t s e1 e2) (bool2b (^val_t w1 w2))``;
+
+  val l = [
+     (``(\s:bir_immtype_t. BExp_nzcv_ADD_N s)``, ``nzcv_BIR_ADD_N``),
+     (``(\s:bir_immtype_t. BExp_nzcv_ADD_Z)``, ``nzcv_BIR_ADD_Z``),
+     (``(\s:bir_immtype_t. BExp_nzcv_ADD_C)``, ``nzcv_BIR_ADD_C``),
+     (``(\s:bir_immtype_t. BExp_nzcv_ADD_V s)``, ``nzcv_BIR_ADD_V``),
+     (``(\s:bir_immtype_t. BExp_nzcv_SUB_N s)``, ``nzcv_BIR_SUB_N``),
+     (``(\s:bir_immtype_t. BExp_nzcv_SUB_Z)``, ``nzcv_BIR_SUB_Z``),
+     (``(\s:bir_immtype_t. BExp_nzcv_SUB_C)``, ``nzcv_BIR_SUB_C``),
+     (``(\s:bir_immtype_t. BExp_nzcv_SUB_V s)``, ``nzcv_BIR_SUB_V``)
+  ];
+
+  val tl = map build_immtype_t_conj (map (fn (te, tv) => (subst [exp_t |-> te, val_t |-> tv] thm_t)) l)
+
+in  list_mk_conj tl end;
+
+val bir_is_lifted_imm_exp_NZCV0 = prove (``^thm_t``,
+SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
+  bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id,
+  pairTheory.pair_case_thm,
+  BExp_nzcv_SUB_type_of, BExp_nzcv_SUB_vars_of,
+  BExp_nzcv_ADD_type_of, BExp_nzcv_ADD_vars_of,
+
+  BExp_nzcv_SUB_N_eval, BExp_nzcv_SUB_Z_eval, BExp_nzcv_SUB_C_eval, BExp_nzcv_SUB_V_eval,
+  BExp_nzcv_ADD_N_eval, BExp_nzcv_ADD_Z_eval, BExp_nzcv_ADD_C_eval, BExp_nzcv_ADD_V_eval
+]);
+
+val bir_is_lifted_imm_exp_NZCV = save_thm ("bir_is_lifted_imm_exp_NZCV",
+let
+  val thm0 = bir_is_lifted_imm_exp_NZCV0
+  val thm1 = SIMP_RULE std_ss [GSYM CONJ_ASSOC, w2bs_REWRS, IMP_CONJ_THM,
+    FORALL_AND_THM, w2w_id] thm0
+in
+  thm1
+end);
+
+
+
+(************)
+(* word_msb *)
+(************)
+
+val thm_t = build_immtype_t_conj
+``!s env (w:'a word) e.
+      bir_is_lifted_imm_exp env e (w2bs w s) ==>
+      bir_is_lifted_imm_exp env (BExp_BinPred BIExp_SignedLessThan e (BExp_Const (n2bs 0 s)))
+             (bool2b (word_msb w))``;
+
+val bir_is_lifted_imm_exp_MSB0 = prove (``^thm_t``,
+SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
+  pred_setTheory.UNION_EMPTY, BType_Bool_def, w2w_id,
+  wordsTheory.word_msb_neg]);
+
+val bir_is_lifted_imm_exp_MSB = save_thm ("bir_is_lifted_imm_exp_MSB",
+let
+  val thm0 = bir_is_lifted_imm_exp_MSB0
+  val thm1 = SIMP_RULE std_ss [GSYM CONJ_ASSOC, w2bs_REWRS, IMP_CONJ_THM,
+    FORALL_AND_THM, w2w_id, n2bs_def] thm0
+in
+  thm1
+end);
+
+
+
 (****************)
 (* Combination  *)
 (****************)
@@ -491,7 +570,9 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_bool2b,
              bir_is_lifted_imm_exp_CASTS,
              bir_is_lifted_imm_exp_COND,
-             bir_is_lifted_imm_exp_LOAD_ENDIAN]);
+             bir_is_lifted_imm_exp_LOAD_ENDIAN,
+             bir_is_lifted_imm_exp_NZCV,
+             bir_is_lifted_imm_exp_MSB]);
 
 
 val _ = export_theory();
