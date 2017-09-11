@@ -183,6 +183,19 @@ SIMP_TAC std_ss [nzcv_BIR_SUB_NZCV_REWRS, nzcv_BIR_ADD_N_def,
 ]);
 
 
+val nzcv_BIR_ADD_SYM = store_thm ("nzcv_BIR_ADD_SYM", ``
+  (!w1 (w2:'a word). nzcv_BIR_ADD_N w1 w2 <=> nzcv_BIR_ADD_N w2 w1) /\
+  (!w1 (w2:'a word). nzcv_BIR_ADD_Z w1 w2 <=> nzcv_BIR_ADD_Z w2 w1) /\
+  (!w1 (w2:'a word). nzcv_BIR_ADD_C w1 w2 <=> nzcv_BIR_ADD_C w2 w1) /\
+  (!w1 (w2:'a word). nzcv_BIR_ADD_V w1 w2 <=> nzcv_BIR_ADD_V w2 w1)``,
+
+SIMP_TAC std_ss [nzcv_BIR_ADD_N_def, nzcv_def, LET_THM,
+  nzcv_BIR_ADD_Z_def, nzcv_BIR_SUB_N_def, nzcv_BIR_ADD_C_def,
+  nzcv_BIR_SUB_Z_def, WORD_NEG_NEG, nzcv_BIR_ADD_V_def,
+  GSYM word_add_def] >>
+METIS_TAC[wordsTheory.WORD_ADD_COMM, arithmeticTheory.ADD_COMM]);
+
+
 (*******************)
 (* Simplifications *)
 (*******************)
