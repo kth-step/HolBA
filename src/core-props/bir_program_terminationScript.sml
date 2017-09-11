@@ -423,5 +423,68 @@ CASE_TAC >> (
 METIS_TAC[bir_exec_stmt_status_assumption]);
 
 
+(*****************************)
+(* Status AssertionViolated *)
+(*****************************)
+
+
+val bir_exec_stmtB_status_assertion = store_thm ("bir_exec_stmtB_status_assertion",
+``!st stmt. (st.bst_status <> BST_AssertionViolated) ==>
+            ((bir_exec_stmtB_state stmt st).bst_status = BST_AssertionViolated) ==>
+            (?e. (stmt = BStmt_Assert e) /\ (bir_eval_exp e st.bst_environ = BVal_Imm (Imm1 0w)))``,
+
+Cases_on `stmt` >> (
+  ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtB_state_REWRS, LET_DEF,
+    bir_exec_stmt_declare_def, bir_exec_stmt_assume_def,
+    bir_exec_stmt_assign_def, bir_exec_stmt_assert_def,
+    bir_exec_stmt_observe_state_def, bir_state_set_failed_def] >>
+  REPEAT GEN_TAC >>
+  REPEAT CASE_TAC >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+));
+
+
+val bir_exec_stmtE_status_not_assertion = store_thm ("bir_exec_stmtE_status_not_assertion",
+``!st p stmt. (st.bst_status <> BST_AssertionViolated) ==>
+              ~((bir_exec_stmtE p stmt st).bst_status = BST_AssertionViolated)``,
+
+Cases_on `stmt` >> (
+  ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtE_def,
+    bir_exec_stmt_jmp_def, bir_state_set_failed_def, bir_exec_stmt_jmp_to_label_def,
+    bir_exec_stmt_cjmp_def, bir_exec_stmt_halt_def, bir_stmtE_is_jmp_to_label_REWRS] >>
+  REPEAT GEN_TAC >>
+  REPEAT CASE_TAC >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+));
+
+
+val bir_exec_stmt_status_assertion = store_thm ("bir_exec_stmt_status_assertion",
+``!st p stmt. (st.bst_status <> BST_AssertionViolated) ==>
+              (((bir_exec_stmt_state p stmt st).bst_status = BST_AssertionViolated)) ==>
+              (?e. (stmt = BStmtB (BStmt_Assert e)) /\ (bir_eval_exp e st.bst_environ = BVal_Imm (Imm1 0w)))``,
+
+Cases_on `stmt` >| [
+  SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++holBACore_ss) [
+    bir_exec_stmt_state_REWRS, LET_DEF] >>
+  METIS_TAC[bir_exec_stmtB_status_assertion],
+
+  SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_state_REWRS] >>
+  METIS_TAC[bir_exec_stmtE_status_not_assertion]
+]);
+
+
+val bir_exec_step_status_assertion = store_thm ("bir_exec_step_status_assertion",
+``!st p. (st.bst_status <> BST_AssertionViolated) ==>
+         ((bir_exec_step_state p st).bst_status = BST_AssertionViolated) ==>
+         (?e. (bir_get_current_statement p st.bst_pc = SOME (BStmtB (BStmt_Assert e))) /\
+              (bir_eval_exp e st.bst_environ = BVal_Imm (Imm1 0w)))``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_exec_step_state_def, bir_exec_step_def] >>
+CASE_TAC >> (
+  ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def, GSYM bir_exec_stmt_state_def]
+) >>
+METIS_TAC[bir_exec_stmt_status_assertion]);
+
 
 val _ = export_theory();

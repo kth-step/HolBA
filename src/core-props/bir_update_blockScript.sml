@@ -927,7 +927,8 @@ val bir_assert_desc_value_def = Define `bir_assert_desc_value (BAssertDesc e b) 
 
 
 val bir_assert_block_def = Define `
-  bir_assert_block al = MAP (\a. BStmt_Assert (bir_assert_desc_exp a)) al`
+  bir_assert_block al = MAP (\a. BStmt_Assert (bir_assert_desc_exp a)) al`;
+
 
 val bir_assert_block_SEM = store_thm ("bir_assert_block_SEM", ``!st al l.
   EVERY (bir_assert_desc_OK st.bst_environ) al ==>
@@ -937,7 +938,7 @@ val bir_assert_block_SEM = store_thm ("bir_assert_block_SEM", ``!st al l.
   (bir_exec_stmtsB (bir_assert_block al) (l, c, st) =
   (case INDEX_FIND 0 (\a. ~(bir_assert_desc_value a)) al of
      | NONE        => (REVERSE l, c + LENGTH al, st)
-     | SOME (n, _) => (REVERSE l, c + SUC n, bir_state_set_failed st))))``,
+     | SOME (n, _) => (REVERSE l, c + SUC n, (st with bst_status := BST_AssertionViolated)))))``,
 
 
 REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
@@ -951,14 +952,14 @@ FULL_SIMP_TAC list_ss [bir_assert_block_def,
   bir_exec_stmtsB_REWRS, bir_exec_stmtB_def,
   LET_THM, OPT_CONS_REWRS] >>
 `bir_exec_stmt_assert (bir_assert_desc_exp a) st =
-  (if bir_assert_desc_value a then st else bir_state_set_failed st)` by (
+  (if bir_assert_desc_value a then st else (st with bst_status := BST_AssertionViolated))` by (
   Cases_on `a` >>
   FULL_SIMP_TAC std_ss [bir_assert_desc_OK_def,
     bir_assert_desc_value_def, bir_assert_desc_exp_def,
     bir_exec_stmt_assert_def, bir_dest_bool_val_bool2b]
 ) >>
 Tactical.REVERSE (Cases_on `bir_assert_desc_value a`) >- (
-  `bir_state_is_terminated (bir_state_set_failed st)` by
+  `bir_state_is_terminated (st with bst_status := BST_AssertionViolated)` by
      SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def, bir_state_set_failed_def] >>
   FULL_SIMP_TAC list_ss [INDEX_FIND_def, pairTheory.pair_case_thm,
     bir_exec_stmtsB_REWRS]
@@ -973,7 +974,7 @@ val bir_assert_block_SEM_NOT_FAIL = store_thm ("bir_assert_block_SEM_NOT_FAIL", 
   EVERY (bir_assert_desc_OK st.bst_environ) al ==>
   ~(bir_state_is_terminated st) ==>
   (bir_exec_stmtsB (bir_assert_block al) (l, c, st) = (l', c', st')) ==>
-  ~(bir_state_is_failed st') ==>
+  ~(st'.bst_status = BST_AssertionViolated) ==>
 
   ((l' = REVERSE l) /\
    (c' = c + LENGTH al) /\
@@ -984,8 +985,7 @@ SIMP_TAC std_ss [bir_assert_block_SEM] >>
 REPEAT GEN_TAC >>
 CASE_TAC >> (
   FULL_SIMP_TAC list_ss [INDEX_FIND_EQ_NONE, combinTheory.o_DEF,
-    pairTheory.pair_CASE_def, bir_state_set_failed_def,
-    bir_state_is_failed_def]
+    pairTheory.pair_CASE_def]
 ) >>
 REPEAT DISCH_TAC >>
 FULL_SIMP_TAC std_ss [] >>
@@ -998,7 +998,7 @@ val bir_assert_block_SEM_NOT_FAIL_BLOCK = store_thm ("bir_assert_block_SEM_NOT_F
   EVERY (bir_assert_desc_OK st.bst_environ) al ==>
   ~(bir_state_is_terminated st) ==>
   (bir_exec_block p (bl with bb_statements := (bir_assert_block al) ++ bl.bb_statements) st = (l, c, st')) ==>
-  ~(bir_state_is_failed st') ==>
+  ~(st'.bst_status = BST_AssertionViolated) ==>
 
   ((LENGTH al < c) /\
   (bir_exec_block p bl st = (l, c - LENGTH al,
@@ -1016,13 +1016,13 @@ REPEAT GEN_TAC >>
   METIS_TAC[pairTheory.PAIR] >>
 ASM_SIMP_TAC std_ss [] >>
 ONCE_ASM_REWRITE_TAC[bir_exec_stmtsB_RESET_ACCUMULATOR_COUNTER] >>
-Cases_on `bir_state_is_failed st''` >- (
+Cases_on `st''.bst_status = BST_AssertionViolated` >- (
   `bir_state_is_terminated st''` by (
-    FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def, bir_state_is_failed_def]
+    FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def]
   ) >>
   ASM_SIMP_TAC list_ss [bir_exec_stmtsB_REWRS, LET_THM] >>
   REPEAT DISCH_TAC >> FULL_SIMP_TAC std_ss [] >> REPEAT BasicProvers.VAR_EQ_TAC >>
-  FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_failed_def]
+  FULL_SIMP_TAC (std_ss++bir_TYPES_ss) []
 ) >>
 NTAC 2 DISCH_TAC >>
 MP_TAC (Q.SPECL [`st`, `al`, `[]:'a list`, `0`] bir_assert_block_SEM_NOT_FAIL) >>
@@ -1078,7 +1078,7 @@ bir_update_block_desc_OK st.bst_environ eup updates ==>
 (bl = (bir_update_assert_block l al eup updates)) ==>
 ~(bir_state_is_terminated st) ==>
 (bir_exec_block p bl st = (lo:'a list, n', st')) ==>
-~(bir_state_is_failed st') ==> (
+~(st'.bst_status = BST_AssertionViolated) ==> (
 
 (* Then we terminate in a state ... *)
   ((lo = []) /\ (n' = bir_block_size bl)) /\

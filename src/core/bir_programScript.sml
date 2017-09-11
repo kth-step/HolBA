@@ -56,6 +56,7 @@ val _ = Datatype `bir_status_t =
     BST_Running                  (* BIR program is still running *)
   | BST_Failed                   (* BIR program execution failed *)
   | BST_AssumptionViolated       (* BIR program execution aborted, because assumption was violated *)
+  | BST_AssertionViolated       (* BIR program execution failed, because assertion was violated *)
   | BST_Halted bir_val_t        (* Halt called *)
   | BST_JumpOutside bir_label_t (* Jump to unknown label *)`;
 
@@ -187,7 +188,7 @@ val bir_exec_stmt_assign_def = Define `bir_exec_stmt_assign v ex (st : bir_state
 val bir_exec_stmt_assert_def = Define `bir_exec_stmt_assert ex (st : bir_state_t) =
   case (bir_dest_bool_val (bir_eval_exp ex st.bst_environ)) of
     | SOME T => st
-    | SOME F => bir_state_set_failed st
+    | SOME F => (st with bst_status := BST_AssertionViolated)
     | NONE => bir_state_set_failed st`
 
 val bir_exec_stmt_assume_def = Define `bir_exec_stmt_assume ex (st : bir_state_t) =
