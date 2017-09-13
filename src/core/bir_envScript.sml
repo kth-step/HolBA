@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
-open finite_mapTheory;
+open finite_mapTheory pred_setTheory;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
 
 val _ = new_theory "bir_env";
@@ -33,7 +33,7 @@ val bir_is_well_typed_env_def = Define `
 
 val bir_is_well_typed_env_empty = store_thm ("bir_is_well_typed_env_empty",
   ``bir_is_well_typed_env bir_empty_env``,
-SIMP_TAC std_ss [bir_is_well_typed_env_def, bir_empty_env_def, finite_mapTheory.FEVERY_FEMPTY]);
+SIMP_TAC std_ss [bir_is_well_typed_env_def, bir_empty_env_def, FEVERY_FEMPTY]);
 
 val bir_env_lookup_def = Define `
   (bir_env_lookup varname (BEnv env) = FLOOKUP env varname)`;
@@ -107,7 +107,7 @@ val bir_env_update_is_well_typed_env = store_thm ("bir_env_update_is_well_typed_
 Cases >>
 SIMP_TAC std_ss [bir_env_update_def, bir_is_well_typed_env_def] >>
 REPEAT STRIP_TAC >>
-ConseqConv.CONSEQ_REWRITE_TAC ([finite_mapTheory.FEVERY_STRENGTHEN_THM], [], []) >>
+ConseqConv.CONSEQ_REWRITE_TAC ([FEVERY_STRENGTHEN_THM], [], []) >>
 ASM_SIMP_TAC std_ss [] >>
 Cases_on `vo` >> (
   FULL_SIMP_TAC std_ss []
@@ -130,7 +130,7 @@ val bir_is_well_typed_env_lookup = store_thm ("bir_is_well_typed_env_lookup",
 
 Cases >> SIMP_TAC std_ss [bir_is_well_typed_env_def] >>
 rename1 `BEnv f` >>
-SIMP_TAC (std_ss++QI_ss) [bir_env_lookup_def, finite_mapTheory.FEVERY_ALL_FLOOKUP] >>
+SIMP_TAC (std_ss++QI_ss) [bir_env_lookup_def, FEVERY_ALL_FLOOKUP] >>
 REPEAT STRIP_TAC >>
 Q.PAT_X_ASSUM `!k. _` (MP_TAC o Q.SPEC `vn`) >>
 ASM_SIMP_TAC std_ss []);
@@ -332,26 +332,26 @@ val bir_env_vars_are_initialised_def = Define `
 
 val bir_env_vars_are_initialised_EMPTY = store_thm ("bir_env_vars_are_initialised_EMPTY",
   ``!env. bir_env_vars_are_initialised env {}``,
-SIMP_TAC std_ss [bir_env_vars_are_initialised_def, pred_setTheory.NOT_IN_EMPTY]);
+SIMP_TAC std_ss [bir_env_vars_are_initialised_def, NOT_IN_EMPTY]);
 
 val bir_env_vars_are_initialised_INSERT = store_thm ("bir_env_vars_are_initialised_INSERT",
   ``!env v vs. bir_env_vars_are_initialised env (v INSERT vs) <=>
                (bir_env_var_is_initialised env v /\ bir_env_vars_are_initialised env vs)``,
-SIMP_TAC std_ss [bir_env_vars_are_initialised_def, pred_setTheory.IN_INSERT] >>
+SIMP_TAC std_ss [bir_env_vars_are_initialised_def, IN_INSERT] >>
 METIS_TAC[]);
 
 val bir_env_vars_are_initialised_UNION = store_thm ("bir_env_vars_are_initialised_UNION",
   ``!env vs1 vs2. bir_env_vars_are_initialised env (vs1 UNION vs2) <=>
                   (bir_env_vars_are_initialised env vs1 /\
                    bir_env_vars_are_initialised env vs2) ``,
-SIMP_TAC std_ss [bir_env_vars_are_initialised_def, pred_setTheory.IN_UNION] >>
+SIMP_TAC std_ss [bir_env_vars_are_initialised_def, IN_UNION] >>
 METIS_TAC[]);
 
 val bir_env_vars_are_initialised_SUBSET = store_thm ("bir_env_vars_are_initialised_SUBSET",
   ``!env vs1 vs2. bir_env_vars_are_initialised env vs1 ==>
                   (vs2 SUBSET vs1) ==>
                    bir_env_vars_are_initialised env vs2``,
-SIMP_TAC std_ss [bir_env_vars_are_initialised_def, pred_setTheory.SUBSET_DEF] >>
+SIMP_TAC std_ss [bir_env_vars_are_initialised_def, SUBSET_DEF] >>
 METIS_TAC[]);
 
 
@@ -376,7 +376,7 @@ REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++QI_ss) [
   bir_env_lookup_type_def,
   bir_env_lookup_def, bir_env_order_def,
-  finite_mapTheory.FLOOKUP_UPDATE] >>
+  FLOOKUP_UPDATE] >>
 METIS_TAC[]);
 
 
@@ -387,7 +387,7 @@ val bir_env_order_write = store_thm ("bir_env_order_write",
 
 Cases >>
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_env_write_def, bir_env_update_def,
-  bir_env_order_def, finite_mapTheory.FLOOKUP_UPDATE, bir_env_lookup_def,
+  bir_env_order_def, FLOOKUP_UPDATE, bir_env_lookup_def,
   bir_env_check_type_def, bir_env_lookup_type_def,
   PULL_EXISTS] >>
 SIMP_TAC (std_ss++QI_ss) []);
@@ -402,7 +402,7 @@ Cases >> Cases >>
 rename1 `bir_env_order (BEnv env_f) (BEnv env_f')` >>
 SIMP_TAC (std_ss++QI_ss) [bir_is_well_typed_env_def,
   bir_env_order_def, bir_env_lookup_def, PULL_FORALL, PULL_EXISTS,
-  finite_mapTheory.FEVERY_ALL_FLOOKUP] >>
+  FEVERY_ALL_FLOOKUP] >>
 REPEAT STRIP_TAC >>
 rename1 `FLOOKUP env_f' vn = SOME (ty, vo)` >>
 REPEAT (Q.PAT_X_ASSUM `!vn. _` (MP_TAC o Q.SPEC `vn`)) >>
@@ -467,7 +467,7 @@ METIS_TAC[SUBMAP_ANTISYM]);
 val bir_is_subenv_domains = store_thm ("bir_is_subenv_domains",
 ``!env1 env2. bir_is_subenv env1 env2 ==> (bir_env_domain env1 SUBSET bir_env_domain env2)``,
 REPEAT Cases >>
-SIMP_TAC std_ss [bir_is_subenv_def, bir_env_domain_def, SUBMAP_DEF, pred_setTheory.SUBSET_DEF]);
+SIMP_TAC std_ss [bir_is_subenv_def, bir_env_domain_def, SUBMAP_DEF, SUBSET_DEF]);
 
 
 
@@ -496,6 +496,56 @@ val bir_is_subenv_READ = store_thm ("bir_is_subenv_READ",
 
 SIMP_TAC std_ss [bir_env_read_def] >>
 METIS_TAC[bir_is_subenv_LOOKUP]);
+
+
+
+(* Equivalence for sets of vars *)
+val bir_env_EQ_FOR_VARS_def = Define `
+  bir_env_EQ_FOR_VARS vs env1 env2 <=>
+  (!v. v IN vs ==> (bir_env_lookup (bir_var_name v) env1 = bir_env_lookup (bir_var_name v) env2))`
+
+val bir_env_EQ_FOR_VARS_EQUIV_EQ = store_thm ("bir_env_EQ_FOR_VARS_EQUIV_EQ",
+  ``!vs env1 env2. (bir_env_EQ_FOR_VARS vs env1 env2) <=>
+                   (bir_env_EQ_FOR_VARS vs env1 = bir_env_EQ_FOR_VARS vs env2)``,
+
+SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def, FUN_EQ_THM] >>
+METIS_TAC[]);
+
+
+val bir_env_EQ_FOR_VARS_EQUIV = store_thm ("bir_env_EQ_FOR_VARS_EQUIV",
+ ``(!vs env. bir_env_EQ_FOR_VARS vs env env) /\
+   (!vs env1 env2. (bir_env_EQ_FOR_VARS vs env1 env2 <=> (bir_env_EQ_FOR_VARS vs env2 env1))) /\
+   (!vs env1 env2 env3. bir_env_EQ_FOR_VARS vs env1 env2 ==>
+                        bir_env_EQ_FOR_VARS vs env2 env3 ==>
+                        bir_env_EQ_FOR_VARS vs env1 env3)``,
+SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def] >> METIS_TAC[]);
+
+
+
+val bir_env_EQ_FOR_VARS_EMPTY = store_thm ("bir_env_EQ_FOR_VARS_EMPTY",
+  ``!env1 env2. bir_env_EQ_FOR_VARS EMPTY env1 env2``,
+SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def, NOT_IN_EMPTY, bir_env_EQ_FOR_VARS_def]);
+
+
+val bir_env_EQ_FOR_VARS_UNIV = store_thm ("bir_env_EQ_FOR_VARS_UNIV",
+  ``!env1 env2. bir_env_EQ_FOR_VARS UNIV env1 env2 <=> (env1 = env2)``,
+REPEAT Cases >>
+SIMP_TAC (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_var_t``]) [
+  bir_env_EQ_FOR_VARS_def, IN_UNIV, FLOOKUP_EXT,
+  bir_var_environment_t_11, bir_env_lookup_def, bir_var_name_def, FUN_EQ_THM]);
+
+
+val bir_env_EQ_FOR_VARS_SUBSET = store_thm ("bir_env_EQ_FOR_VARS_SUBSET",
+  ``!vs1 vs2 env1 env2. vs2 SUBSET vs1 ==> bir_env_EQ_FOR_VARS vs1 env1 env2 ==> bir_env_EQ_FOR_VARS vs2 env1 env2``,
+SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def, SUBSET_DEF] >>
+METIS_TAC[]);
+
+
+val bir_env_EQ_FOR_VARS_read_IMPL = store_thm ("bir_env_EQ_FOR_VARS_read_IMPL",
+``!vs env1 env2. bir_env_EQ_FOR_VARS vs env1 env2 ==>
+  (!v. v IN vs ==> (bir_env_read v env1 = bir_env_read v env2))``,
+SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def] >>
+METIS_TAC[bir_env_read_EQ_lookup_IMPL]);
 
 
 val _ = export_theory();

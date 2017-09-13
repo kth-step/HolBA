@@ -489,7 +489,7 @@ ASM_SIMP_TAC list_ss [rich_listTheory.SEG_LENGTH_ID]);
 val bir_block_size_def = Define `bir_block_size bl = SUC (LENGTH bl.bb_statements)`;
 
 
-val bir_exec_block_def = Define `bir_exec_block p bl st =
+val bir_exec_block_def = Define `bir_exec_block (p:'a bir_program_t) (bl:'a bir_block_t) st =
   let (l, c, st') = bir_exec_stmtsB bl.bb_statements ([], 0, st) in
   (if (bir_state_is_terminated st') then
     (l, c, st' with bst_pc := (st.bst_pc with bpc_index := st.bst_pc.bpc_index + PRE c))

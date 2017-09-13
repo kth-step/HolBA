@@ -146,15 +146,8 @@ val bir_state_is_terminated_IMP = store_thm ("bir_state_is_terminated_IMP",
     (!st. (st.bst_status <> BST_Running) ==> (bir_state_is_terminated st))``,
   SIMP_TAC std_ss [bir_state_is_terminated_def]);
 
-val bir_state_is_failed_def = Define `bir_state_is_failed st =
-  (st.bst_status = BST_Failed)`;
-
 val bir_state_set_failed_def = Define `bir_state_set_failed st =
   (st with bst_status := BST_Failed)`;
-
-val bir_state_set_failed_is_failed = store_thm ("bir_state_set_failed_is_failed",
-  ``!st. bir_state_is_failed (bir_state_set_failed st)``,
-SIMP_TAC (std_ss ++ bir_state_ss) [bir_state_set_failed_def, bir_state_is_failed_def]);
 
 val bir_state_init_def = Define `bir_state_init p = <|
     bst_pc       := bir_pc_first p

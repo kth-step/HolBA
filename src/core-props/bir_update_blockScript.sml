@@ -98,10 +98,7 @@ val bir_update_blockB_desc_OK_def = Define `
 
 val bir_updateB_desc_OK_env_change = store_thm ("bir_updateB_desc_OK_env_change",
 ``!update env env'.
-     (!v. (v IN bir_vars_of_updateB_desc update) ==>
-          (bir_env_lookup (bir_var_name v) env' =
-           bir_env_lookup (bir_var_name v) env)) ==>
-
+     bir_env_EQ_FOR_VARS (bir_vars_of_updateB_desc update) env' env ==>
      bir_updateB_desc_OK env update ==>
      bir_updateB_desc_OK env' update``,
 
@@ -109,7 +106,7 @@ Cases >>
 rename1 `BUpdateDescB var e v use_temp` >>
 SIMP_TAC std_ss [bir_updateB_desc_OK_def,
   bir_env_var_is_declared_def, bir_env_lookup_type_def,
-  IN_INSERT, DISJ_IMP_THM, FORALL_AND_THM,
+  IN_INSERT, DISJ_IMP_THM, FORALL_AND_THM, bir_env_EQ_FOR_VARS_def,
   bir_updateB_desc_ACCESSORS, bir_vars_of_updateB_desc_def] >>
 REPEAT STRIP_TAC >>
 METIS_TAC[bir_vars_of_exp_THM, bir_env_read_EQ_lookup_IMPL]);
@@ -117,11 +114,9 @@ METIS_TAC[bir_vars_of_exp_THM, bir_env_read_EQ_lookup_IMPL]);
 
 val bir_update_blockB_desc_OK_env_change = store_thm ("bir_update_blockB_desc_OK_env_change",
 ``!updates env env'.
-     ((!v update.
+     ((!update.
           MEM update updates ==>
-          v IN bir_vars_of_updateB_desc update ==>
-          (bir_env_lookup (bir_var_name v) env' =
-           bir_env_lookup (bir_var_name v) env)) /\
+          bir_env_EQ_FOR_VARS (bir_vars_of_updateB_desc update) env' env) /\
 
      bir_update_blockB_desc_OK env updates) ==>
      bir_update_blockB_desc_OK env' updates``,
@@ -820,7 +815,7 @@ MP_TAC (Q.SPECL [`st_init`, `c`, `[]:'a list`, `updates`]
 `bir_update_blockB_desc_OK st_init.bst_environ updates` by (
   MATCH_MP_TAC bir_update_blockB_desc_OK_env_change >>
   Q.EXISTS_TAC `st.bst_environ` >>
-  ASM_SIMP_TAC std_ss [] >>
+  ASM_SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def] >>
   REPEAT STRIP_TAC >>
   Q.PAT_X_ASSUM `!vn. _` MATCH_MP_TAC >>
   REPEAT STRIP_TAC >>

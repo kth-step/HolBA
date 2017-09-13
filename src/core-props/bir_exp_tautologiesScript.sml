@@ -70,8 +70,8 @@ rename1 `bir_env_vars_are_initialised env' (bir_vars_of_exp e1)` >>
 `bir_eval_exp e2 env' = bir_val_true` by METIS_TAC[] >>
 `bir_eval_exp e2 env = bir_eval_exp e2 env'` suffices_by METIS_TAC[] >>
 
-MATCH_MP_TAC bir_vars_of_exp_THM >>
-METIS_TAC[bir_env_read_EQ_lookup_IMPL]);
+MATCH_MP_TAC bir_vars_of_exp_THM_EQ_FOR_VARS >>
+ASM_REWRITE_TAC[]);
 
 
 val bir_exp_is_taut_WEAK_CONG_IFF = store_thm ("bir_exp_is_taut_WEAK_CONG_IFF",
@@ -121,8 +121,8 @@ ASM_SIMP_TAC std_ss [bir_vars_of_exp_FINITE] >>
 STRIP_TAC >>
 rename1 `bir_env_vars_are_initialised env' (bir_vars_of_exp e1)` >>
 `bir_eval_exp e2 env = bir_eval_exp e2 env'` suffices_by METIS_TAC[] >>
-MATCH_MP_TAC bir_vars_of_exp_THM >>
-METIS_TAC[bir_env_read_EQ_lookup_IMPL]);
+MATCH_MP_TAC bir_vars_of_exp_THM_EQ_FOR_VARS >>
+ASM_REWRITE_TAC[]);
 
 
 val bir_exp_is_satisfiable_CONG_IFF = store_thm ("bir_exp_is_satisfiable_CONG_IFF",
@@ -262,14 +262,12 @@ EQ_TAC >> REPEAT STRIP_TAC >| [
   Cases_on `env` >> rename1 `BEnv env_f` >>
   Q.ABBREV_TAC `env' = BEnv (env_f |+ (vn,  (BType_Imm s,SOME (BVal_Imm i))))` >>
 
-  `!v. v IN vs ==> (bir_env_lookup (bir_var_name v) env' = bir_env_lookup (bir_var_name v) (BEnv env_f))` by (
+  `bir_env_EQ_FOR_VARS vs env' (BEnv env_f)` by (
+     SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def] >>
      REPEAT STRIP_TAC >>
      Q.UNABBREV_TAC `env'` >>
      `vn <> bir_var_name v` by METIS_TAC[] >>
      FULL_SIMP_TAC std_ss [bir_env_lookup_def, finite_mapTheory.FLOOKUP_UPDATE]
-  ) >>
-  `!v. v IN vs ==> (bir_env_read v env' = bir_env_read v (BEnv env_f))` by (
-     METIS_TAC [bir_env_read_EQ_lookup_IMPL]
   ) >>
   `bir_env_lookup vn env' = SOME (BType_Imm s,SOME (BVal_Imm i))` by (
     Q.UNABBREV_TAC `env'` >>
@@ -286,11 +284,12 @@ EQ_TAC >> REPEAT STRIP_TAC >| [
     POP_ASSUM MP_TAC >>
     Cases_on `v` >>
     SIMP_TAC std_ss [bir_env_var_is_initialised_def] >>
-    METIS_TAC[bir_var_name_def]
+    METIS_TAC[bir_var_name_def, bir_env_EQ_FOR_VARS_def]
   ) >>
 
   `bir_eval_exp ve env' = bir_eval_exp ve (BEnv env_f)` by (
-     MATCH_MP_TAC bir_vars_of_exp_THM >> METIS_TAC[SUBSET_DEF]
+     MATCH_MP_TAC bir_vars_of_exp_THM_EQ_FOR_VARS >>
+     METIS_TAC[bir_env_EQ_FOR_VARS_SUBSET]
   ) >>
   `bir_val_is_Bool (bir_eval_exp e env')` by (
      Q.PAT_X_ASSUM `!env. _` MATCH_MP_TAC >>
@@ -310,8 +309,8 @@ EQ_TAC >> REPEAT STRIP_TAC >| [
     bir_eval_exp e env')` suffices_by METIS_TAC[] >>
 
   CONJ_TAC >| [
-    MATCH_MP_TAC bir_vars_of_exp_THM >>
-    ASM_SIMP_TAC std_ss [],
+    MATCH_MP_TAC bir_vars_of_exp_THM_EQ_FOR_VARS >>
+    ASM_SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_EQUIV],
 
     MATCH_MP_TAC bir_exp_subst1_EVAL_EQ >>
     ASM_SIMP_TAC std_ss [bir_env_read_def]
