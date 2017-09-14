@@ -3,7 +3,9 @@ open bir_auxiliaryTheory;
 open bir_expTheory bir_programTheory HolBACoreSimps
 open bir_program_valid_stateTheory bir_program_terminationTheory;
 open bir_program_multistep_propsTheory;
-
+open bir_program_varsTheory
+open bir_typing_progTheory bir_envTheory
+open pred_setTheory
 
 val _ = new_theory "bir_program_blocks";
 
@@ -673,6 +675,112 @@ REPEAT STRIP_TAC >>
 `?l1 c1 st1. bir_exec_step_n p st (bir_block_size bl) = (l1, c1, st1)` by METIS_TAC[pairTheory.PAIR] >>
 MP_TAC (Q.SPECL [`p`, `st`, `bir_block_size bl`] bir_exec_steps_combine_GUARD) >>
 FULL_SIMP_TAC std_ss [bir_exec_block_SEMANTICS, LET_DEF])
+
+
+
+(* ------------------------------------------------------------------------- *)
+(*  Variables of blocks                                                      *)
+(* ------------------------------------------------------------------------- *)
+
+val bir_changed_vars_of_exec_stmtsB_THM = store_thm ("bir_changed_vars_of_exec_stmtsB_THM",
+``!stmts st ol n.
+   bir_env_EQ_FOR_VARS (bir_varset_COMPL (BIGUNION (IMAGE bir_changed_vars_of_stmtB (set stmts))))
+        (let (ol', n', st') = (bir_exec_stmtsB stmts (ol, n, st)) in
+         st'.bst_environ) (st.bst_environ)``,
+
+Induct >- (
+  SIMP_TAC std_ss [bir_exec_stmtsB_REWRS, LET_THM, bir_env_EQ_FOR_VARS_EQUIV]
+) >>
+REPEAT GEN_TAC >>
+Cases_on `bir_state_is_terminated st` >- (
+  ASM_SIMP_TAC std_ss [bir_exec_stmtsB_REWRS, LET_THM, bir_env_EQ_FOR_VARS_EQUIV]
+) >>
+rename1 `bir_exec_stmtsB (stmt::stmts)` >>
+`?fe st'. bir_exec_stmtB stmt st = (fe, st')` by METIS_TAC[pairTheory.PAIR] >>
+`?ol' n' st''. bir_exec_stmtsB stmts (OPT_CONS fe ol, SUC n, st') =
+               (ol', n', st'')` by METIS_TAC[pairTheory.PAIR] >>
+Q.PAT_X_ASSUM `!st. _` (MP_TAC o Q.SPECL [`st'`, `OPT_CONS fe ol`, `SUC n`]) >>
+MP_TAC (Q.SPECL [`st`, `stmt`] bir_changed_vars_of_stmtB_THM) >>
+ASM_SIMP_TAC list_ss [LET_THM, IMAGE_INSERT, BIGUNION_INSERT, bir_varset_COMPL_UNION,
+  bir_exec_stmtB_state_def, bir_exec_stmtsB_REWRS] >>
+METIS_TAC[INTER_SUBSET, bir_env_EQ_FOR_VARS_SUBSET, bir_env_EQ_FOR_VARS_EQUIV]);
+
+
+val bir_changed_vars_of_block_THM = store_thm ("bir_changed_vars_of_block_THM",
+``!(p:'a bir_program_t) (bl:'a bir_block_t) st.
+   (bir_env_EQ_FOR_VARS (bir_varset_COMPL (bir_changed_vars_of_block bl))
+        (let (ol, n, st') = (bir_exec_block p bl st) in
+         st'.bst_environ) (st.bst_environ))``,
+
+REPEAT STRIP_TAC >>
+`?ol n st'. bir_exec_stmtsB bl.bb_statements ([],0,st) = (ol, n, st')` by
+  METIS_TAC[pairTheory.PAIR] >>
+MP_TAC (Q.SPECL [` bl.bb_statements`, `st`, `[]`, `0`] bir_changed_vars_of_exec_stmtsB_THM) >>
+ASM_SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [LET_THM, bir_exec_block_def,
+  bir_changed_vars_of_block_def, bir_exec_stmtE_env_unchanged]);
+
+
+val bir_vars_of_exec_stmtsB_THM = store_thm ("bir_vars_of_exec_stmtsB_THM",
+``!vs (stmts :'a bir_stmt_basic_t list) st1 st2 l n.
+    (BIGUNION (IMAGE bir_vars_of_stmtB (set stmts)) SUBSET vs) ==>
+    (bir_state_EQ_FOR_VARS vs st1 st2) ==>
+    (let (ol1, n1, st1') = bir_exec_stmtsB stmts (l, n, st1) in
+     let (ol2, n2, st2') = bir_exec_stmtsB stmts (l, n, st2) in
+     ((ol1 = ol2) /\ (n1 = n2) /\ (bir_state_EQ_FOR_VARS vs st1' st2')))``,
+
+GEN_TAC >>
+Induct >- (
+  SIMP_TAC std_ss [bir_exec_stmtsB_REWRS, LET_THM, bir_env_EQ_FOR_VARS_EQUIV]
+) >>
+REPEAT STRIP_TAC >>
+`bir_state_is_terminated st1 = bir_state_is_terminated st2` by
+   FULL_SIMP_TAC std_ss [bir_state_EQ_FOR_VARS_ALT_DEF, bir_state_is_terminated_def] >>
+Cases_on `bir_state_is_terminated st2` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_stmtsB_REWRS, LET_THM, bir_env_EQ_FOR_VARS_EQUIV]
+) >>
+rename1 `bir_exec_stmtsB (stmt::stmts)` >>
+`?fe1 st1'. bir_exec_stmtB stmt st1 = (fe1, st1')` by METIS_TAC[pairTheory.PAIR] >>
+`?fe2 st2'. bir_exec_stmtB stmt st2 = (fe2, st2')` by METIS_TAC[pairTheory.PAIR] >>
+`?ol1 n1 st1''. bir_exec_stmtsB stmts (OPT_CONS fe1 l, SUC n, st1') =
+               (ol1, n1, st1'')` by METIS_TAC[pairTheory.PAIR] >>
+`?ol2 n2 st2''. bir_exec_stmtsB stmts (OPT_CONS fe2 l, SUC n, st2') =
+               (ol2, n2, st2'')` by METIS_TAC[pairTheory.PAIR] >>
+Q.PAT_X_ASSUM `!st. _` (MP_TAC o Q.SPECL [`st1'`, `st2'`, `OPT_CONS fe1 l`, `SUC n`]) >>
+MP_TAC (Q.SPECL [`st1`, `st2`, `vs`, `stmt`] bir_vars_of_stmtB_THM) >>
+FULL_SIMP_TAC list_ss [bir_exec_stmtsB_REWRS, LET_THM,
+  IMAGE_INSERT, BIGUNION_INSERT, UNION_SUBSET] >>
+NTAC 2 STRIP_TAC >>
+REPEAT BasicProvers.VAR_EQ_TAC >>
+FULL_SIMP_TAC std_ss []);
+
+
+
+val bir_vars_of_block_THM = store_thm ("bir_vars_of_block_THM",
+``!(p : 'a bir_program_t) vs (bl :'a bir_block_t) st1 st2.
+    (bir_vars_of_block bl SUBSET vs) ==>
+    (bir_state_EQ_FOR_VARS vs st1 st2) ==>
+    (let (ol1, n1, st1') = bir_exec_block p bl st1 in
+     let (ol2, n2, st2') = bir_exec_block p bl st2 in
+     ((ol1 = ol2) /\ (n1 = n2) /\ (bir_state_EQ_FOR_VARS vs st1' st2')))``,
+
+REPEAT STRIP_TAC >>
+`?ol1 n1 st1'. bir_exec_stmtsB bl.bb_statements ([],0,st1) = (ol1, n1, st1')` by
+  METIS_TAC[pairTheory.PAIR] >>
+`?ol2 n2 st2'. bir_exec_stmtsB bl.bb_statements ([],0,st2) = (ol2, n2, st2')` by
+  METIS_TAC[pairTheory.PAIR] >>
+`(ol1 = ol2) /\ (n1 = n2) /\ bir_state_EQ_FOR_VARS vs st1' st2'` by (
+  MP_TAC (Q.SPECL [`vs`, `bl.bb_statements`, `st1`, `st2`, `[]`, `0`] bir_vars_of_exec_stmtsB_THM) >>
+  FULL_SIMP_TAC std_ss [bir_vars_of_block_def, UNION_SUBSET, LET_THM]
+) >>
+REPEAT BasicProvers.VAR_EQ_TAC >>
+
+MP_TAC (Q.SPECL [`st1'`, `st2'`, `vs`, `p`, `bl.bb_last_statement`] bir_vars_of_stmtE_THM) >>
+FULL_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_TYPES_ss) [
+  bir_vars_of_block_def, UNION_SUBSET, LET_THM, bir_exec_block_def,
+  bir_state_EQ_FOR_VARS_ALT_DEF, bir_state_is_terminated_def,
+  bir_program_valid_stateTheory.bir_exec_stmtE_env_unchanged]);
+
+
 
 
 val _ = export_theory();

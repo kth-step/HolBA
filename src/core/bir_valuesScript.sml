@@ -178,6 +178,19 @@ REPEAT CONJ_TAC >> Cases >> (
 ));
 
 
+val bir_val_checker_TO_type_of = store_thm ("bir_val_checker_TO_type_of",
+  ``(!v. (bir_val_is_Unknown v) <=> (type_of_bir_val v = NONE)) /\
+    (!v ty. (bir_val_is_Imm_s ty v) <=> (type_of_bir_val v = SOME (BType_Imm ty))) /\
+    (!v. (bir_val_is_Imm v) <=> (?ty. type_of_bir_val v = SOME (BType_Imm ty))) /\
+    (!v. (bir_val_is_Bool v) <=> (type_of_bir_val v = SOME BType_Bool)) /\
+    (!v. (bir_val_is_Mem v <=>
+         (?aty vty. type_of_bir_val v = SOME (BType_Mem aty vty))))``,
+
+SIMP_TAC (std_ss++boolSimps.CONJ_ss) [type_of_bir_val_EQ_ELIMS, BType_Bool_def, bir_val_is_Bool_def,
+  bir_val_is_Imm_s_ALT_DEF, bir_val_is_Imm_def, bir_val_is_Unknown_def,
+  bir_val_is_Mem_def] >>
+METIS_TAC[]);
+
 
 (* ------------------------------------------------------------------------- *)
 (*  Finiteness                                                               *)
