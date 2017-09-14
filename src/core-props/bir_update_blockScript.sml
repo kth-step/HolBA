@@ -6,7 +6,9 @@ open bir_programTheory bir_valuesTheory
 open bir_typing_expTheory
 open bir_auxiliaryTheory bir_expTheory
 open bir_bool_expTheory bir_program_env_orderTheory
-open bir_temp_varsTheory
+open bir_temp_varsTheory bir_program_varsTheory
+open bir_program_terminationTheory
+open bir_typing_progTheory
 open HolBACoreSimps;
 
 
@@ -1130,6 +1132,105 @@ Tactical.REVERSE(Cases_on `bir_state_is_terminated st'`) >> FULL_SIMP_TAC std_ss
 
 Cases_on `bir_updateE_SEM eup` >> FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [BUpdateValE_SEM_def] >>
 FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_pc_is_at_label_def, bir_state_is_terminated_def]);
+
+
+(************************)
+(* No declares anywhere *)
+(************************)
+
+val bir_assert_block_NO_DECLARE = store_thm ("bir_assert_block_NO_DECLARE",
+``!al. EVERY (\stmt. ~(bir_stmtB_is_declartion stmt)) (bir_assert_block al)``,
+SIMP_TAC list_ss [bir_assert_block_def, EVERY_MAP, bir_stmtB_is_declartion_def]);
+
+
+val bir_update_block_NO_DECLARE = store_thm ("bir_update_block_NO_DECLARE",
+``EVERY (\stmt. ~(bir_stmtB_is_declartion stmt)) (bir_update_block l eup dl).bb_statements``,
+
+SIMP_TAC (list_ss++bir_TYPES_ss++DatatypeSimps.expand_type_quants_ss[``:bir_updateB_desc_t``]) [
+  bir_update_block_def,
+  bir_update_blockE_INIT_def, bir_update_blockB_def,
+  EVERY_MEM, MEM_FILTER, bir_updateB_desc_use_temp_def,
+  bir_update_blockB_STEP1_def,   bir_update_blockB_STEP2_def,
+  bir_stmtB_is_declartion_def, MEM_MAP, DISJ_IMP_THM, PULL_EXISTS] >>
+GEN_TAC >> REPEAT CASE_TAC >> (
+  SIMP_TAC list_ss [bir_stmtB_is_declartion_def]
+));
+
+
+val bir_update_assert_block_NO_DECLARE = store_thm ("bir_update_assert_block_NO_DECLARE",
+``EVERY (\stmt. ~(bir_stmtB_is_declartion stmt)) (bir_update_assert_block l al eup dl).bb_statements``,
+
+SIMP_TAC (list_ss++bir_TYPES_ss++DatatypeSimps.expand_type_quants_ss[``:bir_updateB_desc_t``]) [
+  bir_update_assert_block_def, bir_assert_block_def,
+  bir_update_blockE_INIT_def, bir_update_blockB_def,
+  EVERY_MEM, MEM_FILTER, bir_updateB_desc_use_temp_def,
+  bir_update_blockB_STEP1_def,   bir_update_blockB_STEP2_def,
+  bir_stmtB_is_declartion_def, MEM_MAP, DISJ_IMP_THM, PULL_EXISTS] >>
+GEN_TAC >> REPEAT CASE_TAC >> (
+  SIMP_TAC list_ss [bir_stmtB_is_declartion_def]
+));
+
+
+(****************)
+(* Changed_vars *)
+(****************)
+
+
+val bir_changed_vars_of_update_block = store_thm ("bir_changed_vars_of_update_block",
+``bir_changed_vars_of_block (bir_update_block l eup dl) =
+
+  (case bir_updateE_desc_var eup of SOME v => {v} | _ => {}) UNION
+  (set (MAP bir_updateB_desc_var dl)) UNION
+  (set (MAP bir_updateB_desc_temp_var (FILTER bir_updateB_desc_use_temp dl)))``,
+
+SIMP_TAC (list_ss++bir_TYPES_ss) [bir_changed_vars_of_block_def, bir_update_block_def,
+  GSYM LIST_TO_SET_MAP, bir_update_blockE_INIT_def, bir_update_blockB_def,
+  BIGUNION_UNION, GSYM UNION_ASSOC] >>
+MATCH_MP_TAC (prove (``(S1 = S1') /\ (S2 = S2') ==> (S1 UNION S2 = S1' UNION S2')``,
+    PROVE_TAC[])) >>
+
+REPEAT STRIP_TAC >- (
+  Cases_on `bir_updateE_desc_var eup` >- (
+    SIMP_TAC list_ss [bir_updateE_desc_var_def, bir_updateE_desc_exp_def,
+      pairTheory.pair_CASE_def, BIGUNION_EMPTY]
+  ) >>
+  `IS_SOME (bir_updateE_desc_exp eup)` by METIS_TAC[bir_updateE_desc_ACCESSORS_IS_SOME,
+     optionTheory.IS_SOME_EXISTS] >>
+  FULL_SIMP_TAC list_ss [optionTheory.IS_SOME_EXISTS, pairTheory.pair_CASE_def,
+    bir_changed_vars_of_stmtB_def, BIGUNION_INSERT, BIGUNION_EMPTY, UNION_EMPTY]
+) >>
+Induct_on `dl` >- (
+  SIMP_TAC list_ss [BIGUNION_EMPTY, UNION_EMPTY]
+) >>
+Cases >>
+SIMP_TAC (list_ss++boolSimps.LIFT_COND_ss) [bir_changed_vars_of_stmtB_def,
+  bir_update_blockB_STEP1_def, BIGUNION_INSERT,
+  bir_update_blockB_STEP2_def, bir_updateB_desc_var_def,
+   bir_updateB_desc_temp_var_def, bir_updateB_desc_use_temp_def] >>
+FULL_SIMP_TAC std_ss [EXTENSION] >>
+FULL_SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [IN_UNION, IN_INSERT, NOT_IN_EMPTY, bir_temp_var_REWRS]);
+
+
+val bir_changed_vars_of_update_assert_block_AUX = prove (
+``bir_changed_vars_of_block (((bir_update_assert_block l al eup dl)):'a bir_block_t) =
+  bir_changed_vars_of_block ((bir_update_block l eup dl):'a bir_block_t)``,
+
+SIMP_TAC (list_ss++bir_TYPES_ss) [bir_changed_vars_of_block_def, bir_update_block_def,
+  bir_update_assert_block_def, IMAGE_UNION, BIGUNION_UNION] >>
+SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [EXTENSION, IN_UNION] >>
+SIMP_TAC list_ss [bir_assert_block_def, GSYM listTheory.LIST_TO_SET_MAP,
+  MAP_MAP_o, combinTheory.o_DEF, bir_changed_vars_of_stmtB_def] >>
+SIMP_TAC std_ss [listTheory.LIST_TO_SET_MAP, IN_BIGUNION_IMAGE, NOT_IN_EMPTY]);
+
+
+val bir_changed_vars_of_update_assert_block = store_thm("bir_changed_vars_of_update_assert_block",
+``bir_changed_vars_of_block (((bir_update_assert_block l al eup dl)):'a bir_block_t) =
+  (case bir_updateE_desc_var eup of SOME v => {v} | _ => {}) UNION
+  (set (MAP bir_updateB_desc_var dl)) UNION
+  (set (MAP bir_updateB_desc_temp_var (FILTER bir_updateB_desc_use_temp dl)))``,
+
+SIMP_TAC std_ss [bir_changed_vars_of_update_assert_block_AUX,
+  bir_changed_vars_of_update_block]);
 
 
 val _ = export_theory();

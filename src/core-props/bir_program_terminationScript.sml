@@ -750,31 +750,49 @@ FULL_SIMP_TAC std_ss [bir_dest_bool_val_EQ_NONE,
 METIS_TAC[type_of_bir_exp_THM_with_init_vars]);
 
 
+val bir_stmtB_is_declartion_def = Define `
+  (bir_stmtB_is_declartion (BStmt_Declare v) = T) /\
+  (bir_stmtB_is_declartion _ = F)`
+
+val bir_stmtB_is_declartion_ALT_DEF = store_thm ("bir_stmtB_is_declartion_ALT_DEF",
+``!stmt. bir_stmtB_is_declartion stmt <=> ?v. (stmt = BStmt_Declare v)``,
+Cases >> SIMP_TAC (std_ss++bir_TYPES_ss) [bir_stmtB_is_declartion_def]);
+
+
+val bir_stmt_is_declartion_def = Define `
+  (bir_stmt_is_declartion (BStmtB stmt) = bir_stmtB_is_declartion stmt) /\
+  (bir_stmt_is_declartion (BStmtE _) = F)`
+
+val bir_stmt_is_declartion_ALT_DEF = store_thm ("bir_stmt_is_declartion_ALT_DEF",
+``!stmt. bir_stmt_is_declartion stmt <=> (?v. (stmt = BStmtB (BStmt_Declare v)))``,
+Cases >> (
+   SIMP_TAC (std_ss++bir_TYPES_ss) [
+     bir_stmt_is_declartion_def, bir_stmtB_is_declartion_ALT_DEF]
+));
+
 
 val bir_program_contains_declarations_def = Define
 `bir_program_contains_declarations p <=>
-  (?v. (BStmtB (BStmt_Declare v)) IN bir_stmts_of_prog p)`
+  (?v. (BStmtB (BStmt_Declare v)) IN bir_stmts_of_prog p)`;
+
+val bir_program_contains_declarations_ALT_DEF = store_thm ("bir_program_contains_declarations_ALT_DEF",
+``!p. bir_program_contains_declarations p <=>
+     (?stmt. (stmt IN (bir_stmts_of_prog p)) /\ (bir_stmt_is_declartion stmt))``,
+SIMP_TAC std_ss [bir_program_contains_declarations_def, bir_stmt_is_declartion_ALT_DEF,
+  PULL_EXISTS]);
+
+
 
 val bir_program_contains_declarations_EVAL = store_thm ("bir_program_contains_declarations_EVAL",
 ``!p.
   bir_program_contains_declarations (BirProgram p) <=>
-  EXISTS (\bl. EXISTS (\stmt. case stmt of
-      BStmt_Declare _ => T
-    | _ => F) bl.bb_statements) p``,
+  EXISTS (\bl. EXISTS bir_stmtB_is_declartion bl.bb_statements) p``,
 
 SIMP_TAC (list_ss++bir_TYPES_ss) [bir_program_contains_declarations_def,
   bir_stmts_of_prog_def, bir_stmts_of_block_def,
-  IN_BIGUNION, IN_IMAGE, PULL_EXISTS, listTheory.EXISTS_MEM] >>
-REPEAT STRIP_TAC >> EQ_TAC >> REPEAT STRIP_TAC >| [
-  rename1 `BStmt_Declare v` >>
-  rename1 `MEM bl p` >>
-  Q.EXISTS_TAC `bl` >>
-  Q.EXISTS_TAC `BStmt_Declare v` >>
-  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [],
-
-  Cases_on `stmt` >> FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
-  METIS_TAC[]
-]);
+  IN_BIGUNION, IN_IMAGE, PULL_EXISTS, listTheory.EXISTS_MEM,
+  bir_stmtB_is_declartion_ALT_DEF] >>
+METIS_TAC[]);
 
 
 
