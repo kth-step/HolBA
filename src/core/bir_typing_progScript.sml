@@ -265,4 +265,138 @@ SIMP_TAC std_ss [bir_changed_vars_of_program_ALT_DEF, SUBSET_DEF, IN_BIGUNION,
 METIS_TAC[bir_get_current_statement_stmts_of_prog]);
 
 
+
+(* ------------------------ *)
+(*  Expressions of program  *)
+(* ------------------------ *)
+
+
+val bir_exps_of_stmtB_def = Define `
+  (bir_exps_of_stmtB (BStmt_Declare v) = {}) /\
+  (bir_exps_of_stmtB (BStmt_Assert ex) = {ex}) /\
+  (bir_exps_of_stmtB (BStmt_Assume ex) = {ex}) /\
+  (bir_exps_of_stmtB (BStmt_Assign v ex) = {ex}) /\
+  (bir_exps_of_stmtB (BStmt_Observe ec el obf) = set (ec::el))`;
+
+val bir_exps_of_label_exp_def = Define `
+  (bir_exps_of_label_exp (BLE_Label l) = {}) /\
+  (bir_exps_of_label_exp (BLE_Exp e) = {e})`;
+
+val bir_exps_of_stmtE_def = Define `
+  (bir_exps_of_stmtE (BStmt_Jmp l) = bir_exps_of_label_exp l) /\
+  (bir_exps_of_stmtE (BStmt_CJmp e l1 l2) =
+    ({e} UNION (bir_exps_of_label_exp l1) UNION (bir_exps_of_label_exp l2))) /\
+  (bir_exps_of_stmtE (BStmt_Halt ex) = {ex})`;
+
+val bir_exps_of_stmt_def = Define `
+  (bir_exps_of_stmt (BStmtE s) = bir_exps_of_stmtE s) /\
+  (bir_exps_of_stmt (BStmtB s) = bir_exps_of_stmtB s)`;
+
+val bir_exps_of_block_def = Define `bir_exps_of_block bl <=>
+  (bir_exps_of_stmtE bl.bb_last_statement) UNION (BIGUNION (IMAGE bir_exps_of_stmtB (LIST_TO_SET bl.bb_statements)))`;
+
+val bir_exps_of_program_def = Define `bir_exps_of_program (BirProgram p) <=>
+  (BIGUNION (IMAGE bir_exps_of_block (LIST_TO_SET p)))`;
+
+val bir_exps_of_block_ALT_DEF = store_thm ("bir_exps_of_block_ALT_DEF",
+  ``!bl. bir_exps_of_block bl = BIGUNION (IMAGE bir_exps_of_stmt (bir_stmts_of_block bl))``,
+
+SIMP_TAC std_ss [EXTENSION] >>
+SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exps_of_block_def, bir_stmts_of_block_def,
+  IN_BIGUNION, PULL_EXISTS, IN_UNION, bir_exps_of_stmt_def,
+  IN_IMAGE, IN_INSERT, LEFT_AND_OVER_OR, EXISTS_OR_THM, NOT_IN_EMPTY]);
+
+
+val bir_exps_of_program_ALT_DEF = store_thm ("bir_exps_of_program_ALT_DEF",
+  ``!p. bir_exps_of_program p =
+        BIGUNION (IMAGE bir_exps_of_stmt (bir_stmts_of_prog p))``,
+
+Cases >>
+SIMP_TAC std_ss [EXTENSION] >>
+SIMP_TAC std_ss [bir_exps_of_program_def, bir_stmts_of_prog_def,
+  IN_BIGUNION, PULL_EXISTS, IN_IMAGE, bir_exps_of_block_ALT_DEF] >>
+METIS_TAC[]);
+
+
+val bir_get_current_statement_exps_of = store_thm ("bir_get_current_statement_exps_of",
+  ``!p pc stmt. (bir_get_current_statement p pc = SOME stmt) ==>
+                bir_exps_of_stmt stmt SUBSET bir_exps_of_program p``,
+
+SIMP_TAC std_ss [bir_exps_of_program_ALT_DEF, SUBSET_DEF, IN_BIGUNION,
+  IN_IMAGE, PULL_EXISTS] >>
+METIS_TAC[bir_get_current_statement_stmts_of_prog]);
+
+
+
+val bir_exp_vars_of_stmtB = store_thm ("bir_exp_vars_of_stmtB",
+``!stmt. BIGUNION (IMAGE bir_vars_of_exp (bir_exps_of_stmtB stmt)) SUBSET
+         bir_vars_of_stmtB stmt``,
+
+Cases >> (
+  SIMP_TAC list_ss [bir_vars_of_stmtB_def, bir_exps_of_stmtB_def,
+    SUBSET_DEF, NOT_IN_EMPTY, IN_INSERT, IN_BIGUNION, IN_IMAGE, PULL_EXISTS] >>
+  METIS_TAC[]
+));
+
+val bir_exp_vars_of_label_exp = store_thm ("bir_exp_vars_of_label_exp",
+``!le. bir_vars_of_label_exp le =
+       BIGUNION (IMAGE bir_vars_of_exp (bir_exps_of_label_exp le))``,
+
+Cases >> (
+  SIMP_TAC std_ss [bir_vars_of_label_exp_def,
+    bir_exps_of_label_exp_def, IMAGE_EMPTY, BIGUNION_EMPTY,
+    IMAGE_INSERT, BIGUNION_INSERT, UNION_EMPTY]
+));
+
+
+val bir_exp_vars_of_stmtE = store_thm ("bir_exp_vars_of_stmtE",
+``!stmt. bir_vars_of_stmtE stmt =
+         BIGUNION (IMAGE bir_vars_of_exp (bir_exps_of_stmtE stmt))
+         ``,
+
+Cases >> (
+  SIMP_TAC list_ss [bir_vars_of_stmtE_def, bir_exps_of_stmtE_def,
+    bir_exp_vars_of_label_exp, IMAGE_UNION, BIGUNION_UNION,
+    IMAGE_INSERT, IMAGE_EMPTY, BIGUNION_INSERT, BIGUNION_EMPTY,
+    UNION_EMPTY]
+));
+
+
+val bir_exp_vars_of_stmt = store_thm ("bir_exp_vars_of_stmt",
+``!stmt. BIGUNION (IMAGE bir_vars_of_exp (bir_exps_of_stmt stmt)) SUBSET
+         bir_vars_of_stmt stmt``,
+
+Cases >> (
+  SIMP_TAC std_ss [bir_exp_vars_of_stmtB, bir_exps_of_stmt_def,
+    bir_vars_of_stmt_def, bir_exp_vars_of_stmtE, SUBSET_REFL]
+));
+
+
+val bir_exp_vars_of_block = store_thm ("bir_exp_vars_of_block",
+``!bl. BIGUNION (IMAGE bir_vars_of_exp (bir_exps_of_block bl)) SUBSET
+       bir_vars_of_block bl``,
+
+SIMP_TAC std_ss [bir_exps_of_block_def,
+  bir_vars_of_block_def, SUBSET_DEF, IN_UNION,
+  IN_BIGUNION, PULL_EXISTS, IN_IMAGE, bir_exp_vars_of_stmtE] >>
+REPEAT STRIP_TAC >- METIS_TAC[] >>
+DISJ1_TAC >>
+rename1 `MEM stmt _` >>
+Q.EXISTS_TAC `stmt` >>
+MP_TAC (Q.SPECL [`stmt`] bir_exp_vars_of_stmtB) >>
+ASM_SIMP_TAC std_ss [SUBSET_DEF, IN_BIGUNION, IN_IMAGE, PULL_EXISTS] >>
+METIS_TAC[]);
+
+
+val bir_exp_vars_of_program = store_thm ("bir_exp_vars_of_program",
+``!p. BIGUNION (IMAGE bir_vars_of_exp (bir_exps_of_program p)) SUBSET
+       bir_vars_of_program p``,
+Cases >>
+MP_TAC bir_exp_vars_of_block >>
+SIMP_TAC std_ss [bir_exps_of_program_def,
+  bir_vars_of_program_def, SUBSET_DEF, IN_UNION,
+  IN_BIGUNION, PULL_EXISTS, IN_IMAGE] >>
+METIS_TAC[]);
+
+
 val _ = export_theory();
