@@ -52,7 +52,7 @@ val WI_wf_size = store_thm ("WI_wf_size",
 REPEAT Cases >>
 ASM_SIMP_TAC arith_ss [WI_wf_def, WI_size_def, WORD_LS, word_add_n2w, w2n_n2w,
   nzcv_BIR_ADD_C_CARRY_DEF, add_with_carry_def, LET_THM] >>
-rename1 `n1 + n2` >>
+rename1 `(n1:num) + n2` >>
 REPEAT STRIP_TAC >> EQ_TAC >> STRIP_TAC >> (
   ASM_SIMP_TAC arith_ss []
 ) >>
@@ -137,17 +137,17 @@ val WI_wfe_def = Define `WI_wfe i <=> (WI_wf i /\ ~(WI_is_empty i))`;
 val WI_not_wf_empty = store_thm ("WI_not_wf_empty",
 ``!i. ~(WI_wf i) ==> WI_is_empty i``,
 SIMP_TAC std_ss [WI_is_empty_def] >>
-METIS_TAC[WI_MEM_implies_wf])
+METIS_TAC[WI_MEM_implies_wf]);
 
 
 (* So the definition can actually be much simplified. *)
 val WI_wfe_NOT_EMPTY = store_thm ("WI_wfe_NOT_EMPTY",
   ``!i. WI_wfe i <=> ~(WI_is_empty i)``,
-METIS_TAC[WI_not_wf_empty, WI_wfe_def])
+METIS_TAC[WI_not_wf_empty, WI_wfe_def]);
 
 val WI_is_empty_NOT_WFE = store_thm ("WI_is_empty_NOT_WFE",
   ``!i. (WI_is_empty i) <=> ~(WI_wfe i)``,
-METIS_TAC[WI_not_wf_empty, WI_wfe_def])
+METIS_TAC[WI_not_wf_empty, WI_wfe_def]);
 
 
 (* Let's provide some nice rewrite rules *)
@@ -158,7 +158,7 @@ REPEAT Cases >>
 ASM_SIMP_TAC arith_ss [WI_wf_def, WORD_LO,
   WI_is_empty_def, WI_MEM_def, n2w_11, WORD_LS, w2n_n2w] >>
 REPEAT STRIP_TAC >>
-rename1 `bn <= en` >>
+rename1 `bn <= (en:num)` >>
 EQ_TAC >> SIMP_TAC arith_ss [] >>
 STRIP_TAC >>
 Q.PAT_X_ASSUM `!w. _` (MP_TAC o Q.SPEC `n2w bn`) >>
@@ -328,7 +328,7 @@ val WI_overlap_compute = store_thm ("WI_overlap_compute",
 
 REPEAT Cases >>
 ASM_SIMP_TAC std_ss [WI_wf_def, WI_overlap_def, WORD_LS, WORD_LO, w2n_n2w] >>
-rename1 `(b1 < e1) /\ (b2 < e2) /\ _` >>
+rename1 `(b1 < (e1:num)) /\ (b2 < (e2:num)) /\ _` >>
 REPEAT STRIP_TAC >>
 `(b1 < e1) <=> ~(b1 = e1)` by DECIDE_TAC >>
 `(b2 < e2) <=> ~(b2 = e2)` by DECIDE_TAC >>
