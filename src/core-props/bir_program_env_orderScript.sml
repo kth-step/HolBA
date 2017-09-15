@@ -104,19 +104,11 @@ REPEAT CASE_TAC >> (
 (*  Therefore, executing steps only extentends the environment               *)
 (* ------------------------------------------------------------------------- *)
 
-val bir_exec_stmt_ENV_ORDER = store_thm ("bir_exec_stmt_ENV_ORDER",
-``!p st stmt. bir_env_order st.bst_environ (bir_exec_stmt_state p stmt st).bst_environ``,
+val bir_exec_stmtB_ENV_ORDER = store_thm ("bir_exec_stmtB_ENV_ORDER",
+``!st stmt. bir_env_order st.bst_environ (bir_exec_stmtB_state stmt st).bst_environ``,
 
-Tactical.REVERSE (Cases_on `stmt`) >- (
-  SIMP_TAC std_ss [bir_exec_stmt_state_def,
-    bir_exec_stmtE_env_unchanged, bir_exec_stmt_def, bir_env_order_REFL]
-) >>
-rename1 `BStmtB stmt` >>
-SIMP_TAC (std_ss++pairSimps.gen_beta_ss++boolSimps.LIFT_COND_ss++holBACore_ss) [
-   bir_exec_stmt_state_def, bir_exec_stmt_def, LET_DEF,
-   bir_env_order_REFL] >>
 GEN_TAC >> Cases_on `stmt` >> (
-  SIMP_TAC std_ss [bir_exec_stmtB_def, bir_exec_stmt_observe_SAME_ENV,
+  SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def, bir_exec_stmt_observe_SAME_ENV,
     bir_exec_stmt_assert_SAME_ENV, bir_exec_stmt_assume_SAME_ENV,
     bir_env_order_REFL, bir_exec_stmt_assign_ENV,  bir_exec_stmt_declare_ENV]
 ) >- (
@@ -139,6 +131,20 @@ GEN_TAC >> Cases_on `stmt` >> (
   ) >>
   METIS_TAC [bir_env_order_write]
 ));
+
+
+val bir_exec_stmt_ENV_ORDER = store_thm ("bir_exec_stmt_ENV_ORDER",
+``!p st stmt. bir_env_order st.bst_environ (bir_exec_stmt_state p stmt st).bst_environ``,
+
+Tactical.REVERSE (Cases_on `stmt`) >- (
+  SIMP_TAC std_ss [bir_exec_stmt_state_def,
+    bir_exec_stmtE_env_unchanged, bir_exec_stmt_def, bir_env_order_REFL]
+) >>
+rename1 `BStmtB stmt` >>
+SIMP_TAC (std_ss++pairSimps.gen_beta_ss++boolSimps.LIFT_COND_ss++holBACore_ss) [
+   bir_exec_stmt_state_def, bir_exec_stmt_def, LET_DEF,
+   bir_env_order_REFL, GSYM bir_exec_stmtB_state_def,
+   bir_exec_stmtB_ENV_ORDER]);
 
 
 val bir_exec_step_ENV_ORDER = store_thm ("bir_exec_step_ENV_ORDER",

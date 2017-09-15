@@ -248,6 +248,8 @@ val bmr_rel_def = Define `bmr_rel r bs ms <=>
 (bir_machine_lifted_pc r.bmr_pc bs ms) /\
 (r.bmr_extra ms)`
 
+val bmr_mem_lf_def = Define `bmr_mem_lf r = case r.bmr_mem of BMLM v lf => lf`
+val bmr_pc_lf_def = Define `bmr_pc_lf r = case r.bmr_pc of BMLPC v_pc v_pc_cond lf => lf`
 
 val bmr_vars_def = Define `bmr_vars r =
   (case r.bmr_mem of (BMLM v _) => v)::

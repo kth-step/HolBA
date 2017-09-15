@@ -4,6 +4,7 @@ open bir_expTheory bir_programTheory HolBACoreSimps
 open bir_program_valid_stateTheory bir_program_terminationTheory;
 open bir_program_multistep_propsTheory;
 open bir_program_varsTheory
+open bir_program_env_orderTheory
 open bir_typing_progTheory bir_envTheory
 open pred_setTheory
 
@@ -781,6 +782,32 @@ FULL_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_TYPES_ss) [
   bir_program_valid_stateTheory.bir_exec_stmtE_env_unchanged]);
 
 
+(* ------------------------------------------------------------------------- *)
+(*  Env order                                                                *)
+(* ------------------------------------------------------------------------- *)
+
+val bir_exec_stmtsB_ENV_ORDER = store_thm ("bir_exec_stmtsB_ENV_ORDER",
+``!stmts l n st.
+  bir_env_order st.bst_environ
+    (SND (SND (bir_exec_stmtsB stmts (l, n, st)))).bst_environ``,
+
+Induct >> (
+  SIMP_TAC std_ss [bir_exec_stmtsB_def, bir_env_order_REFL]
+) >>
+ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++pairSimps.gen_beta_ss) [bir_exec_stmtsB_def,
+  bir_env_order_REFL, LET_THM,
+  GSYM bir_exec_stmtB_state_def] >>
+METIS_TAC[bir_exec_stmtB_ENV_ORDER, bir_env_order_TRANS]);
+
+
+val bir_exec_block_ENV_ORDER = store_thm ("bir_exec_block_ENV_ORDER",
+``!p st bl.
+  bir_env_order st.bst_environ
+    (SND (SND (bir_exec_block p bl st))).bst_environ``,
+
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++pairSimps.gen_beta_ss++bir_TYPES_ss) [
+  bir_exec_block_def, LET_THM,
+  bir_exec_stmtsB_ENV_ORDER, bir_exec_stmtE_env_unchanged]);
 
 
 val _ = export_theory();
