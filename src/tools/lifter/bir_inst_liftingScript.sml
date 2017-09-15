@@ -7,7 +7,7 @@ open bir_immSyntax bir_programTheory wordsTheory
 open bir_mem_expTheory bir_bool_expTheory
 open bir_program_env_orderTheory
 open bir_program_blocksTheory
-
+open bir_temp_varsTheory
 open bir_exp_liftingTheory
 open bir_lifting_machinesTheory
 open bir_interval_expTheory
@@ -20,8 +20,17 @@ open bir_lifting_machinesLib
 val _ = new_theory "bir_inst_lifting";
 
 
+(*****************************)
+(* Unchanged memory interval *)
+(*****************************)
+
 val bmr_ms_mem_unchanged_def = Define `bmr_ms_mem_unchanged r ms ms' i <=>
   (!a. WI_MEM a i ==> (bmr_mem_lf r ms' a = bmr_mem_lf r ms a))`;
+
+
+(*************************)
+(* Program stored in mem *)
+(*************************)
 
 val bmr_ms_mem_contains_def = Define `
   (bmr_ms_mem_contains (r : ('a, 'b, 'ms) bir_lifting_machine_rec_t)  (ms : 'ms) (ba, []) = T) /\
@@ -36,7 +45,6 @@ val bmr_ms_mem_contains_interval_def = Define `
 val WF_bmr_ms_mem_contains_def = Define `WF_bmr_ms_mem_contains (ba: 'a word, wl:'b word list) <=>
   (LENGTH wl < dimword (:'a)) /\
   (WI_wf (bmr_ms_mem_contains_interval (ba, wl)))`
-
 
 
 val bmr_ms_mem_contains_UNCHANGED = store_thm ("bmr_ms_mem_contains_UNCHANGED",
@@ -66,10 +74,23 @@ FULL_SIMP_TAC list_ss [bmr_ms_mem_contains_def,
   WI_ELEM_LIST_def, DISJ_IMP_THM, FORALL_AND_THM]);
 
 
+
+(***************************************************)
+(* Lifting a machine instruction to a single block *)
+(***************************************************)
+
 val bir_is_lifted_inst_block_def = Define `
   bir_is_lifted_inst_block
     (* machine description *)
     (r: ('a, 'b, 'ms) bir_lifting_machine_rec_t)
+
+
+    (* A condition allowing is to get extra information into our reasoning. It can
+       say for example which of the theorems of produced by the step theorem we are
+       dealing with and just assume at the meta leval some of it's preconditions
+       instead of asserting them in BIR. This allows to discard them later by looking
+       at the control flow of a larger bir program containing the block. *)
+    (ms_case_cond : 'ms -> bool)
 
     (* The label to start executing. This may not always be the label of the block,
        but it corresponds to the PC of the machine state. A machine step might be translated
@@ -94,6 +115,9 @@ val bir_is_lifted_inst_block_def = Define `
   (WI_wf mu /\ WF_bmr_ms_mem_contains mm) /\
 
   (!ms bs (p : 'o bir_program_t) c lo bs'.
+
+    (* The extra condition holds *)
+    ms_case_cond ms ==>
 
     (* The machine state and the bir state are related *)
     (bmr_rel r bs ms) ==>
@@ -122,10 +146,13 @@ val bir_is_lifted_inst_block_def = Define `
            (bmr_rel r bs' ms')))`;
 
 
+(**************************)
+(* Computing such a block *)
+(**************************)
+
 
 val bir_is_lifted_inst_block_COMPUTE_ms'_COND_def = Define
   `bir_is_lifted_inst_block_COMPUTE_ms'_COND r ms al_step ms' <=>
-
      (* We can compute the next machine state using extra assumptions in al_step *)
      ((EVERY (\a. bir_assert_desc_value a) al_step) ==>
       (r.bmr_step_fun ms = SOME ms')) /\
@@ -148,6 +175,7 @@ val bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_def = Define
      (!v lf res. (MEM (BMLI v lf, SOME res) imm_ups) ==>
                  (lf ms' = res) /\ (?up. MEM up updates /\ (bir_updateB_desc_var up = v) /\
                                    (bir_updateB_desc_value up = BVal_Imm res)))`
+
 
 
 val bir_is_lifted_inst_block_COMPUTE_mem_chs_COND_def = Define
@@ -183,16 +211,16 @@ val bir_is_lifted_inst_block_COMPUTE_eup_COND_def = Define
                     (bir_var_name var) <> (bir_var_name v))) /\
             (case r.bmr_mem of
                | (BMLM v lf) => (bir_var_name var) <> (bir_var_name v)))) /\
-     (bir_updateE_SEM eup = BUpdateValE_Jmp (BL_Address (bmr_pc_lf r ms')))`
+     (bir_updateE_SEM eup = BUpdateValE_Jmp (BL_Address (bmr_pc_lf r ms')))`;
 
 
 val bir_is_lifted_inst_block_COMPUTE = store_thm ("bir_is_lifted_inst_block_COMPUTE",
-``!r bl l mm mu l'.
+``!r bl ms_case_cond l mm mu l'.
 
   (WI_wf mu /\ WF_bmr_ms_mem_contains mm) ==>
   (!ms bs. ?ms' al_mem al_step imm_ups mem_chs mem_up eup updates.
 
-     bmr_rel r bs ms ==>  bmr_ms_mem_contains r ms mm ==> (BL_Address (bmr_pc_lf r ms) = l) ==> (
+     bmr_rel r bs ms ==>  ms_case_cond ms ==> bmr_ms_mem_contains r ms mm ==> (BL_Address (bmr_pc_lf r ms) = l) ==> (
 
      (* ms' is reached and we need only extra assertions al_step to
         discard preconds of the step theorem. To instantiate this,
@@ -224,7 +252,7 @@ val bir_is_lifted_inst_block_COMPUTE = store_thm ("bir_is_lifted_inst_block_COMP
      (* The block does not depend on the actual values for the state, but just
         the expressions. So, bl should be independent of the actual state. *)
      (bl = (bir_update_assert_block l' (al_mem++al_step) eup updates)))) ==>
-  bir_is_lifted_inst_block (r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) l mu mm (bl :'o bir_block_t)
+  bir_is_lifted_inst_block (r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) ms_case_cond l mu mm (bl :'o bir_block_t)
 ``,
 
 SIMP_TAC std_ss [bir_is_lifted_inst_block_def] >>
@@ -342,6 +370,154 @@ FULL_SIMP_TAC list_ss [bmr_rel_def] >>
 ) >>
 ASM_SIMP_TAC std_ss []);
 
+
+
+(****************************)
+(* Finer grained coomputing *)
+(****************************)
+
+(* The lemma bir_is_lifted_inst_block_COMPUTE is worded in such a way that
+   it is comparably easy to show correct. The actual SML code does not need to
+   (and should) not follow it litterally though. There are 2 issues:
+
+   - above certain combinations of invariants / well-formedness conditions are
+     not exploited, since they would lead to more detailed, fidlly proofs.
+     We can exploit them as an optimisation below and thereby safe runtime checks.
+
+   - The computation of UPDATE is weird. We first need to compute
+     imm_ups and mem_up and then use these to compute updates. It is sensible to
+     detangle this in the definitions.
+*)
+
+val bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_def = Define
+  `bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES r ms ms' imm_ups <=>
+
+     (MAP FST imm_ups = r.bmr_imms) /\
+     (!v lf. (MEM (BMLI v lf, NONE) imm_ups) ==>
+             (lf ms' = lf ms)) /\
+
+     (!v lf res. (MEM (BMLI v lf, SOME res) imm_ups) ==>
+                 (lf ms' = res))`;
+
+val bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES_def = Define
+  `bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES r ms ms' imm_ups updates <=>
+
+     (!v lf. (MEM (BMLI v lf, NONE) imm_ups) ==>
+             (!up. MEM up updates ==>
+             (bir_var_name v <> bir_var_name (bir_updateB_desc_var up)))) /\
+
+     (!v lf res. (MEM (BMLI v lf, SOME res) imm_ups) ==>
+                 (?up. MEM up updates /\ (bir_updateB_desc_var up = v) /\
+                 (bir_updateB_desc_value up = BVal_Imm res)))`
+
+val bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_THM = store_thm ("bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_THM",
+``!r ms ms' imm_ups updates. bmr_ok r ==>
+   (bir_is_lifted_inst_block_COMPUTE_imm_ups_COND r ms ms' imm_ups updates <=>
+    (bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES r ms ms' imm_ups /\
+     bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES r ms ms' imm_ups updates))``,
+
+SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES_def,
+  bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_def,
+  bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_def,
+  IMP_CONJ_THM, FORALL_AND_THM] >>
+REPEAT STRIP_TAC >>
+`bir_var_name v <> bir_var_name (bir_updateB_desc_var up)` by METIS_TAC[] >>
+Cases_on `up` >> rename1 `BUpdateDescB v' e res use_temp` >>
+Cases_on `use_temp` >> (
+  FULL_SIMP_TAC std_ss [bir_updateB_desc_var_def, bir_updateB_desc_temp_var_def,
+    bir_temp_var_REWRS]
+) >>
+`bir_machine_lifted_imm_OK (BMLI v lf)` by (
+  Q.PAT_X_ASSUM `_ = r.bmr_imms` (ASSUME_TAC o GSYM) >>
+  FULL_SIMP_TAC std_ss [bmr_ok_def, EVERY_MEM, MEM_MAP, PULL_EXISTS] >>
+  METIS_TAC[pairTheory.FST]
+) >>
+FULL_SIMP_TAC std_ss [bir_machine_lifted_imm_OK_def] >>
+METIS_TAC[bir_is_temp_var_name_REWR]);
+
+
+val bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES_def = Define
+  `bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES r bs ms ms' mem_up updates <=>
+     (* Memory update sensible *)
+     (case (mem_up, r.bmr_mem) of
+       | (NONE, BMLM v lf) =>
+             (!up. MEM up updates ==>
+                   (bir_var_name v <> bir_var_name (bir_updateB_desc_var up)))
+       | (SOME res, BMLM v lf) =>
+              (?up.
+              MEM up updates /\ (bir_updateB_desc_var up = v) /\
+              (bir_is_lifted_exp bs.bst_environ (bir_updateB_desc_exp up) (BLV_Mem res))))`;
+
+
+
+val bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_def = Define
+  `bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r bs ms ms' mem_up <=>
+     (case (mem_up, r.bmr_mem) of
+       | (NONE, BMLM v lf) => (
+             (lf ms' = lf ms))
+       | (SOME res, BMLM v lf) =>
+              (lf ms' = res))`;
+
+
+val bir_is_lifted_inst_block_COMPUTE_mem_COND_THM = store_thm ("bir_is_lifted_inst_block_COMPUTE_mem_ups_COND_THM",
+``!r bs ms ms' mem_up updates. bmr_ok r ==>
+   (bir_is_lifted_inst_block_COMPUTE_mem_COND r bs ms ms' mem_up updates <=>
+    (bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r bs ms ms' mem_up /\
+     bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES r bs ms ms' mem_up updates))``,
+
+GEN_TAC >>
+Cases_on `r.bmr_mem` >> rename1 `BMLM mv lf` >>
+ASM_SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss++bmr_ss++DatatypeSimps.expand_type_quants_ss[``: 'a option``]) [
+  bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES_def,
+  bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_def,
+  bir_is_lifted_inst_block_COMPUTE_mem_COND_def,
+  IMP_CONJ_THM, FORALL_AND_THM, pairTheory.pair_case_thm] >>
+REPEAT STRIP_TAC >>
+`bir_var_name mv <> bir_var_name (bir_updateB_desc_var up)` by METIS_TAC[] >>
+Cases_on `up` >> rename1 `BUpdateDescB v' e res use_temp` >>
+Cases_on `use_temp` >> (
+  FULL_SIMP_TAC std_ss [bir_updateB_desc_var_def, bir_updateB_desc_temp_var_def,
+    bir_temp_var_REWRS]
+) >>
+REV_FULL_SIMP_TAC std_ss [bmr_ok_def, bir_machine_lifted_mem_OK_def] >>
+METIS_TAC[bir_is_temp_var_name_REWR]);
+
+
+
+val bir_is_lifted_inst_block_COMPUTE_SPLIT = store_thm ("bir_is_lifted_inst_block_COMPUTE_SPLIT",
+``!r bl ms_case_cond l mm mu l'.
+
+  bmr_ok r ==>
+  (WI_wf mu /\ WF_bmr_ms_mem_contains mm) ==>
+  (!ms bs. ?ms' al_mem al_step imm_ups mem_chs mem_up eup updates.
+
+     bmr_rel r bs ms ==>  ms_case_cond ms ==> bmr_ms_mem_contains r ms mm ==> (BL_Address (bmr_pc_lf r ms) = l) ==> (
+
+     bir_is_lifted_inst_block_COMPUTE_ms'_COND r ms al_step ms' /\
+     bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES r ms ms' imm_ups /\
+     bir_is_lifted_inst_block_COMPUTE_mem_chs_COND r mu ms ms' al_mem mem_chs /\
+     bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r bs ms ms' mem_up /\
+     bir_is_lifted_inst_block_COMPUTE_eup_COND r eup ms' /\
+
+     (* Everything fits with respect to temps etc. *)
+     bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES r bs ms ms' mem_up updates /\
+     bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES r ms ms' imm_ups updates /\
+     EVERY (bir_assert_desc_OK bs.bst_environ) al_mem /\
+     EVERY (bir_assert_desc_OK bs.bst_environ) al_step /\
+     bir_update_block_desc_OK bs.bst_environ eup updates /\
+
+     (* The block does not depend on the actual values for the state, but just
+        the expressions. So, bl should be independent of the actual state. *)
+     (bl = (bir_update_assert_block l' (al_mem++al_step) eup updates)))) ==>
+  bir_is_lifted_inst_block (r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) ms_case_cond l mu mm (bl :'o bir_block_t)
+``,
+
+REPEAT STRIP_TAC >>
+MATCH_MP_TAC (SIMP_RULE std_ss [AND_IMP_INTRO] bir_is_lifted_inst_block_COMPUTE) >>
+Q.EXISTS_TAC `l'` >> ASM_SIMP_TAC std_ss [] >>
+FULL_SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_THM,
+  bir_is_lifted_inst_block_COMPUTE_mem_COND_THM, EVERY_APPEND] >>
+METIS_TAC[]);
 
 
 val _ = export_theory();
