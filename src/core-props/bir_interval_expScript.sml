@@ -363,7 +363,7 @@ SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [WI_wfe_def, WI_overlap_compute,
 
 
 (************)
-(* Overlaps *)
+(* Distinct *)
 (************)
 
 val WI_distinct_def = Define `WI_distinct i1 i2 <=> ~(WI_overlap i1 i2)`;

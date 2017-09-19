@@ -310,15 +310,15 @@ end);
 (****************)
 
 val bir_is_lifted_imm_exp_LOAD0 = prove (
-``!guard sa sv sr env en em em ea (va :'a word) mem.
+``!guard sa sv sr env en em em ea (va :'a word) mem_f.
     (size_of_bir_immtype sa = (dimindex (:'a))) ==>
     (size_of_bir_immtype sv = (dimindex (:'v))) ==>
     (size_of_bir_immtype sr = (dimindex (:'r))) ==>
     (guard sa sv sr en) ==>
-    bir_is_lifted_mem_exp env em (mem : 'a word -> 'v word) ==>
+    bir_is_lifted_mem_exp env em (mem_f : 'a word -> 'v word) ==>
     bir_is_lifted_imm_exp env ea (w2bs va sa) ==>
     (!r.
-    (bir_load_from_mem sv sr sa (\n. w2n (mem (n2w n))) en (w2n va) = SOME r) ==>
+    (bir_load_from_mem sv sr sa (\n. w2n (mem_f (n2w n))) en (w2n va) = SOME r) ==>
 
     (bir_is_lifted_imm_exp env (BExp_Load em ea en sr) r))``,
 
@@ -338,7 +338,7 @@ REPEAT STRIP_TAC >- (
 
 `bir_load_from_mem sv sr sa mem_n en
         (b2n (w2bs va sa)) =
- bir_load_from_mem sv sr sa (\n. w2n (mem (n2w n))) en (w2n va)` suffices_by (STRIP_TAC >> FULL_SIMP_TAC std_ss []) >>
+ bir_load_from_mem sv sr sa (\n. w2n (mem_f (n2w n))) en (w2n va)` suffices_by (STRIP_TAC >> FULL_SIMP_TAC std_ss []) >>
 
 Q.PAT_X_ASSUM `bir_load_from_mem _ _ _ _ _ _ = SOME _` (K ALL_TAC) >>
 

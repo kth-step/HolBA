@@ -1,4 +1,4 @@
-INCLUDES = ../../core ../../core-props \
+INCLUDES = ../../core ../../core-props ../l3 \
    $(HOLDIR)/examples/l3-machine-code/common \
    $(HOLDIR)/examples/l3-machine-code/arm8/model \
    $(HOLDIR)/examples/l3-machine-code/arm8/step \
@@ -8,7 +8,7 @@ INCLUDES = ../../core ../../core-props \
 OPTIONS = QUIT_ON_FAILURE
 
 ifdef POLY
-HOLHEAP = ../../core-props/HolBACoreProps-heap
+HOLHEAP = ../l3/HolBA_l3-heap
 endif
 
 default: all

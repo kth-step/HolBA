@@ -1,0 +1,4 @@
+This directory is a dummy just for creating a heap that contains step
+libraries for various machines. These are used by e.g. the lifter and
+take very long to load. Therefore, having this auxiliary heap speeds
+up development.

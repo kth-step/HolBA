@@ -1,4 +1,4 @@
-INCLUDES = ./lifter
+INCLUDES = ./lifter ./l3
 OPTIONS = QUIT_ON_FAILURE
 
 default: all
@@ -8,7 +8,7 @@ default: all
 TARGETS = $(patsubst %.sml,%.uo,$(SMLFILES))
 
 ifdef POLY
-HOLHEAP = ../core-props/HolBACoreProps-heap
+HOLHEAP = ./l3/HolBA_l3-heap
 NEWHOLHEAP = HolBATools-heap
 EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
 
