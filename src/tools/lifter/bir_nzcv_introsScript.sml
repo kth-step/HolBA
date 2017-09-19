@@ -210,19 +210,24 @@ val nzcv_SUB_FOLDS_ARM8_CONST_GEN = save_thm ("nzcv_SUB_FOLDS_ARM8_CONST_GEN",
 
 
 
-(****************)
-(* ARM 8 32 bit *)
-(****************)
+(***************************)
+(* ARM 8 32 bit and 64 bit *)
+(***************************)
 
-(* What we really need is an instance for 32 bit words, though*)
-val nzcv_FOLDS_ARM8_32 = save_thm ("nzcv_FOLDS_ARM8_32",
-SIMP_RULE (std_ss++wordsLib.SIZES_ss) []  (
-  INST_TYPE [``:'a`` |-> ``:32``] (LIST_CONJ [
+(* What we really need is an instance for 32 and 64 bit words, though*)
+val nzcv_FOLDS_ARM8_gen_size = LIST_CONJ [
       nzcv_BIR_SIMPS,
       nzcv_SUB_FOLDS_ARM8_GEN,
       nzcv_SUB_FOLDS_ARM8_CONST_GEN,
       nzcv_ADD_FOLDS_ARM8_GEN,
-      nzcv_ADD_FOLDS_ARM8_CONST_GEN])
+      nzcv_ADD_FOLDS_ARM8_CONST_GEN];
+
+
+val nzcv_FOLDS_ARM8 = save_thm ("nzcv_FOLDS_ARM8",
+SIMP_RULE (std_ss++wordsLib.SIZES_ss) []  (LIST_CONJ [
+  INST_TYPE [``:'a`` |-> ``:32``] nzcv_FOLDS_ARM8_gen_size,
+  INST_TYPE [``:'a`` |-> ``:64``] nzcv_FOLDS_ARM8_gen_size
+ ]
 ));
 
 
@@ -237,7 +242,7 @@ open arm8_stepLib
 
 fun test_nzcv_folds_hex s =
   (arm8.diss s, s,
-   map (SIMP_RULE std_ss [nzcv_FOLDS_ARM8_32]) (arm8_step_hex s));
+   map (SIMP_RULE std_ss [nzcv_FOLDS_ARM8]) (arm8_step_hex s));
 
 val test_nzcv_folds_code = List.map test_nzcv_folds_hex o arm8AssemblerLib.arm8_code;
 
@@ -249,6 +254,15 @@ test_nzcv_folds_code `cmp w0, w1`;
 test_nzcv_folds_code `cmp w0, w0`;
 test_nzcv_folds_code `cmp w1, w1`;
 
+
+
+test_nzcv_folds_code `CMP x0, #3`;
+test_nzcv_folds_code `cmp x0, #324`;
+test_nzcv_folds_code `cmp x0, #0`;
+test_nzcv_folds_code `cmp x0, x1`;
+test_nzcv_folds_code `cmp x0, x0`;
+test_nzcv_folds_code `cmp x1, x1`;
+
 test_nzcv_folds_code `cmn w0, #3`
 test_nzcv_folds_code `cmn w0, #324`
 test_nzcv_folds_code `cmn w0, #0`
@@ -256,11 +270,16 @@ test_nzcv_folds_code `cmn w0, w2`
 test_nzcv_folds_code `cmp w0, #0`
 test_nzcv_folds_code `cmn w1, w1`
 
-test_nzcv_folds_code `ADDS w0, w1, w2`
+test_nzcv_folds_code `ADDS x0, x1, x2`
+
+arm8AssemblerLib.arm8_code `str x0, [x1, #16]`
+arm8AssemblerLib.arm8_code `add x0, x1, #1`
+arm8AssemblerLib.arm8_code `str x0, [sp, #8]`
 
 test_nzcv_folds_code `subs w0, w1, w2`
 test_nzcv_folds_code `adds w0, w1, w1`
 test_nzcv_folds_code `bics w0, w1, w2`
+test_nzcv_folds_code `bics x0, x1, x2`
 
 test_nzcv_folds_hex "1b000001"
 
