@@ -88,10 +88,14 @@ sig
    (**********************************************)
 
    (* Given a list of theorems, "elfs_of_thms" preprocesses these theorems and creates
-      expression lifting functions. For debugging purposes, also the preprocessing function
+      expression lifting functions. Usually all variables in these theorems can be
+      freely instantiated by the expression lifter. A list of variables that should not be
+      instantiated, they can be passed as an extra argument.
+
+      For debugging purposes, also the preprocessing function
       is exported. *)
-   val elfs_of_thms : thm list -> exp_lifting_fun_rec list
-   val prepare_exp_lifting_thms : thm list -> thm list
+   val elfs_of_thms : term list -> thm list -> exp_lifting_fun_rec list
+   val prepare_exp_lifting_thms : term list -> thm list -> thm list
 
 
    (***************************)
@@ -112,9 +116,9 @@ sig
    val eln_of_elfs     : exp_lifting_fun_rec list -> exp_lifting_net
 
    (* combinations with elfs_of_thms for convenience *)
-   val eln_add_thms                 : exp_lifting_net ->        thm list -> exp_lifting_net
-   val eln_add_thms_with_precedence : exp_lifting_net -> int -> thm list -> exp_lifting_net
-   val eln_of_thms                  : thm list -> exp_lifting_net
+   val eln_add_thms                 : exp_lifting_net ->        term list -> thm list -> exp_lifting_net
+   val eln_add_thms_with_precedence : exp_lifting_net -> int -> term list -> thm list -> exp_lifting_net
+   val eln_of_thms                  : term list -> thm list -> exp_lifting_net
 
 
    (****************************************************)

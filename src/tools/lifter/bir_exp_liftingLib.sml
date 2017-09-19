@@ -70,21 +70,22 @@ local
       then base_thms (UNDISCH thm)
     else [thm];
 
-  fun fresh_vars thm =
+  fun fresh_vars fixed_vars thm =
   let
-    val fvs = free_vars (concl thm)
-    val vs = map (fn v => (v |-> genvar (type_of v))) fvs
+    val fvs' = FVL (concl thm::hyp thm) empty_tmset
+    val fvs = HOLset.difference (fvs', HOLset.addList (empty_tmset, fixed_vars))
+    val fvl = HOLset.listItems fvs
+    val vs = map (fn v => (v |-> genvar (type_of v))) fvl
     val thm1 = INST vs thm;
   in thm1 end;
-
 
   val filter_thms = filter (fn thm => is_bir_is_lifted_exp (concl thm))
 in
 
-fun prepare_exp_lifting_thm thm =
-  map fresh_vars (filter_thms (base_thms (intro_bir_is_lifted_exp thm)));
+fun prepare_exp_lifting_thm fixed_vars thm =
+  map (fresh_vars fixed_vars) (filter_thms (base_thms (intro_bir_is_lifted_exp thm)));
 
-fun prepare_exp_lifting_thms thms = flatten (map prepare_exp_lifting_thm thms)
+fun prepare_exp_lifting_thms fixed_vars thms = flatten (map (prepare_exp_lifting_thm fixed_vars) thms)
 
 end
 
@@ -164,7 +165,7 @@ type exp_lifting_thm_rec = {
 
 
 (* DEBUG values
-val thms = prepare_exp_lifting_thms [bir_is_lifted_imm_exp_BIN_EXP]
+val thms = prepare_exp_lifting_thms [] [bir_is_lifted_imm_exp_BIN_EXP]
 val thm = hd thms
 fun gf _ _ = true
 *)
@@ -188,29 +189,32 @@ DEBUG VALUES:
 
 val r = mk_exp_lifting_thm_rec_from_thm (el 45 thms)
 val env_t = ``env:bir_var_environment_t``
-val vt = ``BVal_Imm (Imm32 (5w * w))``
+val vt = ``BLV_Imm (Imm32 (5w * w))``
 *)
 
 
 fun exp_lifting_thm_rec_match (r:exp_lifting_thm_rec) env_t vt =
 let
   val (tm_s, ty_s) = match_term (#elt_guard r) vt
+  val _ = if (exists (fn r => not (is_genvar (#redex r))) tm_s) then fail() else ()
+  val thm0 = INST tm_s (INST_TYPE ty_s (#elt_thm r))
 
-  (* instantiate original theorem *)
-  val thm0 = INST ((#elt_env r |-> env_t)::tm_s) (INST_TYPE ty_s (#elt_thm r))
+  val (tm_s', ty_s') = match_term (subst tm_s (inst ty_s (#elt_env r))) env_t
+  val _ = if (exists (fn r => not (is_genvar (#redex r))) tm_s') then fail() else ()
+  val thm1 = INST tm_s' (INST_TYPE ty_s' thm0)
 
   (* introduce fresh vars *)
   val vs = map (fn v => (v |-> genvar (type_of v))) (#elt_fresh_vars r)
-  val thm1 = INST vs thm0
+  val thm2 = INST vs thm1
 in
-  thm1
+  thm2
 end;
 
 
 fun exp_lifting_thm_rec_2_fun_rec r = mk_elf (SOME (#elt_guard r)) (exp_lifting_thm_rec_match r);
 
 
-fun elfs_of_thms thms = map (exp_lifting_thm_rec_2_fun_rec o mk_exp_lifting_thm_rec_from_thm) (prepare_exp_lifting_thms thms);
+fun elfs_of_thms fixed_vars thms = map (exp_lifting_thm_rec_2_fun_rec o mk_exp_lifting_thm_rec_from_thm) (prepare_exp_lifting_thms fixed_vars thms);
 
 
 
@@ -235,11 +239,11 @@ fun eln_of_elfs rs = eln_list_insert eln_empty rs
 fun eln_union (n1:exp_lifting_net) (n2:exp_lifting_net) : exp_lifting_net =
   Net.union n1 n2;
 
-fun eln_add_thms ne thms =
-  eln_list_insert ne (elfs_of_thms thms);
+fun eln_add_thms ne fixed_vars thms =
+  eln_list_insert ne (elfs_of_thms fixed_vars thms);
 
-fun eln_add_thms_with_precedence ne pr thms = let
-  val rl = elfs_of_thms thms;
+fun eln_add_thms_with_precedence ne pr fixed_vars thms = let
+  val rl = elfs_of_thms fixed_vars thms;
   val rl' = map (fn r => elf_set_precedence r pr) rl
 in
   eln_list_insert ne rl'
@@ -265,6 +269,7 @@ fun eln_match (n:exp_lifting_net) tm = let
 in
   rs'
 end;
+
 
 fun eln_apply n env tm = let
   val rs = eln_match n tm;
@@ -298,14 +303,14 @@ end handle HOL_ERR _ => false;
 
 
 val elf_literal_imm = let
-  val rl = elfs_of_thms [bir_is_lifted_imm_exp_CONSTANT]
+  val rl = elfs_of_thms [] [bir_is_lifted_imm_exp_CONSTANT]
   val _ = assert (fn () => length rl = 1) ()
   val r = elf_add_check (hd rl) (K bir_is_imm_literal)
 in r end;
 
 
 val eln_default = let
-  val eln = eln_of_thms [bir_is_lifted_imm_exp_DEFAULT_THMS]
+  val eln = eln_of_thms [] [bir_is_lifted_imm_exp_DEFAULT_THMS]
   val eln = eln_insert eln elf_literal_imm
 in
   eln
@@ -401,7 +406,6 @@ val c = elc_empty
 
 fun bir_exp_lift_step (c : exp_lifting_cache) (n:exp_lifting_net) thm tm = let
   val (env_t, et, vt) = dest_bir_is_lifted_exp tm
-
   val mthm = eln_apply n env_t vt
   val (env_t', et', vt') = dest_bir_is_lifted_exp (concl mthm)
 
@@ -426,7 +430,9 @@ in
 end;
 
 fun bir_exp_lift_final thm = let
-  val thm0 = DISCH_ALL thm;
+  val thm0 = let
+     val lift_hyps = filter is_bir_is_lifted_exp (hyp thm)
+  in foldl (uncurry DISCH) thm lift_hyps end;
   val vars = filter (fn v => is_genvar v andalso (type_of v = bir_expSyntax.bir_exp_t_ty)) (free_vars (concl thm0))
 
   fun gen_newname uvs c = let

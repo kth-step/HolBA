@@ -112,7 +112,7 @@ val bir_is_lifted_inst_block_def = Define `
     <=>
 
   (* Parameters are sensible *)
-  (WI_wf mu /\ WF_bmr_ms_mem_contains mm) /\
+  (WI_wfe mu /\ WF_bmr_ms_mem_contains mm /\ WI_is_sub (bmr_ms_mem_contains_interval mm) mu) /\
 
   (!ms bs (p : 'o bir_program_t) c lo bs'.
 
@@ -217,7 +217,7 @@ val bir_is_lifted_inst_block_COMPUTE_eup_COND_def = Define
 val bir_is_lifted_inst_block_COMPUTE = store_thm ("bir_is_lifted_inst_block_COMPUTE",
 ``!r bl ms_case_cond l mm mu l'.
 
-  (WI_wf mu /\ WF_bmr_ms_mem_contains mm) ==>
+  (WI_wfe mu /\ WF_bmr_ms_mem_contains mm /\ WI_is_sub (bmr_ms_mem_contains_interval mm) mu) ==>
   (!ms bs. ?ms' al_mem al_step imm_ups mem_chs mem_up eup updates.
 
      bmr_rel r bs ms ==>  ms_case_cond ms ==> bmr_ms_mem_contains r ms mm ==> (BL_Address (bmr_pc_lf r ms) = l) ==> (
@@ -485,15 +485,18 @@ METIS_TAC[bir_is_temp_var_name_REWR]);
 
 
 val bir_is_lifted_inst_block_COMPUTE_SPLIT = store_thm ("bir_is_lifted_inst_block_COMPUTE_SPLIT",
-``!r bl ms_case_cond l mm mu l'.
+``!r.  bmr_ok r ==> !mu. WI_wfe mu ==> !mm l.
+  ((WF_bmr_ms_mem_contains mm) /\ WI_is_sub (bmr_ms_mem_contains_interval mm) mu) ==>
+  !ms_case_cond bl l'.
+  (!ms bs. bmr_rel r bs ms ==>
+           ms_case_cond ms ==>
+           bmr_ms_mem_contains r ms mm ==>
+           (BL_Address (bmr_pc_lf r ms) = l) ==>
 
-  bmr_ok r ==>
-  (WI_wf mu /\ WF_bmr_ms_mem_contains mm) ==>
-  (!ms bs. ?ms' al_mem al_step imm_ups mem_chs mem_up eup updates.
-
-     bmr_rel r bs ms ==>  ms_case_cond ms ==> bmr_ms_mem_contains r ms mm ==> (BL_Address (bmr_pc_lf r ms) = l) ==> (
+     ?ms' al_mem al_step imm_ups mem_chs mem_up eup updates. (
 
      bir_is_lifted_inst_block_COMPUTE_ms'_COND r ms al_step ms' /\
+
      bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES r ms ms' imm_ups /\
      bir_is_lifted_inst_block_COMPUTE_mem_chs_COND r mu ms ms' al_mem mem_chs /\
      bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r bs ms ms' mem_up /\
@@ -518,6 +521,22 @@ Q.EXISTS_TAC `l'` >> ASM_SIMP_TAC std_ss [] >>
 FULL_SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_THM,
   bir_is_lifted_inst_block_COMPUTE_mem_COND_THM, EVERY_APPEND] >>
 METIS_TAC[]);
+
+
+
+(************************)
+(* Deriving assert_desc *)
+(************************)
+
+val bir_assert_desc_OK_via_lifting = store_thm ("bir_assert_desc_OK_via_lifting",
+``!env e b.
+  bir_is_lifted_exp env e (BLV_Imm (bool2b b)) ==>
+  bir_assert_desc_OK env (BAssertDesc e b)``,
+
+SIMP_TAC std_ss [bir_is_lifted_exp_def, bir_is_lifted_imm_exp_def,
+  bir_assert_desc_OK_def]);
+
+
 
 
 val _ = export_theory();

@@ -238,10 +238,9 @@ in fn vn => fn s =>
   List.map (norm_thm vn) (st_hex s)
 end;
 
-
 val arm8_step_hex' = bmr_normalise_step_thms
    (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"})
-   (REWRITE_RULE [nzcv_FOLDS_ARM8])
+   (SIMP_RULE std_ss [nzcv_FOLDS_ARM8])
     arm8_step_hex
 
 val arm8_state_mem_tm = prim_mk_const{Name="arm8_state_MEM", Thy="arm8"}

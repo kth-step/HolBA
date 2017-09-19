@@ -17,7 +17,7 @@ HEAPINC = $(HOLDIR)/examples/l3-machine-code/arm8/step/arm8_stepTheory \
           $(HOLDIR)/examples/l3-machine-code/m0/step/m0_stepTheory \
           $(HOLDIR)/examples/l3-machine-code/m0/step/m0_stepLib
 
-$(NEWHOLHEAP): $(TARGETS)
+$(NEWHOLHEAP): ../../core-props/HolBACoreProps-heap
 	$(protect $(HOLDIR)/bin/buildheap) -b $(HOLHEAP) -o $(NEWHOLHEAP) $(HEAPINC)
 
 all: $(NEWHOLHEAP)
