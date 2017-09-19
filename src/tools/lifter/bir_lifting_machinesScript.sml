@@ -248,6 +248,7 @@ val bmr_rel_def = Define `bmr_rel r bs ms <=>
 (bir_machine_lifted_pc r.bmr_pc bs ms) /\
 (r.bmr_extra ms)`
 
+
 val bmr_mem_lf_def = Define `bmr_mem_lf r = case r.bmr_mem of BMLM v lf => lf`
 val bmr_pc_lf_def = Define `bmr_pc_lf r = case r.bmr_pc of BMLPC v_pc v_pc_cond lf => lf`
 
@@ -491,6 +492,13 @@ in
 end);
 
 
+val arm8_bmr_label_thm = store_thm ("arm8_bmr_label_thm",
+``!ms n. (BL_Address (bmr_pc_lf arm8_bmr ms) = BL_Address (Imm64 (n2w n))) ==>
+         (ms.PC = n2w n)``,
+SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, arm8_bmr_EVAL]);
+
+
+
 (**********)
 (* ARM M0 *)
 (**********)
@@ -554,6 +562,11 @@ SIMP_TAC (list_ss++bmr_ss++stringSimps.STRING_ss++wordsLib.WORD_ss++holBACore_ss
   bir_is_temp_var_name_def, BType_Bool_def,
   bir_machine_lifted_pc_OK_def]);
 
+
+val m0_bmr_label_thm = store_thm ("m0_bmr_label_thm",
+``!ms n. (BL_Address (bmr_pc_lf m0_bmr ms) = BL_Address (Imm32 (n2w n))) ==>
+         (ms.REG RName_PC = n2w n)``,
+SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, m0_bmr_EVAL]);
 
 
 val m0_brm_LIFTED = save_thm ("m0_brm_LIFTED",

@@ -37,6 +37,52 @@ sig
    val is_bmr_temp_vars   : term -> bool
    val mk_bmr_temp_vars   : term -> term
 
+   (* Fields of the record *)
+   val dest_bir_lifting_machine_rec :
+     term -> term list (*imms*) * term (* mem *) * term (*pc*) * term (*extra*) * term (* step *)
+
+   val BMLI_tm   : term
+   val dest_BMLI : term -> term * term
+   val is_BMLI   : term -> bool
+   val mk_BMLI   : term * term -> term
+
+   val BMLPC_tm   : term
+   val dest_BMLPC : term -> term * term * term
+   val is_BMLPC   : term -> bool
+   val mk_BMLPC   : term * term * term -> term
+
+   val BMLM_tm   : term
+   val dest_BMLM : term -> term * term
+   val is_BMLM   : term -> bool
+   val mk_BMLM   : term * term -> term
+
+
+   val bmr_field_extra_tm   : term
+   val dest_bmr_field_extra : term -> term * term
+   val is_bmr_field_extra   : term -> bool
+   val mk_bmr_field_extra   : term * term -> term
+
+   val bmr_field_imms_tm   : term
+   val dest_bmr_field_imms : term -> term
+   val is_bmr_field_imms   : term -> bool
+   val mk_bmr_field_imms   : term -> term
+
+   val bmr_field_pc_tm   : term
+   val dest_bmr_field_pc : term -> term
+   val is_bmr_field_pc   : term -> bool
+   val mk_bmr_field_pc   : term -> term
+
+   val bmr_field_mem_tm   : term
+   val dest_bmr_field_mem : term -> term
+   val is_bmr_field_mem   : term -> bool
+   val mk_bmr_field_mem   : term -> term
+
+   val bmr_field_step_fun_tm   : term
+   val dest_bmr_field_step_fun : term -> term * term
+   val is_bmr_field_step_fun   : term -> bool
+   val mk_bmr_field_step_fun   : term * term -> term
+
+
 
    (******************)
    (* Simplification *)
@@ -85,16 +131,50 @@ sig
          some special rewrites for e.g. OVERFLOWS ... *)
       bmr_extra_lifted_thms  : thm list,
 
+      (* A useful theorem for computing the PC value from a label value.
+         It is expected to be a theorem of the from
+
+         !ms n. (BL_Address (bmr_pc_lf r ms) = BL_Address (ImmX (n2w n))) ==>
+                (PC of ms = something of n)
+      *)
+      bmr_label_thm : thm,
+
+      (* Tries to destruct some memory application. it returns the state and the address
+         of the memory lookup. E.g. "ms.MEM 0x10000" is destructed to (``ms``, ``0x10000``) *)
+      bmr_dest_mem : term -> term * term,
+
       (* A useful ssfrag for this machine type. It should
          contain e.g. information for deal with the machine state type. *)
       bmr_extra_ss           : simpLib.ssfrag,
 
       (* Function evaluationg an instruction given as a hex string and returns
          a set of step theorems. *)
-      bmr_step_hex           : string -> thm list
+      bmr_step_hex           : term -> string -> thm list
    };
 
    (* The record for arm8 *)
    val arm8_bmr_rec : bmr_rec;
+
+
+
+   (* extracting the record fields. Output is the same as of
+      dest_bir_lifting_machine_rec *)
+  val bmr_rec_extract_fields : bmr_rec -> term list * term * term * term * term;
+
+  (* The PC always corresponds to some immediate. This function
+     returns a the size of this immediate.
+
+     As a second component a function for constructing terms "mk_get_pc_term" is
+     returned. Given a term "t" of the suitable machine state type, this
+     function constructs a term returning the PC of this machine state. *)
+  val bmr_rec_mk_pc_of_term : bmr_rec -> int * (term -> term)
+
+  (* Given a PC as an Arbnum, we need to be able to construct a label.
+     The form of the label depends on the size of the PC and therefore the record. *)
+  val bmr_rec_mk_label_of_num : bmr_rec -> Arbnum.num -> term
+
+  (* Similar to contructing the label, we need an equality of this label with
+     the label of the PC, this then simplifies to the PC having a certain value. *)
+  val bmr_rec_mk_label_of_num_eq_pc : bmr_rec -> (term * Arbnum.num) -> term
 
 end

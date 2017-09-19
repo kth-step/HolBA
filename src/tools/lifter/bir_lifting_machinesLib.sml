@@ -3,6 +3,7 @@ struct
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 open bir_exp_liftingLib bir_lifting_machinesTheory
+open bir_nzcv_introsTheory
 open arm8_stepLib
 
 (**********)
@@ -42,6 +43,34 @@ val (bmr_vars_tm,  mk_bmr_vars, dest_bmr_vars, is_bmr_vars)  = syntax_fns1 "bmr_
 val (bmr_temp_vars_tm,  mk_bmr_temp_vars, dest_bmr_temp_vars, is_bmr_temp_vars)  = syntax_fns1 "bmr_temp_vars";
 
 
+val (BMLI_tm,  mk_BMLI, dest_BMLI, is_BMLI)  = syntax_fns2 "BMLI";
+val (BMLM_tm,  mk_BMLM, dest_BMLM, is_BMLM)  = syntax_fns2 "BMLM";
+val (BMLPC_tm,  mk_BMLPC, dest_BMLPC, is_BMLPC)  = syntax_fns3 "BMLPC";
+
+fun dest_bir_lifting_machine_rec tm = let
+  val (ty, l) = TypeBase.dest_record tm
+  val _ = if is_bir_lift_machine_rec_t_ty ty then () else fail()
+  val (imms, _) = listSyntax.dest_list (Lib.assoc "bmr_imms" l)
+  val mem = Lib.assoc "bmr_mem" l
+  val pc = Lib.assoc "bmr_pc" l
+  val extra = Lib.assoc "bmr_extra" l
+  val step_fun = Lib.assoc "bmr_step_fun" l
+in
+  (imms, mem, pc, extra, step_fun)
+end handle HOL_ERR _ => raise ERR "dest_bir_lifting_machine_rec" "";
+
+
+(* Array fields *)
+
+val (bmr_field_extra_tm,  mk_bmr_field_extra, dest_bmr_field_extra, is_bmr_field_extra)  = syntax_fns2 "bir_lifting_machine_rec_t_bmr_extra";
+
+val (bmr_field_imms_tm,  mk_bmr_field_imms, dest_bmr_field_imms, is_bmr_field_imms)  = syntax_fns1 "bir_lifting_machine_rec_t_bmr_imms";
+
+val (bmr_field_pc_tm,  mk_bmr_field_pc, dest_bmr_field_pc, is_bmr_field_pc)  = syntax_fns1 "bir_lifting_machine_rec_t_bmr_pc";
+
+val (bmr_field_mem_tm,  mk_bmr_field_mem, dest_bmr_field_mem, is_bmr_field_mem)  = syntax_fns1 "bir_lifting_machine_rec_t_bmr_mem";
+
+val (bmr_field_step_fun_tm,  mk_bmr_field_step_fun, dest_bmr_field_step_fun, is_bmr_field_step_fun)  = syntax_fns2 "bir_lifting_machine_rec_t_bmr_step_fun";
 
 
 (* the main part of bir_lifting_machinesTheory is the record
@@ -73,12 +102,14 @@ type bmr_rec = {bmr_const              : term,
                 bmr_eval_temp_vars_thm : thm,
                 bmr_extra_lifted_thms  : thm list,
                 bmr_extra_ss           : simpLib.ssfrag,
+                bmr_label_thm          : thm,
+                bmr_dest_mem           : term -> term * term,
                 bmr_lifted_thm         : thm,
-                bmr_step_hex           : string -> thm list};
+                bmr_step_hex           : term -> string -> thm list};
 
 
 (* Some sanity checks to ensure everything is as expected. *)
-val brm_rec_sanity_check = let
+val brm_rec_sanity_check_basic = let
 
   fun check_const t = is_bir_lift_machine_rec_t_ty (type_of t) andalso
                       is_const t
@@ -118,6 +149,20 @@ val brm_rec_sanity_check = let
     List.all bir_exp_liftingLib.is_bir_is_lifted_exp tl
   end handle HOL_ERR _ => false;
 
+
+  fun check_label_thm (r:bmr_rec) = let
+     val thm = (#bmr_label_thm r);
+     val (vl, b) = strip_forall (concl thm)
+     val _ = assert (fn l => length l = 2) vl
+     val _ = assert (fn n => (type_of n = numSyntax.num)) (el 2 vl)
+
+     val (lhs_t, rhs_t) = dest_imp_only b
+     val _ = assert is_eq lhs_t
+     val _ = assert is_eq rhs_t
+  in
+     true
+  end handle HOL_ERR _ => false;
+
 in
   fn r => (
      (check_const (#bmr_const r))
@@ -129,10 +174,78 @@ in
      (check_temp_vars_thm r)
      andalso
      (check_lifted_thm r)
+     andalso
+     (check_label_thm r)
   )
 end
 
 
+
+(* extract the fields of the record *)
+fun bmr_rec_extract_fields (r:bmr_rec) =
+  dest_bir_lifting_machine_rec (rhs (concl (#bmr_eval_thm r)))
+
+fun bmr_rec_mk_pc_of_term (r:bmr_rec) = let
+  val (ms_ty, _, _)  = dest_bir_lifting_machine_rec_t_ty (type_of (#bmr_const r))
+  val ms_v = mk_var ("ms", ms_ty);
+
+  val (_, _, r_pc, _, _) = bmr_rec_extract_fields r;
+  val (_, _, mk_lbl) = dest_BMLPC r_pc;
+  val tm0 = mk_comb (mk_lbl, ms_v);
+  val tm1 = rhs (concl (SIMP_CONV std_ss [] tm0)) handle UNCHANGED => tm0
+  val (sz, tm2) = bir_immSyntax.gen_dest_Imm tm1
+in
+  (sz, (fn t => subst [ms_v |-> t] tm2))
+end
+
+fun bmr_rec_mk_label_of_num (r:bmr_rec) = let
+  val (sz, _) = bmr_rec_mk_pc_of_term r;
+in fn pc =>
+  bir_programSyntax.mk_BL_Address (bir_immSyntax.mk_Imm_of_num sz pc)
+end
+
+fun bmr_rec_mk_label_of_num_eq_pc (r:bmr_rec) = let
+  val (sz, pc_tm) = bmr_rec_mk_pc_of_term r;
+in fn (ms, pc) =>
+  mk_eq (bir_programSyntax.mk_BL_Address (bir_immSyntax.gen_mk_Imm (pc_tm ms)),
+         bir_programSyntax.mk_BL_Address (bir_immSyntax.mk_Imm_of_num sz pc))
+end
+
+fun brm_rec_sanity_check r =
+  (brm_rec_sanity_check_basic r) andalso
+  (can bmr_rec_extract_fields r) andalso
+  (can bmr_rec_mk_label_of_num r) andalso
+  (can bmr_rec_mk_label_of_num_eq_pc r) andalso
+  (can bmr_rec_mk_pc_of_term r);
+
+
+(* An auxiliary function that helps writeing bmr_step_hex functions *)
+fun bmr_normalise_step_thms (r_step_rel:term) (rule:thm -> thm) st_hex = let
+  fun norm_thm vn thm = let
+     (* check whether thm is of expected form and normalise the state variable name *)
+     val thm_v = let
+        val (t_lhs, t_rhs) = dest_eq (concl thm)
+        val _ = optionSyntax.dest_some t_rhs
+        val (t_rel, v) = dest_comb t_lhs
+        val _ = if (aconv t_rel r_step_rel) then () else fail ()
+     in INST [v |-> vn] thm end;
+
+     val thm0 = DISCH_ALL thm_v;
+     val thm1 = rule thm0;
+  in thm1 end;
+
+in fn vn => fn s =>
+  List.map (norm_thm vn) (st_hex s)
+end;
+
+
+val arm8_step_hex' = bmr_normalise_step_thms
+   (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"})
+   (REWRITE_RULE [nzcv_FOLDS_ARM8])
+    arm8_step_hex
+
+val arm8_state_mem_tm = prim_mk_const{Name="arm8_state_MEM", Thy="arm8"}
+val arm8_dest_mem = HolKernel.dest_binop arm8_state_mem_tm (ERR "arm8_dest_mem" "")
 
 val arm8_bmr_rec : bmr_rec = {
   bmr_const              = prim_mk_const{Name="arm8_bmr", Thy="bir_lifting_machines"},
@@ -143,8 +256,10 @@ val arm8_bmr_rec : bmr_rec = {
   bmr_eval_vars_thm      = arm8_brm_vars_EVAL,
   bmr_eval_temp_vars_thm = arm8_brm_temp_vars_EVAL,
   bmr_eval_rel_thm       = arm8_bmr_rel_EVAL,
+  bmr_label_thm          = arm8_bmr_label_thm,
+  bmr_dest_mem           = arm8_dest_mem,
   bmr_extra_ss           = rewrites [],
-  bmr_step_hex           = arm8_step_hex
+  bmr_step_hex           = arm8_step_hex'
 };
 
 val _ = assert brm_rec_sanity_check arm8_bmr_rec
