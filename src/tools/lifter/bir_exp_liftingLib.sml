@@ -77,7 +77,11 @@ local
     val fvl = HOLset.listItems fvs
     val vs = map (fn v => (v |-> genvar (type_of v))) fvl
     val thm1 = INST vs thm;
-  in thm1 end;
+
+    val tvl = type_vars_in_term (concl thm1)
+    val tys = map (fn v => (v |-> gen_tyvar ())) tvl
+    val thm2 = INST_TYPE tys thm1
+  in thm2 end;
 
   val filter_thms = filter (fn thm => is_bir_is_lifted_exp (concl thm))
 in
@@ -499,6 +503,7 @@ bir_exp_lift env_t n ``(w1:word32 < w2) \/ (w2 < w3)``
 bir_exp_lift env_t n ``(w1:word32 < w2) ==> (w2 < w3)``
 
 
+bir_exp_lift env_t n ``aligned 3 ((0x1000w:word16) + x)``
 bir_exp_lift env_t n ``if (w1:word32 < w2) then 0w:word16 else 16w``
 
 bir_exp_lift env_t n ``Imm32((((mem:word32 -> word8)

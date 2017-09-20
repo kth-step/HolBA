@@ -41,13 +41,20 @@ val bir_is_lifted_exp_def = Define `
   (bir_is_lifted_exp env e (BLV_Mem m) = bir_is_lifted_mem_exp env e m)`;
 
 
+(* Below, we often just want to write bir_is_lifted_mem_exp instead of
+   bir_is_lifted_exp env e (BLV_Imm i). The bir_is_lifted_expLib using the following
+   rewrite during preprocessing of lifting theorems. However, in the case of
+   immediates, 2 new type vars are introduced by this rewrite. The ones used in the
+   theorem below are chosen. They should be uncommon names to avoid clashes. In particular,
+   avoid using these type-vars in any theorem you want to hand over to the lifting lib
+   as a lemma. *)
 val bir_is_lifted_exp_INTRO = store_thm ("bir_is_lifted_exp_INTRO",
 ``(!env e i.
       bir_is_lifted_imm_exp env e i <=>
-      bir_is_lifted_exp env e (BLV_Imm i)) /\
+      bir_is_lifted_exp env e ((BLV_Imm i):('addr_word_ty, 'value_word_ty) bir_lift_val_t)) /\
   (!env e m.
      bir_is_lifted_mem_exp env e m <=>
-     bir_is_lifted_exp env e (BLV_Mem m))``,
+     bir_is_lifted_exp env e ((BLV_Mem m):('addr_word_ty, 'value_word_ty) bir_lift_val_t))``,
 SIMP_TAC std_ss [bir_is_lifted_exp_def]);
 
 
@@ -558,6 +565,35 @@ in
 end);
 
 
+(***********)
+(* aligned *)
+(***********)
+
+val bir_is_lifted_imm_exp_ALIGNED0 = prove (
+``!env (w:'a word).
+      bir_is_lifted_exp env bir_exp_true (BLV_Imm (bool2b (aligned 0 w)))``,
+
+SIMP_TAC std_ss [alignmentTheory.aligned_0, bir_is_lifted_exp_def,
+  bir_is_lifted_imm_exp_bool2b_TF]);
+
+
+val bir_is_lifted_imm_exp_ALIGNED_GEN = prove (
+``!p:num env (w:'a word) e.
+      bir_is_lifted_imm_exp env e (bool2b ((w && n2w (2 ** p - 1) = 0w))) ==>
+      bir_is_lifted_imm_exp env e (bool2b (aligned p w))``,
+
+SIMP_TAC std_ss [alignmentTheory.aligned_bitwise_and]);
+
+val bir_is_lifted_imm_exp_ALIGNED = save_thm ("bir_is_lifted_imm_exp_ALIGNED",
+let
+  val thms0 = map (fn n => SPEC (numSyntax.mk_numeral (Arbnum.fromInt (n+1))) bir_is_lifted_imm_exp_ALIGNED_GEN)
+    (List.tabulate (63, I))
+  val thm1 = LIST_CONJ (bir_is_lifted_imm_exp_ALIGNED0::thms0)
+  val thm2 = SIMP_RULE std_ss [] thm1
+in
+  thm2
+end);
+
 
 (****************)
 (* Combination  *)
@@ -572,7 +608,8 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_COND,
              bir_is_lifted_imm_exp_LOAD_ENDIAN,
              bir_is_lifted_imm_exp_NZCV,
-             bir_is_lifted_imm_exp_MSB]);
+             bir_is_lifted_imm_exp_MSB,
+             bir_is_lifted_imm_exp_ALIGNED]);
 
 
 val _ = export_theory();
