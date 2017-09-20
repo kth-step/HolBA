@@ -178,11 +178,12 @@ val bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_def = Define
 
 
 
-val bir_is_lifted_inst_block_COMPUTE_mem_chs_COND_def = Define
-  `bir_is_lifted_inst_block_COMPUTE_mem_chs_COND r mu ms ms' al_mem mem_chs <=>
+val bir_is_lifted_inst_block_COMPUTE_al_mem_COND_def = Define
+  `bir_is_lifted_inst_block_COMPUTE_al_mem_COND r mu ms ms' al_mem <=>
 
      (* Only explicitly listed memory locations are updated and these are
         outside the unchanged region *)
+     ?mem_chs.
      (!a. ~(MEM a mem_chs) ==> (bmr_mem_lf r ms' a = bmr_mem_lf r ms a)) /\
      (EVERY (\a. bir_assert_desc_value a) al_mem ==>
       (!a. (MEM a mem_chs) ==> ~(WI_MEM a mu)))`;
@@ -218,7 +219,7 @@ val bir_is_lifted_inst_block_COMPUTE = store_thm ("bir_is_lifted_inst_block_COMP
 ``!r bl ms_case_cond l mm mu l'.
 
   (WI_wfe mu /\ WF_bmr_ms_mem_contains mm /\ WI_is_sub (bmr_ms_mem_contains_interval mm) mu) ==>
-  (!ms bs. ?ms' al_mem al_step imm_ups mem_chs mem_up eup updates.
+  (!ms bs. ?ms' al_mem al_step imm_ups mem_up eup updates.
 
      bmr_rel r bs ms ==>  ms_case_cond ms ==> bmr_ms_mem_contains r ms mm ==> (BL_Address (bmr_pc_lf r ms) = l) ==> (
 
@@ -232,10 +233,10 @@ val bir_is_lifted_inst_block_COMPUTE = store_thm ("bir_is_lifted_inst_block_COMP
         generate imm_ups and later with other information use it to generate updates. *)
      bir_is_lifted_inst_block_COMPUTE_imm_ups_COND r ms ms' imm_ups updates /\
 
-     (* The memory is only changed in locations mem_chs. These are outside region
+     (* The memory is only changed in a finite number of locations. These are outside region
         mu and the extra assertions al_mem are all we need to show this. The SML
-        code should generate mem_chs and al_mem. *)
-     bir_is_lifted_inst_block_COMPUTE_mem_chs_COND r mu ms ms' al_mem mem_chs /\
+        code should generate al_mem. *)
+     bir_is_lifted_inst_block_COMPUTE_al_mem_COND r mu ms ms' al_mem /\
 
      (* We take care of potential memory changes via an update. The ML code
         should use it to generate mem_up. *)
@@ -312,7 +313,7 @@ FULL_SIMP_TAC list_ss [bmr_rel_def] >>
 
 `bmr_ms_mem_unchanged r ms ms' mu` by (
   FULL_SIMP_TAC std_ss [bmr_ms_mem_unchanged_def,
-     bir_is_lifted_inst_block_COMPUTE_mem_chs_COND_def] >>
+     bir_is_lifted_inst_block_COMPUTE_al_mem_COND_def] >>
   METIS_TAC[]
 ) >>
 
@@ -372,9 +373,9 @@ ASM_SIMP_TAC std_ss []);
 
 
 
-(****************************)
-(* Finer grained coomputing *)
-(****************************)
+(***************************)
+(* Finer grained computing *)
+(***************************)
 
 (* The lemma bir_is_lifted_inst_block_COMPUTE is worded in such a way that
    it is comparably easy to show correct. The actual SML code does not need to
@@ -388,6 +389,17 @@ ASM_SIMP_TAC std_ss []);
      imm_ups and mem_up and then use these to compute updates. It is sensible to
      detangle this in the definitions.
 *)
+
+val bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK_def = Define
+  `bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK r bs ms al_step ms' <=>
+   (bir_is_lifted_inst_block_COMPUTE_ms'_COND r ms al_step ms' /\
+    EVERY (bir_assert_desc_OK bs.bst_environ) al_step)`;
+
+val bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_def = Define
+  `bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK r mu bs ms ms' al_mem <=>
+   (bir_is_lifted_inst_block_COMPUTE_al_mem_COND r mu ms ms' al_mem /\
+    EVERY (bir_assert_desc_OK bs.bst_environ) al_mem)`;
+
 
 val bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_def = Define
   `bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES r ms ms' imm_ups <=>
@@ -451,7 +463,7 @@ val bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES_def = Define
 
 
 val bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_def = Define
-  `bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r bs ms ms' mem_up <=>
+  `bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r ms ms' mem_up <=>
      (case (mem_up, r.bmr_mem) of
        | (NONE, BMLM v lf) => (
              (lf ms' = lf ms))
@@ -459,10 +471,10 @@ val bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_def = Define
               (lf ms' = res))`;
 
 
-val bir_is_lifted_inst_block_COMPUTE_mem_COND_THM = store_thm ("bir_is_lifted_inst_block_COMPUTE_mem_ups_COND_THM",
+val bir_is_lifted_inst_block_COMPUTE_mem_COND_THM = store_thm ("bir_is_lifted_inst_block_COMPUTE_mem_COND_THM",
 ``!r bs ms ms' mem_up updates. bmr_ok r ==>
    (bir_is_lifted_inst_block_COMPUTE_mem_COND r bs ms ms' mem_up updates <=>
-    (bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r bs ms ms' mem_up /\
+    (bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r ms ms' mem_up /\
      bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES r bs ms ms' mem_up updates))``,
 
 GEN_TAC >>
@@ -484,8 +496,68 @@ METIS_TAC[bir_is_temp_var_name_REWR]);
 
 
 
+val bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_INTRO_NONE = store_thm (
+  "bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_INTRO_NONE",
+``!r mu bs ms ms'.
+   bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r ms ms' NONE ==>
+   bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK
+            r mu bs ms ms' []``,
+
+SIMP_TAC list_ss [bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_def,
+  bir_is_lifted_inst_block_COMPUTE_al_mem_COND_def,
+  bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_def,
+  pairTheory.pair_case_thm, bmr_mem_lf_def] >>
+REPEAT STRIP_TAC >>
+Q.EXISTS_TAC `[]` >>
+Cases_on `r.bmr_mem` >>
+FULL_SIMP_TAC (list_ss++bmr_ss) []);
+
+
+val bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_def = Define
+  `bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS r eup ms'  <=>
+     (* EUP sensible *)
+     (case (bir_updateE_desc_var eup) of NONE => T
+       | SOME var => case r.bmr_pc of BMLPC v_pc v_pc_cond _ =>
+         ((var = v_pc) \/ (var = v_pc_cond))) /\
+
+     (bir_updateE_SEM eup = BUpdateValE_Jmp (BL_Address (bmr_pc_lf r ms')))`;
+
+
+val bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_THM = store_thm (
+   "bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_THM",
+``!r eup ms'.
+    bmr_ok r ==>
+    bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS r eup ms' ==>
+    bir_is_lifted_inst_block_COMPUTE_eup_COND r eup ms'``,
+
+REPEAT GEN_TAC >>
+FULL_SIMP_TAC list_ss [bmr_ok_def, bmr_varnames_distinct_def,
+  bir_is_lifted_inst_block_COMPUTE_eup_COND_def, ALL_DISTINCT_APPEND,
+  bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_def,
+  bmr_temp_vars_def, MAP_MAP_o, combinTheory.o_DEF, MEM_MAP,
+  DISJ_IMP_THM, FORALL_AND_THM, PULL_EXISTS] >>
+NTAC 4 STRIP_TAC >>
+FULL_SIMP_TAC std_ss [] >>
+Q.ABBREV_TAC `pc_vars = (case r.bmr_pc of BMLPC v1 v2 v4 => [v1; v2])` >>
+`MEM var pc_vars` by (
+  Q.UNABBREV_TAC `pc_vars` >>
+  Cases_on `r.bmr_pc` >>
+  FULL_SIMP_TAC (list_ss++bmr_ss) []
+) >>
+REPEAT STRIP_TAC >- (
+  `MEM v (bmr_vars r)` suffices_by METIS_TAC[] >>
+  ASM_SIMP_TAC (list_ss++bmr_ss++DatatypeSimps.expand_type_quants_ss[``:'a bir_machine_lifted_imm_t``]) [
+     bmr_vars_def, MEM_MAP] >>
+  METIS_TAC[]
+) >>
+Cases_on `r.bmr_mem` >> rename1 `BMLM mv lf_mem` >>
+FULL_SIMP_TAC (std_ss++bmr_ss) [] >>
+`MEM mv (bmr_vars r)` suffices_by METIS_TAC[] >>
+FULL_SIMP_TAC (list_ss++bmr_ss) [bmr_vars_def]);
+
+
 val bir_is_lifted_inst_block_COMPUTE_SPLIT = store_thm ("bir_is_lifted_inst_block_COMPUTE_SPLIT",
-``!r.  bmr_ok r ==> !mu. WI_wfe mu ==> !mm l.
+``!r. bmr_ok r ==> !mu. WI_wfe mu ==> !mm l.
   ((WF_bmr_ms_mem_contains mm) /\ WI_is_sub (bmr_ms_mem_contains_interval mm) mu) ==>
   !ms_case_cond bl l'.
   (!ms bs. bmr_rel r bs ms ==>
@@ -493,20 +565,17 @@ val bir_is_lifted_inst_block_COMPUTE_SPLIT = store_thm ("bir_is_lifted_inst_bloc
            bmr_ms_mem_contains r ms mm ==>
            (BL_Address (bmr_pc_lf r ms) = l) ==>
 
-     ?ms' al_mem al_step imm_ups mem_chs mem_up eup updates. (
+     ?ms' al_step imm_ups mem_up al_mem eup updates. (
 
-     bir_is_lifted_inst_block_COMPUTE_ms'_COND r ms al_step ms' /\
-
+     bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK r bs ms al_step ms' /\
      bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES r ms ms' imm_ups /\
-     bir_is_lifted_inst_block_COMPUTE_mem_chs_COND r mu ms ms' al_mem mem_chs /\
-     bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r bs ms ms' mem_up /\
-     bir_is_lifted_inst_block_COMPUTE_eup_COND r eup ms' /\
+     bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r ms ms' mem_up /\
+     bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK r mu bs ms ms' al_mem /\
+     bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS r eup ms' /\
 
      (* Everything fits with respect to temps etc. *)
      bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES r bs ms ms' mem_up updates /\
      bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES r ms ms' imm_ups updates /\
-     EVERY (bir_assert_desc_OK bs.bst_environ) al_mem /\
-     EVERY (bir_assert_desc_OK bs.bst_environ) al_step /\
      bir_update_block_desc_OK bs.bst_environ eup updates /\
 
      (* The block does not depend on the actual values for the state, but just
@@ -519,8 +588,12 @@ REPEAT STRIP_TAC >>
 MATCH_MP_TAC (SIMP_RULE std_ss [AND_IMP_INTRO] bir_is_lifted_inst_block_COMPUTE) >>
 Q.EXISTS_TAC `l'` >> ASM_SIMP_TAC std_ss [] >>
 FULL_SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_THM,
-  bir_is_lifted_inst_block_COMPUTE_mem_COND_THM, EVERY_APPEND] >>
-METIS_TAC[]);
+  bir_is_lifted_inst_block_COMPUTE_mem_COND_THM, EVERY_APPEND,
+  bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK_def,
+  bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_def] >>
+METIS_TAC[bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_THM]);
+
+
 
 
 
@@ -536,6 +609,20 @@ val bir_assert_desc_OK_via_lifting = store_thm ("bir_assert_desc_OK_via_lifting"
 SIMP_TAC std_ss [bir_is_lifted_exp_def, bir_is_lifted_imm_exp_def,
   bir_assert_desc_OK_def]);
 
+
+
+(*******************)
+(* Weaken EUP cond *)
+(*******************)
+
+val bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_REMOVE_VAR = store_thm (
+ "bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_REMOVE_VAR",
+
+``!r eup ms'. bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS r eup ms' ==>
+bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS r (bir_updateE_desc_remove_var eup) ms'``,
+
+SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_def,
+  bir_updateE_desc_remove_var_REWRS]);
 
 
 

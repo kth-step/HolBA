@@ -236,19 +236,6 @@ val bmr_ss = rewrites (
 ;
 
 
-val bmr_ok_def = Define `bmr_ok r <=>
-(EVERY bir_machine_lifted_imm_OK r.bmr_imms) /\
-(bir_machine_lifted_mem_OK r.bmr_mem) /\
-(bir_machine_lifted_pc_OK r.bmr_pc)`;
-
-
-val bmr_rel_def = Define `bmr_rel r bs ms <=>
-(EVERY (\i. bir_machine_lifted_imm i bs ms) r.bmr_imms) /\
-(bir_machine_lifted_mem r.bmr_mem bs ms) /\
-(bir_machine_lifted_pc r.bmr_pc bs ms) /\
-(r.bmr_extra ms)`
-
-
 val bmr_mem_lf_def = Define `bmr_mem_lf r = case r.bmr_mem of BMLM v lf => lf`
 val bmr_pc_lf_def = Define `bmr_pc_lf r = case r.bmr_pc of BMLPC v_pc v_pc_cond lf => lf`
 
@@ -259,6 +246,24 @@ val bmr_vars_def = Define `bmr_vars r =
 val bmr_temp_vars_def = Define `bmr_temp_vars r =
   (case r.bmr_pc of BMLPC v1 v2 _ => [v1;v2]) ++
   (MAP (bir_temp_var T) (bmr_vars r))`;
+
+val bmr_varnames_distinct_def = Define `
+  bmr_varnames_distinct r <=>
+  ALL_DISTINCT (MAP bir_var_name (bmr_vars r ++ bmr_temp_vars r))`
+
+val bmr_ok_def = Define `bmr_ok r <=>
+(EVERY bir_machine_lifted_imm_OK r.bmr_imms) /\
+(bir_machine_lifted_mem_OK r.bmr_mem) /\
+(bir_machine_lifted_pc_OK r.bmr_pc) /\
+(bmr_varnames_distinct r)`;
+
+
+val bmr_rel_def = Define `bmr_rel r bs ms <=>
+(EVERY (\i. bir_machine_lifted_imm i bs ms) r.bmr_imms) /\
+(bir_machine_lifted_mem r.bmr_mem bs ms) /\
+(bir_machine_lifted_pc r.bmr_pc bs ms) /\
+(r.bmr_extra ms)`
+
 
 
 val MEM_bmr_vars = store_thm ("MEM_bmr_vars",
@@ -325,6 +330,7 @@ val bmr_vars_IN_TEMP = store_thm ("bmr_vars_IN_TEMP",
 
 SIMP_TAC list_ss [bmr_temp_vars_def, MEM_MAP] >>
 METIS_TAC[]);
+
 
 
 val bmr_vars_INITIALISED = store_thm ("bmr_vars_INITIALISED",
@@ -454,14 +460,32 @@ val arm8_bmr_EVAL = save_thm ("arm8_bmr_EVAL",
 );
 
 
+val arm8_bmr_vars_EVAL = save_thm ("arm8_bmr_vars_EVAL",
+SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, bmr_vars_def] ``bmr_vars arm8_bmr``);
+
+val arm8_bmr_temp_vars_EVAL = save_thm ("arm8_bmr_temp_vars_EVAL",
+SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
+  bir_temp_var_def, bir_temp_var_name_def]
+  ``bmr_temp_vars arm8_bmr``);
+
+val arm8_bmr_varnames_distinct = prove (``
+  bmr_varnames_distinct arm8_bmr``,
+SIMP_TAC std_ss [bmr_varnames_distinct_def,
+  arm8_bmr_vars_EVAL, arm8_bmr_temp_vars_EVAL, MAP, MAP, bir_var_name_def,
+  APPEND] >>
+SIMP_TAC (list_ss++stringSimps.STRING_ss) [ALL_DISTINCT]);
+
+
 val arm8_bmr_OK = store_thm ("arm8_bmr_OK",
   ``bmr_ok arm8_bmr``,
 
+SIMP_TAC std_ss [bmr_ok_def, arm8_bmr_varnames_distinct] >>
 SIMP_TAC (list_ss++bmr_ss++stringSimps.STRING_ss++wordsLib.WORD_ss++holBACore_ss) [
-  bmr_ok_def, arm8_bmr_EVAL,
+  arm8_bmr_EVAL,
   bir_machine_lifted_mem_OK_def, bir_machine_lifted_imm_OK_def,
   bir_is_temp_var_name_def, BType_Bool_def,
-  bir_machine_lifted_pc_OK_def]);
+  bir_machine_lifted_pc_OK_def,
+  bmr_varnames_distinct_def]);
 
 val arm8_bmr_rel_EVAL = save_thm ("arm8_bmr_rel_EVAL",
 SIMP_CONV (list_ss++bmr_ss++holBACore_ss) [
@@ -473,16 +497,7 @@ SIMP_CONV (list_ss++bmr_ss++holBACore_ss) [
 ``bmr_rel arm8_bmr bs ms``);
 
 
-val arm8_brm_vars_EVAL = save_thm ("arm8_brm_vars_EVAL",
-SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, bmr_vars_def] ``bmr_vars arm8_bmr``);
-
-val arm8_brm_temp_vars_EVAL = save_thm ("arm8_brm_temp_vars_EVAL",
-SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
-  bir_temp_var_def, bir_temp_var_name_def]
-  ``bmr_temp_vars arm8_bmr``);
-
-
-val arm8_brm_LIFTED = save_thm ("arm8_brm_LIFTED",
+val arm8_bmr_LIFTED = save_thm ("arm8_bmr_LIFTED",
 let
   val thm0 = MATCH_MP bmr_lifted arm8_bmr_OK
   val c = SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, GSYM CONJ_ASSOC]
@@ -553,11 +568,28 @@ val m0_bmr_EVAL = save_thm ("m0_bmr_EVAL",
     ``m0_bmr``
 );
 
+val m0_bmr_vars_EVAL = save_thm ("m0_bmr_vars_EVAL",
+SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, bmr_vars_def] ``bmr_vars m0_bmr``);
+
+val m0_bmr_temp_vars_EVAL = save_thm ("m0_bmr_temp_vars_EVAL",
+SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
+  bir_temp_var_def, bir_temp_var_name_def]
+  ``bmr_temp_vars m0_bmr``);
+
+val m0_bmr_varnames_distinct = prove (``
+  bmr_varnames_distinct m0_bmr``,
+SIMP_TAC std_ss [bmr_varnames_distinct_def,
+  m0_bmr_vars_EVAL, m0_bmr_temp_vars_EVAL, MAP, MAP, bir_var_name_def,
+  APPEND] >>
+SIMP_TAC (list_ss++stringSimps.STRING_ss) [ALL_DISTINCT]);
+
+
 val m0_bmr_OK = store_thm ("m0_bmr_OK",
   ``bmr_ok m0_bmr``,
 
+SIMP_TAC std_ss [bmr_ok_def, m0_bmr_varnames_distinct] >>
 SIMP_TAC (list_ss++bmr_ss++stringSimps.STRING_ss++wordsLib.WORD_ss++holBACore_ss) [
-  bmr_ok_def, m0_bmr_EVAL,
+  m0_bmr_EVAL,
   bir_machine_lifted_mem_OK_def, bir_machine_lifted_imm_OK_def,
   bir_is_temp_var_name_def, BType_Bool_def,
   bir_machine_lifted_pc_OK_def]);
@@ -569,7 +601,7 @@ val m0_bmr_label_thm = store_thm ("m0_bmr_label_thm",
 SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, m0_bmr_EVAL]);
 
 
-val m0_brm_LIFTED = save_thm ("m0_brm_LIFTED",
+val m0_bmr_LIFTED = save_thm ("m0_bmr_LIFTED",
 let
   val thm0 = MATCH_MP bmr_lifted m0_bmr_OK
   val c = SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, GSYM CONJ_ASSOC]

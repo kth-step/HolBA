@@ -655,6 +655,27 @@ SIMP_TAC (std_ss ++ DatatypeSimps.expand_type_quants_ss[``:bir_updateE_desc_t``,
 ]);
 
 
+val bir_updateE_desc_remove_var_def = Define `
+  (bir_updateE_desc_remove_var (BUpdateDescE_Jmp l) = (BUpdateDescE_Jmp l)) /\
+  (bir_updateE_desc_remove_var (BUpdateDescE_CJmp vo e b l1 l2) =
+     (BUpdateDescE_CJmp NONE e b l1 l2)) /\
+  (bir_updateE_desc_remove_var (BUpdateDescE_XJmp vo e i) = (BUpdateDescE_XJmp NONE e i)) /\
+  (bir_updateE_desc_remove_var (BUpdateDescE_Halt vo e i) =
+     (BUpdateDescE_Halt NONE e i))`;
+
+val bir_updateE_desc_remove_var_REWRS = store_thm ("bir_updateE_desc_remove_var_REWRS",
+  ``(!d. bir_updateE_desc_var (bir_updateE_desc_remove_var d) = NONE) /\
+    (!d. bir_updateE_desc_exp (bir_updateE_desc_remove_var d) = bir_updateE_desc_exp d) /\
+    (!d. bir_updateE_desc_value (bir_updateE_desc_remove_var d) = bir_updateE_desc_value d) /\
+    (!d. bir_updateE_desc_final_exp (bir_updateE_desc_remove_var d) = bir_updateE_desc_exp d) /\
+    (!d. bir_updateE_SEM (bir_updateE_desc_remove_var d) = bir_updateE_SEM d)``,
+
+REPEAT CONJ_TAC >> Cases >> (
+  SIMP_TAC std_ss [bir_updateE_desc_var_def, bir_updateE_desc_exp_def,
+                   bir_updateE_desc_value_def, bir_updateE_desc_final_exp_def,
+                   bir_updateE_desc_remove_var_def, bir_updateE_SEM_def]
+));
+
 val bir_updateE_desc_OK_def = Define `
   bir_updateE_desc_OK env d <=> (
      (!e v. ((bir_updateE_desc_exp d = SOME e) /\ (bir_updateE_desc_value d = SOME v)) ==>
@@ -666,6 +687,11 @@ val bir_updateE_desc_OK_def = Define `
               bir_env_var_is_declared env var)
   )`;
 
+val bir_updateE_desc_remove_OK = store_thm ("bir_updateE_desc_remove_OK",
+ ``!d env. bir_updateE_desc_OK env d ==> bir_updateE_desc_OK env (bir_updateE_desc_remove_var d)``,
+Cases >> (
+  SIMP_TAC std_ss [bir_updateE_desc_OK_def, bir_updateE_desc_remove_var_REWRS]
+));
 
 
 val bir_update_block_desc_OK_def = Define `

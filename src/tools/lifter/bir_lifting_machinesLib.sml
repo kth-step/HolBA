@@ -109,7 +109,7 @@ type bmr_rec = {bmr_const              : term,
 
 
 (* Some sanity checks to ensure everything is as expected. *)
-val brm_rec_sanity_check_basic = let
+val bmr_rec_sanity_check_basic = let
 
   fun check_const t = is_bir_lift_machine_rec_t_ty (type_of t) andalso
                       is_const t
@@ -211,8 +211,8 @@ in fn (ms, pc) =>
          bir_programSyntax.mk_BL_Address (bir_immSyntax.mk_Imm_of_num sz pc))
 end
 
-fun brm_rec_sanity_check r =
-  (brm_rec_sanity_check_basic r) andalso
+fun bmr_rec_sanity_check r =
+  (bmr_rec_sanity_check_basic r) andalso
   (can bmr_rec_extract_fields r) andalso
   (can bmr_rec_mk_label_of_num r) andalso
   (can bmr_rec_mk_label_of_num_eq_pc r) andalso
@@ -241,26 +241,34 @@ end;
 val arm8_step_hex' = bmr_normalise_step_thms
    (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"})
    (SIMP_RULE std_ss [nzcv_FOLDS_ARM8])
-    arm8_step_hex
+    arm8_step_hex;
 
-val arm8_state_mem_tm = prim_mk_const{Name="arm8_state_MEM", Thy="arm8"}
-val arm8_dest_mem = HolKernel.dest_binop arm8_state_mem_tm (ERR "arm8_dest_mem" "")
+val arm8_state_mem_tm = prim_mk_const{Name="arm8_state_MEM", Thy="arm8"};
+val arm8_dest_mem = HolKernel.dest_binop arm8_state_mem_tm (ERR "arm8_dest_mem" "");
+
+val arm8_REWRS = (
+   (type_rws ``:arm8_state``) @
+   (type_rws ``:ProcState``)
+)
+;
+
+val arm8_extra_ss = rewrites arm8_REWRS
 
 val arm8_bmr_rec : bmr_rec = {
   bmr_const              = prim_mk_const{Name="arm8_bmr", Thy="bir_lifting_machines"},
   bmr_ok_thm             = arm8_bmr_OK,
-  bmr_lifted_thm         = arm8_brm_LIFTED,
+  bmr_lifted_thm         = arm8_bmr_LIFTED,
   bmr_extra_lifted_thms  = [],
   bmr_eval_thm           = arm8_bmr_EVAL,
-  bmr_eval_vars_thm      = arm8_brm_vars_EVAL,
-  bmr_eval_temp_vars_thm = arm8_brm_temp_vars_EVAL,
+  bmr_eval_vars_thm      = arm8_bmr_vars_EVAL,
+  bmr_eval_temp_vars_thm = arm8_bmr_temp_vars_EVAL,
   bmr_eval_rel_thm       = arm8_bmr_rel_EVAL,
   bmr_label_thm          = arm8_bmr_label_thm,
   bmr_dest_mem           = arm8_dest_mem,
-  bmr_extra_ss           = rewrites [],
+  bmr_extra_ss           = arm8_extra_ss,
   bmr_step_hex           = arm8_step_hex'
 };
 
-val _ = assert brm_rec_sanity_check arm8_bmr_rec
+val _ = assert bmr_rec_sanity_check arm8_bmr_rec
 
 end;
