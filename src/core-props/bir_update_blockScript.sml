@@ -223,41 +223,6 @@ ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_temp_var_name_11] >>
 METIS_TAC[bir_is_temp_var_name_ALT_DEF]);
 
 
-
-
-val bir_update_blockB_desc_OK_compute_def = Define `
-   bir_update_blockB_desc_OK_compute env (updated_vars : string set) (used_exp_vars : string set) updates =
-   (bir_update_blockB_desc_OK env updates /\
-    EVERY (\up.
-       (bir_var_name (bir_updateB_desc_var up) IN updated_vars) /\
-       (IMAGE bir_var_name (bir_vars_of_exp (bir_updateB_desc_exp up)) SUBSET used_exp_vars))
-      updates)`
-
-val bir_update_blockB_desc_OK_compute_FINAL = store_thm ("bir_update_blockB_desc_OK_compute_FINAL",
-  ``bir_update_blockB_desc_OK_compute env uvs evs updates ==>
-    bir_update_blockB_desc_OK env updates``, SIMP_TAC std_ss [bir_update_blockB_desc_OK_compute_def])
-
-val bir_update_blockB_desc_OK_compute_INIT = store_thm ("bir_update_blockB_desc_OK_compute_INIT",
-  ``!env. bir_update_blockB_desc_OK_compute env {} {} []``,
-SIMP_TAC list_ss [bir_update_blockB_desc_OK_compute_def, bir_update_blockB_desc_OK_NULL]);
-
-val bir_update_blockB_desc_OK_compute_CONS = store_thm ("bir_update_blockB_desc_OK_compute_CONS",
-  ``bir_update_blockB_desc_OK_compute env uvs evs updates ==>
-    bir_updateB_desc_OK env (BUpdateDescB var e v use_temp) ==>
-    ~((bir_var_name var) IN uvs) /\
-    ~((bir_var_name (bir_temp_var use_temp var)) IN evs) ==>
-    bir_update_blockB_desc_OK_compute env ((bir_var_name var) INSERT uvs) (IMAGE bir_var_name (bir_vars_of_exp e) UNION evs) ((BUpdateDescB var e v use_temp)::updates)``,
-
-SIMP_TAC list_ss [bir_update_blockB_desc_OK_compute_def, bir_update_blockB_desc_OK_CONS,
-  bir_updateB_desc_ACCESSORS, IN_INSERT, SUBSET_UNION, IN_IMAGE, SUBSET_DEF,
-  GSYM EVERY_CONJ] >>
-
-SIMP_TAC (std_ss ++ boolSimps.CONJ_ss) [GSYM LEFT_FORALL_IMP_THM, EVERY_MEM,
-  bir_temp_var_REWRS] >>
-METIS_TAC[]);
-
-
-
 (*****************)
 (* Update blocks *)
 (*****************)
