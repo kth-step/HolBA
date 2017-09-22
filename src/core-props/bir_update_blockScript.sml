@@ -687,7 +687,7 @@ val bir_updateE_desc_OK_def = Define `
               bir_env_var_is_declared env var)
   )`;
 
-val bir_updateE_desc_remove_OK = store_thm ("bir_updateE_desc_remove_OK",
+val bir_updateE_desc_OK_remove_var = store_thm ("bir_updateE_desc_OK_remove_var",
  ``!d env. bir_updateE_desc_OK env d ==> bir_updateE_desc_OK env (bir_updateE_desc_remove_var d)``,
 Cases >> (
   SIMP_TAC std_ss [bir_updateE_desc_OK_def, bir_updateE_desc_remove_var_REWRS]
@@ -700,10 +700,17 @@ val bir_update_block_desc_OK_def = Define `
   bir_update_blockB_desc_OK env updates /\
   bir_updateE_desc_OK env eup /\
 
-  (!v u v'. v IN bir_updateE_desc_final_exp_vars eup ==>
-            MEM u updates ==>
-            v' IN bir_vars_of_updateB_desc u ==>
-            ((bir_var_name v <> bir_var_name v'))))`;
+  (!v up v'. (bir_updateE_desc_var eup = SOME v) ==>
+             (MEM up updates) ==>
+             (v' IN (bir_vars_of_updateB_desc up)) ==>
+             ((bir_var_name v <> bir_var_name v'))) /\
+
+  (!v e up v'. (bir_updateE_desc_var eup = NONE) ==>
+               (bir_updateE_desc_exp eup = SOME e) ==>
+               (v IN bir_vars_of_exp e) ==>
+               MEM up updates ==>
+               (v' IN {bir_updateB_desc_temp_var up; bir_updateB_desc_var up}) ==>
+               ((bir_var_name v <> bir_var_name v'))))`;
 
 
 val bir_update_blockE_INIT_def = Define `
@@ -896,9 +903,17 @@ Tactical.REVERSE CONJ_TAC >- (
      REPEAT STRIP_TAC >>
      MATCH_MP_TAC bir_env_read_EQ_lookup_IMPL >>
      Q.PAT_X_ASSUM `!vn. _` MATCH_MP_TAC >>
-     FULL_SIMP_TAC std_ss [bir_updateE_desc_final_exp_vars_def, EVERY_MEM,
+     FULL_SIMP_TAC std_ss [EVERY_MEM, bir_updateE_desc_final_exp_def,
        bir_vars_of_updateB_desc_def, IN_INSERT] >>
-     METIS_TAC[]
+     Cases_on `bir_updateE_desc_var eup` >| [
+       Cases_on `bir_updateE_desc_exp eup` >> FULL_SIMP_TAC std_ss [] >>
+       METIS_TAC[],
+
+       FULL_SIMP_TAC std_ss [] >>
+       REPEAT BasicProvers.VAR_EQ_TAC >>
+       FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, IN_SING] >>
+       METIS_TAC[]
+     ]
   ) >>
   ASM_REWRITE_TAC[] >>
   Tactical.REVERSE (Cases_on `bir_updateE_desc_var eup`) >- (

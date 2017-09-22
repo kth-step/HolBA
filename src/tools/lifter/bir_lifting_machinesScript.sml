@@ -237,7 +237,18 @@ val bmr_ss = rewrites (
 
 
 val bmr_mem_lf_def = Define `bmr_mem_lf r = case r.bmr_mem of BMLM v lf => lf`
+val bmr_mem_var_def = Define `bmr_mem_var r = case r.bmr_mem of BMLM v lf => v`
 val bmr_pc_lf_def = Define `bmr_pc_lf r = case r.bmr_pc of BMLPC v_pc v_pc_cond lf => lf`
+val bmr_pc_var_def = Define `bmr_pc_var r = case r.bmr_pc of BMLPC v_pc v_pc_cond lf => v_pc`
+val bmr_pc_var_cond_def = Define `bmr_pc_var_cond r = case r.bmr_pc of BMLPC v_pc v_pc_cond lf => v_pc_cond`;
+
+val bmr_mem_addr_sz_def = Define `bmr_mem_addr_sz r =
+  (case (bir_var_type (bmr_mem_var r)) of
+      (BType_Mem addr_sz _) => addr_sz)`;
+
+val bmr_mem_val_sz_def = Define `bmr_mem_val_sz r =
+  (case (bir_var_type (bmr_mem_var r)) of
+      (BType_Mem _ val_sz) => val_sz)`;
 
 val bmr_vars_def = Define `bmr_vars r =
   (case r.bmr_mem of (BMLM v _) => v)::

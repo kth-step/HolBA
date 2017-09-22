@@ -42,6 +42,14 @@ val (bmr_rel_tm,  mk_bmr_rel, dest_bmr_rel, is_bmr_rel)  = syntax_fns3 "bmr_rel"
 val (bmr_vars_tm,  mk_bmr_vars, dest_bmr_vars, is_bmr_vars)  = syntax_fns1 "bmr_vars";
 val (bmr_temp_vars_tm,  mk_bmr_temp_vars, dest_bmr_temp_vars, is_bmr_temp_vars)  = syntax_fns1 "bmr_temp_vars";
 
+fun get_const name = prim_mk_const{Name=name,        Thy="bir_lifting_machines"}
+
+val bmr_pc_lf_tm       =   get_const "bmr_pc_lf";
+val bmr_pc_var_tm      =   get_const "bmr_pc_var";
+val bmr_pc_var_cond_tm =   get_const "bmr_pc_var_cond";
+val bmr_mem_lf_tm      =   get_const "bmr_mem_lf";
+val bmr_mem_var_tm     =   get_const "bmr_mem_var";
+
 
 val (BMLI_tm,  mk_BMLI, dest_BMLI, is_BMLI)  = syntax_fns2 "BMLI";
 val (BMLM_tm,  mk_BMLM, dest_BMLM, is_BMLM)  = syntax_fns2 "BMLM";

@@ -67,6 +67,21 @@ GEN_TAC >> Cases >- (
 ASM_SIMP_TAC list_ss [listTheory.GENLIST_CONS, arithmeticTheory.ADD_CLAUSES])
 
 
+val ALL_DISTINCT_MAP_FILTER = store_thm ("ALL_DISTINCT_MAP_FILTER",
+``!f P l. ALL_DISTINCT (MAP f l) ==> ALL_DISTINCT (MAP f (FILTER P l))``,
+GEN_TAC >> GEN_TAC >>
+Induct >> ASM_SIMP_TAC list_ss [] >>
+
+REPEAT STRIP_TAC >>
+rename1 `f x` >>
+Cases_on `P x` >- (
+  FULL_SIMP_TAC list_ss [listTheory.MEM_MAP, listTheory.MEM_FILTER] >>
+  METIS_TAC[]
+) >>
+ASM_SIMP_TAC list_ss []);
+
+
+
 val INDEX_FIND_EQ_NONE = store_thm ("INDEX_FIND_EQ_NONE",
   ``!l i P. (INDEX_FIND i P l = NONE) <=> (~(EXISTS P l))``,
 Induct >> SIMP_TAC list_ss [listTheory.INDEX_FIND_def] >>

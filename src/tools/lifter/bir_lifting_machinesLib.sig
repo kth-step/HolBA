@@ -41,6 +41,12 @@ sig
    val dest_bir_lifting_machine_rec :
      term -> term list (*imms*) * term (* mem *) * term (*pc*) * term (*extra*) * term (* step *)
 
+   val bmr_pc_lf_tm       : term;
+   val bmr_pc_var_tm      : term;
+   val bmr_pc_var_cond_tm : term;
+   val bmr_mem_lf_tm      : term;
+   val bmr_mem_var_tm     : term;
+
    val BMLI_tm   : term
    val dest_BMLI : term -> term * term
    val is_BMLI   : term -> bool
