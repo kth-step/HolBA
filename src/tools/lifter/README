@@ -1,0 +1,8 @@
+This directory contains formalisations and SML code to lift machine
+code instructions and programs to BIR programs. The main entry point
+is "bir_inst_liftingLib". It provides top-level functions for
+performing such liftings. Please look at its signature for details.
+
+A large component of the lifter is the expression lifter, which is
+able to construct bir-expressions corresponding to terms of word types.
+You might want to look at "bir_exp_liftingLib" for using it directly.

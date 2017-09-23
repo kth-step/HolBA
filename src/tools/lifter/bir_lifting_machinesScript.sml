@@ -275,7 +275,9 @@ val bmr_rel_def = Define `bmr_rel r bs ms <=>
 (bir_machine_lifted_pc r.bmr_pc bs ms) /\
 (r.bmr_extra ms)`
 
-
+val bmr_rel_implies_extra = store_thm ("bmr_rel_implies_extra",
+ ``!r bs ms. bmr_rel r bs ms ==> r.bmr_extra ms``,
+SIMP_TAC std_ss [bmr_rel_def]);
 
 val MEM_bmr_vars = store_thm ("MEM_bmr_vars",
 ``!r v. MEM v (bmr_vars r) <=> (?mf. r.bmr_mem = (BMLM v mf)) \/
