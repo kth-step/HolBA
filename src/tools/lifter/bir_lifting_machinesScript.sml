@@ -459,7 +459,7 @@ val arm8_state_is_OK_def = Define `arm8_state_is_OK (ms:arm8_state) <=> (
 
 val arm8_bmr_def = Define `arm8_bmr = <|
   bmr_extra := \ms. arm8_state_is_OK ms;
-  bmr_imms := (arm8_REGS_lifted_imms_LIST ++ arm8_PSTATE_lifted_imms_LIST ++ arm8_EXTRA_lifted_imms_LIST);
+  bmr_imms := (arm8_PSTATE_lifted_imms_LIST ++ arm8_REGS_lifted_imms_LIST ++ arm8_EXTRA_lifted_imms_LIST);
   bmr_mem := arm8_lifted_mem;
   bmr_pc := arm8_lifted_pc;
   bmr_step_fun := NextStateARM8 |>`;
