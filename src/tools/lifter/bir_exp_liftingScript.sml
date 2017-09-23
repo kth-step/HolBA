@@ -5,6 +5,7 @@ open bir_envTheory bir_immTheory bir_imm_expTheory
 open bir_immSyntax wordsTheory
 open bir_mem_expTheory bir_bool_expTheory
 open bir_nzcv_expTheory
+open arm8_stepTheory
 
 val _ = new_theory "bir_exp_lifting";
 
@@ -385,6 +386,15 @@ val bir_is_lifted_imm_exp_LOAD_ARM_M0 = save_thm ("bir_is_lifted_imm_exp_LOAD_AR
   mk_bir_is_lifted_imm_exp_LOAD Bit32_tm Bit8_tm Bit32_tm bir_mem_expSyntax.BEnd_BigEndian_tm)
 
 
+val bir_is_lifted_imm_exp_LOAD_ARM8 = save_thm ("bir_is_lifted_imm_exp_LOAD_ARM8",
+  LIST_CONJ [
+    (REWRITE_RULE [GSYM mem_word_def]
+      (mk_bir_is_lifted_imm_exp_LOAD Bit64_tm Bit8_tm Bit32_tm bir_mem_expSyntax.BEnd_LittleEndian_tm)),
+    (REWRITE_RULE [GSYM mem_dword_def]
+      (mk_bir_is_lifted_imm_exp_LOAD Bit64_tm Bit8_tm Bit64_tm bir_mem_expSyntax.BEnd_LittleEndian_tm))
+  ]);
+
+
 (***************)
 (* boolean ops *)
 (***************)
@@ -607,6 +617,7 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_CASTS,
              bir_is_lifted_imm_exp_COND,
              bir_is_lifted_imm_exp_LOAD_ENDIAN,
+             bir_is_lifted_imm_exp_LOAD_ARM8,
              bir_is_lifted_imm_exp_NZCV,
              bir_is_lifted_imm_exp_MSB,
              bir_is_lifted_imm_exp_ALIGNED]);
