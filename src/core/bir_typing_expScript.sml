@@ -241,10 +241,6 @@ REPEAT CONJ_TAC >> (
 ));
 
 
-
-val bir_is_well_typed_exp_def = Define `bir_is_well_typed_exp e <=>  (type_of_bir_exp e <> NONE)`
-
-
 (* ------------------------------------------------------------------------- *)
 (*  Looking at  variables used somewhere in an expression                    *)
 (* ------------------------------------------------------------------------- *)
