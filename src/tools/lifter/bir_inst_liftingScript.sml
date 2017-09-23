@@ -1288,9 +1288,9 @@ bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL r bs mem_up imm_ups all_var_na
      (!vn e up v'.
         (~eup_temp \/ (bir_updateE_desc_var eup = NONE)) ==>
         (bir_updateE_desc_exp eup = SOME e) ==>
-        vn IN IMAGE bir_var_name (bir_vars_of_exp e) ==>
-        ~(vn IN (bir_is_lifted_inst_block_COMPUTE_updates_UPDATES_VARS
-           (updates_imm ++ (option_CASE update_mem_opt [] (\x. [x]))))))) ==>
+        DISJOINT (IMAGE bir_var_name (bir_vars_of_exp e))
+           (bir_is_lifted_inst_block_COMPUTE_updates_UPDATES_VARS
+             (updates_imm ++ (option_CASE update_mem_opt [] (\x. [x])))))) ==>
 
 bir_is_lifted_inst_block_COMPUTE_updates_FULL
   r bs mem_up imm_ups eup eup_temp (updates_imm ++ (option_CASE update_mem_opt [] (\x. [x])))``,
@@ -1302,7 +1302,7 @@ FULL_SIMP_TAC std_ss [
   bir_is_lifted_inst_block_COMPUTE_updates_UPDATES_VARS_def,
   IN_BIGUNION, IN_IMAGE,
   GSYM RIGHT_FORALL_OR_THM, IN_INSERT,
-  NOT_IN_EMPTY] >>
+  NOT_IN_EMPTY, pred_setTheory.DISJOINT_ALT] >>
 METIS_TAC[]);
 
 

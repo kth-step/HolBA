@@ -22,20 +22,20 @@ val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
 
 fun get_const name = prim_mk_const{Name=name,        Thy="bir_inst_lifting"}
 
-val bir_assert_desc_t_ty = 
+val bir_assert_desc_t_ty =
    Type.mk_thy_type {Tyop = "bir_assert_desc_t", Thy = "bir_update_block", Args = []};
 
 
-val bir_updateE_desc_exp_tm = prim_mk_const{Name="bir_updateE_desc_exp", Thy="bir_update_block"} 
+val bir_updateE_desc_exp_tm = prim_mk_const{Name="bir_updateE_desc_exp", Thy="bir_update_block"}
 
 val block_observe_ty = mk_vartype ":'observation_type"
 
-val bir_is_lifted_inst_block_COMPUTE_block_tm = 
+val bir_is_lifted_inst_block_COMPUTE_block_tm =
    inst [Type.alpha |-> block_observe_ty] (get_const "bir_is_lifted_inst_block_COMPUTE_block")
 
 val bmr_ms_mem_contains_tm = get_const "bmr_ms_mem_contains";
 
-val bir_is_lifted_inst_block_COMPUTE_precond_tm = 
+val bir_is_lifted_inst_block_COMPUTE_precond_tm =
     inst [Type.delta |-> block_observe_ty] (get_const "bir_is_lifted_inst_block_COMPUTE_precond")
 
 val bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK_tm =
@@ -88,7 +88,12 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = hex_code_of_asm `MOV x0 , x1`
   val hex_code = hex_code_of_asm `ADD X0, X1, W2, SXTW`
   val hex_code = hex_code_of_asm `LDRSW X0, [X1, #8]`
+  val hex_code = hex_code_of_asm `lsl x0, x2, #8`
+  val hex_code = hex_code_of_asm `ldr x0, [x2, #0]`
+  val hex_code = hex_code_of_asm `adds x1, x1, #0`
 
+  val hex_code = "D65F03C0";
+  val hex_code = "12001C00"
 *)
 
   open MD;
@@ -120,7 +125,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
        (mk_bmr_field_imms (#bmr_const mr)),
        (mk_bmr_field_pc (#bmr_const mr)),
        (mk_bmr_field_mem (#bmr_const mr))]
-    val thms0 = map (SIMP_CONV (std_ss++bmr_ss) [(#bmr_eval_thm mr), 
+    val thms0 = map (SIMP_CONV (std_ss++bmr_ss) [(#bmr_eval_thm mr),
        bmr_mem_lf_def, bmr_pc_lf_def, bmr_pc_var_cond_def, bmr_pc_var_def,
        bmr_mem_var_def]) tms
     val thms1 = map GEN_ALL thms0
@@ -140,7 +145,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   (* Instantiate the inst_lifting theorem with the record and types. *)
   val inst_lift_THM = let
-     val thm0 = INST_TYPE [mk_vartype "'o" |-> block_observe_ty] 
+     val thm0 = INST_TYPE [mk_vartype "'o" |-> block_observe_ty]
            (bir_is_lifted_inst_block_COMPUTE_OPTIMISED);
      val thm1 = ISPEC (#bmr_const mr) thm0;
      val thm2 = MP thm1 (#bmr_ok_thm mr)
@@ -178,19 +183,19 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     ISPECL [(#bmr_const mr), bs_v] bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL___INTRO_NO_MEM;
 
   val comp_thm_eup_JMP = let
-     val thm0 = ISPECL [#bmr_const mr, bs_v] 
-          bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS___JMP 
+     val thm0 = ISPECL [#bmr_const mr, bs_v]
+          bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS___JMP
   in thm0 end;
 
   val comp_thm_eup_CJMP = let
-     val thm0 = ISPECL [#bmr_const mr, bs_v, ms_v] 
-          bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS___CJMP 
+     val thm0 = ISPECL [#bmr_const mr, bs_v, ms_v]
+          bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS___CJMP
      val thm1 = UNDISCH (MP thm0 (#bmr_ok_thm mr))
   in thm1 end;
 
   val comp_thm_eup_XJMP = let
-     val thm0 = ISPECL [#bmr_const mr, bs_v, ms_v] 
-          bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS___XJMP 
+     val thm0 = ISPECL [#bmr_const mr, bs_v, ms_v]
+          bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS___XJMP
      val thm1 = UNDISCH (MP thm0 (#bmr_ok_thm mr))
   in thm1 end;
 
@@ -235,7 +240,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
 
   (* Constructing net for expression lifting. The _raw version does the lifting for
-     the environment in a specially prepared net. Since we usually want the whole 
+     the environment in a specially prepared net. Since we usually want the whole
      lifting to fail, if some preconds remain, the wrapper exp_lift_fn checks for
      the existence of such preconds. Notice that this does not mean hypothesis, i.e.
      according to the implementation of bir_exp_lift only "bir_is_lifted_exp" terms. *)
@@ -296,14 +301,14 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
            alignmentTheory.aligned_numeric, wordsTheory.word_add_n2w] thm handle UNCHANGED => thm
      fun inst_extra_vars thm = let
         val (preconds, _) = strip_imp_only (concl thm)
-        fun mk_var_subst tm = let
-           val (v1, v2) = dest_eq tm
+        fun mk_var_subst (tm, s) = let
+           val (v1, v2) = dest_eq (subst s tm)
         in
-           (if (is_var v2) then (v2 |-> v1) else
-            if (is_var v1) then (v1 |-> v2) else 
+           (if (is_var v2) then (v2 |-> v1)::s else
+            if (is_var v1) then (v1 |-> v2)::s else
             fail ())
-        end;
-        val s = Lib.mapfilter mk_var_subst preconds
+        end handle HOL_ERR _ => s;
+        val s = List.rev (foldl mk_var_subst [] preconds)
      in if (null s) then thm else
         REWRITE_RULE [] (INST s thm)
      end;
@@ -367,13 +372,13 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (* Preprocessing next-theorem *)
   (******************************)
 
-  (* If multiple theorems are produced by the step function, we might want to 
+  (* If multiple theorems are produced by the step function, we might want to
      preprocess them. If there are exactly 2, one might want to merge them for example.
      Each theorem is accompanied by condition. The code generated around the theorems
      has to guarantee, that this condition is satisfied, once the block belonging to
      this theorem is executed. *)
 
-  fun preprocess_next_thms (lb:term) (pc:Arbnum.num) ([]:thm list) = 
+  fun preprocess_next_thms (lb:term) (pc:Arbnum.num) ([]:thm list) =
       failwith "preprocess_next_thms called with empty list"
     | preprocess_next_thms lb pc [thm] = [(lb, T, thm)]
     | preprocess_next_thms lb pc thms = failwith "TODO: implement this"
@@ -387,9 +392,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (*----------------------*)
   (* Compute ms', al_step *)
   (*----------------------*)
-  
+
   (* given a step theorem, compute the necessary preconditions and
-     and lift them. This gives rise to al_step. Also extract the term ms'. *) 
+     and lift them. This gives rise to al_step. Also extract the term ms'. *)
 
   fun compute_al_step_ms' next_thm0 =
   let
@@ -425,14 +430,14 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (*-----------------*)
   (* Compute imm_ups *)
   (*-----------------*)
-  
+
   (* Given the new machine state as a term, figure out, which changes actually did
      happen. These are represented by the imm_ups list. We need this list as a term
      for later instantiating as well as only the changes as an SML datastructure for
      computing the block-updates later. Moreover, a theorem stating that the
-     computed imm_ups list is correct is produced. *) 
+     computed imm_ups list is correct is produced. *)
 
-  fun compute_imm_ups ms'_t = 
+  fun compute_imm_ups ms'_t =
   let
     val compute_single_up_single_conv = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [
          updateTheory.APPLY_UPDATE_THM, wordsTheory.n2w_11]
@@ -445,15 +450,15 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
                       (optionSyntax.mk_some res, SOME res)
     in
       (upd_tm, upd_tm_opt, lf_ms'_thm)
-    end; 
+    end;
 
     val (upds_tms, eval_thms) =
        foldl (fn ((bmli_tm, lf_ms), (resl, thmL)) =>
-         let val (upd_tm, upd_opt, lf_ms'_thm) = compute_single_up lf_ms 
+         let val (upd_tm, upd_opt, lf_ms'_thm) = compute_single_up lf_ms
              val resl' = pairSyntax.mk_pair (bmli_tm, upd_tm)::resl;
-             val thml' = lf_ms'_thm :: thmL; 
+             val thml' = lf_ms'_thm :: thmL;
          in (resl', thml') end)
-         ([], []) mr_imms_lf_of_ms      
+         ([], []) mr_imms_lf_of_ms
 
     val imm_ups_tm = listSyntax.mk_list (List.rev upds_tms, type_of (hd upds_tms))
 
@@ -477,12 +482,12 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (*-----------------*)
   (* Compute mem_up *)
   (*-----------------*)
-  
-  (* Given a new state, we compute whether updates to the memory happend. This
-     is similar to computing updates to immediates via compute_imm_ups. 
-     The computed term, its SML representation and a correctness theorem are returned. *) 
 
-  fun compute_mem_up ms'_t = 
+  (* Given a new state, we compute whether updates to the memory happend. This
+     is similar to computing updates to immediates via compute_imm_ups.
+     The computed term, its SML representation and a correctness theorem are returned. *)
+
+  fun compute_mem_up ms'_t =
   let
      val lf_ms'_tm = subst [ms_v |-> ms'_t] mr_mem_lf_of_ms
      val lf_ms'_thm = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) []
@@ -515,8 +520,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (*-----------------*)
   (* Compute al_mem  *)
   (*-----------------*)
-  
-  (* Given 
+
+  (* Given
 
      - the next machine state ms'_t as a term
      - the region of memory that needs to remain unchanged in the form of a theorem
@@ -529,7 +534,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     change in the region specified bz mu_thm.
     This list of assertions is returned together with a theorem stating its validity.
 
-    If the memory is not updated, finding such a list is trival, just return the 
+    If the memory is not updated, finding such a list is trival, just return the
     empty list of assertions.
 
     More interesting, if the memory is updated, we need to find out at which addressed.
@@ -558,8 +563,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   in
      failwith ("TODO: implement it")
   end
- 
-  (* Combine both *) 
+
+  (* Combine both *)
   fun compute_al_mem ms'_t mu_thm real_mem_up_opt mem_up_thm = (
     case (real_mem_up_opt) of
         NONE => compute_al_mem_NONE ms'_t mu_thm mem_up_thm
@@ -570,11 +575,11 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (*-------------*)
   (* Compute eup *)
   (*-------------*)
-  
+
   (* Given a next state as a term, we look at the PC of the state and
      compute an end statement update description that allows us to jump to
-     that PC. *) 
-  fun compute_eup ms'_t = 
+     that PC. *)
+  fun compute_eup ms'_t =
   let
      val lf_ms'_tm = list_mk_icomb bmr_pc_lf_tm [(#bmr_const mr), ms'_t];
      val lf_ms'_thm = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [bmr_eval_REWRS]
@@ -582,7 +587,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      val res_imm = rhs (concl lf_ms'_thm)
 
      (* There are 3 cases supported:
-        
+
         - simple unconditional jump : res is a literal word, e.g. 0x1000w
         - simple conditional jump : res is a conditional, with 2 literal words in the cases, e.g.
               if (some condition) then 0x1000w else 0x1008w
@@ -596,13 +601,13 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         val (_, w) = bir_immSyntax.gen_dest_Imm res_imm
         val _ = if (wordsSyntax.is_word_literal w) then () else fail ()
 
-        val thm0 = SPEC ms'_t comp_thm_eup_JMP 
+        val thm0 = SPEC ms'_t comp_thm_eup_JMP
         val thm1 = PURE_REWRITE_RULE [lf_ms'_thm] thm0
      in
         thm1
-     end;     
-     
-     (* DEBUG 
+     end;
+
+     (* DEBUG
         val expand_thm = prove (``Imm64 w = Imm64 (if T then w else w)``, SIMP_TAC std_ss [])
         val lf_ms'_thm = ONCE_REWRITE_RULE [expand_thm] lf_ms'_thm
         val res_imm = rhs (concl lf_ms'_thm)
@@ -622,7 +627,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         val thm3 = PURE_REWRITE_RULE [bmr_eval_REWRS] thm2
      in
         thm3
-     end;     
+     end;
 
      fun compute_eup_XJMP () = let
         val lift_thm = exp_lift_fn res_imm
@@ -633,13 +638,13 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         val thm3 = PURE_REWRITE_RULE [bmr_eval_REWRS] thm2
      in
         thm3
-     end;     
+     end;
 
      val eup_thm = compute_eup_JMP () handle HOL_ERR _ =>
                    compute_eup_CJMP () handle HOL_ERR _ =>
                    compute_eup_XJMP ();
      val eup_tm = rand (rator (concl eup_thm))
-   in     
+   in
      (eup_tm, eup_thm)
    end;
 
@@ -647,7 +652,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (*-----------------*)
   (* Compute updates *)
   (*-----------------*)
-  
+
   (* Given imm_ups, mem_up and the end description, the real updates,
      whether to use a temp var for the end description and theorem
      stating the correctness of the computed updates is derived.
@@ -655,19 +660,20 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      This mainly means lifting the values of imm_ups and mem_up and
      computing the flag whether to use temp vars by looking at which
      vars are still needed afterwards.
-  *) 
-  local 
+  *)
+  local
      val vn_set_empty = HOLset.empty String.compare;
 
      (* compute var names of expression. Return both a theorem and add them to the given
         string set. *)
      val comp_varnames_conv = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) [
-         pred_setTheory.INSERT_UNION_EQ, 
+         pred_setTheory.INSERT_UNION_EQ,
+         bir_temp_varsTheory.bir_temp_var_name_def,
          bir_bool_expTheory.bir_exp_true_def,
          bir_bool_expTheory.bir_exp_false_def,
          bir_nzcv_expTheory.BExp_nzcv_ADD_vars_of, bir_nzcv_expTheory.BExp_nzcv_SUB_vars_of]
 
-     val comp_upd_imm_varname_conv = SIMP_CONV (std_ss++stringSimps.STRING_ss) [bir_temp_varsTheory.bir_temp_var_def, bir_envTheory.bir_var_name_def]
+     val comp_upd_imm_varname_conv = SIMP_CONV (list_ss++stringSimps.STRING_ss) [bir_temp_varsTheory.bir_temp_var_def, bir_envTheory.bir_var_name_def, bir_temp_varsTheory.bir_temp_var_name_def]
 
      val comp_upd_imm_nin_conv = SIMP_CONV (list_ss++pred_setSimps.PRED_SET_ss++stringSimps.STRING_ss) []
 
@@ -690,19 +696,23 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      end;
 
      fun simplify_FULL_REL_vars_RULE thms =
-       let 
+       let
           val c = PURE_REWRITE_CONV (pred_setTheory.INSERT_UNION_EQ::pred_setTheory.UNION_EMPTY::thms)
        in
          CONV_RULE (RATOR_CONV (RATOR_CONV (RAND_CONV c)))
        end;
 
 (*
+     val vn_set0 = vn_set
      val full_rel_thm = init_thm
 
-     val (v_t, lf_t, SOME res_t) = el 5 imm_ups_tm_list
-*)
+     val (full_rel_thm, vn_set) = foldl add_imm_up (init_thm, vn_set)
+         (List.take (imm_ups_tm_list, 38));
 
-     fun add_imm_up ((v_t, lf_t, NONE), (full_rel_thm, vn_set)) = 
+
+     val (v_t, lf_t, SOME res_t) = el 39 imm_ups_tm_list
+*)
+     fun add_imm_up ((v_t, lf_t, NONE), (full_rel_thm, vn_set)) =
          (SPECL [v_t, lf_t] (MATCH_MP comp_thm_updates_ADD_IMM_UP_NONE full_rel_thm),
           vn_set)
        | add_imm_up ((v_t, lf_t, SOME res_t), (full_rel_thm, vn_set)) =
@@ -710,7 +720,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
            val lift_thm = PURE_REWRITE_RULE [bir_exp_liftingTheory.bir_is_lifted_exp_def]
               (exp_lift_fn res_t)
            val e_tm = rand (rator (concl lift_thm))
- 
+
            val (vn_e_thm, vn_set') = comp_varnames e_tm vn_set
 
            (* compute temp *)
@@ -718,7 +728,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
              val vn_s = stringSyntax.fromHOLstring (fst(bir_envSyntax.dest_BVar v_t))
            in
              if HOLset.member (vn_set, vn_s) then T else F
-           end; 
+           end;
 
            val thm0 = SPECL [v_t, lf_t, res_t, e_tm, use_temp] (MATCH_MP comp_thm_updates_ADD_IMM_UP full_rel_thm)
            val thm1 = MP thm0 lift_thm
@@ -727,7 +737,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
            val precond_thm = let
              val xthm0 = RAND_CONV (RATOR_CONV (RAND_CONV comp_upd_imm_varname_conv)) precond_tm
              val xthm1 = CONV_RULE (RHS_CONV comp_upd_imm_nin_conv) xthm0
-             val xthm2 = EQT_ELIM xthm1             
+             val xthm2 = EQT_ELIM xthm1
            in xthm2 end
 
            val thm3 = MP thm1 precond_thm
@@ -738,13 +748,13 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   in
 
-  fun compute_updates mem_up_t imm_ups_t eup_t = 
+  fun compute_updates mem_up_t imm_ups_t eup_t =
   let
      (* Deal with mem_up *)
-     val (init_thm, vn_set) = if (optionSyntax.is_none mem_up_t) then 
+     val (init_thm, vn_set) = if (optionSyntax.is_none mem_up_t) then
           (comp_thm_updates_INTRO_NO_MEM, vn_set_empty)
         else let
-           (* DEBUG: 
+           (* DEBUG:
               val mem_up_t = optionSyntax.mk_some mr_mem_lf_of_ms
             *)
            val mem_ms' = optionSyntax.dest_some mem_up_t
@@ -767,8 +777,11 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
            val (v_t, lf_t) = dest_BMLI t1
         in
            (v_t, lf_t, res_opt)
-        end)        
+        end)
         (fst (listSyntax.dest_list imm_ups_t)));
+
+     val (full_rel_thm, vn_set_final) = foldl add_imm_up (init_thm, vn_set)
+         (List.take (imm_ups_tm_list, 38));
 
      val (full_rel_thm, vn_set_final) = foldl add_imm_up (init_thm, vn_set) imm_ups_tm_list;
 
@@ -781,7 +794,6 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
           val (precond_tm, t1) = dest_imp_only t0
           val updates_tm = rand t1
        in (eup_temp_v, precond_tm, updates_tm) end;
-
        val updates_thm = SIMP_CONV list_ss [bmr_eval_REWRS] updates_tm
 
        val e_thm = REWRITE_CONV [bir_updateE_desc_exp_def] (mk_comb (bir_updateE_desc_exp_tm, eup_t))
@@ -789,20 +801,46 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
        val (precond_thm, temp_t) = if (is_none e_opt) then
        let
+         (* We don't have an exp, therefore the F case holds trivially *)
          val precond_thm = EQT_ELIM (REWRITE_CONV [e_thm, optionTheory.NOT_NONE_SOME] (subst [eup_temp_v |-> F] precond_tm))
        in
          (precond_thm, F)
-       end else let
+       end else if (listSyntax.is_null (rhs (concl updates_thm))) then (
+       let
+         (* We don't have have any other changes, therefore the F case holds trivially *)
+         val precond_thm = EQT_ELIM (
+            REWRITE_CONV [updates_thm, bir_is_lifted_inst_block_COMPUTE_updates_UPDATES_VARS_REWRS,
+              pred_setTheory.DISJOINT_EMPTY] (subst [eup_temp_v |-> F] precond_tm)
+         )
        in
-         failwith "TODO: implement properly"
-       end;
+         (precond_thm, F)
+       end) else (let
+         (* We are in a more tricky situation. We just try it. *)
+         val precond_thm0 = REWRITE_CONV [e_thm, updates_thm,
+            bir_updateE_desc_var_def, optionTheory.option_CLAUSES] precond_tm
+       in
+         let
+            val thm0 = INST [eup_temp_v |-> F] precond_thm0
+            val vars_thm = comp_varnames_thm (valOf e_opt)
+            val thm1 = CONV_RULE (RHS_CONV (SIMP_CONV (std_ss) [vars_thm,
+              bir_is_lifted_inst_block_COMPUTE_updates_UPDATES_VARS_REWRS])) thm0
+            val thm2 = CONV_RULE (RHS_CONV (SIMP_CONV (list_ss++stringSimps.STRING_ss) [
+               pred_setTheory.DISJOINT_EMPTY, pred_setTheory.DISJOINT_INSERT])) thm1
+         in (EQT_ELIM thm2, F) end handle HOL_ERR _ => let
+            val thm0 = INST [eup_temp_v |-> T] precond_thm0
+            val thm1 = CONV_RULE (RHS_CONV (SIMP_CONV (std_ss) [
+               bir_envTheory.bir_var_name_def, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY])) thm0
+         in
+            (EQT_ELIM thm1, T)
+         end handle HOL_ERR _ => failwith "Could not prove precond"
+       end);
 
        val thm1 = MP (SPEC temp_t thm0) precond_thm
        val thm2 = CONV_RULE (RAND_CONV (K updates_thm)) thm1
      in (thm2, temp_t) end;
 
      val updates_tm' = rand (concl eup_thm)
-   in     
+   in
      (updates_tm', eup_temp_tm, eup_thm)
    end;
 
@@ -822,6 +860,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
              bir_updateB_desc_use_temp_def,
              bir_update_blockB_STEP1_def,
              bir_temp_varsTheory.bir_temp_var_def,
+             bir_assert_desc_exp_def,
              bir_update_blockB_STEP2_def,
              bir_update_blockE_FINAL_def]
   fun compute_bl lb al_mem_t al_step_t eup_temp_t eup_t updates_t = let
@@ -836,10 +875,15 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (* Combine it all, main function *)
   (*-------------------------------*)
 
+  (* DEBUG
+
+     val (lb, ms_case_cond_t, next_thm) = el 1 sub_block_work_list
+  *)
+
   (* This is the main workhorse. It gets a single next theorem and tries to
      instantiate inst_thm to generate a block mimicking this next_thm. The
      block should use label "lb" and extra condition "ms_case_cond_t" can be assumed. *)
-  fun lift_single_block inst_lift_thm0 bir_is_lifted_inst_block_COMPUTE_precond_tm0 
+  fun lift_single_block inst_lift_thm0 bir_is_lifted_inst_block_COMPUTE_precond_tm0
      mu_thm (lb, ms_case_cond_t, next_thm) = let
      val next_thm0 = REWRITE_RULE [ASSUME ms_case_cond_t] next_thm
      fun raiseErr s = raise (bir_inst_liftingAuxExn (BILED_msg s));
@@ -853,7 +897,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
        handle HOL_ERR _ => raiseErr "computing imm_ups failed";
 
      (* compute eup *)
-     val (eup_t, eup_THM) = compute_eup ms'_t 
+     val (eup_t, eup_THM) = compute_eup ms'_t
        handle HOL_ERR _ => raiseErr "computing eup failed";
 
      (* compute mem_up *)
@@ -879,7 +923,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
          [bl_t, lb, mk_abs (ms_v, ms_case_cond_t)])
 
        val ex_insts = [ms'_t, al_step_t, imm_ups_t, mem_up_t, al_mem_t,
-         eup_t, eup_temp_t, updates_t] 
+         eup_t, eup_temp_t, updates_t]
 
        val tm1 = list_mk_comb (tm0, ex_insts)
 
@@ -887,22 +931,22 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
          al_mem_THM, updates_THM, bl_thm, eup_THM, mem_up_thm,
          imm_ups_thm, ms'_thm] tm1)
 
-       val tm_goal = list_mk_exists (inst_lift_THM_ex_vars, 
+       val tm_goal = list_mk_exists (inst_lift_THM_ex_vars,
           list_mk_comb (tm0, inst_lift_THM_ex_vars));
 
        val thm1 = prove (``^tm_goal``,
          EVERY (List.map EXISTS_TAC ex_insts) >>
          REWRITE_TAC [thm0]);
 
-       val thm2 = GENL [ms_v, bs_v] thm1 
+       val thm2 = GENL [ms_v, bs_v] thm1
      in thm2 end
        handle HOL_ERR _ => raiseErr "proving precondition of theorem failed";
 
     val final_thm = let
-       val thm0 = SPECL [mk_abs (ms_v, ms_case_cond_t), bl_t, lb] inst_lift_thm0 
+       val thm0 = SPECL [mk_abs (ms_v, ms_case_cond_t), bl_t, lb] inst_lift_thm0
        val thm1 = MP thm0 precond_thm
-    in thm1 end;
-  in 
+    in thm1 end handle HOL_ERR _ => raiseErr "proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated?";
+  in
     final_thm
   end handle HOL_ERR _ => raise (bir_inst_liftingAuxExn (BILED_msg "???"));
 
@@ -911,10 +955,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (* Lifting an instruction *)
   (**************************)
 
-  (* This is the main entry point for lifting an instruction. Given 
-     
+  (* This is the main entry point for lifting an instruction. Given
+
      - a memory region not to touch
-     - the hex-code of an instruction 
+     - the hex-code of an instruction
      - and a PC in form of a number to load it from
 
 
@@ -935,7 +979,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
        val thm0 = MATCH_MP inst_lift_THM mu_thm
        val thm1 = SPECL [mm_tm, label_tm] thm0
        val (pre, _) = dest_imp_only (concl thm1)
-       val pre_thm = prove (pre, 
+       val pre_thm = prove (pre,
           SIMP_TAC (list_ss++wordsLib.WORD_ss) [WF_bmr_ms_mem_contains_def,
             bmr_ms_mem_contains_interval_def, WI_size_def, WI_is_sub_compute, WI_wf_def]);
        val thm2 = MP thm1 pre_thm
