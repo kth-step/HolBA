@@ -3,7 +3,7 @@ struct
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 open bir_exp_liftingLib bir_lifting_machinesTheory
-open bir_nzcv_introsTheory
+open bir_nzcv_introsTheory bir_rotate_introsTheory
 open arm8_stepLib
 
 (**********)
@@ -226,8 +226,6 @@ fun bmr_rec_sanity_check r =
   (can bmr_rec_mk_label_of_num_eq_pc r) andalso
   (can bmr_rec_mk_pc_of_term r);
 
-
-(* An auxiliary function that helps writeing bmr_step_hex functions *)
 fun bmr_normalise_step_thms (r_step_rel:term) (rule:thm -> thm) st_hex = let
   fun norm_thm vn thm = let
      (* check whether thm is of expected form and normalise the state variable name *)
@@ -238,17 +236,35 @@ fun bmr_normalise_step_thms (r_step_rel:term) (rule:thm -> thm) st_hex = let
         val _ = if (aconv t_rel r_step_rel) then () else fail ()
      in INST [v |-> vn] thm end;
 
-     val thm0 = DISCH_ALL thm_v;
-     val thm1 = rule thm0;
-  in thm1 end;
+     (* check for hyp (SOME _ = SOME vars) which can be discared via instantiating it *)
+     val thm0 = let
+       fun process_hyp (tm, thm) =
+       let
+          val (l_tm, r_tm) = dest_eq tm;
+          val l_tm' = optionSyntax.dest_some l_tm;
+          val r_tm' = optionSyntax.dest_some r_tm;
+          val (s, _) = match_term r_tm' l_tm'
 
+          val thm0a = INST s thm
+          val thm0b = PROVE_HYP (REFL l_tm) thm0a
+       in
+          thm0b
+       end handle HOL_ERR _ => thm;
+     in
+       foldl process_hyp thm_v (hyp thm_v)
+     end;
+
+     val thm1 = DISCH_ALL thm0;
+     val thm2 = rule thm1;
+  in thm2 end;
 in fn vn => fn s =>
   List.map (norm_thm vn) (st_hex s)
 end;
 
 val arm8_step_hex' = bmr_normalise_step_thms
    (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"})
-   (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0])
+   (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0,
+      arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS])
     arm8_step_hex;
 
 val arm8_state_mem_tm = prim_mk_const{Name="arm8_state_MEM", Thy="arm8"};

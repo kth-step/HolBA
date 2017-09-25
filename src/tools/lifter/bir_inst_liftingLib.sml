@@ -304,20 +304,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      fun norm_thm thm =
         SIMP_RULE std_ss [pc_thm, ms_extra_REWRS, satTheory.AND_IMP,
            alignmentTheory.aligned_numeric, wordsTheory.word_add_n2w] thm handle UNCHANGED => thm
-     fun inst_extra_vars thm = let
-        val (preconds, _) = strip_imp_only (concl thm)
-        fun mk_var_subst (tm, s) = let
-           val (v1, v2) = dest_eq (subst s tm)
-        in
-           (if (is_var v2) then (v2 |-> v1)::s else
-            if (is_var v1) then (v1 |-> v2)::s else
-            fail ())
-        end handle HOL_ERR _ => s;
-        val s = List.rev (foldl mk_var_subst [] preconds)
-     in if (null s) then thm else
-        REWRITE_RULE [] (INST s thm)
-     end;
-     val lifted_thms = map (inst_extra_vars o norm_thm) lifted_thms_raw;
+     val lifted_thms = map norm_thm lifted_thms_raw;
 
      (* try to compute bmr_ms_mem_contains *)
      val (mm_tm, mm_thm) = let
