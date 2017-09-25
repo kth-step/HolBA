@@ -852,6 +852,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
              bir_updateB_desc_use_temp_def,
              bir_update_blockB_STEP1_def,
              bir_temp_varsTheory.bir_temp_var_def,
+             bir_temp_varsTheory.bir_temp_var_name_def,
              bir_assert_desc_exp_def,
              bir_update_blockB_STEP2_def,
              bir_update_blockE_FINAL_def]

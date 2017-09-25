@@ -19,6 +19,14 @@ SIMP_TAC std_ss [shift_neg1w_rewr] >>
 SIMP_TAC std_ss [word_2comp_n2w]);
 
 
+val shift_neg1w_rewr3 = prove (
+``~(-1w << n):'a word =
+n2w
+  (dimword (:'a) -
+   ((dimword (:'a) - 2 ** n MOD dimword (:'a)) MOD dimword (:'a) + 1))``,
+SIMP_TAC arith_ss [shift_neg1w_rewr2, word_1comp_n2w]);
+
+
 (***********************)
 (* Evaluate "w && -1w" *)
 (***********************)
@@ -79,7 +87,7 @@ end)
 
 
 (***********************)
-(* FOLD "w >>~ n2w x"  *)
+(* FOLD "w >>>~ n2w x" *)
 (***********************)
 
 val arm8_lsr_FOLD_GEN = store_thm ("arm8_lsr_FOLD_GEN",
@@ -108,6 +116,45 @@ let
   val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [shift_neg1w_rewr2, word_1comp_n2w] thm1
 in
   thm2
+end)
+
+
+
+(**********************)
+(* FOLD "w >>~ n2w x" *)
+(**********************)
+
+val arm8_asr_FOLD_GEN = store_thm ("arm8_asr_FOLD_GEN",
+``!n (w:'a word).  n < dimindex (:'a) ==>
+
+((((if word_bit (dimindex (:'a) - 1) w then -1w else 0w) &&
+   ~~(-1w << (dimindex (:'a) - n))) || (w >>>~ n2w n)) =
+(w >>~ n2w n))
+``,
+
+REPEAT STRIP_TAC >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+`dimindex (:'a) < dimword (:'a)` by METIS_TAC[dimindex_lt_dimword] >>
+ASM_SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [word_or_def, fcpTheory.FCP_BETA,
+  word_and_def, WORD_NEG_1_T, word_0, word_lsl_def, word_asr_def,
+  word_asr_bv_def, word_lsr_bv_def, w2n_n2w, GSYM word_msb,
+  word_lsr_def, word_1comp_def, word_msb_def]);
+
+
+val arm8_asr_FOLDS = save_thm ("arm8_asr_FOLDS",
+let
+  fun inst wty n = let
+    val thm0 = INST_TYPE [``:'a`` |-> wty] arm8_asr_FOLD_GEN
+  in
+     (List.tabulate (n, fn i => SPEC (numSyntax.term_of_int i) thm0))
+  end
+
+  val thm1 = LIST_CONJ (flatten [inst ``:32`` 32, inst ``:64`` 64, inst ``:16`` 16])
+
+  val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [shift_neg1w_rewr3] thm1
+  val thm3 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [WORD_NEG_1, word_T_def, UINT_MAX_def] thm2
+in
+  thm3
 end)
 
 
