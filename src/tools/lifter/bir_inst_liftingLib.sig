@@ -71,6 +71,7 @@ end
    val (res, time) = lift_instr_asm `cmn w0, w1`;
    val (res, time) = lift_instr_asm `cmn x0, x9`;
    val (res, time) = lift_instr_asm `ret`;
+   val (res, time) = lift_instr_asm `adds x0, pc, #8`;
    val (res, time) = lift_instr_asm `adds x0, x2, #8`;
    val (res, time) = lift_instr_asm `subs x0, x2, #8`;
    val (res, time) = lift_instr_asm `adds x0, x1, x2`;
@@ -78,13 +79,13 @@ end
    val (res, time) = lift_instr_asm `sub x0, x1, x2`;
    val (res, time) = lift_instr_asm `add x4, SP, #8`;
    val (res, time) = lift_instr_asm `adds x1, x1, #0`;
-   val (res, time) = lift_instr_asm `ldr x0, [x2, #0]`;
+   val (res, time) = lift_instr_asm `ldr x0, [x2, #8]`;
+   val (res, time) = lift_instr_asm `lsr x0, x2, x3`;
+   val (res, time) = lift_instr_asm `lsl x0, x2, x3`;
+   val (res, time) = lift_instr_asm `asr x0, x2, x3`;
+   val (res, time) = lift_instr_asm `lsr x0, x1, #0`;
 
    (* THERE ARE STILL MANY TODOs !!! *)
-   val (res, time) = lift_instr_asm `lsl x0, x2, #8`;
-   val (res, time) = lift_instr_asm `lsr x0, x2, #8`;
    val (res, time) = lift_instr_asm `str x0, [x2, #8]`;
-
-
 
 *)

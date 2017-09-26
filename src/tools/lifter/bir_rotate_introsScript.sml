@@ -27,6 +27,24 @@ n2w
 SIMP_TAC arith_ss [shift_neg1w_rewr2, word_1comp_n2w]);
 
 
+val SHIFT_ZERO_bv = prove (
+  ``(!a. a <<~ 0w = a) /\ (!a. a >>~ 0w = a) /\ (!a. a >>>~ 0w = a) /\
+    (!a. a #<<~ 0w = a) /\ (!a. a #>>~ 0w = a)``,
+
+  SIMP_TAC arith_ss [SHIFT_ZERO, word_lsl_bv_def, w2n_n2w, ZERO_LT_dimword,
+    word_lsr_bv_def, word_asr_bv_def, word_rol_bv_def, word_ror_bv_def]);
+
+val MOD_DIMINDEX_DIMWORD = prove (
+``!m. ((m MOD dimindex (:'a)) MOD dimword (:'a)) =
+      (m MOD dimindex (:'a))``,
+GEN_TAC >>
+`m MOD dimindex (:'a) < dimindex (:'a)` by
+  ASM_SIMP_TAC arith_ss [DIMINDEX_GT_0] >>
+`m MOD dimindex (:'a) < dimword (:'a)` by
+  METIS_TAC [dimindex_lt_dimword, arithmeticTheory.LESS_TRANS] >>
+ASM_SIMP_TAC arith_ss []);
+
+
 (***********************)
 (* Evaluate "w && -1w" *)
 (***********************)
@@ -50,11 +68,12 @@ in
 end)
 
 
+
 (***********************)
 (* FOLD "w <<~ n2w x"  *)
 (***********************)
 
-val arm8_lsl_FOLD_GEN = store_thm ("arm8_lsl_FOLD_GEN",
+val arm8_lsl_FOLD_GEN = prove (
 ``!n w.  n < dimword (:'a) ==>
 (((((w:'a word) #>> (dimindex (:'a) - n)) && (-1w << n))) =
  (w <<~ n2w n))``,
@@ -86,11 +105,40 @@ in
 end)
 
 
+
+
+
+val arm8_lsl_FOLD_NO_IMM_GEN = prove (
+``!(n:num) (w1:'a word) (w2:'a word). (2 ** n = (dimindex (:'a))) ==>
+  ((w1 << (w2n w2 MOD dimindex (:'a))) = (w1 <<~ (w2 && n2w (2 ** n - 1))))``,
+
+REPEAT STRIP_TAC >>
+Cases_on `w2` >> rename1 `m < dimword (:'a)` >>
+ASM_SIMP_TAC arith_ss [WORD_AND_EXP_SUB1, word_lsl_bv_def, w2n_n2w,
+  MOD_DIMINDEX_DIMWORD]);
+
+
+val arm8_lsl_no_imm_FOLDS = save_thm ("arm8_lsl_no_imm_FOLDS",
+let
+  fun inst wty n = let
+    val thm0 = INST_TYPE [``:'a`` |-> wty] arm8_lsl_FOLD_NO_IMM_GEN
+    val thm1 = SPEC (numSyntax.term_of_int n) thm0
+  in
+    thm1
+  end
+  val thm1 = LIST_CONJ ([inst ``:32`` 5, inst ``:64`` 6, inst ``:16`` 4])
+  val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [shift_neg1w_rewr2, word_1comp_n2w] thm1
+in
+  thm2
+end)
+
+
+
 (***********************)
 (* FOLD "w >>>~ n2w x" *)
 (***********************)
 
-val arm8_lsr_FOLD_GEN = store_thm ("arm8_lsr_FOLD_GEN",
+val arm8_lsr_FOLD_GEN = prove (
 ``!n w.  n < dimword (:'a) ==>
 (((((w:'a word) #>> n) && ~(-1w << (dimindex (:'a) - n)))) =
  (w >>>~ n2w n))``,
@@ -120,11 +168,41 @@ end)
 
 
 
+val arm8_lsr_FOLD_NO_IMM_GEN = prove (
+``!(n:num) (w1:'a word) (w2:'a word). (2 ** n = (dimindex (:'a))) ==>
+  ((w1 >>> (w2n w2 MOD dimindex (:'a))) = (w1 >>>~ (w2 && n2w (2 ** n - 1))))``,
+
+REPEAT STRIP_TAC >>
+Cases_on `w2` >> rename1 `m < dimword (:'a)` >>
+ASM_SIMP_TAC arith_ss [WORD_AND_EXP_SUB1, word_lsr_bv_def, w2n_n2w,
+  MOD_DIMINDEX_DIMWORD]);
+
+
+val arm8_lsr_no_imm_FOLDS = save_thm ("arm8_lsr_no_imm_FOLDS",
+let
+  fun inst wty n = let
+    val thm0 = INST_TYPE [``:'a`` |-> wty] arm8_lsr_FOLD_NO_IMM_GEN
+    val thm1 = SPEC (numSyntax.term_of_int n) thm0
+  in
+    thm1
+  end
+
+  val thm1 = LIST_CONJ ([inst ``:32`` 5, inst ``:64`` 6, inst ``:16`` 4])
+
+  val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [shift_neg1w_rewr2, word_1comp_n2w] thm1
+in
+  thm2
+end)
+
+
+
+
+
 (**********************)
 (* FOLD "w >>~ n2w x" *)
 (**********************)
 
-val arm8_asr_FOLD_GEN = store_thm ("arm8_asr_FOLD_GEN",
+val arm8_asr_FOLD_GEN = prove (
 ``!n (w:'a word).  n < dimindex (:'a) ==>
 
 ((((if word_bit (dimindex (:'a) - 1) w then -1w else 0w) &&
@@ -149,13 +227,56 @@ let
      (List.tabulate (n, fn i => SPEC (numSyntax.term_of_int i) thm0))
   end
 
-  val thm1 = LIST_CONJ (flatten [inst ``:32`` 32, inst ``:64`` 64, inst ``:16`` 16])
+  val thm1 = LIST_CONJ (flatten [inst ``:32`` 33, inst ``:64`` 65, inst ``:16`` 17])
 
   val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [shift_neg1w_rewr3] thm1
-  val thm3 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [WORD_NEG_1, word_T_def, UINT_MAX_def] thm2
+  val thm3 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [WORD_NEG_1, word_T_def, UINT_MAX_def,
+    SHIFT_ZERO_bv] thm2
 in
   thm3
-end)
+end);
+
+
+
+val arm8_asr_FOLD_NO_IMM_GEN = prove (
+``!(n:num) (w1:'a word) (w2:'a word). (2 ** n = (dimindex (:'a))) ==>
+  ((w1 >> (w2n w2 MOD dimindex (:'a))) = (w1 >>~ (w2 && n2w (2 ** n - 1))))``,
+
+REPEAT STRIP_TAC >>
+Cases_on `w2` >> rename1 `m < dimword (:'a)` >>
+ASM_SIMP_TAC arith_ss [WORD_AND_EXP_SUB1, word_asr_bv_def, w2n_n2w,
+  MOD_DIMINDEX_DIMWORD]);
+
+
+val arm8_asr_no_imm_FOLDS = save_thm ("arm8_asr_no_imm_FOLDS",
+let
+  fun inst wty n = let
+    val thm0 = INST_TYPE [``:'a`` |-> wty] arm8_asr_FOLD_NO_IMM_GEN
+    val thm1 = SPEC (numSyntax.term_of_int n) thm0
+  in
+    thm1
+  end
+
+  val thm1 = LIST_CONJ ([inst ``:32`` 5, inst ``:64`` 6, inst ``:16`` 4])
+
+  val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [shift_neg1w_rewr2, word_1comp_n2w] thm1
+in
+  thm2
+end);
+
+
+
+
+
+(***************)
+(* Combination *)
+(***************)
+
+
+val arm8_rotate_FOLDS = save_thm ("arm8_rotate_FOLDS",
+  LIST_CONJ [arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS,
+      arm8_asr_FOLDS, arm8_lsr_no_imm_FOLDS, arm8_asr_no_imm_FOLDS,
+      arm8_lsl_no_imm_FOLDS])
 
 
 val _ = export_theory();

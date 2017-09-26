@@ -30,8 +30,10 @@ fun lift_instr mu_b mu_e pc hex_code = let
   val (res, ed) = (SOME (bir_lift_instr (mu_b, mu_e) pc hex_code), NONE) handle
                    bir_inst_liftingExn (_, d)  => (NONE, SOME d)
                  | HOL_ERR _ => (NONE, NONE);
+
   val d_time = Time.- (Time.now(), timer);
   val d_s = (Time.toString d_time);
+
 
   val _ = print (" - " ^ d_s ^ " s - ");
   val _ = if is_some res then
@@ -79,7 +81,20 @@ val _ = test_asm `adds x0, x1, x2`;
 val _ = test_asm `add x0, x0, x2`;
 val _ = test_asm `sub x0, x1, x2`;
 val _ = test_asm `add x4, SP, #8`;
+val _ = test_asm `add x4, SP, #8`;
 val _ = test_asm `adds x1, x1, #0`;
+val res = test_asm `lsr x1, x2, #5`;
+val res = test_asm `lsr x1, x2, #0`;
+val res = test_asm `lsr x1, x1, #0`;
+val res = test_asm `lsr x1, x2, x3`;
+val res = test_asm `lsl x1, x2, #5`;
+val res = test_asm `lsl x1, x2, #0`;
+val res = test_asm `lsl x1, x1, #0`;
+val res = test_asm `lsl x1, x2, x3`;
+val res = test_asm `asr x1, x2, #5`;
+val res = test_asm `asr x1, x2, #0`;
+val res = test_asm `asr x1, x1, #0`;
+val res = test_asm `asr x1, x2, x3`;
 val _ = test_asm `ldr x0, [x2, #0]`;
 
   (* THERE ARE STILL MANY TODOs !!! *)
@@ -208,4 +223,4 @@ val instrs = [
 
 val _ = print_with_style [Bold, Underline] "\n\n\nTESTING AES CODE\n\n";
 val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
-    instrs
+    (Lib.mk_set instrs)

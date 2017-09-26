@@ -264,8 +264,7 @@ end;
 val arm8_step_hex' = bmr_normalise_step_thms
    (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"})
    (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0,
-      arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS,
-      arm8_asr_FOLDS])
+      arm8_rotate_FOLDS])
     arm8_step_hex;
 
 val arm8_state_mem_tm = prim_mk_const{Name="arm8_state_MEM", Thy="arm8"};
