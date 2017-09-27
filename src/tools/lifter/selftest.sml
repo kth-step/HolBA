@@ -102,6 +102,19 @@ val _ = test_asm `lsl x0, x2, #8`;
 val _ = test_asm `lsr x0, x2, #8`;
 val _ = test_asm `str x0, [x2, #8]`;
 
+  (* some instructions I din't see in this file *)
+(*  4003a0:	d61f0220 	br	x17 *)
+val _ = test_asm `br	x17`;
+(*  4003a4:	d503201f 	nop *)
+val _ = test_asm `nop`;
+(*  400510:	d63f0020 	blr	x1 *)
+val _ = test_asm `blr	x1`;
+(*  400430:	b4000040 	cbz	x0, 400438 <call_weak_fn+0x10> *)
+val _ = test_asm `cbz	x0, 400438`;
+(*  4004cc:	35000080 	cbnz	w0, 4004dc <__do_global_dtors_aux+0x24> *)
+val _ = test_asm `cbnz	w0, 4004dc`;
+
+
 
 
 (* And a list version *)
