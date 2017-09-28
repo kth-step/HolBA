@@ -3,7 +3,7 @@ struct
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 open bir_exp_liftingLib bir_lifting_machinesTheory
-open bir_nzcv_introsTheory bir_rotate_introsTheory
+open bir_nzcv_introsTheory bir_arm8_extrasTheory
 open arm8_stepLib
 
 (**********)
@@ -264,7 +264,7 @@ end;
 val arm8_step_hex' = bmr_normalise_step_thms
    (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"})
    (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0,
-      arm8_rotate_FOLDS])
+      arm8_extra_FOLDS])
     arm8_step_hex;
 
 val arm8_state_mem_tm = prim_mk_const{Name="arm8_state_MEM", Thy="arm8"};
@@ -282,7 +282,7 @@ val arm8_bmr_rec : bmr_rec = {
   bmr_const              = prim_mk_const{Name="arm8_bmr", Thy="bir_lifting_machines"},
   bmr_ok_thm             = arm8_bmr_OK,
   bmr_lifted_thm         = arm8_bmr_LIFTED,
-  bmr_extra_lifted_thms  = [],
+  bmr_extra_lifted_thms  = [arm8_extra_LIFTS],
   bmr_eval_thm           = arm8_bmr_EVAL,
   bmr_eval_vars_thm      = arm8_bmr_vars_EVAL,
   bmr_eval_temp_vars_thm = arm8_bmr_temp_vars_EVAL,

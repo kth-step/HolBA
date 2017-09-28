@@ -1,7 +1,22 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory
+open bir_exp_liftingTheory
+open arm8_stepTheory
 
-val _ = new_theory "bir_rotate_intros";
+
+(* In order to produce decent BIR code from step theorems,
+   the concepts described by the step theorems need to be
+   made very explicit. This is mostly due to the fact that
+   the step theorems result from partially evaluating the
+   machine definitions. However, translating a partial evaluation
+   literally is often more cumbersome that translating the abstract
+   concept.
+
+   The work for the conditional execution flags is so extensive, that
+   it is handled in bir_nzcv_introsScript.sml. Moreover, this theory
+   only contains the arm8 specific stuff. *)
+
+val _ = new_theory "bir_arm8_extras";
 
 
 (*********************************)
@@ -265,18 +280,181 @@ in
 end);
 
 
+(**************************)
+(* Sign cast 32 -> 64 bit *)
+(**************************)
+
+val arm8_sxtw_FOLD_GEN = prove (
+``!w.
+
+  ((if word_bit (dimindex (:'a) - 1) (w:'b word) then (-1w) else (0w:'b word)) &&
+    ~~((-1w << (dimindex (:'a)))) || (w && ~(-1w << (dimindex (:'a)))) && ~((-1w << (dimindex (:'a))))) =
+  sw2sw ((w2w w):'a word)``,
+
+
+REPEAT STRIP_TAC >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+`dimindex (:'a) <> 0` by METIS_TAC [DIMINDEX_GT_0, prim_recTheory.LESS_REFL] >>
+Cases_on `w` >>
+
+ASM_SIMP_TAC (arith_ss++boolSimps.CONJ_ss) [word_or_def, fcpTheory.FCP_BETA,
+  word_and_def, word_1comp_def, word_lsl_def, WORD_NEG_1_T,
+  sw2sw_def, word_index, bitTheory.BIT_SIGN_EXTEND, DIMINDEX_GT_0,
+  w2w_def, w2n_n2w, GSYM dimword_def, arithmeticTheory.MOD_MOD,
+  ZERO_LT_dimword, w2n_lt, wordsTheory.MOD_DIMINDEX, bitTheory.BIT_OF_BITS_THM,
+  word_bit_def] >>
+REPEAT STRIP_TAC >>
+Cases_on `BIT (dimindex (:'a) - 1) n` >> Cases_on `dimindex (:'a) <= dimindex (:'b)` >> (
+  ASM_SIMP_TAC arith_ss [WORD_NEG_1_T, word_0, arithmeticTheory.NOT_LESS_EQUAL] >>
+  METIS_TAC[arithmeticTheory.NOT_LESS_EQUAL]
+));
 
 
 
-(***************)
-(* Combination *)
-(***************)
+val arm8_sxtw_FOLDS = save_thm ("arm8_sxtw_FOLDS",
+let
+  fun inst wty1 wty2 = let
+    val thm0 = INST_TYPE [``:'a`` |-> wty1, ``:'b`` |-> wty2] arm8_sxtw_FOLD_GEN
+  in
+    thm0
+  end
+
+  val thm1 = LIST_CONJ ([inst ``:32`` ``:64``, inst ``:16`` ``:64``, inst ``:8`` ``:64``, inst ``:16`` ``:32``])
+
+  val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [shift_neg1w_rewr3,
+    WORD_NEG_1, word_T_def] thm1
+in
+  thm2
+end);
 
 
-val arm8_rotate_FOLDS = save_thm ("arm8_rotate_FOLDS",
+
+(*******)
+(* w2w *)
+(*******)
+
+val w2w_REMOVE_1 = prove (
+  ``!w : 'a word.
+           dimindex (:'a) < dimindex (:'b) ==>
+           dimindex (:'b) <> dimindex (:'c) ==>
+           (((w2w ((w2w w):'b word)):'c word) =
+                  w2w w)``,
+
+Cases >>
+ASM_SIMP_TAC arith_ss [w2w_def,n2w_w2n, w2n_n2w,
+  wordsTheory.dimindex_dimword_le_iso]);
+
+
+val w2w_REMOVE_2 = prove (
+  ``!w : 'a word.
+           ~(dimindex (:'a) <= dimindex (:'b)) ==>
+           dimindex (:'c) < dimindex (:'b) ==>
+
+           (((w2w ((w2w w):'b word)):'c word) =
+                  w2w w)``,
+
+Cases >>
+ASM_SIMP_TAC arith_ss [w2w_def,n2w_w2n, w2n_n2w,
+  wordsTheory.dimindex_dimword_le_iso] >>
+ONCE_REWRITE_TAC[GSYM wordsTheory.n2w_mod] >>
+SIMP_TAC arith_ss [dimword_def] >>
+REPEAT STRIP_TAC >>
+`dimindex (:'c) <= dimindex (:'b)` by DECIDE_TAC >>
+FULL_SIMP_TAC arith_ss [arithmeticTheory.LESS_EQ_EXISTS,
+  arithmeticTheory.EXP_ADD] >>
+METIS_TAC[bitTheory.ZERO_LT_TWOEXP, arithmeticTheory.MOD_MULT_MOD,
+  DIMINDEX_GT_0, arithmeticTheory.MULT_COMM]);
+
+
+
+
+
+val arm8_w2w_REMOVE_FOLDS = save_thm ("arm8_w2w_REMOVE_FOLDS",
+let
+  val ty_l = List.map fcpSyntax.mk_int_numeric_type bir_immSyntax.known_imm_sizes
+
+  fun inst ty thmL =
+    flatten (map (fn thm => (map (fn ty' => INST_TYPE [ty |-> ty'] thm) ty_l)) thmL)
+
+  val thmL0 = [CONJ w2w_REMOVE_1 w2w_REMOVE_2]
+  val thmL1 = inst ``:'a`` thmL0
+  val thmL2 = inst ``:'b`` thmL1
+  val thmL3 = inst ``:'c`` thmL2
+  val thm0 = LIST_CONJ thmL3
+
+  val thm1 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [] thm0
+
+  val thm2 = CONJ thm1 (LIST_CONJ (inst ``:'a`` [w2w_id]))
+in
+  thm2
+end);
+
+
+
+
+(*************************)
+(* Lifting Load for arm8 *)
+(*************************)
+
+
+
+val arm8_LIFT_LOAD_DWORD = store_thm ("arm8_LIFT_LOAD_DWORD",
+``!env em ea va ms.
+     bir_is_lifted_mem_exp env em ms.MEM ==>
+     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+     bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit64)
+       (Imm64 (mem_dword ms.MEM va))``,
+SIMP_TAC std_ss [mem_dword_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+
+
+val arm8_LIFT_LOAD_WORD = store_thm ("arm8_LIFT_LOAD_WORD",
+``!env em ea va ms.
+     bir_is_lifted_mem_exp env em ms.MEM ==>
+     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+     bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit32)
+       (Imm32 (mem_word ms.MEM va))``,
+SIMP_TAC std_ss [mem_word_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+
+
+
+val arm8_LIFT_LOAD_HALF = store_thm ("arm8_LIFT_LOAD_HALF",
+``!env em ea va ms.
+     bir_is_lifted_mem_exp env em ms.MEM ==>
+     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+     bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit16)
+       (Imm16 (mem_half ms.MEM va))``,
+SIMP_TAC std_ss [mem_half_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+
+
+val arm8_LIFT_LOAD_BYTE = store_thm ("arm8_LIFT_LOAD_BYTE",
+``!env em ea va ms.
+     bir_is_lifted_mem_exp env em ms.MEM ==>
+     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+     bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit8)
+       (Imm8 (ms.MEM va))``,
+
+REPEAT STRIP_TAC >>
+ASM_SIMP_TAC std_ss [bir_is_lifted_imm_exp_LOAD_NO_ENDIAN]);
+
+
+(****************)
+(* Combinations *)
+(****************)
+
+val arm8_extra_LIFTS = save_thm ("arm8_extra_LIFTS",
+  LIST_CONJ [
+    arm8_LIFT_LOAD_BYTE,
+    arm8_LIFT_LOAD_HALF,
+    arm8_LIFT_LOAD_WORD,
+    arm8_LIFT_LOAD_DWORD
+]);
+
+
+val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
   LIST_CONJ [arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS,
       arm8_asr_FOLDS, arm8_lsr_no_imm_FOLDS, arm8_asr_no_imm_FOLDS,
-      arm8_lsl_no_imm_FOLDS])
+      arm8_lsl_no_imm_FOLDS, arm8_sxtw_FOLDS, arm8_w2w_REMOVE_FOLDS])
+
 
 
 val _ = export_theory();

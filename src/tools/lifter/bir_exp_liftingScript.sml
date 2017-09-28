@@ -5,7 +5,6 @@ open bir_envTheory bir_immTheory bir_imm_expTheory
 open bir_immSyntax wordsTheory
 open bir_mem_expTheory bir_bool_expTheory
 open bir_nzcv_expTheory
-open arm8_stepTheory
 
 val _ = new_theory "bir_exp_lifting";
 
@@ -370,29 +369,21 @@ in
   thm2
 end;
 
-(* Build the theorem for sensible values *)
+fun mk_bir_is_lifted_imm_exp_LOAD addr_size value_size result_size endian =
+  bir_is_lifted_imm_exp_LOAD_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sa = ^addr_size) /\ (sv = ^value_size) /\ (sr = ^result_size) /\ (en = ^endian)``;
+
+
+(* Build the theorem for common values *)
 val bir_is_lifted_imm_exp_LOAD_ENDIAN = save_thm ("bir_is_lifted_imm_exp_LOAD_ENDIAN",
   bir_is_lifted_imm_exp_LOAD_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sv <> sr) /\ (sa <> Bit1) /\ (sv <> Bit1)``);
 
 val bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE = save_thm ("bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE",
   bir_is_lifted_imm_exp_LOAD_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sa <> Bit1) /\ (sv <> sr) /\ (sv = Bit8)``);
 
-
-fun mk_bir_is_lifted_imm_exp_LOAD addr_size value_size result_size endian =
-  bir_is_lifted_imm_exp_LOAD_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sa = ^addr_size) /\ (sv = ^value_size) /\ (sr = ^result_size) /\ (en = ^endian)``;
-
-
-val bir_is_lifted_imm_exp_LOAD_ARM_M0 = save_thm ("bir_is_lifted_imm_exp_LOAD_ARM_M0",
-  mk_bir_is_lifted_imm_exp_LOAD Bit32_tm Bit8_tm Bit32_tm bir_mem_expSyntax.BEnd_BigEndian_tm)
+val bir_is_lifted_imm_exp_LOAD_NO_ENDIAN = save_thm ("bir_is_lifted_imm_exp_LOAD_NO_ENDIAN",
+  bir_is_lifted_imm_exp_LOAD_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sv = sr)``);
 
 
-val bir_is_lifted_imm_exp_LOAD_ARM8 = save_thm ("bir_is_lifted_imm_exp_LOAD_ARM8",
-  LIST_CONJ [
-    (REWRITE_RULE [GSYM mem_word_def]
-      (mk_bir_is_lifted_imm_exp_LOAD Bit64_tm Bit8_tm Bit32_tm bir_mem_expSyntax.BEnd_LittleEndian_tm)),
-    (REWRITE_RULE [GSYM mem_dword_def]
-      (mk_bir_is_lifted_imm_exp_LOAD Bit64_tm Bit8_tm Bit64_tm bir_mem_expSyntax.BEnd_LittleEndian_tm))
-  ]);
 
 
 (***************)
@@ -617,7 +608,6 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_CASTS,
              bir_is_lifted_imm_exp_COND,
              bir_is_lifted_imm_exp_LOAD_ENDIAN,
-             bir_is_lifted_imm_exp_LOAD_ARM8,
              bir_is_lifted_imm_exp_NZCV,
              bir_is_lifted_imm_exp_MSB,
              bir_is_lifted_imm_exp_ALIGNED]);

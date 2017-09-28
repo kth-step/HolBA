@@ -22,7 +22,7 @@ selftest.exe: selftest.uo bir_inst_liftingLib.uo bir_inst_liftingTheory.uo
 SMLFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
 TARGETS = $(patsubst %.sml,%.uo,$(SMLFILES))
 
-all: $(TARGETS)
+all: $(TARGETS) selftest.exe
 .PHONY: all
 
 
