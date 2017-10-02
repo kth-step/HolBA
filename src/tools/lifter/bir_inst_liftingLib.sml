@@ -405,10 +405,14 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      computing the block-updates later. Moreover, a theorem stating that the
      computed imm_ups list is correct is produced. *)
 
+  local 
+    val compute_single_up_single_conv = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [
+         updateTheory.APPLY_UPDATE_THM, wordsTheory.n2w_11];
+
+  in
+
   fun compute_imm_ups ms'_t =
   let
-    val compute_single_up_single_conv = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [
-         updateTheory.APPLY_UPDATE_THM, wordsTheory.n2w_11]
     fun compute_single_up lf_ms = let
       val lf_ms'_tm = subst [ms_v |-> ms'_t] lf_ms
       val lf_ms'_thm = compute_single_up_single_conv lf_ms'_tm handle UNCHANGED => REFL lf_ms'_tm
@@ -439,14 +443,15 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
           (#bmr_const mr))
        val t1 = list_mk_comb (t0, [ms_v, ms'_t, imm_ups_tm])
 
-       val thm1 = SIMP_CONV bool_ss (eval_thms @ [
+       val thm1 = SIMP_CONV bool_ss ([
          bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_EVAL, bmr_eval_REWRS,
-         bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_CHECK_def])
+         bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_CHECK_def] @ eval_thms)
          t1
        val thm2 = EQT_ELIM thm1
     in thm2 end
   in
     (imm_ups_tm, thm_tm)
+  end;
   end;
 
 
@@ -458,16 +463,19 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      is similar to computing updates to immediates via compute_imm_ups.
      The computed term, its SML representation and a correctness theorem are returned. *)
 
+  local
+    val lf_ms'_CONV = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) []
+  in
+
   fun compute_mem_up ms'_t =
   let
      val lf_ms'_tm = subst [ms_v |-> ms'_t] mr_mem_lf_of_ms
-     val lf_ms'_thm = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) []
-         lf_ms'_tm handle UNCHANGED => REFL lf_ms'_tm
+     val lf_ms'_thm = lf_ms'_CONV  lf_ms'_tm handle UNCHANGED => REFL lf_ms'_tm
 
-      val res = rhs (concl lf_ms'_thm)
+     val res = rhs (concl lf_ms'_thm)
 
-      val (upd_tm, upd_tm_opt) = if (aconv res mr_mem_lf_of_ms) then (optionSyntax.mk_none (type_of res), NONE) else
-                      (optionSyntax.mk_some res, SOME res)
+     val (upd_tm, upd_tm_opt) = if (aconv res mr_mem_lf_of_ms) then (optionSyntax.mk_none (type_of res), NONE) else
+                     (optionSyntax.mk_some res, SOME res)
 
       (* !!!! TODO: support memory changes *)
       val _ = if upd_tm_opt <> NONE then fail () else ()
@@ -485,6 +493,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     in thm1 end
   in
     (upd_tm, upd_tm_opt, thm_tm)
+  end;
   end;
 
 
@@ -550,11 +559,13 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (* Given a next state as a term, we look at the PC of the state and
      compute an end statement update description that allows us to jump to
      that PC. *)
+  local
+    val lf_ms'_CONV = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [bmr_eval_REWRS]
+  in
   fun compute_eup ms'_t =
   let
      val lf_ms'_tm = list_mk_icomb bmr_pc_lf_tm [(#bmr_const mr), ms'_t];
-     val lf_ms'_thm = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [bmr_eval_REWRS]
-         lf_ms'_tm handle UNCHANGED => REFL lf_ms'_tm
+     val lf_ms'_thm = lf_ms'_CONV lf_ms'_tm handle UNCHANGED => REFL lf_ms'_tm
      val res_imm = rhs (concl lf_ms'_thm)
 
      (* There are 3 cases supported:
@@ -618,7 +629,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
    in
      (eup_tm, eup_thm)
    end;
-
+  end;
 
   (*-----------------*)
   (* Compute updates *)
@@ -647,6 +658,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      val comp_upd_imm_varname_conv = SIMP_CONV (list_ss++stringSimps.STRING_ss) [bir_temp_varsTheory.bir_temp_var_def, bir_envTheory.bir_var_name_def, bir_temp_varsTheory.bir_temp_var_name_def]
 
      val comp_upd_imm_nin_conv = SIMP_CONV (list_ss++pred_setSimps.PRED_SET_ss++stringSimps.STRING_ss) []
+
+     val eval_updates_conv = SIMP_CONV list_ss [bmr_eval_REWRS]
 
      fun comp_varnames_thm e_tm = let
        val tm0 = pred_setSyntax.mk_image (bir_envSyntax.bir_var_name_tm,
@@ -717,6 +730,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
            (thm4, vn_set')
          end;
 
+
+
   in
 
   fun compute_updates mem_up_t imm_ups_t eup_t =
@@ -765,7 +780,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
           val (precond_tm, t1) = dest_imp_only t0
           val updates_tm = rand t1
        in (eup_temp_v, precond_tm, updates_tm) end;
-       val updates_thm = SIMP_CONV list_ss [bmr_eval_REWRS] updates_tm
+       val updates_thm = eval_updates_conv updates_tm
 
        val e_thm = REWRITE_CONV [bir_updateE_desc_exp_def] (mk_comb (bir_updateE_desc_exp_tm, eup_t))
        val e_opt = SOME (optionSyntax.dest_some (rhs (concl e_thm))) handle HOL_ERR _ => NONE
@@ -1006,6 +1021,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   in (thm0, cache', false) end
 
 
+  local
+     val discharge_hyp_CONV = SIMP_CONV (arith_ss) [alignmentTheory.aligned_numeric, alignmentTheory.aligned_0]
+  in
   fun bir_lift_instr_mu (mu_thm:thm, mm_precond_thm : thm)  cache (pc : Arbnum.num) hex_code = let
     val (thm0, cache', cache_used) =  bir_lift_instr_mu_gen_pc (mu_thm, mm_precond_thm) cache hex_code
 
@@ -1014,8 +1032,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
     (* remove all remaining hyps *)
     fun discharge_hyp (tm, thm) = let
-       val pre_thm  = EQT_ELIM (SIMP_CONV (arith_ss) [alignmentTheory.aligned_numeric, alignmentTheory.aligned_0] tm)
-    in (PROVE_HYP pre_thm thm) end handle HOL_ERR _ => thm;
+       val pre_thm  = EQT_ELIM (discharge_hyp_CONV tm) 
+    in (PROVE_HYP pre_thm thm) end handle HOL_ERR _ => thm
+                                        | UNCHANGED => thm;
 
     val thm2 = List.foldl discharge_hyp thm1 (hyp thm1)
 
@@ -1023,6 +1042,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     val thm3  = reduceLib.REDUCE_RULE thm2
   in
     (thm3, cache', cache_used)
+  end;
   end;
 
 
