@@ -31,25 +31,6 @@ val bmr_ms_mem_unchanged_def = Define `bmr_ms_mem_unchanged r ms ms' i <=>
   (!a. WI_MEM a i ==> (bmr_mem_lf r ms' a = bmr_mem_lf r ms a))`;
 
 
-(*************************)
-(* Program stored in mem *)
-(*************************)
-
-val bmr_ms_mem_contains_def = Define `
-  (bmr_ms_mem_contains (r : ('a, 'b, 'ms) bir_lifting_machine_rec_t)  (ms : 'ms) (ba, []) = T) /\
-  (bmr_ms_mem_contains r ms (ba, v::vs) =
-     (bmr_mem_lf r ms ba = (v:'b word)) /\
-     (bmr_ms_mem_contains r ms (ba+1w, vs)))`;
-
-val bmr_ms_mem_contains_interval_def = Define `
-  bmr_ms_mem_contains_interval (ba: 'a word, wl:'b word list) <=>
-  (WI_size ba (n2w (LENGTH wl)))`;
-
-val WF_bmr_ms_mem_contains_def = Define `WF_bmr_ms_mem_contains (ba: 'a word, wl:'b word list) <=>
-  (LENGTH wl < dimword (:'a)) /\
-  (WI_wf (bmr_ms_mem_contains_interval (ba, wl)))`
-
-
 val bmr_ms_mem_contains_UNCHANGED = store_thm ("bmr_ms_mem_contains_UNCHANGED",
 ``!r ms ms' i ba vs.
   WF_bmr_ms_mem_contains (ba, vs) ==>

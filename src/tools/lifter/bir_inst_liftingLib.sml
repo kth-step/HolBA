@@ -33,8 +33,6 @@ val block_observe_ty = mk_vartype ":'observation_type"
 val bir_is_lifted_inst_block_COMPUTE_block_tm =
    inst [Type.alpha |-> block_observe_ty] (get_const "bir_is_lifted_inst_block_COMPUTE_block")
 
-val bmr_ms_mem_contains_tm = get_const "bmr_ms_mem_contains";
-
 val bir_is_lifted_inst_block_COMPUTE_precond_tm =
     inst [Type.delta |-> block_observe_ty] (get_const "bir_is_lifted_inst_block_COMPUTE_precond")
 
@@ -207,11 +205,14 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
 
   (* Construct the extra thms *)
-  val ms_extra_REWRS = let
+  val ms_extra_REWRS0 = let
      val thm0 = SPECL [bs_v, ms_v] (ISPEC (#bmr_const mr) bmr_rel_implies_extra)
      val thm1 = UNDISCH thm0
-     val thm2 = SIMP_RULE (std_ss) [bmr_eval_REWRS] thm1
-  in thm2 end;
+  in thm1 end;
+
+  val ms_extra_REWRS =
+     SIMP_RULE (std_ss) [bmr_eval_REWRS] ms_extra_REWRS0;
+
 
 
   (* preinstantiated bmr_ms_mem_contains term *)
@@ -302,61 +303,23 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
        raise (bir_inst_liftingExn (hex_code, BILED_msg "label thm failed"));
 
      (* Normalise all resulting theorems *)
-     fun norm_thm thm =
-        SIMP_RULE std_ss [pc_thm, ms_extra_REWRS, satTheory.AND_IMP,
-           alignmentTheory.aligned_numeric, wordsTheory.word_add_n2w] thm handle UNCHANGED => thm
+     fun norm_thm thm = let
+        val thm0 = HYP_CONV_RULE (K true) (PURE_REWRITE_CONV [pc_thm]) thm
+        val thm1 = PROVE_HYP ms_extra_REWRS0 thm0
+        val thm2 = SIMP_RULE std_ss [pc_thm, ms_extra_REWRS, satTheory.AND_IMP,
+           alignmentTheory.aligned_numeric, wordsTheory.word_add_n2w] thm1 handle UNCHANGED => thm1
+     in
+        thm2
+     end
      val lifted_thms = map norm_thm lifted_thms_raw;
 
-     (* try to compute bmr_ms_mem_contains *)
-     val (mm_tm, mm_thm) = let
-       (* first get the common preconds *)
-       val common_preconds = let
-          fun preconds_of_thm thm =
-            HOLset.addList (empty_tmset, fst (strip_imp_only (concl thm)))
-
-          val preconds = foldl (fn (thm, s) => HOLset.intersection (s, preconds_of_thm thm))
-             (preconds_of_thm (hd lifted_thms)) (tl lifted_thms)
-          in HOLset.listItems preconds end
-
-       (* the extract pairs of mem address and values *)
-       val mem_precond_pairs = Lib.mapfilter (fn tm => let
-          val (l_tm, v_tm) = dest_eq tm;
-          val (ms_t, a_tm) = (#bmr_dest_mem mr) l_tm
-          val _ = assert (aconv ms_v) ms_t
-          val a_n = numSyntax.dest_numeral (fst (wordsSyntax.dest_n2w a_tm))
-       in (a_n, v_tm, tm) end) common_preconds
-       val _ = assert (not o List.null) mem_precond_pairs
-
-       (* sort it and try to combine *)
-       val sorted_mem_pairs = sort (fn (n1, _) => (fn (n2, _) => (Arbnum.< (n2, n1))))
-          (map (fn (a, v, _) => (a,v)) mem_precond_pairs)
-       val (n, vs) = foldl (fn ((n', v), (n, vs)) =>
-         if (Arbnum.plus1 n' = n) then (n', v::vs) else fail())
-         ((fn (n, v) => (n, [v])) (hd sorted_mem_pairs)) (tl sorted_mem_pairs)
-
-       (* make the term *)
-       val mm_tm = let
-          val addr_tm =  mk_mem_addr_from_num n;
-          val v_tm = listSyntax.mk_list (vs, type_of (hd vs))
-       in pairSyntax.mk_pair (addr_tm, v_tm) end;
-
-       (* show that this really implies all the preconds *)
-       val precond_thm = let
-         val p_tm = mk_comb (bmr_ms_mem_contains_tm_mr, mm_tm)
-         val c_tm = list_mk_conj (map (fn (_, _, tm) => tm) mem_precond_pairs)
-         val thm0 = prove (mk_imp (p_tm, c_tm),
-             SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ARITH_ss) [
-                bmr_ms_mem_contains_def, bmr_mem_lf_def,
-                (#bmr_eval_thm mr)]);
-       in UNDISCH thm0 end;
-     in (mm_tm, precond_thm) end handle HOL_ERR _ =>
-       raise (bir_inst_liftingExn (hex_code, BILED_msg "mem region computation failed"));
-
-
-     (* Rewrite with these new mm theorems *)
-     val lifted_thms2 = map (REWRITE_RULE [mm_thm]) lifted_thms
+     (* try to get bmr_ms_mem_contains *)
+     val mm_tm = let
+       val (_, _, mm_tm) = Lib.tryfind dest_bmr_ms_mem_contains (hyp (hd lifted_thms))
+     in mm_tm end handle HOL_ERR _ =>
+       raise (bir_inst_liftingExn (hex_code, BILED_msg "mem region search failed"));
   in
-     (lifted_thms2, mm_tm, label_tm)
+     (lifted_thms, mm_tm, label_tm)
   end handle HOL_ERR _ =>
     raise (bir_inst_liftingExn (hex_code, BILED_msg "mk_inst_lifting_theorems failed"));
 

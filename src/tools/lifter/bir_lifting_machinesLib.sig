@@ -37,6 +37,11 @@ sig
    val is_bmr_temp_vars   : term -> bool
    val mk_bmr_temp_vars   : term -> term
 
+   val bmr_ms_mem_contains_tm   : term
+   val dest_bmr_ms_mem_contains : term -> term * term * term
+   val is_bmr_ms_mem_contains   : term -> bool
+   val mk_bmr_ms_mem_contains   : term * term * term -> term
+
    (* Fields of the record *)
    val dest_bir_lifting_machine_rec :
      term -> term list (*imms*) * term (* mem *) * term (*pc*) * term (*extra*) * term (* step *)

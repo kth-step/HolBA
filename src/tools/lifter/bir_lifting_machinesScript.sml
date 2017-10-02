@@ -23,7 +23,6 @@ val _ = new_theory "bir_lifting_machines";
 (* General stuff *)
 (*****************)
 
-
 (*--------------*)
 (* Lifting Imms *)
 (*--------------*)
@@ -407,6 +406,26 @@ REPEAT STRIP_TAC >| [
 ]);
 
 
+(*-----------------------*)
+(* Program stored in mem *)
+(*-----------------------*)
+
+val bmr_ms_mem_contains_def = Define `
+  (bmr_ms_mem_contains (r : ('a, 'b, 'ms) bir_lifting_machine_rec_t)  (ms : 'ms) (ba, []) = T) /\
+  (bmr_ms_mem_contains r ms (ba, v::vs) =
+     (bmr_mem_lf r ms ba = (v:'b word)) /\
+     (bmr_ms_mem_contains r ms (ba+1w, vs)))`;
+
+val bmr_ms_mem_contains_interval_def = Define `
+  bmr_ms_mem_contains_interval (ba: 'a word, wl:'b word list) <=>
+  (WI_size ba (n2w (LENGTH wl)))`;
+
+val WF_bmr_ms_mem_contains_def = Define `WF_bmr_ms_mem_contains (ba: 'a word, wl:'b word list) <=>
+  (LENGTH wl < dimword (:'a)) /\
+  (WI_wf (bmr_ms_mem_contains_interval (ba, wl)))`
+
+
+
 (**********)
 (* ARM 8  *)
 (**********)
@@ -524,6 +543,25 @@ val arm8_bmr_label_thm = store_thm ("arm8_bmr_label_thm",
 ``!ms n. (BL_Address (bmr_pc_lf arm8_bmr ms) = BL_Address (Imm64 (n2w n))) ==>
          (ms.PC = n2w n)``,
 SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, arm8_bmr_EVAL]);
+
+
+val bmr_ms_mem_contains_ARM8 = store_thm ("bmr_ms_mem_contains_ARM8",
+``!ms v1 v2 v3 v4.
+  (bmr_ms_mem_contains arm8_bmr ms (ms.PC, [v1; v2; v3; v4]) <=>
+  ((ms.MEM ms.PC = v1) /\ (ms.MEM (ms.PC + 1w) = v2) /\ (ms.MEM (ms.PC + 2w) = v3) /\
+   (ms.MEM (ms.PC + 3w) = v4)))``,
+
+SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ss) [bmr_ms_mem_contains_def,
+  arm8_bmr_EVAL, bmr_mem_lf_def]);
+
+
+val bmr_extra_ARM8 = store_thm ("bmr_extra_ARM8",
+``!ms.
+  arm8_bmr.bmr_extra ms = (~ms.SCTLR_EL1.E0E /\ (ms.PSTATE.EL = 0w) /\
+  (ms.exception = NoException) /\ ~ms.SCTLR_EL1.SA0 /\
+  ~ms.TCR_EL1.TBI0 /\ ~ms.TCR_EL1.TBI1)``,
+
+SIMP_TAC (std_ss++bmr_ss++boolSimps.EQUIV_EXTRACT_ss) [arm8_bmr_EVAL]);
 
 
 

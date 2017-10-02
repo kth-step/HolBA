@@ -42,6 +42,9 @@ val (bmr_rel_tm,  mk_bmr_rel, dest_bmr_rel, is_bmr_rel)  = syntax_fns3 "bmr_rel"
 val (bmr_vars_tm,  mk_bmr_vars, dest_bmr_vars, is_bmr_vars)  = syntax_fns1 "bmr_vars";
 val (bmr_temp_vars_tm,  mk_bmr_temp_vars, dest_bmr_temp_vars, is_bmr_temp_vars)  = syntax_fns1 "bmr_temp_vars";
 
+val (bmr_ms_mem_contains_tm,  mk_bmr_ms_mem_contains, dest_bmr_ms_mem_contains, is_bmr_ms_mem_contains)  = syntax_fns3 "bmr_ms_mem_contains";
+
+
 fun get_const name = prim_mk_const{Name=name,        Thy="bir_lifting_machines"}
 
 val bmr_pc_lf_tm       =   get_const "bmr_pc_lf";
@@ -226,18 +229,64 @@ fun bmr_rec_sanity_check r =
   (can bmr_rec_mk_label_of_num_eq_pc r) andalso
   (can bmr_rec_mk_pc_of_term r);
 
-fun bmr_normalise_step_thms (r_step_rel:term) (rule:thm -> thm) st_hex = let
-  fun norm_thm vn thm = let
-     (* check whether thm is of expected form and normalise the state variable name *)
-     val thm_v = let
-        val (t_lhs, t_rhs) = dest_eq (concl thm)
-        val _ = optionSyntax.dest_some t_rhs
-        val (t_rel, v) = dest_comb t_lhs
-        val _ = if (aconv t_rel r_step_rel) then () else fail ()
-     in INST [v |-> vn] thm end;
 
-     (* check for hyp (SOME _ = SOME vars) which can be discared via instantiating it *)
-     val thm0 = let
+(* This performs some common normalisations which are many architectures. It
+   checks whether the resulting theorem is of the form
+
+   (NEXT_STEP_FUN var = SOME ...)
+
+   and renames the variable into the given one. *)
+fun bmr_normalise_step_thm (r_step_rel:term) vn thm =
+   (* check whether thm is of expected form and normalise the state variable name *)
+   let
+      val (t_lhs, t_rhs) = dest_eq (concl thm)
+      val _ = optionSyntax.dest_some t_rhs
+      val (t_rel, v) = dest_comb t_lhs
+      val _ = if (aconv t_rel r_step_rel) then () else fail ()
+   in INST [v |-> vn] thm end;
+
+
+
+(* DEBUG
+  val vn = ``ms:arm8_state``
+  val hex_code = "D65F03C0";
+  val thms = arm8_step_hex hex_code
+*)
+
+local
+  val next_state_tm = (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"});
+  val simp_rule = (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0,
+      arm8_extra_FOLDS]);
+
+  fun arm8_extra_THMS vn = let
+     val thm0  = SPEC vn bmr_extra_ARM8
+     val thm1a = ASSUME (lhs (concl thm0))
+     val thm1 = CONV_RULE (K thm0) thm1a
+  in
+     CONJUNCTS thm1
+  end;
+
+  fun prepare_mem_contains_thms vn hex_code =
+  let
+     val _ = if (String.size hex_code <> 8) then failwith "invalid hex_code" else ();
+
+     fun prepare_word8_of_substring i =
+       wordsSyntax.mk_wordi (Arbnum.fromHexString (String.substring (hex_code, i, 2)), 8);
+
+
+
+    val thm0 = SPECL [vn, prepare_word8_of_substring 6, prepare_word8_of_substring 4,
+                      prepare_word8_of_substring 2, prepare_word8_of_substring 0]
+                      bmr_ms_mem_contains_ARM8
+
+    val thm1a = ASSUME (lhs (concl thm0))
+    val thm2 = CONV_RULE (K thm0) thm1a
+  in
+    CONJUNCTS thm2
+  end;
+
+  (* check for hyp (SOME _ = SOME vars) which can be discared via instantiating it *)
+  fun instantiate_arm8_thm thm = let
        fun process_hyp (tm, thm) =
        let
           val (l_tm, r_tm) = dest_eq tm;
@@ -250,22 +299,38 @@ fun bmr_normalise_step_thms (r_step_rel:term) (rule:thm -> thm) st_hex = let
        in
           thm0b
        end handle HOL_ERR _ => thm;
-     in
-       foldl process_hyp thm_v (hyp thm_v)
-     end;
+   in
+     foldl process_hyp thm (hyp thm)
+   end;
 
-     val thm1 = DISCH_ALL thm0;
-     val thm2 = rule thm1;
-  in thm2 end;
-in fn vn => fn s =>
-  List.map (norm_thm vn) (st_hex s)
+   fun disch_hyp_check tm = 
+     if (is_bmr_ms_mem_contains tm) then false else
+     if (is_bmr_field_extra tm) then false else
+     true;
+
+(* val thm = hd step_thms0  *)
+   fun process_arm8_thm vn pc_mem_thms thm = let
+     val thm0 = bmr_normalise_step_thm next_state_tm vn thm
+     val thm1 = instantiate_arm8_thm thm0
+     val thm2 = foldl (fn (pre_thm, thm) => PROVE_HYP pre_thm thm) thm1
+       (pc_mem_thms @ (arm8_extra_THMS vn))
+
+     val thm3 = foldl (uncurry DISCH) thm2 (List.filter disch_hyp_check (hyp thm2))
+     val thm4 = simp_rule thm3
+   in
+     thm4
+   end;
+
+in
+  fun arm8_step_hex' vn hex_code = let
+    val pc_mem_thms = prepare_mem_contains_thms vn hex_code;
+
+    val step_thms0 = arm8_step_hex hex_code
+    val step_thms1 = List.map (process_arm8_thm vn pc_mem_thms) step_thms0;
+  in
+    step_thms1
+  end
 end;
-
-val arm8_step_hex' = bmr_normalise_step_thms
-   (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"})
-   (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0,
-      arm8_extra_FOLDS])
-    arm8_step_hex;
 
 val arm8_state_mem_tm = prim_mk_const{Name="arm8_state_MEM", Thy="arm8"};
 val arm8_dest_mem = HolKernel.dest_binop arm8_state_mem_tm (ERR "arm8_dest_mem" "");
