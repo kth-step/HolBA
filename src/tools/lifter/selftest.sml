@@ -9,21 +9,39 @@ open PPBackEnd Parse
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 
-(* For manual
-val _ = Parse.current_backend := PPBackEnd.emacs_terminal;
-*)
-
-fun hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm)
+(* style for success, fail and header *)
+val sty_OK     = [FG Green];
+val sty_FAIL   = [FG OrangeRed];
+val sty_HEADER = [Bold, Underline];
 
 (*
+For manual testing
+
+val _ = Parse.current_backend := PPBackEnd.emacs_terminal;
 
 val mu_b = Arbnum.fromInt 0;
 val mu_e = Arbnum.fromInt 0x1000000;
 val pc = Arbnum.fromInt 0x10030;
 val hex_code = "12001C00"
-
 *)
 
+(* run a single instruction "hexcode" given a region of memory
+   and a PC. Some debug output is printed and the required runtime
+   is measured. The result is a triple:
+
+   - res : thm option ---
+       the theorem produced, NONE is something went wrong
+   - ed  : bir_inst_liftingExn_data option ---
+       a description of what went wrong, if available
+   - d_s : string ---
+       time in seconds as a string
+
+   We also keep track of all failed hex_codes in a references
+   "failed_hexcodes_list".
+*)
+
+val failed_hexcodes_list = ref ([]:(string * bir_inst_liftingExn_data option) list);
+val success_hexcodes_list = ref ([]: (string * thm) list);
 fun lift_instr mu_b mu_e pc hex_code = let
   val _ = print (hex_code ^ " @ 0x" ^ (Arbnum.toHexString pc));
   val timer = (Time.now())
@@ -36,15 +54,17 @@ fun lift_instr mu_b mu_e pc hex_code = let
 
 
   val _ = print (" - " ^ d_s ^ " s - ");
-  val _ = if is_some res then
-             print_with_style [FG Green] "OK\n"
-          else
-             (print_with_style [FG OrangeRed] "FAILED\n");
+  val _ = case res of
+             SOME r => (success_hexcodes_list := (hex_code, r)::(!success_hexcodes_list);
+                        (print_with_style sty_OK "OK\n"))
+           | NONE =>
+             (failed_hexcodes_list := (hex_code, ed)::(!failed_hexcodes_list);
+             (print_with_style sty_FAIL "FAILED\n"));
   val _ = case ed of
       NONE => ()
     | SOME d => (let
         val s = ("   "^(bir_inst_liftingExn_data_to_string d) ^ "\n");
-      in print_with_style [FG OrangeRed] s end)
+      in print_with_style sty_FAIL s end)
 in
   (res, ed, d_s)
 end;
@@ -54,72 +74,7 @@ fun hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm)
 fun lift_instr_asm mu_b mu_e pc asm =
   lift_instr mu_b mu_e pc (hex_code_of_asm asm);
 
-
-
-(* SOME MANUAL TESTS *)
-val mu_b = Arbnum.fromInt 0;
-val mu_e = Arbnum.fromInt 0x1000000;
-val pc = Arbnum.fromInt 0x10030;
-val test_asm = lift_instr_asm mu_b mu_e pc
-val test_hex = lift_instr mu_b mu_e pc
-
-val _ = print_with_style [Bold, Underline] "\n\n\nMANUAL TESTS\n\n";
-val _ = test_asm `add x0, x1, x2`;
-val _ = test_asm `add x1, x1, x1`;
-val _ = test_asm `adds x0, x1, x2`;
-val _ = test_asm `add x0, x0, x2`;
-val _ = test_asm `sub x0, x1, x2`;
-val _ = test_asm `mul x0, x1, x2`;
-val _ = test_asm `mul w0, w1, w1`;
-val _ = test_asm `cmp w0, #0`;
-val _ = test_asm `cmn w0, #0`;
-val _ = test_asm `cmn w0, w1`;
-val _ = test_asm `cmn x0, x9`;
-val _ = test_asm `ret`;
-val _ = test_asm `adds x0, x2, #8`;
-val _ = test_asm `subs x0, x2, #8`;
-val _ = test_asm `adds x0, x1, x2`;
-val _ = test_asm `add x0, x0, x2`;
-val _ = test_asm `sub x0, x1, x2`;
-val _ = test_asm `add x4, SP, #8`;
-val _ = test_asm `add x4, SP, #8`;
-val _ = test_asm `adds x1, x1, #0`;
-val res = test_asm `lsr x1, x2, #5`;
-val res = test_asm `lsr x1, x2, #0`;
-val res = test_asm `lsr x1, x1, #0`;
-val res = test_asm `lsr x1, x2, x3`;
-val res = test_asm `lsl x1, x2, #5`;
-val res = test_asm `lsl x1, x2, #0`;
-val res = test_asm `lsl x1, x1, #0`;
-val res = test_asm `lsl x1, x2, x3`;
-val res = test_asm `asr x1, x2, #5`;
-val res = test_asm `asr x1, x2, #0`;
-val res = test_asm `asr x1, x1, #0`;
-val res = test_asm `asr x1, x2, x3`;
-val _ = test_asm `ldr x0, [x2, #0]`;
-
-  (* THERE ARE STILL MANY TODOs !!! *)
-val _ = test_asm `lsl x0, x2, #8`;
-val _ = test_asm `lsr x0, x2, #8`;
-val _ = test_asm `str x0, [x2, #8]`;
-
-  (* some instructions I din't see in this file *)
-(*  4003a0:	d61f0220 	br	x17 *)
-val _ = test_asm `br	x17`;
-(*  4003a4:	d503201f 	nop *)
-val _ = test_asm `nop`;
-(*  400510:	d63f0020 	blr	x1 *)
-val _ = test_asm `blr	x1`;
-(*  400430:	b4000040 	cbz	x0, 400438 <call_weak_fn+0x10> *)
-val _ = test_hex "B4000040";
-(*  4004cc:	35000080 	cbnz	w0, 4004dc <__do_global_dtors_aux+0x24> *)
-val _ = test_hex "35000080";
-
-
-
-
 (* And a list version *)
-
 fun lift_instr_list mu_b mu_e pc hex_codes = let
   val timer = (Time.now())
   val len_codes = (length hex_codes);
@@ -149,10 +104,132 @@ fun lift_instr_list mu_b mu_e pc hex_codes = let
   val _ = print ("Time needed        : " ^ d_s ^ " s\n\n");
 in
   (fail_c, success_c, resL)
-end
+end;
+
+
+fun final_results expected_failed_hexcodes = let
+  val _ = print_with_style sty_HEADER "\n\n\nSUMMARY FAILING HEXCODES\n\n";
+  val _ = print "\n";
+  val failing_l = op_mk_set (fn x => fn y => (fst x = fst y)) (!failed_hexcodes_list)
+  val ok_l = op_mk_set (fn x => fn y => (fst x = fst y)) (!success_hexcodes_list)
+
+  (* look for freshly failing ones *)
+  val failing_l' = map (fn (hc, edo) =>
+     (hc, edo, not (Lib.mem hc expected_failed_hexcodes))) failing_l;
+  val fixed_l = List.filter (fn hc => List.exists (fn e => fst e = hc) ok_l) expected_failed_hexcodes
+
+  (* Show the hex-codes that were expected to fail, but succeeded. These
+     are the ones fixed by recent changes. *)
+  val _ = print ("Instructions FIXED: " ^ (Int.toString (length fixed_l)) ^ "\n\n");
+  val _ = List.map (fn s => print_with_style sty_OK ("   " ^ s ^"\n")) fixed_l;
+  val _ = print "\n\n";
+
+  (* Show the hex-codes that were expected to succeed, but failed. These
+     are the ones broken by recent changes. *)
+  val broken_l = List.filter (fn (hc, edo, br) => br) failing_l';
+  val _ = print ("Instructions BROKEN: " ^ (Int.toString (List.length broken_l)) ^ "\n\n");
+  val _ = List.map (fn (hc, _, _) => print_with_style sty_FAIL ("   " ^ hc ^"\n")) broken_l;
+  val _ = print "\n\n";
+
+
+  (* Show all failing instructions and format them such that they can be copied
+     in the code of selftest.sml
+     as content of list expected_failed_hexcodes *)
+  val _ = print ("Instructions FAILED: " ^ (Int.toString (length failing_l)) ^ "/" ^
+         (Int.toString (length failing_l + length ok_l)) ^ "\n\n[\n");
+  fun print_failed [] = ()
+    | print_failed ((hex_code, ed_opt, broken)::l) =
+  let
+    (* print the ones that failed, but were not excepted to in red *)
+    val st = if broken then sty_FAIL else [];
+    val _ = print "   ";
+    val _ = print_with_style st ("\""^hex_code^"\"");
+    val _ = case ed_opt of
+        NONE => ()
+      | SOME d => (let
+          val s = (" (* "^(bir_inst_liftingExn_data_to_string d) ^ " *)");
+          in print_with_style st s end);
+  in if List.null l then (print "\n]\n\n") else
+         (print ",\n"; print_failed l)
+  end;
+  val _ = print_failed failing_l';
+in
+  ()
+end;
 
 
 
+
+(*********************)
+(* SOME MANUAL TESTS *)
+(*********************)
+
+val mu_b = Arbnum.fromInt 0;
+val mu_e = Arbnum.fromInt 0x1000000;
+val pc = Arbnum.fromInt 0x10030;
+val test_asm = lift_instr_asm mu_b mu_e pc
+val test_hex = lift_instr mu_b mu_e pc
+
+val res = print_with_style sty_HEADER "\n\n\nMANUAL TESTS\n\n";
+val res = test_asm `add x0, x1, x2`;
+val res = test_asm `add x1, x1, x1`;
+val res = test_asm `adds x0, x1, x2`;
+val res = test_asm `add x0, x0, x2`;
+val res = test_asm `sub x0, x1, x2`;
+val res = test_asm `mul x0, x1, x2`;
+val res = test_asm `mul w0, w1, w1`;
+val res = test_asm `cmp w0, #0`;
+val res = test_asm `cmn w0, #0`;
+val res = test_asm `cmn w0, w1`;
+val res = test_asm `cmn x0, x9`;
+val res = test_asm `ret`;
+val res = test_asm `adds x0, x2, #8`;
+val res = test_asm `subs x0, x2, #8`;
+val res = test_asm `adds x0, x1, x2`;
+val res = test_asm `add x0, x0, x2`;
+val res = test_asm `sub x0, x1, x2`;
+val res = test_asm `add x4, SP, #8`;
+val res = test_asm `add x4, SP, #8`;
+val res = test_asm `adds x1, x1, #0`;
+val res = test_asm `lsr x1, x2, #5`;
+val res = test_asm `lsr x1, x2, #0`;
+val res = test_asm `lsr x1, x1, #0`;
+val res = test_asm `lsr x1, x2, x3`;
+val res = test_asm `lsl x1, x2, #5`;
+val res = test_asm `lsl x1, x2, #0`;
+val res = test_asm `lsl x1, x1, #0`;
+val res = test_asm `lsl x1, x2, x3`;
+val res = test_asm `asr x1, x2, #5`;
+val res = test_asm `asr x1, x2, #0`;
+val res = test_asm `asr x1, x1, #0`;
+val res = test_asm `asr x1, x2, x3`;
+val res = test_asm `ldr x0, [x2, #0]`;
+
+  (* THERE ARE STILL MANY TODOs !!! *)
+val res = test_asm `lsl x0, x2, #8`;
+val res = test_asm `lsr x0, x2, #8`;
+val res = test_asm `str x0, [x2, #8]`;
+
+  (* some instructions I din't see in this file *)
+(*  4003a0:     d61f0220        br      x17 *)
+val res = test_asm `br  x17`;
+(*  4003a4:     d503201f        nop *)
+val res = test_asm `nop`;
+(*  400510:     d63f0020        blr     x1 *)
+val res = test_asm `blr x1`;
+(*  400430:     b4000040        cbz     x0, 400438 <call_weak_fn+0x10> *)
+val res = test_hex "B4000040";
+(*  4004cc:     35000080        cbnz    w0, 4004dc <__do_global_dtors_aux+0x24> *)
+val res = test_hex "35000080";
+
+
+
+
+
+
+(***************)
+(* AES_EXAMPLE *)
+(***************)
 
 (* Test it with the instructions from aes example *)
 val instrs = [
@@ -235,7 +312,7 @@ val instrs = [
 ];
 
 
-val _ = print_with_style [Bold, Underline] "\n\n\nTESTING AES CODE\n\n";
+val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE\n\n";
 val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     (Lib.mk_set instrs)
 
@@ -243,7 +320,9 @@ val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fr
 
 
 
-
+(**********)
+(* BIGNUM *)
+(**********)
 
 (* precompiled bignum lib as binary blob with unspecified location *)
 
@@ -368,6 +447,124 @@ val instrs_bignumlib = instrs_bignum_from_bytes @
              instrs_newbn;
 
 
-val _ = print_with_style [Bold, Underline] "\n\n\nTESTING BIGNUM LIB CODE\n\n";
+val _ = print_with_style sty_HEADER "\n\n\nTESTING BIGNUM LIB CODE\n\n";
 val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     (Lib.mk_set instrs_bignumlib)
+
+
+(*****************)
+(* final summary *)
+(*****************)
+
+val expected_failed_hexcodes:string list =
+[
+   "79000001" (* computing mem_up failed *),
+   "54000061" (* TODO: multiple step theorems preprocessing *),
+   "F90017A0" (* computing mem_up failed *),
+   "B9001FA0" (* computing mem_up failed *),
+   "A9BD7BFD" (* computing mem_up failed *),
+   "54FFF78A" (* TODO: multiple step theorems preprocessing *),
+   "54FFFAAA" (* TODO: multiple step theorems preprocessing *),
+   "F9001BE0" (* computing mem_up failed *),
+   "F9001BFF" (* computing mem_up failed *),
+   "F90017E0" (* computing mem_up failed *),
+   "54FFFE8C" (* TODO: multiple step theorems preprocessing *),
+   "7900001F" (* computing mem_up failed *),
+   "B9003BFF" (* computing mem_up failed *),
+   "B90007E3" (* computing mem_up failed *),
+   "F9000BE1" (* computing mem_up failed *),
+   "54FFE3CA" (* TODO: multiple step theorems preprocessing *),
+   "B90067A0" (* computing mem_up failed *),
+   "540001A0" (* TODO: multiple step theorems preprocessing *),
+   "B90057A0" (* computing mem_up failed *),
+   "54FFFB2A" (* TODO: multiple step theorems preprocessing *),
+   "B90063A0" (* computing mem_up failed *),
+   "F9002FA0" (* computing mem_up failed *),
+   "F9002FBF" (* computing mem_up failed *),
+   "54000620" (* TODO: multiple step theorems preprocessing *),
+   "54FFF90A" (* TODO: multiple step theorems preprocessing *),
+   "B90053A0" (* computing mem_up failed *),
+   "54000089" (* TODO: multiple step theorems preprocessing *),
+   "B90053BF" (* computing mem_up failed *),
+   "54000082" (* TODO: multiple step theorems preprocessing *),
+   "54000168" (* TODO: multiple step theorems preprocessing *),
+   "B90047A0" (* computing mem_up failed *),
+   "54000362" (* TODO: multiple step theorems preprocessing *),
+   "B9004FA0" (* computing mem_up failed *),
+   "B9004FBF" (* computing mem_up failed *),
+   "B9006BA0" (* computing mem_up failed *),
+   "B9006BBF" (* computing mem_up failed *),
+   "B90067BF" (* computing mem_up failed *),
+   "7900DFBF" (* computing mem_up failed *),
+   "7900DFA0" (* computing mem_up failed *),
+   "540000AD" (* TODO: multiple step theorems preprocessing *),
+   "790097A0" (* computing mem_up failed *),
+   "B9001FA5" (* computing mem_up failed *),
+   "F90013A4" (* computing mem_up failed *),
+   "B90033A3" (* computing mem_up failed *),
+   "F90017A2" (* computing mem_up failed *),
+   "B90037A1" (* computing mem_up failed *),
+   "F9001FA0" (* computing mem_up failed *),
+   "A9B97BFD" (* computing mem_up failed *),
+   "54FFFD01" (* TODO: multiple step theorems preprocessing *),
+   "F90013E0" (* computing mem_up failed *),
+   "B9001FE0" (* computing mem_up failed *),
+   "B90003E2" (* computing mem_up failed *),
+   "B90007E1" (* computing mem_up failed *),
+   "F90007E0" (* computing mem_up failed *),
+   "F9000FA0" (* computing mem_up failed *),
+   "A9BE7BFD" (* computing mem_up failed *),
+   "54FFF8C3" (* TODO: multiple step theorems preprocessing *),
+   "79005BA0" (* computing mem_up failed *),
+   "79005FA0" (* computing mem_up failed *),
+   "39000001" (* computing mem_up failed *),
+   "54000208" (* TODO: multiple step theorems preprocessing *),
+   "540002E1" (* TODO: multiple step theorems preprocessing *),
+   "F90013A0" (* computing mem_up failed *),
+   "54000128" (* TODO: multiple step theorems preprocessing *),
+   "790057A0" (* computing mem_up failed *),
+   "F9000BA1" (* computing mem_up failed *),
+   "54FFFDC0" (* TODO: multiple step theorems preprocessing *),
+   "54000149" (* TODO: multiple step theorems preprocessing *),
+   "54FFF8E1" (* TODO: multiple step theorems preprocessing *),
+   "B9003FA1" (* computing mem_up failed *),
+   "79000020" (* computing mem_up failed *),
+   "54000320" (* TODO: multiple step theorems preprocessing *),
+   "3900BFA0" (* computing mem_up failed *),
+   "F9000FA1" (* computing mem_up failed *),
+   "B9003FA0" (* computing mem_up failed *),
+   "54FFFEAD" (* TODO: multiple step theorems preprocessing *),
+   "F9001BA0" (* computing mem_up failed *),
+   "B9003BA0" (* computing mem_up failed *),
+   "B90017A1" (* computing mem_up failed *),
+   "A9BC7BFD" (* computing mem_up failed *),
+   "B9000001" (* computing mem_up failed *),
+   "B9003BE0" (* computing mem_up failed *),
+   "B9006FE0" (* computing mem_up failed *),
+   "B9006BE0" (* computing mem_up failed *),
+   "B90067E0" (* computing mem_up failed *),
+   "B90063E0" (* computing mem_up failed *),
+   "B9005FE0" (* computing mem_up failed *),
+   "B9005BE0" (* computing mem_up failed *),
+   "B90057E0" (* computing mem_up failed *),
+   "B90053E0" (* computing mem_up failed *),
+   "B90037E0" (* computing mem_up failed *),
+   "B90033E0" (* computing mem_up failed *),
+   "B9002FE0" (* computing mem_up failed *),
+   "54FFE321" (* TODO: multiple step theorems preprocessing *),
+   "B9004FE0" (* computing mem_up failed *),
+   "F9000FE0" (* computing mem_up failed *),
+   "B9004BE0" (* computing mem_up failed *),
+   "B90047E0" (* computing mem_up failed *),
+   "B90043E0" (* computing mem_up failed *),
+   "B9003FE0" (* computing mem_up failed *),
+   "F90003E3" (* computing mem_up failed *),
+   "F90007E2" (* computing mem_up failed *),
+   "B90017E1" (* computing mem_up failed *),
+   "35000080" (* TODO: multiple step theorems preprocessing *),
+   "B4000040" (* TODO: multiple step theorems preprocessing *),
+   "F9000440" (* computing mem_up failed *)
+]
+;
+
+val _ = final_results expected_failed_hexcodes;

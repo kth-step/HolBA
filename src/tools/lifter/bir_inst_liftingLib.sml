@@ -99,6 +99,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   val hex_code = "D65F03C0";
   val hex_code = "12001C00"
+  val hex_code = "54000061";
 *)
 
   open MD;
@@ -371,9 +372,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      this theorem is executed. *)
 
   fun preprocess_next_thms (lb:term) (pc:Arbnum.num) ([]:thm list) =
-      failwith "preprocess_next_thms called with empty list"
+      raise bir_inst_liftingAuxExn (BILED_msg ("empty list of step theorems produced"))
     | preprocess_next_thms lb pc [thm] = [(lb, T, thm)]
-    | preprocess_next_thms lb pc thms = failwith "TODO: implement this"
+    | preprocess_next_thms lb pc thms =
+      raise bir_inst_liftingAuxExn (BILED_msg ("TODO: multiple step theorems preprocessing"));
 
 
 
@@ -985,6 +987,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      (* preprocess next-theorems. Merge some, order them, derive conditions,
         assign auxiliary labels, ... *)
      val sub_block_work_list = preprocess_next_thms label_tm pc next_thms
+       handle HOL_ERR _ =>
+         raise bir_inst_liftingAuxExn (BILED_msg ("preprocessing next theorems failed"));
 
      val sub_block_thms = map (lift_single_block inst_lift_thm0 bir_is_lifted_inst_block_COMPUTE_precond_tm0 mu_thm) sub_block_work_list
 
