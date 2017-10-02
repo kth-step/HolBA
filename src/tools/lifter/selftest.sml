@@ -61,6 +61,7 @@ val mu_b = Arbnum.fromInt 0;
 val mu_e = Arbnum.fromInt 0x1000000;
 val pc = Arbnum.fromInt 0x10030;
 val test_asm = lift_instr_asm mu_b mu_e pc
+val test_hex = lift_instr mu_b mu_e pc
 
 val _ = print_with_style [Bold, Underline] "\n\n\nMANUAL TESTS\n\n";
 val _ = test_asm `add x0, x1, x2`;
@@ -110,9 +111,9 @@ val _ = test_asm `nop`;
 (*  400510:	d63f0020 	blr	x1 *)
 val _ = test_asm `blr	x1`;
 (*  400430:	b4000040 	cbz	x0, 400438 <call_weak_fn+0x10> *)
-val _ = test_asm `cbz	x0, 400438`;
+val _ = test_hex "B4000040";
 (*  4004cc:	35000080 	cbnz	w0, 4004dc <__do_global_dtors_aux+0x24> *)
-val _ = test_asm `cbnz	w0, 4004dc`;
+val _ = test_hex "35000080";
 
 
 
