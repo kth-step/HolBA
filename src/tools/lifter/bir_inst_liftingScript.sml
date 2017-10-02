@@ -22,7 +22,6 @@ open pred_setTheory
 val _ = new_theory "bir_inst_lifting";
 
 
-
 (*****************************)
 (* Unchanged memory interval *)
 (*****************************)
@@ -557,6 +556,34 @@ val bir_is_lifted_inst_block_COMPUTE_updates_FULL_def = Define
         bir_var_name v <> bir_var_name v')`;
 
 
+val bir_is_lifted_inst_block_COMPUTE_block_def = Define `
+  bir_is_lifted_inst_block_COMPUTE_block l' al_mem al_step eup_temp eup updates =
+  bir_update_assert_block l' (al_mem ++ al_step)
+                 (if eup_temp then eup
+                  else bir_updateE_desc_remove_var eup) updates`;
+
+val bir_is_lifted_inst_block_COMPUTE_precond_def = Define
+  `bir_is_lifted_inst_block_COMPUTE_precond r bs ms l mu mm bl l' ms_case_cond ms'
+     al_step imm_ups mem_up al_mem eup eup_temp updates <=> (
+
+     bmr_rel r bs ms ==>
+     ms_case_cond ms ==>
+     bmr_ms_mem_contains r ms mm ==>
+     (BL_Address (bmr_pc_lf r ms) = l) ==> (
+     bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK r bs ms al_step ms' /\
+     bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES r ms ms' imm_ups /\
+     bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r ms ms' mem_up /\
+     bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK r mu bs ms ms' al_mem /\
+     bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS r bs eup ms' /\
+     bir_is_lifted_inst_block_COMPUTE_updates_FULL r bs mem_up imm_ups eup eup_temp updates /\
+     (bl = bir_is_lifted_inst_block_COMPUTE_block l' al_mem al_step eup_temp eup updates)))`;
+
+val bir_is_lifted_inst_block_COMPUTE_mm_WF_def = Define
+  `bir_is_lifted_inst_block_COMPUTE_mm_WF mu mm <=>
+    ((WF_bmr_ms_mem_contains mm) /\ WI_is_sub (bmr_ms_mem_contains_interval mm) mu)`;
+
+
+
 (*-----------------------*)
 (* Proving optimised thm *)
 (*-----------------------*)
@@ -916,33 +943,12 @@ REPEAT CONJ_TAC >- (
   METIS_TAC[]
 ));
 
-val bir_is_lifted_inst_block_COMPUTE_block_def = Define `
-  bir_is_lifted_inst_block_COMPUTE_block l' al_mem al_step eup_temp eup updates =
-  bir_update_assert_block l' (al_mem ++ al_step)
-                 (if eup_temp then eup
-                  else bir_updateE_desc_remove_var eup) updates`;
-
-val bir_is_lifted_inst_block_COMPUTE_precond_def = Define
-  `bir_is_lifted_inst_block_COMPUTE_precond r bs ms l mu mm bl l' ms_case_cond ms'
-     al_step imm_ups mem_up al_mem eup eup_temp updates <=> (
- 
-     bmr_rel r bs ms ==>
-     ms_case_cond ms ==>
-     bmr_ms_mem_contains r ms mm ==>
-     (BL_Address (bmr_pc_lf r ms) = l) ==> (
-     bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK r bs ms al_step ms' /\
-     bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES r ms ms' imm_ups /\
-     bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES r ms ms' mem_up /\
-     bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK r mu bs ms ms' al_mem /\
-     bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS r bs eup ms' /\
-     bir_is_lifted_inst_block_COMPUTE_updates_FULL r bs mem_up imm_ups eup eup_temp updates /\
-     (bl = bir_is_lifted_inst_block_COMPUTE_block l' al_mem al_step eup_temp eup updates)))`;
 
 
 val bir_is_lifted_inst_block_COMPUTE_OPTIMISED = store_thm (
 "bir_is_lifted_inst_block_COMPUTE_OPTIMISED",
 ``!r. bmr_ok r ==> !mu. WI_wfe mu ==> !mm l.
-  ((WF_bmr_ms_mem_contains mm) /\ WI_is_sub (bmr_ms_mem_contains_interval mm) mu) ==>
+  (bir_is_lifted_inst_block_COMPUTE_mm_WF mu mm) ==>
   !ms_case_cond bl l'.
   (!ms bs.
      ?ms' al_step imm_ups mem_up al_mem eup eup_temp updates. (
@@ -960,10 +966,12 @@ FULL_SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_THM,
   bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK_def,
   bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_def,
   bir_is_lifted_inst_block_COMPUTE_precond_def,
-  bir_is_lifted_inst_block_COMPUTE_block_def] >>
+  bir_is_lifted_inst_block_COMPUTE_block_def,
+  bir_is_lifted_inst_block_COMPUTE_mm_WF_def] >>
 METIS_TAC [bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_THM,
           bir_is_lifted_inst_block_COMPUTE_updates_FULL_THM,
           bir_is_lifted_inst_block_COMPUTE_eup_COND_remove_var]);
+
 
 
 
@@ -1392,6 +1400,28 @@ REPEAT STRIP_TAC >> REPEAT (BasicProvers.VAR_EQ_TAC) >| [
 
   METIS_TAC[]
 ]);
+
+
+val bir_is_lifted_inst_block_COMPUTE_mm_WF_REWR = store_thm ("bir_is_lifted_inst_block_COMPUTE_mm_WF_REWR",
+``!mu_b mu_e.
+  WI_wfe (WI_end ((n2w mu_b):'a word) (n2w mu_e)) ==>
+  (mu_e < dimword (:'a)) ==>
+  !mm_b ml.
+  ((mm_b + LENGTH (ml:'b word list) <= mu_e) /\ (mu_b <= mm_b)) ==>
+
+   (bir_is_lifted_inst_block_COMPUTE_mm_WF (WI_end ((n2w mu_b):'a word) (n2w mu_e)) (n2w mm_b, ml))``,
+
+SIMP_TAC arith_ss [bir_is_lifted_inst_block_COMPUTE_mm_WF_def,
+  WF_bmr_ms_mem_contains_def, bmr_ms_mem_contains_interval_def,
+  WI_wf_size_compute, wordsTheory.word_ls_n2w, word_1comp_n2w] >>
+REPEAT STRIP_TAC >>
+`WI_wf (WI_end ((n2w mu_b):'a word) (n2w mu_e))` by FULL_SIMP_TAC std_ss [WI_wfe_def] >>
+`WI_wf (WI_size ((n2w mm_b):'a word) (n2w (LENGTH ml)))` by (
+  ASM_SIMP_TAC arith_ss [bir_interval_expTheory.WI_wf_size_compute, word_1comp_n2w,
+    wordsTheory.word_ls_n2w]
+) >>
+FULL_SIMP_TAC arith_ss [WI_size_def, WI_is_sub_compute,
+  wordsTheory.word_ls_n2w, word_add_n2w]);
 
 
 val _ = export_theory();

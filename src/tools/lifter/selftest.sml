@@ -11,6 +11,7 @@ val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 
 (* style for success, fail and header *)
 val sty_OK     = [FG Green];
+val sty_CACHE  = [FG Yellow];
 val sty_FAIL   = [FG OrangeRed];
 val sty_HEADER = [Bold, Underline];
 
@@ -42,21 +43,26 @@ val hex_code = "12001C00"
 
 val failed_hexcodes_list = ref ([]:(string * bir_inst_liftingExn_data option) list);
 val success_hexcodes_list = ref ([]: (string * thm) list);
-fun lift_instr mu_b mu_e pc hex_code = let
+fun lift_instr_cached mu_thms cache pc hex_code = let
   val _ = print (hex_code ^ " @ 0x" ^ (Arbnum.toHexString pc));
   val timer = (Time.now())
-  val (res, ed) = (SOME (bir_lift_instr (mu_b, mu_e) pc hex_code), NONE) handle
+  val (res, ed) = (SOME (bir_lift_instr_mu mu_thms cache pc hex_code), NONE) handle
                    bir_inst_liftingExn (_, d)  => (NONE, SOME d)
                  | HOL_ERR _ => (NONE, NONE);
 
   val d_time = Time.- (Time.now(), timer);
   val d_s = (Time.toString d_time);
 
-
   val _ = print (" - " ^ d_s ^ " s - ");
+  val (res', cache') = case res of
+             SOME (thm, cache', _) => ((SOME thm), cache')
+           | NONE => (NONE, cache)
   val _ = case res of
-             SOME r => (success_hexcodes_list := (hex_code, r)::(!success_hexcodes_list);
-                        (print_with_style sty_OK "OK\n"))
+             SOME (thm, _, cache_used) =>
+                 (success_hexcodes_list := (hex_code, thm)::(!success_hexcodes_list);
+                 (print_with_style sty_OK "OK");
+                 (if cache_used then (print " - "; print_with_style sty_CACHE "cached") else ());
+                 (print "\n"))
            | NONE =>
              (failed_hexcodes_list := (hex_code, ed)::(!failed_hexcodes_list);
              (print_with_style sty_FAIL "FAILED\n"));
@@ -65,6 +71,13 @@ fun lift_instr mu_b mu_e pc hex_code = let
     | SOME d => (let
         val s = ("   "^(bir_inst_liftingExn_data_to_string d) ^ "\n");
       in print_with_style sty_FAIL s end)
+in
+  (res', ed, d_s, cache')
+end;
+
+fun lift_instr mu_b mu_e pc hex_code = let
+  val mu_thms = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
+  val (res, ed, d_s, _) = lift_instr_cached mu_thms lift_inst_cache_empty pc hex_code
 in
   (res, ed, d_s)
 end;
@@ -75,6 +88,7 @@ fun lift_instr_asm mu_b mu_e pc asm =
   lift_instr mu_b mu_e pc (hex_code_of_asm asm);
 
 (* And a list version *)
+
 fun lift_instr_list mu_b mu_e pc hex_codes = let
   val timer = (Time.now())
   val len_codes = (length hex_codes);
@@ -82,14 +96,17 @@ fun lift_instr_list mu_b mu_e pc hex_codes = let
   val _ = print ("running " ^ (Int.toString (len_codes)) ^ " instrutions; first pc 0x" ^
               (Arbnum.toHexString pc) ^ "\n\n");
 
-  fun run_inst (i, (c, pc, res)) = let
+  val mu_thms = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
+
+  fun run_inst (i, (c, pc, res, cache)) = let
     val _ = print ((Int.toString c) ^ "/" ^ (Int.toString (length hex_codes)) ^ ": ");
-    val r = lift_instr mu_b mu_e pc i
+    val (r', ed, d_s, cache') = lift_instr_cached mu_thms cache pc i
     val c' = c+1;
     val pc' = Arbnum.+ (pc, Arbnum.fromInt 8);
-  in (c+1, pc', r::res) end
+    val r = (r', ed, d_s);
+  in (c+1, pc', r::res, cache') end
 
-  val (_, _, resL) = foldl run_inst (1, pc, []) hex_codes
+  val (_, _, resL, _) = foldl run_inst (1, pc, [], lift_inst_cache_empty) hex_codes
 
   val d_time = Time.- (Time.now(), timer);
   val d_s = (Time.toString d_time);
@@ -118,20 +135,6 @@ fun final_results expected_failed_hexcodes = let
      (hc, edo, not (Lib.mem hc expected_failed_hexcodes))) failing_l;
   val fixed_l = List.filter (fn hc => List.exists (fn e => fst e = hc) ok_l) expected_failed_hexcodes
 
-  (* Show the hex-codes that were expected to fail, but succeeded. These
-     are the ones fixed by recent changes. *)
-  val _ = print ("Instructions FIXED: " ^ (Int.toString (length fixed_l)) ^ "\n\n");
-  val _ = List.map (fn s => print_with_style sty_OK ("   " ^ s ^"\n")) fixed_l;
-  val _ = print "\n\n";
-
-  (* Show the hex-codes that were expected to succeed, but failed. These
-     are the ones broken by recent changes. *)
-  val broken_l = List.filter (fn (hc, edo, br) => br) failing_l';
-  val _ = print ("Instructions BROKEN: " ^ (Int.toString (List.length broken_l)) ^ "\n\n");
-  val _ = List.map (fn (hc, _, _) => print_with_style sty_FAIL ("   " ^ hc ^"\n")) broken_l;
-  val _ = print "\n\n";
-
-
   (* Show all failing instructions and format them such that they can be copied
      in the code of selftest.sml
      as content of list expected_failed_hexcodes *)
@@ -153,6 +156,21 @@ fun final_results expected_failed_hexcodes = let
          (print ",\n"; print_failed l)
   end;
   val _ = print_failed failing_l';
+
+
+  (* Show the hex-codes that were expected to fail, but succeeded. These
+     are the ones fixed by recent changes. *)
+  val _ = print ("Instructions FIXED: " ^ (Int.toString (length fixed_l)) ^ "\n\n");
+  val _ = List.map (fn s => print_with_style sty_OK ("   " ^ s ^"\n")) fixed_l;
+  val _ = print "\n\n";
+
+  (* Show the hex-codes that were expected to succeed, but failed. These
+     are the ones broken by recent changes. *)
+  val broken_l = List.filter (fn (hc, edo, br) => br) failing_l';
+  val _ = print ("Instructions BROKEN: " ^ (Int.toString (List.length broken_l)) ^ "\n\n");
+  val _ = List.map (fn (hc, _, _) => print_with_style sty_FAIL ("   " ^ hc ^"\n")) broken_l;
+  val _ = print "\n\n";
+
 in
   ()
 end;
@@ -314,9 +332,7 @@ val instrs = [
 
 val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE\n\n";
 val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
-    (Lib.mk_set instrs)
-
-
+    instrs
 
 
 
@@ -449,7 +465,8 @@ val instrs_bignumlib = instrs_bignum_from_bytes @
 
 val _ = print_with_style sty_HEADER "\n\n\nTESTING BIGNUM LIB CODE\n\n";
 val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
-    (Lib.mk_set instrs_bignumlib)
+    instrs_bignumlib
+
 
 
 (*****************)

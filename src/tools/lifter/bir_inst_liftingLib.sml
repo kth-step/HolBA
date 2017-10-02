@@ -7,7 +7,6 @@ open bir_exp_liftingLib bir_typing_expSyntax
 open bir_typing_expTheory
 open bir_programSyntax bir_interval_expSyntax
 
-
 (**********)
 (* Syntax *)
 (**********)
@@ -76,6 +75,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (* For debugging
   structure MD = struct val mr = arm8_bmr_rec end;
   val pc = Arbnum.fromInt 0x10000
+
+  val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x100000)
+
   val (_, mu_thm) = mk_WI_end_of_nums_WFE ``:64`` (Arbnum.fromInt 0x1000) (Arbnum.fromInt 0x100000)
 
   fun hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm)
@@ -95,6 +97,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = hex_code_of_asm `ldr x0, [x2, #0]`
   val hex_code = hex_code_of_asm `adds x1, x1, #0`
 
+  val hex_code = "94000000"
   val hex_code = "D65F03C0";
   val hex_code = "12001C00"
   val hex_code = "54000061";
@@ -145,6 +148,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val (pc_sz, mk_pc_of_term) = bmr_rec_mk_pc_of_term mr
   val mk_label_of_num = bmr_rec_mk_label_of_num mr
   val mk_label_of_num_eq_pc = bmr_rec_mk_label_of_num_eq_pc mr;
+  val pc_num_var = mk_var ("pc_n", numSyntax.num);
+
 
 
   (* Instantiate the inst_lifting theorem with the record and types. *)
@@ -287,7 +292,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      The list of resulting theorems, the computed memory mapping and the
      label corresponding to the given PC are returned. *)
 
-  fun mk_inst_lifting_theorems (pc : Arbnum.num) hex_code =
+  fun mk_inst_lifting_theorems hex_code =
   let
      val lifted_thms_raw = let
        val res = (#bmr_step_hex mr) ms_v hex_code
@@ -297,7 +302,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
      (* instantiate pc and compute label *)
      val (label_tm, pc_thm) = let
-        val thm0 = SPECL [ms_v, numSyntax.mk_numeral pc] (#bmr_label_thm mr);
+        val thm0 = SPECL [ms_v, pc_num_var] (#bmr_label_thm mr);
         val tm = rhs (#1 (dest_imp_only (concl thm0)))
      in (tm, UNDISCH thm0) end handle HOL_ERR _ =>
        raise (bir_inst_liftingExn (hex_code, BILED_msg "label thm failed"));
@@ -306,11 +311,17 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      fun norm_thm thm = let
         val thm0 = HYP_CONV_RULE (K true) (PURE_REWRITE_CONV [pc_thm]) thm
         val thm1 = PROVE_HYP ms_extra_REWRS0 thm0
-        val thm2 = SIMP_RULE std_ss [pc_thm, ms_extra_REWRS, satTheory.AND_IMP,
-           alignmentTheory.aligned_numeric, wordsTheory.word_add_n2w] thm1 handle UNCHANGED => thm1
+        fun disch_hyp_check tm =
+          if (is_bmr_ms_mem_contains tm) then false else
+          if (is_bmr_rel tm) then false else
+          if (free_in pc_num_var tm) then false else true;
+
+        val thm2 = foldl (uncurry DISCH) thm1 (List.filter disch_hyp_check (hyp thm1))
+        val thm3 = REWRITE_RULE [pc_thm, wordsTheory.word_add_n2w] thm2 handle UNCHANGED => thm2
      in
-        thm2
+        thm3
      end
+
      val lifted_thms = map norm_thm lifted_thms_raw;
 
      (* try to get bmr_ms_mem_contains *)
@@ -334,10 +345,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      has to guarantee, that this condition is satisfied, once the block belonging to
      this theorem is executed. *)
 
-  fun preprocess_next_thms (lb:term) (pc:Arbnum.num) ([]:thm list) =
+  fun preprocess_next_thms (lb:term) ([]:thm list) =
       raise bir_inst_liftingAuxExn (BILED_msg ("empty list of step theorems produced"))
-    | preprocess_next_thms lb pc [thm] = [(lb, T, thm)]
-    | preprocess_next_thms lb pc thms =
+    | preprocess_next_thms lb [thm] = [(lb, T, thm)]
+    | preprocess_next_thms lb thms =
       raise bir_inst_liftingAuxExn (BILED_msg ("TODO: multiple step theorems preprocessing"));
 
 
@@ -409,6 +420,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
       (upd_tm, upd_tm_opt, lf_ms'_thm)
     end;
 
+    (*
+      val (bmli_tm, lf_ms) = el 3 mr_imms_lf_of_ms
+    *)
     val (upds_tms, eval_thms) =
        foldl (fn ((bmli_tm, lf_ms), (resl, thmL)) =>
          let val (upd_tm, upd_opt, lf_ms'_thm) = compute_single_up lf_ms
@@ -425,7 +439,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
           (#bmr_const mr))
        val t1 = list_mk_comb (t0, [ms_v, ms'_t, imm_ups_tm])
 
-       val thm1 = SIMP_CONV (std_ss) (eval_thms @ [
+       val thm1 = SIMP_CONV bool_ss (eval_thms @ [
          bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_EVAL, bmr_eval_REWRS,
          bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_CHECK_def])
          t1
@@ -464,7 +478,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
           (#bmr_const mr))
        val t1 = list_mk_comb (t0, [ms_v, ms'_t, upd_tm])
 
-       val thm0 = SIMP_CONV std_ss ([lf_ms'_thm, bmr_eval_REWRS,
+       val thm0 = SIMP_CONV bool_ss ([lf_ms'_thm, bmr_eval_REWRS,
            bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_EVAL])
            t1
        val thm1 = EQT_ELIM thm0
@@ -556,7 +570,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      fun compute_eup_JMP () = let
         (* Check we have a literal imm *)
         val (_, w) = bir_immSyntax.gen_dest_Imm res_imm
-        val _ = if (wordsSyntax.is_word_literal w) then () else fail ()
+        val _ = if (wordsSyntax.is_n2w w) then () else fail ()
 
         val thm0 = SPEC ms'_t comp_thm_eup_JMP
         val thm1 = PURE_REWRITE_RULE [lf_ms'_thm] thm0
@@ -572,8 +586,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      fun compute_eup_CJMP () = let
         val (sz, i) = bir_immSyntax.gen_dest_Imm res_imm
         val (c, w1, w2) = boolSyntax.dest_cond i
-        val _ = if (wordsSyntax.is_word_literal w1) then () else fail ()
-        val _ = if (wordsSyntax.is_word_literal w2) then () else fail ()
+        val _ = if (wordsSyntax.is_n2w w1) then () else fail ()
+        val _ = if (wordsSyntax.is_n2w w2) then () else fail ()
 
         val lf_ms'_thm' = CONV_RULE (RHS_CONV (PURE_REWRITE_CONV [COND_RAND])) lf_ms'_thm
         val lift_thm = exp_lift_fn c
@@ -913,34 +927,54 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (* Lifting an instruction *)
   (**************************)
 
-  (* This is the main entry point for lifting an instruction. Given
+  (* Lifting single instructings, is the main workhorse of this library.
+     The top-level interface provides a function "bir_lift_instr" that given
 
      - a memory region not to touch
      - the hex-code of an instruction
      - and a PC in form of a number to load it from
 
-
-     a program consisting of one or multiple blocks is produced that corresponds to
+     derives a program consisting of one or multiple blocks that corresponds to
      executing the machine instruction and does not touch the memory region.
 
      The program starts at a block with a label corresponding to the PC. All other labels are
      not numeric (BL_Address) labels but string (BL_Label) label whose stringt starts with a
-     prefix derived from the address. *)
+     prefix derived from the address.
 
-  fun bir_lift_instr_mu (mu_thm:thm) (pc : Arbnum.num) hex_code =
+     Usually whole programs are lifted. This means that this function "bir_lift_instr" is
+     called very often with the same memory region that should stay unchanged. Moreover,
+     usually the same hex-code is lifted multiple times for this region. Therefore, there are
+     several layers to speed up computation.
+
+     "bir_lift_instr" computes theorems about the unchanged memory region once and calls
+     a function "bir_lift_instr_mu" which is intended to be called by functions translating
+     while programs.
+
+     "bir_lift_instr_mu" gets a program corresponding to the hex-code for a general PC
+     either from a cache or derives it freshly via "bir_lift_instr_mu_gen_pc_compute".
+     This general theorem is then instantiated for the concrete PC.
+  *)
+
+  type lift_inst_cache = (string, thm) Redblackmap.dict
+  val lift_inst_cache_empty:lift_inst_cache = Redblackmap.mkDict String.compare
+
+  fun bir_lift_instr_mu_gen_pc_compute (mu_thm:thm, mm_precond_thm : thm) hex_code =
   let
      (* call step lib to generate step theorems, compute mm and label *)
-     val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems pc hex_code
+     val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code
 
      (* instantiate inst theorem *)
      val inst_lift_thm0 = let
        val thm0 = MATCH_MP inst_lift_THM mu_thm
        val thm1 = SPECL [mm_tm, label_tm] thm0
-       val (pre, _) = dest_imp_only (concl thm1)
-       val pre_thm = prove (pre,
-          SIMP_TAC (list_ss++wordsLib.WORD_ss) [WF_bmr_ms_mem_contains_def,
-            bmr_ms_mem_contains_interval_def, WI_size_def, WI_is_sub_compute, WI_wf_def]);
-       val thm2 = MP thm1 pre_thm
+
+       val precond_thm = let
+         val thmp_0 = PART_MATCH (rand o snd o dest_imp_only o snd o strip_forall)
+                      mm_precond_thm mm_tm
+         val thmp_1 = CONV_RULE (RATOR_CONV (RAND_CONV (SIMP_CONV list_ss []))) thmp_0
+       in UNDISCH thmp_1 end;
+
+       val thm2 = MP thm1 precond_thm
      in thm2 end;
 
      val bir_is_lifted_inst_block_COMPUTE_precond_tm0 =
@@ -949,7 +983,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
      (* preprocess next-theorems. Merge some, order them, derive conditions,
         assign auxiliary labels, ... *)
-     val sub_block_work_list = preprocess_next_thms label_tm pc next_thms
+     val sub_block_work_list = preprocess_next_thms label_tm next_thms
        handle HOL_ERR _ =>
          raise bir_inst_liftingAuxExn (BILED_msg ("preprocessing next theorems failed"));
 
@@ -963,10 +997,54 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     raise (bir_inst_liftingExn (hex_code, d));
 
 
-  fun bir_lift_instr ((mu_b : Arbnum.num), (mu_e : Arbnum.num)) = let
-     val (_, mu_thm) = mk_WI_end_of_nums_WFE addr_sz_ty mu_b mu_e
+  (* Add a cache *)
+  fun bir_lift_instr_mu_gen_pc (mu_thm:thm, mm_precond_thm : thm) (cache : lift_inst_cache) hex_code =
+    (Redblackmap.find (cache, hex_code), cache, true) handle NotFound =>
+  let
+    val thm0 = bir_lift_instr_mu_gen_pc_compute (mu_thm, mm_precond_thm) hex_code
+    val cache' = Redblackmap.insert (cache, hex_code, thm0)
+  in (thm0, cache', false) end
+
+
+  fun bir_lift_instr_mu (mu_thm:thm, mm_precond_thm : thm)  cache (pc : Arbnum.num) hex_code = let
+    val (thm0, cache', cache_used) =  bir_lift_instr_mu_gen_pc (mu_thm, mm_precond_thm) cache hex_code
+
+    (* instantiate PC *)
+    val thm1 = INST [pc_num_var |-> numSyntax.mk_numeral pc] thm0
+
+    (* remove all remaining hyps *)
+    fun discharge_hyp (tm, thm) = let
+       val pre_thm  = EQT_ELIM (SIMP_CONV (arith_ss) [alignmentTheory.aligned_numeric, alignmentTheory.aligned_0] tm)
+    in (PROVE_HYP pre_thm thm) end handle HOL_ERR _ => thm;
+
+    val thm2 = List.foldl discharge_hyp thm1 (hyp thm1)
+
+    (* simple arithmetic reduction, since we now have concrete values *)
+    val thm3  = reduceLib.REDUCE_RULE thm2
   in
-    bir_lift_instr_mu mu_thm
+    (thm3, cache', cache_used)
+  end;
+
+
+  fun bir_lift_instr_prepare_mu_thms ((mu_b : Arbnum.num), (mu_e : Arbnum.num)) = let
+     val (_, mu_thm) = mk_WI_end_of_nums_WFE addr_sz_ty mu_b mu_e
+
+     val mm_precond_thm = let
+       val thm0 = INST_TYPE [Type.alpha |-> addr_sz_ty, Type.beta |-> mem_val_sz_ty]
+         bir_is_lifted_inst_block_COMPUTE_mm_WF_REWR
+       val thm1 = MATCH_MP thm0 mu_thm
+       val (pre, _) = dest_imp_only (concl thm1)
+       val pre_thm = prove (pre, SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [])
+       val thm2 = MP thm1 pre_thm
+     in thm2 end
+  in (mu_thm, mm_precond_thm) end;
+
+  (* The main entry point for lifting an instruction. Details, please see above. *)
+  fun bir_lift_instr ((mu_b : Arbnum.num), (mu_e : Arbnum.num)) = let
+     val (mu_thm, mm_precond_thm) = bir_lift_instr_prepare_mu_thms (mu_b, mu_e) 
+  in
+    fn pc => fn hex_code =>
+       #1 (bir_lift_instr_mu (mu_thm, mm_precond_thm) lift_inst_cache_empty pc hex_code)
   end;
 
 end

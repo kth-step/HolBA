@@ -303,11 +303,6 @@ local
      foldl process_hyp thm (hyp thm)
    end;
 
-   fun disch_hyp_check tm = 
-     if (is_bmr_ms_mem_contains tm) then false else
-     if (is_bmr_field_extra tm) then false else
-     true;
-
 (* val thm = hd step_thms0  *)
    fun process_arm8_thm vn pc_mem_thms thm = let
      val thm0 = bmr_normalise_step_thm next_state_tm vn thm
@@ -315,10 +310,9 @@ local
      val thm2 = foldl (fn (pre_thm, thm) => PROVE_HYP pre_thm thm) thm1
        (pc_mem_thms @ (arm8_extra_THMS vn))
 
-     val thm3 = foldl (uncurry DISCH) thm2 (List.filter disch_hyp_check (hyp thm2))
-     val thm4 = simp_rule thm3
+     val thm3 = simp_rule thm2
    in
-     thm4
+     thm3
    end;
 
 in

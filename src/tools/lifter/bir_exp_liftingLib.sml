@@ -290,7 +290,7 @@ end
    bir_is_lifted_exp_CONSTANT is powerful enough to lift any
    immediate expression trivially. To get useful results, we need
    to restrict it's usage to cases, where the immediate value is
-   really a conststant *)
+   really a constant *)
 
 (* DEBUG
 
@@ -302,7 +302,7 @@ fun bir_is_imm_literal tm = let
   val tm' = dest_BLV_Imm tm;
   val (_, w) = bir_immSyntax.gen_dest_Imm tm'
 in
-  wordsSyntax.is_word_literal w
+  wordsSyntax.is_n2w w
 end handle HOL_ERR _ => false;
 
 
@@ -326,7 +326,7 @@ end;
 (**************************************)
 
 (* During the lifting of one expression, we want to reuse already performed
-   liftings. This prevents multiple occurences of the same subexpression to be
+   liftings. This prevents multiple occurrences of the same subexpression to be
    lifted multiple times, causing unnecessary lengthy and complicated results. *)
 type exp_lifting_cache = thm Net.net
 

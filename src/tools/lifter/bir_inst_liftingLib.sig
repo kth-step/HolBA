@@ -6,14 +6,39 @@
 
 signature bir_inst_lifting = sig
 
+  (* ------------------- *)
+  (* Single instructions *)
+  (* ------------------- *)
+
   (* bir_inst_lifting (mem_unchanged_begin, mem_unchanged_end) pc hexcode
 
      tries to lift the given hexcode. It assumes this code is stored at location
-     of "pc" in memory and tries to guarentee that the memory adresses in
+     of "pc" in memory and tries to guarantee that the memory addresses in
      interval [mem_unchanged_begin, mem_unchanged_end) are not changed. *)
   val bir_lift_instr : (Arbnum.num * Arbnum.num) -> Arbnum.num -> string -> Abbrev.thm
 
+
+  (* Often we want to lift whole programs. For this, it is convenient to
+     use a lower-level interface. This computes some facts about the unchanged memory
+     region only once and caches hex-codes that occur multiple times. The
+     work-flow is:
+
+     val mu_thms = bir_lift_instr_prepare_mu_thms (mem_unchanged_begin, mem_unchanged_end);
+     val cache0 = lift_inst_cache_empty;
+     val (lift_thm1, cache1, cache_used1) = bir_lift_instr_mu mu_thms cache0 pc1 hex_code1
+     val (lift_thm2, cache2, cache_used2) = bir_lift_instr_mu mu_thms cache1 pc2 hex_code2
+     ...
+     val (lift_thm_n, cache_n, cache_used_n) = bir_lift_instr_mu mu_thms cache_(n-1) pc_n hex_code_n
+
+  *)
+  type lift_inst_cache
+  val lift_inst_cache_empty : lift_inst_cache
+
+  val bir_lift_instr_prepare_mu_thms : (Arbnum.num * Arbnum.num) -> Abbrev.thm * Abbrev.thm;
+  val bir_lift_instr_mu : (Abbrev.thm * Abbrev.thm) -> lift_inst_cache -> Arbnum.num -> string ->
+    (Abbrev.thm * lift_inst_cache * bool);
 end
+
 
 (* Instances for different machine types *)
 signature bir_inst_liftingLib = sig
