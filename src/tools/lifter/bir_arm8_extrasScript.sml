@@ -437,6 +437,103 @@ REPEAT STRIP_TAC >>
 ASM_SIMP_TAC std_ss [bir_is_lifted_imm_exp_LOAD_NO_ENDIAN]);
 
 
+
+(******************)
+(* Store for arm8 *)
+(******************)
+
+val mem_store_dword_def = Define `mem_store_dword (a:word64) (w:word64) (mmap : (word64 -> word8)) =
+   (a + 7w =+ (63 >< 56) w)
+  ((a + 6w =+ (55 >< 48) w)
+  ((a + 5w =+ (47 >< 40) w)
+  ((a + 4w =+ (39 >< 32) w)
+  ((a + 3w =+ (31 >< 24) w)
+  ((a + 2w =+ (23 >< 16) w)
+  ((a + 1w =+ (15 >< 8)  w)
+  ((a      =+ (7  >< 0)  w) mmap)))))))`;
+
+val mem_store_word_def = Define `mem_store_word (a:word64) (w:word32) (mmap : (word64 -> word8)) =
+   (a + 3w =+ (31 >< 24) w)
+  ((a + 2w =+ (23 >< 16) w)
+  ((a + 1w =+ (15 >< 8)  w)
+  ((a      =+ (7  >< 0)  w) mmap)))`;
+
+val mem_store_half_def = Define `mem_store_half (a:word64) (w:word16) (mmap : (word64 -> word8)) =
+   (a + 1w =+ (15 >< 8)  w)
+  ((a      =+ (7  >< 0)  w) mmap)`;
+
+val mem_store_byte_def = Define `mem_store_byte (a:word64) (w:word8) (mmap : (word64 -> word8)) =
+  ((a      =+ w) mmap)`;
+
+
+val arm8_mem_store_FOLDS = save_thm ("arm8_mem_store_FOLDS",
+let
+  val thm0 = GSYM mem_store_byte_def
+  fun mk_thm_GEN thm =
+    REWRITE_RULE [GSYM mem_store_byte_def] (GSYM thm)
+
+  val def_THMS = LIST_CONJ [GSYM mem_store_byte_def,
+     mk_thm_GEN mem_store_half_def,
+     mk_thm_GEN mem_store_word_def,
+     mk_thm_GEN mem_store_dword_def]
+
+  fun mk_zero_thm def_thm tm = GEN_ALL (GSYM (
+     SIMP_CONV (std_ss++wordsLib.WORD_ss) [def_thm,
+        GSYM mem_store_byte_def] tm))
+
+  val zero_THM0 = mk_zero_thm mem_store_half_def ``mem_store_half a 0w mmap``;
+  val zero_THM1 = REWRITE_RULE [zero_THM0] (mk_zero_thm mem_store_word_def ``mem_store_word a 0w mmap``);
+  val zero_THM2 = REWRITE_RULE [zero_THM1, zero_THM0] (
+     mk_zero_thm mem_store_dword_def ``mem_store_dword a 0w mmap``);
+
+in LIST_CONJ [def_THMS, zero_THM0, zero_THM1, zero_THM2] end);
+
+
+val arm8_LIFT_STORE_DWORD = store_thm ("arm8_LIFT_STORE_DWORD",
+``!env em ea va ev vv ms.
+     bir_is_lifted_mem_exp env em ms.MEM ==>
+     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+     bir_is_lifted_imm_exp env ev (Imm64 vv) ==>
+     bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
+       (mem_store_dword va vv ms.MEM)``,
+
+SIMP_TAC std_ss [mem_store_dword_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
+
+
+val arm8_LIFT_STORE_WORD = store_thm ("arm8_LIFT_STORE_WORD",
+``!env em ea va ev vv ms.
+     bir_is_lifted_mem_exp env em ms.MEM ==>
+     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+     bir_is_lifted_imm_exp env ev (Imm32 vv) ==>
+     bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
+       (mem_store_word va vv ms.MEM)``,
+
+SIMP_TAC std_ss [mem_store_word_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
+
+
+val arm8_LIFT_STORE_HALF = store_thm ("arm8_LIFT_STORE_HALF",
+``!env em ea va ev vv ms.
+     bir_is_lifted_mem_exp env em ms.MEM ==>
+     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+     bir_is_lifted_imm_exp env ev (Imm16 vv) ==>
+     bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
+       (mem_store_half va vv ms.MEM)``,
+
+SIMP_TAC std_ss [mem_store_half_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
+
+
+val arm8_LIFT_STORE_BYTE = store_thm ("arm8_LIFT_STORE_BYTE",
+``!env em ea va ev vv ms.
+     bir_is_lifted_mem_exp env em ms.MEM ==>
+     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+     bir_is_lifted_imm_exp env ev (Imm8 vv) ==>
+     bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
+       (mem_store_byte va vv ms.MEM)``,
+
+SIMP_TAC std_ss [mem_store_byte_def, bir_is_lifted_mem_exp_STORE_NO_ENDIAN]);
+
+
+
 (****************)
 (* Combinations *)
 (****************)
@@ -446,14 +543,19 @@ val arm8_extra_LIFTS = save_thm ("arm8_extra_LIFTS",
     arm8_LIFT_LOAD_BYTE,
     arm8_LIFT_LOAD_HALF,
     arm8_LIFT_LOAD_WORD,
-    arm8_LIFT_LOAD_DWORD
+    arm8_LIFT_LOAD_DWORD,
+    arm8_LIFT_STORE_BYTE,
+    arm8_LIFT_STORE_HALF,
+    arm8_LIFT_STORE_WORD,
+    arm8_LIFT_STORE_DWORD
 ]);
 
 
 val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
   LIST_CONJ [arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS,
       arm8_asr_FOLDS, arm8_lsr_no_imm_FOLDS, arm8_asr_no_imm_FOLDS,
-      arm8_lsl_no_imm_FOLDS, arm8_sxtw_FOLDS, arm8_w2w_REMOVE_FOLDS])
+      arm8_lsl_no_imm_FOLDS, arm8_sxtw_FOLDS, arm8_w2w_REMOVE_FOLDS,
+      arm8_mem_store_FOLDS])
 
 
 

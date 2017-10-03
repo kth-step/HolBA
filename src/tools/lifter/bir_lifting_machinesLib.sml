@@ -249,7 +249,7 @@ fun bmr_normalise_step_thm (r_step_rel:term) vn thm =
 
 (* DEBUG
   val vn = ``ms:arm8_state``
-  val hex_code = "D65F03C0";
+  val hex_code = "B90033E0";
   val thms = arm8_step_hex hex_code
 *)
 
@@ -257,6 +257,7 @@ local
   val next_state_tm = (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"});
   val simp_rule = (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0,
       arm8_extra_FOLDS]);
+  val simp_rule2 = (SIMP_RULE (arith_ss++wordsLib.WORD_ss) []);
 
   fun arm8_extra_THMS vn = let
      val thm0  = SPEC vn bmr_extra_ARM8
@@ -311,6 +312,7 @@ local
        (pc_mem_thms @ (arm8_extra_THMS vn))
 
      val thm3 = simp_rule thm2
+     val thm4 = simp_rule2 thm3
    in
      thm3
    end;

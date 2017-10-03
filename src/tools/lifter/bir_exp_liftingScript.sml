@@ -386,6 +386,233 @@ val bir_is_lifted_imm_exp_LOAD_NO_ENDIAN = save_thm ("bir_is_lifted_imm_exp_LOAD
 
 
 
+
+(****************)
+(* STORE        *)
+(****************)
+
+val bir_update_mmap_words_def = Define `
+    (!mmap a.      (bir_update_mmap_words mmap a [] = mmap)) /\
+    (!mmap a v vs. (bir_update_mmap_words mmap a (v::vs) =
+                        bir_update_mmap_words ((a =+ v2w v) mmap) (a + 1w) vs))`;
+
+val bir_store_in_mem_words_def = Define `bir_store_in_mem_words
+  (value_ty : bir_immtype_t) (a_ty : bir_immtype_t) (result : bir_imm_t) (mmap : 'a word -> 'v word) (en: bir_endian_t) (a : 'a word) =
+
+   let result_ty = type_of_bir_imm result in
+   case (bir_number_of_mem_splits value_ty result_ty a_ty) of
+    | NONE => NONE
+    | SOME (n:num) => (
+        let vs = bitstring_split (size_of_bir_immtype value_ty) (b2v result) in
+        let vs' = (case en of BEnd_LittleEndian => SOME (REVERSE vs)
+                          |  BEnd_BigEndian => SOME vs
+                          |  BEnd_NoEndian => if (n = 1) then SOME vs else NONE) in
+
+        case vs' of NONE => NONE
+                 |  SOME vs'' => SOME (bir_update_mmap_words mmap a vs'')
+   )`;
+
+val v2w_w2v_SEG_GEN = store_thm ("v2w_w2v_SEG_GEN",
+  ``!s b (w:'a word).
+      (s + b <= dimindex (:'a)) ==>
+      (dimindex (:'b) = s) ==>
+      ((v2w (SEG s b (w2v w)) : 'b word) =
+        (((dimindex (:'a) - SUC b)) >< (dimindex (:'a) - (b + s))) w)``,
+
+REPEAT STRIP_TAC >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+ASM_SIMP_TAC (list_ss++boolSimps.EQUIV_EXTRACT_ss) [bitstringTheory.v2w_def, fcpTheory.FCP_BETA,
+  bitstringTheory.testbit, LET_DEF, rich_listTheory.LENGTH_SEG, word_extract_def,
+  bitstringTheory.length_w2v, w2w,
+  rich_listTheory.SEG_TAKE_BUTFISTN,
+  rich_listTheory.EL_TAKE,
+  rich_listTheory.EL_DROP,
+  bitstringTheory.el_w2v,
+  word_bits_def]);
+
+
+val v2w_w2v_SEG_REWRS = save_thm ("v2w_w2v_SEG_REWRS",
+let
+  val words_sizes = bir_immSyntax.known_imm_sizes;
+
+  val combined_sizes = flatten (map (fn sz1 => map (fn sz2 => (sz1, sz2)) words_sizes) words_sizes)
+  val combined_sizes = filter (fn (sz1, sz2) => (sz1 < sz2) andalso (sz2 mod sz1 = 0)) combined_sizes
+
+  fun mk_sizes_thms (sz1, sz2) = let
+    val sz1_ty = fcpLib.index_type (Arbnum.fromInt sz1)
+    val sz2_ty = fcpLib.index_type (Arbnum.fromInt sz2)
+
+    val thm0 = INST_TYPE [Type.alpha |-> sz2_ty, Type.beta |-> sz1_ty] v2w_w2v_SEG_GEN
+    val thm1 = SIMP_RULE (arith_ss++wordsLib.SIZES_ss) [] thm0
+
+    fun get_inst_sizes c =
+       if (c < sz2) then c::(get_inst_sizes (c+sz1)) else []
+    val b_values = List.map (fn i => numSyntax.mk_numeral (Arbnum.fromInt i)) (get_inst_sizes 0)
+
+    val thms = List.map (fn i =>
+       SIMP_RULE arith_ss [] (SPEC i thm1)) b_values
+  in thms end
+
+  val thm0 = LIST_CONJ (flatten (map mk_sizes_thms combined_sizes))
+in
+  thm0
+end);
+
+
+val bir_store_in_mem_words_REWRS = save_thm ("bir_store_in_mem_words_REWRS",
+let
+  val thm_def = prove (``!(value_ty :bir_immtype_t) (a_ty :bir_immtype_t) (result :bir_imm_t)
+      (mmap :'a word -> 'v word) (en :bir_endian_t) (a :'a word).
+     (size_of_bir_immtype value_ty = dimindex (:'v)) ==>
+     (size_of_bir_immtype a_ty = dimindex (:'a)) ==> (
+     bir_store_in_mem_words value_ty a_ty result mmap en a =
+     (let (result_ty :bir_immtype_t) = type_of_bir_imm result
+      in
+        case bir_number_of_mem_splits value_ty result_ty a_ty of
+          (NONE :num option) => (NONE :('a word -> 'v word) option)
+        | SOME n =>
+            (let (vs :bitstring list) =
+                   bitstring_split (size_of_bir_immtype value_ty)
+                     (b2v result)
+             in
+             let (vs' :bitstring list option) =
+                   case en of
+                     BEnd_BigEndian => SOME vs
+                   | BEnd_LittleEndian => SOME (REVERSE vs)
+                   | BEnd_NoEndian =>
+                       if n = (1 :num) then SOME vs
+                       else (NONE :bitstring list option)
+             in
+               case vs' of
+                 (NONE :bitstring list option) =>
+                   (NONE :('a word -> 'v word) option)
+               | SOME vs'' => SOME (bir_update_mmap_words mmap a vs''))))``,
+     SIMP_TAC std_ss [bir_store_in_mem_words_def])
+
+
+  val thms1 = MP_size_of_bir_immtype_t_EQ_dimindex thm_def
+  val thms2 = flatten (map MP_size_of_bir_immtype_t_EQ_dimindex thms1)
+  val thm0 = LIST_CONJ thms2
+
+  val thm1 = SIMP_RULE (list_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``, ``:bir_imm_t``]) [
+    bir_number_of_mem_splits_REWRS, LET_DEF, type_of_bir_imm_def] thm0
+
+  val thm2 = SIMP_RULE (list_ss++wordsLib.SIZES_ss) [b2v_def, bitstring_split_num_REWRS,
+     bitstringTheory.length_w2v, size_of_bir_immtype_def] thm1
+  val thm3 = SIMP_RULE (list_ss++holBACore_ss++(DatatypeSimps.expand_type_quants_ss [``:bir_endian_t``])) [LET_DEF] thm2
+
+  val thm4 = Ho_Rewrite.REWRITE_RULE [fold_bir_endian_THM] thm3
+
+  val thm5 = SIMP_RULE (std_ss++wordsLib.WORD_ss) [bir_update_mmap_words_def, bitstringTheory.v2w_w2v, v2w_w2v_SEG_REWRS] thm4
+
+
+  val thm6 = SIMP_RULE list_ss [GSYM CONJ_ASSOC, FORALL_AND_THM] thm5
+
+in thm6
+end);
+
+
+
+val bir_update_mmap_words_INTRO = store_thm ("bir_update_mmap_words_INTRO",
+``!sa (a: 'a word).
+    (size_of_bir_immtype sa = dimindex (:'a)) ==>
+    !vs va_n va mem_n.
+    (bir_mem_addr sa va_n = w2n va) ==>
+    (n2w (bir_update_mmap sa mem_n va_n vs (w2n a)) =
+     bir_update_mmap_words (\a. n2w (mem_n (w2n a))) va vs a)``,
+
+NTAC 2 GEN_TAC >> STRIP_TAC >>
+Induct >> (
+  SIMP_TAC std_ss [bir_update_mmap_def, bir_update_mmap_words_def]
+) >>
+REPEAT STRIP_TAC >>
+Q.PAT_X_ASSUM `!va_n va mem_n. _` (MP_TAC o Q.SPECL [`SUC va_n`, `va + 1w`]) >>
+`bir_mem_addr sa (SUC va_n) = w2n (va + 1w)` by (
+  Q.PAT_X_ASSUM `_ = w2n va` (MP_TAC o GSYM) >>
+  FULL_SIMP_TAC std_ss [bir_mem_addr_def, bitTheory.MOD_2EXP_def,
+    GSYM dimword_def] >>
+  Cases_on `va` >>
+  ASM_SIMP_TAC arith_ss [w2n_n2w, word_add_n2w,
+    bitTheory.MOD_PLUS_LEFT, arithmeticTheory.ADD1]
+) >>
+ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [updateTheory.UPDATE_def,
+  w2n_11, bitstringTheory.n2w_v2n]);
+
+
+val bir_update_mmap_words_INTRO_w2n = store_thm ("bir_update_mmap_words_INTRO_w2n",
+``!sa (a: 'a word) vs va_n va mem_n.
+    (size_of_bir_immtype sa = dimindex (:'a)) ==>
+    (n2w (bir_update_mmap sa mem_n va_n vs (w2n a)) =
+     bir_update_mmap_words (\a. n2w (mem_n (w2n a))) (n2w va_n) vs a)``,
+
+REPEAT STRIP_TAC >>
+`(bir_mem_addr sa va_n = w2n (n2w va_n))` suffices_by METIS_TAC[bir_update_mmap_words_INTRO] >>
+ASM_SIMP_TAC std_ss [bir_mem_addr_def, w2n_n2w,
+  bitTheory.MOD_2EXP_def, GSYM dimword_def]);
+
+
+val bir_is_lifted_mem_exp_STORE0 = prove (
+``!guard sa sv sr env en em em ea (va :'a word) er (vr : 'r word) mem_f.
+    (size_of_bir_immtype sa = (dimindex (:'a))) ==>
+    (size_of_bir_immtype sv = (dimindex (:'v))) ==>
+    (size_of_bir_immtype sr = (dimindex (:'r))) ==>
+    (guard sa sv sr en) ==>
+    bir_is_lifted_mem_exp env em (mem_f : 'a word -> 'v word) ==>
+    bir_is_lifted_imm_exp env ea (w2bs va sa) ==>
+    bir_is_lifted_imm_exp env er (w2bs vr sr) ==>
+    (!r.
+    (bir_store_in_mem_words sv sa (w2bs vr sr) mem_f en va = SOME r) ==>
+    (bir_is_lifted_mem_exp env (BExp_Store em ea en er) r))``,
+
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
+  bir_is_lifted_mem_exp_def, PULL_EXISTS,
+  bir_env_vars_are_initialised_UNION, bir_eval_store_BASIC_REWR] >>
+REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+`sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
+`sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
+REPEAT (BasicProvers.VAR_EQ_TAC) >>
+FULL_SIMP_TAC std_ss [w2n_n2w, w2bs_def, b2n_n2bs, bitTheory.MOD_2EXP_def,
+  GSYM dimword_def, w2n_lt] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_store_in_mem_words_def, LET_DEF,
+  bir_store_in_mem_def] >>
+Cases_on `bir_number_of_mem_splits sb sr sa` >> FULL_SIMP_TAC std_ss [] >>
+rename1 `_ = SOME n` >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  REPEAT BasicProvers.VAR_EQ_TAC >>
+  ASM_SIMP_TAC (std_ss++boolSimps.ETA_ss) [bir_update_mmap_words_INTRO_w2n, n2w_w2n]
+));
+
+
+
+fun bir_is_lifted_mem_exp_STORE_gen gt =
+let
+  val thms0 = MP_size_of_bir_immtype_t_EQ_dimindex (SPEC gt bir_is_lifted_mem_exp_STORE0)
+  val thms1 = flatten (map MP_size_of_bir_immtype_t_EQ_dimindex thms0)
+  val thms2 = flatten (map MP_size_of_bir_immtype_t_EQ_dimindex thms1)
+
+  val thm1 = LIST_CONJ thms2
+  val thm2 = SIMP_RULE (std_ss++holBACore_ss++(DatatypeSimps.expand_type_quants_ss [``:bir_endian_t``])) [n2w_w2n, w2bs_REWRS, w2w_id, bir_mem_addr_w2n_SIZES, bir_mem_addr_w2n_add_SIZES, GSYM CONJ_ASSOC, FORALL_AND_THM, bir_store_in_mem_words_REWRS] thm1
+in
+  thm2
+end;
+
+fun mk_bir_is_lifted_mem_exp_STORE addr_size value_size result_size endian =
+  bir_is_lifted_mem_exp_STORE_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sa = ^addr_size) /\ (sv = ^value_size) /\ (sr = ^result_size) /\ (en = ^endian)``;
+
+
+(* Build the theorem for common values *)
+val bir_is_lifted_mem_exp_STORE_ENDIAN = save_thm ("bir_is_lifted_mem_exp_STORE_ENDIAN",
+  bir_is_lifted_mem_exp_STORE_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sv <> sr) /\ (sa <> Bit1) /\ (sv <> Bit1)``);
+
+val bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE = save_thm ("bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE",
+  bir_is_lifted_mem_exp_STORE_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sa <> Bit1) /\ (sv <> sr) /\ (sv = Bit8)``);
+
+val bir_is_lifted_mem_exp_STORE_NO_ENDIAN = save_thm ("bir_is_lifted_mem_exp_STORE_NO_ENDIAN",
+  bir_is_lifted_mem_exp_STORE_gen ``\(sa:bir_immtype_t) (sv:bir_immtype_t) (sr:bir_immtype_t) (en:bir_endian_t). (sv = sr)``);
+
+
+
 (***************)
 (* boolean ops *)
 (***************)
@@ -608,6 +835,7 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_CASTS,
              bir_is_lifted_imm_exp_COND,
              bir_is_lifted_imm_exp_LOAD_ENDIAN,
+             bir_is_lifted_mem_exp_STORE_ENDIAN,
              bir_is_lifted_imm_exp_NZCV,
              bir_is_lifted_imm_exp_MSB,
              bir_is_lifted_imm_exp_ALIGNED]);
