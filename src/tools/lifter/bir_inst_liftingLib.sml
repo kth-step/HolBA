@@ -27,7 +27,7 @@ val bir_assert_desc_t_ty =
 
 val bir_updateE_desc_exp_tm = prim_mk_const{Name="bir_updateE_desc_exp", Thy="bir_update_block"}
 
-val block_observe_ty = mk_vartype ":'observation_type"
+val block_observe_ty = mk_vartype "'observation_type"
 
 val bir_is_lifted_inst_block_COMPUTE_block_tm =
    inst [Type.alpha |-> block_observe_ty] (get_const "bir_is_lifted_inst_block_COMPUTE_block")
@@ -77,7 +77,6 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val pc = Arbnum.fromInt 0x10000
 
   val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x100000)
-
   val (_, mu_thm) = mk_WI_end_of_nums_WFE ``:64`` (Arbnum.fromInt 0x1000) (Arbnum.fromInt 0x100000)
 
   fun hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm)
@@ -101,6 +100,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "D65F03C0";
   val hex_code = "12001C00"
   val hex_code = "54000061";
+  val hex_code = "79000001"
 *)
 
   open MD;
@@ -119,6 +119,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val (ms_ty, addr_sz_ty, mem_val_sz_ty)  = dest_bir_lifting_machine_rec_t_ty (type_of (#bmr_const mr))
   val ms_v = mk_var ("ms", ms_ty);
   val bs_v = mk_var ("bs", bir_state_t_ty);
+
+  val addr_sz_immtype_t = bir_immSyntax.bir_immtype_t_of_word_ty (wordsSyntax.mk_word_type addr_sz_ty)
 
   val bmr_eval_REWRS = let
     val tms = [
@@ -405,7 +407,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      computing the block-updates later. Moreover, a theorem stating that the
      computed imm_ups list is correct is produced. *)
 
-  local 
+  local
     val compute_single_up_single_conv = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [
          updateTheory.APPLY_UPDATE_THM, wordsTheory.n2w_11];
 
@@ -477,11 +479,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      val (upd_tm, upd_tm_opt) = if (aconv res mr_mem_lf_of_ms) then (optionSyntax.mk_none (type_of res), NONE) else
                      (optionSyntax.mk_some res, SOME res)
 
-      (* !!!! TODO: support memory changes *)
-      val _ = if upd_tm_opt <> NONE then fail () else ()
-
-    (* Show that computed imm_ups  is really are ok *)
-    val thm_tm = let
+     (* Show that computed imm_ups  is really are ok *)
+     val thm_tm = let
        val t0 = mk_icomb (bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_tm,
           (#bmr_const mr))
        val t1 = list_mk_comb (t0, [ms_v, ms'_t, upd_tm])
@@ -490,9 +489,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
            bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_EVAL])
            t1
        val thm1 = EQT_ELIM thm0
-    in thm1 end
+     in thm1 end
   in
-    (upd_tm, upd_tm_opt, thm_tm)
+    (upd_tm, upd_tm_opt, thm_tm, lf_ms'_thm)
   end;
   end;
 
@@ -525,10 +524,14 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   *)
 
   (* Trivial case: nothing changed. Just use preproved theorem. *)
+  local
+     val bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_INTRO_NONE' =
+         ISPEC (#bmr_const mr) bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_INTRO_NONE
+  in
+
   fun compute_al_mem_NONE (ms'_t:term) (mu_thm:thm) mem_up_thm = let
     val al_mem_thm = let
-      val thm0 = ISPEC (#bmr_const mr) (bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_INTRO_NONE)
-      val thm1 = SPECL [(rand (concl mu_thm)), bs_v, ms_v, ms'_t] thm0
+      val thm1 = SPECL [(rand (concl mu_thm)), bs_v, ms_v, ms'_t] bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_INTRO_NONE'
       val thm2 = MP thm1 mem_up_thm
     in thm2 end;
 
@@ -536,19 +539,99 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   in
     (al_mem_t, al_mem_thm)
   end;
+  end;
+
 
 
   (* The interesting case where we actually need to do something *)
-  fun compute_al_mem_SOME ms'_t mu_thm mem_ms'_t mem_up_thm = let
+  (*
+     val (SOME mem_ms'_t) = real_mem_up_opt
+  *)
+  local
+
+     val al_mem_INTRO_THM = let
+       val thm0  = ISPEC (#bmr_const mr) bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_INTRO
+       val thm1  = SPEC addr_sz_immtype_t thm0
+       val (pre, _) = dest_imp_only (concl thm1)
+       val pre_thm = SIMP_PROVE (std_ss++wordsLib.SIZES_ss++HolBACoreSimps.holBACore_ss) [
+                  ] pre
+       val thm2 = MP thm1 pre_thm
+       val thm3 = SIMP_RULE std_ss [bmr_eval_REWRS] thm2
+       val thm4 = SPECL [bs_v, ms_v] thm3
+     in thm4 end;
+
+     val al_mem_NIL_THM = let
+       val thm0 = INST_TYPE [Type.alpha |-> addr_sz_ty, Type.beta |-> mem_val_sz_ty]
+           bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_NIL
+       val thm1 = SPECL [addr_sz_immtype_t, bs_v] thm0
+     in thm1 end;
+
+     val al_mem_CONS_THM = let
+       val thm0 = INST_TYPE [Type.alpha |-> addr_sz_ty, Type.beta |-> mem_val_sz_ty]
+           bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_CONS
+       val thm1 = SPECL [addr_sz_immtype_t, bs_v] thm0
+       val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss++HolBACoreSimps.holBACore_ss) [
+          wordsTheory.w2w_id] thm1
+     in thm2 end;
+
+
+     val ch_thms = flatten (map BODY_CONJUNCTS (#bmr_change_interval_thms mr))
+     (* val t = mem_ms'_t *)
+     fun compute_next_interval t =
+       Lib.tryfind (fn thm => PART_MATCH (rand o rator) thm t) ch_thms
   in
-     failwith ("TODO: implement it")
+
+
+  fun compute_al_mem_SOME ms'_t mu_thm mem_ms'_t mem_ms'_thm = let
+     (* val current_thm = al_mem_NIL_THM *)
+     fun compute_intervals_thm current_thm mem_t =
+       if (aconv mem_t mr_mem_lf_of_ms) then current_thm else
+       let
+          val int_thm = compute_next_interval mem_t
+          val (va_tm, sz_tm, _, mem_t') = bir_interval_expSyntax.dest_FUNS_EQ_OUTSIDE_WI_size
+             (concl int_thm)
+          val lift_thm = REWRITE_RULE [bir_exp_liftingTheory.bir_is_lifted_exp_def]
+             (exp_lift_fn va_tm)
+          val va_e_tm = rand (rator (concl lift_thm))
+
+          val thm0 = MATCH_MP al_mem_CONS_THM current_thm
+          val thm1 = SPECL [va_tm, sz_tm, mem_t, mem_t', va_e_tm] thm0
+          val thm2 = MP thm1 int_thm
+          val thm3 = MP thm2 lift_thm
+
+          val (pre, _) = dest_imp_only (concl thm3)
+          val thm4 = MP thm3 (DECIDE pre)
+       in
+          compute_intervals_thm thm4 mem_t'
+       end;
+
+   val intervals_thm = compute_intervals_thm al_mem_NIL_THM mem_ms'_t
+
+   val final_thm = let
+     val thm0 = MATCH_MP al_mem_INTRO_THM mu_thm
+     val thm1 = SPEC (rand (concl intervals_thm)) thm0
+     val thm2 = MP thm1 intervals_thm
+     val thm3 = SPEC ms'_t thm2
+     val (pre, _) = dest_imp_only (concl thm3)
+     val pre_thm = SIMP_PROVE list_ss [mem_ms'_thm] pre
+     val thm4 = MP thm3 pre_thm
+     val thm5 = SIMP_RULE list_ss [] thm4
+   in thm5 end;
+
+   val al_mem_t = rand (concl final_thm)
+  in
+    (al_mem_t, final_thm)
   end
 
+  end;
+
+
+
   (* Combine both *)
-  fun compute_al_mem ms'_t mu_thm real_mem_up_opt mem_up_thm = (
+  fun compute_al_mem ms'_t mu_thm real_mem_up_opt mem_up_thm mem_ms'_thm = (
     case (real_mem_up_opt) of
         NONE => compute_al_mem_NONE ms'_t mu_thm mem_up_thm
-      | SOME mem_ms' => compute_al_mem_SOME ms'_t mem_ms' mu_thm mem_up_thm
+      | SOME mem_ms' => compute_al_mem_SOME ms'_t mu_thm mem_ms' mem_ms'_thm
   );
 
 
@@ -888,11 +971,11 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
        handle HOL_ERR _ => raiseErr "computing eup failed";
 
      (* compute mem_up *)
-     val (mem_up_t, real_mem_up_opt, mem_up_thm) = compute_mem_up ms'_t
+     val (mem_up_t, real_mem_up_opt, mem_up_thm, mem_ms'_thm) = compute_mem_up ms'_t
        handle HOL_ERR _ => raiseErr "computing mem_up failed";
 
      (* compute al_mem *)
-     val (al_mem_t, al_mem_THM) = compute_al_mem ms'_t mu_thm real_mem_up_opt mem_up_thm
+     val (al_mem_t, al_mem_THM) = compute_al_mem ms'_t mu_thm real_mem_up_opt mem_up_thm mem_ms'_thm
        handle HOL_ERR _ => raiseErr "computing al_mem failed";
 
      (* Now we need to compute the updates. This involves lifting of all computed immediates
@@ -973,6 +1056,16 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   type lift_inst_cache = (string, thm) Redblackmap.dict
   val lift_inst_cache_empty:lift_inst_cache = Redblackmap.mkDict String.compare
 
+
+  (*
+  val hex_code = "94000000"
+  val hex_code = "D65F03C0";
+  val hex_code = "12001C00"
+  val hex_code = "54000061";
+  val hex_code = "79000001"
+  val hex_code = "A9B97BFD"
+  *)
+
   fun bir_lift_instr_mu_gen_pc_compute (mu_thm:thm, mm_precond_thm : thm) hex_code =
   let
      (* call step lib to generate step theorems, compute mm and label *)
@@ -1032,7 +1125,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
     (* remove all remaining hyps *)
     fun discharge_hyp (tm, thm) = let
-       val pre_thm  = EQT_ELIM (discharge_hyp_CONV tm) 
+       val pre_thm  = EQT_ELIM (discharge_hyp_CONV tm)
     in (PROVE_HYP pre_thm thm) end handle HOL_ERR _ => thm
                                         | UNCHANGED => thm;
 
@@ -1061,7 +1154,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   (* The main entry point for lifting an instruction. Details, please see above. *)
   fun bir_lift_instr ((mu_b : Arbnum.num), (mu_e : Arbnum.num)) = let
-     val (mu_thm, mm_precond_thm) = bir_lift_instr_prepare_mu_thms (mu_b, mu_e) 
+     val (mu_thm, mm_precond_thm) = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
   in
     fn pc => fn hex_code =>
        #1 (bir_lift_instr_mu (mu_thm, mm_precond_thm) lift_inst_cache_empty pc hex_code)

@@ -2,7 +2,8 @@ open HolKernel Parse boolLib bossLib;
 open wordsTheory
 open bir_exp_liftingTheory
 open arm8_stepTheory
-
+open bir_lifting_machinesTheory;
+open bir_interval_expTheory
 
 (* In order to produce decent BIR code from step theorems,
    the concepts described by the step theorems need to be
@@ -490,48 +491,94 @@ in LIST_CONJ [def_THMS, zero_THM0, zero_THM1, zero_THM2] end);
 
 
 val arm8_LIFT_STORE_DWORD = store_thm ("arm8_LIFT_STORE_DWORD",
-``!env em ea va ev vv ms.
-     bir_is_lifted_mem_exp env em ms.MEM ==>
+``!env em ea va ev vv ms mem_f.
+     bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env ev (Imm64 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
-       (mem_store_dword va vv ms.MEM)``,
+       (mem_store_dword va vv mem_f)``,
 
 SIMP_TAC std_ss [mem_store_dword_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
 
 val arm8_LIFT_STORE_WORD = store_thm ("arm8_LIFT_STORE_WORD",
-``!env em ea va ev vv ms.
-     bir_is_lifted_mem_exp env em ms.MEM ==>
+``!env em ea va ev vv ms mem_f.
+     bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env ev (Imm32 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
-       (mem_store_word va vv ms.MEM)``,
+       (mem_store_word va vv mem_f)``,
 
 SIMP_TAC std_ss [mem_store_word_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
 
 val arm8_LIFT_STORE_HALF = store_thm ("arm8_LIFT_STORE_HALF",
-``!env em ea va ev vv ms.
-     bir_is_lifted_mem_exp env em ms.MEM ==>
+``!env em ea va ev vv ms mem_f.
+     bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env ev (Imm16 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
-       (mem_store_half va vv ms.MEM)``,
+       (mem_store_half va vv mem_f)``,
 
 SIMP_TAC std_ss [mem_store_half_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
 
 val arm8_LIFT_STORE_BYTE = store_thm ("arm8_LIFT_STORE_BYTE",
-``!env em ea va ev vv ms.
-     bir_is_lifted_mem_exp env em ms.MEM ==>
+``!env em ea va ev vv ms mem_f.
+     bir_is_lifted_mem_exp env em mem_f ==>
      bir_is_lifted_imm_exp env ea (Imm64 va) ==>
      bir_is_lifted_imm_exp env ev (Imm8 vv) ==>
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
-       (mem_store_byte va vv ms.MEM)``,
+       (mem_store_byte va vv mem_f)``,
 
 SIMP_TAC std_ss [mem_store_byte_def, bir_is_lifted_mem_exp_STORE_NO_ENDIAN]);
 
+val arm8_LIFT_STORE_DWORD_CHANGE_INTERVAL = store_thm ("arm8_LIFT_STORE_DWORD_CHANGE_INTERVAL",
+``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 8 (mem_store_dword va vv mem_f) mem_f``,
+
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_dword_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
+
+
+val arm8_LIFT_STORE_WORD_CHANGE_INTERVAL = store_thm ("arm8_LIFT_STORE_WORD_CHANGE_INTERVAL",
+``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 4 (mem_store_word va vv mem_f) mem_f``,
+
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_word_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
+
+val arm8_LIFT_STORE_HALF_CHANGE_INTERVAL = store_thm ("arm8_LIFT_STORE_HALF_CHANGE_INTERVAL",
+``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 2 (mem_store_half va vv mem_f) mem_f``,
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_half_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
+
+val arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL = store_thm ("arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL",
+``!va vv mem_f. FUNS_EQ_OUTSIDE_WI_size va 1 (mem_store_byte va vv mem_f) mem_f``,
+
+SIMP_TAC (list_ss++wordsLib.WORD_ss) [mem_store_byte_def, WI_MEM_WI_size, WI_ELEM_LIST_compute, w2n_n2w, updateTheory.APPLY_UPDATE_THM, FUNS_EQ_OUTSIDE_WI_size_def]);
+
+
+(****************)
+(* Add to sub   *)
+(****************)
+
+val word_add_to_sub_GEN = store_thm ("word_add_to_sub_GEN",
+``!w:'a word n.
+
+   INT_MAX (:'a) < n /\ n < dimword (:'a) ==>
+   (w + n2w n = w - n2w (dimword (:'a) - n))``,
+
+REPEAT STRIP_TAC >>
+ASM_SIMP_TAC arith_ss [wordsTheory.word_sub_def,
+  wordsTheory.word_2comp_n2w]);
+
+
+val word_add_to_sub_TYPES = save_thm ("word_add_to_sub_TYPES",
+let
+  fun inst wty =
+    INST_TYPE [``:'a`` |-> wty] word_add_to_sub_GEN;
+
+  val thm1 = LIST_CONJ ([inst ``:32``, inst ``:64``, inst ``:16``, inst ``:8``])
+  val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [] thm1
+in
+  thm2
+end)
 
 
 (****************)
@@ -550,6 +597,12 @@ val arm8_extra_LIFTS = save_thm ("arm8_extra_LIFTS",
     arm8_LIFT_STORE_DWORD
 ]);
 
+val arm8_CHANGE_INTERVAL_THMS = save_thm ("arm8_CHANGE_INTERVAL_THMS",
+  LIST_CONJ [
+    arm8_LIFT_STORE_DWORD_CHANGE_INTERVAL,
+    arm8_LIFT_STORE_WORD_CHANGE_INTERVAL,
+    arm8_LIFT_STORE_HALF_CHANGE_INTERVAL,
+    arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL]);
 
 val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
   LIST_CONJ [arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS,

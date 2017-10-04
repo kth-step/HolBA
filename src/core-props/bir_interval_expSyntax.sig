@@ -70,6 +70,10 @@ sig
    val is_WI_distinct    : term -> bool
    val mk_WI_distinct    : term * term -> term
 
+   val FUNS_EQ_OUTSIDE_WI_size_tm   : term
+   val dest_FUNS_EQ_OUTSIDE_WI_size : term -> term * term * term * term
+   val is_FUNS_EQ_OUTSIDE_WI_size   : term -> bool
+   val mk_FUNS_EQ_OUTSIDE_WI_size   : term * term * term * term -> term
 
    (*****************************)
    (* Constructing from numbers *)

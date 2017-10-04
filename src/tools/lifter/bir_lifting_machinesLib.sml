@@ -105,18 +105,19 @@ val bmr_ss = rewrites bmr_REWRS
 (************************)
 
 
-type bmr_rec = {bmr_const              : term,
-                bmr_ok_thm             : thm,
-                bmr_eval_thm           : thm,
-                bmr_eval_rel_thm       : thm,
-                bmr_eval_vars_thm      : thm,
-                bmr_eval_temp_vars_thm : thm,
-                bmr_extra_lifted_thms  : thm list,
-                bmr_extra_ss           : simpLib.ssfrag,
-                bmr_label_thm          : thm,
-                bmr_dest_mem           : term -> term * term,
-                bmr_lifted_thm         : thm,
-                bmr_step_hex           : term -> string -> thm list};
+type bmr_rec = {bmr_const                : term,
+                bmr_ok_thm               : thm,
+                bmr_eval_thm             : thm,
+                bmr_eval_rel_thm         : thm,
+                bmr_eval_vars_thm        : thm,
+                bmr_eval_temp_vars_thm   : thm,
+                bmr_extra_lifted_thms    : thm list,
+                bmr_change_interval_thms : thm list,
+                bmr_extra_ss             : simpLib.ssfrag,
+                bmr_label_thm            : thm,
+                bmr_dest_mem             : term -> term * term,
+                bmr_lifted_thm           : thm,
+                bmr_step_hex             : term -> string -> thm list};
 
 
 (* Some sanity checks to ensure everything is as expected. *)
@@ -160,6 +161,25 @@ val bmr_rec_sanity_check_basic = let
     List.all bir_exp_liftingLib.is_bir_is_lifted_exp tl
   end handle HOL_ERR _ => false;
 
+  fun check_change_interval_thms (r:bmr_rec) = let
+     val thms = flatten (map BODY_CONJUNCTS (#bmr_change_interval_thms r));
+
+     fun entry_ok thm = let
+        val (va_tm, sz_tm, f1_tm, f2_tm) = bir_interval_expSyntax.dest_FUNS_EQ_OUTSIDE_WI_size (concl thm)
+
+        val _ = assert numSyntax.is_numeral sz_tm
+        val f1_vs = FVL [f1_tm] empty_tmset
+        val rest_vs = FVL [f2_tm, va_tm] empty_tmset
+        val _ = assert (fn rest_vs => HOLset.isSubset (rest_vs, f1_vs)) rest_vs
+     in
+       true
+     end
+
+     val _ = map entry_ok thms
+  in
+    true
+  end handle HOL_ERR _ => false;
+
 
   fun check_label_thm (r:bmr_rec) = let
      val thm = (#bmr_label_thm r);
@@ -185,6 +205,8 @@ in
      (check_temp_vars_thm r)
      andalso
      (check_lifted_thm r)
+     andalso
+     (check_change_interval_thms r)
      andalso
      (check_label_thm r)
   )
@@ -250,6 +272,10 @@ fun bmr_normalise_step_thm (r_step_rel:term) vn thm =
 (* DEBUG
   val vn = ``ms:arm8_state``
   val hex_code = "B90033E0";
+  val hex_code = "79000001"
+  val hex_code = "D345FC41"
+  val hex_code = "A9B97BFD"
+
   val thms = arm8_step_hex hex_code
 *)
 
@@ -257,7 +283,8 @@ local
   val next_state_tm = (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"});
   val simp_rule = (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0,
       arm8_extra_FOLDS]);
-  val simp_rule2 = (SIMP_RULE (arith_ss++wordsLib.WORD_ss) []);
+  val simp_conv2 = (SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss) []) THENC
+                   (SIMP_CONV std_ss [word_add_to_sub_TYPES, alignmentTheory.aligned_numeric]);
 
   fun arm8_extra_THMS vn = let
      val thm0  = SPEC vn bmr_extra_ARM8
@@ -312,9 +339,9 @@ local
        (pc_mem_thms @ (arm8_extra_THMS vn))
 
      val thm3 = simp_rule thm2
-     val thm4 = simp_rule2 thm3
+     val thm4 = HYP_CONV_RULE (K true) (simp_conv2) (CONV_RULE simp_conv2 thm3)
    in
-     thm3
+     thm4
    end;
 
 in
@@ -340,18 +367,19 @@ val arm8_REWRS = (
 val arm8_extra_ss = rewrites arm8_REWRS
 
 val arm8_bmr_rec : bmr_rec = {
-  bmr_const              = prim_mk_const{Name="arm8_bmr", Thy="bir_lifting_machines"},
-  bmr_ok_thm             = arm8_bmr_OK,
-  bmr_lifted_thm         = arm8_bmr_LIFTED,
-  bmr_extra_lifted_thms  = [arm8_extra_LIFTS],
-  bmr_eval_thm           = arm8_bmr_EVAL,
-  bmr_eval_vars_thm      = arm8_bmr_vars_EVAL,
-  bmr_eval_temp_vars_thm = arm8_bmr_temp_vars_EVAL,
-  bmr_eval_rel_thm       = arm8_bmr_rel_EVAL,
-  bmr_label_thm          = arm8_bmr_label_thm,
-  bmr_dest_mem           = arm8_dest_mem,
-  bmr_extra_ss           = arm8_extra_ss,
-  bmr_step_hex           = arm8_step_hex'
+  bmr_const                = prim_mk_const{Name="arm8_bmr", Thy="bir_lifting_machines"},
+  bmr_ok_thm               = arm8_bmr_OK,
+  bmr_lifted_thm           = arm8_bmr_LIFTED,
+  bmr_extra_lifted_thms    = [arm8_extra_LIFTS],
+  bmr_change_interval_thms = [arm8_CHANGE_INTERVAL_THMS],
+  bmr_eval_thm             = arm8_bmr_EVAL,
+  bmr_eval_vars_thm        = arm8_bmr_vars_EVAL,
+  bmr_eval_temp_vars_thm   = arm8_bmr_temp_vars_EVAL,
+  bmr_eval_rel_thm         = arm8_bmr_rel_EVAL,
+  bmr_label_thm            = arm8_bmr_label_thm,
+  bmr_dest_mem             = arm8_dest_mem,
+  bmr_extra_ss             = arm8_extra_ss,
+  bmr_step_hex             = arm8_step_hex'
 };
 
 val _ = assert bmr_rec_sanity_check arm8_bmr_rec

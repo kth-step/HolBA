@@ -1,6 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 open bir_immTheory bir_expTheory
 open bir_nzcv_expTheory bir_auxiliaryTheory
+open HolBACoreSimps
+open bir_expTheory bir_typing_expTheory bir_valuesTheory
 open wordsTheory
 
 (* In BIR developments we need to deal with intervals of machine
@@ -413,27 +415,129 @@ SIMP_TAC std_ss [WI_distinct_def, WI_overlap_compute_NOT_EMPTY,
 
 
 
+(***************************************)
+(* Distinct to unchanged memory region *)
+(***************************************)
 
 (* A special case as needed for showing that a given fixed interval (mb, me) is
    disjoint from an interval written too (wb, sz) *)
-val WI_overlap_compute_MEM_UNCHANGED = store_thm ("WI_overlap_compute_MEM_UNCHANGED",
-``!sz. (sz < dimword (:'a)) /\ (sz <> 0) ==>
-   !mb me (wb:'a word).
+val WI_distinct_MEM_UNCHANGED_COMPUTE_def = Define `
+  WI_distinct_MEM_UNCHANGED_COMPUTE (mb : 'a word) (me : 'a word) (wb : 'a word) sz =
+    (wb <=+ n2w ((dimword (:'a) - 1) - sz) /\
+    ((mb <+ wb \/ (n2w sz + wb <=+ mb)) /\
+    ((wb <+ mb \/ me <=+ wb))))`;
+
+
+val WI_distinct_compute_MEM_UNCHANGED = store_thm ("WI_distinct_compute_MEM_UNCHANGED",
+``!(mb:'a word) me.
      WI_wfe (WI_end (mb:'a word) me) ==>
 
-(   (((WI_wfe (WI_size wb (n2w sz))) /\ (WI_distinct (WI_end mb me) (WI_size wb (n2w sz)))) <=>
-
-      (wb <=+ n2w ((dimword (:'a) - 1) - sz) /\
-      ((mb <+ wb \/ (n2w sz + wb <=+ mb)) /\
-       ((wb <+ mb \/ me <=+ wb))))))``,
+    !(wb:'a word) sz. (sz < dimword (:'a)) /\ (sz <> 0) ==>
+    (WI_distinct_MEM_UNCHANGED_COMPUTE mb me wb sz <=>
+     (WI_wfe (WI_size wb (n2w sz))) /\ (WI_distinct (WI_end mb me) (WI_size wb (n2w sz))))``,
 
 
 REPEAT STRIP_TAC >>
-ASM_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [WI_distinct_compute_NOT_EMPTY, WI_size_def] >>
+ASM_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [WI_distinct_compute_NOT_EMPTY, WI_size_def,
+  WI_distinct_MEM_UNCHANGED_COMPUTE_def] >>
 SIMP_TAC std_ss [GSYM WI_wf_size_compute, GSYM WI_size_def, WI_wfe_Size] >>
 ASM_SIMP_TAC std_ss [WI_wf_size_compute, n2w_11, ZERO_LT_dimword] >>
 FULL_SIMP_TAC std_ss [WI_wfe_End, word_1comp_n2w]);
 
+
+
+val WI_distinct_compute_MEM_UNCHANGED_COND_REWRITE = store_thm ("WI_distinct_compute_MEM_UNCHANGED_COND_REWRITE",
+``!(wb:'a word) mb me sz.
+    (mb MOD dimword (:'a) < me MOD dimword (:'a) /\ sz < dimword (:'a) /\ sz <> 0) ==>
+    (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb) (n2w me) wb sz <=>
+     (WI_wfe (WI_size wb (n2w sz))) /\
+     WI_wfe (WI_end ((n2w mb):'a word) (n2w me)) /\
+     (WI_distinct (WI_end ((n2w mb):'a word) (n2w me)) (WI_size wb (n2w sz))))``,
+
+REPEAT STRIP_TAC >>
+MP_TAC (Q.SPECL [`n2w mb`, `n2w me`] WI_distinct_compute_MEM_UNCHANGED) >>
+ASM_SIMP_TAC std_ss [WI_wfe_End, word_lo_n2w]);
+
+
+
+val BExp_unchanged_mem_interval_distinct_def = Define `
+ BExp_unchanged_mem_interval_distinct sz mb_n me_n wb_e isz =
+     (BExp_BinExp BIExp_And
+        (BExp_BinPred BIExp_LessOrEqual wb_e
+           (BExp_Const (n2bs ((2 ** (size_of_bir_immtype sz) − 1 − isz)) sz)))
+        (BExp_BinExp BIExp_And
+           (BExp_BinExp BIExp_Or
+              (BExp_BinPred BIExp_LessThan (BExp_Const (n2bs mb_n sz))
+                 wb_e)
+              (BExp_BinPred BIExp_LessOrEqual
+                 (BExp_BinExp BIExp_Plus (BExp_Const (n2bs isz sz))
+                    wb_e) (BExp_Const (n2bs mb_n sz))))
+           (BExp_BinExp BIExp_Or
+              (BExp_BinPred BIExp_LessThan wb_e
+                 (BExp_Const (n2bs mb_n sz)))
+              (BExp_BinPred BIExp_LessOrEqual
+                 (BExp_Const (n2bs me_n sz)) wb_e))))`;
+
+
+
+val BExp_unchanged_mem_interval_distinct_eval = store_thm (
+  "BExp_unchanged_mem_interval_distinct_eval",
+``!sz mb_n me_n wb_e isz env.
+  (bir_eval_exp (BExp_unchanged_mem_interval_distinct sz mb_n me_n wb_e isz) env =
+     case (sz, bir_eval_exp wb_e env) of
+         (Bit1, BVal_Imm (Imm1 wb)) =>
+            BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
+       | (Bit8, BVal_Imm (Imm8 wb)) =>
+            BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
+       | (Bit16, BVal_Imm (Imm16 wb)) =>
+            BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
+       | (Bit32, BVal_Imm (Imm32 wb)) =>
+            BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
+       | (Bit64, BVal_Imm (Imm64 wb)) =>
+            BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
+       | _ => BVal_Unknown)``,
+
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [WI_distinct_MEM_UNCHANGED_COMPUTE_def,
+  BExp_unchanged_mem_interval_distinct_def] >>
+REPEAT CASE_TAC >> (
+   FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [
+     bir_bool_expTheory.bir_bin_exp_BOOL_OPER_EVAL]
+));
+
+
+val BExp_unchanged_mem_interval_distinct_type_of = store_thm (
+  "BExp_unchanged_mem_interval_distinct_type_of",
+``!sz mb_n me_n wb_e isz.
+  (type_of_bir_exp (BExp_unchanged_mem_interval_distinct sz mb_n me_n wb_e isz) =
+   if (type_of_bir_exp wb_e = SOME (BType_Imm sz)) then
+    SOME BType_Bool else NONE)``,
+
+SIMP_TAC (std_ss++holBACore_ss) [BExp_unchanged_mem_interval_distinct_def,
+  type_of_bir_exp_def, pairTheory.pair_case_thm] >>
+REPEAT STRIP_TAC >> REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS, BType_Bool_def]
+));
+
+
+val BExp_unchanged_mem_interval_distinct_vars_of = store_thm (
+  "BExp_unchanged_mem_interval_distinct_vars_of",
+``!sz mb_n me_n wb_e isz.
+  (bir_vars_of_exp (BExp_unchanged_mem_interval_distinct sz mb_n me_n wb_e isz) =
+   bir_vars_of_exp wb_e)``,
+
+SIMP_TAC (std_ss++holBACore_ss) [BExp_unchanged_mem_interval_distinct_def,
+  pred_setTheory.UNION_EMPTY, pred_setTheory.UNION_IDEMPOT]);
+
+
+(* For computing the intervals, some extra syntax is handy *)
+
+val FUNS_EQ_OUTSIDE_WI_size_def = Define `
+  FUNS_EQ_OUTSIDE_WI_size (b:'a word) (sz : num) (f1 : 'a word -> 'b) (f2 : 'a word -> 'b) <=>
+  ((WI_wf (WI_size b (n2w sz))) ==>
+  (!a. ~(WI_MEM a (WI_size b (n2w sz))) ==>
+       (f1 a = f2 a)))`;
 
 
 val _ = export_theory();

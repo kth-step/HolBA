@@ -4,7 +4,7 @@ open bir_typing_expTheory bir_valuesTheory
 open bir_envTheory bir_immTheory bir_imm_expTheory
 open bir_immSyntax wordsTheory
 open bir_mem_expTheory bir_bool_expTheory
-open bir_nzcv_expTheory
+open bir_nzcv_expTheory bir_interval_expTheory
 
 val _ = new_theory "bir_exp_lifting";
 
@@ -768,6 +768,43 @@ end);
 
 
 
+
+(************************************)
+(* WI_distinct_compute_MEM_UNCHANGED *)
+(************************************)
+
+val thm_t = let
+  val thm_t =
+  ``!sz env (wb:'a word) wb_e mb_n me_n wb_e isz.
+        bir_is_lifted_imm_exp env wb_e (w2bs wb sz) ==>
+        bir_is_lifted_imm_exp env (BExp_unchanged_mem_interval_distinct sz mb_n me_n wb_e isz)
+               (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))``;
+
+  val tl = build_immtype_t_conj thm_t
+
+in tl end;
+
+val bir_is_lifted_imm_exp_WI_distinct_MEM_UNCHANGED_COMPUTE0 = prove (``^thm_t``,
+SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
+  bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id,
+  pairTheory.pair_case_thm,
+
+  BExp_unchanged_mem_interval_distinct_type_of,
+  BExp_unchanged_mem_interval_distinct_vars_of,
+  BExp_unchanged_mem_interval_distinct_eval
+]);
+
+val bir_is_lifted_imm_exp_WI_distinct_MEM_UNCHANGED_COMPUTE = save_thm ("bir_is_lifted_imm_exp_WI_distinct_MEM_UNCHANGED_COMPUTE",
+let
+  val thm0 = bir_is_lifted_imm_exp_WI_distinct_MEM_UNCHANGED_COMPUTE0
+  val thm1 = SIMP_RULE std_ss [GSYM CONJ_ASSOC, w2bs_REWRS, IMP_CONJ_THM,
+    FORALL_AND_THM, w2w_id] thm0
+in
+  thm1
+end);
+
+
+
 (************)
 (* word_msb *)
 (************)
@@ -797,6 +834,47 @@ end);
 (* aligned *)
 (***********)
 
+val BExp_Aligned_def = Define `BExp_Aligned sz p e =
+   (BExp_BinPred BIExp_Equal
+      (BExp_BinExp BIExp_And e (BExp_Const (n2bs (2 ** p - 1) sz))) 
+      (BExp_Const (n2bs 0 sz)))`
+
+val BExp_Aligned_vars_of = store_thm ("BExp_Aligned_vars_of",
+``!sz p e. bir_vars_of_exp (BExp_Aligned sz p e) = bir_vars_of_exp e``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_Aligned_def, pred_setTheory.UNION_EMPTY]);
+
+
+val BExp_Aligned_type_of = store_thm ("BExp_Aligned_type_of",
+``!sz p e. type_of_bir_exp (BExp_Aligned sz p e) = 
+           if (type_of_bir_exp e = SOME (BType_Imm sz)) then
+               SOME BType_Bool else NONE``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_Aligned_def, type_of_bir_exp_def,
+  pairTheory.pair_case_thm] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
+));
+
+
+val BExp_Aligned_eval = store_thm ("BExp_Aligned_eval",
+``!sz p e env. bir_eval_exp (BExp_Aligned sz p e) env = 
+     case (sz, bir_eval_exp e env) of
+         (Bit1,  BVal_Imm (Imm1 w))  => BVal_Imm (bool2b (aligned p w))
+       | (Bit8,  BVal_Imm (Imm8 w))  => BVal_Imm (bool2b (aligned p w))
+       | (Bit16, BVal_Imm (Imm16 w)) => BVal_Imm (bool2b (aligned p w))
+       | (Bit32, BVal_Imm (Imm32 w)) => BVal_Imm (bool2b (aligned p w))
+       | (Bit64, BVal_Imm (Imm64 w)) => BVal_Imm (bool2b (aligned p w))
+       | (_, _) => BVal_Unknown``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_Aligned_def, alignmentTheory.aligned_bitwise_and] >>
+REPEAT CASE_TAC >> (
+   FULL_SIMP_TAC (std_ss++holBACore_ss) [
+     bir_bool_expTheory.bir_bin_exp_BOOL_OPER_EVAL]
+));
+
+
 val bir_is_lifted_imm_exp_ALIGNED0 = prove (
 ``!env (w:'a word).
       bir_is_lifted_exp env bir_exp_true (BLV_Imm (bool2b (aligned 0 w)))``,
@@ -805,19 +883,26 @@ SIMP_TAC std_ss [alignmentTheory.aligned_0, bir_is_lifted_exp_def,
   bir_is_lifted_imm_exp_bool2b_TF]);
 
 
-val bir_is_lifted_imm_exp_ALIGNED_GEN = prove (
-``!p:num env (w:'a word) e.
-      bir_is_lifted_imm_exp env e (bool2b ((w && n2w (2 ** p - 1) = 0w))) ==>
-      bir_is_lifted_imm_exp env e (bool2b (aligned p w))``,
+val thm_t = build_immtype_t_conj
+``!s env (w:'a word) e.
+      p < dimindex (:'a) ==>
+      bir_is_lifted_imm_exp env e (w2bs w s) ==>
+      bir_is_lifted_imm_exp env (BExp_Aligned s p e)
+        (bool2b (aligned p w))``;
 
-SIMP_TAC std_ss [alignmentTheory.aligned_bitwise_and]);
+val bir_is_lifted_imm_exp_ALIGNED_GEN = prove (``!p. ^thm_t``,
+SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+  bir_env_vars_are_initialised_UNION, pairTheory.pair_case_thm,
+  BExp_Aligned_vars_of, BExp_Aligned_eval,
+  BExp_Aligned_type_of, BType_Bool_def, w2w_id]);
+
 
 val bir_is_lifted_imm_exp_ALIGNED = save_thm ("bir_is_lifted_imm_exp_ALIGNED",
 let
   val thms0 = map (fn n => SPEC (numSyntax.mk_numeral (Arbnum.fromInt (n+1))) bir_is_lifted_imm_exp_ALIGNED_GEN)
     (List.tabulate (63, I))
   val thm1 = LIST_CONJ (bir_is_lifted_imm_exp_ALIGNED0::thms0)
-  val thm2 = SIMP_RULE std_ss [] thm1
+  val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [w2bs_REWRS, w2w_id, GSYM CONJ_ASSOC] thm1
 in
   thm2
 end);
@@ -837,6 +922,7 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_LOAD_ENDIAN,
              bir_is_lifted_mem_exp_STORE_ENDIAN,
              bir_is_lifted_imm_exp_NZCV,
+             bir_is_lifted_imm_exp_WI_distinct_MEM_UNCHANGED_COMPUTE,
              bir_is_lifted_imm_exp_MSB,
              bir_is_lifted_imm_exp_ALIGNED]);
 

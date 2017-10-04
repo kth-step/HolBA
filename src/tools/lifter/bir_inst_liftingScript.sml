@@ -14,6 +14,7 @@ open bir_lifting_machinesTheory
 open bir_interval_expTheory
 open bir_update_blockTheory
 open bir_lifting_machinesLib
+open quantHeuristicsLib
 open pred_setTheory
 
 (* This theory defines what it means for a block and a whole program
@@ -227,10 +228,10 @@ val bir_is_lifted_inst_block_COMPUTE_al_mem_COND_def = Define
 
      (* Only explicitly listed memory locations are updated and these are
         outside the unchanged region *)
+     (EVERY (\a. bir_assert_desc_value a) al_mem ==>
      ?mem_chs.
      (!a. ~(MEM a mem_chs) ==> (bmr_mem_lf r ms' a = bmr_mem_lf r ms a)) /\
-     (EVERY (\a. bir_assert_desc_value a) al_mem ==>
-      (!a. (MEM a mem_chs) ==> ~(WI_MEM a mu)))`;
+     (!a. (MEM a mem_chs) ==> ~(WI_MEM a mu)))`;
 
 
 val bir_is_lifted_inst_block_COMPUTE_mem_COND_def = Define
@@ -296,12 +297,12 @@ val bir_is_lifted_inst_block_COMPUTE = store_thm ("bir_is_lifted_inst_block_COMP
      bir_is_lifted_inst_block_COMPUTE_eup_COND r eup ms' /\
 
      (* Everything fits with respect to temps etc. *)
-     EVERY (bir_assert_desc_OK bs.bst_environ) (al_mem++al_step) /\
+     EVERY (bir_assert_desc_OK bs.bst_environ) (al_step++al_mem) /\
      bir_update_block_desc_OK bs.bst_environ eup updates /\
 
      (* The block does not depend on the actual values for the state, but just
         the expressions. So, bl should be independent of the actual state. *)
-     (bl = (bir_update_assert_block l' (al_mem++al_step) eup updates)))) ==>
+     (bl = (bir_update_assert_block l' (al_step++al_mem) eup updates)))) ==>
   bir_is_lifted_inst_block (r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) ms_case_cond l mu mm (bl :'o bir_block_t)
 ``,
 
@@ -318,7 +319,7 @@ STRIP_TAC >>
 `bir_env_order bs.bst_environ bs'.bst_environ` by
    METIS_TAC[pairTheory.SND, bir_exec_block_ENV_ORDER] >>
 
-MP_TAC (Q.SPECL [`bs`, `l'`, `eup`, `p`, `updates`, `bl`, `al_mem++al_step`]
+MP_TAC (Q.SPECL [`bs`, `l'`, `eup`, `p`, `updates`, `bl`, `al_step++al_mem`]
    (INST_TYPE [``:'a`` |-> ``:'o``] bir_update_assert_block_SEM)) >>
 ASM_SIMP_TAC std_ss [] >>
 STRIP_TAC >> REPEAT BasicProvers.VAR_EQ_TAC >>
@@ -558,7 +559,7 @@ val bir_is_lifted_inst_block_COMPUTE_updates_FULL_def = Define
 
 val bir_is_lifted_inst_block_COMPUTE_block_def = Define `
   bir_is_lifted_inst_block_COMPUTE_block l' al_mem al_step eup_temp eup updates =
-  bir_update_assert_block l' (al_mem ++ al_step)
+  bir_update_assert_block l' (al_step ++ al_mem)
                  (if eup_temp then eup
                   else bir_updateE_desc_remove_var eup) updates`;
 
@@ -1422,6 +1423,101 @@ REPEAT STRIP_TAC >>
 ) >>
 FULL_SIMP_TAC arith_ss [WI_size_def, WI_is_sub_compute,
   wordsTheory.word_ls_n2w, word_add_n2w]);
+
+
+
+val bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_def = Define
+ `bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS sz bs il <=>
+
+  (EVERY (\ (b:'a word, s, f1, f2, e).
+     (s < dimword (:'a) /\ s <> 0) /\
+     (FUNS_EQ_OUTSIDE_WI_size b s f1 f2) /\
+     (bir_is_lifted_imm_exp bs.bst_environ e (w2bs b sz))) il)`
+
+val bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_NIL = store_thm (
+  "bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_NIL",
+ ``!sz bs. bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS sz bs ([]:('a word # num # ('a word -> 'b word) # ('a word -> 'b word) # bir_exp_t) list)``,
+SIMP_TAC list_ss [bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_def]);
+
+val bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_CONS = store_thm (
+  "bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_CONS",
+ ``!sz bs il (b : 'a word) s (f1 : 'a word -> 'b word) f2 e.
+
+      bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS sz bs il ==>
+      (FUNS_EQ_OUTSIDE_WI_size b s f1 f2) ==>
+      (bir_is_lifted_imm_exp bs.bst_environ e (w2bs b sz)) ==>
+      ((s < dimword (:'a) /\ s <> 0)) ==>
+      bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS sz bs ((b:'a word, s, f1, f2, e)::il)``,
+SIMP_TAC list_ss [bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_def]);
+
+
+val bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_INTRO = store_thm (
+ "bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_INTRO",
+``!(r : ('addr_ty, 'val_ty, 'ms) bir_lifting_machine_rec_t) sz.
+   (dimindex (:'addr_ty) = size_of_bir_immtype sz) ==>
+  !bs ms mu_b mu_e.
+   (WI_wfe (WI_end ((n2w mu_b):'addr_ty word) (n2w mu_e))) ==>
+   !(il : ('addr_ty word # num # ('addr_ty word -> 'val_ty word) # ('addr_ty word -> 'val_ty word) # bir_exp_t) list).
+   bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS sz bs il ==>
+
+   !ms'.
+   (!a. EVERY (\ (b, s, f1, f2, e). f1 a = f2 a) il ==> (bmr_mem_lf r ms' a = bmr_mem_lf r ms a)) ==>
+   bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK r (WI_end (n2w mu_b) (n2w mu_e)) bs ms ms' (MAP (\ (b, s, f1, f2, e). BAssertDesc (BExp_unchanged_mem_interval_distinct sz mu_b mu_e e s)
+           (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mu_b) (n2w mu_e) b s)) il)``,
+
+SIMP_TAC list_ss [bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_def,
+  bir_is_lifted_inst_block_COMPUTE_al_mem_COND_WITH_DESC_OK_def,
+  bir_is_lifted_inst_block_COMPUTE_al_mem_COND_def,
+  EVERY_MEM, MEM_MAP, PULL_EXISTS] >>
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++QUANT_INST_ss [pair_default_qp]) [] >>
+SIMP_TAC std_ss [bir_assert_desc_value_def,   bir_assert_desc_OK_def,
+  BExp_unchanged_mem_interval_distinct_eval] >>
+Tactical.REVERSE (REPEAT STRIP_TAC) >- (
+  `bir_is_lifted_imm_exp bs.bst_environ e (w2bs b sz)` by PROVE_TAC[] >>
+  Cases_on `sz` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def, pairTheory.pair_case_thm] >>
+    Cases_on `b` >> rename1 `bn:num < _` >> POP_ASSUM MP_TAC >>
+    ASM_SIMP_TAC (std_ss++holBACore_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [
+      WI_distinct_MEM_UNCHANGED_COMPUTE_def, w2w_def, word_lo_n2w, word_ls_n2w, dimword_def,
+      w2n_n2w, word_add_n2w]
+  )
+) >>
+Q.ABBREV_TAC `mem_chs = FLAT (MAP (\ (b, s, f1, f2, e). WI_ELEM_LIST b s) il)` >>
+
+`!b s f1 f2 e. MEM (b, s, f1, f2, e) il ==>
+      WI_wfe (WI_size b (n2w s)) /\
+      WI_distinct (WI_end (n2w mu_b) (n2w mu_e)) (WI_size b (n2w s))` by (
+  METIS_TAC [WI_distinct_compute_MEM_UNCHANGED]
+) >>
+
+`!a. MEM a mem_chs <=> ?b s f1 f2 e. (MEM (b, s, f1, f2, e) il) /\ (WI_MEM a (WI_size b (n2w s)))` by (
+   Q.UNABBREV_TAC `mem_chs` >>
+   SIMP_TAC std_ss [MEM_FLAT, MEM_MAP, PULL_EXISTS] >>
+   SIMP_TAC (std_ss++QUANT_INST_ss[pair_default_qp]) [] >>
+   ConseqConv.REDEPTH_CONSEQ_CONV_TAC (K ConseqConv.EXISTS_EQ___CONSEQ_CONV) >>
+   SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [] >>
+   REPEAT STRIP_TAC >>
+   `WI_wf (WI_size b (n2w s))` by METIS_TAC [WI_wfe_def] >>
+   `s < dimword (:'addr_ty)` by METIS_TAC[] >>
+   ASM_SIMP_TAC arith_ss [WI_MEM_WI_size, w2n_n2w]
+) >>
+
+Q.EXISTS_TAC `mem_chs` >>
+ASM_SIMP_TAC std_ss [] >>
+REPEAT STRIP_TAC >- (
+  Q.PAT_X_ASSUM `!a. _` MATCH_MP_TAC >>
+  REPEAT STRIP_TAC >>
+  `FUNS_EQ_OUTSIDE_WI_size b s f1 f2` by METIS_TAC[] >>
+  `~WI_MEM a (WI_size b (n2w s))` by METIS_TAC[] >>
+  `WI_wf (WI_size b (n2w s))` by METIS_TAC [WI_wfe_def] >>
+  FULL_SIMP_TAC std_ss [FUNS_EQ_OUTSIDE_WI_size_def]
+) >>
+
+`WI_distinct (WI_end (n2w mu_b) (n2w mu_e)) (WI_size b (n2w s))` by METIS_TAC[] >>
+FULL_SIMP_TAC std_ss [WI_distinct_def, WI_overlap_def] >>
+METIS_TAC[]);
+
 
 
 val _ = export_theory();

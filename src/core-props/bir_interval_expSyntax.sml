@@ -16,6 +16,7 @@ fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0
 val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
 val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
 val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
+val syntax_fns4 = syntax_fns 4 HolKernel.dest_quadop HolKernel.mk_quadop;
 
 
 (* bir_word_interval_t *)
@@ -42,7 +43,7 @@ val (WI_is_empty_tm,  mk_WI_is_empty, dest_WI_is_empty, is_WI_is_empty)  = synta
 val (WI_is_sub_tm,  mk_WI_is_sub, dest_WI_is_sub, is_WI_is_sub)  = syntax_fns2 "WI_is_sub";
 val (WI_overlap_tm,  mk_WI_overlap, dest_WI_overlap, is_WI_overlap)  = syntax_fns2 "WI_overlap";
 val (WI_distinct_tm,  mk_WI_distinct, dest_WI_distinct, is_WI_distinct)  = syntax_fns2 "WI_distinct";
-
+val (FUNS_EQ_OUTSIDE_WI_size_tm,  mk_FUNS_EQ_OUTSIDE_WI_size, dest_FUNS_EQ_OUTSIDE_WI_size, is_FUNS_EQ_OUTSIDE_WI_size)  = syntax_fns4 "FUNS_EQ_OUTSIDE_WI_size";
 
 (* Fancy constructors *)
 

@@ -110,7 +110,7 @@ end
    val (res, time) = lift_instr_asm `asr x0, x2, x3`;
    val (res, time) = lift_instr_asm `lsr x0, x1, #0`;
 
-   (* THERE ARE STILL MANY TODOs !!! *)
    val (res, time) = lift_instr_asm `str x0, [x2, #8]`;
+   val (res, time) = lift_instr "A9B97BFD"
 
 *)

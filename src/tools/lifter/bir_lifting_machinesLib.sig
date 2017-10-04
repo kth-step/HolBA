@@ -142,6 +142,10 @@ sig
          some special rewrites for e.g. OVERFLOWS ... *)
       bmr_extra_lifted_thms  : thm list,
 
+      (* A list of FUNS_EQ_OUTSIDE_WI_size theorems used to compute
+         the intervals of addressed updated by memory stores. *)
+      bmr_change_interval_thms : thm list,
+
       (* A useful theorem for computing the PC value from a label value.
          It is expected to be a theorem of the from
 
