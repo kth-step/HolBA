@@ -139,7 +139,8 @@ fun final_results expected_failed_hexcodes = let
      in the code of selftest.sml
      as content of list expected_failed_hexcodes *)
   val _ = print ("Instructions FAILED: " ^ (Int.toString (length failing_l)) ^ "/" ^
-         (Int.toString (length failing_l + length ok_l)) ^ "\n\n[\n");
+         (Int.toString (length failing_l + length ok_l)) ^ "\n\n");
+
   fun print_failed [] = ()
     | print_failed ((hex_code, ed_opt, broken)::l) =
   let
@@ -155,7 +156,7 @@ fun final_results expected_failed_hexcodes = let
   in if List.null l then (print "\n]\n\n") else
          (print ",\n"; print_failed l)
   end;
-  val _ = print_failed failing_l';
+  val _ = if List.null failing_l' then () else (print "[\n"; print_failed failing_l');
 
 
   (* Show the hex-codes that were expected to fail, but succeeded. These
@@ -473,36 +474,6 @@ val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fr
 (* final summary *)
 (*****************)
 
-val expected_failed_hexcodes:string list =
-[
-   "54FFF78A" (* TODO: multiple step theorems preprocessing *),
-   "54FFFAAA" (* TODO: multiple step theorems preprocessing *),
-   "54FFFE8C" (* TODO: multiple step theorems preprocessing *),
-   "54FFE3CA" (* TODO: multiple step theorems preprocessing *),
-   "540001A0" (* TODO: multiple step theorems preprocessing *),
-   "54FFFB2A" (* TODO: multiple step theorems preprocessing *),
-   "54000620" (* TODO: multiple step theorems preprocessing *),
-   "54FFF90A" (* TODO: multiple step theorems preprocessing *),
-   "54000089" (* TODO: multiple step theorems preprocessing *),
-   "54000082" (* TODO: multiple step theorems preprocessing *),
-   "54000168" (* TODO: multiple step theorems preprocessing *),
-   "54000362" (* TODO: multiple step theorems preprocessing *),
-   "54000061" (* TODO: multiple step theorems preprocessing *),
-   "540000AD" (* TODO: multiple step theorems preprocessing *),
-   "54FFFD01" (* TODO: multiple step theorems preprocessing *),
-   "54FFF8C3" (* TODO: multiple step theorems preprocessing *),
-   "54000208" (* TODO: multiple step theorems preprocessing *),
-   "540002E1" (* TODO: multiple step theorems preprocessing *),
-   "54000128" (* TODO: multiple step theorems preprocessing *),
-   "54FFFDC0" (* TODO: multiple step theorems preprocessing *),
-   "54000149" (* TODO: multiple step theorems preprocessing *),
-   "54FFF8E1" (* TODO: multiple step theorems preprocessing *),
-   "54000320" (* TODO: multiple step theorems preprocessing *),
-   "54FFFEAD" (* TODO: multiple step theorems preprocessing *),
-   "54FFE321" (* TODO: multiple step theorems preprocessing *),
-   "35000080" (* TODO: multiple step theorems preprocessing *),
-   "B4000040" (* TODO: multiple step theorems preprocessing *)
-]
-;
+val expected_failed_hexcodes:string list = [];
 
 val _ = final_results expected_failed_hexcodes;

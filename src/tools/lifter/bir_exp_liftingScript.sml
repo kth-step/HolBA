@@ -5,6 +5,7 @@ open bir_envTheory bir_immTheory bir_imm_expTheory
 open bir_immSyntax wordsTheory
 open bir_mem_expTheory bir_bool_expTheory
 open bir_nzcv_expTheory bir_interval_expTheory
+open bir_lifter_general_auxTheory
 
 val _ = new_theory "bir_exp_lifting";
 
@@ -310,6 +311,9 @@ let
 in
   thm1
 end);
+
+val bir_is_lifted_imm_exp_PROTECTED_COND = save_thm ("bir_is_lifted_imm_exp_PROTECTED_COND",
+  PURE_REWRITE_RULE [GSYM PROTECTED_COND_def] bir_is_lifted_imm_exp_COND);
 
 
 (****************)
@@ -919,6 +923,7 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_bool2b,
              bir_is_lifted_imm_exp_CASTS,
              bir_is_lifted_imm_exp_COND,
+             bir_is_lifted_imm_exp_PROTECTED_COND,
              bir_is_lifted_imm_exp_LOAD_ENDIAN,
              bir_is_lifted_mem_exp_STORE_ENDIAN,
              bir_is_lifted_imm_exp_NZCV,

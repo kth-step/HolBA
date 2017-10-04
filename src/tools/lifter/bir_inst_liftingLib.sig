@@ -112,5 +112,9 @@ end
 
    val (res, time) = lift_instr_asm `str x0, [x2, #8]`;
    val (res, time) = lift_instr "A9B97BFD"
+   val (res, time) = lift_instr "540002E1"
+   val (res, time) = lift_instr "54000089"
+   val (res, time) = lift_instr "B4000040"
+
 
 *)

@@ -5,6 +5,7 @@ open bir_lifting_machinesLib;
 open bir_interval_expTheory bir_update_blockTheory
 open bir_exp_liftingLib bir_typing_expSyntax
 open bir_typing_expTheory
+open bir_lifter_general_auxTheory
 open bir_programSyntax bir_interval_expSyntax
 
 (**********)
@@ -43,6 +44,9 @@ val bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_tm =
 
 val bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_tm =
   get_const "bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES";
+
+val PROTECTED_COND_tm =
+  prim_mk_const{Name="PROTECTED_COND", Thy="bir_lifter_general_aux"}
 
 
 (******************)
@@ -101,6 +105,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "12001C00"
   val hex_code = "54000061";
   val hex_code = "79000001"
+  val hex_code = "B4000040"
+  val hex_code = "54000089"
 *)
 
   open MD;
@@ -151,8 +157,6 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val mk_label_of_num = bmr_rec_mk_label_of_num mr
   val mk_label_of_num_eq_pc = bmr_rec_mk_label_of_num_eq_pc mr;
   val pc_num_var = mk_var ("pc_n", numSyntax.num);
-
-
 
   (* Instantiate the inst_lifting theorem with the record and types. *)
   val inst_lift_THM = let
@@ -252,6 +256,26 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     val tm1 = rhs (concl (SIMP_CONV std_ss [] tm0)) handle UNCHANGED => tm0
   in (pc_var_t, pc_cond_var_t, tm1) end;
 
+  (* Build cond-lift theorems for all accessed fields *)
+  val cond_lift_fields_thm = let
+     val cond_tm = list_mk_icomb PROTECTED_COND_tm [
+        mk_var ("c", bool),
+        mk_var ("ms1", ms_ty),
+        mk_var ("ms2", ms_ty)];
+
+     fun mk_lift_thm tm =
+       GEN_ALL (QCONV (SIMP_CONV std_ss [PROTECTED_COND_RAND, PROTECTED_COND_RATOR])
+                 (subst [ms_v |-> cond_tm] tm))
+
+     fun mk_imm_thm (_, tm) =  mk_lift_thm ( (rand tm))
+
+  in
+    LIST_CONJ (
+     (mk_lift_thm mr_mem_lf_of_ms) ::
+     (mk_lift_thm (rand mr_pc_lf_of_ms)) ::
+     map (mk_lift_thm o rand o snd) mr_imms_lf_of_ms)
+  end;
+
 
   (* Constructing net for expression lifting. The _raw version does the lifting for
      the environment in a specially prepared net. Since we usually want the whole
@@ -347,11 +371,22 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      has to guarantee, that this condition is satisfied, once the block belonging to
      this theorem is executed. *)
 
+  (* val [thm_a, thm_b] = next_thms *)
+  fun preprocess_next_thms_simple_merge thm_a thm_b = let
+    val thm0 = MATCH_MP COMBINE_TWO_STEP_THMS_SIMPLE thm_a
+    val thm1 = MATCH_MP thm0 thm_b
+    val (pre, _) = dest_imp_only (concl thm1);
+    val pre_thm = SIMP_PROVE std_ss [] pre
+    val thm2 = MP thm1 pre_thm
+    val thm3 = REWRITE_RULE [PROTECTED_COND_NEG_COND, PROTECTED_COND_NEG_COND_CONJ] thm2
+  in thm3 end
+
   fun preprocess_next_thms (lb:term) ([]:thm list) =
       raise bir_inst_liftingAuxExn (BILED_msg ("empty list of step theorems produced"))
     | preprocess_next_thms lb [thm] = [(lb, T, thm)]
     | preprocess_next_thms lb thms =
-      raise bir_inst_liftingAuxExn (BILED_msg ("TODO: multiple step theorems preprocessing"));
+      [(lb, T, preprocess_next_thms_simple_merge (el 1 thms) (el 2 thms))] handle HOL_ERR _ =>
+      raise bir_inst_liftingAuxExn (BILED_msg ("more than 2 next-theorems cannot be merged currently: TODO"));
 
 
 
@@ -385,14 +420,17 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
           (#bmr_const mr))
        val t1 = list_mk_comb (t0, [bs_v, ms_v, al_step, ms'_t])
 
-       val thm0 = SIMP_CONV (list_ss++(#bmr_extra_ss mr)) (assert_ok_thms@[
-          next_thm0, ms_extra_REWRS,
+       val thm0 = SIMP_CONV (list_ss) (assert_ok_thms@[
+          next_thm0,
           bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK_def,
           bir_is_lifted_inst_block_COMPUTE_ms'_COND_def,
           bir_assert_desc_value_def,
           bmr_eval_REWRS]) t1
-       val thm1 = EQT_ELIM thm0
-    in thm1 end
+       val thm1 = CONV_RULE (RHS_CONV (SIMP_CONV (std_ss++(#bmr_extra_ss mr)++boolSimps.LIFT_COND_ss) ([
+          PROTECTED_COND_def, ms_extra_REWRS]))) thm0
+
+       val thm2 = EQT_ELIM thm1
+    in thm2 end
   in
     (ms'_t, al_step, thm_tm)
   end;
@@ -409,7 +447,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   local
     val compute_single_up_single_conv = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [
-         updateTheory.APPLY_UPDATE_THM, wordsTheory.n2w_11];
+         updateTheory.APPLY_UPDATE_THM, wordsTheory.n2w_11, cond_lift_fields_thm,
+         PROTECTED_COND_ID];
 
   in
 
@@ -466,7 +505,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      The computed term, its SML representation and a correctness theorem are returned. *)
 
   local
-    val lf_ms'_CONV = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) []
+    val lf_ms'_CONV = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [cond_lift_fields_thm, PROTECTED_COND_ID]
   in
 
   fun compute_mem_up ms'_t =
@@ -643,7 +682,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      compute an end statement update description that allows us to jump to
      that PC. *)
   local
-    val lf_ms'_CONV = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [bmr_eval_REWRS]
+    val lf_ms'_CONV = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [bmr_eval_REWRS,
+      cond_lift_fields_thm, PROTECTED_COND_ID] THENC
+      PURE_REWRITE_CONV [PROTECTED_COND_def]
   in
   fun compute_eup ms'_t =
   let
