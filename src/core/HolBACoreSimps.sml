@@ -34,7 +34,8 @@ val bir_list_of_types = [
    mk_thy_type {Tyop="bir_program_t",        Thy="bir_program", Args=[Type.alpha]},
    mk_thy_type {Tyop="bir_programcounter_t", Thy="bir_program", Args=[]},
    mk_thy_type {Tyop="bir_status_t",         Thy="bir_program", Args=[]},
-   mk_thy_type {Tyop="bir_state_t",          Thy="bir_program", Args=[]}
+   mk_thy_type {Tyop="bir_state_t",          Thy="bir_program", Args=[]},
+   mk_thy_type {Tyop="bir_execution_result_t", Thy="bir_program", Args=[Type.alpha]}
 ];
 
 
@@ -154,13 +155,16 @@ val bir_SIMPLE_REWRS_exp = rewrites [
 
 val bir_SIMPLE_REWRS_program = rewrites [
   bir_state_is_terminated_IMP,
-  bir_declare_initial_value_def
+  bir_declare_initial_value_def,
+  IS_BER_Ended_def
 ];
 
 val bir_SIMPLE_REWRS_typing_exp = rewrites [
   type_of_bir_exp_EQ_SOME_REWRS,
   type_of_bir_exp_EQ_NONE_REWRS,
-  bir_vars_of_exp_def
+  bir_vars_of_exp_def,
+  valOf_BER_Ended_def,
+  valOf_BER_Ended_steps_def
 ];
 
 val bir_SIMPLE_REWRS_ss = simpLib.merge_ss [

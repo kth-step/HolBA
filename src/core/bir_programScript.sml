@@ -324,10 +324,29 @@ val bir_exec_infinite_steps_fun_REWRS = store_thm ("bir_exec_infinite_steps_fun_
 SIMP_TAC std_ss [bir_exec_infinite_steps_fun_def, arithmeticTheory.FUNPOW]);
 
 
+val bir_state_COUNT_PC_def = Define `bir_state_COUNT_PC pc_cond st =
+  case st.bst_status of
+    | BST_JumpOutside l => pc_cond (bir_block_pc l)
+    | _ => pc_cond st.bst_pc
+`;
+
+
+(* How often was a PC with a certain property reached. *)
+val bir_exec_infinite_steps_fun_COUNT_PCs_def = Define
+  `(bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st 0 = 0) /\
+   (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st (SUC n) =
+    let r = bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p
+               (bir_exec_step_state p st) n in
+    if (bir_state_COUNT_PC pc_cond (bir_exec_step_state p st)) then SUC r else r)`
+
+
+
 (* After how many steps do we terminate ? *)
 val bir_exec_infinite_steps_COUNT_STEPS_def = Define `
-  bir_exec_infinite_steps_COUNT_STEPS p st = (OLEAST i.
-     bir_state_is_terminated (bir_exec_infinite_steps_fun p st i))`;
+  bir_exec_infinite_steps_COUNT_STEPS pc_cond max_steps_opt p st = (OLEAST i.
+     bir_state_is_terminated (bir_exec_infinite_steps_fun p st i) \/
+     (max_steps_opt = SOME (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st i))
+)`;
 
 
 (*************************)
@@ -367,22 +386,76 @@ Cases_on `fe` >> ASM_SIMP_TAC list_ss [LMAP, OPT_LCONS_REWRS]);
 (* Now full execution    *)
 (*************************)
 
-val bir_exec_steps_opt_def = Define `bir_exec_steps_opt p state max_steps =
-  let step_no = OPT_NUM_MIN max_steps (bir_exec_infinite_steps_COUNT_STEPS p state) in
+val _ = Datatype `bir_execution_result_t =
+    (* The termination ends. "BER_Ended o_list step_count pc_count st" means
+       that the execution ended after "step_count" steps in state "st". During
+       execution "pc_count" pcs that satisfy the given predicate where encountered
+       (counting the pc of the final state st, but not the one of the initial state).
+       The list "o_list" of observations was observed during execution *)
+    BER_Ended   ('o list) num num bir_state_t
+
+    (* The execution does not terminate. Since the programs are finite, this means
+       it loops. Therefore there are no step counts and no final state. However a
+       potentially infinite lazy list of observations is returned. *)
+  | BER_Looping ('o llist)
+`;
+
+val bir_execution_result_ss = rewrites (type_rws ``:'a bir_execution_result_t``);
+
+val IS_BER_Ended_def = Define `
+   (IS_BER_Ended (BER_Ended _ _ _ _) = T) /\
+   (IS_BER_Ended (BER_Looping _) = F)`;
+
+
+val IS_BER_Ended_EXISTS = store_thm ("IS_BER_Ended_EXISTS",
+``!ber. IS_BER_Ended ber <=> (?ol step_count pc_count final_st.
+        ber = BER_Ended ol step_count pc_count final_st)``,
+
+Cases_on `ber` >> SIMP_TAC (std_ss++bir_execution_result_ss) [IS_BER_Ended_def]);
+
+
+val valOf_BER_Ended_def = Define `valOf_BER_Ended (BER_Ended ol step_count pc_count final_st) =
+  (ol, step_count, pc_count, final_st)`;
+
+val valOf_BER_Ended_steps_def = Define `valOf_BER_Ended_steps (BER_Ended ol step_count pc_count final_st) =
+  (ol, step_count, final_st)`;
+
+
+(* Now real execution. This is a clear definition, which is not well suited for evalation
+   though. More efficient versions are derived later. We compute the no of steps and
+   then execute this number of steps, recomputing values multiple times. *)
+val bir_exec_steps_GEN_def = Define `bir_exec_steps_GEN pc_cond p state max_steps_opt =
+  let step_no = bir_exec_infinite_steps_COUNT_STEPS pc_cond max_steps_opt p state in
   let ll = bir_exec_steps_observe_llist p state step_no in
   (case step_no of
-    | NONE => (ll, NONE)
-    | SOME i => (ll, SOME (i, bir_exec_infinite_steps_fun p state i)))`;
+    | NONE => BER_Looping ll
+    | SOME i => BER_Ended (THE (toList ll)) i
+                (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i)
+                (bir_exec_infinite_steps_fun p state i))`;
 
 
+(* A simple instance that just runs till termination. *)
 val bir_exec_steps_def = Define `
-  (bir_exec_steps p state = bir_exec_steps_opt p state NONE)`;
+  (bir_exec_steps p state = bir_exec_steps_GEN (\_. T) p state NONE)`;
 
-
+(* A simple instance that counts all steps and has a fixed no of steps given.
+   We are sure it terminates, therefore, the result is converted to a tuple. *)
 val bir_exec_step_n_def = Define `
   bir_exec_step_n p state n =
-  let (ll, sto) = bir_exec_steps_opt p state (SOME n) in
-  (THE (toList ll), THE sto)`;
+  valOf_BER_Ended_steps (bir_exec_steps_GEN (\_. T) p state (SOME n))`
 
+(* We might be interested in executing a certain no of blocks. *)
+val bir_exec_block_n_def = Define `
+  bir_exec_block_n p state n =
+  valOf_BER_Ended (bir_exec_steps_GEN (\pc. pc.bpc_index = 0) p state (SOME n))`
+
+(* Executing till a certain set of labels is useful as well. Since we might loop
+   outside this set of labels, infinite runs are possible. *)
+val bir_exec_to_labels_n_def = Define `
+  bir_exec_to_labels_n ls p state n =
+  bir_exec_steps_GEN (\pc. (pc.bpc_index = 0) /\ (pc.bpc_label IN ls)) p state (SOME n)`
+
+val bir_exec_to_labels_def = Define `
+  bir_exec_to_labels ls p state = bir_exec_to_labels_n ls p state 1`
 
 val _ = export_theory();

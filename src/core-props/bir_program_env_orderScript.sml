@@ -2,28 +2,9 @@ open HolKernel Parse boolLib bossLib;
 open bir_envTheory bir_valuesTheory
 open bir_programTheory HolBACoreSimps;
 open bir_program_multistep_propsTheory;
-
+open bir_program_valid_stateTheory;
 
 val _ = new_theory "bir_program_env_order";
-
-
-(* ------------------------------------------------------------------------- *)
-(*  End statements do not modify the environment                             *)
-(* ------------------------------------------------------------------------- *)
-
-
-val bir_exec_stmtE_env_unchanged = store_thm ("bir_exec_stmtE_env_unchanged",
-``!p st stmt. (bir_exec_stmtE p stmt st).bst_environ = st.bst_environ``,
-
-REPEAT GEN_TAC >>
-Cases_on `stmt` >> (
-  SIMP_TAC (std_ss++holBACore_ss) [
-    bir_exec_stmtE_def, LET_DEF, bir_exec_stmt_cjmp_def,
-    bir_exec_stmt_jmp_def, bir_exec_stmt_jmp_to_label_def,
-    bir_exec_stmt_halt_def, bir_state_set_failed_def] >>
-  REPEAT CASE_TAC >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) []
-));
 
 
 (* ------------------------------------------------------------------------- *)
@@ -171,11 +152,18 @@ Q.EXISTS_TAC `(bir_exec_step_state p st).bst_environ` >>
 ASM_SIMP_TAC std_ss [bir_exec_step_ENV_ORDER]);
 
 
-val bir_exec_steps_ENV_ORDER = store_thm ("bir_exec_steps_ENV_ORDER",
-``!p c st st' ll. (bir_exec_steps p st = (ll, SOME (c, st'))) ==>
+val bir_exec_steps_GEN_ENV_ORDER = store_thm ("bir_exec_steps_GEN_ENV_ORDER",
+``!pc_cond p st mo c_st c_pc st' ol. (bir_exec_steps_GEN pc_cond p st mo = BER_Ended ol c_st c_pc st') ==>
   bir_env_order st.bst_environ st'.bst_environ``,
 
-SIMP_TAC std_ss [bir_exec_steps_EQ_SOME, bir_exec_infinite_steps_fun_ENV_ORDER]);
+SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Ended, bir_exec_infinite_steps_fun_ENV_ORDER]);
+
+
+val bir_exec_steps_ENV_ORDER = store_thm ("bir_exec_steps_ENV_ORDER",
+``!p st c_st c_pc st' ol. (bir_exec_steps p st = BER_Ended ol c_st c_pc st') ==>
+  bir_env_order st.bst_environ st'.bst_environ``,
+
+SIMP_TAC std_ss [bir_exec_steps_EQ_Ended, bir_exec_infinite_steps_fun_ENV_ORDER]);
 
 
 val bir_exec_step_n_ENV_ORDER = store_thm ("bir_exec_step_n_ENV_ORDER",
@@ -184,6 +172,24 @@ val bir_exec_step_n_ENV_ORDER = store_thm ("bir_exec_step_n_ENV_ORDER",
 
 SIMP_TAC std_ss [bir_exec_step_n_EQ_THM,
   bir_exec_infinite_steps_fun_ENV_ORDER]);
+
+
+val bir_exec_block_n_ENV_ORDER = store_thm ("bir_exec_block_n_ENV_ORDER",
+``!p st n st' c c' l. (bir_exec_block_n p st n = (l, c, c', st')) ==>
+  bir_env_order st.bst_environ st'.bst_environ``,
+
+SIMP_TAC std_ss [bir_exec_block_n_EQ_THM,
+  bir_exec_infinite_steps_fun_ENV_ORDER]);
+
+
+val bir_exec_to_labels_n_ENV_ORDER = store_thm ("bir_exec_to_labels_n_ENV_ORDER",
+``!ls p st n c_st c_pc st' ol. (bir_exec_to_labels_n ls p st n = BER_Ended ol c_st c_pc st') ==>
+  bir_env_order st.bst_environ st'.bst_environ``,
+
+SIMP_TAC std_ss [bir_exec_to_labels_n_def,
+  bir_exec_steps_GEN_EQ_Ended,
+  bir_exec_infinite_steps_fun_ENV_ORDER]);
+
 
 
 val _ = export_theory();

@@ -646,11 +646,10 @@ val bir_exec_steps_block = store_thm ("bir_exec_steps_block",
 
     (bir_exec_steps p st =
       let (l1, c1, st1) = bir_exec_block p bl st in
-      let (ll2, sto) = bir_exec_steps p st1 in
-      (LAPPEND (fromList l1) ll2,
-       case sto of
-        NONE => NONE
-      | SOME (c2,st2) => SOME (c1 + c2,st2)))``,
+      case bir_exec_steps p st1 of
+        BER_Looping ll2 => BER_Looping (LAPPEND (fromList l1) ll2)
+      | BER_Ended l2 c2 c2' st2 =>
+        BER_Ended (l1++l2) (c1 + c2) (c1 + c2') st2)``,
 
 REPEAT STRIP_TAC >>
 `?l1 c1 st1. bir_exec_step_n p st (bir_block_size bl) = (l1, c1, st1)` by METIS_TAC[pairTheory.PAIR] >>
@@ -664,13 +663,12 @@ val bir_exec_steps_block_GUARD = store_thm ("bir_exec_steps_block_GUARD",
 
     (bir_exec_steps p st =
       let (l1, c1, st1) = bir_exec_block p bl st in
-      if c1 < bir_block_size bl then (fromList l1, SOME (c1,st1))
+      if c1 < bir_block_size bl then BER_Ended l1 c1 c1 st1
       else (
-        let (ll2, sto) = bir_exec_steps p st1 in
-        (LAPPEND (fromList l1) ll2,
-         case sto of
-          NONE => NONE
-        | SOME (c2,st2) => SOME (c1 + c2,st2))))``,
+        case bir_exec_steps p st1 of
+          BER_Looping ll2 => BER_Looping (LAPPEND (fromList l1) ll2)
+        | BER_Ended l2 c2 c2' st2 =>
+          BER_Ended (l1++l2) (c1 + c2) (c1 + c2') st2))``,
 
 REPEAT STRIP_TAC >>
 `?l1 c1 st1. bir_exec_step_n p st (bir_block_size bl) = (l1, c1, st1)` by METIS_TAC[pairTheory.PAIR] >>

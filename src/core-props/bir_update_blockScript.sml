@@ -9,6 +9,7 @@ open bir_bool_expTheory bir_program_env_orderTheory
 open bir_temp_varsTheory bir_program_varsTheory
 open bir_program_terminationTheory
 open bir_typing_progTheory
+open bir_program_valid_stateTheory
 open HolBACoreSimps;
 
 
