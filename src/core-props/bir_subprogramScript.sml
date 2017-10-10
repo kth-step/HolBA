@@ -554,6 +554,7 @@ val bir_state_COUNT_PC_bir_jumped_outside_termination_cond = store_thm (
    bir_jumped_outside_termination_cond p1 p2 st1 st2 ==>
    (bir_state_COUNT_PC pc_cond st1 = bir_state_COUNT_PC pc_cond st2)``,
 
+Cases >>
 SIMP_TAC (std_ss++bir_TYPES_ss) [bir_jumped_outside_termination_cond_def, PULL_EXISTS,
   bir_state_COUNT_PC_def]);
 
@@ -810,7 +811,7 @@ val bir_exec_step_n_SUBPROGRAM = store_thm ("bir_exec_step_n_SUBPROGRAM",
    (st1 = st2))))``,
 
 REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
-MP_TAC (Q.SPECL [`p1`, `p2`, `\_. T`, `st`, `SOME c`] bir_exec_steps_GEN_Ended_SUBPROGRAM) >>
+MP_TAC (Q.SPECL [`p1`, `p2`, `(T, \_. T)`, `st`, `SOME c`] bir_exec_steps_GEN_Ended_SUBPROGRAM) >>
 FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_n_TO_steps_GEN,
   bir_state_COUNT_PC_ALL_STEPS]);
 
@@ -823,7 +824,7 @@ val bir_exec_step_n_PROGRAM_EQ = store_thm ("bir_exec_step_n_PROGRAM_EQ",
 
 REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [FUN_EQ_THM] >>
-MP_TAC (Q.SPECL [`p1`, `p2`, `\_. T`] bir_exec_steps_GEN_PROGRAM_EQ) >>
+MP_TAC (Q.SPECL [`p1`, `p2`, `(T, \_. T)`] bir_exec_steps_GEN_PROGRAM_EQ) >>
 FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_n_def,
   bir_state_COUNT_PC_ALL_STEPS]);
 
@@ -839,7 +840,7 @@ val bir_exec_step_n_SUBPROGRAM_EQ = store_thm ("bir_exec_step_n_SUBPROGRAM_EQ",
   (bir_exec_step_n p2 st c = (l, n, st'))``,
 
 REPEAT STRIP_TAC >>
-MP_TAC (Q.SPECL [`p1`, `p2`, `\_. T`] bir_exec_steps_GEN_Ended_SUBPROGRAM_EQ) >>
+MP_TAC (Q.SPECL [`p1`, `p2`, `(T, \_. T)`] bir_exec_steps_GEN_Ended_SUBPROGRAM_EQ) >>
 FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_n_TO_steps_GEN,
   bir_state_COUNT_PC_ALL_STEPS]);
 
@@ -874,7 +875,7 @@ val bir_exec_steps_NO_TERMINATE_SUBPROGRAM = store_thm ("bir_exec_steps_NO_TERMI
   (bir_exec_steps p2 st = BER_Looping ll)``,
 
 REPEAT STRIP_TAC >>
-MP_TAC (Q.SPECL [`p1`, `p2`, `\_. T`, `st`, `NONE`] bir_exec_steps_GEN_Looping_SUBPROGRAM) >>
+MP_TAC (Q.SPECL [`p1`, `p2`, `(T, \_. T)`, `st`, `NONE`] bir_exec_steps_GEN_Looping_SUBPROGRAM) >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_def]);
 
 
@@ -886,7 +887,7 @@ val bir_exec_steps_PROGRAM_EQ = store_thm ("bir_exec_steps_PROGRAM_EQ",
   (bir_exec_steps p1 = bir_exec_steps p2)``,
 
 REPEAT STRIP_TAC >>
-MP_TAC (Q.SPECL [`p1`, `p2`, `\_. T`] bir_exec_steps_GEN_PROGRAM_EQ) >>
+MP_TAC (Q.SPECL [`p1`, `p2`, `(T, \_. T)`] bir_exec_steps_GEN_PROGRAM_EQ) >>
 ASM_SIMP_TAC std_ss [FUN_EQ_THM, bir_exec_steps_def]);
 
 

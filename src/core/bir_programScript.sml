@@ -324,10 +324,11 @@ val bir_exec_infinite_steps_fun_REWRS = store_thm ("bir_exec_infinite_steps_fun_
 SIMP_TAC std_ss [bir_exec_infinite_steps_fun_def, arithmeticTheory.FUNPOW]);
 
 
-val bir_state_COUNT_PC_def = Define `bir_state_COUNT_PC pc_cond st =
+val bir_state_COUNT_PC_def = Define `bir_state_COUNT_PC (count_failing, pc_cond) st =
   case st.bst_status of
     | BST_JumpOutside l => pc_cond (bir_block_pc l)
-    | _ => pc_cond st.bst_pc
+    | BST_Running => pc_cond st.bst_pc
+    | _ => count_failing
 `;
 
 
@@ -436,24 +437,24 @@ val bir_exec_steps_GEN_def = Define `bir_exec_steps_GEN pc_cond p state max_step
 
 (* A simple instance that just runs till termination. *)
 val bir_exec_steps_def = Define `
-  (bir_exec_steps p state = bir_exec_steps_GEN (\_. T) p state NONE)`;
+  (bir_exec_steps p state = bir_exec_steps_GEN (T, (\_. T)) p state NONE)`;
 
 (* A simple instance that counts all steps and has a fixed no of steps given.
    We are sure it terminates, therefore, the result is converted to a tuple. *)
 val bir_exec_step_n_def = Define `
   bir_exec_step_n p state n =
-  valOf_BER_Ended_steps (bir_exec_steps_GEN (\_. T) p state (SOME n))`
+  valOf_BER_Ended_steps (bir_exec_steps_GEN (T, (\_. T)) p state (SOME n))`
 
 (* We might be interested in executing a certain no of blocks. *)
 val bir_exec_block_n_def = Define `
   bir_exec_block_n p state n =
-  valOf_BER_Ended (bir_exec_steps_GEN (\pc. pc.bpc_index = 0) p state (SOME n))`
+  valOf_BER_Ended (bir_exec_steps_GEN (F, (\pc. pc.bpc_index = 0)) p state (SOME n))`
 
 (* Executing till a certain set of labels is useful as well. Since we might loop
    outside this set of labels, infinite runs are possible. *)
 val bir_exec_to_labels_n_def = Define `
   bir_exec_to_labels_n ls p state n =
-  bir_exec_steps_GEN (\pc. (pc.bpc_index = 0) /\ (pc.bpc_label IN ls)) p state (SOME n)`
+  bir_exec_steps_GEN (F, \pc. (pc.bpc_index = 0) /\ (pc.bpc_label IN ls)) p state (SOME n)`
 
 val bir_exec_to_labels_def = Define `
   bir_exec_to_labels ls p state = bir_exec_to_labels_n ls p state 1`

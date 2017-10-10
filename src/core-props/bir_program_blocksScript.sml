@@ -320,7 +320,7 @@ DECIDE_TAC);
 
 
 val bir_exec_stmtsB_COUNTER_EQ = store_thm ("bir_exec_stmtsB_COUNTER_EQ",
-  ``!stmts st l l' c c' st'. (bir_exec_stmtsB stmts (l, c, st) = (l', c, st')) ==>
+  ``!stmts st l l' c st'. (bir_exec_stmtsB stmts (l, c, st) = (l', c, st')) ==>
                              ((st' = st) /\ (l' = REVERSE l))``,
 
 Cases_on `stmts` >> (
@@ -482,6 +482,28 @@ MP_TAC (Q.SPECL [`p`, `i`, `bl`, `LENGTH bl.bb_statements`, `st`, `0`, `[]`] bir
 ASM_SIMP_TAC list_ss [rich_listTheory.SEG_LENGTH_ID]);
 
 
+val bir_exec_stmtsB_not_jumped = store_thm ("bir_exec_stmtsB_not_jumped",
+``!stmts l c st ll l' c' st'.
+st.bst_status <> BST_JumpOutside ll ==>
+(bir_exec_stmtsB stmts (l,c,st) = (l',c',st')) ==>
+st'.bst_status <> BST_JumpOutside ll``,
+
+Induct >- (
+  SIMP_TAC std_ss [bir_exec_stmtsB_def]
+) >>
+REPEAT STRIP_TAC >>
+rename1 `stmt::stmts` >>
+FULL_SIMP_TAC std_ss [bir_exec_stmtsB_def] >>
+Cases_on `bir_state_is_terminated st` >- (
+  FULL_SIMP_TAC std_ss []
+) >>
+`?fe st'. bir_exec_stmtB stmt st = (fe, st')` by METIS_TAC[pairTheory.PAIR] >>
+FULL_SIMP_TAC std_ss [LET_DEF] >>
+Q.PAT_X_ASSUM `!l c st. _` (MP_TAC o Q.SPECL [`OPT_CONS fe l`, `SUC c`, `st''`, `ll`]) >>
+ASM_SIMP_TAC std_ss [] >>
+MP_TAC (Q.SPECL [`st`, `stmt`, `ll`] bir_exec_stmtB_status_not_jumped) >>
+ASM_SIMP_TAC std_ss [bir_exec_stmtB_state_def]);
+
 
 (* ------------------------------------------------------------------------- *)
 (*  Semantics of whole blocks                                                *)
@@ -513,7 +535,116 @@ SIMP_TAC (list_ss++holBACore_ss) [bir_exec_block_def, bir_exec_stmtsB_REWRS, LET
 
 
 
-val bir_exec_block_SEMANTICS = store_thm ("bir_exec_block_SEMANTICS",
+val bir_exec_block_n_1_TO_step_n = store_thm ("bir_exec_block_n_1_TO_step_n",
+``!p bl st.
+    (bir_get_current_block p st.bst_pc = SOME bl) ==>
+
+    (bir_exec_block_n p st 1 = (
+       let (ol, c, st') = bir_exec_step_n p st (bir_block_size bl) in
+       (ol, c, (if (0 < c) /\ (bir_state_COUNT_PC (F, \pc. pc.bpc_index = 0) st') then 1 else 0), st')))``,
+
+REPEAT STRIP_TAC >>
+`?ol c st'. bir_exec_step_n p st (bir_block_size bl) = (ol, c, st')` by METIS_TAC[pairTheory.PAIR] >>
+ASM_SIMP_TAC std_ss [LET_DEF] >>
+FULL_SIMP_TAC std_ss [bir_exec_step_n_EQ_THM, bir_exec_block_n_EQ_THM] >>
+Cases_on `c = 0` >- (
+  ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_def, bir_exec_infinite_steps_fun_REWRS] >>
+  FULL_SIMP_TAC std_ss [bir_block_size_def, bir_exec_infinite_steps_fun_REWRS]
+) >>
+ASM_SIMP_TAC arith_ss [] >>
+
+FULL_SIMP_TAC std_ss [bir_get_current_block_SOME] >>
+
+`!n. n < c ==> ((bir_exec_infinite_steps_fun p st n).bst_pc = (st.bst_pc with bpc_index := n))` by (
+   Induct >- (
+     ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_infinite_steps_fun_REWRS2,
+       bir_programcounter_t_component_equality]
+   ) >>
+   STRIP_TAC >>
+   `n < c` by DECIDE_TAC >>
+   FULL_SIMP_TAC arith_ss [] >>
+   `~bir_state_is_terminated (bir_exec_infinite_steps_fun p st (SUC n))` by METIS_TAC[] >>
+   POP_ASSUM MP_TAC >>
+   SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS2,
+      bir_exec_step_state_def, bir_exec_step_def] >>
+
+   `?stmt. bir_get_current_statement p (st.bst_pc with bpc_index := n) = SOME (BStmtB stmt)` by (
+      FULL_SIMP_TAC (arith_ss++bir_TYPES_ss) [bir_get_current_statement_SOME_B,
+         bir_block_size_def]
+   ) >>
+   ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [GSYM bir_exec_stmt_state_def, LET_DEF,
+     bir_exec_stmt_state_REWRS] >>
+   ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_programcounter_t_component_equality,
+     bir_pc_next_def, bir_exec_stmtB_pc_unchanged]
+) >>
+Q.ABBREV_TAC `cpc = \n. bir_state_COUNT_PC (F, \pc. pc.bpc_index = 0)
+      (bir_exec_infinite_steps_fun p st n)` >>
+
+
+`!n. (0 < n /\ n < c) ==> ~(cpc n)` by (
+   Q.UNABBREV_TAC `cpc` >>
+   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_COUNT_PC_def, bir_state_is_terminated_def]
+) >>
+
+`bir_exec_infinite_steps_fun_COUNT_PCs (F, \pc. pc.bpc_index = 0) p st c =
+ (if cpc c then 1 else 0)` by (
+  ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_ALT_DEF] >>
+  `(bir_exec_infinite_steps_fun_PC_COND_SET (F, \pc. pc.bpc_index = 0) p
+     st INTER count (SUC c)) = (
+     if (cpc c) then {c} else {})` by (
+
+     SIMP_TAC std_ss [EXTENSION, IN_INTER, IN_COUNT, IN_bir_exec_infinite_steps_fun_PC_COND_SET] >>
+     GEN_TAC >> rename1 `n < SUC c` >>
+     SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [NOT_IN_EMPTY, IN_SING] >>
+     Cases_on `n = 0` >> ASM_SIMP_TAC std_ss [] >>
+     Cases_on `c < n` >> ASM_SIMP_TAC arith_ss [] >>
+     Cases_on `n = c` >> ASM_SIMP_TAC std_ss [] >>
+     `0 < n /\ n < c` by DECIDE_TAC >>
+     METIS_TAC []
+  ) >>
+  ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [CARD_SING, CARD_EMPTY]
+) >>
+
+`!n. n < c ==>
+     (bir_exec_infinite_steps_fun_COUNT_PCs (F, \pc. pc.bpc_index = 0) p st n = 0)` by (
+  ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_ALT_DEF] >>
+  REPEAT STRIP_TAC >>
+  `(bir_exec_infinite_steps_fun_PC_COND_SET (F, \pc. pc.bpc_index = 0) p
+     st INTER count (SUC n)) = {}` suffices_by METIS_TAC[CARD_EMPTY] >>
+  ASM_SIMP_TAC arith_ss [EXTENSION, NOT_IN_EMPTY, IN_INTER, IN_COUNT,
+    IN_bir_exec_infinite_steps_fun_PC_COND_SET] >>
+  GEN_TAC >>
+  Cases_on `(x = 0) \/ ~(x < SUC n)` >> FULL_SIMP_TAC std_ss [] >>
+  `0 < x /\ x < c` by DECIDE_TAC >>
+  METIS_TAC[]
+) >>
+
+ASM_SIMP_TAC std_ss [] >>
+Cases_on `cpc c` >> ASM_SIMP_TAC std_ss [] >>
+Cases_on `c < bir_block_size bl` >- ASM_SIMP_TAC std_ss [] >>
+`c = bir_block_size bl` by DECIDE_TAC >>
+Cases_on `c` >- FULL_SIMP_TAC std_ss [] >>
+
+Q.PAT_X_ASSUM `~(cpc (SUC n))` MP_TAC >>
+Q.UNABBREV_TAC `cpc` >>
+ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS2,
+  bir_exec_step_state_def, bir_exec_step_def] >>
+
+`?stmt. bir_get_current_statement p (st.bst_pc with bpc_index := n) = SOME (BStmtE stmt)` by (
+   FULL_SIMP_TAC (arith_ss++bir_TYPES_ss) [bir_get_current_statement_SOME_E,
+     bir_block_size_def]
+) >>
+ONCE_REWRITE_TAC [boolTheory.MONO_NOT_EQ] >>
+SIMP_TAC std_ss [bir_state_COUNT_PC_def] >>
+
+ASM_SIMP_TAC std_ss [bir_exec_stmt_def, bir_state_COUNT_PC_def,
+  bir_exec_stmtE_block_pc] >>
+SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def]
+
+);
+
+
+val bir_exec_block_SEMANTICS_step_n = store_thm ("bir_exec_block_SEMANTICS_step_n",
 ``!p bl st.
     (bir_get_current_block p st.bst_pc = SOME bl) ==>
 
@@ -538,6 +669,7 @@ Cases_on `bir_state_is_terminated st'` >- (
   FULL_SIMP_TAC std_ss [LET_DEF, bir_states_EQ_EXCEPT_PC_REWRS] >>
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_state_t_component_equality]
 ) >>
+
 `c = 0 + LENGTH bl.bb_statements` by METIS_TAC [bir_exec_stmtsB_not_terminated_COUNTER] >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
 `bir_exec_step p st'' = (NONE, bir_exec_stmtE p bl.bb_last_statement st'')` by (
@@ -545,7 +677,7 @@ REPEAT BasicProvers.VAR_EQ_TAC >>
     bir_exec_stmt_def, bir_get_current_block_SOME]
 ) >>
 FULL_SIMP_TAC (list_ss++boolSimps.LIFT_COND_ss) [LET_DEF, OPT_CONS_REWRS] >>
-COND_CASES_TAC >| [
+COND_CASES_TAC >- (
   `bir_states_EQ_EXCEPT_PC (bir_exec_stmtE p bl.bb_last_statement st') (bir_exec_stmtE p bl.bb_last_statement st'')` by (
      MATCH_MP_TAC bir_exec_stmtE_pc_unimportant >>
      ASM_SIMP_TAC std_ss []
@@ -558,13 +690,24 @@ COND_CASES_TAC >| [
      METIS_TAC[bir_exec_stmtE_terminates_no_change] >>
 
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_states_EQ_EXCEPT_PC_REWRS,
-    bir_state_t_component_equality],
-
-
+    bir_state_t_component_equality, bir_state_COUNT_PC_def]
+) >- (
   MATCH_MP_TAC bir_exec_stmtE_pc_unimportant_strong >>
   ASM_SIMP_TAC std_ss []
-]);
+));
 
+
+val bir_exec_block_SEMANTICS = store_thm ("bir_exec_block_SEMANTICS",
+``!p bl st.
+    (bir_get_current_block p st.bst_pc = SOME bl) ==>
+
+    (bir_exec_block_n p st 1 = (
+       let (ol, st_c, st') = bir_exec_block p bl st in
+       (ol, st_c, (if (0 < st_c /\ bir_state_COUNT_PC (F, \pc. pc.bpc_index = 0) st') then 1 else 0), st')))``,
+
+REPEAT STRIP_TAC >>
+MP_TAC (Q.SPECL [`p`, `bl`, `st`] bir_exec_block_n_1_TO_step_n) >>
+ASM_SIMP_TAC std_ss [bir_exec_block_SEMANTICS_step_n]);
 
 
 
@@ -637,7 +780,30 @@ val bir_exec_step_n_block = store_thm ("bir_exec_step_n_block",
 REPEAT STRIP_TAC >>
 Q.SUBGOAL_THEN `n =  bir_block_size bl + (n - bir_block_size bl)` SUBST1_TAC >- DECIDE_TAC >>
 REWRITE_TAC [bir_exec_step_n_add] >>
-ASM_SIMP_TAC arith_ss [bir_exec_block_SEMANTICS]);
+ASM_SIMP_TAC arith_ss [bir_exec_block_SEMANTICS_step_n]
+);
+
+
+val bir_exec_block_n_block = store_thm ("bir_exec_block_n_block",
+  ``!p st bl n.
+       (bir_get_current_block p st.bst_pc = SOME bl) ==>
+
+    (bir_exec_block_n p st (SUC n) =
+      let (l1, c1, st1) = bir_exec_block p bl st in
+      let (l2, c2, c_bl2, st2) = bir_exec_block_n p st1 n in
+      (l1 ++ l2, c1+c2, if (0 < c1 /\ bir_state_COUNT_PC (F, \pc. pc.bpc_index = 0) st1) then
+          SUC c_bl2 else c_bl2, st2))``,
+
+REPEAT STRIP_TAC >>
+Q.SUBGOAL_THEN `SUC n =  1 + n` SUBST1_TAC >- DECIDE_TAC >>
+REWRITE_TAC [bir_exec_block_n_add] >>
+MP_TAC (Q.SPECL [`p`, `bl`, `st`] bir_exec_block_SEMANTICS) >>
+ASM_SIMP_TAC std_ss [] >>
+DISCH_TAC >> POP_ASSUM (K ALL_TAC) >>
+
+`?l1 c1 st1.  bir_exec_block p bl st = (l1, c1, st1)` by METIS_TAC[pairTheory.PAIR] >>
+`?l2 c2 c_bl2 st2.  bir_exec_block_n p st1 n = (l2, c2, c_bl2, st2)` by METIS_TAC[pairTheory.PAIR] >>
+ASM_SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [LET_DEF]);
 
 
 val bir_exec_steps_block = store_thm ("bir_exec_steps_block",
@@ -653,8 +819,9 @@ val bir_exec_steps_block = store_thm ("bir_exec_steps_block",
 
 REPEAT STRIP_TAC >>
 `?l1 c1 st1. bir_exec_step_n p st (bir_block_size bl) = (l1, c1, st1)` by METIS_TAC[pairTheory.PAIR] >>
+
 MP_TAC (Q.SPECL [`p`, `st`, `bir_block_size bl`] bir_exec_steps_combine) >>
-FULL_SIMP_TAC std_ss [bir_exec_block_SEMANTICS, LET_DEF])
+FULL_SIMP_TAC std_ss [bir_exec_block_SEMANTICS_step_n, LET_DEF]);
 
 
 val bir_exec_steps_block_GUARD = store_thm ("bir_exec_steps_block_GUARD",
@@ -673,7 +840,7 @@ val bir_exec_steps_block_GUARD = store_thm ("bir_exec_steps_block_GUARD",
 REPEAT STRIP_TAC >>
 `?l1 c1 st1. bir_exec_step_n p st (bir_block_size bl) = (l1, c1, st1)` by METIS_TAC[pairTheory.PAIR] >>
 MP_TAC (Q.SPECL [`p`, `st`, `bir_block_size bl`] bir_exec_steps_combine_GUARD) >>
-FULL_SIMP_TAC std_ss [bir_exec_block_SEMANTICS, LET_DEF])
+FULL_SIMP_TAC std_ss [bir_exec_block_SEMANTICS_step_n, LET_DEF]);
 
 
 
@@ -774,10 +941,17 @@ REPEAT STRIP_TAC >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
 
 MP_TAC (Q.SPECL [`st1'`, `st2'`, `vs`, `p`, `bl.bb_last_statement`] bir_vars_of_stmtE_THM) >>
-FULL_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_TYPES_ss) [
-  bir_vars_of_block_def, UNION_SUBSET, LET_THM, bir_exec_block_def,
-  bir_state_EQ_FOR_VARS_ALT_DEF, bir_state_is_terminated_def,
-  bir_program_valid_stateTheory.bir_exec_stmtE_env_unchanged]);
+`bir_vars_of_stmtE bl.bb_last_statement SUBSET vs` by (
+  FULL_SIMP_TAC std_ss [bir_vars_of_block_def, UNION_SUBSET]
+) >>
+ASM_SIMP_TAC std_ss [] >>
+STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_state_EQ_FOR_VARS_ALT_DEF] >>
+ASM_SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.LIFT_COND_ss) [bir_exec_block_def, LET_THM,
+  bir_state_COUNT_PC_def, bir_block_pc_def,
+  bir_program_valid_stateTheory.bir_exec_stmtE_env_unchanged,
+  bir_state_is_terminated_def]);
+
 
 
 (* ------------------------------------------------------------------------- *)
