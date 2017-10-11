@@ -176,6 +176,26 @@ ASM_SIMP_TAC list_ss [rich_listTheory.DROP_EL_CONS, arithmeticTheory.ADD1]);
 
 
 (* -------------------------------------------------------------------------- *)
+(* pred_set  lemmata                                                          *)
+(* -------------------------------------------------------------------------- *)
+
+val INFINITE_SUBSET_WITH_CARD_EXISTS = store_thm ("INFINITE_SUBSET_WITH_CARD_EXISTS",
+``!s. INFINITE s ==> (!c. ?t. FINITE t /\ (CARD t = c) /\ t SUBSET s)``,
+
+REPEAT STRIP_TAC >>
+Induct_on `c` >- (
+  Q.EXISTS_TAC `{}` >>
+  ASM_SIMP_TAC std_ss [FINITE_EMPTY, CARD_EMPTY, EMPTY_SUBSET]
+) >>
+FULL_SIMP_TAC std_ss [] >>
+`?e. e IN (s DIFF t)` by METIS_TAC[MEMBER_NOT_EMPTY, INFINITE_DIFF_FINITE] >>
+Q.EXISTS_TAC `e INSERT t` >>
+FULL_SIMP_TAC std_ss [IN_DIFF, FINITE_INSERT, INSERT_SUBSET,
+  CARD_INSERT]);
+
+
+
+(* -------------------------------------------------------------------------- *)
 (* While lemmata                                                              *)
 (* -------------------------------------------------------------------------- *)
 

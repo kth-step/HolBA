@@ -5,6 +5,7 @@ open bir_program_multistep_propsTheory;
 open bir_program_env_orderTheory;
 open bir_typing_progTheory;
 open bir_typing_expTheory
+open bir_program_valid_stateTheory
 open pred_setTheory;
 
 val _ = new_theory "bir_program_vars";
@@ -486,11 +487,11 @@ FULL_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++pairSimps.gen_beta_ss) [LET_THM, 
 
 
 val bir_vars_exec_steps_THM_aux_SOME = prove (
-``!p vs st1 st2 st1' ll c.
+``!p vs st1 st2 st1' ol c c'.
     (bir_vars_of_program p SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
-    (bir_exec_steps p st1 = (ll, SOME (c, st1'))) ==>
-    (?st2'. (bir_exec_steps p st2 = (ll, SOME (c, st2'))) /\
+    (bir_exec_steps p st1 = BER_Ended ol c c' st1') ==>
+    (?st2'. (bir_exec_steps p st2 = BER_Ended ol c c' st2') /\
             (bir_state_EQ_FOR_VARS vs st1' st2'))``,
 
 REPEAT STRIP_TAC >>
@@ -506,12 +507,12 @@ val bir_vars_exec_steps_THM_aux_NONE = prove (
 ``!p vs st1 st2 st1' ll1 ll2.
     (bir_vars_of_program p SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
-    (bir_exec_steps p st1 = (ll1, NONE)) ==>
-    (bir_exec_steps p st2 = (ll2, NONE)) ==>
+    (bir_exec_steps p st1 = BER_Looping ll1) ==>
+    (bir_exec_steps p st2 = BER_Looping ll2) ==>
     (ll1 = ll2)``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [bir_exec_steps_EQ_NONE,
+FULL_SIMP_TAC std_ss [bir_exec_steps_EQ_Looping,
   bir_exec_steps_observe_llist_def] >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
 `!i. FST (bir_exec_step p (bir_exec_infinite_steps_fun p st1 i)) =
@@ -528,34 +529,27 @@ val bir_vars_exec_steps_THM = store_thm ("bir_vars_exec_steps_THM",
 ``!p vs st1 st2.
     (bir_vars_of_program p SUBSET vs) ==>
     (bir_state_EQ_FOR_VARS vs st1 st2) ==>
-    (let (ll1, res1) = bir_exec_steps p st1 in
-     let (ll2, res2) = bir_exec_steps p st2 in
-     ((ll1 = ll2) /\
-      (case (res1, res2) of
-         | (NONE, NONE) => T
-         | (SOME (n1, st1'), SOME (n2, st2')) =>
-              (n1 = n2) /\ (bir_state_EQ_FOR_VARS vs st1' st2')
-         | (_, _) => F)))``,
+    (case (bir_exec_steps p st1, bir_exec_steps p st2) of
+         | (BER_Looping ll1, BER_Looping ll2) => ll1 = ll2
+         | (BER_Ended ol1 n1 n1' st1', BER_Ended ol2 n2 n2' st2') =>
+              (ol1 = ol2) /\ (n1 = n2) /\ (n2' = n2) /\ (n1' = n2) /\
+              (bir_state_EQ_FOR_VARS vs st1' st2')
+         | (_, _) => F)``,
 
 REPEAT STRIP_TAC >>
-`?ll1 res1. bir_exec_steps p st1 = (ll1,res1)` by METIS_TAC[pairTheory.PAIR] >>
-`?ll2 res2. bir_exec_steps p st2 = (ll2,res2)` by METIS_TAC[pairTheory.PAIR] >>
-Cases_on `res1` >| [
-  Cases_on `res2` >- (
-    FULL_SIMP_TAC std_ss [LET_THM, pairTheory.pair_case_thm] >>
-    METIS_TAC[bir_vars_exec_steps_THM_aux_NONE]
-  ) >>
-  rename1 `_ = (_, SOME xx)` >> Cases_on `xx` >>
-  rename1 `_ = (_, SOME (c, st2'))` >>
-  MP_TAC (Q.SPECL [`p`, `vs`, `st2`, `st1`] bir_vars_exec_steps_THM_aux_SOME) >>
-  FULL_SIMP_TAC std_ss [bir_state_EQ_FOR_VARS_ALT_DEF, bir_env_EQ_FOR_VARS_EQUIV],
-
-
-  rename1 `_ = (_, SOME xx)` >> Cases_on `xx` >>
-  rename1 `_ = (_, SOME (c, st1'))` >>
+Cases_on `bir_exec_steps p st1` >- (
   MP_TAC (Q.SPECL [`p`, `vs`, `st1`, `st2`] bir_vars_exec_steps_THM_aux_SOME) >>
-  ASM_SIMP_TAC std_ss [PULL_EXISTS, LET_THM, pairTheory.pair_case_thm]
-]);
+  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [PULL_EXISTS, LET_THM, pairTheory.pair_case_thm] >>
+  SIMP_TAC std_ss [bir_exec_steps_EQ_Ended]
+) >- (
+  Cases_on `bir_exec_steps p st2` >- (
+    MP_TAC (Q.SPECL [`p`, `vs`, `st2`, `st1`] bir_vars_exec_steps_THM_aux_SOME) >>
+    FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_EQ_FOR_VARS_ALT_DEF, bir_env_EQ_FOR_VARS_EQUIV]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [pairTheory.pair_case_thm] >>
+  METIS_TAC[bir_vars_exec_steps_THM_aux_NONE]
+));
 
 
 val _ = export_theory();

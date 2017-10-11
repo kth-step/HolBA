@@ -133,28 +133,59 @@ SIMP_TAC std_ss [bir_exec_steps_observe_list_to_llist_THE,
   bir_exec_steps_observe_llist_NO_OBSERVE, llistTheory.toList_THM]);
 
 
-val bir_exec_steps_opt_NO_OBSERVE = store_thm ("bir_exec_steps_opt_NO_OBSERVE",
-``!p st step_no. (~(bir_program_contains_observe p)) ==>
-                 (FST (bir_exec_steps_opt p st step_no) = [||])``,
+val bir_exec_steps_GEN_NO_OBSERVE = store_thm ("bir_exec_steps_GEN_NO_OBSERVE",
+``!pc_cond p st step_no.
+     (~(bir_program_contains_observe p)) ==>
+     case (bir_exec_steps_GEN pc_cond p st step_no) of
+       | BER_Looping ll => (ll = [||])
+       | BER_Ended ol c_st c_pc st' => (ol = [])``,
 
-SIMP_TAC std_ss [bir_exec_steps_opt_def, LET_THM, bir_exec_steps_observe_llist_NO_OBSERVE] >>
+SIMP_TAC std_ss [bir_exec_steps_GEN_def, LET_THM, bir_exec_steps_observe_llist_NO_OBSERVE,
+  llistTheory.toList_THM] >>
 REPEAT STRIP_TAC >>
-Cases_on `OPT_NUM_MIN step_no (bir_exec_infinite_steps_COUNT_STEPS p st)` >> (
-  ASM_SIMP_TAC std_ss []
+Cases_on `bir_exec_infinite_steps_COUNT_STEPS pc_cond step_no p st` >> (
+  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) []
 ));
 
 
 val bir_exec_steps_NO_OBSERVE = store_thm ("bir_exec_steps_NO_OBSERVE",
 ``!p st. (~(bir_program_contains_observe p)) ==>
-         (FST (bir_exec_steps p st) = [||])``,
-SIMP_TAC std_ss [bir_exec_steps_def, bir_exec_steps_opt_NO_OBSERVE]);
+         case (bir_exec_steps p st) of
+           | BER_Looping ll => (ll = [||])
+           | BER_Ended ol c_st c_pc st' => (ol = [])``,
+SIMP_TAC std_ss [bir_exec_steps_def, bir_exec_steps_GEN_NO_OBSERVE]);
+
+
+val bir_exec_to_labels_n_NO_OBSERVE = store_thm ("bir_exec_to_labels_n_NO_OBSERVE",
+``!ls step_no p st. (~(bir_program_contains_observe p)) ==>
+         case (bir_exec_to_labels_n ls p st step_no) of
+           | BER_Looping ll => (ll = [||])
+           | BER_Ended ol c_st c_pc st' => (ol = [])``,
+SIMP_TAC std_ss [bir_exec_to_labels_n_def, bir_exec_steps_GEN_NO_OBSERVE]);
 
 
 val bir_exec_step_n_NO_OBSERVE = store_thm ("bir_exec_step_n_NO_OBSERVE",
 ``!p st step_no. (~(bir_program_contains_observe p)) ==>
                  (FST (bir_exec_step_n p st step_no) = [])``,
-SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [bir_exec_step_n_def, LET_THM,
-  bir_exec_steps_opt_NO_OBSERVE, llistTheory.toList_THM]);
+
+REPEAT STRIP_TAC >>
+`?ol c st'. (bir_exec_step_n p st step_no) = (ol, c, st')` by METIS_TAC[pairTheory.PAIR] >>
+ASM_SIMP_TAC std_ss [] >>
+MP_TAC (Q.SPECL [`(T, \_. T)`, `p`, `st`, `SOME step_no`] bir_exec_steps_GEN_NO_OBSERVE) >>
+FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_n_TO_steps_GEN]);
+
+
+val bir_exec_block_n_NO_OBSERVE = store_thm ("bir_exec_block_n_NO_OBSERVE",
+``!p st step_no. (~(bir_program_contains_observe p)) ==>
+                 (FST (bir_exec_block_n p st step_no) = [])``,
+
+REPEAT STRIP_TAC >>
+`?ol c c' st'. (bir_exec_block_n p st step_no) = (ol, c, c', st')` by METIS_TAC[pairTheory.PAIR] >>
+ASM_SIMP_TAC std_ss [] >>
+MP_TAC (Q.SPECL [`(F, \pc. pc.bpc_index = 0)`, `p`, `st`, `SOME step_no`]
+  bir_exec_steps_GEN_NO_OBSERVE) >>
+FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_block_n_TO_steps_GEN]);
+
 
 
 
