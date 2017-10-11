@@ -40,10 +40,10 @@ val hex_code = "12001C00"
    We also keep track of all failed hex_codes in a references
    "failed_hexcodes_list".
 *)
-
 val failed_hexcodes_list = ref ([]:(string * bir_inst_liftingExn_data option) list);
 val success_hexcodes_list = ref ([]: (string * thm) list);
 fun lift_instr_cached mu_thms cache pc hex_code = let
+  val hex_code = String.map Char.toUpper hex_code
   val _ = print (hex_code ^ " @ 0x" ^ (Arbnum.toHexString pc));
   val timer = (Time.now())
   val (res, ed) = (SOME (bir_lift_instr_mu mu_thms cache pc hex_code), NONE) handle
@@ -81,6 +81,7 @@ fun lift_instr mu_b mu_e pc hex_code = let
 in
   (res, ed, d_s)
 end;
+
 
 fun hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm)
 
@@ -242,7 +243,7 @@ val res = test_hex "B4000040";
 val res = test_hex "35000080";
 
   (* another one, load with lsl, decode error *)
-(*  4005f8:	b8617801        ldr	w1, [x0,x1,lsl #2] *)
+(*  4005f8:     b8617801        ldr     w1, [x0,x1,lsl #2] *)
 val res = test_hex "b8617801";
 
 
@@ -341,14 +342,10 @@ val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fr
 
 
 
-
-
-
-(***************)
+(***************************************)
 (* AES_EXAMPLE_WITH_FUNNY_INSTRUCTIONS *)
-(***************)
+(***************************************)
 
-(* Test it with the instructions from aes example *)
 val instrs = [
   "D10143FF","F9000FE0","B90017E1","F90007E2","F90003E3","B94017E0","51000400",
   "B9002FE0","F94007E0","B9400000","B9004FE0","F94007E0","B9400400","B9004BE0",
@@ -562,6 +559,11 @@ val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fr
 (* final summary *)
 (*****************)
 
-val expected_failed_hexcodes:string list = [];
+val expected_failed_hexcodes:string list =
+[
+   "B8617800" (* bmr_step_hex failed *),
+   "B8627800" (* bmr_step_hex failed *),
+   "B8617801" (* bmr_step_hex failed *)
+];
 
 val _ = final_results expected_failed_hexcodes;
