@@ -17,6 +17,10 @@ val _ = Datatype `bir_label_t =
   | BL_Address bir_imm_t
 `;
 
+val IS_BL_Label_def = Define `
+  (IS_BL_Label (BL_Label _) = T) /\
+  (IS_BL_Label _ = F)`;
+
 val _ = Datatype `bir_label_exp_t =
     BLE_Label bir_label_t
   | BLE_Exp bir_exp_t
@@ -324,7 +328,7 @@ val bir_exec_infinite_steps_fun_REWRS = store_thm ("bir_exec_infinite_steps_fun_
 SIMP_TAC std_ss [bir_exec_infinite_steps_fun_def, arithmeticTheory.FUNPOW]);
 
 
-val bir_state_COUNT_PC_def = Define `bir_state_COUNT_PC (count_failing, pc_cond) st =
+val bir_state_COUNT_PC_def = Define `bir_state_COUNT_PC (count_failing:bool, pc_cond) st =
   case st.bst_status of
     | BST_JumpOutside l => pc_cond (bir_block_pc l)
     | BST_Running => pc_cond st.bst_pc

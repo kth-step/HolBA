@@ -546,9 +546,10 @@ val bir_exec_block_n_1_TO_step_n = store_thm ("bir_exec_block_n_1_TO_step_n",
 REPEAT STRIP_TAC >>
 `?ol c st'. bir_exec_step_n p st (bir_block_size bl) = (ol, c, st')` by METIS_TAC[pairTheory.PAIR] >>
 ASM_SIMP_TAC std_ss [LET_DEF] >>
-FULL_SIMP_TAC std_ss [bir_exec_step_n_EQ_THM, bir_exec_block_n_EQ_THM] >>
+FULL_SIMP_TAC std_ss [bir_exec_step_n_EQ_THM, bir_exec_block_n_TO_steps_GEN,
+  bir_exec_steps_GEN_1_EQ_Ended] >>
 Cases_on `c = 0` >- (
-  ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_def, bir_exec_infinite_steps_fun_REWRS] >>
+  ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS] >>
   FULL_SIMP_TAC std_ss [bir_block_size_def, bir_exec_infinite_steps_fun_REWRS]
 ) >>
 ASM_SIMP_TAC arith_ss [] >>
@@ -580,45 +581,11 @@ FULL_SIMP_TAC std_ss [bir_get_current_block_SOME] >>
 Q.ABBREV_TAC `cpc = \n. bir_state_COUNT_PC (F, \pc. pc.bpc_index = 0)
       (bir_exec_infinite_steps_fun p st n)` >>
 
-
+ASM_SIMP_TAC std_ss [] >>
 `!n. (0 < n /\ n < c) ==> ~(cpc n)` by (
    Q.UNABBREV_TAC `cpc` >>
    FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_COUNT_PC_def, bir_state_is_terminated_def]
 ) >>
-
-`bir_exec_infinite_steps_fun_COUNT_PCs (F, \pc. pc.bpc_index = 0) p st c =
- (if cpc c then 1 else 0)` by (
-  ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_ALT_DEF] >>
-  `(bir_exec_infinite_steps_fun_PC_COND_SET (F, \pc. pc.bpc_index = 0) p
-     st INTER count (SUC c)) = (
-     if (cpc c) then {c} else {})` by (
-
-     SIMP_TAC std_ss [EXTENSION, IN_INTER, IN_COUNT, IN_bir_exec_infinite_steps_fun_PC_COND_SET] >>
-     GEN_TAC >> rename1 `n < SUC c` >>
-     SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [NOT_IN_EMPTY, IN_SING] >>
-     Cases_on `n = 0` >> ASM_SIMP_TAC std_ss [] >>
-     Cases_on `c < n` >> ASM_SIMP_TAC arith_ss [] >>
-     Cases_on `n = c` >> ASM_SIMP_TAC std_ss [] >>
-     `0 < n /\ n < c` by DECIDE_TAC >>
-     METIS_TAC []
-  ) >>
-  ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [CARD_SING, CARD_EMPTY]
-) >>
-
-`!n. n < c ==>
-     (bir_exec_infinite_steps_fun_COUNT_PCs (F, \pc. pc.bpc_index = 0) p st n = 0)` by (
-  ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_ALT_DEF] >>
-  REPEAT STRIP_TAC >>
-  `(bir_exec_infinite_steps_fun_PC_COND_SET (F, \pc. pc.bpc_index = 0) p
-     st INTER count (SUC n)) = {}` suffices_by METIS_TAC[CARD_EMPTY] >>
-  ASM_SIMP_TAC arith_ss [EXTENSION, NOT_IN_EMPTY, IN_INTER, IN_COUNT,
-    IN_bir_exec_infinite_steps_fun_PC_COND_SET] >>
-  GEN_TAC >>
-  Cases_on `(x = 0) \/ ~(x < SUC n)` >> FULL_SIMP_TAC std_ss [] >>
-  `0 < x /\ x < c` by DECIDE_TAC >>
-  METIS_TAC[]
-) >>
-
 ASM_SIMP_TAC std_ss [] >>
 Cases_on `cpc c` >> ASM_SIMP_TAC std_ss [] >>
 Cases_on `c < bir_block_size bl` >- ASM_SIMP_TAC std_ss [] >>
@@ -841,6 +808,27 @@ REPEAT STRIP_TAC >>
 `?l1 c1 st1. bir_exec_step_n p st (bir_block_size bl) = (l1, c1, st1)` by METIS_TAC[pairTheory.PAIR] >>
 MP_TAC (Q.SPECL [`p`, `st`, `bir_block_size bl`] bir_exec_steps_combine_GUARD) >>
 FULL_SIMP_TAC std_ss [bir_exec_block_SEMANTICS_step_n, LET_DEF]);
+
+
+val bir_exec_to_labels_n_block = store_thm ("bir_exec_to_labels_n_block",
+  ``!ls p st n bl.
+       (bir_get_current_block p st.bst_pc = SOME bl) ==>
+
+    (bir_exec_to_labels_n ls p st (SUC n) =
+      let (l1, c1, st1) = bir_exec_block p bl st in
+      let c1' = if (0 < c1) /\ (bir_state_COUNT_PC (F,
+         \pc. (pc.bpc_index = 0) /\ (pc.bpc_label IN ls)) st1) then 1 else 0 in
+      case bir_exec_to_labels_n ls p st1 (SUC n-c1') of
+        BER_Looping ll2 => BER_Looping (LAPPEND (fromList l1) ll2)
+      | BER_Ended l2 c2 c2' st2 =>
+        BER_Ended (l1++l2) (c1 + c2) (c1' + c2') st2)``,
+
+REPEAT STRIP_TAC >>
+SIMP_TAC std_ss [bir_exec_to_labels_n_block_1] >>
+MP_TAC (Q.SPECL [`p`, `bl`, `st`] bir_exec_block_SEMANTICS) >>
+ASM_SIMP_TAC std_ss [] >>
+DISCH_TAC >> POP_ASSUM (K ALL_TAC) >>
+SIMP_TAC (std_ss++pairSimps.gen_beta_ss) [LET_DEF]);
 
 
 
