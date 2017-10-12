@@ -1629,12 +1629,11 @@ val bir_is_lifted_inst_prog_def = Define `
 (* The simplest and most common situation is that an instruction is implemented by
    a single block *)
 val bir_is_lifted_inst_prog_SINGLE_INTRO = store_thm ("bir_is_lifted_inst_prog_SINGLE_INTRO",
-``!r li mu mm (bl:'a bir_block_t) extra_cond.
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) li mu mm (bl:'o bir_block_t) extra_cond.
 
   bir_is_lifted_inst_block r extra_cond (BL_Address li) mu mm bl ==>
   (bl.bb_label = BL_Address li) /\ (!ms. extra_cond ms) ==>
-  bir_is_lifted_inst_prog
-    (r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) li mu mm (BirProgram [bl])``,
+  bir_is_lifted_inst_prog r li mu mm (BirProgram [bl])``,
 
 
 SIMP_TAC (list_ss++bir_TYPES_ss) [bir_is_lifted_inst_block_def, bir_is_lifted_inst_prog_def,
@@ -1647,7 +1646,7 @@ ASM_SIMP_TAC list_ss [bir_is_valid_labels_def,
   bir_labels_of_program_def] >>
 STRIP_TAC >>
 
-MP_TAC (Q.SPECL [` {l | IS_BL_Address l}`, `(BirProgram [bl])`, `bs`, `bl`] bir_exec_to_labels_block) >>
+MP_TAC (ISPECL [``{l | IS_BL_Address l}``, ``(BirProgram [bl]):'o bir_program_t``, ``bs:bir_state_t``, ``bl:'o bir_block_t``] bir_exec_to_labels_block) >>
 
 `bir_get_current_block (BirProgram [bl]) bs.bst_pc = SOME bl` by (
   ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_get_current_block_def, bir_block_pc_def,
@@ -1720,8 +1719,8 @@ val bir_is_lifted_prog_def = Define `
     (* Then executing till the next address label terminates and either
        violates an assertion or results in a state that corresponds to
        the machine state after one step. *)
-    ?lo c c' bs'.
-      (bir_exec_to_addr_label p bs = BER_Ended lo c c' bs') /\
+    ?lo c_st c_addr_labels bs'.
+      (bir_exec_to_addr_label p bs = BER_Ended lo c_st c_addr_labels bs') /\
 
       (~(bs'.bst_status = BST_AssertionViolated) ==>
       (?ms'. (r.bmr_step_fun ms = SOME ms') /\
@@ -1884,11 +1883,11 @@ val bir_is_lifted_prog_MULTI_STEP_EXEC = store_thm ("bir_is_lifted_prog_MULTI_ST
         EVERY (bmr_ms_mem_contains r ms) mms ==>
        ~bir_state_is_terminated bs ==>
 
-       ?lo c c' bs'.
-         (bir_exec_to_addr_label_n p bs n = BER_Ended lo c c' bs') /\
+       ?lo c_st c_addr_labels bs'.
+         (bir_exec_to_addr_label_n p bs n = BER_Ended lo c_st c_addr_labels bs') /\
          (bs'.bst_status <> BST_AssertionViolated ==>
           ?ms'.
-            (FUNPOW_OPT r.bmr_step_fun c' ms = SOME ms') /\
+            (FUNPOW_OPT r.bmr_step_fun c_addr_labels ms = SOME ms') /\
             bmr_ms_mem_unchanged r ms ms' mu /\
             EVERY (bmr_ms_mem_contains r ms') mms /\
             (case bs'.bst_status of
@@ -1919,14 +1918,14 @@ Cases_on `bs'.bst_status = BST_AssertionViolated` >- (
 
 FULL_SIMP_TAC std_ss [] >>
 
-`(c' = 1) /\ (?d. c = SUC d)` by (
+`(c_addr_labels = 1) /\ (?d. c_st = SUC d)` by (
   FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_def,
     bir_exec_to_labels_n_def, bir_exec_to_labels_def, bir_exec_steps_GEN_1_EQ_Ended] >>
   `bir_state_COUNT_PC (F,
     (\pc.(pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l}))
-    (bir_exec_infinite_steps_fun p bs c)` by METIS_TAC[bmr_rel_IMPL_IS_BL_Block_Address] >>
+    (bir_exec_infinite_steps_fun p bs c_st)` by METIS_TAC[bmr_rel_IMPL_IS_BL_Block_Address] >>
   FULL_SIMP_TAC std_ss [] >>
-  Cases_on `c` >> FULL_SIMP_TAC arith_ss [] >>
+  Cases_on `c_st` >> FULL_SIMP_TAC arith_ss [] >>
   REV_FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS]
 ) >>
 
@@ -1973,10 +1972,84 @@ ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_block_pc_11] >>
 STRIP_TAC >>
 ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
 STRIP_TAC >>
-rename1 `1 + c'` >>
+rename1 `(1:num) + c'` >>
 Q.SUBGOAL_THEN `1 + c' = SUC c'` SUBST1_TAC >- DECIDE_TAC >>
 ASM_SIMP_TAC std_ss [FUNPOW_OPT_REWRS] >>
 FULL_SIMP_TAC std_ss [bmr_ms_mem_unchanged_def]);
+
+
+(* ----------------------*)
+(* Efficient computation *)
+(* ----------------------*)
+
+(* If bir_is_lifted_prog_UNION is used naively, the set of labels of the program
+   is computed over and over again. It is more efficient to ignore the disjointness
+   during mergeing of the labels and just show it at the very end. *)
+
+
+val bir_is_lifted_prog_LABELS_DISTINCT_def = Define
+  `bir_is_lifted_prog_LABELS_DISTINCT r mu mms p <=>
+   (ALL_DISTINCT (bir_labels_of_program p) ==>
+    bir_is_lifted_prog r mu mms p)`;
+
+val bir_is_lifted_prog_LABELS_DISTINCT_SINGLE_INST = store_thm ("bir_is_lifted_prog_LABELS_DISTINCT_SINGLE_INST",
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mm li (p:'o bir_program_t).
+     bir_is_lifted_inst_prog r li mu mm p ==>
+     bir_is_lifted_prog_LABELS_DISTINCT r mu [mm] p``,
+SIMP_TAC list_ss [bir_is_lifted_prog_LABELS_DISTINCT_def] >>
+METIS_TAC[bir_is_lifted_prog_SINGLE_INST]);
+
+(* A dummy program used if we can't translate a hexcode. In this case
+   just the memory region is added, but no BIR block. As a result, we don't need to
+   be careful about data blocks mixed with the program code. If the data is machine code
+   for a valid instruction, we just get an extra part of the program we never execute.
+   If it is not valid, we get a warning at runtime but can still translate the whole program.
+   If the bir program tries to execute the failed hex-code, it just stops and tells the user
+   "I'm at PC ... and don't know what to do!". *)
+
+val bir_is_lifted_prog_LABELS_DISTINCT_DATA = store_thm ("bir_is_lifted_prog_LABELS_DISTINCT_DATA",
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mm.
+     WI_wfe mu ==>
+     bir_is_lifted_inst_block_COMPUTE_mm_WF mu mm ==>
+     bir_is_lifted_prog_LABELS_DISTINCT r mu [mm] ((BirProgram []):'o bir_program_t)``,
+
+SIMP_TAC list_ss [bir_is_lifted_prog_LABELS_DISTINCT_def,
+  bir_is_lifted_prog_NO_INST, bir_is_lifted_inst_block_COMPUTE_mm_WF_def]);
+
+(* A base case for starting with UNION *)
+val bir_is_lifted_prog_LABELS_DISTINCT_EMPTY = store_thm ("bir_is_lifted_prog_LABELS_DISTINCT_EMPTY",
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mm.
+     WI_wfe mu ==>
+     bir_is_lifted_prog_LABELS_DISTINCT r mu [] ((BirProgram []):'o bir_program_t)``,
+
+SIMP_TAC list_ss [bir_is_lifted_prog_LABELS_DISTINCT_def,
+  bir_is_lifted_prog_def, bir_labels_of_program_def,
+  bir_is_valid_labels_def]);
+
+
+val bir_is_lifted_prog_LABELS_DISTINCT_UNION = store_thm ("bir_is_lifted_prog_LABELS_DISTINCT_UNION",
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mms1 mms2 (p1 : 'o bir_program_t) p2.
+     bir_is_lifted_prog_LABELS_DISTINCT r mu mms1 p1 ==>
+     bir_is_lifted_prog_LABELS_DISTINCT r mu mms2 p2 ==>
+     bir_is_lifted_prog_LABELS_DISTINCT r mu (mms1++mms2) (bir_program_combine p1 p2)``,
+
+SIMP_TAC std_ss [bir_is_lifted_prog_LABELS_DISTINCT_def, bir_labels_of_program_PROGRAM_COMBINE,
+  ALL_DISTINCT_APPEND] >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [] >>
+METIS_TAC[bir_is_lifted_prog_UNION]);
+
+
+val bir_is_lifted_prog_LABELS_DISTINCT_ELIM = store_thm ("bir_is_lifted_prog_LABELS_DISTINCT_ELIM",
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mms (p : 'o bir_program_t).
+     bir_is_lifted_prog_LABELS_DISTINCT r mu mms p ==>
+     ALL_DISTINCT (bir_labels_of_program p) ==>
+     bir_is_lifted_prog r mu mms p``,
+
+SIMP_TAC std_ss [bir_is_lifted_prog_LABELS_DISTINCT_def]);
+
+
+
 
 
 val _ = export_theory();

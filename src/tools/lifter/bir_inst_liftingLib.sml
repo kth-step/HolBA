@@ -7,6 +7,7 @@ open bir_exp_liftingLib bir_typing_expSyntax
 open bir_typing_expTheory
 open bir_lifter_general_auxTheory
 open bir_programSyntax bir_interval_expSyntax
+open PPBackEnd Parse
 
 (**********)
 (* Syntax *)
@@ -15,10 +16,31 @@ open bir_programSyntax bir_interval_expSyntax
 val ERR = mk_HOL_ERR "bir_inst_liftingLib"
 fun failwith s = raise (ERR "???" s)
 
+fun dest_quinop c e tm =
+   case with_exn strip_comb tm e of
+      (t, [t1, t2, t3, t4, t5]) =>
+         if same_const t c then (t1, t2, t3, t4, t5) else raise e
+    | _ => raise e
+
+fun list_of_quintuple (a, b, c, d, e) = [a, b, c, d, e];
+fun mk_quinop tm = HolKernel.list_mk_icomb tm o list_of_quintuple
+
+fun dest_sexop c e tm =
+   case with_exn strip_comb tm e of
+      (t, [t1, t2, t3, t4, t5, t6]) =>
+         if same_const t c then (t1, t2, t3, t4, t5, t6) else raise e
+    | _ => raise e
+
+fun list_of_sextuple (a, b, c, d, e, f) = [a, b, c, d, e, f];
+fun mk_sexop tm = HolKernel.list_mk_icomb tm o list_of_sextuple
+
 fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_inst_lifting"
 
 val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
 val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
+val syntax_fns4 = syntax_fns 4 HolKernel.dest_quadop HolKernel.mk_quadop;
+val syntax_fns5 = syntax_fns 5 dest_quinop mk_quinop;
+val syntax_fns6 = syntax_fns 6 dest_sexop mk_sexop;
 
 fun get_const name = prim_mk_const{Name=name,        Thy="bir_inst_lifting"}
 
@@ -49,6 +71,15 @@ val PROTECTED_COND_tm =
   prim_mk_const{Name="PROTECTED_COND", Thy="bir_lifter_general_aux"}
 
 
+val (bir_is_lifted_prog_LABELS_DISTINCT_tm,  mk_bir_is_lifted_prog_LABELS_DISTINCT, dest_bir_is_lifted_prog_LABELS_DISTINCT, is_bir_is_lifted_prog_LABELS_DISTINCT)  = syntax_fns4 "bir_is_lifted_prog_LABELS_DISTINCT";
+
+val (bir_is_lifted_prog_tm,  mk_bir_is_lifted_prog, dest_bir_is_lifted_prog, is_bir_is_lifted_prog)  = syntax_fns4 "bir_is_lifted_prog";
+
+val (bir_is_lifted_inst_prog_tm,  mk_bir_is_lifted_inst_prog, dest_bir_is_lifted_inst_prog, is_bir_is_lifted_inst_prog) = syntax_fns5 "bir_is_lifted_inst_prog";
+
+val (bir_is_lifted_inst_block_tm,  mk_bir_is_lifted_inst_block, dest_bir_is_lifted_inst_block, is_bir_is_lifted_inst_block) = syntax_fns6 "bir_is_lifted_inst_block";
+
+
 (******************)
 (* Auxilary stuff *)
 (******************)
@@ -69,6 +100,13 @@ fun bir_inst_liftingExn_data_to_string (BILED_msg msg) = msg
       (msg ^ "(``" ^ (term_to_string t) ^ "``)")
   | bir_inst_liftingExn_data_to_string (BILED_lifting_failed t) =
       ("lifting of ``" ^ (term_to_string t) ^ "`` failed");
+
+val debug_trace = ref (0:int)
+val _ = register_trace ("bir_inst_lifting.DEBUG_LEVEL", debug_trace, 2)
+
+val sty_OK    = [FG Green];
+val sty_CACHE = [FG Yellow];
+val sty_FAIL  = [FG OrangeRed];
 
 
 (****************)
@@ -158,13 +196,17 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val mk_label_of_num_eq_pc = bmr_rec_mk_label_of_num_eq_pc mr;
   val pc_num_var = mk_var ("pc_n", numSyntax.num);
 
-  (* Instantiate the inst_lifting theorem with the record and types. *)
-  val inst_lift_THM = let
-     val thm0 = INST_TYPE [mk_vartype "'o" |-> block_observe_ty]
-           (bir_is_lifted_inst_block_COMPUTE_OPTIMISED);
+  fun inst_bmr_thm bmr_ok_flag thm = let
+     val thm0 = INST_TYPE [mk_vartype "'o" |-> block_observe_ty] thm
      val thm1 = ISPEC (#bmr_const mr) thm0;
-     val thm2 = MP thm1 (#bmr_ok_thm mr)
-  in thm2 end;
+     val thm2 = if bmr_ok_flag then MP thm1 (#bmr_ok_thm mr) else thm1
+  in
+    thm2
+  end;
+
+
+  (* Instantiate the inst_lifting theorem with the record and types. *)
+  val inst_lift_THM = inst_bmr_thm true bir_is_lifted_inst_block_COMPUTE_OPTIMISED;
 
   val inst_lift_THM_ex_vars = let
     val (_, t)  = dest_forall (concl inst_lift_THM)
@@ -1062,6 +1104,39 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   end handle HOL_ERR _ => raise (bir_inst_liftingAuxExn (BILED_msg "???"));
 
 
+  (*----------------------------------------------------------------------------------*)
+  (* Merge multiple bir_is_lifted_inst_block into one bir_is_lifted_inst_prog theorem *)
+  (*----------------------------------------------------------------------------------*)
+
+  (* val block_thm = hd sub_block_thms *)
+  local
+    val single_inst_INTRO_THM = inst_bmr_thm false
+       bir_is_lifted_inst_prog_SINGLE_INTRO
+    val bir_block_ss = rewrites (type_rws ``:'o bir_block_t``);
+
+    val pre_conv = SIMP_CONV (std_ss++bir_block_ss) []
+  in
+
+  (* Currently only single block programs are supported. This should be
+     generalised in the future. *)
+  fun merge_block_thms sub_block_thms =
+    case sub_block_thms of
+        [] => raise (bir_inst_liftingAuxExn (BILED_msg "merging block theorems failed, list of theorems is empty; this should be prevented by the control flow; this is a bug"))
+      | [block_thm] => let
+           val (_, extra_tm, l_tm, mu_tm, mm_tm, bl_tm) = dest_bir_is_lifted_inst_block (concl block_thm)
+           val li_tm = bir_programSyntax.dest_BL_Address l_tm
+           val thm0 = SPECL [li_tm, mu_tm, mm_tm, bl_tm, extra_tm] single_inst_INTRO_THM
+           val thm1 = MP thm0 block_thm
+           val (pre, _)  = dest_imp_only (concl thm1)
+           val pre_thm = EQT_ELIM (pre_conv pre)
+           val thm2 = MP thm1 pre_thm
+        in thm2 end
+      | _ =>
+         raise (bir_inst_liftingAuxExn (BILED_msg "TODO: multiblock instructions are not supported yet"));
+
+   end;
+
+
   (**************************)
   (* Lifting an instruction *)
   (**************************)
@@ -1138,10 +1213,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
      val sub_block_thms = map (lift_single_block inst_lift_thm0 bir_is_lifted_inst_block_COMPUTE_precond_tm0 mu_thm) sub_block_work_list
 
-     (* TODO: implement merging *)
-     val _ = if (length sub_block_thms = 1) then () else failwith "TODO";
+     val prog_thm = merge_block_thms sub_block_thms handle HOL_ERR _ =>
+         raise (bir_inst_liftingAuxExn (BILED_msg "merging block theorems failed"));
   in
-     hd sub_block_thms
+     prog_thm
   end handle bir_inst_liftingAuxExn d =>
     raise (bir_inst_liftingExn (hex_code, d));
 
@@ -1200,6 +1275,163 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     fn pc => fn hex_code =>
        #1 (bir_lift_instr_mu (mu_thm, mm_precond_thm) lift_inst_cache_empty pc hex_code)
   end;
+
+
+
+  (*****************************)
+  (* Lifting the whole program *)
+  (*****************************)
+
+  (*
+    val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x1000000)
+
+    val region_1 = ((Arbnum.fromInt 0x400470), true, [
+      "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3","B94017E0","51000400",
+      "B9004FE0","F94007E0","B9400000","B9002FE0","F94007E0","B9400400","B90033E0"])
+
+    val region_2 = ((Arbnum.fromInt 0x400484), false, [
+      "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3"])
+
+    val regions = [region_1, region_2]
+
+    val regions = [region_2]
+
+    val (_, _, il) = region_2
+
+    bir_lift_prog_gen (mu_b, mu_e) regions
+  *)
+
+  local
+    val data_INTRO_THM = inst_bmr_thm false bir_is_lifted_prog_LABELS_DISTINCT_DATA
+
+    val prog_dist_EMPTY_THM = inst_bmr_thm false bir_is_lifted_prog_LABELS_DISTINCT_EMPTY
+    val prog_dist_UNION_THM = inst_bmr_thm false bir_is_lifted_prog_LABELS_DISTINCT_UNION
+    val prog_dist_ELIM_THM = inst_bmr_thm false bir_is_lifted_prog_LABELS_DISTINCT_ELIM
+    val prog_dist_INST_THM = inst_bmr_thm false bir_is_lifted_prog_LABELS_DISTINCT_SINGLE_INST
+
+    val bir_block_ss = rewrites (type_rws ``:'o bir_block_t``);
+
+
+    val dist_labels_CONV = SIMP_CONV (list_ss++HolBACoreSimps.bir_TYPES_ss++wordsLib.WORD_ss) [
+      bir_programTheory.bir_labels_of_program_def]
+  in
+
+  fun bir_lift_prog_gen ((mu_b : Arbnum.num), (mu_e : Arbnum.num)) = let
+     val (mu_thm, mm_precond_thm) = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
+  in
+    fn regions => let
+      val timer = (Time.now())
+      val (len_codes, len_data) =
+         foldl (fn ((_, code_fl, il), (lc, ld)) =>
+              (if code_fl then (lc + List.length il, ld) else (lc, ld + List.length il)))
+           (0, 0) regions
+
+      val _ = if (!debug_trace > 1) then print ("lifting " ^ (Int.toString (len_codes)) ^ " instructions and " ^ (Int.toString (len_data)) ^ " data entries\n") else ();
+
+      val cache_r = ref lift_inst_cache_empty
+      val inst_no_r = ref 1;
+      val failing_inst_r = ref ([] : (num * exn option) list)
+
+      val data_INTRO_THM' = MATCH_MP data_INTRO_THM mu_thm
+      fun lift_data (pc, hex_code) = let
+         val mm_tm = (#bmr_mk_data_mm mr) pc hex_code
+         val precond_thm = let
+           val thm_0 = PART_MATCH (rand o snd o dest_imp_only o snd o strip_forall)
+                          mm_precond_thm mm_tm
+           val thm_1 = CONV_RULE (RATOR_CONV (RAND_CONV (SIMP_CONV list_ss []))) thm_0
+           val thm_2 = MP thm_1 TRUTH
+         in thm_2 end
+
+         val thm0 = SPEC mm_tm data_INTRO_THM'
+         val thm1 = MP thm0 precond_thm
+      in thm1 end handle HOL_ERR _ =>
+         raise (ERR "lift_data" ("lifting of hex-code '" ^ hex_code ^ "' failed, is the PC outside the protected memory region?"))
+
+      fun lift_inst (hex_code, (c, pc, thmL, cache)) = let
+        val hex_code' = String.map Char.toUpper hex_code
+        val _ = if (!debug_trace > 1) then (
+           print ((Int.toString c) ^ "/" ^ (Int.toString len_codes) ^ ": ");
+           print (hex_code ^ " @ 0x" ^ (Arbnum.toHexString pc))) else ();
+
+        val timer = (Time.now())
+        val (res, ed) = (SOME (bir_lift_instr_mu (mu_thm, mm_precond_thm) cache pc hex_code), NONE) handle
+                       bir_inst_liftingExn (_, d)  => (NONE, SOME d)
+                     | HOL_ERR _ => (NONE, NONE);
+
+        val d_time = Time.- (Time.now(), timer);
+        val d_s = (Time.toString d_time);
+
+        val _ = if (!debug_trace > 1) then (print (" - " ^ d_s ^ " s - ")) else ();
+        val (res', cache') = case res of
+             SOME (thm, cache', _) => (MATCH_MP prog_dist_INST_THM thm, cache')
+           | NONE => (lift_data (pc, hex_code), cache)
+
+        val _ = case res of
+             SOME (thm, _, cache_used) =>
+                 if (!debug_trace > 1) then (
+                   (print_with_style sty_OK "OK");
+                   (if cache_used then (print " - "; print_with_style sty_CACHE "cached") else ());
+                   (print "\n")) else ()
+           | NONE => (
+                (if (!debug_trace > 1) then ((print_with_style sty_FAIL "FAILED\n")) else ());
+                HOL_WARNING "bir_inst_liftingLib" "bir_lift_prog_gen" (
+                  "lifting of instruction '" ^ hex_code ^ " @ 0x" ^ (Arbnum.toHexString pc) ^ " failed");
+                failing_inst_r := (pc, Option.map (fn d => bir_inst_liftingExn (hex_code, d)) ed)::(!failing_inst_r))
+
+        val _ = inst_no_r := (!inst_no_r) + 1
+        val pc' = Arbnum.+ (pc, (#bmr_hex_code_size mr) hex_code);
+      in (c+1, pc', res'::thmL, cache') end
+
+
+      fun lift_code_region pc il = let
+        val (c, _, thms, cache') = foldl lift_inst (!inst_no_r, pc, [], !cache_r) il
+        val _ = inst_no_r := c
+        val _ = cache_r := cache'
+      in
+        thms
+      end;
+
+      fun lift_data_region pc il = let
+        val (_, thms) = foldl (fn (hex_code, (pc, thms)) => let
+           val thm = lift_data (pc, hex_code)
+           val pc' = Arbnum.+ (pc, (#bmr_hex_code_size mr) hex_code);
+         in (pc', thm::thms) end) (pc, []) il
+      in
+        thms
+      end;
+
+      val prog_dist_EMPTY_THM' = MATCH_MP prog_dist_EMPTY_THM mu_thm
+      val merge_prog_distinct_thms =
+         foldl (fn (thm1, thm2) =>
+            MATCH_MP (MATCH_MP prog_dist_UNION_THM thm1) thm2)
+           prog_dist_EMPTY_THM'
+
+      val basic_thms = List.map (fn (pc, code_fl, il) =>
+         if code_fl then lift_code_region pc il else lift_data_region pc il) regions
+
+      val prog_dist_thm = merge_prog_distinct_thms (map merge_prog_distinct_thms (List.rev basic_thms))
+      val prog_dist_thm_clean =
+         PURE_REWRITE_RULE [listTheory.APPEND,
+          bir_subprogramTheory.bir_program_combine_def] prog_dist_thm
+
+(* This is way too slow currently, fine tune 
+      val prog_thm = let
+        val thm0 = MATCH_MP prog_dist_ELIM_THM prog_dist_thm_clean
+        val (pre, _) = dest_imp_only (concl thm0)
+
+        val pre_thm = EQT_ELIM (dist_labels_CONV pre)
+        val thm1 = MP thm0 pre_thm
+      in thm1 end
+*)
+    in
+      (prog_dist_thm_clean, List.rev (!failing_inst_r))
+    end
+  end;
+
+  end;
+
+  fun bir_lift_prog (mu_b, mu_e) pc hex_codes =
+     bir_lift_prog_gen (mu_b, mu_e) [(pc, true, hex_codes)]
 
 end
 

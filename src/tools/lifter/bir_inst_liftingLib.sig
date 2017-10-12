@@ -34,9 +34,55 @@ signature bir_inst_lifting = sig
   type lift_inst_cache
   val lift_inst_cache_empty : lift_inst_cache
 
+  (* The machine record used *)
+  val mr : bir_lifting_machinesLib.bmr_rec
+
   val bir_lift_instr_prepare_mu_thms : (Arbnum.num * Arbnum.num) -> Abbrev.thm * Abbrev.thm;
   val bir_lift_instr_mu : (Abbrev.thm * Abbrev.thm) -> lift_inst_cache -> Arbnum.num -> string ->
     (Abbrev.thm * lift_inst_cache * bool);
+
+
+  (* --------------------------- *)
+  (* Whole programs instructions *)
+  (* --------------------------- *)
+
+  (* A whole program is given as a list of hex-codes. Moreover, the unchanged memory region
+     and the start memory address need to be provided. Caches are used automatically.
+     Some debugging can be enabled by setting the trace "bir_inst_lifting.DEBUG_LEVEL".
+     It returns the theorem that describes the lifted program as well as
+     a list of instructions that could not be lifted. If the list of
+     hex-codes contains data entries that are not supposed to be interpreted as instructions,
+     this can happen without making the result less useful.
+
+     Example:
+
+
+     set_trace "bir_inst_lifting.DEBUG_LEVEL" 2
+
+     bir_lift_prog (Arbnum.fromInt 0, Arbnum.fromInt 0x1000)
+                   (Arbnum.fromInt 0x100) ["D10143FF","F9000FE0","B90017E1"];
+  *)
+
+  val bir_lift_prog : (Arbnum.num * Arbnum.num) (* memory unchanged begin, end *) ->
+                      Arbnum.num (* initial address *) ->
+                      string list (* hex-codes *) ->
+                      (Abbrev.thm (* resulting theorem *) *
+                       (* Errors in from: (PC, error_desc option),
+                          where the exeption is always a bir_inst_liftingExn contain the
+                          hex-code *)
+                       ((Arbnum.num * exn option) list))
+
+  (* Sometimes we want to lift a program that contains more than one code region.
+     Or we want explicitly mark data in the hex-codes. bir_lift_prog_gen allows to
+     do this. It gets a list of regions to translate. Each region is of the form
+
+     (pc, is-code-region-flag, hex-codes). *)
+
+  val bir_lift_prog_gen : (Arbnum.num * Arbnum.num) (* memory unchanged begin, end *) ->
+                          (Arbnum.num * bool * string list) list (* list of regions *) ->
+                          (Abbrev.thm * ((Arbnum.num * exn option) list))
+
+
 end
 
 

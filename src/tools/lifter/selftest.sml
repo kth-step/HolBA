@@ -103,7 +103,7 @@ fun lift_instr_list mu_b mu_e pc hex_codes = let
     val _ = print ((Int.toString c) ^ "/" ^ (Int.toString (length hex_codes)) ^ ": ");
     val (r', ed, d_s, cache') = lift_instr_cached mu_thms cache pc i
     val c' = c+1;
-    val pc' = Arbnum.+ (pc, Arbnum.fromInt 8);
+    val pc' = Arbnum.+ (pc, (#bmr_hex_code_size mr) i);
     val r = (r', ed, d_s);
   in (c+1, pc', r::res, cache') end
 
@@ -340,7 +340,13 @@ val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE\n\n";
 val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     instrs
 
+val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - Whole program\n\n";
 
+val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
+val (thm, errors) = bir_lift_prog ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
+  (Arbnum.fromInt 0x400570) instrs
+
+val _ = print_thm thm;
 
 (***************************************)
 (* AES_EXAMPLE_WITH_FUNNY_INSTRUCTIONS *)

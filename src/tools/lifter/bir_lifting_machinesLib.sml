@@ -117,7 +117,9 @@ type bmr_rec = {bmr_const                : term,
                 bmr_label_thm            : thm,
                 bmr_dest_mem             : term -> term * term,
                 bmr_lifted_thm           : thm,
-                bmr_step_hex             : term -> string -> thm list};
+                bmr_step_hex             : term -> string -> thm list,
+                bmr_mk_data_mm           : Arbnum.num -> string -> term,
+                bmr_hex_code_size        : string -> Arbnum.num};
 
 
 (* Some sanity checks to ensure everything is as expected. *)
@@ -279,6 +281,17 @@ fun bmr_normalise_step_thm (r_step_rel:term) vn thm =
   val thms = arm8_step_hex hex_code
 *)
 
+fun bytes_of_hex_code hex_code = let
+   val _ = if (String.size hex_code mod 2 = 0) then () else failwith "invalid hex_code";
+
+   fun prepare_word8_of_substring i =
+     wordsSyntax.mk_wordi (Arbnum.fromHexString (String.substring (hex_code, i+i, 2)), 8);
+
+in
+   List.tabulate (String.size hex_code div 2, prepare_word8_of_substring)
+end;
+
+
 local
   val next_state_tm = (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"});
   val simp_rule = (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0,
@@ -296,16 +309,10 @@ local
 
   fun prepare_mem_contains_thms vn hex_code =
   let
-     val _ = if (String.size hex_code <> 8) then failwith "invalid hex_code" else ();
+    val bytes = bytes_of_hex_code hex_code
+    val _ = if length bytes = 4 then () else failwith "invalid hex-code";
 
-     fun prepare_word8_of_substring i =
-       wordsSyntax.mk_wordi (Arbnum.fromHexString (String.substring (hex_code, i, 2)), 8);
-
-
-
-    val thm0 = SPECL [vn, prepare_word8_of_substring 6, prepare_word8_of_substring 4,
-                      prepare_word8_of_substring 2, prepare_word8_of_substring 0]
-                      bmr_ms_mem_contains_ARM8
+    val thm0 = SPECL (vn :: (List.rev bytes)) bmr_ms_mem_contains_ARM8
 
     val thm1a = ASSUME (lhs (concl thm0))
     val thm2 = CONV_RULE (K thm0) thm1a
@@ -355,6 +362,23 @@ in
   end
 end;
 
+local
+  val addr_ty = fcpLib.index_type (Arbnum.fromInt 64);
+  val val_ty = fcpLib.index_type (Arbnum.fromInt 8);
+  val val_word_ty = wordsSyntax.mk_word_type val_ty
+in
+
+fun arm8_mk_data_mm mem_loc hex_code = let
+  val ml_tm = wordsSyntax.mk_n2w (numSyntax.mk_numeral mem_loc, addr_ty)
+  val bytes = List.rev (bytes_of_hex_code hex_code)
+  val _ = if length bytes = 4 then () else failwith "invalid hex-code";
+  val bytes_tm = listSyntax.mk_list (bytes, val_word_ty)
+in
+  pairSyntax.mk_pair (ml_tm, bytes_tm)
+end;
+
+end;
+
 val arm8_state_mem_tm = prim_mk_const{Name="arm8_state_MEM", Thy="arm8"};
 val arm8_dest_mem = HolKernel.dest_binop arm8_state_mem_tm (ERR "arm8_dest_mem" "");
 
@@ -379,7 +403,9 @@ val arm8_bmr_rec : bmr_rec = {
   bmr_label_thm            = arm8_bmr_label_thm,
   bmr_dest_mem             = arm8_dest_mem,
   bmr_extra_ss             = arm8_extra_ss,
-  bmr_step_hex             = arm8_step_hex'
+  bmr_step_hex             = arm8_step_hex',
+  bmr_mk_data_mm           = arm8_mk_data_mm,
+  bmr_hex_code_size        = K (Arbnum.fromInt 4)
 };
 
 val _ = assert bmr_rec_sanity_check arm8_bmr_rec

@@ -164,7 +164,15 @@ sig
 
       (* Function evaluationg an instruction given as a hex string and returns
          a set of step theorems. *)
-      bmr_step_hex           : term -> string -> thm list
+      bmr_step_hex           : term -> string -> thm list,
+
+      (* To add data blocks, a function that encode a memory address and a hex-code
+         as a memory-contains tuple *)
+      bmr_mk_data_mm           : Arbnum.num -> string -> term,
+
+      (* This is the number of memory addressed used by a hex-code. If
+         bmr_step_hex or bmr_mk_data_mm succeed, this number of addresses is used. *)
+      bmr_hex_code_size        : string -> Arbnum.num
    };
 
    (* The record for arm8 *)
