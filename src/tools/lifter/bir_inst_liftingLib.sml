@@ -1299,6 +1299,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     val (_, _, il) = region_2
 
     bir_lift_prog_gen (mu_b, mu_e) regions
+
+    val (mu_b, mu_e) = ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
+    val regions = [((Arbnum.fromInt 0x400570), true, instrs)]
+
   *)
 
   local
@@ -1309,8 +1313,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     val prog_dist_ELIM_THM = inst_bmr_thm false bir_is_lifted_prog_LABELS_DISTINCT_ELIM
     val prog_dist_INST_THM = inst_bmr_thm false bir_is_lifted_prog_LABELS_DISTINCT_SINGLE_INST
 
-    val bir_block_ss = rewrites (type_rws ``:'o bir_block_t``);
-
+    val bir_block_rewrs = type_rws ``:'o bir_block_t``;
 
     val dist_labels_CONV = SIMP_CONV (list_ss++HolBACoreSimps.bir_TYPES_ss++wordsLib.WORD_ss) [
       bir_programTheory.bir_labels_of_program_def]
@@ -1320,6 +1323,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      val (mu_thm, mm_precond_thm) = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
   in
     fn regions => let
+      val regions = sort (fn (pc1, _, _) => fn (pc2, _, _) => Arbnum.< (pc1, pc2)) regions
       val timer = (Time.now())
       val (len_codes, len_data) =
          foldl (fn ((_, code_fl, il), (lc, ld)) =>
@@ -1414,17 +1418,25 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
          PURE_REWRITE_RULE [listTheory.APPEND,
           bir_subprogramTheory.bir_program_combine_def] prog_dist_thm
 
-(* This is way too slow currently, fine tune 
       val prog_thm = let
         val thm0 = MATCH_MP prog_dist_ELIM_THM prog_dist_thm_clean
         val (pre, _) = dest_imp_only (concl thm0)
 
-        val pre_thm = EQT_ELIM (dist_labels_CONV pre)
-        val thm1 = MP thm0 pre_thm
+        val pre_thm0 = SPEC (rand pre) ALL_DISTINCT_lifter_label_list_PARTS_THM
+
+        val pre0 = lhs (fst (dest_imp_only (snd (strip_forall (concl pre_thm0)))))
+        val pre0_thm = (PURE_REWRITE_CONV (combinTheory.K_THM::bir_labels_of_program_EVAL::ALL_DISTINCT_lifter_labels_list_PART_def::bir_block_rewrs) THENC EVAL) pre0
+
+        val pre_thm1 = MATCH_MP pre_thm0 pre0_thm
+
+        val pre1 = (fst (dest_imp_only (concl pre_thm1)))
+        val pre1_thm = EQT_ELIM (EVAL pre1)
+        val pre_thm2 = MATCH_MP pre_thm1 pre1_thm
+
+        val thm1 = MP thm0 pre_thm2
       in thm1 end
-*)
     in
-      (prog_dist_thm_clean, List.rev (!failing_inst_r))
+      (prog_thm, List.rev (!failing_inst_r))
     end
   end;
 
