@@ -7,6 +7,7 @@ open bir_immSyntax wordsTheory
 open bir_mem_expTheory bir_bool_expTheory
 open bir_exp_liftingTheory
 open bir_temp_varsTheory
+open bir_programTheory
 
 open arm8Theory arm8_stepTheory
 open m0Theory m0_stepTheory
@@ -404,6 +405,40 @@ REPEAT STRIP_TAC >| [
   FULL_SIMP_TAC (std_ss++bmr_ss) [] >>
   METIS_TAC[bir_machine_lifted_mem_LIFTED]
 ]);
+
+
+val bmr_rel_IMPL_IS_BL_Block_Address = store_thm ("bmr_rel_IMPL_IS_BL_Block_Address",
+  ``!r bs ms. bmr_rel r bs ms ==>
+    bir_state_COUNT_PC
+       (F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l})) bs``,
+
+SIMP_TAC std_ss [bmr_rel_def, bir_state_COUNT_PC_def] >>
+REPEAT STRIP_TAC >>
+Cases_on `r.bmr_pc` >> (
+  FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_pc_def,
+    bir_block_pc_def, pred_setTheory.GSPECIFICATION, IS_BL_Address_def]
+));
+
+
+val bmr_rel_RECOVER_FROM_JUMP_OUTSIDE = store_thm ("bmr_rel_RECOVER_FROM_JUMP_OUTSIDE",
+  ``!r bs ms l.
+      bmr_rel r bs ms ==>
+      (bs.bst_status = BST_JumpOutside l) ==>
+      (bmr_rel r (bs with <| bst_status := BST_Running; bst_pc := bir_block_pc l|>) ms)``,
+
+SIMP_TAC (std_ss++bir_TYPES_ss) [bmr_rel_def, EVERY_MEM] >>
+REPEAT STRIP_TAC >- (
+  Q.PAT_X_ASSUM `!i. _` (MP_TAC o Q.SPEC `i`) >>
+  Cases_on `i` >>
+  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_imm_def]
+) >- (
+  Cases_on `r.bmr_mem` >>
+  FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_mem_def]
+) >- (
+  Cases_on `r.bmr_pc` >>
+  FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_pc_def]
+));
+
 
 
 (*-----------------------*)

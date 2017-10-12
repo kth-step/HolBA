@@ -21,6 +21,10 @@ val IS_BL_Label_def = Define `
   (IS_BL_Label (BL_Label _) = T) /\
   (IS_BL_Label _ = F)`;
 
+val IS_BL_Address_def = Define `
+  (IS_BL_Address (BL_Address _) = T) /\
+  (IS_BL_Address _ = F)`;
+
 val _ = Datatype `bir_label_exp_t =
     BLE_Label bir_label_t
   | BLE_Exp bir_exp_t
@@ -133,6 +137,10 @@ val bir_pc_next_def = Define `
   bir_pc_next pc = pc with bpc_index updated_by SUC`;
 
 val bir_block_pc_def = Define `bir_block_pc l = <| bpc_label := l; bpc_index := 0 |>`
+
+val bir_block_pc_11 = store_thm ("bir_block_pc_11",
+``(bir_block_pc l1 = bir_block_pc l2) <=> (l1 = l2)``,
+SIMP_TAC (std_ss++bir_pc_ss) [bir_block_pc_def, bir_programcounter_t_component_equality]);
 
 val bir_pc_first_def = Define
   `bir_pc_first (BirProgram p) = bir_block_pc (HD p).bb_label`;

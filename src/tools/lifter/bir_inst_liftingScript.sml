@@ -13,7 +13,10 @@ open bir_exp_liftingTheory
 open bir_lifting_machinesTheory
 open bir_interval_expTheory
 open bir_update_blockTheory
+open bir_program_multistep_propsTheory
 open bir_lifting_machinesLib
+open bir_subprogramTheory
+open bir_program_valid_stateTheory
 open quantHeuristicsLib
 open pred_setTheory
 
@@ -32,14 +35,16 @@ val bmr_ms_mem_unchanged_def = Define `bmr_ms_mem_unchanged r ms ms' i <=>
 
 
 val bmr_ms_mem_contains_UNCHANGED = store_thm ("bmr_ms_mem_contains_UNCHANGED",
-``!r ms ms' i ba vs.
-  WF_bmr_ms_mem_contains (ba, vs) ==>
+``!r ms ms' i mm.
+  WF_bmr_ms_mem_contains mm ==>
   bmr_ms_mem_unchanged r ms ms' i ==>
-  WI_is_sub (bmr_ms_mem_contains_interval (ba, vs)) i ==>
+  WI_is_sub (bmr_ms_mem_contains_interval mm) i ==>
 
-  (bmr_ms_mem_contains r ms (ba, vs) <=>
-   bmr_ms_mem_contains r ms' (ba, vs))``,
+  (bmr_ms_mem_contains r ms mm <=>
+   bmr_ms_mem_contains r ms' mm)``,
 
+Cases_on `mm` >>
+rename1 `(ba, vs)` >>
 SIMP_TAC std_ss [bmr_ms_mem_contains_def, WI_is_sub_def,
   bmr_ms_mem_contains_interval_def,
   WI_MEM_WI_size, WF_bmr_ms_mem_contains_def,
@@ -56,6 +61,50 @@ Induct_on `vs` >> (
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC list_ss [bmr_ms_mem_contains_def,
   WI_ELEM_LIST_def, DISJ_IMP_THM, FORALL_AND_THM]);
+
+
+
+(****************************)
+(* Execute to address label *)
+(****************************)
+
+(* Each machine instruction is translated to a bir program consisting of a
+   - block whose label is an address corresponding to the memory address of the instruction
+   - potentially some auxiliary blocks whose labels are strings
+
+   Executing a machine instruction corresponds in the BIR program therefore to
+   running till one reaches the next address label. For this some auxiliary
+   definitions are useful. *)
+
+val bir_exec_to_addr_label_n_def = Define
+ `bir_exec_to_addr_label_n =
+  bir_exec_to_labels_n {l | IS_BL_Address l}`;
+
+val bir_exec_to_addr_label_def = Define
+ `bir_exec_to_addr_label =
+  bir_exec_to_labels {l | (IS_BL_Address l)}`;
+
+val bir_exec_to_addr_label_n_REWR_0 = store_thm ("bir_exec_to_addr_label_n_REWR_0",
+``bir_exec_to_addr_label_n p bs 0 = BER_Ended [] 0 0 bs``,
+SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_REWR_0]);
+
+val bir_exec_to_addr_label_n_REWR_TERMINATED = store_thm ("bir_exec_to_addr_label_n_REWR_TERMINATED",
+``bir_state_is_terminated bs ==> (bir_exec_to_addr_label_n p bs n = BER_Ended [] 0 0 bs)``,
+SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_REWR_TERMINATED]);
+
+
+val bir_exec_to_addr_label_n_REWR_SUC = store_thm ("bir_exec_to_addr_label_n_REWR_SUC",
+`` (bir_exec_to_addr_label_n p st (SUC n) =
+      case bir_exec_to_addr_label p st of
+        BER_Ended l1 c1 c1' st1 =>
+          (case bir_exec_to_addr_label_n p st1 n of
+             BER_Ended l2 c2 c2' st2 =>
+               BER_Ended (l1 ++ l2) (c1 + c2) (c1' + c2') st2
+           | BER_Looping ll2 => BER_Looping (LAPPEND (fromList l1) ll2))
+      | BER_Looping ll1 => BER_Looping ll1)``,
+
+SIMP_TAC std_ss [bir_exec_to_addr_label_def, bir_exec_to_addr_label_n_def,
+  bir_exec_to_labels_n_REWR_SUC]);
 
 
 
@@ -1518,6 +1567,416 @@ REPEAT STRIP_TAC >- (
 FULL_SIMP_TAC std_ss [WI_distinct_def, WI_overlap_def] >>
 METIS_TAC[]);
 
+
+
+(**********************************************)
+(* Lifting a machine instruction to a program *)
+(**********************************************)
+
+val bir_is_lifted_inst_prog_def = Define `
+  bir_is_lifted_inst_prog
+    (* machine description *)
+    (r: ('a, 'b, 'ms) bir_lifting_machine_rec_t)
+
+    (* The label to start executing. Since, it is always an address label, we provide only
+       the immediate. It is the only address label of the program. All auxiliary labels
+       need to be identified by strings. *)
+    l
+
+    (* A region of memory not touched by the execution. Usually this is the part where
+       the program code is stored. *)
+    mu
+
+    (* The code for the machine instruction stored somewhere (usually at the PC) stored
+       in mem *)
+    mm
+
+    (* The program *)
+    (p :'o bir_program_t)
+
+    <=>
+
+  (* Parameters are sensible *)
+  (WI_wfe mu /\ WF_bmr_ms_mem_contains mm /\ WI_is_sub (bmr_ms_mem_contains_interval mm) mu /\
+   bir_is_valid_labels p /\ (!l'. MEM (BL_Address l') (bir_labels_of_program p) <=> (l' = l))) /\
+
+  (!ms bs.
+
+    (* The machine state and the bir state are related *)
+    (bmr_rel r bs ms) ==>
+
+    (* The PC points to where we expect *)
+    (bs.bst_pc = bir_block_pc (BL_Address l)) ==>
+
+    (* At this location in memory the expected instruction code is found *)
+    bmr_ms_mem_contains r ms mm ==>
+
+    (* The bir state is not terminated yet *)
+    ~(bir_state_is_terminated bs) ==>
+
+    (* Then executing till the next address label terminates and either
+       violates an assertion or results in a state that corresponds to
+       the machine state after one step. *)
+    ?lo c c' bs'.
+      (bir_exec_to_addr_label p bs = BER_Ended lo c c' bs') /\
+
+      (~(bs'.bst_status = BST_AssertionViolated) ==>
+      (?ms'. (r.bmr_step_fun ms = SOME ms') /\
+             (bmr_ms_mem_unchanged r ms ms' mu) /\
+             (bmr_rel r bs' ms'))))`;
+
+
+(* The simplest and most common situation is that an instruction is implemented by
+   a single block *)
+val bir_is_lifted_inst_prog_SINGLE_INTRO = store_thm ("bir_is_lifted_inst_prog_SINGLE_INTRO",
+``!r li mu mm (bl:'a bir_block_t) extra_cond.
+
+  bir_is_lifted_inst_block r extra_cond (BL_Address li) mu mm bl ==>
+  (bl.bb_label = BL_Address li) /\ (!ms. extra_cond ms) ==>
+  bir_is_lifted_inst_prog
+    (r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) li mu mm (BirProgram [bl])``,
+
+
+SIMP_TAC (list_ss++bir_TYPES_ss) [bir_is_lifted_inst_block_def, bir_is_lifted_inst_prog_def,
+  bir_is_valid_labels_def, bir_labels_of_program_def] >>
+REPEAT STRIP_TAC >>
+Q.PAT_X_ASSUM `!ms bs p. _` (MP_TAC o Q.SPECL [`ms`, `bs`, `BirProgram [bl]`]) >>
+`?lo c bs'. (bir_exec_block (BirProgram [bl]) bl bs = (lo,c,bs'))` by
+  METIS_TAC[pairTheory.PAIR] >>
+ASM_SIMP_TAC list_ss [bir_is_valid_labels_def,
+  bir_labels_of_program_def] >>
+STRIP_TAC >>
+
+MP_TAC (Q.SPECL [` {l | IS_BL_Address l}`, `(BirProgram [bl])`, `bs`, `bl`] bir_exec_to_labels_block) >>
+
+`bir_get_current_block (BirProgram [bl]) bs.bst_pc = SOME bl` by (
+  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_get_current_block_def, bir_block_pc_def,
+    bir_get_program_block_info_by_label_def, INDEX_FIND_def]
+) >>
+ASM_SIMP_TAC std_ss [bir_exec_to_addr_label_def] >>
+DISCH_TAC >> POP_ASSUM (K ALL_TAC) >>
+
+ASM_SIMP_TAC (std_ss ++ boolSimps.LIFT_COND_ss++bir_TYPES_ss) [LET_THM] >>
+Cases_on `bs'.bst_status = BST_AssertionViolated` >- (
+  `bir_state_is_terminated bs'` by ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def] >>
+  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_to_labels_def, bir_exec_to_labels_n_REWR_TERMINATED]
+) >>
+DISJ1_TAC >>
+CONJ_TAC >- (
+  CCONTR_TAC >>
+  `c = 0` by DECIDE_TAC >>
+  FULL_SIMP_TAC std_ss [bir_exec_block_REWR_NO_STEP]
+) >- (
+  FULL_SIMP_TAC std_ss [] >>
+  METIS_TAC [bmr_rel_IMPL_IS_BL_Block_Address]
+));
+
+
+
+(******************************************)
+(* Lifting a machine program to a program *)
+(******************************************)
+
+
+val bir_is_lifted_prog_def = Define `
+  bir_is_lifted_prog
+    (* machine description *)
+    (r: ('a, 'b, 'ms) bir_lifting_machine_rec_t)
+
+    (* A region of memory not touched by the execution. Usually this is the part where
+       the program code is stored. *)
+    (mu : 'a word_interval_t)
+
+    (* The code for the machine instruction stored somewhere (usually at the PC) stored
+       in mem. This can be in multiple blocks. Moreover, you might want to add data blocks.
+       Therefore a list is provided. *)
+    (mms : ('a word # 'b word list) list)
+
+    (* The program *)
+    (p :'o bir_program_t)
+
+    <=>
+
+  (* Parameters are sensible *)
+  (WI_wfe mu /\ EVERY (\mm. WF_bmr_ms_mem_contains mm /\
+   WI_is_sub (bmr_ms_mem_contains_interval mm) mu) mms /\ (bir_is_valid_labels p)) /\
+
+  (!ms bs l.
+
+    (* The machine state and the bir state are related *)
+    (bmr_rel r bs ms) ==>
+
+    (* The PC points to where we expect *)
+    MEM (BL_Address l) (bir_labels_of_program p) ==>
+    (bs.bst_pc = bir_block_pc (BL_Address l)) ==>
+
+
+    (* At this location in memory the expected instruction code is found *)
+    EVERY (bmr_ms_mem_contains r ms) mms ==>
+
+    (* The bir state is not terminated yet *)
+    ~(bir_state_is_terminated bs) ==>
+
+    (* Then executing till the next address label terminates and either
+       violates an assertion or results in a state that corresponds to
+       the machine state after one step. *)
+    ?lo c c' bs'.
+      (bir_exec_to_addr_label p bs = BER_Ended lo c c' bs') /\
+
+      (~(bs'.bst_status = BST_AssertionViolated) ==>
+      (?ms'. (r.bmr_step_fun ms = SOME ms') /\
+             (bmr_ms_mem_unchanged r ms ms' mu) /\
+             (bmr_rel r bs' ms'))))`;
+
+
+
+(* Just for clarity, a trivial case, where we lifted the empty program. *)
+val bir_is_lifted_prog_NO_INST = store_thm ("bir_is_lifted_prog_NO_INST",
+``!r mu mms p. bir_is_lifted_prog r mu mms (BirProgram []) <=>
+     WI_wfe mu /\
+     EVERY
+       (\mm.
+          WF_bmr_ms_mem_contains mm /\
+          WI_is_sub (bmr_ms_mem_contains_interval mm) mu) mms``,
+
+SIMP_TAC list_ss [bir_is_lifted_prog_def,
+  bir_labels_of_program_def, bir_is_valid_labels_def]);
+
+
+(* More interesting is lifting a single instruction. The definition
+   bir_is_lifted_inst_prog is compatible *)
+val bir_is_lifted_prog_SINGLE_INST = store_thm ("bir_is_lifted_prog_SINGLE_INST",
+``!r mu mm li p.
+     bir_is_lifted_inst_prog r li mu mm p ==>
+     bir_is_lifted_prog r mu [mm] p``,
+SIMP_TAC list_ss [bir_is_lifted_prog_def, bir_is_lifted_inst_prog_def]);
+
+
+
+(* If we have 2 lifted programs, we can combine them. *)
+val bir_is_lifted_prog_UNION = store_thm ("bir_is_lifted_prog_UNION",
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mms1 mms2 (p1 : 'o bir_program_t) p2.
+     bir_is_lifted_prog r mu mms1 p1 ==>
+     bir_is_lifted_prog r mu mms2 p2 ==>
+     (!l. MEM l (bir_labels_of_program p1) ==> ~MEM l (bir_labels_of_program p2)) ==>
+     bir_is_lifted_prog r mu (mms1++mms2) (bir_program_combine p1 p2)``,
+
+SIMP_TAC std_ss [bir_is_lifted_prog_def] >>
+REPEAT STRIP_TAC >- (
+  ASM_SIMP_TAC list_ss []
+) >- (
+  ASM_SIMP_TAC std_ss [bir_is_valid_labels_PROGRAM_COMBINE] >>
+  METIS_TAC[]
+) >>
+
+REPEAT (Q.PAT_X_ASSUM `!ms bs l. _` (MP_TAC o Q.SPECL [`ms`, `bs`, `l`])) >>
+FULL_SIMP_TAC std_ss [EVERY_APPEND, bir_labels_of_program_PROGRAM_COMBINE] >>
+
+Q.ABBREV_TAC `p' = if MEM (BL_Address l) (bir_labels_of_program p1) then p1 else p2` >>
+REPEAT STRIP_TAC >>
+` ?lo c c' bs'.
+    (bir_exec_to_addr_label p' bs = BER_Ended lo c c' bs') /\
+    (bs'.bst_status <> BST_AssertionViolated ==>
+    (?ms'.
+       (r.bmr_step_fun ms = SOME ms') /\
+       bmr_ms_mem_unchanged r ms ms' mu /\ bmr_rel r bs' ms'))` by (
+   METIS_TAC[MEM_APPEND]
+) >>
+REPEAT (Q.PAT_X_ASSUM `MEM l _ ==> _` (K ALL_TAC)) >>
+
+Q.ABBREV_TAC `pc_cond = (F,
+      (\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l}))` >>
+
+`!(p:'o bir_program_t) st. bir_exec_steps_GEN pc_cond p st (SOME 1) =
+        bir_exec_to_addr_label p st` by (
+  ASM_SIMP_TAC std_ss [bir_exec_to_addr_label_def,
+    bir_exec_to_labels_def, bir_exec_to_labels_n_def]
+) >>
+
+`bir_is_subprogram p' (bir_program_combine p1 p2)` by
+  METIS_TAC [bir_program_combine_SUBPROGRAMS] >>
+`bir_is_valid_labels (bir_program_combine p1 p2)` by (
+  ASM_SIMP_TAC std_ss [bir_is_valid_labels_PROGRAM_COMBINE] >>
+  METIS_TAC[]
+) >>
+
+`bir_is_valid_pc p' (bir_block_pc (BL_Address l))` by (
+  CCONTR_TAC >>
+  `bs' = bs with bst_status := BST_Failed` by (
+     `bir_get_current_statement p' (bir_block_pc (BL_Address l)) = NONE` by
+       METIS_TAC[bir_get_current_statement_IS_SOME, optionTheory.option_CLAUSES] >>
+     Q.PAT_X_ASSUM `_ = BER_Ended _ _ _ _` MP_TAC >>
+     SIMP_TAC bool_ss [bir_exec_to_addr_label_def, bir_exec_to_labels_def,
+       bir_exec_to_labels_n_def] >>
+     ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_steps_GEN_REWR_STEP,
+       bir_exec_step_def, LET_THM, bir_state_set_failed_def,
+       bir_exec_steps_GEN_REWR_TERMINATED, bir_state_is_terminated_def]
+  ) >>
+  Cases_on `r.bmr_pc` >>
+  FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bmr_rel_def, bir_machine_lifted_pc_def]
+) >>
+
+`!l. bs.bst_status <> BST_JumpOutside l` by
+   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def] >>
+
+
+Cases_on `bs'.bst_status = BST_AssertionViolated` >- (
+  MP_TAC (Q.SPECL [`pc_cond`, `bs`, `SOME 1`] (ISPECL [``p':'o bir_program_t``, ``(bir_program_combine p1 p2):'o bir_program_t``] bir_exec_steps_GEN_Ended_SUBPROGRAM_EQ)) >>
+
+  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) []
+) >>
+
+MP_TAC (Q.SPECL [`pc_cond`, `bs`, `SOME 1`] (ISPECL [``p':'o bir_program_t``, ``(bir_program_combine p1 p2):'o bir_program_t``] bir_exec_steps_GEN_Ended_SUBPROGRAM)) >>
+
+FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
+
+`bir_state_COUNT_PC pc_cond bs'` by (
+  Cases_on `r.bmr_pc` >>
+  Q.UNABBREV_TAC `pc_cond` >>
+  FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bmr_rel_def, bir_machine_lifted_pc_def,
+      bir_state_COUNT_PC_def, bir_block_pc_def, GSPECIFICATION,
+      IS_BL_Address_def]
+) >>
+
+`c' = 1` by (
+  Q.PAT_X_ASSUM `_ = BER_Ended _ _ _ _` MP_TAC >>
+  SIMP_TAC std_ss [bir_exec_to_addr_label_def,
+    bir_exec_to_labels_def, bir_exec_to_labels_n_def,
+    bir_exec_steps_GEN_1_EQ_Ended] >>
+  ASM_SIMP_TAC std_ss [] >>
+  Cases_on `c` >> FULL_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_REWRS] >>
+  METIS_TAC[]
+) >>
+
+ASM_SIMP_TAC std_ss [] >>
+Tactical.REVERSE STRIP_TAC >- (
+  FULL_SIMP_TAC (std_ss++bir_TYPES_ss) []
+) >>
+ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
+rename1 `bs''.bst_status <> BST_AssertionViolated ==> _` >>
+STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_jumped_outside_termination_cond_def] >>
+METIS_TAC[bmr_rel_RECOVER_FROM_JUMP_OUTSIDE]);
+
+
+
+(* We can add extra data regions in memory *)
+val bir_is_lifted_prog_ADD_DATA_MEM_REGION = store_thm ("bir_is_lifted_prog_ADD_DATA_MEM_REGION",
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mms (p : 'o bir_program_t) mm.
+     bir_is_lifted_prog r mu mms p ==>
+     ((WF_bmr_ms_mem_contains mm /\ WI_is_sub (bmr_ms_mem_contains_interval mm) mu)) ==>
+     bir_is_lifted_prog r mu (mm::mms) p``,
+
+SIMP_TAC list_ss [bir_is_lifted_prog_def] >>
+METIS_TAC[]);
+
+
+(* The semantics of bir_is_lifted_prog uses 1-step relations. Multistep relations are
+   implied. *)
+val bir_is_lifted_prog_MULTI_STEP_EXEC = store_thm ("bir_is_lifted_prog_MULTI_STEP_EXEC",
+
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mms (p : 'o bir_program_t).
+     bir_is_lifted_prog r mu mms p ==>
+     !n ms bs.
+       (bmr_rel r bs ms ==>
+        (?li. MEM (BL_Address li) (bir_labels_of_program p) /\
+              (bs.bst_pc = bir_block_pc (BL_Address li))) ==>
+        EVERY (bmr_ms_mem_contains r ms) mms ==>
+       ~bir_state_is_terminated bs ==>
+
+       ?lo c c' bs'.
+         (bir_exec_to_addr_label_n p bs n = BER_Ended lo c c' bs') /\
+         (bs'.bst_status <> BST_AssertionViolated ==>
+          ?ms'.
+            (FUNPOW_OPT r.bmr_step_fun c' ms = SOME ms') /\
+            bmr_ms_mem_unchanged r ms ms' mu /\
+            EVERY (bmr_ms_mem_contains r ms') mms /\
+            (case bs'.bst_status of
+              | BST_Running =>
+                  (?li. MEM (BL_Address li) (bir_labels_of_program p) /\
+                        (bs.bst_pc = bir_block_pc (BL_Address li)))
+              | BST_JumpOutside ll =>
+                  ~(MEM ll (bir_labels_of_program p)) /\
+                  (IS_BL_Address ll)
+              | _ => F) /\
+            bmr_rel r bs' ms'))``,
+
+REPEAT GEN_TAC >> STRIP_TAC >>
+Induct >- (
+  SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_to_addr_label_n_REWR_0,
+    FUNPOW_OPT_REWRS, bir_state_is_terminated_def, bmr_ms_mem_unchanged_def]
+) >>
+REPEAT STRIP_TAC >>
+SIMP_TAC std_ss [bir_exec_to_addr_label_n_REWR_SUC] >>
+FULL_SIMP_TAC std_ss [bir_is_lifted_prog_def] >>
+Q.PAT_X_ASSUM `!ms bs l. _ ` (MP_TAC o Q.SPECL [`ms`, `bs`, `li`]) >>
+ASM_SIMP_TAC std_ss [] >> STRIP_TAC >>
+ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
+Cases_on `bs'.bst_status = BST_AssertionViolated` >- (
+  `bir_state_is_terminated bs'` by ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def] >>
+  ASM_SIMP_TAC (list_ss++bir_TYPES_ss) [bir_exec_to_addr_label_n_REWR_TERMINATED]
+) >>
+
+FULL_SIMP_TAC std_ss [] >>
+
+`(c' = 1) /\ (?d. c = SUC d)` by (
+  FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_def,
+    bir_exec_to_labels_n_def, bir_exec_to_labels_def, bir_exec_steps_GEN_1_EQ_Ended] >>
+  `bir_state_COUNT_PC (F,
+    (\pc.(pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l}))
+    (bir_exec_infinite_steps_fun p bs c)` by METIS_TAC[bmr_rel_IMPL_IS_BL_Block_Address] >>
+  FULL_SIMP_TAC std_ss [] >>
+  Cases_on `c` >> FULL_SIMP_TAC arith_ss [] >>
+  REV_FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS]
+) >>
+
+`EVERY (bmr_ms_mem_contains r ms') mms` by (
+  FULL_SIMP_TAC std_ss [EVERY_MEM] >>
+  METIS_TAC[bmr_ms_mem_contains_UNCHANGED]
+) >>
+REPEAT BasicProvers.VAR_EQ_TAC >>
+
+Cases_on `bir_state_is_terminated bs'` >- (
+  ASM_SIMP_TAC (list_ss++bir_TYPES_ss) [bir_exec_to_addr_label_n_REWR_TERMINATED,
+    FUNPOW_OPT_compute, bir_block_pc_11] >>
+  Q.PAT_X_ASSUM `bmr_rel r bs' ms'` MP_TAC >>
+  Cases_on `r.bmr_pc` >>
+  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bmr_rel_def, bir_machine_lifted_pc_def] >>
+  REPEAT STRIP_TAC >> ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [IS_BL_Address_def] >>
+
+  `bir_exec_step_n p bs (SUC d) = (lo,SUC d,bs')` suffices_by METIS_TAC[
+    bir_program_terminationTheory.bir_exec_step_n_status_jumped] >>
+  MATCH_MP_TAC bir_exec_steps_GEN_TO_bir_exec_step_n >>
+  FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_def, bir_exec_to_labels_def,
+    bir_exec_to_labels_n_def] >>
+  METIS_TAC[]
+) >>
+
+`?li.
+   MEM (BL_Address li) (bir_labels_of_program p) /\
+   (bs'.bst_pc = bir_block_pc (BL_Address li))` by (
+
+  Q.PAT_X_ASSUM `bmr_rel r bs' ms'` MP_TAC >>
+  Cases_on `r.bmr_pc` >>
+  FULL_SIMP_TAC std_ss [bir_state_is_terminated_def] >>
+  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bmr_rel_def, bir_machine_lifted_pc_def,
+    bir_state_is_terminated_def, bir_block_pc_11] >>
+  `bir_is_valid_pc p bs'.bst_pc` suffices_by METIS_TAC [bir_is_valid_pc_block_pc] >>
+
+  FULL_SIMP_TAC std_ss [bir_exec_to_labels_n_def, bir_exec_to_addr_label_def,
+    bir_exec_to_labels_def, bir_exec_steps_GEN_1_EQ_Ended] >>
+  ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_valid_pc, bir_is_valid_pc_block_pc]
+) >>
+
+Q.PAT_X_ASSUM `!ms' bs'. _ ` (MP_TAC o Q.SPECL [`ms'`, `bs'`]) >>
+ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_block_pc_11] >>
+STRIP_TAC >>
+ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
+STRIP_TAC >>
+rename1 `1 + c'` >>
+Q.SUBGOAL_THEN `1 + c' = SUC c'` SUBST1_TAC >- DECIDE_TAC >>
+ASM_SIMP_TAC std_ss [FUNPOW_OPT_REWRS] >>
+FULL_SIMP_TAC std_ss [bmr_ms_mem_unchanged_def]);
 
 
 val _ = export_theory();

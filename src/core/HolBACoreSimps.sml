@@ -157,7 +157,9 @@ val bir_SIMPLE_REWRS_program = rewrites [
   bir_state_is_terminated_IMP,
   bir_declare_initial_value_def,
   IS_BER_Ended_def,
-  IS_BL_Label_def
+  IS_BL_Label_def,
+  IS_BL_Address_def,
+  bir_block_pc_11
 ];
 
 val bir_SIMPLE_REWRS_typing_exp = rewrites [

@@ -176,7 +176,7 @@ ASM_SIMP_TAC list_ss [rich_listTheory.DROP_EL_CONS, arithmeticTheory.ADD1]);
 
 
 (* -------------------------------------------------------------------------- *)
-(* pred_set  lemmata                                                          *)
+(* pred_set lemmata                                                           *)
 (* -------------------------------------------------------------------------- *)
 
 val INFINITE_SUBSET_WITH_CARD_EXISTS = store_thm ("INFINITE_SUBSET_WITH_CARD_EXISTS",
@@ -336,6 +336,26 @@ val OPT_CONS_REVERSE = store_thm ("OPT_CONS_REVERSE",
   ``!eo l. REVERSE (OPT_CONS eo l) = REVERSE l ++ OPT_CONS eo []``,
 Cases >> SIMP_TAC list_ss [OPT_CONS_REWRS]);
 
+
+val FUNPOW_OPT_def = Define `
+  FUNPOW_OPT (r : 'a -> 'a option) n x =
+  FUNPOW (\x. option_CASE x NONE r) n (SOME x)`
+
+val FUNPOW_OPT_REWRS = store_thm ("FUNPOW_OPT_REWRS",
+``(!r x. (FUNPOW_OPT r 0 x = SOME x)) /\
+  (!r x n. (FUNPOW_OPT r (SUC n) x =
+            case r x of NONE => NONE
+                      | SOME x' => FUNPOW_OPT r n x'))``,
+
+SIMP_TAC std_ss [FUNPOW_OPT_def, arithmeticTheory.FUNPOW] >>
+REPEAT STRIP_TAC >>
+Cases_on `r x` >> SIMP_TAC std_ss [] >>
+Induct_on `n` >> (
+  ASM_SIMP_TAC std_ss [arithmeticTheory.FUNPOW]
+));
+
+val FUNPOW_OPT_compute = save_thm ("FUNPOW_OPT_compute",
+  CONV_RULE (numLib.SUC_TO_NUMERAL_DEFN_CONV) FUNPOW_OPT_REWRS);
 
 
 (* -------------------------------------------------------------------------- *)
