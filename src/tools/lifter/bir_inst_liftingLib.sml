@@ -7,6 +7,7 @@ open bir_exp_liftingLib bir_typing_expSyntax
 open bir_typing_expTheory
 open bir_lifter_general_auxTheory
 open bir_programSyntax bir_interval_expSyntax
+open bir_program_labelsTheory
 open PPBackEnd Parse
 
 (**********)
@@ -1421,19 +1422,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
       val prog_thm = let
         val thm0 = MATCH_MP prog_dist_ELIM_THM prog_dist_thm_clean
         val (pre, _) = dest_imp_only (concl thm0)
-
-        val pre_thm0 = SPEC (rand pre) ALL_DISTINCT_lifter_label_list_PARTS_THM
-
-        val pre0 = lhs (fst (dest_imp_only (snd (strip_forall (concl pre_thm0)))))
-        val pre0_thm = (PURE_REWRITE_CONV (combinTheory.K_THM::bir_labels_of_program_EVAL::ALL_DISTINCT_lifter_labels_list_PART_def::bir_block_rewrs) THENC EVAL) pre0
-
-        val pre_thm1 = MATCH_MP pre_thm0 pre0_thm
-
-        val pre1 = (fst (dest_imp_only (concl pre_thm1)))
-        val pre1_thm = EQT_ELIM (EVAL pre1)
-        val pre_thm2 = MATCH_MP pre_thm1 pre1_thm
-
-        val thm1 = MP thm0 pre_thm2
+        val pre_thm = EQT_ELIM (EVAL pre)
+        val thm1 = MP thm0 pre_thm
       in thm1 end
     in
       (prog_thm, List.rev (!failing_inst_r))

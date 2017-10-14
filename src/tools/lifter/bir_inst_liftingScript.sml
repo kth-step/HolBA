@@ -17,6 +17,7 @@ open bir_program_multistep_propsTheory
 open bir_lifting_machinesLib
 open bir_subprogramTheory
 open bir_program_valid_stateTheory
+open bir_program_labelsTheory
 open quantHeuristicsLib
 open pred_setTheory
 
@@ -1598,7 +1599,8 @@ val bir_is_lifted_inst_prog_def = Define `
 
   (* Parameters are sensible *)
   (WI_wfe mu /\ WF_bmr_ms_mem_contains mm /\ WI_is_sub (bmr_ms_mem_contains_interval mm) mu /\
-   bir_is_valid_labels p /\ (!l'. MEM (BL_Address l') (bir_labels_of_program p) <=> (l' = l))) /\
+   bir_is_valid_labels p /\ (!l'. MEM (BL_Address l') (bir_labels_of_program p) <=> (l' = l)) /\
+   bir_program_string_labels_guarded p) /\
 
   (!ms bs.
 
@@ -1637,7 +1639,8 @@ val bir_is_lifted_inst_prog_SINGLE_INTRO = store_thm ("bir_is_lifted_inst_prog_S
 
 
 SIMP_TAC (list_ss++bir_TYPES_ss) [bir_is_lifted_inst_block_def, bir_is_lifted_inst_prog_def,
-  bir_is_valid_labels_def, bir_labels_of_program_def] >>
+  bir_is_valid_labels_def, bir_labels_of_program_def, bir_program_string_labels_guarded_def,
+  BL_recognisers] >>
 REPEAT STRIP_TAC >>
 Q.PAT_X_ASSUM `!ms bs p. _` (MP_TAC o Q.SPECL [`ms`, `bs`, `BirProgram [bl]`]) >>
 `?lo c bs'. (bir_exec_block (BirProgram [bl]) bl bs = (lo,c,bs'))` by
@@ -1698,16 +1701,17 @@ val bir_is_lifted_prog_def = Define `
 
   (* Parameters are sensible *)
   (WI_wfe mu /\ EVERY (\mm. WF_bmr_ms_mem_contains mm /\
-   WI_is_sub (bmr_ms_mem_contains_interval mm) mu) mms /\ (bir_is_valid_labels p)) /\
+   WI_is_sub (bmr_ms_mem_contains_interval mm) mu) mms /\ (bir_is_valid_labels p) /\
+   bir_program_string_labels_guarded p) /\
 
-  (!ms bs l.
+  (!ms bs li.
 
     (* The machine state and the bir state are related *)
     (bmr_rel r bs ms) ==>
 
     (* The PC points to where we expect *)
-    MEM (BL_Address l) (bir_labels_of_program p) ==>
-    (bs.bst_pc = bir_block_pc (BL_Address l)) ==>
+    MEM (BL_Address li) (bir_labels_of_program p) ==>
+    (bs.bst_pc = bir_block_pc (BL_Address li)) ==>
 
 
     (* At this location in memory the expected instruction code is found *)
@@ -1739,7 +1743,8 @@ val bir_is_lifted_prog_NO_INST = store_thm ("bir_is_lifted_prog_NO_INST",
           WI_is_sub (bmr_ms_mem_contains_interval mm) mu) mms``,
 
 SIMP_TAC list_ss [bir_is_lifted_prog_def,
-  bir_labels_of_program_def, bir_is_valid_labels_def]);
+  bir_labels_of_program_def, bir_is_valid_labels_def,
+  bir_program_string_labels_guarded_def]);
 
 
 (* More interesting is lifting a single instruction. The definition
@@ -1757,21 +1762,40 @@ val bir_is_lifted_prog_UNION = store_thm ("bir_is_lifted_prog_UNION",
 ``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mms1 mms2 (p1 : 'o bir_program_t) p2.
      bir_is_lifted_prog r mu mms1 p1 ==>
      bir_is_lifted_prog r mu mms2 p2 ==>
-     (!l. MEM l (bir_labels_of_program p1) ==> ~MEM l (bir_labels_of_program p2)) ==>
+     (!i. MEM (BL_Address i) (bir_labels_of_program p1) ==> ~(MEM (BL_Address i) (bir_labels_of_program p2))) ==>
      bir_is_lifted_prog r mu (mms1++mms2) (bir_program_combine p1 p2)``,
 
 SIMP_TAC std_ss [bir_is_lifted_prog_def] >>
+REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
+`bir_is_valid_labels (bir_program_combine p1 p2)` by (
+  ASM_SIMP_TAC std_ss [bir_is_valid_labels_PROGRAM_COMBINE] >>
+  Tactical.REVERSE Cases >- METIS_TAC[] >>
+  rename1 `BL_Label s` >>
+  CCONTR_TAC >>
+  FULL_SIMP_TAC std_ss [] >>
+  `(?i1 s1'. (BL_Label s = BL_Label_of_addr i1 s1') /\
+            MEM (BL_Address i1) (bir_labels_of_program p1)) /\
+   (?i2 s2'. (BL_Label s = BL_Label_of_addr i2 s2') /\
+              MEM (BL_Address i2) (bir_labels_of_program p2))` by (
+    FULL_SIMP_TAC std_ss [bir_program_string_labels_guarded_def, EVERY_MEM] >>
+    METIS_TAC[BL_recognisers]
+  ) >>
+  FULL_SIMP_TAC std_ss [BL_Label_of_addr_11] >>
+  METIS_TAC[]
+) >>
 REPEAT STRIP_TAC >- (
   ASM_SIMP_TAC list_ss []
 ) >- (
-  ASM_SIMP_TAC std_ss [bir_is_valid_labels_PROGRAM_COMBINE] >>
+  ASM_REWRITE_TAC[]
+) >- (
+  FULL_SIMP_TAC list_ss [bir_program_string_labels_guarded_def, bir_labels_of_program_PROGRAM_COMBINE, EVERY_MEM] >>
   METIS_TAC[]
 ) >>
 
-REPEAT (Q.PAT_X_ASSUM `!ms bs l. _` (MP_TAC o Q.SPECL [`ms`, `bs`, `l`])) >>
+REPEAT (Q.PAT_X_ASSUM `!ms bs li. _` (MP_TAC o Q.SPECL [`ms`, `bs`, `li`])) >>
 FULL_SIMP_TAC std_ss [EVERY_APPEND, bir_labels_of_program_PROGRAM_COMBINE] >>
 
-Q.ABBREV_TAC `p' = if MEM (BL_Address l) (bir_labels_of_program p1) then p1 else p2` >>
+Q.ABBREV_TAC `p' = if MEM (BL_Address li) (bir_labels_of_program p1) then p1 else p2` >>
 REPEAT STRIP_TAC >>
 ` ?lo c c' bs'.
     (bir_exec_to_addr_label p' bs = BER_Ended lo c c' bs') /\
@@ -1781,7 +1805,7 @@ REPEAT STRIP_TAC >>
        bmr_ms_mem_unchanged r ms ms' mu /\ bmr_rel r bs' ms'))` by (
    METIS_TAC[MEM_APPEND]
 ) >>
-REPEAT (Q.PAT_X_ASSUM `MEM l _ ==> _` (K ALL_TAC)) >>
+REPEAT (Q.PAT_X_ASSUM `MEM (BL_Address li) _ ==> _` (K ALL_TAC)) >>
 
 Q.ABBREV_TAC `pc_cond = (F,
       (\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l}))` >>
@@ -1794,15 +1818,11 @@ Q.ABBREV_TAC `pc_cond = (F,
 
 `bir_is_subprogram p' (bir_program_combine p1 p2)` by
   METIS_TAC [bir_program_combine_SUBPROGRAMS] >>
-`bir_is_valid_labels (bir_program_combine p1 p2)` by (
-  ASM_SIMP_TAC std_ss [bir_is_valid_labels_PROGRAM_COMBINE] >>
-  METIS_TAC[]
-) >>
 
-`bir_is_valid_pc p' (bir_block_pc (BL_Address l))` by (
+`bir_is_valid_pc p' (bir_block_pc (BL_Address li))` by (
   CCONTR_TAC >>
   `bs' = bs with bst_status := BST_Failed` by (
-     `bir_get_current_statement p' (bir_block_pc (BL_Address l)) = NONE` by
+     `bir_get_current_statement p' (bir_block_pc (BL_Address li)) = NONE` by
        METIS_TAC[bir_get_current_statement_IS_SOME, optionTheory.option_CLAUSES] >>
      Q.PAT_X_ASSUM `_ = BER_Ended _ _ _ _` MP_TAC >>
      SIMP_TAC bool_ss [bir_exec_to_addr_label_def, bir_exec_to_labels_def,
@@ -1989,7 +2009,7 @@ FULL_SIMP_TAC std_ss [bmr_ms_mem_unchanged_def]);
 
 val bir_is_lifted_prog_LABELS_DISTINCT_def = Define
   `bir_is_lifted_prog_LABELS_DISTINCT r mu mms p <=>
-   (ALL_DISTINCT (bir_labels_of_program p) ==>
+   (ALL_DISTINCT (FILTER IS_BL_Address (bir_labels_of_program p)) ==>
     bir_is_lifted_prog r mu mms p)`;
 
 val bir_is_lifted_prog_LABELS_DISTINCT_SINGLE_INST = store_thm ("bir_is_lifted_prog_LABELS_DISTINCT_SINGLE_INST",
@@ -1998,6 +2018,7 @@ val bir_is_lifted_prog_LABELS_DISTINCT_SINGLE_INST = store_thm ("bir_is_lifted_p
      bir_is_lifted_prog_LABELS_DISTINCT r mu [mm] p``,
 SIMP_TAC list_ss [bir_is_lifted_prog_LABELS_DISTINCT_def] >>
 METIS_TAC[bir_is_lifted_prog_SINGLE_INST]);
+
 
 (* A dummy program used if we can't translate a hexcode. In this case
    just the memory region is added, but no BIR block. As a result, we don't need to
@@ -2024,7 +2045,7 @@ val bir_is_lifted_prog_LABELS_DISTINCT_EMPTY = store_thm ("bir_is_lifted_prog_LA
 
 SIMP_TAC list_ss [bir_is_lifted_prog_LABELS_DISTINCT_def,
   bir_is_lifted_prog_def, bir_labels_of_program_def,
-  bir_is_valid_labels_def]);
+  bir_is_valid_labels_def, bir_program_string_labels_guarded_def]);
 
 
 val bir_is_lifted_prog_LABELS_DISTINCT_UNION = store_thm ("bir_is_lifted_prog_LABELS_DISTINCT_UNION",
@@ -2036,20 +2057,28 @@ val bir_is_lifted_prog_LABELS_DISTINCT_UNION = store_thm ("bir_is_lifted_prog_LA
 SIMP_TAC std_ss [bir_is_lifted_prog_LABELS_DISTINCT_def, bir_labels_of_program_PROGRAM_COMBINE,
   ALL_DISTINCT_APPEND] >>
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [] >>
+FULL_SIMP_TAC std_ss [ALL_DISTINCT_APPEND, FILTER_APPEND, MEM_FILTER,
+  IS_BL_Address_EXISTS, PULL_EXISTS] >>
 METIS_TAC[bir_is_lifted_prog_UNION]);
 
 
 val bir_is_lifted_prog_LABELS_DISTINCT_ELIM = store_thm ("bir_is_lifted_prog_LABELS_DISTINCT_ELIM",
 ``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mms (p : 'o bir_program_t).
      bir_is_lifted_prog_LABELS_DISTINCT r mu mms p ==>
-     ALL_DISTINCT (bir_labels_of_program p) ==>
+     bir_program_addr_labels_sorted p ==>
      bir_is_lifted_prog r mu mms p``,
 
-SIMP_TAC std_ss [bir_is_lifted_prog_LABELS_DISTINCT_def]);
+SIMP_TAC std_ss [bir_is_lifted_prog_LABELS_DISTINCT_def, bir_program_addr_labels_sorted_def] >>
+REPEAT STRIP_TAC >>
+`ALL_DISTINCT (FILTER IS_BL_Address (bir_labels_of_program p))` suffices_by METIS_TAC[] >>
 
-
-
+`ALL_DISTINCT (bir_label_addresses_of_program p)` by (
+  IRULE_TAC sortingTheory.SORTED_ALL_DISTINCT >>
+  Q.EXISTS_TAC `$<` >>
+  ASM_SIMP_TAC arith_ss [relationTheory.irreflexive_def, relationTheory.transitive_def]
+) >>
+FULL_SIMP_TAC std_ss [bir_label_addresses_of_program_def, bir_label_addresses_of_program_labels_def] >>
+METIS_TAC[ALL_DISTINCT_MAP]);
 
 
 val _ = export_theory();

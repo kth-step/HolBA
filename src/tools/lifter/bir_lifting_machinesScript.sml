@@ -8,6 +8,7 @@ open bir_mem_expTheory bir_bool_expTheory
 open bir_exp_liftingTheory
 open bir_temp_varsTheory
 open bir_programTheory
+open bir_program_labelsTheory;
 
 open arm8Theory arm8_stepTheory
 open m0Theory m0_stepTheory

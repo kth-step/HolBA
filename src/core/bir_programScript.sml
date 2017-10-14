@@ -17,14 +17,6 @@ val _ = Datatype `bir_label_t =
   | BL_Address bir_imm_t
 `;
 
-val IS_BL_Label_def = Define `
-  (IS_BL_Label (BL_Label _) = T) /\
-  (IS_BL_Label _ = F)`;
-
-val IS_BL_Address_def = Define `
-  (IS_BL_Address (BL_Address _) = T) /\
-  (IS_BL_Address _ = F)`;
-
 val _ = Datatype `bir_label_exp_t =
     BLE_Label bir_label_t
   | BLE_Exp bir_exp_t
