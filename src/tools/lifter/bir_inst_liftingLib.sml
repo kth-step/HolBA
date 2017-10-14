@@ -102,7 +102,7 @@ fun bir_inst_liftingExn_data_to_string (BILED_msg msg) = msg
   | bir_inst_liftingExn_data_to_string (BILED_lifting_failed t) =
       ("lifting of ``" ^ (term_to_string t) ^ "`` failed");
 
-val debug_trace = ref (0:int)
+val debug_trace = ref (1:int)
 val _ = register_trace ("bir_inst_lifting.DEBUG_LEVEL", debug_trace, 2)
 
 val sty_OK    = [FG Green];
@@ -1305,6 +1305,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     val (mu_b, mu_e) = ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
     val regions = [((Arbnum.fromInt 0x400570), true, instrs)]
 
+    val regions = [((Arbnum.fromInt 0x400570), true, List.take(instrs, 10))]
+
   *)
 
   local
@@ -1321,6 +1323,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
       bir_programTheory.bir_labels_of_program_def]
   in
 
+
   fun bir_lift_prog_gen ((mu_b : Arbnum.num), (mu_e : Arbnum.num)) = let
      val (mu_thm, mm_precond_thm) = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
   in
@@ -1332,10 +1335,16 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
               (if code_fl then (lc + List.length il, ld) else (lc, ld + List.length il)))
            (0, 0) regions
 
-      val _ = if (!debug_trace > 1) then print ("lifting " ^ (Int.toString (len_codes)) ^ " instructions and " ^ (Int.toString (len_data)) ^ " data entries\n") else ();
+
+      fun current_instr_string c d is_code pc hex_code = (
+           (Int.toString c) ^ "/" ^ (Int.toString len_codes) ^ " " ^
+           (if len_data > 0 then ((Int.toString d) ^ "/" ^ (Int.toString len_data) ^ " ") else "") ^
+           (if is_code then ": code \"" else ": data \"") ^
+           (hex_code ^ "\" @ 0x" ^ (Arbnum.toHexString pc)));
 
       val cache_r = ref lift_inst_cache_empty
-      val inst_no_r = ref 1;
+      val inst_no_r = ref 0;
+      val data_no_r = ref 0;
       val failing_inst_r = ref ([] : (num * exn option) list)
 
       val data_INTRO_THM' = MATCH_MP data_INTRO_THM mu_thm
@@ -1350,15 +1359,16 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
          val thm0 = SPEC mm_tm data_INTRO_THM'
          val thm1 = MP thm0 precond_thm
+         val _ = data_no_r := (!data_no_r) + 1
+         val _ = if (!debug_trace > 1) then (
+            print (current_instr_string (!inst_no_r) (!data_no_r) false pc hex_code); print "\n") else (if (!debug_trace = 1) then print "." else ());
       in thm1 end handle HOL_ERR _ =>
          raise (ERR "lift_data" ("lifting of hex-code '" ^ hex_code ^ "' failed, is the PC outside the protected memory region?"))
 
       fun lift_inst (hex_code, (c, pc, thmL, cache)) = let
         val hex_code' = String.map Char.toUpper hex_code
         val _ = if (!debug_trace > 1) then (
-           print ((Int.toString c) ^ "/" ^ (Int.toString len_codes) ^ ": ");
-           print (hex_code ^ " @ 0x" ^ (Arbnum.toHexString pc))) else ();
-
+           print (current_instr_string (c+1) (!data_no_r) true pc hex_code)) else (if (!debug_trace = 1) then print "." else ());
         val timer = (Time.now())
         val (res, ed) = (SOME (bir_lift_instr_mu (mu_thm, mm_precond_thm) cache pc hex_code), NONE) handle
                        bir_inst_liftingExn (_, d)  => (NONE, SOME d)
@@ -1406,6 +1416,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         thms
       end;
 
+      val _ = if (!debug_trace = 1) then print "bir_lift_prog " else ();
+
       val prog_dist_EMPTY_THM' = MATCH_MP prog_dist_EMPTY_THM mu_thm
       val merge_prog_distinct_thms =
          foldl (fn (thm1, thm2) =>
@@ -1415,17 +1427,36 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
       val basic_thms = List.map (fn (pc, code_fl, il) =>
          if code_fl then lift_code_region pc il else lift_data_region pc il) regions
 
-      val prog_dist_thm = merge_prog_distinct_thms (map merge_prog_distinct_thms (List.rev basic_thms))
-      val prog_dist_thm_clean =
-         PURE_REWRITE_RULE [listTheory.APPEND,
-          bir_subprogramTheory.bir_program_combine_def] prog_dist_thm
-
       val prog_thm = let
-        val thm0 = MATCH_MP prog_dist_ELIM_THM prog_dist_thm_clean
-        val (pre, _) = dest_imp_only (concl thm0)
-        val pre_thm = EQT_ELIM (EVAL pre)
-        val thm1 = MP thm0 pre_thm
-      in thm1 end
+        val _ = if (!debug_trace > 1) then (print ("merging code for instructions"))
+                else if (!debug_trace = 1) then (print "!") else ();
+        val timer = (Time.now())
+        val prog_dist_thm = merge_prog_distinct_thms (map merge_prog_distinct_thms (List.rev basic_thms))
+        val prog_dist_thm_clean =
+           PURE_REWRITE_RULE [listTheory.APPEND,
+            bir_subprogramTheory.bir_program_combine_def] prog_dist_thm
+
+        val prog_thm = let
+          val thm0 = MATCH_MP prog_dist_ELIM_THM prog_dist_thm_clean
+          val (pre, _) = dest_imp_only (concl thm0)
+          val pre_thm = EQT_ELIM (EVAL pre)
+          val thm1 = MP thm0 pre_thm
+        in thm1 end
+
+        val d_time = Time.- (Time.now(), timer);
+        val d_s = (Time.toString d_time);
+        val _ = if (!debug_trace > 1) then (print (" - " ^ d_s ^ " s\n")) else ();
+      in prog_thm end;
+
+      val d_time = Time.- (Time.now(), timer);
+      val d_s = (Time.toString d_time);
+
+      val _ = if (!debug_trace > 1) then
+        print ("Total time : " ^ d_s ^" s -") else ();
+      val _ = if (!debug_trace <> 0) then
+         (if (List.null (!failing_inst_r)) then print_with_style sty_OK " OK\n" else
+             print_with_style sty_FAIL "FAILED\n") else ();
+
     in
       (prog_thm, List.rev (!failing_inst_r))
     end

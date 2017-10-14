@@ -49,6 +49,7 @@ signature bir_inst_lifting = sig
   (* A whole program is given as a list of hex-codes. Moreover, the unchanged memory region
      and the start memory address need to be provided. Caches are used automatically.
      Some debugging can be enabled by setting the trace "bir_inst_lifting.DEBUG_LEVEL".
+     "0" means no-output, "1" minimal output and "2" verbose output. The default is "1".
      It returns the theorem that describes the lifted program as well as
      a list of instructions that could not be lifted. If the list of
      hex-codes contains data entries that are not supposed to be interpreted as instructions,
