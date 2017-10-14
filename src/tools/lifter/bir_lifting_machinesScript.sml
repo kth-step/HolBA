@@ -576,9 +576,10 @@ end);
 
 
 val arm8_bmr_label_thm = store_thm ("arm8_bmr_label_thm",
-``!ms n. (BL_Address (bmr_pc_lf arm8_bmr ms) = BL_Address (Imm64 (n2w n))) ==>
-         (ms.PC = n2w n)``,
-SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, arm8_bmr_EVAL]);
+``!ms n hc. (BL_Address (bmr_pc_lf arm8_bmr ms) = BL_Address_HC (Imm64 (n2w n)) hc) ==>
+            (ms.PC = n2w n)``,
+SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, arm8_bmr_EVAL,
+  BL_Address_HC_def]);
 
 
 val bmr_ms_mem_contains_ARM8 = store_thm ("bmr_ms_mem_contains_ARM8",

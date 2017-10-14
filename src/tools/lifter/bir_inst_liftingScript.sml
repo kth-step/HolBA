@@ -1631,16 +1631,16 @@ val bir_is_lifted_inst_prog_def = Define `
 (* The simplest and most common situation is that an instruction is implemented by
    a single block *)
 val bir_is_lifted_inst_prog_SINGLE_INTRO = store_thm ("bir_is_lifted_inst_prog_SINGLE_INTRO",
-``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) li mu mm (bl:'o bir_block_t) extra_cond.
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) li hc mu mm (bl:'o bir_block_t) extra_cond.
 
-  bir_is_lifted_inst_block r extra_cond (BL_Address li) mu mm bl ==>
+  bir_is_lifted_inst_block r extra_cond (BL_Address_HC li hc) mu mm bl ==>
   (bl.bb_label = BL_Address li) /\ (!ms. extra_cond ms) ==>
   bir_is_lifted_inst_prog r li mu mm (BirProgram [bl])``,
 
 
 SIMP_TAC (list_ss++bir_TYPES_ss) [bir_is_lifted_inst_block_def, bir_is_lifted_inst_prog_def,
   bir_is_valid_labels_def, bir_labels_of_program_def, bir_program_string_labels_guarded_def,
-  BL_recognisers] >>
+  BL_recognisers, BL_Address_HC_def] >>
 REPEAT STRIP_TAC >>
 Q.PAT_X_ASSUM `!ms bs p. _` (MP_TAC o Q.SPECL [`ms`, `bs`, `BirProgram [bl]`]) >>
 `?lo c bs'. (bir_exec_block (BirProgram [bl]) bl bs = (lo,c,bs'))` by

@@ -182,12 +182,12 @@ val bmr_rec_sanity_check_basic = let
     true
   end handle HOL_ERR _ => false;
 
-
   fun check_label_thm (r:bmr_rec) = let
      val thm = (#bmr_label_thm r);
      val (vl, b) = strip_forall (concl thm)
-     val _ = assert (fn l => length l = 2) vl
+     val _ = assert (fn l => length l = 3) vl
      val _ = assert (fn n => (type_of n = numSyntax.num)) (el 2 vl)
+     val _ = assert (fn n => (type_of n = stringSyntax.string_ty)) (el 3 vl)
 
      val (lhs_t, rhs_t) = dest_imp_only b
      val _ = assert is_eq lhs_t

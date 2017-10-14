@@ -302,7 +302,7 @@ Cases >> SIMP_TAC std_ss [IS_BL_Label_def, IS_BL_Address_def])
    This string carries no information. It is as an annotation by the
    instruction lifter. *)
 
-val BL_Address_for_hexcode_def = Define `BL_Address_for_hexcode b (hc:string) =
+val BL_Address_HC_def = Define `BL_Address_HC b (hc:string) =
   BL_Address b`
 
 
@@ -339,14 +339,14 @@ val BL_recognisers = store_thm ("BL_recognisers",
 ``(!l. (IS_BL_Label (BL_Label l))) /\
   (!l. ~(IS_BL_Label (BL_Address l))) /\
   (!b s. (IS_BL_Label (BL_Label_of_addr b s))) /\
-  (!l s. ~(IS_BL_Label (BL_Address_for_hexcode l s))) /\
+  (!l s. ~(IS_BL_Label (BL_Address_HC l s))) /\
   (!l. ~(IS_BL_Address (BL_Label l))) /\
   (!l. (IS_BL_Address (BL_Address l))) /\
   (!b s. ~(IS_BL_Address (BL_Label_of_addr b s))) /\
-  (!l s. IS_BL_Address (BL_Address_for_hexcode l s))``,
+  (!l s. IS_BL_Address (BL_Address_HC l s))``,
 
 SIMP_TAC std_ss [IS_BL_Label_def, IS_BL_Address_def, BL_Label_of_addr_def,
-  BL_Address_for_hexcode_def]);
+  BL_Address_HC_def]);
 
 
 val dest_BL_Label_def = Define `dest_BL_Label (BL_Label l) = l`
@@ -357,10 +357,10 @@ val BL_destructors = store_thm ("BL_destructors",
 ``(!l. dest_BL_Label (BL_Label l) = l) /\
   (!b s. dest_BL_Label (BL_Label_of_addr b s) = (b2s b ++ #"_"::s)) /\
   (!b. dest_BL_Address (BL_Address b) = b) /\
-  (!b s. dest_BL_Address (BL_Address_for_hexcode b s) = b)``,
+  (!b s. dest_BL_Address (BL_Address_HC b s) = b)``,
 
 SIMP_TAC std_ss [dest_BL_Label_def, BL_Label_of_addr_def,
-  dest_BL_Address_def, BL_Address_for_hexcode_def]);
+  dest_BL_Address_def, BL_Address_HC_def]);
 
 
 
@@ -397,7 +397,7 @@ val bir_label_addresses_of_program_REWRS = store_thm ("bir_label_addresses_of_pr
                bir_label_addresses_of_program_labels ls)) /\
     (!i ls. (bir_label_addresses_of_program_labels ((BL_Address i)::ls) =
                (b2n i)::(bir_label_addresses_of_program_labels ls))) /\
-    (!i s ls. (bir_label_addresses_of_program_labels ((BL_Address_for_hexcode i s)::ls) =
+    (!i s ls. (bir_label_addresses_of_program_labels ((BL_Address_HC i s)::ls) =
                (b2n i)::(bir_label_addresses_of_program_labels ls)))``,
 
 SIMP_TAC list_ss [bir_label_addresses_of_program_labels_def,

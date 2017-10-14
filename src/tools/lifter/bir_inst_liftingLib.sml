@@ -371,7 +371,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
      (* instantiate pc and compute label *)
      val (label_tm, pc_thm) = let
-        val thm0 = SPECL [ms_v, pc_num_var] (#bmr_label_thm mr);
+        val thm0 = SPECL [ms_v, pc_num_var, stringSyntax.fromMLstring hex_code] (#bmr_label_thm mr);
         val tm = rhs (#1 (dest_imp_only (concl thm0)))
      in (tm, UNDISCH thm0) end handle HOL_ERR _ =>
        raise (bir_inst_liftingExn (hex_code, BILED_msg "label thm failed"));
@@ -1115,7 +1115,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
        bir_is_lifted_inst_prog_SINGLE_INTRO
     val bir_block_ss = rewrites (type_rws ``:'o bir_block_t``);
 
-    val pre_conv = SIMP_CONV (std_ss++bir_block_ss) []
+    val pre_conv = SIMP_CONV (std_ss++bir_block_ss) [BL_Address_HC_def]
   in
 
   (* Currently only single block programs are supported. This should be
@@ -1125,8 +1125,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         [] => raise (bir_inst_liftingAuxExn (BILED_msg "merging block theorems failed, list of theorems is empty; this should be prevented by the control flow; this is a bug"))
       | [block_thm] => let
            val (_, extra_tm, l_tm, mu_tm, mm_tm, bl_tm) = dest_bir_is_lifted_inst_block (concl block_thm)
-           val li_tm = bir_programSyntax.dest_BL_Address l_tm
-           val thm0 = SPECL [li_tm, mu_tm, mm_tm, bl_tm, extra_tm] single_inst_INTRO_THM
+           val li_tm = rand (rator l_tm)
+           val hc_tm = rand l_tm
+           val thm0 = SPECL [li_tm, hc_tm, mu_tm, mm_tm, bl_tm, extra_tm] single_inst_INTRO_THM
            val thm1 = MP thm0 block_thm
            val (pre, _)  = dest_imp_only (concl thm1)
            val pre_thm = EQT_ELIM (pre_conv pre)
