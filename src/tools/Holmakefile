@@ -8,17 +8,13 @@ default: all
 TARGETS = $(patsubst %.sml,%.uo,$(SMLFILES))
 
 ifdef POLY
-HOLHEAP = ./l3/HolBA_l3-heap
+HOLHEAP = ./lifter/HolBALifter-heap
 NEWHOLHEAP = HolBATools-heap
 EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
 
-HEAPSRC = $(wildcard ./lifter/*Script.sml) \
-          $(wildcard ./lifter/*Lib.sml)
+HEAPINC  =
 
-HEAPINC  = $(patsubst %Lib.sml,%Lib, $(patsubst %Script.sml,%Theory,$(HEAPSRC)))
-HEAPDEPS = $(patsubst %Lib.sml,%Lib.uo, $(patsubst %Script.sml,%Theory.uo,$(HEAPSRC)))
-
-$(NEWHOLHEAP): $(HEAPDEPS)
+$(NEWHOLHEAP): $(HOLHEAP)
 	$(protect $(HOLDIR)/bin/buildheap) -b $(HOLHEAP) -o $(NEWHOLHEAP) $(HEAPINC)
 
 endif
