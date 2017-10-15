@@ -1317,9 +1317,9 @@ val bir_is_lifted_inst_block_COMPUTE_updates_UPDATES_VARS_def =
 
 val bir_is_lifted_inst_block_COMPUTE_updates_FULL_INTRO = store_thm (
 "bir_is_lifted_inst_block_COMPUTE_updates_FULL_INTRO",
-``!r bs mem_up imm_ups all_var_names updates_imm update_mem_opt eup eup_temp.
+``!r bs mem_up imm_ups all_var_names updates_imm update_mem_opt.
 
-bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL r bs mem_up imm_ups all_var_names updates_imm update_mem_opt ==>
+bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL r bs mem_up imm_ups all_var_names updates_imm update_mem_opt ==> !eup eup_temp.
 
      ((!v up v'.
         eup_temp ==>
