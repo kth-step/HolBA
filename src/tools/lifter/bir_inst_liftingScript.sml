@@ -1464,15 +1464,15 @@ val bir_is_lifted_inst_block_COMPUTE_mm_WF_REWR = store_thm ("bir_is_lifted_inst
 
 SIMP_TAC arith_ss [bir_is_lifted_inst_block_COMPUTE_mm_WF_def,
   WF_bmr_ms_mem_contains_def, bmr_ms_mem_contains_interval_def,
-  WI_wf_size_compute, wordsTheory.word_ls_n2w, word_1comp_n2w] >>
+  WI_wf_size_compute, word_ls_n2w, word_1comp_n2w] >>
 REPEAT STRIP_TAC >>
 `WI_wf (WI_end ((n2w mu_b):'a word) (n2w mu_e))` by FULL_SIMP_TAC std_ss [WI_wfe_def] >>
 `WI_wf (WI_size ((n2w mm_b):'a word) (n2w (LENGTH ml)))` by (
   ASM_SIMP_TAC arith_ss [bir_interval_expTheory.WI_wf_size_compute, word_1comp_n2w,
-    wordsTheory.word_ls_n2w]
+    word_ls_n2w]
 ) >>
 FULL_SIMP_TAC arith_ss [WI_size_def, WI_is_sub_compute,
-  wordsTheory.word_ls_n2w, word_add_n2w]);
+  word_ls_n2w, word_add_n2w]);
 
 
 
@@ -2079,6 +2079,203 @@ REPEAT STRIP_TAC >>
 ) >>
 FULL_SIMP_TAC std_ss [bir_label_addresses_of_program_def, bir_label_addresses_of_program_labels_def] >>
 METIS_TAC[ALL_DISTINCT_MAP]);
+
+
+
+(* ----------------------*)
+(* Merging mem regions   *)
+(* ----------------------*)
+
+val bmr_mem_contains_regions_EQUIV_def = Define `
+  bmr_mem_contains_regions_EQUIV r mu mms1 mms2 <=>
+  (EVERY (\mm. WF_bmr_ms_mem_contains mm /\
+               WI_is_sub (bmr_ms_mem_contains_interval mm) mu) mms1 =
+   EVERY (\mm. WF_bmr_ms_mem_contains mm /\
+               WI_is_sub (bmr_ms_mem_contains_interval mm) mu) mms2) /\
+  (!ms. EVERY (bmr_ms_mem_contains r ms) mms1 =
+        EVERY (bmr_ms_mem_contains r ms) mms2)`;
+
+
+val bir_is_lifted_prog_MMS_EQUIV = store_thm ("bir_is_lifted_prog_MMS_EQUIV",
+
+``!r mu p mms1 mms2.
+       bmr_mem_contains_regions_EQUIV r mu mms1 mms2 ==>
+       (bir_is_lifted_prog r mu mms1 p <=> bir_is_lifted_prog r mu mms2 p)``,
+
+SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_is_lifted_prog_def,
+  bmr_mem_contains_regions_EQUIV_def]);
+
+
+val bmr_mem_contains_regions_EQUIV_REFL = store_thm ("bmr_mem_contains_regions_EQUIV_REFL",
+  ``!r mu mms. bmr_mem_contains_regions_EQUIV r mu mms mms``,
+SIMP_TAC std_ss [bmr_mem_contains_regions_EQUIV_def]);
+
+val bmr_mem_contains_regions_EQUIV_SYM = store_thm ("bmr_mem_contains_regions_EQUIV_SYM",
+  ``!r mu mms1 mms2. bmr_mem_contains_regions_EQUIV r mu mms1 mms2 <=>
+                     bmr_mem_contains_regions_EQUIV r mu mms2 mms1``,
+SIMP_TAC std_ss [bmr_mem_contains_regions_EQUIV_def] >> METIS_TAC[]);
+
+val bmr_mem_contains_regions_EQUIV_TRANS = store_thm ("bmr_mem_contains_regions_EQUIV_TRANS",
+  ``!r mu mms1 mms2 mms3.
+       bmr_mem_contains_regions_EQUIV r mu mms1 mms2 ==>
+       bmr_mem_contains_regions_EQUIV r mu mms2 mms3 ==>
+       bmr_mem_contains_regions_EQUIV r mu mms1 mms3``,
+SIMP_TAC std_ss [bmr_mem_contains_regions_EQUIV_def] >> METIS_TAC[]);
+
+
+val bmr_mem_contains_regions_EQUIV_APPEND = store_thm ("bmr_mem_contains_regions_EQUIV_APPEND",
+  ``!r mu mms1 mms1' mms2 mms2'.
+       bmr_mem_contains_regions_EQUIV r mu mms1 mms1' ==>
+       bmr_mem_contains_regions_EQUIV r mu mms2 mms2' ==>
+       bmr_mem_contains_regions_EQUIV r mu (mms1++mms2) (mms1'++mms2')``,
+SIMP_TAC std_ss [bmr_mem_contains_regions_EQUIV_def, EVERY_APPEND] >> METIS_TAC[]);
+
+
+val bmr_mem_contains_regions_EQUIV_PERM = store_thm ("bmr_mem_contains_regions_EQUIV_PERM",
+  ``!r mu mms1 mms2.
+       PERM mms1 mms2 ==>
+       bmr_mem_contains_regions_EQUIV r mu mms1 mms2``,
+SIMP_TAC std_ss [bmr_mem_contains_regions_EQUIV_def, EVERY_MEM] >> METIS_TAC[sortingTheory.MEM_PERM]);
+
+
+val bmr_mem_contains_APPEND = store_thm ("bmr_mem_contains_APPEND",
+``!r ms b l1 l2. bmr_ms_mem_contains r ms (b, (l1 ++ l2)) <=>
+  bmr_ms_mem_contains r ms (b, l1) /\
+  bmr_ms_mem_contains r ms (b + n2w (LENGTH l1), l2)``,
+
+NTAC 2 GEN_TAC >>
+Induct_on `l1` >- SIMP_TAC list_ss [bmr_ms_mem_contains_def, WORD_ADD_0] >>
+
+ASM_SIMP_TAC (list_ss++wordsLib.WORD_ss++boolSimps.EQUIV_EXTRACT_ss) [bmr_ms_mem_contains_def, n2w_SUC]);
+
+
+val WI_MEM_bmr_ms_mem_contains_interval_APPEND = store_thm ("WI_MEM_bmr_ms_mem_contains_interval_APPEND",
+``!b l1 (l2 : 'b word list) (w:'a word).
+   ((w2n b + (LENGTH (l1 ++ l2))) < dimword (:'a)) ==>
+
+  (WI_MEM w (bmr_ms_mem_contains_interval (b,l1 ++ l2)) <=>
+  WI_MEM w (bmr_ms_mem_contains_interval (b, l1)) \/
+  WI_MEM w (bmr_ms_mem_contains_interval (b + n2w (LENGTH l1), l2)))``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [bmr_ms_mem_contains_interval_def, WI_size_def, WI_MEM_def] >>
+Cases_on `b` >> Cases_on `w` >>
+rename1 `n2w b <=+ n2w w` >>
+ASM_SIMP_TAC list_ss [word_ls_n2w, word_add_n2w,
+  n2w_11, word_lo_n2w, w2n_n2w]);
+
+
+
+val bmr_mem_contains_regions_EQUIV_merge2 = store_thm ("bmr_mem_contains_regions_EQUIV_merge2",
+``!r mu b1 l1 b2 l2.
+
+    ((b1:'a word) + n2w (LENGTH l1) = b2) ==>
+    (bmr_mem_contains_regions_EQUIV r mu [(b1, l1); (b2, l2)] [(b1, l1++l2)])``,
+
+SIMP_TAC list_ss [bmr_mem_contains_regions_EQUIV_def,
+  bmr_ms_mem_contains_def, bmr_mem_contains_APPEND,
+  WF_bmr_ms_mem_contains_ALT_DEF] >>
+REPEAT GEN_TAC >>
+Cases_on `b1` >> rename1 `b1 < dimword _` >>
+ASM_SIMP_TAC (arith_ss++boolSimps.CONJ_ss) [w2n_n2w, word_add_n2w] >>
+SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss) [] >>
+STRIP_TAC >>
+
+MP_TAC (Q.SPECL [`n2w b1`, `l1`, `l2`] WI_MEM_bmr_ms_mem_contains_interval_APPEND) >>
+ASM_SIMP_TAC (list_ss++boolSimps.EQUIV_EXTRACT_ss) [w2n_n2w, WI_is_sub_def, DISJ_IMP_THM, FORALL_AND_THM, word_add_n2w]);
+
+
+val bmr_mem_contains_regions_EQUIV_MERGE_def = Define
+  `(bmr_mem_contains_regions_EQUIV_MERGE acc NONE [] = REVERSE acc) /\
+   (bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b, l, b')) [] = REVERSE ((b, l)::acc)) /\
+
+   (bmr_mem_contains_regions_EQUIV_MERGE acc NONE ((b, l)::mms) =
+    bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b, l, b + n2w (LENGTH l))) mms) /\
+
+   (bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b, l, b')) ((b2, l2)::mms) =
+      if (b' = b2) then
+        bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b, (l ++ l2), (b2+n2w (LENGTH l2)))) mms
+      else
+        bmr_mem_contains_regions_EQUIV_MERGE ((b,l)::acc) (SOME (b2, l2, (b2+n2w (LENGTH l2)))) mms)`
+
+
+val bmr_mem_contains_regions_EQUIV_MERGE_THM_RAW = store_thm ("bmr_mem_contains_regions_EQUIV_MERGE_THM_RAW",
+  ``!r mu acc ci mms.
+      (case ci of NONE => T | SOME (b, l, b') => (b' = b + n2w (LENGTH l))) ==>
+      bmr_mem_contains_regions_EQUIV r mu (case ci of NONE => ((REVERSE acc)++mms) | SOME (b, l, _) =>
+         ((REVERSE acc)++(b, l)::mms))
+        (bmr_mem_contains_regions_EQUIV_MERGE acc ci mms)``,
+
+GEN_TAC >> GEN_TAC >>
+Induct_on `mms` >- (
+  REPEAT GEN_TAC >>
+  REPEAT CASE_TAC >> (
+    SIMP_TAC list_ss [bmr_mem_contains_regions_EQUIV_MERGE_def,
+      bmr_mem_contains_regions_EQUIV_REFL]
+  )
+) >>
+REPEAT STRIP_TAC >>
+rename1 `mm::mms` >>
+`?b2 l2. mm = (b2, l2)` by METIS_TAC[pairTheory.PAIR] >>
+`(ci = NONE) \/ (?b l. ci = SOME (b, l, b + n2w (LENGTH l)))` by (
+  Q.PAT_X_ASSUM `option_CASE ci _ _` MP_TAC >>
+  REPEAT CASE_TAC
+) >- (
+  Q.PAT_X_ASSUM `!acc ci. _` (MP_TAC o Q.SPECL [`acc`, `SOME (b2, l2, b2 + n2w (LENGTH l2))`]) >>
+  FULL_SIMP_TAC std_ss [bmr_mem_contains_regions_EQUIV_MERGE_def, pairTheory.pair_case_thm]
+) >- (
+  FULL_SIMP_TAC std_ss [bmr_mem_contains_regions_EQUIV_MERGE_def, pairTheory.pair_case_thm] >>
+  Cases_on `b + n2w (LENGTH l) = b2` >- (
+    Q.PAT_X_ASSUM `!acc ci. _` (MP_TAC o Q.SPECL [`acc`, `SOME (b, l ++ l2, b2 + n2w (LENGTH l2))`]) >>
+    REPEAT BasicProvers.VAR_EQ_TAC >>
+    ASM_SIMP_TAC list_ss [pairTheory.pair_case_thm, GSYM word_add_n2w, wordsTheory.WORD_ADD_ASSOC] >>
+    REPEAT STRIP_TAC >>
+    `bmr_mem_contains_regions_EQUIV r mu
+       (REVERSE acc ++  (b,l)::(b + n2w (LENGTH l),l2)::mms)
+       (REVERSE acc ++ (b,l ++ l2)::mms)` suffices_by METIS_TAC [
+       bmr_mem_contains_regions_EQUIV_TRANS, bmr_mem_contains_regions_EQUIV_SYM] >>
+
+    `bmr_mem_contains_regions_EQUIV r mu [(b,l); (b + n2w (LENGTH l),l2)] [(b, l ++ l2)]` by (
+       MATCH_MP_TAC bmr_mem_contains_regions_EQUIV_merge2 >>
+       REWRITE_TAC []
+    ) >>
+    IRULE_TAC bmr_mem_contains_regions_EQUIV_APPEND >- (
+      REWRITE_TAC [bmr_mem_contains_regions_EQUIV_REFL]
+    ) >>
+    MP_TAC (Q.SPECL [`r`, `mu`,
+      `[(b,l); (b + n2w (LENGTH l),l2)]`, `[(b,l ++ l2)]`, `mms`, `mms`]
+      bmr_mem_contains_regions_EQUIV_APPEND) >>
+    ASM_SIMP_TAC list_ss [bmr_mem_contains_regions_EQUIV_REFL]
+  ) >- (
+    ASM_SIMP_TAC std_ss [] >>
+    Q.PAT_X_ASSUM `!acc ci. _` (MP_TAC o Q.SPECL [`(b, l)::acc`, `SOME (b2, l2, b2 + n2w (LENGTH l2))`]) >>
+    ASM_SIMP_TAC std_ss [pairTheory.pair_case_thm,
+      GSYM listTheory.APPEND_ASSOC, listTheory.REVERSE_DEF,
+      listTheory.APPEND]
+  )
+));
+
+
+
+val bmr_mem_contains_regions_EQUIV_MERGE_THM = store_thm ("bmr_mem_contains_regions_EQUIV_MERGE_THM",
+  ``!r mu mms.
+      bmr_mem_contains_regions_EQUIV r mu mms
+        (bmr_mem_contains_regions_EQUIV_MERGE [] NONE mms)``,
+
+REPEAT GEN_TAC >>
+MP_TAC (Q.SPECL [`r`, `mu`, `[]`, `NONE`, `mms`] bmr_mem_contains_regions_EQUIV_MERGE_THM_RAW) >>
+SIMP_TAC list_ss []);
+
+
+val bir_is_lifted_prog_MMS_EQUIV_COMPUTE = store_thm ("bir_is_lifted_prog_MMS_EQUIV_COMPUTE",
+``!(r : ('addr_ty, 'val_ty, 'ms) bir_lifting_machine_rec_t) mu (p : 'o bir_program_t) mms1.
+       bir_is_lifted_prog r mu mms1 p ==>
+       (!mms2. (bmr_mem_contains_regions_EQUIV_MERGE [] NONE mms1 = mms2) ==>
+               bir_is_lifted_prog r mu mms2 p)``,
+
+METIS_TAC[bmr_mem_contains_regions_EQUIV_MERGE_THM, bmr_mem_contains_regions_EQUIV_SYM,
+  bir_is_lifted_prog_MMS_EQUIV]);
+
 
 
 val _ = export_theory();

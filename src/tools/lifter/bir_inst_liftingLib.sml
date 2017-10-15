@@ -1317,6 +1317,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     val prog_dist_ELIM_THM = inst_bmr_thm false bir_is_lifted_prog_LABELS_DISTINCT_ELIM
     val prog_dist_INST_THM = inst_bmr_thm false bir_is_lifted_prog_LABELS_DISTINCT_SINGLE_INST
 
+    val prog_MMS_THM = inst_bmr_thm false bir_is_lifted_prog_MMS_EQUIV_COMPUTE
+
     val bir_block_rewrs = type_rws ``:'o bir_block_t``;
 
     val dist_labels_CONV = SIMP_CONV (list_ss++HolBACoreSimps.bir_TYPES_ss++wordsLib.WORD_ss) [
@@ -1448,6 +1450,26 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         val _ = if (!debug_trace > 1) then (print (" - " ^ d_s ^ " s\n")) else ();
       in prog_thm end;
 
+
+      val prog_thm2 = let
+        val _ = if (!debug_trace > 1) then (print ("merging memory-regions"))
+                else if (!debug_trace = 1) then (print "!") else ();
+        val timer = (Time.now())
+
+        val (_, mu_tm, mms_tm, p_tm) = dest_bir_is_lifted_prog (concl prog_thm)
+        val thm0 = SPECL [mu_tm, p_tm, mms_tm] prog_MMS_THM
+        val thm1 = MP thm0 prog_thm
+        val pre = lhs (fst (dest_imp_only (snd (strip_forall (concl thm1)))))
+        val pre_thm = EVAL pre
+        val mms'_tm = rhs (concl pre_thm)
+        val thm2 = MP (SPEC mms'_tm thm1) pre_thm
+
+        val d_time = Time.- (Time.now(), timer);
+        val d_s = (Time.toString d_time);
+        val _ = if (!debug_trace > 1) then (print (" - " ^ d_s ^ " s\n")) else ();
+      in thm2 end;
+
+
       val d_time = Time.- (Time.now(), timer);
       val d_s = (Time.toString d_time);
 
@@ -1458,7 +1480,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
              print_with_style sty_FAIL "FAILED\n") else ();
 
     in
-      (prog_thm, List.rev (!failing_inst_r))
+      (prog_thm2, List.rev (!failing_inst_r))
     end
   end;
 
