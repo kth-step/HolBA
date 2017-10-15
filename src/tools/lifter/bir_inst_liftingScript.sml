@@ -2008,14 +2008,14 @@ FULL_SIMP_TAC std_ss [bmr_ms_mem_unchanged_def]);
 
 
 val bir_is_lifted_prog_LABELS_DISTINCT_def = Define
-  `bir_is_lifted_prog_LABELS_DISTINCT r mu mms p <=>
-   (ALL_DISTINCT (FILTER IS_BL_Address (bir_labels_of_program p)) ==>
-    bir_is_lifted_prog r mu mms p)`;
+  `bir_is_lifted_prog_LABELS_DISTINCT r mu mms ps <=>
+   (ALL_DISTINCT (FILTER IS_BL_Address (bir_labels_of_program (BirProgram (FLAT ps)))) ==>
+    bir_is_lifted_prog r mu (FLAT mms) (BirProgram (FLAT ps)))`;
 
 val bir_is_lifted_prog_LABELS_DISTINCT_SINGLE_INST = store_thm ("bir_is_lifted_prog_LABELS_DISTINCT_SINGLE_INST",
-``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mm li (p:'o bir_program_t).
-     bir_is_lifted_inst_prog r li mu mm p ==>
-     bir_is_lifted_prog_LABELS_DISTINCT r mu [mm] p``,
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mm li (bl:'o bir_block_t list).
+     bir_is_lifted_inst_prog r li mu mm (BirProgram bl) ==>
+     bir_is_lifted_prog_LABELS_DISTINCT r mu [[mm]] [bl]``,
 SIMP_TAC list_ss [bir_is_lifted_prog_LABELS_DISTINCT_def] >>
 METIS_TAC[bir_is_lifted_prog_SINGLE_INST]);
 
@@ -2032,7 +2032,7 @@ val bir_is_lifted_prog_LABELS_DISTINCT_DATA = store_thm ("bir_is_lifted_prog_LAB
 ``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mm.
      WI_wfe mu ==>
      bir_is_lifted_inst_block_COMPUTE_mm_WF mu mm ==>
-     bir_is_lifted_prog_LABELS_DISTINCT r mu [mm] ((BirProgram []):'o bir_program_t)``,
+     bir_is_lifted_prog_LABELS_DISTINCT r mu [[mm]] ([]:'o bir_block_t list list)``,
 
 SIMP_TAC list_ss [bir_is_lifted_prog_LABELS_DISTINCT_def,
   bir_is_lifted_prog_NO_INST, bir_is_lifted_inst_block_COMPUTE_mm_WF_def]);
@@ -2041,7 +2041,7 @@ SIMP_TAC list_ss [bir_is_lifted_prog_LABELS_DISTINCT_def,
 val bir_is_lifted_prog_LABELS_DISTINCT_EMPTY = store_thm ("bir_is_lifted_prog_LABELS_DISTINCT_EMPTY",
 ``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mm.
      WI_wfe mu ==>
-     bir_is_lifted_prog_LABELS_DISTINCT r mu [] ((BirProgram []):'o bir_program_t)``,
+     bir_is_lifted_prog_LABELS_DISTINCT r mu [] ([]:'o bir_block_t list list)``,
 
 SIMP_TAC list_ss [bir_is_lifted_prog_LABELS_DISTINCT_def,
   bir_is_lifted_prog_def, bir_labels_of_program_def,
@@ -2049,27 +2049,32 @@ SIMP_TAC list_ss [bir_is_lifted_prog_LABELS_DISTINCT_def,
 
 
 val bir_is_lifted_prog_LABELS_DISTINCT_UNION = store_thm ("bir_is_lifted_prog_LABELS_DISTINCT_UNION",
-``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mms1 mms2 (p1 : 'o bir_program_t) p2.
-     bir_is_lifted_prog_LABELS_DISTINCT r mu mms1 p1 ==>
-     bir_is_lifted_prog_LABELS_DISTINCT r mu mms2 p2 ==>
-     bir_is_lifted_prog_LABELS_DISTINCT r mu (mms1++mms2) (bir_program_combine p1 p2)``,
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mms1 mms2 (ps1 : 'o bir_block_t list list) ps2.
+     bir_is_lifted_prog_LABELS_DISTINCT r mu mms1 ps1 ==>
+     bir_is_lifted_prog_LABELS_DISTINCT r mu mms2 ps2 ==>
+     bir_is_lifted_prog_LABELS_DISTINCT r mu (mms1++mms2) (ps1 ++ ps2)``,
 
-SIMP_TAC std_ss [bir_is_lifted_prog_LABELS_DISTINCT_def, bir_labels_of_program_PROGRAM_COMBINE,
-  ALL_DISTINCT_APPEND] >>
+SIMP_TAC list_ss [bir_is_lifted_prog_LABELS_DISTINCT_def] >>
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [ALL_DISTINCT_APPEND, FILTER_APPEND, MEM_FILTER,
-  IS_BL_Address_EXISTS, PULL_EXISTS] >>
+`BirProgram (FLAT ps1 ++ FLAT ps2) = bir_program_combine
+  (BirProgram (FLAT ps1)) (BirProgram (FLAT ps2))` by SIMP_TAC std_ss [bir_program_combine_def] >>
+
+FULL_SIMP_TAC std_ss [bir_labels_of_program_PROGRAM_COMBINE, FILTER_APPEND, ALL_DISTINCT_APPEND,
+  MEM_FILTER, IS_BL_Address_EXISTS, PULL_EXISTS] >>
 METIS_TAC[bir_is_lifted_prog_UNION]);
 
 
 val bir_is_lifted_prog_LABELS_DISTINCT_ELIM = store_thm ("bir_is_lifted_prog_LABELS_DISTINCT_ELIM",
-``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mms (p : 'o bir_program_t).
-     bir_is_lifted_prog_LABELS_DISTINCT r mu mms p ==>
+``!(r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) mu mmss (ps : 'o bir_block_t list list).
+     bir_is_lifted_prog_LABELS_DISTINCT r mu mmss ps ==>
+     !p mms. (BirProgram (FLAT ps) = p) ==>
+             (FLAT mmss = mms) ==>
      bir_program_addr_labels_sorted p ==>
      bir_is_lifted_prog r mu mms p``,
 
 SIMP_TAC std_ss [bir_is_lifted_prog_LABELS_DISTINCT_def, bir_program_addr_labels_sorted_def] >>
 REPEAT STRIP_TAC >>
+Q.ABBREV_TAC `p = BirProgram (FLAT ps)` >>
 `ALL_DISTINCT (FILTER IS_BL_Address (bir_labels_of_program p))` suffices_by METIS_TAC[] >>
 
 `ALL_DISTINCT (bir_label_addresses_of_program p)` by (
@@ -2187,23 +2192,23 @@ ASM_SIMP_TAC (list_ss++boolSimps.EQUIV_EXTRACT_ss) [w2n_n2w, WI_is_sub_def, DISJ
 
 val bmr_mem_contains_regions_EQUIV_MERGE_def = Define
   `(bmr_mem_contains_regions_EQUIV_MERGE acc NONE [] = REVERSE acc) /\
-   (bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b, l, b')) [] = REVERSE ((b, l)::acc)) /\
+   (bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b, l, b')) [] = REVERSE ((b, FLAT (REVERSE l))::acc)) /\
 
    (bmr_mem_contains_regions_EQUIV_MERGE acc NONE ((b, l)::mms) =
-    bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b, l, b + n2w (LENGTH l))) mms) /\
+    bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b, [l], b + n2w (LENGTH l))) mms) /\
 
    (bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b, l, b')) ((b2, l2)::mms) =
       if (b' = b2) then
-        bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b, (l ++ l2), (b2+n2w (LENGTH l2)))) mms
+        bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b, l2::l, (b2+n2w (LENGTH l2)))) mms
       else
-        bmr_mem_contains_regions_EQUIV_MERGE ((b,l)::acc) (SOME (b2, l2, (b2+n2w (LENGTH l2)))) mms)`
+        bmr_mem_contains_regions_EQUIV_MERGE ((b,FLAT (REVERSE l))::acc) (SOME (b2, [l2], (b2+n2w (LENGTH l2)))) mms)`
 
 
 val bmr_mem_contains_regions_EQUIV_MERGE_THM_RAW = store_thm ("bmr_mem_contains_regions_EQUIV_MERGE_THM_RAW",
   ``!r mu acc ci mms.
-      (case ci of NONE => T | SOME (b, l, b') => (b' = b + n2w (LENGTH l))) ==>
+      (case ci of NONE => T | SOME (b, l, b') => (b' = b + n2w (LENGTH (FLAT l)))) ==>
       bmr_mem_contains_regions_EQUIV r mu (case ci of NONE => ((REVERSE acc)++mms) | SOME (b, l, _) =>
-         ((REVERSE acc)++(b, l)::mms))
+         ((REVERSE acc)++(b, FLAT (REVERSE l))::mms))
         (bmr_mem_contains_regions_EQUIV_MERGE acc ci mms)``,
 
 GEN_TAC >> GEN_TAC >>
@@ -2217,40 +2222,40 @@ Induct_on `mms` >- (
 REPEAT STRIP_TAC >>
 rename1 `mm::mms` >>
 `?b2 l2. mm = (b2, l2)` by METIS_TAC[pairTheory.PAIR] >>
-`(ci = NONE) \/ (?b l. ci = SOME (b, l, b + n2w (LENGTH l)))` by (
+`(ci = NONE) \/ (?b l. ci = SOME (b, l, b + n2w (LENGTH (FLAT l))))` by (
   Q.PAT_X_ASSUM `option_CASE ci _ _` MP_TAC >>
   REPEAT CASE_TAC
 ) >- (
-  Q.PAT_X_ASSUM `!acc ci. _` (MP_TAC o Q.SPECL [`acc`, `SOME (b2, l2, b2 + n2w (LENGTH l2))`]) >>
-  FULL_SIMP_TAC std_ss [bmr_mem_contains_regions_EQUIV_MERGE_def, pairTheory.pair_case_thm]
+  Q.PAT_X_ASSUM `!acc ci. _` (MP_TAC o Q.SPECL [`acc`, `SOME (b2, [l2], b2 + n2w (LENGTH l2))`]) >>
+  FULL_SIMP_TAC list_ss [bmr_mem_contains_regions_EQUIV_MERGE_def, pairTheory.pair_case_thm]
 ) >- (
   FULL_SIMP_TAC std_ss [bmr_mem_contains_regions_EQUIV_MERGE_def, pairTheory.pair_case_thm] >>
-  Cases_on `b + n2w (LENGTH l) = b2` >- (
-    Q.PAT_X_ASSUM `!acc ci. _` (MP_TAC o Q.SPECL [`acc`, `SOME (b, l ++ l2, b2 + n2w (LENGTH l2))`]) >>
+  Cases_on `b + n2w (LENGTH (FLAT l)) = b2` >- (
+    Q.PAT_X_ASSUM `!acc ci. _` (MP_TAC o Q.SPECL [`acc`, `SOME (b, l2::l, b2 + n2w (LENGTH l2))`]) >>
     REPEAT BasicProvers.VAR_EQ_TAC >>
-    ASM_SIMP_TAC list_ss [pairTheory.pair_case_thm, GSYM word_add_n2w, wordsTheory.WORD_ADD_ASSOC] >>
+    ASM_SIMP_TAC (list_ss++wordsLib.WORD_ss) [pairTheory.pair_case_thm, GSYM word_add_n2w] >>
     REPEAT STRIP_TAC >>
     `bmr_mem_contains_regions_EQUIV r mu
-       (REVERSE acc ++  (b,l)::(b + n2w (LENGTH l),l2)::mms)
-       (REVERSE acc ++ (b,l ++ l2)::mms)` suffices_by METIS_TAC [
+       (REVERSE acc ++ (b,FLAT (REVERSE l))::(b + n2w (LENGTH (FLAT l)),l2)::mms)
+       (REVERSE acc ++ (b,FLAT (REVERSE l) ++ l2)::mms)` suffices_by METIS_TAC [
        bmr_mem_contains_regions_EQUIV_TRANS, bmr_mem_contains_regions_EQUIV_SYM] >>
 
-    `bmr_mem_contains_regions_EQUIV r mu [(b,l); (b + n2w (LENGTH l),l2)] [(b, l ++ l2)]` by (
+    `bmr_mem_contains_regions_EQUIV r mu [(b,FLAT (REVERSE l)); (b + n2w (LENGTH (FLAT l)),l2)] [(b, FLAT (REVERSE l) ++ l2)]` by (
        MATCH_MP_TAC bmr_mem_contains_regions_EQUIV_merge2 >>
-       REWRITE_TAC []
+       ASM_SIMP_TAC list_ss [LENGTH_FLAT, MAP_REVERSE, rich_listTheory.SUM_REVERSE]
     ) >>
     IRULE_TAC bmr_mem_contains_regions_EQUIV_APPEND >- (
       REWRITE_TAC [bmr_mem_contains_regions_EQUIV_REFL]
     ) >>
     MP_TAC (Q.SPECL [`r`, `mu`,
-      `[(b,l); (b + n2w (LENGTH l),l2)]`, `[(b,l ++ l2)]`, `mms`, `mms`]
+      `[(b,FLAT (REVERSE l)); (b + n2w (LENGTH (FLAT l)),l2)]`, `[(b,(FLAT (REVERSE l)) ++ l2)]`, `mms`, `mms`]
       bmr_mem_contains_regions_EQUIV_APPEND) >>
     ASM_SIMP_TAC list_ss [bmr_mem_contains_regions_EQUIV_REFL]
   ) >- (
     ASM_SIMP_TAC std_ss [] >>
-    Q.PAT_X_ASSUM `!acc ci. _` (MP_TAC o Q.SPECL [`(b, l)::acc`, `SOME (b2, l2, b2 + n2w (LENGTH l2))`]) >>
-    ASM_SIMP_TAC std_ss [pairTheory.pair_case_thm,
-      GSYM listTheory.APPEND_ASSOC, listTheory.REVERSE_DEF,
+    Q.PAT_X_ASSUM `!acc ci. _` (MP_TAC o Q.SPECL [`(b, FLAT (REVERSE l))::acc`, `SOME (b2, [l2], b2 + n2w (LENGTH l2))`]) >>
+    ASM_SIMP_TAC list_ss [pairTheory.pair_case_thm] >>
+    SIMP_TAC std_ss [GSYM listTheory.APPEND_ASSOC, listTheory.REVERSE_DEF,
       listTheory.APPEND]
   )
 ));
@@ -2276,6 +2281,36 @@ val bir_is_lifted_prog_MMS_EQUIV_COMPUTE = store_thm ("bir_is_lifted_prog_MMS_EQ
 METIS_TAC[bmr_mem_contains_regions_EQUIV_MERGE_THM, bmr_mem_contains_regions_EQUIV_SYM,
   bir_is_lifted_prog_MMS_EQUIV]);
 
+
+
+val bmr_mem_contains_regions_EQUIV_MERGE_REWRS = store_thm ("bmr_mem_contains_regions_EQUIV_MERGE_REWRS",
+  ``(!acc.
+      bmr_mem_contains_regions_EQUIV_MERGE acc NONE [] = REV acc []) /\
+   (!l (b':'a word) b acc.
+      bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b,l,b')) [] =
+      REV ((b,FLAT (REV l []))::acc) []) /\
+   (!mms l b acc.
+      bmr_mem_contains_regions_EQUIV_MERGE acc NONE ((n2w b,l)::mms) =
+      (let b' = n2w (b + LENGTH l) in
+      bmr_mem_contains_regions_EQUIV_MERGE acc
+        (SOME (n2w b,[l],b')) mms)) /\
+   (!mms l2 l b2 b' b acc.
+     bmr_mem_contains_regions_EQUIV_MERGE acc (SOME (b,l,n2w b'))
+       ((n2w b2,l2)::mms) =
+     let (b2':'a word) = n2w (b2 + LENGTH l2) in
+     if b' = b2 then
+       bmr_mem_contains_regions_EQUIV_MERGE acc
+         (SOME (b,l2::l,b2')) mms
+     else if b' MOD dimword (:'a) = b2 MOD dimword (:'a) then
+       bmr_mem_contains_regions_EQUIV_MERGE acc
+         (SOME (b,l2::l,b2')) mms
+     else
+       bmr_mem_contains_regions_EQUIV_MERGE ((b,FLAT (REV l []))::acc)
+         (SOME (n2w b2,[l2],b2')) mms)``,
+
+SIMP_TAC std_ss [bmr_mem_contains_regions_EQUIV_MERGE_def,
+  listTheory.REVERSE_REV, LET_THM, n2w_11, word_add_n2w] >>
+METIS_TAC[])
 
 
 val _ = export_theory();

@@ -8,6 +8,7 @@ open bir_typing_expTheory
 open bir_lifter_general_auxTheory
 open bir_programSyntax bir_interval_expSyntax
 open bir_program_labelsTheory
+open bir_immTheory
 open PPBackEnd Parse
 
 (**********)
@@ -1321,8 +1322,31 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
     val bir_block_rewrs = type_rws ``:'o bir_block_t``;
 
-    val dist_labels_CONV = SIMP_CONV (list_ss++HolBACoreSimps.bir_TYPES_ss++wordsLib.WORD_ss) [
-      bir_programTheory.bir_labels_of_program_def]
+    val dist_labels_CS = reduceLib.num_compset ()
+    val _ = computeLib.add_thms (bir_block_rewrs@[b2n_n2w_REWRS, bir_program_addr_labels_sorted_def,
+      bir_label_addresses_of_program_def, bir_label_addresses_of_program_REWRS,
+     bir_labels_of_program_REWRS, combinTheory.K_THM, sortingTheory.SORTED_DEF]) dist_labels_CS
+
+    val dist_labels_CONV = computeLib.CBV_CONV dist_labels_CS
+
+    val append_flat_CONV = PURE_REWRITE_CONV [listTheory.APPEND,
+          listTheory.FLAT]
+
+
+    val mm_equiv_merge_CS = reduceLib.num_compset ();
+    val _ = computeLib.add_thms [bmr_mem_contains_regions_EQUIV_MERGE_REWRS,
+      listTheory.LENGTH, listTheory.REV_DEF,
+      listTheory.FLAT, listTheory.APPEND] mm_equiv_merge_CS
+
+    val _ =  computeLib.add_conv (wordsSyntax.dimword_tm, 1, wordsLib.SIZES_CONV) mm_equiv_merge_CS
+
+    val mm_equiv_merge_CONV = computeLib.CBV_CONV mm_equiv_merge_CS
+
+(*
+    val pre_thm = mm_equiv_merge_CONV pre
+
+    val pre_thm = SIMP_CONV std_ss [bmr_mem_contains_regions_EQUIV_MERGE_REWRS] pre
+*)
   in
 
 
@@ -1419,36 +1443,62 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
       end;
 
       val _ = if (!debug_trace = 1) then print "bir_lift_prog " else ();
-
       val prog_dist_EMPTY_THM' = MATCH_MP prog_dist_EMPTY_THM mu_thm
+
+(*
+      val (thm1::thm2::_) = hd basic_thms
+*)
+
       val merge_prog_distinct_thms =
-         foldl (fn (thm1, thm2) =>
-            MATCH_MP (MATCH_MP prog_dist_UNION_THM thm1) thm2)
+         foldl (fn (thm1, thm2) => let
+            val (_, mu_tm, mms1_tm, p1_tm) = dest_bir_is_lifted_prog_LABELS_DISTINCT (concl thm1)
+            val (_, mu_tm, mms2_tm, p2_tm) = dest_bir_is_lifted_prog_LABELS_DISTINCT (concl thm2)
+
+            val thma = SPECL [mu_tm, mms1_tm, mms2_tm, p1_tm, p2_tm] prog_dist_UNION_THM                        val thmb = MP thma thm1
+            val thmc = MP thmb thm2
+            in thmc
+            end)
            prog_dist_EMPTY_THM'
 
       val basic_thms = List.map (fn (pc, code_fl, il) =>
          if code_fl then lift_code_region pc il else lift_data_region pc il) regions
 
-      val prog_thm = let
-        val _ = if (!debug_trace > 1) then (print ("merging code for instructions"))
+      val prog_thm0 = let
+        val _ = if (!debug_trace > 1) then (print ("merging code"))
                 else if (!debug_trace = 1) then (print "!") else ();
         val timer = (Time.now())
         val prog_dist_thm = merge_prog_distinct_thms (map merge_prog_distinct_thms (List.rev basic_thms))
-        val prog_dist_thm_clean =
-           PURE_REWRITE_RULE [listTheory.APPEND,
-            bir_subprogramTheory.bir_program_combine_def] prog_dist_thm
 
-        val prog_thm = let
-          val thm0 = MATCH_MP prog_dist_ELIM_THM prog_dist_thm_clean
-          val (pre, _) = dest_imp_only (concl thm0)
-          val pre_thm = EQT_ELIM (EVAL pre)
-          val thm1 = MP thm0 pre_thm
-        in thm1 end
+        val thm0 = MATCH_MP prog_dist_ELIM_THM prog_dist_thm
+        val (p_tm, mms_tm) = let
+           val (aux_tm1, aux_tm2) = dest_imp_only (snd (strip_forall (concl thm0)))
+           val p_tm = lhs aux_tm1
+           val mms_tm = lhs (fst (dest_imp_only aux_tm2))
+        in (p_tm, mms_tm) end
+        val p_thm = append_flat_CONV p_tm
+        val mms_thm = append_flat_CONV mms_tm
+
+        val thm1 = MP (MP (SPECL [rhs (concl p_thm), rhs (concl mms_thm)] thm0) p_thm) mms_thm
 
         val d_time = Time.- (Time.now(), timer);
         val d_s = (Time.toString d_time);
         val _ = if (!debug_trace > 1) then (print (" - " ^ d_s ^ " s\n")) else ();
-      in prog_thm end;
+      in thm1 end;
+
+
+      val prog_thm1 = let
+        val _ = if (!debug_trace > 1) then (print ("checking for duplicate labels"))
+                else if (!debug_trace = 1) then (print "!") else ();
+        val timer = (Time.now())
+
+        val (pre, _) = dest_imp_only (concl prog_thm0)
+        val pre_thm = EQT_ELIM (dist_labels_CONV pre)
+        val thm2 = MP prog_thm0 pre_thm
+
+        val d_time = Time.- (Time.now(), timer);
+        val d_s = (Time.toString d_time);
+        val _ = if (!debug_trace > 1) then (print (" - " ^ d_s ^ " s\n")) else ();
+      in thm2 end;
 
 
       val prog_thm2 = let
@@ -1456,11 +1506,11 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
                 else if (!debug_trace = 1) then (print "!") else ();
         val timer = (Time.now())
 
-        val (_, mu_tm, mms_tm, p_tm) = dest_bir_is_lifted_prog (concl prog_thm)
+        val (_, mu_tm, mms_tm, p_tm) = dest_bir_is_lifted_prog (concl prog_thm1)
         val thm0 = SPECL [mu_tm, p_tm, mms_tm] prog_MMS_THM
-        val thm1 = MP thm0 prog_thm
+        val thm1 = MP thm0 prog_thm1
         val pre = lhs (fst (dest_imp_only (snd (strip_forall (concl thm1)))))
-        val pre_thm = EVAL pre
+        val pre_thm = mm_equiv_merge_CONV pre
         val mms'_tm = rhs (concl pre_thm)
         val thm2 = MP (SPEC mms'_tm thm1) pre_thm
 
@@ -1474,10 +1524,11 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
       val d_s = (Time.toString d_time);
 
       val _ = if (!debug_trace > 1) then
-        print ("Total time : " ^ d_s ^" s -") else ();
+        print ("Total time :") else ();
       val _ = if (!debug_trace <> 0) then
+         (print (" " ^ d_s ^ " s -");
          (if (List.null (!failing_inst_r)) then print_with_style sty_OK " OK\n" else
-             print_with_style sty_FAIL "FAILED\n") else ();
+             print_with_style sty_FAIL "FAILED\n")) else ();
 
     in
       (prog_thm2, List.rev (!failing_inst_r))

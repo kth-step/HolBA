@@ -173,6 +173,15 @@ val b2n_n2b_fixed = store_thm ("b2n_n2b_fixed",
 SIMP_TAC std_ss [n2b_fixed_DEFS, b2n_n2bs, size_of_bir_immtype_def,
   bitTheory.MOD_2EXP_def]);
 
+val b2n_n2w_REWRS = save_thm ("b2n_n2w_REWRS",
+SIMP_RULE std_ss [n2b_fixed_DEFS, n2bs_def] (
+prove (``(!n. b2n (n2b_1 n)  = n MOD 2) /\
+    (!n. b2n (n2b_8 n)  = n MOD 2**8) /\
+    (!n. b2n (n2b_16 n) = n MOD 2**16) /\
+    (!n. b2n (n2b_32 n) = n MOD 2**32) /\
+    (!n. b2n (n2b_64 n) = n MOD 2**64)``, SIMP_TAC std_ss [b2n_n2b_fixed])))
+
+
 val n2bs_b2n = store_thm ("n2bs_b2n",
   ``!b s. (s = type_of_bir_imm b) ==> (n2bs (b2n b) s = b)``,
 Cases >> (
