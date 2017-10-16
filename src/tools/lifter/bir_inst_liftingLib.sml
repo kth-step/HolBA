@@ -9,6 +9,7 @@ open bir_lifter_general_auxTheory
 open bir_programSyntax bir_interval_expSyntax
 open bir_program_labelsTheory
 open bir_immTheory
+open intel_hexLib
 open PPBackEnd Parse
 
 (**********)
@@ -297,6 +298,20 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      res
   end handle HOL_ERR _ =>
     raise (bir_inst_liftingAuxExn (BILED_lifting_failed tm));
+
+
+  (*******************************************************)
+  (* Support for Intel Hex files                         *)
+  (*******************************************************)
+
+
+  fun read_hex_file file_name = case (#bmr_ihex_param mr) of
+     NONE => failwith "No Intel HEX tools implemented for this architecture"
+   | SOME p => decode_ihex_list_hex p (read_from_ihex_file file_name)
+
+  fun write_hex_file file_name data = case (#bmr_ihex_param mr) of
+     NONE => failwith "No Intel HEX tools implemented for this architecture"
+   | SOME p => write_to_ihex_file file_name true (encode_ihex_list_hex p data)
 
 
   (*******************************************************)

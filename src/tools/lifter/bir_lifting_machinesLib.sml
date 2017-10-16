@@ -119,7 +119,8 @@ type bmr_rec = {bmr_const                : term,
                 bmr_lifted_thm           : thm,
                 bmr_step_hex             : term -> string -> thm list,
                 bmr_mk_data_mm           : Arbnum.num -> string -> term,
-                bmr_hex_code_size        : string -> Arbnum.num};
+                bmr_hex_code_size        : string -> Arbnum.num,
+                bmr_ihex_param           : (int * bool) option};
 
 
 (* Some sanity checks to ensure everything is as expected. *)
@@ -406,7 +407,8 @@ val arm8_bmr_rec : bmr_rec = {
   bmr_extra_ss             = arm8_extra_ss,
   bmr_step_hex             = arm8_step_hex',
   bmr_mk_data_mm           = arm8_mk_data_mm,
-  bmr_hex_code_size        = K (Arbnum.fromInt 4)
+  bmr_hex_code_size        = K (Arbnum.fromInt 4),
+  bmr_ihex_param           = SOME (4, true)
 };
 
 val _ = assert bmr_rec_sanity_check arm8_bmr_rec

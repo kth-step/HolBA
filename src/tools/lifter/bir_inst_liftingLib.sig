@@ -84,6 +84,11 @@ signature bir_inst_lifting = sig
                           (Abbrev.thm * ((Arbnum.num * exn option) list))
 
 
+  (* Reading and Writing code to and from intel hex files. The HEX files unluckily
+     do not store whether it is a code or a data section. Therefore we always assume code. *)
+  val read_hex_file : string -> (Arbnum.num * bool * string list) list
+  val write_hex_file : string -> (Arbnum.num * bool * string list) list -> unit
+
 end
 
 

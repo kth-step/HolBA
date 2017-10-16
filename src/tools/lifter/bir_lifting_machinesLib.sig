@@ -172,7 +172,14 @@ sig
 
       (* This is the number of memory addressed used by a hex-code. If
          bmr_step_hex or bmr_mk_data_mm succeed, this number of addresses is used. *)
-      bmr_hex_code_size        : string -> Arbnum.num
+      bmr_hex_code_size        : string -> Arbnum.num,
+
+      (* Parameter used for decoding and encoding Intel HEX files. If set to NONE,
+         no encoding / decoding is supported. If used, all instructions must have the
+         same length. This length in bytes is the first part of this paramter. The
+         second one is a flag whether instructions are encoded little (true) or
+         big (false) endian. *)
+      bmr_ihex_param           : (int * bool) option
    };
 
    (* The record for arm8 *)
