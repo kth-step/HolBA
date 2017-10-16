@@ -277,6 +277,7 @@ fun bmr_normalise_step_thm (r_step_rel:term) vn thm =
   val hex_code = "79000001"
   val hex_code = "D345FC41"
   val hex_code = "A9B97BFD"
+  val hex_code = "90000000"
 
   val thms = arm8_step_hex hex_code
 *)
@@ -296,7 +297,7 @@ local
   val next_state_tm = (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"});
   val simp_rule = (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0,
       arm8_extra_FOLDS]);
-  val simp_conv2 = (SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss) []) THENC
+  val simp_conv2 = (SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss++wordsLib.WORD_LOGIC_ss) []) THENC
                    (SIMP_CONV std_ss [word_add_to_sub_TYPES, alignmentTheory.aligned_numeric]);
 
   fun arm8_extra_THMS vn = let

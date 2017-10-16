@@ -131,6 +131,12 @@ end
    fun lift_instr_asm asm =
      lift_instr (hex_code_of_asm asm)
 
+   val lift_prog =
+     bir_lift_prog (mu_b, mu_e) pc
+
+   fun lift_prog_asm asm =
+     lift_prog (map hex_code_of_asm asm)
+
    val (res, time) = lift_instr_asm `add x0, x1, x2`;
    val (res, time) = lift_instr_asm `add x1, x1, x1`;
    val (res, time) = lift_instr_asm `adds x0, x1, x2`;
@@ -163,5 +169,6 @@ end
    val (res, time) = lift_instr "54000089"
    val (res, time) = lift_instr "B4000040"
 
+   val (res, time) = lift_prog ["13047C00", "a9b97bfd", "eb1f001f"]
 
 *)

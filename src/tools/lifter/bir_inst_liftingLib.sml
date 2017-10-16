@@ -147,6 +147,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "79000001"
   val hex_code = "B4000040"
   val hex_code = "54000089"
+  val hex_code = "90000000"
 *)
 
   open MD;
@@ -341,7 +342,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
           if (free_in pc_num_var tm) then false else true;
 
         val thm2 = foldl (uncurry DISCH) thm1 (List.filter disch_hyp_check (hyp thm1))
-        val thm3 = REWRITE_RULE [pc_thm, wordsTheory.word_add_n2w] thm2 handle UNCHANGED => thm2
+        val thm3 = REWRITE_RULE [pc_thm, wordsTheory.word_add_n2w, wordsTheory.word_and_n2w,
+              wordsTheory.word_or_n2w] thm2 handle UNCHANGED => thm2
      in
         thm3
      end
@@ -1181,6 +1183,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "79000001"
   val hex_code = "A9B97BFD"
   val hex_code = "A9B97BFD"
+  val cache = lift_inst_cache_empty
   *)
   local
     val bir_is_lifted_inst_block_COMPUTE_precond_tm_mr =
@@ -1241,6 +1244,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   local
      val discharge_hyp_CONV = SIMP_CONV (arith_ss) [alignmentTheory.aligned_numeric, alignmentTheory.aligned_0]
+     val final_CS = wordsLib.words_compset ()
+     val final_CONV = computeLib.CBV_CONV final_CS
   in
   fun bir_lift_instr_mu (mu_thm:thm, mm_precond_thm : thm)  cache (pc : Arbnum.num) hex_code = let
     val (thm0, cache', cache_used) =  bir_lift_instr_mu_gen_pc (mu_thm, mm_precond_thm) cache hex_code
@@ -1257,7 +1262,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     val thm2 = List.foldl discharge_hyp thm1 (hyp thm1)
 
     (* simple arithmetic reduction, since we now have concrete values *)
-    val thm3  = reduceLib.REDUCE_RULE thm2
+    val thm3  = CONV_RULE final_CONV thm2
   in
     (thm3, cache', cache_used)
   end;
@@ -1418,7 +1423,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
          raise (ERR "lift_data" ("lifting of hex-code '" ^ hex_code ^ "' failed, is the PC outside the protected memory region?"))
 
       fun lift_inst (hex_code, (c, pc, thmL, cache)) = let
-        val hex_code' = String.map Char.toUpper hex_code
+        val hex_code = String.map Char.toUpper hex_code
         val _ = if (!debug_trace > 1) then (
            print_current_instr_string (c+1) (!data_no_r) true pc hex_code) else (if (!debug_trace = 1) then print "." else ());
         val timer = timer_start 1;
