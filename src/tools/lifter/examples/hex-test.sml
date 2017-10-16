@@ -89,7 +89,8 @@ val instrs = [
 
 val _ = print "writing Intel HEX file: aes-test-aarch64.hex\n"
 val _ = print "try running:\n\n  aarch64-linux-gnu-objdump -m aarch64 -D aes-aarch64.hex\n\n";
-val _ = write_hex_file "aes-test-aarch64.hex" [(Arbnum.fromInt 0x400570, true, instrs)]
+val _ = write_hex_file "aes-test-aarch64.hex" [
+   mk_bir_inst_lifting_region (Arbnum.fromInt 0x400570) instrs]
 
 val _ = print "reading Intel HEX file: aes-test-aarch64.hex\n\n"
 val aes_sections = read_hex_file "aes-test-aarch64.hex"

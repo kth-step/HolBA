@@ -220,7 +220,7 @@ struct
 
 
 
-  fun encode_hex_list bc little_end (addr:num, code:bool, hl:string list) = let
+  fun encode_hex_list bc little_end (addr:num, hl:string list) = let
     fun decode_aux s = let
        val bl = List.tabulate (bc, fn n =>
            decode_byte (String.substring (s, Int.+(0, Int.+(n, n)), 2)));
@@ -243,7 +243,7 @@ struct
        val hs = String.concat (map encode_byte bl_start')
      in decode_aux (hs::acc) bl' end;
   in
-    (addr, true, decode_aux [] bl)
+    (addr, decode_aux [] bl)
   end
 
   fun decode_ihex_list_hex (bc, little_end) ihl =

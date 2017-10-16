@@ -4,18 +4,25 @@
 
    A module with this signature is provided for multiple architectures. *)
 
+open Abbrev
+open bir_inst_liftingLibTypes
+
 signature bir_inst_lifting = sig
 
   (* ------------------- *)
   (* Single instructions *)
   (* ------------------- *)
 
-  (* bir_inst_lifting (mem_unchanged_begin, mem_unchanged_end) pc hexcode
+  (* bir_inst_lifting (mem_unchanged_begin, mem_unchanged_end) pc hexcode hexcode-human
 
      tries to lift the given hexcode. It assumes this code is stored at location
      of "pc" in memory and tries to guarantee that the memory addresses in
-     interval [mem_unchanged_begin, mem_unchanged_end) are not changed. *)
-  val bir_lift_instr : (Arbnum.num * Arbnum.num) -> Arbnum.num -> string -> Abbrev.thm
+     interval [mem_unchanged_begin, mem_unchanged_end) are not changed.
+     The label created fro the resulting bir-program stores the string "hexcode-human",
+     but does not use it in any way. It is supposed to be an annotation for human readers
+     explained the HEX-code (e.g. containing a readable representation).
+  *)
+  val bir_lift_instr : (Arbnum.num * Arbnum.num) -> Arbnum.num -> string -> string -> thm
 
 
   (* Often we want to lift whole programs. For this, it is convenient to
@@ -37,9 +44,9 @@ signature bir_inst_lifting = sig
   (* The machine record used *)
   val mr : bir_lifting_machinesLib.bmr_rec
 
-  val bir_lift_instr_prepare_mu_thms : (Arbnum.num * Arbnum.num) -> Abbrev.thm * Abbrev.thm;
-  val bir_lift_instr_mu : (Abbrev.thm * Abbrev.thm) -> lift_inst_cache -> Arbnum.num -> string ->
-    (Abbrev.thm * lift_inst_cache * bool);
+  val bir_lift_instr_prepare_mu_thms : (Arbnum.num * Arbnum.num) -> thm * thm;
+  val bir_lift_instr_mu : (thm * thm) -> lift_inst_cache -> Arbnum.num -> string -> string ->
+    (thm * lift_inst_cache * bool);
 
 
   (* --------------------------- *)
@@ -67,11 +74,11 @@ signature bir_inst_lifting = sig
   val bir_lift_prog : (Arbnum.num * Arbnum.num) (* memory unchanged begin, end *) ->
                       Arbnum.num (* initial address *) ->
                       string list (* hex-codes *) ->
-                      (Abbrev.thm (* resulting theorem *) *
-                       (* Errors in from: (PC, error_desc option),
-                          where the exeption is always a bir_inst_liftingExn contain the
-                          hex-code *)
-                       ((Arbnum.num * exn option) list))
+                      (thm (* resulting theorem *) *
+                       (* Errors in from: (PC, hex-code, error_data option),
+                          where error_data is always bir_inst_liftingExn_data  *)
+                       ((Arbnum.num * string * 
+                         bir_inst_liftingExn_data option) list))
 
   (* Sometimes we want to lift a program that contains more than one code region.
      Or we want explicitly mark data in the hex-codes. bir_lift_prog_gen allows to
@@ -80,35 +87,22 @@ signature bir_inst_lifting = sig
      (pc, is-code-region-flag, hex-codes). *)
 
   val bir_lift_prog_gen : (Arbnum.num * Arbnum.num) (* memory unchanged begin, end *) ->
-                          (Arbnum.num * bool * string list) list (* list of regions *) ->
-                          (Abbrev.thm * ((Arbnum.num * exn option) list))
+                          (bir_inst_lifting_mem_region list) (* list of regions *) ->
+                          (thm * ((Arbnum.num * string * bir_inst_liftingExn_data option) list))
 
 
   (* Reading and Writing code to and from intel hex files. The HEX files unluckily
      do not store whether it is a code or a data section. Therefore we always assume code. *)
-  val read_hex_file : string -> (Arbnum.num * bool * string list) list
-  val write_hex_file : string -> (Arbnum.num * bool * string list) list -> unit
+  val read_hex_file : string -> bir_inst_lifting_mem_region list
+  val write_hex_file : string -> bir_inst_lifting_mem_region list -> unit
 
 end
-
 
 (* Instances for different machine types *)
 signature bir_inst_liftingLib = sig
 
-  (* Errors are reported via the exception bir_inst_liftingExn (hex_code, reason)
-     which indicates that lifting of the given hex-code failed for the given reason. *)
-  datatype bir_inst_liftingExn_data =
-     BILED_msg of string
-   | BILED_msg_term of string * Abbrev.term
-   | BILED_lifting_failed of Abbrev.term
-
-  exception bir_inst_liftingExn of string * bir_inst_liftingExn_data;
-
-  (* For debugging a printer *)
-  val bir_inst_liftingExn_data_to_string : bir_inst_liftingExn_data -> string;
-
   (* ARM 8 instance *)
-  structure bmil_arm8 : bir_inst_lifting;
+  structure bmil_arm8 : bir_inst_lifting
 
 end
 

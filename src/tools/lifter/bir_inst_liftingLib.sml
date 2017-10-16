@@ -10,6 +10,7 @@ open bir_programSyntax bir_interval_expSyntax
 open bir_program_labelsTheory
 open bir_immTheory
 open intel_hexLib
+open bir_inst_liftingLibTypes
 open PPBackEnd Parse
 
 (**********)
@@ -87,22 +88,7 @@ val (bir_is_lifted_inst_block_tm,  mk_bir_is_lifted_inst_block, dest_bir_is_lift
 (* Auxilary stuff *)
 (******************)
 
-(* If lifting of an instruction fails, it is returned (hexcode) together with
-   some explantion in the from of a bir_inst_liftingExn_data value. *)
-
-datatype bir_inst_liftingExn_data =
-   BILED_msg of string
- | BILED_msg_term of string * term
- | BILED_lifting_failed of term
-exception bir_inst_liftingExn of string * bir_inst_liftingExn_data;
-
 exception bir_inst_liftingAuxExn of bir_inst_liftingExn_data;
-
-fun bir_inst_liftingExn_data_to_string (BILED_msg msg) = msg
-  | bir_inst_liftingExn_data_to_string (BILED_msg_term (msg, t)) =
-      (msg ^ "(``" ^ (term_to_string t) ^ "``)")
-  | bir_inst_liftingExn_data_to_string (BILED_lifting_failed t) =
-      ("lifting of ``" ^ (term_to_string t) ^ "`` failed");
 
 val debug_trace = ref (1:int)
 val _ = register_trace ("bir_inst_lifting.DEBUG_LEVEL", debug_trace, 2)
@@ -307,11 +293,14 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   fun read_hex_file file_name = case (#bmr_ihex_param mr) of
      NONE => failwith "No Intel HEX tools implemented for this architecture"
-   | SOME p => decode_ihex_list_hex p (read_from_ihex_file file_name)
+   | SOME p =>
+      List.map (fn (pc, hcs) => mk_bir_inst_lifting_region pc hcs)
+        (decode_ihex_list_hex p (read_from_ihex_file file_name))
 
   fun write_hex_file file_name data = case (#bmr_ihex_param mr) of
      NONE => failwith "No Intel HEX tools implemented for this architecture"
-   | SOME p => write_to_ihex_file file_name true (encode_ihex_list_hex p data)
+   | SOME p => write_to_ihex_file file_name true (encode_ihex_list_hex p
+       (List.map (fn BILMR (pc, el) => (pc, List.map fst el)) data))
 
 
   (*******************************************************)
@@ -332,7 +321,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      The list of resulting theorems, the computed memory mapping and the
      label corresponding to the given PC are returned. *)
 
-  fun mk_inst_lifting_theorems hex_code =
+  fun mk_inst_lifting_theorems hex_code hex_code_desc =
   let
      val lifted_thms_raw = let
        val res = (#bmr_step_hex mr) ms_v hex_code
@@ -342,7 +331,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
      (* instantiate pc and compute label *)
      val (label_tm, pc_thm) = let
-        val thm0 = SPECL [ms_v, pc_num_var, stringSyntax.fromMLstring hex_code] (#bmr_label_thm mr);
+        val thm0 = SPECL [ms_v, pc_num_var, stringSyntax.fromMLstring hex_code_desc] (#bmr_label_thm mr);
         val tm = rhs (#1 (dest_imp_only (concl thm0)))
      in (tm, UNDISCH thm0) end handle HOL_ERR _ =>
        raise (bir_inst_liftingExn (hex_code, BILED_msg "label thm failed"));
@@ -1208,10 +1197,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
     val list_CONV = SIMP_CONV list_ss []
   in
-  fun bir_lift_instr_mu_gen_pc_compute (mu_thm:thm, mm_precond_thm : thm) hex_code =
+  fun bir_lift_instr_mu_gen_pc_compute (mu_thm:thm, mm_precond_thm : thm) hex_code hex_code_desc =
   let
      (* call step lib to generate step theorems, compute mm and label *)
-     val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code
+     val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
 
      (* instantiate inst theorem *)
      val inst_lift_thm0 = let
@@ -1249,10 +1238,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   end
 
   (* Add a cache *)
-  fun bir_lift_instr_mu_gen_pc (mu_thm:thm, mm_precond_thm : thm) (cache : lift_inst_cache) hex_code =
+  fun bir_lift_instr_mu_gen_pc (mu_thm:thm, mm_precond_thm : thm) (cache : lift_inst_cache) hex_code hex_code_desc =
     (Redblackmap.find (cache, hex_code), cache, true) handle NotFound =>
   let
-    val thm0 = bir_lift_instr_mu_gen_pc_compute (mu_thm, mm_precond_thm) hex_code
+    val thm0 = bir_lift_instr_mu_gen_pc_compute (mu_thm, mm_precond_thm) hex_code hex_code_desc
     val cache' = Redblackmap.insert (cache, hex_code, thm0)
   in (thm0, cache', false) end
 
@@ -1262,8 +1251,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      val final_CS = wordsLib.words_compset ()
      val final_CONV = computeLib.CBV_CONV final_CS
   in
-  fun bir_lift_instr_mu (mu_thm:thm, mm_precond_thm : thm)  cache (pc : Arbnum.num) hex_code = let
-    val (thm0, cache', cache_used) =  bir_lift_instr_mu_gen_pc (mu_thm, mm_precond_thm) cache hex_code
+  fun bir_lift_instr_mu (mu_thm:thm, mm_precond_thm : thm)  cache (pc : Arbnum.num) hex_code hex_code_desc = let
+    val (thm0, cache', cache_used) =  bir_lift_instr_mu_gen_pc (mu_thm, mm_precond_thm) cache hex_code hex_code_desc
 
     (* instantiate PC *)
     val thm1 = INST [pc_num_var |-> numSyntax.mk_numeral pc] thm0
@@ -1306,8 +1295,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   fun bir_lift_instr ((mu_b : Arbnum.num), (mu_e : Arbnum.num)) = let
      val (mu_thm, mm_precond_thm) = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
   in
-    fn pc => fn hex_code =>
-       #1 (bir_lift_instr_mu (mu_thm, mm_precond_thm) lift_inst_cache_empty pc hex_code)
+    fn pc => fn hex_code => fn hex_code_desc =>
+       #1 (bir_lift_instr_mu (mu_thm, mm_precond_thm) lift_inst_cache_empty pc hex_code hex_code_desc)
   end;
 
 
@@ -1319,12 +1308,12 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (*
     val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x1000000)
 
-    val region_1 = ((Arbnum.fromInt 0x400470), true, [
+    val region_1 = mk_bir_inst_lifting_region (Arbnum.fromInt 0x400470) [
       "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3","B94017E0","51000400",
-      "B9004FE0","F94007E0","B9400000","B9002FE0","F94007E0","B9400400","B90033E0"])
+      "B9004FE0","F94007E0","B9400000","B9002FE0","F94007E0","B9400400","B90033E0"]
 
-    val region_2 = ((Arbnum.fromInt 0x400484), false, [
-      "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3"])
+    val region_2 = mk_bir_inst_lifting_data_region (Arbnum.fromInt 0x400484) [
+      "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3"]
 
     val regions = [region_1, region_2]
 
@@ -1390,12 +1379,16 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      val (mu_thm, mm_precond_thm) = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
   in
     fn regions => let
-      val regions = sort (fn (pc1, _, _) => fn (pc2, _, _) => Arbnum.< (pc1, pc2)) regions
+      val regions = sort (fn BILMR (pc1, _) => fn BILMR (pc2, _) => Arbnum.< (pc1, pc2)) regions
       val timer = timer_start 0;
-      val (len_codes, len_data) =
-         foldl (fn ((_, code_fl, il), (lc, ld)) =>
-              (if code_fl then (lc + List.length il, ld) else (lc, ld + List.length il)))
-           (0, 0) regions
+      val (len_codes, len_data) = let
+         fun count_inst ((_, BILME_data), (len_codes, len_data)) = (len_codes, len_data + 1)
+           | count_inst ((_, BILME_code _), (len_codes, len_data)) = (len_codes + 1, len_data)
+           | count_inst ((_, BILME_unknown), (len_codes, len_data)) = (len_codes + 1, len_data)
+
+         fun count_region (BILMR (_, il), (len_codes, len_data)) =
+            foldl count_inst (len_codes, len_data) il
+     in foldl count_region (0, 0) regions end
 
       val len_codes_s = Int.toString len_codes;
       val len_data_s = Int.toString len_data;
@@ -1417,10 +1410,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
       val cache_r = ref lift_inst_cache_empty
       val inst_no_r = ref 0;
       val data_no_r = ref 0;
-      val failing_inst_r = ref ([] : (num * exn option) list)
+      val failing_inst_r = ref ([] : (num * string * bir_inst_liftingExn_data option) list)
 
       val data_INTRO_THM' = MATCH_MP data_INTRO_THM mu_thm
-      fun lift_data (pc, hex_code) = let
+      fun lift_data fallback (pc, hex_code) = let
          val mm_tm = (#bmr_mk_data_mm mr) pc hex_code
          val precond_thm = let
            val thm_0 = PART_MATCH (rand o snd o dest_imp_only o snd o strip_forall)
@@ -1431,27 +1424,35 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
          val thm0 = SPEC mm_tm data_INTRO_THM'
          val thm1 = MP thm0 precond_thm
-         val _ = data_no_r := (!data_no_r) + 1
-         val _ = if (!debug_trace > 1) then (
-            print_current_instr_string (!inst_no_r) (!data_no_r) false pc hex_code; print "\n") else (if (!debug_trace = 1) then print "." else ());
+         val _ = if fallback then () else let
+           val _ = data_no_r := (!data_no_r) + 1
+           val _ = if (!debug_trace > 1) then (
+              print_current_instr_string (!inst_no_r) (!data_no_r) false pc hex_code; print "\n") else (if (!debug_trace = 1) then print "." else ());
+         in () end;
       in thm1 end handle HOL_ERR _ =>
          raise (ERR "lift_data" ("lifting of hex-code '" ^ hex_code ^ "' failed, is the PC outside the protected memory region?"))
 
-      fun lift_inst (hex_code, (c, pc, thmL, cache)) = let
+
+      fun lift_inst (pc, hex_code, entry_ty) = let
         val hex_code = String.map Char.toUpper hex_code
+        val human_hex_code = (case entry_ty of
+             BILME_code (SOME m) => (hex_code ^ " (" ^m ^")")
+           | _ => hex_code);
+
+        val _ = inst_no_r := (!inst_no_r) + 1
         val _ = if (!debug_trace > 1) then (
-           print_current_instr_string (c+1) (!data_no_r) true pc hex_code) else (if (!debug_trace = 1) then print "." else ());
+           print_current_instr_string (!inst_no_r) (!data_no_r) true pc human_hex_code) else (if (!debug_trace = 1) then print "." else ());
         val timer = timer_start 1;
-        val (res, ed) = (SOME (bir_lift_instr_mu (mu_thm, mm_precond_thm) cache pc hex_code), NONE) handle
+        val (res, ed) = (SOME (bir_lift_instr_mu (mu_thm, mm_precond_thm) (!cache_r) pc hex_code human_hex_code), NONE) handle
                        bir_inst_liftingExn (_, d)  => (NONE, SOME d)
                      | HOL_ERR _ => (NONE, NONE);
 
         val d_s = timer_stop timer;
 
         val _ = if (!debug_trace > 1) then (print (" - " ^ d_s ^ " s - ")) else ();
-        val (res', cache') = case res of
-             SOME (thm, cache', _) => (MATCH_MP prog_dist_INST_THM thm, cache')
-           | NONE => (lift_data (pc, hex_code), cache)
+        val res' = case res of
+             SOME (thm, cache', _) => (cache_r := cache'; MATCH_MP prog_dist_INST_THM thm)
+           | NONE => lift_data true (pc, hex_code)
 
         val _ = case res of
              SOME (thm, _, cache_used) =>
@@ -1463,26 +1464,16 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
                 (if (!debug_trace > 1) then ((print_with_style sty_FAIL "FAILED\n")) else ());
                 HOL_WARNING "bir_inst_liftingLib" "bir_lift_prog_gen" (
                   "lifting of instruction '" ^ hex_code ^ " @ 0x" ^ (Arbnum.toHexString pc) ^ " failed");
-                failing_inst_r := (pc, Option.map (fn d => bir_inst_liftingExn (hex_code, d)) ed)::(!failing_inst_r))
+                failing_inst_r := (pc, hex_code, ed)::(!failing_inst_r))
+      in res' end
 
-        val _ = inst_no_r := (!inst_no_r) + 1
-        val pc' = Arbnum.+ (pc, (#bmr_hex_code_size mr) hex_code);
-      in (c+1, pc', res'::thmL, cache') end
-
-
-      fun lift_code_region pc il = let
-        val (c, _, thms, cache') = foldl lift_inst (!inst_no_r, pc, [], !cache_r) il
-        val _ = inst_no_r := c
-        val _ = cache_r := cache'
-      in
-        thms
-      end;
-
-      fun lift_data_region pc il = let
-        val (_, thms) = foldl (fn (hex_code, (pc, thms)) => let
-           val thm = lift_data (pc, hex_code)
-           val pc' = Arbnum.+ (pc, (#bmr_hex_code_size mr) hex_code);
-         in (pc', thm::thms) end) (pc, []) il
+      fun lift_region (BILMR (pc, il)) = let
+        fun lift_entry ((hex_code, ty), (pc, thms)) = let
+          val thm = case ty of BILME_data => lift_data false (pc, hex_code)
+                             | _ => lift_inst (pc, hex_code, ty)
+          val pc' = Arbnum.+ (pc, (#bmr_hex_code_size mr) hex_code);
+        in (pc', thm::thms) end
+        val (_, thms) = foldl lift_entry (pc, []) il
       in
         thms
       end;
@@ -1505,8 +1496,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
             end)
            prog_dist_EMPTY_THM'
 
-      val basic_thms = List.map (fn (pc, code_fl, il) =>
-         if code_fl then lift_code_region pc il else lift_data_region pc il) regions
+      val basic_thms = List.map lift_region regions
 
       val prog_thm0 = let
         val _ = if (!debug_trace > 1) then (print ("merging code"))
@@ -1578,12 +1568,12 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   end;
 
   fun bir_lift_prog (mu_b, mu_e) pc hex_codes =
-     bir_lift_prog_gen (mu_b, mu_e) [(pc, true, hex_codes)]
+     bir_lift_prog_gen (mu_b, mu_e) [BILMR (pc, List.map (fn hc => (hc, BILME_unknown)) hex_codes)]
 
 end
 
-structure bir_inst_liftingLib = struct
-
+structure bir_inst_liftingLib :> bir_inst_liftingLib = struct
+  
   structure bmil_arm8 = bir_inst_liftingFunctor (struct val mr = arm8_bmr_rec end);
 
 end

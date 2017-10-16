@@ -54,8 +54,8 @@ signature intel_hexLib = sig
      therefore does not use lists of bytes, but hex-strings to encode instructions.
      The following functions convert between the format described above and
      the one used by the lifter. Besides the start address and the actual content,
-     the lifter uses also a flag whether the content is data or code. We ignore this
-     flag for encoding and set it always to code for decoding.
+     the lifter uses also flags for each entry whether the content is data or code.
+     We ignore this since it cannot be stored in HEX files.
 
      For encoding and decoding we assume a fixed size of instructions. This as well
      as the endianness is given to the following functions. (4, true) means that
@@ -64,9 +64,9 @@ signature intel_hexLib = sig
   *)
 
   val decode_ihex_list_hex :
-     int * bool -> ihex_record_type list -> (Arbnum.num * bool * string list) list
+     int * bool -> ihex_record_type list -> (Arbnum.num * string list) list
 
   val encode_ihex_list_hex :
-     int * bool -> (Arbnum.num * bool * string list) list -> ihex_record_type list
+     int * bool -> (Arbnum.num * string list) list -> ihex_record_type list
 
 end

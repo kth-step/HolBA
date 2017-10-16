@@ -46,7 +46,7 @@ fun lift_instr_cached mu_thms cache pc hex_code = let
   val hex_code = String.map Char.toUpper hex_code
   val _ = print (hex_code ^ " @ 0x" ^ (Arbnum.toHexString pc));
   val timer = (Time.now())
-  val (res, ed) = (SOME (bir_lift_instr_mu mu_thms cache pc hex_code), NONE) handle
+  val (res, ed) = (SOME (bir_lift_instr_mu mu_thms cache pc hex_code hex_code), NONE) handle
                    bir_inst_liftingExn (_, d)  => (NONE, SOME d)
                  | HOL_ERR _ => (NONE, NONE);
 
@@ -248,7 +248,21 @@ val res = test_hex "b8617801";
 
 
 
+(* dummy prog lifting tests *)
+val region_1 = mk_bir_inst_lifting_region (Arbnum.fromInt 0x400470) [
+  "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3","B94017E0","51000400",
+  "B9004FE0","F94007E0","B9400000","B9002FE0","F94007E0","B9400400","B90033E0"]
 
+val region_2 = mk_bir_inst_lifting_data_region (Arbnum.fromInt 0x400484) [
+  "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3"]
+
+val region_3 = BILMR (Arbnum.fromInt 0x400870, [
+  ("D101C3FF", BILME_unknown), ("F9000FE0", BILME_code (SOME "???")) ,
+   ("B90017E1", BILME_code NONE), ("F90007E2", BILME_data)])
+
+val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
+val (res, fl) = bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
+  [region_1, region_2, region_3]
 
 
 (***************)
