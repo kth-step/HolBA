@@ -1321,7 +1321,11 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     val region_2 = mk_bir_inst_lifting_data_region (Arbnum.fromInt 0x400484) [
       "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3"]
 
-    val regions = [region_1, region_2]
+    val region_3 = BILMR (Arbnum.fromInt 0x400870, [
+      ("D101C3FF", BILME_unknown), ("F9000FE0", BILME_code (SOME "???")) ,
+      ("B90017E1", BILME_code NONE), ("F90007E2", BILME_data)])
+
+    val regions = [region_1, region_2, region_3]
 
     val regions = [region_2]
 
@@ -1387,29 +1391,42 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     fn regions => let
       val regions = sort (fn BILMR (pc1, _) => fn BILMR (pc2, _) => Arbnum.< (pc1, pc2)) regions
       val timer = timer_start 0;
-      val (len_codes, len_data) = let
-         fun count_inst ((_, BILME_data), (len_codes, len_data)) = (len_codes, len_data + 1)
-           | count_inst ((_, BILME_code _), (len_codes, len_data)) = (len_codes + 1, len_data)
-           | count_inst ((_, BILME_unknown), (len_codes, len_data)) = (len_codes + 1, len_data)
+      val (len_codes, len_data, max_hc_len) = let
+         fun count_inst ((hc, BILME_data), (len_codes, len_data, max_hc_len)) = (len_codes, len_data + 1, Int.max (max_hc_len, String.size hc))
+           | count_inst ((hc, BILME_code NONE), (len_codes, len_data, max_hc_len)) = (len_codes + 1, len_data, Int.max (max_hc_len, String.size hc))
+           | count_inst ((hc, BILME_code (SOME m)), (len_codes, len_data, max_hc_len)) = (len_codes + 1, len_data, Int.max (max_hc_len, String.size hc + String.size m + 3))
+           | count_inst ((hc, BILME_unknown), (len_codes, len_data, max_hc_len)) = (len_codes + 1, len_data, Int.max (max_hc_len, String.size hc))
 
-         fun count_region (BILMR (_, il), (len_codes, len_data)) =
-            foldl count_inst (len_codes, len_data) il
-     in foldl count_region (0, 0) regions end
+         fun count_region (BILMR (_, il), (len_codes, len_data, max_hc_len)) =
+            foldl count_inst (len_codes, len_data, max_hc_len) il
+      in foldl count_region (0, 0, 0) regions end
+
+      fun print_padding 0 = ()
+        | print_padding n = (print " "; print_padding (n-1));
 
       val len_codes_s = Int.toString len_codes;
       val len_data_s = Int.toString len_data;
       val print_current_data = if (len_data = 0) then (fn d => ()) else
-        (fn d => (print (Int.toString d); print "/"; print len_data_s; print " "));
+        (fn d => let
+           val d_s = Int.toString d;
+           val _ = print_padding (String.size len_data_s - String.size d_s);
+           val _ = print d_s;
+           val _ = (print "/"; print len_data_s; print " ")
+        in () end);
 
       fun print_current_instr_string c d is_code pc hex_code = let
-         val _ = print (Int.toString c);
+         val c_s = (Int.toString c);
+         val _ = print_padding (String.size len_codes_s - String.size c_s);
+         val _ = print c_s;
          val _ = print "/";
          val _ = print len_codes_s;
          val _ = print " ";
          val _ = print_current_data d;
          val _ = print (if is_code then ": code \"" else ": data \"");
          val _ = print hex_code;
-         val _ = print "\" @ 0x";
+         val _ = print "\"";
+         val _ = print_padding (max_hc_len - String.size hex_code);
+         val _ = print " @ 0x";
          val _ = print ((Arbnum.toHexString pc));
       in () end;
 
