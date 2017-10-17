@@ -541,6 +541,18 @@ ASM_SIMP_TAC arith_ss [dimword_def, arithmeticTheory.EXP, GSYM arithmeticTheory.
 METIS_TAC[arithmeticTheory.LESS_EQUAL_ANTISYM]);
 
 
+
+val word_sub_n2w = store_thm ("word_sub_n2w",
+``!n m. (n2w n - n2w m):'a word = n2w (if m <= n then (n - m) else
+            dimword (:'a) - (m - n) MOD dimword (:'a))``,
+
+REPEAT GEN_TAC >>
+Cases_on `m <= n` >- (
+  ASM_SIMP_TAC std_ss [n2w_sub]
+) >>
+ASM_SIMP_TAC arith_ss [GSYM word_2comp_n2w, n2w_sub, WORD_NEG_SUB]);
+
+
 (* -------------------------------------------------------------------------- *)
 (* Fresh variable names                                                       *)
 (* -------------------------------------------------------------------------- *)

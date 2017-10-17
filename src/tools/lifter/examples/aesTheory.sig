@@ -4517,14 +4517,9 @@ sig
                    BL_Address_HC (Imm64 0x4009C8w)
                      "54FFE321 (b.ne 0x40062c)"; bb_statements := [];
                  bb_last_statement :=
-                   BStmt_Jmp
-                     (BLE_Exp
-                        (BExp_IfThenElse
-                           (BExp_Den (BVar "ProcState_Z" BType_Bool))
-                           (BExp_Const (Imm64 0x4009CCw))
-                           (BExp_BinExp BIExp_Minus
-                              (BExp_Const (Imm64 0x4009C8w))
-                              (BExp_Const (Imm64 924w)))))|>;
+                   BStmt_CJmp (BExp_Den (BVar "ProcState_Z" BType_Bool))
+                     (BLE_Label (BL_Address (Imm64 0x4009CCw)))
+                     (BLE_Label (BL_Address (Imm64 0x40062Cw)))|>;
                <|bb_label :=
                    BL_Address_HC (Imm64 0x4009CCw)
                      "B9403FE0 (ldr w0, [sp,#60])";

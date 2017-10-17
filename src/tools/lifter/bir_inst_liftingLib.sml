@@ -135,6 +135,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "B4000040"
   val hex_code = "54000089"
   val hex_code = "90000000"
+  val hex_code_desc = hex_code
 *)
 
   open MD;
@@ -155,6 +156,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val bs_v = mk_var ("bs", bir_state_t_ty);
 
   val addr_sz_immtype_t = bir_immSyntax.bir_immtype_t_of_word_ty (wordsSyntax.mk_word_type addr_sz_ty)
+
+  val addr_sz_dimword_THM = SIMP_CONV (std_ss++wordsLib.SIZES_ss) [] (wordsSyntax.mk_dimword addr_sz_ty)
 
   val bmr_eval_REWRS = let
     val tms = [
@@ -347,7 +350,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
         val thm2 = foldl (uncurry DISCH) thm1 (List.filter disch_hyp_check (hyp thm1))
         val thm3 = REWRITE_RULE [pc_thm, wordsTheory.word_add_n2w, wordsTheory.word_and_n2w,
-              wordsTheory.word_or_n2w] thm2 handle UNCHANGED => thm2
+              wordsTheory.word_or_n2w, bir_auxiliaryTheory.word_sub_n2w,
+              addr_sz_dimword_THM] thm2 handle UNCHANGED => thm2
      in
         thm3
      end
@@ -752,11 +756,11 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         val _ = if (wordsSyntax.is_n2w w1) then () else fail ()
         val _ = if (wordsSyntax.is_n2w w2) then () else fail ()
 
-        val lf_ms'_thm' = CONV_RULE (RHS_CONV (PURE_REWRITE_CONV [COND_RAND])) lf_ms'_thm
+        val lf_ms'_thm' = CONV_RULE (RHS_CONV (REWR_CONV COND_RAND)) lf_ms'_thm
         val lift_thm = exp_lift_fn c
 
         val thm0 = SPECL [ms'_t, c, bir_immSyntax.gen_mk_Imm w1, bir_immSyntax.gen_mk_Imm w2] comp_thm_eup_CJMP
-        val thm1 = REWRITE_RULE [lf_ms'_thm'] thm0
+        val thm1 = MP thm0 lf_ms'_thm'
         val thm2 = MATCH_MP thm1 lift_thm
         val thm3 = PURE_REWRITE_RULE [bmr_eval_REWRS] thm2
      in
@@ -1188,6 +1192,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "A9B97BFD"
   val hex_code = "A9B97BFD"
   val cache = lift_inst_cache_empty
+  val hex_code = "54FFE321"
+  val hex_code_desc = "???"
   *)
   local
     val bir_is_lifted_inst_block_COMPUTE_precond_tm_mr =
@@ -1573,7 +1579,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 end
 
 structure bir_inst_liftingLib :> bir_inst_liftingLib = struct
-  
+
   structure bmil_arm8 = bir_inst_liftingFunctor (struct val mr = arm8_bmr_rec end);
 
 end
