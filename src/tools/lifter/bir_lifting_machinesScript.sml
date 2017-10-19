@@ -619,27 +619,31 @@ SIMP_TAC (std_ss++bmr_ss++boolSimps.EQUIV_EXTRACT_ss) [arm8_bmr_EVAL]);
 
 val m0_REGS_lifted_imms_LIST_def = Define `
   m0_REGS_lifted_imms_LIST = [
-    (BMLI (BVar "R0" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 0w))));
-    (BMLI (BVar "R1" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 1w))));
-    (BMLI (BVar "R2" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 2w))));
-    (BMLI (BVar "R3" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 3w))));
-    (BMLI (BVar "R4" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 4w))));
-    (BMLI (BVar "R5" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 5w))));
-    (BMLI (BVar "R6" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 6w))));
-    (BMLI (BVar "R7" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 7w))));
-    (BMLI (BVar "R8" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 8w))));
-    (BMLI (BVar "R9" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 9w))));
-    (BMLI (BVar "R10" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 10w))));
-    (BMLI (BVar "R11" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 11w))));
-    (BMLI (BVar "R12" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 12w))));
-    (BMLI (BVar "LR" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 14w))));
-    (BMLI (BVar "SP_main" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name F 13w))));
-    (BMLI (BVar "SP_process" (BType_Imm Bit32)) (\ms. Imm32 (ms.REG (R_name T 13w))))]`;
+    (BMLI (BVar "PSR_C" BType_Bool) (\ms:m0_state. bool2b (ms.PSR.C)));
+    (BMLI (BVar "PSR_N" BType_Bool) (\ms:m0_state. bool2b (ms.PSR.N)));
+    (BMLI (BVar "PSR_V" BType_Bool) (\ms:m0_state. bool2b (ms.PSR.V)));
+    (BMLI (BVar "PSR_Z" BType_Bool) (\ms:m0_state. bool2b (ms.PSR.Z)));
+    (BMLI (BVar "R0" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 0w))));
+    (BMLI (BVar "R1" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 1w))));
+    (BMLI (BVar "R2" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 2w))));
+    (BMLI (BVar "R3" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 3w))));
+    (BMLI (BVar "R4" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 4w))));
+    (BMLI (BVar "R5" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 5w))));
+    (BMLI (BVar "R6" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 6w))));
+    (BMLI (BVar "R7" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 7w))));
+    (BMLI (BVar "R8" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 8w))));
+    (BMLI (BVar "R9" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 9w))));
+    (BMLI (BVar "R10" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 10w))));
+    (BMLI (BVar "R11" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 11w))));
+    (BMLI (BVar "R12" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 12w))));
+    (BMLI (BVar "LR" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 14w))));
+    (BMLI (BVar "SP_main" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name F 13w))));
+    (BMLI (BVar "SP_process" (BType_Imm Bit32)) (\ms:m0_state. Imm32 (ms.REG (R_name T 13w))));
+    (BMLI (BVar "ModeHandler" BType_Bool) (\ms:m0_state. bool2b (ms.CurrentMode = Mode_Handler)))]`;
 
 
 val m0_REGS_lifted_imms_LIST_REWRS = save_thm ("m0_REGS_lifted_imms_LIST_REWRS",
   SIMP_RULE (std_ss++wordsLib.WORD_ss) [R_name_def] m0_REGS_lifted_imms_LIST_def);
-
 
 val m0_lifted_mem_def = Define `
   m0_lifted_mem = BMLM (BVar "MEM" (BType_Mem Bit32 Bit8)) (\ms:m0_state. ms.MEM)`
@@ -649,10 +653,13 @@ val m0_lifted_pc_def = Define `
                        (BVar (bir_temp_var_name "COND") BType_Bool)
                        (\ms:m0_state. Imm32 (ms.REG RName_PC))`
 
+val m0_state_is_OK_def = Define `m0_state_is_OK (ef, sel) (s:m0_state) =
+  ((s.AIRCR.ENDIANNESS <=> ef) /\ (s.CONTROL.SPSEL <=> sel) /\
+  (s.exception = NoException))`
 
 (* Just a dummy for now *)
-val m0_bmr_def = Define `m0_bmr = <|
-  bmr_extra := \ms:m0_state. T;
+val m0_bmr_def = Define `m0_bmr (ef, sel) = <|
+  bmr_extra := \ms:m0_state. m0_state_is_OK (ef, sel) ms;
   bmr_imms := m0_REGS_lifted_imms_LIST;
   bmr_mem := m0_lifted_mem;
   bmr_pc := m0_lifted_pc;
@@ -660,22 +667,22 @@ val m0_bmr_def = Define `m0_bmr = <|
 
 
 val m0_bmr_EVAL = save_thm ("m0_bmr_EVAL",
-  SIMP_CONV list_ss [m0_bmr_def,
-    m0_REGS_lifted_imms_LIST_def, m0_lifted_mem_def,
+  GENL [``ef:bool``, ``sel:bool``] (SIMP_CONV (list_ss++wordsLib.WORD_ss) [m0_bmr_def, R_name_def,
+    m0_REGS_lifted_imms_LIST_def, m0_lifted_mem_def, m0_state_is_OK_def,
     m0_lifted_pc_def, bir_temp_var_name_def, arm8_state_is_OK_def]
-    ``m0_bmr``
+    ``m0_bmr (ef, sel)``)
 );
 
 val m0_bmr_vars_EVAL = save_thm ("m0_bmr_vars_EVAL",
-SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, bmr_vars_def] ``bmr_vars m0_bmr``);
+SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, bmr_vars_def] ``bmr_vars (m0_bmr (ef, sel))``);
 
 val m0_bmr_temp_vars_EVAL = save_thm ("m0_bmr_temp_vars_EVAL",
 SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
   bir_temp_var_def, bir_temp_var_name_def]
-  ``bmr_temp_vars m0_bmr``);
+  ``bmr_temp_vars (m0_bmr (ef, sel))``);
 
 val m0_bmr_varnames_distinct = prove (``
-  bmr_varnames_distinct m0_bmr``,
+  bmr_varnames_distinct (m0_bmr (ef, sel))``,
 SIMP_TAC std_ss [bmr_varnames_distinct_def,
   m0_bmr_vars_EVAL, m0_bmr_temp_vars_EVAL, MAP, MAP, bir_var_name_def,
   APPEND] >>
@@ -683,7 +690,7 @@ SIMP_TAC (list_ss++stringSimps.STRING_ss) [ALL_DISTINCT]);
 
 
 val m0_bmr_OK = store_thm ("m0_bmr_OK",
-  ``bmr_ok m0_bmr``,
+  ``!ef sel. bmr_ok (m0_bmr (ef, sel))``,
 
 SIMP_TAC std_ss [bmr_ok_def, m0_bmr_varnames_distinct] >>
 SIMP_TAC (list_ss++bmr_ss++stringSimps.STRING_ss++wordsLib.WORD_ss++holBACore_ss) [
@@ -694,23 +701,49 @@ SIMP_TAC (list_ss++bmr_ss++stringSimps.STRING_ss++wordsLib.WORD_ss++holBACore_ss
 
 
 val m0_bmr_label_thm = store_thm ("m0_bmr_label_thm",
-``!ms n. (BL_Address (bmr_pc_lf m0_bmr ms) = BL_Address (Imm32 (n2w n))) ==>
-         (ms.REG RName_PC = n2w n)``,
-SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, m0_bmr_EVAL]);
+``!ef sel ms n hc. (BL_Address (bmr_pc_lf (m0_bmr (ef, sel)) ms) = BL_Address_HC (Imm32 (n2w n)) hc) ==>
+                (ms.REG RName_PC = n2w n)``,
+SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, m0_bmr_EVAL, BL_Address_HC_def]);
 
 
 val m0_bmr_LIFTED = save_thm ("m0_bmr_LIFTED",
 let
-  val thm0 = MATCH_MP bmr_lifted m0_bmr_OK
+  val (vars, _) = strip_forall (concl m0_bmr_OK)
+  val thm0 = MATCH_MP bmr_lifted (SPECL vars m0_bmr_OK)
   val c = SIMP_CONV (list_ss++bmr_ss) [m0_bmr_EVAL, GSYM CONJ_ASSOC]
   val thm1 = CONV_RULE (STRIP_QUANT_CONV (RAND_CONV c)) thm0
   val thm2 = SIMP_RULE (std_ss++wordsLib.WORD_ss) [R_name_def] thm1
 
   val thm3 = SIMP_RULE (std_ss++boolSimps.CONJ_ss) [GSYM FORALL_AND_THM, GSYM IMP_CONJ_THM, GSYM CONJ_ASSOC] (CONJ thm1 thm2)
 in
-  thm3
+  GENL vars thm3
 end);
 
+val bmr_extra_M0 = store_thm ("bmr_extra_M0",
+``!ef sel ms. (m0_bmr (ef, sel)).bmr_extra ms = (ms.AIRCR.ENDIANNESS ⇔ ef) ∧ (ms.CONTROL.SPSEL ⇔ sel) ∧
+  (ms.exception = NoException)``,
+
+SIMP_TAC (std_ss++bmr_ss++boolSimps.EQUIV_EXTRACT_ss) [m0_bmr_EVAL]);
+
+
+val bmr_ms_mem_contains_M0_4 = store_thm ("bmr_ms_mem_contains_M0_4",
+``!ef sel ms v1 v2 v3 v4.
+  (bmr_ms_mem_contains (m0_bmr (ef, sel)) ms ((ms.REG RName_PC), [v1; v2; v3; v4])) <=>
+  ((ms.MEM (ms.REG RName_PC) = v1) /\ 
+   (ms.MEM (ms.REG RName_PC + 1w) = v2) /\ 
+   (ms.MEM (ms.REG RName_PC + 2w) = v3) /\
+   (ms.MEM (ms.REG RName_PC + 3w) = v4))``,
+
+SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ss) [bmr_ms_mem_contains_def, m0_bmr_EVAL, bmr_mem_lf_def]);
+
+
+val bmr_ms_mem_contains_M0_2 = store_thm ("bmr_ms_mem_contains_M0_2",
+``!ef sel ms v1 v2.
+  (bmr_ms_mem_contains (m0_bmr (ef, sel)) ms ((ms.REG RName_PC), [v1; v2])) <=>
+  ((ms.MEM (ms.REG RName_PC) = v1) /\ 
+   (ms.MEM (ms.REG RName_PC + 1w) = v2))``,
+
+SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ss) [bmr_ms_mem_contains_def, m0_bmr_EVAL, bmr_mem_lf_def]);
 
 
 val _ = export_theory();

@@ -410,6 +410,14 @@ Cases_on `ll` >> (
 (* Word lemmata                                                               *)
 (* -------------------------------------------------------------------------- *)
 
+val w2w_n2w = store_thm ("w2w_n2w",
+``!n. (w2w ((n2w n):'a word)):'b word = (n2w (n MOD dimword (:'a)))``,
+SIMP_TAC std_ss [w2w_def, w2n_n2w]);
+
+val align_n2w = store_thm ("align_n2w",
+``!n m. align n ((n2w m):'a word) =
+        n2w ((m MOD dimword (:'a)) DIV 2 ** n * 2 ** n)``,
+SIMP_TAC std_ss [alignmentTheory.align_w2n, w2n_n2w]);
 
 val w2n_MOD_2EXP_ID = store_thm ("w2n_MOD_2EXP_ID",
   ``!(w:'a word). (MOD_2EXP (dimindex (:'a)) (w2n w)) = w2n w``,

@@ -1,8 +1,6 @@
 open HolKernel Parse
 open testutils
-
 open bir_inst_liftingLib;
-open bmil_arm8
 open PPBackEnd Parse
 
 (* Tests for ARM 8 *)
@@ -40,6 +38,11 @@ val hex_code = "12001C00"
    We also keep track of all failed hex_codes in a references
    "failed_hexcodes_list".
 *)
+
+functor test_bmr (MD : bir_inst_lifting) = struct
+
+open MD;
+
 val failed_hexcodes_list = ref ([]:(string * bir_inst_liftingExn_data option) list);
 val success_hexcodes_list = ref ([]: (string * thm) list);
 fun lift_instr_cached mu_thms cache pc hex_code = let
@@ -83,11 +86,6 @@ in
 end;
 
 
-fun hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm)
-
-fun lift_instr_asm mu_b mu_e pc asm =
-  lift_instr mu_b mu_e pc (hex_code_of_asm asm);
-
 (* And a list version *)
 
 fun lift_instr_list mu_b mu_e pc hex_codes = let
@@ -125,8 +123,8 @@ in
 end;
 
 
-fun final_results expected_failed_hexcodes = let
-  val _ = print_with_style sty_HEADER "\n\n\nSUMMARY FAILING HEXCODES\n\n";
+fun final_results name expected_failed_hexcodes = let
+  val _ = print_with_style sty_HEADER ("\n\n\nSUMMARY FAILING HEXCODES " ^ name ^ "\n\n");
   val _ = print "\n";
   val failing_l = op_mk_set (fn x => fn y => (fst x = fst y)) (!failed_hexcodes_list)
   val ok_l = op_mk_set (fn x => fn y => (fst x = fst y)) (!success_hexcodes_list)
@@ -176,75 +174,87 @@ fun final_results expected_failed_hexcodes = let
 in
   ()
 end;
+end;
+
+structure test_ARM8 = test_bmr(bmil_arm8);
+
+structure test_M0_1 = test_bmr(bmil_m0_LittleEnd_Process)
+structure test_M0_2 = test_bmr(bmil_m0_BigEnd_Process)
+structure test_M0_3 = test_bmr(bmil_m0_LittleEnd_Main)
+structure test_M0_4 = test_bmr(bmil_m0_BigEnd_Main);
 
 
 
+(**************************)
+(* SOME MANUAL TESTS ARM8 *)
+(**************************)
 
-(*********************)
-(* SOME MANUAL TESTS *)
-(*********************)
+fun arm8_hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm)
+fun arm8_lift_instr_asm mu_b mu_e pc asm =
+  test_ARM8.lift_instr mu_b mu_e pc (arm8_hex_code_of_asm asm);
+
 
 val mu_b = Arbnum.fromInt 0;
 val mu_e = Arbnum.fromInt 0x1000000;
 val pc = Arbnum.fromInt 0x10030;
-val test_asm = lift_instr_asm mu_b mu_e pc
-val test_hex = lift_instr mu_b mu_e pc
+val arm8_test_asm = arm8_lift_instr_asm mu_b mu_e pc
+val arm8_test_hex = test_ARM8.lift_instr mu_b mu_e pc
 
-val res = print_with_style sty_HEADER "\nMANUAL TESTS\n\n";
-val res = test_asm `add x0, x1, x2`;
-val res = test_asm `add x1, x1, x1`;
-val res = test_asm `adds x0, x1, x2`;
-val res = test_asm `add x0, x0, x2`;
-val res = test_asm `sub x0, x1, x2`;
-val res = test_asm `mul x0, x1, x2`;
-val res = test_asm `mul w0, w1, w1`;
-val res = test_asm `cmp w0, #0`;
-val res = test_asm `cmn w0, #0`;
-val res = test_asm `cmn w0, w1`;
-val res = test_asm `cmn x0, x9`;
-val res = test_asm `ret`;
-val res = test_asm `adds x0, x2, #8`;
-val res = test_asm `subs x0, x2, #8`;
-val res = test_asm `adds x0, x1, x2`;
-val res = test_asm `add x0, x0, x2`;
-val res = test_asm `sub x0, x1, x2`;
-val res = test_asm `add x4, SP, #8`;
-val res = test_asm `add x4, SP, #8`;
-val res = test_asm `adds x1, x1, #0`;
-val res = test_asm `lsr x1, x2, #5`;
-val res = test_asm `lsr x1, x2, #0`;
-val res = test_asm `lsr x1, x1, #0`;
-val res = test_asm `lsr x1, x2, x3`;
-val res = test_asm `lsl x1, x2, #5`;
-val res = test_asm `lsl x1, x2, #0`;
-val res = test_asm `lsl x1, x1, #0`;
-val res = test_asm `lsl x1, x2, x3`;
-val res = test_asm `asr x1, x2, #5`;
-val res = test_asm `asr x1, x2, #0`;
-val res = test_asm `asr x1, x1, #0`;
-val res = test_asm `asr x1, x2, x3`;
-val res = test_asm `ldr x0, [x2, #0]`;
+val res = print_with_style sty_HEADER "\nMANUAL TESTS - ARM 8\n\n";
+val res = arm8_test_asm `add x0, x1, x2`;
+val res = arm8_test_asm `add x1, x1, x1`;
+val res = arm8_test_asm `adds x0, x1, x2`;
+val res = arm8_test_asm `add x0, x0, x2`;
+val res = arm8_test_asm `sub x0, x1, x2`;
+val res = arm8_test_asm `mul x0, x1, x2`;
+val res = arm8_test_asm `mul w0, w1, w1`;
+val res = arm8_test_asm `cmp w0, #0`;
+val res = arm8_test_asm `cmn w0, #0`;
+val res = arm8_test_asm `cmn w0, w1`;
+val res = arm8_test_asm `cmn x0, x9`;
+val res = arm8_test_asm `ret`;
+val res = arm8_test_asm `adds x0, x2, #8`;
+val res = arm8_test_asm `subs x0, x2, #8`;
+val res = arm8_test_asm `adds x0, x1, x2`;
+val res = arm8_test_asm `add x0, x0, x2`;
+val res = arm8_test_asm `sub x0, x1, x2`;
+val res = arm8_test_asm `add x4, SP, #8`;
+val res = arm8_test_asm `add x4, SP, #8`;
+val res = arm8_test_asm `adds x1, x1, #0`;
+val res = arm8_test_asm `lsr x1, x2, #5`;
+val res = arm8_test_asm `lsr x1, x2, #0`;
+val res = arm8_test_asm `lsr x1, x1, #0`;
+val res = arm8_test_asm `lsr x1, x2, x3`;
+val res = arm8_test_asm `lsl x1, x2, #5`;
+val res = arm8_test_asm `lsl x1, x2, #0`;
+val res = arm8_test_asm `lsl x1, x1, #0`;
+val res = arm8_test_asm `lsl x1, x2, x3`;
+val res = arm8_test_asm `asr x1, x2, #5`;
+val res = arm8_test_asm `asr x1, x2, #0`;
+val res = arm8_test_asm `asr x1, x1, #0`;
+val res = arm8_test_asm `asr x1, x2, x3`;
+val res = arm8_test_asm `ldr x0, [x2, #0]`;
 
   (* THERE ARE STILL MANY TODOs !!! *)
-val res = test_asm `lsl x0, x2, #8`;
-val res = test_asm `lsr x0, x2, #8`;
-val res = test_asm `str x0, [x2, #8]`;
+val res = arm8_test_asm `lsl x0, x2, #8`;
+val res = arm8_test_asm `lsr x0, x2, #8`;
+val res = arm8_test_asm `str x0, [x2, #8]`;
 
   (* some instructions I din't see in this file *)
 (*  4003a0:     d61f0220        br      x17 *)
-val res = test_asm `br  x17`;
+val res = arm8_test_asm `br  x17`;
 (*  4003a4:     d503201f        nop *)
-val res = test_asm `nop`;
+val res = arm8_test_asm `nop`;
 (*  400510:     d63f0020        blr     x1 *)
-val res = test_asm `blr x1`;
+val res = arm8_test_asm `blr x1`;
 (*  400430:     b4000040        cbz     x0, 400438 <call_weak_fn+0x10> *)
-val res = test_hex "B4000040";
+val res = arm8_test_hex "B4000040";
 (*  4004cc:     35000080        cbnz    w0, 4004dc <__do_global_dtors_aux+0x24> *)
-val res = test_hex "35000080";
+val res = arm8_test_hex "35000080";
 
   (* another one, load with lsl, decode error *)
 (*  4005f8:     b8617801        ldr     w1, [x0,x1,lsl #2] *)
-val res = test_hex "b8617801";
+val res = arm8_test_hex "b8617801";
 
 
 
@@ -261,13 +271,108 @@ val region_3 = BILMR (Arbnum.fromInt 0x400870, [
    ("B90017E1", BILME_code NONE), ("F90007E2", BILME_data)])
 
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
-val (res, fl) = bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
+val (res, fl) = test_ARM8.bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
   [region_1, region_2, region_3]
 
 
-(***************)
-(* AES_EXAMPLE *)
-(***************)
+
+(************************)
+(* SOME MANUAL TESTS M0 *)
+(************************)
+
+fun m0_lift_instr mu_b mu_e pc hex_code = (
+  print "LP "; test_M0_1.lift_instr mu_b mu_e pc hex_code;
+  print "BP "; test_M0_2.lift_instr mu_b mu_e pc hex_code;
+  print "LM "; test_M0_3.lift_instr mu_b mu_e pc hex_code;
+  print "BM "; test_M0_4.lift_instr mu_b mu_e pc hex_code
+);
+
+
+fun m0_hex_code_of_asm asm = hd (m0AssemblerLib.m0_code asm)
+fun m0_lift_instr_asm mu_b mu_e pc asm =
+  m0_lift_instr mu_b mu_e pc (m0_hex_code_of_asm asm);
+
+
+val mu_b = Arbnum.fromInt 0;
+val mu_e = Arbnum.fromInt 0x10000;
+val pc = Arbnum.fromInt 0x130;
+val m0_test_asm = m0_lift_instr_asm mu_b mu_e pc
+val m0_test_hex = m0_lift_instr mu_b mu_e pc
+
+val res = print_with_style sty_HEADER "\nMANUAL TESTS - M0\n\n";
+
+val res = m0_test_hex "3104";
+val res = m0_test_hex "b007";
+val res = m0_test_hex "4A15";
+val res = m0_test_hex "4011";
+val res = m0_test_hex "b510";
+val res = m0_test_hex "f000f858";
+val res = m0_test_hex "3202";
+val res = m0_test_hex "635c";
+val res = m0_test_hex "70E8";
+
+
+
+
+(*********************)
+(* AES_EXAMPLE M0 *)
+(*********************)
+
+val instrs = [ "4b1b", "cb04", "0010", "0019", "3010", "7814",
+"700c", "7854", "704c", "7894", "708c", "78d4", "70cc", "3104",
+"4282", "d1f3", "4913", "2204", "468c", "4813", "2703", "7b19",
+"7b5e", "7b9d", "7bdc", "423a", "d109", "4667", "5d86", "9601",
+"5d46", "5d05", "5c44", "0891", "5c79", "9f01", "781f", "3201",
+"4079", "7419", "404e", "7899", "745e", "404d", "78d9", "749d",
+"404c", "74dc", "3304", "2a2c", "d1de", "4b0b", "4c0c", "6b5f",
+"1d23", "0100", "1811", "1859", "18be", "5cf5", "46ac", "4664",
+"5ccd", "4065", "54f5", "2b04", "d1f6", "d1ee", "4b07", "4807",
+"1d19", "5d04", "4299", "785a", "7059", "7b59", "735a", "73d9",
+"71da", "231b", "09c2", "4353", "0040", "b2c0", "4b08", "4907",
+"1d18", "310b", "2200", "5c9c", "5d0c", "549c", "3204", "2a10",
+"d1f9", "4298", "d1f5", "4b0d", "6b5b", "7a59", "7b5a", "7359",
+"7959", "7259", "7859", "705a", "7159", "7a99", "789a", "7099",
+"7b99", "729a", "799a", "7199", "79d9", "739a", "78da", "70d9",
+"7ad9", "71d9", "7bd9", "73da", "72d9", "4770", "2000", "b087",
+"2501", "f7ffff8c", "4b22", "6b5c", "0023", "7823", "7867", "0018",
+"78a3", "9302", "78e3", "9303", "001e", "f7ffffa6", "9b01", "7020",
+"9802", "4078", "f7ffff9e", "7067", "f7ffff98", "9b02", "70a0",
+"f7ffff8f", "9b03", "4046", "70e6", "3404", "429c", "d1cf", "3501",
+"b2ed", "f7ffff32", "2d0a", "d1bf", "f7ffff4c", "f7ffff5e",
+"f7ffff29", "b007", "b5f0", "200a", "b08f", "f7ffff1f", "2409",
+"f7ffff88", "f7ffff71", "f7ffff17", "4b48", "6b5d", "002b", "3310",
+"930d", "782b", "9304", "786b", "9804", "9305", "78ab", "9300",
+"78eb", "9301", "f7ffff57", "9006", "f7ffff54", "9007", "f7ffff51",
+"9002", "9805", "f7ffff4d", "9008", "f7ffff4a", "9009", "f7ffff47",
+"9003", "9800", "f7ffff43", "900a", "f7ffff40", "0007", "f7ffff3d",
+"9801", "f7ffff39", "900b", "f7ffff36", "900c", "f7ffff33", "9b06",
+"9a08", "407b", "9a05", "702b", "9a02", "9b08", "9a09", "9a03",
+"9a0a", "9a0c", "4073", "4043", "706b", "9a04", "9b05", "4053",
+"9a07", "990a", "9a0b", "4077", "4047", "4057", "9902", "9a06",
+"405f", "9909", "70af", "9903", "990b", "4072", "9e0c", "4056",
+"9a00", "4070", "4050", "4058", "9b0d", "70e8", "3504", "42ab",
+"d181", "1e63", "b2dc", "d000", "e770", "f7fffef9", "f7fffee2",
+"f7fffe88", "b00f", "bdf0", "4b05", "b510", "6b9c", "2300", "5cc1",
+"5ce2", "404a", "54c2", "3301", "2b10", "d1f8", "bd10", "f7fffe2a",
+"f7fffef0", "b570", "0014", "0001", "4b04", "601d", "f7fffe14",
+"f7ffff2c", "bd70", "f7fffdfd", "0028", "f7ffffab", "4f0b",
+"f7fffeaf", "63bc", "f7fffea0", "b5f7", "9201", "220f", "000d",
+"9901", "0006", "4011", "9c08", "9100", "d003", "4a15", "6013",
+"f7fffdc3", "2c00", "d001", "4b13", "639c", "0034", "9a01", "1ba3",
+"429a", "d90f", "2210", "4f0d", "637c", "f7fffecb", "f7ffff68",
+"3410", "63bd", "3510", "e7eb", "9b00", "2b00", "d008", "001a",
+"0029", "0020", "f7fffffe", "4b03", "635c", "f7fffeb8", "bdf7",
+"46c0"]
+
+
+val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - M0 LitteEnd, Main SP\n\n";
+val _ = test_M0_3.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x100000) (Arbnum.fromInt 0x470) instrs
+
+
+
+(*********************)
+(* AES_EXAMPLE ARM 8 *)
+(*********************)
 
 (* Test it with the instructions from aes example *)
 val instrs = [
@@ -350,17 +455,18 @@ val instrs = [
 ];
 
 
-val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE\n\n";
-val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
+val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - ARM 8\n\n";
+val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     instrs
 
-val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - Whole program\n\n";
+val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - ARM 8 - Whole program\n\n";
 
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
-val (thm, errors) = bir_lift_prog ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
+val (thm, errors) = test_ARM8.bir_lift_prog ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
   (Arbnum.fromInt 0x400570) instrs
 
 val _ = print_thm thm;
+
 
 (***************************************)
 (* AES_EXAMPLE_WITH_FUNNY_INSTRUCTIONS *)
@@ -433,11 +539,9 @@ val instrs = [
 
 
 
-val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE WITH FUNNY INSTRUCTIONS\n\n";
-val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
+val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE WITH FUNNY INSTRUCTIONS - ARM 8\n\n";
+val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     instrs
-
-
 
 
 
@@ -569,8 +673,8 @@ val instrs_bignumlib = instrs_bignum_from_bytes @
              instrs_newbn;
 
 
-val _ = print_with_style sty_HEADER "\n\n\nTESTING BIGNUM LIB CODE\n\n";
-val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
+val _ = print_with_style sty_HEADER "\n\n\nTESTING BIGNUM LIB CODE - ARM 8\n\n";
+val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     instrs_bignumlib
 
 
@@ -579,11 +683,20 @@ val _ = lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fr
 (* final summary *)
 (*****************)
 
-val expected_failed_hexcodes:string list =
+val arm8_expected_failed_hexcodes:string list =
 [
    "B8617800" (* bmr_step_hex failed *),
    "B8627800" (* bmr_step_hex failed *),
    "B8617801" (* bmr_step_hex failed *)
 ];
 
-val _ = final_results expected_failed_hexcodes;
+val _ = test_ARM8.final_results "ARM 8" arm8_expected_failed_hexcodes;
+
+val m0_expected_failed_hexcodes:string list =
+[
+];
+
+val _ = test_M0_1.final_results "M0 LittleEnd, Process SP" m0_expected_failed_hexcodes;
+val _ = test_M0_2.final_results "M0 BigEnd, Process SP" m0_expected_failed_hexcodes;
+val _ = test_M0_3.final_results "M0 LittleEnd, Main SP" m0_expected_failed_hexcodes;
+val _ = test_M0_4.final_results "M0 BigEnd, Main SP" m0_expected_failed_hexcodes;

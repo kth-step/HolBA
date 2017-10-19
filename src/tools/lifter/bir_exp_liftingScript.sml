@@ -126,6 +126,33 @@ end);
 
 
 
+val thm_t = build_immtype_t_conj
+``!s bo env (w1:'a word) (n2 : num) e1.
+      MEM bo [BIExp_LeftShift; BIExp_RightShift; BIExp_SignedRightShift] ==>
+      (MEM n2 (COUNT_LIST (dimindex (:'a)))) ==>
+      bir_is_lifted_imm_exp env e1 (w2bs w1 s) ==>
+      bir_is_lifted_imm_exp env (BExp_BinExp bo e1 (BExp_Const (n2bs n2 s)))
+        (w2bs (bir_bin_exp_GET_OPER bo w1 (n2w n2)) s)``;
+
+val bir_is_lifted_imm_exp_SHIFTS_n2w0 = prove (``^thm_t``,
+SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+  bir_env_vars_are_initialised_UNION, w2w_id, bir_env_vars_are_initialised_EMPTY]);
+
+val bir_is_lifted_imm_exp_SHIFTS_n2w = save_thm ("bir_is_lifted_imm_exp_SHIFTS_n2w",
+let
+  val thm0 = bir_is_lifted_imm_exp_SHIFTS_n2w0
+  val thm1 = SIMP_RULE (list_ss++wordsLib.WORD_ss) [
+    bir_bin_exp_GET_OPER_def, GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id,
+    DISJ_IMP_THM, FORALL_AND_THM, n2bs_def] thm0
+  val thm2 = SIMP_RULE (std_ss) [rich_listTheory.COUNT_LIST_compute,
+    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    FORALL_AND_THM] thm1
+in
+  thm2
+end);
+
+
+
 (**********************)
 (* Binary Preds       *)
 (**********************)
@@ -830,8 +857,86 @@ let
   val thm1 = SIMP_RULE std_ss [GSYM CONJ_ASSOC, w2bs_REWRS, IMP_CONJ_THM,
     FORALL_AND_THM, w2w_id, n2bs_def] thm0
 in
-  thm1
+  CONJ thm1 (SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_msb] thm1)
 end);
+
+
+(************)
+(* word_lsb *)
+(************)
+
+val bool2b_word_lsb = prove (``!w. bool2w (word_lsb w) = w2w w``,
+SIMP_TAC std_ss [bool2w_def, word_lsb_def] >>
+REPEAT STRIP_TAC >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+Cases >> SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [] >>
+FULL_SIMP_TAC (arith_ss++wordsLib.WORD_ss ++
+  boolSimps.LIFT_COND_ss) [
+  fcpTheory.FCP_BETA, w2w]);
+
+
+val thm_t = build_immtype_t_conj
+``!s env (w:'a word) e.
+      bir_is_lifted_imm_exp env e (w2bs w s) ==>
+      bir_is_lifted_imm_exp env (BExp_Cast BIExp_LowCast e Bit1)
+             (bool2b (word_lsb w))``;
+
+val bir_is_lifted_imm_exp_LSB0 = prove (``^thm_t``,
+SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
+  pred_setTheory.UNION_EMPTY, BType_Bool_def, w2w_id,
+  bool2b_def, bool2b_word_lsb]);
+
+val bir_is_lifted_imm_exp_LSB = save_thm ("bir_is_lifted_imm_exp_LSB",
+let
+  val thm0 = bir_is_lifted_imm_exp_LSB0
+  val thm1 = SIMP_RULE std_ss [GSYM CONJ_ASSOC, w2bs_REWRS, IMP_CONJ_THM,
+    FORALL_AND_THM, w2w_id, n2bs_def] thm0
+
+in
+  CONJ thm1 (REWRITE_RULE [word_lsb] thm1)
+end);
+
+
+(************)
+(* word_bit *)
+(************)
+
+val word_bit_ALT_DEF = prove (``!w n. (word_bit n w = ((w && n2w (2**n)) <> 0w))``,
+REPEAT STRIP_TAC >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+`0 < dimindex (:'a)` by METIS_TAC[DIMINDEX_GT_0] >>
+SIMP_TAC (arith_ss++wordsLib.SIZES_ss++boolSimps.CONJ_ss++boolSimps.EQUIV_EXTRACT_ss) [
+  word_bit_def, word_0, word_and_def, fcpTheory.FCP_BETA, word_index,
+  bitTheory.BIT_TWO_POW] >>
+DECIDE_TAC);
+
+
+val thm_t = build_immtype_t_conj
+``!s env (w:'a word) n e.
+      (MEM n (COUNT_LIST (dimindex (:'a) - 1))) ==> (0 < n) ==>
+      bir_is_lifted_imm_exp env e (w2bs w s) ==>
+      bir_is_lifted_imm_exp env (BExp_BinPred BIExp_NotEqual
+         (BExp_BinExp BIExp_And e (BExp_Const (n2bs (2**n) s))) (BExp_Const (n2bs 0 s)))
+             (bool2b (word_bit n w))``;
+
+val bir_is_lifted_imm_exp_word_bit0 = prove (``^thm_t``,
+SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
+  pred_setTheory.UNION_EMPTY, BType_Bool_def, word_bit_ALT_DEF, w2w_id]);
+
+
+val bir_is_lifted_imm_exp_word_bit = save_thm ("bir_is_lifted_imm_exp_word_bit",
+let
+  val thm0 = bir_is_lifted_imm_exp_word_bit0
+  val thm1 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [GSYM CONJ_ASSOC, w2bs_REWRS, IMP_CONJ_THM,
+    FORALL_AND_THM, w2w_id, n2bs_def] thm0
+
+  val thm2 = SIMP_RULE std_ss [rich_listTheory.COUNT_LIST_compute,
+    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    FORALL_AND_THM] thm1
+in
+  thm2
+end);
+
 
 
 (***********)
@@ -840,7 +945,7 @@ end);
 
 val BExp_Aligned_def = Define `BExp_Aligned sz p e =
    (BExp_BinPred BIExp_Equal
-      (BExp_BinExp BIExp_And e (BExp_Const (n2bs (2 ** p - 1) sz))) 
+      (BExp_BinExp BIExp_And e (BExp_Const (n2bs (2 ** p - 1) sz)))
       (BExp_Const (n2bs 0 sz)))`
 
 val BExp_Aligned_vars_of = store_thm ("BExp_Aligned_vars_of",
@@ -849,7 +954,7 @@ SIMP_TAC (std_ss++holBACore_ss) [BExp_Aligned_def, pred_setTheory.UNION_EMPTY]);
 
 
 val BExp_Aligned_type_of = store_thm ("BExp_Aligned_type_of",
-``!sz p e. type_of_bir_exp (BExp_Aligned sz p e) = 
+``!sz p e. type_of_bir_exp (BExp_Aligned sz p e) =
            if (type_of_bir_exp e = SOME (BType_Imm sz)) then
                SOME BType_Bool else NONE``,
 
@@ -862,7 +967,7 @@ REPEAT CASE_TAC >> (
 
 
 val BExp_Aligned_eval = store_thm ("BExp_Aligned_eval",
-``!sz p e env. bir_eval_exp (BExp_Aligned sz p e) env = 
+``!sz p e env. bir_eval_exp (BExp_Aligned sz p e) env =
      case (sz, bir_eval_exp e env) of
          (Bit1,  BVal_Imm (Imm1 w))  => BVal_Imm (bool2b (aligned p w))
        | (Bit8,  BVal_Imm (Imm8 w))  => BVal_Imm (bool2b (aligned p w))
@@ -919,6 +1024,7 @@ end);
 val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAULT_THMS",
   LIST_CONJ [bir_is_lifted_imm_exp_UNARY_EXP,
              bir_is_lifted_imm_exp_BIN_EXP,
+             bir_is_lifted_imm_exp_SHIFTS_n2w,
              bir_is_lifted_imm_exp_BIN_PRED,
              bir_is_lifted_imm_exp_bool2b,
              bir_is_lifted_imm_exp_CASTS,
@@ -929,6 +1035,8 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_NZCV,
              bir_is_lifted_imm_exp_WI_distinct_MEM_UNCHANGED_COMPUTE,
              bir_is_lifted_imm_exp_MSB,
+             bir_is_lifted_imm_exp_LSB,
+             bir_is_lifted_imm_exp_word_bit,
              bir_is_lifted_imm_exp_ALIGNED]);
 
 

@@ -119,17 +119,6 @@ sig
          should be expanded in this theorem. *)
       bmr_eval_thm           : thm,
 
-      (* evaluation for ``bmr_rel r bs ms`` *)
-      bmr_eval_rel_thm       : thm,
-
-      (* Rewrite for the vars used. Should be of form
-         ``bmr_vars r = [v1; v2; ...]`` *)
-      bmr_eval_vars_thm      : thm,
-
-      (* Rewrite for the temp_vars used. Should be of form
-         ``bmr_temp_vars r = [v1; v2; ...]`` *)
-      bmr_eval_temp_vars_thm : thm,
-
       (* Some lifting theorem, should be of from
          |- !bs ms. bmr_rel r bs ms ==>
                     (bir_is_lifted_exp bs.bst_environ . .) /\
@@ -185,26 +174,35 @@ sig
    (* The record for arm8 *)
    val arm8_bmr_rec : bmr_rec;
 
+   (* Records for m0, parameters are endianness and whether to use
+      process and main SP. The 4 possible instances are also precomputed. *)
+   val m0_bmr_rec : bool -> bool -> bmr_rec;
+
+   val m0_bmr_rec_LittleEnd_Main    : bmr_rec;
+   val m0_bmr_rec_BigEnd_Main       : bmr_rec;
+   val m0_bmr_rec_LittleEnd_Process : bmr_rec;
+   val m0_bmr_rec_BigEnd_Process    : bmr_rec;
+
 
 
    (* extracting the record fields. Output is the same as of
       dest_bir_lifting_machine_rec *)
-  val bmr_rec_extract_fields : bmr_rec -> term list * term * term * term * term;
+   val bmr_rec_extract_fields : bmr_rec -> term list * term * term * term * term;
 
-  (* The PC always corresponds to some immediate. This function
-     returns a the size of this immediate.
+   (* The PC always corresponds to some immediate. This function
+      returns a the size of this immediate.
 
-     As a second component a function for constructing terms "mk_get_pc_term" is
-     returned. Given a term "t" of the suitable machine state type, this
-     function constructs a term returning the PC of this machine state. *)
-  val bmr_rec_mk_pc_of_term : bmr_rec -> int * (term -> term)
+      As a second component a function for constructing terms "mk_get_pc_term" is
+      returned. Given a term "t" of the suitable machine state type, this
+      function constructs a term returning the PC of this machine state. *)
+   val bmr_rec_mk_pc_of_term : bmr_rec -> int * (term -> term)
 
-  (* Given a PC as an Arbnum, we need to be able to construct a label.
-     The form of the label depends on the size of the PC and therefore the record. *)
-  val bmr_rec_mk_label_of_num : bmr_rec -> Arbnum.num -> term
+   (* Given a PC as an Arbnum, we need to be able to construct a label.
+      The form of the label depends on the size of the PC and therefore the record. *)
+   val bmr_rec_mk_label_of_num : bmr_rec -> Arbnum.num -> term
 
-  (* Similar to contructing the label, we need an equality of this label with
-     the label of the PC, this then simplifies to the PC having a certain value. *)
-  val bmr_rec_mk_label_of_num_eq_pc : bmr_rec -> (term * Arbnum.num) -> term
+   (* Similar to contructing the label, we need an equality of this label with
+      the label of the PC, this then simplifies to the PC having a certain value. *)
+   val bmr_rec_mk_label_of_num_eq_pc : bmr_rec -> (term * Arbnum.num) -> term
 
 end

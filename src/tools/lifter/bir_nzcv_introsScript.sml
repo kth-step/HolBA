@@ -331,44 +331,6 @@ val nzcv_FOLDS_M0 = save_thm ("nzcv_FOLDS_M0",
             nzcv_SUB_N_fold_M0, nzcv_ADD_N_fold_M0,
             nzcv_SUB_Z_fold_M0, nzcv_ADD_Z_fold_M0]);
 
-(* Evaluate bitstring constants statically *)
-
-fun eval_immediates_M0 sz = let
-   val w_ty = wordsSyntax.mk_int_word_type sz
-   val w32_ty = ``:32``
-   val max = Arbnum.pow (Arbnum.two, Arbnum.fromInt sz)
-   fun mk_term n =
-      wordsSyntax.mk_w2w ((bitstringSyntax.padded_fixedwidth_of_num (Arbnum.fromInt n, sz)),
-                         w32_ty)
-   val my_convs = SIMP_CONV (std_ss++bitstringLib.v2w_n2w_ss++wordsLib.WORD_ss) []
-   val thms = List.tabulate (Arbnum.toInt max, (fn i => my_convs (mk_term i)))
-in
-   LIST_CONJ thms
-end;
-
-
-val w2w_v2w_immediates_eval_M0 = save_thm ("w2w_v2w_immediates_eval_M0",
-  LIST_CONJ [eval_immediates_M0 3,
-             eval_immediates_M0 8])
-
-
-val word4_list = List.tabulate (16, (fn i => wordsSyntax.mk_wordii (i, 4)))
-
-val R_name_T_EVAL = save_thm ("R_name_EVAL",
-  LIST_CONJ (map (fn w => EVAL ``R_name T ^w``) word4_list))
-
-val EQ_13w_EVAL = save_thm ("R_name_EVAL",
-  LIST_CONJ (map (fn w => EVAL ``^w = 13w:word4``) word4_list))
-
-val EQ_15w_EVAL = save_thm ("R_name_EVAL",
-  LIST_CONJ (map (fn w => EVAL ``^w = 15w:word4``) word4_list))
-
-val STEP_REWRS_M0 = save_thm ("FOLDS_M0",
-LIST_CONJ [nzcv_FOLDS_M0, nzcv_BIR_SIMPS,
-  R_name_T_EVAL, EQ_13w_EVAL,
-  w2w_v2w_immediates_eval_M0])
-
-
 (* Test
 
 open m0_stepLib

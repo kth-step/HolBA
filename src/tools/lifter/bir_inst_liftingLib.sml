@@ -105,6 +105,7 @@ val sty_FAIL  = [FG OrangeRed];
 functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifting = struct
   (* For debugging
   structure MD = struct val mr = arm8_bmr_rec end;
+  structure MD = struct val mr = m0_bmr_rec true true end;
   val pc = Arbnum.fromInt 0x10000
 
   val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x100000)
@@ -112,7 +113,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   fun hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm)
 
-
+  (* ARM 8 *)
   val hex_code = hex_code_of_asm `adds x0, x1, #1`
   val hex_code = hex_code_of_asm `add x0, x1, x2`
   val hex_code = hex_code_of_asm `ldr x0, [x1, #8]`
@@ -135,6 +136,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "B4000040"
   val hex_code = "54000089"
   val hex_code = "90000000"
+
+  (* M0 *)
+  val hex_code = "3202"
+
   val hex_code_desc = hex_code
 *)
 
@@ -351,7 +356,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         val thm2 = foldl (uncurry DISCH) thm1 (List.filter disch_hyp_check (hyp thm1))
         val thm3 = REWRITE_RULE [pc_thm, wordsTheory.word_add_n2w, wordsTheory.word_and_n2w,
               wordsTheory.word_or_n2w, bir_auxiliaryTheory.word_sub_n2w,
-              addr_sz_dimword_THM] thm2 handle UNCHANGED => thm2
+              addr_sz_dimword_THM, bir_auxiliaryTheory.align_n2w] thm2 handle UNCHANGED => thm2
      in
         thm3
      end
@@ -715,7 +720,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     in thm1 end;
 
     val lf_ms'_CONV = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [bmr_eval_REWRS,
-      cond_lift_fields_thm, PROTECTED_COND_ID] THENC
+      cond_lift_fields_thm, PROTECTED_COND_ID, updateTheory.APPLY_UPDATE_THM] THENC
       PURE_REWRITE_CONV [PROTECTED_COND_def]
   in
   fun compute_eup ms'_t =
@@ -938,9 +943,6 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         end)
         (fst (listSyntax.dest_list imm_ups_t)));
 
-     val (full_rel_thm, vn_set_final) = foldl add_imm_up (init_thm, vn_set)
-         (List.take (imm_ups_tm_list, 38));
-
      val (full_rel_thm, vn_set_final) = foldl add_imm_up (init_thm, vn_set) imm_ups_tm_list;
 
      (* add eup *)
@@ -989,7 +991,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
                pred_setTheory.DISJOINT_EMPTY, pred_setTheory.DISJOINT_INSERT])) thm1
          in (EQT_ELIM thm2, F) end handle HOL_ERR _ => let
             val thm0 = INST [eup_temp_v |-> T] precond_thm0
-            val thm1 = CONV_RULE (RHS_CONV (SIMP_CONV (std_ss) [
+            val thm1 = CONV_RULE (RHS_CONV (SIMP_CONV (list_ss++stringSimps.STRING_ss) [
                bir_envTheory.bir_var_name_def, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY])) thm0
          in
             (EQT_ELIM thm1, T)
@@ -1019,6 +1021,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
              bir_assert_block_def, bir_update_blockE_INIT_def, bir_update_blockB_def,
              bir_updateE_desc_remove_var_def, bir_updateE_desc_var_def,
              bir_updateB_desc_use_temp_def,
+             bir_updateE_desc_exp_def,
              bir_update_blockB_STEP1_def,
              bir_temp_varsTheory.bir_temp_var_def,
              bir_temp_varsTheory.bir_temp_var_name_def,
@@ -1194,6 +1197,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val cache = lift_inst_cache_empty
   val hex_code = "54FFE321"
   val hex_code_desc = "???"
+
+  val hex_code = "704C"
+  val hex_code = "BDF0"
+  val hex_code = "09C2"
   *)
   local
     val bir_is_lifted_inst_block_COMPUTE_precond_tm_mr =
@@ -1598,5 +1605,13 @@ end
 structure bir_inst_liftingLib :> bir_inst_liftingLib = struct
 
   structure bmil_arm8 = bir_inst_liftingFunctor (struct val mr = arm8_bmr_rec end);
+
+  structure bmil_m0_LittleEnd_Process = bir_inst_liftingFunctor (struct val mr = m0_bmr_rec_LittleEnd_Process end);
+  structure bmil_m0_LittleEnd_Main    = bir_inst_liftingFunctor (struct val mr = m0_bmr_rec_LittleEnd_Main end);
+  structure bmil_m0_BigEnd_Process    = bir_inst_liftingFunctor (struct val mr = m0_bmr_rec_BigEnd_Process end);
+  structure bmil_m0_BigEnd_Main       = bir_inst_liftingFunctor (struct val mr = m0_bmr_rec_BigEnd_Main end);
+
+
+
 
 end

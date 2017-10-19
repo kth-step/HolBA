@@ -77,7 +77,7 @@ signature bir_inst_lifting = sig
                       (thm (* resulting theorem *) *
                        (* Errors in from: (PC, hex-code, error_data option),
                           where error_data is always bir_inst_liftingExn_data  *)
-                       ((Arbnum.num * string * 
+                       ((Arbnum.num * string *
                          bir_inst_liftingExn_data option) list))
 
   (* Sometimes we want to lift a program that contains more than one code region.
@@ -104,6 +104,18 @@ signature bir_inst_liftingLib = sig
   (* ARM 8 instance *)
   structure bmil_arm8 : bir_inst_lifting
 
+  (* M0 instance, little endian, process SP *)
+  structure bmil_m0_LittleEnd_Process : bir_inst_lifting;
+
+  (* M0 instance, little endian, main SP *)
+  structure bmil_m0_LittleEnd_Main : bir_inst_lifting;
+
+  (* M0 instance, big endian, process SP *)
+  structure bmil_m0_BigEnd_Process : bir_inst_lifting;
+
+  (* M0 instance, big endian, main SP *)
+  structure bmil_m0_BigEnd_Main : bir_inst_lifting;
+
 end
 
 
@@ -120,7 +132,7 @@ end
 
    fun lift_instr hex_code = let
       val timer = (Time.now())
-      val thm = bir_lift_instr (mu_b, mu_e) pc hex_code
+      val thm = bir_lift_instr (mu_b, mu_e) pc hex_code hex_code
       val d_time = Time.- (Time.now(), timer);
       val d_s = (Time.toString d_time);
    in
