@@ -136,6 +136,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "B4000040"
   val hex_code = "54000089"
   val hex_code = "90000000"
+  val hex_code = "DA020000";
 
   (* M0 *)
   val hex_code = "3202"
@@ -829,7 +830,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
          bir_temp_varsTheory.bir_temp_var_name_def,
          bir_bool_expTheory.bir_exp_true_def,
          bir_bool_expTheory.bir_exp_false_def,
-         bir_nzcv_expTheory.BExp_nzcv_ADD_vars_of, bir_nzcv_expTheory.BExp_nzcv_SUB_vars_of]
+         bir_nzcv_expTheory.BExp_nzcv_ADD_vars_of, bir_nzcv_expTheory.BExp_nzcv_SUB_vars_of,
+         bir_nzcv_expTheory.BExp_ADD_WITH_CARRY_vars_of]
 
      val comp_upd_imm_varname_conv = SIMP_CONV (list_ss++stringSimps.STRING_ss) [bir_temp_varsTheory.bir_temp_var_def, bir_envTheory.bir_var_name_def, bir_temp_varsTheory.bir_temp_var_name_def]
 

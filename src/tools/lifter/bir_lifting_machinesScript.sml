@@ -459,7 +459,7 @@ val bmr_ms_mem_contains_interval_def = Define `
 
 val WF_bmr_ms_mem_contains_def = Define `WF_bmr_ms_mem_contains (ba: 'a word, wl:'b word list) <=>
   (LENGTH wl < dimword (:'a)) /\
-  (WI_wf (bmr_ms_mem_contains_interval (ba, wl)))`
+  (WI_wf (bmr_ms_mem_contains_interval (ba, wl)))`;
 
 val WF_bmr_ms_mem_contains_ALT_DEF = store_thm ("WF_bmr_ms_mem_contains_ALT_DEF",
  ``!(wl:'b word list) (b:'a word).
@@ -467,7 +467,7 @@ val WF_bmr_ms_mem_contains_ALT_DEF = store_thm ("WF_bmr_ms_mem_contains_ALT_DEF"
    (w2n b + LENGTH wl < dimword (:'a))``,
 
 SIMP_TAC std_ss [WF_bmr_ms_mem_contains_def, WI_wf_def, bmr_ms_mem_contains_interval_def,
-  WI_wf_size, bir_nzcv_expTheory.nzcv_BIR_ADD_C_CARRY_DEF,
+  WI_wf_size, bir_nzcv_expTheory.nzcv_BIR_ADD_C_CARRY_DEF, bir_nzcv_expTheory.awc_BIR_C_def,
   add_with_carry_def, LET_THM, n2w_w2n, w2n_n2w] >>
 SIMP_TAC (arith_ss++boolSimps.CONJ_ss) []);
 

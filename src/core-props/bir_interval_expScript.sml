@@ -53,7 +53,7 @@ val WI_wf_size = store_thm ("WI_wf_size",
 
 REPEAT Cases >>
 ASM_SIMP_TAC arith_ss [WI_wf_def, WI_size_def, WORD_LS, word_add_n2w, w2n_n2w,
-  nzcv_BIR_ADD_C_CARRY_DEF, add_with_carry_def, LET_THM] >>
+  nzcv_BIR_ADD_C_CARRY_DEF, awc_BIR_C_def, add_with_carry_def, LET_THM] >>
 rename1 `(n1:num) + n2` >>
 REPEAT STRIP_TAC >> EQ_TAC >> STRIP_TAC >> (
   ASM_SIMP_TAC arith_ss []
@@ -99,7 +99,7 @@ val WI_MEM_WI_size = store_thm ("WI_MEM_WI_size",
 ASM_SIMP_TAC arith_ss [WI_wf_size] >>
 REPEAT Cases >>
 FULL_SIMP_TAC arith_ss [w2n_n2w, WI_size_def, WI_MEM_def, WORD_LO,
-  word_add_n2w, WORD_LS, nzcv_BIR_ADD_C_CARRY_DEF, add_with_carry_def,
+  word_add_n2w, WORD_LS, nzcv_BIR_ADD_C_CARRY_DEF, awc_BIR_C_def, add_with_carry_def,
   LET_THM] >>
 REPEAT (POP_ASSUM MP_TAC) >>
 rename1 `((b:num) <= w) /\ (w < sz + b)` >>

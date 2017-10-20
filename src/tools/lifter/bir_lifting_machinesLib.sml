@@ -259,6 +259,11 @@ fun bmr_normalise_step_thm (r_step_rel:term) vn thm =
   val hex_code = "D345FC41"
   val hex_code = "A9B97BFD"
   val hex_code = "90000000"
+  val hex_code = "BA020000"
+  val hex_code = "BA000000"
+  val hex_code = "FA010000"
+  val hex_code = "FA000000"
+  val hex_code = "7100001F"
 
   val thms = arm8_step_hex hex_code
 *)
@@ -415,6 +420,9 @@ val _ = assert bmr_rec_sanity_check arm8_bmr_rec
   val hex_code = "4770"
   val hex_code = "0100"
 
+  val hex_code = "B285"
+  val hex_code = "8028"
+  val hex_code = "4182"
   val thms = thumb_step_hex (true, true) hex_code
 *)
 
@@ -513,6 +521,7 @@ fun m0_step_hex' (endian_fl, sel_fl) = let
 
      val thm3 = CONV_RULE simp_conv thm2
      val thm4 = HYP_CONV_RULE (K true) (simp_conv2) (CONV_RULE simp_conv2 thm3)
+
      val thm5 = PROVE_HYP TRUTH thm4
    in
      thm5

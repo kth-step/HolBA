@@ -775,7 +775,30 @@ val thm_t = let
 
   val tl = map build_immtype_t_conj (map (fn (te, tv) => (subst [exp_t |-> te, val_t |-> tv] thm_t)) l)
 
-in  list_mk_conj tl end;
+
+  val exp_t = ``XXX_exp : bir_immtype_t -> bir_exp_t -> bir_exp_t -> bir_exp_t -> bir_exp_t``
+  val val_t = ``XXX_val : 'a word -> 'a word -> bool -> bool``
+
+  val thm_t =
+  ``!s env (w1:'a word) w2 c e1 e2 ec.
+        bir_is_lifted_imm_exp env ec (bool2b c) ==>
+        bir_is_lifted_imm_exp env e1 (w2bs w1 s) ==>
+        bir_is_lifted_imm_exp env e2 (w2bs w2 s) ==>
+        bir_is_lifted_imm_exp env (^exp_t s e1 e2 ec) (bool2b (^val_t w1 w2 c))``;
+
+  val l = [
+     (``(\s:bir_immtype_t. BExp_ADD_WITH_CARRY_N s)``, ``awc_BIR_N``),
+     (``(\s:bir_immtype_t. BExp_ADD_WITH_CARRY_Z s)``, ``awc_BIR_Z``),
+     (``(\s:bir_immtype_t. BExp_ADD_WITH_CARRY_C)``, ``awc_BIR_C``),
+     (``(\s:bir_immtype_t. BExp_ADD_WITH_CARRY_V s)``, ``awc_BIR_V``)
+  ];
+
+  val tl2 = map build_immtype_t_conj (map (fn (te, tv) => (subst [exp_t |-> te, val_t |-> tv] thm_t)) l)
+
+
+
+in  list_mk_conj (tl @ tl2) end;
+
 
 val bir_is_lifted_imm_exp_NZCV0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
@@ -783,9 +806,12 @@ SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_d
   pairTheory.pair_case_thm,
   BExp_nzcv_SUB_type_of, BExp_nzcv_SUB_vars_of,
   BExp_nzcv_ADD_type_of, BExp_nzcv_ADD_vars_of,
+  BExp_ADD_WITH_CARRY_type_of, BExp_ADD_WITH_CARRY_vars_of,
 
   BExp_nzcv_SUB_N_eval, BExp_nzcv_SUB_Z_eval, BExp_nzcv_SUB_C_eval, BExp_nzcv_SUB_V_eval,
-  BExp_nzcv_ADD_N_eval, BExp_nzcv_ADD_Z_eval, BExp_nzcv_ADD_C_eval, BExp_nzcv_ADD_V_eval
+  BExp_nzcv_ADD_N_eval, BExp_nzcv_ADD_Z_eval, BExp_nzcv_ADD_C_eval, BExp_nzcv_ADD_V_eval,
+  BExp_ADD_WITH_CARRY_N_eval, BExp_ADD_WITH_CARRY_Z_eval,
+  BExp_ADD_WITH_CARRY_C_eval, BExp_ADD_WITH_CARRY_V_eval
 ]);
 
 val bir_is_lifted_imm_exp_NZCV = save_thm ("bir_is_lifted_imm_exp_NZCV",
