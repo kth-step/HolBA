@@ -129,7 +129,7 @@ end);
 val thm_t = build_immtype_t_conj
 ``!s bo env (w1:'a word) (n2 : num) e1.
       MEM bo [BIExp_LeftShift; BIExp_RightShift; BIExp_SignedRightShift] ==>
-      (MEM n2 (COUNT_LIST (dimindex (:'a)))) ==>
+      (MEM n2 (COUNT_LIST (SUC (dimindex (:'a))))) ==>
       bir_is_lifted_imm_exp env e1 (w2bs w1 s) ==>
       bir_is_lifted_imm_exp env (BExp_BinExp bo e1 (BExp_Const (n2bs n2 s)))
         (w2bs (bir_bin_exp_GET_OPER bo w1 (n2w n2)) s)``;

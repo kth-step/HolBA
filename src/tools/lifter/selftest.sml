@@ -205,6 +205,10 @@ val res = arm8_test_asm `add x0, x1, x2`;
 val res = arm8_test_asm `add x1, x1, x1`;
 val res = arm8_test_asm `adds x0, x1, x2`;
 val res = arm8_test_asm `add x0, x0, x2`;
+val res = arm8_test_asm `adc x0, x0, x2`;
+val res = arm8_test_asm `adcs x0, x0, x2`;
+val res = arm8_test_asm `sbcs x0, x0, x2`;
+val res = arm8_test_asm `sbc x0, x0, x2`;
 val res = arm8_test_asm `sub x0, x1, x2`;
 val res = arm8_test_asm `mul x0, x1, x2`;
 val res = arm8_test_asm `mul w0, w1, w1`;
@@ -310,6 +314,13 @@ val res = m0_test_hex "f000f858";
 val res = m0_test_hex "3202";
 val res = m0_test_hex "635c";
 val res = m0_test_hex "70E8";
+val res = m0_test_hex "B285";
+val res = m0_test_hex "8028";
+val res = m0_test_hex "DFB8";
+val res = m0_test_hex "A1BC";
+val res = m0_test_hex "4182";
+val res = m0_test_hex "1000";
+val res = m0_test_hex "FFFF003F";
 
 
 
