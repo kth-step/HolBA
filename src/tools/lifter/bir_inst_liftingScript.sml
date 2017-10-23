@@ -1570,6 +1570,80 @@ METIS_TAC[]);
 
 
 
+
+val bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_MERGE_1 = store_thm (
+  "bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_MERGE_1",
+ ``!sz bs il (b1 : 'a word) s1 (f : 'a word -> 'b word) f12 e1 b2 s2 f21 e2.
+
+      bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS sz bs
+         ((b1:'a word, s1, f, f12, e1)::(b2, s2, f21, f, e2)::il) ==>
+
+      ((s1 + s2 < dimword (:'a)) /\
+      (b2 = b1 + (n2w s1))) ==>
+
+      bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS sz bs
+         ((b1:'a word, s1+s2, f21, f12, e1)::il)``,
+
+
+SIMP_TAC (list_ss++boolSimps.EQUIV_EXTRACT_ss) [
+  bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_def] >>
+REPEAT GEN_TAC >>
+REPEAT STRIP_TAC >>
+Q.PAT_X_ASSUM `s1 + s2 < dimword (:'a)` ASSUME_TAC >>
+FULL_SIMP_TAC arith_ss [FUNS_EQ_OUTSIDE_WI_size_def,
+  WI_MEM_WI_size, w2n_n2w] >>
+STRIP_TAC >>
+`WI_wf (WI_size b1 (n2w s1))` by (
+  IRULE_TAC WI_wf_size_LOWER_EQ >>
+  Q.EXISTS_TAC `n2w (s1 + s2)` >>
+  ASM_SIMP_TAC arith_ss [word_ls_n2w]
+) >>
+`WI_wf (WI_size (b1+n2w s1) (n2w s2))` by (
+  Q.PAT_X_ASSUM `WI_wf (WI_size b1 (n2w (s1 + s2)))` MP_TAC >>
+  Cases_on `b1` >>
+  ASM_SIMP_TAC arith_ss [WI_wf_size_SUM_LT, w2n_n2w, word_add_n2w]
+) >>
+FULL_SIMP_TAC list_ss [WI_ELEM_LIST_ADD]);
+
+
+val bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_MERGE_2 = store_thm (
+  "bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_MERGE_2",
+ ``!sz bs il (b1 : 'a word) s1 (f : 'a word -> 'b word) f12 e1 b2 s2 f21 e2.
+
+      bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS sz bs
+         ((b1:'a word, s1, f, f12, e1)::(b2, s2, f21, f, e2)::il) ==>
+
+      ((s1 + s2 < dimword (:'a)) /\
+      (b1 = b2 + (n2w s2))) ==>
+
+      bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS sz bs
+         ((b2:'a word, s2+s1, f21, f12, e2)::il)``,
+
+
+SIMP_TAC (list_ss++boolSimps.EQUIV_EXTRACT_ss) [
+  bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_def] >>
+REPEAT GEN_TAC >>
+REPEAT STRIP_TAC >>
+Q.PAT_X_ASSUM `s1 + s2 < dimword (:'a)` ASSUME_TAC >>
+FULL_SIMP_TAC arith_ss [FUNS_EQ_OUTSIDE_WI_size_def,
+  WI_MEM_WI_size, w2n_n2w] >>
+STRIP_TAC >>
+`WI_wf (WI_size b2 (n2w s2))` by (
+  IRULE_TAC WI_wf_size_LOWER_EQ >>
+  Q.EXISTS_TAC `n2w (s1 + s2)` >>
+  ASM_SIMP_TAC arith_ss [word_ls_n2w]
+) >>
+`WI_wf (WI_size (b2+n2w s2) (n2w s1))` by (
+  Q.PAT_X_ASSUM `WI_wf (WI_size b2 (n2w (s1 + s2)))` MP_TAC >>
+  Cases_on `b2` >>
+  ASM_SIMP_TAC arith_ss [WI_wf_size_SUM_LT, w2n_n2w, word_add_n2w]
+) >>
+Q.SUBGOAL_THEN `s1 + s2 = s2 + s1` SUBST1_TAC >- DECIDE_TAC >>
+REWRITE_TAC [WI_ELEM_LIST_ADD] >>
+FULL_SIMP_TAC list_ss []);
+
+
+
 (**********************************************)
 (* Lifting a machine instruction to a program *)
 (**********************************************)

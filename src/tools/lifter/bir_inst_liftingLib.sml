@@ -142,6 +142,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (* M0 *)
   val hex_code = "3202"
   val hex_code = "C500"
+  val hex_code = "B5F7"
 
   val hex_code_desc = hex_code
 *)
@@ -637,15 +638,47 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
           wordsTheory.w2w_id] thm1
      in thm2 end;
 
+     val al_mem_MERGE_THM1 = let
+       val thm0 = INST_TYPE [Type.alpha |-> addr_sz_ty, Type.beta |-> mem_val_sz_ty]
+           bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_MERGE_1
+       val thm1 = SPECL [addr_sz_immtype_t, bs_v] thm0
+       val thm2 = REWRITE_RULE [addr_sz_dimword_THM] thm1
+     in thm2 end;
+
+     val al_mem_MERGE_THM2 = let
+       val thm0 = INST_TYPE [Type.alpha |-> addr_sz_ty, Type.beta |-> mem_val_sz_ty]
+           bir_is_lifted_inst_block_COMPUTE_al_mem_INTERVALS_MERGE_2
+       val thm1 = SPECL [addr_sz_immtype_t, bs_v] thm0
+       val thm2 = REWRITE_RULE [addr_sz_dimword_THM] thm1
+     in thm2 end;
+
 
      val ch_thms = flatten (map BODY_CONJUNCTS (#bmr_change_interval_thms mr))
      (* val t = mem_ms'_t *)
      fun compute_next_interval t =
        Lib.tryfind (fn thm => PART_MATCH (rand o rator) thm t) ch_thms
+
+     val merge_preconds_simp =  SIMP_CONV (std_ss++wordsLib.WORD_ss) []
   in
 
-
   fun compute_al_mem_SOME ms'_t mu_thm mem_ms'_t mem_ms'_thm = let
+     fun merge_intervals_thm mthm intervals_thm = let
+       val thm0 = MATCH_MP mthm intervals_thm
+       val (pre, _) = dest_imp_only (concl thm0)
+       val pre_thm = EQT_ELIM (merge_preconds_simp pre)
+       val thm1 = MP thm0 pre_thm
+     in
+       thm1
+     end
+
+     fun merge_intervals intervals_thm =
+       merge_intervals_thm al_mem_MERGE_THM1 intervals_thm
+     handle HOL_ERR _ =>
+       merge_intervals_thm al_mem_MERGE_THM2 intervals_thm
+     handle HOL_ERR _ =>
+       intervals_thm
+
+
      (* val current_thm = al_mem_NIL_THM *)
      fun compute_intervals_thm current_thm mem_t =
        if (aconv mem_t mr_mem_lf_of_ms) then current_thm else
@@ -664,8 +697,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
           val (pre, _) = dest_imp_only (concl thm3)
           val thm4 = MP thm3 (DECIDE pre)
+
+          val thm5 = merge_intervals thm4
        in
-          compute_intervals_thm thm4 mem_t'
+          compute_intervals_thm thm5 mem_t'
        end;
 
    val intervals_thm = compute_intervals_thm al_mem_NIL_THM mem_ms'_t
@@ -687,7 +722,6 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   end
 
   end;
-
 
 
   (* Combine both *)
@@ -1023,7 +1057,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   (* Simple eval *)
 
-  val compute_bl_conv = SIMP_CONV list_ss [bir_is_lifted_inst_block_COMPUTE_block_def,
+  val compute_bl_compset = listSimps.list_compset ();
+  val _ = computeLib.add_thms [bir_is_lifted_inst_block_COMPUTE_block_def,
              bir_update_assert_block_def, pairTheory.pair_case_thm,
              bir_assert_block_def, bir_update_blockE_INIT_def, bir_update_blockB_def,
              bir_updateE_desc_remove_var_def, bir_updateE_desc_var_def,
@@ -1034,7 +1069,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
              bir_temp_varsTheory.bir_temp_var_name_def,
              bir_assert_desc_exp_def,
              bir_update_blockB_STEP2_def,
-             bir_update_blockE_FINAL_def]
+             bir_update_blockE_FINAL_def] compute_bl_compset
+  val _ = optionLib.OPTION_rws compute_bl_compset
+  val compute_bl_conv = computeLib.CBV_CONV compute_bl_compset
+
   fun compute_bl lb al_mem_t al_step_t eup_temp_t eup_t updates_t = let
     val bl0_tm = list_mk_comb (bir_is_lifted_inst_block_COMPUTE_block_tm,
         [lb, al_mem_t, al_step_t, eup_temp_t, eup_t, updates_t]);
@@ -1208,6 +1246,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "704C"
   val hex_code = "BDF0"
   val hex_code = "09C2"
+  val hex_code = "BDF7";
   *)
   local
     val bir_is_lifted_inst_block_COMPUTE_precond_tm_mr =

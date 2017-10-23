@@ -73,6 +73,21 @@ val WI_wf_size_compute = store_thm ("WI_wf_size_compute",
 SIMP_TAC std_ss [WI_wf_size, nzcv_BIR_ADD_NZCV_REWRS, WORD_NOT_LOWER]);
 
 
+val WI_wf_size_SUM_LT = store_thm ("WI_wf_size_SUM_LT",
+``!(b:'a word) sz.
+    WI_wf (WI_size b sz) <=>
+    w2n b + w2n sz < dimword (:'a)``,
+
+SIMP_TAC std_ss [WI_wf_size, bir_nzcv_expTheory.nzcv_BIR_ADD_C_CARRY_DEF,
+  bir_nzcv_expTheory.awc_BIR_C_def, add_with_carry_def, LET_THM, w2n_n2w] >>
+REPEAT STRIP_TAC >> EQ_TAC >> REPEAT STRIP_TAC >- (
+  POP_ASSUM (SUBST1_TAC o GSYM) >>
+  SIMP_TAC arith_ss [ZERO_LT_dimword]
+) >- (
+  ASM_SIMP_TAC arith_ss []
+));
+
+
 val WI_size_INTRO = store_thm ("WI_size_INTRO",
   ``!s e. ((WI_end s e) = (WI_size s (e - s)))``,
   SIMP_TAC std_ss [WI_size_def, WORD_SUB_ADD]);
@@ -122,6 +137,15 @@ val WI_MEM_WI_end = store_thm ("WI_MEM_WI_end",
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [WI_size_INTRO, WI_MEM_WI_size]);
 
+
+val WI_ELEM_LIST_ADD = store_thm ("WI_ELEM_LIST_ADD",
+``!b:'a word n1 n2. WI_ELEM_LIST b (n1 + n2) =
+                   (WI_ELEM_LIST b n1) ++ (WI_ELEM_LIST (b + n2w n1) n2)``,
+
+Induct_on `n1` >> (
+  SIMP_TAC list_ss [WI_ELEM_LIST_def, WORD_ADD_0]
+) >>
+ASM_SIMP_TAC (list_ss++wordsLib.WORD_ss) [WI_ELEM_LIST_def, arithmeticTheory.ADD_CLAUSES, n2w_SUC]);
 
 
 
@@ -254,6 +278,16 @@ Cases_on `b1` >> Cases_on `e1` >>
 Cases_on `b2` >> Cases_on `e2` >>
 FULL_SIMP_TAC arith_ss [WI_MEM_def, word_interval_11, WI_wf_def, WI_wfe_def,
   WI_is_empty_End, WORD_LS, WORD_LO, w2n_n2w, n2w_11]);
+
+
+val WI_wf_size_LOWER_EQ = store_thm ("WI_wf_size_LOWER_EQ",
+``!b sz1 sz2. (sz2 <=+ sz1) ==>
+              (WI_wf (WI_size (b:'a word) sz1)) ==>
+              (WI_wf (WI_size b sz2))``,
+
+SIMP_TAC std_ss [WI_wf_size_compute] >>
+REPEAT STRIP_TAC >>
+METIS_TAC[wordsTheory.WORD_LOWER_EQ_TRANS, WORD_LS_NOT]);
 
 
 

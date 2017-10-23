@@ -284,13 +284,14 @@ val (res, fl) = test_ARM8.bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt
 (* SOME MANUAL TESTS M0 *)
 (************************)
 
-fun m0_lift_instr mu_b mu_e pc hex_code = (
-  print "LP "; test_M0_1.lift_instr mu_b mu_e pc hex_code;
-  print "BP "; test_M0_2.lift_instr mu_b mu_e pc hex_code;
-  print "LM "; test_M0_3.lift_instr mu_b mu_e pc hex_code;
-  print "BM "; test_M0_4.lift_instr mu_b mu_e pc hex_code
-);
-
+fun m0_lift_instr mu_b mu_e pc hex_code = let
+  val r1 = (print "LP "; test_M0_1.lift_instr mu_b mu_e pc hex_code)
+  val r2 = (print "BP "; test_M0_2.lift_instr mu_b mu_e pc hex_code)
+  val r3 = (print "LM "; test_M0_3.lift_instr mu_b mu_e pc hex_code)
+  val r4 = (print "BM "; test_M0_4.lift_instr mu_b mu_e pc hex_code)
+in
+  (r1, r2, r3, r4)
+end;
 
 fun m0_hex_code_of_asm asm = hd (m0AssemblerLib.m0_code asm)
 fun m0_lift_instr_asm mu_b mu_e pc asm =
@@ -312,6 +313,7 @@ val res = m0_test_hex "4011";
 val res = m0_test_hex "b510";
 val res = m0_test_hex "BA18";
 val res = m0_test_hex "f000f858";
+val res = m0_test_hex "BDF7";
 val res = m0_test_hex "3202";
 val res = m0_test_hex "635c";
 val res = m0_test_hex "70E8";
@@ -322,6 +324,7 @@ val res = m0_test_hex "A1BC";
 val res = m0_test_hex "4182";
 val res = m0_test_hex "1000";
 val res = m0_test_hex "4088";
+val res = m0_test_hex "B5F7"
 
 
 

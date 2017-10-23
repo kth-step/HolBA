@@ -8330,49 +8330,7 @@ sig
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 32w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 28w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 24w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 20w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 16w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 12w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 4w))) 4);
+                            (BExp_Const (Imm32 32w))) 32);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
                       (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
@@ -9398,49 +9356,7 @@ sig
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 32w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 28w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 24w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 20w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 16w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 12w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 4w))) 4);
+                            (BExp_Const (Imm32 32w))) 32);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
                       (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
@@ -10047,13 +9963,7 @@ sig
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 4w))) 4);
+                            (BExp_Const (Imm32 8w))) 8);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
                       (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
@@ -10913,13 +10823,7 @@ sig
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 4w))) 4);
+                            (BExp_Const (Imm32 8w))) 8);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
                       (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
@@ -11666,31 +11570,7 @@ sig
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 20w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 16w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 12w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 4w))) 4);
+                            (BExp_Const (Imm32 20w))) 20);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
                       (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
@@ -12862,31 +12742,7 @@ sig
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 20w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 16w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 12w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 4w))) 4);
+                            (BExp_Const (Imm32 20w))) 20);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
                       (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
@@ -15299,13 +15155,7 @@ sig
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 4w))) 4);
+                            (BExp_Const (Imm32 8w))) 8);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
                       (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
@@ -15531,25 +15381,7 @@ sig
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 16w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 12w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 4w))) 4);
+                            (BExp_Const (Imm32 16w))) 16);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
                       (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
@@ -15822,25 +15654,7 @@ sig
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 16w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 12w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 4w))) 4);
+                            (BExp_Const (Imm32 16w))) 16);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
                       (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
@@ -16114,49 +15928,7 @@ sig
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 32w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 28w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 24w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 20w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 16w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 12w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 4w))) 4);
+                            (BExp_Const (Imm32 32w))) 32);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
                       (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
@@ -17018,49 +16790,7 @@ sig
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 32w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 28w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 24w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 20w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 16w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 12w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))) 4);
-                    BStmt_Assert
-                      (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 4w))) 4);
+                            (BExp_Const (Imm32 32w))) 32);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
                       (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))

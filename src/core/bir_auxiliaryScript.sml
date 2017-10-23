@@ -573,6 +573,12 @@ STRIP_TAC >>
 FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) []);
 
 
+val WORD_LS_NOT = store_thm ("WORD_LS_NOT",
+``!w1 (w2:'a word). (~w1 <=+ ~w2) <=> (w2 <=+ w1)``,
+REPEAT Cases >>
+ASM_SIMP_TAC arith_ss [word_1comp_n2w, word_ls_n2w]);
+
+
 val aligned_neg = store_thm ("aligned_neg",
 ``!p (a:'a word). aligned p (-a) <=> aligned p a``,
 
