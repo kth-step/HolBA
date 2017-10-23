@@ -423,7 +423,15 @@ val _ = assert bmr_rec_sanity_check arm8_bmr_rec
   val hex_code = "B285"
   val hex_code = "8028"
   val hex_code = "4182"
+  val hex_code = "4088";
+  val hex_code = "BA18";
+  val hex_code = "BDF7";
+  val hex_code = "B5F7"
+
   val thms = thumb_step_hex (true, true) hex_code
+  val thms = thumb_step_hex (false, true) hex_code
+  val thms = thumb_step_hex (true, true) hex_code
+
 *)
 
 
@@ -462,7 +470,10 @@ val m0_extra_ss = rewrites m0_REWRS;
 
 (* DEBUG
 
-m0_step_hex' (endian_fl, sel_fl) vn hex_code
+  val endian_fl = false
+  val sel_fl = true
+
+  val res = m0_step_hex' (endian_fl, sel_fl) vn hex_code
 
 *)
 
@@ -477,7 +488,9 @@ fun m0_step_hex' (endian_fl, sel_fl) = let
   val simp_conv = (SIMP_CONV (arith_ss++bitstringLib.v2w_n2w_ss)
      ((if endian_fl then m0_extra_FOLDS_BE else m0_extra_FOLDS_LE)::[nzcv_FOLDS_M0,
      EQ_13w_EVAL, EQ_15w_EVAL, R_name_EVAL, bir_auxiliaryTheory.w2w_n2w,
-     m0_extra_FOLDS_GEN, Mode_Handler_INTRO]));
+     m0_extra_FOLDS_GEN, Mode_Handler_INTRO, bir_auxiliaryTheory.align_aligned_add,
+     bir_auxiliaryTheory.align_aligned_sub,
+     alignmentTheory.aligned_numeric, alignmentTheory.align_aligned]));
 
   val simp_conv2 = (SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss++wordsLib.WORD_LOGIC_ss++wordsLib.SIZES_ss) [wordsTheory.n2w_11, m0_extra_FOLDS_GEN, wordsTheory.word_msb]) THENC
                    (SIMP_CONV std_ss [word_add_to_sub_TYPES, alignmentTheory.aligned_numeric]);
@@ -519,10 +532,9 @@ fun m0_step_hex' (endian_fl, sel_fl) = let
      val thm2 = foldl (fn (pre_thm, thm) => PROVE_HYP pre_thm thm) thm1
        (pc_mem_thms @ (m0_extra_THMS vn))
 
-     val thm3 = CONV_RULE simp_conv thm2
-     val thm4 = HYP_CONV_RULE (K true) (simp_conv2) (CONV_RULE simp_conv2 thm3)
-
-     val thm5 = PROVE_HYP TRUTH thm4
+     val thm3 = DISCH_ALL thm2
+     val thm4 = CONV_RULE (simp_conv THENC simp_conv2) thm3
+     val thm5 = UNDISCH_ALL thm4
    in
      thm5
    end;
@@ -565,10 +577,10 @@ in
 }: bmr_rec
 end;
 
-val m0_bmr_rec_LittleEnd_Main    = m0_bmr_rec false true
-val m0_bmr_rec_BigEnd_Main       = m0_bmr_rec true  true
-val m0_bmr_rec_LittleEnd_Process = m0_bmr_rec false false
-val m0_bmr_rec_BigEnd_Process    = m0_bmr_rec true  false
+val m0_bmr_rec_LittleEnd_Main    = m0_bmr_rec false false
+val m0_bmr_rec_BigEnd_Main       = m0_bmr_rec true  false
+val m0_bmr_rec_LittleEnd_Process = m0_bmr_rec false true
+val m0_bmr_rec_BigEnd_Process    = m0_bmr_rec true  true
 
 val _ = assert bmr_rec_sanity_check (m0_bmr_rec_BigEnd_Process)
 val _ = assert bmr_rec_sanity_check (m0_bmr_rec_LittleEnd_Process)

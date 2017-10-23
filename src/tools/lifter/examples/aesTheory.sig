@@ -8374,12 +8374,9 @@ sig
                                (BVar "SP_process" (BType_Imm Bit32)))
                             (BExp_Const (Imm32 4w))) 4);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 32w))));
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                         (BExp_Const (Imm32 32w)));
                     BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
                       (BExp_Store
                          (BExp_Store
@@ -9303,23 +9300,24 @@ sig
                      "BDF7 (pop {r0, r1, r2, r4, r5, r6, r7, pc})";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Load
-                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-                            (BExp_BinExp BIExp_Plus
-                               (BExp_Den
-                                  (BVar "SP_process" (BType_Imm Bit32)))
-                               (BExp_Const (Imm32 28w))) BEnd_LittleEndian
-                            Bit8) Bit1);
-                    BStmt_Assert
                       (BExp_Aligned Bit32 2
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
+                         (BExp_Aligned Bit8 1
+                            (BExp_Load
+                               (BExp_Den
+                                  (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                               (BExp_BinExp BIExp_Plus
+                                  (BExp_Den
+                                     (BVar "SP_process" (BType_Imm Bit32)))
+                                  (BExp_Const (Imm32 28w)))
+                               BEnd_LittleEndian Bit8)));
+                    BStmt_Assert
+                      (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)));
                     BStmt_Assign (BVar "tmp_PC" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFEw))
+                      (BExp_Align Bit32 1
                          (BExp_Load
                             (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
                             (BExp_BinExp BIExp_Plus
@@ -9444,12 +9442,9 @@ sig
                                (BVar "SP_process" (BType_Imm Bit32)))
                             (BExp_Const (Imm32 4w))) 4);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 32w))));
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                         (BExp_Const (Imm32 32w)));
                     BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
                       (BExp_Store
                          (BExp_Store
@@ -9944,23 +9939,24 @@ sig
                      "BDF7 (pop {r0, r1, r2, r4, r5, r6, r7, pc})";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Load
-                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-                            (BExp_BinExp BIExp_Plus
-                               (BExp_Den
-                                  (BVar "SP_process" (BType_Imm Bit32)))
-                               (BExp_Const (Imm32 28w))) BEnd_LittleEndian
-                            Bit8) Bit1);
-                    BStmt_Assert
                       (BExp_Aligned Bit32 2
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
+                         (BExp_Aligned Bit8 1
+                            (BExp_Load
+                               (BExp_Den
+                                  (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                               (BExp_BinExp BIExp_Plus
+                                  (BExp_Den
+                                     (BVar "SP_process" (BType_Imm Bit32)))
+                                  (BExp_Const (Imm32 28w)))
+                               BEnd_LittleEndian Bit8)));
+                    BStmt_Assert
+                      (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)));
                     BStmt_Assign (BVar "tmp_PC" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFEw))
+                      (BExp_Align Bit32 1
                          (BExp_Load
                             (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
                             (BExp_BinExp BIExp_Plus
@@ -10059,12 +10055,9 @@ sig
                                (BVar "SP_process" (BType_Imm Bit32)))
                             (BExp_Const (Imm32 4w))) 4);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))));
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                         (BExp_Const (Imm32 8w)));
                     BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
                       (BExp_Store
                          (BExp_Store
@@ -10303,23 +10296,24 @@ sig
                    BL_Address_HC (Imm32 214w) "BD10 (pop {r4, pc})";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Load
-                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-                            (BExp_BinExp BIExp_Plus
-                               (BExp_Den
-                                  (BVar "SP_process" (BType_Imm Bit32)))
-                               (BExp_Const (Imm32 4w))) BEnd_LittleEndian
-                            Bit8) Bit1);
-                    BStmt_Assert
                       (BExp_Aligned Bit32 2
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
+                         (BExp_Aligned Bit8 1
+                            (BExp_Load
+                               (BExp_Den
+                                  (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                               (BExp_BinExp BIExp_Plus
+                                  (BExp_Den
+                                     (BVar "SP_process" (BType_Imm Bit32)))
+                                  (BExp_Const (Imm32 4w)))
+                               BEnd_LittleEndian Bit8)));
+                    BStmt_Assert
+                      (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)));
                     BStmt_Assign (BVar "tmp_PC" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFEw))
+                      (BExp_Align Bit32 1
                          (BExp_Load
                             (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
                             (BExp_BinExp BIExp_Plus
@@ -10762,8 +10756,7 @@ sig
                  bb_last_statement :=
                    BStmt_Jmp
                      (BLE_Exp
-                        (BExp_BinExp BIExp_And
-                           (BExp_Const (Imm32 0xFFFFFFFEw))
+                        (BExp_Align Bit32 1
                            (BExp_Den (BVar "LR" (BType_Imm Bit32)))))|>;
                <|bb_label :=
                    BL_Address_HC (Imm32 278w)
@@ -10896,8 +10889,7 @@ sig
                  bb_last_statement :=
                    BStmt_Jmp
                      (BLE_Exp
-                        (BExp_BinExp BIExp_And
-                           (BExp_Const (Imm32 0xFFFFFFFEw))
+                        (BExp_Align Bit32 1
                            (BExp_Den (BVar "LR" (BType_Imm Bit32)))))|>;
                <|bb_label :=
                    BL_Address_HC (Imm32 298w)
@@ -10929,12 +10921,9 @@ sig
                                (BVar "SP_process" (BType_Imm Bit32)))
                             (BExp_Const (Imm32 4w))) 4);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))));
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                         (BExp_Const (Imm32 8w)));
                     BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
                       (BExp_Store
                          (BExp_Store
@@ -11198,23 +11187,24 @@ sig
                    BL_Address_HC (Imm32 330w) "BD10 (pop {r4, pc})";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Load
-                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-                            (BExp_BinExp BIExp_Plus
-                               (BExp_Den
-                                  (BVar "SP_process" (BType_Imm Bit32)))
-                               (BExp_Const (Imm32 4w))) BEnd_LittleEndian
-                            Bit8) Bit1);
-                    BStmt_Assert
                       (BExp_Aligned Bit32 2
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
+                         (BExp_Aligned Bit8 1
+                            (BExp_Load
+                               (BExp_Den
+                                  (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                               (BExp_BinExp BIExp_Plus
+                                  (BExp_Den
+                                     (BVar "SP_process" (BType_Imm Bit32)))
+                                  (BExp_Const (Imm32 4w)))
+                               BEnd_LittleEndian Bit8)));
+                    BStmt_Assert
+                      (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)));
                     BStmt_Assign (BVar "tmp_PC" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFEw))
+                      (BExp_Align Bit32 1
                          (BExp_Load
                             (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
                             (BExp_BinExp BIExp_Plus
@@ -11657,8 +11647,7 @@ sig
                  bb_last_statement :=
                    BStmt_Jmp
                      (BLE_Exp
-                        (BExp_BinExp BIExp_And
-                           (BExp_Const (Imm32 0xFFFFFFFEw))
+                        (BExp_Align Bit32 1
                            (BExp_Den (BVar "LR" (BType_Imm Bit32)))))|>;
                <|bb_label :=
                    BL_Address_HC (Imm32 394w)
@@ -11703,12 +11692,9 @@ sig
                                (BVar "SP_process" (BType_Imm Bit32)))
                             (BExp_Const (Imm32 4w))) 4);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 20w))));
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                         (BExp_Const (Imm32 20w)));
                     BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
                       (BExp_Store
                          (BExp_Store
@@ -11769,8 +11755,7 @@ sig
                    BL_Address_HC (Imm32 404w) "B087 (sub sp, #28)";
                  bb_statements :=
                    [BStmt_Assign (BVar "SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
+                      (BExp_Align Bit32 2
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
@@ -12786,8 +12771,7 @@ sig
                    BL_Address_HC (Imm32 554w) "B007 (add sp, #28)";
                  bb_statements :=
                    [BStmt_Assign (BVar "SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
+                      (BExp_Align Bit32 2
                          (BExp_BinExp BIExp_Plus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
@@ -12799,23 +12783,24 @@ sig
                      "BDF0 (pop {r4, r5, r6, r7, pc})";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Load
-                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-                            (BExp_BinExp BIExp_Plus
-                               (BExp_Den
-                                  (BVar "SP_process" (BType_Imm Bit32)))
-                               (BExp_Const (Imm32 16w))) BEnd_LittleEndian
-                            Bit8) Bit1);
-                    BStmt_Assert
                       (BExp_Aligned Bit32 2
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
+                         (BExp_Aligned Bit8 1
+                            (BExp_Load
+                               (BExp_Den
+                                  (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                               (BExp_BinExp BIExp_Plus
+                                  (BExp_Den
+                                     (BVar "SP_process" (BType_Imm Bit32)))
+                                  (BExp_Const (Imm32 16w)))
+                               BEnd_LittleEndian Bit8)));
+                    BStmt_Assert
+                      (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)));
                     BStmt_Assign (BVar "tmp_PC" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFEw))
+                      (BExp_Align Bit32 1
                          (BExp_Load
                             (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
                             (BExp_BinExp BIExp_Plus
@@ -12903,12 +12888,9 @@ sig
                                (BVar "SP_process" (BType_Imm Bit32)))
                             (BExp_Const (Imm32 4w))) 4);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 20w))));
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                         (BExp_Const (Imm32 20w)));
                     BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
                       (BExp_Store
                          (BExp_Store
@@ -12969,8 +12951,7 @@ sig
                    BL_Address_HC (Imm32 568w) "B08F (sub sp, #60 ; 0x3c)";
                  bb_statements :=
                    [BStmt_Assign (BVar "SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
+                      (BExp_Align Bit32 2
                          (BExp_BinExp BIExp_Minus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
@@ -15222,8 +15203,7 @@ sig
                    BL_Address_HC (Imm32 876w) "B00F (add sp, #60 ; 0x3c)";
                  bb_statements :=
                    [BStmt_Assign (BVar "SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
+                      (BExp_Align Bit32 2
                          (BExp_BinExp BIExp_Plus
                             (BExp_Den
                                (BVar "SP_process" (BType_Imm Bit32)))
@@ -15235,23 +15215,24 @@ sig
                      "BDF0 (pop {r4, r5, r6, r7, pc})";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Load
-                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-                            (BExp_BinExp BIExp_Plus
-                               (BExp_Den
-                                  (BVar "SP_process" (BType_Imm Bit32)))
-                               (BExp_Const (Imm32 16w))) BEnd_LittleEndian
-                            Bit8) Bit1);
-                    BStmt_Assert
                       (BExp_Aligned Bit32 2
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
+                         (BExp_Aligned Bit8 1
+                            (BExp_Load
+                               (BExp_Den
+                                  (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                               (BExp_BinExp BIExp_Plus
+                                  (BExp_Den
+                                     (BVar "SP_process" (BType_Imm Bit32)))
+                                  (BExp_Const (Imm32 16w)))
+                               BEnd_LittleEndian Bit8)));
+                    BStmt_Assert
+                      (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)));
                     BStmt_Assign (BVar "tmp_PC" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFEw))
+                      (BExp_Align Bit32 1
                          (BExp_Load
                             (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
                             (BExp_BinExp BIExp_Plus
@@ -15326,12 +15307,9 @@ sig
                                (BVar "SP_process" (BType_Imm Bit32)))
                             (BExp_Const (Imm32 4w))) 4);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 8w))));
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                         (BExp_Const (Imm32 8w)));
                     BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
                       (BExp_Store
                          (BExp_Store
@@ -15503,23 +15481,24 @@ sig
                    BL_Address_HC (Imm32 906w) "BD10 (pop {r4, pc})";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Load
-                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-                            (BExp_BinExp BIExp_Plus
-                               (BExp_Den
-                                  (BVar "SP_process" (BType_Imm Bit32)))
-                               (BExp_Const (Imm32 4w))) BEnd_LittleEndian
-                            Bit8) Bit1);
-                    BStmt_Assert
                       (BExp_Aligned Bit32 2
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
+                         (BExp_Aligned Bit8 1
+                            (BExp_Load
+                               (BExp_Den
+                                  (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                               (BExp_BinExp BIExp_Plus
+                                  (BExp_Den
+                                     (BVar "SP_process" (BType_Imm Bit32)))
+                                  (BExp_Const (Imm32 4w)))
+                               BEnd_LittleEndian Bit8)));
+                    BStmt_Assert
+                      (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)));
                     BStmt_Assign (BVar "tmp_PC" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFEw))
+                      (BExp_Align Bit32 1
                          (BExp_Load
                             (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
                             (BExp_BinExp BIExp_Plus
@@ -15572,12 +15551,9 @@ sig
                                (BVar "SP_process" (BType_Imm Bit32)))
                             (BExp_Const (Imm32 4w))) 4);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 16w))));
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                         (BExp_Const (Imm32 16w)));
                     BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
                       (BExp_Store
                          (BExp_Store
@@ -15775,23 +15751,24 @@ sig
                      "BD70 (pop {r4, r5, r6, pc})";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Load
-                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-                            (BExp_BinExp BIExp_Plus
-                               (BExp_Den
-                                  (BVar "SP_process" (BType_Imm Bit32)))
-                               (BExp_Const (Imm32 12w))) BEnd_LittleEndian
-                            Bit8) Bit1);
-                    BStmt_Assert
                       (BExp_Aligned Bit32 2
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
+                         (BExp_Aligned Bit8 1
+                            (BExp_Load
+                               (BExp_Den
+                                  (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                               (BExp_BinExp BIExp_Plus
+                                  (BExp_Den
+                                     (BVar "SP_process" (BType_Imm Bit32)))
+                                  (BExp_Const (Imm32 12w)))
+                               BEnd_LittleEndian Bit8)));
+                    BStmt_Assert
+                      (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)));
                     BStmt_Assign (BVar "tmp_PC" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFEw))
+                      (BExp_Align Bit32 1
                          (BExp_Load
                             (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
                             (BExp_BinExp BIExp_Plus
@@ -15865,12 +15842,9 @@ sig
                                (BVar "SP_process" (BType_Imm Bit32)))
                             (BExp_Const (Imm32 4w))) 4);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 16w))));
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                         (BExp_Const (Imm32 16w)));
                     BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
                       (BExp_Store
                          (BExp_Store
@@ -16069,23 +16043,24 @@ sig
                      "BD70 (pop {r4, r5, r6, pc})";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Load
-                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-                            (BExp_BinExp BIExp_Plus
-                               (BExp_Den
-                                  (BVar "SP_process" (BType_Imm Bit32)))
-                               (BExp_Const (Imm32 12w))) BEnd_LittleEndian
-                            Bit8) Bit1);
-                    BStmt_Assert
                       (BExp_Aligned Bit32 2
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
+                         (BExp_Aligned Bit8 1
+                            (BExp_Load
+                               (BExp_Den
+                                  (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                               (BExp_BinExp BIExp_Plus
+                                  (BExp_Den
+                                     (BVar "SP_process" (BType_Imm Bit32)))
+                                  (BExp_Const (Imm32 12w)))
+                               BEnd_LittleEndian Bit8)));
+                    BStmt_Assert
+                      (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)));
                     BStmt_Assign (BVar "tmp_PC" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFEw))
+                      (BExp_Align Bit32 1
                          (BExp_Load
                             (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
                             (BExp_BinExp BIExp_Plus
@@ -16183,12 +16158,9 @@ sig
                                (BVar "SP_process" (BType_Imm Bit32)))
                             (BExp_Const (Imm32 4w))) 4);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 32w))));
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                         (BExp_Const (Imm32 32w)));
                     BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
                       (BExp_Store
                          (BExp_Store
@@ -16943,23 +16915,24 @@ sig
                      "BDF7 (pop {r0, r1, r2, r4, r5, r6, r7, pc})";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Load
-                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-                            (BExp_BinExp BIExp_Plus
-                               (BExp_Den
-                                  (BVar "SP_process" (BType_Imm Bit32)))
-                               (BExp_Const (Imm32 28w))) BEnd_LittleEndian
-                            Bit8) Bit1);
-                    BStmt_Assert
                       (BExp_Aligned Bit32 2
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
+                         (BExp_Aligned Bit8 1
+                            (BExp_Load
+                               (BExp_Den
+                                  (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                               (BExp_BinExp BIExp_Plus
+                                  (BExp_Den
+                                     (BVar "SP_process" (BType_Imm Bit32)))
+                                  (BExp_Const (Imm32 28w)))
+                               BEnd_LittleEndian Bit8)));
+                    BStmt_Assert
+                      (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)));
                     BStmt_Assign (BVar "tmp_PC" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFEw))
+                      (BExp_Align Bit32 1
                          (BExp_Load
                             (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
                             (BExp_BinExp BIExp_Plus
@@ -17089,12 +17062,9 @@ sig
                                (BVar "SP_process" (BType_Imm Bit32)))
                             (BExp_Const (Imm32 4w))) 4);
                     BStmt_Assign (BVar "tmp_SP_process" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFCw))
-                         (BExp_BinExp BIExp_Minus
-                            (BExp_Den
-                               (BVar "SP_process" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 32w))));
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                         (BExp_Const (Imm32 32w)));
                     BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
                       (BExp_Store
                          (BExp_Store
@@ -17849,23 +17819,24 @@ sig
                      "BDF7 (pop {r0, r1, r2, r4, r5, r6, r7, pc})";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Load
-                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-                            (BExp_BinExp BIExp_Plus
-                               (BExp_Den
-                                  (BVar "SP_process" (BType_Imm Bit32)))
-                               (BExp_Const (Imm32 28w))) BEnd_LittleEndian
-                            Bit8) Bit1);
-                    BStmt_Assert
                       (BExp_Aligned Bit32 2
                          (BExp_Den (BVar "SP_process" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
+                         (BExp_Aligned Bit8 1
+                            (BExp_Load
+                               (BExp_Den
+                                  (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                               (BExp_BinExp BIExp_Plus
+                                  (BExp_Den
+                                     (BVar "SP_process" (BType_Imm Bit32)))
+                                  (BExp_Const (Imm32 28w)))
+                               BEnd_LittleEndian Bit8)));
+                    BStmt_Assert
+                      (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)));
                     BStmt_Assign (BVar "tmp_PC" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_And
-                         (BExp_Const (Imm32 0xFFFFFFFEw))
+                      (BExp_Align Bit32 1
                          (BExp_Load
                             (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
                             (BExp_BinExp BIExp_Plus

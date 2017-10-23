@@ -239,10 +239,10 @@ val res = arm8_test_asm `asr x1, x1, #0`;
 val res = arm8_test_asm `asr x1, x2, x3`;
 val res = arm8_test_asm `ldr x0, [x2, #0]`;
 
-  (* THERE ARE STILL MANY TODOs !!! *)
 val res = arm8_test_asm `lsl x0, x2, #8`;
 val res = arm8_test_asm `lsr x0, x2, #8`;
 val res = arm8_test_asm `str x0, [x2, #8]`;
+
 
   (* some instructions I din't see in this file *)
 (*  4003a0:     d61f0220        br      x17 *)
@@ -310,6 +310,7 @@ val res = m0_test_hex "b007";
 val res = m0_test_hex "4A15";
 val res = m0_test_hex "4011";
 val res = m0_test_hex "b510";
+val res = m0_test_hex "BA18";
 val res = m0_test_hex "f000f858";
 val res = m0_test_hex "3202";
 val res = m0_test_hex "635c";
@@ -320,7 +321,7 @@ val res = m0_test_hex "DFB8";
 val res = m0_test_hex "A1BC";
 val res = m0_test_hex "4182";
 val res = m0_test_hex "1000";
-val res = m0_test_hex "FFFF003F";
+val res = m0_test_hex "4088";
 
 
 

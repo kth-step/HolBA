@@ -561,6 +561,52 @@ Cases_on `m <= n` >- (
 ASM_SIMP_TAC arith_ss [GSYM word_2comp_n2w, n2w_sub, WORD_NEG_SUB]);
 
 
+val WORD_SUB_RZERO_IFF = store_thm ("WORD_SUB_RZERO_IFF",
+  ``!(a : 'a word) b. ((a - b = a)) <=> (b = 0w)``,
+
+REPEAT GEN_TAC >>
+Tactical.REVERSE EQ_TAC >- (
+  SIMP_TAC arith_ss [WORD_SUB_RZERO]
+) >>
+STRIP_TAC >>
+`(-a) + (a - b) = (-a) + a` by METIS_TAC[wordsTheory.WORD_EQ_ADD_LCANCEL] >>
+FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) []);
+
+
+val aligned_neg = store_thm ("aligned_neg",
+``!p (a:'a word). aligned p (-a) <=> aligned p a``,
+
+`!p (a:'a word). aligned p a ==> aligned p (-a)` suffices_by METIS_TAC[WORD_NEG_NEG] >>
+REPEAT STRIP_TAC >>
+Q.SUBGOAL_THEN `(-a) = 0w - a` SUBST1_TAC >- SIMP_TAC (std_ss++wordsLib.WORD_ss) [] >>
+ASM_SIMP_TAC std_ss [alignmentTheory.aligned_add_sub, alignmentTheory.aligned_0]);
+
+
+val align_aligned_add = store_thm ("align_aligned_add",
+``!p (a:'a word) b. aligned p b ==>
+                    ((align p (a + b) = ((align p a) + b)))``,
+
+REPEAT STRIP_TAC >>
+Cases_on `dimindex (:'a) <= p` >- (
+  `b = 0w` by METIS_TAC [alignmentTheory.aligned_ge_dim]>>
+  ASM_SIMP_TAC std_ss [wordsTheory.WORD_ADD_0]
+) >>
+FULL_SIMP_TAC std_ss [alignmentTheory.align_sub, alignmentTheory.aligned_def] >>
+REPEAT GEN_TAC >>
+Cases_on `p = 0` >> FULL_SIMP_TAC std_ss [] >>
+ASM_SIMP_TAC arith_ss [Once (GSYM wordsTheory.WORD_EXTRACT_OVER_ADD2)] >>
+FULL_SIMP_TAC arith_ss [WORD_SUB_RZERO_IFF, WORD_ADD_0, WORD_EXTRACT_COMP_THM,
+  arithmeticTheory.MIN_DEF] >>
+SIMP_TAC (std_ss++wordsLib.WORD_ss) []);
+
+
+val align_aligned_sub = store_thm ("align_aligned_sub",
+``!p (a:'a word) b. aligned p b ==>
+                    ((align p (a - b) = ((align p a) - b)))``,
+METIS_TAC[aligned_neg, word_sub_def, align_aligned_add]);
+
+
+
 (* -------------------------------------------------------------------------- *)
 (* Fresh variable names                                                       *)
 (* -------------------------------------------------------------------------- *)

@@ -5,6 +5,7 @@ open bir_lifting_machinesLib;
 open bir_interval_expTheory bir_update_blockTheory
 open bir_exp_liftingLib bir_typing_expSyntax
 open bir_typing_expTheory
+open bir_extra_expsTheory
 open bir_lifter_general_auxTheory
 open bir_programSyntax bir_interval_expSyntax
 open bir_program_labelsTheory
@@ -140,6 +141,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   (* M0 *)
   val hex_code = "3202"
+  val hex_code = "C500"
 
   val hex_code_desc = hex_code
 *)
@@ -335,6 +337,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      val lifted_thms_raw = let
        val res = (#bmr_step_hex mr) ms_v hex_code
        val _ = assert (not o List.null) res
+       val _ = assert (List.all (fn thm => not (Lib.mem F (hyp thm)))) res
      in res end handle HOL_ERR _ =>
        raise (bir_inst_liftingExn (hex_code, BILED_msg "bmr_step_hex failed"));
 
@@ -831,7 +834,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
          bir_bool_expTheory.bir_exp_true_def,
          bir_bool_expTheory.bir_exp_false_def,
          bir_nzcv_expTheory.BExp_nzcv_ADD_vars_of, bir_nzcv_expTheory.BExp_nzcv_SUB_vars_of,
-         bir_nzcv_expTheory.BExp_ADD_WITH_CARRY_vars_of]
+         bir_nzcv_expTheory.BExp_ADD_WITH_CARRY_vars_of,
+         BExp_reverse_endian16_vars_of, BExp_reverse_endian32_vars_of,
+         BExp_reverse_endian64_vars_of, BExp_Align_vars_of, BExp_Aligned_vars_of]
 
      val comp_upd_imm_varname_conv = SIMP_CONV (list_ss++stringSimps.STRING_ss) [bir_temp_varsTheory.bir_temp_var_def, bir_envTheory.bir_var_name_def, bir_temp_varsTheory.bir_temp_var_name_def]
 
