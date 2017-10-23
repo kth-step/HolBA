@@ -489,7 +489,7 @@ fun m0_step_hex' (endian_fl, sel_fl) = let
      ((if endian_fl then m0_extra_FOLDS_BE else m0_extra_FOLDS_LE)::[nzcv_FOLDS_M0,
      EQ_13w_EVAL, EQ_15w_EVAL, R_name_EVAL, bir_auxiliaryTheory.w2w_n2w,
      m0_extra_FOLDS_GEN, Mode_Handler_INTRO, bir_auxiliaryTheory.align_aligned_add,
-     bir_auxiliaryTheory.align_aligned_sub,
+     bir_auxiliaryTheory.align_aligned_sub, LowestSetBit_n2w, numeral_bitTheory.LOWEST_SET_BIT,
      alignmentTheory.aligned_numeric, alignmentTheory.align_aligned]));
 
   val simp_conv2 = (SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss++wordsLib.WORD_LOGIC_ss++wordsLib.SIZES_ss) [wordsTheory.n2w_11, m0_extra_FOLDS_GEN, wordsTheory.word_msb]) THENC
@@ -535,11 +535,16 @@ fun m0_step_hex' (endian_fl, sel_fl) = let
      val thm3 = DISCH_ALL thm2
      val thm4 = CONV_RULE (simp_conv THENC simp_conv2) thm3
      val thm5 = UNDISCH_ALL thm4
+
+     (* check that theorem structure did not get destroyed by e.g.
+        contradicting assumptions. *)
+     val _ = dest_eq (concl thm5) handle HOL_ERR _ => failwith "m0_step_hex': unexpected resulting theorem"
    in
      thm5
    end;
 
 in
+
   fn vn => fn hex_code => let
     val pc_mem_thms = prepare_mem_contains_thms vn hex_code;
 

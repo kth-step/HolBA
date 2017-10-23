@@ -324,7 +324,8 @@ val res = m0_test_hex "A1BC";
 val res = m0_test_hex "4182";
 val res = m0_test_hex "1000";
 val res = m0_test_hex "4088";
-val res = m0_test_hex "B5F7"
+val res = m0_test_hex "B5F7";
+val res = m0_test_hex "C29C";
 
 
 
