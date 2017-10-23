@@ -8695,9 +8695,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 38w) "2204 (movs r2, #4)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 4w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "R2" (BType_Imm Bit32))
                       (BExp_Const (Imm32 4w))];
@@ -8723,9 +8721,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 44w) "2703 (movs r7, #3)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 3w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "R7" (BType_Imm Bit32))
                       (BExp_Const (Imm32 3w))];
@@ -9439,9 +9435,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 126w) "2200 (movs r2, #0)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 0w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_true;
                     BStmt_Assign (BVar "R2" (BType_Imm Bit32))
                       (BExp_Const (Imm32 0w))];
@@ -9628,9 +9622,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 146w) "2300 (movs r3, #0)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 0w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_true;
                     BStmt_Assign (BVar "R3" (BType_Imm Bit32))
                       (BExp_Const (Imm32 0w))];
@@ -10042,9 +10034,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 194w) "2200 (movs r2, #0)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 0w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_true;
                     BStmt_Assign (BVar "R2" (BType_Imm Bit32))
                       (BExp_Const (Imm32 0w))];
@@ -10676,9 +10666,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 284w) "231B (movs r3, #27)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 27w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "R3" (BType_Imm Bit32))
                       (BExp_Const (Imm32 27w))];
@@ -10927,9 +10915,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 310w) "2200 (movs r2, #0)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 0w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_true;
                     BStmt_Assign (BVar "R2" (BType_Imm Bit32))
                       (BExp_Const (Imm32 0w))];
@@ -11623,9 +11609,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 402w) "2000 (movs r0, #0)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 0w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_true;
                     BStmt_Assign (BVar "R0" (BType_Imm Bit32))
                       (BExp_Const (Imm32 0w))];
@@ -11653,9 +11637,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 410w) "2501 (movs r5, #1)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 1w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "R5" (BType_Imm Bit32))
                       (BExp_Const (Imm32 1w))];
@@ -12795,9 +12777,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 566w) "200A (movs r0, #10)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 10w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "R0" (BType_Imm Bit32))
                       (BExp_Const (Imm32 10w))];
@@ -12825,9 +12805,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 574w) "2409 (movs r4, #9)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 9w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "R4" (BType_Imm Bit32))
                       (BExp_Const (Imm32 9w))];
@@ -15198,9 +15176,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 890w) "2300 (movs r3, #0)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 0w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_true;
                     BStmt_Assign (BVar "R3" (BType_Imm Bit32))
                       (BExp_Const (Imm32 0w))];
@@ -16033,9 +16009,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 1004w) "220F (movs r2, #15)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 15w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "R2" (BType_Imm Bit32))
                       (BExp_Const (Imm32 15w))];
@@ -16401,9 +16375,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 1056w) "2210 (movs r2, #16)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 16w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "R2" (BType_Imm Bit32))
                       (BExp_Const (Imm32 16w))];
@@ -16895,9 +16867,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 1120w) "220F (movs r2, #15)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 15w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "R2" (BType_Imm Bit32))
                       (BExp_Const (Imm32 15w))];
@@ -17240,9 +17210,7 @@ sig
                <|bb_label :=
                    BL_Address_HC (Imm32 1166w) "2210 (movs r2, #16)";
                  bb_statements :=
-                   [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Const (Imm32 16w)) (BExp_Const (Imm32 0w)));
+                   [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_false;
                     BStmt_Assign (BVar "R2" (BType_Imm Bit32))
                       (BExp_Const (Imm32 16w))];

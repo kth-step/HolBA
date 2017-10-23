@@ -427,6 +427,8 @@ val _ = assert bmr_rec_sanity_check arm8_bmr_rec
   val hex_code = "BA18";
   val hex_code = "BDF7";
   val hex_code = "B5F7"
+  val hex_code = "2200";
+  val hex_code = "2204";
 
   val thms = thumb_step_hex (true, true) hex_code
   val thms = thumb_step_hex (false, true) hex_code
@@ -490,10 +492,14 @@ fun m0_step_hex' (endian_fl, sel_fl) = let
      EQ_13w_EVAL, EQ_15w_EVAL, R_name_EVAL, bir_auxiliaryTheory.w2w_n2w,
      m0_extra_FOLDS_GEN, Mode_Handler_INTRO, bir_auxiliaryTheory.align_aligned_add,
      bir_auxiliaryTheory.align_aligned_sub, LowestSetBit_n2w, numeral_bitTheory.LOWEST_SET_BIT,
-     alignmentTheory.aligned_numeric, alignmentTheory.align_aligned]));
+     alignmentTheory.aligned_numeric, alignmentTheory.align_aligned, wordsTheory.word_bit_n2w]));
 
-  val simp_conv2 = (SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss++wordsLib.WORD_LOGIC_ss++wordsLib.SIZES_ss) [wordsTheory.n2w_11, m0_extra_FOLDS_GEN, wordsTheory.word_msb]) THENC
-                   (SIMP_CONV std_ss [word_add_to_sub_TYPES, alignmentTheory.aligned_numeric]);
+  val compset_2 = reduceLib.num_compset ();
+  val _ = bitLib.add_bit_compset compset_2
+
+  val simp_conv2 = (SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss++wordsLib.WORD_LOGIC_ss++wordsLib.SIZES_ss) [wordsTheory.n2w_11, m0_extra_FOLDS_GEN, wordsTheory.word_msb, wordsTheory.word_bit_n2w]) THENC
+                   (SIMP_CONV std_ss [word_add_to_sub_TYPES, alignmentTheory.aligned_numeric] THENC
+                    computeLib.CBV_CONV compset_2);
 
   val bmr_extra_M0' = REWRITE_RULE [] (SPECL [endian_fl_tm, sel_fl_tm] bmr_extra_M0)
   fun m0_extra_THMS vn = let
