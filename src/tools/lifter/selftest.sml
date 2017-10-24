@@ -381,8 +381,8 @@ val res = arm8_test_asm "madd x1, x2, x3, x4"
 val res = arm8_test_asm "msub w1, w2, w3, w4"
 val res = arm8_test_asm "msub x1, x2, x3, x4"
 val res = arm8_test_asm "msub x1, x2, x3, xzr"
-val res = arm8_test_asm "mneg w1, w2, w3" (* TODO: better translation *)
-val res = arm8_test_asm "mneg x1, x2, x3" (* TODO: better translation *)
+val res = arm8_test_asm "mneg w1, w2, w3"
+val res = arm8_test_asm "mneg x1, x2, x3"
 
 val res = arm8_test_asm "smaddl x1, w2, w3, x4"
 val res = arm8_test_asm "smsubl x1, w2, w3, x4"
@@ -463,15 +463,112 @@ fun m0_test_hex hex = m0_lift_instr mu_b mu_e pc hex NONE
 
 val res = print_with_style sty_HEADER "\nMANUAL TESTS - M0\n\n";
 
-val res = m0_test_asm "add r0, r1";
-val res = m0_test_asm "adds r0, r1";
-val res = m0_test_asm "subs r0, r1";
-val res = m0_test_asm "lsls r0, r1";
-val res = m0_test_asm "rors r0, r1";
-val res = m0_test_asm "lsrs r4, r0"
-val res = m0_test_asm "asrs r4, r0"
-val res = m0_test_asm "cmn r0, r1";
+val res = m0_test_asm "mov r0, r1";
+val res = m0_test_asm "movs r0, r1";
+val res = m0_test_asm "mov pc, r1";
 
+
+val res = m0_test_asm "adds r0, r1, #0";
+val res = m0_test_asm "adds r0, r1, #2";
+val res = m0_test_asm "adds r0, r1, r2";
+val res = m0_test_asm "add r0, r1";
+val res = m0_test_asm "add pc, r1"; (* TODO: improve result *)
+val res = m0_test_asm "adds r0, #128";
+val res = m0_test_asm "adcs r0, r1";
+val res = m0_test_asm "add sp, #128";
+val res = m0_test_asm "add r0, sp, #128";
+
+
+val res = m0_test_asm "subs r0, r1, r2";
+val res = m0_test_asm "subs r0, r1, #3";
+val res = m0_test_asm "subs r0, r1, r1";
+val res = m0_test_asm "subs r0, r1, #0"; (* TODO: improve result *)
+val res = m0_test_asm "subs r0, #128";
+val res = m0_test_asm "subs r0, #0"; (* TODO: improve result *)
+val res = m0_test_asm "sbcs r0, r3";
+val res = m0_test_asm "sub sp, #8"; (* TODO: improve result *)
+val res = m0_test_asm "sub sp, #16"; (* TODO: improve result *)
+val res = m0_test_asm "rsbs r1, r2, #0"; (* TODO: improve result *)
+val res = m0_test_asm "muls r1, r3";
+val res = m0_test_asm "cmp r1, r3";
+val res = m0_test_asm "cmp r1, r1";
+val res = m0_test_asm "cmp r1, #0"; (* TODO : improve result *)
+val res = m0_test_asm "cmp r1, #12";
+val res = m0_test_asm "cmn r1, r3";
+val res = m0_test_asm "cmn r1, r1";
+
+val res = m0_test_asm "ands r1, r1";
+val res = m0_test_asm "ands r1, r2";
+val res = m0_test_asm "eors r1, r2";
+val res = m0_test_asm "eors r1, r1";
+val res = m0_test_asm "orrs r1, r2";
+val res = m0_test_asm "orrs r1, r1";
+val res = m0_test_asm "bics r1, r2";
+val res = m0_test_asm "bics r1, r1";
+val res = m0_test_asm "mvns r1, r2";
+val res = m0_test_asm "mvns r1, r1";
+val res = m0_test_asm "tst r1, r2";
+val res = m0_test_asm "tst r1, r1";
+val res = m0_test_asm "lsls r0, r1";
+val res = m0_test_asm "lsls r0, #2";
+val res = m0_test_asm "lsls r0, #0";
+val res = m0_test_asm "lsrs r0, r1";
+val res = m0_test_asm "lsrs r0, #2";
+val res = m0_test_asm "asrs r0, r1";
+val res = m0_test_asm "asrs r0, #2";
+
+val res = m0_test_asm "rors r0, r1";
+
+
+val res = m0_test_asm "ldr r1, [r0]"
+val res = m0_test_asm "ldr r1, [r0, #4]"
+val res = m0_test_asm "ldr r1, [r0, #8]"
+val res = m0_test_asm "ldrh r1, [r0, #8]"
+val res = m0_test_asm "ldrh r1, [r0, #0]"
+val res = m0_test_asm "ldrh r1, [r0, #2]"
+val res = m0_test_asm "ldrb r1, [r0]"
+val res = m0_test_asm "ldrb r1, [r0, #1]"
+val res = m0_test_asm "ldrb r1, [r0, #19]"
+val res = m0_test_asm "ldr r1, [r0, r2]"
+val res = m0_test_asm "ldrh r1, [r0, r2]"
+val res = m0_test_asm "ldrsh r1, [r0, r2]"
+val res = m0_test_asm "ldrb r1, [r0, r2]"
+val res = m0_test_asm "ldrsb r1, [r0, r2]"
+val res = m0_test_asm "ldr r1, [pc, #8]"
+val res = m0_test_asm "ldr r1, [sp, #8]"
+val res = m0_test_asm "ldm r3, {r1, r2, r3}"
+
+val res = m0_test_asm "str r1, [r0]"
+val res = m0_test_asm "str r1, [r0, #4]"
+val res = m0_test_asm "str r1, [r0, #8]"
+val res = m0_test_asm "strh r1, [r0, #8]"
+val res = m0_test_asm "strh r1, [r0, #0]"
+val res = m0_test_asm "strh r1, [r0, #2]"
+val res = m0_test_asm "strb r1, [r0]"
+val res = m0_test_asm "strb r1, [r0, #1]"
+val res = m0_test_asm "strb r1, [r0, #19]"
+val res = m0_test_asm "str r1, [r0, r2]"
+val res = m0_test_asm "strh r1, [r0, r2]"
+val res = m0_test_asm "strb r1, [r0, r2]"
+val res = m0_test_asm "str r1, [sp, #8]"
+val res = m0_test_asm "stm r1!, {r1, r2, r3}"
+
+val res = m0_test_asm "push {r1, r2, r3}"
+val res = m0_test_asm "pop {r1, r2, r3}"
+val res = m0_test_asm "push {r1, r2, r3, lr}"
+val res = m0_test_asm "pop {r1, r2, r3, pc}"
+
+val res = m0_test_asm "bx r1"
+val res = m0_test_asm "blx r1"
+
+val res = m0_test_asm "sxth r1, r2"
+val res = m0_test_asm "sxtb r1, r2"
+val res = m0_test_asm "uxth r1, r2"
+val res = m0_test_asm "uxtb r1, r2"
+
+val res = m0_test_asm "rev r1, r2"
+val res = m0_test_asm "rev16 r1, r2"
+val res = m0_test_asm "revsh r1, r2"
 
 val res = m0_test_hex "3104";
 val res = m0_test_hex "b007";
@@ -974,36 +1071,36 @@ val arm8_expected_failed_hexcodes:string list =
    "53021041" (* ubfm w1, w2, #2, #4 lifting of ``Imm64 (w2w (7w && w2w (ms.REG 2w) #>> 2))`` failed *),
    "13080841" (* sbfm w1, w2, #8, #2 lifting of ``Imm64
   (w2w
-     (0x7000000w && w2w (ms.REG 2w) #>> 8 || 
+     (0x7000000w && w2w (ms.REG 2w) #>> 8 ||
       0xF8000000w &&
       if word_bit 2 (w2w (ms.REG 2w)) then 0xFFFFFFFFw else 0w))`` failed *),
    "13022041" (* sbfm w1, w2, #2, #8 lifting of ``Imm64
   (w2w
-     (127w && w2w (ms.REG 2w) #>> 2 || 
+     (127w && w2w (ms.REG 2w) #>> 2 ||
       0xFFFFFF80w &&
       if word_bit 8 (w2w (ms.REG 2w)) then 0xFFFFFFFFw else 0w))`` failed *),
    "13021041" (* sbfm w1, w2, #2, #4 lifting of ``Imm64
   (w2w
-     (7w && w2w (ms.REG 2w) #>> 2 || 
+     (7w && w2w (ms.REG 2w) #>> 2 ||
       0xFFFFFFF8w &&
       if word_bit 4 (w2w (ms.REG 2w)) then 0xFFFFFFFFw else 0w))`` failed *),
    "33080841" (* bfm w1, w2, #8, #2 lifting of ``Imm64
   (w2w
-     (0xF8000000w && w2w (ms.REG 1w) || 
+     (0xF8000000w && w2w (ms.REG 1w) ||
       0x7FFFFFFw &&
-      (0xF8FFFFFFw && w2w (ms.REG 1w) || 
+      (0xF8FFFFFFw && w2w (ms.REG 1w) ||
        0x7000000w && w2w (ms.REG 2w) #>> 8)))`` failed *),
    "33022041" (* bfm w1, w2, #2, #8 lifting of ``Imm64
   (w2w
-     (0xFFFFFF80w && w2w (ms.REG 1w) || 
+     (0xFFFFFF80w && w2w (ms.REG 1w) ||
       127w &&
-      (0x3FFFFF80w && w2w (ms.REG 1w) || 
+      (0x3FFFFF80w && w2w (ms.REG 1w) ||
        0xC000007Fw && w2w (ms.REG 2w) #>> 2)))`` failed *),
    "33021041" (* bfm w1, w2, #2, #4 lifting of ``Imm64
   (w2w
-     (0xFFFFFFF8w && w2w (ms.REG 1w) || 
+     (0xFFFFFFF8w && w2w (ms.REG 1w) ||
       7w &&
-      (0x3FFFFFF8w && w2w (ms.REG 1w) || 
+      (0x3FFFFFF8w && w2w (ms.REG 1w) ||
        0xC0000007w && w2w (ms.REG 2w) #>> 2)))`` failed *),
    "F2800080" (* movk x0, #4 lifting of ``Imm64 ((63 >< 16) (ms.REG 0w) @@ 4w)`` failed *),
    "72800080" (* movk w0, #4 lifting of ``Imm64 (w2w ((31 >< 16) (w2w (ms.REG 0w)) @@ 4w))`` failed *),
@@ -1111,8 +1208,23 @@ val m0_expected_failed_hexcodes:string list = [
    "41C8" (* rors r0, r1 lifting of ``Imm32 (ms.REG RName_0 #>> w2n (w2w (ms.REG RName_1)))`` failed *),
    "4088" (* lsls r0, r1 lifting of ``bool2b
   (if w2n (w2w (ms.REG RName_1)) = 0 then ms.PSR.C
-   else (w2w (ms.REG RName_0) << w2n (w2w (ms.REG RName_1))) ' 32)`` failed *)
+   else (w2w (ms.REG RName_0) << w2n (w2w (ms.REG RName_1))) ' 32)`` failed *),
+   "BAD1" (* revsh r1, r2 lifting of ``Imm32 (sw2sw (w2w (ms.REG RName_2)) @@ (15 >< 8) (ms.REG RName_2))`` failed *),
+   "BA51" (* rev16 r1, r2 lifting of ``Imm32
+  ((23 >< 16) (ms.REG RName_2) @@ (31 >< 24) (ms.REG RName_2) @@
+   w2w (ms.REG RName_2) @@ (15 >< 8) (ms.REG RName_2))`` failed *),
+   "4108" (* asrs r0, r1 lifting of ``bool2b
+  (if w2n (w2w (ms.REG RName_1)) = 0 then ms.PSR.C
+   else
+     word_bit (MIN 32 (w2n (w2w (ms.REG RName_1))) − 1)
+       (ms.REG RName_0))`` failed *),
+   "40C8" (* lsrs r0, r1 lifting of ``bool2b
+  (if w2n (w2w (ms.REG RName_1)) = 0 then ms.PSR.C
+   else
+     w2n (w2w (ms.REG RName_1)) <= 32 /\
+     word_bit (w2n (w2w (ms.REG RName_1)) − 1) (ms.REG RName_0))`` failed *)
 ];
+
 
 val _ = test_M0_1.final_results "M0 LittleEnd, Process SP" m0_expected_failed_hexcodes;
 val _ = test_M0_2.final_results "M0 BigEnd, Process SP" m0_expected_failed_hexcodes;
