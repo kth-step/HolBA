@@ -915,19 +915,19 @@ end);
 val thm_t = build_immtype_t_conj
 ``!s env (w:'a word) e.
       bir_is_lifted_imm_exp env e (w2bs w s) ==>
-      bir_is_lifted_imm_exp env (BExp_BinPred BIExp_SignedLessThan e (BExp_Const (n2bs 0 s)))
+      bir_is_lifted_imm_exp env (BExp_MSB s e)
              (bool2b (word_msb w))``;
 
 val bir_is_lifted_imm_exp_MSB0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
-  pred_setTheory.UNION_EMPTY, BType_Bool_def, w2w_id,
-  wordsTheory.word_msb_neg]);
+  BExp_MSB_vars_of, BExp_MSB_type_of, BType_Bool_def, BExp_MSB_eval,
+  pairTheory.pair_case_thm, w2w_id]);
+
 
 val bir_is_lifted_imm_exp_MSB = save_thm ("bir_is_lifted_imm_exp_MSB",
 let
   val thm0 = bir_is_lifted_imm_exp_MSB0
-  val thm1 = SIMP_RULE std_ss [GSYM CONJ_ASSOC, w2bs_REWRS, IMP_CONJ_THM,
-    FORALL_AND_THM, w2w_id, n2bs_def] thm0
+  val thm1 = SIMP_RULE std_ss [GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id] thm0
 in
   CONJ thm1 (SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_msb] thm1)
 end);
@@ -937,32 +937,20 @@ end);
 (* word_lsb *)
 (************)
 
-val bool2b_word_lsb = prove (``!w. bool2w (word_lsb w) = w2w w``,
-SIMP_TAC std_ss [bool2w_def, word_lsb_def] >>
-REPEAT STRIP_TAC >>
-ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
-Cases >> SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [] >>
-FULL_SIMP_TAC (arith_ss++wordsLib.WORD_ss ++
-  boolSimps.LIFT_COND_ss) [
-  fcpTheory.FCP_BETA, w2w]);
-
-
 val thm_t = build_immtype_t_conj
 ``!s env (w:'a word) e.
       bir_is_lifted_imm_exp env e (w2bs w s) ==>
-      bir_is_lifted_imm_exp env (BExp_Cast BIExp_LowCast e Bit1)
+      bir_is_lifted_imm_exp env (BExp_LSB e)
              (bool2b (word_lsb w))``;
 
 val bir_is_lifted_imm_exp_LSB0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
-  pred_setTheory.UNION_EMPTY, BType_Bool_def, w2w_id,
-  bool2b_def, bool2b_word_lsb]);
+   BExp_LSB_vars_of, BExp_LSB_type_of, BExp_LSB_eval, w2w_id, BType_Bool_def]);
 
 val bir_is_lifted_imm_exp_LSB = save_thm ("bir_is_lifted_imm_exp_LSB",
 let
   val thm0 = bir_is_lifted_imm_exp_LSB0
-  val thm1 = SIMP_RULE std_ss [GSYM CONJ_ASSOC, w2bs_REWRS, IMP_CONJ_THM,
-    FORALL_AND_THM, w2w_id, n2bs_def] thm0
+  val thm1 = SIMP_RULE std_ss [GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id] thm0
 
 in
   CONJ thm1 (REWRITE_RULE [word_lsb] thm1)
@@ -973,30 +961,19 @@ end);
 (* word_bit *)
 (************)
 
-val word_bit_ALT_DEF = prove (``!w n. (word_bit n w = ((w && n2w (2**n)) <> 0w))``,
-REPEAT STRIP_TAC >>
-ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
-`0 < dimindex (:'a)` by METIS_TAC[DIMINDEX_GT_0] >>
-SIMP_TAC (arith_ss++wordsLib.SIZES_ss++boolSimps.CONJ_ss++boolSimps.EQUIV_EXTRACT_ss) [
-  word_bit_def, word_0, word_and_def, fcpTheory.FCP_BETA, word_index,
-  bitTheory.BIT_TWO_POW] >>
-DECIDE_TAC);
-
-
 val thm_t = build_immtype_t_conj
 ``!s env (w:'a word) n e.
       (MEM n (COUNT_LIST (dimindex (:'a) - 1))) ==> (0 < n) ==>
       bir_is_lifted_imm_exp env e (w2bs w s) ==>
-      bir_is_lifted_imm_exp env (BExp_BinPred BIExp_NotEqual
-         (BExp_BinExp BIExp_And e (BExp_Const (n2bs (2**n) s))) (BExp_Const (n2bs 0 s)))
-             (bool2b (word_bit n w))``;
+      bir_is_lifted_imm_exp env (BExp_word_bit s e n) (bool2b (word_bit n w))``;
 
 val bir_is_lifted_imm_exp_word_bit0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
-  pred_setTheory.UNION_EMPTY, BType_Bool_def, word_bit_ALT_DEF, w2w_id]);
+  BExp_word_bit_vars_of, BExp_word_bit_type_of, BExp_word_bit_eval, pairTheory.pair_case_thm,
+  w2w_id, BType_Bool_def]);
 
 
-val bir_is_lifted_imm_exp_word_bit = save_thm ("bir_is_lifted_imm_exp_word_bit",
+val bir_is_lifted_imm_exp_word_bit_const = save_thm ("bir_is_lifted_imm_exp_word_bit_const",
 let
   val thm0 = bir_is_lifted_imm_exp_word_bit0
   val thm1 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [GSYM CONJ_ASSOC, w2bs_REWRS, IMP_CONJ_THM,
@@ -1007,6 +984,51 @@ let
     FORALL_AND_THM] thm1
 in
   thm2
+end);
+
+
+val word_bit_mod_remove = prove (
+``!(w:'a word) (nw:'b word).
+    (dimindex (:'b) <= dimindex (:'a)) ==>
+    (word_bit ((w2n nw) MOD (dimword (:'a))) w =
+     word_bit (w2n nw) w)``,
+
+REPEAT STRIP_TAC >>
+`w2n nw < dimword (:'a)` suffices_by ASM_SIMP_TAC arith_ss [] >>
+`dimword (:'b) <= dimword (:'a)` by METIS_TAC[wordsTheory.dimindex_dimword_le_iso] >>
+`w2n nw < dimword (:'b)` by METIS_TAC[w2n_lt] >>
+DECIDE_TAC);
+
+
+val thm_t = build_immtype_t_conj
+``!s env (w:'a word) (nw:'b word) e en.
+      (dimindex (:'b) <= dimindex (:'a)) ==>
+      bir_is_lifted_imm_exp env e (w2bs w s) ==>
+      bir_is_lifted_imm_exp env en (w2bs nw s) ==>
+      bir_is_lifted_imm_exp env (BExp_word_bit_exp s e en)
+             (bool2b (word_bit (w2n nw) w))``;
+
+val bir_is_lifted_imm_exp_word_bit0 = prove (``^thm_t``,
+SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
+  BExp_word_bit_exp_type_of, BExp_word_bit_exp_vars_of, BExp_word_bit_exp_eval,
+  pairTheory.pair_case_thm, bir_env_vars_are_initialised_UNION, w2w_id, BType_Bool_def] >>
+SIMP_TAC std_ss [w2w_def, w2n_n2w, word_bit_mod_remove]);
+
+
+val bir_is_lifted_imm_exp_word_bit_exp = save_thm ("bir_is_lifted_imm_exp_word_bit_exp",
+let
+  val thm0 = bir_is_lifted_imm_exp_word_bit0
+  val thm1 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [GSYM CONJ_ASSOC, w2bs_REWRS, IMP_CONJ_THM,
+    FORALL_AND_THM, w2w_id, n2bs_def] thm0
+
+  val words_sizes = List.map (fn sz => fcpLib.index_type (Arbnum.fromInt sz))
+          bir_immSyntax.known_imm_sizes;
+
+  val thm2 = LIST_CONJ (List.map (fn sz => INST_TYPE [``:'b`` |-> sz] thm1) words_sizes)
+
+  val thm3 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [w2w_id, GSYM CONJ_ASSOC] thm2
+in
+  thm3
 end);
 
 
@@ -1135,7 +1157,8 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_WI_distinct_MEM_UNCHANGED_COMPUTE,
              bir_is_lifted_imm_exp_MSB,
              bir_is_lifted_imm_exp_LSB,
-             bir_is_lifted_imm_exp_word_bit,
+             bir_is_lifted_imm_exp_word_bit_const,
+             bir_is_lifted_imm_exp_word_bit_exp,
              bir_is_lifted_imm_exp_REVERSE_ENDIAN_16,
              bir_is_lifted_imm_exp_REVERSE_ENDIAN_32,
              bir_is_lifted_imm_exp_REVERSE_ENDIAN_64,

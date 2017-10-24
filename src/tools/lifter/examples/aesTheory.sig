@@ -8430,9 +8430,8 @@ sig
                <|bb_label := BL_Address_HC (Imm32 6w) "0010 (movs r0, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R2" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R2" (BType_Imm Bit32)))
@@ -8444,9 +8443,8 @@ sig
                <|bb_label := BL_Address_HC (Imm32 8w) "0019 (movs r1, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R3" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R3" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R3" (BType_Imm Bit32)))
@@ -8782,11 +8780,10 @@ sig
                <|bb_label := BL_Address_HC (Imm32 54w) "423A (tst r2, r7)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_And
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_And
@@ -8887,17 +8884,13 @@ sig
                    BL_Address_HC (Imm32 70w) "0891 (lsrs r1, r2, #2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_C" BType_Bool)
-                      (BExp_BinPred BIExp_NotEqual
-                         (BExp_BinExp BIExp_And
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 2w)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_word_bit Bit32
+                         (BExp_Den (BVar "R2" (BType_Imm Bit32))) 1);
                     BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_RightShift
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 2w)))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Const (Imm32 2w))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_RightShift
@@ -8943,11 +8936,10 @@ sig
                    BL_Address_HC (Imm32 76w) "4079 (eors r1, r7)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -9000,11 +8992,10 @@ sig
                    BL_Address_HC (Imm32 82w) "4079 (eors r1, r7)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -9053,11 +9044,10 @@ sig
                    BL_Address_HC (Imm32 88w) "404E (eors r6, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R6" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R6" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -9106,11 +9096,10 @@ sig
                    BL_Address_HC (Imm32 94w) "404D (eors r5, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R5" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R5" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -9159,11 +9148,10 @@ sig
                    BL_Address_HC (Imm32 100w) "404C (eors r4, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R4" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R4" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -9508,17 +9496,11 @@ sig
                    BL_Address_HC (Imm32 136w) "0100 (lsls r0, r0, #4)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_C" BType_Bool)
-                      (BExp_BinPred BIExp_NotEqual
-                         (BExp_BinExp BIExp_And
-                            (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 0x10000000w)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_word_bit Bit32
+                         (BExp_Den (BVar "R0" (BType_Imm Bit32))) 28);
                     BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_NotEqual
-                         (BExp_BinExp BIExp_And
-                            (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 0x8000000w)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_word_bit Bit32
+                         (BExp_Den (BVar "R0" (BType_Imm Bit32))) 27);
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_LeftShift
@@ -9697,11 +9679,10 @@ sig
                    BL_Address_HC (Imm32 158w) "4065 (eors r5, r4)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R5" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R5" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -10648,8 +10629,7 @@ sig
                <|bb_label := BL_Address_HC (Imm32 276w) "4770 (bx lr)";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Den (BVar "LR" (BType_Imm Bit32))) Bit1);
+                      (BExp_LSB (BExp_Den (BVar "LR" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)))];
@@ -10676,17 +10656,13 @@ sig
                    BL_Address_HC (Imm32 286w) "09C2 (lsrs r2, r0, #7)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_C" BType_Bool)
-                      (BExp_BinPred BIExp_NotEqual
-                         (BExp_BinExp BIExp_And
-                            (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 64w)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_word_bit Bit32
+                         (BExp_Den (BVar "R0" (BType_Imm Bit32))) 6);
                     BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_RightShift
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 7w)))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Const (Imm32 7w))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_RightShift
@@ -10703,11 +10679,10 @@ sig
                    BL_Address_HC (Imm32 288w) "4353 (muls r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Mult
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Mult
@@ -10724,15 +10699,11 @@ sig
                    BL_Address_HC (Imm32 290w) "0040 (lsls r0, r0, #1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_C" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R0" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_NotEqual
-                         (BExp_BinExp BIExp_And
-                            (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 0x40000000w)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_word_bit Bit32
+                         (BExp_Den (BVar "R0" (BType_Imm Bit32))) 30);
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_LeftShift
@@ -10749,11 +10720,10 @@ sig
                    BL_Address_HC (Imm32 292w) "4058 (eors r0, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -10779,8 +10749,7 @@ sig
                <|bb_label := BL_Address_HC (Imm32 296w) "4770 (bx lr)";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Den (BVar "LR" (BType_Imm Bit32))) Bit1);
+                      (BExp_LSB (BExp_Den (BVar "LR" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)))];
@@ -11529,8 +11498,7 @@ sig
                <|bb_label := BL_Address_HC (Imm32 392w) "4770 (bx lr)";
                  bb_statements :=
                    [BStmt_Assert
-                      (BExp_Cast BIExp_LowCast
-                         (BExp_Den (BVar "LR" (BType_Imm Bit32))) Bit1);
+                      (BExp_LSB (BExp_Den (BVar "LR" (BType_Imm Bit32))));
                     BStmt_Assert
                       (BExp_UnaryExp BIExp_Not
                          (BExp_Den (BVar "ModeHandler" BType_Bool)))];
@@ -11690,9 +11658,8 @@ sig
                    BL_Address_HC (Imm32 424w) "0023 (movs r3, r4)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R4" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
@@ -11798,9 +11765,8 @@ sig
                    BL_Address_HC (Imm32 436w) "0018 (movs r0, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R3" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R3" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R3" (BType_Imm Bit32)))
@@ -11826,11 +11792,10 @@ sig
                    BL_Address_HC (Imm32 440w) "4078 (eors r0, r7)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -11936,11 +11901,10 @@ sig
                    BL_Address_HC (Imm32 452w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -11957,9 +11921,8 @@ sig
                    BL_Address_HC (Imm32 454w) "001E (movs r6, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R3" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R3" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R3" (BType_Imm Bit32)))
@@ -11994,11 +11957,10 @@ sig
                    BL_Address_HC (Imm32 458w) "4046 (eors r6, r0)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R6" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R6" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -12038,11 +12000,10 @@ sig
                    BL_Address_HC (Imm32 466w) "4058 (eors r0, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -12059,11 +12020,10 @@ sig
                    BL_Address_HC (Imm32 468w) "4070 (eors r0, r6)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R6" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R6" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -12112,11 +12072,10 @@ sig
                    BL_Address_HC (Imm32 474w) "4078 (eors r0, r7)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -12141,11 +12100,10 @@ sig
                    BL_Address_HC (Imm32 480w) "4047 (eors r7, r0)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -12162,11 +12120,10 @@ sig
                    BL_Address_HC (Imm32 482w) "4077 (eors r7, r6)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R6" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -12241,11 +12198,10 @@ sig
                    BL_Address_HC (Imm32 494w) "4058 (eors r0, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -12262,11 +12218,10 @@ sig
                    BL_Address_HC (Imm32 496w) "4070 (eors r0, r6)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R6" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R6" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -12334,11 +12289,10 @@ sig
                    BL_Address_HC (Imm32 504w) "4058 (eors r0, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -12378,11 +12332,10 @@ sig
                    BL_Address_HC (Imm32 512w) "4058 (eors r0, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -12399,11 +12352,10 @@ sig
                    BL_Address_HC (Imm32 514w) "4046 (eors r6, r0)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R6" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R6" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -12508,9 +12460,8 @@ sig
                    BL_Address_HC (Imm32 526w) "0028 (movs r0, r5)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R5" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R5" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R5" (BType_Imm Bit32)))
@@ -12610,9 +12561,8 @@ sig
                    BL_Address_HC (Imm32 548w) "0028 (movs r0, r5)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R5" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R5" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R5" (BType_Imm Bit32)))
@@ -12831,9 +12781,8 @@ sig
                    BL_Address_HC (Imm32 584w) "0020 (movs r0, r4)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R4" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
@@ -12881,9 +12830,8 @@ sig
                    BL_Address_HC (Imm32 594w) "002B (movs r3, r5)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R5" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R5" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R5" (BType_Imm Bit32)))
@@ -13335,9 +13283,8 @@ sig
                    BL_Address_HC (Imm32 668w) "0007 (movs r7, r0)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R0" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R0" (BType_Imm Bit32)))
@@ -13357,9 +13304,8 @@ sig
                    BL_Address_HC (Imm32 674w) "0006 (movs r6, r0)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R0" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R0" (BType_Imm Bit32)))
@@ -13487,11 +13433,10 @@ sig
                    BL_Address_HC (Imm32 698w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13524,11 +13469,10 @@ sig
                    BL_Address_HC (Imm32 702w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13561,11 +13505,10 @@ sig
                    BL_Address_HC (Imm32 706w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13598,11 +13541,10 @@ sig
                    BL_Address_HC (Imm32 710w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13619,11 +13561,10 @@ sig
                    BL_Address_HC (Imm32 712w) "407B (eors r3, r7)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R3" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13656,11 +13597,10 @@ sig
                    BL_Address_HC (Imm32 716w) "4073 (eors r3, r6)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R3" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R6" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R6" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13677,11 +13617,10 @@ sig
                    BL_Address_HC (Imm32 718w) "4043 (eors r3, r0)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13698,11 +13637,10 @@ sig
                    BL_Address_HC (Imm32 720w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13732,11 +13670,10 @@ sig
                    BL_Address_HC (Imm32 724w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13769,11 +13706,10 @@ sig
                    BL_Address_HC (Imm32 728w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13838,11 +13774,10 @@ sig
                    BL_Address_HC (Imm32 736w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13876,11 +13811,10 @@ sig
                    BL_Address_HC (Imm32 740w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13929,11 +13863,10 @@ sig
                    BL_Address_HC (Imm32 746w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -13967,11 +13900,10 @@ sig
                    BL_Address_HC (Imm32 750w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14005,11 +13937,10 @@ sig
                    BL_Address_HC (Imm32 754w) "4073 (eors r3, r6)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R3" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R6" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R6" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14026,11 +13957,10 @@ sig
                    BL_Address_HC (Imm32 756w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14063,11 +13993,10 @@ sig
                    BL_Address_HC (Imm32 760w) "4043 (eors r3, r0)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14084,11 +14013,10 @@ sig
                    BL_Address_HC (Imm32 762w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14118,11 +14046,10 @@ sig
                    BL_Address_HC (Imm32 766w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14155,11 +14082,10 @@ sig
                    BL_Address_HC (Imm32 770w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14227,11 +14153,10 @@ sig
                    BL_Address_HC (Imm32 778w) "4053 (eors r3, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14264,11 +14189,10 @@ sig
                    BL_Address_HC (Imm32 782w) "404A (eors r2, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14301,11 +14225,10 @@ sig
                    BL_Address_HC (Imm32 786w) "404A (eors r2, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14339,11 +14262,10 @@ sig
                    BL_Address_HC (Imm32 790w) "404A (eors r2, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14360,11 +14282,10 @@ sig
                    BL_Address_HC (Imm32 792w) "4057 (eors r7, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14398,11 +14319,10 @@ sig
                    BL_Address_HC (Imm32 796w) "4077 (eors r7, r6)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R6" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14419,11 +14339,10 @@ sig
                    BL_Address_HC (Imm32 798w) "4057 (eors r7, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14456,11 +14375,10 @@ sig
                    BL_Address_HC (Imm32 802w) "4047 (eors r7, r0)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14477,11 +14395,10 @@ sig
                    BL_Address_HC (Imm32 804w) "4057 (eors r7, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14530,11 +14447,10 @@ sig
                    BL_Address_HC (Imm32 810w) "405F (eors r7, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R3" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R7" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R7" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14551,11 +14467,10 @@ sig
                    BL_Address_HC (Imm32 812w) "404A (eors r2, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14608,11 +14523,10 @@ sig
                    BL_Address_HC (Imm32 818w) "404A (eors r2, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14645,11 +14559,10 @@ sig
                    BL_Address_HC (Imm32 822w) "404A (eors r2, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14683,11 +14596,10 @@ sig
                    BL_Address_HC (Imm32 826w) "4072 (eors r2, r6)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R6" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R6" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14721,11 +14633,10 @@ sig
                    BL_Address_HC (Imm32 830w) "404A (eors r2, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14742,11 +14653,10 @@ sig
                    BL_Address_HC (Imm32 832w) "4056 (eors r6, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R6" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R6" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14776,11 +14686,10 @@ sig
                    BL_Address_HC (Imm32 836w) "4070 (eors r0, r6)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R6" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R6" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14797,11 +14706,10 @@ sig
                    BL_Address_HC (Imm32 838w) "4050 (eors r0, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -14818,11 +14726,10 @@ sig
                    BL_Address_HC (Imm32 840w) "4058 (eors r0, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R3" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -15014,9 +14921,8 @@ sig
                    BL_Address_HC (Imm32 870w) "0020 (movs r0, r4)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R4" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
@@ -15212,11 +15118,10 @@ sig
                    BL_Address_HC (Imm32 896w) "404A (eors r2, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_Xor
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_Xor
@@ -15401,9 +15306,8 @@ sig
                    BL_Address_HC (Imm32 914w) "0014 (movs r4, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R2" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R2" (BType_Imm Bit32)))
@@ -15416,9 +15320,8 @@ sig
                    BL_Address_HC (Imm32 916w) "000D (movs r5, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R1" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -15431,9 +15334,8 @@ sig
                    BL_Address_HC (Imm32 918w) "001A (movs r2, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R3" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R3" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R3" (BType_Imm Bit32)))
@@ -15446,9 +15348,8 @@ sig
                    BL_Address_HC (Imm32 920w) "0001 (movs r1, r0)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R0" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R0" (BType_Imm Bit32)))
@@ -15461,9 +15362,8 @@ sig
                    BL_Address_HC (Imm32 922w) "0020 (movs r0, r4)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R4" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
@@ -15674,9 +15574,8 @@ sig
                    BL_Address_HC (Imm32 958w) "0014 (movs r4, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R2" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R2" (BType_Imm Bit32)))
@@ -15689,9 +15588,8 @@ sig
                    BL_Address_HC (Imm32 960w) "000D (movs r5, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R1" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -15704,9 +15602,8 @@ sig
                    BL_Address_HC (Imm32 962w) "001A (movs r2, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R3" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R3" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R3" (BType_Imm Bit32)))
@@ -15719,9 +15616,8 @@ sig
                    BL_Address_HC (Imm32 964w) "0001 (movs r1, r0)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R0" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R0" (BType_Imm Bit32)))
@@ -15734,9 +15630,8 @@ sig
                    BL_Address_HC (Imm32 966w) "0020 (movs r0, r4)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R4" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
@@ -16019,9 +15914,8 @@ sig
                    BL_Address_HC (Imm32 1006w) "000D (movs r5, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R1" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -16050,9 +15944,8 @@ sig
                    BL_Address_HC (Imm32 1010w) "0006 (movs r6, r0)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R0" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R0" (BType_Imm Bit32)))
@@ -16065,11 +15958,10 @@ sig
                    BL_Address_HC (Imm32 1012w) "4011 (ands r1, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_And
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_And
@@ -16246,9 +16138,8 @@ sig
                    BL_Address_HC (Imm32 1038w) "0034 (movs r4, r6)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R6" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R6" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R6" (BType_Imm Bit32)))
@@ -16338,9 +16229,8 @@ sig
                    BL_Address_HC (Imm32 1048w) "0028 (movs r0, r5)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R5" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R5" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R5" (BType_Imm Bit32)))
@@ -16361,9 +16251,8 @@ sig
                    BL_Address_HC (Imm32 1054w) "0029 (movs r1, r5)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R5" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R5" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R5" (BType_Imm Bit32)))
@@ -16385,9 +16274,8 @@ sig
                    BL_Address_HC (Imm32 1058w) "0020 (movs r0, r4)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R4" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
@@ -16566,9 +16454,8 @@ sig
                    BL_Address_HC (Imm32 1086w) "001A (movs r2, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R3" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R3" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R3" (BType_Imm Bit32)))
@@ -16581,9 +16468,8 @@ sig
                    BL_Address_HC (Imm32 1088w) "0029 (movs r1, r5)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R5" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R5" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R5" (BType_Imm Bit32)))
@@ -16596,9 +16482,8 @@ sig
                    BL_Address_HC (Imm32 1090w) "0020 (movs r0, r4)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R4" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
@@ -16877,9 +16762,8 @@ sig
                    BL_Address_HC (Imm32 1122w) "000D (movs r5, r1)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R1" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -16908,9 +16792,8 @@ sig
                    BL_Address_HC (Imm32 1126w) "0006 (movs r6, r0)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R0" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R0" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R0" (BType_Imm Bit32)))
@@ -16923,11 +16806,10 @@ sig
                    BL_Address_HC (Imm32 1128w) "4011 (ands r1, r2)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
+                      (BExp_MSB Bit32
                          (BExp_BinExp BIExp_And
                             (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                         (BExp_Const (Imm32 0w)));
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_BinExp BIExp_And
@@ -17104,9 +16986,8 @@ sig
                    BL_Address_HC (Imm32 1154w) "0034 (movs r4, r6)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R6" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R6" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R6" (BType_Imm Bit32)))
@@ -17196,9 +17077,8 @@ sig
                    BL_Address_HC (Imm32 1164w) "0029 (movs r1, r5)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R5" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R5" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R5" (BType_Imm Bit32)))
@@ -17220,9 +17100,8 @@ sig
                    BL_Address_HC (Imm32 1168w) "0020 (movs r0, r4)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R4" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
@@ -17282,9 +17161,8 @@ sig
                    BL_Address_HC (Imm32 1182w) "0020 (movs r0, r4)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R4" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
@@ -17424,9 +17302,8 @@ sig
                    BL_Address_HC (Imm32 1202w) "001A (movs r2, r3)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R3" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R3" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R3" (BType_Imm Bit32)))
@@ -17439,9 +17316,8 @@ sig
                    BL_Address_HC (Imm32 1204w) "0029 (movs r1, r5)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R5" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R5" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R5" (BType_Imm Bit32)))
@@ -17454,9 +17330,8 @@ sig
                    BL_Address_HC (Imm32 1206w) "0020 (movs r0, r4)";
                  bb_statements :=
                    [BStmt_Assign (BVar "PSR_N" BType_Bool)
-                      (BExp_BinPred BIExp_SignedLessThan
-                         (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 0w)));
+                      (BExp_MSB Bit32
+                         (BExp_Den (BVar "R4" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "PSR_Z" BType_Bool)
                       (BExp_BinPred BIExp_Equal
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
