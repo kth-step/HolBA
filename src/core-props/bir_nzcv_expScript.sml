@@ -271,20 +271,6 @@ SIMP_TAC std_ss [nzcv_BIR_ADD_N_def, nzcv_def, LET_THM,
   GSYM word_add_def] >>
 METIS_TAC[wordsTheory.WORD_ADD_COMM, arithmeticTheory.ADD_COMM]);
 
-
-val nzcv_BIR_ADD_SYM = store_thm ("nzcv_BIR_ADD_SYM", ``
-  (!w1 (w2:'a word). nzcv_BIR_ADD_N w1 w2 <=> nzcv_BIR_ADD_N w2 w1) /\
-  (!w1 (w2:'a word). nzcv_BIR_ADD_Z w1 w2 <=> nzcv_BIR_ADD_Z w2 w1) /\
-  (!w1 (w2:'a word). nzcv_BIR_ADD_C w1 w2 <=> nzcv_BIR_ADD_C w2 w1) /\
-  (!w1 (w2:'a word). nzcv_BIR_ADD_V w1 w2 <=> nzcv_BIR_ADD_V w2 w1)``,
-
-SIMP_TAC std_ss [nzcv_BIR_ADD_N_def, nzcv_def, LET_THM,
-  nzcv_BIR_ADD_Z_def, nzcv_BIR_SUB_N_def, nzcv_BIR_ADD_C_def,
-  nzcv_BIR_SUB_Z_def, WORD_NEG_NEG, nzcv_BIR_ADD_V_def,
-  GSYM word_add_def] >>
-METIS_TAC[wordsTheory.WORD_ADD_COMM, arithmeticTheory.ADD_COMM]);
-
-
 val awc_BIR_NZCV_SYM = store_thm ("awc_BIR_NZCV_SYM", ``
   (!w1 (w2:'a word) c. awc_BIR_N w1 w2 c <=> awc_BIR_N w2 w1 c) /\
   (!w1 (w2:'a word) c. awc_BIR_Z w1 w2 c <=> awc_BIR_Z w2 w1 c) /\
@@ -295,6 +281,24 @@ SIMP_TAC (arith_ss++wordsLib.WORD_ss) [awc_BIR_N_def, awc_BIR_Z_def, awc_BIR_C_d
   add_with_carry_def, LET_THM, GSYM word_add_n2w, n2w_w2n, awc_BIR_V_def] >>
 METIS_TAC[]);
 
+val awc_BIR_NZVC_ELIMS_SYM = store_thm ("awc_BIR_NZVC_ELIMS_SYM",
+``(!w1 w2. awc_BIR_N (~w2) w1 T <=> nzcv_BIR_SUB_N w1 w2) /\
+  (!w1 w2. awc_BIR_Z (~w2) w1 T <=> nzcv_BIR_SUB_Z w1 w2) /\
+  (!w1 w2. awc_BIR_V (~w2) w1 T <=> nzcv_BIR_SUB_V w1 w2) /\
+  (!w1 w2. awc_BIR_C (~w2) w1 T <=> nzcv_BIR_SUB_C w1 w2)``,
+
+METIS_TAC[awc_BIR_NZCV_SYM, awc_BIR_NZVC_ELIMS]);
+
+
+val nzcv_BIR_SUB_SYM = store_thm ("nzcv_BIR_ADD_SYM", ``
+  (!w1 (w2:'a word). nzcv_BIR_SUB_N (~w1) (~w2) <=> nzcv_BIR_SUB_N w2 w1) /\
+  (!w1 (w2:'a word). nzcv_BIR_SUB_Z (~w1) (~w2) <=> nzcv_BIR_SUB_Z w2 w1) /\
+  (!w1 (w2:'a word). nzcv_BIR_SUB_C (~w1) (~w2) <=> nzcv_BIR_SUB_C w2 w1) /\
+  (!w1 (w2:'a word). nzcv_BIR_SUB_V (~w1) (~w2) <=> nzcv_BIR_SUB_V w2 w1)``,
+
+SIMP_TAC std_ss [awc_BIR_NZVC_INTROS, WORD_NOT_NOT] >>
+SIMP_TAC std_ss [awc_BIR_NZVC_ELIMS_SYM, awc_BIR_NZVC_ELIMS]);
+
 
 
 (*******************)
@@ -303,26 +307,56 @@ METIS_TAC[]);
 
 (* Special ones for immediate 0 *)
 val nzcv_BIR_ADD_V_0 = store_thm ("nzcv_BIR_ADD_V_0",
-  ``!w. nzcv_BIR_ADD_V w 0w = F``,
+  ``(!w. nzcv_BIR_ADD_V w 0w = F) /\
+    (!w. nzcv_BIR_ADD_V 0w w = F)``,
 SIMP_TAC arith_ss [nzcv_BIR_ADD_NZCV_REWRS,
    WORD_LESS_REFL, WORD_ADD_0]);
 
 val nzcv_BIR_ADD_C_0 = store_thm ("nzcv_BIR_ADD_C_0",
-  ``!w. nzcv_BIR_ADD_C w 0w = F``,
+  ``(!w. nzcv_BIR_ADD_C w 0w = F) /\
+    (!w. nzcv_BIR_ADD_C 0w w = F)``,
 SIMP_TAC arith_ss [nzcv_BIR_ADD_NZCV_REWRS,
-  WORD_NOT_0, WORD_LS_T, WORD_NOT_LOWER]);
+  WORD_NOT_0, WORD_LS_T, WORD_NOT_LOWER, WORD_LO_word_0]);
+
+
+val nzcv_BIR_ADD_Z_0 = store_thm ("nzcv_BIR_ADD_Z_0",
+  ``(!w. nzcv_BIR_ADD_Z w 0w = (w = 0w)) /\
+    (!w. nzcv_BIR_ADD_Z 0w w = (w = 0w))``,
+SIMP_TAC arith_ss [nzcv_BIR_ADD_NZCV_REWRS, WORD_NEG_0] >>
+METIS_TAC[WORD_NEG_EQ_0]);
+
+val nzcv_BIR_ADD_N_0 = store_thm ("nzcv_BIR_ADD_N_0",
+  ``(!w. nzcv_BIR_ADD_N w 0w = (word_msb w)) /\
+    (!w. nzcv_BIR_ADD_N 0w w = (word_msb w))``,
+SIMP_TAC arith_ss [nzcv_BIR_ADD_NZCV_REWRS, WORD_ADD_0, word_msb_neg]);
 
 
 val nzcv_BIR_SUB_V_0 = store_thm ("nzcv_BIR_SUB_V_0",
-  ``!w. nzcv_BIR_SUB_V w 0w = F``,
+  ``(!w:'a word. nzcv_BIR_SUB_V w 0w = F)``,
+
 SIMP_TAC arith_ss [nzcv_BIR_SUB_NZCV_REWRS,
   WORD_SUB_RZERO, WORD_ZERO_LE, GSYM word_msb_neg,
   WORD_MSB_INT_MIN_LS, WORD_LS, w2n_n2w,
-  word_L_def, INT_MIN_LT_DIMWORD]);
+  word_L_def, INT_MIN_LT_DIMWORD, WORD_SUB_LZERO]);
+
 
 val nzcv_BIR_SUB_C_0 = store_thm ("nzcv_BIR_SUB_C_0",
-  ``!w. nzcv_BIR_SUB_C w 0w = T``,
-SIMP_TAC arith_ss [nzcv_BIR_SUB_NZCV_REWRS, WORD_0_LS]);
+  ``(!w. nzcv_BIR_SUB_C w 0w = T) /\
+    (!w. nzcv_BIR_SUB_C 0w w = (w = 0w))``,
+SIMP_TAC arith_ss [nzcv_BIR_SUB_NZCV_REWRS, WORD_0_LS,
+  WORD_LS_word_0]);
+
+val nzcv_BIR_SUB_Z_0 = store_thm ("nzcv_BIR_SUB_Z_0",
+  ``(!w. nzcv_BIR_SUB_Z w 0w = (w = 0w)) /\
+    (!w. nzcv_BIR_SUB_Z 0w w = (w = 0w))``,
+SIMP_TAC arith_ss [nzcv_BIR_SUB_NZCV_REWRS] >>
+METIS_TAC[]);
+
+val nzcv_BIR_SUB_N_0 = store_thm ("nzcv_BIR_SUB_N_0",
+  ``(!w. nzcv_BIR_SUB_N w 0w = (word_msb w)) /\
+    (!w. nzcv_BIR_SUB_N 0w w = (word_msb (-w)))``,
+SIMP_TAC arith_ss [nzcv_BIR_SUB_NZCV_REWRS,
+  WORD_SUB_RZERO, WORD_SUB_LZERO, word_msb_neg]);
 
 
 (* Special ones for immediate same args *)
@@ -353,8 +387,14 @@ LIST_CONJ [
   nzcv_BIR_SUB_V_ID,
   nzcv_BIR_ADD_V_0,
   nzcv_BIR_ADD_C_0,
+  nzcv_BIR_ADD_N_0,
+  nzcv_BIR_ADD_Z_0,
   nzcv_BIR_SUB_V_0,
-  nzcv_BIR_SUB_C_0
+  nzcv_BIR_SUB_C_0,
+  nzcv_BIR_SUB_N_0,
+  nzcv_BIR_SUB_Z_0,
+  awc_BIR_NZVC_ELIMS,
+  awc_BIR_NZVC_ELIMS_SYM
 ]);
 
 

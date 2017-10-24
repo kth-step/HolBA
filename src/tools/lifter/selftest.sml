@@ -443,6 +443,10 @@ val (res, fl) = test_ARM8.bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt
 
 fun m0_lift_instr mu_b mu_e pc hex_code desc = let
   val r1 = (print "LP "; test_M0_1.lift_instr mu_b mu_e pc hex_code desc)
+in r1 end
+
+fun m0_lift_instr mu_b mu_e pc hex_code desc = let
+  val r1 = (print "LP "; test_M0_1.lift_instr mu_b mu_e pc hex_code desc)
   val r2 = (print "BP "; test_M0_2.lift_instr mu_b mu_e pc hex_code desc)
   val r3 = (print "LM "; test_M0_3.lift_instr mu_b mu_e pc hex_code desc)
   val r4 = (print "BM "; test_M0_4.lift_instr mu_b mu_e pc hex_code desc)
@@ -482,17 +486,17 @@ val res = m0_test_asm "add r0, sp, #128";
 val res = m0_test_asm "subs r0, r1, r2";
 val res = m0_test_asm "subs r0, r1, #3";
 val res = m0_test_asm "subs r0, r1, r1";
-val res = m0_test_asm "subs r0, r1, #0"; (* TODO: improve result *)
+val res = m0_test_asm "subs r0, r1, #0";
 val res = m0_test_asm "subs r0, #128";
-val res = m0_test_asm "subs r0, #0"; (* TODO: improve result *)
+val res = m0_test_asm "subs r0, #0";
 val res = m0_test_asm "sbcs r0, r3";
-val res = m0_test_asm "sub sp, #8"; (* TODO: improve result *)
-val res = m0_test_asm "sub sp, #16"; (* TODO: improve result *)
-val res = m0_test_asm "rsbs r1, r2, #0"; (* TODO: improve result *)
+val res = m0_test_asm "sub sp, #8";
+val res = m0_test_asm "sub sp, #16";
+val res = m0_test_asm "rsbs r1, r2, #0";
 val res = m0_test_asm "muls r1, r3";
 val res = m0_test_asm "cmp r1, r3";
 val res = m0_test_asm "cmp r1, r1";
-val res = m0_test_asm "cmp r1, #0"; (* TODO : improve result *)
+val res = m0_test_asm "cmp r1, #0";
 val res = m0_test_asm "cmp r1, #12";
 val res = m0_test_asm "cmn r1, r3";
 val res = m0_test_asm "cmn r1, r1";
@@ -590,7 +594,7 @@ val res = m0_test_hex "1000";
 val res = m0_test_hex "4088";
 val res = m0_test_hex "B5F7";
 val res = m0_test_hex "C29C";
-val res = m0_test_hex "E2821003"
+
 
 
 

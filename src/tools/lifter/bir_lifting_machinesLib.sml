@@ -286,7 +286,8 @@ local
   val simp_rule = (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0,
       arm8_extra_FOLDS]);
   val simp_conv2 = (SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss++wordsLib.WORD_LOGIC_ss) []) THENC
-                   (SIMP_CONV std_ss [word_add_to_sub_TYPES, alignmentTheory.aligned_numeric, addressTheory.WORD_SUB_INTRO]);
+                   (SIMP_CONV std_ss [word_add_to_sub_TYPES, alignmentTheory.aligned_numeric,
+                        wordsTheory.WORD_SUB_INTRO, wordsTheory.WORD_MULT_CLAUSES]);
 
   fun arm8_extra_THMS vn = let
      val thm0  = SPEC vn bmr_extra_ARM8
@@ -432,7 +433,8 @@ val _ = assert bmr_rec_sanity_check arm8_bmr_rec
   val hex_code = "4084"
   val hex_code = "40C4"
   val hex_code = "1ACC";
-
+  val hex_code = "1E08"
+  val hex_code = "4251"
 
   val thms = thumb_step_hex (true, true) hex_code
   val thms = thumb_step_hex (false, true) hex_code
@@ -491,7 +493,7 @@ fun m0_step_hex' (endian_fl, sel_fl) = let
 
   val next_state_tm = (prim_mk_const{Name="NextStateM0", Thy="m0_step"});
 
-  val simp_conv = (SIMP_CONV (arith_ss++bitstringLib.v2w_n2w_ss)
+  val simp_conv = (SIMP_CONV (arith_ss++bitstringLib.v2w_n2w_ss++wordsLib.SIZES_ss)
      ((if endian_fl then m0_extra_FOLDS_BE else m0_extra_FOLDS_LE)::[nzcv_FOLDS_M0,
      EQ_13w_EVAL, EQ_15w_EVAL, R_name_EVAL, bir_auxiliaryTheory.w2w_n2w,
      m0_extra_FOLDS_GEN, Mode_Handler_INTRO, bir_auxiliaryTheory.align_aligned_add,
@@ -502,7 +504,7 @@ fun m0_step_hex' (endian_fl, sel_fl) = let
   val _ = bitLib.add_bit_compset compset_2
 
   val simp_conv2 = SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss ++ wordsLib.WORD_LOGIC_ss++wordsLib.SIZES_ss) [wordsTheory.n2w_11, m0_extra_FOLDS_GEN, wordsTheory.word_msb, wordsTheory.word_bit_n2w] THENC
-                   (SIMP_CONV std_ss [word_add_to_sub_TYPES, addressTheory.WORD_SUB_INTRO, alignmentTheory.aligned_numeric] THENC
+                   (SIMP_CONV std_ss [word_add_to_sub_TYPES, wordsTheory.WORD_SUB_INTRO, alignmentTheory.aligned_numeric, wordsTheory.WORD_MULT_CLAUSES] THENC
                     computeLib.CBV_CONV compset_2);
 
   val bmr_extra_M0' = REWRITE_RULE [] (SPECL [endian_fl_tm, sel_fl_tm] bmr_extra_M0)
