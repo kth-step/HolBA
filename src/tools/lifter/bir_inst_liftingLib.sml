@@ -1,7 +1,7 @@
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 open bir_inst_liftingTheory
 open bir_lifting_machinesTheory
-open bir_lifting_machinesLib;
+open bir_lifting_machinesLib bir_lifting_machinesLib_instances;
 open bir_interval_expTheory bir_update_blockTheory
 open bir_exp_liftingLib bir_typing_expSyntax
 open bir_typing_expTheory
@@ -138,6 +138,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "54000089"
   val hex_code = "90000000"
   val hex_code = "DA020000";
+  val hex_code = "DAC01441";
 
   (* M0 *)
   val hex_code = "3202"

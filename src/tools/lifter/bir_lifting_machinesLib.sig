@@ -171,19 +171,9 @@ sig
       bmr_ihex_param           : (int * bool) option
    };
 
-   (* The record for arm8 *)
-   val arm8_bmr_rec : bmr_rec;
-
-   (* Records for m0, parameters are endianness and whether to use
-      process and main SP. The 4 possible instances are also precomputed. *)
-   val m0_bmr_rec : bool -> bool -> bmr_rec;
-
-   val m0_bmr_rec_LittleEnd_Main    : bmr_rec;
-   val m0_bmr_rec_BigEnd_Main       : bmr_rec;
-   val m0_bmr_rec_LittleEnd_Process : bmr_rec;
-   val m0_bmr_rec_BigEnd_Process    : bmr_rec;
-
-
+   (* A simple sanity check for machine records. This should pass for
+      all instances of the machine record. *)
+   val bmr_rec_sanity_check : bmr_rec -> bool
 
    (* extracting the record fields. Output is the same as of
       dest_bir_lifting_machine_rec *)
