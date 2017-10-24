@@ -39,15 +39,20 @@ val hex_code = "12001C00"
    "failed_hexcodes_list".
 *)
 
+
 functor test_bmr (MD : bir_inst_lifting) = struct
 
 open MD;
 
-val failed_hexcodes_list = ref ([]:(string * bir_inst_liftingExn_data option) list);
-val success_hexcodes_list = ref ([]: (string * thm) list);
-fun lift_instr_cached mu_thms cache pc hex_code = let
+val failed_hexcodes_list = ref ([]:(string * string option * bir_inst_liftingExn_data option) list);
+val success_hexcodes_list = ref ([]: (string * string option * thm) list);
+fun lift_instr_cached mu_thms cache pc hex_code desc = let
   val hex_code = String.map Char.toUpper hex_code
-  val _ = print (hex_code ^ " @ 0x" ^ (Arbnum.toHexString pc));
+  val _ = print hex_code;
+  val _ = case desc of
+            NONE => ()
+          | SOME d => print (" (" ^ d ^")");
+  val _ = print (" @ 0x" ^ (Arbnum.toHexString pc));
   val timer = (Time.now())
   val (res, ed) = (SOME (bir_lift_instr_mu mu_thms cache pc hex_code hex_code), NONE) handle
                    bir_inst_liftingExn (_, d)  => (NONE, SOME d)
@@ -62,12 +67,12 @@ fun lift_instr_cached mu_thms cache pc hex_code = let
            | NONE => (NONE, cache)
   val _ = case res of
              SOME (thm, _, cache_used) =>
-                 (success_hexcodes_list := (hex_code, thm)::(!success_hexcodes_list);
+                 (success_hexcodes_list := (hex_code, desc, thm)::(!success_hexcodes_list);
                  (print_with_style sty_OK "OK");
                  (if cache_used then (print " - "; print_with_style sty_CACHE "cached") else ());
                  (print "\n"))
            | NONE =>
-             (failed_hexcodes_list := (hex_code, ed)::(!failed_hexcodes_list);
+             (failed_hexcodes_list := (hex_code, desc, ed)::(!failed_hexcodes_list);
              (print_with_style sty_FAIL "FAILED\n"));
   val _ = case ed of
       NONE => ()
@@ -78,9 +83,9 @@ in
   (res', ed, d_s, cache')
 end;
 
-fun lift_instr mu_b mu_e pc hex_code = let
+fun lift_instr mu_b mu_e pc hex_code desc = let
   val mu_thms = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-  val (res, ed, d_s, _) = lift_instr_cached mu_thms lift_inst_cache_empty pc hex_code
+  val (res, ed, d_s, _) = lift_instr_cached mu_thms lift_inst_cache_empty pc hex_code desc
 in
   (res, ed, d_s)
 end;
@@ -99,7 +104,7 @@ fun lift_instr_list mu_b mu_e pc hex_codes = let
 
   fun run_inst (i, (c, pc, res, cache)) = let
     val _ = print ((Int.toString c) ^ "/" ^ (Int.toString (length hex_codes)) ^ ": ");
-    val (r', ed, d_s, cache') = lift_instr_cached mu_thms cache pc i
+    val (r', ed, d_s, cache') = lift_instr_cached mu_thms cache pc i NONE
     val c' = c+1;
     val pc' = Arbnum.+ (pc, (#bmr_hex_code_size mr) i);
     val r = (r', ed, d_s);
@@ -126,13 +131,13 @@ end;
 fun final_results name expected_failed_hexcodes = let
   val _ = print_with_style sty_HEADER ("\n\n\nSUMMARY FAILING HEXCODES " ^ name ^ "\n\n");
   val _ = print "\n";
-  val failing_l = op_mk_set (fn x => fn y => (fst x = fst y)) (!failed_hexcodes_list)
-  val ok_l = op_mk_set (fn x => fn y => (fst x = fst y)) (!success_hexcodes_list)
+  val failing_l = op_mk_set (fn (x, _, _) => fn (y, _, _) => (x = y)) (!failed_hexcodes_list)
+  val ok_l = op_mk_set (fn (x, _, _) => fn (y, _, _) => (x = y)) (!success_hexcodes_list)
 
   (* look for freshly failing ones *)
-  val failing_l' = map (fn (hc, edo) =>
-     (hc, edo, not (Lib.mem hc expected_failed_hexcodes))) failing_l;
-  val fixed_l = List.filter (fn hc => List.exists (fn e => fst e = hc) ok_l) expected_failed_hexcodes
+  val failing_l' = map (fn (hc, d, edo) =>
+     (hc, d, edo, not (Lib.mem hc expected_failed_hexcodes))) failing_l;
+  val fixed_l = List.filter (fn hc => List.exists (fn (e, _, _) => e = hc) ok_l) expected_failed_hexcodes
 
   (* Show all failing instructions and format them such that they can be copied
      in the code of selftest.sml
@@ -141,17 +146,24 @@ fun final_results name expected_failed_hexcodes = let
          (Int.toString (length failing_l + length ok_l)) ^ "\n\n");
 
   fun print_failed [] = ()
-    | print_failed ((hex_code, ed_opt, broken)::l) =
+    | print_failed ((hex_code, desc, ed_opt, broken)::l) =
   let
     (* print the ones that failed, but were not excepted to in red *)
     val st = if broken then sty_FAIL else [];
     val _ = print "   ";
     val _ = print_with_style st ("\""^hex_code^"\"");
-    val _ = case ed_opt of
-        NONE => ()
-      | SOME d => (let
-          val s = (" (* "^(bir_inst_liftingExn_data_to_string d) ^ " *)");
-          in print_with_style st s end);
+
+    val c = case desc of
+            NONE => ""
+          | SOME d => (" " ^ d);
+
+    val c' = case ed_opt of
+        NONE => c
+      | SOME d => (c ^ " "^(bir_inst_liftingExn_data_to_string d));
+
+    val _ = if String.size c' = 0 then () else
+            print_with_style st (" (*" ^ c' ^ " *)");
+
   in if List.null l then (print "\n]\n\n") else
          (print ",\n"; print_failed l)
   end;
@@ -166,9 +178,9 @@ fun final_results name expected_failed_hexcodes = let
 
   (* Show the hex-codes that were expected to succeed, but failed. These
      are the ones broken by recent changes. *)
-  val broken_l = List.filter (fn (hc, edo, br) => br) failing_l';
+  val broken_l = List.filter (fn (hc, d, edo, br) => br) failing_l';
   val _ = print ("Instructions BROKEN: " ^ (Int.toString (List.length broken_l)) ^ "\n\n");
-  val _ = List.map (fn (hc, _, _) => print_with_style sty_FAIL ("   " ^ hc ^"\n")) broken_l;
+  val _ = List.map (fn (hc, _, _, _) => print_with_style sty_FAIL ("   " ^ hc ^"\n")) broken_l;
   val _ = print "\n\n";
 
 in
@@ -189,68 +201,212 @@ structure test_M0_4 = test_bmr(bmil_m0_BigEnd_Main);
 (* SOME MANUAL TESTS ARM8 *)
 (**************************)
 
-fun arm8_hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm)
+fun arm8_hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code [QUOTE asm])
 fun arm8_lift_instr_asm mu_b mu_e pc asm =
-  test_ARM8.lift_instr mu_b mu_e pc (arm8_hex_code_of_asm asm);
+  test_ARM8.lift_instr mu_b mu_e pc (arm8_hex_code_of_asm asm) (SOME asm);
 
 
 val mu_b = Arbnum.fromInt 0;
 val mu_e = Arbnum.fromInt 0x1000000;
 val pc = Arbnum.fromInt 0x10030;
 val arm8_test_asm = arm8_lift_instr_asm mu_b mu_e pc
-val arm8_test_hex = test_ARM8.lift_instr mu_b mu_e pc
+fun arm8_test_hex hex = test_ARM8.lift_instr mu_b mu_e pc hex NONE
 
 val res = print_with_style sty_HEADER "\nMANUAL TESTS - ARM 8\n\n";
-val res = arm8_test_asm `add x0, x1, x2`;
-val res = arm8_test_asm `add x1, x1, x1`;
-val res = arm8_test_asm `adds x0, x1, x2`;
-val res = arm8_test_asm `add x0, x0, x2`;
-val res = arm8_test_asm `adc x0, x0, x2`;
-val res = arm8_test_asm `adcs x0, x0, x2`;
-val res = arm8_test_asm `sbcs x0, x0, x2`;
-val res = arm8_test_asm `sbc x0, x0, x2`;
-val res = arm8_test_asm `sub x0, x1, x2`;
-val res = arm8_test_asm `mul x0, x1, x2`;
-val res = arm8_test_asm `mul w0, w1, w1`;
-val res = arm8_test_asm `cmp w0, #0`;
-val res = arm8_test_asm `cmn w0, #0`;
-val res = arm8_test_asm `cmn w0, w1`;
-val res = arm8_test_asm `cmn x0, x9`;
-val res = arm8_test_asm `ret`;
-val res = arm8_test_asm `adds x0, x2, #8`;
-val res = arm8_test_asm `subs x0, x2, #8`;
-val res = arm8_test_asm `adds x0, x1, x2`;
-val res = arm8_test_asm `add x0, x0, x2`;
-val res = arm8_test_asm `sub x0, x1, x2`;
-val res = arm8_test_asm `add x4, SP, #8`;
-val res = arm8_test_asm `add x4, SP, #8`;
-val res = arm8_test_asm `adds x1, x1, #0`;
-val res = arm8_test_asm `lsr x1, x2, #5`;
-val res = arm8_test_asm `lsr x1, x2, #0`;
-val res = arm8_test_asm `lsr x1, x1, #0`;
-val res = arm8_test_asm `lsr x1, x2, x3`;
-val res = arm8_test_asm `lsl x1, x2, #5`;
-val res = arm8_test_asm `lsl x1, x2, #0`;
-val res = arm8_test_asm `lsl x1, x1, #0`;
-val res = arm8_test_asm `lsl x1, x2, x3`;
-val res = arm8_test_asm `asr x1, x2, #5`;
-val res = arm8_test_asm `asr x1, x2, #0`;
-val res = arm8_test_asm `asr x1, x1, #0`;
-val res = arm8_test_asm `asr x1, x2, x3`;
-val res = arm8_test_asm `ldr x0, [x2, #0]`;
+val res = arm8_test_asm "add x0, x1, x2";
+val res = arm8_test_asm "add x1, x1, x1";
+val res = arm8_test_asm "adds x0, x1, x2";
+val res = arm8_test_asm "add x0, x0, x2";
+val res = arm8_test_asm "sub x0, x0, x2";
+val res = arm8_test_asm "adc x0, x0, x2";
+val res = arm8_test_asm "adcs x0, x0, x2";
+val res = arm8_test_asm "sbcs x0, x0, x2";
+val res = arm8_test_asm "sbc x0, x0, x2";
+val res = arm8_test_asm "sub x0, x1, x2";
+val res = arm8_test_asm "mul x0, x1, x2";
+val res = arm8_test_asm "mul w0, w1, w1";
+val res = arm8_test_asm "cmp w0, #0";
+val res = arm8_test_asm "cmn w0, #0";
+val res = arm8_test_asm "cmn w0, w1";
+val res = arm8_test_asm "cmn x0, x9";
+val res = arm8_test_asm "ret";
+val res = arm8_test_asm "mov x0, #4";
+val res = arm8_test_asm "mov x0, x1";
+val res = arm8_test_asm "mvn x0, x1";
+val res = arm8_test_asm "adds x0, x2, #8";
+val res = arm8_test_asm "subs x0, x2, #8";
+val res = arm8_test_asm "adds x0, x1, x2";
+val res = arm8_test_asm "add x0, x0, x2";
+val res = arm8_test_asm "sub x0, x1, x2";
+val res = arm8_test_asm "add x0, x0, x2, LSL #2";
+val res = arm8_test_asm "add x0, x0, x2, ASR #2";
+val res = arm8_test_asm "add x0, x0, x2, LSR #2";
+val res = arm8_test_asm "add x0, x0, x2, LSL #0";
+val res = arm8_test_asm "add x0, x0, x2, ASR #0";
+val res = arm8_test_asm "add x0, x0, x2, LSR #0";
+val res = arm8_test_asm "add x4, SP, #8";
+val res = arm8_test_asm "add x4, SP, #8";
+val res = arm8_test_asm "adds x1, x1, #0";
+val res = arm8_test_asm "lsr x1, x2, #5";
+val res = arm8_test_asm "lsr x1, x2, #0";
+val res = arm8_test_asm "lsr x1, x1, #0";
+val res = arm8_test_asm "lsr x1, x2, x3";
+val res = arm8_test_asm "lsl x1, x2, #5";
+val res = arm8_test_asm "lsl x1, x2, #0";
+val res = arm8_test_asm "lsl x1, x1, #0";
+val res = arm8_test_asm "lsl x1, x2, x3";
+val res = arm8_test_asm "asr x1, x2, #5";
+val res = arm8_test_asm "asr x1, x2, #0";
+val res = arm8_test_asm "asr x1, x1, #0";
+val res = arm8_test_asm "asr x1, x2, x3";
+val res = arm8_test_asm "ror x1, x2, x3";
+val res = arm8_test_asm "ror x1, x2, #0";
+val res = arm8_test_asm "ror x1, x2, #2";
+val res = arm8_test_asm "ror w1, w2, #2";
+val res = arm8_test_asm "l: b.eq l";
+val res = arm8_test_asm "l: cbnz w0, l";
+val res = arm8_test_asm "l: cbnz x0, l";
+val res = arm8_test_asm "l: tbnz w0, #3, l";
+val res = arm8_test_asm "l: tbnz x0, #3, l";
+val res = arm8_test_asm "l: cbz w0, l";
+val res = arm8_test_asm "l: cbz x0, l";
+val res = arm8_test_asm "l: tbz w0, #3, l";
+val res = arm8_test_asm "l: tbz x0, #3, l";
+val res = arm8_test_asm "ldr x0, [x2, #0]";
+val res = arm8_test_asm "lsl x0, x2, #8";
+val res = arm8_test_asm "lsl x0, x2, #8";
+val res = arm8_test_asm "lsr x0, x2, #8";
+val res = arm8_test_asm "str x0, [x2, #8]";
+val res = arm8_test_asm "ldp x1, x2, [x3]";
+val res = arm8_test_asm "ldp w1, w2, [x3]";
+val res = arm8_test_asm "stp x1, x2, [x3]";
+val res = arm8_test_asm "stp w1, w2, [x3]";
+val res = arm8_test_asm "ldpsw x1, x2, [x3]";
+val res = arm8_test_asm "movz w0, #4";
+val res = arm8_test_asm "movz x0, #4";
+val res = arm8_test_asm "movn x0, #4";
+val res = arm8_test_asm "movn w0, #4";
+val res = arm8_test_asm "movk w0, #4";
+val res = arm8_test_asm "movk x0, #4";
+val res = arm8_test_asm "bfm w1, w2, #2, #4";
+val res = arm8_test_asm "bfm w1, w2, #2, #8";
+val res = arm8_test_asm "bfm w1, w2, #8, #2";
+val res = arm8_test_asm "sbfm w1, w2, #2, #4";
+val res = arm8_test_asm "sbfm w1, w2, #2, #8";
+val res = arm8_test_asm "sbfm w1, w2, #8, #2";
+val res = arm8_test_asm "ubfm w1, w2, #2, #4";
+val res = arm8_test_asm "ubfm w1, w2, #2, #8";
+val res = arm8_test_asm "ubfm w1, w2, #8, #2";
+val res = arm8_test_asm "extr w1, w2, w3, #2";
+val res = arm8_test_asm "extr x1, x2, x3, #2";
+val res = arm8_test_asm "sxth w1, w2";
+val res = arm8_test_asm "sxtb w1, w2";
+val res = arm8_test_asm "sxtw x1, x2";
+val res = arm8_test_asm "uxth w1, w2";
+val res = arm8_test_asm "uxtb w1, w2";
+val res = arm8_test_asm "add x0, x1, w3, UXTB #2";
+val res = arm8_test_asm "add x0, x1, w3, SXTB #2";
+val res = arm8_test_asm "adds x0, x1, w3, SXTB #4";
+val res = arm8_test_asm "adds x0, x1, w3, SXTB #0";
+val res = arm8_test_asm "sub x0, x1, w3, UXTB #2";
+val res = arm8_test_asm "sub x0, x1, w3, SXTB #2";
+val res = arm8_test_asm "subs x0, x1, w3, SXTB #4";
+val res = arm8_test_asm "subs x0, x1, w3, SXTB #0";
+val res = arm8_test_asm "bic x1, x2, x3, LSL #2"
+val res = arm8_test_asm "bic x1, x2, x3, LSR #2"
+val res = arm8_test_asm "bic x1, x2, x3, ASR #2"
+val res = arm8_test_asm "bic x1, x2, x2"
+val res = arm8_test_asm "bics x1, x2, x3, LSL #2"
+val res = arm8_test_asm "bics x1, x2, x3, LSR #2"
+val res = arm8_test_asm "bics x1, x2, x3, ASR #2"
+val res = arm8_test_asm "bics x1, x2, x2"
+val res = arm8_test_asm "eon x1, x2, x3, LSL #2"
+val res = arm8_test_asm "eon x1, x2, x3, LSR #2"
+val res = arm8_test_asm "eon x1, x2, x3, ASR #2"
+val res = arm8_test_asm "eon x1, x2, x2"
+val res = arm8_test_asm "lslv w1, w2, w3"
+val res = arm8_test_asm "lslv x1, x2, x3"
+val res = arm8_test_asm "lsrv w1, w2, w3"
+val res = arm8_test_asm "lsrv x1, x2, x3"
+val res = arm8_test_asm "asrv w1, w2, w3"
+val res = arm8_test_asm "asrv x1, x2, x3"
+val res = arm8_test_asm "rorv w1, w2, w3"
+val res = arm8_test_asm "rorv x1, x2, x3"
+val res = arm8_test_asm "cls w1, w2"
+val res = arm8_test_asm "cls x1, x2"
+val res = arm8_test_asm "clz w1, w2"
+val res = arm8_test_asm "clz x1, x2"
+val res = arm8_test_asm "rbit x1, x2"
+val res = arm8_test_asm "rbit w1, w2"
+val res = arm8_test_asm "rev w1, w2"
+val res = arm8_test_asm "rev x1, x2"
+val res = arm8_test_asm "rev16 w1, w2"
+val res = arm8_test_asm "rev16 x1, x2"
+val res = arm8_test_asm "rev32 x1, x2"
+val res = arm8_test_asm "csel w1, w2, w3, EQ"
+val res = arm8_test_asm "csel x1, x2, x3, EQ"
+val res = arm8_test_asm "csel x1, x2, x3, LE"
+val res = arm8_test_asm "csel x1, x2, x3, LT"
+val res = arm8_test_asm "csel x1, x2, x3, NE"
 
-val res = arm8_test_asm `lsl x0, x2, #8`;
-val res = arm8_test_asm `lsr x0, x2, #8`;
-val res = arm8_test_asm `str x0, [x2, #8]`;
+val res = arm8_test_asm "csinc w1, w2, w3, LE"
+val res = arm8_test_asm "csinc x1, x2, x3, EQ"
+val res = arm8_test_asm "csinv w1, w2, w3, LE"
+val res = arm8_test_asm "csinv x1, x2, x3, EQ"
+val res = arm8_test_asm "csneg w1, w2, w3, LE"
+val res = arm8_test_asm "csneg x1, x2, x3, EQ"
+val res = arm8_test_asm "cset w1, LE"
+val res = arm8_test_asm "cset x1, LE"
+val res = arm8_test_asm "csetm w1, LE"
+val res = arm8_test_asm "csetm x1, LE"
+
+val res = arm8_test_asm "cinc w1, w2, LE"
+val res = arm8_test_asm "cinc x1, x2, EQ"
+val res = arm8_test_asm "cinv w1, w2, LE"
+val res = arm8_test_asm "cinv x1, x2, EQ"
+val res = arm8_test_asm "cneg w1, w2, LE"
+val res = arm8_test_asm "cneg x1, x2, EQ"
+val res = arm8_test_asm "ngc w1, w2"
+val res = arm8_test_asm "ngc x1, x2"
+val res = arm8_test_asm "ngcs w1, w2"
+val res = arm8_test_asm "ngcs x1, x2"
+
+val res = arm8_test_asm "ccmn w1, w2, #3, le"
+val res = arm8_test_asm "ccmp w1, w2, #3, le"
+val res = arm8_test_asm "ccmn x1, x2, #3, le"
+val res = arm8_test_asm "ccmp x1, x2, #3, le"
+
+val res = arm8_test_asm "madd w1, w2, w3, w4"
+val res = arm8_test_asm "madd x1, x2, x3, x4"
+val res = arm8_test_asm "msub w1, w2, w3, w4"
+val res = arm8_test_asm "msub x1, x2, x3, x4"
+val res = arm8_test_asm "msub x1, x2, x3, xzr"
+val res = arm8_test_asm "mneg w1, w2, w3" (* TODO: better translation *)
+val res = arm8_test_asm "mneg x1, x2, x3" (* TODO: better translation *)
+
+val res = arm8_test_asm "smaddl x1, w2, w3, x4"
+val res = arm8_test_asm "smsubl x1, w2, w3, x4"
+val res = arm8_test_asm "smull x1, w2, w3"
+val res = arm8_test_asm "smulh x1, x2, x3"
+
+val res = arm8_test_asm "umaddl x1, w2, w3, x4"
+val res = arm8_test_asm "umsubl x1, w2, w3, x4"
+val res = arm8_test_asm "umull x1, w2, w3"
+val res = arm8_test_asm "umulh x1, x2, x3"
+
+val res = arm8_test_asm "sdiv w1, w2, w3"
+val res = arm8_test_asm "sdiv x1, x2, x3"
+val res = arm8_test_asm "udiv w1, w2, w3"
+val res = arm8_test_asm "udiv x1, x2, x3"
 
 
   (* some instructions I din't see in this file *)
 (*  4003a0:     d61f0220        br      x17 *)
-val res = arm8_test_asm `br  x17`;
+val res = arm8_test_asm "br  x17";
 (*  4003a4:     d503201f        nop *)
-val res = arm8_test_asm `nop`;
+val res = arm8_test_asm "nop";
 (*  400510:     d63f0020        blr     x1 *)
-val res = arm8_test_asm `blr x1`;
+val res = arm8_test_asm "blr x1";
 (*  400430:     b4000040        cbz     x0, 400438 <call_weak_fn+0x10> *)
 val res = arm8_test_hex "B4000040";
 (*  4004cc:     35000080        cbnz    w0, 4004dc <__do_global_dtors_aux+0x24> *)
@@ -259,6 +415,7 @@ val res = arm8_test_hex "35000080";
   (* another one, load with lsl, decode error *)
 (*  4005f8:     b8617801        ldr     w1, [x0,x1,lsl #2] *)
 val res = arm8_test_hex "b8617801";
+
 
 
 
@@ -284,27 +441,37 @@ val (res, fl) = test_ARM8.bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt
 (* SOME MANUAL TESTS M0 *)
 (************************)
 
-fun m0_lift_instr mu_b mu_e pc hex_code = let
-  val r1 = (print "LP "; test_M0_1.lift_instr mu_b mu_e pc hex_code)
-  val r2 = (print "BP "; test_M0_2.lift_instr mu_b mu_e pc hex_code)
-  val r3 = (print "LM "; test_M0_3.lift_instr mu_b mu_e pc hex_code)
-  val r4 = (print "BM "; test_M0_4.lift_instr mu_b mu_e pc hex_code)
+fun m0_lift_instr mu_b mu_e pc hex_code desc = let
+  val r1 = (print "LP "; test_M0_1.lift_instr mu_b mu_e pc hex_code desc)
+  val r2 = (print "BP "; test_M0_2.lift_instr mu_b mu_e pc hex_code desc)
+  val r3 = (print "LM "; test_M0_3.lift_instr mu_b mu_e pc hex_code desc)
+  val r4 = (print "BM "; test_M0_4.lift_instr mu_b mu_e pc hex_code desc)
 in
   (r1, r2, r3, r4)
 end;
 
-fun m0_hex_code_of_asm asm = hd (m0AssemblerLib.m0_code asm)
+fun m0_hex_code_of_asm asm = hd (m0AssemblerLib.m0_code [QUOTE asm])
 fun m0_lift_instr_asm mu_b mu_e pc asm =
-  m0_lift_instr mu_b mu_e pc (m0_hex_code_of_asm asm);
+  m0_lift_instr mu_b mu_e pc (m0_hex_code_of_asm asm) (SOME asm);
 
 
 val mu_b = Arbnum.fromInt 0;
 val mu_e = Arbnum.fromInt 0x10000;
 val pc = Arbnum.fromInt 0x130;
 val m0_test_asm = m0_lift_instr_asm mu_b mu_e pc
-val m0_test_hex = m0_lift_instr mu_b mu_e pc
+fun m0_test_hex hex = m0_lift_instr mu_b mu_e pc hex NONE
 
 val res = print_with_style sty_HEADER "\nMANUAL TESTS - M0\n\n";
+
+val res = m0_test_asm "add r0, r1";
+val res = m0_test_asm "adds r0, r1";
+val res = m0_test_asm "subs r0, r1";
+val res = m0_test_asm "lsls r0, r1";
+val res = m0_test_asm "rors r0, r1";
+val res = m0_test_asm "lsrs r4, r0"
+val res = m0_test_asm "asrs r4, r0"
+val res = m0_test_asm "cmn r0, r1";
+
 
 val res = m0_test_hex "3104";
 val res = m0_test_hex "b007";
@@ -326,6 +493,7 @@ val res = m0_test_hex "1000";
 val res = m0_test_hex "4088";
 val res = m0_test_hex "B5F7";
 val res = m0_test_hex "C29C";
+val res = m0_test_hex "E2821003"
 
 
 
@@ -703,13 +871,247 @@ val arm8_expected_failed_hexcodes:string list =
 [
    "B8617800" (* bmr_step_hex failed *),
    "B8627800" (* bmr_step_hex failed *),
-   "B8617801" (* bmr_step_hex failed *)
+   "B8617801" (* bmr_step_hex failed *),
+   "9BC37C41" (* umulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (w2w (ms.REG 3w) * w2w (ms.REG 2w)))`` failed *),
+   "9B437C41" (* smulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (sw2sw (ms.REG 3w) * sw2sw (ms.REG 2w)))`` failed *),
+   "FA0203E1" (* ngcs x1, x2 lifting of ``bool2b
+  ((w2n (~ms.REG 2w) + if ms.PSTATE.C then 1 else 0) MOD
+   18446744073709551616 =
+   0)`` failed *),
+   "7A0203E1" (* ngcs w1, w2 lifting of ``bool2b
+  ((w2n (~w2w (ms.REG 2w)) + if ms.PSTATE.C then 1 else 0) MOD
+   4294967296 =
+   0)`` failed *),
+   "DA0203E1" (* ngc x1, x2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
+   "5A0203E1" (* ngc w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
+   "DAC00841" (* rev32 x1, x2 lifting of ``Imm64
+  ((39 >< 32) (ms.REG 2w) @@ (47 >< 40) (ms.REG 2w) @@
+   (55 >< 48) (ms.REG 2w) @@ (63 >< 56) (ms.REG 2w) @@
+   (7 >< 0) (ms.REG 2w) @@ (15 >< 8) (ms.REG 2w) @@
+   (23 >< 16) (ms.REG 2w) @@ (31 >< 24) (ms.REG 2w))`` failed *),
+   "DAC00441" (* rev16 x1, x2 lifting of ``Imm64
+  ((55 >< 48) (ms.REG 2w) @@ (63 >< 56) (ms.REG 2w) @@
+   (39 >< 32) (ms.REG 2w) @@ (47 >< 40) (ms.REG 2w) @@
+   (23 >< 16) (ms.REG 2w) @@ (31 >< 24) (ms.REG 2w) @@
+   (7 >< 0) (ms.REG 2w) @@ (15 >< 8) (ms.REG 2w))`` failed *),
+   "5AC00441" (* rev16 w1, w2 lifting of ``Imm64
+  (w2w
+     ((23 >< 16) (w2w (ms.REG 2w)) @@ (31 >< 24) (w2w (ms.REG 2w)) @@
+      (7 >< 0) (w2w (ms.REG 2w)) @@ (15 >< 8) (w2w (ms.REG 2w))))`` failed *),
+   "DAC00C41" (* rev x1, x2 lifting of ``Imm64
+  ((7 >< 0) (ms.REG 2w) @@ (15 >< 8) (ms.REG 2w) @@
+   (23 >< 16) (ms.REG 2w) @@ (31 >< 24) (ms.REG 2w) @@
+   (39 >< 32) (ms.REG 2w) @@ (47 >< 40) (ms.REG 2w) @@
+   (55 >< 48) (ms.REG 2w) @@ (63 >< 56) (ms.REG 2w))`` failed *),
+   "5AC00841" (* rev w1, w2 lifting of ``Imm64
+  (w2w
+     ((7 >< 0) (w2w (ms.REG 2w)) @@ (15 >< 8) (w2w (ms.REG 2w)) @@
+      (23 >< 16) (w2w (ms.REG 2w)) @@ (31 >< 24) (w2w (ms.REG 2w))))`` failed *),
+   "5AC00041" (* rbit w1, w2 lifting of ``Imm64 (w2w (word_reverse (w2w (ms.REG 2w))))`` failed *),
+   "DAC00041" (* rbit x1, x2 lifting of ``Imm64 (word_reverse (ms.REG 2w))`` failed *),
+   "DAC01441" (* clz x1, x2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
+   "5AC01441" (* clz w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
+   "DAC01041" (* cls x1, x2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
+   "5AC01041" (* cls w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
+   "1AC32C41" (* rorv w1, w2, w3 lifting of ``Imm64 (w2w (w2w (ms.REG 2w) #>> (w2n (w2w (ms.REG 3w)) MOD 32)))`` failed *),
+   "EB238020" (* subs x0, x1, w3, SXTB #0 lifting of ``Imm64 (ms.REG 1w − ExtendValue (ms.REG 3w,ExtendType_SXTB,0))`` failed *),
+   "EB239020" (* subs x0, x1, w3, SXTB #4 lifting of ``Imm64 (ms.REG 1w − ExtendValue (ms.REG 3w,ExtendType_SXTB,4))`` failed *),
+   "CB238820" (* sub x0, x1, w3, SXTB #2 lifting of ``Imm64 (ms.REG 1w − ExtendValue (ms.REG 3w,ExtendType_SXTB,2))`` failed *),
+   "CB230820" (* sub x0, x1, w3, UXTB #2 lifting of ``Imm64 (ms.REG 1w − ExtendValue (ms.REG 3w,ExtendType_UXTB,2))`` failed *),
+   "AB238020" (* adds x0, x1, w3, SXTB #0 lifting of ``Imm64 (ExtendValue (ms.REG 3w,ExtendType_SXTB,0) + ms.REG 1w)`` failed *),
+   "AB239020" (* adds x0, x1, w3, SXTB #4 lifting of ``Imm64 (ExtendValue (ms.REG 3w,ExtendType_SXTB,4) + ms.REG 1w)`` failed *),
+   "8B238820" (* add x0, x1, w3, SXTB #2 lifting of ``Imm64 (ExtendValue (ms.REG 3w,ExtendType_SXTB,2) + ms.REG 1w)`` failed *),
+   "8B230820" (* add x0, x1, w3, UXTB #2 lifting of ``Imm64 (ExtendValue (ms.REG 3w,ExtendType_UXTB,2) + ms.REG 1w)`` failed *),
+   "93C30841" (* extr x1, x2, x3, #2 lifting of ``Imm64
+  (v2w
+     [ms.REG 2w ' 63; ms.REG 2w ' 62; ms.REG 2w ' 61; ms.REG 2w ' 60;
+      ms.REG 2w ' 59; ms.REG 2w ' 58; ms.REG 2w ' 57; ms.REG 2w ' 56;
+      ms.REG 2w ' 55; ms.REG 2w ' 54; ms.REG 2w ' 53; ms.REG 2w ' 52;
+      ms.REG 2w ' 51; ms.REG 2w ' 50; ms.REG 2w ' 49; ms.REG 2w ' 48;
+      ms.REG 2w ' 47; ms.REG 2w ' 46; ms.REG 2w ' 45; ms.REG 2w ' 44;
+      ms.REG 2w ' 43; ms.REG 2w ' 42; ms.REG 2w ' 41; ms.REG 2w ' 40;
+      ms.REG 2w ' 39; ms.REG 2w ' 38; ms.REG 2w ' 37; ms.REG 2w ' 36;
+      ms.REG 2w ' 35; ms.REG 2w ' 34; ms.REG 2w ' 33; ms.REG 2w ' 32;
+      ms.REG 2w ' 31; ms.REG 2w ' 30; ms.REG 2w ' 29; ms.REG 2w ' 28;
+      ms.REG 2w ' 27; ms.REG 2w ' 26; ms.REG 2w ' 25; ms.REG 2w ' 24;
+      ms.REG 2w ' 23; ms.REG 2w ' 22; ms.REG 2w ' 21; ms.REG 2w ' 20;
+      ms.REG 2w ' 19; ms.REG 2w ' 18; ms.REG 2w ' 17; ms.REG 2w ' 16;
+      ms.REG 2w ' 15; ms.REG 2w ' 14; ms.REG 2w ' 13; ms.REG 2w ' 12;
+      ms.REG 2w ' 11; ms.REG 2w ' 10; ms.REG 2w ' 9; ms.REG 2w ' 8;
+      ms.REG 2w ' 7; ms.REG 2w ' 6; ms.REG 2w ' 5; ms.REG 2w ' 4;
+      ms.REG 2w ' 3; ms.REG 2w ' 2; ms.REG 2w ' 1; ms.REG 2w ' 0;
+      ms.REG 3w ' 63; ms.REG 3w ' 62; ms.REG 3w ' 61; ms.REG 3w ' 60;
+      ms.REG 3w ' 59; ms.REG 3w ' 58; ms.REG 3w ' 57; ms.REG 3w ' 56;
+      ms.REG 3w ' 55; ms.REG 3w ' 54; ms.REG 3w ' 53; ms.REG 3w ' 52;
+      ms.REG 3w ' 51; ms.REG 3w ' 50; ms.REG 3w ' 49; ms.REG 3w ' 48;
+      ms.REG 3w ' 47; ms.REG 3w ' 46; ms.REG 3w ' 45; ms.REG 3w ' 44;
+      ms.REG 3w ' 43; ms.REG 3w ' 42; ms.REG 3w ' 41; ms.REG 3w ' 40;
+      ms.REG 3w ' 39; ms.REG 3w ' 38; ms.REG 3w ' 37; ms.REG 3w ' 36;
+      ms.REG 3w ' 35; ms.REG 3w ' 34; ms.REG 3w ' 33; ms.REG 3w ' 32;
+      ms.REG 3w ' 31; ms.REG 3w ' 30; ms.REG 3w ' 29; ms.REG 3w ' 28;
+      ms.REG 3w ' 27; ms.REG 3w ' 26; ms.REG 3w ' 25; ms.REG 3w ' 24;
+      ms.REG 3w ' 23; ms.REG 3w ' 22; ms.REG 3w ' 21; ms.REG 3w ' 20;
+      ms.REG 3w ' 19; ms.REG 3w ' 18; ms.REG 3w ' 17; ms.REG 3w ' 16;
+      ms.REG 3w ' 15; ms.REG 3w ' 14; ms.REG 3w ' 13; ms.REG 3w ' 12;
+      ms.REG 3w ' 11; ms.REG 3w ' 10; ms.REG 3w ' 9; ms.REG 3w ' 8;
+      ms.REG 3w ' 7; ms.REG 3w ' 6; ms.REG 3w ' 5; ms.REG 3w ' 4;
+      ms.REG 3w ' 3; ms.REG 3w ' 2])`` failed *),
+   "13830841" (* extr w1, w2, w3, #2 lifting of ``Imm64
+  (v2w
+     [w2w (ms.REG 2w) ' 1; w2w (ms.REG 2w) ' 0; w2w (ms.REG 3w) ' 31;
+      w2w (ms.REG 3w) ' 30; w2w (ms.REG 3w) ' 29; w2w (ms.REG 3w) ' 28;
+      w2w (ms.REG 3w) ' 27; w2w (ms.REG 3w) ' 26; w2w (ms.REG 3w) ' 25;
+      w2w (ms.REG 3w) ' 24; w2w (ms.REG 3w) ' 23; w2w (ms.REG 3w) ' 22;
+      w2w (ms.REG 3w) ' 21; w2w (ms.REG 3w) ' 20; w2w (ms.REG 3w) ' 19;
+      w2w (ms.REG 3w) ' 18; w2w (ms.REG 3w) ' 17; w2w (ms.REG 3w) ' 16;
+      w2w (ms.REG 3w) ' 15; w2w (ms.REG 3w) ' 14; w2w (ms.REG 3w) ' 13;
+      w2w (ms.REG 3w) ' 12; w2w (ms.REG 3w) ' 11; w2w (ms.REG 3w) ' 10;
+      w2w (ms.REG 3w) ' 9; w2w (ms.REG 3w) ' 8; w2w (ms.REG 3w) ' 7;
+      w2w (ms.REG 3w) ' 6; w2w (ms.REG 3w) ' 5; w2w (ms.REG 3w) ' 4;
+      w2w (ms.REG 3w) ' 3; w2w (ms.REG 3w) ' 2])`` failed *),
+   "53080841" (* ubfm w1, w2, #8, #2 lifting of ``Imm64 (w2w (0x7000000w && w2w (ms.REG 2w) #>> 8))`` failed *),
+   "53022041" (* ubfm w1, w2, #2, #8 lifting of ``Imm64 (w2w (127w && w2w (ms.REG 2w) #>> 2))`` failed *),
+   "53021041" (* ubfm w1, w2, #2, #4 lifting of ``Imm64 (w2w (7w && w2w (ms.REG 2w) #>> 2))`` failed *),
+   "13080841" (* sbfm w1, w2, #8, #2 lifting of ``Imm64
+  (w2w
+     (0x7000000w && w2w (ms.REG 2w) #>> 8 || 
+      0xF8000000w &&
+      if word_bit 2 (w2w (ms.REG 2w)) then 0xFFFFFFFFw else 0w))`` failed *),
+   "13022041" (* sbfm w1, w2, #2, #8 lifting of ``Imm64
+  (w2w
+     (127w && w2w (ms.REG 2w) #>> 2 || 
+      0xFFFFFF80w &&
+      if word_bit 8 (w2w (ms.REG 2w)) then 0xFFFFFFFFw else 0w))`` failed *),
+   "13021041" (* sbfm w1, w2, #2, #4 lifting of ``Imm64
+  (w2w
+     (7w && w2w (ms.REG 2w) #>> 2 || 
+      0xFFFFFFF8w &&
+      if word_bit 4 (w2w (ms.REG 2w)) then 0xFFFFFFFFw else 0w))`` failed *),
+   "33080841" (* bfm w1, w2, #8, #2 lifting of ``Imm64
+  (w2w
+     (0xF8000000w && w2w (ms.REG 1w) || 
+      0x7FFFFFFw &&
+      (0xF8FFFFFFw && w2w (ms.REG 1w) || 
+       0x7000000w && w2w (ms.REG 2w) #>> 8)))`` failed *),
+   "33022041" (* bfm w1, w2, #2, #8 lifting of ``Imm64
+  (w2w
+     (0xFFFFFF80w && w2w (ms.REG 1w) || 
+      127w &&
+      (0x3FFFFF80w && w2w (ms.REG 1w) || 
+       0xC000007Fw && w2w (ms.REG 2w) #>> 2)))`` failed *),
+   "33021041" (* bfm w1, w2, #2, #4 lifting of ``Imm64
+  (w2w
+     (0xFFFFFFF8w && w2w (ms.REG 1w) || 
+      7w &&
+      (0x3FFFFFF8w && w2w (ms.REG 1w) || 
+       0xC0000007w && w2w (ms.REG 2w) #>> 2)))`` failed *),
+   "F2800080" (* movk x0, #4 lifting of ``Imm64 ((63 >< 16) (ms.REG 0w) @@ 4w)`` failed *),
+   "72800080" (* movk w0, #4 lifting of ``Imm64 (w2w ((31 >< 16) (w2w (ms.REG 0w)) @@ 4w))`` failed *),
+   "13820841" (* ror w1, w2, #2 lifting of ``Imm64
+  (v2w
+     [w2w (ms.REG 2w) ' 1; w2w (ms.REG 2w) ' 0; w2w (ms.REG 2w) ' 31;
+      w2w (ms.REG 2w) ' 30; w2w (ms.REG 2w) ' 29; w2w (ms.REG 2w) ' 28;
+      w2w (ms.REG 2w) ' 27; w2w (ms.REG 2w) ' 26; w2w (ms.REG 2w) ' 25;
+      w2w (ms.REG 2w) ' 24; w2w (ms.REG 2w) ' 23; w2w (ms.REG 2w) ' 22;
+      w2w (ms.REG 2w) ' 21; w2w (ms.REG 2w) ' 20; w2w (ms.REG 2w) ' 19;
+      w2w (ms.REG 2w) ' 18; w2w (ms.REG 2w) ' 17; w2w (ms.REG 2w) ' 16;
+      w2w (ms.REG 2w) ' 15; w2w (ms.REG 2w) ' 14; w2w (ms.REG 2w) ' 13;
+      w2w (ms.REG 2w) ' 12; w2w (ms.REG 2w) ' 11; w2w (ms.REG 2w) ' 10;
+      w2w (ms.REG 2w) ' 9; w2w (ms.REG 2w) ' 8; w2w (ms.REG 2w) ' 7;
+      w2w (ms.REG 2w) ' 6; w2w (ms.REG 2w) ' 5; w2w (ms.REG 2w) ' 4;
+      w2w (ms.REG 2w) ' 3; w2w (ms.REG 2w) ' 2])`` failed *),
+   "93C20841" (* ror x1, x2, #2 lifting of ``Imm64
+  (v2w
+     [ms.REG 2w ' 63; ms.REG 2w ' 62; ms.REG 2w ' 61; ms.REG 2w ' 60;
+      ms.REG 2w ' 59; ms.REG 2w ' 58; ms.REG 2w ' 57; ms.REG 2w ' 56;
+      ms.REG 2w ' 55; ms.REG 2w ' 54; ms.REG 2w ' 53; ms.REG 2w ' 52;
+      ms.REG 2w ' 51; ms.REG 2w ' 50; ms.REG 2w ' 49; ms.REG 2w ' 48;
+      ms.REG 2w ' 47; ms.REG 2w ' 46; ms.REG 2w ' 45; ms.REG 2w ' 44;
+      ms.REG 2w ' 43; ms.REG 2w ' 42; ms.REG 2w ' 41; ms.REG 2w ' 40;
+      ms.REG 2w ' 39; ms.REG 2w ' 38; ms.REG 2w ' 37; ms.REG 2w ' 36;
+      ms.REG 2w ' 35; ms.REG 2w ' 34; ms.REG 2w ' 33; ms.REG 2w ' 32;
+      ms.REG 2w ' 31; ms.REG 2w ' 30; ms.REG 2w ' 29; ms.REG 2w ' 28;
+      ms.REG 2w ' 27; ms.REG 2w ' 26; ms.REG 2w ' 25; ms.REG 2w ' 24;
+      ms.REG 2w ' 23; ms.REG 2w ' 22; ms.REG 2w ' 21; ms.REG 2w ' 20;
+      ms.REG 2w ' 19; ms.REG 2w ' 18; ms.REG 2w ' 17; ms.REG 2w ' 16;
+      ms.REG 2w ' 15; ms.REG 2w ' 14; ms.REG 2w ' 13; ms.REG 2w ' 12;
+      ms.REG 2w ' 11; ms.REG 2w ' 10; ms.REG 2w ' 9; ms.REG 2w ' 8;
+      ms.REG 2w ' 7; ms.REG 2w ' 6; ms.REG 2w ' 5; ms.REG 2w ' 4;
+      ms.REG 2w ' 3; ms.REG 2w ' 2; ms.REG 2w ' 1; ms.REG 2w ' 0;
+      ms.REG 2w ' 63; ms.REG 2w ' 62; ms.REG 2w ' 61; ms.REG 2w ' 60;
+      ms.REG 2w ' 59; ms.REG 2w ' 58; ms.REG 2w ' 57; ms.REG 2w ' 56;
+      ms.REG 2w ' 55; ms.REG 2w ' 54; ms.REG 2w ' 53; ms.REG 2w ' 52;
+      ms.REG 2w ' 51; ms.REG 2w ' 50; ms.REG 2w ' 49; ms.REG 2w ' 48;
+      ms.REG 2w ' 47; ms.REG 2w ' 46; ms.REG 2w ' 45; ms.REG 2w ' 44;
+      ms.REG 2w ' 43; ms.REG 2w ' 42; ms.REG 2w ' 41; ms.REG 2w ' 40;
+      ms.REG 2w ' 39; ms.REG 2w ' 38; ms.REG 2w ' 37; ms.REG 2w ' 36;
+      ms.REG 2w ' 35; ms.REG 2w ' 34; ms.REG 2w ' 33; ms.REG 2w ' 32;
+      ms.REG 2w ' 31; ms.REG 2w ' 30; ms.REG 2w ' 29; ms.REG 2w ' 28;
+      ms.REG 2w ' 27; ms.REG 2w ' 26; ms.REG 2w ' 25; ms.REG 2w ' 24;
+      ms.REG 2w ' 23; ms.REG 2w ' 22; ms.REG 2w ' 21; ms.REG 2w ' 20;
+      ms.REG 2w ' 19; ms.REG 2w ' 18; ms.REG 2w ' 17; ms.REG 2w ' 16;
+      ms.REG 2w ' 15; ms.REG 2w ' 14; ms.REG 2w ' 13; ms.REG 2w ' 12;
+      ms.REG 2w ' 11; ms.REG 2w ' 10; ms.REG 2w ' 9; ms.REG 2w ' 8;
+      ms.REG 2w ' 7; ms.REG 2w ' 6; ms.REG 2w ' 5; ms.REG 2w ' 4;
+      ms.REG 2w ' 3; ms.REG 2w ' 2])`` failed *),
+   "93C20041" (* ror x1, x2, #0 lifting of ``Imm64
+  (v2w
+     [ms.REG 2w ' 63; ms.REG 2w ' 62; ms.REG 2w ' 61; ms.REG 2w ' 60;
+      ms.REG 2w ' 59; ms.REG 2w ' 58; ms.REG 2w ' 57; ms.REG 2w ' 56;
+      ms.REG 2w ' 55; ms.REG 2w ' 54; ms.REG 2w ' 53; ms.REG 2w ' 52;
+      ms.REG 2w ' 51; ms.REG 2w ' 50; ms.REG 2w ' 49; ms.REG 2w ' 48;
+      ms.REG 2w ' 47; ms.REG 2w ' 46; ms.REG 2w ' 45; ms.REG 2w ' 44;
+      ms.REG 2w ' 43; ms.REG 2w ' 42; ms.REG 2w ' 41; ms.REG 2w ' 40;
+      ms.REG 2w ' 39; ms.REG 2w ' 38; ms.REG 2w ' 37; ms.REG 2w ' 36;
+      ms.REG 2w ' 35; ms.REG 2w ' 34; ms.REG 2w ' 33; ms.REG 2w ' 32;
+      ms.REG 2w ' 31; ms.REG 2w ' 30; ms.REG 2w ' 29; ms.REG 2w ' 28;
+      ms.REG 2w ' 27; ms.REG 2w ' 26; ms.REG 2w ' 25; ms.REG 2w ' 24;
+      ms.REG 2w ' 23; ms.REG 2w ' 22; ms.REG 2w ' 21; ms.REG 2w ' 20;
+      ms.REG 2w ' 19; ms.REG 2w ' 18; ms.REG 2w ' 17; ms.REG 2w ' 16;
+      ms.REG 2w ' 15; ms.REG 2w ' 14; ms.REG 2w ' 13; ms.REG 2w ' 12;
+      ms.REG 2w ' 11; ms.REG 2w ' 10; ms.REG 2w ' 9; ms.REG 2w ' 8;
+      ms.REG 2w ' 7; ms.REG 2w ' 6; ms.REG 2w ' 5; ms.REG 2w ' 4;
+      ms.REG 2w ' 3; ms.REG 2w ' 2; ms.REG 2w ' 1; ms.REG 2w ' 0;
+      ms.REG 2w ' 63; ms.REG 2w ' 62; ms.REG 2w ' 61; ms.REG 2w ' 60;
+      ms.REG 2w ' 59; ms.REG 2w ' 58; ms.REG 2w ' 57; ms.REG 2w ' 56;
+      ms.REG 2w ' 55; ms.REG 2w ' 54; ms.REG 2w ' 53; ms.REG 2w ' 52;
+      ms.REG 2w ' 51; ms.REG 2w ' 50; ms.REG 2w ' 49; ms.REG 2w ' 48;
+      ms.REG 2w ' 47; ms.REG 2w ' 46; ms.REG 2w ' 45; ms.REG 2w ' 44;
+      ms.REG 2w ' 43; ms.REG 2w ' 42; ms.REG 2w ' 41; ms.REG 2w ' 40;
+      ms.REG 2w ' 39; ms.REG 2w ' 38; ms.REG 2w ' 37; ms.REG 2w ' 36;
+      ms.REG 2w ' 35; ms.REG 2w ' 34; ms.REG 2w ' 33; ms.REG 2w ' 32;
+      ms.REG 2w ' 31; ms.REG 2w ' 30; ms.REG 2w ' 29; ms.REG 2w ' 28;
+      ms.REG 2w ' 27; ms.REG 2w ' 26; ms.REG 2w ' 25; ms.REG 2w ' 24;
+      ms.REG 2w ' 23; ms.REG 2w ' 22; ms.REG 2w ' 21; ms.REG 2w ' 20;
+      ms.REG 2w ' 19; ms.REG 2w ' 18; ms.REG 2w ' 17; ms.REG 2w ' 16;
+      ms.REG 2w ' 15; ms.REG 2w ' 14; ms.REG 2w ' 13; ms.REG 2w ' 12;
+      ms.REG 2w ' 11; ms.REG 2w ' 10; ms.REG 2w ' 9; ms.REG 2w ' 8;
+      ms.REG 2w ' 7; ms.REG 2w ' 6; ms.REG 2w ' 5; ms.REG 2w ' 4;
+      ms.REG 2w ' 3; ms.REG 2w ' 2; ms.REG 2w ' 1; ms.REG 2w ' 0])`` failed *),
+   "9AC32C41" (* ror x1, x2, x3 lifting of ``Imm64 (ms.REG 2w #>> (w2n (ms.REG 3w) MOD 64))`` failed *)
 ];
 
 val _ = test_ARM8.final_results "ARM 8" arm8_expected_failed_hexcodes;
 
-val m0_expected_failed_hexcodes:string list =
-[
+
+val m0_expected_failed_hexcodes:string list = [
+   "E2821003" (* bmr_step_hex failed *),
+   "A1BC" (* bmr_step_hex failed *),
+   "DFB8" (* bmr_step_hex failed *),
+   "4104" (* asrs r4, r0 lifting of ``bool2b
+  (if w2n (w2w (ms.REG RName_0)) = 0 then ms.PSR.C
+   else
+     word_bit (MIN 32 (w2n (w2w (ms.REG RName_0))) − 1)
+       (ms.REG RName_4))`` failed *),
+   "40C4" (* lsrs r4, r0 lifting of ``bool2b
+  (if w2n (w2w (ms.REG RName_0)) = 0 then ms.PSR.C
+   else
+     w2n (w2w (ms.REG RName_0)) <= 32 /\
+     word_bit (w2n (w2w (ms.REG RName_0)) − 1) (ms.REG RName_4))`` failed *),
+   "41C8" (* rors r0, r1 lifting of ``Imm32 (ms.REG RName_0 #>> w2n (w2w (ms.REG RName_1)))`` failed *),
+   "4088" (* lsls r0, r1 lifting of ``bool2b
+  (if w2n (w2w (ms.REG RName_1)) = 0 then ms.PSR.C
+   else (w2w (ms.REG RName_0) << w2n (w2w (ms.REG RName_1))) ' 32)`` failed *)
 ];
 
 val _ = test_M0_1.final_results "M0 LittleEnd, Process SP" m0_expected_failed_hexcodes;
