@@ -25,6 +25,12 @@ aes-test.exe: aes-test.uo
 aesTheory.uo: aes-test.exe 
 	./aes-test.exe
 
+gcd_code-test.exe: gcd_code-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
+gcd_codeTheory.uo: gcd_code-test.exe 
+	./gcd_code-test.exe
+
 TARGETS = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
 
 all: $(TARGETS)

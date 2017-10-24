@@ -16184,12 +16184,9 @@ sig
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
                          (BExp_Den (BVar "R6" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "R3" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_Plus
+                      (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                         (BExp_BinExp BIExp_Mult
-                            (BExp_UnaryExp BIExp_ChangeSign
-                               (BExp_Const (Imm32 1w)))
-                            (BExp_Den (BVar "R6" (BType_Imm Bit32)))))];
+                         (BExp_Den (BVar "R6" (BType_Imm Bit32))))];
                  bb_last_statement :=
                    BStmt_Jmp (BLE_Label (BL_Address (Imm32 1044w)))|>;
                <|bb_label :=
@@ -17032,12 +17029,9 @@ sig
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
                          (BExp_Den (BVar "R6" (BType_Imm Bit32))));
                     BStmt_Assign (BVar "R3" (BType_Imm Bit32))
-                      (BExp_BinExp BIExp_Plus
+                      (BExp_BinExp BIExp_Minus
                          (BExp_Den (BVar "R4" (BType_Imm Bit32)))
-                         (BExp_BinExp BIExp_Mult
-                            (BExp_UnaryExp BIExp_ChangeSign
-                               (BExp_Const (Imm32 1w)))
-                            (BExp_Den (BVar "R6" (BType_Imm Bit32)))))];
+                         (BExp_Den (BVar "R6" (BType_Imm Bit32))))];
                  bb_last_statement :=
                    BStmt_Jmp (BLE_Label (BL_Address (Imm32 1160w)))|>;
                <|bb_label :=
