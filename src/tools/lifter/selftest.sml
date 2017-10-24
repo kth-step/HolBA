@@ -1195,38 +1195,15 @@ val arm8_expected_failed_hexcodes:string list =
 val _ = test_ARM8.final_results "ARM 8" arm8_expected_failed_hexcodes;
 
 
-val m0_expected_failed_hexcodes:string list = [
-   "E2821003" (* bmr_step_hex failed *),
+val m0_expected_failed_hexcodes:string list =
+[
    "A1BC" (* bmr_step_hex failed *),
    "DFB8" (* bmr_step_hex failed *),
-   "4104" (* asrs r4, r0 lifting of ``bool2b
-  (if w2n (w2w (ms.REG RName_0)) = 0 then ms.PSR.C
-   else
-     word_bit (MIN 32 (w2n (w2w (ms.REG RName_0))) − 1)
-       (ms.REG RName_4))`` failed *),
-   "40C4" (* lsrs r4, r0 lifting of ``bool2b
-  (if w2n (w2w (ms.REG RName_0)) = 0 then ms.PSR.C
-   else
-     w2n (w2w (ms.REG RName_0)) <= 32 /\
-     word_bit (w2n (w2w (ms.REG RName_0)) − 1) (ms.REG RName_4))`` failed *),
-   "41C8" (* rors r0, r1 lifting of ``Imm32 (ms.REG RName_0 #>> w2n (w2w (ms.REG RName_1)))`` failed *),
-   "4088" (* lsls r0, r1 lifting of ``bool2b
-  (if w2n (w2w (ms.REG RName_1)) = 0 then ms.PSR.C
-   else (w2w (ms.REG RName_0) << w2n (w2w (ms.REG RName_1))) ' 32)`` failed *),
    "BAD1" (* revsh r1, r2 lifting of ``Imm32 (sw2sw (w2w (ms.REG RName_2)) @@ (15 >< 8) (ms.REG RName_2))`` failed *),
    "BA51" (* rev16 r1, r2 lifting of ``Imm32
   ((23 >< 16) (ms.REG RName_2) @@ (31 >< 24) (ms.REG RName_2) @@
    w2w (ms.REG RName_2) @@ (15 >< 8) (ms.REG RName_2))`` failed *),
-   "4108" (* asrs r0, r1 lifting of ``bool2b
-  (if w2n (w2w (ms.REG RName_1)) = 0 then ms.PSR.C
-   else
-     word_bit (MIN 32 (w2n (w2w (ms.REG RName_1))) − 1)
-       (ms.REG RName_0))`` failed *),
-   "40C8" (* lsrs r0, r1 lifting of ``bool2b
-  (if w2n (w2w (ms.REG RName_1)) = 0 then ms.PSR.C
-   else
-     w2n (w2w (ms.REG RName_1)) <= 32 /\
-     word_bit (w2n (w2w (ms.REG RName_1)) − 1) (ms.REG RName_0))`` failed *)
+   "41C8" (* rors r0, r1 lifting of ``Imm32 (ms.REG RName_0 ⇄ w2n (w2w (ms.REG RName_1)))`` failed *)
 ];
 
 

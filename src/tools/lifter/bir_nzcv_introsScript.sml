@@ -189,6 +189,7 @@ val awc_BIR_Z_nzcv_BIR_SUB_N_fold = prove (
 SIMP_TAC std_ss [GSYM awc_BIR_N_fold_ARM8, GSYM nzcv_SUB_N_fold_ARM8,
   awc_BIR_RES_fold_ARM8, awc_BIR_RES_FOLD_SUB, GSYM word_msb_n2w]);
 
+
 val awc_BIR_Z_nzcv_BIR_ADD_N_fold = prove (
   ``!(w0:'a word) w1 c. nzcv_BIR_ADD_N (w0 + w1) (if c then 1w else 0w) =
                         awc_BIR_N w0 w1 c``,
@@ -437,6 +438,57 @@ val nzcv_ADD_Z_fold_M0 = store_thm ("nzcv_ADD_Z_fold_M0",
 ``!w1 w0. (w0 + w1 = 0w) = nzcv_BIR_ADD_Z w0 w1``,
 REWRITE_TAC[nzcv_ADD_Z_fold_ARM8]);
 
+
+val lsrs_C_fold_M0 = store_thm ("lsrs_C_fold_M0",
+``!(w1:word8) (w2:word32) c.
+  (if w2n w1 = 0 then c else
+     w2n w1 <= 32 /\ word_bit (w2n w1 - 1) w2) =
+  (if w1 = 0w then c else
+    (w1 <=+ 32w /\ word_bit (w2n (w1 - 1w)) w2))
+``,
+
+Cases >> rename1 `n1 < dimword _` >>
+FULL_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2n_n2w, n2w_11,
+  word_ls_n2w, bir_auxiliaryTheory.word_sub_n2w]);
+
+
+val asrs_C_fold_M0 = store_thm ("asrs_C_fold_M0",
+``!(w1:word8) (w2:word32) c.
+  (if w2n w1 = 0 then c else
+     word_bit ((MIN 32 (w2n w1)) - 1) w2) =
+  (if w1 = 0w then c else
+    (if w1 <=+ 32w then
+        word_bit (w2n (w1 - 1w)) w2
+     else word_bit 31 w2))
+``,
+
+Cases >> rename1 `n1 < dimword _` >>
+FULL_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2n_n2w, n2w_11,
+  word_ls_n2w, bir_auxiliaryTheory.word_sub_n2w, arithmeticTheory.MIN_DEF,
+  word_msb_def] >>
+REPEAT STRIP_TAC >>
+Cases_on `n1 <= 32` >> ASM_SIMP_TAC arith_ss []);
+
+
+
+val lsls_C_fold_M0 = store_thm ("lsls_C_fold_M0",
+``!(w1:word8) (w2:word32) c.
+  (if w2n w1 = 0 then c else
+     (((w2w w2): 33 word) << w2n w1) ' 32) =
+  (if w1 = 0w then c else word_bit (w2n (32w - w1)) w2)
+``,
+
+Cases >> rename1 `n1 < dimword _` >>
+FULL_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2n_n2w, n2w_11,
+  word_ls_n2w, bir_auxiliaryTheory.word_sub_n2w] >>
+Cases_on `n1 = 0` >> ASM_SIMP_TAC arith_ss [] >>
+
+ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [word_lsl_def,
+  fcpTheory.FCP_BETA, w2w, word_bit_def] >>
+Cases_on `n1 <= 32` >> ASM_SIMP_TAC arith_ss []);
+
+
+
 val nzcv_FOLDS_M0 = save_thm ("nzcv_FOLDS_M0",
  LIST_CONJ [awc_BIR_V_fold_M0, awc_BIR_C_fold_M0,
             awc_BIR_NZVC_ELIMS, awc_BIR_Z_fold_M0,
@@ -447,7 +499,9 @@ val nzcv_FOLDS_M0 = save_thm ("nzcv_FOLDS_M0",
             awc_BIR_Z_nzcv_BIR_SUB_Z_fold,
             awc_BIR_Z_nzcv_BIR_ADD_Z_fold,
             awc_BIR_Z_nzcv_BIR_SUB_N_fold,
-            awc_BIR_Z_nzcv_BIR_ADD_N_fold
+            awc_BIR_Z_nzcv_BIR_ADD_N_fold,
+
+            lsrs_C_fold_M0, asrs_C_fold_M0, lsls_C_fold_M0
 ]);
 
 
