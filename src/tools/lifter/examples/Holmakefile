@@ -22,6 +22,9 @@ hex-test.exe: hex-test.uo
 aes-test.exe: aes-test.uo 
 	$(HOLMOSMLC) -o $@ $<
 
+bzip2-test.exe: bzip2-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
 aesTheory.uo: aes-test.exe 
 	./aes-test.exe
 

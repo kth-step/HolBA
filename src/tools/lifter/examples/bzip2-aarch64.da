@@ -1,0 +1,3077 @@
+
+bzip2.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <uInt64_toAscii>:
+       0:	d100c3ff 	sub	sp, sp, #0x30
+       4:	f9400021 	ldr	x1, [x1]
+       8:	9100c3e7 	add	x7, sp, #0x30
+       c:	d2800008 	mov	x8, #0x0                   	// #0
+      10:	91001fe6 	add	x6, sp, #0x7
+      14:	910043e9 	add	x9, sp, #0x10
+      18:	52800145 	mov	w5, #0xa                   	// #10
+      1c:	f81d8ce1 	str	x1, [x7,#-40]!
+      20:	91001ce4 	add	x4, x7, #0x7
+      24:	52800001 	mov	w1, #0x0                   	// #0
+      28:	39400083 	ldrb	w3, [x4]
+      2c:	529999a2 	mov	w2, #0xcccd                	// #52429
+      30:	72b99982 	movk	w2, #0xcccc, lsl #16
+      34:	0b012063 	add	w3, w3, w1, lsl #8
+      38:	9ba27c61 	umull	x1, w3, w2
+      3c:	d360fc21 	lsr	x1, x1, #32
+      40:	53037c21 	lsr	w1, w1, #3
+      44:	381ff481 	strb	w1, [x4],#-1
+      48:	eb06009f 	cmp	x4, x6
+      4c:	1b058c21 	msub	w1, w1, w5, w3
+      50:	54fffec1 	b.ne	28 <uInt64_toAscii+0x28>
+      54:	1100c021 	add	w1, w1, #0x30
+      58:	11000503 	add	w3, w8, #0x1
+      5c:	38286921 	strb	w1, [x9,x8]
+      60:	d2800001 	mov	x1, #0x0                   	// #0
+      64:	386168e2 	ldrb	w2, [x7,x1]
+      68:	91000421 	add	x1, x1, #0x1
+      6c:	f100203f 	cmp	x1, #0x8
+      70:	350001a2 	cbnz	w2, a4 <uInt64_toAscii+0xa4>
+      74:	54ffff81 	b.ne	64 <uInt64_toAscii+0x64>
+      78:	3823c81f 	strb	wzr, [x0,w3,sxtw]
+      7c:	51000461 	sub	w1, w3, #0x1
+      80:	9100c3e2 	add	x2, sp, #0x30
+      84:	8b21c042 	add	x2, x2, w1, sxtw
+      88:	51000421 	sub	w1, w1, #0x1
+      8c:	385e0042 	ldrb	w2, [x2,#-32]
+      90:	3100043f 	cmn	w1, #0x1
+      94:	38001402 	strb	w2, [x0],#1
+      98:	54ffff41 	b.ne	80 <uInt64_toAscii+0x80>
+      9c:	9100c3ff 	add	sp, sp, #0x30
+      a0:	d65f03c0 	ret
+      a4:	91000508 	add	x8, x8, #0x1
+      a8:	17ffffde 	b	20 <uInt64_toAscii+0x20>
+
+00000000000000ac <hasSuffix>:
+      ac:	a9bd7bfd 	stp	x29, x30, [sp,#-48]!
+      b0:	910003fd 	mov	x29, sp
+      b4:	a90153f3 	stp	x19, x20, [sp,#16]
+      b8:	f90013f5 	str	x21, [sp,#32]
+      bc:	aa0103f4 	mov	x20, x1
+      c0:	aa0003f5 	mov	x21, x0
+      c4:	94000000 	bl	0 <strlen>
+      c8:	aa0003f3 	mov	x19, x0
+      cc:	aa1403e0 	mov	x0, x20
+      d0:	94000000 	bl	0 <strlen>
+      d4:	6b00027f 	cmp	w19, w0
+      d8:	aa0003e3 	mov	x3, x0
+      dc:	52800000 	mov	w0, #0x0                   	// #0
+      e0:	5400010b 	b.lt	100 <hasSuffix+0x54>
+      e4:	93407e73 	sxtw	x19, w19
+      e8:	aa1403e1 	mov	x1, x20
+      ec:	cb23c260 	sub	x0, x19, w3, sxtw
+      f0:	8b0002a0 	add	x0, x21, x0
+      f4:	94000000 	bl	0 <strcmp>
+      f8:	6b1f001f 	cmp	w0, wzr
+      fc:	1a9f17e0 	cset	w0, eq
+     100:	a94153f3 	ldp	x19, x20, [sp,#16]
+     104:	f94013f5 	ldr	x21, [sp,#32]
+     108:	a8c37bfd 	ldp	x29, x30, [sp],#48
+     10c:	d65f03c0 	ret
+
+0000000000000110 <configError>:
+     110:	90000003 	adrp	x3, 0 <stderr>
+     114:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     118:	a9bf7bfd 	stp	x29, x30, [sp,#-16]!
+     11c:	d2800021 	mov	x1, #0x1                   	// #1
+     120:	d2801d62 	mov	x2, #0xeb                  	// #235
+     124:	910003fd 	mov	x29, sp
+     128:	f9400063 	ldr	x3, [x3]
+     12c:	91000000 	add	x0, x0, #0x0
+     130:	94000000 	bl	0 <fwrite>
+     134:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+     138:	b9400001 	ldr	w1, [x0]
+     13c:	7100083f 	cmp	w1, #0x2
+     140:	5400006c 	b.gt	14c <configError+0x3c>
+     144:	52800061 	mov	w1, #0x3                   	// #3
+     148:	b9000001 	str	w1, [x0]
+     14c:	b9400000 	ldr	w0, [x0]
+     150:	94000000 	bl	0 <exit>
+
+0000000000000154 <cleanUpAndFail>:
+     154:	a9b57bfd 	stp	x29, x30, [sp,#-176]!
+     158:	910003fd 	mov	x29, sp
+     15c:	a90153f3 	stp	x19, x20, [sp,#16]
+     160:	2a0003f3 	mov	w19, w0
+     164:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+     168:	a9025bf5 	stp	x21, x22, [sp,#32]
+     16c:	b9400000 	ldr	w0, [x0]
+     170:	71000c1f 	cmp	w0, #0x3
+     174:	54000260 	b.eq	1c0 <cleanUpAndFail+0x6c>
+     178:	90000014 	adrp	x20, 1 <uInt64_toAscii+0x1>
+     17c:	39400280 	ldrb	w0, [x20]
+     180:	34000120 	cbz	w0, 1a4 <cleanUpAndFail+0x50>
+     184:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+     188:	b9400004 	ldr	w4, [x0]
+     18c:	6b1f009f 	cmp	w4, wzr
+     190:	540000ad 	b.le	1a4 <cleanUpAndFail+0x50>
+     194:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+     198:	b9400005 	ldr	w5, [x0]
+     19c:	6b05009f 	cmp	w4, w5
+     1a0:	5400050c 	b.gt	240 <cleanUpAndFail+0xec>
+     1a4:	90000001 	adrp	x1, 4 <uInt64_toAscii+0x4>
+     1a8:	b9400020 	ldr	w0, [x1]
+     1ac:	6b13001f 	cmp	w0, w19
+     1b0:	5400004a 	b.ge	1b8 <cleanUpAndFail+0x64>
+     1b4:	b9000033 	str	w19, [x1]
+     1b8:	b9400020 	ldr	w0, [x1]
+     1bc:	94000000 	bl	0 <exit>
+     1c0:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+     1c4:	90000014 	adrp	x20, 1 <uInt64_toAscii+0x1>
+     1c8:	b9400000 	ldr	w0, [x0]
+     1cc:	71000c1f 	cmp	w0, #0x3
+     1d0:	54fffd60 	b.eq	17c <cleanUpAndFail+0x28>
+     1d4:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+     1d8:	39400000 	ldrb	w0, [x0]
+     1dc:	34fffd00 	cbz	w0, 17c <cleanUpAndFail+0x28>
+     1e0:	90000001 	adrp	x1, 40a <showFileNames.part.1+0xa>
+     1e4:	9100c3a2 	add	x2, x29, #0x30
+     1e8:	91000021 	add	x1, x1, #0x0
+     1ec:	52800000 	mov	w0, #0x0                   	// #0
+     1f0:	94000000 	bl	0 <__xstat64>
+     1f4:	350003a0 	cbnz	w0, 268 <cleanUpAndFail+0x114>
+     1f8:	39400280 	ldrb	w0, [x20]
+     1fc:	90000015 	adrp	x21, 40a <showFileNames.part.1+0xa>
+     200:	35000660 	cbnz	w0, 2cc <cleanUpAndFail+0x178>
+     204:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+     208:	f9400000 	ldr	x0, [x0]
+     20c:	b4000040 	cbz	x0, 214 <cleanUpAndFail+0xc0>
+     210:	94000000 	bl	0 <fclose>
+     214:	910002a0 	add	x0, x21, #0x0
+     218:	94000000 	bl	0 <remove>
+     21c:	34fffb00 	cbz	w0, 17c <cleanUpAndFail+0x28>
+     220:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+     224:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     228:	91000021 	add	x1, x1, #0x0
+     22c:	f9400002 	ldr	x2, [x0]
+     230:	90000000 	adrp	x0, 0 <stderr>
+     234:	f9400000 	ldr	x0, [x0]
+     238:	94000000 	bl	0 <fprintf>
+     23c:	17ffffd0 	b	17c <cleanUpAndFail+0x28>
+     240:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+     244:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     248:	4b050085 	sub	w5, w4, w5
+     24c:	91000021 	add	x1, x1, #0x0
+     250:	f9400003 	ldr	x3, [x0]
+     254:	90000000 	adrp	x0, 0 <stderr>
+     258:	aa0303e2 	mov	x2, x3
+     25c:	f9400000 	ldr	x0, [x0]
+     260:	94000000 	bl	0 <fprintf>
+     264:	17ffffd0 	b	1a4 <cleanUpAndFail+0x50>
+     268:	90000016 	adrp	x22, 8 <uInt64_toAscii+0x8>
+     26c:	90000015 	adrp	x21, 0 <stderr>
+     270:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     274:	91000021 	add	x1, x1, #0x0
+     278:	f94002c2 	ldr	x2, [x22]
+     27c:	f94002a0 	ldr	x0, [x21]
+     280:	94000000 	bl	0 <fprintf>
+     284:	f94002c2 	ldr	x2, [x22]
+     288:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     28c:	f94002a0 	ldr	x0, [x21]
+     290:	91000021 	add	x1, x1, #0x0
+     294:	94000000 	bl	0 <fprintf>
+     298:	f94002c2 	ldr	x2, [x22]
+     29c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     2a0:	f94002a0 	ldr	x0, [x21]
+     2a4:	90000003 	adrp	x3, 40a <showFileNames.part.1+0xa>
+     2a8:	91000021 	add	x1, x1, #0x0
+     2ac:	91000063 	add	x3, x3, #0x0
+     2b0:	94000000 	bl	0 <fprintf>
+     2b4:	f94002c2 	ldr	x2, [x22]
+     2b8:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     2bc:	f94002a0 	ldr	x0, [x21]
+     2c0:	91000021 	add	x1, x1, #0x0
+     2c4:	94000000 	bl	0 <fprintf>
+     2c8:	17ffffad 	b	17c <cleanUpAndFail+0x28>
+     2cc:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+     2d0:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     2d4:	910002a3 	add	x3, x21, #0x0
+     2d8:	91000021 	add	x1, x1, #0x0
+     2dc:	f9400002 	ldr	x2, [x0]
+     2e0:	90000000 	adrp	x0, 0 <stderr>
+     2e4:	f9400000 	ldr	x0, [x0]
+     2e8:	94000000 	bl	0 <fprintf>
+     2ec:	17ffffc6 	b	204 <cleanUpAndFail+0xb0>
+
+00000000000002f0 <mySignalCatcher>:
+     2f0:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+     2f4:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     2f8:	a9bf7bfd 	stp	x29, x30, [sp,#-16]!
+     2fc:	91000021 	add	x1, x1, #0x0
+     300:	910003fd 	mov	x29, sp
+     304:	f9400002 	ldr	x2, [x0]
+     308:	90000000 	adrp	x0, 0 <stderr>
+     30c:	f9400000 	ldr	x0, [x0]
+     310:	94000000 	bl	0 <fprintf>
+     314:	52800020 	mov	w0, #0x1                   	// #1
+     318:	97ffff8f 	bl	154 <cleanUpAndFail>
+
+000000000000031c <license>:
+     31c:	a9be7bfd 	stp	x29, x30, [sp,#-32]!
+     320:	90000000 	adrp	x0, 0 <stderr>
+     324:	910003fd 	mov	x29, sp
+     328:	f9000bf3 	str	x19, [sp,#16]
+     32c:	f9400013 	ldr	x19, [x0]
+     330:	94000000 	bl	0 <BZ2_bzlibVersion>
+     334:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     338:	aa0003e2 	mov	x2, x0
+     33c:	aa1303e0 	mov	x0, x19
+     340:	f9400bf3 	ldr	x19, [sp,#16]
+     344:	a8c27bfd 	ldp	x29, x30, [sp],#32
+     348:	91000021 	add	x1, x1, #0x0
+     34c:	14000000 	b	0 <fprintf>
+
+0000000000000350 <usage>:
+     350:	a9bd7bfd 	stp	x29, x30, [sp,#-48]!
+     354:	910003fd 	mov	x29, sp
+     358:	f9000bf3 	str	x19, [sp,#16]
+     35c:	f90017a0 	str	x0, [x29,#40]
+     360:	90000000 	adrp	x0, 0 <stderr>
+     364:	f9400013 	ldr	x19, [x0]
+     368:	94000000 	bl	0 <BZ2_bzlibVersion>
+     36c:	f94017a3 	ldr	x3, [x29,#40]
+     370:	aa0003e2 	mov	x2, x0
+     374:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     378:	aa1303e0 	mov	x0, x19
+     37c:	f9400bf3 	ldr	x19, [sp,#16]
+     380:	91000021 	add	x1, x1, #0x0
+     384:	a8c37bfd 	ldp	x29, x30, [sp],#48
+     388:	14000000 	b	0 <fprintf>
+
+000000000000038c <fileExists>:
+     38c:	a9be7bfd 	stp	x29, x30, [sp,#-32]!
+     390:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     394:	910003fd 	mov	x29, sp
+     398:	91000021 	add	x1, x1, #0x0
+     39c:	f9000bf3 	str	x19, [sp,#16]
+     3a0:	94000000 	bl	0 <fopen64>
+     3a4:	eb1f001f 	cmp	x0, xzr
+     3a8:	1a9f07f3 	cset	w19, ne
+     3ac:	34000053 	cbz	w19, 3b4 <fileExists+0x28>
+     3b0:	94000000 	bl	0 <fclose>
+     3b4:	2a1303e0 	mov	w0, w19
+     3b8:	f9400bf3 	ldr	x19, [sp,#16]
+     3bc:	a8c27bfd 	ldp	x29, x30, [sp],#32
+     3c0:	d65f03c0 	ret
+
+00000000000003c4 <myfeof>:
+     3c4:	a9be7bfd 	stp	x29, x30, [sp,#-32]!
+     3c8:	910003fd 	mov	x29, sp
+     3cc:	f9000bf3 	str	x19, [sp,#16]
+     3d0:	aa0003f3 	mov	x19, x0
+     3d4:	94000000 	bl	0 <fgetc>
+     3d8:	3100041f 	cmn	w0, #0x1
+     3dc:	52800022 	mov	w2, #0x1                   	// #1
+     3e0:	54000080 	b.eq	3f0 <myfeof+0x2c>
+     3e4:	aa1303e1 	mov	x1, x19
+     3e8:	94000000 	bl	0 <ungetc>
+     3ec:	52800002 	mov	w2, #0x0                   	// #0
+     3f0:	2a0203e0 	mov	w0, w2
+     3f4:	f9400bf3 	ldr	x19, [sp,#16]
+     3f8:	a8c27bfd 	ldp	x29, x30, [sp],#32
+     3fc:	d65f03c0 	ret
+
+0000000000000400 <showFileNames.part.1>:
+     400:	90000000 	adrp	x0, 0 <stderr>
+     404:	90000003 	adrp	x3, 40a <showFileNames.part.1+0xa>
+     408:	90000002 	adrp	x2, 40a <showFileNames.part.1+0xa>
+     40c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     410:	91000063 	add	x3, x3, #0x0
+     414:	91000042 	add	x2, x2, #0x0
+     418:	f9400000 	ldr	x0, [x0]
+     41c:	91000021 	add	x1, x1, #0x0
+     420:	14000000 	b	0 <fprintf>
+
+0000000000000424 <outOfMemory>:
+     424:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+     428:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     42c:	a9bf7bfd 	stp	x29, x30, [sp,#-16]!
+     430:	91000021 	add	x1, x1, #0x0
+     434:	910003fd 	mov	x29, sp
+     438:	f9400002 	ldr	x2, [x0]
+     43c:	90000000 	adrp	x0, 0 <stderr>
+     440:	f9400000 	ldr	x0, [x0]
+     444:	94000000 	bl	0 <fprintf>
+     448:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+     44c:	39400000 	ldrb	w0, [x0]
+     450:	35000060 	cbnz	w0, 45c <outOfMemory+0x38>
+     454:	52800020 	mov	w0, #0x1                   	// #1
+     458:	97ffff3f 	bl	154 <cleanUpAndFail>
+     45c:	97ffffe9 	bl	400 <showFileNames.part.1>
+     460:	17fffffd 	b	454 <outOfMemory+0x30>
+
+0000000000000464 <panic>:
+     464:	aa0003e3 	mov	x3, x0
+     468:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+     46c:	a9bf7bfd 	stp	x29, x30, [sp,#-16]!
+     470:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     474:	910003fd 	mov	x29, sp
+     478:	f9400002 	ldr	x2, [x0]
+     47c:	90000000 	adrp	x0, 0 <stderr>
+     480:	91000021 	add	x1, x1, #0x0
+     484:	f9400000 	ldr	x0, [x0]
+     488:	94000000 	bl	0 <fprintf>
+     48c:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+     490:	39400000 	ldrb	w0, [x0]
+     494:	35000060 	cbnz	w0, 4a0 <panic+0x3c>
+     498:	52800060 	mov	w0, #0x3                   	// #3
+     49c:	97ffff2e 	bl	154 <cleanUpAndFail>
+     4a0:	97ffffd8 	bl	400 <showFileNames.part.1>
+     4a4:	17fffffd 	b	498 <panic+0x34>
+
+00000000000004a8 <ioError>:
+     4a8:	a9be7bfd 	stp	x29, x30, [sp,#-32]!
+     4ac:	90000000 	adrp	x0, 0 <stderr>
+     4b0:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     4b4:	910003fd 	mov	x29, sp
+     4b8:	f9000bf3 	str	x19, [sp,#16]
+     4bc:	90000013 	adrp	x19, 8 <uInt64_toAscii+0x8>
+     4c0:	f9400000 	ldr	x0, [x0]
+     4c4:	91000021 	add	x1, x1, #0x0
+     4c8:	f9400262 	ldr	x2, [x19]
+     4cc:	94000000 	bl	0 <fprintf>
+     4d0:	f9400260 	ldr	x0, [x19]
+     4d4:	94000000 	bl	0 <perror>
+     4d8:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+     4dc:	39400000 	ldrb	w0, [x0]
+     4e0:	35000060 	cbnz	w0, 4ec <ioError+0x44>
+     4e4:	52800020 	mov	w0, #0x1                   	// #1
+     4e8:	97ffff1b 	bl	154 <cleanUpAndFail>
+     4ec:	97ffffc5 	bl	400 <showFileNames.part.1>
+     4f0:	17fffffd 	b	4e4 <ioError+0x3c>
+
+00000000000004f4 <applySavedFileAttrToOutputFile>:
+     4f4:	a9be7bfd 	stp	x29, x30, [sp,#-32]!
+     4f8:	910003fd 	mov	x29, sp
+     4fc:	a90153f3 	stp	x19, x20, [sp,#16]
+     500:	90000013 	adrp	x19, 0 <uInt64_toAscii>
+     504:	2a0003f4 	mov	w20, w0
+     508:	91000273 	add	x19, x19, #0x0
+     50c:	b9401261 	ldr	w1, [x19,#16]
+     510:	94000000 	bl	0 <fchmod>
+     514:	350000e0 	cbnz	w0, 530 <applySavedFileAttrToOutputFile+0x3c>
+     518:	b9401e62 	ldr	w2, [x19,#28]
+     51c:	2a1403e0 	mov	w0, w20
+     520:	b9401a61 	ldr	w1, [x19,#24]
+     524:	a94153f3 	ldp	x19, x20, [sp,#16]
+     528:	a8c27bfd 	ldp	x29, x30, [sp],#32
+     52c:	14000000 	b	0 <fchown>
+     530:	97ffffde 	bl	4a8 <ioError>
+
+0000000000000534 <compressStream>:
+     534:	d14007ff 	sub	sp, sp, #0x1, lsl #12
+     538:	d10fc3ff 	sub	sp, sp, #0x3f0
+     53c:	a9ba7bfd 	stp	x29, x30, [sp,#-96]!
+     540:	910003fd 	mov	x29, sp
+     544:	a90153f3 	stp	x19, x20, [sp,#16]
+     548:	6d04a7e8 	stp	d8, d9, [sp,#72]
+     54c:	a90363f7 	stp	x23, x24, [sp,#48]
+     550:	a9025bf5 	stp	x21, x22, [sp,#32]
+     554:	f90023f9 	str	x25, [sp,#64]
+     558:	aa0003f3 	mov	x19, x0
+     55c:	aa0103f8 	mov	x24, x1
+     560:	94000000 	bl	0 <ferror>
+     564:	35000a00 	cbnz	w0, 6a4 <compressStream+0x170>
+     568:	aa1803e0 	mov	x0, x24
+     56c:	94000000 	bl	0 <ferror>
+     570:	350009a0 	cbnz	w0, 6a4 <compressStream+0x170>
+     574:	90000002 	adrp	x2, 4 <uInt64_toAscii+0x4>
+     578:	90000019 	adrp	x25, 4 <uInt64_toAscii+0x4>
+     57c:	aa1803e1 	mov	x1, x24
+     580:	9101d3a0 	add	x0, x29, #0x74
+     584:	b9400044 	ldr	w4, [x2]
+     588:	90000002 	adrp	x2, 4 <uInt64_toAscii+0x4>
+     58c:	b9400323 	ldr	w3, [x25]
+     590:	b9400042 	ldr	w2, [x2]
+     594:	94000000 	bl	0 <BZ2_bzWriteOpen>
+     598:	aa0003f6 	mov	x22, x0
+     59c:	b94077a0 	ldr	w0, [x29,#116]
+     5a0:	350005a0 	cbnz	w0, 654 <compressStream+0x120>
+     5a4:	b9400320 	ldr	w0, [x25]
+     5a8:	7100041f 	cmp	w0, #0x1
+     5ac:	540000ad 	b.le	5c0 <compressStream+0x8c>
+     5b0:	90000001 	adrp	x1, 0 <stderr>
+     5b4:	52800140 	mov	w0, #0xa                   	// #10
+     5b8:	f9400021 	ldr	x1, [x1]
+     5bc:	94000000 	bl	0 <fputc>
+     5c0:	911143a0 	add	x0, x29, #0x450
+     5c4:	910323b5 	add	x21, x29, #0xc8
+     5c8:	d10f7017 	sub	x23, x0, #0x3dc
+     5cc:	14000013 	b	618 <compressStream+0xe4>
+     5d0:	aa1303e3 	mov	x3, x19
+     5d4:	d2827102 	mov	x2, #0x1388                	// #5000
+     5d8:	d2800021 	mov	x1, #0x1                   	// #1
+     5dc:	aa1503e0 	mov	x0, x21
+     5e0:	94000000 	bl	0 <fread>
+     5e4:	aa0003f4 	mov	x20, x0
+     5e8:	aa1303e0 	mov	x0, x19
+     5ec:	94000000 	bl	0 <ferror>
+     5f0:	350005a0 	cbnz	w0, 6a4 <compressStream+0x170>
+     5f4:	6b1f029f 	cmp	w20, wzr
+     5f8:	540000cd 	b.le	610 <compressStream+0xdc>
+     5fc:	2a1403e3 	mov	w3, w20
+     600:	aa1503e2 	mov	x2, x21
+     604:	aa1603e1 	mov	x1, x22
+     608:	aa1703e0 	mov	x0, x23
+     60c:	94000000 	bl	0 <BZ2_bzWrite>
+     610:	b94077a3 	ldr	w3, [x29,#116]
+     614:	35000203 	cbnz	w3, 654 <compressStream+0x120>
+     618:	aa1303e0 	mov	x0, x19
+     61c:	97ffff6a 	bl	3c4 <myfeof>
+     620:	53001c00 	uxtb	w0, w0
+     624:	34fffd60 	cbz	w0, 5d0 <compressStream+0x9c>
+     628:	911143a0 	add	x0, x29, #0x450
+     62c:	9101c3a6 	add	x6, x29, #0x70
+     630:	d10f9005 	sub	x5, x0, #0x3e4
+     634:	d10fa004 	sub	x4, x0, #0x3e8
+     638:	d10fb003 	sub	x3, x0, #0x3ec
+     63c:	52800002 	mov	w2, #0x0                   	// #0
+     640:	d10f7000 	sub	x0, x0, #0x3dc
+     644:	aa1603e1 	mov	x1, x22
+     648:	94000000 	bl	0 <BZ2_bzWriteClose64>
+     64c:	b94077a0 	ldr	w0, [x29,#116]
+     650:	340002e0 	cbz	w0, 6ac <compressStream+0x178>
+     654:	911143a0 	add	x0, x29, #0x450
+     658:	9101c3a6 	add	x6, x29, #0x70
+     65c:	d10f9005 	sub	x5, x0, #0x3e4
+     660:	d10fa004 	sub	x4, x0, #0x3e8
+     664:	d10fb003 	sub	x3, x0, #0x3ec
+     668:	52800022 	mov	w2, #0x1                   	// #1
+     66c:	d10ea000 	sub	x0, x0, #0x3a8
+     670:	aa1603e1 	mov	x1, x22
+     674:	94000000 	bl	0 <BZ2_bzWriteClose64>
+     678:	b94077a0 	ldr	w0, [x29,#116]
+     67c:	3100181f 	cmn	w0, #0x6
+     680:	54000120 	b.eq	6a4 <compressStream+0x170>
+     684:	31000c1f 	cmn	w0, #0x3
+     688:	540000c0 	b.eq	6a0 <compressStream+0x16c>
+     68c:	3100241f 	cmn	w0, #0x9
+     690:	540000c0 	b.eq	6a8 <compressStream+0x174>
+     694:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     698:	91000000 	add	x0, x0, #0x0
+     69c:	97ffff72 	bl	464 <panic>
+     6a0:	97ffff61 	bl	424 <outOfMemory>
+     6a4:	97ffff81 	bl	4a8 <ioError>
+     6a8:	97fffe9a 	bl	110 <configError>
+     6ac:	aa1803e0 	mov	x0, x24
+     6b0:	94000000 	bl	0 <ferror>
+     6b4:	35ffff80 	cbnz	w0, 6a4 <compressStream+0x170>
+     6b8:	aa1803e0 	mov	x0, x24
+     6bc:	94000000 	bl	0 <fflush>
+     6c0:	3100041f 	cmn	w0, #0x1
+     6c4:	54ffff00 	b.eq	6a4 <compressStream+0x170>
+     6c8:	90000000 	adrp	x0, 0 <stdout>
+     6cc:	f9400000 	ldr	x0, [x0]
+     6d0:	eb00031f 	cmp	x24, x0
+     6d4:	54000f40 	b.eq	8bc <compressStream+0x388>
+     6d8:	aa1803e0 	mov	x0, x24
+     6dc:	94000000 	bl	0 <fileno>
+     6e0:	37fffe20 	tbnz	w0, #31, 6a4 <compressStream+0x170>
+     6e4:	97ffff84 	bl	4f4 <applySavedFileAttrToOutputFile>
+     6e8:	aa1803e0 	mov	x0, x24
+     6ec:	94000000 	bl	0 <fclose>
+     6f0:	3100041f 	cmn	w0, #0x1
+     6f4:	90000001 	adrp	x1, 8 <uInt64_toAscii+0x8>
+     6f8:	f900003f 	str	xzr, [x1]
+     6fc:	54fffd40 	b.eq	6a4 <compressStream+0x170>
+     700:	aa1303e0 	mov	x0, x19
+     704:	f900003f 	str	xzr, [x1]
+     708:	94000000 	bl	0 <ferror>
+     70c:	35fffcc0 	cbnz	w0, 6a4 <compressStream+0x170>
+     710:	aa1303e0 	mov	x0, x19
+     714:	94000000 	bl	0 <fclose>
+     718:	3100041f 	cmn	w0, #0x1
+     71c:	54fffc40 	b.eq	6a4 <compressStream+0x170>
+     720:	b9400320 	ldr	w0, [x25]
+     724:	6b1f001f 	cmp	w0, wzr
+     728:	54000a6d 	b.le	874 <compressStream+0x340>
+     72c:	b94067a0 	ldr	w0, [x29,#100]
+     730:	b9406ba4 	ldr	w4, [x29,#104]
+     734:	34000b20 	cbz	w0, 898 <compressStream+0x364>
+     738:	b9406fa3 	ldr	w3, [x29,#108]
+     73c:	53187c88 	lsr	w8, w4, #24
+     740:	b94073a5 	ldr	w5, [x29,#112]
+     744:	53107c87 	lsr	w7, w4, #16
+     748:	53087c86 	lsr	w6, w4, #8
+     74c:	53087c02 	lsr	w2, w0, #8
+     750:	53187c0c 	lsr	w12, w0, #24
+     754:	53107c0b 	lsr	w11, w0, #16
+     758:	53001c01 	uxtb	w1, w0
+     75c:	53187caa 	lsr	w10, w5, #24
+     760:	53001c60 	uxtb	w0, w3
+     764:	3901ffa8 	strb	w8, [x29,#127]
+     768:	53107ca9 	lsr	w9, w5, #16
+     76c:	3901fba7 	strb	w7, [x29,#126]
+     770:	53087ca8 	lsr	w8, w5, #8
+     774:	53187c67 	lsr	w7, w3, #24
+     778:	3901f7a6 	strb	w6, [x29,#125]
+     77c:	53107c66 	lsr	w6, w3, #16
+     780:	3901f3a4 	strb	w4, [x29,#124]
+     784:	53087c64 	lsr	w4, w3, #8
+     788:	3901e7a2 	strb	w2, [x29,#121]
+     78c:	9101e3a3 	add	x3, x29, #0x78
+     790:	5c0009c0 	ldr	d0, 8c8 <compressStream+0x394>
+     794:	3901efac 	strb	w12, [x29,#123]
+     798:	9e6703e9 	fmov	d9, xzr
+     79c:	3901ebab 	strb	w11, [x29,#122]
+     7a0:	d2800002 	mov	x2, #0x0                   	// #0
+     7a4:	3901e3a1 	strb	w1, [x29,#120]
+     7a8:	39021faa 	strb	w10, [x29,#135]
+     7ac:	39021ba9 	strb	w9, [x29,#134]
+     7b0:	390217a8 	strb	w8, [x29,#133]
+     7b4:	390213a5 	strb	w5, [x29,#132]
+     7b8:	39020fa7 	strb	w7, [x29,#131]
+     7bc:	39020ba6 	strb	w6, [x29,#130]
+     7c0:	390207a4 	strb	w4, [x29,#129]
+     7c4:	390203a0 	strb	w0, [x29,#128]
+     7c8:	1e6e1002 	fmov	d2, #1.000000000000000000e+00
+     7cc:	14000002 	b	7d4 <compressStream+0x2a0>
+     7d0:	38636841 	ldrb	w1, [x2,x3]
+     7d4:	1e630021 	ucvtf	d1, w1
+     7d8:	91000442 	add	x2, x2, #0x1
+     7dc:	f100205f 	cmp	x2, #0x8
+     7e0:	1f422429 	fmadd	d9, d1, d2, d9
+     7e4:	1e600842 	fmul	d2, d2, d0
+     7e8:	54ffff41 	b.ne	7d0 <compressStream+0x29c>
+     7ec:	9e6703e8 	fmov	d8, xzr
+     7f0:	d2800001 	mov	x1, #0x0                   	// #0
+     7f4:	1e6e1002 	fmov	d2, #1.000000000000000000e+00
+     7f8:	910203a2 	add	x2, x29, #0x80
+     7fc:	14000002 	b	804 <compressStream+0x2d0>
+     800:	38626820 	ldrb	w0, [x1,x2]
+     804:	1e630001 	ucvtf	d1, w0
+     808:	91000421 	add	x1, x1, #0x1
+     80c:	f100203f 	cmp	x1, #0x8
+     810:	1f422028 	fmadd	d8, d1, d2, d8
+     814:	1e600842 	fmul	d2, d2, d0
+     818:	54ffff41 	b.ne	800 <compressStream+0x2cc>
+     81c:	9101e3a1 	add	x1, x29, #0x78
+     820:	910223a0 	add	x0, x29, #0x88
+     824:	97fffdf7 	bl	0 <uInt64_toAscii>
+     828:	910203a1 	add	x1, x29, #0x80
+     82c:	9102a3a0 	add	x0, x29, #0xa8
+     830:	97fffdf4 	bl	0 <uInt64_toAscii>
+     834:	1e691903 	fdiv	d3, d8, d9
+     838:	90000000 	adrp	x0, 0 <stderr>
+     83c:	1e641001 	fmov	d1, #8.000000000000000000e+00
+     840:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     844:	1e6e1002 	fmov	d2, #1.000000000000000000e+00
+     848:	9102a3a3 	add	x3, x29, #0xa8
+     84c:	1e610901 	fmul	d1, d8, d1
+     850:	f9400000 	ldr	x0, [x0]
+     854:	910223a2 	add	x2, x29, #0x88
+     858:	91000021 	add	x1, x1, #0x0
+     85c:	1e691821 	fdiv	d1, d1, d9
+     860:	1e681920 	fdiv	d0, d9, d8
+     864:	1e633842 	fsub	d2, d2, d3
+     868:	5c000343 	ldr	d3, 8d0 <compressStream+0x39c>
+     86c:	1e630842 	fmul	d2, d2, d3
+     870:	94000000 	bl	0 <fprintf>
+     874:	a94153f3 	ldp	x19, x20, [sp,#16]
+     878:	6d44a7e8 	ldp	d8, d9, [sp,#72]
+     87c:	a9425bf5 	ldp	x21, x22, [sp,#32]
+     880:	a94363f7 	ldp	x23, x24, [sp,#48]
+     884:	f94023f9 	ldr	x25, [sp,#64]
+     888:	a8c67bfd 	ldp	x29, x30, [sp],#96
+     88c:	910fc3ff 	add	sp, sp, #0x3f0
+     890:	914007ff 	add	sp, sp, #0x1, lsl #12
+     894:	d65f03c0 	ret
+     898:	35fff504 	cbnz	w4, 738 <compressStream+0x204>
+     89c:	90000003 	adrp	x3, 0 <stderr>
+     8a0:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     8a4:	d28002a2 	mov	x2, #0x15                  	// #21
+     8a8:	d2800021 	mov	x1, #0x1                   	// #1
+     8ac:	91000000 	add	x0, x0, #0x0
+     8b0:	f9400063 	ldr	x3, [x3]
+     8b4:	94000000 	bl	0 <fwrite>
+     8b8:	17ffffef 	b	874 <compressStream+0x340>
+     8bc:	90000001 	adrp	x1, 8 <uInt64_toAscii+0x8>
+     8c0:	17ffff90 	b	700 <compressStream+0x1cc>
+     8c4:	d503201f 	nop
+     8c8:	00000000 	.word	0x00000000
+     8cc:	40700000 	.word	0x40700000
+     8d0:	00000000 	.word	0x00000000
+     8d4:	40590000 	.word	0x40590000
+
+00000000000008d8 <testStream>:
+     8d8:	d1400bff 	sub	sp, sp, #0x2, lsl #12
+     8dc:	d11cc3ff 	sub	sp, sp, #0x730
+     8e0:	a9ba7bfd 	stp	x29, x30, [sp,#-96]!
+     8e4:	910003fd 	mov	x29, sp
+     8e8:	a9046bf9 	stp	x25, x26, [sp,#64]
+     8ec:	a90153f3 	stp	x19, x20, [sp,#16]
+     8f0:	a9025bf5 	stp	x21, x22, [sp,#32]
+     8f4:	a90363f7 	stp	x23, x24, [sp,#48]
+     8f8:	f9002bfb 	str	x27, [sp,#80]
+     8fc:	aa0003f9 	mov	x25, x0
+     900:	b90077bf 	str	wzr, [x29,#116]
+     904:	94000000 	bl	0 <ferror>
+     908:	35000bc0 	cbnz	w0, a80 <testStream+0x1a8>
+     90c:	d2828100 	mov	x0, #0x1408                	// #5128
+     910:	90000017 	adrp	x23, 1 <uInt64_toAscii+0x1>
+     914:	8b1d0013 	add	x19, x0, x29
+     918:	b94077a5 	ldr	w5, [x29,#116]
+     91c:	911e43a0 	add	x0, x29, #0x790
+     920:	52800016 	mov	w22, #0x0                   	// #0
+     924:	90000018 	adrp	x24, 4 <uInt64_toAscii+0x4>
+     928:	910002f7 	add	x23, x23, #0x0
+     92c:	910203b5 	add	x21, x29, #0x80
+     930:	d11c701b 	sub	x27, x0, #0x71c
+     934:	d11c601a 	sub	x26, x0, #0x718
+     938:	394002e3 	ldrb	w3, [x23]
+     93c:	aa1303e4 	mov	x4, x19
+     940:	b9400302 	ldr	w2, [x24]
+     944:	aa1903e1 	mov	x1, x25
+     948:	9101b3a0 	add	x0, x29, #0x6c
+     94c:	94000000 	bl	0 <BZ2_bzReadOpen>
+     950:	aa0003f4 	mov	x20, x0
+     954:	b40005e0 	cbz	x0, a10 <testStream+0x138>
+     958:	b9406fa4 	ldr	w4, [x29,#108]
+     95c:	350005a4 	cbnz	w4, a10 <testStream+0x138>
+     960:	110006d6 	add	w22, w22, #0x1
+     964:	52827103 	mov	w3, #0x1388                	// #5000
+     968:	aa1503e2 	mov	x2, x21
+     96c:	aa1403e1 	mov	x1, x20
+     970:	9101b3a0 	add	x0, x29, #0x6c
+     974:	94000000 	bl	0 <BZ2_bzRead>
+     978:	b9406fa4 	ldr	w4, [x29,#108]
+     97c:	3100149f 	cmn	w4, #0x5
+     980:	54000480 	b.eq	a10 <testStream+0x138>
+     984:	34ffff04 	cbz	w4, 964 <testStream+0x8c>
+     988:	7100109f 	cmp	w4, #0x4
+     98c:	54000421 	b.ne	a10 <testStream+0x138>
+     990:	9101b3a0 	add	x0, x29, #0x6c
+     994:	aa1b03e3 	mov	x3, x27
+     998:	aa1a03e2 	mov	x2, x26
+     99c:	aa1403e1 	mov	x1, x20
+     9a0:	94000000 	bl	0 <BZ2_bzReadGetUnused>
+     9a4:	b9406fa0 	ldr	w0, [x29,#108]
+     9a8:	350010a0 	cbnz	w0, bbc <testStream+0x2e4>
+     9ac:	b94077a7 	ldr	w7, [x29,#116]
+     9b0:	f9403fa4 	ldr	x4, [x29,#120]
+     9b4:	6b1f00ff 	cmp	w7, wzr
+     9b8:	5400012d 	b.le	9dc <testStream+0x104>
+     9bc:	510004e7 	sub	w7, w7, #0x1
+     9c0:	d2800005 	mov	x5, #0x0                   	// #0
+     9c4:	910004e7 	add	x7, x7, #0x1
+     9c8:	38656886 	ldrb	w6, [x4,x5]
+     9cc:	383368a6 	strb	w6, [x5,x19]
+     9d0:	910004a5 	add	x5, x5, #0x1
+     9d4:	eb0700bf 	cmp	x5, x7
+     9d8:	54ffff81 	b.ne	9c8 <testStream+0xf0>
+     9dc:	9101b3a0 	add	x0, x29, #0x6c
+     9e0:	aa1403e1 	mov	x1, x20
+     9e4:	94000000 	bl	0 <BZ2_bzReadClose>
+     9e8:	b9406fa0 	ldr	w0, [x29,#108]
+     9ec:	35000e80 	cbnz	w0, bbc <testStream+0x2e4>
+     9f0:	b94077a5 	ldr	w5, [x29,#116]
+     9f4:	35fffa25 	cbnz	w5, 938 <testStream+0x60>
+     9f8:	aa1903e0 	mov	x0, x25
+     9fc:	97fffe72 	bl	3c4 <myfeof>
+     a00:	53001c00 	uxtb	w0, w0
+     a04:	35000b60 	cbnz	w0, b70 <testStream+0x298>
+     a08:	b94077a5 	ldr	w5, [x29,#116]
+     a0c:	17ffffcb 	b	938 <testStream+0x60>
+     a10:	9101c3a0 	add	x0, x29, #0x70
+     a14:	aa1403e1 	mov	x1, x20
+     a18:	94000000 	bl	0 <BZ2_bzReadClose>
+     a1c:	b9400300 	ldr	w0, [x24]
+     a20:	340001c0 	cbz	w0, a58 <testStream+0x180>
+     a24:	b9406fa2 	ldr	w2, [x29,#108]
+     a28:	11002442 	add	w2, w2, #0x9
+     a2c:	7100185f 	cmp	w2, #0x6
+     a30:	54000089 	b.ls	a40 <testStream+0x168>
+     a34:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     a38:	91000000 	add	x0, x0, #0x0
+     a3c:	97fffe8a 	bl	464 <panic>
+     a40:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     a44:	91000000 	add	x0, x0, #0x0
+     a48:	38624800 	ldrb	w0, [x0,w2,uxtw]
+     a4c:	10000061 	adr	x1, a58 <testStream+0x180>
+     a50:	8b208820 	add	x0, x1, w0, sxtb #2
+     a54:	d61f0000 	br	x0
+     a58:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+     a5c:	90000003 	adrp	x3, 40a <showFileNames.part.1+0xa>
+     a60:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     a64:	91000063 	add	x3, x3, #0x0
+     a68:	91000021 	add	x1, x1, #0x0
+     a6c:	f9400002 	ldr	x2, [x0]
+     a70:	90000000 	adrp	x0, 0 <stderr>
+     a74:	f9400000 	ldr	x0, [x0]
+     a78:	94000000 	bl	0 <fprintf>
+     a7c:	17ffffea 	b	a24 <testStream+0x14c>
+     a80:	97fffe8a 	bl	4a8 <ioError>
+     a84:	97fffda3 	bl	110 <configError>
+     a88:	90000003 	adrp	x3, 0 <stderr>
+     a8c:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     a90:	d28002e2 	mov	x2, #0x17                  	// #23
+     a94:	d2800021 	mov	x1, #0x1                   	// #1
+     a98:	91000000 	add	x0, x0, #0x0
+     a9c:	f9400063 	ldr	x3, [x3]
+     aa0:	94000000 	bl	0 <fwrite>
+     aa4:	52800000 	mov	w0, #0x0                   	// #0
+     aa8:	a94153f3 	ldp	x19, x20, [sp,#16]
+     aac:	a9425bf5 	ldp	x21, x22, [sp,#32]
+     ab0:	a94363f7 	ldp	x23, x24, [sp,#48]
+     ab4:	a9446bf9 	ldp	x25, x26, [sp,#64]
+     ab8:	f9402bfb 	ldr	x27, [sp,#80]
+     abc:	a8c67bfd 	ldp	x29, x30, [sp],#96
+     ac0:	911cc3ff 	add	sp, sp, #0x730
+     ac4:	91400bff 	add	sp, sp, #0x2, lsl #12
+     ac8:	d65f03c0 	ret
+     acc:	90000000 	adrp	x0, 0 <stdin>
+     ad0:	f9400000 	ldr	x0, [x0]
+     ad4:	eb00033f 	cmp	x25, x0
+     ad8:	54000060 	b.eq	ae4 <testStream+0x20c>
+     adc:	aa1903e0 	mov	x0, x25
+     ae0:	94000000 	bl	0 <fclose>
+     ae4:	710006df 	cmp	w22, #0x1
+     ae8:	54000320 	b.eq	b4c <testStream+0x274>
+     aec:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+     af0:	39400000 	ldrb	w0, [x0]
+     af4:	350001a0 	cbnz	w0, b28 <testStream+0x250>
+     af8:	52800020 	mov	w0, #0x1                   	// #1
+     afc:	17ffffeb 	b	aa8 <testStream+0x1d0>
+     b00:	90000003 	adrp	x3, 0 <stderr>
+     b04:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     b08:	d2800462 	mov	x2, #0x23                  	// #35
+     b0c:	d2800021 	mov	x1, #0x1                   	// #1
+     b10:	91000000 	add	x0, x0, #0x0
+     b14:	f9400063 	ldr	x3, [x3]
+     b18:	94000000 	bl	0 <fwrite>
+     b1c:	52800000 	mov	w0, #0x0                   	// #0
+     b20:	17ffffe2 	b	aa8 <testStream+0x1d0>
+     b24:	97fffe40 	bl	424 <outOfMemory>
+     b28:	90000003 	adrp	x3, 0 <stderr>
+     b2c:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     b30:	d2800462 	mov	x2, #0x23                  	// #35
+     b34:	d2800021 	mov	x1, #0x1                   	// #1
+     b38:	91000000 	add	x0, x0, #0x0
+     b3c:	f9400063 	ldr	x3, [x3]
+     b40:	94000000 	bl	0 <fwrite>
+     b44:	52800020 	mov	w0, #0x1                   	// #1
+     b48:	17ffffd8 	b	aa8 <testStream+0x1d0>
+     b4c:	90000003 	adrp	x3, 0 <stderr>
+     b50:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     b54:	d28005a2 	mov	x2, #0x2d                  	// #45
+     b58:	d2800021 	mov	x1, #0x1                   	// #1
+     b5c:	91000000 	add	x0, x0, #0x0
+     b60:	f9400063 	ldr	x3, [x3]
+     b64:	94000000 	bl	0 <fwrite>
+     b68:	52800000 	mov	w0, #0x0                   	// #0
+     b6c:	17ffffcf 	b	aa8 <testStream+0x1d0>
+     b70:	aa1903e0 	mov	x0, x25
+     b74:	94000000 	bl	0 <ferror>
+     b78:	35fff840 	cbnz	w0, a80 <testStream+0x1a8>
+     b7c:	aa1903e0 	mov	x0, x25
+     b80:	94000000 	bl	0 <fclose>
+     b84:	3100041f 	cmn	w0, #0x1
+     b88:	54fff7c0 	b.eq	a80 <testStream+0x1a8>
+     b8c:	b9400300 	ldr	w0, [x24]
+     b90:	7100041f 	cmp	w0, #0x1
+     b94:	54fffb2d 	b.le	af8 <testStream+0x220>
+     b98:	90000003 	adrp	x3, 0 <stderr>
+     b9c:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     ba0:	d28000a2 	mov	x2, #0x5                   	// #5
+     ba4:	d2800021 	mov	x1, #0x1                   	// #1
+     ba8:	91000000 	add	x0, x0, #0x0
+     bac:	f9400063 	ldr	x3, [x3]
+     bb0:	94000000 	bl	0 <fwrite>
+     bb4:	52800020 	mov	w0, #0x1                   	// #1
+     bb8:	17ffffbc 	b	aa8 <testStream+0x1d0>
+     bbc:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     bc0:	91000000 	add	x0, x0, #0x0
+     bc4:	97fffe28 	bl	464 <panic>
+
+0000000000000bc8 <cadvise.part.2>:
+     bc8:	90000003 	adrp	x3, 0 <stderr>
+     bcc:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     bd0:	d2801e02 	mov	x2, #0xf0                  	// #240
+     bd4:	d2800021 	mov	x1, #0x1                   	// #1
+     bd8:	91000000 	add	x0, x0, #0x0
+     bdc:	f9400063 	ldr	x3, [x3]
+     be0:	14000000 	b	0 <fwrite>
+
+0000000000000be4 <mySIGSEGVorSIGBUScatcher>:
+     be4:	a9be7bfd 	stp	x29, x30, [sp,#-32]!
+     be8:	910003fd 	mov	x29, sp
+     bec:	a90153f3 	stp	x19, x20, [sp,#16]
+     bf0:	90000013 	adrp	x19, 4 <uInt64_toAscii+0x4>
+     bf4:	b9400260 	ldr	w0, [x19]
+     bf8:	7100041f 	cmp	w0, #0x1
+     bfc:	54000300 	b.eq	c5c <mySIGSEGVorSIGBUScatcher+0x78>
+     c00:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     c04:	91000021 	add	x1, x1, #0x0
+     c08:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+     c0c:	90000014 	adrp	x20, 1 <uInt64_toAscii+0x1>
+     c10:	f9400002 	ldr	x2, [x0]
+     c14:	90000000 	adrp	x0, 0 <stderr>
+     c18:	f9400000 	ldr	x0, [x0]
+     c1c:	94000000 	bl	0 <fprintf>
+     c20:	39400280 	ldrb	w0, [x20]
+     c24:	350000c0 	cbnz	w0, c3c <mySIGSEGVorSIGBUScatcher+0x58>
+     c28:	b9400260 	ldr	w0, [x19]
+     c2c:	7100041f 	cmp	w0, #0x1
+     c30:	540001c0 	b.eq	c68 <mySIGSEGVorSIGBUScatcher+0x84>
+     c34:	52800040 	mov	w0, #0x2                   	// #2
+     c38:	97fffd47 	bl	154 <cleanUpAndFail>
+     c3c:	97fffdf1 	bl	400 <showFileNames.part.1>
+     c40:	b9400260 	ldr	w0, [x19]
+     c44:	7100041f 	cmp	w0, #0x1
+     c48:	54000100 	b.eq	c68 <mySIGSEGVorSIGBUScatcher+0x84>
+     c4c:	39400280 	ldrb	w0, [x20]
+     c50:	34ffff20 	cbz	w0, c34 <mySIGSEGVorSIGBUScatcher+0x50>
+     c54:	97ffffdd 	bl	bc8 <cadvise.part.2>
+     c58:	17fffff7 	b	c34 <mySIGSEGVorSIGBUScatcher+0x50>
+     c5c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     c60:	91000021 	add	x1, x1, #0x0
+     c64:	17ffffe9 	b	c08 <mySIGSEGVorSIGBUScatcher+0x24>
+     c68:	52800060 	mov	w0, #0x3                   	// #3
+     c6c:	97fffd3a 	bl	154 <cleanUpAndFail>
+
+0000000000000c70 <uncompressStream>:
+     c70:	d1400bff 	sub	sp, sp, #0x2, lsl #12
+     c74:	d11cc3ff 	sub	sp, sp, #0x730
+     c78:	a9ba7bfd 	stp	x29, x30, [sp,#-96]!
+     c7c:	910003fd 	mov	x29, sp
+     c80:	a90363f7 	stp	x23, x24, [sp,#48]
+     c84:	aa0003f7 	mov	x23, x0
+     c88:	aa0103e0 	mov	x0, x1
+     c8c:	a90153f3 	stp	x19, x20, [sp,#16]
+     c90:	a9025bf5 	stp	x21, x22, [sp,#32]
+     c94:	a9046bf9 	stp	x25, x26, [sp,#64]
+     c98:	a90573fb 	stp	x27, x28, [sp,#80]
+     c9c:	aa0103f4 	mov	x20, x1
+     ca0:	b90077bf 	str	wzr, [x29,#116]
+     ca4:	94000000 	bl	0 <ferror>
+     ca8:	350016a0 	cbnz	w0, f7c <uncompressStream+0x30c>
+     cac:	aa1703e0 	mov	x0, x23
+     cb0:	94000000 	bl	0 <ferror>
+     cb4:	35001640 	cbnz	w0, f7c <uncompressStream+0x30c>
+     cb8:	d2828100 	mov	x0, #0x1408                	// #5128
+     cbc:	90000018 	adrp	x24, 1 <uInt64_toAscii+0x1>
+     cc0:	8b1d0013 	add	x19, x0, x29
+     cc4:	b94077a5 	ldr	w5, [x29,#116]
+     cc8:	911e43a0 	add	x0, x29, #0x790
+     ccc:	52800019 	mov	w25, #0x0                   	// #0
+     cd0:	9000001a 	adrp	x26, 4 <uInt64_toAscii+0x4>
+     cd4:	91000318 	add	x24, x24, #0x0
+     cd8:	910203b5 	add	x21, x29, #0x80
+     cdc:	d11c701c 	sub	x28, x0, #0x71c
+     ce0:	d11c601b 	sub	x27, x0, #0x718
+     ce4:	39400303 	ldrb	w3, [x24]
+     ce8:	aa1303e4 	mov	x4, x19
+     cec:	b9400342 	ldr	w2, [x26]
+     cf0:	aa1703e1 	mov	x1, x23
+     cf4:	9101b3a0 	add	x0, x29, #0x6c
+     cf8:	94000000 	bl	0 <BZ2_bzReadOpen>
+     cfc:	aa0003f6 	mov	x22, x0
+     d00:	b40007e0 	cbz	x0, dfc <uncompressStream+0x18c>
+     d04:	b9406fa0 	ldr	w0, [x29,#108]
+     d08:	350007a0 	cbnz	w0, dfc <uncompressStream+0x18c>
+     d0c:	11000739 	add	w25, w25, #0x1
+     d10:	52827103 	mov	w3, #0x1388                	// #5000
+     d14:	aa1503e2 	mov	x2, x21
+     d18:	aa1603e1 	mov	x1, x22
+     d1c:	9101b3a0 	add	x0, x29, #0x6c
+     d20:	94000000 	bl	0 <BZ2_bzRead>
+     d24:	b9406fa4 	ldr	w4, [x29,#108]
+     d28:	3100149f 	cmn	w4, #0x5
+     d2c:	54000620 	b.eq	df0 <uncompressStream+0x180>
+     d30:	6b1f001f 	cmp	w0, wzr
+     d34:	5400010d 	b.le	d54 <uncompressStream+0xe4>
+     d38:	721d789f 	tst	w4, #0xfffffffb
+     d3c:	540000c1 	b.ne	d54 <uncompressStream+0xe4>
+     d40:	93407c02 	sxtw	x2, w0
+     d44:	aa1403e3 	mov	x3, x20
+     d48:	d2800021 	mov	x1, #0x1                   	// #1
+     d4c:	aa1503e0 	mov	x0, x21
+     d50:	94000000 	bl	0 <fwrite>
+     d54:	aa1403e0 	mov	x0, x20
+     d58:	94000000 	bl	0 <ferror>
+     d5c:	35001100 	cbnz	w0, f7c <uncompressStream+0x30c>
+     d60:	b9406fa0 	ldr	w0, [x29,#108]
+     d64:	34fffd60 	cbz	w0, d10 <uncompressStream+0xa0>
+     d68:	7100101f 	cmp	w0, #0x4
+     d6c:	54000481 	b.ne	dfc <uncompressStream+0x18c>
+     d70:	9101b3a0 	add	x0, x29, #0x6c
+     d74:	aa1c03e3 	mov	x3, x28
+     d78:	aa1b03e2 	mov	x2, x27
+     d7c:	aa1603e1 	mov	x1, x22
+     d80:	94000000 	bl	0 <BZ2_bzReadGetUnused>
+     d84:	b9406fa0 	ldr	w0, [x29,#108]
+     d88:	350017e0 	cbnz	w0, 1084 <uncompressStream+0x414>
+     d8c:	b94077a7 	ldr	w7, [x29,#116]
+     d90:	f9403fa4 	ldr	x4, [x29,#120]
+     d94:	6b1f00ff 	cmp	w7, wzr
+     d98:	5400012d 	b.le	dbc <uncompressStream+0x14c>
+     d9c:	510004e7 	sub	w7, w7, #0x1
+     da0:	d2800005 	mov	x5, #0x0                   	// #0
+     da4:	910004e7 	add	x7, x7, #0x1
+     da8:	38656886 	ldrb	w6, [x4,x5]
+     dac:	383368a6 	strb	w6, [x5,x19]
+     db0:	910004a5 	add	x5, x5, #0x1
+     db4:	eb0700bf 	cmp	x5, x7
+     db8:	54ffff81 	b.ne	da8 <uncompressStream+0x138>
+     dbc:	9101b3a0 	add	x0, x29, #0x6c
+     dc0:	aa1603e1 	mov	x1, x22
+     dc4:	94000000 	bl	0 <BZ2_bzReadClose>
+     dc8:	b9406fa0 	ldr	w0, [x29,#108]
+     dcc:	350015c0 	cbnz	w0, 1084 <uncompressStream+0x414>
+     dd0:	b94077a5 	ldr	w5, [x29,#116]
+     dd4:	35fff885 	cbnz	w5, ce4 <uncompressStream+0x74>
+     dd8:	aa1703e0 	mov	x0, x23
+     ddc:	97fffd7a 	bl	3c4 <myfeof>
+     de0:	53001c00 	uxtb	w0, w0
+     de4:	35000620 	cbnz	w0, ea8 <uncompressStream+0x238>
+     de8:	b94077a5 	ldr	w5, [x29,#116]
+     dec:	17ffffbe 	b	ce4 <uncompressStream+0x74>
+     df0:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+     df4:	39400000 	ldrb	w0, [x0]
+     df8:	35000220 	cbnz	w0, e3c <uncompressStream+0x1cc>
+     dfc:	9101c3a0 	add	x0, x29, #0x70
+     e00:	aa1603e1 	mov	x1, x22
+     e04:	94000000 	bl	0 <BZ2_bzReadClose>
+     e08:	b9406fa0 	ldr	w0, [x29,#108]
+     e0c:	11002400 	add	w0, w0, #0x9
+     e10:	7100181f 	cmp	w0, #0x6
+     e14:	54000089 	b.ls	e24 <uncompressStream+0x1b4>
+     e18:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     e1c:	91000000 	add	x0, x0, #0x0
+     e20:	97fffd91 	bl	464 <panic>
+     e24:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     e28:	91000021 	add	x1, x1, #0x0
+     e2c:	78605820 	ldrh	w0, [x1,w0,uxtw #1]
+     e30:	10000061 	adr	x1, e3c <uncompressStream+0x1cc>
+     e34:	8b20a820 	add	x0, x1, w0, sxth #2
+     e38:	d61f0000 	br	x0
+     e3c:	aa1703e0 	mov	x0, x23
+     e40:	910203b5 	add	x21, x29, #0x80
+     e44:	94000000 	bl	0 <rewind>
+     e48:	14000014 	b	e98 <uncompressStream+0x228>
+     e4c:	aa1703e3 	mov	x3, x23
+     e50:	d2827102 	mov	x2, #0x1388                	// #5000
+     e54:	d2800021 	mov	x1, #0x1                   	// #1
+     e58:	aa1503e0 	mov	x0, x21
+     e5c:	94000000 	bl	0 <fread>
+     e60:	aa0003f3 	mov	x19, x0
+     e64:	aa1703e0 	mov	x0, x23
+     e68:	94000000 	bl	0 <ferror>
+     e6c:	35000880 	cbnz	w0, f7c <uncompressStream+0x30c>
+     e70:	6b1f027f 	cmp	w19, wzr
+     e74:	540000cd 	b.le	e8c <uncompressStream+0x21c>
+     e78:	aa1403e3 	mov	x3, x20
+     e7c:	93407e62 	sxtw	x2, w19
+     e80:	d2800021 	mov	x1, #0x1                   	// #1
+     e84:	aa1503e0 	mov	x0, x21
+     e88:	94000000 	bl	0 <fwrite>
+     e8c:	aa1403e0 	mov	x0, x20
+     e90:	94000000 	bl	0 <ferror>
+     e94:	35000740 	cbnz	w0, f7c <uncompressStream+0x30c>
+     e98:	aa1703e0 	mov	x0, x23
+     e9c:	97fffd4a 	bl	3c4 <myfeof>
+     ea0:	53001c00 	uxtb	w0, w0
+     ea4:	34fffd40 	cbz	w0, e4c <uncompressStream+0x1dc>
+     ea8:	aa1703e0 	mov	x0, x23
+     eac:	94000000 	bl	0 <ferror>
+     eb0:	35000660 	cbnz	w0, f7c <uncompressStream+0x30c>
+     eb4:	90000013 	adrp	x19, 0 <stdout>
+     eb8:	f9400260 	ldr	x0, [x19]
+     ebc:	eb00029f 	cmp	x20, x0
+     ec0:	540000a0 	b.eq	ed4 <uncompressStream+0x264>
+     ec4:	aa1403e0 	mov	x0, x20
+     ec8:	94000000 	bl	0 <fileno>
+     ecc:	37f80580 	tbnz	w0, #31, f7c <uncompressStream+0x30c>
+     ed0:	97fffd89 	bl	4f4 <applySavedFileAttrToOutputFile>
+     ed4:	aa1703e0 	mov	x0, x23
+     ed8:	94000000 	bl	0 <fclose>
+     edc:	3100041f 	cmn	w0, #0x1
+     ee0:	540004e0 	b.eq	f7c <uncompressStream+0x30c>
+     ee4:	aa1403e0 	mov	x0, x20
+     ee8:	94000000 	bl	0 <ferror>
+     eec:	35000480 	cbnz	w0, f7c <uncompressStream+0x30c>
+     ef0:	aa1403e0 	mov	x0, x20
+     ef4:	94000000 	bl	0 <fflush>
+     ef8:	35000420 	cbnz	w0, f7c <uncompressStream+0x30c>
+     efc:	f9400260 	ldr	x0, [x19]
+     f00:	eb00029f 	cmp	x20, x0
+     f04:	54000380 	b.eq	f74 <uncompressStream+0x304>
+     f08:	aa1403e0 	mov	x0, x20
+     f0c:	94000000 	bl	0 <fclose>
+     f10:	3100041f 	cmn	w0, #0x1
+     f14:	90000001 	adrp	x1, 8 <uInt64_toAscii+0x8>
+     f18:	f900003f 	str	xzr, [x1]
+     f1c:	54000300 	b.eq	f7c <uncompressStream+0x30c>
+     f20:	b9400340 	ldr	w0, [x26]
+     f24:	f900003f 	str	xzr, [x1]
+     f28:	7100041f 	cmp	w0, #0x1
+     f2c:	5400066d 	b.le	ff8 <uncompressStream+0x388>
+     f30:	90000003 	adrp	x3, 0 <stderr>
+     f34:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+     f38:	d28000a2 	mov	x2, #0x5                   	// #5
+     f3c:	d2800021 	mov	x1, #0x1                   	// #1
+     f40:	91000000 	add	x0, x0, #0x0
+     f44:	f9400063 	ldr	x3, [x3]
+     f48:	94000000 	bl	0 <fwrite>
+     f4c:	52800020 	mov	w0, #0x1                   	// #1
+     f50:	a94153f3 	ldp	x19, x20, [sp,#16]
+     f54:	a9425bf5 	ldp	x21, x22, [sp,#32]
+     f58:	a94363f7 	ldp	x23, x24, [sp,#48]
+     f5c:	a9446bf9 	ldp	x25, x26, [sp,#64]
+     f60:	a94573fb 	ldp	x27, x28, [sp,#80]
+     f64:	a8c67bfd 	ldp	x29, x30, [sp],#96
+     f68:	911cc3ff 	add	sp, sp, #0x730
+     f6c:	91400bff 	add	sp, sp, #0x2, lsl #12
+     f70:	d65f03c0 	ret
+     f74:	90000001 	adrp	x1, 8 <uInt64_toAscii+0x8>
+     f78:	17ffffea 	b	f20 <uncompressStream+0x2b0>
+     f7c:	97fffd4b 	bl	4a8 <ioError>
+     f80:	97fffd29 	bl	424 <outOfMemory>
+     f84:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+     f88:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+     f8c:	90000013 	adrp	x19, 1 <uInt64_toAscii+0x1>
+     f90:	91000021 	add	x1, x1, #0x0
+     f94:	f9400002 	ldr	x2, [x0]
+     f98:	90000000 	adrp	x0, 0 <stderr>
+     f9c:	f9400000 	ldr	x0, [x0]
+     fa0:	94000000 	bl	0 <fprintf>
+     fa4:	39400260 	ldrb	w0, [x19]
+     fa8:	35000480 	cbnz	w0, 1038 <uncompressStream+0x3c8>
+     fac:	52800040 	mov	w0, #0x2                   	// #2
+     fb0:	97fffc69 	bl	154 <cleanUpAndFail>
+     fb4:	90000000 	adrp	x0, 0 <stdin>
+     fb8:	f9400000 	ldr	x0, [x0]
+     fbc:	eb0002ff 	cmp	x23, x0
+     fc0:	54000060 	b.eq	fcc <uncompressStream+0x35c>
+     fc4:	aa1703e0 	mov	x0, x23
+     fc8:	94000000 	bl	0 <fclose>
+     fcc:	90000000 	adrp	x0, 0 <stdout>
+     fd0:	f9400000 	ldr	x0, [x0]
+     fd4:	eb00029f 	cmp	x20, x0
+     fd8:	54000060 	b.eq	fe4 <uncompressStream+0x374>
+     fdc:	aa1403e0 	mov	x0, x20
+     fe0:	94000000 	bl	0 <fclose>
+     fe4:	7100073f 	cmp	w25, #0x1
+     fe8:	540004a0 	b.eq	107c <uncompressStream+0x40c>
+     fec:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+     ff0:	39400000 	ldrb	w0, [x0]
+     ff4:	350002e0 	cbnz	w0, 1050 <uncompressStream+0x3e0>
+     ff8:	52800020 	mov	w0, #0x1                   	// #1
+     ffc:	17ffffd5 	b	f50 <uncompressStream+0x2e0>
+    1000:	90000013 	adrp	x19, 1 <uInt64_toAscii+0x1>
+    1004:	39400260 	ldrb	w0, [x19]
+    1008:	34fffd20 	cbz	w0, fac <uncompressStream+0x33c>
+    100c:	90000014 	adrp	x20, 8 <uInt64_toAscii+0x8>
+    1010:	90000000 	adrp	x0, 0 <stderr>
+    1014:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1018:	91000021 	add	x1, x1, #0x0
+    101c:	f9400282 	ldr	x2, [x20]
+    1020:	f9400000 	ldr	x0, [x0]
+    1024:	94000000 	bl	0 <fprintf>
+    1028:	f9400280 	ldr	x0, [x20]
+    102c:	94000000 	bl	0 <perror>
+    1030:	39400260 	ldrb	w0, [x19]
+    1034:	34fffbc0 	cbz	w0, fac <uncompressStream+0x33c>
+    1038:	97fffcf2 	bl	400 <showFileNames.part.1>
+    103c:	39400260 	ldrb	w0, [x19]
+    1040:	34fffb60 	cbz	w0, fac <uncompressStream+0x33c>
+    1044:	97fffee1 	bl	bc8 <cadvise.part.2>
+    1048:	17ffffd9 	b	fac <uncompressStream+0x33c>
+    104c:	97fffc31 	bl	110 <configError>
+    1050:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    1054:	90000003 	adrp	x3, 40a <showFileNames.part.1+0xa>
+    1058:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    105c:	91000063 	add	x3, x3, #0x0
+    1060:	91000021 	add	x1, x1, #0x0
+    1064:	f9400002 	ldr	x2, [x0]
+    1068:	90000000 	adrp	x0, 0 <stderr>
+    106c:	f9400000 	ldr	x0, [x0]
+    1070:	94000000 	bl	0 <fprintf>
+    1074:	52800020 	mov	w0, #0x1                   	// #1
+    1078:	17ffffb6 	b	f50 <uncompressStream+0x2e0>
+    107c:	52800000 	mov	w0, #0x0                   	// #0
+    1080:	17ffffb4 	b	f50 <uncompressStream+0x2e0>
+    1084:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+    1088:	91000000 	add	x0, x0, #0x0
+    108c:	97fffcf6 	bl	464 <panic>
+
+0000000000001090 <copyFileName>:
+    1090:	a9bd7bfd 	stp	x29, x30, [sp,#-48]!
+    1094:	910003fd 	mov	x29, sp
+    1098:	f9000bf3 	str	x19, [sp,#16]
+    109c:	aa0003f3 	mov	x19, x0
+    10a0:	aa0103e0 	mov	x0, x1
+    10a4:	f90017a1 	str	x1, [x29,#40]
+    10a8:	94000000 	bl	0 <strlen>
+    10ac:	f110001f 	cmp	x0, #0x400
+    10b0:	f94017a1 	ldr	x1, [x29,#40]
+    10b4:	54000108 	b.hi	10d4 <copyFileName+0x44>
+    10b8:	d2808002 	mov	x2, #0x400                 	// #1024
+    10bc:	aa1303e0 	mov	x0, x19
+    10c0:	94000000 	bl	0 <strncpy>
+    10c4:	3910027f 	strb	wzr, [x19,#1024]
+    10c8:	f9400bf3 	ldr	x19, [sp,#16]
+    10cc:	a8c37bfd 	ldp	x29, x30, [sp],#48
+    10d0:	d65f03c0 	ret
+    10d4:	90000000 	adrp	x0, 0 <stderr>
+    10d8:	aa0103e2 	mov	x2, x1
+    10dc:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    10e0:	52808003 	mov	w3, #0x400                 	// #1024
+    10e4:	91000021 	add	x1, x1, #0x0
+    10e8:	f9400000 	ldr	x0, [x0]
+    10ec:	94000000 	bl	0 <fprintf>
+    10f0:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    10f4:	b9400001 	ldr	w1, [x0]
+    10f8:	6b1f003f 	cmp	w1, wzr
+    10fc:	5400006d 	b.le	1108 <copyFileName+0x78>
+    1100:	b9400000 	ldr	w0, [x0]
+    1104:	94000000 	bl	0 <exit>
+    1108:	52800021 	mov	w1, #0x1                   	// #1
+    110c:	b9000001 	str	w1, [x0]
+    1110:	17fffffc 	b	1100 <copyFileName+0x70>
+
+0000000000001114 <snocString>:
+    1114:	a9bd7bfd 	stp	x29, x30, [sp,#-48]!
+    1118:	910003fd 	mov	x29, sp
+    111c:	a90153f3 	stp	x19, x20, [sp,#16]
+    1120:	aa0003f4 	mov	x20, x0
+    1124:	aa0003f3 	mov	x19, x0
+    1128:	b5000060 	cbnz	x0, 1134 <snocString+0x20>
+    112c:	1400000b 	b	1158 <snocString+0x44>
+    1130:	aa0203f3 	mov	x19, x2
+    1134:	f9400662 	ldr	x2, [x19,#8]
+    1138:	b5ffffc2 	cbnz	x2, 1130 <snocString+0x1c>
+    113c:	d2800000 	mov	x0, #0x0                   	// #0
+    1140:	97fffff5 	bl	1114 <snocString>
+    1144:	f9000660 	str	x0, [x19,#8]
+    1148:	aa1403e0 	mov	x0, x20
+    114c:	a94153f3 	ldp	x19, x20, [sp,#16]
+    1150:	a8c37bfd 	ldp	x29, x30, [sp],#48
+    1154:	d65f03c0 	ret
+    1158:	d2800200 	mov	x0, #0x10                  	// #16
+    115c:	f90017a1 	str	x1, [x29,#40]
+    1160:	94000000 	bl	0 <malloc>
+    1164:	aa0003f4 	mov	x20, x0
+    1168:	f94017a1 	ldr	x1, [x29,#40]
+    116c:	b4000200 	cbz	x0, 11ac <snocString+0x98>
+    1170:	aa0103e0 	mov	x0, x1
+    1174:	f900029f 	str	xzr, [x20]
+    1178:	f900069f 	str	xzr, [x20,#8]
+    117c:	f90017a1 	str	x1, [x29,#40]
+    1180:	94000000 	bl	0 <strlen>
+    1184:	aa0003f3 	mov	x19, x0
+    1188:	11001400 	add	w0, w0, #0x5
+    118c:	93407c00 	sxtw	x0, w0
+    1190:	94000000 	bl	0 <malloc>
+    1194:	b40000c0 	cbz	x0, 11ac <snocString+0x98>
+    1198:	f94017a1 	ldr	x1, [x29,#40]
+    119c:	91000662 	add	x2, x19, #0x1
+    11a0:	f9000280 	str	x0, [x20]
+    11a4:	94000000 	bl	0 <memcpy>
+    11a8:	17ffffe8 	b	1148 <snocString+0x34>
+    11ac:	97fffc9e 	bl	424 <outOfMemory>
+
+00000000000011b0 <addFlagsFromEnvVar>:
+    11b0:	a9bc7bfd 	stp	x29, x30, [sp,#-64]!
+    11b4:	910003fd 	mov	x29, sp
+    11b8:	a90363f7 	stp	x23, x24, [sp,#48]
+    11bc:	aa0003f7 	mov	x23, x0
+    11c0:	aa0103e0 	mov	x0, x1
+    11c4:	a90153f3 	stp	x19, x20, [sp,#16]
+    11c8:	a9025bf5 	stp	x21, x22, [sp,#32]
+    11cc:	94000000 	bl	0 <getenv>
+    11d0:	aa0003f3 	mov	x19, x0
+    11d4:	b40005c0 	cbz	x0, 128c <addFlagsFromEnvVar+0xdc>
+    11d8:	90000014 	adrp	x20, 40a <showFileNames.part.1+0xa>
+    11dc:	52800015 	mov	w21, #0x0                   	// #0
+    11e0:	91000294 	add	x20, x20, #0x0
+    11e4:	52808018 	mov	w24, #0x400                 	// #1024
+    11e8:	aa1403f6 	mov	x22, x20
+    11ec:	8b35c273 	add	x19, x19, w21, sxtw
+    11f0:	39400275 	ldrb	w21, [x19]
+    11f4:	340004d5 	cbz	w21, 128c <addFlagsFromEnvVar+0xdc>
+    11f8:	94000000 	bl	0 <__ctype_b_loc>
+    11fc:	f9400005 	ldr	x5, [x0]
+    1200:	14000002 	b	1208 <addFlagsFromEnvVar+0x58>
+    1204:	38401e75 	ldrb	w21, [x19,#1]!
+    1208:	d37f1ea2 	ubfiz	x2, x21, #1, #8
+    120c:	78656842 	ldrh	w2, [x2,x5]
+    1210:	376fffa2 	tbnz	w2, #13, 1204 <addFlagsFromEnvVar+0x54>
+    1214:	34000475 	cbz	w21, 12a0 <addFlagsFromEnvVar+0xf0>
+    1218:	91000662 	add	x2, x19, #0x1
+    121c:	52800004 	mov	w4, #0x0                   	// #0
+    1220:	14000003 	b	122c <addFlagsFromEnvVar+0x7c>
+    1224:	786568c0 	ldrh	w0, [x6,x5]
+    1228:	376800c0 	tbnz	w0, #13, 1240 <addFlagsFromEnvVar+0x90>
+    122c:	39400043 	ldrb	w3, [x2]
+    1230:	11000484 	add	w4, w4, #0x1
+    1234:	91000442 	add	x2, x2, #0x1
+    1238:	d37f1c66 	ubfiz	x6, x3, #1, #8
+    123c:	35ffff43 	cbnz	w3, 1224 <addFlagsFromEnvVar+0x74>
+    1240:	7110009f 	cmp	w4, #0x400
+    1244:	2a0403f5 	mov	w21, w4
+    1248:	1a98d085 	csel	w5, w4, w24, le
+    124c:	d2800002 	mov	x2, #0x0                   	// #0
+    1250:	510004a4 	sub	w4, w5, #0x1
+    1254:	91000484 	add	x4, x4, #0x1
+    1258:	38626a63 	ldrb	w3, [x19,x2]
+    125c:	38346843 	strb	w3, [x2,x20]
+    1260:	91000442 	add	x2, x2, #0x1
+    1264:	eb04005f 	cmp	x2, x4
+    1268:	54ffff81 	b.ne	1258 <addFlagsFromEnvVar+0xa8>
+    126c:	3825cadf 	strb	wzr, [x22,w5,sxtw]
+    1270:	aa1603e1 	mov	x1, x22
+    1274:	8b35c273 	add	x19, x19, w21, sxtw
+    1278:	f94002e0 	ldr	x0, [x23]
+    127c:	97ffffa6 	bl	1114 <snocString>
+    1280:	f90002e0 	str	x0, [x23]
+    1284:	39400275 	ldrb	w21, [x19]
+    1288:	35fffb95 	cbnz	w21, 11f8 <addFlagsFromEnvVar+0x48>
+    128c:	a94153f3 	ldp	x19, x20, [sp,#16]
+    1290:	a9425bf5 	ldp	x21, x22, [sp,#32]
+    1294:	a94363f7 	ldp	x23, x24, [sp,#48]
+    1298:	a8c47bfd 	ldp	x29, x30, [sp],#64
+    129c:	d65f03c0 	ret
+    12a0:	52800015 	mov	w21, #0x0                   	// #0
+    12a4:	17ffffd2 	b	11ec <addFlagsFromEnvVar+0x3c>
+
+00000000000012a8 <applySavedTimeInfoToOutputFile.constprop.7>:
+    12a8:	90000002 	adrp	x2, 0 <uInt64_toAscii>
+    12ac:	90000000 	adrp	x0, 40a <showFileNames.part.1+0xa>
+    12b0:	91000042 	add	x2, x2, #0x0
+    12b4:	91000000 	add	x0, x0, #0x0
+    12b8:	a9be7bfd 	stp	x29, x30, [sp,#-32]!
+    12bc:	910003fd 	mov	x29, sp
+    12c0:	f9402443 	ldr	x3, [x2,#72]
+    12c4:	910043a1 	add	x1, x29, #0x10
+    12c8:	f9402c42 	ldr	x2, [x2,#88]
+    12cc:	f9000ba3 	str	x3, [x29,#16]
+    12d0:	f9000fa2 	str	x2, [x29,#24]
+    12d4:	94000000 	bl	0 <utime>
+    12d8:	35000060 	cbnz	w0, 12e4 <applySavedTimeInfoToOutputFile.constprop.7+0x3c>
+    12dc:	a8c27bfd 	ldp	x29, x30, [sp],#32
+    12e0:	d65f03c0 	ret
+    12e4:	97fffc71 	bl	4a8 <ioError>
+
+00000000000012e8 <saveInputFileMetaInfo.constprop.8>:
+    12e8:	a9bf7bfd 	stp	x29, x30, [sp,#-16]!
+    12ec:	90000002 	adrp	x2, 0 <uInt64_toAscii>
+    12f0:	90000001 	adrp	x1, 40a <showFileNames.part.1+0xa>
+    12f4:	910003fd 	mov	x29, sp
+    12f8:	91000042 	add	x2, x2, #0x0
+    12fc:	91000021 	add	x1, x1, #0x0
+    1300:	52800000 	mov	w0, #0x0                   	// #0
+    1304:	94000000 	bl	0 <__xstat64>
+    1308:	35000060 	cbnz	w0, 1314 <saveInputFileMetaInfo.constprop.8+0x2c>
+    130c:	a8c17bfd 	ldp	x29, x30, [sp],#16
+    1310:	d65f03c0 	ret
+    1314:	97fffc65 	bl	4a8 <ioError>
+
+0000000000001318 <notAStandardFile.constprop.10>:
+    1318:	a9b77bfd 	stp	x29, x30, [sp,#-144]!
+    131c:	90000001 	adrp	x1, 40a <showFileNames.part.1+0xa>
+    1320:	52800000 	mov	w0, #0x0                   	// #0
+    1324:	910003fd 	mov	x29, sp
+    1328:	91000021 	add	x1, x1, #0x0
+    132c:	910043a2 	add	x2, x29, #0x10
+    1330:	94000000 	bl	0 <__lxstat64>
+    1334:	52800021 	mov	w1, #0x1                   	// #1
+    1338:	350000a0 	cbnz	w0, 134c <notAStandardFile.constprop.10+0x34>
+    133c:	b94023a0 	ldr	w0, [x29,#32]
+    1340:	12140c00 	and	w0, w0, #0xf000
+    1344:	7140201f 	cmp	w0, #0x8, lsl #12
+    1348:	1a9f07e1 	cset	w1, ne
+    134c:	2a0103e0 	mov	w0, w1
+    1350:	a8c97bfd 	ldp	x29, x30, [sp],#144
+    1354:	d65f03c0 	ret
+
+0000000000001358 <fopen_output_safely.constprop.11>:
+    1358:	a9be7bfd 	stp	x29, x30, [sp,#-32]!
+    135c:	90000000 	adrp	x0, 40a <showFileNames.part.1+0xa>
+    1360:	52803002 	mov	w2, #0x180                 	// #384
+    1364:	910003fd 	mov	x29, sp
+    1368:	52801821 	mov	w1, #0xc1                  	// #193
+    136c:	91000000 	add	x0, x0, #0x0
+    1370:	a90153f3 	stp	x19, x20, [sp,#16]
+    1374:	94000000 	bl	0 <open64>
+    1378:	3100041f 	cmn	w0, #0x1
+    137c:	2a0003f4 	mov	w20, w0
+    1380:	54000140 	b.eq	13a8 <fopen_output_safely.constprop.11+0x50>
+    1384:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1388:	91000021 	add	x1, x1, #0x0
+    138c:	94000000 	bl	0 <fdopen>
+    1390:	aa0003f3 	mov	x19, x0
+    1394:	b40000e0 	cbz	x0, 13b0 <fopen_output_safely.constprop.11+0x58>
+    1398:	aa1303e0 	mov	x0, x19
+    139c:	a94153f3 	ldp	x19, x20, [sp,#16]
+    13a0:	a8c27bfd 	ldp	x29, x30, [sp],#32
+    13a4:	d65f03c0 	ret
+    13a8:	d2800013 	mov	x19, #0x0                   	// #0
+    13ac:	17fffffb 	b	1398 <fopen_output_safely.constprop.11+0x40>
+    13b0:	2a1403e0 	mov	w0, w20
+    13b4:	94000000 	bl	0 <close>
+    13b8:	17fffff8 	b	1398 <fopen_output_safely.constprop.11+0x40>
+
+00000000000013bc <pad.constprop.12>:
+    13bc:	a9bc7bfd 	stp	x29, x30, [sp,#-64]!
+    13c0:	910003fd 	mov	x29, sp
+    13c4:	a9025bf5 	stp	x21, x22, [sp,#32]
+    13c8:	90000015 	adrp	x21, 40a <showFileNames.part.1+0xa>
+    13cc:	90000016 	adrp	x22, 4 <uInt64_toAscii+0x4>
+    13d0:	910002b5 	add	x21, x21, #0x0
+    13d4:	f9001bf7 	str	x23, [sp,#48]
+    13d8:	aa1503e0 	mov	x0, x21
+    13dc:	a90153f3 	stp	x19, x20, [sp,#16]
+    13e0:	94000000 	bl	0 <strlen>
+    13e4:	b94002d3 	ldr	w19, [x22]
+    13e8:	aa0003e1 	mov	x1, x0
+    13ec:	6b00027f 	cmp	w19, w0
+    13f0:	5400020d 	b.le	1430 <pad.constprop.12+0x74>
+    13f4:	52800034 	mov	w20, #0x1                   	// #1
+    13f8:	90000017 	adrp	x23, 0 <stderr>
+    13fc:	910002d6 	add	x22, x22, #0x0
+    1400:	14000007 	b	141c <pad.constprop.12+0x60>
+    1404:	f94002e1 	ldr	x1, [x23]
+    1408:	94000000 	bl	0 <fputc>
+    140c:	b94002d3 	ldr	w19, [x22]
+    1410:	aa1503e0 	mov	x0, x21
+    1414:	94000000 	bl	0 <strlen>
+    1418:	aa0003e1 	mov	x1, x0
+    141c:	4b010273 	sub	w19, w19, w1
+    1420:	52800400 	mov	w0, #0x20                  	// #32
+    1424:	6b13029f 	cmp	w20, w19
+    1428:	11000694 	add	w20, w20, #0x1
+    142c:	54fffecd 	b.le	1404 <pad.constprop.12+0x48>
+    1430:	a94153f3 	ldp	x19, x20, [sp,#16]
+    1434:	a9425bf5 	ldp	x21, x22, [sp,#32]
+    1438:	f9401bf7 	ldr	x23, [sp,#48]
+    143c:	a8c47bfd 	ldp	x29, x30, [sp],#64
+    1440:	d65f03c0 	ret
+
+0000000000001444 <uncompress>:
+    1444:	a9aa7bfd 	stp	x29, x30, [sp,#-352]!
+    1448:	910003fd 	mov	x29, sp
+    144c:	a9025bf5 	stp	x21, x22, [sp,#32]
+    1450:	90000016 	adrp	x22, 1 <uInt64_toAscii+0x1>
+    1454:	a90153f3 	stp	x19, x20, [sp,#16]
+    1458:	a90363f7 	stp	x23, x24, [sp,#48]
+    145c:	a9046bf9 	stp	x25, x26, [sp,#64]
+    1460:	390002df 	strb	wzr, [x22]
+    1464:	aa0003f7 	mov	x23, x0
+    1468:	90000013 	adrp	x19, 4 <uInt64_toAscii+0x4>
+    146c:	b4000e20 	cbz	x0, 1630 <uncompress+0x1ec>
+    1470:	b9400262 	ldr	w2, [x19]
+    1474:	7100085f 	cmp	w2, #0x2
+    1478:	54000fc0 	b.eq	1670 <uncompress+0x22c>
+    147c:	71000c5f 	cmp	w2, #0x3
+    1480:	54000400 	b.eq	1500 <uncompress+0xbc>
+    1484:	7100045f 	cmp	w2, #0x1
+    1488:	52800014 	mov	w20, #0x0                   	// #0
+    148c:	54000d80 	b.eq	163c <uncompress+0x1f8>
+    1490:	7100045f 	cmp	w2, #0x1
+    1494:	90000015 	adrp	x21, 40a <showFileNames.part.1+0xa>
+    1498:	540001c0 	b.eq	14d0 <uncompress+0x8c>
+    149c:	910002b7 	add	x23, x21, #0x0
+    14a0:	aa1703e0 	mov	x0, x23
+    14a4:	97fffbba 	bl	38c <fileExists>
+    14a8:	53001c00 	uxtb	w0, w0
+    14ac:	340007c0 	cbz	w0, 15a4 <uncompress+0x160>
+    14b0:	b9400262 	ldr	w2, [x19]
+    14b4:	51000842 	sub	w2, w2, #0x2
+    14b8:	7100045f 	cmp	w2, #0x1
+    14bc:	54000e09 	b.ls	167c <uncompress+0x238>
+    14c0:	34000094 	cbz	w20, 14d0 <uncompress+0x8c>
+    14c4:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    14c8:	39400000 	ldrb	w0, [x0]
+    14cc:	35002320 	cbnz	w0, 1930 <uncompress+0x4ec>
+    14d0:	b9400260 	ldr	w0, [x19]
+    14d4:	71000c1f 	cmp	w0, #0x3
+    14d8:	54000f00 	b.eq	16b8 <uncompress+0x274>
+    14dc:	7100081f 	cmp	w0, #0x2
+    14e0:	54001160 	b.eq	170c <uncompress+0x2c8>
+    14e4:	71000c1f 	cmp	w0, #0x3
+    14e8:	54001e20 	b.eq	18ac <uncompress+0x468>
+    14ec:	7100041f 	cmp	w0, #0x1
+    14f0:	540013e0 	b.eq	176c <uncompress+0x328>
+    14f4:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+    14f8:	91000000 	add	x0, x0, #0x0
+    14fc:	97fffbda 	bl	464 <panic>
+    1500:	90000015 	adrp	x21, 40a <showFileNames.part.1+0xa>
+    1504:	aa0003e1 	mov	x1, x0
+    1508:	910002a0 	add	x0, x21, #0x0
+    150c:	90000018 	adrp	x24, 0 <uInt64_toAscii>
+    1510:	d2800014 	mov	x20, #0x0                   	// #0
+    1514:	91000318 	add	x24, x24, #0x0
+    1518:	97fffede 	bl	1090 <copyFileName>
+    151c:	90000000 	adrp	x0, 40a <showFileNames.part.1+0xa>
+    1520:	aa1703e1 	mov	x1, x23
+    1524:	91000000 	add	x0, x0, #0x0
+    1528:	aa0003f7 	mov	x23, x0
+    152c:	97fffed9 	bl	1090 <copyFileName>
+    1530:	f8786a99 	ldr	x25, [x20,x24]
+    1534:	91008302 	add	x2, x24, #0x20
+    1538:	aa1703e0 	mov	x0, x23
+    153c:	aa1903e1 	mov	x1, x25
+    1540:	f8626a9a 	ldr	x26, [x20,x2]
+    1544:	97fffada 	bl	ac <hasSuffix>
+    1548:	53001c00 	uxtb	w0, w0
+    154c:	35000580 	cbnz	w0, 15fc <uncompress+0x1b8>
+    1550:	91002294 	add	x20, x20, #0x8
+    1554:	f100829f 	cmp	x20, #0x20
+    1558:	54fffec1 	b.ne	1530 <uncompress+0xec>
+    155c:	aa1703e0 	mov	x0, x23
+    1560:	52800034 	mov	w20, #0x1                   	// #1
+    1564:	94000000 	bl	0 <strlen>
+    1568:	8b170002 	add	x2, x0, x23
+    156c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1570:	b9400263 	ldr	w3, [x19]
+    1574:	91000021 	add	x1, x1, #0x0
+    1578:	6b14007f 	cmp	w3, w20
+    157c:	b9400023 	ldr	w3, [x1]
+    1580:	b8376803 	str	w3, [x0,x23]
+    1584:	b8401020 	ldr	w0, [x1,#1]
+    1588:	b8001040 	str	w0, [x2,#1]
+    158c:	54fff9c0 	b.eq	14c4 <uncompress+0x80>
+    1590:	910002b7 	add	x23, x21, #0x0
+    1594:	aa1703e0 	mov	x0, x23
+    1598:	97fffb7d 	bl	38c <fileExists>
+    159c:	53001c00 	uxtb	w0, w0
+    15a0:	35fff880 	cbnz	w0, 14b0 <uncompress+0x6c>
+    15a4:	90000000 	adrp	x0, 0 <stderr>
+    15a8:	f9400013 	ldr	x19, [x0]
+    15ac:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    15b0:	f9400002 	ldr	x2, [x0]
+    15b4:	f9002fa2 	str	x2, [x29,#88]
+    15b8:	94000000 	bl	0 <__errno_location>
+    15bc:	b9400000 	ldr	w0, [x0]
+    15c0:	94000000 	bl	0 <strerror>
+    15c4:	aa0003e4 	mov	x4, x0
+    15c8:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    15cc:	f9402fa2 	ldr	x2, [x29,#88]
+    15d0:	aa1703e3 	mov	x3, x23
+    15d4:	91000021 	add	x1, x1, #0x0
+    15d8:	aa1303e0 	mov	x0, x19
+    15dc:	94000000 	bl	0 <fprintf>
+    15e0:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    15e4:	b9400001 	ldr	w1, [x0]
+    15e8:	6b1f003f 	cmp	w1, wzr
+    15ec:	540011ec 	b.gt	1828 <uncompress+0x3e4>
+    15f0:	52800021 	mov	w1, #0x1                   	// #1
+    15f4:	b9000001 	str	w1, [x0]
+    15f8:	1400008c 	b	1828 <uncompress+0x3e4>
+    15fc:	aa1703e0 	mov	x0, x23
+    1600:	52800014 	mov	w20, #0x0                   	// #0
+    1604:	94000000 	bl	0 <strlen>
+    1608:	aa0003f5 	mov	x21, x0
+    160c:	aa1903e0 	mov	x0, x25
+    1610:	94000000 	bl	0 <strlen>
+    1614:	cb0002b5 	sub	x21, x21, x0
+    1618:	aa1a03e1 	mov	x1, x26
+    161c:	aa1703e0 	mov	x0, x23
+    1620:	38376abf 	strb	wzr, [x21,x23]
+    1624:	94000000 	bl	0 <strcat>
+    1628:	b9400262 	ldr	w2, [x19]
+    162c:	17ffff99 	b	1490 <uncompress+0x4c>
+    1630:	b9400260 	ldr	w0, [x19]
+    1634:	7100041f 	cmp	w0, #0x1
+    1638:	540023c1 	b.ne	1ab0 <uncompress+0x66c>
+    163c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1640:	90000015 	adrp	x21, 40a <showFileNames.part.1+0xa>
+    1644:	91000021 	add	x1, x1, #0x0
+    1648:	910002a0 	add	x0, x21, #0x0
+    164c:	52800014 	mov	w20, #0x0                   	// #0
+    1650:	97fffe90 	bl	1090 <copyFileName>
+    1654:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1658:	90000000 	adrp	x0, 40a <showFileNames.part.1+0xa>
+    165c:	91000021 	add	x1, x1, #0x0
+    1660:	91000000 	add	x0, x0, #0x0
+    1664:	97fffe8b 	bl	1090 <copyFileName>
+    1668:	b9400262 	ldr	w2, [x19]
+    166c:	17ffff89 	b	1490 <uncompress+0x4c>
+    1670:	90000015 	adrp	x21, 40a <showFileNames.part.1+0xa>
+    1674:	aa0003e1 	mov	x1, x0
+    1678:	17fffff4 	b	1648 <uncompress+0x204>
+    167c:	910183a2 	add	x2, x29, #0x60
+    1680:	aa1703e1 	mov	x1, x23
+    1684:	52800000 	mov	w0, #0x0                   	// #0
+    1688:	94000000 	bl	0 <__xstat64>
+    168c:	b94073a0 	ldr	w0, [x29,#112]
+    1690:	12140c00 	and	w0, w0, #0xf000
+    1694:	7140101f 	cmp	w0, #0x4, lsl #12
+    1698:	54002300 	b.eq	1af8 <uncompress+0x6b4>
+    169c:	b9400260 	ldr	w0, [x19]
+    16a0:	71000c1f 	cmp	w0, #0x3
+    16a4:	54fff0e1 	b.ne	14c0 <uncompress+0x7c>
+    16a8:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    16ac:	39400000 	ldrb	w0, [x0]
+    16b0:	34001560 	cbz	w0, 195c <uncompress+0x518>
+    16b4:	35fff094 	cbnz	w20, 14c4 <uncompress+0x80>
+    16b8:	90000014 	adrp	x20, 40a <showFileNames.part.1+0xa>
+    16bc:	91000294 	add	x20, x20, #0x0
+    16c0:	aa1403e0 	mov	x0, x20
+    16c4:	97fffb32 	bl	38c <fileExists>
+    16c8:	53001c00 	uxtb	w0, w0
+    16cc:	340000c0 	cbz	w0, 16e4 <uncompress+0x2a0>
+    16d0:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    16d4:	39400000 	ldrb	w0, [x0]
+    16d8:	34001d40 	cbz	w0, 1a80 <uncompress+0x63c>
+    16dc:	aa1403e0 	mov	x0, x20
+    16e0:	94000000 	bl	0 <remove>
+    16e4:	b9400260 	ldr	w0, [x19]
+    16e8:	71000c1f 	cmp	w0, #0x3
+    16ec:	54ffef81 	b.ne	14dc <uncompress+0x98>
+    16f0:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    16f4:	39400000 	ldrb	w0, [x0]
+    16f8:	34001500 	cbz	w0, 1998 <uncompress+0x554>
+    16fc:	97fffefb 	bl	12e8 <saveInputFileMetaInfo.constprop.8>
+    1700:	b9400260 	ldr	w0, [x19]
+    1704:	7100081f 	cmp	w0, #0x2
+    1708:	54ffeee1 	b.ne	14e4 <uncompress+0xa0>
+    170c:	90000017 	adrp	x23, 40a <showFileNames.part.1+0xa>
+    1710:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1714:	910002f7 	add	x23, x23, #0x0
+    1718:	91000021 	add	x1, x1, #0x0
+    171c:	aa1703e0 	mov	x0, x23
+    1720:	94000000 	bl	0 <fopen64>
+    1724:	aa0003f5 	mov	x21, x0
+    1728:	90000000 	adrp	x0, 0 <stdout>
+    172c:	f9400014 	ldr	x20, [x0]
+    1730:	b50002f5 	cbnz	x21, 178c <uncompress+0x348>
+    1734:	90000000 	adrp	x0, 0 <stderr>
+    1738:	f9400013 	ldr	x19, [x0]
+    173c:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    1740:	f9400002 	ldr	x2, [x0]
+    1744:	f9002fa2 	str	x2, [x29,#88]
+    1748:	94000000 	bl	0 <__errno_location>
+    174c:	b9400000 	ldr	w0, [x0]
+    1750:	94000000 	bl	0 <strerror>
+    1754:	aa0003e4 	mov	x4, x0
+    1758:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    175c:	aa1703e3 	mov	x3, x23
+    1760:	f9402fa2 	ldr	x2, [x29,#88]
+    1764:	91000021 	add	x1, x1, #0x0
+    1768:	17ffff9c 	b	15d8 <uncompress+0x194>
+    176c:	90000000 	adrp	x0, 0 <stdin>
+    1770:	f9400015 	ldr	x21, [x0]
+    1774:	90000000 	adrp	x0, 0 <stdout>
+    1778:	f9400014 	ldr	x20, [x0]
+    177c:	aa1503e0 	mov	x0, x21
+    1780:	94000000 	bl	0 <fileno>
+    1784:	94000000 	bl	0 <isatty>
+    1788:	35001580 	cbnz	w0, 1a38 <uncompress+0x5f4>
+    178c:	90000017 	adrp	x23, 4 <uInt64_toAscii+0x4>
+    1790:	b94002e0 	ldr	w0, [x23]
+    1794:	6b1f001f 	cmp	w0, wzr
+    1798:	5400016d 	b.le	17c4 <uncompress+0x380>
+    179c:	90000018 	adrp	x24, 0 <stderr>
+    17a0:	90000002 	adrp	x2, 40a <showFileNames.part.1+0xa>
+    17a4:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    17a8:	91000042 	add	x2, x2, #0x0
+    17ac:	91000021 	add	x1, x1, #0x0
+    17b0:	f9400300 	ldr	x0, [x24]
+    17b4:	94000000 	bl	0 <fprintf>
+    17b8:	97ffff01 	bl	13bc <pad.constprop.12>
+    17bc:	f9400300 	ldr	x0, [x24]
+    17c0:	94000000 	bl	0 <fflush>
+    17c4:	90000018 	adrp	x24, 8 <uInt64_toAscii+0x8>
+    17c8:	aa1503e0 	mov	x0, x21
+    17cc:	aa1403e1 	mov	x1, x20
+    17d0:	52800035 	mov	w21, #0x1                   	// #1
+    17d4:	390002d5 	strb	w21, [x22]
+    17d8:	90000019 	adrp	x25, 1 <uInt64_toAscii+0x1>
+    17dc:	f9000314 	str	x20, [x24]
+    17e0:	97fffd24 	bl	c70 <uncompressStream>
+    17e4:	f900031f 	str	xzr, [x24]
+    17e8:	53001c00 	uxtb	w0, w0
+    17ec:	340002a0 	cbz	w0, 1840 <uncompress+0x3fc>
+    17f0:	b9400260 	ldr	w0, [x19]
+    17f4:	71000c1f 	cmp	w0, #0x3
+    17f8:	540016c0 	b.eq	1ad0 <uncompress+0x68c>
+    17fc:	b94002e0 	ldr	w0, [x23]
+    1800:	390002df 	strb	wzr, [x22]
+    1804:	6b1f001f 	cmp	w0, wzr
+    1808:	5400010d 	b.le	1828 <uncompress+0x3e4>
+    180c:	90000003 	adrp	x3, 0 <stderr>
+    1810:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+    1814:	d28000a2 	mov	x2, #0x5                   	// #5
+    1818:	d2800021 	mov	x1, #0x1                   	// #1
+    181c:	91000000 	add	x0, x0, #0x0
+    1820:	f9400063 	ldr	x3, [x3]
+    1824:	94000000 	bl	0 <fwrite>
+    1828:	a94153f3 	ldp	x19, x20, [sp,#16]
+    182c:	a9425bf5 	ldp	x21, x22, [sp,#32]
+    1830:	a94363f7 	ldp	x23, x24, [sp,#48]
+    1834:	a9446bf9 	ldp	x25, x26, [sp,#64]
+    1838:	a8d67bfd 	ldp	x29, x30, [sp],#352
+    183c:	d65f03c0 	ret
+    1840:	b9400260 	ldr	w0, [x19]
+    1844:	3900033f 	strb	wzr, [x25]
+    1848:	71000c1f 	cmp	w0, #0x3
+    184c:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    1850:	39000015 	strb	w21, [x0]
+    1854:	54001340 	b.eq	1abc <uncompress+0x678>
+    1858:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    185c:	390002df 	strb	wzr, [x22]
+    1860:	b9400001 	ldr	w1, [x0]
+    1864:	7100043f 	cmp	w1, #0x1
+    1868:	54000e2d 	b.le	1a2c <uncompress+0x5e8>
+    186c:	b94002e0 	ldr	w0, [x23]
+    1870:	6b1f001f 	cmp	w0, wzr
+    1874:	54000c8d 	b.le	1a04 <uncompress+0x5c0>
+    1878:	90000003 	adrp	x3, 0 <stderr>
+    187c:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+    1880:	d2800242 	mov	x2, #0x12                  	// #18
+    1884:	d2800021 	mov	x1, #0x1                   	// #1
+    1888:	91000000 	add	x0, x0, #0x0
+    188c:	f9400063 	ldr	x3, [x3]
+    1890:	94000000 	bl	0 <fwrite>
+    1894:	a94153f3 	ldp	x19, x20, [sp,#16]
+    1898:	a9425bf5 	ldp	x21, x22, [sp,#32]
+    189c:	a94363f7 	ldp	x23, x24, [sp,#48]
+    18a0:	a9446bf9 	ldp	x25, x26, [sp,#64]
+    18a4:	a8d67bfd 	ldp	x29, x30, [sp],#352
+    18a8:	d65f03c0 	ret
+    18ac:	90000017 	adrp	x23, 40a <showFileNames.part.1+0xa>
+    18b0:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    18b4:	910002f7 	add	x23, x23, #0x0
+    18b8:	91000021 	add	x1, x1, #0x0
+    18bc:	aa1703e0 	mov	x0, x23
+    18c0:	94000000 	bl	0 <fopen64>
+    18c4:	aa0003f5 	mov	x21, x0
+    18c8:	97fffea4 	bl	1358 <fopen_output_safely.constprop.11>
+    18cc:	aa0003f4 	mov	x20, x0
+    18d0:	b4001220 	cbz	x0, 1b14 <uncompress+0x6d0>
+    18d4:	b5fff5d5 	cbnz	x21, 178c <uncompress+0x348>
+    18d8:	90000000 	adrp	x0, 0 <stderr>
+    18dc:	f9400013 	ldr	x19, [x0]
+    18e0:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    18e4:	f9400002 	ldr	x2, [x0]
+    18e8:	f9002fa2 	str	x2, [x29,#88]
+    18ec:	94000000 	bl	0 <__errno_location>
+    18f0:	b9400000 	ldr	w0, [x0]
+    18f4:	94000000 	bl	0 <strerror>
+    18f8:	aa0003e4 	mov	x4, x0
+    18fc:	f9402fa2 	ldr	x2, [x29,#88]
+    1900:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1904:	91000021 	add	x1, x1, #0x0
+    1908:	aa1703e3 	mov	x3, x23
+    190c:	aa1303e0 	mov	x0, x19
+    1910:	94000000 	bl	0 <fprintf>
+    1914:	aa1403e0 	mov	x0, x20
+    1918:	94000000 	bl	0 <fclose>
+    191c:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    1920:	b9400001 	ldr	w1, [x0]
+    1924:	6b1f003f 	cmp	w1, wzr
+    1928:	54fff80c 	b.gt	1828 <uncompress+0x3e4>
+    192c:	17ffff31 	b	15f0 <uncompress+0x1ac>
+    1930:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    1934:	90000004 	adrp	x4, 40a <showFileNames.part.1+0xa>
+    1938:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    193c:	91000084 	add	x4, x4, #0x0
+    1940:	910002a3 	add	x3, x21, #0x0
+    1944:	91000021 	add	x1, x1, #0x0
+    1948:	f9400002 	ldr	x2, [x0]
+    194c:	90000000 	adrp	x0, 0 <stderr>
+    1950:	f9400000 	ldr	x0, [x0]
+    1954:	94000000 	bl	0 <fprintf>
+    1958:	17fffede 	b	14d0 <uncompress+0x8c>
+    195c:	97fffe6f 	bl	1318 <notAStandardFile.constprop.10>
+    1960:	53001c00 	uxtb	w0, w0
+    1964:	34ffdae0 	cbz	w0, 14c0 <uncompress+0x7c>
+    1968:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    196c:	39400000 	ldrb	w0, [x0]
+    1970:	34ffe380 	cbz	w0, 15e0 <uncompress+0x19c>
+    1974:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1978:	aa1703e3 	mov	x3, x23
+    197c:	91000021 	add	x1, x1, #0x0
+    1980:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    1984:	f9400002 	ldr	x2, [x0]
+    1988:	90000000 	adrp	x0, 0 <stderr>
+    198c:	f9400000 	ldr	x0, [x0]
+    1990:	94000000 	bl	0 <fprintf>
+    1994:	17ffff13 	b	15e0 <uncompress+0x19c>
+    1998:	90000015 	adrp	x21, 40a <showFileNames.part.1+0xa>
+    199c:	910383a2 	add	x2, x29, #0xe0
+    19a0:	910002a1 	add	x1, x21, #0x0
+    19a4:	52800000 	mov	w0, #0x0                   	// #0
+    19a8:	94000000 	bl	0 <__lxstat64>
+    19ac:	350007a0 	cbnz	w0, 1aa0 <uncompress+0x65c>
+    19b0:	b940f7a4 	ldr	w4, [x29,#244]
+    19b4:	51000484 	sub	w4, w4, #0x1
+    19b8:	6b1f009f 	cmp	w4, wzr
+    19bc:	5400072d 	b.le	1aa0 <uncompress+0x65c>
+    19c0:	90000000 	adrp	x0, 0 <stderr>
+    19c4:	90000001 	adrp	x1, 8 <uInt64_toAscii+0x8>
+    19c8:	7100049f 	cmp	w4, #0x1
+    19cc:	f9400000 	ldr	x0, [x0]
+    19d0:	f9400022 	ldr	x2, [x1]
+    19d4:	540009a0 	b.eq	1b08 <uncompress+0x6c4>
+    19d8:	90000005 	adrp	x5, 0 <uInt64_toAscii>
+    19dc:	910000a5 	add	x5, x5, #0x0
+    19e0:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    19e4:	910002a3 	add	x3, x21, #0x0
+    19e8:	91000021 	add	x1, x1, #0x0
+    19ec:	94000000 	bl	0 <fprintf>
+    19f0:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    19f4:	b9400001 	ldr	w1, [x0]
+    19f8:	6b1f003f 	cmp	w1, wzr
+    19fc:	54fff16c 	b.gt	1828 <uncompress+0x3e4>
+    1a00:	17fffefc 	b	15f0 <uncompress+0x1ac>
+    1a04:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    1a08:	90000003 	adrp	x3, 40a <showFileNames.part.1+0xa>
+    1a0c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1a10:	91000063 	add	x3, x3, #0x0
+    1a14:	91000021 	add	x1, x1, #0x0
+    1a18:	f9400002 	ldr	x2, [x0]
+    1a1c:	90000000 	adrp	x0, 0 <stderr>
+    1a20:	f9400000 	ldr	x0, [x0]
+    1a24:	94000000 	bl	0 <fprintf>
+    1a28:	17ffff80 	b	1828 <uncompress+0x3e4>
+    1a2c:	52800041 	mov	w1, #0x2                   	// #2
+    1a30:	b9000001 	str	w1, [x0]
+    1a34:	17ffff8e 	b	186c <uncompress+0x428>
+    1a38:	90000014 	adrp	x20, 8 <uInt64_toAscii+0x8>
+    1a3c:	90000013 	adrp	x19, 0 <stderr>
+    1a40:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1a44:	91000021 	add	x1, x1, #0x0
+    1a48:	f9400282 	ldr	x2, [x20]
+    1a4c:	f9400260 	ldr	x0, [x19]
+    1a50:	94000000 	bl	0 <fprintf>
+    1a54:	f9400283 	ldr	x3, [x20]
+    1a58:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1a5c:	f9400260 	ldr	x0, [x19]
+    1a60:	91000021 	add	x1, x1, #0x0
+    1a64:	aa0303e2 	mov	x2, x3
+    1a68:	94000000 	bl	0 <fprintf>
+    1a6c:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    1a70:	b9400001 	ldr	w1, [x0]
+    1a74:	6b1f003f 	cmp	w1, wzr
+    1a78:	54ffed8c 	b.gt	1828 <uncompress+0x3e4>
+    1a7c:	17fffedd 	b	15f0 <uncompress+0x1ac>
+    1a80:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    1a84:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1a88:	aa1403e3 	mov	x3, x20
+    1a8c:	91000021 	add	x1, x1, #0x0
+    1a90:	f9400002 	ldr	x2, [x0]
+    1a94:	90000000 	adrp	x0, 0 <stderr>
+    1a98:	f9400000 	ldr	x0, [x0]
+    1a9c:	17fffff3 	b	1a68 <uncompress+0x624>
+    1aa0:	b9400260 	ldr	w0, [x19]
+    1aa4:	71000c1f 	cmp	w0, #0x3
+    1aa8:	54ffe2a0 	b.eq	16fc <uncompress+0x2b8>
+    1aac:	17fffe8c 	b	14dc <uncompress+0x98>
+    1ab0:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+    1ab4:	91000000 	add	x0, x0, #0x0
+    1ab8:	97fffa6b 	bl	464 <panic>
+    1abc:	90000000 	adrp	x0, 40a <showFileNames.part.1+0xa>
+    1ac0:	91000000 	add	x0, x0, #0x0
+    1ac4:	94000000 	bl	0 <remove>
+    1ac8:	34ffec80 	cbz	w0, 1858 <uncompress+0x414>
+    1acc:	97fffa77 	bl	4a8 <ioError>
+    1ad0:	97fffdf6 	bl	12a8 <applySavedTimeInfoToOutputFile.constprop.7>
+    1ad4:	3900033f 	strb	wzr, [x25]
+    1ad8:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    1adc:	39400000 	ldrb	w0, [x0]
+    1ae0:	35ffe8e0 	cbnz	w0, 17fc <uncompress+0x3b8>
+    1ae4:	90000000 	adrp	x0, 40a <showFileNames.part.1+0xa>
+    1ae8:	91000000 	add	x0, x0, #0x0
+    1aec:	94000000 	bl	0 <remove>
+    1af0:	34ffe860 	cbz	w0, 17fc <uncompress+0x3b8>
+    1af4:	17fffff6 	b	1acc <uncompress+0x688>
+    1af8:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1afc:	aa1703e3 	mov	x3, x23
+    1b00:	91000021 	add	x1, x1, #0x0
+    1b04:	17ffff9f 	b	1980 <uncompress+0x53c>
+    1b08:	90000005 	adrp	x5, 0 <uInt64_toAscii>
+    1b0c:	910000a5 	add	x5, x5, #0x0
+    1b10:	17ffffb4 	b	19e0 <uncompress+0x59c>
+    1b14:	90000000 	adrp	x0, 0 <stderr>
+    1b18:	f9400013 	ldr	x19, [x0]
+    1b1c:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    1b20:	f9400002 	ldr	x2, [x0]
+    1b24:	f9002fa2 	str	x2, [x29,#88]
+    1b28:	94000000 	bl	0 <__errno_location>
+    1b2c:	b9400000 	ldr	w0, [x0]
+    1b30:	94000000 	bl	0 <strerror>
+    1b34:	aa0003e4 	mov	x4, x0
+    1b38:	90000003 	adrp	x3, 40a <showFileNames.part.1+0xa>
+    1b3c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1b40:	f9402fa2 	ldr	x2, [x29,#88]
+    1b44:	91000063 	add	x3, x3, #0x0
+    1b48:	91000021 	add	x1, x1, #0x0
+    1b4c:	aa1303e0 	mov	x0, x19
+    1b50:	94000000 	bl	0 <fprintf>
+    1b54:	b4ffd475 	cbz	x21, 15e0 <uncompress+0x19c>
+    1b58:	aa1503e0 	mov	x0, x21
+    1b5c:	94000000 	bl	0 <fclose>
+    1b60:	17fffea0 	b	15e0 <uncompress+0x19c>
+
+0000000000001b64 <testf>:
+    1b64:	a9b47bfd 	stp	x29, x30, [sp,#-192]!
+    1b68:	910003fd 	mov	x29, sp
+    1b6c:	a9025bf5 	stp	x21, x22, [sp,#32]
+    1b70:	aa0003f5 	mov	x21, x0
+    1b74:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    1b78:	a90153f3 	stp	x19, x20, [sp,#16]
+    1b7c:	90000013 	adrp	x19, 4 <uInt64_toAscii+0x4>
+    1b80:	3900001f 	strb	wzr, [x0]
+    1b84:	b4000c35 	cbz	x21, 1d08 <testf+0x1a4>
+    1b88:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1b8c:	90000000 	adrp	x0, 40a <showFileNames.part.1+0xa>
+    1b90:	91000021 	add	x1, x1, #0x0
+    1b94:	91000000 	add	x0, x0, #0x0
+    1b98:	90000014 	adrp	x20, 40a <showFileNames.part.1+0xa>
+    1b9c:	97fffd3d 	bl	1090 <copyFileName>
+    1ba0:	b9400263 	ldr	w3, [x19]
+    1ba4:	7100087f 	cmp	w3, #0x2
+    1ba8:	54000840 	b.eq	1cb0 <testf+0x14c>
+    1bac:	71000c7f 	cmp	w3, #0x3
+    1bb0:	54000800 	b.eq	1cb0 <testf+0x14c>
+    1bb4:	7100047f 	cmp	w3, #0x1
+    1bb8:	54000960 	b.eq	1ce4 <testf+0x180>
+    1bbc:	91000295 	add	x21, x20, #0x0
+    1bc0:	aa1503e0 	mov	x0, x21
+    1bc4:	97fff9f2 	bl	38c <fileExists>
+    1bc8:	53001c00 	uxtb	w0, w0
+    1bcc:	34000b80 	cbz	w0, 1d3c <testf+0x1d8>
+    1bd0:	b9400260 	ldr	w0, [x19]
+    1bd4:	7100041f 	cmp	w0, #0x1
+    1bd8:	54000780 	b.eq	1cc8 <testf+0x164>
+    1bdc:	910103a2 	add	x2, x29, #0x40
+    1be0:	aa1503e1 	mov	x1, x21
+    1be4:	52800000 	mov	w0, #0x0                   	// #0
+    1be8:	94000000 	bl	0 <__xstat64>
+    1bec:	b94053a0 	ldr	w0, [x29,#80]
+    1bf0:	12140c00 	and	w0, w0, #0xf000
+    1bf4:	7140101f 	cmp	w0, #0x4, lsl #12
+    1bf8:	54000f20 	b.eq	1ddc <testf+0x278>
+    1bfc:	b9400260 	ldr	w0, [x19]
+    1c00:	7100041f 	cmp	w0, #0x1
+    1c04:	54000620 	b.eq	1cc8 <testf+0x164>
+    1c08:	540007ab 	b.lt	1cfc <testf+0x198>
+    1c0c:	71000c1f 	cmp	w0, #0x3
+    1c10:	5400076c 	b.gt	1cfc <testf+0x198>
+    1c14:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1c18:	aa1503e0 	mov	x0, x21
+    1c1c:	91000021 	add	x1, x1, #0x0
+    1c20:	94000000 	bl	0 <fopen64>
+    1c24:	aa0003f3 	mov	x19, x0
+    1c28:	b4000ea0 	cbz	x0, 1dfc <testf+0x298>
+    1c2c:	90000015 	adrp	x21, 4 <uInt64_toAscii+0x4>
+    1c30:	b94002a0 	ldr	w0, [x21]
+    1c34:	6b1f001f 	cmp	w0, wzr
+    1c38:	5400014d 	b.le	1c60 <testf+0xfc>
+    1c3c:	90000016 	adrp	x22, 0 <stderr>
+    1c40:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1c44:	91000282 	add	x2, x20, #0x0
+    1c48:	91000021 	add	x1, x1, #0x0
+    1c4c:	f94002c0 	ldr	x0, [x22]
+    1c50:	94000000 	bl	0 <fprintf>
+    1c54:	97fffdda 	bl	13bc <pad.constprop.12>
+    1c58:	f94002c0 	ldr	x0, [x22]
+    1c5c:	94000000 	bl	0 <fflush>
+    1c60:	90000001 	adrp	x1, 8 <uInt64_toAscii+0x8>
+    1c64:	aa1303e0 	mov	x0, x19
+    1c68:	f900003f 	str	xzr, [x1]
+    1c6c:	97fffb1b 	bl	8d8 <testStream>
+    1c70:	53001c00 	uxtb	w0, w0
+    1c74:	34000560 	cbz	w0, 1d20 <testf+0x1bc>
+    1c78:	b94002a0 	ldr	w0, [x21]
+    1c7c:	6b1f001f 	cmp	w0, wzr
+    1c80:	5400010d 	b.le	1ca0 <testf+0x13c>
+    1c84:	90000003 	adrp	x3, 0 <stderr>
+    1c88:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+    1c8c:	d2800062 	mov	x2, #0x3                   	// #3
+    1c90:	d2800021 	mov	x1, #0x1                   	// #1
+    1c94:	91000000 	add	x0, x0, #0x0
+    1c98:	f9400063 	ldr	x3, [x3]
+    1c9c:	94000000 	bl	0 <fwrite>
+    1ca0:	a94153f3 	ldp	x19, x20, [sp,#16]
+    1ca4:	a9425bf5 	ldp	x21, x22, [sp,#32]
+    1ca8:	a8cc7bfd 	ldp	x29, x30, [sp],#192
+    1cac:	d65f03c0 	ret
+    1cb0:	aa1503e1 	mov	x1, x21
+    1cb4:	91000280 	add	x0, x20, #0x0
+    1cb8:	97fffcf6 	bl	1090 <copyFileName>
+    1cbc:	b9400263 	ldr	w3, [x19]
+    1cc0:	7100047f 	cmp	w3, #0x1
+    1cc4:	54fff7c1 	b.ne	1bbc <testf+0x58>
+    1cc8:	90000013 	adrp	x19, 0 <stdin>
+    1ccc:	f9400260 	ldr	x0, [x19]
+    1cd0:	94000000 	bl	0 <fileno>
+    1cd4:	94000000 	bl	0 <isatty>
+    1cd8:	350005e0 	cbnz	w0, 1d94 <testf+0x230>
+    1cdc:	f9400273 	ldr	x19, [x19]
+    1ce0:	17ffffd3 	b	1c2c <testf+0xc8>
+    1ce4:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1ce8:	91000280 	add	x0, x20, #0x0
+    1cec:	91000021 	add	x1, x1, #0x0
+    1cf0:	97fffce8 	bl	1090 <copyFileName>
+    1cf4:	b9400263 	ldr	w3, [x19]
+    1cf8:	17fffff2 	b	1cc0 <testf+0x15c>
+    1cfc:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+    1d00:	91000000 	add	x0, x0, #0x0
+    1d04:	97fff9d8 	bl	464 <panic>
+    1d08:	b9400260 	ldr	w0, [x19]
+    1d0c:	7100041f 	cmp	w0, #0x1
+    1d10:	54fff3c0 	b.eq	1b88 <testf+0x24>
+    1d14:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+    1d18:	91000000 	add	x0, x0, #0x0
+    1d1c:	97fff9d2 	bl	464 <panic>
+    1d20:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    1d24:	52800021 	mov	w1, #0x1                   	// #1
+    1d28:	a94153f3 	ldp	x19, x20, [sp,#16]
+    1d2c:	a9425bf5 	ldp	x21, x22, [sp,#32]
+    1d30:	39000001 	strb	w1, [x0]
+    1d34:	a8cc7bfd 	ldp	x29, x30, [sp],#192
+    1d38:	d65f03c0 	ret
+    1d3c:	90000000 	adrp	x0, 0 <stderr>
+    1d40:	f9400013 	ldr	x19, [x0]
+    1d44:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    1d48:	f9400002 	ldr	x2, [x0]
+    1d4c:	f9001fa2 	str	x2, [x29,#56]
+    1d50:	94000000 	bl	0 <__errno_location>
+    1d54:	b9400000 	ldr	w0, [x0]
+    1d58:	94000000 	bl	0 <strerror>
+    1d5c:	aa0003e4 	mov	x4, x0
+    1d60:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1d64:	f9401fa2 	ldr	x2, [x29,#56]
+    1d68:	aa1503e3 	mov	x3, x21
+    1d6c:	91000021 	add	x1, x1, #0x0
+    1d70:	aa1303e0 	mov	x0, x19
+    1d74:	94000000 	bl	0 <fprintf>
+    1d78:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    1d7c:	b9400001 	ldr	w1, [x0]
+    1d80:	6b1f003f 	cmp	w1, wzr
+    1d84:	54fff8ec 	b.gt	1ca0 <testf+0x13c>
+    1d88:	52800021 	mov	w1, #0x1                   	// #1
+    1d8c:	b9000001 	str	w1, [x0]
+    1d90:	17ffffc4 	b	1ca0 <testf+0x13c>
+    1d94:	90000014 	adrp	x20, 8 <uInt64_toAscii+0x8>
+    1d98:	90000013 	adrp	x19, 0 <stderr>
+    1d9c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1da0:	91000021 	add	x1, x1, #0x0
+    1da4:	f9400282 	ldr	x2, [x20]
+    1da8:	f9400260 	ldr	x0, [x19]
+    1dac:	94000000 	bl	0 <fprintf>
+    1db0:	f9400283 	ldr	x3, [x20]
+    1db4:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1db8:	f9400260 	ldr	x0, [x19]
+    1dbc:	91000021 	add	x1, x1, #0x0
+    1dc0:	aa0303e2 	mov	x2, x3
+    1dc4:	94000000 	bl	0 <fprintf>
+    1dc8:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    1dcc:	b9400001 	ldr	w1, [x0]
+    1dd0:	6b1f003f 	cmp	w1, wzr
+    1dd4:	54fff66c 	b.gt	1ca0 <testf+0x13c>
+    1dd8:	17ffffec 	b	1d88 <testf+0x224>
+    1ddc:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    1de0:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1de4:	aa1503e3 	mov	x3, x21
+    1de8:	91000021 	add	x1, x1, #0x0
+    1dec:	f9400002 	ldr	x2, [x0]
+    1df0:	90000000 	adrp	x0, 0 <stderr>
+    1df4:	f9400000 	ldr	x0, [x0]
+    1df8:	17fffff3 	b	1dc4 <testf+0x260>
+    1dfc:	90000000 	adrp	x0, 0 <stderr>
+    1e00:	f9400013 	ldr	x19, [x0]
+    1e04:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    1e08:	f9400002 	ldr	x2, [x0]
+    1e0c:	f9001fa2 	str	x2, [x29,#56]
+    1e10:	94000000 	bl	0 <__errno_location>
+    1e14:	b9400000 	ldr	w0, [x0]
+    1e18:	94000000 	bl	0 <strerror>
+    1e1c:	aa0003e4 	mov	x4, x0
+    1e20:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1e24:	aa1503e3 	mov	x3, x21
+    1e28:	f9401fa2 	ldr	x2, [x29,#56]
+    1e2c:	91000021 	add	x1, x1, #0x0
+    1e30:	17ffffd0 	b	1d70 <testf+0x20c>
+
+0000000000001e34 <compress>:
+    1e34:	a9aa7bfd 	stp	x29, x30, [sp,#-352]!
+    1e38:	910003fd 	mov	x29, sp
+    1e3c:	f90023f9 	str	x25, [sp,#64]
+    1e40:	90000019 	adrp	x25, 1 <uInt64_toAscii+0x1>
+    1e44:	a90153f3 	stp	x19, x20, [sp,#16]
+    1e48:	a9025bf5 	stp	x21, x22, [sp,#32]
+    1e4c:	a90363f7 	stp	x23, x24, [sp,#48]
+    1e50:	3900033f 	strb	wzr, [x25]
+    1e54:	aa0003f3 	mov	x19, x0
+    1e58:	90000015 	adrp	x21, 4 <uInt64_toAscii+0x4>
+    1e5c:	b4000ba0 	cbz	x0, 1fd0 <compress+0x19c>
+    1e60:	b94002a2 	ldr	w2, [x21]
+    1e64:	7100085f 	cmp	w2, #0x2
+    1e68:	54000d20 	b.eq	200c <compress+0x1d8>
+    1e6c:	71000c5f 	cmp	w2, #0x3
+    1e70:	54000460 	b.eq	1efc <compress+0xc8>
+    1e74:	7100045f 	cmp	w2, #0x1
+    1e78:	54000b20 	b.eq	1fdc <compress+0x1a8>
+    1e7c:	90000017 	adrp	x23, 40a <showFileNames.part.1+0xa>
+    1e80:	910002f3 	add	x19, x23, #0x0
+    1e84:	aa1303e0 	mov	x0, x19
+    1e88:	97fff941 	bl	38c <fileExists>
+    1e8c:	53001c00 	uxtb	w0, w0
+    1e90:	340006a0 	cbz	w0, 1f64 <compress+0x130>
+    1e94:	d2800013 	mov	x19, #0x0                   	// #0
+    1e98:	90000018 	adrp	x24, 0 <uInt64_toAscii>
+    1e9c:	910002f6 	add	x22, x23, #0x0
+    1ea0:	91000302 	add	x2, x24, #0x0
+    1ea4:	aa1603e0 	mov	x0, x22
+    1ea8:	f8626a74 	ldr	x20, [x19,x2]
+    1eac:	aa1403e1 	mov	x1, x20
+    1eb0:	97fff87f 	bl	ac <hasSuffix>
+    1eb4:	53001c00 	uxtb	w0, w0
+    1eb8:	35001900 	cbnz	w0, 21d8 <compress+0x3a4>
+    1ebc:	91002273 	add	x19, x19, #0x8
+    1ec0:	f100827f 	cmp	x19, #0x20
+    1ec4:	54fffee1 	b.ne	1ea0 <compress+0x6c>
+    1ec8:	b94002a0 	ldr	w0, [x21]
+    1ecc:	51000801 	sub	w1, w0, #0x2
+    1ed0:	7100043f 	cmp	w1, #0x1
+    1ed4:	540019c9 	b.ls	220c <compress+0x3d8>
+    1ed8:	7100081f 	cmp	w0, #0x2
+    1edc:	540009e0 	b.eq	2018 <compress+0x1e4>
+    1ee0:	71000c1f 	cmp	w0, #0x3
+    1ee4:	540013a0 	b.eq	2158 <compress+0x324>
+    1ee8:	7100041f 	cmp	w0, #0x1
+    1eec:	54001020 	b.eq	20f0 <compress+0x2bc>
+    1ef0:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+    1ef4:	91000000 	add	x0, x0, #0x0
+    1ef8:	97fff95b 	bl	464 <panic>
+    1efc:	90000017 	adrp	x23, 40a <showFileNames.part.1+0xa>
+    1f00:	aa0003e1 	mov	x1, x0
+    1f04:	910002e0 	add	x0, x23, #0x0
+    1f08:	90000014 	adrp	x20, 40a <showFileNames.part.1+0xa>
+    1f0c:	91000294 	add	x20, x20, #0x0
+    1f10:	97fffc60 	bl	1090 <copyFileName>
+    1f14:	aa1303e1 	mov	x1, x19
+    1f18:	aa1403e0 	mov	x0, x20
+    1f1c:	97fffc5d 	bl	1090 <copyFileName>
+    1f20:	aa1403e0 	mov	x0, x20
+    1f24:	94000000 	bl	0 <strlen>
+    1f28:	8b140003 	add	x3, x0, x20
+    1f2c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1f30:	b94002a2 	ldr	w2, [x21]
+    1f34:	91000021 	add	x1, x1, #0x0
+    1f38:	b9400024 	ldr	w4, [x1]
+    1f3c:	b8346804 	str	w4, [x0,x20]
+    1f40:	b8401020 	ldr	w0, [x1,#1]
+    1f44:	b8001060 	str	w0, [x3,#1]
+    1f48:	7100045f 	cmp	w2, #0x1
+    1f4c:	54fffa40 	b.eq	1e94 <compress+0x60>
+    1f50:	910002f3 	add	x19, x23, #0x0
+    1f54:	aa1303e0 	mov	x0, x19
+    1f58:	97fff90d 	bl	38c <fileExists>
+    1f5c:	53001c00 	uxtb	w0, w0
+    1f60:	35fff9a0 	cbnz	w0, 1e94 <compress+0x60>
+    1f64:	90000000 	adrp	x0, 0 <stderr>
+    1f68:	f9400014 	ldr	x20, [x0]
+    1f6c:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    1f70:	f9400002 	ldr	x2, [x0]
+    1f74:	f9002fa2 	str	x2, [x29,#88]
+    1f78:	94000000 	bl	0 <__errno_location>
+    1f7c:	b9400000 	ldr	w0, [x0]
+    1f80:	94000000 	bl	0 <strerror>
+    1f84:	aa0003e4 	mov	x4, x0
+    1f88:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1f8c:	f9402fa2 	ldr	x2, [x29,#88]
+    1f90:	aa1303e3 	mov	x3, x19
+    1f94:	91000021 	add	x1, x1, #0x0
+    1f98:	aa1403e0 	mov	x0, x20
+    1f9c:	94000000 	bl	0 <fprintf>
+    1fa0:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    1fa4:	b9400001 	ldr	w1, [x0]
+    1fa8:	6b1f003f 	cmp	w1, wzr
+    1fac:	5400082c 	b.gt	20b0 <compress+0x27c>
+    1fb0:	52800021 	mov	w1, #0x1                   	// #1
+    1fb4:	f94023f9 	ldr	x25, [sp,#64]
+    1fb8:	a94153f3 	ldp	x19, x20, [sp,#16]
+    1fbc:	a9425bf5 	ldp	x21, x22, [sp,#32]
+    1fc0:	a94363f7 	ldp	x23, x24, [sp,#48]
+    1fc4:	b9000001 	str	w1, [x0]
+    1fc8:	a8d67bfd 	ldp	x29, x30, [sp],#352
+    1fcc:	d65f03c0 	ret
+    1fd0:	b94002a0 	ldr	w0, [x21]
+    1fd4:	7100041f 	cmp	w0, #0x1
+    1fd8:	540023e1 	b.ne	2454 <compress+0x620>
+    1fdc:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1fe0:	90000017 	adrp	x23, 40a <showFileNames.part.1+0xa>
+    1fe4:	91000021 	add	x1, x1, #0x0
+    1fe8:	910002e0 	add	x0, x23, #0x0
+    1fec:	97fffc29 	bl	1090 <copyFileName>
+    1ff0:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    1ff4:	90000000 	adrp	x0, 40a <showFileNames.part.1+0xa>
+    1ff8:	91000021 	add	x1, x1, #0x0
+    1ffc:	91000000 	add	x0, x0, #0x0
+    2000:	97fffc24 	bl	1090 <copyFileName>
+    2004:	b94002a2 	ldr	w2, [x21]
+    2008:	17ffffd0 	b	1f48 <compress+0x114>
+    200c:	90000017 	adrp	x23, 40a <showFileNames.part.1+0xa>
+    2010:	aa0003e1 	mov	x1, x0
+    2014:	17fffff5 	b	1fe8 <compress+0x1b4>
+    2018:	910002f6 	add	x22, x23, #0x0
+    201c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    2020:	91000021 	add	x1, x1, #0x0
+    2024:	aa1603e0 	mov	x0, x22
+    2028:	94000000 	bl	0 <fopen64>
+    202c:	aa0003f4 	mov	x20, x0
+    2030:	90000000 	adrp	x0, 0 <stdout>
+    2034:	f9400013 	ldr	x19, [x0]
+    2038:	aa1303e0 	mov	x0, x19
+    203c:	94000000 	bl	0 <fileno>
+    2040:	94000000 	bl	0 <isatty>
+    2044:	35001960 	cbnz	w0, 2370 <compress+0x53c>
+    2048:	b4001e94 	cbz	x20, 2418 <compress+0x5e4>
+    204c:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    2050:	b9400000 	ldr	w0, [x0]
+    2054:	6b1f001f 	cmp	w0, wzr
+    2058:	5400014d 	b.le	2080 <compress+0x24c>
+    205c:	90000016 	adrp	x22, 0 <stderr>
+    2060:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    2064:	910002e2 	add	x2, x23, #0x0
+    2068:	91000021 	add	x1, x1, #0x0
+    206c:	f94002c0 	ldr	x0, [x22]
+    2070:	94000000 	bl	0 <fprintf>
+    2074:	97fffcd2 	bl	13bc <pad.constprop.12>
+    2078:	f94002c0 	ldr	x0, [x22]
+    207c:	94000000 	bl	0 <fflush>
+    2080:	90000016 	adrp	x22, 8 <uInt64_toAscii+0x8>
+    2084:	aa1403e0 	mov	x0, x20
+    2088:	52800022 	mov	w2, #0x1                   	// #1
+    208c:	aa1303e1 	mov	x1, x19
+    2090:	39000322 	strb	w2, [x25]
+    2094:	f90002d3 	str	x19, [x22]
+    2098:	97fff927 	bl	534 <compressStream>
+    209c:	b94002a0 	ldr	w0, [x21]
+    20a0:	f90002df 	str	xzr, [x22]
+    20a4:	71000c1f 	cmp	w0, #0x3
+    20a8:	54000100 	b.eq	20c8 <compress+0x294>
+    20ac:	3900033f 	strb	wzr, [x25]
+    20b0:	a94153f3 	ldp	x19, x20, [sp,#16]
+    20b4:	a9425bf5 	ldp	x21, x22, [sp,#32]
+    20b8:	a94363f7 	ldp	x23, x24, [sp,#48]
+    20bc:	f94023f9 	ldr	x25, [sp,#64]
+    20c0:	a8d67bfd 	ldp	x29, x30, [sp],#352
+    20c4:	d65f03c0 	ret
+    20c8:	97fffc78 	bl	12a8 <applySavedTimeInfoToOutputFile.constprop.7>
+    20cc:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    20d0:	3900001f 	strb	wzr, [x0]
+    20d4:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    20d8:	39400000 	ldrb	w0, [x0]
+    20dc:	35fffe80 	cbnz	w0, 20ac <compress+0x278>
+    20e0:	910002e0 	add	x0, x23, #0x0
+    20e4:	94000000 	bl	0 <remove>
+    20e8:	34fffe20 	cbz	w0, 20ac <compress+0x278>
+    20ec:	97fff8ef 	bl	4a8 <ioError>
+    20f0:	90000000 	adrp	x0, 0 <stdout>
+    20f4:	f9400013 	ldr	x19, [x0]
+    20f8:	90000000 	adrp	x0, 0 <stdin>
+    20fc:	f9400014 	ldr	x20, [x0]
+    2100:	aa1303e0 	mov	x0, x19
+    2104:	94000000 	bl	0 <fileno>
+    2108:	94000000 	bl	0 <isatty>
+    210c:	34fffa00 	cbz	w0, 204c <compress+0x218>
+    2110:	90000014 	adrp	x20, 8 <uInt64_toAscii+0x8>
+    2114:	90000013 	adrp	x19, 0 <stderr>
+    2118:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    211c:	91000021 	add	x1, x1, #0x0
+    2120:	f9400282 	ldr	x2, [x20]
+    2124:	f9400260 	ldr	x0, [x19]
+    2128:	94000000 	bl	0 <fprintf>
+    212c:	f9400283 	ldr	x3, [x20]
+    2130:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    2134:	f9400260 	ldr	x0, [x19]
+    2138:	91000021 	add	x1, x1, #0x0
+    213c:	aa0303e2 	mov	x2, x3
+    2140:	94000000 	bl	0 <fprintf>
+    2144:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    2148:	b9400001 	ldr	w1, [x0]
+    214c:	6b1f003f 	cmp	w1, wzr
+    2150:	54fffb0c 	b.gt	20b0 <compress+0x27c>
+    2154:	17ffff97 	b	1fb0 <compress+0x17c>
+    2158:	910002f6 	add	x22, x23, #0x0
+    215c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    2160:	91000021 	add	x1, x1, #0x0
+    2164:	aa1603e0 	mov	x0, x22
+    2168:	94000000 	bl	0 <fopen64>
+    216c:	aa0003f4 	mov	x20, x0
+    2170:	97fffc7a 	bl	1358 <fopen_output_safely.constprop.11>
+    2174:	aa0003f3 	mov	x19, x0
+    2178:	b40012c0 	cbz	x0, 23d0 <compress+0x59c>
+    217c:	b5fff694 	cbnz	x20, 204c <compress+0x218>
+    2180:	90000000 	adrp	x0, 0 <stderr>
+    2184:	f9400014 	ldr	x20, [x0]
+    2188:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    218c:	f9400002 	ldr	x2, [x0]
+    2190:	f9002fa2 	str	x2, [x29,#88]
+    2194:	94000000 	bl	0 <__errno_location>
+    2198:	b9400000 	ldr	w0, [x0]
+    219c:	94000000 	bl	0 <strerror>
+    21a0:	aa0003e4 	mov	x4, x0
+    21a4:	f9402fa2 	ldr	x2, [x29,#88]
+    21a8:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    21ac:	91000021 	add	x1, x1, #0x0
+    21b0:	aa1603e3 	mov	x3, x22
+    21b4:	aa1403e0 	mov	x0, x20
+    21b8:	94000000 	bl	0 <fprintf>
+    21bc:	aa1303e0 	mov	x0, x19
+    21c0:	94000000 	bl	0 <fclose>
+    21c4:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    21c8:	b9400001 	ldr	w1, [x0]
+    21cc:	6b1f003f 	cmp	w1, wzr
+    21d0:	54fff70c 	b.gt	20b0 <compress+0x27c>
+    21d4:	17ffff77 	b	1fb0 <compress+0x17c>
+    21d8:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    21dc:	39400000 	ldrb	w0, [x0]
+    21e0:	34ffee00 	cbz	w0, 1fa0 <compress+0x16c>
+    21e4:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    21e8:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    21ec:	aa1403e4 	mov	x4, x20
+    21f0:	aa1603e3 	mov	x3, x22
+    21f4:	91000021 	add	x1, x1, #0x0
+    21f8:	f9400002 	ldr	x2, [x0]
+    21fc:	90000000 	adrp	x0, 0 <stderr>
+    2200:	f9400000 	ldr	x0, [x0]
+    2204:	94000000 	bl	0 <fprintf>
+    2208:	17ffff66 	b	1fa0 <compress+0x16c>
+    220c:	910183a2 	add	x2, x29, #0x60
+    2210:	aa1603e1 	mov	x1, x22
+    2214:	52800000 	mov	w0, #0x0                   	// #0
+    2218:	94000000 	bl	0 <__xstat64>
+    221c:	b94073a0 	ldr	w0, [x29,#112]
+    2220:	12140c00 	and	w0, w0, #0xf000
+    2224:	7140101f 	cmp	w0, #0x4, lsl #12
+    2228:	54000c60 	b.eq	23b4 <compress+0x580>
+    222c:	b94002a0 	ldr	w0, [x21]
+    2230:	71000c1f 	cmp	w0, #0x3
+    2234:	54ffe521 	b.ne	1ed8 <compress+0xa4>
+    2238:	90000013 	adrp	x19, 1 <uInt64_toAscii+0x1>
+    223c:	39400260 	ldrb	w0, [x19]
+    2240:	34000260 	cbz	w0, 228c <compress+0x458>
+    2244:	90000014 	adrp	x20, 40a <showFileNames.part.1+0xa>
+    2248:	91000294 	add	x20, x20, #0x0
+    224c:	aa1403e0 	mov	x0, x20
+    2250:	97fff84f 	bl	38c <fileExists>
+    2254:	53001c00 	uxtb	w0, w0
+    2258:	340000a0 	cbz	w0, 226c <compress+0x438>
+    225c:	39400260 	ldrb	w0, [x19]
+    2260:	34000700 	cbz	w0, 2340 <compress+0x50c>
+    2264:	aa1403e0 	mov	x0, x20
+    2268:	94000000 	bl	0 <remove>
+    226c:	b94002a0 	ldr	w0, [x21]
+    2270:	71000c1f 	cmp	w0, #0x3
+    2274:	54ffe321 	b.ne	1ed8 <compress+0xa4>
+    2278:	39400260 	ldrb	w0, [x19]
+    227c:	34000260 	cbz	w0, 22c8 <compress+0x494>
+    2280:	97fffc1a 	bl	12e8 <saveInputFileMetaInfo.constprop.8>
+    2284:	b94002a0 	ldr	w0, [x21]
+    2288:	17ffff14 	b	1ed8 <compress+0xa4>
+    228c:	97fffc23 	bl	1318 <notAStandardFile.constprop.10>
+    2290:	53001c00 	uxtb	w0, w0
+    2294:	340004e0 	cbz	w0, 2330 <compress+0x4fc>
+    2298:	90000000 	adrp	x0, 1 <uInt64_toAscii+0x1>
+    229c:	39400000 	ldrb	w0, [x0]
+    22a0:	34ffe800 	cbz	w0, 1fa0 <compress+0x16c>
+    22a4:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    22a8:	aa1603e3 	mov	x3, x22
+    22ac:	91000021 	add	x1, x1, #0x0
+    22b0:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    22b4:	f9400002 	ldr	x2, [x0]
+    22b8:	90000000 	adrp	x0, 0 <stderr>
+    22bc:	f9400000 	ldr	x0, [x0]
+    22c0:	94000000 	bl	0 <fprintf>
+    22c4:	17ffff37 	b	1fa0 <compress+0x16c>
+    22c8:	910383a2 	add	x2, x29, #0xe0
+    22cc:	910002e1 	add	x1, x23, #0x0
+    22d0:	52800000 	mov	w0, #0x0                   	// #0
+    22d4:	94000000 	bl	0 <__lxstat64>
+    22d8:	35000440 	cbnz	w0, 2360 <compress+0x52c>
+    22dc:	b940f7a4 	ldr	w4, [x29,#244]
+    22e0:	51000484 	sub	w4, w4, #0x1
+    22e4:	6b1f009f 	cmp	w4, wzr
+    22e8:	540003cd 	b.le	2360 <compress+0x52c>
+    22ec:	90000000 	adrp	x0, 0 <stderr>
+    22f0:	90000001 	adrp	x1, 8 <uInt64_toAscii+0x8>
+    22f4:	7100049f 	cmp	w4, #0x1
+    22f8:	f9400000 	ldr	x0, [x0]
+    22fc:	f9400022 	ldr	x2, [x1]
+    2300:	54000620 	b.eq	23c4 <compress+0x590>
+    2304:	90000005 	adrp	x5, 0 <uInt64_toAscii>
+    2308:	910000a5 	add	x5, x5, #0x0
+    230c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    2310:	910002e3 	add	x3, x23, #0x0
+    2314:	91000021 	add	x1, x1, #0x0
+    2318:	94000000 	bl	0 <fprintf>
+    231c:	90000000 	adrp	x0, 4 <uInt64_toAscii+0x4>
+    2320:	b9400001 	ldr	w1, [x0]
+    2324:	6b1f003f 	cmp	w1, wzr
+    2328:	54ffec4c 	b.gt	20b0 <compress+0x27c>
+    232c:	17ffff21 	b	1fb0 <compress+0x17c>
+    2330:	b94002a0 	ldr	w0, [x21]
+    2334:	71000c1f 	cmp	w0, #0x3
+    2338:	54ffdd01 	b.ne	1ed8 <compress+0xa4>
+    233c:	17ffffc2 	b	2244 <compress+0x410>
+    2340:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    2344:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    2348:	aa1403e3 	mov	x3, x20
+    234c:	91000021 	add	x1, x1, #0x0
+    2350:	f9400002 	ldr	x2, [x0]
+    2354:	90000000 	adrp	x0, 0 <stderr>
+    2358:	f9400000 	ldr	x0, [x0]
+    235c:	17ffff79 	b	2140 <compress+0x30c>
+    2360:	b94002a0 	ldr	w0, [x21]
+    2364:	71000c1f 	cmp	w0, #0x3
+    2368:	54ffdb81 	b.ne	1ed8 <compress+0xa4>
+    236c:	17ffffc5 	b	2280 <compress+0x44c>
+    2370:	90000015 	adrp	x21, 8 <uInt64_toAscii+0x8>
+    2374:	90000013 	adrp	x19, 0 <stderr>
+    2378:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    237c:	91000021 	add	x1, x1, #0x0
+    2380:	f94002a2 	ldr	x2, [x21]
+    2384:	f9400260 	ldr	x0, [x19]
+    2388:	94000000 	bl	0 <fprintf>
+    238c:	f94002a3 	ldr	x3, [x21]
+    2390:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    2394:	f9400260 	ldr	x0, [x19]
+    2398:	91000021 	add	x1, x1, #0x0
+    239c:	aa0303e2 	mov	x2, x3
+    23a0:	94000000 	bl	0 <fprintf>
+    23a4:	b4ffdff4 	cbz	x20, 1fa0 <compress+0x16c>
+    23a8:	aa1403e0 	mov	x0, x20
+    23ac:	94000000 	bl	0 <fclose>
+    23b0:	17fffefc 	b	1fa0 <compress+0x16c>
+    23b4:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    23b8:	aa1603e3 	mov	x3, x22
+    23bc:	91000021 	add	x1, x1, #0x0
+    23c0:	17ffffbc 	b	22b0 <compress+0x47c>
+    23c4:	90000005 	adrp	x5, 0 <uInt64_toAscii>
+    23c8:	910000a5 	add	x5, x5, #0x0
+    23cc:	17ffffd0 	b	230c <compress+0x4d8>
+    23d0:	90000000 	adrp	x0, 0 <stderr>
+    23d4:	f9400013 	ldr	x19, [x0]
+    23d8:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    23dc:	f9400002 	ldr	x2, [x0]
+    23e0:	f9002fa2 	str	x2, [x29,#88]
+    23e4:	94000000 	bl	0 <__errno_location>
+    23e8:	b9400000 	ldr	w0, [x0]
+    23ec:	94000000 	bl	0 <strerror>
+    23f0:	aa0003e4 	mov	x4, x0
+    23f4:	90000003 	adrp	x3, 40a <showFileNames.part.1+0xa>
+    23f8:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    23fc:	f9402fa2 	ldr	x2, [x29,#88]
+    2400:	91000063 	add	x3, x3, #0x0
+    2404:	91000021 	add	x1, x1, #0x0
+    2408:	aa1303e0 	mov	x0, x19
+    240c:	94000000 	bl	0 <fprintf>
+    2410:	b5fffcd4 	cbnz	x20, 23a8 <compress+0x574>
+    2414:	17fffee3 	b	1fa0 <compress+0x16c>
+    2418:	90000000 	adrp	x0, 0 <stderr>
+    241c:	f9400013 	ldr	x19, [x0]
+    2420:	90000000 	adrp	x0, 8 <uInt64_toAscii+0x8>
+    2424:	f9400002 	ldr	x2, [x0]
+    2428:	f9002fa2 	str	x2, [x29,#88]
+    242c:	94000000 	bl	0 <__errno_location>
+    2430:	b9400000 	ldr	w0, [x0]
+    2434:	94000000 	bl	0 <strerror>
+    2438:	aa0003e4 	mov	x4, x0
+    243c:	90000001 	adrp	x1, 0 <uInt64_toAscii>
+    2440:	aa1603e3 	mov	x3, x22
+    2444:	f9402fa2 	ldr	x2, [x29,#88]
+    2448:	91000021 	add	x1, x1, #0x0
+    244c:	aa1303e0 	mov	x0, x19
+    2450:	17fffed3 	b	1f9c <compress+0x168>
+    2454:	90000000 	adrp	x0, 0 <uInt64_toAscii>
+    2458:	91000000 	add	x0, x0, #0x0
+    245c:	97fff802 	bl	464 <panic>
+
+Disassembly of section .text.startup:
+
+0000000000000000 <main>:
+   0:	a9b77bfd 	stp	x29, x30, [sp,#-144]!
+   4:	90000002 	adrp	x2, 0 <main>
+   8:	52800024 	mov	w4, #0x1                   	// #1
+   c:	910003fd 	mov	x29, sp
+  10:	a90573fb 	stp	x27, x28, [sp,#80]
+  14:	9100005b 	add	x27, x2, #0x0
+  18:	90000002 	adrp	x2, 1 <main+0x1>
+  1c:	a90363f7 	stp	x23, x24, [sp,#48]
+  20:	90000018 	adrp	x24, 4 <main+0x4>
+  24:	90000003 	adrp	x3, 8 <main+0x8>
+  28:	3900005f 	strb	wzr, [x2]
+  2c:	90000002 	adrp	x2, 1 <main+0x1>
+  30:	a9025bf5 	stp	x21, x22, [sp,#32]
+  34:	90000017 	adrp	x23, 4 <main+0x4>
+  38:	90000015 	adrp	x21, 4 <main+0x4>
+  3c:	3900005f 	strb	wzr, [x2]
+  40:	90000002 	adrp	x2, 1 <main+0x1>
+  44:	a90153f3 	stp	x19, x20, [sp,#16]
+  48:	2a0003f6 	mov	w22, w0
+  4c:	aa0103f3 	mov	x19, x1
+  50:	3900005f 	strb	wzr, [x2]
+  54:	90000002 	adrp	x2, 1 <main+0x1>
+  58:	aa1b03e1 	mov	x1, x27
+  5c:	52800160 	mov	w0, #0xb                   	// #11
+  60:	f900007f 	str	xzr, [x3]
+  64:	90000014 	adrp	x20, 8 <main+0x8>
+  68:	39000044 	strb	w4, [x2]
+  6c:	90000002 	adrp	x2, 1 <main+0x1>
+  70:	52800124 	mov	w4, #0x9                   	// #9
+  74:	b9000304 	str	w4, [x24]
+  78:	528003c4 	mov	w4, #0x1e                  	// #30
+  7c:	b90002ff 	str	wzr, [x23]
+  80:	3900005f 	strb	wzr, [x2]
+  84:	90000002 	adrp	x2, 1 <main+0x1>
+  88:	fd0033e8 	str	d8, [sp,#96]
+  8c:	b90002bf 	str	wzr, [x21]
+  90:	a9046bf9 	stp	x25, x26, [sp,#64]
+  94:	3900005f 	strb	wzr, [x2]
+  98:	90000002 	adrp	x2, 4 <main+0x4>
+  9c:	9000001a 	adrp	x26, 40a <main+0x40a>
+  a0:	91000359 	add	x25, x26, #0x0
+  a4:	b900005f 	str	wzr, [x2]
+  a8:	90000002 	adrp	x2, 4 <main+0x4>
+  ac:	b9000044 	str	w4, [x2]
+  b0:	90000004 	adrp	x4, 1 <main+0x1>
+  b4:	90000002 	adrp	x2, 4 <main+0x4>
+  b8:	3900009f 	strb	wzr, [x4]
+  bc:	b900005f 	str	wzr, [x2]
+  c0:	94000000 	bl	0 <signal>
+  c4:	aa1b03e1 	mov	x1, x27
+  c8:	528000e0 	mov	w0, #0x7                   	// #7
+  cc:	94000000 	bl	0 <signal>
+  d0:	90000002 	adrp	x2, 0 <main>
+  d4:	90000000 	adrp	x0, 40a <main+0x40a>
+  d8:	9100005b 	add	x27, x2, #0x0
+  dc:	91000000 	add	x0, x0, #0x0
+  e0:	aa1b03e1 	mov	x1, x27
+  e4:	94000000 	bl	0 <main>
+  e8:	90000000 	adrp	x0, 40a <main+0x40a>
+  ec:	aa1b03e1 	mov	x1, x27
+  f0:	91000000 	add	x0, x0, #0x0
+  f4:	94000000 	bl	0 <main>
+  f8:	f9400261 	ldr	x1, [x19]
+  fc:	aa1903e0 	mov	x0, x25
+ 100:	94000000 	bl	0 <main>
+ 104:	f9000299 	str	x25, [x20]
+ 108:	39400343 	ldrb	w3, [x26]
+ 10c:	34000123 	cbz	w3, 130 <main+0x130>
+ 110:	90000002 	adrp	x2, 40a <main+0x40a>
+ 114:	aa1903e0 	mov	x0, x25
+ 118:	91000042 	add	x2, x2, #0x0
+ 11c:	7100bc7f 	cmp	w3, #0x2f
+ 120:	9a821000 	csel	x0, x0, x2, ne
+ 124:	38401443 	ldrb	w3, [x2],#1
+ 128:	35ffffa3 	cbnz	w3, 11c <main+0x11c>
+ 12c:	f9000280 	str	x0, [x20]
+ 130:	910243b9 	add	x25, x29, #0x90
+ 134:	90000001 	adrp	x1, 0 <main>
+ 138:	91000021 	add	x1, x1, #0x0
+ 13c:	f81f8f3f 	str	xzr, [x25,#-8]!
+ 140:	aa1903e0 	mov	x0, x25
+ 144:	94000000 	bl	0 <main>
+ 148:	90000001 	adrp	x1, 0 <main>
+ 14c:	aa1903e0 	mov	x0, x25
+ 150:	91000021 	add	x1, x1, #0x0
+ 154:	94000000 	bl	0 <main>
+ 158:	710006df 	cmp	w22, #0x1
+ 15c:	5400310d 	b.le	77c <main+0x77c>
+ 160:	51000ac1 	sub	w1, w22, #0x2
+ 164:	f94047a0 	ldr	x0, [x29,#136]
+ 168:	91000821 	add	x1, x1, #0x2
+ 16c:	91002276 	add	x22, x19, #0x8
+ 170:	8b010e73 	add	x19, x19, x1, lsl #3
+ 174:	f84086c1 	ldr	x1, [x22],#8
+ 178:	94000000 	bl	0 <main>
+ 17c:	f90047a0 	str	x0, [x29,#136]
+ 180:	eb1302df 	cmp	x22, x19
+ 184:	54ffff81 	b.ne	174 <main+0x174>
+ 188:	aa0003f9 	mov	x25, x0
+ 18c:	90000004 	adrp	x4, 4 <main+0x4>
+ 190:	528000e0 	mov	w0, #0x7                   	// #7
+ 194:	b90002bf 	str	wzr, [x21]
+ 198:	b9000080 	str	w0, [x4]
+ 19c:	b40017b9 	cbz	x25, 490 <main+0x490>
+ 1a0:	aa1903f3 	mov	x19, x25
+ 1a4:	52800016 	mov	w22, #0x0                   	// #0
+ 1a8:	5280003c 	mov	w28, #0x1                   	// #1
+ 1ac:	910002bb 	add	x27, x21, #0x0
+ 1b0:	9100009a 	add	x26, x4, #0x0
+ 1b4:	1400000a 	b	1dc <main+0x1dc>
+ 1b8:	110006d6 	add	w22, w22, #0x1
+ 1bc:	b9000376 	str	w22, [x27]
+ 1c0:	94000000 	bl	0 <strlen>
+ 1c4:	b9400341 	ldr	w1, [x26]
+ 1c8:	6b01001f 	cmp	w0, w1
+ 1cc:	5400004d 	b.le	1d4 <main+0x1d4>
+ 1d0:	b9000340 	str	w0, [x26]
+ 1d4:	f9400673 	ldr	x19, [x19,#8]
+ 1d8:	b4000213 	cbz	x19, 218 <main+0x218>
+ 1dc:	f9400260 	ldr	x0, [x19]
+ 1e0:	39400001 	ldrb	w1, [x0]
+ 1e4:	7100b43f 	cmp	w1, #0x2d
+ 1e8:	54fffe81 	b.ne	1b8 <main+0x1b8>
+ 1ec:	39400401 	ldrb	w1, [x0,#1]
+ 1f0:	7100b43f 	cmp	w1, #0x2d
+ 1f4:	54000080 	b.eq	204 <main+0x204>
+ 1f8:	34fffe1c 	cbz	w28, 1b8 <main+0x1b8>
+ 1fc:	5280003c 	mov	w28, #0x1                   	// #1
+ 200:	17fffff5 	b	1d4 <main+0x1d4>
+ 204:	39400801 	ldrb	w1, [x0,#2]
+ 208:	35ffff81 	cbnz	w1, 1f8 <main+0x1f8>
+ 20c:	f9400673 	ldr	x19, [x19,#8]
+ 210:	5280001c 	mov	w28, #0x0                   	// #0
+ 214:	b5fffe53 	cbnz	x19, 1dc <main+0x1dc>
+ 218:	2a1603fa 	mov	w26, w22
+ 21c:	340013b6 	cbz	w22, 490 <main+0x490>
+ 220:	90000016 	adrp	x22, 4 <main+0x4>
+ 224:	52800060 	mov	w0, #0x3                   	// #3
+ 228:	b90002c0 	str	w0, [x22]
+ 22c:	f940029b 	ldr	x27, [x20]
+ 230:	90000013 	adrp	x19, 4 <main+0x4>
+ 234:	90000001 	adrp	x1, 0 <main>
+ 238:	52800023 	mov	w3, #0x1                   	// #1
+ 23c:	91000021 	add	x1, x1, #0x0
+ 240:	aa1b03e0 	mov	x0, x27
+ 244:	b9000263 	str	w3, [x19]
+ 248:	94000000 	bl	0 <strstr>
+ 24c:	b4002460 	cbz	x0, 6d8 <main+0x6d8>
+ 250:	52800040 	mov	w0, #0x2                   	// #2
+ 254:	b9000260 	str	w0, [x19]
+ 258:	90000001 	adrp	x1, 0 <main>
+ 25c:	aa1b03e0 	mov	x0, x27
+ 260:	91000021 	add	x1, x1, #0x0
+ 264:	94000000 	bl	0 <strstr>
+ 268:	b4002440 	cbz	x0, 6f0 <main+0x6f0>
+ 26c:	52800040 	mov	w0, #0x2                   	// #2
+ 270:	6b1f035f 	cmp	w26, wzr
+ 274:	1a9f1401 	csinc	w1, w0, wzr, ne
+ 278:	b9000260 	str	w0, [x19]
+ 27c:	b90002c1 	str	w1, [x22]
+ 280:	b40005d9 	cbz	x25, 338 <main+0x338>
+ 284:	90000004 	adrp	x4, 0 <main>
+ 288:	910002fc 	add	x28, x23, #0x0
+ 28c:	9100009b 	add	x27, x4, #0x0
+ 290:	9100031a 	add	x26, x24, #0x0
+ 294:	52800122 	mov	w2, #0x9                   	// #9
+ 298:	f9400323 	ldr	x3, [x25]
+ 29c:	39400060 	ldrb	w0, [x3]
+ 2a0:	7100b41f 	cmp	w0, #0x2d
+ 2a4:	54000461 	b.ne	330 <main+0x330>
+ 2a8:	39400460 	ldrb	w0, [x3,#1]
+ 2ac:	7100b41f 	cmp	w0, #0x2d
+ 2b0:	54000061 	b.ne	2bc <main+0x2bc>
+ 2b4:	39400860 	ldrb	w0, [x3,#2]
+ 2b8:	34000400 	cbz	w0, 338 <main+0x338>
+ 2bc:	39400461 	ldrb	w1, [x3,#1]
+ 2c0:	7100b43f 	cmp	w1, #0x2d
+ 2c4:	54000360 	b.eq	330 <main+0x330>
+ 2c8:	34000341 	cbz	w1, 330 <main+0x330>
+ 2cc:	d2800040 	mov	x0, #0x2                   	// #2
+ 2d0:	52800107 	mov	w7, #0x8                   	// #8
+ 2d4:	5100c421 	sub	w1, w1, #0x31
+ 2d8:	7101243f 	cmp	w1, #0x49
+ 2dc:	54000169 	b.ls	308 <main+0x308>
+ 2e0:	f9400282 	ldr	x2, [x20]
+ 2e4:	90000000 	adrp	x0, 0 <stderr>
+ 2e8:	90000001 	adrp	x1, 0 <main>
+ 2ec:	91000021 	add	x1, x1, #0x0
+ 2f0:	f9400000 	ldr	x0, [x0]
+ 2f4:	94000000 	bl	0 <fprintf>
+ 2f8:	f9400280 	ldr	x0, [x20]
+ 2fc:	94000000 	bl	0 <main>
+ 300:	52800020 	mov	w0, #0x1                   	// #1
+ 304:	94000000 	bl	0 <exit>
+ 308:	78615b61 	ldrh	w1, [x27,w1,uxtw #1]
+ 30c:	10000064 	adr	x4, 318 <main+0x318>
+ 310:	8b21a881 	add	x1, x4, w1, sxth #2
+ 314:	d61f0020 	br	x1
+ 318:	52800021 	mov	w1, #0x1                   	// #1
+ 31c:	b9000261 	str	w1, [x19]
+ 320:	f9400323 	ldr	x3, [x25]
+ 324:	38606861 	ldrb	w1, [x3,x0]
+ 328:	91000400 	add	x0, x0, #0x1
+ 32c:	35fffd41 	cbnz	w1, 2d4 <main+0x2d4>
+ 330:	f9400739 	ldr	x25, [x25,#8]
+ 334:	b5fffb39 	cbnz	x25, 298 <main+0x298>
+ 338:	f94047b9 	ldr	x25, [x29,#136]
+ 33c:	b4000459 	cbz	x25, 3c4 <main+0x3c4>
+ 340:	90000000 	adrp	x0, 0 <main>
+ 344:	9100001a 	add	x26, x0, #0x0
+ 348:	90000000 	adrp	x0, 0 <main>
+ 34c:	9100001b 	add	x27, x0, #0x0
+ 350:	90000000 	adrp	x0, 0 <main>
+ 354:	91000000 	add	x0, x0, #0x0
+ 358:	9e670008 	fmov	d8, x0
+ 35c:	14000005 	b	370 <main+0x370>
+ 360:	52800040 	mov	w0, #0x2                   	// #2
+ 364:	b90002c0 	str	w0, [x22]
+ 368:	f9400739 	ldr	x25, [x25,#8]
+ 36c:	b40002d9 	cbz	x25, 3c4 <main+0x3c4>
+ 370:	f940033c 	ldr	x28, [x25]
+ 374:	39400380 	ldrb	w0, [x28]
+ 378:	7100b41f 	cmp	w0, #0x2d
+ 37c:	540000c1 	b.ne	394 <main+0x394>
+ 380:	39400780 	ldrb	w0, [x28,#1]
+ 384:	7100b41f 	cmp	w0, #0x2d
+ 388:	54000061 	b.ne	394 <main+0x394>
+ 38c:	39400b80 	ldrb	w0, [x28,#2]
+ 390:	340001a0 	cbz	w0, 3c4 <main+0x3c4>
+ 394:	aa1a03e1 	mov	x1, x26
+ 398:	aa1c03e0 	mov	x0, x28
+ 39c:	94000000 	bl	0 <strcmp>
+ 3a0:	34fffe00 	cbz	w0, 360 <main+0x360>
+ 3a4:	aa1b03e1 	mov	x1, x27
+ 3a8:	aa1c03e0 	mov	x0, x28
+ 3ac:	94000000 	bl	0 <strcmp>
+ 3b0:	35000fc0 	cbnz	w0, 5a8 <main+0x5a8>
+ 3b4:	f9400739 	ldr	x25, [x25,#8]
+ 3b8:	52800040 	mov	w0, #0x2                   	// #2
+ 3bc:	b9000260 	str	w0, [x19]
+ 3c0:	b5fffd99 	cbnz	x25, 370 <main+0x370>
+ 3c4:	b94002e0 	ldr	w0, [x23]
+ 3c8:	7100101f 	cmp	w0, #0x4
+ 3cc:	5400008d 	b.le	3dc <main+0x3dc>
+ 3d0:	90000000 	adrp	x0, 4 <main+0x4>
+ 3d4:	52800081 	mov	w1, #0x4                   	// #4
+ 3d8:	b9000001 	str	w1, [x0]
+ 3dc:	b9400260 	ldr	w0, [x19]
+ 3e0:	7100041f 	cmp	w0, #0x1
+ 3e4:	54001240 	b.eq	62c <main+0x62c>
+ 3e8:	71000c1f 	cmp	w0, #0x3
+ 3ec:	b94002c0 	ldr	w0, [x22]
+ 3f0:	54001e40 	b.eq	7b8 <main+0x7b8>
+ 3f4:	7100081f 	cmp	w0, #0x2
+ 3f8:	54002300 	b.eq	858 <main+0x858>
+ 3fc:	b900031f 	str	wzr, [x24]
+ 400:	b94002c0 	ldr	w0, [x22]
+ 404:	71000c1f 	cmp	w0, #0x3
+ 408:	54002980 	b.eq	938 <main+0x938>
+ 40c:	b9400260 	ldr	w0, [x19]
+ 410:	7100041f 	cmp	w0, #0x1
+ 414:	54001e60 	b.eq	7e0 <main+0x7e0>
+ 418:	7100081f 	cmp	w0, #0x2
+ 41c:	b94002c0 	ldr	w0, [x22]
+ 420:	540022e0 	b.eq	87c <main+0x87c>
+ 424:	90000001 	adrp	x1, 1 <main+0x1>
+ 428:	7100041f 	cmp	w0, #0x1
+ 42c:	3900003f 	strb	wzr, [x1]
+ 430:	54001800 	b.eq	730 <main+0x730>
+ 434:	f94047b4 	ldr	x20, [x29,#136]
+ 438:	aa1403f3 	mov	x19, x20
+ 43c:	b4001294 	cbz	x20, 68c <main+0x68c>
+ 440:	90000000 	adrp	x0, 4 <main+0x4>
+ 444:	52800033 	mov	w19, #0x1                   	// #1
+ 448:	91000016 	add	x22, x0, #0x0
+ 44c:	14000007 	b	468 <main+0x468>
+ 450:	b94002c1 	ldr	w1, [x22]
+ 454:	11000421 	add	w1, w1, #0x1
+ 458:	b90002c1 	str	w1, [x22]
+ 45c:	94000000 	bl	0 <main>
+ 460:	f9400694 	ldr	x20, [x20,#8]
+ 464:	b40016b4 	cbz	x20, 738 <main+0x738>
+ 468:	f9400280 	ldr	x0, [x20]
+ 46c:	39400001 	ldrb	w1, [x0]
+ 470:	7100b43f 	cmp	w1, #0x2d
+ 474:	54fffee1 	b.ne	450 <main+0x450>
+ 478:	39400401 	ldrb	w1, [x0,#1]
+ 47c:	7100b43f 	cmp	w1, #0x2d
+ 480:	54000f80 	b.eq	670 <main+0x670>
+ 484:	34fffe73 	cbz	w19, 450 <main+0x450>
+ 488:	52800033 	mov	w19, #0x1                   	// #1
+ 48c:	17fffff5 	b	460 <main+0x460>
+ 490:	90000016 	adrp	x22, 4 <main+0x4>
+ 494:	52800020 	mov	w0, #0x1                   	// #1
+ 498:	5280001a 	mov	w26, #0x0                   	// #0
+ 49c:	b90002c0 	str	w0, [x22]
+ 4a0:	17ffff63 	b	22c <main+0x22c>
+ 4a4:	b9400381 	ldr	w1, [x28]
+ 4a8:	11000421 	add	w1, w1, #0x1
+ 4ac:	b9000381 	str	w1, [x28]
+ 4b0:	17ffff9c 	b	320 <main+0x320>
+ 4b4:	52800061 	mov	w1, #0x3                   	// #3
+ 4b8:	b9000261 	str	w1, [x19]
+ 4bc:	17ffff99 	b	320 <main+0x320>
+ 4c0:	90000003 	adrp	x3, 1 <main+0x1>
+ 4c4:	52800021 	mov	w1, #0x1                   	// #1
+ 4c8:	39000061 	strb	w1, [x3]
+ 4cc:	17ffff95 	b	320 <main+0x320>
+ 4d0:	90000001 	adrp	x1, 1 <main+0x1>
+ 4d4:	3900003f 	strb	wzr, [x1]
+ 4d8:	17ffff92 	b	320 <main+0x320>
+ 4dc:	90000003 	adrp	x3, 1 <main+0x1>
+ 4e0:	52800021 	mov	w1, #0x1                   	// #1
+ 4e4:	39000061 	strb	w1, [x3]
+ 4e8:	17ffff8e 	b	320 <main+0x320>
+ 4ec:	f9400280 	ldr	x0, [x20]
+ 4f0:	94000000 	bl	0 <main>
+ 4f4:	52800000 	mov	w0, #0x0                   	// #0
+ 4f8:	94000000 	bl	0 <exit>
+ 4fc:	90000003 	adrp	x3, 1 <main+0x1>
+ 500:	52800021 	mov	w1, #0x1                   	// #1
+ 504:	39000061 	strb	w1, [x3]
+ 508:	17ffff86 	b	320 <main+0x320>
+ 50c:	52800041 	mov	w1, #0x2                   	// #2
+ 510:	b9000261 	str	w1, [x19]
+ 514:	17ffff83 	b	320 <main+0x320>
+ 518:	52800041 	mov	w1, #0x2                   	// #2
+ 51c:	b90002c1 	str	w1, [x22]
+ 520:	17ffff80 	b	320 <main+0x320>
+ 524:	b90073a2 	str	w2, [x29,#112]
+ 528:	b90077a7 	str	w7, [x29,#116]
+ 52c:	f9003fa0 	str	x0, [x29,#120]
+ 530:	94000000 	bl	0 <main>
+ 534:	f9403fa0 	ldr	x0, [x29,#120]
+ 538:	b94077a7 	ldr	w7, [x29,#116]
+ 53c:	b94073a2 	ldr	w2, [x29,#112]
+ 540:	17ffff78 	b	320 <main+0x320>
+ 544:	b9000342 	str	w2, [x26]
+ 548:	17ffff76 	b	320 <main+0x320>
+ 54c:	b9000347 	str	w7, [x26]
+ 550:	17ffff74 	b	320 <main+0x320>
+ 554:	528000e1 	mov	w1, #0x7                   	// #7
+ 558:	b9000341 	str	w1, [x26]
+ 55c:	17ffff71 	b	320 <main+0x320>
+ 560:	528000c1 	mov	w1, #0x6                   	// #6
+ 564:	b9000341 	str	w1, [x26]
+ 568:	17ffff6e 	b	320 <main+0x320>
+ 56c:	528000a1 	mov	w1, #0x5                   	// #5
+ 570:	b9000341 	str	w1, [x26]
+ 574:	17ffff6b 	b	320 <main+0x320>
+ 578:	52800081 	mov	w1, #0x4                   	// #4
+ 57c:	b9000341 	str	w1, [x26]
+ 580:	17ffff68 	b	320 <main+0x320>
+ 584:	52800061 	mov	w1, #0x3                   	// #3
+ 588:	b9000341 	str	w1, [x26]
+ 58c:	17ffff65 	b	320 <main+0x320>
+ 590:	52800041 	mov	w1, #0x2                   	// #2
+ 594:	b9000341 	str	w1, [x26]
+ 598:	17ffff62 	b	320 <main+0x320>
+ 59c:	52800021 	mov	w1, #0x1                   	// #1
+ 5a0:	b9000341 	str	w1, [x26]
+ 5a4:	17ffff5f 	b	320 <main+0x320>
+ 5a8:	9e660101 	fmov	x1, d8
+ 5ac:	aa1c03e0 	mov	x0, x28
+ 5b0:	94000000 	bl	0 <strcmp>
+ 5b4:	35000080 	cbnz	w0, 5c4 <main+0x5c4>
+ 5b8:	52800020 	mov	w0, #0x1                   	// #1
+ 5bc:	b9000260 	str	w0, [x19]
+ 5c0:	17ffff6a 	b	368 <main+0x368>
+ 5c4:	90000001 	adrp	x1, 0 <main>
+ 5c8:	aa1c03e0 	mov	x0, x28
+ 5cc:	91000021 	add	x1, x1, #0x0
+ 5d0:	94000000 	bl	0 <strcmp>
+ 5d4:	350000a0 	cbnz	w0, 5e8 <main+0x5e8>
+ 5d8:	90000001 	adrp	x1, 1 <main+0x1>
+ 5dc:	52800020 	mov	w0, #0x1                   	// #1
+ 5e0:	39000020 	strb	w0, [x1]
+ 5e4:	17ffff61 	b	368 <main+0x368>
+ 5e8:	90000001 	adrp	x1, 0 <main>
+ 5ec:	aa1c03e0 	mov	x0, x28
+ 5f0:	91000021 	add	x1, x1, #0x0
+ 5f4:	94000000 	bl	0 <strcmp>
+ 5f8:	34000140 	cbz	w0, 620 <main+0x620>
+ 5fc:	90000001 	adrp	x1, 0 <main>
+ 600:	aa1c03e0 	mov	x0, x28
+ 604:	91000021 	add	x1, x1, #0x0
+ 608:	94000000 	bl	0 <strcmp>
+ 60c:	35000bc0 	cbnz	w0, 784 <main+0x784>
+ 610:	90000001 	adrp	x1, 1 <main+0x1>
+ 614:	52800020 	mov	w0, #0x1                   	// #1
+ 618:	39000020 	strb	w0, [x1]
+ 61c:	17ffff53 	b	368 <main+0x368>
+ 620:	52800060 	mov	w0, #0x3                   	// #3
+ 624:	b9000260 	str	w0, [x19]
+ 628:	17ffff50 	b	368 <main+0x368>
+ 62c:	90000000 	adrp	x0, 1 <main+0x1>
+ 630:	39400000 	ldrb	w0, [x0]
+ 634:	340000e0 	cbz	w0, 650 <main+0x650>
+ 638:	b9400300 	ldr	w0, [x24]
+ 63c:	7100081f 	cmp	w0, #0x2
+ 640:	5400008d 	b.le	650 <main+0x650>
+ 644:	90000000 	adrp	x0, 4 <main+0x4>
+ 648:	52800041 	mov	w1, #0x2                   	// #2
+ 64c:	b9000001 	str	w1, [x0]
+ 650:	b94002c0 	ldr	w0, [x22]
+ 654:	7100081f 	cmp	w0, #0x2
+ 658:	54ffed41 	b.ne	400 <main+0x400>
+ 65c:	b94002a0 	ldr	w0, [x21]
+ 660:	35ffed60 	cbnz	w0, 40c <main+0x40c>
+ 664:	52800020 	mov	w0, #0x1                   	// #1
+ 668:	b90002c0 	str	w0, [x22]
+ 66c:	17ffff68 	b	40c <main+0x40c>
+ 670:	39400801 	ldrb	w1, [x0,#2]
+ 674:	35fff081 	cbnz	w1, 484 <main+0x484>
+ 678:	52800013 	mov	w19, #0x0                   	// #0
+ 67c:	17ffff79 	b	460 <main+0x460>
+ 680:	d2800000 	mov	x0, #0x0                   	// #0
+ 684:	94000000 	bl	0 <main>
+ 688:	f94047b3 	ldr	x19, [x29,#136]
+ 68c:	b4000133 	cbz	x19, 6b0 <main+0x6b0>
+ 690:	f9400260 	ldr	x0, [x19]
+ 694:	f9400674 	ldr	x20, [x19,#8]
+ 698:	b4000040 	cbz	x0, 6a0 <main+0x6a0>
+ 69c:	94000000 	bl	0 <free>
+ 6a0:	aa1303e0 	mov	x0, x19
+ 6a4:	aa1403f3 	mov	x19, x20
+ 6a8:	94000000 	bl	0 <free>
+ 6ac:	b5ffff34 	cbnz	x20, 690 <main+0x690>
+ 6b0:	90000000 	adrp	x0, 4 <main+0x4>
+ 6b4:	a94153f3 	ldp	x19, x20, [sp,#16]
+ 6b8:	a9425bf5 	ldp	x21, x22, [sp,#32]
+ 6bc:	b9400000 	ldr	w0, [x0]
+ 6c0:	a94363f7 	ldp	x23, x24, [sp,#48]
+ 6c4:	a9446bf9 	ldp	x25, x26, [sp,#64]
+ 6c8:	a94573fb 	ldp	x27, x28, [sp,#80]
+ 6cc:	fd4033e8 	ldr	d8, [sp,#96]
+ 6d0:	a8c97bfd 	ldp	x29, x30, [sp],#144
+ 6d4:	d65f03c0 	ret
+ 6d8:	90000001 	adrp	x1, 0 <main>
+ 6dc:	aa1b03e0 	mov	x0, x27
+ 6e0:	91000021 	add	x1, x1, #0x0
+ 6e4:	94000000 	bl	0 <strstr>
+ 6e8:	b5ffdb40 	cbnz	x0, 250 <main+0x250>
+ 6ec:	17fffedb 	b	258 <main+0x258>
+ 6f0:	90000001 	adrp	x1, 0 <main>
+ 6f4:	aa1b03e0 	mov	x0, x27
+ 6f8:	91000021 	add	x1, x1, #0x0
+ 6fc:	94000000 	bl	0 <strstr>
+ 700:	b5ffdb60 	cbnz	x0, 26c <main+0x26c>
+ 704:	90000001 	adrp	x1, 0 <main>
+ 708:	aa1b03e0 	mov	x0, x27
+ 70c:	91000021 	add	x1, x1, #0x0
+ 710:	94000000 	bl	0 <strstr>
+ 714:	b5ffdac0 	cbnz	x0, 26c <main+0x26c>
+ 718:	90000001 	adrp	x1, 0 <main>
+ 71c:	aa1b03e0 	mov	x0, x27
+ 720:	91000021 	add	x1, x1, #0x0
+ 724:	94000000 	bl	0 <strstr>
+ 728:	b5ffda20 	cbnz	x0, 26c <main+0x26c>
+ 72c:	17fffed5 	b	280 <main+0x280>
+ 730:	d2800000 	mov	x0, #0x0                   	// #0
+ 734:	94000000 	bl	0 <main>
+ 738:	90000000 	adrp	x0, 1 <main+0x1>
+ 73c:	39400000 	ldrb	w0, [x0]
+ 740:	340001a0 	cbz	w0, 774 <main+0x774>
+ 744:	90000000 	adrp	x0, 1 <main+0x1>
+ 748:	f94047b3 	ldr	x19, [x29,#136]
+ 74c:	39400000 	ldrb	w0, [x0]
+ 750:	34fff9e0 	cbz	w0, 68c <main+0x68c>
+ 754:	90000003 	adrp	x3, 0 <stderr>
+ 758:	90000000 	adrp	x0, 0 <main>
+ 75c:	d2800e02 	mov	x2, #0x70                  	// #112
+ 760:	d2800021 	mov	x1, #0x1                   	// #1
+ 764:	91000000 	add	x0, x0, #0x0
+ 768:	f9400063 	ldr	x3, [x3]
+ 76c:	94000000 	bl	0 <fwrite>
+ 770:	14000068 	b	910 <main+0x910>
+ 774:	f94047b3 	ldr	x19, [x29,#136]
+ 778:	17ffffc5 	b	68c <main+0x68c>
+ 77c:	f94047b9 	ldr	x25, [x29,#136]
+ 780:	17fffe83 	b	18c <main+0x18c>
+ 784:	90000001 	adrp	x1, 0 <main>
+ 788:	aa1c03e0 	mov	x0, x28
+ 78c:	91000021 	add	x1, x1, #0x0
+ 790:	94000000 	bl	0 <strcmp>
+ 794:	340006c0 	cbz	w0, 86c <main+0x86c>
+ 798:	90000001 	adrp	x1, 0 <main>
+ 79c:	aa1c03e0 	mov	x0, x28
+ 7a0:	91000021 	add	x1, x1, #0x0
+ 7a4:	94000000 	bl	0 <strcmp>
+ 7a8:	35000e00 	cbnz	w0, 968 <main+0x968>
+ 7ac:	90000000 	adrp	x0, 1 <main+0x1>
+ 7b0:	3900001f 	strb	wzr, [x0]
+ 7b4:	17fffeed 	b	368 <main+0x368>
+ 7b8:	7100081f 	cmp	w0, #0x2
+ 7bc:	54ffe201 	b.ne	3fc <main+0x3fc>
+ 7c0:	90000000 	adrp	x0, 0 <stderr>
+ 7c4:	f9400282 	ldr	x2, [x20]
+ 7c8:	90000001 	adrp	x1, 0 <main>
+ 7cc:	91000021 	add	x1, x1, #0x0
+ 7d0:	f9400000 	ldr	x0, [x0]
+ 7d4:	94000000 	bl	0 <fprintf>
+ 7d8:	52800020 	mov	w0, #0x1                   	// #1
+ 7dc:	94000000 	bl	0 <exit>
+ 7e0:	b94002c1 	ldr	w1, [x22]
+ 7e4:	7100043f 	cmp	w1, #0x1
+ 7e8:	54fff4c0 	b.eq	680 <main+0x680>
+ 7ec:	2a0003f4 	mov	w20, w0
+ 7f0:	f94047b3 	ldr	x19, [x29,#136]
+ 7f4:	90000000 	adrp	x0, 4 <main+0x4>
+ 7f8:	91000016 	add	x22, x0, #0x0
+ 7fc:	b4fffbd3 	cbz	x19, 774 <main+0x774>
+ 800:	f9400260 	ldr	x0, [x19]
+ 804:	39400001 	ldrb	w1, [x0]
+ 808:	7100b43f 	cmp	w1, #0x2d
+ 80c:	540000e0 	b.eq	828 <main+0x828>
+ 810:	b94002c1 	ldr	w1, [x22]
+ 814:	11000421 	add	w1, w1, #0x1
+ 818:	b90002c1 	str	w1, [x22]
+ 81c:	94000000 	bl	0 <main>
+ 820:	f9400673 	ldr	x19, [x19,#8]
+ 824:	17fffff6 	b	7fc <main+0x7fc>
+ 828:	39400401 	ldrb	w1, [x0,#1]
+ 82c:	7100b43f 	cmp	w1, #0x2d
+ 830:	540000a0 	b.eq	844 <main+0x844>
+ 834:	3607fef4 	tbz	w20, #0, 810 <main+0x810>
+ 838:	52800034 	mov	w20, #0x1                   	// #1
+ 83c:	f9400673 	ldr	x19, [x19,#8]
+ 840:	17ffffef 	b	7fc <main+0x7fc>
+ 844:	39400801 	ldrb	w1, [x0,#2]
+ 848:	35ffff61 	cbnz	w1, 834 <main+0x834>
+ 84c:	52800014 	mov	w20, #0x0                   	// #0
+ 850:	f9400673 	ldr	x19, [x19,#8]
+ 854:	17ffffea 	b	7fc <main+0x7fc>
+ 858:	b94002a0 	ldr	w0, [x21]
+ 85c:	35ffdd00 	cbnz	w0, 3fc <main+0x3fc>
+ 860:	52800020 	mov	w0, #0x1                   	// #1
+ 864:	b90002c0 	str	w0, [x22]
+ 868:	17fffee5 	b	3fc <main+0x3fc>
+ 86c:	90000001 	adrp	x1, 1 <main+0x1>
+ 870:	52800020 	mov	w0, #0x1                   	// #1
+ 874:	39000020 	strb	w0, [x1]
+ 878:	17fffebc 	b	368 <main+0x368>
+ 87c:	90000001 	adrp	x1, 1 <main+0x1>
+ 880:	7100041f 	cmp	w0, #0x1
+ 884:	3900003f 	strb	wzr, [x1]
+ 888:	54000380 	b.eq	8f8 <main+0x8f8>
+ 88c:	90000000 	adrp	x0, 4 <main+0x4>
+ 890:	f94047b3 	ldr	x19, [x29,#136]
+ 894:	52800034 	mov	w20, #0x1                   	// #1
+ 898:	91000016 	add	x22, x0, #0x0
+ 89c:	b4000333 	cbz	x19, 900 <main+0x900>
+ 8a0:	f9400260 	ldr	x0, [x19]
+ 8a4:	39400001 	ldrb	w1, [x0]
+ 8a8:	7100b43f 	cmp	w1, #0x2d
+ 8ac:	540000e0 	b.eq	8c8 <main+0x8c8>
+ 8b0:	b94002c1 	ldr	w1, [x22]
+ 8b4:	11000421 	add	w1, w1, #0x1
+ 8b8:	b90002c1 	str	w1, [x22]
+ 8bc:	94000000 	bl	0 <main>
+ 8c0:	f9400673 	ldr	x19, [x19,#8]
+ 8c4:	17fffff6 	b	89c <main+0x89c>
+ 8c8:	39400401 	ldrb	w1, [x0,#1]
+ 8cc:	7100b43f 	cmp	w1, #0x2d
+ 8d0:	540000a0 	b.eq	8e4 <main+0x8e4>
+ 8d4:	34fffef4 	cbz	w20, 8b0 <main+0x8b0>
+ 8d8:	52800034 	mov	w20, #0x1                   	// #1
+ 8dc:	f9400673 	ldr	x19, [x19,#8]
+ 8e0:	17ffffef 	b	89c <main+0x89c>
+ 8e4:	39400801 	ldrb	w1, [x0,#2]
+ 8e8:	35ffff61 	cbnz	w1, 8d4 <main+0x8d4>
+ 8ec:	52800014 	mov	w20, #0x0                   	// #0
+ 8f0:	f9400673 	ldr	x19, [x19,#8]
+ 8f4:	17ffffea 	b	89c <main+0x89c>
+ 8f8:	d2800000 	mov	x0, #0x0                   	// #0
+ 8fc:	94000000 	bl	0 <main>
+ 900:	90000000 	adrp	x0, 1 <main+0x1>
+ 904:	f94047b3 	ldr	x19, [x29,#136]
+ 908:	39400000 	ldrb	w0, [x0]
+ 90c:	34ffec00 	cbz	w0, 68c <main+0x68c>
+ 910:	90000000 	adrp	x0, 4 <main+0x4>
+ 914:	b9400000 	ldr	w0, [x0]
+ 918:	7100041f 	cmp	w0, #0x1
+ 91c:	5400008c 	b.gt	92c <main+0x92c>
+ 920:	90000000 	adrp	x0, 4 <main+0x4>
+ 924:	52800041 	mov	w1, #0x2                   	// #2
+ 928:	b9000001 	str	w1, [x0]
+ 92c:	90000000 	adrp	x0, 4 <main+0x4>
+ 930:	b9400000 	ldr	w0, [x0]
+ 934:	94000000 	bl	0 <exit>
+ 938:	90000014 	adrp	x20, 0 <main>
+ 93c:	52800040 	mov	w0, #0x2                   	// #2
+ 940:	91000294 	add	x20, x20, #0x0
+ 944:	aa1403e1 	mov	x1, x20
+ 948:	94000000 	bl	0 <signal>
+ 94c:	aa1403e1 	mov	x1, x20
+ 950:	528001e0 	mov	w0, #0xf                   	// #15
+ 954:	94000000 	bl	0 <signal>
+ 958:	aa1403e1 	mov	x1, x20
+ 95c:	52800020 	mov	w0, #0x1                   	// #1
+ 960:	94000000 	bl	0 <signal>
+ 964:	17fffeaa 	b	40c <main+0x40c>
+ 968:	90000001 	adrp	x1, 0 <main>
+ 96c:	aa1c03e0 	mov	x0, x28
+ 970:	91000021 	add	x1, x1, #0x0
+ 974:	94000000 	bl	0 <strcmp>
+ 978:	340001e0 	cbz	w0, 9b4 <main+0x9b4>
+ 97c:	90000001 	adrp	x1, 0 <main>
+ 980:	aa1c03e0 	mov	x0, x28
+ 984:	91000021 	add	x1, x1, #0x0
+ 988:	94000000 	bl	0 <strcmp>
+ 98c:	34000140 	cbz	w0, 9b4 <main+0x9b4>
+ 990:	90000001 	adrp	x1, 0 <main>
+ 994:	aa1c03e0 	mov	x0, x28
+ 998:	91000021 	add	x1, x1, #0x0
+ 99c:	94000000 	bl	0 <strcmp>
+ 9a0:	350000e0 	cbnz	w0, 9bc <main+0x9bc>
+ 9a4:	90000001 	adrp	x1, 4 <main+0x4>
+ 9a8:	52800020 	mov	w0, #0x1                   	// #1
+ 9ac:	b9000020 	str	w0, [x1]
+ 9b0:	17fffe6e 	b	368 <main+0x368>
+ 9b4:	94000000 	bl	0 <main>
+ 9b8:	17fffe6c 	b	368 <main+0x368>
+ 9bc:	90000001 	adrp	x1, 0 <main>
+ 9c0:	aa1c03e0 	mov	x0, x28
+ 9c4:	91000021 	add	x1, x1, #0x0
+ 9c8:	94000000 	bl	0 <strcmp>
+ 9cc:	340001c0 	cbz	w0, a04 <main+0xa04>
+ 9d0:	90000001 	adrp	x1, 0 <main>
+ 9d4:	aa1c03e0 	mov	x0, x28
+ 9d8:	91000021 	add	x1, x1, #0x0
+ 9dc:	94000000 	bl	0 <strcmp>
+ 9e0:	34000120 	cbz	w0, a04 <main+0xa04>
+ 9e4:	90000001 	adrp	x1, 0 <main>
+ 9e8:	aa1c03e0 	mov	x0, x28
+ 9ec:	91000021 	add	x1, x1, #0x0
+ 9f0:	94000000 	bl	0 <strcmp>
+ 9f4:	35000180 	cbnz	w0, a24 <main+0xa24>
+ 9f8:	52800020 	mov	w0, #0x1                   	// #1
+ 9fc:	b9000300 	str	w0, [x24]
+ a00:	17fffe5a 	b	368 <main+0x368>
+ a04:	90000000 	adrp	x0, 0 <stderr>
+ a08:	f9400282 	ldr	x2, [x20]
+ a0c:	90000001 	adrp	x1, 0 <main>
+ a10:	aa1c03e3 	mov	x3, x28
+ a14:	91000021 	add	x1, x1, #0x0
+ a18:	f9400000 	ldr	x0, [x0]
+ a1c:	94000000 	bl	0 <fprintf>
+ a20:	17fffe52 	b	368 <main+0x368>
+ a24:	90000001 	adrp	x1, 0 <main>
+ a28:	aa1c03e0 	mov	x0, x28
+ a2c:	91000021 	add	x1, x1, #0x0
+ a30:	94000000 	bl	0 <strcmp>
+ a34:	35000080 	cbnz	w0, a44 <main+0xa44>
+ a38:	52800120 	mov	w0, #0x9                   	// #9
+ a3c:	b9000300 	str	w0, [x24]
+ a40:	17fffe4a 	b	368 <main+0x368>
+ a44:	90000001 	adrp	x1, 0 <main>
+ a48:	aa1c03e0 	mov	x0, x28
+ a4c:	91000021 	add	x1, x1, #0x0
+ a50:	94000000 	bl	0 <strcmp>
+ a54:	350000a0 	cbnz	w0, a68 <main+0xa68>
+ a58:	b94002e0 	ldr	w0, [x23]
+ a5c:	11000400 	add	w0, w0, #0x1
+ a60:	b90002e0 	str	w0, [x23]
+ a64:	17fffe41 	b	368 <main+0x368>
+ a68:	90000001 	adrp	x1, 0 <main>
+ a6c:	aa1c03e0 	mov	x0, x28
+ a70:	91000021 	add	x1, x1, #0x0
+ a74:	94000000 	bl	0 <strcmp>
+ a78:	34ffd3a0 	cbz	w0, 4ec <main+0x4ec>
+ a7c:	90000001 	adrp	x1, 0 <main>
+ a80:	d2800042 	mov	x2, #0x2                   	// #2
+ a84:	91000021 	add	x1, x1, #0x0
+ a88:	aa1c03e0 	mov	x0, x28
+ a8c:	94000000 	bl	0 <strncmp>
+ a90:	35ffc6c0 	cbnz	w0, 368 <main+0x368>
+ a94:	f9400282 	ldr	x2, [x20]
+ a98:	aa1c03e3 	mov	x3, x28
+ a9c:	17fffe12 	b	2e4 <main+0x2e4>
