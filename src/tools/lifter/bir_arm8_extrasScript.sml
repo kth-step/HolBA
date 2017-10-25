@@ -4,7 +4,8 @@ open bir_exp_liftingTheory
 open arm8_stepTheory
 open bir_lifter_general_auxTheory;
 open bir_lifting_machinesTheory;
-open bir_interval_expTheory
+open bir_interval_expTheory bir_extra_expsTheory
+open bitstringTheory
 
 (* In order to produce decent BIR code from step theorems,
    the concepts described by the step theorems need to be
@@ -520,6 +521,115 @@ in
 end)
 
 
+(***************)
+(* ExtendValue *)
+(***************)
+
+val Extend_ALT_DEF = store_thm ("Extend_ALT_DEF",
+``!l unsigned.
+     arm8$Extend (l,unsigned) : 'a word =
+     if unsigned then v2w l
+     else v2w (sign_extend (dimindex (:'a)) l)``,
+
+REPEAT STRIP_TAC >>
+SIMP_TAC std_ss [arm8Theory.Extend_def] >>
+Cases_on `unsigned` >> ASM_REWRITE_TAC [] >>
+Cases_on `HD l` >- (
+  ASM_SIMP_TAC std_ss [sign_extend_def, word_len_def]
+) >>
+Cases_on `dimindex (:'a) <= LENGTH l` >- (
+  `dimindex (:'a) - LENGTH l = 0` by DECIDE_TAC >>
+  ASM_SIMP_TAC list_ss [listTheory.PAD_LEFT, sign_extend_def]
+) >>
+`PAD_LEFT F (dimindex (:'a)) l =
+ fixwidth (dimindex (:'a)) l` by (
+  ASM_SIMP_TAC arith_ss [fixwidth_def, LET_THM, zero_extend_def]
+) >>
+ASM_SIMP_TAC std_ss [v2w_fixwidth, sign_extend_def]);
+
+
+val ExtendValue_REWR = save_thm ("ExtendValue_REWR",
+  SIMP_RULE (std_ss) [LET_THM, Extend_ALT_DEF, word_len_def] (
+    DatatypeSimps.cases_to_top_RULE arm8Theory.ExtendValue_def));
+
+
+val ExtendValue_Unsigned_REWR = prove (
+``(ExtendValue (w, ExtendType_UXTB, n) = (w2w ((w2w w):word8):word64) << n) /\
+  (ExtendValue (w, ExtendType_UXTH, n) = (w2w ((w2w w):word16):word64) << n) /\
+  (ExtendValue (w, ExtendType_UXTW, n) = (w2w ((w2w w):word32):word64) << n) /\
+  (ExtendValue (w, ExtendType_UXTX, n) = (w << n))``,
+
+SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR,
+  GSYM bitstringTheory.word_lsl_v2w] >>
+Q.SUBGOAL_THEN `w2v w = fixwidth (dimindex (:64)) (w2v w)` SUBST1_TAC >- (
+  METIS_TAC[fixwidth_id_imp, length_w2v]
+) >>
+REWRITE_TAC [GSYM bitstringTheory.word_bits_v2w, v2w_w2v] >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+SIMP_TAC (arith_ss++wordsLib.SIZES_ss++boolSimps.CONJ_ss++boolSimps.EQUIV_EXTRACT_ss) [w2w,
+  wordsTheory.word_bits_def, fcpTheory.FCP_BETA, word_lsl_def] >>
+SIMP_TAC arith_ss [arithmeticTheory.MIN_DEF]);
+
+
+
+val ExtendValue_Signed_REWR_aux = prove (
+``!n w. n < 64 ==> (dimindex(:'b) <= 64) ==> (
+(v2w
+   (sign_extend 64 (shiftl (field (MIN (dimindex(:'b)) (64 - n) - 1) 0 (w2v (w:word64))) n)):word64 =
+ sw2sw ((w2w w):'b word) << n))``,
+
+REPEAT STRIP_TAC >>
+SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR] >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+REWRITE_TAC[word_index_v2w] >>
+ASM_SIMP_TAC (list_ss++wordsLib.SIZES_ss) [word_lsl_def, fcpTheory.FCP_BETA,
+  sw2sw, w2w, testbit, sign_extend_def, listTheory.PAD_LEFT,
+  shiftl_def, listTheory.PAD_RIGHT, length_field] >>
+Q.ABBREV_TAC `m = MIN (dimindex (:'b)) (64 - n)` >>
+`0 < m /\ m <= dimindex(:'b) /\ (n + m <= 64)` by (
+  Q.UNABBREV_TAC `m` >>
+  ASM_SIMP_TAC arith_ss [arithmeticTheory.MIN_DEF, DIMINDEX_GT_0]
+) >>
+`SUC (m - 1) = m` by DECIDE_TAC >>
+
+ASM_SIMP_TAC arith_ss [] >>
+ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [LET_THM, listTheory.EL_APPEND_EQN, listTheory.LENGTH_GENLIST,
+  listTheory.LENGTH_APPEND, length_field, listTheory.EL_GENLIST,
+  el_field, length_w2v] >>
+REPEAT STRIP_TAC >>
+`(64 < i + 65 - n <=> (n <= i))` by DECIDE_TAC >>
+
+ASM_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [GSYM listTheory.EL,
+  el_field, listTheory.EL_APPEND_EQN, length_field, length_w2v, el_w2v,
+  word_msb_def, w2w] >>
+Q.UNABBREV_TAC `m` >>
+SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [arithmeticTheory.MIN_DEF] >>
+CCONTR_TAC >>
+FULL_SIMP_TAC arith_ss [])
+
+
+
+val ExtendValue_Signed_REWR = prove (
+``(!w n. n < 64 ==> (ExtendValue (w, ExtendType_SXTB, n) = ((sw2sw ((w2w w):word8):word64) << n))) /\
+  (!w n. n < 64 ==> (ExtendValue (w, ExtendType_SXTH, n) = ((sw2sw ((w2w w):word16):word64) << n))) /\
+  (!w n. n < 64 ==> (ExtendValue (w, ExtendType_SXTW, n) = ((sw2sw ((w2w w):word32):word64) << n))) /\
+  (!w:word64 n. n < 64 ==> (ExtendValue (w, ExtendType_SXTX, n) = (w << n)))``,
+
+ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:8``] ExtendValue_Signed_REWR_aux) >>
+ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:16``] ExtendValue_Signed_REWR_aux) >>
+ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:32``] ExtendValue_Signed_REWR_aux) >>
+ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:64``] ExtendValue_Signed_REWR_aux) >>
+
+FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR, w2w_id, sw2sw_id]);
+
+
+val ExtendValue_REWRS = save_thm ("ExtendValue_REWRS", let
+  val thm0 = CONJ (GEN_ALL ExtendValue_Unsigned_REWR) ExtendValue_Signed_REWR
+  val thm1 = SIMP_RULE std_ss [FORALL_AND_THM, GSYM CONJ_ASSOC] thm0
+in thm1 end);
+
+
+
 (****************)
 (* Combinations *)
 (****************)
@@ -547,8 +657,8 @@ val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
   LIST_CONJ [arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS,
       arm8_asr_FOLDS, arm8_lsr_no_imm_FOLDS, arm8_asr_no_imm_FOLDS,
       arm8_lsl_no_imm_FOLDS, arm8_sxtw_FOLDS, w2w_REMOVE_FOLDS,
-      arm8_mem_store_FOLDS])
-
-
+      arm8_mem_store_FOLDS, GSYM reverse_endian32_def,
+      GSYM reverse_endian64_def, GSYM reverse_endian16_def,
+      ExtendValue_REWRS])
 
 val _ = export_theory();
