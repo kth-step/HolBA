@@ -226,6 +226,14 @@ in
 end);
 
 
+val bir_is_lifted_imm_exp_bool2w = store_thm (
+"bir_is_lifted_imm_exp_bool2w",
+``!env e b.
+      bir_is_lifted_imm_exp env e (bool2b b) ==>
+      bir_is_lifted_imm_exp env e (Imm1 (bool2w b))``,
+SIMP_TAC std_ss [bir_immTheory.bool2b_def]);
+
+
 
 (***********)
 (* Casting *)
@@ -1100,40 +1108,112 @@ end);
 (* reverse endian *)
 (******************)
 
-val bir_is_lifted_imm_exp_REVERSE_ENDIAN_16 = store_thm ("bir_is_lifted_imm_exp_REVERSE_ENDIAN_16",
+val bir_is_lifted_imm_exp_WORD_REVERSE_8_16 = store_thm ("bir_is_lifted_imm_exp_WORD_REVERSE_8_16",
 ``!env w e.
       bir_is_lifted_imm_exp env e (Imm16 w) ==>
-      bir_is_lifted_imm_exp env (BExp_reverse_endian16 e)
-        (Imm16 (reverse_endian16 w))``,
+      bir_is_lifted_imm_exp env (BExp_word_reverse_8_16 e)
+        (Imm16 (word_reverse_8_16 w))``,
 
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  BExp_reverse_endian16_eval,
-  BExp_reverse_endian16_type_of,
-  BExp_reverse_endian16_vars_of]);
+  BExp_word_reverse_8_16_eval,
+  BExp_word_reverse_8_16_type_of,
+  BExp_word_reverse_8_16_vars_of]);
 
 
-val bir_is_lifted_imm_exp_REVERSE_ENDIAN_32 = store_thm ("bir_is_lifted_imm_exp_REVERSE_ENDIAN_32",
+val bir_is_lifted_imm_exp_WORD_REVERSE_8_32 = store_thm ("bir_is_lifted_imm_exp_WORD_REVERSE_8_32",
 ``!env w e.
       bir_is_lifted_imm_exp env e (Imm32 w) ==>
-      bir_is_lifted_imm_exp env (BExp_reverse_endian32 e)
-        (Imm32 (reverse_endian32 w))``,
+      bir_is_lifted_imm_exp env (BExp_word_reverse_8_32 e)
+        (Imm32 (word_reverse_8_32 w))``,
 
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  BExp_reverse_endian32_eval,
-  BExp_reverse_endian32_type_of,
-  BExp_reverse_endian32_vars_of]);
+  BExp_word_reverse_8_32_eval,
+  BExp_word_reverse_8_32_type_of,
+  BExp_word_reverse_8_32_vars_of]);
 
 
-val bir_is_lifted_imm_exp_REVERSE_ENDIAN_64 = store_thm ("bir_is_lifted_imm_exp_REVERSE_ENDIAN_64",
+val bir_is_lifted_imm_exp_WORD_REVERSE_8_64 = store_thm ("bir_is_lifted_imm_exp_WORD_REVERSE_8_64",
 ``!env w e.
       bir_is_lifted_imm_exp env e (Imm64 w) ==>
-      bir_is_lifted_imm_exp env (BExp_reverse_endian64 e)
-        (Imm64 (reverse_endian64 w))``,
+      bir_is_lifted_imm_exp env (BExp_word_reverse_8_64 e)
+        (Imm64 (word_reverse_8_64 w))``,
 
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  BExp_reverse_endian64_eval,
-  BExp_reverse_endian64_type_of,
-  BExp_reverse_endian64_vars_of]);
+  BExp_word_reverse_8_64_eval,
+  BExp_word_reverse_8_64_type_of,
+  BExp_word_reverse_8_64_vars_of]);
+
+
+val bir_is_lifted_imm_exp_WORD_REVERSE_16_32 = store_thm ("bir_is_lifted_imm_exp_WORD_REVERSE_16_32",
+``!env w e.
+      bir_is_lifted_imm_exp env e (Imm32 w) ==>
+      bir_is_lifted_imm_exp env (BExp_word_reverse_16_32 e)
+        (Imm32 (word_reverse_16_32 w))``,
+
+SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+  BExp_word_reverse_16_32_eval,
+  BExp_word_reverse_16_32_type_of,
+  BExp_word_reverse_16_32_vars_of]);
+
+
+val bir_is_lifted_imm_exp_WORD_REVERSE_16_64 = store_thm ("bir_is_lifted_imm_exp_WORD_REVERSE_16_64",
+``!env w e.
+      bir_is_lifted_imm_exp env e (Imm64 w) ==>
+      bir_is_lifted_imm_exp env (BExp_word_reverse_16_64 e)
+        (Imm64 (word_reverse_16_64 w))``,
+
+SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+  BExp_word_reverse_16_64_eval,
+  BExp_word_reverse_16_64_type_of,
+  BExp_word_reverse_16_64_vars_of]);
+
+
+val bir_is_lifted_imm_exp_WORD_REVERSE_32_64 = store_thm ("bir_is_lifted_imm_exp_WORD_REVERSE_32_64",
+``!env w e.
+      bir_is_lifted_imm_exp env e (Imm64 w) ==>
+      bir_is_lifted_imm_exp env (BExp_word_reverse_32_64 e)
+        (Imm64 (word_reverse_32_64 w))``,
+
+SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+  BExp_word_reverse_32_64_eval,
+  BExp_word_reverse_32_64_type_of,
+  BExp_word_reverse_32_64_vars_of]);
+
+
+
+val bir_is_lifted_imm_exp_WORD_REVERSE_1 = store_thm ("bir_is_lifted_imm_exp_WORD_REVERSE_1",
+``(!env w e.
+      bir_is_lifted_imm_exp env e (Imm8 w) ==>
+      bir_is_lifted_imm_exp env (BExp_word_reverse_1_8 e)
+        (Imm8 (word_reverse w))) /\
+  (!env w e.
+      bir_is_lifted_imm_exp env e (Imm16 w) ==>
+      bir_is_lifted_imm_exp env (BExp_word_reverse_1_16 e)
+        (Imm16 (word_reverse w))) /\
+  (!env w e.
+      bir_is_lifted_imm_exp env e (Imm32 w) ==>
+      bir_is_lifted_imm_exp env (BExp_word_reverse_1_32 e)
+        (Imm32 (word_reverse w))) /\
+  (!env w e.
+      bir_is_lifted_imm_exp env e (Imm64 w) ==>
+      bir_is_lifted_imm_exp env (BExp_word_reverse_1_64 e)
+        (Imm64 (word_reverse w)))``,
+
+SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+  BExp_word_reverse_1_eval,
+  BExp_word_reverse_1_type_of,
+  BExp_word_reverse_1_vars_of]);
+
+
+val bir_is_lifted_imm_exp_WORD_REVERSE = save_thm ("bir_is_lifted_imm_exp_WORD_REVERSE",
+LIST_CONJ [
+  bir_is_lifted_imm_exp_WORD_REVERSE_1,
+  bir_is_lifted_imm_exp_WORD_REVERSE_8_16,
+  bir_is_lifted_imm_exp_WORD_REVERSE_8_32,
+  bir_is_lifted_imm_exp_WORD_REVERSE_8_64,
+  bir_is_lifted_imm_exp_WORD_REVERSE_16_32,
+  bir_is_lifted_imm_exp_WORD_REVERSE_16_64,
+  bir_is_lifted_imm_exp_WORD_REVERSE_32_64])
 
 
 
@@ -1148,6 +1228,7 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_SHIFTS_w2n,
              bir_is_lifted_imm_exp_BIN_PRED,
              bir_is_lifted_imm_exp_bool2b,
+             bir_is_lifted_imm_exp_bool2w,
              bir_is_lifted_imm_exp_CASTS,
              bir_is_lifted_imm_exp_COND,
              bir_is_lifted_imm_exp_PROTECTED_COND,
@@ -1159,9 +1240,7 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_LSB,
              bir_is_lifted_imm_exp_word_bit_const,
              bir_is_lifted_imm_exp_word_bit_exp,
-             bir_is_lifted_imm_exp_REVERSE_ENDIAN_16,
-             bir_is_lifted_imm_exp_REVERSE_ENDIAN_32,
-             bir_is_lifted_imm_exp_REVERSE_ENDIAN_64,
+             bir_is_lifted_imm_exp_WORD_REVERSE,
              bir_is_lifted_imm_exp_ALIGN,
              bir_is_lifted_imm_exp_ALIGNED]);
 

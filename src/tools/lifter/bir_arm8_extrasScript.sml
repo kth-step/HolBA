@@ -630,6 +630,87 @@ in thm1 end);
 
 
 
+(********)
+(* misc *)
+(********)
+
+val arm8_rev_folds = store_thm ("arm8_rev_folds",
+`` (!(w :word64).
+      (((((39 :num) >< (32 :num)) w :word8) @@
+        (((((47 :num) >< (40 :num)) w :word8) @@
+         (((((55 :num) >< (48 :num)) w :word8) @@
+          (((((63 :num) >< (56 :num)) w :word8) @@
+           (((((7 :num) >< (0 :num)) w :word8) @@
+            (((((15 :num) >< (8 :num)) w :word8) @@
+             (((((23 :num) >< (16 :num)) w :word8) @@
+              (((31 :num) >< (24 :num)) w :word8))
+                :word16))
+               :word24))
+              :word32))
+             :40 word))
+            :word48))
+           :56 word))
+         :word64) =
+      word_reverse_32_64 (word_reverse_8_64 w)) /\
+   (!(w :word64).
+      (((((55 :num) >< (48 :num)) w :word8) @@
+        (((((63 :num) >< (56 :num)) w :word8) @@
+         (((((39 :num) >< (32 :num)) w :word8) @@
+          (((((47 :num) >< (40 :num)) w :word8) @@
+           (((((23 :num) >< (16 :num)) w :word8) @@
+            (((((31 :num) >< (24 :num)) w :word8) @@
+             (((((7 :num) >< (0 :num)) w :word8) @@
+              (((15 :num) >< (8 :num)) w :word8))
+                :word16))
+               :word24))
+              :word32))
+             :40 word))
+            :word48))
+           :56 word))
+         :word64) =
+      word_reverse_16_64 (word_reverse_8_64 w)) /\
+   (!(w :word32).
+      (((((23 :num) >< (16 :num)) w :word8) @@
+        (((((31 :num) >< (24 :num)) w :word8) @@
+         (((((7 :num) >< (0 :num)) w :word8) @@
+          (((15 :num) >< (8 :num)) w :word8))
+            :word16))
+           :word24))
+         :word32) =
+      word_reverse_16_32 (word_reverse_8_32 w))``,
+
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
+  word_reverse_REWRS, word_concat_def, word_join_index, word_extract_def,
+  w2w, word_bits_def, fcpTheory.FCP_BETA] >>
+SIMP_TAC (arith_ss++ boolSimps.LIFT_COND_ss) []);
+
+
+val arm8_ngc64_fold = store_thm ("arm8_ngc64_fold",
+ ``!w:word64 c.
+     n2w (w2n (~w) + if c then 1 else 0) =
+     ~w + w2w (bool2w c)``,
+
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.SIZES_ss) [GSYM word_add_n2w, n2w_w2n, bir_immTheory.bool2w_def,
+  w2w_def, w2n_n2w]);
+
+val arm8_ngc32_fold = store_thm ("arm8_ngc32_fold",
+ ``!w:word32 c.
+     n2w (BITS 31 0 (w2n (~w) + if c then 1 else 0)) =
+     (w2w (~w + w2w (bool2w c))):word64``,
+
+REPEAT STRIP_TAC >>
+MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:64``] w2w_n2w)) >>
+SIMP_TAC (std_ss++wordsLib.SIZES_ss) [] >>
+STRIP_TAC >> POP_ASSUM (K ALL_TAC) >>
+SIMP_TAC std_ss [w2w_def, n2w_w2n, GSYM word_add_n2w] >>
+Cases_on `c` >> (
+  SIMP_TAC (std_ss++wordsLib.SIZES_ss) [bir_immTheory.bool2w_def, w2n_n2w]
+));
+
+
+
+
 (****************)
 (* Combinations *)
 (****************)
@@ -653,12 +734,12 @@ val arm8_CHANGE_INTERVAL_THMS = save_thm ("arm8_CHANGE_INTERVAL_THMS",
     arm8_LIFT_STORE_HALF_CHANGE_INTERVAL,
     arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL]);
 
+
 val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
   LIST_CONJ [arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS,
       arm8_asr_FOLDS, arm8_lsr_no_imm_FOLDS, arm8_asr_no_imm_FOLDS,
       arm8_lsl_no_imm_FOLDS, arm8_sxtw_FOLDS, w2w_REMOVE_FOLDS,
-      arm8_mem_store_FOLDS, GSYM reverse_endian32_def,
-      GSYM reverse_endian64_def, GSYM reverse_endian16_def,
-      ExtendValue_REWRS])
+      arm8_mem_store_FOLDS, GSYM word_reverse_REWRS,
+      ExtendValue_REWRS, arm8_rev_folds, arm8_ngc64_fold, arm8_ngc32_fold]);
 
 val _ = export_theory();

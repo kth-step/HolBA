@@ -983,46 +983,11 @@ val arm8_expected_failed_hexcodes:string list =
   ((w2n (~w2w (ms.REG 2w)) + if ms.PSTATE.C then 1 else 0) MOD
    4294967296 =
    0)`` failed *),
-   "DA0203E1" (* ngc x1, x2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
-   "5A0203E1" (* ngc w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
-   "DAC00841" (* rev32 x1, x2 lifting of ``Imm64
-  ((39 >< 32) (ms.REG 2w) @@ (47 >< 40) (ms.REG 2w) @@
-   (55 >< 48) (ms.REG 2w) @@ (63 >< 56) (ms.REG 2w) @@
-   (7 >< 0) (ms.REG 2w) @@ (15 >< 8) (ms.REG 2w) @@
-   (23 >< 16) (ms.REG 2w) @@ (31 >< 24) (ms.REG 2w))`` failed *),
-   "DAC00441" (* rev16 x1, x2 lifting of ``Imm64
-  ((55 >< 48) (ms.REG 2w) @@ (63 >< 56) (ms.REG 2w) @@
-   (39 >< 32) (ms.REG 2w) @@ (47 >< 40) (ms.REG 2w) @@
-   (23 >< 16) (ms.REG 2w) @@ (31 >< 24) (ms.REG 2w) @@
-   (7 >< 0) (ms.REG 2w) @@ (15 >< 8) (ms.REG 2w))`` failed *),
-   "5AC00441" (* rev16 w1, w2 lifting of ``Imm64
-  (w2w
-     ((23 >< 16) (w2w (ms.REG 2w)) @@ (31 >< 24) (w2w (ms.REG 2w)) @@
-      (7 >< 0) (w2w (ms.REG 2w)) @@ (15 >< 8) (w2w (ms.REG 2w))))`` failed *),
-   "DAC00C41" (* rev x1, x2 lifting of ``Imm64
-  ((7 >< 0) (ms.REG 2w) @@ (15 >< 8) (ms.REG 2w) @@
-   (23 >< 16) (ms.REG 2w) @@ (31 >< 24) (ms.REG 2w) @@
-   (39 >< 32) (ms.REG 2w) @@ (47 >< 40) (ms.REG 2w) @@
-   (55 >< 48) (ms.REG 2w) @@ (63 >< 56) (ms.REG 2w))`` failed *),
-   "5AC00841" (* rev w1, w2 lifting of ``Imm64
-  (w2w
-     ((7 >< 0) (w2w (ms.REG 2w)) @@ (15 >< 8) (w2w (ms.REG 2w)) @@
-      (23 >< 16) (w2w (ms.REG 2w)) @@ (31 >< 24) (w2w (ms.REG 2w))))`` failed *),
-   "5AC00041" (* rbit w1, w2 lifting of ``Imm64 (w2w (word_reverse (w2w (ms.REG 2w))))`` failed *),
-   "DAC00041" (* rbit x1, x2 lifting of ``Imm64 (word_reverse (ms.REG 2w))`` failed *),
    "DAC01441" (* clz x1, x2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
    "5AC01441" (* clz w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
    "DAC01041" (* cls x1, x2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
    "5AC01041" (* cls w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
    "1AC32C41" (* rorv w1, w2, w3 lifting of ``Imm64 (w2w (w2w (ms.REG 2w) #>> (w2n (w2w (ms.REG 3w)) MOD 32)))`` failed *),
-   "EB238020" (* subs x0, x1, w3, SXTB #0 lifting of ``Imm64 (ms.REG 1w − ExtendValue (ms.REG 3w,ExtendType_SXTB,0))`` failed *),
-   "EB239020" (* subs x0, x1, w3, SXTB #4 lifting of ``Imm64 (ms.REG 1w − ExtendValue (ms.REG 3w,ExtendType_SXTB,4))`` failed *),
-   "CB238820" (* sub x0, x1, w3, SXTB #2 lifting of ``Imm64 (ms.REG 1w − ExtendValue (ms.REG 3w,ExtendType_SXTB,2))`` failed *),
-   "CB230820" (* sub x0, x1, w3, UXTB #2 lifting of ``Imm64 (ms.REG 1w − ExtendValue (ms.REG 3w,ExtendType_UXTB,2))`` failed *),
-   "AB238020" (* adds x0, x1, w3, SXTB #0 lifting of ``Imm64 (ExtendValue (ms.REG 3w,ExtendType_SXTB,0) + ms.REG 1w)`` failed *),
-   "AB239020" (* adds x0, x1, w3, SXTB #4 lifting of ``Imm64 (ExtendValue (ms.REG 3w,ExtendType_SXTB,4) + ms.REG 1w)`` failed *),
-   "8B238820" (* add x0, x1, w3, SXTB #2 lifting of ``Imm64 (ExtendValue (ms.REG 3w,ExtendType_SXTB,2) + ms.REG 1w)`` failed *),
-   "8B230820" (* add x0, x1, w3, UXTB #2 lifting of ``Imm64 (ExtendValue (ms.REG 3w,ExtendType_UXTB,2) + ms.REG 1w)`` failed *),
    "93C30841" (* extr x1, x2, x3, #2 lifting of ``Imm64
   (v2w
      [ms.REG 2w ' 63; ms.REG 2w ' 62; ms.REG 2w ' 61; ms.REG 2w ' 60;
@@ -1199,10 +1164,6 @@ val m0_expected_failed_hexcodes:string list =
 [
    "A1BC" (* bmr_step_hex failed *),
    "DFB8" (* bmr_step_hex failed *),
-   "BAD1" (* revsh r1, r2 lifting of ``Imm32 (sw2sw (w2w (ms.REG RName_2)) @@ (15 >< 8) (ms.REG RName_2))`` failed *),
-   "BA51" (* rev16 r1, r2 lifting of ``Imm32
-  ((23 >< 16) (ms.REG RName_2) @@ (31 >< 24) (ms.REG RName_2) @@
-   w2w (ms.REG RName_2) @@ (15 >< 8) (ms.REG RName_2))`` failed *),
    "41C8" (* rors r0, r1 lifting of ``Imm32 (ms.REG RName_0 ⇄ w2n (w2w (ms.REG RName_1)))`` failed *)
 ];
 

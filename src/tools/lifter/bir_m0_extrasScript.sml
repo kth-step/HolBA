@@ -535,6 +535,40 @@ METIS_TAC[word_index]);
 
 
 
+
+val m0_rev_folds = store_thm ("m0_rev_folds",
+`` (!(w :word32).
+      (((((23 :num) >< (16 :num)) w :word8) @@
+        (((((31 :num) >< (24 :num)) w :word8) @@
+         (((((7 :num) >< (0 :num)) w :word8) @@
+          (((15 :num) >< (8 :num)) w :word8))
+            :word16))
+           :word24))
+         :word32) =
+      word_reverse_16_32 (word_reverse_8_32 w))``,
+
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
+  word_reverse_REWRS, word_concat_def, word_join_index, word_extract_def,
+  w2w, word_bits_def, fcpTheory.FCP_BETA] >>
+SIMP_TAC (arith_ss++ boolSimps.LIFT_COND_ss) []);
+
+
+val m0_revs_folds = store_thm ("m0_revs_folds",
+``!w:word32.
+    (((sw2sw (w2w (w :word32) :word8) :word24) @@
+       (((15 :num) >< (8 :num)) (w :word32) :
+           word8))
+        :word32) = sw2sw (word_reverse_8_16 (w2w w))``,
+
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
+  word_reverse_REWRS, word_concat_def, word_join_index, word_extract_def,
+  w2w, sw2sw, word_bits_def, fcpTheory.FCP_BETA, word_msb_def] >>
+SIMP_TAC (arith_ss++ boolSimps.LIFT_COND_ss) []);
+
+
+
 (****************)
 (* Combinations *)
 (****************)
@@ -577,7 +611,8 @@ val m0_extra_FOLDS_GEN = save_thm ("m0_extra_FOLDS_GEN",
   LIST_CONJ [GSYM m0_mem_word_LE_def, GSYM m0_mem_half_LE_def,
              GSYM m0_mem_word_BE_def, GSYM m0_mem_half_BE_def,
              m0_extract_byte, m0_extract_half, m0_mask_last_bit_REWR, m0_Shift_C, m0_Shift_N,
-             GSYM reverse_endian32_def, align_AND_INTROS, m0_word_bit_0_ms_aligned])
+             GSYM word_reverse_REWRS, align_AND_INTROS, m0_word_bit_0_ms_aligned,
+             m0_rev_folds, m0_revs_folds])
 
 val m0_extra_FOLDS_LE = save_thm ("m0_extra_FOLDS_LE",
   extract_byte_RULE (

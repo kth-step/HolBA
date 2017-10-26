@@ -118,9 +118,6 @@ type bmr_rec = {bmr_const                : term,
                 bmr_hex_code_size        : string -> Arbnum.num,
                 bmr_ihex_param           : (int * bool) option};
 
-val asm = `bl   48`
-   fun hex_code_of_asm asm = hd (m0AssemblerLib.m0_disassemble `str     r3, [r2, #0]`)
-   fun hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm)
 
 (* Some sanity checks to ensure everything is as expected. *)
 val bmr_rec_sanity_check_basic = let

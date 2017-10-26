@@ -29,6 +29,8 @@ fun bmr_normalise_step_thm (r_step_rel:term) vn thm =
 
 
 (* DEBUG
+  fun arm8_hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code [QUOTE asm])
+
   val vn = ``ms:arm8_state``
   val hex_code = "B90033E0";
   val hex_code = "79000001"
@@ -40,7 +42,14 @@ fun bmr_normalise_step_thm (r_step_rel:term) vn thm =
   val hex_code = "FA010000"
   val hex_code = "FA000000"
   val hex_code = "7100001F"
-
+  val hex_code = arm8_hex_code_of_asm "rev16 x1, x2";
+  val hex_code = arm8_hex_code_of_asm "rev16 w1, w2";
+  val hex_code = arm8_hex_code_of_asm "rev32 x1, x2";
+  val hex_code = arm8_hex_code_of_asm "ngc x1, x2"
+  val hex_code = arm8_hex_code_of_asm "ngc w1, w2"
+  val hex_code = arm8_hex_code_of_asm "ngcs x1, x2"
+  val hex_code = arm8_hex_code_of_asm "ngc w1, w2"
+  val hex_code = arm8_hex_code_of_asm "rbit w1, w2"
   val thms = arm8_step_hex hex_code
 *)
 
@@ -57,7 +66,6 @@ end;
 
 local
   val next_state_tm = (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"});
-
 
   val simp_rule = (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0,
       arm8_extra_FOLDS]);
@@ -211,6 +219,9 @@ val _ = assert bmr_rec_sanity_check arm8_bmr_rec
   val hex_code = "1ACC";
   val hex_code = "1E08"
   val hex_code = "4251"
+  val hex_code = "40C4"
+  val hex_code = "4088"
+  val hex_code = "BA51";
 
   val thms = thumb_step_hex (true, true) hex_code
   val thms = thumb_step_hex (false, true) hex_code

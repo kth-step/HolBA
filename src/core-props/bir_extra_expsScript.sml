@@ -12,8 +12,6 @@ val _ = new_theory "bir_extra_exps";
 (* Align *)
 (*********)
 
-
-
 val BExp_Align_def = Define `BExp_Align sz p e =
   (BExp_BinExp BIExp_And e (BExp_Const (n2bs (2 ** (size_of_bir_immtype sz) - (2 ** p)) sz)))`;
 
@@ -115,19 +113,132 @@ REPEAT CASE_TAC >> (
      bir_bool_expTheory.bir_bin_exp_BOOL_OPER_EVAL]
 ));
 
+(******************)
+(* Reverse Word 1 *)
+(******************)
+
+fun mk_word_reverse_exp sz = let
+  val wty = fcpSyntax.mk_int_numeric_type sz
+  val we_tm = mk_var ("we", bir_expSyntax.bir_exp_t_ty)
+
+  fun mk_for_bit bit_no = let
+    val new_bit_no = (sz - 1) - bit_no
+
+    val (shift_no, shift_tm) = if new_bit_no < bit_no then
+      (bit_no - new_bit_no, bir_imm_expSyntax.BIExp_RightShift_tm)
+     else
+      (new_bit_no - bit_no, bir_imm_expSyntax.BIExp_LeftShift_tm)
+
+    val mask_tm =      bir_expSyntax.mk_BExp_Const (
+     bir_immSyntax.gen_mk_Imm (wordsSyntax.mk_n2w (
+          numSyntax.mk_exp (numSyntax.term_of_int 2,
+          numSyntax.term_of_int new_bit_no), wty)))
+    val d0 = bir_expSyntax.mk_BExp_BinExp (shift_tm, we_tm,
+               bir_expSyntax.mk_BExp_Const (
+                 bir_immSyntax.mk_Imm_of_int sz shift_no))
+    val d1 = if (bit_no = 0) orelse (new_bit_no = 0) then d0 else
+             bir_expSyntax.mk_BExp_BinExp (bir_imm_expSyntax.BIExp_And_tm,
+                d0, mask_tm)
+  in d1 end
+
+  val dl = List.rev (List.tabulate (sz, mk_for_bit))
+
+  val tm = foldl (fn (t1, t2) => bir_expSyntax.mk_BExp_BinExp (bir_imm_expSyntax.BIExp_Or_tm,
+             t1, t2)) (hd dl) (tl dl)
+in
+  tm
+end;
+
+
+val BExp_word_reverse_1_8_def  = Define `BExp_word_reverse_1_8  we = ^(mk_word_reverse_exp 8)`;
+val BExp_word_reverse_1_16_def = Define `BExp_word_reverse_1_16 we = ^(mk_word_reverse_exp 16)`;
+val BExp_word_reverse_1_32_def = Define `BExp_word_reverse_1_32 we = ^(mk_word_reverse_exp 32)`;
+val BExp_word_reverse_1_64_def = Define `BExp_word_reverse_1_64 we = ^(mk_word_reverse_exp 64)`;
+
+
+
+val BExp_word_reverse_1_vars_of = store_thm ("BExp_word_reverse_1_vars_of",
+``(!e. bir_vars_of_exp (BExp_word_reverse_1_8 e) = bir_vars_of_exp e) /\
+  (!e. bir_vars_of_exp (BExp_word_reverse_1_16 e) = bir_vars_of_exp e) /\
+  (!e. bir_vars_of_exp (BExp_word_reverse_1_32 e) = bir_vars_of_exp e) /\
+  (!e. bir_vars_of_exp (BExp_word_reverse_1_64 e) = bir_vars_of_exp e)``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_1_64_def,
+  BExp_word_reverse_1_32_def,
+  BExp_word_reverse_1_16_def,
+  BExp_word_reverse_1_8_def,
+  pred_setTheory.UNION_EMPTY,
+  pred_setTheory.UNION_IDEMPOT]);
+
+
+val BExp_word_reverse_1_type_of = store_thm ("BExp_word_reverse_1_type_of",
+``(!e. type_of_bir_exp (BExp_word_reverse_1_8 e) =
+      (if (type_of_bir_exp e = SOME (BType_Imm Bit8)) then SOME (BType_Imm Bit8) else NONE)) /\
+  (!e. type_of_bir_exp (BExp_word_reverse_1_16 e) =
+      (if (type_of_bir_exp e = SOME (BType_Imm Bit16)) then SOME (BType_Imm Bit16) else NONE)) /\
+  (!e. type_of_bir_exp (BExp_word_reverse_1_32 e) =
+      (if (type_of_bir_exp e = SOME (BType_Imm Bit32)) then SOME (BType_Imm Bit32) else NONE)) /\
+  (!e. type_of_bir_exp (BExp_word_reverse_1_64 e) =
+      (if (type_of_bir_exp e = SOME (BType_Imm Bit64)) then SOME (BType_Imm Bit64) else NONE))``,
+
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_1_64_def,
+  BExp_word_reverse_1_32_def,
+  BExp_word_reverse_1_16_def,
+  BExp_word_reverse_1_8_def,
+  type_of_bir_exp_def,
+  pairTheory.pair_case_thm] >>
+REPEAT STRIP_TAC >> REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
+));
+
+
+val BExp_word_reverse_1_eval = store_thm ("BExp_word_reverse_1_eval",
+``(!e env. bir_eval_exp (BExp_word_reverse_1_8 e) env =
+     case (bir_eval_exp e env) of
+       | (BVal_Imm (Imm8 w)) => BVal_Imm (Imm8 (word_reverse w))
+       | _ => BVal_Unknown) /\
+  (!e env. bir_eval_exp (BExp_word_reverse_1_16 e) env =
+     case (bir_eval_exp e env) of
+       | (BVal_Imm (Imm16 w)) => BVal_Imm (Imm16 (word_reverse w))
+       | _ => BVal_Unknown) /\
+  (!e env. bir_eval_exp (BExp_word_reverse_1_32 e) env =
+     case (bir_eval_exp e env) of
+       | (BVal_Imm (Imm32 w)) => BVal_Imm (Imm32 (word_reverse w))
+       | _ => BVal_Unknown) /\
+  (!e env. bir_eval_exp (BExp_word_reverse_1_64 e) env =
+     case (bir_eval_exp e env) of
+       | (BVal_Imm (Imm64 w)) => BVal_Imm (Imm64 (word_reverse w))
+       | _ => BVal_Unknown)``,
+
+SIMP_TAC (bool_ss++holBACore_ss) [BExp_word_reverse_1_8_def,
+  BExp_word_reverse_1_16_def, BExp_word_reverse_1_32_def, BExp_word_reverse_1_64_def] >>
+REPEAT STRIP_TAC >> REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (bool_ss++holBACore_ss++wordsLib.SIZES_ss) []
+) >> (
+  ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+  SIMP_TAC (bool_ss++wordsLib.SIZES_ss) [word_or_def, fcpTheory.FCP_BETA,
+    word_and_def, word_index, bitTheory.BIT_TWO_POW] >>
+  SIMP_TAC (std_ss++boolSimps.CONJ_ss++wordsLib.SIZES_ss) [wordsTheory.word_lsl_bv_def,
+    word_lsr_bv_def, w2n_n2w, word_lsl_def, fcpTheory.FCP_BETA,
+    word_lsr_def, word_reverse_def] >>
+  REPEAT STRIP_TAC >>
+  Q.PAT_X_ASSUM `i < _` (STRIP_ASSUME_TAC o SIMP_RULE std_ss [GSYM rich_listTheory.MEM_COUNT_LIST,
+    rich_listTheory.COUNT_LIST_compute,
+    rich_listTheory.COUNT_LIST_AUX_def_compute, listTheory.MEM]) >>
+  ASM_SIMP_TAC std_ss []
+));
 
 
 
 (******************)
-(* Reverse Endian *)
+(* Reverse Word 8 *)
 (******************)
 
-val reverse_endian16_def = Define `
-  reverse_endian16 (w:word16) =
+val word_reverse_8_16_def = Define `
+  word_reverse_8_16 (w:word16) =
     (((((7 >< 0) w):word8) @@ (((16 >< 8) w):word8)) : word16)`
 
-val reverse_endian32_def = Define `
- reverse_endian32 (w:word32) =
+val word_reverse_8_32_def = Define `
+ word_reverse_8_32 (w:word32) =
      (((((7 :num) >< (0 :num)) w :word8) @@
        (((((15 :num) >< (8 :num)) w :word8) @@
         (((((23 :num) >< (16 :num)) w :word8) @@
@@ -136,8 +247,8 @@ val reverse_endian32_def = Define `
           :word24))
         :word32)`
 
-val reverse_endian64_def = Define `
- reverse_endian64 (w:word64) =
+val word_reverse_8_64_def = Define `
+ word_reverse_8_64 (w:word64) =
      (((((7 :num) >< (0 :num)) w :word8) @@
        (((((15 :num) >< (8 :num)) w :word8) @@
         (((((23 :num) >< (16 :num)) w :word8) @@
@@ -154,31 +265,31 @@ val reverse_endian64_def = Define `
         :56 word)):word64)`;
 
 
-val reverse_endian16_id = store_thm ("reverse_endian16_id",
-``!w:word16. reverse_endian16 (reverse_endian16 w) = w``,
+val word_reverse_8_16_id = store_thm ("word_reverse_8_16_id",
+``!w:word16. word_reverse_8_16 (word_reverse_8_16 w) = w``,
 
 Cases >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
-  reverse_endian16_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index]);
+  word_reverse_8_16_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index]);
 
 
-val reverse_endian32_id = store_thm ("reverse_endian32_id",
-``!w:word32. reverse_endian32 (reverse_endian32 w) = w``,
-
-Cases >>
-ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
-FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
-  reverse_endian32_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index]);
-
-
-val reverse_endian64_id = store_thm ("reverse_endian64_id",
-``!w:word64. reverse_endian64 (reverse_endian64 w) = w``,
+val word_reverse_8_32_id = store_thm ("word_reverse_8_32_id",
+``!w:word32. word_reverse_8_32 (word_reverse_8_32 w) = w``,
 
 Cases >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
-  reverse_endian64_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index]);
+  word_reverse_8_32_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index]);
+
+
+val word_reverse_8_64_id = store_thm ("word_reverse_8_64_id",
+``!w:word64. word_reverse_8_64 (word_reverse_8_64 w) = w``,
+
+Cases >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
+  word_reverse_8_64_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index]);
 
 
 
@@ -204,34 +315,34 @@ ASM_SIMP_TAC arith_ss []);
 
 
 
-val reverse_endian16_ALT_DEF = store_thm ("reverse_endian16_ALT_DEF",
-``!w:word16. reverse_endian16 w = (w >>> 8) || (w << 8)``,
+val word_reverse_8_16_ALT_DEF = store_thm ("word_reverse_8_16_ALT_DEF",
+``!w:word16. word_reverse_8_16 w = (w >>> 8) || (w << 8)``,
 
 Cases >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
-  reverse_endian16_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
+  word_reverse_8_16_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
   word_or_def, word_lsr_def, word_lsl_def] >>
 SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
 
 
-val reverse_endian32_ALT_DEF_aux = prove (
-``!w:word32. reverse_endian32 w = (w >>> 24) || (word_extract_byte (w >>> 8) 8) ||
+val word_reverse_8_32_ALT_DEF_aux = prove (
+``!w:word32. word_reverse_8_32 w = (w >>> 24) || (word_extract_byte (w >>> 8) 8) ||
                                   (word_extract_byte (w << 8) 16) || (w << 24)``,
 
 GEN_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
-  reverse_endian32_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
+  word_reverse_8_32_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
   word_or_def, word_and_def, word_extract_byte_index, word_lsl_def, word_lsr_def] >>
 SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
 
-val reverse_endian32_ALT_DEF = save_thm ("reverse_endian32_ALT_DEF",
-  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_byte_def, word_lsl_n2w] reverse_endian32_ALT_DEF_aux);
+val word_reverse_8_32_ALT_DEF = save_thm ("word_reverse_8_32_ALT_DEF",
+  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_byte_def, word_lsl_n2w] word_reverse_8_32_ALT_DEF_aux);
 
 
-val reverse_endian64_ALT_DEF_aux = prove (
-``!w:word64. reverse_endian64 w = (w >>> 56) || (word_extract_byte (w >>> 40) 8) ||
+val word_reverse_8_64_ALT_DEF_aux = prove (
+``!w:word64. word_reverse_8_64 w = (w >>> 56) || (word_extract_byte (w >>> 40) 8) ||
                                   (word_extract_byte (w >>> 24) 16) ||
                                   (word_extract_byte (w >>> 8) 24) ||
                                   (word_extract_byte (w << 8) 32) ||
@@ -242,16 +353,16 @@ val reverse_endian64_ALT_DEF_aux = prove (
 GEN_TAC >>
 ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
-  reverse_endian64_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
+  word_reverse_8_64_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
   word_or_def, word_and_def, word_extract_byte_index, word_lsl_def, word_lsr_def] >>
 SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
 
 
-val reverse_endian64_ALT_DEF = save_thm ("reverse_endian64_ALT_DEF",
-  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_byte_def, word_lsl_n2w] reverse_endian64_ALT_DEF_aux);
+val word_reverse_8_64_ALT_DEF = save_thm ("word_reverse_8_64_ALT_DEF",
+  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_byte_def, word_lsl_n2w] word_reverse_8_64_ALT_DEF_aux);
 
 
-val BExp_reverse_endian64_def = Define `BExp_reverse_endian64 e1 =
+val BExp_word_reverse_8_64_def = Define `BExp_word_reverse_8_64 e1 =
       (BExp_BinExp BIExp_Or
         (BExp_BinExp BIExp_RightShift e1 (BExp_Const (Imm64 56w)))
         (BExp_BinExp BIExp_Or
@@ -286,7 +397,7 @@ val BExp_reverse_endian64_def = Define `BExp_reverse_endian64 e1 =
                           (BExp_BinExp BIExp_LeftShift e1
                              (BExp_Const (Imm64 56w))))))))))`
 
-val BExp_reverse_endian32_def = Define `BExp_reverse_endian32 e1 =
+val BExp_word_reverse_8_32_def = Define `BExp_word_reverse_8_32 e1 =
      (BExp_BinExp BIExp_Or
         (BExp_BinExp BIExp_RightShift e1 (BExp_Const (Imm32 24w)))
         (BExp_BinExp BIExp_Or
@@ -301,105 +412,407 @@ val BExp_reverse_endian32_def = Define `BExp_reverse_endian32 e1 =
               (BExp_BinExp BIExp_LeftShift e1
                  (BExp_Const (Imm32 24w))))))`
 
-val BExp_reverse_endian16_def = Define `BExp_reverse_endian16 e1 =
+val BExp_word_reverse_8_16_def = Define `BExp_word_reverse_8_16 e1 =
      (BExp_BinExp BIExp_Or
         (BExp_BinExp BIExp_RightShift e1 (BExp_Const (Imm16 8w)))
         (BExp_BinExp BIExp_LeftShift e1 (BExp_Const (Imm16 8w))))`
 
 
 
-val BExp_reverse_endian16_vars_of = store_thm ("BExp_reverse_endian16_vars_of",
-``!e. bir_vars_of_exp (BExp_reverse_endian16 e) = bir_vars_of_exp e``,
-SIMP_TAC (std_ss++holBACore_ss) [BExp_reverse_endian16_def, pred_setTheory.UNION_EMPTY,
+val BExp_word_reverse_8_16_vars_of = store_thm ("BExp_word_reverse_8_16_vars_of",
+``!e. bir_vars_of_exp (BExp_word_reverse_8_16 e) = bir_vars_of_exp e``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_16_def, pred_setTheory.UNION_EMPTY,
   pred_setTheory.UNION_IDEMPOT]);
 
 
 
-val BExp_reverse_endian32_vars_of = store_thm ("BExp_reverse_endian32_vars_of",
-``!e. bir_vars_of_exp (BExp_reverse_endian32 e) = bir_vars_of_exp e``,
-SIMP_TAC (std_ss++holBACore_ss) [BExp_reverse_endian32_def, pred_setTheory.UNION_EMPTY,
+val BExp_word_reverse_8_32_vars_of = store_thm ("BExp_word_reverse_8_32_vars_of",
+``!e. bir_vars_of_exp (BExp_word_reverse_8_32 e) = bir_vars_of_exp e``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_32_def, pred_setTheory.UNION_EMPTY,
   pred_setTheory.UNION_IDEMPOT]);
 
 
-val BExp_reverse_endian64_vars_of = store_thm ("BExp_reverse_endian64_vars_of",
-``!e. bir_vars_of_exp (BExp_reverse_endian64 e) = bir_vars_of_exp e``,
-SIMP_TAC (std_ss++holBACore_ss) [BExp_reverse_endian64_def, pred_setTheory.UNION_EMPTY,
+val BExp_word_reverse_8_64_vars_of = store_thm ("BExp_word_reverse_8_64_vars_of",
+``!e. bir_vars_of_exp (BExp_word_reverse_8_64 e) = bir_vars_of_exp e``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_64_def, pred_setTheory.UNION_EMPTY,
   pred_setTheory.UNION_IDEMPOT]);
 
 
-val BExp_reverse_endian16_type_of = store_thm ("BExp_reverse_endian16_type_of",
-``!e. type_of_bir_exp (BExp_reverse_endian16 e) =
+val BExp_word_reverse_8_16_type_of = store_thm ("BExp_word_reverse_8_16_type_of",
+``!e. type_of_bir_exp (BExp_word_reverse_8_16 e) =
       (if (type_of_bir_exp e = SOME (BType_Imm Bit16)) then SOME (BType_Imm Bit16) else NONE)``,
 
 REPEAT GEN_TAC >>
-SIMP_TAC (std_ss++holBACore_ss) [BExp_reverse_endian16_def, type_of_bir_exp_def,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_16_def, type_of_bir_exp_def,
   pairTheory.pair_case_thm] >>
 REPEAT CASE_TAC >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
 ));
 
-val BExp_reverse_endian32_type_of = store_thm ("BExp_reverse_endian32_type_of",
-``!e. type_of_bir_exp (BExp_reverse_endian32 e) =
+val BExp_word_reverse_8_32_type_of = store_thm ("BExp_word_reverse_8_32_type_of",
+``!e. type_of_bir_exp (BExp_word_reverse_8_32 e) =
       (if (type_of_bir_exp e = SOME (BType_Imm Bit32)) then SOME (BType_Imm Bit32) else NONE)``,
 
 REPEAT GEN_TAC >>
-SIMP_TAC (std_ss++holBACore_ss) [BExp_reverse_endian32_def, type_of_bir_exp_def,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_32_def, type_of_bir_exp_def,
   pairTheory.pair_case_thm] >>
 REPEAT CASE_TAC >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
 ));
 
-val BExp_reverse_endian64_type_of = store_thm ("BExp_reverse_endian64_type_of",
-``!e. type_of_bir_exp (BExp_reverse_endian64 e) =
+val BExp_word_reverse_8_64_type_of = store_thm ("BExp_word_reverse_8_64_type_of",
+``!e. type_of_bir_exp (BExp_word_reverse_8_64 e) =
       (if (type_of_bir_exp e = SOME (BType_Imm Bit64)) then SOME (BType_Imm Bit64) else NONE)``,
 
 REPEAT GEN_TAC >>
-SIMP_TAC (std_ss++holBACore_ss) [BExp_reverse_endian64_def, type_of_bir_exp_def,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_64_def, type_of_bir_exp_def,
   pairTheory.pair_case_thm] >>
 REPEAT CASE_TAC >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
 ));
 
 
-val BExp_reverse_endian16_eval = store_thm ("BExp_reverse_endian16_eval",
-``!e env. bir_eval_exp (BExp_reverse_endian16 e) env =
+val BExp_word_reverse_8_16_eval = store_thm ("BExp_word_reverse_8_16_eval",
+``!e env. bir_eval_exp (BExp_word_reverse_8_16 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm16 w)) => BVal_Imm (Imm16 (reverse_endian16 w))
+       | (BVal_Imm (Imm16 w)) => BVal_Imm (Imm16 (word_reverse_8_16 w))
        | _ => BVal_Unknown``,
 
 REPEAT GEN_TAC >>
-SIMP_TAC (std_ss++holBACore_ss) [BExp_reverse_endian16_def] >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_16_def] >>
 REPEAT CASE_TAC >> (
-  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [reverse_endian16_ALT_DEF,
+  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [word_reverse_8_16_ALT_DEF,
     wordsTheory.word_shift_bv]
 ));
 
-val BExp_reverse_endian32_eval = store_thm ("BExp_reverse_endian32_eval",
-``!e env. bir_eval_exp (BExp_reverse_endian32 e) env =
+val BExp_word_reverse_8_32_eval = store_thm ("BExp_word_reverse_8_32_eval",
+``!e env. bir_eval_exp (BExp_word_reverse_8_32 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm32 w)) => BVal_Imm (Imm32 (reverse_endian32 w))
+       | (BVal_Imm (Imm32 w)) => BVal_Imm (Imm32 (word_reverse_8_32 w))
        | _ => BVal_Unknown``,
 
 REPEAT GEN_TAC >>
-SIMP_TAC (std_ss++holBACore_ss) [BExp_reverse_endian32_def] >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_32_def] >>
 REPEAT CASE_TAC >> (
-  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [reverse_endian32_ALT_DEF,
+  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [word_reverse_8_32_ALT_DEF,
     wordsTheory.word_shift_bv]
 ));
 
 
-val BExp_reverse_endian64_eval = store_thm ("BExp_reverse_endian64_eval",
-``!e env. bir_eval_exp (BExp_reverse_endian64 e) env =
+val BExp_word_reverse_8_64_eval = store_thm ("BExp_word_reverse_8_64_eval",
+``!e env. bir_eval_exp (BExp_word_reverse_8_64 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm64 w)) => BVal_Imm (Imm64 (reverse_endian64 w))
+       | (BVal_Imm (Imm64 w)) => BVal_Imm (Imm64 (word_reverse_8_64 w))
        | _ => BVal_Unknown``,
 
 REPEAT GEN_TAC >>
-SIMP_TAC (std_ss++holBACore_ss) [BExp_reverse_endian64_def] >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_64_def] >>
 REPEAT CASE_TAC >> (
-  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [reverse_endian64_ALT_DEF,
+  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [word_reverse_8_64_ALT_DEF,
     wordsTheory.word_shift_bv]
 ));
+
+
+
+
+(*******************)
+(* Reverse Word 16 *)
+(*******************)
+
+val word_reverse_16_32_def = Define `
+  word_reverse_16_32 (w:word32) =
+    (((((15 >< 0) w):word16) @@ (((31 >< 16) w):word16)) : word32)`
+
+val word_reverse_16_64_def = Define `
+ word_reverse_16_64 (w:word64) =
+     (((((15 :num) >< (0 :num)) w :word16) @@
+       (((((31 :num) >< (16 :num)) w :word16) @@
+        (((((47 :num) >< (32 :num)) w :word16) @@
+         (((63 :num) >< (48 :num)) w :word16))
+           :word32))
+          :word48))
+        :word64)`
+
+val word_reverse_16_32_id = store_thm ("word_reverse_16_32_id",
+``!w:word32. word_reverse_16_32 (word_reverse_16_32 w) = w``,
+
+Cases >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
+  word_reverse_16_32_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index]);
+
+val word_reverse_16_64_id = store_thm ("word_reverse_16_64_id",
+``!w:word64. word_reverse_16_64 (word_reverse_16_64 w) = w``,
+
+Cases >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
+  word_reverse_16_64_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index]);
+
+
+val word_extract_16bit_def = Define `word_extract_16bit (w:'a word) (n:num) =
+  (w && ((n2w 65535) << n))`
+
+val word_extract_16bit_index = store_thm ("word_extract_16bit_index",
+``!w:'a word m n. m < dimindex (:'a) ==>
+  ((word_extract_16bit w n) ' m =
+  ((w ' m) /\ (n <= m) /\ (m < n + 16)))``,
+
+REPEAT STRIP_TAC >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
+  word_lsl_def, word_and_def, word_index, word_extract_16bit_def] >>
+
+MP_TAC (Q.SPECL [`m-n`, `16`] bitTheory.BIT_EXP_SUB1) >>
+ASM_SIMP_TAC arith_ss []);
+
+
+
+
+val word_reverse_16_32_ALT_DEF = store_thm ("word_reverse_16_32_ALT_DEF",
+``!w:word32. word_reverse_16_32 w = (w >>> 16) || (w << 16)``,
+
+Cases >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
+  word_reverse_16_32_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
+  word_or_def, word_lsr_def, word_lsl_def] >>
+SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
+
+
+val word_reverse_16_64_ALT_DEF_aux = prove (
+``!w:word64. word_reverse_16_64 w = (w >>> 48) || (word_extract_16bit (w >>> 16) 16) ||
+                                  (word_extract_16bit (w << 16) 32) || (w << 48)``,
+
+GEN_TAC >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
+  word_reverse_16_64_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
+  word_or_def, word_and_def, word_extract_16bit_index, word_lsl_def, word_lsr_def] >>
+SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
+
+
+val word_reverse_16_64_ALT_DEF = save_thm ("word_reverse_16_64_ALT_DEF",
+  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_extract_16bit_def, word_lsl_n2w] word_reverse_16_64_ALT_DEF_aux);
+
+
+
+val BExp_word_reverse_16_64_def = Define `BExp_word_reverse_16_64 e1 =
+     (BExp_BinExp BIExp_Or
+        (BExp_BinExp BIExp_RightShift e1 (BExp_Const (Imm64 48w)))
+        (BExp_BinExp BIExp_Or
+           (BExp_BinExp BIExp_And
+              (BExp_BinExp BIExp_RightShift e1 (BExp_Const (Imm64 16w)))
+              (BExp_Const (Imm64 0xFFFF0000w)))
+           (BExp_BinExp BIExp_Or
+              (BExp_BinExp BIExp_And
+                 (BExp_BinExp BIExp_LeftShift e1
+                    (BExp_Const (Imm64 16w)))
+                 (BExp_Const (Imm64 0xFFFF00000000w)))
+              (BExp_BinExp BIExp_LeftShift e1
+                 (BExp_Const (Imm64 48w))))))`
+
+val BExp_word_reverse_16_32_def = Define `BExp_word_reverse_16_32 e1 =
+     (BExp_BinExp BIExp_Or
+        (BExp_BinExp BIExp_RightShift e1 (BExp_Const (Imm32 16w)))
+        (BExp_BinExp BIExp_LeftShift e1 (BExp_Const (Imm32 16w))))`
+
+
+val BExp_word_reverse_16_32_vars_of = store_thm ("BExp_word_reverse_16_32_vars_of",
+``!e. bir_vars_of_exp (BExp_word_reverse_16_32 e) = bir_vars_of_exp e``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_16_32_def, pred_setTheory.UNION_EMPTY,
+  pred_setTheory.UNION_IDEMPOT]);
+
+
+val BExp_word_reverse_16_64_vars_of = store_thm ("BExp_word_reverse_16_64_vars_of",
+``!e. bir_vars_of_exp (BExp_word_reverse_16_64 e) = bir_vars_of_exp e``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_16_64_def, pred_setTheory.UNION_EMPTY,
+  pred_setTheory.UNION_IDEMPOT]);
+
+
+val BExp_word_reverse_16_32_type_of = store_thm ("BExp_word_reverse_16_32_type_of",
+``!e. type_of_bir_exp (BExp_word_reverse_16_32 e) =
+      (if (type_of_bir_exp e = SOME (BType_Imm Bit32)) then SOME (BType_Imm Bit32) else NONE)``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_16_32_def, type_of_bir_exp_def,
+  pairTheory.pair_case_thm] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
+));
+
+val BExp_word_reverse_16_64_type_of = store_thm ("BExp_word_reverse_16_64_type_of",
+``!e. type_of_bir_exp (BExp_word_reverse_16_64 e) =
+      (if (type_of_bir_exp e = SOME (BType_Imm Bit64)) then SOME (BType_Imm Bit64) else NONE)``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_16_64_def, type_of_bir_exp_def,
+  pairTheory.pair_case_thm] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
+));
+
+
+
+val BExp_word_reverse_16_32_eval = store_thm ("BExp_word_reverse_16_32_eval",
+``!e env. bir_eval_exp (BExp_word_reverse_16_32 e) env =
+     case (bir_eval_exp e env) of
+       | (BVal_Imm (Imm32 w)) => BVal_Imm (Imm32 (word_reverse_16_32 w))
+       | _ => BVal_Unknown``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_16_32_def] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [word_reverse_16_32_ALT_DEF,
+    wordsTheory.word_shift_bv]
+));
+
+
+val BExp_word_reverse_16_64_eval = store_thm ("BExp_word_reverse_16_64_eval",
+``!e env. bir_eval_exp (BExp_word_reverse_16_64 e) env =
+     case (bir_eval_exp e env) of
+       | (BVal_Imm (Imm64 w)) => BVal_Imm (Imm64 (word_reverse_16_64 w))
+       | _ => BVal_Unknown``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_16_64_def] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [word_reverse_16_64_ALT_DEF,
+    wordsTheory.word_shift_bv]
+));
+
+
+
+
+(*******************)
+(* Reverse Word 32 *)
+(*******************)
+
+val word_reverse_32_64_def = Define `
+  word_reverse_32_64 (w:word64) =
+    (((((31 >< 0) w):word32) @@ (((63 >< 32) w):word32)) : word64)`
+
+val word_reverse_32_64_id = store_thm ("word_reverse_32_64_id",
+``!w:word64. word_reverse_32_64 (word_reverse_32_64 w) = w``,
+
+Cases >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
+  word_reverse_32_64_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index]);
+
+
+val word_reverse_32_64_ALT_DEF = store_thm ("word_reverse_32_64_ALT_DEF",
+``!w:word64. word_reverse_32_64 w = (w >>> 32) || (w << 32)``,
+
+Cases >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
+  word_reverse_32_64_def, word_bits_def, word_extract_def, w2w, word_concat_def, word_join_index,
+  word_or_def, word_lsr_def, word_lsl_def] >>
+SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
+
+
+val BExp_word_reverse_32_64_def = Define `BExp_word_reverse_32_64 e1 =
+     (BExp_BinExp BIExp_Or
+        (BExp_BinExp BIExp_RightShift e1 (BExp_Const (Imm64 32w)))
+        (BExp_BinExp BIExp_LeftShift e1 (BExp_Const (Imm64 32w))))`
+
+
+
+val BExp_word_reverse_32_64_vars_of = store_thm ("BExp_word_reverse_32_64_vars_of",
+``!e. bir_vars_of_exp (BExp_word_reverse_32_64 e) = bir_vars_of_exp e``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_32_64_def, pred_setTheory.UNION_EMPTY,
+  pred_setTheory.UNION_IDEMPOT]);
+
+val BExp_word_reverse_32_64_type_of = store_thm ("BExp_word_reverse_32_64_type_of",
+``!e. type_of_bir_exp (BExp_word_reverse_32_64 e) =
+      (if (type_of_bir_exp e = SOME (BType_Imm Bit64)) then SOME (BType_Imm Bit64) else NONE)``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_32_64_def, type_of_bir_exp_def,
+  pairTheory.pair_case_thm] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
+));
+
+
+val BExp_word_reverse_32_64_eval = store_thm ("BExp_word_reverse_32_64_eval",
+``!e env. bir_eval_exp (BExp_word_reverse_32_64 e) env =
+     case (bir_eval_exp e env) of
+       | (BVal_Imm (Imm64 w)) => BVal_Imm (Imm64 (word_reverse_32_64 w))
+       | _ => BVal_Unknown``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_32_64_def] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [word_reverse_32_64_ALT_DEF,
+    wordsTheory.word_shift_bv]
+));
+
+
+
+(********************)
+(* Reverse Word ALL *)
+(********************)
+
+val BExp_word_reverse_REWRS = save_thm ("BExp_word_reverse_REWRS",
+LIST_CONJ [
+  BExp_word_reverse_1_8_def,
+  BExp_word_reverse_1_16_def,
+  BExp_word_reverse_1_32_def,
+  BExp_word_reverse_1_64_def,
+  BExp_word_reverse_8_16_def,
+  BExp_word_reverse_8_32_def,
+  BExp_word_reverse_8_64_def,
+  BExp_word_reverse_16_32_def,
+  BExp_word_reverse_16_64_def,
+  BExp_word_reverse_32_64_def
+]);
+
+val word_reverse_REWRS = save_thm ("word_reverse_REWRS",
+LIST_CONJ [
+  word_reverse_8_16_def,
+  word_reverse_8_32_def,
+  word_reverse_8_64_def,
+  word_reverse_16_32_def,
+  word_reverse_16_64_def,
+  word_reverse_32_64_def
+]);
+
+val BExp_word_reverse_vars_of = save_thm ("BExp_word_reverse_vars_of",
+LIST_CONJ [
+  BExp_word_reverse_1_vars_of,
+  BExp_word_reverse_8_16_vars_of,
+  BExp_word_reverse_8_32_vars_of,
+  BExp_word_reverse_8_64_vars_of,
+  BExp_word_reverse_16_32_vars_of,
+  BExp_word_reverse_16_64_vars_of,
+  BExp_word_reverse_32_64_vars_of
+]);
+
+val BExp_word_reverse_type_of = save_thm ("BExp_word_reverse_type_of",
+LIST_CONJ [
+  BExp_word_reverse_1_type_of,
+  BExp_word_reverse_8_16_type_of,
+  BExp_word_reverse_8_32_type_of,
+  BExp_word_reverse_8_64_type_of,
+  BExp_word_reverse_16_32_type_of,
+  BExp_word_reverse_16_64_type_of,
+  BExp_word_reverse_32_64_type_of
+]);
+
+
+val BExp_word_reverse_eval = save_thm ("BExp_word_reverse_eval",
+LIST_CONJ [
+  BExp_word_reverse_1_eval,
+  BExp_word_reverse_8_16_eval,
+  BExp_word_reverse_8_32_eval,
+  BExp_word_reverse_8_64_eval,
+  BExp_word_reverse_16_32_eval,
+  BExp_word_reverse_16_64_eval,
+  BExp_word_reverse_32_64_eval
+]);
+
 
 
 (************)
