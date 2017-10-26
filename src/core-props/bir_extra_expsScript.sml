@@ -235,7 +235,8 @@ REPEAT STRIP_TAC >> REPEAT CASE_TAC >> (
 
 val word_reverse_8_16_def = Define `
   word_reverse_8_16 (w:word16) =
-    (((((7 >< 0) w):word8) @@ (((16 >< 8) w):word8)) : word16)`
+    (((((7 >< 0) w):word8) @@ (((15 >< 8) w):word8)) : word16)`
+
 
 val word_reverse_8_32_def = Define `
  word_reverse_8_32 (w:word32) =
@@ -1007,6 +1008,389 @@ REPEAT CASE_TAC >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
   SIMP_TAC std_ss [GSYM wordsTheory.word_1_lsl, GSYM wordsTheory.word_lsl_bv_def]
 ));
+
+
+
+(****************)
+(* rotate right *)
+(****************)
+
+val word_ror_OR_SHIFT = store_thm ("word_ror_OR_SHIFT",
+``!n w1:'a word w2.
+   (dimindex (:'a) = 2**n) ==>
+
+   ((w1 #>>~ w2) = (
+
+   ((w1 >>>~ (w2 && n2w ((2 ** n) - 1))) ||
+   (w1 <<~ (n2w (2**n) - (w2 && n2w ((2 ** n) - 1)))))))``,
+
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+REPEAT STRIP_TAC >>
+Cases_on `w2` >>
+ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
+  word_ror_bv_def, word_lsl_bv_def,
+  word_lsr_def, w2n_n2w, bir_auxiliaryTheory.word_sub_n2w,
+  WORD_AND_EXP_SUB1] >>
+`n' MOD 2 ** n <= 2 ** n` by METIS_TAC[
+  bitTheory.MOD_2EXP_LT, arithmeticTheory.LESS_IMP_LESS_OR_EQ] >>
+`2 ** n < dimword (:'a)` by METIS_TAC[dimindex_lt_dimword] >>
+`(2 ** n - n' MOD 2 ** n) MOD dimword (:'a) =
+ (2 ** n - n' MOD 2 ** n)` by (
+
+   MATCH_MP_TAC arithmeticTheory.LESS_MOD >> DECIDE_TAC
+) >>
+
+ASM_SIMP_TAC arith_ss [Once (GSYM arithmeticTheory.MOD_PLUS)] >>
+
+ASM_SIMP_TAC arith_ss [word_ror_def, GSYM wordsTheory.word_shift_bv, n2w_11,
+  fcpTheory.FCP_BETA] >>
+`(i + n') MOD 2 ** n = (i + (n' MOD 2 ** n)) MOD 2 ** n` by (
+  SIMP_TAC arith_ss [bitTheory.MOD_PLUS_RIGHT]
+) >>
+Cases_on `n' MOD 2 ** n = 0` >> (
+  ASM_SIMP_TAC arith_ss []
+) >>
+ASM_SIMP_TAC arith_ss [fcpTheory.FCP_BETA, word_lsl_def, word_lsr_def,
+  word_or_def] >>
+Cases_on `i + n' MOD 2 ** n < 2 ** n` >> (
+  ASM_SIMP_TAC arith_ss []
+) >>
+ASM_SIMP_TAC arith_ss [bir_auxiliaryTheory.MOD_ADD_EQ_SUB]);
+
+
+
+
+
+
+
+val BExp_ror_exp_def = Define `BExp_ror_exp sz e1 e2 =
+        (BExp_BinExp BIExp_Or
+           (BExp_BinExp BIExp_RightShift e1
+              (BExp_BinExp BIExp_And e2 (BExp_Const (n2bs (size_of_bir_immtype sz - 1) sz))))
+           (BExp_BinExp BIExp_LeftShift e1
+              (BExp_BinExp BIExp_Minus (BExp_Const (n2bs (size_of_bir_immtype sz) sz))
+                 (BExp_BinExp BIExp_And e2 (BExp_Const (n2bs (size_of_bir_immtype sz - 1) sz))))))`
+
+
+val BExp_ror_exp_vars_of = store_thm ("BExp_ror_exp_vars_of",
+``!sz e1 e2. bir_vars_of_exp (BExp_ror_exp sz e1 e2) = bir_vars_of_exp e1 UNION bir_vars_of_exp e2``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_ror_exp_def, pred_setTheory.UNION_EMPTY] >>
+SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [pred_setTheory.EXTENSION, pred_setTheory.IN_UNION]);
+
+
+val BExp_ror_exp_type_of = store_thm ("BExp_ror_exp_type_of",
+``!sz e1 e2. type_of_bir_exp (BExp_ror_exp sz e1 e2) =
+      (if (type_of_bir_exp e1 = SOME (BType_Imm sz)) /\
+          (type_of_bir_exp e2 = SOME (BType_Imm sz)) then SOME (BType_Imm sz) else NONE)``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_ror_exp_def, type_of_bir_exp_def,
+  pairTheory.pair_case_thm] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
+));
+
+
+val BExp_ror_exp_eval = store_thm ("BExp_ror_exp_eval",
+``!sz e1 e2 env. bir_eval_exp (BExp_ror_exp sz e1 e2) env =
+     case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env) of
+       | (Bit1, BVal_Imm (Imm1 w1), BVal_Imm (Imm1  w2)) =>
+            BVal_Imm (Imm1 (w1 #>>~ w2))
+       | (Bit8,  BVal_Imm (Imm8  w1), BVal_Imm (Imm8  w2)) =>
+            BVal_Imm (Imm8 (w1 #>>~ w2))
+       | (Bit16, BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2)) =>
+            BVal_Imm (Imm16 (w1 #>>~ w2))
+       | (Bit32, BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2)) =>
+            BVal_Imm (Imm32 (w1 #>>~ w2))
+       | (Bit64, BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2)) =>
+            BVal_Imm (Imm64 (w1 #>>~ w2))
+       | _ => BVal_Unknown``,
+
+REPEAT GEN_TAC >>
+MP_TAC (SPEC ``0:num`` (INST_TYPE [``:'a`` |-> ``:1``] word_ror_OR_SHIFT)) >>
+MP_TAC (SPEC ``3:num`` (INST_TYPE [``:'a`` |-> ``:8``] word_ror_OR_SHIFT)) >>
+MP_TAC (SPEC ``4:num`` (INST_TYPE [``:'a`` |-> ``:16``] word_ror_OR_SHIFT)) >>
+MP_TAC (SPEC ``5:num`` (INST_TYPE [``:'a`` |-> ``:32``] word_ror_OR_SHIFT)) >>
+MP_TAC (SPEC ``6:num`` (INST_TYPE [``:'a`` |-> ``:64``] word_ror_OR_SHIFT)) >>
+
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [BExp_ror_exp_def] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [WORD_AND_CLAUSES]
+));
+
+
+
+val word_ror_bv_OR_SHIFT = store_thm ("word_ror_bv_OR_SHIFT",
+``!n w:'a word n. n <= dimindex (:'a) ==> (
+   (w #>> n) =
+   ((w >>> n) || (w << (dimindex (:'a) - n))))``,
+
+REPEAT STRIP_TAC >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+Cases_on `w` >>
+ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
+  word_or_def, fcpTheory.FCP_BETA, word_ror_def,
+  word_lsl_def, word_lsr_def] >>
+REPEAT STRIP_TAC >>
+Cases_on `i + n < dimindex (:'a)` >> ASM_SIMP_TAC arith_ss [] >>
+Cases_on `n = dimindex (:'a)` >> (
+  ASM_SIMP_TAC arith_ss [bir_auxiliaryTheory.MOD_ADD_EQ_SUB,
+    arithmeticTheory.ADD_MODULUS]
+));
+
+
+
+val BExp_ror_def = Define `BExp_ror sz e n =
+        (BExp_BinExp BIExp_Or
+           (BExp_BinExp BIExp_RightShift e
+              (BExp_Const (n2bs n sz)))
+           (BExp_BinExp BIExp_LeftShift e
+              (BExp_Const (n2bs (size_of_bir_immtype sz - n) sz))))`;
+
+
+val BExp_ror_vars_of = store_thm ("BExp_ror_vars_of",
+``!sz e n. bir_vars_of_exp (BExp_ror sz e n) = bir_vars_of_exp e``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_ror_def, pred_setTheory.UNION_EMPTY,
+  pred_setTheory.UNION_IDEMPOT]);
+
+
+val BExp_ror_type_of = store_thm ("BExp_ror_type_of",
+``!sz e n. type_of_bir_exp (BExp_ror sz e n) =
+      (if (type_of_bir_exp e = SOME (BType_Imm sz)) then SOME (BType_Imm sz) else NONE)``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_ror_def, type_of_bir_exp_def,
+  pairTheory.pair_case_thm] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
+));
+
+
+val BExp_ror_eval = store_thm ("BExp_ror_eval",
+``!sz e n env.
+    n <= size_of_bir_immtype sz ==> (
+    bir_eval_exp (BExp_ror sz e n) env =
+     case (sz, bir_eval_exp e env) of
+       | (Bit1, BVal_Imm (Imm1 w)) =>
+            BVal_Imm (Imm1 (w #>> n))
+       | (Bit8,  BVal_Imm (Imm8  w)) =>
+            BVal_Imm (Imm8 (w #>> n))
+       | (Bit16,  BVal_Imm (Imm16 w)) =>
+            BVal_Imm (Imm16 (w #>> n))
+       | (Bit32,  BVal_Imm (Imm32 w)) =>
+            BVal_Imm (Imm32 (w #>> n))
+       | (Bit64,  BVal_Imm (Imm64 w)) =>
+            BVal_Imm (Imm64 (w #>> n))
+       | _ => BVal_Unknown)``,
+
+REPEAT STRIP_TAC >>
+MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:1``] word_ror_bv_OR_SHIFT)) >>
+MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:8``] word_ror_bv_OR_SHIFT)) >>
+MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:16``] word_ror_bv_OR_SHIFT)) >>
+MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:32``] word_ror_bv_OR_SHIFT)) >>
+MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:64``] word_ror_bv_OR_SHIFT)) >>
+
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [BExp_ror_def,
+  pairTheory.pair_case_thm] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (arith_ss++holBACore_ss++wordsLib.SIZES_ss) [word_lsr_bv_def,
+    word_lsl_bv_def, w2n_n2w]
+));
+
+
+
+(***************)
+(* rotate left *)
+(***************)
+
+val word_rol_OR_SHIFT = store_thm ("word_rol_OR_SHIFT",
+``!n w1:'a word w2.
+   (dimindex (:'a) = 2**n) ==>
+
+   ((w1 #<<~ w2) = (
+
+   ((w1 <<~ (w2 && n2w ((2 ** n) - 1))) ||
+   (w1 >>>~ (n2w (2**n) - (w2 && n2w ((2 ** n) - 1)))))))``,
+
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+REPEAT STRIP_TAC >>
+Cases_on `w2` >>
+ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
+  word_rol_bv_def, word_lsl_bv_def,
+  word_lsr_def, w2n_n2w, bir_auxiliaryTheory.word_sub_n2w,
+  WORD_AND_EXP_SUB1] >>
+`n' MOD 2 ** n <= 2 ** n` by METIS_TAC[
+  bitTheory.MOD_2EXP_LT, arithmeticTheory.LESS_IMP_LESS_OR_EQ] >>
+`2 ** n < dimword (:'a)` by METIS_TAC[dimindex_lt_dimword] >>
+`(2 ** n - n' MOD 2 ** n) MOD dimword (:'a) =
+ (2 ** n - n' MOD 2 ** n)` by (
+
+   MATCH_MP_TAC arithmeticTheory.LESS_MOD >> DECIDE_TAC
+) >>
+
+ASM_SIMP_TAC arith_ss [word_rol_def, GSYM wordsTheory.word_shift_bv, n2w_11,
+  fcpTheory.FCP_BETA, word_ror_def] >>
+`(i + n') MOD 2 ** n = (i + (n' MOD 2 ** n)) MOD 2 ** n` by (
+  SIMP_TAC arith_ss [bitTheory.MOD_PLUS_RIGHT]
+) >>
+ASM_SIMP_TAC arith_ss [fcpTheory.FCP_BETA, word_lsl_def, word_lsr_def,
+  word_or_def] >>
+Cases_on `n' MOD 2 ** n = 0` >> (
+  ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_MODULUS]
+) >>
+Cases_on `n' MOD 2 ** n <= i` >> (
+  ASM_SIMP_TAC arith_ss [] >>
+  `i + 2 ** n - n' MOD 2 ** n =
+   2 ** n + (i - n' MOD 2 ** n)` by DECIDE_TAC >>
+  ASM_SIMP_TAC std_ss [arithmeticTheory.ADD_MODULUS] >>
+  ASM_SIMP_TAC arith_ss []
+) >>
+ASM_SIMP_TAC arith_ss [bir_auxiliaryTheory.MOD_ADD_EQ_SUB]);
+
+
+
+
+
+val BExp_rol_exp_def = Define `BExp_rol_exp sz e1 e2 =
+        (BExp_BinExp BIExp_Or
+           (BExp_BinExp BIExp_LeftShift e1
+              (BExp_BinExp BIExp_And e2 (BExp_Const (n2bs (size_of_bir_immtype sz - 1) sz))))
+           (BExp_BinExp BIExp_RightShift e1
+              (BExp_BinExp BIExp_Minus (BExp_Const (n2bs (size_of_bir_immtype sz) sz))
+                 (BExp_BinExp BIExp_And e2 (BExp_Const (n2bs (size_of_bir_immtype sz - 1) sz))))))`
+
+
+val BExp_rol_exp_vars_of = store_thm ("BExp_rol_exp_vars_of",
+``!sz e1 e2. bir_vars_of_exp (BExp_rol_exp sz e1 e2) = bir_vars_of_exp e1 UNION bir_vars_of_exp e2``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_rol_exp_def, pred_setTheory.UNION_EMPTY] >>
+SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [pred_setTheory.EXTENSION, pred_setTheory.IN_UNION]);
+
+
+val BExp_rol_exp_type_of = store_thm ("BExp_rol_exp_type_of",
+``!sz e1 e2. type_of_bir_exp (BExp_rol_exp sz e1 e2) =
+      (if (type_of_bir_exp e1 = SOME (BType_Imm sz)) /\
+          (type_of_bir_exp e2 = SOME (BType_Imm sz)) then SOME (BType_Imm sz) else NONE)``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_rol_exp_def, type_of_bir_exp_def,
+  pairTheory.pair_case_thm] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
+));
+
+
+val BExp_rol_exp_eval = store_thm ("BExp_rol_exp_eval",
+``!sz e1 e2 env. bir_eval_exp (BExp_rol_exp sz e1 e2) env =
+     case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env) of
+       | (Bit1, BVal_Imm (Imm1 w1), BVal_Imm (Imm1  w2)) =>
+            BVal_Imm (Imm1 (w1 #<<~ w2))
+       | (Bit8,  BVal_Imm (Imm8  w1), BVal_Imm (Imm8  w2)) =>
+            BVal_Imm (Imm8 (w1 #<<~ w2))
+       | (Bit16, BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2)) =>
+            BVal_Imm (Imm16 (w1 #<<~ w2))
+       | (Bit32, BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2)) =>
+            BVal_Imm (Imm32 (w1 #<<~ w2))
+       | (Bit64, BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2)) =>
+            BVal_Imm (Imm64 (w1 #<<~ w2))
+       | _ => BVal_Unknown``,
+
+REPEAT GEN_TAC >>
+MP_TAC (SPEC ``0:num`` (INST_TYPE [``:'a`` |-> ``:1``] word_rol_OR_SHIFT)) >>
+MP_TAC (SPEC ``3:num`` (INST_TYPE [``:'a`` |-> ``:8``] word_rol_OR_SHIFT)) >>
+MP_TAC (SPEC ``4:num`` (INST_TYPE [``:'a`` |-> ``:16``] word_rol_OR_SHIFT)) >>
+MP_TAC (SPEC ``5:num`` (INST_TYPE [``:'a`` |-> ``:32``] word_rol_OR_SHIFT)) >>
+MP_TAC (SPEC ``6:num`` (INST_TYPE [``:'a`` |-> ``:64``] word_rol_OR_SHIFT)) >>
+
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [BExp_rol_exp_def] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [WORD_AND_CLAUSES]
+));
+
+
+
+val word_rol_bv_OR_SHIFT = store_thm ("word_rol_bv_OR_SHIFT",
+``!n w:'a word n. n <= dimindex (:'a) ==> (
+   (w #<< n) =
+   ((w << n) || (w >>> (dimindex (:'a) - n))))``,
+
+REPEAT STRIP_TAC >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+Cases_on `w` >>
+ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
+  word_or_def, fcpTheory.FCP_BETA, word_rol_def,
+  word_lsl_def, word_lsr_def, word_ror_def] >>
+REPEAT STRIP_TAC >>
+Cases_on `n <= i` >- (
+  ASM_SIMP_TAC arith_ss [] >>
+  `i + dimindex (:'a) - n = dimindex (:'a) + (i - n)` by DECIDE_TAC >>
+  ASM_SIMP_TAC std_ss [arithmeticTheory.ADD_MODULUS, DIMINDEX_GT_0] >>
+  ASM_SIMP_TAC arith_ss []
+) >>
+ASM_SIMP_TAC arith_ss [] >>
+Cases_on `n = dimindex (:'a)` >> (
+  ASM_SIMP_TAC arith_ss [bir_auxiliaryTheory.MOD_ADD_EQ_SUB,
+    arithmeticTheory.ADD_MODULUS]
+));
+
+
+
+val BExp_rol_def = Define `BExp_rol sz e n =
+        (BExp_BinExp BIExp_Or
+           (BExp_BinExp BIExp_LeftShift e
+              (BExp_Const (n2bs n sz)))
+           (BExp_BinExp BIExp_RightShift e
+              (BExp_Const (n2bs (size_of_bir_immtype sz - n) sz))))`;
+
+
+val BExp_rol_vars_of = store_thm ("BExp_rol_vars_of",
+``!sz e n. bir_vars_of_exp (BExp_rol sz e n) = bir_vars_of_exp e``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_rol_def, pred_setTheory.UNION_EMPTY,
+  pred_setTheory.UNION_IDEMPOT]);
+
+
+val BExp_rol_type_of = store_thm ("BExp_rol_type_of",
+``!sz e n. type_of_bir_exp (BExp_rol sz e n) =
+      (if (type_of_bir_exp e = SOME (BType_Imm sz)) then SOME (BType_Imm sz) else NONE)``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_rol_def, type_of_bir_exp_def,
+  pairTheory.pair_case_thm] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
+));
+
+
+val BExp_rol_eval = store_thm ("BExp_rol_eval",
+``!sz e n env.
+    n <= size_of_bir_immtype sz ==> (
+    bir_eval_exp (BExp_rol sz e n) env =
+     case (sz, bir_eval_exp e env) of
+       | (Bit1, BVal_Imm (Imm1 w)) =>
+            BVal_Imm (Imm1 (w #<< n))
+       | (Bit8,  BVal_Imm (Imm8  w)) =>
+            BVal_Imm (Imm8 (w #<< n))
+       | (Bit16,  BVal_Imm (Imm16 w)) =>
+            BVal_Imm (Imm16 (w #<< n))
+       | (Bit32,  BVal_Imm (Imm32 w)) =>
+            BVal_Imm (Imm32 (w #<< n))
+       | (Bit64,  BVal_Imm (Imm64 w)) =>
+            BVal_Imm (Imm64 (w #<< n))
+       | _ => BVal_Unknown)``,
+
+REPEAT STRIP_TAC >>
+MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:1``] word_rol_bv_OR_SHIFT)) >>
+MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:8``] word_rol_bv_OR_SHIFT)) >>
+MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:16``] word_rol_bv_OR_SHIFT)) >>
+MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:32``] word_rol_bv_OR_SHIFT)) >>
+MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:64``] word_rol_bv_OR_SHIFT)) >>
+
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [BExp_rol_def,
+  pairTheory.pair_case_thm] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (arith_ss++holBACore_ss++wordsLib.SIZES_ss) [word_lsr_bv_def,
+    word_lsl_bv_def, w2n_n2w]
+));
+
 
 
 val _ = export_theory();

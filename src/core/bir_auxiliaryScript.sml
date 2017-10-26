@@ -194,6 +194,18 @@ FULL_SIMP_TAC std_ss [IN_DIFF, FINITE_INSERT, INSERT_SUBSET,
   CARD_INSERT]);
 
 
+(* -------------------------------------------------------------------------- *)
+(* Modulus                                                                    *)
+(* -------------------------------------------------------------------------- *)
+
+val MOD_ADD_EQ_SUB = store_thm ("MOD_ADD_EQ_SUB",
+``!x1 x2 y. x1 < y /\ x2 < y /\ (y <= x1 + x2) ==>
+            ((x1 + x2) MOD y = (x1 + x2) - y)``,
+
+REPEAT STRIP_TAC >>
+`?i. x1 + x2 = y + i` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS] >>
+ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_MODULUS]);
+
 
 (* -------------------------------------------------------------------------- *)
 (* While lemmata                                                              *)
