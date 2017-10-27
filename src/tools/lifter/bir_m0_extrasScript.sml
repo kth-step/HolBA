@@ -352,6 +352,14 @@ val Mode_Handler_INTRO = store_thm ("Mode_Handler_INTRO",
 ``!m. (m = Mode_Thread) <=> (m <> Mode_Handler)``,
 Cases_on `m` >> SIMP_TAC std_ss [m0Theory.Mode_distinct]);
 
+val m0_ror_w2w_remove = store_thm ("m0_ror_w2w_remove",
+``!w1:word32 w2:word32. 
+    (w1 #>> w2n ((w2w w2):word8)) = (w1 #>> w2n w2)``,
+
+ONCE_REWRITE_TAC [GSYM ROR_MOD] >>
+MP_TAC (Q.SPECL [`8`, `32`] arithmeticTheory.MOD_MULT_MOD) >>
+SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2w_def, w2n_n2w]);
+
 
 val m0_word_bit_0_ms_aligned = store_thm ("m0_word_bit_0_ms_aligned",
 ``!ms:m0_state addr. word_bit 0 (ms.MEM addr) =
@@ -612,7 +620,7 @@ val m0_extra_FOLDS_GEN = save_thm ("m0_extra_FOLDS_GEN",
              GSYM m0_mem_word_BE_def, GSYM m0_mem_half_BE_def,
              m0_extract_byte, m0_extract_half, m0_mask_last_bit_REWR, m0_Shift_C, m0_Shift_N,
              GSYM word_reverse_REWRS, align_AND_INTROS, m0_word_bit_0_ms_aligned,
-             m0_rev_folds, m0_revs_folds])
+             m0_rev_folds, m0_revs_folds, m0_ror_w2w_remove])
 
 val m0_extra_FOLDS_LE = save_thm ("m0_extra_FOLDS_LE",
   extract_byte_RULE (

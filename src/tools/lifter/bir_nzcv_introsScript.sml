@@ -488,6 +488,16 @@ ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [word_lsl_def,
 Cases_on `n1 <= 32` >> ASM_SIMP_TAC arith_ss []);
 
 
+val rors_C_fold_M0 = store_thm ("rors_C_fold_M0",
+``!(w1:word8) (w2:word32) c.
+  (if w2n w1 = 0 then c else
+    word_msb w2) =
+  (if (w1 = 0w) then c else word_msb w2)``,
+
+Cases >> rename1 `n1 < dimword _` >>
+FULL_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [w2n_n2w, n2w_11,
+  w2w_def]);
+
 
 val nzcv_FOLDS_M0 = save_thm ("nzcv_FOLDS_M0",
  LIST_CONJ [awc_BIR_V_fold_M0, awc_BIR_C_fold_M0,
@@ -501,7 +511,8 @@ val nzcv_FOLDS_M0 = save_thm ("nzcv_FOLDS_M0",
             awc_BIR_Z_nzcv_BIR_SUB_N_fold,
             awc_BIR_Z_nzcv_BIR_ADD_N_fold,
 
-            lsrs_C_fold_M0, asrs_C_fold_M0, lsls_C_fold_M0
+            lsrs_C_fold_M0, asrs_C_fold_M0, lsls_C_fold_M0,
+            rors_C_fold_M0
 ]);
 
 

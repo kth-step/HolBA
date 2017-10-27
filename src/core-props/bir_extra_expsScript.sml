@@ -1393,4 +1393,100 @@ REPEAT CASE_TAC >> (
 
 
 
+
+
+(***********)
+(* extract *)
+(***********)
+
+(* Extract is the underlying operation used to implement ROR on ARM8. However,
+   it is also available as a separate assembler instruction and therefore
+   modelled explicitly here. *)
+
+val word_shift_extract_def = Define `word_shift_extract (w1:'a word) (w2:'a word) n =
+  ((w2 >>> n) || (w1 << (dimindex (:'a) - n)))`;
+
+
+val word_shift_extract_ID = store_thm ("word_shift_extract_ID",
+``!n w:'a word. word_shift_extract w w n =
+  if (n <= dimindex (:'a)) then (w #>> n) else w``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [word_ror_bv_OR_SHIFT, word_shift_extract_def] >>
+Cases_on `dimindex (:'a) < n` >> ASM_SIMP_TAC arith_ss [] >>
+`dimindex (:'a) - n = 0` by DECIDE_TAC >>
+ASM_SIMP_TAC arith_ss [SHIFT_ZERO, LSR_LIMIT, WORD_OR_CLAUSES]);
+
+
+val word_shift_extract_0 = store_thm ("word_shift_extract_0",
+``!w1:'a word w2. word_shift_extract w1 w2 0 = w2``,
+SIMP_TAC std_ss [word_shift_extract_def, SHIFT_ZERO, LSL_LIMIT,
+  WORD_OR_CLAUSES]);
+
+val word_shift_extract_LIMIT = store_thm ("word_shift_extract_LIMIT",
+``!w1:'a word w2 n. dimindex (:'a) <= n ==> (word_shift_extract w1 w2 n = w1)``,
+
+REPEAT STRIP_TAC >>
+`dimindex (:'a) - n = 0` by DECIDE_TAC >>
+ASM_SIMP_TAC std_ss [word_shift_extract_def, SHIFT_ZERO, LSR_LIMIT,
+  WORD_OR_CLAUSES]);
+
+
+val BExp_extr_def = Define `BExp_extr sz e1 e2 n =
+        (BExp_BinExp BIExp_Or
+           (BExp_BinExp BIExp_RightShift e2
+              (BExp_Const (n2bs n sz)))
+           (BExp_BinExp BIExp_LeftShift e1
+              (BExp_Const (n2bs (size_of_bir_immtype sz - n) sz))))`;
+
+val BExp_extr_ID = store_thm ("BExp_extr_ID",
+``!sz e n. BExp_extr sz e e n = BExp_ror sz e n``,
+SIMP_TAC std_ss [BExp_extr_def, BExp_ror_def]);
+
+
+val BExp_extr_vars_of = store_thm ("BExp_extr_vars_of",
+``!sz e1 e2 n. bir_vars_of_exp (BExp_extr sz e1 e2 n) = bir_vars_of_exp e1 UNION bir_vars_of_exp e2``,
+SIMP_TAC (std_ss++holBACore_ss) [BExp_extr_def, pred_setTheory.UNION_EMPTY, pred_setTheory.UNION_COMM]);
+
+
+val BExp_extr_type_of = store_thm ("BExp_extr_type_of",
+``!sz e1 e2 n. type_of_bir_exp (BExp_extr sz e1 e2 n) =
+      (if ((type_of_bir_exp e1 = SOME (BType_Imm sz)) /\
+          (type_of_bir_exp e2 = SOME (BType_Imm sz))) then SOME (BType_Imm sz) else NONE)``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [BExp_extr_def, type_of_bir_exp_def,
+  pairTheory.pair_case_thm] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
+));
+
+
+val BExp_extr_eval = store_thm ("BExp_extr_eval",
+``!sz e1 e2 n env.
+    n <= size_of_bir_immtype sz ==> (
+    bir_eval_exp (BExp_extr sz e1 e2 n) env =
+     case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env) of
+       | (Bit1, BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2)) =>
+            BVal_Imm (Imm1 (word_shift_extract w1 w2 n))
+       | (Bit8, BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2)) =>
+            BVal_Imm (Imm8 (word_shift_extract w1 w2 n))
+       | (Bit16, BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2)) =>
+            BVal_Imm (Imm16 (word_shift_extract w1 w2 n))
+       | (Bit32, BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2)) =>
+            BVal_Imm (Imm32 (word_shift_extract w1 w2 n))
+       | (Bit64, BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2)) =>
+            BVal_Imm (Imm64 (word_shift_extract w1 w2 n))
+       | _ => BVal_Unknown)``,
+
+REPEAT STRIP_TAC >>
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [BExp_extr_def,
+  pairTheory.pair_case_thm] >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (arith_ss++holBACore_ss++wordsLib.SIZES_ss) [word_lsr_bv_def,
+    word_lsl_bv_def, w2n_n2w, word_shift_extract_def]
+));
+
+
+
 val _ = export_theory();

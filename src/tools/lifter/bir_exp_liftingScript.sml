@@ -1410,6 +1410,38 @@ end);
 
 
 
+(********)
+(* extr *)
+(********)
+
+val thm_t = build_immtype_t_conj
+``!s env (w1:'a word) (w2 : 'a word) (n : num) e1 e2.
+      (MEM n (COUNT_LIST (SUC (dimindex (:'a))))) ==>
+      bir_is_lifted_imm_exp env e1 (w2bs w1 s) ==>
+      bir_is_lifted_imm_exp env e2 (w2bs w2 s) ==>
+      bir_is_lifted_imm_exp env (BExp_extr s e1 e2 n)
+        (w2bs (word_shift_extract w1 w2 n) s)``;
+
+val bir_is_lifted_imm_exp_EXTR0 = prove (``^thm_t``,
+SIMP_TAC (arith_ss++holBACore_ss++wordsLib.SIZES_ss) [bir_is_lifted_imm_exp_def,
+  bir_env_vars_are_initialised_UNION, w2w_id, bir_env_vars_are_initialised_EMPTY,
+  BExp_extr_vars_of, BExp_extr_type_of, BExp_extr_eval, rich_listTheory.MEM_COUNT_LIST,
+  GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC, pairTheory.pair_case_thm]);
+
+val bir_is_lifted_imm_exp_EXTR = save_thm ("bir_is_lifted_imm_exp_EXTR",
+let
+  val thm0 = bir_is_lifted_imm_exp_EXTR0
+  val thm1 = SIMP_RULE (list_ss++wordsLib.WORD_ss) [
+    GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id, n2bs_def] thm0
+  val thm2 = SIMP_RULE (std_ss) [rich_listTheory.COUNT_LIST_compute,
+    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    FORALL_AND_THM] thm1
+in
+  thm2
+end);
+
+
+
 
 
 (****************)
@@ -1442,6 +1474,7 @@ val bir_is_lifted_imm_exp_DEFAULT_THMS = save_thm ("bir_is_lifted_imm_exp_DEFAUL
              bir_is_lifted_imm_exp_ROL_EXP,
              bir_is_lifted_imm_exp_ROL_EXP_w2n,
              bir_is_lifted_imm_exp_ROL,
+             bir_is_lifted_imm_exp_EXTR,
              bir_is_lifted_imm_exp_ALIGN,
              bir_is_lifted_imm_exp_ALIGNED]);
 

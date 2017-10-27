@@ -196,6 +196,8 @@ ASM_SIMP_TAC arith_ss [WORD_AND_EXP_SUB1, word_lsr_bv_def, w2n_n2w,
   MOD_DIMINDEX_DIMWORD]);
 
 
+
+
 val arm8_lsr_no_imm_FOLDS = save_thm ("arm8_lsr_no_imm_FOLDS",
 let
   fun inst wty n = let
@@ -283,6 +285,105 @@ in
 end);
 
 
+
+(****************)
+(* FOLD for ror *)
+(****************)
+
+val arm8_ror_MOD_FOLDS = save_thm ("arm8_ror_MOD_folds",
+let
+  val thms0 = map (fn ty => INST_TYPE [``:'a`` |-> ty] wordsTheory.ROR_MOD) [``:8``, ``:16``, ``:32``, ``:64``]
+  val thm1 = LIST_CONJ thms0
+  val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [] thm1
+in thm2 end);
+
+
+(*****************)
+(* FOLD for extr *)
+(*****************)
+
+val arm8_extr_FOLD0 = prove (
+``!(w1:'a word) (w2:'a word) n.
+   (MEM n (COUNT_LIST (dimindex(:'a)))) ==> (
+   (v2w (BUTLASTN n (w2v w1 ++ w2v w2))): 'a word =
+   word_shift_extract w1 w2 n)``,
+
+ONCE_REWRITE_TAC[fcpTheory.CART_EQ] >>
+REWRITE_TAC[bitstringTheory.word_index_v2w, rich_listTheory.MEM_COUNT_LIST] >>
+REPEAT STRIP_TAC >>
+ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [word_shift_extract_def,
+  word_or_def, fcpTheory.FCP_BETA, word_lsl_def, word_lsr_def] >>
+ASM_SIMP_TAC list_ss [rich_listTheory.LENGTH_BUTLASTN,
+    bitstringTheory.testbit_el, length_w2v, rich_listTheory.BUTLASTN_def,
+    listTheory.EL_REVERSE, GSYM arithmeticTheory.ADD1] >>
+Q.SUBGOAL_THEN `PRE ((i + SUC n) - n) = i` SUBST1_TAC >- DECIDE_TAC >>
+
+ASM_SIMP_TAC list_ss [listTheory.REVERSE_APPEND, rich_listTheory.DROP_APPEND1,
+  length_w2v, listTheory.EL_APPEND_EQN, listTheory.EL_REVERSE,
+  el_w2v, rich_listTheory.EL_DROP, GSYM arithmeticTheory.ADD1] >>
+Cases_on ` i < dimindex (:'a) - n` >- (
+  ASM_SIMP_TAC arith_ss [] >>
+  AP_TERM_TAC >>
+  DECIDE_TAC
+) >- (
+  ASM_SIMP_TAC arith_ss [] >>
+  AP_TERM_TAC >>
+  DECIDE_TAC
+));
+
+
+val arm8_extr_FOLD1 = prove (
+``!(w1:'a word) (w2:'a word) n.
+   (dimindex (:'a) < dimindex (:'b)) ==>
+   (MEM n (COUNT_LIST (dimindex(:'a)))) ==> (
+   (v2w (LASTN (dimindex (:'a)) ((BUTLASTN n (w2v w1 ++ w2v w2))))): 'b word =
+   w2w (word_shift_extract w1 w2 n))``,
+
+ONCE_REWRITE_TAC[fcpTheory.CART_EQ] >>
+REWRITE_TAC[bitstringTheory.word_index_v2w, rich_listTheory.MEM_COUNT_LIST] >>
+REPEAT STRIP_TAC >>
+ASM_SIMP_TAC (list_ss++wordsLib.SIZES_ss++boolSimps.CONJ_ss) [word_shift_extract_def,
+  word_or_def, fcpTheory.FCP_BETA, word_lsl_def, word_lsr_def, w2w] >>
+ASM_SIMP_TAC (list_ss++boolSimps.EQUIV_EXTRACT_ss) [rich_listTheory.LENGTH_BUTLASTN,
+    bir_auxiliaryTheory.testbit_el_iff, length_w2v, rich_listTheory.BUTLASTN_def,
+    listTheory.EL_REVERSE, GSYM arithmeticTheory.ADD1, rich_listTheory.LASTN_REVERSE,
+    rich_listTheory.EL_TAKE] >>
+STRIP_TAC >>
+ASM_SIMP_TAC list_ss [listTheory.REVERSE_APPEND, rich_listTheory.DROP_APPEND1,
+  length_w2v, listTheory.EL_APPEND_EQN, listTheory.EL_REVERSE,
+  el_w2v, rich_listTheory.EL_DROP, GSYM arithmeticTheory.ADD1] >>
+
+Cases_on ` i + n < dimindex (:'a)` >- (
+  ASM_SIMP_TAC arith_ss [] >>
+  AP_TERM_TAC >>
+  DECIDE_TAC
+) >- (
+  ASM_SIMP_TAC arith_ss [] >>
+  AP_TERM_TAC >>
+  DECIDE_TAC
+));
+
+
+val arm8_extr_FOLDS = save_thm ("arm8_extr_folds",
+let
+  val thm0a = INST_TYPE [``:'a`` |-> ``:64``] arm8_extr_FOLD0
+  val thm0b = INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:64``] arm8_extr_FOLD1
+
+  val thm1 = CONJ thm0a thm0b
+  val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [rich_listTheory.COUNT_LIST_compute,
+    rich_listTheory.COUNT_LIST_AUX_def_compute, w2v_def,
+    listTheory.GENLIST_GENLIST_AUX, listTheory.GENLIST_AUX_compute, listTheory.APPEND] thm1
+  val thm3 = SIMP_RULE std_ss [rich_listTheory.BUTLASTN_def,rich_listTheory.LASTN_def,
+    listTheory.REVERSE_REVERSE] thm2
+  val thm4 = SIMP_RULE std_ss [listTheory.REVERSE_REV, listTheory.REV_DEF] thm3
+  val thm5 = SIMP_RULE std_ss [listTheory.MEM, DISJ_IMP_THM, FORALL_AND_THM,
+    listTheory.DROP_compute, listTheory.TAKE_compute, listTheory.REV_DEF] thm4
+  val thm6 = SIMP_RULE (arith_ss++wordsLib.SIZES_ss) [word_shift_extract_LIMIT, word_shift_extract_0] thm5
+
+in thm6 end);
+
+
+
 (**************************)
 (* Sign cast 32 -> 64 bit *)
 (**************************)
@@ -329,7 +430,6 @@ let
 in
   thm2
 end);
-
 
 
 
@@ -740,6 +840,7 @@ val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
       arm8_asr_FOLDS, arm8_lsr_no_imm_FOLDS, arm8_asr_no_imm_FOLDS,
       arm8_lsl_no_imm_FOLDS, arm8_sxtw_FOLDS, w2w_REMOVE_FOLDS,
       arm8_mem_store_FOLDS, GSYM word_reverse_REWRS,
-      ExtendValue_REWRS, arm8_rev_folds, arm8_ngc64_fold, arm8_ngc32_fold]);
+      ExtendValue_REWRS, arm8_rev_folds, arm8_ngc64_fold, arm8_ngc32_fold,
+      arm8_ror_MOD_FOLDS, arm8_extr_FOLDS, word_shift_extract_ID]);
 
 val _ = export_theory();

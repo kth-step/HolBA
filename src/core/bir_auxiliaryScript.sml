@@ -624,6 +624,14 @@ val align_aligned_sub = store_thm ("align_aligned_sub",
 METIS_TAC[aligned_neg, word_sub_def, align_aligned_add]);
 
 
+val testbit_el_iff = store_thm ("testbit_el_iff",
+``!v i. testbit i v = ((i < LENGTH v) /\ EL (LENGTH v - 1 - i) v)``,
+
+REPEAT GEN_TAC >>
+Cases_on `i < LENGTH v` >> (
+  ASM_SIMP_TAC arith_ss [testbit_el, testbit_geq_len]
+));
+
 
 (* -------------------------------------------------------------------------- *)
 (* Fresh variable names                                                       *)

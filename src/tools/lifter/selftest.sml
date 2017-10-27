@@ -262,6 +262,9 @@ val res = arm8_test_asm "asr x1, x2, x3";
 val res = arm8_test_asm "ror x1, x2, x3";
 val res = arm8_test_asm "ror x1, x2, #0";
 val res = arm8_test_asm "ror x1, x2, #2";
+val res = arm8_test_asm "ror x1, x2, #32";
+val res = arm8_test_asm "ror x1, x2, #63";
+val res = arm8_test_asm "ror w1, w2, #0";
 val res = arm8_test_asm "ror w1, w2, #2";
 val res = arm8_test_asm "l: b.eq l";
 val res = arm8_test_asm "l: cbnz w0, l";
@@ -299,6 +302,7 @@ val res = arm8_test_asm "ubfm w1, w2, #2, #8";
 val res = arm8_test_asm "ubfm w1, w2, #8, #2";
 val res = arm8_test_asm "extr w1, w2, w3, #2";
 val res = arm8_test_asm "extr x1, x2, x3, #2";
+val res = arm8_test_asm "extr x1, x3, x2, #2";
 val res = arm8_test_asm "sxth w1, w2";
 val res = arm8_test_asm "sxtb w1, w2";
 val res = arm8_test_asm "sxtw x1, x2";
@@ -976,185 +980,18 @@ val arm8_expected_failed_hexcodes:string list =
    "9BC37C41" (* umulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (w2w (ms.REG 3w) * w2w (ms.REG 2w)))`` failed *),
    "9B437C41" (* smulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (sw2sw (ms.REG 3w) * sw2sw (ms.REG 2w)))`` failed *),
    "FA0203E1" (* ngcs x1, x2 lifting of ``bool2b
-  ((w2n (~ms.REG 2w) + if ms.PSTATE.C then 1 else 0) MOD
-   18446744073709551616 =
-   0)`` failed *),
+  (¬word_msb (¬ms.REG 2w) ∧
+   BIT 63 (w2n (¬ms.REG 2w) + if ms.PSTATE.C then 1 else 0))`` failed *),
    "7A0203E1" (* ngcs w1, w2 lifting of ``bool2b
-  ((w2n (~w2w (ms.REG 2w)) + if ms.PSTATE.C then 1 else 0) MOD
+  ((w2n (¬w2w (ms.REG 2w)) + if ms.PSTATE.C then 1 else 0) MOD
    4294967296 =
    0)`` failed *),
    "DAC01441" (* clz x1, x2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
    "5AC01441" (* clz w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
    "DAC01041" (* cls x1, x2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
    "5AC01041" (* cls w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
-   "1AC32C41" (* rorv w1, w2, w3 lifting of ``Imm64 (w2w (w2w (ms.REG 2w) #>> (w2n (w2w (ms.REG 3w)) MOD 32)))`` failed *),
-   "93C30841" (* extr x1, x2, x3, #2 lifting of ``Imm64
-  (v2w
-     [ms.REG 2w ' 63; ms.REG 2w ' 62; ms.REG 2w ' 61; ms.REG 2w ' 60;
-      ms.REG 2w ' 59; ms.REG 2w ' 58; ms.REG 2w ' 57; ms.REG 2w ' 56;
-      ms.REG 2w ' 55; ms.REG 2w ' 54; ms.REG 2w ' 53; ms.REG 2w ' 52;
-      ms.REG 2w ' 51; ms.REG 2w ' 50; ms.REG 2w ' 49; ms.REG 2w ' 48;
-      ms.REG 2w ' 47; ms.REG 2w ' 46; ms.REG 2w ' 45; ms.REG 2w ' 44;
-      ms.REG 2w ' 43; ms.REG 2w ' 42; ms.REG 2w ' 41; ms.REG 2w ' 40;
-      ms.REG 2w ' 39; ms.REG 2w ' 38; ms.REG 2w ' 37; ms.REG 2w ' 36;
-      ms.REG 2w ' 35; ms.REG 2w ' 34; ms.REG 2w ' 33; ms.REG 2w ' 32;
-      ms.REG 2w ' 31; ms.REG 2w ' 30; ms.REG 2w ' 29; ms.REG 2w ' 28;
-      ms.REG 2w ' 27; ms.REG 2w ' 26; ms.REG 2w ' 25; ms.REG 2w ' 24;
-      ms.REG 2w ' 23; ms.REG 2w ' 22; ms.REG 2w ' 21; ms.REG 2w ' 20;
-      ms.REG 2w ' 19; ms.REG 2w ' 18; ms.REG 2w ' 17; ms.REG 2w ' 16;
-      ms.REG 2w ' 15; ms.REG 2w ' 14; ms.REG 2w ' 13; ms.REG 2w ' 12;
-      ms.REG 2w ' 11; ms.REG 2w ' 10; ms.REG 2w ' 9; ms.REG 2w ' 8;
-      ms.REG 2w ' 7; ms.REG 2w ' 6; ms.REG 2w ' 5; ms.REG 2w ' 4;
-      ms.REG 2w ' 3; ms.REG 2w ' 2; ms.REG 2w ' 1; ms.REG 2w ' 0;
-      ms.REG 3w ' 63; ms.REG 3w ' 62; ms.REG 3w ' 61; ms.REG 3w ' 60;
-      ms.REG 3w ' 59; ms.REG 3w ' 58; ms.REG 3w ' 57; ms.REG 3w ' 56;
-      ms.REG 3w ' 55; ms.REG 3w ' 54; ms.REG 3w ' 53; ms.REG 3w ' 52;
-      ms.REG 3w ' 51; ms.REG 3w ' 50; ms.REG 3w ' 49; ms.REG 3w ' 48;
-      ms.REG 3w ' 47; ms.REG 3w ' 46; ms.REG 3w ' 45; ms.REG 3w ' 44;
-      ms.REG 3w ' 43; ms.REG 3w ' 42; ms.REG 3w ' 41; ms.REG 3w ' 40;
-      ms.REG 3w ' 39; ms.REG 3w ' 38; ms.REG 3w ' 37; ms.REG 3w ' 36;
-      ms.REG 3w ' 35; ms.REG 3w ' 34; ms.REG 3w ' 33; ms.REG 3w ' 32;
-      ms.REG 3w ' 31; ms.REG 3w ' 30; ms.REG 3w ' 29; ms.REG 3w ' 28;
-      ms.REG 3w ' 27; ms.REG 3w ' 26; ms.REG 3w ' 25; ms.REG 3w ' 24;
-      ms.REG 3w ' 23; ms.REG 3w ' 22; ms.REG 3w ' 21; ms.REG 3w ' 20;
-      ms.REG 3w ' 19; ms.REG 3w ' 18; ms.REG 3w ' 17; ms.REG 3w ' 16;
-      ms.REG 3w ' 15; ms.REG 3w ' 14; ms.REG 3w ' 13; ms.REG 3w ' 12;
-      ms.REG 3w ' 11; ms.REG 3w ' 10; ms.REG 3w ' 9; ms.REG 3w ' 8;
-      ms.REG 3w ' 7; ms.REG 3w ' 6; ms.REG 3w ' 5; ms.REG 3w ' 4;
-      ms.REG 3w ' 3; ms.REG 3w ' 2])`` failed *),
-   "13830841" (* extr w1, w2, w3, #2 lifting of ``Imm64
-  (v2w
-     [w2w (ms.REG 2w) ' 1; w2w (ms.REG 2w) ' 0; w2w (ms.REG 3w) ' 31;
-      w2w (ms.REG 3w) ' 30; w2w (ms.REG 3w) ' 29; w2w (ms.REG 3w) ' 28;
-      w2w (ms.REG 3w) ' 27; w2w (ms.REG 3w) ' 26; w2w (ms.REG 3w) ' 25;
-      w2w (ms.REG 3w) ' 24; w2w (ms.REG 3w) ' 23; w2w (ms.REG 3w) ' 22;
-      w2w (ms.REG 3w) ' 21; w2w (ms.REG 3w) ' 20; w2w (ms.REG 3w) ' 19;
-      w2w (ms.REG 3w) ' 18; w2w (ms.REG 3w) ' 17; w2w (ms.REG 3w) ' 16;
-      w2w (ms.REG 3w) ' 15; w2w (ms.REG 3w) ' 14; w2w (ms.REG 3w) ' 13;
-      w2w (ms.REG 3w) ' 12; w2w (ms.REG 3w) ' 11; w2w (ms.REG 3w) ' 10;
-      w2w (ms.REG 3w) ' 9; w2w (ms.REG 3w) ' 8; w2w (ms.REG 3w) ' 7;
-      w2w (ms.REG 3w) ' 6; w2w (ms.REG 3w) ' 5; w2w (ms.REG 3w) ' 4;
-      w2w (ms.REG 3w) ' 3; w2w (ms.REG 3w) ' 2])`` failed *),
-   "53080841" (* ubfm w1, w2, #8, #2 lifting of ``Imm64 (w2w (0x7000000w && w2w (ms.REG 2w) #>> 8))`` failed *),
-   "53022041" (* ubfm w1, w2, #2, #8 lifting of ``Imm64 (w2w (127w && w2w (ms.REG 2w) #>> 2))`` failed *),
-   "53021041" (* ubfm w1, w2, #2, #4 lifting of ``Imm64 (w2w (7w && w2w (ms.REG 2w) #>> 2))`` failed *),
-   "13080841" (* sbfm w1, w2, #8, #2 lifting of ``Imm64
-  (w2w
-     (0x7000000w && w2w (ms.REG 2w) #>> 8 ||
-      0xF8000000w &&
-      if word_bit 2 (w2w (ms.REG 2w)) then 0xFFFFFFFFw else 0w))`` failed *),
-   "13022041" (* sbfm w1, w2, #2, #8 lifting of ``Imm64
-  (w2w
-     (127w && w2w (ms.REG 2w) #>> 2 ||
-      0xFFFFFF80w &&
-      if word_bit 8 (w2w (ms.REG 2w)) then 0xFFFFFFFFw else 0w))`` failed *),
-   "13021041" (* sbfm w1, w2, #2, #4 lifting of ``Imm64
-  (w2w
-     (7w && w2w (ms.REG 2w) #>> 2 ||
-      0xFFFFFFF8w &&
-      if word_bit 4 (w2w (ms.REG 2w)) then 0xFFFFFFFFw else 0w))`` failed *),
-   "33080841" (* bfm w1, w2, #8, #2 lifting of ``Imm64
-  (w2w
-     (0xF8000000w && w2w (ms.REG 1w) ||
-      0x7FFFFFFw &&
-      (0xF8FFFFFFw && w2w (ms.REG 1w) ||
-       0x7000000w && w2w (ms.REG 2w) #>> 8)))`` failed *),
-   "33022041" (* bfm w1, w2, #2, #8 lifting of ``Imm64
-  (w2w
-     (0xFFFFFF80w && w2w (ms.REG 1w) ||
-      127w &&
-      (0x3FFFFF80w && w2w (ms.REG 1w) ||
-       0xC000007Fw && w2w (ms.REG 2w) #>> 2)))`` failed *),
-   "33021041" (* bfm w1, w2, #2, #4 lifting of ``Imm64
-  (w2w
-     (0xFFFFFFF8w && w2w (ms.REG 1w) ||
-      7w &&
-      (0x3FFFFFF8w && w2w (ms.REG 1w) ||
-       0xC0000007w && w2w (ms.REG 2w) #>> 2)))`` failed *),
    "F2800080" (* movk x0, #4 lifting of ``Imm64 ((63 >< 16) (ms.REG 0w) @@ 4w)`` failed *),
-   "72800080" (* movk w0, #4 lifting of ``Imm64 (w2w ((31 >< 16) (w2w (ms.REG 0w)) @@ 4w))`` failed *),
-   "13820841" (* ror w1, w2, #2 lifting of ``Imm64
-  (v2w
-     [w2w (ms.REG 2w) ' 1; w2w (ms.REG 2w) ' 0; w2w (ms.REG 2w) ' 31;
-      w2w (ms.REG 2w) ' 30; w2w (ms.REG 2w) ' 29; w2w (ms.REG 2w) ' 28;
-      w2w (ms.REG 2w) ' 27; w2w (ms.REG 2w) ' 26; w2w (ms.REG 2w) ' 25;
-      w2w (ms.REG 2w) ' 24; w2w (ms.REG 2w) ' 23; w2w (ms.REG 2w) ' 22;
-      w2w (ms.REG 2w) ' 21; w2w (ms.REG 2w) ' 20; w2w (ms.REG 2w) ' 19;
-      w2w (ms.REG 2w) ' 18; w2w (ms.REG 2w) ' 17; w2w (ms.REG 2w) ' 16;
-      w2w (ms.REG 2w) ' 15; w2w (ms.REG 2w) ' 14; w2w (ms.REG 2w) ' 13;
-      w2w (ms.REG 2w) ' 12; w2w (ms.REG 2w) ' 11; w2w (ms.REG 2w) ' 10;
-      w2w (ms.REG 2w) ' 9; w2w (ms.REG 2w) ' 8; w2w (ms.REG 2w) ' 7;
-      w2w (ms.REG 2w) ' 6; w2w (ms.REG 2w) ' 5; w2w (ms.REG 2w) ' 4;
-      w2w (ms.REG 2w) ' 3; w2w (ms.REG 2w) ' 2])`` failed *),
-   "93C20841" (* ror x1, x2, #2 lifting of ``Imm64
-  (v2w
-     [ms.REG 2w ' 63; ms.REG 2w ' 62; ms.REG 2w ' 61; ms.REG 2w ' 60;
-      ms.REG 2w ' 59; ms.REG 2w ' 58; ms.REG 2w ' 57; ms.REG 2w ' 56;
-      ms.REG 2w ' 55; ms.REG 2w ' 54; ms.REG 2w ' 53; ms.REG 2w ' 52;
-      ms.REG 2w ' 51; ms.REG 2w ' 50; ms.REG 2w ' 49; ms.REG 2w ' 48;
-      ms.REG 2w ' 47; ms.REG 2w ' 46; ms.REG 2w ' 45; ms.REG 2w ' 44;
-      ms.REG 2w ' 43; ms.REG 2w ' 42; ms.REG 2w ' 41; ms.REG 2w ' 40;
-      ms.REG 2w ' 39; ms.REG 2w ' 38; ms.REG 2w ' 37; ms.REG 2w ' 36;
-      ms.REG 2w ' 35; ms.REG 2w ' 34; ms.REG 2w ' 33; ms.REG 2w ' 32;
-      ms.REG 2w ' 31; ms.REG 2w ' 30; ms.REG 2w ' 29; ms.REG 2w ' 28;
-      ms.REG 2w ' 27; ms.REG 2w ' 26; ms.REG 2w ' 25; ms.REG 2w ' 24;
-      ms.REG 2w ' 23; ms.REG 2w ' 22; ms.REG 2w ' 21; ms.REG 2w ' 20;
-      ms.REG 2w ' 19; ms.REG 2w ' 18; ms.REG 2w ' 17; ms.REG 2w ' 16;
-      ms.REG 2w ' 15; ms.REG 2w ' 14; ms.REG 2w ' 13; ms.REG 2w ' 12;
-      ms.REG 2w ' 11; ms.REG 2w ' 10; ms.REG 2w ' 9; ms.REG 2w ' 8;
-      ms.REG 2w ' 7; ms.REG 2w ' 6; ms.REG 2w ' 5; ms.REG 2w ' 4;
-      ms.REG 2w ' 3; ms.REG 2w ' 2; ms.REG 2w ' 1; ms.REG 2w ' 0;
-      ms.REG 2w ' 63; ms.REG 2w ' 62; ms.REG 2w ' 61; ms.REG 2w ' 60;
-      ms.REG 2w ' 59; ms.REG 2w ' 58; ms.REG 2w ' 57; ms.REG 2w ' 56;
-      ms.REG 2w ' 55; ms.REG 2w ' 54; ms.REG 2w ' 53; ms.REG 2w ' 52;
-      ms.REG 2w ' 51; ms.REG 2w ' 50; ms.REG 2w ' 49; ms.REG 2w ' 48;
-      ms.REG 2w ' 47; ms.REG 2w ' 46; ms.REG 2w ' 45; ms.REG 2w ' 44;
-      ms.REG 2w ' 43; ms.REG 2w ' 42; ms.REG 2w ' 41; ms.REG 2w ' 40;
-      ms.REG 2w ' 39; ms.REG 2w ' 38; ms.REG 2w ' 37; ms.REG 2w ' 36;
-      ms.REG 2w ' 35; ms.REG 2w ' 34; ms.REG 2w ' 33; ms.REG 2w ' 32;
-      ms.REG 2w ' 31; ms.REG 2w ' 30; ms.REG 2w ' 29; ms.REG 2w ' 28;
-      ms.REG 2w ' 27; ms.REG 2w ' 26; ms.REG 2w ' 25; ms.REG 2w ' 24;
-      ms.REG 2w ' 23; ms.REG 2w ' 22; ms.REG 2w ' 21; ms.REG 2w ' 20;
-      ms.REG 2w ' 19; ms.REG 2w ' 18; ms.REG 2w ' 17; ms.REG 2w ' 16;
-      ms.REG 2w ' 15; ms.REG 2w ' 14; ms.REG 2w ' 13; ms.REG 2w ' 12;
-      ms.REG 2w ' 11; ms.REG 2w ' 10; ms.REG 2w ' 9; ms.REG 2w ' 8;
-      ms.REG 2w ' 7; ms.REG 2w ' 6; ms.REG 2w ' 5; ms.REG 2w ' 4;
-      ms.REG 2w ' 3; ms.REG 2w ' 2])`` failed *),
-   "93C20041" (* ror x1, x2, #0 lifting of ``Imm64
-  (v2w
-     [ms.REG 2w ' 63; ms.REG 2w ' 62; ms.REG 2w ' 61; ms.REG 2w ' 60;
-      ms.REG 2w ' 59; ms.REG 2w ' 58; ms.REG 2w ' 57; ms.REG 2w ' 56;
-      ms.REG 2w ' 55; ms.REG 2w ' 54; ms.REG 2w ' 53; ms.REG 2w ' 52;
-      ms.REG 2w ' 51; ms.REG 2w ' 50; ms.REG 2w ' 49; ms.REG 2w ' 48;
-      ms.REG 2w ' 47; ms.REG 2w ' 46; ms.REG 2w ' 45; ms.REG 2w ' 44;
-      ms.REG 2w ' 43; ms.REG 2w ' 42; ms.REG 2w ' 41; ms.REG 2w ' 40;
-      ms.REG 2w ' 39; ms.REG 2w ' 38; ms.REG 2w ' 37; ms.REG 2w ' 36;
-      ms.REG 2w ' 35; ms.REG 2w ' 34; ms.REG 2w ' 33; ms.REG 2w ' 32;
-      ms.REG 2w ' 31; ms.REG 2w ' 30; ms.REG 2w ' 29; ms.REG 2w ' 28;
-      ms.REG 2w ' 27; ms.REG 2w ' 26; ms.REG 2w ' 25; ms.REG 2w ' 24;
-      ms.REG 2w ' 23; ms.REG 2w ' 22; ms.REG 2w ' 21; ms.REG 2w ' 20;
-      ms.REG 2w ' 19; ms.REG 2w ' 18; ms.REG 2w ' 17; ms.REG 2w ' 16;
-      ms.REG 2w ' 15; ms.REG 2w ' 14; ms.REG 2w ' 13; ms.REG 2w ' 12;
-      ms.REG 2w ' 11; ms.REG 2w ' 10; ms.REG 2w ' 9; ms.REG 2w ' 8;
-      ms.REG 2w ' 7; ms.REG 2w ' 6; ms.REG 2w ' 5; ms.REG 2w ' 4;
-      ms.REG 2w ' 3; ms.REG 2w ' 2; ms.REG 2w ' 1; ms.REG 2w ' 0;
-      ms.REG 2w ' 63; ms.REG 2w ' 62; ms.REG 2w ' 61; ms.REG 2w ' 60;
-      ms.REG 2w ' 59; ms.REG 2w ' 58; ms.REG 2w ' 57; ms.REG 2w ' 56;
-      ms.REG 2w ' 55; ms.REG 2w ' 54; ms.REG 2w ' 53; ms.REG 2w ' 52;
-      ms.REG 2w ' 51; ms.REG 2w ' 50; ms.REG 2w ' 49; ms.REG 2w ' 48;
-      ms.REG 2w ' 47; ms.REG 2w ' 46; ms.REG 2w ' 45; ms.REG 2w ' 44;
-      ms.REG 2w ' 43; ms.REG 2w ' 42; ms.REG 2w ' 41; ms.REG 2w ' 40;
-      ms.REG 2w ' 39; ms.REG 2w ' 38; ms.REG 2w ' 37; ms.REG 2w ' 36;
-      ms.REG 2w ' 35; ms.REG 2w ' 34; ms.REG 2w ' 33; ms.REG 2w ' 32;
-      ms.REG 2w ' 31; ms.REG 2w ' 30; ms.REG 2w ' 29; ms.REG 2w ' 28;
-      ms.REG 2w ' 27; ms.REG 2w ' 26; ms.REG 2w ' 25; ms.REG 2w ' 24;
-      ms.REG 2w ' 23; ms.REG 2w ' 22; ms.REG 2w ' 21; ms.REG 2w ' 20;
-      ms.REG 2w ' 19; ms.REG 2w ' 18; ms.REG 2w ' 17; ms.REG 2w ' 16;
-      ms.REG 2w ' 15; ms.REG 2w ' 14; ms.REG 2w ' 13; ms.REG 2w ' 12;
-      ms.REG 2w ' 11; ms.REG 2w ' 10; ms.REG 2w ' 9; ms.REG 2w ' 8;
-      ms.REG 2w ' 7; ms.REG 2w ' 6; ms.REG 2w ' 5; ms.REG 2w ' 4;
-      ms.REG 2w ' 3; ms.REG 2w ' 2; ms.REG 2w ' 1; ms.REG 2w ' 0])`` failed *),
-   "9AC32C41" (* ror x1, x2, x3 lifting of ``Imm64 (ms.REG 2w #>> (w2n (ms.REG 3w) MOD 64))`` failed *)
+   "72800080" (* movk w0, #4 lifting of ``Imm64 (w2w ((31 >< 16) (w2w (ms.REG 0w)) @@ 4w))`` failed *)
 ];
 
 val _ = test_ARM8.final_results "ARM 8" arm8_expected_failed_hexcodes;
@@ -1163,8 +1000,7 @@ val _ = test_ARM8.final_results "ARM 8" arm8_expected_failed_hexcodes;
 val m0_expected_failed_hexcodes:string list =
 [
    "A1BC" (* bmr_step_hex failed *),
-   "DFB8" (* bmr_step_hex failed *),
-   "41C8" (* rors r0, r1 lifting of ``Imm32 (ms.REG RName_0 ⇄ w2n (w2w (ms.REG RName_1)))`` failed *)
+   "DFB8" (* bmr_step_hex failed *)
 ];
 
 
