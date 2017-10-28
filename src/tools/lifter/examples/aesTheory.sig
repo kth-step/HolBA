@@ -8,7 +8,13 @@ sig
 
   val aes_grammars : type_grammar.grammar * term_grammar.grammar
 (*
+   [bir_arm8_extras] Parent theory of "aes"
+
    [bir_inst_lifting] Parent theory of "aes"
+
+   [bir_m0_extras] Parent theory of "aes"
+
+   [bir_nzcv_intros] Parent theory of "aes"
 
    [aes_arm8_program_THM]  Theorem
 

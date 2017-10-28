@@ -139,6 +139,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "90000000"
   val hex_code = "DA020000";
   val hex_code = "DAC01441";
+  val hex_code = "DAC01041"
 
   (* M0 *)
   val hex_code = "3202"
@@ -293,6 +294,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   fun exp_lift_fn tm = let
      val res = exp_lift_fn_raw tm
      val _ = if is_imp_only (concl res) then failwith "exp_lift_fn: preconds present" else ()
+     val exp_tm = rand (rator (concl res))
+     val _ = if free_in ms_v exp_tm then failwith "exp_lift_fn: ms still present" else ()
   in
      res
   end handle HOL_ERR _ =>
@@ -1158,7 +1161,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     val final_thm = let
        val thm0 = SPECL [mk_abs (ms_v, ms_case_cond_t), bl_t, lb] inst_lift_thm0
        val thm1 = MP thm0 precond_thm
-    in thm1 end handle HOL_ERR _ => raiseErr "proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated?";
+    in thm1 end handle HOL_ERR _ => raiseErr ("proving final thm failed! Does the block still depend on ms and bs, e.g. because it was not completely evaluated?\n" ^ (term_to_string bl_t));
   in
     final_thm
   end handle HOL_ERR _ => raise (bir_inst_liftingAuxExn (BILED_msg "???"));
@@ -1314,7 +1317,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      val final_CS = wordsLib.words_compset ()
      val final_CONV = computeLib.CBV_CONV final_CS
   in
-  fun bir_lift_instr_mu (mu_thm:thm, mm_precond_thm : thm)  cache (pc : Arbnum.num) hex_code hex_code_desc = let
+  fun bir_lift_instr_mu (mu_b, mu_e) (mu_thm:thm, mm_precond_thm : thm)  cache (pc : Arbnum.num) hex_code hex_code_desc = let
+    val _ = if (Arbnum.< (pc, mu_e) andalso Arbnum.<= (mu_b, pc)) then () else
+            raise (bir_inst_liftingExn (hex_code, BILED_msg "pc outside unchanged memory region"))
     val (thm0, cache', cache_used) =  bir_lift_instr_mu_gen_pc (mu_thm, mm_precond_thm) cache hex_code hex_code_desc
 
     (* instantiate PC *)
@@ -1359,7 +1364,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      val (mu_thm, mm_precond_thm) = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
   in
     fn pc => fn hex_code => fn hex_code_desc =>
-       #1 (bir_lift_instr_mu (mu_thm, mm_precond_thm) lift_inst_cache_empty pc hex_code hex_code_desc)
+       #1 (bir_lift_instr_mu (mu_b, mu_e) (mu_thm, mm_precond_thm) lift_inst_cache_empty pc hex_code hex_code_desc)
   end;
 
 
@@ -1523,7 +1528,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         val _ = if (!debug_trace > 1) then (
            print_current_instr_string (!inst_no_r) (!data_no_r) true pc human_hex_code) else (if (!debug_trace = 1) then print "." else ());
         val timer = timer_start 1;
-        val (res, ed) = (SOME (bir_lift_instr_mu (mu_thm, mm_precond_thm) (!cache_r) pc hex_code human_hex_code), NONE) handle
+        val (res, ed) = (SOME (bir_lift_instr_mu (mu_b, mu_e) (mu_thm, mm_precond_thm) (!cache_r) pc hex_code human_hex_code), NONE) handle
                        bir_inst_liftingExn (_, d)  => (NONE, SOME d)
                      | HOL_ERR _ => (NONE, NONE);
 

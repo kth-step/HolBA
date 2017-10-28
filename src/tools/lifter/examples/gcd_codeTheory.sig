@@ -8,7 +8,13 @@ sig
 
   val gcd_code_grammars : type_grammar.grammar * term_grammar.grammar
 (*
+   [bir_arm8_extras] Parent theory of "gcd_code"
+
    [bir_inst_lifting] Parent theory of "gcd_code"
+
+   [bir_m0_extras] Parent theory of "gcd_code"
+
+   [bir_nzcv_intros] Parent theory of "gcd_code"
 
    [gcd_arm8_program_THM]  Theorem
 

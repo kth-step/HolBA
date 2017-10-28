@@ -3,9 +3,34 @@ open testutils
 open bir_inst_liftingLib;
 open PPBackEnd Parse
 
-(* Tests for ARM 8 *)
+(******************)
+(* Config options *)
+(******************)
 
-val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
+val unicode = false;
+val raw_output = false;
+
+(* Test M0 *)
+val test_m0 = true;
+
+(* Test ARM8 *)
+val test_arm8 = true;
+
+(* Run only manual tests *)
+val test_fast = false;
+
+val log_filename = "selftest.log";
+
+val _ = Parse.current_backend := (if (raw_output) then PPBackEnd.raw_terminal else
+                                     PPBackEnd.vt100_terminal);
+val _ = Feedback.set_trace "Unicode" (if unicode then 1 else 0)
+
+val log = TextIO.openOut log_filename;
+
+
+(**************************)
+(* Testing infrastructure *)
+(**************************)
 
 (* style for success, fail and header *)
 val sty_OK     = [FG Green];
@@ -13,31 +38,12 @@ val sty_CACHE  = [FG Yellow];
 val sty_FAIL   = [FG OrangeRed];
 val sty_HEADER = [Bold, Underline];
 
-(*
-For manual testing
+fun print_log_with_style sty s = let
+  val _ = TextIO.output (log, s);
+  val _ = print_with_style sty s;
+in () end;
 
-val _ = Parse.current_backend := PPBackEnd.emacs_terminal;
-
-val mu_b = Arbnum.fromInt 0;
-val mu_e = Arbnum.fromInt 0x1000000;
-val pc = Arbnum.fromInt 0x10030;
-val hex_code = "12001C00"
-*)
-
-(* run a single instruction "hexcode" given a region of memory
-   and a PC. Some debug output is printed and the required runtime
-   is measured. The result is a triple:
-
-   - res : thm option ---
-       the theorem produced, NONE is something went wrong
-   - ed  : bir_inst_liftingExn_data option ---
-       a description of what went wrong, if available
-   - d_s : string ---
-       time in seconds as a string
-
-   We also keep track of all failed hex_codes in a references
-   "failed_hexcodes_list".
-*)
+fun print_log s = print_log_with_style [] s;
 
 
 functor test_bmr (MD : bir_inst_lifting) = struct
@@ -46,46 +52,50 @@ open MD;
 
 val failed_hexcodes_list = ref ([]:(string * string option * bir_inst_liftingExn_data option) list);
 val success_hexcodes_list = ref ([]: (string * string option * thm) list);
-fun lift_instr_cached mu_thms cache pc hex_code desc = let
+fun lift_instr_cached mu_be mu_thms cache pc hex_code desc = let
   val hex_code = String.map Char.toUpper hex_code
-  val _ = print hex_code;
-  val _ = case desc of
-            NONE => ()
-          | SOME d => print (" (" ^ d ^")");
-  val _ = print (" @ 0x" ^ (Arbnum.toHexString pc));
+  val _ = print_log hex_code;
+  val d' = case desc of
+            NONE => hex_code
+          | SOME d => (print_log (" (" ^ d ^")"); d)
+  val _ = print_log (" @ 0x" ^ (Arbnum.toHexString pc));
   val timer = (Time.now())
-  val (res, ed) = (SOME (bir_lift_instr_mu mu_thms cache pc hex_code hex_code), NONE) handle
+  val (res, ed) = (SOME (bir_lift_instr_mu mu_be mu_thms cache pc hex_code d'), NONE) handle
                    bir_inst_liftingExn (_, d)  => (NONE, SOME d)
                  | HOL_ERR _ => (NONE, NONE);
 
   val d_time = Time.- (Time.now(), timer);
   val d_s = (Time.toString d_time);
 
-  val _ = print (" - " ^ d_s ^ " s - ");
+  val _ = print_log (" - ");
+  val _ = print (d_s ^ " s - ");
   val (res', cache') = case res of
              SOME (thm, cache', _) => ((SOME thm), cache')
            | NONE => (NONE, cache)
   val _ = case res of
              SOME (thm, _, cache_used) =>
                  (success_hexcodes_list := (hex_code, desc, thm)::(!success_hexcodes_list);
-                 (print_with_style sty_OK "OK");
-                 (if cache_used then (print " - "; print_with_style sty_CACHE "cached") else ());
-                 (print "\n"))
+                 (print_log_with_style sty_OK "OK");
+                 (if cache_used then (print_log " - "; print_log_with_style sty_CACHE "cached") else ());
+                 (print_log "\n");
+                 (TextIO.output (log, thm_to_string thm));
+                 (TextIO.output (log, "\n")))
            | NONE =>
              (failed_hexcodes_list := (hex_code, desc, ed)::(!failed_hexcodes_list);
-             (print_with_style sty_FAIL "FAILED\n"));
+             (print_log_with_style sty_FAIL "FAILED\n"));
   val _ = case ed of
       NONE => ()
     | SOME d => (let
         val s = ("   "^(bir_inst_liftingExn_data_to_string d) ^ "\n");
-      in print_with_style sty_FAIL s end)
+      in print_log_with_style sty_FAIL s end)
+  val _ = TextIO.output (log, "\n");
 in
   (res', ed, d_s, cache')
 end;
 
 fun lift_instr mu_b mu_e pc hex_code desc = let
   val mu_thms = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-  val (res, ed, d_s, _) = lift_instr_cached mu_thms lift_inst_cache_empty pc hex_code desc
+  val (res, ed, d_s, _) = lift_instr_cached (mu_b, mu_e) mu_thms lift_inst_cache_empty pc hex_code desc
 in
   (res, ed, d_s)
 end;
@@ -104,7 +114,7 @@ fun lift_instr_list mu_b mu_e pc hex_codes = let
 
   fun run_inst (i, (c, pc, res, cache)) = let
     val _ = print ((Int.toString c) ^ "/" ^ (Int.toString (length hex_codes)) ^ ": ");
-    val (r', ed, d_s, cache') = lift_instr_cached mu_thms cache pc i NONE
+    val (r', ed, d_s, cache') = lift_instr_cached (mu_b, mu_e) mu_thms cache pc i NONE
     val c' = c+1;
     val pc' = Arbnum.+ (pc, (#bmr_hex_code_size mr) i);
     val r = (r', ed, d_s);
@@ -129,8 +139,8 @@ end;
 
 
 fun final_results name expected_failed_hexcodes = let
-  val _ = print_with_style sty_HEADER ("\n\n\nSUMMARY FAILING HEXCODES " ^ name ^ "\n\n");
-  val _ = print "\n";
+  val _ = print_log_with_style sty_HEADER ("\n\n\nSUMMARY FAILING HEXCODES " ^ name ^ "\n\n");
+  val _ = print_log "\n";
   val failing_l = op_mk_set (fn (x, _, _) => fn (y, _, _) => (x = y)) (!failed_hexcodes_list)
   val ok_l = op_mk_set (fn (x, _, _) => fn (y, _, _) => (x = y)) (!success_hexcodes_list)
 
@@ -142,46 +152,45 @@ fun final_results name expected_failed_hexcodes = let
   (* Show all failing instructions and format them such that they can be copied
      in the code of selftest.sml
      as content of list expected_failed_hexcodes *)
-  val _ = print ("Instructions FAILED: " ^ (Int.toString (length failing_l)) ^ "/" ^
+  val _ = print_log ("Instructions FAILED: " ^ (Int.toString (length failing_l)) ^ "/" ^
          (Int.toString (length failing_l + length ok_l)) ^ "\n\n");
+
+  fun comment_of_failing desc ed_opt =
+    case (desc, ed_opt) of
+         (NONE, NONE) => ""
+       | (SOME d, NONE) => (" (* " ^ d ^ " *)")
+       | (NONE, SOME d') => (" (* " ^ (bir_inst_liftingExn_data_to_string d') ^ " *)")
+       | (SOME d, SOME d') => (" (* " ^ d ^ "; "^(bir_inst_liftingExn_data_to_string d')  ^ " *)");
 
   fun print_failed [] = ()
     | print_failed ((hex_code, desc, ed_opt, broken)::l) =
   let
     (* print the ones that failed, but were not excepted to in red *)
     val st = if broken then sty_FAIL else [];
-    val _ = print "   ";
-    val _ = print_with_style st ("\""^hex_code^"\"");
+    val _ = print_log "   ";
+    val _ = print_log_with_style st ("\""^hex_code^"\"");
 
-    val c = case desc of
-            NONE => ""
-          | SOME d => (" " ^ d);
+    val _ = print_log_with_style st (comment_of_failing desc ed_opt)
 
-    val c' = case ed_opt of
-        NONE => c
-      | SOME d => (c ^ " "^(bir_inst_liftingExn_data_to_string d));
-
-    val _ = if String.size c' = 0 then () else
-            print_with_style st (" (*" ^ c' ^ " *)");
-
-  in if List.null l then (print "\n]\n\n") else
-         (print ",\n"; print_failed l)
+  in if List.null l then (print_log "\n]\n\n") else
+         (print_log ",\n"; print_failed l)
   end;
   val _ = if List.null failing_l' then () else (print "[\n"; print_failed failing_l');
 
 
   (* Show the hex-codes that were expected to fail, but succeeded. These
      are the ones fixed by recent changes. *)
-  val _ = print ("Instructions FIXED: " ^ (Int.toString (length fixed_l)) ^ "\n\n");
-  val _ = List.map (fn s => print_with_style sty_OK ("   " ^ s ^"\n")) fixed_l;
-  val _ = print "\n\n";
+  val _ = print_log ("Instructions FIXED: " ^ (Int.toString (length fixed_l)) ^ "\n\n");
+  val _ = List.map (fn s => print_log_with_style sty_OK ("   " ^ s ^"\n")) fixed_l;
+  val _ = print_log "\n\n";
 
   (* Show the hex-codes that were expected to succeed, but failed. These
      are the ones broken by recent changes. *)
   val broken_l = List.filter (fn (hc, d, edo, br) => br) failing_l';
-  val _ = print ("Instructions BROKEN: " ^ (Int.toString (List.length broken_l)) ^ "\n\n");
-  val _ = List.map (fn (hc, _, _, _) => print_with_style sty_FAIL ("   " ^ hc ^"\n")) broken_l;
-  val _ = print "\n\n";
+  val _ = print_log ("Instructions BROKEN: " ^ (Int.toString (List.length broken_l)) ^ "\n\n");
+  val _ = List.map (fn (hc, desc, ed_opt, _) => print_log_with_style sty_FAIL ("   " ^ hc ^
+       (comment_of_failing desc ed_opt) ^ "\n")) broken_l;
+  val _ = print_log "\n\n";
 
 in
   ()
@@ -208,11 +217,12 @@ fun arm8_lift_instr_asm mu_b mu_e pc asm =
 
 val mu_b = Arbnum.fromInt 0;
 val mu_e = Arbnum.fromInt 0x1000000;
-val pc = Arbnum.fromInt 0x10030;
+val pc =   Arbnum.fromInt 0x10030;
 val arm8_test_asm = arm8_lift_instr_asm mu_b mu_e pc
 fun arm8_test_hex hex = test_ARM8.lift_instr mu_b mu_e pc hex NONE
 
-val res = print_with_style sty_HEADER "\nMANUAL TESTS - ARM 8\n\n";
+val _ = if not test_arm8 then () else let
+val res = print_log_with_style sty_HEADER "\nMANUAL TESTS - ARM 8\n\n";
 val res = arm8_test_asm "add x0, x1, x2";
 val res = arm8_test_asm "add x1, x1, x1";
 val res = arm8_test_asm "adds x0, x1, x2";
@@ -447,24 +457,23 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 val (res, fl) = test_ARM8.bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
   [region_1, region_2, region_3]
 
+in () end;
 
 
 (************************)
 (* SOME MANUAL TESTS M0 *)
 (************************)
 
-fun m0_lift_instr mu_b mu_e pc hex_code desc = let
-  val r1 = (print "LP "; test_M0_1.lift_instr mu_b mu_e pc hex_code desc)
-in r1 end
 
 fun m0_lift_instr mu_b mu_e pc hex_code desc = let
   val r1 = (print "LP "; test_M0_1.lift_instr mu_b mu_e pc hex_code desc)
+in if (test_fast) then (r1, r1, r1, r1) else let
   val r2 = (print "BP "; test_M0_2.lift_instr mu_b mu_e pc hex_code desc)
   val r3 = (print "LM "; test_M0_3.lift_instr mu_b mu_e pc hex_code desc)
   val r4 = (print "BM "; test_M0_4.lift_instr mu_b mu_e pc hex_code desc)
 in
   (r1, r2, r3, r4)
-end;
+end end;
 
 fun m0_hex_code_of_asm asm = hd (m0AssemblerLib.m0_code [QUOTE asm])
 fun m0_lift_instr_asm mu_b mu_e pc asm =
@@ -477,7 +486,8 @@ val pc = Arbnum.fromInt 0x130;
 val m0_test_asm = m0_lift_instr_asm mu_b mu_e pc
 fun m0_test_hex hex = m0_lift_instr mu_b mu_e pc hex NONE
 
-val res = print_with_style sty_HEADER "\nMANUAL TESTS - M0\n\n";
+val _ = if not test_m0 then () else let
+val res = print_log_with_style sty_HEADER "\nMANUAL TESTS - M0\n\n";
 
 val res = m0_test_asm "mov r0, r1";
 val res = m0_test_asm "movs r0, r1";
@@ -607,13 +617,12 @@ val res = m0_test_hex "4088";
 val res = m0_test_hex "B5F7";
 val res = m0_test_hex "C29C";
 
+in () end;
 
 
-
-
-(*********************)
+(******************)
 (* AES_EXAMPLE M0 *)
-(*********************)
+(******************)
 
 val instrs = [ "4b1b", "cb04", "0010", "0019", "3010", "7814",
 "700c", "7854", "704c", "7894", "708c", "78d4", "70cc", "3104",
@@ -661,10 +670,10 @@ val instrs = [ "4b1b", "cb04", "0010", "0019", "3010", "7814",
 "0029", "0020", "f7fffffe", "4b03", "635c", "f7fffeb8", "bdf7",
 "46c0"]
 
-
-val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - M0 LitteEnd, Main SP\n\n";
-val _ = test_M0_3.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x100000) (Arbnum.fromInt 0x470) instrs
-
+val _ = if (test_fast orelse not test_m0) then () else let
+  val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - M0 LitteEnd, Main SP\n\n";
+  val _ = test_M0_3.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x100000) (Arbnum.fromInt 0x470) instrs
+in () end
 
 
 (*********************)
@@ -752,17 +761,19 @@ val instrs = [
 ];
 
 
-val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - ARM 8\n\n";
-val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
+val _ = if (test_fast orelse not test_arm8) then () else let
+  val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - ARM 8\n\n";
+  val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     instrs
 
-val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - ARM 8 - Whole program\n\n";
+  val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - ARM 8 - Whole program\n\n";
 
-val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
-val (thm, errors) = test_ARM8.bir_lift_prog ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
-  (Arbnum.fromInt 0x400570) instrs
+  val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
+  val (thm, errors) = test_ARM8.bir_lift_prog ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
+    (Arbnum.fromInt 0x400570) instrs
 
-val _ = print_thm thm;
+  val _ = print_thm thm;
+in () end;
 
 
 (***************************************)
@@ -836,10 +847,11 @@ val instrs = [
 
 
 
-val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE WITH FUNNY INSTRUCTIONS - ARM 8\n\n";
-val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
+val _ = if (test_fast orelse not test_arm8) then () else let
+  val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE WITH FUNNY INSTRUCTIONS - ARM 8\n\n";
+  val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     instrs
-
+in () end
 
 
 
@@ -969,12 +981,11 @@ val instrs_bignumlib = instrs_bignum_from_bytes @
              instrs_internal_mul @
              instrs_newbn;
 
-
-val _ = print_with_style sty_HEADER "\n\n\nTESTING BIGNUM LIB CODE - ARM 8\n\n";
-val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
+val _ = if (test_fast orelse not test_arm8) then () else let
+  val _ = print_with_style sty_HEADER "\n\n\nTESTING BIGNUM LIB CODE - ARM 8\n\n";
+  val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     instrs_bignumlib
-
-
+in () end;
 
 (*****************)
 (* final summary *)
@@ -987,14 +998,15 @@ val arm8_expected_failed_hexcodes:string list =
    "B8617801" (* bmr_step_hex failed *),
    "9BC37C41" (* umulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (w2w (ms.REG 3w) * w2w (ms.REG 2w)))`` failed *),
    "9B437C41" (* smulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (sw2sw (ms.REG 3w) * sw2sw (ms.REG 2w)))`` failed *),
-   "DAC01441" (* clz x1, x2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
-   "5AC01441" (* clz w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
-   "DAC01041" (* cls x1, x2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
-   "5AC01041" (* cls w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *)
+   "DAC01441" (* clz x1, x2 lifting of ``Imm64 (n2w (CountLeadingZeroBits (ms.REG 2w)))`` failed *),
+   "5AC01441" (* clz w1, w2 lifting of ``Imm64 (n2w (BITS 31 0 (CountLeadingZeroBits (w2w (ms.REG 2w)))))`` failed *),
+   "DAC01041" (* cls x1, x2 lifting of ``Imm64 (n2w (CountLeadingSignBits (ms.REG 2w)))`` failed *),
+   "5AC01041" (* cls w1, w2 lifting of ``Imm64 (n2w (BITS 31 0 (CountLeadingSignBits (w2w (ms.REG 2w)))))`` failed *)
 ];
 
-val _ = test_ARM8.final_results "ARM 8" arm8_expected_failed_hexcodes;
-
+val _ = if (not test_arm8) then () else let
+  val _ = test_ARM8.final_results "ARM 8" arm8_expected_failed_hexcodes;
+in () end
 
 val m0_expected_failed_hexcodes:string list =
 [
@@ -1003,7 +1015,12 @@ val m0_expected_failed_hexcodes:string list =
 ];
 
 
-val _ = test_M0_1.final_results "M0 LittleEnd, Process SP" m0_expected_failed_hexcodes;
-val _ = test_M0_2.final_results "M0 BigEnd, Process SP" m0_expected_failed_hexcodes;
-val _ = test_M0_3.final_results "M0 LittleEnd, Main SP" m0_expected_failed_hexcodes;
-val _ = test_M0_4.final_results "M0 BigEnd, Main SP" m0_expected_failed_hexcodes;
+val _ = if (not test_m0) then () else let
+  val _ = test_M0_1.final_results "M0 LittleEnd, Process SP" m0_expected_failed_hexcodes;
+  val _ = test_M0_2.final_results "M0 BigEnd, Process SP" m0_expected_failed_hexcodes;
+  val _ = test_M0_3.final_results "M0 LittleEnd, Main SP" m0_expected_failed_hexcodes;
+  val _ = test_M0_4.final_results "M0 BigEnd, Main SP" m0_expected_failed_hexcodes;
+in () end;
+
+
+val _ = TextIO.closeOut log
