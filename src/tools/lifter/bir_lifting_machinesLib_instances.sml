@@ -50,7 +50,20 @@ fun bmr_normalise_step_thm (r_step_rel:term) vn thm =
   val hex_code = arm8_hex_code_of_asm "ngcs x1, x2"
   val hex_code = arm8_hex_code_of_asm "ngc w1, w2"
   val hex_code = arm8_hex_code_of_asm "rbit w1, w2"
+  val hex_code = arm8_hex_code_of_asm "ror x1, x2, x3"
+  val hex_code = arm8_hex_code_of_asm "ror x1, x2, #2"
+  val hex_code = arm8_hex_code_of_asm "ror w1, w2, #2"
+  val hex_code = arm8_hex_code_of_asm "extr w1, w2, w3, #2"
+  val hex_code = arm8_hex_code_of_asm "extr x1, x2, x3, #2"
+  val hex_code = arm8_hex_code_of_asm "movk x1, #2"
+  val hex_code = arm8_hex_code_of_asm "movk w1, #2"
+  val hex_code = arm8_hex_code_of_asm "ngc w0, w1"
+  val hex_code = arm8_hex_code_of_asm "ngcs w0, w1"
+  val hex_code = arm8_hex_code_of_asm "adcs w0, w1, w2"
+  val hex_code = arm8_hex_code_of_asm "sbcs w0, w1, w2"
+
   val thms = arm8_step_hex hex_code
+  val thms' = arm8_step_hex' vn hex_code
 *)
 
 fun bytes_of_hex_code hex_code = let
@@ -67,8 +80,9 @@ end;
 local
   val next_state_tm = (prim_mk_const{Name="NextStateARM8", Thy="arm8_step"});
 
-  val simp_rule = (SIMP_RULE std_ss [nzcv_FOLDS_ARM8, arm8_stepTheory.ExtendValue_0,
-      arm8_extra_FOLDS]);
+  val simp_conv = (SIMP_CONV std_ss [nzcv_FOLDS_ARM8] THENC
+                   SIMP_CONV std_ss [arm8_stepTheory.ExtendValue_0, arm8_extra_FOLDS]);
+
   val simp_conv2 = (SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss++wordsLib.WORD_LOGIC_ss) []) THENC
                    (SIMP_CONV std_ss [word_add_to_sub_TYPES, alignmentTheory.aligned_numeric,
                         wordsTheory.WORD_SUB_INTRO, wordsTheory.WORD_MULT_CLAUSES]);
@@ -119,7 +133,7 @@ local
      val thm2 = foldl (fn (pre_thm, thm) => PROVE_HYP pre_thm thm) thm1
        (pc_mem_thms @ (arm8_extra_THMS vn))
 
-     val thm3 = simp_rule thm2
+     val thm3 = CONV_RULE simp_conv thm2
      val thm4 = HYP_CONV_RULE (K true) (simp_conv2) (CONV_RULE simp_conv2 thm3)
    in
      thm4
@@ -222,6 +236,8 @@ val _ = assert bmr_rec_sanity_check arm8_bmr_rec
   val hex_code = "40C4"
   val hex_code = "4088"
   val hex_code = "BA51";
+  val hex_code = "BAD1"
+  val hex_code = "41C8"
 
   val thms = thumb_step_hex (true, true) hex_code
   val thms = thumb_step_hex (false, true) hex_code

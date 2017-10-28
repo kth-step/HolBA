@@ -217,10 +217,18 @@ val res = arm8_test_asm "add x0, x1, x2";
 val res = arm8_test_asm "add x1, x1, x1";
 val res = arm8_test_asm "adds x0, x1, x2";
 val res = arm8_test_asm "add x0, x0, x2";
-val res = arm8_test_asm "sub x0, x0, x2";
-val res = arm8_test_asm "adc x0, x0, x2";
-val res = arm8_test_asm "adcs x0, x0, x2";
+val res = arm8_test_asm "sub x0, x1, x2";
+val res = arm8_test_asm "adc x0, x1, x2";
+val res = arm8_test_asm "adc x0, x1, x1";
+val res = arm8_test_asm "adc w0, w1, w1";
+val res = arm8_test_asm "adcs x0, x1, x2";
+val res = arm8_test_asm "adcs x0, x1, x1";
+val res = arm8_test_asm "adcs w0, w1, w2";
+val res = arm8_test_asm "adcs w0, w1, w1";
 val res = arm8_test_asm "sbcs x0, x0, x2";
+val res = arm8_test_asm "sbcs x0, x1, x1";
+val res = arm8_test_asm "sbcs w0, w1, w2";
+val res = arm8_test_asm "sbcs w0, w1, w1";
 val res = arm8_test_asm "sbc x0, x0, x2";
 val res = arm8_test_asm "sub x0, x1, x2";
 val res = arm8_test_asm "mul x0, x1, x2";
@@ -979,19 +987,10 @@ val arm8_expected_failed_hexcodes:string list =
    "B8617801" (* bmr_step_hex failed *),
    "9BC37C41" (* umulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (w2w (ms.REG 3w) * w2w (ms.REG 2w)))`` failed *),
    "9B437C41" (* smulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (sw2sw (ms.REG 3w) * sw2sw (ms.REG 2w)))`` failed *),
-   "FA0203E1" (* ngcs x1, x2 lifting of ``bool2b
-  (¬word_msb (¬ms.REG 2w) ∧
-   BIT 63 (w2n (¬ms.REG 2w) + if ms.PSTATE.C then 1 else 0))`` failed *),
-   "7A0203E1" (* ngcs w1, w2 lifting of ``bool2b
-  ((w2n (¬w2w (ms.REG 2w)) + if ms.PSTATE.C then 1 else 0) MOD
-   4294967296 =
-   0)`` failed *),
    "DAC01441" (* clz x1, x2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
    "5AC01441" (* clz w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
    "DAC01041" (* cls x1, x2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
-   "5AC01041" (* cls w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *),
-   "F2800080" (* movk x0, #4 lifting of ``Imm64 ((63 >< 16) (ms.REG 0w) @@ 4w)`` failed *),
-   "72800080" (* movk w0, #4 lifting of ``Imm64 (w2w ((31 >< 16) (w2w (ms.REG 0w)) @@ 4w))`` failed *)
+   "5AC01041" (* cls w1, w2 proving final thm failed! Does the block still depend on ms and bs, i.e. is not completely evaluated? *)
 ];
 
 val _ = test_ARM8.final_results "ARM 8" arm8_expected_failed_hexcodes;

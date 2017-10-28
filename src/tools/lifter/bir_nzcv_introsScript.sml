@@ -127,8 +127,20 @@ val awc_BIR_V_fold_ARM8_ID = store_thm ("awc_BIR_V_fold_ARM8_ID",
 SIMP_TAC std_ss [GSYM awc_BIR_V_fold_ARM8]);
 
 
+val awc_BIR_V_fold_ARM8_ngcs = store_thm ("awc_BIR_V_fold_ARM8_ngcs",
+``!w:'a word c.
+  (~word_msb (~w)) /\
+  (BIT (dimindex (:'a) - 1) (w2n (~w) + (if c then 1 else 0))) =
+   awc_BIR_V 0w (~w) c``,
+
+SIMP_TAC arith_ss [awc_BIR_V_def,
+  add_with_carry_def, LET_THM, GSYM word_msb_n2w, WORD_0_POS, w2n_n2w,
+  wordsTheory.ZERO_LT_dimword]);
+
+
+
 val awc_BIR_C_fold_ARM8 = store_thm ("awc_BIR_C_fold_ARM8",
-``!w1 w0 c.
+``!w0 w1 c.
   ((if w2n w0 + ((w2n (w1:'a word)) + if c then 1 else (0:num)) < dimword (:'a) then
        w2n w0 + (w2n w1 + if c then 1 else 0)
   else (w2n w0 + (w2n w1 + if c then 1 else 0)) MOD (dimword (:'a))) <>
@@ -139,11 +151,29 @@ SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [add_with_carry_def,
   LET_THM, ZERO_LT_dimword, w2n_n2w, awc_BIR_C_def]);
 
 
+val awc_BIR_C_fold_ARM8_ngcs = store_thm ("awc_BIR_C_fold_ARM8_ngcs",
+``!w1 c.
+  ((if ((w2n (~(w1:'a word))) + if c then 1 else (0:num)) < dimword (:'a) then
+       (w2n (~w1) + if c then 1 else 0)
+  else ((w2n (~w1) + if c then 1 else 0)) MOD (dimword (:'a))) <>
+  (w2n (~w1) + if c then 1 else 0)) = awc_BIR_C 0w (~w1) c``,
+
+SIMP_TAC std_ss [GSYM awc_BIR_C_fold_ARM8, word_0_n2w]);
+
+
 val awc_BIR_Z_fold_ARM8 = store_thm ("awc_BIR_Z_fold_ARM8",
 ``!w1 (w0 : 'a word) c.
      ((n2w (w2n w0 + ((w2n w1 + if c then 1 else 0)))) = (0w:'a word)) <=>
      awc_BIR_Z w0 w1 c``,
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [awc_BIR_Z_def, GSYM word_add_n2w, n2w_w2n]);
+
+
+val awc_BIR_Z_fold_ARM8_ngcs = store_thm ("awc_BIR_Z_fold_ARM8_ngcs",
+``!(w1 : 'a word) c.
+     ((n2w ((w2n (~w1) + if c then 1 else 0))) = (0w:'a word)) <=>
+     awc_BIR_Z 0w (~w1) c``,
+SIMP_TAC std_ss [GSYM awc_BIR_Z_fold_ARM8, word_0_n2w]);
+
 
 val awc_BIR_N_fold_ARM8 = store_thm ("awc_BIR_N_fold_ARM8",
 ``!w1 w0 c. BIT (dimindex (:'a) - 1) ((w2n w0 + ((w2n w1 + if c then 1 else 0)))) =
@@ -153,11 +183,46 @@ SIMP_TAC std_ss [awc_BIR_N_def, GSYM word_msb_n2w, GSYM word_add_n2w,
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) []);
 
 
+val awc_BIR_N_fold_ARM8_ngcs = store_thm ("awc_BIR_N_fold_ARM8_ngcs",
+``!w1:'a word c. BIT (dimindex (:'a) - 1) ((((w2n (~w1) + if c then 1 else 0)))) =
+            awc_BIR_N 0w (~w1) c``,
+SIMP_TAC std_ss [GSYM awc_BIR_N_fold_ARM8, word_0_n2w]);
+
+
 val awc_BIR_RES_fold_ARM8 = store_thm ("awc_BIR_RES_fold_ARM8",
 ``!w0 w1 c. (n2w (w2n w0 + ((w2n w1 + if c then 1 else 0)))) =
             (w0 + w1 + (if c then 1w else 0w))``,
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [
   GSYM word_add_n2w, n2w_w2n]);
+
+
+val awc_BIR_RES_fold_ARM8_ngcs = store_thm ("awc_BIR_RES_fold_ARM8_ngcs",
+``!w1 c. (n2w (((w2n w1 + if c then 1 else 0)))) =
+            (w1 + (if c then 1w else 0w))``,
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [
+  GSYM word_add_n2w, n2w_w2n]);
+
+
+val awc_BIR_RES_fold_ARM8_BITS = store_thm ("awc_BIR_RES_fold_ARM8_BITS",
+``!(w0:'a word) w1 c.
+            (dimindex (:'a) < dimindex (:'b)) ==>
+            ((n2w (BITS (dimindex (:'a) -1) 0 (w2n w0 + ((w2n w1 + if c then 1 else 0))))):'b word =
+             w2w (w0 + w1 + (if c then 1w else 0w)))``,
+
+REPEAT STRIP_TAC >>
+MP_TAC (GSYM wordsTheory.w2w_n2w) >>
+ASM_SIMP_TAC arith_ss [awc_BIR_RES_fold_ARM8]);
+
+
+val awc_BIR_RES_fold_ARM8_ngcs_BITS = store_thm ("awc_BIR_RES_fold_ARM8_ngcs_BITS",
+``!(w1:'a word) c.
+            (dimindex (:'a) < dimindex (:'b)) ==>
+            ((n2w (BITS (dimindex (:'a) -1) 0 (((w2n w1 + if c then 1 else 0))))):'b word =
+             w2w (w1 + (if c then 1w else 0w)))``,
+
+REPEAT STRIP_TAC >>
+MP_TAC (GSYM wordsTheory.w2w_n2w) >>
+ASM_SIMP_TAC arith_ss [awc_BIR_RES_fold_ARM8_ngcs]);
 
 
 val awc_BIR_RES_FOLD_SUB = store_thm ("awc_BIR_RES_FOLD_SUB",
@@ -167,6 +232,16 @@ val awc_BIR_RES_FOLD_SUB = store_thm ("awc_BIR_RES_FOLD_SUB",
 
 SIMP_TAC std_ss [WORD_NEG, word_sub_def] >>
 SIMP_TAC (std_ss++wordsLib.WORD_ss++boolSimps.LIFT_COND_ss) []);
+
+
+val awc_BIR_RES_FOLD_SUB_ngcs = store_thm ("awc_BIR_RES_FOLD_SUB_ngcs",
+``!w1:'a word w2 c.
+     ((~w2) + (if c then 1w else 0w)) =
+     ((if c then 0w else -1w) - w2)``,
+
+SIMP_TAC std_ss [WORD_NEG, word_sub_def] >>
+SIMP_TAC (std_ss++wordsLib.WORD_ss++boolSimps.LIFT_COND_ss) []);
+
 
 val awc_BIR_Z_nzcv_BIR_SUB_Z_fold = prove (
   ``!(w0:'a word) w1 c. nzcv_BIR_SUB_Z (w0 - w1) (if c then 0w else 1w) =
@@ -178,9 +253,16 @@ SIMP_TAC std_ss [GSYM awc_BIR_Z_fold_ARM8, GSYM nzcv_SUB_Z_fold_ARM8,
 val awc_BIR_Z_nzcv_BIR_ADD_Z_fold = prove (
   ``!(w0:'a word) w1 c. nzcv_BIR_ADD_Z (w0 + w1) (if c then 1w else 0w) =
                         awc_BIR_Z w0 w1 c``,
-
 SIMP_TAC std_ss [GSYM awc_BIR_Z_fold_ARM8, GSYM nzcv_ADD_Z_fold_ARM8,
   awc_BIR_RES_fold_ARM8, awc_BIR_RES_FOLD_SUB]);
+
+val awc_BIR_Z_nzcv_BIR_ADD_Z_fold_ngcs = prove (
+  ``!(w1:'a word) c. nzcv_BIR_ADD_Z (~w1) (if c then 1w else 0w) =
+                     awc_BIR_Z 0w (~w1) c``,
+
+SIMP_TAC std_ss [GSYM awc_BIR_Z_fold_ARM8_ngcs, GSYM nzcv_ADD_Z_fold_ARM8,
+  awc_BIR_RES_fold_ARM8_ngcs, awc_BIR_RES_FOLD_SUB_ngcs]);
+
 
 val awc_BIR_Z_nzcv_BIR_SUB_N_fold = prove (
   ``!(w0:'a word) w1 c. nzcv_BIR_SUB_N (w0 - w1) (if c then 0w else 1w) =
@@ -197,22 +279,50 @@ val awc_BIR_Z_nzcv_BIR_ADD_N_fold = prove (
 SIMP_TAC std_ss [GSYM awc_BIR_N_fold_ARM8, GSYM nzcv_ADD_N_fold_ARM8,
   awc_BIR_RES_fold_ARM8, awc_BIR_RES_FOLD_SUB, GSYM word_msb_n2w]);
 
+val awc_BIR_Z_nzcv_BIR_ADD_N_fold_ngcs = prove (
+  ``!(w1:'a word) c. nzcv_BIR_ADD_N (~w1) (if c then 1w else 0w) =
+                     awc_BIR_N 0w (~w1) c``,
+
+SIMP_TAC std_ss [GSYM awc_BIR_N_fold_ARM8_ngcs, GSYM nzcv_ADD_N_fold_ARM8,
+  awc_BIR_RES_fold_ARM8_ngcs, awc_BIR_RES_FOLD_SUB_ngcs, GSYM word_msb_n2w]);
 
 
-val awc_BIR_NZCV_FOLDS_ARM8_GEN = save_thm ("awc_BIR_NZCV_FOLDS_ARM8_GEN",
+val awc_BIR_NZCV_FOLDS_ARM8_GEN = save_thm ("awc_BIR_NZCV_FOLDS_ARM8_GEN", let
+  val thm0 =
   LIST_CONJ [
     awc_BIR_N_fold_ARM8,
-    SIMP_RULE std_ss [awc_BIR_RES_fold_ARM8, GSYM arithmeticTheory.ADD_ASSOC] awc_BIR_Z_fold_ARM8,
+    awc_BIR_N_fold_ARM8_ngcs,
+    awc_BIR_Z_fold_ARM8,
+    awc_BIR_Z_fold_ARM8_ngcs,
     awc_BIR_C_fold_ARM8,
-    SIMP_RULE std_ss [awc_BIR_N_fold_ARM8, GSYM arithmeticTheory.ADD_ASSOC] awc_BIR_V_fold_ARM8,
-    SIMP_RULE std_ss [awc_BIR_N_fold_ARM8, GSYM arithmeticTheory.ADD_ASSOC] awc_BIR_V_fold_ARM8_ID,
+    awc_BIR_C_fold_ARM8_ngcs,
+    awc_BIR_V_fold_ARM8,
+    awc_BIR_V_fold_ARM8_ID,
+    awc_BIR_V_fold_ARM8_ngcs,
     awc_BIR_RES_fold_ARM8,
+    awc_BIR_RES_fold_ARM8_BITS,
     awc_BIR_RES_FOLD_SUB,
+    awc_BIR_RES_fold_ARM8_ngcs,
+    awc_BIR_RES_fold_ARM8_ngcs_BITS,
+    awc_BIR_RES_FOLD_SUB_ngcs,
     awc_BIR_Z_nzcv_BIR_SUB_Z_fold,
     awc_BIR_Z_nzcv_BIR_ADD_Z_fold,
+    awc_BIR_Z_nzcv_BIR_ADD_Z_fold_ngcs,
     awc_BIR_Z_nzcv_BIR_SUB_N_fold,
-    awc_BIR_Z_nzcv_BIR_ADD_N_fold
-  ])
+    awc_BIR_Z_nzcv_BIR_ADD_N_fold,
+    awc_BIR_Z_nzcv_BIR_ADD_Z_fold_ngcs
+  ];
+
+  fun normalise_with thms thm = let
+    val thm1 = SIMP_RULE std_ss thms thm
+    val thm2 = SIMP_RULE std_ss [thm] thm1
+  in CONJ thm thm2 end;
+
+  val thm1 = normalise_with [awc_BIR_RES_fold_ARM8_ngcs, awc_BIR_RES_fold_ARM8] thm0
+  val thm2 = normalise_with [awc_BIR_N_fold_ARM8, awc_BIR_N_fold_ARM8_ngcs] thm1
+  val thm3 = normalise_with [GSYM arithmeticTheory.ADD_ASSOC] thm2
+in thm3 end);
+
 
 
 (************************)
@@ -336,8 +446,8 @@ val nzcv_FOLDS_ARM8_gen_size = LIST_CONJ [
 val nzcv_FOLDS_ARM8 = save_thm ("nzcv_FOLDS_ARM8",
 SIMP_RULE (std_ss) [arithmeticTheory.ADD_ASSOC] (
 SIMP_RULE (std_ss++wordsLib.SIZES_ss) []  (LIST_CONJ [
-  INST_TYPE [``:'a`` |-> ``:32``] nzcv_FOLDS_ARM8_gen_size,
-  INST_TYPE [``:'a`` |-> ``:64``] nzcv_FOLDS_ARM8_gen_size
+  INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:64``] nzcv_FOLDS_ARM8_gen_size,
+  INST_TYPE [``:'a`` |-> ``:64``, ``:'b`` |-> ``:64``] nzcv_FOLDS_ARM8_gen_size
  ]
 )));
 

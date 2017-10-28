@@ -810,6 +810,40 @@ Cases_on `c` >> (
 
 
 
+val arm8_movk64_fold0 = prove (
+``!n (w:'a word).
+   FINITE univ(:'b) ==>
+   (16 <= dimindex (:'a)) ==>
+   (dimindex (:'b) = dimindex (:'a) - 16) ==>
+   (dimindex (:('b + 16)) = dimindex (:'a)) ==> (
+   (((((dimindex (:'a) - 1) >< 16) w):'b word) @@ ((n2w n):word16)):'a word =
+    ((w && ~(n2w (2 ** 16 - 1))) || n2w (n MOD 2 ** 16)))``,
+
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+REWRITE_TAC [GSYM wordsTheory.WORD_AND_EXP_SUB1] >>
+Q.ABBREV_TAC `ii = (2:num) ** 16` >>
+SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [fcpTheory.FCP_BETA,
+  word_concat_def, w2w, word_join_index, word_extract_def,
+  word_bits_def, word_or_def, word_and_def, word_1comp_def,
+  word_join_index] >>
+REPEAT STRIP_TAC >>
+`(n2w (ii - 1):'a word) ' i <=> (i < 16)` by (
+  Q.UNABBREV_TAC `ii`  >>
+  ASM_SIMP_TAC (bool_ss++wordsLib.SIZES_ss) [word_index, bitTheory.BIT_EXP_SUB1]
+) >>
+ASM_SIMP_TAC std_ss [] >>
+Cases_on `i < 16` >> ASM_SIMP_TAC arith_ss [] >>
+ASM_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [word_index]);
+
+
+val arm8_movk64_fold = save_thm ("arm8_movk64_fold",
+  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
+     INST_TYPE [``:'a`` |-> ``:64``, ``:'b`` |-> ``:48``] arm8_movk64_fold0));
+
+val arm8_movk32_fold = save_thm ("arm8_movk32_fold",
+  SIMP_RULE (std_ss++wordsLib.SIZES_ss) [word_1comp_n2w] (
+     INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:16``] arm8_movk64_fold0));
+
 
 (****************)
 (* Combinations *)
@@ -841,6 +875,7 @@ val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
       arm8_lsl_no_imm_FOLDS, arm8_sxtw_FOLDS, w2w_REMOVE_FOLDS,
       arm8_mem_store_FOLDS, GSYM word_reverse_REWRS,
       ExtendValue_REWRS, arm8_rev_folds, arm8_ngc64_fold, arm8_ngc32_fold,
-      arm8_ror_MOD_FOLDS, arm8_extr_FOLDS, word_shift_extract_ID]);
+      arm8_ror_MOD_FOLDS, arm8_extr_FOLDS, word_shift_extract_ID,
+      arm8_movk32_fold, arm8_movk64_fold]);
 
 val _ = export_theory();
