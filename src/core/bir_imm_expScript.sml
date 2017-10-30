@@ -1,5 +1,5 @@
 open HolKernel Parse boolLib bossLib;
-open wordsTheory bitstringTheory;
+open wordsTheory integer_wordTheory bitstringTheory;
 open bir_auxiliaryTheory bir_immTheory bir_immSyntax;
 
 val _ = new_theory "bir_imm_exp";
