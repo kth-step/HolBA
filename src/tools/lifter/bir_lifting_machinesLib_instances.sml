@@ -133,10 +133,11 @@ local
      val thm2 = foldl (fn (pre_thm, thm) => PROVE_HYP pre_thm thm) thm1
        (pc_mem_thms @ (arm8_extra_THMS vn))
 
-     val thm3 = CONV_RULE simp_conv thm2
-     val thm4 = HYP_CONV_RULE (K true) (simp_conv2) (CONV_RULE simp_conv2 thm3)
+     val thm3 = DISCH_ALL thm2
+     val thm4 = CONV_RULE (simp_conv THENC simp_conv2) thm3
+     val thm5 = UNDISCH_ALL thm4
    in
-     thm4
+     thm5
    end;
 
 in

@@ -129,6 +129,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = hex_code_of_asm `ldr x0, [x2, #0]`
   val hex_code = hex_code_of_asm `adds x1, x1, #0`
 
+  val hex_code = "B8617800"
   val hex_code = "94000000"
   val hex_code = "D65F03C0";
   val hex_code = "12001C00"
@@ -441,7 +442,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     val ms'_t = rand (rhs (next_tm))
 
     (* lift all preconds *)
-    val lift_thms = map exp_lift_fn_raw preconds
+    val lift_thms = map exp_lift_fn preconds
     val assert_ok_thms = map (MATCH_MP bir_assert_desc_OK_via_lifting) lift_thms
     val al_step_l = map (fn thm => (rand (concl thm))) assert_ok_thms
     val al_step = listSyntax.mk_list (al_step_l, bir_assert_desc_t_ty)

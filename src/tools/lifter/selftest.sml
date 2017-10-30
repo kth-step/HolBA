@@ -993,9 +993,6 @@ in () end;
 
 val arm8_expected_failed_hexcodes:string list =
 [
-   "B8617800" (* bmr_step_hex failed *),
-   "B8627800" (* bmr_step_hex failed *),
-   "B8617801" (* bmr_step_hex failed *),
    "9BC37C41" (* umulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (w2w (ms.REG 3w) * w2w (ms.REG 2w)))`` failed *),
    "9B437C41" (* smulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (sw2sw (ms.REG 3w) * sw2sw (ms.REG 2w)))`` failed *),
    "DAC01441" (* clz x1, x2 lifting of ``Imm64 (n2w (CountLeadingZeroBits (ms.REG 2w)))`` failed *),
