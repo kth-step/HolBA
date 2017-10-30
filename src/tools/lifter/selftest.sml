@@ -446,10 +446,10 @@ val region_1 = mk_bir_inst_lifting_region (Arbnum.fromInt 0x400470) [
   "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3","B94017E0","51000400",
   "B9004FE0","F94007E0","B9400000","B9002FE0","F94007E0","B9400400","B90033E0"]
 
-val region_2 = mk_bir_inst_lifting_data_region (Arbnum.fromInt 0x400484) [
+val region_2 = mk_bir_inst_lifting_data_region (Arbnum.fromInt 0x400584) [
   "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3"]
 
-val region_3 = BILMR (Arbnum.fromInt 0x400870, [
+val region_3 = BILMR (Arbnum.fromInt 0x401970, [
   ("D101C3FF", BILME_unknown), ("F9000FE0", BILME_code (SOME "???")) ,
    ("B90017E1", BILME_code NONE), ("F90007E2", BILME_data)])
 

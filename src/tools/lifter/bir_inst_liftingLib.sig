@@ -77,10 +77,9 @@ signature bir_inst_lifting = sig
                       Arbnum.num (* initial address *) ->
                       string list (* hex-codes *) ->
                       (thm (* resulting theorem *) *
-                       (* Errors in from: (PC, hex-code, error_data option),
-                          where error_data is always bir_inst_liftingExn_data  *)
-                       ((Arbnum.num * string *
-                         bir_inst_liftingExn_data option) list))
+                       (* Errors in from: (PC, hex-code, hex-code human, error_data option),
+                          as defined in bir_inst_liftingLibTypes  *)
+                       (bir_inst_error list))
 
   (* Sometimes we want to lift a program that contains more than one code region.
      Or we want explicitly mark data in the hex-codes. bir_lift_prog_gen allows to
@@ -89,7 +88,7 @@ signature bir_inst_lifting = sig
 
   val bir_lift_prog_gen : (Arbnum.num * Arbnum.num) (* memory unchanged begin, end *) ->
                           (bir_inst_lifting_mem_region list) (* list of regions *) ->
-                          (thm * ((Arbnum.num * string * bir_inst_liftingExn_data option) list))
+                          (thm * (bir_inst_error list))
 
 
   (* Reading and Writing code to and from intel hex files. The HEX files unluckily

@@ -190,7 +190,7 @@ val arm8_bmr_rec : bmr_rec = {
   bmr_extra_ss             = arm8_extra_ss,
   bmr_step_hex             = arm8_step_hex',
   bmr_mk_data_mm           = arm8_mk_data_mm,
-  bmr_hex_code_size        = K (Arbnum.fromInt 4),
+  bmr_hex_code_size        = (fn hc => Arbnum.fromInt ((String.size hc) div 2)),
   bmr_ihex_param           = SOME (4, true)
 };
 
@@ -392,7 +392,7 @@ in
   bmr_extra_ss             = m0_extra_ss,
   bmr_step_hex             = m0_step_hex' (endian_fl, sel_fl),
   bmr_mk_data_mm           = m0_mk_data_mm endian_fl,
-  bmr_hex_code_size        = (fn hc => if String.size hc = 8 then Arbnum.fromInt 4 else Arbnum.fromInt 2),
+  bmr_hex_code_size        = (fn hc => Arbnum.fromInt ((String.size hc) div 2)),
   bmr_ihex_param           = NONE
 }: bmr_rec
 end;

@@ -8,17 +8,26 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val _ = print_with_style [Bold, Underline] "Lifting gcd-aarch64.da\n";
 
-val (region_map, gcd_sections) = read_disassembly_file (fn n => n = "gcd") "gcd-aarch64.da"
+val (region_map, gcd_sections) = read_disassembly_file_regions_filter (fn _ => fn n => n = "gcd") "gcd-aarch64.da"
 
 val (thm_arm8, errors) = bmil_arm8.bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
   gcd_sections
 
+(* automatically done for debug level 2
+
+val _ = print_bir_inst_errors errors
+*)
+
 val _ = print "\n\n\n";
+val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 1;
 val _ = print_with_style [Bold, Underline] "Lifting gcd-m0.da\n";
-val (region_map, gcd_sections) = read_disassembly_file (fn n => n = "gcd") "gcd-m0.da"
+val (region_map, gcd_sections) = read_disassembly_file_regions_filter (fn _ => fn n => n = "gcd") "gcd-m0.da"
 
 val (thm_m0, errors) = bmil_m0_LittleEnd_Process.bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt 0x20000))
   gcd_sections
+
+val _ = print "\n\n";
+val _ = print_bir_inst_errors errors
 
 val _ = print "\n\n";
 
