@@ -38,8 +38,8 @@ val sty_CACHE  = [FG Yellow];
 val sty_FAIL   = [FG OrangeRed];
 val sty_HEADER = [Bold, Underline];
 
-fun print_log_with_style sty s = let
-  val _ = TextIO.output (log, s);
+fun print_log_with_style sty f s = let
+  val _ = if f then TextIO.output (log, s) else ();
   val _ = print_with_style sty s;
 in () end;
 
@@ -52,13 +52,13 @@ open MD;
 
 val failed_hexcodes_list = ref ([]:(string * string option * bir_inst_liftingExn_data option) list);
 val success_hexcodes_list = ref ([]: (string * string option * thm) list);
-fun lift_instr_cached mu_be mu_thms cache pc hex_code desc = let
+fun lift_instr_cached log_f mu_be mu_thms cache pc hex_code desc = let
   val hex_code = String.map Char.toUpper hex_code
-  val _ = print_log hex_code;
+  val _ = print_log log_f hex_code;
   val d' = case desc of
             NONE => hex_code
-          | SOME d => (print_log (" (" ^ d ^")"); d)
-  val _ = print_log (" @ 0x" ^ (Arbnum.toHexString pc));
+          | SOME d => (print_log log_f (" (" ^ d ^")"); d)
+  val _ = print_log log_f (" @ 0x" ^ (Arbnum.toHexString pc));
   val timer = (Time.now())
   val (res, ed) = (SOME (bir_lift_instr_mu mu_be mu_thms cache pc hex_code d'), NONE) handle
                    bir_inst_liftingExn (_, d)  => (NONE, SOME d)
@@ -67,7 +67,7 @@ fun lift_instr_cached mu_be mu_thms cache pc hex_code desc = let
   val d_time = Time.- (Time.now(), timer);
   val d_s = (Time.toString d_time);
 
-  val _ = print_log (" - ");
+  val _ = print_log log_f (" - ");
   val _ = print (d_s ^ " s - ");
   val (res', cache') = case res of
              SOME (thm, cache', _) => ((SOME thm), cache')
@@ -75,27 +75,27 @@ fun lift_instr_cached mu_be mu_thms cache pc hex_code desc = let
   val _ = case res of
              SOME (thm, _, cache_used) =>
                  (success_hexcodes_list := (hex_code, desc, thm)::(!success_hexcodes_list);
-                 (print_log_with_style sty_OK "OK");
-                 (if cache_used then (print_log " - "; print_log_with_style sty_CACHE "cached") else ());
-                 (print_log "\n");
-                 (TextIO.output (log, thm_to_string thm));
-                 (TextIO.output (log, "\n")))
+                 (print_log_with_style sty_OK log_f "OK");
+                 (if cache_used then (print_log log_f " - "; print_log_with_style sty_CACHE log_f "cached") else ());
+                 (print_log log_f "\n");
+                 (if log_f then ((TextIO.output (log, thm_to_string thm));
+                                 (TextIO.output (log, "\n"))) else ()))
            | NONE =>
              (failed_hexcodes_list := (hex_code, desc, ed)::(!failed_hexcodes_list);
-             (print_log_with_style sty_FAIL "FAILED\n"));
+             (print_log_with_style sty_FAIL log_f "FAILED\n"));
   val _ = case ed of
       NONE => ()
     | SOME d => (let
         val s = ("   "^(bir_inst_liftingExn_data_to_string d) ^ "\n");
-      in print_log_with_style sty_FAIL s end)
-  val _ = TextIO.output (log, "\n");
+      in print_log_with_style sty_FAIL log_f s end)
+  val _ = if log_f then TextIO.output (log, "\n") else ();
 in
   (res', ed, d_s, cache')
 end;
 
 fun lift_instr mu_b mu_e pc hex_code desc = let
   val mu_thms = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-  val (res, ed, d_s, _) = lift_instr_cached (mu_b, mu_e) mu_thms lift_inst_cache_empty pc hex_code desc
+  val (res, ed, d_s, _) = lift_instr_cached true (mu_b, mu_e) mu_thms lift_inst_cache_empty pc hex_code desc
 in
   (res, ed, d_s)
 end;
@@ -114,7 +114,7 @@ fun lift_instr_list mu_b mu_e pc hex_codes = let
 
   fun run_inst (i, (c, pc, res, cache)) = let
     val _ = print ((Int.toString c) ^ "/" ^ (Int.toString (length hex_codes)) ^ ": ");
-    val (r', ed, d_s, cache') = lift_instr_cached (mu_b, mu_e) mu_thms cache pc i NONE
+    val (r', ed, d_s, cache') = lift_instr_cached false (mu_b, mu_e) mu_thms cache pc i NONE
     val c' = c+1;
     val pc' = Arbnum.+ (pc, (#bmr_hex_code_size mr) i);
     val r = (r', ed, d_s);
@@ -139,8 +139,8 @@ end;
 
 
 fun final_results name expected_failed_hexcodes = let
-  val _ = print_log_with_style sty_HEADER ("\n\n\nSUMMARY FAILING HEXCODES " ^ name ^ "\n\n");
-  val _ = print_log "\n";
+  val _ = print_log_with_style sty_HEADER true ("\n\n\nSUMMARY FAILING HEXCODES " ^ name ^ "\n\n");
+  val _ = print_log true "\n";
   val failing_l = op_mk_set (fn (x, _, _) => fn (y, _, _) => (x = y)) (!failed_hexcodes_list)
   val ok_l = op_mk_set (fn (x, _, _) => fn (y, _, _) => (x = y)) (!success_hexcodes_list)
 
@@ -152,7 +152,7 @@ fun final_results name expected_failed_hexcodes = let
   (* Show all failing instructions and format them such that they can be copied
      in the code of selftest.sml
      as content of list expected_failed_hexcodes *)
-  val _ = print_log ("Instructions FAILED: " ^ (Int.toString (length failing_l)) ^ "/" ^
+  val _ = print_log true ("Instructions FAILED: " ^ (Int.toString (length failing_l)) ^ "/" ^
          (Int.toString (length failing_l + length ok_l)) ^ "\n\n");
 
   fun comment_of_failing desc ed_opt =
@@ -167,30 +167,30 @@ fun final_results name expected_failed_hexcodes = let
   let
     (* print the ones that failed, but were not excepted to in red *)
     val st = if broken then sty_FAIL else [];
-    val _ = print_log "   ";
-    val _ = print_log_with_style st ("\""^hex_code^"\"");
+    val _ = print_log true "   ";
+    val _ = print_log_with_style st true ("\""^hex_code^"\"");
 
-    val _ = print_log_with_style st (comment_of_failing desc ed_opt)
+    val _ = print_log_with_style st true (comment_of_failing desc ed_opt)
 
-  in if List.null l then (print_log "\n]\n\n") else
-         (print_log ",\n"; print_failed l)
+  in if List.null l then (print_log true "\n]\n\n") else
+         (print_log true ",\n"; print_failed l)
   end;
   val _ = if List.null failing_l' then () else (print "[\n"; print_failed failing_l');
 
 
   (* Show the hex-codes that were expected to fail, but succeeded. These
      are the ones fixed by recent changes. *)
-  val _ = print_log ("Instructions FIXED: " ^ (Int.toString (length fixed_l)) ^ "\n\n");
-  val _ = List.map (fn s => print_log_with_style sty_OK ("   " ^ s ^"\n")) fixed_l;
-  val _ = print_log "\n\n";
+  val _ = print_log true ("Instructions FIXED: " ^ (Int.toString (length fixed_l)) ^ "\n\n");
+  val _ = List.map (fn s => print_log_with_style sty_OK true ("   " ^ s ^"\n")) fixed_l;
+  val _ = print_log true "\n\n";
 
   (* Show the hex-codes that were expected to succeed, but failed. These
      are the ones broken by recent changes. *)
   val broken_l = List.filter (fn (hc, d, edo, br) => br) failing_l';
-  val _ = print_log ("Instructions BROKEN: " ^ (Int.toString (List.length broken_l)) ^ "\n\n");
-  val _ = List.map (fn (hc, desc, ed_opt, _) => print_log_with_style sty_FAIL ("   " ^ hc ^
+  val _ = print_log true ("Instructions BROKEN: " ^ (Int.toString (List.length broken_l)) ^ "\n\n");
+  val _ = List.map (fn (hc, desc, ed_opt, _) => print_log_with_style sty_FAIL true ("   " ^ hc ^
        (comment_of_failing desc ed_opt) ^ "\n")) broken_l;
-  val _ = print_log "\n\n";
+  val _ = print_log true "\n\n";
 
 in
   ()
@@ -222,7 +222,7 @@ val arm8_test_asm = arm8_lift_instr_asm mu_b mu_e pc
 fun arm8_test_hex hex = test_ARM8.lift_instr mu_b mu_e pc hex NONE
 
 val _ = if not test_arm8 then () else let
-val res = print_log_with_style sty_HEADER "\nMANUAL TESTS - ARM 8\n\n";
+val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS - ARM 8\n\n";
 val res = arm8_test_asm "add x0, x1, x2";
 val res = arm8_test_asm "add x1, x1, x1";
 val res = arm8_test_asm "adds x0, x1, x2";
@@ -487,7 +487,7 @@ val m0_test_asm = m0_lift_instr_asm mu_b mu_e pc
 fun m0_test_hex hex = m0_lift_instr mu_b mu_e pc hex NONE
 
 val _ = if not test_m0 then () else let
-val res = print_log_with_style sty_HEADER "\nMANUAL TESTS - M0\n\n";
+val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS - M0\n\n";
 
 val res = m0_test_asm "mov r0, r1";
 val res = m0_test_asm "movs r0, r1";
