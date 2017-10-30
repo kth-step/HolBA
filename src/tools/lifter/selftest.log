@@ -4722,10 +4722,8 @@ MANUAL TESTS - M0
                (BLE_Exp
                   (BExp_Align Bit32 1
                      (BExp_BinExp BIExp_Plus
-                        (BExp_BinExp BIExp_Plus
-                           (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                           (BExp_Const (Imm32 304w)))
-                        (BExp_Const (Imm32 4w)))))|>])
+                        (BExp_Den (BVar "R1" (BType_Imm Bit32)))
+                        (BExp_Const (Imm32 308w)))))|>])
 
 448F (add pc, r1) @ 0x130 - OK
  []
@@ -4739,10 +4737,8 @@ MANUAL TESTS - M0
                (BLE_Exp
                   (BExp_Align Bit32 1
                      (BExp_BinExp BIExp_Plus
-                        (BExp_BinExp BIExp_Plus
-                           (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                           (BExp_Const (Imm32 304w)))
-                        (BExp_Const (Imm32 4w)))))|>])
+                        (BExp_Den (BVar "R1" (BType_Imm Bit32)))
+                        (BExp_Const (Imm32 308w)))))|>])
 
 448F (add pc, r1) @ 0x130 - OK
  []
@@ -4756,10 +4752,8 @@ MANUAL TESTS - M0
                (BLE_Exp
                   (BExp_Align Bit32 1
                      (BExp_BinExp BIExp_Plus
-                        (BExp_BinExp BIExp_Plus
-                           (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                           (BExp_Const (Imm32 304w)))
-                        (BExp_Const (Imm32 4w)))))|>])
+                        (BExp_Den (BVar "R1" (BType_Imm Bit32)))
+                        (BExp_Const (Imm32 308w)))))|>])
 
 448F (add pc, r1) @ 0x130 - OK
  []
@@ -4773,10 +4767,8 @@ MANUAL TESTS - M0
                (BLE_Exp
                   (BExp_Align Bit32 1
                      (BExp_BinExp BIExp_Plus
-                        (BExp_BinExp BIExp_Plus
-                           (BExp_Den (BVar "R1" (BType_Imm Bit32)))
-                           (BExp_Const (Imm32 304w)))
-                        (BExp_Const (Imm32 4w)))))|>])
+                        (BExp_Den (BVar "R1" (BType_Imm Bit32)))
+                        (BExp_Const (Imm32 308w)))))|>])
 
 3080 (adds r0, #128) @ 0x130 - OK
  []

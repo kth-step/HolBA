@@ -145,6 +145,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "3202"
   val hex_code = "C500"
   val hex_code = "B5F7"
+  val hex_code = "448F"
 
   val hex_code_desc = hex_code
 *)
@@ -365,6 +366,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         val thm2 = foldl (uncurry DISCH) thm1 (List.filter disch_hyp_check (hyp thm1))
         val thm3 = REWRITE_RULE [pc_thm, wordsTheory.word_add_n2w, wordsTheory.word_and_n2w,
               wordsTheory.word_or_n2w, bir_auxiliaryTheory.word_sub_n2w,
+              addressTheory.word_arith_lemma1,
+              addressTheory.word_arith_lemma3,
+              addressTheory.word_arith_lemma4,
               addr_sz_dimword_THM, bir_auxiliaryTheory.align_n2w] thm2 handle UNCHANGED => thm2
      in
         thm3
