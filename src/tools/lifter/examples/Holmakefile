@@ -1,0 +1,39 @@
+INCLUDES = ../../../core ../ ../../../core-props ../../l3 \
+   $(HOLDIR)/examples/l3-machine-code/common \
+   $(HOLDIR)/examples/l3-machine-code/arm8/model \
+   $(HOLDIR)/examples/l3-machine-code/arm8/step \
+   $(HOLDIR)/examples/l3-machine-code/m0/model \
+   $(HOLDIR)/examples/l3-machine-code/m0/step
+
+OPTIONS = QUIT_ON_FAILURE
+
+EXTRA_CLEANS = selftest.exe
+
+
+ifdef POLY
+HOLHEAP = ../HolBALifter-heap
+endif
+
+default: all
+
+hex-test.exe: hex-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
+aes-test.exe: aes-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
+aesTheory.uo: aes-test.exe 
+	./aes-test.exe
+
+gcd_code-test.exe: gcd_code-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
+gcd_codeTheory.uo: gcd_code-test.exe 
+	./gcd_code-test.exe
+
+TARGETS = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
+
+all: $(TARGETS)
+.PHONY: all
+
+

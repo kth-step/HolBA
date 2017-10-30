@@ -416,6 +416,19 @@ SIMP_TAC std_ss [bir_is_valid_state_def,
   bir_exec_stmtE_env_unchanged, bir_exec_stmtE_valid_pc]);
 
 
+val bir_exec_stmtE_block_pc = store_thm ("bir_exec_stmtE_block_pc",
+``!p st stmt. ~(bir_state_is_terminated (bir_exec_stmtE p stmt st)) ==>
+              ((bir_exec_stmtE p stmt st).bst_pc.bpc_index = 0)``,
+
+REPEAT GEN_TAC >>
+Cases_on `stmt` >> (
+  SIMP_TAC std_ss [bir_exec_stmtE_def,
+    bir_exec_stmt_halt_def, bir_exec_stmt_jmp_def,
+    bir_exec_stmt_cjmp_def, bir_exec_stmt_jmp_to_label_def,
+    bir_state_set_failed_def] >>
+  REPEAT CASE_TAC >>
+  SIMP_TAC (std_ss++holBACore_ss) [bir_block_pc_def]
+));
 
 
 val bir_exec_step_valid_pc = store_thm ("bir_exec_step_valid_pc",

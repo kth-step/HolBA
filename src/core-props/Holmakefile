@@ -11,7 +11,8 @@ HOLHEAP = ../core/HolBACore-heap
 NEWHOLHEAP = HolBACoreProps-heap
 EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
 
-HEAPINC = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml))
+HEAPINC = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
+          $(patsubst %.sml,%,$(wildcard *Syntax.sml))
 
 $(NEWHOLHEAP): $(TARGETS)
 	$(protect $(HOLDIR)/bin/buildheap) -b $(HOLHEAP) -o $(NEWHOLHEAP) $(HEAPINC)

@@ -13,7 +13,7 @@ EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
 
 HEAPINC =
 
-$(NEWHOLHEAP): $(TARGETS)
+$(NEWHOLHEAP): $(TARGETS) $(HOLHEAP)
 	$(protect $(HOLDIR)/bin/buildheap) -b $(HOLHEAP) -o $(NEWHOLHEAP) $(HEAPINC)
 endif
 

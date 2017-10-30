@@ -172,11 +172,14 @@ Cases_on `c` >> (
 val bir_eval_ifthenelse_REWRS_Unknown = store_thm ("bir_eval_ifthenelse_REWRS_Unknown",
 ``(!ec e1 e2.
      (type_of_bir_val ec <> SOME (BType_Imm Bit1)) ==>
+     (bir_eval_ifthenelse ec e1 e2 = BVal_Unknown)) /\
+  (!ec e1 e2.
+     ~(bir_val_is_Bool ec) ==>
      (bir_eval_ifthenelse ec e1 e2 = BVal_Unknown))``,
 
-Cases_on `ec` >> (
-  SIMP_TAC (std_ss++bir_type_ss++bir_imm_ss) [type_of_bir_imm_def, type_of_bir_val_def,
-    bir_eval_ifthenelse_REWRS]
+REPEAT STRIP_TAC >> Cases_on `ec` >> (
+  FULL_SIMP_TAC (std_ss++bir_type_ss++bir_imm_ss) [type_of_bir_imm_def, type_of_bir_val_def,
+    bir_eval_ifthenelse_REWRS, bir_val_checker_REWRS]
 ));
 
 val bir_eval_ifthenelse_TF_EQ = store_thm ("bir_eval_ifthenelse_TF_EQ",

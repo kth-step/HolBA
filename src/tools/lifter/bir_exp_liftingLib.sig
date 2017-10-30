@@ -21,7 +21,7 @@ sig
    val is_BLV_Mem             : term -> bool;
 
 
-   (* a function constructiong either a BLV_Imm or a BLV_Mem term
+   (* a function constructing either a BLV_Imm or a BLV_Mem term
       depending on the type of input terms. Valid input term types are
       booleans, words of supported sizes and functions from words to words. *)
    val gen_mk_BLV             : term -> term
@@ -37,7 +37,7 @@ sig
    (* Expression Lifting functions *)
    (********************************)
 
-   (* The lifter works by backchainging using theorems of the form
+   (* The lifter works by backchaining using theorems of the form
 
       [some assumptions] |- bir_is_lifted_exp env e v
 
@@ -58,7 +58,7 @@ sig
       check, which to try first. To implement this, there is guard term
       available. If this guard does not match a term "v", then
       "elf_apply r env v" should fail. Using this guard, many lifting functions
-      can be quickly discared without actually calling them.
+      can be quickly discarded without actually calling them.
 
       To construct a exp_lifting_fun_rec one needs to provide the actual
       function creating theorems as well as an optional guard term. If no guard is
@@ -88,10 +88,14 @@ sig
    (**********************************************)
 
    (* Given a list of theorems, "elfs_of_thms" preprocesses these theorems and creates
-      expression lifting functions. For debugging purposes, also the preprocessing function
+      expression lifting functions. Usually all variables in these theorems can be
+      freely instantiated by the expression lifter. A list of variables that should not be
+      instantiated, they can be passed as an extra argument.
+
+      For debugging purposes, also the preprocessing function
       is exported. *)
-   val elfs_of_thms : thm list -> exp_lifting_fun_rec list
-   val prepare_exp_lifting_thms : thm list -> thm list
+   val elfs_of_thms : term list -> thm list -> exp_lifting_fun_rec list
+   val prepare_exp_lifting_thms : term list -> thm list -> thm list
 
 
    (***************************)
@@ -100,7 +104,7 @@ sig
 
    (* finite sets of expression lifting functions are stored in an indexed form
       in expression lifting nets. This is the datastructure used to hand them around
-      to functions acually using them. *)
+      to functions actually using them. *)
 
    type exp_lifting_net;
 
@@ -112,9 +116,9 @@ sig
    val eln_of_elfs     : exp_lifting_fun_rec list -> exp_lifting_net
 
    (* combinations with elfs_of_thms for convenience *)
-   val eln_add_thms                 : exp_lifting_net ->        thm list -> exp_lifting_net
-   val eln_add_thms_with_precedence : exp_lifting_net -> int -> thm list -> exp_lifting_net
-   val eln_of_thms                  : thm list -> exp_lifting_net
+   val eln_add_thms                 : exp_lifting_net ->        term list -> thm list -> exp_lifting_net
+   val eln_add_thms_with_precedence : exp_lifting_net -> int -> term list -> thm list -> exp_lifting_net
+   val eln_of_thms                  : term list -> thm list -> exp_lifting_net
 
 
    (****************************************************)
@@ -154,7 +158,7 @@ sig
    val bir_exp_lift_default_env : exp_lifting_net -> term -> thm
 
 
-   (* Interally bir_exp_lift is implemented using several steps.
+   (* Internally bir_exp_lift is implemented using several steps.
 
       First an initial theorem is created via "bir_exp_lift env v".
       Next this theorem is processed via
@@ -171,7 +175,7 @@ sig
       bir_exp_lift_final.
 
       These functions are exported, since they might be helpful to
-      write specialed lifters. *)
+      write specialized lifters. *)
 
    type exp_lifting_cache
    val elc_empty : exp_lifting_cache

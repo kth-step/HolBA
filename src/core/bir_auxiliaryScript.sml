@@ -67,6 +67,21 @@ GEN_TAC >> Cases >- (
 ASM_SIMP_TAC list_ss [listTheory.GENLIST_CONS, arithmeticTheory.ADD_CLAUSES])
 
 
+val ALL_DISTINCT_MAP_FILTER = store_thm ("ALL_DISTINCT_MAP_FILTER",
+``!f P l. ALL_DISTINCT (MAP f l) ==> ALL_DISTINCT (MAP f (FILTER P l))``,
+GEN_TAC >> GEN_TAC >>
+Induct >> ASM_SIMP_TAC list_ss [] >>
+
+REPEAT STRIP_TAC >>
+rename1 `f x` >>
+Cases_on `P x` >- (
+  FULL_SIMP_TAC list_ss [listTheory.MEM_MAP, listTheory.MEM_FILTER] >>
+  METIS_TAC[]
+) >>
+ASM_SIMP_TAC list_ss []);
+
+
+
 val INDEX_FIND_EQ_NONE = store_thm ("INDEX_FIND_EQ_NONE",
   ``!l i P. (INDEX_FIND i P l = NONE) <=> (~(EXISTS P l))``,
 Induct >> SIMP_TAC list_ss [listTheory.INDEX_FIND_def] >>
@@ -133,6 +148,24 @@ SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [INDEX_FIND_EQ_SOME] >>
 Cases_on `LENGTH l` >> SIMP_TAC std_ss []);
 
 
+val INDEX_FIND_INDEX_CHANGE = store_thm ("INDEX_FIND_INDEX_CHANGE",
+  ``!i P l. INDEX_FIND i P l = OPTION_MAP (\ (j, v). (j+i, v)) (INDEX_FIND 0 P l)``,
+
+REPEAT GEN_TAC >>
+Q.ID_SPEC_TAC `i` >>
+Induct_on `l` >> SIMP_TAC std_ss [listTheory.INDEX_FIND_def] >>
+REPEAT STRIP_TAC >>
+rename1 `P x` >>
+ONCE_ASM_REWRITE_TAC[] >>
+POP_ASSUM (K ALL_TAC) >>
+Cases_on `P x` >> (
+  ASM_SIMP_TAC std_ss []
+) >>
+Cases_on `INDEX_FIND 0 P l` >> (
+  ASM_SIMP_TAC (arith_ss++pairSimps.gen_beta_ss) []
+));
+
+
 val SEG_SUC_LENGTH = store_thm ("SEG_SUC_LENGTH",
 ``!l n m. (n + m < LENGTH l) ==>
           (SEG (SUC n) m l = (EL m l)::SEG n (SUC m) l)``,
@@ -140,6 +173,38 @@ val SEG_SUC_LENGTH = store_thm ("SEG_SUC_LENGTH",
 SIMP_TAC arith_ss [rich_listTheory.SEG_TAKE_BUTFISTN] >>
 REPEAT STRIP_TAC >>
 ASM_SIMP_TAC list_ss [rich_listTheory.DROP_EL_CONS, arithmeticTheory.ADD1]);
+
+
+(* -------------------------------------------------------------------------- *)
+(* pred_set lemmata                                                           *)
+(* -------------------------------------------------------------------------- *)
+
+val INFINITE_SUBSET_WITH_CARD_EXISTS = store_thm ("INFINITE_SUBSET_WITH_CARD_EXISTS",
+``!s. INFINITE s ==> (!c. ?t. FINITE t /\ (CARD t = c) /\ t SUBSET s)``,
+
+REPEAT STRIP_TAC >>
+Induct_on `c` >- (
+  Q.EXISTS_TAC `{}` >>
+  ASM_SIMP_TAC std_ss [FINITE_EMPTY, CARD_EMPTY, EMPTY_SUBSET]
+) >>
+FULL_SIMP_TAC std_ss [] >>
+`?e. e IN (s DIFF t)` by METIS_TAC[MEMBER_NOT_EMPTY, INFINITE_DIFF_FINITE] >>
+Q.EXISTS_TAC `e INSERT t` >>
+FULL_SIMP_TAC std_ss [IN_DIFF, FINITE_INSERT, INSERT_SUBSET,
+  CARD_INSERT]);
+
+
+(* -------------------------------------------------------------------------- *)
+(* Modulus                                                                    *)
+(* -------------------------------------------------------------------------- *)
+
+val MOD_ADD_EQ_SUB = store_thm ("MOD_ADD_EQ_SUB",
+``!x1 x2 y. x1 < y /\ x2 < y /\ (y <= x1 + x2) ==>
+            ((x1 + x2) MOD y = (x1 + x2) - y)``,
+
+REPEAT STRIP_TAC >>
+`?i. x1 + x2 = y + i` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS] >>
+ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_MODULUS]);
 
 
 (* -------------------------------------------------------------------------- *)
@@ -284,6 +349,26 @@ val OPT_CONS_REVERSE = store_thm ("OPT_CONS_REVERSE",
 Cases >> SIMP_TAC list_ss [OPT_CONS_REWRS]);
 
 
+val FUNPOW_OPT_def = Define `
+  FUNPOW_OPT (r : 'a -> 'a option) n x =
+  FUNPOW (\x. option_CASE x NONE r) n (SOME x)`
+
+val FUNPOW_OPT_REWRS = store_thm ("FUNPOW_OPT_REWRS",
+``(!r x. (FUNPOW_OPT r 0 x = SOME x)) /\
+  (!r x n. (FUNPOW_OPT r (SUC n) x =
+            case r x of NONE => NONE
+                      | SOME x' => FUNPOW_OPT r n x'))``,
+
+SIMP_TAC std_ss [FUNPOW_OPT_def, arithmeticTheory.FUNPOW] >>
+REPEAT STRIP_TAC >>
+Cases_on `r x` >> SIMP_TAC std_ss [] >>
+Induct_on `n` >> (
+  ASM_SIMP_TAC std_ss [arithmeticTheory.FUNPOW]
+));
+
+val FUNPOW_OPT_compute = save_thm ("FUNPOW_OPT_compute",
+  CONV_RULE (numLib.SUC_TO_NUMERAL_DEFN_CONV) FUNPOW_OPT_REWRS);
+
 
 (* -------------------------------------------------------------------------- *)
 (* lazy lists                                                                 *)
@@ -337,6 +422,14 @@ Cases_on `ll` >> (
 (* Word lemmata                                                               *)
 (* -------------------------------------------------------------------------- *)
 
+val w2w_n2w = store_thm ("w2w_n2w",
+``!n. (w2w ((n2w n):'a word)):'b word = (n2w (n MOD dimword (:'a)))``,
+SIMP_TAC std_ss [w2w_def, w2n_n2w]);
+
+val align_n2w = store_thm ("align_n2w",
+``!n m. align n ((n2w m):'a word) =
+        n2w ((m MOD dimword (:'a)) DIV 2 ** n * 2 ** n)``,
+SIMP_TAC std_ss [alignmentTheory.align_w2n, w2n_n2w]);
 
 val w2n_MOD_2EXP_ID = store_thm ("w2n_MOD_2EXP_ID",
   ``!(w:'a word). (MOD_2EXP (dimindex (:'a)) (w2n w)) = w2n w``,
@@ -445,6 +538,101 @@ val word1_distinct = store_thm ("word1_distinct",
 SIMP_TAC (std_ss++wordsLib.WORD_ss) []);
 
 
+val BIT_ADD_WORD_CARRY = store_thm ("BIT_ADD_WORD_CARRY", ``
+!w0:'a word (w1:'a word).
+  BIT (dimindex (:'a)) (w2n w0 + w2n (w1)) <=>
+  ~(w2n w0 + w2n w1 < dimword (:'a))``,
+
+REPEAT GEN_TAC >>
+EQ_TAC >> REPEAT STRIP_TAC >- (
+  `dimword (:'a) <= w2n w0 + w2n w1` by METIS_TAC[bitTheory.BIT_IMP_GE_TWOEXP, dimword_def] >>
+  DECIDE_TAC
+) >>
+`?m. (m < dimword (:'a)) /\ (w2n w0 + w2n w1 = m + dimword (:'a))` by (
+  FULL_SIMP_TAC arith_ss [arithmeticTheory.NOT_LESS] >>
+  `?m. w2n w0 + w2n w1 = dimword (:'a) + m` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS] >>
+  Q.EXISTS_TAC `m` >>
+  `(w2n (w0:'a word) < dimword (:'a)) /\ (w2n (w1:'a word) < dimword (:'a))` by METIS_TAC[w2n_lt] >>
+  ASM_SIMP_TAC arith_ss []
+) >>
+
+MP_TAC (SPECL [``dimindex (:'a)``, ``SUC (dimindex (:'a))``, ``m + dimword (:'a)``] bitTheory.EXISTS_BIT_IN_RANGE) >>
+ASM_SIMP_TAC arith_ss [dimword_def, arithmeticTheory.EXP, GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC] >>
+METIS_TAC[arithmeticTheory.LESS_EQUAL_ANTISYM]);
+
+
+
+val word_sub_n2w = store_thm ("word_sub_n2w",
+``!n m. (n2w n - n2w m):'a word = n2w (if m <= n then (n - m) else
+            dimword (:'a) - (m - n) MOD dimword (:'a))``,
+
+REPEAT GEN_TAC >>
+Cases_on `m <= n` >- (
+  ASM_SIMP_TAC std_ss [n2w_sub]
+) >>
+ASM_SIMP_TAC arith_ss [GSYM word_2comp_n2w, n2w_sub, WORD_NEG_SUB]);
+
+
+val WORD_SUB_RZERO_IFF = store_thm ("WORD_SUB_RZERO_IFF",
+  ``!(a : 'a word) b. ((a - b = a)) <=> (b = 0w)``,
+
+REPEAT GEN_TAC >>
+Tactical.REVERSE EQ_TAC >- (
+  SIMP_TAC arith_ss [WORD_SUB_RZERO]
+) >>
+STRIP_TAC >>
+`(-a) + (a - b) = (-a) + a` by METIS_TAC[wordsTheory.WORD_EQ_ADD_LCANCEL] >>
+FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) []);
+
+
+val WORD_LS_NOT = store_thm ("WORD_LS_NOT",
+``!w1 (w2:'a word). (~w1 <=+ ~w2) <=> (w2 <=+ w1)``,
+REPEAT Cases >>
+ASM_SIMP_TAC arith_ss [word_1comp_n2w, word_ls_n2w]);
+
+
+val aligned_neg = store_thm ("aligned_neg",
+``!p (a:'a word). aligned p (-a) <=> aligned p a``,
+
+`!p (a:'a word). aligned p a ==> aligned p (-a)` suffices_by METIS_TAC[WORD_NEG_NEG] >>
+REPEAT STRIP_TAC >>
+Q.SUBGOAL_THEN `(-a) = 0w - a` SUBST1_TAC >- SIMP_TAC (std_ss++wordsLib.WORD_ss) [] >>
+ASM_SIMP_TAC std_ss [alignmentTheory.aligned_add_sub, alignmentTheory.aligned_0]);
+
+
+val align_aligned_add = store_thm ("align_aligned_add",
+``!p (a:'a word) b. aligned p b ==>
+                    ((align p (a + b) = ((align p a) + b)))``,
+
+REPEAT STRIP_TAC >>
+Cases_on `dimindex (:'a) <= p` >- (
+  `b = 0w` by METIS_TAC [alignmentTheory.aligned_ge_dim]>>
+  ASM_SIMP_TAC std_ss [wordsTheory.WORD_ADD_0]
+) >>
+FULL_SIMP_TAC std_ss [alignmentTheory.align_sub, alignmentTheory.aligned_def] >>
+REPEAT GEN_TAC >>
+Cases_on `p = 0` >> FULL_SIMP_TAC std_ss [] >>
+ASM_SIMP_TAC arith_ss [Once (GSYM wordsTheory.WORD_EXTRACT_OVER_ADD2)] >>
+FULL_SIMP_TAC arith_ss [WORD_SUB_RZERO_IFF, WORD_ADD_0, WORD_EXTRACT_COMP_THM,
+  arithmeticTheory.MIN_DEF] >>
+SIMP_TAC (std_ss++wordsLib.WORD_ss) []);
+
+
+val align_aligned_sub = store_thm ("align_aligned_sub",
+``!p (a:'a word) b. aligned p b ==>
+                    ((align p (a - b) = ((align p a) - b)))``,
+METIS_TAC[aligned_neg, word_sub_def, align_aligned_add]);
+
+
+val testbit_el_iff = store_thm ("testbit_el_iff",
+``!v i. testbit i v = ((i < LENGTH v) /\ EL (LENGTH v - 1 - i) v)``,
+
+REPEAT GEN_TAC >>
+Cases_on `i < LENGTH v` >> (
+  ASM_SIMP_TAC arith_ss [testbit_el, testbit_geq_len]
+));
+
+
 (* -------------------------------------------------------------------------- *)
 (* Fresh variable names                                                       *)
 (* -------------------------------------------------------------------------- *)
@@ -535,7 +723,7 @@ REPEAT STRIP_TAC >| [
 ]);
 
 
-val FRESH_INDEXED_STRINGS_PROPS = store_thm ("FRESH_INDEXED_STRING_PROPS",
+val FRESH_INDEXED_STRINGS_PROPS = store_thm ("FRESH_INDEXED_STRINGS_PROPS",
   ``!s pre l n. FINITE s ==> (
       (LENGTH (FRESH_INDEXED_STRINGS pre n s l) = l) /\
       ALL_DISTINCT (FRESH_INDEXED_STRINGS pre n s l) /\

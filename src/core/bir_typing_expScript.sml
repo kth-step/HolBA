@@ -241,10 +241,6 @@ REPEAT CONJ_TAC >> (
 ));
 
 
-
-val bir_is_well_typed_exp_def = Define `bir_is_well_typed_exp e <=>  (type_of_bir_exp e <> NONE)`
-
-
 (* ------------------------------------------------------------------------- *)
 (*  Looking at  variables used somewhere in an expression                    *)
 (* ------------------------------------------------------------------------- *)
@@ -271,6 +267,12 @@ GEN_TAC >> GEN_TAC >> Induct >> REPEAT STRIP_TAC >> (
     pred_setTheory.NOT_IN_EMPTY, pred_setTheory.IN_INSERT,
     bir_eval_exp_def]
 ));
+
+
+val bir_vars_of_exp_THM_EQ_FOR_VARS = store_thm ("bir_vars_of_exp_THM_EQ_FOR_VARS",
+``!env1 env2 e. (bir_env_EQ_FOR_VARS (bir_vars_of_exp e) env1 env2) ==>
+                (bir_eval_exp e env1 = bir_eval_exp e env2)``,
+METIS_TAC[bir_vars_of_exp_THM, bir_env_EQ_FOR_VARS_read_IMPL]);
 
 
 val bir_vars_of_exp_FINITE = store_thm ("bir_vars_of_exp_FINITE",
@@ -471,7 +473,7 @@ val bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION = store_thm ("bir_env_vars
   ``!vs1 vs2 env1.
       (FINITE vs2 /\ vs1 SUBSET vs2 /\ bir_var_set_is_well_typed vs2) ==>
       bir_env_vars_are_initialised env1 vs1 ==>
-      (?env2. (!v. v IN vs1 ==> (bir_env_lookup (bir_var_name v) env1 = bir_env_lookup (bir_var_name v) env2)) /\
+      (?env2. bir_env_EQ_FOR_VARS vs1 env1 env2 /\
               bir_env_vars_are_initialised env2 vs2)``,
 
 REPEAT STRIP_TAC >>
@@ -485,7 +487,7 @@ EXISTS_TAC ``BEnv (FUNION (MAP_KEYS bir_var_name M1) env)`` >>
   INJ_SUBSET, SUBSET_REFL, DIFF_SUBSET] >>
 
 `!v v'. v IN vs2 ==> (
-    ((bir_var_name v = bir_var_name v') ∧ v' IN (vs2 DIFF vs1)) <=>
+    ((bir_var_name v = bir_var_name v') /\ v' IN (vs2 DIFF vs1)) <=>
     (~(v IN vs1) /\ (v' = v)))` by (
 
   SIMP_TAC std_ss [IN_DIFF] >> REPEAT STRIP_TAC >>
@@ -493,6 +495,8 @@ EXISTS_TAC ``BEnv (FUNION (MAP_KEYS bir_var_name M1) env)`` >>
 ) >>
 
 REPEAT STRIP_TAC >- (
+  SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def] >>
+  REPEAT STRIP_TAC >>
   `v IN vs2` by METIS_TAC[SUBSET_DEF] >>
   ASM_SIMP_TAC std_ss [bir_env_lookup_def, FLOOKUP_FUNION, FLOOKUP_MAP_KEYS]
 ) >>
@@ -522,7 +526,8 @@ GEN_TAC >> EQ_TAC >- (
 ) >>
 REPEAT STRIP_TAC >>
 MP_TAC (Q.SPECL [`{}`, `vs`, `bir_empty_env`] bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION) >>
-ASM_SIMP_TAC std_ss [EMPTY_SUBSET, bir_env_vars_are_initialised_EMPTY, NOT_IN_EMPTY]);
+ASM_SIMP_TAC std_ss [EMPTY_SUBSET, bir_env_vars_are_initialised_EMPTY, NOT_IN_EMPTY,
+  bir_env_EQ_FOR_VARS_EMPTY]);
 
 
 

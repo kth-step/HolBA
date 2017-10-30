@@ -1,20 +1,20 @@
-INCLUDES = ../core ../core-props
+INCLUDES = ./lifter ./l3
 OPTIONS = QUIT_ON_FAILURE
 
 default: all
 
-SMLFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
+#SMLFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
+#SMLFILES =
 TARGETS = $(patsubst %.sml,%.uo,$(SMLFILES))
 
 ifdef POLY
-HOLHEAP = ../core-props/HolBACoreProps-heap
+HOLHEAP = ./lifter/HolBALifter-heap
 NEWHOLHEAP = HolBATools-heap
 EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
 
-HEAPINC = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
-          $(patsubst %.sml,%,$(wildcard *Lib.sml))
+HEAPINC  =
 
-$(NEWHOLHEAP): $(TARGETS)
+$(NEWHOLHEAP): $(HOLHEAP)
 	$(protect $(HOLDIR)/bin/buildheap) -b $(HOLHEAP) -o $(NEWHOLHEAP) $(HEAPINC)
 
 endif

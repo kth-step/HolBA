@@ -1,0 +1,28 @@
+INCLUDES = ../../core ../../core-props \
+   $(HOLDIR)/examples/l3-machine-code/common \
+   $(HOLDIR)/examples/l3-machine-code/arm8/model \
+   $(HOLDIR)/examples/l3-machine-code/arm8/step \
+   $(HOLDIR)/examples/l3-machine-code/m0/model \
+   $(HOLDIR)/examples/l3-machine-code/m0/step
+
+OPTIONS = QUIT_ON_FAILURE
+
+ifdef POLY
+HOLHEAP = ../../core-props/HolBACoreProps-heap
+NEWHOLHEAP = HolBA_l3-heap
+EXTRA_CLEANS = $(NEWHOLHEAP) $(NEWHOLHEAP).o
+
+HEAPINC = $(HOLDIR)/examples/l3-machine-code/arm8/step/arm8_stepTheory \
+          $(HOLDIR)/examples/l3-machine-code/arm8/step/arm8_stepLib \
+          $(HOLDIR)/examples/l3-machine-code/m0/step/m0_stepTheory \
+          $(HOLDIR)/examples/l3-machine-code/m0/step/m0_stepLib
+
+$(NEWHOLHEAP): ../../core-props/HolBACoreProps-heap
+	$(protect $(HOLDIR)/bin/buildheap) -b $(HOLHEAP) -o $(NEWHOLHEAP) $(HEAPINC)
+
+all: $(NEWHOLHEAP)
+.PHONY: all default
+
+endif
+
+default: all
