@@ -4149,7 +4149,7 @@ B4000040 @ 0x10030 - OK
                (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
 B8617801 @ 0x10030 - FAILED
-   bmr_step_hex failed
+   computing al_step and ms' failed
 
 
 MANUAL TESTS - M0
@@ -15436,9 +15436,9 @@ SUMMARY FAILING HEXCODES ARM 8
 
 Instructions FAILED: 9/519
 
-   "B8617800" (* bmr_step_hex failed *),
-   "B8627800" (* bmr_step_hex failed *),
-   "B8617801" (* bmr_step_hex failed *),
+   "B8617800" (* computing al_step and ms' failed *),
+   "B8627800" (* computing al_step and ms' failed *),
+   "B8617801" (* computing al_step and ms' failed *),
    "9BC37C41" (* umulh x1, x2, x3; lifting of ``Imm64 ((127 >< 64) (w2w (ms.REG 3w) * w2w (ms.REG 2w)))`` failed *),
    "9B437C41" (* smulh x1, x2, x3; lifting of ``Imm64 ((127 >< 64) (sw2sw (ms.REG 3w) * sw2sw (ms.REG 2w)))`` failed *),
    "DAC01441" (* clz x1, x2; lifting of ``Imm64 (n2w (CountLeadingZeroBits (ms.REG 2w)))`` failed *),
