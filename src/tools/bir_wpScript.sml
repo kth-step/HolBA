@@ -519,7 +519,7 @@ bir_exec_block_jmp_triple p bl pre post l =
   )))
 `);
 
-prove(``
+val bir_exec_block_jmp_triple_wp_thm = prove(``
   !p bl post l.
   (bir_is_well_typed_block bl) ==>
   (bir_is_bool_exp post) ==>
@@ -611,7 +611,8 @@ bir_exec_block_cjmp_triple p bl pre post1 l1 post2 l2 =
   )))
 `);
 
-prove(``
+
+val bir_exec_block_cjmp_triple_wp_thm = prove(``
   !p bl post1 l1 post2 l2.
   (bir_is_well_typed_block bl) ==>
   (bir_is_bool_exp post1) ==>
@@ -669,7 +670,7 @@ prove(``
             bir_env_vars_are_initialised st.bst_environ
               (bir_vars_of_stmtB stmt)) bl.bb_statements` >-
  (cheat) >>
- (FULL_SIMP_TAC std_ss [])
+ (FULL_SIMP_TAC std_ss []) >>
 
  Cases_on `(ns2.bst_status = BST_AssumptionViolated)` >-
  (
@@ -749,7 +750,7 @@ val _ = export_theory();
 
 
 
-
+(*
 
 ``
 (bir_env_vars_are_initialised st.bst_environ
@@ -829,7 +830,7 @@ bir_program_blocksTheory.bir_exec_to_labels_block;
   )))
 
 
-
+*)
 (* val bir_exec_to_labels_triple_def = Define ` *)
 (* bir_exec_to_labels_triple ls lstart p pre post = *)
 (* !bs. *)
