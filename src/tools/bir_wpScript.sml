@@ -14,26 +14,7 @@ load "pairLib";
 
 val _ = new_theory "bir_wp";
 
-val bir_exec_stmtB_triple_def = Define `
-bir_exec_stmtB_triple stmt pre post =
-!st st' fe.
-  (bir_is_bool_exp pre) /\
-  (bir_is_bool_exp post) /\
-  (
-  (bir_env_vars_are_initialised st.bst_environ (bir_vars_of_stmtB stmt) ) ==>
-  (bir_env_vars_are_initialised st.bst_environ (bir_vars_of_exp pre) ) ==>
-  (st.bst_status = BST_Running) ==>
-  (bir_eval_exp pre (st.bst_environ) = bir_val_true) ==>
-  (bir_exec_stmtB stmt st = (fe, st')) ==>
-  (bir_env_vars_are_initialised st'.bst_environ (bir_vars_of_exp post) ) /\
-  ((st'.bst_status = BST_AssumptionViolated) \/ (
-   (st'.bst_status = BST_Running) /\
-   (bir_eval_exp post (st'.bst_environ) = bir_val_true)
-  )))
-`;
-
-
-
+(* Helper theorems *)
 val bir_mk_bool_val_true_thm = prove(``!v1.
 (bir_mk_bool_val v1 = bir_val_true) = v1``, 
 RW_TAC std_ss [bir_mk_bool_val_ALT_DEF_TF, 
@@ -41,11 +22,17 @@ RW_TAC std_ss [bir_mk_bool_val_ALT_DEF_TF,
 );
 
 (* Theorems to check bir_is_bool_exp_env *)
+(* Conditional rewrite *)
 val bir_is_bool_exp_env_GSYM = prove(``
 !env e. bir_is_bool_exp e ==>
  ((bir_env_vars_are_initialised env (bir_vars_of_exp e)) =
  bir_is_bool_exp_env env e)
 ``, RW_TAC std_ss [bir_is_bool_exp_env_def]
+);
+
+val bir_is_bool_exp_GSYM = prove(``
+!ex . (type_of_bir_exp ex = SOME BType_Bool) = (bir_is_bool_exp ex)
+``, RW_TAC std_ss [BType_Bool_def,GSYM bir_is_bool_exp_def]
 );
 
 val bir_env_vars_are_initialised_INTRO = prove(``
@@ -61,99 +48,13 @@ val bir_env_vars_are_initialised_INTRO = prove(``
 		       bir_env_vars_are_initialised_UNION]
 );
 
-(* better use a reweite: eval_exp a /\ b => eval_exp a /\ eval_ecp b *)
-(* {P}S{Q} *)
-(* (e /\ Q) Assert e {Q} *)
-val bir_triple_exec_strmtB_assert_thm = prove(``
-  (bir_is_well_typed_stmtB (BStmt_Assert ex)) ==>
-  (bir_is_bool_exp post) ==>
-bir_exec_stmtB_triple (BStmt_Assert ex) (BExp_BinExp BIExp_And ex post) post
+val bir_is_bool_env_exp_INTRO = prove(``
+! env ope e1 e2 .
+(bir_is_bool_exp_env env (BExp_BinExp ope e1 e2)) ==>
+((bir_is_bool_exp_env env e1) /\ (bir_is_bool_exp_env env e2))
 ``,
-REWRITE_TAC [bir_exec_stmtB_triple_def] >>
-REPEAT DISCH_TAC >>
-REPEAT GEN_TAC >>
-FULL_SIMP_TAC std_ss [bir_is_well_typed_stmtB_def,
-		      		     BType_Bool_def,
-		     GSYM bir_is_bool_exp_def
-		     ] >>
-(subgoal `bir_is_bool_exp (BExp_BinExp BIExp_And ex post)`) >|
-[RW_TAC std_ss [bir_is_bool_exp_REWRS], ALL_TAC] >>
-FULL_SIMP_TAC std_ss [] >>
-REPEAT DISCH_TAC >>
-FULL_SIMP_TAC std_ss [bir_exec_stmtB_def,
-		     bir_exec_stmt_assert_def,
-		     bir_vars_of_stmtB_def
-		     ] >>
-(subgoal `bir_env_vars_are_initialised st.bst_environ (bir_vars_of_exp post)`) >|
-[METIS_TAC [bir_env_vars_are_initialised_INTRO], ALL_TAC] >>
-REV_FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_GSYM] >>
-FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_GSYM] >>
-REV_FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO] >>
-(subgoal `(bir_eval_bool_exp (BExp_BinExp BIExp_And ex post) st.bst_environ) = 
-    (bir_eval_bool_exp ex st.bst_environ) ∧ (bir_eval_bool_exp post st.bst_environ)`) >|
-[
-  FULL_SIMP_TAC std_ss [bir_eval_bool_exp_BExp_BinExp_REWRS],
-  ALL_TAC
-] >>
-FULL_SIMP_TAC std_ss [bir_mk_bool_val_true_thm] >>
-REV_FULL_SIMP_TAC std_ss [bir_mk_bool_val_ALT_DEF_TF,
-			 bir_dest_bool_val_TF] >>
-RW_TAC std_ss [bir_eval_bool_exp_INTRO, bir_mk_bool_val_ALT_DEF_TF, bir_dest_bool_val_TF]
-);
-
-
-
-(* {e ==> Q} Assume e {Q} *)
-val bir_triple_exec_strmtB_assume_thm = prove(``
-  (bir_is_well_typed_stmtB (BStmt_Assume ex)) ==>
-  (bir_is_bool_exp post) ==>
-  bir_exec_stmtB_triple (BStmt_Assume ex) 
-   (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not ex) post) post
-``,
-REWRITE_TAC [bir_exec_stmtB_triple_def] >>
-REPEAT DISCH_TAC >>
-REPEAT GEN_TAC >>
-FULL_SIMP_TAC std_ss [bir_is_well_typed_stmtB_def,
-		      		     BType_Bool_def,
-		     GSYM bir_is_bool_exp_def
-		     ] >>
-(subgoal `
-   (bir_is_bool_exp (BExp_UnaryExp BIExp_Not ex)) /\
-   (bir_is_bool_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not ex) post))
-`) >|
-[RW_TAC std_ss [bir_is_bool_exp_REWRS], ALL_TAC] >>
-FULL_SIMP_TAC std_ss [] >>
-REPEAT DISCH_TAC >>
-FULL_SIMP_TAC std_ss [bir_exec_stmtB_def,
-		     bir_exec_stmt_assume_def,
-		     bir_vars_of_stmtB_def
-		     ] >>
-(subgoal `
-  (bir_env_vars_are_initialised st.bst_environ (bir_vars_of_exp post)) /\
-  (bir_env_vars_are_initialised st.bst_environ (bir_vars_of_exp (BExp_UnaryExp BIExp_Not ex)))
-`) >|
-[METIS_TAC [bir_env_vars_are_initialised_INTRO], ALL_TAC] >>
-REV_FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_GSYM] >>
-FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_GSYM] >>
-REV_FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO] >>
-(subgoal `bir_eval_bool_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not ex) post) st.bst_environ = 
-    (~(bir_eval_bool_exp ex st.bst_environ)) \/ (bir_eval_bool_exp post st.bst_environ)`) >|
-[
-  FULL_SIMP_TAC std_ss [bir_eval_bool_exp_BExp_BinExp_REWRS,
-		       bir_eval_bool_exp_BExp_UnaryExp_REWRS],
-  ALL_TAC
-] >>
-FULL_SIMP_TAC std_ss [] >>
-(RULE_ASSUM_TAC (SIMP_RULE std_ss [bir_mk_bool_val_true_thm])) >>
-Cases_on `¬bir_eval_bool_exp ex st.bst_environ` >|
-[
-  FULL_SIMP_TAC std_ss [bir_mk_bool_val_ALT_DEF_TF,
-			bir_dest_bool_val_TF] >>
-  RW_TAC std_ss [],
-  FULL_SIMP_TAC std_ss [bir_mk_bool_val_ALT_DEF_TF,
-			bir_dest_bool_val_TF] >>
-  RW_TAC std_ss [bir_eval_bool_exp_INTRO, bir_mk_bool_val_ALT_DEF_TF, bir_dest_bool_val_TF]
-]
+  REPEAT GEN_TAC >>
+  FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_REWRS]
 );
 
 (* Add type condition *)
@@ -165,125 +66,127 @@ bir_eval_exp ex (BEnv (en |+ (var,ty,SOME (bir_eval_exp e1 (BEnv en))))) =
 bir_eval_exp (bir_exp_subst1 (BVar var ty) e1 ex) (BEnv en)
 ``,
 REPEAT GEN_TAC >>
-Induct_on `ex` >|
-[
-    (* Const *)
- GEN_TAC >>
- FULL_SIMP_TAC std_ss [bir_exp_subst1_REWRS, bir_eval_exp_def],
-    (* Den *)
- GEN_TAC >>
- FULL_SIMP_TAC std_ss [bir_exp_subst1_REWRS, bir_eval_exp_def] >>
- Cases_on `b = BVar var ty` >|
- [
-  RW_TAC std_ss [bir_env_read_def, bir_var_name_def, bir_env_lookup_def] >>
-  EVAL_TAC,
-  ALL_TAC
- ] >>
- Cases_on `b` >>
- Cases_on `var <> s` >|
- [
-  FULL_SIMP_TAC std_ss [bir_eval_exp_def] >>
-  EVAL_TAC >>
-  FULL_SIMP_TAC std_ss [],
-  ALL_TAC
- ] >>
+Induct_on `ex` >>
+( REPEAT GEN_TAC >>
+  FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_exp_subst1_REWRS]
+) >>
+ (* Case not handled: BExp_Den *)
+Cases_on `b = BVar var ty` >-
+(RW_TAC std_ss [bir_env_read_def, bir_var_name_def, bir_env_lookup_def] >>
+ EVAL_TAC) >>
+Cases_on `b` >>
+Cases_on `var <> s` >-
+(FULL_SIMP_TAC std_ss [bir_eval_exp_def] >>
  EVAL_TAC >>
+ FULL_SIMP_TAC std_ss []) >>
+subgoal `b' <> ty` >- (
+  METIS_TAC[]
+) >>
  FULL_SIMP_TAC std_ss [] >>
- RW_TAC std_ss [] >>
- FULL_SIMP_TAC std_ss [bir_eval_exp_def] >>
  EVAL_TAC >>
- cheat,
+ RW_TAC std_ss [] >>
+ cheat
+);
 
- REPEAT GEN_TAC >>
- SIMP_TAC std_ss [Once bir_eval_exp_def, Once bir_exp_subst1_REWRS] >>
- SIMP_TAC std_ss [Once bir_eval_exp_def] >>
- FULL_SIMP_TAC std_ss [],
+(* ******************** *)
+(* REAL PROOF ON WP *)
+(* ******************** *)
 
- REPEAT GEN_TAC >>
- SIMP_TAC std_ss [Once bir_eval_exp_def, Once bir_exp_subst1_REWRS] >>
- SIMP_TAC std_ss [Once bir_eval_exp_def] >>
- FULL_SIMP_TAC std_ss [],
+(* Definition of pre-post. Notice that we do not have assumption violated *)
+val bir_pre_post_def = Define `
+bir_pre_post s pre s' post =
+  (s.bst_status = BST_Running) ==>
+  (bir_is_bool_exp_env s.bst_environ pre) ==>
+  (bir_eval_exp pre (s.bst_environ) = bir_val_true) ==>
+  (
+    (s'.bst_status = BST_Running) /\
+    (bir_is_bool_exp_env s'.bst_environ post) /\
+    (bir_eval_exp post (s'.bst_environ) = bir_val_true)
+  )
+`;
 
- REPEAT GEN_TAC >>
- SIMP_TAC std_ss [Once bir_eval_exp_def, Once bir_exp_subst1_REWRS] >>
- SIMP_TAC std_ss [Once bir_eval_exp_def] >>
- FULL_SIMP_TAC std_ss [],
+(* Execution of one internal statement *)
+    
+val bir_exec_stmtB_triple_def = Define `
+bir_exec_stmtB_triple stmt pre post =
+!s s' obs.
+  (bir_env_vars_are_initialised s.bst_environ (bir_vars_of_stmtB stmt) ) ==>
+  (bir_exec_stmtB stmt s = (obs, s')) ==>
+  (bir_pre_post s pre s' post)
+`;
 
 
- REPEAT GEN_TAC >>
- SIMP_TAC std_ss [Once bir_eval_exp_def, Once bir_exp_subst1_REWRS] >>
- SIMP_TAC std_ss [Once bir_eval_exp_def] >>
- FULL_SIMP_TAC std_ss [],
+(* (e /\ Q) Assert e {Q} *)
+val bir_triple_exec_strmtB_assert_thm = prove(``
+! ex post.
+  (bir_is_well_typed_stmtB (BStmt_Assert ex)) ==>
+  (bir_is_bool_exp post) ==>
+bir_exec_stmtB_triple (BStmt_Assert ex) (BExp_BinExp BIExp_And ex post) post
+``,
+REWRITE_TAC [bir_exec_stmtB_triple_def, bir_pre_post_def] >>
+REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+FULL_SIMP_TAC std_ss [bir_exec_stmtB_def,bir_exec_stmt_assert_def] >>
+(* Convert all bir_eval_exp in bir_eval_bool_exp *)
+IMP_RES_TAC bir_is_bool_env_exp_INTRO >>
+FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO] >>
+REV_FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO] >>
+(* Infer that ex holds *)
+FULL_SIMP_TAC std_ss [bir_eval_bool_exp_BExp_BinExp_REWRS, bir_mk_bool_val_true_thm] >>
+FULL_SIMP_TAC std_ss [bir_mk_bool_val_ALT_DEF_TF,bir_dest_bool_val_TF] >>
+RW_TAC std_ss [] >>
+(* Convert  bir_eval_exp of postin bir_eval_bool_exp *)
+FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO, bir_mk_bool_val_true_thm]
+);
 
- REPEAT GEN_TAC >>
- SIMP_TAC std_ss [Once bir_eval_exp_def, Once bir_exp_subst1_REWRS] >>
- SIMP_TAC std_ss [Once bir_eval_exp_def] >>
- FULL_SIMP_TAC std_ss [],
+(* (e /\ Q) Assume e {Q} *)
+val bir_triple_exec_strmtB_assert_thm = prove(``
+! ex post.
+  (bir_is_well_typed_stmtB (BStmt_Assume ex)) ==>
+  (bir_is_bool_exp post) ==>
+bir_exec_stmtB_triple (BStmt_Assume ex) (BExp_BinExp BIExp_And ex post) post
+``,
+REWRITE_TAC [bir_exec_stmtB_triple_def, bir_pre_post_def] >>
+REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+FULL_SIMP_TAC std_ss [bir_exec_stmtB_def,bir_exec_stmt_assume_def] >>
+(* Convert all bir_eval_exp in bir_eval_bool_exp *)
+IMP_RES_TAC bir_is_bool_env_exp_INTRO >>
+FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO] >>
+REV_FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO] >>
+(* Infer that ex holds *)
+FULL_SIMP_TAC std_ss [bir_eval_bool_exp_BExp_BinExp_REWRS, bir_mk_bool_val_true_thm] >>
+FULL_SIMP_TAC std_ss [bir_mk_bool_val_ALT_DEF_TF,bir_dest_bool_val_TF] >>
+RW_TAC std_ss [] >>
+(* Convert  bir_eval_exp of postin bir_eval_bool_exp *)
+FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO, bir_mk_bool_val_true_thm]
+);
 
- REPEAT GEN_TAC >>
- SIMP_TAC std_ss [Once bir_eval_exp_def, Once bir_exp_subst1_REWRS] >>
- SIMP_TAC std_ss [Once bir_eval_exp_def] >>
- FULL_SIMP_TAC std_ss [],
 
- REPEAT GEN_TAC >>
- SIMP_TAC std_ss [Once bir_eval_exp_def, Once bir_exp_subst1_REWRS] >>
- SIMP_TAC std_ss [Once bir_eval_exp_def] >>
- FULL_SIMP_TAC std_ss []
-]);
+
 
 (* {{e/v}Q}Assign v:=e {Q} *)
 val bir_triple_exec_strmtB_assign_thm = prove(``
+! v ex post.
   (bir_is_well_typed_stmtB (BStmt_Assign v ex)) ==>
   (bir_is_bool_exp post) ==>
   bir_exec_stmtB_triple (BStmt_Assign v ex) 
    (bir_exp_subst1 v ex post) post
 ``,
-REWRITE_TAC [bir_exec_stmtB_triple_def] >>
-REPEAT DISCH_TAC >>
-REPEAT GEN_TAC >>
-FULL_SIMP_TAC std_ss [bir_is_well_typed_stmtB_def] >>
-subgoal `bir_is_bool_exp (bir_exp_subst1 v ex post)` >|
-[
- FULL_SIMP_TAC std_ss [bir_is_bool_exp_def,
-		      bir_exp_subst1_def] >>
- (let val thm = (SPEC ``(FEMPTY |+ (v:bir_var_t,ex:bir_exp_t)) ``
-		   bir_exp_subst_TYPE_EQ) 
-      val h = (fst o dest_imp o concl) thm in
-      ASSUME_TAC thm >>
-      subgoal `^h`
-  end) >|
- [
-  FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_DEF] >>
-  RW_TAC std_ss [] >>
-  cheat,
-  FULL_SIMP_TAC std_ss []
- ],
- ALL_TAC
-] >>
-
-FULL_SIMP_TAC std_ss [] >>
-REPEAT DISCH_TAC >>
+REWRITE_TAC [bir_exec_stmtB_triple_def, bir_pre_post_def] >>
+REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 FULL_SIMP_TAC std_ss [bir_exec_stmtB_def,
 		     bir_exec_stmt_assign_def,
 		     bir_env_write_def,
-		     bir_vars_of_stmtB_def] >>
-FULL_SIMP_TAC std_ss [bir_env_vars_are_initialised_INSERT] >>
-subgoal `bir_env_var_is_declared st.bst_environ v` >|
-[
- FULL_SIMP_TAC std_ss [bir_env_var_is_initialised_weaken],
- ALL_TAC
-] >>
-FULL_SIMP_TAC std_ss [GEN_ALL bir_env_var_is_declared_ALT_DEF] >>
+		     (GEN_ALL o SYM) bir_env_var_is_declared_ALT_DEF] >>
+(* Check that v is declared *)
+FULL_SIMP_TAC std_ss [bir_vars_of_stmtB_def, bir_env_vars_are_initialised_INSERT] >>
+REV_FULL_SIMP_TAC std_ss [bir_env_var_is_initialised_weaken] >>
 Cases_on `v` >>
-Cases_on `st.bst_environ` >>
-FULL_SIMP_TAC std_ss [bir_var_name_def,
-		     bir_env_update_def,
-		     bir_var_type_def] >>
-subgoal `type_of_bir_val (bir_eval_exp ex (BEnv f)) = SOME(b)` >|
-[
- FULL_SIMP_TAC std_ss [type_of_bir_exp_THM_with_init_vars],
- ALL_TAC
-] >>
+Cases_on `s.bst_environ` >>
+FULL_SIMP_TAC std_ss [bir_var_name_def, bir_env_update_def, bir_var_type_def] >>
+subgoal `type_of_bir_val (bir_eval_exp ex (BEnv f)) = SOME(b)` >-
+(
+ FULL_SIMP_TAC std_ss [bir_is_well_typed_stmtB_def, bir_var_type_def, type_of_bir_exp_THM_with_init_vars]
+) >>
 FULL_SIMP_TAC std_ss [LET_DEF] >>
 RW_TAC std_ss [bir_eval_exp_subst1_env] >>
 cheat
