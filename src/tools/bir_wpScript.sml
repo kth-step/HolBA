@@ -196,8 +196,11 @@ PAT_X_ASSUM ``!ex.p`` (fn thm =>
  ASSUME_TAC (Q.SPECL [`post`, `ex`] thm)) >>
 FULL_SIMP_TAC std_ss [bir_var_name_def, bir_var_type_def] >>
 RW_TAC std_ss [] >>
-(* have atheorem that say that vars of (bir_exp_subst1 (BVar s'' b) ex post) contains *)
+(* have atheorem that says that vars of (bir_exp_subst1 (BVar s'' b) ex post) contains *)
 (* vars of post minus s'' *)
+
+(* bir_exp_substitutionsTheory.bir_exp_subst1_USED_VARS *)
+
 cheat
 );
 
