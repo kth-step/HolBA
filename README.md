@@ -1,6 +1,6 @@
 # Software versions
 
-HOL4 commit: 7036abff76e0d08f5c936de6d9a2b9bbeaa7df03
+HOL4 commit: d0a474d1d1cba7c32acb6056a6288c44c2f1a75b
 PolyML (e.g. standard Ubuntu) 5.6
 
 
