@@ -438,16 +438,38 @@ bir_exec_block_jmp_triple p bl pre post l =
   )
 `);
 
+
+val SUBSET_BIGUNION_IMAGE_thm = prove(``
+  !x s f.
+    (x IN s) ==> ((f x) SUBSET (BIGUNION (IMAGE f s)))
+``,
+
+  SIMP_TAC (pure_ss) [pred_setTheory.IMAGE_DEF, pred_setTheory.BIGUNION, pred_setTheory.SUBSET_DEF] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  Q.EXISTS_TAC `f x` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  Q.EXISTS_TAC `x` >>
+
+  METIS_TAC []
+
+);
+
 val bir_vars_are_initialized_block_then_every_stmts_thm = prove(``
+ !st bl.
  (bir_env_vars_are_initialised st.bst_environ (bir_vars_of_block bl)) ==>
  (EVERY (λstmt.
     bir_env_vars_are_initialised st.bst_environ
        (bir_vars_of_stmtB stmt)) bl.bb_statements)
 ``,
   FULL_SIMP_TAC std_ss [bir_vars_of_block_def, listTheory.EVERY_MEM] >>
-  REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
-  cheat
+  REPEAT STRIP_TAC >>
+
+  METIS_TAC [bir_env_vars_are_initialised_UNION, SUBSET_BIGUNION_IMAGE_thm, bir_env_vars_are_initialised_SUBSET]
 );
+
+
 
 val bir_exec_block_jmp_triple_wp_thm = prove(``
   !p bl post l.
