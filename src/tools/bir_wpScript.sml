@@ -869,6 +869,7 @@ case bl.bb_last_statement of
 ))))
 `;
 
+(*
 prove(``
 (! l1 wp1. ((l1, wp1) IN wps) ==>
    (bir_exec_to_labels_triple p l ls (b) post)
@@ -876,6 +877,7 @@ prove(``
 ((bir_wp_of_block p l ls post wps) = wps') ==>
 a
 ``;
+*)
 
 
 val prog = ``
@@ -923,7 +925,7 @@ val post = ``    (BExp_BinPred BIExp_Equal
               (BExp_Const (Imm64 0w)))
 ``;
 
-EVAL ``bir_wp_of_block (^prog) (BL_Address (Imm64 0x400574w)) 
+val test_prog_post_thm = EVAL ``bir_wp_of_block (^prog) (BL_Address (Imm64 0x400574w)) 
   {(BL_Address (Imm64 0x400578w))} (Imm1 1w) 
   (FEMPTY |+ ((BL_Address (Imm64 0x400578w)), (^post)
   ))``;
