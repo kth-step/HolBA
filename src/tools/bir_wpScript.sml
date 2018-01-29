@@ -690,5 +690,244 @@ val bir_exec_block_cjmp_triple_wp_thm = prove(``
  FULL_SIMP_TAC std_ss [bir_eval_bool_exp_BExp_BinExp_REWRS, bir_eval_bool_exp_INTRO, bir_mk_bool_val_true_thm]
 );
 
+(* bir_exec_to_addr_label *)
+(* bir_exec_to_labels *)    
+
+val bir_exec_to_labels_triple_def = Define `
+bir_exec_to_labels_triple p l ls pre post =
+! s r.
+  (bir_env_vars_are_initialised s.bst_environ (bir_vars_of_program p) ) ==>
+  ((s.bst_pc.bpc_index = 0) ∧ (s.bst_pc.bpc_label = l)) ==>
+  (s.bst_status = BST_Running) ==>
+  (bir_is_bool_exp_env s.bst_environ pre) ==>
+  (bir_eval_exp pre (s.bst_environ) = bir_val_true) ==>
+  ((bir_exec_to_labels ls p s) = r) ==>
+  ? l1 c1 c2 s' .
+  ((r = BER_Ended l1 c1 c2 s') /\
+   (s'.bst_status = BST_Running) /\
+   (bir_is_bool_exp_env s'.bst_environ post) /\
+   (bir_eval_exp post (s'.bst_environ) = bir_val_true) /\
+   ((s'.bst_pc.bpc_index = 0) ∧ (s'.bst_pc.bpc_label ∈ ls))
+  )
+`;
+    
+val bir_exec_to_labels_triple_jmp = prove(``
+!p l bl l1 ls pre post post'.
+(bir_is_bool_exp post) ==>
+(SND(THE(bir_get_program_block_info_by_label p l)) = bl) ==>
+(bl.bb_last_statement = (BStmt_Jmp (BLE_Label l1))) ==>
+(((l1 IN ls) ==> (post' = post)) /\
+ ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls post' post))
+) ==>
+(bir_exec_to_labels_triple p l ls (bir_wp_exec_stmtsB bl.bb_statements post') post)
+``,
+ REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+ SIMP_TAC std_ss [bir_exec_to_labels_triple_def] >>
+ REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+ Q.ABBREV_TAC `s' = bir_exec_to_labels ls p s` >>
+ Q.ABBREV_TAC `cnd = l1 ∈ ls ∧ (post' = post) ∨
+      bir_exec_to_labels_triple p l1 ls pre post'` >>
+ subgoal `(bir_get_current_block p s.bst_pc = SOME bl)` >-
+ (cheat) >>
+ (* open the execution of exec_to_labels_labels *)
+ IMP_RES_TAC bir_exec_to_labels_block >>
+ PAT_X_ASSUM ``!ls.p`` (fn thm => FULL_SIMP_TAC std_ss [Q.SPEC `ls` thm]) >>
+ (* enable preconditions of WP-block *)
+ ASSUME_TAC (Q.SPECL [`p`, `bl`, `post'`, `l1`] bir_exec_block_jmp_triple_wp_thm) >>
+ subgoal `bir_is_well_typed_block bl` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ subgoal `EVERY bir_isnot_declare_stmt bl.bb_statements` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ subgoal `bir_is_bool_exp post'` >- 
+ (
+  Cases_on `l1 IN ls` >- (
+    FULL_SIMP_TAC std_ss [Abbr `cnd`]
+  ) >>
+  cheat
+ ) >> FULL_SIMP_TAC std_ss [] >>
+ REV_FULL_SIMP_TAC std_ss [] >>
+ subgoal `MEM l1 (bir_labels_of_program p)` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ Q.ABBREV_TAC `wp = (bir_wp_exec_stmtsB bl.bb_statements post')` >>
+ FULL_SIMP_TAC std_ss [bir_exec_block_jmp_triple_def] >>
+ Q.ABBREV_TAC `st1 = bir_exec_block p bl s` >>
+ pairLib.PairCases_on `st1` >>
+ PAT_X_ASSUM ``!s.p`` (fn thm =>
+   ASSUME_TAC (Q.SPECL [`s`, `st10`, `st11`, `st12`] thm)
+ ) >>
+ REV_FULL_SIMP_TAC std_ss [] >>
+ subgoal `bir_env_vars_are_initialised s.bst_environ
+         (bir_vars_of_block bl)` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ (* now we know that after executing the internal block we get post' *)
+ Cases_on `l1 IN  ls` >-
+ (
+   FULL_SIMP_TAC std_ss [Abbr `cnd`, LET_DEF, bir_state_COUNT_PC_def] >>
+   subgoal `0<st11` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+   FULL_SIMP_TAC (srw_ss()) [bir_block_pc_def, Abbr `s'`] >>
+   REV_FULL_SIMP_TAC std_ss [] 
+ ) >>
+ FULL_SIMP_TAC std_ss [Abbr `cnd`, LET_DEF, bir_state_COUNT_PC_def, bir_block_pc_def] >>
+ FULL_SIMP_TAC (srw_ss()) [bir_exec_to_labels_triple_def] >>
+ PAT_X_ASSUM ``!s''.p`` (fn thm=>ASSUME_TAC (Q.SPEC `st12` thm)) >>
+ REV_FULL_SIMP_TAC (srw_ss()) [] >>
+ subgoal `bir_env_vars_are_initialised st12.bst_environ
+         (bir_vars_of_program p)` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ FULL_SIMP_TAC (srw_ss()) [Abbr `s'`]
+);
+
+
+
+
+val bir_exec_to_labels_triple_cjmp = prove(``
+!p l bl e l1 l2 ls pre post post1' post2'.
+(bir_is_bool_exp post) ==>
+(SND(THE(bir_get_program_block_info_by_label p l)) = bl) ==>
+(bl.bb_last_statement = (BStmt_CJmp e (BLE_Label l1) (BLE_Label l2))) ==>
+(((l1 IN ls) ==> (post1' = post)) /\
+ ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls post1' post))
+) ==>
+(((l2 IN ls) ==> (post2' = post)) /\
+ ((~(l2 IN ls)) ==> (bir_exec_to_labels_triple p l2 ls post2' post))
+) ==>
+(bir_exec_to_labels_triple p l ls (bir_wp_exec_stmtsB bl.bb_statements 
+(
+    (BExp_BinExp BIExp_And 
+		  (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not e) post1')
+		  (BExp_BinExp BIExp_Or e post2')
+		 )
+)
+) post)
+``,
+
+ REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+ SIMP_TAC std_ss [bir_exec_to_labels_triple_def] >>
+ REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+ Q.ABBREV_TAC `s' = bir_exec_to_labels ls p s` >>
+ subgoal `(bir_get_current_block p s.bst_pc = SOME bl)` >-
+ (cheat) >>
+ (* open the execution of exec_to_labels_labels *)
+ IMP_RES_TAC bir_exec_to_labels_block >>
+ PAT_X_ASSUM ``!ls.p`` (fn thm => FULL_SIMP_TAC std_ss [Q.SPEC `ls` thm]) >>
+ (* enable preconditions of WP-block *)
+ ASSUME_TAC (Q.SPECL [`p`, `bl`, `e`, `post1'`, `l1`, `post2'`, `l2`] bir_exec_block_cjmp_triple_wp_thm) >>
+ subgoal `bir_is_well_typed_block bl` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ subgoal `EVERY bir_isnot_declare_stmt bl.bb_statements` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ subgoal `bir_is_bool_exp post1'` >- 
+ (
+  Cases_on `l1 IN ls` >- (
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  cheat
+ ) >> FULL_SIMP_TAC std_ss [] >>
+ subgoal `bir_is_bool_exp post2'` >- 
+ (
+  Cases_on `l2 IN ls` >- (
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  cheat
+ ) >> FULL_SIMP_TAC std_ss [] >>
+
+ REV_FULL_SIMP_TAC std_ss [] >>
+ subgoal `MEM l1 (bir_labels_of_program p)` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ subgoal `MEM l2 (bir_labels_of_program p)` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ Q.ABBREV_TAC `wp = (bir_wp_exec_stmtsB bl.bb_statements
+            (BExp_BinExp BIExp_And
+               (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not e) post1')
+               (BExp_BinExp BIExp_Or e post2')))` >>
+ FULL_SIMP_TAC std_ss [bir_exec_block_cjmp_triple_def] >>
+ Q.ABBREV_TAC `st1 = bir_exec_block p bl s` >>
+ pairLib.PairCases_on `st1` >>
+ PAT_X_ASSUM ``!s.p`` (fn thm =>
+   ASSUME_TAC (Q.SPECL [`s`, `st10`, `st11`, `st12`] thm)
+ ) >>
+ REV_FULL_SIMP_TAC std_ss [] >>
+ subgoal `bir_env_vars_are_initialised s.bst_environ
+         (bir_vars_of_block bl)` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ (* now we know that after executing the internal block we get post' *)
+ (* Same thing of above, cheat for now *)
+ cheat
+);
+
+
+val bir_wp_of_block_def = Define `
+bir_wp_of_block p l ls post wps = 
+case FLOOKUP wps l of
+  SOME wp => wps
+| NONE    => 
+let bl = SND(THE(bir_get_program_block_info_by_label p l)) in
+case bl.bb_last_statement of
+  BStmt_Jmp (BLE_Label l1) => (
+  case FLOOKUP wps l1 of
+   SOME wp => (wps |+ (l, (bir_wp_exec_stmtsB bl.bb_statements wp)))
+)
+| BStmt_CJmp e (BLE_Label l1) (BLE_Label l2) => ( 
+  case FLOOKUP wps l1 of
+  SOME wp1 => case FLOOKUP wps l2 of
+  SOME wp2 => (wps |+ (l,
+(bir_wp_exec_stmtsB bl.bb_statements 
+    (BExp_BinExp BIExp_And
+		  (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not e) wp1)
+		  (BExp_BinExp BIExp_Or e wp2)
+		 )
+))))
+`;
+
+prove(``
+(! l1 wp1. ((l1, wp1) IN wps) ==>
+   (bir_exec_to_labels_triple p l ls (b) post)
+) ==>
+((bir_wp_of_block p l ls post wps) = wps') ==>
+a
+``;
+
+
+val prog = ``
+(BirProgram
+              [<|bb_label :=
+                   BL_Address_HC (Imm64 0x400570w)
+                     "D101C3FF (sub sp, sp, #0x70)";
+                 bb_statements :=
+                   [BStmt_Assign (BVar "SP_EL0" (BType_Imm Bit64))
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+                         (BExp_Const (Imm64 112w)))];
+                 bb_last_statement :=
+                   BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x400574w)))|>;
+               <|bb_label :=
+                   BL_Address_HC (Imm64 0x400574w)
+                     "F9000FE0 (str x0, [sp,#24])";
+                 bb_statements :=
+                   [BStmt_Assert
+                      (BExp_Aligned Bit64 3
+                         (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64))));
+                    BStmt_Assert
+                      (BExp_unchanged_mem_interval_distinct Bit64 0
+                         16777216
+                         (BExp_BinExp BIExp_Plus
+                            (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+                            (BExp_Const (Imm64 24w))) 8);
+                    BStmt_Assign (BVar "MEM" (BType_Mem Bit64 Bit8))
+                      (BExp_Store
+                         (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                         (BExp_BinExp BIExp_Plus
+                            (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+                            (BExp_Const (Imm64 24w))) BEnd_LittleEndian
+                         (BExp_Den (BVar "R0" (BType_Imm Bit64))))];
+                 bb_last_statement :=
+                   BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x400578w)))|>
+])``;
+
+val post = ``    (BExp_BinPred BIExp_Equal
+	      (* (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64))) *)
+		  (BExp_Load
+                            (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                            (BExp_Const (Imm64 60w)) BEnd_LittleEndian
+                            Bit64)
+              (BExp_Const (Imm64 0w)))
+``;
+
+EVAL ``bir_wp_of_block (^prog) (BL_Address (Imm64 0x400574w)) 
+  {(BL_Address (Imm64 0x400578w))} (Imm1 1w) 
+  (FEMPTY |+ ((BL_Address (Imm64 0x400578w)), (^post)
+  ))``;
+
+
 
 val _ = export_theory();
