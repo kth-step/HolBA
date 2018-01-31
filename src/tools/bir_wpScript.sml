@@ -786,6 +786,7 @@ val bir_exec_to_labels_triple_jmp = prove(``
 val bir_exec_to_labels_triple_cjmp = prove(``
 !p l bl e l1 l2 ls pre post post1' post2'.
 (bir_is_bool_exp post) ==>
+(MEM l (bir_labels_of_program p)) ==>
 (SND(THE(bir_get_program_block_info_by_label p l)) = bl) ==>
 (bl.bb_last_statement = (BStmt_CJmp e (BLE_Label l1) (BLE_Label l2))) ==>
 (((l1 IN ls) ==> (post1' = post)) /\
@@ -809,7 +810,10 @@ val bir_exec_to_labels_triple_cjmp = prove(``
  REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
  Q.ABBREV_TAC `s' = bir_exec_to_labels ls p s` >>
  subgoal `(bir_get_current_block p s.bst_pc = SOME bl)` >-
- (cheat) >>
+  (
+    FULL_SIMP_TAC std_ss [bir_get_current_block_def, bir_get_program_block_info_by_label_MEM] >>
+    REV_FULL_SIMP_TAC std_ss []
+  ) >>
  (* open the execution of exec_to_labels_labels *)
  IMP_RES_TAC bir_exec_to_labels_block >>
  PAT_X_ASSUM ``!ls.p`` (fn thm => FULL_SIMP_TAC std_ss [Q.SPEC `ls` thm]) >>
