@@ -118,9 +118,9 @@ bir_exec_stmtB_triple stmt pre post =
   (bir_pre_post s pre s' post)
 `;
 
-(* TODO: typo in all the theorem names strmtB *)
+
 (* (e /\ Q) Assert e {Q} *)
-val bir_triple_exec_strmtB_assert_thm = prove(``
+val bir_triple_exec_stmtB_assert_thm = prove(``
 ! ex post.
   (bir_is_well_typed_stmtB (BStmt_Assert ex)) ==>
   (bir_is_bool_exp post) ==>
@@ -142,7 +142,7 @@ FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO, bir_mk_bool_val_true_thm]
 );
 
 (* (e /\ Q) Assume e {Q} *)
-val bir_triple_exec_strmtB_assume_thm = prove(``
+val bir_triple_exec_stmtB_assume_thm = prove(``
 ! ex post.
   (bir_is_well_typed_stmtB (BStmt_Assume ex)) ==>
   (bir_is_bool_exp post) ==>
@@ -167,7 +167,7 @@ FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO, bir_mk_bool_val_true_thm]
 
 
 (* {{e/v}Q}Assign v:=e {Q} *)
-val bir_triple_exec_strmtB_assign_thm = prove(``
+val bir_triple_exec_stmtB_assign_thm = prove(``
 ! v ex post.
   (bir_is_well_typed_stmtB (BStmt_Assign v ex)) ==>
   (bir_is_bool_exp post) ==>
@@ -271,7 +271,7 @@ val bir_env_vars_are_initialised_observe_INSERT = prove(``
 );
 
 (* {Q} Observe ex {Q} *)
-val bir_triple_exec_strmtB_observe_thm = prove(``
+val bir_triple_exec_stmtB_observe_thm = prove(``
 ! ec el obf post.
   (bir_is_well_typed_stmtB (BStmt_Observe ec el obf)) ==>
   (bir_is_bool_exp post) ==>
@@ -315,10 +315,10 @@ bir_exec_stmtB_triple stm (bir_wp_exec_stmtB stm post) post
   REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
   Cases_on `stm` >>
   FULL_SIMP_TAC std_ss [bir_wp_exec_stmtB_def,
-			bir_triple_exec_strmtB_assign_thm,
-			bir_triple_exec_strmtB_assert_thm,
-			bir_triple_exec_strmtB_assume_thm,
-			bir_triple_exec_strmtB_observe_thm,
+			bir_triple_exec_stmtB_assign_thm,
+			bir_triple_exec_stmtB_assert_thm,
+			bir_triple_exec_stmtB_assume_thm,
+			bir_triple_exec_stmtB_observe_thm,
 			bir_isnot_declare_stmt_def
 		       ] >>
   (RW_TAC std_ss [])
@@ -335,10 +335,10 @@ val bir_wp_exec_stmtB_bool_thm = prove(
   REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
   Cases_on `stm` >> (
     FULL_SIMP_TAC std_ss [bir_wp_exec_stmtB_def,
-			  bir_triple_exec_strmtB_assign_thm,
-			  bir_triple_exec_strmtB_assert_thm,
-			  bir_triple_exec_strmtB_assume_thm,
-			  bir_triple_exec_strmtB_observe_thm,
+			  bir_triple_exec_stmtB_assign_thm,
+			  bir_triple_exec_stmtB_assert_thm,
+			  bir_triple_exec_stmtB_assume_thm,
+			  bir_triple_exec_stmtB_observe_thm,
 			  bir_isnot_declare_stmt_def,
 			  bir_is_well_typed_stmtB_def,
 			  bir_is_bool_exp_GSYM,
