@@ -118,7 +118,7 @@ bir_exec_stmtB_triple stmt pre post =
   (bir_pre_post s pre s' post)
 `;
 
-
+(* TODO: typo in all the theorem names strmtB *)
 (* (e /\ Q) Assert e {Q} *)
 val bir_triple_exec_strmtB_assert_thm = prove(``
 ! ex post.
@@ -297,8 +297,7 @@ val bir_wp_exec_stmtB_def = Define `
 (bir_wp_exec_stmtB (BStmt_Assert ex) post = (BExp_BinExp BIExp_And ex post)) /\
 (bir_wp_exec_stmtB (BStmt_Assume ex) post = (BExp_BinExp BIExp_And ex post)) /\
 (bir_wp_exec_stmtB (BStmt_Assign v ex) post = (bir_exp_subst1 v ex post)) /\
-(bir_wp_exec_stmtB (BStmt_Observe ec el obf) post = post) /\
-(bir_wp_exec_stmtB (BStmt_Declare b) post = post)
+(bir_wp_exec_stmtB (BStmt_Observe ec el obf) post = post)
 `;
 
 val bir_isnot_declare_stmt_def = Define `
@@ -334,19 +333,20 @@ val bir_wp_exec_stmtB_bool_thm = prove(
   (bir_is_bool_exp (bir_wp_exec_stmtB stm post))
 ``,
   REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
-  Cases_on `stm` >>
-  FULL_SIMP_TAC std_ss [bir_wp_exec_stmtB_def,
-			bir_triple_exec_strmtB_assign_thm,
-			bir_triple_exec_strmtB_assert_thm,
-			bir_triple_exec_strmtB_assume_thm,
-			bir_triple_exec_strmtB_observe_thm,
-			bir_isnot_declare_stmt_def,
-			bir_is_well_typed_stmtB_def,
-			bir_is_bool_exp_GSYM,
-			bir_is_bool_exp_REWRS
-		       ] >>
-  (RW_TAC std_ss []) >>
-  (FULL_SIMP_TAC std_ss [bir_is_bool_exp_def, bir_exp_subst1_TYPE_EQ])
+  Cases_on `stm` >> (
+    FULL_SIMP_TAC std_ss [bir_wp_exec_stmtB_def,
+			  bir_triple_exec_strmtB_assign_thm,
+			  bir_triple_exec_strmtB_assert_thm,
+			  bir_triple_exec_strmtB_assume_thm,
+			  bir_triple_exec_strmtB_observe_thm,
+			  bir_isnot_declare_stmt_def,
+			  bir_is_well_typed_stmtB_def,
+			  bir_is_bool_exp_GSYM,
+			  bir_is_bool_exp_REWRS
+ 			 ] >>
+    (RW_TAC std_ss []) >>
+    (FULL_SIMP_TAC std_ss [bir_is_bool_exp_def, bir_exp_subst1_TYPE_EQ])
+  )
 );
 
 
@@ -712,149 +712,10 @@ bir_exec_to_labels_triple p l ls pre post =
   )
 `;
 
-
-
-val type_of_bir_exp_bir_exp_subst1_thm = prove(``
-  ! ex v ve.
-  (type_of_bir_exp ve = SOME (bir_var_type v)) ==>
-  (type_of_bir_exp (bir_exp_subst1 v ve ex) = type_of_bir_exp ex)
-``,
-
-  REPEAT STRIP_TAC >>
-
-  Induct_on `ex` >|
-  [
-    REWRITE_TAC [bir_exp_subst1_def, bir_exp_subst_def]
-  ,
-    REWRITE_TAC [bir_exp_subst1_def, bir_exp_subst_def] >>
-    REWRITE_TAC [bir_exp_subst_var_def] >>
-    
-    GEN_TAC >>
-    Cases_on `v = b` >> (
-      ASM_SIMP_TAC std_ss [finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY, type_of_bir_exp_def]
-    )
-  ,
-    ALL_TAC
-  ,
-    ALL_TAC
-  ,
-    ALL_TAC
-  ,
-    ALL_TAC
-  ,
-    ALL_TAC
-  ,
-    ALL_TAC
-  ,
-    ALL_TAC
-  ] >> (
-    REWRITE_TAC [bir_exp_subst1_def, bir_exp_subst_def, finite_mapTheory.FLOOKUP_UPDATE] >>
-    REWRITE_TAC [GSYM bir_exp_subst1_def] >>
-    (* for the first case --->  Q.ABBREV_TAC `ex0 = (bir_exp_subst1 v ve ex)` >> *)
-    ASM_REWRITE_TAC [bir_typing_expTheory.type_of_bir_exp_def]
-  )
-);
-
-val bir_exp_subst1_is_bool_exp_thm = prove(``
-  ! exp v ve.
-  (bir_is_bool_exp exp) ==>
-  (type_of_bir_exp ve = SOME (bir_var_type v)) ==>
-  (bir_is_bool_exp (bir_exp_subst1 v ve exp))
-``,
-
-  METIS_TAC [bir_is_bool_exp_def, type_of_bir_exp_bir_exp_subst1_thm]
-);
-
-val bir_wp_exec_stmtB_is_bool_exp_thm = prove(``
-  ! stmt post.
-  (bir_is_bool_exp post) ==>
-  (bir_is_well_typed_stmtB stmt) ==>
-  (bir_is_bool_exp (bir_wp_exec_stmtB stmt post))
-``,
-
-  REPEAT STRIP_TAC >>
-
-  Induct_on `stmt` >|
-  [
-    ASM_REWRITE_TAC [bir_wp_exec_stmtB_def]
-  ,
-    METIS_TAC [bir_wp_exec_stmtB_def, bir_is_well_typed_stmtB_def, bir_exp_subst1_is_bool_exp_thm]
-  ,
-    ASM_REWRITE_TAC [bir_wp_exec_stmtB_def, bir_is_well_typed_stmtB_def, bir_is_bool_exp_REWRS] >>
-    REWRITE_TAC [bir_is_bool_exp_def, BType_Bool_def]
-  ,
-    ASM_REWRITE_TAC [bir_wp_exec_stmtB_def, bir_is_well_typed_stmtB_def, bir_is_bool_exp_REWRS] >>
-    REWRITE_TAC [bir_is_bool_exp_def, BType_Bool_def]
-  ,
-    ASM_REWRITE_TAC [bir_wp_exec_stmtB_def]
-  ]
-);
-
-
-
-(* -------------------- *)
 (*
-
-    REPEAT STRIP_TAC >>
-
-    ASM_REWRITE_TAC [bir_wp_exec_stmtB_def, bir_is_well_typed_stmtB_def, bir_is_bool_exp_REWRS, bir_is_bool_exp_def, BType_Bool_def]
-
-    ASM_REWRITE_TAC [bir_wp_exec_stmtB_def, bir_eval_bool_exp_BExp_BinExp_REWRS, bir_is_well_typed_stmtB_def, bir_is_bool_exp_def, bir_is_bool_exp_REWRS, GSYM bir_is_bool_exp_def]
-
-, bir_eval_bool_exp_BExp_BinExp_REWRS
-
-
- >> cheat *)
-(* >>
-, bir_exp_subst1_is_bool_exp_thm]
-
+bir_wp_exec_stmtB_bool_thm
+bir_wp_exec_stmtsB_bool_thm
 *)
-(*    ASM_REWRITE_TAC [bir_wp_exec_stmtB_def] >> cheat *)
-(*  METIS_TAC [bir_wp_exec_stmtsB_def, bir_wp_exec_stmtB_is_bool_exp_thm] *)
-
-(* -------------------- *)
-
-
-val bir_wp_exec_stmtsB_is_bool_exp_thm = prove(``
-  ! stmts post.
-  (bir_is_bool_exp post) ==>
-  (EVERY bir_is_well_typed_stmtB stmts) ==>
-  (bir_is_bool_exp (bir_wp_exec_stmtsB stmts post))
-``,
-
-  REPEAT STRIP_TAC >>
-
-  Induct_on `stmts` >- (
-    ASM_REWRITE_TAC [bir_wp_exec_stmtsB_def]
-  ) >>
-
-  REPEAT STRIP_TAC >>
-  FULL_SIMP_TAC list_ss [] >>
-  METIS_TAC [bir_wp_exec_stmtsB_def, bir_wp_exec_stmtB_is_bool_exp_thm]
-);
-
-
-val bir_exec_to_labels_triple_is_bool_exp_thm = prove(``
-  ! p l ls pre post.
-  (bir_is_bool_exp post) ==>
-  (bir_exec_to_labels_triple p l ls pre post) ==>
-  (bir_is_bool_exp pre)
-``,
-
-  REPEAT STRIP_TAC >>
-
-(*
-   being a triple should include that pre and post are bool!!!!!
-*)
-
-(*
-  FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_def] >>
-
-bir_wp_exec_stmtsB_is_bool_exp_thm
-bir_wp_exec_stmtsB_def
-*)
-  cheat
-);
     
 val bir_exec_to_labels_triple_jmp = prove(``
 !p l bl l1 ls post post'.
@@ -863,7 +724,7 @@ val bir_exec_to_labels_triple_jmp = prove(``
 (SND(THE(bir_get_program_block_info_by_label p l)) = bl) ==>
 (bl.bb_last_statement = (BStmt_Jmp (BLE_Label l1))) ==>
 (((l1 IN ls) ==> (post' = post)) /\
- ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls post' post))
+ ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls post' post) /\ (bir_is_bool_exp post'))
 ) ==>
 (bir_exec_to_labels_triple p l ls (bir_wp_exec_stmtsB bl.bb_statements post') post)
 ``,
@@ -886,11 +747,9 @@ val bir_exec_to_labels_triple_jmp = prove(``
  subgoal `EVERY bir_isnot_declare_stmt bl.bb_statements` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
  subgoal `bir_is_bool_exp post'` >- 
  (
-  Cases_on `l1 IN ls` >- (
+  Cases_on `l1 IN ls` >> (
     FULL_SIMP_TAC std_ss [Abbr `cnd`]
-  ) >>
-
-  METIS_TAC [bir_exec_to_labels_triple_is_bool_exp_thm]
+  )
  ) >> FULL_SIMP_TAC std_ss [] >>
  REV_FULL_SIMP_TAC std_ss [] >>
  subgoal `MEM l1 (bir_labels_of_program p)` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
