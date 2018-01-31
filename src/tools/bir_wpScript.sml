@@ -716,6 +716,17 @@ bir_exec_to_labels_triple p l ls pre post =
 bir_wp_exec_stmtB_bool_thm
 bir_wp_exec_stmtsB_bool_thm
 *)
+
+val bir_env_vars_are_initialised_prog_block_thm = prove(``
+  !p l bl env.
+    (bir_env_vars_are_initialised env (bir_vars_of_program p)) ==>
+    (MEM l (bir_labels_of_program p)) ==>
+    (SND (THE (bir_get_program_block_info_by_label p l)) = bl) ==>
+    (bir_env_vars_are_initialised env (bir_vars_of_block bl))
+``,
+
+  cheat
+);
     
 val bir_exec_to_labels_triple_jmp = prove(``
 !p l bl l1 ls post post'.
@@ -743,8 +754,12 @@ val bir_exec_to_labels_triple_jmp = prove(``
  PAT_X_ASSUM ``!ls.p`` (fn thm => FULL_SIMP_TAC std_ss [Q.SPEC `ls` thm]) >>
  (* enable preconditions of WP-block *)
  ASSUME_TAC (Q.SPECL [`p`, `bl`, `post'`, `l1`] bir_exec_block_jmp_triple_wp_thm) >>
- subgoal `bir_is_well_typed_block bl` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
- subgoal `EVERY bir_isnot_declare_stmt bl.bb_statements` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ subgoal `bir_is_well_typed_block bl` >- (
+    cheat (* this should be an assumtion in the theorem *)
+  ) >> FULL_SIMP_TAC std_ss [] >>
+ subgoal `EVERY bir_isnot_declare_stmt bl.bb_statements` >- (
+    cheat (* this should be an assumtion in the theorem *)
+  ) >> FULL_SIMP_TAC std_ss [] >>
  subgoal `bir_is_bool_exp post'` >- 
  (
   Cases_on `l1 IN ls` >> (
@@ -752,7 +767,9 @@ val bir_exec_to_labels_triple_jmp = prove(``
   )
  ) >> FULL_SIMP_TAC std_ss [] >>
  REV_FULL_SIMP_TAC std_ss [] >>
- subgoal `MEM l1 (bir_labels_of_program p)` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ subgoal `MEM l1 (bir_labels_of_program p)` >- (
+    cheat (* this should be an assumtion in the theorem *)
+  ) >> FULL_SIMP_TAC std_ss [] >>
  Q.ABBREV_TAC `wp = (bir_wp_exec_stmtsB bl.bb_statements post')` >>
  FULL_SIMP_TAC std_ss [bir_exec_block_jmp_triple_def] >>
  Q.ABBREV_TAC `st1 = bir_exec_block p bl s` >>
@@ -762,12 +779,24 @@ val bir_exec_to_labels_triple_jmp = prove(``
  ) >>
  REV_FULL_SIMP_TAC std_ss [] >>
  subgoal `bir_env_vars_are_initialised s.bst_environ
-         (bir_vars_of_block bl)` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+         (bir_vars_of_block bl)` >- (
+    METIS_TAC [bir_env_vars_are_initialised_prog_block_thm]
+  ) >> FULL_SIMP_TAC std_ss [] >>
  (* now we know that after executing the internal block we get post' *)
  Cases_on `l1 IN  ls` >-
  (
    FULL_SIMP_TAC std_ss [Abbr `cnd`, LET_DEF, bir_state_COUNT_PC_def] >>
-   subgoal `0<st11` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+   subgoal `0<st11` >- (
+
+(*
+bir_exec_block_def
+bir_exec_stmtsB_def
+*)
+(* have to show that none of the stmt in bl.bb_statements stop the running *)
+(* or indirectly: st12.bst_status = BST_Running, then we have to have at least one step! *)
+
+      cheat
+    ) >> FULL_SIMP_TAC std_ss [] >>
    FULL_SIMP_TAC (srw_ss()) [bir_block_pc_def, Abbr `s'`] >>
    REV_FULL_SIMP_TAC std_ss [] 
  ) >>
@@ -776,7 +805,12 @@ val bir_exec_to_labels_triple_jmp = prove(``
  PAT_X_ASSUM ``!s''.p`` (fn thm=>ASSUME_TAC (Q.SPEC `st12` thm)) >>
  REV_FULL_SIMP_TAC (srw_ss()) [] >>
  subgoal `bir_env_vars_are_initialised st12.bst_environ
-         (bir_vars_of_program p)` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+         (bir_vars_of_program p)` >- (
+
+    (* use initialization monotonicity *)
+
+    cheat
+  ) >> FULL_SIMP_TAC std_ss [] >>
  FULL_SIMP_TAC (srw_ss()) [Abbr `s'`]
 );
 
@@ -819,8 +853,19 @@ val bir_exec_to_labels_triple_cjmp = prove(``
  PAT_X_ASSUM ``!ls.p`` (fn thm => FULL_SIMP_TAC std_ss [Q.SPEC `ls` thm]) >>
  (* enable preconditions of WP-block *)
  ASSUME_TAC (Q.SPECL [`p`, `bl`, `e`, `post1'`, `l1`, `post2'`, `l2`] bir_exec_block_cjmp_triple_wp_thm) >>
- subgoal `bir_is_well_typed_block bl` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
- subgoal `EVERY bir_isnot_declare_stmt bl.bb_statements` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
+ subgoal `bir_is_well_typed_block bl` >- (
+
+
+
+cheat
+
+
+  ) >> FULL_SIMP_TAC std_ss [] >>
+ subgoal `EVERY bir_isnot_declare_stmt bl.bb_statements` >- (
+
+
+cheat
+  ) >> FULL_SIMP_TAC std_ss [] >>
  subgoal `bir_is_bool_exp post1'` >- 
  (
   Cases_on `l1 IN ls` >> (
