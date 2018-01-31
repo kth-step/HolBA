@@ -790,10 +790,10 @@ val bir_exec_to_labels_triple_cjmp = prove(``
 (SND(THE(bir_get_program_block_info_by_label p l)) = bl) ==>
 (bl.bb_last_statement = (BStmt_CJmp e (BLE_Label l1) (BLE_Label l2))) ==>
 (((l1 IN ls) ==> (post1' = post)) /\
- ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls post1' post))
+ ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls post1' post) /\ (bir_is_bool_exp post1'))
 ) ==>
 (((l2 IN ls) ==> (post2' = post)) /\
- ((~(l2 IN ls)) ==> (bir_exec_to_labels_triple p l2 ls post2' post))
+ ((~(l2 IN ls)) ==> (bir_exec_to_labels_triple p l2 ls post2' post) /\ (bir_is_bool_exp post2'))
 ) ==>
 (bir_exec_to_labels_triple p l ls (bir_wp_exec_stmtsB bl.bb_statements 
 (
@@ -823,17 +823,15 @@ val bir_exec_to_labels_triple_cjmp = prove(``
  subgoal `EVERY bir_isnot_declare_stmt bl.bb_statements` >- (cheat) >> FULL_SIMP_TAC std_ss [] >>
  subgoal `bir_is_bool_exp post1'` >- 
  (
-  Cases_on `l1 IN ls` >- (
+  Cases_on `l1 IN ls` >> (
     FULL_SIMP_TAC std_ss []
-  ) >>
-  cheat
+  )
  ) >> FULL_SIMP_TAC std_ss [] >>
  subgoal `bir_is_bool_exp post2'` >- 
  (
-  Cases_on `l2 IN ls` >- (
+  Cases_on `l2 IN ls` >> (
     FULL_SIMP_TAC std_ss []
-  ) >>
-  cheat
+  )
  ) >> FULL_SIMP_TAC std_ss [] >>
 
  REV_FULL_SIMP_TAC std_ss [] >>
