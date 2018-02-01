@@ -120,7 +120,8 @@ bir_exec_stmtB_triple stmt pre post =
 
 
 (* (e /\ Q) Assert e {Q} *)
-val bir_triple_exec_stmtB_assert_thm = prove(``
+val bir_triple_exec_stmtB_assert_thm = store_thm("bir_triple_exec_stmtB_assert_thm",
+``
 ! ex post.
   (bir_is_well_typed_stmtB (BStmt_Assert ex)) ==>
   (bir_is_bool_exp post) ==>
@@ -142,7 +143,8 @@ FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO, bir_mk_bool_val_true_thm]
 );
 
 (* (e /\ Q) Assume e {Q} *)
-val bir_triple_exec_stmtB_assume_thm = prove(``
+val bir_triple_exec_stmtB_assume_thm = store_thm("bir_triple_exec_stmtB_assume_thm",
+``
 ! ex post.
   (bir_is_well_typed_stmtB (BStmt_Assume ex)) ==>
   (bir_is_bool_exp post) ==>
@@ -167,7 +169,8 @@ FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO, bir_mk_bool_val_true_thm]
 
 
 (* {{e/v}Q}Assign v:=e {Q} *)
-val bir_triple_exec_stmtB_assign_thm = prove(``
+val bir_triple_exec_stmtB_assign_thm = store_thm("bir_triple_exec_stmtB_assign_thm",
+``
 ! v ex post.
   (bir_is_well_typed_stmtB (BStmt_Assign v ex)) ==>
   (bir_is_bool_exp post) ==>
@@ -271,7 +274,8 @@ val bir_env_vars_are_initialised_observe_INSERT = prove(``
 );
 
 (* {Q} Observe ex {Q} *)
-val bir_triple_exec_stmtB_observe_thm = prove(``
+val bir_triple_exec_stmtB_observe_thm = store_thm("bir_triple_exec_stmtB_observe_thm",
+``
 ! ec el obf post.
   (bir_is_well_typed_stmtB (BStmt_Observe ec el obf)) ==>
   (bir_is_bool_exp post) ==>
@@ -290,7 +294,9 @@ FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO, bir_mk_bool_val_inv] >>
 Cases_on `bir_eval_bool_exp ec s.bst_environ` >>
 (FULL_SIMP_TAC std_ss [] >>
  RW_TAC std_ss [])
-);
+					     );
+
+
 
 
 val bir_wp_exec_stmtB_def = Define `
@@ -304,7 +310,7 @@ val bir_isnot_declare_stmt_def = Define `
 bir_isnot_declare_stmt stm = (~(?v . stm = (BStmt_Declare v)))
 `;
 
-val bir_wp_exec_stmtB_sound_thm = prove(
+val bir_wp_exec_stmtB_sound_thm = store_thm("bir_wp_exec_stmtB_sound_thm",
 ``
 !stm post.
   (bir_isnot_declare_stmt stm) ==>
@@ -324,7 +330,7 @@ bir_exec_stmtB_triple stm (bir_wp_exec_stmtB stm post) post
   (RW_TAC std_ss [])
 );
 
-val bir_wp_exec_stmtB_bool_thm = prove(
+val bir_wp_exec_stmtB_bool_thm = store_thm("bir_wp_exec_stmtB_bool_thm",
 ``
 !stm post.
   (bir_isnot_declare_stmt stm) ==>
@@ -366,7 +372,7 @@ val bir_wp_exec_stmtsB_def = Define `
  bir_wp_exec_stmtB stmt (bir_wp_exec_stmtsB stmts post)
 )`;
 
-val bir_wp_exec_stmtsB_bool_thm = prove(``
+val bir_wp_exec_stmtsB_bool_thm = store_thm("bir_wp_exec_stmtsB_bool_thm",``
   !stmts post.
   (EVERY bir_is_well_typed_stmtB stmts) ==>
   (EVERY bir_isnot_declare_stmt stmts) ==>
@@ -435,7 +441,7 @@ REV_FULL_SIMP_TAC std_ss []
 (*  ]); *)
   
 
-val bir_wp_exec_stmtsB_sound_thm = prove(``
+val bir_wp_exec_stmtsB_sound_thm = store_thm("bir_wp_exec_stmtsB_sound_thm",``
   !stmts post.
   (EVERY bir_is_well_typed_stmtB stmts) ==>
   (EVERY bir_isnot_declare_stmt stmts) ==>
@@ -529,7 +535,7 @@ val bir_vars_are_initialized_block_then_every_stmts_thm = prove(``
 
 
 
-val bir_exec_block_jmp_triple_wp_thm = prove(``
+val bir_exec_block_jmp_triple_wp_thm = store_thm("bir_exec_block_jmp_triple_wp_thm",``
   !p bl post l.
   (bir_is_well_typed_block bl) ==>
   (EVERY bir_isnot_declare_stmt bl.bb_statements) ==>
@@ -605,7 +611,7 @@ bir_exec_block_cjmp_triple p bl pre post1 l1 post2 l2 =
 `;
 
 
-val bir_exec_block_cjmp_triple_wp_thm = prove(``
+val bir_exec_block_cjmp_triple_wp_thm = store_thm("bir_exec_block_cjmp_triple_wp_thm",``
   !p bl e post1 l1 post2 l2.
   (bir_is_well_typed_block bl) ==>
   (EVERY bir_isnot_declare_stmt bl.bb_statements) ==>
@@ -717,6 +723,11 @@ bir_wp_exec_stmtB_bool_thm
 bir_wp_exec_stmtsB_bool_thm
 *)
 
+val bir_declare_free_prog_def = Define `
+    bir_declare_free_prog (BirProgram l) =
+    ! bl. (MEM bl l) ==> (EVERY bir_isnot_declare_stmt bl.bb_statements)
+`;
+
 val bir_env_vars_are_initialised_prog_block_thm = prove(``
   !p l bl env.
     (bir_is_valid_program p) ==>
@@ -763,11 +774,6 @@ EXISTS_TAC ``q:num`` >>
 FULL_SIMP_TAC std_ss []
 );
 
-val bir_declare_free_prog_def = Define `
-bir_declare_free_prog (BirProgram l) =
-! bl. (MEM bl l) ==> (EVERY bir_isnot_declare_stmt bl.bb_statements)
-`;
-
 val bir_exec_block_runing_at_least_one_step = prove(``
 !p bl st l' c' st'.
 (bir_exec_block p bl st = (l',c',st')) ==>
@@ -788,7 +794,8 @@ FULL_SIMP_TAC (srw_ss()) []>>
 RW_TAC std_ss []
 );
 
-val bir_exec_to_labels_triple_jmp = prove(``
+val bir_exec_to_labels_triple_jmp = store_thm("bir_exec_to_labels_triple_jmp",
+``
 !p l bl l1 ls post post'.
 (bir_is_bool_exp post) ==>
 (bir_is_well_typed_program p) ==>
@@ -883,8 +890,11 @@ val bir_exec_to_labels_triple_jmp = prove(``
 
 
 
-
-val bir_exec_to_labels_triple_cjmp = prove(``
+(*
+val bir_exec_to_labels_triple_cjmp = store_thm("bir_exec_to_labels_triple_cjmp",
+*)
+val bir_exec_to_labels_triple_cjmp = prove(
+``
 !p l bl e l1 l2 ls pre post post1' post2'.
 (bir_is_bool_exp post) ==>
 (MEM l (bir_labels_of_program p)) ==>
