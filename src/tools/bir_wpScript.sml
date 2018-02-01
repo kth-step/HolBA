@@ -719,19 +719,83 @@ bir_wp_exec_stmtsB_bool_thm
 
 val bir_env_vars_are_initialised_prog_block_thm = prove(``
   !p l bl env.
+    (bir_is_valid_program p) ==>
     (bir_env_vars_are_initialised env (bir_vars_of_program p)) ==>
     (MEM l (bir_labels_of_program p)) ==>
     (SND (THE (bir_get_program_block_info_by_label p l)) = bl) ==>
     (bir_env_vars_are_initialised env (bir_vars_of_block bl))
 ``,
-
-  cheat
+  REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+  Cases_on `p` >>
+  FULL_SIMP_TAC std_ss [bir_vars_of_program_def] >>
+  subgoal `bl IN (set l')` >-
+  (
+    IMP_RES_TAC bir_programTheory.bir_get_program_block_info_by_label_MEM >>
+    FULL_SIMP_TAC std_ss [] >>
+    REV_FULL_SIMP_TAC std_ss [
+       bir_program_valid_stateTheory.bir_is_valid_program_def,
+       bir_program_valid_stateTheory.bir_get_program_block_info_by_label_valid_THM,
+    listTheory.MEM_EL] >>
+    EXISTS_TAC ``i:num`` >>
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  METIS_TAC [bir_env_vars_are_initialised_UNION, SUBSET_BIGUNION_IMAGE_thm, bir_env_vars_are_initialised_SUBSET]
 );
     
+val bir_get_current_block_SOME_MEM = prove(
+``
+!l pc bl.
+(bir_is_valid_program (BirProgram l)) ==>
+(bir_get_current_block (BirProgram l) pc = SOME bl) ==>
+(MEM bl l)
+``,
+(* This is a repetition of the theorem above *)
+REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+FULL_SIMP_TAC std_ss [bir_get_current_block_def] >>
+Cases_on `bir_get_program_block_info_by_label (BirProgram l) pc.bpc_label` >-
+(FULL_SIMP_TAC std_ss []) >>
+Cases_on `x` >>
+    REV_FULL_SIMP_TAC std_ss [
+       bir_program_valid_stateTheory.bir_is_valid_program_def,
+       bir_program_valid_stateTheory.bir_get_program_block_info_by_label_valid_THM,
+    listTheory.MEM_EL] >>
+EXISTS_TAC ``q:num`` >>
+FULL_SIMP_TAC std_ss []
+);
+
+val bir_declare_free_prog_def = Define `
+bir_declare_free_prog (BirProgram l) =
+! bl. (MEM bl l) ==> (EVERY bir_isnot_declare_stmt bl.bb_statements)
+`;
+
+val bir_exec_block_runing_at_least_one_step = prove(``
+!p bl st l' c' st'.
+(bir_exec_block p bl st = (l',c',st')) ==>
+(st'.bst_status = BST_Running) ==>
+(0<c')
+``,
+RW_TAC std_ss [bir_exec_block_def] >>
+Q.ABBREV_TAC `s' = bir_exec_stmtsB bl.bb_statements ([],0,st)` >>
+pairLib.PairCases_on `s'` >>
+FULL_SIMP_TAC std_ss [LET_DEF, bir_state_is_terminated_def] >>
+Cases_on `s'2.bst_status ≠ BST_Running` >-
+(
+  FULL_SIMP_TAC std_ss [] >>
+  RW_TAC std_ss []>>
+  FULL_SIMP_TAC (srw_ss()) []
+) >>
+FULL_SIMP_TAC (srw_ss()) []>>
+RW_TAC std_ss []
+);
+
 val bir_exec_to_labels_triple_jmp = prove(``
 !p l bl l1 ls post post'.
 (bir_is_bool_exp post) ==>
+(bir_is_well_typed_program p) ==>
+(bir_is_valid_program p) ==>
+(bir_declare_free_prog p) ==>
 (MEM l (bir_labels_of_program p)) ==>
+(MEM l1 (bir_labels_of_program p)) ==>
 (SND(THE(bir_get_program_block_info_by_label p l)) = bl) ==>
 (bl.bb_last_statement = (BStmt_Jmp (BLE_Label l1))) ==>
 (((l1 IN ls) ==> (post' = post)) /\
@@ -739,6 +803,7 @@ val bir_exec_to_labels_triple_jmp = prove(``
 ) ==>
 (bir_exec_to_labels_triple p l ls (bir_wp_exec_stmtsB bl.bb_statements post') post)
 ``,
+
  REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
  SIMP_TAC std_ss [bir_exec_to_labels_triple_def] >>
  REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
@@ -754,12 +819,16 @@ val bir_exec_to_labels_triple_jmp = prove(``
  PAT_X_ASSUM ``!ls.p`` (fn thm => FULL_SIMP_TAC std_ss [Q.SPEC `ls` thm]) >>
  (* enable preconditions of WP-block *)
  ASSUME_TAC (Q.SPECL [`p`, `bl`, `post'`, `l1`] bir_exec_block_jmp_triple_wp_thm) >>
+ Cases_on `p` >>
+ IMP_RES_TAC bir_get_current_block_SOME_MEM >>
  subgoal `bir_is_well_typed_block bl` >- (
-    cheat (* this should be an assumtion in the theorem *)
+    FULL_SIMP_TAC std_ss [bir_is_well_typed_program_def, listTheory.EVERY_MEM] 
   ) >> FULL_SIMP_TAC std_ss [] >>
+
  subgoal `EVERY bir_isnot_declare_stmt bl.bb_statements` >- (
-    cheat (* this should be an assumtion in the theorem *)
+    FULL_SIMP_TAC std_ss [bir_declare_free_prog_def]
   ) >> FULL_SIMP_TAC std_ss [] >>
+
  subgoal `bir_is_bool_exp post'` >- 
  (
   Cases_on `l1 IN ls` >> (
@@ -767,12 +836,10 @@ val bir_exec_to_labels_triple_jmp = prove(``
   )
  ) >> FULL_SIMP_TAC std_ss [] >>
  REV_FULL_SIMP_TAC std_ss [] >>
- subgoal `MEM l1 (bir_labels_of_program p)` >- (
-    cheat (* this should be an assumtion in the theorem *)
-  ) >> FULL_SIMP_TAC std_ss [] >>
+
  Q.ABBREV_TAC `wp = (bir_wp_exec_stmtsB bl.bb_statements post')` >>
  FULL_SIMP_TAC std_ss [bir_exec_block_jmp_triple_def] >>
- Q.ABBREV_TAC `st1 = bir_exec_block p bl s` >>
+ Q.ABBREV_TAC `st1 = bir_exec_block (BirProgram l') bl s` >>
  pairLib.PairCases_on `st1` >>
  PAT_X_ASSUM ``!s.p`` (fn thm =>
    ASSUME_TAC (Q.SPECL [`s`, `st10`, `st11`, `st12`] thm)
@@ -783,33 +850,33 @@ val bir_exec_to_labels_triple_jmp = prove(``
     METIS_TAC [bir_env_vars_are_initialised_prog_block_thm]
   ) >> FULL_SIMP_TAC std_ss [] >>
  (* now we know that after executing the internal block we get post' *)
+ FULL_SIMP_TAC std_ss [LET_DEF] >>
  Cases_on `l1 IN  ls` >-
  (
    FULL_SIMP_TAC std_ss [Abbr `cnd`, LET_DEF, bir_state_COUNT_PC_def] >>
-   subgoal `0<st11` >- (
-
-(*
-bir_exec_block_def
-bir_exec_stmtsB_def
-*)
-(* have to show that none of the stmt in bl.bb_statements stop the running *)
-(* or indirectly: st12.bst_status = BST_Running, then we have to have at least one step! *)
-
-      cheat
-    ) >> FULL_SIMP_TAC std_ss [] >>
-   FULL_SIMP_TAC (srw_ss()) [bir_block_pc_def, Abbr `s'`] >>
-   REV_FULL_SIMP_TAC std_ss [] 
+   ASSUME_TAC (Q.SPECL [`(BirProgram l')`, `bl`, `s`, `st10`, `st11`,`st12`] bir_exec_block_runing_at_least_one_step) >>
+   REV_FULL_SIMP_TAC std_ss [] >>
+   FULL_SIMP_TAC std_ss [] >>
+   FULL_SIMP_TAC (srw_ss()) [bir_block_pc_def, Abbr `s'`]
  ) >>
+ (* We have not reach the an end label *)
  FULL_SIMP_TAC std_ss [Abbr `cnd`, LET_DEF, bir_state_COUNT_PC_def, bir_block_pc_def] >>
  FULL_SIMP_TAC (srw_ss()) [bir_exec_to_labels_triple_def] >>
  PAT_X_ASSUM ``!s''.p`` (fn thm=>ASSUME_TAC (Q.SPEC `st12` thm)) >>
  REV_FULL_SIMP_TAC (srw_ss()) [] >>
  subgoal `bir_env_vars_are_initialised st12.bst_environ
-         (bir_vars_of_program p)` >- (
-
+         (bir_vars_of_program (BirProgram l'))` >- (
     (* use initialization monotonicity *)
-
-    cheat
+   MATCH_MP_TAC (SIMP_RULE std_ss [AND_IMP_INTRO] bir_env_vars_are_initialised_ORDER) >>
+   Q.EXISTS_TAC `s.bst_environ` >>
+   (* METIS_TAC [bir_exec_block_ENV_ORDER] >> *)
+   subgoal `st12 = (SND (SND (bir_exec_block (BirProgram l') bl s)))` >-
+   ( 
+     Q.ABBREV_TAC `s_tmp = bir_exec_block (BirProgram l') bl s` >>
+     pairLib.PairCases_on `s_tmp` >>
+     FULL_SIMP_TAC (srw_ss()) [markerTheory.Abbrev_def]
+    ) >>
+   FULL_SIMP_TAC std_ss [bir_exec_block_ENV_ORDER]
   ) >> FULL_SIMP_TAC std_ss [] >>
  FULL_SIMP_TAC (srw_ss()) [Abbr `s'`]
 );
