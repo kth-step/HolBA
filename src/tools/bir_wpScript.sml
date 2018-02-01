@@ -1153,8 +1153,22 @@ bir_wp_exec_of_block p l ls post wps =
 
 val bir_halt_free_prog_def = Define `
     bir_halt_free_prog (BirProgram l) =
-    (!bl h. (MEM bl l) ==> ~(bl.bb_last_statement = BStmt_Halt h))
+      (!bl h. (MEM bl l) ==> ~(bl.bb_last_statement = BStmt_Halt h))
 `;
+
+val bir_edge_in_prog_def = Define `
+    bir_edge_in_prog (BirProgram bls) l1 l2 =
+      !bl1 e l3. (MEM bl1 bls) ==>
+               (bl1.bb_label = l1) ==>
+               ?bl2. ((MEM bl2 bls) /\
+                      (bl2.bb_label = l2) /\
+                      ( (bl1.bb_last_statement = BStmt_Jmp (BLE_Label l2)) \/
+                        (bl1.bb_last_statement = BStmt_CJmp e (BLE_Label l2) (BLE_Label l3)) \/
+                        (bl1.bb_last_statement = BStmt_CJmp e (BLE_Label l3) (BLE_Label l2))
+                      )
+                     )
+`;
+
 
 val bir_wp_exec_of_block_bool_thm = store_thm("bir_wp_exec_of_block_bool_thm",
 ``
@@ -1163,7 +1177,7 @@ val bir_wp_exec_of_block_bool_thm = store_thm("bir_wp_exec_of_block_bool_thm",
     (bir_is_well_typed_program p) ==>
     (bir_is_valid_program p) ==>
     (bir_declare_free_prog p) ==>
-    (bir_halt_free_prog p) ==>
+    (!l2. (bir_edge_in_prog p l l2) ==> (l2 IN (FDOM wps))) ==>
     (MEM l (bir_labels_of_program p)) ==>
     (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps) ==>
     (FEVERY (\(l1, wp1). bir_is_bool_exp wp1)
@@ -1182,12 +1196,29 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
     (bir_is_well_typed_program p) ==>
     (bir_is_valid_program p) ==>
     (bir_declare_free_prog p) ==>
-    (bir_halt_free_prog p) ==>
+    (!l2. (bir_edge_in_prog p l l2) ==> (l2 IN (FDOM wps))) ==>
     (MEM l (bir_labels_of_program p)) ==>
     (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post) wps) ==>
     (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post)
         (bir_wp_exec_of_block p l ls post wps)
     )
+``,
+
+  cheat
+);
+
+
+val bir_wp_exec_of_block_progress_thm = store_thm("bir_wp_exec_of_block_sound_thm",
+``
+!p l ls post wps.
+    (bir_is_bool_exp post) ==>
+    (bir_is_well_typed_program p) ==>
+    (bir_is_valid_program p) ==>
+    (bir_declare_free_prog p) ==>
+    (!l2. (bir_edge_in_prog p l l2) ==> (l2 IN (FDOM wps))) ==>
+    (MEM l (bir_labels_of_program p)) ==>
+    (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post) wps) ==>
+    (l IN (FDOM (bir_wp_exec_of_block p l ls post wps)))
 ``,
 
   cheat
