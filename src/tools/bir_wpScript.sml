@@ -1124,38 +1124,75 @@ Cases_on `l1 IN  ls` >-
    -------------------------------------------------------------
 *)
 
-val bir_wp_of_block_def = Define `
-bir_wp_of_block p l ls post wps = 
-case FLOOKUP wps l of
-  SOME wp => wps
-| NONE    => 
-let bl = SND(THE(bir_get_program_block_info_by_label p l)) in
-case bl.bb_last_statement of
-  BStmt_Jmp (BLE_Label l1) => (
-  case FLOOKUP wps l1 of
-   SOME wp => (wps |+ (l, (bir_wp_exec_stmtsB bl.bb_statements wp)))
-)
-| BStmt_CJmp e (BLE_Label l1) (BLE_Label l2) => ( 
-  case FLOOKUP wps l1 of
-  SOME wp1 => case FLOOKUP wps l2 of
-  SOME wp2 => (wps |+ (l,
-(bir_wp_exec_stmtsB bl.bb_statements 
-    (BExp_BinExp BIExp_And
-		  (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not e) wp1)
-		  (BExp_BinExp BIExp_Or e wp2)
-		 )
-))))
+val bir_wp_exec_of_block_def = Define `
+bir_wp_exec_of_block p l ls post wps = 
+  case FLOOKUP wps l of
+    SOME wp => wps
+  | NONE    => (
+      let bl = SND(THE(bir_get_program_block_info_by_label p l)) in
+        case bl.bb_last_statement of
+          BStmt_Jmp (BLE_Label l1) => (
+            case FLOOKUP wps l1 of
+              SOME wp => (wps |+ (l, (bir_wp_exec_stmtsB bl.bb_statements wp)))
+            )
+        | BStmt_CJmp e (BLE_Label l1) (BLE_Label l2) => ( 
+            case FLOOKUP wps l1 of
+              SOME wp1 => (
+                case FLOOKUP wps l2 of
+                  SOME wp2 => (wps |+ (l,
+                    (bir_wp_exec_stmtsB bl.bb_statements 
+                      (BExp_BinExp BIExp_And
+		        (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not e) wp1)
+		        (BExp_BinExp BIExp_Or e wp2)
+		      )
+                    )))
+              )
+            )
+    )
 `;
 
-(*
-prove(``
-(! l1 wp1. ((l1, wp1) IN wps) ==>
-   (bir_exec_to_labels_triple p l ls (b) post)
-) ==>
-((bir_wp_of_block p l ls post wps) = wps') ==>
-a
-``;
-*)
+val bir_halt_free_prog_def = Define `
+    bir_halt_free_prog (BirProgram l) =
+    (!bl h. (MEM bl l) ==> ~(bl.bb_last_statement = BStmt_Halt h))
+`;
+
+val bir_wp_exec_of_block_bool_thm = store_thm("bir_wp_exec_of_block_bool_thm",
+``
+!p l ls post wps.
+    (bir_is_bool_exp post) ==>
+    (bir_is_well_typed_program p) ==>
+    (bir_is_valid_program p) ==>
+    (bir_declare_free_prog p) ==>
+    (bir_halt_free_prog p) ==>
+    (MEM l (bir_labels_of_program p)) ==>
+    (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps) ==>
+    (FEVERY (\(l1, wp1). bir_is_bool_exp wp1)
+        (bir_wp_exec_of_block p l ls post wps)
+    )
+``,
+
+  cheat
+);
+
+
+val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
+``
+!p l ls post wps.
+    (bir_is_bool_exp post) ==>
+    (bir_is_well_typed_program p) ==>
+    (bir_is_valid_program p) ==>
+    (bir_declare_free_prog p) ==>
+    (bir_halt_free_prog p) ==>
+    (MEM l (bir_labels_of_program p)) ==>
+    (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post) wps) ==>
+    (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post)
+        (bir_wp_exec_of_block p l ls post wps)
+    )
+``,
+
+  cheat
+);
+
 
 
 (*
