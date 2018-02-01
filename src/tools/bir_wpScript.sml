@@ -14,6 +14,15 @@ load "pairLib";
 
 val _ = new_theory "bir_wp";
 
+
+
+
+(*
+   -------------------------------------------------------------
+                          SOME HELPERS
+   -------------------------------------------------------------
+*)
+
 (* Helper theorems *)
 val bir_mk_bool_val_true_thm = prove(``!v1.
 (bir_mk_bool_val v1 = bir_val_true) = v1``, 
@@ -94,6 +103,13 @@ subgoal `b' <> ty` >- (
 (* ******************** *)
 (* REAL PROOF ON WP *)
 (* ******************** *)
+
+
+(*
+   -------------------------------------------------------------
+                       single statements
+   -------------------------------------------------------------
+*)
 
 (* Definition of pre-post. Notice that we do not have assumption violated *)
 val bir_pre_post_def = Define `
@@ -356,6 +372,14 @@ val bir_wp_exec_stmtB_bool_thm = store_thm("bir_wp_exec_stmtB_bool_thm",
 );
 
 
+
+
+
+(*
+   -------------------------------------------------------------
+                    list of internal statements
+   -------------------------------------------------------------
+*)
 (* Execution of several internal statements *)
 val bir_exec_stmtsB_triple_def = Define `
 bir_exec_stmtsB_triple stmts pre post =
@@ -485,6 +509,14 @@ val bir_wp_exec_stmtsB_sound_thm = store_thm("bir_wp_exec_stmtsB_sound_thm",``
   FULL_SIMP_TAC std_ss [bir_pre_post_def] 
 );
 
+
+
+
+(*
+   -------------------------------------------------------------
+             whole blocks, including jump in the end
+   -------------------------------------------------------------
+*)
 (* Executions of the complete block, including jump *)
 val bir_exec_block_jmp_triple_def = Define(`
 bir_exec_block_jmp_triple p bl pre post l =
@@ -697,6 +729,17 @@ val bir_exec_block_cjmp_triple_wp_thm = store_thm("bir_exec_block_cjmp_triple_wp
  FULL_SIMP_TAC std_ss [bir_eval_bool_exp_BExp_BinExp_REWRS, bir_eval_bool_exp_INTRO, bir_mk_bool_val_true_thm]
 );
 
+
+
+
+
+
+(*
+   -------------------------------------------------------------
+               execute to label (DAG of blocks)
+   -------------------------------------------------------------
+*)
+
 (* bir_exec_to_addr_label *)
 (* bir_exec_to_labels *)    
 
@@ -717,11 +760,6 @@ bir_exec_to_labels_triple p l ls pre post =
    ((s'.bst_pc.bpc_index = 0) ∧ (s'.bst_pc.bpc_label ∈ ls))
   )
 `;
-
-(*
-bir_wp_exec_stmtB_bool_thm
-bir_wp_exec_stmtsB_bool_thm
-*)
 
 val bir_declare_free_prog_def = Define `
     bir_declare_free_prog (BirProgram l) =
@@ -1077,6 +1115,15 @@ Cases_on `l1 IN  ls` >-
 );
 
 
+
+
+
+(*
+   -------------------------------------------------------------
+                  procedure for WP in DAG
+   -------------------------------------------------------------
+*)
+
 val bir_wp_of_block_def = Define `
 bir_wp_of_block p l ls post wps = 
 case FLOOKUP wps l of
@@ -1110,6 +1157,12 @@ a
 ``;
 *)
 
+
+(*
+   -------------------------------------------------------------
+                             TESTING
+   -------------------------------------------------------------
+*)
 
 val prog = ``
 (BirProgram
