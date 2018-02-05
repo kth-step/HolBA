@@ -1199,7 +1199,49 @@ val bir_wp_exec_of_block_bool_thm = store_thm("bir_wp_exec_of_block_bool_thm",
     )
 ``,
 
-  cheat
+  REPEAT STRIP_TAC >>
+  Cases_on `p` >>
+  Q.RENAME1_TAC `BirProgram bls` >>
+
+  FULL_SIMP_TAC (std_ss) [bir_wp_exec_of_block_def, bir_get_program_block_info_by_label_MEM, LET_DEF] >>
+
+  Cases_on `FLOOKUP wps l` >- (
+    subgoal `MEM bl bls` >- (
+      METIS_TAC [bir_get_program_block_info_by_label_def, INDEX_FIND_EQ_SOME_0, listTheory.MEM_EL]
+    ) >>
+
+    FULL_SIMP_TAC (std_ss) [bir_jmp_direct_labels_only_def] >>
+    Q.PAT_X_ASSUM `!x. MEM x B ==> C` (fn thm => ASSUME_TAC (Q.SPEC `bl` thm)) >>
+    REV_FULL_SIMP_TAC (std_ss) [] >|
+    [
+      subgoal `l1 IN FDOM wps` >- (
+        METIS_TAC [bir_get_program_block_info_by_label_THM, bir_edge_in_prog_def]
+      ) >>
+
+      FULL_SIMP_TAC (std_ss++bir_stmt_end_ss++bir_label_exp_ss) [finite_mapTheory.FLOOKUP_DEF, finite_mapTheory.FDOM_FUPDATE, pred_setTheory.COMPONENT]
+
+      subgoal `bir_is_bool_exp(bir_wp_exec_stmtsB bl.bb_statements (FAPPLY wps l1))` >- (
+
+FULL_SIMP_TAC (list_ss) [bir_wp_exec_stmtsB_bool_thm, finite_mapTheory.FEVERY_DEF, bir_declare_free_prog_def,
+bir_is_well_typed_program_def,
+bir_is_well_typed_block_def] >>
+
+METIS_TAC [bir_wp_exec_stmtsB_bool_thm, finite_mapTheory.FEVERY_DEF, bir_declare_free_prog_def,
+bir_is_well_typed_program_def,
+bir_is_well_typed_block_def]
+        
+      ) >>
+      FULL_SIMP_TAC (list_ss++pred_setSimps.PRED_SET_ss) [finite_mapTheory.FEVERY_FUPDATE, finite_mapTheory.FEVERY_DEF, finite_mapTheory.DRESTRICT_DEF]
+    ,
+      subgoal `l1 IN FDOM wps /\ l2 IN FDOM wps` >- (
+        METIS_TAC [bir_get_program_block_info_by_label_THM, bir_edge_in_prog_def]
+      ) >>
+
+      FULL_SIMP_TAC (std_ss++bir_stmt_end_ss++bir_label_exp_ss) [finite_mapTheory.FLOOKUP_DEF, finite_mapTheory.FDOM_FUPDATE, pred_setTheory.COMPONENT]
+    ]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss) [finite_mapTheory.FLOOKUP_DEF]
 );
 
 
