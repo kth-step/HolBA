@@ -1246,13 +1246,7 @@ val bir_wp_exec_of_block_progress_thm = store_thm("bir_wp_exec_of_block_sound_th
   Cases_on `p` >>
   Q.RENAME1_TAC `BirProgram bls` >>
 
-  FULL_SIMP_TAC (std_ss) [bir_wp_exec_of_block_def] >>
-  FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_MEM] >>
-  FULL_SIMP_TAC (std_ss) [LET_DEF] >>
-(*
-  Q.ABBREV_TAC `bl = SND (THE (bir_get_program_block_info_by_label (BirProgram bls) l))` >>
-  FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_def] >>
-*)
+  FULL_SIMP_TAC (std_ss) [bir_wp_exec_of_block_def, bir_get_program_block_info_by_label_MEM, LET_DEF] >>
 
   Cases_on `FLOOKUP wps l` >- (
     subgoal `MEM bl bls` >- (
@@ -1263,53 +1257,22 @@ val bir_wp_exec_of_block_progress_thm = store_thm("bir_wp_exec_of_block_sound_th
     Q.PAT_X_ASSUM `!x. MEM x B ==> C` (fn thm => ASSUME_TAC (Q.SPEC `bl` thm)) >>
     REV_FULL_SIMP_TAC (std_ss) [] >|
     [
-      FULL_SIMP_TAC (std_ss++bir_stmt_end_ss) [] >>
-      FULL_SIMP_TAC (std_ss++bir_label_exp_ss) [] >>
-
-(*  bir_get_program_block_info_by_label_THM *)
-      FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def] >>
-
       subgoal `l1 IN FDOM wps` >- (
-(*        Q.PAT_X_ASSUM `!x. y` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >> *)
-        METIS_TAC [bir_get_program_block_info_by_label_THM]
+        METIS_TAC [bir_get_program_block_info_by_label_THM, bir_edge_in_prog_def]
       ) >>
 
-      FULL_SIMP_TAC (std_ss) [finite_mapTheory.FLOOKUP_DEF, finite_mapTheory.FDOM_FUPDATE, pred_setTheory.COMPONENT]
+      FULL_SIMP_TAC (std_ss++bir_stmt_end_ss++bir_label_exp_ss) [finite_mapTheory.FLOOKUP_DEF, finite_mapTheory.FDOM_FUPDATE, pred_setTheory.COMPONENT]
 
-(*
-bir_program_valid_stateTheory.bir_is_valid_program_def
-bir_program_valid_stateTheory.bir_is_valid_labels_def
-*)
-(*
-      FULL_SIMP_TAC (std_ss) [bir_jmp_direct_labels_only_def] >>
-      subgoal `?l1. bl.bb_last_statement = BStmt_Jmp (BLE_Label l1)` >- (
-        REV_FULL_SIMP_TAC (srw_ss()) []
-      ) >>
-*)
     ,
-      FULL_SIMP_TAC (std_ss++bir_stmt_end_ss) [] >>
-      FULL_SIMP_TAC (std_ss++bir_label_exp_ss) [] >>
-
-      FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def] >>
-
-      subgoal `l1 IN FDOM wps` >- (
-        METIS_TAC [bir_get_program_block_info_by_label_THM]
+      subgoal `l1 IN FDOM wps /\ l2 IN FDOM wps` >- (
+        METIS_TAC [bir_get_program_block_info_by_label_THM, bir_edge_in_prog_def]
       ) >>
 
-      subgoal `l2 IN FDOM wps` >- (
-        METIS_TAC [bir_get_program_block_info_by_label_THM]
-      ) >>
-
-
-      FULL_SIMP_TAC (std_ss) [finite_mapTheory.FLOOKUP_DEF, finite_mapTheory.FDOM_FUPDATE, pred_setTheory.COMPONENT]
+      FULL_SIMP_TAC (std_ss++bir_stmt_end_ss++bir_label_exp_ss) [finite_mapTheory.FLOOKUP_DEF, finite_mapTheory.FDOM_FUPDATE, pred_setTheory.COMPONENT]
     ]
   ) >>
 
   FULL_SIMP_TAC (std_ss) [finite_mapTheory.FLOOKUP_DEF]
-(*
-  FULL_SIMP_TAC (list_ss++pred_setSimps.PRED_SET_ss) [] >>
-  cheat
-*)
 );
 
 
