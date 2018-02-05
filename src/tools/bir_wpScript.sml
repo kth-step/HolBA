@@ -1151,23 +1151,35 @@ bir_wp_exec_of_block p l ls post wps =
     )
 `;
 
+(*
 val bir_halt_free_prog_def = Define `
     bir_halt_free_prog (BirProgram l) =
       (!bl h. (MEM bl l) ==> ~(bl.bb_last_statement = BStmt_Halt h))
 `;
+*)
+
+val bir_jmp_direct_labels_only_def = Define `
+    bir_jmp_direct_labels_only (BirProgram l) =
+      (!bl. (MEM bl l) ==> (?l1. bl.bb_last_statement = BStmt_Jmp (BLE_Label l1)) \/
+                           (?e l1 l2. bl.bb_last_statement = BStmt_CJmp e (BLE_Label l1) (BLE_Label l2))
+      )
+`;
 
 val bir_edge_in_prog_def = Define `
     bir_edge_in_prog (BirProgram bls) l1 l2 =
-      !bl1 e l3. (MEM bl1 bls) ==>
-               (bl1.bb_label = l1) ==>
-               ?bl2. ((MEM bl2 bls) /\
-                      (bl2.bb_label = l2) /\
-                      ( (bl1.bb_last_statement = BStmt_Jmp (BLE_Label l2)) \/
-                        (bl1.bb_last_statement = BStmt_CJmp e (BLE_Label l2) (BLE_Label l3)) \/
-                        (bl1.bb_last_statement = BStmt_CJmp e (BLE_Label l3) (BLE_Label l2))
-                      )
-                     )
+      ?bl1. (MEM bl1 bls) /\
+            (bl1.bb_label = l1) /\
+            ( (bl1.bb_last_statement = BStmt_Jmp (BLE_Label l2)) \/
+              (?e l3. bl1.bb_last_statement = BStmt_CJmp e (BLE_Label l2) (BLE_Label l3)) \/
+              (?e l3. bl1.bb_last_statement = BStmt_CJmp e (BLE_Label l3) (BLE_Label l2))
+            )
 `;
+
+val bir_edges_blocks_in_prog_def = Define `
+    bir_edges_blocks_in_prog (BirProgram bls) l1 =
+      !l2. (bir_edge_in_prog (BirProgram bls) l1 l2) ==>
+           (?bl2. ( (MEM bl2 bls) /\ (bl2.bb_label = l2) ))
+`; (* ==> MEM l2 (bir_labels_of_program (BirProgram bls)) *)
 
 
 val bir_wp_exec_of_block_bool_thm = store_thm("bir_wp_exec_of_block_bool_thm",
@@ -1177,8 +1189,10 @@ val bir_wp_exec_of_block_bool_thm = store_thm("bir_wp_exec_of_block_bool_thm",
     (bir_is_well_typed_program p) ==>
     (bir_is_valid_program p) ==>
     (bir_declare_free_prog p) ==>
-    (!l2. (bir_edge_in_prog p l l2) ==> (l2 IN (FDOM wps))) ==>
+    (bir_jmp_direct_labels_only p) ==>
     (MEM l (bir_labels_of_program p)) ==>
+    (bir_edges_blocks_in_prog p l) ==>
+    (!l2. (bir_edge_in_prog p l l2) ==> (l2 IN (FDOM wps))) ==>
     (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps) ==>
     (FEVERY (\(l1, wp1). bir_is_bool_exp wp1)
         (bir_wp_exec_of_block p l ls post wps)
@@ -1196,8 +1210,10 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
     (bir_is_well_typed_program p) ==>
     (bir_is_valid_program p) ==>
     (bir_declare_free_prog p) ==>
-    (!l2. (bir_edge_in_prog p l l2) ==> (l2 IN (FDOM wps))) ==>
+    (bir_jmp_direct_labels_only p) ==>
     (MEM l (bir_labels_of_program p)) ==>
+    (bir_edges_blocks_in_prog p l) ==>
+    (!l2. (bir_edge_in_prog p l l2) ==> (l2 IN (FDOM wps))) ==>
     (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post) wps) ==>
     (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post)
         (bir_wp_exec_of_block p l ls post wps)
@@ -1208,6 +1224,9 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
 );
 
 
+val bir_stmt_end_ss = rewrites (type_rws ``:bir_stmt_end_t``);
+val bir_label_exp_ss = rewrites (type_rws ``:bir_label_exp_t``);
+
 val bir_wp_exec_of_block_progress_thm = store_thm("bir_wp_exec_of_block_sound_thm",
 ``
 !p l ls post wps.
@@ -1215,13 +1234,82 @@ val bir_wp_exec_of_block_progress_thm = store_thm("bir_wp_exec_of_block_sound_th
     (bir_is_well_typed_program p) ==>
     (bir_is_valid_program p) ==>
     (bir_declare_free_prog p) ==>
-    (!l2. (bir_edge_in_prog p l l2) ==> (l2 IN (FDOM wps))) ==>
+    (bir_jmp_direct_labels_only p) ==>
     (MEM l (bir_labels_of_program p)) ==>
+    (bir_edges_blocks_in_prog p l) ==>
+    (!l2. (bir_edge_in_prog p l l2) ==> (l2 IN (FDOM wps))) ==>
     (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post) wps) ==>
     (l IN (FDOM (bir_wp_exec_of_block p l ls post wps)))
 ``,
 
+  REPEAT STRIP_TAC >>
+  Cases_on `p` >>
+  Q.RENAME1_TAC `BirProgram bls` >>
+
+  FULL_SIMP_TAC (std_ss) [bir_wp_exec_of_block_def] >>
+  FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_MEM] >>
+  FULL_SIMP_TAC (std_ss) [LET_DEF] >>
+(*
+  Q.ABBREV_TAC `bl = SND (THE (bir_get_program_block_info_by_label (BirProgram bls) l))` >>
+  FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_def] >>
+*)
+
+  Cases_on `FLOOKUP wps l` >- (
+    subgoal `MEM bl bls` >- (
+      METIS_TAC [bir_get_program_block_info_by_label_def, INDEX_FIND_EQ_SOME_0, listTheory.MEM_EL]
+    ) >>
+
+    FULL_SIMP_TAC (std_ss) [bir_jmp_direct_labels_only_def] >>
+    Q.PAT_X_ASSUM `!x. MEM x B ==> C` (fn thm => ASSUME_TAC (Q.SPEC `bl` thm)) >>
+    REV_FULL_SIMP_TAC (std_ss) [] >|
+    [
+      FULL_SIMP_TAC (std_ss++bir_stmt_end_ss) [] >>
+      FULL_SIMP_TAC (std_ss++bir_label_exp_ss) [] >>
+
+(*  bir_get_program_block_info_by_label_THM *)
+      FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def] >>
+
+      subgoal `l1 IN FDOM wps` >- (
+(*        Q.PAT_X_ASSUM `!x. y` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >> *)
+        METIS_TAC [bir_get_program_block_info_by_label_THM]
+      ) >>
+
+      FULL_SIMP_TAC (std_ss) [finite_mapTheory.FLOOKUP_DEF, finite_mapTheory.FDOM_FUPDATE, pred_setTheory.COMPONENT]
+
+(*
+bir_program_valid_stateTheory.bir_is_valid_program_def
+bir_program_valid_stateTheory.bir_is_valid_labels_def
+*)
+(*
+      FULL_SIMP_TAC (std_ss) [bir_jmp_direct_labels_only_def] >>
+      subgoal `?l1. bl.bb_last_statement = BStmt_Jmp (BLE_Label l1)` >- (
+        REV_FULL_SIMP_TAC (srw_ss()) []
+      ) >>
+*)
+    ,
+      FULL_SIMP_TAC (std_ss++bir_stmt_end_ss) [] >>
+      FULL_SIMP_TAC (std_ss++bir_label_exp_ss) [] >>
+
+      FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def] >>
+
+      subgoal `l1 IN FDOM wps` >- (
+        METIS_TAC [bir_get_program_block_info_by_label_THM]
+      ) >>
+
+      subgoal `l2 IN FDOM wps` >- (
+        METIS_TAC [bir_get_program_block_info_by_label_THM]
+      ) >>
+
+
+      FULL_SIMP_TAC (std_ss) [finite_mapTheory.FLOOKUP_DEF, finite_mapTheory.FDOM_FUPDATE, pred_setTheory.COMPONENT]
+    ]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss) [finite_mapTheory.FLOOKUP_DEF]
+(*
+  FULL_SIMP_TAC (list_ss++pred_setSimps.PRED_SET_ss) [] >>
   cheat
+*)
 );
 
 
