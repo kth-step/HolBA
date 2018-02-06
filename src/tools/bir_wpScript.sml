@@ -1323,12 +1323,9 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
           subgoal `MEM l1 (bir_labels_of_program (BirProgram bls))` >- (
             FULL_SIMP_TAC (std_ss) [bir_edges_blocks_in_prog_def, bir_labels_of_program_def] >>
             Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> ?E. G` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >>
-            FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM] >>
-            METIS_TAC [listTheory.MEM_MAP]
+            FULL_SIMP_TAC (list_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM, listTheory.MEM_MAP] >>
+            METIS_TAC []
           ) >>
-
-          FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_MEM] >>
-          REV_FULL_SIMP_TAC (std_ss) [] >>
 
           subgoal `~(l1 IN ls)` >- (
             Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> E` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >>
@@ -1336,24 +1333,7 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
             METIS_TAC []
           ) >>
 
-          FULL_SIMP_TAC (std_ss) [finite_mapTheory.FEVERY_DEF]
-(* >>
-          Q.PAT_X_ASSUM `!A. A IN FDOM B ==> C` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >>
-          REV_FULL_SIMP_TAC (std_ss) [] >>
-
-
-
-
-          FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM] >>
-          REV_FULL_SIMP_TAC (std_ss) [] >>
-         
-
-
-          FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_THM] >>
-
-          FULL_SIMP_TAC (std_ss) [finite_mapTheory.FEVERY_DEF, bir_declare_free_prog_def] >>
-          METIS_TAC [bir_is_well_typed_program_def, bir_is_well_typed_block_def, listTheory.EVERY_MEM, bir_wp_exec_stmtsB_bool_thm]
-*)
+          FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_MEM, finite_mapTheory.FEVERY_DEF]
         ) >>
 
         Q.PAT_X_ASSUM `FUPDATE A B = C` (fn thm => ASSUME_TAC (GSYM thm)) >>
@@ -1377,12 +1357,9 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
           subgoal `MEM l1 (bir_labels_of_program (BirProgram bls)) /\ MEM l2 (bir_labels_of_program (BirProgram bls))` >- (
             FULL_SIMP_TAC (std_ss) [bir_edges_blocks_in_prog_def, bir_labels_of_program_def] >>
             Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> ?E. G` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >> ASSUME_TAC (Q.SPEC `l2` thm)) >>
-            FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM] >>
-            METIS_TAC [listTheory.MEM_MAP]
+            FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM, listTheory.MEM_MAP] >>
+            METIS_TAC []
           ) >>
-
-          FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_MEM] >>
-          REV_FULL_SIMP_TAC (std_ss) [] >>
 
           subgoal `~(l1 IN ls) /\ ~(l2 IN ls)` >- (
             Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> E` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >> ASSUME_TAC (Q.SPEC `l2` thm)) >>
@@ -1390,7 +1367,7 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
             METIS_TAC []
           ) >>
 
-          FULL_SIMP_TAC (std_ss) [finite_mapTheory.FEVERY_DEF, Abbr `exp1`]
+          FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_MEM, finite_mapTheory.FEVERY_DEF, Abbr `exp1`]
         ) >>
 
         Q.PAT_X_ASSUM `FUPDATE A B = C` (fn thm => ASSUME_TAC (GSYM thm)) >>
