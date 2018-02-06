@@ -1280,10 +1280,9 @@ val bir_wp_exec_of_block_bool_thm = store_thm("bir_wp_exec_of_block_bool_thm",
   FULL_SIMP_TAC (std_ss) [finite_mapTheory.FLOOKUP_DEF]
 );
 
-(*
 val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
 ``
-!p l ls post wps.
+!p l ls post wps wps'.
     (bir_is_bool_exp post) ==>
     (bir_is_well_typed_program p) ==>
     (bir_is_valid_program p) ==>
@@ -1291,16 +1290,121 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
     (bir_jmp_direct_labels_only p) ==>
     (MEM l (bir_labels_of_program p)) ==>
     (bir_edges_blocks_in_prog p l) ==>
-    (!l2. (bir_edge_in_prog p l l2) ==> (l2 IN (FDOM wps))) ==>
+    (!l2. (bir_edge_in_prog p l l2) ==> ~(l2 IN ls)) ==>
+    (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps) ==>
     (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post) wps) ==>
-    (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post)
-        (bir_wp_exec_of_block p l ls post wps)
-    )
+    ((bir_wp_exec_of_block p l ls post wps) = SOME wps') ==>
+    (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post) wps')
 ``,
 
-  cheat
-);
+  REPEAT STRIP_TAC >>
+  Cases_on `p` >>
+  Q.RENAME1_TAC `BirProgram bls` >>
+
+  FULL_SIMP_TAC (std_ss) [bir_wp_exec_of_block_def, bir_get_program_block_info_by_label_MEM, LET_DEF] >>
+
+  Cases_on `FLOOKUP wps l` >- (
+    subgoal `MEM bl bls` >- (
+      METIS_TAC [bir_get_program_block_info_by_label_def, INDEX_FIND_EQ_SOME_0, listTheory.MEM_EL]
+    ) >>
+
+    FULL_SIMP_TAC (std_ss) [bir_jmp_direct_labels_only_def] >>
+    Q.PAT_X_ASSUM `!x. MEM x B ==> C` (fn thm => ASSUME_TAC (Q.SPEC `bl` thm)) >>
+    REV_FULL_SIMP_TAC (std_ss) [] >> (
+      FULL_SIMP_TAC (std_ss++bir_stmt_end_ss++bir_label_exp_ss) [finite_mapTheory.FLOOKUP_DEF, finite_mapTheory.FDOM_FUPDATE, pred_setTheory.COMPONENT]
+    ) >|
+    [
+      Cases_on `l1 IN FDOM wps` >- (
+        FULL_SIMP_TAC std_ss [] >>
+
+        subgoal `bir_exec_to_labels_triple (BirProgram bls) l ls (bir_wp_exec_stmtsB bl.bb_statements (FAPPLY wps l1)) post` >- (
+          ASSUME_TAC (Q.SPECL [`BirProgram bls`, `l`, `bl`, `l1`, `ls`, `post`] bir_exec_to_labels_triple_jmp) >>
+
+          subgoal `MEM l1 (bir_labels_of_program (BirProgram bls))` >- (
+            FULL_SIMP_TAC (std_ss) [bir_edges_blocks_in_prog_def, bir_labels_of_program_def] >>
+            Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> ?E. G` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >>
+            FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM] >>
+            METIS_TAC [listTheory.MEM_MAP]
+          ) >>
+
+          FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_MEM] >>
+          REV_FULL_SIMP_TAC (std_ss) [] >>
+
+          subgoal `~(l1 IN ls)` >- (
+            Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> E` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >>
+            FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM] >>
+            METIS_TAC []
+          ) >>
+
+          FULL_SIMP_TAC (std_ss) [finite_mapTheory.FEVERY_DEF]
+(* >>
+          Q.PAT_X_ASSUM `!A. A IN FDOM B ==> C` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >>
+          REV_FULL_SIMP_TAC (std_ss) [] >>
+
+
+
+
+          FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM] >>
+          REV_FULL_SIMP_TAC (std_ss) [] >>
+         
+
+
+          FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_THM] >>
+
+          FULL_SIMP_TAC (std_ss) [finite_mapTheory.FEVERY_DEF, bir_declare_free_prog_def] >>
+          METIS_TAC [bir_is_well_typed_program_def, bir_is_well_typed_block_def, listTheory.EVERY_MEM, bir_wp_exec_stmtsB_bool_thm]
 *)
+        ) >>
+
+        Q.PAT_X_ASSUM `FUPDATE A B = C` (fn thm => ASSUME_TAC (GSYM thm)) >>
+        Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements (FAPPLY wps l1)` >>
+        FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE, FEVERY_FEVERY_DRESTRICT_thm]
+      ) >>
+
+      FULL_SIMP_TAC std_ss []
+    ,
+
+      Cases_on `l1 IN FDOM wps /\ l2 IN FDOM wps` >- (
+        FULL_SIMP_TAC std_ss [] >>
+
+        Q.ABBREV_TAC `exp1 = (BExp_BinExp BIExp_And
+            (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not e)
+               (FAPPLY wps l1)) (BExp_BinExp BIExp_Or e (FAPPLY wps l2)))` >>
+
+        subgoal `bir_exec_to_labels_triple (BirProgram bls) l ls (bir_wp_exec_stmtsB bl.bb_statements exp1) post` >- (
+          ASSUME_TAC (Q.SPECL [`BirProgram bls`, `l`, `bl`, `e`, `l1`, `l2`, `ls`, `post`] bir_exec_to_labels_triple_cjmp) >>
+
+          subgoal `MEM l1 (bir_labels_of_program (BirProgram bls)) /\ MEM l2 (bir_labels_of_program (BirProgram bls))` >- (
+            FULL_SIMP_TAC (std_ss) [bir_edges_blocks_in_prog_def, bir_labels_of_program_def] >>
+            Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> ?E. G` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >> ASSUME_TAC (Q.SPEC `l2` thm)) >>
+            FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM] >>
+            METIS_TAC [listTheory.MEM_MAP]
+          ) >>
+
+          FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_MEM] >>
+          REV_FULL_SIMP_TAC (std_ss) [] >>
+
+          subgoal `~(l1 IN ls) /\ ~(l2 IN ls)` >- (
+            Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> E` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >> ASSUME_TAC (Q.SPEC `l2` thm)) >>
+            FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM] >>
+            METIS_TAC []
+          ) >>
+
+          FULL_SIMP_TAC (std_ss) [finite_mapTheory.FEVERY_DEF, Abbr `exp1`]
+        ) >>
+
+        Q.PAT_X_ASSUM `FUPDATE A B = C` (fn thm => ASSUME_TAC (GSYM thm)) >>
+        Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements (FAPPLY wps l1)` >>
+        FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE, FEVERY_FEVERY_DRESTRICT_thm]
+      ) >>
+
+      FULL_SIMP_TAC (std_ss) [] >> FULL_SIMP_TAC (std_ss) [] >>
+      Cases_on `l1 IN FDOM wps` >> FULL_SIMP_TAC (std_ss) []
+    ]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss) [finite_mapTheory.FLOOKUP_DEF]
+);
 
 
 
