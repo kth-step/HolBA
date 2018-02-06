@@ -1,9 +1,9 @@
-INCLUDES = ./lifter ./l3
+INCLUDES = ./lifter ./l3 ./wp
 OPTIONS = QUIT_ON_FAILURE
 
 default: all
 
-SMLFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
+#SMLFILES = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
 #SMLFILES =
 TARGETS = $(patsubst %.sml,%.uo,$(SMLFILES))
 
