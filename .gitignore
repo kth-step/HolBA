@@ -6,7 +6,7 @@
 *.ui
 *.uo
 *~
-selftest.exe
+*.exe
 *-heap
 
 tempdir
