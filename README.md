@@ -4,6 +4,12 @@ HOL4 commit: d0a474d1d1cba7c32acb6056a6288c44c2f1a75b
 PolyML (e.g. standard Ubuntu) 5.6
 
 
+# How to compile
+
+* use `{HOLDIR}/bin/Holmake`
+* if the previous step fails, try to clean your git working directory by `make cleanslate`
+
+
 # Branch policy
 
 * one branch per feature
