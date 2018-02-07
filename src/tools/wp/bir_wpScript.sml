@@ -1287,9 +1287,13 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
     (bir_is_well_typed_program p) ==>
     (bir_is_valid_program p) ==>
     (bir_declare_free_prog p) ==>
+    (* Remove this, since it is not direct jump then we will not return SOME *)
     (bir_jmp_direct_labels_only p) ==>
     (MEM l (bir_labels_of_program p)) ==>
+    (* Another option is to nove this in the function that compute the WPS *)
+    (* Only if bir_edges_blocks_in_prog is executable *)
     (bir_edges_blocks_in_prog p l) ==>
+    (* I do not this you need this, except if you want to split the proof in two parts *)
     (!l2. (bir_edge_in_prog p l l2) ==> ~(l2 IN ls)) ==>
     (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps) ==>
     (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post) wps) ==>
