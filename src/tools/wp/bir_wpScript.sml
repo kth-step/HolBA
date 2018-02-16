@@ -1301,8 +1301,6 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
     (bir_is_well_typed_program p) ==>
     (bir_is_valid_program p) ==>
     (bir_declare_free_prog p) ==>
-    (* Remove this, since it is not direct jump then we will not return SOME *)
-    (bir_jmp_direct_labels_only p) ==>
     (MEM l (bir_labels_of_program p)) ==>
     (* Another option is to nove this in the function that compute the WPS *)
     (* Only if bir_edges_blocks_in_prog is executable *)
@@ -1326,10 +1324,25 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
       METIS_TAC [bir_get_program_block_info_by_label_def, INDEX_FIND_EQ_SOME_0, listTheory.MEM_EL]
     ) >>
 
-    FULL_SIMP_TAC (std_ss) [bir_jmp_direct_labels_only_def] >>
-    Q.PAT_X_ASSUM `!x. MEM x B ==> C` (fn thm => ASSUME_TAC (Q.SPEC `bl` thm)) >>
-    REV_FULL_SIMP_TAC (std_ss) [] >> (
-      FULL_SIMP_TAC (std_ss++bir_stmt_end_ss++bir_label_exp_ss) [finite_mapTheory.FLOOKUP_DEF, finite_mapTheory.FDOM_FUPDATE, pred_setTheory.COMPONENT]
+    FULL_SIMP_TAC (std_ss) [] >>(*bir_jmp_direct_labels_only_def] >>
+    Q.PAT_X_ASSUM `!x. MEM x B ==> C` (fn thm => ASSUME_TAC (Q.SPEC `bl` thm)) >>*)
+    REV_FULL_SIMP_TAC (std_ss) [] >>
+    Cases_on `(?l1. bl.bb_last_statement = BStmt_Jmp (BLE_Label l1)) \/
+              (?e l1 l2. bl.bb_last_statement = BStmt_CJmp e (BLE_Label l1) (BLE_Label l2))` >|
+    [
+      ALL_TAC
+    ,
+      Cases_on `bl.bb_last_statement` >|
+      [
+        Cases_on `b` >> FULL_SIMP_TAC (std_ss) []
+      ,
+        Cases_on `b0` >> Cases_on `b1` >> FULL_SIMP_TAC (srw_ss()) []
+      ,
+        FULL_SIMP_TAC (srw_ss()) []
+      ]
+    ] >> (
+      FULL_SIMP_TAC std_ss [finite_mapTheory.FLOOKUP_DEF, finite_mapTheory.FDOM_FUPDATE, pred_setTheory.COMPONENT] >>
+      FULL_SIMP_TAC (std_ss++bir_stmt_end_ss++bir_label_exp_ss) []
     ) >|
     [
       Cases_on `l1 IN FDOM wps` >- (
