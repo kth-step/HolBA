@@ -1305,12 +1305,15 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
     (* Another option is to nove this in the function that compute the WPS *)
     (* Only if bir_edges_blocks_in_prog is executable *)
     (bir_edges_blocks_in_prog p l) ==>
-    (* I do not this you need this, except if you want to split the proof in two parts *)
-    (!l2. (bir_edge_in_prog p l l2) ==> ~(l2 IN ls)) ==>
+    (~(l IN ls)) ==>
     (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps) ==>
-    (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post) wps) ==>
+    (FEVERY (\(l1, wp1). ((l1 IN ls) ==> (wp1 = post)) /\
+                         ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls wp1 post))
+            ) wps) ==>
     ((bir_wp_exec_of_block p l ls post wps) = SOME wps') ==>
-    (FEVERY (\(l1, wp1). bir_exec_to_labels_triple p l1 ls wp1 post) wps')
+    (FEVERY (\(l1, wp1). ((l1 IN ls) ==> (wp1 = post)) /\
+                         ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls wp1 post))
+            ) wps')
 ``,
 
   REPEAT STRIP_TAC >>
@@ -1358,15 +1361,9 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
             METIS_TAC []
           ) >>
 
-          subgoal `~(l1 IN ls)` >- (
-            Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> E` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >>
-            FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM] >>
-            METIS_TAC []
-          ) >>
-
           FULL_SIMP_TAC (std_ss) [bir_get_program_block_info_by_label_MEM, finite_mapTheory.FEVERY_DEF]
         ) >>
-
+        
         Q.PAT_X_ASSUM `FUPDATE A B = C` (fn thm => ASSUME_TAC (GSYM thm)) >>
         Q.ABBREV_TAC `exp1 = bir_wp_exec_stmtsB bl.bb_statements (FAPPLY wps l1)` >>
         FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_FUPDATE, FEVERY_FEVERY_DRESTRICT_thm]
@@ -1389,12 +1386,6 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
             FULL_SIMP_TAC (std_ss) [bir_edges_blocks_in_prog_def, bir_labels_of_program_def] >>
             Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> ?E. G` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >> ASSUME_TAC (Q.SPEC `l2` thm)) >>
             FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM, listTheory.MEM_MAP] >>
-            METIS_TAC []
-          ) >>
-
-          subgoal `~(l1 IN ls) /\ ~(l2 IN ls)` >- (
-            Q.PAT_X_ASSUM `!A. bir_edge_in_prog B C D ==> E` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm) >> ASSUME_TAC (Q.SPEC `l2` thm)) >>
-            FULL_SIMP_TAC (std_ss) [bir_edge_in_prog_def, bir_get_program_block_info_by_label_THM] >>
             METIS_TAC []
           ) >>
 
