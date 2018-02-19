@@ -1185,6 +1185,122 @@ val bir_edges_blocks_in_prog_def = Define `
            (?bl2. ( (MEM bl2 bls) /\ (bl2.bb_label = l2) ))
 `; (* ==> MEM l2 (bir_labels_of_program (BirProgram bls)) *)
 
+val bir_targets_in_prog_exec_def = Define `
+    bir_targets_in_prog_exec p l1 =
+      case bir_get_program_block_info_by_label p l1 of
+        NONE => []
+      | SOME (_,bl1) => 
+          case bl1.bb_last_statement of
+            BStmt_Jmp (BLE_Label l2) => [l2]
+          | BStmt_CJmp e (BLE_Label l2) (BLE_Label l3) => [l2;l3]
+          | BStmt_Halt e => []
+          | _ => []
+`;
+
+val bir_edges_blocks_in_prog_exec_def = Define `
+    bir_edges_blocks_in_prog_exec (BirProgram bls) l1 =
+      EVERY (\l2. EXISTS (\bl2. bl2.bb_label = l2) bls)
+            (bir_targets_in_prog_exec (BirProgram bls) l1)
+`;
+
+val bir_edges_blocks_in_prog_exec_eq_thm = store_thm("bir_edges_blocks_in_prog_exec_eq_thm",
+``
+!bls l1.
+    (bir_is_valid_labels (BirProgram bls)) ==>
+    (bir_edges_blocks_in_prog (BirProgram bls) l1 = bir_edges_blocks_in_prog_exec (BirProgram bls) l1)
+``,
+
+  REPEAT STRIP_TAC >>
+
+  REWRITE_TAC [bir_targets_in_prog_exec_def, bir_edge_in_prog_def, bir_edges_blocks_in_prog_def, bir_edges_blocks_in_prog_exec_def] >>
+  REWRITE_TAC [listTheory.EVERY_MEM, listTheory.EXISTS_MEM, LET_DEF] >>
+  BETA_TAC >>
+
+  Cases_on `bir_get_program_block_info_by_label (BirProgram bls) l1` >- (
+    FULL_SIMP_TAC std_ss [bir_program_valid_stateTheory.bir_get_program_block_info_by_label_valid_THM, listTheory.MEM] >>
+    REPEAT STRIP_TAC >> REV_FULL_SIMP_TAC std_ss []
+  ) >>
+
+  Cases_on `x` >>
+  Q.RENAME1_TAC `SOME (idx, bl1)` >>
+  REV_FULL_SIMP_TAC std_ss [bir_program_valid_stateTheory.bir_get_program_block_info_by_label_valid_THM] >>
+
+  FULL_SIMP_TAC (srw_ss()) [] >>
+
+  EQ_TAC >|
+  [
+    REPEAT STRIP_TAC >>
+
+    Cases_on `bl1.bb_last_statement` >|
+    [
+      FULL_SIMP_TAC (srw_ss()) [] >>
+      Cases_on `b` >> (FULL_SIMP_TAC (srw_ss()) [] >> METIS_TAC [rich_listTheory.EL_MEM])
+    ,
+      FULL_SIMP_TAC (srw_ss()) [] >>
+      Cases_on `b0` >> (Cases_on `b1` >> (FULL_SIMP_TAC (srw_ss()) [] >> METIS_TAC [rich_listTheory.EL_MEM]))
+    ,
+      FULL_SIMP_TAC (srw_ss()) []      
+    ]
+  ,
+
+    REPEAT STRIP_TAC >> (
+      subgoal `bl1' = bl1` >- (
+        Q.PAT_X_ASSUM `!x. A` (K ALL_TAC) >>
+
+        FULL_SIMP_TAC (std_ss) [bir_program_valid_stateTheory.bir_is_valid_labels_def, bir_labels_of_program_def] >>
+        FULL_SIMP_TAC (list_ss) [listTheory.MEM_EL] >>
+
+        METIS_TAC [listTheory.ALL_DISTINCT_EL_IMP, listTheory.LENGTH_MAP, listTheory.EL_MAP]
+(*
+        Q.PAT_X_ASSUM `!x. (?y. A) ==> B` (fn thm => ASSUME_TAC (Q.SPEC `l1` thm)) >>
+
+        CCONTR_TAC >>
+
+        subgoal `FILTER ($= l1) (MAP (\bl. bl.bb_label) bls) = [l1]` >- (METIS_TAC []) >>
+
+        subgoal `MEM bl1 bls` >- (
+          METIS_TAC [listTheory.MEM_EL]
+        ) >>
+
+        cheat
+*)
+      ) >>
+      FULL_SIMP_TAC (srw_ss()) [] >>
+      METIS_TAC []
+    )
+  ]
+);
+(*
+    Cases_on `bl1.bb_last_statement` >|
+    [
+      FULL_SIMP_TAC (srw_ss()) [] >>
+      Cases_on `b` >> (FULL_SIMP_TAC (srw_ss()) [] >> METIS_TAC [rich_listTheory.EL_MEM])
+    ,
+      FULL_SIMP_TAC (srw_ss()) [] >>
+      Cases_on `b0` >> (Cases_on `b1` >> (FULL_SIMP_TAC (srw_ss()) [] >> METIS_TAC [rich_listTheory.EL_MEM]))
+    ,
+      FULL_SIMP_TAC (srw_ss()) []      
+    ]
+  ]
+);
+*)
+
+(*
+(*  FULL_SIMP_TAC (std_ss) [bir_program_valid_stateTheory.bir_is_valid_labels_def] >>*)
+
+
+
+bir_programTheory.bir_get_program_block_info_by_label_MEM
+bir_programTheory.bir_get_program_block_info_by_label_def
+
+  REPEAT GEN_TAC >>
+  Q.RENAME1_TAC `bir_edges_blocks_in_prog p l1` >>
+
+
+  
+
+);
+*)
 
 
 val bir_stmt_end_ss = rewrites (type_rws ``:bir_stmt_end_t``);
