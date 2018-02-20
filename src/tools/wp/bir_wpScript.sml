@@ -766,6 +766,35 @@ val bir_declare_free_prog_def = Define `
     ! bl. (MEM bl l) ==> (EVERY bir_isnot_declare_stmt bl.bb_statements)
 `;
 
+val bir_declare_free_prog_exec_def = Define `
+    (bir_declare_free_prog_exec (BirProgram []) = T) /\
+    (bir_declare_free_prog_exec (BirProgram (h::l)) = ((EVERY bir_isnot_declare_stmt h.bb_statements) /\ (bir_declare_free_prog_exec (BirProgram l))))
+`;
+
+val bir_declare_free_prog_exec_eq_thm = store_thm("bir_declare_free_prog_exec_eq_thm",
+``
+!bls.
+    (bir_declare_free_prog (BirProgram bls) = bir_declare_free_prog_exec (BirProgram bls))
+``,
+
+  Induct_on `bls` >- (
+    REWRITE_TAC [bir_declare_free_prog_def, bir_declare_free_prog_exec_def, listTheory.MEM]
+  ) >>
+
+  REWRITE_TAC [bir_declare_free_prog_def, bir_declare_free_prog_exec_def, listTheory.MEM] >>
+
+  STRIP_TAC >> EQ_TAC >- (
+    REPEAT STRIP_TAC >> (
+      METIS_TAC [listTheory.MEM, bir_declare_free_prog_def]
+    )
+  ) >>
+
+  REPEAT STRIP_TAC >> (
+    METIS_TAC [bir_declare_free_prog_def]
+  )
+);
+
+
 val bir_env_vars_are_initialised_prog_block_thm = prove(``
   !p l bl env.
     (bir_is_valid_program p) ==>
@@ -1168,6 +1197,57 @@ val bir_jmp_direct_labels_only_def = Define `
                            (?e l1 l2. bl.bb_last_statement = BStmt_CJmp e (BLE_Label l1) (BLE_Label l2))
       )
 `;
+
+val bir_jmp_direct_labels_only_exec_def = Define `
+    (bir_jmp_direct_labels_only_exec (BirProgram []) = T) /\
+    (bir_jmp_direct_labels_only_exec (BirProgram (h::l)) = (case h.bb_last_statement of
+                                                               BStmt_Jmp (BLE_Label _) => T
+                                                             | BStmt_CJmp _ (BLE_Label _) (BLE_Label _) => T
+                                                             | _ => F) /\
+                                                           (bir_jmp_direct_labels_only_exec (BirProgram l)))
+`;
+
+(*
+val bir_jmp_direct_labels_only_exec_eq_thm = store_thm("bir_jmp_direct_labels_only_exec_eq_thm",
+``
+!bls.
+    (bir_jmp_direct_labels_only (BirProgram bls) = bir_jmp_direct_labels_only_exec (BirProgram bls))
+``,
+
+  Induct_on `bls` >- (
+    REWRITE_TAC [bir_jmp_direct_labels_only_def, bir_jmp_direct_labels_only_exec_def, listTheory.MEM]
+  ) >>
+
+  REWRITE_TAC [bir_jmp_direct_labels_only_def, bir_jmp_direct_labels_only_exec_def] >>
+
+  GEN_TAC >> EQ_TAC >- (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC (list_ss) [] >>
+
+    Cases_on `h.bb_last_statement` >|
+    [
+      Cases_on `b` >- (
+        FULL_SIMP_TAC (srw_ss()) []
+      ) >>
+
+      
+    ,
+    ,
+    ]
+  ) >>
+
+
+
+  Cases_on `h.bb_last_statement` >|
+  [
+    Cases_on `b` >- (
+      FULL_SIMP_TAC (srw_ss()) []
+    )
+  ,
+  ,
+  ]
+);
+*)
 
 val bir_edge_in_prog_def = Define `
     bir_edge_in_prog (BirProgram bls) l1 l2 =
