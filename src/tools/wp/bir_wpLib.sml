@@ -60,17 +60,18 @@ fun proc_step0 reusable_thm (program, post, ls) defs =
 	thm
     end;
 
+(* include current label in reasoning *)
 fun proc_step1 label prog_thm (program, post, ls) defs =
     let
         val var_wps = ``wps:(bir_label_t |-> bir_exp_t)``;
         val var_wps1 = ``wps':(bir_label_t |-> bir_exp_t)``;
         val thm = SPECL [label, var_wps, var_wps1] prog_thm;
 
-        val label_in_prog_conv = [bir_labels_of_program_def];
+        val label_in_prog_conv = [bir_labels_of_program_def, BL_Address_HC_def];
         val edges_blocks_in_prog_conv = [bir_edges_blocks_in_prog_exec_def, bir_targets_in_prog_exec_def, bir_get_program_block_info_by_label_def, listTheory.INDEX_FIND_def, BL_Address_HC_def];
         val l_not_in_ls_conv = [BL_Address_HC_def];
 
-        val label_in_prog_thm = SIMP_CONV (srw_ss()) (label_in_prog_conv@defs) ``MEM ^label (bir_labels_of_program ^program)``
+        val label_in_prog_thm = SIMP_CONV (srw_ss()) (label_in_prog_conv@defs) ``MEM ^label (bir_labels_of_program ^program)``;
         val thm = MP thm (SIMP_RULE std_ss [] label_in_prog_thm);
         val edges_blocks_in_prog_thm = SIMP_CONV (srw_ss()) (edges_blocks_in_prog_conv@defs) ``bir_edges_blocks_in_prog_exec ^program ^label``;
 	val thm = MP thm (SIMP_RULE std_ss [] edges_blocks_in_prog_thm);
@@ -83,18 +84,13 @@ fun proc_step1 label prog_thm (program, post, ls) defs =
     end;
 
 
-(*
-((proc_step2 wps wps_bool_thm wps_sound_thm) o (proc_step1 label) o proc_step0) program post ls
-*)
-
-(* wp_on_label *)
+(* produce wps1 and reestablish bool_sound_thm for this one *)
 fun proc_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label)) defs =
     let
         val var_wps1 = ``wps':(bir_label_t |-> bir_exp_t)``;
         val thm = SPECL [wps, var_wps1] prog_l_thm;
 	val thm = MP thm (SIMP_RULE std_ss [] wps_bool_sound_thm);
 
-(* TODO: think about / fix EVAL here *)
         val wps1_thm = EVAL ``bir_wp_exec_of_block ^program ^label ^ls ^post ^wps``;
 	val wps1 = (snd o dest_comb o snd o dest_eq o concl) wps1_thm;
 	val thm = SPEC wps1 (GEN var_wps1 thm);
@@ -105,38 +101,53 @@ fun proc_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label
 
 
 
-(*
+
+
+(* helper for simple traversal in recursive procedure *)
 fun is_lbl_in_wps wps label =
     (optionSyntax.is_some o snd o dest_eq o concl o EVAL) ``FLOOKUP ^wps ^label``;
 
-fun recursive_proc program program_thm wps wps_bool_thm wps_sound_thm =
-    let val blocks = (snd o dest_BirProgram_list) program;
+(* recursive procedure for traversing the control flow graph *)
+fun recursive_proc prog_term prog_thm (wps, wps_bool_sound_thm) (program, post, ls) defs =
+    let
+        val blocks = (snd o dest_BirProgram_list) prog_term;
 	val block = List.find (fn block =>
-	      let val (label, _, end_statement) = dest_bir_block block;
+	      let
+                  val (label, _, end_statement) = dest_bir_block block;
 		  val label = (snd o dest_eq o concl o EVAL) label;
 	      in
-		  if is_lbl_in_wps wps label then false
-		  else if is_BStmt_Halt end_statement then false
-		  else if is_BStmt_Jmp end_statement then
+                  (not (is_lbl_in_wps wps label))
+                  andalso
+		  (not (is_BStmt_Halt end_statement))
+                  andalso
+                  (
+                    ((is_BStmt_Jmp end_statement) andalso (
 		      ((is_lbl_in_wps wps) o dest_BLE_Label o dest_BStmt_Jmp) end_statement
-		  else if is_BStmt_CJmp end_statement then
-		      (((is_lbl_in_wps wps) o dest_BLE_Label o #2 o dest_BStmt_CJmp) end_statement) andalso (((is_lbl_in_wps wps) o dest_BLE_Label o #3 o dest_BStmt_CJmp) end_statement)             
-		  else 
-		      false
+                    ))
+                  orelse
+		    ((is_BStmt_CJmp end_statement) andalso (
+		      ((((is_lbl_in_wps wps) o dest_BLE_Label o #2 o dest_BStmt_CJmp) end_statement) andalso (((is_lbl_in_wps wps) o dest_BLE_Label o #3 o dest_BStmt_CJmp) end_statement))
+                    ))
+                  )
 	      end)
-            blocks in
-    case block of 
-    SOME(bl) => 
-      let val (label, _, end_statement) = dest_bir_block bl in
-          wp_on_label program_thm wps wps_bool_thm wps_sound_thm label
-      end
-    | _ => (wps, wps_bool_thm, wps_sound_thm)
+            blocks
+    in
+      case block of 
+          SOME (bl) => 
+                let
+                  val (label, _, _) = dest_bir_block bl;
+                  val prog_l_thm = proc_step1 label prog_thm (program, post, ls) defs;
+                  val (wps1, wps1_bool_sound_thm) = proc_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label)) defs;
+                in
+                  (* recursive call with new wps tuple *)
+                  (*(wps1, wps1_bool_sound_thm)*)
+                  recursive_proc prog_term prog_thm (wps1, wps1_bool_sound_thm) (program, post, ls) defs
+                end
+        | _ => (wps, wps_bool_sound_thm)
     end;
 
 
 
-
-*)
 
 
 
@@ -235,6 +246,9 @@ val ls = ``aes_ls``;
 val wps = ``aes_wps``;
 
 
+
+
+(* wps_bool_sound_thm for initial wps *)
 val wps_bool_thm = prove(``
       bir_bool_wps_map ^wps
 ``,
@@ -253,25 +267,43 @@ val wps_bool_sound_thm = CONJ wps_bool_thm wps_sound_thm;
 
 
 
+
+(* prepare "problem-static" part of the theorem *)
 val reusable_thm = bir_wp_exec_of_block_reusable_thm;
 val defs = [aes_program_def, aes_post_def, aes_ls_def, aes_wps_def];
 val prog_thm = proc_step0 reusable_thm (program, post, ls) defs;
 
+
+
 (* one step label prep *)
-val label = ``BL_Address_HC (Imm64 0x400574w) "F9000FE0 (str x0, [sp,#24])"``;
+val label = ``BL_Address_HC (Imm64 0x400574w) "XZY"``;
 val prog_l_thm = proc_step1 label prog_thm (program, post, ls) defs;
+
+
+
 
 (* one step wps soundness *)
 val (wps1, wps1_bool_sound_thm) = proc_step2 (wps, wps_bool_sound_thm) (prog_l_thm) ((program, post, ls), (label)) defs;
 
+(* to make it readable or speedup *)
 val aes_wps1_def = Define `
       aes_wps1 = ^wps1
 `;
-
 val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM aes_wps1_def] wps1_bool_sound_thm;
 
 
-(*
-val (wps1, wps_sound1, wps_bool1) = recursive_proc program program_thm wps wps_bool_thm wps_sound_thm;
-*)
+
+
+
+(* and the recursive procedure *)
+val prog_term = (snd o dest_comb o concl) aes_program_def;
+
+val (wps1, wps1_bool_sound_thm) = recursive_proc prog_term prog_thm (wps, wps_bool_sound_thm) (program, post, ls) defs;
+
+(* to make it readable or speedup (copy and paste from a few lines above) *)
+val aes_wps1_def = Define `
+      aes_wps1 = ^wps1
+`;
+val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM aes_wps1_def] wps1_bool_sound_thm;
+
 
