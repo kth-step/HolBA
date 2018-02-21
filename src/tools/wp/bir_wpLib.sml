@@ -245,6 +245,11 @@ val post = ``aes_post``;
 val ls = ``aes_ls``;
 val wps = ``aes_wps``;
 
+val defs = [aes_program_def, aes_post_def, aes_ls_def, aes_wps_def];
+
+
+
+
 
 
 
@@ -253,14 +258,19 @@ val wps_bool_thm = prove(``
       bir_bool_wps_map ^wps
 ``,
 
-  cheat
+  REWRITE_TAC ([bir_bool_wps_map_def]@defs) >>
+  REWRITE_TAC [finite_mapTheory.FEVERY_FUPDATE, finite_mapTheory.DRESTRICT_FEMPTY, finite_mapTheory.FEVERY_FEMPTY] >>
+  SIMP_TAC (srw_ss()) [bir_is_bool_exp_def,type_of_bir_exp_def, bir_var_type_def, type_of_bir_imm_def, 
+		       bir_type_is_Imm_def, BType_Bool_def]
 );
 
 val wps_sound_thm = prove(``
       bir_sound_wps_map aes_program aes_ls aes_post ^wps
 ``,
 
-  cheat
+  REWRITE_TAC ([bir_sound_wps_map_def]@defs) >>
+  REWRITE_TAC [finite_mapTheory.FEVERY_FUPDATE, finite_mapTheory.DRESTRICT_FEMPTY, finite_mapTheory.FEVERY_FEMPTY] >>
+  SIMP_TAC (srw_ss()) []
 );
 
 val wps_bool_sound_thm = CONJ wps_bool_thm wps_sound_thm;
@@ -270,7 +280,6 @@ val wps_bool_sound_thm = CONJ wps_bool_thm wps_sound_thm;
 
 (* prepare "problem-static" part of the theorem *)
 val reusable_thm = bir_wp_exec_of_block_reusable_thm;
-val defs = [aes_program_def, aes_post_def, aes_ls_def, aes_wps_def];
 val prog_thm = proc_step0 reusable_thm (program, post, ls) defs;
 
 
@@ -285,7 +294,7 @@ val prog_l_thm = proc_step1 label prog_thm (program, post, ls) defs;
 (* one step wps soundness *)
 val (wps1, wps1_bool_sound_thm) = proc_step2 (wps, wps_bool_sound_thm) (prog_l_thm) ((program, post, ls), (label)) defs;
 
-(* to make it readable or speedup *)
+(* to make it readable or speedup by incremental buildup *)
 val aes_wps1_def = Define `
       aes_wps1 = ^wps1
 `;
