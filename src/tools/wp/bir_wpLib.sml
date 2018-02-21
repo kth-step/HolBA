@@ -236,15 +236,14 @@ val wps = ``aes_wps``;
 
 
 val wps_bool_thm = prove(``
-      FEVERY (λ(l1,wp1). bir_is_bool_exp wp1) ^wps
+      bir_bool_wps_map ^wps
 ``,
 
   cheat
 );
 
 val wps_sound_thm = prove(``
-      FEVERY (λ(l1,wp1). (l1 IN ^ls ==> (wp1 = ^post)) /\
-           ((~(l1 IN ^ls)) ==> bir_exec_to_labels_triple ^program l1 ^ls wp1 ^post)) ^wps
+      bir_sound_wps_map aes_program aes_ls aes_post ^wps
 ``,
 
   cheat

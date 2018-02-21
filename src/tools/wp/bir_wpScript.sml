@@ -1546,6 +1546,24 @@ val bir_wp_exec_of_block_sound_thm = store_thm("bir_wp_exec_of_block_sound_thm",
 );
 
 
+
+(*
+
+reworked area follows here
+
+*)
+
+
+val bir_bool_wps_map_def = Define `
+      bir_bool_wps_map wps = (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps)
+`;
+
+val bir_sound_wps_map_def = Define `
+      bir_sound_wps_map p ls post wps = (FEVERY (\(l1, wp1). ((l1 IN ls) ==> (wp1 = post)) /\
+                         ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls wp1 post))
+            ) wps)
+`;
+
 val bir_wp_exec_of_block_bool_exec_thm = store_thm("bir_wp_exec_of_block_bool_exec_thm",
 ``
 !p l (ls:bir_label_t->bool) post wps wps'.
@@ -1554,11 +1572,12 @@ val bir_wp_exec_of_block_bool_exec_thm = store_thm("bir_wp_exec_of_block_bool_ex
     (bir_is_valid_program p) ==>
     (bir_declare_free_prog_exec p) ==>
     (MEM l (bir_labels_of_program p)) ==>
-    (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps) ==>
+    (bir_bool_wps_map wps) ==>
     ((bir_wp_exec_of_block p l ls post wps) = SOME wps') ==>
-    (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps')
+    (bir_bool_wps_map wps')
 ``,
 
+  REWRITE_TAC [bir_bool_wps_map_def] >>
   METIS_TAC [bir_declare_free_prog_exec_eq_thm, bir_wp_exec_of_block_bool_thm]
 );
 
@@ -1572,16 +1591,13 @@ val bir_wp_exec_of_block_sound_exec_thm = store_thm("bir_wp_exec_of_block_sound_
     (MEM l (bir_labels_of_program p)) ==>
     (bir_edges_blocks_in_prog_exec p l) ==>
     (~(l IN ls)) ==>
-    (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps) ==>
-    (FEVERY (\(l1, wp1). ((l1 IN ls) ==> (wp1 = post)) /\
-                         ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls wp1 post))
-            ) wps) ==>
+    (bir_bool_wps_map wps) ==>
+    (bir_sound_wps_map p ls post wps) ==>
     ((bir_wp_exec_of_block p l ls post wps) = SOME wps') ==>
-    (FEVERY (\(l1, wp1). ((l1 IN ls) ==> (wp1 = post)) /\
-                         ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls wp1 post))
-            ) wps')
+    (bir_sound_wps_map p ls post wps')
 ``,
 
+  REWRITE_TAC [bir_bool_wps_map_def, bir_sound_wps_map_def] >>
   METIS_TAC [bir_declare_free_prog_exec_eq_thm, bir_program_valid_stateTheory.bir_is_valid_program_def, bir_edges_blocks_in_prog_exec_eq_thm, bir_wp_exec_of_block_sound_thm]
 );
 
@@ -1595,21 +1611,9 @@ val bir_wp_exec_of_block_reusable_thm = store_thm("bir_wp_exec_of_block_reusable
     (MEM l (bir_labels_of_program p)) ==>
     (bir_edges_blocks_in_prog_exec p l) ==>
     (~(l IN ls)) ==>
-   (
-    (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps)
-/\
-    (FEVERY (\(l1, wp1). ((l1 IN ls) ==> (wp1 = post)) /\
-                         ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls wp1 post))
-            ) wps)
-) ==>
+    ((bir_bool_wps_map wps) /\ (bir_sound_wps_map p ls post wps)) ==>
     ((bir_wp_exec_of_block p l ls post wps) = SOME wps') ==>
-    (
-     (FEVERY (\(l1, wp1). ((l1 IN ls) ==> (wp1 = post)) /\
-                         ((~(l1 IN ls)) ==> (bir_exec_to_labels_triple p l1 ls wp1 post))
-            ) wps')
-     /\
-     (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps')
-    )
+    ((bir_bool_wps_map wps') /\ (bir_sound_wps_map p ls post wps'))
 ``,
 
   METIS_TAC [bir_wp_exec_of_block_sound_exec_thm, bir_wp_exec_of_block_bool_exec_thm]
