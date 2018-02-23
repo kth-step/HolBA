@@ -15,6 +15,10 @@ default: all
 aes-test.exe: aes-test.uo 
 	$(HOLMOSMLC) -o $@ $<
 
+toy1-test.exe: toy1-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
+
 #aesTheory.uo: aes-test.exe 
 #	./aes-test.exe
 
