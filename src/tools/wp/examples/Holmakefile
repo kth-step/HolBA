@@ -1,4 +1,4 @@
-INCLUDES = ../../wp aes #../../../core ../ ../../../core-props
+INCLUDES = ../../wp aes ../../../core #../ ../../../core-props
 
 
 OPTIONS = QUIT_ON_FAILURE

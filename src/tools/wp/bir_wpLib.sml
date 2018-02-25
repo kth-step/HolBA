@@ -56,7 +56,7 @@ fun proc_step0 reusable_thm (program, post, ls) defs =
 			    bir_is_well_typed_stmtB_def,bir_is_well_typed_label_exp_def,
 			    type_of_bir_exp_def,bir_var_type_def,bir_type_is_Imm_def,type_of_bir_imm_def,
 			    bir_extra_expsTheory.BExp_Aligned_type_of,BExp_unchanged_mem_interval_distinct_type_of,
-			    bir_mem_expTheory.bir_number_of_mem_splits_REWRS, BType_Bool_def
+			    bir_mem_expTheory.bir_number_of_mem_splits_REWRS, BType_Bool_def, bir_exp_true_def, bir_exp_false_def, BExp_MSB_type_of
 			    ];
         val prog_valid_conv = [
 			     bir_program_valid_stateTheory.bir_is_valid_program_def,
@@ -158,12 +158,20 @@ fun recursive_proc prog_term prog_thm (wps, wps_bool_sound_thm) (program, post, 
           SOME (bl) => 
                 let
                   val (label, _, _) = dest_bir_block bl;
-                  val _ = print ("starting with block: " ^ (term_to_string label) ^ "\r\n");
+                  val _ = if (!debug_trace > 1) then
+                            print ("starting with block: " ^ (term_to_string label) ^ "\r\n")
+                          else
+                            ()
+                          ;
 
                   val prog_l_thm = proc_step1 label prog_thm (program, post, ls) defs;
                   val (wps1, wps1_bool_sound_thm) = proc_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label)) defs;
 
-                  val _ = print ("finished block: " ^ (term_to_string label) ^ "\r\n");
+                  val _ = if (!debug_trace > 1) then
+                            print ("finished block: " ^ (term_to_string label) ^ "\r\n")
+                          else
+                            ()
+                          ;
                 in
                   (* recursive call with new wps tuple *)
                   (*(wps1, wps1_bool_sound_thm)*)
