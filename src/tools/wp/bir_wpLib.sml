@@ -216,7 +216,7 @@ fun recursive_proc prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (prog
                         end) blstodo;
                   val wpsdom1 = label::wpsdom;
 
-                  val _ = if (!debug_trace > 1) then
+                  val _ = if (!debug_trace > 2) then
                             let
                               val wp_exp_term = (snd o dest_comb o concl o EVAL) ``(FAPPLY ^wps1 ^label)``;
                               val _ = bir_exp_pretty_print wp_exp_term;
