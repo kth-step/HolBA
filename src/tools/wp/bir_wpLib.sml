@@ -14,6 +14,8 @@ open bir_valuesTheory;
 open bir_expTheory;
 open bir_program_env_orderTheory;
 
+open bir_expLib;
+
 load "pairLib";
 
 
@@ -164,11 +166,30 @@ fun recursive_proc prog_term prog_thm (wps, wps_bool_sound_thm) (program, post, 
                             ()
                           ;
 
+                  val time_start = Time.now ();
+
                   val prog_l_thm = proc_step1 label prog_thm (program, post, ls) defs;
                   val (wps1, wps1_bool_sound_thm) = proc_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label)) defs;
 
                   val _ = if (!debug_trace > 1) then
+                            let
+                              val wp_exp_term = (snd o dest_comb o concl o EVAL) ``(FAPPLY ^wps1 ^label)``;
+                              val _ = bir_exp_pretty_print wp_exp_term;
+                            in
+                              ()
+                            end
+                          else
+                            ()
+                          ;
+
+                  val _ = if (!debug_trace > 1) then
                             print ("finished block: " ^ (term_to_string label) ^ "\r\n")
+                          else
+                            ()
+                          ;
+
+                  val _ = if (!debug_trace > 1) then
+                            print ("it took " ^ (LargeInt.toString (Time.toSeconds ((Time.now ()) - time_start))) ^ "s\r\n\r\n")
                           else
                             ()
                           ;

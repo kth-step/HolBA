@@ -44,6 +44,14 @@ fun get_subprog_with_n_last prog_term n =
         mk_BirProgram (mk_list (n_last_blocks, block_type))
       end;
 
+fun get_subprog_drop_n_at_end prog_term n =
+      let
+        val (block_list, block_type) = (dest_list o dest_BirProgram) prog_term;
+        val n_last_blocks = List.rev (List.drop (List.rev block_list, n))
+      in
+        mk_BirProgram (mk_list (n_last_blocks, block_type))
+      end;
+
 fun get_prog_length prog_term =
       let
         val (block_list, block_type) = (dest_list o dest_BirProgram) prog_term;
@@ -52,8 +60,24 @@ fun get_prog_length prog_term =
       end;
 
 
-val take_n_last = 11;
-val aes_program_term = get_subprog_with_n_last ((snd o dest_comb o concl) aes_arm8_program_THM) take_n_last;
+(*
+aes round
+0x4005dc - 0x40097c
+
+*)
+
+val take_all = true;
+val take_n_last = 51;
+
+val aes_program_term_whole = ((snd o dest_comb o concl) aes_arm8_program_THM);
+val aes_program_term_round = get_subprog_with_n_last (get_subprog_drop_n_at_end aes_program_term_whole 255) 233;
+
+val aes_program_term = if take_all then
+                         aes_program_term_round
+                       else
+                         get_subprog_with_n_last aes_program_term_round take_n_last
+                       ;
+
 val last_block_label = get_nth_last_label aes_program_term 0;
 val first_block_label = get_nth_last_label aes_program_term ((get_prog_length aes_program_term) - 1);
 
