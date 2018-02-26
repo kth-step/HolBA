@@ -76,7 +76,8 @@ fun proc_step0 reusable_thm (program, post, ls) defs =
 	val thm = MP thm (SIMP_RULE std_ss [] post_bool_thm);
 	val prog_typed_thm = SIMP_CONV (srw_ss()) (prog_typed_conv@defs) ``bir_is_well_typed_program ^program``;
 	val thm = MP thm (SIMP_RULE std_ss [] prog_typed_thm);
-	val prog_valid_thm = SIMP_CONV (srw_ss()) (prog_valid_conv@defs) ``bir_is_valid_program ^program``;
+        (*val prog_valid_thm = SIMP_CONV (srw_ss()) (prog_valid_conv@defs) ``bir_is_valid_program ^program``;*)
+	val prog_valid_thm = EVAL ``bir_is_valid_program ^program``;
 	val thm = MP thm (SIMP_RULE std_ss [] prog_valid_thm);
 	val no_declare_thm = SIMP_CONV (srw_ss()) (no_declare_conv@defs) ``bir_declare_free_prog_exec ^program``;
 	val thm = MP thm (SIMP_RULE std_ss [] no_declare_thm);
@@ -100,12 +101,13 @@ fun proc_step1 label prog_thm (program, post, ls) defs =
         (* val label_in_prog_thm = SIMP_CONV (srw_ss()) (label_in_prog_conv@defs) ``MEM ^label (bir_labels_of_program ^program)``; *)
         val label_in_prog_thm = EVAL ``MEM ^label (bir_labels_of_program ^program)``;
         val thm = MP thm (SIMP_RULE std_ss [] label_in_prog_thm);
-        val edges_blocks_in_prog_thm = SIMP_CONV (srw_ss()) (edges_blocks_in_prog_conv@defs) ``bir_edges_blocks_in_prog_exec ^program ^label``;
-	val thm = MP thm (SIMP_RULE std_ss [] edges_blocks_in_prog_thm);
-	val l_not_in_ls_thm = SIMP_CONV (srw_ss()) (l_not_in_ls_conv@defs) ``~(^label IN ^ls)``;
-	val thm = MP thm (SIMP_RULE std_ss [] l_not_in_ls_thm);
+        (*val edges_blocks_in_prog_thm = SIMP_CONV (srw_ss()) (edges_blocks_in_prog_conv@defs) ``bir_edges_blocks_in_prog_exec ^program ^label``;*)
+        val edges_blocks_in_prog_thm = EVAL ``bir_edges_blocks_in_prog_exec ^program ^label``;
+        val thm = MP thm (SIMP_RULE std_ss [] edges_blocks_in_prog_thm);
+        val l_not_in_ls_thm = SIMP_CONV (srw_ss()) (l_not_in_ls_conv@defs) ``~(^label IN ^ls)``;
+        val thm = MP thm (SIMP_RULE std_ss [] l_not_in_ls_thm);
 
-	val thm = GENL [var_wps, var_wps1] thm;
+        val thm = GENL [var_wps, var_wps1] thm;
     in
         thm
     end;
@@ -199,8 +201,9 @@ fun recursive_proc prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (prog
           SOME (bl) => 
                 let
                   val (label, _, _) = dest_bir_block bl;
+
                   val _ = if (!debug_trace > 1) then
-                            print ("starting with block: " ^ (term_to_string label) ^ "\r\n")
+                            print ("\n\r\nstarting with block: " ^ (term_to_string label) ^ "\r\n")
                           else
                             ()
                           ;
@@ -229,13 +232,13 @@ fun recursive_proc prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (prog
                           ;
 
                   val _ = if (!debug_trace > 1) then
-                            print ("finished block: " ^ (term_to_string label) ^ "\r\n")
+                            print ("it took " ^ (LargeInt.toString (Time.toSeconds ((Time.now ()) - time_start))) ^ "s\r\n")
                           else
                             ()
                           ;
 
-                  val _ = if (!debug_trace > 1) then
-                            print ("it took " ^ (LargeInt.toString (Time.toSeconds ((Time.now ()) - time_start))) ^ "s\r\n\r\n")
+                  val _ = if (!debug_trace > 0) then
+                            print ("remaining = " ^ (Int.toString (List.length blstodo1)) ^ "\r")
                           else
                             ()
                           ;
@@ -244,7 +247,15 @@ fun recursive_proc prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (prog
                   (*(wps1, wps1_bool_sound_thm)*)
                   recursive_proc prog_thm ((wps1, wps1_bool_sound_thm), (wpsdom1, blstodo1)) (program, post, ls) defs
                 end
-        | _ => (wps, wps_bool_sound_thm)
+        | _ => let
+                 val _ = if (!debug_trace > 0) then
+                           print ("\n")
+                         else
+                           ()
+                         ;
+               in
+                 (wps, wps_bool_sound_thm)
+               end
     end;
 
 

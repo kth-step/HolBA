@@ -67,7 +67,8 @@ aes round
 *)
 
 val take_all = false;
-val take_n_last = 51;
+val take_n_last = 50;
+val dontcalcfirstwp = true;
 
 val aes_program_term_whole = ((snd o dest_comb o concl) aes_arm8_program_THM);
 val aes_program_term_round = get_subprog_with_n_last (get_subprog_drop_n_at_end aes_program_term_whole 255) 233;
@@ -75,7 +76,7 @@ val aes_program_term_round = get_subprog_with_n_last (get_subprog_drop_n_at_end 
 val aes_program_term = if take_all then
                          aes_program_term_round
                        else
-                         get_subprog_with_n_last aes_program_term_round take_n_last
+                         get_subprog_with_n_last aes_program_term_round (take_n_last + 1)
                        ;
 
 val last_block_label = get_nth_last_label aes_program_term 0;
@@ -112,7 +113,13 @@ val defs = [aes_program_def, aes_post_def, aes_ls_def, aes_wps_def];
 val prog_term = (snd o dest_comb o concl) aes_program_def;
 val wps_term = (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) wps;
 val wps_bool_sound_thm = init_wps_bool_sound_thm (program, post, ls) wps defs;
-val rec_proc_jobs = init_rec_proc_jobs prog_term wps_term;
+val (wpsdom, blstodo) = init_rec_proc_jobs prog_term wps_term;
+val blstodo = if (dontcalcfirstwp) then
+                tl blstodo
+              else
+                blstodo
+              ;
+
 
 (*
 fst rec_proc_jobs
@@ -142,6 +149,9 @@ val label = ``BL_Address (Imm64 0x400DA8w)``;(* "9101C3FF (add sp, sp, #0x70)"``
 *)
 (* time intensive!!! *)
 (* and the recursive procedure *)
+val (wps1, wps1_bool_sound_thm) = recursive_proc prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (program, post, ls) defs;
+
+(*
 val (wpsdom, blstodo) = rec_proc_jobs;
 
 val SOME(bl) = block;
@@ -173,8 +183,8 @@ val edges_blocks_in_prog_thm = SIMP_CONV (srw_ss()) (edges_blocks_in_prog_conv@d
 
 val edges_blocks_in_prog_thm = SIMP_CONV (srw_ss()) (edges_blocks_in_prog@defs) ``bir_edges_blocks_in_prog_exec ^program ^label``;
     bir_edges_blocks_in_prog_exec_def
-    
-val (wps1, wps1_bool_sound_thm) = recursive_proc prog_thm ((wps, wps_bool_sound_thm), rec_proc_jobs) (program, post, ls) defs;
+ 
+*)
 
 
 (* to make it readable or speedup by incremental buildup *)
