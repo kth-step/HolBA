@@ -113,16 +113,47 @@ fun bir_wp_comp_wps_iter_step1 label prog_thm (program, post, ls) defs =
     end;
 
 
+fun extract_new_wp fmterm = (snd o dest_pair o snd o dest_fupdate) fmterm;
+val lbl_strip_comment = (snd o dest_comb o concl o EVAL);
+
+val bir_wp_comp_wps_iter_step2_defs = ref ([]:thm list);
+val bir_wp_comp_wps_iter_step2_consts = ref ([]:term list);
+val bir_wp_comp_wps_iter_step2_cntr = ref 0;
+
 (* produce wps1 and reestablish bool_sound_thm for this one *)
 fun bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label)) defs =
     let
+(*
+        val wps_id_idx = !bir_wp_comp_wps_iter_step2_cntr;
+        val _ = (bir_wp_comp_wps_iter_step2_cntr := (!bir_wp_comp_wps_iter_step2_cntr) + 1);
+        val wps_id_suffix = Int.toString wps_id_idx;
+*)
+        val wps_id_suffix = (term_to_string o snd o gen_dest_Imm o dest_BL_Address o lbl_strip_comment) label;
+
         val var_wps1 = ``wps':(bir_label_t |-> bir_exp_t)``;
         val thm = SPECL [wps, var_wps1] prog_l_thm;
-	val thm = MP thm (SIMP_RULE std_ss [] wps_bool_sound_thm);
 
-        val wps1_thm = EVAL ``bir_wp_exec_of_block ^program ^label ^ls ^post ^wps``;
+(* this took a while, it should not have been?! *)
+	val thm = MP thm wps_bool_sound_thm;
+
+(* this takes a bit, not anymore? *)
+        val wps_eval_restrict_consts = !bir_wp_comp_wps_iter_step2_consts;
+        val wps1_thm = computeLib.RESTR_EVAL_CONV wps_eval_restrict_consts (list_mk_comb (``bir_wp_exec_of_block:'a bir_program_t ->
+  bir_label_t ->
+  (bir_label_t -> bool) ->
+  bir_exp_t ->
+  (bir_label_t |-> bir_exp_t) -> (bir_label_t |-> bir_exp_t) option``, [program, label, ls, post, wps]));
 	val wps1 = (snd o dest_comb o snd o dest_eq o concl) wps1_thm;
-	val thm = SPEC wps1 (GEN var_wps1 thm);
+        val new_wp_id = "bir_wp_comp_wps_iter_step2_wp_" ^ wps_id_suffix;
+        val new_wp_id_var = mk_var (new_wp_id, ``:bir_exp_t``);
+        val new_wp_def = Define `^new_wp_id_var = ^(extract_new_wp wps1)`;
+        val new_wp_id_const = mk_const (new_wp_id, ``:bir_exp_t``);
+        val _ = (bir_wp_comp_wps_iter_step2_consts := new_wp_id_const::wps_eval_restrict_consts);
+        val wps1_thm2 = REWRITE_CONV [GSYM new_wp_def] ((snd o dest_eq o concl) wps1_thm);
+        val wps1_thm = TRANS wps1_thm wps1_thm2
+        val wps1 = (snd o dest_comb o snd o dest_eq o concl) wps1_thm;
+
+        val thm = SPEC wps1 (GEN var_wps1 thm);
 	val wps1_bool_sound_thm = MP thm wps1_thm;
     in
 	(wps1, wps1_bool_sound_thm)
@@ -139,9 +170,8 @@ fun is_lbl_in_wps wps label =
 
 fun cmp_label lbla lblb =
       let
-        val strip_comment = (snd o dest_comb o concl o EVAL); (*(SIMP_CONV std_ss [BL_Address_HC_def])*)
-        val lbla1 = strip_comment lbla;
-        val lblb1 = strip_comment lblb;
+        val lbla1 = lbl_strip_comment lbla;
+        val lblb1 = lbl_strip_comment lblb;
       in
         term_eq lbla1 lblb1
       end;
@@ -149,18 +179,18 @@ fun cmp_label lbla lblb =
 (*EVAL ``BL_Address_HC b hc``*)
 
 
-fun fmap_to_dom_list fmap =
+fun bir_wp_fmap_to_dom_list fmap =
       if is_fempty fmap then [] else
       let
         val (fmap1, kv) = dest_fupdate fmap;
         val k = (fst o dest_pair) kv;
       in
-        (k)::(List.filter (fn k1 => not (cmp_label k1 k)) (fmap_to_dom_list fmap1))
+        (k)::(List.filter (fn k1 => not (cmp_label k1 k)) (bir_wp_fmap_to_dom_list fmap1))
       end;
 
 fun bir_wp_init_rec_proc_jobs prog_term wps_term =
       let
-        val wpsdom = fmap_to_dom_list wps_term;
+        val wpsdom = bir_wp_fmap_to_dom_list wps_term;
         val blocks = (snd o dest_BirProgram_list) prog_term;
         fun blstodofilter block = let
                                     val (label, _, _) = dest_bir_block block;

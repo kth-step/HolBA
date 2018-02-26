@@ -9,7 +9,7 @@ open bir_expLib;
 
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
-val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
+val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 1;
 
 
 
@@ -66,8 +66,8 @@ aes round
 
 *)
 
-val take_all = false;
-val take_n_last = 10;
+val take_all = true; (* a normal run, should override the others *)
+val take_n_last = 11;
 val dontcalcfirstwp = true;
 
 val aes_program_term_whole = ((snd o dest_comb o concl) aes_arm8_program_THM);
@@ -115,17 +115,14 @@ val prog_term = (snd o dest_comb o concl) aes_program_def;
 val wps_term = (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) wps;
 val wps_bool_sound_thm = bir_wp_init_wps_bool_sound_thm (program, post, ls) wps defs;
 val (wpsdom, blstodo) = bir_wp_init_rec_proc_jobs prog_term wps_term;
-val blstodo = if (dontcalcfirstwp) then
+
+val blstodofst = hd blstodo;
+val blstodo = if (dontcalcfirstwp andalso (not take_all)) then
                 tl blstodo
               else
                 blstodo
               ;
 
-
-(*
-fst rec_proc_jobs
-snd rec_proc_jobs
-*)
 
 
 (* prepare "problem-static" part of the theorem *)
@@ -136,11 +133,11 @@ val prog_thm = bir_wp_comp_wps_iter_step0_init reusable_thm (program, post, ls) 
 (* step-wise for debugging *)
 
 (* one step label prep *)
-val label = ``BL_Address_HC (Imm64 0x40057Cw) "XZY"``;
-val prog_l_thm = proc_step1 label prog_thm (program, post, ls) defs;
+val label = ``BL_Address_HC (Imm64 0x400974w) "XZY"``;
+val prog_l_thm = bir_wp_comp_wps_iter_step1 label prog_thm (program, post, ls) defs;
 
 (* one step wps soundness *)
-val (wps1, wps1_bool_sound_thm) = proc_step2 (wps, wps_bool_sound_thm) (prog_l_thm) ((program, post, ls), (label)) defs;
+val (wps1, wps1_bool_sound_thm) = bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm) (prog_l_thm) ((program, post, ls), (label)) defs;
 *)
 
 
@@ -150,9 +147,10 @@ val label = ``BL_Address (Imm64 0x400DA8w)``;(* "9101C3FF (add sp, sp, #0x70)"``
 *)
 (* time intensive!!! *)
 (* and the recursive procedure *)
-val (wps1, wps1_bool_sound_thm) = bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (program, post, ls) defs;
+val (wps1, wps1_bool_sound_thm) = bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm), (wpsdom, List.rev blstodo)) (program, post, ls) defs;
 
 (*
+(* experiments for speeding up step0 and step1 *)
 val (wpsdom, blstodo) = rec_proc_jobs;
 
 val SOME(bl) = block;
@@ -188,17 +186,34 @@ val edges_blocks_in_prog_thm = SIMP_CONV (srw_ss()) (edges_blocks_in_prog@defs) 
 *)
 
 
+(*
+(* experiments for speeding up step2 *)
+*)
+
+(*
+val blstodo = [blstodofst];
+val (wps, wps_bool_sound_thm) = (wps1, wps1_bool_sound_thm);
+val wpsdom = bir_wp_fmap_to_dom_list wps;
+(* bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (program, post, ls) defs; *)
+
+val bl = blstodofst;
+
+
+
+
+
+*)
+
+
 (* to make it readable or speedup by incremental buildup *)
 val aes_wps1_def = Define `
       aes_wps1 = ^wps1
 `;
 val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM aes_wps1_def] wps1_bool_sound_thm;
 
-(*
+
 val _ = print "===========";
 val _ = print "weakest precondition:";
 val wp_exp_term = (snd o dest_comb o concl o EVAL) ``(FAPPLY aes_wps1 ^snd_block_label)``;
 val _ = bir_exp_pretty_print wp_exp_term;
-*)
-
 
