@@ -15,6 +15,8 @@ open bir_expTheory;
 open bir_program_env_orderTheory;
 
 open bir_expLib;
+open finite_mapSyntax;
+open pairSyntax;
 
 load "pairLib";
 
@@ -126,35 +128,71 @@ fun proc_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label
 
 
 
-
+(*
 (* helper for simple traversal in recursive procedure *)
 fun is_lbl_in_wps wps label =
     (optionSyntax.is_some o snd o dest_eq o concl o EVAL) ``FLOOKUP ^wps ^label``;
+*)
+
+fun cmp_label lbla lblb =
+      let
+        val strip_comment = (snd o dest_comb o concl o EVAL); (*(SIMP_CONV std_ss [BL_Address_HC_def])*)
+        val lbla1 = strip_comment lbla;
+        val lblb1 = strip_comment lblb;
+      in
+        term_eq lbla1 lblb1
+      end;
+
+(*EVAL ``BL_Address_HC b hc``*)
+
+
+fun fmap_to_dom_list fmap =
+      if is_fempty fmap then [] else
+      let
+        val (fmap1, kv) = dest_fupdate fmap;
+        val k = (fst o dest_pair) kv;
+      in
+        (k)::(List.filter (fn k1 => not (cmp_label k1 k)) (fmap_to_dom_list fmap1))
+      end;
+
+fun init_rec_proc_jobs prog_term wps_term =
+      let
+        val wpsdom = fmap_to_dom_list wps_term;
+        val blocks = (snd o dest_BirProgram_list) prog_term;
+        fun blstodofilter block = let
+                                    val (label, _, _) = dest_bir_block block;
+                                  in
+                                    not (List.exists (fn el => cmp_label el label) wpsdom)
+                                  end;
+        val blstodo = List.filter blstodofilter blocks;
+      in
+        (wpsdom, blstodo)
+      end;
 
 (* recursive procedure for traversing the control flow graph *)
-fun recursive_proc prog_term prog_thm (wps, wps_bool_sound_thm) (program, post, ls) defs =
+fun recursive_proc prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (program, post, ls) defs =
     let
-        val blocks = (snd o dest_BirProgram_list) prog_term;
 	val block = List.find (fn block =>
 	      let
                   val (label, _, end_statement) = dest_bir_block block;
-		  val label = (snd o dest_eq o concl o EVAL) label;
+		  (*val label = (snd o dest_eq o concl o EVAL) label;*)
+                  fun is_lbl_in_wps lbl = List.exists (fn el => cmp_label el lbl) wpsdom;
 	      in
-                  (not (is_lbl_in_wps wps label))
-                  andalso
+                  (*(not (is_lbl_in_wps wps label))
+                  andalso*)
 		  (not (is_BStmt_Halt end_statement))
                   andalso
                   (
                     ((is_BStmt_Jmp end_statement) andalso (
-		      ((is_lbl_in_wps wps) o dest_BLE_Label o dest_BStmt_Jmp) end_statement
+		      (is_lbl_in_wps o dest_BLE_Label o dest_BStmt_Jmp) end_statement
                     ))
                   orelse
 		    ((is_BStmt_CJmp end_statement) andalso (
-		      ((((is_lbl_in_wps wps) o dest_BLE_Label o #2 o dest_BStmt_CJmp) end_statement) andalso (((is_lbl_in_wps wps) o dest_BLE_Label o #3 o dest_BStmt_CJmp) end_statement))
+		      (((is_lbl_in_wps o dest_BLE_Label o #2 o dest_BStmt_CJmp) end_statement) andalso ((is_lbl_in_wps o dest_BLE_Label o #3 o dest_BStmt_CJmp) end_statement))
                     ))
                   )
 	      end)
-            blocks
+            blstodo
     in
       case block of 
           SOME (bl) => 
@@ -170,6 +208,13 @@ fun recursive_proc prog_term prog_thm (wps, wps_bool_sound_thm) (program, post, 
 
                   val prog_l_thm = proc_step1 label prog_thm (program, post, ls) defs;
                   val (wps1, wps1_bool_sound_thm) = proc_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label)) defs;
+                  val blstodo1 = List.filter (fn block =>
+                        let
+                          val (label_el, _, _) = dest_bir_block block;
+                        in
+                          not (cmp_label label label_el)
+                        end) blstodo;
+                  val wpsdom1 = label::wpsdom;
 
                   val _ = if (!debug_trace > 1) then
                             let
@@ -196,7 +241,7 @@ fun recursive_proc prog_term prog_thm (wps, wps_bool_sound_thm) (program, post, 
                 in
                   (* recursive call with new wps tuple *)
                   (*(wps1, wps1_bool_sound_thm)*)
-                  recursive_proc prog_term prog_thm (wps1, wps1_bool_sound_thm) (program, post, ls) defs
+                  recursive_proc prog_thm ((wps1, wps1_bool_sound_thm), (wpsdom1, blstodo1)) (program, post, ls) defs
                 end
         | _ => (wps, wps_bool_sound_thm)
     end;

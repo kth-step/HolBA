@@ -66,7 +66,7 @@ aes round
 
 *)
 
-val take_all = true;
+val take_all = false;
 val take_n_last = 51;
 
 val aes_program_term_whole = ((snd o dest_comb o concl) aes_arm8_program_THM);
@@ -108,9 +108,17 @@ val defs = [aes_program_def, aes_post_def, aes_ls_def, aes_wps_def];
 
 
 
-
 (* wps_bool_sound_thm for initial wps *)
+val prog_term = (snd o dest_comb o concl) aes_program_def;
+val wps_term = (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) wps;
 val wps_bool_sound_thm = init_wps_bool_sound_thm (program, post, ls) wps defs;
+val rec_proc_jobs = init_rec_proc_jobs prog_term wps_term;
+
+(*
+fst rec_proc_jobs
+snd rec_proc_jobs
+*)
+
 
 (* prepare "problem-static" part of the theorem *)
 val reusable_thm = bir_wp_exec_of_block_reusable_thm;
@@ -134,8 +142,7 @@ val label = ``BL_Address (Imm64 0x400DA8w)``;(* "9101C3FF (add sp, sp, #0x70)"``
 *)
 (* time intensive!!! *)
 (* and the recursive procedure *)
-val prog_term = (snd o dest_comb o concl) aes_program_def;
-val (wps1, wps1_bool_sound_thm) = recursive_proc prog_term prog_thm (wps, wps_bool_sound_thm) (program, post, ls) defs;
+val (wps1, wps1_bool_sound_thm) = recursive_proc prog_thm ((wps, wps_bool_sound_thm), rec_proc_jobs) (program, post, ls) defs;
 
 
 (* to make it readable or speedup by incremental buildup *)
@@ -144,10 +151,11 @@ val aes_wps1_def = Define `
 `;
 val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM aes_wps1_def] wps1_bool_sound_thm;
 
-
+(*
 val _ = print "===========";
 val _ = print "weakest precondition:";
 val wp_exp_term = (snd o dest_comb o concl o EVAL) ``(FAPPLY aes_wps1 ^first_block_label)``;
 val _ = bir_exp_pretty_print wp_exp_term;
+*)
 
 
