@@ -25,7 +25,7 @@ structure bir_wpLib =
 struct
 
 (* establish wps_bool_sound_thm for an initial analysis context (program, post, ls, wps) *)
-fun init_wps_bool_sound_thm (program, post, ls) wps defs =
+fun bir_wp_init_wps_bool_sound_thm (program, post, ls) wps defs =
       let
         val wps_bool_thm = prove(`` bir_bool_wps_map ^wps ``,
           REWRITE_TAC ([bir_bool_wps_map_def]@defs) >>
@@ -45,7 +45,7 @@ fun init_wps_bool_sound_thm (program, post, ls) wps defs =
 
 
 (* initial_thm_for_prog_post_ls *)
-fun proc_step0 reusable_thm (program, post, ls) defs =
+fun bir_wp_comp_wps_iter_step0_init reusable_thm (program, post, ls) defs =
     let
         val var_l = ``l:(bir_label_t)``;
         val var_wps = ``wps:(bir_label_t |-> bir_exp_t)``;
@@ -88,7 +88,7 @@ fun proc_step0 reusable_thm (program, post, ls) defs =
     end;
 
 (* include current label in reasoning *)
-fun proc_step1 label prog_thm (program, post, ls) defs =
+fun bir_wp_comp_wps_iter_step1 label prog_thm (program, post, ls) defs =
     let
         val var_wps = ``wps:(bir_label_t |-> bir_exp_t)``;
         val var_wps1 = ``wps':(bir_label_t |-> bir_exp_t)``;
@@ -114,7 +114,7 @@ fun proc_step1 label prog_thm (program, post, ls) defs =
 
 
 (* produce wps1 and reestablish bool_sound_thm for this one *)
-fun proc_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label)) defs =
+fun bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label)) defs =
     let
         val var_wps1 = ``wps':(bir_label_t |-> bir_exp_t)``;
         val thm = SPECL [wps, var_wps1] prog_l_thm;
@@ -158,7 +158,7 @@ fun fmap_to_dom_list fmap =
         (k)::(List.filter (fn k1 => not (cmp_label k1 k)) (fmap_to_dom_list fmap1))
       end;
 
-fun init_rec_proc_jobs prog_term wps_term =
+fun bir_wp_init_rec_proc_jobs prog_term wps_term =
       let
         val wpsdom = fmap_to_dom_list wps_term;
         val blocks = (snd o dest_BirProgram_list) prog_term;
@@ -173,7 +173,7 @@ fun init_rec_proc_jobs prog_term wps_term =
       end;
 
 (* recursive procedure for traversing the control flow graph *)
-fun recursive_proc prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (program, post, ls) defs =
+fun bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (program, post, ls) defs =
     let
 	val block = List.find (fn block =>
 	      let
@@ -210,8 +210,8 @@ fun recursive_proc prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (prog
 
                   val time_start = Time.now ();
 
-                  val prog_l_thm = proc_step1 label prog_thm (program, post, ls) defs;
-                  val (wps1, wps1_bool_sound_thm) = proc_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label)) defs;
+                  val prog_l_thm = bir_wp_comp_wps_iter_step1 label prog_thm (program, post, ls) defs;
+                  val (wps1, wps1_bool_sound_thm) = bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label)) defs;
                   val blstodo1 = List.filter (fn block =>
                         let
                           val (label_el, _, _) = dest_bir_block block;
@@ -245,7 +245,7 @@ fun recursive_proc prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (prog
                 in
                   (* recursive call with new wps tuple *)
                   (*(wps1, wps1_bool_sound_thm)*)
-                  recursive_proc prog_thm ((wps1, wps1_bool_sound_thm), (wpsdom1, blstodo1)) (program, post, ls) defs
+                  bir_wp_comp_wps prog_thm ((wps1, wps1_bool_sound_thm), (wpsdom1, blstodo1)) (program, post, ls) defs
                 end
         | _ => let
                  val _ = if (!debug_trace > 0) then
