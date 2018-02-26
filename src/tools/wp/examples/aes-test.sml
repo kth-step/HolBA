@@ -142,6 +142,38 @@ val label = ``BL_Address (Imm64 0x400DA8w)``;(* "9101C3FF (add sp, sp, #0x70)"``
 *)
 (* time intensive!!! *)
 (* and the recursive procedure *)
+val (wpsdom, blstodo) = rec_proc_jobs;
+
+val SOME(bl) = block;
+    
+val edges_blocks_in_prog_thm = SIMP_CONV (srw_ss()) (edges_blocks_in_prog_conv@defs) ``bir_edges_blocks_in_prog_exec ^program ^label``;
+
+val edges_blocks_in_prog_thm = SIMP_CONV (srw_ss()) (defs) ``bir_edges_blocks_in_prog_exec ^program ^label``;
+
+val label_in_prog_conv = [bir_labels_of_program_def, BL_Address_HC_def];
+val edges_blocks_in_prog_conv = [bir_edges_blocks_in_prog_exec_def, bir_targets_in_prog_exec_def, bir_get_program_block_info_by_label_def, listTheory.INDEX_FIND_def, BL_Address_HC_def];
+val l_not_in_ls_conv = [BL_Address_HC_def];
+val label_in_prog_thm = SIMP_CONV (srw_ss()) (label_in_prog_conv@defs) ``MEM ^label (bir_labels_of_program ^program)``;
+
+val all_labels_thm = SIMP_CONV (srw_ss()) (label_in_prog_conv@defs) ``(bir_labels_of_program ^program)``;
+val list = (snd o dest_eq o concl)all_labels_thm;
+
+val all_lbs_def = Define `all_lbs = ^list`;
+val label_in_prog1_thm = SIMP_CONV (list_ss) (label_in_prog_conv@[all_lbs_def]@defs) ``MEM ^label all_lbs``;
+
+val label_in_prog1_thm = SIMP_CONV (list_ss) (label_in_prog_conv@[all_lbs_def]@defs) ``MEM ^label ^list``;
+
+
+     bir_edges_blocks_in_prog_exec (BirProgram bls) l1 ⇔
+     EVERY (λl2. MEM l2 (BirLabelsOf (BirProgram bls)))
+       (bir_targets_in_prog_exec (BirProgram bls) l1):
+
+
+val edges_blocks_in_prog_thm = SIMP_CONV (srw_ss()) (edges_blocks_in_prog_conv@defs) ``bir_edges_blocks_in_prog_exec ^program ^label``;
+
+val edges_blocks_in_prog_thm = SIMP_CONV (srw_ss()) (edges_blocks_in_prog@defs) ``bir_edges_blocks_in_prog_exec ^program ^label``;
+    bir_edges_blocks_in_prog_exec_def
+    
 val (wps1, wps1_bool_sound_thm) = recursive_proc prog_thm ((wps, wps_bool_sound_thm), rec_proc_jobs) (program, post, ls) defs;
 
 

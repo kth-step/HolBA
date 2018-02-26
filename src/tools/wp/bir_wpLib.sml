@@ -97,7 +97,8 @@ fun proc_step1 label prog_thm (program, post, ls) defs =
         val edges_blocks_in_prog_conv = [bir_edges_blocks_in_prog_exec_def, bir_targets_in_prog_exec_def, bir_get_program_block_info_by_label_def, listTheory.INDEX_FIND_def, BL_Address_HC_def];
         val l_not_in_ls_conv = [BL_Address_HC_def];
 
-        val label_in_prog_thm = SIMP_CONV (srw_ss()) (label_in_prog_conv@defs) ``MEM ^label (bir_labels_of_program ^program)``;
+        (* val label_in_prog_thm = SIMP_CONV (srw_ss()) (label_in_prog_conv@defs) ``MEM ^label (bir_labels_of_program ^program)``; *)
+        val label_in_prog_thm = EVAL ``MEM ^label (bir_labels_of_program ^program)``;
         val thm = MP thm (SIMP_RULE std_ss [] label_in_prog_thm);
         val edges_blocks_in_prog_thm = SIMP_CONV (srw_ss()) (edges_blocks_in_prog_conv@defs) ``bir_edges_blocks_in_prog_exec ^program ^label``;
 	val thm = MP thm (SIMP_RULE std_ss [] edges_blocks_in_prog_thm);
