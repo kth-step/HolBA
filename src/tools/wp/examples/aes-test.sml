@@ -13,7 +13,6 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 
 
-val aes_program_term = (snd o dest_comb o concl) aes_arm8_program_THM;
 
 
 (*
@@ -36,17 +35,27 @@ fun get_nth_last_label prog_term n =
         (snd o dest_comb o concl o EVAL) ``(^nth_last_block).bb_label``
       end;
 
-val last_block_label = get_nth_last_label aes_program_term 0;
-
-
-
-
-(*
 (* create subproblem for debugging and analysis *)
-fun get_subprog_with_n_last 
+fun get_subprog_with_n_last prog_term n =
+      let
+        val (block_list, block_type) = (dest_list o dest_BirProgram) prog_term;
+        val n_last_blocks = List.drop (block_list, (List.length block_list) - n)
+      in
+        mk_BirProgram (mk_list (n_last_blocks, block_type))
+      end;
 
-*)
+fun get_prog_length prog_term =
+      let
+        val (block_list, block_type) = (dest_list o dest_BirProgram) prog_term;
+      in
+        List.length block_list
+      end;
 
+
+val take_n_last = 11;
+val aes_program_term = get_subprog_with_n_last ((snd o dest_comb o concl) aes_arm8_program_THM) take_n_last;
+val last_block_label = get_nth_last_label aes_program_term 0;
+val first_block_label = get_nth_last_label aes_program_term ((get_prog_length aes_program_term) - 1);
 
 
 val aes_program_def = Define `
@@ -112,11 +121,9 @@ val aes_wps1_def = Define `
 val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM aes_wps1_def] wps1_bool_sound_thm;
 
 
-(*
-val wp_exp_term = (snd o dest_comb o concl o EVAL)
-                               ``(FAPPLY aes_wps1 ^first_block_label)``;
-*)
-
+val _ = print "===========";
+val _ = print "weakest precondition:";
+val wp_exp_term = (snd o dest_comb o concl o EVAL) ``(FAPPLY aes_wps1 ^first_block_label)``;
 val _ = bir_exp_pretty_print wp_exp_term;
 
 
