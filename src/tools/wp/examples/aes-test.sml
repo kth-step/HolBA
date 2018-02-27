@@ -244,6 +244,12 @@ fun print_wp_list [] = ()
 
 val _ = print_wp_list wp_list;
 
+(* print one *)
+val i = 53;
+val _ = (print (term_to_string (List.nth (wp_list, i))); print "\r\n")
+(*val _ = (bir_exp_pretty_print (List.nth (wp_list, i)); print "\r\n")*)
+
+
 
 val _ = print "\r\n";
 val _ = print "===========\r\n";
@@ -251,7 +257,6 @@ val _ = print "weakest precondition evaluation:\r\n";
 (*
 val (lbl_last, wp_last) = (dest_pair o snd o dest_fupdate) wps1;
 *)
-
 
 
 fun eval_through [] thm = [thm]
@@ -273,7 +278,7 @@ val wp_exp_term = (List.last wp_term_list);
 val var_nums = List.map (List.length o bir_exp_vars_in_exp) wp_term_list;
 val var_dist_nums = List.map (List.length o bir_exp_dist_vars_in_exp) wp_term_list;
 
-
+(*List.nth (var_nums, 53)*)
 (*
 EVAL (concl out_thm)
 
