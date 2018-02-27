@@ -67,7 +67,7 @@ aes round
 *)
 
 val take_all = false; (* false for a normal run, should override the others *)
-val take_n_last = 70;
+val take_n_last = 80;
 val dontcalcfirstwp = false;
 
 val aes_program_term_whole = ((snd o dest_comb o concl) aes_arm8_program_THM);
@@ -232,23 +232,27 @@ val wp_def_list = aes_post_def::(List.map
 
 val wp_list = List.map (snd o dest_eq o concl) wp_def_list;
 
-fun print_wp_list [] = ()
-  | print_wp_list (wp::wp_l) =
+fun print_wp_list _ [] = ()
+  | print_wp_list doPretty (wp::wp_l) =
       let
         val _ = print "\r\n\r\n";
-        (*val _ = bir_exp_pretty_print wp;*)
-        val _ = print (term_to_string wp);
+        val _ = if doPretty then
+                  bir_exp_pretty_print wp
+                else
+                  print (term_to_string wp)
+                ;
       in
-        print_wp_list wp_l
+        print_wp_list doPretty wp_l
       end;
 
-val _ = print_wp_list wp_list;
+val _ = print_wp_list false wp_list;
 
+(*
 (* print one *)
 val i = 53;
 val _ = (print (term_to_string (List.nth (wp_list, i))); print "\r\n")
 (*val _ = (bir_exp_pretty_print (List.nth (wp_list, i)); print "\r\n")*)
-
+*)
 
 
 val _ = print "\r\n";
@@ -273,10 +277,15 @@ fun eval_through [] thm = [thm]
 
 val out_thms = eval_through (tl (List.rev lbl_list)) aes_post_def;
 val wp_term_list = List.map (snd o dest_eq o concl) out_thms;
+
+val _ = print_wp_list true wp_term_list;
+
+
 val wp_exp_term = (List.last wp_term_list);
 
 val var_nums = List.map (List.length o bir_exp_vars_in_exp) wp_term_list;
 val var_dist_nums = List.map (List.length o bir_exp_dist_vars_in_exp) wp_term_list;
+val var_dists = List.map (bir_exp_dist_vars_in_exp) wp_term_list;
 
 (*List.nth (var_nums, 53)*)
 (*
