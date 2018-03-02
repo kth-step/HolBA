@@ -93,7 +93,7 @@ struct
           in
             if subsm_is_var_only subsm then
               (* 2a - subst with vars in map only *)
-              REFL goalterm
+              raise UNCHANGED
             else
               (* 2b - subst simplification *)
               REFL goalterm
@@ -118,6 +118,8 @@ struct
               end
             else if is_BIExp_Or bop then
               (* 3 - imp simplification propagation *)
+              raise UNCHANGED
+              (*
               let
                 val thm_1 = SPECL [prem, e1, e2] bir_wp_simp_eval_and_thm;
                 val (term_2, term_3) = (dest_conj o snd o dest_eq o concl) thm_1;
@@ -128,6 +130,7 @@ struct
               in
                 thm
               end
+              *)
             else
               (* other binop, we don't touch this *)
               raise UNCHANGED
