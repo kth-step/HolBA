@@ -74,65 +74,74 @@ struct
   fun bir_wp_simp_CONV goalterm =
     let
       val (prem, term) = simp_extract goalterm;
+      val get_concl_lhs = fst o dest_eq o concl;
       val get_concl_rhs = snd o dest_eq o concl;
+      val thm =
+        if is_const term then
+          (* 1 - expand a const *)
+          let
+            val const_n = (fst o dest_const) term;
+            val def_thm = lookup_def const_n;
+            val thm_1 = REWRITE_CONV [def_thm] goalterm;
+            val thm_1_rec = bir_wp_simp_CONV (get_concl_rhs thm_1);
+          in
+            TRANS thm_1 thm_1_rec
+          end
+        else if is_bir_exp_subst term then
+          let
+            val (subsm, e) = dest_bir_exp_subst term;
+          in
+            if subsm_is_var_only subsm then
+              (* 2a - subst with vars in map only *)
+              REFL goalterm
+            else
+              (* 2b - subst simplification *)
+              REFL goalterm
+          end
+        else if is_BExp_BinExp term then
+          let
+            val (bop, e1, e2) = dest_BExp_BinExp term;
+          in
+            if is_BIExp_And bop then
+              (* 3 - and simplification propagation *)
+              let
+                val thm_1 = SPECL [prem, e1, e2] bir_wp_simp_eval_and_thm;
+                val (term_2a, term_2b) = (dest_conj o snd o dest_eq o concl) thm_1;
+                val thm_2a = bir_wp_simp_CONV term_2a handle UNCHANGED => REFL term_2a; (* poor and quick solution *)
+                val thm_2b = bir_wp_simp_CONV term_2b handle UNCHANGED => REFL term_2b;
+                val thm_2_lhs = (mk_conj (term_2a, term_2b));
+                val thm_2 = REWRITE_CONV [Once thm_2a, Once thm_2b] thm_2_lhs handle UNCHANGED => REFL thm_2_lhs;
+                val thm_3 = REWRITE_CONV [GSYM bir_wp_simp_eval_and_thm] (get_concl_rhs thm_2);
+                val thm = TRANS (TRANS thm_1 thm_2) thm_3;
+              in
+                thm
+              end
+            else if is_BIExp_Or bop then
+              (* 3 - imp simplification propagation *)
+              let
+                val thm_1 = SPECL [prem, e1, e2] bir_wp_simp_eval_and_thm;
+                val (term_2, term_3) = (dest_conj o snd o dest_eq o concl) thm_1;
+                val thm_2 = bir_wp_simp_CONV term_2; (* catch UNCHANGED *)
+                val thm_3 = bir_wp_simp_CONV term_3;
+                val thm = REWRITE_CONV [Once thm_1, Once thm_2, Once thm_3, GSYM bir_wp_simp_eval_and_thm] goalterm;
+                val _ = print "call me imp\r\n";
+              in
+                thm
+              end
+            else
+              (* other binop, we don't touch this *)
+              raise UNCHANGED
+          end
+        else
+          (* other expression, we don't touch this *)
+          raise UNCHANGED
+        ;
     in
-      if is_const term then
-        (* 1 - expand a const *)
-        let
-          val const_n = (fst o dest_const) term;
-          val def_thm = lookup_def const_n;
-          val thm_1 = REWRITE_CONV [def_thm] goalterm;
-          val thm_1_rec = bir_wp_simp_CONV (get_concl_rhs thm_1);
-        in
-          TRANS thm_1 thm_1_rec
-        end
-      else if is_bir_exp_subst term then
-        let
-          val (subsm, e) = dest_bir_exp_subst term;
-        in
-          if subsm_is_var_only subsm then
-            (* 2a - subst with vars in map only *)
-            REFL goalterm
-          else
-            (* 2b - subst simplification *)
-            REFL goalterm
-        end
-      else if is_BExp_BinExp term then
-        let
-          val (bop, e1, e2) = dest_BExp_BinExp term;
-        in
-          if is_BIExp_And bop then
-            (* 3 - and simplification propagation *)
-            let
-              val thm_1 = SPECL [prem, e1, e2] bir_wp_simp_eval_and_thm;
-              val (term_2, term_3) = (dest_conj o snd o dest_eq o concl) thm_1;
-              val thm_2 = bir_wp_simp_CONV term_2; (* catch UNCHANGED *)
-              val thm_3 = bir_wp_simp_CONV term_3;
-              val thm = REWRITE_CONV [Once thm_1, Once thm_2, Once thm_3, GSYM bir_wp_simp_eval_and_thm] goalterm;
-              (*val thm = TRANS thm (REWRITE_CONV [GSYM bir_wp_simp_eval_and_thm] ((snd o dest_eq o concl) thm)*)
-              val _ = print "call me and\r\n";
-            in
-              thm
-            end
-          else if is_BIExp_Or bop then
-            (* 3 - imp simplification propagation *)
-            let
-              val thm_1 = SPECL [prem, e1, e2] bir_wp_simp_eval_and_thm;
-              val (term_2, term_3) = (dest_conj o snd o dest_eq o concl) thm_1;
-              val thm_2 = bir_wp_simp_CONV term_2; (* catch UNCHANGED *)
-              val thm_3 = bir_wp_simp_CONV term_3;
-              val thm = REWRITE_CONV [Once thm_1, Once thm_2, Once thm_3, GSYM bir_wp_simp_eval_and_thm] goalterm;
-              val _ = print "call me imp\r\n";
-            in
-              thm
-            end
-          else
-            (* other binop, we don't touch this *)
-            REFL goalterm (* raise UNCHANGED *)
-        end
+      (* check goalterm matching lhs *)
+      if (goalterm = (get_concl_lhs thm)) then
+        thm
       else
-        (* other expression, we don't touch this *)
-        REFL goalterm (* raise UNCHANGED *)
+        raise (ERR "bir_wp_simp_CONV" "term mismatch, some unexpected error, debug me")
     end;
 
 (*
@@ -186,40 +195,52 @@ struct
 
 
 (*
-a test
-*)
-(*
-val lbl_str = hd lbl_list;
-val (_, (def_thm, _)) = hd (DB.find ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str));
-val lbl_str = hd (tl lbl_list);
-val (_, (def_thm2, _)) = hd (DB.find ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str));
+(* =================== TESTING ========================================= *)
+val i = 1;
+val lbl_str = List.nth (lbl_list, (List.length lbl_list) - 2 - i);
+
+val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
 val term = (snd o dest_eq o concl) def_thm;
-val term = (snd o dest_eq o concl o (REWRITE_CONV [def_thm2])) term;
+
 
 (* include this in the beginning as expansion step from definition, i.e., replace ^term in goalterm by aes_wps variable and propagate definition theorems accordingly *)
 val aes_wp_def = Define `aes_wp = ^term`;
-
-val goalterm = ``!s. ((\s. (bir_eval_exp (BExp_Const (Imm1 1w)) s) = bir_val_true) s) ==> (bir_eval_exp ^term s = bir_val_true)``;
-
-
-
-type_of ``bir_exp_subst``
-
-
+val aes_wp_term = ``aes_wp``;
 (*
-val goalterm = term_3;
- *)
+val aes_wp_term = ``(bir_exp_subst
+               (FEMPTY |+
+                (BVar "R0" (BType_Imm Bit64),
+                 BExp_Cast BIExp_UnsignedCast
+                   (BExp_Load
+                      (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                      (BExp_BinExp BIExp_Plus
+                         (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+                         (BExp_Const (Imm64 76w))) BEnd_LittleEndian
+                      Bit32) Bit64))
+               bir_wp_comp_wps_iter_step2_wp_0x400978w)``;
+*)
+
+val btautology = ``BExp_Const (Imm1 1w)``;
+val prem_init = ``(\s. (bir_eval_exp ^btautology s) = bir_val_true)``;
+val goalterm = ``!s. (^prem_init s) ==> (bir_eval_exp ^aes_wp_term s = bir_val_true)``;
+(*
+fun expandDef defname goalterm =
+  let
+    val def_thm = lookup_def defname;
+  in
+    (snd o dest_eq o concl) (REWRITE_CONV [def_thm] goalterm)
+  end;
+
+val goalterm = expandDef "aes_wp" goalterm;
+*)
 
 
+val bir_wp_simp_eval_imp_spec_thm = ((SIMP_RULE std_ss [EVAL ``^prem_init s``]) o (SPEC prem_init) o GSYM) bir_wp_simp_eval_imp_thm;
 
-val test = simp_wp_CONV goalterm;
+val simp_thm = bir_wp_simp_CONV goalterm;
+val simp_thm = TRANS (GSYM (REWRITE_CONV [EVAL ``^prem_init s``] ((fst o dest_eq o concl) simp_thm))) simp_thm;
+val simp_thm = TRANS simp_thm (SIMP_CONV std_ss [boolTheory.BETA_THM, bir_wp_simp_eval_imp_spec_thm] ((snd o dest_eq o concl) simp_thm));
 
-
-type_of``bir_eval_exp``
-
-bir_wp_simp_eval_subst_thm
-bir_wp_simp_eval_and_thm
-bir_wp_simp_eval_imp_thm
 *)
 
 
