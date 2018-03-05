@@ -151,30 +151,30 @@ val bir_wp_simp_eval_subst_thm = store_thm("bir_wp_simp_eval_subst_thm", ``
 
 
 (* TODO: should be in bir_exp_substitutionsTheory *)
-(*
-TODO: in the following is something wrong, this doesn't work, has to be fixed
-*)
 val bir_exp_subst_update_def = Define `
-  bir_exp_subst_update s1 s2 = FUN_FMAP (\x. bir_exp_subst s1 (FAPPLY s2 x)) (FDOM s2)
+  bir_exp_subst_update s2 s1 = FUN_FMAP (\x. bir_exp_subst s1 (FAPPLY s2 x)) (FDOM s2)
 `;
 
 val bir_exp_subst_update_exec_thm = store_thm("bir_exp_subst_update_exec_thm", ``
-    !s1 s2 e.
-      (!s1. bir_exp_subst_update s1 FEMPTY = FEMPTY) /\
-      (!s1 s2 v e. bir_exp_subst_update s1 (FUPDATE s2 (v,e)) =
-           FUPDATE (bir_exp_subst_update s1 s2) (v, bir_exp_subst s1 e))
+      (!s1. bir_exp_subst_update FEMPTY s1 = FEMPTY) /\
+      (!s1 s2 v e. bir_exp_subst_update (FUPDATE s2 (v,e)) s1 =
+           FUPDATE (bir_exp_subst_update s2 s1) (v, bir_exp_subst s1 e))
 ``,
 
 (*finite_mapTheory.FDOM_FINITE*)
   cheat
 );
 
+val bir_exp_subst__def = Define `
+  bir_exp_subst_restrict s1 s2 = DRESTRICT s1 (COMPL (FDOM s2))
+`;
+
 
 val bir_exp_subst_bir_exp_subst_thm = store_thm("bir_exp_subst_bir_exp_subst_thm", ``
     !s1 s2 e.
       bir_exp_subst s1 (bir_exp_subst s2 e)
       =
-      bir_exp_subst (bir_exp_subst_update s1 s2) (bir_exp_subst s1 e)
+      bir_exp_subst (bir_exp_subst_update s2 s1) (bir_exp_subst (bir_exp_subst_restrict s1 s2) e)
 ``,
 
   cheat
