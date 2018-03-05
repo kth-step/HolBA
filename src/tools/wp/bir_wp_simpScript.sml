@@ -65,6 +65,22 @@ val bir_wp_simp_eval_imp_thm = store_thm("bir_wp_simp_eval_imp_thm", ``
   cheat
 );
 
+val bir_wp_simp_eval_or_thm = store_thm("bir_wp_simp_eval_or_thm", ``
+    !prem e1 e2.
+      (
+       !s. (prem s) ==>
+           (bir_eval_exp (BExp_BinExp BIExp_Or e1 e2) s = bir_val_true)
+      )
+      <=>
+      (
+       !s. ((\s. (prem s) /\ (bir_eval_exp (BExp_UnaryExp BIExp_Not e1) s = bir_val_true)) s)
+           ==>
+           (bir_eval_exp e2 s = bir_val_true)
+      )
+``,
+
+  cheat
+);
 
 
 
@@ -77,23 +93,191 @@ val bir_wp_simp_eval_imp_thm = store_thm("bir_wp_simp_eval_imp_thm", ``
 
 
 
+(*
+TODO: use this theorem in the lemma below
+TODO: is there something like this already?
+*)
+val bir_eval_exp_indep_env_update_thm = store_thm("bir_eval_exp_indep_env_update_thm", ``
+    !vn vt vo e sm.
+      (~(vn IN (IMAGE bir_var_name (bir_vars_of_exp e)))) ==>
+      (
+       (bir_eval_exp e (BEnv sm))
+       =
+       (bir_eval_exp e (BEnv (FUPDATE sm (vn, (vt, vo)))))
+      )
+``,
 
-(* does something like this already exist, or parts? *)
-val bir_wp_simp_eval_subst_lemma = store_thm("bir_wp_simp_eval_subst_lemma1", ``
-    !substs v' vo' e sm.
-      (*(!v. (v IN (FDOM substs)) ==> (~(v' IN (bir_vars_of_exp (FAPPLY substs v))))) ==>*)
-      (FEVERY (\(_, t). ~(v' IN (bir_vars_of_exp t))) substs) ==>
-      (~(v' IN (bir_vars_of_exp e))) ==>
+  cheat
+);
+
+
+
+val bir_wp_simp_eval_subst1_lemma = store_thm("bir_wp_simp_eval_subst1_lemma", ``
+    !v ve vn' vt' vo' e sm.
+      (~(vn' IN (IMAGE bir_var_name (bir_vars_of_exp ve)))) ==>
+      (~(vn' IN (IMAGE bir_var_name (bir_vars_of_exp e)))) ==>
+      (
+       (bir_eval_exp (bir_exp_subst1 v ve e) (BEnv sm))
+       =
+       (bir_eval_exp (bir_exp_subst1 v ve e) (BEnv (FUPDATE sm (vn', (vt', vo')))))
+      )
+``,
+
+  REPEAT STRIP_TAC >>
+
+  Induct_on `e` >|
+  [
+    REPEAT STRIP_TAC >>
+    SIMP_TAC (std_ss) [bir_exp_subst1_def, bir_exp_subst_def, bir_eval_exp_def]
+  ,
+    REPEAT STRIP_TAC >>
+
+    Cases_on `v = b` >> (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_exp_subst1_def, bir_exp_subst_def, bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY, bir_vars_of_exp_def, bir_eval_exp_def, bir_env_read_def, bir_env_lookup_def]
+    ) >>
+
+    Induct_on `ve` >> (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_eval_exp_def, bir_vars_of_exp_def, bir_env_read_def, bir_env_lookup_UPDATE, boolTheory.LEFT_OR_OVER_AND]
+    )
+  ,
+    FULL_SIMP_TAC std_ss [bir_exp_subst1_def, bir_exp_subst_def, bir_eval_exp_def, bir_vars_of_exp_def]
+  ,
+    FULL_SIMP_TAC std_ss [bir_exp_subst1_def, bir_exp_subst_def, bir_eval_exp_def, bir_vars_of_exp_def]
+  ,
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [bir_exp_subst1_def, bir_exp_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, pred_setTheory.IMAGE_UNION] >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+  ,
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [bir_exp_subst1_def, bir_exp_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, pred_setTheory.IMAGE_UNION] >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+  ,
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [bir_exp_subst1_def, bir_exp_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, pred_setTheory.IMAGE_UNION] >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+  ,
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [bir_exp_subst1_def, bir_exp_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, pred_setTheory.IMAGE_UNION] >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+  ,
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [bir_exp_subst1_def, bir_exp_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, pred_setTheory.IMAGE_UNION] >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+  ]
+);
+
+val bir_wp_simp_eval_binpred_eq_thm = prove(``
+    !e1 e2 s.
+      (bir_eval_exp (BExp_BinPred BIExp_Equal e1 e2) s = bir_val_true)
+      <=>
+      (
+       (~(bir_eval_exp e1 s = BVal_Unknown)) /\
+       (~(bir_eval_exp e2 s = BVal_Unknown)) /\
+       (bir_eval_exp e1 s = bir_eval_exp e2 s)
+      )
+``,
+
+  cheat
+);
+
+val bir_wp_simp_prem_indep_def = Define `
+      bir_wp_simp_prem_indep prem vn =
+        !sm vt vo. prem (BEnv (FUPDATE sm (vn, (vt, vo)))) = prem (BEnv sm)
+`;
+
+val bir_wp_simp_eval_subst1_thm = store_thm("bir_wp_simp_eval_subst1_thm", ``
+    !v ve v' e prem.
+      (~((bir_var_name v') IN (IMAGE bir_var_name (bir_vars_of_exp ve)))) ==>
+      (~((bir_var_name v') IN (IMAGE bir_var_name (bir_vars_of_exp e)))) ==>
+      (bir_wp_simp_prem_indep prem (bir_var_name v')) ==>
+      (
+       (!s. (prem s) ==> (bir_eval_exp (bir_exp_subst1 v ve e) s = bir_val_true))
+       <=>
+       (!s. ((prem s) /\
+             (bir_eval_exp (BExp_Den v') s = bir_eval_exp ve s)
+(*           (bir_eval_exp (BExp_BinPred BIExp_Equal (BExp_Den v') ve) s = bir_val_true)*)
+            )
+            ==>
+            (bir_eval_exp (bir_exp_subst1 v (BExp_Den v') e) s = bir_val_true)
+       )
+      )
+``,
+
+
+  REPEAT STRIP_TAC >>
+  EQ_TAC >- (
+    REPEAT STRIP_TAC >>
+
+    Q.PAT_X_ASSUM `!s.P s` (fn thm => ASSUME_TAC (Q.SPEC `s` thm)) >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+ (*   FULL_SIMP_TAC std_ss [bir_wp_simp_eval_binpred_eq_thm] >>*)
+    METIS_TAC [bir_exp_subst1_EVAL_EQ_GEN]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+
+  Cases_on `s` >>
+  Q.RENAME1_TAC `BEnv sm` >>
+
+  Q.ABBREV_TAC `sm' = FUPDATE sm (bir_var_name v', (bir_var_type v', SOME (bir_eval_exp ve (BEnv sm))))` >>
+
+  subgoal `prem (BEnv sm')` >- (
+    METIS_TAC [bir_wp_simp_prem_indep_def]
+  ) >>
+
+  subgoal `bir_eval_exp (BExp_Den v') (BEnv sm') = bir_eval_exp ve (BEnv sm')` >- (
+    SIMP_TAC std_ss [Abbr `sm'`, bir_eval_exp_def, bir_env_read_def, bir_env_lookup_def, finite_mapTheory.FLOOKUP_UPDATE] >>
+    ASM_SIMP_TAC (srw_ss()) [bir_eval_exp_indep_env_update_thm]
+  ) >>
+
+  subgoal  `bir_eval_exp (bir_exp_subst1 v ve e) (BEnv sm') = bir_val_true` >- (
+    METIS_TAC [bir_exp_subst1_EVAL_EQ_GEN]
+  ) >>
+
+  METIS_TAC [bir_wp_simp_eval_subst1_lemma]
+);
+(*
+  Q.PAT_X_ASSUM `!s.P s` (fn thm => ASSUME_TAC (Q.SPEC `BEnv sm'` thm)) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+
+
+  FULL_SIMP_TAC std_ss [bir_exp_substitutionsTheory.] >>
+
+  FULL_SIMP_TAC std_ss [Abbr `sm'`] >>
+  FULL_SIMP_TAC std_ss [bir_exp_subst1_def, bir_exp_subst_def, finite_mapTheory.FLOOKUP_UPDATE] >>
+*)
+
+
+(*
+bir_exp_subst1_def, bir_exp_subst_def, bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY, bir_vars_of_exp_def, bir_eval_exp_def, bir_env_read_def, bir_env_lookup_def
+*)
+
+(*
+  Q.PAT_X_ASSUM `!s.P s` (fn thm => ASSUME_TAC (Q.SPEC `BEnv (FUPDATE sm ()))` thm)) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [Q.SPECL [`v`, `ve`, `bir_var_name v'`, `bir_var_type v'`, `SOME (bir_eval_exp ve s)`, `e`, `sm`] bir_wp_simp_eval_subst1_lemma] >>
+
+  cheat
+*)
+
+val bir_wp_simp_eval_subst_lemma = store_thm("bir_wp_simp_eval_subst_lemma", ``
+    !substs vn' vt' vo' e sm.
+      (FEVERY (\(_, t). ~(vn' IN (IMAGE bir_var_name (bir_vars_of_exp t)))) substs) ==>
+      (~(vn' IN (IMAGE bir_var_name (bir_vars_of_exp e)))) ==>
       (
        (bir_eval_exp (bir_exp_subst substs e) (BEnv sm))
        =
-       (bir_eval_exp (bir_exp_subst substs e) (BEnv (FUPDATE sm (bir_var_name v', (bir_var_type v', vo')))))
+       (bir_eval_exp (bir_exp_subst substs e) (BEnv (FUPDATE sm (vn', (vt', vo')))))
       )
 ``,
 
 (*
   REPEAT STRIP_TAC >>
 *)
+
   cheat
 );
 
