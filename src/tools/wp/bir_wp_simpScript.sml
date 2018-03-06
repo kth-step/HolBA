@@ -126,6 +126,68 @@ val bir_exp_bool_and_well_typed_vars_def = Define `
 `;
 
 
+val bir_eval_exp_not_true_false_thm = store_thm("bir_eval_exp_not_true_false_thm", ``
+    !e env.
+     (bir_is_bool_exp e) ==>
+     (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
+     (
+      (bir_eval_exp e env <> bir_val_true)
+      <=>
+      (bir_eval_exp e env = bir_val_false)
+     )
+``,
+
+  REPEAT STRIP_TAC >>
+
+  subgoal `((bir_eval_exp e env) = bir_val_false) \/ ((bir_eval_exp e env) = bir_val_true)` >- (
+    METIS_TAC [bir_is_bool_exp_env_IMPLIES_EVAL_IS_BOOL, bir_val_is_Bool_ALT_DEF, GSYM bir_is_bool_exp_env_def]
+  ) >> (
+    FULL_SIMP_TAC (std_ss++bir_val_ss++wordsLib.WORD_ss) [bir_exp_bool_and_well_typed_vars_def, bir_val_true_def, bir_val_false_def, bir_immTheory.bir_imm_t_11]
+  )
+);
+
+val bir_wp_simp_eval_not_true_exp_thm = store_thm("bir_wp_simp_eval_not_true_exp_thm", ``
+    !e env.
+     (bir_exp_bool_and_well_typed_vars e) ==>
+     (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
+     (
+      (bir_eval_exp e env <> bir_val_true)
+      <=>
+      (bir_eval_exp e env = bir_val_false)
+     )
+``,
+
+  METIS_TAC [bir_exp_bool_and_well_typed_vars_def, bir_eval_exp_not_true_false_thm]
+);
+
+
+val bir_var_set_is_well_typed_UNION_initialised_thm = store_thm("bir_var_set_is_well_typed_UNION_initialised_thm", ``
+    !e1vs e2vs env.
+(*
+TODO: the first two assumptions are not neccessary i believe
+*)
+     (bir_var_set_is_well_typed e1vs) ==>
+     (bir_var_set_is_well_typed e2vs) ==>
+     (bir_env_vars_are_initialised env (e1vs UNION e2vs)) ==>
+     (bir_var_set_is_well_typed (e1vs UNION e2vs))
+``,
+
+  REPEAT STRIP_TAC >>
+
+  ASM_REWRITE_TAC [bir_var_set_is_well_typed_UNION] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss) [bir_env_vars_are_initialised_UNION, bir_env_vars_are_initialised_def] >>
+
+  subgoal `(bir_env_var_is_initialised env v1) /\ (bir_env_var_is_initialised env v2)` >- (
+    METIS_TAC []
+  ) >>
+
+  FULL_SIMP_TAC (std_ss) [bir_env_var_is_initialised_def] >>
+
+  REV_FULL_SIMP_TAC (std_ss) []
+);
+
 
 val bir_wp_simp_eval_or_exp_thm = store_thm("bir_wp_simp_eval_or_exp_thm", ``
     !e e1 e2 env.
@@ -144,11 +206,115 @@ val bir_wp_simp_eval_or_exp_thm = store_thm("bir_wp_simp_eval_or_exp_thm", ``
      )
 ``,
 
-  cheat
+  REPEAT STRIP_TAC >>
+
+  subgoal `bir_exp_bool_and_well_typed_vars e` >- (
+    REV_FULL_SIMP_TAC std_ss [bir_exp_or_def, bir_exp_bool_and_well_typed_vars_def, bir_is_bool_exp_REWRS, bir_vars_of_exp_def] >>
+    METIS_TAC [bir_var_set_is_well_typed_UNION_initialised_thm]
+  ) >>
+
+  subgoal `(bir_env_vars_are_initialised env (bir_vars_of_exp e1)) /\ (bir_env_vars_are_initialised env (bir_vars_of_exp e2))` >- (
+    METIS_TAC [bir_exp_or_def, bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION]
+  ) >>
+
+  Cases_on `bir_eval_exp e1 env = bir_val_true` >> Cases_on `bir_eval_exp e2 env = bir_val_true` >> (
+    REV_FULL_SIMP_TAC std_ss [bir_exp_or_def, bir_wp_simp_eval_not_true_exp_thm] >>
+    EVAL_TAC >>
+    FULL_SIMP_TAC std_ss [] >>
+    EVAL_TAC
+  )
 );
+
+
+val bir_wp_simp_eval_and_exp_thm = store_thm("bir_wp_simp_eval_and_exp_thm", ``
+    !e e1 e2 env.
+     (e = bir_exp_and e1 e2) ==>
+     (bir_exp_bool_and_well_typed_vars e1) ==>
+     (bir_exp_bool_and_well_typed_vars e2) ==>
+     (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
+     (
+      (bir_eval_exp e env = bir_val_true)
+      <=>
+      (
+       (bir_eval_exp e1 env = bir_val_true)
+       /\
+       (bir_eval_exp e2 env = bir_val_true)
+      )
+     )
+``,
+
+  REPEAT STRIP_TAC >>
+
+  subgoal `bir_exp_bool_and_well_typed_vars e` >- (
+    REV_FULL_SIMP_TAC std_ss [bir_exp_and_def, bir_exp_bool_and_well_typed_vars_def, bir_is_bool_exp_REWRS, bir_vars_of_exp_def] >>
+    METIS_TAC [bir_var_set_is_well_typed_UNION_initialised_thm]
+  ) >>
+
+  subgoal `(bir_env_vars_are_initialised env (bir_vars_of_exp e1)) /\ (bir_env_vars_are_initialised env (bir_vars_of_exp e2))` >- (
+    METIS_TAC [bir_exp_and_def, bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION]
+  ) >>
+
+  Cases_on `bir_eval_exp e1 env = bir_val_true` >> Cases_on `bir_eval_exp e2 env = bir_val_true` >> (
+    REV_FULL_SIMP_TAC std_ss [bir_exp_and_def, bir_wp_simp_eval_not_true_exp_thm] >>
+    EVAL_TAC >>
+    FULL_SIMP_TAC std_ss [] >>
+    EVAL_TAC
+  )
+);
+
+
+
+val bir_wp_simp_eval_imp_exp_thm = store_thm("bir_wp_simp_eval_imp_exp_thm", ``
+    !e e1 e2 env.
+     (e = bir_exp_imp e1 e2) ==>
+     (bir_exp_bool_and_well_typed_vars e1) ==>
+     (bir_exp_bool_and_well_typed_vars e2) ==>
+     (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
+     (
+      (bir_eval_exp e env = bir_val_true)
+      <=>
+      (
+       (bir_eval_exp e1 env = bir_val_true)
+       ==>
+       (bir_eval_exp e2 env = bir_val_true)
+      )
+     )
+``,
+
+  REPEAT STRIP_TAC >>
+
+  subgoal `bir_exp_bool_and_well_typed_vars e` >- (
+    REV_FULL_SIMP_TAC std_ss [bir_exp_imp_def, bir_exp_bool_and_well_typed_vars_def, bir_is_bool_exp_REWRS, bir_vars_of_exp_def] >>
+    METIS_TAC [bir_var_set_is_well_typed_UNION_initialised_thm]
+  ) >>
+
+  subgoal `(bir_env_vars_are_initialised env (bir_vars_of_exp e1)) /\ (bir_env_vars_are_initialised env (bir_vars_of_exp e2))` >- (
+    METIS_TAC [bir_exp_imp_def, bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION]
+  ) >>
+
+  Cases_on `bir_eval_exp e1 env = bir_val_true` >> Cases_on `bir_eval_exp e2 env = bir_val_true` >> (
+    REV_FULL_SIMP_TAC std_ss [bir_exp_imp_def, bir_wp_simp_eval_not_true_exp_thm] >>
+    EVAL_TAC >>
+    FULL_SIMP_TAC std_ss [] >>
+    EVAL_TAC
+  )
+);
+
+
+
+
+
+
+
+
+
+
+
 
 val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
     !prem e1 e2.
+     (bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION (bir_vars_of_exp e2))) ==>
+     ( 
       (bir_exp_is_taut (bir_exp_imp prem (bir_exp_and e1 e2)))
       <=>
       (
@@ -156,11 +322,57 @@ val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
        /\
        (bir_exp_is_taut (bir_exp_imp prem e2))
       )
+     )
 ``,
 
-  REWRITE_TAC [bir_exp_imp_def, bir_exp_and_def] >>
   REPEAT STRIP_TAC >>
-cheat
+
+  EQ_TAC >- (
+    STRIP_TAC >>
+
+    STRIP_TAC >> (
+      REWRITE_TAC [bir_exp_tautologiesTheory.bir_exp_is_taut_def] >>
+      REPEAT STRIP_TAC >|
+      [
+        ALL_TAC
+      ,
+        ALL_TAC
+      ,
+        FULL_SIMP_TAC std_ss [bir_exp_tautologiesTheory.bir_exp_is_taut_def] >>
+        cheat (* extend environment by uninitialized variables of e2, and then use the theorems for bir_and and bir_imp *)
+      ] >> (
+        FULL_SIMP_TAC std_ss [bir_exp_imp_def, bir_exp_and_def, bir_exp_tautologiesTheory.bir_exp_is_taut_def] >>
+        FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_is_bool_exp_REWRS, bir_vars_of_exp_def, bir_var_set_is_well_typed_UNION]
+      )
+    )
+  ) >>
+
+  STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [bir_exp_tautologiesTheory.bir_exp_is_taut_def] >>
+  REPEAT STRIP_TAC >|
+  [
+    FULL_SIMP_TAC std_ss [bir_exp_imp_def, bir_exp_and_def, bir_exp_tautologiesTheory.bir_exp_is_taut_def] >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_is_bool_exp_REWRS, bir_vars_of_exp_def, bir_var_set_is_well_typed_UNION]
+  ,
+(*
+    FULL_SIMP_TAC std_ss [bir_exp_imp_def, bir_exp_and_def] >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_vars_of_exp_def] >>
+
+    subgoal `(bir_var_set_is_well_typed (bir_vars_of_exp e1)) /\ (bir_var_set_is_well_typed (bir_vars_of_exp e2)) /\ (bir_var_set_is_well_typed (bir_vars_of_exp prem))` >- (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_var_set_is_well_typed_UNION]
+    ) >>
+
+    FULL_SIMP_TAC std_ss [bir_var_set_is_well_typed_UNION_initialised_thm]
+*)
+    cheat
+  ,
+    subgoal `(bir_eval_exp (bir_exp_imp prem e1) env = bir_val_true) /\ (bir_eval_exp (bir_exp_imp prem e2) env = bir_val_true)` >- (
+      FULL_SIMP_TAC std_ss [bir_exp_imp_def, bir_exp_and_def, bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION]
+    ) >>
+
+    
+    cheat
+  ]
 );
 
 val bir_wp_simp_taut_imp_thm = store_thm("bir_wp_simp_taut_imp_thm", ``
