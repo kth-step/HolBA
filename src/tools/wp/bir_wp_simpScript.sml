@@ -74,13 +74,12 @@ val bir_wp_simp_eval_binpred_eq_thm = prove(``
 );
 
 
-
-val bir_wp_simp_eval_bin_is_Imm_thm = prove(``
-    !et e1 e2 s.
-      (bir_val_is_Imm (bir_eval_exp (BExp_BinExp et e1 e2) s))
+val bir_wp_simp_eval_bin_is_Imm_s_thm = prove(``
+    !et e1 e2 s sz.
+      (bir_val_is_Imm_s sz (bir_eval_exp (BExp_BinExp et e1 e2) s))
       <=>
       (
-       (?sz. bir_val_is_Imm_s sz (bir_eval_exp e1 s) /\
+       (     bir_val_is_Imm_s sz (bir_eval_exp e1 s) /\
              bir_val_is_Imm_s sz (bir_eval_exp e2 s))
       )
 ``,
@@ -94,7 +93,7 @@ val bir_wp_simp_eval_bin_is_Imm_thm = prove(``
   ) >>
 
   Cases_on `type_of_bir_imm b = type_of_bir_imm b'` >- (
-    ASM_SIMP_TAC (std_ss++bir_val_ss++bir_imm_ss) [bool2b_def, bool2w_def]
+    ASM_SIMP_TAC (std_ss++bir_val_ss++bir_imm_ss) [bool2b_def, bool2w_def, bir_imm_expTheory.type_of_bir_bin_exp]
   ) >>
 
   ASM_SIMP_TAC (std_ss++bir_val_ss) []
@@ -103,6 +102,78 @@ val bir_wp_simp_eval_bin_is_Imm_thm = prove(``
 
 
 
+
+
+
+
+
+val bir_exp_imp_def = Define `
+      bir_exp_imp e1 e2 = BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not e1) e2
+`;
+
+val bir_exp_or_def = Define `
+      bir_exp_or e1 e2 = BExp_BinExp BIExp_Or e1 e2
+`;
+
+val bir_exp_and_def = Define `
+      bir_exp_and e1 e2 = BExp_BinExp BIExp_And e1 e2
+`;
+
+val bir_exp_bool_and_well_typed_vars_def = Define `
+      bir_exp_bool_and_well_typed_vars e =
+           bir_is_bool_exp e /\
+           bir_var_set_is_well_typed (bir_vars_of_exp e)
+`;
+
+
+
+val bir_wp_simp_eval_or_exp_thm = store_thm("bir_wp_simp_eval_or_exp_thm", ``
+    !e e1 e2 env.
+     (e = bir_exp_or e1 e2) ==>
+     (bir_exp_bool_and_well_typed_vars e1) ==>
+     (bir_exp_bool_and_well_typed_vars e2) ==>
+     (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
+     (
+      (bir_eval_exp e env = bir_val_true)
+      <=>
+      (
+       (bir_eval_exp e1 env = bir_val_true)
+       \/
+       (bir_eval_exp e2 env = bir_val_true)
+      )
+     )
+``,
+
+  cheat
+);
+
+val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
+    !prem e1 e2.
+      (bir_exp_is_taut (bir_exp_imp prem (bir_exp_and e1 e2)))
+      <=>
+      (
+       (bir_exp_is_taut (bir_exp_imp prem e1))
+       /\
+       (bir_exp_is_taut (bir_exp_imp prem e2))
+      )
+``,
+
+  REWRITE_TAC [bir_exp_imp_def, bir_exp_and_def] >>
+  REPEAT STRIP_TAC >>
+cheat
+);
+
+val bir_wp_simp_taut_imp_thm = store_thm("bir_wp_simp_taut_imp_thm", ``
+    !prem e1 e2.
+      (bir_exp_is_taut (bir_exp_imp prem (bir_exp_imp e1 e2)))
+      <=>
+      (bir_exp_is_taut (bir_exp_imp (bir_exp_and prem e1) e2)
+``,
+
+  REWRITE_TAC [bir_exp_imp_def, bir_exp_and_def] >>
+  REPEAT STRIP_TAC >>
+cheat
+);
 
 
 
@@ -192,6 +263,40 @@ val bir_wp_simp_eval_imp_thm = store_thm("bir_wp_simp_eval_imp_thm", ``
 ``,
 
   bir_is_bool_exp
+);
+
+(*
+val bir_exp_and_bool_thm = store_thm ("bir_exp_and_bool_thm", ``
+      bir_eval_exp (bir_exp_and e1 e2) s)
+``,
+
+bir_wp_simp_eval_bin_is_Imm_s_thm
+  cheat
+);
+*)
+
+
+val bir_wp_simp_eval_imp_thm = store_thm("bir_wp_simp_eval_imp_thm", ``
+    !prem e1 e2.
+      (!s. bir_eval_exp (bir_exp_imp prem (bir_exp_imp e1 e2)) s = bir_val_true)
+      <=>
+      (!s. bir_eval_exp (bir_exp_imp (bir_exp_and prem e1) e2) s = bir_val_true)
+``,
+
+  REPEAT STRIP_TAC >>
+
+  EQ_TAC >- (
+    REPEAT STRIP_TAC >>
+
+    Q.PAT_X_ASSUM `!s.P s` (fn thm => ASSUME_TAC (Q.SPEC `s` thm)) >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    subgoal `bir_val_is_Imm_s Bit1 (bir_eval_exp e1 s)` >- (
+      METIS_TAC [bir_exp_imp_def, bir_val_true_def, bir_wp_simp_eval_bin_is_Imm_s_thm, bir_val_checker_REWRS, type_of_bir_imm_def, bir_imm_expTheory.type_of_bir_bin_exp]
+    ) >>
+
+    
+  ) >>
 );
 
 val bir_wp_simp_eval_or_thm = store_thm("bir_wp_simp_eval_or_thm", ``
