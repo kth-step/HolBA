@@ -169,22 +169,29 @@ val bir_wp_simp_eval_and_thm = store_thm("bir_wp_simp_eval_and_thm", ``
 );
 
 
-
+bir_is_bool_exp_def
+type_of_bir_exp_def
+bir_eval_exp_def
+bir_eval_bin_pred_def
 val bir_wp_simp_eval_imp_thm = store_thm("bir_wp_simp_eval_imp_thm", ``
     !prem e1 e2.
+      (bir_is_bool_exp e1) ==>
+      (bir_is_bool_exp e2) ==>
       (
-       !s. (prem s) ==>
-           (bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not e1) e2) s = bir_val_true)
-      )
-      <=>
-      (
-       !s. ((\s. (prem s) /\ (bir_eval_exp e1 s = bir_val_true)) s)
-           ==>
-           (bir_eval_exp e2 s = bir_val_true)
+       (
+        !s. (prem s) ==>
+            (bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not e1) e2) s = bir_val_true)
+       )
+       <=>
+       (
+        !s. ((\s. (prem s) /\ (bir_eval_exp e1 s = bir_val_true)) s)
+            ==>
+            (bir_eval_exp e2 s = bir_val_true)
+       )
       )
 ``,
 
-  cheat
+  bir_is_bool_exp
 );
 
 val bir_wp_simp_eval_or_thm = store_thm("bir_wp_simp_eval_or_thm", ``
@@ -201,7 +208,57 @@ val bir_wp_simp_eval_or_thm = store_thm("bir_wp_simp_eval_or_thm", ``
       )
 ``,
 
-  cheat
+  REPEAT STRIP_TAC >>
+  EQ_TAC >- (
+    REPEAT STRIP_TAC >>
+
+      Q.PAT_X_ASSUM `!s.P s` (fn thm => ASSUME_TAC (Q.SPEC `s` thm)) >>
+      REV_FULL_SIMP_TAC std_ss [] >>
+
+      subgoal `bir_val_is_Imm (bir_eval_exp (BExp_BinExp BIExp_And e1 e2) s)` >- (
+        ASM_SIMP_TAC std_ss [bir_val_true_def, bir_val_checker_REWRS]
+      ) >>
+
+      subgoal `?sz. bir_val_is_Imm_s sz (bir_eval_exp e1 s) /\ bir_val_is_Imm_s sz (bir_eval_exp e2 s)` >- (
+        METIS_TAC [bir_val_is_Imm_s_IMPL, bir_wp_simp_eval_bin_is_Imm_thm]
+      ) >>
+
+      Cases_on `bir_eval_exp e1 s` >> (
+        Cases_on `bir_eval_exp e2 s` >> (
+          FULL_SIMP_TAC (std_ss++bir_val_ss++bir_imm_ss) [bir_val_checker_REWRS]
+        )
+      ) >>
+
+      FULL_SIMP_TAC (std_ss++bir_val_ss++bir_imm_ss) [bir_eval_exp_def, bir_eval_bin_exp_REWRS, bir_val_true_def] >>
+
+      subgoal `sz = Bit1` >- (
+        METIS_TAC [bir_imm_expTheory.type_of_bir_bin_exp, type_of_bir_imm_def]
+      ) >>
+
+      Cases_on `b` >> Cases_on `b'` >> (
+        FULL_SIMP_TAC (std_ss++bir_immtype_ss) [bir_immTheory.type_of_bir_imm_def]
+      ) >>
+
+      FULL_SIMP_TAC (std_ss++bir_imm_ss) [bir_imm_expTheory.bir_bin_exp_def, bir_imm_expTheory.bir_bin_exp_GET_OPER_def] >>
+
+      Q.PAT_X_ASSUM `A && B = C` (MP_TAC) >>
+      blastLib.BBLAST_TAC
+
+
+  ) >>
+
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  REPEAT (Q.PAT_X_ASSUM `!s.P s` (fn thm => ASSUME_TAC (Q.SPEC `s` thm))) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  subgoal `type_of_bir_imm (bir_eval_exp (BExp_UnaryExp BIExp_Not e1) s) = Bit1` >- (
+    METIS_TAC
+  )
+  
+  ASM_REWRITE_TAC [bir_eval_exp_def, bir_eval_bin_exp_REWRS] >>
+  EVAL_TAC
 );
 
 
