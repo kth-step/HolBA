@@ -668,6 +668,14 @@ val bir_exp_imp_def = Define `
       bir_exp_imp e1 e2 = bir_exp_or (bir_exp_not e1) e2
 `;
 
+val bir_exp_imp_or_thm = store_thm("bir_exp_imp_or_thm", ``
+     !e1 e2.
+         bir_exp_imp e1 e2 = bir_exp_or (bir_exp_not e1) e2
+``,
+
+  REWRITE_TAC [bir_exp_imp_def]
+);
+
 
 val bir_exp_CONG_not_not_thm = store_thm("bir_exp_CONG_not_not_thm", ``
      !e ty.
@@ -739,6 +747,7 @@ val bir_exp_CONG_de_morgan_and_thm = store_thm("bir_exp_CONG_de_morgan_and_thm",
   )
 );
 
+(* TODO: simplify the following congruence proofs by introducing theorems to enable use of automation *)
 val bir_exp_CONG_de_morgan_or_thm = store_thm("bir_exp_CONG_de_morgan_or_thm", ``
      !e1 e2 ty.
          (type_of_bir_exp e1 = SOME ty) ==>
@@ -757,7 +766,64 @@ val bir_exp_CONG_de_morgan_or_thm = store_thm("bir_exp_CONG_de_morgan_or_thm", `
     METIS_TAC [bir_exp_CONG_SYM, bir_exp_CONG_not_not_thm]
   ) >>
 
-  METIS_TAC [bir_exp_CONG_SYM, bir_exp_CONG_TRANS, bir_exp_CONG_not_not_thm, bir_exp_CONG_de_morgan_and_thm]
+  subgoal `(type_of_bir_exp (bir_exp_not e1) = SOME ty) /\ (type_of_bir_exp (bir_exp_not e2) = SOME ty)` >- (
+    ASM_SIMP_TAC std_ss [bir_exp_not_def, type_of_bir_exp_EQ_SOME_REWRS]
+  ) >>
+
+  subgoal `bir_exp_CONG (bir_exp_not (bir_exp_or (bir_exp_not (bir_exp_not e1)) (bir_exp_not (bir_exp_not e2)))) (bir_exp_not (bir_exp_not (bir_exp_and (bir_exp_not e1) (bir_exp_not e2))))` >- (
+    METIS_TAC [bir_exp_not_def, bir_exp_CONG_BASIC_CONG_RULES, bir_exp_CONG_SYM, bir_exp_CONG_de_morgan_and_thm]
+  ) >>
+
+  subgoal `bir_exp_CONG (bir_exp_not (bir_exp_or e1 e2)) (bir_exp_not (bir_exp_or (bir_exp_not (bir_exp_not e1)) (bir_exp_not (bir_exp_not e2))))` >- (
+    subgoal `(bir_exp_CONG (bir_exp_not (bir_exp_not e1)) e1) /\ (bir_exp_CONG (bir_exp_not (bir_exp_not e2)) e2)` >- (
+      METIS_TAC [bir_exp_CONG_SYM, bir_exp_CONG_not_not_thm]
+    ) >>
+
+    METIS_TAC [bir_exp_CONG_SYM, bir_exp_not_def, bir_exp_or_def, bir_exp_CONG_BASIC_CONG_RULES]
+  ) >>
+
+  METIS_TAC [bir_exp_CONG_SYM, bir_exp_CONG_TRANS]
+);
+
+val bir_exp_CONG_or_assoc_thm = store_thm("bir_exp_CONG_or_assoc_thm", ``
+     !e1 e2 e3 ty.
+         (type_of_bir_exp e1 = SOME ty) ==>
+         (type_of_bir_exp e2 = SOME ty) ==>
+         (type_of_bir_exp e3 = SOME ty) ==>
+         (bir_type_is_Imm ty) ==>
+         (bir_exp_CONG (bir_exp_or e1 (bir_exp_or e2 e3)) (bir_exp_or (bir_exp_or e1 e2) e3))
+``,
+
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [bir_exp_or_def, bir_exp_CONG_def] >>
+  REPEAT STRIP_TAC >|
+  [
+    ASM_SIMP_TAC std_ss [type_of_bir_exp_def, bir_vars_of_exp_def] >>
+    CASE_TAC >>
+    POP_ASSUM (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss) []
+  ,
+    ASM_SIMP_TAC std_ss [type_of_bir_exp_def, bir_vars_of_exp_def, pred_setTheory.UNION_ASSOC]
+  ,
+    ALL_TAC
+  ] >>
+
+  FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_type_is_Imm_def] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION] >>
+
+  IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+  IMP_RES_TAC type_of_bir_val_EQ_ELIMS >>
+
+  Cases_on `i` >> Cases_on `i'` >> Cases_on `i''` >> (
+    FULL_SIMP_TAC std_ss [bir_eval_unary_exp_REWRS, bir_imm_expTheory.bir_unary_exp_REWRS, bir_imm_expTheory.bir_unary_exp_GET_OPER_def, bir_eval_bin_exp_REWRS, bir_imm_expTheory.bir_bin_exp_REWRS, bir_imm_expTheory.bir_bin_exp_GET_OPER_def, type_of_bir_imm_def] >>
+    blastLib.BBLAST_TAC >>
+
+    FULL_SIMP_TAC (std_ss) [bir_typing_expTheory.type_of_bir_exp_EQ_SOME_REWRS, type_of_bir_val_def, type_of_bir_imm_def] >>
+    PAT_X_ASSUM ``(A:bir_immtype_t) = (s:bir_immtype_t)`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss++bir_immtype_ss) []
+  )
 );
 
 val bir_exp_CONG_imp_imp_thm = store_thm("bir_exp_CONG_imp_imp_thm", ``
@@ -769,7 +835,25 @@ val bir_exp_CONG_imp_imp_thm = store_thm("bir_exp_CONG_imp_imp_thm", ``
          (bir_exp_CONG (bir_exp_imp e1 (bir_exp_imp e2 e3)) (bir_exp_imp (bir_exp_and e1 e2) e3))
 ``,
 
-  cheat
+  REWRITE_TAC [bir_exp_imp_or_thm] >>
+  REPEAT STRIP_TAC >>
+
+(* this part seems not so automation friendly, but maybe okay? *)
+  subgoal `(type_of_bir_exp (bir_exp_not e1) = SOME ty) /\ (type_of_bir_exp (bir_exp_not e2) = SOME ty)` >- (
+    METIS_TAC [bir_exp_not_def, type_of_bir_exp_EQ_SOME_REWRS]
+  ) >>
+
+  subgoal `bir_exp_CONG (bir_exp_or (bir_exp_not e1) (bir_exp_or (bir_exp_not e2) e3))
+                        (bir_exp_or (bir_exp_or (bir_exp_not e1) (bir_exp_not e2)) e3)` >- (
+    METIS_TAC [bir_exp_CONG_or_assoc_thm, bir_exp_CONG_TRANS]
+  ) >>
+
+  subgoal `bir_exp_CONG (bir_exp_or (bir_exp_or (bir_exp_not e1) (bir_exp_not e2)) e3)
+                        (bir_exp_or (bir_exp_not (bir_exp_and e1 e2)) e3)` >- (
+    METIS_TAC [bir_exp_or_def, bir_exp_CONG_BASIC_CONG_RULES, bir_exp_CONG_REFL, bir_exp_CONG_SYM, bir_exp_CONG_de_morgan_and_thm]
+  ) >>
+
+  METIS_TAC [bir_exp_CONG_TRANS]
 );
 
 
