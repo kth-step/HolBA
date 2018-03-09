@@ -704,15 +704,8 @@ val bir_exp_CONG_not_not_thm = store_thm("bir_exp_CONG_not_not_thm", ``
 
 
 val bir_exp_CONG_de_morgan_and_thm = store_thm("bir_exp_CONG_de_morgan_and_thm", ``
-     !e1 e2 ty.
-         (type_of_bir_exp e1 = SOME ty) ==>
-         (type_of_bir_exp e2 = SOME ty) ==>
-         (bir_type_is_Imm ty) ==>
+     !e1 e2.
          (bir_exp_CONG (bir_exp_not (bir_exp_and e1 e2)) (bir_exp_or (bir_exp_not e1) (bir_exp_not e2)))
-(*
-/\
-    (!e1 e2. bir_exp_CONG (bir_exp_not (bir_exp_or e1 e2)) (bir_exp_and (bir_exp_not e1) (bir_exp_not e2)))
-*)
 ``,
 
   REPEAT STRIP_TAC >>
@@ -720,14 +713,27 @@ val bir_exp_CONG_de_morgan_and_thm = store_thm("bir_exp_CONG_de_morgan_and_thm",
   REPEAT STRIP_TAC >|
   [
     ASM_SIMP_TAC std_ss [type_of_bir_exp_def, bir_vars_of_exp_def] >>
-    CASE_TAC >>
-    POP_ASSUM (ASSUME_TAC o GSYM) >>
-    FULL_SIMP_TAC (std_ss) []
+
+    Cases_on `type_of_bir_exp e1` >> Cases_on `type_of_bir_exp e2` >> (
+      CASE_TAC >>
+      POP_ASSUM (ASSUME_TAC o GSYM) >>
+      FULL_SIMP_TAC (std_ss) [] >>
+      Cases_on `bir_type_is_Imm x` >> (
+        FULL_SIMP_TAC (std_ss) []
+      ) >>
+      Cases_on `bir_type_is_Imm x'` >> Cases_on `x' = x` >> (
+        FULL_SIMP_TAC (std_ss) []
+      )
+    )
   ,
     ASM_SIMP_TAC std_ss [type_of_bir_exp_def, bir_vars_of_exp_def]
   ,
     ALL_TAC
   ] >>
+
+  subgoal `(type_of_bir_exp e1 = SOME ty) /\ (type_of_bir_exp e2 = SOME ty) /\ (bir_type_is_Imm ty)` >- (
+    METIS_TAC [bir_typing_expTheory.type_of_bir_exp_EQ_SOME_REWRS]
+  ) >>
 
   FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_type_is_Imm_def] >>
   REV_FULL_SIMP_TAC std_ss [] >>
