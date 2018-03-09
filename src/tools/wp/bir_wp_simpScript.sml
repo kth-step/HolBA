@@ -11,6 +11,7 @@ open bir_expTheory;
 open bir_program_env_orderTheory;
 
 open bir_exp_congruencesTheory;
+open bir_exp_tautologiesTheory;
 
 load "pairLib";
 
@@ -907,24 +908,70 @@ val bir_exp_CONG_imp_imp_thm = store_thm("bir_exp_CONG_imp_imp_thm", ``
 
 (* --------------------------------------------- more ------------------------------------------------ *)
 
-(*
 val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
     !prem e1 e2.
-     (bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION (bir_vars_of_exp e2))) ==>
-     ( 
       (bir_exp_is_taut (bir_exp_imp prem (bir_exp_and e1 e2)))
       <=>
       (
        (bir_exp_is_taut (bir_exp_imp prem e1))
        /\
        (bir_exp_is_taut (bir_exp_imp prem e2))
+       /\
+       (bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION (bir_vars_of_exp e2)))
       )
-     )
 ``,
 
-  cheat
+  REPEAT STRIP_TAC >>
+
+  EQ_TAC >- (
+    REPEAT STRIP_TAC >|
+    [
+      ALL_TAC
+    ,
+      ALL_TAC
+    ,
+      FULL_SIMP_TAC std_ss [bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_and_def, bir_exp_is_taut_def, bir_vars_of_exp_def, pred_setTheory.UNION_ASSOC]
+    ] >> (
+      FULL_SIMP_TAC std_ss [bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_and_def, bir_exp_is_taut_def] >>
+      REPEAT STRIP_TAC >|
+      [
+        METIS_TAC [bir_is_bool_exp_REWRS]
+      ,
+        FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_vars_of_exp_def, bir_var_set_is_well_typed_UNION]
+      ,
+        ALL_TAC
+      ] >>
+
+      (* now it's getting tricky, we have to initialize all vars of ((prem UNION (e1/e2)) DIFF e2/e1) in env to obtain env', then we can prove this *)
+      cheat
+    )
+  ) >>
+
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_and_def, bir_exp_is_taut_def] >>
+  REPEAT STRIP_TAC >|
+  [
+    METIS_TAC [bir_is_bool_exp_REWRS]
+  ,
+    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pred_setTheory.UNION_ASSOC]
+  ,
+    ALL_TAC
+  ] >>
+
+  REPEAT (Q.PAT_X_ASSUM `!s.P s` (fn thm => ASSUME_TAC (Q.SPEC `env` thm))) >>
+  REV_FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pred_setTheory.UNION_ASSOC, bir_env_vars_are_initialised_UNION] >>
+
+  FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS] >>
+  Cases_on `bir_eval_exp prem env = bir_val_true` >> Cases_on `bir_eval_exp e1 env = bir_val_true` >> Cases_on `bir_eval_exp e2 env = bir_val_true` >> (
+    REV_FULL_SIMP_TAC std_ss [bir_eval_exp_not_true_false_thm] >>
+    FULL_SIMP_TAC (std_ss++bir_immtype_ss) [bir_eval_exp_def, bir_eval_unary_exp_REWRS, bir_imm_expTheory.bir_unary_exp_REWRS, bir_eval_bin_exp_REWRS, bir_imm_expTheory.bir_bin_exp_REWRS, bir_val_true_def, bir_val_false_def, bir_imm_expTheory.bir_unary_exp_GET_OPER_def, bir_imm_expTheory.bir_bin_exp_GET_OPER_def, type_of_bir_imm_def] >>
+    
+    blastLib.BBLAST_TAC >>
+    EVERY_ASSUM (fn thm => ASSUME_TAC (blastLib.BBLAST_RULE thm)) >>
+    FULL_SIMP_TAC std_ss []
+  )  
 );
-*)
+
 
 (* --------------------------------------------------------------------------------------------------- *)
 (* --------------------------------------------------------------------------------------------------- *)
