@@ -10,6 +10,8 @@ open bir_valuesTheory;
 open bir_expTheory;
 open bir_program_env_orderTheory;
 
+open bir_exp_congruencesTheory;
+
 load "pairLib";
 
 val _ = new_theory "bir_wp_simp";
@@ -36,10 +38,13 @@ val _ = new_theory "bir_wp_simp";
 
 
 
-
+(* !!!!!!!!!! this has to go somewhere else !!!!!!!!!!!!!!!!!!!!!!! *)
+(* ---------------------------------------------------------------------------------------------------- *)
+(* ---------------------------------------------------------------------------------------------------- *)
 
 
 val bir_val_ss = rewrites (type_rws ``:bir_val_t``);
+val bir_type_ss = rewrites (type_rws ``:bir_type_t``);
 val bir_imm_ss = rewrites (type_rws ``:bir_imm_t``);
 val bir_immtype_ss = rewrites (type_rws ``:bir_immtype_t``);
 val bir_wp_simp_eval_binpred_eq_thm = prove(``
@@ -74,20 +79,37 @@ val bir_wp_simp_eval_binpred_eq_thm = prove(``
 );
 
 
-val bir_wp_simp_eval_bin_is_Imm_s_thm = prove(``
-    !et e1 e2 s sz.
-      (bir_val_is_Imm_s sz (bir_eval_exp (BExp_BinExp et e1 e2) s))
+val bir_wp_simp_eval_unary_Imm_s_match_thm = prove(``
+    !et e env sz.
+      (bir_val_is_Imm_s sz (bir_eval_exp (BExp_UnaryExp et e) env))
+      <=>
+      (bir_val_is_Imm_s sz (bir_eval_exp e env))
+``,
+
+  REWRITE_TAC [bir_eval_exp_def, bir_val_is_Imm_def] >>
+
+  Cases_on `(bir_eval_exp e env)` >> (
+    SIMP_TAC (std_ss++bir_val_ss++bir_imm_ss) [bir_eval_unary_exp_def, bir_val_is_Imm_s_ALT_DEF]
+  ) >>
+
+  SIMP_TAC (std_ss) [bir_imm_expTheory.type_of_bir_unary_exp]
+);
+
+
+val bir_wp_simp_eval_bin_Imm_s_match_thm = prove(``
+    !et e1 e2 env sz.
+      (bir_val_is_Imm_s sz (bir_eval_exp (BExp_BinExp et e1 e2) env))
       <=>
       (
-       (     bir_val_is_Imm_s sz (bir_eval_exp e1 s) /\
-             bir_val_is_Imm_s sz (bir_eval_exp e2 s))
+       (     bir_val_is_Imm_s sz (bir_eval_exp e1 env) /\
+             bir_val_is_Imm_s sz (bir_eval_exp e2 env))
       )
 ``,
 
   REWRITE_TAC [bir_eval_exp_def, bir_val_is_Imm_def] >>
 
-  Cases_on `(bir_eval_exp e1 s)` >> (
-    Cases_on `(bir_eval_exp e2 s)` >> (
+  Cases_on `(bir_eval_exp e1 env)` >> (
+    Cases_on `(bir_eval_exp e2 env)` >> (
       SIMP_TAC (std_ss++bir_val_ss++bir_imm_ss) [bir_eval_bin_exp_def, bir_val_is_Imm_s_ALT_DEF]
     )
   ) >>
@@ -100,6 +122,8 @@ val bir_wp_simp_eval_bin_is_Imm_s_thm = prove(``
 );
 
 
+(* ---------------------------------------------------------------------------------------------------- *)
+(* ---------------------------------------------------------------------------------------------------- *)
 
 
 
@@ -107,17 +131,6 @@ val bir_wp_simp_eval_bin_is_Imm_s_thm = prove(``
 
 
 
-val bir_exp_imp_def = Define `
-      bir_exp_imp e1 e2 = BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not e1) e2
-`;
-
-val bir_exp_or_def = Define `
-      bir_exp_or e1 e2 = BExp_BinExp BIExp_Or e1 e2
-`;
-
-val bir_exp_and_def = Define `
-      bir_exp_and e1 e2 = BExp_BinExp BIExp_And e1 e2
-`;
 
 val bir_exp_bool_and_well_typed_vars_def = Define `
       bir_exp_bool_and_well_typed_vars e =
@@ -587,7 +600,9 @@ val bir_wp_simp_eval_or_thm = store_thm("bir_wp_simp_eval_or_thm", ``
 
 
 
-
+(* !!!!!!!!!!!!!! GOES SOMEWHERE ELSE !!!!!!!!!!!!!!!!!!!! *)
+(* --------------------------------------------------------------------------------------------------- *)
+(* --------------------------------------------------------------------------------------------------- *)
 
 val bir_eval_exp_indep_env_update_thm = store_thm("bir_eval_exp_indep_env_update_thm", ``
     !vn vt vo e sm.
@@ -633,6 +648,133 @@ val bir_wp_simp_eval_subst1_lemma = store_thm("bir_wp_simp_eval_subst1_lemma", `
 
   METIS_TAC [bir_eval_exp_indep_env_update_thm]
 );
+
+(* --------------------------------------------- more ------------------------------------------------ *)
+
+
+val bir_exp_and_def = Define `
+      bir_exp_and e1 e2 = BExp_BinExp BIExp_And e1 e2
+`;
+
+val bir_exp_or_def = Define `
+      bir_exp_or e1 e2 = BExp_BinExp BIExp_Or e1 e2
+`;
+
+val bir_exp_not_def = Define `
+      bir_exp_not e = BExp_UnaryExp BIExp_Not e
+`;
+
+val bir_exp_imp_def = Define `
+      bir_exp_imp e1 e2 = bir_exp_or (bir_exp_not e1) e2
+`;
+
+
+val bir_exp_CONG_not_not_thm = store_thm("bir_exp_CONG_not_not_thm", ``
+     !e ty.
+         (type_of_bir_exp e = SOME ty) ==>
+         (bir_type_is_Imm ty) ==>
+         (bir_exp_CONG e (bir_exp_not (bir_exp_not e)))
+``,
+
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [bir_exp_and_def, bir_exp_or_def, bir_exp_not_def, bir_exp_CONG_def] >>
+  REPEAT STRIP_TAC >> (
+    ASM_SIMP_TAC std_ss [type_of_bir_exp_def, bir_vars_of_exp_def]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_type_is_Imm_def] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+  IMP_RES_TAC type_of_bir_val_EQ_ELIMS >>
+
+  Cases_on `i` >> (
+    FULL_SIMP_TAC std_ss [bir_eval_unary_exp_REWRS, bir_imm_expTheory.bir_unary_exp_REWRS, bir_imm_expTheory.bir_unary_exp_GET_OPER_def] >>
+    blastLib.BBLAST_TAC
+  )
+);
+
+
+val bir_exp_CONG_de_morgan_and_thm = store_thm("bir_exp_CONG_de_morgan_and_thm", ``
+     !e1 e2 ty.
+         (type_of_bir_exp e1 = SOME ty) ==>
+         (type_of_bir_exp e2 = SOME ty) ==>
+         (bir_type_is_Imm ty) ==>
+         (bir_exp_CONG (bir_exp_not (bir_exp_and e1 e2)) (bir_exp_or (bir_exp_not e1) (bir_exp_not e2)))
+(*
+/\
+    (!e1 e2. bir_exp_CONG (bir_exp_not (bir_exp_or e1 e2)) (bir_exp_and (bir_exp_not e1) (bir_exp_not e2)))
+*)
+``,
+
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [bir_exp_and_def, bir_exp_or_def, bir_exp_not_def, bir_exp_CONG_def] >>
+  REPEAT STRIP_TAC >|
+  [
+    ASM_SIMP_TAC std_ss [type_of_bir_exp_def, bir_vars_of_exp_def] >>
+    CASE_TAC >>
+    POP_ASSUM (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss) []
+  ,
+    ASM_SIMP_TAC std_ss [type_of_bir_exp_def, bir_vars_of_exp_def]
+  ,
+    ALL_TAC
+  ] >>
+
+  FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_type_is_Imm_def] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION] >>
+
+  IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+  IMP_RES_TAC type_of_bir_val_EQ_ELIMS >>
+
+  Cases_on `i` >> Cases_on `i'` >> (
+    FULL_SIMP_TAC std_ss [bir_eval_unary_exp_REWRS, bir_imm_expTheory.bir_unary_exp_REWRS, bir_imm_expTheory.bir_unary_exp_GET_OPER_def, bir_eval_bin_exp_REWRS, bir_imm_expTheory.bir_bin_exp_REWRS, bir_imm_expTheory.bir_bin_exp_GET_OPER_def, type_of_bir_imm_def] >>
+    blastLib.BBLAST_TAC >>
+
+    FULL_SIMP_TAC (std_ss) [bir_typing_expTheory.type_of_bir_exp_EQ_SOME_REWRS, type_of_bir_val_def, type_of_bir_imm_def] >>
+    PAT_X_ASSUM ``(A:bir_immtype_t) = (s:bir_immtype_t)`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss++bir_immtype_ss) []
+  )
+);
+
+val bir_exp_CONG_de_morgan_or_thm = store_thm("bir_exp_CONG_de_morgan_or_thm", ``
+     !e1 e2 ty.
+         (type_of_bir_exp e1 = SOME ty) ==>
+         (type_of_bir_exp e2 = SOME ty) ==>
+         (bir_type_is_Imm ty) ==>
+         (bir_exp_CONG (bir_exp_not (bir_exp_or e1 e2)) (bir_exp_and (bir_exp_not e1) (bir_exp_not e2)))
+``,
+
+  REPEAT STRIP_TAC >>
+
+  subgoal `type_of_bir_exp (bir_exp_and (bir_exp_not e1) (bir_exp_not e2)) = SOME ty` >- (
+    ASM_SIMP_TAC std_ss [bir_exp_and_def, bir_exp_imp_def, bir_exp_not_def, type_of_bir_exp_EQ_SOME_REWRS]
+  ) >>
+
+  subgoal `bir_exp_CONG (bir_exp_not (bir_exp_not (bir_exp_and (bir_exp_not e1) (bir_exp_not e2)))) (bir_exp_and (bir_exp_not e1) (bir_exp_not e2))` >- (
+    METIS_TAC [bir_exp_CONG_SYM, bir_exp_CONG_not_not_thm]
+  ) >>
+
+  METIS_TAC [bir_exp_CONG_SYM, bir_exp_CONG_TRANS, bir_exp_CONG_not_not_thm, bir_exp_CONG_de_morgan_and_thm]
+);
+
+val bir_exp_CONG_imp_imp_thm = store_thm("bir_exp_CONG_imp_imp_thm", ``
+     !e1 e2 e3 ty.
+         (type_of_bir_exp e1 = SOME ty) ==>
+         (type_of_bir_exp e2 = SOME ty) ==>
+         (type_of_bir_exp e3 = SOME ty) ==>
+         (bir_type_is_Imm ty) ==>
+         (bir_exp_CONG (bir_exp_imp e1 (bir_exp_imp e2 e3)) (bir_exp_imp (bir_exp_and e1 e2) e3))
+``,
+
+  cheat
+);
+
+
+(* --------------------------------------------------------------------------------------------------- *)
+(* --------------------------------------------------------------------------------------------------- *)
 
 
 
