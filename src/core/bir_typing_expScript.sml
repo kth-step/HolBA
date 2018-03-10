@@ -40,6 +40,11 @@ val type_of_bir_exp_def = Define `
        (SOME ty1, SOME ty2) => (if ((bir_type_is_Imm ty1) /\ (ty2 = ty1)) then SOME BType_Bool else NONE)
        | _, _ => NONE)) /\
 
+  (type_of_bir_exp (BExp_MemEq e1 e2) = (case (type_of_bir_exp e1,
+       type_of_bir_exp e2) of
+       (SOME (BType_Mem aty1 vty1), SOME (BType_Mem aty2 vty2)) => (if ((aty2 = aty1) /\ (vty2 = vty1)) then SOME BType_Bool else NONE)
+       | _, _ => NONE)) /\
+
 
   (type_of_bir_exp (BExp_IfThenElse ec e1 e2) = (case (type_of_bir_exp ec, type_of_bir_exp e1,
        type_of_bir_exp e2) of
@@ -88,6 +93,10 @@ Induct >> (
   FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_bin_pred_REWRS,
     type_of_bir_val_def, BType_Bool_def, type_of_bool2b]
 ) >- (
+  FULL_SIMP_TAC std_ss [bir_eval_memeq_exp_REWRS, bir_type_is_Imm_def] >>
+  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_memeq_exp_REWRS,
+    type_of_bir_val_def, BType_Bool_def, type_of_bool2b]
+) >- (
   Cases_on `bir_eval_exp e env = BVal_Unknown` >- (
     ASM_SIMP_TAC std_ss [bir_eval_ifthenelse_REWRS]
   ) >>
@@ -127,6 +136,9 @@ val type_of_bir_exp_EQ_SOME_REWRS = store_thm ("type_of_bir_exp_EQ_SOME_REWRS",`
      (ty = BType_Bool) /\ (?it. (type_of_bir_exp e1 = SOME (BType_Imm it)) /\
                               (type_of_bir_exp e2 = SOME (BType_Imm it))))) /\
 
+  (!me1 me2 ty. (type_of_bir_exp (BExp_MemEq me1 me2) = SOME ty) <=> (
+     ?at vt. (ty = BType_Bool) /\ (type_of_bir_exp me1 = SOME (BType_Mem at vt)) /\ (type_of_bir_exp me2 = type_of_bir_exp me1))) /\
+
   (!ce e1 e2 ty. (type_of_bir_exp (BExp_IfThenElse ce e1 e2) = SOME ty) <=> (
      (type_of_bir_exp ce = SOME BType_Bool) /\
      (type_of_bir_exp e1 = SOME ty) /\
@@ -164,6 +176,10 @@ REPEAT CONJ_TAC >> (
   )
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
+    FULL_SIMP_TAC (std_ss++bir_type_ss) [] >> METIS_TAC[]
+  )
+) >- (
+  REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
     FULL_SIMP_TAC std_ss [bir_type_is_Imm_def] >> METIS_TAC[]
   )
 ) >- (
@@ -171,7 +187,6 @@ REPEAT CONJ_TAC >> (
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC[]
 ));
-
 
 
 
@@ -193,6 +208,10 @@ val type_of_bir_exp_EQ_NONE_REWRS = store_thm ("type_of_bir_exp_EQ_NONE_REWRS",`
   (!pt e1 e2. (type_of_bir_exp (BExp_BinPred pt e1 e2) = NONE) <=> !ity.
      (type_of_bir_exp e1 <> SOME (BType_Imm ity)) \/
      (type_of_bir_exp e2 <> SOME (BType_Imm ity))) /\
+
+  (!me1 me2. (type_of_bir_exp (BExp_MemEq me1 me2) = NONE) <=> !at vt.
+     (type_of_bir_exp me1 <> SOME (BType_Mem at vt)) \/
+     (type_of_bir_exp me2 <> SOME (BType_Mem at vt))) /\
 
   (!ce e1 e2 ty. (type_of_bir_exp (BExp_IfThenElse ce e1 e2) = NONE) <=> (
      (type_of_bir_exp ce <> SOME BType_Bool) \/
@@ -232,6 +251,11 @@ REPEAT CONJ_TAC >> (
   )
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
+    FULL_SIMP_TAC (std_ss++bir_type_ss) [bir_type_is_Imm_def] >>
+    METIS_TAC[]
+  )
+) >- (
+  REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
     FULL_SIMP_TAC (std_ss) []
   )
 ) >- (
@@ -252,6 +276,7 @@ val bir_vars_of_exp_def = Define `
   (bir_vars_of_exp (BExp_UnaryExp _ e) = bir_vars_of_exp e) /\
   (bir_vars_of_exp (BExp_BinExp _ e1 e2) = (bir_vars_of_exp e1 UNION bir_vars_of_exp e2)) /\
   (bir_vars_of_exp (BExp_BinPred _ e1 e2) = (bir_vars_of_exp e1 UNION bir_vars_of_exp e2)) /\
+  (bir_vars_of_exp (BExp_MemEq e1 e2) = (bir_vars_of_exp e1 UNION bir_vars_of_exp e2)) /\
   (bir_vars_of_exp (BExp_IfThenElse ec e1 e2) = (bir_vars_of_exp ec UNION bir_vars_of_exp e1 UNION bir_vars_of_exp e2)) /\
   (bir_vars_of_exp (BExp_Load me ae _ _) = (bir_vars_of_exp me UNION bir_vars_of_exp ae)) /\
   (bir_vars_of_exp (BExp_Store me ae _ ve) = (bir_vars_of_exp me UNION bir_vars_of_exp ae UNION bir_vars_of_exp ve))`;
@@ -310,6 +335,9 @@ GEN_TAC >> Induct >> (
   ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_bin_exp_REWRS, type_of_bir_bin_exp]
 ) >- (
   ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_bin_pred_REWRS, type_of_bir_val_def,
+    type_of_bool2b, BType_Bool_def]
+) >- (
+  ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_memeq_exp_REWRS, type_of_bir_val_def,
     type_of_bool2b, BType_Bool_def]
 ) >- (
   ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_ifthenelse_REWRS] >>

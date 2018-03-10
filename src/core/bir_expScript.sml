@@ -22,6 +22,7 @@ val _ = Datatype `bir_exp_t =
   | BExp_UnaryExp          bir_unary_exp_t bir_exp_t
   | BExp_BinExp            bir_bin_exp_t bir_exp_t bir_exp_t
   | BExp_BinPred           bir_bin_pred_t bir_exp_t bir_exp_t
+  | BExp_MemEq             bir_exp_t bir_exp_t
 
     (* For some reason if-then-else officially misses in BAP documentation *)
   | BExp_IfThenElse        bir_exp_t bir_exp_t bir_exp_t
@@ -54,6 +55,12 @@ val bir_eval_bin_pred_def = Define `
      if (type_of_bir_imm bi1 <> type_of_bir_imm bi2) then BVal_Unknown else
      BVal_Imm (bool2b (bir_bin_pred pt bi1 bi2))) /\
   (bir_eval_bin_pred _ _ _ = BVal_Unknown)`;
+
+val bir_eval_memeq_exp_def = Define `
+  (bir_eval_memeq_exp (BVal_Mem at1 vt1 mmap1) (BVal_Mem at2 vt2 mmap2) =
+     if ((at1 <> at2) \/ (vt1 <> vt2)) then BVal_Unknown else
+     BVal_Imm (bool2b (bir_memeq_exp mmap1 mmap2))) /\
+  (bir_eval_memeq_exp _ _ = BVal_Unknown)`;
 
 val bir_eval_ifthenelse_def = Define `
   (bir_eval_ifthenelse (BVal_Imm (Imm1 cw)) e1 e2 =
@@ -96,6 +103,10 @@ val bir_eval_exp_def = Define `
 
   (bir_eval_exp (BExp_BinPred pt e1 e2) env = (
      bir_eval_bin_pred pt (bir_eval_exp e1 env) (bir_eval_exp e2 env))) /\
+
+  (bir_eval_exp (BExp_MemEq e1 e2) env = (
+     bir_eval_memeq_exp (bir_eval_exp e1 env) (bir_eval_exp e2 env))) /\
+
 
   (bir_eval_exp (BExp_IfThenElse c et ef) env =
      bir_eval_ifthenelse (bir_eval_exp c env) (bir_eval_exp et env) (bir_eval_exp ef env)
@@ -155,6 +166,19 @@ CONJ_TAC >| [
   Cases_on `v` >> SIMP_TAC std_ss [bir_eval_bin_pred_def],
   Cases_on `v` >> SIMP_TAC std_ss [bir_eval_bin_pred_def]
 ]);
+
+val bir_eval_memeq_exp_REWRS = store_thm ("bir_eval_memeq_exp_REWRS",
+ ``(!at1 vt1 mmap1 at2 vt2 mmap2. (bir_eval_memeq_exp (BVal_Mem at1 vt1 mmap1) (BVal_Mem at2 vt2 mmap2) =
+     if ((at1 <> at2) \/ (vt1 <> vt2)) then BVal_Unknown else
+     BVal_Imm (bool2b (bir_memeq_exp mmap1 mmap2)))) /\
+   (!v. bir_eval_memeq_exp BVal_Unknown v = BVal_Unknown) /\
+   (!v. bir_eval_memeq_exp v BVal_Unknown = BVal_Unknown) /\
+   (!bi v. bir_eval_memeq_exp (BVal_Imm bi) v = BVal_Unknown) /\
+   (!bi v. bir_eval_memeq_exp v (BVal_Imm bi) = BVal_Unknown)``,
+SIMP_TAC std_ss [bir_eval_memeq_exp_def] >>
+CONJ_TAC >> (
+  Cases_on `v` >> SIMP_TAC std_ss [bir_eval_memeq_exp_def]
+));
 
 
 val bir_eval_ifthenelse_REWRS = store_thm ("bir_eval_ifthenelse_REWRS",

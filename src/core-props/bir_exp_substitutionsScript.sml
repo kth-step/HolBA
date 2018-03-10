@@ -43,6 +43,10 @@ val bir_exp_subst_def = Define `
       bir_exp_subst s (BExp_BinPred pt e1 e2) =
       BExp_BinPred pt (bir_exp_subst s e1)
         (bir_exp_subst s e2)) /\
+   (!s me1 me2.
+      bir_exp_subst s (BExp_MemEq me1 me2) =
+      BExp_MemEq (bir_exp_subst s me1)
+        (bir_exp_subst s me2)) /\
    (!s c et ef.
       bir_exp_subst s (BExp_IfThenElse c et ef) =
       BExp_IfThenElse (bir_exp_subst s c) (bir_exp_subst s et)
@@ -208,6 +212,10 @@ val bir_exp_subst1_REWRS = store_thm ("bir_exp_subst1_REWRS",
       bir_exp_subst1 v ve (BExp_BinPred pt e1 e2) =
       BExp_BinPred pt (bir_exp_subst1 v ve e1)
         (bir_exp_subst1 v ve e2)) /\
+   (!v ve me1 me2.
+      bir_exp_subst1 v ve (BExp_MemEq me1 me2) =
+      BExp_MemEq (bir_exp_subst1 v ve me1)
+        (bir_exp_subst1 v ve me2)) /\
    (!v ve c et ef.
       bir_exp_subst1 v ve (BExp_IfThenElse c et ef) =
       BExp_IfThenElse (bir_exp_subst1 v ve c) (bir_exp_subst1 v ve et)
