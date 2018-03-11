@@ -19,6 +19,9 @@ val _ = new_theory "bir_wp_simp";
 
 
 
+val bir_var_ss = rewrites (type_rws ``:bir_var_t``);
+val string_t_ss = rewrites (type_rws ``:string``);
+val char_t_ss = rewrites (type_rws ``:char``);
 
 
 
@@ -972,6 +975,230 @@ val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
   )  
 );
 
+(* --------------------------------------------- more ------------------------------------------------ *)
+
+(* TODO: should be in bir_exp_substitutionsTheory *)
+
+(*
+
+val thm = SIMP_CONV (std_ss) [bir_exp_subst_update_REWRS] ``bir_exp_subst_update (FUPDATE (FUPDATE FEMPTY (BVar "h" (BType_Imm Bit8),BExp_Den (BVar "h1" (BType_Imm Bit8)))) (BVar "k" (BType_Imm Bit8),BExp_Den (BVar "k1" (BType_Imm Bit8)))) (FUPDATE FEMPTY (BVar "h1" (BType_Imm Bit8),BExp_Den (BVar "h1" (BType_Imm Bit16))))``;
+val thm = TRANS thm ((EVAL o snd o dest_eq o concl) thm);
+
+
+*)
+
+val bir_exp_subst_update_def = Define `
+  bir_exp_subst_update s f = FUN_FMAP (\x. f (FAPPLY s x)) (FDOM s)
+`;
+
+val bir_exp_subst_update_REWRS = store_thm("bir_exp_subst_update_REWRS",``
+  (!f. bir_exp_subst_update FEMPTY f = FEMPTY) /\
+  (!s v ve f. bir_exp_subst_update (FUPDATE s (v,ve)) f = FUPDATE (bir_exp_subst_update s f) (v, f ve))
+``,
+
+  CONJ_TAC >- (
+    REWRITE_TAC [bir_exp_subst_update_def, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FUN_FMAP_EMPTY]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+
+  REWRITE_TAC [finite_mapTheory.fmap_EXT] >>
+
+  CONJ_TAC >- (
+    REWRITE_TAC [bir_exp_subst_update_def] >>
+    METIS_TAC [finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE, finite_mapTheory.FDOM_FUPDATE]
+  ) >>
+
+  SIMP_TAC std_ss [bir_exp_subst_update_def, finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE] >>
+  REWRITE_TAC [finite_mapTheory.FDOM_FUPDATE] >>
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+  REPEAT STRIP_TAC >> (
+    ASM_SIMP_TAC std_ss [finite_mapTheory.FAPPLY_FUPDATE_THM, finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE] >>
+    Cases_on `x = v` >> (
+      ASM_SIMP_TAC std_ss []
+    )
+  )
+);
+
+val bir_exp_varsubst_to_subst_def = Define `
+  bir_exp_varsubst_to_subst vs = FUN_FMAP (\(x:bir_var_t). BExp_Den (FAPPLY vs x)) (FDOM vs)
+`;
+
+val bir_exp_varsubst_to_subst_REWRS = store_thm("bir_exp_subst_update_REWRS",``
+  (bir_exp_varsubst_to_subst FEMPTY = FEMPTY) /\
+  (!vs v v'. bir_exp_varsubst_to_subst (FUPDATE vs (v,v')) = FUPDATE (bir_exp_varsubst_to_subst vs) (v, BExp_Den v'))
+``,
+
+  CONJ_TAC >- (
+    REWRITE_TAC [bir_exp_varsubst_to_subst_def, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FUN_FMAP_EMPTY]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+
+  REWRITE_TAC [finite_mapTheory.fmap_EXT] >>
+
+  CONJ_TAC >- (
+    REWRITE_TAC [bir_exp_varsubst_to_subst_def] >>
+    METIS_TAC [finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE, finite_mapTheory.FDOM_FUPDATE]
+  ) >>
+
+  SIMP_TAC std_ss [bir_exp_varsubst_to_subst_def, finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE] >>
+  REWRITE_TAC [finite_mapTheory.FDOM_FUPDATE] >>
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+  REPEAT STRIP_TAC >> (
+    ASM_SIMP_TAC std_ss [finite_mapTheory.FAPPLY_FUPDATE_THM, finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE] >>
+    Cases_on `x = v` >> (
+      ASM_SIMP_TAC std_ss []
+    )
+  )
+);
+
+val bir_exp_varsubst_def = Define `
+  bir_exp_varsubst vs = bir_exp_subst (bir_exp_varsubst_to_subst vs)
+`;
+
+val bir_exp_varsubst1_def = Define `
+  bir_exp_varsubst1 v v' = bir_exp_varsubst (FUPDATE FEMPTY (v,v'))
+`;
+
+val bir_exp_varsubst1_REWR = store_thm("bir_exp_varsubst1_REWR", ``
+  !v v'. bir_exp_varsubst1 v v' = bir_exp_subst1 v (BExp_Den v')
+``,
+
+  REWRITE_TAC [bir_exp_varsubst1_def, bir_exp_varsubst_def, bir_exp_varsubst_to_subst_REWRS, bir_exp_subst1_def]
+);
+
+
+(*
+(* TODO, for doing this directly on expressions *)
+val bir_exp_varsubst_REWRS = store_thm("bir_exp_varsubst_REWRS", ``
+
+  (!e vs. bir_exp_varsubst (FUPDATE vs ) e = e)
+``,
+
+  cheat
+);
+*)
+
+
+
+val bir_exp_subst_restrict_def = Define `
+  bir_exp_subst_restrict s1 s2 = DRESTRICT s1 (COMPL (FDOM s2))
+`;
+
+val bir_exp_subst_restrict1_def = Define `
+  bir_exp_subst_restrict1 s v = DRESTRICT s (COMPL {v})
+`;
+
+val bir_exp_subst_restrict1_REWRS = store_thm("bir_exp_subst_restrict1_REWRS",``
+  (!v.            bir_exp_subst_restrict1 FEMPTY v = FEMPTY) /\
+  (!s v1 ve1 v2. bir_exp_subst_restrict1 (FUPDATE s (v1,ve1)) v2 =
+                     let s' = bir_exp_subst_restrict1 s v2 in
+                     if v1 = v2 then s' else FUPDATE s' (v1,ve1)
+  )
+``,
+
+  CONJ_TAC >- (
+    REWRITE_TAC [bir_exp_subst_restrict1_def, finite_mapTheory.DRESTRICT_FEMPTY]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [finite_mapTheory.fmap_EXT] >>
+
+  CONJ_TAC >- (
+    REWRITE_TAC [bir_exp_subst_restrict1_def, LET_DEF, finite_mapTheory.DRESTRICT_FUPDATE] >>
+    SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+    METIS_TAC []
+  ) >>
+
+  SIMP_TAC std_ss [bir_exp_subst_restrict1_def, LET_DEF, finite_mapTheory.DRESTRICT_FUPDATE] >>
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+  METIS_TAC []
+);
+
+val bir_exp_subst_restrict_REWRS = store_thm("bir_exp_subst_restrict_REWRS",``
+  (!s2.           bir_exp_subst_restrict FEMPTY s2 = FEMPTY) /\
+  (!s1.           bir_exp_subst_restrict s1 FEMPTY = s1) /\
+  (!s1 s2 v ve.   bir_exp_subst_restrict s1 (FUPDATE s2 (v,ve)) =
+                     bir_exp_subst_restrict (bir_exp_subst_restrict1 s1 v) s2
+  )
+``,
+
+  REPEAT (CONJ_TAC >- (
+    REWRITE_TAC [bir_exp_subst_restrict_def, finite_mapTheory.DRESTRICT_FEMPTY, finite_mapTheory.FDOM_FEMPTY, pred_setTheory.COMPL_EMPTY, finite_mapTheory.DRESTRICT_UNIV]
+  )) >>
+
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [finite_mapTheory.fmap_EXT] >>
+
+  CONJ_TAC >> (
+    REWRITE_TAC [bir_exp_subst_restrict_def, bir_exp_subst_restrict1_def, LET_DEF, finite_mapTheory.DRESTRICT_FUPDATE, finite_mapTheory.FDOM_FUPDATE, finite_mapTheory.DRESTRICT_DRESTRICT, GSYM pred_setTheory.COMPL_UNION] >>
+    METIS_TAC [pred_setTheory.INSERT_SING_UNION]
+  )
+);
+
+(*
+(* this is wrong and does not hold *)
+val bir_exp_subst_subst_eq_restrict_thm = store_thm("bir_exp_subst_subst_eq_restrict_thm", ``
+    !s1 s2 e.
+      bir_exp_subst s1 (bir_exp_subst s2 e)
+      =
+      bir_exp_subst (bir_exp_subst_restrict s1 s2) (bir_exp_subst s2 e)
+``,
+
+  REWRITE_TAC [bir_exp_subst_restrict_def] >>
+
+  Induct_on `e` >> (
+    REPEAT STRIP_TAC >>
+    SIMP_TAC std_ss [bir_exp_subst_def] >>
+  ) >>
+
+  Cases_on `b IN (FDOM s2)` >> (
+    ASM_SIMP_TAC std_ss [bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_DEF, bir_exp_subst_def] >>
+    
+  )
+);
+*)
+
+val bir_exp_subst_subst_swap_thm = store_thm("bir_exp_subst_subst_swap_thm", ``
+    !s1 s2 e.
+      bir_exp_subst s1 (bir_exp_subst s2 e)
+      =
+      bir_exp_subst (bir_exp_subst_update s2 (bir_exp_subst s1)) (bir_exp_subst (bir_exp_subst_restrict s1 s2) e)
+``,
+
+  cheat
+);
+
+val bir_exp_varsubst_subst_swap_thm = store_thm("bir_exp_varsubst_subst_swap_thm", ``
+  bir_exp_varsubst vs (bir_exp_subst s e) = bir_exp_subst (bir_exp_subst_update s (bir_exp_varsubst vs)) (bir_exp_varsubst (bir_exp_subst_restrict vs s) e)
+``,
+
+  cheat
+);
+
+val bir_exp_varsubst_subst1_swap_thm = store_thm("bir_exp_varsubst_subst1_swap_thm", ``
+  bir_exp_varsubst vs (bir_exp_subst1 v ve e) = bir_exp_subst1 v (bir_exp_varsubst vs ve) (bir_exp_varsubst (bir_exp_subst_restrict1 vs v) e)
+``,
+
+  cheat
+);
+
+
+val bir_exp_varsubst1_varsubst_merge_thm = store_thm("bir_exp_varsubst1_varsubst_merge_thm", ``
+  !v v' vs e.
+    bir_exp_varsubst1 v v' (bir_exp_varsubst vs e) =
+     let vs' = bir_exp_subst_update vs (\x. if x = v then v' else x) in
+      bir_exp_varsubst (if v IN (FDOM vs') then vs' else FUPDATE (vs') (v,v')) e
+``,
+
+  cheat
+);
+
+
 
 (* --------------------------------------------------------------------------------------------------- *)
 (* --------------------------------------------------------------------------------------------------- *)
@@ -1067,9 +1294,6 @@ val bir_exp_conj_from_list_def = Define `
   bir_exp_conj_from_list = FOLDL (\expa. \exp. BExp_BinExp BIExp_And expa exp) (BExp_Const (Imm1 1w))
 `;
 
-val bir_exp_varsubst_def = Define `
-  bir_exp_varsubst vm = FUN_FMAP (\(x:bir_var_t). BExp_Den (FAPPLY vm x)) (FDOM vm)
-`;
 
 val bir_wp_simp_eval_subst_thm = store_thm("bir_wp_simp_eval_subst_thm", ``
     !vvtl vtm vvm bconj e prem.
@@ -1113,37 +1337,7 @@ val bir_wp_simp_eval_subst_thm = store_thm("bir_wp_simp_eval_subst_thm", ``
 
 
 
-(*
-(* TODO: should be in bir_exp_substitutionsTheory *)
-val bir_exp_subst_update_def = Define `
-  bir_exp_subst_update s2 s1 = FUN_FMAP (\x. bir_exp_subst s1 (FAPPLY s2 x)) (FDOM s2)
-`;
 
-val bir_exp_subst_update_exec_thm = store_thm("bir_exp_subst_update_exec_thm", ``
-      (!s1. bir_exp_subst_update FEMPTY s1 = FEMPTY) /\
-      (!s1 s2 v e. bir_exp_subst_update (FUPDATE s2 (v,e)) s1 =
-           FUPDATE (bir_exp_subst_update s2 s1) (v, bir_exp_subst s1 e))
-``,
-
-(*finite_mapTheory.FDOM_FINITE*)
-  cheat
-);
-
-val bir_exp_subst__def = Define `
-  bir_exp_subst_restrict s1 s2 = DRESTRICT s1 (COMPL (FDOM s2))
-`;
-
-
-val bir_exp_subst_bir_exp_subst_thm = store_thm("bir_exp_subst_bir_exp_subst_thm", ``
-    !s1 s2 e.
-      bir_exp_subst s1 (bir_exp_subst s2 e)
-      =
-      bir_exp_subst (bir_exp_subst_update s2 s1) (bir_exp_subst (bir_exp_subst_restrict s1 s2) e)
-``,
-
-  cheat
-);
-*)
 
 val _ = export_theory();
 
