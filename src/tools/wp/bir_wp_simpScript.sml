@@ -1283,7 +1283,6 @@ val bir_exp_varsubst_subst1_swap_thm = store_thm("bir_exp_varsubst_subst1_swap_t
   ASM_SIMP_TAC std_ss [bir_exp_varsubst_subst_swap_thm]
 );
 
-
 val bir_exp_varsubst1_varsubst_merge_thm = store_thm("bir_exp_varsubst1_varsubst_merge_thm", ``
   !v v' vs e.
     bir_exp_varsubst1 v v' (bir_exp_varsubst vs e) =
@@ -1291,7 +1290,24 @@ val bir_exp_varsubst1_varsubst_merge_thm = store_thm("bir_exp_varsubst1_varsubst
       bir_exp_varsubst (if v IN (FDOM vs') then vs' else FUPDATE (vs') (v,v')) e
 ``,
 
-  cheat
+  Induct_on `e` >> (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [LET_DEF, bir_exp_varsubst_def, bir_exp_varsubst1_REWR, bir_exp_varsubst_to_subst_def, bir_exp_subst_update_def, bir_exp_subst_def, bir_exp_subst1_def, bir_exp_subst_var_def]
+  ) >>
+
+  Cases_on `v IN (FDOM vs)` >> Cases_on `b IN (FDOM vs)` >> (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE, finite_mapTheory.FDOM_FUPDATE, finite_mapTheory.FLOOKUP_FUN_FMAP, bir_exp_subst_def, bir_exp_subst1_def, bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY] >>
+    CASE_TAC >> (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE, finite_mapTheory.FDOM_FUPDATE, finite_mapTheory.FAPPLY_FUPDATE, finite_mapTheory.FAPPLY_FUPDATE_THM]
+    )
+  ) >>
+
+  subgoal `v <> b` >- (
+    CCONTR_TAC >>
+    FULL_SIMP_TAC std_ss []
+  ) >>
+
+  ASM_SIMP_TAC std_ss []
 );
 
 
