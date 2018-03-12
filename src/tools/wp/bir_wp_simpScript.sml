@@ -21,7 +21,6 @@ val _ = new_theory "bir_wp_simp";
 
 val bir_var_ss = rewrites (type_rws ``:bir_var_t``);
 val string_t_ss = rewrites (type_rws ``:string``);
-val char_t_ss = rewrites (type_rws ``:char``);
 
 
 
@@ -1140,51 +1139,142 @@ val bir_exp_subst_restrict_REWRS = store_thm("bir_exp_subst_restrict_REWRS",``
   )
 );
 
-(*
-(* this is wrong and does not hold *)
 val bir_exp_subst_subst_eq_restrict_thm = store_thm("bir_exp_subst_subst_eq_restrict_thm", ``
     !s1 s2 e.
-      bir_exp_subst s1 (bir_exp_subst s2 e)
-      =
-      bir_exp_subst (bir_exp_subst_restrict s1 s2) (bir_exp_subst s2 e)
+      (!v. (v IN (FDOM s2)) ==> (FEVERY (\(_, ve). ~(v IN (bir_vars_of_exp ve))) s2)) ==>
+      (
+       bir_exp_subst s1 (bir_exp_subst s2 e)
+       =
+       bir_exp_subst (bir_exp_subst_restrict s1 s2) (bir_exp_subst s2 e)
+      )
 ``,
 
   REWRITE_TAC [bir_exp_subst_restrict_def] >>
 
   Induct_on `e` >> (
     REPEAT STRIP_TAC >>
-    SIMP_TAC std_ss [bir_exp_subst_def] >>
-  ) >>
+    SIMP_TAC std_ss [bir_exp_subst_def]
+  ) >- (
+    Cases_on `b IN (FDOM s2)` >> (
+      ASM_SIMP_TAC std_ss [bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_DEF, bir_exp_subst_def, finite_mapTheory.FDOM_DRESTRICT, pred_setTheory.IN_INTER, pred_setTheory.IN_COMPL, finite_mapTheory.DRESTRICT_DEF]
+    ) >>
 
-  Cases_on `b IN (FDOM s2)` >> (
-    ASM_SIMP_TAC std_ss [bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_DEF, bir_exp_subst_def] >>
-    
+    FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_DEF, boolTheory.PULL_FORALL] >>
+    Q.PAT_X_ASSUM `!v. A` (ASSUME_TAC o (Q.GEN `v`) o (Q.SPECL [`v`, `b`])) >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    FULL_SIMP_TAC std_ss [Once boolTheory.MONO_NOT_EQ] >>
+    FULL_SIMP_TAC std_ss [GSYM pred_setTheory.IN_COMPL, GSYM pred_setTheory.SUBSET_DEF, bir_exp_subst_UNUSED_VARS_OVERAPPROX]
+  ) >> (
+    METIS_TAC []
   )
 );
-*)
+
+val bir_exp_subst_UNUSED_VARS_IMP = store_thm("bir_exp_subst_UNUSED_VARS_IMP", ``
+  !s e.
+    ((bir_vars_of_exp e) SUBSET (COMPL (FDOM s))) ==>
+    (bir_exp_subst s e = e)
+``,
+
+  Induct_on `e` >> (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [bir_exp_subst_def, bir_exp_subst_var_def, bir_vars_of_exp_def, pred_setTheory.UNION_SUBSET]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [GSYM finite_mapTheory.flookup_thm]
+);
 
 val bir_exp_subst_subst_swap_thm = store_thm("bir_exp_subst_subst_swap_thm", ``
     !s1 s2 e.
-      bir_exp_subst s1 (bir_exp_subst s2 e)
-      =
-      bir_exp_subst (bir_exp_subst_update s2 (bir_exp_subst s1)) (bir_exp_subst (bir_exp_subst_restrict s1 s2) e)
+      (!v. (v IN (FDOM s2)) ==> (FEVERY (\(_, ve). ~(v IN (bir_vars_of_exp ve))) s1)) ==>
+      (
+       bir_exp_subst s1 (bir_exp_subst s2 e)
+       =
+       bir_exp_subst (bir_exp_subst_update s2 (bir_exp_subst s1)) (bir_exp_subst (bir_exp_subst_restrict s1 s2) e)
+      )
 ``,
 
-  cheat
+  Induct_on `e` >> (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [bir_exp_subst_def, bir_exp_subst_update_def, bir_exp_subst_restrict_def, bir_exp_subst_var_def]
+  ) >>
+
+  Cases_on `b IN (FDOM s2)` >> (
+    FULL_SIMP_TAC std_ss [finite_mapTheory.FLOOKUP_DRESTRICT, pred_setTheory.IN_COMPL, finite_mapTheory.FLOOKUP_DEF, bir_exp_subst_def, bir_exp_subst_var_def, finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE]
+  ) >>
+
+  Cases_on `b IN (FDOM s1)` >> (
+    FULL_SIMP_TAC std_ss [finite_mapTheory.FLOOKUP_DRESTRICT, pred_setTheory.IN_COMPL, finite_mapTheory.FLOOKUP_DEF, bir_exp_subst_def, bir_exp_subst_var_def, finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_DEF, boolTheory.PULL_FORALL] >>
+  Q.PAT_X_ASSUM `!v. A` (ASSUME_TAC o (Q.GEN `v`) o (Q.SPECL [`v`, `b`])) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [Once boolTheory.MONO_NOT_EQ] >>
+  FULL_SIMP_TAC std_ss [GSYM pred_setTheory.IN_COMPL, GSYM pred_setTheory.SUBSET_DEF, bir_exp_subst_UNUSED_VARS_OVERAPPROX] >>
+
+  FULL_SIMP_TAC std_ss [bir_exp_subst_UNUSED_VARS_IMP, finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE]
+);
+
+val bir_exp_varsubst_restrict_thm = store_thm("bir_exp_varsubst_restrict_thm", ``
+    !vs s.
+      bir_exp_varsubst (bir_exp_subst_restrict vs s) = bir_exp_subst (bir_exp_subst_restrict (bir_exp_varsubst_to_subst vs) s)
+``,
+
+  REWRITE_TAC [bir_exp_varsubst_def, bir_exp_subst_restrict_def, bir_exp_varsubst_to_subst_def] >>
+
+  REPEAT STRIP_TAC >>
+  AP_TERM_TAC >>
+
+  SIMP_TAC std_ss [finite_mapTheory.fmap_EXT] >>
+  CONJ_TAC >> (
+    SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [finite_mapTheory.DRESTRICT_DEF, finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE, finite_mapTheory.FDOM_DRESTRICT]
+  )
 );
 
 val bir_exp_varsubst_subst_swap_thm = store_thm("bir_exp_varsubst_subst_swap_thm", ``
-  bir_exp_varsubst vs (bir_exp_subst s e) = bir_exp_subst (bir_exp_subst_update s (bir_exp_varsubst vs)) (bir_exp_varsubst (bir_exp_subst_restrict vs s) e)
+  !vs s e.
+    (!v. (v IN (FDOM s)) ==> (FEVERY (\(_, v'). v <> v') vs)) ==>
+    (
+     bir_exp_varsubst vs (bir_exp_subst s e)
+     =
+     bir_exp_subst (bir_exp_subst_update s (bir_exp_varsubst vs)) (bir_exp_varsubst (bir_exp_subst_restrict vs s) e)
+    )
 ``,
 
-  cheat
+  REPEAT STRIP_TAC >>
+
+  REWRITE_TAC [bir_exp_varsubst_restrict_thm, bir_exp_varsubst_def, bir_exp_varsubst_to_subst_def] >>
+
+  subgoal `!v. (v IN (FDOM s)) ==> (FEVERY (\(_, ve). ~(v IN (bir_vars_of_exp ve))) ((FUN_FMAP (λx. BExp_Den (vs ' x)) (FDOM vs))))` >- (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [finite_mapTheory.FEVERY_DEF, finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE, bir_vars_of_exp_def]
+  ) >>
+
+  ASM_SIMP_TAC std_ss [bir_exp_subst_subst_swap_thm]
 );
 
 val bir_exp_varsubst_subst1_swap_thm = store_thm("bir_exp_varsubst_subst1_swap_thm", ``
-  bir_exp_varsubst vs (bir_exp_subst1 v ve e) = bir_exp_subst1 v (bir_exp_varsubst vs ve) (bir_exp_varsubst (bir_exp_subst_restrict1 vs v) e)
+  !vs v ve e.
+    (FEVERY (\(_, v'). v <> v') vs) ==>
+    (
+     bir_exp_varsubst vs (bir_exp_subst1 v ve e)
+     =
+     bir_exp_subst1 v (bir_exp_varsubst vs ve) (bir_exp_varsubst (bir_exp_subst_restrict1 vs v) e)
+    )
 ``,
 
-  cheat
+cheat(*
+  REPEAT STRIP_TAC >>
+
+  REWRITE_TAC [bir_exp_subst1_def, bir_exp_subst_restrict1_def] >>
+
+  subgoal `!v. (v IN (FDOM s)) ==> (FEVERY (\(_, v'). v <> v') vs)` >- (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [finite_mapTheory.FEVERY_DEF, finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE, bir_vars_of_exp_def]
+  ) >>
+
+  ASM_SIMP_TAC std_ss [bir_exp_varsubst_subst_swap_thm]
+*)
 );
 
 
