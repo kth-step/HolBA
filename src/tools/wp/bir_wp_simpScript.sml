@@ -658,56 +658,6 @@ val bir_wp_simp_eval_or_thm = store_thm("bir_wp_simp_eval_or_thm", ``
 (* --------------------------------------------------------------------------------------------------- *)
 (* --------------------------------------------------------------------------------------------------- *)
 
-val bir_eval_exp_indep_env_update_thm = store_thm("bir_eval_exp_indep_env_update_thm", ``
-    !vn vt vo e sm.
-      (~(vn IN (IMAGE bir_var_name (bir_vars_of_exp e)))) ==>
-      (
-       (bir_eval_exp e (BEnv sm))
-       =
-       (bir_eval_exp e (BEnv (FUPDATE sm (vn, (vt, vo)))))
-      )
-``,
-
-  REPEAT STRIP_TAC >>
-
-  Induct_on `e` >> (
-    ASM_SIMP_TAC std_ss [bir_eval_exp_def, bir_vars_of_exp_def, pred_setTheory.IMAGE_UNION] >>
-    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_env_read_def, bir_env_lookup_def, finite_mapTheory.FLOOKUP_UPDATE]
-  )
-);
-
-
-
-val bir_wp_simp_eval_subst1_lemma = store_thm("bir_wp_simp_eval_subst1_lemma", ``
-    !v ve vn' vt' vo' e sm.
-      (~(vn' IN (IMAGE bir_var_name (bir_vars_of_exp ve)))) ==>
-      (~(vn' IN (IMAGE bir_var_name (bir_vars_of_exp e)))) ==>
-      (
-       (bir_eval_exp (bir_exp_subst1 v ve e) (BEnv sm))
-       =
-       (bir_eval_exp (bir_exp_subst1 v ve e) (BEnv (FUPDATE sm (vn', (vt', vo')))))
-      )
-``,
-
-  REPEAT STRIP_TAC >>
-
-  subgoal `~(vn' IN (IMAGE bir_var_name (bir_vars_of_exp (bir_exp_subst1 v ve e))))` >- (
-    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_exp_subst1_USED_VARS] >>
-
-    Cases_on `v IN bir_vars_of_exp e` >> (
-      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.IMAGE_UNION] >>
-      METIS_TAC []
-    )
-  ) >>
-
-  METIS_TAC [bir_eval_exp_indep_env_update_thm]
-);
-
-(* --------------------------------------------- more ------------------------------------------------ *)
-
-
-
-
 
 val bir_exp_CONG_not_not_thm = store_thm("bir_exp_CONG_not_not_thm", ``
      !e ty.
@@ -909,7 +859,7 @@ val bir_exp_CONG_imp_imp_thm = store_thm("bir_exp_CONG_imp_imp_thm", ``
 
 
 (* --------------------------------------------- more ------------------------------------------------ *)
-
+(*
 val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
     !prem e1 e2.
       (bir_exp_is_taut (bir_exp_imp prem (bir_exp_and e1 e2)))
@@ -945,6 +895,7 @@ val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
       ] >>
 
       (* now it's getting tricky, we have to initialize all vars of ((prem UNION (e1/e2)) DIFF e2/e1) in env to obtain env', then we can prove this *)
+      (* TODO: uncheat me *)
       cheat
     )
   ) >>
@@ -971,8 +922,9 @@ val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
     blastLib.BBLAST_TAC >>
     EVERY_ASSUM (fn thm => ASSUME_TAC (blastLib.BBLAST_RULE thm)) >>
     FULL_SIMP_TAC std_ss []
-  )  
+  )
 );
+*)
 
 (* --------------------------------------------- more ------------------------------------------------ *)
 
@@ -1312,16 +1264,58 @@ val bir_exp_varsubst1_varsubst_merge_thm = store_thm("bir_exp_varsubst1_varsubst
 
 
 
-(* --------------------------------------------------------------------------------------------------- *)
-(* --------------------------------------------------------------------------------------------------- *)
-(* --------------------------------------------------------------------------------------------------- *)
-(* --------------------------------------------------------------------------------------------------- *)
-(* --------------------------------------------------------------------------------------------------- *)
-(* --------------------------------------------------------------------------------------------------- *)
-(* --------------------------------------------------------------------------------------------------- *)
+(* --------------------------------------------- more ------------------------------------------------ *)
 
 
-(*
+
+
+
+val bir_eval_exp_indep_env_update_thm = store_thm("bir_eval_exp_indep_env_update_thm", ``
+    !vn vt vo e sm.
+      (~(vn IN (IMAGE bir_var_name (bir_vars_of_exp e)))) ==>
+      (
+       (bir_eval_exp e (BEnv sm))
+       =
+       (bir_eval_exp e (BEnv (FUPDATE sm (vn, (vt, vo)))))
+      )
+``,
+
+  REPEAT STRIP_TAC >>
+
+  Induct_on `e` >> (
+    ASM_SIMP_TAC std_ss [bir_eval_exp_def, bir_vars_of_exp_def, pred_setTheory.IMAGE_UNION] >>
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_env_read_def, bir_env_lookup_def, finite_mapTheory.FLOOKUP_UPDATE]
+  )
+);
+
+
+
+val bir_wp_simp_eval_subst1_lemma = store_thm("bir_wp_simp_eval_subst1_lemma", ``
+    !v ve vn' vt' vo' e sm.
+      (~(vn' IN (IMAGE bir_var_name (bir_vars_of_exp ve)))) ==>
+      (~(vn' IN (IMAGE bir_var_name (bir_vars_of_exp e)))) ==>
+      (
+       (bir_eval_exp (bir_exp_subst1 v ve e) (BEnv sm))
+       =
+       (bir_eval_exp (bir_exp_subst1 v ve e) (BEnv (FUPDATE sm (vn', (vt', vo')))))
+      )
+``,
+
+  REPEAT STRIP_TAC >>
+
+  subgoal `~(vn' IN (IMAGE bir_var_name (bir_vars_of_exp (bir_exp_subst1 v ve e))))` >- (
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_exp_subst1_USED_VARS] >>
+
+    Cases_on `v IN bir_vars_of_exp e` >> (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.IMAGE_UNION] >>
+      METIS_TAC []
+    )
+  ) >>
+
+  METIS_TAC [bir_eval_exp_indep_env_update_thm]
+);
+
+
 val bir_wp_simp_prem_indep_def = Define `
       bir_wp_simp_prem_indep prem vn =
         !sm vt vo. prem (BEnv (FUPDATE sm (vn, (vt, vo)))) = prem (BEnv sm)
@@ -1379,6 +1373,66 @@ val bir_wp_simp_eval_subst1_thm = store_thm("bir_wp_simp_eval_subst1_thm", ``
 
   METIS_TAC [bir_wp_simp_eval_subst1_lemma]
 );
+
+
+
+(* --------------------------------------------- more ------------------------------------------------ *)
+
+
+
+
+(*
+``
+!v' prem vs v ve e.
+  (~(v' IN prem, ve, e, vs,...)) ==>
+  (
+   (bir_exp_is_taut (bir_exp_imp prem (bir_exp_subst1 v ve e)))
+   <=>
+   (bir_exp_is_taut (bir_exp_imp prem
+                    (bir_exp_imp (BExp_BinPred BIExp_Equal (BExp_Den v') (bir_exp_varsubst vs ve))
+                                 (bir_exp_varsubst1 v v' (bir_exp_varsubst vs e))
+                    ))
+   )
+  )
+``
+*)
+
+
+
+
+(*
+(* use thomas' subst intro theorem *)
+
+``
+!v' prem vs v ve e.
+  (~(v' IN prem, ve, e, vs,...)) ==>
+  (
+   (bir_exp_is_taut (bir_exp_imp prem (bir_exp_varsubst vs (bir_exp_subst1 v ve e))))
+   <=>
+   (bir_exp_is_taut (bir_exp_imp prem
+                    (bir_exp_imp (BExp_BinPred BIExp_Equal (BExp_Den v') (bir_exp_varsubst vs ve))
+                                 (bir_exp_varsubst1 v v' (bir_exp_varsubst vs e))
+                    ))
+   )
+  )
+``
+*)
+
+
+
+
+
+(* --------------------------------------------------------------------------------------------------- *)
+(* --------------------------------------------------------------------------------------------------- *)
+(* --------------------------------------------------------------------------------------------------- *)
+(* --------------------------------------------------------------------------------------------------- *)
+(* --------------------------------------------------------------------------------------------------- *)
+(* --------------------------------------------------------------------------------------------------- *)
+(* --------------------------------------------------------------------------------------------------- *)
+
+
+(*
+
 
 
 
