@@ -1264,17 +1264,23 @@ val bir_exp_varsubst_subst1_swap_thm = store_thm("bir_exp_varsubst_subst1_swap_t
     )
 ``,
 
-cheat(*
   REPEAT STRIP_TAC >>
 
   REWRITE_TAC [bir_exp_subst1_def, bir_exp_subst_restrict1_def] >>
+  REWRITE_TAC [(GSYM o (SIMP_CONV std_ss [bir_exp_subst_update_REWRS])) ``bir_exp_subst_update (FEMPTY |+ (v,ve)) (bir_exp_varsubst vs)``] >>
+
+  Q.ABBREV_TAC `s = (FEMPTY |+ (v,ve))` >>
+  subgoal `{v} = FDOM s` >- (
+    FULL_SIMP_TAC std_ss [Abbr `s`] >>
+    EVAL_TAC
+  ) >>
+  ASM_SIMP_TAC std_ss [GSYM bir_exp_subst_restrict_def] >>
 
   subgoal `!v. (v IN (FDOM s)) ==> (FEVERY (\(_, v'). v <> v') vs)` >- (
-    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [finite_mapTheory.FEVERY_DEF, finite_mapTheory.FUN_FMAP_DEF, finite_mapTheory.FDOM_FINITE, bir_vars_of_exp_def]
+    METIS_TAC [pred_setTheory.IN_SING]
   ) >>
 
   ASM_SIMP_TAC std_ss [bir_exp_varsubst_subst_swap_thm]
-*)
 );
 
 
