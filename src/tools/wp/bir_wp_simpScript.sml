@@ -1715,34 +1715,36 @@ val bir_exp_is_taut_imp_imp_subst1_thm = store_thm("bir_exp_is_taut_imp_imp_subs
   FULL_SIMP_TAC std_ss [bir_exp_varsubst1_REWR] >>
   POP_ASSUM (K ALL_TAC) >>
 
-  REV_FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION] >>
-  REV_FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_exp_subst1_USED_VARS, bir_env_vars_are_initialised_UNION] >>
-  FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS] >>
+  subgoal `(bir_is_bool_exp (bir_exp_subst1 v ve e)) /\
+           (bir_env_vars_are_initialised env (bir_vars_of_exp (bir_exp_subst1 v ve e)))` >- (
+    REV_FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION] >>
+    REV_FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_exp_subst1_USED_VARS, bir_env_vars_are_initialised_UNION] >>
+    FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS] >>
 
-  subgoal `bir_is_bool_exp (bir_exp_subst1 v ve e)` >- (
+    REV_FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_exp_subst1_USED_VARS, bir_env_vars_are_initialised_UNION] >>
     FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS, bir_is_bool_exp_def] >>
     METIS_TAC [bir_exp_subst1_TYPE_EQ_GEN]
   ) >>
 
-  subgoal `bir_env_vars_are_initialised env (bir_vars_of_exp (bir_exp_subst1 v ve e))` >- (
-    REV_FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_exp_subst1_USED_VARS, bir_env_vars_are_initialised_UNION]
-  ) >>
-
   Cases_on `bir_eval_exp prem env = bir_val_true` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve e) env = bir_val_false` >- (
-
-    FULL_SIMP_TAC (std_ss++bir_immtype_ss) [bir_eval_exp_def, bir_eval_unary_exp_REWRS, bir_imm_expTheory.bir_unary_exp_REWRS, bir_eval_bin_exp_REWRS, bir_imm_expTheory.bir_bin_exp_REWRS, bir_val_true_def, bir_val_false_def, bir_imm_expTheory.bir_unary_exp_GET_OPER_def, bir_imm_expTheory.bir_bin_exp_GET_OPER_def, type_of_bir_imm_def] >>
-    blastLib.BBLAST_TAC >>
-    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
+    subgoal `bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem)
+                          (bir_exp_subst1 v ve e)) env = bir_val_false` >- (
+      FULL_SIMP_TAC (std_ss++bir_immtype_ss) [bir_eval_exp_def, bir_eval_unary_exp_REWRS, bir_imm_expTheory.bir_unary_exp_REWRS, bir_eval_bin_exp_REWRS, bir_imm_expTheory.bir_bin_exp_REWRS, bir_val_true_def, bir_val_false_def, bir_imm_expTheory.bir_unary_exp_GET_OPER_def, bir_imm_expTheory.bir_bin_exp_GET_OPER_def, type_of_bir_imm_def] >>
+      blastLib.BBLAST_TAC >>
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
+      EVAL_TAC
+    ) >>
+    ASM_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_val_true_def, bir_val_false_def] >>
     EVAL_TAC >>
 
     Cases_on `env` >>
     Q.RENAME1_TAC `BEnv sm` >>
 
-    ASSUME_TAC (Q.SPECL [`v`, `ve`, `bir_var_name v'`, `bir_var_type v'`, `SOME (bir_eval_exp ve env)`, `e`, `sm`] bir_wp_simp_eval_subst1_lemma) >>
-    REV_FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+    ASSUME_TAC (Q.SPECL [`v`, `ve`, `bir_var_name v'`, `bir_var_type v'`, `SOME (bir_eval_exp ve (BEnv sm))`, `e`, `sm`] bir_wp_simp_eval_subst1_lemma) >>
+    REV_FULL_SIMP_TAC std_ss [] >>
 
-    Q.PAT_X_ASSUM `!env. A ==> B` (ASSUME_TAC o (Q.SPEC `(BEnv (FUPDATE sm (bir_var_name v',bir_var_type v,SOME (bir_eval_exp ve (BEnv sm)))))`)) >>
     Q.ABBREV_TAC `sm' = (FUPDATE sm (bir_var_name v',bir_var_type v,SOME (bir_eval_exp ve (BEnv sm))))` >>
+    Q.PAT_X_ASSUM `!env. A ==> B` (ASSUME_TAC o (Q.SPEC `BEnv sm'`)) >>
 
     subgoal `(bir_eval_bin_exp BIExp_Or
           (bir_eval_unary_exp BIExp_Not (bir_eval_exp prem (BEnv sm')))
@@ -1754,29 +1756,32 @@ val bir_exp_is_taut_imp_imp_subst1_thm = store_thm("bir_exp_is_taut_imp_imp_subs
              (bir_eval_exp (bir_exp_subst1 v (BExp_Den v') e)
                 (BEnv sm'))) =
         BVal_Imm (Imm1 1w))` >- (
+      REV_FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION] >>
+      REV_FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_exp_subst1_USED_VARS, bir_env_vars_are_initialised_UNION] >>
+      FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS] >>
+      FULL_SIMP_TAC (std_ss++bir_immtype_ss) [bir_eval_exp_def, bir_eval_unary_exp_REWRS, bir_imm_expTheory.bir_unary_exp_REWRS, bir_eval_bin_exp_REWRS, bir_imm_expTheory.bir_bin_exp_REWRS, bir_val_true_def, bir_val_false_def, bir_imm_expTheory.bir_unary_exp_GET_OPER_def, bir_imm_expTheory.bir_bin_exp_GET_OPER_def, type_of_bir_imm_def] >>
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
       REV_FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_env_vars_are_initialised_FUPDATE_thm, Abbr `sm'`] >>
       REV_FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_env_vars_are_initialised_def, bir_env_var_is_initialised_def, bir_env_lookup_def, finite_mapTheory.FLOOKUP_UPDATE, type_of_bir_exp_THM_with_init_vars]
     ) >>
-
     Q.PAT_X_ASSUM `A ==> B` (K ALL_TAC) >>
 
-    subgoal `bir_eval_exp prem (BEnv sm') = BVal_Imm (Imm1 1w)` >- (
-      cheat (* bir_eval_exp_env_FUPDATE_thm *)
+    subgoal `bir_eval_exp prem (BEnv sm') = bir_eval_exp prem (BEnv sm)` >- (
+      FULL_SIMP_TAC std_ss [bir_eval_exp_env_FUPDATE_thm, Abbr `sm'`]
     ) >>
+    subgoal `(bir_eval_exp ve (BEnv sm')) = (bir_eval_exp ve (BEnv sm))` >- (
+      FULL_SIMP_TAC std_ss [bir_eval_exp_env_FUPDATE_thm, Abbr `sm'`]
+    ) >>
+    REV_FULL_SIMP_TAC (std_ss) [] >>
+    FULL_SIMP_TAC (std_ss) [] >>
 
+(*
     REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [Abbr `sm'`] >>
     REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_env_read_def, bir_env_lookup_def, finite_mapTheory.FLOOKUP_UPDATE] >>
     REV_FULL_SIMP_TAC (srw_ss()) [] >>
     FULL_SIMP_TAC (srw_ss()) [] >>
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
 
-    subgoal `(bir_eval_exp ve (BEnv (sm |+ (bir_var_name v',BType_Imm it, SOME (bir_eval_exp ve (BEnv sm)))))) = (bir_eval_exp ve (BEnv sm))` >- (
-      cheat (*
-    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++pred_setSimps.PRED_SET_ss) [bir_eval_exp_env_FUPDATE_thm] >>
-     *)
-    ) >>
-    REV_FULL_SIMP_TAC (std_ss) [] >>
-    FULL_SIMP_TAC (std_ss) [] >>
 
     subgoal `(type_of_bir_val (bir_eval_exp ve (BEnv sm))) = SOME (bir_var_type v)` >- (
       FULL_SIMP_TAC std_ss [bir_is_bool_exp_def, type_of_bir_exp_THM_with_init_vars]
@@ -1788,9 +1793,32 @@ val bir_exp_is_taut_imp_imp_subst1_thm = store_thm("bir_exp_is_taut_imp_imp_subs
     Q.PAT_X_ASSUM `BType_Imm it = bir_var_type v` (ASSUME_TAC o GSYM) >>
     FULL_SIMP_TAC std_ss [type_of_bir_val_EQ_ELIMS] >>
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_eval_bin_pred_def, bir_imm_expTheory.bir_bin_pred_Equal_REWR] >>
+*)
 
-    Cases_on `bir_eval_exp (bir_exp_subst1 v (BExp_Den v') e)
-               (BEnv (FUPDATE sm (bir_var_name v',BType_Imm it, SOME (BVal_Imm i))) ) = bir_val_false` >- (
+    subgoal `(bir_env_read v' (BEnv sm')) = (bir_eval_exp ve (BEnv sm))` >- (
+      cheat
+    ) >>
+    subgoal `(bir_eval_bin_pred BIExp_Equal (bir_eval_exp ve (BEnv sm)) (bir_eval_exp ve (BEnv sm))) = bir_val_true` >- (
+      cheat
+    ) >>
+
+    Q.PAT_X_ASSUM `bir_val_false = A` (ASSUME_TAC o GSYM) >>
+
+    subgoal `bir_eval_exp (bir_exp_subst1 v (BExp_Den v') e) (BEnv sm') = bir_eval_exp (bir_exp_subst1 v ve e) (BEnv sm')` >- (
+      cheat
+(*      FULL_SIMP_TAC (std_ss) [bir_val_true_def, GSYM bir_exp_subst1_EVAL_EQ_GEN]*)
+    ) >>
+    REV_FULL_SIMP_TAC (std_ss) [] >>
+    FULL_SIMP_TAC (std_ss) [] >>
+
+
+    REV_FULL_SIMP_TAC std_ss [bir_val_true_def, bir_val_false_def] >>
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
+    Q.PAT_X_ASSUM `A = (1w:word1)` (ASSUME_TAC o blastLib.BBLAST_RULE) >>
+    FULL_SIMP_TAC std_ss []
+
+(*
+    Cases_on `bir_eval_exp (bir_exp_subst1 v (BExp_Den v') e) (BEnv (FUPDATE sm (bir_var_name v',BType_Imm it, SOME (BVal_Imm i))) ) = bir_val_false` >- (
       FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_val_false_def, bir_eval_bin_exp_REWRS, bir_imm_expTheory.bir_bin_exp_REWRS, bir_imm_expTheory.bir_bin_exp_GET_OPER_def, type_of_bir_imm_def, bir_imm_expTheory.bir_unary_exp_REWRS, bir_eval_bin_exp_REWRS, bir_imm_expTheory.bir_bin_exp_REWRS, bir_val_true_def, bir_val_false_def, bir_imm_expTheory.bir_unary_exp_GET_OPER_def, bool2b_def, bool2w_def] >>
 
       EVERY_ASSUM (fn thm => ASSUME_TAC (blastLib.BBLAST_RULE thm)) >>
@@ -1811,7 +1839,7 @@ val bir_exp_is_taut_imp_imp_subst1_thm = store_thm("bir_exp_is_taut_imp_imp_subs
     ) >>
 
     REV_FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_env_vars_are_initialised_def, ] >>
-
+*)
 
 
 
@@ -1819,7 +1847,9 @@ val bir_exp_is_taut_imp_imp_subst1_thm = store_thm("bir_exp_is_taut_imp_imp_subs
 
 
   ) >> (
-    REV_FULL_SIMP_TAC std_ss [bir_eval_exp_not_true_false_thm, bir_eval_exp_not_false_true_thm] >>
+    FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS] >>
+
+    REV_FULL_SIMP_TAC std_ss [bir_eval_exp_not_true_false_thm, bir_eval_exp_not_false_true_thm, bir_exp_subst1_USED_VARS, bir_env_vars_are_initialised_UNION, bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION] >>
 
     FULL_SIMP_TAC (std_ss++bir_immtype_ss) [bir_eval_exp_def, bir_eval_unary_exp_REWRS, bir_imm_expTheory.bir_unary_exp_REWRS, bir_eval_bin_exp_REWRS, bir_imm_expTheory.bir_bin_exp_REWRS, bir_val_true_def, bir_val_false_def, bir_imm_expTheory.bir_unary_exp_GET_OPER_def, bir_imm_expTheory.bir_bin_exp_GET_OPER_def, type_of_bir_imm_def] >>
     
