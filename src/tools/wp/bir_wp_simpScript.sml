@@ -889,19 +889,24 @@ val bir_vars_of_exp_FINITE_thm = store_thm("bir_vars_of_exp_FINITE_thm", ``
   )
 );
 
-(*
-(* it is wrong in this way *)
+val UNION_DIFF_same_thm = prove(``
+  !a b. (a UNION (b DIFF a)) = (a UNION b)
+``,
+
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.DIFF_DEF, pred_setTheory.UNION_DEF, prove(``!a b. a \/ (b /\ (~a)) = a \/ b``, METIS_TAC[])]  
+);
+
 val bir_env_initialise_vars_def = Define `
-      bir_env_initialise_vars (BEnv sm) vs = BEnv (FMERGE (K) sm
+      bir_env_initialise_vars (BEnv sm) vs = BEnv (FMERGE (K)
               (FUN_FMAP (\x. case (CHOICE ({ v | ?xt. (v IN vs) /\ (v = BVar x xt) })) of
 			       | (BVar _ vt) => (vt, SOME (bir_default_value_of_type vt)))
-                        ({ vn | ?vt. (BVar vn vt) IN vs })))
+                        ({ vn | ?vt. (BVar vn vt) IN vs }))
+	      sm)
 `;
 
-val bir_env_initialise_vars_reinit_thm = store_thm("bir_env_initialise_vars_reinit_thm", ``
-      !e env.
-        (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
-        ((bir_env_initialise_vars env (bir_vars_of_exp e)) = env)
+val bir_env_initialise_vars_EMPTY_thm = store_thm("bir_env_initialise_vars_EMPTY_thm", ``
+      !env.
+        ((bir_env_initialise_vars env EMPTY) = env)
 ``,
 
   cheat
@@ -925,17 +930,36 @@ val bir_env_initialise_vars_ORDER_thm = store_thm("bir_env_initialise_vars_ORDER
 ``,
 
   cheat
+(*
+bir_env_order_def
+*)
 );
 
-val bir_env_initialise_vars_init_exp_thm = store_thm("bir_env_initialise_vars_init_exp_thm", ``
-      !e1 e2 env env'.
-        (bir_var_set_is_well_typed ((bir_vars_of_exp e1) UNION (bir_vars_of_exp e2))) ==>
-        (bir_env_vars_are_initialised env (bir_vars_of_exp e1)) ==>
-        (env' = bir_env_initialise_vars env (bir_vars_of_exp e2)) ==>
-        (
-         (bir_env_vars_are_initialised env' (bir_vars_of_exp e1)) /\
-         (bir_env_vars_are_initialised env' (bir_vars_of_exp e2))
-        )
+(* ======================= *)
+
+
+
+val bir_env_initialise_vars_inited_thm = store_thm("bir_env_initialise_vars_inited_thm", ``
+      !vs1 vs2 env.
+        (bir_env_vars_are_initialised env vs1) ==>
+        (FINITE vs2) ==>
+        (bir_var_set_is_well_typed (vs1 UNION vs2)) ==>
+        (bir_env_vars_are_initialised (bir_env_initialise_vars env vs2)
+                                      (vs1 UNION vs2))
+``,
+
+  cheat
+);
+
+(*
+(*
+this is a special case of the one above
+*)
+val bir_env_initialise_vars_inited_thm = store_thm("bir_env_initialise_vars_inited_thm", ``
+      !vs env.
+        (bir_var_set_is_well_typed vs) ==>
+        (FINITE vs) ==>
+        (bir_env_vars_are_initialised (bir_env_initialise_vars env vs) vs)
 ``,
 
   cheat
@@ -943,6 +967,101 @@ val bir_env_initialise_vars_init_exp_thm = store_thm("bir_env_initialise_vars_in
 *)
 
 (*
+this is a special case as well
+*)
+val bir_env_initialise_vars_inited_DIFF_thm = store_thm("bir_env_initialise_vars_inited_DIFF_thm", ``
+      !vs1 vs2 env.
+        (bir_env_vars_are_initialised env vs1) ==>
+        (FINITE vs2) ==>
+        (bir_var_set_is_well_typed (vs1 UNION vs2)) ==>
+        (bir_env_vars_are_initialised (bir_env_initialise_vars env (vs2 DIFF vs1))
+                                      (vs1 UNION vs2))
+``,
+
+  REPEAT STRIP_TAC >>
+  ASSUME_TAC (Q.SPECL [`vs1`, `vs2 DIFF vs1`, `env`] bir_env_initialise_vars_inited_thm) >>
+  METIS_TAC [UNION_DIFF_same_thm, pred_setTheory.FINITE_DIFF]
+);
+
+(*
+this is a special case as well
+*)
+val bir_env_initialise_vars_inited_DIFF2_thm = store_thm("bir_env_initialise_vars_inited_DIFF2_thm", ``
+      !vs vs1 env.
+        (bir_env_vars_are_initialised env vs1) ==>
+        (vs1 SUBSET vs) ==>
+        (FINITE vs) ==>
+        (bir_var_set_is_well_typed vs) ==>
+        (bir_env_vars_are_initialised (bir_env_initialise_vars env (vs DIFF vs1))
+                                      (vs))
+``,
+
+  REPEAT STRIP_TAC >>
+  ASSUME_TAC (Q.SPECL [`vs1`, `vs DIFF vs1`, `env`] bir_env_initialise_vars_inited_thm) >>
+  METIS_TAC [pred_setTheory.UNION_DIFF, pred_setTheory.FINITE_DIFF]
+);
+
+(*
+this is a special case as well
+*)
+val bir_env_initialise_vars_inited_exp_thm = store_thm("bir_env_initialise_vars_inited_exp_thm", ``
+      !vs1 e2 env.
+        (bir_env_vars_are_initialised env vs1) ==>
+        (bir_var_set_is_well_typed (vs1 UNION (bir_vars_of_exp e2))) ==>
+        (bir_env_vars_are_initialised (bir_env_initialise_vars env (bir_vars_of_exp e2))
+                                      (vs1 UNION (bir_vars_of_exp e2)))
+``,
+
+  METIS_TAC [bir_env_initialise_vars_inited_thm, bir_vars_of_exp_FINITE_thm]
+);
+
+(*
+this is a special case as well
+*)
+val bir_env_initialise_vars_inited_DIFF_exp_thm = store_thm("bir_env_initialise_vars_inited_DIFF_exp_thm", ``
+      !vs1 e2 env.
+        (bir_env_vars_are_initialised env vs1) ==>
+        (bir_var_set_is_well_typed (vs1 UNION (bir_vars_of_exp e2))) ==>
+        (bir_env_vars_are_initialised (bir_env_initialise_vars env ((bir_vars_of_exp e2) DIFF vs1))
+                                      (vs1 UNION (bir_vars_of_exp e2)))
+``,
+
+  METIS_TAC [bir_env_initialise_vars_inited_DIFF_thm, bir_vars_of_exp_FINITE_thm]
+);
+
+
+(*
+bir_env_initialise_vars_INTER_EMPTY_thm
+*)
+
+(* ======================= *)
+(*
+bir_typing_expTheory.bir_var_set_is_well_typed_SUBSET
+bir_env_vars_are_initialised_UNION
+*)
+val bir_env_initialise_vars_DIFF_eval_eq_thm = store_thm("bir_env_initialise_vars_DIFF_eval_eq_thm", ``
+      !vs1 vs2 env env'.
+        (FINITE vs2) ==>
+        (env' = (bir_env_initialise_vars env (vs2 DIFF vs1))) ==>
+        (
+         (!v. (v IN vs1) ==> (bir_env_lookup (bir_var_name v) env' = bir_env_lookup (bir_var_name v) env)) /\
+         (!v. (v IN (vs2 DIFF vs1)) ==> (bir_env_lookup (bir_var_name v) env' = SOME (bir_var_type v, SOME (bir_default_value_of_type (bir_var_type v)))))
+        )
+``,
+
+  cheat
+);
+
+val bir_env_initialise_vars_DIFF_eval_exp_thm = store_thm("bir_env_initialise_vars_DIFF_eval_exp_thm", ``
+      !e vs1 e2 env.
+        ((bir_vars_of_exp e) SUBSET vs1) ==>
+        (bir_eval_exp e (bir_env_initialise_vars env ((bir_vars_of_exp e2) DIFF vs1)) = bir_eval_exp e env)
+``,
+
+  cheat
+);
+
+
 val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
     !prem e1 e2.
       (bir_exp_is_taut (bir_exp_imp prem (bir_exp_and e1 e2)))
@@ -978,9 +1097,16 @@ val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
       ] >>
 
       (* now it's getting tricky, we have to initialize all vars of ((prem UNION (e1/e2)) DIFF e2/e1) in env to obtain env', then we can prove this *)
-      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION] >>
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION]
 
-      Q.ABBREV_TAC `env' = bir_env_initialise_vars env (bir_vars_of_exp e1 UNION bir_vars_of_exp e2)` >>
+    ) >| [
+      Q.ABBREV_TAC `env' = bir_env_initialise_vars env ((bir_vars_of_exp e2) DIFF ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1)))`
+    ,
+      Q.ABBREV_TAC `env' = bir_env_initialise_vars env ((bir_vars_of_exp e1) DIFF ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e2)))` >>
+      subgoal `bir_var_set_is_well_typed (bir_vars_of_exp prem UNION bir_vars_of_exp e2 UNION bir_vars_of_exp e1)` >- (
+        METIS_TAC [pred_setTheory.UNION_ASSOC, pred_setTheory.UNION_COMM]
+      )
+    ] >> (
 (*
       Cases_on `env'` >>
       Q.RENAME1_TAC `BEnv sm' ` >>
@@ -993,12 +1119,29 @@ val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
                (bir_env_vars_are_initialised env' (bir_vars_of_exp e1)) /\
                (bir_env_vars_are_initialised env' (bir_vars_of_exp e2))` >- (
 
-        FULL_SIMP_TAC std_ss [bir_env_initialise_vars_UNION_thm, bir_env_initialise_vars_stay_init_thm, bir_env_initialise_vars_init_exp_thm, Abbr `env'`] >>
-bir_env_initialise_vars_init_exp_thm
+(*
+        subgoal `bir_env_vars_are_initialised env ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1))` >- (
+          METIS_TAC [bir_env_vars_are_initialised_UNION]
+        ) >>
+*)
 
+(*
+        subgoal `bir_var_set_is_well_typed (((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1)) UNION bir_vars_of_exp e2)` >- (
+          METIS_TAC [pred_setTheory.UNION_ASSOC]
+        ) >>
+
+        subgoal `bir_env_vars_are_initialised env' (((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1)) UNION bir_vars_of_exp e2)` >- (
+          METIS_TAC [bir_env_initialise_vars_inited_DIFF_exp_thm, Abbr `env'`]
+        ) >>
+*)
+
+        METIS_TAC [Abbr `env'`, bir_env_initialise_vars_inited_DIFF_exp_thm, bir_env_vars_are_initialised_UNION, pred_setTheory.UNION_ASSOC]
+(*, pred_setTheory.UNION_COMM*)
+(*bir_env_initialise_vars_init_exp_thm*)
+(*bir_env_initialise_vars_inited_thm, *)
 
 (* uncheat *)
-cheat
+(*cheat*)
 (*
 FULL_SIMP_TAC std_ss [bir_env_initialise_vars_init_exp_thm]
 *)
@@ -1014,15 +1157,21 @@ FULL_SIMP_TAC std_ss [bir_env_initialise_vars_init_exp_thm]
     ) >| [
       subgoal `bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e1) env = bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e1) env'` >- (
 
-cheat
-(* uncheat *)
+        subgoal `bir_vars_of_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e1) SUBSET ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1))` >- (
+          METIS_TAC [bir_vars_of_exp_def, pred_setTheory.SUBSET_REFL]
+        ) >>
 
+        METIS_TAC [GSYM bir_env_initialise_vars_DIFF_eval_exp_thm, Abbr `env'`]
       )
     ,
       subgoal `bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e2) env = bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e2) env'` >- (
 
-cheat
-(* uncheat, see above *)
+(* uncheated, see above *)
+        subgoal `bir_vars_of_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e2) SUBSET ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e2))` >- (
+          METIS_TAC [bir_vars_of_exp_def, pred_setTheory.SUBSET_REFL]
+        ) >>
+
+        METIS_TAC [GSYM bir_env_initialise_vars_DIFF_eval_exp_thm, Abbr `env'`]
 
       )
     ] >> (
@@ -1073,7 +1222,7 @@ cheat
     FULL_SIMP_TAC std_ss []
   )
 );
-*)
+
 
 
 (* --------------------------------------------- more ------------------------------------------------ *)
