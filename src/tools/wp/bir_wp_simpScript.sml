@@ -896,6 +896,7 @@ val UNION_DIFF_same_thm = prove(``
   SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.DIFF_DEF, pred_setTheory.UNION_DEF, prove(``!a b. a \/ (b /\ (~a)) = a \/ b``, METIS_TAC[])]  
 );
 
+(*
 val bir_env_initialise_vars_def = Define `
       bir_env_initialise_vars (BEnv sm) vs = BEnv (FMERGE (K)
               (FUN_FMAP (\x. case (CHOICE ({ v | ?xt. (v IN vs) /\ (v = BVar x xt) })) of
@@ -909,20 +910,32 @@ val bir_env_initialise_vars_EMPTY_thm = store_thm("bir_env_initialise_vars_EMPTY
         ((bir_env_initialise_vars env EMPTY) = env)
 ``,
 
-  cheat
+  Cases_on `env` >>
+
+  REWRITE_TAC [bir_env_initialise_vars_def] >>
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) [finite_mapTheory.FUN_FMAP_EMPTY, finite_mapTheory.FMERGE_FEMPTY]
+);
+
+(*
+val bir_env_initialise_vars_UNION_thm = store_thm("bir_env_initialise_vars_UNION_thm", ``
+      !vs1 vs2 env.
+        () ==>
+        (
+         (bir_env_initialise_vars env (vs1 UNION vs2)) =
+         (bir_env_initialise_vars (bir_env_initialise_vars env vs1) vs2)
+        )
+``,
+
+  Cases_on `env` >>
+  REWRITE_TAC [bir_env_initialise_vars_def] >>
+
+
 (*
 finite_mapTheory.FMERGE_DEF
 K_DEF
 *)
 );
-
-val bir_env_initialise_vars_UNION_thm = store_thm("bir_env_initialise_vars_UNION_thm", ``
-      !e1 e2 env.
-        (bir_env_initialise_vars env ((bir_vars_of_exp e1) UNION (bir_vars_of_exp e2))) = (bir_env_initialise_vars (bir_env_initialise_vars env (bir_vars_of_exp e1)) (bir_vars_of_exp e2))
-``,
-
-  cheat
-);
+*)
 
 val bir_env_initialise_vars_ORDER_thm = store_thm("bir_env_initialise_vars_ORDER_thm", ``
       !vs env.
@@ -935,7 +948,40 @@ bir_env_order_def
 *)
 );
 
+
+(*
+!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!
+*)
+
 (* ======================= *)
+
+val bir_env_initialise_vars_inited1_thm = store_thm("bir_env_initialise_vars_inited1_thm", ``
+      !vs1 vs2 env.
+        (FINITE vs2) ==>
+        (bir_var_set_is_well_typed vs2) ==>
+        (bir_env_vars_are_initialised (bir_env_initialise_vars env vs2) vs2)
+``,
+
+  REWRITE_TAC [bir_env_vars_are_initialised_def] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `env` >>
+  Q.RENAME1_TAC `BEnv sm` >>
+
+  REWRITE_TAC [bir_env_initialise_vars_def] >>
+
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+
+
+
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) []
+
+
+bir_var_set_is_well_typed_def
+bir_env_var_is_initialised_def
+);
 
 
 
@@ -948,7 +994,15 @@ val bir_env_initialise_vars_inited_thm = store_thm("bir_env_initialise_vars_init
                                       (vs1 UNION vs2))
 ``,
 
-  cheat
+  REPEAT STRIP_TAC >>
+
+  SIMP_TAC std_ss [bir_env_vars_are_initialised_UNION] >>
+
+  CONJ_TAC >- (
+    METIS_TAC [bir_env_vars_are_initialised_ORDER, bir_env_initialise_vars_ORDER_thm]
+  ) >>
+
+  METIS_TAC [bir_env_initialise_vars_inited1_thm, bir_var_set_is_well_typed_UNION]
 );
 
 (*
@@ -1039,6 +1093,7 @@ bir_env_initialise_vars_INTER_EMPTY_thm
 bir_typing_expTheory.bir_var_set_is_well_typed_SUBSET
 bir_env_vars_are_initialised_UNION
 *)
+(*
 val bir_env_initialise_vars_DIFF_eval_eq_thm = store_thm("bir_env_initialise_vars_DIFF_eval_eq_thm", ``
       !vs1 vs2 env env'.
         (FINITE vs2) ==>
@@ -1051,6 +1106,7 @@ val bir_env_initialise_vars_DIFF_eval_eq_thm = store_thm("bir_env_initialise_var
 
   cheat
 );
+*)
 
 val bir_env_initialise_vars_DIFF_eval_exp_thm = store_thm("bir_env_initialise_vars_DIFF_eval_exp_thm", ``
       !e vs1 e2 env.
@@ -1060,6 +1116,7 @@ val bir_env_initialise_vars_DIFF_eval_exp_thm = store_thm("bir_env_initialise_va
 
   cheat
 );
+*)
 
 
 val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
@@ -1100,13 +1157,36 @@ val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
       FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION]
 
     ) >| [
+(*
       Q.ABBREV_TAC `env' = bir_env_initialise_vars env ((bir_vars_of_exp e2) DIFF ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1)))`
+*)
+      Q.ABBREV_TAC `vs = (bir_vars_of_exp prem) UNION (bir_vars_of_exp e1)` >>
+      Q.ABBREV_TAC `e = (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e1)`
     ,
-      Q.ABBREV_TAC `env' = bir_env_initialise_vars env ((bir_vars_of_exp e1) DIFF ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e2)))` >>
-      subgoal `bir_var_set_is_well_typed (bir_vars_of_exp prem UNION bir_vars_of_exp e2 UNION bir_vars_of_exp e1)` >- (
-        METIS_TAC [pred_setTheory.UNION_ASSOC, pred_setTheory.UNION_COMM]
-      )
+      Q.ABBREV_TAC `vs = (bir_vars_of_exp prem) UNION (bir_vars_of_exp e2)` >>
+      Q.ABBREV_TAC `e = (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e2)`
     ] >> (
+
+      REV_FULL_SIMP_TAC std_ss [pred_setTheory.UNION_ASSOC] >>
+      Q.ABBREV_TAC `vs2 = (bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION (bir_vars_of_exp e2)` >>
+
+      ASSUME_TAC (Q.SPECL [`vs`, `vs2`, `env`] bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION) >>
+
+      subgoal `FINITE vs2` >- (
+        METIS_TAC [bir_vars_of_exp_FINITE_thm, pred_setTheory.FINITE_UNION]
+      ) >>
+
+      subgoal `vs SUBSET vs2` >- (
+        METIS_TAC [pred_setTheory.SUBSET_UNION, pred_setTheory.UNION_ASSOC, pred_setTheory.UNION_COMM]
+      ) >>
+
+      subgoal `bir_env_vars_are_initialised env vs` >- (
+        METIS_TAC [bir_env_vars_are_initialised_UNION]
+      ) >>
+
+      FULL_SIMP_TAC std_ss [] >>
+      REV_FULL_SIMP_TAC std_ss [] >>
+
 (*
       Cases_on `env'` >>
       Q.RENAME1_TAC `BEnv sm' ` >>
@@ -1114,7 +1194,7 @@ val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
       Q.RENAME1_TAC `BEnv sm` >>
       FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
 *)
-
+(*
       subgoal `(bir_env_vars_are_initialised env' (bir_vars_of_exp prem)) /\
                (bir_env_vars_are_initialised env' (bir_vars_of_exp e1)) /\
                (bir_env_vars_are_initialised env' (bir_vars_of_exp e2))` >- (
@@ -1146,23 +1226,37 @@ val bir_wp_simp_taut_and_thm = store_thm("bir_wp_simp_taut_and_thm", ``
 FULL_SIMP_TAC std_ss [bir_env_initialise_vars_init_exp_thm]
 *)
       ) >>
+*)
 
-      subgoal `(bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) (BExp_BinExp BIExp_And e1 e2)) env' = bir_val_true)` >- (
-        METIS_TAC []
+      subgoal `(bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) (BExp_BinExp BIExp_And e1 e2)) env2 = bir_val_true)` >- (
+        METIS_TAC [bir_env_vars_are_initialised_UNION]
       ) >>
       Q.PAT_X_ASSUM `!env. A` (K ALL_TAC) >>
 
       REV_FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pred_setTheory.UNION_ASSOC, bir_env_vars_are_initialised_UNION] >>
-      FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS]
+      FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS] >>
+
+      subgoal `bir_eval_exp e env = bir_eval_exp e env2` >- (
+
+        subgoal `bir_vars_of_exp e = vs` >- (
+          METIS_TAC [bir_vars_of_exp_def]
+        ) >>
+
+        METIS_TAC [bir_typing_expTheory.bir_vars_of_exp_THM_EQ_FOR_VARS]
+      ) >>
+
+(*
     ) >| [
-      subgoal `bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e1) env = bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e1) env'` >- (
+(*
+bir_env_EQ_FOR_VARS_def
 
         subgoal `bir_vars_of_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e1) SUBSET ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1))` >- (
           METIS_TAC [bir_vars_of_exp_def, pred_setTheory.SUBSET_REFL]
         ) >>
 
         METIS_TAC [GSYM bir_env_initialise_vars_DIFF_eval_exp_thm, Abbr `env'`]
-      )
+      
+*)
     ,
       subgoal `bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e2) env = bir_eval_exp (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not prem) e2) env'` >- (
 
@@ -1175,9 +1269,11 @@ FULL_SIMP_TAC std_ss [bir_env_initialise_vars_init_exp_thm]
 
       )
     ] >> (
-      FULL_SIMP_TAC std_ss [] >>
+*)
 
-      Cases_on `bir_eval_exp prem env' = bir_val_true` >> Cases_on `bir_eval_exp e1 env' = bir_val_true` >> Cases_on `bir_eval_exp e2 env' = bir_val_true` >> (
+      FULL_SIMP_TAC std_ss [Abbr `e`, Abbr `vs`, Abbr `vs2`, bir_env_vars_are_initialised_UNION] >>
+
+      Cases_on `bir_eval_exp prem env2 = bir_val_true` >> Cases_on `bir_eval_exp e1 env2 = bir_val_true` >> Cases_on `bir_eval_exp e2 env2 = bir_val_true` >> (
         Q.PAT_X_ASSUM `bir_eval_exp (BExp_BinExp A B C) D = bir_val_true` ASSUME_TAC >>
 
         REV_FULL_SIMP_TAC std_ss [bir_eval_exp_not_true_false_thm] >>
