@@ -59,7 +59,7 @@ val bir_eval_bin_pred_def = Define `
 val bir_eval_memeq_exp_def = Define `
   (bir_eval_memeq_exp (BVal_Mem at1 vt1 mmap1) (BVal_Mem at2 vt2 mmap2) =
      if ((at1 <> at2) \/ (vt1 <> vt2)) then BVal_Unknown else
-     BVal_Imm (bool2b (bir_memeq_exp mmap1 mmap2))) /\
+     BVal_Imm (bool2b (bir_memeq_exp at1 vt1 mmap1 mmap2))) /\
   (bir_eval_memeq_exp _ _ = BVal_Unknown)`;
 
 val bir_eval_ifthenelse_def = Define `
@@ -170,7 +170,7 @@ CONJ_TAC >| [
 val bir_eval_memeq_exp_REWRS = store_thm ("bir_eval_memeq_exp_REWRS",
  ``(!at1 vt1 mmap1 at2 vt2 mmap2. (bir_eval_memeq_exp (BVal_Mem at1 vt1 mmap1) (BVal_Mem at2 vt2 mmap2) =
      if ((at1 <> at2) \/ (vt1 <> vt2)) then BVal_Unknown else
-     BVal_Imm (bool2b (bir_memeq_exp mmap1 mmap2)))) /\
+     BVal_Imm (bool2b (bir_memeq_exp at1 vt1 mmap1 mmap2)))) /\
    (!v. bir_eval_memeq_exp BVal_Unknown v = BVal_Unknown) /\
    (!v. bir_eval_memeq_exp v BVal_Unknown = BVal_Unknown) /\
    (!bi v. bir_eval_memeq_exp (BVal_Imm bi) v = BVal_Unknown) /\
