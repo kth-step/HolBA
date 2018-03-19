@@ -93,8 +93,8 @@ Induct >> (
   FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_bin_pred_REWRS,
     type_of_bir_val_def, BType_Bool_def, type_of_bool2b]
 ) >- (
-  FULL_SIMP_TAC std_ss [bir_eval_memeq_exp_REWRS, bir_type_is_Imm_def] >>
-  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_memeq_exp_REWRS,
+  FULL_SIMP_TAC std_ss [bir_eval_memeq_REWRS, bir_type_is_Imm_def] >>
+  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_memeq_REWRS,
     type_of_bir_val_def, BType_Bool_def, type_of_bool2b]
 ) >- (
   Cases_on `bir_eval_exp e env = BVal_Unknown` >- (
@@ -337,7 +337,7 @@ GEN_TAC >> Induct >> (
   ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_bin_pred_REWRS, type_of_bir_val_def,
     type_of_bool2b, BType_Bool_def]
 ) >- (
-  ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_memeq_exp_REWRS, type_of_bir_val_def,
+  ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_memeq_REWRS, type_of_bir_val_def,
     type_of_bool2b, BType_Bool_def]
 ) >- (
   ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_ifthenelse_REWRS] >>

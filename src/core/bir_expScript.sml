@@ -56,11 +56,11 @@ val bir_eval_bin_pred_def = Define `
      BVal_Imm (bool2b (bir_bin_pred pt bi1 bi2))) /\
   (bir_eval_bin_pred _ _ _ = BVal_Unknown)`;
 
-val bir_eval_memeq_exp_def = Define `
-  (bir_eval_memeq_exp (BVal_Mem at1 vt1 mmap1) (BVal_Mem at2 vt2 mmap2) =
+val bir_eval_memeq_def = Define `
+  (bir_eval_memeq (BVal_Mem at1 vt1 mmap1) (BVal_Mem at2 vt2 mmap2) =
      if ((at1 <> at2) \/ (vt1 <> vt2)) then BVal_Unknown else
-     BVal_Imm (bool2b (bir_memeq_exp at1 vt1 mmap1 mmap2))) /\
-  (bir_eval_memeq_exp _ _ = BVal_Unknown)`;
+     BVal_Imm (bool2b (bir_memeq at1 vt1 mmap1 mmap2))) /\
+  (bir_eval_memeq _ _ = BVal_Unknown)`;
 
 val bir_eval_ifthenelse_def = Define `
   (bir_eval_ifthenelse (BVal_Imm (Imm1 cw)) e1 e2 =
@@ -105,7 +105,7 @@ val bir_eval_exp_def = Define `
      bir_eval_bin_pred pt (bir_eval_exp e1 env) (bir_eval_exp e2 env))) /\
 
   (bir_eval_exp (BExp_MemEq e1 e2) env = (
-     bir_eval_memeq_exp (bir_eval_exp e1 env) (bir_eval_exp e2 env))) /\
+     bir_eval_memeq (bir_eval_exp e1 env) (bir_eval_exp e2 env))) /\
 
 
   (bir_eval_exp (BExp_IfThenElse c et ef) env =
@@ -167,17 +167,17 @@ CONJ_TAC >| [
   Cases_on `v` >> SIMP_TAC std_ss [bir_eval_bin_pred_def]
 ]);
 
-val bir_eval_memeq_exp_REWRS = store_thm ("bir_eval_memeq_exp_REWRS",
- ``(!at1 vt1 mmap1 at2 vt2 mmap2. (bir_eval_memeq_exp (BVal_Mem at1 vt1 mmap1) (BVal_Mem at2 vt2 mmap2) =
+val bir_eval_memeq_REWRS = store_thm ("bir_eval_memeq_REWRS",
+ ``(!at1 vt1 mmap1 at2 vt2 mmap2. (bir_eval_memeq (BVal_Mem at1 vt1 mmap1) (BVal_Mem at2 vt2 mmap2) =
      if ((at1 <> at2) \/ (vt1 <> vt2)) then BVal_Unknown else
-     BVal_Imm (bool2b (bir_memeq_exp at1 vt1 mmap1 mmap2)))) /\
-   (!v. bir_eval_memeq_exp BVal_Unknown v = BVal_Unknown) /\
-   (!v. bir_eval_memeq_exp v BVal_Unknown = BVal_Unknown) /\
-   (!bi v. bir_eval_memeq_exp (BVal_Imm bi) v = BVal_Unknown) /\
-   (!bi v. bir_eval_memeq_exp v (BVal_Imm bi) = BVal_Unknown)``,
-SIMP_TAC std_ss [bir_eval_memeq_exp_def] >>
+     BVal_Imm (bool2b (bir_memeq at1 vt1 mmap1 mmap2)))) /\
+   (!v. bir_eval_memeq BVal_Unknown v = BVal_Unknown) /\
+   (!v. bir_eval_memeq v BVal_Unknown = BVal_Unknown) /\
+   (!bi v. bir_eval_memeq (BVal_Imm bi) v = BVal_Unknown) /\
+   (!bi v. bir_eval_memeq v (BVal_Imm bi) = BVal_Unknown)``,
+SIMP_TAC std_ss [bir_eval_memeq_def] >>
 CONJ_TAC >> (
-  Cases_on `v` >> SIMP_TAC std_ss [bir_eval_memeq_exp_def]
+  Cases_on `v` >> SIMP_TAC std_ss [bir_eval_memeq_def]
 ));
 
 

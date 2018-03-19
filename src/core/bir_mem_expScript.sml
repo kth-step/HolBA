@@ -936,9 +936,9 @@ METIS_TAC[bir_store_in_mem_used_addrs_THM]);
 (*  Memory equality                                                          *)
 (* ------------------------------------------------------------------------- *)
 
-val bir_memeq_exp_def = Define `
-  (bir_memeq_exp aty vty mmap1 mmap2 = !a. (n2bs (mmap1 (bir_mem_addr aty a)) vty) =
-                                           (n2bs (mmap2 (bir_mem_addr aty a)) vty))`;
+val bir_memeq_def = Define `
+  (bir_memeq aty vty mmap1 mmap2 = !a. (n2bs (mmap1 (bir_mem_addr aty a)) vty) =
+                                       (n2bs (mmap2 (bir_mem_addr aty a)) vty))`;
 
 
 

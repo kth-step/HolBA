@@ -197,6 +197,10 @@ val bir_is_bool_exp_REWRS = store_thm ("bir_is_bool_exp_REWRS",
      ?it. (type_of_bir_exp e1 = SOME (BType_Imm it)) /\
           (type_of_bir_exp e2 = SOME (BType_Imm it)))) /\
 
+  (!bo e1 e2. (bir_is_bool_exp (BExp_MemEq e1 e2) <=>
+     ?at vt. (type_of_bir_exp e1 = SOME (BType_Mem at vt)) /\
+             (type_of_bir_exp e2 = SOME (BType_Mem at vt)))) /\
+
   (!ec e1 e2. (bir_is_bool_exp (BExp_IfThenElse ec e1 e2) <=>
      bir_is_bool_exp ec /\ bir_is_bool_exp e1 /\ bir_is_bool_exp e2)) /\
 
@@ -212,7 +216,7 @@ val bir_is_bool_exp_REWRS = store_thm ("bir_is_bool_exp_REWRS",
 
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_is_bool_exp_def,
   bir_exp_true_def, bir_exp_false_def, BType_Bool_def,
-  bir_number_of_mem_splits_BitResult]);
+  bir_number_of_mem_splits_BitResult] >> METIS_TAC []);
 
 
 
