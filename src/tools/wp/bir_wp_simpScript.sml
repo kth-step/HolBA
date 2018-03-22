@@ -2267,6 +2267,92 @@ now substitution for memories
 *)
 
 
+(* bir_exp_substitutionsTheory.bir_exp_subst1_EVAL_EQ_GEN *)
+val bir_exp_subst1_TYPE_OF_EVAL_EQ_GEN = store_thm("bir_exp_subst1_TYPE_OF_EVAL_EQ_GEN", ``
+  !env v ve ve' e.
+     (type_of_bir_val (bir_eval_exp ve env) = type_of_bir_val (bir_eval_exp ve' env)) ==>
+     (type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e) env) =
+      type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e) env))
+``,
+
+  cheat
+);
+
+val bir_memeq_REFL = store_thm("bir_memeq_REFL", ``
+  !at vt mmap.
+     (bir_memeq at vt mmap mmap)
+``,
+
+  cheat
+);
+
+val bir_memeq_SYMM = store_thm("bir_memeq_SYMM", ``
+  !at vt mmap1 mmap2.
+     (bir_memeq at vt mmap1 mmap2 = bir_memeq at vt mmap2 mmap1)
+``,
+
+  cheat
+);
+
+val bir_memeq_TRANS = store_thm("bir_memeq_TRANS", ``
+  !at vt mmap1 mmap2 mmap3.
+     (bir_memeq at vt mmap1 mmap2) ==>
+     (bir_memeq at vt mmap2 mmap3) ==>
+     (bir_memeq at vt mmap1 mmap3)
+``,
+
+  cheat
+);
+
+val bir_memeq_EQ_REPL = store_thm("bir_memeq_EQ_REPL", ``
+  !at vt mmap1 mmap2 mmap3.
+     (bir_memeq at vt mmap1 mmap2) ==>
+     (bir_memeq at vt mmap1 mmap3 = bir_memeq at vt mmap2 mmap3)
+``,
+
+  cheat
+);
+
+(*
+val bir_eval_memeq_REFL = store_thm("bir_eval_memeq_REFL", ``
+  !m.
+     (bir_eval_memeq m m = bir_val_true)
+``,
+
+  cheat
+);
+
+val bir_eval_memeq_SYMM = store_thm("bir_eval_memeq_SYMM", ``
+  !m1 m2.
+     (bir_eval_memeq m1 m2) = (bir_eval_memeq m2 m1)
+``,
+
+  cheat
+);
+
+val bir_eval_memeq_TRANS = store_thm("bir_eval_memeq_TRANS", ``
+  !m1 m2 m3.
+     (bir_eval_memeq m1 m2 = bir_val_true) ==>
+     (bir_eval_memeq m2 m3 = bir_val_true) ==>
+     (bir_eval_memeq m1 m3 = bir_val_true)
+``,
+
+  cheat
+);
+
+val bir_eval_memeq_trans = store_thm("bir_eval_memeq_trans", ``
+  !m1 m2 m3.
+     (bir_eval_memeq m1 m2) ==>
+     (bir_eval_memeq m1 m3 = bir_eval_memeq m2 m3)
+``,
+
+  cheat
+);
+*)
+
+
+
+
 val bir_memeq_eval_eq = store_thm("bir_memeq_eval_eq", ``
       !e1 e2 aty vty mmap1 mmap2 v e ty env.
         (bir_eval_exp e1 env = BVal_Mem aty vty mmap1) ==>
@@ -2332,7 +2418,40 @@ val bir_memeq_eval_eq = store_thm("bir_memeq_eval_eq", ``
   ) >- (
     (* memeq *)
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [GSYM bir_exp_subst1_def] >>
+
+    subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v e1 e) env) = type_of_bir_val (bir_eval_exp (bir_exp_subst1 v e2 e) env)` >- (
+      cheat (*METIS_TAC [bir_exp_subst1_TYPE_OF_EVAL_EQ_GEN, ...] *)
+    ) >>
+
+    subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v e1 e') env) = type_of_bir_val (bir_eval_exp (bir_exp_subst1 v e2 e') env)` >- (
+      cheat (* METIS_TAC [bir_exp_subst1_TYPE_OF_EVAL_EQ_GEN, ...] *)
+    ) >>
+
+    Cases_on `(bir_eval_exp (bir_exp_subst1 v e1 e) env)` >> Cases_on `(bir_eval_exp (bir_exp_subst1 v e1 e') env)` >> (
+      (* get rid of all non_Memory values, bir_eval_memeq_REWRS *)
 cheat
+    )(* >>
+
+    (* introduce the memory instances, types matching BType_Mem at vt *)
+(*
+    subgoal `(bir_eval_exp (bir_exp_subst1 v e1 e) env = BVal_Mem at vt mmap1a)` >- (
+    subgoal `(bir_eval_exp (bir_exp_subst1 v e2 e) env = BVal_Mem at vt mmap2a)` >- (
+    subgoal `(bir_eval_exp (bir_exp_subst1 v e1 e') env = BVal_Mem at vt mmap1b)` >- (
+    subgoal `(bir_eval_exp (bir_exp_subst1 v e2 e') env = BVal_Mem at vt mmap2b)` >- (
+*)
+
+    (* this follows from the induction *)
+    subgoal `bir_memeq at vt mmap1a mmap2a` >- (
+      cheat
+    ) >>
+    subgoal `bir_memeq at vt mmap1b mmap2b` >- (
+      cheat
+    ) >>
+
+    ASM_REWRITE_TAC [bir_eval_memeq_def] >> (* or ASM_SIMP_TAC std_ss [] *)
+    (* and then, EQ_REPL establishes memeq *)
+cheat*)
+(*    METIS_TAC [bir_memeq_EQ_REPL]*)
 (*
     Cases_on `(bir_eval_exp (bir_exp_subst1 v e1 e) env)` >> (
       FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_eval_memeq_REWRS]
@@ -2352,7 +2471,12 @@ cheat
   ) >- (
     (* ifthenelse2 *)
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [GSYM bir_exp_subst1_def] >>
-    cheat
+
+    Cases_on `bir_eval_exp (bir_exp_subst1 v e1 e) env` >> (
+      cheat (* to open up the ifthenelse and deal with the then and else branches individually *)
+
+      (* the rest is just rewriting and using the induction *)
+    )
 (*
     subgoal `bir_env_init env (vars_of e1 UNION e2)` >- (
     ) >>
@@ -2360,9 +2484,68 @@ cheat
 
   ) >- (
     (* load *)
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [GSYM bir_exp_subst1_def] >>
+
+(*
+subgoal ->
+bir_eval_exp (bir_exp_subst1 v e1 e) env = BVal_Mem at vt mmap1'
+bir_eval_exp (bir_exp_subst1 v e2 e) env = BVal_Mem at vt mmap2'
+*)
+
+(*
+bir_expTheory.bir_eval_load_BASIC_REWR
+bir_expTheory.bir_eval_load_SINGLE_REWR
+bir_expTheory.bir_eval_load_Unknown_REWRS
+
+bir_load_from_mem_SINGLE
+*)
+
+(*
+...
+bir_eval_exp (bir_exp_subst1 v e1 e') env = BVal_Imm i
+...
+
+bir_expTheory.bir_eval_load_SINGLE_REWR
+
+bir_memeq aty vty mmap1' mmap2'
+==>
+BVal_Imm (n2bs (mmap1' (b2n i)) vty) = BVal_Imm (n2bs (mmap2' (b2n i)) vty) = 
+...
+bir_memeq_def
+*)
+
     cheat
   ) >- (
     (* store *)
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [GSYM bir_exp_subst1_def] >>
+
+
+(*
+subgoal ->
+bir_eval_exp (bir_exp_subst1 v e1 e) env = BVal_Mem at vt mmap1''
+bir_eval_exp (bir_exp_subst1 v e2 e) env = BVal_Mem at vt mmap2''
+*)
+
+(*
+...
+bir_eval_exp (bir_exp_subst1 v e1 e') env = BVal_Imm i
+bir_eval_exp (bir_exp_subst1 v e1 e'') env = BVal_Imm i
+...
+
+bir_expTheory.bir_eval_store_SINGLE_REWR
+...
+
+bir_memeq aty vty mmap1'' mmap2''
+mmap1' = ((b2n i =+ b2n v) mmap1''))
+mmap2' = ((b2n i =+ b2n v) mmap2''))
+==>
+bir_memeq aty vty mmap1' mmap2'
+
+...
+bir_memeq_def
+*)
+
+
     cheat
   )
 
