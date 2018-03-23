@@ -2269,13 +2269,143 @@ now substitution for memories
 
 (* bir_exp_substitutionsTheory.bir_exp_subst1_EVAL_EQ_GEN *)
 val bir_exp_subst1_TYPE_OF_EVAL_EQ_GEN = store_thm("bir_exp_subst1_TYPE_OF_EVAL_EQ_GEN", ``
-  !env v ve ve' e.
-     (type_of_bir_val (bir_eval_exp ve env) = type_of_bir_val (bir_eval_exp ve' env)) ==>
-     (type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e) env) =
-      type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e) env))
+  !env v ve ve' ty e ty'.
+     (bir_var_type v = ty) ==>
+     (type_of_bir_val (bir_eval_exp ve env) = SOME ty) ==>
+     (type_of_bir_val (bir_eval_exp ve' env) = SOME ty) ==>
+     (type_of_bir_exp e = SOME ty') ==>
+     (
+      (type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e) env) =
+       type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e) env))
+      /\
+      (type_of_bir_exp (bir_exp_subst1 v ve e) = SOME ty')
+     )
 ``,
 
-  cheat
+  Induct_on `e` >> (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_exp_subst1_REWRS]
+  ) >- (
+    Cases_on `v = b` >> (
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_exp_subst1_REWRS]
+    )
+  ) >- (
+    Cases_on `bir_eval_exp (bir_exp_subst1 v ve e) env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve' e) env` >> (
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_exp_subst1_REWRS, bir_eval_exp_def, bir_eval_cast_REWRS]
+    ) >> (
+      subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e) env) =
+               type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e) env)` >- (
+        METIS_TAC []
+      ) >>
+      Q.PAT_X_ASSUM `!x. P` (K ALL_TAC) >>
+      REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [type_of_bir_val_def]
+    )
+  ) >- (
+    Cases_on `bir_eval_exp (bir_exp_subst1 v ve e) env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve' e) env` >> (
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_exp_subst1_REWRS, bir_eval_exp_def, bir_eval_cast_REWRS]
+    ) >> (
+      subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e) env) =
+               type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e) env)` >- (
+        METIS_TAC []
+      ) >>
+      Q.PAT_X_ASSUM `!x. P` (K ALL_TAC) >>
+      REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [type_of_bir_val_def]
+    )
+  ) >- (
+    Cases_on `bir_eval_exp (bir_exp_subst1 v ve e) env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve' e) env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve e') env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve' e') env` >> (
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_exp_subst1_REWRS, bir_eval_exp_def, bir_eval_cast_REWRS]
+    ) >> (
+      subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e) env) =
+               type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e) env)` >- (
+        METIS_TAC []
+      ) >>
+      subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e') env) =
+               type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e') env)` >- (
+        METIS_TAC []
+      ) >>
+      Q.PAT_X_ASSUM `!x. P` (K ALL_TAC) >>
+      Q.PAT_X_ASSUM `!x. P` (K ALL_TAC) >>
+      REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [type_of_bir_val_def]
+    ) >>
+
+    Cases_on `type_of_bir_imm b' = type_of_bir_imm b'''` >> (
+      ASM_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
+    )
+  ) >- (
+    Cases_on `bir_eval_exp (bir_exp_subst1 v ve e) env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve' e) env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve e') env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve' e') env` >> (
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_exp_subst1_REWRS, bir_eval_exp_def, bir_eval_cast_REWRS]
+    ) >> (
+      subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e) env) =
+               type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e) env)` >- (
+        METIS_TAC []
+      ) >>
+      subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e') env) =
+               type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e') env)` >- (
+        METIS_TAC []
+      ) >>
+      Q.PAT_X_ASSUM `!x. P` (K ALL_TAC) >>
+      Q.PAT_X_ASSUM `!x. P` (K ALL_TAC) >>
+      REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [type_of_bir_val_def]
+    ) >>
+
+    Cases_on `type_of_bir_imm b' = type_of_bir_imm b'''` >> (
+      ASM_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
+    )
+  ) >- (
+    Cases_on `bir_eval_exp (bir_exp_subst1 v ve e) env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve' e) env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve e') env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve' e') env` >> (
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_exp_subst1_REWRS, bir_eval_exp_def, bir_eval_cast_REWRS]
+    ) >> (
+      subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e) env) =
+               type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e) env)` >- (
+        METIS_TAC []
+      ) >>
+      subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e') env) =
+               type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e') env)` >- (
+        METIS_TAC []
+      ) >>
+      Q.PAT_X_ASSUM `!x. P` (K ALL_TAC) >>
+      Q.PAT_X_ASSUM `!x. P` (K ALL_TAC) >>
+      REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [type_of_bir_val_def]
+    ) >> (
+      REWRITE_TAC [bir_eval_memeq_REWRS]
+    ) >>
+
+    Cases_on `b' <> b''' \/ b0' <> b0'''` >> (
+      ASM_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
+    )
+  ) >- (
+    Cases_on `bir_eval_exp (bir_exp_subst1 v ve e) env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve' e) env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve e') env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve' e') env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve e'') env` >> Cases_on `bir_eval_exp (bir_exp_subst1 v ve' e'') env` >> (
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_exp_subst1_REWRS, bir_eval_exp_def, bir_eval_cast_REWRS]
+    ) >> (
+      subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e) env) =
+               type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e) env)` >- (
+        METIS_TAC []
+      ) >>
+      subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e') env) =
+               type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e') env)` >- (
+        METIS_TAC []
+      ) >>
+      subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve e'') env) =
+               type_of_bir_val (bir_eval_exp (bir_exp_subst1 v ve' e'') env)` >- (
+        METIS_TAC []
+      ) >>
+      Q.PAT_X_ASSUM `!x. P` (K ALL_TAC) >>
+      Q.PAT_X_ASSUM `!x. P` (K ALL_TAC) >>
+      Q.PAT_X_ASSUM `!x. P` (K ALL_TAC) >>
+      REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [type_of_bir_val_def]
+    ) >> (
+      Cases_on `type_of_bir_imm b' = Bit1` >> (
+        FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
+      )
+    )
+    type_of_bir_exp_def
+    bir_eval_exp_def
+bir_eval_ifthenelse_def
+
+
+(* , type_of_bir_val_def *)
+
+  )
 );
 
 val bir_memeq_REFL = store_thm("bir_memeq_REFL", ``
@@ -2283,7 +2413,7 @@ val bir_memeq_REFL = store_thm("bir_memeq_REFL", ``
      (bir_memeq at vt mmap mmap)
 ``,
 
-  cheat
+  REWRITE_TAC [bir_mem_expTheory.bir_memeq_def]
 );
 
 val bir_memeq_SYMM = store_thm("bir_memeq_SYMM", ``
@@ -2291,7 +2421,7 @@ val bir_memeq_SYMM = store_thm("bir_memeq_SYMM", ``
      (bir_memeq at vt mmap1 mmap2 = bir_memeq at vt mmap2 mmap1)
 ``,
 
-  cheat
+  METIS_TAC [bir_mem_expTheory.bir_memeq_def]
 );
 
 val bir_memeq_TRANS = store_thm("bir_memeq_TRANS", ``
@@ -2301,7 +2431,7 @@ val bir_memeq_TRANS = store_thm("bir_memeq_TRANS", ``
      (bir_memeq at vt mmap1 mmap3)
 ``,
 
-  cheat
+  METIS_TAC [bir_mem_expTheory.bir_memeq_def]
 );
 
 val bir_memeq_EQ_REPL = store_thm("bir_memeq_EQ_REPL", ``
@@ -2310,7 +2440,7 @@ val bir_memeq_EQ_REPL = store_thm("bir_memeq_EQ_REPL", ``
      (bir_memeq at vt mmap1 mmap3 = bir_memeq at vt mmap2 mmap3)
 ``,
 
-  cheat
+  METIS_TAC [bir_mem_expTheory.bir_memeq_def]
 );
 
 (*
@@ -2352,14 +2482,17 @@ val bir_eval_memeq_trans = store_thm("bir_eval_memeq_trans", ``
 
 
 
-
+bir_env_vars_are_initialised_UNION
 val bir_memeq_eval_eq = store_thm("bir_memeq_eval_eq", ``
       !e1 e2 aty vty mmap1 mmap2 v e ty env.
+        (type_of_bir_exp e1 = SOME (BType_Mem aty vty)) ==>
+        (type_of_bir_exp e2 = SOME (BType_Mem aty vty)) ==>
+        (type_of_bir_exp e = SOME ty) ==>
+        (bir_var_type v = BType_Mem aty vty) ==>
+        (bir_env_vars_are_initialised env (((bir_vars_of_exp e) DIFF {v}) UNION (bir_vars_of_exp e1) UNION (bir_vars_of_exp e2))) ==>
         (bir_eval_exp e1 env = BVal_Mem aty vty mmap1) ==>
         (bir_eval_exp e2 env = BVal_Mem aty vty mmap2) ==>
         (bir_memeq aty vty mmap1 mmap2) ==>
-        (type_of_bir_exp e = SOME ty) ==>
-        (bir_var_type v = BType_Mem aty vty) ==>
 (*        (bir_eval_exp (BExp_MemEq e1 e2) env = bir_val_true) ==> *)
         (
          (
@@ -2419,6 +2552,35 @@ val bir_memeq_eval_eq = store_thm("bir_memeq_eval_eq", ``
     (* memeq *)
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [GSYM bir_exp_subst1_def] >>
 
+
+bir_typing_expTheory.type_of_bir_exp_THM
+bir_is_well_typed_env env ==>
+
+bir_eval_exp e1 env = BVal_Mem aty vty mmap1
+==>
+type_of_bir_exp e1 = SOME (BType_Mem aty vty)
+
+type_of_bir_val (bir_eval_exp e env) = NONE \/
+type_of_bir_val (bir_eval_exp e env) = type_of_bir_exp e
+
+(*
+... (THM1)
+alternative, way to go:
+bir_eval_exp e1 env = BVal_Mem aty vty mmap1
+==>
+type_of_bir_exp e1 = SOME (BType_Mem aty vty)
+(same for e2)
+
+...
+==>
+type_of_bir_exp e = type_of_bir_exp (bir_exp_subst1 v e1 e)
+(same for e2/e', all combinations)
+
+... (THM2)
+==>
+type_of_bir_val (bir_eval_exp (bir_exp_subst1 v e1 e) env) = NONE \/ type_of_bir_exp (bir_exp_subst1 v e1 e)
+(same for e2/e', all combinations) 
+*)
     subgoal `type_of_bir_val (bir_eval_exp (bir_exp_subst1 v e1 e) env) = type_of_bir_val (bir_eval_exp (bir_exp_subst1 v e2 e) env)` >- (
       cheat (*METIS_TAC [bir_exp_subst1_TYPE_OF_EVAL_EQ_GEN, ...] *)
     ) >>
@@ -2576,13 +2738,13 @@ val bir_memeq_eval_eq_imm = store_thm("bir_memeq_eval_eq_imm", ``
 
 
 
-
+bir_exp_is_taut_def
 val bir_exp_is_taut_imp_imp_subst1_mem_thm = store_thm("bir_exp_is_taut_imp_imp_subst1_mem_thm",``
 !v' prem vs v ve e vty.
   (bir_type_is_Mem (bir_var_type v)) ==>
   (bir_var_type v' = bir_var_type v) ==>
   (type_of_bir_exp ve = SOME (bir_var_type v)) ==>
-  (v IN (bir_vars_of_exp e)) ==>
+  (v IN (bir_vars_of_exp e)) ==> (* we need this, otherwise the free variables of "(bir_exp_subst1 v ve e)" do not contain the free variables of "ve", therefore we cannot use them for establishing var_set_well_typed on the right hand side, i.e., the right tautology *)
   (~((bir_var_name v') IN (IMAGE bir_var_name (bir_vars_of_exp prem)))) ==>
   (~((bir_var_name v') IN (IMAGE bir_var_name (bir_vars_of_exp ve)))) ==>
   (~((bir_var_name v') IN (IMAGE bir_var_name (bir_vars_of_exp e)))) ==>
