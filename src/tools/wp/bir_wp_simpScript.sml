@@ -2619,11 +2619,19 @@ val bir_memeq_eval_eq = store_thm("bir_memeq_eval_eq", ``
   ) >- (
     (* binary *)
     REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
-    METIS_TAC []
+    subgoal `(bir_env_vars_are_initialised env (bir_vars_of_exp e DIFF {v})) /\
+             (bir_env_vars_are_initialised env (bir_vars_of_exp e' DIFF {v}))` >- (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_env_vars_are_initialised_def]
+    ) >>
+    METIS_TAC [bir_env_vars_are_initialised_UNION]
   ) >- (
     (* binpred *)
     REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
-    METIS_TAC []
+    subgoal `(bir_env_vars_are_initialised env (bir_vars_of_exp e DIFF {v})) /\
+             (bir_env_vars_are_initialised env (bir_vars_of_exp e' DIFF {v}))` >- (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_env_vars_are_initialised_def]
+    ) >>
+    METIS_TAC [bir_env_vars_are_initialised_UNION]
   ) >- (
     (* memeq *)
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [GSYM bir_exp_subst1_def] >>
@@ -2680,7 +2688,12 @@ val bir_memeq_eval_eq = store_thm("bir_memeq_eval_eq", ``
   ) >- (
     (* ifthenelse1 *)
     REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
-    METIS_TAC []
+    subgoal `(bir_env_vars_are_initialised env (bir_vars_of_exp e DIFF {v})) /\
+             (bir_env_vars_are_initialised env (bir_vars_of_exp e' DIFF {v})) /\
+             (bir_env_vars_are_initialised env (bir_vars_of_exp e'' DIFF {v}))` >- (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_env_vars_are_initialised_def]
+    ) >>
+    METIS_TAC [bir_env_vars_are_initialised_UNION]
   ) >- (
     (* ifthenelse2 *)
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [GSYM bir_exp_subst1_def] >>
@@ -3012,6 +3025,14 @@ val bir_exp_is_taut_imp_imp_subst1_mem_thm = store_thm("bir_exp_is_taut_imp_imp_
 
         subgoal `type_of_bir_exp e = SOME (BType_Imm Bit1)` >- (
           METIS_TAC [bir_exp_subst1_TYPE_EQ, bir_is_bool_exp_def]
+        ) >>
+
+        subgoal `bir_env_vars_are_initialised env ((bir_vars_of_exp e DIFF {v}) UNION (bir_vars_of_exp (BExp_Den v')) UNION (bir_vars_of_exp ve))` >- (
+          METIS_TAC [bir_env_vars_are_initialised_UNION, bir_vars_of_exp_def]
+        ) >>
+
+        subgoal `type_of_bir_exp (BExp_Den v') = type_of_bir_exp ve` >- (
+          METIS_TAC [type_of_bir_exp_def]
         ) >>
 
         METIS_TAC [bir_memeq_eval_eq, bir_type_is_Imm_def]
