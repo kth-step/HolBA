@@ -2505,20 +2505,27 @@ val bir_eval_exp_eq_def = Define `
 
 
 
-
 val n2bs_eq_bitstrings_thm = prove(``
   !vt x1 x2.
     (n2bs x1 vt = n2bs x2 vt) ==>
     (fixwidth (size_of_bir_immtype vt) (n2v x1) = fixwidth (size_of_bir_immtype vt) (n2v x2))
 ``,
 
-  cheat
-
-(*
-      Cases_on `vt` >> (
-        FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [n2bs_def]
-      )
-*)
+  let
+    val alpha = ``:'a``;
+    val instance_thms = [
+                          GSYM (SIMP_RULE (srw_ss()) [] (INST_TYPE [alpha |-> ``:1``] bitstringTheory.w2v_v2w)),
+                          GSYM (SIMP_RULE (srw_ss()) [] (INST_TYPE [alpha |-> ``:8``] bitstringTheory.w2v_v2w)),
+                          GSYM (SIMP_RULE (srw_ss()) [] (INST_TYPE [alpha |-> ``:16``] bitstringTheory.w2v_v2w)),
+                          GSYM (SIMP_RULE (srw_ss()) [] (INST_TYPE [alpha |-> ``:32``] bitstringTheory.w2v_v2w)),
+                          GSYM (SIMP_RULE (srw_ss()) [] (INST_TYPE [alpha |-> ``:64``] bitstringTheory.w2v_v2w))
+                        ];
+  in
+    Cases_on `vt` >> (
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [n2bs_def] >>
+      METIS_TAC (instance_thms@[GSYM bitstringTheory.v2w_n2v])
+    )
+  end
 );
 
 
