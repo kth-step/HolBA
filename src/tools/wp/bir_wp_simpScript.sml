@@ -2531,6 +2531,7 @@ val n2bs_eq_bitstrings_thm = prove(``
 
 
 (*
+(*
 
 type_of_bir_imm i = rty
 
@@ -2544,8 +2545,9 @@ n2bs
      (bir_mem_addr at a)) rty
 *)
 val n2bs_bir_update_mmap_thm = prove(``
-  !mmap1 mmap2 ra vt at av i.
-    (type_of_bir_imm i = vt) ==>
+  !mmap1 mmap2 ra vt at av i rty x.
+    (type_of_bir_imm i = rty) ==>
+    (bir_number_of_mem_splits vt rty at = SOME x) ==>
     (n2bs (mmap1 ra) vt = n2bs (mmap2 ra) vt) ==>
     (n2bs (
         (bir_update_mmap at mmap1 av (bitstring_split (size_of_bir_immtype vt) (b2v i)))
@@ -2560,7 +2562,7 @@ val n2bs_bir_update_mmap_thm = prove(``
   Q.ABBREV_TAC `updates = bitstring_split (size_of_bir_immtype vt) vecval` >>
 
   subgoal `LENGTH updates = (LENGTH vecval) DIV (size_of_bir_immtype vt)` >- (
-    Cases_on `vt` >> (
+    Cases_on `vt` >> Cases_on `rty` >> (
       Cases_on `i` >> FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
       FULL_SIMP_TAC (list_ss++HolBACoreSimps.holBACore_ss) [n2bs_def, Abbr `updates`, Abbr `vecval`, bir_mem_expTheory.bitstring_split_REWRS_LENGTH] >>
 
@@ -2572,6 +2574,7 @@ val n2bs_bir_update_mmap_thm = prove(``
   ) >>
 
   Cases_on `vt` >> (
+(*
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [n2bs_def] >>
 
     FULL_SIMP_TAC std_ss [Abbr `vecval`] >>
@@ -2580,22 +2583,55 @@ val n2bs_bir_update_mmap_thm = prove(``
     POP_ASSUM MP_TAC >>
     EVAL_TAC >>
     STRIP_TAC >>
+*)
 
+(*
     Cases_on `updates` >- (
       FULL_SIMP_TAC list_ss []
     ) >>
 
-    Cases_on `t` >> (
-      FULL_SIMP_TAC list_ss []
+    REPEAT (
+      Cases_on `t` >> (
+        FULL_SIMP_TAC list_ss []
+      ) >>
+      Cases_on `t'` >> (
+        FULL_SIMP_TAC list_ss []
+      )
     ) >>
 
     FULL_SIMP_TAC list_ss [bir_mem_expTheory.bir_update_mmap_def] >>
 
-    Cases_on `bir_mem_addr at av = ra` >> (
-      FULL_SIMP_TAC std_ss [combinTheory.UPDATE_APPLY]
-    )    
+    let
+      fun case_fun AV_var goalandthm =
+            (Cases_on `bir_mem_addr at ^AV_var = ra` >> (
+               FULL_SIMP_TAC std_ss [combinTheory.UPDATE_APPLY]
+            ) >> 
+            case_fun ``SUC (^AV_var)``
+            ) goalandthm;
+    in
+      case_fun ``av:num``
+    end
+*)
+    Q.RENAME1_TAC `LENGTH t` >>
+    Q.ABBREV_TAC `av' = av` >>
+    REPEAT (
+      Cases_on `t` >> (
+        FULL_SIMP_TAC list_ss []
+      ) >>
+      Cases_on `t'` >> (
+        FULL_SIMP_TAC list_ss []
+      ) >>
+
+      FULL_SIMP_TAC list_ss [bir_mem_expTheory.bir_update_mmap_def] >>
+
+      Cases_on `ra = bir_mem_addr at av'` >> Cases_on `ra = bir_mem_addr at (SUC av')` >> (
+        FULL_SIMP_TAC std_ss [combinTheory.UPDATE_APPLY]
+      ) >> 
+    )
+    end
   )
 (*
+open bir_mem_expTheory;
 bir_mem_expTheory.bir_update_mmap_def
 *)
 (*    REPEAT STRIP_TAC >>*)
@@ -2671,6 +2707,44 @@ val n2bs_bir_update_mmap_REVERSE_thm = prove(``
     )    
   )
 );
+*)
+
+
+
+
+
+
+
+
+
+
+
+(*
+  36.  bir_store_in_mem vt at i f b2 (b2n i') = SOME x
+  37.  bir_store_in_mem vt at i f' b2 (b2n i') = SOME x'
+  38.  bir_mem_addr at a ∈
+       bir_store_in_mem_used_addrs vt i at b2 (b2n i')
+
+n2bs (x' (bir_mem_addr at a)) vt = n2bs (x (bir_mem_addr at a)) vt
+*)
+
+val bir_store_in_mem_TO_used_addrs_thm = prove(``
+  !vt at i mm1 mm2 b2 i' mm1' mm2' addr.
+    (bir_store_in_mem vt at i mm1 b2 (b2n i') = SOME mm1') ==>
+    (bir_store_in_mem vt at i mm2 b2 (b2n i') = SOME mm2') ==>
+    (addr IN (bir_store_in_mem_used_addrs vt i at b2 (b2n i'))) ==>
+    (mm1' addr = mm2' addr)
+``,
+
+  cheat
+);
+
+
+
+
+
+
+
 
 
 
@@ -3002,6 +3076,77 @@ val bir_memeq_eval_eq = store_thm("bir_memeq_eval_eq", ``
     Q.PAT_X_ASSUM `bir_eval_store A B C D = E` (ASSUME_TAC o GSYM) >>
     Q.PAT_X_ASSUM `bir_eval_store A B C D = E` (ASSUME_TAC o GSYM) >>
 
+
+
+    REV_FULL_SIMP_TAC std_ss [bir_expTheory.bir_eval_store_BASIC_REWR] >>
+    Cases_on `bir_store_in_mem vt at i f b2 (b2n i')` >> Cases_on `bir_store_in_mem vt at i f' b2 (b2n i')` >> (
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
+    ) >>
+
+    FULL_SIMP_TAC std_ss [bir_mem_expTheory.bir_memeq_def] >>
+
+    GEN_TAC >>
+    Cases_on `~((bir_mem_addr at a) IN bir_store_in_mem_used_addrs vt i at b2 (b2n i'))` >- (
+      subgoal `(x (bir_mem_addr at a) = f (bir_mem_addr at a)) /\ (x' (bir_mem_addr at a) = f' (bir_mem_addr at a))` >- (
+        METIS_TAC [bir_mem_expTheory.bir_store_in_mem_used_addrs_THM]
+      ) >>
+
+      METIS_TAC []
+    ) >>
+
+    METIS_TAC [bir_store_in_mem_TO_used_addrs_thm]
+
+(*
+    FULL_SIMP_TAC std_ss [bir_mem_expTheory.bir_store_in_mem_used_addrs_def, bir_mem_expTheory.bir_load_from_mem_used_addrs_def] >>
+
+    Cases_on `bir_number_of_mem_splits vt (type_of_bir_imm i) at` >> (
+      FULL_SIMP_TAC std_ss [pred_setTheory.NOT_IN_EMPTY]
+    ) >>
+
+    Cases_on `(~(x'' = 1)) /\ (b2 = BEnd_NoEndian)` >> (
+      FULL_SIMP_TAC std_ss [pred_setTheory.NOT_IN_EMPTY]
+    ) >- (
+
+      Q.PAT_X_ASSUM `MEM A B` (MP_TAC) >>
+      EVAL_TAC >>
+      STRIP_TAC >>
+      FULL_SIMP_TAC std_ss [GSYM bir_mem_expTheory.bir_mem_addr_def] >>
+
+      IMP_RES_TAC bir_mem_expTheory.bir_store_load_mem_THM >>
+      REV_FULL_SIMP_TAC std_ss [bir_mem_expTheory.bir_load_from_mem_def, LET_DEF] >>
+
+      Cases_on `b2` >> (
+        FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
+
+        ASSUME_TAC (EVAL ``COUNT_LIST 1``) >>
+        FULL_SIMP_TAC list_ss [bir_mem_expTheory.bir_mem_concat_def, bir_mem_expTheory.bir_load_bitstring_from_mmap_def]
+      )
+
+    ) >>
+
+*)
+
+(*
+    cheat
+    Cases_on `b2` >> (
+    )
+
+
+
+
+
+    FULL_SIMP_TAC std_ss [bir_store_in_mem_EQ_SOME]
+
+
+
+
+
+bir_mem_expTheory.bir_store_in_mem_used_addrs_THM
+bir_mem_expTheory.bir_store_in_mem_used_addrs_def
+bir_mem_expTheory.bir_load_from_mem_used_addrs_def
+
+
+
     REV_FULL_SIMP_TAC std_ss [bir_eval_store_def, bir_mem_expTheory.bir_store_in_mem_def, LET_DEF] >>
     Cases_on `bir_number_of_mem_splits vt rty at` >> (
       FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
@@ -3020,9 +3165,13 @@ val bir_memeq_eval_eq = store_thm("bir_memeq_eval_eq", ``
 (*      FULL_SIMP_TAC std_ss [] >>*)
       cheat >>
       METIS_TAC [n2bs_bir_update_mmap_REVERSE_thm, n2bs_bir_update_mmap_thm]
-    )
+*)
   )
 );
+
+
+
+
 
 
 
