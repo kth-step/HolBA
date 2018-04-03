@@ -18,6 +18,8 @@ open bir_expLib;
 open finite_mapSyntax;
 open pairSyntax;
 
+open bir_wp_simpTheory;
+
 load "pairLib";
 
 
@@ -143,6 +145,7 @@ fun bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, p
   (bir_label_t -> bool) ->
   bir_exp_t ->
   (bir_label_t |-> bir_exp_t) -> (bir_label_t |-> bir_exp_t) option``, [program, label, ls, post, wps]));
+        val wps1_thm = SIMP_RULE pure_ss [GSYM bir_exp_and_def] wps1_thm; (* normalize *)
 	val wps1 = (snd o dest_comb o snd o dest_eq o concl) wps1_thm;
         val new_wp_id = "bir_wp_comp_wps_iter_step2_wp_" ^ wps_id_suffix;
         val new_wp_id_var = mk_var (new_wp_id, ``:bir_exp_t``);

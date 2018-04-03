@@ -27,12 +27,19 @@ structure bir_wp_simpLib =
 struct
 
 
+  
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_wp_simp"
+  val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+  val (bir_exp_imp_tm, mk_bir_exp_imp, dest_bir_exp_imp, is_bir_exp_imp) = syntax_fns2 "bir_exp_imp";
+  val (bir_exp_and_tm, mk_bir_exp_and, dest_bir_exp_and, is_bir_exp_and) = syntax_fns2 "bir_exp_and";
 
   fun simp_extract goalterm =
     let
-      val (prems, beval) = (dest_imp o snd o dest_forall) goalterm;
+      val (prem, term) = (dest_bir_exp_imp o snd o dest_comb) goalterm;
+(*
       val prem = (fst o dest_comb) prems;
       val term = (snd o dest_comb o fst o dest_comb o fst o dest_eq) beval;
+*)
     in
       (prem, term)
     end;
@@ -69,9 +76,26 @@ struct
         (is_BExp_Den e) andalso (subsm_is_var_only subsm1)
       end;
 
+(* val acc = []; *)
+  fun preproc_vars acc [] = acc
+    | preproc_vars acc (lbl_str::lbl_list) =
+        let
+          val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
+(*
+          val vars_def_var_id = "bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str ^ "_vars";
+          val vars_def_var = mk_var (vars_def_var_id, ``:bir_var_t -> bool``);
+          val vars_def_thm = Define `^vars_def_var = bir_vars_of_exp ^((fst o dest_eq o concl) def_thm)`;
+*)
+          val thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss) ([def_thm, GSYM bir_exp_subst1_def, bir_vars_of_exp_def, bir_exp_subst1_USED_VARS]@acc) ``bir_vars_of_exp ^((fst o dest_eq o concl) def_thm)``;
+          val thm = TRANS thm (EVAL ((snd o dest_eq o concl) thm));
+        in
+          preproc_vars ((*(GSYM vars_def_thm)::*)thm::acc) lbl_list
+        end
+      ;
+
   val bir_var_ss = rewrites (type_rws ``:bir_var_t``);
   val string_ss = rewrites (type_rws ``:string``);
-  fun bir_wp_simp_CONV goalterm =
+  fun bir_wp_simp_CONV varexps_thms goalterm =
     let
       val (prem, term) = simp_extract goalterm;
       val get_concl_lhs = fst o dest_eq o concl;
@@ -83,7 +107,8 @@ struct
             val const_n = (fst o dest_const) term;
             val def_thm = lookup_def const_n;
             val thm_1 = REWRITE_CONV [def_thm] goalterm;
-            val thm_1_rec = bir_wp_simp_CONV (get_concl_rhs thm_1);
+	    val goalterm_new = get_concl_rhs thm_1;
+            val thm_1_rec = bir_wp_simp_CONV varexps_thms goalterm_new handle UNCHANGED => REFL goalterm_new;
           in
             TRANS thm_1 thm_1_rec
           end
@@ -93,47 +118,75 @@ struct
           in
             if subsm_is_var_only subsm then
               (* 2a - subst with vars in map only *)
+(*
+bir_exp_varsubst_subst1_swap_thm
+bir_exp_varsubst1_varsubst_merge_thm
+*)
               raise UNCHANGED
             else
               (* 2b - subst simplification *)
+(*
+bir_exp_is_taut_imp_imp_subst1_thm
+bir_exp_is_taut_imp_imp_subst1_mem_thm
+*)
               REFL goalterm
           end
-        else if is_BExp_BinExp term then
+        else if is_bir_exp_and term then
+          (* 3 - and simplification propagation *)
           let
-            val (bop, e1, e2) = dest_BExp_BinExp term;
+            val (e1, e2) = dest_bir_exp_and term;
+
+            val thm_1 = SPECL [prem, e1, e2] bir_wp_simp_taut_and_thm;(*bir_wp_simp_eval_and_thm;*)
+
+            val thm_2_lhs = get_concl_rhs thm_1;
+            val (term_2a, term_2bc) = (dest_conj) thm_2_lhs;
+            val (term_2b, term_2c) = (dest_conj) term_2bc;
+
+            val thm_2a = bir_wp_simp_CONV varexps_thms term_2a handle UNCHANGED => REFL term_2a; (* poor and quick solution *)
+            val thm_2b = bir_wp_simp_CONV varexps_thms term_2b handle UNCHANGED => REFL term_2b;
+
+            val simp_conv_for_bir_var_set_is_well_typed = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss) ([GSYM bir_exp_subst1_def, bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_var_set_is_well_typed_def]@varexps_thms);
+            val thm_2c1 = simp_conv_for_bir_var_set_is_well_typed term_2c;
+            val e1_new = (snd o simp_extract o get_concl_rhs) thm_2a;
+            val e2_new = (snd o simp_extract o get_concl_rhs) thm_2b;
+            val thm_2c2 = simp_conv_for_bir_var_set_is_well_typed ``bir_var_set_is_well_typed ((bir_vars_of_exp ^prem) UNION (bir_vars_of_exp ^e1_new) UNION (bir_vars_of_exp ^e2_new))``;
+            val thm_2c = TRANS thm_2c1 (GSYM thm_2c2);
+            val thm_2 = REWRITE_CONV [Once thm_2a, Once thm_2b, Once thm_2c] thm_2_lhs handle UNCHANGED => REFL thm_2_lhs;
+
+            val thm_3 = REWRITE_CONV [GSYM bir_wp_simp_taut_and_thm] (get_concl_rhs thm_2);
+            val thm = TRANS (TRANS thm_1 thm_2) thm_3;
           in
-            if is_BIExp_And bop then
-              (* 3 - and simplification propagation *)
-              let
-                val thm_1 = SPECL [prem, e1, e2] bir_wp_simp_eval_and_thm;
-                val (term_2a, term_2b) = (dest_conj o snd o dest_eq o concl) thm_1;
-                val thm_2a = bir_wp_simp_CONV term_2a handle UNCHANGED => REFL term_2a; (* poor and quick solution *)
-                val thm_2b = bir_wp_simp_CONV term_2b handle UNCHANGED => REFL term_2b;
-                val thm_2_lhs = (mk_conj (term_2a, term_2b));
-                val thm_2 = REWRITE_CONV [Once thm_2a, Once thm_2b] thm_2_lhs handle UNCHANGED => REFL thm_2_lhs;
-                val thm_3 = REWRITE_CONV [GSYM bir_wp_simp_eval_and_thm] (get_concl_rhs thm_2);
-                val thm = TRANS (TRANS thm_1 thm_2) thm_3;
-              in
-                thm
-              end
-            else if is_BIExp_Or bop then
-              (* 3 - imp simplification propagation *)
-              raise UNCHANGED
-              (*
-              let
-                val thm_1 = SPECL [prem, e1, e2] bir_wp_simp_eval_and_thm;
-                val (term_2, term_3) = (dest_conj o snd o dest_eq o concl) thm_1;
-                val thm_2 = bir_wp_simp_CONV term_2; (* catch UNCHANGED *)
-                val thm_3 = bir_wp_simp_CONV term_3;
-                val thm = REWRITE_CONV [Once thm_1, Once thm_2, Once thm_3, GSYM bir_wp_simp_eval_and_thm] goalterm;
-                val _ = print "call me imp\r\n";
-              in
-                thm
-              end
-              *)
-            else
-              (* other binop, we don't touch this *)
-              raise UNCHANGED
+            thm
+          end	  
+        else if is_bir_exp_imp term then
+          (* 3 - imp simplification propagation *)
+          let
+            val (e1, e2) = dest_bir_exp_imp term;
+            val thm_gen = (Q.GENL [`prem`, `e1`, `e2`]) (MATCH_MP bir_exp_tautologiesTheory.bir_exp_is_taut_WEAK_CONG_IFF (Q.SPECL [`prem`, `e1`, `e2`, `fixme`] bir_exp_CONG_imp_imp_thm));
+            val thm_1 = SPECL [prem, e1, e2] thm_gen;
+
+	    val goalterm_new = get_concl_rhs thm_1;
+            val thm_1_rec = bir_wp_simp_CONV varexps_thms goalterm_new handle UNCHANGED => REFL goalterm_new;
+
+            val thm_2_struct_rev = TRANS thm_1_rec ((SIMP_CONV pure_ss [GSYM thm_gen] o get_concl_rhs) thm_1_rec);
+          in
+            TRANS thm_1 thm_2_struct_rev
+(*
+          in
+            raise UNCHANGED
+*)
+            (*
+            let
+              val thm_1 = SPECL [prem, e1, e2] bir_wp_simp_eval_and_thm;
+              val (term_2, term_3) = (dest_conj o snd o dest_eq o concl) thm_1;
+              val thm_2 = bir_wp_simp_CONV varexps_thms term_2; (* catch UNCHANGED *)
+              val thm_3 = bir_wp_simp_CONV varexps_thms term_3;
+              val thm = REWRITE_CONV [Once thm_1, Once thm_2, Once thm_3, GSYM bir_wp_simp_eval_and_thm] goalterm;
+              val _ = print "call me imp\r\n";
+            in
+              thm
+            end
+            *)
           end
         else
           (* other expression, we don't touch this *)
@@ -224,8 +277,8 @@ val aes_wp_term = ``(bir_exp_subst
 *)
 
 val btautology = ``BExp_Const (Imm1 1w)``;
-val prem_init = ``(\s. (bir_eval_exp ^btautology s) = bir_val_true)``;
-val goalterm = ``!s. (^prem_init s) ==> (bir_eval_exp ^aes_wp_term s = bir_val_true)``;
+val prem_init = ``^btautology``;
+val goalterm = ``bir_exp_is_taut (bir_exp_imp ^prem_init (bir_exp_imp ^btautology ^aes_wp_term))``;
 (*
 fun expandDef defname goalterm =
   let
@@ -237,10 +290,19 @@ fun expandDef defname goalterm =
 val goalterm = expandDef "aes_wp" goalterm;
 *)
 
-
+(*
 val bir_wp_simp_eval_imp_spec_thm = ((SIMP_RULE std_ss [EVAL ``^prem_init s``]) o (SPEC prem_init) o GSYM) bir_wp_simp_eval_imp_thm;
+*)
 
-val simp_thm = bir_wp_simp_CONV goalterm;
+
+(*
+val lbl_str = hd (tl (rev lbl_list));
+*)
+val varexps_thms = preproc_vars [] (tl (rev lbl_list));
+
+
+
+val simp_thm = bir_wp_simp_CONV varexps_thms goalterm;
 val simp_thm = TRANS (GSYM (REWRITE_CONV [EVAL ``^prem_init s``] ((fst o dest_eq o concl) simp_thm))) simp_thm;
 val simp_thm = TRANS simp_thm (SIMP_CONV std_ss [boolTheory.BETA_THM, bir_wp_simp_eval_imp_spec_thm] ((snd o dest_eq o concl) simp_thm));
 
