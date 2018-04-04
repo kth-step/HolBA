@@ -175,7 +175,21 @@ struct
               end
             else
               (* 5 - resolve subst1 as implication of equality check and varsubst1 *)
-              raise ERR "bir_wp_simp_CONV" "rule 5 missing"
+              (* raise ERR "bir_wp_simp_CONV" "rule 5 missing" *)
+              let
+                val (term_v, term_ve, term_e2) = dest_bir_exp_subst1 term_e;
+                val thm_1 = SPECL [term_vs, term_v, term_ve, term_e2] bir_exp_varsubst_subst1_swap_thm;
+                val assum = (fst o dest_imp o concl) thm_1;
+                val assum_thm = SIMP_CONV std_ss [finite_mapTheory.FEVERY_FEMPTY, finite_mapTheory.FEVERY_FUPDATE] assum; (* TODO: this has to be touched again *)
+                val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] assum_thm;
+                val thm_2 = MP thm_1 assum_thm;
+                val thm_2 = TRANS thm_2 (((SIMP_CONV std_ss [bir_exp_subst_restrict1_REWRS, bir_exp_varsubst_REWRS, bir_exp_varsubst_var_REWR, finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY]) o get_concl_rhs) thm_2); (* TODO: this as well, add holbasimps *)
+                val thm_3 = REWRITE_CONV [thm_2] goalterm;
+                val goalterm_new = get_concl_rhs thm_3; (* val goalterm = goalterm_new; *)
+                val thm_3_rec = bir_wp_simp_CONV varexps_thms goalterm_new handle UNCHANGED => REFL goalterm_new;
+              in
+                TRANS thm_3 thm_3_rec
+              end
           end
 (*        else if is_const term then*)
         else if is_bir_exp_subst term then
@@ -185,7 +199,6 @@ struct
             if subsm_is_var_only subsm then
               (* 2a - subst with vars in map only *)
 (*
-bir_exp_varsubst_subst1_swap_thm
 bir_exp_varsubst1_varsubst_merge_thm
 *)
               raise UNCHANGED
