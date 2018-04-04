@@ -122,7 +122,7 @@ struct
             val thm_2a = bir_wp_simp_CONV varexps_thms term_2a handle UNCHANGED => REFL term_2a; (* poor and quick solution *)
             val thm_2b = bir_wp_simp_CONV varexps_thms term_2b handle UNCHANGED => REFL term_2b;
 
-            val simp_conv_for_bir_var_set_is_well_typed = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_var_set_is_well_typed_def, bir_exp_and_def, bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms); (* TODO: this has to be touched again, new expressions may contain varsubst *)
+            val simp_conv_for_bir_var_set_is_well_typed = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_var_set_is_well_typed_def, bir_exp_and_def, bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms); (* TODO: this has to be touched again, new expressions may contain varsubst *)
             val thm_2c1 = simp_conv_for_bir_var_set_is_well_typed term_2c;
             val e1_new = (snd o simp_extract o get_concl_rhs) thm_2a;
             val e2_new = (snd o simp_extract o get_concl_rhs) thm_2b;
@@ -204,7 +204,7 @@ struct
             val term_v_is_Mem_thm = REWRITE_CONV [bir_var_type_def, bir_type_checker_REWRS] ``bir_type_is_Mem (bir_var_type ^term_v)``;
             val term_v_is_Mem_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] term_v_is_Mem_thm;
 
-            val varused_thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms) ``^term_v IN (bir_vars_of_exp ^term_e)``; (* TODO: has to be touched again *)
+            val varused_thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) ([bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms) ``^term_v IN (bir_vars_of_exp ^term_e)``; (* TODO: has to be touched again *)
             val varused_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] varused_thm;
           in
             if ((is_neg o concl) varused_thm) then
@@ -309,7 +309,7 @@ bir_exp_varsubst1_varsubst_merge_thm
 
 (*
 (* =================== TESTING ========================================= *)
-val i = 2;
+val i = 4;
 val lbl_str = List.nth (lbl_list, (List.length lbl_list) - 2 - i);
 
 val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
@@ -363,8 +363,10 @@ val varexps_thms = preproc_vars [] (tl (rev lbl_list));
 
 
 val simp_thm = bir_wp_simp_CONV varexps_thms goalterm;
+(*
 val simp_thm = TRANS (GSYM (REWRITE_CONV [EVAL ``^prem_init s``] ((fst o dest_eq o concl) simp_thm))) simp_thm;
 val simp_thm = TRANS simp_thm (SIMP_CONV std_ss [boolTheory.BETA_THM, bir_wp_simp_eval_imp_spec_thm] ((snd o dest_eq o concl) simp_thm));
+*)
 
 *)
 
