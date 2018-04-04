@@ -1483,6 +1483,49 @@ val bir_exp_varsubst_and_imp_REWRS = store_thm("bir_exp_varsubst_and_imp_REWRS",
 
 
 
+val bir_exp_varsubst_USED_VARS = store_thm("bir_exp_varsubst_USED_VARS", ``
+  !vs e.
+     bir_vars_of_exp (bir_exp_varsubst vs e) =
+     bir_vars_of_exp e DIFF FDOM vs UNION
+     {v' | ?v. (v IN bir_vars_of_exp e) /\ (FLOOKUP vs v = SOME v')}
+``,
+
+  cheat
+(*
+bir_exp_substitutionsTheory.bir_exp_subst_USED_VARS
+*)
+);
+
+
+val bir_exp_varsubst_introduced_vars_def = Define `
+  bir_exp_varsubst_introduced_vars vs e =
+    {v' | ?v. (v IN bir_vars_of_exp e) /\ (FLOOKUP vs v = SOME v')}
+`;
+
+
+val bir_exp_varsubst_introduced_vars_REWRS = store_thm("bir_exp_varsubst_introduced_vars_REWRS", ``
+  (!e. bir_exp_varsubst_introduced_vars FEMPTY e = {}) /\
+  (!vs v v' e. bir_exp_varsubst_introduced_vars (FUPDATE vs (v,v')) e =
+     (if (v IN (bir_vars_of_exp e)) then {v'} else EMPTY) UNION
+        (bir_exp_varsubst_introduced_vars vs e))
+``,
+
+  cheat
+);
+
+
+val bir_exp_varsubst_USED_VARS_REWRS = store_thm("bir_exp_varsubst_USED_VARS_REWRS", ``
+  !vs e.
+    bir_vars_of_exp (bir_exp_varsubst vs e) =
+    bir_vars_of_exp e DIFF FDOM vs UNION
+      bir_exp_varsubst_introduced_vars vs e
+``,
+
+  cheat
+);
+
+
+
 val bir_exp_subst_restrict_def = Define `
   bir_exp_subst_restrict s1 s2 = DRESTRICT s1 (COMPL (FDOM s2))
 `;

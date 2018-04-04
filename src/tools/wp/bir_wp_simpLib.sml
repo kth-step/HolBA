@@ -101,6 +101,7 @@ struct
 
   val bir_var_ss = rewrites (type_rws ``:bir_var_t``);
   val string_ss = rewrites (type_rws ``:string``);
+  val wp_var_idx = ref 0;
   fun bir_wp_simp_CONV varexps_thms goalterm =
     let
       val (prem, term) = simp_extract goalterm;
@@ -121,7 +122,7 @@ struct
             val thm_2a = bir_wp_simp_CONV varexps_thms term_2a handle UNCHANGED => REFL term_2a; (* poor and quick solution *)
             val thm_2b = bir_wp_simp_CONV varexps_thms term_2b handle UNCHANGED => REFL term_2b;
 
-            val simp_conv_for_bir_var_set_is_well_typed = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_var_set_is_well_typed_def]@varexps_thms);
+            val simp_conv_for_bir_var_set_is_well_typed = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_var_set_is_well_typed_def, bir_exp_and_def, bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms); (* TODO: this has to be touched again, new expressions may contain varsubst *)
             val thm_2c1 = simp_conv_for_bir_var_set_is_well_typed term_2c;
             val e1_new = (snd o simp_extract o get_concl_rhs) thm_2a;
             val e2_new = (snd o simp_extract o get_concl_rhs) thm_2b;
@@ -193,23 +194,84 @@ struct
                 TRANS thm_3 thm_3_rec
               end
           end
-(*        else if is_const term then*)
         else if is_bir_exp_subst1 term then
-          raise ERR "bir_wp_simp_CONV" "rule 6 missing"
-(*
-bir_exp_subst1_UNUSED_VAR
-bir_exp_is_taut_imp_imp_subst1_thm
-bir_exp_is_taut_imp_imp_subst1_mem_thm
-*)
+          (* 6-8 - subst1 where var is not present, where var is an imm, and where var is a mem *)
+          (* raise ERR "bir_wp_simp_CONV" "rule 6-8 missing" *)
+          let
+            val (term_v, term_ve, term_e) = dest_bir_exp_subst1 term;
+            val term_v_is_Imm_thm = REWRITE_CONV [bir_var_type_def, bir_type_checker_REWRS] ``bir_type_is_Imm (bir_var_type ^term_v)``;
+            val term_v_is_Imm_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] term_v_is_Imm_thm;
+            val term_v_is_Mem_thm = REWRITE_CONV [bir_var_type_def, bir_type_checker_REWRS] ``bir_type_is_Mem (bir_var_type ^term_v)``;
+            val term_v_is_Mem_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] term_v_is_Mem_thm;
+
+            val varused_thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms) ``^term_v IN (bir_vars_of_exp ^term_e)``; (* TODO: has to be touched again *)
+            val varused_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] varused_thm;
+          in
+            if ((is_neg o concl) varused_thm) then
+              (* raise ERR "bir_wp_simp_CONV" "rule 6 missing" *)
+              let
+                val thm_1 = SPECL [term_v, term_ve, term_e] bir_exp_subst1_UNUSED_VAR;
+                val thm_2 = MP thm_1 varused_thm;
+                val thm_3 = REWRITE_CONV [thm_2] goalterm;
+                val goalterm_new = get_concl_rhs thm_3; (* val goalterm = goalterm_new; *)
+                val thm_3_rec = bir_wp_simp_CONV varexps_thms goalterm_new handle UNCHANGED => REFL goalterm_new;
+              in
+                TRANS thm_3 thm_3_rec
+              end
+            else
+              let
+                val thm_gen =
+                  if ((not o is_neg o concl) term_v_is_Imm_thm) then
+                    (* raise ERR "bir_wp_simp_CONV" "rule 7 missing" *)
+                    MATCH_MP bir_exp_is_taut_imp_imp_subst1_thm term_v_is_Imm_thm
+                  else if ((not o is_neg o concl) term_v_is_Mem_thm) then
+                    (* raise ERR "bir_wp_simp_CONV" "rule 8 missing" *)
+                    MATCH_MP bir_exp_is_taut_imp_imp_subst1_mem_thm term_v_is_Mem_thm
+                  else
+                    raise ERR "bir_wp_simp_CONV" "unknown variable type";
+
+                val wp_var_idx_num = !wp_var_idx;
+                val _ = wp_var_idx := ((!wp_var_idx) + 1);
+                val wp_var_suffix = "_wp_" ^ (Int.toString wp_var_idx_num);
+                val (term_v_str, term_v_type) = dest_BVar_string term_v;
+                val term_v2 = mk_BVar_string (term_v_str ^ wp_var_suffix, term_v_type);
+
+                val thm_1 = SPECL [term_v2, prem, term_vs, term_ve, term_e, ``removeme:bir_type_t``] thm_gen;
+
+                val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``bir_var_type ^term_v2 = bir_var_type ^term_v``);
+                val thm_1 = MP thm_1 assum_thm;
+
+                val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``type_of_bir_exp ve ^term_ve = SOME (bir_var_type ^term_v)``);
+                val thm_1 = MP thm_1 assum_thm;
+                val thm_1 = MP thm_1 varused_thm;
+
+                val varnameset_conv = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_var_name_def]@varexps_thms);
+                val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^prem)``;
+                val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``(bir_var_name ^term_v2) IN (^(get_concl_rhs varnameset_exp_thm))``); (* TODO: add neg conclusion check for debug error messages *)
+                val thm_1 = MP (REWRITE_RULE [varnameset_exp_thm] thm_1) assum_thm;
+                val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^term_ve)``;
+                val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``(bir_var_name ^term_v2) IN (^(get_concl_rhs varnameset_exp_thm))``); (* TODO: add neg conclusion check for debug error messages *)
+                val thm_1 = MP (REWRITE_RULE [varnameset_exp_thm] thm_1) assum_thm;
+                val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^term_e)``;
+                val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``(bir_var_name ^term_v2) IN (^(get_concl_rhs varnameset_exp_thm))``); (* TODO: add neg conclusion check for debug error messages *)
+                val thm_1 = MP (REWRITE_RULE [varnameset_exp_thm] thm_1) assum_thm;
+
+                val thm_2 = REWRITE_CONV [thm_1] goalterm;
+                val goalterm_new = get_concl_rhs thm_2; (* val goalterm = goalterm_new; *)
+                val thm_2_rec = bir_wp_simp_CONV varexps_thms goalterm_new handle UNCHANGED => REFL goalterm_new;
+              in
+                TRANS thm_2 thm_2_rec
+              end
+          end
         else if is_bir_exp_varsubst1 term then
-          (* 7-8 - (varsubst1 v v2 e) - propagate varsubst1, merge with varsubst *)
-          (* raise ERR "bir_wp_simp_CONV" "rule 7-8 missing" *)
+          (* 9-10 - (varsubst1 v v2 e) - propagate varsubst1, merge with varsubst *)
+          (* raise ERR "bir_wp_simp_CONV" "rule 9-10 missing" *)
           let
             val (term_v, term_v2, term_e) = dest_bir_exp_varsubst1 term;
           in
             if not (is_bir_exp_varsubst term_e) then
-              (* 7 - propagate varsubst1 *)
-              raise ERR "bir_wp_simp_CONV" "rule 7 missing"
+              (* 9 - propagate varsubst1 *)
+              raise ERR "bir_wp_simp_CONV" "rule 9 missing"
 (*
               let
               in
@@ -217,8 +279,8 @@ bir_exp_is_taut_imp_imp_subst1_mem_thm
               end
 *)
             else
-              (* 8 - merge with varsubst *)
-              raise ERR "bir_wp_simp_CONV" "rule 8 missing"
+              (* 10 - merge with varsubst *)
+              raise ERR "bir_wp_simp_CONV" "rule 10 missing"
 (*
 bir_exp_varsubst1_varsubst_merge_thm
 *)
@@ -247,7 +309,7 @@ bir_exp_varsubst1_varsubst_merge_thm
 
 (*
 (* =================== TESTING ========================================= *)
-val i = 1;
+val i = 2;
 val lbl_str = List.nth (lbl_list, (List.length lbl_list) - 2 - i);
 
 val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
