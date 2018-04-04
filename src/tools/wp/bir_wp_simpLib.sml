@@ -197,24 +197,9 @@ struct
         else if is_bir_exp_subst1 term then
           raise ERR "bir_wp_simp_CONV" "rule 6 missing"
 (*
-          let
-            val (subsm, e) = dest_bir_exp_subst term;
-          in
-            if subsm_is_var_only subsm then
-              (* 2a - subst with vars in map only *)
-
-              raise UNCHANGED
-            else
-              (* 2b - subst simplification *)
-(*
+bir_exp_subst1_UNUSED_VAR
 bir_exp_is_taut_imp_imp_subst1_thm
 bir_exp_is_taut_imp_imp_subst1_mem_thm
-*)
-              REFL goalterm
-          end
-          (* varsubst subst1 - swap *)
-          (* subst1 - var occurs in e / var does not occur in e *)
-          (* varsubst1 something - propagate varubst1, merge varsubst1 with varsubst *)
 *)
         else if is_bir_exp_varsubst1 term then
           (* 7-8 - (varsubst1 v v2 e) - propagate varsubst1, merge with varsubst *)
@@ -237,13 +222,6 @@ bir_exp_is_taut_imp_imp_subst1_mem_thm
 (*
 bir_exp_varsubst1_varsubst_merge_thm
 *)
-(*
-              let
-                val (term_v, term_ve, term_e2) = dest_bir_exp_subst1 term_e;
-              in
-                TRANS thm_3 thm_3_rec
-              end
-*)
           end
         else
           (* other expression, we don't touch this *)
@@ -257,46 +235,6 @@ bir_exp_varsubst1_varsubst_merge_thm
         raise (ERR "bir_wp_simp_CONV" "term mismatch, some unexpected error, debug me")
     end;
 
-(*
-         else if is_bir_exp_subst term then
-           let
-             val (substs_all, e) = dest_bir_exp_subst term;
-             val (substs, substs_update) = dest_fupdate substs_all;
-             val (var, t1) = dest_pair substs_update;
-
-             val (var_n, var_t) = dest_BVar_string var;
-             val pass_var_n = "pass_v_" ^ var_n ^ "_" ^ "1";
-             val pass_var = mk_BVar_string (pass_var_n, var_t); (* mk_var (, ``:bir_var_t``)*)
-             val thm_1_wa = SPECL [pass_var, prem, substs, var, t1, e] bir_wp_simp_eval_subst_thm;
-
-             val cond1 = (fst o dest_imp o concl) thm_1_wa;
-             val cond2 = (fst o dest_imp o snd o dest_imp o concl) thm_1_wa;
-             val cond1_thm = prove (cond1, cheat);
-             val cond2_thm = prove (cond2, cheat);
-             val thm_1 = MP (MP thm_1_wa cond1_thm) cond2_thm;
-             val thm_1_term = (snd o dest_eq o concl) thm_1;
-             val (prem_1, term_1) = simp_extract thm_1_term;
-
-             (* apply substitution, here can be issues coming up because of the Once exp_subst, not so clean... *)
-             val term1_appl_subst_thm = SIMP_CONV (std_ss++bir_var_ss++string_ss) [bir_exp_subst_def, bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_EMPTY, finite_mapTheory.FLOOKUP_UPDATE, bir_exp_subst_update_exec_thm, Once bir_exp_subst_bir_exp_subst_thm] term_1;
-             val thm_1 = TRANS thm_1 (REWRITE_CONV [term1_appl_subst_thm] ((snd o dest_eq o concl) thm_1));
-
-             (* turn into implication of bir_eval_exps *)
-             val thm_1 = TRANS thm_1 (REWRITE_CONV [bir_wp_simp_eval_imp_thm] ((snd o dest_eq o concl) thm_1));
-
-             (* then recursive call *)
-             val (term_2) = (snd o dest_eq o concl) thm_1;
-             val thm_2 = simp_wp_CONV term_2; (* catch UNCHANGED *)
-             (* val thm_2 = REFL term_2 *)
-
-             (* and revert to standard prem ==> bil_eval shape *)
-             val thm = REWRITE_CONV [(TRANS thm_1 thm_2), GSYM bir_wp_simp_eval_imp_thm] goalterm;
-             (*val thm = TRANS thm (REWRITE_CONV [GSYM bir_wp_simp_eval_and_thm] ((snd o dest_eq o concl) thm)*)
-             val _ = print "call me subst\r\n";
-           in
-             thm
-           end
-*)
 
 
 
