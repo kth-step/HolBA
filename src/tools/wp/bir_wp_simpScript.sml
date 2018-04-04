@@ -1416,17 +1416,70 @@ val bir_exp_varsubst1_REWR = store_thm("bir_exp_varsubst1_REWR", ``
   REWRITE_TAC [bir_exp_varsubst1_def, bir_exp_varsubst_def, bir_exp_varsubst_to_subst_REWRS, bir_exp_subst1_def]
 );
 
+val bir_exp_varsubst_var_def = Define `
+  bir_exp_varsubst_var vs = bir_exp_subst_var (bir_exp_varsubst_to_subst vs)
+`;
 
-(*
-(* TODO, for doing this directly on expressions *)
-val bir_exp_varsubst_REWRS = store_thm("bir_exp_varsubst_REWRS", ``
-
-  (!e vs. bir_exp_varsubst (FUPDATE vs ) e = e)
+val bir_exp_varsubst_var_REWR = store_thm("bir_exp_varsubst_var_REWR", ``
+  !vs v. bir_exp_varsubst_var vs v = case FLOOKUP vs v of NONE => BExp_Den v | SOME e => BExp_Den e
 ``,
 
-  cheat
+  REWRITE_TAC [bir_exp_varsubst_var_def, bir_exp_varsubst_to_subst_def, bir_exp_subst_var_def] >>
+
+  SIMP_TAC std_ss [finite_mapTheory.FLOOKUP_FUN_FMAP, finite_mapTheory.FDOM_FINITE] >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on `FLOOKUP vs v` >> (
+    FULL_SIMP_TAC std_ss [finite_mapTheory.flookup_thm]
+  )
 );
-*)
+
+(* rewrites for doing this directly on expressions *)
+val bir_exp_varsubst_REWRS = store_thm("bir_exp_varsubst_REWRS", ``
+  (!vs n. bir_exp_varsubst vs (BExp_Const n) = BExp_Const n) /\
+  (!vs v. bir_exp_varsubst vs (BExp_Den v) = bir_exp_varsubst_var vs v) /\
+  (!vs ct e ty.
+      bir_exp_varsubst vs (BExp_Cast ct e ty) =
+      BExp_Cast ct (bir_exp_varsubst vs e) ty) /\
+  (!vs et e.
+      bir_exp_varsubst vs (BExp_UnaryExp et e) =
+      BExp_UnaryExp et (bir_exp_varsubst vs e)) /\
+  (!vs et e1 e2.
+      bir_exp_varsubst vs (BExp_BinExp et e1 e2) =
+      BExp_BinExp et (bir_exp_varsubst vs e1) (bir_exp_varsubst vs e2)) /\
+  (!vs pt e1 e2.
+      bir_exp_varsubst vs (BExp_BinPred pt e1 e2) =
+      BExp_BinPred pt (bir_exp_varsubst vs e1) (bir_exp_varsubst vs e2)) /\
+  (!vs me1 me2.
+      bir_exp_varsubst vs (BExp_MemEq me1 me2) =
+      BExp_MemEq (bir_exp_varsubst vs me1) (bir_exp_varsubst vs me2)) /\
+  (!vs c et ef.
+      bir_exp_varsubst vs (BExp_IfThenElse c et ef) =
+      BExp_IfThenElse (bir_exp_varsubst vs c) (bir_exp_varsubst vs et)
+        (bir_exp_varsubst vs ef)) /\
+  (!vs mem_e a_e en ty.
+      bir_exp_varsubst vs (BExp_Load mem_e a_e en ty) =
+      BExp_Load (bir_exp_varsubst vs mem_e) (bir_exp_varsubst vs a_e) en ty) /\
+  (!vs mem_e a_e en v_e.
+     bir_exp_varsubst vs (BExp_Store mem_e a_e en v_e) =
+     BExp_Store (bir_exp_varsubst vs mem_e) (bir_exp_varsubst vs a_e) en
+       (bir_exp_varsubst vs v_e))
+``,
+
+  REWRITE_TAC [bir_exp_varsubst_def, bir_exp_varsubst_to_subst_def, bir_exp_subst_def, bir_exp_varsubst_var_def]
+);
+
+val bir_exp_varsubst_and_imp_REWRS = store_thm("bir_exp_varsubst_and_imp_REWRS", ``
+  (!vs et e1 e2.
+      bir_exp_varsubst vs (bir_exp_and e1 e2) =
+      bir_exp_and (bir_exp_varsubst vs e1) (bir_exp_varsubst vs e2)) /\
+  (!vs et e1 e2.
+      bir_exp_varsubst vs (bir_exp_imp e1 e2) =
+      bir_exp_imp (bir_exp_varsubst vs e1) (bir_exp_varsubst vs e2))
+``,
+
+  REWRITE_TAC [bir_exp_and_def, bir_exp_or_def, bir_exp_not_def, bir_exp_imp_def, bir_exp_varsubst_REWRS]
+);
 
 
 
