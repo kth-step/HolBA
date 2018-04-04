@@ -33,9 +33,11 @@ struct
   
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_wp_simp"
   val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+  val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
   val (bir_exp_imp_tm, mk_bir_exp_imp, dest_bir_exp_imp, is_bir_exp_imp) = syntax_fns2 "bir_exp_imp";
   val (bir_exp_and_tm, mk_bir_exp_and, dest_bir_exp_and, is_bir_exp_and) = syntax_fns2 "bir_exp_and";
   val (bir_exp_varsubst_tm, mk_bir_exp_varsubst, dest_bir_exp_varsubst, is_bir_exp_varsubst) = syntax_fns2 "bir_exp_varsubst";
+  val (bir_exp_varsubst1_tm, mk_bir_exp_varsubst1, dest_bir_exp_varsubst1, is_bir_exp_varsubst1) = syntax_fns3 "bir_exp_varsubst1";
 
   fun simp_extract goalterm =
     let
@@ -192,15 +194,15 @@ struct
               end
           end
 (*        else if is_const term then*)
-        else if is_bir_exp_subst term then
+        else if is_bir_exp_subst1 term then
+          raise ERR "bir_wp_simp_CONV" "rule 6 missing"
+(*
           let
             val (subsm, e) = dest_bir_exp_subst term;
           in
             if subsm_is_var_only subsm then
               (* 2a - subst with vars in map only *)
-(*
-bir_exp_varsubst1_varsubst_merge_thm
-*)
+
               raise UNCHANGED
             else
               (* 2b - subst simplification *)
@@ -213,6 +215,36 @@ bir_exp_is_taut_imp_imp_subst1_mem_thm
           (* varsubst subst1 - swap *)
           (* subst1 - var occurs in e / var does not occur in e *)
           (* varsubst1 something - propagate varubst1, merge varsubst1 with varsubst *)
+*)
+        else if is_bir_exp_varsubst1 term then
+          (* 7-8 - (varsubst1 v v2 e) - propagate varsubst1, merge with varsubst *)
+          (* raise ERR "bir_wp_simp_CONV" "rule 7-8 missing" *)
+          let
+            val (term_v, term_v2, term_e) = dest_bir_exp_varsubst1 term;
+          in
+            if not (is_bir_exp_varsubst term_e) then
+              (* 7 - propagate varsubst1 *)
+              raise ERR "bir_wp_simp_CONV" "rule 7 missing"
+(*
+              let
+              in
+                TRANS thm_1 thm_1_rec
+              end
+*)
+            else
+              (* 8 - merge with varsubst *)
+              raise ERR "bir_wp_simp_CONV" "rule 8 missing"
+(*
+bir_exp_varsubst1_varsubst_merge_thm
+*)
+(*
+              let
+                val (term_v, term_ve, term_e2) = dest_bir_exp_subst1 term_e;
+              in
+                TRANS thm_3 thm_3_rec
+              end
+*)
+          end
         else
           (* other expression, we don't touch this *)
           raise UNCHANGED
