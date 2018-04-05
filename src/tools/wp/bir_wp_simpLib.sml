@@ -210,7 +210,7 @@ struct
             val term_v_is_Mem_thm = REWRITE_CONV [bir_var_type_def, bir_type_checker_REWRS] ``bir_type_is_Mem (bir_var_type ^term_v)``;
             val term_v_is_Mem_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] term_v_is_Mem_thm;
 
-            val varused_thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) ([bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms) ``^term_v IN (bir_vars_of_exp ^term_e)``; (* TODO: has to be touched again *)
+            val varused_thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) ([bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms) ``^term_v IN (bir_vars_of_exp ^term_e)``; (* TODO: has to be touched again *)
             val varused_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] varused_thm;
           in
             if ((is_neg o concl) varused_thm) then
@@ -289,7 +289,7 @@ struct
               let
                 val (term_vs, term_e) = dest_bir_exp_varsubst term_e;
                 val thm_1 = SPECL [term_v, term_v2, term_vs, term_e] bir_exp_varsubst1_varsubst_merge_thm;
-                val thm_1 = TRANS thm_1 (((SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) [LET_DEF, bir_exp_subst_update_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]) o get_concl_rhs) thm_1);
+                val thm_1 = TRANS thm_1 (((SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [LET_DEF, bir_exp_subst_update_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]) o get_concl_rhs) thm_1);
 
                 val thm_2 = REWRITE_CONV [thm_1] goalterm;
                 val goalterm_new = get_concl_rhs thm_2; (* val goalterm = goalterm_new; *)
@@ -392,9 +392,9 @@ val simp_thm = TRANS simp_thm (SIMP_CONV std_ss [boolTheory.BETA_THM, bir_wp_sim
 *)
 
 (*
-val goalterm = List.nth (((!goalterms_failing)), 18);
-val goalterm = List.nth ((rev (!goalterms_failing)), 8);
-val goalterms_failing = ref ([]:term list);
+val goalterm = List.nth (((!goalterms_failing)), 0);
+val goalterm = List.nth ((rev (!goalterms_failing)), 0);
+val _ = goalterms_failing := [];
 
 val goalterm = (snd o dest_eq o concl) simp_thm;
 *)
