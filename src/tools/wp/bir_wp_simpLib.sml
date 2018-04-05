@@ -101,8 +101,10 @@ struct
 
   val bir_var_ss = rewrites (type_rws ``:bir_var_t``);
   val string_ss = rewrites (type_rws ``:string``);
+  val char_ss = rewrites (type_rws ``:char``);
   val bir_type_option_pair_ss = rewrites (type_rws ``:bir_type_t option # bir_type_t option``);
   val wp_var_idx = ref 0;
+  val goalterms_failing = ref ([]:term list);
   fun bir_wp_simp_CONV varexps_thms goalterm =
     let
       val (prem, term) = simp_extract goalterm;
@@ -143,7 +145,7 @@ struct
             val thm_gen = (Q.GENL [`prem`, `e1`, `e2`]) (MATCH_MP bir_exp_tautologiesTheory.bir_exp_is_taut_WEAK_CONG_IFF (Q.SPECL [`prem`, `e1`, `e2`, `fixme`] bir_exp_CONG_imp_imp_thm));
             val thm_1 = SPECL [prem, e1, e2] thm_gen;
 
-	    val goalterm_new = get_concl_rhs thm_1;
+	    val goalterm_new = get_concl_rhs thm_1; (* val goalterm = goalterm_new; *)
             val thm_1_rec = bir_wp_simp_CONV varexps_thms goalterm_new handle UNCHANGED => REFL goalterm_new;
 
             val thm_2_struct_rev = TRANS thm_1_rec ((SIMP_CONV pure_ss [GSYM thm_gen] o get_concl_rhs) thm_1_rec);
@@ -171,7 +173,8 @@ struct
               (* 4 - propagate varsubst further *)
               (*raise ERR "bir_wp_simp_CONV" "rule 4 missing"*)
               let
-                val thm_1a = SIMP_CONV std_ss [bir_exp_varsubst_REWRS, bir_exp_varsubst_and_imp_REWRS, bir_exp_varsubst_var_REWR, finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY] term;
+                val varsubst_propagate_conv = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [bir_exp_varsubst_REWRS, bir_exp_varsubst_and_imp_REWRS, bir_exp_varsubst_var_REWR, finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY];
+                val thm_1a = varsubst_propagate_conv term;
                 val thm_1 = REWRITE_CONV [thm_1a] goalterm;
                 val goalterm_new = get_concl_rhs thm_1; (* val goalterm = goalterm_new; *)
                 val thm_1_rec = bir_wp_simp_CONV varexps_thms goalterm_new handle UNCHANGED => REFL goalterm_new;
@@ -185,10 +188,11 @@ struct
                 val (term_v, term_ve, term_e2) = dest_bir_exp_subst1 term_e;
                 val thm_1 = SPECL [term_vs, term_v, term_ve, term_e2] bir_exp_varsubst_subst1_swap_thm;
                 val assum = (fst o dest_imp o concl) thm_1;
-                val assum_thm = SIMP_CONV std_ss [finite_mapTheory.FEVERY_FEMPTY, finite_mapTheory.FEVERY_FUPDATE] assum; (* TODO: this has to be touched again *)
-                val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] assum_thm;
+                val feveryvarneq_conv = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [finite_mapTheory.FEVERY_FEMPTY, finite_mapTheory.FEVERY_FUPDATE, finite_mapTheory.DRESTRICT_FUPDATE, finite_mapTheory.DRESTRICT_FEMPTY]; (* TODO: this has to be touched again *)
+                val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (feveryvarneq_conv assum);
                 val thm_2 = MP thm_1 assum_thm;
-                val thm_2 = TRANS thm_2 (((SIMP_CONV std_ss [bir_exp_subst_restrict1_REWRS, bir_exp_varsubst_REWRS, bir_exp_varsubst_var_REWR, finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY]) o get_concl_rhs) thm_2); (* TODO: this as well, add holbasimps *)
+                val restrict1_conv = SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [bir_exp_subst_restrict1_REWRS, bir_exp_varsubst_REWRS, bir_exp_varsubst_var_REWR, finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY, LET_DEF];
+                val thm_2 = TRANS thm_2 ((restrict1_conv o get_concl_rhs) thm_2); (* TODO: this as well, add holbasimps *)
                 val thm_3 = REWRITE_CONV [thm_2] goalterm;
                 val goalterm_new = get_concl_rhs thm_3; (* val goalterm = goalterm_new; *)
                 val thm_3_rec = bir_wp_simp_CONV varexps_thms goalterm_new handle UNCHANGED => REFL goalterm_new;
@@ -248,14 +252,14 @@ struct
                 val thm_1 = MP thm_1 assum_thm;
                 val thm_1 = MP thm_1 varused_thm;
 
-                val varnameset_conv = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, bir_var_name_def, bir_exp_varsubst_USED_VARS_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms);
-                val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^prem)``;
+                val varnameset_conv = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, bir_var_name_def, bir_exp_varsubst_USED_VARS_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_and_def]@varexps_thms);
+                val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^prem)`` handle UNCHANGED => raise ERR "bir_wp_simp_CONV" "varnameset prem not resolvable";
                 val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``(bir_var_name ^term_v2) IN (^(get_concl_rhs varnameset_exp_thm))``); (* TODO: add neg conclusion check for debug error messages *)
                 val thm_1 = MP (REWRITE_RULE [varnameset_exp_thm] thm_1) assum_thm;
-                val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^term_ve)``;
+                val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^term_ve)`` handle UNCHANGED => raise ERR "bir_wp_simp_CONV" "varnameset ve not resolvable";
                 val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``(bir_var_name ^term_v2) IN (^(get_concl_rhs varnameset_exp_thm))``); (* TODO: add neg conclusion check for debug error messages *)
                 val thm_1 = MP (REWRITE_RULE [varnameset_exp_thm] thm_1) assum_thm;
-                val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^term_e)``;
+                val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^term_e)`` handle UNCHANGED => raise ERR "bir_wp_simp_CONV" "varnameset e not resolvable";
                 val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``(bir_var_name ^term_v2) IN (^(get_concl_rhs varnameset_exp_thm))``); (* TODO: add neg conclusion check for debug error messages *)
                 val thm_1 = MP (REWRITE_RULE [varnameset_exp_thm] thm_1) assum_thm;
 
@@ -274,19 +278,25 @@ struct
           in
             if not (is_bir_exp_varsubst term_e) then
               (* 9 - propagate varsubst1 *)
-              raise ERR "bir_wp_simp_CONV" "rule 9 missing"
-(*
               let
+                val _ = goalterm_failing := goalterm;(*print_term goalterm;*)
               in
-                TRANS thm_1 thm_1_rec
+                raise ERR "bir_wp_simp_CONV" "rule 9 missing"
               end
-*)
             else
               (* 10 - merge with varsubst *)
-              raise ERR "bir_wp_simp_CONV" "rule 10 missing"
-(*
-bir_exp_varsubst1_varsubst_merge_thm
-*)
+              (*raise ERR "bir_wp_simp_CONV" "rule 10 missing"*)
+              let
+                val (term_vs, term_e) = dest_bir_exp_varsubst term_e;
+                val thm_1 = SPECL [term_v, term_v2, term_vs, term_e] bir_exp_varsubst1_varsubst_merge_thm;
+                val thm_1 = TRANS thm_1 (((SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) [LET_DEF, bir_exp_subst_update_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]) o get_concl_rhs) thm_1);
+
+                val thm_2 = REWRITE_CONV [thm_1] goalterm;
+                val goalterm_new = get_concl_rhs thm_2; (* val goalterm = goalterm_new; *)
+                val thm_2_rec = bir_wp_simp_CONV varexps_thms goalterm_new handle UNCHANGED => REFL goalterm_new;
+              in
+                TRANS thm_2 thm_2_rec
+              end
           end
         else
           (* other expression, we don't touch this *)
@@ -298,7 +308,13 @@ bir_exp_varsubst1_varsubst_merge_thm
         thm
       else
         raise (ERR "bir_wp_simp_CONV" "term mismatch, some unexpected error, debug me")
-    end;
+    end
+    handle err =>
+      let
+        val _ = goalterms_failing := (goalterm::(!goalterms_failing));(*print_term goalterm;*)
+      in
+        raise err
+      end;
 
 
 
@@ -373,6 +389,14 @@ val simp_thm = TRANS (GSYM (REWRITE_CONV [EVAL ``^prem_init s``] ((fst o dest_eq
 val simp_thm = TRANS simp_thm (SIMP_CONV std_ss [boolTheory.BETA_THM, bir_wp_simp_eval_imp_spec_thm] ((snd o dest_eq o concl) simp_thm));
 *)
 
+*)
+
+(*
+val goalterm = List.nth (((!goalterms_failing)), 18);
+val goalterm = List.nth ((rev (!goalterms_failing)), 8);
+val goalterms_failing = ref ([]:term list);
+
+val goalterm = (snd o dest_eq o concl) simp_thm;
 *)
 
 

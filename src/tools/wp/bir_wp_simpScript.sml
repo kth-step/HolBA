@@ -1371,7 +1371,7 @@ val bir_exp_varsubst_to_subst_def = Define `
   bir_exp_varsubst_to_subst vs = FUN_FMAP (\(x:bir_var_t). BExp_Den (FAPPLY vs x)) (FDOM vs)
 `;
 
-val bir_exp_varsubst_to_subst_REWRS = store_thm("bir_exp_subst_update_REWRS",``
+val bir_exp_varsubst_to_subst_REWRS = store_thm("bir_exp_varsubst_to_subst_REWRS",``
   (bir_exp_varsubst_to_subst FEMPTY = FEMPTY) /\
   (!vs v v'. bir_exp_varsubst_to_subst (FUPDATE vs (v,v')) = FUPDATE (bir_exp_varsubst_to_subst vs) (v, BExp_Den v'))
 ``,
