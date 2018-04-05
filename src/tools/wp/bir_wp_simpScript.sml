@@ -1753,6 +1753,33 @@ val bir_exp_varsubst1_varsubst_merge_thm = store_thm("bir_exp_varsubst1_varsubst
   ASM_SIMP_TAC std_ss []
 );
 
+(* --------------------------------------------- more ------------------------------------------------ *)
+
+
+(*
+bir_var_set_is_well_typed_def
+
+bir_var_set_is_well_typed
+    ({BVar "SP_EL0" (BType_Imm Bit64)} ∪
+     ({BVar "SP_EL0" (BType_Imm Bit64)} ∪
+      ({BVar "MEM" (BType_Mem Bit64 Bit8)} ∪
+       {BVar "SP_EL0" (BType_Imm Bit64)})))
+*)
+
+val SET_TO_LIST_SINGLETON_thm = save_thm("SET_TO_LIST_SINGLETON_thm",
+  ((REWRITE_RULE [CONJUNCT1 listTheory.LIST_TO_SET, pred_setTheory.UNION_EMPTY]) o (Q.SPEC `[]`) o (Q.GENL [`t`, `h`]) o CONJUNCT2 o (REWRITE_RULE [Q.SPECL [`set t`, `h`] pred_setTheory.INSERT_SING_UNION]))
+  (GSYM listTheory.LIST_TO_SET));
+
+val bir_var_set_is_well_typed_REWRS = store_thm("bir_var_set_is_well_typed_REWRS", ``
+  (bir_var_set_is_well_typed (set [])) /\
+  (!v vs. bir_var_set_is_well_typed (set (v::vs)) =
+     EVERY (\v'. (bir_var_name v = bir_var_name v') ==> (bir_var_type v = bir_var_type v')) vs /\
+     bir_var_set_is_well_typed (set vs)
+     )
+``,
+
+  cheat
+);
 
 
 (* --------------------------------------------- more ------------------------------------------------ *)
