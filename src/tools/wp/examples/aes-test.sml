@@ -69,7 +69,7 @@ aes round
 *)
 
 val take_all = false; (* false for a normal run, should override the others *)
-val take_n_last = 50;
+val take_n_last = 20;
 val dontcalcfirstwp = false;
 
 val aes_program_term_whole = ((snd o dest_comb o concl) aes_arm8_program_THM);
