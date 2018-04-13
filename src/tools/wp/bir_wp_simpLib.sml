@@ -127,6 +127,16 @@ for debugging:
   val (prem, term) = simp_extract goalterm;
 *)
 
+  val printRuleName = false;
+  fun enterRule rulename =
+              if (printRuleName) then (
+                print ("entr " ^ rulename ^ "\r\n" )
+              ) else ();
+  fun exitRule rulename =
+              if (printRuleName) then (
+                print ("exit " ^ rulename ^ "\r\n" )
+              ) else ();
+
   (*
     rule 1 - conjunction
   *)
@@ -134,6 +144,9 @@ for debugging:
 
   fun bir_wp_simp_step_CONV_conv_1_conj recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
+      val rulename = "1 and";
+      val _ = enterRule rulename;
+
       val (e1, e2) = dest_bir_exp_and term;
 
       val thm_1 = SPECL [prem, e1, e2] bir_wp_simp_taut_and_thm;(*bir_wp_simp_eval_and_thm;*)
@@ -155,18 +168,25 @@ for debugging:
                      simp_conv_for_bir_var_set_is_well_typed3 THENC
                      simp_conv_for_bir_var_set_is_well_typed4;
 
+      (*val timer_start = Lib.start_time ();*)
       val thm_2c1 = simp_conv_for_bir_var_set_is_well_typed term_2c;
       val e1_new = (snd o simp_extract o get_concl_rhs) thm_2a;
       val e2_new = (snd o simp_extract o get_concl_rhs) thm_2b;
       val thm_2c2 = simp_conv_for_bir_var_set_is_well_typed ``bir_var_set_is_well_typed ((bir_vars_of_exp ^prem) UNION (bir_vars_of_exp ^e1_new) UNION (bir_vars_of_exp ^e2_new))``;
       val thm_2c = TRANS thm_2c1 (GSYM thm_2c2);
+      (*val _ = Lib.end_time timer_start;*)
+
       val thm_2 = REWRITE_CONV [Once thm_2a, Once thm_2b, Once thm_2c] thm_2_lhs handle UNCHANGED => raise UNCHANGED_bir_wp_simp_step_CONV;
 
       val thm_3 = REWRITE_CONV [GSYM bir_wp_simp_taut_and_thm] (get_concl_rhs thm_2);
       val thm = TRANS (TRANS thm_1 thm_2) thm_3;
+      val _ = exitRule rulename;
     in
       thm
     end;
+
+
+
 
 
 
@@ -178,6 +198,9 @@ for debugging:
 
   fun bir_wp_simp_step_CONV_conv_2_impl recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
+      val rulename = "2 impl";
+      val _ = enterRule rulename;
+
       val (e1, e2) = dest_bir_exp_imp term;
       val thm_gen = (Q.GENL [`prem`, `e1`, `e2`]) (MATCH_MP bir_exp_tautologiesTheory.bir_exp_is_taut_WEAK_CONG_IFF (Q.SPECL [`prem`, `e1`, `e2`, `fixme`] bir_exp_CONG_imp_imp_thm));
       val thm_1 = SPECL [prem, e1, e2] thm_gen;
@@ -186,6 +209,7 @@ for debugging:
       val thm_1_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => raise UNCHANGED_bir_wp_simp_step_CONV;(*REFL goalterm_new;*)
 
       val thm_2_struct_rev = TRANS thm_1_rec (((REWRITE_CONV [((SPECL [prem, e1]) o GSYM) thm_gen]) o get_concl_rhs) thm_1_rec);
+      val _ = exitRule rulename;
     in
       TRANS thm_1 thm_2_struct_rev
     end;
@@ -208,12 +232,16 @@ for debugging:
 
   fun bir_wp_simp_step_CONV_conv_3_vsconst recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
+      val rulename = "3 vsconst";
+      val _ = enterRule rulename;
+
       val (term_vs, term_e) = dest_bir_exp_varsubst term;
       val const_n = (fst o dest_const) term_e;
       val _ = print ("\r\n" ^ const_n ^ "\r\n");
       val def_thm = lookup_def const_n;
       val thm_1 = REWRITE_CONV [def_thm] goalterm;
       val thm_in = thm_1; (* val goalterm = get_concl_rhs thm_in; *)
+      val _ = exitRule rulename;
     in
       recStepFun thm_in
     end;
@@ -233,11 +261,15 @@ for debugging:
 
   fun bir_wp_simp_step_CONV_conv_4_vsns1 recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
+      val rulename = "4 vsns1";
+      val _ = enterRule rulename;
+
       val (term_vs, term_e) = dest_bir_exp_varsubst term;
       val varsubst_propagate_conv = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [bir_exp_varsubst_REWRS, bir_exp_varsubst_and_imp_REWRS, bir_exp_varsubst_var_REWR, finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY];
       val thm_1a = varsubst_propagate_conv term;
       val thm_1 = REWRITE_CONV [thm_1a] goalterm;
       val thm_in = thm_1; (* val goalterm = get_concl_rhs thm_in; *)
+      val _ = exitRule rulename;
     in
       recStepFun thm_in
     end;
@@ -258,6 +290,9 @@ for debugging:
 
   fun bir_wp_simp_step_CONV_conv_5_vss1 recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
+      val rulename = "5 vss1";
+      val _ = enterRule rulename;
+
       val (term_vs, term_e) = dest_bir_exp_varsubst term;
       val (term_v, term_ve, term_e2) = dest_bir_exp_subst1 term_e;
       val thm_1 = SPECL [term_vs, term_v, term_ve, term_e2] bir_exp_varsubst_subst1_swap_thm;
@@ -269,6 +304,7 @@ for debugging:
       val thm_2 = TRANS thm_2 ((restrict1_conv o get_concl_rhs) thm_2); (* TODO: this as well, add holbasimps *)
       val thm_3 = REWRITE_CONV [thm_2] goalterm;
       val thm_in = thm_3; (* val goalterm = get_concl_rhs thm_in; *)
+      val _ = exitRule rulename;
     in
       recStepFun thm_in
     end;
@@ -284,6 +320,9 @@ for debugging:
   val wp_var_idx = ref 0;
   fun bir_wp_simp_step_CONV_conv_6_7_8_s1 recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
+      val rulename = "6_7_8 s1";
+      val _ = enterRule rulename;
+
       val (term_v, term_ve, term_e) = dest_bir_exp_subst1 term;
       val term_v_is_Imm_thm = REWRITE_CONV [bir_var_type_def, bir_type_checker_REWRS] ``bir_type_is_Imm (bir_var_type ^term_v)``;
       val term_v_is_Imm_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] term_v_is_Imm_thm;
@@ -300,6 +339,7 @@ for debugging:
           val thm_2 = MP thm_1 varused_thm;
           val thm_3 = REWRITE_CONV [thm_2] goalterm;
           val thm_in = thm_3; (* val goalterm = get_concl_rhs thm_in; *)
+          val _ = exitRule rulename;
         in
           recStepFun thm_in
         end
@@ -344,6 +384,7 @@ for debugging:
 
           val thm_2 = REWRITE_CONV [thm_1] goalterm;
           val thm_in = thm_2; (* val goalterm = get_concl_rhs thm_in; *)
+          val _ = exitRule rulename;
         in
           recStepFun thm_in
         end
@@ -383,6 +424,9 @@ for debugging:
 
   fun bir_wp_simp_step_CONV_conv_10_vs1vs recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
+      val rulename = "10 vs1vs";
+      val _ = enterRule rulename;
+
       val (term_v, term_v2, term_e) = dest_bir_exp_varsubst1 term;
       val (term_vs, term_e) = dest_bir_exp_varsubst term_e;
       val thm_1 = SPECL [term_v, term_v2, term_vs, term_e] bir_exp_varsubst1_varsubst_merge_thm;
@@ -390,6 +434,7 @@ for debugging:
 
       val thm_2 = REWRITE_CONV [thm_1] goalterm;
       val thm_in = thm_2; (* val goalterm = get_concl_rhs thm_in; *)
+      val _ = exitRule rulename;
     in
       recStepFun thm_in
     end;
@@ -505,7 +550,7 @@ for debugging:
 
 (*
 (* =================== TESTING ========================================= *)
-val i = 17;
+val i = 49;
 val lbl_str = List.nth (lbl_list, (List.length lbl_list) - 2 - i);
 
 val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
