@@ -123,7 +123,7 @@ struct
 
 (*
 for debugging:
-  val rec_step_CONV = bir_wp_simp_step_CONV;
+  val rec_step_CONV = bir_wp_simp_step_CONV useBigstep;
   val (prem, term) = simp_extract goalterm;
 *)
 
@@ -132,7 +132,7 @@ for debugging:
   *)
   fun bir_wp_simp_step_CONV_match_1_conj term = is_bir_exp_and term;
 
-  fun bir_wp_simp_step_CONV_conv_1_conj rec_step_CONV prem term varexps_thms (goalterm:term) =
+  fun bir_wp_simp_step_CONV_conv_1_conj recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
       val (e1, e2) = dest_bir_exp_and term;
 
@@ -176,7 +176,7 @@ for debugging:
   *)
   fun bir_wp_simp_step_CONV_match_2_impl term = is_bir_exp_imp term;
 
-  fun bir_wp_simp_step_CONV_conv_2_impl rec_step_CONV prem term varexps_thms (goalterm:term) =
+  fun bir_wp_simp_step_CONV_conv_2_impl recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
       val (e1, e2) = dest_bir_exp_imp term;
       val thm_gen = (Q.GENL [`prem`, `e1`, `e2`]) (MATCH_MP bir_exp_tautologiesTheory.bir_exp_is_taut_WEAK_CONG_IFF (Q.SPECL [`prem`, `e1`, `e2`, `fixme`] bir_exp_CONG_imp_imp_thm));
@@ -188,11 +188,6 @@ for debugging:
       val thm_2_struct_rev = TRANS thm_1_rec (((REWRITE_CONV [((SPECL [prem, e1]) o GSYM) thm_gen]) o get_concl_rhs) thm_1_rec);
     in
       TRANS thm_1 thm_2_struct_rev
-(* TODO: something is fishy: maybe here? *)
-(*
-    in
-      TRANS thm_1 thm_1_rec
-*)
     end;
 
 
@@ -211,24 +206,17 @@ for debugging:
         is_const term_e
       end;
 
-  fun bir_wp_simp_step_CONV_conv_3_vsconst rec_step_CONV prem term varexps_thms (goalterm:term) =
+  fun bir_wp_simp_step_CONV_conv_3_vsconst recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
       val (term_vs, term_e) = dest_bir_exp_varsubst term;
       val const_n = (fst o dest_const) term_e;
       val _ = print ("\r\n" ^ const_n ^ "\r\n");
       val def_thm = lookup_def const_n;
       val thm_1 = REWRITE_CONV [def_thm] goalterm;
+      val thm_in = thm_1; (* val goalterm = get_concl_rhs thm_in; *)
     in
-      thm_1
+      recStepFun thm_in
     end;
-(*
-      val goalterm_new = get_concl_rhs thm_1; (* val goalterm = goalterm_new; *)
-      val thm_1_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => raise UNCHANGED_bir_wp_simp_step_CONV; (*REFL goalterm_new;*)
-    in
-      TRANS thm_1 thm_1_rec
-    end;
-*)
-
 
 
 
@@ -243,22 +231,16 @@ for debugging:
         not (is_bir_exp_subst1 term_e)
       end;
 
-  fun bir_wp_simp_step_CONV_conv_4_vsns1 rec_step_CONV prem term varexps_thms (goalterm:term) =
+  fun bir_wp_simp_step_CONV_conv_4_vsns1 recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
       val (term_vs, term_e) = dest_bir_exp_varsubst term;
       val varsubst_propagate_conv = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [bir_exp_varsubst_REWRS, bir_exp_varsubst_and_imp_REWRS, bir_exp_varsubst_var_REWR, finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY];
       val thm_1a = varsubst_propagate_conv term;
       val thm_1 = REWRITE_CONV [thm_1a] goalterm;
+      val thm_in = thm_1; (* val goalterm = get_concl_rhs thm_in; *)
     in
-      thm_1
+      recStepFun thm_in
     end;
-(*
-      val goalterm_new = get_concl_rhs thm_1; (* val goalterm = goalterm_new; *)
-      val thm_1_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => raise UNCHANGED_bir_wp_simp_step_CONV; (* REFL goalterm_new;*)
-    in
-      TRANS thm_1 thm_1_rec
-    end;
-*)
 
 
 
@@ -274,7 +256,7 @@ for debugging:
         is_bir_exp_subst1 term_e
       end;
 
-  fun bir_wp_simp_step_CONV_conv_5_vss1 rec_step_CONV prem term varexps_thms (goalterm:term) =
+  fun bir_wp_simp_step_CONV_conv_5_vss1 recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
       val (term_vs, term_e) = dest_bir_exp_varsubst term;
       val (term_v, term_ve, term_e2) = dest_bir_exp_subst1 term_e;
@@ -286,16 +268,10 @@ for debugging:
       val restrict1_conv = SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [bir_exp_subst_restrict1_REWRS, bir_exp_varsubst_REWRS, bir_exp_varsubst_var_REWR, finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY, LET_DEF];
       val thm_2 = TRANS thm_2 ((restrict1_conv o get_concl_rhs) thm_2); (* TODO: this as well, add holbasimps *)
       val thm_3 = REWRITE_CONV [thm_2] goalterm;
+      val thm_in = thm_3; (* val goalterm = get_concl_rhs thm_in; *)
     in
-      thm_3
+      recStepFun thm_in
     end;
-(*
-      val goalterm_new = get_concl_rhs thm_3; (* val goalterm = goalterm_new; *)
-      val thm_3_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => raise UNCHANGED_bir_wp_simp_step_CONV; (*REFL goalterm_new;*)
-    in
-      TRANS thm_3 thm_3_rec
-    end;
-*)
 
 
 
@@ -306,7 +282,7 @@ for debugging:
   fun bir_wp_simp_step_CONV_match_6_7_8_s1 term = is_bir_exp_subst1 term;
 
   val wp_var_idx = ref 0;
-  fun bir_wp_simp_step_CONV_conv_6_7_8_s1 rec_step_CONV prem term varexps_thms (goalterm:term) =
+  fun bir_wp_simp_step_CONV_conv_6_7_8_s1 recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
       val (term_v, term_ve, term_e) = dest_bir_exp_subst1 term;
       val term_v_is_Imm_thm = REWRITE_CONV [bir_var_type_def, bir_type_checker_REWRS] ``bir_type_is_Imm (bir_var_type ^term_v)``;
@@ -323,16 +299,10 @@ for debugging:
           val thm_1 = SPECL [term_v, term_ve, term_e] bir_exp_subst1_UNUSED_VAR;
           val thm_2 = MP thm_1 varused_thm;
           val thm_3 = REWRITE_CONV [thm_2] goalterm;
+          val thm_in = thm_3; (* val goalterm = get_concl_rhs thm_in; *)
         in
-          thm_3
+          recStepFun thm_in
         end
-(*
-          val goalterm_new = get_concl_rhs thm_3; (* val goalterm = goalterm_new; *)
-          val thm_3_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => raise UNCHANGED_bir_wp_simp_step_CONV; (*REFL goalterm_new;*)
-        in
-          TRANS thm_3 thm_3_rec
-        end
-*)
       else
         let
           val thm_gen =
@@ -373,16 +343,10 @@ for debugging:
           val thm_1 = MP (REWRITE_RULE [varnameset_exp_thm] thm_1) assum_thm;
 
           val thm_2 = REWRITE_CONV [thm_1] goalterm;
+          val thm_in = thm_2; (* val goalterm = get_concl_rhs thm_in; *)
         in
-          thm_2
+          recStepFun thm_in
         end
-(*
-          val goalterm_new = get_concl_rhs thm_2; (* val goalterm = goalterm_new; *)
-          val thm_2_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => raise UNCHANGED_bir_wp_simp_step_CONV; (*REFL goalterm_new;*)
-        in
-          TRANS thm_2 thm_2_rec
-        end
-*)
     end;
 
 
@@ -400,7 +364,7 @@ for debugging:
         not (is_bir_exp_varsubst term_e)
       end;
 
-  fun bir_wp_simp_step_CONV_conv_9_vs1nvs rec_step_CONV prem term varexps_thms (goalterm:term) =
+  fun bir_wp_simp_step_CONV_conv_9_vs1nvs recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     raise (ERR "bir_wp_simp_step_CONV_conv_9_vs1nvs" "not implemented");
 
 
@@ -417,7 +381,7 @@ for debugging:
         is_bir_exp_varsubst term_e
       end;
 
-  fun bir_wp_simp_step_CONV_conv_10_vs1vs rec_step_CONV prem term varexps_thms (goalterm:term) =
+  fun bir_wp_simp_step_CONV_conv_10_vs1vs recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
       val (term_v, term_v2, term_e) = dest_bir_exp_varsubst1 term;
       val (term_vs, term_e) = dest_bir_exp_varsubst term_e;
@@ -425,16 +389,10 @@ for debugging:
       val thm_1 = TRANS thm_1 (((SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [LET_DEF, bir_exp_subst_update_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]) o get_concl_rhs) thm_1);
 
       val thm_2 = REWRITE_CONV [thm_1] goalterm;
+      val thm_in = thm_2; (* val goalterm = get_concl_rhs thm_in; *)
     in
-      thm_2
+      recStepFun thm_in
     end;
-(*
-      val goalterm_new = get_concl_rhs thm_2; (* val goalterm = goalterm_new; *)
-      val thm_2_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => raise UNCHANGED_bir_wp_simp_step_CONV; (*REFL goalterm_new;*)
-    in
-      TRANS thm_2 thm_2_rec
-    end;
-*)
 
 
 
@@ -458,9 +416,14 @@ for debugging:
     step relation
   *)
   val cannotHandleOutput = false;
-  fun bir_wp_simp_step_CONV varexps_thms goalterm =
+  fun bir_wp_simp_step_CONV useBigstep varexps_thms goalterm =
     let
-      (*val bir_wp_simp_step_CONV_s = bir_wp_simp_step_CONV varexps_thms;*)
+      val rec_step_CONV = bir_wp_simp_step_CONV useBigstep;
+      fun recStepFun thm_in = if useBigstep then
+                         (TRANS thm_in (rec_step_CONV varexps_thms (get_concl_rhs thm_in)) handle UNCHANGED => thm_in)
+                       else
+                         (thm_in);
+
       val thm =
         let
           val (prem, term) = simp_extract goalterm;
@@ -476,7 +439,7 @@ for debugging:
                   raise UNCHANGED
              )
            | SOME(_, conv_fun) => (
-                conv_fun bir_wp_simp_step_CONV prem term varexps_thms goalterm
+                conv_fun recStepFun rec_step_CONV prem term varexps_thms goalterm
                 handle
                    UNCHANGED_bir_wp_simp_step_CONV => raise UNCHANGED
                  | UNEXPECTED_bir_wp_simp_step_CONV ex => raise (UNEXPECTED_bir_wp_simp_step_CONV ex)
@@ -508,10 +471,11 @@ for debugging:
   (*
     step-wise conversion
   *)
+  val useBigstep = true;
   val printSteps = false;
   fun bir_wp_simp_CONV varexps_thms goalterm =
     let
-      val bir_wp_simp_step_CONV_s = bir_wp_simp_step_CONV varexps_thms;
+      val bir_wp_simp_step_CONV_s = bir_wp_simp_step_CONV useBigstep varexps_thms;
       val thm1 = (REFL goalterm);
       fun bir_wp_simp_CONV_rec thm1 =
         let
