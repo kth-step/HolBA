@@ -1468,6 +1468,25 @@ val bir_exp_varsubst_REWRS = store_thm("bir_exp_varsubst_REWRS", ``
 
   REWRITE_TAC [bir_exp_varsubst_def, bir_exp_varsubst_to_subst_def, bir_exp_subst_def, bir_exp_varsubst_var_def]
 );
+val bir_exp_varsubst_REWRS_ALT = store_thm("bir_exp_varsubst_REWRS_ALT", ``
+  (!vs e1 e2.
+      bir_exp_varsubst vs (bir_exp_and e1 e2) =
+      bir_exp_and (bir_exp_varsubst vs e1) (bir_exp_varsubst vs e2)) /\
+  (!vs e1 e2.
+      bir_exp_varsubst vs (bir_exp_imp e1 e2) =
+      bir_exp_imp (bir_exp_varsubst vs e1) (bir_exp_varsubst vs e2)) /\
+  (!vs e1 e2.
+      bir_exp_varsubst vs (bir_exp_or e1 e2) =
+      bir_exp_or (bir_exp_varsubst vs e1) (bir_exp_varsubst vs e2)) /\
+  (!vs e.
+      bir_exp_varsubst vs (bir_exp_not e) =
+      bir_exp_not (bir_exp_varsubst vs e))
+``,
+
+  REWRITE_TAC [bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_varsubst_REWRS]
+);
+
+
 
 val bir_exp_varsubst_and_imp_REWRS = store_thm("bir_exp_varsubst_and_imp_REWRS", ``
   (!vs et e1 e2.
