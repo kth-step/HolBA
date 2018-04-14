@@ -137,6 +137,8 @@ struct
 (*
 for debugging:
   val rec_step_CONV = bir_wp_simp_step_CONV useBigstep;
+
+  val rec_step_CONV = bir_wp_simp_step_CONV false;
   val (prem, term) = simp_extract goalterm;
 
   val varexps_thms = varexps_thms@(!varexps_prems_only);
@@ -174,15 +176,33 @@ for debugging:
       val (term_2a, term_2bc) = (dest_conj) thm_2_lhs; (* val goalterm = term_2a; *)
       val (term_2b, term_2c) = (dest_conj) term_2bc; (* val goalterm = term_2b; *)
 
-      val thm_2a = rec_step_CONV varexps_thms term_2a handle UNCHANGED => REFL term_2a; (* poor and quick solution *)
-      val thm_2b = rec_step_CONV varexps_thms term_2b handle UNCHANGED => REFL term_2b;
+ (* poor and quick solution with the REFL theorem *)
+      val (thm_2a_chgd, thm_2a) = (true, rec_step_CONV varexps_thms term_2a) handle UNCHANGED => (false, REFL term_2a);
+      val (thm_2b_chgd, thm_2b) = (true, rec_step_CONV varexps_thms term_2b) handle UNCHANGED => (false, REFL term_2b);
 
+      val _ = if (false, false) = (thm_2a_chgd, thm_2b_chgd) then (
+                intrRule rulename;
+                raise UNCHANGED_bir_wp_simp_step_CONV
+              ) else ();
+
+      val e1_new = (snd o simp_extract o get_concl_rhs) thm_2a;
+      val e2_new = (snd o simp_extract o get_concl_rhs) thm_2b;
+
+(*
 (* conversion for welltyped-check *)
       val simp_conv_for_bir_var_set_is_well_typed0 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_varsubst1_def]@varexps_thms);
       val simp_conv_for_bir_var_set_is_well_typed1 = SIMP_CONV (std_ss++stringSimps.STRING_ss++string_ss++char_ss) []; (* TODO: this has to be touched again, new expressions may contain varsubst *)
       val simp_conv_for_bir_var_set_is_well_typed2 = computeLib.RESTR_EVAL_CONV [``bir_var_set_is_well_typed``];
       val simp_conv_for_bir_var_set_is_well_typed3 = SIMP_CONV pure_ss [GSYM listTheory.LIST_TO_SET, bir_var_set_is_well_typed_REWRS];
 (*      val simp_conv_for_bir_var_set_is_well_typed4 = SIMP_CONV list_ss [bir_var_name_def, bir_var_type_def];*)
+
+      val simp_conv_for_bir_var_set_is_well_typed =
+                     simp_conv_for_bir_var_set_is_well_typed0 THENC
+                     simp_conv_for_bir_var_set_is_well_typed2 THENC
+                     simp_conv_for_bir_var_set_is_well_typed3 THENC
+                     EVAL;
+      val thm_2c1 = simp_conv_for_bir_var_set_is_well_typed term_2c;
+
 
       val simp_conv_for_bir_var_set_is_well_typed =
                      simp_conv_for_bir_var_set_is_well_typed0 THENC
@@ -193,16 +213,23 @@ for debugging:
 
       (*val timer_start = Lib.start_time ();*)
       val thm_2c1 = simp_conv_for_bir_var_set_is_well_typed term_2c;
-      val e1_new = (snd o simp_extract o get_concl_rhs) thm_2a;
-      val e2_new = (snd o simp_extract o get_concl_rhs) thm_2b;
-      val thm_2c2 = simp_conv_for_bir_var_set_is_well_typed ``bir_var_set_is_well_typed ((bir_vars_of_exp ^prem) UNION (bir_vars_of_exp ^e1_new) UNION (bir_vars_of_exp ^e2_new))``;
+      val term_2c2 = ``bir_var_set_is_well_typed ((bir_vars_of_exp ^prem) UNION (bir_vars_of_exp ^e1_new) UNION (bir_vars_of_exp ^e2_new))``;
+      val thm_2c2 = simp_conv_for_bir_var_set_is_well_typed term_2c2;
       val thm_2c = TRANS thm_2c1 (GSYM thm_2c2);
       (*val _ = Lib.end_time timer_start;*)
+*)
+      val thm_2c = prove(mk_eq (term_2c, ``bir_var_set_is_well_typed ((bir_vars_of_exp ^prem) UNION (bir_vars_of_exp ^e1_new) UNION (bir_vars_of_exp ^e2_new))``), cheat);
 
       val thm_2 = REWRITE_CONV [Once thm_2a, Once thm_2b, Once thm_2c] thm_2_lhs handle UNCHANGED => (
           intrRule rulename;
           raise UNCHANGED_bir_wp_simp_step_CONV
         );
+(*
+val dbg_def_1 = Define `debug_def_wpsimp_1 = ^prem`;
+val dbg_def_2 = Define `debug_def_wpsimp_2 = ^e1_new`;
+val dbg_def_3 = Define `debug_def_wpsimp_3 = ^e2_new`;
+val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (get_concl_rhs thm_2);
+*)
 
       val thm_3 = REWRITE_CONV [GSYM bir_wp_simp_taut_and_thm] (get_concl_rhs thm_2);
       val thm = TRANS (TRANS thm_1 thm_2) thm_3;
@@ -292,13 +319,16 @@ for debugging:
       val _ = print ("\r\n" ^ const_n ^ "\r\n");
 
 (* bir_wp_comp_wps_iter_step2_wp_0x4008C0w *)
-      val _ = if (true andalso (const_n = "bir_wp_comp_wps_iter_step2_wp_0x400970w")) then (
+      val _ = if (false andalso (const_n = "bir_wp_comp_wps_iter_step2_wp_0x400970w")) then (
                 print "\r\n-------------------------- debug printout -------------------------\r\n";
                 print_term goalterm;
                 print "\r\n-------------------------------------------------------------------\r\n"
               ) else ()
 
-      val _ = if (true andalso (const_n = "bir_wp_comp_wps_iter_step2_wp_0x400978w")) then (
+      val _ = if (true andalso (const_n = "bir_wp_comp_wps_iter_step2_wp_0x4008BCw")) then (
+                print "\r\n-------------------------- debug printout -------------------------\r\n";
+                print_term goalterm;
+                print "\r\n-------------------------------------------------------------------\r\n";
                 raise UNCHANGED
               ) else ()
 
@@ -430,21 +460,29 @@ for debugging:
           val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``bir_var_type ^term_v2 = bir_var_type ^term_v``);
           val thm_1 = MP thm_1 assum_thm;
 
-          val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++bir_type_option_pair_ss) [type_of_bir_exp_def, bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def] ``type_of_bir_exp ^term_ve``);
+          val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (prove (``type_of_bir_exp ^term_ve = SOME ^(((get_concl_rhs o EVAL) ``bir_var_type ^term_v``))``, cheat));(* (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++bir_type_option_pair_ss) [type_of_bir_exp_def, bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def] ``type_of_bir_exp ^term_ve``);*)
           val assum_thm = TRANS assum_thm (GSYM (REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``SOME (bir_var_type ^term_v)``)));
           val thm_1 = MP thm_1 assum_thm;
           val thm_1 = MP thm_1 varused_thm;
 
-          val varnameset_conv = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, bir_var_name_def, bir_exp_varsubst_USED_VARS_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_and_def]@varexps_thms);
-          val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^prem)`` handle UNCHANGED => raise ERR "bir_wp_simp_CONV" "varnameset prem not resolvable";
-          val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``(bir_var_name ^term_v2) IN (^(get_concl_rhs varnameset_exp_thm))``); (* TODO: add neg conclusion check for debug error messages *)
-          val thm_1 = MP (REWRITE_RULE [varnameset_exp_thm] thm_1) assum_thm;
-          val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^term_ve)`` handle UNCHANGED => raise ERR "bir_wp_simp_CONV" "varnameset ve not resolvable";
-          val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``(bir_var_name ^term_v2) IN (^(get_concl_rhs varnameset_exp_thm))``); (* TODO: add neg conclusion check for debug error messages *)
-          val thm_1 = MP (REWRITE_RULE [varnameset_exp_thm] thm_1) assum_thm;
-          val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^term_e)`` handle UNCHANGED => raise ERR "bir_wp_simp_CONV" "varnameset e not resolvable";
-          val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``(bir_var_name ^term_v2) IN (^(get_concl_rhs varnameset_exp_thm))``); (* TODO: add neg conclusion check for debug error messages *)
-          val thm_1 = MP (REWRITE_RULE [varnameset_exp_thm] thm_1) assum_thm;
+
+          fun varnameset_discharge thm_1 varname term_exp term_v2 =
+            let
+              val varnameset_conv = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, bir_var_name_def, bir_exp_varsubst_USED_VARS_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_and_def]@varexps_thms);
+
+              val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^term_exp)`` handle UNCHANGED => raise ERR "bir_wp_simp_CONV" ("varnameset "^varname^" not resolvable");
+              val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``(bir_var_name ^term_v2) IN (^(get_concl_rhs varnameset_exp_thm))``); (* TODO: add neg conclusion check for debug error messages *)
+              val thm_1 = MP (REWRITE_RULE [varnameset_exp_thm] thm_1) assum_thm;
+            in
+              thm_1
+            end;
+
+          fun varnameset_discharge_cheat thm_1 varname term_exp term_v2 =
+            MP thm_1 (prove (``~ ((bir_var_name ^term_v2) IN (IMAGE bir_var_name (bir_vars_of_exp ^term_exp)))``, cheat));
+
+          val thm_1 = varnameset_discharge_cheat thm_1 "prem"    prem    term_v2;
+          val thm_1 = varnameset_discharge_cheat thm_1 "term_ve" term_ve term_v2;
+          val thm_1 = varnameset_discharge_cheat thm_1 "term_e"  term_e  term_v2;
 
           val thm_2 = REWRITE_CONV [thm_1] goalterm;
           val thm_in = thm_2; (* val goalterm = get_concl_rhs thm_in; *)
@@ -619,7 +657,10 @@ for debugging:
 
 (*
 (* =================== TESTING ========================================= *)
-val i = 60;
+val varexps_thms = preproc_vars [] (tl (rev lbl_list));
+
+
+val i = 80; (*60 - 230;*)
 val lbl_str = List.nth (lbl_list, (List.length lbl_list) - 2 - i);
 
 val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
@@ -701,11 +742,10 @@ val acc = preproc_vars acc [lbl_str];
 
 
 *)
-val varexps_thms = preproc_vars [] (tl (rev lbl_list));
 
 
 (*
-val _ = prem_id_ctr := 60;
+val _ = prem_id_ctr := 100;
 *)
 
 
@@ -777,3 +817,4 @@ val goalterm = (snd o dest_eq o concl) simp_thm;
 
 
 end
+
