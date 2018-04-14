@@ -85,6 +85,15 @@ struct
         (is_BExp_Den e) andalso (subsm_is_var_only subsm1)
       end;
 
+
+  fun preproc_vars_thm acc def_thm =
+    let
+      val thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss) ([def_thm, GSYM bir_exp_subst1_def, bir_vars_of_exp_def, bir_exp_subst1_USED_VARS]@acc) ``bir_vars_of_exp ^((fst o dest_eq o concl) def_thm)``;
+      val thm = TRANS thm (EVAL ((snd o dest_eq o concl) thm));
+    in
+      thm
+    end;
+
 (* val acc = []; *)
   fun preproc_vars acc [] = acc
     | preproc_vars acc (lbl_str::lbl_list) =
@@ -95,8 +104,7 @@ struct
           val vars_def_var = mk_var (vars_def_var_id, ``:bir_var_t -> bool``);
           val vars_def_thm = Define `^vars_def_var = bir_vars_of_exp ^((fst o dest_eq o concl) def_thm)`;
 *)
-          val thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss) ([def_thm, GSYM bir_exp_subst1_def, bir_vars_of_exp_def, bir_exp_subst1_USED_VARS]@acc) ``bir_vars_of_exp ^((fst o dest_eq o concl) def_thm)``;
-          val thm = TRANS thm (EVAL ((snd o dest_eq o concl) thm));
+          val thm = preproc_vars_thm acc def_thm;
         in
           preproc_vars ((*(GSYM vars_def_thm)::*)thm::acc) lbl_list
         end
@@ -196,6 +204,8 @@ for debugging:
   *)
   fun bir_wp_simp_step_CONV_match_2_impl term = is_bir_exp_imp term;
 
+  val prem_id_ctr = ref 0;
+  val prem_id_prefix = "bir_wp_simp_step_prem_";
   fun bir_wp_simp_step_CONV_conv_2_impl recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
     let
       val rulename = "2 impl";
@@ -205,13 +215,26 @@ for debugging:
       val thm_gen = (Q.GENL [`prem`, `e1`, `e2`]) (MATCH_MP bir_exp_tautologiesTheory.bir_exp_is_taut_WEAK_CONG_IFF (Q.SPECL [`prem`, `e1`, `e2`, `fixme`] bir_exp_CONG_imp_imp_thm));
       val thm_1 = SPECL [prem, e1, e2] thm_gen;
 
-      val goalterm_new = get_concl_rhs thm_1; (* val goalterm = goalterm_new; *)
-      val thm_1_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => raise UNCHANGED_bir_wp_simp_step_CONV;(*REFL goalterm_new;*)
+      val prem_id_idx = !prem_id_ctr;
+      val _ = prem_id_ctr := (!prem_id_ctr) + 1;
+      val prem_id = prem_id_prefix ^ (Int.toString prem_id_idx);
+      val prem_id_var = mk_var (prem_id, ``:bir_exp_t``);
+      val prem_def = Define `^prem_id_var = bir_exp_and ^prem ^e1`;
+      val prem_id_const = mk_const (prem_id, ``:bir_exp_t``);
 
-      val thm_2_struct_rev = TRANS thm_1_rec (((REWRITE_CONV [((SPECL [prem, e1]) o GSYM) thm_gen]) o get_concl_rhs) thm_1_rec);
+      val vars_thm = preproc_vars_thm [] prem_def;
+      val varexps_thms = vars_thm::varexps_thms;
+
+      val thm_2 = REWRITE_CONV [GSYM prem_def] (get_concl_rhs thm_1);
+      val thm_3 = TRANS thm_1 thm_2;
+
+      val goalterm_new = get_concl_rhs thm_3; (* val goalterm = goalterm_new; *)
+      val thm_3_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => raise UNCHANGED_bir_wp_simp_step_CONV;(*REFL goalterm_new;*)
+
+      val thm_4_struct_rev = TRANS thm_3_rec (((REWRITE_CONV [prem_def, ((SPECL [prem, e1]) o GSYM) thm_gen]) o get_concl_rhs) thm_3_rec);
       val _ = exitRule rulename;
     in
-      TRANS thm_1 thm_2_struct_rev
+      TRANS thm_3 thm_4_struct_rev
     end;
 
 
@@ -550,7 +573,7 @@ for debugging:
 
 (*
 (* =================== TESTING ========================================= *)
-val i = 49;
+val i = 17;
 val lbl_str = List.nth (lbl_list, (List.length lbl_list) - 2 - i);
 
 val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
