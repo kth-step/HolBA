@@ -85,7 +85,10 @@ struct
         (is_BExp_Den e) andalso (subsm_is_var_only subsm1)
       end;
 
-
+(*
+val acc = varexps_thms;
+val def_thm = prem_def;
+*)
   fun preproc_vars_thm acc def_thm =
     let
       val thm1 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss) ([def_thm, GSYM bir_exp_subst1_def, bir_vars_of_exp_def, bir_exp_subst1_USED_VARS]@acc) ``bir_vars_of_exp ^((fst o dest_eq o concl) def_thm)``;
@@ -268,7 +271,7 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
       val prem_def = Define `^prem_id_var = bir_exp_and ^prem ^e1`;
       val prem_id_const = mk_const (prem_id, ``:bir_exp_t``);
 
-      val vars_thm = preproc_vars_thm [] prem_def;
+      val vars_thm = preproc_vars_thm varexps_thms prem_def;
       val varexps_thms = vars_thm::varexps_thms;
       val _ = varexps_prems_only := (vars_thm::(!varexps_prems_only));
 
@@ -325,7 +328,7 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
                 print "\r\n-------------------------------------------------------------------\r\n"
               ) else ()
 
-      val _ = if (true andalso (const_n = "bir_wp_comp_wps_iter_step2_wp_0x4008BCw")) then (
+      val _ = if (false andalso (const_n = "bir_wp_comp_wps_iter_step2_wp_0x4008BCw")) then (
                 print "\r\n-------------------------- debug printout -------------------------\r\n";
                 print_term goalterm;
                 print "\r\n-------------------------------------------------------------------\r\n";
@@ -770,11 +773,13 @@ fun step_fun goalterm = (
     end
   );
 
+val goalterm_last = goalterm;
 val goalterm = step_fun goalterm;
 
 
-
-
+(*
+val goalterm = goalterm_last;
+*)
 
 
 
@@ -796,8 +801,29 @@ val simp_thm = TRANS simp_thm (SIMP_CONV std_ss [boolTheory.BETA_THM, bir_wp_sim
 
 val goalterm = ``
 bir_exp_is_taut
-  (bir_exp_imp bir_wp_simp_step_prem_37
-     (bir_exp_varsubst FEMPTY bir_wp_comp_wps_iter_step2_wp_0x400970w))
+   (bir_exp_imp bir_wp_simp_step_prem_32
+      (bir_exp_and
+         (BExp_BinPred BIExp_Equal
+            (bir_exp_and (BExp_Den (BVar "R0_wp_32" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 3w))) (BExp_Const (Imm64 0w)))
+         (bir_exp_imp
+            (BExp_BinPred BIExp_Equal
+               (BExp_Den (BVar "R0_wp_0" (BType_Imm Bit64)))
+               (BExp_Cast BIExp_UnsignedCast
+                  (BExp_Load
+                     (BExp_Den
+                        (BVar "MEM_wp_27" (BType_Mem Bit64 Bit8)))
+                     (BExp_Den (BVar "R0_wp_32" (BType_Imm Bit64)))
+                     BEnd_LittleEndian Bit32) Bit64))
+            (bir_exp_varsubst1 (BVar "R0" (BType_Imm Bit64))
+               (BVar "R0_wp_0" (BType_Imm Bit64))
+               (bir_exp_varsubst
+                  (FEMPTY |+
+                   (BVar "MEM" (BType_Mem Bit64 Bit8),
+                    BVar "MEM_wp_27" (BType_Mem Bit64 Bit8)) |+
+                   (BVar "R1" (BType_Imm Bit64),
+                    BVar "R1_wp_29" (BType_Imm Bit64)))
+                  bir_wp_comp_wps_iter_step2_wp_0x4008C0w)))))
 ``;
 
 *)
