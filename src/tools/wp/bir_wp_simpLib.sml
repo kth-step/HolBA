@@ -88,16 +88,21 @@ struct
 
   fun preproc_vars_thm acc def_thm =
     let
-      val thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss) ([def_thm, GSYM bir_exp_subst1_def, bir_vars_of_exp_def, bir_exp_subst1_USED_VARS]@acc) ``bir_vars_of_exp ^((fst o dest_eq o concl) def_thm)``;
-      val thm = TRANS thm (EVAL ((snd o dest_eq o concl) thm));
+      val thm1 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss) ([def_thm, GSYM bir_exp_subst1_def, bir_vars_of_exp_def, bir_exp_subst1_USED_VARS]@acc) ``bir_vars_of_exp ^((fst o dest_eq o concl) def_thm)``;
+      val thm2 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_vars_of_exp_def, bir_exp_subst1_USED_VARS]@acc) ((snd o dest_eq o concl) thm1)
+        handle UNCHANGED => REFL ((snd o dest_eq o concl) thm1);
+      val thm3 = EVAL ((snd o dest_eq o concl) thm2)
+        handle UNCHANGED => REFL ((snd o dest_eq o concl) thm2);
+      val thm4 = TRANS (TRANS thm1 thm2) thm3;
     in
-      thm
+      thm4
     end;
 
 (* val acc = []; *)
   fun preproc_vars acc [] = acc
     | preproc_vars acc (lbl_str::lbl_list) =
         let
+          val _ = print ((Int.toString (length acc)) ^ "        \r");
           val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
 (*
           val vars_def_var_id = "bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str ^ "_vars";
@@ -139,6 +144,10 @@ for debugging:
   fun enterRule rulename =
               if (printRuleName) then (
                 print ("entr " ^ rulename ^ "\r\n" )
+              ) else ();
+  fun intrRule rulename =
+              if (printRuleName) then (
+                print ("intr " ^ rulename ^ "\r\n" )
               ) else ();
   fun exitRule rulename =
               if (printRuleName) then (
@@ -184,7 +193,10 @@ for debugging:
       val thm_2c = TRANS thm_2c1 (GSYM thm_2c2);
       (*val _ = Lib.end_time timer_start;*)
 
-      val thm_2 = REWRITE_CONV [Once thm_2a, Once thm_2b, Once thm_2c] thm_2_lhs handle UNCHANGED => raise UNCHANGED_bir_wp_simp_step_CONV;
+      val thm_2 = REWRITE_CONV [Once thm_2a, Once thm_2b, Once thm_2c] thm_2_lhs handle UNCHANGED => (
+          intrRule rulename;
+          raise UNCHANGED_bir_wp_simp_step_CONV
+        );
 
       val thm_3 = REWRITE_CONV [GSYM bir_wp_simp_taut_and_thm] (get_concl_rhs thm_2);
       val thm = TRANS (TRANS thm_1 thm_2) thm_3;
@@ -229,7 +241,10 @@ for debugging:
       val thm_3 = TRANS thm_1 thm_2;
 
       val goalterm_new = get_concl_rhs thm_3; (* val goalterm = goalterm_new; *)
-      val thm_3_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => raise UNCHANGED_bir_wp_simp_step_CONV;(*REFL goalterm_new;*)
+      val thm_3_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => (
+          intrRule rulename;
+          raise UNCHANGED_bir_wp_simp_step_CONV (*REFL goalterm_new;*)
+        )
 
       val thm_4_struct_rev = TRANS thm_3_rec (((REWRITE_CONV [prem_def, ((SPECL [prem, e1]) o GSYM) thm_gen]) o get_concl_rhs) thm_3_rec);
       val _ = exitRule rulename;
@@ -515,6 +530,7 @@ for debugging:
                            print "--------------- unexpected -----------------\r\n";
                            print_term goalterm;
                            print "\r\n--------------------------------------------\r\n";
+                           print (exn_to_string ex);
                            raise (UNEXPECTED_bir_wp_simp_step_CONV ex)
                          )
              )
@@ -573,7 +589,7 @@ for debugging:
 
 (*
 (* =================== TESTING ========================================= *)
-val i = 17;
+val i = 30;
 val lbl_str = List.nth (lbl_list, (List.length lbl_list) - 2 - i);
 
 val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
@@ -627,11 +643,71 @@ val bir_wp_simp_eval_imp_spec_thm = ((SIMP_RULE std_ss [EVAL ``^prem_init s``]) 
 
 (*
 val lbl_str = hd (tl (rev lbl_list));
+
+
+
+
+      val simp_conv_for_bir_var_set_is_well_typed1 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_varsubst1_def]@varexps_thms); (* TODO: this has to be touched again, new expressions may contain varsubst *)
+
+
+
+
+
+List.take ([1,2,3,4,5,6], 2)
+List.drop ([1,2,3,4,5,6], 2)
+
+val lbls = (tl (rev lbl_list));
+val acc = [];
+
+val acc = preproc_vars acc (List.take (lbls, 56));
+val lbls = List.drop (lbls, 56);
+
+
+val lbl_str = hd lbls;
+val lbls = tl lbls;
+val acc = preproc_vars acc [lbl_str];
+
+
+
+
 *)
 val varexps_thms = preproc_vars [] (tl (rev lbl_list));
 
 
+
+val _ = prem_id_ctr := 60;
+
+
+val timer_start = Lib.start_time ();
 val simp_thm = bir_wp_simp_CONV varexps_thms goalterm;
+val _ = Lib.end_time timer_start;
+
+
+val bir_wp_simp_step_CONV_s = bir_wp_simp_step_CONV false varexps_thms;
+fun step_fun goalterm = (
+    let
+      val simp_thm = bir_wp_simp_step_CONV_s goalterm;
+      val goalterm = get_concl_rhs simp_thm;
+    in
+      (*
+      print "----------------- step ------------------\r\n";
+      print_term goalterm;
+      print "\r\n-----------------------------------------\r\n";
+      *)
+      goalterm
+    end
+  );
+
+val goalterm = step_fun goalterm;
+
+
+
+
+
+
+
+
+
 
 val vars_of_simp_thm = (snd o dest_eq o concl o EVAL) ``bir_vars_of_exp ^((snd o dest_comb o snd o dest_eq o concl) simp_thm)``;
 
@@ -648,28 +724,21 @@ val simp_thm = TRANS simp_thm (SIMP_CONV std_ss [boolTheory.BETA_THM, bir_wp_sim
 
 val goalterm = ``
 bir_exp_is_taut
-  (bir_exp_imp (BExp_Const (Imm1 1w))
+  (bir_exp_imp bir_wp_simp_step_prem_73
      (bir_exp_and
         (BExp_BinPred BIExp_Equal
            (bir_exp_and (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
               (BExp_Const (Imm64 7w))) (BExp_Const (Imm64 0w)))
-        (bir_exp_imp
-           (BExp_BinPred BIExp_Equal
-              (BExp_Den (BVar "R0_wp_3" (BType_Imm Bit64)))
+        (bir_exp_varsubst
+           (FEMPTY |+
+            (BVar "MEM" (BType_Mem Bit64 Bit8),
+             BVar "MEM_wp_11" (BType_Mem Bit64 Bit8)))
+           (bir_exp_subst1 (BVar "R0" (BType_Imm Bit64))
               (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
                  (BExp_BinExp BIExp_Plus
                     (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                    (BExp_Const (Imm64 24w))) BEnd_LittleEndian Bit64))
-           (bir_exp_imp
-              (BExp_BinPred BIExp_Equal
-                 (BExp_Den (BVar "R0_wp_0" (BType_Imm Bit64)))
-                 (BExp_BinExp BIExp_Plus
-                    (BExp_Den (BVar "R0_wp_3" (BType_Imm Bit64)))
-                    (BExp_Const (Imm64 12w))))
-              (bir_exp_varsubst1 (BVar "R0" (BType_Imm Bit64))
-                 (BVar "R0_wp_0" (BType_Imm Bit64))
-                 (bir_exp_varsubst FEMPTY
-                    bir_wp_comp_wps_iter_step2_wp_0x40093Cw))))))
+                    (BExp_Const (Imm64 24w))) BEnd_LittleEndian Bit64)
+              bir_wp_comp_wps_iter_step2_wp_0x400938w))))
 ``;
 
 *)

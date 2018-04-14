@@ -68,7 +68,7 @@ aes round
 
 *)
 
-val take_all = false; (* false for a normal run, should override the others *)
+val take_all = true; (* false for a normal run, should override the others *)
 val take_n_last = 50;
 val dontcalcfirstwp = false;
 
