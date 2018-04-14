@@ -240,6 +240,12 @@ for debugging:
       val thm_2 = REWRITE_CONV [GSYM prem_def] (get_concl_rhs thm_1);
       val thm_3 = TRANS thm_1 thm_2;
 
+      val _ = if (true andalso (prem_id_idx = 8)) then (
+                print "\r\n-------------------------- debug printout -------------------------\r\n";
+                print_term goalterm;
+                print "\r\n-------------------------------------------------------------------\r\n"
+              ) else ()
+
       val goalterm_new = get_concl_rhs thm_3; (* val goalterm = goalterm_new; *)
       val thm_3_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => (
           intrRule rulename;
@@ -572,8 +578,12 @@ for debugging:
           val thm2 = bir_wp_simp_step_CONV_s goalterm;
           val thm = TRANS thm1 thm2;
         in
-          bir_wp_simp_CONV_rec thm
-          handle UNCHANGED => thm
+          if useBigstep then (
+            thm
+          ) else (
+            bir_wp_simp_CONV_rec thm
+            handle UNCHANGED => thm
+          )
         end
     in
       bir_wp_simp_CONV_rec thm1
@@ -675,7 +685,7 @@ val varexps_thms = preproc_vars [] (tl (rev lbl_list));
 
 
 
-val _ = prem_id_ctr := 60;
+val _ = prem_id_ctr := 0;
 
 
 val timer_start = Lib.start_time ();
