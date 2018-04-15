@@ -256,14 +256,14 @@ val useEval = false;
                     EVAL
                   ) else (
                     (RAND_CONV (REWRITE_CONV [pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY])) THENC
-                    (REPEATC (
-                      REWRITE_CONV [Once helper_thm] THENC
-                      ((RATOR_CONV o LAND_CONV) ((REWRITE_CONV [pred_setTheory.IN_INSERT]) THENC
-                                                 (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [pred_setTheory.NOT_IN_EMPTY]))) THENC
-                      REWRITE_CONV []
-                    ))
 
-(*                    REWRITE_CONV [pred_setTheory.UNION_EMPTY]*)
+                    REPEATC (
+                      (fn x => REWRITE_CONV [Once helper_thm] x) THENC
+                      ((RATOR_CONV o LAND_CONV) ((REWRITE_CONV [pred_setTheory.IN_INSERT]) THENC
+                                                 (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [pred_setTheory.NOT_IN_EMPTY])))
+                    ) THENC
+
+                    REWRITE_CONV [pred_setTheory.UNION_EMPTY]
                   )
       val thm3 = conv3 ((snd o dest_eq o concl) thm2)
         handle UNCHANGED => REFL ((snd o dest_eq o concl) thm2);
@@ -826,7 +826,7 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
 val varexps_thms = preproc_vars [] (tl (rev lbl_list));
 
 
-val i = 49; (*60 - 230;*)
+val i = 230; (*60 - 230;*)
 val lbl_str = List.nth (lbl_list, (List.length lbl_list) - 2 - i);
 
 val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
@@ -920,7 +920,6 @@ val simp_thm = bir_wp_simp_CONV varexps_thms goalterm;
 val _ = Lib.end_time timer_start;
 
 
-hd (!varexps_prems_only)
 val varexps_thms = varexps_thms@(!varexps_prems_only);
 val bir_wp_simp_step_CONV_s = bir_wp_simp_step_CONV false varexps_thms;
 fun step_fun goalterm = (
