@@ -85,17 +85,189 @@ struct
         (is_BExp_Den e) andalso (subsm_is_var_only subsm1)
       end;
 
+
+
+
+
+
+
+  val get_concl_lhs = fst o dest_eq o concl;
+  val get_concl_rhs = snd o dest_eq o concl;
+
+  val bir_var_ss = rewrites (type_rws ``:bir_var_t``);
+  val string_ss = rewrites (type_rws ``:string``);
+  val char_ss = rewrites (type_rws ``:char``);
+  val bir_type_option_pair_ss = rewrites (type_rws ``:bir_type_t option # bir_type_t option``);
+
+
+
+
+
 (*
+val bigset = ``
+(
+{BVar "R0" (BType_Imm Bit64); BVar "R0_wp_0" (BType_Imm Bit64);
+   BVar "MEM" (BType_Mem Bit64 Bit8); BVar "R0_wp_1" (BType_Imm Bit64);
+   BVar "R0_wp_3" (BType_Imm Bit64); BVar "R0_wp_4" (BType_Imm Bit64);
+   BVar "MEM_wp_2" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_5" (BType_Imm Bit64); BVar "R0_wp_7" (BType_Imm Bit64);
+   BVar "R0_wp_8" (BType_Imm Bit64);
+   BVar "MEM_wp_6" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_9" (BType_Imm Bit64); BVar "R0_wp_11" (BType_Imm Bit64);
+   BVar "MEM_wp_10" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_12" (BType_Imm Bit64); BVar "R0_wp_14" (BType_Imm Bit64);
+   BVar "R0_wp_16" (BType_Imm Bit64); BVar "R0_wp_17" (BType_Imm Bit64);
+   BVar "R1_wp_15" (BType_Imm Bit64); BVar "R0_wp_18" (BType_Imm Bit64);
+   BVar "MEM_wp_13" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_19" (BType_Imm Bit64); BVar "R0_wp_21" (BType_Imm Bit64);
+   BVar "R0_wp_23" (BType_Imm Bit64); BVar "R0_wp_24" (BType_Imm Bit64);
+   BVar "R1_wp_22" (BType_Imm Bit64); BVar "R0_wp_25" (BType_Imm Bit64);
+   BVar "MEM_wp_20" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_26" (BType_Imm Bit64); BVar "R0_wp_28" (BType_Imm Bit64);
+   BVar "R0_wp_30" (BType_Imm Bit64); BVar "R0_wp_31" (BType_Imm Bit64);
+   BVar "R1_wp_29" (BType_Imm Bit64); BVar "R0_wp_32" (BType_Imm Bit64);
+   BVar "MEM_wp_27" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_33" (BType_Imm Bit64); BVar "R0_wp_35" (BType_Imm Bit64);
+   BVar "R0_wp_37" (BType_Imm Bit64); BVar "R0_wp_38" (BType_Imm Bit64);
+   BVar "R1_wp_36" (BType_Imm Bit64); BVar "R0_wp_39" (BType_Imm Bit64);
+   BVar "MEM_wp_34" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_40" (BType_Imm Bit64); BVar "R0_wp_43" (BType_Imm Bit64);
+   BVar "R1_wp_42" (BType_Imm Bit64); BVar "R0_wp_45" (BType_Imm Bit64);
+   BVar "R1_wp_44" (BType_Imm Bit64); BVar "R0_wp_47" (BType_Imm Bit64);
+   BVar "R1_wp_46" (BType_Imm Bit64); BVar "R0_wp_49" (BType_Imm Bit64);
+   BVar "R0_wp_50" (BType_Imm Bit64); BVar "R1_wp_48" (BType_Imm Bit64);
+   BVar "MEM_wp_41" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_51" (BType_Imm Bit64); BVar "R0_wp_53" (BType_Imm Bit64);
+   BVar "R0_wp_54" (BType_Imm Bit64);
+   BVar "MEM_wp_52" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_55" (BType_Imm Bit64); BVar "R0_wp_57" (BType_Imm Bit64);
+   BVar "R0_wp_58" (BType_Imm Bit64);
+   BVar "MEM_wp_56" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_59" (BType_Imm Bit64); BVar "R0_wp_61" (BType_Imm Bit64);
+   BVar "R0_wp_62" (BType_Imm Bit64);
+   BVar "MEM_wp_60" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_63" (BType_Imm Bit64); BVar "R0_wp_65" (BType_Imm Bit64);
+   BVar "MEM_wp_64" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_66" (BType_Imm Bit64); BVar "R0_wp_68" (BType_Imm Bit64);
+   BVar "R0_wp_70" (BType_Imm Bit64); BVar "R0_wp_71" (BType_Imm Bit64);
+   BVar "R1_wp_69" (BType_Imm Bit64); BVar "R0_wp_72" (BType_Imm Bit64);
+   BVar "MEM_wp_67" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_73" (BType_Imm Bit64); BVar "R0_wp_75" (BType_Imm Bit64);
+   BVar "R0_wp_77" (BType_Imm Bit64); BVar "R0_wp_78" (BType_Imm Bit64);
+   BVar "R1_wp_76" (BType_Imm Bit64); BVar "R0_wp_79" (BType_Imm Bit64);
+   BVar "MEM_wp_74" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_80" (BType_Imm Bit64); BVar "R0_wp_82" (BType_Imm Bit64);
+   BVar "R0_wp_84" (BType_Imm Bit64); BVar "R0_wp_85" (BType_Imm Bit64);
+   BVar "R1_wp_83" (BType_Imm Bit64); BVar "R0_wp_86" (BType_Imm Bit64);
+   BVar "MEM_wp_81" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_87" (BType_Imm Bit64); BVar "R0_wp_89" (BType_Imm Bit64);
+   BVar "R0_wp_91" (BType_Imm Bit64); BVar "R0_wp_92" (BType_Imm Bit64);
+   BVar "R1_wp_90" (BType_Imm Bit64); BVar "R0_wp_93" (BType_Imm Bit64);
+   BVar "MEM_wp_88" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_94" (BType_Imm Bit64); BVar "R0_wp_97" (BType_Imm Bit64);
+   BVar "R1_wp_96" (BType_Imm Bit64); BVar "R0_wp_99" (BType_Imm Bit64);
+   BVar "R1_wp_98" (BType_Imm Bit64);
+   BVar "R0_wp_101" (BType_Imm Bit64);
+   BVar "R1_wp_100" (BType_Imm Bit64);
+   BVar "R0_wp_103" (BType_Imm Bit64);
+   BVar "R0_wp_104" (BType_Imm Bit64);
+   BVar "R0_wp_105" (BType_Imm Bit64);
+   BVar "R1_wp_102" (BType_Imm Bit64);
+   BVar "MEM_wp_95" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_106" (BType_Imm Bit64);
+   BVar "R0_wp_108" (BType_Imm Bit64);
+   BVar "R0_wp_109" (BType_Imm Bit64);
+   BVar "MEM_wp_107" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_110" (BType_Imm Bit64);
+   BVar "R0_wp_112" (BType_Imm Bit64);
+   BVar "R0_wp_113" (BType_Imm Bit64);
+   BVar "MEM_wp_111" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_114" (BType_Imm Bit64);
+   BVar "R0_wp_116" (BType_Imm Bit64);
+   BVar "R0_wp_117" (BType_Imm Bit64);
+   BVar "MEM_wp_115" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_118" (BType_Imm Bit64);
+   BVar "R0_wp_120" (BType_Imm Bit64);
+   BVar "MEM_wp_119" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_121" (BType_Imm Bit64);
+   BVar "R0_wp_123" (BType_Imm Bit64);
+   BVar "R0_wp_125" (BType_Imm Bit64);
+   BVar "R0_wp_126" (BType_Imm Bit64);
+   BVar "R1_wp_124" (BType_Imm Bit64);
+   BVar "R0_wp_127" (BType_Imm Bit64);
+   BVar "MEM_wp_122" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_128" (BType_Imm Bit64);
+   BVar "R0_wp_130" (BType_Imm Bit64);
+   BVar "R0_wp_132" (BType_Imm Bit64);
+   BVar "R0_wp_133" (BType_Imm Bit64);
+   BVar "R1_wp_131" (BType_Imm Bit64);
+   BVar "R0_wp_134" (BType_Imm Bit64);
+   BVar "MEM_wp_129" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_135" (BType_Imm Bit64);
+   BVar "R0_wp_137" (BType_Imm Bit64);
+   BVar "R0_wp_139" (BType_Imm Bit64);
+   BVar "R0_wp_140" (BType_Imm Bit64);
+   BVar "R1_wp_138" (BType_Imm Bit64);
+   BVar "R0_wp_141" (BType_Imm Bit64);
+   BVar "MEM_wp_136" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_142" (BType_Imm Bit64);
+   BVar "R0_wp_144" (BType_Imm Bit64);
+   BVar "R0_wp_146" (BType_Imm Bit64);
+   BVar "R0_wp_147" (BType_Imm Bit64);
+   BVar "R1_wp_145" (BType_Imm Bit64);
+   BVar "R0_wp_148" (BType_Imm Bit64);
+   BVar "MEM_wp_143" (BType_Mem Bit64 Bit8);
+   BVar "R0_wp_149" (BType_Imm Bit64);
+   BVar "R0_wp_152" (BType_Imm Bit64);
+   BVar "R1_wp_151" (BType_Imm Bit64);
+   BVar "R0_wp_154" (BType_Imm Bit64);
+   BVar "R1_wp_153" (BType_Imm Bit64);
+   BVar "R1_wp_157" (BType_Imm Bit64);
+   BVar "R0_wp_156" (BType_Imm Bit64);
+   BVar "R1_wp_155" (BType_Imm Bit64);
+   BVar "MEM_wp_150" (BType_Mem Bit64 Bit8);
+   BVar "SP_EL0" (BType_Imm Bit64); BVar "R0_wp_159" (BType_Imm Bit64);
+   BVar "R0_wp_158" (BType_Imm Bit64)}
+)
+``;
+
+val settocheck = ``^bigset UNION ({BVar "R1_wp_158" (BType_Imm Bit64)} UNION ({BVar "R0_wp_159" (BType_Imm Bit64)} UNION {BVar "R0_wp_1" (BType_Imm Bit64)}))``;
+*)
+
+(*
+val acc = [];
+val thm2 = Define `settocheck = ^settocheck`;
+val useEval = false;
+
 val acc = varexps_thms;
 val def_thm = prem_def;
+val useEval = false;
 *)
-  fun preproc_vars_thm acc def_thm =
+  val helper_thm = prove (``!x s t. t UNION (x INSERT s) = if x IN t then t UNION s else (x INSERT t) UNION s``, METIS_TAC [pred_setTheory.INSERT_UNION, pred_setTheory.UNION_COMM, pred_setTheory.INSERT_UNION_EQ]);
+
+  fun preproc_vars_thm useEval acc def_thm =
     let
       val thm1 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss) ([def_thm, GSYM bir_exp_subst1_def, bir_vars_of_exp_def, bir_exp_subst1_USED_VARS]@acc) ``bir_vars_of_exp ^((fst o dest_eq o concl) def_thm)``;
-      val thm2 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_vars_of_exp_def, bir_exp_subst1_USED_VARS]@acc) ((snd o dest_eq o concl) thm1)
+
+      val thm2 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, pred_setTheory.IN_INSERT]@acc) ((snd o dest_eq o concl) thm1)
         handle UNCHANGED => REFL ((snd o dest_eq o concl) thm1);
-      val thm3 = EVAL ((snd o dest_eq o concl) thm2)
+
+      val conv3 = if (useEval) then (
+                    EVAL
+                  ) else (
+                    (RAND_CONV (REWRITE_CONV [pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY])) THENC
+                    (REPEATC (
+                      REWRITE_CONV [Once helper_thm] THENC
+                      ((RATOR_CONV o LAND_CONV) ((REWRITE_CONV [pred_setTheory.IN_INSERT]) THENC
+                                                 (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [pred_setTheory.NOT_IN_EMPTY]))) THENC
+                      REWRITE_CONV []
+                    ))
+
+(*                    REWRITE_CONV [pred_setTheory.UNION_EMPTY]*)
+                  )
+      val thm3 = conv3 ((snd o dest_eq o concl) thm2)
         handle UNCHANGED => REFL ((snd o dest_eq o concl) thm2);
+
       val thm4 = TRANS (TRANS thm1 thm2) thm3;
     in
       thm4
@@ -112,20 +284,11 @@ val def_thm = prem_def;
           val vars_def_var = mk_var (vars_def_var_id, ``:bir_var_t -> bool``);
           val vars_def_thm = Define `^vars_def_var = bir_vars_of_exp ^((fst o dest_eq o concl) def_thm)`;
 *)
-          val thm = preproc_vars_thm acc def_thm;
+          val thm = preproc_vars_thm true acc def_thm;
         in
           preproc_vars ((*(GSYM vars_def_thm)::*)thm::acc) lbl_list
         end
       ;
-
-
-  val get_concl_lhs = fst o dest_eq o concl;
-  val get_concl_rhs = snd o dest_eq o concl;
-
-  val bir_var_ss = rewrites (type_rws ``:bir_var_t``);
-  val string_ss = rewrites (type_rws ``:string``);
-  val char_ss = rewrites (type_rws ``:char``);
-  val bir_type_option_pair_ss = rewrites (type_rws ``:bir_type_t option # bir_type_t option``);
 
 
 
@@ -271,7 +434,7 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
       val prem_def = Define `^prem_id_var = bir_exp_and ^prem ^e1`;
       val prem_id_const = mk_const (prem_id, ``:bir_exp_t``);
 
-      val vars_thm = preproc_vars_thm varexps_thms prem_def;
+      val vars_thm = preproc_vars_thm false varexps_thms prem_def;
       val varexps_thms = vars_thm::varexps_thms;
       val _ = varexps_prems_only := (vars_thm::(!varexps_prems_only));
 
@@ -282,13 +445,13 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
                 print "\r\n-------------------------- debug printout -------------------------\r\n";
                 print_term goalterm;
                 print "\r\n-------------------------------------------------------------------\r\n"
-              ) else ()
+              ) else ();
 
       val goalterm_new = get_concl_rhs thm_3; (* val goalterm = goalterm_new; *)
       val thm_3_rec = rec_step_CONV varexps_thms goalterm_new handle UNCHANGED => (
           intrRule rulename;
           raise UNCHANGED_bir_wp_simp_step_CONV (*REFL goalterm_new;*)
-        )
+        );
 
       val thm_4_struct_rev = TRANS thm_3_rec (((REWRITE_CONV [prem_def, ((SPECL [prem, e1]) o GSYM) thm_gen]) o get_concl_rhs) thm_3_rec);
       val _ = exitRule rulename;
@@ -326,14 +489,14 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
                 print "\r\n-------------------------- debug printout -------------------------\r\n";
                 print_term goalterm;
                 print "\r\n-------------------------------------------------------------------\r\n"
-              ) else ()
+              ) else ();
 
-      val _ = if (false andalso (const_n = "bir_wp_comp_wps_iter_step2_wp_0x4008BCw")) then (
+      val _ = if (false andalso (const_n = "bir_wp_comp_wps_iter_step2_wp_0x400860w")) then (
                 print "\r\n-------------------------- debug printout -------------------------\r\n";
                 print_term goalterm;
                 print "\r\n-------------------------------------------------------------------\r\n";
                 raise UNCHANGED
-              ) else ()
+              ) else ();
 
       val def_thm = lookup_def const_n;
       val thm_1 = REWRITE_CONV [def_thm] goalterm;
@@ -593,6 +756,7 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
                 handle
                    UNCHANGED_bir_wp_simp_step_CONV => raise UNCHANGED
                  | UNEXPECTED_bir_wp_simp_step_CONV ex => raise (UNEXPECTED_bir_wp_simp_step_CONV ex)
+                 | Interrupt => raise Interrupt
                  | ex => (
                            print "--------------- unexpected -----------------\r\n";
                            print_term goalterm;
@@ -657,13 +821,12 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
 
 
 
-
 (*
 (* =================== TESTING ========================================= *)
 val varexps_thms = preproc_vars [] (tl (rev lbl_list));
 
 
-val i = 80; (*60 - 230;*)
+val i = 49; (*60 - 230;*)
 val lbl_str = List.nth (lbl_list, (List.length lbl_list) - 2 - i);
 
 val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
@@ -757,6 +920,7 @@ val simp_thm = bir_wp_simp_CONV varexps_thms goalterm;
 val _ = Lib.end_time timer_start;
 
 
+hd (!varexps_prems_only)
 val varexps_thms = varexps_thms@(!varexps_prems_only);
 val bir_wp_simp_step_CONV_s = bir_wp_simp_step_CONV false varexps_thms;
 fun step_fun goalterm = (
@@ -801,29 +965,24 @@ val simp_thm = TRANS simp_thm (SIMP_CONV std_ss [boolTheory.BETA_THM, bir_wp_sim
 
 val goalterm = ``
 bir_exp_is_taut
-   (bir_exp_imp bir_wp_simp_step_prem_32
-      (bir_exp_and
+   (bir_exp_imp (BExp_Const (Imm1 1w))
+      (bir_exp_imp
          (BExp_BinPred BIExp_Equal
-            (bir_exp_and (BExp_Den (BVar "R0_wp_32" (BType_Imm Bit64)))
-               (BExp_Const (Imm64 3w))) (BExp_Const (Imm64 0w)))
+            (BExp_Den (BVar "R0_wp_11" (BType_Imm Bit64)))
+            (BExp_BinExp BIExp_Plus
+               (BExp_Den (BVar "R0" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 3608w))))
          (bir_exp_imp
             (BExp_BinPred BIExp_Equal
-               (BExp_Den (BVar "R0_wp_0" (BType_Imm Bit64)))
-               (BExp_Cast BIExp_UnsignedCast
-                  (BExp_Load
-                     (BExp_Den
-                        (BVar "MEM_wp_27" (BType_Mem Bit64 Bit8)))
-                     (BExp_Den (BVar "R0_wp_32" (BType_Imm Bit64)))
-                     BEnd_LittleEndian Bit32) Bit64))
-            (bir_exp_varsubst1 (BVar "R0" (BType_Imm Bit64))
-               (BVar "R0_wp_0" (BType_Imm Bit64))
-               (bir_exp_varsubst
-                  (FEMPTY |+
-                   (BVar "MEM" (BType_Mem Bit64 Bit8),
-                    BVar "MEM_wp_27" (BType_Mem Bit64 Bit8)) |+
-                   (BVar "R1" (BType_Imm Bit64),
-                    BVar "R1_wp_29" (BType_Imm Bit64)))
-                  bir_wp_comp_wps_iter_step2_wp_0x4008C0w)))))
+               (BExp_Den (BVar "R0_wp_12" (BType_Imm Bit64)))
+               (BExp_BinExp BIExp_Plus
+                  (BExp_Den (BVar "R0_wp_11" (BType_Imm Bit64)))
+                  (BExp_Den (BVar "R1" (BType_Imm Bit64)))))
+            (bir_exp_varsubst
+               (FEMPTY |+
+                (BVar "R0" (BType_Imm Bit64),
+                 BVar "R0_wp_12" (BType_Imm Bit64)))
+               bir_wp_comp_wps_iter_step2_wp_0x4008BCw))))
 ``;
 
 *)
