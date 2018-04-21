@@ -1,5 +1,11 @@
 open wordsTheory;
 
+
+
+val _ = new_theory "aes_spec";
+
+
+
 val _ = type_abbrev("aes_state", ``:bool[4] -> bool[4] -> bool[8]``);
 
 val _ = new_constant ("aes_sbox", mk_vartype "word8 -> word8");
@@ -52,8 +58,12 @@ val aes_round_def = Define `
   aes_round (s:aes_state) k =
   aes_add_key (aes_mix_column (aes_shift_row (aes_sub_byte s))) k`;
 
-EVAL ``aes_sub_byte x``;
-EVAL ``aes_shift_row x``;
-EVAL ``aes_mix_column (\x.\y.a x y)``;
+val _ = EVAL ``aes_sub_byte x``;
+val _ = EVAL ``aes_shift_row x``;
+val _ = EVAL ``aes_mix_column (\x.\y.a x y)``;
 
-EVAL ``aes_round (\x.\y.a x y) (\x.\y.b x y) x y``;
+val _ = EVAL ``aes_round (\x.\y.a x y) (\x.\y.b x y) x y``;
+
+
+val _ = export_theory();
+

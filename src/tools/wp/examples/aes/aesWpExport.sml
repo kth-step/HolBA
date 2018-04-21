@@ -1,4 +1,4 @@
-open aesWpTheory;
+open aesSimpWpTheory;
 
 open bir_programTheory;
 open bir_program_blocksTheory;
@@ -23,6 +23,8 @@ val cond = ``bir_exp_is_taut
 
 val t1 = SIMP_CONV (std_ss) [bir_exp_tautologiesTheory.bir_exp_is_taut_def] cond;
 val cnd2 = List.nth((strip_conj o snd o dest_eq o concl) t1, 2);
+
+(*
 prove(``^cnd2``,
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [bir_env_vars_are_initialised_def, bir_vars_of_exp_def,
@@ -42,6 +44,7 @@ prove(``^cnd2``,
   FULL_SIMP_TAC std_ss [] >>
   BBLAST_PROVE_TAC
 
-
-
 open blastLib;
+*)
+
+
