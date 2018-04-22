@@ -356,7 +356,7 @@ for debugging:
 
 (*
 (* conversion for welltyped-check *)
-      val simp_conv_for_bir_var_set_is_well_typed0 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_varsubst1_def]@varexps_thms);
+      val simp_conv_for_bir_var_set_is_well_typed0 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_varsubst_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_varsubst1_def]@varexps_thms);
       val simp_conv_for_bir_var_set_is_well_typed1 = SIMP_CONV (std_ss++stringSimps.STRING_ss++string_ss++char_ss) []; (* TODO: this has to be touched again, new expressions may contain varsubst *)
       val simp_conv_for_bir_var_set_is_well_typed2 = computeLib.RESTR_EVAL_CONV [``bir_var_set_is_well_typed``];
       val simp_conv_for_bir_var_set_is_well_typed3 = SIMP_CONV pure_ss [GSYM listTheory.LIST_TO_SET, bir_var_set_is_well_typed_REWRS];
@@ -589,7 +589,7 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
       val term_v_is_Mem_thm = REWRITE_CONV [bir_var_type_def, bir_type_checker_REWRS] ``bir_type_is_Mem (bir_var_type ^term_v)``;
       val term_v_is_Mem_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] term_v_is_Mem_thm;
 
-      val varused_thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) ([bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms) ``^term_v IN (bir_vars_of_exp ^term_e)``; (* TODO: has to be touched again *)
+      val varused_thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) ([bir_exp_varsubst_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms) ``^term_v IN (bir_vars_of_exp ^term_e)``; (* TODO: has to be touched again *)
       val varused_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] varused_thm;
     in
       if ((is_neg o concl) varused_thm) then
@@ -634,7 +634,7 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
 
           fun varnameset_discharge thm_1 varname term_exp term_v2 =
             let
-              val varnameset_conv = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, bir_var_name_def, bir_exp_varsubst_USED_VARS_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_and_def]@varexps_thms);
+              val varnameset_conv = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, bir_var_name_def, bir_exp_varsubst_USED_VARS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_and_def]@varexps_thms);
 
               val varnameset_exp_thm = varnameset_conv ``IMAGE bir_var_name (bir_vars_of_exp ^term_exp)`` handle UNCHANGED => raise ERR "bir_wp_simp_CONV" ("varnameset "^varname^" not resolvable");
               val assum_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] (EVAL ``(bir_var_name ^term_v2) IN (^(get_concl_rhs varnameset_exp_thm))``); (* TODO: add neg conclusion check for debug error messages *)
@@ -884,7 +884,7 @@ val lbl_str = hd (tl (rev lbl_list));
 
 
 
-      val simp_conv_for_bir_var_set_is_well_typed1 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_varsubst_USED_VARS_REWRS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_varsubst1_def]@varexps_thms); (* TODO: this has to be touched again, new expressions may contain varsubst *)
+      val simp_conv_for_bir_var_set_is_well_typed1 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++string_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_varsubst_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_varsubst1_def]@varexps_thms); (* TODO: this has to be touched again, new expressions may contain varsubst *)
 
 
 

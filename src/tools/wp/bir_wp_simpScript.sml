@@ -1502,45 +1502,68 @@ val bir_exp_varsubst_and_imp_REWRS = store_thm("bir_exp_varsubst_and_imp_REWRS",
 
 
 
+
+val bir_exp_varsubst_introduced_vars_def = Define `
+  bir_exp_varsubst_introduced_vars vs vset =
+    {v' | ?v. (v IN vset) /\ (FLOOKUP vs v = SOME v')}
+`;
+
 val bir_exp_varsubst_USED_VARS = store_thm("bir_exp_varsubst_USED_VARS", ``
   !vs e.
      bir_vars_of_exp (bir_exp_varsubst vs e) =
      bir_vars_of_exp e DIFF FDOM vs UNION
-     {v' | ?v. (v IN bir_vars_of_exp e) /\ (FLOOKUP vs v = SOME v')}
+       (bir_exp_varsubst_introduced_vars vs (bir_vars_of_exp e))
 ``,
 
-  cheat
-(*
-bir_exp_substitutionsTheory.bir_exp_subst_USED_VARS
-*)
-);
-
-
-val bir_exp_varsubst_introduced_vars_def = Define `
-  bir_exp_varsubst_introduced_vars vs e =
-    {v' | ?v. (v IN bir_vars_of_exp e) /\ (FLOOKUP vs v = SOME v')}
-`;
+REWRITE_TAC [bir_exp_varsubst_introduced_vars_def] >>
+GEN_TAC >>
+SIMP_TAC std_ss [pred_setTheory.EXTENSION] >>
+SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [PULL_EXISTS] >>
+Induct_on `e` >> (
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_exp_varsubst_def, bir_exp_subst_def, bir_vars_of_exp_def] >>
+  SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [RIGHT_AND_OVER_OR,
+    LEFT_AND_OVER_OR, EXISTS_OR_THM, bir_exp_subst_var_def]
+) >>
+REPEAT STRIP_TAC >>
+CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss++boolSimps.EQUIV_EXTRACT_ss) [
+    bir_exp_varsubst_to_subst_def , bir_vars_of_exp_def, finite_mapTheory.flookup_thm, finite_mapTheory.FDOM_FINITE, finite_mapTheory.FUN_FMAP_DEF] >>
+  POP_ASSUM (ASSUME_TAC o GSYM) >>
+  REV_FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [finite_mapTheory.FDOM_FINITE, finite_mapTheory.FUN_FMAP_DEF, bir_vars_of_exp_def] >>
+  METIS_TAC[]
+));
 
 
 val bir_exp_varsubst_introduced_vars_REWRS = store_thm("bir_exp_varsubst_introduced_vars_REWRS", ``
-  (!e. bir_exp_varsubst_introduced_vars FEMPTY e = {}) /\
-  (!vs v v' e. bir_exp_varsubst_introduced_vars (FUPDATE vs (v,v')) e =
-     (if (v IN (bir_vars_of_exp e)) then {v'} else EMPTY) UNION
-        (bir_exp_varsubst_introduced_vars vs e))
+  (!vset. bir_exp_varsubst_introduced_vars FEMPTY vset = {}) /\
+  (!vs v v' vset. bir_exp_varsubst_introduced_vars (FUPDATE vs (v,v')) vset =
+     (if (v IN vset) then {v'} else EMPTY) UNION
+        (bir_exp_varsubst_introduced_vars vs (vset DIFF {v})))
 ``,
 
-  cheat
-);
+  REWRITE_TAC [bir_exp_varsubst_introduced_vars_def] >>
+  SIMP_TAC std_ss [finite_mapTheory.FLOOKUP_EMPTY, pred_setTheory.GSPEC_F] >>
 
+  SIMP_TAC std_ss [pred_setTheory.EXTENSION] >>
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [PULL_EXISTS] >>
 
-val bir_exp_varsubst_USED_VARS_REWRS = store_thm("bir_exp_varsubst_USED_VARS_REWRS", ``
-  !vs e.
-    bir_vars_of_exp (bir_exp_varsubst vs e) =
-    bir_vars_of_exp e DIFF FDOM vs UNION
-      bir_exp_varsubst_introduced_vars vs e
-``,
+  REPEAT STRIP_TAC >>
+  EQ_TAC >- (
+    REPEAT STRIP_TAC >>
+    Cases_on `v = v''` >> (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [finite_mapTheory.FLOOKUP_UPDATE] >>
+      METIS_TAC []
+    )
+  ) >>
 
-  cheat
+  REPEAT STRIP_TAC >- (
+    Cases_on `v IN vset` >> (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+      Q.EXISTS_TAC `v` >>
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [finite_mapTheory.FLOOKUP_UPDATE]
+    )
+  ) >>
+  METIS_TAC [finite_mapTheory.FLOOKUP_UPDATE]
 );
 
 
@@ -1797,7 +1820,11 @@ val bir_var_set_is_well_typed_REWRS = store_thm("bir_var_set_is_well_typed_REWRS
      )
 ``,
 
-  cheat
+  REPEAT STRIP_TAC >- (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [listTheory.LIST_TO_SET, bir_var_set_is_well_typed_def]
+  ) >>
+  FULL_SIMP_TAC std_ss [listTheory.LIST_TO_SET, bir_var_set_is_well_typed_INSERT, listTheory.EVERY_MEM] >>
+  METIS_TAC []
 );
 
 
