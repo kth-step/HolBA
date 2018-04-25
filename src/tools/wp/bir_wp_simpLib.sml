@@ -310,6 +310,7 @@ for debugging:
   val varexps_thms = varexps_thms@(!varexps_prems_only);
 *)
 
+  val enableCheats = true;
   val printRuleName = false;
   fun enterRule rulename =
               if (printRuleName) then (
@@ -336,7 +337,7 @@ for debugging:
 
       val (e1, e2) = dest_bir_exp_and term;
 
-      val thm_1 = SPECL [prem, e1, e2] bir_wp_simp_taut_and_thm;(*bir_wp_simp_eval_and_thm;*)
+      val thm_1 = SPECL [prem, e1, e2] bir_wp_simp_taut_and_thm;
 
       val thm_2_lhs = get_concl_rhs thm_1;
       val (term_2a, term_2bc) = (dest_conj) thm_2_lhs; (* val goalterm = term_2a; *)
@@ -354,37 +355,61 @@ for debugging:
       val e1_new = (snd o simp_extract o get_concl_rhs) thm_2a;
       val e2_new = (snd o simp_extract o get_concl_rhs) thm_2b;
 
-(*
+      fun prove_well_typed () =
+        let
 (* conversion for welltyped-check *)
-      val simp_conv_for_bir_var_set_is_well_typed0 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_varsubst_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_varsubst1_def]@varexps_thms);
-      val simp_conv_for_bir_var_set_is_well_typed1 = SIMP_CONV (std_ss++stringSimps.STRING_ss++string_ss++char_ss) []; (* TODO: this has to be touched again, new expressions may contain varsubst *)
-      val simp_conv_for_bir_var_set_is_well_typed2 = computeLib.RESTR_EVAL_CONV [``bir_var_set_is_well_typed``];
-      val simp_conv_for_bir_var_set_is_well_typed3 = SIMP_CONV pure_ss [GSYM listTheory.LIST_TO_SET, bir_var_set_is_well_typed_REWRS];
+          val simp_conv_for_bir_var_set_is_well_typed0 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_varsubst_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_varsubst1_def]@varexps_thms);
+          val simp_conv_for_bir_var_set_is_well_typed1 = SIMP_CONV (std_ss++stringSimps.STRING_ss++string_ss++char_ss) []; (* TODO: this has to be touched again, new expressions may contain varsubst *)
+          val simp_conv_for_bir_var_set_is_well_typed2 = computeLib.RESTR_EVAL_CONV [``bir_var_set_is_well_typed``];
+          val simp_conv_for_bir_var_set_is_well_typed3 = SIMP_CONV pure_ss [GSYM listTheory.LIST_TO_SET, bir_var_set_is_well_typed_REWRS];
 (*      val simp_conv_for_bir_var_set_is_well_typed4 = SIMP_CONV list_ss [bir_var_name_def, bir_var_type_def];*)
 
-      val simp_conv_for_bir_var_set_is_well_typed =
+          val simp_conv_for_bir_var_set_is_well_typed =
                      simp_conv_for_bir_var_set_is_well_typed0 THENC
-                     simp_conv_for_bir_var_set_is_well_typed2 THENC
-                     simp_conv_for_bir_var_set_is_well_typed3 THENC
-                     EVAL;
-      val thm_2c1 = simp_conv_for_bir_var_set_is_well_typed term_2c;
+                     simp_conv_for_bir_var_set_is_well_typed1 THENC
+                     (
+                    (RAND_CONV (REWRITE_CONV [pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY])) THENC
 
+                    REPEATC (
+                      (fn x => REWRITE_CONV [Once helper_thm] x) THENC
+                      ((RATOR_CONV o LAND_CONV) ((REWRITE_CONV [pred_setTheory.IN_INSERT]) THENC
+                                                 (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [pred_setTheory.NOT_IN_EMPTY])))
+                    ) THENC
 
-      val simp_conv_for_bir_var_set_is_well_typed =
+                    REWRITE_CONV [pred_setTheory.UNION_EMPTY]
+                     ) THENC
+                     (REWRITE_CONV [GSYM listTheory.LIST_TO_SET]) THENC
+                     (REPEATC (
+                        (fn x => REWRITE_CONV [Once bir_var_set_is_well_typed_REWRS] x) THENC
+                        (LAND_CONV EVAL) THENC
+                        (REWRITE_CONV [])
+                     )) THENC
+                     (REWRITE_CONV [bir_var_set_is_well_typed_REWRS]);
+(*          val thm_2c1 = simp_conv_for_bir_var_set_is_well_typed term_2c2;*)
+
+(*
+          val simp_conv_for_bir_var_set_is_well_typed =
                      simp_conv_for_bir_var_set_is_well_typed0 THENC
                      simp_conv_for_bir_var_set_is_well_typed1 THENC
                      simp_conv_for_bir_var_set_is_well_typed2 THENC
                      simp_conv_for_bir_var_set_is_well_typed3 THENC
                      EVAL;
-
-      (*val timer_start = Lib.start_time ();*)
-      val thm_2c1 = simp_conv_for_bir_var_set_is_well_typed term_2c;
-      val term_2c2 = ``bir_var_set_is_well_typed ((bir_vars_of_exp ^prem) UNION (bir_vars_of_exp ^e1_new) UNION (bir_vars_of_exp ^e2_new))``;
-      val thm_2c2 = simp_conv_for_bir_var_set_is_well_typed term_2c2;
-      val thm_2c = TRANS thm_2c1 (GSYM thm_2c2);
-      (*val _ = Lib.end_time timer_start;*)
 *)
-      val thm_2c = prove(mk_eq (term_2c, ``bir_var_set_is_well_typed ((bir_vars_of_exp ^prem) UNION (bir_vars_of_exp ^e1_new) UNION (bir_vars_of_exp ^e2_new))``), cheat);
+
+          (*val timer_start = Lib.start_time ();*)
+          val thm_2c1 = simp_conv_for_bir_var_set_is_well_typed term_2c;
+          val term_2c2 = ``bir_var_set_is_well_typed ((bir_vars_of_exp ^prem) UNION (bir_vars_of_exp ^e1_new) UNION (bir_vars_of_exp ^e2_new))``;
+          val thm_2c2 = simp_conv_for_bir_var_set_is_well_typed term_2c2;
+          val thm_2c = TRANS thm_2c1 (GSYM thm_2c2);
+          (*val _ = Lib.end_time timer_start;*)
+        in
+          thm_2c
+        end;
+
+      fun prove_well_typed_cheat () = prove(mk_eq (term_2c, ``bir_var_set_is_well_typed ((bir_vars_of_exp ^prem) UNION (bir_vars_of_exp ^e1_new) UNION (bir_vars_of_exp ^e2_new))``), cheat);
+
+      val prove_well_typed = if enableCheats then prove_well_typed_cheat else prove_well_typed;
+      val thm_2c = prove_well_typed ();
 
       val thm_2 = REWRITE_CONV [Once thm_2a, Once thm_2b, Once thm_2c] thm_2_lhs handle UNCHANGED => (
           intrRule rulename;
@@ -491,7 +516,7 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
                 print "\r\n-------------------------------------------------------------------\r\n"
               ) else ();
 
-      val _ = if (false andalso (const_n = "bir_wp_comp_wps_iter_step2_wp_0x400860w")) then (
+      val _ = if (false andalso (const_n = "bir_wp_comp_wps_iter_step2_wp_0x400970w")) then (
                 print "\r\n-------------------------- debug printout -------------------------\r\n";
                 print_term goalterm;
                 print "\r\n-------------------------------------------------------------------\r\n";
@@ -671,6 +696,8 @@ varnameset_discharge thm_1 varname term_exp term_v2;
 
           fun varnameset_discharge_cheat thm_1 varname term_exp term_v2 =
             MP thm_1 (prove (``~ ((bir_var_name ^term_v2) IN (IMAGE bir_var_name (bir_vars_of_exp ^term_exp)))``, cheat));
+
+          val varnameset_discharge = if enableCheats then varnameset_discharge_cheat else varnameset_discharge;
 
           val thm_1 = varnameset_discharge thm_1 "prem"    prem    term_v2;
           val thm_1 = varnameset_discharge thm_1 "term_ve" term_ve term_v2;
@@ -859,8 +886,8 @@ val lbl_list = (gen_lbl_list o snd o dest_eq o concl) aes_wps1_def;
 val varexps_thms = preproc_vars [] (tl (rev lbl_list));
 
 
-val take_all = true;
-val i = 2; (*60 - 230;*)
+val take_all = false;
+val i = 60; (*60 - 230;*)
 
 val i_min = 1;
 val i_max = (List.length lbl_list) - 1;
@@ -931,18 +958,24 @@ val simp_thm = TRANS simp_thm (SIMP_CONV std_ss [boolTheory.BETA_THM, bir_wp_sim
 
 val goalterm = ``
 bir_exp_is_taut
-  (bir_exp_imp bir_wp_simp_step_prem_80
-     (bir_exp_subst1 (BVar "R1" (BType_Imm Bit64))
-        (BExp_BinExp BIExp_LeftShift
-           (BExp_Den (BVar "R0_wp_6" (BType_Imm Bit64)))
-           (BExp_Const (Imm64 2w)))
+  (bir_exp_imp bir_wp_simp_step_prem_35
+     (bir_exp_and
+        (BExp_BinPred BIExp_Equal
+           (bir_exp_and (BExp_Den (BVar "R0_wp_35" (BType_Imm Bit64)))
+              (BExp_Const (Imm64 3w))) (BExp_Const (Imm64 0w)))
         (bir_exp_varsubst
            (FEMPTY |+
             (BVar "MEM" (BType_Mem Bit64 Bit8),
-             BVar "MEM_wp_5" (BType_Mem Bit64 Bit8)) |+
+             BVar "MEM_wp_33" (BType_Mem Bit64 Bit8)) |+
             (BVar "R0" (BType_Imm Bit64),
-             BVar "R0_wp_6" (BType_Imm Bit64)))
-           bir_wp_comp_wps_iter_step2_wp_0x4008B0w)))
+             BVar "R0_wp_35" (BType_Imm Bit64)))
+           (bir_exp_subst1 (BVar "R0" (BType_Imm Bit64))
+              (BExp_Cast BIExp_UnsignedCast
+                 (BExp_Load
+                    (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
+                    BEnd_LittleEndian Bit32) Bit64)
+              bir_wp_comp_wps_iter_step2_wp_0x400940w))))
 ``;
 
 *)
