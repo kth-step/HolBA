@@ -1320,7 +1320,6 @@ bir_env_EQ_FOR_VARS_def
 );
 
 
-
 (* --------------------------------------------- more ------------------------------------------------ *)
 
 (* TODO: should be in bir_exp_substitutionsTheory *)
@@ -1938,6 +1937,119 @@ val bir_wp_simp_eval_subst1_thm = store_thm("bir_wp_simp_eval_subst1_thm", ``
   METIS_TAC [bir_wp_simp_eval_subst1_lemma]
 );
 
+
+(* --------------------------------------------- more ------------------------------------------------ *)
+
+
+val bir_wp_simp_varset_imp_thm = store_thm("bir_wp_simp_varset_imp_thm", ``
+  !prem e1 e2.
+    (bir_vars_of_exp (
+      bir_exp_imp prem (bir_exp_imp e1 e2)))
+    =
+    (bir_vars_of_exp (
+      bir_exp_imp (bir_exp_and prem e1) e2))
+    
+``,
+
+  REWRITE_TAC [bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_vars_of_exp_def] >>
+  METIS_TAC [pred_setTheory.UNION_ASSOC]
+);
+
+val bir_wp_simp_welltypedset_subst1_not_thm = store_thm("bir_wp_simp_welltypedset_subst1_not_thm", ``
+  !prem v ve e A.
+    (~(v IN bir_vars_of_exp e))
+    ==>
+    (
+      bir_var_set_is_well_typed ((bir_vars_of_exp (
+        bir_exp_imp prem (bir_exp_subst1 v ve e))) UNION A)
+      <=>
+      bir_var_set_is_well_typed ((bir_vars_of_exp (
+        bir_exp_imp prem e)) UNION A)
+    )
+``,
+
+  METIS_TAC [bir_exp_substitutionsTheory.bir_exp_subst1_UNUSED_VAR]
+);
+
+(* bir_exp_is_taut_imp_imp_subst1_thm *)
+val bir_wp_simp_welltypedset_subst1_thm = store_thm("bir_wp_simp_welltypedset_subst1_thm", ``
+  !prem v v' ve e A vs.
+    (v IN bir_vars_of_exp e)
+    ==>
+    (vs = (bir_vars_of_exp (
+        bir_exp_imp prem (bir_exp_subst1 v ve e))) UNION A)
+    ==>
+    (
+      !v. v IN vs ==> (bir_var_name v <> bir_var_name v')
+    )
+    ==>
+    (
+      bir_var_set_is_well_typed (vs)
+      <=>
+      bir_var_set_is_well_typed ((bir_vars_of_exp (
+        bir_exp_imp prem
+          (bir_exp_imp (BExp_BinPred BIExp_Equal (BExp_Den v') ve)
+             (bir_exp_varsubst1 v v' e))
+      )) UNION A)
+    )
+``,
+
+  REPEAT STRIP_TAC >>
+  Q.ABBREV_TAC `vs2 = (bir_vars_of_exp
+     (bir_exp_imp prem
+        (bir_exp_imp (BExp_BinPred BIExp_Equal (BExp_Den v') ve)
+           (bir_exp_varsubst1 v v' e))) UNION A)` >>
+
+  Q.PAT_X_ASSUM `B = C` (ASSUME_TAC o GSYM) >>
+  FULL_SIMP_TAC std_ss [bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_vars_of_exp_def] >>
+
+  FULL_SIMP_TAC std_ss [bir_exp_subst1_USED_VARS, bir_exp_varsubst1_def, bir_exp_varsubst_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FUPDATE, finite_mapTheory.FDOM_FEMPTY] >>
+
+  REV_FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+  subgoal `vs2 = {v'} UNION vs` >- (
+    METIS_TAC [pred_setTheory.UNION_COMM, pred_setTheory.UNION_ASSOC, pred_setTheory.UNION_IDEMPOT]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.INSERT_UNION_EQ] >>
+  METIS_TAC [bir_var_set_is_well_typed_INSERT]
+);
+
+val bir_wp_simp_welltypedset_subst1_list_thm = store_thm("bir_wp_simp_welltypedset_subst1_list_thm", ``
+  !prem v v' ve e A vs vsl.
+    (v IN bir_vars_of_exp e)
+    ==>
+    (vs = (bir_vars_of_exp (
+        bir_exp_imp prem (bir_exp_subst1 v ve e))) UNION A)
+    ==>
+    (set vsl = vs)
+    ==>
+    (
+      EVERY (\v. bir_var_name v <> bir_var_name v') vsl
+    )
+    ==>
+    (
+      bir_var_set_is_well_typed (vs)
+      <=>
+      bir_var_set_is_well_typed ((bir_vars_of_exp (
+        bir_exp_imp prem
+          (bir_exp_imp (BExp_BinPred BIExp_Equal (BExp_Den v') ve)
+             (bir_exp_varsubst1 v v' e))
+      )) UNION A)
+    )
+``,
+
+  REPEAT STRIP_TAC >>
+
+  subgoal `!v. v IN vs ==> (bir_var_name v <> bir_var_name v')` >- (
+    Q.PAT_X_ASSUM `B = C UNION A` (K ALL_TAC) >>
+    Q.PAT_X_ASSUM `B = C` (ASSUME_TAC o GSYM) >>
+    ASM_REWRITE_TAC [] >>
+    FULL_SIMP_TAC std_ss [listTheory.EVERY_MEM]
+  ) >>
+
+  METIS_TAC [bir_wp_simp_welltypedset_subst1_thm]
+);
 
 
 (* --------------------------------------------- more ------------------------------------------------ *)
