@@ -1966,6 +1966,54 @@ val bir_wp_simp_varset_imp_wunions_thm = store_thm("bir_wp_simp_varset_imp_wunio
   METIS_TAC [pred_setTheory.UNION_ASSOC]
 );
 
+val bir_wp_simp_varset_and_helper0_thm = store_thm("bir_wp_simp_varset_and_helper0_thm", ``
+  !prem e1 e2 A.
+    bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp (bir_exp_and e1 e2)) UNION A)
+    =
+    bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION ((bir_vars_of_exp e2) UNION A))
+``,
+
+  METIS_TAC [bir_vars_of_exp_def, bir_exp_and_def, pred_setTheory.UNION_ASSOC]
+);
+
+val bir_wp_simp_varset_and_helper1_thm = store_thm("bir_wp_simp_varset_and_helper1_thm", ``
+  !prem e1 e2 A.
+    bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION ((bir_vars_of_exp e2) UNION A))
+    =
+    bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e2) UNION ((bir_vars_of_exp e1) UNION A))
+``,
+
+  METIS_TAC [pred_setTheory.UNION_ASSOC, pred_setTheory.UNION_COMM]
+);
+
+val bir_wp_simp_varset_and_helper2_thm = store_thm("bir_wp_simp_varset_and_helper2_thm", ``
+  !prem e1 e1' e2 e2' A.
+    (
+      bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION ((bir_vars_of_exp e2) UNION A))
+      =
+      bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1') UNION ((bir_vars_of_exp e2') UNION A))
+    )
+    ==>
+    (
+      bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION (bir_vars_of_exp e2))
+      =
+      bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1') UNION (bir_vars_of_exp e2'))
+    )
+``,
+
+  cheat
+);
+
+val bir_wp_simp_varset_and_helper3_thm = store_thm("bir_wp_simp_varset_and_helper3_thm", ``
+  !prem e1 e2 A.
+    bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION ((bir_vars_of_exp e2) UNION A))
+    =
+    bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION (bir_vars_of_exp e2) UNION A)
+``,
+
+  METIS_TAC [pred_setTheory.UNION_ASSOC]
+);
+
 val bir_wp_simp_welltypedset_subst1_not_thm = store_thm("bir_wp_simp_welltypedset_subst1_not_thm", ``
   !prem v ve e A.
     (~(v IN bir_vars_of_exp e))
