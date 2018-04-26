@@ -40,6 +40,16 @@ struct
   val (bir_exp_varsubst1_tm, mk_bir_exp_varsubst1, dest_bir_exp_varsubst1, is_bir_exp_varsubst1) = syntax_fns3 "bir_exp_varsubst1";
 
   val simp_extract = dest_bir_exp_imp o snd o dest_comb;
+  val bir_exp_is_taut_tm = ``bir_exp_is_taut``;
+  fun simp_construct (prem, term) = mk_comb (bir_exp_is_taut_tm, mk_bir_exp_imp (prem, term));
+  val bir_var_set_is_well_typed_tm = ``bir_var_set_is_well_typed``;
+  val bir_vars_of_exp_tm = ``bir_vars_of_exp``;
+  fun simp_construct_wt (prem, term) varsetopt = mk_comb (bir_var_set_is_well_typed_tm,
+      (fn x => case varsetopt of
+		   NONE => x
+		 | SOME varset => pred_setSyntax.mk_union (x, varset))
+         (pred_setSyntax.mk_union (mk_comb (bir_vars_of_exp_tm, prem), mk_comb (bir_vars_of_exp_tm, term)))
+    );
 (*
   fun simp_extract goalterm =
     let
@@ -100,149 +110,6 @@ struct
   val bir_type_option_pair_ss = rewrites (type_rws ``:bir_type_t option # bir_type_t option``);
 
 
-
-
-
-(*
-val bigset = ``
-(
-{BVar "R0" (BType_Imm Bit64); BVar "R0_wp_0" (BType_Imm Bit64);
-   BVar "MEM" (BType_Mem Bit64 Bit8); BVar "R0_wp_1" (BType_Imm Bit64);
-   BVar "R0_wp_3" (BType_Imm Bit64); BVar "R0_wp_4" (BType_Imm Bit64);
-   BVar "MEM_wp_2" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_5" (BType_Imm Bit64); BVar "R0_wp_7" (BType_Imm Bit64);
-   BVar "R0_wp_8" (BType_Imm Bit64);
-   BVar "MEM_wp_6" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_9" (BType_Imm Bit64); BVar "R0_wp_11" (BType_Imm Bit64);
-   BVar "MEM_wp_10" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_12" (BType_Imm Bit64); BVar "R0_wp_14" (BType_Imm Bit64);
-   BVar "R0_wp_16" (BType_Imm Bit64); BVar "R0_wp_17" (BType_Imm Bit64);
-   BVar "R1_wp_15" (BType_Imm Bit64); BVar "R0_wp_18" (BType_Imm Bit64);
-   BVar "MEM_wp_13" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_19" (BType_Imm Bit64); BVar "R0_wp_21" (BType_Imm Bit64);
-   BVar "R0_wp_23" (BType_Imm Bit64); BVar "R0_wp_24" (BType_Imm Bit64);
-   BVar "R1_wp_22" (BType_Imm Bit64); BVar "R0_wp_25" (BType_Imm Bit64);
-   BVar "MEM_wp_20" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_26" (BType_Imm Bit64); BVar "R0_wp_28" (BType_Imm Bit64);
-   BVar "R0_wp_30" (BType_Imm Bit64); BVar "R0_wp_31" (BType_Imm Bit64);
-   BVar "R1_wp_29" (BType_Imm Bit64); BVar "R0_wp_32" (BType_Imm Bit64);
-   BVar "MEM_wp_27" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_33" (BType_Imm Bit64); BVar "R0_wp_35" (BType_Imm Bit64);
-   BVar "R0_wp_37" (BType_Imm Bit64); BVar "R0_wp_38" (BType_Imm Bit64);
-   BVar "R1_wp_36" (BType_Imm Bit64); BVar "R0_wp_39" (BType_Imm Bit64);
-   BVar "MEM_wp_34" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_40" (BType_Imm Bit64); BVar "R0_wp_43" (BType_Imm Bit64);
-   BVar "R1_wp_42" (BType_Imm Bit64); BVar "R0_wp_45" (BType_Imm Bit64);
-   BVar "R1_wp_44" (BType_Imm Bit64); BVar "R0_wp_47" (BType_Imm Bit64);
-   BVar "R1_wp_46" (BType_Imm Bit64); BVar "R0_wp_49" (BType_Imm Bit64);
-   BVar "R0_wp_50" (BType_Imm Bit64); BVar "R1_wp_48" (BType_Imm Bit64);
-   BVar "MEM_wp_41" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_51" (BType_Imm Bit64); BVar "R0_wp_53" (BType_Imm Bit64);
-   BVar "R0_wp_54" (BType_Imm Bit64);
-   BVar "MEM_wp_52" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_55" (BType_Imm Bit64); BVar "R0_wp_57" (BType_Imm Bit64);
-   BVar "R0_wp_58" (BType_Imm Bit64);
-   BVar "MEM_wp_56" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_59" (BType_Imm Bit64); BVar "R0_wp_61" (BType_Imm Bit64);
-   BVar "R0_wp_62" (BType_Imm Bit64);
-   BVar "MEM_wp_60" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_63" (BType_Imm Bit64); BVar "R0_wp_65" (BType_Imm Bit64);
-   BVar "MEM_wp_64" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_66" (BType_Imm Bit64); BVar "R0_wp_68" (BType_Imm Bit64);
-   BVar "R0_wp_70" (BType_Imm Bit64); BVar "R0_wp_71" (BType_Imm Bit64);
-   BVar "R1_wp_69" (BType_Imm Bit64); BVar "R0_wp_72" (BType_Imm Bit64);
-   BVar "MEM_wp_67" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_73" (BType_Imm Bit64); BVar "R0_wp_75" (BType_Imm Bit64);
-   BVar "R0_wp_77" (BType_Imm Bit64); BVar "R0_wp_78" (BType_Imm Bit64);
-   BVar "R1_wp_76" (BType_Imm Bit64); BVar "R0_wp_79" (BType_Imm Bit64);
-   BVar "MEM_wp_74" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_80" (BType_Imm Bit64); BVar "R0_wp_82" (BType_Imm Bit64);
-   BVar "R0_wp_84" (BType_Imm Bit64); BVar "R0_wp_85" (BType_Imm Bit64);
-   BVar "R1_wp_83" (BType_Imm Bit64); BVar "R0_wp_86" (BType_Imm Bit64);
-   BVar "MEM_wp_81" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_87" (BType_Imm Bit64); BVar "R0_wp_89" (BType_Imm Bit64);
-   BVar "R0_wp_91" (BType_Imm Bit64); BVar "R0_wp_92" (BType_Imm Bit64);
-   BVar "R1_wp_90" (BType_Imm Bit64); BVar "R0_wp_93" (BType_Imm Bit64);
-   BVar "MEM_wp_88" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_94" (BType_Imm Bit64); BVar "R0_wp_97" (BType_Imm Bit64);
-   BVar "R1_wp_96" (BType_Imm Bit64); BVar "R0_wp_99" (BType_Imm Bit64);
-   BVar "R1_wp_98" (BType_Imm Bit64);
-   BVar "R0_wp_101" (BType_Imm Bit64);
-   BVar "R1_wp_100" (BType_Imm Bit64);
-   BVar "R0_wp_103" (BType_Imm Bit64);
-   BVar "R0_wp_104" (BType_Imm Bit64);
-   BVar "R0_wp_105" (BType_Imm Bit64);
-   BVar "R1_wp_102" (BType_Imm Bit64);
-   BVar "MEM_wp_95" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_106" (BType_Imm Bit64);
-   BVar "R0_wp_108" (BType_Imm Bit64);
-   BVar "R0_wp_109" (BType_Imm Bit64);
-   BVar "MEM_wp_107" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_110" (BType_Imm Bit64);
-   BVar "R0_wp_112" (BType_Imm Bit64);
-   BVar "R0_wp_113" (BType_Imm Bit64);
-   BVar "MEM_wp_111" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_114" (BType_Imm Bit64);
-   BVar "R0_wp_116" (BType_Imm Bit64);
-   BVar "R0_wp_117" (BType_Imm Bit64);
-   BVar "MEM_wp_115" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_118" (BType_Imm Bit64);
-   BVar "R0_wp_120" (BType_Imm Bit64);
-   BVar "MEM_wp_119" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_121" (BType_Imm Bit64);
-   BVar "R0_wp_123" (BType_Imm Bit64);
-   BVar "R0_wp_125" (BType_Imm Bit64);
-   BVar "R0_wp_126" (BType_Imm Bit64);
-   BVar "R1_wp_124" (BType_Imm Bit64);
-   BVar "R0_wp_127" (BType_Imm Bit64);
-   BVar "MEM_wp_122" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_128" (BType_Imm Bit64);
-   BVar "R0_wp_130" (BType_Imm Bit64);
-   BVar "R0_wp_132" (BType_Imm Bit64);
-   BVar "R0_wp_133" (BType_Imm Bit64);
-   BVar "R1_wp_131" (BType_Imm Bit64);
-   BVar "R0_wp_134" (BType_Imm Bit64);
-   BVar "MEM_wp_129" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_135" (BType_Imm Bit64);
-   BVar "R0_wp_137" (BType_Imm Bit64);
-   BVar "R0_wp_139" (BType_Imm Bit64);
-   BVar "R0_wp_140" (BType_Imm Bit64);
-   BVar "R1_wp_138" (BType_Imm Bit64);
-   BVar "R0_wp_141" (BType_Imm Bit64);
-   BVar "MEM_wp_136" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_142" (BType_Imm Bit64);
-   BVar "R0_wp_144" (BType_Imm Bit64);
-   BVar "R0_wp_146" (BType_Imm Bit64);
-   BVar "R0_wp_147" (BType_Imm Bit64);
-   BVar "R1_wp_145" (BType_Imm Bit64);
-   BVar "R0_wp_148" (BType_Imm Bit64);
-   BVar "MEM_wp_143" (BType_Mem Bit64 Bit8);
-   BVar "R0_wp_149" (BType_Imm Bit64);
-   BVar "R0_wp_152" (BType_Imm Bit64);
-   BVar "R1_wp_151" (BType_Imm Bit64);
-   BVar "R0_wp_154" (BType_Imm Bit64);
-   BVar "R1_wp_153" (BType_Imm Bit64);
-   BVar "R1_wp_157" (BType_Imm Bit64);
-   BVar "R0_wp_156" (BType_Imm Bit64);
-   BVar "R1_wp_155" (BType_Imm Bit64);
-   BVar "MEM_wp_150" (BType_Mem Bit64 Bit8);
-   BVar "SP_EL0" (BType_Imm Bit64); BVar "R0_wp_159" (BType_Imm Bit64);
-   BVar "R0_wp_158" (BType_Imm Bit64)}
-)
-``;
-
-val settocheck = ``^bigset UNION ({BVar "R1_wp_158" (BType_Imm Bit64)} UNION ({BVar "R0_wp_159" (BType_Imm Bit64)} UNION {BVar "R0_wp_1" (BType_Imm Bit64)}))``;
-*)
-
-(*
-val acc = [];
-val thm2 = Define `settocheck = ^settocheck`;
-val useEval = false;
-
-val acc = varexps_thms;
-val def_thm = prem_def;
-val useEval = false;
-*)
   val helper_thm = prove (``!x s t. t UNION (x INSERT s) = if x IN t then t UNION s else (x INSERT t) UNION s``, METIS_TAC [pred_setTheory.INSERT_UNION, pred_setTheory.UNION_COMM, pred_setTheory.INSERT_UNION_EQ]);
 
   fun preproc_vars_thm useEval acc def_thm =
@@ -325,6 +192,7 @@ for debugging:
                 print ("exit " ^ rulename ^ "\r\n" )
               ) else ();
 
+(*
   (*
     rule 1 - conjunction
   *)
@@ -428,13 +296,13 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
     in
       thm
     end;
+*)
 
 
 
 
 
-
-
+(*
   (*
     rule 2 - implication
   *)
@@ -483,7 +351,7 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
     in
       TRANS thm_3 thm_4_struct_rev
     end;
-
+*)
 
 
 
@@ -500,7 +368,7 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
         is_const term_e
       end;
 
-  fun bir_wp_simp_step_CONV_conv_3_vsconst recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) =
+  fun bir_wp_simp_step_CONV_conv_3_vsconst recStepFun rec_step_CONV prem term varexps_thms (goalterm:term) (extra_wt_varset:term option) =
     let
       val rulename = "3 vsconst";
       val _ = enterRule rulename;
@@ -526,13 +394,14 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
       val def_thm = lookup_def const_n;
       val thm_1 = REWRITE_CONV [def_thm] goalterm;
       val thm_in = thm_1; (* val goalterm = get_concl_rhs thm_in; *)
+      val wt_thm_in = REWRITE_CONV [def_thm] (simp_construct_wt (prem, term) extra_wt_varset);
       val _ = exitRule rulename;
     in
-      recStepFun thm_in
+      recStepFun (thm_in, wt_thm_in) extra_wt_varset
     end;
 
 
-
+(*
   (*
     rule 4 - varsubst (not subst1)
   *)
@@ -558,10 +427,10 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
     in
       recStepFun thm_in
     end;
+*)
 
 
-
-
+(*
   (*
     rule 5 - varsubst (subst1)
   *)
@@ -593,10 +462,10 @@ val thm_2_dbg = REWRITE_CONV [GSYM dbg_def_1, GSYM dbg_def_2, GSYM dbg_def_3] (g
     in
       recStepFun thm_in
     end;
+*)
 
 
-
-
+(*
   (*
     rule 6-8 - subst1
   *)
@@ -710,11 +579,11 @@ varnameset_discharge thm_1 varname term_exp term_v2;
           recStepFun thm_in
         end
     end;
+*)
 
 
 
-
-
+(*
   (*
     rule 9 - varsubst1 (not varsubst)
   *)
@@ -759,7 +628,7 @@ varnameset_discharge thm_1 varname term_exp term_v2;
     in
       recStepFun thm_in
     end;
-
+*)
 
 
 
@@ -769,6 +638,10 @@ varnameset_discharge thm_1 varname term_exp term_v2;
     rule list
   *)
   val bir_wp_simp_step_CONV_list =
+          [(bir_wp_simp_step_CONV_match_3_vsconst, bir_wp_simp_step_CONV_conv_3_vsconst)];
+
+(*
+  val bir_wp_simp_step_CONV_list =
           [(bir_wp_simp_step_CONV_match_1_conj, bir_wp_simp_step_CONV_conv_1_conj),
            (bir_wp_simp_step_CONV_match_2_impl, bir_wp_simp_step_CONV_conv_2_impl),
            (bir_wp_simp_step_CONV_match_3_vsconst, bir_wp_simp_step_CONV_conv_3_vsconst),
@@ -777,27 +650,34 @@ varnameset_discharge thm_1 varname term_exp term_v2;
            (bir_wp_simp_step_CONV_match_6_7_8_s1, bir_wp_simp_step_CONV_conv_6_7_8_s1),
            (bir_wp_simp_step_CONV_match_9_vs1nvs, bir_wp_simp_step_CONV_conv_9_vs1nvs),
            (bir_wp_simp_step_CONV_match_10_vs1vs, bir_wp_simp_step_CONV_conv_10_vs1vs)];
+*)
 
   (*
     step relation
   *)
-  val cannotHandleOutput = false;
-  fun bir_wp_simp_step_CONV useBigstep varexps_thms goalterm =
+(*  val empty_varset = (pred_setSyntax.mk_empty (``:bir_var_t``));*)
+  val print_cannotHandle = false;
+  fun bir_wp_simp_step_CONV useBigstep (varexps_thms:thm list) goalterm extra_wt_varset =
     let
       val rec_step_CONV = bir_wp_simp_step_CONV useBigstep;
-      fun recStepFun thm_in = if useBigstep then
-                         (TRANS thm_in (rec_step_CONV varexps_thms (get_concl_rhs thm_in)) handle UNCHANGED => thm_in)
+      fun recStepFun (thm_in, wt_thm_in) extra_wt_varset = if useBigstep then
+                         let
+                           val (thm_out, wt_thm_out) = rec_step_CONV varexps_thms (get_concl_rhs thm_in) extra_wt_varset;
+                         in
+                           (TRANS thm_in thm_out, TRANS wt_thm_in wt_thm_out)
+                         end
+                         handle UNCHANGED => (thm_in, wt_thm_in)
                        else
-                         (thm_in);
+                         (thm_in, wt_thm_in);
 
-      val thm =
+      val (thm, wt_thm) =
         let
           val (prem, term) = simp_extract goalterm;
           val conv_fun_opt = List.find (fn (matchfun, _) => matchfun term) bir_wp_simp_step_CONV_list;
         in
           case conv_fun_opt of
              NONE => (
-                if cannotHandleOutput then (
+                if print_cannotHandle then (
                   print "--------------- cannot handle -----------------\r\n";
                   print_term goalterm;
                   print "\r\n-----------------------------------------------\r\n"
@@ -805,7 +685,7 @@ varnameset_discharge thm_1 varname term_exp term_v2;
                   raise UNCHANGED
              )
            | SOME(_, conv_fun) => (
-                conv_fun recStepFun rec_step_CONV prem term varexps_thms goalterm
+                conv_fun recStepFun rec_step_CONV prem term varexps_thms goalterm extra_wt_varset
                 handle
                    UNCHANGED_bir_wp_simp_step_CONV => raise UNCHANGED
                  | UNEXPECTED_bir_wp_simp_step_CONV ex => raise (UNEXPECTED_bir_wp_simp_step_CONV ex)
@@ -827,11 +707,17 @@ varnameset_discharge thm_1 varname term_exp term_v2;
         val (premL, _) = ((simp_extract) goalterm);
         val (premR, _) = ((simp_extract o get_concl_rhs) thm);
         val structPreserv = (premL = premR);
+        val wt_L = simp_construct_wt ((simp_extract o get_concl_lhs) thm) extra_wt_varset;
+        val wt_R = simp_construct_wt ((simp_extract o get_concl_rhs) thm) extra_wt_varset;
+        val wt_concl_iscorrect = ((concl wt_thm) = mk_eq (wt_L, wt_R));
+        val _ = if not (goaltermIsOnLhs andalso structPreserv) then
+                  raise (ERR "bir_wp_simp_step_CONV" "taut term mismatch, some unexpected error, debug me")
+                else if not wt_concl_iscorrect then
+                  raise (ERR "bir_wp_simp_step_CONV" "wt term mismatch, some unexpected error, debug me")
+                else
+                  ()
       in
-        if not (goaltermIsOnLhs andalso structPreserv) then
-          raise (ERR "bir_wp_simp_step_CONV" "term mismatch, some unexpected error, debug me")
-        else
-          thm
+        (thm, wt_thm)
       end
     end;
 
@@ -853,7 +739,8 @@ varnameset_discharge thm_1 varname term_exp term_v2;
                     print_term goalterm;
                     print "\r\n-----------------------------------------\r\n"
                   ) else ()
-          val thm2 = bir_wp_simp_step_CONV_s goalterm;
+          val extra_wt_varset = NONE;
+          val (thm2, _) = bir_wp_simp_step_CONV_s goalterm extra_wt_varset;
           val thm = TRANS thm1 thm2;
         in
           if useBigstep then (
@@ -887,7 +774,7 @@ val varexps_thms = preproc_vars [] (tl (rev lbl_list));
 
 
 val take_all = false;
-val i = 60; (*60 - 230;*)
+val i = 20; (*60 - 230;*)
 
 val i_min = 1;
 val i_max = (List.length lbl_list) - 1;

@@ -10,7 +10,7 @@ open bir_wp_simpLib;
 val _ = new_theory "aesSimpWp";
 
 
-
+(*
 
 val lbl_list = (gen_lbl_list o snd o dest_eq o concl) aes_wps1_def;
 
@@ -48,7 +48,7 @@ val _ = Lib.end_time timer_start;
 
 val _ = save_thm("aes_wp_taut_thm", simp_thm);
 
-
+*)
 
 
 val _ = export_theory();
