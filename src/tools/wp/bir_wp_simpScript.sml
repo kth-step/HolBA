@@ -1955,6 +1955,17 @@ val bir_wp_simp_varset_imp_thm = store_thm("bir_wp_simp_varset_imp_thm", ``
   METIS_TAC [pred_setTheory.UNION_ASSOC]
 );
 
+val bir_wp_simp_varset_imp_wunions_thm = store_thm("bir_wp_simp_varset_imp_wunions_thm", ``
+  !prem e1 e2 A.
+    ((bir_vars_of_exp prem) UNION (bir_vars_of_exp (bir_exp_imp e1 e2)) UNION A)
+    =
+    ((bir_vars_of_exp (bir_exp_and prem e1)) UNION (bir_vars_of_exp e2) UNION A)
+``,
+
+  REWRITE_TAC [bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_vars_of_exp_def] >>
+  METIS_TAC [pred_setTheory.UNION_ASSOC]
+);
+
 val bir_wp_simp_welltypedset_subst1_not_thm = store_thm("bir_wp_simp_welltypedset_subst1_not_thm", ``
   !prem v ve e A.
     (~(v IN bir_vars_of_exp e))
@@ -2049,6 +2060,35 @@ val bir_wp_simp_welltypedset_subst1_list_thm = store_thm("bir_wp_simp_welltypeds
   ) >>
 
   METIS_TAC [bir_wp_simp_welltypedset_subst1_thm]
+);
+
+val bir_wp_simp_welltypedset_subst1_list_format_thm = store_thm("bir_wp_simp_welltypedset_subst1_list_format_thm", ``
+  !prem v v' ve e A vs vsl.
+    (v IN bir_vars_of_exp e)
+    ==>
+    (vs = (bir_vars_of_exp (
+        bir_exp_imp prem (bir_exp_subst1 v ve e))) UNION A)
+    ==>
+    (set vsl = vs)
+    ==>
+    (
+      EVERY (\v. bir_var_name v <> bir_var_name v') vsl
+    )
+    ==>
+    (
+      bir_var_set_is_well_typed (vs)
+      <=>
+      bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp
+               (bir_exp_imp (BExp_BinPred BIExp_Equal (BExp_Den v') ve)
+                            (bir_exp_varsubst1 v v' e)))
+          
+      UNION A)
+    )
+``,
+
+  ASSUME_TAC bir_wp_simp_welltypedset_subst1_list_thm >>
+  FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def] >>
+  METIS_TAC []
 );
 
 
