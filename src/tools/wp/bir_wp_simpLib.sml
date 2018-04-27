@@ -642,32 +642,102 @@ varnameset_discharge thm_1 varname term_exp term_v2;
           val simp_conv_for_bir_var_set0 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_varsubst_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_varsubst1_def]@varexps_thms);
           val simp_conv_for_bir_var_set1 = SIMP_CONV (std_ss++stringSimps.STRING_ss++string_ss++char_ss) [];
 
-(*
-          val diff_resolv_conv = REPEATC (
-                 (fn x => REWRITE_CONV [Once pred_setTheory.INSERT_DIFF, pred_setTheory.UNION_EMPTY, pred_setTheory.DIFF_EMPTY] x) THENC
-                 (PAT_CONV ``\a. COND (a:bool)`` EVAL) THENC
-                 (REWRITE_CONV [pred_setTheory.EMPTY_DIFF])
-            );
+
+fun diff_conv conv tm =
+  if pred_setSyntax.is_diff tm then
+    conv tm
+  else if is_comb tm then
+      ((RAND_CONV  (diff_conv conv)) THENC
+       (RATOR_CONV (diff_conv conv))) tm
+  else
+    raise UNCHANGED
+  ;
+fun if_conv conv tm =
+  if is_cond tm then
+    conv tm
+  else if is_comb tm then
+      ((RAND_CONV  (if_conv conv)) THENC
+       (RATOR_CONV (if_conv conv))) tm
+  else
+    raise UNCHANGED
+  ;
+     
+          fun diff_resolv_conv x = (
+                 (fn x => REWRITE_CONV [Once pred_setTheory.INSERT_DIFF, pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY, pred_setTheory.DIFF_EMPTY] x) THENC
+                 ((RATOR_CONV o LAND_CONV) EVAL) THENC
+                 (REWRITE_CONV [pred_setTheory.EMPTY_DIFF]) THENC
+                 (diff_conv diff_resolv_conv)
+            ) x;
+          fun cond_resolv_conv x = (
+                 ((RATOR_CONV o LAND_CONV) EVAL)
+            ) x;
 
 
           val simp_conv_for_bir_var_set =
                      simp_conv_for_bir_var_set0 THENC
                      simp_conv_for_bir_var_set1 THENC
-(fn x => REWRITE_CONV [Once pred_setTheory.INSERT_DIFF, pred_setTheory.UNION_EMPTY, pred_setTheory.DIFF_EMPTY] x) THENC
-
-                 (PAT_CONV ``\a. COND (a:bool)`` EVAL);
-
-
-                     diff_resolv_conv;
-
+                     (if_conv cond_resolv_conv) THENC
+                     (REWRITE_CONV []) THENC
+                     (diff_conv diff_resolv_conv) THENC
                      (REWRITE_CONV [pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY]) THENC
                      (REWRITE_CONV [GSYM listTheory.LIST_TO_SET]);
 
-
+(*
 simp_conv_for_bir_var_set term_vs
+simp_conv_for_bir_var_set test456_tm
+
+(diff_conv diff_resolv_conv) test456_tm
+
+(diff_conv diff_resolv_conv) ((fst o dest_comb o snd o dest_comb) test456_tm)
+
+(snd o dest_comb o fst o dest_comb o snd o dest_comb) test456_tm
+
+val test456_tm = (get_concl_rhs (simp_conv_for_bir_var_set term_vs))
 
 
 (PAT_CONV ``\a. COND (a:bool) x`` EVAL)
+
+val capsule_def = Define `capsule A = A`;
+val capsule_DIFF = prove (``!A B. capsule (A DIFF B) = (A DIFF B)``, REWRITE_TAC [capsule_def]);
+
+
+(
+  (REWRITE_CONV [GSYM pred_setTheory.INSERT_DIFF, Once (GSYM capsule_DIFF)]) THENC
+  
+)
+
+
+
+
+  (diff_conv diff_resolv_conv) test12_tm
+
+val test123_tm = (snd o dest_comb) test12_tm;
+val test123_tm = (snd o dest_comb) test123_tm;
+val test123_tm = (snd o dest_comb) test123_tm;
+pred_setSyntax.is_diff test123_tm
+
+val test123_tm = (snd o dest_comb) test123_tm;
+
+
+val test12_tm = ``
+EMPTY UNION {BVar "MEM" (BType_Mem Bit64 Bit8); BVar "R0_wp_10" (BType_Imm Bit64);
+   BVar "R1" (BType_Imm Bit64); BVar "R0_wp_9" (BType_Imm Bit64);
+   BVar "R0_wp_8" (BType_Imm Bit64); BVar "R0_wp_7" (BType_Imm Bit64)} ∪
+  (capsule
+     ({BVar "MEM" (BType_Mem Bit64 Bit8);
+       BVar "SP_EL0" (BType_Imm Bit64)} DIFF
+      {BVar "MEM" (BType_Mem Bit64 Bit8)}) ∪
+   ({BVar "MEM" (BType_Mem Bit64 Bit8)} ∪
+    {BVar "SP_EL0" (BType_Imm Bit64)} ∪
+    (({BVar "MEM" (BType_Mem Bit64 Bit8);
+       BVar "SP_EL0" (BType_Imm Bit64);BVar "MEM" (BType_Mem Bit64 Bit8);
+       BVar "SP_EL0" (BType_Imm Bit64);BVar "MEM" (BType_Mem Bit64 Bit8);
+       BVar "SP_EL0" (BType_Imm Bit64)} DIFF
+      {BVar "MEM" (BType_Mem Bit64 Bit8)}))))
+``
+
+
+
 ``
 {BVar "MEM" (BType_Mem Bit64 Bit8); BVar "R0_wp_10" (BType_Imm Bit64);
   BVar "R1" (BType_Imm Bit64); BVar "R0_wp_9" (BType_Imm Bit64);
@@ -687,18 +757,18 @@ simp_conv_for_bir_var_set term_vs
    {BVar "R0_wp_10" (BType_Imm Bit64)}))
 ``
 *)
-(*
           val wt_thm_1 = MATCH_MP wt_thm_1 ((GSYM o simp_conv_for_bir_var_set) term_vs);
-*)
+(*
           val wt_thm_1 = Q.SPEC `vsl` wt_thm_1;
           val wt_thm_1 = MP wt_thm_1 (prove (((snd o dest_comb o fst o dest_comb o concl) wt_thm_1), cheat));
+*)
 
-(*
           (*val wt_thm_1 = CONV_RULE ((STRIP_QUANT_CONV o LAND_CONV) simp_conv_for_bir_var_set) wt_thm_1;*)
           val wt_thm_1 = CONV_RULE (LAND_CONV EVAL) wt_thm_1;
           val wt_thm_1 = REWRITE_RULE [] wt_thm_1;
-*)
+(*
           val wt_thm_1 = MP wt_thm_1 (prove (((snd o dest_comb o fst o dest_comb o concl) wt_thm_1), cheat));
+*)
 
           val wt_thm_in = wt_thm_1;
 
@@ -1000,19 +1070,18 @@ val simp_thm = TRANS simp_thm (SIMP_CONV std_ss [boolTheory.BETA_THM, bir_wp_sim
 
 val goalterm = ``
 bir_exp_is_taut
-  (bir_exp_imp bir_wp_simp_step_prem_82
-     (bir_exp_subst1 (BVar "MEM" (BType_Mem Bit64 Bit8))
-        (BExp_Store (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
-           (BExp_BinExp BIExp_Plus
-              (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-              (BExp_Const (Imm64 44w))) BEnd_LittleEndian
-           (BExp_Cast BIExp_LowCast
-              (BExp_Den (BVar "R0_wp_82" (BType_Imm Bit64))) Bit32))
+  (bir_exp_imp bir_wp_simp_step_prem_3
+     (bir_exp_subst1 (BVar "R1" (BType_Imm Bit64))
+        (BExp_BinExp BIExp_LeftShift
+           (BExp_Den (BVar "R0_wp_3" (BType_Imm Bit64)))
+           (BExp_Const (Imm64 2w)))
         (bir_exp_varsubst
            (FEMPTY |+
+            (BVar "MEM" (BType_Mem Bit64 Bit8),
+             BVar "MEM_wp_2" (BType_Mem Bit64 Bit8)) |+
             (BVar "R0" (BType_Imm Bit64),
-             BVar "R0_wp_82" (BType_Imm Bit64)))
-           bir_wp_comp_wps_iter_step2_wp_0x400918w)))
+             BVar "R0_wp_3" (BType_Imm Bit64)))
+           bir_wp_comp_wps_iter_step2_wp_0x4008CCw)))
 ``;
 
 *)
