@@ -11,17 +11,96 @@ open bir_wp_simpLib;
 open bir_wp_expLib;
 
 open aesSimpWpTheory;
+open aesWpsTheory;
 
 
+(*
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 1;
+*)
 
 
+
+
+
+(* ---------------------------------------------------------------------------------------- *)
+
+
+
+
+(* quick fix, has to be revisited *)
+(*val lbl_list = List.map (term_to_string o snd o gen_dest_Imm o dest_BL_Address) (bir_wp_fmap_to_dom_list wps1);*)
+val lbl_list = (gen_lbl_list o snd o dest_eq o concl) aes_wps1_def;
+
+val wp_def_list = aes_post_def::(List.map
+      (fn lbl_str =>
+      let
+        val (_, (def_thm, _)) = hd (DB.find ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str));
+      in def_thm end
+      ) (tl (List.rev lbl_list)));
+
+(*
+val wp_list = List.map (snd o dest_eq o concl) wp_def_list;
+
+fun print_wp_list _ [] = ()
+  | print_wp_list doPretty (wp::wp_l) =
+      let
+        val _ = print "\r\n\r\n";
+        val _ = if doPretty then
+                  bir_exp_pretty_print wp
+                else
+                  print (term_to_string wp)
+                ;
+      in
+        print_wp_list doPretty wp_l
+      end;
+
+val _ = print_wp_list false wp_list;
+*)
+
+val _ = print "\r\n";
+val _ = print "===========\r\n";
+val _ = print "weakest precondition evaluation:\r\n";
+(*
+val (lbl_last, wp_last) = (dest_pair o snd o dest_fupdate) wps1;
+*)
+
+
+fun eval_through [] thm = [thm]
+  | eval_through (lbl_str::lbls) thm_in =
+      let
+        val (_, (def_thm, _)) = hd (DB.find ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str));
+        val thm = REWRITE_RULE [thm_in] def_thm;
+        val thm_evald = (EVAL o snd o dest_eq o concl) thm;
+        val thm_new = (TRANS thm thm_evald);
+        val _ = print ("remaining: " ^ (Int.toString (List.length lbls)) ^ "  \r");
+      in
+        thm_new::(eval_through lbls thm_new)
+      end;
+
+
+val lbl_list_todo = List.take ((tl (List.rev lbl_list)), 90);
+
+
+val timer_start = Lib.start_time ();
+val _ = print "\r\n===========\r\n";
+val out_thms = eval_through lbl_list_todo aes_post_def;
+val out_thm = List.last out_thms;
+val _ = print "\r\n===========\r\n";
+val _ = Lib.end_time timer_start;
+
+val wp_ = (snd o dest_eq o concl) out_thm;
+(* ---------------------------------------------------------------------------------------- *)
 
 val prop = (snd o dest_eq o concl) aes_wp_taut_thm;
 val wp = List.nth((snd o strip_comb o snd o dest_comb) prop, 1);
 
 val wp_ = (snd o dest_eq o concl o (REWRITE_CONV [bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def])) wp;
+
+(* ---------------------------------------------------------------------------------------- *)
+
+
+
 
 
   fun bir_exp_nonstandards exp =
@@ -113,6 +192,7 @@ fun count_nodes term =
 
 
 val problist = bir_exp_nonstandards wp_;
+val probnum = List.length problist;
 
 val n_nodes = count_nodes wp_;
 
