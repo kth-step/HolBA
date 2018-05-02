@@ -1988,11 +1988,9 @@ val bir_wp_simp_varset_and_helper1_thm = store_thm("bir_wp_simp_varset_and_helpe
 
 val bir_wp_simp_varset_and_helper2_thm = store_thm("bir_wp_simp_varset_and_helper2_thm", ``
   !prem e1 e1' e2 e2' A.
-    (
-      bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION ((bir_vars_of_exp e2) UNION A))
-      =
-      bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1') UNION ((bir_vars_of_exp e2') UNION A))
-    )
+    (bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION ((bir_vars_of_exp e2) UNION A)))
+    ==>
+    (bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1') UNION ((bir_vars_of_exp e2') UNION A)))
     ==>
     (
       bir_var_set_is_well_typed ((bir_vars_of_exp prem) UNION (bir_vars_of_exp e1) UNION (bir_vars_of_exp e2))
