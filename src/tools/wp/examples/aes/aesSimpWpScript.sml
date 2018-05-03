@@ -18,7 +18,7 @@ val varexps_thms = preproc_vars [] (tl (rev lbl_list));
 
 
 (* provide the number of arm instructions to take for the simplification, counted from the end of the computed block *)
-val take_all = false;
+val take_all = true;
 val i = 30; (*60 - 230;*)
 
 val i_min = 1;
