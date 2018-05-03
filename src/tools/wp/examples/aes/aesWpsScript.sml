@@ -31,8 +31,8 @@ loop condition check with conditional branch to 0x4005dc:
 
 
 (* how many blocks of the aes round do we take for the computation? *)
-val take_all = true; (* false for a normal run, should override the others *)
-val take_n_last = 150; (* we will get one block more at the end as a dummy block *)
+val take_all = false; (* false for a normal run, should override the others *)
+val take_n_last = 100; (* we will get one block more at the end as a dummy block *)
 
 val aes_program_term_whole = ((snd o dest_comb o concl) aes_arm8_program_THM);
 (* include one after the last as dummy block *)
@@ -77,6 +77,12 @@ val wps = ``aes_wps``;
 val defs = [aes_program_def, aes_post_def, aes_ls_def, aes_wps_def];
 
 
+(* ----------- measurement overhead ----------- *)
+val _ = if not runMeasurement then () else
+        Lib.end_time timer_start;
+val timer_start = Lib.start_time ();
+
+
 
 (* wps_bool_sound_thm for initial wps *)
 val prog_term = (snd o dest_comb o concl) aes_program_def;
@@ -89,12 +95,6 @@ val (wpsdom, blstodo) = bir_wp_init_rec_proc_jobs prog_term wps_term;
 (* prepare "problem-static" part of the theorem *)
 val reusable_thm = bir_wp_exec_of_block_reusable_thm;
 val prog_thm = bir_wp_comp_wps_iter_step0_init reusable_thm (program, post, ls) defs;
-
-
-(* ----------- measurement overhead ----------- *)
-val _ = if not runMeasurement then () else
-        Lib.end_time timer_start;
-val timer_start = Lib.start_time ();
 
 
 val (wps1, wps1_bool_sound_thm) = bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm), (wpsdom, List.rev blstodo)) (program, post, ls) defs;

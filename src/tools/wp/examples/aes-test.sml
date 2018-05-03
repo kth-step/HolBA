@@ -89,8 +89,6 @@ val wp_w_subst1 =
     (snd o dest_eq o concl) (computeLib.RESTR_EVAL_CONV [``bir_exp_subst1``] ((fst o dest_eq o concl) def_thm))
   end;
 
-(fst o dest_comb) wp_w_subst1
-
 
 val timer_start = Lib.start_time ();
 val _ = print "\r\n===========\r\n";
@@ -103,7 +101,7 @@ val wp_ = (snd o dest_eq o concl) out_thm;
 (* ---------------------------------------------------------------------------------------- *)
 
 val prop = (snd o dest_eq o concl) aes_wp_taut_thm;
-val wp = List.nth((snd o strip_comb o snd o dest_comb) prop, 1);
+val wp = (snd o dest_comb o snd o dest_comb) prop;
 
 val wp_ = (snd o dest_eq o concl o (REWRITE_CONV [bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def])) wp;
 
@@ -277,12 +275,180 @@ val wp_ = (snd o dest_eq o concl o (REWRITE_CONV [bir_exp_and_def, bir_exp_imp_d
     end;
 
 
-fun count_nodes term =
-  if is_comb term then
+  fun bir_exp_count_bir_nodes exp =
+    let
+      val ef = bir_exp_count_bir_nodes;
+    in
+      if is_BExp_Const exp then 1
+      else if is_BExp_Den exp then 1
+      else if is_BExp_Cast exp then
+        let
+          val (castt, exp, sz) = (dest_BExp_Cast) exp;
+          val casttstr = castt_to_string castt;
+          val szstr = (Int.toString o size_of_bir_immtype_t) sz;
+        in
+          1+(ef exp)
+        end
+
+      else if is_BExp_UnaryExp exp then
+        let
+          val (uop, exp) = (dest_BExp_UnaryExp) exp;
+          val uopstr = uop_to_string uop;
+        in
+          1+(ef exp)
+        end
+
+      else if is_BExp_BinExp exp then
+        let
+          val (bop, exp1, exp2) = (dest_BExp_BinExp) exp;
+          val bopstr = bop_to_string bop;
+        in
+          1+(ef exp1)+(ef exp2)
+        end
+
+      else if is_BExp_BinPred exp then
+        let
+          val (bpredop, exp1, exp2) = (dest_BExp_BinPred) exp;
+          val bpredopstr = bpredop_to_string bpredop;
+        in
+          1+(ef exp1)+(ef exp2)
+        end
+
+      else if is_BExp_MemEq exp then
+        let
+          val (exp1, exp2) = (dest_BExp_MemEq) exp;
+        in
+          1+(ef exp1)+(ef exp2)
+        end
+
+      else if is_BExp_IfThenElse exp then
+        let
+          val (expc, expt, expf) = (dest_BExp_IfThenElse) exp;
+        in
+          1+(ef expc)+(ef expt)+(ef expf)
+        end
+
+      else if is_BExp_Load exp then
+        let
+          val (expm, expad, endi, sz) = (dest_BExp_Load) exp;
+          val endistr = endi_to_string endi;
+          val szstr = (Int.toString o size_of_bir_immtype_t) sz;
+        in
+          1+(ef expm)+(ef expad)
+        end
+
+      else if is_BExp_Store exp then
+        let
+          val (expm, expad, endi, expv) = (dest_BExp_Store) exp;
+          val endistr = endi_to_string endi;
+        in
+          1+(ef expm)+(ef expad)+(ef expv)
+        end
+
+      else if is_bir_exp_subst1 exp then
+        let
+          val (v, ve, e) = (dest_bir_exp_subst1) exp;
+        in
+          1+(ef ve)+(ef e)
+        end
+
+      else
+        raise (ERR "bir_exp_count_bir_nodes" "not an allowed structure")
+    end;
+
+
+  fun bir_exp_count_subst1 exp =
+    let
+      val ef = bir_exp_count_subst1;
+    in
+      if is_BExp_Const exp then 0
+      else if is_BExp_Den exp then 0
+      else if is_BExp_Cast exp then
+        let
+          val (castt, exp, sz) = (dest_BExp_Cast) exp;
+          val casttstr = castt_to_string castt;
+          val szstr = (Int.toString o size_of_bir_immtype_t) sz;
+        in
+          ef exp
+        end
+
+      else if is_BExp_UnaryExp exp then
+        let
+          val (uop, exp) = (dest_BExp_UnaryExp) exp;
+          val uopstr = uop_to_string uop;
+        in
+          ef exp
+        end
+
+      else if is_BExp_BinExp exp then
+        let
+          val (bop, exp1, exp2) = (dest_BExp_BinExp) exp;
+          val bopstr = bop_to_string bop;
+        in
+          (ef exp1)+(ef exp2)
+        end
+
+      else if is_BExp_BinPred exp then
+        let
+          val (bpredop, exp1, exp2) = (dest_BExp_BinPred) exp;
+          val bpredopstr = bpredop_to_string bpredop;
+        in
+          (ef exp1)+(ef exp2)
+        end
+
+      else if is_BExp_MemEq exp then
+        let
+          val (exp1, exp2) = (dest_BExp_MemEq) exp;
+        in
+          (ef exp1)+(ef exp2)
+        end
+
+      else if is_BExp_IfThenElse exp then
+        let
+          val (expc, expt, expf) = (dest_BExp_IfThenElse) exp;
+        in
+          (ef expc)+(ef expt)+(ef expf)
+        end
+
+      else if is_BExp_Load exp then
+        let
+          val (expm, expad, endi, sz) = (dest_BExp_Load) exp;
+          val endistr = endi_to_string endi;
+          val szstr = (Int.toString o size_of_bir_immtype_t) sz;
+        in
+          (ef expm)+(ef expad)
+        end
+
+      else if is_BExp_Store exp then
+        let
+          val (expm, expad, endi, expv) = (dest_BExp_Store) exp;
+          val endistr = endi_to_string endi;
+        in
+          (ef expm)+(ef expad)+(ef expv)
+        end
+
+      else if is_bir_exp_subst1 exp then
+        let
+          val (v, ve, e) = (dest_bir_exp_subst1) exp;
+        in
+          1+(ef ve)+(ef e)
+        end
+
+      else
+        raise (ERR "bir_exp_count_subst1" "not an allowed structure")
+    end;
+
+
+fun count_leaves term =
+  if wordsSyntax.is_n2w term then
+    1
+  else if stringSyntax.is_string term then
+    1
+  else if is_comb term then
     let
       val (left, right) = dest_comb term;
     in
-      (count_nodes left) + (count_nodes right)
+      (count_leaves left) + (count_leaves right)
     end
   else
     1;
@@ -292,12 +458,33 @@ fun count_nodes term =
 
 val problist_pre = bir_exp_nonstandards_wsubst1 wp_w_subst1;
 val n_prob_pre = List.length problist_pre;
-val n_nodes_pre = count_nodes wp_w_subst1;
+val n_nodes_pre = bir_exp_count_bir_nodes wp_w_subst1;
+val n_substs_pre = bir_exp_count_subst1 wp_w_subst1;
+(*
+((fst o dest_comb) wp_w_subst1)
+((fst o dest_comb o snd o dest_comb) wp_w_subst1)
+((fst o dest_comb o snd o dest_comb o snd o dest_comb o snd o dest_comb) wp_w_subst1)
+((fst o dest_comb) wp_)
+((fst o dest_comb o snd o dest_comb) wp_)
 
+val n_leaves_pre = count_leaves wp_w_subst1;
+val str_wp_pre = bir_expLib.bir_exp_to_string wp_w_subst1;
+val sz_str_wp_pre = String.size str_wp_pre;
+*)
 
 val problist = bir_exp_nonstandards wp_;
 val n_prob = List.length problist;
-val n_nodes = count_nodes wp_;
+val n_nodes = bir_exp_count_bir_nodes wp_;
+val n_substs_pre = bir_exp_count_subst1 wp_;
+(*
+val n_leaves = count_leaves wp_;
+val str_wp = bir_expLib.bir_exp_to_string wp_;
+val sz_str_wp = String.size str_wp;
+*)
+
+
+
+
 
 
 
