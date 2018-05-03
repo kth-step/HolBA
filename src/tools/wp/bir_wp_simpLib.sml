@@ -687,6 +687,7 @@ fun if_conv conv tm =
                      (REWRITE_CONV [pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY]) THENC
                      (REWRITE_CONV [GSYM listTheory.LIST_TO_SET]);
 
+
 (*
 simp_conv_for_bir_var_set term_vs
 simp_conv_for_bir_var_set test456_tm
@@ -743,24 +744,6 @@ EMPTY UNION {BVar "MEM" (BType_Mem Bit64 Bit8); BVar "R0_wp_10" (BType_Imm Bit64
 
 
 
-``
-{BVar "MEM" (BType_Mem Bit64 Bit8); BVar "R0_wp_10" (BType_Imm Bit64);
-  BVar "R1" (BType_Imm Bit64); BVar "R0_wp_9" (BType_Imm Bit64);
-  BVar "R0_wp_8" (BType_Imm Bit64); BVar "R0_wp_7" (BType_Imm Bit64)} ∪
- ((if
-     BVar "MEM" (BType_Mem Bit64 Bit8) ∈
-     {BVar "MEM" (BType_Mem Bit64 Bit8)}
-   then
-     {BVar "SP_EL0" (BType_Imm Bit64)} DIFF
-     {BVar "MEM" (BType_Mem Bit64 Bit8)}
-   else
-     (BVar "MEM" (BType_Mem Bit64 Bit8) INSERT
-      {BVar "SP_EL0" (BType_Imm Bit64)} DIFF
-      {BVar "MEM" (BType_Mem Bit64 Bit8)})) ∪
-  ({BVar "MEM" (BType_Mem Bit64 Bit8)} ∪
-   {BVar "SP_EL0" (BType_Imm Bit64)} ∪
-   {BVar "R0_wp_10" (BType_Imm Bit64)}))
-``
 *)
           val wt_thm_1 = MATCH_MP wt_thm_1 ((GSYM o simp_conv_for_bir_var_set) term_vs);
 (*
@@ -840,17 +823,6 @@ EMPTY UNION {BVar "MEM" (BType_Mem Bit64 Bit8); BVar "R0_wp_10" (BType_Imm Bit64
   (*
     rule list
   *)
-(*
-  val bir_wp_simp_step_CONV_list =
-          [(bir_wp_simp_step_CONV_match_2_impl, bir_wp_simp_step_CONV_conv_2_impl),
-           (bir_wp_simp_step_CONV_match_3_vsconst, bir_wp_simp_step_CONV_conv_3_vsconst),
-           (bir_wp_simp_step_CONV_match_4_vsns1, bir_wp_simp_step_CONV_conv_4_vsns1),
-           (bir_wp_simp_step_CONV_match_5_vss1, bir_wp_simp_step_CONV_conv_5_vss1),
-           (bir_wp_simp_step_CONV_match_6_7_8_s1, bir_wp_simp_step_CONV_conv_6_7_8_s1),
-           (bir_wp_simp_step_CONV_match_9_vs1nvs, bir_wp_simp_step_CONV_conv_9_vs1nvs),
-           (bir_wp_simp_step_CONV_match_10_vs1vs, bir_wp_simp_step_CONV_conv_10_vs1vs)];
-*)
-
   val bir_wp_simp_step_CONV_list =
           [(bir_wp_simp_step_CONV_match_1_conj, bir_wp_simp_step_CONV_conv_1_conj),
            (bir_wp_simp_step_CONV_match_2_impl, bir_wp_simp_step_CONV_conv_2_impl),
@@ -909,6 +881,11 @@ val wt_thm = wt_thm_out;
                  | ex => (
                            print "\r\n--------------- unexpected -----------------\r\n";
                            print_term goalterm;
+                           print "\r\n------------- extra varset -----------------\r\n";
+                           (case extra_wt_varset of
+                               NONE => print "NO EXTRA VARSET"
+                             | SOME x => print_term x
+                           );
                            print "\r\n--------------------------------------------\r\n";
                            print (exn_to_string ex) handle _ => ();
                            raise (UNEXPECTED_bir_wp_simp_step_CONV ex)
@@ -1017,11 +994,34 @@ val def_const = (fst o dest_eq o concl) def_thm;
 
 
 
-val btautology = ``BExp_Const (Imm1 1w)``;
-val prem_init = ``^btautology``; (* have another premise here *)
+(*val btautology = ``BExp_Const (Imm1 1w)``;*)
+(* translated from roberto's z3 precondition *)
+val prem_init = ``BExp_BinExp BIExp_And
+                    (BExp_BinExp BIExp_And
+                      (BExp_BinPred BIExp_Equal (BExp_BinExp BIExp_And
+                                                   (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+                                                   (BExp_Const (Imm64 7w)))
+                                                (BExp_Const (Imm64 0w)))
+                      (BExp_UnaryExp BIExp_Not (BExp_BinPred BIExp_LessOrEqual
+                                                  (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+                                                  (BExp_Const (Imm64 33554432w)))))
+                    (BExp_BinPred BIExp_LessOrEqual
+                                                  (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+                                                  (BExp_Const (Imm64 43554432w)))``;
+
+val prem_init = ``BExp_BinExp BIExp_And ^prem_init (
+                    (BExp_BinPred BIExp_Equal (BExp_BinExp BIExp_And
+                                                   (BExp_Den (BVar "R0_post" (BType_Imm Bit64)))
+                                                   (BExp_Const (Imm64 3w)))
+                                                (BExp_Const (Imm64 0w)))
+                  )``;
 
 
-val goalterm = ``bir_exp_is_taut (bir_exp_imp ^prem_init (bir_exp_varsubst FEMPTY ^def_const))``;
+val aes_prem_def = Define `aes_prem = ^prem_init`;
+val varexps_thms = (preproc_vars_thm true [] aes_prem_def)::varexps_thms;
+
+
+val goalterm = ``bir_exp_is_taut (bir_exp_imp aes_prem (bir_exp_varsubst FEMPTY ^def_const))``;
 
 
 (*ASSUME (simp_construct_wt (simp_extract goalterm) NONE);*)
@@ -1109,56 +1109,22 @@ bir_exp_is_taut
 
 val goalterm = ``
 bir_exp_is_taut
-  (bir_exp_imp (BExp_Const (Imm1 1w))
-     (bir_exp_and
-        (BExp_BinPred BIExp_Equal
-           (bir_exp_and (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-              (BExp_Const (Imm64 3w))) (BExp_Const (Imm64 0w)))
+  (bir_exp_imp bir_wp_simp_step_prem_6
+     (bir_exp_subst1 (BVar "R0" (BType_Imm Bit64))
+        (BExp_Cast BIExp_UnsignedCast
+           (BExp_BinExp BIExp_RightShift
+              (BExp_Cast BIExp_LowCast
+                 (BExp_Den (BVar "R0_wp_4" (BType_Imm Bit64))) Bit32)
+              (BExp_Const (Imm32 24w))) Bit64)
         (bir_exp_varsubst FEMPTY
-           (bir_exp_subst1 (BVar "R0" (BType_Imm Bit64))
-              (BExp_Cast BIExp_UnsignedCast
-                 (BExp_Load
-                    (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
-                    (BExp_BinExp BIExp_Plus
-                       (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                       (BExp_Const (Imm64 76w))) BEnd_LittleEndian
-                    Bit32) Bit64)
-              bir_wp_comp_wps_iter_step2_wp_0x400978w))))
+           bir_wp_comp_wps_iter_step2_wp_0x4005E4w)))
 ``;
 
 val extra_wt_varset = SOME ``
 bir_vars_of_exp
-  (bir_exp_and
-     (BExp_BinPred BIExp_LessOrEqual
-        (BExp_BinExp BIExp_Plus
-           (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-           (BExp_Const (Imm64 24w)))
-        (BExp_Const (Imm64 0xFFFFFFFFFFFFFFF7w)))
-     (bir_exp_and
-        (BExp_BinExp BIExp_Or
-           (BExp_BinPred BIExp_LessThan (BExp_Const (Imm64 0w))
-              (BExp_BinExp BIExp_Plus
-                 (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                 (BExp_Const (Imm64 24w))))
-           (BExp_BinPred BIExp_LessOrEqual
-              (BExp_BinExp BIExp_Plus (BExp_Const (Imm64 8w))
-                 (BExp_BinExp BIExp_Plus
-                    (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                    (BExp_Const (Imm64 24w)))) (BExp_Const (Imm64 0w))))
-        (BExp_BinExp BIExp_Or
-           (BExp_BinPred BIExp_LessThan
-              (BExp_BinExp BIExp_Plus
-                 (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                 (BExp_Const (Imm64 24w))) (BExp_Const (Imm64 0w)))
-           (BExp_BinPred BIExp_LessOrEqual
-              (BExp_Const (Imm64 0x1000000w))
-              (BExp_BinExp BIExp_Plus
-                 (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                 (BExp_Const (Imm64 24w))))))) ∪
-bir_vars_of_exp
   (BExp_BinPred BIExp_Equal
      (bir_exp_and (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-        (BExp_Const (Imm64 7w))) (BExp_Const (Imm64 0w)))
+        (BExp_Const (Imm64 3w))) (BExp_Const (Imm64 0w)))
 ``;
 
 *)

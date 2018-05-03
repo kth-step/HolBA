@@ -40,22 +40,48 @@ val def_const = (fst o dest_eq o concl) def_thm;
 
 
 
-val btautology = ``BExp_Const (Imm1 1w)``;
-val prem_init = ``^btautology``; (*``BExp_Const (Imm1 precond_v)``;*) (* have another premise here *)
 
-val goalterm = ``bir_exp_is_taut (bir_exp_imp ^prem_init (bir_exp_varsubst FEMPTY ^def_const))``;
+(*val btautology = ``BExp_Const (Imm1 1w)``;*)
+(* translated from roberto's z3 precondition *)
+val prem_init = ``BExp_BinExp BIExp_And
+                    (BExp_BinExp BIExp_And
+                      (BExp_BinPred BIExp_Equal (BExp_BinExp BIExp_And
+                                                   (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+                                                   (BExp_Const (Imm64 7w)))
+                                                (BExp_Const (Imm64 0w)))
+                      (BExp_UnaryExp BIExp_Not (BExp_BinPred BIExp_LessOrEqual
+                                                  (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+                                                  (BExp_Const (Imm64 33554432w)))))
+                    (BExp_BinPred BIExp_LessOrEqual
+                                                  (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+                                                  (BExp_Const (Imm64 43554432w)))``;
+
+val prem_init = ``BExp_BinExp BIExp_And ^prem_init (
+                    (BExp_BinPred BIExp_Equal (BExp_BinExp BIExp_And
+                                                   (BExp_Den (BVar "R0_post" (BType_Imm Bit64)))
+                                                   (BExp_Const (Imm64 3w)))
+                                                (BExp_Const (Imm64 0w)))
+                  )``;
 
 
+val aes_prem_def = Define `aes_prem = ^prem_init`;
+val varexps_thms = (preproc_vars_thm true [] aes_prem_def)::varexps_thms;
 
-(* ----------- measurement overhead ----------- *)
-val _ = if not runMeasurement then () else
-        Lib.end_time timer_start;
-val timer_start = Lib.start_time ();
+
+val goalterm = ``bir_exp_is_taut (bir_exp_imp aes_prem (bir_exp_varsubst FEMPTY ^def_const))``;
+
 
 (*ASSUME (simp_construct_wt (simp_extract goalterm) NONE);*)
 val wt0_thm = prove (``^(simp_construct_wt (simp_extract goalterm) NONE)``,
   CONV_TAC (well_typed_conv varexps_thms)
 );
+
+
+
+(* ----------- measurement preprocessing ----------- *)
+val _ = if not runMeasurement then () else
+        Lib.end_time timer_start;
+val timer_start = Lib.start_time ();
 
 
 val (simp_thm,wt_thm) = bir_wp_simp_CONV varexps_thms goalterm wt0_thm;

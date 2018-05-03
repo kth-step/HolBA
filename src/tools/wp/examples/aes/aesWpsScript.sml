@@ -57,7 +57,8 @@ val aes_program_def = Define `
       aes_program = ^aes_program_term
 `;
 val aes_post_def = Define `
-      aes_post = (BExp_Const (Imm1 1w))
+      aes_post = (BExp_BinPred BIExp_Equal (BExp_Den (BVar "R0_post" (BType_Imm Bit64)))
+                                           (BExp_Den (BVar "R0" (BType_Imm Bit64))))
 `;
 val aes_ls_def = Define `
       aes_ls = \x.(x = ^last_block_label)
@@ -76,12 +77,6 @@ val wps = ``aes_wps``;
 val defs = [aes_program_def, aes_post_def, aes_ls_def, aes_wps_def];
 
 
-(* ----------- measurement overhead ----------- *)
-val _ = if not runMeasurement then () else
-        Lib.end_time timer_start;
-val timer_start = Lib.start_time ();
-
-
 
 (* wps_bool_sound_thm for initial wps *)
 val prog_term = (snd o dest_comb o concl) aes_program_def;
@@ -94,6 +89,12 @@ val (wpsdom, blstodo) = bir_wp_init_rec_proc_jobs prog_term wps_term;
 (* prepare "problem-static" part of the theorem *)
 val reusable_thm = bir_wp_exec_of_block_reusable_thm;
 val prog_thm = bir_wp_comp_wps_iter_step0_init reusable_thm (program, post, ls) defs;
+
+
+(* ----------- measurement preprocessing ----------- *)
+val _ = if not runMeasurement then () else
+        Lib.end_time timer_start;
+val timer_start = Lib.start_time ();
 
 
 val (wps1, wps1_bool_sound_thm) = bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm), (wpsdom, List.rev blstodo)) (program, post, ls) defs;
