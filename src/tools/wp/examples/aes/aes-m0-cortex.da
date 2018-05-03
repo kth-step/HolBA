@@ -1,0 +1,579 @@
+
+aes.o:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00000000 <KeyExpansion>:
+   0:	4b1b      	ldr	r3, [pc, #108]	; (70 <KeyExpansion+0x70>)
+   2:	b5f7      	push	{r0, r1, r2, r4, r5, r6, r7, lr}
+   4:	cb04      	ldmia	r3!, {r2}
+   6:	0010      	movs	r0, r2
+   8:	0019      	movs	r1, r3
+   a:	3010      	adds	r0, #16
+   c:	7814      	ldrb	r4, [r2, #0]
+   e:	700c      	strb	r4, [r1, #0]
+  10:	7854      	ldrb	r4, [r2, #1]
+  12:	704c      	strb	r4, [r1, #1]
+  14:	7894      	ldrb	r4, [r2, #2]
+  16:	708c      	strb	r4, [r1, #2]
+  18:	78d4      	ldrb	r4, [r2, #3]
+  1a:	3204      	adds	r2, #4
+  1c:	70cc      	strb	r4, [r1, #3]
+  1e:	3104      	adds	r1, #4
+  20:	4282      	cmp	r2, r0
+  22:	d1f3      	bne.n	c <KeyExpansion+0xc>
+  24:	4913      	ldr	r1, [pc, #76]	; (74 <KeyExpansion+0x74>)
+  26:	2204      	movs	r2, #4
+  28:	468c      	mov	ip, r1
+  2a:	4813      	ldr	r0, [pc, #76]	; (78 <KeyExpansion+0x78>)
+  2c:	2703      	movs	r7, #3
+  2e:	7b19      	ldrb	r1, [r3, #12]
+  30:	7b5e      	ldrb	r6, [r3, #13]
+  32:	7b9d      	ldrb	r5, [r3, #14]
+  34:	7bdc      	ldrb	r4, [r3, #15]
+  36:	423a      	tst	r2, r7
+  38:	d109      	bne.n	4e <KeyExpansion+0x4e>
+  3a:	4667      	mov	r7, ip
+  3c:	5d86      	ldrb	r6, [r0, r6]
+  3e:	9601      	str	r6, [sp, #4]
+  40:	5d46      	ldrb	r6, [r0, r5]
+  42:	5d05      	ldrb	r5, [r0, r4]
+  44:	5c44      	ldrb	r4, [r0, r1]
+  46:	0891      	lsrs	r1, r2, #2
+  48:	5c79      	ldrb	r1, [r7, r1]
+  4a:	9f01      	ldr	r7, [sp, #4]
+  4c:	4079      	eors	r1, r7
+  4e:	781f      	ldrb	r7, [r3, #0]
+  50:	3201      	adds	r2, #1
+  52:	4079      	eors	r1, r7
+  54:	7419      	strb	r1, [r3, #16]
+  56:	7859      	ldrb	r1, [r3, #1]
+  58:	404e      	eors	r6, r1
+  5a:	7899      	ldrb	r1, [r3, #2]
+  5c:	745e      	strb	r6, [r3, #17]
+  5e:	404d      	eors	r5, r1
+  60:	78d9      	ldrb	r1, [r3, #3]
+  62:	749d      	strb	r5, [r3, #18]
+  64:	404c      	eors	r4, r1
+  66:	74dc      	strb	r4, [r3, #19]
+  68:	3304      	adds	r3, #4
+  6a:	2a2c      	cmp	r2, #44	; 0x2c
+  6c:	d1de      	bne.n	2c <KeyExpansion+0x2c>
+  6e:	bdf7      	pop	{r0, r1, r2, r4, r5, r6, r7, pc}
+  70:	00000000 	.word	0x00000000
+  74:	00000100 	.word	0x00000100
+  78:	00000000 	.word	0x00000000
+
+0000007c <AddRoundKey>:
+  7c:	b5f7      	push	{r0, r1, r2, r4, r5, r6, r7, lr}
+  7e:	2200      	movs	r2, #0
+  80:	4b0b      	ldr	r3, [pc, #44]	; (b0 <AddRoundKey+0x34>)
+  82:	4c0c      	ldr	r4, [pc, #48]	; (b4 <AddRoundKey+0x38>)
+  84:	6b5f      	ldr	r7, [r3, #52]	; 0x34
+  86:	1d23      	adds	r3, r4, #4
+  88:	0100      	lsls	r0, r0, #4
+  8a:	9301      	str	r3, [sp, #4]
+  8c:	9b01      	ldr	r3, [sp, #4]
+  8e:	1811      	adds	r1, r2, r0
+  90:	1859      	adds	r1, r3, r1
+  92:	2300      	movs	r3, #0
+  94:	18be      	adds	r6, r7, r2
+  96:	5cf5      	ldrb	r5, [r6, r3]
+  98:	46ac      	mov	ip, r5
+  9a:	4664      	mov	r4, ip
+  9c:	5ccd      	ldrb	r5, [r1, r3]
+  9e:	4065      	eors	r5, r4
+  a0:	54f5      	strb	r5, [r6, r3]
+  a2:	3301      	adds	r3, #1
+  a4:	2b04      	cmp	r3, #4
+  a6:	d1f6      	bne.n	96 <AddRoundKey+0x1a>
+  a8:	3204      	adds	r2, #4
+  aa:	2a10      	cmp	r2, #16
+  ac:	d1ee      	bne.n	8c <AddRoundKey+0x10>
+  ae:	bdf7      	pop	{r0, r1, r2, r4, r5, r6, r7, pc}
+  b0:	00000080 	.word	0x00000080
+  b4:	00000000 	.word	0x00000000
+
+000000b8 <SubBytes>:
+  b8:	4b07      	ldr	r3, [pc, #28]	; (d8 <SubBytes+0x20>)
+  ba:	b510      	push	{r4, lr}
+  bc:	6b5b      	ldr	r3, [r3, #52]	; 0x34
+  be:	4807      	ldr	r0, [pc, #28]	; (dc <SubBytes+0x24>)
+  c0:	1d19      	adds	r1, r3, #4
+  c2:	2200      	movs	r2, #0
+  c4:	5c9c      	ldrb	r4, [r3, r2]
+  c6:	5d04      	ldrb	r4, [r0, r4]
+  c8:	549c      	strb	r4, [r3, r2]
+  ca:	3204      	adds	r2, #4
+  cc:	2a10      	cmp	r2, #16
+  ce:	d1f9      	bne.n	c4 <SubBytes+0xc>
+  d0:	3301      	adds	r3, #1
+  d2:	4299      	cmp	r1, r3
+  d4:	d1f5      	bne.n	c2 <SubBytes+0xa>
+  d6:	bd10      	pop	{r4, pc}
+  d8:	00000080 	.word	0x00000080
+  dc:	00000000 	.word	0x00000000
+
+000000e0 <ShiftRows>:
+  e0:	4b0d      	ldr	r3, [pc, #52]	; (118 <ShiftRows+0x38>)
+  e2:	6b5b      	ldr	r3, [r3, #52]	; 0x34
+  e4:	7959      	ldrb	r1, [r3, #5]
+  e6:	785a      	ldrb	r2, [r3, #1]
+  e8:	7059      	strb	r1, [r3, #1]
+  ea:	7a59      	ldrb	r1, [r3, #9]
+  ec:	7159      	strb	r1, [r3, #5]
+  ee:	7b59      	ldrb	r1, [r3, #13]
+  f0:	735a      	strb	r2, [r3, #13]
+  f2:	7259      	strb	r1, [r3, #9]
+  f4:	7a99      	ldrb	r1, [r3, #10]
+  f6:	789a      	ldrb	r2, [r3, #2]
+  f8:	7099      	strb	r1, [r3, #2]
+  fa:	7b99      	ldrb	r1, [r3, #14]
+  fc:	729a      	strb	r2, [r3, #10]
+  fe:	799a      	ldrb	r2, [r3, #6]
+ 100:	7199      	strb	r1, [r3, #6]
+ 102:	7bd9      	ldrb	r1, [r3, #15]
+ 104:	739a      	strb	r2, [r3, #14]
+ 106:	78da      	ldrb	r2, [r3, #3]
+ 108:	70d9      	strb	r1, [r3, #3]
+ 10a:	7ad9      	ldrb	r1, [r3, #11]
+ 10c:	73d9      	strb	r1, [r3, #15]
+ 10e:	79d9      	ldrb	r1, [r3, #7]
+ 110:	71da      	strb	r2, [r3, #7]
+ 112:	72d9      	strb	r1, [r3, #11]
+ 114:	4770      	bx	lr
+ 116:	46c0      	nop			; (mov r8, r8)
+ 118:	00000080 	.word	0x00000080
+
+0000011c <xtime>:
+ 11c:	231b      	movs	r3, #27
+ 11e:	09c2      	lsrs	r2, r0, #7
+ 120:	4353      	muls	r3, r2
+ 122:	0040      	lsls	r0, r0, #1
+ 124:	4058      	eors	r0, r3
+ 126:	b2c0      	uxtb	r0, r0
+ 128:	4770      	bx	lr
+
+0000012a <InvSubBytes>:
+ 12a:	4b08      	ldr	r3, [pc, #32]	; (14c <InvSubBytes+0x22>)
+ 12c:	b510      	push	{r4, lr}
+ 12e:	6b5b      	ldr	r3, [r3, #52]	; 0x34
+ 130:	4907      	ldr	r1, [pc, #28]	; (150 <InvSubBytes+0x26>)
+ 132:	1d18      	adds	r0, r3, #4
+ 134:	310b      	adds	r1, #11
+ 136:	2200      	movs	r2, #0
+ 138:	5c9c      	ldrb	r4, [r3, r2]
+ 13a:	5d0c      	ldrb	r4, [r1, r4]
+ 13c:	549c      	strb	r4, [r3, r2]
+ 13e:	3204      	adds	r2, #4
+ 140:	2a10      	cmp	r2, #16
+ 142:	d1f9      	bne.n	138 <InvSubBytes+0xe>
+ 144:	3301      	adds	r3, #1
+ 146:	4298      	cmp	r0, r3
+ 148:	d1f5      	bne.n	136 <InvSubBytes+0xc>
+ 14a:	bd10      	pop	{r4, pc}
+ 14c:	00000080 	.word	0x00000080
+ 150:	00000100 	.word	0x00000100
+
+00000154 <InvShiftRows>:
+ 154:	4b0d      	ldr	r3, [pc, #52]	; (18c <InvShiftRows+0x38>)
+ 156:	6b5b      	ldr	r3, [r3, #52]	; 0x34
+ 158:	7a59      	ldrb	r1, [r3, #9]
+ 15a:	7b5a      	ldrb	r2, [r3, #13]
+ 15c:	7359      	strb	r1, [r3, #13]
+ 15e:	7959      	ldrb	r1, [r3, #5]
+ 160:	7259      	strb	r1, [r3, #9]
+ 162:	7859      	ldrb	r1, [r3, #1]
+ 164:	705a      	strb	r2, [r3, #1]
+ 166:	7159      	strb	r1, [r3, #5]
+ 168:	7a99      	ldrb	r1, [r3, #10]
+ 16a:	789a      	ldrb	r2, [r3, #2]
+ 16c:	7099      	strb	r1, [r3, #2]
+ 16e:	7b99      	ldrb	r1, [r3, #14]
+ 170:	729a      	strb	r2, [r3, #10]
+ 172:	799a      	ldrb	r2, [r3, #6]
+ 174:	7199      	strb	r1, [r3, #6]
+ 176:	79d9      	ldrb	r1, [r3, #7]
+ 178:	739a      	strb	r2, [r3, #14]
+ 17a:	78da      	ldrb	r2, [r3, #3]
+ 17c:	70d9      	strb	r1, [r3, #3]
+ 17e:	7ad9      	ldrb	r1, [r3, #11]
+ 180:	71d9      	strb	r1, [r3, #7]
+ 182:	7bd9      	ldrb	r1, [r3, #15]
+ 184:	73da      	strb	r2, [r3, #15]
+ 186:	72d9      	strb	r1, [r3, #11]
+ 188:	4770      	bx	lr
+ 18a:	46c0      	nop			; (mov r8, r8)
+ 18c:	00000080 	.word	0x00000080
+
+00000190 <Cipher>:
+ 190:	b5f0      	push	{r4, r5, r6, r7, lr}
+ 192:	2000      	movs	r0, #0
+ 194:	b087      	sub	sp, #28
+ 196:	f7ff ff71 	bl	7c <AddRoundKey>
+ 19a:	2501      	movs	r5, #1
+ 19c:	f7ff ff8c 	bl	b8 <SubBytes>
+ 1a0:	f7ff ff9e 	bl	e0 <ShiftRows>
+ 1a4:	4b22      	ldr	r3, [pc, #136]	; (230 <Cipher+0xa0>)
+ 1a6:	6b5c      	ldr	r4, [r3, #52]	; 0x34
+ 1a8:	0023      	movs	r3, r4
+ 1aa:	3310      	adds	r3, #16
+ 1ac:	9305      	str	r3, [sp, #20]
+ 1ae:	7823      	ldrb	r3, [r4, #0]
+ 1b0:	7867      	ldrb	r7, [r4, #1]
+ 1b2:	9301      	str	r3, [sp, #4]
+ 1b4:	0018      	movs	r0, r3
+ 1b6:	78a3      	ldrb	r3, [r4, #2]
+ 1b8:	4078      	eors	r0, r7
+ 1ba:	9302      	str	r3, [sp, #8]
+ 1bc:	78e3      	ldrb	r3, [r4, #3]
+ 1be:	9303      	str	r3, [sp, #12]
+ 1c0:	9a03      	ldr	r2, [sp, #12]
+ 1c2:	9b02      	ldr	r3, [sp, #8]
+ 1c4:	4053      	eors	r3, r2
+ 1c6:	001e      	movs	r6, r3
+ 1c8:	9304      	str	r3, [sp, #16]
+ 1ca:	4046      	eors	r6, r0
+ 1cc:	f7ff ffa6 	bl	11c <xtime>
+ 1d0:	9b01      	ldr	r3, [sp, #4]
+ 1d2:	4058      	eors	r0, r3
+ 1d4:	4070      	eors	r0, r6
+ 1d6:	7020      	strb	r0, [r4, #0]
+ 1d8:	9802      	ldr	r0, [sp, #8]
+ 1da:	4078      	eors	r0, r7
+ 1dc:	f7ff ff9e 	bl	11c <xtime>
+ 1e0:	4047      	eors	r7, r0
+ 1e2:	4077      	eors	r7, r6
+ 1e4:	7067      	strb	r7, [r4, #1]
+ 1e6:	9804      	ldr	r0, [sp, #16]
+ 1e8:	f7ff ff98 	bl	11c <xtime>
+ 1ec:	9b02      	ldr	r3, [sp, #8]
+ 1ee:	4058      	eors	r0, r3
+ 1f0:	4070      	eors	r0, r6
+ 1f2:	70a0      	strb	r0, [r4, #2]
+ 1f4:	9b03      	ldr	r3, [sp, #12]
+ 1f6:	9801      	ldr	r0, [sp, #4]
+ 1f8:	4058      	eors	r0, r3
+ 1fa:	f7ff ff8f 	bl	11c <xtime>
+ 1fe:	9b03      	ldr	r3, [sp, #12]
+ 200:	4058      	eors	r0, r3
+ 202:	4046      	eors	r6, r0
+ 204:	9b05      	ldr	r3, [sp, #20]
+ 206:	70e6      	strb	r6, [r4, #3]
+ 208:	3404      	adds	r4, #4
+ 20a:	429c      	cmp	r4, r3
+ 20c:	d1cf      	bne.n	1ae <Cipher+0x1e>
+ 20e:	0028      	movs	r0, r5
+ 210:	3501      	adds	r5, #1
+ 212:	b2ed      	uxtb	r5, r5
+ 214:	f7ff ff32 	bl	7c <AddRoundKey>
+ 218:	2d0a      	cmp	r5, #10
+ 21a:	d1bf      	bne.n	19c <Cipher+0xc>
+ 21c:	f7ff ff4c 	bl	b8 <SubBytes>
+ 220:	f7ff ff5e 	bl	e0 <ShiftRows>
+ 224:	0028      	movs	r0, r5
+ 226:	f7ff ff29 	bl	7c <AddRoundKey>
+ 22a:	b007      	add	sp, #28
+ 22c:	bdf0      	pop	{r4, r5, r6, r7, pc}
+ 22e:	46c0      	nop			; (mov r8, r8)
+ 230:	00000080 	.word	0x00000080
+
+00000234 <InvCipher>:
+ 234:	b5f0      	push	{r4, r5, r6, r7, lr}
+ 236:	200a      	movs	r0, #10
+ 238:	b08f      	sub	sp, #60	; 0x3c
+ 23a:	f7ff ff1f 	bl	7c <AddRoundKey>
+ 23e:	2409      	movs	r4, #9
+ 240:	f7ff ff88 	bl	154 <InvShiftRows>
+ 244:	f7ff ff71 	bl	12a <InvSubBytes>
+ 248:	0020      	movs	r0, r4
+ 24a:	f7ff ff17 	bl	7c <AddRoundKey>
+ 24e:	4b48      	ldr	r3, [pc, #288]	; (370 <InvCipher+0x13c>)
+ 250:	6b5d      	ldr	r5, [r3, #52]	; 0x34
+ 252:	002b      	movs	r3, r5
+ 254:	3310      	adds	r3, #16
+ 256:	930d      	str	r3, [sp, #52]	; 0x34
+ 258:	782b      	ldrb	r3, [r5, #0]
+ 25a:	9304      	str	r3, [sp, #16]
+ 25c:	786b      	ldrb	r3, [r5, #1]
+ 25e:	9804      	ldr	r0, [sp, #16]
+ 260:	9305      	str	r3, [sp, #20]
+ 262:	78ab      	ldrb	r3, [r5, #2]
+ 264:	9300      	str	r3, [sp, #0]
+ 266:	78eb      	ldrb	r3, [r5, #3]
+ 268:	9301      	str	r3, [sp, #4]
+ 26a:	f7ff ff57 	bl	11c <xtime>
+ 26e:	9006      	str	r0, [sp, #24]
+ 270:	f7ff ff54 	bl	11c <xtime>
+ 274:	9007      	str	r0, [sp, #28]
+ 276:	f7ff ff51 	bl	11c <xtime>
+ 27a:	9002      	str	r0, [sp, #8]
+ 27c:	9805      	ldr	r0, [sp, #20]
+ 27e:	f7ff ff4d 	bl	11c <xtime>
+ 282:	9008      	str	r0, [sp, #32]
+ 284:	f7ff ff4a 	bl	11c <xtime>
+ 288:	9009      	str	r0, [sp, #36]	; 0x24
+ 28a:	f7ff ff47 	bl	11c <xtime>
+ 28e:	9003      	str	r0, [sp, #12]
+ 290:	9800      	ldr	r0, [sp, #0]
+ 292:	f7ff ff43 	bl	11c <xtime>
+ 296:	900a      	str	r0, [sp, #40]	; 0x28
+ 298:	f7ff ff40 	bl	11c <xtime>
+ 29c:	0007      	movs	r7, r0
+ 29e:	f7ff ff3d 	bl	11c <xtime>
+ 2a2:	0006      	movs	r6, r0
+ 2a4:	9801      	ldr	r0, [sp, #4]
+ 2a6:	f7ff ff39 	bl	11c <xtime>
+ 2aa:	900b      	str	r0, [sp, #44]	; 0x2c
+ 2ac:	f7ff ff36 	bl	11c <xtime>
+ 2b0:	900c      	str	r0, [sp, #48]	; 0x30
+ 2b2:	f7ff ff33 	bl	11c <xtime>
+ 2b6:	9a07      	ldr	r2, [sp, #28]
+ 2b8:	9b06      	ldr	r3, [sp, #24]
+ 2ba:	4053      	eors	r3, r2
+ 2bc:	9a02      	ldr	r2, [sp, #8]
+ 2be:	4053      	eors	r3, r2
+ 2c0:	9a08      	ldr	r2, [sp, #32]
+ 2c2:	4053      	eors	r3, r2
+ 2c4:	9a03      	ldr	r2, [sp, #12]
+ 2c6:	4053      	eors	r3, r2
+ 2c8:	407b      	eors	r3, r7
+ 2ca:	9a05      	ldr	r2, [sp, #20]
+ 2cc:	4073      	eors	r3, r6
+ 2ce:	4043      	eors	r3, r0
+ 2d0:	4053      	eors	r3, r2
+ 2d2:	9a00      	ldr	r2, [sp, #0]
+ 2d4:	4053      	eors	r3, r2
+ 2d6:	9a01      	ldr	r2, [sp, #4]
+ 2d8:	4053      	eors	r3, r2
+ 2da:	702b      	strb	r3, [r5, #0]
+ 2dc:	9a02      	ldr	r2, [sp, #8]
+ 2de:	9b08      	ldr	r3, [sp, #32]
+ 2e0:	4053      	eors	r3, r2
+ 2e2:	9a09      	ldr	r2, [sp, #36]	; 0x24
+ 2e4:	4053      	eors	r3, r2
+ 2e6:	9a03      	ldr	r2, [sp, #12]
+ 2e8:	9902      	ldr	r1, [sp, #8]
+ 2ea:	4053      	eors	r3, r2
+ 2ec:	9a0a      	ldr	r2, [sp, #40]	; 0x28
+ 2ee:	4053      	eors	r3, r2
+ 2f0:	9a0c      	ldr	r2, [sp, #48]	; 0x30
+ 2f2:	4073      	eors	r3, r6
+ 2f4:	4053      	eors	r3, r2
+ 2f6:	9a04      	ldr	r2, [sp, #16]
+ 2f8:	4043      	eors	r3, r0
+ 2fa:	4053      	eors	r3, r2
+ 2fc:	9a00      	ldr	r2, [sp, #0]
+ 2fe:	4053      	eors	r3, r2
+ 300:	9a01      	ldr	r2, [sp, #4]
+ 302:	4053      	eors	r3, r2
+ 304:	706b      	strb	r3, [r5, #1]
+ 306:	9a04      	ldr	r2, [sp, #16]
+ 308:	9b05      	ldr	r3, [sp, #20]
+ 30a:	4053      	eors	r3, r2
+ 30c:	9a07      	ldr	r2, [sp, #28]
+ 30e:	404a      	eors	r2, r1
+ 310:	9903      	ldr	r1, [sp, #12]
+ 312:	404a      	eors	r2, r1
+ 314:	990a      	ldr	r1, [sp, #40]	; 0x28
+ 316:	404a      	eors	r2, r1
+ 318:	4057      	eors	r7, r2
+ 31a:	9a0b      	ldr	r2, [sp, #44]	; 0x2c
+ 31c:	4077      	eors	r7, r6
+ 31e:	4057      	eors	r7, r2
+ 320:	9a01      	ldr	r2, [sp, #4]
+ 322:	4047      	eors	r7, r0
+ 324:	4057      	eors	r7, r2
+ 326:	9902      	ldr	r1, [sp, #8]
+ 328:	9a06      	ldr	r2, [sp, #24]
+ 32a:	405f      	eors	r7, r3
+ 32c:	404a      	eors	r2, r1
+ 32e:	9909      	ldr	r1, [sp, #36]	; 0x24
+ 330:	70af      	strb	r7, [r5, #2]
+ 332:	404a      	eors	r2, r1
+ 334:	9903      	ldr	r1, [sp, #12]
+ 336:	404a      	eors	r2, r1
+ 338:	990b      	ldr	r1, [sp, #44]	; 0x2c
+ 33a:	4072      	eors	r2, r6
+ 33c:	9e0c      	ldr	r6, [sp, #48]	; 0x30
+ 33e:	404a      	eors	r2, r1
+ 340:	4056      	eors	r6, r2
+ 342:	9a00      	ldr	r2, [sp, #0]
+ 344:	4070      	eors	r0, r6
+ 346:	4050      	eors	r0, r2
+ 348:	4058      	eors	r0, r3
+ 34a:	9b0d      	ldr	r3, [sp, #52]	; 0x34
+ 34c:	70e8      	strb	r0, [r5, #3]
+ 34e:	3504      	adds	r5, #4
+ 350:	42ab      	cmp	r3, r5
+ 352:	d181      	bne.n	258 <InvCipher+0x24>
+ 354:	1e63      	subs	r3, r4, #1
+ 356:	b2dc      	uxtb	r4, r3
+ 358:	2c00      	cmp	r4, #0
+ 35a:	d000      	beq.n	35e <InvCipher+0x12a>
+ 35c:	e770      	b.n	240 <InvCipher+0xc>
+ 35e:	f7ff fef9 	bl	154 <InvShiftRows>
+ 362:	f7ff fee2 	bl	12a <InvSubBytes>
+ 366:	0020      	movs	r0, r4
+ 368:	f7ff fe88 	bl	7c <AddRoundKey>
+ 36c:	b00f      	add	sp, #60	; 0x3c
+ 36e:	bdf0      	pop	{r4, r5, r6, r7, pc}
+ 370:	00000080 	.word	0x00000080
+
+00000374 <XorWithIv>:
+ 374:	4b05      	ldr	r3, [pc, #20]	; (38c <XorWithIv+0x18>)
+ 376:	b510      	push	{r4, lr}
+ 378:	6b9c      	ldr	r4, [r3, #56]	; 0x38
+ 37a:	2300      	movs	r3, #0
+ 37c:	5cc1      	ldrb	r1, [r0, r3]
+ 37e:	5ce2      	ldrb	r2, [r4, r3]
+ 380:	404a      	eors	r2, r1
+ 382:	54c2      	strb	r2, [r0, r3]
+ 384:	3301      	adds	r3, #1
+ 386:	2b10      	cmp	r3, #16
+ 388:	d1f8      	bne.n	37c <XorWithIv+0x8>
+ 38a:	bd10      	pop	{r4, pc}
+ 38c:	00000080 	.word	0x00000080
+
+00000390 <AES_ECB_encrypt>:
+ 390:	b570      	push	{r4, r5, r6, lr}
+ 392:	0014      	movs	r4, r2
+ 394:	000d      	movs	r5, r1
+ 396:	001a      	movs	r2, r3
+ 398:	0001      	movs	r1, r0
+ 39a:	0020      	movs	r0, r4
+ 39c:	f7ff fffe 	bl	0 <memcpy>
+ 3a0:	4b04      	ldr	r3, [pc, #16]	; (3b4 <AES_ECB_encrypt+0x24>)
+ 3a2:	635c      	str	r4, [r3, #52]	; 0x34
+ 3a4:	4b04      	ldr	r3, [pc, #16]	; (3b8 <AES_ECB_encrypt+0x28>)
+ 3a6:	601d      	str	r5, [r3, #0]
+ 3a8:	f7ff fe2a 	bl	0 <KeyExpansion>
+ 3ac:	f7ff fef0 	bl	190 <Cipher>
+ 3b0:	bd70      	pop	{r4, r5, r6, pc}
+ 3b2:	46c0      	nop			; (mov r8, r8)
+ 3b4:	00000080 	.word	0x00000080
+ 3b8:	00000000 	.word	0x00000000
+
+000003bc <AES_ECB_decrypt>:
+ 3bc:	b570      	push	{r4, r5, r6, lr}
+ 3be:	0014      	movs	r4, r2
+ 3c0:	000d      	movs	r5, r1
+ 3c2:	001a      	movs	r2, r3
+ 3c4:	0001      	movs	r1, r0
+ 3c6:	0020      	movs	r0, r4
+ 3c8:	f7ff fffe 	bl	0 <memcpy>
+ 3cc:	4b04      	ldr	r3, [pc, #16]	; (3e0 <AES_ECB_decrypt+0x24>)
+ 3ce:	635c      	str	r4, [r3, #52]	; 0x34
+ 3d0:	4b04      	ldr	r3, [pc, #16]	; (3e4 <AES_ECB_decrypt+0x28>)
+ 3d2:	601d      	str	r5, [r3, #0]
+ 3d4:	f7ff fe14 	bl	0 <KeyExpansion>
+ 3d8:	f7ff ff2c 	bl	234 <InvCipher>
+ 3dc:	bd70      	pop	{r4, r5, r6, pc}
+ 3de:	46c0      	nop			; (mov r8, r8)
+ 3e0:	00000080 	.word	0x00000080
+ 3e4:	00000000 	.word	0x00000000
+
+000003e8 <AES_CBC_encrypt_buffer>:
+ 3e8:	b5f7      	push	{r0, r1, r2, r4, r5, r6, r7, lr}
+ 3ea:	9201      	str	r2, [sp, #4]
+ 3ec:	220f      	movs	r2, #15
+ 3ee:	000d      	movs	r5, r1
+ 3f0:	9901      	ldr	r1, [sp, #4]
+ 3f2:	0006      	movs	r6, r0
+ 3f4:	4011      	ands	r1, r2
+ 3f6:	9c08      	ldr	r4, [sp, #32]
+ 3f8:	9100      	str	r1, [sp, #0]
+ 3fa:	2b00      	cmp	r3, #0
+ 3fc:	d003      	beq.n	406 <AES_CBC_encrypt_buffer+0x1e>
+ 3fe:	4a15      	ldr	r2, [pc, #84]	; (454 <AES_CBC_encrypt_buffer+0x6c>)
+ 400:	6013      	str	r3, [r2, #0]
+ 402:	f7ff fdfd 	bl	0 <KeyExpansion>
+ 406:	2c00      	cmp	r4, #0
+ 408:	d001      	beq.n	40e <AES_CBC_encrypt_buffer+0x26>
+ 40a:	4b13      	ldr	r3, [pc, #76]	; (458 <AES_CBC_encrypt_buffer+0x70>)
+ 40c:	639c      	str	r4, [r3, #56]	; 0x38
+ 40e:	0034      	movs	r4, r6
+ 410:	9a01      	ldr	r2, [sp, #4]
+ 412:	1ba3      	subs	r3, r4, r6
+ 414:	429a      	cmp	r2, r3
+ 416:	d90f      	bls.n	438 <AES_CBC_encrypt_buffer+0x50>
+ 418:	0028      	movs	r0, r5
+ 41a:	f7ff ffab 	bl	374 <XorWithIv>
+ 41e:	0029      	movs	r1, r5
+ 420:	2210      	movs	r2, #16
+ 422:	0020      	movs	r0, r4
+ 424:	f7ff fffe 	bl	0 <memcpy>
+ 428:	4f0b      	ldr	r7, [pc, #44]	; (458 <AES_CBC_encrypt_buffer+0x70>)
+ 42a:	3510      	adds	r5, #16
+ 42c:	637c      	str	r4, [r7, #52]	; 0x34
+ 42e:	f7ff feaf 	bl	190 <Cipher>
+ 432:	63bc      	str	r4, [r7, #56]	; 0x38
+ 434:	3410      	adds	r4, #16
+ 436:	e7eb      	b.n	410 <AES_CBC_encrypt_buffer+0x28>
+ 438:	9b00      	ldr	r3, [sp, #0]
+ 43a:	2b00      	cmp	r3, #0
+ 43c:	d008      	beq.n	450 <AES_CBC_encrypt_buffer+0x68>
+ 43e:	001a      	movs	r2, r3
+ 440:	0029      	movs	r1, r5
+ 442:	0020      	movs	r0, r4
+ 444:	f7ff fffe 	bl	0 <memcpy>
+ 448:	4b03      	ldr	r3, [pc, #12]	; (458 <AES_CBC_encrypt_buffer+0x70>)
+ 44a:	635c      	str	r4, [r3, #52]	; 0x34
+ 44c:	f7ff fea0 	bl	190 <Cipher>
+ 450:	bdf7      	pop	{r0, r1, r2, r4, r5, r6, r7, pc}
+ 452:	46c0      	nop			; (mov r8, r8)
+ 454:	00000000 	.word	0x00000000
+ 458:	00000080 	.word	0x00000080
+
+0000045c <AES_CBC_decrypt_buffer>:
+ 45c:	b5f7      	push	{r0, r1, r2, r4, r5, r6, r7, lr}
+ 45e:	9201      	str	r2, [sp, #4]
+ 460:	220f      	movs	r2, #15
+ 462:	000d      	movs	r5, r1
+ 464:	9901      	ldr	r1, [sp, #4]
+ 466:	0006      	movs	r6, r0
+ 468:	4011      	ands	r1, r2
+ 46a:	9c08      	ldr	r4, [sp, #32]
+ 46c:	9100      	str	r1, [sp, #0]
+ 46e:	2b00      	cmp	r3, #0
+ 470:	d003      	beq.n	47a <AES_CBC_decrypt_buffer+0x1e>
+ 472:	4a15      	ldr	r2, [pc, #84]	; (4c8 <AES_CBC_decrypt_buffer+0x6c>)
+ 474:	6013      	str	r3, [r2, #0]
+ 476:	f7ff fdc3 	bl	0 <KeyExpansion>
+ 47a:	2c00      	cmp	r4, #0
+ 47c:	d001      	beq.n	482 <AES_CBC_decrypt_buffer+0x26>
+ 47e:	4b13      	ldr	r3, [pc, #76]	; (4cc <AES_CBC_decrypt_buffer+0x70>)
+ 480:	639c      	str	r4, [r3, #56]	; 0x38
+ 482:	0034      	movs	r4, r6
+ 484:	9a01      	ldr	r2, [sp, #4]
+ 486:	1ba3      	subs	r3, r4, r6
+ 488:	429a      	cmp	r2, r3
+ 48a:	d90f      	bls.n	4ac <AES_CBC_decrypt_buffer+0x50>
+ 48c:	0029      	movs	r1, r5
+ 48e:	2210      	movs	r2, #16
+ 490:	0020      	movs	r0, r4
+ 492:	f7ff fffe 	bl	0 <memcpy>
+ 496:	4f0d      	ldr	r7, [pc, #52]	; (4cc <AES_CBC_decrypt_buffer+0x70>)
+ 498:	637c      	str	r4, [r7, #52]	; 0x34
+ 49a:	f7ff fecb 	bl	234 <InvCipher>
+ 49e:	0020      	movs	r0, r4
+ 4a0:	f7ff ff68 	bl	374 <XorWithIv>
+ 4a4:	3410      	adds	r4, #16
+ 4a6:	63bd      	str	r5, [r7, #56]	; 0x38
+ 4a8:	3510      	adds	r5, #16
+ 4aa:	e7eb      	b.n	484 <AES_CBC_decrypt_buffer+0x28>
+ 4ac:	9b00      	ldr	r3, [sp, #0]
+ 4ae:	2b00      	cmp	r3, #0
+ 4b0:	d008      	beq.n	4c4 <AES_CBC_decrypt_buffer+0x68>
+ 4b2:	001a      	movs	r2, r3
+ 4b4:	0029      	movs	r1, r5
+ 4b6:	0020      	movs	r0, r4
+ 4b8:	f7ff fffe 	bl	0 <memcpy>
+ 4bc:	4b03      	ldr	r3, [pc, #12]	; (4cc <AES_CBC_decrypt_buffer+0x70>)
+ 4be:	635c      	str	r4, [r3, #52]	; 0x34
+ 4c0:	f7ff feb8 	bl	234 <InvCipher>
+ 4c4:	bdf7      	pop	{r0, r1, r2, r4, r5, r6, r7, pc}
+ 4c6:	46c0      	nop			; (mov r8, r8)
+ 4c8:	00000000 	.word	0x00000000
+ 4cc:	00000080 	.word	0x00000080
