@@ -1999,7 +1999,8 @@ val bir_wp_simp_varset_and_helper2_thm = store_thm("bir_wp_simp_varset_and_helpe
     )
 ``,
 
-  cheat
+  REPEAT STRIP_TAC >>
+  METIS_TAC [bir_typing_expTheory.bir_var_set_is_well_typed_SUBSET, pred_setTheory.UNION_ASSOC, pred_setTheory.SUBSET_UNION]
 );
 
 val bir_wp_simp_varset_and_helper3_thm = store_thm("bir_wp_simp_varset_and_helper3_thm", ``
