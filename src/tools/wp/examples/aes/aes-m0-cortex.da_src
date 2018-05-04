@@ -1,11 +1,15 @@
+arm-none-eabi-objdump -d -S main
 
 main:     file format elf32-littlearm
 
 
-Disassembly of section .text:
-
-
 0000811c <wc_AesEncryptSimplified>:
+
+#define GETBYTE(x, y) (word32)((byte)((x) >> (8 * (y))))
+
+
+static void wc_AesEncryptSimplified(const word32* rk, word32 rounds, const byte* inBlock, byte* outBlock)
+{
     811c:	b580      	push	{r7, lr}
     811e:	b096      	sub	sp, #88	; 0x58
     8120:	af00      	add	r7, sp, #0
@@ -13,87 +17,128 @@ Disassembly of section .text:
     8124:	60b9      	str	r1, [r7, #8]
     8126:	607a      	str	r2, [r7, #4]
     8128:	603b      	str	r3, [r7, #0]
+    word32 s0, s1, s2, s3;
+    word32 t0, t1, t2, t3;
+    word32 v0, v1, v2, v3;
+    word32 a0, a1, a2, a3;
+    word32 r = rounds - 1;
     812a:	68bb      	ldr	r3, [r7, #8]
     812c:	3b01      	subs	r3, #1
     812e:	637b      	str	r3, [r7, #52]	; 0x34
+    XMEMCPY(&s0, inBlock,                  sizeof(s0));
+    XMEMCPY(&s1, inBlock + sizeof(s0),     sizeof(s1));
+    XMEMCPY(&s2, inBlock + 2 * sizeof(s0), sizeof(s2));
+    XMEMCPY(&s3, inBlock + 3 * sizeof(s0), sizeof(s3));
+    */
+    s0 = *((word32*)inBlock);
     8130:	687b      	ldr	r3, [r7, #4]
     8132:	681b      	ldr	r3, [r3, #0]
     8134:	657b      	str	r3, [r7, #84]	; 0x54
+    s1 = *(((word32*)inBlock)+1);
     8136:	687b      	ldr	r3, [r7, #4]
     8138:	685b      	ldr	r3, [r3, #4]
     813a:	653b      	str	r3, [r7, #80]	; 0x50
+    s2 = *(((word32*)inBlock)+2);
     813c:	687b      	ldr	r3, [r7, #4]
     813e:	689b      	ldr	r3, [r3, #8]
     8140:	64fb      	str	r3, [r7, #76]	; 0x4c
+    s3 = *(((word32*)inBlock)+3);
     8142:	687b      	ldr	r3, [r7, #4]
     8144:	68db      	ldr	r3, [r3, #12]
     8146:	64bb      	str	r3, [r7, #72]	; 0x48
+        s2 = ByteReverseWord32(s2);
+        s3 = ByteReverseWord32(s3);
+    #endif
+    */
+
+    s0 ^= rk[0];
     8148:	68fb      	ldr	r3, [r7, #12]
     814a:	681b      	ldr	r3, [r3, #0]
     814c:	6d7a      	ldr	r2, [r7, #84]	; 0x54
     814e:	4053      	eors	r3, r2
     8150:	657b      	str	r3, [r7, #84]	; 0x54
+    s1 ^= rk[1];
     8152:	68fb      	ldr	r3, [r7, #12]
     8154:	3304      	adds	r3, #4
     8156:	681b      	ldr	r3, [r3, #0]
     8158:	6d3a      	ldr	r2, [r7, #80]	; 0x50
     815a:	4053      	eors	r3, r2
     815c:	653b      	str	r3, [r7, #80]	; 0x50
+    s2 ^= rk[2];
     815e:	68fb      	ldr	r3, [r7, #12]
     8160:	3308      	adds	r3, #8
     8162:	681b      	ldr	r3, [r3, #0]
     8164:	6cfa      	ldr	r2, [r7, #76]	; 0x4c
     8166:	4053      	eors	r3, r2
     8168:	64fb      	str	r3, [r7, #76]	; 0x4c
+    s3 ^= rk[3];
     816a:	68fb      	ldr	r3, [r7, #12]
     816c:	330c      	adds	r3, #12
     816e:	681b      	ldr	r3, [r3, #0]
     8170:	6cba      	ldr	r2, [r7, #72]	; 0x48
     8172:	4053      	eors	r3, r2
     8174:	64bb      	str	r3, [r7, #72]	; 0x48
+
+    /*
+     * Nr - 1 full rounds:
+     */
+
+    rk += 4;
     8176:	68fb      	ldr	r3, [r7, #12]
     8178:	3310      	adds	r3, #16
     817a:	60fb      	str	r3, [r7, #12]
+    
+    while (r != 0) {
     817c:	e0d8      	b.n	8330 <wc_AesEncryptSimplified+0x214>
+      a0=GETBYTE(s0, 3);
     817e:	6d7b      	ldr	r3, [r7, #84]	; 0x54
     8180:	0e1b      	lsrs	r3, r3, #24
     8182:	b2db      	uxtb	r3, r3
     8184:	633b      	str	r3, [r7, #48]	; 0x30
+      a1=GETBYTE(s1, 2);
     8186:	6d3b      	ldr	r3, [r7, #80]	; 0x50
     8188:	0c1b      	lsrs	r3, r3, #16
     818a:	b2db      	uxtb	r3, r3
     818c:	62fb      	str	r3, [r7, #44]	; 0x2c
+      a2=GETBYTE(s2, 1);
     818e:	6cfb      	ldr	r3, [r7, #76]	; 0x4c
     8190:	0a1b      	lsrs	r3, r3, #8
     8192:	b2db      	uxtb	r3, r3
     8194:	62bb      	str	r3, [r7, #40]	; 0x28
+      a3=GETBYTE(s3, 0);
     8196:	6cbb      	ldr	r3, [r7, #72]	; 0x48
     8198:	b2db      	uxtb	r3, r3
     819a:	627b      	str	r3, [r7, #36]	; 0x24
+      v0=*(Te[0] + a0);
     819c:	6b3b      	ldr	r3, [r7, #48]	; 0x30
     819e:	009a      	lsls	r2, r3, #2
     81a0:	4be8      	ldr	r3, [pc, #928]	; (8544 <wc_AesEncryptSimplified+0x428>)
     81a2:	18d3      	adds	r3, r2, r3
     81a4:	681b      	ldr	r3, [r3, #0]
     81a6:	623b      	str	r3, [r7, #32]
+      v1=*(Te[1] + a1);
     81a8:	6afb      	ldr	r3, [r7, #44]	; 0x2c
     81aa:	009a      	lsls	r2, r3, #2
     81ac:	4be6      	ldr	r3, [pc, #920]	; (8548 <wc_AesEncryptSimplified+0x42c>)
     81ae:	18d3      	adds	r3, r2, r3
     81b0:	681b      	ldr	r3, [r3, #0]
     81b2:	61fb      	str	r3, [r7, #28]
+      v2=*(Te[2] + a2);
     81b4:	6abb      	ldr	r3, [r7, #40]	; 0x28
     81b6:	009a      	lsls	r2, r3, #2
     81b8:	4be4      	ldr	r3, [pc, #912]	; (854c <wc_AesEncryptSimplified+0x430>)
     81ba:	18d3      	adds	r3, r2, r3
     81bc:	681b      	ldr	r3, [r3, #0]
     81be:	61bb      	str	r3, [r7, #24]
+      v3=*(Te[3] + a3);
     81c0:	6a7b      	ldr	r3, [r7, #36]	; 0x24
     81c2:	009a      	lsls	r2, r3, #2
     81c4:	4be2      	ldr	r3, [pc, #904]	; (8550 <wc_AesEncryptSimplified+0x434>)
     81c6:	18d3      	adds	r3, r2, r3
     81c8:	681b      	ldr	r3, [r3, #0]
     81ca:	617b      	str	r3, [r7, #20]
+        t0 =
+            v0  ^ v1 ^ v2 ^ v3 ^
     81cc:	6a3a      	ldr	r2, [r7, #32]
     81ce:	69fb      	ldr	r3, [r7, #28]
     81d0:	405a      	eors	r2, r3
@@ -101,49 +146,69 @@ Disassembly of section .text:
     81d4:	405a      	eors	r2, r3
     81d6:	697b      	ldr	r3, [r7, #20]
     81d8:	405a      	eors	r2, r3
+            rk[0];
     81da:	68fb      	ldr	r3, [r7, #12]
     81dc:	681b      	ldr	r3, [r3, #0]
+      a3=GETBYTE(s3, 0);
+      v0=*(Te[0] + a0);
+      v1=*(Te[1] + a1);
+      v2=*(Te[2] + a2);
+      v3=*(Te[3] + a3);
+        t0 =
     81de:	4053      	eors	r3, r2
     81e0:	647b      	str	r3, [r7, #68]	; 0x44
+            v0  ^ v1 ^ v2 ^ v3 ^
+            rk[0];
+
+      a0=GETBYTE(s1, 3);
     81e2:	6d3b      	ldr	r3, [r7, #80]	; 0x50
     81e4:	0e1b      	lsrs	r3, r3, #24
     81e6:	b2db      	uxtb	r3, r3
     81e8:	633b      	str	r3, [r7, #48]	; 0x30
+      a1=GETBYTE(s2, 2);
     81ea:	6cfb      	ldr	r3, [r7, #76]	; 0x4c
     81ec:	0c1b      	lsrs	r3, r3, #16
     81ee:	b2db      	uxtb	r3, r3
     81f0:	62fb      	str	r3, [r7, #44]	; 0x2c
+      a2=GETBYTE(s3, 1);
     81f2:	6cbb      	ldr	r3, [r7, #72]	; 0x48
     81f4:	0a1b      	lsrs	r3, r3, #8
     81f6:	b2db      	uxtb	r3, r3
     81f8:	62bb      	str	r3, [r7, #40]	; 0x28
+      a3=GETBYTE(s0, 0);
     81fa:	6d7b      	ldr	r3, [r7, #84]	; 0x54
     81fc:	b2db      	uxtb	r3, r3
     81fe:	627b      	str	r3, [r7, #36]	; 0x24
+      v0=*(Te[0] + a0);
     8200:	6b3b      	ldr	r3, [r7, #48]	; 0x30
     8202:	009a      	lsls	r2, r3, #2
     8204:	4bcf      	ldr	r3, [pc, #828]	; (8544 <wc_AesEncryptSimplified+0x428>)
     8206:	18d3      	adds	r3, r2, r3
     8208:	681b      	ldr	r3, [r3, #0]
     820a:	623b      	str	r3, [r7, #32]
+      v1=*(Te[1] + a1);
     820c:	6afb      	ldr	r3, [r7, #44]	; 0x2c
     820e:	009a      	lsls	r2, r3, #2
     8210:	4bcd      	ldr	r3, [pc, #820]	; (8548 <wc_AesEncryptSimplified+0x42c>)
     8212:	18d3      	adds	r3, r2, r3
     8214:	681b      	ldr	r3, [r3, #0]
     8216:	61fb      	str	r3, [r7, #28]
+      v2=*(Te[2] + a2);
     8218:	6abb      	ldr	r3, [r7, #40]	; 0x28
     821a:	009a      	lsls	r2, r3, #2
     821c:	4bcb      	ldr	r3, [pc, #812]	; (854c <wc_AesEncryptSimplified+0x430>)
     821e:	18d3      	adds	r3, r2, r3
     8220:	681b      	ldr	r3, [r3, #0]
     8222:	61bb      	str	r3, [r7, #24]
+      v3=*(Te[3] + a3);
     8224:	6a7b      	ldr	r3, [r7, #36]	; 0x24
     8226:	009a      	lsls	r2, r3, #2
     8228:	4bc9      	ldr	r3, [pc, #804]	; (8550 <wc_AesEncryptSimplified+0x434>)
     822a:	18d3      	adds	r3, r2, r3
     822c:	681b      	ldr	r3, [r3, #0]
     822e:	617b      	str	r3, [r7, #20]
+        t1 =
+            v0  ^ v1 ^ v2 ^ v3 ^
     8230:	6a3a      	ldr	r2, [r7, #32]
     8232:	69fb      	ldr	r3, [r7, #28]
     8234:	405a      	eors	r2, r3
@@ -151,50 +216,70 @@ Disassembly of section .text:
     8238:	405a      	eors	r2, r3
     823a:	697b      	ldr	r3, [r7, #20]
     823c:	405a      	eors	r2, r3
+            rk[1];
     823e:	68fb      	ldr	r3, [r7, #12]
     8240:	3304      	adds	r3, #4
     8242:	681b      	ldr	r3, [r3, #0]
+      a3=GETBYTE(s0, 0);
+      v0=*(Te[0] + a0);
+      v1=*(Te[1] + a1);
+      v2=*(Te[2] + a2);
+      v3=*(Te[3] + a3);
+        t1 =
     8244:	4053      	eors	r3, r2
     8246:	643b      	str	r3, [r7, #64]	; 0x40
+            v0  ^ v1 ^ v2 ^ v3 ^
+            rk[1];
+
+      a0=GETBYTE(s2, 3);
     8248:	6cfb      	ldr	r3, [r7, #76]	; 0x4c
     824a:	0e1b      	lsrs	r3, r3, #24
     824c:	b2db      	uxtb	r3, r3
     824e:	633b      	str	r3, [r7, #48]	; 0x30
+      a1=GETBYTE(s3, 2);
     8250:	6cbb      	ldr	r3, [r7, #72]	; 0x48
     8252:	0c1b      	lsrs	r3, r3, #16
     8254:	b2db      	uxtb	r3, r3
     8256:	62fb      	str	r3, [r7, #44]	; 0x2c
+      a2=GETBYTE(s0, 1);
     8258:	6d7b      	ldr	r3, [r7, #84]	; 0x54
     825a:	0a1b      	lsrs	r3, r3, #8
     825c:	b2db      	uxtb	r3, r3
     825e:	62bb      	str	r3, [r7, #40]	; 0x28
+      a3=GETBYTE(s1, 0);
     8260:	6d3b      	ldr	r3, [r7, #80]	; 0x50
     8262:	b2db      	uxtb	r3, r3
     8264:	627b      	str	r3, [r7, #36]	; 0x24
+      v0=*(Te[0] + a0);
     8266:	6b3b      	ldr	r3, [r7, #48]	; 0x30
     8268:	009a      	lsls	r2, r3, #2
     826a:	4bb6      	ldr	r3, [pc, #728]	; (8544 <wc_AesEncryptSimplified+0x428>)
     826c:	18d3      	adds	r3, r2, r3
     826e:	681b      	ldr	r3, [r3, #0]
     8270:	623b      	str	r3, [r7, #32]
+      v1=*(Te[1] + a1);
     8272:	6afb      	ldr	r3, [r7, #44]	; 0x2c
     8274:	009a      	lsls	r2, r3, #2
     8276:	4bb4      	ldr	r3, [pc, #720]	; (8548 <wc_AesEncryptSimplified+0x42c>)
     8278:	18d3      	adds	r3, r2, r3
     827a:	681b      	ldr	r3, [r3, #0]
     827c:	61fb      	str	r3, [r7, #28]
+      v2=*(Te[2] + a2);
     827e:	6abb      	ldr	r3, [r7, #40]	; 0x28
     8280:	009a      	lsls	r2, r3, #2
     8282:	4bb2      	ldr	r3, [pc, #712]	; (854c <wc_AesEncryptSimplified+0x430>)
     8284:	18d3      	adds	r3, r2, r3
     8286:	681b      	ldr	r3, [r3, #0]
     8288:	61bb      	str	r3, [r7, #24]
+      v3=*(Te[3] + a3);
     828a:	6a7b      	ldr	r3, [r7, #36]	; 0x24
     828c:	009a      	lsls	r2, r3, #2
     828e:	4bb0      	ldr	r3, [pc, #704]	; (8550 <wc_AesEncryptSimplified+0x434>)
     8290:	18d3      	adds	r3, r2, r3
     8292:	681b      	ldr	r3, [r3, #0]
     8294:	617b      	str	r3, [r7, #20]
+        t2 =
+            v0  ^ v1 ^ v2 ^ v3 ^
     8296:	6a3a      	ldr	r2, [r7, #32]
     8298:	69fb      	ldr	r3, [r7, #28]
     829a:	405a      	eors	r2, r3
@@ -202,50 +287,70 @@ Disassembly of section .text:
     829e:	405a      	eors	r2, r3
     82a0:	697b      	ldr	r3, [r7, #20]
     82a2:	405a      	eors	r2, r3
+            rk[2];
     82a4:	68fb      	ldr	r3, [r7, #12]
     82a6:	3308      	adds	r3, #8
     82a8:	681b      	ldr	r3, [r3, #0]
+      a3=GETBYTE(s1, 0);
+      v0=*(Te[0] + a0);
+      v1=*(Te[1] + a1);
+      v2=*(Te[2] + a2);
+      v3=*(Te[3] + a3);
+        t2 =
     82aa:	4053      	eors	r3, r2
     82ac:	63fb      	str	r3, [r7, #60]	; 0x3c
+            v0  ^ v1 ^ v2 ^ v3 ^
+            rk[2];
+
+      a0=GETBYTE(s3, 3);
     82ae:	6cbb      	ldr	r3, [r7, #72]	; 0x48
     82b0:	0e1b      	lsrs	r3, r3, #24
     82b2:	b2db      	uxtb	r3, r3
     82b4:	633b      	str	r3, [r7, #48]	; 0x30
+      a1=GETBYTE(s0, 2);
     82b6:	6d7b      	ldr	r3, [r7, #84]	; 0x54
     82b8:	0c1b      	lsrs	r3, r3, #16
     82ba:	b2db      	uxtb	r3, r3
     82bc:	62fb      	str	r3, [r7, #44]	; 0x2c
+      a2=GETBYTE(s1, 1);
     82be:	6d3b      	ldr	r3, [r7, #80]	; 0x50
     82c0:	0a1b      	lsrs	r3, r3, #8
     82c2:	b2db      	uxtb	r3, r3
     82c4:	62bb      	str	r3, [r7, #40]	; 0x28
+      a3=GETBYTE(s2, 0);
     82c6:	6cfb      	ldr	r3, [r7, #76]	; 0x4c
     82c8:	b2db      	uxtb	r3, r3
     82ca:	627b      	str	r3, [r7, #36]	; 0x24
+      v0=*(Te[0] + a0);
     82cc:	6b3b      	ldr	r3, [r7, #48]	; 0x30
     82ce:	009a      	lsls	r2, r3, #2
     82d0:	4b9c      	ldr	r3, [pc, #624]	; (8544 <wc_AesEncryptSimplified+0x428>)
     82d2:	18d3      	adds	r3, r2, r3
     82d4:	681b      	ldr	r3, [r3, #0]
     82d6:	623b      	str	r3, [r7, #32]
+      v1=*(Te[1] + a1);
     82d8:	6afb      	ldr	r3, [r7, #44]	; 0x2c
     82da:	009a      	lsls	r2, r3, #2
     82dc:	4b9a      	ldr	r3, [pc, #616]	; (8548 <wc_AesEncryptSimplified+0x42c>)
     82de:	18d3      	adds	r3, r2, r3
     82e0:	681b      	ldr	r3, [r3, #0]
     82e2:	61fb      	str	r3, [r7, #28]
+      v2=*(Te[2] + a2);
     82e4:	6abb      	ldr	r3, [r7, #40]	; 0x28
     82e6:	009a      	lsls	r2, r3, #2
     82e8:	4b98      	ldr	r3, [pc, #608]	; (854c <wc_AesEncryptSimplified+0x430>)
     82ea:	18d3      	adds	r3, r2, r3
     82ec:	681b      	ldr	r3, [r3, #0]
     82ee:	61bb      	str	r3, [r7, #24]
+      v3=*(Te[3] + a3);
     82f0:	6a7b      	ldr	r3, [r7, #36]	; 0x24
     82f2:	009a      	lsls	r2, r3, #2
     82f4:	4b96      	ldr	r3, [pc, #600]	; (8550 <wc_AesEncryptSimplified+0x434>)
     82f6:	18d3      	adds	r3, r2, r3
     82f8:	681b      	ldr	r3, [r3, #0]
     82fa:	617b      	str	r3, [r7, #20]
+        t3 =
+            v0  ^ v1 ^ v2 ^ v3 ^
     82fc:	6a3a      	ldr	r2, [r7, #32]
     82fe:	69fb      	ldr	r3, [r7, #28]
     8300:	405a      	eors	r2, r3
@@ -253,287 +358,509 @@ Disassembly of section .text:
     8304:	405a      	eors	r2, r3
     8306:	697b      	ldr	r3, [r7, #20]
     8308:	405a      	eors	r2, r3
+            rk[3];
     830a:	68fb      	ldr	r3, [r7, #12]
     830c:	330c      	adds	r3, #12
     830e:	681b      	ldr	r3, [r3, #0]
+      a3=GETBYTE(s2, 0);
+      v0=*(Te[0] + a0);
+      v1=*(Te[1] + a1);
+      v2=*(Te[2] + a2);
+      v3=*(Te[3] + a3);
+        t3 =
     8310:	4053      	eors	r3, r2
     8312:	63bb      	str	r3, [r7, #56]	; 0x38
+            v0  ^ v1 ^ v2 ^ v3 ^
+            rk[3];
+
+	s0 = t0;
     8314:	6c7b      	ldr	r3, [r7, #68]	; 0x44
     8316:	657b      	str	r3, [r7, #84]	; 0x54
+	s1 = t1;
     8318:	6c3b      	ldr	r3, [r7, #64]	; 0x40
     831a:	653b      	str	r3, [r7, #80]	; 0x50
+	s2 = t2;
     831c:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
     831e:	64fb      	str	r3, [r7, #76]	; 0x4c
+	s3 = t3;
     8320:	6bbb      	ldr	r3, [r7, #56]	; 0x38
     8322:	64bb      	str	r3, [r7, #72]	; 0x48
+	
+        rk += 4;
     8324:	68fb      	ldr	r3, [r7, #12]
     8326:	3310      	adds	r3, #16
     8328:	60fb      	str	r3, [r7, #12]
+	r--;
     832a:	6b7b      	ldr	r3, [r7, #52]	; 0x34
     832c:	3b01      	subs	r3, #1
     832e:	637b      	str	r3, [r7, #52]	; 0x34
+     * Nr - 1 full rounds:
+     */
+
+    rk += 4;
+    
+    while (r != 0) {
     8330:	6b7b      	ldr	r3, [r7, #52]	; 0x34
     8332:	2b00      	cmp	r3, #0
     8334:	d000      	beq.n	8338 <wc_AesEncryptSimplified+0x21c>
     8336:	e722      	b.n	817e <wc_AesEncryptSimplified+0x62>
+    /*
+     * apply last round and
+     * map cipher state to byte array block:
+     */
+
+      a0=GETBYTE(t0, 3);
     8338:	6c7b      	ldr	r3, [r7, #68]	; 0x44
     833a:	0e1b      	lsrs	r3, r3, #24
     833c:	b2db      	uxtb	r3, r3
     833e:	633b      	str	r3, [r7, #48]	; 0x30
+      a1=GETBYTE(t1, 2);
     8340:	6c3b      	ldr	r3, [r7, #64]	; 0x40
     8342:	0c1b      	lsrs	r3, r3, #16
     8344:	b2db      	uxtb	r3, r3
     8346:	62fb      	str	r3, [r7, #44]	; 0x2c
+      a2=GETBYTE(t2, 1);
     8348:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
     834a:	0a1b      	lsrs	r3, r3, #8
     834c:	b2db      	uxtb	r3, r3
     834e:	62bb      	str	r3, [r7, #40]	; 0x28
+      a3=GETBYTE(t3, 0);
     8350:	6bbb      	ldr	r3, [r7, #56]	; 0x38
     8352:	b2db      	uxtb	r3, r3
     8354:	627b      	str	r3, [r7, #36]	; 0x24
+      v0=*(Te[2] + a0);
     8356:	6b3b      	ldr	r3, [r7, #48]	; 0x30
     8358:	009a      	lsls	r2, r3, #2
     835a:	4b7c      	ldr	r3, [pc, #496]	; (854c <wc_AesEncryptSimplified+0x430>)
     835c:	18d3      	adds	r3, r2, r3
     835e:	681b      	ldr	r3, [r3, #0]
     8360:	623b      	str	r3, [r7, #32]
+      v1=*(Te[3] + a1);
     8362:	6afb      	ldr	r3, [r7, #44]	; 0x2c
     8364:	009a      	lsls	r2, r3, #2
     8366:	4b7a      	ldr	r3, [pc, #488]	; (8550 <wc_AesEncryptSimplified+0x434>)
     8368:	18d3      	adds	r3, r2, r3
     836a:	681b      	ldr	r3, [r3, #0]
     836c:	61fb      	str	r3, [r7, #28]
+      v2=*(Te[0] + a2);
     836e:	6abb      	ldr	r3, [r7, #40]	; 0x28
     8370:	009a      	lsls	r2, r3, #2
     8372:	4b74      	ldr	r3, [pc, #464]	; (8544 <wc_AesEncryptSimplified+0x428>)
     8374:	18d3      	adds	r3, r2, r3
     8376:	681b      	ldr	r3, [r3, #0]
     8378:	61bb      	str	r3, [r7, #24]
+      v3=*(Te[1] + a3);
     837a:	6a7b      	ldr	r3, [r7, #36]	; 0x24
     837c:	009a      	lsls	r2, r3, #2
     837e:	4b72      	ldr	r3, [pc, #456]	; (8548 <wc_AesEncryptSimplified+0x42c>)
     8380:	18d3      	adds	r3, r2, r3
     8382:	681b      	ldr	r3, [r3, #0]
     8384:	617b      	str	r3, [r7, #20]
+    s0 =
+        (v0 & 0xff000000) ^
     8386:	6a3b      	ldr	r3, [r7, #32]
     8388:	0e1b      	lsrs	r3, r3, #24
     838a:	061a      	lsls	r2, r3, #24
+        (v1 & 0x00ff0000) ^
     838c:	69f9      	ldr	r1, [r7, #28]
     838e:	23ff      	movs	r3, #255	; 0xff
     8390:	041b      	lsls	r3, r3, #16
     8392:	400b      	ands	r3, r1
+      v0=*(Te[2] + a0);
+      v1=*(Te[3] + a1);
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s0 =
+        (v0 & 0xff000000) ^
     8394:	405a      	eors	r2, r3
+        (v1 & 0x00ff0000) ^
+        (v2 & 0x0000ff00) ^
     8396:	69b9      	ldr	r1, [r7, #24]
     8398:	23ff      	movs	r3, #255	; 0xff
     839a:	021b      	lsls	r3, r3, #8
     839c:	400b      	ands	r3, r1
+      v1=*(Te[3] + a1);
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s0 =
+        (v0 & 0xff000000) ^
+        (v1 & 0x00ff0000) ^
     839e:	405a      	eors	r2, r3
+        (v2 & 0x0000ff00) ^
+        (v3 & 0x000000ff) ^
     83a0:	697b      	ldr	r3, [r7, #20]
     83a2:	21ff      	movs	r1, #255	; 0xff
     83a4:	400b      	ands	r3, r1
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s0 =
+        (v0 & 0xff000000) ^
+        (v1 & 0x00ff0000) ^
+        (v2 & 0x0000ff00) ^
     83a6:	405a      	eors	r2, r3
+        (v3 & 0x000000ff) ^
+        rk[0];
     83a8:	68fb      	ldr	r3, [r7, #12]
     83aa:	681b      	ldr	r3, [r3, #0]
+      a3=GETBYTE(t3, 0);
+      v0=*(Te[2] + a0);
+      v1=*(Te[3] + a1);
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s0 =
     83ac:	4053      	eors	r3, r2
     83ae:	657b      	str	r3, [r7, #84]	; 0x54
+        (v1 & 0x00ff0000) ^
+        (v2 & 0x0000ff00) ^
+        (v3 & 0x000000ff) ^
+        rk[0];
+
+      a0=GETBYTE(t1, 3);
     83b0:	6c3b      	ldr	r3, [r7, #64]	; 0x40
     83b2:	0e1b      	lsrs	r3, r3, #24
     83b4:	b2db      	uxtb	r3, r3
     83b6:	633b      	str	r3, [r7, #48]	; 0x30
+      a1=GETBYTE(t2, 2);
     83b8:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
     83ba:	0c1b      	lsrs	r3, r3, #16
     83bc:	b2db      	uxtb	r3, r3
     83be:	62fb      	str	r3, [r7, #44]	; 0x2c
+      a2=GETBYTE(t3, 1);
     83c0:	6bbb      	ldr	r3, [r7, #56]	; 0x38
     83c2:	0a1b      	lsrs	r3, r3, #8
     83c4:	b2db      	uxtb	r3, r3
     83c6:	62bb      	str	r3, [r7, #40]	; 0x28
+      a3=GETBYTE(t0, 0);
     83c8:	6c7b      	ldr	r3, [r7, #68]	; 0x44
     83ca:	b2db      	uxtb	r3, r3
     83cc:	627b      	str	r3, [r7, #36]	; 0x24
+      v0=*(Te[2] + a0);
     83ce:	6b3b      	ldr	r3, [r7, #48]	; 0x30
     83d0:	009a      	lsls	r2, r3, #2
     83d2:	4b5e      	ldr	r3, [pc, #376]	; (854c <wc_AesEncryptSimplified+0x430>)
     83d4:	18d3      	adds	r3, r2, r3
     83d6:	681b      	ldr	r3, [r3, #0]
     83d8:	623b      	str	r3, [r7, #32]
+      v1=*(Te[3] + a1);
     83da:	6afb      	ldr	r3, [r7, #44]	; 0x2c
     83dc:	009a      	lsls	r2, r3, #2
     83de:	4b5c      	ldr	r3, [pc, #368]	; (8550 <wc_AesEncryptSimplified+0x434>)
     83e0:	18d3      	adds	r3, r2, r3
     83e2:	681b      	ldr	r3, [r3, #0]
     83e4:	61fb      	str	r3, [r7, #28]
+      v2=*(Te[0] + a2);
     83e6:	6abb      	ldr	r3, [r7, #40]	; 0x28
     83e8:	009a      	lsls	r2, r3, #2
     83ea:	4b56      	ldr	r3, [pc, #344]	; (8544 <wc_AesEncryptSimplified+0x428>)
     83ec:	18d3      	adds	r3, r2, r3
     83ee:	681b      	ldr	r3, [r3, #0]
     83f0:	61bb      	str	r3, [r7, #24]
+      v3=*(Te[1] + a3);
     83f2:	6a7b      	ldr	r3, [r7, #36]	; 0x24
     83f4:	009a      	lsls	r2, r3, #2
     83f6:	4b54      	ldr	r3, [pc, #336]	; (8548 <wc_AesEncryptSimplified+0x42c>)
     83f8:	18d3      	adds	r3, r2, r3
     83fa:	681b      	ldr	r3, [r3, #0]
     83fc:	617b      	str	r3, [r7, #20]
+    s1 =
+        (v0 & 0xff000000) ^
     83fe:	6a3b      	ldr	r3, [r7, #32]
     8400:	0e1b      	lsrs	r3, r3, #24
     8402:	061a      	lsls	r2, r3, #24
+        (v1 & 0x00ff0000) ^
     8404:	69f9      	ldr	r1, [r7, #28]
     8406:	23ff      	movs	r3, #255	; 0xff
     8408:	041b      	lsls	r3, r3, #16
     840a:	400b      	ands	r3, r1
+      v0=*(Te[2] + a0);
+      v1=*(Te[3] + a1);
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s1 =
+        (v0 & 0xff000000) ^
     840c:	405a      	eors	r2, r3
+        (v1 & 0x00ff0000) ^
+        (v2 & 0x0000ff00) ^
     840e:	69b9      	ldr	r1, [r7, #24]
     8410:	23ff      	movs	r3, #255	; 0xff
     8412:	021b      	lsls	r3, r3, #8
     8414:	400b      	ands	r3, r1
+      v1=*(Te[3] + a1);
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s1 =
+        (v0 & 0xff000000) ^
+        (v1 & 0x00ff0000) ^
     8416:	405a      	eors	r2, r3
+        (v2 & 0x0000ff00) ^
+        (v3 & 0x000000ff) ^
     8418:	697b      	ldr	r3, [r7, #20]
     841a:	21ff      	movs	r1, #255	; 0xff
     841c:	400b      	ands	r3, r1
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s1 =
+        (v0 & 0xff000000) ^
+        (v1 & 0x00ff0000) ^
+        (v2 & 0x0000ff00) ^
     841e:	405a      	eors	r2, r3
+        (v3 & 0x000000ff) ^
+        rk[1];
     8420:	68fb      	ldr	r3, [r7, #12]
     8422:	3304      	adds	r3, #4
     8424:	681b      	ldr	r3, [r3, #0]
+      a3=GETBYTE(t0, 0);
+      v0=*(Te[2] + a0);
+      v1=*(Te[3] + a1);
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s1 =
     8426:	4053      	eors	r3, r2
     8428:	653b      	str	r3, [r7, #80]	; 0x50
+        (v1 & 0x00ff0000) ^
+        (v2 & 0x0000ff00) ^
+        (v3 & 0x000000ff) ^
+        rk[1];
+
+      a0=GETBYTE(t2, 3);
     842a:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
     842c:	0e1b      	lsrs	r3, r3, #24
     842e:	b2db      	uxtb	r3, r3
     8430:	633b      	str	r3, [r7, #48]	; 0x30
+      a1=GETBYTE(t3, 2);
     8432:	6bbb      	ldr	r3, [r7, #56]	; 0x38
     8434:	0c1b      	lsrs	r3, r3, #16
     8436:	b2db      	uxtb	r3, r3
     8438:	62fb      	str	r3, [r7, #44]	; 0x2c
+      a2=GETBYTE(t0, 1);
     843a:	6c7b      	ldr	r3, [r7, #68]	; 0x44
     843c:	0a1b      	lsrs	r3, r3, #8
     843e:	b2db      	uxtb	r3, r3
     8440:	62bb      	str	r3, [r7, #40]	; 0x28
+      a3=GETBYTE(t1, 0);
     8442:	6c3b      	ldr	r3, [r7, #64]	; 0x40
     8444:	b2db      	uxtb	r3, r3
     8446:	627b      	str	r3, [r7, #36]	; 0x24
+      v0=*(Te[2] + a0);
     8448:	6b3b      	ldr	r3, [r7, #48]	; 0x30
     844a:	009a      	lsls	r2, r3, #2
     844c:	4b3f      	ldr	r3, [pc, #252]	; (854c <wc_AesEncryptSimplified+0x430>)
     844e:	18d3      	adds	r3, r2, r3
     8450:	681b      	ldr	r3, [r3, #0]
     8452:	623b      	str	r3, [r7, #32]
+      v1=*(Te[3] + a1);
     8454:	6afb      	ldr	r3, [r7, #44]	; 0x2c
     8456:	009a      	lsls	r2, r3, #2
     8458:	4b3d      	ldr	r3, [pc, #244]	; (8550 <wc_AesEncryptSimplified+0x434>)
     845a:	18d3      	adds	r3, r2, r3
     845c:	681b      	ldr	r3, [r3, #0]
     845e:	61fb      	str	r3, [r7, #28]
+      v2=*(Te[0] + a2);
     8460:	6abb      	ldr	r3, [r7, #40]	; 0x28
     8462:	009a      	lsls	r2, r3, #2
     8464:	4b37      	ldr	r3, [pc, #220]	; (8544 <wc_AesEncryptSimplified+0x428>)
     8466:	18d3      	adds	r3, r2, r3
     8468:	681b      	ldr	r3, [r3, #0]
     846a:	61bb      	str	r3, [r7, #24]
+      v3=*(Te[1] + a3);
     846c:	6a7b      	ldr	r3, [r7, #36]	; 0x24
     846e:	009a      	lsls	r2, r3, #2
     8470:	4b35      	ldr	r3, [pc, #212]	; (8548 <wc_AesEncryptSimplified+0x42c>)
     8472:	18d3      	adds	r3, r2, r3
     8474:	681b      	ldr	r3, [r3, #0]
     8476:	617b      	str	r3, [r7, #20]
+    s2 =
+        (v0 & 0xff000000) ^
     8478:	6a3b      	ldr	r3, [r7, #32]
     847a:	0e1b      	lsrs	r3, r3, #24
     847c:	061a      	lsls	r2, r3, #24
+        (v1 & 0x00ff0000) ^
     847e:	69f9      	ldr	r1, [r7, #28]
     8480:	23ff      	movs	r3, #255	; 0xff
     8482:	041b      	lsls	r3, r3, #16
     8484:	400b      	ands	r3, r1
+      v0=*(Te[2] + a0);
+      v1=*(Te[3] + a1);
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s2 =
+        (v0 & 0xff000000) ^
     8486:	405a      	eors	r2, r3
+        (v1 & 0x00ff0000) ^
+        (v2 & 0x0000ff00) ^
     8488:	69b9      	ldr	r1, [r7, #24]
     848a:	23ff      	movs	r3, #255	; 0xff
     848c:	021b      	lsls	r3, r3, #8
     848e:	400b      	ands	r3, r1
+      v1=*(Te[3] + a1);
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s2 =
+        (v0 & 0xff000000) ^
+        (v1 & 0x00ff0000) ^
     8490:	405a      	eors	r2, r3
+        (v2 & 0x0000ff00) ^
+        (v3 & 0x000000ff) ^
     8492:	697b      	ldr	r3, [r7, #20]
     8494:	21ff      	movs	r1, #255	; 0xff
     8496:	400b      	ands	r3, r1
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s2 =
+        (v0 & 0xff000000) ^
+        (v1 & 0x00ff0000) ^
+        (v2 & 0x0000ff00) ^
     8498:	405a      	eors	r2, r3
+        (v3 & 0x000000ff) ^
+        rk[2];
     849a:	68fb      	ldr	r3, [r7, #12]
     849c:	3308      	adds	r3, #8
     849e:	681b      	ldr	r3, [r3, #0]
+      a3=GETBYTE(t1, 0);
+      v0=*(Te[2] + a0);
+      v1=*(Te[3] + a1);
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s2 =
     84a0:	4053      	eors	r3, r2
     84a2:	64fb      	str	r3, [r7, #76]	; 0x4c
+        (v1 & 0x00ff0000) ^
+        (v2 & 0x0000ff00) ^
+        (v3 & 0x000000ff) ^
+        rk[2];
+
+      a0=GETBYTE(t3, 3);
     84a4:	6bbb      	ldr	r3, [r7, #56]	; 0x38
     84a6:	0e1b      	lsrs	r3, r3, #24
     84a8:	b2db      	uxtb	r3, r3
     84aa:	633b      	str	r3, [r7, #48]	; 0x30
+      a1=GETBYTE(t0, 2);
     84ac:	6c7b      	ldr	r3, [r7, #68]	; 0x44
     84ae:	0c1b      	lsrs	r3, r3, #16
     84b0:	b2db      	uxtb	r3, r3
     84b2:	62fb      	str	r3, [r7, #44]	; 0x2c
+      a2=GETBYTE(t1, 1);
     84b4:	6c3b      	ldr	r3, [r7, #64]	; 0x40
     84b6:	0a1b      	lsrs	r3, r3, #8
     84b8:	b2db      	uxtb	r3, r3
     84ba:	62bb      	str	r3, [r7, #40]	; 0x28
+      a3=GETBYTE(t2, 0);
     84bc:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
     84be:	b2db      	uxtb	r3, r3
     84c0:	627b      	str	r3, [r7, #36]	; 0x24
+      v0=*(Te[2] + a0);
     84c2:	6b3b      	ldr	r3, [r7, #48]	; 0x30
     84c4:	009a      	lsls	r2, r3, #2
     84c6:	4b21      	ldr	r3, [pc, #132]	; (854c <wc_AesEncryptSimplified+0x430>)
     84c8:	18d3      	adds	r3, r2, r3
     84ca:	681b      	ldr	r3, [r3, #0]
     84cc:	623b      	str	r3, [r7, #32]
+      v1=*(Te[3] + a1);
     84ce:	6afb      	ldr	r3, [r7, #44]	; 0x2c
     84d0:	009a      	lsls	r2, r3, #2
     84d2:	4b1f      	ldr	r3, [pc, #124]	; (8550 <wc_AesEncryptSimplified+0x434>)
     84d4:	18d3      	adds	r3, r2, r3
     84d6:	681b      	ldr	r3, [r3, #0]
     84d8:	61fb      	str	r3, [r7, #28]
+      v2=*(Te[0] + a2);
     84da:	6abb      	ldr	r3, [r7, #40]	; 0x28
     84dc:	009a      	lsls	r2, r3, #2
     84de:	4b19      	ldr	r3, [pc, #100]	; (8544 <wc_AesEncryptSimplified+0x428>)
     84e0:	18d3      	adds	r3, r2, r3
     84e2:	681b      	ldr	r3, [r3, #0]
     84e4:	61bb      	str	r3, [r7, #24]
+      v3=*(Te[1] + a3);
     84e6:	6a7b      	ldr	r3, [r7, #36]	; 0x24
     84e8:	009a      	lsls	r2, r3, #2
     84ea:	4b17      	ldr	r3, [pc, #92]	; (8548 <wc_AesEncryptSimplified+0x42c>)
     84ec:	18d3      	adds	r3, r2, r3
     84ee:	681b      	ldr	r3, [r3, #0]
     84f0:	617b      	str	r3, [r7, #20]
+    s3 =
+        (v0 & 0xff000000) ^
     84f2:	6a3b      	ldr	r3, [r7, #32]
     84f4:	0e1b      	lsrs	r3, r3, #24
     84f6:	061a      	lsls	r2, r3, #24
+        (v1 & 0x00ff0000) ^
     84f8:	69f9      	ldr	r1, [r7, #28]
     84fa:	23ff      	movs	r3, #255	; 0xff
     84fc:	041b      	lsls	r3, r3, #16
     84fe:	400b      	ands	r3, r1
+      v0=*(Te[2] + a0);
+      v1=*(Te[3] + a1);
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s3 =
+        (v0 & 0xff000000) ^
     8500:	405a      	eors	r2, r3
+        (v1 & 0x00ff0000) ^
+        (v2 & 0x0000ff00) ^
     8502:	69b9      	ldr	r1, [r7, #24]
     8504:	23ff      	movs	r3, #255	; 0xff
     8506:	021b      	lsls	r3, r3, #8
     8508:	400b      	ands	r3, r1
+      v1=*(Te[3] + a1);
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s3 =
+        (v0 & 0xff000000) ^
+        (v1 & 0x00ff0000) ^
     850a:	405a      	eors	r2, r3
+        (v2 & 0x0000ff00) ^
+        (v3 & 0x000000ff) ^
     850c:	697b      	ldr	r3, [r7, #20]
     850e:	21ff      	movs	r1, #255	; 0xff
     8510:	400b      	ands	r3, r1
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s3 =
+        (v0 & 0xff000000) ^
+        (v1 & 0x00ff0000) ^
+        (v2 & 0x0000ff00) ^
     8512:	405a      	eors	r2, r3
+        (v3 & 0x000000ff) ^
+        rk[3];
     8514:	68fb      	ldr	r3, [r7, #12]
     8516:	330c      	adds	r3, #12
     8518:	681b      	ldr	r3, [r3, #0]
+      a3=GETBYTE(t2, 0);
+      v0=*(Te[2] + a0);
+      v1=*(Te[3] + a1);
+      v2=*(Te[0] + a2);
+      v3=*(Te[1] + a3);
+    s3 =
     851a:	4053      	eors	r3, r2
     851c:	64bb      	str	r3, [r7, #72]	; 0x48
+        s3 = ByteReverseWord32(s3);
+    #endif
+    */
+    
+
+    *((word32*)outBlock) = s0;
     851e:	683b      	ldr	r3, [r7, #0]
     8520:	6d7a      	ldr	r2, [r7, #84]	; 0x54
     8522:	601a      	str	r2, [r3, #0]
+    *(((word32*)outBlock)+1) = s1;
     8524:	683b      	ldr	r3, [r7, #0]
     8526:	3304      	adds	r3, #4
     8528:	6d3a      	ldr	r2, [r7, #80]	; 0x50
     852a:	601a      	str	r2, [r3, #0]
+    *(((word32*)outBlock)+2) = s2;
     852c:	683b      	ldr	r3, [r7, #0]
     852e:	3308      	adds	r3, #8
     8530:	6cfa      	ldr	r2, [r7, #76]	; 0x4c
     8532:	601a      	str	r2, [r3, #0]
+    *(((word32*)outBlock)+3) = s3;
     8534:	683b      	ldr	r3, [r7, #0]
     8536:	330c      	adds	r3, #12
     8538:	6cba      	ldr	r2, [r7, #72]	; 0x48
     853a:	601a      	str	r2, [r3, #0]
+      XMEMCPY(outBlock,                  &s0, sizeof(s0));
+    XMEMCPY(outBlock + sizeof(s0),     &s1, sizeof(s1));
+    XMEMCPY(outBlock + 2 * sizeof(s0), &s2, sizeof(s2));
+    XMEMCPY(outBlock + 3 * sizeof(s0), &s3, sizeof(s3));*/
+
+}
     853c:	46bd      	mov	sp, r7
     853e:	b016      	add	sp, #88	; 0x58
     8540:	bd80      	pop	{r7, pc}
