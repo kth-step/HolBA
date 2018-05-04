@@ -537,7 +537,8 @@ for debugging:
       val term_v_is_Mem_thm = REWRITE_CONV [bir_var_type_def, bir_type_checker_REWRS] ``bir_type_is_Mem (bir_var_type ^term_v)``;
       val term_v_is_Mem_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] term_v_is_Mem_thm;
 
-      val varused_thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) ([bir_exp_varsubst_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms) ``^term_v IN (bir_vars_of_exp ^term_e)``; (* TODO: has to be touched again *)
+(*      well_typed_conv varexps_thms ``^term_v IN (bir_vars_of_exp ^term_e)``*)
+      val varused_thm = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) ([bir_exp_varsubst_USED_VARS, bir_exp_subst1_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE]@varexps_thms) ``^term_v IN (bir_vars_of_exp ^term_e)``; (* TODO: has to be touched again *)
       val varused_thm = REWRITE_RULE [boolTheory.EQ_CLAUSES] varused_thm;
     in
       if ((is_neg o concl) varused_thm) then
@@ -1109,22 +1110,37 @@ bir_exp_is_taut
 
 val goalterm = ``
 bir_exp_is_taut
-  (bir_exp_imp bir_wp_simp_step_prem_6
-     (bir_exp_subst1 (BVar "R0" (BType_Imm Bit64))
-        (BExp_Cast BIExp_UnsignedCast
-           (BExp_BinExp BIExp_RightShift
-              (BExp_Cast BIExp_LowCast
-                 (BExp_Den (BVar "R0_wp_4" (BType_Imm Bit64))) Bit32)
-              (BExp_Const (Imm32 24w))) Bit64)
-        (bir_exp_varsubst FEMPTY
-           bir_wp_comp_wps_iter_step2_wp_0x4005E4w)))
+  (bir_exp_imp bir_wp_simp_step_prem_0
+     (bir_exp_subst1 (BVar "PSR_C" (BType_Imm Bit1))
+        (BExp_BinPred BIExp_NotEqual
+           (bir_exp_and (BExp_Den (BVar "R3_wp_0" (BType_Imm Bit32)))
+              (BExp_Const (Imm32 0x40000000w))) (BExp_Const (Imm32 0w)))
+        (bir_exp_varsubst
+           (FEMPTY |+
+            (BVar "R3" (BType_Imm Bit32),
+             BVar "R3_wp_0" (BType_Imm Bit32)))
+           (bir_exp_subst1 (BVar "PSR_N" (BType_Imm Bit1))
+              (BExp_BinPred BIExp_NotEqual
+                 (bir_exp_and (BExp_Den (BVar "R3" (BType_Imm Bit32)))
+                    (BExp_Const (Imm32 0x20000000w)))
+                 (BExp_Const (Imm32 0w)))
+              (bir_exp_subst1 (BVar "PSR_Z" (BType_Imm Bit1))
+                 (BExp_BinPred BIExp_Equal
+                    (BExp_BinExp BIExp_LeftShift
+                       (BExp_Den (BVar "R3" (BType_Imm Bit32)))
+                       (BExp_Const (Imm32 2w))) (BExp_Const (Imm32 0w)))
+                 (bir_exp_subst1 (BVar "R2" (BType_Imm Bit32))
+                    (BExp_BinExp BIExp_LeftShift
+                       (BExp_Den (BVar "R3" (BType_Imm Bit32)))
+                       (BExp_Const (Imm32 2w)))
+                    bir_wp_comp_wps_iter_step2_wp_33488w))))))
 ``;
 
 val extra_wt_varset = SOME ``
 bir_vars_of_exp
   (BExp_BinPred BIExp_Equal
-     (bir_exp_and (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-        (BExp_Const (Imm64 3w))) (BExp_Const (Imm64 0w)))
+     (bir_exp_and (BExp_Den (BVar "R7" (BType_Imm Bit32)))
+        (BExp_Const (Imm32 3w))) (BExp_Const (Imm32 0w)))
 ``;
 
 *)
