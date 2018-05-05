@@ -43,28 +43,26 @@ val def_const = (fst o dest_eq o concl) def_thm;
 
 (*val btautology = ``BExp_Const (Imm1 1w)``;*)
 (* translated from roberto's z3 precondition *)
-val prem_init = ``BExp_Const (Imm1 1w)``;
-(*
+(*val prem_init = ``BExp_Const (Imm1 1w)``;*)
 val prem_init = ``BExp_BinExp BIExp_And
                     (BExp_BinExp BIExp_And
                       (BExp_BinPred BIExp_Equal (BExp_BinExp BIExp_And
-                                                   (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                                                   (BExp_Const (Imm64 7w)))
-                                                (BExp_Const (Imm64 0w)))
+                                                   (BExp_Den (BVar "R7" (BType_Imm Bit32)))
+                                                   (BExp_Const (Imm32 7w)))
+                                                (BExp_Const (Imm32 0w)))
                       (BExp_UnaryExp BIExp_Not (BExp_BinPred BIExp_LessOrEqual
-                                                  (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                                                  (BExp_Const (Imm64 33554432w)))))
+                                                  (BExp_Den (BVar "R7" (BType_Imm Bit32)))
+                                                  (BExp_Const (Imm32 0w)))))
                     (BExp_BinPred BIExp_LessOrEqual
-                                                  (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                                                  (BExp_Const (Imm64 43554432w)))``;
+                                                  (BExp_Den (BVar "R7" (BType_Imm Bit32)))
+                                                  (BExp_Const (Imm32 65536w)))``;
 
 val prem_init = ``BExp_BinExp BIExp_And ^prem_init (
                     (BExp_BinPred BIExp_Equal (BExp_BinExp BIExp_And
-                                                   (BExp_Den (BVar "R0_post" (BType_Imm Bit64)))
-                                                   (BExp_Const (Imm64 3w)))
-                                                (BExp_Const (Imm64 0w)))
+                                                   (BExp_Den (BVar "R3_post" (BType_Imm Bit32)))
+                                                   (BExp_Const (Imm32 3w)))
+                                                (BExp_Const (Imm32 0w)))
                   )``;
-*)
 
 
 val aes_prem_def = Define `aes_prem = ^prem_init`;

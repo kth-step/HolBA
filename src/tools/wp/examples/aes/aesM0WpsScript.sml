@@ -58,8 +58,8 @@ val aes_program_def = Define `
       aes_program = ^aes_program_term
 `;
 val aes_post_def = Define `
-      aes_post = BExp_Const (Imm1 1w)(*(BExp_BinPred BIExp_Equal (BExp_Den (BVar "R0_post" (BType_Imm Bit64)))
-                                           (BExp_Den (BVar "R0" (BType_Imm Bit64))))*)
+      aes_post = (BExp_BinPred BIExp_Equal (BExp_Den (BVar "R3_post" (BType_Imm Bit32)))
+                                           (BExp_Den (BVar "R3" (BType_Imm Bit32))))
 `;
 val aes_ls_def = Define `
       aes_ls = \x.(x = ^last_block_label)
