@@ -79,7 +79,7 @@ fun eval_through [] thm = [thm]
       end;
 
 
-val lbl_list_todo = List.take ((tl (List.rev lbl_list)), 100);
+val lbl_list_todo = List.take ((tl (List.rev lbl_list)), 70);
 
 val wp_w_subst1 =
   let
@@ -100,9 +100,12 @@ val _ = Lib.end_time timer_start;
 val wp_ = (snd o dest_eq o concl) out_thm;
 (* ---------------------------------------------------------------------------------------- *)
 
+(*
 val prop = (snd o dest_eq o concl) aes_wp_taut_thm;
 val wp = (snd o dest_comb o snd o dest_comb) prop;
+*)
 
+val wp = (snd o dest_eq o concl) wp_simp_def;
 val wp_ = (snd o dest_eq o concl o (REWRITE_CONV [bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def])) wp;
 
 (* ---------------------------------------------------------------------------------------- *)

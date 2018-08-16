@@ -94,7 +94,7 @@ val _ = if not runMeasurement then () else
 
 
 val wp_simp_term = (snd o dest_comb o snd o dest_comb o snd o dest_eq o concl) simp_thm;
-val wp_simp_def = Define `wp_simp_def = ^wp_simp_term`;
+val wp_simp_def = Define `wp_simp = ^wp_simp_term`;
 
 
 val aes_wp_taut_thm = save_thm("aes_wp_taut_thm", REWRITE_RULE [GSYM wp_simp_def] simp_thm);
