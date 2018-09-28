@@ -491,20 +491,22 @@ val mem_store_dword_def = Define `mem_store_dword (a:word64) (w:word64) (mmap : 
   ((a + 3w =+ (31 >< 24) w)
   ((a + 2w =+ (23 >< 16) w)
   ((a + 1w =+ (15 >< 8)  w)
-  ((a      =+ (7  >< 0)  w) mmap)))))))`;
+  ((a + 0w  =+ (7  >< 0)  w) mmap)))))))`;
 
 val mem_store_word_def = Define `mem_store_word (a:word64) (w:word32) (mmap : (word64 -> word8)) =
    (a + 3w =+ (31 >< 24) w)
   ((a + 2w =+ (23 >< 16) w)
   ((a + 1w =+ (15 >< 8)  w)
-  ((a      =+ (7  >< 0)  w) mmap)))`;
+  ((a + 0w =+ (7  >< 0)  w) mmap)))`;
 
 val mem_store_half_def = Define `mem_store_half (a:word64) (w:word16) (mmap : (word64 -> word8)) =
    (a + 1w =+ (15 >< 8)  w)
-  ((a      =+ (7  >< 0)  w) mmap)`;
+  ((a + 0w =+ (7  >< 0)  w) mmap)`;
 
 val mem_store_byte_def = Define `mem_store_byte (a:word64) (w:word8) (mmap : (word64 -> word8)) =
   ((a      =+ w) mmap)`;
+
+val elim_zero_for_def_thm = GEN_ALL (SIMP_CONV (std_ss++wordsLib.WORD_ss) [] ``a + 0w  =+ w``);
 
 
 val arm8_mem_store_FOLDS = save_thm ("arm8_mem_store_FOLDS",
@@ -513,10 +515,13 @@ let
   fun mk_thm_GEN thm =
     REWRITE_RULE [GSYM mem_store_byte_def] (GSYM thm)
 
-  val def_THMS = LIST_CONJ [GSYM mem_store_byte_def,
+  val def_THMS_apz = LIST_CONJ [GSYM mem_store_byte_def,
      mk_thm_GEN mem_store_half_def,
      mk_thm_GEN mem_store_word_def,
-     mk_thm_GEN mem_store_dword_def]
+     mk_thm_GEN mem_store_dword_def];
+
+  val elim_zero_thm = GEN_ALL (SIMP_CONV (std_ss++wordsLib.WORD_ss) [] ``mem_store_byte (a+0w) w mmap``);
+  val def_THMS = REWRITE_RULE [elim_zero_thm] def_THMS_apz;
 
   fun mk_zero_thm def_thm tm = GEN_ALL (GSYM (
      SIMP_CONV (std_ss++wordsLib.WORD_ss) [def_thm,
@@ -527,7 +532,7 @@ let
   val zero_THM2 = REWRITE_RULE [zero_THM1, zero_THM0] (
      mk_zero_thm mem_store_dword_def ``mem_store_dword a 0w mmap``);
 
-in LIST_CONJ [def_THMS, zero_THM0, zero_THM1, zero_THM2] end);
+in LIST_CONJ [def_THMS_apz, def_THMS, zero_THM0, zero_THM1, zero_THM2] end);
 
 
 val arm8_LIFT_STORE_DWORD = store_thm ("arm8_LIFT_STORE_DWORD",
@@ -538,7 +543,7 @@ val arm8_LIFT_STORE_DWORD = store_thm ("arm8_LIFT_STORE_DWORD",
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
        (mem_store_dword va vv mem_f)``,
 
-SIMP_TAC std_ss [mem_store_dword_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
+SIMP_TAC std_ss [mem_store_dword_def, elim_zero_for_def_thm, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
 
 val arm8_LIFT_STORE_WORD = store_thm ("arm8_LIFT_STORE_WORD",
@@ -549,7 +554,7 @@ val arm8_LIFT_STORE_WORD = store_thm ("arm8_LIFT_STORE_WORD",
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
        (mem_store_word va vv mem_f)``,
 
-SIMP_TAC std_ss [mem_store_word_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
+SIMP_TAC std_ss [mem_store_word_def, elim_zero_for_def_thm, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
 
 val arm8_LIFT_STORE_HALF = store_thm ("arm8_LIFT_STORE_HALF",
@@ -560,7 +565,7 @@ val arm8_LIFT_STORE_HALF = store_thm ("arm8_LIFT_STORE_HALF",
      bir_is_lifted_mem_exp env (BExp_Store em ea BEnd_LittleEndian ev)
        (mem_store_half va vv mem_f)``,
 
-SIMP_TAC std_ss [mem_store_half_def, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
+SIMP_TAC std_ss [mem_store_half_def, elim_zero_for_def_thm, bir_is_lifted_mem_exp_STORE_ENDIAN_BYTE]);
 
 
 val arm8_LIFT_STORE_BYTE = store_thm ("arm8_LIFT_STORE_BYTE",
