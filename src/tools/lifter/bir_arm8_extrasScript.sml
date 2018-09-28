@@ -290,7 +290,7 @@ end);
 (* FOLD for ror *)
 (****************)
 
-val arm8_ror_MOD_FOLDS = save_thm ("arm8_ror_MOD_folds",
+val arm8_ror_MOD_FOLDS = save_thm ("arm8_ror_MOD_FOLDS",
 let
   val thms0 = map (fn ty => INST_TYPE [``:'a`` |-> ty] wordsTheory.ROR_MOD) [``:8``, ``:16``, ``:32``, ``:64``]
   val thm1 = LIST_CONJ thms0
@@ -364,7 +364,7 @@ Cases_on ` i + n < dimindex (:'a)` >- (
 ));
 
 
-val arm8_extr_FOLDS = save_thm ("arm8_extr_folds",
+val arm8_extr_FOLDS = save_thm ("arm8_extr_FOLDS",
 let
   val thm0a = INST_TYPE [``:'a`` |-> ``:64``] arm8_extr_FOLD0
   val thm0b = INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:64``] arm8_extr_FOLD1
