@@ -772,7 +772,7 @@ val _ = if (test_fast orelse not test_arm8) then () else let
   val (thm, errors) = test_ARM8.bir_lift_prog ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
     (Arbnum.fromInt 0x400570) instrs
 
-  val _ = print_thm thm;
+(*  val _ = print_thm thm; *)
 in () end;
 
 
@@ -986,6 +986,27 @@ val _ = if (test_fast orelse not test_arm8) then () else let
   val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     instrs_bignumlib
 in () end;
+
+
+
+val _ = if (test_fast orelse not test_arm8) then () else let
+  val disassemble_fun = arm8AssemblerLib.arm8_disassemble;
+  fun asm_of_hex_code_fun code = hd (disassemble_fun [QUOTE code]);
+  fun hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm);
+
+  val test_insts_movk_raw = ["movk w3, #0x5, lsl #0", "movk w3, #0x5, lsl #16",
+                             "movk x3, #0x5, lsl #0", "movk x3, #0x5, lsl #16",
+                             "movk x3, #0x5, lsl #32", "movk x3, #0x5, lsl #48"];
+  val test_insts = List.map (fn x => [(QUOTE:string -> string frag) x]) test_insts_movk_raw;
+  val test_insts_hex = List.map (hex_code_of_asm) test_insts;
+
+  val _ = print_with_style sty_HEADER "\n\n\nTESTING MOVK INSTRUCTIONS - ARM 8\n\n";
+  val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
+    test_insts_hex
+in () end;
+
+
+
 
 (*****************)
 (* final summary *)
