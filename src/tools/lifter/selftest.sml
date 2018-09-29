@@ -996,11 +996,12 @@ val _ = if (test_fast orelse not test_arm8) then () else let
 
   val test_insts_movk_raw = ["movk w3, #0x5, lsl #0", "movk w3, #0x5, lsl #16",
                              "movk x3, #0x5, lsl #0", "movk x3, #0x5, lsl #16",
-                             "movk x3, #0x5, lsl #32", "movk x3, #0x5, lsl #48"];
+                             "movk x3, #0x5, lsl #32", "movk x3, #0x5, lsl #48",
+                             "strh w1, [x19, x0]", "ldrh w1, [x19, x0]"];
   val test_insts = List.map (fn x => [(QUOTE:string -> string frag) x]) test_insts_movk_raw;
   val test_insts_hex = List.map (hex_code_of_asm) test_insts;
 
-  val _ = print_with_style sty_HEADER "\n\n\nTESTING MOVK INSTRUCTIONS - ARM 8\n\n";
+  val _ = print_with_style sty_HEADER "\n\n\nTESTING MOVK AND STRH/LDRH INSTRUCTIONS - ARM 8\n\n";
   val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     test_insts_hex
 in () end;
