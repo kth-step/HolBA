@@ -1029,8 +1029,8 @@ in () end
 
 val m0_expected_failed_hexcodes:string list =
 [
-   "A1BC" (* bmr_step_hex failed *),
-   "DFB8" (* bmr_step_hex failed *)
+   "A1BC" (* manual decoding: ADR r1, PC, #0xBC *),
+   "DFB8" (* manual decoding: SVC #0xB8 *)
 ];
 
 
