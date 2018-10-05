@@ -1617,6 +1617,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
       in thm1 end;
 
 
+      val _ = if ((!debug_trace > 1) andalso (not (List.null (!failing_inst_r)))) then
+                (print "\n"; print_bir_inst_errors (!failing_inst_r)) else ();
+
       val prog_thm1 = let
         val _ = if (!debug_trace > 1) then (print ("checking for duplicate labels"))
                 else if (!debug_trace = 1) then (print "!") else ();
@@ -1656,8 +1659,6 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
          (print (" " ^ d_s ^ " s -");
          (if (List.null (!failing_inst_r)) then print_with_style sty_OK " OK\n" else
              print_with_style sty_FAIL " FAILED\n")) else ();
-      val _ = if ((!debug_trace > 1) andalso (not (List.null (!failing_inst_r)))) then
-                (print "\n"; print_bir_inst_errors (!failing_inst_r)) else ();
 
     in
       (prog_thm2, List.rev (!failing_inst_r))
