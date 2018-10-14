@@ -1,0 +1,27 @@
+INCLUDES = aes ../../../core #../ ../../../core-props
+
+
+OPTIONS = QUIT_ON_FAILURE
+
+EXTRA_CLEANS = selftest.exe
+
+
+ifdef POLY
+HOLHEAP = ../../lifter/HolBALifter-heap
+endif
+
+default: all
+
+aes-test.exe: aes-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
+
+#aesTheory.uo: aes-test.exe 
+#	./aes-test.exe
+
+TARGETS = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
+
+all: $(TARGETS)
+.PHONY: all
+
+

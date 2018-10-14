@@ -1,0 +1,9 @@
+digraph L {
+
+  node [shape=record fontname=Arial];
+
+  n_0  [label="id: 0\lfst:\llst:\lcnt:\l"]
+
+n_0 -> n_0
+
+}
