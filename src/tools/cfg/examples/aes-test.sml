@@ -129,16 +129,43 @@ val (_,in_idxs,out_idxs) = cfg_compute_inoutedges_as_idxs blocks;
 =================================================================
  *)
 
-(*
 fun find_conn_comp (blocks, in_idxs, out_idxs) =
   let
     val exit_nodes = find_idxs (fn is => List.exists (fn x => x=(~1)) is) out_idxs;
-    fun process_conccomp exit_nodes acc = [];
-    val conncomp = process_conccomp exit_nodes [];
+    fun process_conccomp [] acc = acc
+      | process_conccomp (n::ns) (nodes, entries, exits) =
+           let
+             val ins = List.nth(in_idxs,n);
+             val outs = List.nth(out_idxs,n);
+             val outs_filt = List.filter (fn x => x <> (~1)) outs;
+
+             val new_entries = if ins = [] then (n::entries) else entries;
+             val new_exits   = if outs <> outs_filt then (n::exits) else exits;
+
+             val new_ns_0 = (List.filter (fn x => not (List.exists (fn y => y = x) (ns@nodes)))
+                               ins) @ ns;
+             val new_ns_1 = (List.filter (fn x => not (List.exists (fn y => y = x) (ns@nodes)))
+                               outs_filt) @ new_ns_0;
+           in
+             process_conccomp new_ns_1 (n::nodes, new_entries, new_exits)
+           end;
+    fun process_conccomps [] acc = acc
+      | process_conccomps (n::exit_nodes) acc =
+           let
+             val conn_comp = process_conccomp [n] ([],[],[]);
+             val (_,_,conn_comp_exits) = conn_comp;
+             val new_exit_nodes = List.filter (fn x => not (List.exists (fn y => x = y) conn_comp_exits)) exit_nodes;
+           in
+             process_conccomps (new_exit_nodes) (conn_comp::acc)
+           end;
+    val conncomp = process_conccomps exit_nodes [];
     (* verify that all nodes are captures in the connected components *)
   in
     conncomp
   end;
+
+(*
+find_conn_comp (blocks, in_idxs, out_idxs)
 *)
 
 
