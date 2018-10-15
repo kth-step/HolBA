@@ -135,8 +135,17 @@ fun convertAndView file =
  ----------------------------------------
  *)
 (*
+val nodes = [(0,node_shape_default,[("id","abc"),("len","12")]),
+             (1,node_shape_default,[("id","def"),("len","22")]),
+             (2,node_shape_point,[]),
+             (3,node_shape_circle,[("id","???")])];
+val edges = [(2,0),
+             (0,1),
+             (1,1),
+             (1,3)];
+
 val file = "test";
-val dot_str = gen_graph [(0,node_shape_default,[("id","abc"),("len","12")]),(1,node_shape_default,[("id","def"),("len","22")]),(2,node_shape_point,[]),(3,node_shape_default,[("id","???")])] [(2,0),(0,1),(1,1),(1,3)];
+val dot_str = gen_graph nodes edges;
 val _ = writeToFile dot_str (file ^ ".dot");
 val _ = convertAndView file;
 *)
