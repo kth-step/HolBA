@@ -165,7 +165,7 @@ fun find_conn_comp (blocks, in_idxs, out_idxs) =
   end;
 
 (*
-find_conn_comp (blocks, in_idxs, out_idxs)
+val conn_comps = find_conn_comp (blocks, in_idxs, out_idxs);
 *)
 
 
@@ -175,5 +175,40 @@ find_conn_comp (blocks, in_idxs, out_idxs)
 =================================================================
  *)
 
+fun divide_linear_fragments (blocks, in_idxs, out_idxs) conn_comps =
+  let
+    fun process_frag n acc =
+      let
+        val new_acc = n::acc;
+        val ins = List.nth(in_idxs,n);
+        val is_split = (length ins = 0) orelse
+                       (length ins > 1) orelse
+                       (length ins = 1 andalso (length (List.nth(out_idxs,hd ins)) > 1))
+      in
+        if is_split then new_acc else process_frag (hd ins) new_acc
+      end;
+
+    fun process_frags [] _ acc = acc
+      | process_frags (n::ns) visited acc =
+          let
+            val new_frag = process_frag n [];
+            val new_visited = new_frag @ visited;
+
+            val ins = List.nth(in_idxs,hd new_frag);
+            val new_ns = (List.filter (fn x => not (List.exists (fn y => y = x) (ns@new_visited)))
+                            ins) @ ns;
+          in
+            process_frags new_ns new_visited (new_frag::acc)
+          end;
+
+    fun process_comp_frags (_, _, exits) =
+      process_frags exits [] [];
+  in
+    List.foldl (fn (c,fs) => (process_comp_frags c)@fs) [] conn_comps
+  end;
+
+(*
+val frags = divide_linear_fragments (blocks, in_idxs, out_idxs) conn_comps;
+*)
 
 
