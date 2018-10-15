@@ -191,7 +191,7 @@ fun convertAndView file =
     val dotfile = (file ^ ".dot");
     val tempfile = (file ^ ".ps");
     val _ = OS.Process.system ("dot " ^ dotfile ^ " -Tps -o " ^ tempfile);
-    val _ = OS.Process.system ("xdg-open " ^ tempfile);
+    val _ = OS.Process.system ("xdg-open " ^ tempfile ^ " > /dev/null 2>/dev/null");
   in
     ()
   end;
