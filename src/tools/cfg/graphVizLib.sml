@@ -77,7 +77,7 @@ fun gen_edges edges =
         graph
  ----------------------------------------
  *)
-fun gen_graph nodes edges =
+fun gen_graph (nodes, edges) =
   let
     val s1 = "digraph L {\r\n\r\n  node [shape=record fontname=Arial];\r\n\r\n";
     val s2 = gen_nodes nodes;
@@ -87,6 +87,75 @@ fun gen_graph nodes edges =
   in
     s1 ^ s2 ^ s3 ^ s4 ^ s5
   end;
+
+
+
+fun simplify_graph (nodes, edges) =
+  let
+    fun isSpecialNode i =
+         let
+           val ins = List.foldl (fn ((x,y),l) => if y = i then x::l else l) [] edges;
+           val outs = List.foldl (fn ((x,y),l) => if x = i then y::l else l) [] edges;
+         in
+           (not (length outs = 1 andalso length ins = 1)) orelse
+           (let
+              val SOME (_,in_shape,_) = List.find (fn (i,_,_) => i = hd ins) nodes;
+              val SOME (_,out_shape,_) = List.find (fn (i,_,_) => i = hd outs) nodes;
+            in
+              in_shape <> node_shape_default orelse out_shape <> node_shape_default
+            end)
+         end;
+    val nodes = List.filter (fn (i,_,_) =>
+         let
+           val ins = List.foldl (fn ((x,y),l) => if y = i then x::l else l) [] edges;
+           val outs = List.foldl (fn ((x,y),l) => if x = i then y::l else l) [] edges;
+         in
+           isSpecialNode i orelse isSpecialNode (hd ins)
+         end
+      ) nodes;
+
+    fun nodeExists x = (List.exists (fn (i,_,_) => i = x) nodes);
+(*
+    fun findNexts acc x = if nodeExists x then (x,acc) else
+      let
+        val SOME (_,y) = List.find (fn (z,_) => x = z) edges;
+      in
+        findNexts (acc+1) y
+      end;
+*)
+    fun findNexts acc x =
+      let
+        val SOME (_,y) = List.find (fn (z,_) => x = z) edges;
+      in
+        if nodeExists y then (y,acc)
+        else findNexts (acc+1) y
+      end;
+    val findNext = fst o (findNexts 0);
+    val numMissing = snd o (findNexts 1);
+
+    val nodes = List.map (fn (i,s,ls) => (i,s,
+      let
+        val outs = List.foldl (fn ((x,y),l) => if x = i then y::l else l) [] edges;
+      in
+        if length outs = 1 andalso not (nodeExists (hd outs)) then
+          ls @ [("REM", Int.toString (numMissing (hd outs)))]
+        else
+          ls
+      end)) nodes;
+
+    val edges = List.foldl (fn ((x,y),edges) =>
+        if nodeExists x then
+          if nodeExists y then
+            (x,y)::edges
+          else
+            (x,findNext y)::edges
+        else
+          edges
+      ) [] edges;
+  in
+    (nodes, edges)
+  end;
+
 
 
 (*
@@ -138,14 +207,21 @@ fun convertAndView file =
 val nodes = [(0,node_shape_default,[("id","abc"),("len","12")]),
              (1,node_shape_default,[("id","def"),("len","22")]),
              (2,node_shape_point,[]),
-             (3,node_shape_circle,[("id","???")])];
+             (3,node_shape_circle,[("id","???")]),
+             (4,node_shape_default,[("id","aaa")]),
+             (5,node_shape_default,[("id","bbb")])];
 val edges = [(2,0),
-             (0,1),
+             (0,4),
+             (4,5),
+             (5,1),
              (1,1),
              (1,3)];
 
+
+val (nodes, edges) = simplify_graph (nodes, edges);
+
 val file = "test";
-val dot_str = gen_graph nodes edges;
+val dot_str = gen_graph (nodes, edges);
 val _ = writeToFile dot_str (file ^ ".dot");
 val _ = convertAndView file;
 *)

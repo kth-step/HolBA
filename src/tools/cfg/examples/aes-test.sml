@@ -32,7 +32,10 @@ fun ziplist [] [] = []
   | ziplist (x::xs) (y::ys) = (x,y)::(ziplist xs ys)
   | ziplist _ _ = raise ERR "ziplist" "list length doesn't match";
 
-fun convert_inout_tographviz (blocks,in_idxs,out_idxs) =
+fun unziplist [] = ([],[])
+  | unziplist ((x,y)::xys) = let val (xs,ys) = unziplist xys; in (x::xs,y::ys) end;
+
+fun convert_inout_to_graphviz (blocks,in_idxs,out_idxs) =
   let
     fun node_fold_fun (block, (nodes,i)) =
       let
@@ -75,9 +78,10 @@ fun convert_inout_tographviz (blocks,in_idxs,out_idxs) =
   end;
 
 (*
-val (nodes, edges) = convert_inout_tographviz (blocks,in_idxs,out_idxs)
+val (nodes, edges) = convert_inout_to_graphviz (blocks,in_idxs,out_idxs);
+val (nodes, edges) = simplify_graph (nodes, edges);
 val file = "test";
-val dot_str = gen_graph nodes edges;
+val dot_str = gen_graph (nodes, edges);
 val _ = writeToFile dot_str (file ^ ".dot");
 val _ = convertAndView file;
 *)
