@@ -1,4 +1,7 @@
 
+structure graphVizLib =
+struct
+
 
 (*
  ----------------------------------------
@@ -137,3 +140,7 @@ val dot_str = gen_graph [(0,node_shape_default,[("id","abc"),("len","12")]),(1,n
 val _ = writeToFile dot_str (file ^ ".dot");
 val _ = convertAndView file;
 *)
+
+
+end
+

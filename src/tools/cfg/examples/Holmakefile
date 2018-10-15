@@ -1,4 +1,4 @@
-INCLUDES = aes ../../../core #../ ../../../core-props
+INCLUDES = aes ../../../core .. #../../../core-props
 
 
 OPTIONS = QUIT_ON_FAILURE
