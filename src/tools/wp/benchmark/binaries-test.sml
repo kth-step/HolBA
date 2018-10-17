@@ -4,6 +4,7 @@ open listSyntax;
 
 open binariesTheory;
 open bir_cfgLib;
+open bir_cfgVizLib;
 
 open bir_wpTheory bir_wpLib;
 
@@ -11,8 +12,8 @@ open bir_wpTheory bir_wpLib;
 
 
 val configurations = [
-  ("arm8", "aes"    , aes_arm8_program_THM)(*,
-  ("m0"  , "aes"    , aes_m0_program_THM),
+  ("arm8", "aes"    , aes_arm8_program_THM),
+  ("m0"  , "aes"    , aes_m0_program_THM)(*,
   ("arm8", "bignum" , bignum_arm8_program_THM),
   ("m0"  , "bignum" , bignum_m0_program_THM),
   ("arm8", "wolfssl", wolfssl_arm8_program_THM),
@@ -39,14 +40,24 @@ val _ = OS.FileSys.chDir ("./" ^ dirname);
 val _ = List.foldl (fn (config,_) =>
   let
     val (arch_str, example_str, prog_thm) = config;
-    (* val (arch_str, example_str, prog_thm) = hd configurations; *)
+    (*
+    val (arch_str, example_str, prog_thm) = hd configurations;
+    val (arch_str, example_str, prog_thm) = ("m0"  , "aes"    , aes_m0_program_THM);
+    *)
 
     val prog = ((snd o dest_comb o concl) prog_thm);
     val blocks = (fst o dest_list o dest_BirProgram) prog;
 
     val g = cfg_compute_inoutedges_as_idxs blocks;
+    (*
+    val _ = bir_show_graph_inout_all true g;
+    val _ = bir_show_graph_inout_all false g;
+    *)
 
     val conn_comps = find_conn_comp g;
+    (*
+    val _ = List.map (fn (nodes,_,_) => bir_show_graph_inout true nodes g) conn_comps;
+    *)
 
     val frags = divide_linear_fragments g conn_comps;
     val num_frags = length frags;
@@ -68,8 +79,15 @@ val _ = List.foldl (fn (config,_) =>
       let
 	(*
 	val frag_i = 0;
-	val frag = (hd o tl o tl) frags;
+	val frag = List.nth (frags,0);
+	val frag_i = 1;
+	val frag = List.nth (frags,1);
 	*)
+
+        (*
+        val _ = bir_show_graph_inout true frag g;
+        val _ = bir_show_graph_inout false frag g;
+        *)
 
 	val theory_name = theory_name_prefix ^ (Int.toString frag_i);
 
@@ -83,7 +101,7 @@ val _ = List.foldl (fn (config,_) =>
 	    val blocks_sel = List.rev blocks_sel;
 
 	    val eval_label = (snd o dest_eq o concl o EVAL);
-	    val last_block = List.last blocks_sel;
+	    val last_block = List.nth(blocks,(List.last frag));
 	    val (raw_BL_term, _, _) = dest_bir_block last_block;
 	    val BL_term = eval_label raw_BL_term;
 
