@@ -148,6 +148,9 @@ val _ = List.foldl (fn (config,_) =>
 
 	(* prepare "problem-static" part of the theorem *)
 	val reusable_thm = bir_wp_exec_of_block_reusable_thm;
+	(*
+	val (program, post, ls) = (ex_program, ex_post, ex_ls);
+	*)
 	val prog_thm = bir_wp_comp_wps_iter_step0_init reusable_thm (ex_program, ex_post, ex_ls) defs;
 
 
