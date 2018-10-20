@@ -13,12 +13,11 @@ open bir_wpTheory bir_wpLib;
 
 val configurations = [
   ("arm8", "aes"    , aes_arm8_program_THM),
-  ("m0"  , "aes"    , aes_m0_program_THM)(*,
+  ("m0"  , "aes"    , aes_m0_program_THM),
   ("arm8", "bignum" , bignum_arm8_program_THM),
   ("m0"  , "bignum" , bignum_m0_program_THM),
   ("arm8", "wolfssl", wolfssl_arm8_program_THM),
   ("m0"  , "wolfssl", wolfssl_m0_program_THM)
-*)
 ];
 
 
@@ -61,27 +60,37 @@ val _ = List.foldl (fn (config,_) =>
 
     val frags = divide_linear_fragments g conn_comps;
     val num_frags = length frags;
-    val max_frag_size = List.foldl (fn (l,m) => Int.max(length l,m)) 0 frags;
+    val (max_frag, max_frag_size, _) = List.foldl (fn (l,(mf,m,i)) => let val fl = length l; in
+        if fl > m then
+          (i,fl,i+1)
+        else
+          (mf,m,i+1)
+      end) (0,0,0) frags;
+    (*val max_frag_size = List.foldl (fn (l,m) => Int.max(length l,m)) 0 frags;*)
+    val sum_frag_size = List.foldl (fn (l,s) => s + (length l)) 0 frags;
 
     val _ = print ("\n" ^ example_str ^ " - " ^ arch_str ^ ":\n");
     val _ = print ((Int.toString num_frags) ^ " fragments\n");
-    val _ = print ((Int.toString max_frag_size) ^ " max frag size\n\n");
-    val _ = print "\n";
+    val _ = print ((Int.toString max_frag_size) ^ " max frag size in frag " ^ (Int.toString max_frag) ^ "\n");
+    val _ = print ((Int.toString sum_frag_size) ^ " blocks in all fragments\n");
+    val _ = print "\n\n";
 
 
     val theory_name_prefix = example_str ^ "_" ^ arch_str ^ "_";
     (* remove all temporary theories with this prefix *)
     val _ = OS.Process.system ("rm " ^ theory_name_prefix ^ "*");
 
+    val skipidx = 0;(* 1531 *)
+    val maxlength = 300;
 
     (* iterate over all fragments *)
-    val _ = List.foldl (fn (frag,frag_i) =>
+    val _ = List.foldl (fn (frag,frag_i) => if frag_i < skipidx orelse (maxlength > 0 andalso maxlength < length frag) then frag_i + 1 else
       let
 	(*
 	val frag_i = 0;
-	val frag = List.nth (frags,0);
 	val frag_i = 1;
-	val frag = List.nth (frags,1);
+	val frag_i = skipidx;
+	val frag = List.nth (frags,frag_i);
 	*)
 
         (*
@@ -92,6 +101,10 @@ val _ = List.foldl (fn (config,_) =>
 	val theory_name = theory_name_prefix ^ (Int.toString frag_i);
 
 	val _ = new_theory theory_name;
+
+        val _ = print ("==================================\n");
+        val _ = print ("frag " ^ (Int.toString frag_i) ^ " (length: " ^ (Int.toString (length frag)) ^ ")\n");
+        val _ = print ("==================================\n");
 
 	(* select only fragment blocks, and last block label *)
 	fun select_blocks_from_prog frag prog =
