@@ -99,8 +99,12 @@ fun simplify_graph (nodes, edges) =
          in
            (not (length outs = 1 andalso length ins = 1)) orelse
            (let
-              val SOME (_,in_shape,_) = List.find (fn (i,_,_) => i = hd ins) nodes;
-              val SOME (_,out_shape,_) = List.find (fn (i,_,_) => i = hd outs) nodes;
+              val (_,in_shape,_) = case List.find (fn (i,_,_) => i = hd ins) nodes of
+				       NONE => raise ERR "simplify_graph" "unexpected error"
+				     | SOME x => x;
+              val (_,out_shape,_) = case List.find (fn (i,_,_) => i = hd outs) nodes of
+				       NONE => raise ERR "simplify_graph" "unexpected error"
+				     | SOME x => x;
             in
               in_shape <> node_shape_default orelse out_shape <> node_shape_default
             end)
@@ -125,7 +129,9 @@ fun simplify_graph (nodes, edges) =
 *)
     fun findNexts acc x =
       let
-        val SOME (_,y) = List.find (fn (z,_) => x = z) edges;
+        val (_,y) = case List.find (fn (z,_) => x = z) edges of
+		        NONE => raise ERR "simplify_graph" "unexpected error"
+		      | SOME x => x;
       in
         if nodeExists y then (y,acc)
         else findNexts (acc+1) y
