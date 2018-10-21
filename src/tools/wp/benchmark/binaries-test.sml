@@ -14,11 +14,11 @@ open bir_wpTheory bir_wpLib;
 
 
 val configurations = [
-  ("m0"  , "toy"    , toy_m0_program_THM)(*,
+  ("m0"  , "toy"    , toy_m0_program_THM),
   ("arm8", "aes"    , aes_arm8_program_THM),
   ("m0"  , "aes"    , aes_m0_program_THM),
   ("arm8", "bignum" , bignum_arm8_program_THM),
-  ("m0"  , "bignum" , bignum_m0_program_THM),
+  ("m0"  , "bignum" , bignum_m0_program_THM)(*,
   ("arm8", "wolfssl", wolfssl_arm8_program_THM),
   ("m0"  , "wolfssl", wolfssl_m0_program_THM)
 *)
@@ -171,7 +171,7 @@ val _ = List.foldl (fn (config,_) =>
 	val ex_program = ``ex_program``;
 	val ex_post = ``ex_post``;
 	val ex_ls = ``ex_ls``;
-	val ex_wps = ``ex_wps``;
+	val ex_wps = (snd o dest_eq o concl) ex_wps_def;(*``ex_wps``;*)
 
 	val defs = [ex_program_def, ex_post_def, ex_ls_def, ex_wps_def];
 
@@ -198,9 +198,10 @@ val _ = List.foldl (fn (config,_) =>
 
 
         (* verify that we have wps for each entry *)
+        (*val wps_ = (snd o dest_eq o concl o (REWRITE_CONV [ex_wps_def])) wps1;*)
         (*
         val label = hd first_block_labels;
-        find_wp_const label wps1
+        find_wp_const label wps_
         *)
         fun find_wp_const label wps1 =
           if is_fempty wps1 then NONE else
