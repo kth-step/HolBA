@@ -192,5 +192,243 @@ val frags = divide_linear_fragments (blocks, in_idxs, out_idxs) conn_comps;
 *)
 
 
+(*
+=================================================================
+            divide into loop-free fragments
+=================================================================
+ *)
+
+(*
+fun divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps =
+  let
+    fun process_frag n acc =
+      let
+        val new_acc = n::acc;
+        val ins = List.nth(in_idxs,n);
+        val is_split = (length ins = 0) orelse
+                       (length ins > 1) orelse
+                       (length ins = 1 andalso (length (List.nth(out_idxs,hd ins)) > 1))
+      in
+        if is_split then new_acc else process_frag (hd ins) new_acc
+      end;
+
+    fun process_frags [] = raise ERR "process_frags" "we need at least one fragment to work on"
+      | process_frags ((todo,done)::frag_fifo) =
+          if todo = [] then
+            if List.forall (fn (todo,_) => todo = []) frag_fifo then
+              ((todo,done)::frag_fifo)
+            else
+              process_frags (frag_fifo @ [(todo,done)])
+          else
+          let
+            val (todox::todol) = todo;
+            val ins = List.nth(in_idxs,todox);
+            val outs = List.nth(out_idxs,todox);
+
+            val new_todo = ;
+            val new_done = ;
+            val new_frags = ;
+            val new_frag_fifo = ;
+
+            val new_frag = process_frag n [];
+            val new_visited = new_frag @ visited;
+          in
+            process_frags (new_frag_fifo @ new_frags @ [(new_todo,new_done)])
+          end;
+
+    fun process_comp_frags (_, _, exits) =
+      let
+        val init = List.map (fn exit => ([exit],[])) exits;
+        val processed = process_frags init;
+        fun check_double [] = ()
+	  | check_double ((_,done):xs) = (List.map (fn xd =>
+                if List.exists (fn (_,xsdone) => List.exists (fn xsd => xsd = xd) xsdone) xs then
+                  raise ERR "process_comp_frags" "done lists have overlap"
+                else
+                  ()
+              ) done; check_double xs);
+        val _ = check_double processed;
+        val out = List.foldl (fn ((todo,done),l) =>
+              if todo <> [] then raise ERR "process_comp_frags" "todo list not empty" else (done::l)
+             ) [] processed;
+      in
+        out
+      end;
+  in
+    List.foldl (fn (c,fs) => (process_comp_frags c)@fs) [] conn_comps
+  end;
+*)
+(*
+fun divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps =
+  let
+    fun prep_frag_todo_for_compnent c =
+      List.map (fn frag =>
+        let
+          val entries = List.filter (fn z => (List.nth(in_idxs,z)) = [] orelse not (List.all (fn x => List.exists (fn y => x = y) frag) (List.nth(in_idxs,z)))) frag;
+          val exits = List.filter (fn z => not (List.all (fn x => (List.exists (fn y => x = y) frag)) (List.nth(out_idxs,z)))) frag;
+          val _ = if entries = [hd frag] andalso exits = [List.last frag] then ()
+                  else raise ERR "prep_frag_todo_for_compnent" "something is fishy";
+        in
+          (frag, hd entries, hd exits)
+        end) (divide_linear_fragments (blocks, in_idxs, out_idxs) [c]);
+
+    fun is_reachable nodes outs n =
+      if List.exists (fn x => x = n) outs then true else
+      let
+        val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) (List.nth(out_idxs,n));
+      in
+        List.exists (fn x => is_reachable nodes outs x) n_outs
+      end;
+
+    fun process_comp_frags frags [] = frags
+      | process_comp_frags frags ((ns,en,ex)::todo) =
+      let
+        val (new_frags,isgluedin) = List.foldr (fn ((nodes,entries,exits),(l,isgluedin)) =>
+            if isgluedin then
+              ((nodes,entries,exits)::l,isgluedin)
+            else
+              let
+                val ins = List.nth(in_idxs,en);
+                val outs = List.nth(out_idxs,ex);
+
+                val connects_in = List.exists (fn x => List.exists (fn y => x = y) ins) exits;
+                val connects_out = List.exists (fn x => List.exists (fn y => x = y) outs) entries;
+
+                val createscircle = connects_in andalso
+                                    connects_out andalso
+                                    (List.exists (fn x => is_reachable nodes ins x)
+                                                 (List.filter (fn x => List.exists (fn y => x = y) nodes) outs)
+                                    );
+
+                val isgluedin = (not createscircle) andalso (connects_in orelse connects_out);
+
+                val new_nodes = if isgluedin then ns @ nodes else nodes;
+
+                val new_entries = List.filter (fn z => (List.nth(in_idxs,z)) = [] orelse not (List.all (fn x => List.exists (fn y => x = y) new_nodes) (List.nth(in_idxs,z)))) new_nodes;
+                val new_exits = List.filter (fn z => not (List.all (fn x => (List.exists (fn y => x = y) new_nodes)) (List.nth(out_idxs,z)))) new_nodes;
+                (*
+                val (new_entries,new_exits) = if isgluedin andalso connects_out then ((
+                    List.filter (fn x =>
+                        let
+                          val x_ins = List.nth(in_idxs,x);
+                        in
+                          (not (List.exists (fn y => ex = y) x_ins)) orelse
+                          (List.exists (fn y => not (List.exists (fn z => z = y) new_nodes)) x_ins)
+                        end
+                      ) (en::entries)
+                  ),exits) else (entries,exits);
+
+                val (new_entries,new_exits) = if isgluedin andalso connects_in then (new_entries,(
+                    List.filter (fn x =>
+                        let
+                          val x_outs = List.nth(out_idxs,x);
+                        in
+                          (not (List.exists (fn y => en = y) x_outs)) orelse
+                          (List.exists (fn y => not (List.exists (fn z => z = y) new_nodes)) x_outs)
+                        end
+                      ) (List.foldl () (ex::new_exits) ins)
+                  )) else (new_entries,new_exits);
+                *)
+              in
+                ((new_nodes,new_entries,new_exits)::l,isgluedin)
+              end
+          ) ([],false) frags;
+        val new_frags = if isgluedin then new_frags else (new_frags @ [(ns,[en],[ex])]);
+      in
+        process_comp_frags new_frags todo
+      end;
+  in
+    List.foldl (fn (c,fs) => (process_comp_frags [] (prep_frag_todo_for_compnent c))@fs) [] conn_comps
+  end;
+*)
+
+fun divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps =
+  let
+    fun prep_frag_todo_for_compnent c =
+      List.map (fn frag =>
+        let
+          val entries = List.filter (fn z => (List.nth(in_idxs,z)) = [] orelse not (List.all (fn x => List.exists (fn y => x = y) frag) (List.nth(in_idxs,z)))) frag;
+          val exits = List.filter (fn z => not (List.all (fn x => (List.exists (fn y => x = y) frag)) (List.nth(out_idxs,z)))) frag;
+          val _ = if entries = [hd frag] andalso exits = [List.last frag] then ()
+                  else raise ERR "prep_frag_todo_for_compnent" "something is fishy";
+        in
+          (frag, entries, exits)
+        end) (divide_linear_fragments (blocks, in_idxs, out_idxs) [c]);
+
+    fun is_reachable nodes outs n =
+      if List.exists (fn x => x = n) outs then true else
+      let
+        val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) (List.nth(out_idxs,n));
+      in
+        List.exists (fn x => is_reachable nodes outs x) n_outs
+      end;
+
+    fun merge_frags (ns_1,en_1,ex_1) (ns_2,en_2,ex_2) =
+      let
+        val ins_2 = List.foldl (fn (en,l) => List.foldl (fn (x,l) => if List.exists (fn y => x = y) l then l else (x::l)) l (List.nth(in_idxs,en))) [] en_2;
+        val outs_2 = List.foldl (fn (ex,l) => List.foldl (fn (x,l) => if List.exists (fn y => x = y) l then l else (x::l)) l (List.nth(out_idxs,ex))) [] ex_2;
+
+        val connects_in = List.exists (fn x => List.exists (fn y => x = y) ins_2) ex_1;
+        val connects_out = List.exists (fn x => List.exists (fn y => x = y) outs_2) en_1;
+
+	val createscircle = connects_in andalso
+			    connects_out andalso
+			    (List.exists (fn x => is_reachable ns_1 ins_2 x)
+					 (List.filter (fn x => List.exists (fn y => x = y) ns_1) outs_2)
+			    );
+
+        val mergable = (not createscircle) andalso (connects_in orelse connects_out);
+      in
+        if not mergable then NONE else SOME (
+          let
+	  val new_nodes = ns_2 @ ns_1;
+
+	  val new_entries = List.filter (fn z => (List.nth(in_idxs,z)) = [] orelse not (List.all (fn x => List.exists (fn y => x = y) new_nodes) (List.nth(in_idxs,z)))) new_nodes;
+	  val new_exits = List.filter (fn z => not (List.all (fn x => (List.exists (fn y => x = y) new_nodes)) (List.nth(out_idxs,z)))) new_nodes;
+          in
+            (new_nodes,new_entries,new_exits)
+          end
+          )
+      end;
+
+    fun merge_fragl l _ [] = NONE
+      | merge_fragl l frag1 (frag2::fs) =
+          case merge_frags frag1 frag2 of
+	      NONE          => merge_fragl (frag2::l) frag1 fs
+	    | SOME new_frag => SOME (l @ (new_frag::fs));
+
+    fun merge_through l [] = NONE
+      | merge_through l (frag::fs) =
+          case merge_fragl l frag fs of
+	      NONE => merge_through (frag::l) fs
+	    | x    => x;
+
+    fun process_comp_frags fs =
+          case merge_through [] fs of
+	      NONE        => fs
+	    | SOME new_fs => process_comp_frags new_fs;
+
+  in
+    List.concat (List.map (fn c => process_comp_frags (prep_frag_todo_for_compnent c)) conn_comps)
+  end;
+
+
+(*
+val conn_comps = tl conn_comps;
+val frags = divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps;
+
+val c = hd conn_comps;
+val todo = prep_frag_todo_for_compnent c;
+(divide_linear_fragments (blocks, in_idxs, out_idxs) [c])
+val frags = process_comp_frags [] [];
+
+val frags =[([0,1,3],[0],[3])]
+val ((ns,en,ex)::todo) = [([2],2,2)]
+val (nodes,entries,exits) = hd frags
+process_comp_frags frags ((ns,en,ex)::todo)
+
+*)
+
+
 end
 
