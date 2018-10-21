@@ -144,7 +144,7 @@ fun simplify_graph (nodes, edges) =
         val outs = List.foldl (fn ((x,y),l) => if x = i then y::l else l) [] edges;
       in
         if length outs = 1 andalso not (nodeExists (hd outs)) then
-          ls @ [("REM", Int.toString (numMissing (hd outs)))]
+          ls @ [("CUTOUT", Int.toString (numMissing (hd outs)))]
         else
           ls
       end)) nodes;
