@@ -118,6 +118,8 @@ fun simplify_graph (nodes, edges) =
          end
       ) nodes;
 
+    val _ = if nodes <> [] then () else raise ERR "simplify_graph" "the fragment is only one loop, cannot be simplified at the moment";
+
     fun nodeExists x = (List.exists (fn (i,_,_) => i = x) nodes);
 (*
     fun findNexts acc x = if nodeExists x then (x,acc) else

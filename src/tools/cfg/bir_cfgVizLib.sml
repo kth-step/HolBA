@@ -45,6 +45,12 @@ fun convert_inout_to_graphviz idxs_sel (blocks,in_idxs,out_idxs) =
    (*         (nodes_aux,edges,i_aux) *)
           else
             (nodes_aux,edges,i_aux);
+        val (nodes_aux,edges,i_aux) = List.foldl (fn (in_idx,(nodes_aux,edges,i_aux)) =>
+            if in_idx = (~1) then
+              ((i_aux,node_shape_circle,[("id", "???")])::nodes_aux,(i_aux,i)::edges,i_aux+1)
+            else
+              (nodes_aux,edges,i_aux)
+          ) (nodes_aux,edges,i_aux) ins;
         val (nodes_aux,edges,i_aux) = List.foldl (fn (out_idx,(nodes_aux,edges,i_aux)) =>
             if out_idx = (~1) then
               ((i_aux,node_shape_circle,[("id", "???")])::nodes_aux,(i,i_aux)::edges,i_aux+1)
@@ -63,7 +69,8 @@ fun convert_inout_to_graphviz idxs_sel (blocks,in_idxs,out_idxs) =
           if not (listcontains idxs_sel i) then
             ([],[])
           else
-            (List.filter (fn x => listcontains ((~1)::idxs_sel) x) ins, List.filter (fn x => listcontains ((~1)::idxs_sel) x) outs)
+            (List.map (fn x => if (listcontains ((~1)::idxs_sel) x) then x else (~1)) ins,
+             List.map (fn x => if (listcontains ((~1)::idxs_sel) x) then x else (~1)) outs)
       ) (ziplist (List.tabulate(num_idxs, fn x => x)) (ziplist in_idxs out_idxs));
 
     val (nodes_aux, edges,_,_) = List.foldl edge_fold_fun ([],[],0,num_idxs) inout_idxs;
