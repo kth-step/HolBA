@@ -44,7 +44,7 @@ val _ = List.foldl (fn (config,_) =>
     val (arch_str, example_str, prog_thm) = config;
     (*
     val (arch_str, example_str, prog_thm) = hd configurations;
-    val (arch_str, example_str, prog_thm) = ("m0"  , "aes"    , aes_m0_program_THM);
+    val (arch_str, example_str, prog_thm) = ("m0"  , "bignum"    , bignum_m0_program_THM);
     *)
 
     val theory_name_prefix = example_str ^ "_" ^ arch_str ^ "_";
@@ -83,15 +83,32 @@ val _ = List.foldl (fn (config,_) =>
     val _ = print ((Int.toString num_frags) ^ " fragments\n");
     val _ = print ((Int.toString max_frag_size) ^ " max frag size in frag " ^ (Int.toString max_frag) ^ "\n");
     val _ = print ((Int.toString sum_frag_size) ^ " blocks in all fragments\n");
+    val _ = print ((Int.toString (length blocks)) ^ " blocks in the original program\n");
     val _ = print "\n\n";
     val _ = if sum_frag_size = (length blocks) then () else print "sum fragment size: there is something fishy here";
+
+
 
 
     (* remove all temporary theories with this prefix *)
     val _ = OS.Process.system ("rm " ^ theory_name_prefix ^ "*");
 
+
+
     val skipidx = 0;(* 1531 *)
     val maxlength = 150;
+
+    val num_frags_to_consider = List.foldl (fn (frag,acc) =>
+          if (maxlength > 0 andalso maxlength < length ((fn (x,_,_) => x) frag))
+          then acc
+          else acc + 1
+        ) 0 frags;
+
+    val _ = print ("... looking only at fragments where block number <= " ^ (Int.toString maxlength) ^ "\n");
+    val _ = print ("        i.e., " ^ (Int.toString num_frags_to_consider) ^ " fragments\n");
+    val _ = print "\n\n";
+
+
 
     (* iterate over all fragments *)
     val _ = List.foldl (fn (frag,frag_i) => if frag_i < skipidx orelse (maxlength > 0 andalso maxlength < length ((fn (x,_,_) => x) frag)) then frag_i + 1 else
