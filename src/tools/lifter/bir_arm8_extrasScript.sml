@@ -675,6 +675,21 @@ SIMP_TAC (arith_ss++wordsLib.SIZES_ss++boolSimps.CONJ_ss++boolSimps.EQUIV_EXTRAC
   wordsTheory.word_bits_def, fcpTheory.FCP_BETA, word_lsl_def] >>
 SIMP_TAC arith_ss [arithmeticTheory.MIN_DEF]);
 
+val ExtendValue_Unsigned_32_REWR = prove (
+``(ExtendValue (w, ExtendType_UXTB, n) = (w2w ((w2w w):word8):word32) << n) /\
+  (ExtendValue (w, ExtendType_UXTH, n) = (w2w ((w2w w):word16):word32) << n) /\
+  (ExtendValue (w, ExtendType_UXTW, n) = (w << n))``,
+
+SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR,
+  GSYM bitstringTheory.word_lsl_v2w] >>
+Q.SUBGOAL_THEN `w2v w = fixwidth (dimindex (:32)) (w2v w)` SUBST1_TAC >- (
+  METIS_TAC[fixwidth_id_imp, length_w2v]
+) >>
+REWRITE_TAC [GSYM bitstringTheory.word_bits_v2w, v2w_w2v] >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+SIMP_TAC (arith_ss++wordsLib.SIZES_ss++boolSimps.CONJ_ss++boolSimps.EQUIV_EXTRACT_ss) [w2w,
+  wordsTheory.word_bits_def, fcpTheory.FCP_BETA, word_lsl_def] >>
+SIMP_TAC arith_ss [arithmeticTheory.MIN_DEF]);
 
 
 val ExtendValue_Signed_REWR_aux = prove (
@@ -730,8 +745,9 @@ FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR, w2w_id, sw2sw_id]);
 
 val ExtendValue_REWRS = save_thm ("ExtendValue_REWRS", let
   val thm0 = CONJ (GEN_ALL ExtendValue_Unsigned_REWR) ExtendValue_Signed_REWR
-  val thm1 = SIMP_RULE std_ss [FORALL_AND_THM, GSYM CONJ_ASSOC] thm0
-in thm1 end);
+  val thm1 = CONJ (GEN_ALL ExtendValue_Unsigned_32_REWR) thm0
+  val thm2 = SIMP_RULE std_ss [FORALL_AND_THM, GSYM CONJ_ASSOC] thm1
+in thm2 end);
 
 
 
@@ -789,6 +805,24 @@ SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
   word_reverse_REWRS, word_concat_def, word_join_index, word_extract_def,
   w2w, word_bits_def, fcpTheory.FCP_BETA] >>
 SIMP_TAC (arith_ss++ boolSimps.LIFT_COND_ss) []);
+
+
+val g_low_def = Define `g_low(x:word64) = 0xFFFFFFFFw && x`;
+val g_high_def = Define `g_high(x:word64) = x >>> 32`;
+val arm8_high_u_mul_internal = store_thm ("arm8_high_u_mul_internal",
+``!w1:word64 w2:word64. ((127 >< 64) ((w2w (w1)):word128 * w2w (w2)))
+= 
+g_high(
+   g_high (g_low(w1) * g_low(w2)) +
+   g_low(g_high(w1) * g_low(w2)) + 
+   g_low(g_low(w1) * g_high(w2))
+  ) +
+  g_high(g_high(w1) * g_low(w2)) + 
+  g_high(g_low(w1) * g_high(w2)) +
+(g_high(w1) * g_high(w2))
+``,
+ cheat);
+val arm8_high_u_mul = REWRITE_RULE [g_low_def, g_high_def] arm8_high_u_mul_internal;
 
 
 val arm8_ngc64_fold = store_thm ("arm8_ngc64_fold",
@@ -1010,6 +1044,10 @@ val arm8_CHANGE_INTERVAL_THMS = save_thm ("arm8_CHANGE_INTERVAL_THMS",
     arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL]);
 
 
+val arm8_count_leading_sign = store_thm ("arm8_count_leading_sign",
+ ``!w:word64. (n2w (CountLeadingSignBits w)) = w >>> 3``,
+      cheat);
+      
 val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
   LIST_CONJ [arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS,
       arm8_asr_FOLDS, arm8_lsr_no_imm_FOLDS, arm8_asr_no_imm_FOLDS,
@@ -1017,6 +1055,9 @@ val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
       arm8_mem_store_FOLDS, GSYM word_reverse_REWRS,
       ExtendValue_REWRS, arm8_rev_folds, arm8_ngc64_fold, arm8_ngc32_fold,
       arm8_ror_MOD_FOLDS, arm8_extr_FOLDS, word_shift_extract_ID,
-      arm8_movk32_folds, arm8_movk64_folds]);
+      arm8_movk32_folds, arm8_movk64_folds,
+      arm8_high_u_mul,
+      arm8_count_leading_sign
+]);
 
 val _ = export_theory();
