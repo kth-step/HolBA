@@ -989,7 +989,7 @@ in () end;
 
 
 
-val _ = if (test_fast orelse not test_arm8) then () else let
+val _ = if (not test_arm8) then () else let
   val disassemble_fun = arm8AssemblerLib.arm8_disassemble;
   fun asm_of_hex_code_fun code = hd (disassemble_fun [QUOTE code]);
   fun hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm);
@@ -998,10 +998,22 @@ val _ = if (test_fast orelse not test_arm8) then () else let
                              "movk x3, #0x5, lsl #0", "movk x3, #0x5, lsl #16",
                              "movk x3, #0x5, lsl #32", "movk x3, #0x5, lsl #48",
                              "strh w1, [x19, x0]", "ldrh w1, [x19, x0]"];
-  val test_insts = List.map (fn x => [(QUOTE:string -> string frag) x]) test_insts_movk_raw;
-  val test_insts_hex = List.map (hex_code_of_asm) test_insts;
 
-  val _ = print_with_style sty_HEADER "\n\n\nTESTING MOVK AND STRH/LDRH INSTRUCTIONS - ARM 8\n\n";
+  val test_insts_misc_raw = ["negs xzr, x0, lsr #1", "negs wzr, w1, lsr #4",
+                             "negs w0, w19"        , "negs xzr, x3, lsl #7",
+                             "cmp w4, w3, uxtb"    , "cmp w26, w0, uxth",
+                             "sbc x0, x0, xzr"];
+
+  val test_insts_misc_hex = ["0B200180" (* "add w0, w12, w0, uxtb" *),
+                             "0B202034" (* "add w20, w1, w0, uxth" *)
+                            ];
+
+  val test_insts_raw = test_insts_movk_raw @ test_insts_misc_raw;
+
+  val test_insts = List.map (fn x => [(QUOTE:string -> string frag) x]) test_insts_raw;
+  val test_insts_hex = (List.map (hex_code_of_asm) test_insts) @ test_insts_misc_hex;
+
+  val _ = print_with_style sty_HEADER "\n\n\nTESTING VARIOUS INSTRUCTIONS - ARM 8\n\n";
   val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     test_insts_hex
 in () end;
