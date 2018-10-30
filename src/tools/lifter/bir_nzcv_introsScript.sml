@@ -28,6 +28,14 @@ SIMP_TAC std_ss [nzcv_BIR_SUB_V_CARRY_DEF, awc_BIR_V_def,
   add_with_carry_def, LET_THM, word_msb_n2w]);
 
 
+val nzcv_NEGS_V_fold_ARM8 = save_thm ("nzcv_NEGS_V_fold_ARM8",
+  Q.GEN `a`
+    (CONV_RULE (LAND_CONV (SIMP_CONV (std_ss++wordsLib.WORD_ss) []))
+      (ISPECL [``a:'a word``, ``0w:'a word``] nzcv_SUB_V_fold_ARM8)
+    )
+);
+
+
 val nzcv_SUB_C_fold_ARM8 = store_thm ("nzcv_SUB_C_fold_ARM8",
 ``!w1 w0.
   ((if w2n w0 + w2n (~(w1:'a word)) + 1 < dimword (:'a) then w2n w0 + w2n (~w1) + 1
@@ -423,7 +431,8 @@ val nzcv_SUB_FOLDS_ARM8_CONST_GEN = save_thm ("nzcv_SUB_FOLDS_ARM8_CONST_GEN",
         nzcv_SUB_V_fold_ARM8_CONST,
         nzcv_ADD_N_to_SUB,
         nzcv_ADD_Z_to_SUB,
-        nzcv_ADD_ZN_to_SUB_0]
+        nzcv_ADD_ZN_to_SUB_0,
+        nzcv_NEGS_V_fold_ARM8]
 );
 
 
