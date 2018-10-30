@@ -1002,7 +1002,7 @@ val _ = if (not test_arm8) then () else let
   val test_insts_misc_raw = ["negs xzr, x0, lsr #1", "negs wzr, w1, lsr #4",
                              "negs w0, w19"        , "negs xzr, x3, lsl #7",
                              "cmp w4, w3, uxtb"    , "cmp w26, w0, uxth",
-                             "sbc x0, x0, xzr"];
+                             "sbc x0, x0, xzr"     , "sbcs x0, x0, xzr"];
 
   val test_insts_misc_hex = ["0B200180" (* "add w0, w12, w0, uxtb" *),
                              "0B202034" (* "add w20, w1, w0, uxth" *)

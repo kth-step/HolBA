@@ -58,7 +58,7 @@ SIMP_TAC std_ss [nzcv_def, LET_THM, nzcv_BIR_SUB_N_def, GSYM word_add_def, word_
 
 
 val nzcv_SUB_FOLDS_ARM8_GEN = save_thm ("nzcv_SUB_FOLDS_ARM8_GEN",
-  LIST_CONJ [nzcv_SUB_N_fold_ARM8, nzcv_SUB_C_fold_ARM8, nzcv_SUB_Z_fold_ARM8, nzcv_SUB_V_fold_ARM8]
+  LIST_CONJ [nzcv_SUB_N_fold_ARM8, nzcv_SUB_C_fold_ARM8, nzcv_SUB_Z_fold_ARM8, nzcv_SUB_V_fold_ARM8, nzcv_NEGS_V_fold_ARM8]
 );
 
 
@@ -202,6 +202,19 @@ val awc_BIR_RES_fold_ARM8 = store_thm ("awc_BIR_RES_fold_ARM8",
             (w0 + w1 + (if c then 1w else 0w))``,
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [
   GSYM word_add_n2w, n2w_w2n]);
+
+
+(*
+val awc_BIR_RES_fold_ARM8_SBC_xzr_64 = save_thm ("awc_BIR_RES_fold_ARM8_SBC_xzr",
+  GENL [``w1:word64``, ``c:bool``]  (
+    CONV_RULE (LAND_CONV (SIMP_CONV (std_ss++wordsLib.WORD_ss) []))
+      (ISPECL [``w1:word64``, ``0xFFFFFFFFFFFFFFFFw:word64``, ``c:bool``] awc_BIR_RES_fold_ARM8)
+  )
+);
+*)
+val maxword_w2n_thm = save_thm ("maxword_w2n_thm",
+  GSYM (EVAL ``w2n (0w:word64 - 1w)``)
+);
 
 
 val awc_BIR_RES_fold_ARM8_ngcs = store_thm ("awc_BIR_RES_fold_ARM8_ngcs",
@@ -431,8 +444,7 @@ val nzcv_SUB_FOLDS_ARM8_CONST_GEN = save_thm ("nzcv_SUB_FOLDS_ARM8_CONST_GEN",
         nzcv_SUB_V_fold_ARM8_CONST,
         nzcv_ADD_N_to_SUB,
         nzcv_ADD_Z_to_SUB,
-        nzcv_ADD_ZN_to_SUB_0,
-        nzcv_NEGS_V_fold_ARM8]
+        nzcv_ADD_ZN_to_SUB_0]
 );
 
 
@@ -455,6 +467,7 @@ val nzcv_FOLDS_ARM8_gen_size = LIST_CONJ [
 val nzcv_FOLDS_ARM8 = save_thm ("nzcv_FOLDS_ARM8",
 SIMP_RULE (std_ss) [arithmeticTheory.ADD_ASSOC] (
 SIMP_RULE (std_ss++wordsLib.SIZES_ss) []  (LIST_CONJ [
+  maxword_w2n_thm,(* awc_BIR_RES_fold_ARM8_SBC_xzr_64,*)
   INST_TYPE [``:'a`` |-> ``:32``, ``:'b`` |-> ``:64``] nzcv_FOLDS_ARM8_gen_size,
   INST_TYPE [``:'a`` |-> ``:64``, ``:'b`` |-> ``:64``] nzcv_FOLDS_ARM8_gen_size
  ]
@@ -512,6 +525,15 @@ test_nzcv_folds_code `bics w0, w1, w2`
 test_nzcv_folds_code `bics x0, x1, x2`
 
 test_nzcv_folds_hex "1b000001"
+
+(*
+arm8_step_hex "DA1F0000";
+arm8_step_hex "DA020000";
+*)
+
+test_nzcv_folds_code `sbcs x0, x0, xzr`
+test_nzcv_folds_hex "DA1F0000";
+test_nzcv_folds_hex "DA020000";
 
 *)
 
