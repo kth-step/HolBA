@@ -53,6 +53,10 @@ val _ = List.foldl (fn (config,_) =>
     val prog = ((snd o dest_comb o concl) prog_thm);
     val blocks = (fst o dest_list o dest_BirProgram) prog;
 
+
+    val timer = (Time.now());
+
+
     val g = cfg_compute_inoutedges_as_idxs blocks;
     (*
     val _ = bir_show_graph_inout_all true g;
@@ -68,6 +72,14 @@ val _ = List.foldl (fn (config,_) =>
     val (blocks, in_idxs, out_idxs) = g;
     *)
     val frags = divide_loopfree_fragments g conn_comps;
+
+
+
+    val d_time = Time.- (Time.now(), timer);
+    val d_s = (Time.toString d_time);
+    val _ = print ("time_to_divide_loopfree = " ^ d_s ^ " s\n\n\n");
+
+
     (*val frags = List.map (fn x => (x, [hd x], [List.last x])) (divide_linear_fragments g conn_comps);*)
     val num_frags = length frags;
     val (max_frag, max_frag_size, _) = List.foldl (fn ((l,_,_),(mf,m,i)) => let val fl = length l; in
@@ -82,6 +94,7 @@ val _ = List.foldl (fn (config,_) =>
     val _ = print ("\n" ^ example_str ^ " - " ^ arch_str ^ ":\n");
     val _ = print ((Int.toString num_frags) ^ " fragments\n");
     val _ = print ((Int.toString max_frag_size) ^ " max frag size in frag " ^ (Int.toString max_frag) ^ "\n");
+    val _ = print ((Int.toString (length blocks)) ^ " blocks in the binary\n");
     val _ = print ((Int.toString sum_frag_size) ^ " blocks in all fragments\n");
     val _ = print ((Int.toString (length blocks)) ^ " blocks in the original program\n");
     val _ = print "\n\n";
@@ -98,17 +111,24 @@ val _ = List.foldl (fn (config,_) =>
     val skipidx = 0;(* 1531 *)
     val maxlength = 150;
 
-    val num_frags_to_consider = List.foldl (fn (frag,acc) =>
-          if (maxlength > 0 andalso maxlength < length ((fn (x,_,_) => x) frag))
-          then acc
-          else acc + 1
-        ) 0 frags;
+    val (num_frags_to_consider,sum_frag_size_to_consider,max_frag_size_to_consider) = List.foldl (fn (frag,(acc,acc2,acc3)) =>
+          let val frag_size = length ((fn (x,_,_) => x) frag); in
+          if (maxlength > 0 andalso maxlength < frag_size)
+          then (acc,acc2,acc3)
+          else (acc + 1,acc2 + frag_size, Int.max(acc3,frag_size))
+          end
+        ) (0,0,0) frags;
 
     val _ = print ("... looking only at fragments where block number <= " ^ (Int.toString maxlength) ^ "\n");
     val _ = print ("        i.e., " ^ (Int.toString num_frags_to_consider) ^ " fragments\n");
+    val _ = print ("              with in total " ^ (Int.toString sum_frag_size_to_consider) ^ " blocks\n");
+    val _ = print ("              with the maximum frag having " ^ (Int.toString max_frag_size_to_consider) ^ " blocks\n");
     val _ = print "\n\n";
 
 
+
+    val sum_time_ref = ref (0:int);
+    val max_time_ref = ref (0:int);
 
     (* iterate over all fragments *)
     val _ = List.foldl (fn (frag,frag_i) => if frag_i < skipidx orelse (maxlength > 0 andalso maxlength < length ((fn (x,_,_) => x) frag)) then frag_i + 1 else
@@ -133,6 +153,10 @@ val _ = List.foldl (fn (config,_) =>
         val _ = print ("==================================\n");
         val _ = print ("frag " ^ (Int.toString frag_i) ^ " (length: " ^ (Int.toString (length frag_ns)) ^ ")\n");
         val _ = print ("==================================\n");
+
+
+    val timer = (Time.now());
+
 
 	val _ = new_theory theory_name;
 
@@ -218,6 +242,13 @@ val _ = List.foldl (fn (config,_) =>
 	val (wps1, wps1_bool_sound_thm) = bir_wp_comp_wps prog_thm ((ex_wps, wps_bool_sound_thm), (wpsdom, List.rev blstodo)) (ex_program, ex_post, ex_ls) defs;
 
 
+        val d_time = Time.- (Time.now(), timer);
+        val d_ms = Time.toMilliseconds d_time;
+    
+        val _ = sum_time_ref := (!sum_time_ref) + d_ms;
+        val _ = max_time_ref := (Int.max(!max_time_ref,d_ms));
+
+
         (* verify that we have wps for each entry *)
         val wps_ = (snd o dest_eq o concl o (REWRITE_CONV [ex_wps_def])) wps1
                    handle UNCHANGED => wps1;
@@ -257,6 +288,14 @@ val _ = List.foldl (fn (config,_) =>
       in
         frag_i + 1
       end) 0 frags;
+
+
+    fun ms_to_s ms_int =
+      ((Int.toString (ms_int div 1000)) ^ "." ^ (Int.toString (ms_int mod 1000)));
+
+    val _ = print ("times for the fragments:\n");
+    val _ = print ("     sum time: " ^ (ms_to_s (!sum_time_ref)) ^ " s \n");
+    val _ = print ("     max time: " ^ (ms_to_s (!max_time_ref)) ^ " s \n\n\n");
 
   in
     ()
