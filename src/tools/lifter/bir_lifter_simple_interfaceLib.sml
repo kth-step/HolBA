@@ -2,6 +2,9 @@
 open bir_inst_liftingLib;
 open gcc_supportLib;
 
+open listSyntax;
+open bir_expLib;
+
 
 structure bir_lifter_simple_interfaceLib =
 struct
@@ -35,6 +38,156 @@ fun err_to_str disassemble_fun ((err_pc, err_inst, err_inst_desc, err_descr):bir
 
 
 
+(* bir exp size, from wp/examples/aes-test.sml *)
+  fun bir_exp_nonstandards exp =
+    let
+      val ef = bir_exp_nonstandards;
+    in
+      if is_BExp_Const exp then []
+      else if is_BExp_Den exp then []
+      else if is_BExp_Cast exp then
+        let
+          val (castt, exp, sz) = (dest_BExp_Cast) exp;
+          val casttstr = castt_to_string castt;
+          val szstr = (Int.toString o size_of_bir_immtype_t) sz;
+        in
+          ef exp
+        end
+
+      else if is_BExp_UnaryExp exp then
+        let
+          val (uop, exp) = (dest_BExp_UnaryExp) exp;
+          val uopstr = uop_to_string uop;
+        in
+          ef exp
+        end
+
+      else if is_BExp_BinExp exp then
+        let
+          val (bop, exp1, exp2) = (dest_BExp_BinExp) exp;
+          val bopstr = bop_to_string bop;
+        in
+          (ef exp1)@(ef exp2)
+        end
+
+      else if is_BExp_BinPred exp then
+        let
+          val (bpredop, exp1, exp2) = (dest_BExp_BinPred) exp;
+          val bpredopstr = bpredop_to_string bpredop;
+        in
+          (ef exp1)@(ef exp2)
+        end
+
+      else if is_BExp_MemEq exp then
+        let
+          val (exp1, exp2) = (dest_BExp_MemEq) exp;
+        in
+          (ef exp1)@(ef exp2)
+        end
+
+      else if is_BExp_IfThenElse exp then
+        let
+          val (expc, expt, expf) = (dest_BExp_IfThenElse) exp;
+        in
+          (ef expc)@(ef expt)@(ef expf)
+        end
+
+      else if is_BExp_Load exp then
+        let
+          val (expm, expad, endi, sz) = (dest_BExp_Load) exp;
+          val endistr = endi_to_string endi;
+          val szstr = (Int.toString o size_of_bir_immtype_t) sz;
+        in
+          (ef expm)@(ef expad)
+        end
+
+      else if is_BExp_Store exp then
+        let
+          val (expm, expad, endi, expv) = (dest_BExp_Store) exp;
+          val endistr = endi_to_string endi;
+        in
+          (ef expm)@(ef expad)@(ef expv)
+        end
+
+      else
+        [exp]
+
+    end;
+    fun bir_exp_count_bir_nodes_mod exp =
+    let
+      val ef = bir_exp_count_bir_nodes_mod;
+    in
+      if is_BExp_Const exp then 1
+      else if is_BExp_Den exp then 1
+      else if is_BExp_Cast exp then
+        let
+          val (castt, exp, sz) = (dest_BExp_Cast) exp;
+          val casttstr = castt_to_string castt;
+          val szstr = (Int.toString o size_of_bir_immtype_t) sz;
+        in
+          1+(ef exp)
+        end
+
+      else if is_BExp_UnaryExp exp then
+        let
+          val (uop, exp) = (dest_BExp_UnaryExp) exp;
+          val uopstr = uop_to_string uop;
+        in
+          1+(ef exp)
+        end
+
+      else if is_BExp_BinExp exp then
+        let
+          val (bop, exp1, exp2) = (dest_BExp_BinExp) exp;
+          val bopstr = bop_to_string bop;
+        in
+          1+(ef exp1)+(ef exp2)
+        end
+
+      else if is_BExp_BinPred exp then
+        let
+          val (bpredop, exp1, exp2) = (dest_BExp_BinPred) exp;
+          val bpredopstr = bpredop_to_string bpredop;
+        in
+          1+(ef exp1)+(ef exp2)
+        end
+
+      else if is_BExp_MemEq exp then
+        let
+          val (exp1, exp2) = (dest_BExp_MemEq) exp;
+        in
+          1+(ef exp1)+(ef exp2)
+        end
+
+      else if is_BExp_IfThenElse exp then
+        let
+          val (expc, expt, expf) = (dest_BExp_IfThenElse) exp;
+        in
+          1+(ef expc)+(ef expt)+(ef expf)
+        end
+
+      else if is_BExp_Load exp then
+        let
+          val (expm, expad, endi, sz) = (dest_BExp_Load) exp;
+          val endistr = endi_to_string endi;
+          val szstr = (Int.toString o size_of_bir_immtype_t) sz;
+        in
+          1+(ef expm)+(ef expad)
+        end
+
+      else if is_BExp_Store exp then
+        let
+          val (expm, expad, endi, expv) = (dest_BExp_Store) exp;
+          val endistr = endi_to_string endi;
+        in
+          1+(ef expm)+(ef expad)+(ef expv)
+        end
+
+      else
+        raise (ERR "bir_exp_count_bir_nodes" "not an allowed structure")
+    end;
+
+
 (* generic lifting call *)
 fun disassembly_section_to_minmax section =
   case section of
@@ -64,6 +217,28 @@ fun arch_str_to_funs arch_str = case arch_str of
           | _      => raise (ERR "arch_str_to_funs" ("architecture \"" ^ arch_str ^ "\" unknown"))
         ;
 
+fun disassembly_section_to_n_instrs section =
+  case section of
+      BILMR(addr_start, entries) =>
+        List.foldl (fn ((_,entry),(n_code, n_data, n_unknown)) =>
+             case entry of
+                 BILME_code(_) => (n_code+1, n_data  , n_unknown  )
+               | BILME_data    => (n_code  , n_data+1, n_unknown  )
+               | BILME_unknown => (n_code  , n_data  , n_unknown+1)
+           ) (0,0,0) entries;
+
+(*
+val BILMR(addr_start, entries) = (hd sections);
+hd entries
+*)
+
+fun da_sections_n_instrs sections = List.foldl
+  (fn ((n_code_i, n_data_i, n_unknown_i),(n_code, n_data, n_unknown)) =>
+     (n_code+n_code_i, n_data+n_data_i, n_unknown+n_unknown_i)
+  )
+  (0,0,0)
+  (List.map disassembly_section_to_n_instrs sections);
+
 
 fun lift_file arch_str da_file =
   let
@@ -73,7 +248,20 @@ fun lift_file arch_str da_file =
 
     val (region_map, sections) = read_disassembly_file_regions da_file;
 
-    (* TODO: calculate instruction number *)
+    (* calculate instruction number *)
+    val _ =
+      let
+        val (n_code, n_data, n_unknown) = da_sections_n_instrs sections;
+
+        val _ = print_l ("input binary contents (number of instructions):\n");
+        val _ = print_l ("  code    = " ^ (Int.toString n_code) ^ "\n");
+        val _ = print_l ("  data    = " ^ (Int.toString n_data) ^ "\n");
+        val _ = print_l ("  unknown = " ^ (Int.toString n_unknown) ^ "\n\n");
+      in
+        ()
+      end;
+
+
 
     (*
     (* predefined program range *)
@@ -90,11 +278,122 @@ fun lift_file arch_str da_file =
 
     val (thm_prog, errors) = bmil_bir_lift_prog_gen prog_range sections;
 
-    (* TODO: sum up bir blocks and bir statements in thm_prog *)
-
     val d_time = Time.- (Time.now(), timer);
     val d_s = (Time.toString d_time);
     val _ = print_l ("time_to_lift = " ^ d_s ^ " s\n\n\n");
+
+
+    (* sum up bir blocks and bir statements in thm_prog *)
+    (* calculate block number, also block number by label type, sum and max of block sizes, end statements *)
+    (* TODO: sum and max of expression sizes? *)
+    val _ =
+      let
+        val prog = ((snd o dest_comb o concl) thm_prog);
+        val blocks = (fst o dest_list o dest_BirProgram) prog;
+        val n_blocks = length blocks;
+        val (n_blocks_a, n_blocks_l) = List.foldl (fn (b,(n_blocks_a, n_blocks_l)) =>
+(* val b = (hd blocks); *)
+                   let val l = ((snd o dest_eq o concl o EVAL o (fn (l,_,_) => l) o dest_bir_block) b); in
+                     if is_BL_Address l then      (n_blocks_a+1, n_blocks_l  )
+                     else if is_BL_Address l then (n_blocks_a  , n_blocks_l+1)
+                     else raise ERR "lift_file" "unknown label type"
+                   end
+                 ) (0,0) blocks;
+
+        val (sum_stmts, max_stmts) = List.foldl (fn (b,(sum_stmts, max_stmts)) =>
+                   let val n_stmts = 1 + ((length o fst o dest_list o (fn (_,stmts,_) => stmts) o dest_bir_block) b); in
+                     (sum_stmts + n_stmts,
+                      Int.max(max_stmts, n_stmts))
+                   end
+                 ) (0,0) blocks;
+
+        val (n_jmp, n_cjmp, n_halt) = List.foldl (fn (b,(n_jmp, n_cjmp, n_halt)) =>
+                   let val es = ((fn (_,_,es) => es) o dest_bir_block) b; in
+                     if is_BStmt_Jmp es then
+                       (n_jmp+1, n_cjmp  , n_halt  )
+                     else if is_BStmt_CJmp es then
+                       (n_jmp  , n_cjmp+1, n_halt  )
+                     else if is_BStmt_Halt es then
+                       (n_jmp  , n_cjmp  , n_halt+1)
+                     else raise ERR "lift_file" "unknown end statement type"
+                   end
+                 ) (0,0,0) blocks;
+
+        val (sum_exp_size, max_exp_size) = List.foldl (fn (b,(sum_exp_size, max_exp_size)) =>
+                   let
+                     val stmts = (fst o dest_list o (fn (_,stmts,_) => stmts) o dest_bir_block) b;
+                     val es = ((fn (_,_,es) => es) o dest_bir_block) b;
+
+(* val s = hd stmts; *)
+                     val s_exps = List.map (fn s =>
+                            if is_BStmt_Declare s then []
+                            else if is_BStmt_Assign s then
+                               [(snd o dest_BStmt_Assign) s]
+                            else if is_BStmt_Assert s then
+                               [(dest_BStmt_Assert) s]
+                            else if is_BStmt_Assume s then
+                               [(dest_BStmt_Assume) s]
+                            else if is_BStmt_Observe s then
+                               let val (oe,oes,_) = (dest_BStmt_Observe) s; in
+                                 (oe::((fst o dest_list) oes))
+                               end
+                            else raise ERR "lift_file" "unknown statement type"
+                          ) stmts;
+                     val e_exps = if is_BStmt_Jmp es then
+				    let val le = dest_BStmt_Jmp es; in
+                                      if is_BLE_Label le then []
+                                      else if is_BLE_Exp le then [dest_BLE_Exp le]
+                                      else raise ERR "lift_file" "unknown end statement label type"
+                                    end
+				  else if is_BStmt_CJmp es then
+				    let
+                                      val (ce, le1, le2) = dest_BStmt_CJmp es;
+                                      val le1_ =
+                                        if is_BLE_Label le1 then []
+                                        else if is_BLE_Exp le1 then [dest_BLE_Exp le1]
+                                        else raise ERR "lift_file" "unknown end statement label type";
+                                      val le2_ =
+                                        if is_BLE_Label le2 then []
+                                        else if is_BLE_Exp le2 then [dest_BLE_Exp le2]
+                                        else raise ERR "lift_file" "unknown end statement label type";
+                                    in
+                                      (ce::(le1_@le2_))
+                                    end
+				  else if is_BStmt_Halt es then []
+				  else raise ERR "lift_file" "unknown end statement type";
+
+                     val exps = List.concat (e_exps::s_exps);
+
+                     val _ = if List.all (fn exp => (bir_exp_nonstandards exp) = []) exps then ()
+                       else print_l "something is fishy! non standard expressions found\n";
+
+                     val exp_size = List.foldl (fn (exp,n) => n + (bir_exp_count_bir_nodes_mod exp)) 0 exps;
+                   in
+                     (sum_exp_size + exp_size,
+                      Int.max(max_exp_size, exp_size))
+                   end
+                 ) (0,0) blocks;
+
+        val _ = print_l ("output BIR statistics:\n");
+        val _ = print_l ("  ------- \n");
+        val _ = print_l ("  n_blocks = " ^ (Int.toString n_blocks) ^ "\n");
+        val _ = print_l ("    - n_blocks_label   = " ^ (Int.toString n_blocks_l) ^ "\n");
+        val _ = print_l ("    - n_blocks_address = " ^ (Int.toString n_blocks_a) ^ "\n");
+        val _ = print_l ("    ------- \n");
+        val _ = print_l ("    - n_jmp    = " ^ (Int.toString n_jmp)  ^ "\n");
+        val _ = print_l ("    - n_cjmp   = " ^ (Int.toString n_cjmp) ^ "\n");
+        val _ = print_l ("    - n_halt   = " ^ (Int.toString n_halt) ^ "\n");
+        val _ = print_l ("  ------- \n");
+        val _ = print_l ("  sum_stmts = " ^ (Int.toString sum_stmts) ^ "\n");
+        val _ = print_l ("  max_stmts = " ^ (Int.toString max_stmts) ^ "\n");
+        val _ = print_l ("  ------- \n");
+        val _ = print_l ("  sum_exp_size = " ^ (Int.toString sum_exp_size) ^ "\n");
+        val _ = print_l ("  max_exp_size = " ^ (Int.toString max_exp_size) ^ "\n");
+        val _ = print_l ("\n");
+      in
+        ()
+      end;
+
 
     (* print out only the failing instructions *)
     val _ = if errors <> [] then
