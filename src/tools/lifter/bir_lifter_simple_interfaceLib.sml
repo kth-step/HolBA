@@ -285,7 +285,7 @@ fun lift_file arch_str da_file =
 
     (* sum up bir blocks and bir statements in thm_prog *)
     (* calculate block number, also block number by label type, sum and max of block sizes, end statements *)
-    (* TODO: sum and max of expression sizes? *)
+    (* sum and max of expression sizes? *)
     val _ =
       let
         val prog = ((snd o dest_comb o concl) thm_prog);
@@ -319,7 +319,23 @@ fun lift_file arch_str da_file =
                    end
                  ) (0,0,0) blocks;
 
-        val (sum_exp_size, max_exp_size) = List.foldl (fn (b,(sum_exp_size, max_exp_size)) =>
+        val _ = print_l ("output BIR statistics:\n");
+        val _ = print_l ("  ------- \n");
+        val _ = print_l ("  n_blocks = " ^ (Int.toString n_blocks) ^ "\n");
+        val _ = print_l ("    - n_blocks_label   = " ^ (Int.toString n_blocks_l) ^ "\n");
+        val _ = print_l ("    - n_blocks_address = " ^ (Int.toString n_blocks_a) ^ "\n");
+        val _ = print_l ("    ------- \n");
+        val _ = print_l ("    - n_jmp    = " ^ (Int.toString n_jmp)  ^ "\n");
+        val _ = print_l ("    - n_cjmp   = " ^ (Int.toString n_cjmp) ^ "\n");
+        val _ = print_l ("    - n_halt   = " ^ (Int.toString n_halt) ^ "\n");
+        val _ = print_l ("  ------- \n");
+        val _ = print_l ("  sum_stmts = " ^ (Int.toString sum_stmts) ^ "\n");
+        val _ = print_l ("  max_stmts = " ^ (Int.toString max_stmts) ^ "\n");
+        val _ = print_l ("  ------- \n");
+
+        val _ =
+          let
+            val (sum_exp_size, max_exp_size) = List.foldl (fn (b,(sum_exp_size, max_exp_size)) =>
                    let
                      val stmts = (fst o dest_list o (fn (_,stmts,_) => stmts) o dest_bir_block) b;
                      val es = ((fn (_,_,es) => es) o dest_bir_block) b;
@@ -364,8 +380,28 @@ fun lift_file arch_str da_file =
 
                      val exps = List.concat (e_exps::s_exps);
 
-                     val _ = if List.all (fn exp => (bir_exp_nonstandards exp) = []) exps then ()
-                       else print_l "something is fishy! non standard expressions found\n";
+                     val rewrs = [bir_extra_expsTheory.BExp_Aligned_def,
+                                  BExp_unchanged_mem_interval_distinct_def,
+                                  BExp_MSB_def, bir_bool_expTheory.bir_exp_true_def, bir_bool_expTheory.bir_exp_false_def];
+                     val norm_conv = if true then EVAL else (REWRITE_CONV rewrs);
+
+
+                     val exps = List.map (fn exp =>
+                           (snd o dest_eq o concl o norm_conv) exp
+                           handle UNCHANGED => exp
+                         ) exps;
+
+                     val _ =
+                       let
+                         val nonstd_exp = List.concat (List.map bir_exp_nonstandards exps);
+                       in
+                         if nonstd_exp = [] then ()
+                         else (
+                           print_l "something is fishy! non standard expressions found\n";
+                           List.map ((K (print_l "\n")) o print_l o term_to_string) nonstd_exp;
+                           raise ERR "lift_file" "contains expressions which cannot be handled"
+                         )
+                       end;
 
                      val exp_size = List.foldl (fn (exp,n) => n + (bir_exp_count_bir_nodes_mod exp)) 0 exps;
                    in
@@ -374,21 +410,14 @@ fun lift_file arch_str da_file =
                    end
                  ) (0,0) blocks;
 
-        val _ = print_l ("output BIR statistics:\n");
+            val _ = print_l ("  sum_exp_size = " ^ (Int.toString sum_exp_size) ^ "\n");
+            val _ = print_l ("  max_exp_size = " ^ (Int.toString max_exp_size) ^ "\n");
+          in
+            ()
+          end
+          handle HOL_ERR x => print_l ("  error while processing the expressions" ^ ((!ERR_to_string) x) ^ "\n");
+
         val _ = print_l ("  ------- \n");
-        val _ = print_l ("  n_blocks = " ^ (Int.toString n_blocks) ^ "\n");
-        val _ = print_l ("    - n_blocks_label   = " ^ (Int.toString n_blocks_l) ^ "\n");
-        val _ = print_l ("    - n_blocks_address = " ^ (Int.toString n_blocks_a) ^ "\n");
-        val _ = print_l ("    ------- \n");
-        val _ = print_l ("    - n_jmp    = " ^ (Int.toString n_jmp)  ^ "\n");
-        val _ = print_l ("    - n_cjmp   = " ^ (Int.toString n_cjmp) ^ "\n");
-        val _ = print_l ("    - n_halt   = " ^ (Int.toString n_halt) ^ "\n");
-        val _ = print_l ("  ------- \n");
-        val _ = print_l ("  sum_stmts = " ^ (Int.toString sum_stmts) ^ "\n");
-        val _ = print_l ("  max_stmts = " ^ (Int.toString max_stmts) ^ "\n");
-        val _ = print_l ("  ------- \n");
-        val _ = print_l ("  sum_exp_size = " ^ (Int.toString sum_exp_size) ^ "\n");
-        val _ = print_l ("  max_exp_size = " ^ (Int.toString max_exp_size) ^ "\n");
         val _ = print_l ("\n");
       in
         ()
