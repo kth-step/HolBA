@@ -159,7 +159,11 @@ fun bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, p
         val new_wp_id = "bir_wp_comp_wps_iter_step2_wp_" ^ wps_id_suffix;
         val new_wp_id_var = mk_var (new_wp_id, ``:bir_exp_t``);
         val new_wp_def = Define `^new_wp_id_var = ^(extract_new_wp wps1)`;
+	(*
+	val current_theory_s = current_theory();
         val new_wp_id_const = mk_const (new_wp_id, ``:bir_exp_t``);
+        *)
+        val new_wp_id_const = (fst o dest_eq o concl) new_wp_def;
         val _ = (bir_wp_comp_wps_iter_step2_consts := new_wp_id_const::wps_eval_restrict_consts);
         val wps1_thm2 = REWRITE_CONV [GSYM new_wp_def] ((snd o dest_eq o concl) wps1_thm);
         val wps1_thm = TRANS wps1_thm wps1_thm2
