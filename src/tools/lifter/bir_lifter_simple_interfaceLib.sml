@@ -211,6 +211,32 @@ fun minmax_fromlist ls = List.foldl (fn ((min_1,max_1),(min_2,max_2)) =>
 fun da_sections_minmax sections = minmax_fromlist (List.map disassembly_section_to_minmax sections);
 
 
+
+fun split_to_non_overlapping_sections sections =
+  let
+    val aug_sections = List.map (fn sec => (sec, disassembly_section_to_minmax sec)) (List.rev sections);
+
+    fun sections_overlapping secs (_,(min1,max1)) =
+           List.exists (fn (_,(min2,max2)) => not (
+               ((Arbnum.< (min1, min2)) andalso (Arbnum.< (max1, max2))) orelse 
+               ((Arbnum.< (min2, min1)) andalso (Arbnum.< (max2, max1)))
+             )) secs;
+
+    fun update_sections (sec,[])                 = [[sec]]
+      | update_sections (sec,(secs::sections_l)) =
+            if sections_overlapping secs sec then
+              (secs::(update_sections (sec,sections_l)))
+            else
+              ((sec::secs)::sections_l);
+
+    val sections_l = List.foldr update_sections [] (aug_sections);
+  in
+    List.map (List.rev o (List.map fst)) sections_l
+  end;
+
+
+
+
 fun arch_str_to_funs arch_str = case arch_str of
             "arm8" => (bmil_arm8.bir_lift_prog_gen, arm8AssemblerLib.arm8_disassemble)
           | "m0"   => (bmil_m0_LittleEnd_Process.bir_lift_prog_gen, m0AssemblerLib.m0_disassemble)
@@ -239,28 +265,14 @@ fun da_sections_n_instrs sections = List.foldl
   (0,0,0)
   (List.map disassembly_section_to_n_instrs sections);
 
-
-fun lift_file arch_str da_file =
+(*
+val arch_str = "arm8";
+val da_file  = "binaries/android/taimen-ppr2.181005.003_bins/system/init.da";
+val da_file  = "binaries/android/taimen-ppr2.181005.003_bins/system/system/bin/toybox.da";
+*)
+fun lift_sections arch_str sections idx =
   let
-    val (bmil_bir_lift_prog_gen, disassemble_fun) = arch_str_to_funs arch_str
-
-    val _ = print_log_with_style [Bold, Underline] true ("Lifting \""^da_file^"\" ("^arch_str^")\n");
-
-    val (region_map, sections) = read_disassembly_file_regions da_file;
-
-    (* calculate instruction number *)
-    val _ =
-      let
-        val (n_code, n_data, n_unknown) = da_sections_n_instrs sections;
-
-        val _ = print_l ("input binary contents (number of instructions):\n");
-        val _ = print_l ("  code    = " ^ (Int.toString n_code) ^ "\n");
-        val _ = print_l ("  data    = " ^ (Int.toString n_data) ^ "\n");
-        val _ = print_l ("  unknown = " ^ (Int.toString n_unknown) ^ "\n\n");
-      in
-        ()
-      end;
-
+    val (bmil_bir_lift_prog_gen, disassemble_fun) = arch_str_to_funs arch_str;
 
 
     (*
@@ -422,6 +434,45 @@ fun lift_file arch_str da_file =
       in
         ()
       end;
+  in
+    (thm_prog, errors)
+  end;
+
+
+fun lift_file arch_str da_file =
+  let
+    val (bmil_bir_lift_prog_gen, disassemble_fun) = arch_str_to_funs arch_str;
+
+    val _ = print_log_with_style [Bold, Underline] true ("Lifting \""^da_file^"\" ("^arch_str^")\n");
+
+    val (region_map, sections) = read_disassembly_file_regions da_file;
+
+    (* calculate instruction number *)
+    val _ =
+      let
+        val (n_code, n_data, n_unknown) = da_sections_n_instrs sections;
+
+        val _ = print_l ("input binary contents (number of instructions):\n");
+        val _ = print_l ("  code    = " ^ (Int.toString n_code) ^ "\n");
+        val _ = print_l ("  data    = " ^ (Int.toString n_data) ^ "\n");
+        val _ = print_l ("  unknown = " ^ (Int.toString n_unknown) ^ "\n\n");
+      in
+        ()
+      end;
+
+
+    val sections_l = split_to_non_overlapping_sections sections;
+(*    List.map (List.map disassembly_section_to_minmax) sections_l  *)
+    val sections_to_lift = List.tabulate (length sections_l, fn x => x);
+
+    val (thms, errors) = List.foldr (fn (idx,(thms, errors)) =>
+      let
+        val (lift_thm, lift_errors) = lift_sections arch_str (List.nth(sections_l,idx)) idx;
+      in
+        (lift_thm::thms, lift_errors@errors)
+      end) ([],[]) sections_to_lift;
+
+
 
 
     (* print out only the failing instructions *)
@@ -435,7 +486,7 @@ fun lift_file arch_str da_file =
         ()
       end else ();
   in
-    thm_prog
+    thms
   end;
 
 (*
