@@ -13,11 +13,29 @@ val bir_imm_ss = rewrites ((type_rws ``:bir_imm_t``) @ (type_rws ``:bir_immtype_
 
 val _ = Datatype `bir_unary_exp_t =
   | BIExp_ChangeSign
-  | BIExp_Not`;
+  | BIExp_Not
+  | BIExp_CLZ
+  | BIExp_CLS`;
+
+
+(*
+arm8Theory.HighestSetBit_def
+arm8Theory.CountLeadingZeroBits_def
+arm8Theory.CountLeadingSignBits_def
+*)
+
+val bir_HighestSetBit_def = Define `bir_HighestSetBit (w:'a word) = if w = 0w then -1 else w2i (word_log2 w)`;
+val bir_CountLeadingZeroBits_def = Define `bir_CountLeadingZeroBits (w:'a word) = Num (((&(word_len (0w:'a word))) - 1) - (bir_HighestSetBit w))`;
+val bir_CountLeadingSignBits_def = Define `bir_CountLeadingSignBits (w:'a word) = bir_CountLeadingZeroBits (word_xor (w >>> 1) (w && (word_1comp(word_ror (1w:'a word) 1)))) -1`;
+
+val bir_word_countleadingzeros_def = Define `bir_word_countleadingzeros (w:'a word) = (n2w (bir_CountLeadingZeroBits w) :'a word)`;
+val bir_word_countleadingsigns_def = Define `bir_word_countleadingsigns (w:'a word) = (n2w (bir_CountLeadingSignBits w) :'a word)`;
 
 val bir_unary_exp_GET_OPER_def = Define
   `(bir_unary_exp_GET_OPER BIExp_Not = word_1comp) /\
-   (bir_unary_exp_GET_OPER BiExp_ChangeSign = word_2comp)`;
+   (bir_unary_exp_GET_OPER BIExp_ChangeSign = word_2comp) /\
+   (bir_unary_exp_GET_OPER BIExp_CLZ = bir_word_countleadingzeros) /\
+   (bir_unary_exp_GET_OPER BIExp_CLS = bir_word_countleadingsigns)`;
 
 val bir_unary_exp_def = Define `
   (bir_unary_exp uo (Imm64 w) = Imm64 (bir_unary_exp_GET_OPER uo w)) /\

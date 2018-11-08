@@ -456,11 +456,15 @@ val bir_eval_bool_exp_BExp_BinPred_REWRS_GSYM = save_thm ("bir_eval_bool_exp_BEx
     (SPEC T bir_eval_bool_exp_BExp_BinPred)));
 
 
-
+(* the first bool seems to be indicating whether the second function is
+replaced by the lifter with the corresponding BIR expression, we only want
+to do this for a boolean negation operation everything else is not useful *)
 val bir_unary_exp_GET_BOOL_OPER_def = Define
-  `(bir_unary_exp_GET_BOOL_OPER BIExp_Not = SOME (T, $~)) /\
-   (bir_unary_exp_GET_BOOL_OPER BiExp_ChangeSign = SOME (F, (\b. b))) /\
-   (bir_unary_exp_GET_BOOL_OPER _ = NONE) (* Should not fire *)`;
+  `(bir_unary_exp_GET_BOOL_OPER BIExp_Not        = SOME (T, $~)) /\
+   (bir_unary_exp_GET_BOOL_OPER BIExp_ChangeSign = SOME (F, (\b. b))) /\
+   (bir_unary_exp_GET_BOOL_OPER BIExp_CLZ        = SOME (F, $~)) /\
+   (bir_unary_exp_GET_BOOL_OPER BIExp_CLS        = SOME (F, (\b. F))) /\
+   (bir_unary_exp_GET_BOOL_OPER _                = NONE) (* Should not fire *)`;
 
 
 val bir_unary_exp_GET_BOOL_OPER_THM = store_thm ("bir_unary_exp_GET_BOOL_OPER_THM",
@@ -471,7 +475,17 @@ SIMP_TAC (std_ss++holBACore_ss) [bool2b_def] >>
 Cases_on `uo` >> (
   Cases_on `b` >> (
     SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [bool2w_def,
-      bool2b_def, bir_unary_exp_GET_BOOL_OPER_def, bir_unary_exp_GET_OPER_def]
+      bool2b_def, bir_unary_exp_GET_BOOL_OPER_def, bir_unary_exp_GET_OPER_def] >>
+
+    (* for the CLZ and CLS cases *)
+    REPEAT GEN_TAC >>
+    COND_CASES_TAC >>
+    REPEAT STRIP_TAC >>
+    POP_ASSUM (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) [] >>
+
+    EVAL_TAC >>
+    FULL_SIMP_TAC (std_ss++intSimps.INT_ARITH_ss) []
   )
 ));
 

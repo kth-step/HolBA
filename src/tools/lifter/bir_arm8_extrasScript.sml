@@ -1044,9 +1044,51 @@ val arm8_CHANGE_INTERVAL_THMS = save_thm ("arm8_CHANGE_INTERVAL_THMS",
     arm8_LIFT_STORE_BYTE_CHANGE_INTERVAL]);
 
 
+val arm8_count_leading_eq_bir = store_thm ("arm8_count_leading_eq_bir",
+ ``!w:'a word. (arm8$CountLeadingZeroBits w = bir_CountLeadingZeroBits w) /\
+               (arm8$CountLeadingSignBits w = bir_CountLeadingSignBits w)``,
+
+  REWRITE_TAC [arm8Theory.CountLeadingZeroBits_def,
+               arm8Theory.HighestSetBit_def,
+               arm8Theory.CountLeadingSignBits_def,
+               bir_imm_expTheory.bir_CountLeadingZeroBits_def,
+               bir_imm_expTheory.bir_HighestSetBit_def,
+               bir_imm_expTheory.bir_CountLeadingSignBits_def]
+);
+
+
+val arm8_count_leading_zero = store_thm ("arm8_count_leading_zero",
+ ``!w:'a word. (n2w (arm8$CountLeadingZeroBits w)) = bir_word_countleadingzeros w``,
+
+  REWRITE_TAC [arm8_count_leading_eq_bir,
+               bir_imm_expTheory.bir_word_countleadingzeros_def]
+);
+
 val arm8_count_leading_sign = store_thm ("arm8_count_leading_sign",
- ``!w:word64. (n2w (CountLeadingSignBits w)) = w >>> 3``,
-      cheat);
+ ``!w:'a word. (n2w (arm8$CountLeadingSignBits w)) = bir_word_countleadingsigns w``,
+
+  REWRITE_TAC [arm8_count_leading_eq_bir,
+               bir_imm_expTheory.bir_word_countleadingsigns_def]
+);
+
+val cast_thm = prove (``
+  !n. w2w (n2w n :word32) = (n2w (BITS 31 0 n) :word64)
+``,
+  REWRITE_TAC [wordsTheory.w2w_def, wordsTheory.w2n_n2w, bitTheory.BITS_ZERO3] >>
+  SIMP_TAC (arith_ss++wordsLib.SIZES_ss) []
+);
+
+val arm8_count_leading_zero_32 = store_thm ("arm8_count_leading_zero_32",
+ ``!w:word32. (n2w (BITS 31 0 (arm8$CountLeadingZeroBits w)) :word64) = w2w (bir_word_countleadingzeros w)``,
+
+  REWRITE_TAC [arm8_count_leading_zero, GSYM cast_thm]
+);
+
+val arm8_count_leading_sign_32 = store_thm ("arm8_count_leading_sign_32",
+ ``!w:word32. (n2w (BITS 31 0 (arm8$CountLeadingSignBits w)) :word64) = w2w (bir_word_countleadingsigns w)``,
+
+  REWRITE_TAC [arm8_count_leading_sign, GSYM cast_thm]
+);
       
 val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
   LIST_CONJ [arm8_lsl_FOLDS, arm8_and_neg_1w_FOLDS, arm8_lsr_FOLDS,
@@ -1057,7 +1099,8 @@ val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
       arm8_ror_MOD_FOLDS, arm8_extr_FOLDS, word_shift_extract_ID,
       arm8_movk32_folds, arm8_movk64_folds,
       arm8_high_u_mul,
-      arm8_count_leading_sign
+      arm8_count_leading_zero, arm8_count_leading_sign,
+      arm8_count_leading_zero_32, arm8_count_leading_sign_32
 ]);
 
 val _ = export_theory();

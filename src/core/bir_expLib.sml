@@ -67,6 +67,10 @@ struct
                                "-"
                           else if is_BIExp_Not uop then
                                "!"
+                          else if is_BIExp_CLZ uop then
+                               "($CLZ)"
+                          else if is_BIExp_CLS uop then
+                               "($CLS)"
                           else
                                raise (ERR "uop_to_string" "don't know how to print BIR unaryop")
                           ;

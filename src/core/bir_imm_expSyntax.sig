@@ -11,9 +11,13 @@ sig
 
    val BIExp_Not_tm        : term
    val BIExp_ChangeSign_tm : term
+   val BIExp_CLZ_tm        : term
+   val BIExp_CLS_tm        : term
 
    val is_BIExp_Not        : term -> bool
    val is_BIExp_ChangeSign : term -> bool
+   val is_BIExp_CLZ        : term -> bool
+   val is_BIExp_CLS        : term -> bool
 
    val bir_unary_exp_tm    : term;
    val mk_bir_unary_exp    : term * term -> term;

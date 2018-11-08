@@ -25,6 +25,8 @@ val bir_unary_exp_t_ty = mk_type ("bir_unary_exp_t", []);
 
 val (BIExp_ChangeSign_tm, is_BIExp_ChangeSign) = syntax_fns0 "BIExp_ChangeSign";
 val (BIExp_Not_tm, is_BIExp_Not) = syntax_fns0 "BIExp_Not";
+val (BIExp_CLZ_tm, is_BIExp_CLZ) = syntax_fns0 "BIExp_CLZ";
+val (BIExp_CLS_tm, is_BIExp_CLS) = syntax_fns0 "BIExp_CLS";
 
 val (bir_unary_exp_tm, mk_bir_unary_exp, dest_bir_unary_exp, is_bir_unary_exp) = syntax_fns2 "bir_unary_exp";
 
