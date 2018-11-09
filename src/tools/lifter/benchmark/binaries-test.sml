@@ -53,7 +53,7 @@ val benchmark_descriptors_2_1 = [
   ("arm8", ["binaries/android/taimen-ppr2.181005.003_bins/system/system/bin/iptables.da"])
 ];
 
-val benchmark_descriptors_2_1 = [
+val benchmark_descriptors_2_2 = [
   ("arm8", ["binaries/android/taimen-ppr2.181005.003_bins/system/system/bin/toybox.da"])
 ];
 
@@ -64,7 +64,7 @@ val benchmark_descriptors_3 = [
 
 
 
-val benchmark_descriptors = benchmark_descriptors_3;
+val benchmark_descriptors = benchmark_descriptors_2_1;
 
 fun run_benchmark (arch_str, da_files) = List.map (fn da_file =>
     let
