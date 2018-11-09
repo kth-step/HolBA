@@ -806,7 +806,7 @@ SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [
   w2w, word_bits_def, fcpTheory.FCP_BETA] >>
 SIMP_TAC (arith_ss++ boolSimps.LIFT_COND_ss) []);
 
-
+(*
 val g_low_def = Define `g_low(x:word64) = 0xFFFFFFFFw && x`;
 val g_high_def = Define `g_high(x:word64) = x >>> 32`;
 val arm8_high_u_mul_internal = store_thm ("arm8_high_u_mul_internal",
@@ -823,6 +823,7 @@ g_high(
 ``,
  cheat);
 val arm8_high_u_mul = REWRITE_RULE [g_low_def, g_high_def] arm8_high_u_mul_internal;
+*)
 
 
 val arm8_ngc64_fold = store_thm ("arm8_ngc64_fold",
@@ -1098,7 +1099,7 @@ val arm8_extra_FOLDS = save_thm ("arm8_extra_FOLDS",
       ExtendValue_REWRS, arm8_rev_folds, arm8_ngc64_fold, arm8_ngc32_fold,
       arm8_ror_MOD_FOLDS, arm8_extr_FOLDS, word_shift_extract_ID,
       arm8_movk32_folds, arm8_movk64_folds,
-      arm8_high_u_mul,
+(*      arm8_high_u_mul, *)
       arm8_count_leading_zero, arm8_count_leading_sign,
       arm8_count_leading_zero_32, arm8_count_leading_sign_32
 ]);
