@@ -1593,7 +1593,17 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
                                                 Arbnum.<= (pc_max, mu_e)) then () else
                      raise (ERR "preprocess regions" ("the program is not (completely) stored in the unchanged part of memory, please enforce that at least the interval [0x" ^ (Arbnum.toHexString pc_min) ^ ", 0x" ^ Arbnum.toHexString (Arbnum.+ (Arbnum.one, pc_max)) ^")" ^ " is enforced to be unchanged"))
 
-      val basic_thms = foldl lift_ext_entry [] ext_entries
+      val basic_thms = let
+          val timer = timer_start 1;
+
+          val basic_thms = foldl lift_ext_entry [] ext_entries;
+
+          val d_s = timer_stop timer;
+          val _ = if (!debug_trace > 1) then (print ("\ntime to lift individual instructions only - " ^ d_s ^ " s\n")) else ();
+        in
+          basic_thms
+        end;
+
 
       val prog_thm0 = let
         val _ = if (!debug_trace > 1) then (print ("merging code"))
