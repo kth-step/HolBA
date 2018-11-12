@@ -21,7 +21,10 @@ val _ = new_theory "binaries";
 
 val _ = List.map (fn (arch_str, da_file, thm_name) =>
   let
-    val thm_prog = lift_file arch_str da_file;
+    val thm_progs = lift_file arch_str da_file;
+    val _ = if length thm_progs = 1 then () else raise ERR "" ("more than one theorem produced for the input binary \"" ^ da_file ^ "\"");
+    val thm_prog = hd thm_progs;
+
     val _ = save_thm (thm_name, thm_prog);
   in
     ()
