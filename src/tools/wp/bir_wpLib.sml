@@ -268,7 +268,7 @@ fun bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm), (wpsdom, blstodo)) (pro
                           ;
 
                   val _ = if (!debug_trace > 0) then
-                            print ("remaining = " ^ (Int.toString (List.length blstodo1)) ^ "\r")
+                            print ("remaining = " ^ (Int.toString (List.length blstodo1)) ^ "  \r")
                           else
                             ()
                           ;

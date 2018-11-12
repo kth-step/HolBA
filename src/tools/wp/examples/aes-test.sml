@@ -67,7 +67,7 @@ aes round
 *)
 
 val take_all = false; (* false for a normal run, should override the others *)
-val take_n_last = 65;
+val take_n_last = 70;
 val dontcalcfirstwp = false;
 
 val aes_program_term_whole = ((snd o dest_comb o concl) aes_arm8_program_THM);
@@ -212,27 +212,66 @@ val aes_wps1_def = Define `
 val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM aes_wps1_def] wps1_bool_sound_thm;
 
 
-val _ = print "===========";
-val _ = print "weakest precondition evaluation:";
-val (lbl_last, wp_last) = (dest_pair o snd o dest_fupdate) wps1;
+
+
+
+
+
+
 
 
 (* quick fix, has to be revisited *)
 val lbl_list = List.map (term_to_string o snd o gen_dest_Imm o dest_BL_Address) (bir_wp_fmap_to_dom_list wps1);
 
-fun eval_through [] thm = thm
-  | eval_through (lbl_str::lbls) thm_in =
+val wp_def_list = aes_post_def::(List.map
+      (fn lbl_str =>
       let
-        val (_, (def_thm, Def)) = hd (DB.find ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str));
-        val thm = REWRITE_RULE [thm_in] def_thm;
-        val thm_evald = (EVAL o snd o dest_eq o concl) thm;
-        val _ = print ("remaining: " ^ (Int.toString (List.length lbls)) ^ "\r");
+        val (_, (def_thm, _)) = hd (DB.find ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str));
+      in def_thm end
+      ) (tl (List.rev lbl_list)));
+
+val wp_list = List.map (snd o dest_eq o concl) wp_def_list;
+
+fun print_wp_list [] = ()
+  | print_wp_list (wp::wp_l) =
+      let
+        val _ = print "\r\n\r\n";
+        (*val _ = bir_exp_pretty_print wp;*)
+        val _ = print (term_to_string wp);
       in
-        eval_through lbls (TRANS thm thm_evald)
+        print_wp_list wp_l
       end;
 
-val out_thm = eval_through (tl (List.rev lbl_list)) aes_post_def;
-val wp_exp_term = (snd o dest_eq o concl) out_thm;
+val _ = print_wp_list wp_list;
+
+
+val _ = print "\r\n";
+val _ = print "===========\r\n";
+val _ = print "weakest precondition evaluation:\r\n";
+(*
+val (lbl_last, wp_last) = (dest_pair o snd o dest_fupdate) wps1;
+*)
+
+
+
+fun eval_through [] thm = [thm]
+  | eval_through (lbl_str::lbls) thm_in =
+      let
+        val (_, (def_thm, _)) = hd (DB.find ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str));
+        val thm = REWRITE_RULE [thm_in] def_thm;
+        val thm_evald = (EVAL o snd o dest_eq o concl) thm;
+        val thm_new = (TRANS thm thm_evald);
+        val _ = print ("remaining: " ^ (Int.toString (List.length lbls)) ^ "  \r");
+      in
+        thm_new::(eval_through lbls thm_new)
+      end;
+
+val out_thms = eval_through (tl (List.rev lbl_list)) aes_post_def;
+val wp_term_list = List.map (snd o dest_eq o concl) out_thms;
+val wp_exp_term = (List.last wp_term_list);
+
+val var_nums = List.map (List.length o bir_exp_vars_in_exp) wp_term_list;
+val var_dist_nums = List.map (List.length o bir_exp_dist_vars_in_exp) wp_term_list;
 
 
 (*
@@ -255,7 +294,8 @@ val wp_exp_term = (snd o dest_comb o concl o EVAL) ``(FAPPLY aes_wps1 ^snd_block
 *)
 
 
-val _ = print "===========";
-val _ = print "weakest precondition:";
+val _ = print "\r\n";
+val _ = print "===========\r\n";
+val _ = print "weakest precondition:\r\n";
 val _ = bir_exp_pretty_print wp_exp_term;
 
