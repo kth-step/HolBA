@@ -465,6 +465,8 @@ fun lift_file arch_str da_file =
 (*    List.map (List.map disassembly_section_to_minmax) sections_l  *)
     val sections_to_lift = List.tabulate (length sections_l, fn x => x);
 
+    val _ = print_l ("had to split the sections of the file into " ^ (Int.toString (length sections_l)) ^ " subsets.");
+
     val (thms, errors) = List.foldr (fn (idx,(thms, errors)) =>
       let
         val (lift_thm, lift_errors) = lift_sections arch_str (List.nth(sections_l,idx)) idx;

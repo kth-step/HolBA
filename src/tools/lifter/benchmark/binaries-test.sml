@@ -33,10 +33,13 @@ val benchmark_descriptors_2 = [
             "binaries/android/taimen-ppr2.181005.003_bins/system/system/bin/run-as.da",
             "binaries/android/taimen-ppr2.181005.003_bins/system/system/bin/uncrypt.da"])
 ];
+val benchmark_descriptors_3 = [
+  ("m0",   ["binaries/freertos_nrf51/m0-freertos_nrf51.da"])
+];
 
 
 
-val benchmark_descriptors = benchmark_descriptors_2;
+val benchmark_descriptors = benchmark_descriptors_3;
 
 fun run_benchmark (arch_str, da_files) = List.map (fn da_file =>
     let
