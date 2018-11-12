@@ -6,8 +6,8 @@ PolyML (e.g. standard Ubuntu) 5.6
 
 # How to compile
 
-* use `{HOLDIR}/bin/Holmake`
-* if the previous step fails, try to clean your git working directory by `make cleanslate`
+* use `{HOLDIR}/bin/Holmake` in `src`
+* if the previous step fails, try to clean your git working directory by `make cleanslate` in the project root directory
 
 
 # Branch policy
