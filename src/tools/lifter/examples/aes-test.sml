@@ -23,7 +23,8 @@ val (thm_m0, errors) = bmil_m0_LittleEnd_Process.bir_lift_prog_gen ((Arbnum.from
 
 val _ = print "\n\n";
 
-val _ = new_theory "aes";
+val _ = new_theory "aesBinary";
 val _ = save_thm ("aes_arm8_program_THM", thm_arm8);
 val _ = save_thm ("aes_m0_program_THM", thm_m0);
+val _ = FileSys.chDir "./output";
 val _ = export_theory();
