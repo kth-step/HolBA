@@ -48,6 +48,9 @@ val _ = List.foldl (fn (config,_) =>
     val (arch_str, example_str, prog_thm) = ("m0"  , "aes"    , aes_m0_program_THM);
     *)
 
+    val theory_name_prefix = example_str ^ "_" ^ arch_str ^ "_";
+    val _ = print ("processing program: " ^ theory_name_prefix ^ "\n");
+
     val prog = ((snd o dest_comb o concl) prog_thm);
     val blocks = (fst o dest_list o dest_BirProgram) prog;
 
@@ -62,6 +65,9 @@ val _ = List.foldl (fn (config,_) =>
     val _ = List.map (fn (nodes,_,_) => bir_show_graph_inout true nodes g) conn_comps;
     *)
 
+    (*
+    val (blocks, in_idxs, out_idxs) = g;
+    *)
     val frags = divide_loopfree_fragments g conn_comps;
     (*val frags = List.map (fn x => (x, [hd x], [List.last x])) (divide_linear_fragments g conn_comps);*)
     val num_frags = length frags;
@@ -82,7 +88,6 @@ val _ = List.foldl (fn (config,_) =>
     val _ = if sum_frag_size = (length blocks) then () else raise ERR "" "there is something fishy here";
 
 
-    val theory_name_prefix = example_str ^ "_" ^ arch_str ^ "_";
     (* remove all temporary theories with this prefix *)
     val _ = OS.Process.system ("rm " ^ theory_name_prefix ^ "*");
 
@@ -108,12 +113,12 @@ val _ = List.foldl (fn (config,_) =>
 
 	val theory_name = theory_name_prefix ^ (Int.toString frag_i);
 
-	val _ = new_theory theory_name;
-
         val (frag_ns, frag_en, frag_ex) = frag;
         val _ = print ("==================================\n");
         val _ = print ("frag " ^ (Int.toString frag_i) ^ " (length: " ^ (Int.toString (length frag_ns)) ^ ")\n");
         val _ = print ("==================================\n");
+
+	val _ = new_theory theory_name;
 
 	(* select only fragment blocks, and last block label *)
 	fun select_blocks_from_prog frag prog =
@@ -171,7 +176,7 @@ val _ = List.foldl (fn (config,_) =>
 	val ex_program = ``ex_program``;
 	val ex_post = ``ex_post``;
 	val ex_ls = ``ex_ls``;
-	val ex_wps = (snd o dest_eq o concl) ex_wps_def;(*``ex_wps``;*)
+	val ex_wps = ``ex_wps``;(*(snd o dest_eq o concl) ex_wps_def;``ex_wps``;*)
 
 	val defs = [ex_program_def, ex_post_def, ex_ls_def, ex_wps_def];
 
@@ -198,7 +203,8 @@ val _ = List.foldl (fn (config,_) =>
 
 
         (* verify that we have wps for each entry *)
-        (*val wps_ = (snd o dest_eq o concl o (REWRITE_CONV [ex_wps_def])) wps1;*)
+        val wps_ = (snd o dest_eq o concl o (REWRITE_CONV [ex_wps_def])) wps1
+                   handle UNCHANGED => wps1;
         (*
         val label = hd first_block_labels;
         find_wp_const label wps_
@@ -215,7 +221,7 @@ val _ = List.foldl (fn (config,_) =>
             raise ERR "find_wp_const" "the resulting term is not const"
           end;
 
-        val _ = List.map (fn label => if find_wp_const label wps1 = NONE then raise ERR "" "cannot find one of the preconditions" else ()) first_block_labels;
+        val _ = List.map (fn label => if find_wp_const label wps_ = NONE then raise ERR "" "cannot find one of the preconditions" else ()) first_block_labels;
 
 
 
