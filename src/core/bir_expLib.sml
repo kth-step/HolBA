@@ -4,7 +4,6 @@ structure bir_expLib =
 struct
 
 
-  val err_str = "$$$$$$$$";
 
   fun castt_to_string castt = if is_BIExp_LowCast castt then
                                    "CL"
@@ -15,7 +14,7 @@ struct
                               else if is_BIExp_UnsignedCast castt then
                                    "CU"
                               else
-                                   err_str
+                                   raise (ERR "castt_to_string" "don't know how to print BIR casttype")
                               ;
 
   fun bop_to_string bop = if is_BIExp_And bop then
@@ -45,7 +44,7 @@ struct
                           else if is_BIExp_SignedRightShift bop then
                                "s>>"
                           else
-                               err_str
+                               raise (ERR "bop_to_string" "don't know how to print BIR binop")
                           ;
 
   fun bpredop_to_string bpredop = if is_BIExp_Equal bpredop then
@@ -61,7 +60,7 @@ struct
                                   else if is_BIExp_SignedLessOrEqual bpredop then
                                        "s<="
                                   else
-                                       err_str
+                                       raise (ERR "bpredop_to_string" "don't know how to print BIR binpredop")
                                   ;
 
   fun uop_to_string uop = if is_BIExp_ChangeSign uop then
@@ -69,7 +68,7 @@ struct
                           else if is_BIExp_Not uop then
                                "!"
                           else
-                               err_str
+                               raise (ERR "uop_to_string" "don't know how to print BIR unaryop")
                           ;
 
   fun endi_to_string endi = if is_BEnd_BigEndian endi then
@@ -79,7 +78,7 @@ struct
                             else if is_BEnd_NoEndian endi then
                                  "N"
                             else
-                                 err_str
+                                 raise (ERR "endi_to_string" "don't know how to print endianness")
                             ;
 
   fun bir_exp_to_x xf cf exp =
@@ -151,7 +150,7 @@ struct
         end
 
       else
-        xf err_str
+        raise (ERR "bir_exp_to_x" "don't know BIR expression")
 
     end;
 
@@ -199,5 +198,65 @@ val exp = ``(BExp_Store (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
 
 val _ = bir_exp_pretty_print exp;
 *)
+
+  fun bir_exp_vars_in_exp exp =
+      if is_BExp_Const exp then
+        []
+      else if is_BExp_Den exp then
+        [(fst o dest_BVar_string o dest_BExp_Den) exp]
+      else if is_BExp_Cast exp then
+        let
+          val (castt, exp, sz) = (dest_BExp_Cast) exp;
+        in
+          bir_exp_vars_in_exp exp
+        end
+      else if is_BExp_UnaryExp exp then
+        let
+          val (uop, exp) = (dest_BExp_UnaryExp) exp;
+        in
+          bir_exp_vars_in_exp exp
+        end
+      else if is_BExp_BinExp exp then
+        let
+          val (bop, exp1, exp2) = (dest_BExp_BinExp) exp;
+        in
+          (bir_exp_vars_in_exp exp1) @ (bir_exp_vars_in_exp exp2)
+        end
+      else if is_BExp_BinPred exp then
+        let
+          val (bpredop, exp1, exp2) = (dest_BExp_BinPred) exp;
+        in
+          (bir_exp_vars_in_exp exp1) @ (bir_exp_vars_in_exp exp2)
+        end
+      else if is_BExp_IfThenElse exp then
+        let
+          val (expc, expt, expf) = (dest_BExp_IfThenElse) exp;
+        in
+          (bir_exp_vars_in_exp expc) @ (bir_exp_vars_in_exp expt) @ (bir_exp_vars_in_exp expf)
+        end
+      else if is_BExp_Load exp then
+        let
+          val (expm, expad, endi, sz) = (dest_BExp_Load) exp;
+        in
+          (bir_exp_vars_in_exp expm) @ (bir_exp_vars_in_exp expad)
+        end
+      else if is_BExp_Store exp then
+        let
+          val (expm, expad, endi, expv) = (dest_BExp_Store) exp;
+        in
+          (bir_exp_vars_in_exp expm) @ (bir_exp_vars_in_exp expad) @ (bir_exp_vars_in_exp expv)
+        end
+      else
+        raise (ERR "bir_exp_vars_in_exp" "don't know BIR expression")
+      ;
+
+  fun bir_exp_dist_vars_in_exp exp =
+    let
+      val vars = bir_exp_vars_in_exp exp;
+    in
+      List.foldr (fn (var, vl) => if List.exists (fn x => x = var) vl then vl else var::vl) [] vars
+    end;
+
+
 
 end
