@@ -18,10 +18,9 @@ val configurations = [
   ("arm8", "aes"    , aes_arm8_program_THM),
   ("m0"  , "aes"    , aes_m0_program_THM),
   ("arm8", "bignum" , bignum_arm8_program_THM),
-  ("m0"  , "bignum" , bignum_m0_program_THM)(*,
+  ("m0"  , "bignum" , bignum_m0_program_THM),
   ("arm8", "wolfssl", wolfssl_arm8_program_THM),
   ("m0"  , "wolfssl", wolfssl_m0_program_THM)
-*)
 ];
 
 
@@ -85,14 +84,14 @@ val _ = List.foldl (fn (config,_) =>
     val _ = print ((Int.toString max_frag_size) ^ " max frag size in frag " ^ (Int.toString max_frag) ^ "\n");
     val _ = print ((Int.toString sum_frag_size) ^ " blocks in all fragments\n");
     val _ = print "\n\n";
-    val _ = if sum_frag_size = (length blocks) then () else raise ERR "" "there is something fishy here";
+    val _ = if sum_frag_size = (length blocks) then () else print "sum fragment size: there is something fishy here";
 
 
     (* remove all temporary theories with this prefix *)
     val _ = OS.Process.system ("rm " ^ theory_name_prefix ^ "*");
 
     val skipidx = 0;(* 1531 *)
-    val maxlength = 200;
+    val maxlength = 150;
 
     (* iterate over all fragments *)
     val _ = List.foldl (fn (frag,frag_i) => if frag_i < skipidx orelse (maxlength > 0 andalso maxlength < length ((fn (x,_,_) => x) frag)) then frag_i + 1 else
@@ -221,16 +220,19 @@ val _ = List.foldl (fn (config,_) =>
             raise ERR "find_wp_const" "the resulting term is not const"
           end;
 
-        val _ = List.map (fn label => if find_wp_const label wps_ = NONE then raise ERR "" "cannot find one of the preconditions" else ()) first_block_labels;
+        val _ = List.map (fn label => if find_wp_const label wps_ = NONE then
+                                        raise ERR "" "cannot find one of the preconditions"
+                                      else ())
+                         (List.filter (fn x => not (List.exists (fn y => x = y) last_block_labels)) first_block_labels);
 
 
 
-	val aes_wps1_def = Define `
-	      aes_wps1 = ^wps1
+	val ex_wps1_def = Define `
+	      ex_wps1 = ^wps1
 	`;
 
-	val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM aes_wps1_def] wps1_bool_sound_thm;
-	val _ = save_thm("aes_wps1_bool_sound_thm", wps1_bool_sound_thm_readable);
+	val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM ex_wps1_def] wps1_bool_sound_thm;
+	val _ = save_thm("ex_wps1_bool_sound_thm", wps1_bool_sound_thm_readable);
 
 
 
