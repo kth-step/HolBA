@@ -1,0 +1,30 @@
+INCLUDES = ../../../core ../ ../../../core-props ../../l3 \
+   $(HOLDIR)/examples/l3-machine-code/common \
+   $(HOLDIR)/examples/l3-machine-code/arm8/model \
+   $(HOLDIR)/examples/l3-machine-code/arm8/step \
+   $(HOLDIR)/examples/l3-machine-code/m0/model \
+   $(HOLDIR)/examples/l3-machine-code/m0/step
+
+OPTIONS = QUIT_ON_FAILURE
+
+EXTRA_CLEANS = selftest.exe
+
+
+ifdef POLY
+HOLHEAP = ../HolBALifter-heap
+endif
+
+default: all
+
+binaries-test.exe: binaries-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
+#binariesTheory.uo: binaries-test.exe 
+#	./binaries-test.exe
+
+TARGETS = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
+
+all: $(TARGETS)
+.PHONY: all
+
+
