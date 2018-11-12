@@ -149,9 +149,68 @@ val conn_comps = find_conn_comp (blocks, in_idxs, out_idxs);
 *)
 
 
+
 (*
 =================================================================
-            divide into linear fragments
+            reachability
+=================================================================
+ *)
+
+(*
+    fun is_reachable_ nodes outs (done, []) = false
+      | is_reachable_ nodes outs (done, n::todo) =
+      if List.exists (fn x => x = n) outs then true else
+      let
+        val outs = List.nth(out_idxs,n;
+        val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) outs);
+        val todo_outs = List.filter (fn x => List.exists (fn y => x = y) done) n_outs);
+      in
+      end;
+*)
+
+fun is_reachable_chk out_idxs nodes outs n =
+  if List.exists (fn x => x = n) outs then true else
+  let
+    val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) (List.nth(out_idxs,n));
+  in
+    List.exists (fn x => is_reachable_chk out_idxs nodes outs x) n_outs
+  end;
+
+fun reachable_nodes_ out_idxs nodes (acc,[]) = acc
+  | reachable_nodes_ out_idxs nodes (acc,n::todo) =
+  let
+    val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) (List.nth(out_idxs,n));
+    val n_outs_filtered = List.filter (fn x => not (List.exists (fn y => x = y) (todo@acc))) n_outs;
+  in
+    reachable_nodes_ out_idxs nodes (n::acc,n_outs_filtered@todo)
+  end;
+
+fun reachable_nodes out_idxs nodes n =
+  let
+    val outs = List.filter (fn x => List.exists (fn y => x = y) nodes) (List.nth(out_idxs,n));
+  in
+    reachable_nodes_ out_idxs nodes ([],outs)
+  end;
+
+fun is_reachable out_idxs nodes outs n =
+  let
+    val reachable_nodes_l = reachable_nodes out_idxs nodes n;
+    val result = List.exists (fn x => List.exists (fn y => x = y) outs) reachable_nodes_l;
+(*
+    val _ = if result = is_reachable_chk out_idxs nodes outs n then ()
+	    else raise ERR "" "some error in is_rechable implementation";
+*)
+  in
+    result
+  end;
+
+
+
+
+
+(*
+=================================================================
+      divide into sequence fragments (therefore-loopfree)
 =================================================================
  *)
 
@@ -171,7 +230,16 @@ fun divide_linear_fragments (blocks, in_idxs, out_idxs) conn_comps =
     fun process_frags [] _ acc = acc
       | process_frags (n::ns) visited acc =
           let
-            val new_frag = process_frag n [];
+            val outs = List.nth(out_idxs,n);
+            val new_frag = if (length outs > 1) then [n] else process_frag n [];
+            (*val new_frag = process_frag n [];*)
+
+            val _ = if (length new_frag = 0) orelse
+                       (length new_frag = 1 andalso (is_reachable out_idxs new_frag [hd new_frag] (hd new_frag))) orelse
+                       (length new_frag > 1 andalso (is_reachable out_idxs new_frag [hd new_frag] (hd (tl new_frag))))
+                    then raise ERR "divide_linear_fragments" "unknown error, created a sequence with a loop?!"
+                    else ();
+
             val new_visited = new_frag @ visited;
 
             val ins = List.nth(in_idxs,hd new_frag);
@@ -211,39 +279,6 @@ fun divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps =
           (frag, entries, exits)
         end) (divide_linear_fragments (blocks, in_idxs, out_idxs) [c]);
 
-(*
-    fun is_reachable nodes outs n =
-      if List.exists (fn x => x = n) outs then true else
-      let
-        val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) (List.nth(out_idxs,n));
-      in
-        List.exists (fn x => is_reachable nodes outs x) n_outs
-      end;
-*)
-
-    fun reachable_nodes nodes (acc,[]) = acc
-      | reachable_nodes nodes (acc,n::todo) =
-      let
-        val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) (List.nth(out_idxs,n));
-        val n_outs_filtered = List.filter (fn x => not (List.exists (fn y => x = y) (todo@acc))) n_outs;
-      in
-        reachable_nodes nodes (n::acc,n_outs_filtered@todo)
-      end;
-
-(*
-    fun is_reachable_ nodes outs (done, []) = false
-      | is_reachable_ nodes outs (done, n::todo) =
-      if List.exists (fn x => x = n) outs then true else
-      let
-        val outs = List.nth(out_idxs,n;
-        val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) outs);
-        val todo_outs = List.filter (fn x => List.exists (fn y => x = y) done) n_outs);
-      in
-      end;
-*)
-
-    fun is_reachable nodes outs n = List.exists (fn x => List.exists (fn y => x = y) outs) (reachable_nodes nodes ([],[n]));
-
     fun merge_frags (ns_1,en_1,ex_1) (ns_2,en_2,ex_2) =
       let
         val ins_2 = List.foldl (fn (en,l) => List.foldl (fn (x,l) => if List.exists (fn y => x = y) l then l else (x::l)) l (List.nth(in_idxs,en))) [] en_2;
@@ -254,9 +289,7 @@ fun divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps =
 
 	val createscircle = connects_in andalso
 			    connects_out andalso
-			    (List.exists (fn x => is_reachable ns_1 ins_2 x)
-					 (List.filter (fn x => List.exists (fn y => x = y) ns_1) outs_2)
-			    );
+			    (List.exists (fn x => is_reachable out_idxs ns_1 ins_2 x) ex_2);
 
         val mergable = (not createscircle) andalso (connects_in orelse connects_out);
       in
@@ -312,8 +345,23 @@ fun divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps =
 	      NONE        => fs
 	    | SOME new_fs => process_comp_frags new_fs;
 
+    val result = List.concat (List.map (fn c => process_comp_frags (prep_frag_todo_for_compnent c)) conn_comps);
+
+    val _ = if (List.all (fn (ns,en,ex) =>
+		  let
+		    val entries = List.filter (fn z =>
+			    (List.nth(in_idxs,z)) = [] orelse
+			    not (List.all (fn x => List.exists (fn y => x = y) ns) (List.nth(in_idxs,z)))
+			  ) ns;
+		    val exits = List.filter (fn z =>
+			    not (List.all (fn x => (List.exists (fn y => x = y) ns)) (List.nth(out_idxs,z)))
+			  ) ns;
+		  in
+		    en = entries andalso ex = exits
+		  end) result) then ()
+	    else raise ERR "divide_loopfree_fragments" "there is a fragment where entry and exit points are wrong";
   in
-    List.concat (List.map (fn c => process_comp_frags (prep_frag_todo_for_compnent c)) conn_comps)
+    result
   end;
 
 
@@ -330,6 +378,57 @@ val frags =[([0,1,3],[0],[3])]
 val ((ns,en,ex)::todo) = [([2],2,2)]
 val (nodes,entries,exits) = hd frags
 process_comp_frags frags ((ns,en,ex)::todo)
+
+
+
+
+fun find_component conn_comp target_label = find_idx (fn (n,_,_) => List.exists (fn i =>
+  let
+    val block = List.nth(blocks,i);
+
+    val eval_label = (snd o dest_eq o concl o EVAL);
+    val (raw_BL_term, _, _) = dest_bir_block block;
+    val BL_term = eval_label raw_BL_term;
+
+  in
+    BL_term = target_label
+  end) n) conn_comp;
+
+
+val addr = 0x40379C;
+val target_label = ``BL_Address (Imm64 ^(wordsSyntax.mk_word(Arbnum.fromInt addr, Arbnum.fromInt 64)))``
+find_component conn_comps target_label
+val conn_comps = [List.nth(conn_comps,17)]
+
+val frags = divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps;
+List.map (fn (nodes,_,_) => bir_show_graph_inout true nodes (blocks, in_idxs, out_idxs)) frags
+
+length frags;
+
+val frag = hd frags;
+
+val (frag_ns, _, _) = frag;
+val _ = bir_show_graph_inout true frag_ns g;
+
+
+
+
+process_comp_frags 
+
+val fs = (prep_frag_todo_for_compnent (hd conn_comps))
+
+val SOME fs = merge_through [] fs;
+List.map (fn (nodes,_,_) => bir_show_graph_inout true nodes g) fs
+length fs
+
+
+List.nth (in_idxs,3232)
+List.nth (out_idxs,3232)
+
+val simplified = true
+val nodes = ((fn (nodes,_,_) => nodes)) (hd fs)
+bir_show_graph_inout true nodes g
+
 
 *)
 
