@@ -239,6 +239,7 @@ val wp1 = (snd o dest_eq o concl) thm1;
 
 
 
+
 val pre = " (and (and (= (bvand SP_EL0 (_ bv7 64)) (_ bv0 64)) (bvugt SP_EL0 (_ bv33554432 64))) (bvult SP_EL0 (_ bv43554432 64)))";
 (* val pre = " (= SP_EL0 (_ bv16777216 64) )"; *)
 (* val pre = " (= (bvand SP_EL0 (_ bv3 64)) (_ bv0 64))"; *)
