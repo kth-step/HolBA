@@ -7,7 +7,6 @@ open listSyntax;
 open aesBinaryTheory;
 open bir_expLib;
 
-open bir_wp_simpLib;
 open bir_wp_expLib;
 
 
@@ -31,8 +30,8 @@ loop condition check with conditional branch to 0x4005dc:
 
 
 (* how many blocks of the aes round do we take for the computation? *)
-val take_all = false; (* false for a normal run, should override the others *)
-val take_n_last = 100; (* we will get one block more at the end as a dummy block *)
+val take_all = true; (* false for a normal run, should override the others *)
+val take_n_last = 60; (* we will get one block more at the end as a dummy block *)
 
 val aes_program_term_whole = ((snd o dest_comb o concl) aes_arm8_program_THM);
 (* include one after the last as dummy block *)

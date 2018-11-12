@@ -52,13 +52,13 @@ val _ = if not runMeasurement then () else
         Lib.end_time timer_start;
 val timer_start = Lib.start_time ();
 
+(*ASSUME (simp_construct_wt (simp_extract goalterm) NONE);*)
+val wt0_thm = prove (``^(simp_construct_wt (simp_extract goalterm) NONE)``,
+  CONV_TAC (well_typed_conv varexps_thms)
+);
 
-val simp_thm = bir_wp_simp_CONV varexps_thms goalterm;
-(*
-val timer_start = Lib.start_time ();
-val simp_thm = bir_wp_simp_CONV varexps_thms goalterm;
-val _ = Lib.end_time timer_start;
-*)
+
+val (simp_thm,wt_thm) = bir_wp_simp_CONV varexps_thms goalterm wt0_thm;
 
 
 (* ----------- measurement end ----------- *)
@@ -67,7 +67,12 @@ val _ = if not runMeasurement then () else
 
 
 
-val aes_wp_taut_thm = save_thm("aes_wp_taut_thm", simp_thm);
+val wp_simp_term = (snd o dest_comb o snd o dest_comb o snd o dest_eq o concl) simp_thm;
+val wp_simp_def = Define `wp_simp_def = ^wp_simp_term`;
+
+
+val aes_wp_taut_thm = save_thm("aes_wp_taut_thm", REWRITE_RULE [GSYM wp_simp_def] simp_thm);
+val aes_wp_wt_thm = save_thm("aes_wp_wt_thm", REWRITE_RULE [GSYM wp_simp_def] wt_thm);
 
 
 
