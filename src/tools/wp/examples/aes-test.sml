@@ -66,9 +66,9 @@ aes round
 
 *)
 
-val take_all = true; (* a normal run, should override the others *)
-val take_n_last = 11;
-val dontcalcfirstwp = true;
+val take_all = false; (* false for a normal run, should override the others *)
+val take_n_last = 65;
+val dontcalcfirstwp = false;
 
 val aes_program_term_whole = ((snd o dest_comb o concl) aes_arm8_program_THM);
 val aes_program_term_round = get_subprog_with_n_last (get_subprog_drop_n_at_end aes_program_term_whole 255) 233;
@@ -213,7 +213,49 @@ val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM aes_wps1_def] wps1_bool_so
 
 
 val _ = print "===========";
-val _ = print "weakest precondition:";
+val _ = print "weakest precondition evaluation:";
+val (lbl_last, wp_last) = (dest_pair o snd o dest_fupdate) wps1;
+
+
+(* quick fix, has to be revisited *)
+val lbl_list = List.map (term_to_string o snd o gen_dest_Imm o dest_BL_Address) (bir_wp_fmap_to_dom_list wps1);
+
+fun eval_through [] thm = thm
+  | eval_through (lbl_str::lbls) thm_in =
+      let
+        val (_, (def_thm, Def)) = hd (DB.find ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str));
+        val thm = REWRITE_RULE [thm_in] def_thm;
+        val thm_evald = (EVAL o snd o dest_eq o concl) thm;
+        val _ = print ("remaining: " ^ (Int.toString (List.length lbls)) ^ "\r");
+      in
+        eval_through lbls (TRANS thm thm_evald)
+      end;
+
+val out_thm = eval_through (tl (List.rev lbl_list)) aes_post_def;
+val wp_exp_term = (snd o dest_eq o concl) out_thm;
+
+
+(*
+EVAL (concl out_thm)
+
+val lbl_str = hd (tl (List.take (List.rev lbl_list, 5)));
+
+
+
+val wp_list = (List.rev (!bir_wp_comp_wps_iter_step2_defs));
+
+(*val wp_last = (snd o dest_eq o concl o EVAL) wp_last;*)
+bir_wp_comp_wps_iter_step2_defs
+*)
+
+(*
+val test = ``(FAPPLY aes_wps1 ^snd_block_label)``;
+val test2 = REWRITE_CONV [aes_wps1_def] test;
 val wp_exp_term = (snd o dest_comb o concl o EVAL) ``(FAPPLY aes_wps1 ^snd_block_label)``;
+*)
+
+
+val _ = print "===========";
+val _ = print "weakest precondition:";
 val _ = bir_exp_pretty_print wp_exp_term;
 
