@@ -211,6 +211,7 @@ fun divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps =
           (frag, entries, exits)
         end) (divide_linear_fragments (blocks, in_idxs, out_idxs) [c]);
 
+(*
     fun is_reachable nodes outs n =
       if List.exists (fn x => x = n) outs then true else
       let
@@ -218,6 +219,30 @@ fun divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps =
       in
         List.exists (fn x => is_reachable nodes outs x) n_outs
       end;
+*)
+
+    fun reachable_nodes nodes (acc,[]) = acc
+      | reachable_nodes nodes (acc,n::todo) =
+      let
+        val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) (List.nth(out_idxs,n));
+        val n_outs_filtered = List.filter (fn x => not (List.exists (fn y => x = y) (todo@acc))) n_outs;
+      in
+        reachable_nodes nodes (n::acc,n_outs_filtered@todo)
+      end;
+
+(*
+    fun is_reachable_ nodes outs (done, []) = false
+      | is_reachable_ nodes outs (done, n::todo) =
+      if List.exists (fn x => x = n) outs then true else
+      let
+        val outs = List.nth(out_idxs,n;
+        val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) outs);
+        val todo_outs = List.filter (fn x => List.exists (fn y => x = y) done) n_outs);
+      in
+      end;
+*)
+
+    fun is_reachable nodes outs n = List.exists (fn x => List.exists (fn y => x = y) outs) (reachable_nodes nodes ([],[n]));
 
     fun merge_frags (ns_1,en_1,ex_1) (ns_2,en_2,ex_2) =
       let
