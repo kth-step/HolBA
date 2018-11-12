@@ -1,0 +1,12 @@
+INCLUDES = ../../ ../../../../core ../../../lifter ../../../../core-props ../../../l3 \
+   $(HOLDIR)/examples/l3-machine-code/common \
+   $(HOLDIR)/examples/l3-machine-code/arm8/model \
+   $(HOLDIR)/examples/l3-machine-code/arm8/step \
+   $(HOLDIR)/examples/l3-machine-code/m0/model \
+   $(HOLDIR)/examples/l3-machine-code/m0/step
+
+
+ifdef POLY
+HOLHEAP = ../../../lifter/HolBALifter-heap
+endif
+
