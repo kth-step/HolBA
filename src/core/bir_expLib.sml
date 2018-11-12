@@ -82,81 +82,88 @@ struct
                                  err_str
                             ;
 
-
-  fun bir_exp_to_string exp =
+  fun bir_exp_to_x xf cf exp =
+    let
+      val ef = bir_exp_to_x xf cf;
+      infix cf;
+    in
       if is_BExp_Const exp then
-        (term_to_string o snd o gen_dest_Imm o dest_BExp_Const) exp
+        (xf o term_to_string o snd o gen_dest_Imm o dest_BExp_Const) exp
+
       else if is_BExp_Den exp then
-        ("_" ^ ((fst o dest_BVar_string o dest_BExp_Den) exp))
+        ((xf "_") cf ((xf o fst o dest_BVar_string o dest_BExp_Den) exp))
+
       else if is_BExp_Cast exp then
         let
           val (castt, exp, sz) = (dest_BExp_Cast) exp;
           val casttstr = castt_to_string castt;
-          val expstr = bir_exp_to_string exp;
           val szstr = (Int.toString o size_of_bir_immtype_t) sz;
         in
-          ("(" ^ expstr ^ ":" ^ casttstr ^ szstr ^ ")")
+          ((xf "(") cf (ef exp) cf (xf ":") cf (xf casttstr) cf (xf szstr) cf (xf ")"))
         end
+
       else if is_BExp_UnaryExp exp then
         let
           val (uop, exp) = (dest_BExp_UnaryExp) exp;
           val uopstr = uop_to_string uop;
-          val expstr = bir_exp_to_string exp;
         in
-          ("(" ^ uopstr ^ " " ^ expstr ^ ")")
+          ((xf "(") cf (xf uopstr) cf (xf " ") cf (ef exp) cf (xf ")"))
         end
+
       else if is_BExp_BinExp exp then
         let
           val (bop, exp1, exp2) = (dest_BExp_BinExp) exp;
           val bopstr = bop_to_string bop;
-          val exp1str = bir_exp_to_string exp1;
-          val exp2str = bir_exp_to_string exp2;
         in
-          ("(" ^ exp1str ^ " " ^ bopstr ^ " " ^ exp2str ^ ")")
+          ((xf "(") cf (ef exp1) cf (xf " ") cf (xf bopstr) cf (xf " ") cf (ef exp2) cf (xf ")"))
         end
+
       else if is_BExp_BinPred exp then
         let
           val (bpredop, exp1, exp2) = (dest_BExp_BinPred) exp;
           val bpredopstr = bpredop_to_string bpredop;
-          val exp1str = bir_exp_to_string exp1;
-          val exp2str = bir_exp_to_string exp2;
         in
-          ("(" ^ exp1str ^ " " ^ bpredopstr ^ " " ^ exp2str ^ ")")
+          ((xf "(") cf (ef exp1) cf (xf " ") cf (xf bpredopstr) cf (xf " ") cf (ef exp2) cf (xf ")"))
         end
+
       else if is_BExp_IfThenElse exp then
         let
           val (expc, expt, expf) = (dest_BExp_IfThenElse) exp;
-          val expcstr = bir_exp_to_string expc;
-          val exptstr = bir_exp_to_string expt;
-          val expfstr = bir_exp_to_string expf;
         in
-          ("(if " ^ expcstr ^ " then " ^ exptstr ^ " else " ^ expfstr ^ ")")
+          ((xf "(if ") cf (ef expc) cf (xf " then ") cf (ef expt) cf (xf " else ") cf (ef expf) cf (xf ")"))
         end
+
       else if is_BExp_Load exp then
         let
           val (expm, expad, endi, sz) = (dest_BExp_Load) exp;
-          val expmstr = bir_exp_to_string expm;
-          val expadstr = bir_exp_to_string expad;
           val endistr = endi_to_string endi;
           val szstr = (Int.toString o size_of_bir_immtype_t) sz;
         in
-          ("(" ^ expmstr ^ ":" ^ endistr ^ szstr ^ "[" ^ expadstr ^ "])")
+          ((xf "(") cf (ef expm) cf (xf ":") cf (xf endistr) cf (xf szstr) cf (xf "[") cf (ef expad) cf (xf "])"))
         end
+
       else if is_BExp_Store exp then
         let
           val (expm, expad, endi, expv) = (dest_BExp_Store) exp;
-          val expmstr = bir_exp_to_string expm;
-          val expadstr = bir_exp_to_string expad;
           val endistr = endi_to_string endi;
-          val expvstr = bir_exp_to_string expv;
         in
-          ("(" ^ expmstr ^ ":" ^ endistr ^ "[" ^ expadstr ^ "] = " ^ expvstr ^ ")")
+          ((xf "(") cf (ef expm) cf (xf ":") cf (xf endistr) cf (xf "[") cf (ef expad) cf (xf "] = ") cf (ef expv) cf (xf ")"))
         end
+
       else
-        err_str;
+        xf err_str
 
+    end;
 
-  fun bir_exp_pretty_print exp = print ((bir_exp_to_string exp) ^ "\r\n");
+  fun string_xf (x:string) = x;
+  val string_cf = (op ^);
+  fun print_xf (x:string) = print x;
+  fun print_cf ((), ()) = ();
+
+  val bir_exp_to_string = bir_exp_to_x string_xf string_cf;
+  val bir_exp_print = bir_exp_to_x print_xf print_cf;
+
+  fun bir_exp_pretty_print exp = (bir_exp_print exp; print "\r\n");
 
 (*
 val exp = ``BExp_Const (Imm64 0x400574w)``
