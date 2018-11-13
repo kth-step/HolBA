@@ -10,7 +10,32 @@ PolyML (e.g. standard Ubuntu) 5.6
 * if the previous step fails, try to clean your git working directory by `make cleanslate` in the project root directory
 
 
-# Branch policy
+# Branches
+## Branch `master`
+
+* core functionality for BIR language
+  * `core`
+  * `core-props`
+  * `tools/cfg` (non-proof-producing)
+* the binary lifter
+  * `tools/l3`
+  * `tools/lifter`
+
+
+## Branch `wp`
+
+* weakest precondition propagation and related substitution simplification prototype for verification
+  * `tools/wp`
+
+
+## Branch `benchmarks`
+
+* some binaries and disassembly files of binaries for benchmarking of the `lifter` and `wp`, and also parts of the resulting data
+  * `tools/lifter/benchmark/binaries` (non-proof-producing)
+  * `tools/wp/benchmark/binaries` (non-proof-producing)
+
+
+## Branch policy
 
 * one branch per feature
   * commit in a feature branch must compile
@@ -18,17 +43,12 @@ PolyML (e.g. standard Ubuntu) 5.6
   * Can cheat
   * Code can be commented
 
-* master is the stable release (probably 1 or 2 months behind the development)
+* master is the standard branch where completed features are merged
   * bug-fixes ok
-  * changes that do not affect existing code ok (e.g. new theories, functions. etc)
-  * should be tested
-  * merge to master only after pull request and 2 reviews (for now Roberto + Thomas)
-  * no cheat
-
-* development is the standard branch where completed features are merged
   * must correctly compile
   * self tests must succeed
-  * merge to development 1 review (Thomas or Roberto, not the same one that developed the feature)
+  * should be tested
+  * merge to development 1 review (Andreas or Roberto, not the same one that developed the feature)
   * no cheat
 
 * if you want to violate the rules for temporary development or experiments (only for feature branches)
