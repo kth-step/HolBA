@@ -1,4 +1,4 @@
-INCLUDES = ./lifter ./l3
+INCLUDES = ./cfg ./lifter ./l3
 OPTIONS = QUIT_ON_FAILURE
 
 default: all
