@@ -25,7 +25,7 @@ struct
 *)
 
 
-  fun bir_exec_exp_conv t =
+  fun bir_exec_exp_conv_help t =
     if not (is_bir_eval_exp t) then
       raise UNCHANGED
     else
@@ -35,5 +35,20 @@ struct
 (*
 bir_exec_exp_conv t
 *)
+
+
+  fun GEN_bir_eval_exp_conv conv tm =
+    if is_bir_eval_exp tm then
+      conv tm
+    else if is_comb tm then
+        ((RAND_CONV  (GEN_bir_eval_exp_conv conv)) THENC
+         (RATOR_CONV (GEN_bir_eval_exp_conv conv))) tm
+    else
+      raise UNCHANGED
+    ;
+
+
+  val bir_exec_exp_conv = GEN_bir_eval_exp_conv bir_exec_exp_conv_help;
+
 
 end

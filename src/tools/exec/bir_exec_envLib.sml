@@ -27,11 +27,8 @@ struct
       LIST_CONJ (List.map ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL) (List.foldl (fn (v,l) => (List.map (fn v2 => mk_eq(v,v2)) vars)@l) [] vars))
     end;
 *)
-(*
-++stringSimps.STRING_ss
-*)
 
-  fun bir_exec_env_write_conv var_eq_thm t =
+  fun bir_exec_env_write_conv_help var_eq_thm t =
     if not (is_bir_env_write t) then
       raise UNCHANGED
     else
@@ -46,11 +43,7 @@ struct
                 bir_env_write_def,
                 var_eq_thm] t;
 
-(*
-        val thm2 = REFL ((snd o dest_eq o concl) thm1);
-        val thm3 = REFL ((snd o dest_eq o concl) thm2);
-*)
-        val thm2 = REWRITE_CONV [Once finite_mapTheory.FUPDATE_PURGE] ((snd o dest_eq o concl) thm1);
+        val thm2 = REWRITE_CONV [Once FUPDATE_PURGE] ((snd o dest_eq o concl) thm1);
 
         val thm3 = SIMP_CONV (std_ss) [
                 DOMSUB_FEMPTY, DOMSUB_FUPDATE, DOMSUB_FUPDATE_NEQ,
@@ -61,6 +54,19 @@ struct
       end;
 
 
+
+  fun GEN_bir_env_write_conv conv tm =
+    if is_bir_env_write tm then
+      conv tm
+    else if is_comb tm then
+        ((RAND_CONV  (GEN_bir_env_write_conv conv)) THENC
+         (RATOR_CONV (GEN_bir_env_write_conv conv))) tm
+    else
+      raise UNCHANGED
+    ;
+
+
+  val bir_exec_env_write_conv = GEN_bir_env_write_conv o bir_exec_env_write_conv_help;
 
 
 end

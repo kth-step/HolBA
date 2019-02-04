@@ -2,22 +2,14 @@
 open bir_programTheory;
 open bir_programSyntax;
 
+open bir_program_multistep_propsTheory;
+
 open bir_exec_expLib;
 open bir_exec_envLib;
 
 structure bir_execLib =
 struct
 
-(*
-bir_exec_stmtB
-bir_exec_stmtE
-bir_exec_stmt
-bir_exec_step
-bir_exec_step_n
-
-bir_programTheory.bir_exec_step_n_def
-bir_program_multistep_propsTheory.bir_exec_step_n_REWRS
-*)
 
 (*
   val prog = ``
@@ -65,24 +57,7 @@ bir_program_multistep_propsTheory.bir_exec_step_n_REWRS
   val t = ``bir_exec_step ^prog ^state``;
 *)
 
-  fun GEN_bir_env_write_conv conv tm =
-    if is_bir_env_write tm then
-      conv tm
-    else if is_comb tm then
-        ((RAND_CONV  (GEN_bir_env_write_conv conv)) THENC
-         (RATOR_CONV (GEN_bir_env_write_conv conv))) tm
-    else
-      raise UNCHANGED
-    ;
-  fun GEN_bir_eval_exp_conv conv tm =
-    if is_bir_eval_exp tm then
-      conv tm
-    else if is_comb tm then
-        ((RAND_CONV  (GEN_bir_eval_exp_conv conv)) THENC
-         (RATOR_CONV (GEN_bir_eval_exp_conv conv))) tm
-    else
-      raise UNCHANGED
-    ;
+
   fun GEN_bir_exec_step_conv conv tm =
     if is_bir_exec_step tm then
       conv tm
@@ -95,26 +70,52 @@ bir_program_multistep_propsTheory.bir_exec_step_n_REWRS
 
 
   val bir_pc_ss = rewrites (type_rws ``:bir_programcounter_t``);
-  fun bir_exec_prog_step var_eq_thm t =
+  fun bir_exec_prog_step_conv_help var_eq_thm t =
     if not (is_bir_exec_step t) then
       raise UNCHANGED
     else
       let
         val thm1 = (
                     (SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [
-bir_exec_stmt_assign_def, bir_exec_stmtB_def, bir_exec_stmtE_def, bir_exec_stmt_def, bir_exec_step_def, bir_state_is_terminated_def, bir_state_set_failed_def, bir_get_current_statement_def, bir_get_program_block_info_by_label_def, listTheory.INDEX_FIND_def
-]) THENC
-                    (GEN_bir_eval_exp_conv bir_exec_exp_conv) THENC
-                    (GEN_bir_env_write_conv (bir_exec_env_write_conv var_eq_thm)) THENC
-                    (SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [bir_valuesTheory.BType_Bool_def])
+                         bir_exec_stmt_declare_def,
+                         bir_exec_stmt_assign_def,
+                         bir_exec_stmt_assert_def,
+                         bir_exec_stmt_assume_def,
+                         bir_exec_stmt_observe_def,
+                         bir_exec_stmtB_def,
+                         bir_exec_stmt_halt_def,
+                         bir_exec_stmt_jmp_to_label_def,
+                         bir_eval_label_exp_def,
+                         bir_exec_stmt_jmp_def,
+                         bir_exec_stmt_cjmp_def,
+                         bir_exec_stmtE_def,
+                         bir_exec_stmt_def,
+                         bir_exec_step_def,
+                         bir_state_is_terminated_def,
+                         bir_state_set_failed_def,
+                         bir_get_current_statement_def,
+                         bir_get_program_block_info_by_label_def,
+                         listTheory.INDEX_FIND_def
+                       ]) THENC
+                    (bir_exec_exp_conv) THENC
+                    (bir_exec_env_write_conv var_eq_thm) THENC
+                    (SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [
+                        bir_valuesTheory.BType_Bool_def])
                    ) t;
 
-        val thm2 = CONV_RULE (RAND_CONV (SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [LET_DEF])) thm1;
+        val thm2 = CONV_RULE (RAND_CONV (SIMP_CONV
+                      (list_ss++HolBACoreSimps.holBACore_ss) [LET_DEF])) thm1;
 
-        val thm3 = CONV_RULE (RAND_CONV (SIMP_CONV (arith_ss++bir_pc_ss) [bir_pc_next_def])) thm2;
+        val thm3 = CONV_RULE (RAND_CONV (SIMP_CONV
+                      (arith_ss++bir_pc_ss) [bir_pc_next_def])) thm2;
       in
         thm3
       end;
+
+
+  val bir_exec_prog_step_conv = GEN_bir_exec_step_conv o bir_exec_prog_step_conv_help;
+
+
 
 
   fun bir_exec_prog_step_n var_eq_thm thm =
@@ -129,13 +130,19 @@ bir_exec_stmt_assign_def, bir_exec_stmtB_def, bir_exec_stmtE_def, bir_exec_stmt_
           val thm1 = if Arbnumcore.<= ((numSyntax.dest_numeral n), (Arbnumcore.fromInt 1)) then
                       thm
                     else
-                      GEN_REWRITE_RULE (RAND_CONV o RAND_CONV) empty_rewrites [Once (prove(``^n = (SUC ((^n)-1))``, SIMP_TAC arith_ss []))] thm;
+                      GEN_REWRITE_RULE (RAND_CONV o RAND_CONV) empty_rewrites
+                        [Once (prove(``^n = (SUC ((^n)-1))``, SIMP_TAC arith_ss []))] thm;
           val exec_term1 = (snd o dest_eq o concl) thm1;
 
-          val is_terminated_thm = ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL) (mk_bir_state_is_terminated s);
+          val is_terminated_thm = ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL)
+                                      (mk_bir_state_is_terminated s);
 
-          val thm2 = CONV_RULE (RAND_CONV (SIMP_CONV std_ss [is_terminated_thm, bir_program_multistep_propsTheory.bir_exec_step_n_REWRS])) thm1;
-          val thm3 = CONV_RULE (RAND_CONV (GEN_bir_exec_step_conv (bir_exec_prog_step var_eq_thm))) thm2;
+          val thm2 = CONV_RULE (RAND_CONV (SIMP_CONV std_ss [
+                        is_terminated_thm,
+                        bir_exec_step_n_REWR_0,
+                        bir_exec_step_n_REWR_NOT_TERMINATED,
+                        bir_exec_step_n_REWR_TERMINATED])) thm1;
+          val thm3 = CONV_RULE (RAND_CONV (bir_exec_prog_step_conv var_eq_thm)) thm2;
           val thm4 = CONV_RULE (RAND_CONV (SIMP_CONV (arith_ss) [LET_DEF])) thm3;
 
         in
