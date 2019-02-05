@@ -1,3 +1,4 @@
+open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 open bir_envSyntax;
 open finite_mapSyntax;

@@ -1,0 +1,19 @@
+INCLUDES = ../../../core ../ ../../../core-props
+
+OPTIONS = QUIT_ON_FAILURE
+
+ifdef POLY
+HOLHEAP = ../../../core-props/HolBACoreProps-heap
+endif
+
+default: all
+
+basic-test.exe: basic-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
+TARGETS = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
+
+all: $(TARGETS)
+.PHONY: all
+
+

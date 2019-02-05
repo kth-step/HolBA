@@ -1,8 +1,13 @@
+open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 open bir_typing_progTheory;
 open bir_typing_expTheory;
 
+open bir_valuesTheory;
+open bir_immTheory;
+
 open pred_setSyntax;
+open bir_valuesSyntax;
 
 
 structure bir_exec_typingLib =
@@ -29,6 +34,14 @@ val prog = ``
            bb_last_statement :=
              BStmt_Halt (BExp_Const (Imm32 1w)) |>
        ]``;
+
+
+val t = ``type_of_bir_val (BVal_Imm (Imm32 x))``
+
+val t = ``type_of_bir_val (BVal_Mem Bit32 Bit32 x)``
+
+val t = ``type_of_bir_val (BVal_Mem Bit32 Bit32 (K 0))``
+
 *)
 
 
@@ -45,8 +58,30 @@ val prog = ``
       strip_set var_set
     end;
 
-(*
-type_of_bir_val
-*)
+
+  fun bir_exec_typing_exp_conv_help t =
+    if not (is_type_of_bir_val t) then
+      raise UNCHANGED
+    else
+      REWRITE_CONV [type_of_bir_val_def, type_of_bir_imm_def] t;
+
+
+
+
+
+  fun GEN_bir_exec_typing_exp_conv conv tm =
+    if is_type_of_bir_val tm then
+      conv tm
+    else if is_comb tm then
+        ((RAND_CONV  (GEN_bir_exec_typing_exp_conv conv)) THENC
+         (RATOR_CONV (GEN_bir_exec_typing_exp_conv conv))) tm
+    else
+      raise UNCHANGED
+    ;
+
+
+
+
+  val bir_exec_typing_exp_conv = GEN_bir_exec_typing_exp_conv bir_exec_typing_exp_conv_help;
 
 end

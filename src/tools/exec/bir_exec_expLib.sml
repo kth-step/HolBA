@@ -1,3 +1,4 @@
+open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 open bir_expSyntax;
 
@@ -22,6 +23,32 @@ struct
   val exp = ``(BExp_BinExp BIExp_Plus
                    (BExp_Den (BVar "R2" (BType_Imm Bit32)))
                    (BExp_Den (BVar "R3" (BType_Imm Bit32))))``;
+
+
+  val t = ``(bir_eval_bin_exp BIExp_Plus
+                   (bir_env_read (BVar "R2" (BType_Imm Bit32))
+                      (BEnv
+                         (FEMPTY |+
+                          ("R1",BType_Imm Bit32,
+                           SOME (BVal_Imm (Imm32 0w))) |+
+                          ("bit1",BType_Imm Bit1,
+                           SOME (BVal_Imm (Imm1 0w))) |+
+                          ("R3",BType_Imm Bit32,
+                           SOME (BVal_Imm (Imm32 25w))) |+
+                          ("R2",BType_Imm Bit32,
+                           SOME (BVal_Imm (Imm32 7w))))))
+                   (bir_env_read (BVar "R3" (BType_Imm Bit32))
+                      (BEnv
+                         (FEMPTY |+
+                          ("R1",BType_Imm Bit32,
+                           SOME (BVal_Imm (Imm32 0w))) |+
+                          ("bit1",BType_Imm Bit1,
+                           SOME (BVal_Imm (Imm1 0w))) |+
+                          ("R3",BType_Imm Bit32,
+                           SOME (BVal_Imm (Imm32 25w))) |+
+                          ("R2",BType_Imm Bit32,
+                           SOME (BVal_Imm (Imm32 7w)))))))``;
+
 
   val t = ``bir_eval_exp ^exp ^env``;
 *)
