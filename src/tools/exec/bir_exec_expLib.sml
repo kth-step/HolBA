@@ -1,6 +1,8 @@
 
 open bir_expSyntax;
 
+open bir_exec_envLib;
+
 structure bir_exec_expLib =
 struct
 
@@ -25,11 +27,12 @@ struct
 *)
 
 
-  fun bir_exec_exp_conv_help t =
+  fun bir_exec_exp_conv_help var_eq_thm t =
     if not (is_bir_eval_exp t) then
       raise UNCHANGED
     else
-      EVAL t;
+      ((bir_exec_env_read_conv var_eq_thm) THENC
+       EVAL) t;
 (*      SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [] t; *)
 
 (*
@@ -48,7 +51,7 @@ bir_exec_exp_conv t
     ;
 
 
-  val bir_exec_exp_conv = GEN_bir_eval_exp_conv bir_exec_exp_conv_help;
+  val bir_exec_exp_conv = (GEN_bir_eval_exp_conv o bir_exec_exp_conv_help);
 
 
 end

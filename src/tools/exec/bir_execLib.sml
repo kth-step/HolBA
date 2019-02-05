@@ -4,8 +4,12 @@ open bir_programSyntax;
 
 open bir_program_multistep_propsTheory;
 
-open bir_exec_expLib;
 open bir_exec_envLib;
+open bir_exec_expLib;
+open bir_exec_typingLib;
+
+open pairSyntax;
+
 
 structure bir_execLib =
 struct
@@ -32,14 +36,17 @@ struct
              BStmt_Halt (BExp_Const (Imm32 1w)) |>
        ]``;
 
-  val n = ``50:num``;
+  val n_max = 50;
 
-  val pc = ``<| bpc_label := BL_Label "entry" ; bpc_index := 0 |>``;
-  val env = ``BEnv (FEMPTY |+ ("bit1", (BType_Bool,      SOME (BVal_Imm (Imm1  0w))))
-                           |+ ("R1",   (BType_Imm Bit32, SOME (BVal_Imm (Imm32 0w))))
-                           |+ ("R2",   (BType_Imm Bit32, SOME (BVal_Imm (Imm32 0w))))
-                           |+ ("R3",   (BType_Imm Bit32, SOME (BVal_Imm (Imm32 0w))))
-                   )``;
+
+
+
+  val n = numSyntax.mk_numeral (Arbnumcore.fromInt n_max);
+  val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog``;
+
+  val vars = gen_vars_of_prog prog;
+
+  val env = bir_exec_env_initd_env vars;
 
   val state = ``<| bst_pc := ^pc ; bst_environ := ^env ; bst_status := BST_Running |>``;
 
@@ -47,12 +54,10 @@ struct
 
   val thm = REWRITE_CONV [GSYM bir_exec_step_n_acc_eq_thm] exec_term;
 
-  val var_eq_thm =
-    let
-      val vars = [``"bit1"``, ``"R1"``, ``"R2"``, ``"R3"``];
-    in
-      LIST_CONJ (List.map ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL) (List.foldl (fn (v,l) => (List.map (fn v2 => mk_eq(v,v2)) vars)@l) [] vars))
-    end;
+
+  val var_eq_thm = gen_var_eq_thm vars;
+
+
 
   val t = ``bir_exec_step ^prog ^state``;
 
@@ -89,6 +94,15 @@ bir_exec_step
           bst_status := BST_Running|>
 
           ``;
+
+
+
+  bir_exec_prog_step_n var_eq_thm thm
+
+  bir_exec_prog_step_iter (bir_exec_prog_step_n var_eq_thm) thm
+
+  bir_exec_prog prog 1
+  bir_exec_prog prog 2
 
 *)
 
@@ -132,18 +146,10 @@ bir_exec_step
                          bir_get_program_block_info_by_label_def,
                          listTheory.INDEX_FIND_def
                        ]) THENC
-                    (bir_exec_exp_conv) THENC
+                    (bir_exec_exp_conv var_eq_thm) THENC
                     (bir_exec_env_write_conv var_eq_thm) THENC
                     (SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [
-                        bir_valuesTheory.BType_Bool_def(*,
-                        bir_env_read_def,
-                bir_env_lookup_type_def,
-                bir_env_check_type_def,
-                FLOOKUP_EMPTY,
-                FLOOKUP_UPDATE,
-bir_eval_bin_pred_def,
-bir_env_lookup_def,
-                        var_eq_thm*)])
+                        bir_valuesTheory.BType_Bool_def]) (* todo here? *)
                    ) t;
 
         val thm2 = CONV_RULE (RAND_CONV (SIMP_CONV
@@ -163,11 +169,11 @@ bir_env_lookup_def,
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program_multistep_props"
   val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
   val (bir_exec_step_n_acc_tm,  mk_bir_exec_step_n_acc, dest_bir_exec_step_n_acc, is_bir_exec_step_n_acc)  = syntax_fns3 "bir_exec_step_n_acc";
-  
-open pairSyntax;
   fun bir_exec_prog_step_n var_eq_thm thm =
     let
       val exec_term = (snd o dest_eq o concl) thm;
+    in if not (is_bir_exec_step_n_acc exec_term) then raise UNCHANGED else
+    let
       val (_,n,x) = dest_bir_exec_step_n_acc exec_term;
       val (_,x) = dest_pair x;
       val (_,s) = dest_pair x;
@@ -207,13 +213,51 @@ open pairSyntax;
         in
           thm4
         end
+    end end;
+
+
+  fun bir_exec_prog_step_iter step_n_rule thm =
+    (*
+    val step_n_rule = (bir_exec_prog_step_n var_eq_thm);
+    *)
+    let
+      val thm1 = step_n_rule thm;
+      val thm2 = CONV_RULE (RAND_CONV (REWRITE_CONV [bir_auxiliaryTheory.OPT_CONS_REWRS])) thm1;
+    in
+      (bir_exec_prog_step_iter step_n_rule thm2)
+      handle UNCHANGED => thm2
     end;
+
+
+
+
+
+  fun bir_exec_prog prog n_max =
+    let
+      val n = numSyntax.mk_numeral (Arbnumcore.fromInt n_max);
+      val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog``;
+      (*val pc = ``<| bpc_label := BL_Label "entry" ; bpc_index := 0 |>``;*)
+
+      val vars = gen_vars_of_prog prog;
+      val var_eq_thm = gen_var_eq_thm vars;
+
+      val env = bir_exec_env_initd_env vars;
+
+      val state = ``<| bst_pc := ^pc ; bst_environ := ^env ; bst_status := BST_Running |>``;
+
+      val exec_term = ``bir_exec_step_n ^prog ^state ^n``;
+      val thm = REWRITE_CONV [GSYM bir_exec_step_n_acc_eq_thm] exec_term;
+    in
+      (CONV_RULE (RAND_CONV (REWRITE_CONV [CONJUNCT1 listTheory.REVERSE_DEF])))
+      (bir_exec_prog_step_iter (bir_exec_prog_step_n var_eq_thm) thm)
+    end;
+
 
 (*
 
-  bir_exec_prog_step_n var_eq_thm thm
 
-  val (os, steps, state2) = (dest_triple o snd o dest_eq o concl) thm;
+  val (os, steps, state2) = ((fn (os, x) => let val (steps, state2) = dest_pair x in (os, steps, state2))
+                             o dest_pair o snd o dest_eq o concl) thm;
 *)
 
 end
