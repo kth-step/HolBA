@@ -38,18 +38,20 @@ val bir_unary_exp_GET_OPER_def = Define
    (bir_unary_exp_GET_OPER BIExp_CLS = bir_word_countleadingsigns)`;
 
 val bir_unary_exp_def = Define `
-  (bir_unary_exp uo (Imm64 w) = Imm64 (bir_unary_exp_GET_OPER uo w)) /\
-  (bir_unary_exp uo (Imm32 w) = Imm32 (bir_unary_exp_GET_OPER uo w)) /\
-  (bir_unary_exp uo (Imm16 w) = Imm16 (bir_unary_exp_GET_OPER uo w)) /\
-  (bir_unary_exp uo (Imm8 w)  = Imm8  (bir_unary_exp_GET_OPER uo w)) /\
-  (bir_unary_exp uo (Imm1 w)  = Imm1  (bir_unary_exp_GET_OPER uo w))`;
+  (bir_unary_exp uo (Imm128 w) = Imm128 (bir_unary_exp_GET_OPER uo w)) /\
+  (bir_unary_exp uo (Imm64 w)  = Imm64 (bir_unary_exp_GET_OPER uo w)) /\
+  (bir_unary_exp uo (Imm32 w)  = Imm32 (bir_unary_exp_GET_OPER uo w)) /\
+  (bir_unary_exp uo (Imm16 w)  = Imm16 (bir_unary_exp_GET_OPER uo w)) /\
+  (bir_unary_exp uo (Imm8 w)   = Imm8  (bir_unary_exp_GET_OPER uo w)) /\
+  (bir_unary_exp uo (Imm1 w)   = Imm1  (bir_unary_exp_GET_OPER uo w))`;
 
 val bir_unary_exp_REWRS = store_thm ("bir_unary_exp_REWRS", ``!uo.
-  (!w. (bir_unary_exp uo (Imm1 w)  = Imm1  (bir_unary_exp_GET_OPER uo w))) /\
-  (!w. (bir_unary_exp uo (Imm8 w)  = Imm8  (bir_unary_exp_GET_OPER uo w))) /\
-  (!w. (bir_unary_exp uo (Imm16 w) = Imm16 (bir_unary_exp_GET_OPER uo w))) /\
-  (!w. (bir_unary_exp uo (Imm32 w) = Imm32 (bir_unary_exp_GET_OPER uo w))) /\
-  (!w. (bir_unary_exp uo (Imm64 w) = Imm64 (bir_unary_exp_GET_OPER uo w)))``,
+  (!w. (bir_unary_exp uo (Imm1 w)   = Imm1   (bir_unary_exp_GET_OPER uo w))) /\
+  (!w. (bir_unary_exp uo (Imm8 w)   = Imm8   (bir_unary_exp_GET_OPER uo w))) /\
+  (!w. (bir_unary_exp uo (Imm16 w)  = Imm16  (bir_unary_exp_GET_OPER uo w))) /\
+  (!w. (bir_unary_exp uo (Imm32 w)  = Imm32  (bir_unary_exp_GET_OPER uo w))) /\
+  (!w. (bir_unary_exp uo (Imm64 w)  = Imm64  (bir_unary_exp_GET_OPER uo w))) /\
+  (!w. (bir_unary_exp uo (Imm128 w) = Imm128 (bir_unary_exp_GET_OPER uo w)))``,
 SIMP_TAC std_ss [bir_unary_exp_def]);
 
 
@@ -96,19 +98,21 @@ val bir_bin_exp_GET_OPER_def = Define
    (bir_bin_exp_GET_OPER _ = ARB) (* Should never fire *)`;
 
 val bir_bin_exp_def = Define `
-  (bir_bin_exp uo (Imm64 w1) (Imm64 w2) = Imm64 (bir_bin_exp_GET_OPER uo w1 w2)) /\
-  (bir_bin_exp uo (Imm32 w1) (Imm32 w2) = Imm32 (bir_bin_exp_GET_OPER uo w1 w2)) /\
-  (bir_bin_exp uo (Imm16 w1) (Imm16 w2) = Imm16 (bir_bin_exp_GET_OPER uo w1 w2)) /\
-  (bir_bin_exp uo (Imm8  w1) (Imm8  w2) = Imm8  (bir_bin_exp_GET_OPER uo w1 w2)) /\
-  (bir_bin_exp uo (Imm1  w1) (Imm1  w2) = Imm1  (bir_bin_exp_GET_OPER uo w1 w2)) /\
+  (bir_bin_exp uo (Imm128 w1) (Imm128 w2) = Imm128 (bir_bin_exp_GET_OPER uo w1 w2)) /\
+  (bir_bin_exp uo (Imm64  w1) (Imm64  w2) = Imm64  (bir_bin_exp_GET_OPER uo w1 w2)) /\
+  (bir_bin_exp uo (Imm32  w1) (Imm32  w2) = Imm32  (bir_bin_exp_GET_OPER uo w1 w2)) /\
+  (bir_bin_exp uo (Imm16  w1) (Imm16  w2) = Imm16  (bir_bin_exp_GET_OPER uo w1 w2)) /\
+  (bir_bin_exp uo (Imm8   w1) (Imm8   w2) = Imm8   (bir_bin_exp_GET_OPER uo w1 w2)) /\
+  (bir_bin_exp uo (Imm1   w1) (Imm1   w2) = Imm1   (bir_bin_exp_GET_OPER uo w1 w2)) /\
   (bir_bin_exp uo _ _ = ARB)`
 
 val bir_bin_exp_REWRS = store_thm ("bir_bin_exp_REWRS", ``!uo.
-  (!w1 w2. (bir_bin_exp uo (Imm64 w1) (Imm64 w2) = Imm64 (bir_bin_exp_GET_OPER uo w1 w2))) /\
-  (!w1 w2. (bir_bin_exp uo (Imm32 w1) (Imm32 w2) = Imm32 (bir_bin_exp_GET_OPER uo w1 w2))) /\
-  (!w1 w2. (bir_bin_exp uo (Imm16 w1) (Imm16 w2) = Imm16 (bir_bin_exp_GET_OPER uo w1 w2))) /\
-  (!w1 w2. (bir_bin_exp uo (Imm8  w1) (Imm8  w2) = Imm8  (bir_bin_exp_GET_OPER uo w1 w2))) /\
-  (!w1 w2. (bir_bin_exp uo (Imm1  w1) (Imm1  w2) = Imm1  (bir_bin_exp_GET_OPER uo w1 w2))) /\
+  (!w1 w2. (bir_bin_exp uo (Imm128 w1) (Imm128 w2) = Imm128 (bir_bin_exp_GET_OPER uo w1 w2))) /\
+  (!w1 w2. (bir_bin_exp uo (Imm64  w1) (Imm64  w2) = Imm64  (bir_bin_exp_GET_OPER uo w1 w2))) /\
+  (!w1 w2. (bir_bin_exp uo (Imm32  w1) (Imm32  w2) = Imm32  (bir_bin_exp_GET_OPER uo w1 w2))) /\
+  (!w1 w2. (bir_bin_exp uo (Imm16  w1) (Imm16  w2) = Imm16  (bir_bin_exp_GET_OPER uo w1 w2))) /\
+  (!w1 w2. (bir_bin_exp uo (Imm8   w1) (Imm8   w2) = Imm8   (bir_bin_exp_GET_OPER uo w1 w2))) /\
+  (!w1 w2. (bir_bin_exp uo (Imm1   w1) (Imm1   w2) = Imm1   (bir_bin_exp_GET_OPER uo w1 w2))) /\
   (!r1 r2. (type_of_bir_imm r1 <> type_of_bir_imm r2) ==>
            (bir_bin_exp uo r1 r2 = ARB))``,
 
@@ -147,19 +151,21 @@ val bir_bin_pred_GET_OPER_def = Define
    (bir_bin_pred_GET_OPER BIExp_SignedLessOrEqual = word_le)`;
 
 val bir_bin_pred_def = Define `
-  (bir_bin_pred uo (Imm64 w1) (Imm64 w2) = (bir_bin_pred_GET_OPER uo w1 w2)) /\
-  (bir_bin_pred uo (Imm32 w1) (Imm32 w2) = (bir_bin_pred_GET_OPER uo w1 w2)) /\
-  (bir_bin_pred uo (Imm16 w1) (Imm16 w2) = (bir_bin_pred_GET_OPER uo w1 w2)) /\
-  (bir_bin_pred uo (Imm8  w1) (Imm8  w2) = (bir_bin_pred_GET_OPER uo w1 w2)) /\
-  (bir_bin_pred uo (Imm1  w1) (Imm1  w2) = (bir_bin_pred_GET_OPER uo w1 w2)) /\
+  (bir_bin_pred uo (Imm128 w1) (Imm128 w2) = (bir_bin_pred_GET_OPER uo w1 w2)) /\
+  (bir_bin_pred uo (Imm64  w1) (Imm64  w2) = (bir_bin_pred_GET_OPER uo w1 w2)) /\
+  (bir_bin_pred uo (Imm32  w1) (Imm32  w2) = (bir_bin_pred_GET_OPER uo w1 w2)) /\
+  (bir_bin_pred uo (Imm16  w1) (Imm16  w2) = (bir_bin_pred_GET_OPER uo w1 w2)) /\
+  (bir_bin_pred uo (Imm8   w1) (Imm8   w2) = (bir_bin_pred_GET_OPER uo w1 w2)) /\
+  (bir_bin_pred uo (Imm1   w1) (Imm1   w2) = (bir_bin_pred_GET_OPER uo w1 w2)) /\
   (bir_bin_pred uo _ _ = F)`;
 
 val bir_bin_pred_REWRS = store_thm ("bir_bin_pred_REWRS", ``!uo.
-  (!w1 w2. (bir_bin_pred uo (Imm64 w1) (Imm64 w2) = (bir_bin_pred_GET_OPER uo w1 w2))) /\
-  (!w1 w2. (bir_bin_pred uo (Imm32 w1) (Imm32 w2) = (bir_bin_pred_GET_OPER uo w1 w2))) /\
-  (!w1 w2. (bir_bin_pred uo (Imm16 w1) (Imm16 w2) = (bir_bin_pred_GET_OPER uo w1 w2))) /\
-  (!w1 w2. (bir_bin_pred uo (Imm8  w1) (Imm8  w2) = (bir_bin_pred_GET_OPER uo w1 w2))) /\
-  (!w1 w2. (bir_bin_pred uo (Imm1  w1) (Imm1  w2) = (bir_bin_pred_GET_OPER uo w1 w2))) /\
+  (!w1 w2. (bir_bin_pred uo (Imm128 w1) (Imm128 w2) = (bir_bin_pred_GET_OPER uo w1 w2))) /\
+  (!w1 w2. (bir_bin_pred uo (Imm64  w1) (Imm64  w2) = (bir_bin_pred_GET_OPER uo w1 w2))) /\
+  (!w1 w2. (bir_bin_pred uo (Imm32  w1) (Imm32  w2) = (bir_bin_pred_GET_OPER uo w1 w2))) /\
+  (!w1 w2. (bir_bin_pred uo (Imm16  w1) (Imm16  w2) = (bir_bin_pred_GET_OPER uo w1 w2))) /\
+  (!w1 w2. (bir_bin_pred uo (Imm8   w1) (Imm8   w2) = (bir_bin_pred_GET_OPER uo w1 w2))) /\
+  (!w1 w2. (bir_bin_pred uo (Imm1   w1) (Imm1   w2) = (bir_bin_pred_GET_OPER uo w1 w2))) /\
   (!r1 r2. (type_of_bir_imm r1 <> type_of_bir_imm r2) ==>
      (bir_bin_pred uo r1 r2 = F))``,
 

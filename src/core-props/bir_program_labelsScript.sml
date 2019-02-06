@@ -83,11 +83,12 @@ SIMP_TAC list_ss [num_to_hex_string_fix_width_def, LET_DEF]);
 
 
 val b2s_def = Define `
-  (b2s ( Imm1  w ) = num_to_hex_string_fix_width 1 (w2n w)) /\
-  (b2s ( Imm8  w ) = num_to_hex_string_fix_width 2 (w2n w)) /\
-  (b2s ( Imm16 w ) = num_to_hex_string_fix_width 4 (w2n w)) /\
-  (b2s ( Imm32 w ) = num_to_hex_string_fix_width 8 (w2n w)) /\
-  (b2s ( Imm64 w ) = num_to_hex_string_fix_width 16 (w2n w))
+  (b2s ( Imm1   w ) = num_to_hex_string_fix_width 1  (w2n w)) /\
+  (b2s ( Imm8   w ) = num_to_hex_string_fix_width 2  (w2n w)) /\
+  (b2s ( Imm16  w ) = num_to_hex_string_fix_width 4  (w2n w)) /\
+  (b2s ( Imm32  w ) = num_to_hex_string_fix_width 8  (w2n w)) /\
+  (b2s ( Imm64  w ) = num_to_hex_string_fix_width 16 (w2n w)) /\
+  (b2s ( Imm128 w ) = num_to_hex_string_fix_width 32 (w2n w))
 `;
 
 
@@ -100,16 +101,18 @@ val s2b_def = Define `s2b s =
     | 6 => SOME (n2bs n Bit16)
     | 10 => SOME (n2bs n Bit32)
     | 18 => SOME (n2bs n Bit64)
+    | 34 => SOME (n2bs n Bit128)
     | _ => NONE))`
 
 
 val LENGTH_b2s = store_thm ("LENGTH_b2s",
 ``!i. LENGTH (b2s i) = case type_of_bir_imm i of
-     Bit1 => 3
-   | Bit8 => 4
-   | Bit16 => 6
-   | Bit32 => 10
-   | Bit64 => 18``,
+     Bit1   => 3
+   | Bit8   => 4
+   | Bit16  => 6
+   | Bit32  => 10
+   | Bit64  => 18
+   | Bit128 => 34``,
 
 Cases >> (
   ASM_SIMP_TAC (arith_ss++bir_TYPES_ss) [b2s_def, type_of_bir_imm_def]
@@ -132,6 +135,10 @@ Cases >> (
 
   MP_TAC (Q.SPEC `16` LENGTH_num_to_hex_string_fixwidth) >>
   MP_TAC (Q.SPEC `c` (INST_TYPE [``:'a`` |-> ``:64``] wordsTheory.w2n_lt)) >>
+  ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [],
+
+  MP_TAC (Q.SPEC `32` LENGTH_num_to_hex_string_fixwidth) >>
+  MP_TAC (Q.SPEC `c` (INST_TYPE [``:'a`` |-> ``:128``] wordsTheory.w2n_lt)) >>
   ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) []
 ])
 
