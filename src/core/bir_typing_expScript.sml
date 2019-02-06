@@ -102,7 +102,7 @@ Induct >> (
   ) >>
   FULL_SIMP_TAC std_ss [bir_eval_ifthenelse_REWRS, bir_type_is_Imm_def] >> (
     FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_ifthenelse_REWRS,
-      BType_Bool_def] >>
+      BType_Bool_def, type_of_bir_val_def] >>
     CASE_TAC
   )
 ) >- (
