@@ -12,7 +12,7 @@ val _ = print "================================\n"
 
 
 
-
+val _ = print "loading..."
 
 val prog = ``
        BirProgram [
@@ -84,7 +84,20 @@ val prog = ``
 
 val n_max = 50;
 
+val _ = print "ok\n"
+
+
+
+
+
+val _ = print "typechecking..."
+val _ = bir_exec_typecheck_prog_result prog;
+val _ = print "ok\n"
+
+
+val _ = print "executing..."
 val (ol, n, s2) = bir_exec_prog_result prog n_max;
+val _ = print "ok\n"
 
 
 
