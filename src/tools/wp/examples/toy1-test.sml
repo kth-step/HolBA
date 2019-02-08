@@ -99,46 +99,33 @@ val defs = [aes_program_def, aes_post_def, aes_ls_def, aes_wps_def];
 
 
 
-
 (* wps_bool_sound_thm for initial wps *)
-val wps_bool_sound_thm = init_wps_bool_sound_thm (program, post, ls) wps defs;
-
+val prog_term = (snd o dest_comb o concl) aes_program_def;
+val wps_term = (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) wps;
+val wps_bool_sound_thm = bir_wp_init_wps_bool_sound_thm (program, post, ls) wps defs;
+val (wpsdom, blstodo) = bir_wp_init_rec_proc_jobs prog_term wps_term;
 
 
 
 (* prepare "problem-static" part of the theorem *)
 val reusable_thm = bir_wp_exec_of_block_reusable_thm;
-val prog_thm = proc_step0 reusable_thm (program, post, ls) defs;
+val prog_thm = bir_wp_comp_wps_iter_step0_init reusable_thm (program, post, ls) defs;
 
 
-
-(* one step label prep *)
-val label = ``BL_Address_HC (Imm64 0x400574w) "XZY"``;
-val prog_l_thm = proc_step1 label prog_thm (program, post, ls) defs;
+val (wps1, wps1_bool_sound_thm) = bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm), (wpsdom, List.rev blstodo)) (program, post, ls) defs;
 
 
-
-
-(* one step wps soundness *)
-val (wps1, wps1_bool_sound_thm) = proc_step2 (wps, wps_bool_sound_thm) (prog_l_thm) ((program, post, ls), (label)) defs;
 
 (* to make it readable or speedup by incremental buildup *)
+
+
 val aes_wps1_def = Define `
       aes_wps1 = ^wps1
 `;
+
 val wps1_bool_sound_thm_readable = REWRITE_RULE [GSYM aes_wps1_def] wps1_bool_sound_thm;
+val _ = save_thm("aes_wps1_bool_sound_thm", wps1_bool_sound_thm_readable);
 
-
-
-
-
-(* and the recursive procedure *)
-val prog_term = (snd o dest_comb o concl) aes_program_def;
-
-val (wps1, wps1_bool_sound_thm) = recursive_proc prog_term prog_thm (wps, wps_bool_sound_thm) (program, post, ls) defs;
-
-(* to make it readable or speedup (copy and paste from a few lines above) *)
-val wps1_bool_sound_thm_readable_rec = REWRITE_RULE [GSYM aes_wps1_def] wps1_bool_sound_thm;
 
 
 
