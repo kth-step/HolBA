@@ -41,49 +41,6 @@ struct
   bir_exec_prog prog 7
 *)
 
-val t = ``bir_exec_step
-          (BirProgram
-             [<|bb_label := BL_Label "entry";
-                bb_statements :=
-                  [BStmt_Assign (BVar "bit1" BType_Bool)
-                     (BExp_MSB Bit32
-                        (BExp_Den (BVar "R1" (BType_Imm Bit32))))];
-                bb_last_statement :=
-                  BStmt_Jmp (BLE_Label (BL_Address (Imm32 258w)))|>;
-              <|bb_label := BL_Address (Imm32 258w);
-                bb_statements :=
-                  [BStmt_Assign (BVar "R3" (BType_Imm Bit32))
-                     (BExp_Const (Imm32 25w));
-                   BStmt_Assign (BVar "R2" (BType_Imm Bit32))
-                     (BExp_Const (Imm32 7w))];
-                bb_last_statement :=
-                  BStmt_CJmp
-                    (BExp_BinPred BIExp_Equal (BExp_Const (Imm32 7w))
-                       (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                    (BLE_Label (BL_Address (Imm32 260w)))
-                    (BLE_Label (BL_Address (Imm32 262w)))|>;
-              <|bb_label := BL_Address (Imm32 260w);
-                bb_statements :=
-                  [BStmt_Assign (BVar "R3" (BType_Imm Bit32))
-                     (BExp_BinExp BIExp_Plus
-                        (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                        (BExp_Den (BVar "R3" (BType_Imm Bit32))))];
-                bb_last_statement :=
-                  BStmt_Halt (BExp_Const (Imm32 1w))|>;
-              <|bb_label := BL_Address (Imm32 262w);
-                bb_statements := [];
-                bb_last_statement :=
-                  BStmt_Halt (BExp_Const (Imm32 0w))|>])
-          <|bst_pc :=
-              <|bpc_label := BL_Address (Imm32 258w); bpc_index := 2|>;
-            bst_environ :=
-              BEnv
-                (FEMPTY |+
-                 ("R1",BType_Imm Bit32,SOME (BVal_Imm (Imm32 0w))) |+
-                 ("bit1",BType_Imm Bit1,SOME (BVal_Imm (Imm1 0w))) |+
-                 ("R3",BType_Imm Bit32,SOME (BVal_Imm (Imm32 25w))) |+
-                 ("R2",BType_Imm Bit32,SOME (BVal_Imm (Imm32 7w))));
-            bst_status := BST_Running|>``;
 
 
   val bir_pc_ss = rewrites (type_rws ``:bir_programcounter_t``);
@@ -127,7 +84,7 @@ val t = ``bir_exec_step
                    )) thm1;
 
         val thm1_2 = CONV_RULE (RAND_CONV (SIMP_CONV
-                      (list_ss++HolBACoreSimps.holBACore_ss) [
+                      (list_ss++WORD_ss++HolBACoreSimps.holBACore_ss) [
                             bir_program_labelsTheory.bir_labels_of_program_REWRS,
                             bir_block_pc_def])) thm1_1;
 
@@ -176,6 +133,8 @@ val t = ``bir_exec_step
           val thm2 = CONV_RULE (RAND_CONV (
                  (REWRITE_CONV [Once bir_exec_step_n_acc_def, is_terminated_thm, EVAL ``^n = 0:num``])
                )) thm;
+
+          val t = (snd o dest_comb o snd o dest_eq o concl) thm2;
 
           val thm3 = CONV_RULE (RAND_CONV (bir_exec_prog_step_conv var_eq_thm)) thm2;
           val thm4 = CONV_RULE (RAND_CONV (SIMP_CONV (arith_ss) [LET_DEF])) thm3;
