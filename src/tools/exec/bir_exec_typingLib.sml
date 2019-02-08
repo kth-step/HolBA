@@ -80,6 +80,14 @@ val t = ``type_of_bir_val (BVal_Mem Bit32 Bit32 (K 0))``
     ;
 
 
+(* TODO: *)
+(*
+type_of_bir_exp
+(bir_vars_of_exp)
+(bir_var_set_is_well_typed vs)
+((bir_exp_is_well_typed))
+bir_is_well_typed_program
+*)
 
 
   val bir_exec_typing_exp_conv = GEN_bir_exec_typing_exp_conv bir_exec_typing_exp_conv_help;

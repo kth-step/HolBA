@@ -55,6 +55,9 @@ struct
 *)
 
 
+(* TODO: improve evaluation completion checks and generalize these functions everywhere *)
+(* TODO: generally: improve rewriting, select proper theorems and organize reusably in separate lists according to respective goals *)
+
   fun bir_exec_exp_conv_help var_eq_thm t =
     if not (is_bir_eval_exp t) then
       raise UNCHANGED

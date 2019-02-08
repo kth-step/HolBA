@@ -49,8 +49,11 @@ struct
       *)
       val var_assigns = List.map (fn (n,t) =>
             mk_pair (n, (mk_pair (t, (snd o dest_eq o concl o EVAL) ``SOME (bir_default_value_of_type ^t)``)))) var_pairs;
+
+      val env = mk_BEnv (list_mk_fupdate (fempty_env_tm, var_assigns));
+      (* TODO: check that "bir_env_vars_are_initialised ^env (bir_vars_of_prog ^prog)" *)
     in
-      mk_BEnv (list_mk_fupdate (fempty_env_tm, var_assigns))
+      env
     end;
 
 
@@ -101,6 +104,8 @@ struct
       end;
 
 
+(* TODO: *)
+(* bir_envTheory.bir_env_vars_are_initialised_def *)
 
 
 
