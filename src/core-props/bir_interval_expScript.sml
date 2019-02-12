@@ -529,6 +529,8 @@ val BExp_unchanged_mem_interval_distinct_eval = store_thm (
             BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
        | (Bit64, BVal_Imm (Imm64 wb)) =>
             BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
+       | (Bit128, BVal_Imm (Imm128 wb)) =>
+            BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
        | _ => BVal_Unknown)``,
 
 

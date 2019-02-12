@@ -13,18 +13,20 @@ sig
    val bir_immtype_t_list : term list;
 
    (* The constants *)
-   val Bit1_tm : term
-   val Bit8_tm : term
-   val Bit16_tm : term
-   val Bit32_tm : term
-   val Bit64_tm : term
+   val Bit1_tm   : term
+   val Bit8_tm   : term
+   val Bit16_tm  : term
+   val Bit32_tm  : term
+   val Bit64_tm  : term
+   val Bit128_tm : term
 
    (* And checkers *)
-   val is_Bit1  : term -> bool
-   val is_Bit8  : term -> bool
-   val is_Bit16 : term -> bool
-   val is_Bit32 : term -> bool
-   val is_Bit64 : term -> bool
+   val is_Bit1   : term -> bool
+   val is_Bit8   : term -> bool
+   val is_Bit16  : term -> bool
+   val is_Bit32  : term -> bool
+   val is_Bit64  : term -> bool
+   val is_Bit128 : term -> bool
 
 
    (*****************)
@@ -38,32 +40,36 @@ sig
    val bir_imm_t_list : term list;
 
    (* The constants *)
-   val Imm1_tm : term
-   val Imm8_tm : term
-   val Imm16_tm : term
-   val Imm32_tm : term
-   val Imm64_tm : term
+   val Imm1_tm   : term
+   val Imm8_tm   : term
+   val Imm16_tm  : term
+   val Imm32_tm  : term
+   val Imm64_tm  : term
+   val Imm128_tm : term
 
    (* make functions *)
-   val mk_Imm1  : term -> term
-   val mk_Imm8  : term -> term
-   val mk_Imm16 : term -> term
-   val mk_Imm32 : term -> term
-   val mk_Imm64 : term -> term
+   val mk_Imm1   : term -> term
+   val mk_Imm8   : term -> term
+   val mk_Imm16  : term -> term
+   val mk_Imm32  : term -> term
+   val mk_Imm64  : term -> term
+   val mk_Imm128 : term -> term
 
    (* dest functions *)
-   val dest_Imm1  : term -> term
-   val dest_Imm8  : term -> term
-   val dest_Imm16 : term -> term
-   val dest_Imm32 : term -> term
-   val dest_Imm64 : term -> term
+   val dest_Imm1   : term -> term
+   val dest_Imm8   : term -> term
+   val dest_Imm16  : term -> term
+   val dest_Imm32  : term -> term
+   val dest_Imm64  : term -> term
+   val dest_Imm128 : term -> term
 
    (* And checkers *)
-   val is_Imm1  : term -> bool
-   val is_Imm8  : term -> bool
-   val is_Imm16 : term -> bool
-   val is_Imm32 : term -> bool
-   val is_Imm64 : term -> bool
+   val is_Imm1   : term -> bool
+   val is_Imm8   : term -> bool
+   val is_Imm16  : term -> bool
+   val is_Imm32  : term -> bool
+   val is_Imm64  : term -> bool
+   val is_Imm128 : term -> bool
 
 
 

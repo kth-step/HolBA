@@ -540,7 +540,7 @@ SIMP_TAC std_ss [bir_eval_bool_exp_def, bir_eval_exp_def, bir_is_bool_exp_env_RE
 REPEAT STRIP_TAC >>
 ASM_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO, bir_mk_bool_val_inv] >>
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_mk_bool_val_def, bir_eval_ifthenelse_REWRS,
-  type_of_bool2b, bool2b_ELIMS, bool2w_ELIMS] >>
+  type_of_bool2b, bool2b_ELIMS, bool2w_ELIMS, type_of_bir_val_def] >>
 ASM_SIMP_TAC std_ss [bir_mk_bool_val_inv, GSYM bir_mk_bool_val_def]);
 
 
