@@ -17,6 +17,7 @@ fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0
 
 val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
 val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
 
 
 (* Environments *)
@@ -47,6 +48,10 @@ val (bir_var_type_tm, mk_bir_var_type, dest_bir_var_type, is_bir_var_type) = syn
 
 
 (* Misc *)
+
+val (bir_env_write_tm, mk_bir_env_write, dest_bir_env_write, is_bir_env_write) = syntax_fns3 "bir_env_write";
+
+val (bir_env_read_tm, mk_bir_env_read, dest_bir_env_read, is_bir_env_read) = syntax_fns2 "bir_env_read";
 
 val (bir_is_well_typed_env_tm, mk_bir_is_well_typed_env, dest_bir_is_well_typed_env, is_bir_is_well_typed_env) = syntax_fns1 "bir_is_well_typed_env";
 

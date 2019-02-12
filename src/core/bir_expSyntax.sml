@@ -40,4 +40,7 @@ val (BExp_Load_tm, mk_BExp_Load, dest_BExp_Load, is_BExp_Load) = syntax_fns4 "BE
 val (BExp_Store_tm, mk_BExp_Store, dest_BExp_Store, is_BExp_Store) = syntax_fns4 "BExp_Store";
 
 
+
+val (bir_eval_exp_tm, mk_bir_eval_exp, dest_bir_eval_exp, is_bir_eval_exp) = syntax_fns2 "bir_eval_exp";
+
 end
