@@ -53,4 +53,9 @@ sig
    val mk_BExp_Store        : term * term * term * term -> term;
    val mk_BExp_UnaryExp     : term * term -> term;
 
+   val bir_eval_exp_tm      : term;
+   val mk_bir_eval_exp      : term * term -> term;
+   val dest_bir_eval_exp    : term -> term * term;
+   val is_bir_eval_exp      : term -> bool;
+
 end

@@ -1,4 +1,4 @@
-INCLUDES = ./lifter ./l3 ./wp
+INCLUDES = ./cfg ./lifter ./l3 ./wp
 OPTIONS = QUIT_ON_FAILURE
 
 default: all
