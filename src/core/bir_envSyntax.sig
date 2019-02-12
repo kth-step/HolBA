@@ -52,6 +52,11 @@ sig
    val dest_bir_env_write    : term -> term * term * term;
    val is_bir_env_write      : term -> bool;
 
+   val bir_env_read_tm      : term;
+   val mk_bir_env_read      : term * term -> term;
+   val dest_bir_env_read    : term -> term * term;
+   val is_bir_env_read      : term -> bool;
+
    val bir_is_well_typed_env_tm   : term;
    val mk_bir_is_well_typed_env   : term -> term;
    val dest_bir_is_well_typed_env : term -> term;
