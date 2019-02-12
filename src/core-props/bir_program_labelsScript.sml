@@ -278,28 +278,6 @@ FULL_SIMP_TAC (list_ss++bir_TYPES_ss) [BL_Label_of_addr_def]);
 
 
 
-(***************)
-(* Recognisers *)
-(***************)
-
-val IS_BL_Label_def = Define `
-  (IS_BL_Label (BL_Label _) = T) /\
-  (IS_BL_Label _ = F)`;
-
-val IS_BL_Address_def = Define `
-  (IS_BL_Address (BL_Address _) = T) /\
-  (IS_BL_Address _ = F)`;
-
-
-val IS_BL_Address_NOT = store_thm ("IS_BL_Address_NOT",
- ``!l. ~(IS_BL_Address l) <=> IS_BL_Label l``,
-Cases >> SIMP_TAC std_ss [IS_BL_Label_def, IS_BL_Address_def])
-
-val IS_BL_Label_NOT = store_thm ("IS_BL_Label_NOT",
- ``!l. ~(IS_BL_Label l) <=> IS_BL_Address l``,
-Cases >> SIMP_TAC std_ss [IS_BL_Label_def, IS_BL_Address_def])
-
-
 
 (****************************************)
 (* Labels core hex-codes use the lifter *)
