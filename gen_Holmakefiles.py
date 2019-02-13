@@ -9,13 +9,8 @@ gen_filename = out_filename + ".gen"
 
 root         = "./src"
 
-gen_files = []
-for path, subdirs, files in os.walk(root):
-  for f in files:
-    if f == gen_filename:
-      gen_files.append(path)
 
-for p_d in gen_files:
+def gen_holmakefile_in(p_d):
   p     = os.path.join(p_d, out_filename)
   p_gen = os.path.join(p_d, gen_filename)
 
@@ -36,5 +31,26 @@ for p_d in gen_files:
 
   with open(p, 'w') as f:
     f.write(result)
+
+
+
+
+
+if len(sys.argv) < 2:
+  gen_files = []
+  for path, subdirs, files in os.walk(root):
+    for f in files:
+      if f == gen_filename:
+        gen_files.append(path)
+
+  for p_d in gen_files:
+    gen_holmakefile_in(p_d)
+
+else:
+  p = sys.argv[1]
+  p_d = os.path.dirname(p)
+
+  print ("working in: %s" % p_d)
+  gen_holmakefile_in(p_d)
 
 
