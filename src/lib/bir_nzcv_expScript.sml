@@ -2,7 +2,7 @@ open HolKernel Parse boolLib bossLib;
 open bir_immTheory bir_expTheory
 open bir_typing_expTheory bir_valuesTheory
 open pred_setTheory
-open bir_imm_expTheory bir_bool_expTheory
+open bir_exp_immTheory bir_bool_expTheory
 open HolBACoreSimps
 open wordsTheory
 

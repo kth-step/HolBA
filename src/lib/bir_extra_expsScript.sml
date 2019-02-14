@@ -1,7 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 open HolBACoreSimps
-open bir_expTheory bir_imm_expTheory bir_valuesTheory
+open bir_expTheory bir_exp_immTheory bir_valuesTheory
 open bir_typing_expTheory bir_envTheory wordsTheory
+open bir_exp_immSyntax
 
 (* Some extra expressions that are sometimes useful. *)
 
@@ -127,9 +128,9 @@ fun mk_word_reverse_exp sz = let
     val new_bit_no = (sz - 1) - bit_no
 
     val (shift_no, shift_tm) = if new_bit_no < bit_no then
-      (bit_no - new_bit_no, bir_imm_expSyntax.BIExp_RightShift_tm)
+      (bit_no - new_bit_no, BIExp_RightShift_tm)
      else
-      (new_bit_no - bit_no, bir_imm_expSyntax.BIExp_LeftShift_tm)
+      (new_bit_no - bit_no, BIExp_LeftShift_tm)
 
     val mask_tm =      bir_expSyntax.mk_BExp_Const (
      bir_immSyntax.gen_mk_Imm (wordsSyntax.mk_n2w (
@@ -139,13 +140,13 @@ fun mk_word_reverse_exp sz = let
                bir_expSyntax.mk_BExp_Const (
                  bir_immSyntax.mk_Imm_of_int sz shift_no))
     val d1 = if (bit_no = 0) orelse (new_bit_no = 0) then d0 else
-             bir_expSyntax.mk_BExp_BinExp (bir_imm_expSyntax.BIExp_And_tm,
+             bir_expSyntax.mk_BExp_BinExp (BIExp_And_tm,
                 d0, mask_tm)
   in d1 end
 
   val dl = List.rev (List.tabulate (sz, mk_for_bit))
 
-  val tm = foldl (fn (t1, t2) => bir_expSyntax.mk_BExp_BinExp (bir_imm_expSyntax.BIExp_Or_tm,
+  val tm = foldl (fn (t1, t2) => bir_expSyntax.mk_BExp_BinExp BIExp_Or_tm,
              t1, t2)) (hd dl) (tl dl)
 in
   tm
