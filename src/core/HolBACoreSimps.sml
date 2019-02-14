@@ -3,7 +3,7 @@ struct
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
-open bir_imm_expTheory bir_mem_expTheory bir_envTheory;
+open bir_exp_immTheory bir_exp_memTheory bir_envTheory;
 open bir_expTheory bir_programTheory bir_typing_progTheory;
 open bir_typing_expTheory;
 
@@ -11,12 +11,12 @@ val bir_list_of_types = [
    mk_thy_type {Tyop="bir_imm_t",            Thy="bir_imm", Args=[]},
    mk_thy_type {Tyop="bir_immtype_t",        Thy="bir_imm", Args=[]},
 
-   mk_thy_type {Tyop="bir_unary_exp_t",      Thy="bir_imm_exp", Args=[]},
-   mk_thy_type {Tyop="bir_bin_exp_t",        Thy="bir_imm_exp", Args=[]},
-   mk_thy_type {Tyop="bir_bin_pred_t",       Thy="bir_imm_exp", Args=[]},
-   mk_thy_type {Tyop="bir_cast_t",           Thy="bir_imm_exp", Args=[]},
+   mk_thy_type {Tyop="bir_unary_exp_t",      Thy="bir_exp_imm", Args=[]},
+   mk_thy_type {Tyop="bir_bin_exp_t",        Thy="bir_exp_imm", Args=[]},
+   mk_thy_type {Tyop="bir_bin_pred_t",       Thy="bir_exp_imm", Args=[]},
+   mk_thy_type {Tyop="bir_cast_t",           Thy="bir_exp_imm", Args=[]},
 
-   mk_thy_type {Tyop="bir_endian_t",         Thy="bir_mem_exp", Args=[]},
+   mk_thy_type {Tyop="bir_endian_t",         Thy="bir_exp_mem", Args=[]},
 
    mk_thy_type {Tyop="bir_val_t",            Thy="bir_values", Args=[]},
    mk_thy_type {Tyop="bir_type_t",           Thy="bir_values", Args=[]},

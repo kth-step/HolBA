@@ -1,6 +1,6 @@
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 
-open bir_expSyntax bir_immSyntax bir_envSyntax bir_imm_expSyntax bir_mem_expSyntax;
+open bir_expSyntax bir_immSyntax bir_envSyntax bir_exp_immSyntax bir_exp_memSyntax;
 
 structure bir_expLib =
 struct

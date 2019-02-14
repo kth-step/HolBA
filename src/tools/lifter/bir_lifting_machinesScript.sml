@@ -2,9 +2,9 @@ open HolKernel Parse boolLib bossLib;
 open rich_listTheory listTheory
 open bir_expTheory HolBACoreSimps;
 open bir_typing_expTheory bir_valuesTheory
-open bir_envTheory bir_immTheory bir_imm_expTheory
+open bir_envTheory bir_immTheory bir_exp_immTheory
 open bir_immSyntax wordsTheory
-open bir_mem_expTheory bir_bool_expTheory
+open bir_exp_memTheory bir_bool_expTheory
 open bir_exp_liftingTheory
 open bir_temp_varsTheory
 open bir_programTheory
