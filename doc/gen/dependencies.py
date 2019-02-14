@@ -18,7 +18,7 @@ print src_path
 print
 
 
-modules = ["core", "core-props", "tools/cfg", "tools/lifter", "tools/wp"]
+modules = ["core", "lib", "tools/cfg", "tools/lifter"]#, "tools/wp"]
 
 
 def read_dep_file(filename):
