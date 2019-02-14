@@ -22,5 +22,5 @@ main: $(HOLMAKEFILES)
 	$(PYTHON) gen_Holmakefiles.py $<
 
 cleanslate:
-	git clean -f -d -x .
+	git clean -f -d -x src
 

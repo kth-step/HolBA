@@ -5,7 +5,7 @@ INCLUDES   = ../../ ../../../../core ../../../lifter ../../../../lib
 
 # configuration
 # ----------------------------------
-SMLFILES   = 
+SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 

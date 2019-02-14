@@ -5,7 +5,7 @@ INCLUDES   = ../core
 
 # configuration
 # ----------------------------------
-SMLFILES   = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
+SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
