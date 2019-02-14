@@ -1,0 +1,23 @@
+# includes
+# ----------------------------------
+INCLUDES   = ../core
+
+
+# configuration
+# ----------------------------------
+SMLFILES   = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
+
+TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
+
+HOLHEAP    = ../core/HolBACore-heap
+NEWHOLHEAP = HolBALib-heap
+
+HEAPINC    = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
+             $(patsubst %.sml,%,$(wildcard *Syntax.sml))
+
+HAS_SELFTEST = 
+
+
+# included lines follow
+# ----------------------------------
+-include ../Holmakefile.inc

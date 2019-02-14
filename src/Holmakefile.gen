@@ -1,0 +1,22 @@
+# includes
+# ----------------------------------
+INCLUDES   = core lib tools
+
+
+# configuration
+# ----------------------------------
+SMLFILES   = 
+
+TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
+
+HOLHEAP    = tools/HolBATools-heap
+NEWHOLHEAP = HolBA-heap
+
+HEAPINC    = 
+
+HAS_SELFTEST =
+
+
+# included lines follow
+# ----------------------------------
+-include Holmakefile.inc
