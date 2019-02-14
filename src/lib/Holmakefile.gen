@@ -15,7 +15,7 @@ NEWHOLHEAP = HolBALib-heap
 HEAPINC    = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
              $(patsubst %.sml,%,$(wildcard *Syntax.sml))
 
-HAS_SELFTEST = 
+SELFTEST_DEP = 
 
 
 # included lines follow

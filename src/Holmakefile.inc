@@ -11,7 +11,7 @@ endif
 
 # selftest-part
 # ----------------------------------
-ifdef HAS_SELFTEST
+ifdef SELFTEST_DEP
 
 selftest.exe: selftest.uo
 	$(HOLMOSMLC) -o $@ $<

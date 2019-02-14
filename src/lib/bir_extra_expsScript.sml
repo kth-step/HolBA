@@ -146,7 +146,7 @@ fun mk_word_reverse_exp sz = let
 
   val dl = List.rev (List.tabulate (sz, mk_for_bit))
 
-  val tm = foldl (fn (t1, t2) => bir_expSyntax.mk_BExp_BinExp BIExp_Or_tm,
+  val tm = foldl (fn (t1, t2) => bir_expSyntax.mk_BExp_BinExp (BIExp_Or_tm,
              t1, t2)) (hd dl) (tl dl)
 in
   tm

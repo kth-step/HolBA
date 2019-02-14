@@ -17,7 +17,7 @@ HEAPINC    = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
              $(patsubst %.sml,%,$(wildcard *Simps.sml)) \
              wordsLib
 
-HAS_SELFTEST = defined
+SELFTEST_DEP = $(NULL) #defined but empty
 
 
 # included lines follow
