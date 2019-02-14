@@ -9,7 +9,8 @@ endif
 SRCDIR     = $(CURDIR)/src
 
 EXAMPLES   = $(SRCDIR)/tools/lifter/examples \
-             $(SRCDIR)/tools/cfg/examples
+             $(SRCDIR)/tools/cfg/examples \
+             $(SRCDIR)/tools/exec/examples
 BENCHMARKS = $(SRCDIR)/tools/lifter/benchmark
 
 # recursive wildcard function
