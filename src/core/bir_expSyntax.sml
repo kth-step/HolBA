@@ -3,7 +3,7 @@ struct
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 open bir_immTheory bir_valuesTheory;
-open bir_imm_expTheory bir_mem_expTheory bir_envTheory;
+open bir_exp_immTheory bir_exp_memTheory bir_envTheory;
 open bir_expTheory;
 open bir_valuesSyntax bir_immSyntax;
 

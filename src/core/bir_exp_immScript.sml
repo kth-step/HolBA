@@ -2,7 +2,7 @@ open HolKernel Parse boolLib bossLib;
 open wordsTheory integer_wordTheory bitstringTheory;
 open bir_auxiliaryTheory bir_immTheory bir_immSyntax;
 
-val _ = new_theory "bir_imm_exp";
+val _ = new_theory "bir_exp_imm";
 
 val bir_imm_ss = rewrites ((type_rws ``:bir_imm_t``) @ (type_rws ``:bir_immtype_t``));
 

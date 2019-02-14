@@ -1,4 +1,4 @@
-signature bir_mem_expSyntax =
+signature bir_exp_memSyntax =
 sig
    include Abbrev
 

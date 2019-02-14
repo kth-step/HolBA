@@ -1,4 +1,4 @@
-signature bir_imm_expSyntax =
+signature bir_exp_immSyntax =
 sig
    include Abbrev
 
