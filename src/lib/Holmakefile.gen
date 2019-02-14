@@ -20,4 +20,4 @@ SELFTEST_DEP =
 
 # included lines follow
 # ----------------------------------
--include ../Holmakefile.inc
+include ../Holmakefile.inc

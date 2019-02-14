@@ -26,4 +26,4 @@ SELFTEST_DEP = bir_inst_liftingLib.uo bir_inst_liftingTheory.uo bir_lifting_mach
 
 # included lines follow
 # ----------------------------------
--include ../../Holmakefile.inc
+include ../../Holmakefile.inc

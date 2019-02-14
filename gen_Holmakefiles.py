@@ -19,7 +19,7 @@ def gen_holmakefile_in(p_d):
   result = ""
   with open(p_gen) as f_gen:
     for line in f_gen:
-      if line.startswith("-include "):
+      if line.startswith("include "):
         l_inc = line.split(" ")
         assert(len(l_inc) == 2)
         p_inc = os.path.join(p_d, l_inc[1].strip())

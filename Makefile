@@ -1,5 +1,11 @@
-PYTHON  = python
-HOLMAKE = /opt/hol_snapshot3/bin/Holmake
+-include Makefile.local
+ifndef PYTHON # python 2.7.13 works
+  PYTHON  = python
+endif
+ifndef HOLMAKE
+  HOLMAKE = Holmake
+endif
+
 SRCDIR  = src
 
 # recursive wildcard function
