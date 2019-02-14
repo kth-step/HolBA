@@ -1,8 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 open bir_envTheory bir_valuesTheory;
 open bir_immTheory bir_typing_expTheory;
-open bir_mem_expTheory bir_expTheory;
-open bir_imm_expTheory;
+open bir_exp_memTheory bir_expTheory;
+open bir_exp_immTheory;
 open finite_mapTheory pred_setTheory;
 open HolBACoreSimps
 

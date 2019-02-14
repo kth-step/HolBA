@@ -1,9 +1,9 @@
 open HolKernel Parse boolLib bossLib;
 open bir_expTheory HolBACoreSimps;
 open bir_typing_expTheory bir_valuesTheory
-open bir_envTheory bir_immTheory bir_imm_expTheory
+open bir_envTheory bir_immTheory bir_exp_immTheory
 open bir_immSyntax wordsTheory
-open bir_mem_expTheory bir_bool_expTheory
+open bir_exp_memTheory bir_bool_expTheory
 open bir_nzcv_expTheory bir_interval_expTheory
 open bir_lifter_general_auxTheory
 open bir_extra_expsTheory
@@ -422,7 +422,7 @@ REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 `sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
 FULL_SIMP_TAC std_ss [] >>
 REPEAT STRIP_TAC >- (
-  METIS_TAC[bir_mem_expTheory.type_of_bir_load_from_mem]
+  METIS_TAC[bir_exp_memTheory.type_of_bir_load_from_mem]
 ) >- (
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_load_from_mem_EQ_SOME] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) []

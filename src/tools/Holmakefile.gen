@@ -1,0 +1,22 @@
+# includes
+# ----------------------------------
+INCLUDES   = ./cfg ./lifter
+
+
+# configuration
+# ----------------------------------
+SMLFILES   = 
+
+TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
+
+HOLHEAP    = ./lifter/HolBALifter-heap
+NEWHOLHEAP = HolBATools-heap
+
+HEAPINC    = 
+
+SELFTEST_DEP = 
+
+
+# included lines follow
+# ----------------------------------
+include ../Holmakefile.inc

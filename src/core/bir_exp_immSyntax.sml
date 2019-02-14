@@ -1,13 +1,13 @@
-structure bir_imm_expSyntax :> bir_imm_expSyntax =
+structure bir_exp_immSyntax :> bir_exp_immSyntax =
 struct
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;
-open bir_imm_expTheory
+open bir_exp_immTheory
 open bir_envTheory;
 
-val ERR = mk_HOL_ERR "bir_imm_expSyntax"
+val ERR = mk_HOL_ERR "bir_exp_immSyntax"
 
-fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_imm_exp";
+fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_imm";
 
 fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0
    (fn tm1 => fn e => fn tm2 =>

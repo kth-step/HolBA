@@ -9,5 +9,8 @@
 *.exe
 *-heap
 
+Holmakefile
+Makefile.local
+
 tempdir
 
