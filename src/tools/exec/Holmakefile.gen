@@ -9,7 +9,7 @@ SMLFILES   = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
-HOLHEAP    = ../../core-props/HolBALib-heap
+HOLHEAP    = ../../lib/HolBALib-heap
 NEWHOLHEAP = 
 
 HEAPINC    = 

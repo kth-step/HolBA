@@ -9,7 +9,7 @@ SMLFILES   =
 
 TARGETS    = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
 
-HOLHEAP    = ../../../core-props/HolBALib-heap
+HOLHEAP    = ../../../lib/HolBALib-heap
 NEWHOLHEAP = 
 
 HEAPINC    = 
