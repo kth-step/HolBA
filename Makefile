@@ -18,9 +18,11 @@ rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 HOLMAKEFILE_GENS = $(call rwildcard,src/,Holmakefile.gen)
 HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
 
-main: $(HOLMAKEFILES)
+main: holmakefiles
 	echo "\n\nExecute \"$(HOLMAKE)\" in \"$(SRCDIR)\".\n"
 	cd $(SRCDIR) && $(HOLMAKE)
+
+holmakefiles: $(HOLMAKEFILES)
 
 examples: main
 	for dir in $(EXAMPLES); \
