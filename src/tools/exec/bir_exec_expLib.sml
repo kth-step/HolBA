@@ -3,6 +3,7 @@ open HolKernel boolLib liteLib simpLib Parse bossLib;
 open bir_expSyntax;
 open bir_valuesSyntax;
 
+open bir_exec_auxLib;
 open bir_exec_envLib;
 
 structure bir_exec_expLib =
@@ -75,19 +76,7 @@ struct
           thm
       end;
 
-
-  fun GEN_bir_eval_exp_conv conv tm =
-    if is_bir_eval_exp tm then
-      conv tm
-    else if is_comb tm then
-        ((RAND_CONV  (GEN_bir_eval_exp_conv conv)) THENC
-         (RATOR_CONV (GEN_bir_eval_exp_conv conv))) tm
-    else
-      raise UNCHANGED
-    ;
-
-
-  val bir_exec_exp_conv = (GEN_bir_eval_exp_conv o bir_exec_exp_conv_help);
+  val bir_exec_exp_conv = ((GEN_match_conv is_bir_eval_exp) o bir_exec_exp_conv_help);
 
 
 end
