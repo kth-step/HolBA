@@ -94,9 +94,11 @@ struct
     (snd o dest_eq o concl o (REWRITE_CONV [bir_program_labelsTheory.BL_Address_HC_def])) prog;
 
 
-  fun bir_exec_prog prog n_max =
+  fun bir_exec_prog name prog n_max =
     let
       val prog = bir_exec_prog_normalize prog handle UNCHANGED => prog;
+      val prog_def = Define [QUOTE ("bir_exec_prog_" ^ name ^ " = "), ANTIQUOTE prog];
+      val prog_const = (fst o dest_eq o concl) prog_def;
 
       val n = numSyntax.mk_numeral (Arbnumcore.fromInt n_max);
       val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog``;
@@ -118,9 +120,9 @@ struct
     end;
 
 
-  fun bir_exec_prog_result prog n_max =
+  fun bir_exec_prog_result name prog n_max =
     let
-      val exec_thm = bir_exec_prog prog n_max;
+      val exec_thm = bir_exec_prog name prog n_max;
       val result_t = (snd o dest_eq o concl) exec_thm;
       val (ol, x)  = dest_pair result_t;
       val (n, s2)  = dest_pair x;

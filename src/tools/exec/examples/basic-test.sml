@@ -14,6 +14,8 @@ val _ = print "================================\n"
 
 val _ = print "loading..."
 
+val name = "my_crazy_program";
+
 val prog = ``
        BirProgram [
          <|bb_label :=
@@ -42,7 +44,6 @@ val prog = ``
            bb_last_statement :=
              BStmt_Halt (BExp_Const (Imm32 1w)) |>
        ]``;
-
 
 val prog = ``
        BirProgram [
@@ -95,8 +96,9 @@ val _ = bir_exec_typecheck_prog_result prog;
 val _ = print "ok\n"
 
 
-val _ = print "executing..."
-val (ol, n, s2) = bir_exec_prog_result prog n_max;
+val _ = print "executing...\n"
+val (ol, n, s2) = bir_exec_prog_result name prog n_max;
+val _ = print "ok\n"
 
 
 
