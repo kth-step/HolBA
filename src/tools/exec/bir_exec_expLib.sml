@@ -58,25 +58,14 @@ struct
 
 (* TODO: improve evaluation completion checks and generalize these functions everywhere *)
 (* TODO: generally: improve rewriting, select proper theorems and organize reusably in separate lists according to respective goals *)
-
-  fun bir_exec_exp_conv_help var_eq_thm t =
-    if not (is_bir_eval_exp t) then
-      raise UNCHANGED
-    else
-      let
-        val thm = ((bir_exec_env_read_conv var_eq_thm) THENC EVAL) t;
-(*      SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [] t; *)
-      in
-        if not (((fn t => is_BVal_Imm t orelse is_BVal_Mem t) o snd o dest_eq o concl) thm) then (
-          print "----------------";
-          print_term t;
-          print "----------------";
-          raise ERR "bir_exec_exp_conv_help" "could not evaluate expression to value"
-        ) else
-          thm
-      end;
-
-  val bir_exec_exp_conv = ((GEN_match_conv is_bir_eval_exp) o bir_exec_exp_conv_help);
-
+  fun bir_exec_exp_conv var_eq_thm =
+    let
+      val is_tm_fun = is_bir_eval_exp;
+      val check_tm_fun = (fn t => is_BVal_Imm t orelse is_BVal_Mem t);
+      val conv = ((bir_exec_env_read_conv var_eq_thm) THENC EVAL);
+(*      (SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) []); *)
+    in
+      GEN_selective_conv is_tm_fun check_tm_fun conv
+    end;
 
 end

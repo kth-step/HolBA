@@ -4,24 +4,20 @@ structure bir_exec_auxLib =
 struct
 
 
-(*
-  fun GEN_check_conv bir_exec_exp_conv_help var_eq_thm t =
-    if not (is_bir_eval_exp t) then
-      raise UNCHANGED
-    else
-      let
-        val thm = ((bir_exec_env_read_conv var_eq_thm) THENC EVAL) t;
-(*      SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [] t; *)
-      in
-        if not (((fn t => is_BVal_Imm t orelse is_BVal_Mem t) o snd o dest_eq o concl) thm) then (
-          print "----------------";
-          print_term t;
-          print "----------------";
-          raise ERR "bir_exec_exp_conv_help" "could not evaluate expression to value"
-        ) else
-          thm
-      end;
-*)
+  fun GEN_check_conv check_tm_fun conv tm =
+    let
+      val thm = conv tm;
+      val result = (snd o dest_eq o concl) thm;
+    in
+      if not (check_tm_fun result) then (
+        print "----------------";
+        print_term tm;
+        print "----------------";
+        raise ERR "GEN_check_conv" "conversion result is not as expected"
+      ) else
+        thm
+    end;
+
 
   fun GEN_match_conv is_tm_fun conv tm =
     if is_tm_fun tm then
@@ -32,6 +28,10 @@ struct
     else
       raise UNCHANGED
     ;
+
+
+  fun GEN_selective_conv is_tm_fun check_tm_fun conv =
+    GEN_match_conv is_tm_fun (GEN_check_conv check_tm_fun conv);
 
 
 end
