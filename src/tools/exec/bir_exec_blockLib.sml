@@ -10,6 +10,7 @@ open bir_exec_auxLib;
 open bir_exec_envLib;
 open bir_exec_expLib;
 
+open optionSyntax;
 open pairSyntax;
 open listTheory;
 open wordsLib;
@@ -21,21 +22,25 @@ struct
 (*
   val t = ``bir_exec_step ^prog ^state``;
 
-  bir_exec_prog_step_conv_help var_eq_thm t
+  bir_exec_prog_step_conv var_eq_thm t
 *)
 
 
 
-
-
-
   val bir_pc_ss = rewrites (type_rws ``:bir_programcounter_t``);
-  fun bir_exec_prog_step_conv_help var_eq_thm t =
-    if not (is_bir_exec_step t) then
-      raise UNCHANGED
-    else
-      let
-        val thm1 = (
+  fun bir_exec_prog_step_conv var_eq_thm =
+    let
+      val is_tm_fun = is_bir_exec_step;
+      val check_tm_fun = (fn t => is_pair t andalso
+                                  let
+                                    val (ov, st) = dest_pair t;
+                                  in
+                                    (is_none ov orelse is_some ov) andalso
+                                    (is_bir_state st)
+                                  end);
+      fun conv t =
+        let
+          val thm1 = (
                     (SIMP_CONV (list_ss++WORD_ss++bir_TYPES_ss) [
                          bir_exec_stmt_declare_def,
                          bir_exec_stmt_assign_def,
@@ -57,7 +62,7 @@ struct
                        ])
                    ) t;
 
-        val thm1_1 = CONV_RULE (RAND_CONV (
+          val thm1_1 = CONV_RULE (RAND_CONV (
                     (bir_exec_exp_conv var_eq_thm) THENC
                     (SIMP_CONV (list_ss++WORD_ss++bir_TYPES_ss) [
                          bir_dest_bool_val_def,
@@ -69,20 +74,23 @@ struct
                         bir_valuesTheory.BType_Bool_def]) (* todo here? *)
                    )) thm1;
 
-        val thm1_2 = CONV_RULE (RAND_CONV (SIMP_CONV
+          val thm1_2 = CONV_RULE (RAND_CONV (SIMP_CONV
                       (list_ss++WORD_ss++HolBACoreSimps.holBACore_ss) [
                             bir_program_labelsTheory.bir_labels_of_program_REWRS,
                             bir_block_pc_def])) thm1_1;
 
-        val thm2 = CONV_RULE (RAND_CONV (SIMP_CONV
+          val thm2 = CONV_RULE (RAND_CONV (SIMP_CONV
                       (list_ss++HolBACoreSimps.holBACore_ss) [LET_DEF])) thm1_2;
 
-        val thm3 = CONV_RULE (RAND_CONV (SIMP_CONV
+          val thm3 = CONV_RULE (RAND_CONV (SIMP_CONV
                       (arith_ss++bir_pc_ss) [bir_pc_next_def])) thm2;
-      in
-        thm3
-      end;
+        in
+          thm3
+        end;
+    in
+      GEN_selective_conv is_tm_fun check_tm_fun conv
+    end;
 
-  val bir_exec_prog_step_conv = (GEN_match_conv is_bir_exec_step) o bir_exec_prog_step_conv_help;
+
 
 end

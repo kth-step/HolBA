@@ -1,12 +1,16 @@
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 open bir_envSyntax;
+open bir_valuesSyntax;
 open finite_mapSyntax;
 
 open bir_envTheory;
 open finite_mapTheory;
 
+open bir_exec_auxLib;
+
 open pairSyntax;
+open optionSyntax;
 
 
 structure bir_exec_envLib =
@@ -52,17 +56,19 @@ struct
 
       val env = mk_BEnv (list_mk_fupdate (fempty_env_tm, var_assigns));
       (* TODO: check that "bir_env_vars_are_initialised ^env (bir_vars_of_prog ^prog)" *)
+(* bir_envTheory.bir_env_vars_are_initialised_def *)
     in
       env
     end;
 
 
-  fun bir_exec_env_write_conv_help var_eq_thm t =
-    if not (is_bir_env_write t) then
-      raise UNCHANGED
-    else
-      let
-        val thm1 = SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [
+  fun bir_exec_env_write_conv var_eq_thm =
+    let
+      val is_tm_fun = is_bir_env_write;
+      val check_tm_fun = (fn t => is_none t orelse is_some t);
+      fun conv t =
+        let
+          val thm1 = SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [
                 FLOOKUP_EMPTY,
                 FLOOKUP_UPDATE,
                 bir_env_update_def,
@@ -72,23 +78,33 @@ struct
                 bir_env_write_def,
                 var_eq_thm] t;
 
-        val thm2 = REWRITE_CONV [Once FUPDATE_PURGE] ((snd o dest_eq o concl) thm1);
+          val thm2 = REWRITE_CONV [Once FUPDATE_PURGE] ((snd o dest_eq o concl) thm1);
 
-        val thm3 = SIMP_CONV (std_ss) [
+          val thm3 = SIMP_CONV (std_ss) [
                 DOMSUB_FEMPTY, DOMSUB_FUPDATE, DOMSUB_FUPDATE_NEQ,
                 var_eq_thm] ((snd o dest_eq o concl) thm2);
 
-      in
-        TRANS (TRANS thm1 thm2) thm3
-      end;
+          val thm3 = CONV_RULE (RAND_CONV (SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [bir_valuesTheory.BType_Bool_def])) thm3;
+        in
+          TRANS (TRANS thm1 thm2) thm3
+        end;
+    in
+      GEN_selective_conv is_tm_fun check_tm_fun conv
+    end;
 
 
-  fun bir_exec_env_read_conv_help var_eq_thm t =
-    if not (is_bir_env_read t) then
-      raise UNCHANGED
-    else
-      let
-        val thm1 = SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [
+  fun bir_exec_env_read_conv var_eq_thm =
+    let
+      val is_tm_fun = is_bir_env_read;
+      val check_tm_fun = (fn t => (List.exists (fn f => f t) [is_BVal_Imm1,
+                                                              is_BVal_Imm8,
+                                                              is_BVal_Imm16,
+                                                              is_BVal_Imm32,
+                                                              is_BVal_Imm64]
+                                  ) orelse is_BVal_Mem t);
+      fun conv t =
+        let
+          val thm1 = SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [
                 FLOOKUP_EMPTY,
                 FLOOKUP_UPDATE,
                 bir_env_lookup_def,
@@ -97,45 +113,14 @@ struct
                 bir_env_read_def,
                 var_eq_thm] t;
 
-        val thm2 = CONV_RULE (RAND_CONV (EVAL)) thm1; (* quick fix *)
+          val thm2 = CONV_RULE (RAND_CONV (EVAL)) thm1; (* quick fix *)
+        in
+          thm2
+        end;
+    in
+      GEN_selective_conv is_tm_fun check_tm_fun conv
+    end;
 
-      in
-        thm2
-      end;
-
-
-(* TODO: *)
-(* bir_envTheory.bir_env_vars_are_initialised_def *)
-
-
-
-
-  fun GEN_bir_env_write_conv conv tm =
-    if is_bir_env_write tm then
-      conv tm
-    else if is_comb tm then
-        ((RAND_CONV  (GEN_bir_env_write_conv conv)) THENC
-         (RATOR_CONV (GEN_bir_env_write_conv conv))) tm
-    else
-      raise UNCHANGED
-    ;
-
-  fun GEN_bir_env_read_conv conv tm =
-    if is_bir_env_read tm then
-      conv tm
-    else if is_comb tm then
-        ((RAND_CONV  (GEN_bir_env_read_conv conv)) THENC
-         (RATOR_CONV (GEN_bir_env_read_conv conv))) tm
-    else
-      raise UNCHANGED
-    ;
-
-
-
-
-  val bir_exec_env_write_conv = GEN_bir_env_write_conv o bir_exec_env_write_conv_help;
-
-  val bir_exec_env_read_conv = GEN_bir_env_read_conv o bir_exec_env_read_conv_help;
 
 
 end

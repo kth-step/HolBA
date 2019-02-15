@@ -1,5 +1,6 @@
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 
+open bir_expTheory;
 open bir_expSyntax;
 open bir_valuesSyntax;
 
@@ -62,7 +63,7 @@ struct
     let
       val is_tm_fun = is_bir_eval_exp;
       val check_tm_fun = (fn t => is_BVal_Imm t orelse is_BVal_Mem t);
-      val conv = ((bir_exec_env_read_conv var_eq_thm) THENC EVAL);
+      val conv = ((REWRITE_CONV [bir_eval_exp_def]) THENC (bir_exec_env_read_conv var_eq_thm) THENC EVAL);
 (*      (SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) []); *)
     in
       GEN_selective_conv is_tm_fun check_tm_fun conv

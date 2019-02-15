@@ -9,6 +9,10 @@ open bir_immTheory;
 open pred_setSyntax;
 open bir_valuesSyntax;
 
+open bir_exec_auxLib;
+
+open optionSyntax;
+
 
 structure bir_exec_typingLib =
 struct
@@ -59,26 +63,6 @@ val t = ``type_of_bir_val (BVal_Mem Bit32 Bit32 (K 0))``
     end;
 
 
-  fun bir_exec_typing_exp_conv_help t =
-    if not (is_type_of_bir_val t) then
-      raise UNCHANGED
-    else
-      REWRITE_CONV [type_of_bir_val_def, type_of_bir_imm_def] t;
-
-
-
-
-
-  fun GEN_bir_exec_typing_exp_conv conv tm =
-    if is_type_of_bir_val tm then
-      conv tm
-    else if is_comb tm then
-        ((RAND_CONV  (GEN_bir_exec_typing_exp_conv conv)) THENC
-         (RATOR_CONV (GEN_bir_exec_typing_exp_conv conv))) tm
-    else
-      raise UNCHANGED
-    ;
-
 
 (* TODO: *)
 (*
@@ -89,7 +73,25 @@ type_of_bir_exp
 bir_is_well_typed_program
 *)
 
-
-  val bir_exec_typing_exp_conv = GEN_bir_exec_typing_exp_conv bir_exec_typing_exp_conv_help;
+  val bir_exec_typing_exp_conv =
+    let
+      val is_tm_fun = is_type_of_bir_val;
+      val check_tm_fun = (fn t => is_none t orelse
+                                  (is_some t andalso
+                                   let
+                                     val bt = dest_some t;
+                                   in
+                                     (List.exists (fn f => f bt) [is_BType_Imm1,
+                                                                  is_BType_Imm8,
+                                                                  is_BType_Imm16,
+                                                                  is_BType_Imm32,
+                                                                  is_BType_Imm64]
+                                     ) orelse is_BType_Mem bt
+                                   end)
+                         );
+      val conv = (REWRITE_CONV [type_of_bir_val_def, type_of_bir_imm_def]);
+    in
+      GEN_selective_conv is_tm_fun check_tm_fun conv
+    end;
 
 end

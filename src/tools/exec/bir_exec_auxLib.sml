@@ -10,9 +10,11 @@ struct
       val result = (snd o dest_eq o concl) thm;
     in
       if not (check_tm_fun result) then (
-        print "----------------";
+        print "\n----------------\n";
         print_term tm;
-        print "----------------";
+        print "\n----------------\n";
+        print_term result;
+        print "\n----------------\n";
         raise ERR "GEN_check_conv" "conversion result is not as expected"
       ) else
         thm
