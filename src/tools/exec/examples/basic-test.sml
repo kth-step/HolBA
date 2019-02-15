@@ -97,7 +97,6 @@ val _ = print "ok\n"
 
 val _ = print "executing..."
 val (ol, n, s2) = bir_exec_prog_result prog n_max;
-val _ = print "ok\n"
 
 
 

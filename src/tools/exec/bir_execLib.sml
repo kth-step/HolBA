@@ -7,6 +7,13 @@ open bir_exec_blockLib;
 open bir_exec_typingLib;
 
 
+
+
+val debug_trace = ref (1:int)
+val _ = register_trace ("bir_exec.DEBUG_LEVEL", debug_trace, 2)
+
+
+
 structure bir_execLib =
 struct
 
@@ -67,12 +74,17 @@ struct
 
   fun bir_exec_prog_step_iter step_n_rule thm =
     let
+      val _ = if (!debug_trace >= 1) then (print "!") else ();
       val thm1 = step_n_rule thm;
       val thm2 = CONV_RULE (RAND_CONV (REWRITE_CONV [OPT_CONS_REWRS])) thm1;
       val thm = thm2;
     in
       (bir_exec_prog_step_iter step_n_rule thm)
-      handle UNCHANGED => thm
+      handle UNCHANGED =>
+      (
+        if (!debug_trace >= 1) then (print "done\n") else ();
+        thm
+      )
     end;
 
 
