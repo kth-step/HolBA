@@ -2,11 +2,13 @@ open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 open bir_auxiliaryTheory;
 open bir_program_multistep_propsTheory;
+open bir_programSyntax;
+open bir_envSyntax;
 
 open bir_exec_blockLib;
 open bir_exec_typingLib;
 
-
+open numSyntax;
 
 
 val debug_trace = ref (1:int)
@@ -34,56 +36,83 @@ struct
 
 
 
-
+  fun bir_exec_is_state_triple t =
+    if not (is_pair t) orelse not (is_pair (snd (dest_pair t))) then false
+    else
+                               let
+                                 val (_,x) = dest_pair t;
+                                 val (n_acc,s) = dest_pair x;
+                               in
+                                 is_numeral n_acc andalso
+                                 is_bir_state s andalso
+                                 let val (pc,env,_) = dest_bir_state s in
+                                   is_BEnv env andalso
+                                   is_bir_programcounter pc andalso
+                                   let val (l,i) = dest_bir_programcounter pc in
+                                     is_numeral i andalso
+                                     (is_BL_Label l orelse is_BL_Address l)
+                                   end
+                                 end
+                               end;
 
 
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program_multistep_props"
   val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
   val (bir_exec_step_n_acc_tm,  mk_bir_exec_step_n_acc, dest_bir_exec_step_n_acc, is_bir_exec_step_n_acc)  = syntax_fns3 "bir_exec_step_n_acc";
 
-  fun bir_exec_prog_step_n var_eq_thm thm =
+  val bir_pc_ss = rewrites (type_rws ``:bir_programcounter_t``);
+  fun bir_exec_prog_step_n_conv var_eq_thm =
     let
-      val exec_term = (snd o dest_eq o concl) thm;
-    in if not (is_bir_exec_step_n_acc exec_term) then raise UNCHANGED else
-    let
-      val (_,n,x) = dest_bir_exec_step_n_acc exec_term;
-      val (_,x) = dest_pair x;
-      val (_,s) = dest_pair x;
-    in
-      if not (numSyntax.is_numeral n) then
-        raise UNCHANGED
-      else
+      val is_tm_fun = (fn t => is_bir_exec_step_n_acc t andalso
+                               let
+                                 val (_,n,x) = dest_bir_exec_step_n_acc t;
+                               in
+                                 is_numeral n andalso
+                                 bir_exec_is_state_triple x
+                               end
+                      );
+      val check_tm_fun = (fn t => is_tm_fun t orelse
+                                  bir_exec_is_state_triple t
+                         );
+      fun conv t =
         let
+          val (_,n,x) = dest_bir_exec_step_n_acc t;
+          val (_,x) = dest_pair x;
+          val (_,s) = dest_pair x;
           val is_terminated_thm = ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL)
                                       (mk_bir_state_is_terminated s);
 
-          val thm2 = CONV_RULE (RAND_CONV (
-                 (REWRITE_CONV [Once bir_exec_step_n_acc_def, is_terminated_thm, EVAL ``^n = 0:num``])
-               )) thm;
-
-          val t = (snd o dest_comb o snd o dest_eq o concl) thm2;
+          val thm2 = (REWRITE_CONV [Once bir_exec_step_n_acc_def, is_terminated_thm, EVAL ``^n = 0:num``]) t;
 
           val thm3 = CONV_RULE (RAND_CONV (bir_exec_prog_step_conv var_eq_thm)) thm2;
           val thm4 = CONV_RULE (RAND_CONV (SIMP_CONV (arith_ss) [LET_DEF])) thm3;
-
         in
           thm4
-        end
-    end end;
+        end;
+    in
+      GEN_selective_conv is_tm_fun check_tm_fun conv
+    end;
 
 
-  fun bir_exec_prog_step_iter step_n_rule thm =
+  fun bir_exec_prog_step_iter step_n_conv thm =
     let
       val _ = if (!debug_trace >= 1) then (print "!") else ();
-      val thm1 = step_n_rule thm;
-      val thm2 = CONV_RULE (RAND_CONV (REWRITE_CONV [OPT_CONS_REWRS])) thm1;
+      val t = (snd o dest_eq o concl) thm;
+      val thm1 = (step_n_conv THENC (REWRITE_CONV [OPT_CONS_REWRS])) t;
+      val thm2 = TRANS thm thm1;
       val thm = thm2;
     in
-      (bir_exec_prog_step_iter step_n_rule thm)
+      (bir_exec_prog_step_iter step_n_conv thm)
       handle UNCHANGED =>
       (
         if (!debug_trace >= 1) then (print "done\n") else ();
-        thm
+        let
+          val result = (snd o dest_eq o concl) thm;
+          fun check_thm_fun _ = bir_exec_is_state_triple result;
+          fun extract_print_tm_fun _ = result;
+        in
+          GEN_check_thm check_thm_fun extract_print_tm_fun thm
+        end
       )
     end;
 
@@ -113,10 +142,10 @@ struct
       val exec_term = ``bir_exec_step_n ^prog ^state ^n``;
       val thm = REWRITE_CONV [GSYM bir_exec_step_n_acc_eq_thm] exec_term;
 
-      val step_n_rule = (bir_exec_prog_step_n var_eq_thm);
+      val step_n_conv = (bir_exec_prog_step_n_conv var_eq_thm);
     in
       (CONV_RULE (RAND_CONV (REWRITE_CONV [CONJUNCT1 REVERSE_DEF])))
-      (bir_exec_prog_step_iter step_n_rule thm)
+      (bir_exec_prog_step_iter step_n_conv thm)
     end;
 
 

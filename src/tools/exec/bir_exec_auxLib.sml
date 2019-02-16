@@ -4,6 +4,15 @@ structure bir_exec_auxLib =
 struct
 
 
+  fun GEN_check_thm check_thm_fun extract_print_tm_fun thm =
+    if not (check_thm_fun thm) then (
+        print "\n----------------\n";
+        print_term (extract_print_tm_fun thm);
+        print "\n----------------\n";
+        raise ERR "GEN_check_thm" "theorem is not as expected"
+    ) else thm;
+
+
   fun GEN_check_conv check_tm_fun conv tm =
     let
       val thm = conv tm;
