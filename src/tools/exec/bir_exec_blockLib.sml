@@ -129,6 +129,8 @@ for now, we're taking single steps, not whole blocks
                          bir_eval_label_exp_def]) THENC
                     (* evaluate the new label expressions *)
                     (bir_exec_exp_conv var_eq_thm) THENC
+                    (* resolve cases *)
+                    CASE_SIMP_CONV THENC
                     (* finally update the environment *)
                     (bir_exec_env_write_conv var_eq_thm)
                    )) thm1_2;
@@ -147,12 +149,15 @@ for now, we're taking single steps, not whole blocks
               val block_thm_to = Redblackmap.find(block_thm_map,cur_lbl);
 
               (* compute program counter for the next block *)
-              val thm1_4 = CONV_RULE (RAND_CONV (REWRITE_CONV [
+              val thm2 = CONV_RULE (RAND_CONV (REWRITE_CONV [
                                 block_thm_to,
                                 bir_exec_stmt_jmp_to_label_def,
                                 bir_block_pc_def])) thm_pre_pc_upd;
+
+              (* cleanup bir_state_t record (for updated pc) *)
+              val thm3 = CONV_RULE (RAND_CONV (SIMP_CONV (std_ss++bir_TYPES_ss) [])) thm2;
             in
-              thm1_4
+              thm3
             end
             handle UNCHANGED =>
             (* if jmp_to_label is not present *)

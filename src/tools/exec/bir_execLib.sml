@@ -97,7 +97,9 @@ struct
       GEN_selective_conv is_tm_fun check_tm_fun conv
     end;
 
-
+(*
+val _ = debug_trace := 2;
+*)
   fun bir_exec_prog_step_iter step_n_conv thm =
     let
       val _ = if (!debug_trace >= 1) then (print "!") else ();
@@ -105,6 +107,11 @@ struct
       val thm1 = (step_n_conv THENC (REWRITE_CONV [OPT_CONS_REWRS])) t;
       val thm2 = TRANS thm thm1;
       val thm = thm2;
+      val _ = if (!debug_trace >= 2) then (
+                print "\n--------------------------------------\n";
+                print_term t;
+                print "\n--------------------------------------\n"
+              ) else ();
     in
       (bir_exec_prog_step_iter step_n_conv thm)
       handle UNCHANGED =>
