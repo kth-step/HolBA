@@ -23,15 +23,6 @@ struct
 
 
 (*
-  val t = ``bir_exec_step ^prog_const (<|bst_pc := <|bpc_label := BL_Label "entry"; bpc_index := 1|>;
-    bst_environ :=
-      BEnv
-        (FEMPTY |+ ("R1",BType_Imm Bit32,SOME (BVal_Imm (Imm32 0w))) |+
-         ("R2",BType_Imm Bit32,SOME (BVal_Imm (Imm32 0w))) |+
-         ("R3",BType_Imm Bit32,SOME (BVal_Imm (Imm32 0w))) |+
-         ("bit1",BType_Imm Bit1,SOME (BVal_Imm (Imm1 0w))));
-    bst_status := BST_Running|>)``;
-
   val t = ``bir_exec_step ^prog_const ^state``;
 
   bir_exec_prog_step_conv var_eq_thm t
@@ -76,7 +67,6 @@ struct
 (*
 for now, we're taking single steps, not whole blocks
 *)
-  val bir_pc_ss = rewrites (type_rws ``:bir_programcounter_t``);
   fun bir_exec_prog_step_conv block_thm_map var_eq_thm =
     let
       val is_tm_fun = is_bir_exec_step;
@@ -98,6 +88,7 @@ for now, we're taking single steps, not whole blocks
                          bir_state_set_failed_def])
                    ) t;
 
+          (* lookup the corresponding block thm *)
           val (_,l) = (dest_bir_get_program_block_info_by_label o
                        (GEN_find_subterm is_bir_get_program_block_info_by_label) o
                        snd o dest_eq o concl
@@ -105,14 +96,14 @@ for now, we're taking single steps, not whole blocks
           val cur_lbl = (snd o dest_eq o concl o EVAL) l;
           val block_thm = Redblackmap.find(block_thm_map,cur_lbl);
 
-          (* get block and statement *)
+          (* get block and current statement *)
           val thm1_1 = CONV_RULE (RAND_CONV (
                     (SIMP_CONV (list_ss++bir_TYPES_ss) [block_thm])
                    )) thm1;
 
-          (* ??? *)
+          (* open statement effects *)
           val thm1_2 = CONV_RULE (RAND_CONV (
-                    (SIMP_CONV (list_ss++WORD_ss++bir_TYPES_ss) [
+                    (REWRITE_CONV [
                          bir_exec_stmt_declare_def,
                          bir_exec_stmt_assign_def,
                          bir_exec_stmt_assert_def,
@@ -127,16 +118,19 @@ for now, we're taking single steps, not whole blocks
                        ])
                    )) thm1_1;
 
-          (* ??? *)
+          (* evaluate expressions (bir_eval_exp and bir_eval_label_exp) *)
           val thm1_3 = CONV_RULE (RAND_CONV (
+                    (* evaluate the expressions *)
                     (bir_exec_exp_conv var_eq_thm) THENC
-                    (SIMP_CONV (list_ss++WORD_ss++bir_TYPES_ss) [
+                    (* open the evaluation of label expressions *)
+                    (* (additionally for cjmp: determine which branch to take) *)
+                    (SIMP_CONV (std_ss++WORD_ss) [
                          bir_dest_bool_val_def,
                          bir_eval_label_exp_def]) THENC
+                    (* evaluate the new label expressions *)
                     (bir_exec_exp_conv var_eq_thm) THENC
-                    (bir_exec_env_write_conv var_eq_thm) THENC
-                    (SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [
-                        bir_valuesTheory.BType_Bool_def]) (* todo here? *)
+                    (* finally update the environment *)
+                    (bir_exec_env_write_conv var_eq_thm)
                    )) thm1_2;
 
           (* control flow *)
@@ -144,14 +138,16 @@ for now, we're taking single steps, not whole blocks
           val thm4 =
             (* try jmp_to_label *)
             let
+              (* lookup the block thm for the jump target *)
               val (_,l,_) = (dest_bir_exec_stmt_jmp_to_label o
                              (GEN_find_subterm is_bir_exec_stmt_jmp_to_label) o
                              snd o dest_eq o concl
                             ) thm_pre_pc_upd;
               val cur_lbl = (snd o dest_eq o concl o EVAL) l;
               val block_thm_to = Redblackmap.find(block_thm_map,cur_lbl);
-              val thm1_4 = CONV_RULE (RAND_CONV (SIMP_CONV
-                            (list_ss++WORD_ss++HolBACoreSimps.holBACore_ss) [
+
+              (* compute program counter for the next block *)
+              val thm1_4 = CONV_RULE (RAND_CONV (REWRITE_CONV [
                                 block_thm_to,
                                 bir_exec_stmt_jmp_to_label_def,
                                 bir_block_pc_def])) thm_pre_pc_upd;

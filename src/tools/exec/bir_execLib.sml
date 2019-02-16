@@ -129,6 +129,8 @@ struct
 
   fun bir_exec_prog name prog n_max =
     let
+      val _ = if (!debug_trace >= 1) then (print "preprocessing starts\n") else ();
+
       val prog = bir_exec_prog_normalize prog handle UNCHANGED => prog;
       val prog_def = Define [QUOTE ("bir_exec_prog_" ^ name ^ " = "), ANTIQUOTE prog];
       val prog_const = (fst o dest_eq o concl) prog_def;
@@ -150,7 +152,7 @@ struct
 
       val step_n_conv = (bir_exec_prog_step_n_conv block_thm_map var_eq_thm);
 
-      val _ = if (!debug_trace >= 1) then (print "finished preprocessing\n") else ();
+      val _ = if (!debug_trace >= 1) then (print "execution starts\n") else ();
     in
       (CONV_RULE (RAND_CONV (REWRITE_CONV [CONJUNCT1 REVERSE_DEF])))
       (bir_exec_prog_step_iter step_n_conv thm)
