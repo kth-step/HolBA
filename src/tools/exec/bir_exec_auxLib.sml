@@ -40,6 +40,21 @@ struct
       raise UNCHANGED
     ;
 
+  fun GEN_find_subterm is_tm_fun tm =
+    if is_tm_fun tm then
+      tm
+    else if is_comb tm then
+      let
+        val (l,r) = dest_comb tm;
+      in
+        GEN_find_subterm is_tm_fun l
+        handle UNCHANGED =>
+        GEN_find_subterm is_tm_fun r
+      end
+    else
+      raise UNCHANGED
+    ;
+
 
   fun GEN_selective_conv is_tm_fun check_tm_fun conv =
     GEN_match_conv is_tm_fun (GEN_check_conv check_tm_fun conv);

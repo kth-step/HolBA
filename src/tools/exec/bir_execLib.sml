@@ -9,6 +9,7 @@ open bir_exec_blockLib;
 open bir_exec_typingLib;
 
 open numSyntax;
+open HolBACoreSimps;
 
 
 val debug_trace = ref (1:int)
@@ -61,7 +62,7 @@ struct
   val (bir_exec_step_n_acc_tm,  mk_bir_exec_step_n_acc, dest_bir_exec_step_n_acc, is_bir_exec_step_n_acc)  = syntax_fns3 "bir_exec_step_n_acc";
 
   val bir_pc_ss = rewrites (type_rws ``:bir_programcounter_t``);
-  fun bir_exec_prog_step_n_conv var_eq_thm =
+  fun bir_exec_prog_step_n_conv block_thm_map var_eq_thm =
     let
       val is_tm_fun = (fn t => is_bir_exec_step_n_acc t andalso
                                let
@@ -79,12 +80,15 @@ struct
           val (_,n,x) = dest_bir_exec_step_n_acc t;
           val (_,x) = dest_pair x;
           val (_,s) = dest_pair x;
-          val is_terminated_thm = ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL)
+          val is_terminated_thm = (SIMP_CONV (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def])
                                       (mk_bir_state_is_terminated s);
 
-          val thm2 = (REWRITE_CONV [Once bir_exec_step_n_acc_def, is_terminated_thm, EVAL ``^n = 0:num``]) t;
+          val n_eq_0_tm = (mk_eq (n, mk_numeral (Arbnum.fromInt 0)));
+          val n_eq_0_thm = SIMP_CONV arith_ss [] n_eq_0_tm;
 
-          val thm3 = CONV_RULE (RAND_CONV (bir_exec_prog_step_conv var_eq_thm)) thm2;
+          val thm2 = (REWRITE_CONV [Once bir_exec_step_n_acc_def, is_terminated_thm, n_eq_0_thm]) t;
+
+          val thm3 = CONV_RULE (RAND_CONV (bir_exec_prog_step_conv block_thm_map var_eq_thm)) thm2;
           val thm4 = CONV_RULE (RAND_CONV (SIMP_CONV (arith_ss) [LET_DEF])) thm3;
         in
           thm4
@@ -129,8 +133,10 @@ struct
       val prog_def = Define [QUOTE ("bir_exec_prog_" ^ name ^ " = "), ANTIQUOTE prog];
       val prog_const = (fst o dest_eq o concl) prog_def;
 
+      val block_thm_map = gen_block_thm_map prog_def;
+
       val n = numSyntax.mk_numeral (Arbnumcore.fromInt n_max);
-      val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog``;
+      val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog_const``;
 
       val vars = gen_vars_of_prog prog;
       val var_eq_thm = gen_var_eq_thm vars;
@@ -139,10 +145,12 @@ struct
 
       val state = ``<| bst_pc := ^pc ; bst_environ := ^env ; bst_status := BST_Running |>``;
 
-      val exec_term = ``bir_exec_step_n ^prog ^state ^n``;
+      val exec_term = ``bir_exec_step_n ^prog_const ^state ^n``;
       val thm = REWRITE_CONV [GSYM bir_exec_step_n_acc_eq_thm] exec_term;
 
-      val step_n_conv = (bir_exec_prog_step_n_conv var_eq_thm);
+      val step_n_conv = (bir_exec_prog_step_n_conv block_thm_map var_eq_thm);
+
+      val _ = if (!debug_trace >= 1) then (print "finished preprocessing\n") else ();
     in
       (CONV_RULE (RAND_CONV (REWRITE_CONV [CONJUNCT1 REVERSE_DEF])))
       (bir_exec_prog_step_iter step_n_conv thm)
