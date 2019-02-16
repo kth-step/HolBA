@@ -27,3 +27,6 @@ include ../../../Holmakefile.inc
 basic-test.exe: basic-test.uo 
 	$(HOLMOSMLC) -o $@ $<
 
+toy-test.exe: toy-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
