@@ -1,13 +1,18 @@
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 
+open BasicProvers;
+
 open bir_envSyntax;
 open bir_valuesSyntax;
 open finite_mapSyntax;
+
+open HolBACoreSimps;
 
 open bir_envTheory;
 open finite_mapTheory;
 
 open bir_exec_auxLib;
+open bir_exec_typingLib;
 
 open pairSyntax;
 open optionSyntax;
@@ -32,6 +37,8 @@ struct
   val t = ``bir_env_write ^var ^b_val ^env``;
 
   val t = ``bir_env_read ^var ^env``;
+
+  val t = ````;
 *)
 
   fun gen_var_eq_thm vars =
@@ -62,31 +69,56 @@ struct
     end;
 
 
+
+  (* TODO: organize these and other theorem lists in simpsets if suitable *)
+  (* list of theorems to evaluate environment lookups *)
+  val env_lookup_thms =
+       [bir_var_name_def,
+	bir_var_type_def,
+	FLOOKUP_EMPTY,
+	FLOOKUP_UPDATE,
+	bir_env_lookup_def
+       ];
+
+  val env_check_type_thms =
+       [bir_env_lookup_type_def,
+	bir_env_check_type_def,
+        BType_Bool_def
+       ]@env_lookup_thms;
+
+  val type_of_bir_val_thms =
+    [type_of_bir_val_def, type_of_bir_imm_def];
+
+
+
+
   fun bir_exec_env_write_conv var_eq_thm =
     let
       val is_tm_fun = is_bir_env_write;
-      val check_tm_fun = (fn t => is_none t orelse is_some t);
+      val check_tm_fun = (fn t => is_none t orelse (is_some t andalso is_BEnv (dest_some t)));
       fun conv t =
         let
-          val thm1 = SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [
-                FLOOKUP_EMPTY,
-                FLOOKUP_UPDATE,
-                bir_env_update_def,
-                bir_env_lookup_def,
-                bir_env_lookup_type_def,
-                bir_env_check_type_def,
-                bir_env_write_def,
-                var_eq_thm] t;
+          (* make sure that the type of the variable in the environment matches *)
+          val thm1 = SIMP_CONV (std_ss++bir_TYPES_ss) (var_eq_thm::bir_env_write_def::env_check_type_thms) t;
 
-          val thm2 = REWRITE_CONV [Once FUPDATE_PURGE] ((snd o dest_eq o concl) thm1);
+          (* now we can update the environment accordingly *)
+          val thm2 = CONV_RULE (RAND_CONV (
+                                    (SIMP_CONV (std_ss++bir_TYPES_ss)
+                                               ([bir_env_update_def]@type_of_bir_val_thms))
+                                 )) thm1;
 
-          val thm3 = SIMP_CONV (std_ss) [
-                DOMSUB_FEMPTY, DOMSUB_FUPDATE, DOMSUB_FUPDATE_NEQ,
-                var_eq_thm] ((snd o dest_eq o concl) thm2);
+          (* finally we start purging of redundant updates *)
+          val thm3 = CONV_RULE (RAND_CONV (
+                       REWRITE_CONV [Once FUPDATE_PURGE]
+                     )) thm2;
 
-          val thm3 = CONV_RULE (RAND_CONV (SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [bir_valuesTheory.BType_Bool_def])) thm3;
+          (* propagation of the purging operation *)
+          val thm4 = CONV_RULE (RAND_CONV (
+                       SIMP_CONV (std_ss)
+                         (var_eq_thm::[DOMSUB_FEMPTY, DOMSUB_FUPDATE, DOMSUB_FUPDATE_NEQ])
+                     )) thm3;
         in
-          TRANS (TRANS thm1 thm2) thm3
+          thm4
         end;
     in
       GEN_selective_conv is_tm_fun check_tm_fun conv
@@ -104,18 +136,14 @@ struct
                                   ) orelse is_BVal_Mem t);
       fun conv t =
         let
-          val thm1 = SIMP_CONV (list_ss++HolBACoreSimps.holBACore_ss) [
-                FLOOKUP_EMPTY,
-                FLOOKUP_UPDATE,
-                bir_env_lookup_def,
-                bir_env_lookup_type_def,
-                bir_env_check_type_def,
-                bir_env_read_def,
-                var_eq_thm] t;
-
-          val thm2 = CONV_RULE (RAND_CONV (EVAL)) thm1; (* quick fix *)
+          (* make sure that the type of the variable in the environment matches *)
+          (* and take its value *)
+          val thm1 = ((SIMP_CONV (std_ss++bir_TYPES_ss)
+                                 (var_eq_thm::bir_env_read_def::env_check_type_thms)) THENC
+                      CASE_SIMP_CONV
+                     ) t;
         in
-          thm2
+          thm1
         end;
     in
       GEN_selective_conv is_tm_fun check_tm_fun conv

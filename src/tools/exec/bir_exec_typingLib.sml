@@ -73,6 +73,7 @@ type_of_bir_exp
 bir_is_well_typed_program
 *)
 
+(*
   val bir_exec_typing_exp_conv =
     let
       val is_tm_fun = is_type_of_bir_val;
@@ -93,5 +94,6 @@ bir_is_well_typed_program
     in
       GEN_selective_conv is_tm_fun check_tm_fun conv
     end;
+*)
 
 end
