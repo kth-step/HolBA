@@ -1,5 +1,7 @@
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 
+open bir_envSyntax;
+
 structure bir_exec_auxLib =
 struct
 
@@ -58,6 +60,27 @@ struct
 
   fun GEN_selective_conv is_tm_fun check_tm_fun conv =
     GEN_match_conv is_tm_fun (GEN_check_conv check_tm_fun conv);
+
+
+
+
+
+  fun gen_var_eq_thm vars =
+        let
+          val vars = List.map (fst o dest_BVar) vars;
+        in
+          LIST_CONJ (List.map ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL)
+                     (List.foldl (fn (v,l) => (List.map (fn v2 => mk_eq(v,v2)) vars)@l) [] vars)
+                    )
+        end;
+
+
+
+  fun gen_label_eq_thms labels =
+          List.map ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL)
+             (List.foldl (fn (v,ls) => (List.map (fn v2 => mk_eq(v,v2)) labels)@ls) [] labels)
+          ;
+
 
 
 end

@@ -2,16 +2,17 @@ open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 open bir_typing_progTheory;
 open bir_typing_expTheory;
+open bir_programTheory;
 
 open bir_valuesTheory;
 open bir_immTheory;
 
 open pred_setSyntax;
-open bir_valuesSyntax;
 
 open bir_exec_auxLib;
 
 open optionSyntax;
+open listSyntax;
 
 
 structure bir_exec_typingLib =
@@ -63,6 +64,17 @@ val t = ``type_of_bir_val (BVal_Mem Bit32 Bit32 (K 0))``
     end;
 
 
+  fun gen_labels_of_prog prog =
+    let
+      val rep_gen_set_and_eval_conv =
+                   (REWRITE_CONV [bir_labels_of_program_def]) THENC
+                   (REPEATC ((SIMP_CONV list_ss []) THENC
+                             ((fn t => if op=((dest_eq o concl) t) then raise UNCHANGED else t) o EVAL)
+                            ));
+      val label_set = (snd o dest_eq o concl o rep_gen_set_and_eval_conv) ``bir_labels_of_program ^prog``;
+    in
+      (fst o dest_list) label_set
+    end;
 
 (* TODO: *)
 (*

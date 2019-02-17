@@ -41,15 +41,6 @@ struct
   val t = ````;
 *)
 
-  fun gen_var_eq_thm vars =
-        let
-          val vars = List.map (fst o dest_BVar) vars;
-        in
-          LIST_CONJ (List.map ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL)
-                     (List.foldl (fn (v,l) => (List.map (fn v2 => mk_eq(v,v2)) vars)@l) [] vars)
-                    )
-        end;
-
   fun bir_exec_env_initd_env vars =
     let
       val fempty_env_tm = (dest_BEnv o snd o dest_eq o concl) bir_empty_env_def;

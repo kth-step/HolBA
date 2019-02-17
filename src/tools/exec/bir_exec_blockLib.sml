@@ -12,11 +12,16 @@ open bir_exec_expLib;
 
 open optionSyntax;
 open pairSyntax;
+open numSyntax;
+
 open listTheory;
 open listSyntax;
 open wordsLib;
 
 open Redblackmap;
+
+open bir_program_valid_stateTheory;
+
 
 structure bir_exec_blockLib =
 struct
@@ -29,39 +34,130 @@ struct
 *)
 
 
-
-  fun gen_block_thm_map prog_def =
-    let
-      val prog_const = (fst o dest_eq o concl) prog_def;
-      val prog = (snd o dest_eq o concl) prog_def;
-
-      val block_ts = (fst o dest_list) (dest_BirProgram prog);
-      val label_ts = List.map ((fn (x,_,_) => (snd o dest_eq o concl o EVAL) x) o dest_bir_block) block_ts;
-      (*
-      val lt = List.nth(label_ts,1);
-      *)
-      val block_l_thm_list =
-           List.map (fn lt => (lt, LIST_CONJ
-                      [SIMP_CONV (list_ss++WORD_ss++bir_TYPES_ss)
-                         [bir_get_program_block_info_by_label_def, INDEX_FIND_def, prog_def]
-                         ``bir_get_program_block_info_by_label ^prog_const ^lt``,
-                       SIMP_CONV (list_ss++WORD_ss++bir_TYPES_ss)
-                         [bir_program_labelsTheory.bir_labels_of_program_REWRS, prog_def]
-                         ``MEM ^lt (bir_labels_of_program ^prog_const)``
-                      ]
-                    )) label_ts;
-    in
-      insertList (mkDict Term.compare, block_l_thm_list)
-    end;
-
-
-
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program"
+  val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
   val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
   val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
 
   val (bir_get_program_block_info_by_label_tm,  mk_bir_get_program_block_info_by_label, dest_bir_get_program_block_info_by_label, is_bir_get_program_block_info_by_label)  = syntax_fns2 "bir_get_program_block_info_by_label";
   val (bir_exec_stmt_jmp_to_label_tm,  mk_bir_exec_stmt_jmp_to_label, dest_bir_exec_stmt_jmp_to_label, is_bir_exec_stmt_jmp_to_label)  = syntax_fns3 "bir_exec_stmt_jmp_to_label";
+  val (bir_labels_of_program_tm,  mk_bir_labels_of_program, dest_bir_labels_of_program, is_bir_labels_of_program)  = syntax_fns1 "bir_labels_of_program";
+
+
+  fun gen_block_thm_map prog_l_def labels_eq_thms =
+    let
+      val read_debug_trace = get_tracefn "bir_exec.DEBUG_LEVEL";
+
+      val prog_l = (snd o dest_eq o concl) prog_l_def;
+      val prog_l_const = (fst o dest_eq o concl) prog_l_def;
+      val prog_const = (mk_BirProgram prog_l_const);
+
+      val rep_gen_set_and_eval_conv =
+                   (REWRITE_CONV [bir_labels_of_program_def]) THENC
+                   (REPEATC ((SIMP_CONV list_ss []) THENC
+                             ((fn t => if op=((dest_eq o concl) t) then raise UNCHANGED else t) o EVAL)
+                            ));
+      val label_set_thm = (REWRITE_CONV [prog_l_def] THENC (rep_gen_set_and_eval_conv)) ``bir_labels_of_program ^prog_const``;
+      val valid_prog_thm =
+        (
+          (REWRITE_CONV [bir_is_valid_labels_def, label_set_thm]) THENC
+          (SIMP_CONV list_ss (ALL_DISTINCT::labels_eq_thms))
+        )
+        ``bir_is_valid_labels ^prog_const``;
+      val _ = if ((fn x => x <> T) o snd o dest_eq o concl) valid_prog_thm
+              then raise ERR "gen_block_thm_map" "the input program is not valid" else ();
+
+      (*
+      val lt = List.nth(label_ts,10);
+      *)
+(*
+      val index_find_step_conv =
+        (fn x => REWRITE_CONV [Once INDEX_FIND_def] x) THENC
+        (* take care of the condition alone *)
+        (RATOR_CONV (RATOR_CONV (RAND_CONV (SIMP_CONV (std_ss++bir_TYPES_ss) (labels_eq_thms))))) THENC
+        (* resolve the if-then-else *)
+        (REWRITE_CONV []) THENC
+        (* compute SUC *)
+        (TRY_CONV (RATOR_CONV (RATOR_CONV (RAND_CONV (SIMP_CONV (arith_ss) [])))))
+        ;
+
+(*
+dest_comb ``if a then b else c``
+val test = (REPEATC (index_find_step_conv) term;
+
+(REPEATC index_find_step_conv)
+((snd o dest_eq o concl)((REWRITE_CONV [bir_get_program_block_info_by_label_def, prog_def]) (mk_bir_get_program_block_info_by_label (prog_const, lt))))
+
+*)
+bir_program_valid_stateTheory.bir_is_valid_program_def
+bir_program_valid_stateTheory.bir_is_valid_labels_def
+bir_program_valid_stateTheory.bir_get_program_block_info_by_label_valid_THM 
+
+
+SIMP_CONV list_ss [] ``EL 23 ^(dest_BirProgram prog)``
+
+      val block_by_label_conv =
+        (REWRITE_CONV [bir_get_program_block_info_by_label_def, prog_def]) THENC
+        (REPEATC index_find_step_conv);
+
+      val block_l_thm_list =
+           List.map (fn lt => (
+                      (if (read_debug_trace() >= 1) then (print "!") else ());
+                      (lt, LIST_CONJ
+                        [block_by_label_conv (mk_bir_get_program_block_info_by_label (prog_const, lt))
+                         ,
+                         labels_mem_conv (mk_mem (lt, mk_bir_labels_of_program prog_const))
+                        ]
+                    ))) labels;
+*)
+
+
+      val labels_mem_conv = SIMP_CONV (list_ss++WORD_ss++bir_TYPES_ss)
+        [bir_program_labelsTheory.bir_labels_of_program_REWRS, prog_l_def];
+
+      val prep_thm0 = (CONJUNCT2 bir_get_program_block_info_by_label_valid_THM);
+      val prep_thm1 = MATCH_MP prep_thm0 (REWRITE_RULE [] valid_prog_thm);
+      val prep_thm  = REWRITE_RULE [SIMP_CONV list_ss [prog_l_def] ``LENGTH ^prog_l_const``] prep_thm1;
+
+      val (_,augm_block_lst) = List.foldl (fn (bl,(i,l)) => (i+1,(i,bl)::l)) (0,[]) ((fst o dest_list) prog_l);
+
+(*
+val i = 1;
+val bl = snd(List.nth(augm_block_lst,i));
+*)
+
+      val block_l_thm_list =
+           List.map (fn (i,bl) => (
+             (if (read_debug_trace() >= 1) then (print "!") else ());
+             let
+               val i_n = mk_numeral (Arbnum.fromInt i);
+               val (lt,_,_)  = dest_bir_block bl;
+
+               val thm1 = SPECL [lt, i_n, bl] prep_thm;
+
+               val thm2 = CONV_RULE (RAND_CONV (EVAL)) thm1;
+               val thm3 = (REWRITE_RULE [] thm2);
+
+               val _ = if ((fn t => t <> T) o snd o dest_eq o concl) thm2
+                       then (print_term ((concl) thm2);raise ERR "block_l_thm_list" "something went wrong")
+                       else ();
+(*
+               val el_thm = EVAL ``EL ^i_n ^prog_l_const``;
+               val thm2 = CONV_RULE (RAND_CONV (SIMP_CONV (arith_ss++bir_TYPES_ss) [el_thm])) thm1;
+*)
+             in
+               (lt,
+                CONJ
+                  thm3
+                  (EVAL (mk_mem (lt, mk_bir_labels_of_program prog_const)))
+               )
+             end
+           )) augm_block_lst;
+    in
+      insertList (mkDict Term.compare, block_l_thm_list)
+    end;
+
+
 
 
 (*

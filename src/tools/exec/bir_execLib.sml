@@ -139,13 +139,16 @@ val _ = debug_trace := 2;
       val _ = if (!debug_trace >= 1) then (print "preprocessing starts\n") else ();
 
       val prog = bir_exec_prog_normalize prog handle UNCHANGED => prog;
-      val prog_def = Define [QUOTE ("bir_exec_prog_" ^ name ^ " = "), ANTIQUOTE prog];
-      val prog_const = (fst o dest_eq o concl) prog_def;
-
-      val block_thm_map = gen_block_thm_map prog_def;
+      val prog_l_def = Define [QUOTE ("bir_exec_prog_" ^ name ^ "_l = "), ANTIQUOTE (dest_BirProgram prog)];
+      val prog_l_const = (fst o dest_eq o concl) prog_l_def;
+      val prog_const = (mk_BirProgram prog_l_const);
 
       val n = numSyntax.mk_numeral (Arbnumcore.fromInt n_max);
       val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog_const``;
+
+      val labels = gen_labels_of_prog prog;
+      val labels_eq_thms = gen_label_eq_thms labels;
+      val block_thm_map = gen_block_thm_map prog_l_def labels_eq_thms;
 
       val vars = gen_vars_of_prog prog;
       val var_eq_thm = gen_var_eq_thm vars;
