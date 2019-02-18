@@ -53,14 +53,12 @@ val t = ``type_of_bir_val (BVal_Mem Bit32 Bit32 (K 0))``
 
   fun gen_vars_of_prog prog =
     let
-      val rep_gen_set_and_eval_conv =
-                   (REWRITE_CONV [bir_vars_of_program_def]) THENC
-                   (REPEATC ((SIMP_CONV list_ss []) THENC
-                             ((fn t => if op=((dest_eq o concl) t) then raise UNCHANGED else t) o EVAL)
-                            ));
-      val var_set = (snd o dest_eq o concl o rep_gen_set_and_eval_conv) ``bir_vars_of_program ^prog``;
+      val var_usage_list = GEN_find_all_subterm is_BVar prog;
+
+      fun filter_doubles [] acc = acc
+	| filter_doubles (x::xs) acc = filter_doubles (List.filter (fn y => y <> x) xs) (x::acc);
     in
-      strip_set var_set
+      filter_doubles var_usage_list [] (* TODO: double check that these are all variables? *)
     end;
 
 

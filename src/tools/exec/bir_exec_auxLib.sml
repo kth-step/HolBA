@@ -69,6 +69,20 @@ struct
       raise UNCHANGED
     ;
 
+  fun GEN_find_all_subterm is_tm_fun tm =
+    if is_tm_fun tm then
+      [tm]
+    else if is_comb tm then
+      let
+        val (l,r) = dest_comb tm;
+      in
+        (GEN_find_all_subterm is_tm_fun l)@
+        (GEN_find_all_subterm is_tm_fun r)
+      end
+    else
+      []
+    ;
+
 
   fun GEN_selective_conv is_tm_fun check_tm_fun conv =
     GEN_match_conv is_tm_fun (GEN_check_conv check_tm_fun conv);
@@ -79,10 +93,12 @@ struct
 
   fun gen_var_eq_thms vars =
         let
-          val vars = List.map (fst o dest_BVar) vars;
+          val vars_ = List.map (fst o dest_BVar) vars;
         in
-          (List.map ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL)
-            (List.foldl (fn (v,l) => (List.map (fn v2 => mk_eq(v,v2)) vars)@l) [] vars)
+          (List.foldl (fn (tm,thms) => (((if ((!debug_trace) > 0) then (print "!") else ());
+                                         ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o (EVAL THENC (REWRITE_CONV thms)))
+                      ) tm)::thms) []
+            (List.foldl (fn (v,l) => (List.map (fn v2 => mk_eq(v,v2)) vars_)@l) [] vars_)
           )
         end;
 
