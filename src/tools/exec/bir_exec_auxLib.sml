@@ -2,8 +2,20 @@ open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 open bir_envSyntax;
 
+
+val debug_trace = ref (1:int)
+val _ = register_trace ("bir_exec.DEBUG_LEVEL", debug_trace, 2)
+
 structure bir_exec_auxLib =
 struct
+
+
+
+  fun timer_start level = if ((!debug_trace) > level) then SOME (Time.now()) else NONE;
+  fun timer_stop NONE = ""
+    | timer_stop (SOME tm) = let
+       val d_time = Time.- (Time.now(), tm);
+       in (Time.toString d_time) end;
 
 
   fun GEN_check_thm check_thm_fun extract_print_tm_fun thm =

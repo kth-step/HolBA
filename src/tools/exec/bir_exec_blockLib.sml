@@ -46,8 +46,6 @@ struct
 
   fun gen_block_thm_map prog_l_def labels_eq_thms =
     let
-      val read_debug_trace = get_tracefn "bir_exec.DEBUG_LEVEL";
-
       val prog_l = (snd o dest_eq o concl) prog_l_def;
       val prog_l_const = (fst o dest_eq o concl) prog_l_def;
       val prog_const = (mk_BirProgram prog_l_const);
@@ -102,7 +100,7 @@ SIMP_CONV list_ss [] ``EL 23 ^(dest_BirProgram prog)``
 
       val block_l_thm_list =
            List.map (fn lt => (
-                      (if (read_debug_trace() >= 1) then (print "!") else ());
+                      (if ((!debug_trace) > 0) then (print "!") else ());
                       (lt, LIST_CONJ
                         [block_by_label_conv (mk_bir_get_program_block_info_by_label (prog_const, lt))
                          ,
@@ -128,7 +126,7 @@ val bl = snd(List.nth(augm_block_lst,i));
 
       val block_l_thm_list =
            List.map (fn (i,bl) => (
-             (if (read_debug_trace() >= 1) then (print "!") else ());
+             (if ((!debug_trace) > 0) then (print "!") else ());
              let
                val i_n = mk_numeral (Arbnum.fromInt i);
                val (lt,_,_)  = dest_bir_block bl;

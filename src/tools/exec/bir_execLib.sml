@@ -5,15 +5,12 @@ open bir_program_multistep_propsTheory;
 open bir_programSyntax;
 open bir_envSyntax;
 
+open bir_exec_auxLib;
 open bir_exec_blockLib;
 open bir_exec_typingLib;
 
 open numSyntax;
 open HolBACoreSimps;
-
-
-val debug_trace = ref (1:int)
-val _ = register_trace ("bir_exec.DEBUG_LEVEL", debug_trace, 2)
 
 
 
@@ -102,12 +99,12 @@ val _ = debug_trace := 2;
 *)
   fun bir_exec_prog_step_iter step_n_conv thm =
     let
-      val _ = if (!debug_trace >= 1) then (print "!") else ();
+      val _ = if (!debug_trace > 0) then (print "!") else ();
       val t = (snd o dest_eq o concl) thm;
       val thm1 = (step_n_conv THENC (REWRITE_CONV [OPT_CONS_REWRS])) t;
       val thm2 = TRANS thm thm1;
       val thm = thm2;
-      val _ = if (!debug_trace >= 2) then (
+      val _ = if (!debug_trace > 1) then (
                 print "\n--------------------------------------\n";
                 print_term t;
                 print "\n--------------------------------------\n"
@@ -116,7 +113,7 @@ val _ = debug_trace := 2;
       (bir_exec_prog_step_iter step_n_conv thm)
       handle UNCHANGED =>
       (
-        if (!debug_trace >= 1) then (print "done\n") else ();
+        if (!debug_trace > 0) then (print "done\n") else ();
         let
           val result = (snd o dest_eq o concl) thm;
           fun check_thm_fun _ = bir_exec_is_state_triple result;
@@ -136,7 +133,8 @@ val _ = debug_trace := 2;
 
   fun bir_exec_prog name prog n_max =
     let
-      val _ = if (!debug_trace >= 1) then (print "preprocessing starts\n") else ();
+      val _ = if (!debug_trace > 0) then (print "preprocessing starts\n") else ();
+      val timer = timer_start 0;
 
       val prog = bir_exec_prog_normalize prog handle UNCHANGED => prog;
       val prog_l_def = Define [QUOTE ("bir_exec_prog_" ^ name ^ "_l = "), ANTIQUOTE (dest_BirProgram prog)];
@@ -161,11 +159,20 @@ val _ = debug_trace := 2;
       val thm = REWRITE_CONV [GSYM bir_exec_step_n_acc_eq_thm] exec_term;
 
       val step_n_conv = (bir_exec_prog_step_n_conv block_thm_map var_eq_thm);
+      val d_s = timer_stop timer;
 
-      val _ = if (!debug_trace >= 1) then (print "execution starts\n") else ();
+      val _ = if (!debug_trace > 0) then (print ("done\n")) else ();
+      val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
+      val _ = if (!debug_trace > 0) then (print "execution starts\n") else ();
+
+      val timer = timer_start 0;
+      val res_thm =
+        (CONV_RULE (RAND_CONV (REWRITE_CONV [CONJUNCT1 REVERSE_DEF])))
+        (bir_exec_prog_step_iter step_n_conv thm);
+      val d_s = timer_stop timer;
+      val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
     in
-      (CONV_RULE (RAND_CONV (REWRITE_CONV [CONJUNCT1 REVERSE_DEF])))
-      (bir_exec_prog_step_iter step_n_conv thm)
+      res_thm
     end;
 
 
@@ -231,6 +238,57 @@ open pairSyntax;
         ()
       end;
   end;
+
+
+  fun bir_exec_prog_output name prog n_max =
+    let
+      val _ = print "\n";
+      val _ = print ("executing " ^ name ^ "\n");
+      val _ = print "================================\n";
+
+      val _ = print "typechecking...";
+      val timer = timer_start 0;
+      val _ = bir_exec_typecheck_prog_result prog;
+      val d_s = timer_stop timer;
+      val _ = print "ok\n";
+
+      val _ = if (!debug_trace > 0) then (print (" typecheck: - " ^ d_s ^ " s - \n")) else ();
+
+
+      val _ = print "executing...\n";
+      val timer = timer_start 0;
+      val (ol, n, s2) = bir_exec_prog_result name prog n_max;
+      val d_s = timer_stop timer;
+      val _ = print "ok\n";
+
+      val _ = if (!debug_trace > 0) then (print (" exec total: - " ^ d_s ^ " s - \n")) else ();
+
+      val _ = print "\n";
+      val _ = print "ol = ";
+      val _ = print_term ol;
+      val _ = print "\n";
+
+      val _ = print "\n";
+      val _ = print "n = ";
+      val _ = print_term n;
+      val _ = print "\n";
+
+      val _ = print "\n";
+      val _ = print "s2 = ";
+      val _ = print_term s2;
+      val _ = print "\n";
+
+
+
+      val _ = print "\n";
+      val _ = print "================================\n";
+      val _ = print "done\n";
+      val _ = print "================================\n";
+      val _ = print "\n";
+    in
+      ()
+    end;
+
 
 
 end

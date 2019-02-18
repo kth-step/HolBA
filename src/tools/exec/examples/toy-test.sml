@@ -6,13 +6,7 @@ val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 
 
 
-val _ = print "\n";
-val _ = print "executing thomas toy program\n"
-val _ = print "================================\n"
-
-
-
-val _ = print "loading..."
+val _ = print "loading...";
 
 val name = "thomas_crazy_program";
 
@@ -384,44 +378,7 @@ BirProgram [
 
 val n_max = 50;
 
-val _ = print "ok\n"
+val _ = print "ok\n";
 
 
-
-
-
-val _ = print "typechecking..."
-val _ = bir_exec_typecheck_prog_result prog;
-val _ = print "ok\n"
-
-
-val _ = print "executing...\n"
-val (ol, n, s2) = bir_exec_prog_result name prog n_max;
-val _ = print "ok\n"
-
-
-
-val _ = print "\n";
-val _ = print "ol = ";
-val _ = print_term ol;
-val _ = print "\n";
-
-val _ = print "\n";
-val _ = print "n = ";
-val _ = print_term n;
-val _ = print "\n";
-
-val _ = print "\n";
-val _ = print "s2 = ";
-val _ = print_term s2;
-val _ = print "\n";
-
-
-
-val _ = print "\n";
-val _ = print "================================\n"
-val _ = print "done\n"
-val _ = print "================================\n"
-val _ = print "\n";
-
-
+val _ = bir_exec_prog_output name prog n_max;
