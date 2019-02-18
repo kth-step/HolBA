@@ -77,13 +77,13 @@ struct
 
 
 
-  fun gen_var_eq_thm vars =
+  fun gen_var_eq_thms vars =
         let
           val vars = List.map (fst o dest_BVar) vars;
         in
-          LIST_CONJ (List.map ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL)
-                     (List.foldl (fn (v,l) => (List.map (fn v2 => mk_eq(v,v2)) vars)@l) [] vars)
-                    )
+          (List.map ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL)
+            (List.foldl (fn (v,l) => (List.map (fn v2 => mk_eq(v,v2)) vars)@l) [] vars)
+          )
         end;
 
 

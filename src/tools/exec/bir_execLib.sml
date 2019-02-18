@@ -19,9 +19,9 @@ struct
 
 
 (*
-  bir_exec_prog_step_n var_eq_thm thm
+  bir_exec_prog_step_n var_eq_thms thm
 
-  bir_exec_prog_step_iter (bir_exec_prog_step_n var_eq_thm) thm
+  bir_exec_prog_step_iter (bir_exec_prog_step_n var_eq_thms) thm
 
   bir_exec_prog prog 1
   bir_exec_prog prog 2
@@ -59,7 +59,7 @@ struct
   val (bir_exec_step_n_acc_tm,  mk_bir_exec_step_n_acc, dest_bir_exec_step_n_acc, is_bir_exec_step_n_acc)  = syntax_fns3 "bir_exec_step_n_acc";
 
   val bir_pc_ss = rewrites (type_rws ``:bir_programcounter_t``);
-  fun bir_exec_prog_step_n_conv block_thm_map var_eq_thm =
+  fun bir_exec_prog_step_n_conv block_thm_map var_eq_thms =
     let
       val is_tm_fun = (fn t => is_bir_exec_step_n_acc t andalso
                                let
@@ -85,7 +85,7 @@ struct
 
           val thm2 = (REWRITE_CONV [Once bir_exec_step_n_acc_def, is_terminated_thm, n_eq_0_thm]) t;
 
-          val thm3 = CONV_RULE (RAND_CONV (bir_exec_prog_step_conv block_thm_map var_eq_thm)) thm2;
+          val thm3 = CONV_RULE (RAND_CONV (bir_exec_prog_step_conv block_thm_map var_eq_thms)) thm2;
           val thm4 = CONV_RULE (RAND_CONV (SIMP_CONV (arith_ss) [LET_DEF])) thm3;
         in
           thm4
@@ -149,7 +149,7 @@ val _ = debug_trace := 2;
       val block_thm_map = gen_block_thm_map prog_l_def labels_eq_thms;
 
       val vars = gen_vars_of_prog prog;
-      val var_eq_thm = gen_var_eq_thm vars;
+      val var_eq_thms = gen_var_eq_thms vars;
 
       val env = bir_exec_env_initd_env vars;
 
@@ -158,7 +158,7 @@ val _ = debug_trace := 2;
       val exec_term = ``bir_exec_step_n ^prog_const ^state ^n``;
       val thm = REWRITE_CONV [GSYM bir_exec_step_n_acc_eq_thm] exec_term;
 
-      val step_n_conv = (bir_exec_prog_step_n_conv block_thm_map var_eq_thm);
+      val step_n_conv = (bir_exec_prog_step_n_conv block_thm_map var_eq_thms);
       val d_s = timer_stop timer;
 
       val _ = if (!debug_trace > 0) then (print ("done\n")) else ();

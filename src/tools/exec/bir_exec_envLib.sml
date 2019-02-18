@@ -28,7 +28,7 @@ struct
               ``BVar "R3" (BType_Imm Bit32)``];
 
   val env = bir_exec_env_initd_env vars;
-  val var_eq_thm = gen_var_eq_thm vars;
+  val var_eq_thms = gen_var_eq_thms vars;
 
   val var = List.nth(vars,1);
   val b_val = ``(BVal_Imm (Imm32 9w))``;
@@ -83,14 +83,14 @@ struct
 
 
 
-  fun bir_exec_env_write_conv var_eq_thm =
+  fun bir_exec_env_write_conv var_eq_thms =
     let
       val is_tm_fun = is_bir_env_write;
       val check_tm_fun = (fn t => is_none t orelse (is_some t andalso is_BEnv (dest_some t)));
       fun conv t =
         let
           (* make sure that the type of the variable in the environment matches *)
-          val thm1 = SIMP_CONV (std_ss++bir_TYPES_ss) (var_eq_thm::bir_env_write_def::env_check_type_thms) t;
+          val thm1 = SIMP_CONV (std_ss++bir_TYPES_ss) (bir_env_write_def::env_check_type_thms@var_eq_thms) t;
 
           (* now we can update the environment accordingly *)
           val thm2 = CONV_RULE (RAND_CONV (
@@ -106,7 +106,7 @@ struct
           (* propagation of the purging operation *)
           val thm4 = CONV_RULE (RAND_CONV (
                        SIMP_CONV (std_ss)
-                         (var_eq_thm::[DOMSUB_FEMPTY, DOMSUB_FUPDATE, DOMSUB_FUPDATE_NEQ])
+                         ([DOMSUB_FEMPTY, DOMSUB_FUPDATE, DOMSUB_FUPDATE_NEQ]@var_eq_thms)
                      )) thm3;
         in
           thm4
@@ -116,7 +116,7 @@ struct
     end;
 
 
-  fun bir_exec_env_read_conv var_eq_thm =
+  fun bir_exec_env_read_conv var_eq_thms =
     let
       val is_tm_fun = is_bir_env_read;
       val check_tm_fun = (fn t => (List.exists (fn f => f t) [is_BVal_Imm1,
@@ -130,7 +130,7 @@ struct
           (* make sure that the type of the variable in the environment matches *)
           (* and take its value *)
           val thm1 = ((SIMP_CONV (std_ss++bir_TYPES_ss)
-                                 (var_eq_thm::bir_env_read_def::env_check_type_thms)) THENC
+                                 (bir_env_read_def::env_check_type_thms@var_eq_thms)) THENC
                       CASE_SIMP_CONV
                      ) t;
         in
