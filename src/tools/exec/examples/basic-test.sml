@@ -6,7 +6,7 @@ val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 
 
 
-val _ = print "loading..."
+val _ = print "loading...";
 
 val name = "my_crazy_program";
 
@@ -79,7 +79,7 @@ val prog = ``
 
 val n_max = 50;
 
-val _ = print "ok\n"
+val _ = print "ok\n";
 
 
 val _ = bir_exec_prog_output name prog n_max;
