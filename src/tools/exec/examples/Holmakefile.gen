@@ -22,7 +22,7 @@ SELFTEST_DEP =
 include ../../../Holmakefile.inc
 
 
-# test recipes
+# test recipes (have to be last if there are multiple for some reason)
 # ----------------------------------
 basic-test.exe: basic-test.uo 
 	$(HOLMOSMLC) -o $@ $<
