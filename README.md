@@ -1,6 +1,6 @@
 # Software versions
 
-HOL4 commit: d0a474d1d1cba7c32acb6056a6288c44c2f1a75b
+HOL4 commit: ae1feaa27180bbbe081e70f9004859321d0d426f (tags/kananaskis-12)
 PolyML (e.g. standard Ubuntu) 5.6
 
 
