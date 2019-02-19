@@ -40,7 +40,7 @@ val sty_HEADER = [Bold, Underline];
 
 fun print_log_with_style sty f s = let
   val _ = if f then TextIO.output (log, s) else ();
-  val _ = print_with_style sty s;
+  val _ = print_with_style_ sty s;
 in () end;
 
 fun print_log s = print_log_with_style [] s;
@@ -671,7 +671,7 @@ val instrs = [ "4b1b", "cb04", "0010", "0019", "3010", "7814",
 "46c0"]
 
 val _ = if (test_fast orelse not test_m0) then () else let
-  val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - M0 LitteEnd, Main SP\n\n";
+  val _ = print_with_style_ sty_HEADER "\n\n\nTESTING AES CODE - M0 LitteEnd, Main SP\n\n";
   val _ = test_M0_3.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x100000) (Arbnum.fromInt 0x470) instrs
 in () end
 
@@ -762,11 +762,11 @@ val instrs = [
 
 
 val _ = if (test_fast orelse not test_arm8) then () else let
-  val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - ARM 8\n\n";
+  val _ = print_with_style_ sty_HEADER "\n\n\nTESTING AES CODE - ARM 8\n\n";
   val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     instrs
 
-  val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE - ARM 8 - Whole program\n\n";
+  val _ = print_with_style_ sty_HEADER "\n\n\nTESTING AES CODE - ARM 8 - Whole program\n\n";
 
   val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
   val (thm, errors) = test_ARM8.bir_lift_prog ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
@@ -848,7 +848,7 @@ val instrs = [
 
 
 val _ = if (test_fast orelse not test_arm8) then () else let
-  val _ = print_with_style sty_HEADER "\n\n\nTESTING AES CODE WITH FUNNY INSTRUCTIONS - ARM 8\n\n";
+  val _ = print_with_style_ sty_HEADER "\n\n\nTESTING AES CODE WITH FUNNY INSTRUCTIONS - ARM 8\n\n";
   val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     instrs
 in () end
@@ -982,7 +982,7 @@ val instrs_bignumlib = instrs_bignum_from_bytes @
              instrs_newbn;
 
 val _ = if (test_fast orelse not test_arm8) then () else let
-  val _ = print_with_style sty_HEADER "\n\n\nTESTING BIGNUM LIB CODE - ARM 8\n\n";
+  val _ = print_with_style_ sty_HEADER "\n\n\nTESTING BIGNUM LIB CODE - ARM 8\n\n";
   val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     instrs_bignumlib
 in () end;
@@ -1013,7 +1013,7 @@ val _ = if (not test_arm8) then () else let
   val test_insts = List.map (fn x => [(QUOTE:string -> string frag) x]) test_insts_raw;
   val test_insts_hex = (List.map (hex_code_of_asm) test_insts) @ test_insts_misc_hex;
 
-  val _ = print_with_style sty_HEADER "\n\n\nTESTING VARIOUS INSTRUCTIONS - ARM 8\n\n";
+  val _ = print_with_style_ sty_HEADER "\n\n\nTESTING VARIOUS INSTRUCTIONS - ARM 8\n\n";
   val _ = test_ARM8.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x1000000) (Arbnum.fromInt 0x400570)
     test_insts_hex
 in () end;

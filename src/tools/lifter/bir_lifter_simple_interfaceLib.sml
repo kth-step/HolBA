@@ -16,7 +16,7 @@ val log = TextIO.openOut log_filename;
 
 fun print_log_with_style sty f s = let
   val _ = if f then TextIO.output (log, s) else ();
-  val _ = print_with_style sty s;
+  val _ = print_with_style_ sty s;
 in () end;
 
 val print_log = print_log_with_style [];
@@ -482,7 +482,7 @@ fun lift_file arch_str da_file =
       let
         val _ = print_l "\n\n";
         val _ = print_log_with_style [Bold, Underline] true ("There are " ^ (Int.toString (length errors)) ^ " failing instruction(s)\n");
-        val _ = print_with_style [Bold, Underline] "Failing instructions\n";
+        val _ = print_with_style_ [Bold, Underline] "Failing instructions\n";
         val _ = List.foldl (fn (x, ()) => print ((err_to_str disassemble_fun x) ^ "\n")) () errors;
       in
         ()
