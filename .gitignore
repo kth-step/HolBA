@@ -14,3 +14,5 @@ Makefile.local
 
 tempdir
 
+# IDEs
+.vscode
