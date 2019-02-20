@@ -1,7 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../core ../../lib \
-   models/l3 \
+INCLUDES   = models/l3 \
    $(HOLDIR)/examples/l3-machine-code/common \
    $(HOLDIR)/examples/l3-machine-code/arm8/model \
    $(HOLDIR)/examples/l3-machine-code/arm8/step \
