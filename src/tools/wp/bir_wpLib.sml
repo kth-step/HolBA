@@ -30,9 +30,12 @@ struct
 (* establish wps_bool_sound_thm for an initial analysis context (program, post, ls, wps) *)
 fun bir_wp_init_wps_bool_sound_thm (program, post, ls) wps defs =
       let
+        fun REPEAT_MAX n tac =
+          if n > 0 then ((tac THEN (REPEAT_MAX (n - 1) tac)) ORELSE ALL_TAC)
+          else NO_TAC;
         val wps_bool_thm = prove(`` bir_bool_wps_map ^wps ``,
           REWRITE_TAC ([bir_bool_wps_map_def]@defs) >>
-          REPEAT (
+          REPEAT_MAX 20 (
               REWRITE_TAC [finite_mapTheory.FEVERY_FUPDATE, finite_mapTheory.DRESTRICT_FEMPTY, finite_mapTheory.FEVERY_FEMPTY] >>
               SIMP_TAC (srw_ss()) [bir_is_bool_exp_def,type_of_bir_exp_def, bir_var_type_def, type_of_bir_imm_def, 
         		           bir_type_is_Imm_def, BType_Bool_def]
@@ -40,7 +43,7 @@ fun bir_wp_init_wps_bool_sound_thm (program, post, ls) wps defs =
           );
         val wps_sound_thm = prove(``bir_sound_wps_map ^program ^ls ^post ^wps``,
           REWRITE_TAC ([bir_sound_wps_map_def]@defs) >>
-          REPEAT (
+          REPEAT_MAX 20 (
               REWRITE_TAC [finite_mapTheory.FEVERY_FUPDATE, finite_mapTheory.DRESTRICT_FEMPTY, finite_mapTheory.FEVERY_FEMPTY] >>
               SIMP_TAC (srw_ss()) []
             )
