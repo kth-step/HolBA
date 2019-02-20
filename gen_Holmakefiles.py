@@ -1,56 +1,87 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
+""" Holmakefile generator.
 
-import sys,os
+This script generates `Holmakefile` files from `Holmakefile.gen` files, in
+order to add support for inclusion.
 
+Syntax:
+    Lines beginning with `include ` will be replaced by the content of all
+    files whose paths follow on the line, in the order they appear on the line.
+
+    For example,
+
+        include ../Holmakefile /some/other/file
+
+    will be replaced by the content of `../Holmakefile` first, then the content
+    of `/some/other/file`.
+"""
+
+from __future__ import print_function
+import sys
+import os
 
 out_filename = "Holmakefile"
 gen_filename = out_filename + ".gen"
 
-root         = "./src"
+src_root = "./src"
 
 
-def gen_holmakefile_in(p_d):
-  p     = os.path.join(p_d, out_filename)
-  p_gen = os.path.join(p_d, gen_filename)
+def gen_holmakefile_in(dir_path):
+    """ Generates a `Holmakefile` from the `Holmakefile.gen` file present in
+        dir_path.
+    """
 
-  print p
+    out_path = os.path.join(dir_path, out_filename)
+    gen_path = os.path.join(dir_path, gen_filename)
 
-  result = ""
-  with open(p_gen) as f_gen:
-    for line in f_gen:
-      if line.startswith("include "):
-        l_inc = line.split(" ")
-        assert(len(l_inc) == 2)
-        p_inc = os.path.join(p_d, l_inc[1].strip())
-        assert(os.path.isfile(p_inc))
-        with open(p_inc) as f_inc:
-          line = "".join(f_inc.readlines())
+    assert os.path.isfile(gen_path), \
+        "Cannot generate '{}': missing '{}'.".format(out_path, gen_path)
 
-      result = result + line
+    print("Generating: {}".format(out_path))
 
-  with open(p, 'w') as f:
-    f.write(result)
+    result = ""
+    with open(gen_path) as gen_file:
+        for line in gen_file:
+            if line.startswith("include "):
+                files_to_include = map(str.strip, line.split(" ")[1:])
+                for inc_path in files_to_include:
+                    inc_path = os.path.join(dir_path, inc_path)
+                    assert os.path.isfile(inc_path), \
+                        "Cannot include '{}': invalid path.".format(inc_path)
+                    with open(inc_path) as inc_file:
+                        result += "".join(inc_file.readlines())
+            else:
+                result += line
 
-
-
-
-
-if len(sys.argv) < 2:
-  gen_files = []
-  for path, subdirs, files in os.walk(root):
-    for f in files:
-      if f == gen_filename:
-        gen_files.append(path)
-
-  for p_d in gen_files:
-    gen_holmakefile_in(p_d)
-
-else:
-  p = sys.argv[1]
-  p_d = os.path.dirname(p)
-
-  print ("working in: %s" % p_d)
-  gen_holmakefile_in(p_d)
+        with open(out_path, 'w') as f:
+            f.write(result)
 
 
+def main():
+    argc = len(sys.argv)
+    if len(sys.argv) == 1:  # Working in `src_root/`
+        print("Recursively working in: {}".format(src_root))
+
+        dir_paths = []
+        for path, subdirs, files in os.walk(src_root):
+            for f in files:
+                if f == gen_filename:
+                    dir_paths.append(path)
+
+        for dir_path in dir_paths:
+            gen_holmakefile_in(dir_path)
+
+    elif argc == 2:  # Working in the given directory
+        path = sys.argv[1]
+        dir_path = os.path.dirname(os.path.abspath(path))
+
+        # print("Working in: {}".format(dir_path))
+        gen_holmakefile_in(dir_path)
+
+    else:
+        print("Invalid invocation.\nUsage: {} [directory]".format(
+            sys.argv[0]), file=sys.stderr)
+
+
+main()
