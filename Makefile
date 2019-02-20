@@ -1,7 +1,4 @@
 -include Makefile.local
-ifndef PYTHON # python 2.7.13 works
-  PYTHON  = python
-endif
 ifndef HOLMAKE # we need a specific HOL version - see README.md
   HOLMAKE = Holmake
 endif
@@ -19,30 +16,27 @@ HOLMAKEFILE_GENS = $(call rwildcard,src/,Holmakefile.gen)
 HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
 
 main: $(HOLMAKEFILES)
-	echo "\n\nExecute \"$(HOLMAKE)\" in \"$(SRCDIR)\".\n"
 	cd $(SRCDIR) && $(HOLMAKE)
 
-examples: main
-	for dir in $(EXAMPLES); \
-	do \
-		echo "\n\nExecute \"$(HOLMAKE)\" in \"$$dir\".\n"; \
-		cd $$dir && $(HOLMAKE); \
-	done
-
-benchmarks: main
-	for dir in $(BENCHMARKS); \
-	do \
-		echo "\n\nExecute \"$(HOLMAKE)\" in \"$$dir\".\n"; \
-		cd $$dir && $(HOLMAKE); \
-	done
-
 %Holmakefile: %Holmakefile.gen
-	$(PYTHON) gen_Holmakefiles.py $<
+	@./gen_Holmakefiles.py $<
+
+examples: main $(EXAMPLES)
+
+$(EXAMPLES):
+	cd $@ && $(HOLMAKE)
+
+benchmarks: main $(BENCHMARKS)
+
+$(BENCHMARKS):
+	cd $@ && $(HOLMAKE)
 
 gendoc:
 	cd doc/gen; ./dependencies.py
 
-
 cleanslate:
 	git clean -f -d -x src
 
+.PHONY: main gendoc cleanslate
+.PHONY: examples $(EXAMPLES)
+.PHONY: benchmarks $(BENCHMARKS)
