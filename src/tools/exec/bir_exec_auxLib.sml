@@ -105,9 +105,16 @@ struct
 
 
   fun gen_label_eq_thms labels =
-          List.map ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL)
-             (List.foldl (fn (v,ls) => (List.map (fn v2 => mk_eq(v,v2)) labels)@ls) [] labels)
-          ;
+    let
+      val eq_list = (List.foldl (fn (v,ls) => (List.map (fn v2 => mk_eq(v,v2)) labels)@ls) [] labels);
+      val eq_list_len = length eq_list;
+
+      val eval_conv = ((SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES]) o EVAL);
+    in
+          List.foldl (fn (t,(i,l)) => (if ((!debug_trace) > 0 andalso (i >= (eq_list_len div 100))) then (print "!";0) else (i+1),
+                                       (eval_conv t)::l)
+                     ) (0:int,[]) eq_list
+    end;
 
 
 

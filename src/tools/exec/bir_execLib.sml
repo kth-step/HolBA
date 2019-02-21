@@ -33,7 +33,7 @@ struct
 *)
 
 
-
+  (* determines whether a term is a sufficiently evaluated sate triple *)
   fun bir_exec_is_state_triple t =
     if not (is_pair t) orelse not (is_pair (snd (dest_pair t))) then false
     else
@@ -58,7 +58,7 @@ struct
   val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
   val (bir_exec_step_n_acc_tm,  mk_bir_exec_step_n_acc, dest_bir_exec_step_n_acc, is_bir_exec_step_n_acc)  = syntax_fns3 "bir_exec_step_n_acc";
 
-  val bir_pc_ss = rewrites (type_rws ``:bir_programcounter_t``);
+  (* conversion for applying one BIR step *)
   fun bir_exec_prog_step_n_conv block_thm_map var_eq_thms =
     let
       val is_tm_fun = (fn t => is_bir_exec_step_n_acc t andalso
@@ -97,6 +97,7 @@ struct
 (*
 val _ = debug_trace := 2;
 *)
+  (* executes one step and then recurses (one BIR statement per step) *)
   fun bir_exec_prog_step_iter step_n_conv thm =
     let
       val _ = if (!debug_trace > 0) then (print "!") else ();
@@ -127,26 +128,33 @@ val _ = debug_trace := 2;
 
 
 
-  fun bir_exec_prog_normalize prog =
-    (snd o dest_eq o concl o (REWRITE_CONV [bir_program_labelsTheory.BL_Address_HC_def])) prog;
-
-
-  fun bir_exec_prog name prog n_max =
+  (* preprocessing and execution *)
+  fun bir_exec_prog_gen prog_l_def n_max valid_prog_thm =
     let
-      val _ = if (!debug_trace > 0) then (print "preprocessing starts\n") else ();
-      val timer = timer_start 0;
-
-      val prog = bir_exec_prog_normalize prog handle UNCHANGED => prog;
-      val prog_l_def = Define [QUOTE ("bir_exec_prog_" ^ name ^ "_l = "), ANTIQUOTE (dest_BirProgram prog)];
+      val _ = if (!debug_trace > 0) then (print "input validation starts\n") else ();
+      (* verify that the inputs are as expected (definition theorem and program theorems) *)
       val prog_l_const = (fst o dest_eq o concl) prog_l_def;
       val prog_const = (mk_BirProgram prog_l_const);
+      val prog = (snd o dest_eq o concl o (REWRITE_CONV [prog_l_def])) prog_const;
+(*      val prog = bir_exec_prog_normalize prog handle UNCHANGED => prog;*)
+      val _ = if not (is_const prog_l_const) orelse
+                 (concl valid_prog_thm) <> ``bir_is_valid_program ^prog_const`` then
+                raise ERR "bir_exec_prog_gen"
+                          "input validation failed"
+              else
+                ();
+      val _ = if (!debug_trace > 0) then (print ("done\n")) else ();
+      val _ = if (!debug_trace > 0) then (print ("\n")) else ();
+      
+
+      val _ = if (!debug_trace > 0) then (print "preprocessing starts\n") else ();
+      val timer = timer_start 0;
 
       val n = numSyntax.mk_numeral (Arbnumcore.fromInt n_max);
       val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog_const``;
 
       val labels = gen_labels_of_prog prog;
-      val labels_eq_thms = gen_label_eq_thms labels;
-      val block_thm_map = gen_block_thm_map prog_l_def labels_eq_thms;
+      val block_thm_map = gen_block_thm_map prog_l_def valid_prog_thm;
 
       val vars = gen_vars_of_prog prog;
       val var_eq_thms = gen_var_eq_thms vars;
@@ -163,22 +171,20 @@ val _ = debug_trace := 2;
 
       val _ = if (!debug_trace > 0) then (print ("done\n")) else ();
       val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
+      val _ = if (!debug_trace > 0) then (print ("\n")) else ();
+
+
       val _ = if (!debug_trace > 0) then (print "execution starts\n") else ();
 
       val timer = timer_start 0;
-      val res_thm =
+      val exec_thm =
         (CONV_RULE (RAND_CONV (REWRITE_CONV [CONJUNCT1 REVERSE_DEF])))
         (bir_exec_prog_step_iter step_n_conv thm);
       val d_s = timer_stop timer;
+      val _ = if (!debug_trace > 0) then (print ("done\n")) else ();
       val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
-    in
-      res_thm
-    end;
+      val _ = if (!debug_trace > 0) then (print ("\n")) else ();
 
-
-  fun bir_exec_prog_result name prog n_max =
-    let
-      val exec_thm = bir_exec_prog name prog n_max;
       val result_t = (snd o dest_eq o concl) exec_thm;
       val (ol, x)  = dest_pair result_t;
       val (n, s2)  = dest_pair x;
@@ -186,82 +192,76 @@ val _ = debug_trace := 2;
       (ol, n, s2)
     end;
 
-  local
-    open HolKernel boolLib liteLib simpLib Parse bossLib;
-
-open bir_programTheory;
-open bir_program_blocksTheory;
-open bir_program_terminationTheory;
-open bir_typing_progTheory;
-open bir_envTheory;
-open bir_exp_substitutionsTheory;
-open bir_bool_expTheory;
-open bir_auxiliaryTheory;
-open bir_valuesTheory;
-open bir_expTheory;
-open bir_program_env_orderTheory;
-open bir_extra_expsTheory;
-open bir_interval_expTheory;
-open bir_program_labelsTheory;
-
-open finite_mapSyntax;
-open pairSyntax;
-
-
-  in
-    fun bir_exec_typecheck_prog_result prog =
-      let
-        val prog_typed_conv = [
-			    bir_is_well_typed_program_def,bir_is_well_typed_block_def,bir_is_well_typed_stmtE_def,
-			    bir_is_well_typed_stmtB_def,bir_is_well_typed_label_exp_def,
-			    type_of_bir_exp_def,bir_var_type_def,bir_type_is_Imm_def,type_of_bir_imm_def,
-			    bir_extra_expsTheory.BExp_Aligned_type_of,BExp_unchanged_mem_interval_distinct_type_of,
-			    bir_exp_memTheory.bir_number_of_mem_splits_REWRS, BType_Bool_def, bir_exp_true_def, bir_exp_false_def, BExp_MSB_type_of,
-			    bir_nzcv_expTheory.BExp_nzcv_ADD_DEFS, bir_nzcv_expTheory.BExp_nzcv_SUB_DEFS, bir_immTheory.n2bs_def, bir_extra_expsTheory.BExp_word_bit_def,
-			    BExp_Align_type_of, BExp_ror_type_of, BExp_LSB_type_of, BExp_word_bit_exp_type_of,
-			    bir_nzcv_expTheory.BExp_ADD_WITH_CARRY_type_of, BExp_word_reverse_type_of,
-                            BExp_ror_exp_type_of
-			    ];
-        val prog_valid_conv = [
-			     bir_program_valid_stateTheory.bir_is_valid_program_def,
-			     bir_program_valid_stateTheory.bir_program_is_empty_def,
-			     bir_program_valid_stateTheory.bir_is_valid_labels_def,
-			     bir_labels_of_program_def,BL_Address_HC_def
-			     ];
-
-        val thm = prove(``bir_is_well_typed_program ^prog``, SIMP_TAC (srw_ss()) (prog_typed_conv))
-                  handle _ => raise ERR "bir_exec_typecheck_prog_result" "typechecking of program failed";
-
-        val thm = prove(``bir_is_valid_program ^prog``, SIMP_TAC (srw_ss()) (prog_valid_conv))
-                  handle _ => raise ERR "bir_exec_typecheck_prog_result" "program is not valid - must be non-empty list of blocks with distinct labels";
-      in
-        ()
-      end;
-  end;
-
-
-  fun bir_exec_prog_output name prog n_max =
+  (* function for using execution in scripts, it prints out relevant progress information and the output *)
+  fun bir_exec_prog_print name prog n_max validprog_o welltypedprog_o =
     let
       val _ = print "\n";
       val _ = print ("executing " ^ name ^ "\n");
       val _ = print "================================\n";
 
-      val _ = print "typechecking...";
+      (* determine if a block list definition has to be created, and do so if required *)
+      val _ = print "checking block list definition...\n";
+      val _ = print "--------------------------------\n";
+      val prog_l = dest_BirProgram prog;
+      val prog_l_def = if (is_const prog_l) then
+                         let
+                           val def_str = (fst o dest_const) prog_l;
+                           val (_, (def_thm, _)) = hd (DB.find def_str);
+                         in
+                           def_thm
+                         end
+                       else
+                         Define [QUOTE ("bir_exec_prog_" ^ name ^ "_l"),
+                                 QUOTE " = ", ANTIQUOTE prog_l];
+      val _ = print "ok\n";
+      val _ = print "\n";
+
+      (* if validprog theorem is not supplied, compute it *)
+      val _ = print "program validity...\n";
+      val _ = print "--------------------------------\n";
       val timer = timer_start 0;
-      val _ = bir_exec_typecheck_prog_result prog;
+
+      val valid_prog_thm = case validprog_o of
+			      SOME thm => thm
+	                    | NONE     => bir_exec_valid_prog prog_l_def;
+
       val d_s = timer_stop timer;
       val _ = print "ok\n";
+      val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
+      val _ = print "\n";
 
-      val _ = if (!debug_trace > 0) then (print (" typecheck: - " ^ d_s ^ " s - \n")) else ();
-
-
-      val _ = print "executing...\n";
+      (* if welltypedprog theorem is not supplied, compute it *)
+      val _ = print "typechecking...\n";
+      val _ = print "--------------------------------\n";
       val timer = timer_start 0;
-      val (ol, n, s2) = bir_exec_prog_result name prog n_max;
+
+      val well_typed_prog_thm = case welltypedprog_o of
+				    SOME thm => thm
+				  | NONE     => bir_exec_well_typed_prog prog_l_def;
+
+      val d_s = timer_stop timer;
+      val _ = print "ok\n";
+      val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
+      val _ = print "\n";
+
+      (* now execution *)
+      val _ = print "executing...\n";
+      val _ = print "--------------------------------\n";
+      val timer = timer_start 0;
+      val (ol, n, s2) = bir_exec_prog_gen prog_l_def n_max valid_prog_thm;
       val d_s = timer_stop timer;
       val _ = print "ok\n";
 
       val _ = if (!debug_trace > 0) then (print (" exec total: - " ^ d_s ^ " s - \n")) else ();
+      val _ = print "\n";
+
+
+      (* now the result *)
+      val _ = print "\n";
+      val _ = print "================================\n";
+      val _ = print "result:\n";
+      val _ = print "================================\n";
+      val _ = print "\n";
 
       val _ = print "\n";
       val _ = print "ol = ";

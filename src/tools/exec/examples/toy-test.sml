@@ -375,10 +375,12 @@ BirProgram [
   |>
 ]``;
 
+val validprog_o = NONE;
+val welltypedprog_o = NONE;
 
 val n_max = 50;
 
 val _ = print "ok\n";
 
 
-val _ = bir_exec_prog_output name prog n_max;
+val _ = bir_exec_prog_print name prog n_max validprog_o welltypedprog_o;
