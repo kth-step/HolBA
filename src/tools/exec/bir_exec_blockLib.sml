@@ -64,10 +64,10 @@ struct
 
       val (_,augm_block_lst) = List.foldl (fn (bl,(i,l)) => (i+1,(i,bl)::l)) (0,[]) ((fst o dest_list) prog_l);
 
-(*
-val i = 1;
-val bl = snd(List.nth(augm_block_lst,(length augm_block_lst) -1 - i));
-*)
+      (*
+      val i = 1;
+      val bl = snd(List.nth(augm_block_lst,(length augm_block_lst) -1 - i));
+      *)
 
       val block_l_thm_list =
            List.map (fn (i,bl) => (
@@ -86,10 +86,10 @@ val bl = snd(List.nth(augm_block_lst,(length augm_block_lst) -1 - i));
                val _ = if ((fn t => t <> T) o snd o dest_eq o concl) thm2
                        then (print_term ((concl) thm2);raise ERR "block_l_thm_list" "something went wrong")
                        else ();
-(*
+               (*
                val el_thm = EVAL ``EL ^i_n ^prog_l_const``;
                val thm2 = CONV_RULE (RAND_CONV (SIMP_CONV (arith_ss++bir_TYPES_ss) [el_thm])) thm1;
-*)
+               *)
              in
                (norm_lt,
                 CONJ
@@ -103,6 +103,25 @@ val bl = snd(List.nth(augm_block_lst,(length augm_block_lst) -1 - i));
     end;
 
 
+  (* this only works if the program in the map is the same considered in the term *)
+  fun block_thm_map_conv block_thm_map =
+    let
+      val is_tm_fun = is_bir_get_program_block_info_by_label;
+      val check_tm_fun = not o is_bir_get_program_block_info_by_label;
+      fun conv t =
+        let
+          (* lookup the corresponding block thm *)
+          val (_,l) = dest_bir_get_program_block_info_by_label t;
+          val cur_lbl = (snd o dest_eq o concl o EVAL) l;
+          val block_thm = Redblackmap.find(block_thm_map,cur_lbl)
+                          handle NotFound =>
+                          raise UNCHANGED
+        in
+          SIMP_CONV (list_ss++bir_TYPES_ss) [block_thm] t
+        end;
+    in
+      GEN_selective_conv is_tm_fun check_tm_fun conv
+    end;
 
 
 (*
@@ -129,17 +148,10 @@ for now, we're taking single steps, not whole blocks
                          bir_state_set_failed_def])
                    ) t;
 
-          (* lookup the corresponding block thm *)
-          val (_,l) = (dest_bir_get_program_block_info_by_label o
-                       (GEN_find_subterm is_bir_get_program_block_info_by_label) o
-                       snd o dest_eq o concl
-                      ) thm1;
-          val cur_lbl = (snd o dest_eq o concl o EVAL) l;
-          val block_thm = Redblackmap.find(block_thm_map,cur_lbl);
-
           (* get block and current statement *)
           val thm1_1 = CONV_RULE (RAND_CONV (
-                    (SIMP_CONV (list_ss++bir_TYPES_ss) [block_thm])
+                    (block_thm_map_conv block_thm_map) THENC
+                    (SIMP_CONV (list_ss++bir_TYPES_ss) [])
                    )) thm1;
 
           (* open statement effects *)
@@ -187,7 +199,9 @@ for now, we're taking single steps, not whole blocks
                              snd o dest_eq o concl
                             ) thm_pre_pc_upd;
               val cur_lbl = l;
-              val block_thm_to = Redblackmap.find(block_thm_map,cur_lbl);
+              val block_thm_to = Redblackmap.find(block_thm_map,cur_lbl)
+                                 handle NotFound =>
+                                 raise UNCHANGED;
 
               (* compute program counter for the next block *)
               val thm2 = CONV_RULE (RAND_CONV (REWRITE_CONV [
