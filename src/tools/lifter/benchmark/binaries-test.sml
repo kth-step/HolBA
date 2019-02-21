@@ -66,6 +66,9 @@ val benchmark_descriptors_3 = [
 
 val benchmark_descriptors = benchmark_descriptors_2_1;
 
+val log_filename = "benchmark.log";
+val _ = log_setfile log_filename;
+
 fun run_benchmark (arch_str, da_files) = List.map (fn da_file =>
     let
       val thm_prog = lift_file arch_str da_file;
