@@ -90,7 +90,7 @@ val prog3 = ``
              BStmt_Jmp (BLE_Label (BL_Address (Imm32 0x102w)))|>;
 
          <|bb_label :=
-             BL_Address_HC (Imm32 0x102w) "abc";
+             BL_Address (Imm32 0x102w);
            bb_statements :=
              [BStmt_Assign (BVar "R0" (BType_Imm Bit64))
                            (BExp_Cast BIExp_UnsignedCast
@@ -103,7 +103,7 @@ val prog3 = ``
              BStmt_Jmp (BLE_Label (BL_Address (Imm32 0x200w))) |>;
 
          <|bb_label :=
-             BL_Address_HC (Imm32 0x200w) "eeee";
+             BL_Address (Imm32 0x200w);
            bb_statements := [];
            bb_last_statement :=
              BStmt_Halt (BExp_Const (Imm32 1w)) |>
