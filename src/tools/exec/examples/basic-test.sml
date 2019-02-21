@@ -10,7 +10,7 @@ val _ = print "loading...";
 
 val name = "my_crazy_program";
 
-val prog = ``
+val prog1 = ``
        BirProgram [
          <|bb_label :=
              BL_Label "entry";
@@ -39,7 +39,7 @@ val prog = ``
              BStmt_Halt (BExp_Const (Imm32 1w)) |>
        ]``;
 
-val prog = ``
+val prog2 = ``
        BirProgram [
          <|bb_label :=
              BL_Label "entry";
@@ -76,6 +76,40 @@ val prog = ``
              BStmt_Halt (BExp_Const (Imm32 0w)) |>
        ]``;
 
+val prog3 = ``
+       BirProgram [
+         <|bb_label :=
+             BL_Label "entry";
+           bb_statements :=
+             [BStmt_Assign (BVar "Mem" (BType_Mem Bit64 Bit8))
+                           (BExp_Store (BExp_Den (BVar "Mem" (BType_Mem Bit64 Bit8)))
+                                       (BExp_Const (Imm64 25w))
+                                       BEnd_LittleEndian
+                                       (BExp_Const (Imm64 25w)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm32 0x102w)))|>;
+
+         <|bb_label :=
+             BL_Address_HC (Imm32 0x102w) "abc";
+           bb_statements :=
+             [BStmt_Assign (BVar "R0" (BType_Imm Bit64))
+                           (BExp_Cast BIExp_UnsignedCast
+                                      (BExp_Load (BExp_Den (BVar "Mem" (BType_Mem Bit64 Bit8)))
+                                                 (BExp_Const (Imm64 24w))
+                                                 BEnd_LittleEndian
+                                                 Bit32)
+                                      Bit64)];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm32 0x200w))) |>;
+
+         <|bb_label :=
+             BL_Address_HC (Imm32 0x200w) "eeee";
+           bb_statements := [];
+           bb_last_statement :=
+             BStmt_Halt (BExp_Const (Imm32 1w)) |>
+       ]``;
+
+val prog = prog3;
 
 val validprog_o = NONE;
 val welltypedprog_o = NONE;
