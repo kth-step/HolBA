@@ -18,6 +18,23 @@ structure bir_execLib =
 struct
 
 
+
+  val log = ref (NONE : TextIO.outstream option);
+
+  fun log_setfile log_filename = log := SOME (TextIO.openOut log_filename);
+
+  fun print_log_with_style sty f s = let
+    val log_ = !log;
+    val _ = case log_ of
+	        NONE       => ()
+	      | SOME log_v => if f then TextIO.output (log_v, s) else ();
+    val _ = print_with_style sty s;
+  in () end;
+
+  val print_log = print_log_with_style [];
+  val print_l = print_log true;
+
+
 (*
   bir_exec_prog_step_n var_eq_thms thm
 
@@ -100,21 +117,21 @@ val _ = debug_trace := 2;
   (* executes one step and then recurses (one BIR statement per step) *)
   fun bir_exec_prog_step_iter step_n_conv thm =
     let
-      val _ = if (!debug_trace > 0) then (print "!") else ();
+      val _ = if (!debug_trace > 0) then (print_l "!") else ();
       val t = (snd o dest_eq o concl) thm;
       val thm1 = (step_n_conv THENC (REWRITE_CONV [OPT_CONS_REWRS])) t;
       val thm2 = TRANS thm thm1;
       val thm = thm2;
       val _ = if (!debug_trace > 1) then (
-                print "\n--------------------------------------\n";
-                print_term t;
-                print "\n--------------------------------------\n"
+                print_l "\n--------------------------------------\n";
+                print_l (term_to_string t);
+                print_l "\n--------------------------------------\n"
               ) else ();
     in
       (bir_exec_prog_step_iter step_n_conv thm)
       handle UNCHANGED =>
       (
-        if (!debug_trace > 0) then (print "done\n") else ();
+        if (!debug_trace > 0) then (print_l "done\n") else ();
         let
           val result = (snd o dest_eq o concl) thm;
           fun check_thm_fun _ = bir_exec_is_state_triple result;
@@ -131,7 +148,7 @@ val _ = debug_trace := 2;
   (* preprocessing and execution *)
   fun bir_exec_prog_gen prog_l_def n_max valid_prog_thm state =
     let
-      val _ = if (!debug_trace > 0) then (print "input validation starts\n") else ();
+      val _ = if (!debug_trace > 0) then (print_l "input validation starts\n") else ();
       (* verify that the inputs are as expected (definition theorem and program theorems) *)
       val prog_l_const = (fst o dest_eq o concl) prog_l_def;
       val prog_const = (mk_BirProgram prog_l_const);
@@ -143,11 +160,11 @@ val _ = debug_trace := 2;
                           "input validation failed"
               else
                 ();
-      val _ = if (!debug_trace > 0) then (print ("done\n")) else ();
-      val _ = if (!debug_trace > 0) then (print ("\n")) else ();
+      val _ = if (!debug_trace > 0) then (print_l ("done\n")) else ();
+      val _ = if (!debug_trace > 0) then (print_l ("\n")) else ();
       
 
-      val _ = if (!debug_trace > 0) then (print "preprocessing starts\n") else ();
+      val _ = if (!debug_trace > 0) then (print_l "preprocessing starts\n") else ();
       val timer = timer_start 0;
 
       val n = numSyntax.mk_numeral (Arbnumcore.fromInt n_max);
@@ -164,21 +181,21 @@ val _ = debug_trace := 2;
       val step_n_conv = (bir_exec_prog_step_n_conv block_thm_map var_eq_thms);
       val d_s = timer_stop timer;
 
-      val _ = if (!debug_trace > 0) then (print ("done\n")) else ();
-      val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
-      val _ = if (!debug_trace > 0) then (print ("\n")) else ();
+      val _ = if (!debug_trace > 0) then (print_l ("done\n")) else ();
+      val _ = if (!debug_trace > 0) then (print_l (" - " ^ d_s ^ " s - \n")) else ();
+      val _ = if (!debug_trace > 0) then (print_l ("\n")) else ();
 
 
-      val _ = if (!debug_trace > 0) then (print "execution starts\n") else ();
+      val _ = if (!debug_trace > 0) then (print_l "execution starts\n") else ();
 
       val timer = timer_start 0;
       val exec_thm =
         (CONV_RULE (RAND_CONV (REWRITE_CONV [CONJUNCT1 REVERSE_DEF])))
         (bir_exec_prog_step_iter step_n_conv thm);
       val d_s = timer_stop timer;
-      val _ = if (!debug_trace > 0) then (print ("done\n")) else ();
-      val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
-      val _ = if (!debug_trace > 0) then (print ("\n")) else ();
+      val _ = if (!debug_trace > 0) then (print_l ("done\n")) else ();
+      val _ = if (!debug_trace > 0) then (print_l (" - " ^ d_s ^ " s - \n")) else ();
+      val _ = if (!debug_trace > 0) then (print_l ("\n")) else ();
 
       val result_t = (snd o dest_eq o concl) exec_thm;
       val (ol, x)  = dest_pair result_t;
@@ -190,13 +207,13 @@ val _ = debug_trace := 2;
   (* function for using execution in scripts, it prints out relevant progress information and the output *)
   fun bir_exec_prog_print name prog n_max validprog_o welltypedprog_o state_o =
     let
-      val _ = print "\n";
-      val _ = print ("executing " ^ name ^ "\n");
-      val _ = print "================================\n";
+      val _ = print_l "\n";
+      val _ = print_l ("executing " ^ name ^ "\n");
+      val _ = print_l "================================\n";
 
       (* determine if a block list definition has to be created, and do so if required *)
-      val _ = print "checking block list definition...\n";
-      val _ = print "--------------------------------\n";
+      val _ = print_l "checking block list definition...\n";
+      val _ = print_l "--------------------------------\n";
       val prog_l = dest_BirProgram prog;
       val prog_l_def = if (is_const prog_l) then
                          let
@@ -208,12 +225,12 @@ val _ = debug_trace := 2;
                        else
                          Define [QUOTE ("bir_exec_prog_" ^ name ^ "_l"),
                                  QUOTE " = ", ANTIQUOTE prog_l];
-      val _ = print "ok\n";
-      val _ = print "\n";
+      val _ = print_l "ok\n";
+      val _ = print_l "\n";
 
       (* if validprog theorem is not supplied, compute it *)
-      val _ = print "program validity...\n";
-      val _ = print "--------------------------------\n";
+      val _ = print_l "program validity...\n";
+      val _ = print_l "--------------------------------\n";
       val timer = timer_start 0;
 
       val valid_prog_thm = case validprog_o of
@@ -221,13 +238,13 @@ val _ = debug_trace := 2;
 	                    | NONE     => bir_exec_valid_prog prog_l_def;
 
       val d_s = timer_stop timer;
-      val _ = print "ok\n";
-      val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
-      val _ = print "\n";
+      val _ = print_l "ok\n";
+      val _ = if (!debug_trace > 0) then (print_l (" - " ^ d_s ^ " s - \n")) else ();
+      val _ = print_l "\n";
 
       (* if welltypedprog theorem is not supplied, compute it *)
-      val _ = print "typechecking...\n";
-      val _ = print "--------------------------------\n";
+      val _ = print_l "typechecking...\n";
+      val _ = print_l "--------------------------------\n";
       val timer = timer_start 0;
 
       val well_typed_prog_thm = case welltypedprog_o of
@@ -235,13 +252,13 @@ val _ = debug_trace := 2;
 				  | NONE     => bir_exec_well_typed_prog prog_l_def;
 
       val d_s = timer_stop timer;
-      val _ = print "ok\n";
-      val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
-      val _ = print "\n";
+      val _ = print_l "ok\n";
+      val _ = if (!debug_trace > 0) then (print_l (" - " ^ d_s ^ " s - \n")) else ();
+      val _ = print_l "\n";
 
       (* if state is not supplied, compute an empty one *)
-      val _ = print "state checking/generation...\n";
-      val _ = print "--------------------------------\n";
+      val _ = print_l "state checking/generation...\n";
+      val _ = print_l "--------------------------------\n";
       val timer = timer_start 0;
 
       val state = case state_o of
@@ -260,51 +277,51 @@ val _ = debug_trace := 2;
                       end;
 
       val d_s = timer_stop timer;
-      val _ = print "ok\n";
-      val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
-      val _ = print "\n";
+      val _ = print_l "ok\n";
+      val _ = if (!debug_trace > 0) then (print_l (" - " ^ d_s ^ " s - \n")) else ();
+      val _ = print_l "\n";
 
       (* now execution *)
-      val _ = print "executing...\n";
-      val _ = print "--------------------------------\n";
+      val _ = print_l "executing...\n";
+      val _ = print_l "--------------------------------\n";
       val timer = timer_start 0;
       val (ol, n, s2) = bir_exec_prog_gen prog_l_def n_max valid_prog_thm state;
       val d_s = timer_stop timer;
-      val _ = print "ok\n";
+      val _ = print_l "ok\n";
 
-      val _ = if (!debug_trace > 0) then (print (" exec total: - " ^ d_s ^ " s - \n")) else ();
-      val _ = print "\n";
+      val _ = if (!debug_trace > 0) then (print_l (" exec total: - " ^ d_s ^ " s - \n")) else ();
+      val _ = print_l "\n";
 
 
       (* now the result *)
-      val _ = print "\n";
-      val _ = print "================================\n";
-      val _ = print "result:\n";
-      val _ = print "================================\n";
-      val _ = print "\n";
+      val _ = print_l "\n";
+      val _ = print_l "================================\n";
+      val _ = print_l "result:\n";
+      val _ = print_l "================================\n";
+      val _ = print_l "\n";
 
-      val _ = print "\n";
-      val _ = print "ol = ";
-      val _ = print_term ol;
-      val _ = print "\n";
+      val _ = print_l "\n";
+      val _ = print_l "ol = ";
+      val _ = print_l (term_to_string ol);
+      val _ = print_l "\n";
 
-      val _ = print "\n";
-      val _ = print "n = ";
-      val _ = print_term n;
-      val _ = print "\n";
+      val _ = print_l "\n";
+      val _ = print_l "n = ";
+      val _ = print_l (term_to_string n);
+      val _ = print_l "\n";
 
-      val _ = print "\n";
-      val _ = print "s2 = ";
-      val _ = print_term s2;
-      val _ = print "\n";
+      val _ = print_l "\n";
+      val _ = print_l "s2 = ";
+      val _ = print_l (term_to_string s2);
+      val _ = print_l "\n";
 
 
 
-      val _ = print "\n";
-      val _ = print "================================\n";
-      val _ = print "done\n";
-      val _ = print "================================\n";
-      val _ = print "\n";
+      val _ = print_l "\n";
+      val _ = print_l "================================\n";
+      val _ = print_l "done\n";
+      val _ = print_l "================================\n";
+      val _ = print_l "\n";
     in
       ()
     end;

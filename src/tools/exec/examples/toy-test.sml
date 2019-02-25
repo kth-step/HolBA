@@ -5,6 +5,7 @@ open bir_execLib;
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 
 
+val _ = log_setfile "toy-test.log";
 
 val _ = print "loading...";
 

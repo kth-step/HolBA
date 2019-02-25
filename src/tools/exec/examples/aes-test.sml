@@ -13,6 +13,8 @@ open aesBinaryTheory;
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 
 
+val _ = log_setfile "aes-test.log";
+
 
 val _ = print "loading...\n";
 
