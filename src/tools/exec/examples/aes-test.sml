@@ -60,7 +60,7 @@ val welltypedprog_o = NONE;
 val state_o = SOME state;
 
 (* set the number of steps *)
-val n_max = 50;
+val n_max = 400 * 15; (* these are not enough steps, this is just an overapproximation of the blocks that have to be executed *)
 
 val _ = print "ok\n"
 
