@@ -113,11 +113,12 @@ val prog = prog3;
 
 val validprog_o = NONE;
 val welltypedprog_o = NONE;
+val state_o = NONE;
 
 val n_max = 50;
 
 val _ = print "ok\n";
 
 
-val _ = bir_exec_prog_print name prog n_max validprog_o welltypedprog_o;
+val _ = bir_exec_prog_print name prog n_max validprog_o welltypedprog_o state_o;
 

@@ -129,7 +129,7 @@ val _ = debug_trace := 2;
 
 
   (* preprocessing and execution *)
-  fun bir_exec_prog_gen prog_l_def n_max valid_prog_thm =
+  fun bir_exec_prog_gen prog_l_def n_max valid_prog_thm state =
     let
       val _ = if (!debug_trace > 0) then (print "input validation starts\n") else ();
       (* verify that the inputs are as expected (definition theorem and program theorems) *)
@@ -151,17 +151,12 @@ val _ = debug_trace := 2;
       val timer = timer_start 0;
 
       val n = numSyntax.mk_numeral (Arbnumcore.fromInt n_max);
-      val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog_const``;
 
       val labels = gen_labels_of_prog prog;
       val block_thm_map = gen_block_thm_map prog_l_def valid_prog_thm;
 
       val vars = gen_vars_of_prog prog;
       val var_eq_thms = gen_var_eq_thms vars;
-
-      val env = bir_exec_env_initd_env vars;
-
-      val state = ``<| bst_pc := ^pc ; bst_environ := ^env ; bst_status := BST_Running |>``;
 
       val exec_term = ``bir_exec_step_n ^prog_const ^state ^n``;
       val thm = REWRITE_CONV [GSYM bir_exec_step_n_acc_eq_thm] exec_term;
@@ -193,7 +188,7 @@ val _ = debug_trace := 2;
     end;
 
   (* function for using execution in scripts, it prints out relevant progress information and the output *)
-  fun bir_exec_prog_print name prog n_max validprog_o welltypedprog_o =
+  fun bir_exec_prog_print name prog n_max validprog_o welltypedprog_o state_o =
     let
       val _ = print "\n";
       val _ = print ("executing " ^ name ^ "\n");
@@ -244,11 +239,36 @@ val _ = debug_trace := 2;
       val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
       val _ = print "\n";
 
+      (* if state is not supplied, compute an empty one *)
+      val _ = print "state checking/generation...\n";
+      val _ = print "--------------------------------\n";
+      val timer = timer_start 0;
+
+      val state = case state_o of
+		    SOME state => state
+		  | NONE       =>
+                      let
+			val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog``;
+
+			val vars = gen_vars_of_prog prog;
+
+			val env = bir_exec_env_initd_env vars;
+
+			val state = ``<| bst_pc := ^pc ; bst_environ := ^env ; bst_status := BST_Running |>``;
+                      in
+                        state
+                      end;
+
+      val d_s = timer_stop timer;
+      val _ = print "ok\n";
+      val _ = if (!debug_trace > 0) then (print (" - " ^ d_s ^ " s - \n")) else ();
+      val _ = print "\n";
+
       (* now execution *)
       val _ = print "executing...\n";
       val _ = print "--------------------------------\n";
       val timer = timer_start 0;
-      val (ol, n, s2) = bir_exec_prog_gen prog_l_def n_max valid_prog_thm;
+      val (ol, n, s2) = bir_exec_prog_gen prog_l_def n_max valid_prog_thm state;
       val d_s = timer_stop timer;
       val _ = print "ok\n";
 

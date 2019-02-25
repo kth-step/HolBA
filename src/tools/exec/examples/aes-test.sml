@@ -4,6 +4,7 @@ open bir_inst_liftingTheory;
 open bir_program_valid_stateTheory;
 
 
+open bir_exec_envLib;
 open bir_execLib;
 
 open aesBinaryTheory;
@@ -38,8 +39,23 @@ val validprog_thm = prove(``
   SIMP_TAC list_ss [bir_program_is_empty_def, prog_l_def]
 );
 
+
+val prog = (mk_BirProgram) prog_l;
+val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog``;
+val vars = gen_vars_of_prog prog;
+val var_eq_thms = gen_var_eq_thms vars;
+
+val env_init = bir_exec_env_initd_env vars;
+val env = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
+          ``bir_env_write (BVar "SP_EL0" (BType_Imm Bit64)) (BVal_Imm (Imm64 0x8000000w)) ^env_init``;
+
+val state = ``<| bst_pc := ^pc ; bst_environ := ^env ; bst_status := BST_Running |>``;
+
+
+
 val validprog_o = SOME validprog_thm;
 val welltypedprog_o = NONE;
+val state_o = SOME state;
 
 (* set the number of steps *)
 val n_max = 50;
@@ -49,6 +65,6 @@ val _ = print "ok\n"
 
 
 (* run the execution *)
-val _ = bir_exec_prog_print name prog_const n_max validprog_o welltypedprog_o;
+val _ = bir_exec_prog_print name prog_const n_max validprog_o welltypedprog_o state_o;
 
 
