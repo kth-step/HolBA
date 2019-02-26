@@ -10,11 +10,12 @@ val _ = new_theory "bir_imm";
 
 (* Immediates can be words of various sizes *)
 val _ = Datatype `bir_imm_t =
-    Imm1  bool[1]
-  | Imm8  bool[8]
-  | Imm16 bool[16]
-  | Imm32 bool[32]
-  | Imm64 bool[64]
+    Imm1   bool[1]
+  | Imm8   bool[8]
+  | Imm16  bool[16]
+  | Imm32  bool[32]
+  | Imm64  bool[64]
+  | Imm128 bool[128]
 `;
 
 
@@ -25,37 +26,41 @@ val _ = Datatype `bir_immtype_t =
   | Bit16
   | Bit32
   | Bit64
+  | Bit128
 `;
 
 val bir_imm_ss = rewrites ((type_rws ``:bir_imm_t``) @ (type_rws ``:bir_immtype_t``));
 
 
 val fold_bir_immtype_THM = store_thm ("fold_bir_immtype_THM",
-  ``!P. ((P Bit1 /\ P Bit8 /\ P Bit16 /\ P Bit32 /\ P Bit64) <=> (!ty. P ty))``,
+  ``!P. ((P Bit1 /\ P Bit8 /\ P Bit16 /\ P Bit32 /\ P Bit64 /\ P Bit128) <=> (!ty. P ty))``,
     SIMP_TAC (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``]) []);
 
 
 val type_of_bir_imm_def = Define `
-  (type_of_bir_imm (Imm1  _) = Bit1) /\
-  (type_of_bir_imm (Imm8  _) = Bit8) /\
-  (type_of_bir_imm (Imm16 _) = Bit16) /\
-  (type_of_bir_imm (Imm32 _) = Bit32) /\
-  (type_of_bir_imm (Imm64 _) = Bit64)`;
+  (type_of_bir_imm (Imm1  _)  = Bit1) /\
+  (type_of_bir_imm (Imm8  _)  = Bit8) /\
+  (type_of_bir_imm (Imm16 _)  = Bit16) /\
+  (type_of_bir_imm (Imm32 _)  = Bit32) /\
+  (type_of_bir_imm (Imm64 _)  = Bit64) /\
+  (type_of_bir_imm (Imm128 _) = Bit128)`;
 
 val size_of_bir_immtype_def = Define `
-  (size_of_bir_immtype Bit1  = 1) /\
-  (size_of_bir_immtype Bit8  = 8) /\
-  (size_of_bir_immtype Bit16 = 16) /\
-  (size_of_bir_immtype Bit32 = 32) /\
-  (size_of_bir_immtype Bit64 = 64)`
+  (size_of_bir_immtype Bit1   = 1) /\
+  (size_of_bir_immtype Bit8   = 8) /\
+  (size_of_bir_immtype Bit16  = 16) /\
+  (size_of_bir_immtype Bit32  = 32) /\
+  (size_of_bir_immtype Bit64  = 64) /\
+  (size_of_bir_immtype Bit128 = 128)`
 
 val bir_immtype_of_size_def = Define `
   bir_immtype_of_size n = (
-         if n = 1  then SOME Bit1
-    else if n = 8  then SOME Bit8
-    else if n = 16 then SOME Bit16
-    else if n = 32 then SOME Bit32
-    else if n = 64 then SOME Bit64
+         if n = 1   then SOME Bit1
+    else if n = 8   then SOME Bit8
+    else if n = 16  then SOME Bit16
+    else if n = 32  then SOME Bit32
+    else if n = 64  then SOME Bit64
+    else if n = 128 then SOME Bit128
     else NONE)`;
 
 val is_valid_bir_immtype_size_def = Define `
@@ -126,26 +131,30 @@ end);
 (*  Transformation between immediates and numbers                            *)
 (* ------------------------------------------------------------------------- *)
 val b2n_def = Define `
-  (b2n ( Imm1  w ) = w2n w) /\
-  (b2n ( Imm8  w ) = w2n w) /\
-  (b2n ( Imm16 w ) = w2n w) /\
-  (b2n ( Imm32 w ) = w2n w) /\
-  (b2n ( Imm64 w ) = w2n w)
+  (b2n ( Imm1   w ) = w2n w) /\
+  (b2n ( Imm8   w ) = w2n w) /\
+  (b2n ( Imm16  w ) = w2n w) /\
+  (b2n ( Imm32  w ) = w2n w) /\
+  (b2n ( Imm64  w ) = w2n w) /\
+  (b2n ( Imm128 w ) = w2n w)
 `;
 
 val n2bs_def = Define `
-  (n2bs n Bit1  = Imm1  (n2w n)) /\
-  (n2bs n Bit8  = Imm8  (n2w n)) /\
-  (n2bs n Bit16 = Imm16 (n2w n)) /\
-  (n2bs n Bit32 = Imm32 (n2w n)) /\
-  (n2bs n Bit64 = Imm64 (n2w n))`
+  (n2bs n Bit1   = Imm1   (n2w n)) /\
+  (n2bs n Bit8   = Imm8   (n2w n)) /\
+  (n2bs n Bit16  = Imm16  (n2w n)) /\
+  (n2bs n Bit32  = Imm32  (n2w n)) /\
+  (n2bs n Bit64  = Imm64  (n2w n)) /\
+  (n2bs n Bit128 = Imm128 (n2w n))`
 
-val n2b_1_def  = Define `n2b_1  n = n2bs n Bit1`;
-val n2b_8_def  = Define `n2b_8  n = n2bs n Bit8`;
-val n2b_16_def = Define `n2b_16 n = n2bs n Bit16`;
-val n2b_32_def = Define `n2b_32 n = n2bs n Bit32`;
-val n2b_64_def = Define `n2b_64 n = n2bs n Bit64`;
+val n2b_1_def   = Define `n2b_1  n  = n2bs n Bit1`;
+val n2b_8_def   = Define `n2b_8  n  = n2bs n Bit8`;
+val n2b_16_def  = Define `n2b_16 n  = n2bs n Bit16`;
+val n2b_32_def  = Define `n2b_32 n  = n2bs n Bit32`;
+val n2b_64_def  = Define `n2b_64 n  = n2bs n Bit64`;
+val n2b_128_def = Define `n2b_128 n = n2bs n Bit128`;
 
+val _ = add_bare_numeral_form (#"y", SOME "n2b_128");
 val _ = add_bare_numeral_form (#"x", SOME "n2b_64");
 val _ = add_bare_numeral_form (#"e", SOME "n2b_32");
 val _ = add_bare_numeral_form (#"d", SOME "n2b_16");
@@ -153,7 +162,7 @@ val _ = add_bare_numeral_form (#"c", SOME "n2b_8");
 val _ = add_bare_numeral_form (#"b", SOME "n2b_1");
 
 val n2b_fixed_DEFS = save_thm ("n2b_fixed_DEFS",
-    LIST_CONJ [n2b_1_def, n2b_8_def, n2b_16_def, n2b_32_def, n2b_64_def]);
+    LIST_CONJ [n2b_1_def, n2b_8_def, n2b_16_def, n2b_32_def, n2b_64_def, n2b_128_def]);
 
 val b2n_n2bs = store_thm ("b2n_n2bs",
   ``!bt n. b2n (n2bs n bt) = MOD_2EXP (size_of_bir_immtype bt) n``,
@@ -168,6 +177,7 @@ val b2n_n2b_fixed = store_thm ("b2n_n2b_fixed",
     (!n. b2n (n2b_16 n) = n MOD 2**16) /\
     (!n. b2n (n2b_32 n) = n MOD 2**32) /\
     (!n. b2n (n2b_64 n) = n MOD 2**64) /\
+    (!n. b2n (n2b_128 n) = n MOD 2**128) /\
     (!n bt. b2n (n2bs n bt) = n MOD 2**(size_of_bir_immtype bt))``,
 
 SIMP_TAC std_ss [n2b_fixed_DEFS, b2n_n2bs, size_of_bir_immtype_def,
@@ -179,7 +189,8 @@ prove (``(!n. b2n (n2b_1 n)  = n MOD 2) /\
     (!n. b2n (n2b_8 n)  = n MOD 2**8) /\
     (!n. b2n (n2b_16 n) = n MOD 2**16) /\
     (!n. b2n (n2b_32 n) = n MOD 2**32) /\
-    (!n. b2n (n2b_64 n) = n MOD 2**64)``, SIMP_TAC std_ss [b2n_n2b_fixed])))
+    (!n. b2n (n2b_64 n) = n MOD 2**64) /\
+    (!n. b2n (n2b_128 n) = n MOD 2**128)``, SIMP_TAC std_ss [b2n_n2b_fixed])))
 
 
 val n2bs_b2n = store_thm ("n2bs_b2n",
@@ -301,21 +312,23 @@ REWRITE_TAC[bir_imm_t_UNIV_SPEC, listTheory.FINITE_LIST_TO_SET]);
 val b2w_def = Define `b2w bi = n2w (b2n bi)`;
 
 val b2w_REWRS = store_thm ("b2w_REWRS",
-``(!w. (b2w ( Imm1  w ) = w2w w)) /\
-  (!w. (b2w ( Imm8  w ) = w2w w)) /\
-  (!w. (b2w ( Imm16 w ) = w2w w)) /\
-  (!w. (b2w ( Imm32 w ) = w2w w)) /\
-  (!w. (b2w ( Imm64 w ) = w2w w))``,
+``(!w. (b2w ( Imm1  w )  = w2w w)) /\
+  (!w. (b2w ( Imm8  w )  = w2w w)) /\
+  (!w. (b2w ( Imm16 w )  = w2w w)) /\
+  (!w. (b2w ( Imm32 w )  = w2w w)) /\
+  (!w. (b2w ( Imm64 w )  = w2w w)) /\
+  (!w. (b2w ( Imm128 w ) = w2w w))``,
 REWRITE_TAC[b2w_def, b2n_def, w2w_def]);
 
 val w2bs_def = Define `w2bs w s = n2bs (w2n w) s`
 
 val w2bs_REWRS = store_thm ("w2bs_REWRS",
-``(!w. (w2bs w Bit1  = Imm1  (w2w w))) /\
-  (!w. (w2bs w Bit8  = Imm8  (w2w w))) /\
-  (!w. (w2bs w Bit16 = Imm16 (w2w w))) /\
-  (!w. (w2bs w Bit32 = Imm32 (w2w w))) /\
-  (!w. (w2bs w Bit64 = Imm64 (w2w w)))``,
+``(!w. (w2bs w Bit1   = Imm1   (w2w w))) /\
+  (!w. (w2bs w Bit8   = Imm8   (w2w w))) /\
+  (!w. (w2bs w Bit16  = Imm16  (w2w w))) /\
+  (!w. (w2bs w Bit32  = Imm32  (w2w w))) /\
+  (!w. (w2bs w Bit64  = Imm64  (w2w w))) /\
+  (!w. (w2bs w Bit128 = Imm128 (w2w w)))``,
 SIMP_TAC std_ss [w2bs_def,n2bs_def, w2w_def]);
 
 
@@ -416,11 +429,12 @@ val v2bs_REWRS = save_thm ("v2bs_REWRS",
     n2bs_def, FORALL_AND_THM, n2w_v2n] v2bs_def);
 
 val b2v_def = Define `
-  (b2v ( Imm1  w ) = w2v w) /\
-  (b2v ( Imm8  w ) = w2v w) /\
-  (b2v ( Imm16 w ) = w2v w) /\
-  (b2v ( Imm32 w ) = w2v w) /\
-  (b2v ( Imm64 w ) = w2v w)
+  (b2v ( Imm1   w ) = w2v w) /\
+  (b2v ( Imm8   w ) = w2v w) /\
+  (b2v ( Imm16  w ) = w2v w) /\
+  (b2v ( Imm32  w ) = w2v w) /\
+  (b2v ( Imm64  w ) = w2v w) /\
+  (b2v ( Imm128 w ) = w2v w)
 `;
 
 val b2v_LENGTH = store_thm ("b2v_LENGTH",

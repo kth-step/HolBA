@@ -11,11 +11,12 @@ struct
 
 
 
-val log_filename = "benchmark.log";
-val log = TextIO.openOut log_filename;
+val log = ref TextIO.stdOut;
+
+fun log_setfile log_filename = log := (TextIO.openOut log_filename);
 
 fun print_log_with_style sty f s = let
-  val _ = if f then TextIO.output (log, s) else ();
+  val _ = if f then TextIO.output (!log, s) else ();
   val _ = print_with_style sty s;
 in () end;
 

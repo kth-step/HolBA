@@ -1,0 +1,30 @@
+# includes
+# ----------------------------------
+INCLUDES   = ../../../../lib \
+   $(HOLDIR)/examples/l3-machine-code/common \
+   $(HOLDIR)/examples/l3-machine-code/arm8/model \
+   $(HOLDIR)/examples/l3-machine-code/arm8/step \
+   $(HOLDIR)/examples/l3-machine-code/m0/model \
+   $(HOLDIR)/examples/l3-machine-code/m0/step
+
+
+# configuration
+# ----------------------------------
+SMLFILES   = 
+
+TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
+
+HOLHEAP    = ../../../../lib/HolBALib-heap
+NEWHOLHEAP = HolBA_l3-heap
+
+HEAPINC    = $(HOLDIR)/examples/l3-machine-code/arm8/step/arm8_stepTheory \
+             $(HOLDIR)/examples/l3-machine-code/arm8/step/arm8_stepLib \
+             $(HOLDIR)/examples/l3-machine-code/m0/step/m0_stepTheory \
+             $(HOLDIR)/examples/l3-machine-code/m0/step/m0_stepLib
+
+SELFTEST_DEP = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../../../Holmakefile.inc

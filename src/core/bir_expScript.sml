@@ -1,7 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
-open bir_imm_expTheory bir_mem_expTheory bir_envTheory;
+open bir_exp_immTheory bir_exp_memTheory bir_envTheory;
 
 val _ = new_theory "bir_exp";
 
@@ -63,8 +63,9 @@ val bir_eval_memeq_def = Define `
   (bir_eval_memeq _ _ = BVal_Unknown)`;
 
 val bir_eval_ifthenelse_def = Define `
-  (bir_eval_ifthenelse (BVal_Imm (Imm1 cw)) e1 e2 =
-     if (cw = 1w) then e1 else e2) /\
+  (bir_eval_ifthenelse (BVal_Imm (Imm1 cw)) v1 v2 =
+     if (type_of_bir_val v1 <> type_of_bir_val v2) then BVal_Unknown else
+       if (cw = 1w) then v1 else v2) /\
   (bir_eval_ifthenelse _ _ _ = BVal_Unknown)`;
 
 val bir_eval_load_def = Define `
@@ -182,9 +183,10 @@ CONJ_TAC >> (
 
 
 val bir_eval_ifthenelse_REWRS = store_thm ("bir_eval_ifthenelse_REWRS",
-``(!c e1 e2. bir_eval_ifthenelse (BVal_Imm c) e1 e2 =
+``(!c v1 v2. bir_eval_ifthenelse (BVal_Imm c) v1 v2 =
      if (type_of_bir_imm c = Bit1) then (
-       if (c = Imm1 1w) then e1 else e2
+       if (type_of_bir_val v1 <> type_of_bir_val v2) then BVal_Unknown else
+         if (c = Imm1 1w) then v1 else v2
      ) else BVal_Unknown) /\
   (!c e1 e2. bir_eval_ifthenelse BVal_Unknown e1 e2 = BVal_Unknown) /\
   (!at vt mmap e1 e2. bir_eval_ifthenelse (BVal_Mem at vt mmap) e1 e2 = BVal_Unknown)``,
@@ -194,22 +196,25 @@ Cases_on `c` >> (
 ));
 
 val bir_eval_ifthenelse_REWRS_Unknown = store_thm ("bir_eval_ifthenelse_REWRS_Unknown",
-``(!ec e1 e2.
-     (type_of_bir_val ec <> SOME (BType_Imm Bit1)) ==>
-     (bir_eval_ifthenelse ec e1 e2 = BVal_Unknown)) /\
-  (!ec e1 e2.
-     ~(bir_val_is_Bool ec) ==>
-     (bir_eval_ifthenelse ec e1 e2 = BVal_Unknown))``,
+``(!vc v1 v2.
+     (type_of_bir_val vc <> SOME (BType_Imm Bit1)) ==>
+     (bir_eval_ifthenelse vc v1 v2 = BVal_Unknown)) /\
+  (!vc v1 v2.
+     ~(bir_val_is_Bool vc) ==>
+     (bir_eval_ifthenelse vc v1 v2 = BVal_Unknown)) /\
+  (!vc v1 v2.
+     (type_of_bir_val v1 <> type_of_bir_val v2) ==>
+     (bir_eval_ifthenelse vc v1 v2 = BVal_Unknown))``,
 
-REPEAT STRIP_TAC >> Cases_on `ec` >> (
+REPEAT STRIP_TAC >> Cases_on `vc` >> (
   FULL_SIMP_TAC (std_ss++bir_type_ss++bir_imm_ss) [type_of_bir_imm_def, type_of_bir_val_def,
     bir_eval_ifthenelse_REWRS, bir_val_checker_REWRS]
 ));
 
 val bir_eval_ifthenelse_TF_EQ = store_thm ("bir_eval_ifthenelse_TF_EQ",
-``!c e.
-     bir_eval_ifthenelse c e e =
-     if (bir_val_is_Bool c) then e else BVal_Unknown``,
+``!c v.
+     bir_eval_ifthenelse c v v =
+     if (bir_val_is_Bool c) then v else BVal_Unknown``,
 Cases_on `c` >> (
   SIMP_TAC (std_ss++bir_imm_ss++bir_type_ss) [type_of_bir_imm_def, bir_eval_ifthenelse_REWRS,
     bir_val_checker_REWRS]

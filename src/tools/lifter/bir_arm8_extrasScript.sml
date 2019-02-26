@@ -6,6 +6,7 @@ open bir_lifter_general_auxTheory;
 open bir_lifting_machinesTheory;
 open bir_interval_expTheory bir_extra_expsTheory
 open bitstringTheory
+open bir_exp_immTheory
 
 (* In order to produce decent BIR code from step theorems,
    the concepts described by the step theorems need to be
@@ -1052,9 +1053,9 @@ val arm8_count_leading_eq_bir = store_thm ("arm8_count_leading_eq_bir",
   REWRITE_TAC [arm8Theory.CountLeadingZeroBits_def,
                arm8Theory.HighestSetBit_def,
                arm8Theory.CountLeadingSignBits_def,
-               bir_imm_expTheory.bir_CountLeadingZeroBits_def,
-               bir_imm_expTheory.bir_HighestSetBit_def,
-               bir_imm_expTheory.bir_CountLeadingSignBits_def]
+               bir_CountLeadingZeroBits_def,
+               bir_HighestSetBit_def,
+               bir_CountLeadingSignBits_def]
 );
 
 
@@ -1062,14 +1063,14 @@ val arm8_count_leading_zero = store_thm ("arm8_count_leading_zero",
  ``!w:'a word. (n2w (arm8$CountLeadingZeroBits w)) = bir_word_countleadingzeros w``,
 
   REWRITE_TAC [arm8_count_leading_eq_bir,
-               bir_imm_expTheory.bir_word_countleadingzeros_def]
+               bir_word_countleadingzeros_def]
 );
 
 val arm8_count_leading_sign = store_thm ("arm8_count_leading_sign",
  ``!w:'a word. (n2w (arm8$CountLeadingSignBits w)) = bir_word_countleadingsigns w``,
 
   REWRITE_TAC [arm8_count_leading_eq_bir,
-               bir_imm_expTheory.bir_word_countleadingsigns_def]
+               bir_word_countleadingsigns_def]
 );
 
 val cast_thm = prove (``

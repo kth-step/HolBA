@@ -9,5 +9,10 @@
 *.exe
 *-heap
 
+Holmakefile
+Makefile.local
+
 tempdir
 
+# IDEs
+.vscode

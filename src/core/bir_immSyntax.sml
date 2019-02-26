@@ -22,14 +22,15 @@ val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
 
 val bir_immtype_t_ty = mk_type ("bir_immtype_t", []);
 val bir_immtype_t_list = TypeBase.constructors_of bir_immtype_t_ty;
-val _ = if ((length bir_immtype_t_list) = 5) then () else
+val _ = if ((length bir_immtype_t_list) = 6) then () else
     (failwith "number of bir_immtype_t constructors changed, please adapt")
 
-val (Bit1_tm,  is_Bit1)  = syntax_fns0 "Bit1";
-val (Bit8_tm,  is_Bit8)  = syntax_fns0 "Bit8";
-val (Bit16_tm, is_Bit16) = syntax_fns0 "Bit16";
-val (Bit32_tm, is_Bit32) = syntax_fns0 "Bit32";
-val (Bit64_tm, is_Bit64) = syntax_fns0 "Bit64";
+val (Bit1_tm,   is_Bit1)   = syntax_fns0 "Bit1";
+val (Bit8_tm,   is_Bit8)   = syntax_fns0 "Bit8";
+val (Bit16_tm,  is_Bit16)  = syntax_fns0 "Bit16";
+val (Bit32_tm,  is_Bit32)  = syntax_fns0 "Bit32";
+val (Bit64_tm,  is_Bit64)  = syntax_fns0 "Bit64";
+val (Bit128_tm, is_Bit128) = syntax_fns0 "Bit128";
 
 
 (* bir_imm_t *)
@@ -41,11 +42,12 @@ val _ = if ((length bir_imm_t_list) = (length bir_immtype_t_list)) then () else
     (failwith "number of bir_imm_t constructors changed, please adapt");
 
 
-val (Imm1_tm,  mk_Imm1,  dest_Imm1,  is_Imm1)  = syntax_fns1 "Imm1";
-val (Imm8_tm,  mk_Imm8,  dest_Imm8,  is_Imm8)  = syntax_fns1 "Imm8";
-val (Imm16_tm, mk_Imm16, dest_Imm16, is_Imm16) = syntax_fns1 "Imm16";
-val (Imm32_tm, mk_Imm32, dest_Imm32, is_Imm32) = syntax_fns1 "Imm32";
-val (Imm64_tm, mk_Imm64, dest_Imm64, is_Imm64) = syntax_fns1 "Imm64";
+val (Imm1_tm,   mk_Imm1,   dest_Imm1,   is_Imm1)   = syntax_fns1 "Imm1";
+val (Imm8_tm,   mk_Imm8,   dest_Imm8,   is_Imm8)   = syntax_fns1 "Imm8";
+val (Imm16_tm,  mk_Imm16,  dest_Imm16,  is_Imm16)  = syntax_fns1 "Imm16";
+val (Imm32_tm,  mk_Imm32,  dest_Imm32,  is_Imm32)  = syntax_fns1 "Imm32";
+val (Imm64_tm,  mk_Imm64,  dest_Imm64,  is_Imm64)  = syntax_fns1 "Imm64";
+val (Imm128_tm, mk_Imm128, dest_Imm128, is_Imm128) = syntax_fns1 "Imm128";
 
 
 
