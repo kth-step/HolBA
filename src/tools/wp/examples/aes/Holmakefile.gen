@@ -1,16 +1,16 @@
 # includes
 # ----------------------------------
-INCLUDES   = ./cfg ./lifter ./wp
+INCLUDES   = ../../wp
 
 
 # configuration
 # ----------------------------------
 SMLFILES   = 
 
-TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
+TARGETS    = 
 
-HOLHEAP    = ./lifter/HolBALifter-heap
-NEWHOLHEAP = HolBATools-heap
+HOLHEAP    = ../../HolBAWp-heap
+NEWHOLHEAP = 
 
 HEAPINC    = 
 
@@ -19,4 +19,4 @@ SELFTEST_DEP =
 
 # included lines follow
 # ----------------------------------
-include ../Holmakefile.inc
+include ../../../../Holmakefile.inc

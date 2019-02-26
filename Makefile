@@ -6,8 +6,11 @@ endif
 SRCDIR     = $(CURDIR)/src
 
 EXAMPLES   = $(SRCDIR)/tools/lifter/examples \
-             $(SRCDIR)/tools/cfg/examples
-BENCHMARKS = $(SRCDIR)/tools/lifter/benchmark
+             $(SRCDIR)/tools/cfg/examples \
+             $(SRCDIR)/tools/wp/examples
+
+BENCHMARKS = $(SRCDIR)/tools/lifter/benchmark \
+             $(SRCDIR)/tools/wp/benchmark
 
 # recursive wildcard function
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
