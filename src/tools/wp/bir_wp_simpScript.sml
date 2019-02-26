@@ -2993,7 +2993,8 @@ val n2bs_eq_bitstrings_thm = prove(``
                           GSYM (SIMP_RULE (srw_ss()) [] (INST_TYPE [alpha |-> ``:8``] bitstringTheory.w2v_v2w)),
                           GSYM (SIMP_RULE (srw_ss()) [] (INST_TYPE [alpha |-> ``:16``] bitstringTheory.w2v_v2w)),
                           GSYM (SIMP_RULE (srw_ss()) [] (INST_TYPE [alpha |-> ``:32``] bitstringTheory.w2v_v2w)),
-                          GSYM (SIMP_RULE (srw_ss()) [] (INST_TYPE [alpha |-> ``:64``] bitstringTheory.w2v_v2w))
+                          GSYM (SIMP_RULE (srw_ss()) [] (INST_TYPE [alpha |-> ``:64``] bitstringTheory.w2v_v2w)),
+                          GSYM (SIMP_RULE (srw_ss()) [] (INST_TYPE [alpha |-> ``:128``] bitstringTheory.w2v_v2w))
                         ];
   in
     Cases_on `vt` >> (
