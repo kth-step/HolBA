@@ -1,13 +1,13 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../wp
+INCLUDES   = ../../../wp
 
 
 # configuration
 # ----------------------------------
-SMLFILES   = 
+SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
 
-TARGETS    = 
+TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
 HOLHEAP    = ../../HolBAWp-heap
 NEWHOLHEAP = 
