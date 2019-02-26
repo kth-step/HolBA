@@ -12,7 +12,7 @@ open bir_valuesTheory;
 open bir_expTheory;
 open bir_program_env_orderTheory;
 open bir_wp_simpTheory;
-open bir_expSyntax bir_immSyntax bir_envSyntax bir_imm_expSyntax bir_mem_expSyntax;
+open bir_expSyntax bir_immSyntax bir_envSyntax bir_exp_immSyntax bir_exp_memSyntax;
 
 (* look at core/bir_expLib *)
 
