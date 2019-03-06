@@ -1,0 +1,22 @@
+# includes
+# ----------------------------------
+INCLUDES   = ../l3
+
+
+# configuration
+# ----------------------------------
+SMLFILES   = 
+
+TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
+
+HOLHEAP    = ../l3/HolBA_l3-heap
+NEWHOLHEAP = HolBA_l3mod-heap
+
+HEAPINC    = 
+
+SELFTEST_DEP = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../../../Holmakefile.inc
