@@ -35,9 +35,12 @@ benchmarks: main $(BENCHMARKS)
 $(BENCHMARKS):
 	cd $@ && $(HOLMAKE)
 
+gendoc:
+	cd doc/gen; ./dependencies.py
+
 cleanslate:
 	git clean -f -d -x src
 
-.PHONY: main cleanslate
+.PHONY: main gendoc cleanslate
 .PHONY: examples $(EXAMPLES)
 .PHONY: benchmarks $(BENCHMARKS)

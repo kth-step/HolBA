@@ -1,0 +1,250 @@
+bir_program_labels
+==============================================
+- num_to_hex_string_fix_width w n
+- (b2s ( ImmXY  w ) = num_to_hex_string_fix_width XY/4 (w2n w))
+- s2b s
+- BL_Label_of_addr (i:bir_imm_t) s
+- bir_immediate_of_label_string s
+- (IS_BL_Label (BL_Label _) = T)
+- (IS_BL_Address (BL_Address _) = T)
+- BL_Address_HC b (hc:string)
+- dest_BL_Label (BL_Label l)
+- dest_BL_Address (BL_Address b)
+- bir_label_addresses_of_program_labels l
+- bir_label_addresses_of_program p
+- bir_program_addr_labels_sorted p
+- bir_program_string_labels_guarded p
+
+
+
+bir_temp_vars
+==============================================
+- bir_temp_var_name vn
+- bir_is_temp_var_name vn
+- bir_temp_var use_temp (BVar vn ty)
+
+
+
+bir_extra_exps
+==============================================
+- BExp_Align sz p e
+- BExp_Aligned sz p e
+- BExp_word_reverse_1_XY  we
+- word_reverse_8_XY (w:wordXY)
+- word_extract_byte (w:'a word) (n:num)
+- BExp_word_reverse_8_XY e1
+- word_reverse_16_XY (w:wordXY)
+- word_extract_16bit (w:'a word) (n:num)
+- BExp_word_reverse_16_XY e1
+- word_reverse_32_XY (w:wordXY)
+- BExp_word_reverse_32_XY e1
+- BExp_MSB sz e
+- BExp_LSB e
+- BExp_word_bit sz e n
+- BExp_word_bit_exp sz e ne
+- BExp_ror_exp sz e1 e2
+- BExp_ror sz e n
+- BExp_rol_exp sz e1 e2
+- BExp_rol sz e n
+- word_shift_extract (w1:'a word) (w2:'a word) n
+- BExp_extr sz e1 e2 n
+
+
+
+bir_bool_exp
+==============================================
+- bir_val_true  = BVal_Imm   (Imm1 1w)
+- bir_val_false = BVal_Imm   (Imm1 0w)
+- bir_mk_bool_val b
+- bir_exp_true  = BExp_Const (Imm1 1w)
+- bir_exp_false = BExp_Const (Imm1 0w)
+- bir_is_bool_exp e
+- bir_is_bool_exp_env env e
+- bir_eval_bool_exp env e
+- bir_bin_exp_GET_BOOL_OPER bop
+- bir_bin_pred_GET_BOOL_OPER pop
+- bir_unary_exp_GET_BOOL_OPER uop
+
+
+
+bir_nzcv_exp
+==============================================
+- awc_BIR_C/V/N/Z w1 w2 c
+- nzcv_BIR_SUB_C/V/N/Z w1 w2
+- nzcv_BIR_ADD_C/V/N/Z w1 w2
+- nzcv_SUB_COND_CODE_EQ w1 w2
+- nzcv_SUB_COND_CODE_NE w1 w2
+- nzcv_SUB_COND_CODE_CS_HS w1 w2
+- nzcv_SUB_COND_CODE_CC_LO w1 w2
+- nzcv_SUB_COND_CODE_MI w1 w2
+- nzcv_SUB_COND_CODE_PL w1 w2
+- nzcv_SUB_COND_CODE_VS w1 w2
+- nzcv_SUB_COND_CODE_VC w1 w2
+- nzcv_SUB_COND_CODE_HI w1 w2
+- nzcv_SUB_COND_CODE_LS w1 w2
+- nzcv_SUB_COND_CODE_GE w1 w2
+- nzcv_SUB_COND_CODE_LT w1 w2
+- nzcv_SUB_COND_CODE_GT w1 w2
+- nzcv_SUB_COND_CODE_LE w1 w2
+- nzcv_SUB_COND_CODE_AL w1 w2
+- BExp_nzcv_SUB_C/V/N/Z
+- BExp_nzcv_ADD_C/V/N/Z
+- BExp_ADD_WITH_CARRY_C/V/N/Z
+
+
+
+bir_interval_exp
+==============================================
+- word_interval_t = WI_end ('a word) ('a word)
+- WI_size s sz
+- WI_wf (WI_end b e)
+- WI_MEM w (WI_end b e)
+- WI_ELEM_LIST b n
+- WI_is_empty i
+- WI_wfe i
+- WI_is_sub i1 i2
+- WI_overlap i1 i2
+- WI_distinct i1 i2
+- WI_distinct_MEM_UNCHANGED_COMPUTE (mb : 'a word) (me : 'a word) (wb : 'a word) sz
+- BExp_unchanged_mem_interval_distinct sz mb_n me_n wb_e isz
+- FUNS_EQ_OUTSIDE_WI_size (b:'a word) (sz : num) (f1 : 'a word -> 'b) (f2 : 'a word -> 'b)
+
+
+
+bir_exp_substitutions
+==============================================
+- bir_exp_subst_var s v
+- bir_exp_subst s exp
+- bir_exp_subst1 v ve
+
+
+
+bir_exp_congruences
+==============================================
+- bir_eval_exp_EQUIV e1 e2
+- bir_exp_CONG e1 e2
+- bir_exp_CONG_WEAK e1 e2
+
+
+
+bir_exp_tautologies
+==============================================
+- bir_exp_is_taut e
+- bir_exp_is_satisfiable e
+
+
+
+bir_program_valid_state
+==============================================
+- bir_is_valid_labels p
+- bir_program_is_empty (BirProgram p)
+- bir_is_valid_program p
+- bir_is_valid_pc p pc
+- bir_is_valid_state p st
+
+
+
+bir_program_multistep_props
+==============================================
+- bir_exec_infinite_steps_fun_PC_COND_SET pc_cond p state
+- bir_pc_cond_impl (cf1, pc_cond1) (cf2, pc_cond2)
+- bir_exec_steps_observe_list p st step_no
+
+
+
+bir_program_env_order
+==============================================
+- no defines
+
+
+
+bir_program_vars
+==============================================
+- bir_varset_COMPL vs
+- bir_state_EQ_FOR_VARS vs st1 st2
+
+
+
+bir_program_termination
+==============================================
+- bir_stmtE_is_jmp_to_label env l stmt
+- bir_stmt_is_jmp_to_label env l st
+- bir_stmtB_is_declartion st
+- bir_stmt_is_declartion st
+- bir_program_contains_declarations p
+
+
+
+bir_subprogram
+==============================================
+- bir_is_subprogram (BirProgram p_sub) (BirProgram p)
+- bir_program_eq (BirProgram p1) (BirProgram p2)
+- bir_program_combine (BirProgram p1) (BirProgram p2)
+- bir_jumped_outside_termination_cond (p1 : 'a bir_program_t) (p2 : 'a bir_program_t) st1 st2
+
+
+
+bir_program_blocks
+==============================================
+- bir_states_EQ_EXCEPT_PC st1 st2
+- bir_observation_states_EQ_EXCEPT_PC ost1 ost2
+- bir_exec_stmtsB stmts (l, c, st)
+- bir_get_current_block p pc
+- bir_block_size bl
+- bir_exec_block (p:'a bir_program_t) (bl:'a bir_block_t) st
+
+
+
+bir_program_no_observe
+==============================================
+- bir_stmtB_is_observe st
+- bir_stmt_is_observe st
+- bir_block_contains_observe bl
+- bir_program_contains_observe (BirProgram p)
+- bir_exec_stmtsB_state stmts (c, st)
+- bir_exec_block_state p bl st
+
+
+
+bir_update_block
+==============================================
+- bir_updateB_desc_t = BUpdateDescB bir_var_t bir_exp_t bir_val_t bool
+- bir_updateB_desc_var d
+- bir_updateB_desc_temp_var d
+- bir_updateB_desc_exp d
+- bir_updateB_desc_value d
+- bir_updateB_desc_value d
+- bir_vars_of_updateB_desc d
+- bir_updateB_desc_OK env d
+- bir_update_blockB_desc_OK env d
+- bir_update_blockB_STEP1 d
+- bir_update_blockB_STEP2 d
+- bir_update_blockB d
+- bir_updateE_desc_t
+- bir_updateE_val_t
+- bir_updateE_SEM d
+- bir_state_pc_is_at_label p l_new st
+- BUpdateValE_SEM st p d
+- BUpdateValE_EXEC p d
+- bir_updateE_desc_var d
+- bir_updateE_desc_exp d
+- bir_updateE_desc_value d
+- bir_updateE_desc_final_exp d
+- bir_updateE_desc_final_exp_vars d
+- bir_updateE_desc_remove_var d
+- bir_updateE_desc_OK env d
+- bir_update_block_desc_OK env eup d
+- bir_update_blockE_INIT d
+- bir_update_blockE_FINAL d
+- bir_update_block l eup d
+- bir_assert_desc_t = BAssertDesc bir_exp_t bool
+- bir_assert_desc_OK env d
+- bir_assert_desc_exp d
+- bir_assert_desc_value d
+- bir_assert_block al
+- bir_update_assert_block l al eup d
+
+
+
+
+
