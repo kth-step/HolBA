@@ -7,8 +7,8 @@ SRCDIR     = $(CURDIR)/src
 
 EXAMPLES   = $(SRCDIR)/tools/lifter/examples \
              $(SRCDIR)/tools/cfg/examples    \
-             $(SRCDIR)/tools/wp/examples     \
-             $(SRCDIR)/tools/exec/examples
+             $(SRCDIR)/tools/exec/examples   \
+             $(SRCDIR)/tools/wp/examples
 
 BENCHMARKS = $(SRCDIR)/tools/lifter/benchmark \
              $(SRCDIR)/tools/wp/benchmark
@@ -18,6 +18,9 @@ rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
 HOLMAKEFILE_GENS = $(call rwildcard,src/,Holmakefile.gen)
 HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
+
+all:
+	@echo "Please use sub-rules to build HolBA (main, examples, benchmarks, gendoc,...)."
 
 main: $(HOLMAKEFILES)
 	cd $(SRCDIR) && $(HOLMAKE)
