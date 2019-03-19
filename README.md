@@ -1,64 +1,119 @@
 # Software versions
 
-HOL4 commit: d0a474d1d1cba7c32acb6056a6288c44c2f1a75b
-PolyML (e.g. standard Ubuntu) 5.6
+- HOL4 commit: `d0a474d1d1cba7c32acb6056a6288c44c2f1a75b`
+- PolyML (e.g. standard Ubuntu) 5.6
 
 
 # How to compile
 
-* use `{HOLDIR}/bin/Holmake` in `src`
-* if the previous step fails, try to clean your git working directory by `make cleanslate` in the project root directory
+* First, run `make [main|examples|benchmarks|...]` in the root directory,
+  according to your needs.
+* Then, go in the directory you want to use and run `{HOLDIR}/bin/Holmake`.
+* If one of the previous steps fails, try to clean your Git working directory by
+  `make cleanslate` in the project root directory. **Be careful though**, this
+  command is quite dangerous as it can easily eat your files (`Holmakefile`s are
+  auto-generated from `Holmakefile.gen` files, so they are removed by this
+  command).
 
 
-# Branches
-## Branch `master`
+# Branch policy
 
-* core functionality for BIR language
-  * `core`
-  * `core-props`
-  * `tools/cfg` (non-proof-producing)
-* the binary lifter
-  * `tools/l3`
-  * `tools/lifter`
+### `master` branch
 
+`master` is the standard branch where **completed features** are merged:
+ - no cheat
+ - must correctly compile
+ - self tests must succeed
+ - code should be tested
+ - bug-fixes are ok
+ - 1 review is needed in order to merge into `master`
 
-## Branch `wp`
+Follow these instructions whenever you merge to master:
+  - `grep` for "cheat"
+  - check that the `README` is up to date (especially tool status)
+  - find a reviewer for your Pull Request
 
-* weakest precondition propagation and related substitution simplification prototype for verification
-  * `tools/wp`
+### `dev` branch
 
-
-## Branch `benchmarks`
-
-* some binaries and disassembly files of binaries for benchmarking of the `lifter` and `wp`, and also parts of the resulting data
-  * `tools/lifter/benchmark/binaries` (non-proof-producing)
-  * `tools/wp/benchmark/binaries` (non-proof-producing)
-
-
-## Branch policy
-
-* one branch per feature
-  * commit in a feature branch must compile
-  * Holmake must work
+* `dev` is the branch where every feature is available, but no necessarily
+  finalized:
   * Can cheat
-  * Code can be commented
+  * Code can be commented out
+  * **Holmake must work**
+  * bug-fixes are ok
 
-* master is the standard branch where completed features are merged
-  * bug-fixes ok
-  * must correctly compile
-  * self tests must succeed
-  * should be tested
-  * merge to development 1 review (Andreas or Roberto, not the same one that developed the feature)
-  * no cheat
+However, **no development happens on this branch**, but rather on separate
+feature branches.
 
-* if you want to violate the rules for temporary development or experiments (only for feature branches)
-  * fork
-  * merge in feature branch after history rewrite
+**In order to prevent mayhem**, define good interfaces for your code, so that
+development won't break existing code.
 
-* suggestions
-  * for long running feature branches keep in sync with base branch and rebase if easily possible
+### Feature branches
+
+Every "somewhat" working tool should be available in the `dev` branch, but new
+features or any development must go on new branches.
+ - branch names must be short and explicit (prefer explicit over short)
+ - every feature branch should involve small developments
+ - rebase feature branches on `dev` **often**, by using `git rebase` or `git merge`
+ - **merge feature branches on `dev` often**: work on small features
+
+Some rules for feature branches:
+ - commits in a feature branch must compile, unless explicitly stated in commit
+   message (with the prefix `[WIP] ...` for instance)
+ - further subbranch to do implementation experiments (keep them small)
+
+If you want to violate the rules for temporary development or experiments (only
+for feature branches):
+  1. Fork
+  2. Do a good mess
+  3. Merge in feature branch after history rewrite
+
+
+# Folders and organization
+
+```
+├─ doc
+└─ src
+   ├─ core: Core BIR language
+   ├─ examples: to showcase HolBA features
+   ├─ lib: 
+   └─ tools
+      ├─ cfg: Control Flow Graph utilities
+      │  └─ examples: CFG-related small examples
+      ├─ exec: Concrete execution
+      │  └─ examples: Concrete execution-related small examples
+      ├─ lifter: Proof-producing binary lifter
+      │  ├─ benchmark
+      │  ├─ examples: Lifter-related small examples
+      └─ wp: Weakest Precondition propagation
+         ├─ benchmark
+         └─ examples: WP-related small examples
+```
+
+Tools status:
+- `tools/cfg`:
+  * non proof-producing
+  * no clear interface yet
+  * GraphViz exporter working
+- `tools/exec`:
+  * proof-producing
+  * unstable BIR evaluation utilities
+  * quite easy to use
+- `tools/lifter`:
+  * merged in `master` => very stable
+  * proof-producing
+  * widely used in examples
+  * supports: ARMv8, Cortex-M0
+- `tools/wp`:
+  * proof-producing
+  * experimental implementation
+    * includes prototype of substitution simplification
+  * interface in progress
+
+
+# Coding style
 
 * HOL source code
-  * Spaces, no tabs
-  * No unicode
-  * name_surname_etc_etc
+  - Spaces, no tabs
+  - No unicode
+  - `snake_case` (e.g. `bir_number_of_mem_splits_def`)
