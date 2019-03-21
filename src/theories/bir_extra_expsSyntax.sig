@@ -57,8 +57,8 @@ sig
    val is_BExp_rol                      : term -> bool
    val is_BExp_extr                     : term -> bool
 
-   val mk_BExp_Align                    : (term * term) -> term
-   val mk_BExp_Aligned                  : (term * term) -> term
+   val mk_BExp_Align                    : (term * term * term) -> term
+   val mk_BExp_Aligned                  : (term * term * term) -> term
    val mk_BExp_word_reverse_1_8         : term -> term
    val mk_BExp_word_reverse_1_16        : term -> term
    val mk_BExp_word_reverse_1_32        : term -> term
@@ -75,7 +75,7 @@ sig
    val mk_BExp_word_reverse_32_128      : term -> term
    val mk_BExp_word_reverse_64_128      : term -> term
    val mk_BExp_MSB                      : (term * term) -> term
-   val mk_BExp_LSB                      : (term * term) -> term
+   val mk_BExp_LSB                      : term -> term
    val mk_BExp_word_bit                 : (term * term * term) -> term
    val mk_BExp_word_bit_exp             : (term * term * term) -> term
    val mk_BExp_ror_exp                  : (term * term * term) -> term
@@ -84,8 +84,8 @@ sig
    val mk_BExp_rol                      : (term * term * term) -> term
    val mk_BExp_extr                     : (term * term * term * term) -> term
 
-   val dest_BExp_Align                  : term -> (term * term)
-   val dest_BExp_Aligned                : term -> (term * term)
+   val dest_BExp_Align                  : term -> (term * term * term)
+   val dest_BExp_Aligned                : term -> (term * term * term)
    val dest_BExp_word_reverse_1_8       : term -> term
    val dest_BExp_word_reverse_1_16      : term -> term
    val dest_BExp_word_reverse_1_32      : term -> term
@@ -102,7 +102,7 @@ sig
    val dest_BExp_word_reverse_32_128    : term -> term
    val dest_BExp_word_reverse_64_128    : term -> term
    val dest_BExp_MSB                    : term -> (term * term)
-   val dest_BExp_LSB                    : term -> (term * term)
+   val dest_BExp_LSB                    : term -> term
    val dest_BExp_word_bit               : term -> (term * term * term)
    val dest_BExp_word_bit_exp           : term -> (term * term * term)
    val dest_BExp_ror_exp                : term -> (term * term * term)

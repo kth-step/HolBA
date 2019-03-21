@@ -1,31 +1,34 @@
 structure bslSyntax :> bslSyntax =
 struct
 
-  open HolKernel Parse boolLib bossLib;
-  open Abbrev;
+  open HolKernel Parse boolLib bossLib
+  open Abbrev
 
   local
 
-  open bir_envSyntax;
-  open bir_expSyntax;
-  open bir_exp_immSyntax;
-  open bir_exp_memSyntax;
-  open bir_immSyntax;
-  open bir_programSyntax;
-  open bir_typing_expSyntax;
-  open bir_valuesSyntax;
-  open bir_extra_expsSyntax;
+  open bir_envSyntax
+  open bir_expSyntax
+  open bir_exp_immSyntax
+  open bir_exp_memSyntax
+  open bir_immSyntax
+  open bir_programSyntax
+  open bir_typing_expSyntax
+  open bir_valuesSyntax
+  open bir_extra_expsSyntax
 
-  val ERR = Feedback.mk_HOL_ERR "bslSyntax";
-  val wrap_exn = Feedback.wrap_exn "bslSyntax";
+  val ERR = Feedback.mk_HOL_ERR "bslSyntax"
+  val wrap_exn = Feedback.wrap_exn "bslSyntax"
 
-  fun curry2 f = (fn a => fn b => f (a, b));
-  fun curry3 f = (fn a => fn b => fn c => f (a, b, c));
-  fun curry4 f = (fn a => fn b => fn c => fn d => f (a, b, c, d));
+  fun curry2 f = (fn a => fn b => f (a, b))
+  fun curry3 f = (fn a => fn b => fn c => f (a, b, c))
+  fun curry4 f = (fn a => fn b => fn c => fn d => f (a, b, c, d))
 
-  fun uncurry2 f = (fn (a, b) => f a b);
-  fun uncurry3 f = (fn (a, b, c) => f a b c);
-  fun uncurry4 f = (fn (a, b, c, d) => f a b c d);
+  fun curry_fst_of_3 f = (fn a => fn (b, c) => f (a, b, c))
+  fun curry_fst_of_4 f = (fn a => fn (b, c, d) => f (a, b, c, d))
+
+  fun uncurry2 f = (fn (a, b) => f a b)
+  fun uncurry3 f = (fn (a, b, c) => f a b c)
+  fun uncurry4 f = (fn (a, b, c, d) => f a b c d)
 
   fun app1th2 f a = (fn b => f a b)
   fun app2th2 f b = (fn a => f a b)
@@ -36,6 +39,14 @@ struct
   fun app2th4 f b = (fn a => fn c => fn d => f a b c d)
   fun app3th4 f c = (fn a => fn b => fn d => f a b c d)
   fun app4th4 f d = (fn a => fn b => fn c => f a b c d)
+
+  local
+    open bir_program_labelsTheory
+    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program_labels"
+    val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop
+  in
+    val (BL_Address_HC_tm, mk_BL_Address_HC, dest_BL_Address_HC, is_BL_Address_HC) = syntax_fns2 "BL_Address_HC"
+  end
 
   in
 
@@ -110,6 +121,18 @@ struct
   val blabel_addr32 = blabel_addrii 32
   val blabel_addr64 = blabel_addrii 64
   val blabel_addr128 = blabel_addrii 128
+  fun blabel_addrimm_s a s = mk_BL_Address_HC (a, (stringSyntax.fromMLstring s))
+    handle e => raise wrap_exn "blabel_addrimm_s" e
+  fun blabel_addr_s a s = mk_BL_Address_HC (a, (stringSyntax.fromMLstring s))
+    handle e => raise wrap_exn "blabel_addr_s" e
+  fun blabel_addrii_s a b s = mk_BL_Address_HC ((mk_Imm_of_int a b), (stringSyntax.fromMLstring s))
+    handle e => raise wrap_exn "blabel_addrii_s" e
+  val blabel_addr1_s = blabel_addrii_s 1
+  val blabel_addr8_s = blabel_addrii_s 8
+  val blabel_addr16_s = blabel_addrii_s 16
+  val blabel_addr32_s = blabel_addrii_s 32
+  val blabel_addr64_s = blabel_addrii_s 64
+  val blabel_addr128_s = blabel_addrii_s 128
 
   (* Label expressions (:bir_label_exp_t) *)
   val belabel = mk_BLE_Label
@@ -127,6 +150,15 @@ struct
   val belabel_addr128 = belabel o blabel_addr128
   fun belabel_addrii a b = belabel (blabel_addrii a b)
   val belabel_addrimm = belabel o blabel_addrimm
+  val belabel_addrimm_s = curry (belabel o (uncurry blabel_addrimm_s))
+  val belabel_addr_s = curry (belabel o (uncurry blabel_addr_s))
+  val belabel_addrii_s = curry3 (belabel o (uncurry3 blabel_addrii_s))
+  val belabel_addr1_s = curry (belabel o (uncurry blabel_addr1_s))
+  val belabel_addr8_s = curry (belabel o (uncurry blabel_addr8_s))
+  val belabel_addr16_s = curry (belabel o (uncurry blabel_addr16_s))
+  val belabel_addr32_s = curry (belabel o (uncurry blabel_addr32_s))
+  val belabel_addr64_s = curry (belabel o (uncurry blabel_addr64_s))
+  val belabel_addr128_s = curry (belabel o (uncurry blabel_addr128_s))
 
   (* Basic statements (:bir_stmt_basic_t) *)
   val bdeclare = mk_BStmt_Declare
@@ -141,7 +173,7 @@ struct
   (* End statements (:bir_stmt_end_t) *)
   val bjmp = mk_BStmt_Jmp
     handle e => raise wrap_exn "bjmp" e
-  val bcjmp = curry3 mk_BStmt_CJmp
+  val bcjmp = mk_BStmt_CJmp
     handle e => raise wrap_exn "bcjmp" e
   val bhalt = mk_BStmt_Halt
     handle e => raise wrap_exn "bhalt" e
@@ -190,8 +222,67 @@ struct
   val bden = mk_BExp_Den
     handle e => raise wrap_exn "bden" e
 
+(*
+  (* Memory loads (BExp_Load: bir_exp_t) *)
+  val bload = curry4 mk_BExp_Load
+    handle e => raise wrap_exn "bload" e
+  fun bloadi a b c d = bload a b c (gen_mk_BType_Imm d)
+    handle e => raise wrap_exn "bloadi" e
+  val bload1 = app4th4 bloadi 1
+  val bload8 = app4th4 bloadi 8
+  val bload16 = app4th4 bloadi 16
+  val bload32 = app4th4 bloadi 32
+  val bload64 = app4th4 bloadi 64
+  val bload128 = app4th4 bloadi 128
+*)
+
   (* Casts (BExp_Cast: bir_exp_t) *)
-  (* Nothing for the moment *)
+  fun bcast c imm e = mk_BExp_Cast (c, e, imm)
+    handle e => raise wrap_exn "bcast" e
+  fun bcasti a b c = bcast a (bir_immtype_t_of_size b) c
+    handle e => raise wrap_exn "bcasti" e
+  val bcast1 = app2th3 bcasti 1
+  val bcast8 = app2th3 bcasti 8
+  val bcast16 = app2th3 bcasti 16
+  val bcast32 = app2th3 bcasti 32
+  val bcast64 = app2th3 bcasti 64
+  val bcast128 = app2th3 bcasti 128
+
+  val bucast = bcast BIExp_UnsignedCast_tm
+  val bucasti = bcasti BIExp_UnsignedCast_tm
+  val bucast1 = bucasti 1
+  val bucast8 = bucasti 8
+  val bucast16 = bucasti 16
+  val bucast32 = bucasti 32
+  val bucast64 = bucasti 64
+  val bucast128 = bucasti 128
+
+  val bscast = bcast BIExp_SignedCast_tm
+  val bscasti = bcasti BIExp_SignedCast_tm
+  val bscast1 = bscasti 1
+  val bscast8 = bscasti 8
+  val bscast16 = bscasti 16
+  val bscast32 = bscasti 32
+  val bscast64 = bscasti 64
+  val bscast128 = bscasti 128
+
+  val bhighcast = bcast BIExp_HighCast_tm
+  val bhighcasti = bcasti BIExp_HighCast_tm
+  val bhighcast1 = bhighcasti 1
+  val bhighcast8 = bhighcasti 8
+  val bhighcast16 = bhighcasti 16
+  val bhighcast32 = bhighcasti 32
+  val bhighcast64 = bhighcasti 64
+  val bhighcast128 = bhighcasti 128
+
+  val blowcast = bcast BIExp_LowCast_tm
+  val blowcasti = bcasti BIExp_LowCast_tm
+  val blowcast1 = blowcasti 1
+  val blowcast8 = blowcasti 8
+  val blowcast16 = blowcasti 16
+  val blowcast32 = blowcasti 32
+  val blowcast64 = blowcasti 64
+  val blowcast128 = blowcasti 128
 
   (* Unary expressions (BExp_UnaryExp: bir_exp_t) *)
   val bunexp = curry2 mk_BExp_UnaryExp
@@ -266,7 +357,7 @@ struct
   val bslel = bbinpredl BIExp_SignedLessOrEqual_tm
 
   (* Memory equality (BExp_MemEq: bir_exp_t) *)
-  val bmemeq = curry2 mk_BExp_MemEq
+  val bmemeq = mk_BExp_MemEq
     handle e => raise wrap_exn "bmemeq" e
 
   (* Conditionals (BExp_IfThenElse: bir_exp_t) *)
@@ -280,7 +371,7 @@ struct
   (* Memory loads (BExp_Load: bir_exp_t) *)
   val bload = curry4 mk_BExp_Load
     handle e => raise wrap_exn "bload" e
-  fun bloadi a b c d = bload a b c (gen_mk_BType_Imm d)
+  fun bloadi a b c d = bload a b c (bir_immtype_t_of_size d)
     handle e => raise wrap_exn "bloadi" e
   val bload1 = app4th4 bloadi 1
   val bload8 = app4th4 bloadi 8
@@ -320,8 +411,11 @@ struct
   val bstore_ne = app3th4 bstore BEnd_NoEndian_tm
 
   (* Extra expressions (:bir_exp_t) *)
-  val balign = mk_BExp_Align
-  val baligned = mk_BExp_Aligned
+  val balign = curry_fst_of_3 mk_BExp_Align
+  val baligni = (balign o bir_immtype_t_of_size)
+  val baligned = curry_fst_of_3 mk_BExp_Aligned
+  val balignedi = (baligned o bir_immtype_t_of_size)
+
   val bword_reverse_1_8 = mk_BExp_word_reverse_1_8
   val bword_reverse_1_16 = mk_BExp_word_reverse_1_16
   val bword_reverse_1_32 = mk_BExp_word_reverse_1_32
@@ -337,15 +431,27 @@ struct
   val bword_reverse_32_64 = mk_BExp_word_reverse_32_64
   val bword_reverse_32_128 = mk_BExp_word_reverse_32_128
   val bword_reverse_64_128 = mk_BExp_word_reverse_64_128
-  val bmsb = mk_BExp_MSB
+
+  val bmsb = curry mk_BExp_MSB
+  val bmsbi = (bmsb o bir_immtype_t_of_size)
   val blsb = mk_BExp_LSB
-  val bword_bit = mk_BExp_word_bit
-  val bword_bit_exp = mk_BExp_word_bit_exp
-  val bror = mk_BExp_ror_exp
-  val bror_exp = mk_BExp_ror
-  val brol = mk_BExp_rol_exp
-  val brol_exp = mk_BExp_rol
-  val bextr = mk_BExp_extr
+
+  val bword_bit = curry_fst_of_3 mk_BExp_word_bit
+  val bword_biti = (bword_bit o bir_immtype_t_of_size)
+  val bword_bit_exp = curry_fst_of_3 mk_BExp_word_bit_exp
+  val bword_bit_expi = (bword_bit_exp o bir_immtype_t_of_size)
+
+  val bror = curry_fst_of_3 mk_BExp_ror
+  val brori = (bror o bir_immtype_t_of_size)
+  val bror_exp = curry_fst_of_3 mk_BExp_ror_exp
+  val bror_expi = (bror_exp o bir_immtype_t_of_size)
+  val brol = curry_fst_of_3 mk_BExp_rol
+  val broli = (brol o bir_immtype_t_of_size)
+  val brol_exp = curry_fst_of_3 mk_BExp_rol_exp
+  val brol_expi = (brol_exp o bir_immtype_t_of_size)
+
+  val bextr = curry_fst_of_4 mk_BExp_extr
+  val bextri = (bextr o bir_immtype_t_of_size)
 
   (****************************************************************************)
   (* Term <-> BSL                                                             *)

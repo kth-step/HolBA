@@ -33,86 +33,86 @@ sig
      *
      * bvar: string -> bir_type_t -> bir_var_t
      *
-     * bvarimm: int -> string -> bir_var_t
-     * bvarimm1: string -> bir_var_t
-     * bvarimm8: string -> bir_var_t
-     * bvarimm16: string -> bir_var_t
-     * bvarimm32: string -> bir_var_t
-     * bvarimm64: string -> bir_var_t
-     * bvarimm128: string -> bir_var_t
+     * bvarimm:     int -> string -> bir_var_t
+     * bvarimm1:    string -> bir_var_t
+     * bvarimm8:    string -> bir_var_t
+     * bvarimm16:   string -> bir_var_t
+     * bvarimm32:   string -> bir_var_t
+     * bvarimm64:   string -> bir_var_t
+     * bvarimm128:  string -> bir_var_t
      *
-     * bvarmem: (int * int) -> string -> bir_var_t
-     * bvarmem8_1: string -> bir_var_t
-     * bvarmem16_1: string -> bir_var_t
-     * bvarmem32_1: string -> bir_var_t
-     * bvarmem64_1: string -> bir_var_t
-     * bvarmem128_1: string -> bir_var_t
-     * bvarmem8_8: string -> bir_var_t
-     * bvarmem16_8: string -> bir_var_t
-     * bvarmem32_8: string -> bir_var_t
-     * bvarmem64_8: string -> bir_var_t
-     * bvarmem128_8: string -> bir_var_t
-     * bvarmem8_16: string -> bir_var_t
-     * bvarmem16_16: string -> bir_var_t
-     * bvarmem32_16: string -> bir_var_t
-     * bvarmem64_16: string -> bir_var_t
-     * bvarmem128_16: string -> bir_var_t
-     * bvarmem8_32: string -> bir_var_t
-     * bvarmem16_32: string -> bir_var_t
-     * bvarmem32_32: string -> bir_var_t
-     * bvarmem64_32: string -> bir_var_t
-     * bvarmem128_32: string -> bir_var_t
-     * bvarmem8_64: string -> bir_var_t
-     * bvarmem16_64: string -> bir_var_t
-     * bvarmem32_64: string -> bir_var_t
-     * bvarmem64_64: string -> bir_var_t
-     * bvarmem128_64: string -> bir_var_t
-     * bvarmem8_128: string -> bir_var_t
-     * bvarmem16_128: string -> bir_var_t
-     * bvarmem32_128: string -> bir_var_t
-     * bvarmem64_128: string -> bir_var_t
-     * bvarmem128_128: string -> bir_var_t
+     * bvarmem:         (int * int) -> string -> bir_var_t
+     * bvarmem8_1:      string -> bir_var_t
+     * bvarmem16_1:     string -> bir_var_t
+     * bvarmem32_1:     string -> bir_var_t
+     * bvarmem64_1:     string -> bir_var_t
+     * bvarmem128_1:    string -> bir_var_t
+     * bvarmem8_8:      string -> bir_var_t
+     * bvarmem16_8:     string -> bir_var_t
+     * bvarmem32_8:     string -> bir_var_t
+     * bvarmem64_8:     string -> bir_var_t
+     * bvarmem128_8:    string -> bir_var_t
+     * bvarmem8_16:     string -> bir_var_t
+     * bvarmem16_16:    string -> bir_var_t
+     * bvarmem32_16:    string -> bir_var_t
+     * bvarmem64_16:    string -> bir_var_t
+     * bvarmem128_16:   string -> bir_var_t
+     * bvarmem8_32:     string -> bir_var_t
+     * bvarmem16_32:    string -> bir_var_t
+     * bvarmem32_32:    string -> bir_var_t
+     * bvarmem64_32:    string -> bir_var_t
+     * bvarmem128_32:   string -> bir_var_t
+     * bvarmem8_64:     string -> bir_var_t
+     * bvarmem16_64:    string -> bir_var_t
+     * bvarmem32_64:    string -> bir_var_t
+     * bvarmem64_64:    string -> bir_var_t
+     * bvarmem128_64:   string -> bir_var_t
+     * bvarmem8_128:    string -> bir_var_t
+     * bvarmem16_128:   string -> bir_var_t
+     * bvarmem32_128:   string -> bir_var_t
+     * bvarmem64_128:   string -> bir_var_t
+     * bvarmem128_128:  string -> bir_var_t
      *)
-    val bvar: string -> term -> term
+    val bvar:           string -> term -> term
 
-    val bvarimm: int -> string -> term
-    val bvarimm1: string -> term
-    val bvarimm8: string -> term
-    val bvarimm16: string -> term
-    val bvarimm32: string -> term
-    val bvarimm64: string -> term
-    val bvarimm128: string -> term
+    val bvarimm:        int -> string -> term
+    val bvarimm1:       string -> term
+    val bvarimm8:       string -> term
+    val bvarimm16:      string -> term
+    val bvarimm32:      string -> term
+    val bvarimm64:      string -> term
+    val bvarimm128:     string -> term
 
-    val bvarmem: (int * int) -> string -> term
-    val bvarmem8_1: string -> term
-    val bvarmem16_1: string -> term
-    val bvarmem32_1: string -> term
-    val bvarmem64_1: string -> term
-    val bvarmem128_1: string -> term
-    val bvarmem8_8: string -> term
-    val bvarmem16_8: string -> term
-    val bvarmem32_8: string -> term
-    val bvarmem64_8: string -> term
-    val bvarmem128_8: string -> term
-    val bvarmem8_16: string -> term
-    val bvarmem16_16: string -> term
-    val bvarmem32_16: string -> term
-    val bvarmem64_16: string -> term
-    val bvarmem128_16: string -> term
-    val bvarmem8_32: string -> term
-    val bvarmem16_32: string -> term
-    val bvarmem32_32: string -> term
-    val bvarmem64_32: string -> term
-    val bvarmem128_32: string -> term
-    val bvarmem8_64: string -> term
-    val bvarmem16_64: string -> term
-    val bvarmem32_64: string -> term
-    val bvarmem64_64: string -> term
-    val bvarmem128_64: string -> term
-    val bvarmem8_128: string -> term
-    val bvarmem16_128: string -> term
-    val bvarmem32_128: string -> term
-    val bvarmem64_128: string -> term
+    val bvarmem:        (int * int) -> string -> term
+    val bvarmem8_1:     string -> term
+    val bvarmem16_1:    string -> term
+    val bvarmem32_1:    string -> term
+    val bvarmem64_1:    string -> term
+    val bvarmem128_1:   string -> term
+    val bvarmem8_8:     string -> term
+    val bvarmem16_8:    string -> term
+    val bvarmem32_8:    string -> term
+    val bvarmem64_8:    string -> term
+    val bvarmem128_8:   string -> term
+    val bvarmem8_16:    string -> term
+    val bvarmem16_16:   string -> term
+    val bvarmem32_16:   string -> term
+    val bvarmem64_16:   string -> term
+    val bvarmem128_16:  string -> term
+    val bvarmem8_32:    string -> term
+    val bvarmem16_32:   string -> term
+    val bvarmem32_32:   string -> term
+    val bvarmem64_32:   string -> term
+    val bvarmem128_32:  string -> term
+    val bvarmem8_64:    string -> term
+    val bvarmem16_64:   string -> term
+    val bvarmem32_64:   string -> term
+    val bvarmem64_64:   string -> term
+    val bvarmem128_64:  string -> term
+    val bvarmem8_128:   string -> term
+    val bvarmem16_128:  string -> term
+    val bvarmem32_128:  string -> term
+    val bvarmem64_128:  string -> term
     val bvarmem128_128: string -> term
 
     (**************************************************************************)
@@ -131,31 +131,40 @@ sig
      * blabel_addr: bool_t list  -> bir_label_t
      * blabel_addr: 'a word_t    -> bir_label_t
      *
-     * blabel_addr1: int -> bir_label_t
-     * blabel_addr8: int -> bir_label_t
-     * blabel_addr16: int -> bir_label_t
-     * blabel_addr32: int -> bir_label_t
-     * blabel_addr64: int -> bir_label_t
-     * blabel_addr128: int -> bir_label_t
+     * blabel_addr1:    int -> bir_label_t
+     * blabel_addr8:    int -> bir_label_t
+     * blabel_addr16:   int -> bir_label_t
+     * blabel_addr32:   int -> bir_label_t
+     * blabel_addr64:   int -> bir_label_t
+     * blabel_addr128:  int -> bir_label_t
      *
-     * blabel_addrii: int (length) -> int (value) -> bir_label_t
-     * blabel_addrimm: bir_imm_t -> bir_label_t
+     * blabel_addrii:   int (length) -> int (value) -> bir_label_t
+     * blabel_addrimm:  bir_imm_t -> bir_label_t
      *)
-    val blabel_str: string -> term
-    val blabel_addr: term -> term
-    val blabel_addr1: int -> term
-    val blabel_addr8: int -> term
-    val blabel_addr16: int -> term
-    val blabel_addr32: int -> term
-    val blabel_addr64: int -> term
-    val blabel_addr128: int -> term
-    val blabel_addrii: int -> int -> term
-    val blabel_addrimm: term -> term
+    val blabel_str:       string -> term
+    val blabel_addr:      term -> term
+    val blabel_addr1:     int -> term
+    val blabel_addr8:     int -> term
+    val blabel_addr16:    int -> term
+    val blabel_addr32:    int -> term
+    val blabel_addr64:    int -> term
+    val blabel_addr128:   int -> term
+    val blabel_addrii:    int -> int -> term
+    val blabel_addrimm:   term -> term
+    val blabel_addr_s:    term -> string -> term
+    val blabel_addr1_s:   int -> string -> term
+    val blabel_addr8_s:   int -> string -> term
+    val blabel_addr16_s:  int -> string -> term
+    val blabel_addr32_s:  int -> string -> term
+    val blabel_addr64_s:  int -> string -> term
+    val blabel_addr128_s: int -> string -> term
+    val blabel_addrii_s:  int -> int -> string -> term
+    val blabel_addrimm_s: term -> string -> term
 
     (* Label expressions (:bir_label_exp_t)
      *
-     * belabel: bir_label_t -> bir_label_exp_t
-     * belabel_expr: bir_exp_t -> bir_label_exp_t
+     * belabel:       bir_label_t -> bir_label_exp_t
+     * belabel_expr:  bir_exp_t -> bir_label_exp_t
      *
      * The following are the same than bir_label_t-producing ones, but produce
      * bir_label_exp_t instead.
@@ -166,29 +175,38 @@ sig
      * belabel_addr: bool_t list  -> bir_label_exp_t
      * belabel_addr: 'a word_t    -> bir_label_exp_t
      *
-     * belabel_addr1: int -> bir_label_exp_t
-     * belabel_addr8: int -> bir_label_exp_t
-     * belabel_addr16: int -> bir_label_exp_t
-     * belabel_addr32: int -> bir_label_exp_t
-     * belabel_addr64: int -> bir_label_exp_t
+     * belabel_addr1:   int -> bir_label_exp_t
+     * belabel_addr8:   int -> bir_label_exp_t
+     * belabel_addr16:  int -> bir_label_exp_t
+     * belabel_addr32:  int -> bir_label_exp_t
+     * belabel_addr64:  int -> bir_label_exp_t
      * belabel_addr128: int -> bir_label_exp_t
      *
-     * belabel_addrii: int (length) -> int (value) -> bir_label_exp_t
+     * belabel_addrii:  int (length) -> int (value) -> bir_label_exp_t
      * belabel_addrimm: bir_imm_t -> bir_label_exp_t
      *)
     val belabel: term -> term
     val belabel_expr: term -> term
 
-    val belabel_str: string -> term
-    val belabel_addr: term -> term
-    val belabel_addr1: int -> term
-    val belabel_addr8: int -> term
-    val belabel_addr16: int -> term
-    val belabel_addr32: int -> term
-    val belabel_addr64: int -> term
-    val belabel_addr128: int -> term
-    val belabel_addrii: int -> int -> term
-    val belabel_addrimm: term -> term
+    val belabel_str:        string -> term
+    val belabel_addr:       term -> term
+    val belabel_addr1:      int -> term
+    val belabel_addr8:      int -> term
+    val belabel_addr16:     int -> term
+    val belabel_addr32:     int -> term
+    val belabel_addr64:     int -> term
+    val belabel_addr128:    int -> term
+    val belabel_addrii:     int -> int -> term
+    val belabel_addrimm:    term -> term
+    val belabel_addr_s:     term -> string -> term
+    val belabel_addr1_s:    int -> string -> term
+    val belabel_addr8_s:    int -> string -> term
+    val belabel_addr16_s:   int -> string -> term
+    val belabel_addr32_s:   int -> string -> term
+    val belabel_addr64_s:   int -> string -> term
+    val belabel_addr128_s:  int -> string -> term
+    val belabel_addrii_s:   int -> int -> string -> term
+    val belabel_addrimm_s:  term -> string -> term
 
     (* Basic statements (:bir_stmt_basic_t)
      * | BStmt_Declare    => bdeclare
@@ -197,10 +215,10 @@ sig
      * | BStmt_Assume     => bassume
      * | BStmt_Observe    => TODO
      *
-     * bdeclare: bir_var_t -> bir_stmt_basic_t
-     * bassign: (bir_var_t * bir_exp_t) -> bir_stmt_basic_t
-     * bassert: bir_exp_t -> bir_stmt_basic_t
-     * bassume: bir_exp_t -> bir_stmt_basic_t
+     * bdeclare:  bir_var_t -> bir_stmt_basic_t
+     * bassign:   (bir_var_t * bir_exp_t) -> bir_stmt_basic_t
+     * bassert:   bir_exp_t -> bir_stmt_basic_t
+     * bassume:   bir_exp_t -> bir_stmt_basic_t
      *
      * Note: BStmt_Observe hasn't been added due to lack of use case. Please add
      * it if you need it. In the meantime, use bir_programSyntax.
@@ -215,12 +233,12 @@ sig
      * | BStmt_CJmp       => bcjmp
      * | BStmt_Halt       => bhalt
      *
-     * bjmp: bir_label_exp_t -> bir_stmt_end_t
-     * bcjmp: bir_exp_t -> bir_label_exp_t -> bir_label_exp_t -> bir_stmt_end_t
+     * bjmp:  bir_label_exp_t -> bir_stmt_end_t
+     * bcjmp: (bir_exp_t * bir_label_exp_t * bir_label_exp_t) -> bir_stmt_end_t
      * bhalt: bir_exp_t -> bir_stmt_end_t
      *)
     val bjmp: term -> term
-    val bcjmp: term -> term -> term -> term
+    val bcjmp: (term * term * term) -> term
     val bhalt: term -> term
 
     (* Statements (:bir_stmt_t)
@@ -241,8 +259,8 @@ sig
      *
      * Note: If you don't use BStmt_Observe, use any hol_type, or just 'a.
      *)
-    val bblock: hol_type -> (term * term list * term) -> term
-    val bblocks: hol_type -> (term * term list * term) list -> term
+    val bblock:   hol_type -> (term * term list * term) -> term
+    val bblocks:  hol_type -> (term * term list * term) list -> term
 
     (* Programs (:bir_program_t)
      *
@@ -266,31 +284,31 @@ sig
      *  - bconstimm and bconstii will fail if the word lenght isn't supported
      *    in BIR.
      *
-     * bconst: bool_t       -> bir_exp_t
-     * bconst: bool_t list  -> bir_exp_t
-     * bconst: 'a word_t    -> bir_exp_t
+     * bconst:    bool_t       -> bir_exp_t
+     * bconst:    bool_t list  -> bir_exp_t
+     * bconst:    'a word_t    -> bir_exp_t
      *
-     * bconst1: int -> bir_exp_t
-     * bconst8: int -> bir_exp_t
-     * bconst16: int -> bir_exp_t
-     * bconst32: int -> bir_exp_t
-     * bconst64: int -> bir_exp_t
+     * bconst1:   int -> bir_exp_t
+     * bconst8:   int -> bir_exp_t
+     * bconst16:  int -> bir_exp_t
+     * bconst32:  int -> bir_exp_t
+     * bconst64:  int -> bir_exp_t
      * bconst128: int -> bir_exp_t
      *
-     * bconstii: int (length) -> int (value) -> bir_exp_t
+     * bconstii:  int (length) -> int (value) -> bir_exp_t
      * bconstimm: bir_imm_t -> bir_exp_t
      *)
-    val bconst: term -> term
+    val bconst:     term -> term
 
-    val bconst1: int -> term
-    val bconst8: int -> term
-    val bconst16: int -> term
-    val bconst32: int -> term
-    val bconst64: int -> term
-    val bconst128: int -> term
+    val bconst1:    int -> term
+    val bconst8:    int -> term
+    val bconst16:   int -> term
+    val bconst32:   int -> term
+    val bconst64:   int -> term
+    val bconst128:  int -> term
 
-    val bconstii: int -> int -> term
-    val bconstimm: term -> term
+    val bconstii:   int -> int -> term
+    val bconstimm:  term -> term
 
     (* Den (BExp_Den: bir_exp_t)
      *
@@ -299,10 +317,100 @@ sig
     val bden: term -> term
 
     (* Casts (BExp_Cast: bir_exp_t)
+     * | BIExp_UnsignedCast   => BIExp_UnsignedCast_tm
+     * | BIExp_SignedCast     => BIExp_SignedCast_tm
+     * | BIExp_HighCast       => BIExp_HighCast_tm
+     * | BIExp_LowCast        => BIExp_LowCast_tm
      *
-     * bcast: bir_cast_t -> bir_exp_t -> bir_immtype_t -> bir_exp_t
+     * bcast:     bir_cast_t -> bir_immtype_t -> bir_exp_t -> bir_exp_t
+     * bcasti:    bir_cast_t -> int           -> bir_exp_t -> bir_exp_t
+     * bcast1:    bir_cast_t                  -> bir_exp_t -> bir_exp_t
+     * bcast8:    bir_cast_t                  -> bir_exp_t -> bir_exp_t
+     * bcast16:   bir_cast_t                  -> bir_exp_t -> bir_exp_t
+     * bcast32:   bir_cast_t                  -> bir_exp_t -> bir_exp_t
+     * bcast64:   bir_cast_t                  -> bir_exp_t -> bir_exp_t
+     * bcast128:  bir_cast_t                  -> bir_exp_t -> bir_exp_t
+     *
+     * bucast:                  bir_immtype_t -> bir_exp_t -> bir_exp_t
+     * bucasti:                 int           -> bir_exp_t -> bir_exp_t
+     * bucast1:                                  bir_exp_t -> bir_exp_t
+     * bucast8:                                  bir_exp_t -> bir_exp_t
+     * bucast16:                                 bir_exp_t -> bir_exp_t
+     * bucast32:                                 bir_exp_t -> bir_exp_t
+     * bucast64:                                 bir_exp_t -> bir_exp_t
+     * bucast128:                                bir_exp_t -> bir_exp_t
+     *
+     * bscast:                  bir_immtype_t -> bir_exp_t -> bir_exp_t
+     * bscasti:                 int           -> bir_exp_t -> bir_exp_t
+     * bscast1:                                  bir_exp_t -> bir_exp_t
+     * bscast8:                                  bir_exp_t -> bir_exp_t
+     * bscast16:                                 bir_exp_t -> bir_exp_t
+     * bscast32:                                 bir_exp_t -> bir_exp_t
+     * bscast64:                                 bir_exp_t -> bir_exp_t
+     * bscast128:                                bir_exp_t -> bir_exp_t
+     *
+     * bhighcast:               bir_immtype_t -> bir_exp_t -> bir_exp_t
+     * bhighcasti:              bint          -> bir_exp_t -> bir_exp_t
+     * bhighcast1:                               bir_exp_t -> bir_exp_t
+     * bhighcast8:                               bir_exp_t -> bir_exp_t
+     * bhighcast16:                              bir_exp_t -> bir_exp_t
+     * bhighcast32:                              bir_exp_t -> bir_exp_t
+     * bhighcast64:                              bir_exp_t -> bir_exp_t
+     * bhighcast128:                             bir_exp_t -> bir_exp_t
+     *
+     * blowcast:                bir_immtype_t -> bir_exp_t -> bir_exp_t
+     * blowcasti:               int           -> bir_exp_t -> bir_exp_t
+     * blowcast1:                                bir_exp_t -> bir_exp_t
+     * blowcast8:                                bir_exp_t -> bir_exp_t
+     * blowcast16:                               bir_exp_t -> bir_exp_t
+     * blowcast32:                               bir_exp_t -> bir_exp_t
+     * blowcast64:                               bir_exp_t -> bir_exp_t
+     * blowcast128:                              bir_exp_t -> bir_exp_t
      *)
-    (*val bcast: term -> term -> term -> term*)
+    val bcast: term -> term -> term -> term
+    val bcasti: term -> int -> term -> term
+    val bcast1: term -> term -> term
+    val bcast8: term -> term -> term
+    val bcast16: term -> term -> term
+    val bcast32: term -> term -> term
+    val bcast64: term -> term -> term
+    val bcast128: term -> term -> term
+    
+    val bucast: term -> term -> term
+    val bucasti: int -> term -> term
+    val bucast1: term -> term
+    val bucast8: term -> term
+    val bucast16: term -> term
+    val bucast32: term -> term
+    val bucast64: term -> term
+    val bucast128: term -> term
+    
+    val bscast: term -> term -> term
+    val bscasti: int -> term -> term
+    val bscast1: term -> term
+    val bscast8: term -> term
+    val bscast16: term -> term
+    val bscast32: term -> term
+    val bscast64: term -> term
+    val bscast128: term -> term
+    
+    val bhighcast: term -> term -> term
+    val bhighcasti: int -> term -> term
+    val bhighcast1: term -> term
+    val bhighcast8: term -> term
+    val bhighcast16: term -> term
+    val bhighcast32: term -> term
+    val bhighcast64: term -> term
+    val bhighcast128: term -> term
+    
+    val blowcast: term -> term -> term
+    val blowcasti: int -> term -> term
+    val blowcast1: term -> term
+    val blowcast8: term -> term
+    val blowcast16: term -> term
+    val blowcast32: term -> term
+    val blowcast64: term -> term
+    val blowcast128: term -> term
 
     (* Unary expressions (BExp_UnaryExp: bir_exp_t)
      * | BIExp_ChangeSign => bchsign
@@ -317,11 +425,11 @@ sig
      * bclz: bir_exp_t -> bir_exp_t
      * bcls: bir_exp_t -> bir_exp_t
      *)
-    val bunexp: term -> term -> term
-    val bchsign: term -> term
-    val bnot: term -> term
-    val bclz: term -> term
-    val bcls: term -> term
+    val bunexp:   term -> term -> term
+    val bchsign:  term -> term
+    val bnot:     term -> term
+    val bclz:     term -> term
+    val bcls:     term -> term
 
     (* Binary expressions (BExp_BinExp: bir_exp_t)
      * | BIExp_And              => band bandl
@@ -369,36 +477,36 @@ sig
      * brshiftl:    bir_exp_t list -> bir_exp_t
      * bsrshiftl:   bir_exp_t list -> bir_exp_t
      *)
-    val bbinexp: term -> (term * term) -> term
-    val bbinexpl: term -> term list -> term
+    val bbinexp:    term -> (term * term) -> term
+    val bbinexpl:   term -> term list -> term
 
-    val band: (term * term) -> term
-    val bor: (term * term) -> term
-    val bxor: (term * term) -> term
-    val bplus: (term * term) -> term
-    val bminus: (term * term) -> term
-    val bmult: (term * term) -> term
-    val bdiv: (term * term) -> term
-    val bsdiv: (term * term) -> term
-    val bmod: (term * term) -> term
-    val bsmod: (term * term) -> term
-    val blshift: (term * term) -> term
-    val brshift: (term * term) -> term
-    val bsrshift: (term * term) -> term
+    val band:       (term * term) -> term
+    val bor:        (term * term) -> term
+    val bxor:       (term * term) -> term
+    val bplus:      (term * term) -> term
+    val bminus:     (term * term) -> term
+    val bmult:      (term * term) -> term
+    val bdiv:       (term * term) -> term
+    val bsdiv:      (term * term) -> term
+    val bmod:       (term * term) -> term
+    val bsmod:      (term * term) -> term
+    val blshift:    (term * term) -> term
+    val brshift:    (term * term) -> term
+    val bsrshift:   (term * term) -> term
 
-    val bandl: term list -> term
-    val borl: term list -> term
-    val bxorl: term list -> term
-    val bplusl: term list -> term
-    val bminusl: term list -> term
-    val bmultl: term list -> term
-    val bdivl: term list -> term
-    val bsdivl: term list -> term
-    val bmodl: term list -> term
-    val bsmodl: term list -> term
-    val blshiftl: term list -> term
-    val brshiftl: term list -> term
-    val bsrshiftl: term list -> term
+    val bandl:      term list -> term
+    val borl:       term list -> term
+    val bxorl:      term list -> term
+    val bplusl:     term list -> term
+    val bminusl:    term list -> term
+    val bmultl:     term list -> term
+    val bdivl:      term list -> term
+    val bsdivl:     term list -> term
+    val bmodl:      term list -> term
+    val bsmodl:     term list -> term
+    val blshiftl:   term list -> term
+    val brshiftl:   term list -> term
+    val bsrshiftl:  term list -> term
 
     (* Binary predicates (BExp_BinPred: bir_exp_t)
      * | BIExp_Equal                => beq beql
@@ -427,28 +535,28 @@ sig
      * blel:        bir_exp_t list -> bir_exp_t
      * bslel:       bir_exp_t list -> bir_exp_t
      *)
-    val bbinpred: term -> (term * term) -> term
-    val bbinpredl: term -> term list -> term
+    val bbinpred:   term -> (term * term) -> term
+    val bbinpredl:  term -> term list -> term
 
-    val beq: (term * term) -> term
-    val bneq: (term * term) -> term
-    val blt: (term * term) -> term
-    val bslt: (term * term) -> term
-    val ble: (term * term) -> term
-    val bsle: (term * term) -> term
+    val beq:        (term * term) -> term
+    val bneq:       (term * term) -> term
+    val blt:        (term * term) -> term
+    val bslt:       (term * term) -> term
+    val ble:        (term * term) -> term
+    val bsle:       (term * term) -> term
 
-    val beql: term list -> term
-    val bneql: term list -> term
-    val bltl: term list -> term
-    val bsltl: term list -> term
-    val blel: term list -> term
-    val bslel: term list -> term
+    val beql:       term list -> term
+    val bneql:      term list -> term
+    val bltl:       term list -> term
+    val bsltl:      term list -> term
+    val blel:       term list -> term
+    val bslel:      term list -> term
 
     (* Memory equality (BExp_MemEq: bir_exp_t)
      *
-     * bmemeq: bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bmemeq: (bir_exp_t * bir_exp_t) -> bir_exp_t
      *)
-    val bmemeq: term -> term -> term
+    val bmemeq: (term * term) -> term
 
     (* Conditionals (BExp_IfThenElse: bir_exp_t)
      *
@@ -468,7 +576,7 @@ sig
      * ]
      * ```
      *)
-    val bite: term -> term -> term -> term
+    val bite:   term -> term -> term -> term
     val bcases: (term * term) list -> term
 
     (* Memory loads (BExp_Load: bir_exp_t)
@@ -485,69 +593,69 @@ sig
      *  - `_ne` stands for No Endian
      *  - `nn` specializes the length of the loaded value
      *
-     * bloadi: bir_exp_t -> bir_exp_t -> bir_endian_t -> int -> bir_exp_t
+     * bloadi:    bir_exp_t -> bir_exp_t -> bir_endian_t -> int -> bir_exp_t
      * bloadi_le: bir_exp_t -> bir_exp_t -> int -> bir_exp_t
      * bloadi_be: bir_exp_t -> bir_exp_t -> int -> bir_exp_t
      * bloadi_ne: bir_exp_t -> bir_exp_t -> int -> bir_exp_t
      *
-     * bload1: bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
-     * bload8: bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
-     * bload16: bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
-     * bload32: bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
-     * bload64: bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
-     * bload128: bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
+     * bload1:    bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
+     * bload8:    bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
+     * bload16:   bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
+     * bload32:   bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
+     * bload64:   bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
+     * bload128:  bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
      *
-     * bload_le: bir_exp_t -> bir_exp_t -> bir_immtype_t-> bir_exp_t
-     * bload_le1: bir_exp_t -> bir_exp_t -> bir_exp_t
-     * bload_le8: bir_exp_t -> bir_exp_t -> bir_exp_t
-     * bload_le16: bir_exp_t -> bir_exp_t -> bir_exp_t
-     * bload_le32: bir_exp_t -> bir_exp_t -> bir_exp_t
-     * bload_le64: bir_exp_t -> bir_exp_t -> bir_exp_t
-     * bload_le128: bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload_le:    bir_exp_t -> bir_exp_t -> bir_immtype_t-> bir_exp_t
+     * bload1_le:   bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload8_le:   bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload16_le:  bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload32_le:  bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload64_le:  bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload128_le: bir_exp_t -> bir_exp_t -> bir_exp_t
      *
-     * bload_be: bir_exp_t -> bir_exp_t -> bir_immtype_t-> bir_exp_t
-     * bload_be1: bir_exp_t -> bir_exp_t -> bir_exp_t
-     * bload_be8: bir_exp_t -> bir_exp_t -> bir_exp_t
-     * bload_be16: bir_exp_t -> bir_exp_t -> bir_exp_t
-     * bload_be32: bir_exp_t -> bir_exp_t -> bir_exp_t
-     * bload_be64: bir_exp_t -> bir_exp_t -> bir_exp_t
-     * bload_be128: bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload_be:    bir_exp_t -> bir_exp_t -> bir_immtype_t-> bir_exp_t
+     * bload1_be:   bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload8_be:   bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload16_be:  bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload32_be:  bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload64_be:  bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload128_be: bir_exp_t -> bir_exp_t -> bir_exp_t
      *
-     * bload_ne: bir_exp_t -> bir_exp_t -> bir_immtype_t-> bir_exp_t
-     * bload_ne1: bir_exp_t -> bir_exp_t -> bir_exp_t
-     * bload_ne8: bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload_ne:  bir_exp_t -> bir_exp_t -> bir_immtype_t-> bir_exp_t
+     * bload1_ne: bir_exp_t -> bir_exp_t -> bir_exp_t
+     * bload8_ne: bir_exp_t -> bir_exp_t -> bir_exp_t
      *)
-    val bload: term -> term -> term -> term -> term
-    val bloadi: term -> term -> term -> int -> term
-    val bload1: term -> term -> term -> term
-    val bload8: term -> term -> term -> term
-    val bload16: term -> term -> term -> term
-    val bload32: term -> term -> term -> term
-    val bload64: term -> term -> term -> term
+    val bload:    term -> term -> term -> term -> term
+    val bloadi:   term -> term -> term -> int -> term
+    val bload1:   term -> term -> term -> term
+    val bload8:   term -> term -> term -> term
+    val bload16:  term -> term -> term -> term
+    val bload32:  term -> term -> term -> term
+    val bload64:  term -> term -> term -> term
     val bload128: term -> term -> term -> term
 
-    val bload_le: term -> term -> term -> term
-    val bloadi_le: term -> term -> int -> term
-    val bload1_le: term -> term -> term
-    val bload8_le: term -> term -> term
-    val bload16_le: term -> term -> term
-    val bload32_le: term -> term -> term
-    val bload64_le: term -> term -> term
-    val bload128_le: term -> term -> term
+    val bload_le:     term -> term -> term -> term
+    val bloadi_le:    term -> term -> int -> term
+    val bload1_le:    term -> term -> term
+    val bload8_le:    term -> term -> term
+    val bload16_le:   term -> term -> term
+    val bload32_le:   term -> term -> term
+    val bload64_le:   term -> term -> term
+    val bload128_le:  term -> term -> term
 
-    val bload_be: term -> term -> term -> term
-    val bloadi_be: term -> term -> int -> term
-    val bload1_be: term -> term -> term
-    val bload8_be: term -> term -> term
-    val bload16_be: term -> term -> term
-    val bload32_be: term -> term -> term
-    val bload64_be: term -> term -> term
-    val bload128_be: term -> term -> term
+    val bload_be:     term -> term -> term -> term
+    val bloadi_be:    term -> term -> int -> term
+    val bload1_be:    term -> term -> term
+    val bload8_be:    term -> term -> term
+    val bload16_be:   term -> term -> term
+    val bload32_be:   term -> term -> term
+    val bload64_be:   term -> term -> term
+    val bload128_be:  term -> term -> term
 
-    val bload_ne: term -> term -> term -> term
-    val bloadi_ne: term -> term -> int -> term
-    val bload1_ne: term -> term -> term
-    val bload8_ne: term -> term -> term
+    val bload_ne:   term -> term -> term -> term
+    val bloadi_ne:  term -> term -> int -> term
+    val bload1_ne:  term -> term -> term
+    val bload8_ne:  term -> term -> term
 
     (* Memory stores (BExp_Store: bir_exp_t)
      *
@@ -566,7 +674,7 @@ sig
      * bstore_be: bir_exp_t -> bir_exp_t -> bir_exp_t -> bir_exp_t
      * bstore_ne: bir_exp_t -> bir_exp_t -> bir_exp_t -> bir_exp_t
      *)
-     val bstore: term -> term -> term -> term -> term
+     val bstore:    term -> term -> term -> term -> term
      val bstore_le: term -> term -> term -> term
      val bstore_be: term -> term -> term -> term
      val bstore_ne: term -> term -> term -> term
@@ -635,8 +743,10 @@ sig
      *
      * bextr: (bir_immtype_t * bir_exp_t * bir_exp_t * bir_exp_t) -> bir_exp_t
      *)
-    val balign:    (term * int) -> term
-    val baligned:  (term * int) -> term
+    val balign:    term -> (term * term) -> term
+    val baligni:    int -> (term * term) -> term
+    val baligned:  term -> (term * term) -> term
+    val balignedi:  int -> (term * term) -> term
 
     val bword_reverse_1_8:     term -> term
     val bword_reverse_1_16:    term -> term
@@ -654,19 +764,27 @@ sig
     val bword_reverse_32_128:  term -> term
     val bword_reverse_64_128:  term -> term
 
-    val bmsb:  (term * term) -> term
-    val blsb:  (term * term) -> term
+    val bmsb:  term -> term -> term
+    val bmsbi: int  -> term -> term
+    val blsb:  term -> term
 
-    val bword_bit:     (term * term * int) -> term
-    val bword_bit_exp: (term * term * term) -> term
+    val bword_bit:      term -> (term * term) -> term
+    val bword_biti:     int  -> (term * term) -> term
+    val bword_bit_exp:  term -> (term * term) -> term
+    val bword_bit_expi: int  -> (term * term) -> term
 
-    val bror:      (term * term * int) -> term
-    val bror_exp:  (term * term * term) -> term
+    val bror:      term -> (term * term) -> term
+    val brori:     int  -> (term * term) -> term
+    val bror_exp:  term -> (term * term) -> term
+    val bror_expi: int  -> (term * term) -> term
 
-    val brol:      (term * term * int) -> term
-    val brol_exp:  (term * term * term) -> term
+    val brol:      term -> (term * term) -> term
+    val broli:     int  -> (term * term) -> term
+    val brol_exp:  term -> (term * term) -> term
+    val brol_expi: int  -> (term * term) -> term
 
-    val bextr: (term * term * term * term) -> term
+    val bextr:  term -> (term * term * term) -> term
+    val bextri: int  -> (term * term * term) -> term
 
 
 end (* bslLib *)
