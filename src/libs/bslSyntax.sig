@@ -34,6 +34,7 @@ sig
      * bvar: string -> bir_type_t -> bir_var_t
      *
      * bvarimm: int -> string -> bir_var_t
+     * bvarimm1: string -> bir_var_t
      * bvarimm8: string -> bir_var_t
      * bvarimm16: string -> bir_var_t
      * bvarimm32: string -> bir_var_t
@@ -41,6 +42,11 @@ sig
      * bvarimm128: string -> bir_var_t
      *
      * bvarmem: (int * int) -> string -> bir_var_t
+     * bvarmem8_1: string -> bir_var_t
+     * bvarmem16_1: string -> bir_var_t
+     * bvarmem32_1: string -> bir_var_t
+     * bvarmem64_1: string -> bir_var_t
+     * bvarmem128_1: string -> bir_var_t
      * bvarmem8_8: string -> bir_var_t
      * bvarmem16_8: string -> bir_var_t
      * bvarmem32_8: string -> bir_var_t
@@ -70,6 +76,7 @@ sig
     val bvar: string -> term -> term
 
     val bvarimm: int -> string -> term
+    val bvarimm1: string -> term
     val bvarimm8: string -> term
     val bvarimm16: string -> term
     val bvarimm32: string -> term
@@ -77,6 +84,11 @@ sig
     val bvarimm128: string -> term
 
     val bvarmem: (int * int) -> string -> term
+    val bvarmem8_1: string -> term
+    val bvarmem16_1: string -> term
+    val bvarmem32_1: string -> term
+    val bvarmem64_1: string -> term
+    val bvarmem128_1: string -> term
     val bvarmem8_8: string -> term
     val bvarmem16_8: string -> term
     val bvarmem32_8: string -> term
@@ -119,6 +131,7 @@ sig
      * blabel_addr: bool_t list  -> bir_label_t
      * blabel_addr: 'a word_t    -> bir_label_t
      *
+     * blabel_addr1: int -> bir_label_t
      * blabel_addr8: int -> bir_label_t
      * blabel_addr16: int -> bir_label_t
      * blabel_addr32: int -> bir_label_t
@@ -130,6 +143,7 @@ sig
      *)
     val blabel_str: string -> term
     val blabel_addr: term -> term
+    val blabel_addr1: int -> term
     val blabel_addr8: int -> term
     val blabel_addr16: int -> term
     val blabel_addr32: int -> term
@@ -152,6 +166,7 @@ sig
      * belabel_addr: bool_t list  -> bir_label_exp_t
      * belabel_addr: 'a word_t    -> bir_label_exp_t
      *
+     * belabel_addr1: int -> bir_label_exp_t
      * belabel_addr8: int -> bir_label_exp_t
      * belabel_addr16: int -> bir_label_exp_t
      * belabel_addr32: int -> bir_label_exp_t
@@ -166,6 +181,7 @@ sig
 
     val belabel_str: string -> term
     val belabel_addr: term -> term
+    val belabel_addr1: int -> term
     val belabel_addr8: int -> term
     val belabel_addr16: int -> term
     val belabel_addr32: int -> term
@@ -254,6 +270,7 @@ sig
      * bconst: bool_t list  -> bir_exp_t
      * bconst: 'a word_t    -> bir_exp_t
      *
+     * bconst1: int -> bir_exp_t
      * bconst8: int -> bir_exp_t
      * bconst16: int -> bir_exp_t
      * bconst32: int -> bir_exp_t
@@ -265,6 +282,7 @@ sig
      *)
     val bconst: term -> term
 
+    val bconst1: int -> term
     val bconst8: int -> term
     val bconst16: int -> term
     val bconst32: int -> term
@@ -472,6 +490,7 @@ sig
      * bloadi_be: bir_exp_t -> bir_exp_t -> int -> bir_exp_t
      * bloadi_ne: bir_exp_t -> bir_exp_t -> int -> bir_exp_t
      *
+     * bload1: bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
      * bload8: bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
      * bload16: bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
      * bload32: bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
@@ -479,6 +498,7 @@ sig
      * bload128: bir_exp_t -> bir_exp_t -> bir_endian_t -> bir_exp_t
      *
      * bload_le: bir_exp_t -> bir_exp_t -> bir_immtype_t-> bir_exp_t
+     * bload_le1: bir_exp_t -> bir_exp_t -> bir_exp_t
      * bload_le8: bir_exp_t -> bir_exp_t -> bir_exp_t
      * bload_le16: bir_exp_t -> bir_exp_t -> bir_exp_t
      * bload_le32: bir_exp_t -> bir_exp_t -> bir_exp_t
@@ -486,6 +506,7 @@ sig
      * bload_le128: bir_exp_t -> bir_exp_t -> bir_exp_t
      *
      * bload_be: bir_exp_t -> bir_exp_t -> bir_immtype_t-> bir_exp_t
+     * bload_be1: bir_exp_t -> bir_exp_t -> bir_exp_t
      * bload_be8: bir_exp_t -> bir_exp_t -> bir_exp_t
      * bload_be16: bir_exp_t -> bir_exp_t -> bir_exp_t
      * bload_be32: bir_exp_t -> bir_exp_t -> bir_exp_t
@@ -493,10 +514,12 @@ sig
      * bload_be128: bir_exp_t -> bir_exp_t -> bir_exp_t
      *
      * bload_ne: bir_exp_t -> bir_exp_t -> bir_immtype_t-> bir_exp_t
+     * bload_ne1: bir_exp_t -> bir_exp_t -> bir_exp_t
      * bload_ne8: bir_exp_t -> bir_exp_t -> bir_exp_t
      *)
     val bload: term -> term -> term -> term -> term
     val bloadi: term -> term -> term -> int -> term
+    val bload1: term -> term -> term -> term
     val bload8: term -> term -> term -> term
     val bload16: term -> term -> term -> term
     val bload32: term -> term -> term -> term
@@ -505,6 +528,7 @@ sig
 
     val bload_le: term -> term -> term -> term
     val bloadi_le: term -> term -> int -> term
+    val bload1_le: term -> term -> term
     val bload8_le: term -> term -> term
     val bload16_le: term -> term -> term
     val bload32_le: term -> term -> term
@@ -513,6 +537,7 @@ sig
 
     val bload_be: term -> term -> term -> term
     val bloadi_be: term -> term -> int -> term
+    val bload1_be: term -> term -> term
     val bload8_be: term -> term -> term
     val bload16_be: term -> term -> term
     val bload32_be: term -> term -> term
@@ -521,6 +546,7 @@ sig
 
     val bload_ne: term -> term -> term -> term
     val bloadi_ne: term -> term -> int -> term
+    val bload1_ne: term -> term -> term
     val bload8_ne: term -> term -> term
 
     (* Memory stores (BExp_Store: bir_exp_t)
@@ -544,5 +570,103 @@ sig
      val bstore_le: term -> term -> term -> term
      val bstore_be: term -> term -> term -> term
      val bstore_ne: term -> term -> term -> term
+
+    (* Extra expressions (:bir_exp_t)
+     * | BExp_Align                   => balign
+     * | BExp_Aligned                 => baligned
+     * | BExp_word_reverse_1_8        => bword_reverse_1_8
+     * | BExp_word_reverse_1_16       => bword_reverse_1_16
+     * | BExp_word_reverse_1_32       => bword_reverse_1_32
+     * | BExp_word_reverse_1_64       => bword_reverse_1_64
+     * | BExp_word_reverse_1_128      => bword_reverse_1_128
+     * | BExp_word_reverse_8_16       => bword_reverse_8_16
+     * | BExp_word_reverse_8_32       => bword_reverse_8_32
+     * | BExp_word_reverse_8_64       => bword_reverse_8_64
+     * | BExp_word_reverse_8_128      => bword_reverse_8_128
+     * | BExp_word_reverse_16_32      => bword_reverse_16_32
+     * | BExp_word_reverse_16_64      => bword_reverse_16_64
+     * | BExp_word_reverse_16_128     => bword_reverse_16_128
+     * | BExp_word_reverse_32_64      => bword_reverse_32_64
+     * | BExp_word_reverse_32_128     => bword_reverse_32_128
+     * | BExp_word_reverse_64_128     => bword_reverse_64_128
+     * | BExp_MSB                     => bmsb
+     * | BExp_LSB                     => blsb
+     * | BExp_word_bit                => bword_bit
+     * | BExp_word_bit_exp            => bword_bit_exp
+     * | BExp_ror_exp                 => bror_exp
+     * | BExp_ror                     => bror
+     * | BExp_rol_exp                 => brol_exp
+     * | BExp_rol                     => brol
+     * | BExp_extr                    => bextr
+     *
+     * Note: In the following, `num` have types `int` for ease of use, but they
+     * must be positive.
+     *
+     * balign:    (bir_immtype_t * num) -> bir_exp_t
+     * baligned:  (bir_immtype_t * num) -> bir_exp_t
+     *
+     * bword_reverse_1_8:     bir_exp_t -> bir_exp_t
+     * bword_reverse_1_16:    bir_exp_t -> bir_exp_t
+     * bword_reverse_1_32:    bir_exp_t -> bir_exp_t
+     * bword_reverse_1_64:    bir_exp_t -> bir_exp_t
+     * bword_reverse_1_128:   bir_exp_t -> bir_exp_t
+     * bword_reverse_8_16:    bir_exp_t -> bir_exp_t
+     * bword_reverse_8_32:    bir_exp_t -> bir_exp_t
+     * bword_reverse_8_64:    bir_exp_t -> bir_exp_t
+     * bword_reverse_8_128:   bir_exp_t -> bir_exp_t
+     * bword_reverse_16_32:   bir_exp_t -> bir_exp_t
+     * bword_reverse_16_64:   bir_exp_t -> bir_exp_t
+     * bword_reverse_16_128:  bir_exp_t -> bir_exp_t
+     * bword_reverse_32_64:   bir_exp_t -> bir_exp_t
+     * bword_reverse_32_128:  bir_exp_t -> bir_exp_t
+     * bword_reverse_64_128:  bir_exp_t -> bir_exp_t
+     *
+     * bmsb:  (bir_immtype_t * bir_exp_t) -> bir_exp_t
+     * blsb:  (bir_immtype_t * bir_exp_t) -> bir_exp_t
+     *
+     * bword_bit:     (bir_immtype_t * bir_exp_t * num) -> bir_exp_t
+     * bword_bit_exp: (bir_immtype_t * bir_exp_t * bir_exp_t) -> bir_exp_t
+     *
+     * bror:      (bir_immtype_t * bir_exp_t * num) -> bir_exp_t
+     * bror_exp:  (bir_immtype_t * bir_exp_t * bir_exp_t) -> bir_exp_t
+     *
+     * brol:      (bir_immtype_t * bir_exp_t * num) -> bir_exp_t
+     * brol_exp:  (bir_immtype_t * bir_exp_t * bir_exp_t) -> bir_exp_t
+     *
+     * bextr: (bir_immtype_t * bir_exp_t * bir_exp_t * bir_exp_t) -> bir_exp_t
+     *)
+    val balign:    (term * int) -> term
+    val baligned:  (term * int) -> term
+
+    val bword_reverse_1_8:     term -> term
+    val bword_reverse_1_16:    term -> term
+    val bword_reverse_1_32:    term -> term
+    val bword_reverse_1_64:    term -> term
+    val bword_reverse_1_128:   term -> term
+    val bword_reverse_8_16:    term -> term
+    val bword_reverse_8_32:    term -> term
+    val bword_reverse_8_64:    term -> term
+    val bword_reverse_8_128:   term -> term
+    val bword_reverse_16_32:   term -> term
+    val bword_reverse_16_64:   term -> term
+    val bword_reverse_16_128:  term -> term
+    val bword_reverse_32_64:   term -> term
+    val bword_reverse_32_128:  term -> term
+    val bword_reverse_64_128:  term -> term
+
+    val bmsb:  (term * term) -> term
+    val blsb:  (term * term) -> term
+
+    val bword_bit:     (term * term * int) -> term
+    val bword_bit_exp: (term * term * term) -> term
+
+    val bror:      (term * term * int) -> term
+    val bror_exp:  (term * term * term) -> term
+
+    val brol:      (term * term * int) -> term
+    val brol_exp:  (term * term * term) -> term
+
+    val bextr: (term * term * term * term) -> term
+
 
 end (* bslLib *)

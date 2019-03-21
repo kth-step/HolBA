@@ -14,6 +14,7 @@ struct
   open bir_programSyntax;
   open bir_typing_expSyntax;
   open bir_valuesSyntax;
+  open bir_extra_expsSyntax;
 
   val ERR = Feedback.mk_HOL_ERR "bslSyntax";
   val wrap_exn = Feedback.wrap_exn "bslSyntax";
@@ -48,6 +49,7 @@ struct
 
   fun bvarimm len_int name = mk_BVar_string (name, gen_mk_BType_Imm len_int)
     handle e => raise wrap_exn "bvarimm" e
+  val bvarimm1 = bvarimm 1
   val bvarimm8 = bvarimm 8
   val bvarimm16 = bvarimm 16
   val bvarimm32 = bvarimm 32
@@ -58,6 +60,11 @@ struct
     mk_BVar_string (name, mk_BType_Mem
       (bir_immtype_t_of_size lty_int, bir_immtype_t_of_size rty_int))
     handle e => raise wrap_exn "bvarmem" e
+  val bvarmem8_1 = bvarmem (8, 1)
+  val bvarmem16_1 = bvarmem (16, 1)
+  val bvarmem32_1 = bvarmem (32, 1)
+  val bvarmem64_1 = bvarmem (64, 1)
+  val bvarmem128_1 = bvarmem (128, 1)
   val bvarmem8_8 = bvarmem (8, 8)
   val bvarmem16_8 = bvarmem (16, 8)
   val bvarmem32_8 = bvarmem (32, 8)
@@ -97,6 +104,7 @@ struct
     handle e => raise wrap_exn "blabel_addr" e
   val blabel_addrii = curry2 (mk_BL_Address o uncurry2 mk_Imm_of_int)
     handle e => raise wrap_exn "blabel_addrii" e
+  val blabel_addr1 = blabel_addrii 1
   val blabel_addr8 = blabel_addrii 8
   val blabel_addr16 = blabel_addrii 16
   val blabel_addr32 = blabel_addrii 32
@@ -111,6 +119,7 @@ struct
 
   val belabel_str = belabel o blabel_str
   val belabel_addr = belabel o blabel_addr
+  val belabel_addr1 = belabel o blabel_addr1
   val belabel_addr8 = belabel o blabel_addr8
   val belabel_addr16 = belabel o blabel_addr16
   val belabel_addr32 = belabel o blabel_addr32
@@ -170,6 +179,7 @@ struct
     handle e => raise wrap_exn "bconst" e
   val bconstii = curry2 (mk_BExp_Const o uncurry2 mk_Imm_of_int)
     handle e => raise wrap_exn "bconstii" e
+  val bconst1 = bconstii 1
   val bconst8 = bconstii 8
   val bconst16 = bconstii 16
   val bconst32 = bconstii 32
@@ -272,6 +282,7 @@ struct
     handle e => raise wrap_exn "bload" e
   fun bloadi a b c d = bload a b c (gen_mk_BType_Imm d)
     handle e => raise wrap_exn "bloadi" e
+  val bload1 = app4th4 bloadi 1
   val bload8 = app4th4 bloadi 8
   val bload16 = app4th4 bloadi 16
   val bload32 = app4th4 bloadi 32
@@ -280,6 +291,7 @@ struct
 
   val bload_le = app3th4 bload BEnd_LittleEndian_tm
   val bloadi_le = app3th3 bloadi BEnd_LittleEndian_tm
+  val bload1_le = app3th3 bload1 BEnd_LittleEndian_tm
   val bload8_le = app3th3 bload8 BEnd_LittleEndian_tm
   val bload16_le = app3th3 bload16 BEnd_LittleEndian_tm
   val bload32_le = app3th3 bload32 BEnd_LittleEndian_tm
@@ -288,6 +300,7 @@ struct
 
   val bload_be = app3th4 bload BEnd_BigEndian_tm
   val bloadi_be = app3th3 bloadi BEnd_BigEndian_tm
+  val bload1_be = app3th3 bload1 BEnd_BigEndian_tm
   val bload8_be = app3th3 bload8 BEnd_BigEndian_tm
   val bload16_be = app3th3 bload16 BEnd_BigEndian_tm
   val bload32_be = app3th3 bload32 BEnd_BigEndian_tm
@@ -296,6 +309,7 @@ struct
 
   val bload_ne = app3th4 bload BEnd_NoEndian_tm
   val bloadi_ne = app3th3 bloadi BEnd_NoEndian_tm
+  val bload1_ne = app3th3 bload1 BEnd_NoEndian_tm
   val bload8_ne = app3th3 bload8 BEnd_NoEndian_tm
 
   (* Memory stores (BExp_Store: bir_exp_t) *)
@@ -304,6 +318,34 @@ struct
   val bstore_le = app3th4 bstore BEnd_LittleEndian_tm
   val bstore_be = app3th4 bstore BEnd_BigEndian_tm
   val bstore_ne = app3th4 bstore BEnd_NoEndian_tm
+
+  (* Extra expressions (:bir_exp_t) *)
+  val balign = mk_BExp_Align
+  val baligned = mk_BExp_Aligned
+  val bword_reverse_1_8 = mk_BExp_word_reverse_1_8
+  val bword_reverse_1_16 = mk_BExp_word_reverse_1_16
+  val bword_reverse_1_32 = mk_BExp_word_reverse_1_32
+  val bword_reverse_1_64 = mk_BExp_word_reverse_1_64
+  val bword_reverse_1_128 = mk_BExp_word_reverse_1_128
+  val bword_reverse_8_16 = mk_BExp_word_reverse_8_16
+  val bword_reverse_8_32 = mk_BExp_word_reverse_8_32
+  val bword_reverse_8_64 = mk_BExp_word_reverse_8_64
+  val bword_reverse_8_128 = mk_BExp_word_reverse_8_128
+  val bword_reverse_16_32 = mk_BExp_word_reverse_16_32
+  val bword_reverse_16_64 = mk_BExp_word_reverse_16_64
+  val bword_reverse_16_128 = mk_BExp_word_reverse_16_128
+  val bword_reverse_32_64 = mk_BExp_word_reverse_32_64
+  val bword_reverse_32_128 = mk_BExp_word_reverse_32_128
+  val bword_reverse_64_128 = mk_BExp_word_reverse_64_128
+  val bmsb = mk_BExp_MSB
+  val blsb = mk_BExp_LSB
+  val bword_bit = mk_BExp_word_bit
+  val bword_bit_exp = mk_BExp_word_bit_exp
+  val bror = mk_BExp_ror_exp
+  val bror_exp = mk_BExp_ror
+  val brol = mk_BExp_rol_exp
+  val brol_exp = mk_BExp_rol
+  val bextr = mk_BExp_extr
 
   (****************************************************************************)
   (* Term <-> BSL                                                             *)
