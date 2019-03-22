@@ -1,7 +1,7 @@
 # Software versions
 
 - HOL4 commit: `d0a474d1d1cba7c32acb6056a6288c44c2f1a75b`
-- PolyML (e.g. standard Ubuntu) 5.6
+- PolyML (e.g. current polyml version packaged for Ubuntu, 5.7.1)
 
 
 # How to compile
@@ -35,12 +35,11 @@ Follow these instructions whenever you merge to master:
 
 ### `dev` branch
 
-* `dev` is the branch where every feature is available, but no necessarily
-  finalized:
-  * Can cheat
-  * Code can be commented out
-  * **Holmake must work**
-  * bug-fixes are ok
+`dev` is the branch where every feature is available, but not necessarily finalized:
+  - Can cheat
+  - Code can be commented out
+  - **Holmake must work**
+  - bug-fixes are ok
 
 However, **no development happens on this branch**, but rather on separate
 feature branches.
