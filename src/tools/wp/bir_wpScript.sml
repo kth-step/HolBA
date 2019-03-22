@@ -1,9 +1,9 @@
-(* From core BIR: *)
+(* From BIR core: *)
 open bir_programTheory bir_typing_progTheory bir_envTheory
      bir_auxiliaryTheory bir_valuesTheory bir_expTheory
      bir_exp_immTheory;
 
-(* From BIR core-props: *)
+(* From BIR lib: *)
 open bir_program_blocksTheory bir_program_terminationTheory
      bir_program_valid_stateTheory bir_exp_substitutionsTheory
      bir_bool_expTheory bir_program_env_orderTheory
@@ -65,7 +65,7 @@ FULL_SIMP_TAC std_ss [bir_vars_of_exp_def,
 
 (* NOTE: Shouldn't "env" and "exp" swap place in this name, to
  * reflect bir_is_bool_exp_env_def? *)
-val bir_is_bool_env_exp_INTRO = prove(
+val bir_is_bool_exp_env_INTRO = prove(
 ``!env ope e1 e2.
     bir_is_bool_exp_env env (BExp_BinExp ope e1 e2) ==>
     (bir_is_bool_exp_env env e1 /\ bir_is_bool_exp_env env e2)``,
@@ -167,8 +167,7 @@ val bir_exp_and_true = store_thm("bir_exp_and_true",
   ``!b b'.
     (type_of_bir_imm b = type_of_bir_imm b') ==>
     (bir_bin_exp BIExp_And b' b = Imm1 1w) ==>
-    ((b' = Imm1 1w) /\ (b = Imm1 1w))
-  ``,
+    ((b' = Imm1 1w) /\ (b = Imm1 1w))``,
   
 (* First, which immtypes can b and b' have? There is only one
  * relevant case: Bit1, Bit1. *)
@@ -397,7 +396,7 @@ SUBGOAL_THEN
   METIS_TAC [bir_status_t_nchotomy, bir_and_equiv]
 ) >>
 REV_FULL_SIMP_TAC std_ss [] >>
-METIS_TAC [bir_is_bool_env_exp_INTRO]
+METIS_TAC [bir_is_bool_exp_env_INTRO]
 );
 
 (* Theorem stating the soundness of the precondition ~e \/ Q for the
@@ -429,13 +428,13 @@ Cases_on `bir_eval_exp (BExp_UnaryExp BIExp_Not ex) s.bst_environ =
     Cases_on `s` >>
     RW_TAC (std_ss++holBACore_ss) []
   ) >>
-  IMP_RES_TAC bir_is_bool_env_exp_INTRO >>
+  IMP_RES_TAC bir_is_bool_exp_env_INTRO >>
   RW_TAC (std_ss++holBACore_ss) [] >>
   FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def],
 
   (* If ~ex does not hold, and if ex is Boolean, then ex must
    * hold. *)
-  IMP_RES_TAC bir_is_bool_env_exp_INTRO >>
+  IMP_RES_TAC bir_is_bool_exp_env_INTRO >>
   FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def,
                         bir_neg_val_true] >>
   IMP_RES_TAC bir_env_vars_are_initialised_unary_INTRO >>
@@ -585,7 +584,6 @@ RW_TAC std_ss [] >| [
     ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
                  [bir_exp_subst1_USED_VARS]
   ) >>
-
   METIS_TAC [bir_var_name_def],
 
   (* Valid status of s' can be proved directly. *)
@@ -911,8 +909,7 @@ val bir_exec_block_jmp_triple_def = Define`
 
 val SUBSET_BIGUNION_IMAGE_thm = prove(
   ``!x s f.
-      (x IN s) ==> ((f x) SUBSET (BIGUNION (IMAGE f s)))
-  ``,
+      (x IN s) ==> ((f x) SUBSET (BIGUNION (IMAGE f s)))``,
 
 SIMP_TAC pure_ss [pred_setTheory.IMAGE_DEF,
                   pred_setTheory.BIGUNION,
@@ -1121,8 +1118,8 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss)
     FULL_SIMP_TAC std_ss [bir_pre_post_def] >>
     REV_FULL_SIMP_TAC std_ss [Abbr `post_stmts`, Abbr `q1`,
                               Abbr `q2`] >>
-    IMP_RES_TAC bir_is_bool_env_exp_INTRO >>
-    IMP_RES_TAC bir_is_bool_env_exp_INTRO
+    IMP_RES_TAC bir_is_bool_exp_env_INTRO >>
+    IMP_RES_TAC bir_is_bool_exp_env_INTRO
   ) >>
   FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO,
                         bir_mk_bool_val_inv] >>
@@ -1132,7 +1129,7 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss)
    * then
    *   eval_bool q1 /\ eval_bool q2 *)
   FULL_SIMP_TAC std_ss [Abbr `post_stmts`] >>
-  IMP_RES_TAC bir_is_bool_env_exp_INTRO >>
+  IMP_RES_TAC bir_is_bool_exp_env_INTRO >>
   FULL_SIMP_TAC std_ss [bir_eval_bool_exp_INTRO,
                         bir_mk_bool_val_true_thm,
                         bir_eval_bool_exp_BExp_BinExp_REWRS] >>
@@ -1144,7 +1141,7 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss)
                               bir_state_is_terminated_def] >>
     RW_TAC std_ss [] >>
     FULL_SIMP_TAC std_ss [Abbr `q1`] >>
-    IMP_RES_TAC bir_is_bool_env_exp_INTRO >>
+    IMP_RES_TAC bir_is_bool_exp_env_INTRO >>
     subgoal `~(bir_eval_bool_exp (BExp_UnaryExp BIExp_Not e)
                                  ns2.bst_environ) ` >- (
       FULL_SIMP_TAC std_ss [bir_eval_bool_exp_BExp_UnaryExp_REWRS]
@@ -1161,7 +1158,7 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss)
                             bir_state_is_terminated_def] >>
   RW_TAC std_ss [] >>
   FULL_SIMP_TAC std_ss [Abbr `q2`] >>
-  IMP_RES_TAC bir_is_bool_env_exp_INTRO >>
+  IMP_RES_TAC bir_is_bool_exp_env_INTRO >>
   FULL_SIMP_TAC std_ss [bir_eval_bool_exp_BExp_BinExp_REWRS,
                         bir_eval_bool_exp_INTRO,
                         bir_mk_bool_val_true_thm],
