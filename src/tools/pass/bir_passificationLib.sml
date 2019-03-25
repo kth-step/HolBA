@@ -309,7 +309,7 @@ fun passify_block_list_ssa []     = []
       end
 
 in
-fun passify_prog_ssa prog =
+fun bir_prog_pass_ssa prog =
   let
     val (hty, block_list) = dest_BirProgram_list prog
   in
