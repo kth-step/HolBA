@@ -1,4 +1,4 @@
-structure bir_translationSyntax :> bir_translationSyntax =
+structure bir_passificationSyntax :> bir_passificationSyntax =
 struct
 (* For compilation: *)
 open HolKernel boolLib liteLib simpLib Parse bossLib;

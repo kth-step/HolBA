@@ -1,3 +1,6 @@
+structure bir_passificationLib :> bir_passificationLib =
+struct
+
 (* Unverified translation of loop-free programs to SSA, passified
  * form. *)
 (* From BIR core: *)
@@ -23,6 +26,32 @@ fun bir_var_compare (var1, var2) =
     if tycomp = EQUAL
     then strcomp
     else tycomp
+  end
+;
+
+(* Writes a program to a file in .bir format. *)
+fun bir_prog_wtf prog file =
+  let
+    val os = TextIO.openOut file
+    val output_to_file = term_to_string prog
+    val _ = TextIO.output (os, output_to_file) handle e =>
+      (TextIO.closeOut os; raise e)
+    val _ = TextIO.closeOut os
+  in
+    ()
+  end
+;
+
+(* Reads a program stored in .bir format from a file. *)
+fun bir_prog_rff file =
+  let
+    val is = TextIO.openIn file
+    val file_content = TextIO.inputAll is handle e =>
+      (TextIO.closeIn is; raise e)
+    val prog = Term [QUOTE file_content]
+    val _ = TextIO.closeIn is
+  in
+    prog
   end
 ;
 
@@ -286,4 +315,6 @@ fun passify_prog_ssa prog =
   in
     mk_BirProgram_list (hty, passify_block_list_ssa block_list)
   end
+end;
+
 end;

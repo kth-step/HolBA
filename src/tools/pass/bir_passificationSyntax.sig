@@ -1,4 +1,4 @@
-signature bir_translationSyntax =
+signature bir_passificationSyntax =
 sig
    include Abbrev
 
