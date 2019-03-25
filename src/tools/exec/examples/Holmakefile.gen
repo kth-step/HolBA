@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../../core ../ ../../../lib aes
+INCLUDES   = ../lifter ../../../core ../ ../../../theories aes
 
 
 # configuration

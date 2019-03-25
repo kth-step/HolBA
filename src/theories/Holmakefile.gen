@@ -10,7 +10,7 @@ SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
 HOLHEAP    = ../core/HolBACore-heap
-NEWHOLHEAP = HolBALib-heap
+NEWHOLHEAP = HolBATheories-heap
 
 HEAPINC    = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
              $(patsubst %.sml,%,$(wildcard *Syntax.sml))

@@ -77,7 +77,8 @@ for feature branches):
 └─ src
    ├─ core: Core BIR language
    ├─ examples: to showcase HolBA features
-   ├─ lib: 
+   ├─ libs: general BIR libraries, used by tools
+   ├─ theories: various supporting theories
    └─ tools
       ├─ cfg: Control Flow Graph utilities
       │  └─ examples: CFG-related small examples
@@ -110,6 +111,9 @@ Tools status:
   * experimental implementation
     * includes prototype of substitution simplification
   * interface in progress
+- `tools/pass`:
+  * non proof-producing
+  * experimental passification transformation to SSA
 
 
 # Coding style
