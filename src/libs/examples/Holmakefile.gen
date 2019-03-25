@@ -1,0 +1,28 @@
+# includes
+# ----------------------------------
+INCLUDES   = ../../core ../../lib ../
+
+
+# configuration
+# ----------------------------------
+SMLFILES   = 
+
+TARGETS    = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
+
+HOLHEAP    = ../HolBALibs-heap
+NEWHOLHEAP = 
+
+HEAPINC    = 
+
+SELFTEST_DEP = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../Holmakefile.inc
+
+
+# test recipes
+# ----------------------------------
+z3-sat-model-test.exe: z3-sat-model-test.uo
+	$(HOLMOSMLC) -o $@ $<

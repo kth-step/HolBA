@@ -12,7 +12,7 @@ TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 HOLHEAP    = ../theories/HolBATheories-heap
 NEWHOLHEAP = HolBALibs-heap
 
-HEAPINC    = bir_expLib
+HEAPINC    = bir_expLib Z3_SAT_modelLib
 
 SELFTEST_DEP =
 
