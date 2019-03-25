@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../lifter ../../../core ../ ../../../theories aes
+INCLUDES   = ../../lifter ../../../core ../ ../../../theories aes
 
 
 # configuration
