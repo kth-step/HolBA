@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ./cfg ./lifter ./wp ./exec
+INCLUDES   = ./cfg ./lifter ./wp ./exec ./pass
 
 
 # configuration

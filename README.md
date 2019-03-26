@@ -1,14 +1,16 @@
 # Software versions
 
-- HOL4 commit: `d0a474d1d1cba7c32acb6056a6288c44c2f1a75b`
-- PolyML (e.g. standard Ubuntu) 5.6
+- HOL4 (`https://github.com/kth-step/HOL`)
+  - commit: `d0a474d1d1cba7c32acb6056a6288c44c2f1a75b`
+  - with modified HolSmtLib: branch `holsmt-arrays`
+- Poly/ML (e.g. current Poly/ML version packaged for Ubuntu, 5.7.1)
 
 
 # How to compile
 
 * First, run `make [main|examples|benchmarks|...]` in the root directory,
   according to your needs.
-* Then, go in the directory you want to use and run `{HOLDIR}/bin/Holmake`.
+* Then, go into the directory you want to use and run `{HOLDIR}/bin/Holmake`.
 * If one of the previous steps fails, try to clean your Git working directory by
   `make cleanslate` in the project root directory. **Be careful though**, this
   command is quite dangerous as it can easily eat your files (`Holmakefile`s are
@@ -35,12 +37,11 @@ Follow these instructions whenever you merge to master:
 
 ### `dev` branch
 
-* `dev` is the branch where every feature is available, but no necessarily
-  finalized:
-  * Can cheat
-  * Code can be commented out
-  * **Holmake must work**
-  * bug-fixes are ok
+`dev` is the branch where every feature is available, but not necessarily finalized:
+  - Can cheat
+  - Code can be commented out
+  - **Holmake must work**
+  - bug-fixes are ok
 
 However, **no development happens on this branch**, but rather on separate
 feature branches.
@@ -76,7 +77,8 @@ for feature branches):
 └─ src
    ├─ core: Core BIR language
    ├─ examples: to showcase HolBA features
-   ├─ lib: 
+   ├─ libs: general BIR libraries, used by tools
+   ├─ theories: various supporting theories
    └─ tools
       ├─ cfg: Control Flow Graph utilities
       │  └─ examples: CFG-related small examples
@@ -109,6 +111,9 @@ Tools status:
   * experimental implementation
     * includes prototype of substitution simplification
   * interface in progress
+- `tools/pass`:
+  * non proof-producing
+  * experimental passification transformation to SSA
 
 
 # Coding style
