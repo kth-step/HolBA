@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../.. lifter wp
+DEPENDENCIES   = lifter wp ../..
 
 
 # configuration

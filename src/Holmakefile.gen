@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = core theories tools
+DEPENDENCIES   = core theories tools
 
 
 # configuration

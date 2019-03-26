@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../../core ../ ../../../theories
+DEPENDENCIES   = ../../../core ../ ../../../theories
 
 
 # configuration

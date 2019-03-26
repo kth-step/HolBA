@@ -1,6 +1,7 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../wp ../../../examples/aes/lifter ../../../examples/aes/wp ../../../core #../ ../../../lib
+DEPENDENCIES   = ../ ../../../examples/aes/lifter ../../../examples/aes/wp ../../../core
+# TODO: Remove references to examples/aes/
 
 
 # configuration

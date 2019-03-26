@@ -1,14 +1,11 @@
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-
-open bir_envSyntax;
-
-
-val debug_trace = ref (1:int)
-val _ = register_trace ("bir_exec.DEBUG_LEVEL", debug_trace, 2)
-
 structure bir_exec_auxLib =
 struct
 
+  open HolKernel boolLib liteLib simpLib Parse bossLib;
+  open bir_envSyntax;
+
+  val debug_trace = ref (1:int)
+  val _ = register_trace ("bir_exec.DEBUG_LEVEL", debug_trace, 2)
 
 
   fun timer_start level = if ((!debug_trace) > level) then SOME (Time.now()) else NONE;

@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = aes toy ../../../core .. #../../../theories
+DEPENDENCIES   = aes toy ../../../core .. #../../../theories
 
 
 # configuration
@@ -9,7 +9,7 @@ SMLFILES   =
 
 TARGETS    = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
 
-HOLHEAP    = ../../lifter/HolBALifter-heap
+HOLHEAP    = ../../lifter/HolBALifter-heap # TODO: Use ../HolBACfg-heap
 NEWHOLHEAP = 
 
 HEAPINC    = 
