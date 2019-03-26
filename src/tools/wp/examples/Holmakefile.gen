@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../wp aes ../../../core #../ ../../../lib
+INCLUDES   = ../../wp ../../../examples/aes/lifter ../../../examples/aes/wp ../../../core #../ ../../../lib
 
 
 # configuration
