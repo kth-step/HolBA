@@ -86,6 +86,8 @@ for feature branches):
    │  ├─ lifter: proof-producing binary lifter
    │  │  ├─ benchmark
    │  │  └─ examples: lifter-related small examples
+   │  ├─ pass: Passification utility
+   │  │  └─ examples: Passification-related small examples
    │  └─ wp: weakest precondition propagation
    │     ├─ benchmark
    │     └─ examples: WP-related small examples
