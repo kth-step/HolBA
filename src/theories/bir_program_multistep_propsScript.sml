@@ -261,7 +261,7 @@ val bir_exec_infinite_steps_fun_COUNT_PCs_MONO = store_thm ("bir_exec_infinite_s
 
 SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_ALT_DEF] >>
 REPEAT STRIP_TAC >>
-IRULE_TAC CARD_SUBSET >- (
+IRULE_TAC CARD_SUBSET >> REPEAT CONJ_TAC >- (
   SIMP_TAC std_ss [FINITE_INTER, FINITE_COUNT]
 ) >>
 ASM_SIMP_TAC arith_ss [SUBSET_DEF, IN_INTER, IN_COUNT]);

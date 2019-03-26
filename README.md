@@ -1,8 +1,8 @@
 # Software versions
 
 - HOL4 (`https://github.com/kth-step/HOL`)
-  - commit: `d0a474d1d1cba7c32acb6056a6288c44c2f1a75b`
-  - with modified HolSmtLib: branch `holsmt-arrays`
+  - commit: `ae1feaa27180bbbe081e70f9004859321d0d426f` (tags/kananaskis-12 or for_holba)
+  - (with modified HolSmtLib: branch `holsmt-arrays`)
 - Poly/ML (e.g. current Poly/ML version packaged for Ubuntu, 5.7.1)
 
 

@@ -26,7 +26,7 @@ fun bir_inst_error_to_string ((pc, hc, hc_desc, ed):bir_inst_error) = let
 in (s'^"\n") end;
 
 fun print_bir_inst_error e =
-  Parse.print_with_style [PPBackEnd.FG PPBackEnd.OrangeRed] (bir_inst_error_to_string e);
+  (print o (Parse.add_style_to_string [PPBackEnd.FG PPBackEnd.OrangeRed])) (bir_inst_error_to_string e);
 
 fun print_bir_inst_errors [] = ()
   | print_bir_inst_errors (e::es) =
