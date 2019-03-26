@@ -27,6 +27,12 @@ include ../../../Holmakefile.inc
 aes-test.exe: aes-test.uo 
 	$(HOLMOSMLC) -o $@ $<
 
+aes71-test-passified.exe: aes71-test-passified.uo 
+	$(HOLMOSMLC) -o $@ $<
+
 toy1-test.exe: toy1-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
+toy1-test-passified.exe: toy1-test-passified.uo 
 	$(HOLMOSMLC) -o $@ $<
 
