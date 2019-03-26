@@ -20,7 +20,7 @@ default: all
 # ----------------------------------
 ifdef POLY
 
-$(NEWHOLHEAP): $(TARGETS)
+$(NEWHOLHEAP): $(TARGETS) $(HOLHEAP)
 	$(protect $(HOLDIR)/bin/buildheap) $(if $(HOLHEAP),-b $(HOLHEAP),) -o $@ $(HEAPINC)
 
 endif

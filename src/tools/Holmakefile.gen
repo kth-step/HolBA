@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ./cfg ./lifter ./wp ./exec ./pass
+DEPENDENCIES   = 
 
 
 # configuration

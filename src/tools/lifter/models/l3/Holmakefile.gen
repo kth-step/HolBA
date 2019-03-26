@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../../../../theories \
+DEPENDENCIES   = \
    $(HOLDIR)/examples/l3-machine-code/common \
    $(HOLDIR)/examples/l3-machine-code/arm8/model \
    $(HOLDIR)/examples/l3-machine-code/arm8/step \

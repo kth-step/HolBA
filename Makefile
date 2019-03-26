@@ -37,7 +37,9 @@ all:
 %Holmakefile: %Holmakefile.gen src/Holmakefile.inc
 	@./gen_Holmakefiles.py $<
 
-main: $(HOLMAKEFILES)
+Holmakefiles: $(HOLMAKEFILES)
+
+main: Holmakefiles
 	cd $(SRCDIR) && $(HOLMAKE)
 
 core: $(HOLMAKEFILES)
@@ -61,6 +63,7 @@ gendoc:
 cleanslate:
 	git clean -fdX src
 
+.PHONY: Holmakefiles
 .PHONY: main gendoc cleanslate
 .PHONY: examples-base examples-all $(EXAMPLES_BASE) $(EXAMPLES_ALL)
 .PHONY: benchmarks $(BENCHMARKS)
