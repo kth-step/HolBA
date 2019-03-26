@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../core ../../theories
+DEPENDENCIES   = ../../core ../../theories
 
 
 # configuration
@@ -9,8 +9,8 @@ SMLFILES   = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
-HOLHEAP    = ../lifter/HolBALifter-heap
-NEWHOLHEAP = 
+HOLHEAP    = ../cfg/HolBACfg-heap
+NEWHOLHEAP = HolBAPass-heap
 
 HEAPINC    = 
 

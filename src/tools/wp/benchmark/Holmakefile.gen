@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../wp ../../cfg binaries
+DEPENDENCIES   = ../../wp ../../cfg binaries
 
 
 # configuration

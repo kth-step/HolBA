@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../core
+DEPENDENCIES   = ../core
 
 
 # configuration

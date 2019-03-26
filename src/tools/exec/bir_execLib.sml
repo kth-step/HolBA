@@ -1,22 +1,19 @@
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-
-open bir_auxiliaryTheory;
-open bir_program_multistep_propsTheory;
-open bir_programSyntax;
-open bir_envSyntax;
-
-open bir_exec_auxLib;
-open bir_exec_blockLib;
-open bir_exec_typingLib;
-
-open numSyntax;
-open HolBACoreSimps;
-
-
-
 structure bir_execLib =
 struct
 
+  open HolKernel boolLib liteLib simpLib Parse bossLib;
+
+  open bir_auxiliaryTheory;
+  open bir_program_multistep_propsTheory;
+  open bir_programSyntax;
+  open bir_envSyntax;
+
+  open bir_exec_auxLib;
+  open bir_exec_blockLib;
+  open bir_exec_typingLib;
+
+  open numSyntax;
+  open HolBACoreSimps;
 
 
   val log = ref (NONE : TextIO.outstream option);

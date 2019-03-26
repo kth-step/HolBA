@@ -1,14 +1,14 @@
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-
-open bir_expTheory;
-open bir_expSyntax;
-open bir_valuesSyntax;
-
-open bir_exec_auxLib;
-open bir_exec_envLib;
-
 structure bir_exec_expLib =
 struct
+
+  open HolKernel boolLib liteLib simpLib Parse bossLib;
+
+  open bir_expTheory;
+  open bir_expSyntax;
+  open bir_valuesSyntax;
+
+  open bir_exec_auxLib;
+  open bir_exec_envLib;
 
 (*
   val env = ``BEnv (FEMPTY |+ ("bit1", (BType_Bool,      SOME (BVal_Imm (Imm1  0w))))
