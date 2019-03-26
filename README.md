@@ -75,21 +75,21 @@ for feature branches):
 ```
 ├─ doc
 └─ src
-   ├─ core: Core BIR language
-   ├─ examples: to showcase HolBA features
+   ├─ core: core BIR language
    ├─ libs: general BIR libraries, used by tools
    ├─ theories: various supporting theories
-   └─ tools
-      ├─ cfg: Control Flow Graph utilities
-      │  └─ examples: CFG-related small examples
-      ├─ exec: Concrete execution
-      │  └─ examples: Concrete execution-related small examples
-      ├─ lifter: Proof-producing binary lifter
-      │  ├─ benchmark
-      │  ├─ examples: Lifter-related small examples
-      └─ wp: Weakest Precondition propagation
-         ├─ benchmark
-         └─ examples: WP-related small examples
+   ├─ tools
+   │  ├─ cfg: Control Flow Graph utilities
+   │  │  └─ examples: CFG-related small examples
+   │  ├─ exec: concrete execution
+   │  │  └─ examples: concrete execution-related small examples
+   │  ├─ lifter: proof-producing binary lifter
+   │  │  ├─ benchmark
+   │  │  └─ examples: lifter-related small examples
+   │  └─ wp: weakest precondition propagation
+   │     ├─ benchmark
+   │     └─ examples: WP-related small examples
+   └─ examples: to showcase HolBA features
 ```
 
 Tools status:
