@@ -85,6 +85,11 @@ val prog3 = ``
                            (BExp_Store (BExp_Den (BVar "Mem" (BType_Mem Bit64 Bit8)))
                                        (BExp_Const (Imm64 25w))
                                        BEnd_LittleEndian
+                                       (BExp_Const (Imm64 26w)));
+	      BStmt_Assign (BVar "Mem" (BType_Mem Bit64 Bit8))
+                           (BExp_Store (BExp_Den (BVar "Mem" (BType_Mem Bit64 Bit8)))
+                                       (BExp_Const (Imm64 25w))
+                                       BEnd_LittleEndian
                                        (BExp_Const (Imm64 25w)))];
            bb_last_statement :=
              BStmt_Jmp (BLE_Label (BL_Address (Imm32 0x102w)))|>;

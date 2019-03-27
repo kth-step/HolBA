@@ -29,7 +29,7 @@ struct
   (*
     val t = ``bir_exec_step ^prog_const ^state``;
 
-    bir_exec_prog_step_conv var_eq_thm t
+    bir_exec_prog_step_conv block_thm_map var_eq_thms t
   *)
 
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program"
