@@ -4,6 +4,8 @@
 all: $(TARGETS) $(if $(NEWHOLHEAP),$(NEWHOLHEAP),) \
                 $(if $(SELFTEST_DEP),selftest.exe,)
 
+INCLUDES = $(DEPENDENCIES) $(if $(HOLHEAP),$(shell dirname $(HOLHEAP)),)
+
 EXTRA_CLEANS = $(if $(NEWHOLHEAP),$(NEWHOLHEAP) $(NEWHOLHEAP).o,) \
                $(if $(SELFTEST_DEP),selftest.exe,)
 
@@ -19,7 +21,7 @@ default: all
 ifdef POLY
 
 $(NEWHOLHEAP): $(TARGETS) $(HOLHEAP)
-	$(protect $(HOLDIR)/bin/buildheap) $(if $(HOLHEAP),-b $(HOLHEAP),) -o $(NEWHOLHEAP) $(HEAPINC)
+	$(protect $(HOLDIR)/bin/buildheap) $(if $(HOLHEAP),-b $(HOLHEAP),) -o $@ $(HEAPINC)
 
 endif
 

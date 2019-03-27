@@ -1,27 +1,26 @@
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-
-open bir_typing_progTheory;
-open bir_typing_expTheory;
-open bir_programTheory;
-open bir_programSyntax;
-
-open bir_valuesTheory;
-open bir_immTheory;
-
-open pred_setSyntax;
-
-open bir_exec_auxLib;
-
-open optionSyntax;
-open listSyntax;
-
-open listTheory;
-open bir_program_valid_stateTheory;
-
-
 structure bir_exec_typingLib =
 struct
 
+  open HolKernel boolLib liteLib simpLib Parse bossLib;
+
+  open bir_typing_progTheory;
+  open bir_typing_expTheory;
+  open bir_interval_expTheory;
+  open bir_programTheory;
+  open bir_programSyntax;
+
+  open bir_valuesTheory;
+  open bir_immTheory;
+
+  open pred_setSyntax;
+
+  open bir_exec_auxLib;
+
+  open optionSyntax;
+  open listSyntax;
+
+  open listTheory;
+  open bir_program_valid_stateTheory;
 
 (*
 val prog = ``

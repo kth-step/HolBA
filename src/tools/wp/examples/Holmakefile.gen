@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../wp aes ../../../core #../ ../../../lib
+DEPENDENCIES   = 
 
 
 # configuration
@@ -24,9 +24,9 @@ include ../../../Holmakefile.inc
 
 # test recipes
 # ----------------------------------
-aes-test.exe: aes-test.uo 
+toy1-test.exe: toy1-test.uo 
 	$(HOLMOSMLC) -o $@ $<
 
-toy1-test.exe: toy1-test.uo 
+toy1-pass-test.exe: toy1-pass-test.uo 
 	$(HOLMOSMLC) -o $@ $<
 

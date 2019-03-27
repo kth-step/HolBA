@@ -1,14 +1,15 @@
 # Software versions
 
-- HOL4 commit: `d0a474d1d1cba7c32acb6056a6288c44c2f1a75b`
-- PolyML (e.g. standard Ubuntu) 5.6
+- HOL4 (`https://github.com/kth-step/HOL`)
+  - branch: for_holba (i.e. tags/kananaskis-12 + holsmt-arrays + syntax-errors)
+- Poly/ML (e.g. current Poly/ML version packaged for Ubuntu, 5.7.1)
 
 
 # How to compile
 
 * First, run `make [main|examples|benchmarks|...]` in the root directory,
   according to your needs.
-* Then, go in the directory you want to use and run `{HOLDIR}/bin/Holmake`.
+* Then, go into the directory you want to use and run `{HOLDIR}/bin/Holmake`.
 * If one of the previous steps fails, try to clean your Git working directory by
   `make cleanslate` in the project root directory. **Be careful though**, this
   command is quite dangerous as it can easily eat your files (`Holmakefile`s are
@@ -35,12 +36,11 @@ Follow these instructions whenever you merge to master:
 
 ### `dev` branch
 
-* `dev` is the branch where every feature is available, but no necessarily
-  finalized:
-  * Can cheat
-  * Code can be commented out
-  * **Holmake must work**
-  * bug-fixes are ok
+`dev` is the branch where every feature is available, but not necessarily finalized:
+  - Can cheat
+  - Code can be commented out
+  - **Holmake must work**
+  - bug-fixes are ok
 
 However, **no development happens on this branch**, but rather on separate
 feature branches.
@@ -74,20 +74,24 @@ for feature branches):
 ```
 ├─ doc
 └─ src
-   ├─ core: Core BIR language
-   ├─ examples: to showcase HolBA features
-   ├─ lib: 
-   └─ tools
-      ├─ cfg: Control Flow Graph utilities
-      │  └─ examples: CFG-related small examples
-      ├─ exec: Concrete execution
-      │  └─ examples: Concrete execution-related small examples
-      ├─ lifter: Proof-producing binary lifter
-      │  ├─ benchmark
-      │  ├─ examples: Lifter-related small examples
-      └─ wp: Weakest Precondition propagation
-         ├─ benchmark
-         └─ examples: WP-related small examples
+   ├─ core: core BIR language
+   ├─ libs: general BIR libraries, used by tools
+   │  └─ examples: Examples showcasing the use of libs/ libraries.
+   ├─ theories: various supporting theories
+   ├─ tools
+   │  ├─ cfg: Control Flow Graph utilities
+   │  │  └─ examples: CFG-related small examples
+   │  ├─ exec: concrete execution
+   │  │  └─ examples: concrete execution-related small examples
+   │  ├─ lifter: proof-producing binary lifter
+   │  │  ├─ benchmark
+   │  │  └─ examples: lifter-related small examples
+   │  ├─ pass: Passification utility
+   │  │  └─ examples: Passification-related small examples
+   │  └─ wp: weakest precondition propagation
+   │     ├─ benchmark
+   │     └─ examples: WP-related small examples
+   └─ examples: to showcase HolBA features
 ```
 
 Tools status:
@@ -109,6 +113,9 @@ Tools status:
   * experimental implementation
     * includes prototype of substitution simplification
   * interface in progress
+- `tools/pass`:
+  * non proof-producing
+  * experimental passification transformation to SSA
 
 
 # Coding style

@@ -6,7 +6,7 @@ open gcc_supportLib
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
-val _ = print_with_style [Bold, Underline] "Lifting gcd-aarch64.da\n";
+val _ = print_with_style_ [Bold, Underline] "Lifting gcd-aarch64.da\n";
 
 val (region_map, gcd_sections) = read_disassembly_file_regions_filter (fn _ => fn n => n = "gcd") "gcd-aarch64.da"
 
@@ -20,7 +20,7 @@ val _ = print_bir_inst_errors errors
 
 val _ = print "\n\n\n";
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 1;
-val _ = print_with_style [Bold, Underline] "Lifting gcd-m0.da\n";
+val _ = print_with_style_ [Bold, Underline] "Lifting gcd-m0.da\n";
 val (region_map, gcd_sections) = read_disassembly_file_regions_filter (fn _ => fn n => n = "gcd") "gcd-m0.da"
 
 val (thm_m0, errors) = bmil_m0_LittleEnd_Process.bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt 0x20000))

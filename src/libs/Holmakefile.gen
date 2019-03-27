@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../core
+DEPENDENCIES   = ../core ../theories
 
 
 # configuration
@@ -9,13 +9,12 @@ SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
-HOLHEAP    = ../core/HolBACore-heap
-NEWHOLHEAP = HolBALib-heap
+HOLHEAP    = ../theories/HolBATheories-heap
+NEWHOLHEAP = HolBALibs-heap
 
-HEAPINC    = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
-             $(patsubst %.sml,%,$(wildcard *Syntax.sml))
+HEAPINC    = bir_expLib Z3_SAT_modelLib
 
-SELFTEST_DEP = 
+SELFTEST_DEP =
 
 
 # included lines follow

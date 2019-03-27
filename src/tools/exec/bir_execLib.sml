@@ -1,34 +1,34 @@
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-
-open bir_auxiliaryTheory;
-open bir_program_multistep_propsTheory;
-open bir_programSyntax;
-open bir_envSyntax;
-
-open bir_exec_auxLib;
-open bir_exec_blockLib;
-open bir_exec_typingLib;
-
-open numSyntax;
-open HolBACoreSimps;
-
-
-
 structure bir_execLib =
 struct
 
+  open HolKernel boolLib liteLib simpLib Parse bossLib;
+
+  open bir_auxiliaryTheory;
+  open bir_program_multistep_propsTheory;
+  open bir_programSyntax;
+  open bir_envSyntax;
+
+  open bir_exec_auxLib;
+  open bir_exec_blockLib;
+  open bir_exec_typingLib;
+
+  open numSyntax;
+  open HolBACoreSimps;
 
 
   val log = ref (NONE : TextIO.outstream option);
 
   fun log_setfile log_filename = log := SOME (TextIO.openOut log_filename);
 
+  (* a function with the old behavior of print_with_style (no implicit newline at the end) *)
+  fun print_with_style_ sty = print o (add_style_to_string sty);
+
   fun print_log_with_style sty f s = let
     val log_ = !log;
     val _ = case log_ of
 	        NONE       => ()
 	      | SOME log_v => if f then TextIO.output (log_v, s) else ();
-    val _ = print_with_style sty s;
+    val _ = print_with_style_ sty s;
   in () end;
 
   val print_log = print_log_with_style [];

@@ -1,16 +1,16 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../../wp
+DEPENDENCIES   = ../../core ../../theories
 
 
 # configuration
 # ----------------------------------
-SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
+SMLFILES   = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
-HOLHEAP    = ../../HolBAWp-heap
-NEWHOLHEAP = 
+HOLHEAP    = ../cfg/HolBACfg-heap
+NEWHOLHEAP = HolBAPass-heap
 
 HEAPINC    = 
 
@@ -19,4 +19,4 @@ SELFTEST_DEP =
 
 # included lines follow
 # ----------------------------------
-include ../../../../Holmakefile.inc
+include ../../Holmakefile.inc
