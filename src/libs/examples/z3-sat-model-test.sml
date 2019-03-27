@@ -18,7 +18,7 @@ val _ = Globals.show_types := true;
 
 (* Prints a model, one variable per line. *)
 fun print_model model = List.foldl
-  (fn ((name, tm), _) => (print (" - " ^ name ^ ": "); Hol_pp.print_term tm; print "\n"))
+  (fn ((name, tm), _) => (print (" - " ^ name ^ ": "); Hol_pp.print_term tm))
   () (rev model);
 
 (* Builds a theorem from a model and a term. *)
