@@ -1,0 +1,22 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   = ../core ../theories
+
+
+# configuration
+# ----------------------------------
+SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
+
+TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
+
+HOLHEAP    = ../theories/HolBATheories-heap
+NEWHOLHEAP = HolBALibs-heap
+
+HEAPINC    = bir_expLib Z3_SAT_modelLib bir_exp_to_wordsLib bslSyntax
+
+SELFTEST_DEP =
+
+
+# included lines follow
+# ----------------------------------
+include ../Holmakefile.inc

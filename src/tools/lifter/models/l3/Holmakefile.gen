@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../../../lib \
+DEPENDENCIES   = \
    $(HOLDIR)/examples/l3-machine-code/common \
    $(HOLDIR)/examples/l3-machine-code/arm8/model \
    $(HOLDIR)/examples/l3-machine-code/arm8/step \
@@ -14,7 +14,7 @@ SMLFILES   =
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
-HOLHEAP    = ../../../../lib/HolBALib-heap
+HOLHEAP    = ../../../exec/HolBAExec-heap
 NEWHOLHEAP = HolBA_l3-heap
 
 HEAPINC    = $(HOLDIR)/examples/l3-machine-code/arm8/step/arm8_stepTheory \

@@ -18,6 +18,9 @@ open PPBackEnd Parse
 (* Syntax *)
 (**********)
 
+(* a function with the old behavior of print_with_style (no implicit newline at the end) *)
+fun print_with_style_ sty = print o (add_style_to_string sty);
+
 val ERR = mk_HOL_ERR "bir_inst_liftingLib"
 fun failwith s = raise (ERR "???" s)
 
@@ -1547,14 +1550,14 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         val _ = case res of
              SOME (thm, _, cache_used) =>
                  if (!debug_trace > 1) then (
-                   (print_with_style sty_OK "OK");
-                   (if cache_used then (print " - "; print_with_style sty_CACHE "cached") else ());
+                   (print_with_style_ sty_OK "OK");
+                   (if cache_used then (print " - "; print_with_style_ sty_CACHE "cached") else ());
                    (print "\n")) else ()
            | NONE => (
                 (if (!debug_trace > 1) then (
-                   (print_with_style sty_FAIL "FAILED\n");
+                   (print_with_style_ sty_FAIL "FAILED\n");
                     case ed of NONE => () | SOME d =>
-                    print_with_style sty_FAIL ("   " ^ (bir_inst_liftingExn_data_to_string d) ^ "\n")
+                    print_with_style_ sty_FAIL ("   " ^ (bir_inst_liftingExn_data_to_string d) ^ "\n")
                    ) else (
                 HOL_WARNING "bir_inst_liftingLib" "bir_lift_prog_gen" (
                   "lifting of instruction '" ^ hex_code ^ " @ 0x" ^ (Arbnum.toHexString pc) ^ " failed" ^ (case ed of NONE => "" | SOME d => ": "^(bir_inst_liftingExn_data_to_string d)))));
@@ -1667,8 +1670,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
         print ("Total time :") else ();
       val _ = if (!debug_trace <> 0) then
          (print (" " ^ d_s ^ " s -");
-         (if (List.null (!failing_inst_r)) then print_with_style sty_OK " OK\n" else
-             print_with_style sty_FAIL " FAILED\n")) else ();
+         (if (List.null (!failing_inst_r)) then print_with_style_ sty_OK " OK\n" else
+             print_with_style_ sty_FAIL " FAILED\n")) else ();
 
     in
       (prog_thm2, List.rev (!failing_inst_r))

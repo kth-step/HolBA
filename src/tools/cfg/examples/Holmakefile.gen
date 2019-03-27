@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = aes toy ../../../core .. #../../../lib
+DEPENDENCIES   = toy
 
 
 # configuration
@@ -9,7 +9,7 @@ SMLFILES   =
 
 TARGETS    = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
 
-HOLHEAP    = ../../lifter/HolBALifter-heap
+HOLHEAP    = ../HolBACfg-heap
 NEWHOLHEAP = 
 
 HEAPINC    = 
@@ -24,6 +24,6 @@ include ../../../Holmakefile.inc
 
 # test recipes
 # ----------------------------------
-aes-test.exe: aes-test.uo 
+toy-test.exe: toy-test.uo 
 	$(HOLMOSMLC) -o $@ $<
 

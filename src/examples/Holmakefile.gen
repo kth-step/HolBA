@@ -1,0 +1,23 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   = aes
+
+
+# configuration
+# ----------------------------------
+SMLFILES   = 
+
+TARGETS    = 
+
+HOLHEAP    = 
+NEWHOLHEAP = 
+
+HEAPINC    = 
+
+SELFTEST_DEP = 
+
+
+# included lines follow
+# ----------------------------------
+include ../Holmakefile.inc
+

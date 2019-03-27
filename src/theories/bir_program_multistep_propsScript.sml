@@ -7,6 +7,8 @@ open bir_program_valid_stateTheory;
 open llistTheory wordsLib pred_setTheory;
 open HolBACoreSimps
 
+open bir_auxiliaryTheory;
+
 val _ = new_theory "bir_program_multistep_props";
 
 (* ------------------------------------------------------------------------- *)
@@ -259,7 +261,7 @@ val bir_exec_infinite_steps_fun_COUNT_PCs_MONO = store_thm ("bir_exec_infinite_s
 
 SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_ALT_DEF] >>
 REPEAT STRIP_TAC >>
-IRULE_TAC CARD_SUBSET >- (
+IRULE_TAC CARD_SUBSET >> REPEAT CONJ_TAC >- (
   SIMP_TAC std_ss [FINITE_INTER, FINITE_COUNT]
 ) >>
 ASM_SIMP_TAC arith_ss [SUBSET_DEF, IN_INTER, IN_COUNT]);
@@ -2350,6 +2352,126 @@ val bir_exec_step_n_LIMIT_STEP_NO = store_thm ("bir_exec_step_n_LIMIT_STEP_NO",
     (bir_exec_step_n p st c = (l, c, st'))``,
 
 SIMP_TAC std_ss [bir_exec_step_n_EQ_THM]);
+
+
+(***********************************************)
+(* alternative definition: bir_exec_step_n_acc *)
+(***********************************************)
+
+val bir_exec_step_n_acc_def = Define `
+  bir_exec_step_n_acc (p:'a bir_program_t) (n:num) (aol:'a list, an:num, s:bir_state_t) =
+            if (n = 0) \/ (bir_state_is_terminated s) then
+              (REVERSE aol, an, s)
+            else
+              let
+                (fe, s') = bir_exec_step p s
+              in
+                bir_exec_step_n_acc p (n-1) (OPT_CONS fe aol, an + 1, s')
+`;
+
+val bir_exec_step_n_acc_REWR_0 = store_thm("bir_exec_step_n_acc_REWR_0", ``
+  !(p:'a bir_program_t) aol an s.
+           bir_exec_step_n_acc p 0 (aol, an, s) = (REVERSE aol, an, s)
+``,
+  SIMP_TAC list_ss [Once bir_exec_step_n_acc_def]
+);
+
+val bir_exec_step_n_acc_REWR_TERMINATED = store_thm("bir_exec_step_n_acc_REWR_TERMINATED", ``
+  !(p:'a bir_program_t) n aol an s.
+           bir_state_is_terminated s ==>
+           (bir_exec_step_n_acc p n (aol, an, s) = (REVERSE aol, an, s))
+``,
+  REPEAT STRIP_TAC >>
+  ASM_SIMP_TAC list_ss [Once bir_exec_step_n_acc_def]
+);
+
+val bir_exec_step_n_acc_REWR_NOT_TERMINATED = store_thm("bir_exec_step_n_acc_REWR_NOT_TERMINATED", ``
+  !(p:'a bir_program_t) n aol an s.
+           ((~bir_state_is_terminated s) /\ (~(n = 0))) ==>
+           (bir_exec_step_n_acc p n (aol, an, s) =
+            (let
+               (fe, s') = bir_exec_step p s
+             in
+               bir_exec_step_n_acc p (n-1) (OPT_CONS fe aol, an + 1, s')
+            )
+           )
+``,
+  REPEAT STRIP_TAC >>
+  ASM_SIMP_TAC list_ss [Once bir_exec_step_n_acc_def]
+);
+
+
+
+
+val bir_exec_step_n_plus_acc_thm = store_thm("bir_exec_step_n_plus_acc_thm", ``
+  !p s n aol an. (bir_exec_step_n_acc (p:'a bir_program_t) n (aol, an, s)) =
+                 (\(ol, sn, s'). (APPEND (REVERSE aol) ol, sn + an, s')) (bir_exec_step_n p s n)
+``,
+  Induct_on `n` >- (
+    SIMP_TAC list_ss [bir_exec_step_n_REWR_0, bir_exec_step_n_acc_REWR_0]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on `bir_state_is_terminated s` >- (
+    ASM_SIMP_TAC list_ss [bir_exec_step_n_REWR_TERMINATED, bir_exec_step_n_acc_REWR_TERMINATED]
+  ) >>
+
+  POP_ASSUM (fn thm => ASSUME_TAC thm >> ASSUME_TAC (MP (Q.SPECL [`p`, `s`, `n`] bir_exec_step_n_REWR_NOT_TERMINATED) thm)) >>
+  POP_ASSUM (fn thm => REWRITE_TAC [thm]) >>
+
+  POP_ASSUM (fn thm => ASSUME_TAC (MP (Q.SPECL [`p`, `SUC n`, `aol`, `an`, `s`] bir_exec_step_n_acc_REWR_NOT_TERMINATED) (CONJ thm (prove(``~(SUC n = 0)``, SIMP_TAC arith_ss []))))) >>
+  POP_ASSUM (fn thm => REWRITE_TAC [thm]) >>
+
+  SIMP_TAC arith_ss [] >>
+
+  Cases_on `bir_exec_step p s` >>
+  Q.RENAME1_TAC `bir_exec_step p s = (fe,s')` >>
+  ASM_SIMP_TAC std_ss [LET_DEF] >>
+
+  Cases_on `bir_exec_step_n p s' n` >>
+  Q.RENAME1_TAC `bir_exec_step_n p s' n = (ol, x)` >>
+  Cases_on `x` >>
+  Q.RENAME1_TAC `bir_exec_step_n p s' n = (ol, sn, s'')` >>
+  ASM_SIMP_TAC std_ss [LET_DEF] >>
+
+  POP_ASSUM (fn thm => REWRITE_TAC [thm]) >>
+
+  SIMP_TAC arith_ss [] >>
+
+  SIMP_TAC list_ss [OPT_CONS_APPEND, OPT_CONS_REVERSE] >>
+  Q.RENAME1_TAC `OPT_CONS fe []` >>
+  SIMP_TAC list_ss [OPT_CONS_def] >>
+  Cases_on `fe` >> (
+    SIMP_TAC list_ss []
+  ) >>
+
+  SIMP_TAC std_ss [listTheory.APPEND, GSYM listTheory.APPEND_ASSOC]
+);
+
+
+
+
+
+
+val bir_exec_step_n_acc_eq_thm = store_thm("bir_exec_step_n_acc_eq_thm", ``
+  !p s n. bir_exec_step_n_acc (p:'a bir_program_t) n ([], 0, s) =
+          bir_exec_step_n     p s n
+``,
+
+  REWRITE_TAC [bir_exec_step_n_plus_acc_thm] >>
+  SIMP_TAC list_ss [] >>
+  REPEAT STRIP_TAC >>
+  
+  Q.RENAME1_TAC `bir_exec_step_n p s n` >>
+  Cases_on `bir_exec_step_n p s n` >>
+  Q.RENAME1_TAC `bir_exec_step_n p s n = (ol, x)` >>
+  Cases_on `x` >>
+
+  SIMP_TAC std_ss []
+);
+
+
+
 
 
 

@@ -100,7 +100,7 @@ sig
    val is_BType_Bool_Imm1 : term -> bool
 
 
-   (* speical memory sizes *)
+   (* special memory sizes *)
    val mk_BType_MemByte    : term -> term
    val dest_BType_MemByte  : term -> term
    val is_BType_MemByte    : term -> bool

@@ -1,6 +1,7 @@
 # includes
 # ----------------------------------
-INCLUDES   = models/l3 models/l3mod \
+DEPENDENCIES   = ../../core ../../theories ../../libs \
+   models/l3mod \
    $(HOLDIR)/examples/l3-machine-code/common \
    $(HOLDIR)/examples/l3-machine-code/arm8/model \
    $(HOLDIR)/examples/l3-machine-code/arm8/step \

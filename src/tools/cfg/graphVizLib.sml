@@ -1,4 +1,3 @@
-
 structure graphVizLib =
 struct
 
@@ -43,7 +42,7 @@ fun gen_node (idx, shape, label_lines) =
 fun gen_nodes nodes =
   let
     val nodes_strs = List.map gen_node nodes;
-    val str = List.foldl (fn (x,y) => y ^ x ^ "\r\n\r\n") "" nodes_strs;
+    val str = List.foldr (fn (x,y) => y ^ x ^ "\r\n\r\n") "" nodes_strs;
   in
     str
   end;
