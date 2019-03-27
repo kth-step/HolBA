@@ -9,7 +9,7 @@ SMLFILES   =
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
-HOLHEAP    = wp/HolBAWp-heap
+HOLHEAP    = scamv/HolBAScamV-heap
 NEWHOLHEAP = HolBATools-heap
 
 HEAPINC    = 

@@ -1,8 +1,7 @@
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-
-
 structure bir_scamv_driverLib =
 struct
+
+open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 (*
  workflow:
