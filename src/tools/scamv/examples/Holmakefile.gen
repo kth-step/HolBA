@@ -1,0 +1,29 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   = 
+
+
+# configuration
+# ----------------------------------
+SMLFILES   = 
+
+TARGETS    = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
+
+HOLHEAP    = ../HolBAScamV-heap
+NEWHOLHEAP = 
+
+HEAPINC    = 
+
+SELFTEST_DEP = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../../Holmakefile.inc
+
+
+# test recipes
+# ----------------------------------
+run-test.exe: run-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
