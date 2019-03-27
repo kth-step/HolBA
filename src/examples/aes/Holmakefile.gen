@@ -28,3 +28,9 @@ include ../../Holmakefile.inc
 cfg-test.exe: cfg-test.uo 
 	$(HOLMOSMLC) -o $@ $<
 
+wp-test.exe: wp-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
+wp71-pass-test.exe: wp71-pass-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
