@@ -1,6 +1,5 @@
 open HolKernel Parse;
 
-open aesBinaryTheory;
 open toyBinaryTheory;
 
 open listSyntax;

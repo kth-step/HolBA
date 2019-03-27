@@ -7,7 +7,8 @@ DEPENDENCIES   = lifter wp
 # ----------------------------------
 SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
 
-TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
+TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES)) \
+             $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
 
 HOLHEAP    = ../../HolBA-heap
 NEWHOLHEAP = 
@@ -20,3 +21,10 @@ SELFTEST_DEP =
 # included lines follow
 # ----------------------------------
 include ../../Holmakefile.inc
+
+
+# test recipes
+# ----------------------------------
+cfg-test.exe: cfg-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
