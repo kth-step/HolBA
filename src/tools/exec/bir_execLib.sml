@@ -20,12 +20,15 @@ struct
 
   fun log_setfile log_filename = log := SOME (TextIO.openOut log_filename);
 
+  (* a function with the old behavior of print_with_style (no implicit newline at the end) *)
+  fun print_with_style_ sty = print o (add_style_to_string sty);
+
   fun print_log_with_style sty f s = let
     val log_ = !log;
     val _ = case log_ of
 	        NONE       => ()
 	      | SOME log_v => if f then TextIO.output (log_v, s) else ();
-    val _ = print_with_style sty s;
+    val _ = print_with_style_ sty s;
   in () end;
 
   val print_log = print_log_with_style [];
