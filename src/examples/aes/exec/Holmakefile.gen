@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = 
+DEPENDENCIES   = ../../.. ../lifter
 
 
 # configuration
@@ -9,7 +9,7 @@ SMLFILES   =
 
 TARGETS    = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
 
-HOLHEAP    = ../HolBAExec-heap
+HOLHEAP    = ../../../HolBA-heap
 NEWHOLHEAP = 
 
 HEAPINC    = 
@@ -24,9 +24,6 @@ include ../../../Holmakefile.inc
 
 # test recipes (have to be last if there are multiple for some reason)
 # ----------------------------------
-basic-test.exe: basic-test.uo 
-	$(HOLMOSMLC) -o $@ $<
-
-toy-test.exe: toy-test.uo 
+aes-test.exe: aes-test.uo 
 	$(HOLMOSMLC) -o $@ $<
 
