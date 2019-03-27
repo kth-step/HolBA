@@ -7,7 +7,7 @@ open bir_program_blocksTheory;
 open bir_program_terminationTheory;
 open bir_typing_progTheory;
 open bir_envTheory;
-open bir_exp_substitutionsTheory;
+open bir_exp_substitutionsTheory bir_exp_substitutionsSyntax;
 open bir_bool_expTheory;
 open bir_auxiliaryTheory;
 open bir_valuesTheory;
@@ -26,11 +26,6 @@ load "pairLib";
 structure bir_wp_simpLib =
 struct
 
-
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_substitutions"
-  val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
-  val (bir_exp_subst1_tm, mk_bir_exp_subst1, dest_bir_exp_subst1, is_bir_exp_subst1) = syntax_fns3 "bir_exp_subst1";
-  
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_wp_simp"
   val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
   val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
