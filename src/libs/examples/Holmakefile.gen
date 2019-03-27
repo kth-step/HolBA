@@ -26,3 +26,6 @@ include ../../Holmakefile.inc
 # ----------------------------------
 z3-sat-model-test.exe: z3-sat-model-test.uo
 	$(HOLMOSMLC) -o $@ $<
+
+bir-to-word-test.exe: bir-to-word-test.uo
+	$(HOLMOSMLC) -o $@ $<
