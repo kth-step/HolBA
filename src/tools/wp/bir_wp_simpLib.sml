@@ -8,7 +8,7 @@ open bir_program_terminationTheory;
 open bir_typing_progTheory;
 open bir_envTheory;
 open bir_exp_substitutionsTheory bir_exp_substitutionsSyntax;
-open bir_bool_expTheory;
+open bir_bool_expTheory bir_bool_expSyntax;
 open bir_auxiliaryTheory;
 open bir_valuesTheory;
 open bir_expTheory;
