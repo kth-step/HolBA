@@ -76,6 +76,7 @@ for feature branches):
 └─ src
    ├─ core: core BIR language
    ├─ libs: general BIR libraries, used by tools
+   │  └─ examples: Examples showcasing the use of libs/ libraries.
    ├─ theories: various supporting theories
    ├─ tools
    │  ├─ cfg: Control Flow Graph utilities
