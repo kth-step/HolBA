@@ -24,8 +24,12 @@ HOLMAKEFILE_GENS = $(call rwildcard,src/,Holmakefile.gen)
 HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
 
 .DEFAULT_GOAL := all
-all:
-	@echo "Please use sub-rules to build HolBA:\n\
+all: show-rules
+	@echo "Please use sub-rules to build HolBA."
+
+show-rules:
+	@echo "Available rules:\n\
+     - Holmakefiles: generates \`Holmakefile\`s from \`Holmakefile.gen\` files.\n\
      - core: builds only src/core, src/theories and src/libs\n\
      - main: builds HolBA, but without the examples or documentation\n\
      - examples-base: builds HolBA and the examples for each tool\n\
@@ -39,11 +43,11 @@ all:
 
 Holmakefiles: $(HOLMAKEFILES)
 
+core: Holmakefiles
+	cd $(SRCDIR)/libs && $(HOLMAKE)
+
 main: Holmakefiles
 	cd $(SRCDIR) && $(HOLMAKE)
-
-core: $(HOLMAKEFILES)
-	cd $(SRCDIR)/libs && $(HOLMAKE)
 
 examples-base: main $(EXAMPLES_BASE)
 

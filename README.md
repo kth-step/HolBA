@@ -1,14 +1,16 @@
-# Software versions
+# HolBA - Binary analysis in HOL 
+
+## Software versions
 
 - HOL4 (`https://github.com/kth-step/HOL`)
   - branch: for_holba (i.e. tags/kananaskis-12 + holsmt-arrays + syntax-errors)
 - Poly/ML (e.g. current Poly/ML version packaged for Ubuntu, 5.7.1)
 
 
-# How to compile
+## How to compile
 
 * First, run `make [main|examples|benchmarks|...]` in the root directory,
-  according to your needs.
+  according to your needs (use `make show-rules` to see existing rules).
 * Then, go into the directory you want to use and run `{HOLDIR}/bin/Holmake`.
 * If one of the previous steps fails, try to clean your Git working directory by
   `make cleanslate` in the project root directory. **Be careful though**, this
@@ -16,8 +18,10 @@
   auto-generated from `Holmakefile.gen` files, so they are removed by this
   command).
 
+_Note_: You can use `make --directory=/path/to/HolBA rule`.
 
-# Branch policy
+
+## Branch policy
 
 ### tags
 
@@ -68,7 +72,7 @@ for feature branches):
   3. Merge in feature branch after history rewrite
 
 
-# Folders and organization
+## Folders and organization
 
 ```
 ├─ doc
@@ -93,7 +97,8 @@ for feature branches):
    └─ examples: to showcase HolBA features
 ```
 
-Tools status:
+### Tools status:
+
 - `tools/cfg`:
   * non proof-producing
   * no clear interface yet
@@ -116,8 +121,20 @@ Tools status:
   * non proof-producing
   * experimental passification transformation to SSA
 
+### Dependency graph and PolyML heaps
 
-# Coding style
+![Dependency diagram](./doc/diagrams/dependencies.png?raw=true)
+
+Key:
+ - Blue edges represent dependencies between HolBA modules.
+ - Green edges represent the chain of PolyML heaps. See HOL's Description Manual
+   for more information about PolyML heaps.
+
+_Note_:
+- You can temporarily change the heap chain order if you don't need a dependency
+  in order to reduce build times.
+
+## Coding style
 
 * HOL source code
   - Spaces, no tabs
