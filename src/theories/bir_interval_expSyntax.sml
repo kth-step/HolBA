@@ -55,6 +55,27 @@ val (FUNS_EQ_OUTSIDE_WI_size_tm,  mk_FUNS_EQ_OUTSIDE_WI_size, dest_FUNS_EQ_OUTSI
    val wty = ``:32``
 *)
 
+val BExp_unchanged_mem_interval_distinct_tm =
+  prim_mk_const{Name = "BExp_unchanged_mem_interval_distinct",
+                Thy  = "bir_interval_exp"}
+fun dest_BExp_unchanged_mem_interval_distinct tm =
+  (let
+    val (const, args) = strip_comb tm
+  in
+    if (Term.same_const const
+                        BExp_unchanged_mem_interval_distinct_tm)
+    then (el 1 args, el 2 args, el 3 args, el 4 args, el 5 args)
+    else raise (ERR "dest_BExp_unchanged_mem_interval_distinct" "")
+  end) handle e =>
+       raise (ERR "dest_BExp_unchanged_mem_interval_distinct" "")
+val is_BExp_unchanged_mem_interval_distinct =
+  can dest_BExp_unchanged_mem_interval_distinct
+fun mk_BExp_unchanged_mem_interval_distinct
+      (sz, mb_n, me_n, exp, isz) =
+        list_mk_comb (BExp_unchanged_mem_interval_distinct_tm,
+                      [sz, mb_n, me_n, exp, isz])
+
+
 fun mk_WI_end_of_nums wty b_n e_n = let
   val b_t = wordsSyntax.mk_n2w (numSyntax.mk_numeral b_n, wty);
   val e_t = wordsSyntax.mk_n2w (numSyntax.mk_numeral e_n, wty);

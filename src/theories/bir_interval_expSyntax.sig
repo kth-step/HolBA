@@ -75,6 +75,11 @@ sig
    val is_FUNS_EQ_OUTSIDE_WI_size   : term -> bool
    val mk_FUNS_EQ_OUTSIDE_WI_size   : term * term * term * term -> term
 
+   val BExp_unchanged_mem_interval_distinct_tm   : term
+   val dest_BExp_unchanged_mem_interval_distinct : term -> term * term * term * term * term
+   val is_BExp_unchanged_mem_interval_distinct   : term -> bool
+   val mk_BExp_unchanged_mem_interval_distinct   : term * term * term * term * term -> term
+
    (*****************************)
    (* Constructing from numbers *)
    (*****************************)
