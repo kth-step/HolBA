@@ -46,6 +46,7 @@ val prog = prog_const;
 
 val liftertheorem = REWRITE_RULE [GSYM prog_l_def] liftertheorem;
 
+(* (* this is not valid anymore since we replaced the last block *)
 val validprog_thm = prove(``
   bir_is_valid_program ^prog_const
 ``,
@@ -55,6 +56,7 @@ val validprog_thm = prove(``
   ) >>
   SIMP_TAC list_ss [bir_program_is_empty_def, prog_l_def]
 );
+*)
 
 
 val prog = (mk_BirProgram) prog_l;
@@ -63,14 +65,32 @@ val vars = gen_vars_of_prog prog;
 val var_eq_thms = gen_var_eq_thms vars;
 
 val env_init = bir_exec_env_initd_env vars;
-val env = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
-          ``bir_env_write (BVar "SP_EL0" (BType_Imm Bit64)) (BVal_Imm (Imm64 0x8000000w)) ^env_init``;
+(* SP *)
+val env_1 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
+            ``bir_env_write (BVar "SP_EL0" (BType_Imm Bit64)) (BVal_Imm (Imm64 0x8000000w)) ^env_init``;
 
+(* *rk *)
+val env_2 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
+            ``bir_env_write (BVar "R0" (BType_Imm Bit64)) (BVal_Imm (Imm64 0xA000000w)) ^env_1``;
+
+(* r *)
+val env_3 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
+            ``bir_env_write (BVar "R1" (BType_Imm Bit64)) (BVal_Imm (Imm64 1w)) ^env_2``;
+
+(* *inBlock *)
+val env_4 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
+            ``bir_env_write (BVar "R2" (BType_Imm Bit64)) (BVal_Imm (Imm64 0xB000000w)) ^env_3``;
+
+(* *outBlock *)
+val env_5 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
+            ``bir_env_write (BVar "R3" (BType_Imm Bit64)) (BVal_Imm (Imm64 0xC000000w)) ^env_4``;
+
+val env = env_5;
 val state = ``<| bst_pc := ^pc ; bst_environ := ^env ; bst_status := BST_Running |>``;
 
 
 
-val validprog_o = SOME validprog_thm;
+val validprog_o = NONE;
 val welltypedprog_o = NONE;
 val state_o = SOME state;
 
