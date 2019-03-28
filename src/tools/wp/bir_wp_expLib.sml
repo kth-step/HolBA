@@ -55,7 +55,7 @@ struct
     end;
 
   fun gen_lbl_list wps1_term =
-    List.map (term_to_string o snd o gen_dest_Imm o dest_BL_Address) (bir_wp_fmap_to_dom_list wps1_term);
+    List.map bir_wpLib.label_to_wps_id_suffix (bir_wp_fmap_to_dom_list wps1_term);
 
   end (* local *)
 

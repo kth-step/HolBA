@@ -140,6 +140,25 @@ struct
   val bir_wp_comp_wps_iter_step2_consts = ref ([]:term list);
   val bir_wp_comp_wps_iter_step2_cntr = ref 0;
 
+  (* Generates a string suffix from the label. *)
+  fun label_to_wps_id_suffix label =
+    let
+      (*-------------------------------------------------------------------
+       * Replaces invalid identifier characters by '_', to conform to
+       * Lexis.ok_identifier.
+       *-------------------------------------------------------------------*)
+      fun escape_non_alphanum c = if Char.isAlphaNum c then String.str c else "_";
+      fun to_ident name = String.translate escape_non_alphanum name;
+
+      val striped_label = lbl_strip_comment label;
+      val wps_id_suffix =
+        if (is_BL_Address striped_label)
+          then (term_to_string o snd o gen_dest_Imm o dest_BL_Address) striped_label
+          else (stringSyntax.fromHOLstring o dest_BL_Label) striped_label;
+    in
+      to_ident wps_id_suffix
+    end;
+
   (* produce wps1 and reestablish bool_sound_thm for this one *)
   fun bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm) prog_l_thm ((program, post, ls), (label)) defs =
     let
@@ -149,20 +168,8 @@ struct
         val wps_id_suffix = Int.toString wps_id_idx;
         *)
 
-        (*-------------------------------------------------------------------
-         * Replaces invalid identifier characters by '_', to conform to
-         * Lexis.ok_identifier.
-         *-------------------------------------------------------------------*)
-        fun escape_non_alphanum c = if Char.isAlphaNum c then String.str c else "_";
-        fun to_ident name = String.translate escape_non_alphanum name;
-
         (* Generate a string suffix from the label. *)
-        val striped_label = lbl_strip_comment label;
-        val wps_id_suffix =
-          if (is_BL_Address striped_label)
-            then (term_to_string o snd o gen_dest_Imm o dest_BL_Address) striped_label
-            else (stringSyntax.fromHOLstring o dest_BL_Label) striped_label;
-        val wps_id_suffix = to_ident wps_id_suffix;
+        val wps_id_suffix = label_to_wps_id_suffix label;
 
         val var_wps1 = ``wps':(bir_label_t |-> bir_exp_t)``;
         val thm = SPECL [wps, var_wps1] prog_l_thm;
