@@ -24,6 +24,21 @@ val name = "lifted_aes_enc_part";
 val liftertheorem = aes_arm8_program_THM;
 val prog_l = ((dest_BirProgram o snd o dest_comb o concl) liftertheorem);
 
+(* fix program to have a BIR halt instead of an armv8 ret at the end *)
+val prog_l =
+  let
+    val (blocks,ty) = dest_list prog_l;
+    val obs_ty = (hd o snd o dest_type) ty;
+    val (lbl,a,_) = bir_programSyntax.dest_bir_block (List.last blocks);
+    val new_last_block =  bir_programSyntax.mk_bir_block
+              (lbl, mk_list ([], mk_type ("bir_stmt_basic_t", [obs_ty])),
+               ``BStmt_Halt (BExp_Const (Imm32 0x000000w))``);
+
+    val blocks' = (List.take (blocks, (List.length blocks) - 1))@[new_last_block];
+  in
+    mk_list (blocks',ty)
+  end;
+
 (* define a constant for the program, obtain validprog theorem *)
 val prog_l_def = Define [QUOTE (name ^ "_prog_l = "), ANTIQUOTE prog_l];
 val prog_const = (mk_BirProgram o fst o dest_eq o concl) prog_l_def;
