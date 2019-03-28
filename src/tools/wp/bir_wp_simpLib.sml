@@ -1,30 +1,31 @@
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-
-open bir_wpTheory;
-
-open bir_programTheory;
-open bir_program_blocksTheory;
-open bir_program_terminationTheory;
-open bir_typing_progTheory;
-open bir_envTheory;
-open bir_exp_substitutionsTheory bir_exp_substitutionsSyntax;
-open bir_bool_expTheory bir_bool_expSyntax;
-open bir_auxiliaryTheory;
-open bir_valuesTheory;
-open bir_expTheory;
-open bir_program_env_orderTheory;
-
-open bir_expLib;
-open finite_mapSyntax;
-open pairSyntax;
-
-open bir_wp_simpTheory;
-
-load "pairLib";
-
-
 structure bir_wp_simpLib =
 struct
+
+  local
+
+  open HolKernel boolLib liteLib simpLib Parse bossLib;
+
+  open bir_wpTheory;
+
+  open bir_programTheory;
+  open bir_program_blocksTheory;
+  open bir_program_terminationTheory;
+  open bir_typing_progTheory;
+  open bir_envTheory bir_envSyntax;
+  open bir_exp_substitutionsTheory bir_exp_substitutionsSyntax;
+  open bir_bool_expTheory bir_bool_expSyntax;
+  open bir_auxiliaryTheory;
+  open bir_valuesTheory bir_valuesSyntax;
+  open bir_expTheory bir_expSyntax;
+  open bir_program_env_orderTheory;
+
+  open bir_expLib;
+  open finite_mapSyntax;
+  open pairSyntax;
+
+  open bir_wp_simpTheory;
+
+  in (* local *)
 
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_wp_simp"
   val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
@@ -1152,5 +1153,6 @@ val goalterm = (snd o dest_eq o concl) simp_thm;
 *)
 
 
-end
+end (* local *)
 
+end (* bir_wp_simpLib *)
