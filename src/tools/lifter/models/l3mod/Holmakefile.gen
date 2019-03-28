@@ -5,14 +5,15 @@ INCLUDES   = ../l3
 
 # configuration
 # ----------------------------------
-SMLFILES   = 
+SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
 HOLHEAP    = ../l3/HolBA_l3-heap
 NEWHOLHEAP = HolBA_l3mod-heap
 
-HEAPINC    = 
+HEAPINC    = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
+             $(patsubst %.sml,%,$(wildcard *Lib.sml))
 
 SELFTEST_DEP = 
 
