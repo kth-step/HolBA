@@ -35,7 +35,7 @@ val i = if take_all then
 
 val lbl_str = List.nth (lbl_list, (List.length lbl_list) - 2 - i + 1);
 
-val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
+val def_thm = lookup_def (bir_wpLib.wps_id_prefix ^ lbl_str);
 val def_const = (fst o dest_eq o concl) def_thm;
 
 

@@ -196,7 +196,7 @@ struct
     | preproc_vars acc (lbl_str::lbl_list) =
         let
           val _ = print ((Int.toString (length acc)) ^ "        \r");
-          val def_thm = lookup_def ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str);
+          val def_thm = lookup_def (bir_wpLib.wps_id_prefix ^ lbl_str);
 (*
           val vars_def_var_id = "bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str ^ "_vars";
           val vars_def_var = mk_var (vars_def_var_id, ``:bir_var_t -> bool``);
