@@ -106,6 +106,13 @@ struct
           ((xf "(") cf (ef exp1) cf (xf " ") cf (xf bpredopstr) cf (xf " ") cf (ef exp2) cf (xf ")"))
         end
 
+      else if is_BExp_MemEq exp then
+        let
+          val (exp1, exp2) = (dest_BExp_MemEq) exp;
+        in
+          ((xf "(") cf (ef exp1) cf (xf " = ") cf (ef exp2) cf (xf ")"))
+        end
+
       else if is_BExp_IfThenElse exp then
         let
           val (expc, expt, expf) = (dest_BExp_IfThenElse) exp;
