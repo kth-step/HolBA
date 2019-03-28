@@ -1,4 +1,3 @@
-
 structure graphVizLib =
 struct
 

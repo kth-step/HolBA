@@ -2318,7 +2318,7 @@ rename1 `mm::mms` >>
        MATCH_MP_TAC bmr_mem_contains_regions_EQUIV_merge2 >>
        ASM_SIMP_TAC list_ss [LENGTH_FLAT, MAP_REVERSE, rich_listTheory.SUM_REVERSE]
     ) >>
-    IRULE_TAC bmr_mem_contains_regions_EQUIV_APPEND >- (
+    IRULE_TAC bmr_mem_contains_regions_EQUIV_APPEND >> REPEAT CONJ_TAC >- (
       REWRITE_TAC [bmr_mem_contains_regions_EQUIV_REFL]
     ) >>
     MP_TAC (Q.SPECL [`r`, `mu`,

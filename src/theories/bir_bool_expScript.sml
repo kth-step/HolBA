@@ -219,6 +219,31 @@ SIMP_TAC (std_ss++holBACore_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_is_bool_exp_def
   bir_number_of_mem_splits_BitResult] >> METIS_TAC []);
 
 
+(*************************)
+(* convenient shorthands *)
+(*************************)
+
+val bir_exp_or_def =  Define `bir_exp_or  e1 e2 = BExp_BinExp   BIExp_Or  e1 e2`;
+val bir_exp_and_def = Define `bir_exp_and e1 e2 = BExp_BinExp   BIExp_And e1 e2`;
+val bir_exp_not_def = Define `bir_exp_not e     = BExp_UnaryExp BIExp_Not e`;
+val bir_exp_imp_def = Define `bir_exp_imp e1 e2 = bir_exp_or (bir_exp_not e1) e2`;
+
+val bir_exp_imp_or_thm = store_thm ("bir_exp_imp_or_thm",
+  ``!e1 e2. bir_exp_imp e1 e2 = bir_exp_or (bir_exp_not e1) e2``,
+  REWRITE_TAC [bir_exp_imp_def]
+);
+
+val bir_bool_shorthands_REWRS = store_thm ("bir_bool_shorthands_REWRS",
+``   (!e1 e2. (bir_exp_or  e1 e2) = (BExp_BinExp   BIExp_Or  e1 e2))
+  /\ (!e1 e2. (bir_exp_and e1 e2) = (BExp_BinExp   BIExp_And e1 e2))
+  /\ (!e    . (bir_exp_not e    ) = (BExp_UnaryExp BIExp_Not e    ))
+  /\ (!e1 e2. (bir_exp_imp e1 e2) = (bir_exp_or (bir_exp_not e1) e2))``,
+  REWRITE_TAC [
+    bir_exp_or_def,
+    bir_exp_and_def,
+    bir_exp_not_def,
+    bir_exp_imp_def
+  ]);
 
 (*********************************************)
 (* boolean expressions properly typed in env *)

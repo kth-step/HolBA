@@ -1,11 +1,10 @@
+structure bir_cfgVizLib =
+struct
+
 open HolKernel Parse;
 open bir_immSyntax;
 open graphVizLib;
 open bir_cfgLib;
-
-
-structure bir_cfgVizLib =
-struct
 
 val ERR = mk_HOL_ERR "bir_cfgVizLib"
 

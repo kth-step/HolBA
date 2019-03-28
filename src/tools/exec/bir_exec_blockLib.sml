@@ -1,39 +1,36 @@
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-
-open bir_programTheory;
-open bir_programSyntax;
-open bir_valuesTheory;
-
-open HolBACoreSimps;
-
-open bir_exec_auxLib;
-open bir_exec_envLib;
-open bir_exec_expLib;
-
-open optionSyntax;
-open pairSyntax;
-open numSyntax;
-
-open listTheory;
-open listSyntax;
-open wordsLib;
-
-open Redblackmap;
-
-open bir_program_valid_stateTheory;
-open bir_program_labelsTheory;
-
-
 structure bir_exec_blockLib =
 struct
 
+  open HolKernel boolLib liteLib simpLib Parse bossLib;
 
-(*
-  val t = ``bir_exec_step ^prog_const ^state``;
+  open bir_programTheory;
+  open bir_programSyntax;
+  open bir_valuesTheory;
 
-  bir_exec_prog_step_conv var_eq_thm t
-*)
+  open HolBACoreSimps;
 
+  open bir_exec_auxLib;
+  open bir_exec_envLib;
+  open bir_exec_expLib;
+
+  open optionSyntax;
+  open pairSyntax;
+  open numSyntax;
+
+  open listTheory;
+  open listSyntax;
+  open wordsLib;
+
+  open Redblackmap;
+
+  open bir_program_valid_stateTheory;
+  open bir_program_labelsTheory;
+
+  (*
+    val t = ``bir_exec_step ^prog_const ^state``;
+
+    bir_exec_prog_step_conv block_thm_map var_eq_thms t
+  *)
 
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program"
   val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;

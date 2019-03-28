@@ -1,15 +1,16 @@
-# Software versions
+# HolBA - Binary analysis in HOL 
+
+## Software versions
 
 - HOL4 (`https://github.com/kth-step/HOL`)
-  - commit: `d0a474d1d1cba7c32acb6056a6288c44c2f1a75b`
-  - with modified HolSmtLib: branch `holsmt-arrays`
+  - branch: for_holba (i.e. tags/kananaskis-12 + holsmt-arrays + syntax-errors)
 - Poly/ML (e.g. current Poly/ML version packaged for Ubuntu, 5.7.1)
 
 
-# How to compile
+## How to compile
 
 * First, run `make [main|examples|benchmarks|...]` in the root directory,
-  according to your needs.
+  according to your needs (use `make show-rules` to see existing rules).
 * Then, go into the directory you want to use and run `{HOLDIR}/bin/Holmake`.
 * If one of the previous steps fails, try to clean your Git working directory by
   `make cleanslate` in the project root directory. **Be careful though**, this
@@ -17,31 +18,32 @@
   auto-generated from `Holmakefile.gen` files, so they are removed by this
   command).
 
+_Note_: You can use `make --directory=/path/to/HolBA rule`.
 
-# Branch policy
 
-### `master` branch
+## Branch policy
 
-`master` is the standard branch where **completed features** are merged:
+### tags
+
+tags should have as many **completed features** as possible:
  - no cheat
  - must correctly compile
  - self tests must succeed
  - code should be tested
- - bug-fixes are ok
- - 1 review is needed in order to merge into `master`
 
 Follow these instructions whenever you merge to master:
   - `grep` for "cheat"
   - check that the `README` is up to date (especially tool status)
   - find a reviewer for your Pull Request
 
-### `dev` branch
+### `master` branch
 
-`dev` is the branch where every feature is available, but not necessarily finalized:
-  - Can cheat
-  - Code can be commented out
+`master` is the branch where every feature is available, but not necessarily finalized:
+  - Can cheat, but has to be avoided
+  - Code should not be be commented out
   - **Holmake must work**
   - bug-fixes are ok
+  - 1 review is needed in order to merge into `master`
 
 However, **no development happens on this branch**, but rather on separate
 feature branches.
@@ -51,12 +53,12 @@ development won't break existing code.
 
 ### Feature branches
 
-Every "somewhat" working tool should be available in the `dev` branch, but new
-features or any development must go on new branches.
+Every "somewhat" working tool should be available in the `master` branch, but new
+features or any development must go on new branches prefixed with `dev_`.
  - branch names must be short and explicit (prefer explicit over short)
  - every feature branch should involve small developments
- - rebase feature branches on `dev` **often**, by using `git rebase` or `git merge`
- - **merge feature branches on `dev` often**: work on small features
+ - rebase feature branches on `master` **often**, by using `git rebase` or `git merge`
+ - **merge feature branches on `master` often**: work on small features
 
 Some rules for feature branches:
  - commits in a feature branch must compile, unless explicitly stated in commit
@@ -70,29 +72,33 @@ for feature branches):
   3. Merge in feature branch after history rewrite
 
 
-# Folders and organization
+## Folders and organization
 
 ```
 ├─ doc
 └─ src
-   ├─ core: Core BIR language
-   ├─ examples: to showcase HolBA features
+   ├─ core: core BIR language
    ├─ libs: general BIR libraries, used by tools
+   │  └─ examples: Examples showcasing the use of libs/ libraries.
    ├─ theories: various supporting theories
-   └─ tools
-      ├─ cfg: Control Flow Graph utilities
-      │  └─ examples: CFG-related small examples
-      ├─ exec: Concrete execution
-      │  └─ examples: Concrete execution-related small examples
-      ├─ lifter: Proof-producing binary lifter
-      │  ├─ benchmark
-      │  ├─ examples: Lifter-related small examples
-      └─ wp: Weakest Precondition propagation
-         ├─ benchmark
-         └─ examples: WP-related small examples
+   ├─ tools
+   │  ├─ cfg: Control Flow Graph utilities
+   │  │  └─ examples: CFG-related small examples
+   │  ├─ exec: concrete execution
+   │  │  └─ examples: concrete execution-related small examples
+   │  ├─ lifter: proof-producing binary lifter
+   │  │  ├─ benchmark
+   │  │  └─ examples: lifter-related small examples
+   │  ├─ pass: Passification utility
+   │  │  └─ examples: Passification-related small examples
+   │  └─ wp: weakest precondition propagation
+   │     ├─ benchmark
+   │     └─ examples: WP-related small examples
+   └─ examples: to showcase HolBA features
 ```
 
-Tools status:
+### Tools status:
+
 - `tools/cfg`:
   * non proof-producing
   * no clear interface yet
@@ -115,8 +121,20 @@ Tools status:
   * non proof-producing
   * experimental passification transformation to SSA
 
+### Dependency graph and PolyML heaps
 
-# Coding style
+![Dependency diagram](./doc/diagrams/dependencies.png?raw=true)
+
+Key:
+ - Blue edges represent dependencies between HolBA modules.
+ - Green edges represent the chain of PolyML heaps. See HOL's Description Manual
+   for more information about PolyML heaps.
+
+_Note_:
+- You can temporarily change the heap chain order if you don't need a dependency
+  in order to reduce build times.
+
+## Coding style
 
 * HOL source code
   - Spaces, no tabs

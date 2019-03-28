@@ -1,25 +1,24 @@
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-
-open BasicProvers;
-
-open bir_envSyntax;
-open bir_valuesSyntax;
-open finite_mapSyntax;
-
-open HolBACoreSimps;
-
-open bir_envTheory;
-open finite_mapTheory;
-
-open bir_exec_auxLib;
-open bir_exec_typingLib;
-
-open pairSyntax;
-open optionSyntax;
-
-
 structure bir_exec_envLib =
 struct
+
+  open HolKernel boolLib liteLib simpLib Parse bossLib;
+
+  open BasicProvers;
+
+  open bir_envSyntax;
+  open bir_valuesSyntax;
+  open finite_mapSyntax;
+
+  open HolBACoreSimps;
+
+  open bir_envTheory;
+  open finite_mapTheory;
+
+  open bir_exec_auxLib;
+  open bir_exec_typingLib;
+
+  open pairSyntax;
+  open optionSyntax;
 
 (*
   val vars = [``BVar "bit1" (BType_Bool)``,

@@ -24,49 +24,15 @@ val string_t_ss = rewrites (type_rws ``:string``);
 
 
 
-
-
-
 (* TODO: memory load store updates *)
 
-
-
-
-
-
-
-val bir_exp_and_def = Define `
-      bir_exp_and e1 e2 = BExp_BinExp BIExp_And e1 e2
-`;
-
-val bir_exp_or_def = Define `
-      bir_exp_or e1 e2 = BExp_BinExp BIExp_Or e1 e2
-`;
-
-val bir_exp_not_def = Define `
-      bir_exp_not e = BExp_UnaryExp BIExp_Not e
-`;
-
-val bir_exp_imp_def = Define `
-      bir_exp_imp e1 e2 = bir_exp_or (bir_exp_not e1) e2
-`;
-
-val bir_exp_imp_or_thm = store_thm("bir_exp_imp_or_thm", ``
-     !e1 e2.
-         bir_exp_imp e1 e2 = bir_exp_or (bir_exp_not e1) e2
-``,
-
-  REWRITE_TAC [bir_exp_imp_def]
-);
-
-
-
-
-
-
-
-
-
+(* Definitions moved to theories/bir_bool_expScript.sml:
+ *  - bir_exp_and
+ *  - bir_exp_or
+ *  - bir_exp_not
+ *  - bir_exp_imp
+ *  - bir_exp_imp_or_thm
+ *)
 
 
 (* !!!!!!!!!! this has to go somewhere else !!!!!!!!!!!!!!!!!!!!!!! *)

@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../..
+DEPENDENCIES   = ../../..
 
 
 # configuration
@@ -10,9 +10,9 @@ SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
 HOLHEAP    = ../../../HolBA-heap
-NEWHOLHEAP = 
+NEWHOLHEAP = # TODO: Create a heap with lifted binaries "HolBAExamples-aes-LiftedBinaries-heap"
 
-HEAPINC    = 
+HEAPINC    = # TODO: Add lifted stuff here
 
 SELFTEST_DEP = 
 

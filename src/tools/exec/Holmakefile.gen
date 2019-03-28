@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../lifter
+DEPENDENCIES   = ../../core ../../theories
 
 
 # configuration
@@ -9,10 +9,10 @@ SMLFILES   = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
-HOLHEAP    = ../lifter/HolBALifter-heap #../../lib/HolBATheories-heap
-NEWHOLHEAP = 
+HOLHEAP    = ../../libs/HolBALibs-heap
+NEWHOLHEAP = HolBAExec-heap
 
-HEAPINC    = 
+HEAPINC    = $(patsubst %.sml,%,$(wildcard *Lib.sml))
 
 SELFTEST_DEP = 
 

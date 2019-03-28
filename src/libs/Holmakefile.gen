@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-INCLUDES   = ../../ ../../../../core ../../../lifter ../../../../theories
+DEPENDENCIES   = ../core ../theories
 
 
 # configuration
@@ -9,14 +9,14 @@ SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
-HOLHEAP    = ../../../lifter/HolBALifter-heap
-NEWHOLHEAP = 
+HOLHEAP    = ../theories/HolBATheories-heap
+NEWHOLHEAP = HolBALibs-heap
 
-HEAPINC    = 
+HEAPINC    = bir_expLib Z3_SAT_modelLib bir_exp_to_wordsLib bslSyntax
 
-SELFTEST_DEP = 
+SELFTEST_DEP =
 
 
 # included lines follow
 # ----------------------------------
-include ../../../../Holmakefile.inc
+include ../Holmakefile.inc
