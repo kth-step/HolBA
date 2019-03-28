@@ -1,4 +1,4 @@
-open HolKernel Parse;
+open HolKernel Parse boolLib bossLib;
 
 
 open gcc_supportLib;
@@ -65,6 +65,7 @@ open bir_inst_liftingLib;
 (* for arm8 *)
 val (bmil_bir_lift_prog_gen, disassemble_fun) = (bmil_arm8.bir_lift_prog_gen, arm8AssemblerLib.arm8_disassemble);
 
+(* this was copied -----> *)
 fun disassembly_section_to_minmax section =
   case section of
       BILMR(addr_start, entries) =>
@@ -85,7 +86,54 @@ fun minmax_fromlist ls = List.foldl (fn ((min_1,max_1),(min_2,max_2)) =>
   ) (hd ls) (tl ls);
 
 fun da_sections_minmax sections = minmax_fromlist (List.map disassembly_section_to_minmax sections);
+(* <---- this was copied *)
 
+(*
+from: lifter/bir_inst_liftingLibTypes.sml
+
+datatype bir_inst_lifting_mem_entry_type =
+    BILME_code of string option
+  | BILME_data
+  | BILME_unknown
+
+datatype bir_inst_lifting_mem_region =
+  BILMR of Arbnum.num * (string * bir_inst_lifting_mem_entry_type) list;
+
+*)
+fun entry_to_str entry = case entry of
+                 BILME_code(c) => "BILME_code("^(PolyML.makestring c)^")"
+               | BILME_data    => "BILME_data"
+               | BILME_unknown => "BILME_unknown";
+
+fun pretty_entry
+  (depth: int)
+  (printElem: {})
+  (x: bir_inst_lifting_mem_entry_type) =
+    PolyML.PrettyString (entry_to_str x);
+
+val _ = PolyML.addPrettyPrinter pretty_entry;
+(*
+PolyML.print (BILME_code(SOME "hallo"))
+(BILME_code(SOME "hallo"))
+*)
+
+fun section_to_str section = case section of
+      BILMR(a_start, entries) =>
+        (* use pretty block and "PolyML.prettyRepresentation (x, depth)" *)
+        "BILMR (Arbnum.fromString \"" ^ (Arbnum.toString a_start) ^ "\", " ^ (PolyML.makestring entries) ^ ")";
+
+fun pretty_section
+  (depth: int)
+  (printElem: {})
+  (x: bir_inst_lifting_mem_region) =
+    PolyML.PrettyString (section_to_str x);
+
+val _ = PolyML.addPrettyPrinter pretty_section;
+
+(*
+BILMR (Arbnum.fromString "3", [("test", BILME_code(SOME "hallo"))])
+*)
+(* <------------ this should go to lifter/bir_inst_liftingLibTypes.sml *)
 
 val prog_range = da_sections_minmax sections;
 val (thm_prog, errors) = bmil_bir_lift_prog_gen prog_range sections;

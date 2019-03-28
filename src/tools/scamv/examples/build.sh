@@ -1,11 +1,11 @@
-
+#!/bin/bash
 
 # https://static.docs.arm.com/100898/0100/the_a64_Instruction_set_100898_0100.pdf
 # https://www.element14.com/community/servlet/JiveServlet/previewBody/41836-102-1-229511/ARM.Reference_Manual.pdf
 # http://infocenter.arm.com/help/topic/com.arm.doc.dui0801d/dom1359731161338.html
 
 
-CROSS=/home/andreas/Downloads/lifter/binary_blobs_for_analysis/compilers/arm/gcc-arm-8.2-2018.08-x86_64-aarch64-elf/bin/aarch64-elf-
+#CROSS=/home/andreas/Downloads/lifter/binary_blobs_for_analysis/compilers/arm/gcc-arm-8.2-2018.08-x86_64-aarch64-elf/bin/aarch64-elf-
 CROSS=aarch64-linux-gnu-
 
 
