@@ -80,8 +80,13 @@ struct
       val lastline = hd (allLinesRevFun []);
       val _    = TextIO.closeIn file;
 
+      val result = case lastline of
+          "SUCCESS\n" => true
+        | "FAILED\n" => false
+        | otherwise => raise ERR "bir_embexp_run_cache_distinguishability"
+          ("Unexpected result from test platform: '" ^ otherwise ^ "'")
     in
-        lastline = "SUCCESS\n" (* return result from evaluation *)
+      result (* return result from evaluation *)
     end;
 
   end (* local end *)
