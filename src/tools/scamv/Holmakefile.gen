@@ -12,7 +12,8 @@ TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 HOLHEAP    = ../wp/HolBAWp-heap
 NEWHOLHEAP = HolBAScamV-heap
 
-HEAPINC    = $(patsubst %.sml,%,$(wildcard *Lib.sml)) #\
+HEAPINC    = bir_relSynth \
+             $(patsubst %.sml,%,$(wildcard *Lib.sml)) #\
              #$(patsubst %Script.sml,%Theory,$(wildcard *Script.sml))
 
 SELFTEST_DEP = 
