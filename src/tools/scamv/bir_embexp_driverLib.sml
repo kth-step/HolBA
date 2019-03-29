@@ -9,6 +9,8 @@ struct
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
+  val scamv_basedir = "../../../../../";
+
   in
 
 (*
@@ -37,7 +39,7 @@ struct
                 "\t.x2 = 0x0, .x3 = 0x0" ^
                 "};\n";
 
-      val file = TextIO.openOut "../../../../../EmbExp-ProgPlatform/src/entropy_input.h";
+      val file = TextIO.openOut (scamv_basedir ^ "/EmbExp-ProgPlatform/src/entropy_input.h");
       val _    = TextIO.output (file, str);
       val _    = TextIO.closeOut file;
     in
@@ -68,10 +70,10 @@ struct
       val _ = set_entropy_input_h s1 s2;
 
       (* make runlog *)
-      val _ = OS.Process.system ("make --directory=../../../../../EmbExp-ProgPlatform runlog");
+      val _ = OS.Process.system ("make --directory=" ^ scamv_basedir ^ "/EmbExp-ProgPlatform runlog");
 
       (* evaluate uart.log *)
-      val file = TextIO.openIn "../../../../../EmbExp-ProgPlatform/temp/uart.log";
+      val file = TextIO.openIn (scamv_basedir ^ "/EmbExp-ProgPlatform/temp/uart.log");
       val _    = TextIO.input file;
       fun allLinesRevFun acc = case TextIO.inputLine file of
 			    NONE => acc
