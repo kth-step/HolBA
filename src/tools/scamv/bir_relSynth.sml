@@ -47,11 +47,13 @@ fun primed_term exp =
     in subst psub exp
     end;
 
-fun triangleWith f xs ys =
+fun cartesianWith f xs ys =
     let fun go [] _ = []
           | go _ [] = []
           | go (x::xs) (y::ys) =
-            (map (fn p => f x p) (y::ys)) @ go xs ys
+            (map (fn p => f x p) (y::ys)) @
+            (map (fn p => f y p) xs) @
+            go xs ys
     in go xs ys
     end;
 
@@ -91,7 +93,7 @@ fun mk_bir_cond_obs_eq l1 l2 =
         val l2leaves = buildLeaves l2;
         fun processList (c,es1) (c',es2) =
             mk_bir_impl (band (c, c')) (mk_bir_list_eq es1 es2)
-        val xs = triangleWith processList l1leaves l2leaves
+        val xs = cartesianWith processList l1leaves l2leaves
     in bandl xs
     end
 
@@ -108,7 +110,7 @@ fun mkRelConj xs =
                      | (SOME l1,SOME l2)  => 
                        mk_bir_cond_obs_eq l1 l2;
             in mk_bir_impl (band (c, c')) eqRel end;
-        val xs2 = triangleWith processImpl xs primed
+        val xs2 = cartesianWith processImpl xs primed
     in bandl xs2
     end
 
