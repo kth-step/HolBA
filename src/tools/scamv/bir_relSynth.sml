@@ -125,7 +125,7 @@ fun mkRel [] = ``T``
            ([],_) => borl errors
          | (_,[]) => mkRelConj valid
          | _ =>
-           bor (mkRelConj valid, borl errors)
+           band (mkRelConj valid, borl errors)
     end;
 
 fun bool_var s = ``BExp_Den (BVar ^(lift_string string_ty s) (BType_Imm Bit1))``;
