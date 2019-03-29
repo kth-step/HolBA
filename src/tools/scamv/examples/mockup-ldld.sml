@@ -100,15 +100,15 @@ val prog_symbexecs =
                                                      Bit64))
          |+ ("MEM", BType_Mem Bit64 Bit8, BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
        )``,
-     ``[
-         [BExp_BinExp BIExp_And
+     [
+       (``(BExp_Const (Imm1 1w))``, [``BExp_BinExp BIExp_And
             (BExp_Const (Imm64 0x1FC0w))
-            (BExp_Den (BVar "R1" (BType_Imm Bit64)))]
+            (BExp_Den (BVar "R1" (BType_Imm Bit64)))``]
         ,
          [BExp_BinExp BIExp_And
             (BExp_Const (Imm64 0x1FC0w))
             (BExp_Den (BVar "R2" (BType_Imm Bit64)))]
-       ]``)
+       ])
   ];
 
 
@@ -118,20 +118,21 @@ val prog_symbexecs =
 (* --------------------------------------- *)
 
 val prog_obss_paths =
-  [
+    [
+      (``...``, NONE),
     (``BExp_BinExp BIExp_And (BExp_Const (Imm1 1w))
          (BExp_BinExp BIExp_And
            (BExp_Aligned Bit64 3 (BExp_Den (BVar "R1" (BType_Imm Bit64))))
            (BExp_Aligned Bit64 3 (BExp_Den (BVar "R2" (BType_Imm Bit64)))))``,
-     ``[
-         [BExp_BinExp BIExp_And
+     SOME [
+          (``BExp_Const (Imm1 1w)``, ``BExp_BinExp BIExp_And
             (BExp_Const (Imm64 0x1FC0w))
-            (BExp_Den (BVar "R1" (BType_Imm Bit64)))]
+            (BExp_Den (BVar "R1" (BType_Imm Bit64)))``)
         ,
-         [BExp_BinExp BIExp_And
+          (``BExp_Const (Imm1 1w)``, ``BExp_BinExp BIExp_And
             (BExp_Const (Imm64 0x1FC0w))
-            (BExp_Den (BVar "R2" (BType_Imm Bit64)))]
-       ]``)
+            (BExp_Den (BVar "R2" (BType_Imm Bit64)))``)
+       ])
   ];
 
 
