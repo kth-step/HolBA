@@ -30,3 +30,6 @@ basic-test.exe: basic-test.uo
 toy-test.exe: toy-test.uo 
 	$(HOLMOSMLC) -o $@ $<
 
+obs-test.exe: obs-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
