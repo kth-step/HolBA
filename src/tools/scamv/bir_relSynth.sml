@@ -99,9 +99,14 @@ fun mapPair f (c, oCobs) = (f c, f oCobs);
 
 fun mkRelConj xs =
     let val primed =
-            map (fn (x,y) => (primed_term x, map (mapPair primed_term) y)) xs;
-        fun processImpl (c, l1) (c', l2) =
-            let val eqRel = mk_bir_cond_obs_eq l1 l2;
+            map (fn (x,y) => (primed_term x, Option.map (map (mapPair primed_term)) y)) xs;
+        fun processImpl (c, l1) (c', l2) = 
+            let val eqRel =
+                    case (l1,l2) of
+                       (NONE,_) => bir_false
+                     | (_,NONE) => bir_false
+                     | (SOME l1,SOME l2)  => 
+                       mk_bir_cond_obs_eq l1 l2;
             in mk_bir_impl (band (c, c')) eqRel end;
         val xs2 = triangleWith processImpl xs primed
     in bandl xs2
@@ -112,8 +117,9 @@ exception MkRel
 (* input type : (bir_exp * (cobs list) option) list *)
 (*              path condition * ((list of conditional observations) or bottom if error) *)
 fun mkRel [] = ``T``
-  | mkRel xs =
-    let fun partitionOption [] = ([],[])
+| mkRel xs = mkRelConj xs
+                       
+(*    let fun partitionOption [] = ([],[])
           | partitionOption ((pathCond,NONE)::ps) =
             let val (v,e) = partitionOption ps
             in (v,pathCond::e) end
@@ -128,7 +134,7 @@ fun mkRel [] = ``T``
          | _ =>
            band (mkRelConj valid, borl errors)
     end;
-
+*)
 fun bool_var s = ``BExp_Den (BVar ^(lift_string string_ty s) (BType_Imm Bit1))``;
 val varA = bool_var "a"
 val varB = bool_var "b"
