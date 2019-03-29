@@ -5,6 +5,10 @@ struct
 
   open HolKernel Parse boolLib bossLib;
 
+  val libname = "bir_embexp_driverLib"
+  val ERR = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
+
   in
 
 (*
@@ -35,17 +39,18 @@ struct
 
       val file = TextIO.openOut "../../../../../EmbExp-ProgPlatform/src/entropy_input.h";
       val _    = TextIO.output (file, str);
-      val _    = StreamIO.closeOut file;
+      val _    = TextIO.closeOut file;
     in
       ()
     end;
 
   fun create_setup_asm_prelude s =
     let
-      (* assert that the value can be set in this way and is not too big *)
-      val _ = if (value > 1024*1024) then raise ERR "create_setup_asm_prelude" "value cannot be set" else ();
-
-      fun set_reg_asm (reg_name, value) = "\tSET " ^ reg_name ^ ", #" ^ (Int.toString value);
+      fun set_reg_asm (reg_name, value) =
+        let
+          (* assert that the value can be set in this way and is not too big *)
+          val _ = if (value > 1024*1024) then raise ERR "create_setup_asm_prelude" "value cannot be set" else ();
+        in "\tSET " ^ reg_name ^ ", #" ^ (Int.toString value) end;
       val set_reg_asm_list = List.map set_reg_asm s;
     in
       List.foldr (fn (s,acc) => acc ^ s ^ "\n") "" set_reg_asm_list
@@ -67,11 +72,11 @@ struct
 
       (* evaluate uart.log *)
       val file = TextIO.openIn "../../../../../EmbExp-ProgPlatform/temp/uart.log";
-      val _    = TextIO.input (file, str);
-      fun allLinesRevFun acc = case inputLine file of
-			  | NONE => acc
-			  | SOME l => allLinesFun (l::acc);
-      val _    = StreamIO.closeIn file;
+      val _    = TextIO.input file;
+      fun allLinesRevFun acc = case TextIO.inputLine file of
+			    NONE => acc
+			  | SOME l => allLinesRevFun (l::acc);
+      val _    = TextIO.closeIn file;
       val lastline = hd (allLinesRevFun []);
 
     in
