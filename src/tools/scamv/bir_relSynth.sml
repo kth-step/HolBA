@@ -120,7 +120,8 @@ fun mkRel [] = ``T``
           | partitionOption ((pathCond,SOME cObs)::ps) =
             let val (v,e) = partitionOption ps
             in ((pathCond,cObs)::v,e) end;
-        val (valid,errors) = partitionOption xs;
+        val (valid,nones) = partitionOption xs;
+        val errors = map (fn x => mk_bir_impl x bir_false) nones;
     in case (valid,errors) of
            ([],_) => borl errors
          | (_,[]) => mkRelConj valid
