@@ -64,6 +64,9 @@ val pc = (snd o dest_eq o concl o EVAL) ``bir_pc_first ^prog``;
 val vars = gen_vars_of_prog prog;
 val var_eq_thms = gen_var_eq_thms vars;
 
+val num_aes_rounds = 14;
+val num_aes_rounts_wtm = wordsSyntax.mk_wordii (num_aes_rounds, 64);
+
 val env_init = bir_exec_env_initd_env vars;
 (* SP *)
 val env_1 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
@@ -75,7 +78,7 @@ val env_2 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq
 
 (* r *)
 val env_3 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
-            ``bir_env_write (BVar "R1" (BType_Imm Bit64)) (BVal_Imm (Imm64 1w)) ^env_2``;
+            ``bir_env_write (BVar "R1" (BType_Imm Bit64)) (BVal_Imm (Imm64 ^(num_aes_rounts_wtm))) ^env_2``;
 
 (* *inBlock *)
 val env_4 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
