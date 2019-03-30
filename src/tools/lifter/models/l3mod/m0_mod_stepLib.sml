@@ -52,7 +52,6 @@ val thms = m0_stepLib.thumb_step_hex (endian_fl, sel_fl) hex_code;
 
 NextStateM0_def
 
-
 Next_def
 
 Fetch_def
@@ -62,8 +61,6 @@ Run_def
 DecodeThumb_def
 
 dfn'Undefined_def
-*)
-(*
 bir_is_lifted_prog_def
 *)
 
@@ -97,8 +94,7 @@ bir_is_lifted_prog_def
 
 	  val thm_mod1 = CONV_RULE ((LAND_CONV (EVAL)) THENC (REWRITE_CONV [])) thm_mod_gen;
 	  val thm_mod2 = CONV_RULE ((LAND_CONV (EVAL)) THENC (REWRITE_CONV [])) thm_mod1;
-	  val thm_mod3 = CONV_RULE ((LAND_CONV (EVAL)) THENC (REWRITE_CONV [])) thm_mod2;
-	  val thm_mod4 = UNDISCH thm_mod3;
+	  val thm_mod4 = UNDISCH thm_mod2;
 
 	  val thm_mod5 = (UNDISCH_ALL o
 			  (SIMP_RULE (std_ss++m0_state_type_ss++m0_mod_state_type_ss)
