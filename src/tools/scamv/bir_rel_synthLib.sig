@@ -1,4 +1,4 @@
-signature bir_relSynth =
+signature bir_rel_synthLib =
 sig
     type exp;
     type cobs = exp * exp;

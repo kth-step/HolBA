@@ -1,5 +1,5 @@
-structure bir_relSynth : sig
-              include bir_relSynth;
+structure bir_rel_synthLib : sig
+              include bir_rel_synthLib;
               val test1 : (exp * (cobs list) option) list;
           end = 
 struct

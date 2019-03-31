@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open bir_exp_to_wordsLib;
-open bir_relSynth;
+open bir_rel_synthLib;
 open bslSyntax;
 open wordsSyntax;
 

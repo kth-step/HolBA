@@ -27,3 +27,6 @@ include ../../../Holmakefile.inc
 run-test.exe: run-test.uo 
 	$(HOLMOSMLC) -o $@ $<
 
+mock-test.exe: mock-test.uo 
+	$(HOLMOSMLC) -o $@ $<
+
