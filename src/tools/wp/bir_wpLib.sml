@@ -20,14 +20,15 @@ struct
   open bir_program_env_orderTheory;
   open bir_extra_expsTheory;
   open bir_immSyntax;
+  open bir_exp_memTheory;
 
   open bir_expLib;
-  open finite_mapSyntax;
-  open pairSyntax;
-
-  open bir_wp_simpTheory;
+  open finite_mapTheory finite_mapSyntax;
+  open pairTheory pairSyntax;
+  open wordsTheory;
 
   val ERR = Feedback.mk_HOL_ERR "bir_wpLib";
+  val wrap_exn = Feedback.wrap_exn "bir_wpLib";
 
   in (* local *)
 
@@ -39,21 +40,38 @@ struct
         fun REPEAT_MAX n tac =
           if n > 0 then ((tac THEN (REPEAT_MAX (n - 1) tac)) ORELSE ALL_TAC)
           else NO_TAC;
-        val wps_bool_thm = prove(`` bir_bool_wps_map ^wps ``,
-          REWRITE_TAC ([bir_bool_wps_map_def]@defs) >>
+        val wps_bool_thm = prove(``bir_bool_wps_map ^wps``,
+          REWRITE_TAC [bir_bool_wps_map_def] >>
+          REWRITE_TAC defs >>
           REPEAT_MAX 20 (
-              REWRITE_TAC [finite_mapTheory.FEVERY_FUPDATE, finite_mapTheory.DRESTRICT_FEMPTY, finite_mapTheory.FEVERY_FEMPTY] >>
-              SIMP_TAC (srw_ss()) [bir_is_bool_exp_def,type_of_bir_exp_def, bir_var_type_def, type_of_bir_imm_def,
-        		           bir_type_is_Imm_def, BType_Bool_def]
-            )
-          );
+            REWRITE_TAC [
+              finite_mapTheory.FEVERY_FUPDATE,
+              finite_mapTheory.DRESTRICT_FEMPTY,
+              finite_mapTheory.FEVERY_FEMPTY
+            ] >>
+            SIMP_TAC (std_ss++wordsLib.SIZES_ss++HolBACoreSimps.holBACore_ss) [
+              bir_is_bool_exp_def,
+              type_of_bir_exp_def,
+              bir_var_type_def,
+              type_of_bir_imm_def,
+              bir_type_is_Imm_def,
+              BType_Bool_def
+            ]
+          )
+        );
         val wps_sound_thm = prove(``bir_sound_wps_map ^program ^ls ^post ^wps``,
-          REWRITE_TAC ([bir_sound_wps_map_def]@defs) >>
+          REWRITE_TAC [bir_sound_wps_map_def] >>
+          REWRITE_TAC defs >>
           REPEAT_MAX 20 (
-              REWRITE_TAC [finite_mapTheory.FEVERY_FUPDATE, finite_mapTheory.DRESTRICT_FEMPTY, finite_mapTheory.FEVERY_FEMPTY] >>
-              SIMP_TAC (srw_ss()) []
-            )
-          );
+            REWRITE_TAC [
+              finite_mapTheory.FEVERY_FUPDATE,
+              finite_mapTheory.DRESTRICT_FEMPTY,
+              finite_mapTheory.FEVERY_FEMPTY,
+              finite_mapTheory.FMERGE_DEF
+            ] >>
+            SIMP_TAC (srw_ss()) []
+          )
+        );
       in
         CONJ wps_bool_thm wps_sound_thm
       end;
@@ -63,48 +81,85 @@ struct
   (* initial_thm_for_prog_post_ls *)
   fun bir_wp_comp_wps_iter_step0_init reusable_thm (program, post, ls) defs =
     let
-        val var_l = ``l:(bir_label_t)``;
-        val var_wps = ``wps:(bir_label_t |-> bir_exp_t)``;
-        val var_wps1 = ``wps':(bir_label_t |-> bir_exp_t)``;
-        val thm = SPECL [program, var_l, ls, post, var_wps, var_wps1] reusable_thm;
+      val var_l = ``l:(bir_label_t)``;
+      val var_wps = ``wps:(bir_label_t |-> bir_exp_t)``;
+      val var_wps1 = ``wps':(bir_label_t |-> bir_exp_t)``;
+      val thm = SPECL [program, var_l, ls, post, var_wps, var_wps1] reusable_thm;
 
-        val post_bool_conv = [
-		       bir_is_bool_exp_def,type_of_bir_exp_def, bir_var_type_def, type_of_bir_imm_def,
-		       bir_type_is_Imm_def, BType_Bool_def];
-        val prog_typed_conv = [
-			    bir_is_well_typed_program_def,bir_is_well_typed_block_def,bir_is_well_typed_stmtE_def,
-			    bir_is_well_typed_stmtB_def,bir_is_well_typed_label_exp_def,
-			    type_of_bir_exp_def,bir_var_type_def,bir_type_is_Imm_def,type_of_bir_imm_def,
-			    bir_extra_expsTheory.BExp_Aligned_type_of,BExp_unchanged_mem_interval_distinct_type_of,
-			    bir_exp_memTheory.bir_number_of_mem_splits_REWRS, BType_Bool_def, bir_exp_true_def, bir_exp_false_def, BExp_MSB_type_of,
-			    bir_nzcv_expTheory.BExp_nzcv_ADD_DEFS, bir_nzcv_expTheory.BExp_nzcv_SUB_DEFS, bir_immTheory.n2bs_def, bir_extra_expsTheory.BExp_word_bit_def,
-			    BExp_Align_type_of, BExp_ror_type_of, BExp_LSB_type_of, BExp_word_bit_exp_type_of,
-			    bir_nzcv_expTheory.BExp_ADD_WITH_CARRY_type_of, BExp_word_reverse_type_of,
-                            BExp_ror_exp_type_of
-			    ];
-        val prog_valid_conv = [
-			     bir_program_valid_stateTheory.bir_is_valid_program_def,
-			     bir_program_valid_stateTheory.bir_program_is_empty_def,
-			     bir_program_valid_stateTheory.bir_is_valid_labels_def,
-			     bir_labels_of_program_def,BL_Address_HC_def
-			     ];
-        val no_declare_conv = [
-			     bir_declare_free_prog_exec_def, bir_isnot_declare_stmt_def
-			     ];
+      val post_bool_conv = [
+        bir_is_bool_exp_def,
+        type_of_bir_exp_def,
+        bir_var_type_def,
+        type_of_bir_imm_def,
+        bir_type_is_Imm_def,
+        BType_Bool_def,
+        bir_number_of_mem_splits_def,
+        size_of_bir_immtype_def
+      ];
+      val prog_typed_conv = [
+        bir_is_well_typed_program_def,
+        bir_is_well_typed_block_def,
+        bir_is_well_typed_stmtE_def,
+        bir_is_well_typed_stmtB_def,
+        bir_is_well_typed_label_exp_def,
+        type_of_bir_exp_def,
+        bir_var_type_def,
+        bir_type_is_Imm_def,
+        type_of_bir_imm_def,
+        bir_extra_expsTheory.BExp_Aligned_type_of,
+        BExp_unchanged_mem_interval_distinct_type_of,
+        bir_exp_memTheory.bir_number_of_mem_splits_REWRS,
+        BType_Bool_def,
+        bir_exp_true_def,
+        bir_exp_false_def,
+        BExp_MSB_type_of,
+        bir_nzcv_expTheory.BExp_nzcv_ADD_DEFS,
+        bir_nzcv_expTheory.BExp_nzcv_SUB_DEFS,
+        bir_immTheory.n2bs_def,
+        bir_extra_expsTheory.BExp_word_bit_def,
+        BExp_Align_type_of,
+        BExp_ror_type_of,
+        BExp_LSB_type_of,
+        BExp_word_bit_exp_type_of,
+        bir_nzcv_expTheory.BExp_ADD_WITH_CARRY_type_of,
+        BExp_word_reverse_type_of,
+        BExp_ror_exp_type_of
+      ];
+      val prog_valid_conv = [
+        bir_program_valid_stateTheory.bir_is_valid_program_def,
+        bir_program_valid_stateTheory.bir_program_is_empty_def,
+        bir_program_valid_stateTheory.bir_is_valid_labels_def,
+        bir_labels_of_program_def,
+        BL_Address_HC_def
+      ];
+      val no_declare_conv = [
+        bir_declare_free_prog_exec_def,
+        bir_isnot_declare_stmt_def
+      ];
 
-	val post_bool_thm = SIMP_CONV (srw_ss()) (post_bool_conv@defs) ``bir_is_bool_exp ^post``;
-	val thm = MP thm (SIMP_RULE std_ss [] post_bool_thm);
-	val prog_typed_thm = SIMP_CONV (srw_ss()) (prog_typed_conv@defs) ``bir_is_well_typed_program ^program``;
-	val thm = MP thm (SIMP_RULE std_ss [] prog_typed_thm);
-        (*val prog_valid_thm = SIMP_CONV (srw_ss()) (prog_valid_conv@defs) ``bir_is_valid_program ^program``;*)
-	val prog_valid_thm = EVAL ``bir_is_valid_program ^program``;
-	val thm = MP thm (SIMP_RULE std_ss [] prog_valid_thm);
-	val no_declare_thm = SIMP_CONV (srw_ss()) (no_declare_conv@defs) ``bir_declare_free_prog_exec ^program``;
-	val thm = MP thm (SIMP_RULE std_ss [] no_declare_thm);
+      fun wrap_exn_ exn term message = wrap_exn ("bir_wp_comp_wps_iter_step0_init::"
+        ^ message ^ ": \n" ^ (Hol_pp.term_to_string term) ^ "\n") exn
+      val concl_tm = (snd o dest_eq o concl)
 
-	val thm = GENL [var_l, var_wps, var_wps1] thm;
+      val post_bool_thm = SIMP_CONV (srw_ss()) (post_bool_conv@defs) ``bir_is_bool_exp ^post``;
+      val thm = MP thm (SIMP_RULE std_ss [] post_bool_thm)
+        handle e => raise wrap_exn_ e (concl_tm post_bool_thm) "The postcondition isn't a bool";
+
+      val prog_typed_thm = SIMP_CONV (srw_ss()) (prog_typed_conv@defs) ``bir_is_well_typed_program ^program``;
+      val thm = MP thm (SIMP_RULE std_ss [] prog_typed_thm)
+        handle e => raise wrap_exn_ e (concl_tm prog_typed_thm) "The program isn't well-typed";
+
+      val prog_valid_thm = EVAL ``bir_is_valid_program ^program``;
+      val thm = MP thm (SIMP_RULE std_ss [] prog_valid_thm)
+        handle e => raise wrap_exn_ e (concl_tm prog_valid_thm) "The program isn't valid";
+
+      val no_declare_thm = SIMP_CONV (srw_ss()) (no_declare_conv@defs) ``bir_declare_free_prog_exec ^program``;
+      val thm = MP thm (SIMP_RULE std_ss [] no_declare_thm)
+        handle e => raise wrap_exn_ e (concl_tm no_declare_thm) "The program isn't BStmt_Declare-free";
+
+      val thm = GENL [var_l, var_wps, var_wps1] thm;
     in
-	thm
+	    thm
     end;
 
   (* include current label in reasoning *)
