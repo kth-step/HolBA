@@ -11,7 +11,7 @@ struct
 
   val scamv_basedir =
       case OS.Process.getEnv("SCAMV_BASEDIR") of
-          NONE => "../../../../"
+          NONE => raise ERR "scamv_basedir" "the environment variable SCAMV_BASEDIR is not set"
         | SOME p => p;
 
   in
