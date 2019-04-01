@@ -9,7 +9,10 @@ struct
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
-  val scamv_basedir = "../../../../";
+  val scamv_basedir =
+      case OS.Process.getEnv("SCAMV_BASEDIR") of
+          NONE => "../../../../"
+        | SOME p => p;
 
   in
 
@@ -51,7 +54,7 @@ struct
       fun set_reg_asm (reg_name, value) =
         let
           (* assert that the value can be set in this way and is not too big *)
-            val _ = if (value > (1024*1024 +0x80000000)) then raise ERR "create_setup_asm_prelude" "value cannot be set" else ();
+            val _ = if (value > (1024*1024 +0x80030000)) then raise ERR "create_setup_asm_prelude" (reg_name ^ ": value " ^ (Int.toString value) ^ " cannot be set") else ();
         in "\tSET " ^ reg_name ^ ", #" ^ (Int.toString value) end;
       val set_reg_asm_list = List.map set_reg_asm s;
     in
