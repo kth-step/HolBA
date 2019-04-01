@@ -3,6 +3,7 @@ open bir_exp_to_wordsLib;
 open bir_rel_synthLib;
 open bslSyntax;
 open wordsSyntax;
+open bir_embexp_driverLib;
 
 (* Load the dependencies in interactive sessions *)
 val _ = if !Globals.interactive then (
@@ -59,4 +60,7 @@ val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
 val _ = (print "SAT model:\n"; print_model model(*; print "\n"*));
 
 val sml_model = to_sml_ints model;
+fun isPrimedRun s = String.isSuffix "_" s;
+val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
 
+val test_result =  bir_embexp_run_cache_distinguishability "" s1 s2;
