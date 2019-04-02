@@ -40,8 +40,6 @@ val prog_ldld_w_obs = ("prog_ldld_w_obs", ``
                           (HD)];
          bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 8w)))|>]``);
 
-(* TODO: fix obs evaluation *)
-
 val (name, prog) = prog_ldld_w_obs;
 
 val validprog_o = NONE;

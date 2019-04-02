@@ -170,6 +170,8 @@ for now, we're taking single steps, not whole blocks
 
           (* evaluate expressions (bir_eval_exp and bir_eval_label_exp) *)
           val thm1_3 = CONV_RULE (RAND_CONV (
+                    (* apply MAP, when introduced by observation statements *)
+                    (REWRITE_CONV [MAP]) THENC
                     (* evaluate the expressions *)
                     (bir_exec_exp_conv var_eq_thms) THENC
                     (* open the evaluation of label expressions *)
@@ -221,6 +223,7 @@ for now, we're taking single steps, not whole blocks
             handle UNCHANGED =>
             (* if jmp_to_label is not present *)
             (* pc_next update and finalize *)
+            (* notice: observation functions could get applied here, for example list functions according to list_ss *)
             CONV_RULE (RAND_CONV (SIMP_CONV (list_ss++bir_TYPES_ss)
                [LET_DEF, bir_pc_next_def, bir_state_is_terminated_def]
              )) thm_pre_pc_upd
