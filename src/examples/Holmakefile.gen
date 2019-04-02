@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = aes
+DEPENDENCIES   = aes nic
 
 
 # configuration
