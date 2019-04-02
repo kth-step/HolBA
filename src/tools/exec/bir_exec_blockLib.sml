@@ -170,6 +170,8 @@ for now, we're taking single steps, not whole blocks
 
           (* evaluate expressions (bir_eval_exp and bir_eval_label_exp) *)
           val thm1_3 = CONV_RULE (RAND_CONV (
+                    (* apply MAP, when introduced by observation statements *)
+                    (REWRITE_CONV [MAP]) THENC
                     (* evaluate the expressions *)
                     (bir_exec_exp_conv var_eq_thms) THENC
                     (* open the evaluation of label expressions *)
@@ -191,14 +193,21 @@ for now, we're taking single steps, not whole blocks
             (* try jmp_to_label *)
             let
               (* lookup the block thm for the jump target *)
-              val (_,l,_) = (dest_bir_exec_stmt_jmp_to_label o
-                             (GEN_find_subterm is_bir_exec_stmt_jmp_to_label) o
+              val jutola = ((GEN_find_subterm is_bir_exec_stmt_jmp_to_label) o
                              snd o dest_eq o concl
                             ) thm_pre_pc_upd;
+              val (prog_tm,l,_) = dest_bir_exec_stmt_jmp_to_label jutola;
               val cur_lbl = l;
               val block_thm_to = Redblackmap.find(block_thm_map,cur_lbl)
                                  handle NotFound =>
-                                 raise UNCHANGED;
+                                   (* maybe we jump outside? *)
+                                   let
+                                     val mem_labels_thm = EVAL ``MEM ^cur_lbl (bir_labels_of_program ^prog_tm)``;
+                                     val _ = if (snd o dest_eq o concl) mem_labels_thm = F then () else
+                                              raise ERR "bir_exec_prog_step_conv" ("label is not in the dictionary and cannot resolve: " ^ (term_to_string jutola));
+                                   in
+                                     (REWRITE_RULE []) mem_labels_thm
+                                   end;
 
               (* compute program counter for the next block *)
               val thm2 = CONV_RULE (RAND_CONV (REWRITE_CONV [
@@ -214,6 +223,7 @@ for now, we're taking single steps, not whole blocks
             handle UNCHANGED =>
             (* if jmp_to_label is not present *)
             (* pc_next update and finalize *)
+            (* notice: observation functions could get applied here, for example list functions according to list_ss *)
             CONV_RULE (RAND_CONV (SIMP_CONV (list_ss++bir_TYPES_ss)
                [LET_DEF, bir_pc_next_def, bir_state_is_terminated_def]
              )) thm_pre_pc_upd

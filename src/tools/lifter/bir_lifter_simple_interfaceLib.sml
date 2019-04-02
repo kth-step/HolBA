@@ -1,3 +1,10 @@
+structure bir_lifter_simple_interfaceLib =
+struct
+
+local
+
+open bir_expSyntax bir_immSyntax bir_envSyntax bir_exp_immSyntax bir_exp_memSyntax;
+open bir_bool_expSyntax;
 
 open bir_inst_liftingLib;
 open gcc_supportLib;
@@ -5,11 +12,7 @@ open gcc_supportLib;
 open listSyntax;
 open bir_expLib;
 
-
-structure bir_lifter_simple_interfaceLib =
-struct
-
-
+in (* local *)
 
 val log = ref TextIO.stdOut;
 
@@ -541,8 +544,6 @@ val arch_str = "m0";
 val thm_prog = lift_inst arch_str (Arbnum.fromInt 0xCFEE) ("4770");
 *)
 
-
-
+end (* local *)
 
 end
-

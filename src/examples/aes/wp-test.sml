@@ -35,7 +35,7 @@ val lbl_list = (gen_lbl_list o snd o dest_eq o concl) aes_wps1_def;
 val wp_def_list = aes_post_def::(List.map
       (fn lbl_str =>
       let
-        val (_, (def_thm, _)) = hd (DB.find ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str));
+        val (_, (def_thm, _)) = hd (DB.find (bir_wpLib.wps_id_prefix ^ lbl_str));
       in def_thm end
       ) (tl (List.rev lbl_list)));
 
@@ -69,7 +69,7 @@ val (lbl_last, wp_last) = (dest_pair o snd o dest_fupdate) wps1;
 fun eval_through [] thm = [thm]
   | eval_through (lbl_str::lbls) thm_in =
       let
-        val (_, (def_thm, _)) = hd (DB.find ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str));
+        val (_, (def_thm, _)) = hd (DB.find (bir_wpLib.wps_id_prefix ^ lbl_str));
         val thm = REWRITE_RULE [thm_in] def_thm;
         val thm_evald = (EVAL o snd o dest_eq o concl) thm;
         val thm_new = (TRANS thm thm_evald);
@@ -84,7 +84,7 @@ val lbl_list_todo = List.take ((tl (List.rev lbl_list)), 70);
 val wp_w_subst1 =
   let
     val lbl_str = List.last lbl_list_todo;
-    val (_, (def_thm, _)) = hd (DB.find ("bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str));
+    val (_, (def_thm, _)) = hd (DB.find (bir_wpLib.wps_id_prefix ^ lbl_str));
   in
     (snd o dest_eq o concl) (computeLib.RESTR_EVAL_CONV [``bir_exp_subst1``] ((fst o dest_eq o concl) def_thm))
   end;

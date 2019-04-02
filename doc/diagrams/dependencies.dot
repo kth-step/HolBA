@@ -1,0 +1,124 @@
+digraph {
+    # The key
+    // subgraph cluster_key {
+    //     rankdir="TB";
+
+    //     label="Legend";
+
+    //     # Nodes
+    //     {
+    //         // kheaps[label="Heaps" style="filled,dashed" fillcolor="#bbffcc"];
+    //         // kexamples[label="Examples" style="filled" fillcolor="#ffbbbb"];
+    //         // ktools[label="Tools" style="filled" fillcolor="#ccccff"];
+    //         // kcore[label="Core" style="filled" fillcolor="#ffddaa"];
+
+    //         # Make rules
+    //         {
+    //             node[shape="box" style="striped" fontsize=10 width=0.1 height=0.1];
+    //             kmakeexamplesbase[label="examples-base" fillcolor="#ffddaa:#ccccff:#ffbbbb"];
+    //             kmakemain[label="main" fillcolor="#ffddaa:#ccccff"];
+    //             kmakecore[label="Core" fillcolor="#ffddaa"];
+    //             edge[fontsize=10 width=0.1 height=0.1];
+
+    //             // edge[style="invis"];
+    //             // kmakecore -> kmakemain -> kmakeexamplesbase;
+    //         }
+    //     }
+
+    //     # Edges
+    //     {
+    //         node[shape="point" label=""];
+    //         edge[dir="back" color="darkblue"];
+    //         k1 -> k2;
+    //         edge[dir="forward" color="#00700060"];
+    //         k3 -> k4;
+    //     }
+
+    //     {
+    //         edge[style="invis"];
+    //         // kheaps
+    //         // kcore -> ktools -> kexamples;
+    //     }
+    // }
+
+    # Nodes
+    {
+        ## Core
+        node[style="filled" fillcolor="#ffddaa"];
+        core[label="core"];
+        theories[label="theories"];
+        libs[label="libs"];
+
+        ## Tools
+        node[style="filled" fillcolor="#ccccff"];
+        scamv[label="tools/scamv"];
+        exec[label="tools/exec"];
+        lifter[label="tools/lifter"];
+        cfg[label="tools/cfg"];
+        wp[label="tools/wp"];
+        pass[label="tools/pass"];
+
+        ## Examples
+        node[style="filled" fillcolor="#ffbbbb"];
+        examples_aes_bin[label="examples/aes/bin"];
+        examples_aes_lifter[label="examples/aes/lifter"];
+        examples_aes_wp[label="examples/aes/wp"];
+
+        ## Heaps
+        node[style="filled,dashed" fillcolor="#bbffcc"];
+        tools[label="tools-heap"]
+        HolBA[label="HolBA-heap"]
+    }
+
+    ## We should not create other nodes after here
+    node[style="filled,bold" fillcolor="red"];
+
+    # SML/HOL4 dependencies
+    {
+        edge[dir="back" color="darkblue"];
+
+        ## Core
+        core -> theories;
+        theories -> libs;
+
+        ## Tools
+        libs -> exec;
+        libs -> lifter;
+        libs -> cfg;
+        libs -> wp;
+        libs -> pass;
+        libs -> scamv;
+        exec -> scamv;
+        lifter -> scamv;
+
+        ## Examples
+        wp -> examples_aes_wp[constraint=false];
+        lifter -> examples_aes_lifter[constraint=false];
+        examples_aes_bin -> examples_aes_lifter;
+        examples_aes_lifter -> examples_aes_wp;
+    }
+
+    # PolyML heap
+    {
+        edge[color="#00700060" constraint=false];
+
+        core -> theories
+            -> libs
+            # Tools
+            -> exec
+            -> lifter
+            -> cfg
+            -> pass
+            -> wp
+            -> scamv
+            -> tools
+            -> HolBA;
+    }
+
+    # Ghost edges for styling only
+    {
+        edge[style="invis"];
+        HolBA -> tools;
+        examples_aes_bin -> examples_aes_lifter -> examples_aes_wp;
+    }
+}

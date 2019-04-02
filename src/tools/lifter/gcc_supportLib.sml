@@ -1,15 +1,16 @@
-open HolKernel boolLib liteLib;
-open bir_inst_liftingLibTypes
-
 structure gcc_supportLib :> gcc_supportLib =
 struct
+
+  local
+
+  open HolKernel boolLib liteLib;
+  open bir_inst_liftingLibTypes
+
+  val ERR = mk_HOL_ERR "gcc_supportLib"
 
   (*******************)
   (* Auxiliary stuff *)
   (*******************)
-
-  val ERR = mk_HOL_ERR "gcc_supportLib"
-
 
   fun list_split_pred_aux acc p [] = fail ()
     | list_split_pred_aux acc p (x::xs) =
@@ -28,6 +29,7 @@ struct
     val input = read_it [] before TextIO.closeIn instream
   in input end;
 
+  in (* local *)
 
   (*******************)
   (* File Operations *)
@@ -282,4 +284,6 @@ in
   (l, r)
 end
 
-end
+end (* local *)
+
+end (* gcc_supportLib *)

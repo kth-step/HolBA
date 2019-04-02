@@ -1,92 +1,66 @@
 structure bir_expLib =
 struct
 
+  local
+
   open HolKernel boolLib liteLib simpLib Parse bossLib;
 
   open bir_expSyntax bir_immSyntax bir_envSyntax bir_exp_immSyntax bir_exp_memSyntax;
+  open bir_bool_expSyntax;
 
+  val ERR = Feedback.mk_HOL_ERR "bir_expLib";
 
+  in
 
+  fun castt_to_string castt =
+    if is_BIExp_LowCast castt then "CL"
+    else if is_BIExp_HighCast castt then "CH"
+    else if is_BIExp_SignedCast castt then "CS"
+    else if is_BIExp_UnsignedCast castt then "CU"
+    else raise ERR "castt_to_string"
+      ("don't know how to print BIR cast-type: " ^ (term_to_string castt));
 
-  fun castt_to_string castt = if is_BIExp_LowCast castt then
-                                   "CL"
-                              else if is_BIExp_HighCast castt then
-                                   "CH"
-                              else if is_BIExp_SignedCast castt then
-                                   "CS"
-                              else if is_BIExp_UnsignedCast castt then
-                                   "CU"
-                              else
-                                   raise (ERR "castt_to_string" "don't know how to print BIR casttype")
-                              ;
+  fun bop_to_string bop =
+    if is_BIExp_And bop then "&"
+    else if is_BIExp_Or bop then "|"
+    else if is_BIExp_Xor bop then "^"
+    else if is_BIExp_Plus bop then "+"
+    else if is_BIExp_Minus bop then "-"
+    else if is_BIExp_Mult bop then "*"
+    else if is_BIExp_Div bop then "/"
+    else if is_BIExp_SignedDiv bop then "s/"
+    else if is_BIExp_Mod bop then "%"
+    else if is_BIExp_SignedMod bop then "s<<"
+    else if is_BIExp_LeftShift bop then "<<"
+    else if is_BIExp_RightShift bop then ">>"
+    else if is_BIExp_SignedRightShift bop then "s>>"
+    else raise ERR "bop_to_string"
+      ("don't know how to print BIR bin-op: " ^ (term_to_string bop));
 
-  fun bop_to_string bop = if is_BIExp_And bop then
-                               "&"
-                          else if is_BIExp_Or bop then
-                               "|"
-                          else if is_BIExp_Xor bop then
-                               "^"
-                          else if is_BIExp_Plus bop then
-                               "+"
-                          else if is_BIExp_Minus bop then
-                               "-"
-                          else if is_BIExp_Mult bop then
-                               "*"
-                          else if is_BIExp_Div bop then
-                               "/"
-                          else if is_BIExp_SignedDiv bop then
-                               "s/"
-                          else if is_BIExp_Mod bop then
-                               "%"
-                          else if is_BIExp_SignedMod bop then
-                               "s<<"
-                          else if is_BIExp_LeftShift bop then
-                               "<<"
-                          else if is_BIExp_RightShift bop then
-                               ">>"
-                          else if is_BIExp_SignedRightShift bop then
-                               "s>>"
-                          else
-                               raise (ERR "bop_to_string" "don't know how to print BIR binop")
-                          ;
+  fun bpredop_to_string bpredop =
+    if is_BIExp_Equal bpredop then "=="
+    else if is_BIExp_NotEqual bpredop then "<>"
+    else if is_BIExp_LessThan bpredop then "<"
+    else if is_BIExp_SignedLessThan bpredop then "s<"
+    else if is_BIExp_LessOrEqual bpredop then "<="
+    else if is_BIExp_SignedLessOrEqual bpredop then "s<="
+    else raise ERR "bpredop_to_string"
+      ("don't know how to print BIR bin-pred-op: " ^ (term_to_string bpredop));
 
-  fun bpredop_to_string bpredop = if is_BIExp_Equal bpredop then
-                                       "=="
-                                  else if is_BIExp_NotEqual bpredop then
-                                       "<>"
-                                  else if is_BIExp_LessThan bpredop then
-                                       "<"
-                                  else if is_BIExp_SignedLessThan bpredop then
-                                       "s<"
-                                  else if is_BIExp_LessOrEqual bpredop then
-                                       "<="
-                                  else if is_BIExp_SignedLessOrEqual bpredop then
-                                       "s<="
-                                  else
-                                       raise (ERR "bpredop_to_string" "don't know how to print BIR binpredop")
-                                  ;
+  fun uop_to_string uop =
+    if is_BIExp_ChangeSign uop then "-"
+    else if is_BIExp_Not uop then "!"
+    else if is_BIExp_CLZ uop then "($CLZ)"
+    else if is_BIExp_CLS uop then "($CLS)"
+    else raise ERR "uop_to_string"
+      ("don't know how to print BIR unary-op: " ^ (term_to_string uop));
 
-  fun uop_to_string uop = if is_BIExp_ChangeSign uop then
-                               "-"
-                          else if is_BIExp_Not uop then
-                               "!"
-                          else if is_BIExp_CLZ uop then
-                               "($CLZ)"
-                          else if is_BIExp_CLS uop then
-                               "($CLS)"
-                          else
-                               raise (ERR "uop_to_string" "don't know how to print BIR unaryop")
-                          ;
-
-  fun endi_to_string endi = if is_BEnd_BigEndian endi then
-                                 "B"
-                            else if is_BEnd_LittleEndian endi then
-                                 "L"
-                            else if is_BEnd_NoEndian endi then
-                                 "N"
-                            else
-                                 raise (ERR "endi_to_string" "don't know how to print endianness")
-                            ;
+  fun endi_to_string endi =
+    if is_BEnd_BigEndian endi then "B"
+    else if is_BEnd_LittleEndian endi then "L"
+    else if is_BEnd_NoEndian endi then "N"
+    else raise ERR "endi_to_string"
+      ("don't know how to print endianness: " ^ (term_to_string endi));
 
   fun bir_exp_to_x xf cf exp =
     let
@@ -132,6 +106,13 @@ struct
           ((xf "(") cf (ef exp1) cf (xf " ") cf (xf bpredopstr) cf (xf " ") cf (ef exp2) cf (xf ")"))
         end
 
+      else if is_BExp_MemEq exp then
+        let
+          val (exp1, exp2) = (dest_BExp_MemEq) exp;
+        in
+          ((xf "(") cf (ef exp1) cf (xf " = ") cf (ef exp2) cf (xf ")"))
+        end
+
       else if is_BExp_IfThenElse exp then
         let
           val (expc, expt, expf) = (dest_BExp_IfThenElse) exp;
@@ -156,8 +137,15 @@ struct
           ((xf "(") cf (ef expm) cf (xf ":") cf (xf endistr) cf (xf "[") cf (ef expad) cf (xf "] = ") cf (ef expv) cf (xf ")"))
         end
 
+      else if is_bir_exp_imp exp then
+        let
+          val (bir_lhs, bir_rhs) = dest_bir_exp_imp exp
+        in
+          ((xf "(") cf (ef bir_lhs) cf (xf "==>") cf (ef bir_rhs) cf (xf ")"))
+        end
+
       else
-        raise (ERR "bir_exp_to_x" "don't know BIR expression")
+        raise (ERR "bir_exp_to_x" ("don't know BIR expression: '" ^ term_to_string exp ^ "'"))
 
     end;
 
@@ -254,7 +242,7 @@ val _ = bir_exp_pretty_print exp;
           (bir_exp_vars_in_exp expm) @ (bir_exp_vars_in_exp expad) @ (bir_exp_vars_in_exp expv)
         end
       else
-        raise (ERR "bir_exp_vars_in_exp" "don't know BIR expression")
+        raise (ERR "bir_exp_vars_in_exp" ("don't know BIR expression: '" ^ term_to_string exp ^ "'"))
       ;
 
   fun bir_exp_dist_vars_in_exp exp =
@@ -264,6 +252,6 @@ val _ = bir_exp_pretty_print exp;
       List.foldr (fn (var, vl) => if List.exists (fn x => x = var) vl then vl else var::vl) [] vars
     end;
 
-
+  end (* local *)
 
 end

@@ -1,17 +1,17 @@
+open HolKernel Parse boolLib bossLib;
+
 (* From core BIR: *)
 open bir_programTheory bir_typing_progTheory bir_envTheory
      bir_auxiliaryTheory bir_valuesTheory bir_expTheory
-     bir_exp_immTheory;
+     bir_exp_immTheory bir_typing_expTheory bir_immTheory;
 
-(* From BIR core-props: *)
+(* From BIR theories: *)
 open bir_program_blocksTheory bir_program_terminationTheory
      bir_program_valid_stateTheory bir_exp_substitutionsTheory
      bir_bool_expTheory bir_program_env_orderTheory
      bir_program_multistep_propsTheory;
 
 open HolBACoreSimps;
-
-load "pairLib";
 
 val _ = new_theory "bir_wp";
 

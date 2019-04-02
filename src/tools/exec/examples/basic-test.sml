@@ -1,7 +1,8 @@
 open HolKernel Parse bossLib boolLib;
 open bslSyntax;
 
-(*open bir_execLib;*)
+open bir_execLib;
+val alpha = ``:'a``;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 

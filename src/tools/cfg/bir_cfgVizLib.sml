@@ -1,12 +1,18 @@
 structure bir_cfgVizLib =
 struct
 
-open HolKernel Parse;
+local
+
+open HolKernel Parse boolLib bossLib;
+open bir_programSyntax;
 open bir_immSyntax;
 open graphVizLib;
 open bir_cfgLib;
+open listSyntax;
 
 val ERR = mk_HOL_ERR "bir_cfgVizLib"
+
+in
 
 (*---------------------------------------------------------------------------*)
 
@@ -147,5 +153,7 @@ fun bir_show_graph_from_prog prog path =
   in
     bir_show_graph_inout_all simplified (blocks, in_idxs, out_idxs)
   end;
+
+end (* local *)
 
 end (* bir_cfgVizLib *)
