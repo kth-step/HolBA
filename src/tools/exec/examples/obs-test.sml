@@ -42,9 +42,8 @@ val prog_ldld_w_obs = ("prog_ldld_w_obs", ``
 
 (* TODO: fix obs evaluation *)
 (* TODO: fix evaluation of REVERSE in obs in the end! *)
-(* TODO: fix jmp outside possible *)
 
-val (name, prog_tm) = prog_ldld_w_obs;
+val (name, prog) = prog_ldld_w_obs;
 
 val validprog_o = NONE;
 val welltypedprog_o = NONE;
@@ -55,5 +54,5 @@ val n_max = 50;
 val _ = print "ok\n";
 
 
-val _ = bir_exec_prog_print name prog_tm n_max validprog_o welltypedprog_o state_o;
+val _ = bir_exec_prog_print name prog n_max validprog_o welltypedprog_o state_o;
 
