@@ -63,4 +63,6 @@ val sml_model = to_sml_ints model;
 fun isPrimedRun s = String.isSuffix "_" s;
 val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
 
-val test_result =  bir_embexp_run_cache_distinguishability "" s1 s2;
+val test_result =  bir_embexp_run_cache_distinguishability "ldr x2, [x1]" s1 s2;
+
+val _ = print ("result = " ^ (if test_result then "ok!" else "failed") ^ "\n\n");
