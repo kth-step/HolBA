@@ -778,7 +778,8 @@ val m0_mod_REGS_lifted_imms_LIST_def = Define `
     (BMLI (BVar "LR" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 14w))));
     (BMLI (BVar "SP_main" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name F 13w))));
     (BMLI (BVar "SP_process" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 13w))));
-    (BMLI (BVar "ModeHandler" BType_Bool) (\ms:m0_mod_state. bool2b (ms.base.CurrentMode = Mode_Handler)))]`;
+    (BMLI (BVar "ModeHandler" BType_Bool) (\ms:m0_mod_state. bool2b (ms.base.CurrentMode = Mode_Handler)));
+    (BMLI (BVar "countw" (BType_Imm Bit64)) (\ms:m0_mod_state. Imm64 (ms.countw)))]`;
 
 
 val m0_mod_REGS_lifted_imms_LIST_REWRS = save_thm ("m0_mod_REGS_lifted_imms_LIST_REWRS",
