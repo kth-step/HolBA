@@ -1,0 +1,38 @@
+# includes
+# ----------------------------------
+DEPENDENCIES =
+
+
+# configuration
+# ----------------------------------
+SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
+
+TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
+
+HOLHEAP    = ../../HolBA-heap
+NEWHOLHEAP = 
+
+HEAPINC    = 
+
+SELFTEST_DEP = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../Holmakefile.inc
+
+
+# test recipes
+# ----------------------------------
+
+addrs-eq-imp-x42-test.exe: addrs-eq-imp-x42-test.uo
+	$(HOLMOSMLC) -o $@ $<
+
+no-mem-gauss-test.exe: no-mem-gauss-test.uo
+	$(HOLMOSMLC) -o $@ $<
+
+mem-gauss-test.exe: mem-gauss-test.uo
+	$(HOLMOSMLC) -o $@ $<
+
+no-mult-gauss-test.exe: no-mult-gauss-test.uo
+	$(HOLMOSMLC) -o $@ $<

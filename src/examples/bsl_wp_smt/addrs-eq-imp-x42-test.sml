@@ -118,5 +118,5 @@ val addrs_eq_imp_x42_thm =
     HolSmtLib.Z3_ORACLE_PROVE smt_ready_tm
       handle e => raise pp_exn_s "Z3_ORACLE_PROVE failed" e
   end;
-val _ = Hol_pp.print_thm addrs_eq_imp_x42_thm;
+val _ = (Hol_pp.print_thm addrs_eq_imp_x42_thm; print "\n");
 

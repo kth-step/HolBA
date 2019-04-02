@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = aes nic
+DEPENDENCIES   = aes bsl_wp_smt nic
 
 
 # configuration
