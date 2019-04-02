@@ -6,11 +6,12 @@ DEPENDENCIES   = toy
 # configuration
 # ----------------------------------
 HOLHEAP        = ../HolBATools_Cfg-heap
-NEWHOLHEAP     = 
+NEWHOLHEAP     =
 
-HEAPINC_EXTRA  = 
+HEAPINC_EXTRA  =
 
 
 # included lines follow
 # ----------------------------------
 include ../../../Holmakefile.inc
+
