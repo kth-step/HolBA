@@ -14,7 +14,7 @@ val _ = Globals.show_tags := true;
 val _ = if !Globals.interactive then () else (
   Feedback.set_trace "HolSmtLib" 0;
   Feedback.set_trace "bir_wpLib.DEBUG_LEVEL" 0;
-  Feedback.set_trace "easy_noproof_wpLib" 1;
+  Feedback.set_trace "easy_noproof_wpLib" 2;
   Feedback.set_trace "Define.storage_message" 0;
   Feedback.emit_WARNING := false;
   ());

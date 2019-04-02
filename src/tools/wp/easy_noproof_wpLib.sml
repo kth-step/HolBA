@@ -3,8 +3,8 @@ struct
 
   open Abbrev
 
-  val debug_trace = ref (1: int)
-  val _ = register_trace ("easy_noproof_wpLib", debug_trace, 2)
+  val debug_trace = ref (2: int)
+  val _ = register_trace ("easy_noproof_wpLib", debug_trace, 3)
 
   local
 
@@ -47,43 +47,53 @@ struct
     end;
 
   (* Trace utilities *)
-
-  local
-    (* This is from HOL/Parse *)
-    fun checkterm pfx s =
-      case OS.Process.getEnv "TERM" of
-          NONE => s
-        | SOME term =>
-          if String.isPrefix "xterm" term then
-            pfx ^ s ^ "\027[0m"
-          else
-            s
-  in
-    val bold = checkterm "\027[1m"
-    val boldred = checkterm "\027[31m\027[1m"
-    val boldgreen = checkterm "\027[32m\027[1m"
-    val boldyellow = checkterm "\027[33m\027[1m"
-    val boldblue = checkterm "\027[34m\027[1m"
-    val boldmagenta = checkterm "\027[35m\027[1m"
-    val boldcyan = checkterm "\027[36m\027[1m"
-    val red = checkterm "\027[31m"
-    val green = checkterm "\027[32m"
-    val yellow = checkterm "\027[33m"
-    val blue = checkterm "\027[34m"
-    val magenta = checkterm "\027[35m"
-    val cyan = checkterm "\027[36m"
-    val dim = checkterm "\027[2m"
-    val clear = checkterm "\027[0m"
-  end
-
-  fun error func msg = if !debug_trace >= 0 then
-    print ((boldred     ("[ERROR @ easy_noproof_wpLib::" ^ func ^ "] ")) ^ (red msg) ^ "\n") else ();
-  fun warn func msg = if !debug_trace >= 0 then
-    print ((boldyellow  ("[ WARN @ easy_noproof_wpLib::" ^ func ^ "] ")) ^ msg ^ "\n") else ();
-  fun info func msg = if !debug_trace >= 1 then
-    print ((boldblue    ("[ INFO @ easy_noproof_wpLib::" ^ func ^ "] ")) ^ msg ^ "\n") else ();
-  fun trace func msg = if !debug_trace >= 2 then
-    print ((boldmagenta ("[TRACE @ easy_noproof_wpLib::" ^ func ^ "] ")) ^ msg ^ "\n") else ();
+  fun gen_log_functions lib_name level_ref =
+    let
+      (* Colors *)
+      fun checkterm pfx s = (* This is from HOL/Parse *)
+        case OS.Process.getEnv "TERM" of
+            NONE => s
+          | SOME term => if String.isPrefix "xterm" term then pfx ^ s ^ "\027[0m" else s
+      val bold = checkterm "\027[1m"
+      val boldred = checkterm "\027[31m\027[1m"
+      val boldgreen = checkterm "\027[32m\027[1m"
+      val boldyellow = checkterm "\027[33m\027[1m"
+      val boldblue = checkterm "\027[34m\027[1m"
+      val boldmagenta = checkterm "\027[35m\027[1m"
+      val boldcyan = checkterm "\027[36m\027[1m"
+      val red = checkterm "\027[31m"
+      val green = checkterm "\027[32m"
+      val yellow = checkterm "\027[33m"
+      val blue = checkterm "\027[34m"
+      val magenta = checkterm "\027[35m"
+      val cyan = checkterm "\027[36m"
+      val dim = checkterm "\027[2m"
+      val clear = checkterm "\027[0m"
+      (* Log functions *)
+      fun error func_name msg = if !level_ref >= 0 then (
+          print (boldred ("[ERROR @ " ^ lib_name ^ "::" ^ func_name ^ "] "));
+          print (red msg);
+          print "\n"
+        ) else ();
+      fun warn func_name msg = if !level_ref >= 1 then (
+          print (boldyellow ("[ WARN @ " ^ lib_name ^ "::" ^ func_name ^ "] "));
+          print msg;
+          print "\n"
+        ) else ();
+      fun info func_name msg = if !level_ref >= 2 then (
+          print (boldblue ("[ INFO @ " ^ lib_name ^ "::" ^ func_name ^ "] "));
+          print msg;
+          print "\n"
+        ) else ();
+      fun trace func_name msg = if !level_ref >= 3 then (
+          print (boldmagenta ("[TRACE @ " ^ lib_name ^ "::" ^ func_name ^ "] "));
+          print msg;
+          print "\n"
+        ) else ();
+    in
+      (error, warn, info, trace)
+    end;
+  val (error, warn, info, trace) = gen_log_functions "easy_noproof_wpLib" debug_trace;
 
   in (* local *)
 
