@@ -200,6 +200,9 @@ val _ = debug_trace := 2;
       val result_t = (snd o dest_eq o concl) exec_thm;
       val (ol, x)  = dest_pair result_t;
       val (n, s2)  = dest_pair x;
+
+      (* fix REVERSEd observations *)
+      val ol = (snd o dest_eq o concl o (REWRITE_CONV [REVERSE_DEF, APPEND])) ol;
     in
       (ol, n, s2)
     end;

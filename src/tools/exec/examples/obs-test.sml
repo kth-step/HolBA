@@ -41,7 +41,6 @@ val prog_ldld_w_obs = ("prog_ldld_w_obs", ``
          bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 8w)))|>]``);
 
 (* TODO: fix obs evaluation *)
-(* TODO: fix evaluation of REVERSE in obs in the end! *)
 
 val (name, prog) = prog_ldld_w_obs;
 
