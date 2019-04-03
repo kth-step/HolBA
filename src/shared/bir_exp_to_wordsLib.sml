@@ -60,7 +60,7 @@ struct
         )
       ]
     in
-      REWRITE_CONV thms tm
+      PURE_REWRITE_CONV thms tm
         handle _ => REFL tm
     end;
 
@@ -132,7 +132,7 @@ struct
   fun bool2w exp_tm =
     let
       val to_rewrite = ``bool2w ^exp_tm``
-      val rewritten = REWRITE_CONV [bool2w_def] to_rewrite
+      val rewritten = PURE_REWRITE_CONV [bool2w_def] to_rewrite
     in
       (snd o dest_comb o concl) rewritten
     end
@@ -195,7 +195,7 @@ struct
           val (uop, bir_exp) = (dest_BExp_UnaryExp) exp
           val w_exp = bir_exp_to_words bir_exp
           val to_rw = ``(bir_unary_exp_GET_OPER ^uop) ^w_exp``
-          val rewritten = REWRITE_CONV [bir_unary_exp_GET_OPER_def] to_rw
+          val rewritten = PURE_REWRITE_CONV [bir_unary_exp_GET_OPER_def] to_rw
         in
           (snd o dest_comb o concl) rewritten
         end
@@ -210,7 +210,7 @@ struct
           val w_exp1 = bir_exp_to_words bir_exp1
           val w_exp2 = bir_exp_to_words bir_exp2
           val to_rw = ``(bir_bin_exp_GET_OPER ^bop) ^w_exp1 ^w_exp2``
-          val rewritten = REWRITE_CONV [bir_bin_exp_GET_OPER_def] to_rw
+          val rewritten = PURE_REWRITE_CONV [bir_bin_exp_GET_OPER_def] to_rw
         in
           (snd o dest_comb o concl) rewritten
         end
@@ -229,7 +229,7 @@ struct
           val w_exp1 = bir_exp_to_words bir_exp1
           val w_exp2 = bir_exp_to_words bir_exp2
           val to_rw = ``(bir_bin_pred_GET_OPER ^bpred) ^w_exp1 ^w_exp2``
-          val rewritten = REWRITE_CONV [bir_bin_pred_GET_OPER_def] to_rw
+          val rewritten = PURE_REWRITE_CONV [bir_bin_pred_GET_OPER_def] to_rw
           val w_bool_bin_pred = (snd o dest_comb o concl) rewritten
         in
           bool2w w_bool_bin_pred
