@@ -297,6 +297,9 @@ sig
      *
      * bconstii:  int (length) -> int (value) -> bir_exp_t
      * bconstimm: bir_imm_t -> bir_exp_t
+     *
+     * btrue:     bir_exp_t
+     * bfalse:    bir_exp_t
      *)
     val bconst:     term -> term
 
@@ -309,6 +312,9 @@ sig
 
     val bconstii:   int -> int -> term
     val bconstimm:  term -> term
+
+    val btrue:  term
+    val bfalse:  term
 
     (* Memory constants (BExp_MemConst: bir_exp_t)
      *

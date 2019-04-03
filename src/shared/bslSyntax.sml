@@ -217,6 +217,8 @@ struct
   val bconst32 = bconstii 32
   val bconst64 = bconstii 64
   val bconst128 = bconstii 128
+  val btrue = bconst1 1
+  val bfalse = bconst1 0
 
   (* Memory constants (BExp_MemConst: bir_exp_t) *)
   fun bconstmem_helper [] =
