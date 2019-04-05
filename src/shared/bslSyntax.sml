@@ -378,11 +378,10 @@ struct
     handle e => raise wrap_exn "bmemeq" e
 
   (* Conditionals (BExp_IfThenElse: bir_exp_t) *)
-  val bite = curry3 mk_BExp_IfThenElse
+  val bite = mk_BExp_IfThenElse
     handle e => raise wrap_exn "bite" e
-  fun bcases [] = raise ERR "bcases" "need at least 1 term"
-    | bcases [(cond_tm, tm)] = tm
-    | bcases ((cond_tm, tm)::tl) = bite cond_tm tm (bcases tl)
+  fun bcases [] default = default
+    | bcases ((cond_tm, tm)::tl) default = bite (cond_tm, tm, bcases tl default)
     handle e => raise wrap_exn "bcases" e
 
   (* Memory loads (BExp_Load: bir_exp_t) *)
