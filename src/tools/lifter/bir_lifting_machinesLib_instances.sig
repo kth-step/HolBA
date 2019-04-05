@@ -15,4 +15,12 @@ sig
    val m0_bmr_rec_LittleEnd_Process : bir_lifting_machinesLib.bmr_rec;
    val m0_bmr_rec_BigEnd_Process    : bir_lifting_machinesLib.bmr_rec;
 
+   (* repeated for the modified m0 version: m0_mod *)
+   val m0_mod_bmr_rec : bool -> bool -> bir_lifting_machinesLib.bmr_rec;
+
+   val m0_mod_bmr_rec_LittleEnd_Main    : bir_lifting_machinesLib.bmr_rec;
+   val m0_mod_bmr_rec_BigEnd_Main       : bir_lifting_machinesLib.bmr_rec;
+   val m0_mod_bmr_rec_LittleEnd_Process : bir_lifting_machinesLib.bmr_rec;
+   val m0_mod_bmr_rec_BigEnd_Process    : bir_lifting_machinesLib.bmr_rec;
+
 end

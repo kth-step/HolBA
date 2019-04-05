@@ -409,4 +409,175 @@ val _ = assert bmr_rec_sanity_check (m0_bmr_rec_BigEnd_Main)
 val _ = assert bmr_rec_sanity_check (m0_bmr_rec_LittleEnd_Main)
 
 
+
+
+
+
+
+(************************)
+(* Instantiation for M0_mod (modified to include countw and old base) *)
+(************************)
+
+
+fun m0_mod_reorder_bytes false (b1::b2::bs) =
+    b2::b1::(m0_mod_reorder_bytes false bs)
+  | m0_mod_reorder_bytes _ l = l
+
+local
+  val addr_ty = fcpLib.index_type (Arbnum.fromInt 32);
+  val val_ty = fcpLib.index_type (Arbnum.fromInt 8);
+  val val_word_ty = wordsSyntax.mk_word_type val_ty
+in
+
+fun m0_mod_mk_data_mm ef mem_loc hex_code = let
+  val ml_tm = wordsSyntax.mk_n2w (numSyntax.mk_numeral mem_loc, addr_ty)
+  val bytes = m0_mod_reorder_bytes ef (bytes_of_hex_code hex_code)
+  val _ = if (length bytes = 2) orelse (length bytes = 4) then () else failwith "invalid hex-code";
+  val bytes_tm = listSyntax.mk_list (bytes, val_word_ty)
+in
+  pairSyntax.mk_pair (ml_tm, bytes_tm)
+end;
+
+end;
+
+val m0_mod_REWRS = (RName_distinct :: (
+   (type_rws ``:m0_state``) @
+   (type_rws ``:m0_mod_state``) @
+   (type_rws ``:PSR``) @
+   (type_rws ``:RName``) @
+   (type_rws ``:Mode``)
+));
+
+val m0_mod_extra_ss = rewrites m0_mod_REWRS;
+
+(* DEBUG
+
+  val endian_fl = false
+  val sel_fl = true
+
+  val res = m0_step_hex' (endian_fl, sel_fl) vn hex_code
+
+*)
+
+fun m0_mod_step_hex' (endian_fl, sel_fl) = let
+  val endian_fl_tm = if endian_fl then T else F;
+  val sel_fl_tm = if sel_fl then T else F;
+
+  val m0_mod_step_hex = m0_mod_stepLib.thumb_mod_step_hex (endian_fl, sel_fl);
+
+  val next_state_tm = (prim_mk_const{Name="NextStateM0_mod", Thy="m0_mod_step"});
+
+  val simp_conv = (SIMP_CONV (arith_ss++bitstringLib.v2w_n2w_ss++wordsLib.SIZES_ss)
+     ((if endian_fl then m0_extra_FOLDS_BE else m0_extra_FOLDS_LE)::[nzcv_FOLDS_M0,
+     EQ_13w_EVAL, EQ_15w_EVAL, R_name_EVAL, bir_auxiliaryTheory.w2w_n2w,
+     m0_extra_FOLDS_GEN, Mode_Handler_INTRO, bir_auxiliaryTheory.align_aligned_add,
+     bir_auxiliaryTheory.align_aligned_sub, LowestSetBit_n2w, numeral_bitTheory.LOWEST_SET_BIT,
+     alignmentTheory.aligned_numeric, alignmentTheory.align_aligned, wordsTheory.word_bit_n2w]));
+
+  val compset_2 = reduceLib.num_compset ();
+  val _ = bitLib.add_bit_compset compset_2
+
+  val simp_conv2 = SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss ++ wordsLib.WORD_LOGIC_ss++wordsLib.SIZES_ss) [wordsTheory.n2w_11, m0_extra_FOLDS_GEN, wordsTheory.word_msb, wordsTheory.word_bit_n2w] THENC
+                   (SIMP_CONV std_ss [word_add_to_sub_TYPES, wordsTheory.WORD_SUB_INTRO, alignmentTheory.aligned_numeric, wordsTheory.WORD_MULT_CLAUSES] THENC
+                    computeLib.CBV_CONV compset_2);
+
+  val bmr_extra_M0_mod' = REWRITE_RULE [] (SPECL [endian_fl_tm, sel_fl_tm] bmr_extra_M0_mod)
+  fun m0_mod_extra_THMS vn = let
+     val thm0  = SPEC vn bmr_extra_M0_mod'
+     val thm1a = ASSUME (lhs (concl thm0))
+     val thm1 = CONV_RULE (K thm0) thm1a
+  in
+     CONJUNCTS thm1
+  end;
+
+
+  val bmr_ms_mem_contains_M0_mod_2' = SPECL [endian_fl_tm, sel_fl_tm] bmr_ms_mem_contains_M0_mod_2
+  val bmr_ms_mem_contains_M0_mod_4' = SPECL [endian_fl_tm, sel_fl_tm] bmr_ms_mem_contains_M0_mod_4
+
+  fun prepare_mem_contains_thms vn hex_code =
+  let
+    val bytes = m0_mod_reorder_bytes endian_fl (bytes_of_hex_code hex_code)
+    val ms_thm = if (length bytes = 2) then
+                    bmr_ms_mem_contains_M0_mod_2'
+                 else if (length bytes = 4) then
+                    bmr_ms_mem_contains_M0_mod_4'
+                 else failwith "invalid hex-code";
+
+    val thm0 = SPECL (vn :: bytes) ms_thm
+
+    val thm1a = ASSUME (lhs (concl thm0))
+    val thm2 = CONV_RULE (K thm0) thm1a
+  in
+    CONJUNCTS thm2
+  end;
+
+(* val thm = hd step_thms0  *)
+   fun process_m0_mod_thm vn pc_mem_thms thm = let
+     val thm0 = bmr_normalise_step_thm next_state_tm vn thm
+     val thm1 = HYP_CONV_RULE (K true) simp_conv thm0
+     val thm2 = foldl (fn (pre_thm, thm) => PROVE_HYP pre_thm thm) thm1
+       (pc_mem_thms @ (m0_mod_extra_THMS vn))
+
+     val thm3 = DISCH_ALL thm2
+     val thm4 = CONV_RULE (simp_conv THENC simp_conv2) thm3
+     val thm5 = UNDISCH_ALL thm4
+
+     (* check that theorem structure did not get destroyed by e.g.
+        contradicting assumptions. *)
+     val _ = dest_eq (concl thm5) handle HOL_ERR _ => failwith "m0_mod_step_hex': unexpected resulting theorem"
+   in
+     thm5
+   end;
+
+in
+
+  fn vn => fn hex_code => let
+    val pc_mem_thms = prepare_mem_contains_thms vn hex_code;
+
+    val step_thms0 = m0_mod_step_hex hex_code
+    val step_thms1 = List.map (process_m0_mod_thm vn pc_mem_thms) step_thms0;
+  in
+    step_thms1
+  end
+end;
+
+
+fun m0_mod_bmr_rec endian_fl sel_fl =
+let
+  val endian_fl_tm = if endian_fl then T else F;
+  val sel_fl_tm = if sel_fl then T else F;
+
+  val const_tm0 = prim_mk_const{Name="m0_mod_bmr", Thy="bir_lifting_machines"};
+  val const_tm = mk_comb (const_tm0, pairSyntax.mk_pair (endian_fl_tm, sel_fl_tm))
+
+in
+{
+  bmr_const                = const_tm,
+  bmr_ok_thm               = SPECL [endian_fl_tm, sel_fl_tm] m0_mod_bmr_OK,
+  bmr_lifted_thm           = SPECL [endian_fl_tm, sel_fl_tm] m0_mod_bmr_LIFTED,
+  bmr_extra_lifted_thms    = [if endian_fl then m0_extra_LIFTS_BE else m0_extra_LIFTS_LE],
+  bmr_change_interval_thms = [m0_CHANGE_INTERVAL_THMS],
+  bmr_eval_thm             = REWRITE_RULE [] (SPECL [endian_fl_tm, sel_fl_tm] m0_mod_bmr_EVAL),
+  bmr_label_thm            = SPECL [endian_fl_tm, sel_fl_tm] m0_mod_bmr_label_thm,
+  bmr_dest_mem             = m0_dest_mem,
+  bmr_extra_ss             = m0_mod_extra_ss,
+  bmr_step_hex             = m0_mod_step_hex' (endian_fl, sel_fl),
+  bmr_mk_data_mm           = m0_mod_mk_data_mm endian_fl,
+  bmr_hex_code_size        = (fn hc => Arbnum.fromInt ((String.size hc) div 2)),
+  bmr_ihex_param           = NONE
+}: bmr_rec
+end;
+
+val m0_mod_bmr_rec_LittleEnd_Main    = m0_mod_bmr_rec false false
+val m0_mod_bmr_rec_BigEnd_Main       = m0_mod_bmr_rec true  false
+val m0_mod_bmr_rec_LittleEnd_Process = m0_mod_bmr_rec false true
+val m0_mod_bmr_rec_BigEnd_Process    = m0_mod_bmr_rec true  true
+
+val _ = assert bmr_rec_sanity_check (m0_mod_bmr_rec_BigEnd_Process)
+val _ = assert bmr_rec_sanity_check (m0_mod_bmr_rec_LittleEnd_Process)
+val _ = assert bmr_rec_sanity_check (m0_mod_bmr_rec_BigEnd_Main)
+val _ = assert bmr_rec_sanity_check (m0_mod_bmr_rec_LittleEnd_Main)
+
+
+
 end;

@@ -3,7 +3,7 @@ open wordsTheory
 open bir_exp_liftingTheory
 open arm8_stepTheory
 open bir_lifter_general_auxTheory;
-open bir_lifting_machinesTheory;
+
 open bir_interval_expTheory bir_extra_expsTheory
 open bitstringTheory
 open bir_exp_immTheory

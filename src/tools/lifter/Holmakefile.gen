@@ -1,6 +1,7 @@
 # includes
 # ----------------------------------
 DEPENDENCIES   = ../../core ../../theories ../../libs \
+   models/l3mod \
    $(HOLDIR)/examples/l3-machine-code/common \
    $(HOLDIR)/examples/l3-machine-code/arm8/model \
    $(HOLDIR)/examples/l3-machine-code/arm8/step \
@@ -14,7 +15,7 @@ SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
-HOLHEAP    = models/l3/HolBA_l3-heap
+HOLHEAP    = models/l3mod/HolBA_l3mod-heap
 NEWHOLHEAP = HolBALifter-heap
 
 HEAPINC    = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
