@@ -581,23 +581,24 @@ sig
     (* Conditionals (BExp_IfThenElse: bir_exp_t)
      *
      * If-Then-Else:
-     *  - bite: bir_exp_t -> bir_exp_t -> bir_exp_t -> bir_exp_t
+     *  - bite: (bir_exp_t * bir_exp_t * bir_exp_t) -> bir_exp_t
      *
      * Cases: list of conditions tested in order, stopping at the first match
-     *  - bcases: (bir_exp_t * bir_exp_t) list -> bir_exp_t
+     *  - bcases: (bir_exp_t * bir_exp_t) list -> bir_exp_t -> bir_exp_t
      *
-     * Example: This will evaluate to `bconstii 32 2`, and only the first two
+     * Example: This will evaluate to `bconstii 32 1`, and only the first two
      * comparisons will be executed (lazy evaluation).
      * ```
      * bcases [
-     *   (beq (bconstii 32 2) (bconstii 32 4), bconstii 32 0),
-     *   (beq (bconstii 32 3) (bconstii 32 3), bconstii 32 1),
-     *   (beq (bconstii 32 7) (bconstii 32 7), bconstii 32 2)
+     *   (beq (bconst8 2) (bconst8 4), bconst32 0),
+     *   (beq (bconst32 3) (bconst32 3), bconst32 1),
+     *   (beq (bconst128 7) (bconst128 7), bconst32 2),
+     *   bconst32 100
      * ]
      * ```
      *)
-    val bite:   term -> term -> term -> term
-    val bcases: (term * term) list -> term
+    val bite:   (term * term * term) -> term
+    val bcases: (term * term) list -> term -> term
 
     (* Memory loads (BExp_Load: bir_exp_t)
      *
