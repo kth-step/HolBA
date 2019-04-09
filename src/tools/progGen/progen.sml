@@ -102,49 +102,48 @@ fun progGen n =
       if null wl then pl else progGen n
   end 
 
-val hex0 = (progGen 5);
+val hex0 = (progGen 2);
 (* val l = Lib.mapfilter *)
 (*            (fn s => (print (s ^ "\n"); arm8_spec_hex s) *)
 (*                     handle e as HOL_ERR _ => *)
 (*                        (failed := s :: !failed; raise e)) (failed := []; hex0); *)
 map decomp hex0;
 
-(* fun member(x,[]) = false *)
-(*   |  member(x,L) = *)
-(*         if x=hd(L) then true *)
-(*         else member(x,tl(L)); *)
+    
 
-(* fun intersect([],[]) = [] *)
-(*   | intersect(L1,[]) = [] *)
-(*   | intersect(L1,L2) = if member(hd(L2), L1) then hd(L2)::intersect(L1, tl(L2)) *)
-(*       else intersect(L1, tl(L2)); *)
+fun inst_decomp inst =
+    instructionToString
+        (Decode((Option.valOf o BitsN.fromHexString) (inst ,32)))    
+fun rmcomma args = 
+     map (fn s => String.tokens (fn c => c = #",") s) args
 
-(* fun subtract([],[]) = [] *)
-(*   | subtract(L1,[]) = [] *)
-(*   | subtract(L1,L2) = if not(member(hd(L2), L1)) then hd(L2)::subtract(L1, tl(L2)) *)
-(*       else subtract(L1, tl(L2)); *)
+fun change(i,v,[]) = []
+|   change(0, v, x::xs) =  v :: xs
+|   change(i, v, x::xs) =  if i < 0 then []
+                            else  x :: change((i-1), v, xs)
 
+fun ret_ast s =
+ case instructionFromString s of
+     OK ast =>
+     ast
 
-(* fun combine(L1) f = *)
-(*    if L1 = [] then [] *)
-(*    else if tl(L1) = [] then hd(L1) *)
-(*    else foldr f (hd(L1)) (tl(L1)); *)
-
-(* fun progGen n = *)
-(*    let *)
-(*        val insts = (List.tabulate (n, fn _ => (snd(weighted_select arm8_names_weighted rg)))) *)
-(*        val pats  = map (Option.valOf o arm8_stepLib.arm8_pattern) insts *)
-(*        val insts_fvl    = map (Term.free_vars) pats *)
-(*        val fv_intersect = (combine insts_fvl intersect) *)
-(*        val fvinter_inst = List.map (fn v => v |-> random_bit ()) (fv_intersect) *)
-(*        val fv_diff      = map (fn l => (combine ([l,fv_intersect]) subtract)) insts_fvl *)
-(*        val tmpl = map (fn l => List.map (fn v => v |-> random_bit ()) l) fv_diff *)
-(*        val fvdif_inst   = map (fn l => l@fvinter_inst) tmpl *)
-(*        val pl   = map (fn (a,b) => bitstringSyntax.hexstring_of_term (Term.subst a b)) (zip fvdif_inst pats) *)
-(*        val wl = filter (fn c => String.isSubstring "WORD" c) (flat (map decomp pl)) *)
-(*    in *)
-(*        if null wl then pl else progGen n *)
-(*    end *)
+fun ret_mcode ast = 
+  (case Encode ast of
+           arm8.ARM8 w =>
+             ("",
+              Option.SOME(L3.padLeftString(#"0",(8,BitsN.toHexString w))))
+         | BadCode err => ("Encode error: " ^ err,NONE))
 
 
-(* map decomp(progGen 10); *)
+fun progGenRef n =
+    let val insts = progGen n
+	val (ins , args) = unzip(map inst_decomp insts)
+	val secInst = change (1, hd(hd(rmcomma args)), hd(tl (rmcomma args)))
+	val argss  = map (String.concatWith ",") [hd(rmcomma args), secInst]
+	val instss = map (fn (a,b) => String.concatWith " " [a,b]) (zip ins argss)
+    in
+	(map (valOf o snd o ret_mcode) (map ret_ast instss))
+	handle Match =>
+	       progGenRef n
+    end
+map decomp (progGenRef 2);
