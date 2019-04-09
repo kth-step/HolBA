@@ -19,11 +19,6 @@ open bir_program_blocksTheory bir_program_terminationTheory
 (* From /libs: *)
 open bir_expLib;
 
-(* Generic HOL libraries: *)
-open finite_mapSyntax pairSyntax;
-
-load "pairLib";
-
 structure bir_wpLib =
 struct
 
@@ -95,7 +90,8 @@ fun bir_wp_comp_wps_iter_step0_init reusable_thm (program, post, ls)
                            BExp_Aligned_type_of,
                            BExp_unchanged_mem_interval_distinct_type_of,
                            bir_number_of_mem_splits_REWRS,
-                           BType_Bool_def, bir_exp_true_def,
+                           BType_Bool_def,
+                           bir_exp_true_def,
                            bir_exp_false_def, BExp_MSB_type_of,
                            BExp_nzcv_ADD_DEFS,
                            BExp_nzcv_SUB_DEFS,
@@ -189,7 +185,8 @@ fun bir_wp_comp_wps_iter_step1 label prog_thm (program, post, ls)
   end;
 
 fun extract_new_wp fmterm =
-  (snd o dest_pair o snd o dest_fupdate) fmterm;
+  (snd o pairSyntax.dest_pair o snd o finite_mapSyntax.dest_fupdate)
+    fmterm;
 val lbl_strip_comment = (snd o dest_comb o concl o EVAL);
 
 val bir_wp_comp_wps_iter_step2_defs = ref ([]:thm list);
@@ -282,10 +279,10 @@ fun cmp_label lbla lblb =
 (*EVAL ``BL_Address_HC b hc``*)
 
 fun bir_wp_fmap_to_dom_list fmap =
-  if is_fempty fmap then [] else
+  if finite_mapSyntax.is_fempty fmap then [] else
   let
-    val (fmap1, kv) = dest_fupdate fmap
-    val k = (fst o dest_pair) kv
+    val (fmap1, kv) = finite_mapSyntax.dest_fupdate fmap
+    val k = (fst o pairSyntax.dest_pair) kv
   in
     (k)::(List.filter (fn k1 => not (cmp_label k1 k))
                       (bir_wp_fmap_to_dom_list fmap1)
