@@ -27,14 +27,15 @@ fun dest_bir_symb_state tm =
     val env = Lib.assoc "bsst_environ" l
     val pred = Lib.assoc "bsst_pred" l
     val status = Lib.assoc "bsst_status" l
+    val obs = Lib.assoc "bsst_obs" l
   in 
-    (pc, env, pred, status)
+    (pc, env, pred, status, obs)
   end handle HOL_ERR _ => raise ERR "dest_bir_symb_state" "wtf";
 
 (* Destruct symbolic state to decide wheter branch is still running *)
 fun symb_is_BST_Running state = 
   let 
-    val (pc, env, pres, status) = dest_bir_symb_state state;
+    val (pc, env, pres, status, obs) = dest_bir_symb_state state;
   in
     is_BST_Running status
   end;
@@ -67,7 +68,7 @@ fun symb_exec_run bir_program tree =
               | _ => raise ERR "symb_exec_run" "More than two states" end)
         else 
           let val _ = print ("Branch stopped Running\n") in tree end)
-     | _ => raise ERR "symb_exec_run" "Wrong Tree format"
+     | _ => raise ERR "symb_exec_run" "Wrong Tree format";
 
 (* Given a Program, exec until every branch halts *)
 fun symb_exec_program bir_program =
@@ -88,7 +89,6 @@ In order to Execute a Program:
 
 val prog = (snd o dest_comb o concl) toy_arm8_THM; <-- replace program
 val tree = symb_exec_program prog;
-*)
-
-
+val tree = symb_exec_program prog_w_obs;
+ *)
 end

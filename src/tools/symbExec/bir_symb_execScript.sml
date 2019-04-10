@@ -25,6 +25,14 @@ val _ = new_theory "bir_symb_exec";
 (* Datatypes                                                                 *)
 (* ------------------------------------------------------------------------- *)
 
+(** Observations
+ * obs_cond : Observation Condition
+ * obs: Observation
+ **)
+val _ = Datatype `bir_symb_obs_t = <|
+  obs_cond     : bir_exp_t;
+  obs          : bir_exp_t; (* Should be 'a type *)
+ |>`  
 
 (* *
  * Symbolic State contains of:
@@ -39,7 +47,8 @@ val _ = Datatype `bir_symb_state_t = <|
   bsst_pc           : bir_programcounter_t; 
   bsst_environ      : bir_symb_var_environment_t; (* Mapping Vars to Exps *)
   bsst_pred         : bir_exp_t; (* Path predicate *)
-  bsst_status       : bir_status_t;
+  bsst_status       : bir_status_t; (* State *)
+  bsst_obs          : bir_symb_obs_t list; (* Observations *)
  |>`;
     
 
@@ -60,7 +69,8 @@ val bir_symb_state_init_def = Define `bir_symb_state_init p env = <|
     bsst_pc         := bir_pc_first p;
     bsst_environ    := env;
     bsst_pred       := TRUE_EXP;
-    bsst_status     := BST_Running |>`;
+    bsst_status     := BST_Running;
+    bsst_obs        := [] |>`;
 
 val bir_symb_state_set_failed_def = Define `
     bir_symb_state_set_failed st = 
@@ -215,6 +225,7 @@ val bir_symb_exec_stmtE_def = Define `
 (* Declare / Assign *)
 (********************)
 
+
 (* We declare all variables before execution, so raise error is this occurs *)
 val bir_symb_exec_stmt_declare_def = Define `
     bir_symb_exec_stmt_declare var_name var_type st = 
@@ -231,6 +242,18 @@ val bir_symb_exec_stmt_assert_def = Define `
     bir_symb_exec_stmt_assert ex st = 
     st with bsst_pred := BExp_BinExp BIExp_And ex st.bsst_pred`;
 
+val bir_symb_add_obs_def = Define `
+    (bir_symb_add_obs symb_exp [] st = st) /\
+    (bir_symb_add_obs symb_exp (obs::obs_lst) st = 
+        let symb_obs = bir_symb_eval_exp obs st.bsst_environ in
+        let obs1 = <| obs_cond := symb_exp; obs := symb_obs |> in
+        bir_symb_add_obs symb_exp obs_lst (st with bsst_obs := (obs1 :: st.bsst_obs)))`;
+
+(* Evaluate and add observations *)
+val bir_symb_exec_stmt_observe_def = Define `
+    bir_symb_exec_stmt_observe c_ex obs_lst st =
+      bir_symb_add_obs (bir_symb_eval_exp c_ex st.bsst_environ) obs_lst st`;
+
 (* Basic Statement execution *)
 val bir_symb_exec_stmtB_def = Define `
     (bir_symb_exec_stmtB (BStmt_Declare v) st  
@@ -239,6 +262,8 @@ val bir_symb_exec_stmtB_def = Define `
         = bir_symb_exec_stmt_assign v ex st) /\
     (bir_symb_exec_stmtB (BStmt_Assert ex) st 
         =  bir_symb_exec_stmt_assert ex st) /\ 
+    (bir_symb_exec_stmtB (BStmt_Observe ex ex_lst f) st
+        = bir_symb_exec_stmt_observe ex ex_lst st) /\
     (bir_symb_exec_stmtB (_)  st  = st)`;
 
 (* Execute one statement *)
