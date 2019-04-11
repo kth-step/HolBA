@@ -1,4 +1,4 @@
-open arm8_progLib;
+open arm8_progLib arm8AssemblerLib arm8;
 
 val arm8_names_weighted = [(* (1,"Address"), *)
 (20,"AddSubShiftedRegister32-1"),      (1,"AddSubShiftedRegister32-2"),     (1,"AddSubShiftedRegister32-3"),
@@ -26,8 +26,8 @@ val arm8_names_weighted = [(* (1,"Address"), *)
 (1,"MultiplyAddSub-1"),               (1,"MultiplyAddSub-2"),              (1,"MultiplyAddSubLong"),
 (1,"MultiplyHigh"),                   (1,"Reverse32"),                     (1,"Reverse64"),
 (1,"CRC8"),                           (1,"CRC16"),                         (1,"CRC32"),
-(1,"CRC64"),                          (1,"BranchConditional"),             (1,"BranchImmediate-1"),
-(1,"BranchImmediate-2"),              (1,"BranchRegisterJMP"),             (1,"BranchRegisterCALL"),
+(1,"CRC64"),                          (30,"BranchConditional"),             (30,"BranchImmediate-1"),
+(1,"BranchImmediate-2"),              (30,"BranchRegisterJMP"),             (1,"BranchRegisterCALL"),
 (1,"BranchRegisterRET"),              (1,"CompareAndBranch-1"),            (1,"CompareAndBranch-2"),
 (1,"TestBitAndBranch-1"),             (1,"TestBitAndBranch-2"),            (1,"TestBitAndBranch-3"),
 (1,"TestBitAndBranch-4"),             (1,"LoadStoreImmediate-1-1"),        (1,"LoadStoreImmediate-1-2"),
@@ -90,60 +90,73 @@ in
       end
 end
 
-fun decomp el =  arm8AssemblerLib.arm8_disassemble [QUOTE el];
-
 val random = random_hex o Option.valOf o arm8_stepLib.arm8_pattern;
-(* ---------------------------------------------  *)
 
-fun progGen n =
-  let val pl = (List.map random (List.tabulate (n, fn _ => (snd(weighted_select arm8_names_weighted rg)))))
-      val wl = filter (fn c => String.isSubstring "WORD" c) (flat (map decomp pl))
-  in
-      if null wl then pl else progGen n
-  end 
-
-val hex0 = (progGen 2);
-(* val l = Lib.mapfilter *)
-(*            (fn s => (print (s ^ "\n"); arm8_spec_hex s) *)
-(*                     handle e as HOL_ERR _ => *)
-(*                        (failed := s :: !failed; raise e)) (failed := []; hex0); *)
-map decomp hex0;
-
-    
+fun decomp el =  arm8AssemblerLib.arm8_disassemble [QUOTE el];
 
 fun inst_decomp inst =
     instructionToString
-        (Decode((Option.valOf o BitsN.fromHexString) (inst ,32)))    
-fun rmcomma args = 
-     map (fn s => String.tokens (fn c => c = #",") s) args
+        (Decode((Option.valOf o BitsN.fromHexString) (inst ,32)))  
 
-fun change(i,v,[]) = []
-|   change(0, v, x::xs) =  v :: xs
-|   change(i, v, x::xs) =  if i < 0 then []
-                            else  x :: change((i-1), v, xs)
+fun member(x,[]) = false
+  |  member(x,L) =
+        if x=hd(L) then true
+        else member(x,tl(L));
 
-fun ret_ast s =
- case instructionFromString s of
-     OK ast =>
-     ast
+fun intersect([],[]) = []
+  | intersect(L1,[]) = []
+  | intersect(L1,L2) = if member(hd(L2), L1) then hd(L2)::intersect(L1, tl(L2))
+      else intersect(L1, tl(L2));
 
-fun ret_mcode ast = 
-  (case Encode ast of
-           arm8.ARM8 w =>
-             ("",
-              Option.SOME(L3.padLeftString(#"0",(8,BitsN.toHexString w))))
-         | BadCode err => ("Encode error: " ^ err,NONE))
-
-
-fun progGenRef n =
-    let val insts = progGen n
-	val (ins , args) = unzip(map inst_decomp insts)
-	val secInst = change (1, hd(hd(rmcomma args)), hd(tl (rmcomma args)))
-	val argss  = map (String.concatWith ",") [hd(rmcomma args), secInst]
-	val instss = map (fn (a,b) => String.concatWith " " [a,b]) (zip ins argss)
+fun remChars  (c,s) =
+    let fun rem [] = []
+          | rem (c'::cs) =
+              if c = c'
+              then rem cs
+              else c'::rem cs
     in
-	(map (valOf o snd o ret_mcode) (map ret_ast instss))
-	handle Match =>
-	       progGenRef n
+	implode (rem (explode s)) 
     end
-map decomp (progGenRef 2);
+
+fun getReg args = 
+    map (fn arg => foldl remChars arg [#",", #" ", #"]"]) args
+
+
+fun instGen () =
+  let val ic = (snd(weighted_select arm8_names_weighted rg))
+      val ib = random ic
+      val wl = filter (fn c => String.isSubstring "WORD" c) (decomp ib)
+  in
+      if null wl then (ic, ib) else instGen ()
+  end 
+
+fun instsGen []  =
+    let val inst = snd (instGen ())
+	val args = getReg (p_tokens ((snd o inst_decomp) inst))
+    in
+	(hd args, inst)
+    end
+	
+  | instsGen src =
+    let val (c, inst) = instGen ()
+	val args = getReg (p_tokens ((snd o inst_decomp) inst))
+	val inclusion =  intersect (src, tl args)
+    in
+	case c of 
+	    "BranchImmediate-1" => (hd args, inst)
+	  | "BranchConditional" => (hd args, inst)
+	  | _ =>
+	    if List.null inclusion
+	    then instsGen src 
+	    else (hd args, inst)
+    end
+
+(* ---------------------------------------------  *)
+fun progGen n =
+ let val src = ref ([]:string list);
+ in
+     (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!src)) 			
+				in  (src:= (d::(!src)));i end))
+ end
+
+map decomp (progGen 2);
