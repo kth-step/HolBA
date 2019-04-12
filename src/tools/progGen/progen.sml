@@ -1,14 +1,14 @@
 open arm8_progLib arm8AssemblerLib arm8;
 
 val arm8_names_weighted = [(* (1,"Address"), *)
-(20,"AddSubShiftedRegister32-1"),      (1,"AddSubShiftedRegister32-2"),     (1,"AddSubShiftedRegister32-3"),
-(20,"AddSubShiftedRegister32-4"),      (1,"AddSubShiftedRegister64-1"),     (1,"AddSubShiftedRegister64-2"),
-(20,"AddSubShiftedRegister64-3"),      (1,"AddSubShiftedRegister64-4"),     (1,"AddSubExtendRegister-1"),
+(1,"AddSubShiftedRegister32-1"),      (1,"AddSubShiftedRegister32-2"),     (1,"AddSubShiftedRegister32-3"),
+(1,"AddSubShiftedRegister32-4"),      (1,"AddSubShiftedRegister64-1"),     (1,"AddSubShiftedRegister64-2"),
+(1,"AddSubShiftedRegister64-3"),      (1,"AddSubShiftedRegister64-4"),     (1,"AddSubExtendRegister-1"),
 (1,"AddSubExtendRegister-2"),         (1,"AddSubExtendRegister-3"),        (1,"AddSubExtendRegister-4"),
 (1,"AddSubExtendRegister-5"),         (1,"AddSubExtendRegister-6"),        (1,"AddSubExtendRegister-7"),
 (1,"AddSubExtendRegister-8"),         (1,"AddSubImmediate-1"),             (1,"AddSubImmediate-2"),
-(20,"AddSubImmediate-3"),              (1,"AddSubImmediate-4"),             (1,"AddSubImmediate-5"),
-(30,"AddSubImmediate-6"),              (1,"AddSubImmediate-7"),             (1,"AddSubImmediate-8"),
+(1,"AddSubImmediate-3"),              (1,"AddSubImmediate-4"),             (1,"AddSubImmediate-5"),
+(1,"AddSubImmediate-6"),              (1,"AddSubImmediate-7"),             (1,"AddSubImmediate-8"),
 (1,"AddSubCarry-1"),                  (1,"AddSubCarry-2"),                 (1,"AddSubCarry-3"),
 (1,"AddSubCarry-4"),                  (1,"LogicalShiftedRegister32-1"),    (1,"LogicalShiftedRegister32-2"),
 (1,"LogicalShiftedRegister32-3"),     (1,"LogicalShiftedRegister32-4"),    (1,"LogicalShiftedRegister64-1"),
@@ -26,8 +26,8 @@ val arm8_names_weighted = [(* (1,"Address"), *)
 (1,"MultiplyAddSub-1"),               (1,"MultiplyAddSub-2"),              (1,"MultiplyAddSubLong"),
 (1,"MultiplyHigh"),                   (1,"Reverse32"),                     (1,"Reverse64"),
 (1,"CRC8"),                           (1,"CRC16"),                         (1,"CRC32"),
-(1,"CRC64"),                          (30,"BranchConditional"),             (30,"BranchImmediate-1"),
-(1,"BranchImmediate-2"),              (30,"BranchRegisterJMP"),             (1,"BranchRegisterCALL"),
+(1,"CRC64"),                          (1,"BranchConditional"),             (1,"BranchImmediate-1"),
+(1,"BranchImmediate-2"),              (1,"BranchRegisterJMP"),             (1,"BranchRegisterCALL"),
 (1,"BranchRegisterRET"),              (1,"CompareAndBranch-1"),            (1,"CompareAndBranch-2"),
 (1,"TestBitAndBranch-1"),             (1,"TestBitAndBranch-2"),            (1,"TestBitAndBranch-3"),
 (1,"TestBitAndBranch-4"),             (1,"LoadStoreImmediate-1-1"),        (1,"LoadStoreImmediate-1-2"),
@@ -54,6 +54,10 @@ val arm8_names_weighted = [(* (1,"Address"), *)
 (1,"StorePair32-2"),                  (1,"LoadPair32-1"),                  (1,"LoadPair32-2"),
 (1,"LoadStorePair64-1"),              (1,"LoadStorePair64-2"),             (1,"LoadStorePair64-3"),
 (1,"LoadStorePair64-4"),              (1,"NoOperation")]
+
+fun instClass subs =
+    hd (String.tokens  (fn c => Char.compare (c,#"-") = EQUAL) subs);
+
 (* ---------------------------------------------  *)
 type gen = Random.generator
 val rg = Random.newgenseed 1.0
@@ -142,8 +146,8 @@ fun instsGen []  =
 	val args = getReg (p_tokens ((snd o inst_decomp) inst))
 	val inclusion =  intersect (src, tl args)
     in
-	case c of 
-	    "BranchImmediate-1" => (hd args, inst)
+	case (instClass c) of 
+	    "BranchImmediate" => (hd args, inst)
 	  | "BranchConditional" => (hd args, inst)
 	  | _ =>
 	    if List.null inclusion
@@ -159,4 +163,4 @@ fun progGen n =
 				in  (src:= (d::(!src)));i end))
  end
 
-map decomp (progGen 2);
+map decomp (progGen 10);
