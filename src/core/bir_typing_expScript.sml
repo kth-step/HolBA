@@ -379,8 +379,8 @@ GEN_TAC >> Induct >> (
    like "BExp_BinPred BIExp_And (BExp_Const (Imm1 1w)) (BExp_Const (Imm8 3w))"
    should not be used.
 
-   More subtile, one needs also make sure that variables occouring in the expression
-   are having consistent type annotations. This is expressed as follows. *)
+   More subtly, one needs also make sure that variables occuring in the expression
+   are having consistent type annotations. This is expressed as follows: *)
 
 val bir_var_set_is_well_typed_def = Define `bir_var_set_is_well_typed vs <=>
   (!v1 v2. (v1 IN vs /\ v2 IN vs /\ (bir_var_name v1 = bir_var_name v2)) ==>

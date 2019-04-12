@@ -1,4 +1,5 @@
 open HolKernel Parse boolLib bossLib;
+open bir_auxiliaryTheory;
 open bir_envTheory bir_valuesTheory;
 open bir_immTheory bir_typing_expTheory;
 open bir_exp_memTheory bir_expTheory;
@@ -110,6 +111,13 @@ val bir_mk_bool_val_ALT_DEF_TF = store_thm ("bir_mk_bool_val_ALT_DEF_TF",
   ``!b. bir_mk_bool_val b = (if b then bir_val_true else bir_val_false)``,
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_mk_bool_val_def, bool2b_def, bir_val_true_def, bir_val_false_def, bool2w_def]);
 
+val bir_mk_bool_val_true_thm = store_thm ("bir_mk_bool_val_true_thm",
+  ``!v1.
+      (bir_mk_bool_val v1 = bir_val_true) = v1``,
+
+RW_TAC std_ss [bir_mk_bool_val_ALT_DEF_TF, 
+               bir_val_false_def, bir_val_true_def, word1_distinct]
+);
 
 val bir_mk_bool_val_inv = store_thm ("bir_mk_bool_val_inv",
   ``!b. bir_dest_bool_val (bir_mk_bool_val b) = SOME b``,
@@ -163,6 +171,16 @@ SIMP_TAC std_ss [bir_exp_false_def, bir_exp_true_def, bir_eval_exp_def,
 val bir_is_bool_exp_def = Define `
   bir_is_bool_exp e <=>
   (type_of_bir_exp e = SOME (BType_Imm Bit1))`;
+
+(* Conditional rewrite *)
+val bir_is_bool_exp_GSYM =
+  store_thm ("bir_is_bool_exp_GSYM",
+  ``!ex.
+      (type_of_bir_exp ex = SOME BType_Bool) =
+        (bir_is_bool_exp ex)``,
+
+RW_TAC std_ss [BType_Bool_def, GSYM bir_is_bool_exp_def]
+);
 
 val bir_number_of_mem_splits_BitResult = store_thm ("bir_number_of_mem_splits_BitResult",
   ``!vty aty. bir_number_of_mem_splits vty Bit1 aty =
@@ -253,6 +271,16 @@ val bir_is_bool_exp_env_def = Define `bir_is_bool_exp_env env e <=>
   (bir_is_bool_exp e /\
    (bir_env_vars_are_initialised env (bir_vars_of_exp e)))`;
 
+(* Conditional rewrite *)
+val bir_is_bool_exp_env_GSYM =
+  store_thm ("bir_is_bool_exp_env_GSYM",
+  ``!env e.
+      bir_is_bool_exp e ==>
+      ((bir_env_vars_are_initialised env (bir_vars_of_exp e)) =
+        bir_is_bool_exp_env env e)``,
+
+RW_TAC std_ss [bir_is_bool_exp_env_def]
+);
 
 val bir_is_bool_exp_env_IMPLIES_dest_bool_val = store_thm (
   "bir_is_bool_exp_env_IMPLIES_dest_bool_val",
@@ -270,6 +298,37 @@ REPEAT STRIP_TAC >>
   METIS_TAC[type_of_bir_exp_THM_with_init_vars] >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_val_EQ_ELIMS,
   bir_val_is_Bool_def]);
+
+val bir_bool_values = store_thm("bir_bool_values",
+  ``!env ex.
+      bir_is_bool_exp_env env ex ==>
+       (((bir_eval_exp ex env) = bir_val_false) \/
+        ((bir_eval_exp ex env) = bir_val_true)
+       )``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def, 
+                      bir_is_bool_exp_def] >>
+IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+Cases_on `(bir_eval_exp ex env)` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_val_def] >> (
+    rename1 `(BVal_Imm b = bir_val_false)` >>
+    Cases_on `b` >- (
+      SUBGOAL_THEN
+        ``!c.
+            ((BVal_Imm (Imm1 c)) = bir_val_true) \/
+            ((BVal_Imm (Imm1 c)) = bir_val_false)``
+        (fn thm => METIS_TAC [thm]) >- (
+           FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss++
+                          wordsLib.WORD_BIT_EQ_ss)
+             [bir_val_true_def, bir_val_false_def] >>
+           METIS_TAC []
+        )
+    ) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_imm_def]
+  )
+)
+);
 
 
 val bir_eval_bool_exp_def = Define `bir_eval_bool_exp env e =

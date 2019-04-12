@@ -537,6 +537,12 @@ val word1_distinct = store_thm ("word1_distinct",
   ``(1w:word1) <> 0w``,
 SIMP_TAC (std_ss++wordsLib.WORD_ss) []);
 
+val word1_neg = store_thm("word1_neg",
+  ``(~(0w:word1) = 1w) /\ (~(1w:word1) = 0w)``,
+
+SIMP_TAC (std_ss++wordsLib.WORD_ss++wordsLib.WORD_BIT_EQ_ss) []
+);
+
 
 val BIT_ADD_WORD_CARRY = store_thm ("BIT_ADD_WORD_CARRY", ``
 !w0:'a word (w1:'a word).
