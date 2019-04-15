@@ -13,6 +13,7 @@ open bir_interval_expTheory
 
 open arm8Theory arm8_stepTheory
 open m0Theory m0_stepTheory
+open m0_mod_stepTheory
 
 (* The lifting library is in principle able to lift
    machine code for multiple architectures. However,
@@ -669,7 +670,7 @@ val m0_bmr_def = Define `m0_bmr (ef, sel) = <|
 val m0_bmr_EVAL = save_thm ("m0_bmr_EVAL",
   GENL [``ef:bool``, ``sel:bool``] (SIMP_CONV (list_ss++wordsLib.WORD_ss) [m0_bmr_def, R_name_def,
     m0_REGS_lifted_imms_LIST_def, m0_lifted_mem_def, m0_state_is_OK_def,
-    m0_lifted_pc_def, bir_temp_var_name_def, arm8_state_is_OK_def]
+    m0_lifted_pc_def, bir_temp_var_name_def]
     ``m0_bmr (ef, sel)``)
 );
 
@@ -744,6 +745,149 @@ val bmr_ms_mem_contains_M0_2 = store_thm ("bmr_ms_mem_contains_M0_2",
    (ms.MEM (ms.REG RName_PC + 1w) = v2))``,
 
 SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ss) [bmr_ms_mem_contains_def, m0_bmr_EVAL, bmr_mem_lf_def]);
+
+
+
+
+
+
+(**********)
+(* ARM M0 MOD VERSION WITH COUNTW AND BASE M0 *)
+(**********)
+(* Lifting REGs *)
+
+val m0_mod_REGS_lifted_imms_LIST_def = Define `
+  m0_mod_REGS_lifted_imms_LIST = [
+    (BMLI (BVar "PSR_C" BType_Bool) (\ms:m0_mod_state. bool2b (ms.base.PSR.C)));
+    (BMLI (BVar "PSR_N" BType_Bool) (\ms:m0_mod_state. bool2b (ms.base.PSR.N)));
+    (BMLI (BVar "PSR_V" BType_Bool) (\ms:m0_mod_state. bool2b (ms.base.PSR.V)));
+    (BMLI (BVar "PSR_Z" BType_Bool) (\ms:m0_mod_state. bool2b (ms.base.PSR.Z)));
+    (BMLI (BVar "R0" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 0w))));
+    (BMLI (BVar "R1" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 1w))));
+    (BMLI (BVar "R2" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 2w))));
+    (BMLI (BVar "R3" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 3w))));
+    (BMLI (BVar "R4" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 4w))));
+    (BMLI (BVar "R5" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 5w))));
+    (BMLI (BVar "R6" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 6w))));
+    (BMLI (BVar "R7" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 7w))));
+    (BMLI (BVar "R8" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 8w))));
+    (BMLI (BVar "R9" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 9w))));
+    (BMLI (BVar "R10" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 10w))));
+    (BMLI (BVar "R11" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 11w))));
+    (BMLI (BVar "R12" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 12w))));
+    (BMLI (BVar "LR" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 14w))));
+    (BMLI (BVar "SP_main" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name F 13w))));
+    (BMLI (BVar "SP_process" (BType_Imm Bit32)) (\ms:m0_mod_state. Imm32 (ms.base.REG (R_name T 13w))));
+    (BMLI (BVar "ModeHandler" BType_Bool) (\ms:m0_mod_state. bool2b (ms.base.CurrentMode = Mode_Handler)));
+    (BMLI (BVar "countw" (BType_Imm Bit64)) (\ms:m0_mod_state. Imm64 (ms.countw)))]`;
+
+
+val m0_mod_REGS_lifted_imms_LIST_REWRS = save_thm ("m0_mod_REGS_lifted_imms_LIST_REWRS",
+  SIMP_RULE (std_ss++wordsLib.WORD_ss) [R_name_def] m0_mod_REGS_lifted_imms_LIST_def);
+
+val m0_mod_lifted_mem_def = Define `
+  m0_mod_lifted_mem = BMLM (BVar "MEM" (BType_Mem Bit32 Bit8)) (\ms:m0_mod_state. ms.base.MEM)`
+
+val m0_mod_lifted_pc_def = Define `
+  m0_mod_lifted_pc = BMLPC (BVar (bir_temp_var_name "PC") (BType_Imm Bit32))
+                       (BVar (bir_temp_var_name "COND") BType_Bool)
+                       (\ms:m0_mod_state. Imm32 (ms.base.REG RName_PC))`
+
+val m0_mod_state_is_OK_def = Define `m0_mod_state_is_OK (ef, sel) (s:m0_mod_state) =
+  ((s.base.AIRCR.ENDIANNESS <=> ef) /\ (s.base.CONTROL.SPSEL <=> sel) /\
+  (s.base.exception = NoException))`
+
+(* Just a dummy for now *)
+val m0_mod_bmr_def = Define `m0_mod_bmr (ef, sel) = <|
+  bmr_extra := \ms:m0_mod_state. m0_mod_state_is_OK (ef, sel) ms;
+  bmr_imms := m0_mod_REGS_lifted_imms_LIST;
+  bmr_mem := m0_mod_lifted_mem;
+  bmr_pc := m0_mod_lifted_pc;
+  bmr_step_fun := NextStateM0_mod |>`;
+
+
+val m0_mod_bmr_EVAL = save_thm ("m0_mod_bmr_EVAL",
+  GENL [``ef:bool``, ``sel:bool``] (SIMP_CONV (list_ss++wordsLib.WORD_ss) [m0_mod_bmr_def, R_name_def,
+    m0_mod_REGS_lifted_imms_LIST_def, m0_mod_lifted_mem_def, m0_mod_state_is_OK_def,
+    m0_mod_lifted_pc_def, bir_temp_var_name_def]
+    ``m0_mod_bmr (ef, sel)``)
+);
+
+val m0_mod_bmr_vars_EVAL = save_thm ("m0_mod_bmr_vars_EVAL",
+SIMP_CONV (list_ss++bmr_ss) [m0_mod_bmr_EVAL, bmr_vars_def] ``bmr_vars (m0_mod_bmr (ef, sel))``);
+
+val m0_mod_bmr_temp_vars_EVAL = save_thm ("m0_mod_bmr_temp_vars_EVAL",
+SIMP_CONV (list_ss++bmr_ss) [m0_mod_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
+  bir_temp_var_def, bir_temp_var_name_def]
+  ``bmr_temp_vars (m0_mod_bmr (ef, sel))``);
+
+val m0_mod_bmr_varnames_distinct = prove (``
+  bmr_varnames_distinct (m0_mod_bmr (ef, sel))``,
+SIMP_TAC std_ss [bmr_varnames_distinct_def,
+  m0_mod_bmr_vars_EVAL, m0_mod_bmr_temp_vars_EVAL, MAP, MAP, bir_var_name_def,
+  APPEND] >>
+SIMP_TAC (list_ss++stringSimps.STRING_ss) [ALL_DISTINCT]);
+
+
+val m0_mod_bmr_OK = store_thm ("m0_mod_bmr_OK",
+  ``!ef sel. bmr_ok (m0_mod_bmr (ef, sel))``,
+
+SIMP_TAC std_ss [bmr_ok_def, m0_mod_bmr_varnames_distinct] >>
+SIMP_TAC (list_ss++bmr_ss++stringSimps.STRING_ss++wordsLib.WORD_ss++holBACore_ss) [
+  m0_mod_bmr_EVAL,
+  bir_machine_lifted_mem_OK_def, bir_machine_lifted_imm_OK_def,
+  bir_is_temp_var_name_def, BType_Bool_def,
+  bir_machine_lifted_pc_OK_def]);
+
+
+val m0_mod_bmr_label_thm = store_thm ("m0_mod_bmr_label_thm",
+``!ef sel ms n hc. (BL_Address (bmr_pc_lf (m0_mod_bmr (ef, sel)) ms) = BL_Address_HC (Imm32 (n2w n)) hc) ==>
+                (ms.base.REG RName_PC = n2w n)``,
+SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, m0_mod_bmr_EVAL, BL_Address_HC_def]);
+
+
+val m0_mod_bmr_LIFTED = save_thm ("m0_mod_bmr_LIFTED",
+let
+  val (vars, _) = strip_forall (concl m0_mod_bmr_OK)
+  val thm0 = MATCH_MP bmr_lifted (SPECL vars m0_mod_bmr_OK)
+  val c = SIMP_CONV (list_ss++bmr_ss) [m0_mod_bmr_EVAL, GSYM CONJ_ASSOC]
+  val thm1 = CONV_RULE (STRIP_QUANT_CONV (RAND_CONV c)) thm0
+  val thm2 = SIMP_RULE (std_ss++wordsLib.WORD_ss) [R_name_def] thm1
+
+  val thm3 = SIMP_RULE (std_ss++boolSimps.CONJ_ss) [GSYM FORALL_AND_THM, GSYM IMP_CONJ_THM, GSYM CONJ_ASSOC] (CONJ thm1 thm2)
+in
+  GENL vars thm3
+end);
+
+val bmr_extra_M0_mod = store_thm ("bmr_extra_M0_mod",
+``!ef sel ms. (m0_mod_bmr (ef, sel)).bmr_extra ms = (ms.base.AIRCR.ENDIANNESS ⇔ ef) ∧ (ms.base.CONTROL.SPSEL ⇔ sel) ∧
+  (ms.base.exception = NoException)``,
+
+SIMP_TAC (std_ss++bmr_ss++boolSimps.EQUIV_EXTRACT_ss) [m0_mod_bmr_EVAL]);
+
+
+val bmr_ms_mem_contains_M0_mod_4 = store_thm ("bmr_ms_mem_contains_M0_mod_4",
+``!ef sel ms v1 v2 v3 v4.
+  (bmr_ms_mem_contains (m0_mod_bmr (ef, sel)) ms ((ms.base.REG RName_PC), [v1; v2; v3; v4])) <=>
+  ((ms.base.MEM (ms.base.REG RName_PC) = v1) /\ 
+   (ms.base.MEM (ms.base.REG RName_PC + 1w) = v2) /\ 
+   (ms.base.MEM (ms.base.REG RName_PC + 2w) = v3) /\
+   (ms.base.MEM (ms.base.REG RName_PC + 3w) = v4))``,
+
+SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ss) [bmr_ms_mem_contains_def, m0_mod_bmr_EVAL, bmr_mem_lf_def]);
+
+
+val bmr_ms_mem_contains_M0_mod_2 = store_thm ("bmr_ms_mem_contains_M0_mod_2",
+``!ef sel ms v1 v2.
+  (bmr_ms_mem_contains (m0_mod_bmr (ef, sel)) ms ((ms.base.REG RName_PC), [v1; v2])) <=>
+  ((ms.base.MEM (ms.base.REG RName_PC) = v1) /\ 
+   (ms.base.MEM (ms.base.REG RName_PC + 1w) = v2))``,
+
+SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ss) [bmr_ms_mem_contains_def, m0_mod_bmr_EVAL, bmr_mem_lf_def]);
+
+
+
+
 
 
 val _ = export_theory();

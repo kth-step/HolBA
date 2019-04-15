@@ -1,7 +1,9 @@
+open HolKernel Parse boolLib bossLib;
+
 (* From /core: *)
 open bir_programTheory bir_typing_progTheory bir_envTheory
      bir_auxiliaryTheory bir_valuesTheory bir_expTheory
-     bir_exp_immTheory;
+     bir_exp_immTheory bir_typing_expTheory bir_immTheory;
 
 (* From /theories: *)
 open bir_program_blocksTheory bir_program_terminationTheory

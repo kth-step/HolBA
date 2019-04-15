@@ -8,8 +8,7 @@ open bir_programSyntax bir_expSyntax bir_exp_immSyntax
      bir_valuesSyntax;
 (* From BIR lib: *)
 open bir_extra_expsTheory bir_interval_expTheory;
-(* Local: *)
-open bir_translationSyntax;
+open bir_extra_expsSyntax bir_interval_expSyntax;
 
 (* Exception for use in this structure. *)
 val ERR = mk_HOL_ERR "bir_translationLib";

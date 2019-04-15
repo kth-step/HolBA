@@ -204,6 +204,11 @@ structure test_M0_2 = test_bmr(bmil_m0_BigEnd_Process)
 structure test_M0_3 = test_bmr(bmil_m0_LittleEnd_Main)
 structure test_M0_4 = test_bmr(bmil_m0_BigEnd_Main);
 
+structure test_M0_mod_1 = test_bmr(bmil_m0_mod_LittleEnd_Process)
+structure test_M0_mod_2 = test_bmr(bmil_m0_mod_BigEnd_Process)
+structure test_M0_mod_3 = test_bmr(bmil_m0_mod_LittleEnd_Main)
+structure test_M0_mod_4 = test_bmr(bmil_m0_mod_BigEnd_Main);
+
 
 
 (**************************)
@@ -467,12 +472,17 @@ in () end;
 
 fun m0_lift_instr mu_b mu_e pc hex_code desc = let
   val r1 = (print "LP "; test_M0_1.lift_instr mu_b mu_e pc hex_code desc)
-in if (test_fast) then (r1, r1, r1, r1) else let
+in if (test_fast) then (r1, r1, r1, r1, r1, r1, r1, r1) else let
   val r2 = (print "BP "; test_M0_2.lift_instr mu_b mu_e pc hex_code desc)
   val r3 = (print "LM "; test_M0_3.lift_instr mu_b mu_e pc hex_code desc)
   val r4 = (print "BM "; test_M0_4.lift_instr mu_b mu_e pc hex_code desc)
+
+  val r5 = (print "LP_mod "; test_M0_mod_1.lift_instr mu_b mu_e pc hex_code desc)
+  val r6 = (print "BP_mod "; test_M0_mod_2.lift_instr mu_b mu_e pc hex_code desc)
+  val r7 = (print "LM_mod "; test_M0_mod_3.lift_instr mu_b mu_e pc hex_code desc)
+  val r8 = (print "BM_mod "; test_M0_mod_4.lift_instr mu_b mu_e pc hex_code desc)
 in
-  (r1, r2, r3, r4)
+  (r1, r2, r3, r4, r5, r6, r7, r8)
 end end;
 
 fun m0_hex_code_of_asm asm = hd (m0AssemblerLib.m0_code [QUOTE asm])

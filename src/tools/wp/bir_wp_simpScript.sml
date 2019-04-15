@@ -1,3 +1,5 @@
+open HolKernel Parse boolLib bossLib;
+
 open bir_programTheory;
 open bir_program_blocksTheory;
 open bir_program_terminationTheory;
@@ -9,11 +11,11 @@ open bir_auxiliaryTheory;
 open bir_valuesTheory;
 open bir_expTheory;
 open bir_program_env_orderTheory;
+open bir_immTheory;
+open bir_typing_expTheory;
 
 open bir_exp_congruencesTheory;
 open bir_exp_tautologiesTheory;
-
-load "pairLib";
 
 val _ = new_theory "bir_wp_simp";
 

@@ -188,16 +188,21 @@ val _ = debug_trace := 2;
 
       val _ = if (!debug_trace > 0) then (print_l "execution starts\n") else ();
 
+      (* execute *)
       val timer = timer_start 0;
-      val exec_thm =
-        (CONV_RULE (RAND_CONV (REWRITE_CONV [CONJUNCT1 REVERSE_DEF])))
-        (bir_exec_prog_step_iter step_n_conv thm);
+      val exec_thm = bir_exec_prog_step_iter step_n_conv thm;
       val d_s = timer_stop timer;
       val _ = if (!debug_trace > 0) then (print_l ("done\n")) else ();
       val _ = if (!debug_trace > 0) then (print_l (" - " ^ d_s ^ " s - \n")) else ();
       val _ = if (!debug_trace > 0) then (print_l ("\n")) else ();
 
-      val result_t = (snd o dest_eq o concl) exec_thm;
+      (* fix REVERSEd observations *)
+      val reverse_list_conv = REWRITE_CONV [REVERSE_DEF, APPEND];
+      val _ = if (!debug_trace > 0) then (print_l "reversing observations\n") else ();
+      val exec_thm' = (CONV_RULE (RAND_CONV reverse_list_conv)) exec_thm;
+      val _ = if (!debug_trace > 0) then (print_l "done\n") else ();
+
+      val result_t = (snd o dest_eq o concl) exec_thm';
       val (ol, x)  = dest_pair result_t;
       val (n, s2)  = dest_pair x;
     in

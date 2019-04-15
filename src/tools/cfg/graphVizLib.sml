@@ -1,6 +1,13 @@
 structure graphVizLib =
 struct
 
+local
+
+open HolKernel Parse boolLib bossLib;
+
+val ERR = mk_HOL_ERR "graphVizLib";
+
+in
 
 (*
  ----------------------------------------
@@ -233,6 +240,6 @@ val _ = writeToFile dot_str (file ^ ".dot");
 val _ = convertAndView file;
 *)
 
+end (* local *)
 
-end
-
+end (* graphVizLib *)

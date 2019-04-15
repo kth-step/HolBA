@@ -107,7 +107,10 @@ struct
           end
         val model = parse_tm_list instream [];
       in
-        SAT (SOME model)
+        if model = [] then
+          SAT NONE
+        else
+          SAT (SOME model)
       end
     | _ => raise ERR "is_sat_stream" "Malformed Z3 output: first line not recognized"
 

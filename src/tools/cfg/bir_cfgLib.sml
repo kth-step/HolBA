@@ -1,6 +1,15 @@
 structure bir_cfgLib =
 struct
 
+local
+
+open HolKernel Parse boolLib bossLib;
+open bir_programSyntax;
+
+val ERR = Feedback.mk_HOL_ERR "bir_cfgLib";
+
+in
+
 (*
 =================================================================
               translate to edge by node list
@@ -431,6 +440,6 @@ bir_show_graph_inout true nodes g
 
 *)
 
+end (* local *)
 
-end
-
+end (* bir_cfgLib *)
