@@ -207,8 +207,9 @@ val bir_symb_stmt_cjmp_def = Define `
     bir_symb_exec_stmt_cjmp p ex l1 l2 st = 
     let st_true = bir_symb_exec_stmt_jmp p l1 st in
     let st_false = bir_symb_exec_stmt_jmp p l2 st in
-    [   st_true with bsst_pred := (BExp_BinExp BIExp_And ex st.bsst_pred);
-        st_false with bsst_pred := (BExp_BinExp BIExp_And (BExp_UnaryExp BIExp_Not ex) st.bsst_pred)
+    let ex_subst = (bir_symb_eval_exp ex st.bsst_environ) in
+    [   st_true with bsst_pred := (BExp_BinExp BIExp_And ex_subst st.bsst_pred);
+        st_false with bsst_pred := (BExp_BinExp BIExp_And (BExp_UnaryExp BIExp_Not ex_subst) st.bsst_pred)
     ]`;
 
 (* Execute "End" (Jump/Halt) Statement *)
@@ -240,7 +241,7 @@ val bir_symb_exec_stmt_assign_def = Define `
 (* Assertions are simply added to the Path Predicate *)
 val bir_symb_exec_stmt_assert_def = Define `
     bir_symb_exec_stmt_assert ex st = 
-    st with bsst_pred := BExp_BinExp BIExp_And ex st.bsst_pred`;
+    st with bsst_pred := BExp_BinExp BIExp_And (bir_symb_eval_exp ex st.bsst_environ) st.bsst_pred`;
 
 val bir_symb_add_obs_def = Define `
     (bir_symb_add_obs symb_exp [] st = st) /\
