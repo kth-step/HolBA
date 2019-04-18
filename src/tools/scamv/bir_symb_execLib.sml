@@ -18,6 +18,8 @@ struct
  * to destruct the symbolic state 
  * Use method "is_BST_Running to decide wether we want to stop
  *)
+
+(* -------------------- syntax functions ----------------------------- *)
 val bir_symb_state_t_ty = mk_type ("bir_symb_state_t", []);
 fun dest_bir_symb_state tm =
   let 
@@ -30,7 +32,19 @@ fun dest_bir_symb_state tm =
     val obs = Lib.assoc "bsst_obs" l
   in 
     (pc, env, pred, status, obs)
-  end handle HOL_ERR _ => raise ERR "dest_bir_symb_state" "wtf";
+  end handle HOL_ERR _ => raise ERR "dest_bir_symb_state" ("cannot destruct term \"" ^ (term_to_string tm) ^ "\"");
+
+val bir_symb_obs_t_ty = mk_type ("bir_symb_obs_t", []);
+fun dest_bir_symb_obs tm =
+  let 
+    val (ty, l) = TypeBase.dest_record tm 
+    val _ = if ty = bir_symb_obs_t_ty then () else fail()
+    val obs_cond = Lib.assoc "obs_cond" l
+    val obs = Lib.assoc "obs" l
+  in 
+    (obs_cond, obs)
+  end handle HOL_ERR _ => raise ERR "dest_bir_symb_obs" ("cannot destruct term \"" ^ (term_to_string tm) ^ "\"");
+(* ------------------------------------------------------------------- *)
 
 (* Destruct symbolic state to decide wheter branch is still running *)
 fun symb_is_BST_Running state = 
@@ -82,6 +96,13 @@ fun symb_exec_program bir_program =
     let val _ = print ("Execution: Done!\n") in 
     tree end
   end;
+
+
+fun symb_exec_leaflist Symb_Empty = raise ERR "symb_exec_leaflist" "this should not happen"
+  | symb_exec_leaflist (Symb_Node (s, Symb_Empty, Symb_Empty)) = [s]
+  | symb_exec_leaflist (Symb_Node (_, n1, Symb_Empty)) = symb_exec_leaflist n1
+  | symb_exec_leaflist (Symb_Node (_, Symb_Empty, n2)) = symb_exec_leaflist n2
+  | symb_exec_leaflist (Symb_Node (_, n1, n2)) = (symb_exec_leaflist n1)@(symb_exec_leaflist n2);
 
   
 (*
