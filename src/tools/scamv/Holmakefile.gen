@@ -1,11 +1,12 @@
 # includes
 # ----------------------------------
-DEPENDENCIES = ../../core ../../theories ../../libs ../lifter
+DEPENDENCIES = ../../core ../../theories ../../libs ../lifter \
+               $(HOLDIR)/examples/l3-machine-code/arm8/prog
 
 
 # configuration
 # ----------------------------------
-SMLFILES   = $(patsubst %Script.sml,%Theory.uo,$(wildcard *.sml))
+SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
 
 TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
 
@@ -13,7 +14,8 @@ HOLHEAP    = ../wp/HolBAWp-heap
 NEWHOLHEAP = HolBAScamV-heap
 
 HEAPINC    = $(patsubst %.sml,%,$(wildcard *Lib.sml)) \
-             $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml))
+             $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
+             $(HOLDIR)/examples/l3-machine-code/arm8/prog/arm8_progLib
 
 SELFTEST_DEP = 
 

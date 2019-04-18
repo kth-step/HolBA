@@ -3,12 +3,8 @@ struct
 
 local
   open HolKernel boolLib liteLib simpLib Parse bossLib;
-(*
-  (* TODO: this needs some Holmakefile change *)
   open arm8_progLib arm8AssemblerLib arm8;
-*)
 in
-(*
   val arm8_names_weighted = [(* (1,"Address"), *)
   (1,"AddSubShiftedRegister32-1"),      (1,"AddSubShiftedRegister32-2"),     (1,"AddSubShiftedRegister32-3"),
   (1,"AddSubShiftedRegister32-4"),      (1,"AddSubShiftedRegister64-1"),     (1,"AddSubShiftedRegister64-2"),
@@ -106,10 +102,7 @@ in
   val random = random_hex o Option.valOf o arm8_stepLib.arm8_pattern;
 
   fun decomp el =  arm8AssemblerLib.arm8_disassemble [QUOTE el];
-*)
 
-(* there are some undefined functions used hereafter *)
-(*
   fun inst_decomp inst =
       instructionToString
           (Decode((Option.valOf o BitsN.fromHexString) (inst ,32)))  
@@ -174,7 +167,6 @@ in
        (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!src)) 			
 				  in  (src:= (d::(!src)));i end))
    end
-*)
 
 (*
   map decomp (progGen 10);
