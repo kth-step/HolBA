@@ -19,7 +19,7 @@ SELFTEST_DEP =
 
 # included lines follow
 # ----------------------------------
-include ../../../../Holmakefile.inc
+include ../../../../../Holmakefile.inc
 
 
 # test recipes (have to be last if there are multiple for some reason)
