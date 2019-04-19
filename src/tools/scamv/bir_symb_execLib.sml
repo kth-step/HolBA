@@ -1,7 +1,12 @@
+
+
+structure bir_symb_execLib = 
+struct
+
+local
 (* 
 app load ["bir_symb_execTheory", "bir_symb_envTheory", "bir_symb_init_envLib"];
 *)
-
 
 open HolKernel
 open bir_symb_execTheory;
@@ -9,10 +14,7 @@ open bir_symb_envTheory;
 open bir_symb_init_envLib;
 open listSyntax bir_programSyntax;
 
-structure bir_symb_execLib = 
-struct
-
-
+in
 
 (* In order to decide when we want to stop execution, we need 
  * to destruct the symbolic state 
@@ -104,6 +106,97 @@ fun symb_exec_leaflist Symb_Empty = raise ERR "symb_exec_leaflist" "this should 
   | symb_exec_leaflist (Symb_Node (_, Symb_Empty, n2)) = symb_exec_leaflist n2
   | symb_exec_leaflist (Symb_Node (_, n1, n2)) = (symb_exec_leaflist n1)@(symb_exec_leaflist n2);
 
+
+(* TODO: move this to lib and possibly merge to bir_expLib *)
+  fun bir_exp_rewrite rwf exp =
+      if is_BExp_Const exp then
+        rwf exp
+
+      else if is_BExp_Den exp then
+        rwf exp
+
+      else if is_BExp_Cast exp then
+        let
+          val (castt, exp, sz) = (dest_BExp_Cast) exp;
+          val exp_rw = bir_exp_rewrite rwf exp;
+        in
+          rwf (mk_BExp_Cast (castt, exp_rw, sz))
+        end
+
+      else if is_BExp_UnaryExp exp then
+        let
+          val (uop, exp) = (dest_BExp_UnaryExp) exp;
+          val exp_rw = bir_exp_rewrite rwf exp;
+        in
+          rwf (mk_BExp_UnaryExp (uop, exp_rw))
+        end
+
+      else if is_BExp_BinExp exp then
+        let
+          val (bop, exp1, exp2) = (dest_BExp_BinExp) exp;
+          val exp1_rw = bir_exp_rewrite rwf exp1;
+          val exp2_rw = bir_exp_rewrite rwf exp2;
+        in
+          rwf (mk_BExp_BinExp (bop, exp1_rw, exp2_rw))
+        end
+
+      else if is_BExp_BinPred exp then
+        let
+          val (bpredop, exp1, exp2) = (dest_BExp_BinPred) exp;
+          val exp1_rw = bir_exp_rewrite rwf exp1;
+          val exp2_rw = bir_exp_rewrite rwf exp2;
+        in
+          rwf (mk_BExp_BinPred (bpredop, exp1_rw, exp2_rw))
+        end
+
+      else if is_BExp_IfThenElse exp then
+        let
+          val (expc, expt, expf) = (dest_BExp_IfThenElse) exp;
+          val expc_rw = bir_exp_rewrite rwf expc;
+          val expt_rw = bir_exp_rewrite rwf expt;
+          val expf_rw = bir_exp_rewrite rwf expf;
+        in
+          rwf (mk_BExp_IfThenElse (expc_rw, expt_rw, expf_rw))
+        end
+
+      else if is_BExp_Load exp then
+        let
+          val (expm, expad, endi, sz) = (dest_BExp_Load) exp;
+          val expm_rw = bir_exp_rewrite rwf expm;
+          val expad_rw = bir_exp_rewrite rwf expad;
+        in
+          rwf (mk_BExp_Load (expm_rw, expad_rw, endi, sz))
+        end
+
+      else if is_BExp_Store exp then
+        let
+          val (expm, expad, endi, expv) = (dest_BExp_Store) exp;
+          val expm_rw = bir_exp_rewrite rwf expm;
+          val expad_rw = bir_exp_rewrite rwf expad;
+          val expv_rw = bir_exp_rewrite rwf expv;
+        in
+          rwf (mk_BExp_Store (expm_rw, expad_rw, endi, expv_rw))
+        end
+
+      else
+        raise (ERR "bir_exp_rewrite" ("don't know BIR expression: \"" ^ (term_to_string exp) ^ "\""))
+      ;
+
+local
+  open bir_valuesSyntax;
+in
+(*
+val exp = ``BExp_Const (Imm32 r1)``;
+*)
+  val bir_exp_hvar_to_bvar = bir_exp_rewrite (fn exp => if not (is_BExp_Const exp) then exp else
+        let val (imm_t_i, w) = (gen_dest_Imm o dest_BExp_Const) exp in
+          if not (is_var w) then exp else
+          let val (v_n, v_t) = dest_var w in
+            (mk_BExp_Den o mk_BVar_string) (v_n, mk_BType_Imm(bir_immtype_t_of_word_ty v_t))
+          end
+        end);
+end
+
   
 (*
 In order to Execute a Program: 
@@ -112,4 +205,6 @@ val prog = (snd o dest_comb o concl) toy_arm8_THM; <-- replace program
 val tree = symb_exec_program prog;
 val tree = symb_exec_program prog_w_obs;
  *)
-end
+end (* local *)
+
+end (* struct *)

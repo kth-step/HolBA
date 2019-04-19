@@ -17,7 +17,9 @@ fun bir_free_vars exp =
     if is_comb exp then
         let val (con,args) = strip_comb exp
         in if con = ``BExp_Den`` then
-               let val (_,v::_) = strip_comb (hd args)
+               let val v = case strip_comb (hd args) of
+                                     (_,v::_) => v
+                                   | _ => raise ERR "bir_free_vars" "not expected"
                in [v]
                end
            else

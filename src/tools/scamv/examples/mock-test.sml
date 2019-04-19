@@ -58,12 +58,17 @@ val tree = symb_exec_program prog_w_obs;
 val leafs = symb_exec_leaflist tree;
 
 (* retrieval of path condition and observation expressions *)
+(*
+val s = hd leafs;
+*)
 fun extract_cond_obs s =
   let
     val (_,_,cond,_,obs) = dest_bir_symb_state s;
     val obss = ((List.map dest_bir_symb_obs) o fst o dest_list) obs;
   in
-    (cond, obss)
+    (* this converts BIR consts to HOL4 variables *)
+    (bir_exp_hvar_to_bvar cond, List.map (fn (ec,eo) =>
+         (bir_exp_hvar_to_bvar ec, bir_exp_hvar_to_bvar eo)) obss)
   end;
 
 val leaf_cond_obss = List.map extract_cond_obs leafs;
@@ -73,7 +78,7 @@ val leaf_cond_obss = List.map extract_cond_obs leafs;
 (* ------------------------------------------ *)
 
 (* generate the input structure for the relation generation *)
-(* TODO: this is to fix the missing failed paths,needs to be generalized *)
+(* TODO: this is to fix the missing failed paths, needs to be generalized *)
 val [(cond,[(obs_cond_exp, obs_exp)])] = leaf_cond_obss;
 val prog_obss_paths =
     [
@@ -83,7 +88,7 @@ val prog_obss_paths =
            (obs_cond_exp, obs_exp)
       ])
     ];
-(* TODO: handle HOL4 variables in BIR consts *)
+
 val relation = mkRel prog_obss_paths;
 
 (* Prints a model, one variable per line. *)
