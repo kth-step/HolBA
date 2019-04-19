@@ -1,0 +1,28 @@
+notifications:
+  email:
+    recipients:
+      - andili@kth.se
+    on_success: always
+    on_failure: always
+
+
+language: c
+dist: xenial
+env: ENV_EXPORT_SCRIPT=devel/travis_env.sh
+
+cache:
+  directories:
+    - $HOME/cache
+
+jobs:
+  include:
+    - stage: "Prepare polyml & HOL4"
+      before_script:
+        - devel/install_poly.sh
+        - devel/install_hol4.sh
+      script: true
+
+    - stage: "Compilation"
+      script: devel/compile.sh
+
+
