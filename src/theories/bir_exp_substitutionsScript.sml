@@ -322,4 +322,39 @@ ASM_SIMP_TAC std_ss [DRESTRICT_FUPDATE, DRESTRICT_FEMPTY,
   bir_exp_subst_EMPTY])
 
 
+val bir_eval_exp_subst1_env = store_thm("bir_eval_exp_subst1_env",
+``!ex en var ty e1.
+    (?r. (bir_env_lookup var (BEnv en)) = SOME (ty, r)) ==>
+    (bir_eval_exp ex
+      (BEnv (en |+ (var,ty,SOME (bir_eval_exp e1 (BEnv en))))) =
+        bir_eval_exp (bir_exp_subst1 (BVar var ty) e1 ex) (BEnv en)
+    )``,
+
+REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+Induct_on `ex` >> (
+  REPEAT GEN_TAC >>
+  FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_exp_subst1_REWRS]
+) >>
+(* Case not handled: BExp_Den *)
+Cases_on `b = BVar var ty` >- (
+  RW_TAC std_ss [bir_env_read_def, bir_var_name_def,
+                 bir_env_lookup_def] >>
+  EVAL_TAC
+) >>
+Cases_on `b` >>
+Cases_on `var <> s` >- (
+  FULL_SIMP_TAC std_ss [bir_eval_exp_def] >>
+  EVAL_TAC >>
+  FULL_SIMP_TAC std_ss []
+) >>
+subgoal `b' <> ty` >- (
+  METIS_TAC[]
+) >>
+FULL_SIMP_TAC std_ss [bir_env_lookup_def] >>
+EVAL_TAC >>
+RW_TAC std_ss [] >>
+CASE_TAC
+);
+
+
 val _ = export_theory();
