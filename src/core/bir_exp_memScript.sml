@@ -1,10 +1,36 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
 open bir_auxiliaryTheory bir_immTheory bir_immSyntax;
+open finite_mapTheory;
 
 val _ = new_theory "bir_exp_mem";
 
 val bir_imm_ss = rewrites ((type_rws ``:bir_imm_t``) @ (type_rws ``:bir_immtype_t``));
+
+
+(* ------------------------------------------------------------------------- *)
+(* access of memory map                                                      *)
+(* ------------------------------------------------------------------------- *)
+
+val bir_load_mmap_def = Define `
+    bir_load_mmap (mmap: num |-> num) a =
+      case FLOOKUP mmap a of
+        | NONE => 0
+        | SOME v => v
+    `;
+
+
+val bir_load_mmap_FUPDATE_THM = store_thm("bir_load_mmap_FUPDATE_THM", ``
+  !mmap a b x. bir_load_mmap (FUPDATE mmap (a,b)) x = if x = a then b else bir_load_mmap mmap x
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `x = a` >> (
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_load_mmap_def, FDOM_FUPDATE, FLOOKUP_UPDATE]
+  )
+);
+
+    
+
 
 
 (* ------------------------------------------------------------------------- *)
@@ -102,12 +128,12 @@ SIMP_TAC std_ss [bir_mem_concat_def, type_of_v2bs]);
 
 val bir_load_bitstring_from_mmap_def = Define `
   bir_load_bitstring_from_mmap value_ty mmap (a:num) =
-    fixwidth (size_of_bir_immtype value_ty) (n2v (mmap a))`
+    fixwidth (size_of_bir_immtype value_ty) (n2v (bir_load_mmap mmap a))`
 
 val bir_load_bitstring_from_mmap_w2v = store_thm ("bir_load_bitstring_from_mmap_w2v",
   ``!value_ty mmap a. (size_of_bir_immtype value_ty = dimindex (:'a)) ==>
       (bir_load_bitstring_from_mmap value_ty mmap a =
-       (w2v ((n2w (mmap a)):'a word)))``,
+       (w2v ((n2w (bir_load_mmap mmap a)):'a word)))``,
 SIMP_TAC std_ss [bir_load_bitstring_from_mmap_def, GSYM w2v_v2w, v2w_n2v]);
 
 
@@ -151,7 +177,7 @@ val bir_mem_addr_w2n_add_SIZES = save_thm ("bir_mem_addr_w2n_add_SIZES",
 
 
 val bir_load_from_mem_def = Define `bir_load_from_mem
-  (value_ty : bir_immtype_t) (result_ty : bir_immtype_t) (a_ty : bir_immtype_t) (mmap : num -> num) (en: bir_endian_t) (a:num) =
+  (value_ty : bir_immtype_t) (result_ty : bir_immtype_t) (a_ty : bir_immtype_t) (mmap : num |-> num) (en: bir_endian_t) (a:num) =
 
    case (bir_number_of_mem_splits value_ty result_ty a_ty) of
     | NONE => NONE
@@ -166,7 +192,7 @@ val bir_load_from_mem_def = Define `bir_load_from_mem
 
 val bir_load_from_mem_SINGLE = store_thm ("bir_load_from_mem_SINGLE",
   ``!en a vty aty mmap. bir_load_from_mem vty vty aty mmap en a =
-    SOME (n2bs (mmap (bir_mem_addr aty a)) vty)``,
+    SOME (n2bs (bir_load_mmap mmap (bir_mem_addr aty a)) vty)``,
 
 SIMP_TAC list_ss [bir_load_from_mem_def, bir_number_of_mem_splits_ID, LET_THM,
   rich_listTheory.count_list_sub1, rich_listTheory.COUNT_LIST_def] >>
@@ -179,7 +205,7 @@ Cases_on `en` >> (
 val bir_load_from_mem_NO_ENDIAN = store_thm ("bir_load_from_mem_NO_ENDIAN",
   ``!a vty rty aty mmap. bir_load_from_mem vty rty aty mmap BEnd_NoEndian a =
     (if vty = rty then
-      SOME (n2bs (mmap (bir_mem_addr aty a)) vty)
+      SOME (n2bs (bir_load_mmap mmap (bir_mem_addr aty a)) vty)
      else NONE)``,
 
 REPEAT GEN_TAC >>
@@ -320,7 +346,7 @@ val bir_load_from_mem_used_addrs_def = Define
 val bir_load_from_mem_used_addrs_THM = store_thm ("bir_load_from_mem_used_addrs_THM",
   ``!vt rt at mmap mmap' en a.
       (!addr. addr IN (bir_load_from_mem_used_addrs vt rt at en a) ==>
-              (mmap addr = mmap' addr)) ==>
+              (bir_load_mmap mmap addr = bir_load_mmap mmap' addr)) ==>
       (bir_load_from_mem vt rt at mmap en a =
        bir_load_from_mem vt rt at mmap' en a)``,
 
@@ -586,28 +612,29 @@ end);
 val bir_update_mmap_def = Define `
     (!mmap aty a.      (bir_update_mmap aty mmap a [] = mmap)) /\
     (!mmap aty a v vs. (bir_update_mmap aty mmap a (v::vs) =
-                        bir_update_mmap aty (((bir_mem_addr aty a) =+ v2n v) mmap) (SUC a) vs))`;
+                        bir_update_mmap aty (FUPDATE mmap ((bir_mem_addr aty a), v2n v)) (SUC a) vs))`;
 
 
 val bir_update_mmap_UNCHANGED = store_thm ("bir_update_mmap_UNCHANGED",
   ``!aty mmap a vs a'.
       (!n. n < LENGTH vs ==> (a' <> bir_mem_addr aty (a+n))) ==>
-      ((bir_update_mmap aty mmap a vs) a' = mmap a')``,
+      (bir_load_mmap (bir_update_mmap aty mmap a vs) a' = bir_load_mmap mmap a')``,
 
 GEN_TAC >>
 Induct_on `vs` >> (
   SIMP_TAC list_ss [bir_update_mmap_def]
 ) >>
 REPEAT STRIP_TAC >>
-`bir_update_mmap aty ((bir_mem_addr aty a =+ v2n h) mmap) (SUC a) vs a' =
- (bir_mem_addr aty a =+ v2n h) mmap a'` by (
+`bir_load_mmap (bir_update_mmap aty (FUPDATE mmap (bir_mem_addr aty a, v2n h)) (SUC a) vs) a' =
+ bir_load_mmap (FUPDATE mmap (bir_mem_addr aty a, v2n h)) a'` by (
    Q.PAT_X_ASSUM `!aty a a'. _` MATCH_MP_TAC >>
    REPEAT STRIP_TAC >>
    Q.PAT_X_ASSUM `!n. _` (MP_TAC o Q.SPEC `SUC n`) >>
    ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_CLAUSES]
 ) >>
 Q.PAT_X_ASSUM `!n. n < SUC _ ==> _` (MP_TAC o Q.SPEC `0`) >>
-ASM_SIMP_TAC arith_ss [combinTheory.APPLY_UPDATE_THM]);
+ASM_SIMP_TAC arith_ss [bir_load_mmap_FUPDATE_THM]);
+
 
 
 
@@ -616,7 +643,7 @@ ASM_SIMP_TAC arith_ss [combinTheory.APPLY_UPDATE_THM]);
 (* ================= *)
 
 val bir_store_in_mem_def = Define `bir_store_in_mem
-  (value_ty : bir_immtype_t) (a_ty : bir_immtype_t) (result : bir_imm_t) (mmap : num -> num) (en: bir_endian_t) (a:num) =
+  (value_ty : bir_immtype_t) (a_ty : bir_immtype_t) (result : bir_imm_t) (mmap : num |-> num) (en: bir_endian_t) (a:num) =
 
    let result_ty = type_of_bir_imm result in
    case (bir_number_of_mem_splits value_ty result_ty a_ty) of
@@ -635,7 +662,7 @@ val bir_store_in_mem_def = Define `bir_store_in_mem
 val bir_store_in_mem_SINGLE = store_thm ("bir_store_in_mem_SINGLE",
   ``!en a vty aty mmap v.
      (type_of_bir_imm v = vty) ==>
-     (bir_store_in_mem vty aty v mmap en a = SOME (((bir_mem_addr aty a) =+ b2n v) mmap))``,
+     (bir_store_in_mem vty aty v mmap en a = SOME (FUPDATE mmap ((bir_mem_addr aty a), b2n v)))``,
 
 Cases_on `en` >> (
   SIMP_TAC (list_ss++bir_endian_ss) [bir_store_in_mem_def, bir_number_of_mem_splits_ID, LET_DEF,
@@ -647,7 +674,7 @@ Cases_on `en` >> (
 val bir_store_in_mem_NO_ENDIAN = store_thm ("bir_store_in_mem_NO_ENDIAN",
   ``!a vty aty v mmap. bir_store_in_mem vty aty v mmap BEnd_NoEndian a =
     (if vty = (type_of_bir_imm v) then
-      SOME (((bir_mem_addr aty a) =+ b2n v) mmap)
+      SOME (FUPDATE mmap ((bir_mem_addr aty a), b2n v))
      else NONE)``,
 
 REPEAT GEN_TAC >>
@@ -768,7 +795,7 @@ val bir_store_in_mem_used_addrs_THM = store_thm ("bir_store_in_mem_used_addrs_TH
   ``!a en vty aty v mmap mmap'.
        (bir_store_in_mem vty aty v mmap en a = SOME mmap') ==>
        (!addr. ~(addr IN bir_store_in_mem_used_addrs vty v aty en a) ==>
-               (mmap' addr = mmap addr))``,
+               (bir_load_mmap mmap' addr = bir_load_mmap mmap addr))``,
 
 SIMP_TAC std_ss [bir_store_in_mem_used_addrs_def, bir_load_from_mem_used_addrs_def,
   bir_store_in_mem_EQ_SOME, GSYM LEFT_FORALL_IMP_THM] >>
@@ -849,14 +876,14 @@ SIMP_TAC std_ss [listTheory.LENGTH, rich_listTheory.COUNT_LIST_def] >>
 SIMP_TAC list_ss [listTheory.MAP_MAP_o, combinTheory.o_DEF, bir_update_mmap_def,
   DISJ_IMP_THM, FORALL_AND_THM] >>
 REPEAT GEN_TAC >> STRIP_TAC >>
-Q.ABBREV_TAC `mmap' = (bir_mem_addr aty a =+ v2n v) mmap` >>
+Q.ABBREV_TAC `mmap' = FUPDATE mmap (bir_mem_addr aty a, v2n v)` >>
 Tactical.REVERSE CONJ_TAC >- (
   Q.PAT_X_ASSUM `!n. _` (MP_TAC o Q.SPECL [
-    `LENGTH (vs:bitstring list)`, ` ((bir_mem_addr aty a =+ v2n v) mmap)`, `SUC a`]) >>
+    `LENGTH (vs:bitstring list)`, ` (FUPDATE mmap (bir_mem_addr aty a, v2n v))`, `SUC a`]) >>
   ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_CLAUSES]
 ) >>
 
-`(bir_update_mmap aty mmap' (SUC a) vs (bir_mem_addr aty a)) = mmap' (bir_mem_addr aty a)` by (
+`(bir_load_mmap (bir_update_mmap aty mmap' (SUC a) vs) (bir_mem_addr aty a)) = bir_load_mmap mmap' (bir_mem_addr aty a)` by (
   MATCH_MP_TAC bir_update_mmap_UNCHANGED >>
   ASM_SIMP_TAC std_ss [bir_mem_addr_def, bitTheory.MOD_2EXP_def] >>
   GEN_TAC >> STRIP_TAC >>
@@ -866,7 +893,7 @@ Tactical.REVERSE CONJ_TAC >- (
 ) >>
 UNABBREV_ALL_TAC >>
 ASM_SIMP_TAC arith_ss [bir_load_bitstring_from_mmap_def,
-  combinTheory.APPLY_UPDATE_THM, n2v_v2n]);
+  bir_load_mmap_FUPDATE_THM, n2v_v2n]);
 
 
 
@@ -937,8 +964,8 @@ METIS_TAC[bir_store_in_mem_used_addrs_THM]);
 (* ------------------------------------------------------------------------- *)
 
 val bir_memeq_def = Define `
-  (bir_memeq aty vty mmap1 mmap2 = !a. (n2bs (mmap1 (bir_mem_addr aty a)) vty) =
-                                       (n2bs (mmap2 (bir_mem_addr aty a)) vty))`;
+  (bir_memeq aty vty mmap1 mmap2 = !a. (n2bs (bir_load_mmap mmap1 (bir_mem_addr aty a)) vty) =
+                                       (n2bs (bir_load_mmap mmap2 (bir_mem_addr aty a)) vty))`;
 
 
 

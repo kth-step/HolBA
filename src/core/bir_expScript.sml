@@ -2,6 +2,7 @@ open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
 open bir_exp_immTheory bir_exp_memTheory bir_envTheory;
+open finite_mapTheory;
 
 val _ = new_theory "bir_exp";
 
@@ -15,6 +16,7 @@ val bir_type_ss = rewrites ((type_rws ``:bir_type_t``));
 
 val _ = Datatype `bir_exp_t =
     BExp_Const             bir_imm_t
+  | BExp_MemConst          bir_immtype_t (*Addr-Type*) bir_immtype_t (* value-type *) (num |-> num)
   | BExp_Den               bir_var_t
 
   | BExp_Cast              bir_cast_t bir_exp_t bir_immtype_t
@@ -90,6 +92,8 @@ val bir_eval_store_def = Define `
 
 val bir_eval_exp_def = Define `
   (bir_eval_exp (BExp_Const n) env = BVal_Imm n) /\
+
+  (bir_eval_exp (BExp_MemConst aty vty mmap) env = BVal_Mem aty vty mmap) /\
 
   (bir_eval_exp (BExp_Den v) env = bir_env_read v env) /\
 
@@ -274,7 +278,7 @@ val bir_eval_load_Unknown_REWRS = save_thm ("bir_eval_load_Unknown_REWRS",
 val bir_eval_load_SINGLE_REWR = store_thm ("bir_eval_load_SINGLE_REWR",
   ``!a en t i aty vty mmap en.
       (bir_eval_load (BVal_Mem aty vty mmap) (BVal_Imm i) en vty) =
-      ((if (type_of_bir_imm i = aty) then (BVal_Imm (n2bs (mmap (b2n i)) vty))
+      ((if (type_of_bir_imm i = aty) then (BVal_Imm (n2bs (bir_load_mmap mmap (b2n i)) vty))
        else BVal_Unknown))``,
 
 SIMP_TAC arith_ss [bir_eval_load_def, bir_load_from_mem_SINGLE] >>
@@ -400,7 +404,7 @@ val bir_eval_store_SINGLE_REWR = store_thm ("bir_eval_store_SINGLE_REWR",
   ``!a en t i aty v vty mmap en.
       ((type_of_bir_imm i = aty) /\ (type_of_bir_imm v = vty)) ==>
       (bir_eval_store (BVal_Mem aty vty mmap) (BVal_Imm i) en (BVal_Imm v) =
-      (BVal_Mem aty vty ((b2n i =+ b2n v) mmap)))``,
+      (BVal_Mem aty vty (FUPDATE mmap (b2n i, b2n v))))``,
 
 SIMP_TAC arith_ss [bir_eval_store_def, bir_store_in_mem_SINGLE] >>
 REPEAT STRIP_TAC >>

@@ -7,8 +7,304 @@ open bir_exp_memTheory bir_bool_expTheory
 open bir_nzcv_expTheory bir_interval_expTheory
 open bir_lifter_general_auxTheory
 open bir_extra_expsTheory
+open finite_mapTheory;
+open pred_setTheory;
 
 val _ = new_theory "bir_exp_lifting";
+
+(***********************************)
+(* memory map conversion functions *)
+(***********************************)
+
+
+val bir_mmap_w_w2n_def = Define `
+   (bir_mmap_w_w2n (mmap_w: 'a word |-> 'b word)): num |-> num =
+      FUN_FMAP (\x. w2n (FAPPLY mmap_w (n2w x)))
+               (IMAGE w2n (FDOM mmap_w))
+    `;
+
+val bir_mmap_n2w_def = Define `
+   (bir_mmap_n2w (mmap: num |-> num)) : 'a word |-> 'b word =
+      FUN_FMAP (\x. n2w (FAPPLY mmap (w2n x)))
+               (IMAGE n2w ((FDOM mmap) INTER {n | n < dimword (:'a)}))
+    `;
+
+val bir_load_mmap_w_def = Define `
+    bir_load_mmap_w (mmap_w: 'a word |-> 'b word) a =
+      n2w (bir_load_mmap (bir_mmap_w_w2n mmap_w) (w2n (a : 'a word))) : 'b word
+    `;
+
+val bir_load_mmap_w_alt_thm = store_thm("bir_load_mmap_w_alt_thm", ``
+  !mmap_w a. bir_load_mmap_w (mmap_w: 'a word |-> 'b word) a =
+	       case FLOOKUP mmap_w a of
+		 | NONE => 0w
+		 | SOME v => v
+``,
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [bir_load_mmap_w_def] >>
+
+  REWRITE_TAC [bir_load_mmap_def, bir_mmap_w_w2n_def] >>
+
+  Cases_on `FLOOKUP mmap_w a` >- (
+    `~((w2n a) IN (IMAGE w2n (FDOM mmap_w)))` by (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [FLOOKUP_DEF] >>
+      METIS_TAC [w2n_11]
+    ) >>
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [FLOOKUP_FUN_FMAP, FDOM_FINITE, IMAGE_FINITE]
+  ) >>
+
+  `((w2n a) IN (IMAGE w2n (FDOM mmap_w)))` by (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [FLOOKUP_DEF]
+  ) >>
+  `a IN (FDOM mmap_w)` by (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [w2n_11]
+  ) >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [FLOOKUP_FUN_FMAP, FDOM_FINITE, IMAGE_FINITE, n2w_w2n, FLOOKUP_DEF]
+);
+
+
+val bir_mf2mm_def = Define `
+   (bir_mf2mm (mf: 'a word -> 'b word)) : 'a word |-> 'b word =
+      FUN_FMAP mf (UNIV:'a word -> bool)(*{ x | mf x <> 0w }*)
+    `;
+
+
+
+val bir_FLOOKUP_mmap_w2n__thm = store_thm("bir_FLOOKUP_mmap_w2n__thm", ``
+  !mmap_w a. FLOOKUP (bir_mmap_w_w2n mmap_w) (a MOD dimword (:'a)) = OPTION_MAP w2n (FLOOKUP mmap_w (n2w a : 'a word))
+``,
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [FLOOKUP_DEF] >>
+
+  `FDOM (bir_mmap_w_w2n mmap_w) = IMAGE w2n (FDOM mmap_w)` by (
+    SIMP_TAC std_ss [bir_mmap_w_w2n_def, FDOM_FINITE, IMAGE_FINITE, FDOM_FMAP]
+  ) >>
+  ASM_REWRITE_TAC [] >>
+  POP_ASSUM (K ALL_TAC) >>
+
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  Cases_on `?x. (a MOD dimword (:'a) = w2n x) /\ x IN FDOM mmap_w` >- (
+    ASM_REWRITE_TAC [] >>
+    FULL_SIMP_TAC std_ss [n2w_w2n] >>
+
+    `(a MOD dimword (:'a)) IN (IMAGE w2n (FDOM mmap_w))` by (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+      METIS_TAC []
+    ) >>
+
+    REV_FULL_SIMP_TAC std_ss [bir_mmap_w_w2n_def, FDOM_FINITE, IMAGE_FINITE,
+                              FDOM_FMAP, FUN_FMAP_DEF, n2w_w2n] >>
+    `n2w a = x` by (
+      METIS_TAC [n2w_w2n, n2w_mod]
+    ) >>
+    ASM_REWRITE_TAC []
+  ) >>
+
+  ASM_REWRITE_TAC [] >>
+  FULL_SIMP_TAC std_ss [] >>
+  POP_ASSUM (ASSUME_TAC o (SPEC ``n2w (a MOD dimword (:'a)) : 'a word``)) >>
+
+  FULL_SIMP_TAC (arith_ss++wordsLib.WORD_ss) [w2n_n2w, n2w_mod, arithmeticTheory.MOD_MOD]
+);
+
+val bir_FLOOKUP_mmap_n2w__thm = store_thm("bir_FLOOKUP_mmap_n2w__thm", ``
+  !mmap a. FLOOKUP (bir_mmap_n2w mmap) a = OPTION_MAP n2w (FLOOKUP mmap ((w2n (a : 'a word))))
+``,
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [FLOOKUP_DEF] >>
+
+  `FDOM (bir_mmap_n2w mmap : 'a word |-> 'b word) =
+   (IMAGE n2w ((FDOM mmap) INTER {n | n < dimword (:'a)}))` by (
+    SIMP_TAC std_ss [bir_mmap_n2w_def, FDOM_FINITE, IMAGE_FINITE, FDOM_FMAP, INTER_FINITE]
+  ) >>
+  ASM_REWRITE_TAC [] >>
+  POP_ASSUM (K ALL_TAC) >>
+
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  Cases_on `?x. (a = n2w x) /\ x IN FDOM mmap /\ x < dimword(:'a)` >- (
+    ASM_REWRITE_TAC [] >>
+    FULL_SIMP_TAC std_ss [n2w_w2n, w2n_n2w, bir_mmap_n2w_def] >>
+
+    `a IN (IMAGE n2w (FDOM mmap ∩ {n | n < dimword (:α)}))` by (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+      METIS_TAC []
+    ) >>
+
+    REV_FULL_SIMP_TAC std_ss [FDOM_FINITE, IMAGE_FINITE, INTER_FINITE,
+                              FDOM_FMAP, FUN_FMAP_DEF, n2w_w2n, w2n_n2w]
+  ) >>
+
+  ASM_REWRITE_TAC [] >>
+  FULL_SIMP_TAC std_ss [] >>
+  POP_ASSUM (ASSUME_TAC o (SPEC ``w2n (a : 'a word)``)) >>
+  FULL_SIMP_TAC std_ss [n2w_w2n, w2n_lt]
+);
+
+val w2n_MOD_dimword_thm = prove(``
+  !a. (w2n (a : 'a word)) MOD dimword (:'a) = w2n a
+``,
+  REPEAT STRIP_TAC >>
+  SIMP_TAC (arith_ss++wordsLib.WORD_ss) [w2n_lt]
+);
+
+val bir_FLOOKUP_mmap_w2n_thm = store_thm("bir_FLOOKUP_mmap_w2n_thm", ``
+  !mmap_w a. FLOOKUP (bir_mmap_w_w2n mmap_w) (w2n (a:'a word)) = OPTION_MAP w2n (FLOOKUP mmap_w a)
+``,
+  REPEAT STRIP_TAC >>
+  METIS_TAC [bir_FLOOKUP_mmap_w2n__thm, n2w_w2n, w2n_MOD_dimword_thm]
+);
+
+val bir_FLOOKUP_mmap_n2w_thm = store_thm("bir_FLOOKUP_mmap_n2w_thm", ``
+  !mmap a. FLOOKUP (bir_mmap_n2w mmap) (n2w a : 'a word) = OPTION_MAP n2w (FLOOKUP mmap (a MOD dimword (:'a)))
+``,
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [bir_FLOOKUP_mmap_n2w__thm, w2n_n2w]
+);
+
+
+
+val bir_load_mmap_n2w_thm = store_thm("bir_load_mmap_n2w_thm", ``
+  !mmap a.   bir_load_mmap_w (bir_mmap_n2w mmap) (a : 'a word)
+           = n2w (bir_load_mmap mmap (w2n a)) : 'b word
+``,
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [bir_load_mmap_w_alt_thm, bir_load_mmap_def, bir_FLOOKUP_mmap_n2w__thm] >>
+
+  Cases_on `FLOOKUP mmap (w2n a)` >> (
+    SIMP_TAC (std_ss++wordsLib.WORD_ss) [optionTheory.OPTION_MAP_DEF]
+  )
+);
+
+val bir_load_mmap_w2n_thm = store_thm("bir_load_mmap_w2n_thm", ``
+  !mmap_w a.   bir_load_mmap (bir_mmap_w_w2n mmap_w) (w2n (a : 'a word))
+             = w2n (bir_load_mmap_w mmap_w a : 'b word)
+``,
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [bir_load_mmap_w_alt_thm, bir_load_mmap_def, bir_FLOOKUP_mmap_w2n_thm] >>
+
+  Cases_on `FLOOKUP mmap_w a` >> (
+    SIMP_TAC (std_ss++wordsLib.WORD_ss) [optionTheory.OPTION_MAP_DEF]
+  )
+);
+
+
+
+val bir_mmap_w_n2w_w2n_thm = store_thm("bir_mmap_w_n2w_w2n_thm", ``
+  !mmap_w. bir_mmap_n2w (bir_mmap_w_w2n mmap_w) = mmap_w
+``,
+  REWRITE_TAC [fmap_eq_flookup, bir_FLOOKUP_mmap_n2w__thm,
+               bir_FLOOKUP_mmap_w2n__thm, n2w_w2n, Once (GSYM w2n_MOD_dimword_thm)] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `FLOOKUP mmap_w x` >> (
+    SIMP_TAC (std_ss++wordsLib.WORD_ss) [optionTheory.OPTION_MAP_DEF, n2w_w2n]
+  )
+);
+
+val bir_load_mmap_MOD_dimword_thm = store_thm("bir_load_mmap_MOD_dimword_thm", ``
+  !mem_n a.   bir_load_mmap (bir_mmap_w_w2n (bir_mmap_n2w mem_n : 'a word |-> 'b word)) (a MOD dimword (:'a))
+            = (bir_load_mmap mem_n (a MOD dimword (:'a))) MOD dimword (:'b)
+``,
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [bir_load_mmap_def, bir_FLOOKUP_mmap_w2n__thm, bir_FLOOKUP_mmap_n2w__thm, w2n_n2w] >>
+
+  Cases_on `FLOOKUP mem_n (a MOD dimword (:'a))` >> (
+    SIMP_TAC arith_ss [w2n_n2w, ZERO_LT_dimword]
+  )
+);
+
+val bir_load_mmap_w_bir_mmap_n2w_thm = store_thm("bir_load_mmap_w_bir_mmap_n2w_thm", ``
+  !mem_n a.   bir_load_mmap_w (bir_mmap_n2w mem_n) a
+            = n2w (bir_load_mmap mem_n (w2n a))
+``,
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [bir_load_mmap_def, bir_load_mmap_w_alt_thm, bir_FLOOKUP_mmap_n2w__thm] >>
+
+  Cases_on `FLOOKUP mem_n (w2n a)` >> (
+    SIMP_TAC std_ss []
+  )
+);
+
+
+
+val bir_load_w2n_mf2mm_load_n2w_thm = prove (``
+  !mem_n a.
+    (bir_load_mmap (bir_mmap_w_w2n (bir_mf2mm (bir_load_mmap_w (bir_mmap_n2w mem_n : 'a word |-> 'b word)))) (a MOD dimword(:'a)))
+    =
+    ((bir_load_mmap mem_n (a MOD dimword(:'a))) MOD dimword(:'b))
+``,
+
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [bir_load_mmap_def, bir_FLOOKUP_mmap_w2n__thm, bir_FLOOKUP_mmap_n2w__thm, w2n_n2w] >>
+
+  Cases_on `FLOOKUP mem_n (a MOD dimword (:'a))` >> (
+    SIMP_TAC arith_ss [w2n_n2w, ZERO_LT_dimword, bir_mf2mm_def] >>
+    `(n2w a) IN (UNIV: 'a word -> bool)` by (
+      ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [WORD_FINITE]
+    ) >>
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [WORD_FINITE, FLOOKUP_FUN_FMAP, bir_load_mmap_n2w_thm, w2n_n2w, bir_load_mmap_def, arithmeticTheory.ZERO_MOD, ZERO_LT_dimword]
+  )
+);
+
+val bir_load_mmap_n2w_FUPDATE_thm = prove(``
+!mem_n a v.
+bir_load_mmap_w (bir_mmap_n2w (FUPDATE mem_n (w2n a, v)))
+=
+(a =+ n2w v) (bir_load_mmap_w (bir_mmap_n2w mem_n))
+``,
+  REPEAT STRIP_TAC >>
+  MATCH_MP_TAC boolTheory.EQ_EXT >>
+  STRIP_TAC >>
+
+  REWRITE_TAC [updateTheory.UPDATE_def] >>
+  BETA_TAC >>
+  REWRITE_TAC [bir_load_mmap_w_alt_thm] >>
+
+  Cases_on `a = x` >> (
+    ASM_SIMP_TAC std_ss [bir_FLOOKUP_mmap_n2w__thm, FLOOKUP_UPDATE, w2n_11]
+  )
+);
+
+
+
+(* ---------------------------------------------------------------------- *)
+
+val bir_load_w2n_mf_simp_thm = store_thm("bir_load_w2n_mf_simp_thm", ``
+  !mem_f a. bir_load_mmap (bir_mmap_w_w2n (bir_mf2mm mem_f)) (w2n (a:'a word)) = w2n (mem_f a)
+``,
+  REPEAT STRIP_TAC >>
+  SIMP_TAC std_ss [bir_load_mmap_def] >>
+
+  ASSUME_TAC (SPEC ``UNIV : 'a word -> bool`` WORD_FINITE) >>
+(* {x | mem_f x <> 0w}:'a word -> bool *)
+
+  Cases_on `FLOOKUP (bir_mmap_w_w2n (bir_mf2mm mem_f)) (w2n a)` >- (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_mmap_w_w2n_def, bir_mf2mm_def] >>
+    REV_FULL_SIMP_TAC (std_ss) [FLOOKUP_FUN_FMAP, FDOM_FMAP, IMAGE_FINITE] >>
+
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+    METIS_TAC [word_0_n2w]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_mmap_w_w2n_def, bir_mf2mm_def] >>
+  REV_FULL_SIMP_TAC (std_ss) [FLOOKUP_FUN_FMAP, FDOM_FMAP, IMAGE_FINITE] >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+  `a IN (UNIV : 'a word -> bool)` by (
+    SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+  ) >>
+
+  METIS_TAC [FUN_FMAP_DEF, n2w_w2n]
+);
+
+val n2w_bir_load_mmap_w2n_thm = store_thm("n2w_bir_load_mmap_w2n_thm", ``
+  !mem_n. (\a. n2w (bir_load_mmap mem_n (w2n a))) = bir_load_mmap_w (bir_mmap_n2w mem_n)
+``,
+  SIMP_TAC std_ss [boolTheory.EQ_EXT, bir_load_mmap_w_bir_mmap_n2w_thm]
+);
+
+
 
 (*********************************)
 (* Predicates describing lifting *)
@@ -23,7 +319,7 @@ val bir_is_lifted_mem_exp_def = Define `bir_is_lifted_mem_exp
      (type_of_bir_exp e = SOME (BType_Mem sa sb)) /\
      (bir_env_vars_are_initialised env (bir_vars_of_exp e)) /\
      (bir_eval_exp e env = BVal_Mem sa sb mem_n) /\
-     (mem = (\a. n2w (mem_n (w2n a)))))
+     (mem = bir_load_mmap_w (bir_mmap_n2w mem_n)))
 `;
 
 val bir_is_lifted_imm_exp_def = Define `bir_is_lifted_imm_exp env e i =
@@ -410,35 +706,38 @@ val bir_is_lifted_imm_exp_LOAD0 = prove (
     bir_is_lifted_mem_exp env em (mem_f : 'a word -> 'v word) ==>
     bir_is_lifted_imm_exp env ea (w2bs va sa) ==>
     (!r.
-    (bir_load_from_mem sv sr sa (\n. w2n (mem_f (n2w n))) en (w2n va) = SOME r) ==>
+    (bir_load_from_mem sv sr sa (bir_mmap_w_w2n (bir_mf2mm mem_f)) en (w2n va) = SOME r) ==>
 
-    (bir_is_lifted_imm_exp env (BExp_Load em ea en sr) r))``,
+    (bir_is_lifted_imm_exp env (BExp_Load em ea en sr) r))
+``,
+  SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
+    bir_is_lifted_mem_exp_def, PULL_EXISTS,
+    bir_eval_load_BASIC_REWR, bir_env_vars_are_initialised_UNION] >>
+  REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+  `sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
+  `sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
+  FULL_SIMP_TAC std_ss [] >>
+  REPEAT STRIP_TAC >- (
+    METIS_TAC[bir_exp_memTheory.type_of_bir_load_from_mem]
+  ) >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_load_from_mem_EQ_SOME] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
 
-SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
-  bir_is_lifted_mem_exp_def, PULL_EXISTS,
-  bir_eval_load_BASIC_REWR, bir_env_vars_are_initialised_UNION] >>
-REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
-`sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
-`sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
-FULL_SIMP_TAC std_ss [] >>
-REPEAT STRIP_TAC >- (
-  METIS_TAC[bir_exp_memTheory.type_of_bir_load_from_mem]
-) >- (
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_load_from_mem_EQ_SOME] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) []
-) >>
+  `bir_load_from_mem sv sr sa mem_n en
+	  (b2n (w2bs va sa)) =
+   bir_load_from_mem sv sr sa (bir_mmap_w_w2n (bir_mf2mm mem_f)) en (w2n va)` suffices_by (
+     STRIP_TAC >>
+     FULL_SIMP_TAC std_ss []
+  ) >>
+  Q.PAT_X_ASSUM `bir_load_from_mem _ _ _ _ _ _ = SOME _` (K ALL_TAC) >>
 
-`bir_load_from_mem sv sr sa mem_n en
-        (b2n (w2bs va sa)) =
- bir_load_from_mem sv sr sa (\n. w2n (mem_f (n2w n))) en (w2n va)` suffices_by (STRIP_TAC >> FULL_SIMP_TAC std_ss []) >>
-
-Q.PAT_X_ASSUM `bir_load_from_mem _ _ _ _ _ _ = SOME _` (K ALL_TAC) >>
-
-ASM_SIMP_TAC std_ss [bir_load_from_mem_def, GSYM bitstringTheory.w2v_v2w, bitstringTheory.v2w_n2v,
-  bir_load_bitstring_from_mmap_def,
-  w2bs_def, b2n_n2bs, n2w_w2n, bir_auxiliaryTheory.w2n_MOD_2EXP_ID] >>
-ASM_SIMP_TAC arith_ss [w2n_n2w, bir_mem_addr_def, GSYM wordsTheory.MOD_2EXP_DIMINDEX,
-  wordsTheory.ZERO_LT_dimword]);
+  ASM_SIMP_TAC std_ss [bir_load_from_mem_def, GSYM bitstringTheory.w2v_v2w, bitstringTheory.v2w_n2v,
+    bir_load_bitstring_from_mmap_def,
+    w2bs_def, b2n_n2bs, n2w_w2n, bir_auxiliaryTheory.w2n_MOD_2EXP_ID] >>
+  ASM_SIMP_TAC arith_ss [w2n_n2w, bir_mem_addr_def, GSYM wordsTheory.MOD_2EXP_DIMINDEX,
+    wordsTheory.ZERO_LT_dimword, bir_load_mmap_MOD_dimword_thm, n2w_mod, bir_load_w2n_mf2mm_load_n2w_thm]
+);
 
 
 fun bir_is_lifted_imm_exp_LOAD_gen gt =
@@ -449,7 +748,7 @@ let
 
   val thm1 = LIST_CONJ thms2
   val thm2 = SIMP_RULE (std_ss++holBACore_ss++(DatatypeSimps.expand_type_quants_ss [``:bir_endian_t``])) [
-     bir_load_from_mem_REWRS, n2w_w2n, w2bs_REWRS, w2w_id, bir_mem_addr_w2n_SIZES, bir_mem_addr_w2n_add_SIZES, GSYM CONJ_ASSOC, FORALL_AND_THM] thm1
+     bir_load_from_mem_REWRS, n2w_w2n, w2bs_REWRS, w2w_id, bir_mem_addr_w2n_SIZES, bir_mem_addr_w2n_add_SIZES, GSYM CONJ_ASSOC, FORALL_AND_THM, bir_load_w2n_mf_simp_thm] thm1
 in
   thm2
 end;
@@ -603,32 +902,33 @@ val bir_update_mmap_words_INTRO = store_thm ("bir_update_mmap_words_INTRO",
     (size_of_bir_immtype sa = dimindex (:'a)) ==>
     !vs va_n va mem_n.
     (bir_mem_addr sa va_n = w2n va) ==>
-    (n2w (bir_update_mmap sa mem_n va_n vs (w2n a)) =
-     bir_update_mmap_words (\a. n2w (mem_n (w2n a))) va vs a)``,
-
-NTAC 2 GEN_TAC >> STRIP_TAC >>
-Induct >> (
-  SIMP_TAC std_ss [bir_update_mmap_def, bir_update_mmap_words_def]
-) >>
-REPEAT STRIP_TAC >>
-Q.PAT_X_ASSUM `!va_n va mem_n. _` (MP_TAC o Q.SPECL [`SUC va_n`, `va + 1w`]) >>
-`bir_mem_addr sa (SUC va_n) = w2n (va + 1w)` by (
-  Q.PAT_X_ASSUM `_ = w2n va` (MP_TAC o GSYM) >>
-  FULL_SIMP_TAC std_ss [bir_mem_addr_def, bitTheory.MOD_2EXP_def,
-    GSYM dimword_def] >>
-  Cases_on `va` >>
-  ASM_SIMP_TAC arith_ss [w2n_n2w, word_add_n2w,
-    bitTheory.MOD_PLUS_LEFT, arithmeticTheory.ADD1]
-) >>
-ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [updateTheory.UPDATE_def,
-  w2n_11, bitstringTheory.n2w_v2n]);
+    (n2w (bir_load_mmap (bir_update_mmap sa mem_n va_n vs) (w2n a)) =
+                        (bir_update_mmap_words (bir_load_mmap_w (bir_mmap_n2w mem_n)) va vs) a)
+``,
+  NTAC 2 GEN_TAC >> STRIP_TAC >>
+  Induct >> (
+    SIMP_TAC std_ss [bir_update_mmap_def, bir_update_mmap_words_def, bir_load_mmap_w_bir_mmap_n2w_thm]
+  ) >>
+  REPEAT STRIP_TAC >>
+  Q.PAT_X_ASSUM `!va_n va mem_n. _` (MP_TAC o Q.SPECL [`SUC va_n`, `va + 1w`]) >>
+  `bir_mem_addr sa (SUC va_n) = w2n (va + 1w)` by (
+    Q.PAT_X_ASSUM `_ = w2n va` (MP_TAC o GSYM) >>
+    FULL_SIMP_TAC std_ss [bir_mem_addr_def, bitTheory.MOD_2EXP_def,
+      GSYM dimword_def] >>
+    Cases_on `va` >>
+    ASM_SIMP_TAC arith_ss [w2n_n2w, word_add_n2w,
+      bitTheory.MOD_PLUS_LEFT, arithmeticTheory.ADD1]
+  ) >>
+  ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [(* updateTheory.UPDATE_def, *)
+    w2n_11, bitstringTheory.n2w_v2n, bir_load_mmap_n2w_FUPDATE_thm]
+);
 
 
 val bir_update_mmap_words_INTRO_w2n = store_thm ("bir_update_mmap_words_INTRO_w2n",
 ``!sa (a: 'a word) vs va_n va mem_n.
     (size_of_bir_immtype sa = dimindex (:'a)) ==>
-    (n2w (bir_update_mmap sa mem_n va_n vs (w2n a)) =
-     bir_update_mmap_words (\a. n2w (mem_n (w2n a))) (n2w va_n) vs a)``,
+    (n2w (bir_load_mmap (bir_update_mmap sa mem_n va_n vs) (w2n a)) =
+                        (bir_update_mmap_words (bir_load_mmap_w (bir_mmap_n2w mem_n)) (n2w va_n) vs) a)``,
 
 REPEAT STRIP_TAC >>
 `(bir_mem_addr sa va_n = w2n (n2w va_n))` suffices_by METIS_TAC[bir_update_mmap_words_INTRO] >>
@@ -647,27 +947,32 @@ val bir_is_lifted_mem_exp_STORE0 = prove (
     bir_is_lifted_imm_exp env er (w2bs vr sr) ==>
     (!r.
     (bir_store_in_mem_words sv sa (w2bs vr sr) mem_f en va = SOME r) ==>
-    (bir_is_lifted_mem_exp env (BExp_Store em ea en er) r))``,
+    (bir_is_lifted_mem_exp env (BExp_Store em ea en er) r))
+``,
+  SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
+    bir_is_lifted_mem_exp_def, PULL_EXISTS,
+    bir_env_vars_are_initialised_UNION, bir_eval_store_BASIC_REWR] >>
+  REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+  `sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
+  `sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
+  REPEAT (BasicProvers.VAR_EQ_TAC) >>
 
-SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
-  bir_is_lifted_mem_exp_def, PULL_EXISTS,
-  bir_env_vars_are_initialised_UNION, bir_eval_store_BASIC_REWR] >>
-REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
-`sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
-`sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
-REPEAT (BasicProvers.VAR_EQ_TAC) >>
-FULL_SIMP_TAC std_ss [w2n_n2w, w2bs_def, b2n_n2bs, bitTheory.MOD_2EXP_def,
-  GSYM dimword_def, w2n_lt] >>
-FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_store_in_mem_words_def, LET_DEF,
-  bir_store_in_mem_def] >>
-Cases_on `bir_number_of_mem_splits sb sr sa` >> FULL_SIMP_TAC std_ss [] >>
-rename1 `_ = SOME n` >>
-REPEAT CASE_TAC >> (
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-  REPEAT BasicProvers.VAR_EQ_TAC >>
-  ASM_SIMP_TAC (std_ss++boolSimps.ETA_ss) [bir_update_mmap_words_INTRO_w2n, n2w_w2n]
-));
+  FULL_SIMP_TAC std_ss [w2n_n2w, w2bs_def, b2n_n2bs, bitTheory.MOD_2EXP_def,
+    GSYM dimword_def, w2n_lt] >>
 
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_store_in_mem_words_def, LET_DEF,
+    bir_store_in_mem_def] >>
+
+  Cases_on `bir_number_of_mem_splits sb sr sa` >> FULL_SIMP_TAC std_ss [] >>
+  rename1 `_ = SOME n` >>
+  REPEAT CASE_TAC >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+    REPEAT BasicProvers.VAR_EQ_TAC >>
+    ASM_SIMP_TAC (std_ss++boolSimps.ETA_ss) [bir_update_mmap_words_INTRO_w2n, n2w_w2n] >>
+
+    METIS_TAC [bir_update_mmap_words_INTRO_w2n, n2w_w2n, bir_load_mmap_w_bir_mmap_n2w_thm]
+  )
+);
 
 
 fun bir_is_lifted_mem_exp_STORE_gen gt =

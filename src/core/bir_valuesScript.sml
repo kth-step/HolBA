@@ -1,5 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory listTheory pred_setTheory;
+open finite_mapTheory;
 open bir_auxiliaryTheory bir_immTheory;
 
 val _ = new_theory "bir_values";
@@ -13,7 +14,7 @@ val bir_imm_ss = rewrites ((type_rws ``:bir_imm_t``) @ (type_rws ``:bir_immtype_
 val _ = Datatype `bir_val_t =
     BVal_Unknown
   | BVal_Imm bir_imm_t
-  | BVal_Mem bir_immtype_t (*Addr-Type*) bir_immtype_t (* value-type *) (num -> num)
+  | BVal_Mem bir_immtype_t (*Addr-Type*) bir_immtype_t (* value-type *) (num |-> num)
 `;
 
 
@@ -226,7 +227,7 @@ REWRITE_TAC[bir_type_t_UNIV_SPEC, listTheory.FINITE_LIST_TO_SET]);
 
 val bir_default_value_of_type_def = Define `
   (bir_default_value_of_type (BType_Imm s) = BVal_Imm (n2bs 0 s)) /\
-  (bir_default_value_of_type (BType_Mem a_s v_s) = BVal_Mem a_s v_s (K 0))`;
+  (bir_default_value_of_type (BType_Mem a_s v_s) = BVal_Mem a_s v_s (FEMPTY))`;
 
 val bir_default_value_of_type_SPEC = store_thm ("bir_default_value_of_type_SPEC",
   ``!ty. type_of_bir_val (bir_default_value_of_type ty) = SOME ty``,

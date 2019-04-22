@@ -118,7 +118,7 @@ val bir_machine_lifted_mem_def = Define `bir_machine_lifted_mem (BMLM v lf) bs m
 
 ?sa sb mem_n. (bir_var_type v = BType_Mem sa sb) /\
 (bir_env_read v bs.bst_environ = BVal_Mem sa sb mem_n) /\
-(lf ms = (\a. n2w (mem_n (w2n a)))) /\
+(lf ms = (\a. n2w (bir_load_mmap mem_n (w2n a)))) /\
 (bir_env_var_is_declared bs.bst_environ (bir_temp_var T v))`;
 
 
@@ -171,7 +171,9 @@ SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_mem_def,
   bir_env_vars_are_initialised_EMPTY,
   bir_env_var_is_initialised_def,
   bir_env_read_NEQ_UNKNOWN, type_of_bir_val_def,
-  GSYM LEFT_FORALL_IMP_THM]);
+  GSYM LEFT_FORALL_IMP_THM] >>
+REWRITE_TAC [n2w_bir_load_mmap_w2n_thm]
+);
 
 
 

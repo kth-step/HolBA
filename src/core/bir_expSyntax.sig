@@ -14,6 +14,7 @@ sig
    val BExp_MemEq_tm        : term;
    val BExp_Cast_tm         : term;
    val BExp_Const_tm        : term;
+   val BExp_MemConst_tm     : term;
    val BExp_Den_tm          : term;
    val BExp_IfThenElse_tm   : term;
    val BExp_Load_tm         : term;
@@ -25,6 +26,7 @@ sig
    val dest_BExp_MemEq      : term -> term * term;
    val dest_BExp_Cast       : term -> term * term * term;
    val dest_BExp_Const      : term -> term;
+   val dest_BExp_MemConst   : term -> term * term * term;
    val dest_BExp_Den        : term -> term;
    val dest_BExp_IfThenElse : term -> term * term * term;
    val dest_BExp_Load       : term -> term * term * term * term;
@@ -36,6 +38,7 @@ sig
    val is_BExp_MemEq        : term -> bool;
    val is_BExp_Cast         : term -> bool;
    val is_BExp_Const        : term -> bool;
+   val is_BExp_MemConst     : term -> bool;
    val is_BExp_Den          : term -> bool;
    val is_BExp_IfThenElse   : term -> bool;
    val is_BExp_Load         : term -> bool;
@@ -47,6 +50,7 @@ sig
    val mk_BExp_MemEq        : term * term -> term;
    val mk_BExp_Cast         : term * term * term -> term;
    val mk_BExp_Const        : term -> term;
+   val mk_BExp_MemConst     : term * term * term -> term;
    val mk_BExp_Den          : term -> term;
    val mk_BExp_IfThenElse   : term * term * term -> term;
    val mk_BExp_Load         : term * term * term * term -> term;

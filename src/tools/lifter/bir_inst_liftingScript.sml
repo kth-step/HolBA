@@ -451,7 +451,10 @@ FULL_SIMP_TAC list_ss [bmr_rel_def] >>
   REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
   REPEAT BasicProvers.VAR_EQ_TAC >>
   Q.EXISTS_TAC `mem_n'` >> ASM_REWRITE_TAC[] >>
-  Tactical.REVERSE CONJ_TAC >- METIS_TAC[bir_env_var_is_declared_ORDER] >>
+  Tactical.REVERSE CONJ_TAC >- (
+    METIS_TAC[n2w_bir_load_mmap_w2n_thm,
+              bir_env_var_is_declared_ORDER]
+  ) >>
 
   ASM_SIMP_TAC std_ss [bir_env_read_def, pairTheory.pair_case_thm,
     bir_updateB_desc_value_def]

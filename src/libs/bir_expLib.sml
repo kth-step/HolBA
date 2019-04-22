@@ -70,6 +70,15 @@ struct
       if is_BExp_Const exp then
         (xf o term_to_string o snd o gen_dest_Imm o dest_BExp_Const) exp
 
+      else if is_BExp_MemConst exp then
+        let
+          val (aty, vty, mmap) = (dest_BExp_MemConst) exp;
+          val aty_str = (Int.toString o size_of_bir_immtype_t) aty;
+          val vty_str = (Int.toString o size_of_bir_immtype_t) vty;
+        in
+          ((xf "(MEM:") cf (xf aty_str) cf (xf ":") cf (xf vty_str) cf (xf (":{" ^ (term_to_string mmap) ^ "})")))
+        end
+
       else if is_BExp_Den exp then
         ((xf "_") cf ((xf o fst o dest_BVar_string o dest_BExp_Den) exp))
 
@@ -196,6 +205,8 @@ val _ = bir_exp_pretty_print exp;
 
   fun bir_exp_vars_in_exp exp =
       if is_BExp_Const exp then
+        []
+      else if is_BExp_MemConst exp then
         []
       else if is_BExp_Den exp then
         [(fst o dest_BVar_string o dest_BExp_Den) exp]

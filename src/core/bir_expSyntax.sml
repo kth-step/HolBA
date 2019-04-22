@@ -29,6 +29,7 @@ val syntax_fns4 = syntax_fns 4 HolKernel.dest_quadop HolKernel.mk_quadop;
 val bir_exp_t_ty = mk_type ("bir_exp_t", []);
 
 val (BExp_Const_tm, mk_BExp_Const, dest_BExp_Const, is_BExp_Const) = syntax_fns1 "BExp_Const";
+val (BExp_MemConst_tm, mk_BExp_MemConst, dest_BExp_MemConst, is_BExp_MemConst) = syntax_fns3 "BExp_MemConst";
 val (BExp_Den_tm, mk_BExp_Den, dest_BExp_Den, is_BExp_Den) = syntax_fns1 "BExp_Den";
 val (BExp_Cast_tm, mk_BExp_Cast, dest_BExp_Cast, is_BExp_Cast) = syntax_fns3 "BExp_Cast";
 val (BExp_UnaryExp_tm, mk_BExp_UnaryExp, dest_BExp_UnaryExp, is_BExp_UnaryExp) = syntax_fns2 "BExp_UnaryExp";

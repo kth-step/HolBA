@@ -218,6 +218,21 @@ struct
   val bconst64 = bconstii 64
   val bconst128 = bconstii 128
 
+  (* Memory constants (BExp_MemConst: bir_exp_t) *)
+  fun bconstmem_helper [] =
+        finite_mapSyntax.mk_fempty (numSyntax.num, numSyntax.num)
+    | bconstmem_helper ((k,v)::l) =
+        finite_mapSyntax.mk_fupdate (bconstmem_helper l,
+          pairSyntax.mk_pair (numSyntax.term_of_int k, numSyntax.term_of_int v));
+
+  fun bconstmem al vl l =
+    let
+      val aty = Term [QUOTE ("Bit" ^ (Int.toString al))];
+      val vty = Term [QUOTE ("Bit" ^ (Int.toString al))];
+    in
+      mk_BExp_MemConst (aty, vty, bconstmem_helper l)
+    end;
+
   (* Den (BExp_Den: bir_exp_t) *)
   val bden = mk_BExp_Den
     handle e => raise wrap_exn "bden" e

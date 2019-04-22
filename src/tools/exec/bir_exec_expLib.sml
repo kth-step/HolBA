@@ -126,11 +126,8 @@ struct
 bir_exec_exp_conv var_eq_thms t
 
 val t = ``(bir_update_mmap Bit64
-          ((32 =+ 0:num)
-             ((31 =+ 0)
-                ((30 =+ 0)
-                   ((29 =+ 0)
-                      ((28 =+ 0) ((27 =+ 0) ((26 =+ 0) ((25 =+ 26) (K 0)))))))))
+          (FEMPTY |+ (25, 26) |+ (26, 0) |+ (27, 0) |+ (28, 0)
+                  |+ (29, 0) |+ (30, 0) |+ (31, 0) |+ (32, 0:num))
           25
           [SEG 8 56 (w2v (25w:word64)); SEG 8 48 (w2v (25w:word64)); SEG 8 40 (w2v (25w:word64));
            SEG 8 32 (w2v (25w:word64)); SEG 8 24 (w2v (25w:word64)); SEG 8 16 (w2v (25w:word64));
@@ -138,12 +135,8 @@ val t = ``(bir_update_mmap Bit64
 
 bir_exec_bir_update_mmap_conv t
 
-val ct = ``((25:num =+ 25:num)
-          ((32 =+ 0)
-             ((31 =+ 0)
-                ((30 =+ 0)
-                   ((29 =+ 0)
-                      ((28 =+ 0) ((27 =+ 0) ((26 =+ 0) ((25 =+ 26) (K 0))))))))))``;
+val ct = ``FUPDATE (FEMPTY |+ (25, 26) |+ (26, 0) |+ (27, 0) |+ (28, 0)
+                  |+ (29, 0) |+ (30, 0) |+ (31, 0) |+ (32, 0:num)) (25:num, 25:num)``;
 
 open bir_exp_memTheory;
 bir_update_mmap_def
@@ -181,9 +174,38 @@ val UPDATE_EQ_num = prove(``
   SIMP_TAC std_ss [UPDATE_EQ]
 );
 
+fun combin_purge_conv ct =
+  if is_update_comb ct then
+    let val ((a1,v1),ct2) = dest_update_comb ct; in
+      if is_update_comb ct2 then
+	let
+	  val ((a2,v2), ct3) = dest_update_comb ct2;
+	  val a_eq_thm = (EVAL o mk_eq) (a1, a2);
+	  val a_eq_thm' = SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES] a_eq_thm;
+	  val a_is_eq = (snd o dest_eq o concl) a_eq_thm;
+
+	  val ct_thm =
+	    if a_is_eq = F then
+	      MP (SPECL [ct3, a1, a2, v1, v2] UPDATE_COMMUTES_num) a_eq_thm'
+	    else if a_is_eq = T then
+	      MP (SPECL [ct3, a1, a2, v1, v2] UPDATE_EQ_num) a_eq_thm'
+	    else
+	      raise UNCHANGED;
+	  (*val _ = print "\n------------\n";
+	  val _ = print_term (concl ct_thm);*)
+	in
+	  CONV_RULE (RAND_CONV (RAND_CONV combin_purge_conv)) ct_thm
+	end
+      else
+	raise UNCHANGED
+    end
+  else
+    raise UNCHANGED;
+
+
 fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_mem";
 val (bir_update_mmap_tm,  mk_bir_update_mmap, dest_bir_update_mmap, is_bir_update_mmap)  =
-  (syntax_fns 5 HolKernel.dest_quadop HolKernel.mk_quadop) "bir_update_mmap";
+  (syntax_fns 4 HolKernel.dest_quadop HolKernel.mk_quadop) "bir_update_mmap";
 
   val bir_exec_bir_update_mmap_conv =
     let
@@ -191,64 +213,15 @@ val (bir_update_mmap_tm,  mk_bir_update_mmap, dest_bir_update_mmap, is_bir_updat
       val check_tm_fun = K true;
       fun conv t =
         let
-          fun combin_purge_conv ct =
-            if is_update_comb ct then
-              let val ((a1,v1),ct2) = dest_update_comb ct; in
-                if is_update_comb ct2 then
-                  let
-                    val ((a2,v2), ct3) = dest_update_comb ct2;
-                    val a_eq_thm = (EVAL o mk_eq) (a1, a2);
-                    val a_eq_thm' = SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES] a_eq_thm;
-                    val a_is_eq = (snd o dest_eq o concl) a_eq_thm;
-
-                    val ct_thm =
-                      if a_is_eq = F then
-                        MP (SPECL [ct3, a1, a2, v1, v2] UPDATE_COMMUTES_num) a_eq_thm'
-                      else if a_is_eq = T then
-                        MP (SPECL [ct3, a1, a2, v1, v2] UPDATE_EQ_num) a_eq_thm'
-                      else
-                        raise UNCHANGED;
-                    (*val _ = print "\n------------\n";
-                    val _ = print_term (concl ct_thm);*)
-                  in
-                    CONV_RULE (RAND_CONV (RAND_CONV combin_purge_conv)) ct_thm
-                  end
-                else
-                  raise UNCHANGED
-              end
-            else
-              raise UNCHANGED;
-
-(*
-val ct = ``((25:num =+ 25:num) ((25 =+ 26) (K 0)))``;
-combin_purge_conv ``((25:num =+ 25:num) ((25 =+ 26) (K 0)))``
-
-val ct_thm = (ASSUME ``(25:num =+ 25:num) ((26 =+ 0) ((25 =+ 26) (K 0))) =
-(26 =+ 0) ((25 =+ 25) ((25 =+ 26) (K 0)))``)
-
-CONV_RULE (RAND_CONV (RAND_CONV (fn x => (print_term (x); REFL x)   ))) ct_thm
-*)
-
-(*
-          val thm1 = REWRITE_CONV [Once bir_update_mmap_def] t;
-          val thm2 = if not (is_bir_update_mmap ((snd o dest_eq o concl) thm1)) then thm1 else
-                CONV_RULE (RAND_CONV (
-                  (RATOR_CONV (LAND_CONV (EVAL THENC combin_purge_conv))) THENC
-                  (bir_exec_bir_update_mmap_conv)
-                )) thm1;
           val thm2 = REPEATC (
-                  (REWRITE_CONV [Once bir_update_mmap_def]) THENC
-                  (RATOR_CONV (LAND_CONV (EVAL THENC combin_purge_conv)))
-                ) t;
-*)
-
-
-          val thm2 = REPEATC (
-                  (fn x => REWRITE_CONV [Once bir_update_mmap_def] x) THENC
-                  (fn x => if is_bir_update_mmap x then
-                             RATOR_CONV (LAND_CONV (EVAL THENC combin_purge_conv)) x
-                           else
-                             raise UNCHANGED)
+            (fn x => REWRITE_CONV [Once bir_update_mmap_def] x) THENC
+	    (fn x => if is_bir_update_mmap x then
+		       RATOR_CONV (LAND_CONV (
+			 EVAL THENC
+			 (fn x => REWRITE_CONV [Once finite_mapTheory.FUPDATE_PURGE] x) THENC
+			 EVAL)) x
+		     else
+		       raise UNCHANGED)
                 ) t;
 
         in

@@ -146,6 +146,9 @@ struct
       if is_BExp_Const exp then
         (snd o gen_dest_Imm o dest_BExp_Const) exp
           handle e => raise wrap_exn "bir_exp_to_words::const" e
+      (* Memory constants *)
+      else if is_BExp_MemConst exp then
+        raise Fail ("unhandled: BExp_MemConst")
       (* Den *)
       else if is_BExp_Den exp then
         (* Manual tests
