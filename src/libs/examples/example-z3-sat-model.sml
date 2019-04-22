@@ -1,5 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 
+open finite_mapTheory;
+
 (* Load the dependencies in interactive sessions *)
 val _ = if !Globals.interactive then (
   load "../Z3_SAT_modelLib"; (* ../ *)
@@ -41,6 +43,10 @@ fun produce_sat_thm term model =
 
 (* Get a SAT model using Z3 (this function assumes that the given term is SAT) *)
 val term = ``(z + y = 2 * x) /\ ((x * x + y - 25) = z:int)``;
+(* (FUN_MAP2 (K 0w) (UNIV)) *)
+(*
+val term = ``(m2 = FUPDATE (m1: word32 |-> word8) (3w, 2w)) /\ (FAPPLY m2 3w = 2w)``;
+*)
 val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL term;
 val _ = (print "SAT model:\n"; print_model model(*; print "\n"*));
 val sat_thm = produce_sat_thm term model;
