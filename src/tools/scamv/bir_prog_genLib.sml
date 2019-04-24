@@ -5,7 +5,7 @@ local
   open HolKernel boolLib liteLib simpLib Parse bossLib;
   open arm8_progLib arm8AssemblerLib arm8;
 in
-  val arm8_names_weighted = [(* (1,"Address"), *)
+ val arm8_names_weighted = [(30,"Address"),
   (1,"AddSubShiftedRegister32-1"),      (1,"AddSubShiftedRegister32-2"),     (1,"AddSubShiftedRegister32-3"),
   (1,"AddSubShiftedRegister32-4"),      (1,"AddSubShiftedRegister64-1"),     (1,"AddSubShiftedRegister64-2"),
   (1,"AddSubShiftedRegister64-3"),      (1,"AddSubShiftedRegister64-4"),     (1,"AddSubExtendRegister-1"),
@@ -60,119 +60,153 @@ in
   (1,"LoadStorePair64-1"),              (1,"LoadStorePair64-2"),             (1,"LoadStorePair64-3"),
   (1,"LoadStorePair64-4"),              (1,"NoOperation")]
 
-  fun instClass subs =
-      hd (String.tokens  (fn c => Char.compare (c,#"-") = EQUAL) subs);
+ fun instClass subs =
+     hd (String.tokens  (fn c => Char.compare (c,#"-") = EQUAL) subs);
 
-  (* ---------------------------------------------  *)
-  type gen = Random.generator
-  val rg = Random.newgenseed 1.0
-  type init = unit
-  val newgen = Random.newgen
-  val failed = ref ([] : string list);
+(* ---------------------------------------------  *)
+ type gen = Random.generator
+ val rg = Random.newgenseed 1.0
+ type init = unit
+ val newgen = Random.newgen
+ val failed = ref ([] : string list);
+     
+ fun bits gen bits =
+     map (fn x => x = 1) (Random.rangelist (0,2) (bits,gen))
 
-  fun bits gen bits =
-      map (fn x => x = 1) (Random.rangelist (0,2) (bits,gen))
+ fun select l =
+     let val ln = length l
+     in
+      fn gen => let val i = Random.range (0,ln) gen in (i,List.nth (l,i)) end
+     end
 
-  fun select l =
-      let val ln = length l
-      in
-       fn gen => let val i = Random.range (0,ln) gen in (i,List.nth (l,i)) end
-      end
+ fun genint gen max =
+     Random.range (0,max+1) gen
 
-  fun genint gen max =
-      Random.range (0,max+1) gen
+ fun weighted_select l = select (List.concat (map (fn (n,x) => List.tabulate (n,fn _ => x)) l));
+ fun flat xs = List.foldr (fn (x, acc) => x @ acc) [] xs;
 
-  fun weighted_select l = select (List.concat (map (fn (n,x) => List.tabulate (n,fn _ => x)) l));
-  fun flat xs = List.foldr (fn (x, acc) => x @ acc) [] xs;
-
-  local
+ local
      val gen = Random.newgenseed 1.0
      fun random_bit () =
-        if Random.range (0, 2) gen = 1 then boolSyntax.T else boolSyntax.F
-  in
-     fun random_hex tm =
-        let
-           val l = Term.free_vars tm
-           val s = List.map (fn v => v |-> random_bit ()) l
-        in
-           bitstringSyntax.hexstring_of_term (Term.subst s tm)
-        end
-  end
+	 if Random.range (0, 2) gen = 1 then boolSyntax.T else boolSyntax.F
+ in
+ fun random_hex tm =
+     let
+         val l = Term.free_vars tm
+         val s = List.map (fn v => v |-> random_bit ()) l
+     in
+         bitstringSyntax.hexstring_of_term (Term.subst s tm)
+     end
+ end
 
-  val random = random_hex o Option.valOf o arm8_stepLib.arm8_pattern;
+ val random = random_hex o Option.valOf o arm8_stepLib.arm8_pattern;
 
-  fun decomp el =  arm8AssemblerLib.arm8_disassemble [QUOTE el];
+ fun decomp el =  arm8AssemblerLib.arm8_disassemble [QUOTE el];
 
-  fun inst_decomp inst =
-      instructionToString
-          (Decode((Option.valOf o BitsN.fromHexString) (inst ,32)))  
+ fun inst_decomp inst =
+     instructionToString
+         (Decode((Option.valOf o BitsN.fromHexString) (inst ,32)))  
 
-  fun member(x,[]) = false
-    |  member(x,L) =
-          if x=hd(L) then true
-          else member(x,tl(L));
+ fun member(x,[]) = false
+   |  member(x,L) =
+      if x=hd(L) then true
+      else member(x,tl(L));
 
-  fun intersect([],[]) = []
-    | intersect(L1,[]) = []
-    | intersect(L1,L2) = if member(hd(L2), L1) then hd(L2)::intersect(L1, tl(L2))
-        else intersect(L1, tl(L2));
+ fun intersect([],[]) = []
+   | intersect(L1,[]) = []
+   | intersect(L1,L2) = if member(hd(L2), L1) then hd(L2)::intersect(L1, tl(L2))
+			else intersect(L1, tl(L2));
 
-  fun remChars  (c,s) =
-      let fun rem [] = []
-            | rem (c'::cs) =
-                if c = c'
-                then rem cs
-                else c'::rem cs
-      in
-	  implode (rem (explode s)) 
-      end
+ fun remChars  (c,s) =
+     let fun rem [] = []
+           | rem (c'::cs) =
+             if c = c'
+             then rem cs
+             else c'::rem cs
+     in
+	 implode (rem (explode s)) 
+     end
 
-  fun getReg args = 
-      map (fn arg => foldl remChars arg [#",", #" ", #"]"]) args
+ fun getReg args = 
+     map (fn arg => foldl remChars arg [#",", #" ", #"]"]) args
 
 
-  fun instGen () =
-    let val ic = (snd(weighted_select arm8_names_weighted rg))
-        val ib = random ic
-        val wl = filter (fn c => String.isSubstring "WORD" c) (decomp ib)
-    in
-        if null wl then (ic, ib) else instGen ()
-    end 
+ fun instGen () =
+     let val ic = (snd(weighted_select arm8_names_weighted rg))
+	 val ib = random ic
+	 val wl = filter (fn c => String.isSubstring "WORD" c) (decomp ib)
+     in
+	 if null wl then (ic, ib) else instGen ()
+     end 
 
-  fun instsGen []  =
-      let val inst = snd (instGen ())
-	  val args = getReg (p_tokens ((snd o inst_decomp) inst))
-      in
-	  (hd args, inst)
-      end
+ local 
+     val gen = Random.newgenseed 1.0
+     val base = 0x4000
+     fun addr_to_hexString adr =
+	 (BitsN.toHexString (BitsN.fromInt ((IntInf.fromInt adr), 32)))
 
-    | instsGen src =
-      let val (c, inst) = instGen ()
-	  val args = getReg (p_tokens ((snd o inst_decomp) inst))
-	  val inclusion =  intersect (src, tl args)
-      in
-	  case (instClass c) of 
-	      "BranchImmediate" => (hd args, inst)
-	    | "BranchConditional" => (hd args, inst)
-	    | _ =>
-	      if List.null inclusion
-	      then instsGen src 
-	      else (hd args, inst)
-      end
+     fun cmp_ast s =
+	 case instructionFromString s of
+	     OK ast =>
+	     ast
 
-  (* ---------------------------------------------  *)
-  fun progGen n =
-   let val src = ref ([]:string list);
-   in
-       (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!src)) 			
-				  in  (src:= (d::(!src)));i end))
-   end
+     fun cmp_mcode ast = 
+	 (case Encode ast of
+              arm8.ARM8 w =>
+              ("",
+               Option.SOME(L3.padLeftString(#"0",(8,BitsN.toHexString w))))
+            | BadCode err => ("Encode error: " ^ err,NONE));
 
-(*
-  map decomp (progGen 10);
-*)
+ in
+ fun branch_instGen cntr =
+     let val adr = base + (4*(Random.range (cntr, 5) gen))
+	 val adr_str = String.concat["bl +#0x", (addr_to_hexString(adr))]
+	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
+	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
+     in
+	 (hd args, inst)
+     end
+ fun c_branch_instGen (inst, cntr) =
+     let val adr = base + (4*(Random.range (cntr, 5) gen))
+	 val adr_str = String.concat[hd((p_tokens(hd(decomp(inst)))))," +#0x", (addr_to_hexString(adr))]
+	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
+	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
+     in
+	 (hd args, inst)
+     end
+ end
 
-  fun bir_prog_gen_arm8 n = map decomp (progGen n);
+ fun instsGen (cntr, [])  =
+     let val inst = snd (instGen ())
+	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
+     in
+	 (hd args, inst)
+     end
+     
+   | instsGen (cntr, src) =
+     let val (c, inst) = instGen ()
+	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
+	 val inclusion =  intersect (src, tl args)
+     in
+	 case (instClass c) of 
+	     "BranchImmediate" =>  branch_instGen(cntr)
+	   | "BranchConditional" => c_branch_instGen (inst,cntr)
+	   | _ =>
+	     if List.null inclusion
+	     then instsGen (cntr,src) 
+	     else (hd args, inst)
+     end
+
+ (* ---------------------------------------------  *)
+ fun progGen n =
+     let val src = ref ([]:string list);
+	 val cntr = ref 0;
+     in
+	 (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!cntr,!src)) 			
+				    in  (src:= (d::(!src)); cntr:= !cntr + 1);i end))
+     end
+
+ fun bir_prog_gen_arm8 n = map decomp (progGen n);
 
 
 
