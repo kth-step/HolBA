@@ -71,7 +71,8 @@ val bir_mf2mm_def = Define `
 
 
 val bir_FLOOKUP_mmap_w2n__thm = store_thm("bir_FLOOKUP_mmap_w2n__thm", ``
-  !mmap_w a. FLOOKUP (bir_mmap_w_w2n mmap_w) (a MOD dimword (:'a)) = OPTION_MAP w2n (FLOOKUP mmap_w (n2w a : 'a word))
+  !mmap_w a. FLOOKUP (bir_mmap_w_w2n mmap_w) (a MOD dimword (:'a)) =
+               OPTION_MAP w2n (FLOOKUP mmap_w (n2w a : 'a word))
 ``,
   REPEAT STRIP_TAC >>
   REWRITE_TAC [FLOOKUP_DEF] >>
@@ -108,7 +109,8 @@ val bir_FLOOKUP_mmap_w2n__thm = store_thm("bir_FLOOKUP_mmap_w2n__thm", ``
 );
 
 val bir_FLOOKUP_mmap_n2w__thm = store_thm("bir_FLOOKUP_mmap_n2w__thm", ``
-  !mmap a. FLOOKUP (bir_mmap_n2w mmap) a = OPTION_MAP n2w (FLOOKUP mmap ((w2n (a : 'a word))))
+  !mmap a. FLOOKUP (bir_mmap_n2w mmap) a =
+             OPTION_MAP n2w (FLOOKUP mmap ((w2n (a : 'a word))))
 ``,
   REPEAT STRIP_TAC >>
   REWRITE_TAC [FLOOKUP_DEF] >>
@@ -148,14 +150,16 @@ val w2n_MOD_dimword_thm = prove(``
 );
 
 val bir_FLOOKUP_mmap_w2n_thm = store_thm("bir_FLOOKUP_mmap_w2n_thm", ``
-  !mmap_w a. FLOOKUP (bir_mmap_w_w2n mmap_w) (w2n (a:'a word)) = OPTION_MAP w2n (FLOOKUP mmap_w a)
+  !mmap_w a. FLOOKUP (bir_mmap_w_w2n mmap_w) (w2n (a:'a word)) =
+               OPTION_MAP w2n (FLOOKUP mmap_w a)
 ``,
   REPEAT STRIP_TAC >>
   METIS_TAC [bir_FLOOKUP_mmap_w2n__thm, n2w_w2n, w2n_MOD_dimword_thm]
 );
 
 val bir_FLOOKUP_mmap_n2w_thm = store_thm("bir_FLOOKUP_mmap_n2w_thm", ``
-  !mmap a. FLOOKUP (bir_mmap_n2w mmap) (n2w a : 'a word) = OPTION_MAP n2w (FLOOKUP mmap (a MOD dimword (:'a)))
+  !mmap a. FLOOKUP (bir_mmap_n2w mmap) (n2w a : 'a word) =
+             OPTION_MAP n2w (FLOOKUP mmap (a MOD dimword (:'a)))
 ``,
   REPEAT STRIP_TAC >>
   REWRITE_TAC [bir_FLOOKUP_mmap_n2w__thm, w2n_n2w]
@@ -202,7 +206,8 @@ val bir_mmap_w_n2w_w2n_thm = store_thm("bir_mmap_w_n2w_w2n_thm", ``
 );
 
 val bir_load_mmap_MOD_dimword_thm = store_thm("bir_load_mmap_MOD_dimword_thm", ``
-  !mem_n a.   bir_load_mmap (bir_mmap_w_w2n (bir_mmap_n2w mem_n : 'a word |-> 'b word)) (a MOD dimword (:'a))
+  !mem_n a.   bir_load_mmap (bir_mmap_w_w2n (bir_mmap_n2w mem_n : 'a word |-> 'b word))
+                            (a MOD dimword (:'a))
             = (bir_load_mmap mem_n (a MOD dimword (:'a))) MOD dimword (:'b)
 ``,
   REPEAT STRIP_TAC >>
@@ -229,7 +234,9 @@ val bir_load_mmap_w_bir_mmap_n2w_thm = store_thm("bir_load_mmap_w_bir_mmap_n2w_t
 
 val bir_load_w2n_mf2mm_load_n2w_thm = prove (``
   !mem_n a.
-    (bir_load_mmap (bir_mmap_w_w2n (bir_mf2mm (bir_load_mmap_w (bir_mmap_n2w mem_n : 'a word |-> 'b word)))) (a MOD dimword(:'a)))
+    (bir_load_mmap (bir_mmap_w_w2n (bir_mf2mm (bir_load_mmap_w
+                      (bir_mmap_n2w mem_n : 'a word |-> 'b word))))
+                   (a MOD dimword(:'a)))
     =
     ((bir_load_mmap mem_n (a MOD dimword(:'a))) MOD dimword(:'b))
 ``,

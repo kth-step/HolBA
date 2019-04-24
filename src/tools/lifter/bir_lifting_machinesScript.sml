@@ -172,7 +172,7 @@ SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_mem_def,
   bir_env_var_is_initialised_def,
   bir_env_read_NEQ_UNKNOWN, type_of_bir_val_def,
   GSYM LEFT_FORALL_IMP_THM] >>
-REWRITE_TAC [n2w_bir_load_mmap_w2n_thm]
+  REWRITE_TAC [n2w_bir_load_mmap_w2n_thm]
 );
 
 

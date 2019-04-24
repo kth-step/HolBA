@@ -313,15 +313,16 @@ sig
     (* Memory constants (BExp_MemConst: bir_exp_t)
      *
      * Notes:
-     *  - bconstmem takes an address type, a value type and a
-     *    list of key-value pairs to build up a finite map
-     *    using FUPDATE and FEMPTY. The address and value
-     *    sizes have to be supported by BIR.
+     *  - bconstmem takes an address type length, a value type
+     *    length and a list of key-value pairs to build up a
+     *    finite map using FUPDATE and FEMPTY. The address and
+     *    value sizes have to be supported by BIR.
      *
-     * bconstmem:  int -> int -> (int * int) list -> bir_exp_t
+     * bconstmemii:  int (address type) -> int (value type) ->
+                       (int * int) list -> bir_exp_t
      *)
 
-    val bconstmem: int -> int -> (int * int) list -> term
+    val bconstmemii: int -> int -> (int * int) list -> term
 
     (* Den (BExp_Den: bir_exp_t)
      *

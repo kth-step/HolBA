@@ -225,10 +225,10 @@ struct
         finite_mapSyntax.mk_fupdate (bconstmem_helper l,
           pairSyntax.mk_pair (numSyntax.term_of_int k, numSyntax.term_of_int v));
 
-  fun bconstmem al vl l =
+  fun bconstmemii al vl l =
     let
-      val aty = Term [QUOTE ("Bit" ^ (Int.toString al))];
-      val vty = Term [QUOTE ("Bit" ^ (Int.toString al))];
+      val aty = bir_immtype_t_of_size al;
+      val vty = bir_immtype_t_of_size vl;
     in
       mk_BExp_MemConst (aty, vty, bconstmem_helper l)
     end;

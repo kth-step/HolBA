@@ -99,31 +99,7 @@ struct
                              (BVal_Imm (Imm64 0xFFFFFFFFFFFFFF90w))));
                      bst_status := BST_Running|>.bst_environ)``;
 
-  val t = ``(bir_eval_exp
-                     (BExp_Store
-                        (BExp_Den (BVar "Mem" (BType_Mem Bit64 Bit8)))
-                        (BExp_Const (Imm64 25w)) BEnd_LittleEndian
-                        (BExp_Const (Imm64 25w)))
-                     <|bst_pc :=
-                         <|bpc_label := BL_Label "entry"; bpc_index := 1|>;
-                       bst_environ :=
-                         BEnv
-                           (FEMPTY |+
-                            ("R0",BType_Imm Bit64,SOME (BVal_Imm (Imm64 0w))) |+
-                            ("Mem",BType_Mem Bit64 Bit8,
-                             SOME
-                               (BVal_Mem Bit64 Bit8
-                                  ((32 =+ 0)
-                                     ((31 =+ 0)
-                                        ((30 =+ 0)
-                                           ((29 =+ 0)
-                                              ((28 =+ 0)
-                                                 ((27 =+ 0)
-                                                    ((26 =+ 0)
-                                                       ((25 =+ 26) (K 0))))))))))));
-                       bst_status := BST_Running|>.bst_environ)``;
 
-bir_exec_exp_conv var_eq_thms t
 
 val t = ``(bir_update_mmap Bit64
           (FEMPTY |+ (25, 26) |+ (26, 0) |+ (27, 0) |+ (28, 0)
@@ -133,74 +109,11 @@ val t = ``(bir_update_mmap Bit64
            SEG 8 32 (w2v (25w:word64)); SEG 8 24 (w2v (25w:word64)); SEG 8 16 (w2v (25w:word64));
            SEG 8 8 (w2v (25w:word64)); SEG 8 0 (w2v (25w:word64))])``;
 
+bir_exec_exp_conv var_eq_thms t
+
 bir_exec_bir_update_mmap_conv t
 
-val ct = ``FUPDATE (FEMPTY |+ (25, 26) |+ (26, 0) |+ (27, 0) |+ (28, 0)
-                  |+ (29, 0) |+ (30, 0) |+ (31, 0) |+ (32, 0:num)) (25:num, 25:num)``;
-
-open bir_exp_memTheory;
-bir_update_mmap_def
-
 *)
-
-
-
-(*
-  val bir_update_mmap_purge_thm = prove(``
-    (!mmap aty a. bir_update_mmap aty mmap a [] = mmap) /\
-    (!mmap aty a v vs. bir_update_mmap aty mmap a (v::vs) =
-                       bir_update_mmap aty ((bir_mem_addr aty a =+ v2n v) mmap) (SUC a) vs)
-  ``,
-    REWRITE_TAC [bir_update_mmap_def]
-  );
-UPDATE_COMMUTES
-UPDATE_EQ
-
-is_bir_update_mmap t
-*)
-
-
-val UPDATE_COMMUTES_num = prove(``
-  !f:num->num a:num b:num c:num d:num. (a <> b) ==>
-                                       ((a =+ c) ((b =+ d) f) = (b =+ d) ((a =+ c) f))
-``,
-  REWRITE_TAC [UPDATE_COMMUTES]
-);
-
-val UPDATE_EQ_num = prove(``
-  !f:num->num a:num b:num c:num d:num. (a = b) ==>
-                                       ((a =+ c) ((b =+ d) f) = (a =+ c) f)
-``,
-  SIMP_TAC std_ss [UPDATE_EQ]
-);
-
-fun combin_purge_conv ct =
-  if is_update_comb ct then
-    let val ((a1,v1),ct2) = dest_update_comb ct; in
-      if is_update_comb ct2 then
-	let
-	  val ((a2,v2), ct3) = dest_update_comb ct2;
-	  val a_eq_thm = (EVAL o mk_eq) (a1, a2);
-	  val a_eq_thm' = SIMP_RULE pure_ss [boolTheory.EQ_CLAUSES] a_eq_thm;
-	  val a_is_eq = (snd o dest_eq o concl) a_eq_thm;
-
-	  val ct_thm =
-	    if a_is_eq = F then
-	      MP (SPECL [ct3, a1, a2, v1, v2] UPDATE_COMMUTES_num) a_eq_thm'
-	    else if a_is_eq = T then
-	      MP (SPECL [ct3, a1, a2, v1, v2] UPDATE_EQ_num) a_eq_thm'
-	    else
-	      raise UNCHANGED;
-	  (*val _ = print "\n------------\n";
-	  val _ = print_term (concl ct_thm);*)
-	in
-	  CONV_RULE (RAND_CONV (RAND_CONV combin_purge_conv)) ct_thm
-	end
-      else
-	raise UNCHANGED
-    end
-  else
-    raise UNCHANGED;
 
 
 fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_mem";
