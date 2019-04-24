@@ -1,4 +1,4 @@
-structure bir_scamv_driverLib =
+structure bir_prog_genLib :> bir_prog_genLib =
 struct
 
 local
@@ -171,6 +171,8 @@ in
 (*
   map decomp (progGen 10);
 *)
+
+  fun bir_prog_gen_arm8 n = map decomp (progGen n);
 
 
 
