@@ -148,7 +148,7 @@ struct
           handle e => raise wrap_exn "bir_exp_to_words::const" e
       (* Memory constants *)
       else if is_BExp_MemConst exp then
-        raise Fail ("unhandled: BExp_MemConst")
+        raise ERR "bir_exp_to_words" "unhandled: BExp_MemConst"
       (* Den *)
       else if is_BExp_Den exp then
         (* Manual tests
