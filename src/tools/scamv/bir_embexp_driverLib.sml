@@ -90,7 +90,7 @@ struct
     end;
 
   (* make connect has to be run before and must be complete *)
-  fun bir_embexp_run_cache_distinguishability test_asm s1 s2 =
+  fun bir_embexp_run_cache_indistinguishability test_asm s1 s2 =
     let
       (* write the input code *)
       val _ = write_to_file ((scamv_basedir()) ^ "/EmbExp-ProgPlatform/inc/experiment/cache_run_input.h") test_asm;
@@ -99,7 +99,17 @@ struct
       val _ = set_cache_input_setup s1 s2;
 
       (* make runlog *)
-      val _ = OS.Process.system ("make --directory=" ^ (scamv_basedir()) ^ "/EmbExp-ProgPlatform runlog");
+      val _ = if OS.Process.isSuccess (OS.Process.system ("make --directory=" ^
+                                                          (scamv_basedir()) ^
+                                                          "/EmbExp-ProgPlatform runlog")) then ()
+              else raise ERR "bir_embexp_run_cache_indistinguishability" "running \"make runlog\" failed somehow";
+
+      (* create logs: asm/config1/config2 *)
+      val date = Date.fromTimeLocal (Time.now ());
+      val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S" date;
+      val logdir = (scamv_basedir()) ^ "/logs/arm8/cache2/" ^ datestr;
+      val _ = OS.Process.system ("mkdir -p " ^ logdir);
+      val _ = OS.Process.system ("cp " ^ ((scamv_basedir()) ^ "/EmbExp-ProgPlatform/inc/experiment/cache_run_inp*.h") ^ " " ^ (logdir ^ "/"));
 
       (* evaluate uart.log *)
       val file = TextIO.openIn ((scamv_basedir()) ^ "/EmbExp-ProgPlatform/temp/uart.log");
