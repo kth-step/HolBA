@@ -67,8 +67,6 @@ in
  type gen = Random.generator
  val rg = Random.newgenseed 1.0
  type init = unit
- val newgen = Random.newgen
- val failed = ref ([] : string list);
      
  fun bits gen bits =
      map (fn x => x = 1) (Random.rangelist (0,2) (bits,gen))
@@ -141,7 +139,6 @@ in
 
  local 
      val gen = Random.newgenseed 1.0
-     val base = 0x4000
      fun addr_to_hexString adr =
 	 (BitsN.toHexString (BitsN.fromInt ((IntInf.fromInt adr), 32)))
 
@@ -158,16 +155,16 @@ in
             | BadCode err => ("Encode error: " ^ err,NONE));
 
  in
- fun branch_instGen cntr =
-     let val adr = base + (4*(Random.range (cntr, 5) gen))
+ fun branch_instGen (pc, base) =
+     let val adr = base + (4*(Random.range (pc, 5) gen))
 	 val adr_str = String.concat["bl +#0x", (addr_to_hexString(adr))]
 	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
 	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
      in
 	 (hd args, inst)
      end
- fun c_branch_instGen (inst, cntr) =
-     let val adr = base + (4*(Random.range (cntr, 5) gen))
+ fun c_branch_instGen (inst, pc, base) =
+     let val adr = base + (4*(Random.range (pc, 5) gen))
 	 val adr_str = String.concat[hd((p_tokens(hd(decomp(inst)))))," +#0x", (addr_to_hexString(adr))]
 	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
 	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
@@ -176,37 +173,38 @@ in
      end
  end
 
- fun instsGen (cntr, [])  =
+ fun instsGen (pc, [], base)  =
      let val inst = snd (instGen ())
 	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
      in
 	 (hd args, inst)
      end
      
-   | instsGen (cntr, src) =
+   | instsGen (pc, src, base) =
      let val (c, inst) = instGen ()
 	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
 	 val inclusion =  intersect (src, tl args)
      in
 	 case (instClass c) of 
-	     "BranchImmediate" =>  branch_instGen(cntr)
-	   | "BranchConditional" => c_branch_instGen (inst,cntr)
+	     "BranchImmediate" =>  branch_instGen(pc, base)
+	   | "BranchConditional" => c_branch_instGen (inst,pc, base)
 	   | _ =>
 	     if List.null inclusion
-	     then instsGen (cntr,src) 
+	     then instsGen (pc,src, base) 
 	     else (hd args, inst)
      end
 
  (* ---------------------------------------------  *)
- fun progGen n =
+ fun progGen (n, base) =
      let val src = ref ([]:string list);
-	 val cntr = ref 0;
+	 val pc = ref 0;
      in
-	 (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!cntr,!src)) 			
-				    in  (src:= (d::(!src)); cntr:= !cntr + 1);i end))
+	 (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!pc,!src, base)) 			
+				    in  (src:= (d::(!src)); pc:= !pc + 1);i end))
      end
 
- fun bir_prog_gen_arm8 n = map decomp (progGen n);
+
+ fun bir_prog_gen_arm8 n = map decomp (progGen (n, 0x40000));
 
 
 
