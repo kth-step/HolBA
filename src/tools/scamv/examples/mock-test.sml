@@ -5,6 +5,9 @@ open bslSyntax;
 open wordsSyntax;
 open bir_embexp_driverLib;
 open bir_symb_execLib;
+open bir_prog_genLib;
+open bir_inst_liftingLib;
+open bir_gccLib;
 
 (* Load the dependencies in interactive sessions *)
 val _ = if !Globals.interactive then (
@@ -25,12 +28,79 @@ val _ = Globals.show_types := true;
 
 
 
+(* --------------------------------------- *)
+(* program generation                      *)
+(* --------------------------------------- *)
+
+(*
+val _ = bir_prog_gen_arm8_mock_set [];
+val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
+*)
+
+val asm_lines = bir_prog_gen_arm8_mock ();
+
+val da_file = bir_gcc_assembe_disassemble asm_lines "./tempdir"
+
+  fun readFromFile file_name =
+    let
+      val file = TextIO.openIn file_name;
+      val s    = TextIO.inputAll file before TextIO.closeIn file;
+    in
+      s 
+    end;
+
+val asm_file_contents = List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "\n" asm_lines;
+
+
+(* --------------------------------------- *)
+(* lifting                                 *)
+(* --------------------------------------- *)
+
+val (region_map, sections) = read_disassembly_file_regions da_file;
+(* for arm8 *)
+val (bmil_bir_lift_prog_gen, disassemble_fun) = (bmil_arm8.bir_lift_prog_gen, arm8AssemblerLib.arm8_disassemble);
+
+(* this was copied -----> *)
+fun disassembly_section_to_minmax section =
+  case section of
+      BILMR(addr_start, entries) =>
+        let
+          val data_strs = List.map fst entries;
+	  (* val _ = List.map (fn x => print (x ^ "\r\n")) data_strs; *)
+          val lengths_st = List.map String.size data_strs;
+          val _ = List.map (fn x => ()) lengths_st;
+          val lengths = List.map (fn x => Arbnum.fromInt (x div 2)) lengths_st;
+          val length = List.foldr (Arbnum.+) Arbnum.zero lengths;
+        in
+          (addr_start, Arbnum.+(addr_start, length))
+        end;
+
+fun minmax_fromlist ls = List.foldl (fn ((min_1,max_1),(min_2,max_2)) =>
+  ((if Arbnum.<(min_1, min_2) then min_1 else min_2),
+   (if Arbnum.>(max_1, max_2) then max_1 else max_2))
+  ) (hd ls) (tl ls);
+
+fun da_sections_minmax sections = minmax_fromlist (List.map disassembly_section_to_minmax sections);
+(* <---- this was copied *)
+
+val prog_range = da_sections_minmax sections;
+val (thm_prog, errors) = bmil_bir_lift_prog_gen prog_range sections;
+
+val lifted_prog = (snd o dest_comb o concl) thm_prog;
+
+
+(* --------------------------------------- *)
+(* observation augmentation                *)
+(* --------------------------------------- *)
+
+(* this is the memory constraint for cached access *)
 val cond1 = bandl [ble (bconst64 (0x30000 + 0x80000000),
                        bden (bvarimm64 "R1")),
                   ble (bden (bvarimm64 "R1"), bconst64 (0x42ff8 + 0x80000000))
                  ];
 
 
+(* TODO: this is manual for now *)
 val prog_w_obs = ``BirProgram
       [<|bb_label := BL_Address_HC (Imm64 0w) "F9400023 (ldr x3, [x1])";
          bb_statements :=
@@ -50,8 +120,11 @@ val prog_w_obs = ``BirProgram
          bb_last_statement := BStmt_Halt (BExp_Const (Imm64 4w))|>]``;
 
 
-(* execute symbolically and determine paths *)
-(* ------------------------------------------ *)
+
+(* --------------------------------------- *)
+(* symbolic execution (& determine paths)  *)
+(* --------------------------------------- *)
+
 val tree = symb_exec_program prog_w_obs;
 
 (* leaf list *)
@@ -74,8 +147,9 @@ fun extract_cond_obs s =
 val leaf_cond_obss = List.map extract_cond_obs leafs;
 
 
-(* relation generation *)
-(* ------------------------------------------ *)
+(* --------------------------------------- *)
+(* relation generation                     *)
+(* --------------------------------------- *)
 
 (* generate the input structure for the relation generation *)
 (* TODO: this is to fix the missing failed paths, needs to be generalized *)
@@ -90,6 +164,11 @@ val prog_obss_paths =
     ];
 
 val relation = mkRel prog_obss_paths;
+
+
+(* --------------------------------------- *)
+(* test generation                         *)
+(* --------------------------------------- *)
 
 (* Prints a model, one variable per line. *)
 fun print_model model = List.foldl
@@ -107,6 +186,11 @@ val sml_model = to_sml_ints model;
 fun isPrimedRun s = String.isSuffix "_" s;
 val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
 
-val test_result =  bir_embexp_run_cache_distinguishability "ldr x2, [x1]" s1 s2;
+
+(* --------------------------------------- *)
+(* test execution                          *)
+(* --------------------------------------- *)
+
+val test_result =  bir_embexp_run_cache_distinguishability asm_file_contents s1 s2;
 
 val _ = print ("result = " ^ (if test_result then "ok!" else "failed") ^ "\n\n");

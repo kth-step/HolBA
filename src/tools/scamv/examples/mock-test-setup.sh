@@ -21,3 +21,8 @@ export HOL4_Z3_EXECUTABLE=${Z3_BASEDIR}/bin/z3
 export HOL4_Z3_WRAPPED_EXECUTABLE=${SCAMV_BASEDIR}/HolBA/src/libs/z3_wrapper.py
 
 
+
+#export SCAMV_CROSS=/home/andreas/Downloads/lifter/binary_blobs_for_analysis/compilers/arm/gcc-arm-8.2-2018.08-x86_64-aarch64-elf/bin/aarch64-elf-
+export SCAMV_CROSS=aarch64-linux-gnu-
+
+
