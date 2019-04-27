@@ -44,7 +44,7 @@ in
   end
 
 
- val arm8_names_weighted = [(30,"Address"),
+ val arm8_names_weighted = [(0,"Address"),
   (1,"AddSubShiftedRegister32-1"),      (1,"AddSubShiftedRegister32-2"),     (1,"AddSubShiftedRegister32-3"),
   (1,"AddSubShiftedRegister32-4"),      (1,"AddSubShiftedRegister64-1"),     (1,"AddSubShiftedRegister64-2"),
   (1,"AddSubShiftedRegister64-3"),      (1,"AddSubShiftedRegister64-4"),     (1,"AddSubExtendRegister-1"),
@@ -106,6 +106,7 @@ in
  type gen = Random.generator
  val rg = Random.newgenseed 1.0
  type init = unit
+ val emp_str = ""
      
  fun bits gen bits =
      map (fn x => x = 1) (Random.rangelist (0,2) (bits,gen))
@@ -194,42 +195,40 @@ in
             | BadCode err => ("Encode error: " ^ err,NONE));
 
  in
- fun branch_instGen (pc, base) =
-     let val adr = base + (4*(Random.range (pc, 5) gen))
+ fun branch_instGen (pc, base, len) =
+     let val adr = base + (4*(Random.range (pc, len) gen))
 	 val adr_str = String.concat["bl +#0x", (addr_to_hexString(adr))]
 	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
-	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
      in
-	 (hd args, inst)
+	 (emp_str, inst)
      end
- fun c_branch_instGen (inst, pc, base) =
-     let val adr = base + (4*(Random.range (pc, 5) gen))
+ fun c_branch_instGen (inst, pc, base, len) =
+     let val adr = base + (4*(Random.range (pc, len) gen))
 	 val adr_str = String.concat[hd((p_tokens(hd(decomp(inst)))))," +#0x", (addr_to_hexString(adr))]
 	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
-	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
      in
-	 (hd args, inst)
+	 (emp_str, inst)
      end
  end
 
- fun instsGen (pc, [], base)  =
+ fun instsGen (pc, [], base, len)  =
      let val inst = snd (instGen ())
 	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
      in
 	 (hd args, inst)
      end
      
-   | instsGen (pc, src, base) =
+   | instsGen (pc, src, base, len) =
      let val (c, inst) = instGen ()
 	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
 	 val inclusion =  intersect (src, tl args)
      in
 	 case (instClass c) of 
-	     "BranchImmediate" =>  branch_instGen(pc, base)
-	   | "BranchConditional" => c_branch_instGen (inst,pc, base)
+	     "BranchImmediate" =>  branch_instGen(pc, base, len)
+	   | "BranchConditional" => c_branch_instGen (inst,pc, base, len)
 	   | _ =>
 	     if List.null inclusion
-	     then instsGen (pc,src, base) 
+	     then instsGen (pc,src, base, len) 
 	     else (hd args, inst)
      end
 
@@ -238,7 +237,7 @@ in
      let val src = ref ([]:string list);
 	 val pc = ref 0;
      in
-	 (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!pc,!src, base)) 			
+	 (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!pc,!src, base, n)) 			
 				    in  (src:= (d::(!src)); pc:= !pc + 1);i end))
      end
 
