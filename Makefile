@@ -23,6 +23,9 @@ rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 HOLMAKEFILE_GENS = $(call rwildcard,src/,Holmakefile.gen)
 HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
 
+TESTS            = $(call rwildcard,src/,selftest.sml) $(call rwildcard,src/,test-*.sml)
+TEST_EXES        = $(TESTS:.sml=.exe)
+
 .DEFAULT_GOAL := all
 all: show-rules
 	@echo "Please use sub-rules to build HolBA."
@@ -32,6 +35,7 @@ show-rules:
      - Holmakefiles: generates \`Holmakefile\`s from \`Holmakefile.gen\` files.\n\
      - core: builds only src/core, src/theories and src/libs\n\
      - main: builds HolBA, but without the examples or documentation\n\
+     - tests: builds HolBA and runs the tests\n\
      - examples-base: builds HolBA and the examples for each tool\n\
      - examples-all: builds HolBA and all the examples (base + src/examples/)\n\
      - benchmarks: builds HolBA and all the benchmarks\n\
@@ -48,6 +52,16 @@ core: Holmakefiles
 
 main: Holmakefiles
 	cd $(SRCDIR) && $(HOLMAKE)
+
+tests: $(TEST_EXES)
+	echo "$(TEST_EXES)"
+	@echo "===================================================="
+	@echo "====     all HolBA tests ran successfully       ===="
+	@echo "===================================================="
+	@echo ""
+
+$(TEST_EXES): main
+	cd $(dir $@) && ./$(notdir $@)
 
 examples-base: main $(EXAMPLES_BASE)
 
@@ -68,6 +82,8 @@ cleanslate:
 	git clean -fdX src
 
 .PHONY: Holmakefiles
-.PHONY: main gendoc cleanslate
+.PHONY: core main gendoc cleanslate
+.PHONY: tests $(TEST_EXES)
 .PHONY: examples-base examples-all $(EXAMPLES_BASE) $(EXAMPLES_ALL)
 .PHONY: benchmarks $(BENCHMARKS)
+
