@@ -3,6 +3,7 @@ struct
 
 open HolKernel Parse boolLib bossLib
 
+open bir_exp_substitutionsTheory;
 
 val ERR = mk_HOL_ERR "bir_exp_substitutionsSyntax"
 fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_substitutions"
