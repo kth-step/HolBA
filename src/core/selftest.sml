@@ -9,6 +9,7 @@ open bir_typing_expTheory bir_typing_progTheory;
 open bir_immSyntax bir_valuesSyntax bir_envSyntax bir_exp_memSyntax;
 open bir_exp_immSyntax bir_expSyntax;
 open bir_programSyntax;
+open bir_typing_expSyntax;
 open wordsLib;
 
 val _ = Process.exit Process.success;
