@@ -35,7 +35,7 @@ show-rules:
      - Holmakefiles: generates \`Holmakefile\`s from \`Holmakefile.gen\` files.\n\
      - core: builds only src/core, src/theories and src/libs\n\
      - main: builds HolBA, but without the examples or documentation\n\
-     - tests: builds HolBA and runs the tests\n\
+     - tests: builds HolBA and runs all the tests\n\
      - examples-base: builds HolBA and the examples for each tool\n\
      - examples-all: builds HolBA and all the examples (base + src/examples/)\n\
      - benchmarks: builds HolBA and all the benchmarks\n\
@@ -53,15 +53,13 @@ core: Holmakefiles
 main: Holmakefiles
 	cd $(SRCDIR) && $(HOLMAKE)
 
-tests: $(TEST_EXES)
-	echo "$(TEST_EXES)"
-	@echo "===================================================="
-	@echo "====     all HolBA tests ran successfully       ===="
-	@echo "===================================================="
-	@echo ""
+tests:
+	@./scripts/run-tests.sh
+
+_run_tests: $(TEST_EXES)
 
 $(TEST_EXES): main
-	cd $(dir $@) && ./$(notdir $@)
+	@/usr/bin/env HOLMAKE="$(HOLMAKE)" ./scripts/run-test.sh $(@:.exe=.sml)
 
 examples-base: main $(EXAMPLES_BASE)
 
@@ -83,7 +81,7 @@ cleanslate:
 
 .PHONY: Holmakefiles
 .PHONY: core main gendoc cleanslate
-.PHONY: tests $(TEST_EXES)
+.PHONY: tests _run_tests $(TEST_EXES)
 .PHONY: examples-base examples-all $(EXAMPLES_BASE) $(EXAMPLES_ALL)
 .PHONY: benchmarks $(BENCHMARKS)
 

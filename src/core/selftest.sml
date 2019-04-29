@@ -12,4 +12,6 @@ open bir_programSyntax;
 open bir_typing_expSyntax;
 open wordsLib;
 
+val _ = print "HolBA core files successfully loaded.\n";
+
 val _ = Process.exit Process.success;

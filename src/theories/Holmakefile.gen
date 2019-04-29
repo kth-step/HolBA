@@ -15,7 +15,7 @@ NEWHOLHEAP = HolBATheories-heap
 HEAPINC    = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
              $(patsubst %.sml,%,$(wildcard *Syntax.sml))
 
-SELFTEST_DEP = $(NULL) #defined but empty
+SELFTEST_DEP =
 
 
 # included lines follow

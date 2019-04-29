@@ -6,4 +6,6 @@ open bir_exp_substitutionsSyntax;
 open bir_extra_expsSyntax;
 open bir_interval_expSyntax;
 
+val _ = print "HolBA theory files successfully loaded.\n";
+
 val _ = Process.exit Process.success;

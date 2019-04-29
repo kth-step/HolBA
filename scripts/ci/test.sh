@@ -9,6 +9,5 @@ set -e
 # compile the project
 # -------------------------------
 export HOLMAKE="${CACHE_DIR}/HOL/bin/Holmake --qof"
-make -k tests
-
+make tests
 
