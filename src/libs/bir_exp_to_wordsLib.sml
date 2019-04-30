@@ -411,7 +411,7 @@ struct
           val writes = offset_writes_up_to nsplits []
             handle e => raise wrap_exn "bir_exp_to_words::store::writes" e;
           (* Fold using mk_comb *)
-          val whole_store_tm = List.foldl (fn (update_tm, mem_tm) =>
+          val whole_store_tm = List.foldr (fn (update_tm, mem_tm) =>
             mk_comb (update_tm, mem_tm))
             mem_w writes
             handle e => raise wrap_exn "bir_exp_to_words::store::mk_comb" e;
