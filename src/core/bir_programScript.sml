@@ -4,6 +4,7 @@ open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
 open bir_exp_immTheory bir_exp_memTheory bir_envTheory;
 open bir_expTheory;
 open llistTheory wordsLib;
+open finite_mapTheory;
 
 val _ = new_theory "bir_program";
 
@@ -166,7 +167,7 @@ val bir_state_init_def = Define `bir_state_init p = <|
 
 val bir_declare_initial_value_def = Define `
   (bir_declare_initial_value (BType_Imm _) = NONE) /\
-  (bir_declare_initial_value (BType_Mem at vt) = SOME (BVal_Mem at vt (K 0)))`;
+  (bir_declare_initial_value (BType_Mem at vt) = SOME (BVal_Mem at vt (FEMPTY)))`;
 
 val bir_exec_stmt_declare_def = Define `bir_exec_stmt_declare v ty (st : bir_state_t) =
    if bir_env_varname_is_bound st.bst_environ v then

@@ -362,6 +362,9 @@ Induct_on `ex'` >| [
   (* Const *)
   FULL_SIMP_TAC std_ss [bir_exp_subst_def],
 
+  (* MemConst *)
+  FULL_SIMP_TAC std_ss [bir_exp_subst_def],
+
   (* Den *)
   REPEAT STRIP_TAC >>
   Cases_on `b` >> Cases_on `v` >>

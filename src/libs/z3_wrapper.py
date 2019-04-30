@@ -127,9 +127,11 @@ def z3_to_HolTerm(exp):
             if is_store(exp):
                 return "(store %s)" % " ".join(z3_to_HolTerm(p) for p in exp.children())
             if is_const_array(exp):
-                params = " ".join(string.ascii_lowercase[:exp.num_args()])
+                if exp.num_args() != 1 and len(exp.children()) != 1:
+                    raise NotImplementedError("Not handled: special constant array: {}".format(exp))
+                #params = " ".join(string.ascii_lowercase[:exp.num_args()])
                 expr = ", ".join(z3_to_HolTerm(p) for p in exp.children())
-                return "(\\{}. ({}))".format(params, expr)
+                return "(FUN_MAP2 (K ({})) (UNIV))".format(expr)
 
     raise NotImplementedError("Not handled: {} as {}".format(type(exp), exp))
 

@@ -1404,6 +1404,7 @@ val bir_exp_varsubst_var_REWR = store_thm("bir_exp_varsubst_var_REWR", ``
 (* rewrites for doing this directly on expressions *)
 val bir_exp_varsubst_REWRS = store_thm("bir_exp_varsubst_REWRS", ``
   (!vs n. bir_exp_varsubst vs (BExp_Const n) = BExp_Const n) /\
+  (!vs aty vty memm. bir_exp_varsubst vs (BExp_MemConst aty vty memm) = BExp_MemConst aty vty memm) /\
   (!vs v. bir_exp_varsubst vs (BExp_Den v) = bir_exp_varsubst_var vs v) /\
   (!vs ct e ty.
       bir_exp_varsubst vs (BExp_Cast ct e ty) =
@@ -3176,7 +3177,7 @@ val bir_update_mmap_CHANGED = store_thm ("bir_update_mmap_CHANGED",
       (LENGTH vs <= 2 ** (size_of_bir_immtype aty)) ==>
       (n < LENGTH vs) ==>
       (a' = bir_mem_addr aty (a+n)) ==>
-      ((bir_update_mmap aty mmap a vs) a' = v2n (EL n vs) )``,
+      (bir_load_mmap (bir_update_mmap aty mmap a vs) a' = v2n (EL n vs) )``,
 
 GEN_TAC >>
 Induct_on `vs` >> (
@@ -3186,7 +3187,7 @@ REPEAT STRIP_TAC >>
 
 Cases_on `n` >- (
   SIMP_TAC list_ss [bir_exp_memTheory.bir_update_mmap_def] >>
-  ASSUME_TAC (Q.SPECL [`aty`, `((bir_mem_addr aty a =+ v2n h) mmap)`, `(SUC a)`, `vs`, `(bir_mem_addr aty a)`] bir_exp_memTheory.bir_update_mmap_UNCHANGED) >>
+  ASSUME_TAC (Q.SPECL [`aty`, `(FUPDATE  mmap (bir_mem_addr aty a, v2n h))`, `(SUC a)`, `vs`, `(bir_mem_addr aty a)`] bir_exp_memTheory.bir_update_mmap_UNCHANGED) >>
 
   subgoal `(!n. n < LENGTH (vs:bitstring list) ==>
                 bir_mem_addr aty a <> bir_mem_addr aty (SUC a + n))` >- (
@@ -3220,7 +3221,7 @@ Cases_on `n` >- (
     METIS_TAC [arithmeticTheory.ADD_MOD]
   ) >>
 
-  FULL_SIMP_TAC list_ss [combinTheory.UPDATE_APPLY]
+  FULL_SIMP_TAC list_ss [combinTheory.UPDATE_APPLY, bir_exp_memTheory.bir_load_mmap_def, finite_mapTheory.FLOOKUP_UPDATE]
 ) >>
 
 FULL_SIMP_TAC arith_ss [] >>
@@ -3258,8 +3259,8 @@ EVAL_TAC
 
 val bir_update_mmap_STAY_EQ = store_thm ("bir_update_mmap_STAY_EQ",
   ``!aty mmap1 mmap2 a vs addr.
-      (mmap1 addr = mmap2 addr) ==>
-      ((bir_update_mmap aty mmap1 a vs) addr = (bir_update_mmap aty mmap2 a vs) addr)``,
+      (bir_load_mmap mmap1 addr = bir_load_mmap mmap2 addr) ==>
+      (bir_load_mmap (bir_update_mmap aty mmap1 a vs) addr = bir_load_mmap (bir_update_mmap aty mmap2 a vs) addr)``,
 
 GEN_TAC >>
 Induct_on `vs` >> (
@@ -3268,12 +3269,12 @@ Induct_on `vs` >> (
 
 REPEAT STRIP_TAC >>
 
-Q.ABBREV_TAC `mmap1' = ((bir_mem_addr aty a =+ v2n h) mmap1)` >>
-Q.ABBREV_TAC `mmap2' = ((bir_mem_addr aty a =+ v2n h) mmap2)` >>
+Q.ABBREV_TAC `mmap1' = (FUPDATE mmap1 (bir_mem_addr aty a, v2n h))` >>
+Q.ABBREV_TAC `mmap2' = (FUPDATE mmap2 (bir_mem_addr aty a, v2n h))` >>
 
-subgoal `mmap1' addr = mmap2' addr` >- (
+subgoal `bir_load_mmap mmap1' addr = bir_load_mmap mmap2' addr` >- (
   Cases_on `addr = bir_mem_addr aty a` >> (
-    METIS_TAC [combinTheory.UPDATE_APPLY]
+    METIS_TAC [combinTheory.UPDATE_APPLY, bir_exp_memTheory.bir_load_mmap_def, finite_mapTheory.FLOOKUP_UPDATE]
   )
 ) >>
 
@@ -3287,7 +3288,7 @@ val bir_update_mmap_EQUAL_FOR = store_thm ("bir_update_mmap_EQUAL_FOR",
   ``!aty mmap1 mmap2 a vs a' n.
       (n < LENGTH vs) ==>
       (a' = bir_mem_addr aty (a+n)) ==>
-      ((bir_update_mmap aty mmap1 a vs) a' = (bir_update_mmap aty mmap2 a vs) a')``,
+      (bir_load_mmap (bir_update_mmap aty mmap1 a vs) a' = bir_load_mmap (bir_update_mmap aty mmap2 a vs) a')``,
 
 GEN_TAC >>
 Induct_on `vs` >> (
@@ -3295,14 +3296,14 @@ Induct_on `vs` >> (
 ) >>
 REPEAT STRIP_TAC >>
 
-Q.ABBREV_TAC `mmap1' = ((bir_mem_addr aty a =+ v2n h) mmap1)` >>
-Q.ABBREV_TAC `mmap2' = ((bir_mem_addr aty a =+ v2n h) mmap2)` >>
+Q.ABBREV_TAC `mmap1' = (FUPDATE mmap1 (bir_mem_addr aty a, v2n h))` >>
+Q.ABBREV_TAC `mmap2' = (FUPDATE mmap2 (bir_mem_addr aty a, v2n h))` >>
 
 Cases_on `n` >- (
   Q.ABBREV_TAC `addr = bir_mem_addr aty a` >>
-  subgoal `mmap1' addr = mmap2' addr` >- (
+  subgoal `bir_load_mmap mmap1' addr = bir_load_mmap mmap2' addr` >- (
     Cases_on `addr = bir_mem_addr aty a` >> (
-      METIS_TAC [combinTheory.UPDATE_APPLY]
+      METIS_TAC [combinTheory.UPDATE_APPLY, bir_exp_memTheory.bir_load_mmap_def, finite_mapTheory.FLOOKUP_UPDATE]
     )
   ) >>
   FULL_SIMP_TAC arith_ss [] >>
@@ -3313,7 +3314,8 @@ subgoal `n' < LENGTH vs` >- (
   FULL_SIMP_TAC arith_ss []
 ) >>
 
-subgoal `bir_update_mmap aty mmap1' (SUC a) vs (bir_mem_addr aty ((SUC a) + n')) = bir_update_mmap aty mmap2' (SUC a) vs (bir_mem_addr aty ((SUC a) + n'))` >- (
+subgoal `bir_load_mmap (bir_update_mmap aty mmap1' (SUC a) vs) (bir_mem_addr aty ((SUC a) + n')) =
+         bir_load_mmap (bir_update_mmap aty mmap2' (SUC a) vs) (bir_mem_addr aty ((SUC a) + n'))` >- (
   METIS_TAC []
 ) >>
 
@@ -3500,7 +3502,7 @@ val bir_update_mmap_eq_thm = prove (``
 (MEM addr (MAP (λn. bir_mem_addr at (a + n)) (COUNT_LIST x))) ==>
 (x ≤ 2 ** size_of_bir_immtype at) ==>
 (LENGTH vs = x) ==>
-(bir_update_mmap at mm1 a vs addr = bir_update_mmap at mm2 a vs addr)
+(bir_load_mmap (bir_update_mmap at mm1 a vs) addr = bir_load_mmap (bir_update_mmap at mm2 a vs) addr)
 ``,
 
   REPEAT STRIP_TAC >>
@@ -3524,7 +3526,7 @@ val bir_store_in_mem_TO_used_addrs_thm = prove(``
     (bir_store_in_mem vt at i mm1 b2 (b2n i') = SOME mm1') ==>
     (bir_store_in_mem vt at i mm2 b2 (b2n i') = SOME mm2') ==>
     (addr IN (bir_store_in_mem_used_addrs vt i at b2 (b2n i'))) ==>
-    (mm1' addr = mm2' addr)
+    (bir_load_mmap mm1' addr = bir_load_mmap mm2' addr)
 ``,
 
   REPEAT STRIP_TAC >>
@@ -3717,6 +3719,8 @@ val bir_memeq_eval_eq = store_thm("bir_memeq_eval_eq", ``
     REPEAT STRIP_TAC >>
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [type_of_bir_exp_EQ_SOME_REWRS, bir_exp_subst1_def, bir_exp_subst_def, bir_type_is_Imm_def] >>
     REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_type_is_Mem_def, BType_Bool_def]
+  ) >- (
+    REWRITE_TAC [bir_exp_memTheory.bir_memeq_def]
   ) >- (
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_UPDATE, finite_mapTheory.FLOOKUP_EMPTY] >>
 
@@ -4018,7 +4022,7 @@ val bir_memeq_eval_eq = store_thm("bir_memeq_eval_eq", ``
 
     GEN_TAC >>
     Cases_on `~((bir_mem_addr at a) IN bir_store_in_mem_used_addrs vt i at b2 (b2n i'))` >- (
-      subgoal `(x (bir_mem_addr at a) = f (bir_mem_addr at a)) /\ (x' (bir_mem_addr at a) = f' (bir_mem_addr at a))` >- (
+      subgoal `(bir_load_mmap x (bir_mem_addr at a) = bir_load_mmap f (bir_mem_addr at a)) /\ (bir_load_mmap x' (bir_mem_addr at a) = bir_load_mmap f' (bir_mem_addr at a))` >- (
         METIS_TAC [bir_exp_memTheory.bir_store_in_mem_used_addrs_THM]
       ) >>
 

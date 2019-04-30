@@ -48,6 +48,7 @@ fun err_to_str disassemble_fun ((err_pc, err_inst, err_inst_desc, err_descr):bir
       val ef = bir_exp_nonstandards;
     in
       if is_BExp_Const exp then []
+      else if is_BExp_MemConst exp then []
       else if is_BExp_Den exp then []
       else if is_BExp_Cast exp then
         let
@@ -122,6 +123,7 @@ fun err_to_str disassemble_fun ((err_pc, err_inst, err_inst_desc, err_descr):bir
       val ef = bir_exp_count_bir_nodes_mod;
     in
       if is_BExp_Const exp then 1
+      else if is_BExp_MemConst exp then 1
       else if is_BExp_Den exp then 1
       else if is_BExp_Cast exp then
         let

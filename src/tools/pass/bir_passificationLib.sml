@@ -75,6 +75,8 @@ local
     (* Leaves *)
     if is_BExp_Const exp
     then exp
+    else if is_BExp_MemConst exp
+    then exp
     else if is_BExp_Den exp
     then let
            val var = dest_BExp_Den exp

@@ -146,6 +146,9 @@ struct
       if is_BExp_Const exp then
         (snd o gen_dest_Imm o dest_BExp_Const) exp
           handle e => raise wrap_exn "bir_exp_to_words::const" e
+      (* Memory constants *)
+      else if is_BExp_MemConst exp then
+        raise ERR "bir_exp_to_words" "unhandled: BExp_MemConst"
       (* Den *)
       else if is_BExp_Den exp then
         (* Manual tests
@@ -167,7 +170,7 @@ struct
                 val val_ty = word_ty_of_bir_immtype_t val_bir_ty
                   handle e => raise wrap_exn "bir_exp_to_words::den::mem" e
               in
-                Type `: ^addr_ty -> ^val_ty`
+                Type `: ^addr_ty |-> ^val_ty`
               end
             else
               raise Fail ("unhandled type: " ^ (term_to_string bir_type))
@@ -295,7 +298,7 @@ struct
         val w = bir_exp_to_words exp;
         *)
         (*
-         * ((addr+0) :> mem) @@ ((addr+1) :> mem) @@ ...
+         * ((addr+0) ' mem) @@ ((addr+1) ' mem) @@ ...
          *)
         let
           val (bir_mem, bir_addr, bir_endi, bir_val_ty) = dest_BExp_Load exp
@@ -318,7 +321,8 @@ struct
                 val offset = Arbnumcore.- (n, Arbnumcore.one);
                 val offset_w = mk_word (offset, size_of base_addr_w);
                 val addr = ``^base_addr_w + ^offset_w``;
-                val load_tm = ``^addr :> ^mem_w``;
+                (* this may need to be refined to: case FLOOKUP .. .. of SOME x => x | NONE => 0w *)
+                val load_tm = ``FAPPLY ^mem_w ^addr``;
               in
                 offset_reads_up_to (Arbnumcore.- (n, Arbnumcore.one)) (load_tm::acc)
               end
@@ -383,6 +387,10 @@ struct
           val write_len_num = Arbnumcore.fromInt write_len
           val write_len_ty = mk_numeric_type write_len_num
           val val_w = bir_exp_to_words bir_val
+          (*
+          val n = nsplits;
+          val acc = [];
+          *)
           fun offset_writes_up_to n acc =
             if n = Arbnumcore.zero then acc else
               let
@@ -396,19 +404,19 @@ struct
                 val high_bit_tm = mk_numeral high_bit
                 val val_tm = mk_word_extract
                   (high_bit_tm, low_bit_tm, val_w, write_len_ty)
-                val store_tm = ``(^addr_tm =+ ^val_tm)``
+                val store_tm = ``(\x. (FUPDATE x (^addr_tm, ^val_tm)))``
               in
                 offset_writes_up_to (Arbnumcore.- (n, Arbnumcore.one)) (store_tm::acc)
               end
           val writes = offset_writes_up_to nsplits []
             handle e => raise wrap_exn "bir_exp_to_words::store::writes" e;
           (* Fold using mk_comb *)
-          val whole_store_tm = List.foldl (fn (update_tm, mem_tm) =>
+          val whole_store_tm = List.foldr (fn (update_tm, mem_tm) =>
             mk_comb (update_tm, mem_tm))
             mem_w writes
             handle e => raise wrap_exn "bir_exp_to_words::store::mk_comb" e;
         in
-          whole_store_tm
+          (snd o dest_eq o concl o (SIMP_CONV pure_ss [boolTheory.BETA_THM])) whole_store_tm
         end
       (*** WP specific terms ***)
       (* Implications *)

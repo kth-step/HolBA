@@ -28,6 +28,7 @@ REPEAT CASE_TAC);
 
 val bir_exp_subst_def = Define `
    (!s n. bir_exp_subst s (BExp_Const n) = (BExp_Const n)) /\
+   (!s aty vty mmap. bir_exp_subst s (BExp_MemConst aty vty mmap) = (BExp_MemConst aty vty mmap)) /\
    (!s v. bir_exp_subst s (BExp_Den v) = bir_exp_subst_var s v) /\
    (!s ct e ty.
       bir_exp_subst s (BExp_Cast ct e ty) =
@@ -197,6 +198,7 @@ val bir_exp_subst1_def = Define `
 
 val bir_exp_subst1_REWRS = store_thm ("bir_exp_subst1_REWRS",
 `` (!v ve n. bir_exp_subst1 v ve (BExp_Const n) = (BExp_Const n)) /\
+   (!v ve aty vty mmap. bir_exp_subst1 v ve (BExp_MemConst aty vty mmap) = (BExp_MemConst aty vty mmap)) /\
    (!v ve v'. bir_exp_subst1 v ve (BExp_Den v') = (if v = v' then ve else (BExp_Den v'))) /\
    (!v ve ct e ty.
       bir_exp_subst1 v ve (BExp_Cast ct e ty) =

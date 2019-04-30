@@ -19,6 +19,8 @@ val bir_type_ss = rewrites (type_rws ``:bir_type_t``);
 val type_of_bir_exp_def = Define `
   (type_of_bir_exp (BExp_Const i) = SOME (BType_Imm (type_of_bir_imm i))) /\
 
+  (type_of_bir_exp (BExp_MemConst aty vty mmap) = SOME (BType_Mem aty vty)) /\
+
   (type_of_bir_exp (BExp_Den v) = SOME (bir_var_type v)) /\
 
   (type_of_bir_exp (BExp_Cast ct e rty) = (case (type_of_bir_exp e) of
@@ -121,6 +123,8 @@ Induct >> (
 val type_of_bir_exp_EQ_SOME_REWRS = store_thm ("type_of_bir_exp_EQ_SOME_REWRS",``
   (!i ty. (type_of_bir_exp (BExp_Const i) = SOME ty) <=> (ty = BType_Imm (type_of_bir_imm i))) /\
 
+  (!aty vty mmap ty. (type_of_bir_exp (BExp_MemConst aty vty mmap) = SOME ty) <=> (ty = BType_Mem aty vty)) /\
+
   (!v ty. (type_of_bir_exp (BExp_Den v) = SOME ty) <=> (ty = bir_var_type v)) /\
 
   (!ct e ty ty'. (type_of_bir_exp (BExp_Cast ct e ty') = SOME ty) <=> (
@@ -192,6 +196,8 @@ REPEAT CONJ_TAC >> (
 
 val type_of_bir_exp_EQ_NONE_REWRS = store_thm ("type_of_bir_exp_EQ_NONE_REWRS",``
   (!i. ~(type_of_bir_exp (BExp_Const i) = NONE)) /\
+
+  (!aty vty mmap. ~(type_of_bir_exp (BExp_MemConst aty vty mmap) = NONE)) /\
 
   (!v. ~(type_of_bir_exp (BExp_Den v) = NONE)) /\
 
@@ -271,6 +277,7 @@ REPEAT CONJ_TAC >> (
 
 val bir_vars_of_exp_def = Define `
   (bir_vars_of_exp (BExp_Const _) = {}) /\
+  (bir_vars_of_exp (BExp_MemConst _ _ _) = {}) /\
   (bir_vars_of_exp (BExp_Den v) = {v}) /\
   (bir_vars_of_exp (BExp_Cast _ e _) = bir_vars_of_exp e) /\
   (bir_vars_of_exp (BExp_UnaryExp _ e) = bir_vars_of_exp e) /\
