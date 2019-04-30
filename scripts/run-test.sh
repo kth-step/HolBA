@@ -48,7 +48,7 @@ function enclose {
 
 function test_failed_trap {
     declare END_TIME=$(date +%s.%N)
-    declare DURATION=$(echo "$END_TIME - $START_TIME" | bc)
+    declare DURATION=$(python2 -c "print($END_TIME - $START_TIME)")
     enclose "Test failed: $TEST_PATH" "$(printf "Elapsed time: %3g sec.\n" "$DURATION")"
 }
 
@@ -66,7 +66,7 @@ function test_sml_file {
     #if (($RANDOM < 20000)); then exit 1; fi
 
     declare END_TIME=$(date +%s.%N)
-    declare DURATION=$(echo "$END_TIME - $START_TIME" | bc)
+    declare DURATION=$(python2 -c "print($END_TIME - $START_TIME)")
 
     enclose "Test successful: $1" "$(printf "Elapsed time: %3g sec.\n" "$DURATION")"
 
