@@ -1,6 +1,6 @@
 -include Makefile.local
 ifndef HOLMAKE # we need a specific HOL version - see README.md
-  HOLMAKE = Holmake
+  HOLMAKE = Holmake --fast
 endif
 
 SRCDIR     = $(CURDIR)/src
@@ -59,6 +59,7 @@ tests:
 _run_tests: $(TEST_EXES)
 
 $(TEST_EXES): main
+	cd $(dir $@) && $(HOLMAKE) --quiet --qof $(notdir $@)
 	@/usr/bin/env HOLMAKE="$(HOLMAKE)" ./scripts/run-test.sh $(@:.exe=.sml)
 
 examples-base: main $(EXAMPLES_BASE)

@@ -22,9 +22,13 @@ function print_report {
     declare FAILED=$(                                     \
         grep "== Test failed:" "$TEST_LOG_FILE"           \
         | sed -r 's/== Test failed: (\S+) ==/\1/')
+    declare MAKE_FAILED=$(                                           \
+        grep -R "recipe for target .* failed" "$TEST_LOG_FILE"       \
+        | cut -d"'" -f2)
 
     declare N_SUCCESSFUL=$(printf '%s' "$SUCCESSFUL" | grep -c '')
     declare N_FAILED=$(printf '%s' "$FAILED" | grep -c '')
+    declare N_MAKE_FAILED=$(printf '%s' "$MAKE_FAILED" | grep -c '')
 
     # Print a separator
     echo
@@ -32,20 +36,33 @@ function print_report {
 
     # Successful tests
     if (($N_SUCCESSFUL == 0)); then
+        echo
         printf 'No successful tests.\n'
     else
+        echo
         printf 'Successful tests: (%d total)\n' $N_SUCCESSFUL
         echo "$SUCCESSFUL" | sed -e 's/^/- /'
     fi
 
-    echo
+
+    # `make` failed tests
+    if (($N_MAKE_FAILED > 0)); then
+        echo
+        printf 'make failed for some tests: (%d total)\n' $N_MAKE_FAILED
+        echo "$MAKE_FAILED" | sed -e 's/^/- /'
+    fi
+
 
     # Failed tests
-    if (($N_FAILED == 0)); then
-        printf 'All tests succeeded.\n'
-    else
+    if (($N_FAILED > 0)); then
+        echo
         printf 'Failed tests: (%d total)\n' $N_FAILED
         echo "$FAILED" | sed -e 's/^/- /'
+    fi
+
+    if (($N_FAILED + $N_MAKE_FAILED == 0)); then
+        echo
+        printf 'All tests succeeded.\n'
     fi
 }
 
