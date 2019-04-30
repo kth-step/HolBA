@@ -1,5 +1,9 @@
-open HolKernel Parse;
+(* This test uses the WP tool, but doesn't perform any check.
+ * It is used to showcase the use of the WP tool, and to check
+ * that it doesn't break, i.e. can run without failure.
+ *)
 
+open HolKernel Parse;
 open bir_wpTheory bir_wpLib;
 
 

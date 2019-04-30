@@ -1,13 +1,11 @@
 
 # general configs
 # ----------------------------------
-all: $(TARGETS) $(if $(NEWHOLHEAP),$(NEWHOLHEAP),) \
-                $(if $(SELFTEST_DEP),selftest.exe,)
+all: $(TARGETS) $(if $(NEWHOLHEAP),$(NEWHOLHEAP),)
 
 INCLUDES = $(DEPENDENCIES) $(if $(HOLHEAP),$(shell dirname $(HOLHEAP)),)
 
-EXTRA_CLEANS = $(if $(NEWHOLHEAP),$(NEWHOLHEAP) $(NEWHOLHEAP).o,) \
-               $(if $(SELFTEST_DEP),selftest.exe,)
+EXTRA_CLEANS = $(if $(NEWHOLHEAP),$(NEWHOLHEAP) $(NEWHOLHEAP).o,)
 
 OPTIONS = QUIT_ON_FAILURE
 

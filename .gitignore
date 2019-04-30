@@ -10,9 +10,13 @@
 *.exe
 *-heap
 
-# Generate Holmake files
+# Generated Holmake files
 Holmakefile
+
+# Makefile related stuff
 Makefile.local
+holba-tests.log
+holba-tests.success
 
 # Temporary BIR files
 tempdir/

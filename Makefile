@@ -23,6 +23,10 @@ rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 HOLMAKEFILE_GENS = $(call rwildcard,src/,Holmakefile.gen)
 HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
 
+TEST_SMLS        = $(call rwildcard,src/,selftest.sml) $(call rwildcard,src/,test-*.sml)
+TEST_EXES        = $(TEST_SMLS:.sml=.exe)
+TEST_DIRS        = $(sort $(foreach sml,$(TEST_SMLS),$(dir $(sml))))
+
 .DEFAULT_GOAL := all
 all: show-rules
 	@echo "Please use sub-rules to build HolBA."
@@ -32,6 +36,7 @@ show-rules:
      - Holmakefiles: generates \`Holmakefile\`s from \`Holmakefile.gen\` files.\n\
      - core: builds only src/core, src/theories and src/libs\n\
      - main: builds HolBA, but without the examples or documentation\n\
+     - tests: builds HolBA and runs all the tests\n\
      - examples-base: builds HolBA and the examples for each tool\n\
      - examples-all: builds HolBA and all the examples (base + src/examples/)\n\
      - benchmarks: builds HolBA and all the benchmarks\n\
@@ -48,6 +53,17 @@ core: Holmakefiles
 
 main: Holmakefiles
 	cd $(SRCDIR) && $(HOLMAKE)
+
+tests: $(TEST_DIRS)
+	@./scripts/run-tests.sh
+
+$(TEST_DIRS):
+	cd $@ && $(HOLMAKE)
+
+_run_tests: $(TEST_EXES)
+
+$(TEST_EXES): main
+	@/usr/bin/env HOLMAKE="$(HOLMAKE)" ./scripts/run-test.sh $(@:.exe=.sml)
 
 examples-base: main $(EXAMPLES_BASE)
 
@@ -68,6 +84,8 @@ cleanslate:
 	git clean -fdX src
 
 .PHONY: Holmakefiles
-.PHONY: main gendoc cleanslate
+.PHONY: core main gendoc cleanslate
+.PHONY: tests _run_tests $(TEST_EXES) $(TEST_DIRS)
 .PHONY: examples-base examples-all $(EXAMPLES_BASE) $(EXAMPLES_ALL)
 .PHONY: benchmarks $(BENCHMARKS)
+

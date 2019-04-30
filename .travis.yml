@@ -8,7 +8,7 @@ notifications:
 
 language: c
 dist: xenial
-env: ENV_EXPORT_SCRIPT=devel/travis_env.sh
+env: ENV_EXPORT_SCRIPT=scripts/ci/travis_env.sh
 
 cache:
   directories:
@@ -18,11 +18,11 @@ jobs:
   include:
     - stage: "Prepare polyml & HOL4"
       before_script:
-        - devel/install_poly.sh
-        - devel/install_hol4.sh
+        - scripts/install_poly.sh
+        - scripts/install_hol4.sh
       script: true
 
-    - stage: "Compilation"
-      script: devel/compile.sh
+    - stage: "Compile and test"
+      script: scripts/ci/compile.sh && scripts/ci/test.sh
 
 

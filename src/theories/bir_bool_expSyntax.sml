@@ -3,9 +3,9 @@ struct
 
   open Abbrev
 
-  local
-
   open HolKernel Parse boolLib bossLib
+
+  open bir_bool_expTheory;
 
   val ERR = mk_HOL_ERR "bir_bool_expSyntax"
 
@@ -19,7 +19,6 @@ struct
   val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
   val syntax_fns4 = syntax_fns 4 HolKernel.dest_quadop HolKernel.mk_quadop;
 
-  in
 
   val ( bir_val_true_tm, is_bir_val_true ) = syntax_fns0 "bir_val_true";
   val (bir_val_false_tm, is_bir_val_false) = syntax_fns0 "bir_val_false";
@@ -32,6 +31,5 @@ struct
   val (bir_exp_not_tm, mk_bir_exp_not, dest_bir_exp_not, is_bir_exp_not) = syntax_fns1 "bir_exp_not";
   val (bir_exp_imp_tm, mk_bir_exp_imp, dest_bir_exp_imp, is_bir_exp_imp) = syntax_fns2 "bir_exp_imp";
 
-  end (* local *)
 
 end (* bir_bool_expSyntax *)

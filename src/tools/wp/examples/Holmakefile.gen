@@ -7,7 +7,8 @@ DEPENDENCIES   =
 # ----------------------------------
 SMLFILES   = 
 
-TARGETS    = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
+TARGETS    = $(patsubst test-%.sml,test-%.exe,$(wildcard test-*.sml)) \
+             $(patsubst example-%.sml,example-%.exe,$(wildcard example-*.sml))
 
 HOLHEAP    = ../HolBAWp-heap
 NEWHOLHEAP = 
@@ -24,9 +25,9 @@ include ../../../Holmakefile.inc
 
 # test recipes
 # ----------------------------------
-toy1-test.exe: toy1-test.uo 
+test-toy.exe: test-toy.uo 
 	$(HOLMOSMLC) -o $@ $<
 
-toy1-pass-test.exe: toy1-pass-test.uo 
+example-toy-pass.exe: example-toy-pass.uo 
 	$(HOLMOSMLC) -o $@ $<
 

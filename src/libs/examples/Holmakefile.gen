@@ -7,7 +7,8 @@ DEPENDENCIES =
 # ----------------------------------
 SMLFILES   = 
 
-TARGETS    = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
+TARGETS    = $(patsubst test-%.sml,test-%.exe,$(wildcard test-*.sml)) \
+             $(patsubst example-%.sml,example-%.exe,$(wildcard example-*.sml))
 
 HOLHEAP    = ../HolBALibs-heap
 NEWHOLHEAP = 
@@ -24,14 +25,12 @@ include ../../Holmakefile.inc
 
 # test recipes
 # ----------------------------------
-z3-sat-model-test.exe: z3-sat-model-test.uo
+
+example-z3-sat-model.exe: example-z3-sat-model.uo
 	$(HOLMOSMLC) -o $@ $<
 
-bir-to-word-test.exe: bir-to-word-test.uo
+test-bir-to-word.exe: test-bir-to-word.uo
 	$(HOLMOSMLC) -o $@ $<
 
-bsl-noop_prog-test.exe: bsl-noop_prog-test.uo
-	$(HOLMOSMLC) -o $@ $<
-
-bsl-simple_arith_prog-test.exe: bsl-simple_arith_prog-test.uo
+test-bsl-progs.exe: test-bsl-progs.uo
 	$(HOLMOSMLC) -o $@ $<
