@@ -1,7 +1,18 @@
 -include Makefile.local
-ifndef HOLMAKE # we need a specific HOL version - see README.md
-  HOLMAKE = Holmake
+ifndef HOLBA_HOLMAKE # we need a specific HOL version - see README.md
+  $(info -------- HOLBA_HOLMAKE not defined --------)
+  ifndef HOLBA_OPT_DIR
+    $(info -------- HOLBA_OPT_DIR not defined --------)
+    HOLBA_HOLMAKE = Holmake
+    ifeq ("$(shell which $(HOLBA_HOLMAKE))","")
+      $(error HOLBA_HOLMAKE undefined, HOLBA_OPT_DIR undefined, Holmake not in PATH)
+    endif
+  else
+    include scripts/setup/env.mk
+  endif
 endif
+$(info "---- HOLBA_HOLMAKE=$(HOLBA_HOLMAKE) ----")
+
 
 SRCDIR     = $(CURDIR)/src
 
@@ -34,6 +45,7 @@ all: show-rules
 show-rules:
 	@echo "Available rules:\n\
      - Holmakefiles: generates \`Holmakefile\`s from \`Holmakefile.gen\` files.\n\
+     - setup: creates a subdirectory opt and installs all dependencies there\n\
      - core: builds only src/core, src/theories and src/libs\n\
      - main: builds HolBA, but without the examples or documentation\n\
      - tests: builds HolBA and runs all the tests\n\
@@ -44,38 +56,38 @@ show-rules:
      - cleanslate: removes all files that are .gignore-d under src/"
 
 %Holmakefile: %Holmakefile.gen src/Holmakefile.inc
-	@./gen_Holmakefiles.py $<
+	@./scripts/gen_Holmakefiles.py $<
 
 Holmakefiles: $(HOLMAKEFILES)
 
 core: Holmakefiles
-	cd $(SRCDIR)/libs && $(HOLMAKE)
+	cd $(SRCDIR)/libs && $(HOLBA_HOLMAKE)
 
 main: Holmakefiles
-	cd $(SRCDIR) && $(HOLMAKE)
+	cd $(SRCDIR) && $(HOLBA_HOLMAKE)
 
 tests: $(TEST_DIRS)
 	@./scripts/run-tests.sh
 
 $(TEST_DIRS):
-	cd $@ && $(HOLMAKE)
+	cd $@ && $(HOLBA_HOLMAKE)
 
 _run_tests: $(TEST_EXES)
 
 $(TEST_EXES): main
-	@/usr/bin/env HOLMAKE="$(HOLMAKE)" ./scripts/run-test.sh $(@:.exe=.sml)
+	@/usr/bin/env HOLBA_HOLMAKE="$(HOLBA_HOLMAKE)" ./scripts/run-test.sh $(@:.exe=.sml)
 
 examples-base: main $(EXAMPLES_BASE)
 
 examples-all: main $(EXAMPLES_ALL)
 
 $(EXAMPLES_ALL):
-	cd $@ && $(HOLMAKE)
+	cd $@ && $(HOLBA_HOLMAKE)
 
 benchmarks: main $(BENCHMARKS)
 
 $(BENCHMARKS):
-	cd $@ && $(HOLMAKE)
+	cd $@ && $(HOLBA_HOLMAKE)
 
 gendoc:
 	cd doc/gen; ./dependencies.py

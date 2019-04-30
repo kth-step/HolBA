@@ -4,11 +4,11 @@ set -e
 TEST_PATH=$1
 
 function find_hol4_bin_dir {
-    declare HOLMAKE=${HOLMAKE:-"Holmake"}
-    declare HOLMAKE_NOFLAGS=$(echo $HOLMAKE | awk '{print $1;}')
+    declare HOLBA_HOLMAKE=${HOLBA_HOLMAKE:-"Holmake"}
+    declare HOLMAKE_NOFLAGS=$(echo $HOLBA_HOLMAKE | awk '{print $1;}')
 
     which $HOLMAKE_NOFLAGS >/dev/null \
-        || (echo "Holmake not found. Please set a HOlMAKE env variable." && exit 1)
+        || (echo "Holmake not found. Please set a HOLBA_HOlMAKE env variable." && exit 1)
 
     dirname $(which $HOLMAKE_NOFLAGS)
 }

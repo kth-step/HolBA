@@ -9,16 +9,54 @@
 
 ## How to compile
 
-* First, run `make [main|examples|benchmarks|...]` in the root directory,
-  according to your needs (use `make show-rules` to see existing rules).
-* Then, go into the directory you want to use and run `{HOLDIR}/bin/Holmake`.
+### As bash commands
+```
+git clone https://github.com/kth-step/HolBA.git
+cd HolBA
+
+./scripts/setup/install_all.sh
+
+. ./scripts/setup/env.sh
+
+make main
+make tests
+
+cd src/examples/aes
+${HOLBA_HOLMAKE}
+```
+
+### With explanations
+* To setup all dependencies in your working directory, change to the root directory (`{HOLBA_DIR}`) and run `./scripts/setup/install_all.sh`. This downloads and builds the correct polyml and HOL4 versions in the subdirectory `{HOLBA_DIR}/opt`.
+
+* For convenience the environment should be augmented with `. ./scripts/setup/env.sh`. This allows easy calls to the build system.
+
+* To build HolBA, run `make main`. For more specific targets run `make [tests|examples|benchmarks|...]` according to your needs (use `make show-rules` to see existing rules).
+
+* For specific source directories, `cd` there and run `${HOLBA_HOLMAKE}`.
+
 * If one of the previous steps fails, try to clean your Git working directory by
   `make cleanslate` in the project root directory. **Be careful though**, this
   command is quite dangerous as it can easily eat your files (`Holmakefile`s are
   auto-generated from `Holmakefile.gen` files, so they are removed by this
   command).
 
-_Note_: You can use `make --directory=/path/to/HolBA rule`.
+* With this setup, you should run the `. ./scripts/setup/env.sh` before working with HolBA each time you open a new shell. You could also put this into `~/.bashrc`.
+
+_Note_: You can use `make --directory=${HOLBA_DIR} rule`.
+
+### Shared dependencies and `~/.bashrc`
+
+To setup dependencies and develop HolBA conveniently, you need:
+* One HolBA directory with the setup scripts. We call this `{HOLBA_DIR}`.
+* A directory where you want to install and place the shared dependencies. We call this `{HOLBA_OPT_DIR}`.
+* Add the following to your `~/.bashrc` file:
+```
+export HOLBA_DIR=/path/to/{HOLBA_DIR}
+export HOLBA_OPT_DIR=/path/to/{HOLBA_OPT_DIR}
+
+${HOLBA_DIR}/scripts/setup/install_all.sh
+. ${HOLBA_DIR}/scripts/setup/env.sh
+```
 
 
 ## Branch policy
