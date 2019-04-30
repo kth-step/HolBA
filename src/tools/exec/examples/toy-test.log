@@ -8,17 +8,17 @@ ok
 program validity...
 --------------------------------
 ok
- - 0.603 s - 
+ - 0.765 s - 
 
 typechecking...
 --------------------------------
 ok
- - 0.295 s - 
+ - 0.354 s - 
 
 state checking/generation...
 --------------------------------
 ok
- - 0.036 s - 
+ - 0.047 s - 
 
 executing...
 --------------------------------
@@ -27,15 +27,17 @@ done
 
 preprocessing starts
 done
- - 1.349 s - 
+ - 1.617 s - 
 
 execution starts
 !!!!!!!!!!!!!!!!!!!!done
 done
- - 7.425 s - 
+ - 6.823 s - 
 
+reversing observations
+done
 ok
- exec total: - 8.782 s - 
+ exec total: - 8.446 s - 
 
 
 ================================
@@ -47,9 +49,9 @@ ol = []
 
 n = 18
 
-s2 = <|bst_pc := <|bpc_label := BL_Address (Imm32 4352w); bpc_index := 3|>;
-  bst_environ :=
-    BEnv
+s2 = <|bst_pc  := <|bpc_label  :=BL_Address (Imm32 4352w); bpc_index  :=3|>;
+  bst_environ 
+    :=BEnv
       (FEMPTY |+ ("oracle",BType_Imm Bit32,SOME (BVal_Imm (Imm32 0w))) |+
        ("state.bob.step",BType_Imm Bit32,SOME (BVal_Imm (Imm32 0w))) |+
        ("state.bob.stamina",BType_Imm Bit32,SOME (BVal_Imm (Imm32 0w))) |+
@@ -57,7 +59,7 @@ s2 = <|bst_pc := <|bpc_label := BL_Address (Imm32 4352w); bpc_index := 3|>;
        ("state.alice.stamina",BType_Imm Bit32,SOME (BVal_Imm (Imm32 20w))) |+
        ("state.alice.hunger",BType_Imm Bit32,SOME (BVal_Imm (Imm32 26w))) |+
        ("state.alice.step",BType_Imm Bit32,SOME (BVal_Imm (Imm32 1w))));
-  bst_status := BST_Halted (BVal_Imm (Imm32 0w))|>
+  bst_status  :=BST_Halted (BVal_Imm (Imm32 0w))|>
 
 ================================
 done
