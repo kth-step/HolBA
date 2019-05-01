@@ -1,0 +1,19 @@
+
+minimal:     file format elf64-littleaarch64
+
+0000000000400570 <main>:
+  400570:	d10043ff 	sub	sp, sp, #0x10
+  400574:	5280a720 	mov	w0, #0x539                 	// #1337
+  400578:	b9000be0 	str	w0, [sp,#8]
+  40057c:	52800540 	mov	w0, #0x2a                  	// #42
+  400580:	b9000fe0 	str	w0, [sp,#12]
+  400584:	b9400be1 	ldr	w1, [sp,#8]
+  400588:	b9400fe0 	ldr	w0, [sp,#12]
+  40058c:	0b000021 	add	w1, w1, w0
+  400590:	b9400be2 	ldr	w2, [sp,#8]
+  400594:	b9400fe0 	ldr	w0, [sp,#12]
+  400598:	1b007c40 	mul	w0, w2, w0
+  40059c:	0b000020 	add	w0, w1, w0
+  4005a0:	910043ff 	add	sp, sp, #0x10
+  4005a4:	d65f03c0 	ret
+

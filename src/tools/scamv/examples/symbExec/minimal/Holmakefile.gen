@@ -1,0 +1,16 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   = ../../../../lifter
+
+
+# configuration
+# ----------------------------------
+HOLHEAP        = ../../HolBASymbExec-heap
+NEWHOLHEAP     = 
+
+HEAPINC_EXTRA  = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../../../../Holmakefile.inc

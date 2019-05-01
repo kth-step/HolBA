@@ -1,0 +1,9 @@
+
+asm.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <scamv_entry>:
+   0:	f9400023 	ldr	x3, [x1]
+   4:	f9400044 	ldr	x4, [x2]
