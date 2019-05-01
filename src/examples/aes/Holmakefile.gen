@@ -5,32 +5,12 @@ DEPENDENCIES   = lifter wp exec
 
 # configuration
 # ----------------------------------
-SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
+HOLHEAP        = ../../HolBA-heap
+NEWHOLHEAP     = 
 
-TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES)) \
-             $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
-
-HOLHEAP    = ../../HolBA-heap
-NEWHOLHEAP = 
-
-HEAPINC    = 
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow
 # ----------------------------------
 include ../../Holmakefile.inc
-
-
-# test recipes
-# ----------------------------------
-cfg-test.exe: cfg-test.uo 
-	$(HOLMOSMLC) -o $@ $<
-
-wp-test.exe: wp-test.uo 
-	$(HOLMOSMLC) -o $@ $<
-
-wp71-pass-test.exe: wp71-pass-test.uo 
-	$(HOLMOSMLC) -o $@ $<
-

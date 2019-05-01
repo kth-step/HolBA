@@ -5,16 +5,10 @@ DEPENDENCIES   = ../core ../theories
 
 # configuration
 # ----------------------------------
-SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
+HOLHEAP        = ../theories/HolBATheories-heap
+NEWHOLHEAP     = HolBALibs-heap
 
-TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
-
-HOLHEAP    = ../theories/HolBATheories-heap
-NEWHOLHEAP = HolBALibs-heap
-
-HEAPINC    = bir_expLib Z3_SAT_modelLib bir_exp_to_wordsLib bslSyntax
-
-SELFTEST_DEP =
+HEAPINC_EXTRA  = 
 
 
 # included lines follow

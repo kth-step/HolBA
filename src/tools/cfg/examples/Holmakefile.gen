@@ -5,25 +5,12 @@ DEPENDENCIES   = toy
 
 # configuration
 # ----------------------------------
-SMLFILES   = 
+HOLHEAP        = ../HolBACfg-heap
+NEWHOLHEAP     = 
 
-TARGETS    = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
-
-HOLHEAP    = ../HolBACfg-heap
-NEWHOLHEAP = 
-
-HEAPINC    = 
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow
 # ----------------------------------
 include ../../../Holmakefile.inc
-
-
-# test recipes
-# ----------------------------------
-toy-test.exe: toy-test.uo 
-	$(HOLMOSMLC) -o $@ $<
-

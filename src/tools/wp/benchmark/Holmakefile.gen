@@ -5,24 +5,12 @@ DEPENDENCIES   = ../../wp ../../cfg binaries
 
 # configuration
 # ----------------------------------
-SMLFILES   = 
+HOLHEAP        = ../HolBAWp-heap
+NEWHOLHEAP     = 
 
-TARGETS    = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
-
-HOLHEAP    = ../HolBAWp-heap
-NEWHOLHEAP = 
-
-HEAPINC    = 
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow
 # ----------------------------------
 include ../../../Holmakefile.inc
-
-
-# test recipes
-# ----------------------------------
-binaries-test.exe: binaries-test.uo 
-	$(HOLMOSMLC) -o $@ $<

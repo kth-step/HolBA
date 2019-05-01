@@ -5,16 +5,10 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-SMLFILES   = 
+HOLHEAP        = wp/HolBAWp-heap
+NEWHOLHEAP     = HolBATools-heap
 
-TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
-
-HOLHEAP    = wp/HolBAWp-heap
-NEWHOLHEAP = HolBATools-heap
-
-HEAPINC    = 
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow

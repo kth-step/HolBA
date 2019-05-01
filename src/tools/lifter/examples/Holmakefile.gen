@@ -5,37 +5,12 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-SMLFILES   = 
+HOLHEAP        = ../HolBALifter-heap
+NEWHOLHEAP     = 
 
-TARGETS    = $(patsubst %-test.sml,%-test.exe,$(wildcard *-test.sml))
-
-HOLHEAP    = ../HolBALifter-heap
-NEWHOLHEAP = 
-
-HEAPINC    = 
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow
 # ----------------------------------
 include ../../../Holmakefile.inc
-
-
-# test recipes
-# ----------------------------------
-hex-test.exe: hex-test.uo 
-	$(HOLMOSMLC) -o $@ $<
-
-aes-test.exe: aes-test.uo 
-	$(HOLMOSMLC) -o $@ $<
-
-aesTheory.uo: aes-test.exe 
-	./aes-test.exe
-
-gcd_code-test.exe: gcd_code-test.uo 
-	$(HOLMOSMLC) -o $@ $<
-
-gcd_codeTheory.uo: gcd_code-test.exe 
-	./gcd_code-test.exe
-

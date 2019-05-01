@@ -5,19 +5,10 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
+HOLHEAP        = 
+NEWHOLHEAP     = HolBACore-heap
 
-TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
-
-HOLHEAP    = 
-NEWHOLHEAP = HolBACore-heap
-
-HEAPINC    = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) \
-             $(patsubst %.sml,%,$(wildcard *Syntax.sml)) \
-             $(patsubst %.sml,%,$(wildcard *Simps.sml)) \
-             wordsLib
-
-SELFTEST_DEP = $(NULL) #defined but empty
+HEAPINC_EXTRA  = wordsLib
 
 
 # included lines follow

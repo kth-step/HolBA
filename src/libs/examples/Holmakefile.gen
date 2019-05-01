@@ -1,36 +1,16 @@
 # includes
 # ----------------------------------
-DEPENDENCIES =
+DEPENDENCIES   =
 
 
 # configuration
 # ----------------------------------
-SMLFILES   = 
+HOLHEAP        = ../HolBALibs-heap
+NEWHOLHEAP     = 
 
-TARGETS    = $(patsubst test-%.sml,test-%.exe,$(wildcard test-*.sml)) \
-             $(patsubst example-%.sml,example-%.exe,$(wildcard example-*.sml))
-
-HOLHEAP    = ../HolBALibs-heap
-NEWHOLHEAP = 
-
-HEAPINC    = 
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow
 # ----------------------------------
 include ../../Holmakefile.inc
-
-
-# test recipes
-# ----------------------------------
-
-example-z3-sat-model.exe: example-z3-sat-model.uo
-	$(HOLMOSMLC) -o $@ $<
-
-test-bir-to-word.exe: test-bir-to-word.uo
-	$(HOLMOSMLC) -o $@ $<
-
-test-bsl-progs.exe: test-bsl-progs.uo
-	$(HOLMOSMLC) -o $@ $<

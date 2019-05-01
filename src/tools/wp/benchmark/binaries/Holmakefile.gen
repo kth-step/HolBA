@@ -5,16 +5,10 @@ DEPENDENCIES   = ../../../wp
 
 # configuration
 # ----------------------------------
-SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
+HOLHEAP        = ../../HolBAWp-heap
+NEWHOLHEAP     = 
 
-TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
-
-HOLHEAP    = ../../HolBAWp-heap
-NEWHOLHEAP = 
-
-HEAPINC    = 
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow

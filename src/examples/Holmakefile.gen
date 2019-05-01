@@ -5,16 +5,10 @@ DEPENDENCIES   = aes
 
 # configuration
 # ----------------------------------
-SMLFILES   = 
+HOLHEAP        = 
+NEWHOLHEAP     = 
 
-TARGETS    = 
-
-HOLHEAP    = 
-NEWHOLHEAP = 
-
-HEAPINC    = 
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow

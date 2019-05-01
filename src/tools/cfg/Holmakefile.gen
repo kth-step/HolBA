@@ -5,16 +5,10 @@ DEPENDENCIES   = ../../core ../../theories
 
 # configuration
 # ----------------------------------
-SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
+HOLHEAP        = ../lifter/HolBALifter-heap
+NEWHOLHEAP     = HolBACfg-heap
 
-TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
-
-HOLHEAP    = ../lifter/HolBALifter-heap
-NEWHOLHEAP = HolBACfg-heap
-
-HEAPINC    = $(patsubst %.sml,%,$(wildcard *Lib.sml))
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow

@@ -5,16 +5,10 @@ DEPENDENCIES   = ../../core ../../theories
 
 # configuration
 # ----------------------------------
-SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
+HOLHEAP        = ../../libs/HolBALibs-heap
+NEWHOLHEAP     = HolBAExec-heap
 
-TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
-
-HOLHEAP    = ../../libs/HolBALibs-heap
-NEWHOLHEAP = HolBAExec-heap
-
-HEAPINC    = $(patsubst %.sml,%,$(wildcard *Lib.sml))
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow

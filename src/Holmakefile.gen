@@ -5,16 +5,10 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-SMLFILES   = 
+HOLHEAP        = tools/HolBATools-heap
+NEWHOLHEAP     = HolBA-heap
 
-TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
-
-HOLHEAP    = tools/HolBATools-heap
-NEWHOLHEAP = HolBA-heap
-
-HEAPINC    = 
-
-SELFTEST_DEP =
+HEAPINC_EXTRA  = 
 
 
 # included lines follow

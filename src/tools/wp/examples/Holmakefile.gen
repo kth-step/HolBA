@@ -5,29 +5,12 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-SMLFILES   = 
+HOLHEAP        = ../HolBAWp-heap
+NEWHOLHEAP     = 
 
-TARGETS    = $(patsubst test-%.sml,test-%.exe,$(wildcard test-*.sml)) \
-             $(patsubst example-%.sml,example-%.exe,$(wildcard example-*.sml))
-
-HOLHEAP    = ../HolBAWp-heap
-NEWHOLHEAP = 
-
-HEAPINC    = 
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow
 # ----------------------------------
 include ../../../Holmakefile.inc
-
-
-# test recipes
-# ----------------------------------
-test-toy.exe: test-toy.uo 
-	$(HOLMOSMLC) -o $@ $<
-
-example-toy-pass.exe: example-toy-pass.uo 
-	$(HOLMOSMLC) -o $@ $<
-

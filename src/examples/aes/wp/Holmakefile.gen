@@ -5,16 +5,10 @@ DEPENDENCIES   = ../../.. ../lifter
 
 # configuration
 # ----------------------------------
-SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
+HOLHEAP        = ../../../HolBA-heap # TODO: Use ../lifter/HolBAExamples-aes-LiftedBinaries-heap
+NEWHOLHEAP     = 
 
-TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
-
-HOLHEAP    = ../../../HolBA-heap # TODO: Use ../lifter/HolBAExamples-aes-LiftedBinaries-heap
-NEWHOLHEAP = 
-
-HEAPINC    = 
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow

@@ -5,17 +5,10 @@ DEPENDENCIES   = ../../core ../../theories
 
 # configuration
 # ----------------------------------
-SMLFILES   = $(patsubst %Script.sml,%Theory.sml,$(wildcard *.sml))
+HOLHEAP        = ../pass/HolBAPass-heap
+NEWHOLHEAP     = HolBAWp-heap
 
-TARGETS    = $(patsubst %.sml,%.uo,$(SMLFILES))
-
-HOLHEAP    = ../pass/HolBAPass-heap
-NEWHOLHEAP = HolBAWp-heap
-
-HEAPINC    = $(patsubst %Script.sml,%Theory,$(wildcard *Script.sml)) #\
-             #$(patsubst %.sml,%,$(wildcard *Lib.sml))
-
-SELFTEST_DEP = 
+HEAPINC_EXTRA  = 
 
 
 # included lines follow
