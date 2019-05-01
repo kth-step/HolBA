@@ -51,3 +51,6 @@ tags
 # opt for dependencies within
 opt
 
+# logs for general purpose logging
+logs
+

@@ -8,8 +8,8 @@ local
 in
 
   fun gcc_prefix () =
-      case OS.Process.getEnv("HOLBA_SCAMV_CROSS") of
-          NONE => raise ERR "scamv_gcc_prefix" "the environment variable HOLBA_SCAMV_CROSS is not set"
+      case OS.Process.getEnv("HOLBA_GCC_ARM8_CROSS") of
+          NONE => raise ERR "scamv_gcc_prefix" "the environment variable HOLBA_GCC_ARM8_CROSS is not set"
         | SOME p => p;
 
 

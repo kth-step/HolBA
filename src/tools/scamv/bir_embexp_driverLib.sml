@@ -9,19 +9,37 @@ struct
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
-  val scamv_basedir_ref = ref (NONE:string option);
+  val embexp_basedir_ref = ref (NONE:string option);
 
-  fun scamv_basedir_read () =
-      case OS.Process.getEnv("HOLBA_SCAMV_DIR") of
-          NONE => raise ERR "scamv_basedir" "the environment variable HOLBA_SCAMV_DIR is not set"
+  fun embexp_basedir_read () =
+      case OS.Process.getEnv("HOLBA_EMBEXP_DIR") of
+          NONE => raise ERR "embexp_basedir" "the environment variable HOLBA_EMBEXP_DIR is not set"
         | SOME p => p;
 
-  fun scamv_basedir () =
-    case !scamv_basedir_ref of
+  fun embexp_basedir () =
+    case !embexp_basedir_ref of
         NONE =>
           let
-            val dir_path = scamv_basedir_read();
-            val _ = scamv_basedir_ref := SOME dir_path;
+            val dir_path = embexp_basedir_read();
+            val _ = embexp_basedir_ref := SOME dir_path;
+          in
+            dir_path
+          end
+      | SOME p => p;
+
+  val logfile_basedir_ref = ref (NONE:string option);
+
+  fun logfile_basedir_read () =
+      case OS.Process.getEnv("HOLBA_SCAMV_LOGS") of
+          NONE => raise ERR "logfile_basedir" "the environment variable HOLBA_EMBEXP_DIR is not set"
+        | SOME p => p;
+
+  fun logfile_basedir () =
+    case !logfile_basedir_ref of
+        NONE =>
+          let
+            val dir_path = logfile_basedir_read();
+            val _ = logfile_basedir_ref := SOME dir_path;
           in
             dir_path
           end
@@ -76,7 +94,7 @@ struct
 
       val str = List.foldl (op^) "" s_assign;
 
-      val _ = write_to_file ((scamv_basedir()) ^ "/EmbExp-ProgPlatform/inc/experiment/cache_run_input_setup" ^ (Int.toString idx) ^ ".h") str;
+      val _ = write_to_file ((embexp_basedir()) ^ "/EmbExp-ProgPlatform/inc/experiment/cache_run_input_setup" ^ (Int.toString idx) ^ ".h") str;
     in
       ()
     end;
@@ -93,26 +111,26 @@ struct
   fun bir_embexp_run_cache_indistinguishability test_asm s1 s2 =
     let
       (* write the input code *)
-      val _ = write_to_file ((scamv_basedir()) ^ "/EmbExp-ProgPlatform/inc/experiment/cache_run_input.h") test_asm;
+      val _ = write_to_file ((embexp_basedir()) ^ "/EmbExp-ProgPlatform/inc/experiment/cache_run_input.h") test_asm;
 
       (* write the input state preparation code *)
       val _ = set_cache_input_setup s1 s2;
 
       (* make runlog *)
       val _ = if OS.Process.isSuccess (OS.Process.system ("make --directory=" ^
-                                                          (scamv_basedir()) ^
+                                                          (embexp_basedir()) ^
                                                           "/EmbExp-ProgPlatform runlog")) then ()
               else raise ERR "bir_embexp_run_cache_indistinguishability" "running \"make runlog\" failed somehow";
 
       (* create logs: asm/config1/config2 *)
       val date = Date.fromTimeLocal (Time.now ());
       val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S" date;
-      val logdir = (scamv_basedir()) ^ "/logs/arm8/cache2/" ^ datestr;
+      val logdir = (logfile_basedir()) ^ "/embexp/arm8/cache2/" ^ datestr;
       val _ = OS.Process.system ("mkdir -p " ^ logdir);
-      val _ = OS.Process.system ("cp " ^ ((scamv_basedir()) ^ "/EmbExp-ProgPlatform/inc/experiment/cache_run_inp*.h") ^ " " ^ (logdir ^ "/"));
+      val _ = OS.Process.system ("cp " ^ ((embexp_basedir()) ^ "/EmbExp-ProgPlatform/inc/experiment/cache_run_inp*.h") ^ " " ^ (logdir ^ "/"));
 
       (* evaluate uart.log *)
-      val file = TextIO.openIn ((scamv_basedir()) ^ "/EmbExp-ProgPlatform/temp/uart.log");
+      val file = TextIO.openIn ((embexp_basedir()) ^ "/EmbExp-ProgPlatform/temp/uart.log");
       fun allLinesRevFun acc = case TextIO.inputLine file of
 			    NONE => acc
 			  | SOME l => allLinesRevFun (l::acc);
