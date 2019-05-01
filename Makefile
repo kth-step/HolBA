@@ -34,8 +34,11 @@ rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 HOLMAKEFILE_GENS = $(call rwildcard,src/,Holmakefile.gen)
 HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
 
+SML_RUNS         = $(foreach sml,$(call rwildcard,src/,*.sml),$(sml)_run)
+
 TEST_SMLS        = $(call rwildcard,src/,selftest.sml) $(call rwildcard,src/,test-*.sml)
 TEST_EXES        = $(TEST_SMLS:.sml=.exe)
+TEST_SML_RUNS    = $(TEST_SMLS:.sml=.sml_run)
 TEST_DIRS        = $(sort $(foreach sml,$(TEST_SMLS),$(dir $(sml))))
 
 .DEFAULT_GOAL := all
@@ -66,16 +69,19 @@ core: Holmakefiles
 main: Holmakefiles
 	cd $(SRCDIR) && $(HOLBA_HOLMAKE)
 
-tests: $(TEST_DIRS)
+tests: $(TEST_DIRS) $(TEST_EXES)
 	@./scripts/run-tests.sh
 
 $(TEST_DIRS):
 	cd $@ && $(HOLBA_HOLMAKE)
 
-_run_tests: $(TEST_EXES)
+_run_tests: $(TEST_SML_RUNS)
 
-$(TEST_EXES): main
-	@/usr/bin/env HOLBA_HOLMAKE="$(HOLBA_HOLMAKE)" ./scripts/run-test.sh $(@:.exe=.sml)
+%.exe: %.sml
+	@/usr/bin/env HOLBA_HOLMAKE="$(HOLBA_HOLMAKE)" ./scripts/mk-exe.sh $(@:.exe=.sml)
+
+$(SML_RUNS): main
+	@/usr/bin/env HOLBA_HOLMAKE="$(HOLBA_HOLMAKE)" ./scripts/run-test.sh $(@:.sml_run=.sml)
 
 examples-base: main $(EXAMPLES_BASE)
 
@@ -97,7 +103,8 @@ cleanslate:
 
 .PHONY: Holmakefiles
 .PHONY: core main gendoc cleanslate
-.PHONY: tests _run_tests $(TEST_EXES) $(TEST_DIRS)
+.PHONY: $(SML_RUNS)
+.PHONY: tests _run_tests $(TEST_DIRS)
 .PHONY: examples-base examples-all $(EXAMPLES_BASE) $(EXAMPLES_ALL)
 .PHONY: benchmarks $(BENCHMARKS)
 
