@@ -13,8 +13,10 @@ ifndef HOLBA_HOLMAKE # we need a specific HOL version - see README.md
 endif
 $(info "---- HOLBA_HOLMAKE=$(HOLBA_HOLMAKE) ----")
 
+##########################################################
 
-SRCDIR     = $(CURDIR)/src
+HOLBA_DIR     = $(CURDIR)
+SRCDIR        = src
 
 EXAMPLES_BASE = $(SRCDIR)/libs/examples               \
                 $(SRCDIR)/tools/cfg/examples          \
@@ -22,24 +24,29 @@ EXAMPLES_BASE = $(SRCDIR)/libs/examples               \
                 $(SRCDIR)/tools/lifter/examples       \
                 $(SRCDIR)/tools/wp/examples
 
-EXAMPLES_ALL = $(EXAMPLES_BASE)                       \
-               $(SRCDIR)/examples
+EXAMPLES_ALL  = $(EXAMPLES_BASE)                      \
+                $(SRCDIR)/examples
 
-BENCHMARKS = $(SRCDIR)/tools/lifter/benchmark         \
-             $(SRCDIR)/tools/wp/benchmark
+BENCHMARKS    = $(SRCDIR)/tools/lifter/benchmark      \
+                $(SRCDIR)/tools/wp/benchmark
+
+##########################################################
 
 # recursive wildcard function
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
-HOLMAKEFILE_GENS = $(call rwildcard,src/,Holmakefile.gen)
+HOLMAKEFILE_GENS = $(call rwildcard,$(SRCDIR)/,Holmakefile.gen)
 HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
+HOLMAKEFILE_DIRS = $(patsubst %/,%,$(sort $(foreach file,$(HOLMAKEFILE_GENS),$(dir $(file)))))
 
-SML_RUNS         = $(foreach sml,$(call rwildcard,src/,*.sml),$(sml)_run)
+SML_RUNS         = $(foreach sml,$(call rwildcard,$(SRCDIR)/,*.sml),$(sml)_run)
 
-TEST_SMLS        = $(call rwildcard,src/,selftest.sml) $(call rwildcard,src/,test-*.sml)
+TEST_SMLS        = $(call rwildcard,$(SRCDIR)/,selftest.sml) $(call rwildcard,$(SRCDIR)/,test-*.sml)
 TEST_EXES        = $(TEST_SMLS:.sml=.exe)
 TEST_SML_RUNS    = $(TEST_SMLS:.sml=.sml_run)
-TEST_DIRS        = $(sort $(foreach sml,$(TEST_SMLS),$(dir $(sml))))
+TEST_DIRS        = $(patsubst %/,%,$(sort $(foreach sml,$(TEST_SMLS),$(dir $(sml)))))
+
+##########################################################
 
 .DEFAULT_GOAL := all
 all: show-rules
@@ -58,42 +65,46 @@ show-rules:
      - gendoc: generate the documentation\n\
      - cleanslate: removes all files that are .gignore-d under src/"
 
-%Holmakefile: %Holmakefile.gen src/Holmakefile.inc
+##########################################################
+
+%Holmakefile: %Holmakefile.gen $(SRCDIR)/Holmakefile.inc
 	@./scripts/gen_Holmakefiles.py $<
 
 Holmakefiles: $(HOLMAKEFILES)
 
-core: Holmakefiles
-	cd $(SRCDIR)/libs && $(HOLBA_HOLMAKE)
 
-main: Holmakefiles
-	cd $(SRCDIR) && $(HOLBA_HOLMAKE)
-
-tests: $(TEST_DIRS) $(TEST_EXES)
-	@./scripts/run-tests.sh
-
-$(TEST_DIRS):
+$(HOLMAKEFILE_DIRS): Holmakefiles
 	cd $@ && $(HOLBA_HOLMAKE)
 
-_run_tests: $(TEST_SML_RUNS)
 
 %.exe: %.sml
 	@/usr/bin/env HOLBA_HOLMAKE="$(HOLBA_HOLMAKE)" ./scripts/mk-exe.sh $(@:.exe=.sml)
 
-$(SML_RUNS): main
-	@/usr/bin/env HOLBA_HOLMAKE="$(HOLBA_HOLMAKE)" ./scripts/run-test.sh $(@:.sml_run=.sml)
+# workaround: this only works for tests currently
+# these dependencies enable multiple jobs
+#   (because of this and static nature of Makefile dependencies,
+#    this target has to be depndent on all test-directories for
+#    Holmake to run before)
+%.sml_run: main $(TEST_DIRS) %.exe
+	@./scripts/run-test.sh $(@:.sml_run=.exe)
+
+
+##########################################################
+
+core: $(SRCDIR)/libs
+main: $(SRCDIR)
 
 examples-base: main $(EXAMPLES_BASE)
-
 examples-all: main $(EXAMPLES_ALL)
-
-$(EXAMPLES_ALL):
-	cd $@ && $(HOLBA_HOLMAKE)
-
 benchmarks: main $(BENCHMARKS)
 
-$(BENCHMARKS):
-	cd $@ && $(HOLBA_HOLMAKE)
+
+tests: $(TEST_EXES)
+	@./scripts/run-tests.sh
+
+# this target can be made with multiple jobs
+_run_tests: $(TEST_SML_RUNS)
+
 
 gendoc:
 	cd doc/gen; ./dependencies.py
@@ -101,10 +112,17 @@ gendoc:
 cleanslate:
 	git clean -fdX src
 
+##########################################################
+
 .PHONY: Holmakefiles
+.PHONY: $(HOLMAKEFILE_DIRS)
+
+# workaround: cannot be defined phony currently
+#.PHONY: $(SML_RUNS)
+
 .PHONY: core main gendoc cleanslate
-.PHONY: $(SML_RUNS)
-.PHONY: tests _run_tests $(TEST_DIRS)
-.PHONY: examples-base examples-all $(EXAMPLES_BASE) $(EXAMPLES_ALL)
-.PHONY: benchmarks $(BENCHMARKS)
+
+.PHONY: tests _run_tests
+.PHONY: examples-base examples-all
+.PHONY: benchmarks
 
