@@ -40,7 +40,10 @@ echo
 echo "-----------------------------------------------"
 echo "---------- placing Makefile.local -------------"
 echo "-----------------------------------------------"
-. "${SETUP_DIR}/env.sh"
-echo "HOLBA_HOLMAKE=${HOLBA_HOLMAKE}" > Makefile.local
+if [ "${HOLBA_DIR}" == "$(pwd)" ]; then
+  echo "HOLBA_HOLMAKE=${HOLBA_HOLMAKE}" > Makefile.local
+else
+  echo "script is not executed from \"${HOLBA_DIR}\". not creating Makefile.local."
+fi
 echo
 

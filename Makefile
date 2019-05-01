@@ -40,10 +40,11 @@ HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
 HOLMAKEFILE_DIRS = $(patsubst %/,%,$(sort $(foreach file,$(HOLMAKEFILE_GENS),$(dir $(file)))))
 
 SML_RUNS         = $(foreach sml,$(call rwildcard,$(SRCDIR)/,*.sml),$(sml)_run)
+SML_RUNQS        = $(foreach sml,$(call rwildcard,$(SRCDIR)/,*.sml),$(sml)_runq)
 
 TEST_SMLS        = $(call rwildcard,$(SRCDIR)/,selftest.sml) $(call rwildcard,$(SRCDIR)/,test-*.sml)
 TEST_EXES        = $(TEST_SMLS:.sml=.exe)
-TEST_SML_RUNS    = $(TEST_SMLS:.sml=.sml_run)
+TEST_SML_RUNQS   = $(TEST_SMLS:.sml=.sml_runq)
 TEST_DIRS        = $(patsubst %/,%,$(sort $(foreach sml,$(TEST_SMLS),$(dir $(sml)))))
 
 ##########################################################
@@ -80,14 +81,17 @@ $(HOLMAKEFILE_DIRS): Holmakefiles
 %.exe: %.sml
 	@/usr/bin/env HOLBA_HOLMAKE="$(HOLBA_HOLMAKE)" ./scripts/mk-exe.sh $(@:.exe=.sml)
 
-# workaround: this only works for tests currently
-# these dependencies enable multiple jobs
-#   (because of this and static nature of Makefile dependencies,
-#    this target has to be depndent on all test-directories for
-#    Holmake to run before)
-%.sml_run: main $(TEST_DIRS) %.exe
+# this is a target for all sml files to run as scripts,
+# it properly prepares first
+$(SML_RUNS):
+	@make $(@:.sml_run=.exe)
+	@make $(patsubst %/,%,$(dir $@))
 	@./scripts/run-test.sh $(@:.sml_run=.exe)
 
+# this target is for quick running (no preparation,
+# for tests where preparation is done before)
+%.sml_runq:
+	@./scripts/run-test.sh $(@:.sml_runq=.exe)
 
 ##########################################################
 
@@ -99,11 +103,11 @@ examples-all: main $(EXAMPLES_ALL)
 benchmarks: main $(BENCHMARKS)
 
 
-tests: $(TEST_EXES)
+tests: $(TEST_EXES) $(TEST_DIRS)
 	@./scripts/run-tests.sh
 
-# this target can be made with multiple jobs
-_run_tests: $(TEST_SML_RUNS)
+# this target can be made with multiple jobs, the others cannot!
+_run_tests: $(TEST_SML_RUNQS)
 
 
 gendoc:
@@ -117,8 +121,10 @@ cleanslate:
 .PHONY: Holmakefiles
 .PHONY: $(HOLMAKEFILE_DIRS)
 
-# workaround: cannot be defined phony currently
-#.PHONY: $(SML_RUNS)
+.PHONY: $(SML_RUNS)
+# note: SML_RUNQS cannot be defined phony,
+# because it uses suffix rules apparently
+#.PHONY: $(SML_RUNQS) 
 
 .PHONY: core main gendoc cleanslate
 
