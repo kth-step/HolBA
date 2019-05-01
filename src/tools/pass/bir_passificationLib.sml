@@ -1,11 +1,14 @@
 structure bir_passificationLib :> bir_passificationLib =
 struct
 
+open listSyntax;
+
 (* Unverified translation of loop-free programs to SSA, passified
  * form. *)
 (* From BIR core: *)
 open bir_programSyntax bir_expSyntax bir_exp_immSyntax
      bir_valuesSyntax;
+open bir_envSyntax;
 (* From BIR lib: *)
 open bir_extra_expsTheory bir_interval_expTheory;
 open bir_extra_expsSyntax bir_interval_expSyntax;
@@ -300,7 +303,7 @@ fun passify_block_list_ssa []     = []
       let
         val (obs, label, bstmts, estmt) = dest_bir_block_list h
         val passified_bstmts =
-          map (inst [alpha |-> obs]) (passify_bstmts_ssa bstmts)
+          map (inst [(* TODO: make this "alpha" again *) (Type `:'a`) |-> obs]) (passify_bstmts_ssa bstmts)
         val passified_estmt = passify_estmt_ssa estmt
         val passified_block =
           mk_bir_block_list (obs, label, passified_bstmts,
