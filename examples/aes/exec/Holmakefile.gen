@@ -1,17 +1,16 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = 
-#../../core ../../theories
+DEPENDENCIES   = ../lifter
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../cfg/HolBATools_Cfg-heap
-NEWHOLHEAP     = HolBATools_Pass-heap
+HOLHEAP        = ../../../src/HolBA-heap
+NEWHOLHEAP     = 
 
 HEAPINC_EXTRA  = 
 
 
 # included lines follow
 # ----------------------------------
-include ../../Holmakefile.inc
+include ../../../src/Holmakefile.inc

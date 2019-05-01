@@ -1,16 +1,16 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../l3
+DEPENDENCIES   = ../theory/bir ../theory/bir-support
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../l3/HolBA_l3-heap
-NEWHOLHEAP     = HolBA_l3mod-heap
+HOLHEAP        = ../theory/HolBATheory-heap
+NEWHOLHEAP     = HolBAShared-heap
 
 HEAPINC_EXTRA  = 
 
 
 # included lines follow
 # ----------------------------------
-include ../../../../Holmakefile.inc
+include ../Holmakefile.inc

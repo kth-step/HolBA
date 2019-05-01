@@ -5,7 +5,7 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-HOLHEAP        = wp/HolBAWp-heap
+HOLHEAP        = wp/HolBATools_Wp-heap
 NEWHOLHEAP     = HolBATools-heap
 
 HEAPINC_EXTRA  = 

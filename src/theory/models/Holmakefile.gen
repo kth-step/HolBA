@@ -1,12 +1,12 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   =
+DEPENDENCIES   = 
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../HolBALibs-heap
-NEWHOLHEAP     = 
+HOLHEAP        = l3mod/HolBAModels_l3mod-heap
+NEWHOLHEAP     = HolBAModels-heap
 
 HEAPINC_EXTRA  = 
 

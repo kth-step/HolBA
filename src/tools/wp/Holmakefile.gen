@@ -1,12 +1,12 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../../core ../../theories
+DEPENDENCIES   = ../../theory/bir ../../theory/bir-support
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../pass/HolBAPass-heap
-NEWHOLHEAP     = HolBAWp-heap
+HOLHEAP        = ../pass/HolBATools_Pass-heap
+NEWHOLHEAP     = HolBATools_Wp-heap
 
 HEAPINC_EXTRA  = 
 

@@ -1,17 +1,16 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = aes
+DEPENDENCIES   = ../bir
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = 
-NEWHOLHEAP     = 
+HOLHEAP        = ../bir/HolBABir-heap
+NEWHOLHEAP     = HolBABirSupport-heap
 
 HEAPINC_EXTRA  = 
 
 
 # included lines follow
 # ----------------------------------
-include ../Holmakefile.inc
-
+include ../../Holmakefile.inc

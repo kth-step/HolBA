@@ -5,7 +5,7 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../../../lifter/HolBALifter-heap
+HOLHEAP        = ../../../lifter/HolBATools_Lifter-heap
 NEWHOLHEAP     = 
 
 HEAPINC_EXTRA  = 

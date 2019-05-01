@@ -14,7 +14,7 @@ open bir_lifting_machinesTheory
 open bir_interval_expTheory
 open bir_update_blockTheory
 open bir_program_multistep_propsTheory
-open bir_lifting_machinesLib
+
 open bir_subprogramTheory
 open bir_program_valid_stateTheory
 open bir_program_labelsTheory
@@ -25,6 +25,21 @@ open pred_setTheory
    to be corresponding to a machine instruction *)
 
 val _ = new_theory "bir_inst_lifting";
+
+
+
+(* TODO: find a better place for this. bmr_ss is now created in 3
+   places and there are probably more like this in the lifter *)
+val bmr_REWRS = (
+   (type_rws ``:('a, 'b, 'c) bir_lifting_machine_rec_t``) @
+   (type_rws ``:'a bir_machine_lifted_pc_t``) @
+   (type_rws ``:'a bir_machine_lifted_imm_t``) @
+   (type_rws ``:('a, 'b, 'c) bir_machine_lifted_mem_t``)
+)
+;
+
+val bmr_ss = rewrites bmr_REWRS
+(* TODO: end of TODO todo above*)
 
 
 (*****************************)

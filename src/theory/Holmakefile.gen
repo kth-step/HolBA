@@ -1,14 +1,14 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   =
+DEPENDENCIES   = 
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = 
-NEWHOLHEAP     = HolBACore-heap
+HOLHEAP        = tools/HolBATheory_Tools-heap
+NEWHOLHEAP     = HolBATheory-heap
 
-HEAPINC_EXTRA  = wordsLib
+HEAPINC_EXTRA  = 
 
 
 # included lines follow

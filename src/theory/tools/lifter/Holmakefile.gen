@@ -1,0 +1,22 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   = ../../bir ../../bir-support \
+                 $(HOLDIR)/examples/l3-machine-code/common \
+                 $(HOLDIR)/examples/l3-machine-code/arm8/model \
+                 $(HOLDIR)/examples/l3-machine-code/arm8/step \
+                 $(HOLDIR)/examples/l3-machine-code/m0/model \
+                 $(HOLDIR)/examples/l3-machine-code/m0/step \
+                 ../../models/l3mod
+
+
+# configuration
+# ----------------------------------
+HOLHEAP        = ../../models/HolBAModels-heap
+NEWHOLHEAP     = HolBATheory_Tools_Lifter-heap
+
+HEAPINC_EXTRA  = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../../Holmakefile.inc

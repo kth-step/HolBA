@@ -1,12 +1,13 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../../core ../../theories
+DEPENDENCIES   = 
+#../../core ../../theories
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../../libs/HolBALibs-heap
-NEWHOLHEAP     = HolBAExec-heap
+HOLHEAP        = ../../shared/HolBAShared-heap
+NEWHOLHEAP     = HolBATools_Exec-heap
 
 HEAPINC_EXTRA  = 
 

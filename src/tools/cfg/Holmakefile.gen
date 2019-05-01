@@ -1,12 +1,13 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../../core ../../theories
+DEPENDENCIES   = 
+#../../core ../../theories
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../lifter/HolBALifter-heap
-NEWHOLHEAP     = HolBACfg-heap
+HOLHEAP        = ../lifter/HolBATools_Lifter-heap
+NEWHOLHEAP     = HolBATools_Cfg-heap
 
 HEAPINC_EXTRA  = 
 

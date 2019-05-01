@@ -5,7 +5,7 @@ DEPENDENCIES   = toy
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../HolBACfg-heap
+HOLHEAP        = ../HolBATools_Cfg-heap
 NEWHOLHEAP     = 
 
 HEAPINC_EXTRA  = 

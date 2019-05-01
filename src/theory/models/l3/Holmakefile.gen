@@ -10,8 +10,8 @@ DEPENDENCIES   = \
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../../../exec/HolBAExec-heap
-NEWHOLHEAP     = HolBA_l3-heap
+HOLHEAP        = ../../bir-support/HolBABirSupport-heap
+NEWHOLHEAP     = HolBAModels_l3-heap
 
 HEAPINC_EXTRA  = $(HOLDIR)/examples/l3-machine-code/arm8/step/arm8_stepTheory \
                  $(HOLDIR)/examples/l3-machine-code/arm8/step/arm8_stepLib \
@@ -21,4 +21,4 @@ HEAPINC_EXTRA  = $(HOLDIR)/examples/l3-machine-code/arm8/step/arm8_stepTheory \
 
 # included lines follow
 # ----------------------------------
-include ../../../../Holmakefile.inc
+include ../../../Holmakefile.inc

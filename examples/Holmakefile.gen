@@ -1,11 +1,11 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = lifter wp exec
+DEPENDENCIES   = aes
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../../HolBA-heap
+HOLHEAP        = 
 NEWHOLHEAP     = 
 
 HEAPINC_EXTRA  = 
@@ -13,4 +13,5 @@ HEAPINC_EXTRA  =
 
 # included lines follow
 # ----------------------------------
-include ../../Holmakefile.inc
+include ../src/Holmakefile.inc
+

@@ -1,11 +1,11 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../../..
+DEPENDENCIES   = 
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../../../HolBA-heap
+HOLHEAP        = ../../../src/HolBA-heap
 NEWHOLHEAP     = # TODO: Create a heap with lifted binaries "HolBAExamples-aes-LiftedBinaries-heap"
 
 HEAPINC_EXTRA  = # TODO: Add lifted stuff here
@@ -13,4 +13,4 @@ HEAPINC_EXTRA  = # TODO: Add lifted stuff here
 
 # included lines follow
 # ----------------------------------
-include ../../../Holmakefile.inc
+include ../../../src/Holmakefile.inc

@@ -17,15 +17,16 @@ $(info "---- HOLBA_HOLMAKE=$(HOLBA_HOLMAKE) ----")
 
 HOLBA_DIR     = $(CURDIR)
 SRCDIR        = src
+EXAMPLESDIR   = examples
 
-EXAMPLES_BASE = $(SRCDIR)/libs/examples               \
+EXAMPLES_BASE = $(SRCDIR)/shared/examples             \
                 $(SRCDIR)/tools/cfg/examples          \
                 $(SRCDIR)/tools/exec/examples         \
                 $(SRCDIR)/tools/lifter/examples       \
                 $(SRCDIR)/tools/wp/examples
 
 EXAMPLES_ALL  = $(EXAMPLES_BASE)                      \
-                $(SRCDIR)/examples
+                $(EXAMPLESDIR)
 
 BENCHMARKS    = $(SRCDIR)/tools/lifter/benchmark      \
                 $(SRCDIR)/tools/wp/benchmark
@@ -35,7 +36,8 @@ BENCHMARKS    = $(SRCDIR)/tools/lifter/benchmark      \
 # recursive wildcard function
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
-HOLMAKEFILE_GENS = $(call rwildcard,$(SRCDIR)/,Holmakefile.gen)
+HOLMAKEFILE_GENS = $(call rwildcard,$(SRCDIR)/,Holmakefile.gen) \
+                   $(call rwildcard,$(EXAMPLESDIR)/,Holmakefile.gen)
 HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
 HOLMAKEFILE_DIRS = $(patsubst %/,%,$(sort $(foreach file,$(HOLMAKEFILE_GENS),$(dir $(file)))))
 
@@ -57,11 +59,11 @@ show-rules:
 	@echo "Available rules:\n\
      - Holmakefiles: generates \`Holmakefile\`s from \`Holmakefile.gen\` files.\n\
      - setup: creates a subdirectory opt and installs all dependencies there\n\
-     - core: builds only src/core, src/theories and src/libs\n\
+     - theory: builds only src/theory\n\
      - main: builds HolBA, but without the examples or documentation\n\
      - tests: builds HolBA and runs all the tests\n\
      - examples-base: builds HolBA and the examples for each tool\n\
-     - examples-all: builds HolBA and all the examples (base + src/examples/)\n\
+     - examples-all: builds HolBA and all the examples (base + HOLBA/examples/)\n\
      - benchmarks: builds HolBA and all the benchmarks\n\
      - gendoc: generate the documentation\n\
      - cleanslate: removes all files that are .gignore-d under src/"
@@ -95,7 +97,7 @@ $(SML_RUNS):
 
 ##########################################################
 
-core: $(SRCDIR)/libs
+theory: $(SRCDIR)/theory
 main: $(SRCDIR)
 
 examples-base: main $(EXAMPLES_BASE)

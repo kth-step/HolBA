@@ -1,16 +1,16 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../core ../theories
+DEPENDENCIES   = 
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../theories/HolBATheories-heap
-NEWHOLHEAP     = HolBALibs-heap
+HOLHEAP        = wp/HolBATheory_Tools_Wp-heap
+NEWHOLHEAP     = HolBATheory_Tools-heap
 
 HEAPINC_EXTRA  = 
 
 
 # included lines follow
 # ----------------------------------
-include ../Holmakefile.inc
+include ../../Holmakefile.inc

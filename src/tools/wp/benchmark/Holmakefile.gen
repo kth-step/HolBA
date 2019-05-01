@@ -5,7 +5,7 @@ DEPENDENCIES   = ../../wp ../../cfg binaries
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../HolBAWp-heap
+HOLHEAP        = ../HolBATools_Wp-heap
 NEWHOLHEAP     = 
 
 HEAPINC_EXTRA  = 

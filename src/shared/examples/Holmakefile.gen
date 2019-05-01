@@ -1,16 +1,16 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../core
+DEPENDENCIES   =
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../core/HolBACore-heap
-NEWHOLHEAP     = HolBATheories-heap
+HOLHEAP        = ../HolBAShared-heap
+NEWHOLHEAP     = 
 
 HEAPINC_EXTRA  = 
 
 
 # included lines follow
 # ----------------------------------
-include ../Holmakefile.inc
+include ../../Holmakefile.inc
