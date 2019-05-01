@@ -1,24 +1,30 @@
 #!/usr/bin/env bash
 
-# exit immediately if an error happens
-set -e
+OPT_DIR_PARAM=$1
 
-# make opt directory absolute and go there
-HOLBA_OPT_DIR=$(readlink -f "${HOLBA_OPT_DIR}")
-cd "${HOLBA_OPT_DIR}"
+# get setup directory path
+SETUP_DIR=$(dirname "${BASH_SOURCE[0]}")
+SETUP_DIR=$(readlink -f "${SETUP_DIR}")
+
+# find the environment variables
+. "${SETUP_DIR}/env.sh" "${OPT_DIR_PARAM}"
+
+##################################################################
+
 
 # make polyml binaries and libraries available
 POLY_DIR=${HOLBA_OPT_DIR}/polyml_5_7_1
 export PATH=${POLY_DIR}/bin:$PATH
 export LD_LIBRARY_PATH=${POLY_DIR}/lib:$LD_LIBRARY_PATH
 
-
-
 # HOL source and branch
 GIT_URL=git://github.com/kth-step/HOL.git
 GIT_BRANCH=for_holba
 
 HOL4_DIR=${HOLBA_OPT_DIR}/hol_k12_holba
+
+
+##################################################################
 
 
 # if HOL does exist, check if it is up-to-date and remove it in case it is not

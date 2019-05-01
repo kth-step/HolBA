@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 
-# exit immediately if an error happens
-set -e
+OPT_DIR_PARAM=$1
 
-# make opt directory absolute and go there
-HOLBA_OPT_DIR=$(readlink -f "${HOLBA_OPT_DIR}")
-mkdir -p "${HOLBA_OPT_DIR}"
-cd "${HOLBA_OPT_DIR}"
+# get setup directory path
+SETUP_DIR=$(dirname "${BASH_SOURCE[0]}")
+SETUP_DIR=$(readlink -f "${SETUP_DIR}")
+
+# find the environment variables
+. "${SETUP_DIR}/env.sh" "${OPT_DIR_PARAM}"
+
+##################################################################
 
 
 # based on HOL4 developers/install-poly.sh
@@ -17,6 +20,12 @@ POLY_URL=${POLY_BASE}/archive/${POLY_VERSION}.tar.gz
 
 POLY_DIR=${HOLBA_OPT_DIR}/polyml_5_7_1
 POLY_DIR_SRC=${HOLBA_OPT_DIR}/polyml_5_7_1_src
+
+
+
+
+##################################################################
+
 
 # if the output directory exists, we already have a polyml in the cache
 if [ -d "${POLY_DIR}" ]; then

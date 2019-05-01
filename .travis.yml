@@ -16,10 +16,9 @@ cache:
 
 jobs:
   include:
-    - stage: "Prepare polyml & HOL4"
+    - stage: "Prepare all cached dependencies"
       before_script:
-        - scripts/setup/install_poly.sh
-        - scripts/setup/install_hol4.sh
+        - scripts/setup/install_base.sh
       script: true
 
     - stage: "Compile and test"

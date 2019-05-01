@@ -11,8 +11,8 @@ SETUP_DIR=$(readlink -f "${SETUP_DIR}")
 
 ##################################################################
 
-
-
+# create the directory if it doesn't exist yet
+mkdir -p "${HOLBA_OPT_DIR}"
 
 
 echo "-----------------------------------------------"
@@ -20,31 +20,27 @@ echo "-- using HOLBA_OPT_DIR=${HOLBA_OPT_DIR}"
 echo "-----------------------------------------------"
 
 
-# install the base (poly, hol4 and basic setup)
-echo
-echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-echo
-
-"${SETUP_DIR}/install_base.sh"
-
-echo
-echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-echo
-
-
-# install Z3
+# install poly
 echo "-----------------------------------------------"
-echo "--------------- installing Z3 -----------------"
+echo "------------- installing polyml ---------------"
 echo "-----------------------------------------------"
-"${SETUP_DIR}/install_z3.sh"
+"${SETUP_DIR}/install_poly.sh"
 echo
 
 
-# install gcc_arm8
+# install hol4
 echo "-----------------------------------------------"
-echo "------------ installing gcc_arm8 --------------"
+echo "-------------- installing HOL4 ----------------"
 echo "-----------------------------------------------"
-"${SETUP_DIR}/install_gcc_arm8.sh"
+"${SETUP_DIR}/install_hol4.sh"
 echo
 
+
+# place Makefile.local to set Holmake
+echo "-----------------------------------------------"
+echo "---------- placing Makefile.local -------------"
+echo "-----------------------------------------------"
+. "${SETUP_DIR}/env.sh"
+echo "HOLBA_HOLMAKE=${HOLBA_HOLMAKE}" > Makefile.local
+echo
 
