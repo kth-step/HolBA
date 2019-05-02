@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# exit immediately if an error happens
+set -e
+
 OPT_DIR_PARAM=$1
 
 # get setup directory path
@@ -7,7 +10,8 @@ SETUP_DIR=$(dirname "${BASH_SOURCE[0]}")
 SETUP_DIR=$(readlink -f "${SETUP_DIR}")
 
 # find the environment variables
-. "${SETUP_DIR}/env.sh" "${OPT_DIR_PARAM}"
+set --
+source "${SETUP_DIR}/autoenv.sh" "${OPT_DIR_PARAM}"
 
 ##################################################################
 
@@ -15,9 +19,6 @@ SETUP_DIR=$(readlink -f "${SETUP_DIR}")
 
 
 
-echo "-----------------------------------------------"
-echo "-- using HOLBA_OPT_DIR=${HOLBA_OPT_DIR}"
-echo "-----------------------------------------------"
 
 
 # install the base (poly, hol4 and basic setup)

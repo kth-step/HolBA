@@ -1,23 +1,9 @@
--include Makefile.local
-ifndef HOLBA_HOLMAKE # we need a specific HOL version - see README.md
-  $(info -------- HOLBA_HOLMAKE not defined --------)
-  ifndef HOLBA_OPT_DIR
-    $(info -------- HOLBA_OPT_DIR not defined --------)
-    HOLBA_HOLMAKE = Holmake
-    ifeq ("$(shell which $(HOLBA_HOLMAKE))","")
-      $(error HOLBA_HOLMAKE undefined, HOLBA_OPT_DIR undefined, Holmake not in PATH)
-    endif
-  else
-    include scripts/setup/env.mk
-  endif
-endif
-$(info "---- HOLBA_HOLMAKE=$(HOLBA_HOLMAKE) ----")
+include scripts/setup/autoenv.mk
 
 ##########################################################
 
-HOLBA_DIR     = $(CURDIR)
 SRCDIR        = src
-EXAMPLESDIR   = examples
+EXSDIR        = examples
 
 EXAMPLES_BASE = $(SRCDIR)/shared/examples             \
                 $(SRCDIR)/tools/cfg/examples          \
@@ -26,7 +12,7 @@ EXAMPLES_BASE = $(SRCDIR)/shared/examples             \
                 $(SRCDIR)/tools/wp/examples
 
 EXAMPLES_ALL  = $(EXAMPLES_BASE)                      \
-                $(EXAMPLESDIR)
+                $(EXSDIR)
 
 BENCHMARKS    = $(SRCDIR)/tools/lifter/benchmark      \
                 $(SRCDIR)/tools/wp/benchmark
@@ -37,8 +23,11 @@ BENCHMARKS    = $(SRCDIR)/tools/lifter/benchmark      \
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
 HOLMAKEFILE_GENS = $(call rwildcard,$(SRCDIR)/,Holmakefile.gen) \
-                   $(call rwildcard,$(EXAMPLESDIR)/,Holmakefile.gen)
+                   $(call rwildcard,$(EXSDIR)/,Holmakefile.gen)
 HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
+
+
+ifdef HOLBA_HOLMAKE_AVAILABLE
 HOLMAKEFILE_DIRS = $(patsubst %/,%,$(sort $(foreach file,$(HOLMAKEFILE_GENS),$(dir $(file)))))
 
 SML_RUNS         = $(foreach sml,$(call rwildcard,$(SRCDIR)/,*.sml),$(sml)_run)
@@ -48,6 +37,7 @@ TEST_SMLS        = $(call rwildcard,$(SRCDIR)/,selftest.sml) $(call rwildcard,$(
 TEST_EXES        = $(TEST_SMLS:.sml=.exe)
 TEST_SML_RUNQS   = $(TEST_SMLS:.sml=.sml_runq)
 TEST_DIRS        = $(patsubst %/,%,$(sort $(foreach sml,$(TEST_SMLS),$(dir $(sml)))))
+endif
 
 ##########################################################
 
@@ -56,16 +46,18 @@ all: show-rules
 	@echo "Please use sub-rules to build HolBA."
 
 show-rules:
-	@echo "Available rules:\n\
-     - Holmakefiles: generates \`Holmakefile\`s from \`Holmakefile.gen\` files.\n\
-     - theory: builds only src/theory\n\
-     - main: builds HolBA, but without the examples or documentation\n\
-     - tests: builds HolBA and runs all the tests\n\
-     - examples-base: builds HolBA and the examples for each tool\n\
-     - examples-all: builds HolBA and all the examples (base + HOLBA/examples/)\n\
-     - benchmarks: builds HolBA and all the benchmarks\n\
-     - gendoc: generate the documentation\n\
-     - cleanslate: removes all files that are .gignore-d under src/"
+	@echo "Available rules:"
+	@echo "     - Holmakefiles: generates \`Holmakefile\`s from \`Holmakefile.gen\` files."
+ifdef HOLBA_HOLMAKE_AVAILABLE
+	@echo "     - theory: builds only src/theory"
+	@echo "     - main: builds HolBA, but without the examples or documentation"
+	@echo "     - tests: builds HolBA and runs all the tests"
+	@echo "     - examples-base: builds HolBA and the examples for each tool"
+	@echo "     - examples-all: builds HolBA and all the examples (base + HOLBA/examples/)"
+	@echo "     - benchmarks: builds HolBA and all the benchmarks"
+endif
+	@echo "     - gendoc: generate the documentation"
+	@echo "     - cleanslate: removes all files that are .gignore-d under src/"
 
 ##########################################################
 
@@ -96,12 +88,13 @@ $(SML_RUNS):
 
 ##########################################################
 
-theory: $(SRCDIR)/theory
-main: $(SRCDIR)
+ifdef HOLBA_HOLMAKE_AVAILABLE
+theory:        $(SRCDIR)/theory
+main:          $(SRCDIR)
 
 examples-base: main $(EXAMPLES_BASE)
-examples-all: main $(EXAMPLES_ALL)
-benchmarks: main $(BENCHMARKS)
+examples-all:  main $(EXAMPLES_ALL)
+benchmarks:    main $(BENCHMARKS)
 
 
 tests: $(TEST_EXES) $(TEST_DIRS)
@@ -109,6 +102,7 @@ tests: $(TEST_EXES) $(TEST_DIRS)
 
 # this target can be made with multiple jobs, the others cannot!
 _run_tests: $(TEST_SML_RUNQS)
+endif
 
 
 gendoc:
@@ -120,16 +114,23 @@ cleanslate:
 ##########################################################
 
 .PHONY: Holmakefiles
+ifdef HOLBA_HOLMAKE_AVAILABLE
 .PHONY: $(HOLMAKEFILE_DIRS)
 
 .PHONY: $(SML_RUNS)
+endif
 # note: SML_RUNQS cannot be defined phony,
 # because it uses suffix rules apparently
 #.PHONY: $(SML_RUNQS) 
 
-.PHONY: core main gendoc cleanslate
+ifdef HOLBA_HOLMAKE_AVAILABLE
+.PHONY: theory main
+endif
+.PHONY: gendoc cleanslate
 
+ifdef HOLBA_HOLMAKE_AVAILABLE
 .PHONY: tests _run_tests
 .PHONY: examples-base examples-all
 .PHONY: benchmarks
+endif
 

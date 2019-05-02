@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# exit immediately if an error happens
+set -e
+
 OPT_DIR_PARAM=$1
 
 # get setup directory path
@@ -7,17 +10,16 @@ SETUP_DIR=$(dirname "${BASH_SOURCE[0]}")
 SETUP_DIR=$(readlink -f "${SETUP_DIR}")
 
 # find the environment variables
-. "${SETUP_DIR}/env.sh" "${OPT_DIR_PARAM}"
+set --
+source "${SETUP_DIR}/autoenv.sh" "${OPT_DIR_PARAM}"
 
 ##################################################################
 
 # create the directory if it doesn't exist yet
 mkdir -p "${HOLBA_OPT_DIR}"
+mkdir -p "${HOLBA_SCAMV_LOGS}"
 
 
-echo "-----------------------------------------------"
-echo "-- using HOLBA_OPT_DIR=${HOLBA_OPT_DIR}"
-echo "-----------------------------------------------"
 
 
 # install poly
@@ -33,17 +35,5 @@ echo "-----------------------------------------------"
 echo "-------------- installing HOL4 ----------------"
 echo "-----------------------------------------------"
 "${SETUP_DIR}/install_hol4.sh"
-echo
-
-
-# place Makefile.local to set Holmake
-echo "-----------------------------------------------"
-echo "---------- placing Makefile.local -------------"
-echo "-----------------------------------------------"
-if [ "${HOLBA_DIR}" == "$(pwd)" ]; then
-  echo "HOLBA_HOLMAKE=${HOLBA_HOLMAKE}" > Makefile.local
-else
-  echo "script is not executed from \"${HOLBA_DIR}\". not creating Makefile.local."
-fi
 echo
 

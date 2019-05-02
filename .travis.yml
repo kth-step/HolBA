@@ -15,9 +15,12 @@ jobs:
     - stage: "Prepare all cached dependencies"
       before_script:
         - scripts/setup/install_base.sh
-      script: true
+      script:
+        - true
 
     - stage: "Compile and test"
-      script: . scripts/setup/env.sh && scripts/ci/compile.sh && scripts/ci/test.sh
+      script:
+        - scripts/ci/run_make.sh main
+        - scripts/ci/run_make.sh tests
 
 

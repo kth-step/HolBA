@@ -3,9 +3,15 @@
 # exit immediately if an error happens
 set -e
 
+MAKETARGET_PARAM=$1
+
+# find the environment variables
+set --
+source scripts/setup/autoenv.sh
+
 # compile the project
 # -------------------------------
 export HOLBA_HOLMAKE="${HOLBA_HOLMAKE} --qof"
-make main
+make ${MAKETARGET_PARAM}
 
 
