@@ -20,10 +20,16 @@ source "${SETUP_DIR}/autoenv.sh" "${OPT_DIR_PARAM}"
 # --------------------------------------------
 POLY_BASE="https://github.com/polyml/polyml"
 POLY_VERSION="v5.7.1"
+
+# if poly version is specified in the environment, use this
+if [ ! -z "${HOLBA_POLYML_VERSION}" ]; then
+  POLY_VERSION=${HOLBA_POLYML_VERSION}
+fi
+
 POLY_URL=${POLY_BASE}/archive/${POLY_VERSION}.tar.gz
 
-POLY_DIR=${HOLBA_OPT_DIR}/polyml_5_7_1
-POLY_DIR_SRC=${HOLBA_OPT_DIR}/polyml_5_7_1_src
+POLY_DIR=${HOLBA_OPT_DIR}/polyml_${POLY_VERSION}
+POLY_DIR_SRC=${HOLBA_OPT_DIR}/polyml_${POLY_VERSION}_src
 
 
 

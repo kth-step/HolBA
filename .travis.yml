@@ -7,7 +7,9 @@ notifications:
 
 language: c
 dist: xenial
-env: HOLBA_OPT_DIR=$HOME/cache
+env:
+  global:
+    - HOLBA_OPT_DIR=$HOME/cache
 
 cache:
   directories:
@@ -15,15 +17,23 @@ cache:
 
 jobs:
   include:
-    - stage: "Prepare all cached dependencies"
+    - &cache-prep
+      stage: "Prepare all cached dependencies"
       before_script:
         - scripts/setup/install_base.sh
       script:
         - true
 
-    - stage: "Compile and test"
+    - <<: *cache-prep
+      env: HOLBA_POLYML_VERSION="v5.8"
+
+    - &compile-test
+      stage: "Compile and test"
       script:
         - scripts/ci/run_make.sh main
         - scripts/ci/run_make.sh tests
+
+    - <<: *compile-test
+      env: HOLBA_POLYML_VERSION="v5.8"
 
 

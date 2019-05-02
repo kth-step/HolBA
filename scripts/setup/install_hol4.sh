@@ -17,7 +17,14 @@ source "${SETUP_DIR}/autoenv.sh" "${OPT_DIR_PARAM}"
 
 
 # make polyml binaries and libraries available
-POLY_DIR=${HOLBA_OPT_DIR}/polyml_5_7_1
+POLY_VERSION="v5.7.1"
+
+# if poly version is specified in the environment, use this
+if [ ! -z "${HOLBA_POLYML_VERSION}" ]; then
+  POLY_VERSION=${HOLBA_POLYML_VERSION}
+fi
+
+POLY_DIR=${HOLBA_OPT_DIR}/polyml_${POLY_VERSION}
 export PATH=${POLY_DIR}/bin:$PATH
 export LD_LIBRARY_PATH=${POLY_DIR}/lib:$LD_LIBRARY_PATH
 
