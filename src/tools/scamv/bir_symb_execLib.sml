@@ -1,6 +1,4 @@
-
-
-structure bir_symb_execLib = 
+structure bir_symb_execLib :> bir_symb_execLib = 
 struct
 
 local

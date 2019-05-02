@@ -8,8 +8,10 @@
 app load ["bir_symb_envTheory", "bir_symb_execTheory", "stringLib"]
 *)
 
-structure bir_symb_init_envLib = 
+structure bir_symb_init_envLib :> bir_symb_init_envLib = 
 struct
+
+local
 
 open HolKernel;
 open bir_expTheory;
@@ -21,6 +23,8 @@ open finite_mapTheory;
 open bitstringTheory;
 open stringLib;
 open bir_exp_memTheory;
+
+in
 
 (* Initialize all the Registers / Variables we have *)
 
@@ -119,4 +123,7 @@ fun init_env () =
         end
       end
     end;
-end
+
+end (* local *)
+
+end (* struct *)
