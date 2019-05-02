@@ -58,7 +58,6 @@ all: show-rules
 show-rules:
 	@echo "Available rules:\n\
      - Holmakefiles: generates \`Holmakefile\`s from \`Holmakefile.gen\` files.\n\
-     - setup: creates a subdirectory opt and installs all dependencies there\n\
      - theory: builds only src/theory\n\
      - main: builds HolBA, but without the examples or documentation\n\
      - tests: builds HolBA and runs all the tests\n\
