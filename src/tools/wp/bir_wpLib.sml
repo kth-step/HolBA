@@ -243,15 +243,7 @@ struct
   fun bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm) prog_l_thm
 				 ((program, post, ls), (label)) defs =
     let
-    (* val wps_id_idx = !bir_wp_comp_wps_iter_step2_cntr
-     * val _ = (bir_wp_comp_wps_iter_step2_cntr :=
-     *           (!bir_wp_comp_wps_iter_step2_cntr) + 1)
-     * val wps_id_suffix = Int.toString wps_id_idx *)
-
-      val wps_id_suffix =
-        (term_to_string o snd o gen_dest_Imm o dest_BL_Address o
-           lbl_strip_comment
-        ) label
+      val wps_id_suffix = label_to_wps_id_suffix label
 
       (* TODO: Constant, move out of function. *)
       val var_wps1 =
