@@ -20,15 +20,15 @@ uint64_t gcd(uint64_t x, uint64_t y) {
   return x;
 }
 
+
 int64_t sqrt(int64_t x) {
   uint64_t y = 0;
-  uint64_t sq = 0;
-  while (sq < x) {
+  while ((y+1)*(y+1) < x) {
     y += 1;
-    sq = y * y;
   }
   return y;
 }
+
 
 uint64_t modular_pow(uint64_t base, uint64_t exponent, uint64_t modulus) {
   if (modulus == 1) return 0;
