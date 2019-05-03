@@ -178,16 +178,18 @@ for feature branches):
 - `tools/scamv`:
   * experimental and under development
 
-### Dependency graph and PolyML heaps (outdated)
+### Dependency graph
 
 ![Dependency diagram](./doc/diagrams/dependencies.png?raw=true)
 
 Key:
  - Blue edges represent dependencies between HolBA modules.
- - Green edges represent the chain of PolyML heaps. See HOL's Description Manual
-   for more information about PolyML heaps.
 
-_Note_:
+### PolyML heaps
+
+- The heap chain is no longer represented in the diagram. You can see it by
+  reading the `Holmakefil.gen` files.
+- See HOL's Description Manual for more information about PolyML heaps.
 - You can temporarily change the heap chain order if you don't need a dependency
   in order to reduce build times.
 
