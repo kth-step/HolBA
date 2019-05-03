@@ -33,7 +33,8 @@ HOLMAKEFILE_DIRS = $(patsubst %/,%,$(sort $(foreach file,$(HOLMAKEFILE_GENS),$(d
 SML_RUNS         = $(foreach sml,$(call rwildcard,$(SRCDIR)/,*.sml),$(sml)_run)
 SML_RUNQS        = $(foreach sml,$(call rwildcard,$(SRCDIR)/,*.sml),$(sml)_runq)
 
-TEST_SMLS        = $(call rwildcard,$(SRCDIR)/,selftest.sml) $(call rwildcard,$(SRCDIR)/,test-*.sml)
+TEST_SMLS        = $(call rwildcard,$(SRCDIR)/,selftest.sml) $(call rwildcard,$(SRCDIR)/,test-*.sml) \
+                   $(call rwildcard,$(EXSDIR)/,selftest.sml) $(call rwildcard,$(EXSDIR)/,test-*.sml)
 TEST_EXES        = $(TEST_SMLS:.sml=.exe)
 TEST_SML_RUNQS   = $(TEST_SMLS:.sml=.sml_runq)
 TEST_DIRS        = $(patsubst %/,%,$(sort $(foreach sml,$(TEST_SMLS),$(dir $(sml)))))
