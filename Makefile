@@ -43,21 +43,21 @@ endif
 
 .DEFAULT_GOAL := all
 all: show-rules
-	@echo "Please use sub-rules to build HolBA."
+	@echo 'Please use sub-rules to build HolBA.'
 
 show-rules:
-	@echo "Available rules:"
-	@echo "     - Holmakefiles: generates \`Holmakefile\`s from \`Holmakefile.gen\` files."
+	@echo 'Available rules:'
+	@echo '     - Holmakefiles: generates `Holmakefile`s from `Holmakefile.gen` files.'
 ifdef HOLBA_HOLMAKE_AVAILABLE
-	@echo "     - theory: builds only src/theory"
-	@echo "     - main: builds HolBA, but without the examples or documentation"
-	@echo "     - tests: builds HolBA and runs all the tests"
-	@echo "     - examples-base: builds HolBA and the examples for each tool"
-	@echo "     - examples-all: builds HolBA and all the examples (base + HOLBA/examples/)"
-	@echo "     - benchmarks: builds HolBA and all the benchmarks"
+	@echo '     - theory: builds only src/theory/'
+	@echo '     - main: builds HolBA, but without the examples or documentation'
+	@echo '     - tests: builds HolBA and runs all the tests'
+	@echo '     - examples-base: builds HolBA and the examples for each tool'
+	@echo '     - examples-all: builds HolBA and all the examples (base + HolBA/examples/)'
+	@echo '     - benchmarks: builds HolBA and all the benchmarks'
 endif
-	@echo "     - gendoc: generate the documentation"
-	@echo "     - cleanslate: removes all files that are .gignore-d under src/"
+	@echo '     - gendoc: generate the documentation'
+	@echo '     - cleanslate: removes all files that are .gitignore-d under src/ and examples/'
 
 ##########################################################
 
@@ -110,27 +110,26 @@ gendoc:
 
 cleanslate:
 	git clean -fdX src
+	git clean -fdX examples
 
 ##########################################################
 
 .PHONY: Holmakefiles
+
 ifdef HOLBA_HOLMAKE_AVAILABLE
 .PHONY: $(HOLMAKEFILE_DIRS)
-
 .PHONY: $(SML_RUNS)
 endif
+
 # note: SML_RUNQS cannot be defined phony,
 # because it uses suffix rules apparently
 #.PHONY: $(SML_RUNQS) 
 
 ifdef HOLBA_HOLMAKE_AVAILABLE
 .PHONY: theory main
-endif
-.PHONY: gendoc cleanslate
-
-ifdef HOLBA_HOLMAKE_AVAILABLE
 .PHONY: tests _run_tests
 .PHONY: examples-base examples-all
 .PHONY: benchmarks
 endif
 
+.PHONY: gendoc cleanslate
