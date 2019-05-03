@@ -13,7 +13,7 @@
 The directory scripts/setup contain a relatively flexible set of shell scripts to help with the initial setup. The most simple setup can be done with a few shell commands and require no manual dealing with environment variables. More sophisticated setups allow convenient sharing of the required software packages and setup environment variables in a custom shell script.
 
 ### Simple setup
-```
+```bash
 git clone https://github.com/kth-step/HolBA.git
 cd HolBA
 
@@ -62,13 +62,13 @@ For this you need to:
 1. Prepare a HolBA directory with the setup scripts: `{HOLBA_DIR}`.
 1. Select a directory where you want to install and place the shared dependencies: `{HOLBA_OPT_DIR}`.
 1. Run these shell commands:
-```
+```bash
 cd /path/to/{HOLBA_DIR}
 ./scripts/setup/install_base.sh
 ./scripts/setup/install_mk_env.sh
 ```
 1. Add the following to your `~/.bashrc` file:
-```
+```bash
 export HOLBA_OPT_DIR=/path/to/{HOLBA_OPT_DIR}
 
 source ${HOLBA_OPT_DIR}/env.sh
