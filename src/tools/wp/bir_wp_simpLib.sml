@@ -25,6 +25,11 @@ struct
 
   open bir_wp_simpTheory;
 
+  (* NOTE by Thomas: I added this function as a quick&dirty trace method. *)
+  (*fun trace msg = print msg;*)
+  fun trace msg = ();
+  val printRuleName = false; (* Moved here for convenience *)
+
   in (* local *)
 
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_wp_simp"
@@ -90,14 +95,6 @@ struct
       end;
 
 
-
-
-
-
-
-
-
-
   val get_concl_lhs = fst o dest_eq o concl;
   val get_concl_rhs = snd o dest_eq o concl;
 
@@ -107,62 +104,72 @@ struct
   val bir_type_option_pair_ss = rewrites (type_rws ``:bir_type_t option # bir_type_t option``);
 
 
-  val helper_thm = prove (``!x s t. t UNION (x INSERT s) = if x IN t then t UNION s else (x INSERT t) UNION s``, METIS_TAC [pred_setTheory.INSERT_UNION, pred_setTheory.UNION_COMM, pred_setTheory.INSERT_UNION_EQ]);
+  val pred_set_helper_thm = prove (
+    ``!x s t. t UNION (x INSERT s) = if x IN t then t UNION s else (x INSERT t) UNION s``,
+    METIS_TAC [
+      pred_setTheory.INSERT_UNION,
+      pred_setTheory.UNION_COMM,
+      pred_setTheory.INSERT_UNION_EQ
+    ]);
 
 
+  fun well_typed_conv varexps_thms =
+    let
+      (* conversion for welltyped-check *)
+      val simp_conv_for_bir_var_set_is_well_typed0 = SIMP_CONV
+        (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss)
+        ([bir_vars_of_exp_def,
+          bir_exp_subst1_USED_VARS,
+          bir_exp_and_def,
+          bir_exp_imp_def,
+          bir_exp_or_def,
+          bir_exp_not_def,
+          bir_exp_varsubst_USED_VARS,
+          bir_exp_varsubst_introduced_vars_REWRS,
+          finite_mapTheory.FDOM_FEMPTY,
+          finite_mapTheory.FDOM_FUPDATE,
+          bir_exp_varsubst1_def
+        ]@varexps_thms);
 
+      (* TODO: this has to be touched again, new expressions may contain varsubst *)
+      val simp_conv_for_bir_var_set_is_well_typed1 = SIMP_CONV
+      (std_ss++stringSimps.STRING_ss++string_ss++char_ss) [];
+      val simp_conv_for_bir_var_set_is_well_typed2 = computeLib.RESTR_EVAL_CONV [``bir_var_set_is_well_typed``];
+      val simp_conv_for_bir_var_set_is_well_typed3 = SIMP_CONV pure_ss [GSYM listTheory.LIST_TO_SET,
+                                                                        bir_var_set_is_well_typed_REWRS];
 
-
-
-
-
-
-
-
-
-      fun well_typed_conv varexps_thms =
-        let
-(* conversion for welltyped-check *)
-          val simp_conv_for_bir_var_set_is_well_typed0 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_exp_varsubst_USED_VARS, bir_exp_varsubst_introduced_vars_REWRS, finite_mapTheory.FDOM_FEMPTY, finite_mapTheory.FDOM_FUPDATE, bir_exp_varsubst1_def]@varexps_thms);
-          val simp_conv_for_bir_var_set_is_well_typed1 = SIMP_CONV (std_ss++stringSimps.STRING_ss++string_ss++char_ss) []; (* TODO: this has to be touched again, new expressions may contain varsubst *)
-          val simp_conv_for_bir_var_set_is_well_typed2 = computeLib.RESTR_EVAL_CONV [``bir_var_set_is_well_typed``];
-          val simp_conv_for_bir_var_set_is_well_typed3 = SIMP_CONV pure_ss [GSYM listTheory.LIST_TO_SET, bir_var_set_is_well_typed_REWRS];
-(*      val simp_conv_for_bir_var_set_is_well_typed4 = SIMP_CONV list_ss [bir_var_name_def, bir_var_type_def];*)
-
-          val simp_conv_for_bir_var_set_is_well_typed =
-                     simp_conv_for_bir_var_set_is_well_typed0 THENC
-                     simp_conv_for_bir_var_set_is_well_typed1 THENC
-                     (
-                    (RAND_CONV (REWRITE_CONV [pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY])) THENC
-
-                    REPEATC (
-                      (fn x => REWRITE_CONV [Once helper_thm] x) THENC
-                      ((RATOR_CONV o LAND_CONV) ((REWRITE_CONV [pred_setTheory.IN_INSERT]) THENC
-                                                 (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [pred_setTheory.NOT_IN_EMPTY])))
-                    ) THENC
-
-                    REWRITE_CONV [pred_setTheory.UNION_EMPTY]
-                     ) THENC
-                     (REWRITE_CONV [GSYM listTheory.LIST_TO_SET]) THENC
-                     (REPEATC (
-                        (fn x => REWRITE_CONV [Once bir_var_set_is_well_typed_REWRS] x) THENC
-                        (LAND_CONV EVAL) THENC
-                        (REWRITE_CONV [])
-                     )) THENC
-                     (REWRITE_CONV [bir_var_set_is_well_typed_REWRS]);
-        in
-          simp_conv_for_bir_var_set_is_well_typed
-        end;
-
-
-
-
-
-
-
-
-
-
+      val simp_conv_for_bir_var_set_is_well_typed =
+        simp_conv_for_bir_var_set_is_well_typed0
+        THENC
+        simp_conv_for_bir_var_set_is_well_typed1
+        THENC (
+          (RAND_CONV (REWRITE_CONV [pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY]))
+          THENC
+          REPEATC (
+            (fn x => REWRITE_CONV [Once pred_set_helper_thm] x)
+            THENC (
+              (RATOR_CONV o LAND_CONV) (
+                (REWRITE_CONV [pred_setTheory.IN_INSERT])
+                THENC
+                (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss)
+                  [pred_setTheory.NOT_IN_EMPTY])
+              )
+            )
+          ) THENC
+          REWRITE_CONV [pred_setTheory.UNION_EMPTY]
+        ) THENC
+        (REWRITE_CONV [GSYM listTheory.LIST_TO_SET])
+        THENC
+        REPEATC (
+          (fn x => REWRITE_CONV [Once bir_var_set_is_well_typed_REWRS] x)
+          THENC
+          (LAND_CONV EVAL) THENC
+          (REWRITE_CONV [])
+        ) THENC
+        (REWRITE_CONV [bir_var_set_is_well_typed_REWRS]);
+    in
+      simp_conv_for_bir_var_set_is_well_typed
+    end;
 
   fun preproc_vars_thm useEval acc def_thm =
     let
@@ -171,19 +178,42 @@ struct
       val thm2 = SIMP_CONV (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([bir_exp_and_def, bir_exp_imp_def, bir_exp_or_def, bir_exp_not_def, bir_vars_of_exp_def, bir_exp_subst1_USED_VARS, pred_setTheory.IN_INSERT]@acc) ((snd o dest_eq o concl) thm1)
         handle UNCHANGED => REFL ((snd o dest_eq o concl) thm1);
 
-      val conv3 = if (useEval) then (
-                    EVAL
-                  ) else (
-                    (RAND_CONV (REWRITE_CONV [pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY])) THENC
+      fun trace_CONV msg = (trace msg; ALL_CONV)
 
-                    REPEATC (
-                      (fn x => REWRITE_CONV [Once helper_thm] x) THENC
-                      ((RATOR_CONV o LAND_CONV) ((REWRITE_CONV [pred_setTheory.IN_INSERT]) THENC
-                                                 (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss) [pred_setTheory.NOT_IN_EMPTY])))
-                    ) THENC
+      (*
+      val conv3 = if (useEval) then EVAL else (
+        (trace_CONV "C0") THENC
+        (RAND_CONV (REWRITE_CONV [
+          pred_setTheory.INSERT_UNION_EQ,
+          pred_setTheory.UNION_EMPTY
+        ]))
+        THENC (trace_CONV "C1")
+        THENC
+        REPEATC (
+          (trace_CONV "C2") THENC
+          (fn x => REWRITE_CONV [Once pred_set_helper_thm] x)
+          THENC (trace_CONV "C3")
+          THENC (
+            (RATOR_CONV o LAND_CONV) (
+              (REWRITE_CONV [pred_setTheory.IN_INSERT])
+              THENC (trace_CONV "C4")
+              THENC
+              (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss)
+                [pred_setTheory.NOT_IN_EMPTY]
+              )
+            ) (* RATOR o LAND *)
+          ) (* THENC *)
+        ) (* REPEATC *)
+        THENC (trace_CONV "C5")
+        THENC
+        REWRITE_CONV [pred_setTheory.UNION_EMPTY]
+        THENC (trace_CONV "C6")
+      )
+      *)
 
-                    REWRITE_CONV [pred_setTheory.UNION_EMPTY]
-                  )
+      (* The non-EVAL conv3 is 10x slower and EVAL works just well. *)
+      val conv3 = EVAL;
+
       val thm3 = conv3 ((snd o dest_eq o concl) thm2)
         handle UNCHANGED => REFL ((snd o dest_eq o concl) thm2);
 
@@ -193,10 +223,14 @@ struct
     end;
 
 (* val acc = []; *)
+  val print_preproc_vars = false;
   fun preproc_vars acc [] = acc
     | preproc_vars acc (lbl_str::lbl_list) =
         let
-          val _ = print ((Int.toString (length acc)) ^ "        \r");
+          val _ = if print_preproc_vars then
+            print ((Int.toString (length acc)) ^ "        \r")
+          else ();
+
           val def_thm = lookup_def (bir_wpLib.wps_id_prefix ^ lbl_str);
 (*
           val vars_def_var_id = "bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str ^ "_vars";
@@ -232,7 +266,6 @@ for debugging:
 *)
 
   val enableCheats = false;
-  val printRuleName = false;
   fun enterRule rulename =
               if (printRuleName) then (
                 print ("entr " ^ rulename ^ "\r\n" )
@@ -421,7 +454,7 @@ for debugging:
 
       val (term_vs, term_e) = dest_bir_exp_varsubst term;
       val const_n = (fst o dest_const) term_e;
-      val _ = print ("\r\n" ^ const_n ^ "\r\n");
+      val _ = trace ("\r\n" ^ const_n ^ "\r\n");
 
 (* bir_wp_comp_wps_iter_step2_wp_0x4008C0w *)
       val _ = if (false andalso (const_n = "bir_wp_comp_wps_iter_step2_wp_0x400970w")) then (
@@ -1156,3 +1189,4 @@ val goalterm = (snd o dest_eq o concl) simp_thm;
 end (* local *)
 
 end (* bir_wp_simpLib *)
+
