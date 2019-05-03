@@ -18,13 +18,16 @@ trap cleanup EXIT
 function print_report {
     declare SUCCESSFUL=$(                                 \
         grep "== Test successful:" "$TEST_LOG_FILE"       \
-        | sed -r 's/== Test successful: (\S+) ==/\1/')
+        | sed -r 's/== Test successful: (\S+) ==/\1/'     \
+        | sort)
     declare FAILED=$(                                     \
         grep "== Test failed:" "$TEST_LOG_FILE"           \
-        | sed -r 's/== Test failed: (\S+) ==/\1/')
+        | sed -r 's/== Test failed: (\S+) ==/\1/'         \
+        | sort)
     declare MAKE_FAILED=$(                                           \
         grep -R "recipe for target .* failed" "$TEST_LOG_FILE"       \
-        | cut -d"'" -f2)
+        | cut -d"'" -f2                                              \
+        | sort)
 
     declare N_SUCCESSFUL=$(printf '%s' "$SUCCESSFUL" | grep -c '')
     declare N_FAILED=$(printf '%s' "$FAILED" | grep -c '')
