@@ -21,6 +21,7 @@ jobs:
       stage: "Prepare all cached dependencies"
       before_script:
         - scripts/setup/install_base.sh
+        - scripts/setup/install_z3.sh
       script:
         - true
 
