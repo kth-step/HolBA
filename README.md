@@ -114,25 +114,23 @@ for feature branches):
 
 ```
 ├─ doc
-└─ src
-   ├─ core: core BIR language
-   ├─ libs: general BIR libraries, used by tools
-   │  └─ examples: Examples showcasing the use of libs/ libraries.
-   ├─ theories: various supporting theories
-   ├─ tools
-   │  ├─ cfg: Control Flow Graph utilities
-   │  │  └─ examples: CFG-related small examples
-   │  ├─ exec: concrete execution
-   │  │  └─ examples: concrete execution-related small examples
-   │  ├─ lifter: proof-producing binary lifter
-   │  │  ├─ benchmark
-   │  │  └─ examples: lifter-related small examples
-   │  ├─ pass: Passification utility
-   │  │  └─ examples: Passification-related small examples
-   │  └─ wp: weakest precondition propagation
-   │     ├─ benchmark
-   │     └─ examples: WP-related small examples
-   └─ examples: to showcase HolBA features
+├─ src
+│  ├─ theory
+│  │  ├─ bir: core BIR language
+│  │  ├─ bir-support: various supporting theories for bir
+│  │  ├─ models: various machine models
+│  │  └─ tools: theories used by the tool libraries in src/tools
+│  │     ├─ ...
+│  │     ...
+│  ├─ shared: general BIR libraries, used by libraries in tools
+│  └─ tools
+│     ├─ cfg: Control Flow Graph utilities
+│     ├─ exec: concrete execution
+│     ├─ lifter: proof-producing binary lifter
+│     ├─ pass: Passification utility
+│     ├─ wp: weakest precondition propagation
+│     └─ scamv: abstract side channel model validation framework
+└──── examples: to showcase HolBA
 ```
 
 ### Tools status:
@@ -143,13 +141,13 @@ for feature branches):
   * GraphViz exporter working
 - `tools/exec`:
   * proof-producing
-  * unstable BIR evaluation utilities
+  * unstable BIR evaluation utilities (no clear interface yet)
   * quite easy to use
 - `tools/lifter`:
-  * merged in `master` => very stable
+  * very stable
   * proof-producing
   * widely used in examples
-  * supports: ARMv8, Cortex-M0
+  * supports: ARMv8, Cortex-M0, Cortex-M0 with clock cycke counter
 - `tools/wp`:
   * proof-producing
   * experimental implementation
@@ -158,8 +156,10 @@ for feature branches):
 - `tools/pass`:
   * non proof-producing
   * experimental passification transformation to SSA
+- `tools/scamv`:
+  * experimental and under development
 
-### Dependency graph and PolyML heaps
+### Dependency graph and PolyML heaps (outdated)
 
 ![Dependency diagram](./doc/diagrams/dependencies.png?raw=true)
 
