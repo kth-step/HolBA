@@ -1,6 +1,9 @@
 structure bir_wpLib =
 struct
 
+  val debug_trace = ref (1: int)
+  val _ = register_trace ("bir_wpLib.DEBUG_LEVEL", debug_trace, 2)
+
   local
 
   (* For compilation *)
