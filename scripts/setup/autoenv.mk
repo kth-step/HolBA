@@ -30,7 +30,11 @@ endif
 # check whether HOLBA_HOLMAKE is usable
 HOLBA_HOLMAKE_AVAILABLE =
 ifeq ("$(shell which $(HOLBA_HOLMAKE))","")
-  $(info !!! HOLBA_HOLMAKE undefined, HOLBA_OPT_DIR undefined, no directory HOLBA/opt, Holmake not in PATH)
+  $(info !!! WARNING)
+  $(info !!! - HOLBA_HOLMAKE undefined,)
+  $(info !!! - nothing in HOLBA_OPT_DIR,)
+  $(info !!! - nothing in HOLBA/opt, and)
+  $(info !!! - Holmake not in PATH)
   $(info ---------------------------------)
   $(info -\|/- Holmake not available -\|/-)
   $(info ---------------------------------)
