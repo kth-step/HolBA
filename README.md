@@ -8,6 +8,7 @@
 - Z3 v4.8.4
 
 
+
 ## How to setup and compile
 
 The directory scripts/setup contain a relatively flexible set of shell scripts to help with the initial setup. The most simple setup can be done with a few shell commands and require no manual dealing with environment variables. More sophisticated setups allow convenient sharing of the required software packages and setup environment variables in a custom shell script.
@@ -78,56 +79,6 @@ source ${HOLBA_OPT_DIR}/env.sh
 Notice that this sequence is exemplary and it is possible to selectively run the `install_*.sh` scripts for the components that are desired. The script `${HOLBA_OPT_DIR}/env.sh` is generated and contains all variables for components which can be found in `${HOLBA_OPT_DIR}` or are available in the shell when `install_mk_env.sh` runs.
 
 
-## Branch policy
-
-### tags
-
-tags should have as many **completed features** as possible:
- - no cheat
- - must correctly compile
- - self tests must succeed
- - code should be tested
-
-Follow these instructions whenever you merge to master:
-  - `grep` for "cheat"
-  - check that the `README` is up to date (especially tool status)
-  - find a reviewer for your Pull Request
-
-### `master` branch
-
-`master` is the branch where every feature is available, but not necessarily finalized:
-  - Can cheat, but has to be avoided
-  - Code should not be be commented out
-  - **Holmake must work**
-  - bug-fixes are ok
-  - 1 review is needed in order to merge into `master`
-
-However, **no development happens on this branch**, but rather on separate
-feature branches.
-
-**In order to prevent mayhem**, define good interfaces for your code, so that
-development won't break existing code.
-
-### Feature branches
-
-Every "somewhat" working tool should be available in the `master` branch, but new
-features or any development must go on new branches prefixed with `dev_`.
- - branch names must be short and explicit (prefer explicit over short)
- - every feature branch should involve small developments
- - rebase feature branches on `master` **often**, by using `git rebase` or `git merge`
- - **merge feature branches on `master` often**: work on small features
-
-Some rules for feature branches:
- - commits in a feature branch must compile, unless explicitly stated in commit
-   message (with the prefix `[WIP] ...` for instance)
- - further subbranch to do implementation experiments (keep them small)
-
-If you want to violate the rules for temporary development or experiments (only
-for feature branches):
-  1. Fork
-  2. Do a good mess
-  3. Merge in feature branch after history rewrite
-
 
 ## Folders and organization
 
@@ -193,9 +144,15 @@ Key:
 - You can temporarily change the heap chain order if you don't need a dependency
   in order to reduce build times.
 
-## Coding style
 
-* HOL source code
-  - Spaces, no tabs
-  - No unicode
-  - `snake_case` (e.g. `bir_number_of_mem_splits_def`)
+
+## References
+
+* A. Lindner, R. Guanciale and R. Metere, **"TrABin : Trustworthy analyses of binaries"**, Science of Computer Programming, vol. 174, p. 72-89, 2019. [Link](https://doi.org/10.1016/j.scico.2019.01.001). _(the proof-producing binary analysis framework with weakest preconditions in HOL4)_
+
+* D. Lundberg, **"Provably Sound and Secure Automatic Proving and Generation of Verification Conditions"**, Master Thesis, 2018. [Link](http://urn.kb.se/resolve?urn=urn%3Anbn%3Ase%3Akth%3Adiva-239441).
+
+* R. Metere, A. Lindner and R. Guanciale, **"Sound Transpilation from Binary to Machine-Independent Code"**, in 20th Brazilian Symposium on Formal Methods, p. 197-214, 2017. [Link](https://link.springer.com/chapter/10.1007/978-3-319-70848-5_13). _(formalization of intermediate language and proof-producing lifter in HOL4)_
+
+
+
