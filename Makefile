@@ -69,7 +69,7 @@ Holmakefiles: $(HOLMAKEFILES)
 
 
 $(HOLMAKEFILE_DIRS): Holmakefiles
-	cd $@ && $(HOLBA_HOLMAKE)
+	cd $@ && $(HOLBA_HOLMAKE) $(HOLBA_HOLMAKE_OPTS)
 
 
 %.exe: %.sml

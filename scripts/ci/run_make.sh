@@ -11,7 +11,7 @@ source scripts/setup/autoenv.sh
 
 # compile the project
 # -------------------------------
-export HOLBA_HOLMAKE="${HOLBA_HOLMAKE} --qof"
+export HOLBA_HOLMAKE_OPTS="--qof"
 make ${MAKETARGET_PARAM}
 
 
