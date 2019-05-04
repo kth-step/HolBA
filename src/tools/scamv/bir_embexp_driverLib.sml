@@ -116,8 +116,14 @@ struct
       (* write the input state preparation code *)
       val _ = set_cache_input_setup s1 s2;
 
+      (* set embexp compilation environment EMBEXP_CROSS, EMBEXP_GDB *)
+      val eeenv_str = case OS.Process.getEnv("HOLBA_GCC_ARM8_CROSS") of
+                          NONE => ""
+                        | SOME p => "EMBEXP_CROSS=" ^ p ^ " " ^ "EMBEXP_GDB=" ^ p ^ "gdb";
+
       (* make runlog *)
-      val _ = if OS.Process.isSuccess (OS.Process.system ("make --directory=" ^
+      val _ = if OS.Process.isSuccess (OS.Process.system (eeenv_str ^ " " ^
+                                                          "make --directory=" ^
                                                           (embexp_basedir()) ^
                                                           "/EmbExp-ProgPlatform runlog")) then ()
               else raise ERR "bir_embexp_run_cache_indistinguishability" "running \"make runlog\" failed somehow";
@@ -138,7 +144,7 @@ struct
       val _    = TextIO.closeIn file;
 
       (* skip until init complete *)
-      fun skipUntilInit [] = raise ERR "bir_embexp_run_cache_distinguishability" "init never completes"
+      fun skipUntilInit [] = raise ERR "bir_embexp_run_cache_distinguishability" "init never completed"
 	| skipUntilInit (x::l) = if x = "Init complete.\r\n" then (x::l)
                                  else skipUntilInit l;
       val uart_output_strs = skipUntilInit uart_output_strs;
