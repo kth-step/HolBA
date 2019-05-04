@@ -75,7 +75,7 @@ $(HOLMAKEFILE_DIRS): Holmakefiles
 	cd $@ && $(HOLBA_HOLMAKE) $(HOLBA_HOLMAKE_OPTS)
 
 
-%.exe: %.sml
+%.exe: %.sml Holmakefiles
 	@/usr/bin/env HOLBA_HOLMAKE="$(HOLBA_HOLMAKE)" ./scripts/mk-exe.sh $(@:.exe=.sml)
 
 # this is a target for all sml files to run as scripts,
