@@ -1,5 +1,8 @@
 include scripts/setup/autoenv.mk
 
+# set make's shell to bash
+SHELL := /bin/bash
+
 ##########################################################
 
 SRCDIR        = src
@@ -77,13 +80,15 @@ $(HOLMAKEFILE_DIRS): Holmakefiles
 
 # this is a target for all sml files to run as scripts,
 # it properly prepares first
+# it also tries to find the undefined environment variables
 $(SML_RUNS):
-	@make $(@:.sml_run=.exe)
 	@make $(patsubst %/,%,$(dir $@))
-	@./scripts/run-test.sh $(@:.sml_run=.exe)
+	@make $(@:.sml_run=.exe)
+	@source ./scripts/setup/autoenv.sh && ./scripts/run-test.sh $(@:.sml_run=.exe)
 
-# this target is for quick running (no preparation,
-# for tests where preparation is done before)
+# this target is for quick running, mainly for the run-tests.sh,
+# (no preparation, it is for tests where preparation is
+#  done before and autoenv.sh has been sources)
 %.sml_runq:
 	@./scripts/run-test.sh $(@:.sml_runq=.exe)
 
@@ -99,7 +104,7 @@ benchmarks:    main $(BENCHMARKS)
 
 
 tests: $(TEST_EXES) $(TEST_DIRS)
-	@./scripts/run-tests.sh
+	@source ./scripts/setup/autoenv.sh && ./scripts/run-tests.sh
 
 # this target can be made with multiple jobs, the others cannot!
 _run_tests: $(TEST_SML_RUNQS)
