@@ -28,8 +28,8 @@ POLY_DIR=${HOLBA_OPT_DIR}/polyml_${POLY_VERSION}
 export PATH=${POLY_DIR}/bin:$PATH
 export LD_LIBRARY_PATH=${POLY_DIR}/lib:$LD_LIBRARY_PATH
 
-# HOL source and branch
-GIT_URL=git://github.com/kth-step/HOL.git
+# HOL4 source and branch
+GIT_URL=https://github.com/kth-step/HOL.git
 GIT_BRANCH=for_holba
 
 HOL4_DIR=${HOLBA_OPT_DIR}/hol_k12_holba
