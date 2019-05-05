@@ -100,6 +100,13 @@ if [ -z "${HOLBA_Z3_DIR}" ]; then
   if [ -d "${Z3_DIR}/bin/python" ]; then
     print_export_msg "Exporting HOLBA_Z3_DIR"
     export HOLBA_Z3_DIR=${Z3_DIR}
+  else
+    # try the folder name for the version compiled from source
+    Z3_DIR=${HOLBA_OPT_DIR}/z3_4.8.4
+    if [ -d "${Z3_DIR}/bin/python" ]; then
+      print_export_msg "Exporting HOLBA_Z3_DIR"
+      export HOLBA_Z3_DIR=${Z3_DIR}
+    fi
   fi
 fi
 echo "Using HOLBA_Z3_DIR=${HOLBA_Z3_DIR}"
