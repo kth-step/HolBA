@@ -27,11 +27,39 @@ fi
 # find HolBA dir for this script
 #####################################################
 
+function is_holba {
+  head -n1 "$1/README.md" 2> /dev/null | grep -c 'HolBA'
+}
 
-if [ -z "${HOLBA_DIR}" ]; then
-  HOLBA_DIR=${SETUP_DIR}/../..
-  HOLBA_DIR=$(readlink -f "${HOLBA_DIR}")
-fi
+function find_holba_dir_or_die {
+  if (( $(is_holba "$HOLBA_DIR") )); then
+    #trace "Found HolBA: $HOLBA_DIR"
+    echo "$HOLBA_DIR"
+    return
+  fi
+
+  declare DIRNAME_0=$(dirname $(readlink -f $0))
+  declare SOURCE_DIR=$(readlink -f "${BASH_SOURCE[0]}")
+
+  declare -a CANDIDATES=(
+    "$SOURCE_DIR/../.."
+    "$DIRNAME_0"
+    "$DIRNAME_0/.."
+    "$DIRNAME_0/../.."
+  )
+  for d in "${CANDIDATES[@]}"; do
+    if (( $(is_holba "$d") )); then
+      #trace "Found HolBA: $d"
+      echo "$(readlink -f "$d")"
+      return
+    fi
+  done
+
+  echo "I couldn't locate HolBA. Please set \$HOLBA_DIR."
+  exit 1
+}
+
+HOLBA_DIR="$(find_holba_dir_or_die)"
 
 if [[ ! -d "${HOLBA_DIR}/scripts/setup" ]]; then
   echo "ERROR: HOLBA_DIR not found (tried $HOLBA_DIR)"
