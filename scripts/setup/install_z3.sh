@@ -32,7 +32,7 @@ Z3_DIR=${HOLBA_OPT_DIR}/z3-4.8.4.d6df51951f4c
 
 
 # if the output directory exists, we already have a z3 in the cache
-if [ -d "${Z3_DIR}" ]; then
+if [[ -d "${Z3_DIR}" ]]; then
   echo "z3 is already available in the cache, exiting."
   exit 0
 else

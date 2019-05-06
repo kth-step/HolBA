@@ -22,7 +22,7 @@ POLY_BASE="https://github.com/polyml/polyml"
 POLY_VERSION="v5.7.1"
 
 # if poly version is specified in the environment, use this
-if [ ! -z "${HOLBA_POLYML_VERSION}" ]; then
+if [[ ! -z "${HOLBA_POLYML_VERSION}" ]]; then
   POLY_VERSION=${HOLBA_POLYML_VERSION}
 fi
 
@@ -38,7 +38,7 @@ POLY_DIR_SRC=${HOLBA_OPT_DIR}/polyml_${POLY_VERSION}_src
 
 
 # if the output directory exists, we already have a polyml in the cache
-if [ -d "${POLY_DIR}" ]; then
+if [[ -d "${POLY_DIR}" ]]; then
   echo "polyml is already available in the cache, exiting."
   exit 0
 else

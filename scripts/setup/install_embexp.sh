@@ -26,7 +26,7 @@ EMBEXP_DIR=${HOLBA_OPT_DIR}/embexp
 
 
 # if the output directory exists, we already have a embexp in the cache
-if [ -d "${EMBEXP_DIR}" ]; then
+if [[ -d "${EMBEXP_DIR}" ]]; then
   echo "embexp is already available in the cache, exiting."
   exit 0
 else

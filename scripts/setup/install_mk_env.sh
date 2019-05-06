@@ -17,7 +17,7 @@ source "${SETUP_DIR}/autoenv.sh"
 
 # set output file param if it is unset
 OUTPUT_FILE=${OUTPUT_FILE_PARAM}
-if [ -z "${OUTPUT_FILE}" ]; then
+if [[ -z "${OUTPUT_FILE}" ]]; then
   OUTPUT_FILE=${HOLBA_OPT_DIR}/env.sh
 fi
 echo "Output file: ${OUTPUT_FILE}"
@@ -41,7 +41,7 @@ OUTPUT="#!/usr/bin/env bash\n"
 for var in "${vararr[@]}"
 do
   var_val=$(printenv ${var} | cat)
-  if [ ! -z "${var_val}" ]; then
+  if [[ ! -z "${var_val}" ]]; then
     printf -v var_pad %${PAD_LEN}.${PAD_LEN}s "${var}"
     OUTPUT="${OUTPUT}\nexport ${var_pad}=${var_val}"
     echo "Exporting ${var}"

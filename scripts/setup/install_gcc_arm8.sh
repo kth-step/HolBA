@@ -32,7 +32,7 @@ GCC_DIR=${HOLBA_OPT_DIR}/gcc-arm8-8.2-2018.08-aarch64-elf
 
 
 # if the output directory exists, we already have a gcc in the cache
-if [ -d "${GCC_DIR}" ]; then
+if [[ -d "${GCC_DIR}" ]]; then
   echo "gcc_arm8 is already available in the cache, exiting."
   exit 0
 else
