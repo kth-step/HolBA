@@ -2005,7 +2005,7 @@ val bir_is_lifted_prog_MULTI_STEP_EXEC = store_thm ("bir_is_lifted_prog_MULTI_ST
             (case bs'.bst_status of
               | BST_Running =>
                   (?li. MEM (BL_Address li) (bir_labels_of_program p) /\
-                        (bs.bst_pc = bir_block_pc (BL_Address li)))
+                        (bs'.bst_pc = bir_block_pc (BL_Address li)))
               | BST_JumpOutside ll =>
                   ~(MEM ll (bir_labels_of_program p)) /\
                   (IS_BL_Address ll)
@@ -2048,19 +2048,25 @@ FULL_SIMP_TAC std_ss [] >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
 
 Cases_on `bir_state_is_terminated bs'` >- (
-  ASM_SIMP_TAC (list_ss++bir_TYPES_ss) [bir_exec_to_addr_label_n_REWR_TERMINATED,
-    FUNPOW_OPT_compute, bir_block_pc_11] >>
+  ASM_SIMP_TAC (list_ss++bir_TYPES_ss)
+               [bir_exec_to_addr_label_n_REWR_TERMINATED,
+                FUNPOW_OPT_compute, bir_block_pc_11 (* Does nothing? *)] >>
   Q.PAT_X_ASSUM `bmr_rel r bs' ms'` MP_TAC >>
   Cases_on `r.bmr_pc` >>
-  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bmr_rel_def, bir_machine_lifted_pc_def] >>
-  REPEAT STRIP_TAC >> ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [IS_BL_Address_def] >>
+  ASM_SIMP_TAC (std_ss++bir_TYPES_ss)
+               [bmr_rel_def, bir_machine_lifted_pc_def] >>
+  REPEAT STRIP_TAC >| [
+    FULL_SIMP_TAC std_ss [bir_state_is_terminated_def],
 
-  `bir_exec_step_n p bs (SUC d) = (lo,SUC d,bs')` suffices_by METIS_TAC[
-    bir_program_terminationTheory.bir_exec_step_n_status_jumped] >>
-  MATCH_MP_TAC bir_exec_steps_GEN_TO_bir_exec_step_n >>
-  FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_def, bir_exec_to_labels_def,
-    bir_exec_to_labels_n_def] >>
-  METIS_TAC[]
+    ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [IS_BL_Address_def] >>
+    `bir_exec_step_n p bs (SUC d) = (lo,SUC d,bs')` suffices_by
+      METIS_TAC [bir_program_terminationTheory.bir_exec_step_n_status_jumped] >>
+    MATCH_MP_TAC bir_exec_steps_GEN_TO_bir_exec_step_n >>
+    FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_def,
+                          bir_exec_to_labels_def,
+                          bir_exec_to_labels_n_def] >>
+    METIS_TAC[]
+  ]
 ) >>
 
 `?li.
@@ -2070,8 +2076,10 @@ Cases_on `bir_state_is_terminated bs'` >- (
   Q.PAT_X_ASSUM `bmr_rel r bs' ms'` MP_TAC >>
   Cases_on `r.bmr_pc` >>
   FULL_SIMP_TAC std_ss [bir_state_is_terminated_def] >>
-  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bmr_rel_def, bir_machine_lifted_pc_def,
-    bir_state_is_terminated_def, bir_block_pc_11] >>
+  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bmr_rel_def,
+                                       bir_machine_lifted_pc_def,
+                                       bir_state_is_terminated_def,
+                                       bir_block_pc_11] >>
   `bir_is_valid_pc p bs'.bst_pc` suffices_by METIS_TAC [bir_is_valid_pc_block_pc] >>
 
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_n_def, bir_exec_to_addr_label_def,
@@ -2087,7 +2095,8 @@ STRIP_TAC >>
 rename1 `(1:num) + c'` >>
 Q.SUBGOAL_THEN `1 + c' = SUC c'` SUBST1_TAC >- DECIDE_TAC >>
 ASM_SIMP_TAC std_ss [FUNPOW_OPT_REWRS] >>
-FULL_SIMP_TAC std_ss [bmr_ms_mem_unchanged_def]);
+FULL_SIMP_TAC std_ss [bmr_ms_mem_unchanged_def]
+);
 
 
 (* ----------------------*)
