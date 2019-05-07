@@ -3,7 +3,7 @@
 OPT_DIR_PARAM=$1
 
 # get setup directory path
-SETUP_DIR=$(dirname "${BASH_SOURCE[0]}")
+SETUP_DIR=$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")
 SETUP_DIR=$(readlink -f "${SETUP_DIR}")
 
 
@@ -27,14 +27,29 @@ fi
 # find HolBA dir for this script
 #####################################################
 
-
-if [ -z "${HOLBA_DIR}" ]; then
+if [[ -z "${HOLBA_DIR}" ]]; then
   HOLBA_DIR=${SETUP_DIR}/../..
   HOLBA_DIR=$(readlink -f "${HOLBA_DIR}")
 fi
 
-if [[ ! -d "${HOLBA_DIR}/scripts/setup" ]]; then
-  echo "ERROR: HOLBA_DIR not found (tried $HOLBA_DIR)"
+function is_holba {
+  # Apparently not a good practice (https://stackoverflow.com/a/43840545)
+  # but this enables to easily "echo then return $FALSE"
+  local FALSE="1"
+
+  [[ -d "$1/scripts/setup" ]] \
+      || { echo "bad scripts dir" > /dev/stderr; return $FALSE; }
+  [[ "$(head -n1 "$1/README.md" 2> /dev/null | grep -c '# HolBA')" -eq 1 ]] \
+      || { echo "bad README.md" > /dev/stderr; return $FALSE; }
+  local REMOTE_REGEX='github[.]com[:/]kth-step/HolBA'
+  [[ "$(cd "$1" && git remote -v | grep -c $REMOTE_REGEX)" -gt 0 ]] \
+      || { echo "missing Git remote" > /dev/stderr; return $FALSE; }
+
+  true
+}
+
+if ! is_holba "${HOLBA_DIR}"; then
+  echo "ERROR: HOLBA_DIR not found or incorrect (tried: '${HOLBA_DIR}')"
   return 2
 fi
 
