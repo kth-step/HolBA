@@ -196,8 +196,18 @@ struct
   val bprog = mk_BirProgram
     handle e => raise wrap_exn "bprog" e
   fun bprog_list obs_ty bl_list =
-    (curry2 mk_BirProgram_list)
-      obs_ty (List.map (uncurry3 ((curry4 mk_bir_block_list) obs_ty)) bl_list)
+    let
+      (* Instantiate the observation type for all statements *)
+      val bl_list_obs_ty = List.map
+        (fn (a, l_stmts, b) => (a, List.map (inst [alpha |-> obs_ty]) l_stmts, b))
+        bl_list
+      (* list of terms to term of list *)
+      val list_tm = List.map
+        (uncurry3 ((curry4 mk_bir_block_list) obs_ty))
+        bl_list_obs_ty
+    in
+      mk_BirProgram_list (obs_ty, list_tm)
+  end
     handle e => raise wrap_exn "bprog_list" e
 
   (****************************************************************************)
