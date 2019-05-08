@@ -129,8 +129,8 @@ struct
       val no_declare_conv = [bir_declare_free_prog_exec_def,
                              bir_isnot_declare_stmt_def]
 
-      fun wrap_exn_ exn term message = wrap_exn ("bir_wp_comp_wps_iter_step0_init::"
-        ^ message ^ ": \n" ^ (Hol_pp.term_to_string term) ^ "\n") exn
+      fun wrap_exn_ exn term message = wrap_exn
+        (message ^ ": \n" ^ (Hol_pp.term_to_string term) ^ "\n") exn
       val concl_tm = (snd o dest_eq o concl)
 
       (* TODO: Create bir_is_bool_expSyntax for the below *)
@@ -160,7 +160,8 @@ struct
       val thm = GENL [var_l, var_wps, var_wps1] thm;
     in
       thm
-    end;
+    end
+      handle e => raise wrap_exn "bir_wp_comp_wps_iter_step0_init" e;
 
   (* Include current label in reasoning *)
   fun bir_wp_comp_wps_iter_step1 label prog_thm (program, post, ls)
@@ -302,7 +303,8 @@ struct
       val wps1_bool_sound_thm = MP thm wps1_thm
     in
       (wps1, wps1_bool_sound_thm)
-    end;
+    end
+      handle e => raise wrap_exn "bir_wp_comp_wps_iter_step2" e;
 
   (*
   (* helper for simple traversal in recursive procedure *)
@@ -331,7 +333,8 @@ struct
       (k)::(List.filter (fn k1 => not (cmp_label k1 k))
 			(bir_wp_fmap_to_dom_list fmap1)
 	   )
-    end;
+    end
+      handle e => raise wrap_exn "bir_wp_fmap_to_dom_list" e;
 
   fun bir_wp_init_rec_proc_jobs prog_term wps_term =
     let
@@ -346,7 +349,8 @@ struct
       val blstodo = List.filter blstodofilter blocks
     in
       (wpsdom, blstodo)
-    end;
+    end
+      handle e => raise wrap_exn "bir_wp_init_rec_proc_jobs" e;
 
   (* Recursive procedure for traversing the control flow graph *)
   fun bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm),
@@ -373,8 +377,7 @@ struct
 	          ((is_lbl_in_wps o dest_BLE_Label o #3 o
                     dest_BStmt_CJmp) end_statement)
 	  else
-	    raise ERR "bir_wp_comp_wps"
-                      "unhandled end_statement type."
+	    raise ERR "bir_wp_comp_wps" "unhandled end_statement type."
 	end) blstodo
     in
       case block of
@@ -457,7 +460,8 @@ struct
           in
             (wps, wps_bool_sound_thm)
           end
-    end;
+    end
+      handle e => raise wrap_exn "bir_wp_comp_wps" e;
 
   end (* local *)
 
