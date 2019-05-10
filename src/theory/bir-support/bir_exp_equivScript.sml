@@ -245,4 +245,50 @@ METIS_TAC [bir_disj_equiv, bir_not_equiv, bir_is_bool_exp_env_def,
            bir_vars_init_not]
 );
 
+(* Equivalence of BIR equality with HOL equality. *)
+val bir_is_imm_exp_def =
+  Define `bir_is_imm_exp e =
+  (?it. type_of_bir_exp e = SOME (BType_Imm it))
+`;
+val bir_eval_imm = prove(
+  ``!env ex.
+    bir_env_vars_are_initialised env (bir_vars_of_exp ex) ==>
+    bir_is_imm_exp ex ==>
+    (?imm. bir_eval_exp ex env = BVal_Imm imm)``,
+
+METIS_TAC [bir_is_imm_exp_def, type_of_bir_exp_THM_with_init_vars,
+           type_of_bir_val_EQ_ELIMS]
+);
+val bir_equal_equiv = store_thm("bir_equal_equiv",
+  ``!ex1 ex2 env.
+    bir_env_vars_are_initialised env (bir_vars_of_exp ex1) ==>
+    bir_env_vars_are_initialised env (bir_vars_of_exp ex2) ==>
+    bir_is_imm_exp ex1 ==>
+    bir_is_imm_exp ex2 ==>
+    (type_of_bir_exp ex1 = type_of_bir_exp ex2) ==>
+    ((bir_eval_exp 
+       (BExp_BinPred BIExp_Equal ex1 ex2) env = bir_val_true
+     ) <=> (
+      (bir_eval_exp ex1 env) =
+        (bir_eval_exp ex2 env)
+     )
+    )``,
+
+REPEAT STRIP_TAC >>
+IMP_RES_TAC bir_eval_imm >>
+FULL_SIMP_TAC (bool_ss++holBACore_ss) [bir_val_true_def,
+                                       bool2b_def,
+                                       bool2w_def] >>
+Cases_on `imm' = imm` >| [
+  FULL_SIMP_TAC (bool_ss++holBACore_ss) [bir_bin_pred_Equal_REWR],
+
+  Cases_on `type_of_bir_imm imm' <> type_of_bir_imm imm` >| [
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [],
+ 
+    FULL_SIMP_TAC (bool_ss++holBACore_ss++wordsLib.WORD_ss
+                   ++wordsLib.WORD_BIT_EQ_ss) [bir_bin_pred_Equal_REWR]
+  ]
+]
+);
+
 val _ = export_theory();
