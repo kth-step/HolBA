@@ -39,7 +39,9 @@ val bir_list_of_types = [
 ];
 
 
-val bir_TYPES_ss = rewrites (flatten (map type_rws bir_list_of_types))
+val bir_TYPES_thms = (flatten (map type_rws bir_list_of_types));
+
+val bir_TYPES_ss = rewrites bir_TYPES_thms;
 
 val bir_SIMPLE_REWRS_imm = rewrites [
   type_of_bir_imm_def,
