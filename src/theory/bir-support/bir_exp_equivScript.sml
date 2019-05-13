@@ -63,7 +63,7 @@ EQ_TAC >| [
 );
 
 (* A BIR disjunction implies the equivalent HOL disjunction. *)
-val bir_disj_impl = store_thm("bir_disj_impl",
+val bir_or_impl = store_thm("bir_or_impl",
   ``!env ex1 ex2.
       ((bir_eval_exp (BExp_BinExp BIExp_Or ex1 ex2) env =
         bir_val_true) ==>
@@ -131,7 +131,7 @@ IMP_RES_TAC bir_bool_values >> (
 
 (* If the BIR negation of a value evaluates to BIR True, then said
  * value itself must evaluate to BIR False. *)
-val bir_neg_val_true = store_thm("bir_neg_val_true",
+val bir_not_val_true = store_thm("bir_not_val_true",
   ``!env ex.
       (bir_eval_exp (BExp_UnaryExp BIExp_Not ex) env =
         bir_val_true) <=>
@@ -175,7 +175,7 @@ blastLib.FULL_BBLAST_TAC
 
 (* BIR disjunction is equivalent to HOL disjunction provided the
  * variables are initialised and the subexpressions are Boolean. *)
-val bir_disj_equiv = store_thm("bir_disj_equiv",
+val bir_or_equiv = store_thm("bir_or_equiv",
   ``!env ex1 ex2.
     bir_is_bool_exp_env env ex1 ==>
     bir_is_bool_exp_env env ex2 ==>
@@ -240,7 +240,7 @@ val bir_impl_equiv = store_thm("bir_impl_equiv",
     )
   ``,
 
-METIS_TAC [bir_disj_equiv, bir_not_equiv, bir_is_bool_exp_env_def,
+METIS_TAC [bir_or_equiv, bir_not_equiv, bir_is_bool_exp_env_def,
            bir_is_bool_exp_not,
            bir_vars_init_not]
 );

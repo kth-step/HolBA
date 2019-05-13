@@ -246,7 +246,7 @@ PAT_X_ASSUM ``bir_is_bool_exp_env s.bst_environ ex``
               (HO_MATCH_MP bir_bool_values thm)
             ) >>
 REV_FULL_SIMP_TAC std_ss [] >>
-FULL_SIMP_TAC std_ss [bir_neg_val_true, bir_exec_stmtB_def,
+FULL_SIMP_TAC std_ss [bir_not_val_true, bir_exec_stmtB_def,
                       bir_exec_stmt_assume_def,
                       bir_dest_bool_val_TF, bir_val_TF_dist] >>
 Cases_on `s` >> Cases_on `s'` >>
