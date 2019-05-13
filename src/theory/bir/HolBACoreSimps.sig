@@ -2,6 +2,9 @@ signature HolBACoreSimps =
 sig
    include Abbrev
 
+   (* a list over rewrite theorems for all HolBA BIR types *)
+   val bir_TYPES_thms : thm list;
+
    (* Rewrite rules for all the types defined as part of the HolBIR formalisation. *)
    val bir_TYPES_ss : simpLib.ssfrag;
 
