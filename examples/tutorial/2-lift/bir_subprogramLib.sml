@@ -7,6 +7,8 @@ struct
     open wordsSyntax;
 
   in
+ 
+    val ERR = mk_HOL_ERR "bir_subprogramLib"
 
     (* TODO: Copied from bslSyntax (not in bslSyntax.sig). This should
      * really be placed in bir_programlabelsSyntax.  *)
@@ -77,7 +79,19 @@ struct
 
     in
       fun extract_subprogram prog a1 a2 =
-	find_subprogram_start ((snd o dest_BirProgram_list) prog) a1 a2
+        let
+          val (obs_ty, prog_list_tm) = dest_BirProgram_list prog
+	  val subprog_tm_opt =
+            find_subprogram_start prog_list_tm a1 a2
+        in
+          mk_BirProgram_list (obs_ty, valOf subprog_tm_opt)
+        end handle Option => raise ERR "extract_subprogram"
+              ("The provided addresses "^
+               "0x"^(Int.fmt StringCvt.HEX a1)^
+               "0x"^(Int.fmt StringCvt.HEX a2)^
+               "do not match any subprogram. Please double-check "^
+               "these addresses with the .elf.da file of the "^
+               "lifted program.");
     end;
 
   end
