@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open tutorial_liftTheory;
-open tutorialWPLib;
+open bir_subprogramLib;
 
 val _ = new_theory "tutorial_wp";
 
