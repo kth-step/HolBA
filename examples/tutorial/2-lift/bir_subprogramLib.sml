@@ -1,16 +1,14 @@
-structure tutorialWPLib =
+structure bir_subprogramLib =
 struct
 
   local
-    open examplesBinaryTheory;
-
     open bir_programSyntax;
     open bir_immSyntax;
     open wordsSyntax;
 
   in
 
-    (* TODO: Copied from bslSyntax (not in .sig). This should
+    (* TODO: Copied from bslSyntax (not in bslSyntax.sig). This should
      * really be placed in bir_programlabelsSyntax.  *)
     local
       open bir_program_labelsTheory
@@ -24,6 +22,29 @@ struct
 	     is_BL_Address_HC) = syntax_fns2 "BL_Address_HC"
     end
 
+    (* DESCRIPTION: Function extracting subrograms from BirProgram
+     * terms.
+     * 
+     * USAGE: Look at the .elf.da file. Observe the memory
+     * addresses in the leftmost column. Pick out the first
+     * address in the function you want to analyse, and then the
+     * last address.
+     *
+     * EXAMPLE: 
+     * Get a term containing a lifted program:
+    
+       val (_, bir_prog) =
+         dest_comb
+           (concl examplesBinaryTheory.examples_arm8_program_THM);
+     
+     * This should extract the SQRT function
+     * (adjust addresses as needed):
+
+       val sqrt_prog_tm =
+         extract_subprogram bir_prog 0x400250 0x400294;
+
+     *
+     * *)
     local
       fun address_of_block h =
 	let
@@ -58,18 +79,6 @@ struct
       fun extract_subprogram prog a1 a2 =
 	find_subprogram_start ((snd o dest_BirProgram_list) prog) a1 a2
     end;
-
-    (* Look at the .elf.da file. Observe the memory addresses in the
-     * leftmost column. Pick out the first address in the function
-     * you want to analyse, and then the last address. *)
-
-    (* This is how you get the term containing the lifted program:
-     * *)
-    val (_, bir_prog) = dest_comb (concl examples_arm8_program_THM);
-
-    (* Test: Finding SQRT function: *)
-    val sqrt_prog_tm =
-      extract_subprogram bir_prog 0x400250 0x400294;
 
   end
 

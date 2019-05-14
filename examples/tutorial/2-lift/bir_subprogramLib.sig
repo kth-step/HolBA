@@ -1,4 +1,4 @@
-signature bir_verificationLib =
+signature bir_subprogramLib =
 sig
    include Abbrev
 
