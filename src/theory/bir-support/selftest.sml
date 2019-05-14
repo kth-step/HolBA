@@ -54,7 +54,7 @@ val progvars_expected = ``
   {BVar "R0" (BType_Imm Bit64);
    BVar "Mem" (BType_Mem Bit64 Bit8)}``;
 
-val progvars_val = (rhs o concl o ((SIMP_CONV (pure_ss++vars_of_prog_ss) []) THENC EVAL)) ``bir_vars_of_program ^prog``;
+val progvars_val = (rhs o concl o ((SIMP_CONV (pure_ss++VARS_OF_PROG_ss) []) THENC EVAL)) ``bir_vars_of_program ^prog``;
 
 val _ = if progvars_expected = progvars_val then () else
         raise Fail "Incorrect result for variables of program.";
