@@ -19,8 +19,8 @@ val aux_thms = [LIST_TO_SET, combinTheory.K_THM];
 val pred_set_thms = [IMAGE_INSERT, IMAGE_EMPTY, BIGUNION_INSERT, BIGUNION_EMPTY, UNION_EMPTY, INSERT_UNION_EQ];
 
 
-val stmts_of_prog_ss = rewrites (bir_TYPES_thms@bir_stmts_of_prog_thms@aux_thms@pred_set_thms);
-val vars_of_prog_ss = rewrites (bir_TYPES_thms@[bir_vars_of_program_ALT_DEF]@bir_vars_of_exp_thms@
+val STMTS_OF_PROG_ss = rewrites (bir_TYPES_thms@bir_stmts_of_prog_thms@aux_thms@pred_set_thms);
+val VARS_OF_PROG_ss = rewrites (bir_TYPES_thms@[bir_vars_of_program_ALT_DEF]@bir_vars_of_exp_thms@
                                 bir_vars_of_stmt_thms@bir_stmts_of_prog_thms@aux_thms@pred_set_thms);
 
 
