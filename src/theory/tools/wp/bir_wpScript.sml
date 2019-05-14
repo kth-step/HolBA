@@ -246,7 +246,7 @@ PAT_X_ASSUM ``bir_is_bool_exp_env s.bst_environ ex``
               (HO_MATCH_MP bir_bool_values thm)
             ) >>
 REV_FULL_SIMP_TAC std_ss [] >>
-FULL_SIMP_TAC std_ss [bir_not_val_true, bir_exec_stmtB_def,
+FULL_SIMP_TAC std_ss [bir_neg_val_true, bir_exec_stmtB_def,
                       bir_exec_stmt_assume_def,
                       bir_dest_bool_val_TF, bir_val_TF_dist] >>
 Cases_on `s` >> Cases_on `s'` >>
@@ -1276,14 +1276,16 @@ val bir_exec_to_labels_triple_def = Define `
     (bir_eval_exp pre (s.bst_environ) = bir_val_true) ==>
     ((bir_exec_to_labels ls p s) = r) ==>
     (?l1 c1 c2 s'.
+      (r = BER_Ended l1 c1 c2 s') /\
       (
-        (r = BER_Ended l1 c1 c2 s') /\
-        (s'.bst_status = BST_Running) /\
-        bir_is_bool_exp_env s'.bst_environ post /\
-        (bir_eval_exp post (s'.bst_environ) = bir_val_true) /\
-        ((s'.bst_pc.bpc_index = 0) /\ (s'.bst_pc.bpc_label IN ls))
-      ) \/ (
-        (s'.bst_status = BST_AssumptionViolated)
+        (
+	  (s'.bst_status = BST_Running) /\
+	  bir_is_bool_exp_env s'.bst_environ post /\
+	  (bir_eval_exp post (s'.bst_environ) = bir_val_true) /\
+	  ((s'.bst_pc.bpc_index = 0) /\ (s'.bst_pc.bpc_label IN ls))
+        ) \/ (
+          (s'.bst_status = BST_AssumptionViolated)
+        )
       )
     )`;
 
@@ -1525,7 +1527,20 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
   ),
 
+  (* Case: st12 is AssumptionViolated *)
   quantHeuristicsLib.QUANT_TAC [("s''", `st12`, [])] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF,
+                                        bir_state_COUNT_PC_def,
+                                        bir_block_pc_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_def] >>
+  subgoal `bir_state_is_terminated st12` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  IMP_RES_TAC bir_exec_to_labels_n_REWR_TERMINATED >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  quantHeuristicsLib.QUANT_TAC [("l1", `(st10 ++ [])`, []),
+                                ("c1", `st11`, []),
+                                ("c2", `0`, [])] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 ]
 );
@@ -1748,6 +1763,18 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
 
   (* Case 3: st12 has status AssumptionViolated *)
   quantHeuristicsLib.QUANT_TAC [("s''", `st12`, [])] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF,
+                                        bir_state_COUNT_PC_def,
+                                        bir_block_pc_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_def] >>
+  subgoal `bir_state_is_terminated st12` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  IMP_RES_TAC bir_exec_to_labels_n_REWR_TERMINATED >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  quantHeuristicsLib.QUANT_TAC [("l1", `(st10 ++ [])`, []),
+                                ("c1", `st11`, []),
+                                ("c2", `0`, [])] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 ]
 );
