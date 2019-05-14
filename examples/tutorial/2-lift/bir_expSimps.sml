@@ -1,16 +1,13 @@
 structure bir_expSimps :> bir_expSimps =
 struct
 
-local
-
+open HolKernel boolLib liteLib simpLib Parse bossLib;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory
      bir_exp_immTheory bir_exp_memTheory bir_envTheory
      bir_expTheory bir_programTheory bir_typing_progTheory
      bir_typing_expTheory;
 
 open bir_bool_expTheory;
-
-in
 
 val bir_list_of_types = [
    mk_thy_type {Tyop="bir_immtype_t", Thy="bir_imm", Args=[]},
@@ -45,5 +42,4 @@ val bir_is_bool_ss = simpLib.merge_ss [type_thms, thms];
 val bir_type_val_opt_ss =
   DatatypeSimps.case_cong_ss [``:bir_type_t # bir_val_t option``];
 
-end
 end

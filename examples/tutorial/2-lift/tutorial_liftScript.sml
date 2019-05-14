@@ -1,5 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open examplesBinaryTheory;
+open bir_expSimps;
 
 val _ = new_theory "tutorial_lift";
 
@@ -130,7 +131,11 @@ val b_sqrt_I_def = Define `b_sqrt_I =
    `;
 
 
-val bir_I_is_bool_pred_thm = prove(``bir_is_bool_exp b_sqrt_I``, cheat);
+val bir_I_is_bool_pred_thm = prove(
+  ``bir_is_bool_exp b_sqrt_I``,
+
+FULL_SIMP_TAC (std_ss++bir_is_bool_ss) [b_sqrt_I_def]
+);
 
 val arm8I_imp_bI_thm = store_thm("arm8I_imp_bI_thm", 
 ``bir_pre_arm8_to_bir arm8_sqrt_I b_sqrt_I``
