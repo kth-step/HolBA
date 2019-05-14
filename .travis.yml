@@ -10,6 +10,7 @@ dist: xenial
 env:
   global:
     - HOLBA_OPT_DIR=$HOME/cache
+    - secure: M4nFRCjPs4zCHwE0m3hb9PtU603+V8NtcgBCu39iMsW5bvd5/SzdZNOss/JcV6WckwbTkqwsJPqUL83b/mTzWItVdexIHnaBw0BIu1vsAMSzJFPDlDvpOjmvTLZZ8mp9YBQwODUaLY4J5yrOU1ODsuTyBWidIyeVWIFYG7FB0Gv+wygh7hHgVL2eCRzwCJ0vfrOlORd/Tkmfvf5gTdUR82ZvPmBKiHoyCfNhgRlUAeiUZQLtBFvcdUq2L/mUFSaOe1o6KJewN+xczqA6w3X63dE7Pfm8CImAbgxKSp/GwMDmMGrmH1DmXHlWI7nNgA779tDfma+ozJd7MuPeXpmijTfmExqlZEFECf/epVsQuYE2FCu066+aAsSu0Pf/qv/kqwfyNWJula4EpoQywYm7PKL0SLDhb9ydb/Az7/1LlUvDP8TY0Q6Jksz9Yeu9uocO7mg+eiEv28usPc+eoevSEqh/GYxOcBWclVHWPT4lgW8g2wlrYdslmKVRgw9ufn9YrmOczLLRAhlXqkDkpED5MNXdWwx2Pt7fCnDxsoTGV4p2xhK/yKCdNHoK0wfZHbIks0IBz7+5yJWl3XKiM7bAQfMnpb7XBKzOwgc7oVW6Ah0I+NH50302hlz8mE4gp+y1alQzJyr1F3y4lWcflKSrjJqNdQ+y4tYd/vCZ7rWPtCg=
 
 cache:
   directories:
@@ -17,6 +18,10 @@ cache:
 
 jobs:
   include:
+    - stage: "Static analysis"
+      script:
+        - scripts/ci/grep-cheat-comment-PR.sh
+
     - &cache-prep
       stage: "Prepare all cached dependencies"
       before_script:
