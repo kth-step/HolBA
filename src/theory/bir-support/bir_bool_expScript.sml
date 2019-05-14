@@ -628,4 +628,23 @@ SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_mk_bool_val_def, bir_eval_ifthene
 ASM_SIMP_TAC std_ss [bir_mk_bool_val_inv, GSYM bir_mk_bool_val_def]);
 
 
+(*********************************************)
+(* additional useful lemmas                  *)
+(*********************************************)
+
+val bir_eval_bool_exp_EQ = store_thm ( "bir_eval_bool_exp_EQ",
+  ``!exp env.
+      bir_is_bool_exp_env env exp
+      ==>
+      ((bir_eval_bool_exp exp env) <=> (bir_eval_exp exp env = bir_val_true))``,
+  REPEAT STRIP_TAC >>
+  drule bir_is_bool_exp_env_IMPLIES_EVAL_IS_BOOL >>
+  STRIP_TAC >> (
+    FULL_SIMP_TAC std_ss [bir_val_is_Bool_ALT_DEF,
+                          bir_val_true_def, bir_val_false_def,
+                          bir_eval_bool_exp_def, bir_dest_bool_val_def] >>
+    EVAL_TAC
+  )
+);
+
 val _ = export_theory();
