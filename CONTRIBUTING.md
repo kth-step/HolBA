@@ -1,4 +1,4 @@
-# Coding style
+## Coding style
 
 * like HOL source code
   - Spaces, no tabs
@@ -6,13 +6,13 @@
   - `snake_case` (e.g. `bir_number_of_mem_splits_def`)
 
 
+## Branch policy
 
-# Branch policy
-
-## `master` branch
+### `master` branch
 
 `master` is the branch where every feature is available, but not necessarily finalized:
- - Can cheat, but has to be avoided (TODO: if a check is present as CI test, maintain its exception list)
+ - Can cheat, but has to be avoided (cheats are reported by the CI in Pull Requests)
+   - You must explicitely say why you cheated if it's not too obvious
  - Code should not be be commented out
  - Our Travis CI must pass
    - **Holmake must work** (i.e. must correctly compile)
@@ -25,19 +25,17 @@ Notice:
  - **In order to prevent mayhem**, define good interfaces for your code (so that development won't break existing code)
 
 Follow these instructions whenever you merge to master:
-  - `grep` for "cheat" (TODO: add this as a CI test)
+  - `grep` for "cheat"
   - Check that the `README` is up to date (especially tool status)
   - Find a reviewer for your Pull Request
 
-
-## tags
+### tags
 
 tags are like `master` and on top of this:
  - Should have as many **completed features** as possible
- - No cheats in the directory `src` (TODO: if check is present as CI test, add text here to check CI output for possible excluded directories)
+ - The `README` must be up to date, **especially in presence of cheat**
 
-
-## Feature branches
+### Feature branches
 
 Every "somewhat" working tool should be available in the `master` branch, but new
 features or any development must go on new branches prefixed with `dev_`, fixes with `fix_`.
@@ -49,12 +47,8 @@ Guidelines:
  - Commits in a feature branch should compile, unless explicitly stated in commit message (with the prefix `[WIP] ...` for instance)
  - Further subbranch to do implementation experiments (keep them small)
 
-If you want to violate the rules for temporary development or experiments (only
-for feature branches):
+If you want to violate the rules for temporary development or experiments (only for feature branches):
   1. Fork
   2. Do a good mess
   3. Merge in feature branch after history rewrite
-
-
-
 
