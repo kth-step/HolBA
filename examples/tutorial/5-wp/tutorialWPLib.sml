@@ -1,4 +1,4 @@
-structure tutorial_wpLib =
+structure tutorialWPLib =
 struct
 
   local
