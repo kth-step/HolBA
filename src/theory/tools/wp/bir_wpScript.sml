@@ -1,20 +1,20 @@
 open HolKernel Parse boolLib bossLib;
 
-(* From /core: *)
+(* Theories from theory/bir: *)
 open bir_programTheory bir_typing_progTheory bir_envTheory
      bir_auxiliaryTheory bir_valuesTheory bir_expTheory
      bir_exp_immTheory bir_typing_expTheory bir_immTheory;
 
-(* From /theories: *)
+(* Theories from theory/bir-support: *)
 open bir_program_blocksTheory bir_program_terminationTheory
      bir_program_valid_stateTheory bir_exp_substitutionsTheory
      bir_bool_expTheory bir_program_env_orderTheory
      bir_program_multistep_propsTheory bir_exp_equivTheory;
 
+(* Simplification sets from theory/bir: *)
 open HolBACoreSimps;
 
 val _ = new_theory "bir_wp";
-
 
 (* Lemmata to move: *)
 
@@ -45,7 +45,7 @@ val bir_is_bool_exp_env_invar_bstmt =
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def] >>
 IMP_RES_TAC bir_varinit_invar_bstmt >>
-PAT_X_ASSUM ``!bstmt. blah``
+PAT_X_ASSUM ``!bstmt. _``
             (fn thm => ASSUME_TAC
               (SPEC ``bstmt:'a bir_stmt_basic_t`` thm)
             ) >>
@@ -227,8 +227,8 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtB_def,
 (* TODO: This theorem could also be stated with the precondition
  * holding instead of Booleanity holding. This antecedent is
  * needed to translate "not equal to True" to "equal to False". *)
-val bir_assume_assviol =
-  store_thm("bir_assume_assviol",
+val bir_assume_assumviol =
+  store_thm("bir_assume_assumviol",
   ``!s s' ex post obs.
       bir_is_bool_exp_env s.bst_environ
            (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not ex)
@@ -281,7 +281,7 @@ Cases_on `bir_eval_exp ex s.bst_environ = bir_val_true` >| [
   FULL_SIMP_TAC std_ss [],
 
   subgoal `s'.bst_status = BST_AssumptionViolated` >- (
-    METIS_TAC [bir_assume_assviol]
+    METIS_TAC [bir_assume_assumviol]
   ) >>
   FULL_SIMP_TAC std_ss []
 ]
@@ -304,7 +304,7 @@ local
 
   val one_op_tac = (
     subst_induct_tac >>
-    PAT_X_ASSUM ``!e. blah`` (fn thm => ASSUME_TAC (SPEC ``ex':bir_exp_t`` thm)) >>
+    PAT_X_ASSUM ``!e. _`` (fn thm => ASSUME_TAC (SPEC ``ex':bir_exp_t`` thm)) >>
     Cases_on `type_of_bir_exp ex'` >> (
       FULL_SIMP_TAC std_ss []
     )
@@ -312,9 +312,9 @@ local
 
   val two_op_tac = (
     subst_induct_tac >>
-    PAT_ASSUM ``!e. blah``
+    PAT_ASSUM ``!e. _``
               (fn thm => ASSUME_TAC (SPEC ``ex':bir_exp_t`` thm)) >>
-    PAT_X_ASSUM ``!e. blah``
+    PAT_X_ASSUM ``!e. _``
                 (fn thm => ASSUME_TAC
                   (SPEC ``ex'':bir_exp_t`` thm)
                 ) >>
@@ -326,13 +326,13 @@ local
 
   val three_op_tac = (
     subst_induct_tac >>
-    PAT_ASSUM ``!e. blah``
+    PAT_ASSUM ``!e. _``
               (fn thm => ASSUME_TAC (SPEC ``ex':bir_exp_t`` thm)) >>
-    PAT_ASSUM ``!e. blah``
+    PAT_ASSUM ``!e. _``
               (fn thm => ASSUME_TAC
                 (SPEC ``ex'':bir_exp_t`` thm)
               ) >>
-    PAT_X_ASSUM ``!e. blah``
+    PAT_X_ASSUM ``!e. _``
                 (fn thm => ASSUME_TAC
                   (SPEC ``ex''':bir_exp_t`` thm)
                 ) >>
@@ -481,14 +481,14 @@ subgoal `bir_is_bool_exp post` >- (
 Cases_on `v` >> rename1 `(BVar vname vtype)` >>
 IMP_RES_TAC bir_assign_exec >>
 Cases_on `s.bst_environ` >> rename1 `BEnv f` >>
-PAT_X_ASSUM ``!f'. blah1 ==> blah2``
+PAT_X_ASSUM ``!f'. p1 ==> p2``
             (fn thm =>
                ASSUME_TAC (SPEC ``f:string |->
                                     bir_type_t # bir_val_t option``
                                 thm
                           )
             ) >>
-PAT_X_ASSUM ``!f'. blah``
+PAT_X_ASSUM ``!f'. _``
             (fn thm =>
                ASSUME_TAC (SPEC ``f:string |->
                                     bir_type_t # bir_val_t option``
@@ -860,8 +860,8 @@ ASSUME_TAC (ISPECL [``(\stmt:'a bir_stmt_basic_t.
 REV_FULL_SIMP_TAC std_ss [bir_varinit_invar_bstmt]
 );
 
-val bir_assviol_exec_stmtsB =
-  store_thm("bir_assviol_exec_stmtsB",
+val bir_assumviol_exec_stmtsB =
+  store_thm("bir_assumviol_exec_stmtsB",
   ``!obs c s stmts.
       (s.bst_status = BST_AssumptionViolated) ==>
       (bir_exec_stmtsB stmts (obs, c, s) = (REVERSE obs, c, s))
@@ -935,7 +935,7 @@ val bir_wp_exec_stmtsB_sound_thm =
         (* Case: AssumptionViolated in s'.
          * bir_exec_stmtsB is used to relate s'' to s', so you
          * should be able to prove this case easily. *)
-        FULL_SIMP_TAC std_ss [bir_assviol_exec_stmtsB] >>
+        FULL_SIMP_TAC std_ss [bir_assumviol_exec_stmtsB] >>
         REV_FULL_SIMP_TAC std_ss [],
 
         (* Case: Running in s. *)
@@ -945,7 +945,7 @@ val bir_wp_exec_stmtsB_sound_thm =
         ) >>
         (* Use induction hypothesis *)
         FULL_SIMP_TAC std_ss [bir_exec_stmtsB_triple_def] >>
-        PAT_X_ASSUM ``!s s' obs obs' c c'. blah`` (fn thm =>
+        PAT_X_ASSUM ``!s s' obs obs' c c'. _`` (fn thm =>
           ASSUME_TAC (Q.SPECL [`s'`, `s''`, `OPT_CONS q obs`,
                                `obs'`, `SUC c`, `c':num`] thm)) >>
         REV_FULL_SIMP_TAC std_ss [] >>
@@ -960,7 +960,7 @@ val bir_wp_exec_stmtsB_sound_thm =
                           [bir_is_valid_status_def]
       ],
 
-    FULL_SIMP_TAC std_ss [bir_assviol_exec_stmtsB] >>
+    FULL_SIMP_TAC std_ss [bir_assumviol_exec_stmtsB] >>
     REV_FULL_SIMP_TAC std_ss []
   ]
 );

@@ -1,21 +1,25 @@
 open HolKernel Parse boolLib bossLib;
 
-(* From /core: *)
+(* Theories from theory/bir: *)
 open bir_programTheory bir_typing_progTheory bir_envTheory
      bir_auxiliaryTheory bir_valuesTheory bir_expTheory
      bir_exp_immTheory bir_typing_expTheory bir_immTheory;
 
-(* From /theories: *)
+(* Theories from theory/bir-support: *)
 open bir_program_blocksTheory bir_program_terminationTheory
      bir_program_valid_stateTheory bir_exp_substitutionsTheory
      bir_bool_expTheory bir_program_env_orderTheory
      bir_program_multistep_propsTheory bir_exp_equivTheory
      bir_subprogramTheory;
 
+(* Local theories: *)
 open bir_wpTheory;
 
+(* Simplification sets from theory/bir: *)
 open HolBACoreSimps;
 
+(* This theory contains theorems for manipulation of Hoare
+ * triples not directly related to WP propagation. *)
 val _ = new_theory "bir_ht";
 
 val bir_stmtb_is_not_assume_def = Define `
@@ -26,8 +30,8 @@ val bir_stmtb_is_not_assume_def = Define `
   (bir_stmtb_is_not_assume (BStmt_Observe ec el obf) = T)
 `;
 
-val bir_stmtb_not_assume_never_assviol =
-  store_thm("bir_stmtb_not_assume_never_assviol",
+val bir_stmtb_not_assume_never_assumviol =
+  store_thm("bir_stmtb_not_assume_never_assumviol",
   ``!stmtb st obs st'.
     bir_stmtb_is_not_assume stmtb ==>
     (st.bst_status <> BST_AssumptionViolated) ==>
@@ -130,8 +134,8 @@ Cases_on `bir_dest_bool_val (bir_eval_exp b st.bst_environ)` >| [
 ]
 );
 
-val bir_stmtsB_not_assume_never_assviol =
-  store_thm("bir_stmtsB_not_assume_never_assviol",
+val bir_stmtsB_not_assume_never_assumviol =
+  store_thm("bir_stmtsB_not_assume_never_assumviol",
   ``!stmtsB l c st l' c' st'.
     bir_stmtsB_has_no_assumes stmtsB ==>
     (st.bst_status <> BST_AssumptionViolated) ==>
@@ -156,8 +160,8 @@ Cases_on `bir_state_is_terminated st` >| [
     FULL_SIMP_TAC std_ss [bir_exec_stmtB_exists]
   ) >>
   FULL_SIMP_TAC std_ss [LET_DEF] >>
-  IMP_RES_TAC bir_stmtb_not_assume_never_assviol >>
-  PAT_X_ASSUM ``!l'' c'' st''. blah``
+  IMP_RES_TAC bir_stmtb_not_assume_never_assumviol >>
+  PAT_X_ASSUM ``!l'' c'' st''. _``
               (fn thm => ASSUME_TAC
                 (SPECL [``(OPT_CONS obs_test l): 'a list``,
                         ``(SUC c):num``,
@@ -177,8 +181,8 @@ val bir_block_has_no_assumes_def = Define `
 `;
 
 (* TODO: Move somewhere else... *)
-val bir_exec_stmtE_not_assviol =
-  store_thm("bir_exec_stmtE_not_assviol",
+val bir_exec_stmtE_not_assumviol =
+  store_thm("bir_exec_stmtE_not_assumviol",
   ``!prog stmtE st.
       (st.bst_status <> BST_AssumptionViolated) ==>
       ((bir_exec_stmtE prog stmtE st).bst_status <>
@@ -272,8 +276,8 @@ ASSUME_TAC (SPECL [``h:'a bir_stmt_basic_t``, ``st:bir_state_t``]
 FULL_SIMP_TAC std_ss [LET_DEF]
 );
 
-val bir_block_not_assume_never_assviol =
-  store_thm("bir_block_not_assume_never_assviol",
+val bir_block_not_assume_never_assumviol =
+  store_thm("bir_block_not_assume_never_assumviol",
   ``!prog bl st l' c' st'.
     bir_block_has_no_assumes bl ==>
     (st.bst_status <> BST_AssumptionViolated) ==>
@@ -283,14 +287,14 @@ val bir_block_not_assume_never_assviol =
 FULL_SIMP_TAC std_ss [bir_block_has_no_assumes_def,
                       bir_exec_block_def] >>
 REPEAT STRIP_TAC >>
-IMP_RES_TAC bir_stmtsB_not_assume_never_assviol >>
+IMP_RES_TAC bir_stmtsB_not_assume_never_assumviol >>
 subgoal `?l_test c_test st'_test.
 	   bir_exec_stmtsB bl.bb_statements ([],0,st) =
              (l_test, c_test, st'_test)` >- (
   FULL_SIMP_TAC std_ss [bir_exec_stmtsB_exists]
 ) >>
 FULL_SIMP_TAC std_ss [LET_DEF] >>
-PAT_X_ASSUM ``!st' l' l c' c. blah``
+PAT_X_ASSUM ``!st' l' l c' c. _``
 	    (fn thm => ASSUME_TAC
 	      (SPECL [``st'_test:bir_state_t``,
 		      ``l_test: 'a list``,
@@ -319,7 +323,7 @@ Cases_on `bir_state_is_terminated st'_test` >| [
     ASSUME_TAC (SPECL [``prog:'a bir_program_t``,
                        ``bl.bb_last_statement:bir_stmt_end_t``,
                        ``st'_test:bir_state_t``]
-                      bir_exec_stmtE_not_assviol
+                      bir_exec_stmtE_not_assumviol
                ) >>
     Q.ABBREV_TAC `st' = bir_exec_stmtE prog bl.bb_last_statement
                                        st'_test` >>
@@ -353,10 +357,10 @@ FULL_SIMP_TAC std_ss [listTheory.INDEX_FIND_def] >>
 Cases_on `P h` >> (
   FULL_SIMP_TAC std_ss []
 ) >>
-PAT_X_ASSUM ``!i j P x. blah``
+PAT_X_ASSUM ``!i j P x. _``
             (fn thm => ASSUME_TAC (SPEC ``(SUC i):num`` thm)) >>
 REV_FULL_SIMP_TAC std_ss [] >>
-PAT_X_ASSUM ``!j' P' x'. blah`` (fn thm => IMP_RES_TAC thm) >>
+PAT_X_ASSUM ``!j' P' x'. _`` (fn thm => IMP_RES_TAC thm) >>
 REV_FULL_SIMP_TAC std_ss [arithmeticTheory.SUC_PRE]
 );
 
@@ -396,7 +400,7 @@ Induct_on `l` >| [
 		      )
 	       ) >>
     REV_FULL_SIMP_TAC std_ss [] >>
-    PAT_X_ASSUM ``!st' bl'. blah``
+    PAT_X_ASSUM ``!st' bl'. _``
 		(fn thm => ASSUME_TAC
 		  (SPECL [``st:bir_state_t``,
 			  ``bl:'a bir_block_t``] thm)
@@ -425,8 +429,8 @@ Cases_on `bir_state_is_terminated st'` >> (
 )
 );
 
-val bir_prog_not_assume_never_assviol =
-  store_thm("bir_prog_not_assume_never_assviol",
+val bir_prog_not_assume_never_assumviol_exec_block_n =
+  store_thm("bir_prog_not_assume_never_assumviol_exec_block_n",
   ``!prog st n bl ol nstep npc st'.
     (bir_get_current_block prog st.bst_pc = SOME bl) ==>
     bir_prog_has_no_assumes prog ==>
@@ -450,14 +454,14 @@ Induct_on `n` >| [
   rename1 `st'''.bst_status = BST_AssumptionViolated` >>
   rename1 `bir_exec_block prog bl st = (l',c',st')` >>
   rename1 `st''.bst_status = BST_AssumptionViolated` >>
-  PAT_X_ASSUM ``!prog st bl ol nstep npc st'. blah``
+  PAT_X_ASSUM ``!prog st bl ol nstep npc st'. _``
           (fn thm => ASSUME_TAC (SPECL [``prog: 'a bir_program_t``,
                                         ``st':bir_state_t``] thm)
           ) >>
   IMP_RES_TAC bir_prog_to_block_no_assumes >>
-  IMP_RES_TAC bir_block_not_assume_never_assviol >>
+  IMP_RES_TAC bir_block_not_assume_never_assumviol >>
   IMP_RES_TAC bir_exec_block_n_block >>
-  PAT_X_ASSUM ``!n. blah``
+  PAT_X_ASSUM ``!n. _``
           (fn thm => ASSUME_TAC
             (SPECL [``n:num``] thm)
           ) >>
@@ -472,7 +476,7 @@ Induct_on `n` >| [
       IMP_RES_TAC bir_exec_block_new_block_pc >>
       FULL_SIMP_TAC std_ss [optionTheory.IS_SOME_EXISTS] >>
       FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-      PAT_X_ASSUM ``(ol,nstep,npc,st'') = blah``
+      PAT_X_ASSUM ``(ol,nstep,npc,st'') = _``
 	      (fn thm => ASSUME_TAC
 		(GSYM thm)
 	      ) >>
@@ -484,7 +488,7 @@ Induct_on `n` >| [
 
       FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
       IMP_RES_TAC bir_exec_block_n_REWR_TERMINATED >>
-      PAT_X_ASSUM ``!p n. blah``
+      PAT_X_ASSUM ``!p n. _``
 	      (fn thm => ASSUME_TAC
 		(SPECL [``prog:'a bir_program_t``, ``n:num``] thm)
 	      ) >>
@@ -494,8 +498,8 @@ Induct_on `n` >| [
 ]
 );
 (* Formulated in terms of bir_exec_to_labels: *)
-val bir_prog_not_assume_never_assviol_labels =
-  store_thm("bir_prog_not_assume_never_assviol_labels",
+val bir_prog_not_assume_never_assumviol_exec_to_labels =
+  store_thm("bir_prog_not_assume_never_assumviol_exec_to_labels",
   ``!ls prog st bl ol c_st c_l st'.
     (bir_get_current_block prog st.bst_pc = SOME bl) ==>
     bir_prog_has_no_assumes prog ==>
@@ -511,7 +515,7 @@ subgoal `bir_exec_to_labels_n ls prog st 1 =
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_def]
 ) >>
 IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_block_n >>
-IMP_RES_TAC bir_prog_not_assume_never_assviol
+IMP_RES_TAC bir_prog_not_assume_never_assumviol_exec_block_n
 );
 
 val bir_exec_to_labels_no_av_triple_def = Define `
@@ -549,8 +553,8 @@ FULL_SIMP_TAC (std_ss++bir_TYPES_ss)
   [bir_state_set_failed_def]
 );
 
-val bir_never_assviol_ht =
-  store_thm("bir_never_assviol_ht",
+val bir_never_assumviol_ht =
+  store_thm("bir_never_assumviol_ht",
   ``!prog l ls pre post.
     bir_prog_has_no_assumes prog ==>
     bir_exec_to_labels_triple prog l ls pre post ==>
@@ -559,7 +563,7 @@ val bir_never_assviol_ht =
 REWRITE_TAC [bir_exec_to_labels_no_av_triple_def,
              bir_exec_to_labels_triple_def] >>
 REPEAT STRIP_TAC >>
-PAT_X_ASSUM ``!s r. blah``
+PAT_X_ASSUM ``!s r. _``
             (fn thm => ASSUME_TAC
               (SPECL [``s:bir_state_t``,
                       ``r: 'a bir_execution_result_t``] thm)
@@ -578,7 +582,7 @@ Cases_on `r` >| [
       >- (
       FULL_SIMP_TAC std_ss [bir_get_current_block_def]
     ) >>
-    IMP_RES_TAC bir_prog_not_assume_never_assviol_labels >>
+    IMP_RES_TAC bir_prog_not_assume_never_assumviol_exec_to_labels >>
     cheat,
 
     FULL_SIMP_TAC (std_ss++holBACore_ss)
