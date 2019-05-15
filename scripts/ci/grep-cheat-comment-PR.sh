@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
 
-# Check that the script is run in Travis
-if [[  -z "$TRAVIS_PULL_REQUEST"
-    || -z "$TRAVIS_REPO_SLUG"
-    || -z "$TRAVIS_COMMIT"
-    || -z "$HOLBA_BOT_GITHUB_TOKEN"
-    ]]; then
-    echo '$TRAVIS_PULL_REQUEST, $TRAVIS_REPO_SLUG, $TRAVIS_COMMIT or $HOLBA_BOT_GITHUB_TOKEN is not set.'
-    exit 1
-fi
-
 # Check that this script is run during a PR job
 if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
    echo '$TRAVIS_PULL_REQUEST is false, exiting.'
    exit 0
 fi
+
+# Check that the env variables we need are correct
+[[ -n "$TRAVIS_PULL_REQUEST" ]] && echo "\$TRAVIS_PULL_REQUEST: $TRAVIS_PULL_REQUEST" \
+    || { echo '$TRAVIS_PULL_REQUEST not set, exiting.'; exit 1; }
+[[ -n "$TRAVIS_REPO_SLUG" ]] && echo "\$TRAVIS_REPO_SLUG: $TRAVIS_REPO_SLUG" \
+    || { echo '$TRAVIS_REPO_SLUG not set, exiting.'; exit 1; }
+[[ -n "$TRAVIS_COMMIT" ]] && echo "\$TRAVIS_COMMIT: $TRAVIS_COMMIT" \
+    || { echo '$TRAVIS_COMMIT not set, exiting.'; exit 1; }
+
+## The GitHub token has a special treatment (it's secret)
+[[ -n "$HOLBA_BOT_GITHUB_TOKEN" ]] && echo "\$HOLBA_BOT_GITHUB_TOKEN is set." \
+    || { echo '$HOLBA_BOT_GITHUB_TOKEN not set, exiting.'; exit 1; }
 
 # Grep for 'cheat' in the $GREP_DIR directory
 GREP_PATTERN='\<cheat\>'
