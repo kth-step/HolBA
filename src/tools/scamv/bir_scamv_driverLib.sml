@@ -10,6 +10,7 @@ open bir_rel_synthLib;
 open bslSyntax;
 open wordsSyntax;
 open stringSyntax;
+open listSyntax;
 open bir_embexp_driverLib;
 open bir_symb_execLib;
 open gcc_supportLib;
@@ -231,7 +232,7 @@ fun next_test select_path =
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
         val asm_file_contents = !current_asm;
 
-        val test_result =  bir_embexp_run_cache_distinguishability asm_file_contents s1 s2;
+        val test_result =  bir_embexp_run_cache_indistinguishability asm_file_contents s1 s2;
 
         val _ = print ("result = " ^ (if test_result then "ok!" else "failed") ^ "\n\n");
     in
@@ -292,7 +293,7 @@ fun scamv_test_mock () =
         fun isPrimedRun s = String.isSuffix "_" s;
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
 
-        val test_result =  bir_embexp_run_cache_distinguishability asm_file_contents s1 s2;
+        val test_result =  bir_embexp_run_cache_indistinguishability asm_file_contents s1 s2;
 
         val _ = print ("result = " ^ (if test_result then "ok!" else "failed") ^ "\n\n");
     in
