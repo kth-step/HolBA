@@ -166,6 +166,28 @@ Cases_on `INDEX_FIND 0 P l` >> (
 ));
 
 
+val INDEX_FIND_PRE = store_thm("INDEX_FIND_PRE",
+  ``!i j P l x.
+    (0 < i) ==>
+    (INDEX_FIND i       P l = SOME (j, x)) ==>
+    (INDEX_FIND (PRE i) P l = SOME (PRE j, x))``,
+
+Induct_on `l` >- (
+  FULL_SIMP_TAC std_ss [listTheory.INDEX_FIND_def]
+) >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [listTheory.INDEX_FIND_def] >>
+Cases_on `P h` >> (
+  FULL_SIMP_TAC std_ss []
+) >>
+PAT_X_ASSUM ``!i j P x. _``
+            (fn thm => ASSUME_TAC (SPEC ``(SUC i):num`` thm)) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+PAT_X_ASSUM ``!j' P' x'. _`` (fn thm => IMP_RES_TAC thm) >>
+REV_FULL_SIMP_TAC std_ss [arithmeticTheory.SUC_PRE]
+);
+
+
 val SEG_SUC_LENGTH = store_thm ("SEG_SUC_LENGTH",
 ``!l n m. (n + m < LENGTH l) ==>
           (SEG (SUC n) m l = (EL m l)::SEG n (SUC m) l)``,

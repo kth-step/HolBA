@@ -672,7 +672,6 @@ Q.PAT_X_ASSUM `!st'' mo'. _` (MP_TAC o Q.SPECL [`st2''`, `mo'`]) >>
 ASM_SIMP_TAC (std_ss++bir_TYPES_ss) []);
 
 
-
 val bir_state_is_terminated_step_not_valid_pc = store_thm ("bir_state_is_terminated_step_not_valid_pc",
 ``!p st. ~(bir_is_valid_pc p st.bst_pc) ==> bir_state_is_terminated (bir_exec_step_state p st)``,
 
@@ -683,6 +682,24 @@ FULL_SIMP_TAC std_ss [bir_exec_step_state_def, bir_exec_step_def] >>
 Cases_on `bir_state_is_terminated st` >> (
   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_set_failed_def, bir_state_is_terminated_def]
 ));
+
+
+val bir_state_is_failed_step_not_valid_pc =
+  store_thm ("bir_state_is_failed_step_not_valid_pc",
+``!p st.
+  ~(bir_state_is_terminated st) ==>
+  ~(bir_is_valid_pc p st.bst_pc) ==>
+  ((bir_exec_step_state p st).bst_status = BST_Failed)``,
+
+REPEAT STRIP_TAC >>
+`~(IS_SOME (bir_get_current_statement p st.bst_pc))` by
+  (METIS_TAC [bir_get_current_statement_IS_SOME]) >>
+  FULL_SIMP_TAC std_ss [bir_exec_step_state_def,
+                        bir_exec_step_def] >>
+FULL_SIMP_TAC (std_ss++bir_TYPES_ss)
+  [bir_state_set_failed_def]
+);
+
 
 val bir_exec_infinite_steps_fun_SUBPROGRAM = store_thm ("bir_exec_infinite_steps_fun_SUBPROGRAM",
 ``!p1 p2.
