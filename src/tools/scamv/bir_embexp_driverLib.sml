@@ -31,7 +31,7 @@ struct
 
   fun logfile_basedir_read () =
       case OS.Process.getEnv("HOLBA_SCAMV_LOGS") of
-          NONE => raise ERR "logfile_basedir" "the environment variable HOLBA_EMBEXP_DIR is not set"
+          NONE => raise ERR "logfile_basedir" "the environment variable HOLBA_SCAMV_LOGS is not set"
         | SOME p => p;
 
   fun logfile_basedir () =
