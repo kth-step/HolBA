@@ -1,5 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open bir_programTheory;
+open bslSyntax;
 
 val _ = new_theory "bir_obs_model";
 
@@ -46,6 +47,20 @@ observe_load (BExp_Load _ e _ _) =
                        (\x. x)
 `;
 
+val constrain_load_def = Define`
+constrain_load (BExp_Load _ e _ _) =
+  BStmt_Assert
+       (BExp_BinExp BIExp_And
+                    (BExp_BinPred
+                         BIExp_LessOrEqual
+                         (BExp_Const (Imm64 0x80030000w))
+                         e)
+                    (BExp_BinPred
+                         BIExp_LessOrEqual
+                         e
+                         (BExp_Const (Imm64 0x80042FF8w))))
+`;
+
 val add_obs_stmts_def = Define `
 (add_obs_stmts [] = []) /\
 (add_obs_stmts (x :: xs) =
@@ -53,7 +68,8 @@ val add_obs_stmts_def = Define `
      BStmt_Assign v e =>
      (case select_loads e of
           [] => x :: add_obs_stmts xs
-        | lds => x :: ((MAP observe_load lds) ++ add_obs_stmts xs))
+        | lds => (APPEND (MAP constrain_load lds)
+                      (x :: (APPEND (MAP observe_load lds) (add_obs_stmts xs)))))
    | _ => x :: add_obs_stmts xs)
 `;
 
