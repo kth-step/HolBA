@@ -227,6 +227,14 @@ val eval_BIR_P_is_true_thm = store_thm ( "eval_BIR_P_is_true_thm",
   METIS_TAC [BIR_P_is_bool_exp_thm, R_def, BIR_P_def, bir_eval_bool_exp_EQ]
 )
 
+(* TODO: Move to theory/bir[-support] *)
+val bir_type_of_val_is_imm_then_exists_imm = prove (
+  ``!imm_ty v. (type_of_bir_val v = SOME (BType_Imm imm_ty))
+        ==> (?imm. v = (BVal_Imm imm))``,
+  Cases_on `v` >>
+  SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [type_of_bir_val_def]
+)
+
 (* {P} bir_prog {Q} *)
 val (wp_thm, triple_thm) =
   let
@@ -256,10 +264,12 @@ val (wp_thm, triple_thm) =
     val wpsrec_def = Define `wpsrec = ^wpsrec`
     val wpsrec_bool_sound_thm_readable = REWRITE_RULE [GSYM wpsrec_def] wpsrec_bool_sound_thm
     (**)
+    val Abbrev_def = markerTheory.Abbrev_def
     val INITIALIZED_TAC = FULL_SIMP_TAC holba_ss [
       bir_is_bool_exp_env_def, BIR_P_exp_def, bir_vars_of_exp_def, bir_env_vars_are_initialised_def,
-      BIR_P_exp_def, EVAL ``bir_wp_comp_wps_iter_step2_wp_entry``]
-    val Abbrev_def = markerTheory.Abbrev_def
+      BIR_P_exp_def, EVAL ``bir_wp_comp_wps_iter_step2_wp_entry``, Abbrev_def]
+    val IS_IMM_EXP_TAC = FULL_SIMP_TAC holba_ss [bir_is_imm_exp_def, Abbrev_def]
+    val UNABBREV_EVAL_TAC = unabbrev_all_tac >> EVAL_TAC
     (**)
     val triple_thm = store_thm ( "triple_thm",
       ``bir_exec_to_labels_triple bir_prog entry_label end_labels BIR_P_exp BIR_Q_exp``,
@@ -301,7 +311,7 @@ val (wp_thm, triple_thm) =
       ) >>
       (* P => WP *)
       subgoal `bir_eval_exp wp bir_state.bst_environ = bir_val_true` >- (
-        (* Not needed, but improve readibility *)
+        (* Not needed, but improves readibility *)
         PAT_X_TAC `bir_state.bst_pc.bpc_index = 0` >>
         PAT_X_TAC `bir_state.bst_pc.bpc_label = BL_Label "entry"` >>
         PAT_X_TAC `bir_state.bst_status = BST_Running` >>
@@ -309,61 +319,36 @@ val (wp_thm, triple_thm) =
 
         Q.ABBREV_TAC `env = bir_state.bst_environ` >>
 
-        (* prove that nic_x and nic_dead are initialized *)
-        Q.UNABBREV_TAC `wp` >>
-        Q.UNABBREV_TAC `p` >>
-        `bir_env_var_is_initialised env (BVar "nic_x" (BType_Imm Bit32))` by INITIALIZED_TAC >>
-        `bir_env_var_is_initialised env (BVar "nic_dead" (BType_Imm Bit1))` by INITIALIZED_TAC >>
-        PAT_X_TAC `bir_env_vars_are_initialised _ _` >>
-        Q.ABBREV_TAC `wp = bir_wp_comp_wps_iter_step2_wp_entry` >>
-        Q.ABBREV_TAC `p = BIR_P_exp` >>
-
         (* P ==> WP *)
         Q.UNDISCH_TAC `bir_eval_exp p env = bir_val_true` >>
-
-        (* we cannot go further with abbreviations of P and WP *)
         Q.UNABBREV_TAC `wp` >>
         Q.UNABBREV_TAC `p` >>
         PURE_REWRITE_TAC [BIR_P_exp_def, EVAL ``bir_wp_comp_wps_iter_step2_wp_entry``] >>
 
-        (* but we can abbreviate nic_x and nic_dead *)
         Q.ABBREV_TAC `nic_x: bir_var_t = BVar "nic_x" (BType_Imm Bit32)` >>
         Q.ABBREV_TAC `nic_dead: bir_var_t = BVar "nic_dead" (BType_Imm Bit1)` >>
+        Q.ABBREV_TAC `x_exp = (BExp_Den nic_x)` >>
+        Q.ABBREV_TAC `dead_exp = (BExp_Den nic_dead)` >>
 
         (*** now we want to translate into a words expression ***)
 
         (** bir_equal_equiv requires some lemmas **)
+        `bir_env_var_is_initialised env nic_x` by INITIALIZED_TAC >>
+        `bir_env_var_is_initialised env nic_dead` by INITIALIZED_TAC >>
+        `bir_env_vars_are_initialised env (bir_vars_of_exp x_exp)` by INITIALIZED_TAC >>
+        `bir_env_vars_are_initialised env (bir_vars_of_exp dead_exp)` by INITIALIZED_TAC >>
+        `bir_is_imm_exp x_exp` by IS_IMM_EXP_TAC >>
+        `bir_is_imm_exp dead_exp` by IS_IMM_EXP_TAC >>
 
-        Q.ABBREV_TAC `x_exp = (BExp_Den nic_x)` >>
-        Q.ABBREV_TAC `dead_exp = (BExp_Den nic_dead)` >>
         Q.ABBREV_TAC `exp_0w1 = (BExp_Const (Imm1 0w))` >>
         Q.ABBREV_TAC `exp_0w32 = (BExp_Const (Imm32 0w))` >>
+        `bir_env_vars_are_initialised env (bir_vars_of_exp exp_0w1)` by INITIALIZED_TAC >>
+        `bir_env_vars_are_initialised env (bir_vars_of_exp exp_0w32)` by INITIALIZED_TAC >>
+        `bir_is_imm_exp exp_0w1` by IS_IMM_EXP_TAC >>
+        `bir_is_imm_exp exp_0w32` by IS_IMM_EXP_TAC >>
 
-        (* prove that vars are initialized and are imms *)
-        subgoal `bir_env_vars_are_initialised env (bir_vars_of_exp x_exp)
-              /\ bir_env_vars_are_initialised env (bir_vars_of_exp dead_exp)
-              /\ bir_is_imm_exp x_exp
-              /\ bir_is_imm_exp dead_exp` >- (
-          FULL_SIMP_TAC holba_ss [bir_env_var_is_initialised_def,
-                                  bir_env_vars_are_initialised_def,
-                                  bir_vars_of_exp_def,
-                                  bir_is_imm_exp_def,
-                                  Abbrev_def] >>
-          METIS_TAC []
-        ) >>
-
-        (* we need to help HOL4 a little bit *)
-        subgoal `bir_env_vars_are_initialised env (bir_vars_of_exp exp_0w1)
-              /\ bir_env_vars_are_initialised env (bir_vars_of_exp exp_0w32)
-              /\ bir_is_imm_exp exp_0w1
-              /\ bir_is_imm_exp exp_0w32
-              /\ (type_of_bir_exp dead_exp = type_of_bir_exp exp_0w1)
-              /\ (type_of_bir_exp    x_exp = type_of_bir_exp exp_0w32)` >- (
-          unabbrev_all_tac >>
-          ASM_SIMP_TAC holba_ss [bir_is_imm_exp_def] >>
-          EVAL_TAC >>
-          ASM_REWRITE_TAC []
-        ) >>
+        `type_of_bir_exp dead_exp = type_of_bir_exp exp_0w1` by UNABBREV_EVAL_TAC >>
+        `type_of_bir_exp    x_exp = type_of_bir_exp exp_0w32` by UNABBREV_EVAL_TAC >>
 
         `(  (bir_eval_exp (BExp_BinPred BIExp_Equal dead_exp exp_0w1) env = bir_val_true)
           = (bir_eval_exp dead_exp env = bir_eval_exp exp_0w1 env)
@@ -372,11 +357,67 @@ val (wp_thm, triple_thm) =
           = (bir_eval_exp x_exp env = bir_eval_exp exp_0w32 env)
         )` by METIS_TAC [bir_equal_equiv] >>
 
+        Q.ABBREV_TAC `x_val = (bir_env_read nic_x env)` >>
+        Q.ABBREV_TAC `dead_val = (bir_env_read nic_dead env)` >>
+        subgoal `type_of_bir_val x_val = SOME (BType_Imm Bit32)` >- (
+          unabbrev_all_tac >>
+          FULL_SIMP_TAC pure_ss [type_of_bir_val_def, bir_env_read_def, bir_env_var_is_initialised_def] >>
+          ASM_SIMP_TAC (srw_ss()) [] >>
+          REWRITE_TAC [bir_var_type_def]
+        ) >>
+        subgoal `type_of_bir_val dead_val = SOME (BType_Imm Bit1)` >- (
+          unabbrev_all_tac >>
+          FULL_SIMP_TAC pure_ss [type_of_bir_val_def, bir_env_read_def, bir_env_var_is_initialised_def] >>
+          ASM_SIMP_TAC (srw_ss()) [] >>
+          REWRITE_TAC [bir_var_type_def]
+        ) >>
+        subgoal `?x_imm. x_val = BVal_Imm x_imm` >- (
+          subgoal `type_of_bir_val x_val = SOME (BType_Imm Bit32)` >- (
+            unabbrev_all_tac >>
+            FULL_SIMP_TAC pure_ss [bir_env_read_def, bir_env_var_is_initialised_def] >>
+            ASM_SIMP_TAC (srw_ss()) [] >>
+            REWRITE_TAC [bir_var_type_def]
+          ) >>
+          ASM_SIMP_TAC holba_ss [bir_type_of_val_is_imm_then_exists_imm]
+        ) >>
+        subgoal `?dead_imm. dead_val = BVal_Imm dead_imm` >- (
+          subgoal `type_of_bir_val dead_val = SOME (BType_Imm Bit1)` >- (
+            unabbrev_all_tac >>
+            FULL_SIMP_TAC pure_ss [bir_env_read_def, bir_env_var_is_initialised_def] >>
+            ASM_SIMP_TAC (srw_ss()) [] >>
+            REWRITE_TAC [bir_var_type_def]
+          ) >>
+          ASM_SIMP_TAC holba_ss [bir_type_of_val_is_imm_then_exists_imm]
+        ) >>
+        subgoal `type_of_bir_imm x_imm = Bit32` >- (
+          FULL_SIMP_TAC pure_ss [type_of_bir_val_def] >>
+          FULL_SIMP_TAC (srw_ss()) []
+        ) >>
+        subgoal `type_of_bir_imm dead_imm = Bit1` >- (
+          FULL_SIMP_TAC pure_ss [type_of_bir_val_def] >>
+          FULL_SIMP_TAC (srw_ss()) []
+        ) >>
+        Q.UNABBREV_TAC `x_val` >>
+        Q.UNABBREV_TAC `dead_val` >>
+
         (** simplify using the equiv theorems **)
         unabbrev_all_tac >>
-        FULL_SIMP_TAC pure_ss [bir_equal_equiv] >>
-        FULL_SIMP_TAC pure_ss [GSYM bir_and_equiv, GSYM bir_not_equiv, GSYM bir_or_impl] >>
+        FULL_SIMP_TAC pure_ss [bir_equal_equiv, GSYM bir_and_equiv,
+                               GSYM bir_not_equiv, GSYM bir_or_impl] >>
         SIMP_TAC pure_ss [bir_eval_exp_def] >>
+
+        REWRITE_TAC [type_of_bir_imm_def] >>
+        FULL_SIMP_TAC pure_ss [type_of_bir_imm_def] >>
+
+        ASM_SIMP_TAC pure_ss [bir_eval_cast_REWRS, bir_eval_unary_exp_REWRS, bir_eval_bin_exp_REWRS, bir_eval_bin_pred_REWRS, bir_eval_memeq_REWRS, bir_eval_ifthenelse_REWRS (* rewrites for select and store are missing *)] >>
+
+        FULL_SIMP_TAC pure_ss [bir_env_var_is_initialised_def] >>
+        FULL_SIMP_TAC pure_ss [bir_var_type_def] >>
+        FULL_SIMP_TAC pure_ss [bir_type_of_val_is_imm_then_exists_imm] >>
+        ASM_SIMP_TAC holba_ss [bir_env_read_def] >>
+        SIMP_TAC (srw_ss()) []
+
+        (*FULL_SIMP_TAC holba_ss [bool2b_def, bool2w_def]*)
 
         REPEAT STRIP_TAC >>
         ASM_REWRITE_TAC [] >>
