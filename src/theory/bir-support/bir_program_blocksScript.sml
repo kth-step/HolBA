@@ -147,6 +147,26 @@ val bir_exec_stmtsB_def = Define `
      bir_exec_stmtsB stmts (OPT_CONS fe l, SUC c, st'))`;
 
 
+val bir_exec_stmtsB_exists =
+  store_thm("bir_exec_stmtsB_exists",
+  ``!stmtsB l c st.
+      ?l' c' st'.
+        bir_exec_stmtsB stmtsB (l,c,st) = (l', c', st')``,
+
+Induct_on `stmtsB` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_stmtsB_def]
+) >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_stmtsB_def] >>
+Cases_on `bir_state_is_terminated st` >- (
+  FULL_SIMP_TAC std_ss []
+) >>
+ASSUME_TAC (SPECL [``h:'a bir_stmt_basic_t``, ``st:bir_state_t``]
+                  bir_exec_stmtB_exists) >>
+FULL_SIMP_TAC std_ss [LET_DEF]
+);
+
+
 val bir_exec_stmtsB_REWRS = store_thm ("bir_exec_stmtsB_REWRS",
   ``(!l c st. bir_exec_stmtsB [] (l, c, st) = (REVERSE l, c, st)) /\
     (!stmts l c st. bir_state_is_terminated st ==>
@@ -538,6 +558,25 @@ val bir_exec_block_def = Define `bir_exec_block (p:'a bir_program_t) (bl:'a bir_
         if (bir_state_is_terminated st'') then
           (st'' with bst_pc := (st.bst_pc with bpc_index := st.bst_pc.bpc_index + c))
         else st''))`;
+
+
+val bir_exec_block_exists =
+  store_thm("bir_exec_block_exists",
+  ``!prog bl st.
+      ?l' c' st'.
+        bir_exec_block prog bl st = (l', c', st')``,
+
+Cases_on `prog` >>
+FULL_SIMP_TAC std_ss [bir_exec_block_def] >>
+REPEAT STRIP_TAC >>
+ASSUME_TAC (SPECL [``bl.bb_statements:'a bir_stmt_basic_t list``,
+                   ``[]: 'a list``, ``0:num``, ``st:bir_state_t``]
+                  bir_exec_stmtsB_exists) >>
+FULL_SIMP_TAC std_ss [LET_DEF] >>
+Cases_on `bir_state_is_terminated st'` >> (
+  FULL_SIMP_TAC std_ss []
+)
+);
 
 
 val bir_exec_block_REWR_TERMINATED = store_thm ("bir_exec_block_REWR_TERMINATED",

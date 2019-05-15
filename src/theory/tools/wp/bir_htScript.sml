@@ -113,27 +113,6 @@ val bir_stmtsB_has_no_assumes_def = Define `
   )
 `;
 
-(* TODO: Move this elsewhere... *)
-val bir_exec_stmtB_exists =
-  store_thm("bir_exec_stmtB_exists",
-  ``!h st.
-      ?obs' st'.
-        bir_exec_stmtB h st = (obs', st')``,
-
-Cases_on `h` >> (
-  STRIP_TAC >>
-  FULL_SIMP_TAC std_ss [bir_exec_stmtB_def]
-) >>
-FULL_SIMP_TAC std_ss [bir_exec_stmt_observe_def] >>
-Cases_on `bir_dest_bool_val (bir_eval_exp b st.bst_environ)` >| [
-  FULL_SIMP_TAC std_ss [],
-
-  Cases_on `x` >> (
-    FULL_SIMP_TAC std_ss []
-  )
-]
-);
-
 val bir_stmtsB_not_assume_never_assumviol =
   store_thm("bir_stmtsB_not_assume_never_assumviol",
   ``!stmtsB l c st l' c' st'.
@@ -180,7 +159,6 @@ val bir_block_has_no_assumes_def = Define `
     bir_stmtsB_has_no_assumes block.bb_statements
 `;
 
-(* TODO: Move somewhere else... *)
 val bir_exec_stmtE_not_assumviol =
   store_thm("bir_exec_stmtE_not_assumviol",
   ``!prog stmtE st.
@@ -256,26 +234,6 @@ Cases_on `stmtE` >| [
 ]
 );
 
-(* TODO: Move this elsewhere... *)
-val bir_exec_stmtsB_exists =
-  store_thm("bir_exec_stmtsB_exists",
-  ``!stmtsB l c st.
-      ?l' c' st'.
-        bir_exec_stmtsB stmtsB (l,c,st) = (l', c', st')``,
-
-Induct_on `stmtsB` >- (
-  FULL_SIMP_TAC std_ss [bir_exec_stmtsB_def]
-) >>
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [bir_exec_stmtsB_def] >>
-Cases_on `bir_state_is_terminated st` >- (
-  FULL_SIMP_TAC std_ss []
-) >>
-ASSUME_TAC (SPECL [``h:'a bir_stmt_basic_t``, ``st:bir_state_t``]
-                  bir_exec_stmtB_exists) >>
-FULL_SIMP_TAC std_ss [LET_DEF]
-);
-
 val bir_block_not_assume_never_assumviol =
   store_thm("bir_block_not_assume_never_assumviol",
   ``!prog bl st l' c' st'.
@@ -342,28 +300,6 @@ val bir_prog_has_no_assumes_def = Define `
   )
 `;
 
-(* TODO: Move this elsewhere... *)
-val INDEX_FIND_PRE = store_thm("INDEX_FIND_PRE",
-  ``!i j P l x.
-    (0 < i) ==>
-    (INDEX_FIND i       P l = SOME (j, x)) ==>
-    (INDEX_FIND (PRE i) P l = SOME (PRE j, x))``,
-
-Induct_on `l` >- (
-  FULL_SIMP_TAC std_ss [listTheory.INDEX_FIND_def]
-) >>
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [listTheory.INDEX_FIND_def] >>
-Cases_on `P h` >> (
-  FULL_SIMP_TAC std_ss []
-) >>
-PAT_X_ASSUM ``!i j P x. _``
-            (fn thm => ASSUME_TAC (SPEC ``(SUC i):num`` thm)) >>
-REV_FULL_SIMP_TAC std_ss [] >>
-PAT_X_ASSUM ``!j' P' x'. _`` (fn thm => IMP_RES_TAC thm) >>
-REV_FULL_SIMP_TAC std_ss [arithmeticTheory.SUC_PRE]
-);
-
 val bir_prog_to_block_no_assumes = store_thm("bir_prog_to_block_no_assumes",
   ``!prog st bl.
     (bir_get_current_block prog st.bst_pc = SOME bl) ==>
@@ -408,25 +344,6 @@ Induct_on `l` >| [
     FULL_SIMP_TAC std_ss []
   ]
 ]
-);
-
-(* TODO: Move this elsewhere... *)
-val bir_exec_block_exists =
-  store_thm("bir_exec_block_exists",
-  ``!prog bl st.
-      ?l' c' st'.
-        bir_exec_block prog bl st = (l', c', st')``,
-
-Cases_on `prog` >>
-FULL_SIMP_TAC std_ss [bir_exec_block_def] >>
-REPEAT STRIP_TAC >>
-ASSUME_TAC (SPECL [``bl.bb_statements:'a bir_stmt_basic_t list``,
-                   ``[]: 'a list``, ``0:num``, ``st:bir_state_t``]
-                  bir_exec_stmtsB_exists) >>
-FULL_SIMP_TAC std_ss [LET_DEF] >>
-Cases_on `bir_state_is_terminated st'` >> (
-  FULL_SIMP_TAC std_ss []
-)
 );
 
 val bir_prog_not_assume_never_assumviol_exec_block_n =
@@ -497,7 +414,7 @@ Induct_on `n` >| [
   ) 
 ]
 );
-(* Formulated in terms of bir_exec_to_labels: *)
+
 val bir_prog_not_assume_never_assumviol_exec_to_labels =
   store_thm("bir_prog_not_assume_never_assumviol_exec_to_labels",
   ``!ls prog st bl ol c_st c_l st'.
@@ -535,23 +452,6 @@ val bir_exec_to_labels_triple_def = Define `
       (bir_eval_exp post (s'.bst_environ) = bir_val_true) /\
       ((s'.bst_pc.bpc_index = 0) /\ (s'.bst_pc.bpc_label IN ls))
     )`;
-
-(* TODO: Move to SubprogramTheory *)
-val bir_state_is_failed_step_not_valid_pc =
-  store_thm ("bir_state_is_failed_step_not_valid_pc",
-``!p st.
-  ~(bir_state_is_terminated st) ==>
-  ~(bir_is_valid_pc p st.bst_pc) ==>
-  ((bir_exec_step_state p st).bst_status = BST_Failed)``,
-
-REPEAT STRIP_TAC >>
-`~(IS_SOME (bir_get_current_statement p st.bst_pc))` by
-  (METIS_TAC [bir_get_current_statement_IS_SOME]) >>
-  FULL_SIMP_TAC std_ss [bir_exec_step_state_def,
-                        bir_exec_step_def] >>
-FULL_SIMP_TAC (std_ss++bir_TYPES_ss)
-  [bir_state_set_failed_def]
-);
 
 val bir_never_assumviol_ht =
   store_thm("bir_never_assumviol_ht",

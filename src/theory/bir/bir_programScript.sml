@@ -228,6 +228,27 @@ val bir_exec_stmtB_state_def = Define `bir_exec_stmtB_state stmt st =
   SND (bir_exec_stmtB stmt st)`;
 
 
+val bir_exec_stmtB_exists =
+  store_thm("bir_exec_stmtB_exists",
+  ``!h st.
+      ?obs' st'.
+        bir_exec_stmtB h st = (obs', st')``,
+
+Cases_on `h` >> (
+  STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [bir_exec_stmtB_def]
+) >>
+FULL_SIMP_TAC std_ss [bir_exec_stmt_observe_def] >>
+Cases_on `bir_dest_bool_val (bir_eval_exp b st.bst_environ)` >| [
+  FULL_SIMP_TAC std_ss [],
+
+  Cases_on `x` >> (
+    FULL_SIMP_TAC std_ss []
+  )
+]
+);
+
+
 val bir_exec_stmtB_state_REWRS = store_thm ("bir_exec_stmtB_state_REWRS",
 ``(!v st. (bir_exec_stmtB_state (BStmt_Declare v) st = (bir_exec_stmt_declare (bir_var_name v) (bir_var_type v) st))) /\
   (!ex st. (bir_exec_stmtB_state (BStmt_Assert ex) st = (bir_exec_stmt_assert ex st))) /\
