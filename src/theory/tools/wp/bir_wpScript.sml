@@ -1265,8 +1265,8 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss)
    -------------------------------------------------------------
 *)
   
-val bir_exec_to_labels_triple_def = Define `
-  bir_exec_to_labels_triple p l ls pre post =
+val bir_exec_to_labels_or_assumviol_triple_def = Define `
+  bir_exec_to_labels_or_assumviol_triple p l ls pre post =
   !s r.
     bir_env_vars_are_initialised s.bst_environ
                                  (bir_vars_of_program p) ==>
@@ -1391,8 +1391,8 @@ FULL_SIMP_TAC (srw_ss()) []>>
 RW_TAC std_ss []
 );
 
-val bir_exec_to_labels_triple_jmp =
-  store_thm("bir_exec_to_labels_triple_jmp",
+val bir_exec_to_labels_or_assumviol_triple_jmp =
+  store_thm("bir_exec_to_labels_or_assumviol_triple_jmp",
   ``!p l bl l1 ls post post'.
       bir_is_bool_exp post ==>
       bir_is_well_typed_program p ==>
@@ -1404,23 +1404,23 @@ val bir_exec_to_labels_triple_jmp =
       (bl.bb_last_statement = (BStmt_Jmp (BLE_Label l1))) ==>
       (((l1 IN ls) ==> (post' = post)) /\
        ((~(l1 IN ls)) ==>
-        (bir_exec_to_labels_triple p l1 ls post' post) /\
+        (bir_exec_to_labels_or_assumviol_triple p l1 ls post' post) /\
         (bir_is_bool_exp post')
        )
       ) ==>
-      (bir_exec_to_labels_triple p l ls
+      (bir_exec_to_labels_or_assumviol_triple p l ls
         (bir_wp_exec_stmtsB bl.bb_statements post') post
       )``,
 
 (* Expand definitions *)
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
-SIMP_TAC std_ss [bir_exec_to_labels_triple_def] >>
+SIMP_TAC std_ss [bir_exec_to_labels_or_assumviol_triple_def] >>
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 (* "s'" is the state resulting from execution with
  * bir_exec_to_labels from s. *)
 Q.ABBREV_TAC `s' = bir_exec_to_labels ls p s` >>
 Q.ABBREV_TAC `cnd = l1 IN ls /\ (post' = post) \/
-  bir_exec_to_labels_triple p l1 ls pre post'` >>
+  bir_exec_to_labels_or_assumviol_triple p l1 ls pre post'` >>
 subgoal `(bir_get_current_block p s.bst_pc = SOME bl)` >- (
   FULL_SIMP_TAC std_ss [bir_get_current_block_def,
                         bir_get_program_block_info_by_label_MEM] >>
@@ -1498,7 +1498,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
   (* Case: We have not reach an end label *)
   FULL_SIMP_TAC std_ss [Abbr `cnd`, LET_DEF, bir_state_COUNT_PC_def,
                         bir_block_pc_def] >>
-  FULL_SIMP_TAC (srw_ss()) [bir_exec_to_labels_triple_def] >>
+  FULL_SIMP_TAC (srw_ss()) [bir_exec_to_labels_or_assumviol_triple_def] >>
   PAT_X_ASSUM ``!s''.p``
               (fn thm => ASSUME_TAC (Q.SPEC `st12` thm)) >>
   REV_FULL_SIMP_TAC (srw_ss()) [] >>
@@ -1545,8 +1545,8 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
 ]
 );
 
-val bir_exec_to_labels_triple_cjmp =
-  store_thm("bir_exec_to_labels_triple_cjmp",
+val bir_exec_to_labels_or_assumviol_triple_cjmp =
+  store_thm("bir_exec_to_labels_or_assumviol_triple_cjmp",
   ``!p l bl e l1 l2 ls post post1' post2'.
       bir_is_bool_exp post ==>
       bir_is_well_typed_program p ==>
@@ -1561,17 +1561,17 @@ val bir_exec_to_labels_triple_cjmp =
       ) ==>
       (((l1 IN ls) ==> (post1' = post)) /\
        ((~(l1 IN ls)) ==>
-         bir_exec_to_labels_triple p l1 ls post1' post /\
+         bir_exec_to_labels_or_assumviol_triple p l1 ls post1' post /\
          bir_is_bool_exp post1'
        )
       ) ==>
       (((l2 IN ls) ==> (post2' = post)) /\
        ((~(l2 IN ls)) ==>
-         bir_exec_to_labels_triple p l2 ls post2' post /\
+         bir_exec_to_labels_or_assumviol_triple p l2 ls post2' post /\
          bir_is_bool_exp post2'
        )
       ) ==>
-      (bir_exec_to_labels_triple p l ls
+      (bir_exec_to_labels_or_assumviol_triple p l ls
         (bir_wp_exec_stmtsB bl.bb_statements 
         (
           (BExp_BinExp BIExp_And 
@@ -1585,7 +1585,7 @@ val bir_exec_to_labels_triple_cjmp =
 
 (* Expand definitions *)
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
-SIMP_TAC std_ss [bir_exec_to_labels_triple_def] >>
+SIMP_TAC std_ss [bir_exec_to_labels_or_assumviol_triple_def] >>
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 (* "s'" is the final state of execution *)
 Q.ABBREV_TAC `s' = bir_exec_to_labels ls p s` >>
@@ -1682,7 +1682,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
   (* We have not reached an end label *)
   FULL_SIMP_TAC std_ss [LET_DEF,
                         bir_state_COUNT_PC_def, bir_block_pc_def] >>
-  FULL_SIMP_TAC (srw_ss()) [bir_exec_to_labels_triple_def] >>
+  FULL_SIMP_TAC (srw_ss()) [bir_exec_to_labels_or_assumviol_triple_def] >>
   PAT_X_ASSUM ``!s''.p`` (fn thm=>ASSUME_TAC (Q.SPEC `st12` thm)) >>
   REV_FULL_SIMP_TAC (srw_ss()) [] >>
   subgoal `bir_env_vars_are_initialised st12.bst_environ
@@ -1734,7 +1734,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
   (* We have not reached an end label *)
   FULL_SIMP_TAC std_ss [LET_DEF,
                         bir_state_COUNT_PC_def, bir_block_pc_def] >>
-  FULL_SIMP_TAC (srw_ss()) [bir_exec_to_labels_triple_def] >>
+  FULL_SIMP_TAC (srw_ss()) [bir_exec_to_labels_or_assumviol_triple_def] >>
   PAT_X_ASSUM ``!s''.p`` (fn thm=>ASSUME_TAC (Q.SPEC `st12` thm)) >>
   REV_FULL_SIMP_TAC (srw_ss()) [] >>
   subgoal `bir_env_vars_are_initialised st12.bst_environ
@@ -2106,14 +2106,14 @@ val bir_wp_exec_of_block_sound_thm =
       FEVERY (\(l1, wp1).
                ((l1 IN ls) ==> (wp1 = post)) /\
                ((~(l1 IN ls)) ==>
-                 (bir_exec_to_labels_triple p l1 ls wp1 post)
+                 (bir_exec_to_labels_or_assumviol_triple p l1 ls wp1 post)
                )
              ) wps ==>
       ((bir_wp_exec_of_block p l ls post wps) = SOME wps') ==>
       (FEVERY (\(l1, wp1).
                 ((l1 IN ls) ==> (wp1 = post)) /\
                 ((~(l1 IN ls)) ==>
-                  (bir_exec_to_labels_triple p l1 ls wp1 post)
+                  (bir_exec_to_labels_or_assumviol_triple p l1 ls wp1 post)
                 )
               ) wps')
   ``,
@@ -2156,13 +2156,13 @@ Cases_on `FLOOKUP wps l` >- (
   ) >| [
     Cases_on `l1 IN FDOM wps` >- (
       FULL_SIMP_TAC std_ss [] >>
-      subgoal `bir_exec_to_labels_triple (BirProgram bls) l ls
+      subgoal `bir_exec_to_labels_or_assumviol_triple (BirProgram bls) l ls
                  (bir_wp_exec_stmtsB bl.bb_statements
                                      (FAPPLY wps l1)
                  ) post` >- (
         ASSUME_TAC (Q.SPECL [`BirProgram bls`, `l`, `bl`, `l1`,
                              `ls`, `post`]
-                            bir_exec_to_labels_triple_jmp) >>
+                            bir_exec_to_labels_or_assumviol_triple_jmp) >>
         subgoal `MEM l1 (bir_labels_of_program
                           (BirProgram bls)
                         )` >- (
@@ -2201,12 +2201,12 @@ Cases_on `FLOOKUP wps l` >- (
                                                    (FAPPLY wps l2)
                              )
                            )` >>
-      subgoal `bir_exec_to_labels_triple (BirProgram bls) l ls
+      subgoal `bir_exec_to_labels_or_assumviol_triple (BirProgram bls) l ls
                 (bir_wp_exec_stmtsB bl.bb_statements exp1)
                 post` >- (
         ASSUME_TAC (Q.SPECL [`BirProgram bls`, `l`, `bl`, `e`, `l1`,
                              `l2`, `ls`, `post`]
-                   bir_exec_to_labels_triple_cjmp) >>
+                   bir_exec_to_labels_or_assumviol_triple_cjmp) >>
         subgoal `MEM l1
                   (bir_labels_of_program (BirProgram bls)) /\
                  MEM l2
@@ -2251,7 +2251,7 @@ val bir_sound_wps_map_def = Define `
     (FEVERY (\(l1, wp1).
               ((l1 IN ls) ==> (wp1 = post)) /\
               ((~(l1 IN ls)) ==>
-                (bir_exec_to_labels_triple p l1 ls wp1 post)
+                (bir_exec_to_labels_or_assumviol_triple p l1 ls wp1 post)
               )
             ) wps
     )`;

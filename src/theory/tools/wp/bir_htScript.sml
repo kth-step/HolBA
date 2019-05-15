@@ -22,18 +22,18 @@ open HolBACoreSimps;
  * triples not directly related to WP propagation. *)
 val _ = new_theory "bir_ht";
 
-val bir_stmtb_is_not_assume_def = Define `
-  (bir_stmtb_is_not_assume (BStmt_Declare v) = T) /\
-  (bir_stmtb_is_not_assume (BStmt_Assign v ex) = T) /\
-  (bir_stmtb_is_not_assume (BStmt_Assert ex) = T) /\
-  (bir_stmtb_is_not_assume (BStmt_Assume ex) = F) /\
-  (bir_stmtb_is_not_assume (BStmt_Observe ec el obf) = T)
+val bir_stmtB_is_not_assume_def = Define `
+  (bir_stmtB_is_not_assume (BStmt_Declare v) = T) /\
+  (bir_stmtB_is_not_assume (BStmt_Assign v ex) = T) /\
+  (bir_stmtB_is_not_assume (BStmt_Assert ex) = T) /\
+  (bir_stmtB_is_not_assume (BStmt_Assume ex) = F) /\
+  (bir_stmtB_is_not_assume (BStmt_Observe ec el obf) = T)
 `;
 
-val bir_stmtb_not_assume_never_assumviol =
-  store_thm("bir_stmtb_not_assume_never_assumviol",
+val bir_stmtB_not_assume_never_assumviol =
+  store_thm("bir_stmtB_not_assume_never_assumviol",
   ``!stmtb st obs st'.
-    bir_stmtb_is_not_assume stmtb ==>
+    bir_stmtB_is_not_assume stmtb ==>
     (st.bst_status <> BST_AssumptionViolated) ==>
     (bir_exec_stmtB stmtb st = (obs, st')) ==>
     (st'.bst_status <> BST_AssumptionViolated)``,
@@ -42,7 +42,7 @@ REPEAT STRIP_TAC >>
 Cases_on `st` >>
 Cases_on `st'` >>
 Cases_on `stmtb` >> (
-  FULL_SIMP_TAC std_ss [bir_stmtb_is_not_assume_def,
+  FULL_SIMP_TAC std_ss [bir_stmtB_is_not_assume_def,
                         bir_exec_stmtB_def]
 ) >| [
   FULL_SIMP_TAC (std_ss++holBACore_ss)
@@ -109,7 +109,7 @@ Cases_on `stmtb` >> (
 val bir_stmtsB_has_no_assumes_def = Define `
   (bir_stmtsB_has_no_assumes [] = T) /\
   (bir_stmtsB_has_no_assumes (h::t) =
-    (bir_stmtb_is_not_assume h) /\ (bir_stmtsB_has_no_assumes t)
+    (bir_stmtB_is_not_assume h) /\ (bir_stmtsB_has_no_assumes t)
   )
 `;
 
@@ -150,7 +150,7 @@ Induct_on `stmtsB` >- (
 ) >>
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_stmtsB_has_no_assumes_def,
-                      bir_stmtb_is_not_assume_def,
+                      bir_stmtB_is_not_assume_def,
                       bir_exec_stmtsB_def] >>
 Cases_on `bir_state_is_terminated st` >| [
   FULL_SIMP_TAC std_ss [],
@@ -160,7 +160,7 @@ Cases_on `bir_state_is_terminated st` >| [
     FULL_SIMP_TAC std_ss [bir_exec_stmtB_exists]
   ) >>
   FULL_SIMP_TAC std_ss [LET_DEF] >>
-  IMP_RES_TAC bir_stmtb_not_assume_never_assumviol >>
+  IMP_RES_TAC bir_stmtB_not_assume_never_assumviol >>
   PAT_X_ASSUM ``!l'' c'' st''. _``
               (fn thm => ASSUME_TAC
                 (SPECL [``(OPT_CONS obs_test l): 'a list``,
@@ -518,8 +518,8 @@ IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_block_n >>
 IMP_RES_TAC bir_prog_not_assume_never_assumviol_exec_block_n
 );
 
-val bir_exec_to_labels_no_av_triple_def = Define `
-  bir_exec_to_labels_no_av_triple p l ls pre post =
+val bir_exec_to_labels_triple_def = Define `
+  bir_exec_to_labels_triple p l ls pre post =
   !s r.
     bir_env_vars_are_initialised s.bst_environ
                                  (bir_vars_of_program p) ==>
@@ -557,11 +557,11 @@ val bir_never_assumviol_ht =
   store_thm("bir_never_assumviol_ht",
   ``!prog l ls pre post.
     bir_prog_has_no_assumes prog ==>
-    bir_exec_to_labels_triple prog l ls pre post ==>
-    bir_exec_to_labels_no_av_triple prog l ls pre post``,
+    bir_exec_to_labels_or_assumviol_triple prog l ls pre post ==>
+    bir_exec_to_labels_triple prog l ls pre post``,
 
-REWRITE_TAC [bir_exec_to_labels_no_av_triple_def,
-             bir_exec_to_labels_triple_def] >>
+REWRITE_TAC [bir_exec_to_labels_triple_def,
+             bir_exec_to_labels_or_assumviol_triple_def] >>
 REPEAT STRIP_TAC >>
 PAT_X_ASSUM ``!s r. _``
             (fn thm => ASSUME_TAC
