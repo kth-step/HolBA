@@ -35,61 +35,65 @@ val bir_stmtb_not_assume_never_assviol =
     (st'.bst_status <> BST_AssumptionViolated)``,
 
 REPEAT STRIP_TAC >>
+Cases_on `st` >>
+Cases_on `st'` >>
 Cases_on `stmtb` >> (
   FULL_SIMP_TAC std_ss [bir_stmtb_is_not_assume_def,
                         bir_exec_stmtB_def]
 ) >| [
-  FULL_SIMP_TAC std_ss [bir_exec_stmt_declare_def] >>
-  Cases_on `bir_env_varname_is_bound st.bst_environ
-              (bir_var_name b)` >| [
-    FULL_SIMP_TAC std_ss [bir_state_set_failed_def] >>
-    RW_TAC std_ss [] >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [],
+  FULL_SIMP_TAC (std_ss++holBACore_ss)
+                [bir_exec_stmt_declare_def] >>
+  Cases_on `bir_env_varname_is_bound b0
+              (bir_var_name b'')` >| [
+    FULL_SIMP_TAC (std_ss++holBACore_ss)
+                  [bir_state_set_failed_def,
+                   bir_state_t_bst_status_fupd],
 
-    FULL_SIMP_TAC std_ss [] >>
-    Cases_on `bir_env_update (bir_var_name b)
-                (bir_declare_initial_value (bir_var_type b))
-                (bir_var_type b)
-                st.bst_environ` >| [
-      FULL_SIMP_TAC std_ss [bir_state_set_failed_def] >>
-      RW_TAC std_ss [] >>
-      FULL_SIMP_TAC (std_ss++holBACore_ss) [],
+    Cases_on `bir_env_update (bir_var_name b'')
+                (bir_declare_initial_value (bir_var_type b''))
+                (bir_var_type b'')
+                b0` >| [
+      FULL_SIMP_TAC (std_ss++holBACore_ss)
+		    [bir_state_set_failed_def,
+		     bir_state_t_bst_status_fupd],
 
-      FULL_SIMP_TAC std_ss [] >>
-      RW_TAC std_ss [] >>
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+      FULL_SIMP_TAC (std_ss++holBACore_ss)
+		    [bir_state_set_failed_def,
+		     bir_state_t_bst_status_fupd,
+                     bir_state_t_bst_environ_fupd]
     ]
   ],
 
-  FULL_SIMP_TAC std_ss [bir_exec_stmt_assign_def, LET_DEF] >>
-  Cases_on `bir_env_write b (bir_eval_exp b0 st.bst_environ)
-                          st.bst_environ` >| [
-    FULL_SIMP_TAC std_ss [bir_state_set_failed_def] >>
-    RW_TAC std_ss [] >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [],
+  FULL_SIMP_TAC (std_ss++holBACore_ss)
+                [bir_exec_stmt_assign_def, LET_DEF] >>
+  Cases_on `bir_env_write b'' (bir_eval_exp b0'' b0) b0` >| [
+    FULL_SIMP_TAC (std_ss++holBACore_ss)
+		  [bir_state_set_failed_def,
+		   bir_state_t_bst_status_fupd],
 
-    RW_TAC std_ss [] >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC (std_ss++holBACore_ss)
+                  [bir_state_t_bst_environ_fupd]
   ],
 
-  FULL_SIMP_TAC std_ss [bir_exec_stmt_assert_def] >>
-  Cases_on `bir_dest_bool_val (bir_eval_exp b st.bst_environ)` >| [
-    FULL_SIMP_TAC std_ss [bir_state_set_failed_def] >>
-    RW_TAC std_ss [] >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [],
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_assert_def] >>
+  Cases_on `bir_dest_bool_val (bir_eval_exp b'' b0)` >| [
+    FULL_SIMP_TAC (std_ss++holBACore_ss)
+		  [bir_state_set_failed_def,
+		   bir_state_t_bst_status_fupd],
 
     Cases_on `x` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) >>
-    RW_TAC std_ss [] >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+      FULL_SIMP_TAC (std_ss++holBACore_ss)
+		    [bir_state_set_failed_def,
+		     bir_state_t_bst_status_fupd]
+    )
   ],
 
-  FULL_SIMP_TAC std_ss [bir_exec_stmt_observe_def] >>
-  Cases_on `bir_dest_bool_val (bir_eval_exp b st.bst_environ)` >| [
-    FULL_SIMP_TAC std_ss [bir_state_set_failed_def] >>
-    RW_TAC std_ss [] >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [],
+  FULL_SIMP_TAC (std_ss++holBACore_ss)
+                [bir_exec_stmt_observe_def] >>
+  Cases_on `bir_dest_bool_val (bir_eval_exp b'' b0)` >| [
+    FULL_SIMP_TAC (std_ss++holBACore_ss)
+		  [bir_state_set_failed_def,
+		   bir_state_t_bst_status_fupd],
 
     Cases_on `x` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss) []
@@ -120,11 +124,9 @@ FULL_SIMP_TAC std_ss [bir_exec_stmt_observe_def] >>
 Cases_on `bir_dest_bool_val (bir_eval_exp b st.bst_environ)` >| [
   FULL_SIMP_TAC std_ss [],
 
-  Cases_on `x` >| [
-    FULL_SIMP_TAC std_ss [],
-
+  Cases_on `x` >> (
     FULL_SIMP_TAC std_ss []
-  ]
+  )
 ]
 );
 
@@ -195,20 +197,16 @@ Cases_on `stmtE` >| [
       FULL_SIMP_TAC (std_ss++holBACore_ss)
                     [bir_state_set_failed_def,
                      bir_exec_stmt_jmp_to_label_def] >>
-      Cases_on `MEM (BL_Label s) (bir_labels_of_program prog)` >| [
-        FULL_SIMP_TAC (std_ss++holBACore_ss) [],
-
+      Cases_on `MEM (BL_Label s) (bir_labels_of_program prog)` >> (
         FULL_SIMP_TAC (std_ss++holBACore_ss) []
-      ],
+      ),
 
       FULL_SIMP_TAC (std_ss++holBACore_ss)
                     [bir_exec_stmt_jmp_to_label_def] >>
       Cases_on `MEM (BL_Address b')
-                    (bir_labels_of_program prog)` >| [
-        FULL_SIMP_TAC (std_ss++holBACore_ss) [],
-
+                    (bir_labels_of_program prog)` >> (
         FULL_SIMP_TAC (std_ss++holBACore_ss) []
-      ]
+      )
     ]
   ],
 
@@ -235,20 +233,16 @@ Cases_on `stmtE` >| [
       FULL_SIMP_TAC (std_ss++holBACore_ss)
                     [bir_state_set_failed_def,
                      bir_exec_stmt_jmp_to_label_def] >>
-      Cases_on `MEM (BL_Label s) (bir_labels_of_program prog)` >| [
-        FULL_SIMP_TAC (std_ss++holBACore_ss) [],
-
+      Cases_on `MEM (BL_Label s) (bir_labels_of_program prog)` >> (
         FULL_SIMP_TAC (std_ss++holBACore_ss) []
-      ],
+      ),
 
       FULL_SIMP_TAC (std_ss++holBACore_ss)
                     [bir_exec_stmt_jmp_to_label_def] >>
       Cases_on `MEM (BL_Address b')
-                    (bir_labels_of_program prog)` >| [
-        FULL_SIMP_TAC (std_ss++holBACore_ss) [],
-
+                    (bir_labels_of_program prog)` >> (
         FULL_SIMP_TAC (std_ss++holBACore_ss) []
-      ]
+      )
     ]
   ),
 
@@ -344,7 +338,8 @@ val bir_prog_has_no_assumes_def = Define `
   )
 `;
 
-val test_lemma_3 = store_thm("test_lemma_3",
+(* TODO: Move this elsewhere... *)
+val INDEX_FIND_PRE = store_thm("INDEX_FIND_PRE",
   ``!i j P l x.
     (0 < i) ==>
     (INDEX_FIND i       P l = SOME (j, x)) ==>
@@ -365,7 +360,7 @@ PAT_X_ASSUM ``!j' P' x'. blah`` (fn thm => IMP_RES_TAC thm) >>
 REV_FULL_SIMP_TAC std_ss [arithmeticTheory.SUC_PRE]
 );
 
-val test_lemma = store_thm("test_lemma",
+val bir_prog_to_block_no_assumes = store_thm("bir_prog_to_block_no_assumes",
   ``!prog st bl.
     (bir_get_current_block prog st.bst_pc = SOME bl) ==>
     bir_prog_has_no_assumes prog ==>
@@ -397,7 +392,7 @@ Induct_on `l` >| [
 		       ``l:'a bir_block_t list``,
 		       ``bl:'a bir_block_t``]
 		      (INST_TYPE [``:'a`` |-> ``:'a bir_block_t``]
-				 test_lemma_3
+				 INDEX_FIND_PRE
 		      )
 	       ) >>
     REV_FULL_SIMP_TAC std_ss [] >>
@@ -459,7 +454,7 @@ Induct_on `n` >| [
           (fn thm => ASSUME_TAC (SPECL [``prog: 'a bir_program_t``,
                                         ``st':bir_state_t``] thm)
           ) >>
-  IMP_RES_TAC test_lemma >>
+  IMP_RES_TAC bir_prog_to_block_no_assumes >>
   IMP_RES_TAC bir_block_not_assume_never_assviol >>
   IMP_RES_TAC bir_exec_block_n_block >>
   PAT_X_ASSUM ``!n. blah``
