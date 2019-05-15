@@ -107,13 +107,14 @@ fun mkRelConj xs =
         fun processImpl (c, l1) (c', l2) = 
             let val eqRel =
                     case (l1,l2) of
-                       (NONE,_) => bir_false
+                       (NONE, NONE) => bir_true
+                     | (NONE,_) => bir_false
                      | (_,NONE) => bir_false
                      | (SOME l1,SOME l2)  => 
                        mk_bir_cond_obs_eq l1 l2;
-            in mk_bir_impl (band (c, c')) eqRel end;
+            in ((band (c, c')),  eqRel) end;
         val xs2 = cartesianWith processImpl xs primed
-    in bandl xs2
+    in xs2
     end
 
 exception MkRel
@@ -121,8 +122,15 @@ exception MkRel
 (* input type : (bir_exp * (cobs list) option) list *)
 (*              path condition * ((list of conditional observations) or bottom if error) *)
 fun mkRel [] = ``T``
-| mkRel xs = mkRelConj xs
-                       
+| mkRel xs = bandl (List.map (uncurry mk_bir_impl) (mkRelConj xs))
+
+fun mkRel_conds [] = ([], ``T``)
+  | mkRel_conds xs =
+    let val xs2 = mkRelConj xs
+    in
+        (List.map fst xs2, bandl (List.map (uncurry mk_bir_impl) xs2))
+    end
+
 (*    let fun partitionOption [] = ([],[])
           | partitionOption ((pathCond,NONE)::ps) =
             let val (v,e) = partitionOption ps
