@@ -91,7 +91,15 @@ FULL_SIMP_TAC (std_ss) [bir_expTheory.bir_eval_load_FULL_REWRS, arm8_load_64_def
  FULL_SIMP_TAC (srw_ss()) []
  );
 
+val bool2w_and = prove(``!a b. ((bool2w a) && (bool2w b)) = (bool2w (a /\ b))``,
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC (std_ss) [bool2w_def] >>
+    Cases_on `a` >>
+    Cases_on `b` >>
+    EVAL_TAC);
 
+val imm_eq_to_val_eq = prove(``!a b . ((BVal_Imm(Imm1 a)) = (BVal_Imm(Imm1 b))) = (a = b)``,
+    REPEAT STRIP_TAC >> EVAL_TAC);
 
 (* Code specific for the example *)
 
@@ -150,9 +158,10 @@ SIMP_TAC (std_ss) [b_sqrt_I_def, bir_expTheory.bir_eval_exp_def] >>
          bir_exp_immTheory.bir_bin_pred_REWRS, bir_exp_immTheory.bir_bin_pred_GET_OPER_def,
          bir_immTheory.bool2b_def] @
   [(UNDISCH o (SPECL [``bs:bir_state_t``, ``ms:arm8_state``])) bload_64_to_arm8_load_64_thm] @
-  [bir_bool_expTheory.BVal_Imm_bool2b_EQ_TF_REWRS])) >>
+  [bir_bool_expTheory.BVal_Imm_bool2b_EQ_TF_REWRS, bir_valuesTheory.BType_Bool_def ])) >>
 FULL_SIMP_TAC (std_ss) [arm8_sqrt_I_def] >>
-cheat
+FULL_SIMP_TAC (std_ss) [bool2w_def, bir_bool_expTheory.bir_val_true_def] >>
+EVAL_TAC
 );
 
 
@@ -167,11 +176,12 @@ FULL_SIMP_TAC (std_ss) [b_sqrt_I_def, bir_expTheory.bir_eval_exp_def] >>
   [bir_expTheory.bir_eval_bin_exp_REWRS, bir_immTheory.type_of_bir_imm_def,
          bir_exp_immTheory.bir_bin_exp_REWRS, bir_exp_immTheory.bir_bin_exp_GET_OPER_def] @
   [bir_expTheory.bir_eval_bin_pred_REWRS, bir_immTheory.type_of_bir_imm_def,
-         bir_exp_immTheory.bir_bin_pred_REWRS, bir_exp_immTheory.bir_bin_pred_GET_OPER_def] @
+         bir_exp_immTheory.bir_bin_pred_REWRS, bir_exp_immTheory.bir_bin_pred_GET_OPER_def,
+         bir_immTheory.bool2b_def] @
   [(UNDISCH o (SPECL [``bs:bir_state_t``, ``ms:arm8_state``])) bload_64_to_arm8_load_64_thm] @
-  [bir_bool_expTheory.BVal_Imm_bool2b_EQ_TF_REWRS])) >>
+  [bir_bool_expTheory.BVal_Imm_bool2b_EQ_TF_REWRS, bir_valuesTheory.BType_Bool_def ])) >>
 FULL_SIMP_TAC (std_ss) [arm8_sqrt_I_def] >>
-cheat
+FULL_SIMP_TAC (std_ss) [bir_immTheory.bool2w_11, bool2w_and, bir_bool_expTheory.bir_val_true_def, imm_eq_to_val_eq, bir_bool_expTheory.bool2w_ELIMS] >>
 );
 
 
