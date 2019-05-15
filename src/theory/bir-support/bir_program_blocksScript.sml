@@ -14,9 +14,9 @@ val _ = new_theory "bir_program_blocks";
 (* ------------------------------------------------------------------------- *)
 (* This theory tries to execute whole blocks in an easy way.
    The PC is only relevant for fetching the next instruction.
-   Moreover, basic staments can only terminate or increment the PC. Therefore
+   Moreover, basic statements can only terminate or increment the PC. Therefore
    executing blocks can be simplified by executing one instruction after the
-   other and just update the PC at the very end.                             *)
+   other and only updating the PC at the very end.                             *)
 (* ------------------------------------------------------------------------- *)
 
 
@@ -138,7 +138,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss++pairSimps.gen_beta_ss++boolSimps.LIFT_COND_
 (*  Definition of executing lists of basic staments                          *)
 (* ------------------------------------------------------------------------- *)
 
-(* First lets define executing lists of basic statements. *)
+(* First, let's define executing lists of basic statements. *)
 val bir_exec_stmtsB_def = Define `
   (bir_exec_stmtsB [] (l, c, st) = (REVERSE l, c, st)) /\
   (bir_exec_stmtsB (stmt::stmts) (l, c, st) =
@@ -315,7 +315,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss) [
 (*  Semantics of bir_exec_stmtsB                                             *)
 (* ------------------------------------------------------------------------- *)
 
-(* We can proof that the executing a list of basic statements and then
+(* We can prove that executing a list of basic statements and then
    updating the PC is the same as executing multiple steps and then updating the pc. *)
 
 val bir_exec_stmtsB_COUNTER = store_thm ("bir_exec_stmtsB_COUNTER",
@@ -720,18 +720,8 @@ ASM_SIMP_TAC std_ss [bir_exec_block_SEMANTICS_step_n]);
 (* ------------------------------------------------------------------------- *)
 
 (* We can execute our whole program just using bir_exec_block,
-   size we either terminate during execution of the next block
+   since we either terminate during execution of the next block
    or end up at the beginning of a new block.*)
-
-val bir_get_current_block_block_pc = store_thm ("bir_get_current_block_block_pc",
-  ``!p l. IS_SOME (bir_get_current_block p (bir_block_pc l)) <=>
-          MEM l (bir_labels_of_program p)``,
-
-SIMP_TAC (std_ss++holBACore_ss) [optionTheory.IS_SOME_EXISTS, bir_get_current_block_SOME,
-  bir_block_pc_def, bir_get_program_block_info_by_label_MEM] >>
-METIS_TAC[]);
-
-
 val bir_exec_stmtE_new_block_pc = store_thm ("bir_exec_stmtE_new_block_pc",
   ``!st p stmt. let st' = bir_exec_stmtE p stmt st in
                 ~(bir_state_is_terminated st') ==>
