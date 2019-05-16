@@ -357,9 +357,24 @@ struct
 	  (*val label = (snd o dest_eq o concl o EVAL) label;*)
 	  fun is_lbl_in_wps lbl =
 	    List.exists (fn el => cmp_label el lbl) wpsdom
+          (* Currently, we do not treat BLE_Exps. *)
+          fun has_exp_lbl stmte =
+            if is_BStmt_Jmp stmte
+            then (is_BLE_Exp o dest_BStmt_Jmp) stmte
+            else if is_BStmt_CJmp stmte
+            then ((fn (_, a, b) => is_BLE_Exp a orelse is_BLE_Exp b)
+                    (dest_BStmt_CJmp stmte)
+                 )
+            else if is_BStmt_Halt stmte
+            then false
+            else
+	      raise ERR "bir_wp_comp_wps.has_exp_lbl"
+			"unhandled end_statement type."
 	in
 	  if (is_BStmt_Halt end_statement)
 	  then false
+          else if has_exp_lbl end_statement
+          then false
           else if (is_BStmt_Jmp end_statement)
 	  then ((is_lbl_in_wps o dest_BLE_Label o dest_BStmt_Jmp)
                   end_statement
