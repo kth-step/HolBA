@@ -50,9 +50,11 @@
 open HolKernel Parse boolLib bossLib;
 open finite_mapTheory optionTheory;
 open wordsLib;
+open HolSmtLib;
 open bir_envTheory bir_programTheory;
 open bir_expTheory bir_bool_expTheory bir_valuesTheory;
 open bir_exp_equivTheory bir_typing_progTheory
+open bir_exp_immTheory;
 open HolBASimps;
 open bir_wpTheory;
 open bslSyntax;
@@ -271,6 +273,53 @@ val (wp_thm, triple_thm) =
     val IS_IMM_EXP_TAC = FULL_SIMP_TAC holba_ss [bir_is_imm_exp_def, Abbrev_def]
     val UNABBREV_EVAL_TAC = unabbrev_all_tac >> EVAL_TAC
     (**)
+    val bexp_not_bool2b = prove (
+      ``!b. (bir_unary_exp BIExp_Not (bool2b b)) = (bool2b ~b)``,
+      Cases >> EVAL_TAC)
+    val bexp_and_bool2b = prove (
+      ``!a b. (bir_bin_exp BIExp_And (bool2b a) (bool2b b)) = (bool2b (a /\ b))``,
+      REPEAT Cases >> EVAL_TAC)
+    val bexp_or_bool2b = prove (
+      ``!a b. (bir_bin_exp BIExp_Or (bool2b a) (bool2b b)) = (bool2b (a \/ b))``,
+      REPEAT Cases >> EVAL_TAC)
+    (**)
+    fun REPEAT_N 1 tac = tac | REPEAT_N n tac = tac >> REPEAT_N (n-1) tac
+    (**)
+    val bir_exp_equiv_thms = [
+      bir_equal_equiv,
+      GSYM bir_and_equiv,
+      GSYM bir_not_equiv,
+      GSYM bir_or_impl
+    ]
+    val bir_eval_defs = [
+      bir_eval_exp_def,
+      bir_eval_bin_pred_def,
+      bir_eval_bin_exp_def,
+      bir_eval_unary_exp_def
+    ]
+    val bir_to_OPER_equiv_thms = [
+      bir_unary_exp_def,
+      bir_bin_exp_def,
+      bir_bin_pred_def
+    ]
+    val OPER_thms = [bir_bin_exp_GET_OPER_def, bir_bin_pred_GET_OPER_def, bir_unary_exp_GET_OPER_def]
+    val bool2b_REWRS = [
+      bool2b_11, bool2b_inv,
+      bool2b_ELIMS, bool2b_EQ_IMM1_ELIMS, bool2b_NEQ_IMM_ELIMS,
+      bir_eval_bool_exp_BExp_Const_bool2b, BVal_Imm_bool2b_EQ_TF_REWRS,
+      bexp_not_bool2b, bexp_and_bool2b, bexp_or_bool2b
+    ]
+    val BIR_TO_WORDS_ss = rewrites (
+       bir_exp_equiv_thms
+      @bir_eval_defs
+      @bir_to_OPER_equiv_thms
+      @OPER_thms
+      @bool2b_REWRS
+      @[type_of_bir_imm_def]
+      @[EVAL ``~T``, COND_CLAUSES]
+    )
+    val bir_to_words_ss = pure_ss++HolBACoreSimps.holBACore_ss++BIR_TO_WORDS_ss
+    (**)
     val triple_thm = store_thm ( "triple_thm",
       ``bir_exec_to_labels_triple bir_prog entry_label end_labels BIR_P_exp BIR_Q_exp``,
       (* WP --> Q *)
@@ -400,28 +449,27 @@ val (wp_thm, triple_thm) =
         Q.UNABBREV_TAC `x_val` >>
         Q.UNABBREV_TAC `dead_val` >>
 
-        (** simplify using the equiv theorems **)
-        unabbrev_all_tac >>
-        FULL_SIMP_TAC pure_ss [bir_equal_equiv, GSYM bir_and_equiv,
-                               GSYM bir_not_equiv, GSYM bir_or_impl] >>
-        SIMP_TAC pure_ss [bir_eval_exp_def] >>
+        subgoal `?x_w. x_imm = Imm32 x_w` >- (
+          (* TODO: That's UGLY *)
+          ASSUME_TAC (SPEC ``x_imm: bir_imm_t`` bir_imm_t_nchotomy) >>
+          RW_TAC holba_ss [] >>
+          FULL_SIMP_TAC holba_ss [type_of_bir_imm_def]
+        ) >>
+        subgoal `?dead_w. dead_imm = Imm1 dead_w` >- (
+          (* TODO: That's UGLY *)
+          ASSUME_TAC (SPEC ``dead_imm: bir_imm_t`` bir_imm_t_nchotomy) >>
+          RW_TAC holba_ss [] >>
+          FULL_SIMP_TAC holba_ss [type_of_bir_imm_def]
+        ) >>
 
-        REWRITE_TAC [type_of_bir_imm_def] >>
-        FULL_SIMP_TAC pure_ss [type_of_bir_imm_def] >>
+        Q.UNABBREV_TAC `x_exp` >>
+        Q.UNABBREV_TAC `dead_exp` >>
+        Q.UNABBREV_TAC `exp_0w1` >>
+        Q.UNABBREV_TAC `exp_0w32` >>
+        FULL_SIMP_TAC bir_to_words_ss [] >>
 
-        ASM_SIMP_TAC pure_ss [bir_eval_cast_REWRS, bir_eval_unary_exp_REWRS, bir_eval_bin_exp_REWRS, bir_eval_bin_pred_REWRS, bir_eval_memeq_REWRS, bir_eval_ifthenelse_REWRS (* rewrites for select and store are missing *)] >>
-
-        FULL_SIMP_TAC pure_ss [bir_env_var_is_initialised_def] >>
-        FULL_SIMP_TAC pure_ss [bir_var_type_def] >>
-        FULL_SIMP_TAC pure_ss [bir_type_of_val_is_imm_then_exists_imm] >>
-        ASM_SIMP_TAC holba_ss [bir_env_read_def] >>
-        SIMP_TAC (srw_ss()) []
-
-        (*FULL_SIMP_TAC holba_ss [bool2b_def, bool2w_def]*)
-
-        REPEAT STRIP_TAC >>
-        ASM_REWRITE_TAC [] >>
-        EVAL_TAC
+        (REPEAT o PAT_X_TAC) `_` >>
+        Z3_ORACLE_TAC
       ) >>
       METIS_TAC [bir_exec_to_labels_triple_def]
     )
