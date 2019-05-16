@@ -1,0 +1,77 @@
+
+executing lifted_sliced
+================================
+checking block list definition...
+--------------------------------
+ok
+
+program validity...
+--------------------------------
+ok
+ - 0.228 s - 
+
+typechecking...
+--------------------------------
+ok
+ - 0.144 s - 
+
+state checking/generation...
+--------------------------------
+ok
+ - 0.000 s - 
+
+executing...
+--------------------------------
+input validation starts
+done
+
+preprocessing starts
+done
+ - 0.539 s - 
+
+execution starts
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!done
+done
+ - 30.443 s - 
+
+reversing observations
+done
+ok
+ exec total: - 30.988 s - 
+
+
+================================
+result:
+================================
+
+
+ol = []
+
+n = 68
+
+s2 = <|bst_pc := <|bpc_label := BL_Address (Imm64 0x400294w); bpc_index := 0|>;
+  bst_environ :=
+    BEnv
+      (FEMPTY |+
+       ("MEM",BType_Mem Bit64 Bit8,
+        SOME
+          (BVal_Mem Bit64 Bit8
+             (FEMPTY |+ (134217704,3) |+ (134217705,0) |+ (134217706,0) |+
+              (134217707,0) |+ (134217708,0) |+ (134217709,0) |+
+              (134217710,0) |+ (134217711,0) |+ (134217720,1) |+
+              (134217721,0) |+ (134217722,0) |+ (134217723,0) |+
+              (134217724,0) |+ (134217725,0) |+ (134217726,0) |+
+              (134217727,0)))) |+
+       ("R1",BType_Imm Bit64,SOME (BVal_Imm (Imm64 4w))) |+
+       ("ProcState_C",BType_Imm Bit1,SOME (BVal_Imm (Imm1 1w))) |+
+       ("ProcState_N",BType_Imm Bit1,SOME (BVal_Imm (Imm1 0w))) |+
+       ("ProcState_V",BType_Imm Bit1,SOME (BVal_Imm (Imm1 0w))) |+
+       ("ProcState_Z",BType_Imm Bit1,SOME (BVal_Imm (Imm1 0w))) |+
+       ("R0",BType_Imm Bit64,SOME (BVal_Imm (Imm64 1w))) |+
+       ("SP_EL0",BType_Imm Bit64,SOME (BVal_Imm (Imm64 0x8000000w))));
+  bst_status := BST_Halted (BVal_Imm (Imm32 0w))|>
+
+================================
+done
+================================
+
