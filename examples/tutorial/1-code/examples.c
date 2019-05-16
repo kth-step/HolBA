@@ -21,9 +21,9 @@ uint64_t gcd(uint64_t x, uint64_t y) {
 }
 
 
-int64_t sqrt(int64_t x) {
+int64_t sqrt_(int64_t x) {
   uint64_t y = 0;
-  while ((y+1)*(y+1) < x) {
+  while ((y+1)*(y+1) <= x) {
     y += 1;
   }
   return y;
@@ -116,12 +116,13 @@ int main(int argc, char ** argv) {
   PRINTF(("CGD 6 9 %ld\n", gcd(6, 9)));
   PRINTF(("CGD 12 18 %ld\n", gcd(12, 18)));
   for (int i=0; i<20; i++) {
-    PRINTF(("SQRT %d %ld\n", i, sqrt(i)));
+    PRINTF(("SQRT %d %ld\n", i, sqrt_(i)));
   }
   PRINTF(("POW MOD 3^3 mod 4 = 27 mod 4 = 3 ? %ld\n", modular_pow(3, 3, 4)));
 
   uint64_t buffer[255];
   buffer[0] = 0; buffer[1] = 10;
+  buffer[0] = buffer[0]; // code to avoid compiler warning "varibale unused"
   // binary_search_buggy(buffer, 2, 1);
   PRINTF(("SEARCH 0 = %ld\n", binary_search_buggy(buffer, 2, 0)));
   for (int i=0; i<255; i++) {
