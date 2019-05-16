@@ -424,4 +424,18 @@ FULL_SIMP_TAC (std_ss) [bir_immTheory.bool2w_11, bool2w_and, bir_bool_expTheory.
 );
 
 
+
+open bir_subprogramLib;
+open bir_programSyntax;
+
+val (_, bir_prog) =
+         dest_comb
+           (concl examples_arm8_program_THM);
+
+val tutorial_prog_def = Define `tutorial_prog = ^bir_prog`;
+
+EVAL ``MEM (BL_Address (Imm64 0x70cw)) (bir_labels_of_program tutorial_prog)``;
+EVAL ``arm8_wf_varset (bir_vars_of_exp b_sqrt_I)``;
+EVAL ``(bir_vars_of_exp b_sqrt_I)``;
+EVAL ``(bir_vars_of_program tutorial_prog)``;
 val _ = export_theory();
