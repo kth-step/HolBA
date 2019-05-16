@@ -32,15 +32,18 @@ all: $(NAME).da
 #$(NAME): ${OBJECTS} entry/entry.o
 #	${CROSS}ld $(LDFLAGS) -o $@ -T linkerscript.ld $^
 
-$(NAME):
+$(NAME): examples.c
 	${CROSS}gcc -DBAREMETAL= ${CFLAGS} examples.c -o $@
 
 $(NAME).da: $(NAME)
 	${CROSS}objdump -d $< > $@
 
 
-test.elf:
+test.elf: examples.c
 	gcc examples.c -o test.elf
+
+test: test.elf
+	./test.elf
 
 clean:
 	rm -f $(NAME) $(NAME).da test.elf
