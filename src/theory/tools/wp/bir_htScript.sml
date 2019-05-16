@@ -479,8 +479,7 @@ Cases_on `r` >| [
       >- (
       FULL_SIMP_TAC std_ss [bir_get_current_block_def]
     ) >>
-    IMP_RES_TAC bir_prog_not_assume_never_assumviol_exec_to_labels >>
-    cheat,
+    IMP_RES_TAC bir_prog_not_assume_never_assumviol_exec_to_labels,
 
     FULL_SIMP_TAC (std_ss++holBACore_ss)
                   [bir_exec_to_labels_def] >>
