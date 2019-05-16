@@ -28,9 +28,9 @@ struct
 
   in
 
-    fun bir_stmtb_is_not_assume_pp stmtb_is_na =
+    fun bir_stmtB_is_not_assume_pp stmtb_is_na =
       EQT_ELIM (
-	SIMP_CONV holba_ss [bir_stmtb_is_not_assume_def] stmtb_is_na
+	SIMP_CONV holba_ss [bir_stmtB_is_not_assume_def] stmtb_is_na
       );
 
     fun bir_stmtsB_has_no_assumes_pp stmtsB_is_na =
@@ -44,10 +44,10 @@ struct
 	  val thm1_lhs_tm = (snd o dest_eq o concl) thm1
 	  (* Can split with boolSyntax.strip_conj and prove
            * conjuncts individually using
-           * bir_stmtb_is_not_assume_pp. What is faster? *)
+           * bir_stmtB_is_not_assume_pp. What is faster? *)
 	  val thm1_lhs_thm =
 	    EQT_ELIM (
-	      SIMP_CONV holba_ss [bir_stmtb_is_not_assume_def,
+	      SIMP_CONV holba_ss [bir_stmtB_is_not_assume_def,
 				  stmtsB_empty_na] thm1_lhs_tm
 	    )
 	  val thm1_rhs = REWRITE_RULE [thm1_lhs_thm] thm1

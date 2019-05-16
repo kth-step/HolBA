@@ -23,11 +23,8 @@ open HolBACoreSimps;
 val _ = new_theory "bir_ht";
 
 val bir_stmtB_is_not_assume_def = Define `
-  (bir_stmtB_is_not_assume (BStmt_Declare v) = T) /\
-  (bir_stmtB_is_not_assume (BStmt_Assign v ex) = T) /\
-  (bir_stmtB_is_not_assume (BStmt_Assert ex) = T) /\
   (bir_stmtB_is_not_assume (BStmt_Assume ex) = F) /\
-  (bir_stmtB_is_not_assume (BStmt_Observe ec el obf) = T)
+  (bir_stmtB_is_not_assume _ = T)
 `;
 
 val bir_stmtB_not_assume_never_assumviol =
