@@ -117,8 +117,8 @@ Disassembly of section .text:
   400188:	cb000042 	sub	x2, x2, x0
   40018c:	9400019d 	bl	400800 <memset>
   400190:	580001c0 	ldr	x0, 4001c8 <_cpu_init_hook+0x1c>
-  400194:	94000151 	bl	4006d8 <atexit>
-  400198:	94000168 	bl	400738 <__libc_init_array>
+  400194:	94000153 	bl	4006e0 <atexit>
+  400198:	9400016a 	bl	400740 <__libc_init_array>
   40019c:	d2800000 	mov	x0, #0x0                   	// #0
   4001a0:	d2800001 	mov	x1, #0x0                   	// #0
   4001a4:	9400012f 	bl	400660 <main>
@@ -131,7 +131,7 @@ Disassembly of section .text:
   4001bc:	00000000 	.word	0x00000000
   4001c0:	00411468 	.word	0x00411468
   4001c4:	00000000 	.word	0x00000000
-  4001c8:	004006f0 	.word	0x004006f0
+  4001c8:	004006f8 	.word	0x004006f8
   4001cc:	00000000 	.word	0x00000000
 
 00000000004001d0 <_exit>:
@@ -170,11 +170,11 @@ Disassembly of section .text:
   400248:	910043ff 	add	sp, sp, #0x10
   40024c:	d65f03c0 	ret
 
-0000000000400250 <sqrt>:
+0000000000400250 <sqrt_>:
   400250:	d10083ff 	sub	sp, sp, #0x20
   400254:	f90007e0 	str	x0, [sp, #8]
   400258:	f9000fff 	str	xzr, [sp, #24]
-  40025c:	14000004 	b	40026c <sqrt+0x1c>
+  40025c:	14000004 	b	40026c <sqrt_+0x1c>
   400260:	f9400fe0 	ldr	x0, [sp, #24]
   400264:	91000400 	add	x0, x0, #0x1
   400268:	f9000fe0 	str	x0, [sp, #24]
@@ -185,7 +185,7 @@ Disassembly of section .text:
   40027c:	9b007c21 	mul	x1, x1, x0
   400280:	f94007e0 	ldr	x0, [sp, #8]
   400284:	eb00003f 	cmp	x1, x0
-  400288:	54fffec3 	b.cc	400260 <sqrt+0x10>  // b.lo, b.ul, b.last
+  400288:	54fffec9 	b.ls	400260 <sqrt_+0x10>  // b.plast
   40028c:	f9400fe0 	ldr	x0, [sp, #24]
   400290:	910083ff 	add	sp, sp, #0x20
   400294:	d65f03c0 	ret
@@ -457,87 +457,89 @@ Disassembly of section .text:
   40068c:	f9000bff 	str	xzr, [sp, #16]
   400690:	d2800140 	mov	x0, #0xa                   	// #10
   400694:	f9000fe0 	str	x0, [sp, #24]
-  400698:	b9080bff 	str	wzr, [sp, #2056]
-  40069c:	14000009 	b	4006c0 <main+0x60>
-  4006a0:	b9880be2 	ldrsw	x2, [sp, #2056]
-  4006a4:	b9880be0 	ldrsw	x0, [sp, #2056]
-  4006a8:	d37df000 	lsl	x0, x0, #3
-  4006ac:	910043e1 	add	x1, sp, #0x10
-  4006b0:	f8206822 	str	x2, [x1, x0]
-  4006b4:	b9480be0 	ldr	w0, [sp, #2056]
-  4006b8:	11000400 	add	w0, w0, #0x1
-  4006bc:	b9080be0 	str	w0, [sp, #2056]
-  4006c0:	b9480be0 	ldr	w0, [sp, #2056]
-  4006c4:	7103f81f 	cmp	w0, #0xfe
-  4006c8:	54fffecd 	b.le	4006a0 <main+0x40>
-  4006cc:	52800000 	mov	w0, #0x0                   	// #0
-  4006d0:	912043ff 	add	sp, sp, #0x810
-  4006d4:	d65f03c0 	ret
+  400698:	f9400be0 	ldr	x0, [sp, #16]
+  40069c:	f9000be0 	str	x0, [sp, #16]
+  4006a0:	b9080bff 	str	wzr, [sp, #2056]
+  4006a4:	14000009 	b	4006c8 <main+0x68>
+  4006a8:	b9880be2 	ldrsw	x2, [sp, #2056]
+  4006ac:	b9880be0 	ldrsw	x0, [sp, #2056]
+  4006b0:	d37df000 	lsl	x0, x0, #3
+  4006b4:	910043e1 	add	x1, sp, #0x10
+  4006b8:	f8206822 	str	x2, [x1, x0]
+  4006bc:	b9480be0 	ldr	w0, [sp, #2056]
+  4006c0:	11000400 	add	w0, w0, #0x1
+  4006c4:	b9080be0 	str	w0, [sp, #2056]
+  4006c8:	b9480be0 	ldr	w0, [sp, #2056]
+  4006cc:	7103f81f 	cmp	w0, #0xfe
+  4006d0:	54fffecd 	b.le	4006a8 <main+0x48>
+  4006d4:	52800000 	mov	w0, #0x0                   	// #0
+  4006d8:	912043ff 	add	sp, sp, #0x810
+  4006dc:	d65f03c0 	ret
 
-00000000004006d8 <atexit>:
-  4006d8:	aa0003e1 	mov	x1, x0
-  4006dc:	d2800003 	mov	x3, #0x0                   	// #0
-  4006e0:	d2800002 	mov	x2, #0x0                   	// #0
-  4006e4:	52800000 	mov	w0, #0x0                   	// #0
-  4006e8:	140000bc 	b	4009d8 <__register_exitproc>
-  4006ec:	00000000 	.inst	0x00000000 ; undefined
+00000000004006e0 <atexit>:
+  4006e0:	aa0003e1 	mov	x1, x0
+  4006e4:	d2800003 	mov	x3, #0x0                   	// #0
+  4006e8:	d2800002 	mov	x2, #0x0                   	// #0
+  4006ec:	52800000 	mov	w0, #0x0                   	// #0
+  4006f0:	140000ba 	b	4009d8 <__register_exitproc>
+  4006f4:	00000000 	.inst	0x00000000 ; undefined
 
-00000000004006f0 <__libc_fini_array>:
-  4006f0:	a9be7bfd 	stp	x29, x30, [sp, #-32]!
-  4006f4:	90000001 	adrp	x1, 400000 <_init>
-  4006f8:	90000000 	adrp	x0, 400000 <_init>
-  4006fc:	910003fd 	mov	x29, sp
-  400700:	a90153f3 	stp	x19, x20, [sp, #16]
-  400704:	f9463c33 	ldr	x19, [x1, #3192]
-  400708:	f9464014 	ldr	x20, [x0, #3200]
-  40070c:	cb140273 	sub	x19, x19, x20
-  400710:	9343fe73 	asr	x19, x19, #3
-  400714:	b40000b3 	cbz	x19, 400728 <__libc_fini_array+0x38>
-  400718:	d1000673 	sub	x19, x19, #0x1
-  40071c:	f8737a80 	ldr	x0, [x20, x19, lsl #3]
-  400720:	d63f0000 	blr	x0
-  400724:	b5ffffb3 	cbnz	x19, 400718 <__libc_fini_array+0x28>
-  400728:	a94153f3 	ldp	x19, x20, [sp, #16]
-  40072c:	a8c27bfd 	ldp	x29, x30, [sp], #32
-  400730:	1400013c 	b	400c20 <_fini>
-  400734:	00000000 	.inst	0x00000000 ; undefined
+00000000004006f8 <__libc_fini_array>:
+  4006f8:	a9be7bfd 	stp	x29, x30, [sp, #-32]!
+  4006fc:	90000001 	adrp	x1, 400000 <_init>
+  400700:	90000000 	adrp	x0, 400000 <_init>
+  400704:	910003fd 	mov	x29, sp
+  400708:	a90153f3 	stp	x19, x20, [sp, #16]
+  40070c:	f9463c33 	ldr	x19, [x1, #3192]
+  400710:	f9464014 	ldr	x20, [x0, #3200]
+  400714:	cb140273 	sub	x19, x19, x20
+  400718:	9343fe73 	asr	x19, x19, #3
+  40071c:	b40000b3 	cbz	x19, 400730 <__libc_fini_array+0x38>
+  400720:	d1000673 	sub	x19, x19, #0x1
+  400724:	f8737a80 	ldr	x0, [x20, x19, lsl #3]
+  400728:	d63f0000 	blr	x0
+  40072c:	b5ffffb3 	cbnz	x19, 400720 <__libc_fini_array+0x28>
+  400730:	a94153f3 	ldp	x19, x20, [sp, #16]
+  400734:	a8c27bfd 	ldp	x29, x30, [sp], #32
+  400738:	1400013a 	b	400c20 <_fini>
+  40073c:	00000000 	.inst	0x00000000 ; undefined
 
-0000000000400738 <__libc_init_array>:
-  400738:	a9bd7bfd 	stp	x29, x30, [sp, #-48]!
-  40073c:	90000001 	adrp	x1, 400000 <_init>
-  400740:	90000000 	adrp	x0, 400000 <_init>
-  400744:	910003fd 	mov	x29, sp
-  400748:	a90153f3 	stp	x19, x20, [sp, #16]
-  40074c:	f9464834 	ldr	x20, [x1, #3216]
-  400750:	f90013f5 	str	x21, [sp, #32]
-  400754:	f9464c15 	ldr	x21, [x0, #3224]
-  400758:	cb150294 	sub	x20, x20, x21
-  40075c:	9343fe94 	asr	x20, x20, #3
-  400760:	b40000f4 	cbz	x20, 40077c <__libc_init_array+0x44>
-  400764:	d2800013 	mov	x19, #0x0                   	// #0
-  400768:	f8737aa0 	ldr	x0, [x21, x19, lsl #3]
-  40076c:	91000673 	add	x19, x19, #0x1
-  400770:	d63f0000 	blr	x0
-  400774:	eb13029f 	cmp	x20, x19
-  400778:	54ffff81 	b.ne	400768 <__libc_init_array+0x30>  // b.any
-  40077c:	97fffe21 	bl	400000 <_init>
-  400780:	90000001 	adrp	x1, 400000 <_init>
-  400784:	90000000 	adrp	x0, 400000 <_init>
-  400788:	f9465034 	ldr	x20, [x1, #3232]
-  40078c:	f9465415 	ldr	x21, [x0, #3240]
-  400790:	cb150294 	sub	x20, x20, x21
-  400794:	9343fe94 	asr	x20, x20, #3
-  400798:	b40000f4 	cbz	x20, 4007b4 <__libc_init_array+0x7c>
-  40079c:	d2800013 	mov	x19, #0x0                   	// #0
-  4007a0:	f8737aa0 	ldr	x0, [x21, x19, lsl #3]
-  4007a4:	91000673 	add	x19, x19, #0x1
-  4007a8:	d63f0000 	blr	x0
-  4007ac:	eb13029f 	cmp	x20, x19
-  4007b0:	54ffff81 	b.ne	4007a0 <__libc_init_array+0x68>  // b.any
-  4007b4:	a94153f3 	ldp	x19, x20, [sp, #16]
-  4007b8:	f94013f5 	ldr	x21, [sp, #32]
-  4007bc:	a8c37bfd 	ldp	x29, x30, [sp], #48
-  4007c0:	d65f03c0 	ret
+0000000000400740 <__libc_init_array>:
+  400740:	a9bd7bfd 	stp	x29, x30, [sp, #-48]!
+  400744:	90000001 	adrp	x1, 400000 <_init>
+  400748:	90000000 	adrp	x0, 400000 <_init>
+  40074c:	910003fd 	mov	x29, sp
+  400750:	a90153f3 	stp	x19, x20, [sp, #16]
+  400754:	f9464834 	ldr	x20, [x1, #3216]
+  400758:	f90013f5 	str	x21, [sp, #32]
+  40075c:	f9464c15 	ldr	x21, [x0, #3224]
+  400760:	cb150294 	sub	x20, x20, x21
+  400764:	9343fe94 	asr	x20, x20, #3
+  400768:	b40000f4 	cbz	x20, 400784 <__libc_init_array+0x44>
+  40076c:	d2800013 	mov	x19, #0x0                   	// #0
+  400770:	f8737aa0 	ldr	x0, [x21, x19, lsl #3]
+  400774:	91000673 	add	x19, x19, #0x1
+  400778:	d63f0000 	blr	x0
+  40077c:	eb13029f 	cmp	x20, x19
+  400780:	54ffff81 	b.ne	400770 <__libc_init_array+0x30>  // b.any
+  400784:	97fffe1f 	bl	400000 <_init>
+  400788:	90000001 	adrp	x1, 400000 <_init>
+  40078c:	90000000 	adrp	x0, 400000 <_init>
+  400790:	f9465034 	ldr	x20, [x1, #3232]
+  400794:	f9465415 	ldr	x21, [x0, #3240]
+  400798:	cb150294 	sub	x20, x20, x21
+  40079c:	9343fe94 	asr	x20, x20, #3
+  4007a0:	b40000f4 	cbz	x20, 4007bc <__libc_init_array+0x7c>
+  4007a4:	d2800013 	mov	x19, #0x0                   	// #0
+  4007a8:	f8737aa0 	ldr	x0, [x21, x19, lsl #3]
+  4007ac:	91000673 	add	x19, x19, #0x1
+  4007b0:	d63f0000 	blr	x0
+  4007b4:	eb13029f 	cmp	x20, x19
+  4007b8:	54ffff81 	b.ne	4007a8 <__libc_init_array+0x68>  // b.any
+  4007bc:	a94153f3 	ldp	x19, x20, [sp, #16]
+  4007c0:	f94013f5 	ldr	x21, [sp, #32]
+  4007c4:	a8c37bfd 	ldp	x29, x30, [sp], #48
+  4007c8:	d65f03c0 	ret
 	...
 
 0000000000400800 <memset>:
