@@ -25,11 +25,14 @@ in
  *)
 
 (* -------------------- syntax functions ----------------------------- *)
-val bir_symb_state_t_ty = mk_type ("bir_symb_state_t", []);
+(* val bir_symb_state_t_ty = mk_type ("bir_symb_state_t", []); *)
 fun dest_bir_symb_state tm =
   let 
     val (ty, l) = TypeBase.dest_record tm 
-    val _ = if ty = bir_symb_state_t_ty then () else fail()
+    val _ = if is_type ty andalso
+               (fst o dest_type) ty = "bir_symb_state_t" andalso
+               (length o snd o dest_type) ty = 1
+            then () else fail()
     val pc = Lib.assoc "bsst_pc" l
     val env = Lib.assoc "bsst_environ" l
     val pred = Lib.assoc "bsst_pred" l
@@ -39,11 +42,14 @@ fun dest_bir_symb_state tm =
     (pc, env, pred, status, obs)
   end handle HOL_ERR _ => raise ERR "dest_bir_symb_state" ("cannot destruct term \"" ^ (term_to_string tm) ^ "\"");
 
-val bir_symb_obs_t_ty = mk_type ("bir_symb_obs_t", []);
+(*val bir_symb_obs_t_ty = mk_type ("bir_symb_obs_t", []);*)
 fun dest_bir_symb_obs tm =
   let 
     val (ty, l) = TypeBase.dest_record tm 
-    val _ = if ty = bir_symb_obs_t_ty then () else fail()
+    val _ = if is_type ty andalso
+               (fst o dest_type) ty = "bir_symb_obs_t" andalso
+               (length o snd o dest_type) ty = 1
+            then () else fail()
     val obs_cond = Lib.assoc "obs_cond" l
     val obs = Lib.assoc "obs" l
   in 
@@ -106,6 +112,9 @@ fun symb_exec_run bir_program tree assert_list_ref =
 
    
 (* Given a Program, exec until every branch halts *)
+(*
+val bir_program = ``BirProgram [] : 'observation_type bir_program_t``;
+*)
 fun symb_exec_program bir_program =
   let 
     val env = init_env ();
@@ -211,13 +220,28 @@ in
 (*
 val exp = ``BExp_Const (Imm32 r1)``;
 *)
-  val bir_exp_hvar_to_bvar = bir_exp_rewrite (fn exp => if not (is_BExp_Const exp) then exp else
+  val bir_exp_hvar_to_bvar_bexp = bir_exp_rewrite (fn exp => if not (is_BExp_Const exp) then exp else
         let val (imm_t_i, w) = (gen_dest_Imm o dest_BExp_Const) exp in
           if not (is_var w) then exp else
           let val (v_n, v_t) = dest_var w in
             (mk_BExp_Den o mk_BVar_string) (v_n, mk_BType_Imm(bir_immtype_t_of_word_ty v_t))
           end
         end);
+
+(*
+ this function tolerates lists and maps bir_exp_hvar_to_bvar_bexp
+   to the list elements, or applies it directly
+ *)
+  fun bir_exp_hvar_to_bvar t =
+    if is_list t then
+      let
+        val (t_l, t_t) = dest_list t;
+      in
+        mk_list (List.map bir_exp_hvar_to_bvar_bexp t_l, t_t)
+      end
+    else
+      bir_exp_hvar_to_bvar_bexp t;
+
 end
 
   
