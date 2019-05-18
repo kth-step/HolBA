@@ -184,8 +184,8 @@ in
 
      fun cmp_ast s =
 	 case instructionFromString s of
-	     OK ast =>
-	     ast
+	     OK ast => ast
+           | _ => raise ERR "cmp_ast" "some progGen error"
 
      fun cmp_mcode ast = 
 	 (case Encode ast of
