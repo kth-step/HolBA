@@ -39,11 +39,15 @@ function is_holba {
 
   [[ -d "$1/scripts/setup" ]] \
       || { echo "bad scripts dir" > /dev/stderr; return $FALSE; }
+
+  [[ -f "$1/scripts/setup/autoenv.sh" ]] \
+      || { echo "no autoenv.sh" > /dev/stderr; return $FALSE; }
+
+  [[ "$(cat "$1/scripts/setup/autoenv.sh" 2> /dev/null | grep -c 'HOLBA')" -ge 1 ]] \
+      || { echo "bad autoenv.sh" > /dev/stderr; return $FALSE; }
+
   [[ "$(head -n1 "$1/README.md" 2> /dev/null | grep -c '# HolBA')" -eq 1 ]] \
       || { echo "bad README.md" > /dev/stderr; return $FALSE; }
-  local REMOTE_REGEX='github[.]com[:/]kth-step/HolBA'
-  [[ "$(cd "$1" && git remote -v | grep -c $REMOTE_REGEX)" -gt 0 ]] \
-      || { echo "missing Git remote" > /dev/stderr; return $FALSE; }
 
   true
 }
