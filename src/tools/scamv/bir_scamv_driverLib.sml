@@ -206,6 +206,8 @@ fun start_interactive () =
         val obs_exps = flatten (List.map (fn (x,y) => [x,y])
                                          (flatten (List.map snd paths)));
         val fail_cond = bnot (borl path_conds);
+
+        (* TODO: interface mismatch between symb exec and relation genration *)
         val prog_obss_paths =
             (fail_cond, NONE) ::
             (List.map (fn (x,y) => (x, SOME y)) paths);

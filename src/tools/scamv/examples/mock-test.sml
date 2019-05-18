@@ -154,16 +154,23 @@ val leaf_cond_obss = List.map extract_cond_obs leafs;
 (* --------------------------------------- *)
 
 (* generate the input structure for the relation generation *)
-(* TODO: this is to fix the missing failed paths, needs to be generalized *)
-val [(cond,[(obs_cond_exp, obs_exp)])] = leaf_cond_obss;
-val prog_obss_paths =
-    [
-      (bnot cond, NONE),
-      (cond,
-       SOME [
-           (obs_cond_exp, obs_exp)
-      ])
-    ];
+(*
+ TODO: interface mismatch to relation genration
+ why SOME and NONE?
+ why no lists of observations?
+ *)
+val prog_obss_paths = List.map (fn (patc,obsl) => (patc,
+      if obsl = [] then NONE else
+        SOME (List.map (fn (cond,obslt) => (cond,
+          let
+            val (obstl, obstt) = dest_list obslt;
+          in
+            if length obstl <> 1 then
+              raise ERR "prog_obss_paths" "currently we support only singleton observations"
+            else
+              hd obstl
+          end)) obsl)
+       )) leaf_cond_obss;
 
 val relation = mkRel prog_obss_paths;
 
