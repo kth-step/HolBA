@@ -1,4 +1,4 @@
-include scripts/setup/autoenv.mk
+include scripts/setup/autoenv_base.mk
 
 # set make's shell to bash
 SHELL := /bin/bash

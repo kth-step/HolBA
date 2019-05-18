@@ -10,8 +10,14 @@ ifndef HOLBA_HOLMAKE
   else
 
     $(info !!! HOLBA_OPT_DIR not defined, trying HOLBA/opt)
-    # then check if the local HolBA contains opt
-    ifneq ("$(wildcard $(CURDIR)/opt/.*)", "")
+    # then check if the defined HOLBA_DIR
+    # (or alternatively the local HolBA) contains opt
+
+    ifndef HOLBA_DIR
+      HOLBA_DIR = $(CURDIR)
+    endif
+
+    ifneq ("$(wildcard $(HOLBA_DIR)/opt/.*)", "")
 
       HOLBA_HOLMAKE=$(CURDIR)/opt/hol_k12_holba/bin/Holmake
 
