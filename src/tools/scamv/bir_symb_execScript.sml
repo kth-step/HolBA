@@ -31,7 +31,7 @@ val _ = new_theory "bir_symb_exec";
  **)
 val _ = Datatype `bir_symb_obs_t = <|
   obs_cond     : bir_exp_t;
-  obs          : bir_exp_t; (* Should be 'a type *)
+  obs          : bir_exp_t list; (* Should be 'a type *)
  |>`  
 
 (* *
@@ -57,8 +57,7 @@ val CONJ_def = Define `
 
 (* Expression that always evaluates to True *)
 val TRUE_EXP_def = Define `
-    TRUE_EXP = BExp_BinPred BIExp_Equal 
-        (BExp_Const (Imm1 1w)) (BExp_Const (Imm1 1w))`;
+    TRUE_EXP = BExp_Const (Imm1 1w)`;
 
 (* ------------------------------------------------------------------------- *)
 (* Symbolic State                                                            *)
@@ -230,30 +229,38 @@ val bir_symb_exec_stmtE_def = Define `
 (* We declare all variables before execution, so raise error is this occurs *)
 val bir_symb_exec_stmt_declare_def = Define `
     bir_symb_exec_stmt_declare var_name var_type st = 
-        st with bsst_status := BST_Failed `;
+        [st with bsst_status := BST_Failed] `;
 
 val bir_symb_exec_stmt_assign_def = Define `
     bir_symb_exec_stmt_assign v ex (st: bir_symb_state_t) = 
     case (bir_symb_env_write v (bir_symb_eval_exp ex st.bsst_environ) st.bsst_environ) of 
-    | SOME env => st with bsst_environ := env
-    | NONE => st with bsst_status := BST_Failed`;
+    | SOME env => [st with bsst_environ := env]
+    | NONE => [st with bsst_status := BST_Failed]`;
 
-(* Assertions are simply added to the Path Predicate *)
+(* Assertions create two follow up states: 
+ * One in which the assertion holds and One in which the Assertion is violated *)
 val bir_symb_exec_stmt_assert_def = Define `
     bir_symb_exec_stmt_assert ex st = 
-    st with bsst_pred := BExp_BinExp BIExp_And (bir_symb_eval_exp ex st.bsst_environ) st.bsst_pred`;
+        let st_true = 
+            st with bsst_pred := 
+                BExp_BinExp BIExp_And (bir_symb_eval_exp ex st.bsst_environ) st.bsst_pred 
+        in 
+        let st_false = 
+            st with 
+                <| bsst_status := BST_AssertionViolated;
+                   bsst_pred   := BExp_BinExp BIExp_And (BExp_UnaryExp BIExp_Not 
+                                   (bir_symb_eval_exp ex st.bsst_environ))
+                                   st.bsst_pred |>
+        in [st_true; st_false]`;
 
-val bir_symb_add_obs_def = Define `
-    (bir_symb_add_obs symb_exp [] st = st) /\
-    (bir_symb_add_obs symb_exp (obs::obs_lst) st = 
-        let symb_obs = bir_symb_eval_exp obs st.bsst_environ in
-        let obs1 = <| obs_cond := symb_exp; obs := symb_obs |> in
-        bir_symb_add_obs symb_exp obs_lst (st with bsst_obs := (obs1 :: st.bsst_obs)))`;
 
 (* Evaluate and add observations *)
 val bir_symb_exec_stmt_observe_def = Define `
     bir_symb_exec_stmt_observe c_ex obs_lst st =
-      bir_symb_add_obs (bir_symb_eval_exp c_ex st.bsst_environ) obs_lst st`;
+        let obs_cond_ex = bir_symb_eval_exp c_ex st.bsst_environ in
+        let obs_lst_e = MAP (\o_ex. bir_symb_eval_exp o_ex st.bsst_environ) obs_lst in
+        let obs = <| obs_cond := obs_cond_ex; obs := obs_lst_e |> in
+          [st with bsst_obs := (obs :: st.bsst_obs)]`;
 
 (* Basic Statement execution *)
 val bir_symb_exec_stmtB_def = Define `
@@ -265,46 +272,72 @@ val bir_symb_exec_stmtB_def = Define `
         =  bir_symb_exec_stmt_assert ex st) /\ 
     (bir_symb_exec_stmtB (BStmt_Observe ex ex_lst f) st
         = bir_symb_exec_stmt_observe ex ex_lst st) /\
-    (bir_symb_exec_stmtB (_)  st  = st)`;
+    (bir_symb_exec_stmtB (_)  st  = [st])`; (* Ignore Assumptions *)
 
 (* Execute one statement *)
 val bir_symb_exec_stmt_def = Define`
     (bir_symb_exec_stmt (p: 'a bir_program_t) (BStmtB (bst: 'a bir_stmt_basic_t)) (st: bir_symb_state_t) 
-        = [bir_symb_exec_stmtB bst st]) /\
+        = (bir_symb_exec_stmtB bst st)) /\
     (bir_symb_exec_stmt p (BStmtE (bst: bir_stmt_end_t)) st 
-        = (bir_symb_exec_stmtE p bst st))
-    `;
+        = (bir_symb_exec_stmtE p bst st))`;
 
 (* ---------------------------------------------------- *)
 (* Execute a program                                    *)
 (* -----------------------------------------------------*)
 
-(* Execute a Basic Block  *)
-val bir_symb_exec_stmtB_list_def = Define `
-    (bir_symb_exec_stmtB_list (p: 'a bir_program_t) (st: bir_symb_state_t)
-        [] = st) ∧
-    (bir_symb_exec_stmtB_list p st (stmt :: stmt_list) = 
-        bir_symb_exec_stmtB_list p (bir_symb_exec_stmtB stmt st) stmt_list)`;
+(* Execute the non-ending statements of a BB.
+ * Produces one running state and a list of halted states *)
+val bir_symb_exec_stmtB_list_rec_def = Define `
+    (bir_symb_exec_stmtB_list_rec 
+        (p: 'a bir_program_t) (st: bir_symb_state_t) [] sts_halted =
+        (st, sts_halted))  /\
+    (bir_symb_exec_stmtB_list_rec 
+        p st (stmt :: stmt_lst) sts_halted = 
+        let st_lst = bir_symb_exec_stmtB stmt st in
+        case (LENGTH st_lst) of
+          (* There is either 1 follow-up state (no assertion) or 
+           * 2 follow up-states (assetion failed and assertion holds) *)
+          | 1 => 
+             (bir_symb_exec_stmtB_list_rec p (HD st_lst) stmt_lst sts_halted)
+          | 2 =>
+              let st_n0 = EL 0 st_lst in
+              let st_n1 = EL 1 st_lst in
+              (case (st_n0.bsst_status) of 
+                 (* Continue Execution with the Running state, collect the other
+                  * one in the halted list *)
+                 | BST_Running =>
+                    bir_symb_exec_stmtB_list_rec p st_n0 stmt_lst (st_n1::sts_halted)
+                 | _ => 
+                    bir_symb_exec_stmtB_list_rec p st_n1 stmt_lst (st_n0::sts_halted))
+          | _ => (* this does not happen *)
+                 (st with bsst_status := BST_Failed, sts_halted))`;
+               
+(* helper function for the recursive function above ... *)
+val bir_symb_exec_bb_statements = Define `
+    bir_symb_exec_bb_statements p st stmt_lst = 
+        bir_symb_exec_stmtB_list_rec p st stmt_lst []`;
 
+(* Execute the End Statemens of a BB
+ * May produce one or two follow-up states *)
+val bir_symb_exec_bb_last_statement = Define `
+    bir_symb_exec_bb_last_statement p st stmt = 
+        bir_symb_exec_stmtE p stmt st`;
 
+(* Execute a single basic block.
+ * Returns a list of blocks with assertions violated 
+ * and a list of potential follow-up states *)
 val bir_symb_exec_blk_def = Define `
-    (bir_symb_exec_blk 
-        (p: 'a bir_program_t) (blk: 'a bir_block_t) (st: bir_symb_state_t ) = 
-        bir_symb_exec_stmtE p (blk.bb_last_statement) 
-            (bir_symb_exec_stmtB_list p st (blk.bb_statements))
-    )`;
-        
-val bir_symb_exec_first_blk_def = Define`
-    (bir_symb_exec_first_blk 
-        (BirProgram (blk_list : ('a bir_block_t) list)) (st: bir_symb_state_t) = 
-        bir_symb_exec_blk (BirProgram blk_list) (HD blk_list) st)`;
+    bir_symb_exec_blk (p: 'a bir_program_t) (blk: 'a bir_block_t) st = 
+        let (st_e, sts_halted) = 
+            bir_symb_exec_bb_statements p st blk.bb_statements in 
+        let sts = bir_symb_exec_bb_last_statement p st_e blk.bb_last_statement in 
+            (sts_halted, sts)`; 
 
-(* Execute each BB  in a program *)
-
+(* Given a Program and a State, find the respective block and execute it *)
 val bir_symb_exec_label_block_def = Define`
     bir_symb_exec_label_block (p: 'a bir_program_t) (st: bir_symb_state_t) = 
     case (bir_get_program_block_info_by_label p st.bsst_pc.bpc_label) of 
-    | NONE => [bir_symb_state_set_failed st] 
+    | NONE => ([], [bir_symb_state_set_failed st])
     | SOME (_, blk) => bir_symb_exec_blk p blk st`;
     
 val _ = export_theory();
