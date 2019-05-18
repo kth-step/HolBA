@@ -9,7 +9,7 @@ else
   HOLBA_AUTOENV_BASE_MK = $(HOLBA_DIR)/scripts/setup/autoenv_base.mk
   ifeq ("$(wildcard $(HOLBA_AUTOENV_BASE_MK))", "")
     $(info !!! ERROR)
-    $(error !!! - $(HOLBA_AUTOENV_BASE_MK) does not exist)
+    $(error $(HOLBA_AUTOENV_BASE_MK) does not exist)
   endif
 
   include $(HOLBA_AUTOENV_BASE_MK)
@@ -22,17 +22,15 @@ else
       include $(HOLBA_ENV_SH)
     else
       $(info !!! WARNING)
-      $(info !!! - env.sh not found, you may run install_mk_env.sh)
+      $(info !!! - $(HOLBA_ENV_SH) not found, you may run install_mk_env.sh)
     endif
     $(info )
   endif
 
-  # define a default gcc
+  # fail if gcc variable is still undefined
   ifndef HOLBA_GCC_ARM8_CROSS
-    $(info !!! WARNING)
-    $(info !!! - HOLBA_GCC_ARM8_CROSS undefined, using default name)
-    $(info )
-    HOLBA_GCC_ARM8_CROSS	= aarch64-linux-gnu-
+    $(info !!! ERROR)
+    $(error HOLBA_GCC_ARM8_CROSS undefined)
   endif
 
   $(info !!! Using HOLBA_GCC_ARM8_CROSS=$(HOLBA_GCC_ARM8_CROSS))
