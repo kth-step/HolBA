@@ -87,9 +87,9 @@ struct
           mk_BirProgram_list (obs_ty, valOf subprog_tm_opt)
         end handle Option => raise ERR "extract_subprogram"
               ("The provided addresses "^
-               "0x"^(Int.fmt StringCvt.HEX a1)^
+               "0x"^(Int.fmt StringCvt.HEX a1)^" and "^
                "0x"^(Int.fmt StringCvt.HEX a2)^
-               "do not match any subprogram. Please double-check "^
+               " do not match any subprogram. Please double-check "^
                "these addresses with the .elf.da file of the "^
                "lifted program.");
     end;
