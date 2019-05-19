@@ -103,10 +103,10 @@ fun prog_gen_from_file da_file =
 
 fun symb_exec_phase prog =
     let
-        val (tree, st_assert_lst) = symb_exec_program prog;
+        val tree = symb_exec_program prog;
 
         (* leaf list *)
-        val leafs = symb_exec_leaflist_complete tree st_assert_lst;
+        val leafs = symb_exec_leaflist tree;
 
         (* retrieval of path condition and observation expressions *)
         fun extract_cond_obs s =

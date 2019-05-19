@@ -42,6 +42,7 @@ val _ = Datatype `bir_symb_obs_t = <|
  * memory: Mapping memory addresses to expressions
  * pred: expression representing the path condition
  * bsst_status : a status bit (mainly used for errors) 
+ * obs: list of conditional observations
  * *)
 
 val _ = Datatype `bir_symb_state_t = <|
@@ -183,11 +184,9 @@ val bir_symb_exec_stmt_halt_def = Define `
     bir_symb_exec_stmt_halt ex (st: 'a bir_symb_state_t) = 
     (st with bsst_status := BST_Halted (bir_symb_eval_exp_empty (bir_symb_eval_exp ex st.bsst_environ)))`;
 
-(* Conditional, so "fork":
- * Return a list containing of two states with 
- * updated path predicate accordingly *)
-
-(* Switch to a purely expressional conditional jump *)
+(* Conditional jump:
+ * Return a list with two states where 
+ * path predicate is updated accordingly *)
 val bir_symb_stmt_cjmp_def = Define `
     bir_symb_exec_stmt_cjmp p ex l1 l2 st = 
     let
@@ -215,7 +214,7 @@ val bir_symb_exec_stmtE_def = Define `
 (********************)
 
 
-(* We declare all variables before execution, so raise error is this occurs *)
+(* We declare all variables before execution, so raise error if this occurs *)
 val bir_symb_exec_stmt_declare_def = Define `
     bir_symb_exec_stmt_declare var_name var_type st = 
         [bir_symb_state_set_failed st] `;
@@ -225,6 +224,7 @@ val bir_symb_exec_stmt_assume_def = Define `
     bir_symb_exec_stmt_assume ex st = 
         [bir_symb_state_set_failed st] `;
 
+(* assign... *)
 val bir_symb_exec_stmt_assign_def = Define `
     bir_symb_exec_stmt_assign v ex (st: 'a bir_symb_state_t) = 
     case (bir_symb_env_write v (bir_symb_eval_exp ex st.bsst_environ) st.bsst_environ) of 
@@ -249,7 +249,7 @@ val bir_symb_exec_stmt_assert_def = Define `
     `;
 
 
-(* Evaluate and add observations *)
+(* add observations as symbolic stubstitutions *)
 val bir_symb_exec_stmt_observe_def = Define `
     bir_symb_exec_stmt_observe c_ex obs_lst f st =
 (*
@@ -294,59 +294,66 @@ val bir_symb_exec_stmt_def = Define`
 (* Execute a program                                    *)
 (* -----------------------------------------------------*)
 
+(* helper definition to partition a list of states
+   into running and terminated ones *)
+val bir_symb_exec_partition_running_def = Define `
+    (bir_symb_exec_partition_running [] (sr, sh) = (REVERSE sr, REVERSE sh)) /\
+    (bir_symb_exec_partition_running (st::sts) (sr, sh) =
+       bir_symb_exec_partition_running (sts) (if bir_symb_state_is_terminated st then (sr, st::sh) else (st::sr, sh)))
+    `;
+
 (* Execute the non-ending statements of a BB.
- * Produces one running state and a list of halted states *)
+ * generalized: produces list of running states and a list of terminated states *)
 val bir_symb_exec_stmtB_list_rec_def = Define `
+
     (bir_symb_exec_stmtB_list_rec 
-        (p: 'a bir_program_t) (st: 'a bir_symb_state_t) [] sts_halted =
-        (st, sts_halted))  /\
-    (bir_symb_exec_stmtB_list_rec 
-        p st (stmt :: stmt_lst) sts_halted = 
-        let st_lst = bir_symb_exec_stmtB stmt st in
-        case (LENGTH st_lst) of
-          (* There is either 1 follow-up state (no assertion) or 
-           * 2 follow up-states (assetion failed and assertion holds) *)
-          | 1 => 
-             (bir_symb_exec_stmtB_list_rec p (HD st_lst) stmt_lst sts_halted)
-          | 2 =>
-              let st_n0 = EL 0 st_lst in
-              let st_n1 = EL 1 st_lst in
-              (case (st_n0.bsst_status) of 
-                 (* Continue Execution with the Running state, collect the other
-                  * one in the halted list *)
-                 | BST_Running =>
-                    bir_symb_exec_stmtB_list_rec p st_n0 stmt_lst (st_n1::sts_halted)
-                 | _ => 
-                    bir_symb_exec_stmtB_list_rec p st_n1 stmt_lst (st_n0::sts_halted))
-          | _ => (* this does not happen *)
-                 (bir_symb_state_set_failed st, sts_halted))`;
-               
+        (p: 'a bir_program_t)
+        (sts_running: 'a bir_symb_state_t list)
+        []
+        sts_halted
+          = (sts_running, sts_halted)
+    )  /\
+
+    (bir_symb_exec_stmtB_list_rec p sts_running (stmt :: stmt_lst) sts_halted
+         =
+        let
+          st_lst = FLAT (MAP (bir_symb_exec_stmtB stmt) sts_running);
+          (sts_running', sts_halted') = bir_symb_exec_partition_running st_lst ([],[]);
+        in
+          bir_symb_exec_stmtB_list_rec  p sts_running' stmt_lst (APPEND sts_halted' sts_halted)
+    )
+
+    `;
+
 (* helper function for the recursive function above ... *)
 val bir_symb_exec_bb_statements = Define `
-    bir_symb_exec_bb_statements p st stmt_lst = 
-        bir_symb_exec_stmtB_list_rec p st stmt_lst []`;
+    bir_symb_exec_bb_statements p sts stmt_lst = 
+        bir_symb_exec_stmtB_list_rec p sts stmt_lst []
+    `;
 
 (* Execute the End Statemens of a BB
- * May produce one or two follow-up states *)
+ * same output as above *)
 val bir_symb_exec_bb_last_statement = Define `
-    bir_symb_exec_bb_last_statement p st stmt = 
-        bir_symb_exec_stmtE p stmt st`;
+    bir_symb_exec_bb_last_statement p sts_running stmt = 
+        bir_symb_exec_partition_running (FLAT (MAP (bir_symb_exec_stmtE p stmt) sts_running)) ([],[])
+    `;
 
 (* Execute a single basic block.
- * Returns a list of blocks with assertions violated 
- * and a list of potential follow-up states *)
+ * same output as above *)
 val bir_symb_exec_blk_def = Define `
-    bir_symb_exec_blk (p: 'a bir_program_t) (blk: 'a bir_block_t) st = 
-        let (st_e, sts_halted) = 
-            bir_symb_exec_bb_statements p st blk.bb_statements in 
-        let sts = bir_symb_exec_bb_last_statement p st_e blk.bb_last_statement in 
-            (sts_halted, sts)`; 
+    bir_symb_exec_blk (p: 'a bir_program_t) (blk: 'a bir_block_t) sts_running = 
+        let
+          (sts_running', sts_halted') = bir_symb_exec_bb_statements p sts_running blk.bb_statements;
+          (sts_running'', sts_halted'') = bir_symb_exec_bb_last_statement p sts_running' blk.bb_last_statement;
+        in
+          (sts_running'', APPEND sts_halted' sts_halted'')`; 
 
 (* Given a Program and a State, find the respective block and execute it *)
-val bir_symb_exec_label_block_def = Define`
-    bir_symb_exec_label_block (p: 'a bir_program_t) (st: 'a bir_symb_state_t) = 
+val bir_symb_exec_label_block_def = Define `
+    (bir_symb_exec_label_block (p: 'a bir_program_t) (st: 'a bir_symb_state_t))
+       = 
     case (bir_get_program_block_info_by_label p st.bsst_pc.bpc_label) of 
     | NONE => ([], [bir_symb_state_set_failed st])
-    | SOME (_, blk) => bir_symb_exec_blk p blk st`;
+    | SOME (_, blk) => bir_symb_exec_blk p blk [st]`;
     
 val _ = export_theory();

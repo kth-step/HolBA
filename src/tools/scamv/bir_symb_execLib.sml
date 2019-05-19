@@ -65,79 +65,69 @@ fun symb_is_BST_Running state =
     is_BST_Running status
   end;
 
-(* We represent an Execution as a binary tree, where branches
+(* We represent an Execution as a tree, where branches
  * in the Tree represent the Branches in the CFG *)
-datatype 'a symb_tree_t =
-        Symb_Empty 
-      | Symb_Node of ('a  * 'a symb_tree_t * 'a symb_tree_t);
-
+datatype 'a symb_tree_t = Symb_Node  of ('a  * 'a symb_tree_t list);
 
 (* The main function to execute a BIR Program:
- * Builds an Execution Tree and additionally 
- * returns a list with state of AssertionViolated states *)
-fun symb_exec_run bir_program tree assert_list_ref = 
-  case tree of
-      (* Nothing to do here. *)
-      Symb_Empty => (Symb_Empty, !assert_list_ref)
-      (* Continue Execution. *)
-    | Symb_Node (state, Symb_Empty, Symb_Empty) => 
-        if (symb_is_BST_Running state) then 
-          let 
-            val (st_assert_lst, st_running_lst) = 
-              ((dest_pair o  rhs o concl o EVAL) ``bir_symb_exec_label_block ^bir_program ^state``);
-            val st_assert_lst_dest = (#1 (dest_list st_assert_lst));
-          in 
-            (* Collect the AssertionViolated States *)
-            assert_list_ref := !assert_list_ref @ st_assert_lst_dest;
-            case (#1 (dest_list st_running_lst)) of 
-                (* If only one follow-up state: Simply continue with this State *)
-                [st] => 
-                  (symb_exec_run bir_program (Symb_Node (st, Symb_Empty,
-                   Symb_Empty)) assert_list_ref)
-                (* If two states: Continue with both *)
-              | [st_l, st_r] => 
-                  let 
-                  val (node_l, _)  = 
-                    symb_exec_run bir_program (Symb_Node (st_l, Symb_Empty, Symb_Empty)) assert_list_ref;
-                  val (node_r, _) =
-                    symb_exec_run bir_program (Symb_Node (st_r, Symb_Empty, Symb_Empty)) assert_list_ref;
-                  in
-                    (Symb_Node (state, node_l, node_r), !assert_list_ref)
-                   end
-              | _ => raise ERR "symb_exec_run" "Too many states after executing  BB."
-          end 
-        else
-          (tree, !assert_list_ref)
-    | _ => raise ERR "symb_exec_run" "Wrong Tree Format.";
-
+ * Builds an Execution Tree  *)
+(*
+ val bp = bir_program;
+ val st = state;
+ *)
+fun symb_exec_run bp st = 
+  if not (symb_is_BST_Running st) then
+    Symb_Node (st, [])
+  else
+    let
+      val (sts_running, sts_terminated) = 
+              ((dest_pair o  rhs o concl o EVAL) ``bir_symb_exec_label_block ^bp ^st``);
+      val sts_ter = (#1 (dest_list sts_terminated));
+      val sts_run = (#1 (dest_list sts_running));
+    in
+      Symb_Node (st, (List.map (symb_exec_run bp)
+                              (sts_ter @ sts_run)
+                     ))
+    end;
    
 (* Given a Program, exec until every branch halts *)
 (*
 val bir_program = ``BirProgram [] : 'observation_type bir_program_t``;
+
+val bir_program = ``BirProgram
+      [<|bb_label := BL_Address_HC (Imm64 0w) "F9400023 (ldr x3, [x1])";
+         bb_statements :=
+         [BStmt_Assert
+              (BExp_Const (Imm1 abc));
+	   BStmt_Assert
+              (BExp_Aligned Bit64 3 (BExp_Den (BVar "R1" (BType_Imm Bit64))));
+            BStmt_Assign (BVar "R3" (BType_Imm Bit64))
+              (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                 (BExp_Den (BVar "R1" (BType_Imm Bit64))) BEnd_LittleEndian
+                 Bit64);
+            BStmt_Observe (BExp_Const (Imm1 1w))
+                          ([BExp_BinExp BIExp_And
+                                        (BExp_Const (Imm64 0x1FC0w))
+                                        (BExp_Den (BVar "R1" (BType_Imm Bit64)))])
+                          (\x. x)];
+         bb_last_statement := BStmt_Halt (BExp_Const (Imm64 4w))|>]``;
 *)
 fun symb_exec_program bir_program =
   let 
     val env = init_env ();
-    val state = 
-        (rhs o concl o EVAL) ``bir_symb_state_init ^bir_program ^env``;
-    val st_assert_lst_ref = ref [];
-    val (tree, st_assert_lst)  = 
-        symb_exec_run bir_program (Symb_Node (state, Symb_Empty, Symb_Empty))
-        st_assert_lst_ref;
+    val state = (rhs o concl o EVAL)
+                  ``bir_symb_state_init ^bir_program ^env``;
+    val tree  = symb_exec_run bir_program state;
+    val _ = print ("Execution: Done!\n");
    in 
-    let val _ = print ("Execution: Done!\n") in 
-    (tree, st_assert_lst)  end
-  end;
+     tree
+   end;
 
 
-fun symb_exec_leaflist Symb_Empty = raise ERR "symb_exec_leaflist" "this should not happen"
-  | symb_exec_leaflist (Symb_Node (s, Symb_Empty, Symb_Empty))  = [s]
-  | symb_exec_leaflist (Symb_Node (_, n1, Symb_Empty)) = symb_exec_leaflist n1
-  | symb_exec_leaflist (Symb_Node (_, Symb_Empty, n2)) = symb_exec_leaflist n2
-  | symb_exec_leaflist (Symb_Node (_, n1, n2)) = (symb_exec_leaflist n1)@(symb_exec_leaflist n2);
-
-fun symb_exec_leaflist_complete tree st_assert_lst = 
-    (symb_exec_leaflist tree) @ st_assert_lst;
+fun symb_exec_leaflist (Symb_Node (s, [])) = [s]
+  | symb_exec_leaflist (Symb_Node (_, l )) = List.concat (List.map symb_exec_leaflist l)
+(*  | symb_exec_leaflist _  = raise ERR "symb_exec_leaflist" "this should not happen"*)
+  ;
 
 (* TODO: move this to lib and possibly merge to bir_expLib *)
   fun bir_exp_rewrite rwf exp =

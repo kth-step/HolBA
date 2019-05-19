@@ -127,10 +127,10 @@ val prog_w_obs = ``BirProgram
 (* symbolic execution (& determine paths)  *)
 (* --------------------------------------- *)
 
-val (tree, st_assert_lst) = symb_exec_program prog_w_obs;
+val tree = symb_exec_program prog_w_obs;
 
 (* leaf list *)
-val leafs = symb_exec_leaflist_complete tree st_assert_lst ;
+val leafs = symb_exec_leaflist tree;
 
 (* retrieval of path condition and observation expressions *)
 (*
