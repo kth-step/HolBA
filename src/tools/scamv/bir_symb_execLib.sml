@@ -52,8 +52,9 @@ fun dest_bir_symb_obs tm =
             then () else fail()
     val obs_cond = Lib.assoc "obs_cond" l
     val obs = Lib.assoc "obs" l
+    val obs_fun = Lib.assoc "obs_fun" l
   in 
-    (obs_cond, obs)
+    (obs_cond, obs, obs_fun)
   end handle HOL_ERR _ => raise ERR "dest_bir_symb_obs" ("cannot destruct term \"" ^ (term_to_string tm) ^ "\"");
 (* ------------------------------------------------------------------- *)
 
@@ -63,6 +64,13 @@ fun symb_is_BST_Running state =
     val (pc, env, pres, status, obs) = dest_bir_symb_state state;
   in
     is_BST_Running status
+  end;
+
+fun symb_is_BST_AssertionViolated state = 
+  let 
+    val (pc, env, pres, status, obs) = dest_bir_symb_state state;
+  in
+    status = ``BST_AssertionViolated``
   end;
 
 (* We represent an Execution as a tree, where branches

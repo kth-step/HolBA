@@ -118,7 +118,7 @@ val prog_w_obs = ``BirProgram
                           ([BExp_BinExp BIExp_And
                                         (BExp_Const (Imm64 0x1FC0w))
                                         (BExp_Den (BVar "R1" (BType_Imm Bit64)))])
-                          (\x. x)];
+                          HD];
          bb_last_statement := BStmt_Halt (BExp_Const (Imm64 4w))|>]``;
 
 
@@ -140,10 +140,31 @@ fun extract_cond_obs s =
   let
     val (_,_,cond,_,obs) = dest_bir_symb_state s;
     val obss = ((List.map dest_bir_symb_obs) o fst o dest_list) obs;
-  in
+
+    (* determine whether this is an error state *)
+    val isErrorState = symb_is_BST_AssertionViolated s;
+
     (* this converts BIR consts to HOL4 variables *)
-    (bir_exp_hvar_to_bvar cond, List.map (fn (ec,eo) =>
-         (bir_exp_hvar_to_bvar ec, bir_exp_hvar_to_bvar eo)) obss)
+    val obs_list = List.map (fn (ec,eo, obsf) =>
+           (bir_exp_hvar_to_bvar ec, bir_exp_hvar_to_bvar eo, obsf)) obss;
+
+    (* we require singleton lists for the observations at the moment *)
+    (* check that we have HD as observation function, and apply it *)
+    val obs_list' = List.map (fn (ec,eo,obsf) =>
+             let
+               val (otl,_) = dest_list eo;
+               val _ = (if listSyntax.is_hd ``^obsf x`` then () else raise ERR "" "")
+                       handle _ =>
+                         raise ERR "extract_cond_obs" ("currently we only support HD as observation function, not \"" ^ (term_to_string obsf) ^ "\"");
+             in
+               if length otl <> 1 then
+                 raise ERR "extract_cond_obs" "currently we support only singleton observations"
+               else
+                 (ec, hd otl)
+             end
+           ) obs_list;
+  in
+    (bir_exp_hvar_to_bvar cond, if isErrorState then NONE else SOME obs_list')
   end;
 
 val leaf_cond_obss = List.map extract_cond_obs leafs;
@@ -154,23 +175,7 @@ val leaf_cond_obss = List.map extract_cond_obs leafs;
 (* --------------------------------------- *)
 
 (* generate the input structure for the relation generation *)
-(*
- TODO: interface mismatch to relation genration
- why SOME and NONE?
- why no lists of observations?
- *)
-val prog_obss_paths = List.map (fn (patc,obsl) => (patc,
-      if obsl = [] then NONE else
-        SOME (List.map (fn (cond,obslt) => (cond,
-          let
-            val (obstl, obstt) = dest_list obslt;
-          in
-            if length obstl <> 1 then
-              raise ERR "prog_obss_paths" "currently we support only singleton observations"
-            else
-              hd obstl
-          end)) obsl)
-       )) leaf_cond_obss;
+val prog_obss_paths = leaf_cond_obss;
 
 val relation = mkRel prog_obss_paths;
 

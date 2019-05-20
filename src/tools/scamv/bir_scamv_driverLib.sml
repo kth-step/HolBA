@@ -76,7 +76,7 @@ fun lift_program_from_sections sections =
         val (thm_prog, errors) = bmil_bir_lift_prog_gen prog_range sections;
         val lifted_prog = (snd o dest_comb o concl) thm_prog;
         val lifted_prog_typed =
-            inst [Type`:'observation_type` |-> Type`:bir_val_t list`]
+            inst [Type`:'observation_type` |-> Type`:bir_val_t`]
                  lifted_prog;
     in
         lifted_prog_typed
@@ -109,18 +109,36 @@ fun symb_exec_phase prog =
         val leafs = symb_exec_leaflist tree;
 
         (* retrieval of path condition and observation expressions *)
-        fun extract_cond_obs s =
-            let
-                val (_,_,cond,_,obs) = dest_bir_symb_state s;
-                val obss =
-                    ((List.map dest_bir_symb_obs) o fst o dest_list) obs;
-            in
-                (* this converts BIR consts to HOL4 variables *)
-                (bir_exp_hvar_to_bvar cond,
-                 List.map (fn (ec,eo) =>
-                              (bir_exp_hvar_to_bvar ec,
-                               bir_exp_hvar_to_bvar eo)) obss)
-            end;
+	fun extract_cond_obs s =
+	  let
+	    val (_,_,cond,_,obs) = dest_bir_symb_state s;
+	    val obss = ((List.map dest_bir_symb_obs) o fst o dest_list) obs;
+
+	    (* determine whether this is an error state *)
+	    val isErrorState = symb_is_BST_AssertionViolated s;
+
+	    (* this converts BIR consts to HOL4 variables *)
+	    val obs_list = List.map (fn (ec,eo, obsf) =>
+		   (bir_exp_hvar_to_bvar ec, bir_exp_hvar_to_bvar eo, obsf)) obss;
+
+	    (* we require singleton lists for the observations at the moment *)
+	    (* check that we have HD as observation function, and apply it *)
+	    val obs_list' = List.map (fn (ec,eo,obsf) =>
+		     let
+		       val (otl,_) = dest_list eo;
+		       val _ = (if listSyntax.is_hd ``^obsf x`` then () else raise ERR "" "")
+			       handle _ =>
+				 raise ERR "extract_cond_obs" ("currently we only support HD as observation function, not \"" ^ (term_to_string obsf) ^ "\"");
+		     in
+		       if length otl <> 1 then
+			 raise ERR "extract_cond_obs" "currently we support only singleton observations"
+		       else
+			 (ec, hd otl)
+		     end
+		   ) obs_list;
+	  in
+	    (bir_exp_hvar_to_bvar cond, if isErrorState then NONE else SOME obs_list')
+	  end;
 
         val leaf_cond_obss = List.map extract_cond_obs leafs;
     in
@@ -201,20 +219,18 @@ fun start_interactive () =
             bir_arm8_cache_line_model.add_obs lifted_prog;
         val paths = symb_exec_phase lifted_prog_w_obs;
 
-        (* generate the input structure for the relation generation *)
+        (* generate the input structures for the relation generation *)
         val path_conds = List.map fst paths;
         val obs_exps = flatten (List.map (fn (x,y) => [x,y])
-                                         (flatten (List.map snd paths)));
-        val fail_cond = bnot (borl path_conds);
+                          (flatten (List.map ((fn x =>
+                             case x of NONE => [] 
+                                     | SOME y => y) o snd) paths)));
+        val all_exps = (path_conds @ obs_exps);
 
-        (* TODO: interface mismatch between symb exec and relation genration *)
-        val prog_obss_paths =
-            (fail_cond, NONE) ::
-            (List.map (fn (x,y) => (x, SOME y)) paths);
+        val prog_obss_paths = paths;
         val _ = current_pathstruct := prog_obss_paths;
         val (conds, relation) = mkRel_conds prog_obss_paths;
-        val word_relation = make_word_relation relation
-                                               (path_conds @ obs_exps);
+        val word_relation = make_word_relation relation all_exps;
         val _ = current_word_rel := SOME word_relation;
         val _ = current_antecedents := List.map bir2bool conds;
     in prog_obss_paths end
@@ -223,7 +239,9 @@ fun next_test select_path =
     let
         val path = select_path (!current_antecedents);
         val _ = (print "Selecting path: "; print_term path);
-        val SOME rel = !current_word_rel;
+        val rel = case !current_word_rel of
+                    SOME x => x
+                  | NONE => raise ERR "next_test" "no relation found";
         val word_relation = ``^rel /\ ^path``;
 
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
@@ -278,15 +296,14 @@ fun scamv_test_mock () =
         (* generate the input structure for the relation generation *)
         val path_conds = List.map fst paths;
         val obs_exps = flatten (List.map (fn (x,y) => [x,y])
-                                         (flatten (List.map snd paths)));
-        val fail_cond = bnot (borl path_conds);
-        val prog_obss_paths =
-            (fail_cond, NONE) ::
-             (List.map (fn (x,y) => (x, SOME y)) paths);
+                          (flatten (List.map ((fn x =>
+                             case x of NONE => [] 
+                                     | SOME y => y) o snd) paths)));
+        val all_exps = (path_conds @ obs_exps);
 
+        val prog_obss_paths = paths;
         val relation = mkRel prog_obss_paths;
-        val word_relation = make_word_relation relation
-                                               (path_conds @ obs_exps);
+        val word_relation = make_word_relation relation all_exps;
 
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
         val _ = (print "SAT model:\n"; print_model model(*; print "\n"*));

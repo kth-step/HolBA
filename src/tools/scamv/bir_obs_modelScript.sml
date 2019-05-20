@@ -11,7 +11,7 @@ map_obs_prog f (BirProgram xs) = BirProgram (MAP f xs)
 val observe_label_def = Define `
 observe_label (BL_Address addr) =
 BStmt_Observe (BExp_Const (Imm1 1w)) [BExp_Const addr]
-              (\xs . case xs of [e] => e)
+              HD
 `;
 
 val add_block_pc_obs_def = Define`
@@ -44,7 +44,7 @@ observe_load (BExp_Load _ e _ _) =
                        ([BExp_BinExp BIExp_And
                                      (BExp_Const (Imm64 0x1FC0w))
                                      e])
-                       (\x. x)
+                       HD
 `;
 
 val constrain_load_def = Define`
