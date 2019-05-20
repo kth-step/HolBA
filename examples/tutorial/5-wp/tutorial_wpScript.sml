@@ -12,6 +12,14 @@ open bir_programTheory;
 open bir_program_blocksTheory;
 open bir_program_multistep_propsTheory;
 
+open bir_expSyntax;
+open bir_programSyntax;
+open bir_immSyntax;
+
+open pred_setSyntax;
+
+open bir_htLib;
+
 open HolBACoreSimps;
 
 val _ = new_theory "tutorial_wp";
@@ -79,51 +87,63 @@ fun find_ht _            []     = NONE
 ;
 
 (* TODO: Need to make sure a mess is not caused by overloading
- * definitions. *)
+ * definitions.
+ *
+ * This can be solved by passing an additional prefix/suffix to
+ * bir_wp_comp_wps.
+ *)
 fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                  postcond_tm =
+                  postcond_tm prefix =
   let
+    (* TODO: Make some sort of test to check if computations have
+     * already been performed for current prefix. *)
     (* Definitions: *)
     val prog_def = Define `
-      prog = ^prog_tm
+      ^(mk_var(prefix^"prog", type_of prog_tm)) = ^prog_tm
     `
+    (*   For some reason prog requires this approach... *)
+    val prog_var = Parse.Term [QUOTE (prefix^"prog")]
     val postcond_def = Define `
-      postcond = ^postcond_tm
+      ^(mk_var(prefix^"postcond", bir_exp_t_ty)) = ^postcond_tm
     `
+    val postcond_var = (fst o dest_eq o concl) postcond_def
     val ls_def = Define `
-      ls = \x.(x = ^last_block_label_tm)
+      ^(mk_var(prefix^"ls", mk_set_type bir_label_t_ty)) =
+        \x.(x = ^last_block_label_tm)
     `
+    val ls_var = (fst o dest_eq o concl) ls_def
     val wps_def = Define `
-      wps = (FEMPTY |+ (^last_block_label_tm, postcond))
+      ^(mk_var(prefix^"wps", ``:bir_label_t |-> bir_exp_t``)) =
+        (FEMPTY |+ (^last_block_label_tm,
+                    ^((fst o dest_eq o concl) postcond_def)
+                   )
+        )
     `
-
-    (* Pick out terms: *)
-    val prog = ``prog``
-    val postcond = ``postcond``
-    val ls = ``ls``
-    val wps = ``wps``
+    val wps_var = (fst o dest_eq o concl) wps_def
 
     (* List of definitions: *)
     val defs = [prog_def, postcond_def, ls_def, wps_def]
 
     (* Initialize queue of blocks to process: *)
     val wps_tm =
-      (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) wps
+      (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) wps_var
     val wps_bool_sound_thm =
-      bir_wp_init_wps_bool_sound_thm (prog, postcond, ls) wps defs
+      bir_wp_init_wps_bool_sound_thm
+        (prog_var, postcond_var, ls_var) wps_var defs
     val (wpsdom, blstodo) =
       bir_wp_init_rec_proc_jobs prog_tm wps_tm
 
     (* Prepare "problem-static" part of computation: *)
     val prog_thm =
       bir_wp_comp_wps_iter_step0_init
-        bir_wp_exec_of_block_reusable_thm (prog, postcond, ls) defs
+        bir_wp_exec_of_block_reusable_thm
+        (prog_var, postcond_var, ls_var) defs
 
     (* Main computation: *)
     val (wps1, wps1_bool_sound_thm) =
-      bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm),
+      bir_wp_comp_wps prog_thm ((wps_var, wps_bool_sound_thm),
 				(wpsdom, List.rev blstodo))
-			       (prog, postcond, ls) defs
+			       (prog_var, postcond_var, ls_var) defs
 
     (* Pick out the soundness theorems, *)
     val sound_thms = ((el 2 o CONJUNCTS) wps1_bool_sound_thm)
@@ -146,10 +166,28 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
     val hts_list = CONJUNCTS simp_thm4
     val hts_list_trim = List.take (hts_list, (length hts_list) - 1)
     val target_ht =
-      find_ht first_block_label_tm hts_list_trim
-
+      valOf (find_ht first_block_label_tm hts_list_trim)
+    (* Transform HT to bir_triple *)
+    (* TODO: Make bir_htSyntax *)
+    val no_assumes_thm =
+      REWRITE_RULE [GSYM prog_def]
+        (bir_prog_has_no_assumes_pp
+           ``bir_prog_has_no_assumes ^prog_tm``
+        )
+    val target_bir_triple =
+      HO_MATCH_MP
+        (HO_MATCH_MP bir_never_assumviol_block_n_ht_from_to_labels_ht
+                     no_assumes_thm
+        ) target_ht
+    (* Obtain definition of WP expression *)
+    val wp_name =
+      "bir_wp_comp_wps_iter_step2_wp_"^
+      ((term_to_string o snd o gen_dest_Imm o dest_BL_Address)
+        first_block_label_tm)
+    val final_wp_def =
+      EVAL (Parse.Term [QUOTE wp_name])
   in
-    valOf target_ht
+    (target_bir_triple, [prog_def, postcond_def, final_wp_def])
   end handle Option => raise ERR "extract_subprogram"
 	("No Hoare triple was found for the addresses "^
 	 (term_to_string first_block_label_tm)^" and "^
@@ -161,6 +199,7 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
 (******************************************************************)
 val prog_tm = sqrt_prog_tm;
 (****************** bir_sqrt_entry_contract ***********************)
+val prefix = "sqrt_entry_"
 val first_block_label_tm = ``BL_Address (Imm64 0x400250w)``;
 (* TODO: Can be stated as a BL_Address?  *)
 val last_block_label_tm =
