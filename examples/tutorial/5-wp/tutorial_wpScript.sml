@@ -11,6 +11,7 @@ open bir_program_valid_stateTheory;
 open bir_programTheory;
 open bir_program_blocksTheory;
 open bir_program_multistep_propsTheory;
+open bir_subprogramTheory;
 
 open bir_expSyntax;
 open bir_programSyntax;
@@ -43,14 +44,34 @@ val bir_exec_to_labels_exists =
 FULL_SIMP_TAC std_ss [bir_exec_to_labels_def]
 );
 
+(* TODO: Move this definition to the others... *)
+val bir_triple_assumviol_free_def = Define `
+  bir_triple_assumviol_free p l ls pre post <=>
+    !s.
+	bir_env_vars_are_initialised s.bst_environ
+	  (bir_vars_of_program p) ==>
+	(s.bst_pc.bpc_index = 0) /\
+	(s.bst_pc.bpc_label = l) ==>
+	(s.bst_status = BST_Running) ==>
+	bir_is_bool_exp_env s.bst_environ pre ==>
+	(bir_eval_exp pre s.bst_environ = bir_val_true) ==>
+	?n l1 c1 c2 s'.
+	    (bir_exec_block_n p s n = (l1,c1,c2,s')) /\
+	    (s'.bst_status = BST_Running) /\
+	    bir_is_bool_exp_env s'.bst_environ post /\
+	    (bir_eval_exp post s'.bst_environ = bir_val_true) /\
+	    (s'.bst_pc.bpc_index = 0) /\
+             s'.bst_pc.bpc_label IN ls
+`;
+
 val bir_never_assumviol_block_n_ht_from_to_labels_ht =
   store_thm("bir_never_assumviol_block_n_ht_from_to_labels_ht",
   ``!prog l ls pre post.
     bir_prog_has_no_assumes prog ==>
     bir_exec_to_labels_or_assumviol_triple prog l ls pre post ==>
-    bir_triple prog l ls pre post``,
+    bir_triple_assumviol_free prog l ls pre post``,
 
-REWRITE_TAC [bir_triple_def,
+REWRITE_TAC [bir_triple_assumviol_free_def,
              bir_exec_to_labels_or_assumviol_triple_def] >>
 REPEAT STRIP_TAC >>
 ASSUME_TAC (SPECL [``ls:bir_label_t -> bool``,
@@ -61,7 +82,7 @@ PAT_X_ASSUM ``!s'. _``
             (fn thm => ASSUME_TAC
               (SPEC ``s:bir_state_t`` thm)
             ) >>
-REV_FULL_SIMP_TAC std_ss [] >> (
+REV_FULL_SIMP_TAC std_ss [] >| [
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
   IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_block_n >>
   quantHeuristicsLib.QUANT_TAC [("n", `m`, []),
@@ -69,8 +90,44 @@ REV_FULL_SIMP_TAC std_ss [] >> (
 				("c1", `c1`, []),
 				("c2", `c_l'`, []),
 				("s'", `s'`, [])] >>
-  FULL_SIMP_TAC std_ss []
-)
+  FULL_SIMP_TAC std_ss [],
+
+  Cases_on `bir_is_valid_pc prog s.bst_pc` >| [
+    FULL_SIMP_TAC std_ss
+                  [bir_is_valid_pc_def,
+                   bir_get_program_block_info_by_label_def] >>
+    subgoal `?bl. bir_get_current_block prog s.bst_pc = SOME bl`
+      >- (
+      FULL_SIMP_TAC std_ss [bir_get_current_block_def]
+    ) >>
+    subgoal `s.bst_status <> BST_AssumptionViolated` >- (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [] 
+    ) >>
+    IMP_RES_TAC bir_prog_not_assume_never_assumviol_exec_to_labels,
+
+    (* This part is admittedly a bit of a yarn *)
+    FULL_SIMP_TAC (std_ss++holBACore_ss)
+                  [bir_exec_to_labels_def] >>
+    IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_step_n >>
+    subgoal `~bir_state_is_terminated s` >- (
+      FULL_SIMP_TAC std_ss [bir_state_is_terminated_def]
+    ) >>
+    IMP_RES_TAC bir_state_is_failed_step_not_valid_pc >>
+    Cases_on `c1` >| [
+      FULL_SIMP_TAC (std_ss++holBACore_ss)
+                    [bir_exec_step_n_REWR_0],
+
+      FULL_SIMP_TAC (std_ss++holBACore_ss)
+                    [bir_exec_step_n_SUC,
+                     bir_exec_step_state_def] >>
+      Cases_on `(bir_exec_step prog s)` >>
+      ASSUME_TAC (el 4 (CONJUNCTS bir_exec_step_n_REWRS)) >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss)
+                    [bir_state_is_terminated_def, LET_DEF] >>
+      REV_FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ]
+  ]
+]
 );
 
 (* 22222222222222222222222222222222222222222222222222222222222222 *)
@@ -167,7 +224,7 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
     val hts_list_trim = List.take (hts_list, (length hts_list) - 1)
     val target_ht =
       valOf (find_ht first_block_label_tm hts_list_trim)
-    (* Transform HT to bir_triple *)
+    (* Transform HT to bir_triple_assumviol_free *)
     (* TODO: Make bir_htSyntax *)
     val no_assumes_thm =
       REWRITE_RULE [GSYM prog_def]
@@ -208,7 +265,7 @@ val last_block_label_tm =
 val postcond_tm = (snd o dest_eq o concl) b_sqrt_I_def;
 val bir_sqrt_entry_ht =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm;
+                postcond_tm prefix;
 
 (****************** bir_sqrt_loop_inv_contract ********************)
 val first_block_label_tm = ``BL_Address (Imm64 0x400288w)``;
@@ -243,12 +300,12 @@ val bir_sqrt_entry_ht =
  * the generated one. *)
 val bir_sqrt_entry_contract_roc =
   store_thm("bir_sqrt_entry_contract_roc",
-  ``bir_triple sqrt_prog
+  ``bir_triple_assumviol_free sqrt_prog
       (BL_Address (Imm64 0x400250w))
       (\x.(x = (BL_Address (Imm64 0x400284w))))
       bir_wp_comp_wps_iter_step2_wp_0x400250w
       sqrt_post ==>
-    bir_triple sqrt_prog
+    bir_triple_assumviol_free sqrt_prog
       (BL_Address (Imm64 0x400250w))
       (\x.(x = (BL_Address (Imm64 0x400284w))))
       (BExp_Const (Imm1 1w))
@@ -268,7 +325,7 @@ val test = SPECL [``sqrt_prog``,
                   ``(BL_Address (Imm64 2132w))``,
                   ``(\x.(x = (BL_Address (Imm64 2192w))))``,
                   ``(BExp_Const (Imm1 1w))``,
-                  ``b_sqrt_I``] bir_triple_def;
+                  ``b_sqrt_I``] bir_triple_assumviol_free_def;
 (* Check type... *)
 val test_ty = type_of ((snd o dest_eq o concl) sqrt_prog_def);
 (* The below does not work either... :( *)
@@ -279,7 +336,7 @@ val bir_sqrt_entry_contract_test_def = Define `
 (* Nullary definition failed - giving up *)
 val bir_sqrt_entry_contract_def = Define `
   bir_sqrt_entry_contract =
-    bir_triple sqrt_prog
+    bir_triple_assumviol_free sqrt_prog
       (BL_Address (Imm64 0x400250w))
       (\x.(x = (BL_Address (Imm64 0x400284w))))
       (BExp_Const (Imm1 1w))
@@ -288,7 +345,8 @@ val bir_sqrt_entry_contract_def = Define `
 (* Nullary definition failed - giving up *)
 val bir_sqrt_loop_inv_contract_def = Define `
   `bir_sqrt_loop_inv_contract =
-     bir_triple sqrt_prog (BL_Address (Imm64 0x400288w))
+     bir_triple_assumviol_free sqrt_prog
+       (BL_Address (Imm64 0x400288w))
        {BL_Address (Imm64 0x400288w)}
        (BExp_BinExp BIExp_And (b_sqrt_I)
          (BExp_Den (BVar "ProcState_C" BType_Bool))
@@ -297,7 +355,8 @@ val bir_sqrt_loop_inv_contract_def = Define `
 (* Nullary definition failed - giving up *)
 val bir_sqrt_loop_exit_contract_def = Define `
   `bir_sqrt_loop_exit_contract =
-     bir_triple sqrt_prog (BL_Address (Imm64 0x400288w))
+     bir_triple_assumviol_free sqrt_prog
+       (BL_Address (Imm64 0x400288w))
        {BL_Address (Imm64 0x400294w)}
        (BExp_BinExp BIExp_And (b_sqrt_I)
 	 (BExp_UnaryExp BIExp_Not
