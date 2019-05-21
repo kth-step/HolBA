@@ -43,8 +43,11 @@ function is_holba {
   [[ -f "$1/scripts/setup/autoenv.sh" ]] \
       || { echo "no autoenv.sh" > /dev/stderr; return $FALSE; }
 
-  [[ "$(cat "$1/scripts/setup/autoenv.sh" 2> /dev/null | grep -c 'HOLBA')" -ge 1 ]] \
+  [[ "$(grep -c 'HOLBA' "$1/scripts/setup/autoenv.sh")" -ge 1 ]] \
       || { echo "bad autoenv.sh" > /dev/stderr; return $FALSE; }
+
+  [[ -f "$1/README.md" ]] \
+      || { echo "no README.md" > /dev/stderr; return $FALSE; }
 
   [[ "$(head -n1 "$1/README.md" 2> /dev/null | grep -c '# HolBA')" -eq 1 ]] \
       || { echo "bad README.md" > /dev/stderr; return $FALSE; }
