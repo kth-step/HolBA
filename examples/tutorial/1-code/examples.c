@@ -22,7 +22,7 @@ uint64_t gcd(uint64_t x, uint64_t y) {
 
 
 int64_t sqrt_(int64_t x) {
-  uint64_t y = 0;
+  int64_t y = 0;
   while ((y+1)*(y+1) <= x) {
     y += 1;
   }

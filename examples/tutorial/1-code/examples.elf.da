@@ -182,10 +182,10 @@ Disassembly of section .text:
   400270:	91000401 	add	x1, x0, #0x1
   400274:	f9400fe0 	ldr	x0, [sp, #24]
   400278:	91000400 	add	x0, x0, #0x1
-  40027c:	9b007c21 	mul	x1, x1, x0
-  400280:	f94007e0 	ldr	x0, [sp, #8]
+  40027c:	9b007c20 	mul	x0, x1, x0
+  400280:	f94007e1 	ldr	x1, [sp, #8]
   400284:	eb00003f 	cmp	x1, x0
-  400288:	54fffec9 	b.ls	400260 <sqrt_+0x10>  // b.plast
+  400288:	54fffeca 	b.ge	400260 <sqrt_+0x10>  // b.tcont
   40028c:	f9400fe0 	ldr	x0, [sp, #24]
   400290:	910083ff 	add	sp, sp, #0x20
   400294:	d65f03c0 	ret

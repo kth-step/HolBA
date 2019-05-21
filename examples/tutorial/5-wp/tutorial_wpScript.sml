@@ -257,15 +257,24 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
 val prog_tm = sqrt_prog_tm;
 (****************** bir_sqrt_entry_contract ***********************)
 val prefix = "sqrt_entry_"
-val first_block_label_tm = ``BL_Address (Imm64 0x400250w)``;
+val first_block_label_tm = ``BL_Address (Imm64 0x400254w)``;
 (* TODO: Can be stated as a BL_Address?  *)
 val last_block_label_tm =
-  ``BL_Address_HC (Imm64 0x400288w)
-      "54FFFEC9 (b.ls 400260 <sqrt_+0x10>  // b.plast)"``;
-val postcond_tm = (snd o dest_eq o concl) b_sqrt_I_def;
+  ``BL_Address (Imm64 0x400288w)``;
+val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_contract_1_post``;
 val bir_sqrt_entry_ht =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix;
+(fst bir_sqrt_entry_ht);
+val wp = (snd o dest_eq o concl o EVAL) ``bir_wp_comp_wps_iter_step2_wp_0x400254w``;
+
+
+(*
+open bir_exp_to_wordsLib;
+val x = bir2bool wp;
+open blastLib;
+BBLAST_PROVE x;
+*)
 
 (****************** bir_sqrt_loop_inv_contract ********************)
 val first_block_label_tm = ``BL_Address (Imm64 0x400288w)``;
