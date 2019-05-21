@@ -244,7 +244,7 @@ struct
 
   (* produce wps1 and reestablish bool_sound_thm for this one *)
   fun bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm) prog_l_thm
-				 ((program, post, ls), (label)) defs =
+				 ((program, post, ls), (label)) defs wp_infix =
     let
       val wps_id_suffix = label_to_wps_id_suffix label
 
@@ -280,7 +280,7 @@ struct
                                         GSYM bir_exp_and_def]
                                        wps1_thm; 
       val wps1 = (snd o dest_comb o snd o dest_eq o concl) wps1_thm
-      val new_wp_id = wps_id_prefix^wps_id_suffix
+      val new_wp_id = wps_id_prefix^wp_infix^wps_id_suffix
       val new_wp_id_var = mk_var (new_wp_id, bir_exp_t_ty)
       val new_wp_def =
         Define `^new_wp_id_var = ^(extract_new_wp wps1)`
@@ -349,7 +349,7 @@ struct
   (* Recursive procedure for traversing the control flow graph *)
   fun bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm),
 				(wpsdom, blstodo)
-			       ) (program, post, ls) defs =
+			       ) (program, post, ls) defs wp_infix =
     let
       val block = List.find (fn block =>
 	let
@@ -411,7 +411,7 @@ struct
 					 prog_l_thm
 					 ((program, post, ls),
 					  (label)
-					 ) defs
+					 ) defs wp_infix
 	    val blstodo1 =
 	      List.filter (
 		fn block =>
@@ -463,6 +463,7 @@ struct
 	    bir_wp_comp_wps prog_thm ((wps1, wps1_bool_sound_thm),
 				      (wpsdom1, blstodo1)
 				     ) (program, post, ls) defs
+                                     wp_infix
 	  end
         | NONE =>
           let
