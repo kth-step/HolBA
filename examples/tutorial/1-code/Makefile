@@ -15,7 +15,7 @@ GDB     =$(HOLBA_GDB)
 # settings
 # ---------------------------------
 NAME	= examples.elf
-CFLAGS	= -ggdb3 -std=gnu99 -Wall -fno-builtin
+CFLAGS	= -ggdb3 -std=gnu99 -Wall -fno-builtin -O1
 #LDFLAGS = --gc-sections -nostartfiles -nostdlib
 
 

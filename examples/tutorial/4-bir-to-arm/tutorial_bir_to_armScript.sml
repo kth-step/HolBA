@@ -4,10 +4,14 @@ open bir_expSimps;
 open tutorial_bir_to_armSupportTheory;
 open bslSyntax;
 
-val y_addr = ``24w:word64``;
+val y_addr = ``0w:word64``;
 val x_addr = ``8w:word64``;
+val ly_addr = ``16w:word64``;
+val lx_addr = ``24w:word64``;
 val y_var = ``(arm8_load_64 m.MEM (m.SP_EL0+(^y_addr)))``;
 val x_var = ``(arm8_load_64 m.MEM (m.SP_EL0+(^x_addr)))``;
+val ly_var = ``(arm8_load_64 m.MEM (m.SP_EL0+(^ly_addr)))``;
+val lx_var = ``(arm8_load_64 m.MEM (m.SP_EL0+(^lx_addr)))``;
 
 
 
@@ -19,13 +23,12 @@ EVAL ``255w <= (0w:word8)``;
 
 val arm8_sp_ok = ``(m.SP_EL0 >=+ 0xC0000000w) /\ (m.SP_EL0 <+ 0xD0000000w)``;
 
-val arm8_sqrt_pre_def = Define `arm8_sqrt_pre m =
+val arm8_add_pre_def = Define `arm8_add_pre m =
   ((^x_var) >= 0w) /\
   (^arm8_sp_ok)
 `;
-val arm8_sqrt_post_def = Define `arm8_sqrt_post m =
-  (((^y_var)  * (^y_var)) <= (^x_var)) /\
-  ((((^y_var)+1w)  * ((^y_var)+1w)) > (^x_var)) /\
+val arm8_add_post_def = Define `arm8_add_post m =
+  ((^x_var+^y_var) = (^ly_var)) /\
   (^arm8_sp_ok)
 `;
 
@@ -41,6 +44,18 @@ val get_x = ``(BExp_Load
                               (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
                               (BExp_Const (Imm64 (^x_addr)))) BEnd_LittleEndian
                         Bit64)``;
+val get_ly = ``(BExp_Load
+       (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                 (BExp_BinExp BIExp_Plus
+                              (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+                              (BExp_Const (Imm64 (^ly_addr)))) BEnd_LittleEndian
+                        Bit64)``;
+val get_lx = ``(BExp_Load
+       (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                 (BExp_BinExp BIExp_Plus
+                              (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+                              (BExp_Const (Imm64 (^lx_addr)))) BEnd_LittleEndian
+                        Bit64)``;
 
 
 val bir_sp_ok = 
@@ -51,28 +66,31 @@ band (
 
 
 
-val bir_sqrt_pre_def = Define `bir_sqrt_pre =
+val bir_add_pre_def = Define `bir_add_pre =
 ^(band
   (bnot (bslt(get_x, bconst64 0)),
    bir_sp_ok ))
 `;
 
-val bir_sqrt_post_def = Define `bir_sqrt_post =
+val bir_add_post_def = Define `bir_add_post =
 ^(bandl [
-      (bsle(bmult(get_y, get_y), get_x)),
-      (bnot (bsle(bmult(bplus(get_y, bconst64 1), bplus(get_y, bconst64 1)), get_x))),
+        (beq (bplus(get_y, get_x), get_ly)),
       bir_sp_ok
       ])`;
 
 
-val original_loop_condition = (bsle(bmult(bplus(get_y, bconst64 1), bplus(get_y, bconst64 1)), get_x));
-val bir_loop_condition =  beq ((bden (bvar "ProcState_N" ``BType_Bool``)),
-                               (bden (bvar "ProcState_V" ``BType_Bool``)));
+val original_loop_condition = (bnot (bsle(get_lx, bconst64 0)));
+val bir_loop_condition =  bnot ``(BExp_BinExp BIExp_Or
+                       (BExp_UnaryExp BIExp_Not
+                          (BExp_BinPred BIExp_Equal
+                             (BExp_Den (BVar "ProcState_N" BType_Bool))
+                             (BExp_Den (BVar "ProcState_V" BType_Bool))))
+                       (BExp_Den (BVar "ProcState_Z" BType_Bool)))``;
 
 
-val bir_sqrt_I_def = Define `bir_sqrt_I =
+val bir_add_I_def = Define `bir_add_I =
 ^(bandl [
-      (bsle(bmult(get_y, get_y), get_x)),
+      (beq (bplus(get_y, get_x), bplus(get_ly, get_lx))),
    (beq (original_loop_condition, bir_loop_condition)),
    bir_sp_ok
    ])
@@ -82,30 +100,33 @@ val bir_sqrt_I_def = Define `bir_sqrt_I =
 (* contract one *)
 (* from function entry (we avoid stack pointer operations) to cjmp *)
 val bir_contract_1_pre_def = Define `bir_contract_1_pre =
- (bir_sqrt_pre)
+ (bir_add_pre)
 `;
 val bir_contract_1_post_def = Define `bir_contract_1_post =
- (bir_sqrt_I)
+ (bir_add_I)
 `;
 
 
 (* contract two: loop body *)
 (* from cjmp to cjmp *)
 val bir_contract_2_pre_def = Define `bir_contract_2_pre =
-^(band(``bir_sqrt_I``, bir_loop_condition))
+^(band(``bir_add_I``, bir_loop_condition))
 `;
 val bir_contract_2_post_def = Define `bir_contract_2_post =
- bir_sqrt_I
+ bir_add_I
 `;
 
 (* contract three: loop exit *)
 (* from cjmp to end of function except ret and sp operations *)
 val bir_contract_3_pre_def = Define `bir_contract_3_pre =
-^(band(``bir_sqrt_I``, bnot bir_loop_condition))
+^(band(``bir_add_I``, bnot bir_loop_condition))
 `;
 val bir_contract_3_post_def = Define `bir_contract_3_post =
- bir_sqrt_post
+ bir_add_post
 `;
+
+
+(* old things *)
 
 
 
