@@ -1,8 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 
 
-open gcc_supportLib;
-
+open bir_scamv_driverLib;
 
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
@@ -42,51 +41,47 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
  *)
 
 
-val binaries__list = [
-  ("enpa0", "enpa0/asm.da"),
-  ("enpa1", "enpa1/asm.da"),
-  ("ldld",   "ldld/asm.da")
+val input_files = [
+  ("enpa0", "asm/enpa0.s"),
+  ("enpa1", "asm/enpa1.s"),
+  ("ldld",  "asm/ldld.s")
 ];
 
 
+(*
+val _ = Globals.linewidth := 100;
+val _ = wordsLib.add_word_cast_printer ();
+val _ = Feedback.set_trace "HolSmtLib" 4;
+val _ = Globals.show_assums := true;
+val _ = Globals.show_types := true;
+*)
 
 
+val (prog_name, asm_file) = List.nth (input_files, 2);
+
+(*
+val _ = bir_prog_gen_arm8_mock_set [];
+val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
+*)
+
+(*
+val asm_code = "ldr x3, [x1]\nldr x4, [x2]\n";
+val (asm_code, sections) = process_asm_code asm_code;
+*)
+
+val _ = scamv_test_mock ();
+(*val _ = scamv_test_asmf asm_file;*)
 
 
-val da_file = "ldld/asm.da";
-val (region_map, sections) = read_disassembly_file_regions da_file;
+(*
+ TODO: move the following somewhere else
+  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ *)
 
-(* --------------------------------------- *)
-(* here we have the binary in the lifter input format *)
-(* --------------------------------------- *)
 
-open bir_inst_liftingLib;
+open gcc_supportLib;
 
-(* for arm8 *)
-val (bmil_bir_lift_prog_gen, disassemble_fun) = (bmil_arm8.bir_lift_prog_gen, arm8AssemblerLib.arm8_disassemble);
 
-(* this was copied -----> *)
-fun disassembly_section_to_minmax section =
-  case section of
-      BILMR(addr_start, entries) =>
-        let
-          val data_strs = List.map fst entries;
-	  (* val _ = List.map (fn x => print (x ^ "\r\n")) data_strs; *)
-          val lengths_st = List.map String.size data_strs;
-          val _ = List.map (fn x => ()) lengths_st;
-          val lengths = List.map (fn x => Arbnum.fromInt (x div 2)) lengths_st;
-          val length = List.foldr (Arbnum.+) Arbnum.zero lengths;
-        in
-          (addr_start, Arbnum.+(addr_start, length))
-        end;
-
-fun minmax_fromlist ls = List.foldl (fn ((min_1,max_1),(min_2,max_2)) =>
-  ((if Arbnum.<(min_1, min_2) then min_1 else min_2),
-   (if Arbnum.>(max_1, max_2) then max_1 else max_2))
-  ) (hd ls) (tl ls);
-
-fun da_sections_minmax sections = minmax_fromlist (List.map disassembly_section_to_minmax sections);
-(* <---- this was copied *)
 
 (*
 from: lifter/bir_inst_liftingLibTypes.sml
@@ -135,11 +130,4 @@ BILMR (Arbnum.fromString "3", [("test", BILME_code(SOME "hallo"))])
 *)
 (* <------------ this should go to lifter/bir_inst_liftingLibTypes.sml *)
 
-val prog_range = da_sections_minmax sections;
-val (thm_prog, errors) = bmil_bir_lift_prog_gen prog_range sections;
 
-val lifted_prog = (snd o dest_comb o concl) thm_prog;
-
-(* --------------------------------------- *)
-(* here we have a lifted binary *)
-(* --------------------------------------- *)

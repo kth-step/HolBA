@@ -1,7 +1,6 @@
 
-scamv_entry:
 	cmp x2, x3
-	b.lo lb
+	b.lo __scamv_lbl
 	add x1, x2, x3
-lb:
+__scamv_lbl:
 	ldr x2, [x1]

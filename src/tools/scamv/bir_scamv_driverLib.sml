@@ -42,7 +42,6 @@ val _ = if !Globals.interactive then (
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = Globals.show_tags := true;
 
-val default_da_file = "examples/ldld/asm.da";
 
 (* for arm8 *)
 val (bmil_bir_lift_prog_gen, disassemble_fun) = (bmil_arm8.bir_lift_prog_gen, arm8AssemblerLib.arm8_disassemble);
@@ -82,23 +81,33 @@ fun lift_program_from_sections sections =
         lifted_prog_typed
     end
 
+fun process_asm_code asm_code =
+    let
+        val da_file = bir_gcc_assembe_disassemble asm_code "./tempdir"
+
+        val (region_map, sections) = read_disassembly_file_regions da_file;
+    in
+        (asm_code, sections)
+    end
+
+fun prog_gen_from_file s_file =
+    let
+        val file = TextIO.openIn s_file;
+        val s    = TextIO.inputAll file before TextIO.closeIn file;
+
+        val asm_code = s; 
+    in
+        process_asm_code asm_code
+    end
+
 fun prog_gen_mock () =
     let
         val asm_lines = bir_prog_gen_arm8_mock ();
 
-        val da_file = bir_gcc_assembe_disassemble asm_lines "./tempdir"
-
-        val asm_file_contents =
+        val asm_code =
             List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "\n" asm_lines;
-
-        val (region_map, sections) = read_disassembly_file_regions da_file;
     in
-        (asm_file_contents, sections)
-    end
-
-fun prog_gen_from_file da_file =
-    let val (region_map, sections) = read_disassembly_file_regions da_file;
-    in sections
+        process_asm_code asm_code
     end
 
 fun symb_exec_phase prog =
@@ -140,11 +149,22 @@ fun symb_exec_phase prog =
 	    (bir_exp_hvar_to_bvar cond, if isErrorState then NONE else SOME obs_list')
 	  end;
 
-        val leaf_cond_obss = List.map extract_cond_obs leafs;
+        val paths = List.map extract_cond_obs leafs;
+
+        (* we also need all generated expressions to collect the variables *)
+        val path_conds = List.map fst paths;
+        val obs_exps = flatten (List.map (fn (x,y) => [x,y])
+                          (flatten (List.map ((fn x =>
+                             case x of NONE => [] 
+                                     | SOME y => y) o snd) paths)));
+        val all_exps = (path_conds @ obs_exps);
     in
-        leaf_cond_obss
+        (paths, all_exps)
     end
 
+(*
+val exps = all_exps;
+*)
 fun make_word_relation relation exps =
     let
         fun bir_free_vars exp =
@@ -179,7 +199,7 @@ fun make_word_relation relation exps =
         val pairs = zip unprimed primed;
         fun mk_distinct (a,b) =
             ``^(mk_var (a,``:word64``)) <> ^(mk_var (b,``:word64``))``;
-        val distinct = bandl (map mk_distinct pairs);
+        val distinct = list_mk_conj (map mk_distinct pairs);
     in
        ``^(bir2bool relation) /\ ^distinct``
     end
@@ -217,23 +237,14 @@ fun start_interactive () =
 
         val lifted_prog_w_obs =
             bir_arm8_cache_line_model.add_obs lifted_prog;
-        val paths = symb_exec_phase lifted_prog_w_obs;
+        val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 
-        (* generate the input structures for the relation generation *)
-        val path_conds = List.map fst paths;
-        val obs_exps = flatten (List.map (fn (x,y) => [x,y])
-                          (flatten (List.map ((fn x =>
-                             case x of NONE => [] 
-                                     | SOME y => y) o snd) paths)));
-        val all_exps = (path_conds @ obs_exps);
-
-        val prog_obss_paths = paths;
-        val _ = current_pathstruct := prog_obss_paths;
-        val (conds, relation) = mkRel_conds prog_obss_paths;
+        val _ = current_pathstruct := paths;
+        val (conds, relation) = mkRel_conds paths;
         val word_relation = make_word_relation relation all_exps;
         val _ = current_word_rel := SOME word_relation;
         val _ = current_antecedents := List.map bir2bool conds;
-    in prog_obss_paths end
+    in paths end
 
 fun next_test select_path =
     let
@@ -285,24 +296,14 @@ fun scamv_test_main () =
     in do_tests (length (!current_antecedents)) end
 
 
-fun scamv_test_mock () =
+fun scamv_test_gen_run (asm_code, sections) =
     let
-        val (asm_file_contents, sections) = prog_gen_mock ();
         val lifted_prog = lift_program_from_sections sections;
         val lifted_prog_w_obs =
             bir_arm8_cache_line_model.add_obs lifted_prog;
-        val paths = symb_exec_phase lifted_prog_w_obs;
+        val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 
-        (* generate the input structure for the relation generation *)
-        val path_conds = List.map fst paths;
-        val obs_exps = flatten (List.map (fn (x,y) => [x,y])
-                          (flatten (List.map ((fn x =>
-                             case x of NONE => [] 
-                                     | SOME y => y) o snd) paths)));
-        val all_exps = (path_conds @ obs_exps);
-
-        val prog_obss_paths = paths;
-        val relation = mkRel prog_obss_paths;
+        val relation = mkRel paths;
         val word_relation = make_word_relation relation all_exps;
 
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
@@ -312,12 +313,15 @@ fun scamv_test_mock () =
         fun isPrimedRun s = String.isSuffix "_" s;
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
 
-        val test_result =  bir_embexp_run_cache_indistinguishability asm_file_contents s1 s2;
+        val test_result =  bir_embexp_run_cache_indistinguishability asm_code s1 s2;
 
         val _ = print ("result = " ^ (if test_result then "ok!" else "failed") ^ "\n\n");
     in
         test_result
     end
+
+val scamv_test_mock = scamv_test_gen_run o prog_gen_mock;
+val scamv_test_asmf = scamv_test_gen_run o prog_gen_from_file;
 
 end;
 
