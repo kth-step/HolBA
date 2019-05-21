@@ -1,4 +1,4 @@
-include scripts/setup/autoenv.mk
+include scripts/setup/autoenv_base.mk
 
 # set make's shell to bash
 SHELL := /bin/bash
@@ -33,8 +33,8 @@ HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
 ifdef HOLBA_HOLMAKE_AVAILABLE
 HOLMAKEFILE_DIRS = $(patsubst %/,%,$(sort $(foreach file,$(HOLMAKEFILE_GENS),$(dir $(file)))))
 
-SML_RUNS         = $(foreach sml,$(call rwildcard,$(SRCDIR)/,*.sml),$(sml)_run)
-SML_RUNQS        = $(foreach sml,$(call rwildcard,$(SRCDIR)/,*.sml),$(sml)_runq)
+SML_RUNS         = $(foreach sml,$(call rwildcard,$(SRCDIR)/,*.sml),$(sml)_run) \
+                   $(foreach sml,$(call rwildcard,$(EXSDIR)/,*.sml),$(sml)_run)
 
 TEST_SMLS        = $(call rwildcard,$(SRCDIR)/,selftest.sml) $(call rwildcard,$(SRCDIR)/,test-*.sml) \
                    $(call rwildcard,$(EXSDIR)/,selftest.sml) $(call rwildcard,$(EXSDIR)/,test-*.sml)
@@ -125,13 +125,7 @@ cleanslate:
 ifdef HOLBA_HOLMAKE_AVAILABLE
 .PHONY: $(HOLMAKEFILE_DIRS)
 .PHONY: $(SML_RUNS)
-endif
 
-# note: SML_RUNQS cannot be defined phony,
-# because it uses suffix rules apparently
-#.PHONY: $(SML_RUNQS) 
-
-ifdef HOLBA_HOLMAKE_AVAILABLE
 .PHONY: theory main
 .PHONY: tests _run_tests
 .PHONY: examples-base examples-all
