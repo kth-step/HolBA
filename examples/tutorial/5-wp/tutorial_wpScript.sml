@@ -16,7 +16,7 @@ open bir_expSyntax;
 open bir_programSyntax;
 open bir_immSyntax;
 open finite_mapSyntax bir_bool_expSyntax pairSyntax;
-
+open bir_exp_to_wordsLib;
 open pred_setSyntax;
 
 open bir_htLib;
@@ -282,8 +282,6 @@ val (bir_add_reg_entry_ht, bir_add_reg_entry_def) =
 val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
 val precondition = (snd o dest_eq o concl o EVAL) precondition;
 
-
-
 (****************** bir_add_reg_loop_contract ***********************)
 val prefix = "add_reg_loop_";
 val first_block_label_tm = ``BL_Address (Imm64 0x400260w)``;
@@ -303,17 +301,60 @@ val prefix = "add_reg_loop_continue_";
 val first_block_label_tm = ``BL_Address (Imm64 0x400280w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x400260w)``;
 val false_label_l = [``BL_Address (Imm64 0x400284w)``];
-val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_2_pre``;
+val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_3_pre``;
 val (bir_add_reg_loop_continue_ht, bir_add_reg_loop_continue_def) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l;
 
-val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
+val precondition = ((el 4) o snd o strip_comb o concl) bir_add_reg_loop_continue_ht;
 val precondition = (snd o dest_eq o concl o EVAL) precondition;
-val x = bir2bool precondition;
+val wp_need = (rhs o rhs o concl o (REWRITE_CONV [bir_add_reg_I_def, bir_valuesTheory.BType_Bool_def]) o concl) bir_add_reg_contract_3_pre_def;
 
+fun prove_imp_w_smt lhs rhs =
+  let
+    val bir_impl = bor (bnot lhs, rhs)
+    val w_tm = bir2bool bir_impl
+  in
+    HolSmtLib.Z3_ORACLE_PROVE w_tm
+
+    handle HOL_ERR e => let
+      val neg_tm = mk_neg w_tm
+      val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL neg_tm
+      val _ = print "Failed to prove the implication. Anyways, have a SAT model:";
+      val _ = PolyML.print model;
+    in
+      raise HOL_ERR e
+    end
+  end
+;
 
 (* Prove using Z3 *)
+
+prove_imp_w_smt wp_need precondition
+
+(*
+val test_def = Define `
+cond = 
+(BExp_BinExp BIExp_Or
+               (BExp_UnaryExp BIExp_Not
+                  (BExp_BinPred BIExp_Equal
+                     (BExp_Den (BVar "ProcState_N" (BType_Imm Bit1)))
+                     (BExp_Den (BVar "ProcState_V" (BType_Imm Bit1)))))
+               (BExp_Den (BVar "ProcState_Z" (BType_Imm Bit1))))
+
+`;
+
+(rhs o concl) (REWRITE_CONV [GSYM test_def] wp_need);
+(rhs o concl) (REWRITE_CONV [GSYM test_def] precondition);
+REWRITE_RULE [GSYM test_def] bir_add_reg_loop_continue_ht;
+ val _ = bir_ppLib.remove_bir_pretty_printers ();
+ val _ = bir_ppLib.install_bir_pretty_printers ();
+
+
+val x = bir2bool precondition;
+HolSmtLib.Z3_ORACLE_PROVE x;
+Z3_SAT_modelLib.Z3_GET_SAT_MODEL  (bir2bool (bnot precondition));
+*)
 
 (****************** bir_add_reg_entry_contract ***********************)
 val prefix = "add_reg_entry_";
