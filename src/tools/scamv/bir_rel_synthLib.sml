@@ -86,17 +86,28 @@ fun mk_bir_list_eq l1 l2 =
          in list_eq l1 l2
          end
 
-(* unpacks l1 = l2 where l1 and l2 are lists of conditional observations
+(* unpacks xs = ys where xs and ys are lists of conditional observations
    returns a HOL term of HOL type bir_exp_t that represents
-   all possible ways of making l1 = l2
+   all possible ways of making xs = ys
 *)
-fun mk_bir_cond_obs_eq l1 l2 =
-    let val l1leaves = buildLeaves l1;
-        val l2leaves = buildLeaves l2;
-        fun processList (c,es1) (c',es2) =
-            mk_bir_impl (band (c, c')) (mk_bir_list_eq es1 es2)
-        val xs = cartesianWith processList l1leaves l2leaves
-    in bandl xs
+fun mk_bir_cond_obs_eq xs ys =
+    let fun go (l1,l2) = 
+            let val l1leaves = buildLeaves l1;
+                val l2leaves = buildLeaves l2;
+                fun processList (c,es1) (c',es2) =
+                    mk_bir_impl (band (c, c')) (mk_bir_list_eq es1 es2)
+                val xs = cartesianWith processList l1leaves l2leaves
+            in if length xs > 0 then bandl xs else bir_true
+            end
+        val (trivial, nontrivial) =
+            partition (fn ((c,x),(c',y)) => (c = bir_true)
+                                            andalso (c' = bir_true))
+                      (zip xs ys);
+        val _ = print("Simplified " ^ PolyML.makestring (length trivial) ^ " condition(s)\n");
+        val trivial_eq =
+            List.map (fn ((_,x),(_,y)) => mk_bir_eq x y) trivial;
+    in
+        band (bandl trivial_eq, go (unzip nontrivial))
     end
 
 fun mapPair f (c, oCobs) = (f c, f oCobs);
@@ -106,9 +117,15 @@ exception MkRel;
 (* input type : (bir_exp * (cobs list) option) list *)
 (*              path condition * ((list of conditional observations) or bottom if error) *)
 fun mkRel_conds xs =
-    let fun primed ys =
+    let val _ = print("Relation synthesis: " ^ PolyML.makestring (length xs) ^ " paths ");
+        fun primed ys =
             map (fn (x,y) => (primed_term x, Option.map (map (mapPair primed_term)) y)) ys;
         val (somes, nones) = partition (is_some o snd) xs;
+        val _ = print("("
+                      ^ (PolyML.makestring (length somes))
+                      ^ " valid, "
+                      ^ (PolyML.makestring (length nones))
+                      ^ " invalid)\n");
         val (somes_primed, nones_primed) = (primed somes, primed nones);
 
         fun processImpl (c, l1) (c', l2) = 
@@ -118,13 +135,14 @@ fun mkRel_conds xs =
                      | (NONE,_) => bir_false
                      | (_,NONE) => bir_false
                      | *) (SOME l1,SOME l2)  => 
-                       mk_bir_cond_obs_eq l1 l2;
+                          mk_bir_cond_obs_eq l1 l2;
+                val _ = print (".");
             in ((band (c, c')),  eqRel) end;
         val xs2 = cartesianWith processImpl somes somes_primed;
 
         val negCond = bandl o List.map (bnot o fst);
         val unfoldCondObs =  bandl o List.map (uncurry mk_bir_impl);
-
+        val _ = print ("Done!\n");
     in (List.map fst xs2,
         band (unfoldCondObs xs2, band (negCond nones, negCond nones_primed)))
     end
