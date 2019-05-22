@@ -101,35 +101,36 @@ fun mk_bir_cond_obs_eq l1 l2 =
 
 fun mapPair f (c, oCobs) = (f c, f oCobs);
 
-fun mkRelConj xs =
-    let val primed =
-            map (fn (x,y) => (primed_term x, Option.map (map (mapPair primed_term)) y)) xs;
-        fun processImpl (c, l1) (c', l2) = 
-            let val eqRel =
-                    case (l1,l2) of
-                       (NONE, NONE) => bir_true
-                     | (NONE,_) => bir_false
-                     | (_,NONE) => bir_false
-                     | (SOME l1,SOME l2)  => 
-                       mk_bir_cond_obs_eq l1 l2;
-            in ((band (c, c')),  eqRel) end;
-        val xs2 = cartesianWith processImpl xs primed
-    in xs2
-    end
-
-exception MkRel
+exception MkRel;
 
 (* input type : (bir_exp * (cobs list) option) list *)
 (*              path condition * ((list of conditional observations) or bottom if error) *)
-fun mkRel [] = ``T``
-| mkRel xs = bandl (List.map (uncurry mk_bir_impl) (mkRelConj xs))
+fun mkRel_conds xs =
+    let fun primed ys =
+            map (fn (x,y) => (primed_term x, Option.map (map (mapPair primed_term)) y)) ys;
+        val (somes, nones) = partition (is_some o snd) xs;
+        val (somes_primed, nones_primed) = (primed somes, primed nones);
 
-fun mkRel_conds [] = ([], ``T``)
-  | mkRel_conds xs =
-    let val xs2 = mkRelConj xs
-    in
-        (List.map fst xs2, bandl (List.map (uncurry mk_bir_impl) xs2))
+        fun processImpl (c, l1) (c', l2) = 
+            let val eqRel =
+                    case (l1,l2) of
+(*                       (NONE, NONE) => bir_true
+                     | (NONE,_) => bir_false
+                     | (_,NONE) => bir_false
+                     | *) (SOME l1,SOME l2)  => 
+                       mk_bir_cond_obs_eq l1 l2;
+            in ((band (c, c')),  eqRel) end;
+        val xs2 = cartesianWith processImpl somes somes_primed;
+
+        val negCond = bandl o List.map (bnot o fst);
+        val unfoldCondObs =  bandl o List.map (uncurry mk_bir_impl);
+
+    in (List.map fst xs2,
+        band (unfoldCondObs xs2, band (negCond nones, negCond nones_primed)))
     end
+
+fun mkRel xs = snd (mkRel_conds xs);
+
 
 (*    let fun partitionOption [] = ([],[])
           | partitionOption ((pathCond,NONE)::ps) =
