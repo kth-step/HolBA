@@ -1,0 +1,27 @@
+
+add_reg.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <add_reg>:
+   0:	d10043ff 	sub	sp, sp, #0x10
+   4:	f90007e0 	str	x0, [sp, #8]
+   8:	f90003e1 	str	x1, [sp]
+   c:	f94007e2 	ldr	x2, [sp, #8]
+  10:	f94003e3 	ldr	x3, [sp]
+  14:	f94007e4 	ldr	x4, [sp, #8]
+  18:	f94003e5 	ldr	x5, [sp]
+  1c:	14000007 	b	38 <add_reg+0x38>
+  20:	aa0303e0 	mov	x0, x3
+  24:	91000400 	add	x0, x0, #0x1
+  28:	aa0003e3 	mov	x3, x0
+  2c:	aa0203e0 	mov	x0, x2
+  30:	d1000400 	sub	x0, x0, #0x1
+  34:	aa0003e2 	mov	x2, x0
+  38:	aa0203e0 	mov	x0, x2
+  3c:	f100001f 	cmp	x0, #0x0
+  40:	54ffff0c 	b.gt	20 <add_reg+0x20>
+  44:	aa0303e0 	mov	x0, x3
+  48:	910043ff 	add	sp, sp, #0x10
+  4c:	d65f03c0 	ret
