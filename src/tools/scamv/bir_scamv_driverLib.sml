@@ -241,6 +241,7 @@ fun start_interactive () =
 
         val _ = current_pathstruct := paths;
         val (conds, relation) = mkRel_conds paths;
+        val _ = print ("Word relation\n");
         val word_relation = make_word_relation relation all_exps;
         val _ = current_word_rel := SOME word_relation;
         val _ = current_antecedents := List.map bir2bool conds;
@@ -255,6 +256,7 @@ fun next_test select_path =
                   | NONE => raise ERR "next_test" "no relation found";
         val word_relation = ``^rel /\ ^path``;
 
+        val _ = print ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
         val _ = (print "SAT model:\n"; print_model model(*; print "\n"*));
 
@@ -303,8 +305,11 @@ fun scamv_test_gen_run (asm_code, sections) =
             bir_arm8_cache_line_model.add_obs lifted_prog;
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 
+
         val relation = mkRel paths;
+        val _ = print ("Word relation\n");
         val word_relation = make_word_relation relation all_exps;
+        val _ = print ("Calling Z3\n");
 
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
         val _ = (print "SAT model:\n"; print_model model(*; print "\n"*));
