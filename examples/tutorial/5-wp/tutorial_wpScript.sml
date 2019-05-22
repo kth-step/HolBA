@@ -20,8 +20,11 @@ open pred_setSyntax;
 
 open bir_htLib;
 open examplesBinaryTheory;
-
+open tutorial_bir_to_armSupportTheory;
+open tutorial_bir_to_armTheory;
 open HolBACoreSimps;
+open examplesBinaryLib;
+open bslSyntax;
 
 val _ = new_theory "tutorial_wp";
 
@@ -246,45 +249,43 @@ val wps = wps_var
 ;
 
 (******************************************************************)
-open bir_subprogramLib;
 open easy_noproof_wpLib;
-val prog_tm = (extract_subprogram bir_prog_tm 0x40025c 0x40028c);
-val prog_tm = (snd o dest_eq o concl o EVAL) prog_tm;
+val prog_tm = bir_prog_tm;
 (****************** bir_add_reg_entry_contract ***********************)
 val prefix = "add_reg_entry_";
-val first_block_label_tm = ``BL_Address (Imm64 0x40025cw)``;
-val last_block_label_tm =  ``BL_Address (Imm64 0x400280w)``;
+val first_block_label_tm = ``BL_Address (Imm64 0x1cw)``;
+val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``;
 val false_label_l = [];
 val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_1_post``;
 val (bir_add_reg_entry_ht, bir_add_reg_entry_def) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l;
 
-val wp_precondition_thm = fst bir_add_reg_entry_ht;
+val wp_precondition_thm = bir_add_reg_entry_ht;
 
 
-val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
+val precondition = ((el 4) o snd o strip_comb o concl) bir_add_reg_entry_ht;
 val precondition = (snd o dest_eq o concl o EVAL) precondition;
 
 (****************** bir_add_reg_loop_contract ***********************)
 val prefix = "add_reg_loop_";
-val first_block_label_tm = ``BL_Address (Imm64 0x400260w)``;
-val last_block_label_tm =  ``BL_Address (Imm64 0x400280w)``;
+val first_block_label_tm = ``BL_Address (Imm64 0x20w)``;
+val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``;
 val false_label_l = [];
 val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_2_post``;
 val (bir_add_reg_loop_ht, bir_add_reg_loop_def) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l;
 
-val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
+val precondition = ((el 4) o snd o strip_comb o concl) bir_add_reg_entry_ht;
 val precondition = (snd o dest_eq o concl o EVAL) precondition;
 val x = bir2bool precondition;
 
 (************** bir_add_reg_loop_continue_contract *******************)
 val prefix = "add_reg_loop_continue_";
-val first_block_label_tm = ``BL_Address (Imm64 0x400280w)``;
-val last_block_label_tm =  ``BL_Address (Imm64 0x400260w)``;
-val false_label_l = [``BL_Address (Imm64 0x400284w)``];
+val first_block_label_tm = ``BL_Address (Imm64 0x40w)``;
+val last_block_label_tm =  ``BL_Address (Imm64 0x20w)``;
+val false_label_l = [``BL_Address (Imm64 0x44w)``];
 val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_3_pre``;
 val (bir_add_reg_loop_continue_ht, bir_add_reg_loop_continue_def) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
@@ -314,7 +315,7 @@ fun prove_imp_w_smt lhs rhs =
 
 (* Prove using Z3 *)
 
-prove_imp_w_smt wp_need precondition
+prove_imp_w_smt wp_need precondition;
 
 (*
 val test_def = Define `

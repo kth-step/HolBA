@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../2-lift
+DEPENDENCIES   = ../2-lift ../support
 
 
 # configuration

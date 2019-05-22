@@ -49,6 +49,25 @@ bir_exp_tautologiesTheory.bir_exp_is_taut_def,
 bir_bool_expTheory.bir_is_bool_exp_REWRS]);
 
 
+
+val bir_triple_def = Define `
+bir_triple p l ls pre post ⇔
+ ! s.
+  bir_env_vars_are_initialised s.bst_environ
+    (bir_vars_of_program p) ⇒
+  (s.bst_pc.bpc_index = 0) ∧ (s.bst_pc.bpc_label = l) ⇒
+  (s.bst_status = BST_Running) ⇒
+  bir_is_bool_exp_env s.bst_environ pre ⇒
+  (bir_eval_exp pre s.bst_environ = bir_val_true) ⇒
+  ?n l1 c1 c2 s'. 
+      ((bir_exec_block_n p s n) = (l1, c1, c2, s')) ∧
+      (s'.bst_status = BST_Running) ∧
+      bir_is_bool_exp_env s'.bst_environ post ∧
+      (bir_eval_exp post s'.bst_environ = bir_val_true) ∧
+      (s'.bst_pc.bpc_index = 0) ∧ s'.bst_pc.bpc_label ∈ ls
+`;
+
+
 val bir_triple_weak_rule_thm = store_thm("bir_triple_weak_rule_thm",  ``
   ( (bir_vars_of_exp pre') ⊆ (bir_vars_of_program p)) ==>
   ((bir_vars_of_exp pre) ⊆ (bir_vars_of_program p)) ==>
@@ -74,23 +93,6 @@ FULL_SIMP_TAC (std_ss) [] >>
 ASSUME_TAC (Q.SPECL [`s.bst_environ`, `pre'`, `pre`]  bir_exp_equivTheory.bir_impl_equiv) >>
 REV_FULL_SIMP_TAC (std_ss) [] *)
 );
-
-
-bir_triple p l ls pre post ⇔
- ! s.
-  bir_env_vars_are_initialised s.bst_environ
-    (bir_vars_of_program p) ⇒
-  (s.bst_pc.bpc_index = 0) ∧ (s.bst_pc.bpc_label = l) ⇒
-  (s.bst_status = BST_Running) ⇒
-  bir_is_bool_exp_env s.bst_environ pre ⇒
-  (bir_eval_exp pre s.bst_environ = bir_val_true) ⇒
-  ?n l1 c1 c2 s'. 
-      ((bir_exec_block_n p s n) = (l1, c1, c2, s')) ∧
-      (s'.bst_status = BST_Running) ∧
-      bir_is_bool_exp_env s'.bst_environ post ∧
-      (bir_eval_exp post s'.bst_environ = bir_val_true) ∧
-      (s'.bst_pc.bpc_index = 0) ∧ s'.bst_pc.bpc_label ∈ ls
-`;
 
 
 val bir_pre_arm8_to_bir_def = Define `

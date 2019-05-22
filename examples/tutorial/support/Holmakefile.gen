@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../2-lift ../support ../4-bir-to-arm
+DEPENDENCIES   = 
 
 
 # configuration

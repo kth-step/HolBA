@@ -2,7 +2,6 @@ structure examplesBinaryLib =
 struct
 
   local
-    open bir_subprogramLib;
     open examplesBinaryTheory;
   in
 

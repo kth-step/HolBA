@@ -4,6 +4,8 @@ open bir_expSimps;
 open tutorial_bir_to_armSupportTheory;
 open bslSyntax;
 
+val _ = new_theory "tutorial_bir_to_arm";
+
 (* unsigned comparison *)
 EVAL ``255w <=+ (0w:word8)``;
 (* Signed comparison *)
@@ -97,127 +99,8 @@ EVAL ``arm8_wf_varset (bir_vars_of_exp bir_add_reg_contract_1_pre)``;
 
 
 
-
-
-val y_addr = ``0w:word64``;
-val x_addr = ``8w:word64``;
-val ly_addr = ``16w:word64``;
-val lx_addr = ``24w:word64``;
-val y_var = ``(arm8_load_64 m.MEM (m.SP_EL0+(^y_addr)))``;
-val x_var = ``(arm8_load_64 m.MEM (m.SP_EL0+(^x_addr)))``;
-val ly_var = ``(arm8_load_64 m.MEM (m.SP_EL0+(^ly_addr)))``;
-val lx_var = ``(arm8_load_64 m.MEM (m.SP_EL0+(^lx_addr)))``;
-
-val arm8_sp_ok = ``(m.SP_EL0 >=+ 0xC0000000w) /\ (m.SP_EL0 <+ 0xD0000000w)``;
-
-
-
-
-val arm8_add_pre_def = Define `arm8_add_pre m =
-  ((^x_var) >= 0w) /\
-  (^arm8_sp_ok)
-`;
-val arm8_add_post_def = Define `arm8_add_post m =
-  ((^x_var+^y_var) = (^ly_var)) /\
-  (^arm8_sp_ok)
-`;
-
-val get_y = ``(BExp_Load
-       (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
-                 (BExp_BinExp BIExp_Plus
-                              (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                              (BExp_Const (Imm64 (^y_addr)))) BEnd_LittleEndian
-                        Bit64)``;
-val get_x = ``(BExp_Load
-       (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
-                 (BExp_BinExp BIExp_Plus
-                              (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                              (BExp_Const (Imm64 (^x_addr)))) BEnd_LittleEndian
-                        Bit64)``;
-val get_ly = ``(BExp_Load
-       (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
-                 (BExp_BinExp BIExp_Plus
-                              (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                              (BExp_Const (Imm64 (^ly_addr)))) BEnd_LittleEndian
-                        Bit64)``;
-val get_lx = ``(BExp_Load
-       (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
-                 (BExp_BinExp BIExp_Plus
-                              (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                              (BExp_Const (Imm64 (^lx_addr)))) BEnd_LittleEndian
-                        Bit64)``;
-
-
-val bir_sp_ok = 
-band (
-     bnot (blt((bden (bvar "SP_EL0" ``(BType_Imm Bit64)``)),(bconst64 0xC0000000))),
-     blt((bden (bvar "SP_EL0" ``(BType_Imm Bit64)``)),(bconst64 0xD0000000))
-     );
-
-
-
-val bir_add_pre_def = Define `bir_add_pre =
-^(band
-  (bnot (bslt(get_x, bconst64 0)),
-   bir_sp_ok ))
-`;
-
-val bir_add_post_def = Define `bir_add_post =
-^(bandl [
-        (beq (bplus(get_y, get_x), get_ly)),
-      bir_sp_ok
-      ])`;
-
-
-val original_loop_condition = (bnot (bsle(get_lx, bconst64 0)));
-val bir_loop_condition =  bnot ``(BExp_BinExp BIExp_Or
-                       (BExp_UnaryExp BIExp_Not
-                          (BExp_BinPred BIExp_Equal
-                             (BExp_Den (BVar "ProcState_N" BType_Bool))
-                             (BExp_Den (BVar "ProcState_V" BType_Bool))))
-                       (BExp_Den (BVar "ProcState_Z" BType_Bool)))``;
-
-
-val bir_add_I_def = Define `bir_add_I =
-^(bandl [
-      (beq (bplus(get_y, get_x), bplus(get_ly, get_lx))),
-   (beq (original_loop_condition, bir_loop_condition)),
-   bir_sp_ok
-   ])
-`;
-
-
-(* contract one *)
-(* from function entry (we avoid stack pointer operations) to cjmp *)
-val bir_contract_1_pre_def = Define `bir_contract_1_pre =
- (bir_add_pre)
-`;
-val bir_contract_1_post_def = Define `bir_contract_1_post =
- (bir_add_I)
-`;
-
-
-(* contract two: loop body *)
-(* from cjmp to cjmp *)
-val bir_contract_2_pre_def = Define `bir_contract_2_pre =
-^(band(``bir_add_I``, bir_loop_condition))
-`;
-val bir_contract_2_post_def = Define `bir_contract_2_post =
- bir_add_I
-`;
-
-(* contract three: loop exit *)
-(* from cjmp to end of function except ret and sp operations *)
-val bir_contract_3_pre_def = Define `bir_contract_3_pre =
-^(band(``bir_add_I``, bnot bir_loop_condition))
-`;
-val bir_contract_3_post_def = Define `bir_contract_3_post =
- bir_add_post
-`;
-
-
-(* old things *)
-
+(* old proofs *)
+(*
 
 
 
@@ -269,7 +152,7 @@ FULL_SIMP_TAC (std_ss) [bir_immTheory.bool2w_11, bool2w_and, bir_bool_expTheory.
 
 
 
-
+*)
 
 
 
