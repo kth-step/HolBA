@@ -191,11 +191,15 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
     (* Initialize queue of blocks to process: *)
     val wps_tm =
       (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) wps_var
+(* For experimentation: 
+val (program, post, ls) = (prog_var, postcond_var, ls_var)
+val wps = wps_var
+*)
     val wps_bool_sound_thm =
       bir_wp_init_wps_bool_sound_thm
         (prog_var, postcond_var, ls_var) wps_var defs
     val (wpsdom, blstodo) =
-      bir_wp_init_rec_proc_jobs prog_tm wps_tm
+      bir_wp_init_rec_proc_jobs prog_tm wps_tm false_label_l
 
     (* Prepare "problem-static" part of computation: *)
     val prog_thm =
@@ -271,7 +275,7 @@ val first_block_label_tm = ``BL_Address (Imm64 0x40025cw)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x400280w)``;
 val false_label_l = [];
 val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_1_post``;
-val bir_add_reg_entry_ht =
+val (bir_add_reg_entry_ht, bir_add_reg_entry_def) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l;
 
@@ -286,7 +290,7 @@ val first_block_label_tm = ``BL_Address (Imm64 0x400260w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x400280w)``;
 val false_label_l = [];
 val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_2_post``;
-val bir_add_reg_entry_ht =
+val (bir_add_reg_loop_ht, bir_add_reg_loop_def) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l;
 
@@ -294,13 +298,13 @@ val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_h
 val precondition = (snd o dest_eq o concl o EVAL) precondition;
 val x = bir2bool precondition;
 
-(****************** bir_add_reg_loop_continue ***********************)
+(************** bir_add_reg_loop_continue_contract *******************)
 val prefix = "add_reg_loop_continue_";
 val first_block_label_tm = ``BL_Address (Imm64 0x400280w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x400260w)``;
 val false_label_l = [``BL_Address (Imm64 0x400284w)``];
 val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_2_pre``;
-val bir_add_reg_entry_ht =
+val (bir_add_reg_loop_continue_ht, bir_add_reg_loop_continue_def) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l;
 
