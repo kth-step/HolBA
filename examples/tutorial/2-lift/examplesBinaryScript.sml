@@ -8,9 +8,9 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 
 
-val _ = print_with_style_ [Bold, Underline] "Lifting ../1-code/examples.elf.da\n";
+val _ = print_with_style_ [Bold, Underline] "Lifting ../1-code/add_reg.da\n";
 
-val (region_map, aes_sections) = read_disassembly_file_regions "../1-code/examples.elf.da"
+val (region_map, aes_sections) = read_disassembly_file_regions "../1-code/add_reg.da"
 
 val (thm_arm8, errors) = bmil_arm8.bir_lift_prog_gen
                            ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))

@@ -92,6 +92,9 @@ val bir_add_reg_contract_3_post_def = Define `bir_add_reg_contract_3_post =
 
 
 
+EVAL ``arm8_wf_varset (bir_vars_of_exp bir_add_reg_contract_1_pre)``;
+
+
 
 
 

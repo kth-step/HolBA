@@ -21,7 +21,7 @@ CFLAGS	= -ggdb3 -std=gnu99 -Wall -fno-builtin # -O1
 
 # compilation and linking
 # ---------------------------------
-all: $(NAME).da
+all: $(NAME).da add_reg.da
 
 %.o: %.asm
 	${CROSS}as -o $@ $<
@@ -36,6 +36,8 @@ $(NAME): examples.c
 	${CROSS}gcc -DBAREMETAL= ${CFLAGS} examples.c -o $@
 
 $(NAME).da: $(NAME)
+	${CROSS}objdump -d $< > $@
+add_reg.da: add_reg.o
 	${CROSS}objdump -d $< > $@
 
 

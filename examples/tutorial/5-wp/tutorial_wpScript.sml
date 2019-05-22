@@ -1,6 +1,5 @@
 open HolKernel Parse boolLib bossLib;
 
-open examplesBinaryLib;
 open bir_wpLib;
 open bir_wpTheory;
 open bir_htTheory;
@@ -20,6 +19,7 @@ open bir_exp_to_wordsLib;
 open pred_setSyntax;
 
 open bir_htLib;
+open examplesBinaryTheory;
 
 open HolBACoreSimps;
 
@@ -44,34 +44,15 @@ val bir_exec_to_labels_exists =
 FULL_SIMP_TAC std_ss [bir_exec_to_labels_def]
 );
 
-(* TODO: Move this definition to the others... *)
-val bir_triple_assumviol_free_def = Define `
-  bir_triple_assumviol_free p l ls pre post <=>
-    !s.
-	bir_env_vars_are_initialised s.bst_environ
-	  (bir_vars_of_program p) ==>
-	(s.bst_pc.bpc_index = 0) /\
-	(s.bst_pc.bpc_label = l) ==>
-	(s.bst_status = BST_Running) ==>
-	bir_is_bool_exp_env s.bst_environ pre ==>
-	(bir_eval_exp pre s.bst_environ = bir_val_true) ==>
-	?n l1 c1 c2 s'.
-	    (bir_exec_block_n p s n = (l1,c1,c2,s')) /\
-	    (s'.bst_status = BST_Running) /\
-	    bir_is_bool_exp_env s'.bst_environ post /\
-	    (bir_eval_exp post s'.bst_environ = bir_val_true) /\
-	    (s'.bst_pc.bpc_index = 0) /\
-             s'.bst_pc.bpc_label IN ls
-`;
 
 val bir_never_assumviol_block_n_ht_from_to_labels_ht =
   store_thm("bir_never_assumviol_block_n_ht_from_to_labels_ht",
   ``!prog l ls pre post.
     bir_prog_has_no_assumes prog ==>
     bir_exec_to_labels_or_assumviol_triple prog l ls pre post ==>
-    bir_triple_assumviol_free prog l ls pre post``,
+    bir_triple prog l ls pre post``,
 
-REWRITE_TAC [bir_triple_assumviol_free_def,
+REWRITE_TAC [bir_triple_def,
              bir_exec_to_labels_or_assumviol_triple_def] >>
 REPEAT STRIP_TAC >>
 ASSUME_TAC (SPECL [``ls:bir_label_t -> bool``,
@@ -235,7 +216,7 @@ val wps = wps_var
     val hts_list_trim = List.take (hts_list, (length hts_list) - 1)
     val target_ht =
       valOf (find_ht first_block_label_tm hts_list_trim)
-    (* Transform HT to bir_triple_assumviol_free *)
+    (* Transform HT to bir_triple *)
     (* TODO: Make bir_htSyntax *)
     val no_assumes_thm =
       REWRITE_RULE [GSYM prog_def]
@@ -278,6 +259,9 @@ val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_1_post``
 val (bir_add_reg_entry_ht, bir_add_reg_entry_def) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l;
+
+val wp_precondition_thm = fst bir_add_reg_entry_ht;
+
 
 val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
 val precondition = (snd o dest_eq o concl o EVAL) precondition;
@@ -381,6 +365,8 @@ val x = bir2bool
 HolSmtLib.Z3_ORACLE_PROVE x;
 Z3_SAT_modelLib.Z3_GET_SAT_MODEL  (mk_neg x);
 
+EVAL ``((bir_vars_of_exp bir_add_reg_contract_1_pre) = (bir_vars_of_exp (^precondition)))``;
+
 
 (****************** bir_add_reg_loop_contract ***********************)
 val prefix = "add_reg_loop_";
@@ -400,6 +386,35 @@ val x = bir2bool
 HolSmtLib.Z3_ORACLE_PROVE x;
 Z3_SAT_modelLib.Z3_GET_SAT_MODEL  (mk_neg x);
 
+EVAL ``((bir_vars_of_exp bir_add_reg_contract_2_pre) = (bir_vars_of_exp (^precondition)))``;
+
+val string_ss = rewrites (type_rws ``:string``);
+val char_ss = rewrites (type_rws ``:char``);
+
+val prog_tm = (extract_subprogram bir_prog_tm 0x40025c 0x40028c);
+
+
+val prog_term = ((el 4) o snd o strip_comb o concl) examples_arm8_program_THM;
+
+(SIMP_CONV (
+std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss++HolBASimps.VARS_OF_PROG_ss)
+) [bir_add_reg_contract_2_pre_def, bir_add_reg_I_def, bir_valuesTheory.BType_Bool_def] ``
+((bir_vars_of_exp bir_add_reg_contract_2_pre)) ⊆
+ ((bir_vars_of_program (^prog_term)))``;
+
+
+(SIMP_CONV (
+std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss++HolBASimps.VARS_OF_PROG_ss)
+) [bir_add_reg_contract_2_pre_def, bir_add_reg_I_def, bir_valuesTheory.BType_Bool_def] ``
+((bir_vars_of_exp bir_add_reg_contract_2_pre))``;
+
+(SIMP_CONV (
+std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss++HolBASimps.VARS_OF_PROG_ss)
+) [bir_add_reg_contract_2_pre_def, bir_add_reg_I_def, bir_valuesTheory.BType_Bool_def] ``
+ ((bir_vars_of_program (^prog_tm)))``;
+
+EVAL ``((bir_vars_of_exp bir_add_reg_contract_2_pre))``;
+EVAL ``(bir_vars_of_exp (^precondition))``;
 
 (*
 open bir_exp_to_wordsLib;
