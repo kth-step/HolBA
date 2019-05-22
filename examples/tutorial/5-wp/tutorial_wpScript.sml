@@ -1,6 +1,5 @@
 open HolKernel Parse boolLib bossLib;
 
-open tutorial_liftTheory;
 open examplesBinaryLib;
 open bir_wpLib;
 open bir_wpTheory;
@@ -16,6 +15,7 @@ open bir_subprogramTheory;
 open bir_expSyntax;
 open bir_programSyntax;
 open bir_immSyntax;
+open finite_mapSyntax bir_bool_expSyntax pairSyntax;
 
 open pred_setSyntax;
 
@@ -143,6 +143,12 @@ fun find_ht _            []     = NONE
   end
 ;
 
+fun make_false_label_fmap false_label_l =
+  List.foldl (fn (label, map) => mk_fupdate (map, mk_pair (label, bir_exp_false_tm)))
+             (mk_fempty (bir_label_t_ty, bir_exp_t_ty))
+             false_label_l
+;
+
 (* TODO: Need to make sure a mess is not caused by overloading
  * definitions.
  *
@@ -150,7 +156,7 @@ fun find_ht _            []     = NONE
  * bir_wp_comp_wps.
  *)
 fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                  postcond_tm prefix =
+                  postcond_tm prefix false_label_l =
   let
     (* TODO: Make some sort of test to check if computations have
      * already been performed for current prefix. *)
@@ -169,9 +175,10 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
         \x.(x = ^last_block_label_tm)
     `
     val ls_var = (fst o dest_eq o concl) ls_def
+    val false_fmap_tm = make_false_label_fmap false_label_l
     val wps_def = Define `
       ^(mk_var(prefix^"wps", ``:bir_label_t |-> bir_exp_t``)) =
-        (FEMPTY |+ (^last_block_label_tm,
+        ((^false_fmap_tm) |+ (^last_block_label_tm,
                     ^((fst o dest_eq o concl) postcond_def)
                    )
         )
@@ -261,12 +268,12 @@ val prog_tm = (snd o dest_eq o concl o EVAL) prog_tm;
 (****************** bir_add_reg_entry_contract ***********************)
 val prefix = "add_reg_entry_";
 val first_block_label_tm = ``BL_Address (Imm64 0x40025cw)``;
-(* TODO: Can be stated as a BL_Address?  *)
 val last_block_label_tm =  ``BL_Address (Imm64 0x400280w)``;
+val false_label_l = [];
 val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_1_post``;
 val bir_add_reg_entry_ht =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix;
+                postcond_tm prefix false_label_l;
 
 val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
 val precondition = (snd o dest_eq o concl o EVAL) precondition;
@@ -276,12 +283,12 @@ val precondition = (snd o dest_eq o concl o EVAL) precondition;
 (****************** bir_add_reg_loop_contract ***********************)
 val prefix = "add_reg_loop_";
 val first_block_label_tm = ``BL_Address (Imm64 0x400260w)``;
-(* TODO: Can be stated as a BL_Address?  *)
 val last_block_label_tm =  ``BL_Address (Imm64 0x400280w)``;
+val false_label_l = [];
 val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_2_post``;
 val bir_add_reg_entry_ht =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix;
+                postcond_tm prefix false_label_l;
 
 val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
 val precondition = (snd o dest_eq o concl o EVAL) precondition;
@@ -290,12 +297,12 @@ val x = bir2bool precondition;
 (****************** bir_add_reg_loop_continue ***********************)
 val prefix = "add_reg_loop_continue_";
 val first_block_label_tm = ``BL_Address (Imm64 0x400280w)``;
-(* TODO: Can be stated as a BL_Address?  *)
 val last_block_label_tm =  ``BL_Address (Imm64 0x400260w)``;
+val false_label_l = [``BL_Address (Imm64 0x400284w)``];
 val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_2_pre``;
 val bir_add_reg_entry_ht =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix;
+                postcond_tm prefix false_label_l;
 
 val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
 val precondition = (snd o dest_eq o concl o EVAL) precondition;
