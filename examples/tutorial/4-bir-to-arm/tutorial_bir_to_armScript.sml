@@ -4,6 +4,96 @@ open bir_expSimps;
 open tutorial_bir_to_armSupportTheory;
 open bslSyntax;
 
+(* unsigned comparison *)
+EVAL ``255w <=+ (0w:word8)``;
+(* Signed comparison *)
+EVAL ``255w <= (0w:word8)``;
+
+(* register add *)
+val y_var = ``(m.REG 5w)``;
+val x_var = ``(m.REG 4w)``;
+val ly_var = ``(m.REG 3w)``;
+val lx_var = ``(m.REG 2w)``;
+
+val arm8_add_reg_pre_def = Define `arm8_add_reg_pre m =
+  ((^x_var) >= 0w)
+`;
+val arm8_add_reg_post_def = Define `arm8_add_reg_post m =
+  ((^x_var+^y_var) = (^ly_var))
+`;
+
+val get_y = bden (bvar "R5" ``(BType_Imm Bit64)``);
+val get_x = bden (bvar "R4" ``(BType_Imm Bit64)``);
+val get_ly = bden (bvar "R3" ``(BType_Imm Bit64)``);
+val get_lx = bden (bvar "R2" ``(BType_Imm Bit64)``);
+
+
+val bir_add_reg_pre_def = Define `bir_add_reg_pre =
+^(bandl[
+        bnot (bslt(get_x, bconst64 0)),
+        beq(get_lx, get_x),
+         beq(get_ly, get_y)
+         ]
+)
+`;
+
+val bir_add_reg_post_def = Define `bir_add_reg_post =
+^(beq (bplus(get_y, get_x), get_ly))`;
+
+
+val original_add_reg_loop_condition = 
+ (bnot (bsle(get_lx, bconst64 0)));
+val bir_add_reg_loop_condition =  bnot ``(BExp_BinExp BIExp_Or
+                       (BExp_UnaryExp BIExp_Not
+                          (BExp_BinPred BIExp_Equal
+                             (BExp_Den (BVar "ProcState_N" BType_Bool))
+                             (BExp_Den (BVar "ProcState_V" BType_Bool))))
+                       (BExp_Den (BVar "ProcState_Z" BType_Bool)))``;
+
+
+val bir_add_reg_I_def = Define `bir_add_reg_I =
+^(bandl [
+      (beq (bplus(get_y, get_x), bplus(get_ly, get_lx))),
+   (beq (original_add_reg_loop_condition, bir_add_reg_loop_condition))
+   ])
+`;
+
+
+(* contract one *)
+(* from function entry (we avoid stack pointer operations) to cjmp *)
+val bir_add_reg_contract_1_pre_def = Define `bir_add_reg_contract_1_pre =
+ (bir_add_reg_pre)
+`;
+val bir_add_reg_contract_1_post_def = Define `bir_add_reg_contract_1_post =
+ (bir_add_reg_I)
+`;
+
+
+(* contract two: loop body *)
+(* from cjmp to cjmp *)
+val bir_add_reg_contract_2_pre_def = Define `bir_add_reg_contract_2_pre =
+^(band(``bir_add_reg_I``, bir_add_reg_loop_condition))
+`;
+val bir_add_reg_contract_2_post_def = Define `bir_add_reg_contract_2_post =
+ bir_add_reg_I
+`;
+
+(* contract three: loop exit *)
+(* from cjmp to end of function except ret and sp operations *)
+val bir_add_reg_contract_3_pre_def = Define `bir_add_reg_contract_3_pre =
+^(band(``bir_add_reg_I``, bnot bir_add_reg_loop_condition))
+`;
+val bir_add_reg_contract_3_post_def = Define `bir_add_reg_contract_3_post =
+ bir_add_reg_post
+`;
+
+
+
+
+
+
+
+
 val y_addr = ``0w:word64``;
 val x_addr = ``8w:word64``;
 val ly_addr = ``16w:word64``;
@@ -13,15 +103,10 @@ val x_var = ``(arm8_load_64 m.MEM (m.SP_EL0+(^x_addr)))``;
 val ly_var = ``(arm8_load_64 m.MEM (m.SP_EL0+(^ly_addr)))``;
 val lx_var = ``(arm8_load_64 m.MEM (m.SP_EL0+(^lx_addr)))``;
 
-
-
-(* unsigned comparison *)
-EVAL ``255w <=+ (0w:word8)``;
-(* Signed comparison *)
-EVAL ``255w <= (0w:word8)``;
-
-
 val arm8_sp_ok = ``(m.SP_EL0 >=+ 0xC0000000w) /\ (m.SP_EL0 <+ 0xD0000000w)``;
+
+
+
 
 val arm8_add_pre_def = Define `arm8_add_pre m =
   ((^x_var) >= 0w) /\

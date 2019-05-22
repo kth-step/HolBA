@@ -254,46 +254,105 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
 ;
 
 (******************************************************************)
-val prog_tm = sqrt_prog_tm;
 open bir_subprogramLib;
 open easy_noproof_wpLib;
-val prog_tm = (extract_subprogram bir_prog_tm 0x4001d8 0x400224);
+val prog_tm = (extract_subprogram bir_prog_tm 0x40025c 0x40028c);
 val prog_tm = (snd o dest_eq o concl o EVAL) prog_tm;
-(****************** bir_sqrt_entry_contract ***********************)
-val prefix = "add_entry_"
-val first_block_label_tm = ``BL_Address (Imm64 0x4001dcw)``;
-val first_block_label_small_tm = ``BL_Address (Imm64 0x400214w)``;
+(****************** bir_add_reg_entry_contract ***********************)
+val prefix = "add_reg_entry_";
+val first_block_label_tm = ``BL_Address (Imm64 0x40025cw)``;
 (* TODO: Can be stated as a BL_Address?  *)
-val last_block_label_tm =
-  ``BL_Address (Imm64 0x400218w)``;
-val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_contract_1_post``;
-val bir_add_entry_ht =
+val last_block_label_tm =  ``BL_Address (Imm64 0x400280w)``;
+val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_1_post``;
+val bir_add_reg_entry_ht =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix;
-(fst bir_add_entry_ht);
 
-val my_prog_def = Define `my_prog = (^prog_tm)`;
-val p_imp_wp_bir_tm = easy_noproof_wpLib.compute_p_imp_wp_tm ("S3_hello")
-    my_prog_def
-    (
-            first_block_label_small_tm,
-            btrue
-          )
-          (* Q3 *) (
-            [last_block_label_tm],
-           postcond_tm
-          );
+val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
+val precondition = (snd o dest_eq o concl o EVAL) precondition;
 
 
-val wp = (snd o dest_eq o concl o EVAL) ``bir_wp_comp_wps_iter_step2_wp_0x4001DCw``;
-val wp = (snd o dest_eq o concl o EVAL) ``bir_wp_comp_wps_iter_step2_wp_0x400214w``;
+
+(****************** bir_add_reg_loop_contract ***********************)
+val prefix = "add_reg_loop_";
+val first_block_label_tm = ``BL_Address (Imm64 0x400260w)``;
+(* TODO: Can be stated as a BL_Address?  *)
+val last_block_label_tm =  ``BL_Address (Imm64 0x400280w)``;
+val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_2_post``;
+val bir_add_reg_entry_ht =
+  bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
+                postcond_tm prefix;
+
+val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
+val precondition = (snd o dest_eq o concl o EVAL) precondition;
+val x = bir2bool precondition;
+
+(****************** bir_add_reg_loop_continue ***********************)
+val prefix = "add_reg_loop_continue_";
+val first_block_label_tm = ``BL_Address (Imm64 0x400280w)``;
+(* TODO: Can be stated as a BL_Address?  *)
+val last_block_label_tm =  ``BL_Address (Imm64 0x400260w)``;
+val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_2_pre``;
+val bir_add_reg_entry_ht =
+  bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
+                postcond_tm prefix;
+
+val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
+val precondition = (snd o dest_eq o concl o EVAL) precondition;
+val x = bir2bool precondition;
+
+
+(* Prove using Z3 *)
+
+(****************** bir_add_reg_entry_contract ***********************)
+val prefix = "add_reg_entry_";
+val first_block_label_tm = ``BL_Address (Imm64 0x40025cw)``;
+(* TODO: Can be stated as a BL_Address?  *)
+val last_block_label_tm =  ``BL_Address (Imm64 0x400280w)``;
+val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_1_post``;
+val bir_add_reg_entry_ht =
+  bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
+                postcond_tm prefix;
+
+val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
+val precondition = (snd o dest_eq o concl o EVAL) precondition;
+
+
+
+open bir_exp_to_wordsLib;
+val x = bir2bool precondition;
+HolSmtLib.Z3_ORACLE_PROVE x;
+Z3_SAT_modelLib.Z3_GET_SAT_MODEL  (bir2bool (bnot precondition));
+
+val x = bir2bool
+ ((snd o dest_eq o concl o EVAL) (bor ((bnot ``bir_add_reg_contract_1_pre``), precondition)));
+HolSmtLib.Z3_ORACLE_PROVE x;
+Z3_SAT_modelLib.Z3_GET_SAT_MODEL  (mk_neg x);
+
+
+(****************** bir_add_reg_loop_contract ***********************)
+val prefix = "add_reg_loop_";
+val first_block_label_tm = ``BL_Address (Imm64 0x400260w)``;
+(* TODO: Can be stated as a BL_Address?  *)
+val last_block_label_tm =  ``BL_Address (Imm64 0x400280w)``;
+val postcond_tm = (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_2_post``;
+val bir_add_reg_entry_ht =
+  bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
+                postcond_tm prefix;
+
+val precondition = ((el 4) o snd o strip_comb o concl o fst) bir_add_reg_entry_ht;
+val precondition = (snd o dest_eq o concl o EVAL) precondition;
+
+val x = bir2bool
+ ((snd o dest_eq o concl o EVAL) (bor ((bnot ``bir_add_reg_contract_2_pre``), precondition)));
+HolSmtLib.Z3_ORACLE_PROVE x;
+Z3_SAT_modelLib.Z3_GET_SAT_MODEL  (mk_neg x);
+
 
 (*
 open bir_exp_to_wordsLib;
 
 val x = bir2bool wp;
-open blastLib;
-BBLAST_PROVE x;
 *)
 
 
