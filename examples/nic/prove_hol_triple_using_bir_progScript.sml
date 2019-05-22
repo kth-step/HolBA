@@ -12,7 +12,7 @@
  *   !nic nic'.
  *     (  (~nic.dead /\ nic.x = 0) .... {P(nic)}
  *     /\ (nic' = holprog nic)) ....... prog
- *     ==> (~nic'.dead /\ nic.x = 1) .. {Q(nic,nic')} .............. (1)
+ *     ==> (~nic'.dead /\ nic'.x = nic.x + 1) .. {Q(nic,nic')} .............. (1)
  *
  * However, the program is a BIR program working with a BIR state, so we
  * have to perform some plumbing:
@@ -319,6 +319,9 @@ val (wp_thm, triple_thm) =
       @[EVAL ``~T``, COND_CLAUSES]
     )
     val bir_to_words_ss = pure_ss++HolBACoreSimps.holBACore_ss++BIR_TO_WORDS_ss
+
+(*PURE_REWRITE_TAC [((UNDISCH o UNDISCH) (Q.SPECL [`env`, `BIR_P_exp`, `bir_wp_comp_wps_iter_step2_wp_entry`] bir_impl_equiv))]*)
+
     (**)
     val triple_thm = store_thm ( "triple_thm",
       ``bir_exec_to_labels_triple bir_prog entry_label end_labels BIR_P_exp BIR_Q_exp``,
