@@ -72,8 +72,8 @@ val bir_add_reg_contract_1_post_def = Define `bir_add_reg_contract_1_post =
 
 
 (* contract two: loop body *)
-(* from cjmp to cjmp *)
-(* Note: "BIR cjmp exists the loop is `C`, not `not C`" *)
+(* from loop body start to cjmp *)
+(* Note: "BIR cjmp exits the loop is `C`, not `not C`" *)
 val bir_add_reg_contract_2_pre_def = Define `bir_add_reg_contract_2_pre =
 ^(band(``bir_add_reg_I``, bnot bir_add_reg_loop_condition))
 `;
@@ -81,13 +81,23 @@ val bir_add_reg_contract_2_post_def = Define `bir_add_reg_contract_2_post =
  bir_add_reg_I
 `;
 
-(* contract three: loop exit *)
-(* from cjmp to end of function except ret and sp operations *)
-(* Note: "BIR cjmp exists the loop is `C`, not `not C`" *)
+(* contract three: loop continue *)
+(* from cjmp to loop body start *)
+(* Note: "BIR cjmp exits the loop is `C`, not `not C`" *)
 val bir_add_reg_contract_3_pre_def = Define `bir_add_reg_contract_3_pre =
-^(band(``bir_add_reg_I``, bir_add_reg_loop_condition))
+^(band(``bir_add_reg_I``, bnot bir_add_reg_loop_condition))
 `;
 val bir_add_reg_contract_3_post_def = Define `bir_add_reg_contract_3_post =
+ ^(band(``bir_add_reg_I``, bnot bir_add_reg_loop_condition))
+`;
+
+(* contract four: loop exit *)
+(* from cjmp to end of function except ret and sp operations *)
+(* Note: "BIR cjmp exits the loop is `C`, not `not C`" *)
+val bir_add_reg_contract_4_pre_def = Define `bir_add_reg_contract_4_pre =
+^(band(``bir_add_reg_I``, bir_add_reg_loop_condition))
+`;
+val bir_add_reg_contract_4_post_def = Define `bir_add_reg_contract_4_post =
  bir_add_reg_post
 `;
 
