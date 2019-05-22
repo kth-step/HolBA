@@ -331,19 +331,23 @@ struct
     end
       handle e => raise wrap_exn "bir_wp_fmap_to_dom_list" e;
 
-  fun bir_wp_init_rec_proc_jobs prog_term wps_term =
+  fun bir_wp_init_rec_proc_jobs prog_term wps_term false_label_l =
     let
+      val eval_label = (lhs o concl o EVAL)
+      fun label_tm_eq l1 l2 = (eval_label l1 ) = (eval_label l2)
       val wpsdom = bir_wp_fmap_to_dom_list wps_term
+      val wpsdom_nofalsel =
+        List.filter (fn a => not (List.exists (fn b => (label_tm_eq a b)) false_label_l)) wpsdom
       val blocks = (snd o dest_BirProgram_list) prog_term
       fun blstodofilter block =
         let
           val (label, _, _) = dest_bir_block block
         in
-          not (List.exists (fn el => cmp_label el label) wpsdom)
+          not (List.exists (fn el => cmp_label el label) wpsdom_nofalsel)
         end;
       val blstodo = List.filter blstodofilter blocks
     in
-      (wpsdom, blstodo)
+      (wpsdom_nofalsel, blstodo)
     end
       handle e => raise wrap_exn "bir_wp_init_rec_proc_jobs" e;
 
