@@ -36,6 +36,61 @@ bir_triple p l ls pre post ⇔
       (s'.bst_pc.bpc_index = 0) ∧ s'.bst_pc.bpc_label ∈ ls
 `;
 
+
+val same_var_is_bool_exp_env_eq_thm = prove(``
+(bir_exp_is_taut (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not pre') pre)) ==>
+(bir_vars_of_exp pre' = bir_vars_of_exp pre) ==>
+((bir_is_bool_exp_env s.bst_environ pre') =
+ (bir_is_bool_exp_env s.bst_environ pre))
+``,
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_is_bool_exp_env_def,
+bir_exp_tautologiesTheory.bir_exp_is_taut_def,
+bir_bool_expTheory.bir_is_bool_exp_REWRS]);
+
+
+val bir_triple_weak_rule_thm = store_thm("bir_triple_weak_rule_thm",  ``
+  ((bir_vars_of_exp pre') = (bir_vars_of_exp pre)) ==>
+  (bir_triple p l ls pre post) ==>
+  (bir_exp_is_taut (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not pre') pre)) ==>
+  (bir_triple p l ls pre' post)
+``,
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_triple_def] >>
+REPEAT STRIP_TAC >>
+PAT_X_ASSUM ``!s.p`` (fn thm => ASSUME_TAC (Q.SPEC `s` thm)) >>
+REV_FULL_SIMP_TAC (std_ss) [] >>
+ASSUME_TAC same_var_is_bool_exp_env_eq_thm >>
+REV_FULL_SIMP_TAC (std_ss) [] >>
+FULL_SIMP_TAC (std_ss) [bir_exp_tautologiesTheory.bir_exp_is_taut_def] >>
+PAT_X_ASSUM ``!s.p`` (fn thm => ASSUME_TAC (Q.SPEC `s.bst_environ` thm)) >>
+Q.SUBGOAL_THEN `bir_env_vars_are_initialised s.bst_environ
+           (bir_vars_of_exp
+              (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not pre') pre))` ASSUME_TAC >-
+ FULL_SIMP_TAC (std_ss) [bir_typing_expTheory.bir_vars_of_exp_def, pred_setTheory.UNION_IDEMPOT, bir_bool_expTheory.bir_is_bool_exp_env_def] >>
+FULL_SIMP_TAC (std_ss) [] >> 
+ASSUME_TAC (Q.SPECL [`s.bst_environ`, `pre'`, `pre`]  bir_exp_equivTheory.bir_impl_equiv) >>
+REV_FULL_SIMP_TAC (std_ss) []
+);
+
+
+bir_triple p l ls pre post ⇔
+ ! s.
+  bir_env_vars_are_initialised s.bst_environ
+    (bir_vars_of_program p) ⇒
+  (s.bst_pc.bpc_index = 0) ∧ (s.bst_pc.bpc_label = l) ⇒
+  (s.bst_status = BST_Running) ⇒
+  bir_is_bool_exp_env s.bst_environ pre ⇒
+  (bir_eval_exp pre s.bst_environ = bir_val_true) ⇒
+  ?n l1 c1 c2 s'. 
+      ((bir_exec_block_n p s n) = (l1, c1, c2, s')) ∧
+      (s'.bst_status = BST_Running) ∧
+      bir_is_bool_exp_env s'.bst_environ post ∧
+      (bir_eval_exp post s'.bst_environ = bir_val_true) ∧
+      (s'.bst_pc.bpc_index = 0) ∧ s'.bst_pc.bpc_label ∈ ls
+`;
+
+
 val bir_pre_arm8_to_bir_def = Define `
   bir_pre_arm8_to_bir pre pre_bir =
   bir_is_bool_exp pre_bir /\
