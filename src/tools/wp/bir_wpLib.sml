@@ -86,7 +86,7 @@ struct
       val var_l = mk_var ("l", bir_label_t_ty)
       val var_wps = mk_var ("wps", finite_mapSyntax.mk_fmap_ty (bir_label_t_ty, bir_exp_t_ty))
       val var_wps1 = mk_var ("wps'", finite_mapSyntax.mk_fmap_ty (bir_label_t_ty, bir_exp_t_ty))
-      val thm = SPECL [program, var_l, ls, post, var_wps, var_wps1] reusable_thm
+      val thm = ISPECL [program, var_l, ls, post, var_wps, var_wps1] reusable_thm
         handle e => raise wrap_exn ("Failed to specialize the reusable thm "
           ^ "(you may need to instantiate the reusable_thm's "
           ^ "observation type to the one you're using)") e
@@ -263,13 +263,13 @@ struct
 
       (* FIXME: This seems to take some time, is that normal? *)
       val wps_eval_restrict_consts = !bir_wp_comp_wps_iter_step2_consts;
-      val obs_ty = (hd o snd o dest_type o type_of) program
+      val prog_obs_ty = (hd o snd o dest_type o type_of) program;
+
       val wps1_thm =
         computeLib.RESTR_EVAL_CONV wps_eval_restrict_consts
           (list_mk_comb
             (* TODO: Add to bir_wpSyntax *)
-            (inst [Type `:'obs_ty` |-> obs_ty]
-              ``bir_wp_exec_of_block:'obs_ty bir_program_t ->
+            (inst [Type `:'a` |-> prog_obs_ty] ``bir_wp_exec_of_block:'a bir_program_t ->
                  bir_label_t ->
                  (bir_label_t -> bool) ->
                  bir_exp_t ->

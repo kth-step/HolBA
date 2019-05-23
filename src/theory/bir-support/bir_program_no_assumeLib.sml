@@ -62,10 +62,10 @@ struct
       end
     ;
 
-    fun bir_prog_has_no_assumes_pp prog_is_na =
+    fun bir_prog_has_no_assumes_pp defs prog_is_na =
       let
         val thm1 =
-          SIMP_CONV holba_ss [bir_prog_has_no_assumes_def]
+          SIMP_CONV holba_ss ([bir_prog_has_no_assumes_def]@defs)
                 prog_is_na
         val thm1_lhs_conj_tms =
           (boolSyntax.strip_conj o snd o dest_eq o concl) thm1
