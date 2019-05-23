@@ -29,7 +29,6 @@ open bir_exp_to_wordsLib bslSyntax;
 open examplesBinaryTheory;
 open tutorial_bir_to_armSupportTheory;
 open tutorial_bir_to_armTheory;
-open examplesBinaryLib;
 
 (* From HOL4: *)
 open finite_mapSyntax pairSyntax pred_setSyntax;
@@ -86,11 +85,13 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
     (* TODO: Make some sort of test to check if computations have
      * already been performed for current prefix. *)
     (* Definitions: *)
+(*
     val prog_def = Define `
       ^(mk_var(prefix^"prog", type_of prog_tm)) = ^prog_tm
     `
+*)
     (*   For some reason prog requires this approach... *)
-    val prog_var = Parse.Term [QUOTE (prefix^"prog")]
+    val prog_var = prog_tm
 (*
     val postcond_def = Define `
       ^(mk_var(prefix^"postcond", bir_exp_t_ty)) = ^postcond_tm
@@ -114,7 +115,7 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
 
     (* List of definitions: *)
 
-    val defs = [prog_def, ls_def, wps_def]@defs
+    val defs = [ls_def, wps_def]@defs
 
 
     (* Initialize queue of blocks to process: *)
@@ -128,9 +129,13 @@ val wps = wps_var
       bir_wp_init_wps_bool_sound_thm
         (prog_var, postcond_var, ls_var) wps_var defs
     val (wpsdom, blstodo) =
-      bir_wp_init_rec_proc_jobs prog_tm wps_tm false_label_l
+      bir_wp_init_rec_proc_jobs (eot prog_tm) wps_tm false_label_l
 
     (* Prepare "problem-static" part of computation: *)
+(*
+val reusable_thm = bir_wp_exec_of_block_reusable_thm;
+val (program, post, ls) = (prog_var, postcond_var, ls_var)
+*)
     val prog_thm =
       bir_wp_comp_wps_iter_step0_init
         bir_wp_exec_of_block_reusable_thm
@@ -174,10 +179,9 @@ val wps = wps_var
     (* Transform HT to bir_triple *)
     (* TODO: Make bir_htSyntax *)
     val no_assumes_thm =
-      REWRITE_RULE [GSYM prog_def]
         (bir_prog_has_no_assumes_pp
-           ``bir_prog_has_no_assumes ^prog_tm``
-        )
+            defs
+            ``bir_prog_has_no_assumes ^(prog_tm)``)
     val target_bir_triple =
       HO_MATCH_MP
         (HO_MATCH_MP bir_never_assumviol_block_n_ht_from_to_labels_ht
