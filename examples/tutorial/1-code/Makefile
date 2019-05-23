@@ -1,5 +1,7 @@
+##########################################################
 # cross compiler
-# ---------------------------------
+##########################################################
+
 -include Makefile.local
 ifndef HOLBA_GCC_ARM8_CROSS
   HOLBA_GCC_ARM8_CROSS	= aarch64-linux-gnu-
@@ -12,16 +14,21 @@ CROSS   =$(HOLBA_GCC_ARM8_CROSS)
 GDB     =$(HOLBA_GDB)
 
 
+##########################################################
 # settings
-# ---------------------------------
+##########################################################
+
 NAME	= examples.elf
 CFLAGS	= -ggdb3 -std=gnu99 -Wall -fno-builtin # -O1
 #LDFLAGS = --gc-sections -nostartfiles -nostdlib
 
-
+##########################################################
 # compilation and linking
-# ---------------------------------
+##########################################################
+
 all: $(NAME).da add_reg.da
+
+##########################################################
 
 %.o: %.asm
 	${CROSS}as -o $@ $<
@@ -29,12 +36,15 @@ all: $(NAME).da add_reg.da
 %.o: %.c
 	${CROSS}gcc ${CFLAGS} -c -o $@ -fno-stack-protector $<
 
+##########################################################
+
 #$(NAME): ${OBJECTS} entry/entry.o
 #	${CROSS}ld $(LDFLAGS) -o $@ -T linkerscript.ld $^
 
 $(NAME): examples.c
 	${CROSS}gcc -DBAREMETAL= ${CFLAGS} examples.c -o $@
 
+##########################################################
 
 touch_script_file:
 	touch "../2-lift/examplesBinaryScript.sml"
@@ -44,6 +54,7 @@ $(NAME).da: $(NAME) touch_script_file
 %.da: %.o touch_script_file
 	${CROSS}objdump -d $< > $@
 
+##########################################################
 
 test.elf: examples.c
 	gcc examples.c -o test.elf
@@ -51,7 +62,13 @@ test.elf: examples.c
 test: test.elf
 	./test.elf
 
+##########################################################
+
 clean:
 	rm -f $(NAME) $(NAME).da test.elf
 
+##########################################################
+
 .PHONY: touch_script_file
+
+
