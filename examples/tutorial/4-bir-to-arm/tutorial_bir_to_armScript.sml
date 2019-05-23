@@ -102,6 +102,23 @@ val bir_add_reg_contract_4_post_def = Define `bir_add_reg_contract_4_post =
 `;
 
 
+(* contract two: loop body with variant *)
+(* from loop body start to cjmp *)
+val bir_add_reg_contract_2_pre_variant_def = Define `bir_add_reg_contract_2_pre_variant (v) =
+^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition,
+  beq(get_lx, ``(BExp_Const (Imm64 v))``)
+])
+`;
+
+val bir_add_reg_contract_2_post_variant_def = Define `bir_add_reg_contract_2_post_variant v  =
+ ^(bandl[``bir_add_reg_I``,
+  bnot(bsle(``(BExp_Const (Imm64 v))``, get_lx))
+])
+`;
+
+
+
+
 
 (* Here we prove that the contracts transfer properties between the two models *)
 (* We first show that the bir contract is a boolean property *)
@@ -143,7 +160,22 @@ FULL_SIMP_TAC std_ss []
 );
 
 
-
+val arm8_post_imp_bir_post_thm = store_thm("arm8_post_imp_bir_post_thm", 
+``bir_post_bir_to_arm8 arm8_add_reg_post bir_add_reg_post``
+,
+FULL_SIMP_TAC (std_ss) [bir_post_bir_to_arm8_def] >>
+REPEAT STRIP_TAC >>
+UNDISCH_TAC ``bir_eval_exp bir_add_reg_post bs.bst_environ = bir_val_true`` >>
+SIMP_TAC (std_ss) [bir_add_reg_post_def] >>
+SIMP_TAC (std_ss) arm_to_bir_exp_thms >>
+EVAL_TAC >>
+Q.ABBREV_TAC `a = ms.REG 2w` >>
+Q.ABBREV_TAC `b = ms.REG 3w` >>
+Q.ABBREV_TAC `c = ms.REG 4w` >>
+Q.ABBREV_TAC `d = ms.REG 5w` >>
+(fn (asl,goal) => ASSUME_TAC (HolSmtLib.Z3_ORACLE_PROVE  goal)(asl,goal)) >>
+FULL_SIMP_TAC std_ss []
+);
 
 
 
@@ -155,57 +187,6 @@ EVAL ``arm8_wf_varset (bir_vars_of_exp bir_add_reg_contract_1_pre)``;
 
 
 (* old proofs *)
-(*
-
-
-
-
-
-val arm8I_imp_bI_thm = store_thm("arm8I_imp_bI_thm", 
-``bir_pre_arm8_to_bir arm8_sqrt_I b_sqrt_I``
-,
-FULL_SIMP_TAC (std_ss) [bir_pre_arm8_to_bir_def, bir_I_is_bool_pred_thm] >>
-REPEAT STRIP_TAC >>
-SIMP_TAC (std_ss) [b_sqrt_I_def, bir_expTheory.bir_eval_exp_def] >>
-(SIMP_TAC (std_ss) (((CONJUNCTS o UNDISCH o fst o EQ_IMP_RULE) bir_lifting_machinesTheory.arm8_bmr_rel_EVAL) @
-  [bir_expTheory.bir_eval_bin_exp_REWRS, bir_immTheory.type_of_bir_imm_def,
-         bir_exp_immTheory.bir_bin_exp_REWRS, bir_exp_immTheory.bir_bin_exp_GET_OPER_def] @
-  [bir_expTheory.bir_eval_bin_pred_REWRS, bir_immTheory.type_of_bir_imm_def,
-         bir_exp_immTheory.bir_bin_pred_REWRS, bir_exp_immTheory.bir_bin_pred_GET_OPER_def,
-         bir_immTheory.bool2b_def] @
-  [(UNDISCH o (SPECL [``bs:bir_state_t``, ``ms:arm8_state``])) bload_64_to_arm8_load_64_thm] @
-  [bir_bool_expTheory.BVal_Imm_bool2b_EQ_TF_REWRS, bir_valuesTheory.BType_Bool_def ])) >>
-FULL_SIMP_TAC (std_ss) [arm8_sqrt_I_def] >>
-FULL_SIMP_TAC (std_ss) [bool2w_def, bir_bool_expTheory.bir_val_true_def] >>
-EVAL_TAC
-);
-
-
-val bI_imp_arm8I_thm = store_thm("bI_imp_arm8I_thm",
-``
-bir_post_bir_to_arm8  arm8_sqrt_I b_sqrt_I 
-``,
-FULL_SIMP_TAC (std_ss) [bir_post_bir_to_arm8_def] >>
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC (std_ss) [b_sqrt_I_def, bir_expTheory.bir_eval_exp_def] >>
-(FULL_SIMP_TAC (std_ss) (((CONJUNCTS o UNDISCH o fst o EQ_IMP_RULE) bir_lifting_machinesTheory.arm8_bmr_rel_EVAL) @
-  [bir_expTheory.bir_eval_bin_exp_REWRS, bir_immTheory.type_of_bir_imm_def,
-         bir_exp_immTheory.bir_bin_exp_REWRS, bir_exp_immTheory.bir_bin_exp_GET_OPER_def] @
-  [bir_expTheory.bir_eval_bin_pred_REWRS, bir_immTheory.type_of_bir_imm_def,
-         bir_exp_immTheory.bir_bin_pred_REWRS, bir_exp_immTheory.bir_bin_pred_GET_OPER_def,
-         bir_immTheory.bool2b_def] @
-  [(UNDISCH o (SPECL [``bs:bir_state_t``, ``ms:arm8_state``])) bload_64_to_arm8_load_64_thm] @
-  [bir_bool_expTheory.BVal_Imm_bool2b_EQ_TF_REWRS, bir_valuesTheory.BType_Bool_def ])) >>
-FULL_SIMP_TAC (std_ss) [arm8_sqrt_I_def] >>
-FULL_SIMP_TAC (std_ss) [bir_immTheory.bool2w_11, bool2w_and, bir_bool_expTheory.bir_val_true_def, imm_eq_to_val_eq, bir_bool_expTheory.bool2w_ELIMS] 
-);
-
-
-
-
-*)
-
-
 
 
 (*
