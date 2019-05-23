@@ -54,6 +54,7 @@ val bir_add_reg_entry_wp =
 
 val bir_add_reg_entry_wp_def = Define `bir_add_reg_entry_wp = ^(bir_add_reg_entry_wp)`;
 
+val _ = save_thm ("bir_add_reg_entry_ht", bir_add_reg_entry_ht);
 
 
 (******************    (2)  bir_add_reg_loop     *********************)
@@ -74,6 +75,8 @@ val bir_add_reg_loop_wp =
 
 val bir_add_reg_loop_wp_def = Define `bir_add_reg_loop_wp = ^(bir_add_reg_loop_wp)`;
 
+val _ = save_thm ("bir_add_reg_loop_ht", bir_add_reg_loop_ht);
+
 (**************   (3)  bir_add_reg_loop_continue     *****************)
 (* This WP is for execution which starts at the loop condition and
  * then continues looping. *)
@@ -93,6 +96,9 @@ val bir_add_reg_loop_continue_wp =
 
 val bir_add_reg_loop_continue_wp_def = Define
   `bir_add_reg_loop_continue_wp = ^(bir_add_reg_loop_continue_wp)`;
+
+val _ = save_thm ("bir_add_reg_loop_continue_ht", bir_add_reg_loop_continue_ht);
+
 
 (***************       bir_add_reg_loop_exit      *****************)
 (* This WP is for execution which starts at the loop condition and
@@ -117,6 +123,9 @@ val bir_add_reg_loop_exit_wp =
 val bir_add_reg_loop_exit_wp_def = Define
   `bir_add_reg_loop_exit_wp = ^(bir_add_reg_loop_exit_wp)`;
 
+val _ = save_thm ("bir_add_reg_loop_exit_ht", bir_add_reg_loop_exit_ht);
+
+
 (******************    (2)  bir_add_reg_loop_variant     *********************)
 (* The WP for the loop content is generated and proved here. *)
 (* 20 -> 24 -> 28 -> 2c -> 30 -> 34 -> 38 -> 3c -> 40 *)
@@ -138,7 +147,7 @@ val bir_add_reg_loop_variant_wp =
 
 
 (************           RECENT EXPERIMENTS           **************)
-(*
+(* 
 (* Contract 1 *)
 val contract_1_pre = (rhs o concl o EVAL) ``bir_add_reg_contract_1_pre``
 val contract_1_imp = prove_imp_w_smt contract_1_pre bir_add_reg_entry_wp;

@@ -69,6 +69,7 @@ bir_triple p l ls pre post ⇔
 
 
 val bir_triple_weak_rule_thm = store_thm("bir_triple_weak_rule_thm",  ``
+!pre pre' p l ls post .
   ( (bir_vars_of_exp pre') ⊆ (bir_vars_of_program p)) ==>
   ((bir_vars_of_exp pre) ⊆ (bir_vars_of_program p)) ==>
   (bir_triple p l ls pre post) ==>
@@ -392,6 +393,20 @@ val set_of_address_in_all_address_labels_thm = prove (``
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (std_ss) [pred_setTheory.GSPECIFICATION, bir_program_labelsTheory.IS_BL_Address_def]
 );
+
+
+val lift_contract_thm = prove(``
+! p mms ml mls mu
+mpre mpost bpre bpost .
+(MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p)) ==>
+bir_triple p (BL_Address (Imm64 ml)) {(BL_Address (Imm64 ml')) | ml' IN mls} bpre bpost ==>
+bir_is_lifted_prog arm8_bmr mu mms p ==>
+(arm8_wf_varset ((bir_vars_of_program p) ∪ (bir_vars_of_exp bpre))) ==>
+bir_pre_arm8_to_bir mpre bpre ==>
+bir_post_bir_to_arm8 mpost bpost ==>
+arm8_triple mms ml mls mpre mpost
+``,
+cheat);
 
 (*
 val bir_block_pc_alt_thm = prove(``

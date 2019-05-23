@@ -55,6 +55,9 @@ val bir_add_reg_loop_condition =  bnot ``(BExp_BinExp BIExp_Or
                        (BExp_Den (BVar "ProcState_Z" BType_Bool)))``;
 
 
+val bir_add_reg_loop_condition_def = Define `
+ bir_add_reg_loop_condition = ^bir_add_reg_loop_condition`;
+
 val bir_add_reg_I_def = Define `bir_add_reg_I =
 ^(bandl [
    (beq (bplus(get_y, get_x), bplus(get_ly, get_lx))),
@@ -102,6 +105,10 @@ val bir_add_reg_contract_4_post_def = Define `bir_add_reg_contract_4_post =
 `;
 
 
+
+
+
+(* VARIANT *)
 (* contract two: loop body with variant *)
 (* from loop body start to cjmp *)
 val bir_add_reg_contract_2_pre_variant_def = Define `bir_add_reg_contract_2_pre_variant (v) =
@@ -115,6 +122,8 @@ val bir_add_reg_contract_2_post_variant_def = Define `bir_add_reg_contract_2_pos
   bnot(bsle(``(BExp_Const (Imm64 v))``, get_lx))
 ])
 `;
+
+
 
 
 
@@ -199,7 +208,6 @@ val (_, bir_prog) =
 
 val tutorial_prog_def = Define `tutorial_prog = ^bir_prog`;
 
-EVAL ``MEM (BL_Address (Imm64 0x70cw)) (bir_labels_of_program tutorial_prog)``;
 EVAL ``arm8_wf_varset (bir_vars_of_exp b_sqrt_I)``;
 EVAL ``(bir_vars_of_exp b_sqrt_I)``;
 EVAL ``(bir_vars_of_program tutorial_prog)``;
