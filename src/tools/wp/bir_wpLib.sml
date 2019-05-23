@@ -256,10 +256,10 @@ struct
         mk_var("wps'", finite_mapSyntax.mk_fmap_ty(bir_label_t_ty,
                                                    bir_exp_t_ty)
               )
-      val thm = SPECL [wps, var_wps1] prog_l_thm
+      val thm1 = SPECL [wps, var_wps1] prog_l_thm
 
       (* FIXME: This seems to take some time, is that normal? *)
-      val thm = MP thm wps_bool_sound_thm
+      val thm2 = MP thm1 wps_bool_sound_thm
 
       (* FIXME: This seems to take some time, is that normal? *)
       val wps_eval_restrict_consts = !bir_wp_comp_wps_iter_step2_consts;
@@ -281,7 +281,6 @@ struct
       val wps1_thm = SIMP_RULE pure_ss [GSYM bir_exp_subst1_def,
                                         GSYM bir_exp_and_def]
                                        wps1_thm; 
-      val wps1 = (snd o dest_comb o snd o dest_eq o concl) wps1_thm
       (*
       val new_wp_id = wps_id_prefix^wps_id_suffix
       val new_wp_id_var = mk_var (new_wp_id, bir_exp_t_ty)
@@ -293,10 +292,10 @@ struct
       (*
       val new_wp_id_const = (fst o dest_eq o concl) new_wp_def
       *)
-      val wps1 = (snd o dest_comb o snd o dest_eq o concl) wps1_thm
+      val wps1 = (snd o dest_comb o rhs o concl) wps1_thm
 
-      val thm = SPEC wps1 (GEN var_wps1 thm)
-      val wps1_bool_sound_thm = MP thm wps1_thm
+      val thm3 = SPEC wps1 (GEN var_wps1 thm2)
+      val wps1_bool_sound_thm = MP thm3 wps1_thm
     in
       (wps1, wps1_bool_sound_thm)
     end
@@ -396,6 +395,9 @@ struct
 	end) blstodo
     in
       case block of
+(*
+  val bl = valOf block;
+*)
 	SOME (bl) =>
 	  let
             val (label, _, _) = dest_bir_block bl
