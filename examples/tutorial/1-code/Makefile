@@ -35,9 +35,13 @@ all: $(NAME).da add_reg.da
 $(NAME): examples.c
 	${CROSS}gcc -DBAREMETAL= ${CFLAGS} examples.c -o $@
 
-$(NAME).da: $(NAME)
+
+touch_script_file:
+	touch "../2-lift/examplesBinaryScript.sml"
+
+$(NAME).da: $(NAME) touch_script_file
 	${CROSS}objdump -d $< > $@
-add_reg.da: add_reg.o
+%.da: %.o touch_script_file
 	${CROSS}objdump -d $< > $@
 
 
@@ -50,4 +54,4 @@ test: test.elf
 clean:
 	rm -f $(NAME) $(NAME).da test.elf
 
-
+.PHONY: touch_script_file
