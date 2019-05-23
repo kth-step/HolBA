@@ -16,10 +16,19 @@ val (thm_arm8, errors) = bmil_arm8.bir_lift_prog_gen
                            ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
                            aes_sections
 
+val (lift_app_1_tm, bir_prog_tm) = (dest_comb o concl) thm_arm8;
+val (_, bir_progbin_tm) = dest_comb lift_app_1_tm;
 
 
 val _ = print "\n\n";
 
 val _ = new_theory "examplesBinary";
-val _ = save_thm ("examples_arm8_program_THM", thm_arm8);
+
+val bir_add_reg_prog_def = Define `bir_add_reg_prog = ^bir_prog_tm`;
+val bir_add_reg_progbin_def = Define `bir_add_reg_progbin = ^bir_progbin_tm`;
+
+val bir_add_reg_arm8_lift_THM = save_thm ("bir_add_reg_arm8_lift_THM",
+       REWRITE_RULE [GSYM bir_add_reg_prog_def,
+                     GSYM bir_add_reg_progbin_def] thm_arm8);
+
 val _ = export_theory();
