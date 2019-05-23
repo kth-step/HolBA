@@ -84,34 +84,19 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
   let
     (* TODO: Make some sort of test to check if computations have
      * already been performed for current prefix. *)
-    (* Definitions: *)
-(*
-    val prog_def = Define `
-      ^(mk_var(prefix^"prog", type_of prog_tm)) = ^prog_tm
-    `
-*)
-    (*   For some reason prog requires this approach... *)
+    (* variables: *)
     val prog_var = prog_tm
-(*
-    val postcond_def = Define `
-      ^(mk_var(prefix^"postcond", bir_exp_t_ty)) = ^postcond_tm
-    `
-*)
+
     val postcond_var = postcond_tm
     val ls_var = ``\x.(x = ^last_block_label_tm)``
     val false_fmap_tm = make_false_label_fmap false_label_l
-    val wps_def = Define `
-      ^(mk_var(prefix^"wps", ``:bir_label_t |-> bir_exp_t``)) =
+
+    val wps_var = ``
         ((^false_fmap_tm) |+ (^last_block_label_tm,
                     ^(postcond_tm)
                    )
         )
-    `
-    val wps_var = (fst o dest_eq o concl) wps_def
-
-    (* List of definitions: *)
-
-    val defs = [wps_def]@defs
+    ``;
 
 
     (* Initialize queue of blocks to process: *)
