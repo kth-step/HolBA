@@ -35,10 +35,6 @@ val _ = new_theory "tutorial_wp";
  val _ = bir_ppLib.remove_bir_pretty_printers ();
  val _ = bir_ppLib.install_bir_pretty_printers ();
 *)
-(* TODO: Move to function library? *)
-val eot = (rhs o concl o EVAL)
-val get_wp_from_ht =
-  (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl)
 
 val prog_tm = (rhs o concl o EVAL) bir_prog_tm;
 (****************     (1) bir_add_reg_entry      ******************)
@@ -104,7 +100,7 @@ val bir_add_reg_loop_continue_wp_def = Define
 val _ = save_thm ("bir_add_reg_loop_continue_ht", bir_add_reg_loop_continue_ht);
 
 
-(***************       bir_add_reg_loop_exit      *****************)
+(***************    (4)   bir_add_reg_loop_exit      *****************)
 (* This WP is for execution which starts at the loop condition and
  * then exits the loop. Note that the blocks following 44 are
  * SP manipulation and return. *)
@@ -135,12 +131,12 @@ val first_block_label_tm = ``BL_Address (Imm64 0x20w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``;
 val false_label_l = [];
 val postcond_tm =
-  (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_2_post_variant(v)``;
+  eot ``bir_add_reg_contract_2_post_variant(v)``;
 val (bir_add_reg_loop_variant_ht, bir_add_reg_loop_cariant_defs) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l;
 val bir_add_reg_loop_variant_wp =
-  (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl)
+  get_wp_from_ht
     bir_add_reg_loop_variant_ht;
 *)
 

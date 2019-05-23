@@ -39,7 +39,13 @@ open tutorial_wpSupportTheory;
 
 in
 
+
+val eot = (rhs o concl o EVAL)
+val get_wp_from_ht =
+  (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl)
+
 local
+
   (* This finds exactly one HT whose execution starts from
    * target_label. *)
   fun find_ht _            []     = NONE
