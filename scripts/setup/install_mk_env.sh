@@ -27,7 +27,7 @@ echo
 # variables to export if defined
 declare -a vararr=(
   "HOLBA_OPT_DIR"
-  "HOLBA_HOLMAKE"
+  "HOLBA_HOL_BIN_DIR"
 
   "HOLBA_Z3_DIR"
   "HOLBA_EMBEXP_DIR"
@@ -47,6 +47,9 @@ do
     echo "Exporting ${var}"
   fi
 done
+OUTPUT="${OUTPUT}\n"
+OUTPUT=${OUTPUT}'\nexport PATH="${HOLBA_HOL_BIN_DIR}:${PATH}"'
+OUTPUT=${OUTPUT}'\nexport HOLBA_HOLMAKE="${HOLBA_HOL_BIN_DIR}/Holmake"'
 OUTPUT="${OUTPUT}\n"
 echo
 

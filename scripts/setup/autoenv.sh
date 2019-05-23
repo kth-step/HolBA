@@ -95,14 +95,30 @@ echo "Using HOLBA_OPT_DIR=${HOLBA_OPT_DIR}"
 echo
 
 
-####### HOLBA_HOLMAKE
+####### HOLBA_HOL_BIN_DIR
+## SECONDARY: HOLBA_HOLMAKE, PATH
 
-# make Holmake available
-if [[ -z "${HOLBA_HOLMAKE}" ]]; then
-  HOL4_DIR=${HOLBA_OPT_DIR}/hol_k12_holba
-  print_export_msg "Exporting HOLBA_HOLMAKE"
-  export HOLBA_HOLMAKE=${HOL4_DIR}/bin/Holmake
+# first define HOLBA_HOL_BIN_DIR if undefined (default)
+if [[ -z "${HOLBA_HOL_BIN_DIR}" ]]; then
+  print_export_msg "Exporting HOLBA_HOL_BIN_DIR"
+  export HOLBA_HOL_BIN_DIR=${HOLBA_OPT_DIR}/hol_k12_holba/bin
+  echo "Using HOLBA_HOL_BIN_DIR=${HOLBA_HOL_BIN_DIR}"
 fi
+
+# fail if HOLBA_HOL_BIN_DIR doesn't exist
+if [[ ! -d "${HOLBA_HOL_BIN_DIR}" ]]; then
+  echo "ERROR: hol/bin directory does not exist ('${HOLBA_HOL_BIN_DIR}')"
+  return 3
+fi
+
+# make "hol/bin" available in PATH
+print_export_msg "Exporting PATH"
+# do it conditional if needed (also in install_mk_env.sh): [[ ":$PATH:" != *":${HOLBA_HOL_BIN_DIR}:"* ]] && export ...
+export PATH="${HOLBA_HOL_BIN_DIR}:${PATH}"
+echo "Using PATH=${PATH}"
+# make Holmake available
+print_export_msg "Exporting HOLBA_HOLMAKE"
+export HOLBA_HOLMAKE="${HOLBA_HOL_BIN_DIR}/Holmake"
 echo "Using HOLBA_HOLMAKE=${HOLBA_HOLMAKE}"
 echo
 
