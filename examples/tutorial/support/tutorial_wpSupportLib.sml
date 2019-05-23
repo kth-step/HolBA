@@ -160,7 +160,7 @@ val (program, post, ls) = (prog_var, postcond_var, ls_var)
     (* Transform HT to bir_triple *)
     (* TODO: Make bir_htSyntax *)
     val no_assumes_thm =
-        (bir_prog_has_no_assumes_pp
+        (bir_prog_has_no_assumes_rewr_pp
             defs
             ``bir_prog_has_no_assumes ^(prog_tm)``)
     val target_bir_triple =
