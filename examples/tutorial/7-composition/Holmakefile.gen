@@ -1,0 +1,16 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   = ../2-lift ../support ../4-bir-to-arm ../5-wp
+
+
+# configuration
+# ----------------------------------
+HOLHEAP        = ../../../src/HolBA-heap
+NEWHOLHEAP     = # TODO: Create a heap with lifted binaries
+
+HEAPINC_EXTRA  = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../../src/Holmakefile.inc
