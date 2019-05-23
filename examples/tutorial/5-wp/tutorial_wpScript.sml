@@ -46,11 +46,13 @@ val postcond_tm =
 val (bir_add_reg_entry_ht, bir_add_reg_entry_defs) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l;
+
 (* bir_add_reg_entry_wp is the weakest precondition obtained as a
  * term: *)
 val bir_add_reg_entry_wp =
-  (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl)
-    bir_add_reg_entry_ht;
+  (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl) bir_add_reg_entry_ht;
+
+val bir_add_reg_entry_wp_def = Define `bir_add_reg_entry_wp = ^(bir_add_reg_entry_wp)`;
 
 (******************    (2)  bir_add_reg_loop     *********************)
 (* The WP for the loop content is generated and proved here. *)
@@ -64,9 +66,11 @@ val postcond_tm =
 val (bir_add_reg_loop_ht, bir_add_reg_loop_defs) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l;
+
 val bir_add_reg_loop_wp =
-  (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl)
-    bir_add_reg_loop_ht;
+  (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl) bir_add_reg_loop_ht;
+
+val bir_add_reg_loop_wp_def = Define `bir_add_reg_loop_wp = ^(bir_add_reg_loop_wp)`;
 
 (**************   (3)  bir_add_reg_loop_continue     *****************)
 (* This WP is for execution which starts at the loop condition and
@@ -83,8 +87,10 @@ val (bir_add_reg_loop_continue_ht, bir_add_reg_loop_continue_defs) =
                 postcond_tm prefix false_label_l;
 
 val bir_add_reg_loop_continue_wp =
-  (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl)
-    bir_add_reg_loop_continue_ht;
+  (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl) bir_add_reg_loop_continue_ht;
+
+val bir_add_reg_loop_continue_wp_def = Define
+  `bir_add_reg_loop_continue_wp = ^(bir_add_reg_loop_continue_wp)`;
 
 (***************       bir_add_reg_loop_exit      *****************)
 (* This WP is for execution which starts at the loop condition and
@@ -104,32 +110,30 @@ val (bir_add_reg_loop_exit_ht, bir_add_reg_loop_exit_defs) =
                 postcond_tm prefix false_label_l;
 
 val bir_add_reg_loop_exit_wp =
-  (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl)
-    bir_add_reg_loop_exit_ht;
+  (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl) bir_add_reg_loop_exit_ht;
+
+val bir_add_reg_loop_exit_wp_def = Define
+  `bir_add_reg_loop_exit_wp = ^(bir_add_reg_loop_exit_wp)`;
 
 (************           RECENT EXPERIMENTS           **************)
 (*
 (* Contract 1 *)
-val contract_1_pre = (rhs o concl o EVAL) ``bir_add_reg_contract_1_pre``;
-prove_imp_w_smt contract_1_pre bir_add_reg_entry_wp;
+val contract_1_pre = (rhs o concl o EVAL) ``bir_add_reg_contract_1_pre``
+val contract_1_imp = prove_imp_w_smt contract_1_pre bir_add_reg_entry_wp;
 
 (* Contract 2 *)
 val contract_2_pre = (rhs o concl o EVAL) ``bir_add_reg_contract_2_pre``;
-prove_imp_w_smt contract_2_pre bir_add_reg_loop_wp;
+val contract_2_imp = prove_imp_w_smt contract_2_pre bir_add_reg_loop_wp;
 
 (* Contract 3 *)
 val contract_3_pre = (rhs o concl o EVAL) ``bir_add_reg_contract_3_pre``;
-prove_imp_w_smt contract_3_pre bir_add_reg_loop_continue_wp;
+val contract_3_imp = prove_imp_w_smt contract_3_pre bir_add_reg_loop_continue_wp;
 
 (* Contract 4 *)
 val contract_4_pre = (rhs o concl o EVAL) ``bir_add_reg_contract_4_pre``;
-prove_imp_w_smt contract_4_pre bir_add_reg_loop_exit_wp;
-
-
-(* Prove using Z3 *)
-
-prove_imp_w_smt wp_need precondition;
+val contract_4_imp = prove_imp_w_smt contract_4_pre bir_add_reg_loop_exit_wp;
 *)
+
 (*
 val test_def = Define `
 cond = 
