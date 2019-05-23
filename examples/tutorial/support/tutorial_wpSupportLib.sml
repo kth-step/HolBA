@@ -187,6 +187,7 @@ val (program, post, ls) = (prog_var, postcond_var, ls_var)
 
 end
 
+(*
 (* This function proves implications between BIR expressions using
  * the SMT solver Z3. *)
 fun prove_imp_w_smt ante conseq =
@@ -207,6 +208,7 @@ fun prove_imp_w_smt ante conseq =
       end
   end
 ;
+*)
 
 end
 

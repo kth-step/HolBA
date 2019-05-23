@@ -125,10 +125,9 @@ val bir_add_reg_loop_exit_wp_def = Define
 val _ = save_thm ("bir_add_reg_loop_exit_ht", bir_add_reg_loop_exit_ht);
 
 
-(******************    (2.1)  bir_add_reg_loop_variant     *********************)
+(******************    (2v)  bir_add_reg_loop_variant     *********************)
 (* The WP for the loop content is generated and proved here. *)
 (* 20 -> 24 -> 28 -> 2c -> 30 -> 34 -> 38 -> 3c -> 40 *)
-(*
 val prefix = "add_reg_loop_variant_";
 val first_block_label_tm = ``BL_Address (Imm64 0x20w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``;
@@ -141,9 +140,11 @@ val (bir_add_reg_loop_variant_ht, bir_add_reg_loop_cariant_defs) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l defs;
 val bir_add_reg_loop_variant_wp =
-  get_wp_from_ht
-    bir_add_reg_loop_variant_ht;
-*)
+  get_wp_from_ht bir_add_reg_loop_variant_ht;
+val bir_add_reg_loop_variant_wp_def = Define
+  `bir_add_reg_loop_variant_wp v = ^(bir_add_reg_loop_variant_wp)`;
+
+val _ = save_thm ("bir_add_reg_loop_variant_ht", bir_add_reg_loop_variant_ht);
 
 
 
