@@ -84,6 +84,14 @@ val contract_2v_wp  = (lhs o concl o (SPEC contract_2v_freevar)) bir_add_reg_loo
 val contract_2v_imp_taut_thm = save_exp_is_taut_imp ("contract_2v_imp_taut_thm",
   contract_2v_pre, contract_2v_wp);
 
+(***************   (3v)    bir_add_reg_loop_continue_variant      *****************)
+val contract_3v_freevar = ``abcdefg:word64``;
+val contract_3v_pre = (lhs o concl o (SPEC contract_3v_freevar)) bir_add_reg_contract_3_pre_variant_def;
+val contract_3v_wp  = (lhs o concl o (SPEC contract_3v_freevar)) bir_add_reg_loop_continue_variant_wp_def;
+
+val contract_3v_imp_taut_thm = save_exp_is_taut_imp ("contract_3v_imp_taut_thm",
+  contract_3v_pre, contract_3v_wp);
+
 
 val _ = export_theory();
 

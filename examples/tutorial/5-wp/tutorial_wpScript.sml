@@ -133,7 +133,7 @@ val first_block_label_tm = ``BL_Address (Imm64 0x20w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``;
 val false_label_l = [];
 val postcond_tm =
-  ``bir_add_reg_contract_2_post_variant(v)``;
+  ``bir_add_reg_contract_2_post_variant v``;
 val defs = [bir_add_reg_prog_def, bir_add_reg_contract_2_post_variant_def, bir_add_reg_I_def, BType_Bool_def];
 
 val (bir_add_reg_loop_variant_ht, bir_add_reg_loop_cariant_defs) =
@@ -145,6 +145,28 @@ val bir_add_reg_loop_variant_wp_def = Define
   `bir_add_reg_loop_variant_wp v = ^(bir_add_reg_loop_variant_wp)`;
 
 val _ = save_thm ("bir_add_reg_loop_variant_ht", bir_add_reg_loop_variant_ht);
+
+
+(*************   (3v)  bir_add_reg_loop_continue_variant     ***************)
+(* This WP is for execution which starts at the loop condition and
+ * then continues looping. *)
+(* 40 -> 20 *)
+val prefix = "add_reg_loop_continue_variant_";
+val first_block_label_tm = ``BL_Address (Imm64 0x40w)``;
+val last_block_label_tm =  ``BL_Address (Imm64 0x20w)``;
+val false_label_l = [``BL_Address (Imm64 0x44w)``];
+val postcond_tm = ``bir_add_reg_contract_3_post_variant v``;
+val defs = [bir_add_reg_prog_def, bir_add_reg_contract_3_post_variant_def, bir_add_reg_I_def, BType_Bool_def];
+
+val (bir_add_reg_loop_continue_variant_ht, bir_add_reg_loop_continue_variant_defs) =
+  bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
+                postcond_tm prefix false_label_l defs;
+val bir_add_reg_loop_continue_variant_wp =
+  get_wp_from_ht bir_add_reg_loop_continue_variant_ht;
+val bir_add_reg_loop_continue_variant_wp_def = Define
+  `bir_add_reg_loop_continue_variant_wp v = ^(bir_add_reg_loop_continue_variant_wp)`;
+
+val _ = save_thm ("bir_add_reg_loop_continue_variant_ht", bir_add_reg_loop_continue_variant_ht);
 
 
 

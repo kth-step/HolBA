@@ -111,7 +111,7 @@ val bir_add_reg_contract_4_post_def = Define `bir_add_reg_contract_4_post =
 (* VARIANT *)
 (* contract two: loop body with variant *)
 (* from loop body start to cjmp *)
-val bir_add_reg_contract_2_pre_variant_def = Define `bir_add_reg_contract_2_pre_variant (v) =
+val bir_add_reg_contract_2_pre_variant_def = Define `bir_add_reg_contract_2_pre_variant v =
 ^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition,
   beq(get_lx, ``(BExp_Const (Imm64 v))``)
 ])
@@ -121,6 +121,14 @@ val bir_add_reg_contract_2_post_variant_def = Define `bir_add_reg_contract_2_pos
  ^(bandl[``bir_add_reg_I``,
   bnot(bsle(``(BExp_Const (Imm64 v))``, get_lx))
 ])
+`;
+(* contract three: loop continue *)
+(* from cjmp to loop body start *)
+val bir_add_reg_contract_3_pre_variant_def = Define `bir_add_reg_contract_3_pre_variant v =
+^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, ``(BExp_Const (Imm64 v))``)])
+`;
+val bir_add_reg_contract_3_post_variant_def = Define `bir_add_reg_contract_3_post_variant v =
+ ^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, ``(BExp_Const (Imm64 v))``)])
 `;
 
 
