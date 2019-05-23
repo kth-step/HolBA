@@ -81,7 +81,7 @@ in
  * bir_wp_comp_wps.
  *)
 fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                  postcond_tm prefix false_label_l =
+                  postcond_tm prefix false_label_l defs =
   let
     (* TODO: Make some sort of test to check if computations have
      * already been performed for current prefix. *)
@@ -91,10 +91,12 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
     `
     (*   For some reason prog requires this approach... *)
     val prog_var = Parse.Term [QUOTE (prefix^"prog")]
+(*
     val postcond_def = Define `
       ^(mk_var(prefix^"postcond", bir_exp_t_ty)) = ^postcond_tm
     `
-    val postcond_var = (fst o dest_eq o concl) postcond_def
+*)
+    val postcond_var = postcond_tm
     val ls_def = Define `
       ^(mk_var(prefix^"ls", mk_set_type bir_label_t_ty)) =
         \x.(x = ^last_block_label_tm)
@@ -104,18 +106,20 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
     val wps_def = Define `
       ^(mk_var(prefix^"wps", ``:bir_label_t |-> bir_exp_t``)) =
         ((^false_fmap_tm) |+ (^last_block_label_tm,
-                    ^((fst o dest_eq o concl) postcond_def)
+                    ^(postcond_tm)
                    )
         )
     `
     val wps_var = (fst o dest_eq o concl) wps_def
 
     (* List of definitions: *)
-    val defs = [prog_def, postcond_def, ls_def, wps_def]
+
+    val defs = [prog_def, ls_def, wps_def]@defs
+
 
     (* Initialize queue of blocks to process: *)
     val wps_tm =
-      (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) wps_var
+      (rhs o concl o (SIMP_CONV std_ss defs)) wps_var
 (* For experimentation: 
 val (program, post, ls) = (prog_var, postcond_var, ls_var)
 val wps = wps_var
@@ -133,6 +137,13 @@ val wps = wps_var
         (prog_var, postcond_var, ls_var) defs
 
     (* Main computation: *)
+(*
+  val wps = wps_var
+  val blsotodo = List.rev blstodo
+  val program = prog_var
+  val post = postcond_var
+  val ls = ls_var
+*)
     val (wps1, wps1_bool_sound_thm) =
       bir_wp_comp_wps prog_thm ((wps_var, wps_bool_sound_thm),
 				(wpsdom, List.rev blstodo))
@@ -180,7 +191,7 @@ val wps = wps_var
     val final_wp_def =
       EVAL (Parse.Term [QUOTE wp_name])
   in
-    (target_bir_triple, [prog_def, postcond_def, final_wp_def])
+    (target_bir_triple, [final_wp_def])
   end handle Option => raise ERR "extract_subprogram"
 	("No Hoare triple was found for the addresses "^
 	 (term_to_string first_block_label_tm)^" and "^

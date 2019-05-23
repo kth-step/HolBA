@@ -12,7 +12,7 @@ open bir_program_labelsTheory bir_program_valid_stateTheory
 open bir_bool_expSyntax;
 
 (* From theory/bir: *)
-open bir_programTheory;
+open bir_programTheory bir_valuesTheory;
 open bir_expSyntax bir_programSyntax bir_immSyntax;
 open HolBACoreSimps;
 
@@ -45,12 +45,13 @@ val prefix = "add_reg_entry_";
 val first_block_label_tm = ``BL_Address (Imm64 0x1cw)``; (* 28 *)
 val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``; (* 64 *)
 val false_label_l = [];
-val postcond_tm = eot ``bir_add_reg_contract_1_post``;
+val postcond_tm = ``bir_add_reg_contract_1_post``;
+val defs = [bir_add_reg_contract_1_post_def, bir_add_reg_I_def, BType_Bool_def];
 
 (* bir_add_reg_entry_ht is the HT stating the generated WP: *)
 val (bir_add_reg_entry_ht, bir_add_reg_entry_defs) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l;
+                postcond_tm prefix false_label_l defs;
 (* TODO: Add to end of HT-generating function *)
 (* bir_add_reg_entry_wp is the weakest precondition obtained as a
  * term: *)
@@ -68,11 +69,12 @@ val prefix = "add_reg_loop_";
 val first_block_label_tm = ``BL_Address (Imm64 0x20w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``;
 val false_label_l = [];
-val postcond_tm = eot ``bir_add_reg_contract_2_post``;
+val postcond_tm = ``bir_add_reg_contract_2_post``;
+val defs = [bir_add_reg_contract_2_post_def, bir_add_reg_I_def, BType_Bool_def];
 
 val (bir_add_reg_loop_ht, bir_add_reg_loop_defs) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l;
+                postcond_tm prefix false_label_l defs;
 val bir_add_reg_loop_wp =
   get_wp_from_ht bir_add_reg_loop_ht;
 val bir_add_reg_loop_wp_def =
@@ -87,11 +89,12 @@ val prefix = "add_reg_loop_continue_";
 val first_block_label_tm = ``BL_Address (Imm64 0x40w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x20w)``;
 val false_label_l = [``BL_Address (Imm64 0x44w)``];
-val postcond_tm = eot ``bir_add_reg_contract_3_post``;
+val postcond_tm = ``bir_add_reg_contract_3_post``;
+val defs = [bir_add_reg_contract_3_post_def, bir_add_reg_I_def, BType_Bool_def];
 
 val (bir_add_reg_loop_continue_ht, bir_add_reg_loop_continue_defs) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l;
+                postcond_tm prefix false_label_l defs;
 val bir_add_reg_loop_continue_wp =
   get_wp_from_ht bir_add_reg_loop_continue_ht;
 val bir_add_reg_loop_continue_wp_def = Define
@@ -109,11 +112,12 @@ val prefix = "add_reg_loop_exit_";
 val first_block_label_tm = ``BL_Address (Imm64 0x40w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x48w)``;
 val false_label_l = [``BL_Address (Imm64 0x20w)``];
-val postcond_tm = eot ``bir_add_reg_contract_4_post``;
+val postcond_tm = ``bir_add_reg_contract_4_post``;
+val defs = [bir_add_reg_contract_4_post_def, bir_add_reg_post_def];
 
 val (bir_add_reg_loop_exit_ht, bir_add_reg_loop_exit_defs) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l;
+                postcond_tm prefix false_label_l defs;
 val bir_add_reg_loop_exit_wp =
   get_wp_from_ht bir_add_reg_loop_exit_ht;
 val bir_add_reg_loop_exit_wp_def = Define
@@ -122,7 +126,7 @@ val bir_add_reg_loop_exit_wp_def = Define
 val _ = save_thm ("bir_add_reg_loop_exit_ht", bir_add_reg_loop_exit_ht);
 
 
-(******************    (2)  bir_add_reg_loop_variant     *********************)
+(******************    (2.1)  bir_add_reg_loop_variant     *********************)
 (* The WP for the loop content is generated and proved here. *)
 (* 20 -> 24 -> 28 -> 2c -> 30 -> 34 -> 38 -> 3c -> 40 *)
 (*
@@ -131,10 +135,12 @@ val first_block_label_tm = ``BL_Address (Imm64 0x20w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``;
 val false_label_l = [];
 val postcond_tm =
-  eot ``bir_add_reg_contract_2_post_variant(v)``;
+  ``bir_add_reg_contract_2_post_variant(v)``;
+val defs = [bir_add_reg_contract_2_post_variant_def, bir_add_reg_I_def, BType_Bool_def];
+
 val (bir_add_reg_loop_variant_ht, bir_add_reg_loop_cariant_defs) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l;
+                postcond_tm prefix false_label_l defs;
 val bir_add_reg_loop_variant_wp =
   get_wp_from_ht
     bir_add_reg_loop_variant_ht;
