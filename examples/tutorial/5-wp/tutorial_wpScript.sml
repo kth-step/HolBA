@@ -32,7 +32,7 @@ open finite_mapSyntax pairSyntax pred_setSyntax;
 val _ = new_theory "tutorial_wp";
 
 val prog_tm = (rhs o concl o EVAL) bir_prog_tm;
-(******************     bir_add_reg_entry      ********************)
+(******************     (1) bir_add_reg_entry      ********************)
 (* The WP for the loop entry of the add_reg is generated and proved
  * here. *)
 (* 1c -> 38 -> 3c -> 40 *)
@@ -52,7 +52,7 @@ val bir_add_reg_entry_wp =
   (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl)
     bir_add_reg_entry_ht;
 
-(******************      bir_add_reg_loop     *********************)
+(******************    (2)  bir_add_reg_loop     *********************)
 (* The WP for the loop content is generated and proved here. *)
 (* 20 -> 24 -> 28 -> 2c -> 30 -> 34 -> 38 -> 3c -> 40 *)
 val prefix = "add_reg_loop_";
@@ -68,7 +68,7 @@ val bir_add_reg_loop_wp =
   (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl)
     bir_add_reg_loop_ht;
 
-(**************     bir_add_reg_loop_continue     *****************)
+(**************   (3)  bir_add_reg_loop_continue     *****************)
 (* This WP is for execution which starts at the loop condition and
  * then continues looping. *)
 (* 40 -> 20 *)
@@ -77,7 +77,7 @@ val first_block_label_tm = ``BL_Address (Imm64 0x40w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x20w)``;
 val false_label_l = [``BL_Address (Imm64 0x44w)``];
 val postcond_tm =
-  (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_3_pre``;
+  (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_3_post``;
 val (bir_add_reg_loop_continue_ht, bir_add_reg_loop_continue_defs) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l;
@@ -90,13 +90,15 @@ val bir_add_reg_loop_continue_wp =
 (* This WP is for execution which starts at the loop condition and
  * then exits the loop. Note that the blocks following 44 are
  * SP manipulation and return. *)
-(* 40 -> 44 *)
+(* 40 -> 48 *)
 val prefix = "add_reg_loop_exit_";
 val first_block_label_tm = ``BL_Address (Imm64 0x40w)``;
-val last_block_label_tm =  ``BL_Address (Imm64 0x44w)``;
+val last_block_label_tm =  ``BL_Address (Imm64 0x48w)``;
 val false_label_l = [``BL_Address (Imm64 0x20w)``];
+
 val postcond_tm =
-  (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_4_pre``;
+  (snd o dest_eq o concl o EVAL) ``bir_add_reg_contract_4_post``;
+
 val (bir_add_reg_loop_exit_ht, bir_add_reg_loop_exit_defs) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l;
@@ -107,7 +109,22 @@ val bir_add_reg_loop_exit_wp =
 
 (************           RECENT EXPERIMENTS           **************)
 (*
-val wp_need = (rhs o rhs o concl o (REWRITE_CONV [bir_add_reg_I_def, bir_valuesTheory.BType_Bool_def]) o concl) bir_add_reg_contract_3_pre_def;
+(* Contract 1 *)
+val contract_1_pre = (rhs o concl o EVAL) ``bir_add_reg_contract_1_pre``;
+prove_imp_w_smt contract_1_pre bir_add_reg_entry_wp;
+
+(* Contract 2 *)
+val contract_2_pre = (rhs o concl o EVAL) ``bir_add_reg_contract_2_pre``;
+prove_imp_w_smt contract_2_pre bir_add_reg_loop_wp;
+
+(* Contract 3 *)
+val contract_3_pre = (rhs o concl o EVAL) ``bir_add_reg_contract_3_pre``;
+prove_imp_w_smt contract_3_pre bir_add_reg_loop_continue_wp;
+
+(* Contract 4 *)
+val contract_4_pre = (rhs o concl o EVAL) ``bir_add_reg_contract_4_pre``;
+prove_imp_w_smt contract_4_pre bir_add_reg_loop_exit_wp;
+
 
 (* Prove using Z3 *)
 
