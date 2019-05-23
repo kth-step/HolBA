@@ -4,7 +4,8 @@ sig
 
   val bir_stmtB_is_not_assume_pp : term -> thm
   val bir_stmtsB_has_no_assumes_pp : term -> thm
-(*  val bir_block_has_no_assumes_pp : term -> thm *)
-  val bir_prog_has_no_assumes_pp : thm list -> term -> thm
+  val bir_block_has_no_assumes_pp : term -> thm
+  val bir_prog_has_no_assumes_pp : term -> thm
+  val bir_prog_has_no_assumes_rewr_pp : thm list -> term -> thm
 
 end
