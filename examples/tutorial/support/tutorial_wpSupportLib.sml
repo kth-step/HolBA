@@ -98,11 +98,7 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
     `
 *)
     val postcond_var = postcond_tm
-    val ls_def = Define `
-      ^(mk_var(prefix^"ls", mk_set_type bir_label_t_ty)) =
-        \x.(x = ^last_block_label_tm)
-    `
-    val ls_var = (fst o dest_eq o concl) ls_def
+    val ls_var = ``\x.(x = ^last_block_label_tm)``
     val false_fmap_tm = make_false_label_fmap false_label_l
     val wps_def = Define `
       ^(mk_var(prefix^"wps", ``:bir_label_t |-> bir_exp_t``)) =
@@ -115,7 +111,7 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
 
     (* List of definitions: *)
 
-    val defs = [ls_def, wps_def]@defs
+    val defs = [wps_def]@defs
 
 
     (* Initialize queue of blocks to process: *)
@@ -168,7 +164,7 @@ val (program, post, ls) = (prog_var, postcond_var, ls_var)
     val simp_thm4 =
       SIMP_RULE (std_ss++holBACore_ss++wordsLib.WORD_ss++
 		 wordsLib.WORD_ARITH_EQ_ss++pred_setLib.PRED_SET_ss)
-		[ls_def, BL_Address_HC_def] simp_thm3
+		[BL_Address_HC_def] simp_thm3
     (* CONJUNCTS now obtains a list with Hoare triples (plus an
      * abbreviation for the postcondition), from which we can pick
      * the theorem we need. *)
