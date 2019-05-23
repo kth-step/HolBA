@@ -8,4 +8,6 @@ sig
 
    val bimp: term * term -> term
 
+   val save_exp_is_taut_imp : string * term * term -> thm
+
 end

@@ -57,4 +57,13 @@ fun bimp (ante, conseq) = bor (bnot ante, conseq)
     ^ "Make sure that `ante` and `conseq` are BIR expression terms.")
     (wrap_exn "bimp" e)
 
+
+
+fun save_exp_is_taut_imp (name, ante, cons) =
+  let
+    val imp_tm = bimp (ante, cons);
+  in
+    save_thm (name, (GEN_ALL o prove_exp_is_taut) imp_tm)
+  end;
+
 end
