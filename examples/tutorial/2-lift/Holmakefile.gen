@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = 
+DEPENDENCIES   = ../support
 
 
 # configuration
