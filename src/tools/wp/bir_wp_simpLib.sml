@@ -231,15 +231,16 @@ struct
             print ((Int.toString (length acc)) ^ "        \r")
           else ();
 
-          val def_thm = lookup_def (bir_wpLib.wps_id_prefix ^ lbl_str);
+          val def_thms = [lookup_def (bir_wpLib.wps_id_prefix ^ lbl_str)]
+                handle Empty => [];
 (*
           val vars_def_var_id = "bir_wp_comp_wps_iter_step2_wp_" ^ lbl_str ^ "_vars";
           val vars_def_var = mk_var (vars_def_var_id, ``:bir_var_t -> bool``);
           val vars_def_thm = Define `^vars_def_var = bir_vars_of_exp ^((fst o dest_eq o concl) def_thm)`;
 *)
-          val thm = preproc_vars_thm true acc def_thm;
+          val thms = List.map (preproc_vars_thm true acc) def_thms;
         in
-          preproc_vars ((*(GSYM vars_def_thm)::*)thm::acc) lbl_list
+          preproc_vars ((*(GSYM vars_def_thm)::*)thms@acc) lbl_list
         end
       ;
 

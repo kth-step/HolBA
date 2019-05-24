@@ -118,6 +118,13 @@ struct
         defs)
         handle exn => raise wrap_exn "compute_wp_thm::bir_wp_comp_wps_iter_step0_init" exn;
 
+(*
+val ((wps, wps_bool_sound_thm),
+				(wpsdom, blstodo)
+			       ) = ((wps0_tm, wps_bool_sound_thm), (wpsdom, List.rev blstodo))
+val (program, post, ls) = (prog_tm, post_tm, wps_labels_lambda_tm)
+*)
+
       val _ = trace "WP: computing WPs...";
       val (new_wps_tm, new_wps_bool_sound_thm) = (bir_wpLib.bir_wp_comp_wps
         prog_thm
@@ -131,6 +138,10 @@ struct
       new_wps_tm
     end;
 
+(*
+val wp_lbl =  precond_lbl
+*)
+  fun eval_wo_subst terms = (computeLib.RESTR_EVAL_CONV ([``bir_exp_subst1``, ``bir_exp_subst``]@terms))
   fun bir_wp_simp define_prefix prog_def wps_tm wp_lbl precond_bir_tm =
     let
       val trace = trace ("bir_wp_simp::'" ^ define_prefix ^ "'")
@@ -139,13 +150,13 @@ struct
       val _ = trace "Extracting the WP from the WPs map...";
       val lbl_list = bir_wp_expLib.gen_lbl_list wps_tm
         handle e => raise wrap_exn "[bir_wp_simp] Failed to gen_lbl_list" e;
-      val varexps_thms = bir_wp_simpLib.preproc_vars [] (tl (rev lbl_list))
+      val varexps_thms = preproc_vars [] (tl (rev lbl_list))
         handle e => raise wrap_exn "[bir_wp_simp] Failed to preproc_vars" e;
       val wp_thm_suffix = bir_label_to_wps_id_suffix wp_lbl
         handle e => raise wrap_exn "[bir_wp_simp] Failed to create wp_thm_suffix" e;
-      val wp_thm = bir_wp_simpLib.lookup_def (bir_wpLib.wps_id_prefix ^ wp_thm_suffix)
+      val wp_tm = ((snd o dest_eq o concl o (eval_wo_subst [])) ``THE (FLOOKUP ^wps_tm ^wp_lbl)``)
         handle e => raise wrap_exn ("[bir_wp_simp] Failed to lookup_def '" ^ bir_wpLib.wps_id_prefix ^ wp_thm_suffix ^ "'") e;
-      val wp_const = (fst o dest_eq o concl) wp_thm
+      val wp_const = wp_tm
 
         handle e => raise wrap_exn "[bir_wp_simp] Failed to extract the WP" e;
 
@@ -169,7 +180,7 @@ struct
       val _ = trace "Well-typed theorem init thingy...";
       val wt0_thm = prove (
         ``^(bir_wp_simpLib.simp_construct_wt (bir_wp_simpLib.simp_extract goalterm) NONE)``,
-        CONV_TAC (bir_wp_simpLib.well_typed_conv varexps_thms))
+        CONV_TAC ((computeLib.RESTR_EVAL_CONV [``bir_var_set_is_well_typed``, ``bir_vars_of_exp``, ``bir_exp_varsubst``]) THENC (bir_wp_simpLib.well_typed_conv varexps_thms)))
 
         handle e => raise wrap_exn "[bir_wp_simp] Failed to prove well-typedness" e;
 
