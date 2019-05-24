@@ -29,6 +29,7 @@ struct
 
   (* From HOL4 *)
   open finite_mapSyntax pairSyntax wordsTheory;
+  open finite_mapTheory;
 
   val ERR = Feedback.mk_HOL_ERR "bir_wpLib";
   val wrap_exn = Feedback.wrap_exn "bir_wpLib";
@@ -52,30 +53,27 @@ struct
       val wps_bool_thm = prove(``bir_bool_wps_map ^wps``,
         REWRITE_TAC [bir_bool_wps_map_def] >>
         REWRITE_TAC defs >>
-        REPEAT_MAX 20 (
-          REWRITE_TAC [finite_mapTheory.FEVERY_FUPDATE,
-                       finite_mapTheory.DRESTRICT_FEMPTY,
-                       finite_mapTheory.FEVERY_FEMPTY] >>
-          SIMP_TAC (std_ss++wordsLib.SIZES_ss++HolBACoreSimps.holBACore_ss) [
-              bir_is_bool_exp_def,
-              type_of_bir_exp_def,
-              bir_var_type_def,
-              type_of_bir_imm_def,
-              bir_type_is_Imm_def,
-              BType_Bool_def
-          ]
-        )
+        SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss++wordsLib.WORD_ss)
+          [FEVERY_FUPDATE, DRESTRICT_FEMPTY, DRESTRICT_FUPDATE, FEVERY_FEMPTY] >>
+	SIMP_TAC (std_ss++wordsLib.SIZES_ss++HolBACoreSimps.holBACore_ss) [
+	    bir_is_bool_exp_def,
+	    type_of_bir_exp_def,
+	    bir_var_type_def,
+	    type_of_bir_imm_def,
+	    bir_type_is_Imm_def,
+	    BType_Bool_def,
+	    bir_exp_false_def
+	]
       )
       val wps_sound_thm =
         prove(``bir_sound_wps_map ^program ^ls ^post ^wps``,
         REWRITE_TAC [bir_sound_wps_map_def] >>
         REWRITE_TAC defs >>
-        REPEAT_MAX 20 (
-          REWRITE_TAC [finite_mapTheory.FEVERY_FUPDATE,
-                       finite_mapTheory.DRESTRICT_FEMPTY,
-                       finite_mapTheory.FEVERY_FEMPTY] >>
-          SIMP_TAC (srw_ss()) []
-        )
+        SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss++wordsLib.WORD_ss)
+          [FEVERY_FUPDATE, DRESTRICT_FEMPTY, DRESTRICT_FUPDATE, FEVERY_FEMPTY] >>
+        SIMP_TAC std_ss [bir_exec_to_labels_pre_F]
+        (* Hopefully, this is not needed: *)
+        (*  SIMP_TAC (srw_ss()) [] *)
       )
       in
         CONJ wps_bool_thm wps_sound_thm
