@@ -74,6 +74,30 @@ val add_obs_stmts_def = Define `
 `;
 
 
+val observe_load_tag_def = Define`
+observe_load_tag (BExp_Load _ e _ _) =
+         BStmt_Observe (BExp_Const (Imm1 1w))
+                       ([BExp_BinExp BIExp_And
+                                     (BExp_Const (Imm64 0xFFFFE000w))
+                                     e])
+                       HD
+`;
+
+
+val add_obs_stmts_tag_def = Define `
+(add_obs_stmts_tag [] = []) /\
+(add_obs_stmts_tag (x :: xs) =
+ case x of
+     BStmt_Assign v e =>
+     (case select_loads e of
+          [] => x :: add_obs_stmts_tag xs
+        | lds => (APPEND (MAP constrain_load lds)
+                         (x :: (APPEND (MAP observe_load_tag lds) (add_obs_stmts_tag xs)))))
+   | _ => x :: add_obs_stmts_tag xs)
+`;
+
+
+
 val add_block_cache_line_def = Define`
 add_block_cache_line block =
          block with bb_statements := add_obs_stmts block.bb_statements
@@ -82,5 +106,15 @@ add_block_cache_line block =
 val add_obs_cache_line_armv8_def = Define`
 add_obs_cache_line_armv8 p = map_obs_prog add_block_cache_line p
 `;
+
+val add_block_cache_line_tag_def = Define`
+add_block_cache_line_tag block =
+        block with bb_statements := add_obs_stmts_tag block.bb_statements
+`;
+
+val add_obs_cache_line_tag_armv8_def = Define`
+add_obs_cache_line_tag_armv8 p = map_obs_prog add_block_cache_line p
+`;
+
 
 val _ = export_theory();

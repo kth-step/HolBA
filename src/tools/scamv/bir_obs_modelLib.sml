@@ -16,5 +16,12 @@ struct
 val obs_hol_type = ``bir_val_t``;
 fun add_obs t = rand (concl (EVAL ``add_obs_cache_line_armv8 ^t``));
 end
+
+structure bir_arm8_cache_line_tag_model : OBS_MODEL =
+struct
+val obs_hol_type = ``bir_val_t``;
+fun add_obs t = rand (concl (EVAL ``add_obs_cache_line_tag_armv8 ^t``));
+end
+
 end
 end
