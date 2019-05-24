@@ -1,5 +1,5 @@
 
-executing lifted_sliced
+executing add_reg
 ================================
 checking block list definition...
 --------------------------------
@@ -8,12 +8,12 @@ ok
 program validity...
 --------------------------------
 ok
- - 0.228 s - 
+ - 0.209 s - 
 
 typechecking...
 --------------------------------
 ok
- - 0.144 s - 
+ - 0.103 s - 
 
 state checking/generation...
 --------------------------------
@@ -27,17 +27,17 @@ done
 
 preprocessing starts
 done
- - 0.539 s - 
+ - 0.728 s - 
 
 execution starts
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!done
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!done
 done
- - 30.443 s - 
+ - 40.762 s - 
 
 reversing observations
 done
 ok
- exec total: - 30.988 s - 
+ exec total: - 41.493 s - 
 
 
 ================================
@@ -47,27 +47,30 @@ result:
 
 ol = []
 
-n = 68
+n = 96
 
-s2 = <|bst_pc := <|bpc_label := BL_Address (Imm64 0x400294w); bpc_index := 0|>;
+s2 = <|bst_pc := <|bpc_label := BL_Address (Imm64 76w); bpc_index := 0|>;
   bst_environ :=
     BEnv
-      (FEMPTY |+
+      (FEMPTY |+ ("R1",BType_Imm Bit64,SOME (BVal_Imm (Imm64 7w))) |+
        ("MEM",BType_Mem Bit64 Bit8,
         SOME
           (BVal_Mem Bit64 Bit8
-             (FEMPTY |+ (134217704,3) |+ (134217705,0) |+ (134217706,0) |+
-              (134217707,0) |+ (134217708,0) |+ (134217709,0) |+
-              (134217710,0) |+ (134217711,0) |+ (134217720,1) |+
-              (134217721,0) |+ (134217722,0) |+ (134217723,0) |+
-              (134217724,0) |+ (134217725,0) |+ (134217726,0) |+
-              (134217727,0)))) |+
-       ("R1",BType_Imm Bit64,SOME (BVal_Imm (Imm64 4w))) |+
+             (FEMPTY |+ (134217720,3) |+ (134217721,0) |+ (134217722,0) |+
+              (134217723,0) |+ (134217724,0) |+ (134217725,0) |+
+              (134217726,0) |+ (134217727,0) |+ (134217712,7) |+
+              (134217713,0) |+ (134217714,0) |+ (134217715,0) |+
+              (134217716,0) |+ (134217717,0) |+ (134217718,0) |+
+              (134217719,0)))) |+
+       ("R4",BType_Imm Bit64,SOME (BVal_Imm (Imm64 3w))) |+
+       ("R5",BType_Imm Bit64,SOME (BVal_Imm (Imm64 7w))) |+
+       ("R3",BType_Imm Bit64,SOME (BVal_Imm (Imm64 10w))) |+
+       ("R2",BType_Imm Bit64,SOME (BVal_Imm (Imm64 0w))) |+
        ("ProcState_C",BType_Imm Bit1,SOME (BVal_Imm (Imm1 1w))) |+
        ("ProcState_N",BType_Imm Bit1,SOME (BVal_Imm (Imm1 0w))) |+
        ("ProcState_V",BType_Imm Bit1,SOME (BVal_Imm (Imm1 0w))) |+
-       ("ProcState_Z",BType_Imm Bit1,SOME (BVal_Imm (Imm1 0w))) |+
-       ("R0",BType_Imm Bit64,SOME (BVal_Imm (Imm64 1w))) |+
+       ("ProcState_Z",BType_Imm Bit1,SOME (BVal_Imm (Imm1 1w))) |+
+       ("R0",BType_Imm Bit64,SOME (BVal_Imm (Imm64 10w))) |+
        ("SP_EL0",BType_Imm Bit64,SOME (BVal_Imm (Imm64 0x8000000w))));
   bst_status := BST_Halted (BVal_Imm (Imm32 0w))|>
 

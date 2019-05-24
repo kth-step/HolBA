@@ -1,6 +1,6 @@
 open HolKernel Parse;
 
-open examplesBinaryLib;
+open examplesBinaryTheory;
 
 open bir_exec_envLib;
 open bir_execLib;
@@ -14,15 +14,20 @@ val _ = log_setfile "exec.log";
 
 val _ = print "loading...\n";
 
-val name = "lifted_sliced";
-val prog_l = dest_BirProgram sqrt_prog_tm;
+val name = "add_reg";
+val prog_l = (dest_BirProgram o rhs o concl) bir_add_reg_prog_def;
 
 (* set the maximum number of steps to execute *)
 val n_max = 100;
 
-(* input (x) is in R0, output (y) is in R0 as well *)
+(* folowing the calling convention:
+    - input (x) is in R0
+    - input (y) is in R1
+    - output (ly) is in R0 *)
 val prog_par_x = 3;
 val prog_par_x_wtm = wordsSyntax.mk_wordii (prog_par_x, 64);
+val prog_par_y = 7;
+val prog_par_y_wtm = wordsSyntax.mk_wordii (prog_par_y, 64);
 
 
 (* patch the end of the program: has to have a BIR halt instead of an arm8 ret *)
@@ -59,11 +64,15 @@ val env_init = bir_exec_env_initd_env vars;
 val env_1 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
             ``bir_env_write (BVar "SP_EL0" (BType_Imm Bit64)) (BVal_Imm (Imm64 0x8000000w)) ^env_init``;
 
-(* n *)
+(* x *)
 val env_2 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
             ``bir_env_write (BVar "R0" (BType_Imm Bit64)) (BVal_Imm (Imm64 ^(prog_par_x_wtm))) ^env_1``;
 
-val env = env_2;
+(* y *)
+val env_3 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
+            ``bir_env_write (BVar "R1" (BType_Imm Bit64)) (BVal_Imm (Imm64 ^(prog_par_y_wtm))) ^env_2``;
+
+val env = env_3;
 val state = ``<| bst_pc := ^pc ; bst_environ := ^env ; bst_status := BST_Running |>``;
 
 
