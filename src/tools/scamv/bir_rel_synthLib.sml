@@ -86,6 +86,10 @@ fun mk_bir_list_eq l1 l2 =
          in list_eq l1 l2
          end
 
+fun nonridiculous_zip [] ys = []
+  | nonridiculous_zip xs [] = []
+  | nonridiculous_zip (x::xs) (y::ys) = (x,y) :: nonridiculous_zip xs ys
+
 (* unpacks xs = ys where xs and ys are lists of conditional observations
    returns a HOL term of HOL type bir_exp_t that represents
    all possible ways of making xs = ys
@@ -102,12 +106,18 @@ fun mk_bir_cond_obs_eq xs ys =
         val (trivial, nontrivial) =
             partition (fn ((c,x),(c',y)) => (c = bir_true)
                                             andalso (c' = bir_true))
-                      (zip xs ys);
-        val _ = print("Simplified " ^ PolyML.makestring (length trivial) ^ " condition(s)\n");
-        val trivial_eq =
-            List.map (fn ((_,x),(_,y)) => mk_bir_eq x y) trivial;
+                      (nonridiculous_zip xs ys);
     in
-        band (bandl trivial_eq, go (unzip nontrivial))
+        case trivial of
+            [] => go (unzip nontrivial)
+         |  _  =>
+            let val _ = print(PolyML.makestring (length trivial));
+                val trivial_eq =
+                    List.map (fn ((_,x),(_,y)) => mk_bir_eq x y) trivial;
+            in
+                (*        go (xs,ys) *)
+                band (bandl trivial_eq, go (unzip nontrivial))
+            end
     end
 
 fun mapPair f (c, oCobs) = (f c, f oCobs);
@@ -135,7 +145,7 @@ fun mkRel_conds xs =
                      | (NONE,_) => bir_false
                      | (_,NONE) => bir_false
                      | *) (SOME l1,SOME l2)  => 
-                          mk_bir_cond_obs_eq l1 l2;
+                          mk_bir_cond_obs_eq l1 l2
                 val _ = print (".");
             in ((band (c, c')),  eqRel) end;
         val xs2 = cartesianWith processImpl somes somes_primed;
