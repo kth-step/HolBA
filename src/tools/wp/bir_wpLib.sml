@@ -37,6 +37,8 @@ struct
 
   in (* local *)
 
+  fun eval_wo_subst terms = (computeLib.RESTR_EVAL_CONV ([``bir_exp_subst1``, ``bir_exp_subst``]@terms))
+
   val wps_id_prefix = "bir_wp_comp_wps_iter_step2_wp_"
 
   (* TODO: Replace all expressions in double hyphens by syntactic
@@ -266,7 +268,7 @@ struct
       val prog_obs_ty = (hd o snd o dest_type o type_of) program;
 
       val wps1_thm =
-        computeLib.RESTR_EVAL_CONV wps_eval_restrict_consts
+        eval_wo_subst wps_eval_restrict_consts
           (list_mk_comb
             (* TODO: Add to bir_wpSyntax *)
             (inst [Type `:'a` |-> prog_obs_ty] ``bir_wp_exec_of_block:'a bir_program_t ->
@@ -436,7 +438,7 @@ struct
                         val _ = print_term label;
                         val _ = print "\n";
 			val wp_exp_term =
-			  (snd o dest_comb o concl o EVAL)
+			  (snd o dest_comb o concl o (eval_wo_subst []))
 			    (finite_mapSyntax.mk_fapply
 			      (wps1, label)
 			    );
