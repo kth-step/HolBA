@@ -198,7 +198,11 @@ fun make_word_relation relation exps =
                                       (flatten (map bir_free_vars exps))));
         val pairs = zip unprimed primed;
         fun mk_distinct (a,b) =
-            ``^(mk_var (a,``:word64``)) <> ^(mk_var (b,``:word64``))``;
+            let val va = mk_var (a,``:word64``);
+                val vb = mk_var (b,``:word64``);
+            in
+``(^va <> ^vb)  /\ (^va < 0x80042FF8w) /\ (^vb < 0x80042FF8w)``
+            end;
         val distinct = list_mk_conj (map mk_distinct pairs);
     in
        ``^(bir2bool relation) /\ ^distinct``
@@ -212,7 +216,7 @@ fun print_model model =
         () (rev model);
 
 fun to_sml_ints model =
-    List.map (fn (name, tm) => (name, uint_of_word tm)) model;
+    List.map (fn (name, tm) => (name, uint_of_word tm handle e => 42)) model;
 
 val (current_asm : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
@@ -228,15 +232,15 @@ fun reset () =
      current_word_rel := NONE;
      current_antecedents := [])
 
-fun start_interactive () =
+fun start_interactive file =
     let
-        val (asm_file_contents, sections) = prog_gen_mock ();
+        val (asm_file_contents, sections) = prog_gen_from_file file;
         val _ = current_asm := asm_file_contents;
         val lifted_prog = lift_program_from_sections sections;
         val _ = current_prog := SOME lifted_prog;
 
         val lifted_prog_w_obs =
-            bir_arm8_cache_line_model.add_obs lifted_prog;
+            bir_arm8_cache_line_tag_model.add_obs lifted_prog;
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 
         val _ = current_pathstruct := paths;
@@ -284,10 +288,10 @@ fun mk_round_robin n =
           end
     end
 
-fun scamv_test_main () =
+fun scamv_test_main file =
     let
         val _ = reset();
-        val prog_obss_result = start_interactive();
+        val prog_obss_result = start_interactive file;
         val round_robin = mk_round_robin (length (!current_antecedents) - 1);
         fun do_tests 0 = ()
           | do_tests n =
