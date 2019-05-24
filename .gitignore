@@ -56,4 +56,7 @@ logs
 
 # binary files compiled for analysis
 *.elf
+*.o
+# generally all .da files
+*.da
 
