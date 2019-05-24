@@ -1,5 +1,5 @@
 
-add_reg.o:     file format elf64-littleaarch64
+src/add_reg.o:     file format elf64-littleaarch64
 
 
 Disassembly of section .text:

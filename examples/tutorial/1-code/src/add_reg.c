@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#ifdef BAREMETAL
+
 int64_t add_reg (int64_t x, int64_t y) {
   register int64_t lx asm ("x2") = x;
   register int64_t ly asm ("x3") = y;
@@ -11,3 +13,7 @@ int64_t add_reg (int64_t x, int64_t y) {
   }
   return ly;
 }
+
+#endif
+
+

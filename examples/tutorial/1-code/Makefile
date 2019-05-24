@@ -13,62 +13,81 @@ endif
 CROSS   =$(HOLBA_GCC_ARM8_CROSS)
 GDB     =$(HOLBA_GDB)
 
+$(shell mkdir -p bin)
+
 
 ##########################################################
 # settings
 ##########################################################
 
-NAME	= examples.elf
+ELF	  = bin/examples.elf
+ELF_TEST = bin/test.elf
 CFLAGS	= -ggdb3 -std=gnu99 -Wall -fno-builtin # -O1
 #LDFLAGS = --gc-sections -nostartfiles -nostdlib
+
+rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+
+##########################################################
+# source definition
+##########################################################
+
+SOURCES_C     = $(call rwildcard, src/, *.c)
+SOURCES_S     = $(call rwildcard, src/, *.S)
+SOURCES       = $(SOURCES_C) $(SOURCES_S)
+
+OBJECTS       = $(SOURCES_C:.c=.o) $(SOURCES_S:.S=.o)
+
+OBJECT_DAS    = $(OBJECTS:.o=.da)
 
 ##########################################################
 # compilation and linking
 ##########################################################
 
-all: $(NAME).da add_reg.da
+.DEFAULT_GOAL := all
+all: $(OBJECT_DAS) $(ELF).da
 
 ##########################################################
 
-%.o: %.asm
+%.o: %.S
 	${CROSS}as -o $@ $<
 
 %.o: %.c
-	${CROSS}gcc ${CFLAGS} -c -o $@ -fno-stack-protector $<
+	${CROSS}gcc -DBAREMETAL= ${CFLAGS} -c -o $@ -fno-stack-protector $<
 
 ##########################################################
 
-#$(NAME): ${OBJECTS} entry/entry.o
-#	${CROSS}ld $(LDFLAGS) -o $@ -T linkerscript.ld $^
+$(ELF): ${OBJECTS}
+	${CROSS}ld -o $@ $^
 
-$(NAME): examples.c
-	${CROSS}gcc -DBAREMETAL= ${CFLAGS} examples.c -o $@
+#$(ELF): $(SOURCES)
+#	${CROSS}gcc -DBAREMETAL= ${CFLAGS} $(SOURCES) -o $@
 
 ##########################################################
 
-touch_script_file:
-	touch "../2-lift/examplesBinaryScript.sml"
+TOUCH_SCRIPT_FILE=touch "../2-lift/examplesBinaryScript.sml"
 
-$(NAME).da: $(NAME) touch_script_file
+$(ELF).da: $(ELF)
+	${TOUCH_SCRIPT_FILE}
 	${CROSS}objdump -d $< > $@
-%.da: %.o touch_script_file
+%.da: %.o
+	${TOUCH_SCRIPT_FILE}
 	${CROSS}objdump -d $< > $@
 
 ##########################################################
 
-test.elf: examples.c
-	gcc examples.c -o test.elf
+$(ELF_TEST): $(SOURCES_C)
+	gcc $^ -o $@
 
-test: test.elf
-	./test.elf
+test: $(ELF_TEST)
+	./$(ELF_TEST)
 
 ##########################################################
 
 clean:
-	rm -f $(NAME) $(NAME).da test.elf
+	rm -f $(OBJECTS) $(OBJECT_DAS) $(ELF) $(ELF).da $(ELF_TEST)
 
 ##########################################################
 
-.PHONY: touch_script_file
+.PHONY: test
 
 
