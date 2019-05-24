@@ -29,6 +29,8 @@ val get_y = bden (bvar "R5" ``(BType_Imm Bit64)``);
 val get_x = bden (bvar "R4" ``(BType_Imm Bit64)``);
 val get_ly = bden (bvar "R3" ``(BType_Imm Bit64)``);
 val get_lx = bden (bvar "R2" ``(BType_Imm Bit64)``);
+val get_sp = bden (bvar "SP_EL0" ``(BType_Imm Bit64)``);
+val get_r0 = bden (bvar "R0" ``(BType_Imm Bit64)``);
 
 
 val bir_add_reg_pre_def = Define `bir_add_reg_pre =
@@ -116,10 +118,10 @@ val bir_add_reg_contract_2_pre_variant_def = Define `bir_add_reg_contract_2_pre_
   beq(get_lx, ``(BExp_Const (Imm64 v))``)
 ])
 `;
-
 val bir_add_reg_contract_2_post_variant_def = Define `bir_add_reg_contract_2_post_variant v  =
  ^(bandl[``bir_add_reg_I``,
-  bnot(bsle(``(BExp_Const (Imm64 v))``, get_lx))
+  bnot(bsle(``(BExp_Const (Imm64 v))``, get_lx)),
+  (bsle(bconst64 0, get_lx))
 ])
 `;
 (* contract three: loop continue *)
@@ -132,7 +134,21 @@ val bir_add_reg_contract_3_post_variant_def = Define `bir_add_reg_contract_3_pos
 `;
 
 
+(* contract entry mem *)
+val bir_add_reg_contract_0_pre_def = Define `bir_add_reg_contract_0_pre =
+^(bandl[
+        bnot (bslt(get_r0, bconst64 0)),
+        ``(BExp_Aligned Bit64 3
+                        (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64))))``,
+        bnot(blt(get_sp, bconst64 0xC0000000)),
+        blt(get_sp, bconst64 0xD0000000)
+         ]
+)
+`;
 
+val bir_add_reg_contract_0_post_def = Define `bir_add_reg_contract_0_post =
+bir_add_reg_pre
+`;
 
 
 

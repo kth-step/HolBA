@@ -395,7 +395,7 @@ FULL_SIMP_TAC (std_ss) [pred_setTheory.GSPECIFICATION, bir_program_labelsTheory.
 );
 
 
-val lift_contract_thm = prove(``
+val lift_contract_thm = store_thm("lift_contract_thm", ``
 ! p mms ml mls mu
 mpre mpost bpre bpost .
 (MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p)) ==>

@@ -50,29 +50,29 @@ val contract_1_imp_taut_thm = prove_exp_is_taut contract_1_imp_tm
 (* T isn't strong enough: {x >= 0} entry {I} *)
 val contract_1_pre = (lhs o concl) bir_add_reg_contract_1_pre_def;
 
-val contract_1_imp_taut_thm = save_exp_is_taut_imp ("contract_1_imp_taut_thm",
-  contract_1_pre, contract_1_wp);
+val contract_1_imp_taut_thm = save_thm ("contract_1_imp_taut_thm",
+  prove_exp_is_taut (bimp (contract_1_pre, contract_1_wp)));
 
 (******************    (2)  bir_add_reg_loop     *********************)
 val contract_2_pre = (lhs o concl) bir_add_reg_contract_2_pre_def;
 val contract_2_wp  = (lhs o concl) bir_add_reg_loop_wp_def;
 
-val contract_2_imp_taut_thm = save_exp_is_taut_imp ("contract_2_imp_taut_thm",
-  contract_2_pre, contract_2_wp);
+val contract_2_imp_taut_thm = save_thm ("contract_2_imp_taut_thm",
+  prove_exp_is_taut (bimp (contract_2_pre, contract_2_wp)));
 
 (**************   (3)  bir_add_reg_loop_continue     *****************)
 val contract_3_pre = (lhs o concl) bir_add_reg_contract_3_pre_def;
 val contract_3_wp  = (lhs o concl) bir_add_reg_loop_continue_wp_def;
 
-val contract_3_imp_taut_thm = save_exp_is_taut_imp ("contract_3_imp_taut_thm",
-  contract_3_pre, contract_3_wp);
+val contract_3_imp_taut_thm = save_thm ("contract_3_imp_taut_thm",
+  prove_exp_is_taut (bimp (contract_3_pre, contract_3_wp)));
 
-(***************   (4)    bir_add_reg_loop_exit      *****************)
+(***************   (4)  bir_add_reg_loop_exit      *****************)
 val contract_4_pre = (lhs o concl) bir_add_reg_contract_4_pre_def;
 val contract_4_wp  = (lhs o concl) bir_add_reg_loop_exit_wp_def;
 
-val contract_4_imp_taut_thm = save_exp_is_taut_imp ("contract_4_imp_taut_thm",
-  contract_4_pre, contract_4_wp);
+val contract_4_imp_taut_thm = save_thm ("contract_4_imp_taut_thm",
+  prove_exp_is_taut (bimp (contract_4_pre, contract_4_wp)));
 
 
 
@@ -92,6 +92,14 @@ val contract_3v_wp  = (lhs o concl o (SPEC contract_3v_freevar)) bir_add_reg_loo
 val contract_3v_imp_taut_thm = save_exp_is_taut_imp ("contract_3v_imp_taut_thm",
   contract_3v_pre, contract_3v_wp);
 
+(***************   (0)  bir_add_reg_mem      *****************)
+(*
+val contract_0_pre = (lhs o concl) bir_add_reg_contract_0_pre_def;
+val contract_0_wp  = (lhs o concl) bir_add_reg_mem_wp_def;
+
+val contract_0_imp_taut_thm = save_thm ("contract_0_imp_taut_thm",
+  prove_exp_is_taut (bimp (contract_0_pre, contract_0_wp)));
+*)
 
 val _ = export_theory();
 
