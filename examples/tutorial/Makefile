@@ -21,7 +21,8 @@ $(HOLMAKEFILE_DIRS):
 cleantutorial:
 	git clean -fdX .
 
-reverttutorial: cleantutorial
+reverttutorial:
+	git clean -fd .
 	git checkout HEAD -- .
 
 ##########################################################
