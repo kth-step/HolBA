@@ -30,6 +30,7 @@ struct
   (* From HOL4 *)
   open finite_mapSyntax pairSyntax wordsTheory;
   open finite_mapTheory;
+  open HolBACoreSimps;
 
   val ERR = Feedback.mk_HOL_ERR "bir_wpLib";
   val wrap_exn = Feedback.wrap_exn "bir_wpLib";
@@ -347,7 +348,7 @@ struct
         end;
       val blstodo = List.filter blstodofilter blocks
     in
-      (wpsdom_nofalsel, blstodo)
+      (wpsdom, blstodo)
     end
       handle e => raise wrap_exn "bir_wp_init_rec_proc_jobs" e;
 

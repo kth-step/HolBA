@@ -103,7 +103,7 @@ struct
       val wps_bool_sound_thm = (bir_wpLib.bir_wp_init_wps_bool_sound_thm
         (prog_tm, post_tm, wps_labels_lambda_tm) wps0_tm defs)
         handle exn => raise wrap_exn "compute_wp_thm::wps_bool_sound_thm" exn;
-      val (wpsdom, blstodo) = (bir_wpLib.bir_wp_init_rec_proc_jobs prog_term wps0_tm)
+      val (wpsdom, blstodo) = (bir_wpLib.bir_wp_init_rec_proc_jobs prog_term wps0_tm [])
         handle exn => raise wrap_exn "compute_wp_thm::wpsdom, blstodo" exn;
 
       (* prepare "problem-static" part of the theorem *)
