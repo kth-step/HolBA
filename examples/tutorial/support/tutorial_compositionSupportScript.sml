@@ -2,14 +2,57 @@ open HolKernel Parse boolLib bossLib;
 open bslSyntax;
 open tutorial_bir_to_armSupportTheory;
 
+open bir_program_multistep_propsTheory;
+open bir_envTheory;
+open bir_program_env_orderTheory;
+
 val _ = new_theory "tutorial_compositionSupport";
 
-val comp_seq_thm = store_thm("comp_seq_thm", ``
-! l l1 ls prog P R Q.
-(bir_triple prog l (\x.x=l1) P R) ==>
-(bir_triple prog l1 ls R Q) ==>
-(bir_triple prog l ls P Q)
-``, cheat
+val comp_seq_thm = store_thm("comp_seq_thm",
+``!l l1 ls prog P R Q.
+  bir_triple prog l (\x.x=l1) P R ==>
+  bir_triple prog l1 ls R Q ==>
+  bir_triple prog l ls P Q``,
+
+REPEAT STRIP_TAC >>
+SIMP_TAC std_ss [bir_triple_def] >>
+REPEAT STRIP_TAC >>
+PAT_X_ASSUM ``bir_triple prog l (\x. x = l1) P R'``
+            (fn thm =>
+               ASSUME_TAC (Q.SPEC `s`
+                 (SIMP_RULE std_ss [bir_triple_def] thm)
+               )
+            ) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+PAT_X_ASSUM ``bir_triple prog l1 ls R' Q``
+            (fn thm =>
+               ASSUME_TAC (Q.SPEC `s'`
+                 (SIMP_RULE std_ss [bir_triple_def] thm)
+               )
+            ) >>
+subgoal `bir_env_vars_are_initialised s'.bst_environ
+           (bir_vars_of_program prog)` >- (
+METIS_TAC [bir_exec_block_n_ENV_ORDER,
+           bir_env_vars_are_initialised_ORDER]
+) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+FULL_SIMP_TAC std_ss [] >>
+Q.SUBGOAL_THEN `s'.bst_pc.bpc_label IN (\x. x = l1) ==>
+         (s'.bst_pc.bpc_label = l1)` 
+  (fn thm => IMP_RES_TAC thm) >- (
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
+) >>
+FULL_SIMP_TAC std_ss [] >>
+quantHeuristicsLib.QUANT_TAC [("n", `n+n'`, []),
+			      ("l1", `l1' ++ l1''`, []),
+			      ("c1", `c1 + c1'`, []),
+			      ("c2", `c2 + c2'`, []),
+			      ("s'", `s''`, [])] >>
+FULL_SIMP_TAC std_ss [] >>
+subgoal `bir_exec_block_n prog s (n + n') =
+         (l1' ++ l1'',c1 + c1',c2 + c2',s'')` >- (
+FULL_SIMP_TAC std_ss [bir_exec_block_n_combine]
+)
 );
 
 
