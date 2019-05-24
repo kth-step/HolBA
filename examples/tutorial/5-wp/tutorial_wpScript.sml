@@ -30,9 +30,12 @@ open finite_mapSyntax pairSyntax pred_setSyntax;
 
 val _ = new_theory "tutorial_wp";
 
-(*
- val _ = bir_ppLib.remove_bir_pretty_printers ();
- val _ = bir_ppLib.install_bir_pretty_printers ();
+(* You may install the BIR pretty printers to get syntax
+ * highlighting for matching pairs of parantheses:
+
+  val _ = bir_ppLib.install_bir_pretty_printers ();
+  val _ = bir_ppLib.remove_bir_pretty_printers ();
+
 *)
 
 val prog_tm = (lhs o concl) bir_add_reg_prog_def;
