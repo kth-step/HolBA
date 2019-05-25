@@ -25,9 +25,13 @@ val n_max = 100;
     - input (y) is in R1
     - output (ly) is in R0 *)
 val prog_par_x = 3;
-val prog_par_x_wtm = wordsSyntax.mk_wordii (prog_par_x, 64);
 val prog_par_y = 7;
+val prog_sp = 0x8000000;
+
+(* translate the inputs to word terms *)
+val prog_par_x_wtm = wordsSyntax.mk_wordii (prog_par_x, 64);
 val prog_par_y_wtm = wordsSyntax.mk_wordii (prog_par_y, 64);
+val prog_sp_wtm = wordsSyntax.mk_wordii (prog_sp, 64);
 
 
 (* patch the end of the program: has to have a BIR halt instead of an arm8 ret *)
@@ -62,7 +66,7 @@ val var_eq_thms = gen_var_eq_thms vars;
 val env_init = bir_exec_env_initd_env vars;
 (* SP *)
 val env_1 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
-            ``bir_env_write (BVar "SP_EL0" (BType_Imm Bit64)) (BVal_Imm (Imm64 0x8000000w)) ^env_init``;
+            ``bir_env_write (BVar "SP_EL0" (BType_Imm Bit64)) (BVal_Imm (Imm64 ^(prog_sp_wtm))) ^env_init``;
 
 (* x *)
 val env_2 = (dest_some o snd o dest_eq o concl o (bir_exec_env_write_conv var_eq_thms))
@@ -96,6 +100,6 @@ val _ = print "\n";
 
 
 (* run the execution *)
-val _ = bir_exec_prog_print name prog_const n_max validprog_o welltypedprog_o state_o;
+val thm = bir_exec_prog_print name prog_const n_max validprog_o welltypedprog_o state_o;
 
 

@@ -8,12 +8,12 @@ ok
 program validity...
 --------------------------------
 ok
- - 0.209 s - 
+ - 0.186 s - 
 
 typechecking...
 --------------------------------
 ok
- - 0.103 s - 
+ - 0.093 s - 
 
 state checking/generation...
 --------------------------------
@@ -27,17 +27,17 @@ done
 
 preprocessing starts
 done
- - 0.728 s - 
+ - 0.556 s - 
 
 execution starts
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!done
 done
- - 40.762 s - 
+ - 39.345 s - 
 
 reversing observations
 done
 ok
- exec total: - 41.493 s - 
+ exec total: - 39.903 s - 
 
 
 ================================
