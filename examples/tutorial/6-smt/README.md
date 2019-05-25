@@ -32,11 +32,9 @@ _[end of note]_
 
 The third solver, simply called `Z3`, asks Z3 for a proof procedure to prove the term directly in HOL4. Hence, it doesn't need to use an oracle.
 
-In this tutorial, we will use the `Z3_ORACLE` solver, because we needed to add support for arrays and because `Z3` only works with Z3 2.x.
+In this tutorial, we will use the `Z3_ORACLE` solver, because we needed to add support for BIR memories and because `Z3` only works with Z3 2.x which is quite old (we are using Z3 4.x).
 
-**Note**: TODO: explain array export and that we should use axioms
-
-_[end of note]_
+**Note**: Currently, the support for BIR memories works by using the array theory at the byte level. That's quite inefficient because BIR has some restrictions on memories that we could use (reads and writes are aligned). Moreover, we could add some axioms when translating to SMT-LIB 2.0 in order to consider loads and stores as only one operation instead of N operations (on N-byte words). Considering the exponential blow-up problem that arises when not using HolBA WP simplifier, this change could dramatically decrease the complexity of solving such instances in Z3.
 
 ## Proving Hoare triples
 
