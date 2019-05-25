@@ -8,25 +8,28 @@ open bir_expTheory bir_expSyntax;
 
 val wrap_exn = Feedback.wrap_exn "tutorial_smtSupportLib"
 
+fun print_model model = List.foldl
+  (fn ((name, tm), _) => (print (" - " ^ name ^ ": "); Hol_pp.print_term tm))
+  () (rev model);
+
 fun prove_bir_eval_exp_with_SMT_then_cheat_TAC (assum_list, goal) =
   let
     val (eval_tm, rhs_tm) = dest_eq goal
-    val _ = if (rhs_tm <> ``BVal_Imm (Imm1 1w)``) then
-      raise Fail "Cannot prove the goal because the RHS isn't btrue." else ();
+    val _ = if (rhs_tm = ``BVal_Imm (Imm1 1w)``) then () else
+      raise Fail "Cannot prove the goal because the RHS isn't btrue.";
     (**)
     val (bir_tm, env_tm) = dest_bir_eval_exp eval_tm
     val w_tm = bir2bool bir_tm
     (**)
-    val proved_w_thm = HolSmtLib.Z3_ORACLE_PROVE w_tm
+    val w_thm = HolSmtLib.Z3_ORACLE_PROVE w_tm
       handle HOL_ERR e =>
+        (* Print a SAT model if the solver reports "SAT" *)
         let
-          fun print_model model = List.foldl
-            (fn ((name, tm), _) => (print (" - " ^ name ^ ": "); Hol_pp.print_term tm))
-            () (rev model);
-          val neg_tm = mk_neg w_tm
-          val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL neg_tm
-          val _ = print "Failed to prove the implication. Here is a counter-example:\n";
+          val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL (mk_neg w_tm)
+          val _ = print ( "Failed to prove the implication. "
+                        ^ "Here is a counter-example:\n")
           val _ = print_model model;
+          val _ = print "\n";
         in
           raise HOL_ERR e
         end
@@ -35,7 +38,7 @@ fun prove_bir_eval_exp_with_SMT_then_cheat_TAC (assum_list, goal) =
     ([], K (prove (goal, cheat)))
   end;
 
-fun prove_exp_is_taut imp_tm = prove (
+fun prove_exp_is_taut imp_tm = (GEN_ALL o prove) (
   ``bir_exp_is_taut ^(imp_tm)``,
   PURE_REWRITE_TAC [bir_exp_is_taut_def] >>
   REPEAT STRIP_TAC >| [
@@ -56,14 +59,5 @@ fun bimp (ante, conseq) = bor (bnot ante, conseq)
     ( "Failed to create the implication. "
     ^ "Make sure that `ante` and `conseq` are BIR expression terms.")
     (wrap_exn "bimp" e)
-
-
-
-fun save_exp_is_taut_imp (name, ante, cons) =
-  let
-    val imp_tm = bimp (ante, cons);
-  in
-    save_thm (name, (GEN_ALL o prove_exp_is_taut) imp_tm)
-  end;
 
 end
