@@ -12,7 +12,7 @@ The Satisfiability Modulo Theories (SMT) problem is a decision problem for logic
 
 A SMT instance is a quantifier-free first-order formula. When given a SMT instance, SMT solvers determine if the instance is _satisfiable_, i.e. if there exist a valuation for which the formula evaluates to true. The decision can be _satisfiable_ or _unsatisfiable_.
 
-**Note**: SMT cal also decide `unknown` if they run into an error.
+**Note**: SMT solvers can also decide _unknown_ if they run into an error.
 
 In our use case, we want to prove that a given boolean formula is true. This is equivalent to determining if there are no valuation for which it is false, which translate in SMT solver terms in proving that the negation of the formula is _unsatifiable_.
 
