@@ -139,6 +139,7 @@ val defs = [bir_add_reg_prog_def, bir_add_reg_contract_2_post_def,
 val (bir_add_reg_loop_ht, bir_add_reg_loop_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix false_label_l defs;
+
 val bir_add_reg_loop_wp_def =
   Define `bir_add_reg_loop_wp = ^(bir_add_reg_loop_wp_tm)`;
 val _ = save_thm ("bir_add_reg_loop_ht", bir_add_reg_loop_ht);
@@ -280,7 +281,7 @@ val _ = save_thm ("bir_add_reg_loop_continue_variant_ht",
  * of verification due to issues with memory simplification which
  * bungle the step involving the SMT solver.
  *
- * The below shows that we can still generate WPs for this
+ * The below shows that we can still prove HTs for this
  * situation. *)
 
 (*****************     (0) bir_add_reg_mem      *******************)
