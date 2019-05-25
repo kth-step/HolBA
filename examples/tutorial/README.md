@@ -21,6 +21,10 @@ You may use the following commands:
 1. Prepare your terminal with `source {HOLBA_DIR}/scripts/setup/autoenv.sh`
 2. In the directory with a code file of interest, run either
   * `rlwrap hol`, or
-  * `emacs` (don't forget to prepare your `~/.emacs` file with `{HOLBA_DIR}/scripts/setup/config.emacs`)
+  * `emacs` (your `~/.emacs` file has to be prepared for the hol-mode, see `{HOLBA_DIR}/scripts/setup/config.emacs`)
 
+
+## HolBA-tutorial VM
+
+Using the prepared VM, you don't need to worry about `autoenv.sh` and emacs configurations. The environment is prepared so that you can run `make`, `Holmake`, `rlwrap hol` and `emacs` from a terminal in the HolBA directories as needed. The most relevant HolBA directories are `~/tutorial/HolBA_tutorial/examples/tutorial` and `~/tutorial/HolBA_scamv/src/tools/scamv`.
 
