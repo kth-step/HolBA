@@ -206,7 +206,7 @@ val _ = debug_trace := 2;
       val (ol, x)  = dest_pair result_t;
       val (n, s2)  = dest_pair x;
     in
-      (ol, n, s2)
+      (ol, n, s2, exec_thm')
     end;
 
   (* function for using execution in scripts, it prints out relevant progress information and the output *)
@@ -290,7 +290,7 @@ val _ = debug_trace := 2;
       val _ = print_l "executing...\n";
       val _ = print_l "--------------------------------\n";
       val timer = timer_start 0;
-      val (ol, n, s2) = bir_exec_prog_gen prog_l_def n_max valid_prog_thm state;
+      val (ol, n, s2, exec_thm) = bir_exec_prog_gen prog_l_def n_max valid_prog_thm state;
       val d_s = timer_stop timer;
       val _ = print_l "ok\n";
 
@@ -328,7 +328,7 @@ val _ = debug_trace := 2;
       val _ = print_l "================================\n";
       val _ = print_l "\n";
     in
-      ()
+      exec_thm
     end;
 
 
