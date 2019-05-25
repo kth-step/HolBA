@@ -38,7 +38,6 @@ open tutorial_wpSupportTheory;
 
 in
 
-
 val eot = (rhs o concl o EVAL)
 val get_wp_from_ht =
   (rhs o concl o EVAL o (el 4) o snd o strip_comb o concl)
@@ -73,67 +72,60 @@ local
 in
 
 (* This is a wrapper function for generating and proving WPs. *)
-(* TODO: Need to make sure a mess is not caused by overloading
- * definitions.
- *
- * This can be solved by passing an additional prefix/suffix to
- * bir_wp_comp_wps.
- *)
 fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                   postcond_tm prefix false_label_l defs =
   let
-    (* TODO: Make some sort of test to check if computations have
-     * already been performed for current prefix. *)
-    (* variables: *)
-    val prog_var = prog_tm
-
-    val postcond_var = postcond_tm
-    val ls_var = ``\x.(x = ^last_block_label_tm)``
+    (* Some terms which will be used: *)
+    (*   The terminating label set *)
+    val ls_tm = ``\x.(x = ^last_block_label_tm)``
+    (*   A finite map of dummy labels to False *)
     val false_fmap_tm = make_false_label_fmap false_label_l
-
-    val wps_var = ``
+    (*   A finite map of all the labels and all the preconditions,
+     *   which will be used throughout the computation to store
+     *   the WPs *)
+    val wps_tm = ``
         ((^false_fmap_tm) |+ (^last_block_label_tm,
                     ^(postcond_tm)
                    )
         )
     ``;
 
-
     (* Initialize queue of blocks to process: *)
-    val wps_tm =
-      (rhs o concl o (SIMP_CONV std_ss defs)) wps_var
-(* For experimentation: 
-val (program, post, ls) = (prog_var, postcond_var, ls_var)
-val wps = wps_var
-*)
+    val wps_expand_tm =
+      (rhs o concl o (SIMP_CONV std_ss defs)) wps_tm
+    (* For debugging bir_wp_init_wps_bool_sound_thm: 
+    val (program, post, ls) = (prog_tm, postcond_tm, ls_tm)
+    val wps = wps_tm
+    *)
     val wps_bool_sound_thm =
       bir_wp_init_wps_bool_sound_thm
-        (prog_var, postcond_var, ls_var) wps_var defs
+        (prog_tm, postcond_tm, ls_tm) wps_tm defs
     val (wpsdom, blstodo) =
-      bir_wp_init_rec_proc_jobs (eot prog_tm) wps_tm false_label_l
+      bir_wp_init_rec_proc_jobs (eot prog_tm) wps_expand_tm
+                                false_label_l
 
     (* Prepare "problem-static" part of computation: *)
-(*
-val reusable_thm = bir_wp_exec_of_block_reusable_thm;
-val (program, post, ls) = (prog_var, postcond_var, ls_var)
-*)
+    (* For debugging bir_wp_comp_wps_iter_step0_init:
+    val reusable_thm = bir_wp_exec_of_block_reusable_thm;
+    val (program, post, ls) = (prog_tm, postcond_tm, ls_tm)
+    *)
     val prog_thm =
       bir_wp_comp_wps_iter_step0_init
         bir_wp_exec_of_block_reusable_thm
-        (prog_var, postcond_var, ls_var) defs
+        (prog_tm, postcond_tm, ls_tm) defs
 
     (* Main computation: *)
-(*
-  val wps = wps_var
-  val blsotodo = List.rev blstodo
-  val program = prog_var
-  val post = postcond_var
-  val ls = ls_var
-*)
+    (* For debugging bir_wp_comp_wps:
+      val wps = wps_tm
+      val blsotodo = List.rev blstodo
+      val program = prog_tm
+      val post = postcond_tm
+      val ls = ls_tm
+    *)
     val (wps1, wps1_bool_sound_thm) =
-      bir_wp_comp_wps prog_thm ((wps_var, wps_bool_sound_thm),
+      bir_wp_comp_wps prog_thm ((wps_tm, wps_bool_sound_thm),
 				(wpsdom, List.rev blstodo))
-			       (prog_var, postcond_var, ls_var) defs
+			       (prog_tm, postcond_tm, ls_tm) defs
 
     (* Pick out the soundness theorems, *)
     val sound_thms = ((el 2 o CONJUNCTS) wps1_bool_sound_thm)
@@ -165,18 +157,14 @@ val (program, post, ls) = (prog_var, postcond_var, ls_var)
             ``bir_prog_has_no_assumes ^(prog_tm)``)
     val target_bir_triple =
       HO_MATCH_MP
-        (HO_MATCH_MP bir_never_assumviol_block_n_ht_from_to_labels_ht
-                     no_assumes_thm
+        (HO_MATCH_MP
+           bir_never_assumviol_block_n_ht_from_to_labels_ht
+           no_assumes_thm
         ) target_ht
-    (* Obtain definition of WP expression *)
-    val wp_name =
-      "bir_wp_comp_wps_iter_step2_wp_"^
-      ((term_to_string o snd o gen_dest_Imm o dest_BL_Address)
-        first_block_label_tm)
-    val final_wp_def =
-      EVAL (Parse.Term [QUOTE wp_name])
+    (* Obtain WP of target_bir_triple *)
+    val target_wp_tm = get_wp_from_ht target_bir_triple
   in
-    (target_bir_triple, [final_wp_def])
+    (target_bir_triple, target_wp_tm)
   end handle Option => raise ERR "extract_subprogram"
 	("No Hoare triple was found for the addresses "^
 	 (term_to_string first_block_label_tm)^" and "^
