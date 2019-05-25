@@ -37,8 +37,8 @@ in () end else ();
 
 val _ = new_theory "tutorial_smt";
 
-(**********************************************************************)
-(* 1.1. Prove Hoare triples                                           *)
+(*****************************************************************************)
+(* 1.1. Prove Hoare triples                                                  *)
 
 (* (1) bir_add_reg_entry
  * 
@@ -115,8 +115,8 @@ val contract_4_imp = bimp (contract_4_pre, contract_4_wp);
 val contract_4_imp_taut_thm = save_thm ("contract_4_imp_taut_thm",
   prove_exp_is_taut contract_4_imp);
 
-(**********************************************************************)
-(* 1.2. Prove variants                                                *)
+(*****************************************************************************)
+(* 1.2. Prove variants                                                       *)
 
 (* (2v) bir_add_reg_loop_variant
  * 
@@ -151,13 +151,13 @@ val contract_3v_imp = bimp (contract_3v_pre, contract_3v_wp);
 val contract_3v_imp_taut_thm = save_thm ("contract_3v_imp_taut_thm",
   prove_exp_is_taut contract_3v_imp);
 
-(**********************************************************************)
-(* 1.3. Hoare triples containing memories                             *)
-(*                                                                    *)
-(* !!! WARNING !!!                                                    *)
-(*                                                                    *)
-(* This is WIP, you can stop here for the tutorial.                   *)
-(*                                                                    *)
+(*****************************************************************************)
+(* 1.3. Hoare triples containing memories                                    *)
+(*                                                                           *)
+(* !!! WARNING !!!                                                           *)
+(*                                                                           *)
+(* This is WIP, you can stop here for the tutorial.                          *)
+(*                                                                           *)
 
 (* (0) bir_add_reg_mem
  * 

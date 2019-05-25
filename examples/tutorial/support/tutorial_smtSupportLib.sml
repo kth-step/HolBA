@@ -12,6 +12,24 @@ fun print_model model = List.foldl
   (fn ((name, tm), _) => (print (" - " ^ name ^ ": "); Hol_pp.print_term tm))
   () (rev model);
 
+fun Z3_prove_or_print_model term =
+  HolSmtLib.Z3_ORACLE_PROVE term
+    handle HOL_ERR e =>
+      (* Print a SAT model if the solver reports "SAT" *)
+      let
+        (* TODO: Check soundness of using strip_forall *)
+        val (_, qf_tm) = strip_forall term
+        val neg_tm = mk_neg qf_tm
+        val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL neg_tm
+        val _ = print ( "Failed to prove the given term. "
+                      ^ "Here is a counter-example:\n")
+        val _ = print_model model;
+        val _ = print "\n";
+      in
+        raise HOL_ERR e
+      end
+        handle _ => raise HOL_ERR e
+
 fun prove_bir_eval_exp_with_SMT_then_cheat_TAC (assum_list, goal) =
   let
     val (eval_tm, rhs_tm) = dest_eq goal
@@ -21,19 +39,7 @@ fun prove_bir_eval_exp_with_SMT_then_cheat_TAC (assum_list, goal) =
     val (bir_tm, env_tm) = dest_bir_eval_exp eval_tm
     val w_tm = bir2bool bir_tm
     (**)
-    val w_thm = HolSmtLib.Z3_ORACLE_PROVE w_tm
-      handle HOL_ERR e =>
-        (* Print a SAT model if the solver reports "SAT" *)
-        let
-          val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL (mk_neg w_tm)
-          val _ = print ( "Failed to prove the implication. "
-                        ^ "Here is a counter-example:\n")
-          val _ = print_model model;
-          val _ = print "\n";
-        in
-          raise HOL_ERR e
-        end
-          handle _ => raise HOL_ERR e
+    val w_thm = Z3_prove_or_print_model
   in
     ([], K (prove (goal, cheat)))
   end;
