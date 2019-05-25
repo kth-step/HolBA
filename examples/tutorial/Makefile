@@ -5,8 +5,7 @@ HOLMAKEFILE_DIRS=2-lift 4-bir-to-arm 5-wp 6-smt 7-composition
 ##########################################################
 
 .DEFAULT_GOAL := all
-all:2-lift
-#all:7-composition
+all: 7-composition
 
 ##########################################################
 
@@ -21,7 +20,7 @@ $(HOLMAKEFILE_DIRS):
 cleantutorial:
 	git clean -fdX .
 
-reverttutorial:
+reverttutorial: cleantutorial
 	git clean -fd .
 	git checkout HEAD -- .
 
