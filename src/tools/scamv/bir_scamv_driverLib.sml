@@ -307,6 +307,7 @@ fun scamv_test_gen_run (asm_code, sections) =
         val lifted_prog = lift_program_from_sections sections;
         val lifted_prog_w_obs =
             bir_arm8_cache_line_model.add_obs lifted_prog;
+        val _ = print_term(lifted_prog_w_obs);
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 
 
