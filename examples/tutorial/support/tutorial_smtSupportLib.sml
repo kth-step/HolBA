@@ -39,7 +39,7 @@ fun prove_bir_eval_exp_with_SMT_then_cheat_TAC (assum_list, goal) =
     val (bir_tm, env_tm) = dest_bir_eval_exp eval_tm
     val w_tm = bir2bool bir_tm
     (**)
-    val w_thm = Z3_prove_or_print_model
+    val w_thm = Z3_prove_or_print_model w_tm;
   in
     ([], K (prove (goal, cheat)))
   end;
