@@ -28,7 +28,7 @@ It is usually nice to split the Emacs frame into two windows side-by-side: one w
 
 <kbd>Ctrl</kbd>+<kbd>x</kbd>, <kbd>3</kbd> (to split the frame)
 
-<kbd>Ctrl</kbd>+<kbd>o</kbd> (to switch window inside the frame)
+<kbd>Ctrl</kbd>+<kbd>x</kbd>, <kbd>o</kbd> (to switch window inside the frame)
 
 <kbd>Alt</kbd>+<kbd>h</kbd>, <kbd>h</kbd> (to start the HOL4 REPL)
 
