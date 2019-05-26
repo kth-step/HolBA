@@ -80,14 +80,17 @@ struct
                val regname = if String.isSuffix "_" regname then
                                (String.extract(regname, 0, SOME((String.size regname) - 1)))
                              else regname;
-               val v_0 = Int.mod(v,                           0x10000);
-               val v_1 = Int.mod(Int.div(v, 0x10000),         0x10000);
-               val v_2 = Int.mod(Int.div(v, 0x100000000),     0x10000);
-               val v_3 = Int.mod(Int.div(v, 0x1000000000000), 0x10000);
-               val line0 = "\tmovz " ^ regname ^ ", #0x" ^ (Int.fmt StringCvt.HEX v_0);
-               val line1 = "\tmovk " ^ regname ^ ", #0x" ^ (Int.fmt StringCvt.HEX v_1) ^ ", lsl #16";
-               val line2 = "\tmovk " ^ regname ^ ", #0x" ^ (Int.fmt StringCvt.HEX v_2) ^ ", lsl #32";
-               val line3 = "\tmovk " ^ regname ^ ", #0x" ^ (Int.fmt StringCvt.HEX v_3) ^ ", lsl #48";
+               val bit2_16 = Arbnumcore.fromHexString "10000";
+               val bit2_32 = Arbnumcore.fromHexString "100000000";
+               val bit2_48 = Arbnumcore.fromHexString "1000000000000";
+               val v_0 = Arbnumcore.mod(v,                          bit2_16);
+               val v_1 = Arbnumcore.mod(Arbnumcore.div(v, bit2_16), bit2_16);
+               val v_2 = Arbnumcore.mod(Arbnumcore.div(v, bit2_32), bit2_16);
+               val v_3 = Arbnumcore.mod(Arbnumcore.div(v, bit2_48), bit2_16);
+               val line0 = "\tmovz " ^ regname ^ ", #0x" ^ (Arbnumcore.toHexString v_0);
+               val line1 = "\tmovk " ^ regname ^ ", #0x" ^ (Arbnumcore.toHexString v_1) ^ ", lsl #16";
+               val line2 = "\tmovk " ^ regname ^ ", #0x" ^ (Arbnumcore.toHexString v_2) ^ ", lsl #32";
+               val line3 = "\tmovk " ^ regname ^ ", #0x" ^ (Arbnumcore.toHexString v_3) ^ ", lsl #48";
              in
                "\n" ^ line0 ^ "\n" ^ line1 ^ "\n" ^ line2 ^ "\n" ^ line3 ^ "\n"
              end) s;

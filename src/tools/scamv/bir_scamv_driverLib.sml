@@ -9,6 +9,7 @@ open bir_exp_to_wordsLib;
 open bir_rel_synthLib;
 open bslSyntax;
 open wordsSyntax;
+open wordsLib;
 open stringSyntax;
 open listSyntax;
 open bir_embexp_driverLib;
@@ -215,8 +216,8 @@ fun print_model model =
             (print (" - " ^ name ^ ": "); Hol_pp.print_term tm))
         () (rev model);
 
-fun to_sml_ints model =
-    List.map (fn (name, tm) => (name, uint_of_word tm handle e => 42)) model;
+fun to_sml_Arbnums model =
+    List.map (fn (name, tm) => (name, dest_word_literal tm)) model;
 
 val (current_asm : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
@@ -264,7 +265,7 @@ fun next_test select_path =
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
         val _ = (print "SAT model:\n"; print_model model(*; print "\n"*));
 
-        val sml_model = to_sml_ints model;
+        val sml_model = to_sml_Arbnums model;
         fun isPrimedRun s = String.isSuffix "_" s;
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
         val asm_file_contents = !current_asm;
@@ -319,7 +320,7 @@ fun scamv_test_gen_run (asm_code, sections) =
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
         val _ = (print "SAT model:\n"; print_model model(*; print "\n"*));
 
-        val sml_model = to_sml_ints model;
+        val sml_model = to_sml_Arbnums model;
         fun isPrimedRun s = String.isSuffix "_" s;
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
 

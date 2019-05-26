@@ -146,6 +146,7 @@ fun mkRel_conds xs =
                      | (_,NONE) => bir_false
                      | *) (SOME l1,SOME l2)  => 
                           mk_bir_cond_obs_eq l1 l2
+                        | _ => raise ERR "mkRel_conds" "this should really not happen :)"
                 val _ = print (".");
             in ((band (c, c')),  eqRel) end;
         val xs2 = cartesianWith processImpl somes somes_primed;
