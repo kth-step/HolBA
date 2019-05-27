@@ -88,16 +88,23 @@ lift_contract_thm;
 val arm_add_reg_contract_thm = prove(``
 ^(concl (UNDISCH_ALL add_lift_thm))
 ``,
+
 ASSUME_TAC add_lift_thm >>
 FULL_SIMP_TAC std_ss [EVAL ``MEM (^(get_contract_l add_reg_contract_thm)) (bir_labels_of_program bir_add_reg_prog)``] >>
 ASSUME_TAC add_reg_contract_thm >>
 SUBGOAL_THEN ``
   ((λx. x = BL_Address (Imm64 72w)) = {BL_Address (Imm64 ml') | ml' ∈ {72w}})
-`` (fn thm => FULL_SIMP_TAC std_ss (CONJUNCTS thm)) >- (cheat) >>
+`` (fn thm => FULL_SIMP_TAC std_ss (CONJUNCTS thm)) >- (
+FULL_SIMP_TAC (srw_ss()) [GSYM pred_setTheory.IMAGE_DEF,
+                          GSYM set_sepTheory.SEP_EQ_def,
+                          stateTheory.SEP_EQ_SINGLETON]
+) >>
 FULL_SIMP_TAC (std_ss) [examplesBinaryTheory.bir_add_reg_arm8_lift_THM] >>
 SUBGOAL_THEN ``arm8_wf_varset
            (bir_vars_of_program (^(get_contract_prog add_reg_contract_thm)) ∪
-            bir_vars_of_exp bir_add_reg_pre)`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- cheat >>
+            bir_vars_of_exp bir_add_reg_pre)`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+  cheat
+) >>
 FULL_SIMP_TAC (std_ss) [arm8_pre_imp_bir_pre_thm, arm8_post_imp_bir_post_thm]
 );
 
