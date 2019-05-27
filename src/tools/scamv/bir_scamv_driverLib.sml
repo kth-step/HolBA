@@ -315,6 +315,7 @@ fun scamv_test_gen_run (asm_code, sections) =
         val relation = mkRel paths;
         val _ = print ("Word relation\n");
         val word_relation = make_word_relation relation all_exps;
+        val _ = print_term(word_relation);
         val _ = print ("Calling Z3\n");
 
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
