@@ -1,11 +1,11 @@
 
-MAKEFILE_DIRS=1-code 3-exec
-HOLMAKEFILE_DIRS=2-lift 4-bir-to-arm 5-wp 6-smt 7-composition
+MAKEFILE_DIRS=1-code 3-exec 8-symbexec
+HOLMAKEFILE_DIRS=2-lift 4-bir-to-arm 5-wp 6-smt 7-composition support support2
 
 ##########################################################
 
 .DEFAULT_GOAL := all
-all: 7-composition
+all: 7-composition support2
 
 ##########################################################
 
