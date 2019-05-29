@@ -2,9 +2,13 @@ signature bir_symb_execLib = sig
 
   type 'a symb_tree_t;
 
+  val symb_is_BST_Running  : term -> bool
+
+  val symb_is_BST_AssertionViolated : term -> bool
+
   val symb_exec_program    : term -> term symb_tree_t
 
-  val dest_bir_symb_obs    : term -> term * term
+  val dest_bir_symb_obs    : term -> term * term * term
   val dest_bir_symb_state  : term -> term * term * term * term * term
 
   val bir_exp_hvar_to_bvar : term -> term

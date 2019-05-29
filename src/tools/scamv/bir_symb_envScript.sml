@@ -35,7 +35,8 @@ val fmap_update_replace_def = Define `
 val bir_symb_env_read_def  = Define `
     (bir_symb_env_read v (BEnv env) = 
         case (FLOOKUP  env (bir_var_name v)) of 
-        | NONE => ARB
+        | NONE => ARB (* this means we don't expect this case,
+                         all variables of expressions should be in the environment *)
         | SOME (ty, e) => e)`;
 
 val bir_symb_env_lookup_def = Define `

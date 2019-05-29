@@ -1,6 +1,5 @@
 
-scamv_entry:
-	b.eq l2
+	b.eq __scamv_lbl
 	mul x1, x2, x3
-l2:
+__scamv_lbl:
 	ldr x2, [x1, #8]

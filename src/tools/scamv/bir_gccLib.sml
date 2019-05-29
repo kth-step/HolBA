@@ -22,10 +22,10 @@ in
     end;
 
 (*
-val lines = ["ldr x2, [x1]"];
+val lines = "";
 val tempdir = "./tempdir";
 *)
-  fun bir_gcc_assembe_disassemble lines tempdir =
+  fun bir_gcc_assembe_disassemble input_code tempdir =
     let
       val gcc_prefix = gcc_prefix ();
 
@@ -38,7 +38,6 @@ val tempdir = "./tempdir";
       val path_asm_o  = tempdir ^ "/asm.o";
       val path_asm_da = tempdir ^ "/asm.da";
 
-      val input_code = List.foldl (fn (l,s) => s ^ "\t" ^ l ^ "\n") "\n__scamv_entry__:\n" lines;
       val _ = writeToFile input_code path_asm_s;
 
       val commandline = (gcc_prefix ^ "gcc -o " ^ path_asm_o ^ " -c " ^ path_asm_s ^
