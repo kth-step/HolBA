@@ -148,7 +148,7 @@ val eq_thm = Define `
 
 (* This is the theorem we want to prove *)
 val NIC_P_def = Define `NIC_P nic = (nic.dead = F) /\ (nic.x = 0w)`
-val NIC_Q_def = Define `NIC_Q nic nic' = (nic'.dead = F) /\ (nic'.x = 1w)`
+val NIC_Q_def = Define `NIC_Q nic nic' = (nic'.dead = F) /\ (nic'.x = nic.x + 1w)`
 val goal_tm = ``!nic nic'. (NIC_P nic /\ exec_prog nic bir_prog nic') ==> NIC_Q nic nic'``;
 
 (* Equivalent preconditions on BIR variables *)
@@ -188,12 +188,57 @@ val d_thm = store_thm ( "d_thm",
   ``!bir_state'. BIR_Q bir_state'
       ==> (!nic nic' bir_state. (BIR_P bir_state /\ R nic bir_state /\ R nic' bir_state')
             ==> (NIC_Q nic nic'))``,
-  REPEAT STRIP_TAC >>
-  REWRITE_TAC [NIC_Q_def] >>
-  FULL_SIMP_TAC holba_ss [BIR_Q_def, BIR_Q_exp_def, R_def] >>
-  FULL_SIMP_TAC holba_ss [bool2bval_def, w2bval32_def, bool2imm1_REWR] >>
-  CCONTR_TAC >>
-  REPEAT FULL_EVAL_SIMP_TAC
+  PURE_REWRITE_TAC [NIC_Q_def] >>
+  PURE_REWRITE_TAC [BIR_P_def, BIR_Q_def, R_def] >>
+  PURE_REWRITE_TAC [bool2bval_def, w2bval32_def, bool2imm1_REWR] >>
+  REPEAT STRIP_TAC >| [
+    (* ~nic'.dead *)
+    Cases_on `nic'.dead` >> (
+      CCONTR_TAC >>
+      REPEAT FULL_EVAL_SIMP_TAC
+    )
+    ,
+    (* nic'.x = nic.x + 1w *)
+    subgoal `bir_is_bool_exp_env bir_state.bst_environ BIR_P_exp` >- (
+      FULL_SIMP_TAC pure_ss [BIR_P_exp_def] >>
+      PURE_REWRITE_TAC [bir_is_bool_exp_env_def] >>
+      ASM_SIMP_TAC (pure_ss++VARS_OF_PROG_ss++pred_setSimps.PRED_SET_ss) [] >>
+      subgoal `bir_env_var_is_initialised bir_state.bst_environ (BVar "nic_dead" (BType_Imm Bit1))` >- (
+        FULL_SIMP_TAC holba_ss [bir_env_var_is_initialised_def] >>
+        EVAL_TAC
+      ) >>
+      subgoal `bir_env_var_is_initialised bir_state.bst_environ (BVar "nic_x" (BType_Imm Bit32))` >- (
+        FULL_SIMP_TAC holba_ss [bir_env_var_is_initialised_def]
+      ) >>
+      SIMP_TAC holba_ss [bir_is_bool_exp_def, BType_Bool_def] >>
+      ASM_SIMP_TAC holba_ss [bir_env_vars_are_initialised_def] >>
+      PROVE_TAC [bir_env_vars_are_initialised_def]
+    ) >>
+    subgoal `bir_is_bool_exp_env bir_state'.bst_environ BIR_Q_exp` >- (
+      FULL_SIMP_TAC pure_ss [BIR_Q_exp_def] >>
+      PURE_REWRITE_TAC [bir_is_bool_exp_env_def] >>
+      ASM_SIMP_TAC (pure_ss++VARS_OF_PROG_ss++pred_setSimps.PRED_SET_ss) [] >>
+      subgoal `bir_env_var_is_initialised bir_state'.bst_environ (BVar "nic_dead" (BType_Imm Bit1))` >- (
+        FULL_SIMP_TAC holba_ss [bir_env_var_is_initialised_def] >>
+        EVAL_TAC
+      ) >>
+      subgoal `bir_env_var_is_initialised bir_state'.bst_environ (BVar "nic_x" (BType_Imm Bit32))` >- (
+        FULL_SIMP_TAC holba_ss [bir_env_var_is_initialised_def]
+      ) >>
+      SIMP_TAC holba_ss [bir_is_bool_exp_def, BType_Bool_def] >>
+      ASM_SIMP_TAC holba_ss [bir_env_vars_are_initialised_def] >>
+      PROVE_TAC [bir_env_vars_are_initialised_def]
+    ) >>
+    FULL_SIMP_TAC holba_ss [bir_eval_bool_exp_EQ] >>
+    (**)
+    FULL_SIMP_TAC pure_ss [BIR_P_exp_def, BIR_Q_exp_def] >>
+    FULL_SIMP_TAC holba_ss [bir_eval_exp_def, bir_eval_bin_exp_def, bir_eval_bin_pred_def] >>
+    FULL_SIMP_TAC (srw_ss()) [bir_env_read_def, BType_Bool_def] >>
+    FULL_SIMP_TAC holba_ss [bir_eval_exp_def, bir_eval_bin_exp_def, bir_eval_bin_pred_def] >>
+    FULL_SIMP_TAC (srw_ss()) [bir_env_read_def, BType_Bool_def] >>
+    FULL_SIMP_TAC holba_ss [bir_eval_exp_def, bir_eval_bin_exp_def, bir_eval_bin_pred_def] >>
+    FULL_SIMP_TAC holba_ss bool2b_REWRS
+  ]
 )
 
 (* Useful lemmas *)
