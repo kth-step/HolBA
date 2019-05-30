@@ -17,6 +17,8 @@ open bir_immSyntax;
 open bir_expSyntax;
 open bir_envSyntax;
 
+val debug_on = false;
+
 in
 
 (* In order to decide when we want to stop execution, we need 
@@ -77,25 +79,44 @@ fun symb_is_BST_AssertionViolated state =
  * in the Tree represent the Branches in the CFG *)
 datatype 'a symb_tree_t = Symb_Node  of ('a  * 'a symb_tree_t list);
 
+fun decide_pred pd s =
+  let 
+    val (pc, env, pred, status, obs) = dest_bir_symb_state s;
+  in
+    pd pred
+  end;
+
+
 (* The main function to execute a BIR Program:
  * Builds an Execution Tree  *)
 (*
  val bp = bir_program;
  val st = state;
  *)
-fun symb_exec_run bp st = 
-  if not (symb_is_BST_Running st) then
+fun symb_exec_run max bp pd st = 
+  if (not (symb_is_BST_Running st)) orelse (max = 0) then
     Symb_Node (st, [])
   else
     let
+      val max_new = if max < 0 then max else (max-1);
       val (sts_running, sts_terminated) = 
               ((dest_pair o  rhs o concl o EVAL) ``bir_symb_exec_label_block ^bp ^st``);
       val sts_ter = (#1 (dest_list sts_terminated));
       val sts_run = (#1 (dest_list sts_running));
+      val sts = (sts_ter @ sts_run);
+      val sts_filtered = List.filter (decide_pred pd) sts;
+      val _ = if not debug_on then () else
+        let
+	  val _ = print "=========================================\n";
+	  val _ = print (Int.toString max);
+	  val _ = print "\n=========================================\n";
+        in () end;
+      val sts_rec = List.map (symb_exec_run max_new bp pd) sts_filtered;
     in
-      Symb_Node (st, (List.map (symb_exec_run bp)
-                              (sts_ter @ sts_run)
-                     ))
+      Symb_Node (st, sts_rec)
+(*
+      Symb_Node (st, (List.map (fn st' => Symb_Node (st', [])) (sts_ter @ sts_run)))
+*)
     end;
    
 (* Given a Program, exec until every branch halts *)
@@ -120,12 +141,12 @@ val bir_program = ``BirProgram
                           (\x. x)];
          bb_last_statement := BStmt_Halt (BExp_Const (Imm64 4w))|>]``;
 *)
-fun symb_exec_program bir_program =
+fun symb_exec_program depth precond bir_program pd =
   let 
     val env = init_env ();
     val state = (rhs o concl o EVAL)
-                  ``bir_symb_state_init ^bir_program ^env``;
-    val tree  = symb_exec_run bir_program state;
+                  ``bir_symb_state_init ^bir_program ^env ^precond``;
+    val tree  = symb_exec_run depth bir_program pd state;
     val _ = print ("Execution: Done!\n");
    in 
      tree

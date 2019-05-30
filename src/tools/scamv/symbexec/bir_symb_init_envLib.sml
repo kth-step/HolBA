@@ -81,7 +81,7 @@ fun add_memory_to_env env =
     (rhs o concl o EVAL) 
     ``
     bir_symb_env_update 
-    ^mem (BExp_Den (BVar ^mem (BType_Mem Bit64 Bit8))) (BType_Mem Bit64 Bit8) ^env
+    ^mem (BExp_MemConst Bit64 Bit8 memory) (BType_Mem Bit64 Bit8) ^env
     ``
   end;
 
