@@ -48,9 +48,6 @@ do
   fi
 done
 OUTPUT="${OUTPUT}\n"
-OUTPUT=${OUTPUT}'\nexport PATH="${HOLBA_HOL_BIN_DIR}:${PATH}"'
-OUTPUT=${OUTPUT}'\nexport HOLBA_HOLMAKE="${HOLBA_HOL_BIN_DIR}/Holmake"'
-OUTPUT="${OUTPUT}\n"
 echo
 
 # generate env export script for all variables
