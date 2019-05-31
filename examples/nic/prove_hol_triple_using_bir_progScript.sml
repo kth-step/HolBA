@@ -111,19 +111,34 @@ val bool2imm1_REWR = store_thm ( "bool2imm1_REWR",
 val bool2bexp_def = Define `(bool2bexp b = BExp_Const (bool2imm1 b))`
 val bool2bval_def = Define `(bool2bval b = BVal_Imm (bool2imm1 b))`
 val w2bval32_def = Define `(w2bval32 n = BVal_Imm (Imm32 n))`
+val bexp_not_bool2b = prove (
+  ``!b. (bir_unary_exp BIExp_Not (bool2b b)) = (bool2b ~b)``,
+  Cases >> EVAL_TAC)
+val bexp_and_bool2b = prove (
+  ``!a b. (bir_bin_exp BIExp_And (bool2b a) (bool2b b)) = (bool2b (a /\ b))``,
+  REPEAT Cases >> EVAL_TAC)
+val bexp_or_bool2b = prove (
+  ``!a b. (bir_bin_exp BIExp_Or (bool2b a) (bool2b b)) = (bool2b (a \/ b))``,
+  REPEAT Cases >> EVAL_TAC)
+val bool2b_REWRS = [
+  bool2b_11, bool2b_inv,
+  bool2b_ELIMS, bool2b_EQ_IMM1_ELIMS, bool2b_NEQ_IMM_ELIMS,
+  bir_eval_bool_exp_BExp_Const_bool2b, BVal_Imm_bool2b_EQ_TF_REWRS,
+  bexp_not_bool2b, bexp_and_bool2b, bexp_or_bool2b
+]
 val R_def = Define `
   R (nic: nic_state) (bir_state: bir_state_t) <=>
-    (  (bir_state.bst_pc.bpc_index = 0)
-    /\ (bir_state.bst_pc.bpc_label = entry_label)
-    /\ (bir_state.bst_status = BST_Running)
-    /\ (bir_env_lookup "nic_dead" bir_state.bst_environ
+    (  (bir_env_lookup "nic_dead" bir_state.bst_environ
           = SOME (BType_Bool, SOME (bool2bval nic.dead)))
     /\ (bir_env_lookup "nic_x" bir_state.bst_environ
           = SOME (BType_Imm Bit32, SOME (w2bval32 nic.x))))`
 
 (* Lemma (3) *)
 val R_inj_thm = store_thm ( "R_inj_thm",
-  ``!nic. ?bir_state. R nic bir_state``,
+  ``!nic. ?bir_state. R nic bir_state
+            /\ (bir_state.bst_pc.bpc_index = 0)
+            /\ (bir_state.bst_pc.bpc_label = entry_label)
+            /\ (bir_state.bst_status = BST_Running)``,
   STRIP_TAC >>
   REWRITE_TAC [R_def] >>
   EXISTS_TAC ``
@@ -318,16 +333,6 @@ val (wp_thm, triple_thm) =
     val IS_IMM_EXP_TAC = FULL_SIMP_TAC holba_ss [bir_is_imm_exp_def, Abbrev_def]
     val UNABBREV_EVAL_TAC = unabbrev_all_tac >> EVAL_TAC
     (**)
-    val bexp_not_bool2b = prove (
-      ``!b. (bir_unary_exp BIExp_Not (bool2b b)) = (bool2b ~b)``,
-      Cases >> EVAL_TAC)
-    val bexp_and_bool2b = prove (
-      ``!a b. (bir_bin_exp BIExp_And (bool2b a) (bool2b b)) = (bool2b (a /\ b))``,
-      REPEAT Cases >> EVAL_TAC)
-    val bexp_or_bool2b = prove (
-      ``!a b. (bir_bin_exp BIExp_Or (bool2b a) (bool2b b)) = (bool2b (a \/ b))``,
-      REPEAT Cases >> EVAL_TAC)
-    (**)
     fun REPEAT_N 1 tac = tac | REPEAT_N n tac = tac >> REPEAT_N (n-1) tac
     (**)
     val bir_exp_equiv_thms = [
@@ -348,12 +353,6 @@ val (wp_thm, triple_thm) =
       bir_bin_pred_def
     ]
     val OPER_thms = [bir_bin_exp_GET_OPER_def, bir_bin_pred_GET_OPER_def, bir_unary_exp_GET_OPER_def]
-    val bool2b_REWRS = [
-      bool2b_11, bool2b_inv,
-      bool2b_ELIMS, bool2b_EQ_IMM1_ELIMS, bool2b_NEQ_IMM_ELIMS,
-      bir_eval_bool_exp_BExp_Const_bool2b, BVal_Imm_bool2b_EQ_TF_REWRS,
-      bexp_not_bool2b, bexp_and_bool2b, bexp_or_bool2b
-    ]
     val BIR_TO_WORDS_ss = rewrites (
        bir_exp_equiv_thms
       @bir_eval_defs
@@ -364,9 +363,6 @@ val (wp_thm, triple_thm) =
       @[EVAL ``~T``, COND_CLAUSES]
     )
     val bir_to_words_ss = pure_ss++HolBACoreSimps.holBACore_ss++BIR_TO_WORDS_ss
-
-(*PURE_REWRITE_TAC [((UNDISCH o UNDISCH) (Q.SPECL [`env`, `BIR_P_exp`, `bir_wp_comp_wps_iter_step2_wp_entry`] bir_impl_equiv))]*)
-
     (**)
     val triple_thm = store_thm ( "triple_thm",
       ``bir_exec_to_labels_triple bir_prog entry_label end_labels BIR_P_exp BIR_Q_exp``,
@@ -531,7 +527,7 @@ val goal_thm = store_thm ( "goal_thm",
   goal_tm,
   (* 1 *)
   REPEAT STRIP_TAC >>
-  `?bir_state. R nic bir_state` by METIS_TAC[R_inj_thm] >>
+  ASSUME_TAC (SPEC_ALL R_inj_thm) >> RW_TAC pure_ss [] >>
   `BIR_P bir_state` by METIS_TAC[b_thm] >>
 
   (* 2 *)
