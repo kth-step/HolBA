@@ -24,7 +24,7 @@ fun pprint_thm thm = ((print o ppstring pp_thm) thm; print "\n")
 
 (* Configuration *)
 val dot_path = "./cfg.dot";
-val show_cfg = true;
+val show_cfg = false;
 
 (* Load the program *)
 val _ = info "Loading the program...";
