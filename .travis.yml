@@ -20,7 +20,7 @@ jobs:
   include:
     - stage: "Static analysis"
       script:
-        - scripts/ci/grep-cheat-comment-PR.sh || echo "grep-cheat failed with status $?."
+        - scripts/ci/static-analysis.sh || echo "Static-analysis failed with status $?."
 
     - &cache-prep
       stage: "Prepare all cached dependencies"
