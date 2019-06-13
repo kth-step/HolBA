@@ -4,13 +4,12 @@
 # Greps for '$1' in src/ and examples/. Prints GitHub Markdown results to     #
 # STDOUT and text results to STDERR.                                          #
 #                                                                             #
-# Arguments:                                                                  #
-#  * $1: pretty name of grepped pattern                                       #
-#  * $2: raw grep pattern                                                     #
+# See below for mandatory and optional parameters.                            #
 ###############################################################################
 
 printf '%60s\n' ' ' | tr ' ' '*' >&2
 
+# Mandatory parameters
 [[ -n "$1" ]] && >&2 echo "PRETTY_PATTERN=$1" \
     || { >&2 echo "You must supply the pretty name of the grepped pattern."; exit 1; }
 [[ -n "$2" ]] && >&2 echo "GREP_PATTERN=$2" \
@@ -18,13 +17,16 @@ printf '%60s\n' ' ' | tr ' ' '*' >&2
 PRETTY_PATTERN="$1"
 GREP_PATTERN="$2"
 
+# Optional parameters
+GREP_INCLUDE=${GREP_INCLUDE:-"*Script.sml"}
+
 # Grep for the given pattern in both src/ and examples/
->&2 echo "grep command: grep -r -E $GREP_PATTERN --include='*Script.sml' \$GREP_DIR"
-N_CHEATS_SRC=$(grep -r -E $GREP_PATTERN --include='*Script.sml' src/ | wc -l)
-N_CHEATS_EXAMPLES=$(grep -r -E $GREP_PATTERN --include='*Script.sml' examples/ | wc -l)
+>&2 echo "grep command: grep -r -E $GREP_PATTERN --include='$GREP_INCLUDE' \$GREP_DIR"
+N_CHEATS_SRC=$(grep -r -E $GREP_PATTERN --include="$GREP_INCLUDE" src/ | wc -l)
+N_CHEATS_EXAMPLES=$(grep -r -E $GREP_PATTERN --include="$GREP_INCLUDE" examples/ | wc -l)
 N_CHEATS=$(($N_CHEATS_SRC + $N_CHEATS_EXAMPLES))
-WITH_CONTEXT=$(grep -rn -C6 -E $GREP_PATTERN --include='*Script.sml' src/ examples/)
-FILE_LINES=$(grep -rn -E $GREP_PATTERN --include='*Script.sml' src/ examples/ \
+WITH_CONTEXT=$(grep -rn -C6 -E $GREP_PATTERN --include="$GREP_INCLUDE" src/ examples/)
+FILE_LINES=$(grep -rn -E $GREP_PATTERN --include="$GREP_INCLUDE" src/ examples/ \
     | cut -d: -f-2 --output-delimiter=' ')
 PRETTY_FILE_LINES=$(<<< "$FILE_LINES" awk "{printf \" - %s line %d\n\", \$1, \$2;}")
 GITHUB_LOCATIONS=$(<<< "$FILE_LINES" awk "{printf \"- [%s, line %d]\", \$1, \$2;

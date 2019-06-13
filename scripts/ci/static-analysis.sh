@@ -12,10 +12,10 @@
 printf '%80s\n' ' ' | tr ' ' '#' >&2
 
 # Grep 'cheat'
-GREP_CHEAT_MARKDOWN=$(./scripts/ci/static-analysis/grep-analysis.sh 'cheat' '\<cheat\>')
+GREP_CHEAT_MARKDOWN=$(env GREP_INCLUDE='*Script.sml' ./scripts/ci/static-analysis/grep-analysis.sh 'cheat' '\<cheat\>')
 
 # Grep 'TODO' or 'FIXME'
-GREP_TODO_MARKDOWN=$(./scripts/ci/static-analysis/grep-analysis.sh 'TODO/FIXME' '\<TODO\>|\<FIXME\>|\<todo\>|\<fixme\>')
+GREP_TODO_MARKDOWN=$(env GREP_INCLUDE='*.sml' ./scripts/ci/static-analysis/grep-analysis.sh 'TODO/FIXME' '\<TODO\>|\<FIXME\>|\<todo\>|\<fixme\>')
 
 # Build the GitHub comment
 GITHUB_COMMENT="
