@@ -384,6 +384,16 @@ struct
   val blel = bbinpredl BIExp_LessOrEqual_tm
   val bslel = bbinpredl BIExp_SignedLessOrEqual_tm
 
+  fun bgt (a, b) = blt (b, a)
+  fun bsgt (a, b) = bslt (b, a)
+  fun bge (a, b) = ble (b, a)
+  fun bsge (a, b) = bsle (b, a)
+
+  val bgtl = (bltl o rev)
+  val bsgtl = (bsltl o rev)
+  val bgel = (blel o rev)
+  val bsgel = (bslel o rev)
+
   (* Memory equality (BExp_MemEq: bir_exp_t) *)
   val bmemeq = mk_BExp_MemEq
     handle e => raise wrap_exn "bmemeq" e
