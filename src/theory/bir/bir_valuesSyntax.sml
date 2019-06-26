@@ -7,6 +7,8 @@ open bir_immSyntax;
 
 
 val ERR = mk_HOL_ERR "bir_valuesSyntax"
+val wrap_exn = Feedback.wrap_exn "bir_valuesSyntax"
+
 fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_values"
 
 fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0
@@ -48,8 +50,7 @@ fun mk_BVal_MemByte (aty, mf) = mk_BVal_Mem (aty, Bit8_tm, mf);
 fun dest_BVal_MemByte tm = let
   val (aty, vty, mf) = dest_BVal_Mem tm;
   val _ = if is_Bit8 vty then () else fail();
-in (aty, mf) end handle HOL_ERR _ =>
-  raise ERR "dest_BVal_MemByte" "???";
+in (aty, mf) end handle e => raise wrap_exn "dest_BVal_MemByte" e;
 
 val is_BVal_MemByte = can dest_BVal_MemByte;
 
@@ -58,8 +59,7 @@ fun mk_BVal_MemByte_32 mf = mk_BVal_Mem (Bit32_tm, Bit8_tm, mf);
 fun dest_BVal_MemByte_32 tm = let
   val (aty, mf) = dest_BVal_MemByte tm;
   val _ = if is_Bit32 aty then () else fail();
-in mf end handle HOL_ERR _ =>
-  raise ERR "dest_BVal_MemByte_32" "???";
+in mf end handle e => raise wrap_exn "dest_BVal_MemByte_32" e;
 
 val is_BVal_MemByte_32 = can dest_BVal_MemByte_32;
 
@@ -67,8 +67,7 @@ fun mk_BVal_MemByte_64 mf = mk_BVal_Mem (Bit64_tm, Bit8_tm, mf);
 fun dest_BVal_MemByte_64 tm = let
   val (aty, mf) = dest_BVal_MemByte tm;
   val _ = if is_Bit64 aty then () else fail();
-in mf end handle HOL_ERR _ =>
-  raise ERR "dest_BVal_MemByte_32" "???";
+in mf end handle e => raise wrap_exn "dest_BVal_MemByte_32" e;
 
 val is_BVal_MemByte_64 = can dest_BVal_MemByte_64;
 
@@ -103,8 +102,7 @@ fun mk_BType_MemByte aty = mk_BType_Mem (aty, Bit8_tm);
 fun dest_BType_MemByte tm = let
   val (aty, vty) = dest_BType_Mem tm;
   val _ = if is_Bit8 vty then () else fail();
-in aty end handle HOL_ERR _ =>
-  raise ERR "dest_BType_MemByte" "???";
+in aty end handle e => raise wrap_exn "dest_BType_MemByte" e;
 
 val is_BType_MemByte = can dest_BType_MemByte;
 

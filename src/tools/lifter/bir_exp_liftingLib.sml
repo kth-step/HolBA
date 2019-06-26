@@ -22,7 +22,7 @@ fun mk_bir_lift_val_t (ty1, ty2) =
 fun dest_bir_lift_val_t ty =
    case total dest_thy_type ty of
       SOME{Tyop = "bir_lift_val_t", Thy = "bir_exp_lifting", Args = [ty1, ty2]} => (ty1, ty2)
-    | other => raise ERR "dest_bir_lift_val_t" "";
+    | other => raise ERR "dest_bir_lift_val_t" "Invalid argument.";
 
 val is_bir_lift_val_t = can dest_bir_lift_val_t;
 

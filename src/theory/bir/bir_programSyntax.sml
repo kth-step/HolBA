@@ -6,6 +6,8 @@ open bir_immTheory bir_valuesTheory bir_programTheory;
 
 
 val ERR = mk_HOL_ERR "bir_programSyntax"
+val wrap_exn = Feedback.wrap_exn "bir_programSyntax"
+
 fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program"
 
 fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0
@@ -102,7 +104,7 @@ fun dest_bir_block tm = let
   val last_stmt = Lib.assoc "bb_last_statement" l
 in
   (lbl, stmts, last_stmt)
-end handle HOL_ERR _ => raise ERR "dest_bir_block" "";
+end handle e => raise wrap_exn "dest_bir_block" e;
 
 val is_bir_block = can dest_bir_block;
 
@@ -115,7 +117,7 @@ fun mk_bir_block (tm_lbl, tm_stmts, tm_last_stmt) = let
            ("bb_last_statement", tm_last_stmt)];
 in
   TypeBase.mk_record (ty, l)
-end handle HOL_ERR _ => raise ERR "mk_bir_block" "";
+end handle e => raise wrap_exn "mk_bir_block" e;
 
 fun dest_bir_block_list tm = let
   val (tm_lbl, tm_stmts, tm_last_stmt) = dest_bir_block tm;
@@ -123,14 +125,14 @@ fun dest_bir_block_list tm = let
   val ty'' = dest_bir_stmt_basic_t_ty ty'
 in
   (ty'', tm_lbl, l_stmts, tm_last_stmt)
-end handle HOL_ERR _ => raise ERR "dest_bir_block_list" "";
+end handle e => raise wrap_exn "dest_bir_block_list" e;
 
 fun mk_bir_block_list (ty, tm_lbl, l_stmts, tm_last_stmt) = let
   val ty' = mk_bir_stmt_basic_t_ty ty
   val tm_stmts = listSyntax.mk_list (l_stmts, ty')
 in
   mk_bir_block (tm_lbl, tm_stmts, tm_last_stmt)
-end handle HOL_ERR _ => raise ERR "mk_bir_block_list" "";
+end handle e => raise wrap_exn "mk_bir_block_list" e;
 
 
 (* bir_program_t *)
@@ -153,14 +155,14 @@ fun dest_BirProgram_list tm = let
   val (l, ty) = listSyntax.dest_list l_tm
 in
   (dest_bir_block_t_ty ty, l)
-end handle HOL_ERR _ => raise ERR "dest_BirProgram_list" "";
+end handle e => raise wrap_exn "dest_BirProgram_list" e;
 
 fun mk_BirProgram_list (ty, tms) = let
   val ty' = mk_bir_block_t_ty ty
   val l_tm = listSyntax.mk_list (tms, ty')
 in
   mk_BirProgram l_tm
-end handle HOL_ERR _ => raise ERR "mk_BirProgram_list" "";
+end handle e => raise wrap_exn "mk_BirProgram_list" e;
 
 
 (* bir_programcounter_t *)
@@ -173,7 +175,7 @@ fun dest_bir_programcounter tm = let
   val index = Lib.assoc "bpc_index" l
 in
   (lbl, index)
-end handle HOL_ERR _ => raise ERR "dest_bir_programcounter" "";
+end handle e => raise wrap_exn "dest_bir_programcounter" e;
 
 val is_bir_programcounter = can dest_bir_programcounter;
 
@@ -182,7 +184,7 @@ fun mk_bir_programcounter (tm_lbl, tm_index) = let
            ("bpc_index", tm_index)];
 in
   TypeBase.mk_record (bir_programcounter_t_ty, l)
-end handle HOL_ERR _ => raise ERR "mk_bir_programcounter" "";
+end handle e => raise wrap_exn "mk_bir_programcounter" e;
 
 
 val (bir_block_pc_tm,  mk_bir_block_pc, dest_bir_block_pc, is_bir_block_pc)  = syntax_fns1 "bir_block_pc";
@@ -232,7 +234,7 @@ fun dest_bir_state tm = let
   val status = Lib.assoc "bst_status" l
 in
   (pc, env, status)
-end handle HOL_ERR _ => raise ERR "dest_bir_state" "";
+end handle e => raise wrap_exn "dest_bir_state" e;
 
 val is_bir_state = can dest_bir_state;
 
@@ -242,7 +244,7 @@ fun mk_bir_state (pc, env, status) = let
            ("bst_status", status)];
 in
   TypeBase.mk_record (bir_state_t_ty, l)
-end handle HOL_ERR _ => raise ERR "mk_bir_state" "";
+end handle e => raise wrap_exn "mk_bir_state" e;
 
 
 val (bst_status_tm,  mk_bst_status, dest_bst_status, is_bst_status)  = syntax_fns1 "bir_state_t_bst_status";
