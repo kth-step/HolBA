@@ -45,6 +45,8 @@
  *           /\ bir_state' = BIR_exec prog bir_state)   .. (c)
  *           ==> R nic' bir_state' ....................... (d) ..... (4)
  *
+ * Note: Some proofs are long and dump, that's normal. I tried to keep them
+ * simple, in order to easily automate them afterward.
  *)
 
 open HolKernel Parse boolLib bossLib;
