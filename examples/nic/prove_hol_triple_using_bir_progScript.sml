@@ -58,7 +58,7 @@ open bir_expTheory bir_bool_expTheory bir_valuesTheory;
 open bir_exp_equivTheory bir_typing_progTheory
 open bir_exp_immTheory;
 open HolBASimps;
-open bir_wpTheory bir_htTheory;
+open bir_wpTheory bir_htTheory bir_htLib;
 open bslSyntax;
 open pretty_exnLib;
 
@@ -384,6 +384,12 @@ val (wp_thm, triple_thm) =
       FULL_SIMP_TAC std_ss [FEVERY_FUPDATE, entry_label_def] >>
       PAT_X_TAC `FEVERY _ _` >>
 
+      (* Remove "or_assumviol" *)
+      assume_bir_prog_has_no_assumes_tac bir_prog_def >>
+      `bir_exec_to_labels_triple bir_prog (BL_Label "entry")
+          end_labels bir_wp_comp_wps_iter_step2_wp_entry BIR_Q_exp`
+        by METIS_TAC [bir_never_assumviol_ht] >>
+
       (* some renaming *)
       Q.ABBREV_TAC `wp = bir_wp_comp_wps_iter_step2_wp_entry` >>
       Q.ABBREV_TAC `p = BIR_P_exp` >>
@@ -552,15 +558,8 @@ val goal_thm = store_thm ( "goal_thm",
 
   (drule o SIMP_RULE holba_ss [bir_exec_to_labels_triple_def]) triple_thm >>
   ASM_SIMP_TAC holba_ss [] >>
-  RW_TAC holba_ss [] >| [
-    rename1 `bir_is_bool_exp_env bir_state'.bst_environ BIR_Q_exp`
-    ,
-    rename1 `bir_state'.bst_status = BST_AssumptionViolated` >>
-    (* FIXME: Remove the cheat related to BST_AssumptionViolated *)
-    (* we just need to use: !stmt. stmt <> assume ==> BST_AssumptionViolated impossible *)
-    (* this should be easy, but I need the thm from HolBA *)
-    cheat
-  ] >>
+  RW_TAC holba_ss [] >>
+  rename1 `bir_is_bool_exp_env bir_state'.bst_environ BIR_Q_exp` >>
 
   (* 3 *)
   `BIR_Q bir_state'` by METIS_TAC [BIR_Q_def, bir_eval_bool_exp_LEMMA] >>
