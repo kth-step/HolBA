@@ -199,7 +199,8 @@ struct
     let
       (* Instantiate the observation type for all statements *)
       val bl_list_obs_ty = List.map
-        (fn (a, l_stmts, b) => (a, List.map (inst [alpha |-> obs_ty]) l_stmts, b))
+        (fn (a, l_stmts, b) => (a,
+          List.map (inst [mk_bir_program_t_ty alpha |-> mk_bir_program_t_ty obs_ty]) l_stmts, b))
         bl_list
       (* list of terms to term of list *)
       val list_tm = List.map
