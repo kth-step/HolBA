@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """ Holmakefile generator.
 
@@ -17,7 +17,6 @@ Syntax:
     of `/some/other/file`.
 """
 
-from __future__ import print_function
 import sys
 import os
 
