@@ -56,7 +56,7 @@ open bir_expTheory bir_bool_expTheory bir_valuesTheory;
 open bir_exp_equivTheory bir_typing_progTheory
 open bir_exp_immTheory;
 open HolBASimps;
-open bir_wpTheory;
+open bir_wpTheory bir_htTheory;
 open bslSyntax;
 open pretty_exnLib;
 
