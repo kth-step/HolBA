@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
-open finite_mapTheory pred_setTheory;
+open combinTheory pred_setTheory;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
 
 val _ = new_theory "bir_env";
@@ -17,65 +17,85 @@ val bir_var_eq_EXPAND = store_thm ("bir_var_eq_EXPAND",
                         (bir_var_type v1 = bir_var_type v2)``,
 
 Cases >> Cases >>
-SIMP_TAC std_ss [bir_var_type_def, bir_var_name_def, bir_var_t_11])
+SIMP_TAC std_ss [bir_var_type_def, bir_var_name_def, bir_var_t_11]
+);
 
 
 val _ = Datatype `bir_var_environment_t =
-   BEnv (string |-> (bir_type_t # (bir_val_t option)))`;
+   BEnv (string -> (bir_val_k_t))`;
 val bir_var_environment_t_11 = DB.fetch "-" "bir_var_environment_t_11";
 
 (* Empty environment *)
+(* TODO: What now? *)
+(*
 val bir_empty_env_def = Define `bir_empty_env = BEnv FEMPTY`
-
+*)
+(* Deprecated
 val bir_is_well_typed_env_def = Define `
   (bir_is_well_typed_env (BEnv m) <=> FEVERY (\ (_, (ty, vo)).
      (case vo of NONE => T | SOME v => (SOME ty = type_of_bir_val v))) m)`;
-
+*)
+(* Deprecated
 val bir_is_well_typed_env_empty = store_thm ("bir_is_well_typed_env_empty",
   ``bir_is_well_typed_env bir_empty_env``,
 SIMP_TAC std_ss [bir_is_well_typed_env_def, bir_empty_env_def, FEVERY_FEMPTY]);
+*)
 
 val bir_env_lookup_def = Define `
-  (bir_env_lookup varname (BEnv env) = FLOOKUP env varname)`;
+  (bir_env_lookup varname (BEnv env) = env varname)`;
 
 val bir_env_update_def = Define `
   (bir_env_update varname vo ty (BEnv env) =
-    if (?v. (vo = SOME v) /\ (SOME ty <> type_of_bir_val v)) then NONE else
-    SOME (BEnv (env |+ (varname, (ty, vo)))))`;
+    if (ty <> type_of_bir_kval vo)
+    then NONE
+    else SOME (BEnv ((varname =+ vo) env))
+  )`;
 
 val bir_env_lookup_UPDATE = store_thm ("bir_env_lookup_UPDATE",
-``bir_env_lookup vn (BEnv (env |+ (vn', ty, vo))) =
-   (if (vn' = vn) then SOME (ty, vo) else bir_env_lookup vn (BEnv env))``,
-SIMP_TAC std_ss [bir_env_lookup_def, FLOOKUP_UPDATE]);
+``!vn vn' vo env.
+  bir_env_lookup vn (BEnv ((vn' =+ vo) env)) =
+   (if (vn' = vn)
+    then vo
+    else bir_env_lookup vn (BEnv env))``,
 
+SIMP_TAC std_ss [bir_env_lookup_def, UPDATE_def]
+);
+
+(* Note: After introduction of the total map, this now checks the
+ *       type of the value stored using type_of_bir_kval, instead of
+ *       checking the type stored in the tuple.
+ *       An alternative could be to do no checking at all. *)
 val bir_env_lookup_type_def = Define `
-  bir_env_lookup_type var_name env = OPTION_MAP FST (bir_env_lookup var_name env)`;
+  bir_env_lookup_type var_name env =
+    type_of_bir_kval (bir_env_lookup var_name env)`;
 
 
 val bir_env_check_type_def = Define `
   bir_env_check_type var env =
-    (bir_env_lookup_type (bir_var_name var) env = SOME (bir_var_type var))`;
+    (bir_env_lookup_type (bir_var_name var) env =
+      bir_var_type var
+    )`;
 
 
 val bir_env_read_def = Define `bir_env_read v env =
-  case (bir_env_lookup (bir_var_name v) env) of
-     NONE => BVal_Unknown
-   | SOME (_, NONE) => BVal_Unknown
-   | SOME (ty, SOME r) => if (ty = bir_var_type v) then r else BVal_Unknown`;
+  bir_env_lookup (bir_var_name v) env`;
 
-
+(* TODO: This checks the type of the stored value - if types do
+ *       not agree, then keep on checking. *)
 val bir_env_read_UPDATE = store_thm ("bir_env_read_UPDATE",
-``bir_env_read v (BEnv (env |+ (vn, ty, vo))) =
+``!v vn vo env.
+  bir_env_read v (BEnv ((vn =+ vo) env)) =
    (if (bir_var_name v = vn) then (
-      if (ty = bir_var_type v) then
-         (case vo of NONE => BVal_Unknown
-                   | SOME r => r)
-      else BVal_Unknown)
+      if (type_of_bir_kval vo = bir_var_type v) then
+         vo
+      else bir_env_read v (BEnv env))
  else bir_env_read v (BEnv env))``,
 
+REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [bir_env_read_def, bir_env_lookup_UPDATE] >>
 Cases_on `bir_var_name v = vn` >> ASM_SIMP_TAC std_ss [] >>
-Cases_on `vo` >> SIMP_TAC std_ss [pairTheory.pair_case_thm]);
+Cases_on `vo` >> SIMP_TAC std_ss [pairTheory.pair_case_thm]
+);
 
 val bir_env_read_NEQ_UNKNOWN = store_thm ("bir_env_read_NEQ_UNKNOWN",
 ``!var env v.
@@ -87,11 +107,13 @@ SIMP_TAC std_ss [bir_env_read_def] >>
 REPEAT CASE_TAC);
 
 val bir_env_write_def = Define `bir_env_write v va env =
-  if (bir_env_check_type v env) then bir_env_update (bir_var_name v) (SOME va) (bir_var_type v) env else NONE`;
+  if (bir_env_check_type v env)
+  then bir_env_update (bir_var_name v) va (bir_var_type v) env
+  else NONE`;
 
 
 val bir_env_write_WrongVal = store_thm ("bir_env_write_WrongVal",
-  ``!v va env. (type_of_bir_val va <> SOME (bir_var_type v)) ==>
+  ``!v va env. (type_of_bir_kval va <> SOME (bir_var_type v)) ==>
                (bir_env_write v va env = NONE)``,
 
 REPEAT GEN_TAC >> Cases_on `env` >>
