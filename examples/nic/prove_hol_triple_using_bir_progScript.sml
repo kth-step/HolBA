@@ -54,11 +54,12 @@ open finite_mapTheory optionTheory;
 open wordsLib;
 open HolSmtLib;
 open bir_envTheory bir_programTheory;
+open bir_program_no_assumeTheory bir_program_no_assumeLib;
 open bir_expTheory bir_bool_expTheory bir_valuesTheory;
 open bir_exp_equivTheory bir_typing_progTheory
 open bir_exp_immTheory;
 open HolBASimps;
-open bir_wpTheory bir_htTheory bir_htLib;
+open bir_wpTheory bir_htTheory;
 open bslSyntax;
 open pretty_exnLib;
 
@@ -385,7 +386,7 @@ val (wp_thm, triple_thm) =
       PAT_X_TAC `FEVERY _ _` >>
 
       (* Remove "or_assumviol" *)
-      assume_bir_prog_has_no_assumes_tac bir_prog_def >>
+      ASSUME_TAC (SIMP_RULE holba_ss [GSYM bir_prog_def] (bir_prog_has_no_assumes_pp ``bir_prog_has_no_assumes ^((rhs o concl) bir_prog_def)``)) >>
       `bir_exec_to_labels_triple bir_prog (BL_Label "entry")
           end_labels bir_wp_comp_wps_iter_step2_wp_entry BIR_Q_exp`
         by METIS_TAC [bir_never_assumviol_ht] >>
