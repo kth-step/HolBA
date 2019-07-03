@@ -22,6 +22,23 @@ Q.EXISTS_TAC `t` >>
 METIS_TAC [pred_setTheory.SUBSET_UNION_ABSORPTION]
 );
 
+val IN_NOT_IN_NEQ_thm = prove(``
+!x y z.
+(x IN z) ==> (~(y IN z)) ==> (x <> y)
+``,
+ FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
+);
+
+val SING_DISJOINT_SING_NOT_IN_thm = prove(``
+!x y. ((x INTER {y}) = EMPTY) ==>(~(y IN x))
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.INTER_DEF] >>
+  FULL_SIMP_TAC std_ss [pred_setTheory.EMPTY_DEF] >>
+  FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
+  QSPECL_X_ASSUM ``!x.P`` [`y`] >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
+);
 
 (* Inv is usually the fact that the program is in memory and that
 the execution mode is the exprected one *)
@@ -165,7 +182,7 @@ Q.SUBGOAL_THEN `∀ms. pc ms ∈ (ls ∪ ls') ⇒ (λms. pc ms ∉ ls' ∧ post1
 (
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] >>
-  cheat
+  METIS_TAC [IN_NOT_IN_NEQ_thm]
 ) >>
 ASSUME_TAC (Q.SPECL [`rel`, `tr`, `pc`, `l`, `ls UNION ls'`, `(λms. pre ms ∧ invariant ms)`,  `(λms. pre ms ∧ invariant ms)`,
   `(λms. pc ms ∉ (ls':'b->bool) ∧ post1 (pc ms) ms ∧ invariant ms)`,
@@ -194,7 +211,8 @@ Q.SUBGOAL_THEN `∀ms. (pc ms = l1) ⇒
 (
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] >>
-  cheat
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.UNION_OVER_INTER] >>
+  FULL_SIMP_TAC std_ss [SING_DISJOINT_SING_NOT_IN_thm]
 ) >>
 ASSUME_TAC (Q.SPECL [`rel`, `tr`, `pc`, `l1`, `ls UNION ls'`,
   `(λms. post l1 ms ∧ invariant ms)`,  `(λms. pc ms ∉ ls' ∧ post (pc ms) ms ∧ invariant ms)`,
@@ -226,10 +244,8 @@ REV_FULL_SIMP_TAC std_ss []
 
 
 
-
-
 (* We chould generalize the other contact to handle set of labels *)
-val weak_simp_trs_subset_blacklist_thm = prove(``
+val weak_simp_trs_seq_comp_thm = prove(``
 (rel_is_weak_trs rel tr pc) ==>
 (ls1' SUBSET ls2) ==>
 (~(l1 IN ls1')) ==>
@@ -246,7 +262,7 @@ REV_FULL_SIMP_TAC std_ss [] >>
 (* We then restrict the non-accessible addresses of the first contract *)
 Q.SUBGOAL_THEN `ls1' UNION (ls2 ∩ ls2') SUBSET ls2` ASSUME_TAC >-
 (
- cheat
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) []
 ) >>
 ASSUME_TAC (Q.SPECL [`rel`, `tr`, `pc`, `l`, `{l1}`, `ls2`, `ls1' UNION (ls2 INTER ls2')`, `pre1`,
            `(λl ms. if l ∈ {l1} then post1 l ms else post2 l ms)`]
@@ -260,7 +276,7 @@ REV_FULL_SIMP_TAC std_ss [] >>
 (* We then restrict the non-accessible addresses of the first contract *)
 Q.SUBGOAL_THEN `(ls2 ∩ ls2') SUBSET ls2'` ASSUME_TAC >-
 (
- cheat
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) []
 ) >>
 ASSUME_TAC (Q.SPECL [`rel`, `tr`, `pc`, `l1`, `ls1'`, `ls2'`, `ls2 INTER ls2'`, `post1 l1`,
            `(λl ms. if l ∈ {l1} then post1 l ms else post2 l ms)`]
@@ -277,7 +293,8 @@ Q.SUBGOAL_THEN `(∀ms. pc ms ∈ ls1' ⇒ (λl' ms. if l' = l1 then post1 l1 ms
 (
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [] >>
-  Q.SUBGOAL_THEN `(pc ms) <> l1` (FULLSIMP_BY_THM std_ss) >- cheat
+  Q.SUBGOAL_THEN `(pc ms) <> l1` (FULLSIMP_BY_THM std_ss) >>
+  METIS_TAC [IN_NOT_IN_NEQ_thm]
 ) >>
 ASSUME_TAC (Q.SPECL [`rel`, `tr`, `pc`, `l`, `ls1'`, `ls2 INTER ls2'`, `pre1`,
            `(λl' ms. if l' = l1 then post1 l1 ms else post2 l' ms)`, `post2`]
