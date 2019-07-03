@@ -147,7 +147,7 @@ val weak_trs_case_rule_thm = prove(``
 val weak_trs_weak_rule_thm = prove(``
   !rel tr pc l ls pre1 pre2 post1 post2 .
   (rel_is_weak_trs rel tr pc) ==>
-  (!ms. (pre2 ms) ==> (pre1 ms)) ==>
+  (!ms. ((pc ms) = l) ==> (pre2 ms) ==> (pre1 ms)) ==>
   (!ms. ((pc ms) IN ls) ==> (post1 ms) ==> (post2 ms)) ==>
   (weak_trs_triple rel pc l ls pre1 post1) ==>
   (weak_trs_triple rel pc l ls pre2 post2)
@@ -156,6 +156,7 @@ val weak_trs_weak_rule_thm = prove(``
   REPEAT STRIP_TAC >>
   METIS_TAC [weak_trs_in_pc_thm]
 );
+
 
 
 val weak_trs_subset_rule_thm = prove(``
@@ -420,7 +421,7 @@ Q.SUBGOAL_THEN `({l1} UNION ls1) = (({l1} UNION (ls2 UNION ls3)) UNION ls1)` ASS
 ( cheat ) >>
 FULL_SIMP_TAC std_ss [] >>
 Q.SUBGOAL_THEN `(∀l ms. (l ∈ ls1) ⇒ ¬((λl. if l ∈ {l1} then pre2 else (λms. F)) l ms))` ASSUME_TAC >-
-(
+(reo
   REPEAT STRIP_TAC >>
   REV_FULL_SIMP_TAC std_ss [pred_setTheory.IN_SING] >>
   (Cases_on `l' = l1`) >>
