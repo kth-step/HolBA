@@ -2,6 +2,9 @@ open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory pred_setTheory listTheory;
 open bir_auxiliaryTheory;
 
+  open tacticToe;
+  ttt_record (); 
+
 val _ = new_theory "bir_imm";
 
 (* ------------------------------------------------------------------------- *)

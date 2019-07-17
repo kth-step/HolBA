@@ -66,59 +66,159 @@ val type_of_bir_exp_def = Define `
        | _, _, _ => NONE))`;
 
 
+(* ------------------------------------------------------------------------- *)
+(*  Looking at  variables used somewhere in an expression                    *)
+(* ------------------------------------------------------------------------- *)
 
-val type_of_bir_exp_THM = store_thm ("type_of_bir_exp_THM",
- ``!env. (bir_is_well_typed_env env) ==> !e ty. (type_of_bir_exp e = SOME ty) ==>
-              ((bir_eval_exp e env = BVal_Unknown) \/ (type_of_bir_val (bir_eval_exp e env) = SOME ty))``,
+val bir_vars_of_exp_def = Define `
+  (bir_vars_of_exp (BExp_Const _) = {}) /\
+  (bir_vars_of_exp (BExp_MemConst _ _ _) = {}) /\
+  (bir_vars_of_exp (BExp_Den v) = {v}) /\
+  (bir_vars_of_exp (BExp_Cast _ e _) = bir_vars_of_exp e) /\
+  (bir_vars_of_exp (BExp_UnaryExp _ e) = bir_vars_of_exp e) /\
+  (bir_vars_of_exp (BExp_BinExp _ e1 e2) =
+    bir_vars_of_exp e1 UNION bir_vars_of_exp e2
+  ) /\
+  (bir_vars_of_exp (BExp_BinPred _ e1 e2) =
+    bir_vars_of_exp e1 UNION bir_vars_of_exp e2
+  ) /\
+  (bir_vars_of_exp (BExp_MemEq e1 e2) =
+    bir_vars_of_exp e1 UNION bir_vars_of_exp e2
+  ) /\
+  (bir_vars_of_exp (BExp_IfThenElse ec e1 e2) =
+    bir_vars_of_exp ec UNION bir_vars_of_exp e1 UNION
+    bir_vars_of_exp e2
+  ) /\
+  (bir_vars_of_exp (BExp_Load me ae _ _) =
+    bir_vars_of_exp me UNION bir_vars_of_exp ae
+  ) /\
+  (bir_vars_of_exp (BExp_Store me ae _ ve) =
+    bir_vars_of_exp me UNION bir_vars_of_exp ae UNION
+    bir_vars_of_exp ve
+  )`;
 
-GEN_TAC >> STRIP_TAC >>
+
+val bir_vars_of_exp_THM = store_thm ("bir_vars_of_exp_THM",
+  ``!env1 env2 e.
+      (!v. v IN (bir_vars_of_exp e) ==>
+      (bir_env_read v env1 = bir_env_read v env2)) ==>
+      (bir_eval_exp e env1 = bir_eval_exp e env2)``,
+
+GEN_TAC >> GEN_TAC >> Induct >> REPEAT STRIP_TAC >> (
+  FULL_SIMP_TAC std_ss [bir_vars_of_exp_def,
+                        pred_setTheory.IN_UNION,
+                        pred_setTheory.NOT_IN_EMPTY,
+                        pred_setTheory.IN_INSERT,
+                        bir_eval_exp_def]
+)
+);
+
+
+val bir_vars_of_exp_THM_EQ_FOR_VARS =
+  store_thm ("bir_vars_of_exp_THM_EQ_FOR_VARS",
+  ``!env1 env2 e.
+      (bir_env_EQ_FOR_VARS (bir_vars_of_exp e) env1 env2) ==>
+      (bir_eval_exp e env1 = bir_eval_exp e env2)``,
+
+METIS_TAC[bir_vars_of_exp_THM, bir_env_EQ_FOR_VARS_read_IMPL]
+);
+
+
+val bir_vars_of_exp_FINITE = store_thm ("bir_vars_of_exp_FINITE",
+  ``!e. FINITE (bir_vars_of_exp e)``,
+
 Induct >> (
-  SIMP_TAC (list_ss++bir_val_ss) [bir_eval_exp_def, type_of_bir_exp_def,
-     type_of_bir_val_def] >>
-  REPEAT CASE_TAC
-) >- (
-  METIS_TAC[bir_is_well_typed_env_read]
-) >- (
-  FULL_SIMP_TAC std_ss [bir_eval_cast_REWRS, bir_type_is_Imm_def] >>
-  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_cast_REWRS,
-    type_of_bir_gencast]
-) >- (
-  FULL_SIMP_TAC std_ss [bir_eval_unary_exp_REWRS, bir_type_is_Imm_def] >>
-  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_unary_exp_REWRS,
-    type_of_bir_unary_exp]
-) >- (
-  FULL_SIMP_TAC std_ss [bir_eval_bin_exp_REWRS, bir_type_is_Imm_def] >>
-  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_bin_exp_REWRS,
-    type_of_bir_bin_exp]
-) >- (
-  FULL_SIMP_TAC std_ss [bir_eval_bin_pred_REWRS, bir_type_is_Imm_def] >>
-  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_bin_pred_REWRS,
-    type_of_bir_val_def, BType_Bool_def, type_of_bool2b]
-) >- (
-  FULL_SIMP_TAC std_ss [bir_eval_memeq_REWRS, bir_type_is_Imm_def] >>
-  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_memeq_REWRS,
-    type_of_bir_val_def, BType_Bool_def, type_of_bool2b]
-) >- (
-  Cases_on `bir_eval_exp e env = BVal_Unknown` >- (
-    ASM_SIMP_TAC std_ss [bir_eval_ifthenelse_REWRS]
-  ) >>
-  FULL_SIMP_TAC std_ss [bir_eval_ifthenelse_REWRS, bir_type_is_Imm_def] >> (
-    FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_eval_ifthenelse_REWRS,
-      BType_Bool_def, type_of_bir_val_def] >>
-    CASE_TAC
-  )
-) >- (
-  FULL_SIMP_TAC std_ss [bir_eval_load_Unknown_REWRS] >>
-  FULL_SIMP_TAC std_ss [type_of_bir_val_EQ_ELIMS, bir_eval_load_def] >>
-  REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
-    METIS_TAC[type_of_bir_load_from_mem]
-  )
-) >- (
-  FULL_SIMP_TAC std_ss [bir_eval_store_Unknown_REWRS] >>
-  FULL_SIMP_TAC std_ss [type_of_bir_val_EQ_ELIMS, bir_eval_store_def] >>
-  REPEAT GEN_TAC >> REPEAT CASE_TAC
-));
+  ASM_SIMP_TAC std_ss [bir_vars_of_exp_def,
+    pred_setTheory.FINITE_INSERT, pred_setTheory.FINITE_EMPTY,
+    pred_setTheory.FINITE_UNION]
+)
+);
 
+
+val bir_env_exp_is_well_typed_def = Define `
+  bir_env_exp_is_well_typed env ex =
+    bir_env_vars_are_well_typed env (bir_vars_of_exp ex)
+`;
+
+val type_of_bir_exp_THM =
+  store_thm ("type_of_bir_exp_THM",
+  ``!env ex ty.
+      (type_of_bir_exp ex = SOME ty) ==>
+      bir_env_exp_is_well_typed env ex ==>
+      (type_of_bir_val (bir_eval_exp ex env) = SOME ty)``,
+
+GEN_TAC >> Induct >> (
+  (* Const, MemConst *)
+  SIMP_TAC std_ss [bir_eval_exp_def, type_of_bir_val_def,
+                   type_of_bir_kval_def, type_of_bir_exp_def] >>
+  REPEAT STRIP_TAC
+) >- (
+  (* Den *)
+  rename1 `bir_env_read v env` >>
+  Cases_on `v` >>
+  rename1 `bir_env_read (BVar vname vtype) env` >>
+  FULL_SIMP_TAC std_ss
+                [bir_env_exp_is_well_typed_def,
+                 pred_setTheory.IN_SING,
+                 bir_env_vars_are_well_typed_def,
+                 bir_env_var_is_well_typed_def,
+                 bir_env_check_type_def,
+                 bir_env_lookup_type_def,
+                 bir_vars_of_exp_def,
+                 bir_env_read_def, bir_var_name_def,
+                 bir_var_type_def, bir_env_lookup_def,
+                 type_of_bir_kval_def,
+                 pred_setTheory.IN_SING,
+                 type_of_bir_val_def]
+) >- (
+  (* Cast*)
+  Cases_on `type_of_bir_exp ex` >- (
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  Q.SUBGOAL_THEN `bir_env_exp_is_well_typed env ex`
+                 (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+    FULL_SIMP_TAC std_ss
+		  [bir_env_exp_is_well_typed_def,
+		   bir_env_vars_are_well_typed_def,
+		   bir_vars_of_exp_def]
+  ) >>
+  FULL_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_cast_REWRS,
+                                      bir_type_is_Imm_def] >>
+  FULL_SIMP_TAC std_ss [bir_eval_cast_REWRS, 
+                        type_of_bir_val_EQ_ELIMS,
+                        type_of_bir_gencast,
+                        type_of_bir_val_def,
+                        type_of_bir_kval_def]
+) >- (
+  (* UnaryExp *)
+  Cases_on `type_of_bir_exp ex` >- (
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  FULL_SIMP_TAC std_ss
+    [bir_eval_unary_exp_REWRS, type_of_bir_unary_exp] >>
+  Q.SUBGOAL_THEN `bir_env_exp_is_well_typed env ex`
+                 (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+    FULL_SIMP_TAC std_ss
+		  [bir_env_exp_is_well_typed_def,
+		   bir_env_vars_are_well_typed_def,
+		   bir_vars_of_exp_def]
+  ) >>
+  FULL_SIMP_TAC std_ss [bir_eval_unary_exp_REWRS,
+                        bir_type_is_Imm_def] >>
+  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS,
+                                      bir_eval_unary_exp_REWRS,
+                                      type_of_bir_unary_exp] >>
+  Q.EXISTS_TAC `(bir_unary_exp b0 i)` >>
+  FULL_SIMP_TAC std_ss [type_of_bir_unary_exp]
+) >- (
+(* BinExp *)
+
+) >> (
+  (* The rest... *)
+  cheat
+)
+);
 
 val type_of_bir_exp_EQ_SOME_REWRS = store_thm ("type_of_bir_exp_EQ_SOME_REWRS",``
   (!i ty. (type_of_bir_exp (BExp_Const i) = SOME ty) <=> (ty = BType_Imm (type_of_bir_imm i))) /\
@@ -270,51 +370,6 @@ REPEAT CONJ_TAC >> (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC[]
 ));
 
-
-(* ------------------------------------------------------------------------- *)
-(*  Looking at  variables used somewhere in an expression                    *)
-(* ------------------------------------------------------------------------- *)
-
-val bir_vars_of_exp_def = Define `
-  (bir_vars_of_exp (BExp_Const _) = {}) /\
-  (bir_vars_of_exp (BExp_MemConst _ _ _) = {}) /\
-  (bir_vars_of_exp (BExp_Den v) = {v}) /\
-  (bir_vars_of_exp (BExp_Cast _ e _) = bir_vars_of_exp e) /\
-  (bir_vars_of_exp (BExp_UnaryExp _ e) = bir_vars_of_exp e) /\
-  (bir_vars_of_exp (BExp_BinExp _ e1 e2) = (bir_vars_of_exp e1 UNION bir_vars_of_exp e2)) /\
-  (bir_vars_of_exp (BExp_BinPred _ e1 e2) = (bir_vars_of_exp e1 UNION bir_vars_of_exp e2)) /\
-  (bir_vars_of_exp (BExp_MemEq e1 e2) = (bir_vars_of_exp e1 UNION bir_vars_of_exp e2)) /\
-  (bir_vars_of_exp (BExp_IfThenElse ec e1 e2) = (bir_vars_of_exp ec UNION bir_vars_of_exp e1 UNION bir_vars_of_exp e2)) /\
-  (bir_vars_of_exp (BExp_Load me ae _ _) = (bir_vars_of_exp me UNION bir_vars_of_exp ae)) /\
-  (bir_vars_of_exp (BExp_Store me ae _ ve) = (bir_vars_of_exp me UNION bir_vars_of_exp ae UNION bir_vars_of_exp ve))`;
-
-
-val bir_vars_of_exp_THM = store_thm ("bir_vars_of_exp_THM",
-``!env1 env2 e. (!v. v IN (bir_vars_of_exp e) ==>
-                     (bir_env_read v env1 = bir_env_read v env2)) ==>
-                (bir_eval_exp e env1 = bir_eval_exp e env2)``,
-
-GEN_TAC >> GEN_TAC >> Induct >> REPEAT STRIP_TAC >> (
-  FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pred_setTheory.IN_UNION,
-    pred_setTheory.NOT_IN_EMPTY, pred_setTheory.IN_INSERT,
-    bir_eval_exp_def]
-));
-
-
-val bir_vars_of_exp_THM_EQ_FOR_VARS = store_thm ("bir_vars_of_exp_THM_EQ_FOR_VARS",
-``!env1 env2 e. (bir_env_EQ_FOR_VARS (bir_vars_of_exp e) env1 env2) ==>
-                (bir_eval_exp e env1 = bir_eval_exp e env2)``,
-METIS_TAC[bir_vars_of_exp_THM, bir_env_EQ_FOR_VARS_read_IMPL]);
-
-
-val bir_vars_of_exp_FINITE = store_thm ("bir_vars_of_exp_FINITE",
-``!e. FINITE (bir_vars_of_exp e)``,
-
-Induct >> (
-  ASM_SIMP_TAC std_ss [bir_vars_of_exp_def,
-    pred_setTheory.FINITE_INSERT, pred_setTheory.FINITE_EMPTY,
-    pred_setTheory.FINITE_UNION]
-));
 
 
 val type_of_bir_exp_THM_with_init_vars = store_thm ("type_of_bir_exp_THM_with_init_vars",
