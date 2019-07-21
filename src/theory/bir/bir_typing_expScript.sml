@@ -66,9 +66,9 @@ val type_of_bir_exp_def = Define `
        | _, _, _ => NONE))`;
 
 
-(* ------------------------------------------------------------------------- *)
-(*  Looking at  variables used somewhere in an expression                    *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------------ *)
+(*  Looking at variables used somewhere in an expression                    *)
+(* ------------------------------------------------------------------------ *)
 
 val bir_vars_of_exp_def = Define `
   (bir_vars_of_exp (BExp_Const _) = {}) /\
@@ -140,6 +140,87 @@ val bir_env_exp_is_well_typed_def = Define `
     bir_env_vars_are_well_typed env (bir_vars_of_exp ex)
 `;
 
+val bir_env_exp_is_well_typed_REWRS =
+  store_thm ("bir_env_exp_is_well_typed_REWRS",
+  ``(!env imm.
+     bir_env_exp_is_well_typed env (BExp_Const imm) = T) /\
+    (!env at vt map.
+     bir_env_exp_is_well_typed env
+                               (BExp_MemConst at vt map) = T) /\
+    (* TODO: Add Den here? Might not want to give a rewrite in
+     * terms of another definition... *)
+    (!env ct ex it.
+     bir_env_exp_is_well_typed env
+                               (BExp_Cast ct ex it) =
+       bir_env_exp_is_well_typed env ex) /\
+    (!env ue ex.
+     bir_env_exp_is_well_typed env
+                               (BExp_UnaryExp ue ex) =
+       bir_env_exp_is_well_typed env ex) /\
+    (!env be ex1 ex2.
+     bir_env_exp_is_well_typed env
+                               (BExp_BinExp be ex1 ex2) =
+       (bir_env_exp_is_well_typed env ex1 /\
+        bir_env_exp_is_well_typed env ex2)
+    ) /\
+    (!env bp ex1 ex2.
+     bir_env_exp_is_well_typed env
+                               (BExp_BinPred bp ex1 ex2) =
+       (bir_env_exp_is_well_typed env ex1 /\
+        bir_env_exp_is_well_typed env ex2)
+    ) /\
+    (!env ex1 ex2.
+     bir_env_exp_is_well_typed env
+                               (BExp_MemEq ex1 ex2) =
+       (bir_env_exp_is_well_typed env ex1 /\
+        bir_env_exp_is_well_typed env ex2)
+    ) /\
+    (!env cond ex1 ex2.
+     bir_env_exp_is_well_typed env
+                               (BExp_IfThenElse cond ex1 ex2) =
+       (bir_env_exp_is_well_typed env cond /\
+        bir_env_exp_is_well_typed env ex1 /\
+        bir_env_exp_is_well_typed env ex2)
+    ) /\
+    (!env me a en t.
+     bir_env_exp_is_well_typed env
+                               (BExp_Load me a en t) =
+       (bir_env_exp_is_well_typed env me /\
+        bir_env_exp_is_well_typed env a)
+    ) /\
+    (!env me a en v.
+     bir_env_exp_is_well_typed env
+                               (BExp_Store me a en v) =
+       (bir_env_exp_is_well_typed env me /\
+        bir_env_exp_is_well_typed env a /\
+        bir_env_exp_is_well_typed env v)
+    )
+``,
+
+REPEAT CONJ_TAC >> (
+  SIMP_TAC std_ss [bir_env_exp_is_well_typed_def,
+		   bir_vars_of_exp_def]
+) >| [
+  SIMP_TAC std_ss [bir_env_vars_are_well_typed_EMPTY],
+
+  SIMP_TAC std_ss [bir_env_vars_are_well_typed_EMPTY],
+
+  SIMP_TAC std_ss [bir_env_vars_are_well_typed_UNION],
+
+  SIMP_TAC std_ss [bir_env_vars_are_well_typed_UNION],
+
+  SIMP_TAC std_ss [bir_env_vars_are_well_typed_UNION],
+
+  SIMP_TAC std_ss [bir_env_vars_are_well_typed_UNION,
+                   GSYM CONJ_ASSOC],
+
+  SIMP_TAC std_ss [bir_env_vars_are_well_typed_UNION],
+
+  SIMP_TAC std_ss [bir_env_vars_are_well_typed_UNION,
+	           GSYM CONJ_ASSOC]
+]
+);
+
 val type_of_bir_exp_THM =
   store_thm ("type_of_bir_exp_THM",
   ``!env ex ty.
@@ -175,17 +256,10 @@ GEN_TAC >> Induct >> (
   Cases_on `type_of_bir_exp ex` >- (
     FULL_SIMP_TAC std_ss []
   ) >>
-  FULL_SIMP_TAC std_ss [] >>
-  Q.SUBGOAL_THEN `bir_env_exp_is_well_typed env ex`
-                 (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
-    FULL_SIMP_TAC std_ss
-		  [bir_env_exp_is_well_typed_def,
-		   bir_env_vars_are_well_typed_def,
-		   bir_vars_of_exp_def]
-  ) >>
-  FULL_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_cast_REWRS,
-                                      bir_type_is_Imm_def] >>
-  FULL_SIMP_TAC std_ss [bir_eval_cast_REWRS, 
+  (* TODO: Can't merge these for some reason... *)
+  FULL_SIMP_TAC std_ss [bir_type_is_Imm_def] >>
+  FULL_SIMP_TAC std_ss [bir_env_exp_is_well_typed_REWRS,
+                        bir_eval_cast_REWRS, 
                         type_of_bir_val_EQ_ELIMS,
                         type_of_bir_gencast,
                         type_of_bir_val_def,
@@ -196,27 +270,184 @@ GEN_TAC >> Induct >> (
     FULL_SIMP_TAC std_ss []
   ) >>
   FULL_SIMP_TAC std_ss
-    [bir_eval_unary_exp_REWRS, type_of_bir_unary_exp] >>
-  Q.SUBGOAL_THEN `bir_env_exp_is_well_typed env ex`
-                 (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
-    FULL_SIMP_TAC std_ss
-		  [bir_env_exp_is_well_typed_def,
-		   bir_env_vars_are_well_typed_def,
-		   bir_vars_of_exp_def]
-  ) >>
-  FULL_SIMP_TAC std_ss [bir_eval_unary_exp_REWRS,
-                        bir_type_is_Imm_def] >>
+    [bir_env_exp_is_well_typed_REWRS, bir_type_is_Imm_def] >>
   FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS,
-                                      bir_eval_unary_exp_REWRS,
-                                      type_of_bir_unary_exp] >>
-  Q.EXISTS_TAC `(bir_unary_exp b0 i)` >>
+                                      bir_eval_unary_exp_REWRS] >>
+  EXISTS_TAC ``bir_unary_exp b0 i`` >>
   FULL_SIMP_TAC std_ss [type_of_bir_unary_exp]
 ) >- (
-(* BinExp *)
+  (* BinExp *)
+  Cases_on `type_of_bir_exp ex` >> (
+    Cases_on `type_of_bir_exp ex'` >> (
+      (* TODO: srw_ss()... *)
+      FULL_SIMP_TAC (srw_ss()) []
+    )
+  ) >>
+  FULL_SIMP_TAC std_ss
+    [bir_env_exp_is_well_typed_REWRS, bir_type_is_Imm_def] >>
+  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS,
+				      bir_eval_bin_exp_REWRS] >>
+  EXISTS_TAC ``bir_bin_exp b1 i i'`` >>
+  FULL_SIMP_TAC std_ss [type_of_bir_bin_exp]
+) >- (
+  (* BinPred *)
+  Cases_on `type_of_bir_exp ex` >> (
+    Cases_on `type_of_bir_exp ex'` >> (
+      (* TODO: srw_ss()... *)
+      FULL_SIMP_TAC (srw_ss()) []
+    )
+  ) >>
+  FULL_SIMP_TAC std_ss
+    [bir_env_exp_is_well_typed_REWRS, bir_type_is_Imm_def,
+                                      BType_Bool_def] >>
+  PAT_X_ASSUM ``BType_Imm Bit1 = ty``
+                (fn thm => ASSUME_TAC (GSYM thm)) >>
+  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS,
+				      bir_eval_bin_pred_REWRS] >>
+  EXISTS_TAC ``bool2b (bir_bin_pred b1 i i')`` >>
+  FULL_SIMP_TAC std_ss [type_of_bool2b]
+) >- (
+  (* MemEq *)
+  Cases_on `type_of_bir_exp ex` >> (
+    Cases_on `type_of_bir_exp ex'` >> (
+      (* TODO: srw_ss()... *)
+      FULL_SIMP_TAC (srw_ss()) []
+    )
+  ) >| [
+    Cases_on `x` >> (
+      (* TODO: srw_ss()... *)
+      FULL_SIMP_TAC (srw_ss()) []
+    ),
 
-) >> (
-  (* The rest... *)
-  cheat
+    Cases_on `x` >> Cases_on `x'` >> (
+      (* TODO: srw_ss()... *)
+      FULL_SIMP_TAC (srw_ss()) []
+    ) >>
+    FULL_SIMP_TAC std_ss
+      [bir_env_exp_is_well_typed_REWRS, bir_type_is_Imm_def,
+                                        BType_Bool_def] >>
+    PAT_X_ASSUM ``BType_Imm Bit1 = ty``
+		(fn thm => ASSUME_TAC (GSYM thm)) >>
+    FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS,
+					bir_eval_memeq_REWRS] >>
+    EXISTS_TAC ``bool2b (bir_memeq b b0 f f')`` >>
+    FULL_SIMP_TAC std_ss [type_of_bool2b]
+  ]
+) >- (
+  (* IfThenElse *)
+  Cases_on `type_of_bir_exp ex` >> (
+    Cases_on `type_of_bir_exp ex'` >> (
+      Cases_on `type_of_bir_exp ex''` >> (
+	(* TODO: srw_ss()... *)
+	FULL_SIMP_TAC (srw_ss()) []
+      )
+    )
+  ) >>
+ FULL_SIMP_TAC std_ss
+    [bir_env_exp_is_well_typed_REWRS, BType_Bool_def] >>
+  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS,
+				      bir_eval_ifthenelse_REWRS] >>
+  Cases_on `i = Imm1 1w` >> (
+    FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS,
+				      bir_eval_ifthenelse_REWRS]
+  )
+) >- (
+  (* Load *)
+  Cases_on `type_of_bir_exp ex` >> (
+    Cases_on `type_of_bir_exp ex'` >> (
+      (* TODO: srw_ss()... *)
+      FULL_SIMP_TAC (srw_ss()) []
+    )
+  ) >| [
+    Cases_on `x` >> (
+      (* TODO: srw_ss()... *)
+      FULL_SIMP_TAC (srw_ss()) []
+    ),
+
+    Cases_on `x` >> Cases_on `x'` >> (
+      (* TODO: srw_ss()... *)
+      FULL_SIMP_TAC (srw_ss()) []
+    ) >>
+    FULL_SIMP_TAC std_ss [bir_env_exp_is_well_typed_REWRS,
+                          bir_type_is_Imm_def] >>
+    PAT_X_ASSUM ``BType_Imm b1 = ty``
+		(fn thm => ASSUME_TAC (GSYM thm)) >>
+    FULL_SIMP_TAC std_ss [type_of_bir_val_EQ_ELIMS] >>
+    Cases_on `b2 = BEnd_NoEndian` >| [
+      FULL_SIMP_TAC std_ss
+		    [bir_eval_load_SINGLE_REWR] >>
+      EXISTS_TAC ``(n2bs (bir_load_mmap f (b2n i)) b1)`` >>
+      FULL_SIMP_TAC std_ss [type_of_n2bs],
+
+      FULL_SIMP_TAC std_ss
+        [(GEN_ALL (((el 1) o CONJUNCTS) bir_eval_load_def))] >>
+      FULL_SIMP_TAC (std_ss++bir_val_ss)
+        [bir_load_from_mem_def, LET_DEF] >>
+        Cases_on `bir_number_of_mem_splits b0 b1 b'` >| [
+          METIS_TAC [],
+
+          FULL_SIMP_TAC std_ss [] >>
+          Cases_on `b2` >> (
+            (* TODO: srw_ss()... *)
+            RW_TAC (srw_ss()) [type_of_bir_mem_concat]
+          )
+        ]
+    ]
+  ]
+) >- (
+  (* Store *)
+  Cases_on `type_of_bir_exp ex` >> (
+    Cases_on `type_of_bir_exp ex'` >> (
+      Cases_on `type_of_bir_exp ex''` >> (
+	(* TODO: srw_ss()... *)
+	FULL_SIMP_TAC (srw_ss()) []
+      )
+    )
+  ) >| [
+    Cases_on `x` >> (
+      (* TODO: srw_ss()... *)
+      FULL_SIMP_TAC (srw_ss()) []
+    ),
+
+    Cases_on `x` >> (
+      (* TODO: srw_ss()... *)
+      FULL_SIMP_TAC (srw_ss()) []
+    ),
+
+    Cases_on `x` >> Cases_on `x'` >> (
+      (* TODO: srw_ss()... *)
+      FULL_SIMP_TAC (srw_ss()) []
+    ),
+
+    Cases_on `x` >> Cases_on `x'` >> Cases_on `x''` >> (
+      (* TODO: srw_ss()... *)
+      FULL_SIMP_TAC (srw_ss()) []
+    ) >>
+    FULL_SIMP_TAC std_ss
+      [bir_env_exp_is_well_typed_REWRS, bir_type_is_Imm_def] >>
+    PAT_X_ASSUM ``BType_Mem b' b0 = ty``
+		(fn thm => ASSUME_TAC (GSYM thm)) >>
+    FULL_SIMP_TAC std_ss [type_of_bir_val_EQ_ELIMS] >>
+    Cases_on `b2 = BEnd_NoEndian` >| [
+      FULL_SIMP_TAC std_ss [bir_eval_store_SINGLE_REWR] >>
+      EXISTS_TAC ``(f |+ (b2n i,b2n i'))`` >>
+      FULL_SIMP_TAC std_ss [],
+
+      FULL_SIMP_TAC std_ss [(GEN_ALL (((el 1) o CONJUNCTS)
+                              bir_eval_store_def))] >>
+      FULL_SIMP_TAC (std_ss++bir_val_ss)
+        [bir_eval_store_def, bir_store_in_mem_def, LET_DEF] >>
+      Cases_on `bir_number_of_mem_splits b0 b'' b'` >| [
+        METIS_TAC [],
+
+        FULL_SIMP_TAC std_ss [] >>
+        Cases_on `b2` >> (
+          (* TODO: srw_ss()... *)
+          RW_TAC (srw_ss()) []
+        )
+      ]
+    ]
+  ]
 )
 );
 

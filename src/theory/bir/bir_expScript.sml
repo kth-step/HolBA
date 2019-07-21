@@ -16,7 +16,9 @@ val bir_type_ss = rewrites ((type_rws ``:bir_type_t``));
 
 val _ = Datatype `bir_exp_t =
     BExp_Const             bir_imm_t
-  | BExp_MemConst          bir_immtype_t (*Addr-Type*) bir_immtype_t (* value-type *) (num |-> num)
+  | BExp_MemConst          bir_immtype_t (* Address type *)
+                           bir_immtype_t (* Value type *)
+                           (num |-> num) (* Memory map *)
   | BExp_Den               bir_var_t
 
   | BExp_Cast              bir_cast_t bir_exp_t bir_immtype_t
@@ -453,7 +455,7 @@ REWRITE_RULE [GSYM CONJ_ASSOC] (
 
 val bir_eval_load_SINGLE_REWR =
   store_thm ("bir_eval_load_SINGLE_REWR",
-  ``!a en t i aty vty mmap en.
+  ``!i aty vty mmap en.
       bir_eval_load (BVal_Known (BKVal_Mem aty vty mmap))
                     (BVal_Known (BKVal_Imm i)) en vty =
         if (type_of_bir_imm i = aty)
@@ -698,7 +700,7 @@ SIMP_RULE std_ss [GSYM CONJ_ASSOC] (
 
 val bir_eval_store_SINGLE_REWR =
   store_thm ("bir_eval_store_SINGLE_REWR",
-  ``!a en t i aty v vty mmap en.
+  ``!i aty v vty mmap en.
       ((type_of_bir_imm i = aty) /\ (type_of_bir_imm v = vty)) ==>
       (bir_eval_store (BVal_Known (BKVal_Mem aty vty mmap))
                       (BVal_Known (BKVal_Imm i)) en
