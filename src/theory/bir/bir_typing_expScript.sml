@@ -498,29 +498,30 @@ REPEAT CONJ_TAC >> (
   SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [type_of_bir_exp_def]
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >>
-    FULL_SIMP_TAC (std_ss++bir_type_ss) [bir_type_is_Imm_def] >> METIS_TAC[]
+    FULL_SIMP_TAC (std_ss++bir_type_ss) [bir_type_is_Imm_def] >>
+    METIS_TAC []
 ) >- (
-  REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC[]
+  REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC []
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC std_ss [] >> METIS_TAC[]
+    FULL_SIMP_TAC std_ss [] >> METIS_TAC []
   )
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC std_ss [bir_type_is_Imm_def] >> METIS_TAC[]
+    FULL_SIMP_TAC std_ss [bir_type_is_Imm_def] >> METIS_TAC []
   )
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC (std_ss++bir_type_ss) [] >> METIS_TAC[]
+    FULL_SIMP_TAC (std_ss++bir_type_ss) [] >> METIS_TAC []
   )
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC std_ss [bir_type_is_Imm_def] >> METIS_TAC[]
+    FULL_SIMP_TAC std_ss [bir_type_is_Imm_def] >> METIS_TAC []
   )
 ) >- (
-  REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC[]
+  REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC []
 ) >- (
-  REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC[]
+  REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC []
 ));
 
 
@@ -579,62 +580,92 @@ REPEAT CONJ_TAC >> (
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
     FULL_SIMP_TAC (std_ss++bir_type_ss) [bir_type_is_Imm_def] >>
-    METIS_TAC[]
+    METIS_TAC []
   )
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
     FULL_SIMP_TAC (std_ss++bir_type_ss) [bir_type_is_Imm_def] >>
-    METIS_TAC[]
+    METIS_TAC []
   )
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
     FULL_SIMP_TAC (std_ss++bir_type_ss) [bir_type_is_Imm_def] >>
-    METIS_TAC[]
+    METIS_TAC []
   )
 ) >- (
   REPEAT GEN_TAC >> REPEAT CASE_TAC >> (
     FULL_SIMP_TAC (std_ss) []
   )
 ) >- (
-  REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC[]
+  REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC []
 ) >- (
-  REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC[]
+  REPEAT GEN_TAC >> REPEAT CASE_TAC >> METIS_TAC []
 ));
 
 
 
-val type_of_bir_exp_THM_with_init_vars = store_thm ("type_of_bir_exp_THM_with_init_vars",
+val type_of_bir_exp_THM_with_init_vars =
+  store_thm ("type_of_bir_exp_THM_with_init_vars",
   ``!env e ty. (type_of_bir_exp e = SOME ty) ==>
-               (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
+               bir_env_exp_is_well_typed env e ==>
                (type_of_bir_val (bir_eval_exp e env) = SOME ty)``,
 
 GEN_TAC >> Induct >> (
   SIMP_TAC (std_ss++bir_val_ss) [bir_eval_exp_def, BType_Bool_def,
     type_of_bir_exp_EQ_SOME_REWRS, bir_vars_of_exp_def,
-    bir_env_vars_are_initialised_UNION, bir_env_vars_are_initialised_INSERT,
-    bir_env_vars_are_initialised_EMPTY, PULL_EXISTS, PULL_FORALL, bir_type_is_Imm_def] >>
+    bir_env_vars_are_well_typed_UNION,
+    bir_env_vars_are_well_typed_INSERT,
+    bir_env_vars_are_well_typed_EMPTY,
+    PULL_EXISTS, PULL_FORALL,
+    bir_type_is_Imm_def] >>
   REPEAT STRIP_TAC >>
-  FULL_SIMP_TAC (std_ss++bir_val_ss) [type_of_bir_val_EQ_ELIMS, bir_type_is_Imm_def]
+  FULL_SIMP_TAC (std_ss++bir_val_ss)
+                [type_of_bir_val_EQ_ELIMS, bir_type_is_Imm_def,
+                 bir_env_exp_is_well_typed_REWRS]
+) >- (
+  METIS_TAC []
+) >- (
+  METIS_TAC []
 ) >- (
   rename1 `bir_env_read v env` >>
   Cases_on `v` >>
-  FULL_SIMP_TAC std_ss [bir_env_read_def, bir_env_var_is_initialised_def, bir_var_name_def,
-    bir_var_type_def, pairTheory.pair_case_thm]
+  FULL_SIMP_TAC std_ss [bir_env_read_def,
+                        bir_var_name_def,
+                        bir_env_check_type_def,
+                        bir_var_type_def, pairTheory.pair_case_thm,
+                        bir_env_exp_is_well_typed_def,
+                        bir_env_vars_are_well_typed_def,
+                        bir_vars_of_exp_def, IN_SING,
+                        bir_env_var_is_well_typed_def] >>
+  Cases_on `bir_env_lookup_type s env = b` >| [
+    FULL_SIMP_TAC std_ss [type_of_bir_val_def],
+
+    FULL_SIMP_TAC std_ss [bir_env_lookup_type_def]
+  ]
 ) >- (
-  SIMP_TAC (std_ss++bir_val_ss) [bir_eval_cast_REWRS, type_of_bir_gencast]
+  EXISTS_TAC ``bir_gencast b1 i b0`` >>
+  FULL_SIMP_TAC std_ss [bir_eval_cast_REWRS, type_of_bir_gencast]
 ) >- (
-  ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_unary_exp_REWRS, type_of_bir_unary_exp]
+  EXISTS_TAC ``bir_unary_exp b0 i`` >>
+  ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_unary_exp_REWRS,
+                                     type_of_bir_unary_exp]
 ) >- (
-  ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_bin_exp_REWRS, type_of_bir_bin_exp]
+  EXISTS_TAC ``bir_bin_exp b1 i i'`` >>
+  ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_bin_exp_REWRS,
+                                     type_of_bir_bin_exp]
 ) >- (
-  ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_bin_pred_REWRS, type_of_bir_val_def,
-    type_of_bool2b, BType_Bool_def]
+  EXISTS_TAC ``bool2b (bir_bin_pred b1 i i')`` >>
+  ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_bin_pred_REWRS,
+                                     type_of_bir_val_def,
+                                     type_of_bool2b, BType_Bool_def]
 ) >- (
-  ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_memeq_REWRS, type_of_bir_val_def,
-    type_of_bool2b, BType_Bool_def]
+  EXISTS_TAC ``bool2b (bir_memeq at vt f f')`` >>
+  ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_memeq_REWRS,
+                                     type_of_bir_val_def,
+                                     type_of_bool2b, BType_Bool_def]
 ) >- (
   ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_ifthenelse_REWRS] >>
-  METIS_TAC[]
+  METIS_TAC []
 ) >- (
   ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_eval_load_BASIC_REWR] >>
   rename1 `bir_load_from_mem vt ity at mmap en (b2n i)` >>
@@ -642,7 +673,8 @@ GEN_TAC >> Induct >> (
     POP_ASSUM MP_TAC >>
     ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_load_from_mem_EQ_NONE] >>
     Cases_on `en = BEnd_NoEndian` >> (
-       FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [bir_number_of_mem_splits_ID]
+       FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss)
+                     [bir_number_of_mem_splits_ID]
     )
   ) >>
   ASM_SIMP_TAC (std_ss++bir_val_ss) [] >>
@@ -654,10 +686,12 @@ GEN_TAC >> Induct >> (
     POP_ASSUM MP_TAC >>
     ASM_SIMP_TAC (std_ss++bir_val_ss) [bir_store_in_mem_EQ_NONE] >>
     Cases_on `en = BEnd_NoEndian` >> (
-       FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [bir_number_of_mem_splits_ID]
+       FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss)
+                     [bir_number_of_mem_splits_ID]
     )
   ) >>
-  ASM_SIMP_TAC (std_ss++bir_val_ss) []
+  ASM_SIMP_TAC (std_ss++bir_val_ss) [] >>
+  METIS_TAC []
 ));
 
 
