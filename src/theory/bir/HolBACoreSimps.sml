@@ -79,7 +79,6 @@ val bir_SIMPLE_REWRS_imm = rewrites [
 val bir_SIMPLE_REWRS_env = rewrites [
   bir_var_name_def,
   bir_var_type_def,
-  bir_is_well_typed_env_empty,
   bir_env_write_WrongVal
 ];
 

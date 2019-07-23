@@ -50,7 +50,6 @@ fun dest_bir_stmt_basic_t_ty ty =
 
 val is_bir_stmt_basic_t_ty = can dest_bir_stmt_basic_t_ty;
 
-val (BStmt_Declare_tm,  mk_BStmt_Declare, dest_BStmt_Declare, is_BStmt_Declare)  = syntax_fns1 "BStmt_Declare";
 val (BStmt_Assign_tm,  mk_BStmt_Assign, dest_BStmt_Assign, is_BStmt_Assign)  = syntax_fns2 "BStmt_Assign";
 val (BStmt_Assert_tm,  mk_BStmt_Assert, dest_BStmt_Assert, is_BStmt_Assert)  = syntax_fns1 "BStmt_Assert";
 val (BStmt_Assume_tm,  mk_BStmt_Assume, dest_BStmt_Assume, is_BStmt_Assume)  = syntax_fns1 "BStmt_Assume";
@@ -253,8 +252,6 @@ val (bst_environ_tm,  mk_bst_environ, dest_bst_environ, is_bst_environ)  = synta
 
 val (bst_pc_tm,  mk_bst_pc, dest_bst_pc, is_bst_pc)  = syntax_fns1 "bir_state_t_bst_pc";
 
-
-val (bir_state_init_tm,  mk_bir_state_init, dest_bir_state_init, is_bir_state_init)  = syntax_fns1 "bir_state_init";
 
 val (bir_state_is_terminated_tm,  mk_bir_state_is_terminated, dest_bir_state_is_terminated, is_bir_state_is_terminated)  = syntax_fns1 "bir_state_is_terminated";
 

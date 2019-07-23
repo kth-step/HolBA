@@ -61,7 +61,6 @@ val bir_is_well_typed_stmtE_def = Define `
   (bir_is_well_typed_stmtE (BStmt_Halt e) = (type_of_bir_exp e <> NONE))`
 
 val bir_is_well_typed_stmtB_def = Define `
-  (bir_is_well_typed_stmtB (BStmt_Declare _) = T) /\
   (bir_is_well_typed_stmtB (BStmt_Assign v e) = (type_of_bir_exp e = SOME (bir_var_type v))) /\
   (bir_is_well_typed_stmtB (BStmt_Assert e) = (type_of_bir_exp e = SOME BType_Bool)) /\
   (bir_is_well_typed_stmtB (BStmt_Assume e) = (type_of_bir_exp e = SOME BType_Bool)) /\
@@ -111,7 +110,6 @@ METIS_TAC[bir_is_well_typed_program_ALT_DEF, bir_get_current_statement_stmts_of_
 (* ------------------------------------------------------------------------- *)
 
 val bir_vars_of_stmtB_def = Define `
-  (bir_vars_of_stmtB (BStmt_Declare v) = {v}) /\
   (bir_vars_of_stmtB (BStmt_Assert ex) = bir_vars_of_exp ex) /\
   (bir_vars_of_stmtB (BStmt_Assume ex) = bir_vars_of_exp ex) /\
   (bir_vars_of_stmtB (BStmt_Assign v ex) = (v INSERT (bir_vars_of_exp ex))) /\
@@ -184,7 +182,6 @@ METIS_TAC[bir_vars_of_exp_THM_EQ_FOR_VARS]);
 
 
 val bir_changed_vars_of_stmtB_def = Define `
-  (bir_changed_vars_of_stmtB (BStmt_Declare v) = {v}) /\
   (bir_changed_vars_of_stmtB (BStmt_Assert ex) = {}) /\
   (bir_changed_vars_of_stmtB (BStmt_Assume ex) = {}) /\
   (bir_changed_vars_of_stmtB (BStmt_Assign v ex) = {v}) /\
@@ -272,7 +269,6 @@ METIS_TAC[bir_get_current_statement_stmts_of_prog]);
 
 
 val bir_exps_of_stmtB_def = Define `
-  (bir_exps_of_stmtB (BStmt_Declare v) = {}) /\
   (bir_exps_of_stmtB (BStmt_Assert ex) = {ex}) /\
   (bir_exps_of_stmtB (BStmt_Assume ex) = {ex}) /\
   (bir_exps_of_stmtB (BStmt_Assign v ex) = {ex}) /\

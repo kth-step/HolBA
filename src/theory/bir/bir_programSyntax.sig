@@ -47,11 +47,6 @@ sig
    val dest_bir_stmt_basic_t_ty : hol_type -> hol_type
    val is_bir_stmt_basic_t_ty   : hol_type -> bool
 
-   val BStmt_Declare_tm   : term
-   val dest_BStmt_Declare : term -> term
-   val is_BStmt_Declare   : term -> bool
-   val mk_BStmt_Declare   : term -> term
-
    val BStmt_Assign_tm   : term
    val dest_BStmt_Assign : term -> term * term
    val is_BStmt_Assign   : term -> bool
@@ -208,11 +203,6 @@ sig
    val dest_bir_state : term -> term * term * term
    val is_bir_state   : term -> bool
    val mk_bir_state   : term * term * term -> term
-
-   val bir_state_init_tm   : term
-   val dest_bir_state_init : term -> term
-   val is_bir_state_init   : term -> bool
-   val mk_bir_state_init   : term -> term
 
    val bir_state_is_terminated_tm   : term
    val dest_bir_state_is_terminated : term -> term

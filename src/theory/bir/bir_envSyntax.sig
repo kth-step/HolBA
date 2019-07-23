@@ -9,9 +9,6 @@ sig
 
    val bir_var_environment_t_ty : hol_type;
 
-   val bir_empty_env_tm : term;
-   val is_bir_empty_env : term -> bool;
-
    val BEnv_tm   : term;
    val mk_BEnv   : term -> term;
    val dest_BEnv : term -> term;
@@ -57,27 +54,10 @@ sig
    val dest_bir_env_read    : term -> term * term;
    val is_bir_env_read      : term -> bool;
 
-   val bir_is_well_typed_env_tm   : term;
-   val mk_bir_is_well_typed_env   : term -> term;
-   val dest_bir_is_well_typed_env : term -> term;
-   val is_bir_is_well_typed_env   : term -> bool;
-
-   val bir_env_varname_is_bound_tm          : term;
-   val mk_bir_env_varname_is_bound          : term * term -> term;
-   val mk_bir_env_varname_is_bound_string   : string * term -> term;
-   val dest_bir_env_varname_is_bound        : term -> term * term;
-   val dest_bir_env_varname_is_bound_string : term -> string * term;
-   val is_bir_env_varname_is_bound          : term -> bool;
-
-   val bir_env_var_is_initialised_tm   : term;
-   val mk_bir_env_var_is_initialised   : term * term -> term;
-   val dest_bir_env_var_is_initialised : term -> term * term;
-   val is_bir_env_var_is_initialised   : term -> bool;
-
-   val bir_env_var_is_declared_tm   : term;
-   val mk_bir_env_var_is_declared   : term * term -> term;
-   val dest_bir_env_var_is_declared : term -> term * term;
-   val is_bir_env_var_is_declared   : term -> bool;
+   val bir_env_var_is_well_typed_tm   : term;
+   val mk_bir_env_var_is_well_typed   : term * term -> term;
+   val dest_bir_env_var_is_well_typed : term -> term * term;
+   val is_bir_env_var_is_well_typed   : term -> bool;
 
    val bir_env_order_tm   : term;
    val mk_bir_env_order   : term * term -> term;

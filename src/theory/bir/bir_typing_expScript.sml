@@ -612,11 +612,7 @@ val type_of_bir_exp_THM_with_init_vars =
 
 GEN_TAC >> Induct >> (
   SIMP_TAC (std_ss++bir_val_ss) [bir_eval_exp_def, BType_Bool_def,
-    type_of_bir_exp_EQ_SOME_REWRS, bir_vars_of_exp_def,
-    bir_env_vars_are_well_typed_UNION,
-    bir_env_vars_are_well_typed_INSERT,
-    bir_env_vars_are_well_typed_EMPTY,
-    PULL_EXISTS, PULL_FORALL,
+    type_of_bir_exp_EQ_SOME_REWRS,
     bir_type_is_Imm_def] >>
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC (std_ss++bir_val_ss)
@@ -706,8 +702,8 @@ GEN_TAC >> Induct >> (
    like "BExp_BinPred BIExp_And (BExp_Const (Imm1 1w)) (BExp_Const (Imm8 3w))"
    should not be used.
 
-   More subtly, one needs also make sure that variables occuring in the expression
-   are having consistent type annotations. This is expressed as follows: *)
+   More subtly, one also needs to make sure that variables occuring in the expression
+   have consistent type annotations. This is expressed as follows: *)
 
 val bir_var_set_is_well_typed_def = Define `bir_var_set_is_well_typed vs <=>
   (!v1 v2. (v1 IN vs /\ v2 IN vs /\ (bir_var_name v1 = bir_var_name v2)) ==>
@@ -719,11 +715,11 @@ val bir_exp_is_well_typed_def = Define `bir_exp_is_well_typed e <=>
 
 
 val bir_var_set_is_well_typed_INJ_DEF = store_thm ("bir_var_set_is_well_typed_INJ_DEF",
-  ``bir_var_set_is_well_typed vs <=> INJ bir_var_name vs UNIV``,
+  ``!vs. bir_var_set_is_well_typed vs <=> INJ bir_var_name vs UNIV``,
 
 SIMP_TAC std_ss [bir_var_set_is_well_typed_def, INJ_DEF, IN_UNIV,
   bir_var_eq_EXPAND] >>
-METIS_TAC[]);
+METIS_TAC []);
 
 val bir_var_set_is_well_typed_EMPTY = store_thm ("bir_var_set_is_well_typed_EMPTY",
   ``bir_var_set_is_well_typed {}``,
@@ -757,24 +753,27 @@ val bir_var_set_is_well_typed_SUBSET = store_thm ("bir_var_set_is_well_typed_SUB
 SIMP_TAC std_ss [bir_var_set_is_well_typed_def, SUBSET_DEF] >>
 METIS_TAC[]);
 
+(* TODO: This theorem relates the two properties of well-typedness
+ * to each other. *)
+val bir_env_vars_are_well_typed_SET_WELL_TYPED =
+  store_thm ("bir_env_vars_are_well_typed_SET_WELL_TYPED",
+  ``!vs env.
+      bir_env_vars_are_well_typed env vs ==>
+      bir_var_set_is_well_typed vs``,
 
-val bir_env_vars_are_initialised_WELL_TYPED = store_thm ("bir_env_vars_are_initialised_WELL_TYPED",
-  ``!vs env. bir_env_vars_are_initialised env vs ==> bir_var_set_is_well_typed vs``,
-
-  SIMP_TAC std_ss [bir_var_set_is_well_typed_def, bir_env_vars_are_initialised_def] >>
+  SIMP_TAC std_ss [bir_var_set_is_well_typed_def,
+                   bir_env_vars_are_well_typed_def] >>
   REPEAT STRIP_TAC >>
   Cases_on `v1` >> Cases_on `v2` >>
   rename1 `bir_var_name (BVar vn1 vty1) = bir_var_name (BVar vn2 vty2)` >>
   FULL_SIMP_TAC std_ss [bir_var_name_def, bir_var_type_def] >>
-
-
-  `bir_env_var_is_initialised env (BVar vn2 vty1)` by METIS_TAC[] >>
-  `bir_env_var_is_initialised env (BVar vn2 vty2)` by METIS_TAC[] >>
-  FULL_SIMP_TAC std_ss [bir_env_var_is_initialised_def, bir_var_type_def, bir_var_name_def] >>
-  FULL_SIMP_TAC std_ss []
+  `bir_env_var_is_well_typed env (BVar vn2 vty1)` by METIS_TAC [] >>
+  `bir_env_var_is_well_typed env (BVar vn2 vty2)` by METIS_TAC [] >>
+  FULL_SIMP_TAC std_ss [bir_env_var_is_well_typed_def,
+                        bir_var_type_def, bir_var_name_def]
 );
 
-
+(* TODO: Deprecated...
 val bir_env_vars_are_initialised_SUBSET_DOMAIN = store_thm ("bir_env_vars_are_initialised_SUBSET_DOMAIN",
   ``!vs env. bir_env_vars_are_initialised env vs ==>
              (IMAGE bir_var_name vs) SUBSET (bir_env_domain env)``,
@@ -789,7 +788,7 @@ Q.PAT_X_ASSUM `!v. _` (MP_TAC o Q.SPEC `v`) >>
 Cases_on `v` >> rename1 `BVar vn vty` >>
 ASM_SIMP_TAC std_ss [bir_env_var_is_initialised_def, bir_env_lookup_def,
     flookup_thm, PULL_EXISTS, bir_var_name_def]);
-
+*)
 
 val VAR_SET_FINITE_IFF_NAME_SET_FINITE = store_thm ("VAR_SET_FINITE_IFF_NAME_SET_FINITE",
 ``!vs. FINITE vs <=> FINITE (IMAGE bir_var_name vs)``,
@@ -815,24 +814,33 @@ Q.UNABBREV_TAC `VS` >>
 SIMP_TAC std_ss [FINITE_BIGUNION_EQ, IN_IMAGE, PULL_EXISTS] >>
 METIS_TAC[IMAGE_FINITE, bir_type_t_FINITE_UNIV]);
 
-
+(* TODO: Deprecated???
 val bir_env_vars_are_initialised_FINITE = store_thm ("bir_env_vars_are_initialised_FINITE",
-  ``!vs env. bir_env_vars_are_initialised env vs ==> FINITE vs``,
+  ``!vs env. bir_env_vars_are_well_typed env vs ==>
+             FINITE vs``,
 
-METIS_TAC[bir_env_vars_are_initialised_SUBSET_DOMAIN, bir_env_domain_FINITE,
+METIS_TAC[bir_env_vars_are_well_typed_SUBSET_DOMAIN, bir_env_domain_FINITE,
           VAR_SET_FINITE_IFF_NAME_SET_FINITE, SUBSET_FINITE]);
 
+*)
 
-
-val bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION = store_thm ("bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION",
+(* TODO: Need to complete this proof...
+val bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION =
+  store_thm ("bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION",
   ``!vs1 vs2 env1.
-      (FINITE vs2 /\ vs1 SUBSET vs2 /\ bir_var_set_is_well_typed vs2) ==>
-      bir_env_vars_are_initialised env1 vs1 ==>
+      (FINITE vs2 /\ vs1 SUBSET vs2 /\
+       bir_var_set_is_well_typed vs2) ==>
+      bir_env_vars_are_well_typed env1 vs1 ==>
       (?env2. bir_env_EQ_FOR_VARS vs1 env1 env2 /\
-              bir_env_vars_are_initialised env2 vs2)``,
+              bir_env_vars_are_well_typed env2 vs2)``,
 
 REPEAT STRIP_TAC >>
 Cases_on `env1` >> rename1 `BEnv env` >>
+EXISTS_TAC ``(BEnv env)`` >>
+FULL_SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_EQUIV] >>
+IMP_RES_TAC bir_var_set_is_well_typed_SUBSET
+
+
 Q.ABBREV_TAC `VF = (\v. (bir_var_type v, SOME (bir_default_value_of_type (bir_var_type v))))` >>
 Q.ABBREV_TAC `M1 = FUN_FMAP VF (vs2 DIFF vs1)` >>
 EXISTS_TAC ``BEnv (FUNION (MAP_KEYS bir_var_name M1) env)`` >>
@@ -870,9 +878,9 @@ Q.UNABBREV_TAC `M1` >>
 Q.UNABBREV_TAC `VF` >>
 ASM_SIMP_TAC std_ss [FLOOKUP_FUN_FMAP, FINITE_DIFF,
   bir_default_value_of_type_SPEC, bir_var_type_def, IN_DIFF]);
+*)
 
-
-
+(* TODO: Deprecated???
 val bir_env_vars_are_initialised_ENV_EXISTS_IFF = store_thm ("bir_env_vars_are_initialised_ENV_EXISTS_IFF",
   ``!vs. (?env. bir_env_vars_are_initialised env vs) <=> (FINITE vs /\ bir_var_set_is_well_typed vs)``,
 
@@ -883,7 +891,7 @@ REPEAT STRIP_TAC >>
 MP_TAC (Q.SPECL [`{}`, `vs`, `bir_empty_env`] bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION) >>
 ASM_SIMP_TAC std_ss [EMPTY_SUBSET, bir_env_vars_are_initialised_EMPTY, NOT_IN_EMPTY,
   bir_env_EQ_FOR_VARS_EMPTY]);
-
+*)
 
 
 val _ = export_theory();
