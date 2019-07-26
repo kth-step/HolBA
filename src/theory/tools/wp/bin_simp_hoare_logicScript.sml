@@ -1,7 +1,9 @@
 open HolKernel Parse boolLib bossLib;
 open bin_hoare_logicTheory;
 
-val _ = new_theory "bin_hoare_logic";
+open bin_hoare_logicLib;
+
+val _ = new_theory "bin_simp_hoare_logic";
 
 val INTER_SUBSET_EMPTY_thm = prove(``!s t v.
 (s SUBSET t) ==> (v INTER t = EMPTY) ==> (v INTER s = EMPTY)
@@ -79,6 +81,7 @@ val weak_map_subset_blacklist_rule_thm = prove(``
 (weak_map_triple m invariant l ls ls' pre post) ==>
 (weak_map_triple m invariant l ls ls'' pre post)
 ``,
+
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
 ASSUME_TAC (ISPECL [``ls'':'b->bool``, ``ls':'b->bool``, ``ls:'b->bool``] INTER_SUBSET_EMPTY_thm) >>
@@ -132,6 +135,7 @@ val weak_map_weakening_rule_thm = prove(``
 (weak_map_triple m invariant l ls ls' pre post1) ==>
 (weak_map_triple m invariant l ls ls' pre post2)
 ``,
+
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
 Q.SUBGOAL_THEN `∀ms. m.pc ms ∈ (ls ∪ ls') ⇒ (λms. m.pc ms ∉ ls' ∧ post1 (m.pc ms) ms ∧ invariant ms) ms ⇒
@@ -155,6 +159,7 @@ val weak_map_add_post_corollary_thm = prove(``
 (weak_map_triple m invariant l ls ls' pre post1) ==>
 (weak_map_triple m invariant l ls ls' pre (\l ms. if l IN ls then post1 l ms else post2 l ms))
 ``,
+
 REPEAT STRIP_TAC >>
 ASSUME_TAC (Q.SPECL [`m`, `invariant`, `l`, `ls`, `ls'`, `pre`,  `post1`,  `(\l ms. if l IN ls then post1 l ms else post2 l ms)`]
  weak_map_weakening_rule_thm) >>
@@ -169,6 +174,7 @@ val weak_map_add_post2_corollary = prove(``
 (weak_map_triple m invariant l ls1 ls' pre post1) ==>
 (weak_map_triple m invariant l ls1 ls' pre (\l ms. if (l IN ls2) then post2 l ms else post1 l ms))
 ``,
+
 REPEAT STRIP_TAC >>
 Q.SUBGOAL_THEN `(∀ms. m.pc ms ∈ ls1 ⇒ post1 (m.pc ms) ms ⇒
               (λl ms. if l ∈ ls2 then post2 l ms else post1 l ms) (m.pc ms) ms)` ASSUME_TAC >-
@@ -186,14 +192,17 @@ REV_FULL_SIMP_TAC std_ss []
 
 
 (* This prove should use the blacklist move lemma *)
-val weak_map_seq_thm = prove(``
-! m invariant l ls1 ls ls' pre post.
-(weak_model m) ==>
-(ls ∩ ls' = ∅) ==>
-(weak_map_triple m invariant l ls1 (ls UNION ls') pre post) ==>
-(! l1. (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls ls' (post l1) post)) ==>
-(weak_map_triple m invariant l ls ls' pre post)
-``,
+val weak_map_seq_thm = prove(
+  ``!m invariant l ls1 ls ls' pre post.
+    weak_model m ==>
+    (ls ∩ ls' = ∅) ==>
+    weak_map_triple m invariant l ls1 (ls UNION ls') pre post ==>
+    (!l1.
+     (l1 IN ls1) ==>
+     weak_map_triple m invariant l1 ls ls' (post l1) post
+    ) ==>
+    (weak_map_triple m invariant l ls ls' pre post)``,
+
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
 REV_FULL_SIMP_TAC std_ss [] >>
@@ -258,6 +267,7 @@ val weak_map_std_seq_comp_thm = prove(``
 (!l1 . (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
 (weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2)
 ``,
+
 REPEAT STRIP_TAC >>
 
 (* First we extend the initial contract to have the same postcondition *)
@@ -334,7 +344,9 @@ val weak_map_std_seq_comp_thm = prove(``
 (weak_map_triple m invariant l ls1 ls2 pre1 post1) ==>
 (!l1 . (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
 (weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2)
-``,chat);
+``,
+
+cheat);
 
 
 (* loop *)
@@ -358,7 +370,9 @@ val weak_map_std_seq_comp_thm = prove(``
 (weak_map_triple m invariant l ls1 ls2 pre1 post1) ==>
 (!l1 . (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
 (weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2)
-``,cheat);
+``,
+
+cheat);
 
 
 (* Recursive function *)
@@ -370,7 +384,9 @@ val weak_map_std_seq_comp_thm = prove(``
 (weak_map_triple m invariant l ls1 ls2 pre1 post1) ==>
 (!l1 . (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
 (weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2)
-``,cheat);
+``,
+
+cheat);
 
 
 (* Mutually Recursive function *)
@@ -382,7 +398,9 @@ val weak_map_std_seq_comp_thm = prove(``
 (weak_map_triple m invariant l ls1 ls2 pre1 post1) ==>
 (!l1 . (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
 (weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2)
-``,cheat);
+``,
+
+cheat);
 
 
 val _ = export_theory();

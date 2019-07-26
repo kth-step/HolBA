@@ -1,36 +1,62 @@
 open HolKernel Parse boolLib bossLib;
 
-val _ = new_theory "bin_hoare_logic";
+open bin_hoare_logicLib;
 
-(* Utility tactics *)
-fun QSPECL_ASSUM pat ls = PAT_ASSUM pat (fn thm => ASSUME_TAC (Q.SPECL ls thm));
-fun QSPECL_X_ASSUM pat ls = PAT_X_ASSUM pat (fn thm => ASSUME_TAC (Q.SPECL ls thm));
-fun FULLSIMP_BY_THM ss thm = FULL_SIMP_TAC ss [thm];
+val _ = new_theory "bin_hoare_logic";
 
 (* Utility theorems *)
 val FUNPOW_OPT_ADD_thm = prove(``
   !f n n' ms ms' ms''.
-  (FUNPOW_OPT f n ms = SOME ms') ==>  (FUNPOW_OPT f n' ms' = SOME ms'') ==>  (FUNPOW_OPT f (n'+n) ms = SOME ms'')
-``,
-  METIS_TAC [bir_auxiliaryTheory.FUNPOW_OPT_def, arithmeticTheory.FUNPOW_ADD]
+  (FUNPOW_OPT f n ms = SOME ms') ==>
+  (FUNPOW_OPT f n' ms' = SOME ms'') ==> 
+  (FUNPOW_OPT f (n'+n) ms = SOME ms'')
+  ``,
+
+METIS_TAC [bir_auxiliaryTheory.FUNPOW_OPT_def,
+           arithmeticTheory.FUNPOW_ADD]
 );
 
 val IN_UNION_ABSORB_thm = prove(``! l ls. (l IN ls) ==> (({l} UNION ls) = ls)``,
-  METIS_TAC [pred_setTheory.ABSORPTION, GSYM pred_setTheory.INSERT_SING_UNION]
+
+METIS_TAC [pred_setTheory.ABSORPTION,
+           GSYM pred_setTheory.INSERT_SING_UNION]
 );
 
 val SINGLETONS_UNION_thm = prove(``! l e. ({l} UNION {e}) = {l;e}``,
-  METIS_TAC [pred_setTheory.INSERT_SING_UNION]
+
+METIS_TAC [pred_setTheory.INSERT_SING_UNION]
 );
 
 
 (* Generalization of exec to label *)
-Datatype `bin_model_t = <| trs : 'a -> 'a option ; weak : 'a -> ('b -> bool) -> 'a -> bool; pc : 'a -> 'b |>`;
+Datatype `bin_model_t =
+  <|(* A function to obtain a state option from a state via
+     * execution (transition) *)
+    trs : 'a -> 'a option;
+    (* A function to determine whether a transition between two
+     * states is OK, through using a set of labels for which
+     * execution must halt if reached, meaning they cannot be
+     * touched in any intermediate step *)
+    weak : 'a -> ('b -> bool) -> 'a -> bool;
+    (* A function to obtain the program counter from a state *)
+    pc : 'a -> 'b
+   |>`;
 
 val weak_model_def = Define `
-    weak_model m = ! ms ls ms' . (m.weak ms ls ms') =
-  ?n . ((n > 0) /\ (FUNPOW_OPT m.trs n ms = SOME ms') /\ ((m.pc ms') IN ls)) /\
-    !n'. (((n' < n) /\ (n' > 0)) ==> ?ms''.(FUNPOW_OPT m.trs n' ms = SOME ms'') /\ (~((m.pc ms'') IN ls)))`;
+  weak_model m =
+    !ms ls ms'.
+      (m.weak ms ls ms') =
+        ?n.
+          ((n > 0) /\
+           (FUNPOW_OPT m.trs n ms = SOME ms') /\
+           ((m.pc ms') IN ls)
+          ) /\
+          !n'.
+            (((n' < n) /\ (n' > 0)) ==>
+            ?ms''.
+              (FUNPOW_OPT m.trs n' ms = SOME ms'') /\
+              (~((m.pc ms'') IN ls))
+            )`;
 
 
 val weak_comp_thm = prove(``
@@ -39,6 +65,7 @@ val weak_comp_thm = prove(``
 (m.weak ms (ls1 UNION ls2) ms') ==> (~ ((m.pc ms') IN ls2)) ==>
 (m.weak ms' ls2 ms'') ==> (m.weak ms ls2 ms'')
 ``,
+
 REPEAT STRIP_TAC >>
 REV_FULL_SIMP_TAC std_ss [weak_model_def] >>
 EXISTS_TAC ``n'+n:num`` >>
@@ -60,22 +87,26 @@ REV_FULL_SIMP_TAC arith_ss []
 
 val weak_unique_thm = prove(``
   !m. (weak_model m) ==>
-  !ms ls ms' ms''. (m.weak ms ls ms') ==> (m.weak ms ls ms'') ==> (ms' = ms'')
+  !ms ls ms' ms''.
+  (m.weak ms ls ms') ==>
+  (m.weak ms ls ms'') ==>
+  (ms' = ms'')
 ``,
-  REPEAT STRIP_TAC >>
-  REV_FULL_SIMP_TAC std_ss [weak_model_def] >>
-  Q.SUBGOAL_THEN `n = n'` (FULLSIMP_BY_THM arith_ss)  >>
-  (Cases_on `n < n'`) >-
-  (
-     QSPECL_X_ASSUM ``!n'':num.(n'' < n' ∧ n'' > 0) ⇒ P`` [`n:num`] >>
-     REV_FULL_SIMP_TAC std_ss [] 
-  ) >>
-  (Cases_on `n > n'`) >-
-  (
-     QSPECL_X_ASSUM ``!n'':num.(n'' < n ∧ n'' > 0) ⇒ P`` [`n':num`] >>
-     REV_FULL_SIMP_TAC arith_ss [] 
-  ) >>
-  FULL_SIMP_TAC arith_ss [] 
+
+REPEAT STRIP_TAC >>
+REV_FULL_SIMP_TAC std_ss [weak_model_def] >>
+Q.SUBGOAL_THEN `n = n'` (FULLSIMP_BY_THM arith_ss)  >>
+(Cases_on `n < n'`) >-
+(
+   QSPECL_X_ASSUM ``!n'':num.(n'' < n' ∧ n'' > 0) ⇒ P`` [`n:num`] >>
+   REV_FULL_SIMP_TAC std_ss [] 
+) >>
+(Cases_on `n > n'`) >-
+(
+   QSPECL_X_ASSUM ``!n'':num.(n'' < n ∧ n'' > 0) ⇒ P`` [`n':num`] >>
+   REV_FULL_SIMP_TAC arith_ss [] 
+) >>
+FULL_SIMP_TAC arith_ss [] 
 );
 
 val weak_union_thm = prove(``
@@ -83,10 +114,11 @@ val weak_union_thm = prove(``
   !ms ls1 ls2 ms'.
   (m.weak ms (ls1 UNION ls2) ms') ==> (~ ((m.pc ms') IN ls1)) ==> (m.weak ms ls2 ms')
 ``,
-  REPEAT STRIP_TAC >>
-  REV_FULL_SIMP_TAC std_ss [weak_model_def] >>
-  Q.EXISTS_TAC `n` >>
-  METIS_TAC [pred_setTheory.IN_UNION]
+
+REPEAT STRIP_TAC >>
+REV_FULL_SIMP_TAC std_ss [weak_model_def] >>
+Q.EXISTS_TAC `n` >>
+METIS_TAC [pred_setTheory.IN_UNION]
 );
 
 val weak_union2_thm = prove(``
@@ -94,10 +126,11 @@ val weak_union2_thm = prove(``
   !ms ls1 ls2 ms'.
   (m.weak ms (ls1 UNION ls2) ms') ==> (((m.pc ms') IN ls2)) ==> (m.weak ms ls2 ms')
 ``,
-  REPEAT STRIP_TAC >>
-  REV_FULL_SIMP_TAC std_ss [weak_model_def] >>
-  Q.EXISTS_TAC `n` >>
-  METIS_TAC [pred_setTheory.IN_UNION]
+
+REPEAT STRIP_TAC >>
+REV_FULL_SIMP_TAC std_ss [weak_model_def] >>
+Q.EXISTS_TAC `n` >>
+METIS_TAC [pred_setTheory.IN_UNION]
 );
 
 val weak_union_singleton_thm = prove(``
@@ -105,6 +138,7 @@ val weak_union_singleton_thm = prove(``
   !ms l1 ls2 ms'.
   (m.weak ms ({l1} UNION ls2) ms') ==> ((m.pc ms') <> l1) ==> (m.weak ms ls2 ms')
 ``,
+
 METIS_TAC [weak_union_thm, pred_setTheory.IN_SING]
 );
 
@@ -114,14 +148,16 @@ val weak_singleton_pc_thm = prove(``
 !ms e ms'.
  (m.weak ms {e} ms') ==> ((m.pc ms') = e)
 ``,
-  METIS_TAC[weak_model_def, pred_setTheory.IN_SING]
+
+METIS_TAC[weak_model_def, pred_setTheory.IN_SING]
 );
 
 
 val weak_pc_in_thm = prove(``
   !m. (weak_model m) ==> !ms ls ms'. (m.weak ms ls ms') ==> ((m.pc ms') IN ls)
 ``,
-  METIS_TAC [weak_model_def]
+
+METIS_TAC [weak_model_def]
 );
 
 val weak_union_pc_not_in_thm = prove(``
@@ -129,9 +165,10 @@ val weak_union_pc_not_in_thm = prove(``
  (m.weak ms (ls1 UNION ls2) ms') ==> (~((m.pc ms') IN ls2)) ==>
  (m.weak ms ls1 ms')
 ``,
-  REPEAT STRIP_TAC >>
-  REV_FULL_SIMP_TAC std_ss [weak_model_def] >>
-  METIS_TAC [pred_setTheory.IN_UNION]
+
+REPEAT STRIP_TAC >>
+REV_FULL_SIMP_TAC std_ss [weak_model_def] >>
+METIS_TAC [pred_setTheory.IN_UNION]
 );
 
 
@@ -154,50 +191,56 @@ val weak_case_rule_thm = prove(``
   (weak_triple m l ls (\ms. (pre ms) /\ (~(C1 ms))) post) ==>
   (weak_triple m l ls pre post)
 ``,
-  REPEAT STRIP_TAC >>
-  FULL_SIMP_TAC std_ss [weak_triple_def] >>
-  METIS_TAC []
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [weak_triple_def] >>
+METIS_TAC []
 );
 
-val weak_weakening_rule_thm = prove(``
-  !m . 
-  ! l ls pre1 pre2 post1 post2 .
-  (weak_model m) ==>
-  (!ms. ((m.pc ms) = l) ==> (pre2 ms) ==> (pre1 ms)) ==>
-  (!ms. ((m.pc ms) IN ls) ==> (post1 ms) ==> (post2 ms)) ==>
-  (weak_triple m l ls pre1 post1) ==>
-  (weak_triple m l ls pre2 post2)
-``,
-  SIMP_TAC std_ss [weak_triple_def] >>
-  REPEAT STRIP_TAC >>
-  METIS_TAC [weak_pc_in_thm]
+val weak_weakening_rule_thm =
+  store_thm("weak_weakening_rule_thm",
+  ``!m. 
+    !l ls pre1 pre2 post1 post2.
+    weak_model m ==>
+    (!ms. ((m.pc ms) = l) ==> (pre2 ms) ==> (pre1 ms)) ==>
+    (!ms. ((m.pc ms) IN ls) ==> (post1 ms) ==> (post2 ms)) ==>
+    weak_triple m l ls pre1 post1 ==>
+    weak_triple m l ls pre2 post2
+  ``,
+
+SIMP_TAC std_ss [weak_triple_def] >>
+REPEAT STRIP_TAC >>
+METIS_TAC [weak_pc_in_thm]
 );
 
 
 
-val weak_subset_rule_thm = prove(``
-  !m.  ! l ls1 ls2 pre post .
+val weak_subset_rule_thm =
+ store_thm("weak_subset_rule_thm",
+  ``!m.  ! l ls1 ls2 pre post .
   (weak_model m) ==>
   (!ms. ((post ms) ==> (~((m.pc ms) IN ls2)))) ==>
   (weak_triple m l (ls1 UNION ls2) pre post) ==>
   (weak_triple m l ls1 pre post)
 ``,
-  REPEAT STRIP_TAC >>
-  REV_FULL_SIMP_TAC std_ss [weak_triple_def] >>
-  REPEAT STRIP_TAC >>
-  QSPECL_X_ASSUM ``!x.P`` [`ms`] >>
-  METIS_TAC [weak_union_pc_not_in_thm]
+
+REPEAT STRIP_TAC >>
+REV_FULL_SIMP_TAC std_ss [weak_triple_def] >>
+REPEAT STRIP_TAC >>
+QSPECL_X_ASSUM ``!x.P`` [`ms`] >>
+METIS_TAC [weak_union_pc_not_in_thm]
 );
 
 
 
-val weak_seq_rule_thm = prove(``
-!m. (weak_model m) ==>
-!l ls1 ls2 pre post.
-(weak_triple m l (ls1 UNION ls2) pre post) ==>
-(!l1. (l1 IN ls1) ==> (weak_triple m l1 ls2 post post)) ==>
-(weak_triple m l ls2 pre post)
-``,
+val weak_seq_rule_thm = store_thm("weak_seq_rule_thm",
+  ``!m l ls1 ls2 pre post.
+    weak_model m ==>
+    weak_triple m l (ls1 UNION ls2) pre post ==>
+    (!l1. (l1 IN ls1) ==> (weak_triple m l1 ls2 post post)) ==>
+    weak_triple m l ls2 pre post
+  ``,
+
 REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [weak_triple_def] >>
 REPEAT STRIP_TAC >>
@@ -227,6 +270,7 @@ val weak_conj_rule_thm = prove(``
 (weak_triple m l ls pre post2) ==>
 (weak_triple m l ls pre (\ms. (post1 ms) /\ (post2 ms)))
 ``,
+
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [weak_triple_def] >>
 REPEAT STRIP_TAC >>
@@ -289,6 +333,7 @@ Q.SPEC `(\m ms var l le invariant C1.
 val inductive_invariant_thm = prove(``
 ^inductive_invariant_goal
 ``,
+
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [] >>
 REPEAT STRIP_TAC >>
@@ -375,6 +420,7 @@ val weak_invariant_rule_thm = prove(``
 (weak_triple m l le (\ms. (invariant ms) /\ (~(C1 ms))) post) ==>
 (weak_triple m l le invariant post)
 ``,
+
 REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [weak_triple_def] >>
 REPEAT STRIP_TAC >>
@@ -390,13 +436,4 @@ REV_FULL_SIMP_TAC std_ss [] >>
 FULL_SIMP_TAC std_ss [weak_triple_def] 
 );
 
-
-
-
-
-
-
 val _ = export_theory();
-
-
-
