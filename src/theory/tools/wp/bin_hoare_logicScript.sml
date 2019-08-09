@@ -29,7 +29,7 @@ METIS_TAC [pred_setTheory.INSERT_SING_UNION]
 
 
 (* Generalization of exec to label *)
-Datatype `bin_model_t =
+val _ = Datatype `bin_model_t =
   <|(* A function to obtain a state option from a state via
      * execution (transition) *)
     trs : 'a -> 'a option;

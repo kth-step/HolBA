@@ -257,7 +257,7 @@ REV_FULL_SIMP_TAC std_ss []
 
 
 
-(* We chould generalize the other contact to handle set of labels *)
+(* We should generalize the other contact to handle set of labels *)
 val weak_map_std_seq_comp_thm = prove(``
 (weak_model m) ==>
 (ls1' SUBSET ls2) ==>
