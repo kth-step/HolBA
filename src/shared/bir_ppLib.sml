@@ -48,6 +48,7 @@ struct
 
   fun hol_string_printer _ _ _ {add_string,ustyle,...} _ _ term =
     ustyle [FG Green] (add_string ("\"" ^ (stringSyntax.fromHOLstring term) ^ "\""))
+      handle e => raise term_pp_types.UserPP_Failed
 
   fun bir_immtype_t_printer _ _ _ ppfns _ _ term =
     let

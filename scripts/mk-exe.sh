@@ -28,9 +28,7 @@ function mk_exe_for_sml_file {
 
     declare SML_MODULE=$(echo $1 | sed -r 's/.sml//')
 
-    # This line executes the test. If the test fails (exit status not 0), then
-    # test_failed_trap will be executed and the script will fail. This is due
-    # to `set -e` and `trap test_failed_trap EXIT`
+    # Generate the .exe file as executable
     RUN_CMD="\"${BUILDHEAP}\" --gcthreads=1 --holstate=\"${HEAP}\" ${SML_MODULE}"
     EXE_FILE_CONTENTS="#!/bin/sh\nset -e\n${RUN_CMD}\nexit 0"
     echo -e ${EXE_FILE_CONTENTS} > ${SML_MODULE}.exe

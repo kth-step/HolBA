@@ -313,8 +313,8 @@ sig
     val bconstii:   int -> int -> term
     val bconstimm:  term -> term
 
-    val btrue:  term
-    val bfalse:  term
+    val btrue:      term
+    val bfalse:     term
 
     (* Memory constants (BExp_MemConst: bir_exp_t)
      *
@@ -554,6 +554,17 @@ sig
      * bsltl:       bir_exp_t list -> bir_exp_t
      * blel:        bir_exp_t list -> bir_exp_t
      * bslel:       bir_exp_t list -> bir_exp_t
+     *
+     * # BSL sugar:
+     * bgt:         (bir_exp_t * bir_exp_t) -> bir_exp_t
+     * bsgt:        (bir_exp_t * bir_exp_t) -> bir_exp_t
+     * bge:         (bir_exp_t * bir_exp_t) -> bir_exp_t
+     * bsge:        (bir_exp_t * bir_exp_t) -> bir_exp_t
+     *
+     * bgtl:        bir_exp_t list -> bir_exp_t
+     * bsgtl:       bir_exp_t list -> bir_exp_t
+     * bgel:        bir_exp_t list -> bir_exp_t
+     * bsgel:       bir_exp_t list -> bir_exp_t
      *)
     val bbinpred:   term -> (term * term) -> term
     val bbinpredl:  term -> term list -> term
@@ -571,6 +582,16 @@ sig
     val bsltl:      term list -> term
     val blel:       term list -> term
     val bslel:      term list -> term
+
+    val bgt:        (term * term) -> term
+    val bsgt:       (term * term) -> term
+    val bge:        (term * term) -> term
+    val bsge:       (term * term) -> term
+
+    val bgtl:       term list -> term
+    val bsgtl:      term list -> term
+    val bgel:       term list -> term
+    val bsgel:      term list -> term
 
     (* Memory equality (BExp_MemEq: bir_exp_t)
      *
@@ -806,6 +827,5 @@ sig
 
     val bextr:  term -> (term * term * term) -> term
     val bextri: int  -> (term * term * term) -> term
-
 
 end (* bslLib *)
