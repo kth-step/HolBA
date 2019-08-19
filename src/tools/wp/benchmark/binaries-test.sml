@@ -269,7 +269,7 @@ val _ = List.foldl (fn (config,_) =>
           end;
 
         val _ = List.map (fn label => if find_wp_const label wps_ = NONE then
-                                        raise ERR "" "cannot find one of the preconditions"
+                                        raise ERR "select_blocks_from_prog" "cannot find one of the preconditions"
                                       else ())
                          (List.filter (fn x => not (List.exists (fn y => x = y) last_block_labels)) first_block_labels);
 

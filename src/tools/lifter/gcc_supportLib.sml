@@ -134,7 +134,7 @@ fun parse_disassembly_file_line l =
   end else if String.isPrefix "Disassembly of section" l then
     DASL_section (String.implode (butlast (List.drop (cl, 23))))
   else DASL_sep
-end handle HOL_ERR _ => raise (ERR "" ("can't parse line '"^ l ^"'"))
+end handle HOL_ERR _ => raise (ERR "parse_disassembly_file_line" ("can't parse line '"^ l ^"'"))
 
 
 

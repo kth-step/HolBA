@@ -6,6 +6,8 @@ open bir_immTheory;
 
 
 val ERR = mk_HOL_ERR "bir_immSyntax"
+val wrap_exn = Feedback.wrap_exn "bir_immSyntax"
+
 fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_imm"
 
 fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0
@@ -125,8 +127,7 @@ fun gen_dest_Imm tm = let
   val s = assoc c bir_imm_t_sizes_list
 in
   (s, arg)
-end handle HOL_ERR _ =>
-  raise (ERR "gen_dest_Imm" "???");
+end handle e => raise wrap_exn "gen_dest_Imm" e;
 
 val gen_is_Imm = can gen_dest_Imm;
 

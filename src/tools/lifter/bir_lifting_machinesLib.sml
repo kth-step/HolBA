@@ -10,6 +10,8 @@ open bir_exp_liftingLib bir_lifting_machinesTheory
 (**********)
 
 val ERR = mk_HOL_ERR "bir_lifting_machinesLib"
+val wrap_exn = Feedback.wrap_exn "bir_lifting_machinesLib"
+
 fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_lifting_machines"
 
 fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0
@@ -67,7 +69,7 @@ fun dest_bir_lifting_machine_rec tm = let
   val step_fun = Lib.assoc "bmr_step_fun" l
 in
   (imms, mem, pc, extra, step_fun)
-end handle HOL_ERR _ => raise ERR "dest_bir_lifting_machine_rec" "";
+end handle e => raise wrap_exn "dest_bir_lifting_machine_rec" e;
 
 
 (* Array fields *)

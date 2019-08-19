@@ -7,6 +7,7 @@ open bir_immTheory bir_valuesTheory bir_programTheory;
 
 val ERR = mk_HOL_ERR "bir_programSyntax"
 val wrap_exn = Feedback.wrap_exn "bir_programSyntax"
+
 fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program"
 
 fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0

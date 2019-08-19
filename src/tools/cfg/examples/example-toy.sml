@@ -86,7 +86,7 @@ val num_lf_frags = length lf_frags;
 val _ = print ("number of loop free fragments: " ^ (Int.toString num_lf_frags) ^ "\n");
 
 val _ = if (length blocks) = (List.foldl (fn ((x,_,_),l) => l + length x) 0 lf_frags) then ()
-        else raise ERR "" "something is fishy";
+        else raise Fail "Something is fishy: incorrect number of blocks";
 
 (*
 List.foldl (fn ((x,_,_),l) => l + length x) 0 lf_frags
