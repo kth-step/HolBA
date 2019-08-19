@@ -36,8 +36,8 @@ jobs:
     - &compile-test
       stage: "Compile and test"
       script:
-        - source ./scripts/setup/autoenv.sh && scripts/ci/run_make.sh main
-        - source ./scripts/setup/autoenv.sh && scripts/ci/run_make.sh tests
+        - scripts/ci/run_make.sh main
+        - scripts/ci/run_make.sh tests
 
     - <<: *compile-test
       env: HOLBA_POLYML_VERSION="v5.8"
