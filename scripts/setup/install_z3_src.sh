@@ -52,7 +52,7 @@ wget -qO- ${Z3_URL} | \
 
 # compile z3
 cd "${Z3_DIR_SRC}"
-python scripts/mk_make.py --prefix=${Z3_DIR} --python --pypkgdir=${Z3_DIR}/bin/python
+python3 scripts/mk_make.py --prefix=${Z3_DIR} --python --pypkgdir=${Z3_DIR}/bin/python
 cd build
 make
 
