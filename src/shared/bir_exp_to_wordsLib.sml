@@ -8,6 +8,7 @@ struct
   open HolKernel Parse boolLib bossLib;
   open optionSyntax numSyntax;
   open wordsSyntax fcpSyntax;
+  open pretty_exnLib;
 
   open bir_exp_memTheory bir_exp_memSyntax;
   open bir_valuesTheory bir_valuesSyntax;
@@ -25,6 +26,8 @@ struct
 
   val ERR = mk_HOL_ERR "bir_exp_to_wordsLib";
   val wrap_exn = Feedback.wrap_exn "bir_exp_to_wordsLib";
+
+  fun fst3 (a, b, c) = a
 
   fun simp_if_conv tm =
     let
@@ -197,7 +200,7 @@ struct
           val to_rw = ``(bir_unary_exp_GET_OPER ^uop) ^w_exp``
           val rewritten = PURE_REWRITE_CONV [bir_unary_exp_GET_OPER_def] to_rw
         in
-          (snd o dest_comb o concl) rewritten
+          (rhs o concl) rewritten
         end
           handle e => raise wrap_exn "bir_exp_to_words::unary_exp" e
       (* Binary expressions *)
@@ -230,9 +233,11 @@ struct
           val w_exp2 = bir_exp_to_words bir_exp2
           val to_rw = ``(bir_bin_pred_GET_OPER ^bpred) ^w_exp1 ^w_exp2``
           val rewritten = PURE_REWRITE_CONV [bir_bin_pred_GET_OPER_def] to_rw
-          val w_bool_bin_pred = (snd o dest_comb o concl) rewritten
+          (* For BIExp_NotEqual *)
+          val beta_rw = (QCONV (REPEATC (ONCE_DEPTH_CONV BETA_CONV))) ((rhs o concl) rewritten)
+          val w_bool_bin_pred = (rhs o concl) beta_rw
         in
-          bool2w w_bool_bin_pred
+          (bool2w w_bool_bin_pred)
         end
           handle e => raise wrap_exn "bir_exp_to_words::binary_pred" e
       (* MemEq expressions *)
@@ -269,9 +274,11 @@ struct
         *)
         let
           val (bir_cond_exp, bir_then_exp, bir_else_exp) = dest_BExp_IfThenElse exp
+          (**)
           val w_cond_exp = bir_exp_to_words bir_cond_exp
-          (* Do we really want to do this "optimization"? *)
-          val (bool_cond_exp, _, _) = dest_cond w_cond_exp
+          val bool_cond_exp = if is_cond w_cond_exp then ((fst3 o dest_cond) w_cond_exp)
+            else mk_eq (w_cond_exp, mk_wordii (1, 1))
+          (**)
           val w_then_exp = bir_exp_to_words bir_then_exp
           val w_else_exp = bir_exp_to_words bir_else_exp
         in
@@ -466,7 +473,8 @@ struct
             ^ "\n - actual: " ^ (term_to_string actual)
             ^ "\n - expected: " ^ (term_to_string expected)
             );
-        in () end;
+        in () end
+          handle e => raise wrap_exn "bir_exp_to_words raised during test" e;
       val t = test_bir_exp_to_words;
       (* Const *)
       val _ = t ``BExp_Const (Imm32 12345w)`` ``12345w: 32 word``;
@@ -512,7 +520,8 @@ struct
             then (200w :word64)
             else (404w :word64)``;
       (* TODO: Write tests for store and loads *)
-    in () end;
+    in () end
+      handle e => raise pp_exn e;
 
   end (* local *)
 
