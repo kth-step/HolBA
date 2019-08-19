@@ -88,6 +88,9 @@ struct
       val var_wps = mk_var ("wps", finite_mapSyntax.mk_fmap_ty (bir_label_t_ty, bir_exp_t_ty))
       val var_wps1 = mk_var ("wps'", finite_mapSyntax.mk_fmap_ty (bir_label_t_ty, bir_exp_t_ty))
       val thm = SPECL [program, var_l, ls, post, var_wps, var_wps1] reusable_thm
+        handle e => raise wrap_exn ("Failed to specialize the reusable thm "
+          ^ "(you may need to instantiate the reusable_thm's "
+          ^ "observation type to the one you're using)") e
 
       (* TODO: Redefining these convs every call is not part of
        *       computation, so these should be placed externally... *)
@@ -126,8 +129,8 @@ struct
       val no_declare_conv = [bir_declare_free_prog_exec_def,
                              bir_isnot_declare_stmt_def]
 
-      fun wrap_exn_ exn term message = wrap_exn ("bir_wp_comp_wps_iter_step0_init::"
-        ^ message ^ ": \n" ^ (Hol_pp.term_to_string term) ^ "\n") exn
+      fun wrap_exn_ exn term message = wrap_exn
+        (message ^ ": \n" ^ (Hol_pp.term_to_string term) ^ "\n") exn
       val concl_tm = (snd o dest_eq o concl)
 
       (* TODO: Create bir_is_bool_expSyntax for the below *)
@@ -157,7 +160,8 @@ struct
       val thm = GENL [var_l, var_wps, var_wps1] thm;
     in
       thm
-    end;
+    end
+      handle e => raise wrap_exn "bir_wp_comp_wps_iter_step0_init" e;
 
   (* Include current label in reasoning *)
   fun bir_wp_comp_wps_iter_step1 label prog_thm (program, post, ls)
@@ -255,25 +259,24 @@ struct
               )
       val thm = SPECL [wps, var_wps1] prog_l_thm
 
-      (* this took a while, it should not have been?! *)
+      (* FIXME: This seems to take some time, is that normal? *)
       val thm = MP thm wps_bool_sound_thm
 
-      (* this takes a bit, not anymore? *)
-      val wps_eval_restrict_consts =
-        !bir_wp_comp_wps_iter_step2_consts;
+      (* FIXME: This seems to take some time, is that normal? *)
+      val wps_eval_restrict_consts = !bir_wp_comp_wps_iter_step2_consts;
+      val obs_ty = (hd o snd o dest_type o type_of) program
       val wps1_thm =
         computeLib.RESTR_EVAL_CONV wps_eval_restrict_consts
           (list_mk_comb
             (* TODO: Add to bir_wpSyntax *)
-            (``bir_wp_exec_of_block:'a bir_program_t ->
+            (inst [Type `:'obs_ty` |-> obs_ty]
+              ``bir_wp_exec_of_block:'obs_ty bir_program_t ->
                  bir_label_t ->
                  (bir_label_t -> bool) ->
                  bir_exp_t ->
                  (bir_label_t |-> bir_exp_t) ->
                  (bir_label_t |-> bir_exp_t) option``,
-             [program, label, ls, post, wps]
-            )
-          )
+             [program, label, ls, post, wps]))
 
       (* normalize *)
       val wps1_thm = SIMP_RULE pure_ss [GSYM bir_exp_subst1_def,
@@ -300,7 +303,8 @@ struct
       val wps1_bool_sound_thm = MP thm wps1_thm
     in
       (wps1, wps1_bool_sound_thm)
-    end;
+    end
+      handle e => raise wrap_exn "bir_wp_comp_wps_iter_step2" e;
 
   (*
   (* helper for simple traversal in recursive procedure *)
@@ -329,7 +333,8 @@ struct
       (k)::(List.filter (fn k1 => not (cmp_label k1 k))
 			(bir_wp_fmap_to_dom_list fmap1)
 	   )
-    end;
+    end
+      handle e => raise wrap_exn "bir_wp_fmap_to_dom_list" e;
 
   fun bir_wp_init_rec_proc_jobs prog_term wps_term =
     let
@@ -344,7 +349,8 @@ struct
       val blstodo = List.filter blstodofilter blocks
     in
       (wpsdom, blstodo)
-    end;
+    end
+      handle e => raise wrap_exn "bir_wp_init_rec_proc_jobs" e;
 
   (* Recursive procedure for traversing the control flow graph *)
   fun bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm),
@@ -386,8 +392,7 @@ struct
 	          ((is_lbl_in_wps o dest_BLE_Label o #3 o
                     dest_BStmt_CJmp) end_statement)
 	  else
-	    raise ERR "bir_wp_comp_wps"
-                      "unhandled end_statement type."
+	    raise ERR "bir_wp_comp_wps" "unhandled end_statement type."
 	end) blstodo
     in
       case block of
@@ -470,7 +475,8 @@ struct
           in
             (wps, wps_bool_sound_thm)
           end
-    end;
+    end
+      handle e => raise wrap_exn "bir_wp_comp_wps" e;
 
   end (* local *)
 
