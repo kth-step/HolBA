@@ -29,7 +29,7 @@ declare COMMENT_BODY="$(cat)"
 
 # Escape the comment to respect JSON format
 json_escape () {
-    printf '%s' "$1" | python -c 'import json,sys; print(json.dumps(sys.stdin.read()))'
+    printf '%s' "$1" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))'
 }
 declare COMMENT_BODY=$(json_escape "$COMMENT_BODY")
 

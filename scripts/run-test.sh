@@ -21,7 +21,7 @@ function start_watcher {
     while [ 1 ]; do
         sleep 30
         declare END_TIME=$(date +%s.%N)
-        declare DURATION=$(python2 -c "print($END_TIME - $WATCHER_START_TIME)")
+        declare DURATION=$(python3 -c "print($END_TIME - $WATCHER_START_TIME)")
         enclose "Test running: $TEST_PATH" "$(printf 'Time so far: %3g sec.\n' "$DURATION")"
     done &
     declare -g WATCH_PID=$!
@@ -33,7 +33,7 @@ function stop_watcher {
 
 function test_failed_trap {
     declare END_TIME=$(date +%s.%N)
-    declare DURATION=$(python2 -c "print($END_TIME - $START_TIME)")
+    declare DURATION=$(python3 -c "print($END_TIME - $START_TIME)")
     enclose "Test failed: $TEST_PATH" "$(printf 'Elapsed time: %3g sec.\n' "$DURATION")"
     stop_watcher
 }
@@ -52,7 +52,7 @@ function test_script_file {
     #if (($RANDOM < 20000)); then exit 1; fi
 
     declare END_TIME=$(date +%s.%N)
-    declare DURATION=$(python2 -c "print($END_TIME - $START_TIME)")
+    declare DURATION=$(python3 -c "print($END_TIME - $START_TIME)")
 
     enclose "Test successful: $1" "$(printf "Elapsed time: %3g sec.\n" "$DURATION")"
 
