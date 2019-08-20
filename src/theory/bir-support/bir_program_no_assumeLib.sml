@@ -4,7 +4,6 @@ struct
   open HolKernel Parse boolLib bossLib;
   open Abbrev;
 
-  local
 
     (* HOL4 *)
     open listSyntax;
@@ -20,7 +19,6 @@ struct
     val [stmtsB_empty_na, stmtsB_nempty_na] =
       CONJUNCTS bir_stmtsB_has_no_assumes_def;
 
-  in
 
     fun bir_stmtB_is_not_assume_pp stmtb_is_na =
       EQT_ELIM (
@@ -62,10 +60,10 @@ struct
       end
     ;
 
-    fun bir_prog_has_no_assumes_pp prog_is_na =
+    fun bir_prog_has_no_assumes_rewr_pp defs prog_is_na =
       let
         val thm1 =
-          SIMP_CONV holba_ss [bir_prog_has_no_assumes_def]
+          SIMP_CONV holba_ss ([bir_prog_has_no_assumes_def]@defs)
                 prog_is_na
         val thm1_lhs_conj_tms =
           (boolSyntax.strip_conj o snd o dest_eq o concl) thm1
@@ -77,6 +75,7 @@ struct
       end
     ;
 
-  end
+  val bir_prog_has_no_assumes_pp = bir_prog_has_no_assumes_rewr_pp [];
+
 
 end

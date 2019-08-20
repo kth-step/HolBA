@@ -102,7 +102,7 @@ val wps_term =
 val wps_bool_sound_thm =
   bir_wp_init_wps_bool_sound_thm (program, post, ls) wps defs;
 val (wpsdom, blstodo) =
-  bir_wp_init_rec_proc_jobs prog_term wps_term;
+  bir_wp_init_rec_proc_jobs prog_term wps_term [];
 
 
 (* prepare "problem-static" part of the theorem *)

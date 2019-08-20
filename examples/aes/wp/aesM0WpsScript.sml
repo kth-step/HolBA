@@ -83,7 +83,7 @@ val defs = [aes_program_def, aes_post_def, aes_ls_def, aes_wps_def];
 val prog_term = (snd o dest_comb o concl) aes_program_def;
 val wps_term = (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) wps;
 val wps_bool_sound_thm = bir_wp_init_wps_bool_sound_thm (program, post, ls) wps defs;
-val (wpsdom, blstodo) = bir_wp_init_rec_proc_jobs prog_term wps_term;
+val (wpsdom, blstodo) = bir_wp_init_rec_proc_jobs prog_term wps_term [];
 
 
 

@@ -9,7 +9,8 @@ open bir_programTheory bir_typing_progTheory bir_envTheory
 open bir_program_blocksTheory bir_program_terminationTheory
      bir_program_valid_stateTheory bir_exp_substitutionsTheory
      bir_bool_expTheory bir_program_env_orderTheory
-     bir_program_multistep_propsTheory bir_exp_equivTheory;
+     bir_program_multistep_propsTheory bir_exp_equivTheory
+     bir_bool_expTheory;
 
 (* Simplification sets from theory/bir: *)
 open HolBACoreSimps;
@@ -1302,6 +1303,16 @@ val bir_declare_free_prog_exec_def = Define `
      (bir_declare_free_prog_exec (BirProgram l))
     )
   )`;
+
+val bir_exec_to_labels_pre_F =
+  store_thm("bir_exec_to_labels_pre_F",
+  ``!p l ls post.
+    bir_exec_to_labels_or_assumviol_triple p l ls bir_exp_false post``,
+
+FULL_SIMP_TAC (std_ss++holBACore_ss)
+              [bir_exec_to_labels_or_assumviol_triple_def, bir_exp_false_def,
+               bir_val_true_def, bir_eval_exp_def, word1_distinct]
+);
 
 val bir_declare_free_prog_exec_eq_thm =
   store_thm("bir_declare_free_prog_exec_eq_thm",

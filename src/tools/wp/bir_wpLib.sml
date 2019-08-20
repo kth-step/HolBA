@@ -29,6 +29,8 @@ struct
 
   (* From HOL4 *)
   open finite_mapSyntax pairSyntax wordsTheory;
+  open finite_mapTheory;
+  open HolBACoreSimps;
 
   val ERR = Feedback.mk_HOL_ERR "bir_wpLib";
   val wrap_exn = Feedback.wrap_exn "bir_wpLib";
@@ -52,30 +54,27 @@ struct
       val wps_bool_thm = prove(``bir_bool_wps_map ^wps``,
         REWRITE_TAC [bir_bool_wps_map_def] >>
         REWRITE_TAC defs >>
-        REPEAT_MAX 20 (
-          REWRITE_TAC [finite_mapTheory.FEVERY_FUPDATE,
-                       finite_mapTheory.DRESTRICT_FEMPTY,
-                       finite_mapTheory.FEVERY_FEMPTY] >>
-          SIMP_TAC (std_ss++wordsLib.SIZES_ss++HolBACoreSimps.holBACore_ss) [
-              bir_is_bool_exp_def,
-              type_of_bir_exp_def,
-              bir_var_type_def,
-              type_of_bir_imm_def,
-              bir_type_is_Imm_def,
-              BType_Bool_def
-          ]
-        )
+        SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss++wordsLib.WORD_ss)
+          [FEVERY_FUPDATE, DRESTRICT_FEMPTY, DRESTRICT_FUPDATE, FEVERY_FEMPTY] >>
+	SIMP_TAC (std_ss++wordsLib.SIZES_ss++HolBACoreSimps.holBACore_ss) [
+	    bir_is_bool_exp_def,
+	    type_of_bir_exp_def,
+	    bir_var_type_def,
+	    type_of_bir_imm_def,
+	    bir_type_is_Imm_def,
+	    BType_Bool_def,
+	    bir_exp_false_def
+	]
       )
       val wps_sound_thm =
         prove(``bir_sound_wps_map ^program ^ls ^post ^wps``,
         REWRITE_TAC [bir_sound_wps_map_def] >>
         REWRITE_TAC defs >>
-        REPEAT_MAX 20 (
-          REWRITE_TAC [finite_mapTheory.FEVERY_FUPDATE,
-                       finite_mapTheory.DRESTRICT_FEMPTY,
-                       finite_mapTheory.FEVERY_FEMPTY] >>
-          SIMP_TAC (srw_ss()) []
-        )
+        SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss++wordsLib.WORD_ss)
+          [FEVERY_FUPDATE, DRESTRICT_FEMPTY, DRESTRICT_FUPDATE, FEVERY_FEMPTY] >>
+        SIMP_TAC std_ss [bir_exec_to_labels_pre_F]
+        (* Hopefully, this is not needed: *)
+        (*  SIMP_TAC (srw_ss()) [] *)
       )
       in
         CONJ wps_bool_thm wps_sound_thm
@@ -87,7 +86,7 @@ struct
       val var_l = mk_var ("l", bir_label_t_ty)
       val var_wps = mk_var ("wps", finite_mapSyntax.mk_fmap_ty (bir_label_t_ty, bir_exp_t_ty))
       val var_wps1 = mk_var ("wps'", finite_mapSyntax.mk_fmap_ty (bir_label_t_ty, bir_exp_t_ty))
-      val thm = SPECL [program, var_l, ls, post, var_wps, var_wps1] reusable_thm
+      val thm = ISPECL [program, var_l, ls, post, var_wps, var_wps1] reusable_thm
         handle e => raise wrap_exn ("Failed to specialize the reusable thm "
           ^ "(you may need to instantiate the reusable_thm's "
           ^ "observation type to the one you're using)") e
@@ -257,20 +256,20 @@ struct
         mk_var("wps'", finite_mapSyntax.mk_fmap_ty(bir_label_t_ty,
                                                    bir_exp_t_ty)
               )
-      val thm = SPECL [wps, var_wps1] prog_l_thm
+      val thm1 = SPECL [wps, var_wps1] prog_l_thm
 
       (* FIXME: This seems to take some time, is that normal? *)
-      val thm = MP thm wps_bool_sound_thm
+      val thm2 = MP thm1 wps_bool_sound_thm
 
       (* FIXME: This seems to take some time, is that normal? *)
       val wps_eval_restrict_consts = !bir_wp_comp_wps_iter_step2_consts;
-      val obs_ty = (hd o snd o dest_type o type_of) program
+      val prog_obs_ty = (hd o snd o dest_type o type_of) program;
+
       val wps1_thm =
         computeLib.RESTR_EVAL_CONV wps_eval_restrict_consts
           (list_mk_comb
             (* TODO: Add to bir_wpSyntax *)
-            (inst [Type `:'obs_ty` |-> obs_ty]
-              ``bir_wp_exec_of_block:'obs_ty bir_program_t ->
+            (inst [Type `:'a` |-> prog_obs_ty] ``bir_wp_exec_of_block:'a bir_program_t ->
                  bir_label_t ->
                  (bir_label_t -> bool) ->
                  bir_exp_t ->
@@ -282,25 +281,21 @@ struct
       val wps1_thm = SIMP_RULE pure_ss [GSYM bir_exp_subst1_def,
                                         GSYM bir_exp_and_def]
                                        wps1_thm; 
-      val wps1 = (snd o dest_comb o snd o dest_eq o concl) wps1_thm
+      (*
       val new_wp_id = wps_id_prefix^wps_id_suffix
       val new_wp_id_var = mk_var (new_wp_id, bir_exp_t_ty)
       val new_wp_def =
         Define `^new_wp_id_var = ^(extract_new_wp wps1)`
+      *)
       (* val current_theory_s = current_theory()
        * val new_wp_id_const = mk_const (new_wp_id, ``:bir_exp_t``) *)
-
+      (*
       val new_wp_id_const = (fst o dest_eq o concl) new_wp_def
-      val _ = (bir_wp_comp_wps_iter_step2_consts :=
-		 new_wp_id_const::wps_eval_restrict_consts
-	      );
-      val wps1_thm2 = REWRITE_CONV [GSYM new_wp_def]
-				   ((snd o dest_eq o concl) wps1_thm)
-      val wps1_thm = TRANS wps1_thm wps1_thm2
-      val wps1 = (snd o dest_comb o snd o dest_eq o concl) wps1_thm
+      *)
+      val wps1 = (snd o dest_comb o rhs o concl) wps1_thm
 
-      val thm = SPEC wps1 (GEN var_wps1 thm)
-      val wps1_bool_sound_thm = MP thm wps1_thm
+      val thm3 = SPEC wps1 (GEN var_wps1 thm2)
+      val wps1_bool_sound_thm = MP thm3 wps1_thm
     in
       (wps1, wps1_bool_sound_thm)
     end
@@ -336,15 +331,19 @@ struct
     end
       handle e => raise wrap_exn "bir_wp_fmap_to_dom_list" e;
 
-  fun bir_wp_init_rec_proc_jobs prog_term wps_term =
+  fun bir_wp_init_rec_proc_jobs prog_term wps_term false_label_l =
     let
+      val eval_label = (lhs o concl o EVAL)
+      fun label_tm_eq l1 l2 = (eval_label l1 ) = (eval_label l2)
       val wpsdom = bir_wp_fmap_to_dom_list wps_term
+      val wpsdom_nofalsel =
+        List.filter (fn a => not (List.exists (fn b => (label_tm_eq a b)) false_label_l)) wpsdom
       val blocks = (snd o dest_BirProgram_list) prog_term
       fun blstodofilter block =
         let
           val (label, _, _) = dest_bir_block block
         in
-          not (List.exists (fn el => cmp_label el label) wpsdom)
+          not (List.exists (fn el => cmp_label el label) wpsdom_nofalsel)
         end;
       val blstodo = List.filter blstodofilter blocks
     in
@@ -396,6 +395,9 @@ struct
 	end) blstodo
     in
       case block of
+(*
+  val bl = valOf block;
+*)
 	SOME (bl) =>
 	  let
             val (label, _, _) = dest_bir_block bl

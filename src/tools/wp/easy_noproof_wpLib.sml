@@ -103,7 +103,7 @@ struct
       val wps_bool_sound_thm = (bir_wpLib.bir_wp_init_wps_bool_sound_thm
         (prog_tm, post_tm, wps_labels_lambda_tm) wps0_tm defs)
         handle exn => raise wrap_exn "compute_wp_thm::wps_bool_sound_thm" exn;
-      val (wpsdom, blstodo) = (bir_wpLib.bir_wp_init_rec_proc_jobs prog_term wps0_tm)
+      val (wpsdom, blstodo) = (bir_wpLib.bir_wp_init_rec_proc_jobs prog_term wps0_tm [])
         handle exn => raise wrap_exn "compute_wp_thm::wpsdom, blstodo" exn;
 
       (* prepare "problem-static" part of the theorem *)
@@ -209,6 +209,33 @@ struct
       simp'ed
     end;
 
+(*
+easy_noproof_wpLib.compute_p_imp_wp_tm ""
+      (* prog_def *) bir_mem_prog_def
+      (* Precondition *)
+      (``BL_Label "entry"``, ``
+        BExp_BinPred BIExp_Equal
+          (BExp_Den (BVar "ADDR1" (BType_Imm Bit32)))
+          (BExp_Den (BVar "ADDR2" (BType_Imm Bit32)))``)
+      (* Postconditions *) (
+        [``BL_Label "end"``], ``
+          BExp_BinPred BIExp_Equal
+            (BExp_Den (BVar "x" (BType_Imm Bit16)))
+            (BExp_Const (Imm16 42w))
+        ``)
+val define_prefix = "";
+val prog_def = bir_mem_prog_def;
+val (precond_lbl, precond_bir_tm) = (``BL_Label "entry"``, ``
+        BExp_BinPred BIExp_Equal
+          (BExp_Den (BVar "ADDR1" (BType_Imm Bit32)))
+          (BExp_Den (BVar "ADDR2" (BType_Imm Bit32)))``);
+val (postcond_lbls, postcond_bir_tm) = (
+        [``BL_Label "end"``], ``
+          BExp_BinPred BIExp_Equal
+            (BExp_Den (BVar "x" (BType_Imm Bit16)))
+            (BExp_Const (Imm16 42w))
+        ``);
+*)
   fun compute_p_imp_wp_tm define_prefix prog_def
     (precond_lbl, precond_bir_tm) (postcond_lbls, postcond_bir_tm) =
     let
@@ -220,8 +247,14 @@ struct
       val _ = info "Done.";
 
       val _ = info "Translating to ``P ==> WP``...";
+(*
       val p_imp_wp_tm = bir_wp_simp define_prefix prog_def wps_tm precond_lbl precond_bir_tm
         handle e => raise wrap_exn "compute_p_imp_wp_tm::bir_wp_simp" e;
+*)
+      val p_tm = precond_bir_tm;
+      val wp_tm = (snd o dest_eq o concl o EVAL) ``THE (FLOOKUP ^wps_tm ^precond_lbl)``;
+      val p_imp_wp_tm = ``BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not ^p_tm) (^wp_tm)``;
+
       val _ = info "Done.";
     in
       p_imp_wp_tm

@@ -230,7 +230,7 @@ val _ = List.foldl (fn (config,_) =>
 	val prog_term = (snd o dest_comb o concl) ex_program_def;
 	val wps_term = (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) ex_wps;
 	val wps_bool_sound_thm = bir_wp_init_wps_bool_sound_thm (ex_program, ex_post, ex_ls) ex_wps defs;
-	val (wpsdom, blstodo) = bir_wp_init_rec_proc_jobs prog_term wps_term;
+	val (wpsdom, blstodo) = bir_wp_init_rec_proc_jobs prog_term wps_term [];
 
 
 
