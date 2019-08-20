@@ -72,7 +72,7 @@ Holmakefiles: $(HOLMAKEFILES)
 
 
 $(HOLMAKEFILE_DIRS): Holmakefiles
-	cd $@ && $(HOLBA_HOLMAKE) $(HOLBA_HOLMAKE_OPTS)
+	source ./scripts/setup/autoenv.sh && cd $@ && $(HOLBA_HOLMAKE) $(HOLBA_HOLMAKE_OPTS)
 
 
 %.exe: %.sml Holmakefiles
@@ -86,9 +86,8 @@ $(SML_RUNS):
 	@make $(@:.sml_run=.exe)
 	@source ./scripts/setup/autoenv.sh && ./scripts/run-test.sh $(@:.sml_run=.exe)
 
-# this target is for quick running, mainly for the run-tests.sh,
-# (no preparation, it is for tests where preparation is
-#  done before and autoenv.sh has been sources)
+# this target is for quick running, mainly for the run-tests.sh
+# (no environment preparation, it assumes that autoenv.sh has been sourced before)
 %.sml_runq:
 	@./scripts/run-test.sh $(@:.sml_runq=.exe)
 
