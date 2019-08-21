@@ -11,7 +11,7 @@ SETUP_DIR=$(readlink -f "${SETUP_DIR}")
 
 # find the environment variables
 set --
-source "${SETUP_DIR}/autoenv.sh" "${OPT_DIR_PARAM}"
+source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 
 ##################################################################
 

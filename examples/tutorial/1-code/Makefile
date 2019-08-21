@@ -3,7 +3,8 @@
 ##########################################################
 
 HOLBA_DIR = ../../..
-include $(HOLBA_DIR)/scripts/setup/autoenv_gcc.mk
+include $(HOLBA_DIR)/scripts/setup/env_base.mk
+include $(HOLBA_DIR)/scripts/setup/env_check_gcc_arm8.mk
 
 ifndef HOLBA_GDB
   HOLBA_GDB             = $(HOLBA_GCC_ARM8_CROSS)gdb

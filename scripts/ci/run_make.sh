@@ -8,7 +8,7 @@ MAKETARGET_PARAM=$1
 # find the environment variables
 # - Makefile already does this where needed
 #set --
-#source scripts/setup/autoenv.sh
+#source ./env.sh
 
 # compile the project
 # -------------------------------
