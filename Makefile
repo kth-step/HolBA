@@ -1,4 +1,8 @@
-include scripts/setup/autoenv_base.mk
+HOLBA_DIR = .
+include $(HOLBA_DIR)/scripts/setup/env_base.mk
+include $(HOLBA_DIR)/scripts/setup/env_check_hol4.mk
+
+
 
 # set make's shell to bash
 SHELL := /bin/bash
@@ -30,7 +34,7 @@ HOLMAKEFILE_GENS = $(call rwildcard,$(SRCDIR)/,Holmakefile.gen) \
 HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
 
 
-ifdef HOLBA_HOLMAKE_AVAILABLE
+ifdef HOLBA_HOLMAKE
 HOLMAKEFILE_DIRS = $(patsubst %/,%,$(sort $(foreach file,$(HOLMAKEFILE_GENS),$(dir $(file)))))
 
 SML_RUNS         = $(foreach sml,$(call rwildcard,$(SRCDIR)/,*.sml),$(sml)_run) \
@@ -52,7 +56,7 @@ all: show-rules
 show-rules:
 	@echo 'Available rules:'
 	@echo '     - Holmakefiles: generates `Holmakefile`s from `Holmakefile.gen` files.'
-ifdef HOLBA_HOLMAKE_AVAILABLE
+ifdef HOLBA_HOLMAKE
 	@echo '     - theory: builds only src/theory/'
 	@echo '     - main: builds HolBA, but without the examples or documentation'
 	@echo '     - tests: builds HolBA and runs all the tests'
@@ -72,7 +76,7 @@ Holmakefiles: $(HOLMAKEFILES)
 
 
 $(HOLMAKEFILE_DIRS): Holmakefiles
-	source ./scripts/setup/autoenv.sh && cd $@ && $(HOLBA_HOLMAKE) $(HOLBA_HOLMAKE_OPTS)
+	source ./scripts/setup/env_derive.sh && cd $@ && $(HOLBA_HOLMAKE) $(HOLBA_HOLMAKE_OPTS)
 
 
 %.exe: %.sml Holmakefiles
@@ -84,16 +88,17 @@ $(HOLMAKEFILE_DIRS): Holmakefiles
 $(SML_RUNS):
 	@make $(patsubst %/,%,$(dir $@))
 	@make $(@:.sml_run=.exe)
-	@source ./scripts/setup/autoenv.sh && ./scripts/run-test.sh $(@:.sml_run=.exe)
+	@source ./scripts/setup/env_derive.sh && ./scripts/run-test.sh $(@:.sml_run=.exe)
 
 # this target is for quick running, mainly for the run-tests.sh
-# (no environment preparation, it assumes that autoenv.sh has been sourced before)
+# (no environment preparation, it assumes that all
+#  TEST_DIRS are "made" and env.sh has been sourced)
 %.sml_runq:
 	@./scripts/run-test.sh $(@:.sml_runq=.exe)
 
 ##########################################################
 
-ifdef HOLBA_HOLMAKE_AVAILABLE
+ifdef HOLBA_HOLMAKE
 theory:        $(SRCDIR)/theory
 main:          $(SRCDIR)
 
@@ -103,7 +108,7 @@ benchmarks:    main $(BENCHMARKS)
 
 
 tests: $(TEST_EXES) $(TEST_DIRS)
-	@source ./scripts/setup/autoenv.sh && ./scripts/run-tests.sh
+	@source ./scripts/setup/env_derive.sh && ./scripts/run-tests.sh
 
 # this target can be made with multiple jobs, the others cannot!
 _run_tests: $(TEST_SML_RUNQS)
@@ -121,7 +126,7 @@ cleanslate:
 
 .PHONY: Holmakefiles
 
-ifdef HOLBA_HOLMAKE_AVAILABLE
+ifdef HOLBA_HOLMAKE
 .PHONY: $(HOLMAKEFILE_DIRS)
 .PHONY: $(SML_RUNS)
 

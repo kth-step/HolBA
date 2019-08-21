@@ -2,10 +2,10 @@
 # cross compiler
 ##########################################################
 
--include Makefile.local
-ifndef HOLBA_GCC_ARM8_CROSS
-  HOLBA_GCC_ARM8_CROSS	= aarch64-linux-gnu-
-endif
+HOLBA_DIR = ../../..
+include $(HOLBA_DIR)/scripts/setup/env_base.mk
+include $(HOLBA_DIR)/scripts/setup/env_check_gcc_arm8.mk
+
 ifndef HOLBA_GDB
   HOLBA_GDB             = $(HOLBA_GCC_ARM8_CROSS)gdb
 endif

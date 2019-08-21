@@ -11,7 +11,7 @@ Be sure to check out the Wiki, which contains some useful general information ab
 
 ## How to setup and compile
 
-The directory scripts/setup contain a relatively flexible set of shell scripts to help with the initial setup. The most simple setup can be done with a few shell commands and require no manual dealing with environment variables. More sophisticated setups allow convenient sharing of the required software packages and setup environment variables in a custom shell script.
+The directory scripts/setup contains a relatively flexible set of shell scripts to help with the initial setup. The most simple setup can be done with a few shell commands and requires no manual dealing with environment variables. More sophisticated setups allow convenient sharing of the required software packages and setup environment variables in a custom shell script.
 
 ### Simple setup
 ```bash
@@ -23,12 +23,18 @@ cd HolBA
 # builds polyml and HOL4 for example.
 ./scripts/setup/install_all.sh
 
+# In order to create a configuration file with
+# the directories for the installed tools,
+# execute the following line
+./configure.sh
+
 # For convenience and indepence of make, this command
 # augments the environment with ${HOLBA_*} variables
-# and allows calls to ${HOLBA_HOLMAKE} for example.
-# Some tools require these variables to run properly.
-# It has to be run for each new shell.
-source ./scripts/setup/autoenv.sh
+# as well as the ${PATH} variable. Now calls to Holmake
+# use the installed instance of HOL4 in the opt directory.
+# Furthermore, some tools require these variables to
+# run properly. It has to be run for each new shell.
+source env.sh
 
 # This prints the available convenience
 # rules like tests and examples.
@@ -54,7 +60,7 @@ ${HOLBA_HOLMAKE}
   auto-generated from `Holmakefile.gen` files, so they are removed by this
   command).
 
-* You can use `make --directory=${HOLBA_DIR} rule`.
+* You can use `make --directory=${HOLBA_DIR} rulename`.
 
 
 ### More advanced setup with shared dependencies and `~/.bashrc`
@@ -62,21 +68,19 @@ ${HOLBA_HOLMAKE}
 For this you need to:
 1. Prepare a HolBA directory with the setup scripts: `{HOLBA_DIR}`.
 1. Select a directory where you want to install and place the shared dependencies: `{HOLBA_OPT_DIR}`.
-1. Run these shell commands:
-```bash
-cd /path/to/{HOLBA_DIR}
-./scripts/setup/install_base.sh
-./scripts/setup/install_mk_env.sh
-```
 1. Add the following to your `~/.bashrc` file:
 ```bash
 export HOLBA_OPT_DIR=/path/to/{HOLBA_OPT_DIR}
-
-source ${HOLBA_OPT_DIR}/env.sh
 ```
-1. Start a new shell and compile HolBA by using `make main`.
+1. Start a new shell and run these shell commands:
+```bash
+cd /path/to/{HOLBA_DIR}
+./scripts/setup/install_base.sh
+./configure.sh
+make main
+```
 
-Notice that this sequence is exemplary and it is possible to selectively run the `install_*.sh` scripts for the components that are desired. The script `${HOLBA_OPT_DIR}/env.sh` is generated and contains all variables for components which can be found in `${HOLBA_OPT_DIR}` or are available in the shell when `install_mk_env.sh` runs.
+Notice that this sequence is exemplary and it is possible to selectively run the `install_*.sh` scripts for the components that are desired. The script `config.env.sh` is generated and contains all variables for components which can be found in `${HOLBA_OPT_DIR}` or are available in the shell when `./configure.sh` runs. Sourcing the script `./env.sh` in the respective copy of the HolBA repository will setup the currently running shell for development there.
 
 
 

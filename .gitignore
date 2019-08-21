@@ -54,6 +54,9 @@ opt
 # logs for general purpose logging
 logs
 
+# configuration files
+config.env.sh
+
 # binary files compiled for analysis
 *.elf
 *.o
