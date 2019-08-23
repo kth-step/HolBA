@@ -9,58 +9,48 @@ sig
    (* The type itself *)
    val bir_val_t_ty : hol_type
 
-   (* BVal_Unknown *)
-   val BVal_Unknown_tm : term
-   val is_BVal_Unknown : term -> bool
+   (* BVal_Imm *)
+   val BVal_Imm_tm   : term
+   val dest_BVal_Imm : term -> term
+   val is_BVal_Imm   : term -> bool
+   val mk_BVal_Imm   : term -> term
 
-   (* BVal_Known *)
-   val BVal_Known_tm : term
-   val dest_BVal_Known : term -> term
-   val is_BVal_Known : term -> bool
-   val mk_BVal_Known  : term -> term
+   (* BVal_Mem *)
+   val BVal_Mem_tm   : term
+   val dest_BVal_Mem : term -> term * term * term
+   val is_BVal_Mem   : term -> bool
+   val mk_BVal_Mem   : term * term * term -> term
 
-   (* BKVal_Imm *)
-   val BKVal_Imm_tm   : term
-   val dest_BKVal_Imm : term -> term
-   val is_BKVal_Imm   : term -> bool
-   val mk_BKVal_Imm   : term -> term
+   (* BVal_Imm for concrete sizes *)
+   val dest_BVal_Imm1    : term -> term
+   val dest_BVal_Imm8    : term -> term
+   val dest_BVal_Imm16   : term -> term
+   val dest_BVal_Imm32   : term -> term
+   val dest_BVal_Imm64   : term -> term
+   val gen_dest_BVal_Imm : term -> int * term
 
-   (* BKVal_Mem *)
-   val BKVal_Mem_tm   : term
-   val dest_BKVal_Mem : term -> term * term * term
-   val is_BKVal_Mem   : term -> bool
-   val mk_BKVal_Mem   : term * term * term -> term
-
-   (* BKVal_Imm for concrete sizes *)
-   val dest_BKVal_Imm1    : term -> term
-   val dest_BKVal_Imm8    : term -> term
-   val dest_BKVal_Imm16   : term -> term
-   val dest_BKVal_Imm32   : term -> term
-   val dest_BKVal_Imm64   : term -> term
-   val gen_dest_BKVal_Imm : term -> int * term
-
-   val is_BKVal_Imm1    : term -> bool
-   val is_BKVal_Imm8    : term -> bool
-   val is_BKVal_Imm16   : term -> bool
-   val is_BKVal_Imm32   : term -> bool
-   val is_BKVal_Imm64   : term -> bool
-   val gen_is_BKVal_Imm : int -> term -> bool
+   val is_BVal_Imm1    : term -> bool
+   val is_BVal_Imm8    : term -> bool
+   val is_BVal_Imm16   : term -> bool
+   val is_BVal_Imm32   : term -> bool
+   val is_BVal_Imm64   : term -> bool
+   val gen_is_BVal_Imm : int -> term -> bool
 
 
    (* Memory that stores bytes is common, common
       adderess sizes are 32 or 64 bit.
       So let's provide special functions *)
-   val mk_BKVal_MemByte   : term * term -> term
-   val dest_BKVal_MemByte : term -> term * term
-   val is_BKVal_MemByte   : term -> bool
+   val mk_BVal_MemByte   : term * term -> term
+   val dest_BVal_MemByte : term -> term * term
+   val is_BVal_MemByte   : term -> bool
 
-   val mk_BKVal_MemByte_32   : term -> term
-   val dest_BKVal_MemByte_32 : term -> term
-   val is_BKVal_MemByte_32   : term -> bool
+   val mk_BVal_MemByte_32   : term -> term
+   val dest_BVal_MemByte_32 : term -> term
+   val is_BVal_MemByte_32   : term -> bool
 
-   val mk_BKVal_MemByte_64   : term -> term
-   val dest_BKVal_MemByte_64 : term -> term
-   val is_BKVal_MemByte_64   : term -> bool
+   val mk_BVal_MemByte_64   : term -> term
+   val dest_BVal_MemByte_64 : term -> term
+   val is_BVal_MemByte_64   : term -> bool
 
 
    (*****************)

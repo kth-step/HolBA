@@ -204,6 +204,11 @@ sig
    val is_bir_state   : term -> bool
    val mk_bir_state   : term * term * term -> term
 
+   val bir_state_init_tm   : term
+   val dest_bir_state_init : term -> term
+   val is_bir_state_init   : term -> bool
+   val mk_bir_state_init   : term -> term
+
    val bir_state_is_terminated_tm   : term
    val dest_bir_state_is_terminated : term -> term
    val is_bir_state_is_terminated   : term -> bool

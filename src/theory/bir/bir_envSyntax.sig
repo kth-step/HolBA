@@ -54,14 +54,4 @@ sig
    val dest_bir_env_read    : term -> term * term;
    val is_bir_env_read      : term -> bool;
 
-   val bir_env_var_is_well_typed_tm   : term;
-   val mk_bir_env_var_is_well_typed   : term * term -> term;
-   val dest_bir_env_var_is_well_typed : term -> term * term;
-   val is_bir_env_var_is_well_typed   : term -> bool;
-
-   val bir_env_order_tm   : term;
-   val mk_bir_env_order   : term * term -> term;
-   val dest_bir_env_order : term -> term * term;
-   val is_bir_env_order   : term -> bool;
-
 end
