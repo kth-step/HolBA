@@ -374,8 +374,14 @@ GEN_TAC >> GEN_TAC >> Induct >> (
   ASM_SIMP_TAC (std_ss++bir_val_ss) []
 ));
 
-
-
+(* TODO: move elsewhere *)
+open bir_env_oldTheory;
+val type_of_bir_exp_THM_with_init_vars = store_thm ("type_of_bir_exp_THM_with_init_vars",
+  ``!env e ty. (type_of_bir_exp e = SOME ty) ==>
+               (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
+               (?va. (bir_eval_exp e env = SOME va) /\ (type_of_bir_val va = ty))``,
+  METIS_TAC [type_of_bir_exp_THM_with_envty, bir_env_vars_are_initialised_EQ_envty, bir_env_satisfies_envty_of_env]
+);
 
 
 (* -------------------- *)
