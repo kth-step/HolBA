@@ -9,6 +9,9 @@ sig
 
    val bir_var_environment_t_ty : hol_type;
 
+   val bir_empty_env_tm : term;
+   val is_bir_empty_env : term -> bool;
+
    val BEnv_tm   : term;
    val mk_BEnv   : term -> term;
    val dest_BEnv : term -> term;

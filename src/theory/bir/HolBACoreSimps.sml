@@ -23,7 +23,6 @@ val bir_list_of_types = [
 
    mk_thy_type {Tyop="bir_var_t",            Thy="bir_env", Args=[]},
    mk_thy_type {Tyop="bir_var_environment_t",Thy="bir_env", Args=[]},
-   mk_thy_type {Tyop="bir_env_cond_t",       Thy="bir_env", Args=[]},
 
    mk_thy_type {Tyop="bir_label_t",          Thy="bir_program", Args=[]},
    mk_thy_type {Tyop="bir_label_exp_t",      Thy="bir_program", Args=[]},
@@ -79,7 +78,7 @@ val bir_SIMPLE_REWRS_imm = rewrites [
 val bir_SIMPLE_REWRS_env = rewrites [
   bir_var_name_def,
   bir_var_type_def,
-  bir_env_write_WrongVal
+  bir_env_write_different_type
 ];
 
 
@@ -149,14 +148,13 @@ val bir_SIMPLE_REWRS_exp = rewrites [
   bir_eval_bin_exp_REWRS,
   bir_eval_bin_pred_REWRS,
   bir_eval_ifthenelse_REWRS,
-  bir_eval_ifthenelse_REWRS_Unknown,
-  bir_eval_load_Unknown_REWRS,
-  bir_eval_store_Unknown_REWRS
+  bir_eval_ifthenelse_REWRS_NONE,
+  bir_eval_load_NONE_REWRS,
+  bir_eval_store_NONE_REWRS
 ];
 
 val bir_SIMPLE_REWRS_program = rewrites [
   bir_state_is_terminated_IMP,
-  bir_declare_initial_value_def,
   IS_BER_Ended_def,
   bir_block_pc_11
 ];

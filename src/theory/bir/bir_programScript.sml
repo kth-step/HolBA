@@ -156,27 +156,14 @@ val bir_state_set_typeerror_def = Define `bir_state_set_typeerror st =
 val bir_state_set_failed_def = Define `bir_state_set_failed st =
   (st with bst_status := BST_Failed)`;
 
-(*
-TODO: move this somewhere else, also in programSyntax
-
-val bir_value_default_def = Define `
-  (bir_value_default (BType_Imm Bit1)   = BVal_Imm (Imm1   0w)) /\
-  (bir_value_default (BType_Imm Bit8)   = BVal_Imm (Imm8   0w)) /\
-  (bir_value_default (BType_Imm Bit16)  = BVal_Imm (Imm16  0w)) /\
-  (bir_value_default (BType_Imm Bit32)  = BVal_Imm (Imm32  0w)) /\
-  (bir_value_default (BType_Imm Bit64)  = BVal_Imm (Imm64  0w)) /\
-  (bir_value_default (BType_Imm Bit128) = BVal_Imm (Imm128 0w)) /\
-  (bir_value_default (BType_Mem at vt)  = BVal_Mem at vt (FEMPTY))`;
-
 (* TODO: add default value for each variable in p *)
-val bir_env_default_def = Define `bir_env_default (p:'a bir_program_t) = BEnv (K NONE)`;
+val bir_env_default_def = Define `bir_env_default (p:'a bir_program_t) = bir_empty_env`;
 
 val bir_state_init_def = Define `bir_state_init p = <|
     bst_pc       := bir_pc_first p
   ; bst_environ  := bir_env_default p
   ; bst_status := BST_Running
 |>`;
-*)
 
 
 (* ------------------------------------------------------------------------- *)

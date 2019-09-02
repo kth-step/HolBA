@@ -22,6 +22,15 @@ val _ = Datatype `bir_type_t =
   | BType_Mem bir_immtype_t (* Addr-Type *) bir_immtype_t (* Value-Type *)
 `;
 
+val bir_val_default_def = Define `
+  (bir_val_default (BType_Imm Bit1)   = BVal_Imm (Imm1   0w)) /\
+  (bir_val_default (BType_Imm Bit8)   = BVal_Imm (Imm8   0w)) /\
+  (bir_val_default (BType_Imm Bit16)  = BVal_Imm (Imm16  0w)) /\
+  (bir_val_default (BType_Imm Bit32)  = BVal_Imm (Imm32  0w)) /\
+  (bir_val_default (BType_Imm Bit64)  = BVal_Imm (Imm64  0w)) /\
+  (bir_val_default (BType_Imm Bit128) = BVal_Imm (Imm128 0w)) /\
+  (bir_val_default (BType_Mem at vt)  = BVal_Mem at vt (FEMPTY))`;
+
 val BType_Bool_def = Define `BType_Bool = BType_Imm Bit1`;
 
 
