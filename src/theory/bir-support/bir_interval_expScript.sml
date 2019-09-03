@@ -519,19 +519,19 @@ val BExp_unchanged_mem_interval_distinct_eval = store_thm (
 ``!sz mb_n me_n wb_e isz env.
   (bir_eval_exp (BExp_unchanged_mem_interval_distinct sz mb_n me_n wb_e isz) env =
      case (sz, bir_eval_exp wb_e env) of
-         (Bit1, BVal_Imm (Imm1 wb)) =>
-            BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
-       | (Bit8, BVal_Imm (Imm8 wb)) =>
-            BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
-       | (Bit16, BVal_Imm (Imm16 wb)) =>
-            BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
-       | (Bit32, BVal_Imm (Imm32 wb)) =>
-            BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
-       | (Bit64, BVal_Imm (Imm64 wb)) =>
-            BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
-       | (Bit128, BVal_Imm (Imm128 wb)) =>
-            BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz))
-       | _ => BVal_Unknown)``,
+         (Bit1, SOME (BVal_Imm (Imm1 wb))) =>
+            SOME (BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz)))
+       | (Bit8, SOME (BVal_Imm (Imm8 wb))) =>
+            SOME (BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz)))
+       | (Bit16, SOME (BVal_Imm (Imm16 wb))) =>
+            SOME (BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz)))
+       | (Bit32, SOME (BVal_Imm (Imm32 wb))) =>
+            SOME (BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz)))
+       | (Bit64, SOME (BVal_Imm (Imm64 wb))) =>
+            SOME (BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz)))
+       | (Bit128, SOME (BVal_Imm (Imm128 wb))) =>
+            SOME (BVal_Imm (bool2b (WI_distinct_MEM_UNCHANGED_COMPUTE (n2w mb_n) (n2w me_n) wb isz)))
+       | _ => NONE)``,
 
 
 REPEAT GEN_TAC >>
