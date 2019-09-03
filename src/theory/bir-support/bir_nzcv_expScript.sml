@@ -961,7 +961,7 @@ val BExp_ADD_WITH_CARRY_N_eval = store_thm ("BExp_ADD_WITH_CARRY_N_eval",
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_ADD_WITH_CARRY_N_def, awc_BIR_NZCV_REWRS] >>
 REPEAT CASE_TAC >> (
-   FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss++boolSimps.LIFT_COND_ss) []
+  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss++boolSimps.LIFT_COND_ss) []
 ));
 
 

@@ -131,7 +131,11 @@ cheat
 );
 
 val bir_dest_bool_val_opt_EQ_NONE = store_thm ("bir_dest_bool_val_opt_EQ_NONE",
-  ``!v. (bir_dest_bool_val_opt (SOME v) = NONE) <=> ~(bir_val_is_Bool v)``,
+  ``!v_opt.
+    (bir_dest_bool_val_opt v_opt = NONE) <=>
+      ((?v. (v_opt = SOME v) /\ ~(bir_val_is_Bool v)) \/
+       (v_opt = NONE)
+      )``,
 
 cheat
 );
