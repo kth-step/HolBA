@@ -120,6 +120,29 @@ val bir_dest_bool_val_bool2b = store_thm ("bir_dest_bool_val_bool2b",
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [
   bool2b_def, bool2w_def, bir_dest_bool_val_def]);
 
+val bir_dest_bool_val_opt_def = Define `
+  (bir_dest_bool_val_opt (SOME v) = bir_dest_bool_val v) /\
+  (bir_dest_bool_val_opt _ = NONE)`
+
+val bir_dest_bool_val_opt_EQ_SOME = store_thm ("bir_dest_bool_val_opt_EQ_SOME",
+  ``!v b. (bir_dest_bool_val_opt v = SOME b) <=> (v = SOME (BVal_Imm (bool2b b)))``,
+
+cheat
+);
+
+val bir_dest_bool_val_opt_EQ_NONE = store_thm ("bir_dest_bool_val_opt_EQ_NONE",
+  ``!v. (bir_dest_bool_val_opt (SOME v) = NONE) <=> ~(bir_val_is_Bool v)``,
+
+cheat
+);
+
+val bir_dest_bool_val_opt_bool2b = store_thm ("bir_dest_bool_val_opt_bool2b",
+  ``!b.
+    bir_dest_bool_val_opt (SOME (BVal_Imm (bool2b b))) = SOME b``,
+
+cheat
+);
+
 (* ------------------------------------------------------------------------- *)
 (*  Some basic typing                                                        *)
 (* ------------------------------------------------------------------------- *)

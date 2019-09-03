@@ -138,7 +138,10 @@ val bir_SIMPLE_REWRS_values = rewrites [
   bir_type_is_Bool_IMPL,
   bir_dest_bool_val_EQ_SOME,
   bir_dest_bool_val_EQ_NONE,
-  bir_dest_bool_val_bool2b
+  bir_dest_bool_val_bool2b,
+  bir_dest_bool_val_opt_EQ_SOME,
+  bir_dest_bool_val_opt_EQ_NONE,
+  bir_dest_bool_val_opt_bool2b
 ];
 
 val bir_SIMPLE_REWRS_exp = rewrites [
