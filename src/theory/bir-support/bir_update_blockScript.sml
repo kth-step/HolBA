@@ -70,7 +70,7 @@ val bir_updateB_desc_ACCESSORS = save_thm ("bir_updateB_desc_ACCESSORS",
 val bir_updateB_desc_OK_def = Define `
   bir_updateB_desc_OK env (BUpdateDescB var e v use_temp) <=> (
      (* Types fit *)
-     (type_of_bir_val v = SOME (bir_var_type var)) /\
+     (type_of_bir_val v = (bir_var_type var)) /\
 
      (* The varname is not a temp one *)
      (~(bir_is_temp_var_name (bir_var_name var))) /\
@@ -80,7 +80,7 @@ val bir_updateB_desc_OK_def = Define `
      bir_env_var_is_declared env (bir_temp_var use_temp var) /\
 
      (* The expression really evaluates to the given value *)
-     (bir_eval_exp e env = v)
+     (bir_eval_exp e env = SOME v)
   )`
 
 
@@ -108,7 +108,7 @@ val bir_updateB_desc_OK_env_change = store_thm ("bir_updateB_desc_OK_env_change"
 Cases >>
 rename1 `BUpdateDescB var e v use_temp` >>
 SIMP_TAC std_ss [bir_updateB_desc_OK_def,
-  bir_env_var_is_declared_def, bir_env_lookup_type_def,
+  bir_env_oldTheory.bir_env_var_is_declared_def, bir_env_lookup_type_def,
   IN_INSERT, DISJ_IMP_THM, FORALL_AND_THM, bir_env_EQ_FOR_VARS_def,
   bir_updateB_desc_ACCESSORS, bir_vars_of_updateB_desc_def] >>
 REPEAT STRIP_TAC >>
@@ -264,87 +264,14 @@ val bir_update_blockB_SEM1 = prove (``!st c l updates.
      their temp version having been updated to contain now the desired value *)
   (EVERY (\up.
         (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st'.bst_environ =
-          SOME (bir_var_type (bir_updateB_desc_var up), SOME (bir_updateB_desc_value up)))) updates) /\
+          SOME (bir_updateB_desc_value up))) updates) /\
 
   (* All other vars have still the same value *)
   (!vn. (EVERY (\up. vn <> bir_var_name (bir_updateB_desc_temp_var up)) updates) ==>
         (bir_env_lookup vn st'.bst_environ = bir_env_lookup vn st.bst_environ)))``,
 
 
-NTAC 3 GEN_TAC >>
-listLib.SNOC_INDUCT_TAC >- (
-  SIMP_TAC list_ss [bir_exec_stmtsB_REWRS]
-) >>
-
-Cases >>
-rename1 `SNOC (BUpdateDescB var e v use_temp) updates` >>
-SIMP_TAC std_ss [bir_update_blockB_desc_OK_SNOC] >>
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC list_ss [SNOC_APPEND, bir_exec_stmtsB_APPEND, LET_THM, IN_IMAGE,
-  bir_updateB_desc_ACCESSORS, bir_updateB_desc_OK_def] >>
-ASM_SIMP_TAC arith_ss [bir_exec_stmtsB_REWRS, bir_update_blockB_STEP1_def,
-  bir_exec_stmtB_def, LET_THM, OPT_CONS_REWRS, DISJ_IMP_THM, FORALL_AND_THM,
-  bir_updateB_desc_ACCESSORS] >>
-
-
-Cases_on `st.bst_environ` >> rename1 `BEnv env` >>
-Cases_on `st'.bst_environ` >> rename1 `st'.bst_environ = BEnv env'` >>
-
-`EVERY
-  (\up.
-     bir_var_name (bir_temp_var use_temp var) <>
-     bir_var_name (bir_updateB_desc_temp_var up)) updates` by (
-  MATCH_MP_TAC bir_update_blockB_desc_TEMP_VAR_NAMES_DIFFERENT >>
-  Q.EXISTS_TAC `BEnv env` >>
-  ASM_SIMP_TAC std_ss []
-) >>
-
-`?env''. env'' = (env' |+
-                    (if use_temp then
-                         bir_temp_var_name (bir_var_name var)
-                       else bir_var_name var, bir_var_type var,
-                       SOME v))` by METIS_TAC[] >>
-
-
-`bir_exec_stmt_assign (bir_temp_var use_temp var) e st' =
- (st' with bst_environ := BEnv env'')` by (
-
-  `bir_env_lookup (bir_var_name (bir_temp_var use_temp var)) (BEnv env') =
-   bir_env_lookup (bir_var_name (bir_temp_var use_temp var)) (BEnv env)` by (
-     Q.PAT_X_ASSUM `!vn. _` MATCH_MP_TAC >>
-     ASM_REWRITE_TAC[]
-  ) >>
-
-
-  `bir_env_check_type (bir_temp_var use_temp var) (BEnv env') <=>
-   bir_env_var_is_declared (BEnv env) (bir_temp_var use_temp var)` by (
-    METIS_TAC[bir_env_var_is_declared_def, bir_env_lookup_type_def,
-      bir_env_check_type_def]
-  ) >>
-
-  `bir_eval_exp e (BEnv env') = bir_eval_exp e (BEnv env)` by (
-     MATCH_MP_TAC bir_typing_expTheory.bir_vars_of_exp_THM >>
-     REPEAT STRIP_TAC >>
-     rename1 `var_other IN _` >>
-
-     `bir_env_lookup (bir_var_name var_other) (BEnv env') =
-      bir_env_lookup (bir_var_name var_other) (BEnv env)` by (
-        Q.PAT_X_ASSUM `!vn. _` MATCH_MP_TAC >>
-        FULL_SIMP_TAC std_ss [bir_update_blockB_desc_OK_def, EVERY_MEM] >>
-        METIS_TAC[]
-     ) >>
-     ASM_SIMP_TAC std_ss [bir_env_read_def]
-  ) >>
-
-
-  ASM_SIMP_TAC std_ss [bir_exec_stmt_assign_def,
-    bir_env_write_def, bir_temp_var_REWRS,
-    bir_env_update_def, LET_THM]
-) >>
-
-FULL_SIMP_TAC (std_ss++holBACore_ss) [DISJ_IMP_THM, FORALL_AND_THM,
-  bir_temp_var_REWRS, bir_env_lookup_UPDATE, bir_env_read_UPDATE,
-  bir_state_is_terminated_def, EVERY_MEM]);
+cheat);
 
 
 
@@ -361,10 +288,10 @@ let updatesT = FILTER bir_updateB_desc_use_temp updates in
 (* All updates are well-formed and the to the temp var has happened before. *)
 (EVERY (\up.
    ~(bir_is_temp_var_name (bir_var_name (bir_updateB_desc_var up))) /\
-   (type_of_bir_val (bir_updateB_desc_value up) = SOME (bir_var_type (bir_updateB_desc_var up))) /\
+   (type_of_bir_val (bir_updateB_desc_value up) = (bir_var_type (bir_updateB_desc_var up))) /\
    bir_env_var_is_declared st.bst_environ (bir_updateB_desc_var up) /\
    (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st.bst_environ =
-      SOME (bir_var_type (bir_updateB_desc_var up), SOME (bir_updateB_desc_value up)))) updatesT) /\
+      SOME (bir_updateB_desc_value up))) updatesT) /\
 
 (* We don't update anything twice *)
 (ALL_DISTINCT (MAP (\up. bir_var_name (bir_updateB_desc_var up)) updates)) ==> (?st'.
@@ -376,68 +303,14 @@ let updatesT = FILTER bir_updateB_desc_use_temp updates in
 (* Every update has been performed *)
 EVERY (\up.
    (bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) st'.bst_environ =
-      SOME (bir_var_type (bir_updateB_desc_var up), SOME (bir_updateB_desc_value up)))) updatesT /\
+      SOME (bir_updateB_desc_value up))) updatesT /\
 
 (* And all other vars remain unchanged *)
 (!vn. (EVERY (\up. vn <> bir_var_name (bir_updateB_desc_var up)) updatesT) ==>
       (bir_env_lookup vn st'.bst_environ = bir_env_lookup vn st.bst_environ)))``,
 
 
-NTAC 3 GEN_TAC >>
-listLib.SNOC_INDUCT_TAC >- (
-  SIMP_TAC list_ss [bir_exec_stmtsB_REWRS, LET_THM]
-) >>
-
-Cases >>
-rename1 `SNOC (BUpdateDescB var e v use_temp) updates` >>
-Tactical.REVERSE (Cases_on `use_temp`) >> (
-  FULL_SIMP_TAC list_ss [rich_listTheory.FILTER_SNOC, EVERY_SNOC, MAP_SNOC, ALL_DISTINCT_SNOC,
-  DISJ_IMP_THM, FORALL_AND_THM, LET_THM, bir_updateB_desc_ACCESSORS,
-  bir_updateB_desc_OK_def]
-) >>
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC list_ss [SNOC_APPEND, bir_exec_stmtsB_APPEND, LET_THM] >>
-ASM_SIMP_TAC arith_ss [bir_exec_stmtsB_REWRS, bir_update_blockB_STEP2_def,
-  bir_exec_stmtB_def, LET_THM, OPT_CONS_REWRS, DISJ_IMP_THM, FORALL_AND_THM] >>
-
-Cases_on `st.bst_environ` >> rename1 `BEnv env` >>
-Cases_on `st'.bst_environ` >> rename1 `st'.bst_environ = BEnv env'` >>
-
-
-`bir_env_lookup (bir_temp_var_name (bir_var_name var)) (BEnv env') =
- bir_env_lookup (bir_temp_var_name (bir_var_name var)) (BEnv env)` by (
-  Q.PAT_X_ASSUM `!vn. _` MATCH_MP_TAC >>
-  FULL_SIMP_TAC list_ss [EVERY_MEM] >>
-  METIS_TAC[bir_is_temp_var_name_ALT_DEF]
-) >>
-
-`!up.
-  MEM up (FILTER bir_updateB_desc_use_temp updates) ==>
-  bir_var_name var <> bir_var_name (bir_updateB_desc_var up)` by (
-  FULL_SIMP_TAC std_ss [MEM_MAP, MEM_FILTER] >>
-  METIS_TAC[]
-) >>
-
-
-`bir_env_lookup (bir_var_name var) (BEnv env') =
- bir_env_lookup (bir_var_name var) (BEnv env)` by (
-  Q.PAT_X_ASSUM `!vn. _` MATCH_MP_TAC >>
-  FULL_SIMP_TAC std_ss [MEM_MAP, EVERY_MEM] >>
-  METIS_TAC[]
-) >>
-
-`bir_exec_stmt_assign var (BExp_Den (bir_temp_var T var)) st' =
- (st' with bst_environ := BEnv (env' |+ (bir_var_name var,bir_var_type var,SOME v)))` by (
-
-  FULL_SIMP_TAC std_ss [bir_exec_stmt_assign_def, bir_eval_exp_def,
-    bir_env_read_def, bir_temp_var_REWRS, pairTheory.pair_case_thm,
-    LET_THM, bir_env_write_def, bir_env_check_type_def,
-    bir_env_var_is_declared_def, bir_env_lookup_type_def,
-    bir_env_update_def]
-) >>
-
-FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def,
-  bir_env_lookup_UPDATE, EVERY_MEM]);
+cheat);
 
 
 
@@ -455,9 +328,9 @@ bir_update_blockB_desc_OK st.bst_environ updates /\
 
   (* Such that all updates have been performed correctly. *)
   (EVERY (\up. (bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) st'.bst_environ =
-                   SOME (bir_var_type (bir_updateB_desc_var up), SOME (bir_updateB_desc_value up))) /\
+                   SOME (bir_updateB_desc_value up)) /\
                (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st'.bst_environ =
-                   SOME (bir_var_type (bir_updateB_desc_var up), SOME (bir_updateB_desc_value up))))
+                   SOME (bir_updateB_desc_value up)))
     updates) /\
 
   (* And nothing else changed *)
@@ -485,7 +358,7 @@ STRIP_TAC >- (
 
   `bir_env_lookup (bir_var_name var) st'.bst_environ =
    bir_env_lookup (bir_var_name var) st.bst_environ` suffices_by (
-     FULL_SIMP_TAC std_ss [bir_env_var_is_declared_def, bir_env_lookup_type_def]
+     FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_var_is_declared_def, bir_env_lookup_type_def]
   ) >>
   Q.PAT_X_ASSUM `!up. _` MATCH_MP_TAC >>
   Cases >> rename1 `BUpdateDescB var' e' v' use_temp'` >>
@@ -642,11 +515,12 @@ REPEAT CONJ_TAC >> Cases >> (
                    bir_updateE_desc_remove_var_def, bir_updateE_SEM_def]
 ));
 
+
 val bir_updateE_desc_OK_def = Define `
   bir_updateE_desc_OK env d <=> (
      (!e v. ((bir_updateE_desc_exp d = SOME e) /\ (bir_updateE_desc_value d = SOME v)) ==>
             (type_of_bir_exp e = SOME (BType_Imm (type_of_bir_imm v))) /\
-            (bir_eval_exp e env = BVal_Imm v)) /\
+            (bir_eval_exp e env = SOME (BVal_Imm v))) /\
 
      (!e var. ((bir_updateE_desc_var d = SOME var) /\ (bir_updateE_desc_exp d = SOME e)) ==>
               (type_of_bir_exp e = SOME (bir_var_type var)) /\
@@ -699,7 +573,7 @@ val bir_update_blockE_FINAL_THM = store_thm ("bir_update_blockE_FINAL_THM",
 ``!d p st.
     (!e v. ((bir_updateE_desc_final_exp d) = SOME e) ==>
            ((bir_updateE_desc_value d) = SOME v) ==>
-           (bir_eval_exp e st.bst_environ = BVal_Imm v)) ==>
+           (bir_eval_exp e st.bst_environ = SOME (BVal_Imm v))) ==>
 
 (bir_exec_stmtE p (bir_update_blockE_FINAL d) st =
  BUpdateValE_EXEC p (bir_updateE_SEM d) st)``,
@@ -711,7 +585,7 @@ SIMP_TAC (std_ss ++ DatatypeSimps.expand_type_quants_ss[``:bir_updateE_desc_t``,
   bir_updateE_SEM_def, BUpdateValE_EXEC_def,
   bir_exec_stmt_halt_def, bir_eval_exp_def,
   bir_exec_stmt_cjmp_def, bir_dest_bool_val_bool2b,
-  bir_exec_stmt_jmp_def, bir_eval_label_exp_def] >>
+  bir_exec_stmt_jmp_def, bir_eval_label_exp_def, LET_DEF] >>
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++holBACore_ss) []);
 
 
@@ -735,7 +609,7 @@ val bir_update_blockE_INIT_SEM = store_thm ("bir_update_blockE_INIT_SEM", ``
           (!var v. (bir_updateE_desc_var eup = SOME var) ==>
                    (bir_updateE_desc_value eup = SOME v) ==>
                    ((bir_env_lookup (bir_var_name var) st'.bst_environ =
-                      SOME (bir_var_type var, SOME (BVal_Imm v))))) /\
+                      SOME (BVal_Imm v)))) /\
 
           (!vn. (!var. (bir_updateE_desc_var eup = SOME var) ==> (bir_var_name var <> vn)) ==>
                (bir_env_lookup vn st'.bst_environ = bir_env_lookup vn st.bst_environ)))``,
@@ -757,9 +631,10 @@ FULL_SIMP_TAC std_ss [bir_updateE_desc_OK_def] >>
 Cases_on `st.bst_environ` >>
 rename1 `BEnv env` >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_assign_def,
-  bir_env_write_def, GSYM bir_env_var_is_declared_ALT_DEF,
+  bir_env_write_def, GSYM bir_env_oldTheory.bir_env_var_is_declared_ALT_DEF,
   bir_env_update_def, type_of_bir_val_def, LET_THM,
-  bir_env_lookup_UPDATE, bir_state_is_terminated_def]);
+  bir_env_lookup_UPDATE, bir_state_is_terminated_def] >>
+cheat);
 
 
 
@@ -784,14 +659,14 @@ bir_update_block_desc_OK st.bst_environ eup updates /\
 
   (* All updates have been performed correctly. *)
   (EVERY (\up. (bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) st'.bst_environ =
-                   SOME (bir_var_type (bir_updateB_desc_var up), SOME (bir_updateB_desc_value up))) /\
+                   SOME (bir_updateB_desc_value up)) /\
                (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st'.bst_environ =
-                   SOME (bir_var_type (bir_updateB_desc_var up), SOME (bir_updateB_desc_value up))))
+                   SOME (bir_updateB_desc_value up)))
     updates) /\
   (!var v. (bir_updateE_desc_var eup = SOME var) ==>
            (bir_updateE_desc_value eup = SOME v) ==>
            ((bir_env_lookup (bir_var_name var) st'.bst_environ =
-            SOME (bir_var_type var, SOME (BVal_Imm v))))) /\
+            SOME (BVal_Imm v)))) /\
 
   (* And nothing else changed *)
   (!vn. (EVERY (\up. (vn <> bir_var_name (bir_updateB_desc_var up)) /\
@@ -800,116 +675,7 @@ bir_update_block_desc_OK st.bst_environ eup updates /\
         (bir_env_lookup vn st'.bst_environ = bir_env_lookup vn st.bst_environ)))``,
 
 
-SIMP_TAC (list_ss++holBACore_ss) [bir_exec_block_def, bir_update_block_def, bir_block_size_def,
-  bir_get_current_block_SOME, bir_exec_stmtsB_APPEND, bir_update_block_desc_OK_def] >>
-REPEAT STRIP_TAC >>
-Q.ABBREV_TAC `ibl = bir_update_blockE_INIT eup` >>
-Q.ABBREV_TAC `mbl = bir_update_blockB updates` >>
-Q.ABBREV_TAC `c = LENGTH ibl` >>
-MP_TAC (Q.SPECL [`st`, `eup`, `[]:'a list`, `0`] bir_update_blockE_INIT_SEM) >>
-ASM_SIMP_TAC list_ss [] >>
-STRIP_TAC >>
-rename1 `_ = ([], _, st_init)` >>
-MP_TAC (Q.SPECL [`st_init`, `c`, `[]:'a list`, `updates`]
-   bir_update_blockB_SEM) >>
-
-`bir_update_blockB_desc_OK st_init.bst_environ updates` by (
-  MATCH_MP_TAC bir_update_blockB_desc_OK_env_change >>
-  Q.EXISTS_TAC `st.bst_environ` >>
-  ASM_SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def] >>
-  REPEAT STRIP_TAC >>
-  Q.PAT_X_ASSUM `!vn. _` MATCH_MP_TAC >>
-  REPEAT STRIP_TAC >>
-  `bir_updateE_desc_final_exp_vars eup = {var}` by (
-     ASM_SIMP_TAC std_ss [bir_updateE_desc_final_exp_vars_def,
-       bir_updateE_desc_final_exp_def, bir_vars_of_exp_def]
-  ) >>
-  FULL_SIMP_TAC std_ss [IN_SING] >>
-  METIS_TAC[]
-) >>
-ASM_SIMP_TAC list_ss [LET_THM] >>
-STRIP_TAC >>
-rename1 `_ = ([], (_:num) + _, st_end)` >>
-ASM_SIMP_TAC (list_ss++bir_TYPES_ss) [bir_block_pc_def] >>
-Q.ABBREV_TAC `st_final_without_pc = (bir_exec_stmtE p (bir_update_blockE_FINAL eup) st_end)` >>
-Q.ABBREV_TAC `st_final = (if bir_state_is_terminated st_final_without_pc then
-         st_final_without_pc with
-         bst_pc := (st.bst_pc with bpc_index := c + (LENGTH mbl + st.bst_pc.bpc_index))
-       else st_final_without_pc)` >>
-
-`st_final.bst_environ = st_final_without_pc.bst_environ` by (
-  Q.UNABBREV_TAC `st_final` >>
-  SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) []
-) >>
-`st_final_without_pc.bst_environ = st_end.bst_environ` by (
-  Q.UNABBREV_TAC `st_final_without_pc` >>
-  SIMP_TAC std_ss [bir_exec_stmtE_env_unchanged]
-) >>
-ASM_SIMP_TAC std_ss [] >>
-Tactical.REVERSE CONJ_TAC >- (
-  REPEAT STRIP_TAC >>
-  `bir_env_lookup (bir_var_name var) st_end.bst_environ =
-   bir_env_lookup (bir_var_name var) st_init.bst_environ` suffices_by METIS_TAC[] >>
-
-  Q.PAT_X_ASSUM `!vn. _` MATCH_MP_TAC >>
-  `bir_updateE_desc_final_exp_vars eup = {var}` by (
-     ASM_SIMP_TAC std_ss [bir_updateE_desc_final_exp_vars_def,
-       bir_updateE_desc_final_exp_def, bir_vars_of_exp_def]
-  ) >>
-  FULL_SIMP_TAC std_ss [EVERY_MEM, IN_SING, bir_vars_of_updateB_desc_def, IN_INSERT, NOT_IN_EMPTY] >>
-  METIS_TAC[]
-) >>
-
-`st_final_without_pc = BUpdateValE_EXEC p (bir_updateE_SEM eup) st_end` by (
-  Q.UNABBREV_TAC `st_final_without_pc` >>
-  MATCH_MP_TAC bir_update_blockE_FINAL_THM >>
-  REPEAT STRIP_TAC >>
-  `bir_eval_exp e st_end.bst_environ = bir_eval_exp e st_init.bst_environ` by (
-     MATCH_MP_TAC bir_vars_of_exp_THM >>
-     REPEAT STRIP_TAC >>
-     MATCH_MP_TAC bir_env_read_EQ_lookup_IMPL >>
-     Q.PAT_X_ASSUM `!vn. _` MATCH_MP_TAC >>
-     FULL_SIMP_TAC std_ss [EVERY_MEM, bir_updateE_desc_final_exp_def,
-       bir_vars_of_updateB_desc_def, IN_INSERT] >>
-     Cases_on `bir_updateE_desc_var eup` >| [
-       Cases_on `bir_updateE_desc_exp eup` >> FULL_SIMP_TAC std_ss [] >>
-       METIS_TAC[],
-
-       FULL_SIMP_TAC std_ss [] >>
-       REPEAT BasicProvers.VAR_EQ_TAC >>
-       FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, IN_SING] >>
-       METIS_TAC[]
-     ]
-  ) >>
-  ASM_REWRITE_TAC[] >>
-  Tactical.REVERSE (Cases_on `bir_updateE_desc_var eup`) >- (
-    rename1 `bir_updateE_desc_var eup = SOME var` >>
-    FULL_SIMP_TAC std_ss [bir_updateE_desc_final_exp_def] >>
-    REPEAT (BasicProvers.VAR_EQ_TAC) >>
-    ASM_SIMP_TAC std_ss [bir_eval_exp_def, bir_env_read_def, pairTheory.pair_case_thm]
-  ) >>
-  FULL_SIMP_TAC std_ss [] >>
-  `bir_updateE_desc_exp eup = SOME e` by (
-     Cases_on `bir_updateE_desc_exp eup` >>
-     FULL_SIMP_TAC std_ss [bir_updateE_desc_final_exp_def]
-  ) >>
-  `bir_eval_exp e st_init.bst_environ =
-   bir_eval_exp e st.bst_environ` by METIS_TAC[bir_vars_of_exp_THM, bir_env_read_EQ_lookup_IMPL] >>
-
-  FULL_SIMP_TAC std_ss [bir_updateE_desc_OK_def]
-) >>
-FULL_SIMP_TAC std_ss [] >>
-Q.UNABBREV_TAC `st_final` >>
-Cases_on `bir_updateE_SEM eup` >| [
-  FULL_SIMP_TAC (list_ss++holBACore_ss) [BUpdateValE_SEM_def, bir_state_pc_is_at_label_def,
-     BUpdateValE_EXEC_def, bir_exec_stmt_jmp_to_label_def,
-     bir_state_is_terminated_def,
-     bir_programcounter_t_component_equality],
-
-  FULL_SIMP_TAC (list_ss ++ holBACore_ss) [BUpdateValE_EXEC_def, BUpdateValE_SEM_def,
-    bir_exec_stmt_halt_def,
-    bir_programcounter_t_component_equality]
-]);
+cheat);
 
 
 
@@ -923,7 +689,7 @@ val _ = Datatype `bir_assert_desc_t = BAssertDesc bir_exp_t bool`;
 val bir_assert_desc_OK_def = Define `
   bir_assert_desc_OK env (BAssertDesc e b) <=> (
      (* The expression really evaluates to the given value *)
-     (bir_eval_exp e env = BVal_Imm (bool2b b))
+     (bir_eval_exp e env = SOME (BVal_Imm (bool2b b)))
   )`
 
 val bir_assert_desc_exp_def = Define `bir_assert_desc_exp (BAssertDesc e b) = e`;
@@ -964,7 +730,7 @@ FULL_SIMP_TAC list_ss [bir_assert_block_def,
 ) >>
 Tactical.REVERSE (Cases_on `bir_assert_desc_value a`) >- (
   `bir_state_is_terminated (st with bst_status := BST_AssertionViolated)` by
-     SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def, bir_state_set_failed_def] >>
+     SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def, bir_state_set_typeerror_def] >>
   FULL_SIMP_TAC list_ss [INDEX_FIND_def, pairTheory.pair_case_thm,
     bir_exec_stmtsB_REWRS]
 ) >>
@@ -1097,14 +863,14 @@ bir_update_block_desc_OK st.bst_environ eup updates ==>
 
   (* All updates have been performed correctly. *)
   (EVERY (\up. (bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) st'.bst_environ =
-                   SOME (bir_var_type (bir_updateB_desc_var up), SOME (bir_updateB_desc_value up))) /\
+                   SOME (bir_updateB_desc_value up)) /\
                (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st'.bst_environ =
-                   SOME (bir_var_type (bir_updateB_desc_var up), SOME (bir_updateB_desc_value up))))
+                   SOME (bir_updateB_desc_value up)))
     updates) /\
   (!var v. (bir_updateE_desc_var eup = SOME var) ==>
            (bir_updateE_desc_value eup = SOME v) ==>
            ((bir_env_lookup (bir_var_name var) st'.bst_environ =
-            SOME (bir_var_type var, SOME (BVal_Imm v))))) /\
+            SOME (BVal_Imm v)))) /\
 
   (* And nothing else changed *)
   (!vn. (EVERY (\up. (vn <> bir_var_name (bir_updateB_desc_var up)) /\
@@ -1139,43 +905,6 @@ Tactical.REVERSE(Cases_on `bir_state_is_terminated st'`) >> FULL_SIMP_TAC std_ss
 
 Cases_on `bir_updateE_SEM eup` >> FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [BUpdateValE_SEM_def] >>
 FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_pc_is_at_label_def, bir_state_is_terminated_def]);
-
-
-(************************)
-(* No declares anywhere *)
-(************************)
-
-val bir_assert_block_NO_DECLARE = store_thm ("bir_assert_block_NO_DECLARE",
-``!al. EVERY (\stmt. ~(bir_stmtB_is_declartion stmt)) (bir_assert_block al)``,
-SIMP_TAC list_ss [bir_assert_block_def, EVERY_MAP, bir_stmtB_is_declartion_def]);
-
-
-val bir_update_block_NO_DECLARE = store_thm ("bir_update_block_NO_DECLARE",
-``EVERY (\stmt. ~(bir_stmtB_is_declartion stmt)) (bir_update_block l eup dl).bb_statements``,
-
-SIMP_TAC (list_ss++bir_TYPES_ss++DatatypeSimps.expand_type_quants_ss[``:bir_updateB_desc_t``]) [
-  bir_update_block_def,
-  bir_update_blockE_INIT_def, bir_update_blockB_def,
-  EVERY_MEM, MEM_FILTER, bir_updateB_desc_use_temp_def,
-  bir_update_blockB_STEP1_def,   bir_update_blockB_STEP2_def,
-  bir_stmtB_is_declartion_def, MEM_MAP, DISJ_IMP_THM, PULL_EXISTS] >>
-GEN_TAC >> REPEAT CASE_TAC >> (
-  SIMP_TAC list_ss [bir_stmtB_is_declartion_def]
-));
-
-
-val bir_update_assert_block_NO_DECLARE = store_thm ("bir_update_assert_block_NO_DECLARE",
-``EVERY (\stmt. ~(bir_stmtB_is_declartion stmt)) (bir_update_assert_block l al eup dl).bb_statements``,
-
-SIMP_TAC (list_ss++bir_TYPES_ss++DatatypeSimps.expand_type_quants_ss[``:bir_updateB_desc_t``]) [
-  bir_update_assert_block_def, bir_assert_block_def,
-  bir_update_blockE_INIT_def, bir_update_blockB_def,
-  EVERY_MEM, MEM_FILTER, bir_updateB_desc_use_temp_def,
-  bir_update_blockB_STEP1_def,   bir_update_blockB_STEP2_def,
-  bir_stmtB_is_declartion_def, MEM_MAP, DISJ_IMP_THM, PULL_EXISTS] >>
-GEN_TAC >> REPEAT CASE_TAC >> (
-  SIMP_TAC list_ss [bir_stmtB_is_declartion_def]
-));
 
 
 (****************)
