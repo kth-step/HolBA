@@ -31,33 +31,15 @@ val bir_stmtB_not_assume_never_assumviol =
                           bir_exec_stmtB_def]
   ) >| [
     FULL_SIMP_TAC (std_ss++holBACore_ss)
-                  [bir_exec_stmt_declare_def] >>
-    Cases_on `bir_env_varname_is_bound b0
-                (bir_var_name b'')` >| [
-      FULL_SIMP_TAC (std_ss++holBACore_ss)
-                    [bir_state_set_failed_def,
-                     bir_state_t_bst_status_fupd],
-
-      Cases_on `bir_env_update (bir_var_name b'')
-                  (bir_declare_initial_value (bir_var_type b''))
-                  (bir_var_type b'')
-                  b0` >| [
-        FULL_SIMP_TAC (std_ss++holBACore_ss)
-              [bir_state_set_failed_def,
-               bir_state_t_bst_status_fupd],
-
-        FULL_SIMP_TAC (std_ss++holBACore_ss)
-              [bir_state_set_failed_def,
-               bir_state_t_bst_status_fupd,
-                       bir_state_t_bst_environ_fupd]
-      ]
-    ],
-
-    FULL_SIMP_TAC (std_ss++holBACore_ss)
                   [bir_exec_stmt_assign_def, LET_DEF] >>
-    Cases_on `bir_env_write b'' (bir_eval_exp b0'' b0) b0` >| [
+    Cases_on `(bir_eval_exp b0'' b0)` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss)
-            [bir_state_set_failed_def,
+            [bir_state_set_typeerror_def,
+             bir_state_t_bst_status_fupd]
+    ) >>
+    Cases_on `bir_env_write b'' x b0` >| [
+      FULL_SIMP_TAC (std_ss++holBACore_ss)
+            [bir_state_set_typeerror_def,
              bir_state_t_bst_status_fupd],
 
       FULL_SIMP_TAC (std_ss++holBACore_ss)
@@ -65,29 +47,45 @@ val bir_stmtB_not_assume_never_assumviol =
     ],
 
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_assert_def] >>
-    Cases_on `bir_dest_bool_val (bir_eval_exp b'' b0)` >| [
+    Cases_on `(bir_eval_exp b'' b0)` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss)
-            [bir_state_set_failed_def,
+            [bir_state_set_typeerror_def,
+             bir_state_t_bst_status_fupd]
+    ) >>
+    Cases_on `bir_dest_bool_val x` >| [
+      FULL_SIMP_TAC (std_ss++holBACore_ss)
+            [bir_state_set_typeerror_def,
              bir_state_t_bst_status_fupd],
 
-      Cases_on `x` >> (
+      Cases_on `x'` >> (
         FULL_SIMP_TAC (std_ss++holBACore_ss)
-              [bir_state_set_failed_def,
+              [bir_state_set_typeerror_def,
                bir_state_t_bst_status_fupd]
       )
     ],
 
     FULL_SIMP_TAC (std_ss++holBACore_ss)
-                  [bir_exec_stmt_observe_def] >>
-    Cases_on `bir_dest_bool_val (bir_eval_exp b'' b0)` >| [
+                  [bir_exec_stmt_observe_def, LET_DEF] >>
+    Cases_on `(bir_eval_exp b'' b0)` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss)
-            [bir_state_set_failed_def,
-             bir_state_t_bst_status_fupd],
-
-      Cases_on `x` >> (
-        FULL_SIMP_TAC (std_ss++holBACore_ss) []
+            [bir_state_set_typeerror_def,
+             bir_state_t_bst_status_fupd]
+    ) >>
+    Cases_on `(bir_dest_bool_val x)` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss)
+            [bir_state_set_typeerror_def,
+             bir_state_t_bst_status_fupd]
+    ) >>
+    Cases_on `(x')` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss)
+            [bir_state_set_typeerror_def,
+             bir_state_t_bst_status_fupd] >>
+      Cases_on `(EXISTS IS_NONE (MAP (λe. bir_eval_exp e b0) l))` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss)
+              [bir_state_set_typeerror_def,
+               bir_state_t_bst_status_fupd]
       )
-    ]
+    )
   ]
 );
 
@@ -156,11 +154,11 @@ val bir_exec_stmtE_not_assumviol =
                           bir_exec_stmt_jmp_def] >>
     Cases_on `bir_eval_label_exp b st.bst_environ` >| [
       FULL_SIMP_TAC (std_ss++holBACore_ss)
-                    [bir_state_set_failed_def],
+                    [bir_state_set_typeerror_def],
 
       Cases_on `x` >| [
         FULL_SIMP_TAC (std_ss++holBACore_ss)
-                      [bir_state_set_failed_def,
+                      [bir_state_set_typeerror_def,
                        bir_exec_stmt_jmp_to_label_def] >>
         Cases_on `MEM (BL_Label s) (bir_labels_of_program prog)` >> (
           FULL_SIMP_TAC (std_ss++holBACore_ss) []
@@ -178,25 +176,28 @@ val bir_exec_stmtE_not_assumviol =
     (* CJmp *)
     FULL_SIMP_TAC std_ss [bir_exec_stmtE_def,
                           bir_exec_stmt_cjmp_def] >>
-    Cases_on `bir_dest_bool_val (bir_eval_exp b st.bst_environ)` >- (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def]
+    Cases_on `(bir_eval_exp b st.bst_environ)` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def, LET_DEF]
     ) >>
-    Cases_on `x` >> (
+    Cases_on `bir_dest_bool_val x` >- (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def]
+    ) >>
+    Cases_on `x'` >> (
       FULL_SIMP_TAC std_ss [bir_exec_stmt_jmp_def]
     ) >>> (TACS_TO_LT [
       Cases_on `bir_eval_label_exp b0 st.bst_environ` >- (
         FULL_SIMP_TAC (std_ss++holBACore_ss)
-                      [bir_state_set_failed_def]
+                      [bir_state_set_typeerror_def]
       ),
 
       Cases_on `bir_eval_label_exp b1 st.bst_environ` >- (
         FULL_SIMP_TAC (std_ss++holBACore_ss)
-                      [bir_state_set_failed_def]
+                      [bir_state_set_typeerror_def]
       )
     ]) >> (
-      Cases_on `x` >| [
+      Cases_on `x'` >| [
         FULL_SIMP_TAC (std_ss++holBACore_ss)
-                      [bir_state_set_failed_def,
+                      [bir_state_set_typeerror_def,
                        bir_exec_stmt_jmp_to_label_def] >>
         Cases_on `MEM (BL_Label s) (bir_labels_of_program prog)` >> (
           FULL_SIMP_TAC (std_ss++holBACore_ss) []
@@ -213,7 +214,10 @@ val bir_exec_stmtE_not_assumviol =
 
     (* Halt *)
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtE_def,
-                                          bir_exec_stmt_halt_def]
+                                          bir_exec_stmt_halt_def] >>
+    Cases_on `(bir_eval_exp b st.bst_environ)` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def, LET_DEF]
+    )
   ]
 );
 
