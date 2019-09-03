@@ -71,12 +71,12 @@ val bir_exec_stmtB_pc_unimportant = store_thm ("bir_exec_stmtB_pc_unimportant",
 REPEAT STRIP_TAC >>
 Cases_on `stmt` >> (
   FULL_SIMP_TAC std_ss [bir_exec_stmtB_def, LET_DEF,
-    bir_exec_stmt_declare_def, bir_exec_stmt_assume_def,
+    bir_exec_stmt_assume_def,
     bir_exec_stmt_assign_def, bir_exec_stmt_assert_def,
     bir_exec_stmt_observe_def,
     bir_observation_states_EQ_EXCEPT_PC_def, bir_states_EQ_EXCEPT_PC_REWRS] >>
   REPEAT CASE_TAC >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def]
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def]
 ));
 
 
@@ -92,7 +92,7 @@ Cases_on `stmt` >> (
     bir_exec_stmt_jmp_to_label_def,
     bir_states_EQ_EXCEPT_PC_REWRS] >>
   REPEAT CASE_TAC >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def]
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def]
 ));
 
 
@@ -110,7 +110,7 @@ Cases_on `stmt` >> (
     bir_exec_stmt_jmp_to_label_def] >>
   REPEAT CASE_TAC >>
   REPEAT BasicProvers.VAR_EQ_TAC >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def, bir_state_is_terminated_def]
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def, bir_state_is_terminated_def]
 ));
 
 
@@ -773,7 +773,7 @@ Cases_on `stmt` >> (
     bir_exec_stmt_halt_def, bir_exec_stmt_jmp_to_label_def] >>
   REPEAT CASE_TAC >>
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_get_current_block_block_pc_IS_SOME,
-    bir_state_set_failed_def]
+    bir_state_set_typeerror_def]
 ));
 
 
@@ -1042,12 +1042,12 @@ val bir_exec_stmtsB_ENV_ORDER = store_thm ("bir_exec_stmtsB_ENV_ORDER",
     (SND (SND (bir_exec_stmtsB stmts (l, n, st)))).bst_environ``,
 
 Induct >> (
-  SIMP_TAC std_ss [bir_exec_stmtsB_def, bir_env_order_REFL]
+  SIMP_TAC std_ss [bir_exec_stmtsB_def, bir_env_oldTheory.bir_env_order_REFL]
 ) >>
 ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++pairSimps.gen_beta_ss) [bir_exec_stmtsB_def,
-  bir_env_order_REFL, LET_THM,
+  bir_env_oldTheory.bir_env_order_REFL, LET_THM,
   GSYM bir_exec_stmtB_state_def] >>
-METIS_TAC[bir_exec_stmtB_ENV_ORDER, bir_env_order_TRANS]);
+METIS_TAC[bir_exec_stmtB_ENV_ORDER, bir_env_oldTheory.bir_env_order_TRANS]);
 
 
 val bir_exec_block_ENV_ORDER = store_thm ("bir_exec_block_ENV_ORDER",

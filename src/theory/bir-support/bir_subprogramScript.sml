@@ -444,7 +444,7 @@ Cases_on `stmt` >> (
     bir_exec_stmt_cjmp_def, bir_exec_stmt_halt_def] >>
   REPEAT GEN_TAC >>
   REPEAT CASE_TAC >>
-  ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_state_t_component_equality, bir_state_set_failed_def] >>
+  ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_state_t_component_equality, bir_state_set_typeerror_def] >>
   METIS_TAC[]
 ));
 
