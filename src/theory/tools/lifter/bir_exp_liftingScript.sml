@@ -325,14 +325,14 @@ val bir_is_lifted_mem_exp_def = Define `bir_is_lifted_mem_exp
      (size_of_bir_immtype sb = (dimindex (:'b))) /\
      (type_of_bir_exp e = SOME (BType_Mem sa sb)) /\
      (bir_env_vars_are_initialised env (bir_vars_of_exp e)) /\
-     (bir_eval_exp e env = BVal_Mem sa sb mem_n) /\
+     (bir_eval_exp e env = SOME (BVal_Mem sa sb mem_n)) /\
      (mem = bir_load_mmap_w (bir_mmap_n2w mem_n)))
 `;
 
 val bir_is_lifted_imm_exp_def = Define `bir_is_lifted_imm_exp env e i =
   (type_of_bir_exp e = SOME (BType_Imm (type_of_bir_imm i))) /\
   (bir_env_vars_are_initialised env (bir_vars_of_exp e)) /\
-  (bir_eval_exp e env = BVal_Imm i)`;
+  (bir_eval_exp e env = SOME (BVal_Imm i))`;
 
 
 val _ = Datatype `bir_lift_val_t =
@@ -374,7 +374,7 @@ val bir_is_lifted_imm_exp_CONSTANT = store_thm ("bir_is_lifted_imm_exp_CONSTANT"
 
 SIMP_TAC std_ss [bir_is_lifted_imm_exp_def,
   type_of_bir_exp_def, type_of_bir_val_def,
-  bir_vars_of_exp_def, bir_env_vars_are_initialised_EMPTY, bir_eval_exp_def]);
+  bir_vars_of_exp_def, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY, bir_eval_exp_def]);
 
 
 (*********************)
@@ -390,7 +390,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_UNARY_EXP0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, w2w_id]);
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id]);
 
 
 val bir_is_lifted_imm_exp_UNARY_EXP = save_thm ("bir_is_lifted_imm_exp_UNARY_EXP",
@@ -417,7 +417,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_BIN_EXP0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, w2w_id]);
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id]);
 
 val bir_is_lifted_imm_exp_BIN_EXP = save_thm ("bir_is_lifted_imm_exp_BIN_EXP",
 let
@@ -440,7 +440,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_SHIFTS_n2w0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, w2w_id, bir_env_vars_are_initialised_EMPTY]);
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY]);
 
 val bir_is_lifted_imm_exp_SHIFTS_n2w = save_thm ("bir_is_lifted_imm_exp_SHIFTS_n2w",
 let
@@ -469,7 +469,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_SHIFTS_w2n0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, w2w_id, bir_env_vars_are_initialised_EMPTY,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
   w2w_def]);
 
 
@@ -516,7 +516,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_BIN_PRED0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id]);
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id]);
 
 
 val bir_is_lifted_imm_exp_BIN_PRED = save_thm ("bir_is_lifted_imm_exp_BIN_PRED",
@@ -580,7 +580,7 @@ val thm_t = build_immtype_t_conj_gen "sb" Type.beta (build_immtype_t_conj_gen "s
 
 val bir_is_lifted_imm_exp_LCAST0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, bir_auxiliaryTheory.sw2sw_w2w_downcast,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, bir_auxiliaryTheory.sw2sw_w2w_downcast,
   w2w_id]);
 
 val bir_is_lifted_imm_exp_LCAST = save_thm ("bir_is_lifted_imm_exp_LCAST",
@@ -602,7 +602,7 @@ val thm_t = build_immtype_t_conj_gen "sb" Type.beta (build_immtype_t_conj_gen "s
 
 val bir_is_lifted_imm_exp_HCAST0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, w2w_id]);
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id]);
 
 val bir_is_lifted_imm_exp_HCAST = save_thm ("bir_is_lifted_imm_exp_HCAST",
 let
@@ -624,7 +624,7 @@ val thm_t = build_immtype_t_conj_gen "sb" Type.beta (build_immtype_t_conj_gen "s
 
 val bir_is_lifted_imm_exp_UNSIGNED_CAST0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, w2w_id, w2wh_w2w]);
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id, w2wh_w2w]);
 
 val bir_is_lifted_imm_exp_UNSIGNED_CAST = save_thm ("bir_is_lifted_imm_exp_UNSIGNED_CAST",
 let
@@ -648,7 +648,7 @@ val thm_t = build_immtype_t_conj_gen "sb" Type.beta (build_immtype_t_conj_gen "s
 
 val bir_is_lifted_imm_exp_SIGNED_CAST0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, w2w_id]);
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id]);
 
 val bir_is_lifted_imm_exp_SIGNED_CAST = save_thm ("bir_is_lifted_imm_exp_SIGNED_CAST",
 let
@@ -685,7 +685,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_COND0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id]);
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id]);
 
 val bir_is_lifted_imm_exp_COND = save_thm ("bir_is_lifted_imm_exp_COND",
 let
@@ -719,7 +719,7 @@ val bir_is_lifted_imm_exp_LOAD0 = prove (
 ``,
   SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
     bir_is_lifted_mem_exp_def, PULL_EXISTS,
-    bir_eval_load_BASIC_REWR, bir_env_vars_are_initialised_UNION] >>
+    bir_eval_load_BASIC_REWR, bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
   REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
   `sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
   `sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
@@ -958,7 +958,7 @@ val bir_is_lifted_mem_exp_STORE0 = prove (
 ``,
   SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
     bir_is_lifted_mem_exp_def, PULL_EXISTS,
-    bir_env_vars_are_initialised_UNION, bir_eval_store_BASIC_REWR] >>
+    bir_env_oldTheory.bir_env_vars_are_initialised_UNION, bir_eval_store_BASIC_REWR] >>
   REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
   `sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
   `sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
@@ -1028,7 +1028,7 @@ val bir_is_lifted_imm_exp_bool2b_TF = prove (
   (!env. bir_is_lifted_imm_exp env bir_exp_false (bool2b F))``,
 
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  bir_exp_true_def, bir_exp_false_def, bir_env_vars_are_initialised_EMPTY]);
+  bir_exp_true_def, bir_exp_false_def, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY]);
 
 
 val bir_is_lifted_imm_exp_bool2b_COND = prove (
@@ -1039,7 +1039,7 @@ val bir_is_lifted_imm_exp_bool2b_COND = prove (
       bir_is_lifted_imm_exp env (BExp_IfThenElse ec e1 e2) (bool2b (if c then b1 else b2))``,
 
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, BType_Bool_def]);
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, BType_Bool_def]);
 
 
 val bir_is_lifted_imm_exp_bool2b_UnaryExp0 = prove (
@@ -1071,7 +1071,7 @@ REPEAT STRIP_TAC >>
 `bir_bin_exp uo (bool2b b1) (bool2b b2) = bool2b (bop b1 b2)` by METIS_TAC[
   bir_bin_exp_GET_BOOL_OPER_THM] >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION]);
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION]);
 
 
 val bir_is_lifted_imm_exp_bool2b_BinExp =
@@ -1093,7 +1093,7 @@ REPEAT STRIP_TAC >>
 `bir_bin_pred uo (bool2b b1) (bool2b b2) = bop b1 b2` by METIS_TAC[
   bir_bin_pred_GET_BOOL_OPER_THM] >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, BType_Bool_def]);
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, BType_Bool_def]);
 
 
 val bir_is_lifted_imm_exp_bool2b_BinPred =
@@ -1168,7 +1168,7 @@ in  list_mk_conj (tl @ tl2) end;
 
 val bir_is_lifted_imm_exp_NZCV0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id,
   pairTheory.pair_case_thm,
   BExp_nzcv_SUB_type_of, BExp_nzcv_SUB_vars_of,
   BExp_nzcv_ADD_type_of, BExp_nzcv_ADD_vars_of,
@@ -1209,7 +1209,7 @@ in tl end;
 
 val bir_is_lifted_imm_exp_WI_distinct_MEM_UNCHANGED_COMPUTE0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id,
   pairTheory.pair_case_thm,
 
   BExp_unchanged_mem_interval_distinct_type_of,
@@ -1331,7 +1331,7 @@ val thm_t = build_immtype_t_conj
 val bir_is_lifted_imm_exp_word_bit0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
   BExp_word_bit_exp_type_of, BExp_word_bit_exp_vars_of, BExp_word_bit_exp_eval,
-  pairTheory.pair_case_thm, bir_env_vars_are_initialised_UNION, w2w_id, BType_Bool_def] >>
+  pairTheory.pair_case_thm, bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id, BType_Bool_def] >>
 SIMP_TAC std_ss [w2w_def, w2n_n2w, word_bit_mod_remove]);
 
 
@@ -1374,7 +1374,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_ALIGNED_GEN = prove (``!p. ^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, pairTheory.pair_case_thm,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, pairTheory.pair_case_thm,
   BExp_Aligned_vars_of, BExp_Aligned_eval,
   BExp_Aligned_type_of, BType_Bool_def, w2w_id]);
 
@@ -1402,7 +1402,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_ALIGN_GEN = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, pairTheory.pair_case_thm,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, pairTheory.pair_case_thm,
   BExp_Align_vars_of, BExp_Align_eval,
   BExp_Align_type_of, w2w_id]);
 
@@ -1543,7 +1543,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_ROR_EXP0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, w2w_id, pairTheory.pair_case_thm,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id, pairTheory.pair_case_thm,
   BExp_ror_exp_vars_of, BExp_ror_exp_type_of, BExp_ror_exp_eval]);
 
 val bir_is_lifted_imm_exp_ROR_EXP = save_thm ("bir_is_lifted_imm_exp_ROR_EXP",
@@ -1565,7 +1565,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_ROR_EXP_w2n0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def, pairTheory.pair_case_thm,
-  bir_env_vars_are_initialised_UNION, w2w_id, bir_env_vars_are_initialised_EMPTY,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
   w2w_def, BExp_ror_exp_eval, BExp_ror_exp_type_of, BExp_ror_exp_vars_of]);
 
 
@@ -1607,7 +1607,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_ROR0 = prove (``^thm_t``,
 SIMP_TAC (arith_ss++holBACore_ss++wordsLib.SIZES_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, w2w_id, bir_env_vars_are_initialised_EMPTY,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
   BExp_ror_vars_of, BExp_ror_type_of, BExp_ror_eval, rich_listTheory.MEM_COUNT_LIST,
   GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC, pairTheory.pair_case_thm]);
 
@@ -1641,7 +1641,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_ROL_EXP0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, w2w_id, pairTheory.pair_case_thm,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id, pairTheory.pair_case_thm,
   BExp_rol_exp_vars_of, BExp_rol_exp_type_of, BExp_rol_exp_eval]);
 
 val bir_is_lifted_imm_exp_ROL_EXP = save_thm ("bir_is_lifted_imm_exp_ROL_EXP",
@@ -1663,7 +1663,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_ROL_EXP_w2n0 = prove (``^thm_t``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def, pairTheory.pair_case_thm,
-  bir_env_vars_are_initialised_UNION, w2w_id, bir_env_vars_are_initialised_EMPTY,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
   w2w_def, BExp_rol_exp_eval, BExp_rol_exp_type_of, BExp_rol_exp_vars_of]);
 
 
@@ -1704,7 +1704,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_ROL0 = prove (``^thm_t``,
 SIMP_TAC (arith_ss++holBACore_ss++wordsLib.SIZES_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, w2w_id, bir_env_vars_are_initialised_EMPTY,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
   BExp_rol_vars_of, BExp_rol_type_of, BExp_rol_eval, rich_listTheory.MEM_COUNT_LIST,
   GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC, pairTheory.pair_case_thm]);
 
@@ -1736,7 +1736,7 @@ val thm_t = build_immtype_t_conj
 
 val bir_is_lifted_imm_exp_EXTR0 = prove (``^thm_t``,
 SIMP_TAC (arith_ss++holBACore_ss++wordsLib.SIZES_ss) [bir_is_lifted_imm_exp_def,
-  bir_env_vars_are_initialised_UNION, w2w_id, bir_env_vars_are_initialised_EMPTY,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2w_id, bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
   BExp_extr_vars_of, BExp_extr_type_of, BExp_extr_eval, rich_listTheory.MEM_COUNT_LIST,
   GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC, pairTheory.pair_case_thm]);
 
