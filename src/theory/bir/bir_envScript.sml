@@ -70,6 +70,22 @@ SIMP_TAC std_ss [bir_env_read_def, bir_env_lookup_UPDATE,
       bir_env_check_type_def, bir_env_lookup_type_def] >>
 Cases_on `bir_var_name var = vn` >> ASM_SIMP_TAC std_ss []);
 
+val bir_env_read_NEQ_NONE = store_thm ("bir_env_read_NEQ_NONE",
+``!var env v.
+(v <> NONE) ==>
+((bir_env_read var env = v) <=> (?va. (v = SOME va) /\
+                                      (bir_env_lookup (bir_var_name var) env = v) /\
+                                      (bir_var_type var = type_of_bir_val va)))``,
+
+REPEAT GEN_TAC >>
+Cases_on `env` >> Cases_on `v` >> (
+  SIMP_TAC std_ss [bir_env_read_def, bir_env_check_type_def, bir_env_lookup_type_def, bir_env_lookup_def]
+) >>
+EQ_TAC >> SIMP_TAC std_ss [] >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss []
+);
+
 val bir_env_write_def = Define `bir_env_write var va env =
 	 if (bir_env_check_type var env) then
 	   bir_env_update (bir_var_name var) va (bir_var_type var) env
