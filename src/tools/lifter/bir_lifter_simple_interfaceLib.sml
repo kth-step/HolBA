@@ -360,8 +360,7 @@ fun lift_sections arch_str sections idx =
 
 (* val s = hd stmts; *)
                      val s_exps = List.map (fn s =>
-                            if is_BStmt_Declare s then []
-                            else if is_BStmt_Assign s then
+                            if is_BStmt_Assign s then
                                [(snd o dest_BStmt_Assign) s]
                             else if is_BStmt_Assert s then
                                [(dest_BStmt_Assert) s]
