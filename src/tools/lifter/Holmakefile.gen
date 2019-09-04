@@ -12,7 +12,8 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../exec/HolBATools_Exec-heap
+HOLHEAP        = ../../shared/HolBAShared-heap
+#HOLHEAP        = ../../theory/HolBATheory-heap
 NEWHOLHEAP     = HolBATools_Lifter-heap
 
 HEAPINC_EXTRA  = 
