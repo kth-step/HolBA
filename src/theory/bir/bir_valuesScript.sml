@@ -116,20 +116,34 @@ Cases_on `b` >> SIMP_TAC (std_ss++bir_imm_ss) [bir_val_checker_REWRS, bir_dest_b
   type_of_bir_imm_def]);
 
 val bir_dest_bool_val_bool2b = store_thm ("bir_dest_bool_val_bool2b",
-  ``bir_dest_bool_val (BVal_Imm (bool2b b)) = SOME b``,
+  ``!b. bir_dest_bool_val (BVal_Imm (bool2b b)) = SOME b``,
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [
   bool2b_def, bool2w_def, bir_dest_bool_val_def]);
 
+(* TODO: See if this really needs to be used *)
 val bir_dest_bool_val_opt_def = Define `
   (bir_dest_bool_val_opt (SOME v) = bir_dest_bool_val v) /\
   (bir_dest_bool_val_opt _ = NONE)`
 
+(* TODO: See if this really needs to be used *)
 val bir_dest_bool_val_opt_EQ_SOME = store_thm ("bir_dest_bool_val_opt_EQ_SOME",
-  ``!v b. (bir_dest_bool_val_opt v = SOME b) <=> (v = SOME (BVal_Imm (bool2b b)))``,
+  ``!v b.
+    (bir_dest_bool_val_opt v = SOME b) <=> (v = SOME (BVal_Imm (bool2b b)))``,
 
-cheat
+Cases >> (
+  SIMP_TAC std_ss [bir_dest_bool_val_opt_def]
+) >>
+Cases_on `x` >> (
+  SIMP_TAC (std_ss++bir_val_ss) [bir_dest_bool_val_opt_def, bir_dest_bool_val_def]
+) >>
+rename1 `BVal_Imm i` >>
+Cases_on `i` >> SIMP_TAC (std_ss++bir_imm_ss) [bir_dest_bool_val_def, bool2b_NEQ_IMM_ELIMS] >>
+SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def] >>
+Cases_on `b'` >> SIMP_TAC std_ss [bool2w_def] >>
+METIS_TAC[word1_dichotomy, word1_distinct]
 );
 
+(* TODO: See if this really needs to be used *)
 val bir_dest_bool_val_opt_EQ_NONE = store_thm ("bir_dest_bool_val_opt_EQ_NONE",
   ``!v_opt.
     (bir_dest_bool_val_opt v_opt = NONE) <=>
@@ -137,14 +151,26 @@ val bir_dest_bool_val_opt_EQ_NONE = store_thm ("bir_dest_bool_val_opt_EQ_NONE",
        (v_opt = NONE)
       )``,
 
-cheat
+Cases >> (
+  SIMP_TAC std_ss [bir_dest_bool_val_opt_def]
+) >>
+Cases_on `x` >> (
+  SIMP_TAC std_ss [bir_val_checker_REWRS, bir_dest_bool_val_opt_def, bir_dest_bool_val_def]
+) >>
+rename1 `BVal_Imm i` >>
+Cases_on `i` >> (
+  SIMP_TAC (std_ss++bir_imm_ss) [bir_val_checker_REWRS, bir_dest_bool_val_def,
+    type_of_bir_imm_def]
+)
 );
 
+(* TODO: See if this really needs to be used *)
 val bir_dest_bool_val_opt_bool2b = store_thm ("bir_dest_bool_val_opt_bool2b",
   ``!b.
     bir_dest_bool_val_opt (SOME (BVal_Imm (bool2b b))) = SOME b``,
 
-cheat
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss)
+  [bool2b_def, bool2w_def, bir_dest_bool_val_opt_def, bir_dest_bool_val_def]
 );
 
 (* ------------------------------------------------------------------------- *)
