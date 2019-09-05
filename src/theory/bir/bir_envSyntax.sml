@@ -23,7 +23,6 @@ val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
 (* Environments *)
 
 val bir_var_environment_t_ty = mk_type ("bir_var_environment_t", []);
-val (bir_empty_env_tm, is_bir_empty_env) = syntax_fns0 "bir_empty_env";
 val (BEnv_tm, mk_BEnv, dest_BEnv, is_BEnv) = syntax_fns1 "BEnv";
 
 

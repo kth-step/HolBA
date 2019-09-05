@@ -156,12 +156,9 @@ val bir_state_set_typeerror_def = Define `bir_state_set_typeerror st =
 val bir_state_set_failed_def = Define `bir_state_set_failed st =
   (st with bst_status := BST_Failed)`;
 
-(* TODO: add default value for each variable in p *)
-val bir_env_default_def = Define `bir_env_default (p:'a bir_program_t) = bir_empty_env`;
-
 val bir_state_init_def = Define `bir_state_init p = <|
     bst_pc       := bir_pc_first p
-  ; bst_environ  := bir_env_default p
+  ; bst_environ  := bir_env_default (bir_envty_of_vs {}) (* TODO: add vars of program here *)
   ; bst_status := BST_Running
 |>`;
 

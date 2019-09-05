@@ -23,9 +23,6 @@ SIMP_TAC std_ss [bir_var_type_def, bir_var_name_def, bir_var_t_11])
 val _ = Datatype `bir_var_environment_t = BEnv (string -> (bir_val_t option))`;
 val bir_var_environment_t_11 = DB.fetch "-" "bir_var_environment_t_11";
 
-(* Empty environment *)
-val bir_empty_env_def = Define `bir_empty_env = BEnv (K NONE)`
-
 val bir_env_lookup_def = Define `
   (bir_env_lookup varname (BEnv env) = env varname)`;
 
@@ -144,6 +141,11 @@ val bir_envty_of_env_def = Define `bir_envty_of_env (BEnv env) =
   BEnvTy ((OPTION_MAP type_of_bir_val) o env)
 `;
 
+val bir_env_default_def = Define `
+    bir_env_default (BEnvTy envty) =
+           BEnv ((OPTION_MAP bir_default_value_of_type) o envty)
+`;
+
 val bir_env_satisfies_envty_def = Define `bir_env_satisfies_envty (BEnv env) (BEnvTy envty) =
   !vn t. (envty vn = SOME t) ==> (?v. (env vn = SOME v) /\ (type_of_bir_val v = t))
 `;
@@ -154,6 +156,14 @@ val bir_env_satisfies_envty_of_env = store_thm("bir_env_satisfies_envty_of_env",
   Cases_on `env` >>
   SIMP_TAC std_ss [bir_env_satisfies_envty_def, bir_envty_of_env_def] >>
   METIS_TAC[]
+);
+
+val bir_env_default_satisfies_envty = store_thm("bir_env_default_satisfies_envty", ``
+  !envty. bir_env_satisfies_envty (bir_env_default envty) envty
+``,
+  Cases_on `envty` >>
+  SIMP_TAC std_ss [bir_env_satisfies_envty_def, bir_env_default_def] >>
+  METIS_TAC[bir_default_value_of_type_SPEC]
 );
 
 (*
@@ -182,6 +192,15 @@ val bir_v_in_envty_env_IMP = store_thm("bir_v_in_envty_env_IMP", ``
   METIS_TAC []
 );
 
+val bir_v_in_envty_env_IMP2 = store_thm("bir_v_in_envty_env_IMP2", ``
+  !envty env v. (bir_envty_includes_v envty v) ==>
+             (bir_env_satisfies_envty (BEnv env) envty) ==>
+             (?va. (env (bir_var_name v) = SOME va) /\ (type_of_bir_val va = bir_var_type v))
+``,
+  Cases_on `envty` >>
+  FULL_SIMP_TAC std_ss [bir_envty_includes_v_def, bir_env_satisfies_envty_def, bir_env_read_def, bir_env_check_type_def, bir_env_lookup_type_def, bir_env_lookup_def]
+);
+
 val bir_vs_in_envty_env_IMP = store_thm("bir_vs_in_envty_env_IMP", ``
   !envty env vs. (bir_envty_includes_vs envty vs) ==>
              (bir_env_satisfies_envty env envty) ==>
@@ -191,6 +210,21 @@ val bir_vs_in_envty_env_IMP = store_thm("bir_vs_in_envty_env_IMP", ``
   METIS_TAC [bir_envty_includes_vs_def, bir_v_in_envty_env_IMP]
 );
 
+val bir_vs_in_envty_env_IMP2 = store_thm("bir_vs_in_envty_env_IMP2", ``
+  !envty env vs. (bir_envty_includes_vs envty vs) ==>
+             (bir_env_satisfies_envty (BEnv env) envty) ==>
+             !v. (v IN vs) ==>
+                 (?va. (env (bir_var_name v) = SOME va) /\ (type_of_bir_val va = bir_var_type v))
+``,
+  METIS_TAC [bir_envty_includes_vs_def, bir_v_in_envty_env_IMP2]
+);
+
+val bir_envty_of_vs_def = Define `bir_envty_of_vs (vs:bir_var_t -> bool) =
+  BEnvTy (\vn. if vn IN (IMAGE bir_var_name vs) then
+                 SOME (bir_var_type (CHOICE (vs DIFF { BVar vn' vt' | ?vt. (vt = vt') /\ (vn <> vn')})))
+               else
+                 NONE)
+`;
 
 val bir_vs_consistent_def = Define `bir_vs_consistent vs =
   !v1 v2. (v1 IN vs) ==> (v2 IN vs) ==> ((bir_var_name v1) = (bir_var_name v2)) ==> (v1 = v2)
@@ -212,6 +246,45 @@ val bir_envty_includes_vs_IMP_vs_consistent = store_thm("bir_envty_includes_vs_I
   ) >>
   FULL_SIMP_TAC std_ss [bir_var_name_def, bir_var_type_def] >>
   REV_FULL_SIMP_TAC std_ss []
+);
+
+val bir_vs_consistent_IMP_includes_envty_of_vs = store_thm("bir_vs_consistent_IMP_includes_envty_of_vs", ``
+  !envty vs. (bir_vs_consistent vs) ==>
+             (bir_envty_includes_vs (bir_envty_of_vs vs) vs)
+``,
+  SIMP_TAC std_ss [bir_vs_consistent_def, bir_envty_of_vs_def, bir_envty_includes_vs_def, bir_envty_includes_v_def] >>
+  REPEAT STRIP_TAC >>
+  RW_TAC std_ss [] >>
+
+  ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  `vs DIFF {BVar vn' vt' | (vn',vt') | bir_var_name v <> vn'} = {v}` by (
+    SIMP_TAC std_ss [GSPEC_IMAGE, o_DEF, EXTENSION, IMAGE_applied, IN_DIFF, IN_APP, SING_applied] >>
+    GEN_TAC >> Cases_on `x = v` >- (
+      ASM_SIMP_TAC (std_ss) [] >>
+      POP_ASSUM (K ALL_TAC) >>
+      `vs v` by METIS_TAC [IN_APP] >>
+      ASM_SIMP_TAC (std_ss) [] >>
+      POP_ASSUM (K ALL_TAC) >>
+
+      GEN_TAC >>
+      Cases_on `x'` >> Cases_on `v` >>
+      ASM_SIMP_TAC (std_ss) [bir_var_eq_EXPAND, bir_var_name_def, bir_var_type_def] >>
+      METIS_TAC []
+    ) >>
+    ASM_SIMP_TAC (std_ss) [] >>
+    Cases_on `x IN vs` >- (
+      `vs x` by METIS_TAC [IN_APP] >>
+      ASM_SIMP_TAC (std_ss) [] >>
+
+      Cases_on `x` >> Cases_on `v` >>
+      Q.EXISTS_TAC `(s,b)` >>
+      ASM_SIMP_TAC (std_ss) [] >>
+      METIS_TAC [bir_var_name_def, bir_var_type_def]
+    ) >>
+    `~(vs x)` by METIS_TAC [IN_APP] >>
+    ASM_SIMP_TAC (std_ss) []
+  ) >>
+  ASM_SIMP_TAC std_ss [CHOICE_SING]
 );
 
 val bir_envty_includes_vs_EMPTY = store_thm("bir_envty_includes_vs_EMPTY", ``
