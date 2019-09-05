@@ -14,11 +14,10 @@ val bir_env_varname_is_bound_def = Define `
 val bir_env_varname_is_bound_ALT_DEF = store_thm ("bir_env_varname_is_bound_ALT_DEF",
   ``!var env. bir_env_varname_is_bound env var <=> IS_SOME (bir_env_lookup_type var env)``,
 
-Cases_on `env` >> (
-  SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_env_varname_is_bound_def,
-    bir_env_lookup_type_def, bir_env_lookup_def] >>
-  cheat
-));
+Cases_on `env` >>
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_env_varname_is_bound_def,
+  bir_env_lookup_type_def, bir_env_lookup_def, optionTheory.IS_SOME_EXISTS]
+);
 
 val bir_env_varname_is_bound_ALT2_DEF = store_thm ("bir_env_varname_is_bound_ALT2_DEF",
   ``!var env. bir_env_varname_is_bound env var <=> IS_SOME (bir_env_lookup var env)``,
@@ -69,7 +68,8 @@ val bir_env_var_is_initialised_EQ_envty = store_thm("bir_env_var_is_initialised_
 ``,
   Cases_on `env` >>
   REWRITE_TAC [bir_envty_of_env_def, bir_env_var_is_initialised_def, bir_envty_includes_v_def, bir_env_lookup_def] >>
-  cheat
+  SIMP_TAC std_ss [] >>
+  METIS_TAC []
 );
 
 
@@ -316,15 +316,57 @@ val bir_env_vars_are_initialised_WELL_TYPED = store_thm ("bir_env_vars_are_initi
   METIS_TAC []
 );
 
-
+(* actually, we require only vs1 UNION vs2 to be consistent *)
 val bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION = store_thm ("bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION",
   ``!vs1 vs2 env1.
       (vs1 SUBSET vs2 /\ bir_var_set_is_well_typed vs2) ==>
       bir_env_vars_are_initialised env1 vs1 ==>
       (?env2. bir_env_EQ_FOR_VARS vs1 env1 env2 /\
-              bir_env_vars_are_initialised env2 vs2)``,
+              bir_env_vars_are_initialised env2 vs2)
+``,
 
-cheat);
+REWRITE_TAC [bir_var_set_is_well_typed_EQ_bir_vs_consistent, bir_env_vars_are_initialised_EQ_envty] >>
+
+REPEAT STRIP_TAC >>
+Cases_on `env1` >> rename1 `BEnv env` >>
+
+Q.ABBREV_TAC `ENV2_ = bir_env_default (bir_envty_of_vs vs2)` >>
+Cases_on `ENV2_` >>
+
+EXISTS_TAC ``BEnv (\vn. if (?vt. BVar vn vt IN vs1) then env vn else f vn)`` >>
+
+CONJ_TAC >- (
+  ASM_SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def, bir_env_lookup_def] >>
+  GEN_TAC >> STRIP_TAC >>
+  COND_CASES_TAC >> SIMP_TAC std_ss [] >>
+  Cases_on `v` >> METIS_TAC [bir_var_name_def]
+) >>
+
+ASM_SIMP_TAC std_ss [bir_envty_of_env_def, bir_envty_includes_vs_def, bir_envty_includes_v_def] >>
+REPEAT STRIP_TAC >>
+Cases_on `v` >>
+ASM_SIMP_TAC std_ss [bir_var_name_def, bir_var_type_def] >>
+`bir_vs_consistent vs1` by METIS_TAC [bir_envty_includes_vs_IMP_vs_consistent] >>
+Cases_on `BVar s b IN vs1` >- (
+  COND_CASES_TAC >> SIMP_TAC std_ss [] >- (
+    METIS_TAC [bir_env_satisfies_envty_of_env, bir_vs_in_envty_env_IMP2, bir_var_name_def, bir_var_type_def]
+  ) >>
+  METIS_TAC []
+) >>
+
+COND_CASES_TAC >> SIMP_TAC std_ss [] >- (
+  METIS_TAC [bir_vs_consistent_def, bir_var_name_def, bir_var_eq_EXPAND, SUBSET_THM]
+) >>
+
+`bir_env_satisfies_envty (BEnv f) (bir_envty_of_vs vs2)` by
+  METIS_TAC [bir_env_default_satisfies_envty] >>
+Cases_on `bir_envty_of_vs vs2` >>
+`bir_envty_includes_vs (bir_envty_of_vs vs2) vs2` by
+  METIS_TAC [bir_vs_consistent_IMP_includes_envty_of_vs] >>
+REV_FULL_SIMP_TAC std_ss [bir_envty_includes_vs_def, bir_envty_includes_v_def] >>
+FULL_SIMP_TAC std_ss [bir_env_satisfies_envty_def] >>
+METIS_TAC [bir_var_name_def, bir_var_type_def]
+);
 
 
 (*
