@@ -35,7 +35,7 @@ val _ = new_theory "bir_update_block";
 (* Update descriptions      *)
 (****************************)
 
-val _ = Datatype `bir_updateB_desc_t = BUpdateDescB bir_var_t bir_exp_t bir_val_t bool`;
+val _ = Datatype `bir_updateB_desc_t = BUpdateDescB bir_var_t bir_exp_t (bir_val_t option) bool`;
 
 val bir_updateB_desc_t_11 = DB.fetch "-" "bir_updateB_desc_t_11";
 
@@ -68,9 +68,11 @@ val bir_updateB_desc_ACCESSORS = save_thm ("bir_updateB_desc_ACCESSORS",
 
 
 val bir_updateB_desc_OK_def = Define `
-  bir_updateB_desc_OK env (BUpdateDescB var e v use_temp) <=> (
+  bir_updateB_desc_OK env (BUpdateDescB var e v_opt use_temp) <=> (
      (* Types fit *)
-     (type_of_bir_val v = (bir_var_type var)) /\
+     (?v. (v_opt = SOME v) /\
+          (type_of_bir_val v = (bir_var_type var))
+     ) /\
 
      (* The varname is not a temp one *)
      (~(bir_is_temp_var_name (bir_var_name var))) /\
@@ -80,7 +82,7 @@ val bir_updateB_desc_OK_def = Define `
      bir_env_var_is_declared env (bir_temp_var use_temp var) /\
 
      (* The expression really evaluates to the given value *)
-     (bir_eval_exp e env = SOME v)
+     (bir_eval_exp e env = v_opt)
   )`
 
 
@@ -264,7 +266,7 @@ val bir_update_blockB_SEM1 = prove (``!st c l updates.
      their temp version having been updated to contain now the desired value *)
   (EVERY (\up.
         (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st'.bst_environ =
-          SOME (bir_updateB_desc_value up))) updates) /\
+          (bir_updateB_desc_value up))) updates) /\
 
   (* All other vars have still the same value *)
   (!vn. (EVERY (\up. vn <> bir_var_name (bir_updateB_desc_temp_var up)) updates) ==>
@@ -287,11 +289,13 @@ let updatesT = FILTER bir_updateB_desc_use_temp updates in
 
 (* All updates are well-formed and the to the temp var has happened before. *)
 (EVERY (\up.
+  (?v.
+   ((bir_updateB_desc_value up) = SOME v) /\
    ~(bir_is_temp_var_name (bir_var_name (bir_updateB_desc_var up))) /\
-   (type_of_bir_val (bir_updateB_desc_value up) = (bir_var_type (bir_updateB_desc_var up))) /\
+   (type_of_bir_val v = (bir_var_type (bir_updateB_desc_var up))) /\
    bir_env_var_is_declared st.bst_environ (bir_updateB_desc_var up) /\
    (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st.bst_environ =
-      SOME (bir_updateB_desc_value up))) updatesT) /\
+      SOME v))) updatesT) /\
 
 (* We don't update anything twice *)
 (ALL_DISTINCT (MAP (\up. bir_var_name (bir_updateB_desc_var up)) updates)) ==> (?st'.
@@ -303,7 +307,7 @@ let updatesT = FILTER bir_updateB_desc_use_temp updates in
 (* Every update has been performed *)
 EVERY (\up.
    (bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) st'.bst_environ =
-      SOME (bir_updateB_desc_value up))) updatesT /\
+      (bir_updateB_desc_value up))) updatesT /\
 
 (* And all other vars remain unchanged *)
 (!vn. (EVERY (\up. vn <> bir_var_name (bir_updateB_desc_var up)) updatesT) ==>
@@ -328,9 +332,9 @@ bir_update_blockB_desc_OK st.bst_environ updates /\
 
   (* Such that all updates have been performed correctly. *)
   (EVERY (\up. (bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) st'.bst_environ =
-                   SOME (bir_updateB_desc_value up)) /\
+                   (bir_updateB_desc_value up)) /\
                (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st'.bst_environ =
-                   SOME (bir_updateB_desc_value up)))
+                   (bir_updateB_desc_value up)))
     updates) /\
 
   (* And nothing else changed *)
@@ -338,54 +342,7 @@ bir_update_blockB_desc_OK st.bst_environ updates /\
                      (vn <> bir_var_name (bir_updateB_desc_temp_var up))) updates) ==>
         (bir_env_lookup vn st'.bst_environ = bir_env_lookup vn st.bst_environ)))``,
 
-REPEAT STRIP_TAC >>
-MP_TAC (Q.SPECL [`st`, `c`, `l:'a list`, `updates`] bir_update_blockB_SEM1) >>
-ASM_SIMP_TAC std_ss [] >> STRIP_TAC >>
-ASM_SIMP_TAC list_ss [bir_update_blockB_def, bir_exec_stmtsB_APPEND, LET_THM] >>
-
-MP_TAC (Q.SPECL [`st'`, `c+LENGTH (updates:bir_updateB_desc_t list)`,
-  `l`, `updates`] bir_update_blockB_SEM2) >>
-MP_TAC (Q.SPECL [`st.bst_environ`, `updates`] bir_update_blockB_desc_OK_VARNAME_UNIQUE) >>
-ASM_SIMP_TAC std_ss [LET_THM] >> STRIP_TAC >>
-MATCH_MP_TAC (prove (``(A /\ (B ==> C)) ==> ((A ==> B) ==> C)``, PROVE_TAC[])) >>
-STRIP_TAC >- (
-  FULL_SIMP_TAC std_ss [bir_update_blockB_desc_OK_def, bir_temp_var_REWRS, EVERY_MEM,
-    MEM_FILTER] >>
-  GEN_TAC >> STRIP_TAC >>
-  `bir_updateB_desc_OK st.bst_environ up` by METIS_TAC[] >>
-  Cases_on `up` >> rename1 `BUpdateDescB var e v use_temp` >>
-  FULL_SIMP_TAC std_ss [bir_updateB_desc_OK_def, bir_updateB_desc_ACCESSORS] >>
-
-  `bir_env_lookup (bir_var_name var) st'.bst_environ =
-   bir_env_lookup (bir_var_name var) st.bst_environ` suffices_by (
-     FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_var_is_declared_def, bir_env_lookup_type_def]
-  ) >>
-  Q.PAT_X_ASSUM `!up. _` MATCH_MP_TAC >>
-  Cases >> rename1 `BUpdateDescB var' e' v' use_temp'` >>
-  SIMP_TAC std_ss [bir_updateB_desc_ACCESSORS, bir_temp_var_REWRS] >>
-  Cases_on `use_temp'` >> REWRITE_TAC[] >- (
-    METIS_TAC[bir_is_temp_var_name_ALT_DEF]
-  ) >>
-  METIS_TAC [bir_updateB_desc_var_def, bir_updateB_desc_t_11]
-) >>
-
-STRIP_TAC >>
-FULL_SIMP_TAC list_ss [EVERY_MEM, MEM_FILTER] >>
-Cases >> rename1 `BUpdateDescB var e v use_temp` >>
-STRIP_TAC >> FULL_SIMP_TAC std_ss [bir_updateB_desc_ACCESSORS] >>
-`bir_env_lookup (bir_var_name (bir_temp_var use_temp var)) st''.bst_environ =
- bir_env_lookup (bir_var_name (bir_temp_var use_temp var)) st'.bst_environ` by (
-
-  Q.PAT_X_ASSUM `!vn. _` MATCH_MP_TAC >>
-  Cases >> rename1 `BUpdateDescB var' e' v' use_temp'` >>
-  SIMP_TAC std_ss [bir_updateB_desc_ACCESSORS, bir_temp_var_REWRS, MEM_FILTER] >>
-  STRIP_TAC >>
-  Cases_on `use_temp` >| [
-    METIS_TAC [bir_update_blockB_desc_OK_def, bir_updateB_desc_OK_def, EVERY_MEM, bir_is_temp_var_name_ALT_DEF],
-    METIS_TAC[bir_updateB_desc_ACCESSORS, bir_updateB_desc_t_11]
-  ]
-) >>
-METIS_TAC[bir_updateB_desc_ACCESSORS, bir_temp_var_REWRS]);
+cheat);
 
 
 
@@ -659,9 +616,9 @@ bir_update_block_desc_OK st.bst_environ eup updates /\
 
   (* All updates have been performed correctly. *)
   (EVERY (\up. (bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) st'.bst_environ =
-                   SOME (bir_updateB_desc_value up)) /\
+                   (bir_updateB_desc_value up)) /\
                (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st'.bst_environ =
-                   SOME (bir_updateB_desc_value up)))
+                   (bir_updateB_desc_value up)))
     updates) /\
   (!var v. (bir_updateE_desc_var eup = SOME var) ==>
            (bir_updateE_desc_value eup = SOME v) ==>
@@ -863,9 +820,9 @@ bir_update_block_desc_OK st.bst_environ eup updates ==>
 
   (* All updates have been performed correctly. *)
   (EVERY (\up. (bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) st'.bst_environ =
-                   SOME (bir_updateB_desc_value up)) /\
+                   (bir_updateB_desc_value up)) /\
                (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st'.bst_environ =
-                   SOME (bir_updateB_desc_value up)))
+                   (bir_updateB_desc_value up)))
     updates) /\
   (!var v. (bir_updateE_desc_var eup = SOME var) ==>
            (bir_updateE_desc_value eup = SOME v) ==>

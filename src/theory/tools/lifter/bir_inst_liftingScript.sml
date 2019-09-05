@@ -284,7 +284,7 @@ val bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_def = Define
 
      (!v lf res. (MEM (BMLI v lf, SOME res) imm_ups) ==>
                  (lf ms' = res) /\ (?up. MEM up updates /\ (bir_updateB_desc_var up = v) /\
-                                   (bir_updateB_desc_value up = BVal_Imm res)))`
+                                   (bir_updateB_desc_value up = SOME (BVal_Imm res))))`
 
 
 
@@ -537,7 +537,7 @@ val bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES_def = Define
 
      (!v lf res. (MEM (BMLI v lf, SOME res) imm_ups) ==>
                  (?up. MEM up updates /\ (bir_updateB_desc_var up = v) /\
-                 (bir_updateB_desc_value up = BVal_Imm res)))`
+                 (bir_updateB_desc_value up = SOME (BVal_Imm res))))`
 
 
 val bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES_def = Define
@@ -583,14 +583,14 @@ val bir_is_lifted_inst_block_COMPUTE_updates_FULL_def = Define
 
      (* imm_ups covered *)
      ((MAP (\up. (bir_updateB_desc_var up, bir_updateB_desc_value up)) updates_imm) =
-      (MAP (\x. (case x of | (BMLI v _, SOME r) => (v, BVal_Imm r)))
+      (MAP (\x. (case x of | (BMLI v _, SOME r) => (v, SOME (BVal_Imm r))))
         (FILTER (\x. IS_SOME (SND x)) imm_ups))) /\
 
      (* mem_up covered *)
      (case mem_up of NONE => (updates_mem = []) | SOME res =>
        (?upd_mem. (updates_mem = [upd_mem]) /\
            (bir_updateB_desc_var upd_mem = bmr_mem_var r) /\
-           (SOME (bir_updateB_desc_value upd_mem) =
+           ((bir_updateB_desc_value upd_mem) =
              (bir_eval_exp (bir_updateB_desc_exp upd_mem) bs.bst_environ)) /\
            (bir_is_lifted_exp bs.bst_environ (bir_updateB_desc_exp upd_mem)
              (BLV_Mem res)))) /\
@@ -600,7 +600,7 @@ val bir_is_lifted_inst_block_COMPUTE_updates_FULL_def = Define
 
      (* imm_ups are lifted properly *)
      (!var e v use_temp.
-            MEM (BUpdateDescB var e (BVal_Imm v) use_temp) updates_imm ==>
+            MEM (BUpdateDescB var e (SOME (BVal_Imm v)) use_temp) updates_imm ==>
             bir_is_lifted_imm_exp bs.bst_environ e v) /\
 
      (* Vars fit *)
@@ -1016,21 +1016,21 @@ val bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL_def = Define
 
      (* imm_ups covered *)
      ((MAP (\up. (bir_updateB_desc_var up, bir_updateB_desc_value up)) updates_imm) =
-      (MAP (\x. (case x of | (BMLI v _, SOME r) => (v, BVal_Imm r)))
+      (MAP (\x. (case x of | (BMLI v _, SOME r) => (v, SOME (BVal_Imm r))))
         (FILTER (\x. IS_SOME (SND x)) imm_ups))) /\
 
      (* mem_up covered *)
      (case mem_up of NONE => (update_mem_opt = NONE) | SOME res =>
        (?upd_mem. (update_mem_opt = SOME upd_mem) /\
            (bir_updateB_desc_var upd_mem = bmr_mem_var r) /\
-           (SOME (bir_updateB_desc_value upd_mem) =
+           ((bir_updateB_desc_value upd_mem) =
              (bir_eval_exp (bir_updateB_desc_exp upd_mem) bs.bst_environ)) /\
            (bir_is_lifted_exp bs.bst_environ (bir_updateB_desc_exp upd_mem)
              (BLV_Mem res)))) /\
 
      (* imm_ups are lifted properly *)
      (!var e v use_temp.
-            MEM (BUpdateDescB var e (BVal_Imm v) use_temp) updates_imm ==>
+            MEM (BUpdateDescB var e (SOME (BVal_Imm v)) use_temp) updates_imm ==>
             bir_is_lifted_imm_exp bs.bst_environ e v) /\
 
      (* Vars fit *)
@@ -1151,9 +1151,8 @@ val bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL___INTRO_MEM =
 store_thm ("bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL___INTRO_MEM",
 ``!r bs e mres.
    bir_is_lifted_exp bs.bst_environ e (BLV_Mem mres) ==>
-   ?va. ((bir_eval_exp e bs.bst_environ) = SOME va) /\
-         (bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL r bs (SOME mres) [] (IMAGE bir_var_name (bir_vars_of_exp e)) []
-               (SOME (BUpdateDescB (bmr_mem_var r) e va F)))``,
+     (bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL r bs (SOME mres) [] (IMAGE bir_var_name (bir_vars_of_exp e)) []
+        (SOME (BUpdateDescB (bmr_mem_var r) e (bir_eval_exp e bs.bst_environ) F)))``,
 
 cheat);
 
@@ -1184,7 +1183,7 @@ store_thm ("bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL___ADD_IMM_UP",
    bir_is_lifted_imm_exp bs.bst_environ e v ==>
    ~(bir_var_name (bir_temp_var temp var) IN all_var_names) ==>
    bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL r bs mem_up
-       ((BMLI var lf, SOME v)::imm_ups) (IMAGE bir_var_name (bir_vars_of_exp e) UNION all_var_names) ((BUpdateDescB var e (BVal_Imm v) temp)::updates_imm) update_mem_opt``,
+       ((BMLI var lf, SOME v)::imm_ups) (IMAGE bir_var_name (bir_vars_of_exp e) UNION all_var_names) ((BUpdateDescB var e (SOME (BVal_Imm v)) temp)::updates_imm) update_mem_opt``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL_def, LET_THM, APPEND,
