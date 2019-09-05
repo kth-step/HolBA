@@ -329,12 +329,59 @@ ASM_SIMP_TAC std_ss [DRESTRICT_FUPDATE, DRESTRICT_FEMPTY,
 *)
 val bir_eval_exp_subst1_env = store_thm("bir_eval_exp_subst1_env",
 ``!ex env varn ty e1.
-    (?va. ((bir_env_lookup varn (BEnv env)) = SOME va) /\ (type_of_bir_val va = ty)) ==>
-    (bir_eval_exp ex (BEnv ((varn =+ (bir_eval_exp e1 (BEnv env))) env)) =
-        bir_eval_exp (bir_exp_subst1 (BVar varn ty) e1 ex) (BEnv env)
+    (?va.
+     ((bir_env_lookup varn (BEnv env)) = SOME va) /\
+     (type_of_bir_val va = ty)
+    ) ==>
+    (* If e1 evaluates to some expression, type must be same as ty *)
+    (!ex_va.
+     ((bir_eval_exp e1 (BEnv env)) = SOME ex_va) ==>
+     (ty = type_of_bir_val ex_va)
+    ) ==>
+    (bir_eval_exp ex
+      (BEnv ((varn =+ (bir_eval_exp e1 (BEnv env))) env)) =
+        bir_eval_exp (bir_exp_subst1 (BVar varn ty) e1 ex)
+                     (BEnv env)
     )``,
 
-cheat
+REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+Induct_on `ex` >> (
+  REPEAT GEN_TAC >>
+  FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_exp_subst1_REWRS]
+) >>
+(* Case not handled: BExp_Den *)
+Cases_on `b = BVar varn ty` >- (
+  FULL_SIMP_TAC std_ss [bir_exp_subst1_REWRS, bir_env_read_def, bir_var_name_def,
+                 bir_env_lookup_def, bir_env_check_type_def, bir_env_lookup_type_def] >>
+  CASE_TAC >- (
+    EVAL_TAC
+  ) >>
+  FULL_SIMP_TAC std_ss [bir_var_type_def] >>
+  Cases_on `bir_eval_exp e1 (BEnv env)` >- (
+    EVAL_TAC
+  ) >>
+  Q.PAT_X_ASSUM `!ex_va. ((SOME x = SOME ex_va) ==> _)`
+    (fn thm => ASSUME_TAC (Q.SPEC `x` thm)) >>
+  Q.PAT_X_ASSUM `!z. _` (fn thm => ASSUME_TAC (Q.SPEC `x` thm)) >>
+  FULL_SIMP_TAC std_ss [] >| [
+    FULL_SIMP_TAC std_ss [combinTheory.UPDATE_def],
+
+    FULL_SIMP_TAC std_ss []
+  ]
+) >>
+Cases_on `b` >>
+Cases_on `varn <> s` >- (
+  FULL_SIMP_TAC std_ss [bir_eval_exp_def] >>
+  EVAL_TAC >>
+  FULL_SIMP_TAC std_ss []
+) >>
+subgoal `b' <> ty` >- (
+  METIS_TAC []
+) >>
+FULL_SIMP_TAC std_ss [bir_env_lookup_def] >>
+EVAL_TAC >>
+RW_TAC std_ss [] >>
+FULL_SIMP_TAC std_ss []
 );
 
 
