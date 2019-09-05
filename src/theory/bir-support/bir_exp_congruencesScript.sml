@@ -171,7 +171,27 @@ val bir_exp_CONG_simp_IDEMPOTENT_AND = store_thm ("bir_exp_CONG_simp_IDEMPOTENT_
      (?ty. bir_type_is_Imm ty /\ (type_of_bir_exp e = SOME ty)) ==>
      bir_exp_CONG (BExp_BinExp BIExp_And e e) e``,
 
-cheat);
+REPEAT STRIP_TAC >>
+ASM_SIMP_TAC std_ss [bir_exp_CONG_def, bir_vars_of_exp_def,
+  UNION_IDEMPOT, type_of_bir_exp_def, pairTheory.pair_case_thm,
+  bir_eval_exp_def] >>
+REPEAT STRIP_TAC >>
+Cases_on `bir_eval_exp e env` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_exp_def]
+) >>
+subgoal `ty = type_of_bir_val x` >- (
+  IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+  `x = va` by FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+Cases_on `x` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_exp_def]
+) >>
+rename1 `bir_bin_exp _ v v = v` >>
+Cases_on `v` >> (
+  SIMP_TAC (std_ss++holBACore_ss) [wordsTheory.WORD_AND_IDEM]
+)
+);
 
 
 
@@ -180,7 +200,28 @@ val bir_exp_CONG_simp_IDEMPOTENT_OR = store_thm ("bir_exp_CONG_simp_IDEMPOTENT_O
      (?ty. bir_type_is_Imm ty /\ (type_of_bir_exp e = SOME ty)) ==>
      bir_exp_CONG (BExp_BinExp BIExp_Or e e) e``,
 
-cheat);
+
+REPEAT STRIP_TAC >>
+ASM_SIMP_TAC std_ss [bir_exp_CONG_def, bir_vars_of_exp_def,
+  UNION_IDEMPOT, type_of_bir_exp_def, pairTheory.pair_case_thm,
+  bir_eval_exp_def] >>
+REPEAT STRIP_TAC >>
+Cases_on `bir_eval_exp e env` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_exp_def]
+) >>
+subgoal `ty = type_of_bir_val x` >- (
+  IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+  `x = va` by FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+Cases_on `x` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_bin_exp_def]
+) >>
+rename1 `bir_bin_exp _ v v = v` >>
+Cases_on `v` >> (
+  SIMP_TAC (std_ss++holBACore_ss) [wordsTheory.WORD_OR_IDEM]
+)
+);
 
 
 
@@ -323,7 +364,29 @@ val bir_exp_CONG_WEAK_simp_IF_THEN_ELSE_TF_EQ = store_thm ("bir_exp_CONG_WEAK_si
 ``!c e. (type_of_bir_exp c = SOME BType_Bool) ==>
         bir_exp_CONG_WEAK (BExp_IfThenElse c e e) e``,
 
-cheat);
+SIMP_TAC std_ss [bir_exp_CONG_WEAK_def, bir_vars_of_exp_def,
+  type_of_bir_exp_def, SUBSET_DEF, IN_UNION,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, bir_eval_exp_def,
+  pairTheory.pair_case_thm] >>
+REPEAT STRIP_TAC >- (
+  Cases_on `type_of_bir_exp e` >> ASM_SIMP_TAC std_ss [BType_Bool_def]
+) >>
+Cases_on `bir_eval_exp c env` >- (
+  IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+subgoal `BType_Bool = type_of_bir_val x` >- (
+  IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+  `x = va` by FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+Cases_on `bir_eval_exp e env` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+Cases_on `x` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_ifthenelse_def, BType_Bool_def]
+)
+);
 
 
 (* TODO: ADD MANY MORE! *)
