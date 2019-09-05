@@ -212,7 +212,86 @@ val bir_vars_of_stmtB_THM = store_thm ("bir_vars_of_stmtB_THM",
      let (oo2, st2') = bir_exec_stmtB stmt st2 in
      ((oo1 = oo2) /\ (bir_state_EQ_FOR_VARS vs st1' st2')))``,
 
-cheat);
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_state_EQ_FOR_VARS_ALT_DEF] >>
+`bir_env_EQ_FOR_VARS (bir_vars_of_stmtB stmt) st1.bst_environ st2.bst_environ` by
+  METIS_TAC[bir_env_EQ_FOR_VARS_SUBSET] >>
+Cases_on `st1.bst_environ` >>
+Cases_on `st2.bst_environ` >>
+rename1 `bir_env_EQ_FOR_VARS _ (BEnv env1) (BEnv env2)` >>
+Cases_on `stmt` >> (
+  FULL_SIMP_TAC std_ss [
+    bir_exec_stmt_assume_SAME_ENV,
+    bir_exec_stmt_assert_SAME_ENV,
+    bir_exec_stmt_observe_SAME_ENV,
+    bir_exec_stmtB_state_def, bir_exec_stmtB_def,
+    bir_env_EQ_FOR_VARS_EQUIV, LET_THM
+  ]
+) >| [
+  (* assign *)
+  rename1 `bir_exec_stmt_assign v e` >>
+  `bir_eval_exp e (BEnv env1) = bir_eval_exp e (BEnv env2)` by (
+     MATCH_MP_TAC bir_vars_of_exp_THM_EQ_FOR_VARS >>
+     FULL_SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def, IN_INSERT, bir_vars_of_stmtB_def]
+  ) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_assign_def,
+    bir_env_write_def, LET_DEF, bir_env_update_def, bir_vars_of_stmtB_def,
+    IN_INSERT, DISJ_IMP_THM, bir_env_EQ_FOR_VARS_def, FORALL_AND_THM,
+    bir_env_check_type_def, bir_env_lookup_type_def] >>
+  REPEAT CASE_TAC >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def,
+      bir_env_lookup_UPDATE]
+  ) >> (
+    Q.PAT_X_ASSUM `!v. v IN vs ==> _` (fn thm => ASSUME_TAC (Q.SPEC `v` thm)) >>
+    `v IN vs` by FULL_SIMP_TAC std_ss [INSERT_SUBSET] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_env_lookup_def]
+  ),
+
+  (* assert *)
+  rename1 `bir_exec_stmt_assert e` >>
+  `bir_eval_exp e (BEnv env1) = bir_eval_exp e (BEnv env2)` by (
+     MATCH_MP_TAC bir_vars_of_exp_THM_EQ_FOR_VARS >>
+     FULL_SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def, IN_INSERT, bir_vars_of_stmtB_def]
+  ) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_assert_def] >>
+  REPEAT CASE_TAC >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def]
+  ),
+
+  (* assume *)
+  rename1 `bir_exec_stmt_assume e` >>
+  `bir_eval_exp e (BEnv env1) = bir_eval_exp e (BEnv env2)` by (
+     MATCH_MP_TAC bir_vars_of_exp_THM_EQ_FOR_VARS >>
+     FULL_SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def, bir_vars_of_stmtB_def]
+  ) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_assume_def] >>
+  REPEAT CASE_TAC >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def]
+  ),
+
+  (* observe *)
+  rename1 `bir_exec_stmt_observe e el fl` >>
+  `!e'. MEM e' (e::el) ==> (bir_eval_exp e' (BEnv env1) = bir_eval_exp e' (BEnv env2))` by (
+     REPEAT STRIP_TAC >>
+     MATCH_MP_TAC bir_vars_of_exp_THM_EQ_FOR_VARS >>
+     FULL_SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def, bir_vars_of_stmtB_def,
+       IN_BIGUNION, IN_IMAGE, PULL_EXISTS] >>
+     METIS_TAC []
+  ) >>
+
+  FULL_SIMP_TAC (list_ss++holBACore_ss++pairSimps.gen_beta_ss) [bir_exec_stmt_observe_def,
+    DISJ_IMP_THM, FORALL_AND_THM, LET_DEF] >>
+  REPEAT CASE_TAC >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def]
+  ) >> (
+    subgoal `(MAP (\e'. bir_eval_exp e' (BEnv env1)) el) =
+               (MAP (\e'. bir_eval_exp e' (BEnv env2)) el)` >- (
+      ASM_SIMP_TAC std_ss [listTheory.MAP_EQ_f]
+    ) >>
+    FULL_SIMP_TAC std_ss []
+  )
+]
+);
 
 
 val bir_vars_of_stmtB_state_THM = store_thm ("bir_vars_of_stmtB_state_THM",

@@ -177,7 +177,8 @@ bir_exp_is_taut (BExp_BinPred BIExp_LessOrEqual
                  (BExp_BinPred BIExp_Equal (BExp_Den v) ve)
                  e))``,
 
-cheat);
+cheat
+);
 
 
 
