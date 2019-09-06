@@ -143,9 +143,9 @@ val bir_machine_lifted_mem_DECLARED = store_thm ("bir_machine_lifted_mem_DECLARE
       bir_machine_lifted_mem (BMLM v lf) bs ms ==>
       (bir_env_var_is_declared bs.bst_environ v)``,
 
-SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_mem_def, bir_env_oldTheory.bir_env_var_is_declared_def,
-  bir_env_read_NEQ_NONE, bir_env_lookup_type_def, GSYM LEFT_FORALL_IMP_THM] >>
-cheat);
+SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_mem_def, bir_env_read_def, GSYM bir_env_oldTheory.bir_env_var_is_declared_ALT_DEF] >>
+REPEAT STRIP_TAC
+);
 
 
 val bir_machine_lifted_mem_DECLARED_TEMP = store_thm ("bir_machine_lifted_mem_DECLARED_TEMP",
