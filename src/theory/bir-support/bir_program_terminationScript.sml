@@ -384,9 +384,189 @@ MP_TAC (Q.SPECL [`st' with bst_status := BST_Running`, `p`] bir_exec_step_status
 ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_state_def]);
 
 
-(*****************************)
-(* TODO: Status TypeError    *)
-(*****************************)
+
+(********************)
+(* Status TypeError *)
+(********************)
+
+(* For type error there are many possible reasons:
+
+   - an not-well-typed statement, i.e. an expression returns a different type than expected
+   - evaluation of expression fails
+   - assigning to a undeclared var or one of wrong type
+   - ...
+
+  This is shown formally below. Since the possible conditions are varied,
+  it is shown separately for each statement. *)
+
+
+val bir_exec_stmtB_status_typeerror_Assign = store_thm ("bir_exec_stmtB_status_typeerror_Assign",
+  ``!st stmt v e.
+    (st.bst_status <> BST_TypeError) ==>
+    (((bir_exec_stmtB_state (BStmt_Assign v e) st).bst_status = BST_TypeError) <=>
+      (* The expression e assigned to v must not evaluate to NONE *)
+      ((bir_eval_exp e st.bst_environ = NONE) \/
+       (* The variable v must have the same type in variable environment *)
+       (~(bir_env_check_type v st.bst_environ)) \/
+       (?va.
+         (bir_eval_exp e st.bst_environ = SOME va) /\
+         ((type_of_bir_val va <> (bir_var_type v)) \/
+          (bir_env_lookup (bir_var_name v) st.bst_environ = NONE)
+         )
+       )
+      )
+    )``,
+
+REPEAT GEN_TAC >>
+Cases_on `st.bst_environ` >> rename1 `BEnv env` >>
+ASM_SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def,
+  bir_exec_stmt_assign_def, bir_env_update_def, bir_state_set_typeerror_def,
+  LET_DEF, bir_env_write_def, bir_env_oldTheory.bir_env_var_is_declared_ALT_DEF,
+  bir_env_lookup_def] >>
+REPEAT CASE_TAC >> FULL_SIMP_TAC (std_ss++holBACore_ss) []
+);
+
+
+val bir_exec_stmtB_status_typeerror_cond_exp_aux = prove (
+ ``!v. (type_of_bir_val v = BType_Bool) <=>
+       (case bir_dest_bool_val v of
+         | NONE => F
+         | SOME _ => T)``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [GSYM bir_val_checker_TO_type_of,
+  optionTheory.option_case_compute] >>
+METIS_TAC[bir_dest_bool_val_EQ_NONE, optionTheory.option_CLAUSES]
+);
+
+
+val bir_exec_stmtB_status_typeerror_Assert = store_thm ("bir_exec_stmtB_status_typeerror_Assert",
+``!st stmt e.
+  (st.bst_status <> BST_TypeError) ==>
+  (((bir_exec_stmtB_state (BStmt_Assert e) st).bst_status = BST_TypeError) <=>
+    ((bir_eval_exp e st.bst_environ = NONE) \/
+     (?va.
+      (bir_eval_exp e st.bst_environ = SOME va) /\
+      (type_of_bir_val va <> BType_Bool))
+    )
+  )``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def,
+  bir_exec_stmt_assert_def, bir_exec_stmtB_status_typeerror_cond_exp_aux,
+  optionTheory.option_case_compute] >>
+Cases_on `bir_eval_exp e st.bst_environ` >> (
+  SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.LIFT_COND_ss) [bir_state_set_typeerror_def]
+)
+);
+
+
+val bir_exec_stmtB_status_typeerror_Assume = store_thm ("bir_exec_stmtB_status_typeerror_Assume",
+``!st stmt e.
+  (st.bst_status <> BST_TypeError) ==>
+  (((bir_exec_stmtB_state (BStmt_Assume e) st).bst_status = BST_TypeError) <=>
+    ((bir_eval_exp e st.bst_environ = NONE) \/
+     (?va.
+      (bir_eval_exp e st.bst_environ = SOME va) /\
+      (type_of_bir_val va <> BType_Bool)
+     )
+    )
+  )``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def,
+  bir_exec_stmt_assume_def, bir_exec_stmtB_status_typeerror_cond_exp_aux,
+  optionTheory.option_case_compute] >>
+Cases_on `bir_eval_exp e st.bst_environ` >> (
+  SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.LIFT_COND_ss) [bir_state_set_typeerror_def]
+)
+);
+
+
+(* TODO: Semantics changed - look at this later *)
+val bir_exec_stmtB_status_typeerror_Observe = store_thm ("bir_exec_stmtB_status_typeerror_Observe",
+``!st stmt ec es osf.
+  (st.bst_status <> BST_TypeError) ==>
+  (((bir_exec_stmtB_state (BStmt_Observe ec es osf) st).bst_status = BST_TypeError) <=>
+    ((bir_eval_exp ec st.bst_environ = NONE) \/
+     (?va.
+      (bir_eval_exp ec st.bst_environ = SOME va) /\
+      (type_of_bir_val va <> BType_Bool)
+     )
+    )
+  )``,
+
+cheat
+);
+
+
+val bir_exec_stmtE_status_typeerror_jmp_to_label = store_thm ("bir_exec_stmtE_status_typeerror_jmp_to_label",
+``!st stmt p l. (st.bst_status <> BST_TypeError) ==>
+                ((bir_exec_stmt_jmp_to_label p l st).bst_status <> BST_TypeError)``,
+
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_TYPES_ss) [bir_exec_stmt_jmp_to_label_def]
+);
+
+
+val bir_eval_label_exp_EQ_NONE = store_thm ("bir_eval_label_exp_EQ_NONE",
+``!le env. (bir_eval_label_exp le env = NONE) <=>
+           (?e. (le = BLE_Exp e) /\
+                ~(?va. (bir_eval_exp e env = SOME va) /\ (bir_val_is_Imm va)))``,
+
+Cases >> (
+  SIMP_TAC (std_ss++bir_TYPES_ss) [bir_eval_label_exp_def,
+    bir_val_is_Imm_def]
+) >>
+REPEAT GEN_TAC >> CASE_TAC >> CASE_TAC
+);
+
+
+val bir_exec_stmtE_status_typeerror_Jmp = store_thm ("bir_exec_stmtE_status_typeerror_Jmp",
+``!st stmt p le. (st.bst_status <> BST_TypeError) ==>
+                 (((bir_exec_stmtE p (BStmt_Jmp le) st).bst_status = BST_TypeError) <=>
+                 (bir_eval_label_exp le st.bst_environ = NONE))``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [bir_exec_stmtE_def, bir_exec_stmt_jmp_def] >>
+CASE_TAC >> (
+  SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_stmtE_status_typeerror_jmp_to_label,
+                                   bir_state_set_typeerror_def]
+)
+);
+
+
+val bir_exec_stmtE_status_typeerror_CJmp = store_thm ("bir_exec_stmtE_status_typeerror_CJmp",
+``!st stmt p ce le1 le2.
+     (st.bst_status <> BST_TypeError) ==>
+     (((bir_exec_stmtE p (BStmt_CJmp ce le1 le2) st).bst_status = BST_TypeError) <=>
+      case bir_eval_exp ce st.bst_environ of
+	| NONE => T
+	| SOME va => (
+		case bir_dest_bool_val va of
+		   NONE => T
+		 | SOME T => (bir_eval_label_exp le1 st.bst_environ = NONE)
+		 | SOME F => (bir_eval_label_exp le2 st.bst_environ = NONE)
+           ))``,
+
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [bir_exec_stmtE_def, bir_exec_stmt_cjmp_def,
+  bir_exec_stmt_jmp_def] >>
+REPEAT CASE_TAC >> (
+  SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.LIFT_COND_ss) [
+    bir_exec_stmtE_status_typeerror_jmp_to_label,
+    bir_state_set_typeerror_def, LET_DEF]
+)
+);
+
+
+(* TODO: Semantics changed - look at this later *)
+val bir_exec_stmtE_status_typeerror_Halt = store_thm ("bir_exec_stmtE_status_typeerror_Halt",
+``!st stmt p e.
+  (st.bst_status <> BST_TypeError) ==>
+  (((bir_exec_stmtE p (BStmt_Halt e) st).bst_status = BST_TypeError) <=>
+    (?va. (bir_eval_exp e st.bst_environ = SOME va) /\ (bir_val_is_Imm va)))``,
+
+cheat);
 
 
 (*****************************)
@@ -540,139 +720,16 @@ CASE_TAC >> (
 METIS_TAC[bir_exec_stmt_status_assertion]);
 
 
-
-
 (*****************)
 (* Status Failed *)
 (*****************)
 
-(* For failing there are many possible reasons:
+(* For failing there is one possible reason:
 
    - an invalid PC
-   - an not-well-typed statement, i.e. an expression returns a different type than expected
-   - evaluation of expression fails
-   - assigning to a undeclared var or one of wrong type
-   - ...
 
-  This is shown formally below. Since the possible conditions are varied,
-  it is shown separately for each statement. *)
+*)
 
-
-(* TODO: theorem names should be status TypeError failed, and status Failed should be an extra category *)
-(* TODO: something seems wrong here, now with TypeError this and the others below should be provable *)
-(* TODO: revisit these theorems, the asusmption is probably useless or wrong *)
-val bir_exec_stmtB_status_failed_Assign = store_thm ("bir_exec_stmtB_status_failed_Assign",
-``!st stmt v e. (st.bst_status <> BST_TypeError) ==>
-                (((bir_exec_stmtB_state (BStmt_Assign v e) st).bst_status = BST_TypeError) <=>
-                 (~(bir_env_var_is_declared st.bst_environ v) \/
-                  (?va. (bir_eval_exp e st.bst_environ = SOME va) /\ (type_of_bir_val va <> (bir_var_type v)))))``,
-
-cheat);
-
-
-val bir_exec_stmtB_status_failed_cond_exp_aux = prove (
- ``!v. (type_of_bir_val v = BType_Bool) <=>
-       (case bir_dest_bool_val v of
-         | NONE => F
-         | SOME _ => T)``,
-
-REPEAT GEN_TAC >>
-SIMP_TAC std_ss [GSYM bir_val_checker_TO_type_of,
-  optionTheory.option_case_compute] >>
-METIS_TAC[bir_dest_bool_val_EQ_NONE, optionTheory.option_CLAUSES]);
-
-
-(* TODO: something seems wrong here? *)
-val bir_exec_stmtB_status_failed_Assert = store_thm ("bir_exec_stmtB_status_failed_Assert",
-``!st stmt e. (st.bst_status <> BST_TypeError) ==>
-              (((bir_exec_stmtB_state (BStmt_Assert e) st).bst_status = BST_TypeError) <=>
-              (?va. (bir_eval_exp e st.bst_environ = SOME va) /\ (type_of_bir_val va <> BType_Bool)))``,
-
-cheat
-);
-
-
-(* TODO: something seems wrong here? *)
-val bir_exec_stmtB_status_failed_Assume = store_thm ("bir_exec_stmtB_status_failed_Assume",
-``!st stmt e. (st.bst_status <> BST_TypeError) ==>
-              (((bir_exec_stmtB_state (BStmt_Assume e) st).bst_status = BST_TypeError) <=>
-              (?va. (bir_eval_exp e st.bst_environ = SOME va) /\ (type_of_bir_val va <> BType_Bool)))``,
-
-cheat);
-
-
-(* TODO: something seems wrong here? *)
-val bir_exec_stmtB_status_failed_Observe = store_thm ("bir_exec_stmtB_status_failed_Observe",
-``!st stmt ec. (st.bst_status <> BST_TypeError) ==>
-              (((bir_exec_stmtB_state (BStmt_Observe ec es osf) st).bst_status = BST_TypeError) <=>
-              (?va. (bir_eval_exp ec st.bst_environ = SOME va) /\ (type_of_bir_val va <> BType_Bool)))``,
-
-cheat);
-
-
-val bir_exec_stmtE_status_failed_jmp_to_label = store_thm ("bir_exec_stmtE_status_failed_jmp_to_label",
-``!st stmt p l. (st.bst_status <> BST_TypeError) ==>
-                ((bir_exec_stmt_jmp_to_label p l st).bst_status <> BST_TypeError)``,
-SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_TYPES_ss) [bir_exec_stmt_jmp_to_label_def]);
-
-
-val bir_eval_label_exp_EQ_NONE = store_thm ("bir_eval_label_exp_EQ_NONE",
-``!le env. (bir_eval_label_exp le env = NONE) <=>
-           (?e. (le = BLE_Exp e) /\
-                ~(?va. (bir_eval_exp e env = SOME va) /\ (bir_val_is_Imm va)))``,
-
-Cases >> (
-  SIMP_TAC (std_ss++bir_TYPES_ss) [bir_eval_label_exp_def,
-    bir_val_is_Imm_def]
-) >>
-REPEAT GEN_TAC >> CASE_TAC >> CASE_TAC);
-
-
-val bir_exec_stmtE_status_failed_Jmp = store_thm ("bir_exec_stmtE_status_failed_Jmp",
-``!st stmt p le. (st.bst_status <> BST_TypeError) ==>
-                 (((bir_exec_stmtE p (BStmt_Jmp le) st).bst_status = BST_TypeError) <=>
-                 (bir_eval_label_exp le st.bst_environ = NONE))``,
-
-REPEAT GEN_TAC >>
-SIMP_TAC std_ss [bir_exec_stmtE_def, bir_exec_stmt_jmp_def] >>
-CASE_TAC >> (
-  SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_stmtE_status_failed_jmp_to_label,
-    bir_state_set_typeerror_def]
-));
-
-
-val bir_exec_stmtE_status_failed_CJmp = store_thm ("bir_exec_stmtE_status_failed_CJmp",
-``!st stmt p ce le1 le2.
-     (st.bst_status <> BST_TypeError) ==>
-     (((bir_exec_stmtE p (BStmt_CJmp ce le1 le2) st).bst_status = BST_TypeError) <=>
-      case bir_eval_exp ce st.bst_environ of
-	| NONE => T
-	| SOME va => (
-		case bir_dest_bool_val va of
-		   NONE => T
-		 | SOME T => (bir_eval_label_exp le1 st.bst_environ = NONE)
-		 | SOME F => (bir_eval_label_exp le2 st.bst_environ = NONE)
-           ))``,
-
-REPEAT GEN_TAC >>
-SIMP_TAC std_ss [bir_exec_stmtE_def, bir_exec_stmt_cjmp_def,
-  bir_exec_stmt_jmp_def] >>
-REPEAT CASE_TAC >> (
-  SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.LIFT_COND_ss) [
-    bir_exec_stmtE_status_failed_jmp_to_label,
-    bir_state_set_typeerror_def, LET_DEF]
-));
-
-
-
-val bir_exec_stmtE_status_failed_Halt = store_thm ("bir_exec_stmtE_status_failed_Halt",
-``!st stmt p e.  (st.bst_status <> BST_TypeError) ==>
-                 (((bir_exec_stmtE p (BStmt_Halt e) st).bst_status = BST_TypeError) <=>
-                 (?va. (bir_eval_exp e st.bst_environ = SOME va) /\ (bir_val_is_Imm va)))``,
-
-cheat);
-
-
-
+(* TODO: Theorems *)
 
 val _ = export_theory();
