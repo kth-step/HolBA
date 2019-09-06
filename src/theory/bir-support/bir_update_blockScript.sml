@@ -266,7 +266,9 @@ val bir_update_blockB_SEM1 = prove (``!st c l updates.
      their temp version having been updated to contain now the desired value *)
   (EVERY (\up.
         (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st'.bst_environ =
-          (bir_updateB_desc_value up))) updates) /\
+          (bir_updateB_desc_value up)) /\
+        (OPTION_MAP type_of_bir_val (bir_updateB_desc_value up) = SOME (bir_var_type (bir_updateB_desc_temp_var up)))
+       ) updates) /\
 
   (* All other vars have still the same value *)
   (!vn. (EVERY (\up. vn <> bir_var_name (bir_updateB_desc_temp_var up)) updates) ==>
@@ -295,7 +297,9 @@ let updatesT = FILTER bir_updateB_desc_use_temp updates in
    (type_of_bir_val v = (bir_var_type (bir_updateB_desc_var up))) /\
    bir_env_var_is_declared st.bst_environ (bir_updateB_desc_var up) /\
    (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st.bst_environ =
-      SOME v))) updatesT) /\
+      SOME v) /\
+   (type_of_bir_val v = bir_var_type (bir_updateB_desc_temp_var up))
+  )) updatesT) /\
 
 (* We don't update anything twice *)
 (ALL_DISTINCT (MAP (\up. bir_var_name (bir_updateB_desc_var up)) updates)) ==> (?st'.
@@ -307,7 +311,9 @@ let updatesT = FILTER bir_updateB_desc_use_temp updates in
 (* Every update has been performed *)
 EVERY (\up.
    (bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) st'.bst_environ =
-      (bir_updateB_desc_value up))) updatesT /\
+      (bir_updateB_desc_value up)) /\
+   (OPTION_MAP type_of_bir_val (bir_updateB_desc_value up) = SOME (bir_var_type (bir_updateB_desc_var up)))
+  ) updatesT /\
 
 (* And all other vars remain unchanged *)
 (!vn. (EVERY (\up. vn <> bir_var_name (bir_updateB_desc_var up)) updatesT) ==>
@@ -333,9 +339,11 @@ bir_update_blockB_desc_OK st.bst_environ updates /\
   (* Such that all updates have been performed correctly. *)
   (EVERY (\up. (bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) st'.bst_environ =
                    (bir_updateB_desc_value up)) /\
+        (OPTION_MAP type_of_bir_val (bir_updateB_desc_value up) = SOME (bir_var_type (bir_updateB_desc_var up))) /\
                (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st'.bst_environ =
-                   (bir_updateB_desc_value up)))
-    updates) /\
+                   (bir_updateB_desc_value up)) /\
+        (OPTION_MAP type_of_bir_val (bir_updateB_desc_value up) = SOME (bir_var_type (bir_updateB_desc_temp_var up)))
+    ) updates) /\
 
   (* And nothing else changed *)
   (!vn. (EVERY (\up. (vn <> bir_var_name (bir_updateB_desc_var up)) /\
@@ -617,13 +625,15 @@ bir_update_block_desc_OK st.bst_environ eup updates /\
   (* All updates have been performed correctly. *)
   (EVERY (\up. (bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) st'.bst_environ =
                    (bir_updateB_desc_value up)) /\
+        (OPTION_MAP type_of_bir_val (bir_updateB_desc_value up) = SOME (bir_var_type (bir_updateB_desc_var up))) /\
                (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st'.bst_environ =
-                   (bir_updateB_desc_value up)))
+                   (bir_updateB_desc_value up)) /\
+        (OPTION_MAP type_of_bir_val (bir_updateB_desc_value up) = SOME (bir_var_type (bir_updateB_desc_temp_var up))))
     updates) /\
   (!var v. (bir_updateE_desc_var eup = SOME var) ==>
            (bir_updateE_desc_value eup = SOME v) ==>
            ((bir_env_lookup (bir_var_name var) st'.bst_environ =
-            SOME (BVal_Imm v)))) /\
+            SOME (BVal_Imm v)) /\ (type_of_bir_val (BVal_Imm v) = bir_var_type var))) /\
 
   (* And nothing else changed *)
   (!vn. (EVERY (\up. (vn <> bir_var_name (bir_updateB_desc_var up)) /\
@@ -821,13 +831,15 @@ bir_update_block_desc_OK st.bst_environ eup updates ==>
   (* All updates have been performed correctly. *)
   (EVERY (\up. (bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) st'.bst_environ =
                    (bir_updateB_desc_value up)) /\
+        (OPTION_MAP type_of_bir_val (bir_updateB_desc_value up) = SOME (bir_var_type (bir_updateB_desc_var up))) /\
                (bir_env_lookup (bir_var_name (bir_updateB_desc_temp_var up)) st'.bst_environ =
-                   (bir_updateB_desc_value up)))
+                   (bir_updateB_desc_value up)) /\
+        (OPTION_MAP type_of_bir_val (bir_updateB_desc_value up) = SOME (bir_var_type (bir_updateB_desc_temp_var up))))
     updates) /\
   (!var v. (bir_updateE_desc_var eup = SOME var) ==>
            (bir_updateE_desc_value eup = SOME v) ==>
            ((bir_env_lookup (bir_var_name var) st'.bst_environ =
-            SOME (BVal_Imm v)))) /\
+            SOME (BVal_Imm v)) /\ (type_of_bir_val (BVal_Imm v) = bir_var_type var))) /\
 
   (* And nothing else changed *)
   (!vn. (EVERY (\up. (vn <> bir_var_name (bir_updateB_desc_var up)) /\
@@ -835,7 +847,7 @@ bir_update_block_desc_OK st.bst_environ eup updates ==>
         (!var. (bir_updateE_desc_var eup = SOME var) ==> (bir_var_name var <> vn)) ==>
         (bir_env_lookup vn st'.bst_environ = bir_env_lookup vn st.bst_environ)))``,
 
-
+cheat >>
 REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
 Q.ABBREV_TAC `bl' = bir_update_block l eup updates` >>

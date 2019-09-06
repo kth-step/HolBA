@@ -20,6 +20,7 @@ open bir_program_valid_stateTheory
 open bir_program_labelsTheory
 open quantHeuristicsLib
 open pred_setTheory
+open optionTheory;
 
 (* This theory defines what it means for a block and a whole program
    to be corresponding to a machine instruction *)
@@ -371,7 +372,6 @@ val bir_is_lifted_inst_block_COMPUTE = store_thm ("bir_is_lifted_inst_block_COMP
   bir_is_lifted_inst_block (r: ('a, 'b, 'ms) bir_lifting_machine_rec_t) ms_case_cond l mu mm (bl :'o bir_block_t)
 ``,
 
-cheat >>
 SIMP_TAC std_ss [bir_is_lifted_inst_block_def] >>
 REPEAT STRIP_TAC >>
 `l = BL_Address (bmr_pc_lf r ms)` by (
@@ -418,13 +418,13 @@ FULL_SIMP_TAC list_ss [bmr_rel_def] >>
    `(lf ms' = res) /\
     (?up.
        MEM up updates /\ (bir_updateB_desc_var up = v) /\
-       (bir_updateB_desc_value up = BVal_Imm res))` by METIS_TAC[] >>
+       (bir_updateB_desc_value up = SOME (BVal_Imm res)))` by METIS_TAC[] >>
 
    FULL_SIMP_TAC std_ss [bir_machine_lifted_imm_def, AND_IMP_INTRO] >>
    Tactical.REVERSE CONJ_TAC >- METIS_TAC[bir_env_oldTheory.bir_env_var_is_declared_ORDER] >>
 
    Q.PAT_X_ASSUM `!up. MEM up updates ==> _` (MP_TAC o Q.SPEC `up`) >>
-   ASM_SIMP_TAC std_ss [bir_env_read_def, pairTheory.pair_case_thm]
+   ASM_SIMP_TAC std_ss [bir_env_read_def, pairTheory.pair_case_thm, bir_env_check_type_def, bir_env_lookup_type_def]
 ) >>
 
 `bmr_ms_mem_unchanged r ms ms' mu` by (
@@ -454,8 +454,8 @@ FULL_SIMP_TAC list_ss [bmr_rel_def] >>
        bir_update_blockB_desc_OK_def, EVERY_MEM]
   ) >>
   `(bir_env_lookup (bir_var_name (bir_updateB_desc_var up)) bs'.bst_environ =
-    SOME (bir_var_type (bir_updateB_desc_var up),
-          SOME (bir_updateB_desc_value up)))` by (
+          (bir_updateB_desc_value up)) /\
+   (OPTION_MAP type_of_bir_val (bir_updateB_desc_value up) = SOME (bir_var_type (bir_updateB_desc_var up)))` by (
      FULL_SIMP_TAC std_ss [EVERY_MEM]
   ) >>
   Cases_on `up` >>
@@ -473,7 +473,11 @@ FULL_SIMP_TAC list_ss [bmr_rel_def] >>
   ) >>
 
   ASM_SIMP_TAC std_ss [bir_env_read_def, pairTheory.pair_case_thm,
-    bir_updateB_desc_value_def]
+    bir_updateB_desc_value_def, bir_env_check_type_def, bir_env_lookup_type_def] >>
+
+  FULL_SIMP_TAC std_ss [bir_env_read_def, pairTheory.pair_case_thm,
+    bir_updateB_desc_value_def, bir_env_check_type_def, bir_env_lookup_type_def] >>
+  Cases_on `z` >> FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [type_of_bir_val_def]
 ) >>
 
 `bir_machine_lifted_pc r.bmr_pc bs' ms'` by (
@@ -766,7 +770,255 @@ val bir_is_lifted_inst_block_COMPUTE_updates_FULL_THM = prove (
       bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES r ms ms' imm_ups updates /\
       bir_update_block_desc_OK bs.bst_environ (if eup_temp then eup else bir_updateE_desc_remove_var eup) updates)``,
 
-cheat);
+REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
+FULL_SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_updates_FULL_def] >>
+`!upd. MEM upd updates_imm ==>
+       (?lf i. (bir_updateB_desc_value upd = SOME (BVal_Imm i)) /\
+               MEM (BMLI (bir_updateB_desc_var upd) lf, SOME i) imm_ups)` by (
+  REPEAT STRIP_TAC >>
+  `MEM (bir_updateB_desc_var upd, bir_updateB_desc_value upd)
+      (MAP (\up.(bir_updateB_desc_var up,bir_updateB_desc_value up))
+      updates_imm)` by (
+    FULL_SIMP_TAC std_ss [MEM_MAP] >> METIS_TAC[]
+  ) >>
+  POP_ASSUM MP_TAC >>
+  ASM_REWRITE_TAC[] >>
+  SIMP_TAC (list_ss++QI_ss++bmr_ss++DatatypeSimps.expand_type_quants_ss[``:'a bir_machine_lifted_imm_t``])
+    [MEM_MAP, MEM_FILTER, pairTheory.pair_case_thm]
+) >>
+`!upd. MEM upd updates_imm ==>
+       (?lf. MEM (BMLI (bir_updateB_desc_var upd) lf) r.bmr_imms)` by (
+   REPEAT STRIP_TAC >>
+   FULL_SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_def] >>
+   METIS_TAC[MEM_MAP, pairTheory.FST]
+) >>
+`!up. MEM up updates <=> MEM up (updates_imm ++ updates_mem)` by
+   METIS_TAC[sortingTheory.MEM_PERM] >>
+Cases_on `r.bmr_mem` >> rename1 `BMLM mem_v mem_lf` >>
+
+`MEM mem_v (bmr_vars r)` by (
+  FULL_SIMP_TAC (list_ss++bmr_ss) [bmr_vars_def]
+) >>
+
+`!up.
+  MEM up updates_imm ==>
+  (MEM (bir_updateB_desc_var up) (bmr_vars r) /\
+  (bir_var_name mem_v <> bir_var_name (bir_updateB_desc_var up)))` by (
+
+  REPEAT STRIP_TAC >>
+  Q.PAT_X_ASSUM `bmr_ok r` MP_TAC >>
+  ASM_SIMP_TAC (list_ss++bmr_ss) [bmr_ok_def, bmr_varnames_distinct_def, ALL_DISTINCT_APPEND, bmr_vars_def, MAP_MAP_o, combinTheory.o_DEF] >>
+  REPEAT STRIP_TAC >>
+  `?lf. MEM (BMLI (bir_updateB_desc_var up) lf) r.bmr_imms` by METIS_TAC[] >>
+  SIMP_TAC (std_ss++bmr_ss++DatatypeSimps.expand_type_quants_ss[``:'a bir_machine_lifted_imm_t``]) [
+    MEM_MAP] >>
+  METIS_TAC[]
+) >>
+
+REPEAT STRIP_TAC >- (
+  ASM_SIMP_TAC (std_ss++bmr_ss) [bir_is_lifted_inst_block_COMPUTE_mem_COND_UPDATES_def,
+    pairTheory.pair_case_thm] >>
+  Tactical.REVERSE (Cases_on `mem_up`) >> (
+    FULL_SIMP_TAC (list_ss++bmr_ss) [bmr_mem_var_def]
+  ) >>
+  METIS_TAC[]
+) >- (
+  ASM_SIMP_TAC (std_ss++bmr_ss) [bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_UPDATES_def,
+    pairTheory.pair_case_thm] >>
+
+  Q.PAT_X_ASSUM `bmr_ok r` MP_TAC >>
+  ASM_SIMP_TAC (list_ss++bmr_ss) [bmr_ok_def, bmr_varnames_distinct_def, ALL_DISTINCT_APPEND, bmr_vars_def, MAP_MAP_o, combinTheory.o_DEF] >>
+  `r.bmr_imms = MAP FST imm_ups` by
+    FULL_SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_def] >>
+  REPEAT STRIP_TAC >- (
+    `?n1. n1 < LENGTH imm_ups /\ (EL n1 imm_ups = (BMLI v lf,NONE))` by METIS_TAC[MEM_EL] >>
+    `?n2 lf' i. n2 < LENGTH imm_ups /\
+                (EL n2 imm_ups = (BMLI (bir_updateB_desc_var up) lf', SOME i))` by
+       METIS_TAC[MEM_EL] >>
+    `n1 <> n2` by (
+      STRIP_TAC >>
+      FULL_SIMP_TAC std_ss []
+    ) >>
+    Q.ABBREV_TAC `vs_imms = (MAP (\i. bir_var_name (case i of BMLI v v2 => v)) r.bmr_imms)` >>
+    `LENGTH vs_imms = LENGTH imm_ups` by (
+       Q.UNABBREV_TAC `vs_imms` >> FULL_SIMP_TAC list_ss []) >>
+    `(EL n1 vs_imms = bir_var_name v) /\
+     (EL n2 vs_imms = bir_var_name v)` by (
+       Q.UNABBREV_TAC `vs_imms` >>
+       FULL_SIMP_TAC (list_ss++bmr_ss) [EL_MAP]
+    ) >>
+    METIS_TAC[EL_ALL_DISTINCT_EL_EQ]
+  ) >- (
+    Cases_on `mem_up` >> REV_FULL_SIMP_TAC list_ss[] >>
+    REV_FULL_SIMP_TAC (list_ss++bmr_ss) [bmr_mem_var_def] >>
+    REPEAT (BasicProvers.VAR_EQ_TAC) >>
+    FULL_SIMP_TAC (list_ss++bmr_ss++QI_ss++DatatypeSimps.expand_type_quants_ss[``:'a bir_machine_lifted_imm_t``]) [MEM_MAP] >>
+    METIS_TAC[]
+  ) >- (
+    `MEM (v, SOME (BVal_Imm res)) (MAP (\up. (bir_updateB_desc_var up,bir_updateB_desc_value up))
+         updates_imm)` by (
+      ASM_REWRITE_TAC[] >>
+      ASM_SIMP_TAC (list_ss++QI_ss++bir_TYPES_ss++bmr_ss++DatatypeSimps.expand_type_quants_ss[``:'a bir_machine_lifted_imm_t``]) [MEM_MAP, MEM_FILTER, pairTheory.pair_case_thm]
+    ) >>
+    POP_ASSUM MP_TAC >>
+    SIMP_TAC std_ss [MEM_MAP] >>
+    METIS_TAC[]
+  )
+) >>
+
+SIMP_TAC std_ss [bir_update_block_desc_OK_def, bir_update_blockB_desc_OK_def] >>
+
+`bir_updateE_desc_OK bs.bst_environ
+  (if eup_temp then eup else bir_updateE_desc_remove_var eup)` by (
+  FULL_SIMP_TAC (std_ss) [bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_def] >>
+  Cases_on `eup_temp` >> (
+    ASM_SIMP_TAC std_ss [bir_updateE_desc_OK_remove_var]
+  )
+) >>
+
+`EVERY (bir_updateB_desc_OK bs.bst_environ) updates` by (
+  ASM_SIMP_TAC list_ss [EVERY_MEM] >>
+  Cases >> rename1 `BUpdateDescB v e res use_temp` >>
+  STRIP_TAC >- (
+    `?i. res = SOME (BVal_Imm i)` by METIS_TAC[bir_updateB_desc_value_def] >>
+    `bir_is_lifted_imm_exp bs.bst_environ e i` by METIS_TAC[] >>
+
+    FULL_SIMP_TAC std_ss [bir_updateB_desc_OK_def, bir_is_lifted_imm_exp_def] >>
+
+    `?lf. MEM (BMLI v lf, SOME i) imm_ups` by (
+      METIS_TAC [bir_updateB_desc_value_def,
+        bir_updateB_desc_var_def, bir_val_t_11, SOME_11]
+    ) >>
+
+    FULL_SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_def] >>
+    `lf ms' = i` by METIS_TAC[] >>
+    `MEM (BMLI v lf) r.bmr_imms` by  (
+       Q.PAT_X_ASSUM `_ = r.bmr_imms` (ASSUME_TAC o GSYM) >>
+       ASM_SIMP_TAC (std_ss++QI_ss) [MEM_MAP]
+    ) >>
+    `bir_machine_lifted_imm_OK (BMLI v lf)` by METIS_TAC[bmr_ok_def, EVERY_MEM] >>
+    FULL_SIMP_TAC std_ss [bir_machine_lifted_imm_OK_def] >>
+    Q.PAT_X_ASSUM `!ms. _ = bir_var_type _` (MP_TAC o GSYM o Q.SPEC `ms'`) >>
+    ASM_SIMP_TAC std_ss [type_of_bir_val_def] >>
+    `MEM v (bmr_vars r)` by (
+       ASM_SIMP_TAC (list_ss++bmr_ss++DatatypeSimps.expand_type_quants_ss[``:'a bir_machine_lifted_imm_t``]) [bmr_vars_def, MEM_MAP] >>
+       METIS_TAC[]
+    ) >>
+    Cases_on `use_temp` >> (
+      METIS_TAC[EVERY_MEM, bmr_vars_DECLARED, bmr_temp_vars_DECLARED,
+        bmr_vars_IN_TEMP, bir_temp_var_REWRS]
+    )
+  ) >- (
+    Cases_on `mem_up` >> REV_FULL_SIMP_TAC list_ss [] >>
+    REV_FULL_SIMP_TAC list_ss [] >>
+    REPEAT (BasicProvers.VAR_EQ_TAC) >>
+    FULL_SIMP_TAC (std_ss++bmr_ss) [bir_updateB_desc_var_def,
+      bir_updateB_desc_OK_def, bir_updateB_desc_value_def,
+      bir_updateB_desc_exp_def, bmr_ok_def, type_of_bir_val_def,
+      bir_machine_lifted_mem_OK_def, bmr_mem_var_def,
+      bir_is_lifted_exp_def, bir_is_lifted_mem_exp_def] >>
+    CONJ_TAC >- METIS_TAC[size_of_bir_immtype_INJ] >>
+    Cases_on `use_temp` >> (
+      METIS_TAC[EVERY_MEM, bmr_vars_DECLARED, bmr_temp_vars_DECLARED,
+        bmr_vars_IN_TEMP, bir_temp_var_REWRS]
+    )
+  )
+) >>
+`ALL_DISTINCT (MAP (\up. bir_var_name (bir_updateB_desc_var up)) updates)` by (
+  `ALL_DISTINCT (MAP (\up. bir_var_name (bir_updateB_desc_var up)) (updates_imm ++ updates_mem))`
+     suffices_by (METIS_TAC[sortingTheory.ALL_DISTINCT_PERM,sortingTheory.PERM_MAP]) >>
+
+  SIMP_TAC list_ss [ALL_DISTINCT_APPEND] >>
+  Tactical.REVERSE CONJ_TAC >- (
+    Cases_on `mem_up` >> REV_FULL_SIMP_TAC list_ss [] >>
+    FULL_SIMP_TAC (list_ss++bmr_ss) [MEM_MAP, bmr_mem_var_def] >>
+    METIS_TAC[]
+  ) >>
+
+  Q.ABBREV_TAC `imm_up_vars = (MAP (\x. ((case (FST x) of BMLI v v2 => v), SND x)) imm_ups)` >>
+
+  `ALL_DISTINCT (MAP (bir_var_name o FST) imm_up_vars)` by (
+
+    `ALL_DISTINCT (MAP bir_var_name (MAP (\i. case i of BMLI v v2 => v) r.bmr_imms))` by (
+      Q.PAT_X_ASSUM `bmr_ok r` MP_TAC >>
+      SIMP_TAC list_ss [bmr_ok_def,  bmr_varnames_distinct_def, MAP_APPEND,
+        bmr_vars_def, ALL_DISTINCT_APPEND]
+    ) >>
+
+    `(MAP (\i. case i of BMLI v v2 => v) r.bmr_imms) = (MAP FST imm_up_vars)` by (
+      Q.UNABBREV_TAC `imm_up_vars` >>
+      `r.bmr_imms = MAP FST imm_ups` by
+         FULL_SIMP_TAC std_ss [bir_is_lifted_inst_block_COMPUTE_imm_ups_COND_NO_UPDATES_def] >>
+       ASM_SIMP_TAC std_ss [MAP_MAP_o, combinTheory.o_DEF]
+    ) >>
+    FULL_SIMP_TAC std_ss [] >>
+    FULL_SIMP_TAC std_ss [MAP_MAP_o]
+  ) >>
+
+  `(MAP (\up. bir_var_name (bir_updateB_desc_var up)) updates_imm) =
+   (MAP (bir_var_name o FST) (FILTER (IS_SOME o SND) imm_up_vars))` suffices_by
+     METIS_TAC[ALL_DISTINCT_MAP_FILTER] >>
+
+
+   `MAP (\up. bir_var_name (bir_updateB_desc_var up)) updates_imm =
+    MAP (bir_var_name o FST) (MAP (\up. (bir_updateB_desc_var up,bir_updateB_desc_value up))
+        updates_imm)` by (
+      SIMP_TAC std_ss [MAP_MAP_o, combinTheory.o_DEF]
+   ) >>
+   ASM_REWRITE_TAC[] >>
+   Q.UNABBREV_TAC `imm_up_vars` >>
+   ASM_SIMP_TAC std_ss [FILTER_MAP, combinTheory.o_DEF, MAP_MAP_o, pairTheory.pair_CASE_def] >>
+   SIMP_TAC (std_ss++QI_ss++bmr_ss++DatatypeSimps.expand_type_quants_ss[``:'a bir_machine_lifted_imm_t``]) [listTheory.MAP_EQ_f, MEM_FILTER]
+) >>
+
+ASM_SIMP_TAC std_ss [] >>
+
+Cases_on `r.bmr_pc` >> rename1 `BMLPC v_pc v_pc_cond lf_pc` >>
+REPEAT CONJ_TAC >- (
+  METIS_TAC[]
+) >- (
+  Cases_on `eup_temp` >> SIMP_TAC std_ss [bir_updateE_desc_remove_var_REWRS] >>
+  FULL_SIMP_TAC std_ss [] >>
+  REPEAT STRIP_TAC >>
+  `(v' <> mem_v) /\ (!b. v' <> bir_temp_var b mem_v) /\
+   ~(MEM v' (MAP (\i. case i of BMLI v v2 => v) r.bmr_imms)) /\
+   (!b. ~(MEM v' (MAP (\i. case i of BMLI v v2 => bir_temp_var b v) r.bmr_imms)))` by (
+    `v IN {v_pc; v_pc_cond}` by (
+     FULL_SIMP_TAC (std_ss++bmr_ss) [bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_def,
+       IN_INSERT]
+    ) >>
+    Q.PAT_X_ASSUM `brm_ok r` MP_TAC >>
+    ASM_SIMP_TAC (list_ss++bmr_ss++DatatypeSimps.expand_type_quants_ss [``:'a bir_machine_lifted_imm_t``]) [
+      bmr_ok_def, bmr_varnames_distinct_def,
+      bmr_vars_def, bmr_temp_vars_def, bir_temp_var_REWRS, MAP_MAP_o,
+      ALL_DISTINCT_APPEND, MEM_MAP, combinTheory.o_DEF, PULL_EXISTS,
+      FORALL_BOOL] >>
+    FULL_SIMP_TAC std_ss [IN_INSERT, NOT_IN_EMPTY] >>
+       METIS_TAC [bir_temp_var_REWRS]
+  ) >>
+
+  Cases_on `v' IN bir_vars_of_exp (bir_updateB_desc_exp up)` >- METIS_TAC[] >>
+  Cases_on `up` >> rename1 `BUpdateDescB v_up e_up val_up tmp_up` >>
+  FULL_SIMP_TAC (list_ss++bmr_ss++DatatypeSimps.expand_type_quants_ss [``:'a bir_machine_lifted_imm_t``]) [MEM_MAP, bir_updateB_desc_exp_def] >- (
+     `?lf. MEM (BMLI v_up lf) r.bmr_imms` by METIS_TAC[bir_updateB_desc_var_def] >>
+     FULL_SIMP_TAC std_ss [bir_vars_of_updateB_desc_def, IN_INSERT,
+       bir_updateB_desc_temp_var_def] >> (
+       METIS_TAC[]
+     )
+  ) >>
+  Cases_on `mem_up` >> REV_FULL_SIMP_TAC list_ss [] >>
+  REV_FULL_SIMP_TAC list_ss [] >>
+  REPEAT BasicProvers.VAR_EQ_TAC >>
+  FULL_SIMP_TAC (std_ss++bmr_ss) [bir_updateB_desc_var_def, bmr_mem_var_def] >>
+  REPEAT BasicProvers.VAR_EQ_TAC >>
+  FULL_SIMP_TAC std_ss [bir_vars_of_updateB_desc_def, IN_INSERT,
+       bir_updateB_desc_temp_var_def, bir_updateB_desc_var_def] >> (
+       METIS_TAC[]
+  )
+) >- (
+  Cases_on `eup_temp` >> SIMP_TAC std_ss [bir_updateE_desc_remove_var_REWRS] >>
+  METIS_TAC[]
+));
 
 
 
@@ -1154,7 +1406,15 @@ store_thm ("bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL___INTRO_MEM",
      (bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL r bs (SOME mres) [] (IMAGE bir_var_name (bir_vars_of_exp e)) []
         (SOME (BUpdateDescB (bmr_mem_var r) e (bir_eval_exp e bs.bst_environ) F)))``,
 
-cheat);
+SIMP_TAC list_ss [bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL_def,
+  LET_THM, bir_updateB_desc_exp_def, bir_updateB_desc_value_def,
+  bir_updateB_desc_var_def, IN_IMAGE] >>
+REPEAT STRIP_TAC >- (
+  `i = 0` by DECIDE_TAC >>
+  FULL_SIMP_TAC std_ss []
+) >- (
+  METIS_TAC[]
+));
 
 
 val bir_is_lifted_inst_block_COMPUTE_updates_FULL_REL___ADD_IMM_UP_NONE =
