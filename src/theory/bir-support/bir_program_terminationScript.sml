@@ -483,7 +483,6 @@ Cases_on `bir_eval_exp e st.bst_environ` >> (
 );
 
 
-(* TODO: Semantics changed - look at this later *)
 val bir_exec_stmtB_status_typeerror_Observe = store_thm ("bir_exec_stmtB_status_typeerror_Observe",
 ``!st stmt ec es osf.
   (st.bst_status <> BST_TypeError) ==>
@@ -491,12 +490,29 @@ val bir_exec_stmtB_status_typeerror_Observe = store_thm ("bir_exec_stmtB_status_
     ((bir_eval_exp ec st.bst_environ = NONE) \/
      (?va.
       (bir_eval_exp ec st.bst_environ = SOME va) /\
-      (type_of_bir_val va <> BType_Bool)
+      ((type_of_bir_val va <> BType_Bool) \/
+       (EXISTS IS_NONE (MAP (\e. bir_eval_exp e st.bst_environ) es))
+      )
      )
     )
   )``,
 
-cheat
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def,
+  bir_exec_stmt_observe_def, LET_DEF] >>
+Cases_on `bir_eval_exp ec st.bst_environ` >| [
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def,
+    bir_dest_bool_val_EQ_NONE, bir_val_checker_TO_type_of],
+
+  Cases_on `bir_dest_bool_val x` >| [
+    FULL_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss)
+      [bir_state_set_typeerror_def, optionTheory.option_case_compute] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_checker_TO_type_of],
+
+    FULL_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++holBACore_ss)
+      [BType_Bool_def, bir_state_set_typeerror_def]
+  ]
+]
 );
 
 
@@ -559,14 +575,19 @@ REPEAT CASE_TAC >> (
 );
 
 
-(* TODO: Semantics changed - look at this later *)
 val bir_exec_stmtE_status_typeerror_Halt = store_thm ("bir_exec_stmtE_status_typeerror_Halt",
 ``!st stmt p e.
   (st.bst_status <> BST_TypeError) ==>
   (((bir_exec_stmtE p (BStmt_Halt e) st).bst_status = BST_TypeError) <=>
-    (?va. (bir_eval_exp e st.bst_environ = SOME va) /\ (bir_val_is_Imm va)))``,
+    (bir_eval_exp e st.bst_environ = NONE)
+  )``,
 
-cheat);
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [bir_exec_stmtE_def, bir_exec_stmt_halt_def] >>
+Cases_on `bir_eval_exp e st.bst_environ` >> (
+  SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.LIFT_COND_ss) [bir_state_set_typeerror_def]
+)
+);
 
 
 (*****************************)
