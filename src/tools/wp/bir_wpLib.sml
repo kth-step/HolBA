@@ -10,7 +10,7 @@ struct
   open HolKernel Parse boolLib bossLib liteLib simpLib;
 
   (* Local *)
-  open bir_wpTheory bir_wp_simpTheory;
+  open bir_wpTheory; (*bir_wp_simpTheory;*)
 
   (* From /theory/bir *)
   open bir_programTheory bir_typing_progTheory bir_envTheory
@@ -125,8 +125,6 @@ struct
                              bir_is_valid_labels_def,
                              bir_labels_of_program_def,
                              BL_Address_HC_def]
-      val no_declare_conv = [bir_declare_free_prog_exec_def,
-                             bir_isnot_declare_stmt_def]
 
       fun wrap_exn_ exn term message = wrap_exn
         (message ^ ": \n" ^ (Hol_pp.term_to_string term) ^ "\n") exn
@@ -149,12 +147,6 @@ struct
       val prog_valid_thm = EVAL ``bir_is_valid_program ^program``
       val thm = MP thm (SIMP_RULE std_ss [] prog_valid_thm)
         handle e => raise wrap_exn_ e (concl_tm prog_valid_thm) "The program isn't valid";
-
-      (* TODO: Make bir_wpSyntax *)
-      val no_declare_thm = SIMP_CONV (srw_ss()) (no_declare_conv@defs)
-        ``bir_declare_free_prog_exec ^program``
-      val thm = MP thm (SIMP_RULE std_ss [] no_declare_thm)
-        handle e => raise wrap_exn_ e (concl_tm no_declare_thm) "The program isn't BStmt_Declare-free";
 
       val thm = GENL [var_l, var_wps, var_wps1] thm;
     in
