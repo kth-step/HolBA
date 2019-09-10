@@ -64,7 +64,8 @@ val bir_is_well_typed_stmtB_def = Define `
   (bir_is_well_typed_stmtB (BStmt_Assign v e) = (type_of_bir_exp e = SOME (bir_var_type v))) /\
   (bir_is_well_typed_stmtB (BStmt_Assert e) = (type_of_bir_exp e = SOME BType_Bool)) /\
   (bir_is_well_typed_stmtB (BStmt_Assume e) = (type_of_bir_exp e = SOME BType_Bool)) /\
-  (bir_is_well_typed_stmtB (BStmt_Observe e _ _) = (type_of_bir_exp e = SOME BType_Bool))`;
+  (bir_is_well_typed_stmtB (BStmt_Observe e el _) = ((type_of_bir_exp e = SOME BType_Bool) /\
+                                                     (EVERY (IS_SOME o type_of_bir_exp) el)))`;
 
 val bir_is_well_typed_stmt_def = Define `
   (bir_is_well_typed_stmt (BStmtE s) = bir_is_well_typed_stmtE s) /\
