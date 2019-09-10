@@ -256,13 +256,6 @@ local
         then (rename_vars_observe h::
               (passify_bstmts_ssa t)
              )
-        (* Case: Declare. Declare is not passive, but is not yet
-         * supported.*)
-        else if is_BStmt_Declare h
-        then raise (ERR "passify_prog_ssa"
-                        ("Declare is not yet supported for "^
-                        "passification")
-                   )
         else raise (ERR "passify_prog_ssa"
                         ("The statement "^(Parse.term_to_string h)^
                         " is "^
