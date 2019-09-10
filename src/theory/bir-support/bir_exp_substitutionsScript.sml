@@ -324,22 +324,13 @@ ASM_SIMP_TAC std_ss [DRESTRICT_FUPDATE, DRESTRICT_FEMPTY,
   bir_exp_subst_EMPTY]);
 
 
-(*
-  maybe need to add type of e1 is matching ty, not sure whether it's really needed
-*)
 val bir_eval_exp_subst1_env = store_thm("bir_eval_exp_subst1_env",
-``!ex env varn ty e1.
-    (?va.
-     ((bir_env_lookup varn (BEnv env)) = SOME va) /\
-     (type_of_bir_val va = ty)
-    ) ==>
-    (* If e1 evaluates to some expression, type must be same as ty *)
-    (!ex_va.
-     ((bir_eval_exp e1 (BEnv env)) = SOME ex_va) ==>
-     (ty = type_of_bir_val ex_va)
-    ) ==>
+``!ex env varn ty e1 e1_va.
+    (bir_env_lookup_type varn (BEnv env) = SOME ty) ==>
+    (bir_eval_exp e1 (BEnv env) = SOME e1_va) ==>
+    (type_of_bir_val e1_va = ty) ==>
     (bir_eval_exp ex
-      (BEnv ((varn =+ (bir_eval_exp e1 (BEnv env))) env)) =
+      (BEnv ((varn =+ SOME e1_va) env)) =
         bir_eval_exp (bir_exp_subst1 (BVar varn ty) e1 ex)
                      (BEnv env)
     )``,
@@ -353,36 +344,14 @@ Induct_on `ex` >> (
 Cases_on `b = BVar varn ty` >- (
   FULL_SIMP_TAC std_ss [bir_exp_subst1_REWRS, bir_env_read_def, bir_var_name_def,
                  bir_env_lookup_def, bir_env_check_type_def, bir_env_lookup_type_def] >>
-  CASE_TAC >- (
-    EVAL_TAC
-  ) >>
   FULL_SIMP_TAC std_ss [bir_var_type_def] >>
-  Cases_on `bir_eval_exp e1 (BEnv env)` >- (
-    EVAL_TAC
-  ) >>
-  Q.PAT_X_ASSUM `!ex_va. ((SOME x = SOME ex_va) ==> _)`
-    (fn thm => ASSUME_TAC (Q.SPEC `x` thm)) >>
-  Q.PAT_X_ASSUM `!z. _` (fn thm => ASSUME_TAC (Q.SPEC `x` thm)) >>
-  FULL_SIMP_TAC std_ss [] >| [
-    FULL_SIMP_TAC std_ss [combinTheory.UPDATE_def],
-
-    FULL_SIMP_TAC std_ss []
-  ]
+  FULL_SIMP_TAC std_ss [combinTheory.UPDATE_def]
 ) >>
 Cases_on `b` >>
-Cases_on `varn <> s` >- (
-  FULL_SIMP_TAC std_ss [bir_eval_exp_def] >>
-  EVAL_TAC >>
-  FULL_SIMP_TAC std_ss []
-) >>
-subgoal `b' <> ty` >- (
-  METIS_TAC []
-) >>
-FULL_SIMP_TAC std_ss [bir_env_lookup_def] >>
-EVAL_TAC >>
-RW_TAC std_ss [] >>
-FULL_SIMP_TAC std_ss []
-);
+Cases_on `varn = s` >> (
+  FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_env_read_def, bir_env_check_type_def, bir_env_lookup_type_def, bir_var_type_def, bir_var_name_def, bir_env_lookup_def, combinTheory.UPDATE_APPLY, bir_var_eq_EXPAND] >>
+  REV_FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_env_read_def, bir_env_check_type_def, bir_env_lookup_type_def, bir_var_type_def, bir_var_name_def, bir_env_lookup_def, combinTheory.UPDATE_APPLY, bir_var_eq_EXPAND]
+));
 
 
 val _ = export_theory();
