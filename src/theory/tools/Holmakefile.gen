@@ -5,8 +5,7 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-HOLHEAP        = lifter/HolBATheory_Tools_Lifter-heap
-#HOLHEAP        = wp/HolBATheory_Tools_Wp-heap
+HOLHEAP        = wp/HolBATheory_Tools_Wp-heap
 NEWHOLHEAP     = HolBATheory_Tools-heap
 
 HEAPINC_EXTRA  = 
