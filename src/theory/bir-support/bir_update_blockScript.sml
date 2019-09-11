@@ -775,7 +775,8 @@ val bir_update_blockE_INIT_SEM =
           (!var v. (bir_updateE_desc_var eup = SOME var) ==>
                    (bir_updateE_desc_value eup = SOME v) ==>
                    ((bir_env_lookup (bir_var_name var) st'.bst_environ =
-                      SOME (BVal_Imm v)))) /\
+                      SOME (BVal_Imm v)) /\
+                    (type_of_bir_val (BVal_Imm v) = bir_var_type var))) /\
 
           (!vn. (!var. (bir_updateE_desc_var eup = SOME var) ==> (bir_var_name var <> vn)) ==>
                (bir_env_lookup vn st'.bst_environ = bir_env_lookup vn st.bst_environ)))``,
@@ -909,8 +910,7 @@ Tactical.REVERSE CONJ_TAC >- (
        IN_INSERT, NOT_IN_EMPTY] >>
     METIS_TAC [],
     
-    (* ??? *)
-    cheat
+    METIS_TAC [type_of_bir_val_def]
   ]
 ) >>
 
@@ -943,9 +943,7 @@ subgoal `st_final_without_pc = BUpdateValE_EXEC p (bir_updateE_SEM eup) st_end` 
     ASM_SIMP_TAC std_ss [bir_eval_exp_def, bir_env_read_def,
                          pairTheory.pair_case_thm,
                          bir_env_check_type_def,
-                         bir_env_lookup_type_def] >>
-    (* Same issue as above *)
-    cheat
+                         bir_env_lookup_type_def]
   ) >>
   FULL_SIMP_TAC std_ss [] >>
   `bir_updateE_desc_exp eup = SOME e` by (
