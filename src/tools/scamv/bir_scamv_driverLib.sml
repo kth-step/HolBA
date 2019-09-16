@@ -14,6 +14,7 @@ open stringSyntax;
 open listSyntax;
 open bir_embexp_driverLib;
 open bir_symb_execLib;
+open bir_symb_masterLib;
 open gcc_supportLib;
 open bir_gccLib;
 open bir_typing_expTheory;
@@ -113,10 +114,10 @@ fun prog_gen_mock () =
 
 fun symb_exec_phase prog =
     let
-        val tree = symb_exec_program prog;
-
         (* leaf list *)
-        val leafs = symb_exec_leaflist tree;
+        val maxdepth = (~1);
+        val precond = ``bir_exp_true``
+        val leafs = symb_exec_process_to_leafs_nosmt maxdepth precond prog;
 
         (* retrieval of path condition and observation expressions *)
 	fun extract_cond_obs s =

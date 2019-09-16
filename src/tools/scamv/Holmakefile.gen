@@ -6,7 +6,7 @@ DEPENDENCIES   = ../../theory/bir ../../theory/bir-support ../../shared ../lifte
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../wp/HolBATools_Wp-heap
+HOLHEAP        = symbexec/HolBATools_ScamV_symbexec-heap
 NEWHOLHEAP     = HolBATools_ScamV-heap
 
 HEAPINC_EXTRA  = $(HOLDIR)/examples/l3-machine-code/arm8/prog/arm8_progLib

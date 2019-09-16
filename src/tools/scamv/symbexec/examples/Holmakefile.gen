@@ -5,7 +5,7 @@ DEPENDENCIES   = ./minimal ../ ../../../../theory/bir
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../../HolBATools_ScamV-heap
+HOLHEAP        = ../HolBATools_ScamV_symbexec-heap
 NEWHOLHEAP     = 
 
 HEAPINC_EXTRA  = 

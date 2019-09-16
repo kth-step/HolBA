@@ -62,10 +62,10 @@ val TRUE_EXP_def = Define `
 (* ------------------------------------------------------------------------- *)
 
 (* Initially, Environment is empty and predicate set to True *)
-val bir_symb_state_init_def = Define `bir_symb_state_init (p : 'a bir_program_t) env = <|
+val bir_symb_state_init_def = Define `bir_symb_state_init (p : 'a bir_program_t) env pred = <|
     bsst_pc         := bir_pc_first p;
     bsst_environ    := env;
-    bsst_pred       := TRUE_EXP;
+    bsst_pred       := pred;
     bsst_status     := BST_Running;
     bsst_obs        := ([] : 'a bir_symb_obs_t list) |>`;
 
@@ -354,6 +354,7 @@ val bir_symb_exec_label_block_def = Define `
        = 
     case (bir_get_program_block_info_by_label p st.bsst_pc.bpc_label) of 
     | NONE => ([], [bir_symb_state_set_failed st])
-    | SOME (_, blk) => bir_symb_exec_blk p blk [st]`;
+    | SOME (_, blk) => if bir_symb_state_is_terminated st
+                       then ([], [st]) else (bir_symb_exec_blk p blk [st])`;
     
 val _ = export_theory();
