@@ -47,6 +47,8 @@ struct
     else if is_comb tm then
         ((RAND_CONV  (GEN_match_conv is_tm_fun conv)) THENC
          (RATOR_CONV (GEN_match_conv is_tm_fun conv))) tm
+    else if is_abs tm then
+        TRY_CONV (ABS_CONV (GEN_match_conv is_tm_fun conv)) tm
     else
       raise UNCHANGED
     ;
