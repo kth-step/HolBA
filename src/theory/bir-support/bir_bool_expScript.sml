@@ -22,8 +22,8 @@ SIMP_TAC (std_ss ++ holBACore_ss ++ wordsLib.WORD_ss) [bir_val_false_def, bir_va
 
 
 val type_of_bir_val_TF = store_thm ("type_of_bir_val_TF",
-  ``(type_of_bir_val bir_val_true = SOME BType_Bool) /\
-    (type_of_bir_val bir_val_false = SOME BType_Bool)``,
+  ``(type_of_bir_val bir_val_true = BType_Bool) /\
+    (type_of_bir_val bir_val_false = BType_Bool)``,
 
 SIMP_TAC (std_ss++holBACore_ss) [bir_val_false_def, bir_val_true_def,
   BType_Bool_def]);
@@ -161,8 +161,8 @@ val bir_exp_true_def  = Define `bir_exp_true  = BExp_Const (Imm1 1w)`;
 val bir_exp_false_def = Define `bir_exp_false = BExp_Const (Imm1 0w)`;
 
 val bir_eval_exp_TF = store_thm ("bir_eval_exp_TF",
-  ``(!env. bir_eval_exp bir_exp_true env = bir_val_true) /\
-    (!env. bir_eval_exp bir_exp_false env = bir_val_false)``,
+  ``(!env. bir_eval_exp bir_exp_true env = SOME bir_val_true) /\
+    (!env. bir_eval_exp bir_exp_false env = SOME bir_val_false)``,
 
 SIMP_TAC std_ss [bir_exp_false_def, bir_exp_true_def, bir_eval_exp_def,
   bir_val_true_def, bir_val_false_def]);
@@ -290,11 +290,11 @@ SIMP_TAC std_ss [bir_is_bool_exp_env_def]);
 
 val bir_is_bool_exp_env_IMPLIES_EVAL_IS_BOOL = store_thm ("bir_is_bool_exp_env_IMPLIES_EVAL_IS_BOOL",
   ``!env e. bir_is_bool_exp_env env e ==>
-      bir_val_is_Bool (bir_eval_exp e env)``,
+      ?va. (bir_eval_exp e env = SOME va) /\ (bir_val_is_Bool va)``,
 
 SIMP_TAC std_ss [bir_is_bool_exp_env_def, bir_is_bool_exp_def] >>
 REPEAT STRIP_TAC >>
-`type_of_bir_val (bir_eval_exp e env) = SOME (BType_Imm Bit1)` by
+`?va. (bir_eval_exp e env = SOME va) /\ (type_of_bir_val va = BType_Imm Bit1)` by
   METIS_TAC[type_of_bir_exp_THM_with_init_vars] >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_val_EQ_ELIMS,
   bir_val_is_Bool_def]);
@@ -302,8 +302,8 @@ FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_val_EQ_ELIMS,
 val bir_bool_values = store_thm("bir_bool_values",
   ``!env ex.
       bir_is_bool_exp_env env ex ==>
-       (((bir_eval_exp ex env) = bir_val_false) \/
-        ((bir_eval_exp ex env) = bir_val_true)
+       (((bir_eval_exp ex env) = SOME bir_val_false) \/
+        ((bir_eval_exp ex env) = SOME bir_val_true)
        )``,
 
 REPEAT STRIP_TAC >>
@@ -311,7 +311,7 @@ FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def,
                       bir_is_bool_exp_def] >>
 IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
 Cases_on `(bir_eval_exp ex env)` >> (
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_val_def] >> (
+  Cases_on `va` >> FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_val_def] >> (
     rename1 `(BVal_Imm b = bir_val_false)` >>
     Cases_on `b` >- (
       SUBGOAL_THEN
@@ -324,27 +324,29 @@ Cases_on `(bir_eval_exp ex env)` >> (
              [bir_val_true_def, bir_val_false_def] >>
            METIS_TAC []
         )
-    ) >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_imm_def]
+    ) >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_imm_def]
+    )
   )
 )
 );
 
 
 val bir_eval_bool_exp_def = Define `bir_eval_bool_exp env e =
-  THE (bir_dest_bool_val (bir_eval_exp env e))`;
+  THE (bir_dest_bool_val (THE (bir_eval_exp env e)))`;
 
 
 
 val bir_eval_bool_exp_INTRO = store_thm ("bir_eval_bool_exp_INTRO",
   ``!env e. bir_is_bool_exp_env env e ==>
-      (bir_eval_exp e env = bir_mk_bool_val (bir_eval_bool_exp e env))``,
+      (bir_eval_exp e env = SOME (bir_mk_bool_val (bir_eval_bool_exp e env)))``,
 
 REPEAT STRIP_TAC >>
-`bir_val_is_Bool (bir_eval_exp e env)` by METIS_TAC[bir_is_bool_exp_env_IMPLIES_EVAL_IS_BOOL] >>
+IMP_RES_TAC bir_is_bool_exp_env_IMPLIES_EVAL_IS_BOOL >>
 FULL_SIMP_TAC std_ss [bir_eval_bool_exp_def, GSYM bir_dest_bool_val_IS_SOME,
   optionTheory.IS_SOME_EXISTS] >>
-METIS_TAC[bir_dest_bool_val_inv]);
+METIS_TAC[bir_dest_bool_val_inv]
+);
 
 
 
@@ -390,8 +392,8 @@ val bir_is_bool_exp_env_REWRS = store_thm ("bir_is_bool_exp_env_REWRS",
 
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_is_bool_exp_env_def,
   bir_is_bool_exp_REWRS, bir_exp_false_def, bir_exp_true_def,
-  bir_vars_of_exp_def, bir_env_vars_are_initialised_UNION,
-  bir_env_vars_are_initialised_EMPTY, bir_env_vars_are_initialised_INSERT]);
+  bir_vars_of_exp_def, bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
+  bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY, bir_env_oldTheory.bir_env_vars_are_initialised_INSERT]);
 
 
 
@@ -457,8 +459,8 @@ val bir_eval_bool_exp_BExp_BinExp = store_thm ("bir_eval_bool_exp_BExp_BinExp",
 SIMP_TAC std_ss [bir_eval_bool_exp_def, bir_eval_exp_def, bir_eval_bin_exp_def,
    bir_is_bool_exp_env_REWRS] >>
 REPEAT STRIP_TAC >>
-`?b1. bir_eval_exp e1 env = bir_mk_bool_val b1` by METIS_TAC[bir_eval_bool_exp_INTRO] >>
-`?b2. bir_eval_exp e2 env = bir_mk_bool_val b2` by METIS_TAC[bir_eval_bool_exp_INTRO] >>
+`?b1. bir_eval_exp e1 env = SOME (bir_mk_bool_val b1)` by METIS_TAC[bir_eval_bool_exp_INTRO] >>
+`?b2. bir_eval_exp e2 env = SOME (bir_mk_bool_val b2)` by METIS_TAC[bir_eval_bool_exp_INTRO] >>
 FULL_SIMP_TAC std_ss [bir_mk_bool_val_inv] >>
 ASM_SIMP_TAC std_ss [bir_eval_bin_exp_def, bir_mk_bool_val_def,
   type_of_bool2b] >>
@@ -519,8 +521,8 @@ val bir_eval_bool_exp_BExp_BinPred = store_thm ("bir_eval_bool_exp_BExp_BinPred"
 SIMP_TAC std_ss [bir_eval_bool_exp_def, bir_eval_exp_def, bir_eval_bin_pred_def,
    bir_is_bool_exp_env_REWRS] >>
 REPEAT STRIP_TAC >>
-`?b1. bir_eval_exp e1 env = bir_mk_bool_val b1` by METIS_TAC[bir_eval_bool_exp_INTRO] >>
-`?b2. bir_eval_exp e2 env = bir_mk_bool_val b2` by METIS_TAC[bir_eval_bool_exp_INTRO] >>
+`?b1. bir_eval_exp e1 env = SOME (bir_mk_bool_val b1)` by METIS_TAC[bir_eval_bool_exp_INTRO] >>
+`?b2. bir_eval_exp e2 env = SOME (bir_mk_bool_val b2)` by METIS_TAC[bir_eval_bool_exp_INTRO] >>
 FULL_SIMP_TAC std_ss [bir_mk_bool_val_inv] >>
 ASM_SIMP_TAC std_ss [bir_eval_bin_pred_def, bir_mk_bool_val_def,
   type_of_bool2b] >>
@@ -589,7 +591,7 @@ val bir_eval_bool_exp_BExp_UnaryExp = store_thm ("bir_eval_bool_exp_BExp_UnaryEx
 
 SIMP_TAC std_ss [bir_eval_bool_exp_def, bir_eval_exp_def, bir_is_bool_exp_env_REWRS] >>
 REPEAT STRIP_TAC >>
-`?b. bir_eval_exp e env = bir_mk_bool_val b` by METIS_TAC[bir_eval_bool_exp_INTRO] >>
+`?b. bir_eval_exp e env = SOME (bir_mk_bool_val b)` by METIS_TAC[bir_eval_bool_exp_INTRO] >>
 FULL_SIMP_TAC std_ss [bir_mk_bool_val_inv] >>
 ASM_SIMP_TAC std_ss [bir_eval_unary_exp_def, bir_mk_bool_val_def] >>
 `bir_unary_exp uo (bool2b b) = bool2b (bop b)` by METIS_TAC[
@@ -636,7 +638,7 @@ val bir_eval_bool_exp_EQ = store_thm ( "bir_eval_bool_exp_EQ",
   ``!exp env.
       bir_is_bool_exp_env env exp
       ==>
-      ((bir_eval_bool_exp exp env) <=> (bir_eval_exp exp env = bir_val_true))``,
+      ((bir_eval_bool_exp exp env) <=> (bir_eval_exp exp env = SOME bir_val_true))``,
   REPEAT STRIP_TAC >>
   drule bir_is_bool_exp_env_IMPLIES_EVAL_IS_BOOL >>
   STRIP_TAC >> (

@@ -25,7 +25,6 @@ val _ = Datatype `bir_label_exp_t =
 
 
 val _ = Datatype `bir_stmt_basic_t =
-  | BStmt_Declare bir_var_t
   | BStmt_Assign  bir_var_t bir_exp_t
   | BStmt_Assert  bir_exp_t
   | BStmt_Assume  bir_exp_t
@@ -55,7 +54,8 @@ val bir_pc_ss = rewrites (type_rws ``:bir_programcounter_t``);
 
 val _ = Datatype `bir_status_t =
     BST_Running                  (* BIR program is still running *)
-  | BST_Failed                   (* BIR program execution failed *)
+  | BST_TypeError                (* BIR program execution encountered a type error *)
+  | BST_Failed                   (* BIR program execution failed, should not happen when starting in a state where pc is available in the program to execute *)
   | BST_AssumptionViolated       (* BIR program execution aborted, because assumption was violated *)
   | BST_AssertionViolated       (* BIR program execution failed, because assertion was violated *)
   | BST_Halted bir_val_t        (* Halt called *)
@@ -151,12 +151,14 @@ val bir_state_is_terminated_IMP = store_thm ("bir_state_is_terminated_IMP",
     (!st. (st.bst_status <> BST_Running) ==> (bir_state_is_terminated st))``,
   SIMP_TAC std_ss [bir_state_is_terminated_def]);
 
+val bir_state_set_typeerror_def = Define `bir_state_set_typeerror st =
+  (st with bst_status := BST_TypeError)`;
 val bir_state_set_failed_def = Define `bir_state_set_failed st =
   (st with bst_status := BST_Failed)`;
 
 val bir_state_init_def = Define `bir_state_init p = <|
     bst_pc       := bir_pc_first p
-  ; bst_environ  := bir_empty_env
+  ; bst_environ  := bir_env_default (bir_envty_of_vs {}) (* TODO: add vars of program here *)
   ; bst_status := BST_Running
 |>`;
 
@@ -165,59 +167,65 @@ val bir_state_init_def = Define `bir_state_init p = <|
 (*  Semantics of statements                                                  *)
 (* ------------------------------------------------------------------------- *)
 
-val bir_declare_initial_value_def = Define `
-  (bir_declare_initial_value (BType_Imm _) = NONE) /\
-  (bir_declare_initial_value (BType_Mem at vt) = SOME (BVal_Mem at vt (FEMPTY)))`;
-
-val bir_exec_stmt_declare_def = Define `bir_exec_stmt_declare v ty (st : bir_state_t) =
-   if bir_env_varname_is_bound st.bst_environ v then
-     bir_state_set_failed st
-   else (
-      case (bir_env_update v (bir_declare_initial_value ty) ty st.bst_environ) of
-        | SOME env => (st with bst_environ := env)
-        | NONE => (* Cannot happen, since bir_declare_initial_value returns value of correct type *)            bir_state_set_failed st)`;
-
 val bir_exec_stmt_assign_def = Define `bir_exec_stmt_assign v ex (st : bir_state_t) =
-   let env_o = bir_env_write v (bir_eval_exp ex st.bst_environ) st.bst_environ in
-   case env_o of
-     | SOME env => (st with bst_environ := env)
-     | NONE => bir_state_set_failed st`;
+   case bir_eval_exp ex st.bst_environ of
+     | SOME va => (case bir_env_write v va st.bst_environ of
+                     | SOME env => (st with bst_environ := env)
+                     | NONE => bir_state_set_typeerror st
+                  )
+     | NONE => bir_state_set_typeerror st`;
 
 val bir_exec_stmt_assert_def = Define `bir_exec_stmt_assert ex (st : bir_state_t) =
-  case (bir_dest_bool_val (bir_eval_exp ex st.bst_environ)) of
+  case (option_CASE (bir_eval_exp ex st.bst_environ) NONE bir_dest_bool_val) of
     | SOME T => st
     | SOME F => (st with bst_status := BST_AssertionViolated)
-    | NONE => bir_state_set_failed st`
+    | NONE => bir_state_set_typeerror st`
 
 val bir_exec_stmt_assume_def = Define `bir_exec_stmt_assume ex (st : bir_state_t) =
-  case (bir_dest_bool_val (bir_eval_exp ex st.bst_environ)) of
+  case (option_CASE (bir_eval_exp ex st.bst_environ) NONE bir_dest_bool_val) of
     | SOME T => st
     | SOME F => (st with bst_status := BST_AssumptionViolated)
-    | NONE => bir_state_set_failed st`;
+    | NONE => bir_state_set_typeerror st`;
 
 
 val bir_exec_stmt_observe_def = Define `bir_exec_stmt_observe ec el obf (st : bir_state_t) =
-  case (bir_dest_bool_val (bir_eval_exp ec st.bst_environ)) of
-    | SOME T => (SOME (obf (MAP (\e. bir_eval_exp e st.bst_environ) el)), st)
-    | SOME F => (NONE, st)
-    | NONE => (NONE, bir_state_set_failed st)`;
+  let
+    vol = MAP (\e. bir_eval_exp e st.bst_environ) el;
+    vobc = option_CASE (bir_eval_exp ec st.bst_environ) NONE bir_dest_bool_val
+  in
+  case vobc of
+    | SOME T =>   if EXISTS IS_NONE vol then
+                    (NONE, bir_state_set_typeerror st)
+                  else
+                    (SOME (obf (MAP THE vol)), st)
+    | SOME F =>   if EXISTS IS_NONE vol then
+                    (NONE, bir_state_set_typeerror st)
+                  else
+                    (NONE, st)
+    | NONE => (NONE, bir_state_set_typeerror st)`;
 
-val bir_exec_stmt_observe_state_def = Define `bir_exec_stmt_observe_state ec (st : bir_state_t) =
-  case (bir_dest_bool_val (bir_eval_exp ec st.bst_environ)) of
-    | SOME _ => st
-    | NONE => bir_state_set_failed st`;
+val bir_exec_stmt_observe_state_def = Define `bir_exec_stmt_observe_state ec el (st : bir_state_t) =
+  let
+    vol = MAP (\e. bir_eval_exp e st.bst_environ) el;
+    vobc = option_CASE (bir_eval_exp ec st.bst_environ) NONE bir_dest_bool_val
+  in
+  case vobc of
+    | SOME _ =>   if EXISTS IS_NONE vol then
+                    bir_state_set_typeerror st
+                  else
+                    st
+    | NONE => bir_state_set_typeerror st`;
 
 
 val bir_exec_stmt_observe_state_THM = store_thm ("bir_exec_stmt_observe_state_THM",
-  ``!ec el obf st. SND (bir_exec_stmt_observe ec el obf st) = bir_exec_stmt_observe_state ec st``,
+  ``!ec el obf st. SND (bir_exec_stmt_observe ec el obf st) = bir_exec_stmt_observe_state ec el st``,
 
 REPEAT GEN_TAC >>
-SIMP_TAC std_ss [bir_exec_stmt_observe_def, bir_exec_stmt_observe_state_def] >>
+SIMP_TAC std_ss [bir_exec_stmt_observe_def, bir_exec_stmt_observe_state_def, LET_DEF] >>
 REPEAT CASE_TAC >> SIMP_TAC std_ss []);
 
 
 val bir_exec_stmtB_def = Define `
-  (bir_exec_stmtB (BStmt_Declare v) st = (NONE, bir_exec_stmt_declare (bir_var_name v) (bir_var_type v) st)) /\
   (bir_exec_stmtB (BStmt_Assert ex) st = (NONE, bir_exec_stmt_assert ex st)) /\
   (bir_exec_stmtB (BStmt_Assume ex) st = (NONE, bir_exec_stmt_assume ex st)) /\
   (bir_exec_stmtB (BStmt_Assign v ex) st = (NONE, bir_exec_stmt_assign v ex st)) /\
@@ -239,28 +247,32 @@ Cases_on `h` >> (
   FULL_SIMP_TAC std_ss [bir_exec_stmtB_def]
 ) >>
 FULL_SIMP_TAC std_ss [bir_exec_stmt_observe_def] >>
-Cases_on `bir_dest_bool_val (bir_eval_exp b st.bst_environ)` >| [
-  FULL_SIMP_TAC std_ss [],
+Cases_on `option_CASE (bir_eval_exp b st.bst_environ) NONE bir_dest_bool_val` >| [
+  FULL_SIMP_TAC std_ss [LET_DEF],
 
   Cases_on `x` >> (
-    FULL_SIMP_TAC std_ss []
+    FULL_SIMP_TAC std_ss [LET_DEF] >>
+    Cases_on `EXISTS IS_NONE (MAP (λe. bir_eval_exp e st.bst_environ) l)` >> (
+      FULL_SIMP_TAC std_ss []
+    )
   )
 ]
 );
 
 
 val bir_exec_stmtB_state_REWRS = store_thm ("bir_exec_stmtB_state_REWRS",
-``(!v st. (bir_exec_stmtB_state (BStmt_Declare v) st = (bir_exec_stmt_declare (bir_var_name v) (bir_var_type v) st))) /\
-  (!ex st. (bir_exec_stmtB_state (BStmt_Assert ex) st = (bir_exec_stmt_assert ex st))) /\
+``(!ex st. (bir_exec_stmtB_state (BStmt_Assert ex) st = (bir_exec_stmt_assert ex st))) /\
   (!ex st. (bir_exec_stmtB_state (BStmt_Assume ex) st = (bir_exec_stmt_assume ex st))) /\
   (!v ex st. (bir_exec_stmtB_state (BStmt_Assign v ex) st = (bir_exec_stmt_assign v ex st))) /\
-  (!ec el obf st. (bir_exec_stmtB_state (BStmt_Observe ec el obf) st = bir_exec_stmt_observe_state ec st))``,
+  (!ec el obf st. (bir_exec_stmtB_state (BStmt_Observe ec el obf) st = bir_exec_stmt_observe_state ec el st))``,
 
 SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def, bir_exec_stmt_observe_state_THM]);
 
 
 val bir_exec_stmt_halt_def = Define `bir_exec_stmt_halt ex (st : bir_state_t) =
-    (st with bst_status := BST_Halted (bir_eval_exp ex st.bst_environ))`;
+  case bir_eval_exp ex st.bst_environ of
+    | NONE => bir_state_set_typeerror st
+    | SOME v => st with bst_status := BST_Halted v`;
 
 val bir_exec_stmt_jmp_to_label_def = Define `bir_exec_stmt_jmp_to_label p
    (l : bir_label_t) (st : bir_state_t) =
@@ -271,20 +283,23 @@ val bir_exec_stmt_jmp_to_label_def = Define `bir_exec_stmt_jmp_to_label p
 val bir_eval_label_exp_def = Define `
    (bir_eval_label_exp (BLE_Label l) env = SOME l) /\
    (bir_eval_label_exp (BLE_Exp e) env = case bir_eval_exp e env of
-      | BVal_Imm i => SOME (BL_Address i)
+      | SOME (BVal_Imm i) => SOME (BL_Address i)
       | _ => NONE
    )`;
 
 val bir_exec_stmt_jmp_def = Define `bir_exec_stmt_jmp p le (st : bir_state_t) =
     case bir_eval_label_exp le st.bst_environ of
-      | NONE => bir_state_set_failed st
+      | NONE => bir_state_set_typeerror st
       | SOME l => bir_exec_stmt_jmp_to_label p l st`;
 
-val bir_exec_stmt_cjmp_def = Define `bir_exec_stmt_cjmp p ex l1 l2 (st : bir_state_t) =
-  case (bir_dest_bool_val (bir_eval_exp ex st.bst_environ)) of
+val bir_exec_stmt_cjmp_def = Define `bir_exec_stmt_cjmp p ec l1 l2 (st : bir_state_t) =
+  let
+    vobc = option_CASE (bir_eval_exp ec st.bst_environ) NONE bir_dest_bool_val
+  in
+  case vobc of
     | SOME T => bir_exec_stmt_jmp p l1 st
     | SOME F => bir_exec_stmt_jmp p l2 st
-    | NONE => bir_state_set_failed st`;
+    | NONE => bir_state_set_typeerror st`;
 
 
 val bir_exec_stmtE_def = Define `

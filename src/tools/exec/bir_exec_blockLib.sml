@@ -154,7 +154,6 @@ for now, we're taking single steps, not whole blocks
           (* open statement effects *)
           val thm1_2 = CONV_RULE (RAND_CONV (
                     (REWRITE_CONV [
-                         bir_exec_stmt_declare_def,
                          bir_exec_stmt_assign_def,
                          bir_exec_stmt_assert_def,
                          bir_exec_stmt_assume_def,

@@ -569,19 +569,19 @@ val BExp_nzcv_SUB_N_eval = store_thm ("BExp_nzcv_SUB_N_eval",
 ``!sz e1 e2 env.
   (bir_eval_exp (BExp_nzcv_SUB_N sz e1 e2) env =
      case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env) of
-         (Bit1, BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_N w1 w2))
-       | (Bit8, BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_N w1 w2))
-       | (Bit16, BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_N w1 w2))
-       | (Bit32, BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_N w1 w2))
-       | (Bit64, BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_N w1 w2))
-       | (Bit128, BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_N w1 w2))
-       | _ => BVal_Unknown)``,
+         (Bit1, SOME (BVal_Imm (Imm1 w1)), SOME (BVal_Imm (Imm1 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_N w1 w2)))
+       | (Bit8, SOME (BVal_Imm (Imm8 w1)), SOME (BVal_Imm (Imm8 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_N w1 w2)))
+       | (Bit16, SOME (BVal_Imm (Imm16 w1)), SOME (BVal_Imm (Imm16 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_N w1 w2)))
+       | (Bit32, SOME (BVal_Imm (Imm32 w1)), SOME (BVal_Imm (Imm32 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_N w1 w2)))
+       | (Bit64, SOME (BVal_Imm (Imm64 w1)), SOME (BVal_Imm (Imm64 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_N w1 w2)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_N w1 w2)))
+       | _ => NONE)``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_nzcv_SUB_N_def, nzcv_BIR_SUB_NZCV_REWRS] >>
@@ -594,19 +594,19 @@ val BExp_nzcv_SUB_V_eval = store_thm ("BExp_nzcv_SUB_V_eval",
 ``!sz e1 e2 env.
   (bir_eval_exp (BExp_nzcv_SUB_V sz e1 e2) env =
      case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env) of
-         (Bit1, BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_V w1 w2))
-       | (Bit8, BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_V w1 w2))
-       | (Bit16, BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_V w1 w2))
-       | (Bit32, BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_V w1 w2))
-       | (Bit64, BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_V w1 w2))
-       | (Bit128, BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_V w1 w2))
-       | _ => BVal_Unknown)``,
+         (Bit1, SOME (BVal_Imm (Imm1 w1)), SOME (BVal_Imm (Imm1 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_V w1 w2)))
+       | (Bit8, SOME (BVal_Imm (Imm8 w1)), SOME (BVal_Imm (Imm8 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_V w1 w2)))
+       | (Bit16, SOME (BVal_Imm (Imm16 w1)), SOME (BVal_Imm (Imm16 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_V w1 w2)))
+       | (Bit32, SOME (BVal_Imm (Imm32 w1)), SOME (BVal_Imm (Imm32 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_V w1 w2)))
+       | (Bit64, SOME (BVal_Imm (Imm64 w1)), SOME (BVal_Imm (Imm64 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_V w1 w2)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_V w1 w2)))
+       | _ => NONE)``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_nzcv_SUB_V_def, nzcv_BIR_SUB_NZCV_REWRS] >>
@@ -618,19 +618,19 @@ val BExp_nzcv_SUB_Z_eval = store_thm ("BExp_nzcv_SUB_Z_eval",
 ``!e1 e2 env.
   (bir_eval_exp (BExp_nzcv_SUB_Z e1 e2) env =
      case (bir_eval_exp e1 env, bir_eval_exp e2 env) of
-         (BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_Z w1 w2))
-       | (BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_Z w1 w2))
-       | (BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_Z w1 w2))
-       | (BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_Z w1 w2))
-       | (BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_Z w1 w2))
-       | (BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_Z w1 w2))
-       | _ => BVal_Unknown)``,
+         (SOME (BVal_Imm (Imm1 w1)), SOME (BVal_Imm (Imm1 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_Z w1 w2)))
+       | (SOME (BVal_Imm (Imm8 w1)), SOME (BVal_Imm (Imm8 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_Z w1 w2)))
+       | (SOME (BVal_Imm (Imm16 w1)), SOME (BVal_Imm (Imm16 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_Z w1 w2)))
+       | (SOME (BVal_Imm (Imm32 w1)), SOME (BVal_Imm (Imm32 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_Z w1 w2)))
+       | (SOME (BVal_Imm (Imm64 w1)), SOME (BVal_Imm (Imm64 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_Z w1 w2)))
+       | (SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_Z w1 w2)))
+       | _ => NONE)``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_nzcv_SUB_Z_def, nzcv_BIR_SUB_NZCV_REWRS] >>
@@ -643,19 +643,19 @@ val BExp_nzcv_SUB_C_eval = store_thm ("BExp_nzcv_SUB_C_eval",
 ``!e1 e2 env.
   (bir_eval_exp (BExp_nzcv_SUB_C e1 e2) env =
      case (bir_eval_exp e1 env, bir_eval_exp e2 env) of
-         (BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_C w1 w2))
-       | (BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_C w1 w2))
-       | (BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_C w1 w2))
-       | (BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_C w1 w2))
-       | (BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_C w1 w2))
-       | (BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_SUB_C w1 w2))
-       | _ => BVal_Unknown)``,
+         (SOME (BVal_Imm (Imm1 w1)), SOME (BVal_Imm (Imm1 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_C w1 w2)))
+       | (SOME (BVal_Imm (Imm8 w1)), SOME (BVal_Imm (Imm8 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_C w1 w2)))
+       | (SOME (BVal_Imm (Imm16 w1)), SOME (BVal_Imm (Imm16 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_C w1 w2)))
+       | (SOME (BVal_Imm (Imm32 w1)), SOME (BVal_Imm (Imm32 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_C w1 w2)))
+       | (SOME (BVal_Imm (Imm64 w1)), SOME (BVal_Imm (Imm64 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_C w1 w2)))
+       | (SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_SUB_C w1 w2)))
+       | _ => NONE)``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_nzcv_SUB_C_def, nzcv_BIR_SUB_NZCV_REWRS] >>
@@ -747,19 +747,19 @@ val BExp_nzcv_ADD_N_eval = store_thm ("BExp_nzcv_ADD_N_eval",
 ``!sz e1 e2 env.
   (bir_eval_exp (BExp_nzcv_ADD_N sz e1 e2) env =
      case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env) of
-         (Bit1, BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_N w1 w2))
-       | (Bit8, BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_N w1 w2))
-       | (Bit16, BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_N w1 w2))
-       | (Bit32, BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_N w1 w2))
-       | (Bit64, BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_N w1 w2))
-       | (Bit128, BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_N w1 w2))
-       | _ => BVal_Unknown)``,
+         (Bit1, SOME (BVal_Imm (Imm1 w1)), SOME (BVal_Imm (Imm1 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_N w1 w2)))
+       | (Bit8, SOME (BVal_Imm (Imm8 w1)), SOME (BVal_Imm (Imm8 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_N w1 w2)))
+       | (Bit16, SOME (BVal_Imm (Imm16 w1)), SOME (BVal_Imm (Imm16 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_N w1 w2)))
+       | (Bit32, SOME (BVal_Imm (Imm32 w1)), SOME (BVal_Imm (Imm32 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_N w1 w2)))
+       | (Bit64, SOME (BVal_Imm (Imm64 w1)), SOME (BVal_Imm (Imm64 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_N w1 w2)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_N w1 w2)))
+       | _ => NONE)``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_nzcv_ADD_N_def, nzcv_BIR_ADD_NZCV_REWRS] >>
@@ -772,19 +772,19 @@ val BExp_nzcv_ADD_V_eval = store_thm ("BExp_nzcv_ADD_V_eval",
 ``!sz e1 e2 env.
   (bir_eval_exp (BExp_nzcv_ADD_V sz e1 e2) env =
      case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env) of
-         (Bit1, BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_V w1 w2))
-       | (Bit8, BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_V w1 w2))
-       | (Bit16, BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_V w1 w2))
-       | (Bit32, BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_V w1 w2))
-       | (Bit64, BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_V w1 w2))
-       | (Bit128, BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_V w1 w2))
-       | _ => BVal_Unknown)``,
+         (Bit1, SOME (BVal_Imm (Imm1 w1)), SOME (BVal_Imm (Imm1 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_V w1 w2)))
+       | (Bit8, SOME (BVal_Imm (Imm8 w1)), SOME (BVal_Imm (Imm8 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_V w1 w2)))
+       | (Bit16, SOME (BVal_Imm (Imm16 w1)), SOME (BVal_Imm (Imm16 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_V w1 w2)))
+       | (Bit32, SOME (BVal_Imm (Imm32 w1)), SOME (BVal_Imm (Imm32 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_V w1 w2)))
+       | (Bit64, SOME (BVal_Imm (Imm64 w1)), SOME (BVal_Imm (Imm64 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_V w1 w2)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_V w1 w2)))
+       | _ => NONE)``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_nzcv_ADD_V_def, nzcv_BIR_ADD_NZCV_REWRS] >>
@@ -800,19 +800,19 @@ val BExp_nzcv_ADD_Z_eval = store_thm ("BExp_nzcv_ADD_Z_eval",
 ``!e1 e2 env.
   (bir_eval_exp (BExp_nzcv_ADD_Z e1 e2) env =
      case (bir_eval_exp e1 env, bir_eval_exp e2 env) of
-         (BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_Z w1 w2))
-       | (BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_Z w1 w2))
-       | (BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_Z w1 w2))
-       | (BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_Z w1 w2))
-       | (BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_Z w1 w2))
-       | (BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_Z w1 w2))
-       | _ => BVal_Unknown)``,
+         (SOME (BVal_Imm (Imm1 w1)), SOME (BVal_Imm (Imm1 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_Z w1 w2)))
+       | (SOME (BVal_Imm (Imm8 w1)), SOME (BVal_Imm (Imm8 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_Z w1 w2)))
+       | (SOME (BVal_Imm (Imm16 w1)), SOME (BVal_Imm (Imm16 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_Z w1 w2)))
+       | (SOME (BVal_Imm (Imm32 w1)), SOME (BVal_Imm (Imm32 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_Z w1 w2)))
+       | (SOME (BVal_Imm (Imm64 w1)), SOME (BVal_Imm (Imm64 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_Z w1 w2)))
+       | (SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_Z w1 w2)))
+       | _ => NONE)``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_nzcv_ADD_Z_def, nzcv_BIR_ADD_NZCV_REWRS] >>
@@ -825,19 +825,19 @@ val BExp_nzcv_ADD_C_eval = store_thm ("BExp_nzcv_ADD_C_eval",
 ``!e1 e2 env.
   (bir_eval_exp (BExp_nzcv_ADD_C e1 e2) env =
      case (bir_eval_exp e1 env, bir_eval_exp e2 env) of
-         (BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_C w1 w2))
-       | (BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_C w1 w2))
-       | (BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_C w1 w2))
-       | (BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_C w1 w2))
-       | (BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_C w1 w2))
-       | (BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2)) =>
-            BVal_Imm (bool2b (nzcv_BIR_ADD_C w1 w2))
-       | _ => BVal_Unknown)``,
+         (SOME (BVal_Imm (Imm1 w1)), SOME (BVal_Imm (Imm1 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_C w1 w2)))
+       | (SOME (BVal_Imm (Imm8 w1)), SOME (BVal_Imm (Imm8 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_C w1 w2)))
+       | (SOME (BVal_Imm (Imm16 w1)), SOME (BVal_Imm (Imm16 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_C w1 w2)))
+       | (SOME (BVal_Imm (Imm32 w1)), SOME (BVal_Imm (Imm32 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_C w1 w2)))
+       | (SOME (BVal_Imm (Imm64 w1)), SOME (BVal_Imm (Imm64 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_C w1 w2)))
+       | (SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2))) =>
+            SOME (BVal_Imm (bool2b (nzcv_BIR_ADD_C w1 w2)))
+       | _ => NONE)``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_nzcv_ADD_C_def, nzcv_BIR_ADD_NZCV_REWRS] >>
@@ -943,45 +943,45 @@ SIMP_TAC (std_ss++holBACore_ss++boolSimps.EQUIV_EXTRACT_ss) [BExp_ADD_WITH_CARRY
 val BExp_ADD_WITH_CARRY_N_eval = store_thm ("BExp_ADD_WITH_CARRY_N_eval",
 ``!sz e1 e2 ec env.
   (bir_eval_exp (BExp_ADD_WITH_CARRY_N sz e1 e2 ec) env =
-     case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env, bir_dest_bool_val (bir_eval_exp ec env)) of
-         (Bit1, BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_N w1 w2 c))
-       | (Bit8, BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_N w1 w2 c))
-       | (Bit16, BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_N w1 w2 c))
-       | (Bit32, BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_N w1 w2 c))
-       | (Bit64, BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_N w1 w2 c))
-       | (Bit128, BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_N w1 w2 c))
-       | _ => BVal_Unknown)``,
+     case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env, bir_dest_bool_val_opt (bir_eval_exp ec env)) of
+         (Bit1, SOME (BVal_Imm (Imm1 w1)), SOME (BVal_Imm (Imm1 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_N w1 w2 c)))
+       | (Bit8, SOME (BVal_Imm (Imm8 w1)), SOME (BVal_Imm (Imm8 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_N w1 w2 c)))
+       | (Bit16, SOME (BVal_Imm (Imm16 w1)), SOME (BVal_Imm (Imm16 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_N w1 w2 c)))
+       | (Bit32, SOME (BVal_Imm (Imm32 w1)), SOME (BVal_Imm (Imm32 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_N w1 w2 c)))
+       | (Bit64, SOME (BVal_Imm (Imm64 w1)), SOME (BVal_Imm (Imm64 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_N w1 w2 c)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_N w1 w2 c)))
+       | _ => NONE)``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_ADD_WITH_CARRY_N_def, awc_BIR_NZCV_REWRS] >>
 REPEAT CASE_TAC >> (
-   FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss++boolSimps.LIFT_COND_ss) []
+  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss++boolSimps.LIFT_COND_ss) []
 ));
 
 
 val BExp_ADD_WITH_CARRY_V_eval = store_thm ("BExp_ADD_WITH_CARRY_V_eval",
 ``!sz e1 e2 ec env.
   (bir_eval_exp (BExp_ADD_WITH_CARRY_V sz e1 e2 ec) env =
-     case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env, bir_dest_bool_val (bir_eval_exp ec env)) of
-         (Bit1, BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_V w1 w2 c))
-       | (Bit8, BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_V w1 w2 c))
-       | (Bit16, BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_V w1 w2 c))
-       | (Bit32, BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_V w1 w2 c))
-       | (Bit64, BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_V w1 w2 c))
-       | (Bit128, BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_V w1 w2 c))
-       | _ => BVal_Unknown)``,
+     case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env, bir_dest_bool_val_opt (bir_eval_exp ec env)) of
+         (Bit1, SOME (BVal_Imm (Imm1 w1)), SOME (BVal_Imm (Imm1 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_V w1 w2 c)))
+       | (Bit8, SOME (BVal_Imm (Imm8 w1)), SOME (BVal_Imm (Imm8 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_V w1 w2 c)))
+       | (Bit16, SOME (BVal_Imm (Imm16 w1)), SOME (BVal_Imm (Imm16 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_V w1 w2 c)))
+       | (Bit32, SOME (BVal_Imm (Imm32 w1)), SOME (BVal_Imm (Imm32 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_V w1 w2 c)))
+       | (Bit64, SOME (BVal_Imm (Imm64 w1)), SOME (BVal_Imm (Imm64 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_V w1 w2 c)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_V w1 w2 c)))
+       | _ => NONE)``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_ADD_WITH_CARRY_V_def, awc_BIR_NZCV_REWRS] >>
@@ -996,20 +996,20 @@ REPEAT CASE_TAC >> (
 val BExp_ADD_WITH_CARRY_Z_eval = store_thm ("BExp_ADD_WITH_CARRY_Z_eval",
 ``!sz e1 e2 ec env.
   (bir_eval_exp (BExp_ADD_WITH_CARRY_Z sz e1 e2 ec) env =
-     case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env, bir_dest_bool_val (bir_eval_exp ec env)) of
-         (Bit1, BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_Z w1 w2 c))
-       | (Bit8, BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_Z w1 w2 c))
-       | (Bit16, BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_Z w1 w2 c))
-       | (Bit32, BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_Z w1 w2 c))
-       | (Bit64, BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_Z w1 w2 c))
-       | (Bit128, BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_Z w1 w2 c))
-       | _ => BVal_Unknown)``,
+     case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env, bir_dest_bool_val_opt (bir_eval_exp ec env)) of
+         (Bit1, SOME (BVal_Imm (Imm1 w1)), SOME (BVal_Imm (Imm1 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_Z w1 w2 c)))
+       | (Bit8, SOME (BVal_Imm (Imm8 w1)), SOME (BVal_Imm (Imm8 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_Z w1 w2 c)))
+       | (Bit16, SOME (BVal_Imm (Imm16 w1)), SOME (BVal_Imm (Imm16 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_Z w1 w2 c)))
+       | (Bit32, SOME (BVal_Imm (Imm32 w1)), SOME (BVal_Imm (Imm32 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_Z w1 w2 c)))
+       | (Bit64, SOME (BVal_Imm (Imm64 w1)), SOME (BVal_Imm (Imm64 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_Z w1 w2 c)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_Z w1 w2 c)))
+       | _ => NONE)``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_ADD_WITH_CARRY_Z_def, awc_BIR_NZCV_REWRS] >>
@@ -1021,20 +1021,20 @@ REPEAT CASE_TAC >> (
 val BExp_ADD_WITH_CARRY_C_eval = store_thm ("BExp_ADD_WITH_CARRY_C_eval",
 ``!e1 e2 ec env.
   (bir_eval_exp (BExp_ADD_WITH_CARRY_C e1 e2 ec) env =
-     case (bir_eval_exp e1 env, bir_eval_exp e2 env, bir_dest_bool_val (bir_eval_exp ec env)) of
-         (BVal_Imm (Imm1 w1), BVal_Imm (Imm1 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_C w1 w2 c))
-       | (BVal_Imm (Imm8 w1), BVal_Imm (Imm8 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_C w1 w2 c))
-       | (BVal_Imm (Imm16 w1), BVal_Imm (Imm16 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_C w1 w2 c))
-       | (BVal_Imm (Imm32 w1), BVal_Imm (Imm32 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_C w1 w2 c))
-       | (BVal_Imm (Imm64 w1), BVal_Imm (Imm64 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_C w1 w2 c))
-       | (BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2), SOME c) =>
-            BVal_Imm (bool2b (awc_BIR_C w1 w2 c))
-       | _ => BVal_Unknown)``,
+     case (bir_eval_exp e1 env, bir_eval_exp e2 env, bir_dest_bool_val_opt (bir_eval_exp ec env)) of
+         (SOME (BVal_Imm (Imm1 w1)), SOME (BVal_Imm (Imm1 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_C w1 w2 c)))
+       | (SOME (BVal_Imm (Imm8 w1)), SOME (BVal_Imm (Imm8 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_C w1 w2 c)))
+       | (SOME (BVal_Imm (Imm16 w1)), SOME (BVal_Imm (Imm16 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_C w1 w2 c)))
+       | (SOME (BVal_Imm (Imm32 w1)), SOME (BVal_Imm (Imm32 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_C w1 w2 c)))
+       | (SOME (BVal_Imm (Imm64 w1)), SOME (BVal_Imm (Imm64 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_C w1 w2 c)))
+       | (SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2)), SOME c) =>
+            SOME (BVal_Imm (bool2b (awc_BIR_C w1 w2 c)))
+       | _ => NONE)``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_ADD_WITH_CARRY_C_def, awc_BIR_NZCV_REWRS] >>

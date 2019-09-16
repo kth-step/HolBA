@@ -13,12 +13,14 @@ struct
 
   open bir_envTheory;
   open finite_mapTheory;
+  open combinTheory;
 
   open bir_exec_auxLib;
   open bir_exec_typingLib;
 
   open pairSyntax;
   open optionSyntax;
+  open combinSyntax;
 
 (*
   val vars = [``BVar "bit1" (BType_Bool)``,
@@ -37,23 +39,38 @@ struct
 
   val t = ``bir_env_read ^var ^env``;
 
-  val t = ````;
+  val t = ``bir_env_read (BVar "Mem" (BType_Mem Bit64 Bit8))
+  <|bst_pc := <|bpc_label := BL_Label "entry"; bpc_index := 0|>;
+    bst_environ :=
+      BEnv
+        (("R0" =+ SOME (BVal_Imm (Imm64 0w)))
+           (("Mem" =+ SOME (BVal_Mem Bit64 Bit8 FEMPTY)) (K NONE)));
+    bst_status := BST_Running|>.bst_environ``;
+
+  val t = ``bir_env_write (BVar "Mem" (BType_Mem Bit64 Bit8))
+  (BVal_Mem Bit64 Bit8
+     (FEMPTY |+ (25,26) |+ (26,0) |+ (27,0) |+ (28,0) |+ (29,0) |+ (30,0) |+
+      (31,0) |+ (32,0)))
+  <|bst_pc := <|bpc_label := BL_Label "entry"; bpc_index := 0|>;
+    bst_environ :=
+      BEnv
+        (("R0" =+ SOME (BVal_Imm (Imm64 0w)))
+           (("Mem" =+ SOME (BVal_Mem Bit64 Bit8 FEMPTY)) (K NONE)));
+    bst_status := BST_Running|>.bst_environ``;
 *)
 
   fun bir_exec_env_initd_env vars =
     let
-      val fempty_env_tm = (dest_BEnv o snd o dest_eq o concl) bir_empty_env_def;
       val var_pairs = List.map dest_BVar vars;
-      (*
-      bir_valuesTheory.bir_default_value_of_type_def
-      bir_programTheory.bir_declare_initial_value_def
-      *)
       val var_assigns = List.map (fn (n,t) =>
-            mk_pair (n, (mk_pair (t, (snd o dest_eq o concl o EVAL) ``SOME (bir_default_value_of_type ^t)``)))) var_pairs;
+           (n, ((snd o dest_eq o concl o EVAL) ``SOME (bir_default_value_of_type ^t)``))) var_pairs;
 
-      val env = mk_BEnv (list_mk_fupdate (fempty_env_tm, var_assigns));
-      (* TODO: check that "bir_env_vars_are_initialised ^env (bir_vars_of_prog ^prog)" *)
-(* bir_envTheory.bir_env_vars_are_initialised_def *)
+      val env_empty = ``(K NONE) : string -> bir_val_t option``;
+
+      fun list_mk_update ([], env) = env
+	| list_mk_update (h::l, env) = list_mk_update (l, mk_comb (mk_update h, env));
+
+      val env = mk_BEnv (list_mk_update (List.rev var_assigns, env_empty));
     in
       env
     end;
@@ -65,19 +82,19 @@ struct
   val env_lookup_thms =
        [bir_var_name_def,
 	bir_var_type_def,
-	FLOOKUP_EMPTY,
-	FLOOKUP_UPDATE,
+	K_DEF,
+	UPDATE_APPLY,
 	bir_env_lookup_def
        ];
+
+  val type_of_bir_val_thms =
+    [type_of_bir_val_def, type_of_bir_imm_def];
 
   val env_check_type_thms =
        [bir_env_lookup_type_def,
 	bir_env_check_type_def,
         BType_Bool_def
-       ]@env_lookup_thms;
-
-  val type_of_bir_val_thms =
-    [type_of_bir_val_def, type_of_bir_imm_def];
+       ]@env_lookup_thms@type_of_bir_val_thms;
 
 
 
@@ -94,10 +111,11 @@ struct
           (* now we can update the environment accordingly *)
           val thm2 = CONV_RULE (RAND_CONV (
                                     (SIMP_CONV (std_ss++bir_TYPES_ss)
-                                               ([bir_env_update_def]@type_of_bir_val_thms))
+                                               ([bir_env_update_def]@env_lookup_thms@type_of_bir_val_thms@var_eq_thms))
                                  )) thm1;
 
           (* finally we start purging of redundant updates *)
+          (* TODO: this is not working at the moment *)
           val thm3 = CONV_RULE (RAND_CONV (
                        REWRITE_CONV [Once FUPDATE_PURGE]
                      )) thm2;
@@ -118,12 +136,15 @@ struct
   fun bir_exec_env_read_conv var_eq_thms =
     let
       val is_tm_fun = is_bir_env_read;
-      val check_tm_fun = (fn t => (List.exists (fn f => f t) [is_BVal_Imm1,
+      val check_tm_fun = (fn to => is_none to orelse (is_some to andalso
+                                 let val t = dest_some to in
+                                 (List.exists (fn f => f t) [is_BVal_Imm1,
                                                               is_BVal_Imm8,
                                                               is_BVal_Imm16,
                                                               is_BVal_Imm32,
                                                               is_BVal_Imm64]
-                                  ) orelse is_BVal_Mem t);
+                                  ) orelse is_BVal_Mem t
+                               end));
       fun conv t =
         let
           (* make sure that the type of the variable in the environment matches *)

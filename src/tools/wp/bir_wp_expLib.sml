@@ -16,7 +16,7 @@ struct
   open bir_programSyntax;
 
   open bir_wpTheory bir_wpLib;
-  open bir_wp_simpLib;
+  (*open bir_wp_simpLib;*)
 
   val ERR = Feedback.mk_HOL_ERR "bir_wp_expLib";
 

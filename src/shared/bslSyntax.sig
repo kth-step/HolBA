@@ -209,13 +209,11 @@ sig
     val belabel_addrimm_s:  term -> string -> term
 
     (* Basic statements (:bir_stmt_basic_t)
-     * | BStmt_Declare    => bdeclare
      * | BStmt_Assign     => bassign
      * | BStmt_Assert     => bassert
      * | BStmt_Assume     => bassume
      * | BStmt_Observe    => TODO
      *
-     * bdeclare:  bir_var_t -> bir_stmt_basic_t
      * bassign:   (bir_var_t * bir_exp_t) -> bir_stmt_basic_t
      * bassert:   bir_exp_t -> bir_stmt_basic_t
      * bassume:   bir_exp_t -> bir_stmt_basic_t
@@ -223,7 +221,6 @@ sig
      * Note: BStmt_Observe hasn't been added due to lack of use case. Please add
      * it if you need it. In the meantime, use bir_programSyntax.
      *)
-    val bdeclare: term -> term
     val bassign: (term * term) -> term
     val bassert: term -> term
     val bassume: term -> term

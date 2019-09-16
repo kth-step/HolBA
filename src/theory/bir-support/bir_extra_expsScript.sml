@@ -38,13 +38,13 @@ REPEAT CASE_TAC >> (
 val BExp_Align_eval = store_thm ("BExp_Align_eval",
 ``!sz p e env. bir_eval_exp (BExp_Align sz p e) env =
      case (sz, bir_eval_exp e env) of
-         (Bit1,   BVal_Imm (Imm1   w)) => BVal_Imm (Imm1   (align p w))
-       | (Bit8,   BVal_Imm (Imm8   w)) => BVal_Imm (Imm8   (align p w))
-       | (Bit16,  BVal_Imm (Imm16  w)) => BVal_Imm (Imm16  (align p w))
-       | (Bit32,  BVal_Imm (Imm32  w)) => BVal_Imm (Imm32  (align p w))
-       | (Bit64,  BVal_Imm (Imm64  w)) => BVal_Imm (Imm64  (align p w))
-       | (Bit128, BVal_Imm (Imm128 w)) => BVal_Imm (Imm128 (align p w))
-       | (_, _) => BVal_Unknown``,
+         (Bit1,   SOME (BVal_Imm (Imm1   w))) => SOME (BVal_Imm (Imm1   (align p w)))
+       | (Bit8,   SOME (BVal_Imm (Imm8   w))) => SOME (BVal_Imm (Imm8   (align p w)))
+       | (Bit16,  SOME (BVal_Imm (Imm16  w))) => SOME (BVal_Imm (Imm16  (align p w)))
+       | (Bit32,  SOME (BVal_Imm (Imm32  w))) => SOME (BVal_Imm (Imm32  (align p w)))
+       | (Bit64,  SOME (BVal_Imm (Imm64  w))) => SOME (BVal_Imm (Imm64  (align p w)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w))) => SOME (BVal_Imm (Imm128 (align p w)))
+       | (_, _) => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_Align_def, alignmentTheory.align_bitwise_and,
@@ -67,8 +67,7 @@ val align_AND_INTROS = save_thm ("align_AND_INTROS", let
   val thm2 = LIST_CONJ (List.map (fn sz => INST_TYPE [``:'a`` |-> sz] thm0) words_sizes)
 
   val thm3 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
-    FORALL_AND_THM, GSYM CONJ_ASSOC] thm2
+    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM, FORALL_AND_THM, GSYM CONJ_ASSOC] thm2
 in thm3 end);
 
 
@@ -101,13 +100,13 @@ REPEAT CASE_TAC >> (
 val BExp_Aligned_eval = store_thm ("BExp_Aligned_eval",
 ``!sz p e env. bir_eval_exp (BExp_Aligned sz p e) env =
      case (sz, bir_eval_exp e env) of
-         (Bit1,   BVal_Imm (Imm1   w)) => BVal_Imm (bool2b (aligned p w))
-       | (Bit8,   BVal_Imm (Imm8   w)) => BVal_Imm (bool2b (aligned p w))
-       | (Bit16,  BVal_Imm (Imm16  w)) => BVal_Imm (bool2b (aligned p w))
-       | (Bit32,  BVal_Imm (Imm32  w)) => BVal_Imm (bool2b (aligned p w))
-       | (Bit64,  BVal_Imm (Imm64  w)) => BVal_Imm (bool2b (aligned p w))
-       | (Bit128, BVal_Imm (Imm128 w)) => BVal_Imm (bool2b (aligned p w))
-       | (_, _) => BVal_Unknown``,
+         (Bit1,   SOME (BVal_Imm (Imm1   w))) => SOME (BVal_Imm (bool2b (aligned p w)))
+       | (Bit8,   SOME (BVal_Imm (Imm8   w))) => SOME (BVal_Imm (bool2b (aligned p w)))
+       | (Bit16,  SOME (BVal_Imm (Imm16  w))) => SOME (BVal_Imm (bool2b (aligned p w)))
+       | (Bit32,  SOME (BVal_Imm (Imm32  w))) => SOME (BVal_Imm (bool2b (aligned p w)))
+       | (Bit64,  SOME (BVal_Imm (Imm64  w))) => SOME (BVal_Imm (bool2b (aligned p w)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w))) => SOME (BVal_Imm (bool2b (aligned p w)))
+       | (_, _) => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_Aligned_def, alignmentTheory.aligned_bitwise_and] >>
@@ -201,36 +200,41 @@ REPEAT STRIP_TAC >> REPEAT CASE_TAC >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS]
 ));
 
+(* To increase power of EVAL_TAC against nasty bit manipulation stuff *)
+(* TODO: Change the below proof to something less brutal later... *)
+val _ = bitLib.add_bit_compset computeLib.the_compset
 
 val BExp_word_reverse_1_eval = store_thm ("BExp_word_reverse_1_eval",
 ``(!e env. bir_eval_exp (BExp_word_reverse_1_8 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm8 w)) => BVal_Imm (Imm8 (word_reverse w))
-       | _ => BVal_Unknown) /\
+       | SOME (BVal_Imm (Imm8 w)) => SOME (BVal_Imm (Imm8 (word_reverse w)))
+       | _ => NONE) /\
   (!e env. bir_eval_exp (BExp_word_reverse_1_16 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm16 w)) => BVal_Imm (Imm16 (word_reverse w))
-       | _ => BVal_Unknown) /\
+       | SOME (BVal_Imm (Imm16 w)) => SOME (BVal_Imm (Imm16 (word_reverse w)))
+       | _ => NONE) /\
   (!e env. bir_eval_exp (BExp_word_reverse_1_32 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm32 w)) => BVal_Imm (Imm32 (word_reverse w))
-       | _ => BVal_Unknown) /\
+       | SOME (BVal_Imm (Imm32 w)) => SOME (BVal_Imm (Imm32 (word_reverse w)))
+       | _ => NONE) /\
   (!e env. bir_eval_exp (BExp_word_reverse_1_64 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm64 w)) => BVal_Imm (Imm64 (word_reverse w))
-       | _ => BVal_Unknown) /\
+       | SOME (BVal_Imm (Imm64 w)) => SOME (BVal_Imm (Imm64 (word_reverse w)))
+       | _ => NONE) /\
   (!e env. bir_eval_exp (BExp_word_reverse_1_128 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm128 w)) => BVal_Imm (Imm128 (word_reverse w))
-       | _ => BVal_Unknown)``,
+       | SOME (BVal_Imm (Imm128 w)) => SOME (BVal_Imm (Imm128 (word_reverse w)))
+       | _ => NONE)``,
 
-SIMP_TAC (bool_ss++holBACore_ss) [BExp_word_reverse_1_8_def,
-  BExp_word_reverse_1_16_def, BExp_word_reverse_1_32_def, BExp_word_reverse_1_64_def, BExp_word_reverse_1_128_def] >>
+SIMP_TAC (std_ss++holBACore_ss)
+  [BExp_word_reverse_1_8_def, BExp_word_reverse_1_16_def,
+   BExp_word_reverse_1_32_def, BExp_word_reverse_1_64_def,
+   BExp_word_reverse_1_128_def] >>
 REPEAT STRIP_TAC >> REPEAT CASE_TAC >> (
-  FULL_SIMP_TAC (bool_ss++holBACore_ss++wordsLib.SIZES_ss) []
+  FULL_SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) []
 ) >> (
   ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
-  SIMP_TAC (bool_ss++wordsLib.SIZES_ss) [word_or_def, fcpTheory.FCP_BETA,
+  SIMP_TAC (std_ss++wordsLib.SIZES_ss) [word_or_def, fcpTheory.FCP_BETA,
     word_and_def, word_index, bitTheory.BIT_TWO_POW] >>
   SIMP_TAC (std_ss++boolSimps.CONJ_ss++wordsLib.SIZES_ss) [wordsTheory.word_lsl_bv_def,
     word_lsr_bv_def, w2n_n2w, word_lsl_def, fcpTheory.FCP_BETA,
@@ -239,10 +243,11 @@ REPEAT STRIP_TAC >> REPEAT CASE_TAC >> (
   Q.PAT_X_ASSUM `i < _` (STRIP_ASSUME_TAC o SIMP_RULE std_ss [GSYM rich_listTheory.MEM_COUNT_LIST,
     rich_listTheory.COUNT_LIST_compute,
     rich_listTheory.COUNT_LIST_AUX_def_compute, listTheory.MEM]) >>
-  ASM_SIMP_TAC std_ss []
-));
-
-
+  ASM_SIMP_TAC std_ss [] >> (
+      EVAL_TAC
+  )
+)
+);
 
 (******************)
 (* Reverse Word 8 *)
@@ -652,8 +657,8 @@ REPEAT CASE_TAC >> (
 val BExp_word_reverse_8_16_eval = store_thm ("BExp_word_reverse_8_16_eval",
 ``!e env. bir_eval_exp (BExp_word_reverse_8_16 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm16 w)) => BVal_Imm (Imm16 (word_reverse_8_16 w))
-       | _ => BVal_Unknown``,
+       | SOME (BVal_Imm (Imm16 w)) => SOME (BVal_Imm (Imm16 (word_reverse_8_16 w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_16_def] >>
@@ -665,8 +670,8 @@ REPEAT CASE_TAC >> (
 val BExp_word_reverse_8_32_eval = store_thm ("BExp_word_reverse_8_32_eval",
 ``!e env. bir_eval_exp (BExp_word_reverse_8_32 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm32 w)) => BVal_Imm (Imm32 (word_reverse_8_32 w))
-       | _ => BVal_Unknown``,
+       | SOME (BVal_Imm (Imm32 w)) => SOME (BVal_Imm (Imm32 (word_reverse_8_32 w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_32_def] >>
@@ -679,8 +684,8 @@ REPEAT CASE_TAC >> (
 val BExp_word_reverse_8_64_eval = store_thm ("BExp_word_reverse_8_64_eval",
 ``!e env. bir_eval_exp (BExp_word_reverse_8_64 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm64 w)) => BVal_Imm (Imm64 (word_reverse_8_64 w))
-       | _ => BVal_Unknown``,
+       | SOME (BVal_Imm (Imm64 w)) => SOME (BVal_Imm (Imm64 (word_reverse_8_64 w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_64_def] >>
@@ -693,8 +698,8 @@ REPEAT CASE_TAC >> (
 val BExp_word_reverse_8_128_eval = store_thm ("BExp_word_reverse_8_128_eval",
 ``!e env. bir_eval_exp (BExp_word_reverse_8_128 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm128 w)) => BVal_Imm (Imm128 (word_reverse_8_128 w))
-       | _ => BVal_Unknown``,
+       | SOME (BVal_Imm (Imm128 w)) => SOME (BVal_Imm (Imm128 (word_reverse_8_128 w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_8_128_def] >>
@@ -948,8 +953,8 @@ REPEAT CASE_TAC >> (
 val BExp_word_reverse_16_32_eval = store_thm ("BExp_word_reverse_16_32_eval",
 ``!e env. bir_eval_exp (BExp_word_reverse_16_32 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm32 w)) => BVal_Imm (Imm32 (word_reverse_16_32 w))
-       | _ => BVal_Unknown``,
+       | SOME (BVal_Imm (Imm32 w)) => SOME (BVal_Imm (Imm32 (word_reverse_16_32 w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_16_32_def] >>
@@ -962,8 +967,8 @@ REPEAT CASE_TAC >> (
 val BExp_word_reverse_16_64_eval = store_thm ("BExp_word_reverse_16_64_eval",
 ``!e env. bir_eval_exp (BExp_word_reverse_16_64 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm64 w)) => BVal_Imm (Imm64 (word_reverse_16_64 w))
-       | _ => BVal_Unknown``,
+       | SOME (BVal_Imm (Imm64 w)) => SOME (BVal_Imm (Imm64 (word_reverse_16_64 w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_16_64_def] >>
@@ -976,8 +981,8 @@ REPEAT CASE_TAC >> (
 val BExp_word_reverse_16_128_eval = store_thm ("BExp_word_reverse_16_128_eval",
 ``!e env. bir_eval_exp (BExp_word_reverse_16_128 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm128 w)) => BVal_Imm (Imm128 (word_reverse_16_128 w))
-       | _ => BVal_Unknown``,
+       | SOME (BVal_Imm (Imm128 w)) => SOME (BVal_Imm (Imm128 (word_reverse_16_128 w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_16_128_def] >>
@@ -1128,8 +1133,8 @@ REPEAT CASE_TAC >> (
 val BExp_word_reverse_32_64_eval = store_thm ("BExp_word_reverse_32_64_eval",
 ``!e env. bir_eval_exp (BExp_word_reverse_32_64 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm64 w)) => BVal_Imm (Imm64 (word_reverse_32_64 w))
-       | _ => BVal_Unknown``,
+       | SOME (BVal_Imm (Imm64 w)) => SOME (BVal_Imm (Imm64 (word_reverse_32_64 w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_32_64_def] >>
@@ -1141,8 +1146,8 @@ REPEAT CASE_TAC >> (
 val BExp_word_reverse_32_128_eval = store_thm ("BExp_word_reverse_32_128_eval",
 ``!e env. bir_eval_exp (BExp_word_reverse_32_128 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm128 w)) => BVal_Imm (Imm128 (word_reverse_32_128 w))
-       | _ => BVal_Unknown``,
+       | SOME (BVal_Imm (Imm128 w)) => SOME (BVal_Imm (Imm128 (word_reverse_32_128 w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_32_128_def] >>
@@ -1208,8 +1213,8 @@ REPEAT CASE_TAC >> (
 val BExp_word_reverse_64_128_eval = store_thm ("BExp_word_reverse_64_128_eval",
 ``!e env. bir_eval_exp (BExp_word_reverse_64_128 e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm128 w)) => BVal_Imm (Imm128 (word_reverse_64_128 w))
-       | _ => BVal_Unknown``,
+       | SOME (BVal_Imm (Imm128 w)) => SOME (BVal_Imm (Imm128 (word_reverse_64_128 w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_word_reverse_64_128_def] >>
@@ -1331,13 +1336,13 @@ REPEAT CASE_TAC >> (
 val BExp_MSB_eval = store_thm ("BExp_MSB_eval",
 ``!sz e env. bir_eval_exp (BExp_MSB sz e) env =
      case (sz, bir_eval_exp e env) of
-       | (Bit1,   BVal_Imm (Imm1   w)) => BVal_Imm (bool2b (word_msb w))
-       | (Bit8,   BVal_Imm (Imm8   w)) => BVal_Imm (bool2b (word_msb w))
-       | (Bit16,  BVal_Imm (Imm16  w)) => BVal_Imm (bool2b (word_msb w))
-       | (Bit32,  BVal_Imm (Imm32  w)) => BVal_Imm (bool2b (word_msb w))
-       | (Bit64,  BVal_Imm (Imm64  w)) => BVal_Imm (bool2b (word_msb w))
-       | (Bit128, BVal_Imm (Imm128 w)) => BVal_Imm (bool2b (word_msb w))
-       | _ => BVal_Unknown``,
+       | (Bit1,   SOME (BVal_Imm (Imm1   w))) => SOME (BVal_Imm (bool2b (word_msb w)))
+       | (Bit8,   SOME (BVal_Imm (Imm8   w))) => SOME (BVal_Imm (bool2b (word_msb w)))
+       | (Bit16,  SOME (BVal_Imm (Imm16  w))) => SOME (BVal_Imm (bool2b (word_msb w)))
+       | (Bit32,  SOME (BVal_Imm (Imm32  w))) => SOME (BVal_Imm (bool2b (word_msb w)))
+       | (Bit64,  SOME (BVal_Imm (Imm64  w))) => SOME (BVal_Imm (bool2b (word_msb w)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w))) => SOME (BVal_Imm (bool2b (word_msb w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_MSB_def, wordsTheory.word_msb_neg] >>
@@ -1382,13 +1387,13 @@ REPEAT CASE_TAC >> (
 val BExp_LSB_eval = store_thm ("BExp_LSB_eval",
 ``!e env. bir_eval_exp (BExp_LSB e) env =
      case (bir_eval_exp e env) of
-       | (BVal_Imm (Imm1   w)) => BVal_Imm (bool2b (word_lsb w))
-       | (BVal_Imm (Imm8   w)) => BVal_Imm (bool2b (word_lsb w))
-       | (BVal_Imm (Imm16  w)) => BVal_Imm (bool2b (word_lsb w))
-       | (BVal_Imm (Imm32  w)) => BVal_Imm (bool2b (word_lsb w))
-       | (BVal_Imm (Imm64  w)) => BVal_Imm (bool2b (word_lsb w))
-       | (BVal_Imm (Imm128 w)) => BVal_Imm (bool2b (word_lsb w))
-       | _ => BVal_Unknown``,
+       | SOME (BVal_Imm (Imm1   w)) => SOME (BVal_Imm (bool2b (word_lsb w)))
+       | SOME (BVal_Imm (Imm8   w)) => SOME (BVal_Imm (bool2b (word_lsb w)))
+       | SOME (BVal_Imm (Imm16  w)) => SOME (BVal_Imm (bool2b (word_lsb w)))
+       | SOME (BVal_Imm (Imm32  w)) => SOME (BVal_Imm (bool2b (word_lsb w)))
+       | SOME (BVal_Imm (Imm64  w)) => SOME (BVal_Imm (bool2b (word_lsb w)))
+       | SOME (BVal_Imm (Imm128 w)) => SOME (BVal_Imm (bool2b (word_lsb w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_LSB_def, bir_immTheory.bool2b_def, bool2b_word_lsb] >>
@@ -1435,13 +1440,13 @@ REPEAT CASE_TAC >> (
 val BExp_word_bit_eval = store_thm ("BExp_word_bit_eval",
 ``!sz e n env. bir_eval_exp (BExp_word_bit sz e n) env =
      case (sz, bir_eval_exp e env) of
-       | (Bit1,   BVal_Imm (Imm1   w)) => BVal_Imm (bool2b (word_bit n w))
-       | (Bit8,   BVal_Imm (Imm8   w)) => BVal_Imm (bool2b (word_bit n w))
-       | (Bit16,  BVal_Imm (Imm16  w)) => BVal_Imm (bool2b (word_bit n w))
-       | (Bit32,  BVal_Imm (Imm32  w)) => BVal_Imm (bool2b (word_bit n w))
-       | (Bit64,  BVal_Imm (Imm64  w)) => BVal_Imm (bool2b (word_bit n w))
-       | (Bit128, BVal_Imm (Imm128 w)) => BVal_Imm (bool2b (word_bit n w))
-       | _ => BVal_Unknown``,
+       | (Bit1,   SOME (BVal_Imm (Imm1   w))) => SOME (BVal_Imm (bool2b (word_bit n w)))
+       | (Bit8,   SOME (BVal_Imm (Imm8   w))) => SOME (BVal_Imm (bool2b (word_bit n w)))
+       | (Bit16,  SOME (BVal_Imm (Imm16  w))) => SOME (BVal_Imm (bool2b (word_bit n w)))
+       | (Bit32,  SOME (BVal_Imm (Imm32  w))) => SOME (BVal_Imm (bool2b (word_bit n w)))
+       | (Bit64,  SOME (BVal_Imm (Imm64  w))) => SOME (BVal_Imm (bool2b (word_bit n w)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w))) => SOME (BVal_Imm (bool2b (word_bit n w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_word_bit_def, word_bit_ALT_DEF] >>
@@ -1482,19 +1487,19 @@ REPEAT CASE_TAC >> (
 val BExp_word_bit_exp_eval = store_thm ("BExp_word_bit_exp_eval",
 ``!sz e en env. bir_eval_exp (BExp_word_bit_exp sz e en) env =
      case (sz, bir_eval_exp e env, bir_eval_exp en env) of
-       | (Bit1,   BVal_Imm (Imm1   w), BVal_Imm (Imm1   wn)) =>
-            BVal_Imm (bool2b (word_bit (w2n wn) w))
-       | (Bit8,   BVal_Imm (Imm8   w), BVal_Imm (Imm8   wn)) =>
-            BVal_Imm (bool2b (word_bit (w2n wn) w))
-       | (Bit16,  BVal_Imm (Imm16  w), BVal_Imm (Imm16  wn)) =>
-            BVal_Imm (bool2b (word_bit (w2n wn) w))
-       | (Bit32,  BVal_Imm (Imm32  w), BVal_Imm (Imm32  wn)) =>
-            BVal_Imm (bool2b (word_bit (w2n wn) w))
-       | (Bit64,  BVal_Imm (Imm64  w), BVal_Imm (Imm64  wn)) =>
-            BVal_Imm (bool2b (word_bit (w2n wn) w))
-       | (Bit128, BVal_Imm (Imm128 w), BVal_Imm (Imm128 wn)) =>
-            BVal_Imm (bool2b (word_bit (w2n wn) w))
-       | _ => BVal_Unknown``,
+       | (Bit1,   SOME (BVal_Imm (Imm1   w)), SOME (BVal_Imm (Imm1   wn))) =>
+            SOME (BVal_Imm (bool2b (word_bit (w2n wn) w)))
+       | (Bit8,   SOME (BVal_Imm (Imm8   w)), SOME (BVal_Imm (Imm8   wn))) =>
+            SOME (BVal_Imm (bool2b (word_bit (w2n wn) w)))
+       | (Bit16,  SOME (BVal_Imm (Imm16  w)), SOME (BVal_Imm (Imm16  wn))) =>
+            SOME (BVal_Imm (bool2b (word_bit (w2n wn) w)))
+       | (Bit32,  SOME (BVal_Imm (Imm32  w)), SOME (BVal_Imm (Imm32  wn))) =>
+            SOME (BVal_Imm (bool2b (word_bit (w2n wn) w)))
+       | (Bit64,  SOME (BVal_Imm (Imm64  w)), SOME (BVal_Imm (Imm64  wn))) =>
+            SOME (BVal_Imm (bool2b (word_bit (w2n wn) w)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w)), SOME (BVal_Imm (Imm128 wn))) =>
+            SOME (BVal_Imm (bool2b (word_bit (w2n wn) w)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [BExp_word_bit_exp_def, word_bit_ALT_DEF] >>
@@ -1588,19 +1593,19 @@ REPEAT CASE_TAC >> (
 val BExp_ror_exp_eval = store_thm ("BExp_ror_exp_eval",
 ``!sz e1 e2 env. bir_eval_exp (BExp_ror_exp sz e1 e2) env =
      case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env) of
-       | (Bit1,   BVal_Imm (Imm1   w1), BVal_Imm (Imm1   w2)) =>
-            BVal_Imm (Imm1 (w1 #>>~ w2))
-       | (Bit8,   BVal_Imm (Imm8   w1), BVal_Imm (Imm8   w2)) =>
-            BVal_Imm (Imm8 (w1 #>>~ w2))
-       | (Bit16,  BVal_Imm (Imm16  w1), BVal_Imm (Imm16  w2)) =>
-            BVal_Imm (Imm16 (w1 #>>~ w2))
-       | (Bit32,  BVal_Imm (Imm32  w1), BVal_Imm (Imm32  w2)) =>
-            BVal_Imm (Imm32 (w1 #>>~ w2))
-       | (Bit64,  BVal_Imm (Imm64  w1), BVal_Imm (Imm64  w2)) =>
-            BVal_Imm (Imm64 (w1 #>>~ w2))
-       | (Bit128, BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2)) =>
-            BVal_Imm (Imm128 (w1 #>>~ w2))
-       | _ => BVal_Unknown``,
+       | (Bit1,   SOME (BVal_Imm (Imm1   w1)), SOME (BVal_Imm (Imm1   w2))) =>
+            SOME (BVal_Imm (Imm1 (w1 #>>~ w2)))
+       | (Bit8,   SOME (BVal_Imm (Imm8   w1)), SOME (BVal_Imm (Imm8   w2))) =>
+            SOME (BVal_Imm (Imm8 (w1 #>>~ w2)))
+       | (Bit16,  SOME (BVal_Imm (Imm16  w1)), SOME (BVal_Imm (Imm16  w2))) =>
+            SOME (BVal_Imm (Imm16 (w1 #>>~ w2)))
+       | (Bit32,  SOME (BVal_Imm (Imm32  w1)), SOME (BVal_Imm (Imm32  w2))) =>
+            SOME (BVal_Imm (Imm32 (w1 #>>~ w2)))
+       | (Bit64,  SOME (BVal_Imm (Imm64  w1)), SOME (BVal_Imm (Imm64  w2))) =>
+            SOME (BVal_Imm (Imm64 (w1 #>>~ w2)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2))) =>
+            SOME (BVal_Imm (Imm128 (w1 #>>~ w2)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 MP_TAC (SPEC ``0:num`` (INST_TYPE [``:'a`` |-> ``:1``] word_ror_OR_SHIFT)) >>
@@ -1668,19 +1673,19 @@ val BExp_ror_eval = store_thm ("BExp_ror_eval",
     n <= size_of_bir_immtype sz ==> (
     bir_eval_exp (BExp_ror sz e n) env =
      case (sz, bir_eval_exp e env) of
-       | (Bit1,    BVal_Imm (Imm1   w)) =>
-            BVal_Imm (Imm1 (w #>> n))
-       | (Bit8,    BVal_Imm (Imm8   w)) =>
-            BVal_Imm (Imm8 (w #>> n))
-       | (Bit16,   BVal_Imm (Imm16  w)) =>
-            BVal_Imm (Imm16 (w #>> n))
-       | (Bit32,   BVal_Imm (Imm32  w)) =>
-            BVal_Imm (Imm32 (w #>> n))
-       | (Bit64,   BVal_Imm (Imm64  w)) =>
-            BVal_Imm (Imm64 (w #>> n))
-       | (Bit128,  BVal_Imm (Imm128 w)) =>
-            BVal_Imm (Imm128 (w #>> n))
-       | _ => BVal_Unknown)``,
+       | (Bit1,    SOME (BVal_Imm (Imm1   w))) =>
+            SOME (BVal_Imm (Imm1 (w #>> n)))
+       | (Bit8,    SOME (BVal_Imm (Imm8   w))) =>
+            SOME (BVal_Imm (Imm8 (w #>> n)))
+       | (Bit16,   SOME (BVal_Imm (Imm16  w))) =>
+            SOME (BVal_Imm (Imm16 (w #>> n)))
+       | (Bit32,   SOME (BVal_Imm (Imm32  w))) =>
+            SOME (BVal_Imm (Imm32 (w #>> n)))
+       | (Bit64,   SOME (BVal_Imm (Imm64  w))) =>
+            SOME (BVal_Imm (Imm64 (w #>> n)))
+       | (Bit128,  SOME (BVal_Imm (Imm128 w))) =>
+            SOME (BVal_Imm (Imm128 (w #>> n)))
+       | _ => NONE)``,
 
 REPEAT STRIP_TAC >>
 MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:1``] word_ror_bv_OR_SHIFT)) >>
@@ -1782,19 +1787,19 @@ REPEAT CASE_TAC >> (
 val BExp_rol_exp_eval = store_thm ("BExp_rol_exp_eval",
 ``!sz e1 e2 env. bir_eval_exp (BExp_rol_exp sz e1 e2) env =
      case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env) of
-       | (Bit1,   BVal_Imm (Imm1   w1), BVal_Imm (Imm1   w2)) =>
-            BVal_Imm (Imm1 (w1 #<<~ w2))
-       | (Bit8,   BVal_Imm (Imm8   w1), BVal_Imm (Imm8   w2)) =>
-            BVal_Imm (Imm8 (w1 #<<~ w2))
-       | (Bit16,  BVal_Imm (Imm16  w1), BVal_Imm (Imm16  w2)) =>
-            BVal_Imm (Imm16 (w1 #<<~ w2))
-       | (Bit32,  BVal_Imm (Imm32  w1), BVal_Imm (Imm32  w2)) =>
-            BVal_Imm (Imm32 (w1 #<<~ w2))
-       | (Bit64,  BVal_Imm (Imm64  w1), BVal_Imm (Imm64  w2)) =>
-            BVal_Imm (Imm64 (w1 #<<~ w2))
-       | (Bit128, BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2)) =>
-            BVal_Imm (Imm128 (w1 #<<~ w2))
-       | _ => BVal_Unknown``,
+       | (Bit1,   SOME (BVal_Imm (Imm1   w1)), SOME (BVal_Imm (Imm1   w2))) =>
+            SOME (BVal_Imm (Imm1 (w1 #<<~ w2)))
+       | (Bit8,   SOME (BVal_Imm (Imm8   w1)), SOME (BVal_Imm (Imm8   w2))) =>
+            SOME (BVal_Imm (Imm8 (w1 #<<~ w2)))
+       | (Bit16,  SOME (BVal_Imm (Imm16  w1)), SOME (BVal_Imm (Imm16  w2))) =>
+            SOME (BVal_Imm (Imm16 (w1 #<<~ w2)))
+       | (Bit32,  SOME (BVal_Imm (Imm32  w1)), SOME (BVal_Imm (Imm32  w2))) =>
+            SOME (BVal_Imm (Imm32 (w1 #<<~ w2)))
+       | (Bit64,  SOME (BVal_Imm (Imm64  w1)), SOME (BVal_Imm (Imm64  w2))) =>
+            SOME (BVal_Imm (Imm64 (w1 #<<~ w2)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2))) =>
+            SOME (BVal_Imm (Imm128 (w1 #<<~ w2)))
+       | _ => NONE``,
 
 REPEAT GEN_TAC >>
 MP_TAC (SPEC ``0:num`` (INST_TYPE [``:'a`` |-> ``:1``] word_rol_OR_SHIFT)) >>
@@ -1868,19 +1873,19 @@ val BExp_rol_eval = store_thm ("BExp_rol_eval",
     n <= size_of_bir_immtype sz ==> (
     bir_eval_exp (BExp_rol sz e n) env =
      case (sz, bir_eval_exp e env) of
-       | (Bit1,   BVal_Imm (Imm1   w)) =>
-            BVal_Imm (Imm1   (w #<< n))
-       | (Bit8,   BVal_Imm (Imm8   w)) =>
-            BVal_Imm (Imm8   (w #<< n))
-       | (Bit16,  BVal_Imm (Imm16  w)) =>
-            BVal_Imm (Imm16  (w #<< n))
-       | (Bit32,  BVal_Imm (Imm32  w)) =>
-            BVal_Imm (Imm32  (w #<< n))
-       | (Bit64,  BVal_Imm (Imm64  w)) =>
-            BVal_Imm (Imm64  (w #<< n))
-       | (Bit128, BVal_Imm (Imm128 w)) =>
-            BVal_Imm (Imm128 (w #<< n))
-       | _ => BVal_Unknown)``,
+       | (Bit1,   SOME (BVal_Imm (Imm1   w))) =>
+            SOME (BVal_Imm (Imm1   (w #<< n)))
+       | (Bit8,   SOME (BVal_Imm (Imm8   w))) =>
+            SOME (BVal_Imm (Imm8   (w #<< n)))
+       | (Bit16,  SOME (BVal_Imm (Imm16  w))) =>
+            SOME (BVal_Imm (Imm16  (w #<< n)))
+       | (Bit32,  SOME (BVal_Imm (Imm32  w))) =>
+            SOME (BVal_Imm (Imm32  (w #<< n)))
+       | (Bit64,  SOME (BVal_Imm (Imm64  w))) =>
+            SOME (BVal_Imm (Imm64  (w #<< n)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w))) =>
+            SOME (BVal_Imm (Imm128 (w #<< n)))
+       | _ => NONE)``,
 
 REPEAT STRIP_TAC >>
 MP_TAC (GSYM (INST_TYPE [``:'a`` |-> ``:1``] word_rol_bv_OR_SHIFT)) >>
@@ -1973,19 +1978,19 @@ val BExp_extr_eval = store_thm ("BExp_extr_eval",
     n <= size_of_bir_immtype sz ==> (
     bir_eval_exp (BExp_extr sz e1 e2 n) env =
      case (sz, bir_eval_exp e1 env, bir_eval_exp e2 env) of
-       | (Bit1,   BVal_Imm (Imm1   w1), BVal_Imm (Imm1   w2)) =>
-            BVal_Imm (Imm1   (word_shift_extract w1 w2 n))
-       | (Bit8,   BVal_Imm (Imm8   w1), BVal_Imm (Imm8   w2)) =>
-            BVal_Imm (Imm8   (word_shift_extract w1 w2 n))
-       | (Bit16,  BVal_Imm (Imm16  w1), BVal_Imm (Imm16  w2)) =>
-            BVal_Imm (Imm16  (word_shift_extract w1 w2 n))
-       | (Bit32,  BVal_Imm (Imm32  w1), BVal_Imm (Imm32  w2)) =>
-            BVal_Imm (Imm32  (word_shift_extract w1 w2 n))
-       | (Bit64,  BVal_Imm (Imm64  w1), BVal_Imm (Imm64  w2)) =>
-            BVal_Imm (Imm64  (word_shift_extract w1 w2 n))
-       | (Bit128, BVal_Imm (Imm128 w1), BVal_Imm (Imm128 w2)) =>
-            BVal_Imm (Imm128 (word_shift_extract w1 w2 n))
-       | _ => BVal_Unknown)``,
+       | (Bit1,   SOME (BVal_Imm (Imm1   w1)), SOME (BVal_Imm (Imm1   w2))) =>
+            SOME (BVal_Imm (Imm1   (word_shift_extract w1 w2 n)))
+       | (Bit8,   SOME (BVal_Imm (Imm8   w1)), SOME (BVal_Imm (Imm8   w2))) =>
+            SOME (BVal_Imm (Imm8   (word_shift_extract w1 w2 n)))
+       | (Bit16,  SOME (BVal_Imm (Imm16  w1)), SOME (BVal_Imm (Imm16  w2))) =>
+            SOME (BVal_Imm (Imm16  (word_shift_extract w1 w2 n)))
+       | (Bit32,  SOME (BVal_Imm (Imm32  w1)), SOME (BVal_Imm (Imm32  w2))) =>
+            SOME (BVal_Imm (Imm32  (word_shift_extract w1 w2 n)))
+       | (Bit64,  SOME (BVal_Imm (Imm64  w1)), SOME (BVal_Imm (Imm64  w2))) =>
+            SOME (BVal_Imm (Imm64  (word_shift_extract w1 w2 n)))
+       | (Bit128, SOME (BVal_Imm (Imm128 w1)), SOME (BVal_Imm (Imm128 w2))) =>
+            SOME (BVal_Imm (Imm128 (word_shift_extract w1 w2 n)))
+       | _ => NONE)``,
 
 REPEAT STRIP_TAC >>
 SIMP_TAC (std_ss++holBACore_ss++wordsLib.SIZES_ss) [BExp_extr_def,

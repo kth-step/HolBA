@@ -32,10 +32,10 @@ SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_imm_def,
 (* BIR And is equivalent to HOL conjunction of two propositions. *)
 val bir_and_equiv = store_thm("bir_and_equiv",
   ``!env ex1 ex2.
-      (bir_eval_exp ex1 env = bir_val_true) /\
-        (bir_eval_exp ex2 env = bir_val_true) <=>
+      (bir_eval_exp ex1 env = SOME bir_val_true) /\
+        (bir_eval_exp ex2 env = SOME bir_val_true) <=>
       (bir_eval_exp (BExp_BinExp BIExp_And ex1 ex2) env =
-         bir_val_true
+         SOME bir_val_true
       )``,
 
 REPEAT GEN_TAC >>
@@ -53,22 +53,23 @@ EQ_TAC >| [
       FULL_SIMP_TAC (std_ss++holBACore_ss)
                     [bir_eval_bin_exp_REWRS]
     ) >>
-    rename1 `type_of_bir_imm b <> type_of_bir_imm b'` >>
-    Cases_on `type_of_bir_imm b <> type_of_bir_imm b'` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    Cases_on `x` >> Cases_on `x'` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss)
+                    [bir_eval_bin_exp_REWRS]
     ) >>
     METIS_TAC [bir_exp_and_true]
   )
 ]
 );
 
+
 (* A BIR disjunction implies the equivalent HOL disjunction. *)
 val bir_or_impl = store_thm("bir_or_impl",
   ``!env ex1 ex2.
       ((bir_eval_exp (BExp_BinExp BIExp_Or ex1 ex2) env =
-        bir_val_true) ==>
-      ((bir_eval_exp ex1 env = bir_val_true) \/
-       (bir_eval_exp ex2 env = bir_val_true))
+        SOME bir_val_true) ==>
+      ((bir_eval_exp ex1 env = SOME bir_val_true) \/
+       (bir_eval_exp ex2 env = SOME bir_val_true))
       )``,
 
 REPEAT STRIP_TAC >>
@@ -82,7 +83,7 @@ Cases_on `bir_eval_exp ex2 env` >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss)
                 [bir_eval_bin_exp_def]
 ) >>
-Cases_on `type_of_bir_imm b <> type_of_bir_imm b'` >> (
+Cases_on `x` >> Cases_on `x'` >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss)
                 [bir_eval_bin_exp_def]
 ) >>
@@ -99,9 +100,9 @@ Cases_on `b` >> Cases_on `b'` >> (
 val bir_not_equiv = store_thm("bir_not_equiv",
   ``!env ex.
       bir_is_bool_exp_env env ex ==>
-      (~(bir_eval_exp ex env = bir_val_true) <=>
+      (~(bir_eval_exp ex env = SOME bir_val_true) <=>
         (bir_eval_exp (BExp_UnaryExp BIExp_Not ex) env =
-          bir_val_true)
+          SOME bir_val_true)
       )``,
 
 REPEAT STRIP_TAC >>
@@ -116,8 +117,8 @@ val bir_not_equiv_alt = store_thm("bir_not_equiv_alt",
   ``!ex env.
     bir_is_bool_exp_env env ex ==>
     ((bir_eval_unary_exp BIExp_Not (bir_eval_exp ex env) 
-       = bir_val_true) <=>
-    ((bir_eval_exp ex env) = bir_val_false))
+       = SOME bir_val_true) <=>
+    ((bir_eval_exp ex env) = SOME bir_val_false))
   ``,
 
 REPEAT STRIP_TAC >>
@@ -134,8 +135,8 @@ IMP_RES_TAC bir_bool_values >> (
 val bir_not_val_true = store_thm("bir_not_val_true",
   ``!env ex.
       (bir_eval_exp (BExp_UnaryExp BIExp_Not ex) env =
-        bir_val_true) <=>
-      (bir_eval_exp ex env = bir_val_false)``,
+        SOME bir_val_true) <=>
+      (bir_eval_exp ex env = SOME bir_val_false)``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_eval_exp_def,
@@ -143,25 +144,29 @@ FULL_SIMP_TAC std_ss [bir_eval_exp_def,
 Cases_on `(bir_eval_exp ex env)` >| [
   FULL_SIMP_TAC (std_ss++holBACore_ss) [],
 
+  Cases_on `x` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
   Cases_on `b` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
     SIMP_TAC (bool_ss++wordsLib.WORD_ss++wordsLib.WORD_BIT_EQ_ss) []
-  ),
-
-  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  )
 ]
 );
 
 val bir_disj1_false = store_thm("bir_disj1_false",
   ``!ex env.
-      (bir_eval_bin_exp BIExp_Or bir_val_false (bir_eval_exp ex env)
-        = bir_val_true) ==>
-      (bir_eval_exp ex env = bir_val_true)``,
+      (bir_eval_bin_exp BIExp_Or (SOME bir_val_false) (bir_eval_exp ex env)
+        = SOME bir_val_true) ==>
+      (bir_eval_exp ex env = SOME bir_val_true)``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def,
                                       bir_val_false_def] >>
 Cases_on `(bir_eval_exp ex env)` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+Cases_on `x` >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 ) >>
 Cases_on `type_of_bir_imm b` >> (
@@ -179,11 +184,11 @@ val bir_or_equiv = store_thm("bir_or_equiv",
   ``!env ex1 ex2.
     bir_is_bool_exp_env env ex1 ==>
     bir_is_bool_exp_env env ex2 ==>
-    (((bir_eval_exp ex1 env = bir_val_true) \/
-      (bir_eval_exp ex2 env = bir_val_true)
+    (((bir_eval_exp ex1 env = SOME bir_val_true) \/
+      (bir_eval_exp ex2 env = SOME bir_val_true)
      ) <=>
       (bir_eval_exp (BExp_BinExp BIExp_Or ex1 ex2) env =
-         bir_val_true
+         SOME bir_val_true
       )
     )
   ``,
@@ -230,12 +235,12 @@ val bir_impl_equiv = store_thm("bir_impl_equiv",
   ``!env ex1 ex2.
     bir_is_bool_exp_env env ex1 ==>
     bir_is_bool_exp_env env ex2 ==>
-    (((bir_eval_exp ex1 env = bir_val_true) ==>
-      (bir_eval_exp ex2 env = bir_val_true)
+    (((bir_eval_exp ex1 env = SOME bir_val_true) ==>
+      (bir_eval_exp ex2 env = SOME bir_val_true)
      ) <=> (bir_eval_exp (BExp_BinExp BIExp_Or
                                        (BExp_UnaryExp BIExp_Not ex1)
                                        ex2
-                          ) env = bir_val_true
+                          ) env = SOME bir_val_true
            )
     )
   ``,
@@ -254,7 +259,7 @@ val bir_eval_imm = prove(
   ``!env ex.
     bir_env_vars_are_initialised env (bir_vars_of_exp ex) ==>
     bir_is_imm_exp ex ==>
-    (?imm. bir_eval_exp ex env = BVal_Imm imm)``,
+    (?imm. bir_eval_exp ex env = SOME (BVal_Imm imm))``,
 
 METIS_TAC [bir_is_imm_exp_def, type_of_bir_exp_THM_with_init_vars,
            type_of_bir_val_EQ_ELIMS]
@@ -267,7 +272,7 @@ val bir_equal_equiv = store_thm("bir_equal_equiv",
     bir_is_imm_exp ex2 ==>
     (type_of_bir_exp ex1 = type_of_bir_exp ex2) ==>
     ((bir_eval_exp 
-       (BExp_BinPred BIExp_Equal ex1 ex2) env = bir_val_true
+       (BExp_BinPred BIExp_Equal ex1 ex2) env = SOME bir_val_true
      ) <=> (
       (bir_eval_exp ex1 env) =
         (bir_eval_exp ex2 env)
@@ -286,7 +291,7 @@ Cases_on `imm' = imm` >| [
     FULL_SIMP_TAC (std_ss++holBACore_ss) [],
  
     FULL_SIMP_TAC (bool_ss++holBACore_ss++wordsLib.WORD_ss
-                   ++wordsLib.WORD_BIT_EQ_ss) [bir_bin_pred_Equal_REWR]
+                   ++wordsLib.WORD_BIT_EQ_ss) [bir_bin_pred_Equal_REWR, optionTheory.option_CLAUSES]
   ]
 ]
 );

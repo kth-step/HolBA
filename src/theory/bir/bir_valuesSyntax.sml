@@ -26,7 +26,6 @@ val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
 
 val bir_val_t_ty = mk_type ("bir_val_t", []);
 
-val (BVal_Unknown_tm,  is_BVal_Unknown)  = syntax_fns0 "BVal_Unknown";
 val (BVal_Imm_tm,  mk_BVal_Imm, dest_BVal_Imm, is_BVal_Imm)  = syntax_fns1 "BVal_Imm";
 val (BVal_Mem_tm,  mk_BVal_Mem, dest_BVal_Mem, is_BVal_Mem)  = syntax_fns3 "BVal_Mem";
 

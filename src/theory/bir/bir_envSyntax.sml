@@ -23,7 +23,6 @@ val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
 (* Environments *)
 
 val bir_var_environment_t_ty = mk_type ("bir_var_environment_t", []);
-val (bir_empty_env_tm, is_bir_empty_env) = syntax_fns0 "bir_empty_env";
 val (BEnv_tm, mk_BEnv, dest_BEnv, is_BEnv) = syntax_fns1 "BEnv";
 
 
@@ -53,23 +52,6 @@ val (bir_env_write_tm, mk_bir_env_write, dest_bir_env_write, is_bir_env_write) =
 
 val (bir_env_read_tm, mk_bir_env_read, dest_bir_env_read, is_bir_env_read) = syntax_fns2 "bir_env_read";
 
-val (bir_is_well_typed_env_tm, mk_bir_is_well_typed_env, dest_bir_is_well_typed_env, is_bir_is_well_typed_env) = syntax_fns1 "bir_is_well_typed_env";
 
-val (bir_env_varname_is_bound_tm, mk_bir_env_varname_is_bound, dest_bir_env_varname_is_bound, is_bir_env_varname_is_bound) = syntax_fns2 "bir_env_varname_is_bound";
-
-fun mk_bir_env_varname_is_bound_string (s, tm) = mk_bir_env_varname_is_bound (stringSyntax.fromMLstring s, tm);
-
-fun dest_bir_env_varname_is_bound_string tm = let
-  val (s, t) = dest_bir_env_varname_is_bound tm
-in
-  (stringSyntax.fromHOLstring s, t)
-end;
-
-
-val (bir_env_var_is_initialised_tm, mk_bir_env_var_is_initialised, dest_bir_env_var_is_initialised, is_bir_env_var_is_initialised) = syntax_fns2 "bir_env_var_is_initialised";
-
-val (bir_env_var_is_declared_tm, mk_bir_env_var_is_declared, dest_bir_env_var_is_declared, is_bir_env_var_is_declared) = syntax_fns2 "bir_env_var_is_declared";
-
-val (bir_env_order_tm, mk_bir_env_order, dest_bir_env_order, is_bir_env_order) = syntax_fns2 "bir_env_order";
 
 end

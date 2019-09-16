@@ -149,7 +149,10 @@ val (bir_update_mmap_tm,  mk_bir_update_mmap, dest_bir_update_mmap, is_bir_updat
   fun bir_exec_exp_conv var_eq_thms =
     let
       val is_tm_fun = is_bir_eval_exp;
-      val check_tm_fun = (fn t => is_BVal_Imm t orelse is_BVal_Mem t);
+      val check_tm_fun = (fn to => is_none to orelse (is_some to andalso
+                                 let val t = dest_some to in
+                                   is_BVal_Imm t orelse is_BVal_Mem t
+                                 end));
       fun conv t =
         let
           val preproc_conv =

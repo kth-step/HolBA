@@ -99,7 +99,7 @@ val bir_changed_vars_of_stmtB_THM = store_thm ("bir_changed_vars_of_stmtB_THM",
         (bir_exec_stmtB_state stmt st).bst_environ (st.bst_environ))``,
 
 Cases_on `stmt` >> (
-  (* Interesting cases are only assign and declare. In all other cases
+  (* Interesting case is only assign. In all other cases
      the env is not changed. *)
   SIMP_TAC std_ss [bir_changed_vars_of_stmtB_def,
     bir_exec_stmt_assume_SAME_ENV,
@@ -110,28 +110,17 @@ Cases_on `stmt` >> (
   ]
 ) >> (
   SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_env_EQ_FOR_VARS_def, bir_varset_COMPL_IN_EVAL]
-) >| [
-  (* declare *)
-  GEN_TAC >>
-  Cases_on `st.bst_environ` >>
-  ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_declare_def,
-    bir_env_update_def] >>
-  REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def,
-      bir_env_lookup_UPDATE]
-  ),
-
-
+) >>
   (* assign *)
   GEN_TAC >>
   Cases_on `st.bst_environ` >>
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_assign_def,
     bir_env_write_def, LET_DEF, bir_env_update_def] >>
   REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def,
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def,
       bir_env_lookup_UPDATE]
   )
-]);
+);
 
 
 val bir_changed_vars_of_stmt_THM = store_thm ("bir_changed_vars_of_stmt_THM",
@@ -239,16 +228,6 @@ Cases_on `stmt` >> (
     bir_env_EQ_FOR_VARS_EQUIV, LET_THM
   ]
 ) >| [
-  (* declare *)
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_declare_def,
-    bir_env_update_def, bir_vars_of_stmtB_def, SUBSET_DEF, IN_INSERT, NOT_IN_EMPTY,
-    bir_env_EQ_FOR_VARS_def] >>
-  REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def,
-      bir_env_lookup_UPDATE, bir_env_varname_is_bound_ALT2_DEF] >>
-    METIS_TAC[optionTheory.option_CLAUSES]
-  ),
-
   (* assign *)
   rename1 `bir_exec_stmt_assign v e` >>
   `bir_eval_exp e (BEnv env1) = bir_eval_exp e (BEnv env2)` by (
@@ -260,9 +239,12 @@ Cases_on `stmt` >> (
     IN_INSERT, DISJ_IMP_THM, bir_env_EQ_FOR_VARS_def, FORALL_AND_THM,
     bir_env_check_type_def, bir_env_lookup_type_def] >>
   REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def,
-      bir_env_lookup_UPDATE] >>
-    METIS_TAC[]
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def,
+      bir_env_lookup_UPDATE]
+  ) >> (
+    Q.PAT_X_ASSUM `!v. v IN vs ==> _` (fn thm => ASSUME_TAC (Q.SPEC `v` thm)) >>
+    `v IN vs` by FULL_SIMP_TAC std_ss [INSERT_SUBSET] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_env_lookup_def]
   ),
 
   (* assert *)
@@ -273,7 +255,7 @@ Cases_on `stmt` >> (
   ) >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_assert_def] >>
   REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def]
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def]
   ),
 
   (* assume *)
@@ -284,7 +266,7 @@ Cases_on `stmt` >> (
   ) >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_assume_def] >>
   REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def]
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def]
   ),
 
   (* observe *)
@@ -294,18 +276,22 @@ Cases_on `stmt` >> (
      MATCH_MP_TAC bir_vars_of_exp_THM_EQ_FOR_VARS >>
      FULL_SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def, bir_vars_of_stmtB_def,
        IN_BIGUNION, IN_IMAGE, PULL_EXISTS] >>
-     METIS_TAC[]
+     METIS_TAC []
   ) >>
 
   FULL_SIMP_TAC (list_ss++holBACore_ss++pairSimps.gen_beta_ss) [bir_exec_stmt_observe_def,
-    DISJ_IMP_THM, FORALL_AND_THM] >>
+    DISJ_IMP_THM, FORALL_AND_THM, LET_DEF] >>
   REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def]
-  ) >>
-  `(MAP (\e'. bir_eval_exp e' (BEnv env1)) el) =
-   (MAP (\e'. bir_eval_exp e' (BEnv env2)) el)` suffices_by SIMP_TAC std_ss [] >>
-  ASM_SIMP_TAC std_ss [listTheory.MAP_EQ_f]
-]);
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def]
+  ) >> (
+    subgoal `(MAP (\e'. bir_eval_exp e' (BEnv env1)) el) =
+               (MAP (\e'. bir_eval_exp e' (BEnv env2)) el)` >- (
+      ASM_SIMP_TAC std_ss [listTheory.MAP_EQ_f]
+    ) >>
+    FULL_SIMP_TAC std_ss []
+  )
+]
+);
 
 
 val bir_vars_of_stmtB_state_THM = store_thm ("bir_vars_of_stmtB_state_THM",
@@ -344,7 +330,7 @@ Cases_on `stmt` >> (
   rename1 `bir_exec_stmt_jmp _ le _` >>
   `bir_eval_label_exp le st1.bst_environ = bir_eval_label_exp le st2.bst_environ` by
     METIS_TAC[bir_vars_of_label_exp_THM_EQ_FOR_VARS] >>
-  FULL_SIMP_TAC std_ss [bir_exec_stmt_jmp_def, bir_state_set_failed_def, bir_exec_stmt_jmp_to_label_def] >>
+  FULL_SIMP_TAC std_ss [bir_exec_stmt_jmp_def, bir_state_set_typeerror_def, bir_exec_stmt_jmp_to_label_def] >>
   REPEAT CASE_TAC >> ASM_SIMP_TAC (std_ss++holBACore_ss) [],
 
 
@@ -357,16 +343,29 @@ Cases_on `stmt` >> (
               bir_vars_of_exp_THM_EQ_FOR_VARS,
               SUBSET_UNION, bir_env_EQ_FOR_VARS_SUBSET] >>
 
-  FULL_SIMP_TAC std_ss [bir_exec_stmt_cjmp_def, bir_state_set_failed_def,
+  FULL_SIMP_TAC std_ss [bir_exec_stmt_cjmp_def, bir_state_set_typeerror_def,
      bir_exec_stmt_jmp_to_label_def, bir_exec_stmt_jmp_def] >>
-  REPEAT CASE_TAC >> ASM_SIMP_TAC (std_ss++holBACore_ss) [],
+  REPEAT CASE_TAC >>
+  SIMP_TAC (std_ss++holBACore_ss) [LET_DEF] >>
+  Cases_on `bir_eval_exp ec st2.bst_environ` >> (
+    ASM_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF]
+  ) >> (
+    rename1 `bir_dest_bool_val abcde` >> Cases_on `bir_dest_bool_val abcde`
+  ) >> (
+    ASM_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF]
+  ) >> (
+    COND_CASES_TAC >>
+    ASM_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF]
+  ),
 
 
   (* Halt *)
   rename1 `bir_exec_stmt_halt e` >>
   `bir_eval_exp e st1.bst_environ = bir_eval_exp e st2.bst_environ` by
     METIS_TAC[bir_vars_of_exp_THM_EQ_FOR_VARS] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_halt_def]
+  Cases_on `bir_eval_exp e st2.bst_environ` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_halt_def, bir_state_set_typeerror_def]
+  )
 ]);
 
 

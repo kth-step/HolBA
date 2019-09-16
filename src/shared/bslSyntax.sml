@@ -161,8 +161,6 @@ struct
   val belabel_addr128_s = curry (belabel o (uncurry blabel_addr128_s))
 
   (* Basic statements (:bir_stmt_basic_t) *)
-  val bdeclare = mk_BStmt_Declare
-    handle e => raise wrap_exn "bdeclare" e
   val bassign = mk_BStmt_Assign
     handle e => raise wrap_exn "bassign" e
   val bassert = mk_BStmt_Assert

@@ -21,7 +21,7 @@ val _ = new_theory "bir_exp_tautologies";
 val bir_exp_is_taut_def = Define `bir_exp_is_taut e <=> (
   bir_is_bool_exp e /\ (bir_var_set_is_well_typed (bir_vars_of_exp e)) /\
   (!env. (bir_env_vars_are_initialised env (bir_vars_of_exp e)) ==>
-         (bir_eval_exp e env = bir_val_true)))`;
+         (bir_eval_exp e env = SOME bir_val_true)))`;
 
 
 
@@ -29,7 +29,7 @@ val bir_exp_is_taut_def = Define `bir_exp_is_taut e <=> (
 val bir_exp_is_satisfiable_def = Define `bir_exp_is_satisfiable e <=> (
   bir_is_bool_exp e /\ (bir_var_set_is_well_typed (bir_vars_of_exp e)) /\
   (?env. (bir_env_vars_are_initialised env (bir_vars_of_exp e) /\
-         (bir_eval_exp e env = bir_val_true))))`;
+         (bir_eval_exp e env = SOME bir_val_true))))`;
 
 
 
@@ -44,9 +44,10 @@ SIMP_TAC std_ss [bir_exp_is_taut_def, bir_is_bool_exp_REWRS,
 REPEAT STRIP_TAC >>
 ConseqConv.CONSEQ_CONV_TAC (K ConseqConv.EXISTS_EQ___CONSEQ_CONV) >>
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [] >> REPEAT STRIP_TAC >>
-
-`bir_val_is_Bool (bir_eval_exp e env)` by METIS_TAC[bir_is_bool_exp_env_IMPLIES_EVAL_IS_BOOL,
-  bir_is_bool_exp_env_def] >>
+`?va. (bir_eval_exp e env = SOME va) /\ (type_of_bir_val va = (BType_Imm Bit1))` by (
+METIS_TAC [bir_is_bool_exp_def, type_of_bir_exp_THM_with_init_vars]
+) >>
+`bir_val_is_Bool va` by METIS_TAC[bir_val_checker_TO_type_of, BType_Bool_def] >>
 FULL_SIMP_TAC std_ss [bir_val_is_Bool_bool2b_DEF, bir_unary_exp_BOOL_OPER_EVAL,
    BVal_Imm_bool2b_EQ_TF_REWRS, bir_eval_unary_exp_def]);
 
@@ -61,13 +62,13 @@ SIMP_TAC std_ss [bir_exp_is_taut_def, bir_exp_CONG_WEAK_def, bir_is_bool_exp_def
 REPEAT GEN_TAC >> NTAC 2 STRIP_TAC >>
 FULL_SIMP_TAC std_ss [] >>
 REPEAT STRIP_TAC >- (
-  METIS_TAC[bir_var_set_is_well_typed_SUBSET]
+  METIS_TAC[bir_env_oldTheory.bir_var_set_is_well_typed_SUBSET]
 ) >>
-MP_TAC (Q.SPECL [`bir_vars_of_exp e2`, `bir_vars_of_exp e1`, `env`] bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION) >>
+MP_TAC (Q.SPECL [`bir_vars_of_exp e2`, `bir_vars_of_exp e1`, `env`] bir_env_oldTheory.bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION) >>
 ASM_SIMP_TAC std_ss [bir_vars_of_exp_FINITE] >>
 STRIP_TAC >>
 rename1 `bir_env_vars_are_initialised env' (bir_vars_of_exp e1)` >>
-`bir_eval_exp e2 env' = bir_val_true` by METIS_TAC[] >>
+`bir_eval_exp e2 env' = SOME bir_val_true` by METIS_TAC[] >>
 `bir_eval_exp e2 env = bir_eval_exp e2 env'` suffices_by METIS_TAC[] >>
 
 MATCH_MP_TAC bir_vars_of_exp_THM_EQ_FOR_VARS >>
@@ -83,7 +84,7 @@ REPEAT STRIP_TAC >> EQ_TAC >- (
 ) >>
 FULL_SIMP_TAC std_ss [bir_exp_is_taut_def, bir_exp_CONG_WEAK_def, bir_is_bool_exp_def] >>
 REPEAT STRIP_TAC >>
-METIS_TAC[bir_env_vars_are_initialised_SUBSET]);
+METIS_TAC[bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET]);
 
 
 val bir_exp_is_taut_WEAK_CONG_IFF = store_thm ("bir_exp_is_taut_WEAK_CONG_IFF",
@@ -101,10 +102,10 @@ SIMP_TAC std_ss [bir_exp_is_satisfiable_def, bir_exp_CONG_WEAK_def, bir_is_bool_
 REPEAT GEN_TAC >> NTAC 2 STRIP_TAC >>
 FULL_SIMP_TAC std_ss [] >>
 REPEAT STRIP_TAC >- (
-  METIS_TAC[bir_var_set_is_well_typed_SUBSET]
+  METIS_TAC[bir_env_oldTheory.bir_var_set_is_well_typed_SUBSET]
 ) >>
 Q.EXISTS_TAC `env` >>
-METIS_TAC[bir_env_vars_are_initialised_SUBSET]);
+METIS_TAC[bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET]);
 
 
 val bir_exp_is_satisfiable_WEAK_CONG_IFF = store_thm ("bir_exp_is_satisfiable_WEAK_CONG_IFF",
@@ -116,7 +117,7 @@ REPEAT STRIP_TAC >> EQ_TAC >- (
 ) >>
 FULL_SIMP_TAC std_ss [bir_exp_is_satisfiable_def, bir_exp_CONG_WEAK_def, bir_is_bool_exp_def] >>
 REPEAT STRIP_TAC >>
-MP_TAC (Q.SPECL [`bir_vars_of_exp e2`, `bir_vars_of_exp e1`, `env`] bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION) >>
+MP_TAC (Q.SPECL [`bir_vars_of_exp e2`, `bir_vars_of_exp e1`, `env`] bir_env_oldTheory.bir_env_vars_are_initialised_ENV_EXISTS_EXTENSION) >>
 ASM_SIMP_TAC std_ss [bir_vars_of_exp_FINITE] >>
 STRIP_TAC >>
 rename1 `bir_env_vars_are_initialised env' (bir_vars_of_exp e1)` >>
@@ -199,7 +200,7 @@ Q.SUBGOAL_THEN `({v} UNION (bir_vars_of_exp ve UNION bir_vars_of_exp e)) = (v IN
   Q.UNABBREV_TAC `vs` >>
   ASM_SIMP_TAC std_ss [bir_exp_subst1_USED_VARS, IN_UNION, IN_DIFF, IN_INSERT]
 ) >>
-FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_var_set_is_well_typed_INSERT] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_env_oldTheory.bir_var_set_is_well_typed_INSERT] >>
 `(bir_vars_of_exp e SUBSET (v INSERT vs)) /\ (bir_vars_of_exp ve SUBSET vs)` by (
   Q.UNABBREV_TAC `vs` >>
   ASM_SIMP_TAC std_ss [SUBSET_DEF, IN_INSERT, bir_exp_subst1_USED_VARS,
@@ -216,74 +217,84 @@ Q.PAT_X_ASSUM `!v'. v' IN vs ==> _ ==> _` (K ALL_TAC) >>
 ) >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
 FULL_SIMP_TAC std_ss [bir_var_type_def, bir_env_read_def, bir_var_name_def,
-  bir_env_vars_are_initialised_INSERT, bir_env_var_is_initialised_def, PULL_EXISTS,
+  bir_env_oldTheory.bir_env_vars_are_initialised_INSERT, bir_env_oldTheory.bir_env_var_is_initialised_def,
+  PULL_EXISTS, bir_env_check_type_def, bir_env_lookup_type_def,
   pairTheory.pair_case_thm, type_of_bir_val_EQ_ELIMS, bir_val_true_def,
   bir_val_TF_bool2b_DEF] >>
 `!env. bir_env_vars_are_initialised env ((BVar vn (BType_Imm s)) INSERT vs) ==>
-       bir_val_is_Bool (bir_eval_exp e env)` by (
+       ?e_va. ((bir_eval_exp e env = SOME e_va) /\ (bir_val_is_Bool e_va))` by (
    REPEAT STRIP_TAC >>
    MATCH_MP_TAC bir_is_bool_exp_env_IMPLIES_EVAL_IS_BOOL >>
    FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def, bir_is_bool_exp_def] >>
-   METIS_TAC[bir_env_vars_are_initialised_SUBSET]
+   METIS_TAC[bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET]
 ) >>
 
 `!env. bir_env_vars_are_initialised env vs ==>
-       (?i'. (bir_eval_exp ve env = BVal_Imm i') /\ (type_of_bir_imm i' = s))` by (
+       (?i'. (bir_eval_exp ve env = SOME (BVal_Imm i')) /\ (type_of_bir_imm i' = s))` by (
    REPEAT STRIP_TAC >>
-   `type_of_bir_val (bir_eval_exp ve env) = SOME (BType_Imm s)` by (
-     METIS_TAC[type_of_bir_exp_THM_with_init_vars, bir_env_vars_are_initialised_SUBSET]
+   `bir_env_vars_are_initialised env (bir_vars_of_exp ve)` by (
+     METIS_TAC[bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET]
    ) >>
+   IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
    FULL_SIMP_TAC (std_ss++QI_ss) [type_of_bir_val_EQ_ELIMS]
 ) >>
 EQ_TAC >> REPEAT STRIP_TAC >| [
-  `bir_val_is_Bool (bir_eval_exp e env)` by (
-     Q.PAT_X_ASSUM `!env. _` MATCH_MP_TAC >>
-     ASM_SIMP_TAC std_ss [bir_env_vars_are_initialised_INSERT,
-       bir_env_var_is_initialised_def, type_of_bir_val_def, bir_var_name_def, bir_var_type_def]
-  ) >>
-  `?i'. (bir_eval_exp ve env = BVal_Imm i') /\ (type_of_bir_imm i' = s)` by METIS_TAC[] >>
+   `bir_env_vars_are_initialised env (bir_vars_of_exp e)` by (
+     METIS_TAC[bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET, bir_env_oldTheory.bir_env_vars_are_initialised_INSERT,
+       bir_env_oldTheory.bir_env_var_is_initialised_def, type_of_bir_val_def, bir_var_name_def, bir_var_type_def]
+   ) >>
+  `?i'. (bir_eval_exp ve env = SOME (BVal_Imm i')) /\ (type_of_bir_imm i' = s)` by METIS_TAC[type_of_bir_exp_THM_with_init_vars] >>
 
+  IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+  `bir_val_is_Bool va` by (
+     ASM_SIMP_TAC std_ss [bir_val_checker_TO_type_of, BType_Bool_def]
+  ) >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_is_Bool_bool2b_DEF,
     bir_bin_pred_BOOL_OPER_EVAL, bir_bin_pred_Equal_REWR] >>
   STRIP_TAC >>
+
   FULL_SIMP_TAC std_ss [] >>
   `bir_eval_exp (bir_exp_subst1 (BVar vn (BType_Imm s)) ve e) env =
-   BVal_Imm (Imm1 1w)` by METIS_TAC[] >>
+   SOME (BVal_Imm (Imm1 1w))` by METIS_TAC[] >>
   `bir_eval_exp (bir_exp_subst1 (BVar vn (BType_Imm s)) ve e) env =
    bir_eval_exp e env` by (
      MATCH_MP_TAC bir_exp_subst1_EVAL_EQ >>
-     ASM_SIMP_TAC std_ss [bir_env_read_def, bir_var_name_def,
-       pairTheory.pair_case_thm, bir_var_type_def]
+     FULL_SIMP_TAC std_ss [bir_env_read_def, bir_var_name_def,
+       pairTheory.pair_case_thm, bir_var_type_def, bir_env_check_type_def, bir_env_lookup_type_def, type_of_bir_val_def] >>
+     Cases_on `i` >> Cases_on `i'` >> (
+       METIS_TAC [type_of_bir_imm_def]
+     )
   ) >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [],
 
 
-  `?i. (bir_eval_exp ve env = BVal_Imm i) /\ (type_of_bir_imm i = s)` by METIS_TAC[] >>
+  `?i. (bir_eval_exp ve env = SOME (BVal_Imm i)) /\ (type_of_bir_imm i = s)` by METIS_TAC[] >>
   Cases_on `env` >> rename1 `BEnv env_f` >>
-  Q.ABBREV_TAC `env' = BEnv (env_f |+ (vn,  (BType_Imm s,SOME (BVal_Imm i))))` >>
+  Q.ABBREV_TAC `env' = BEnv ((vn =+ SOME (BVal_Imm i)) env_f)` >>
 
   `bir_env_EQ_FOR_VARS vs env' (BEnv env_f)` by (
      SIMP_TAC std_ss [bir_env_EQ_FOR_VARS_def] >>
      REPEAT STRIP_TAC >>
      Q.UNABBREV_TAC `env'` >>
      `vn <> bir_var_name v` by METIS_TAC[] >>
-     FULL_SIMP_TAC std_ss [bir_env_lookup_def, finite_mapTheory.FLOOKUP_UPDATE]
+     FULL_SIMP_TAC std_ss [bir_env_lookup_def, combinTheory.UPDATE_APPLY]
   ) >>
-  `bir_env_lookup vn env' = SOME (BType_Imm s,SOME (BVal_Imm i))` by (
+  `bir_env_lookup vn env' = SOME (BVal_Imm i)` by (
     Q.UNABBREV_TAC `env'` >>
-    ASM_SIMP_TAC std_ss [bir_env_lookup_def, finite_mapTheory.FLOOKUP_UPDATE]
+    ASM_SIMP_TAC std_ss [bir_env_lookup_def, combinTheory.UPDATE_APPLY]
   ) >>
-  `bir_env_read (BVar vn (BType_Imm s)) env' = BVal_Imm i` by (
+  `bir_env_read (BVar vn (BType_Imm s)) env' = SOME (BVal_Imm i)` by (
      ASM_SIMP_TAC std_ss [bir_env_read_def, pairTheory.pair_case_thm,
-       bir_var_name_def, bir_var_type_def]
+       bir_var_name_def, bir_var_type_def, bir_env_check_type_def,
+       bir_env_lookup_type_def, type_of_bir_val_def]
   ) >>
   `bir_env_vars_are_initialised env' vs` by (
-    FULL_SIMP_TAC std_ss [bir_env_vars_are_initialised_def] >>
+    FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_def] >>
     REPEAT STRIP_TAC >>
     `bir_env_var_is_initialised (BEnv env_f) v` by METIS_TAC[] >>
     POP_ASSUM MP_TAC >>
     Cases_on `v` >>
-    SIMP_TAC std_ss [bir_env_var_is_initialised_def] >>
+    SIMP_TAC std_ss [bir_env_oldTheory.bir_env_var_is_initialised_def] >>
     METIS_TAC[bir_var_name_def, bir_env_EQ_FOR_VARS_def]
   ) >>
 
@@ -291,11 +302,14 @@ EQ_TAC >> REPEAT STRIP_TAC >| [
      MATCH_MP_TAC bir_vars_of_exp_THM_EQ_FOR_VARS >>
      METIS_TAC[bir_env_EQ_FOR_VARS_SUBSET]
   ) >>
-  `bir_val_is_Bool (bir_eval_exp e env')` by (
-     Q.PAT_X_ASSUM `!env. _` MATCH_MP_TAC >>
-     ASM_SIMP_TAC std_ss [bir_env_vars_are_initialised_INSERT,
-       bir_env_var_is_initialised_def, type_of_bir_val_def,
-       bir_var_name_def, bir_var_type_def]
+
+   `bir_env_vars_are_initialised env' (bir_vars_of_exp e)` by (
+     METIS_TAC[bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET, bir_env_oldTheory.bir_env_vars_are_initialised_INSERT,
+       bir_env_oldTheory.bir_env_var_is_initialised_def, type_of_bir_val_def, bir_var_name_def, bir_var_type_def]
+   ) >>
+  IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+  `bir_val_is_Bool va` by (
+     ASM_SIMP_TAC std_ss [bir_val_checker_TO_type_of, BType_Bool_def]
   ) >>
 
   Q.PAT_X_ASSUM `!env i. _ ==> _` (MP_TAC o Q.SPECL [`env'`, `i`]) >>
@@ -315,7 +329,8 @@ EQ_TAC >> REPEAT STRIP_TAC >| [
     MATCH_MP_TAC bir_exp_subst1_EVAL_EQ >>
     ASM_SIMP_TAC std_ss [bir_env_read_def]
   ]
-]);
+]
+);
 
 
 

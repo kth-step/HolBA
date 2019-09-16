@@ -12,7 +12,8 @@ struct
   val embexp_basedir_ref = ref (NONE:string option);
 
   fun embexp_basedir_read () =
-      case OS.Process.getEnv("HOLBA_EMBEXP_DIR") of
+      case Option.mapPartial (fn p => if p <> "" then SOME p else NONE)
+                             (OS.Process.getEnv ("HOLBA_EMBEXP_DIR")) of
           NONE => raise ERR "embexp_basedir" "the environment variable HOLBA_EMBEXP_DIR is not set"
         | SOME p => p;
 
@@ -30,7 +31,8 @@ struct
   val logfile_basedir_ref = ref (NONE:string option);
 
   fun logfile_basedir_read () =
-      case OS.Process.getEnv("HOLBA_SCAMV_LOGS") of
+      case Option.mapPartial (fn p => if p <> "" then SOME p else NONE)
+                             (OS.Process.getEnv ("HOLBA_SCAMV_LOGS")) of
           NONE => raise ERR "logfile_basedir" "the environment variable HOLBA_SCAMV_LOGS is not set"
         | SOME p => p;
 

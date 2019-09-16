@@ -9,10 +9,6 @@ sig
    (* The type itself *)
    val bir_val_t_ty : hol_type
 
-   (* BVal_Unknown *)
-   val BVal_Unknown_tm : term
-   val is_BVal_Unknown : term -> bool
-
    (* BVal_Imm *)
    val BVal_Imm_tm   : term
    val dest_BVal_Imm : term -> term

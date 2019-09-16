@@ -12,8 +12,7 @@ val bir_imm_ss = rewrites ((type_rws ``:bir_imm_t``) @ (type_rws ``:bir_immtype_
 (* ------------------------------------------------------------------------- *)
 
 val _ = Datatype `bir_val_t =
-    BVal_Unknown
-  | BVal_Imm bir_imm_t
+    BVal_Imm bir_imm_t
   | BVal_Mem bir_immtype_t (*Addr-Type*) bir_immtype_t (* value-type *) (num |-> num)
 `;
 
@@ -22,6 +21,15 @@ val _ = Datatype `bir_type_t =
     BType_Imm bir_immtype_t
   | BType_Mem bir_immtype_t (* Addr-Type *) bir_immtype_t (* Value-Type *)
 `;
+
+val bir_val_default_def = Define `
+  (bir_val_default (BType_Imm Bit1)   = BVal_Imm (Imm1   0w)) /\
+  (bir_val_default (BType_Imm Bit8)   = BVal_Imm (Imm8   0w)) /\
+  (bir_val_default (BType_Imm Bit16)  = BVal_Imm (Imm16  0w)) /\
+  (bir_val_default (BType_Imm Bit32)  = BVal_Imm (Imm32  0w)) /\
+  (bir_val_default (BType_Imm Bit64)  = BVal_Imm (Imm64  0w)) /\
+  (bir_val_default (BType_Imm Bit128) = BVal_Imm (Imm128 0w)) /\
+  (bir_val_default (BType_Mem at vt)  = BVal_Mem at vt (FEMPTY))`;
 
 val BType_Bool_def = Define `BType_Bool = BType_Imm Bit1`;
 
@@ -34,14 +42,13 @@ val bir_type_ss = rewrites (type_rws ``:bir_type_t``);
 (*  Checkers for Values                                                      *)
 (* ------------------------------------------------------------------------- *)
 
-val bir_val_is_Unknown_def = Define `bir_val_is_Unknown v = (v = BVal_Unknown)`;
 val bir_val_is_Imm_def = Define `bir_val_is_Imm v = ?b. (v = BVal_Imm b)`;
 val bir_val_is_Imm_s_def = Define `bir_val_is_Imm_s s v = ?n. (v = BVal_Imm (n2bs n s))`;
 val bir_val_is_Bool_def = Define `bir_val_is_Bool = bir_val_is_Imm_s Bit1`;
 val bir_val_is_Mem_def = Define `bir_val_is_Mem v = ?at vt mmap. (v = BVal_Mem at vt mmap)`;
 
 val bir_val_checker_DEFS = save_thm ("bir_val_checker_DEFS", LIST_CONJ [
-  bir_val_is_Unknown_def, bir_val_is_Imm_def, bir_val_is_Imm_s_def,
+  bir_val_is_Imm_def, bir_val_is_Imm_s_def,
   bir_val_is_Bool_def, bir_val_is_Mem_def]);
 
 
@@ -56,23 +63,15 @@ Cases_on `v` >> (
 
 
 val bir_val_checker_REWRS = store_thm ("bir_val_checker_REWRS",
-  ``bir_val_is_Unknown BVal_Unknown /\
-    (!b. ~bir_val_is_Unknown (BVal_Imm b)) /\
-    (!at vt mmap. ~(bir_val_is_Unknown (BVal_Mem at vt mmap))) /\
-
-    ~(bir_val_is_Imm BVal_Unknown) /\
-    (!b. bir_val_is_Imm (BVal_Imm b)) /\
+  ``(!b. bir_val_is_Imm (BVal_Imm b)) /\
     (!at vt mmap. ~(bir_val_is_Imm (BVal_Mem at vt mmap))) /\
 
-    ~(bir_val_is_Mem BVal_Unknown) /\
     (!b. ~(bir_val_is_Mem (BVal_Imm b))) /\
     (!at vt mmap. (bir_val_is_Mem (BVal_Mem at vt mmap))) /\
 
-    (!s. ~(bir_val_is_Imm_s s BVal_Unknown)) /\
     (!s b. bir_val_is_Imm_s s (BVal_Imm b) <=> (type_of_bir_imm b = s)) /\
     (!s at vt mmap. ~(bir_val_is_Imm_s s (BVal_Mem at vt mmap))) /\
 
-    (~(bir_val_is_Bool BVal_Unknown)) /\
     (!b. bir_val_is_Bool (BVal_Imm b) <=> (type_of_bir_imm b = Bit1)) /\
     (!at vt mmap. ~(bir_val_is_Bool (BVal_Mem at vt mmap)))``,
 
@@ -117,18 +116,70 @@ Cases_on `b` >> SIMP_TAC (std_ss++bir_imm_ss) [bir_val_checker_REWRS, bir_dest_b
   type_of_bir_imm_def]);
 
 val bir_dest_bool_val_bool2b = store_thm ("bir_dest_bool_val_bool2b",
-  ``bir_dest_bool_val (BVal_Imm (bool2b b)) = SOME b``,
+  ``!b. bir_dest_bool_val (BVal_Imm (bool2b b)) = SOME b``,
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss) [
   bool2b_def, bool2w_def, bir_dest_bool_val_def]);
+
+(* TODO: See if this really needs to be used *)
+val bir_dest_bool_val_opt_def = Define `
+  (bir_dest_bool_val_opt (SOME v) = bir_dest_bool_val v) /\
+  (bir_dest_bool_val_opt _ = NONE)`
+
+(* TODO: See if this really needs to be used *)
+val bir_dest_bool_val_opt_EQ_SOME = store_thm ("bir_dest_bool_val_opt_EQ_SOME",
+  ``!v b.
+    (bir_dest_bool_val_opt v = SOME b) <=> (v = SOME (BVal_Imm (bool2b b)))``,
+
+Cases >> (
+  SIMP_TAC std_ss [bir_dest_bool_val_opt_def]
+) >>
+Cases_on `x` >> (
+  SIMP_TAC (std_ss++bir_val_ss) [bir_dest_bool_val_opt_def, bir_dest_bool_val_def]
+) >>
+rename1 `BVal_Imm i` >>
+Cases_on `i` >> SIMP_TAC (std_ss++bir_imm_ss) [bir_dest_bool_val_def, bool2b_NEQ_IMM_ELIMS] >>
+SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def] >>
+Cases_on `b'` >> SIMP_TAC std_ss [bool2w_def] >>
+METIS_TAC[word1_dichotomy, word1_distinct]
+);
+
+(* TODO: See if this really needs to be used *)
+val bir_dest_bool_val_opt_EQ_NONE = store_thm ("bir_dest_bool_val_opt_EQ_NONE",
+  ``!v_opt.
+    (bir_dest_bool_val_opt v_opt = NONE) <=>
+      ((?v. (v_opt = SOME v) /\ ~(bir_val_is_Bool v)) \/
+       (v_opt = NONE)
+      )``,
+
+Cases >> (
+  SIMP_TAC std_ss [bir_dest_bool_val_opt_def]
+) >>
+Cases_on `x` >> (
+  SIMP_TAC std_ss [bir_val_checker_REWRS, bir_dest_bool_val_opt_def, bir_dest_bool_val_def]
+) >>
+rename1 `BVal_Imm i` >>
+Cases_on `i` >> (
+  SIMP_TAC (std_ss++bir_imm_ss) [bir_val_checker_REWRS, bir_dest_bool_val_def,
+    type_of_bir_imm_def]
+)
+);
+
+(* TODO: See if this really needs to be used *)
+val bir_dest_bool_val_opt_bool2b = store_thm ("bir_dest_bool_val_opt_bool2b",
+  ``!b.
+    bir_dest_bool_val_opt (SOME (BVal_Imm (bool2b b))) = SOME b``,
+
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss)
+  [bool2b_def, bool2w_def, bir_dest_bool_val_opt_def, bir_dest_bool_val_def]
+);
 
 (* ------------------------------------------------------------------------- *)
 (*  Some basic typing                                                        *)
 (* ------------------------------------------------------------------------- *)
 
 val type_of_bir_val_def = Define `
-  (type_of_bir_val BVal_Unknown = NONE) /\
-  (type_of_bir_val (BVal_Imm imm) = SOME (BType_Imm (type_of_bir_imm imm))) /\
-  (type_of_bir_val (BVal_Mem at vt _) = SOME (BType_Mem at vt))`;
+  (type_of_bir_val (BVal_Imm imm) = (BType_Imm (type_of_bir_imm imm))) /\
+  (type_of_bir_val (BVal_Mem at vt _) = (BType_Mem at vt))`;
 
 val bir_type_is_Imm_def = Define `bir_type_is_Imm ty = (?s. ty = BType_Imm s)`;
 val bir_type_is_Imm_s_def = Define `bir_type_is_Imm_s s ty = (ty = BType_Imm s)`
@@ -169,10 +220,9 @@ SIMP_TAC (std_ss++bir_type_ss) [bir_type_is_Imm_def, bir_type_is_Bool_def]);
 
 
 val type_of_bir_val_EQ_ELIMS = store_thm ("type_of_bir_val_EQ_ELIMS",
-  ``(!v. (type_of_bir_val v = NONE) <=> (v = BVal_Unknown)) /\
-    (!v ty. (type_of_bir_val v = SOME (BType_Imm ty)) <=>
+  ``(!v ty. (type_of_bir_val v = (BType_Imm ty)) <=>
             (?i. (type_of_bir_imm i = ty) /\ (v = BVal_Imm i))) /\
-    (!v aty vty. (type_of_bir_val v = SOME (BType_Mem aty vty)) <=>
+    (!v aty vty. (type_of_bir_val v = (BType_Mem aty vty)) <=>
             (?f. (v = BVal_Mem aty vty f)))``,
 REPEAT CONJ_TAC >> Cases >> (
   SIMP_TAC (std_ss++bir_val_ss++bir_type_ss) [type_of_bir_val_def]
@@ -180,15 +230,14 @@ REPEAT CONJ_TAC >> Cases >> (
 
 
 val bir_val_checker_TO_type_of = store_thm ("bir_val_checker_TO_type_of",
-  ``(!v. (bir_val_is_Unknown v) <=> (type_of_bir_val v = NONE)) /\
-    (!v ty. (bir_val_is_Imm_s ty v) <=> (type_of_bir_val v = SOME (BType_Imm ty))) /\
-    (!v. (bir_val_is_Imm v) <=> (?ty. type_of_bir_val v = SOME (BType_Imm ty))) /\
-    (!v. (bir_val_is_Bool v) <=> (type_of_bir_val v = SOME BType_Bool)) /\
+  ``(!v ty. (bir_val_is_Imm_s ty v) <=> (type_of_bir_val v = (BType_Imm ty))) /\
+    (!v. (bir_val_is_Imm v) <=> (?ty. type_of_bir_val v = (BType_Imm ty))) /\
+    (!v. (bir_val_is_Bool v) <=> (type_of_bir_val v = BType_Bool)) /\
     (!v. (bir_val_is_Mem v <=>
-         (?aty vty. type_of_bir_val v = SOME (BType_Mem aty vty))))``,
+         (?aty vty. type_of_bir_val v = (BType_Mem aty vty))))``,
 
 SIMP_TAC (std_ss++boolSimps.CONJ_ss) [type_of_bir_val_EQ_ELIMS, BType_Bool_def, bir_val_is_Bool_def,
-  bir_val_is_Imm_s_ALT_DEF, bir_val_is_Imm_def, bir_val_is_Unknown_def,
+  bir_val_is_Imm_s_ALT_DEF, bir_val_is_Imm_def,
   bir_val_is_Mem_def] >>
 METIS_TAC[]);
 
@@ -230,7 +279,7 @@ val bir_default_value_of_type_def = Define `
   (bir_default_value_of_type (BType_Mem a_s v_s) = BVal_Mem a_s v_s (FEMPTY))`;
 
 val bir_default_value_of_type_SPEC = store_thm ("bir_default_value_of_type_SPEC",
-  ``!ty. type_of_bir_val (bir_default_value_of_type ty) = SOME ty``,
+  ``!ty. type_of_bir_val (bir_default_value_of_type ty) = ty``,
 
 Cases >> (
   SIMP_TAC std_ss [bir_default_value_of_type_def, type_of_bir_val_def, type_of_n2bs]

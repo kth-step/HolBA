@@ -50,7 +50,6 @@ fun dest_bir_stmt_basic_t_ty ty =
 
 val is_bir_stmt_basic_t_ty = can dest_bir_stmt_basic_t_ty;
 
-val (BStmt_Declare_tm,  mk_BStmt_Declare, dest_BStmt_Declare, is_BStmt_Declare)  = syntax_fns1 "BStmt_Declare";
 val (BStmt_Assign_tm,  mk_BStmt_Assign, dest_BStmt_Assign, is_BStmt_Assign)  = syntax_fns2 "BStmt_Assign";
 val (BStmt_Assert_tm,  mk_BStmt_Assert, dest_BStmt_Assert, is_BStmt_Assert)  = syntax_fns1 "BStmt_Assert";
 val (BStmt_Assume_tm,  mk_BStmt_Assume, dest_BStmt_Assume, is_BStmt_Assume)  = syntax_fns1 "BStmt_Assume";

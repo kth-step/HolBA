@@ -40,7 +40,7 @@ val bir_machine_lifted_imm_OK_def = Define `bir_machine_lifted_imm_OK (BMLI v (l
 
 val bir_machine_lifted_imm_def = Define `bir_machine_lifted_imm (BMLI v lf) bs ms <=>
 
-(bir_env_read v bs.bst_environ = BVal_Imm (lf ms)) /\
+(bir_env_read v bs.bst_environ = SOME (BVal_Imm (lf ms))) /\
 (bir_env_var_is_declared bs.bst_environ (bir_temp_var T v))`;
 
 
@@ -55,8 +55,8 @@ val bir_machine_lifted_imm_INITIALISED = store_thm ("bir_machine_lifted_imm_INIT
                  bir_machine_lifted_imm (BMLI v lf) bs ms ==>
                  (bir_env_var_is_initialised bs.bst_environ v)``,
 SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_imm_def, bir_machine_lifted_imm_OK_def,
-  bir_env_var_is_initialised_def,
-  bir_var_name_def, bir_var_type_def, bir_env_read_NEQ_UNKNOWN,
+  bir_env_oldTheory.bir_env_var_is_initialised_def,
+  bir_var_name_def, bir_var_type_def, bir_env_read_NEQ_NONE,
   type_of_bir_val_def]);
 
 
@@ -65,8 +65,8 @@ val bir_machine_lifted_imm_DECLARED = store_thm ("bir_machine_lifted_imm_DECLARE
       bir_machine_lifted_imm (BMLI v lf) bs ms ==>
       (bir_env_var_is_declared bs.bst_environ v)``,
 
-SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_imm_def, bir_env_var_is_declared_def,
-  bir_env_read_NEQ_UNKNOWN, bir_env_lookup_type_def]);
+SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_imm_def, bir_env_oldTheory.bir_env_var_is_declared_def,
+  bir_env_read_NEQ_NONE, bir_env_lookup_type_def]);
 
 
 val bir_machine_lifted_imm_DECLARED_TEMP = store_thm ("bir_machine_lifted_imm_DECLARED_TEMP",
@@ -89,10 +89,10 @@ SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_imm_def,
   bir_is_lifted_exp_def, bir_is_lifted_imm_exp_def,
   bir_eval_exp_def, type_of_bir_exp_def,
   bir_var_type_def, bir_vars_of_exp_def,
-  bir_env_vars_are_initialised_INSERT,
-  bir_env_vars_are_initialised_EMPTY,
-  bir_env_var_is_initialised_def,
-  bir_env_read_NEQ_UNKNOWN, type_of_bir_val_def]);
+  bir_env_oldTheory.bir_env_vars_are_initialised_INSERT,
+  bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
+  bir_env_oldTheory.bir_env_var_is_initialised_def,
+  bir_env_read_NEQ_NONE, type_of_bir_val_def]);
 
 
 val bir_machine_lifted_imms_def = Define `bir_machine_lifted_imms vl bs ms =
@@ -117,7 +117,7 @@ val bir_machine_lifted_mem_OK_def = Define `bir_machine_lifted_mem_OK (BMLM v (l
 val bir_machine_lifted_mem_def = Define `bir_machine_lifted_mem (BMLM v lf) bs ms <=>
 
 ?sa sb mem_n. (bir_var_type v = BType_Mem sa sb) /\
-(bir_env_read v bs.bst_environ = BVal_Mem sa sb mem_n) /\
+(bir_env_read v bs.bst_environ = SOME (BVal_Mem sa sb mem_n)) /\
 (lf ms = (\a. n2w (bir_load_mmap mem_n (w2n a)))) /\
 (bir_env_var_is_declared bs.bst_environ (bir_temp_var T v))`;
 
@@ -133,8 +133,8 @@ val bir_machine_lifted_mem_INITIALISED = store_thm ("bir_machine_lifted_mem_INIT
                  bir_machine_lifted_mem (BMLM v lf) bs ms ==>
                  (bir_env_var_is_initialised bs.bst_environ v)``,
 SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_mem_def, bir_machine_lifted_mem_OK_def,
-  bir_env_var_is_initialised_def,
-  bir_var_name_def, bir_var_type_def, bir_env_read_NEQ_UNKNOWN,
+  bir_env_oldTheory.bir_env_var_is_initialised_def,
+  bir_var_name_def, bir_var_type_def, bir_env_read_NEQ_NONE,
   type_of_bir_val_def, GSYM LEFT_FORALL_IMP_THM]);
 
 
@@ -143,8 +143,9 @@ val bir_machine_lifted_mem_DECLARED = store_thm ("bir_machine_lifted_mem_DECLARE
       bir_machine_lifted_mem (BMLM v lf) bs ms ==>
       (bir_env_var_is_declared bs.bst_environ v)``,
 
-SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_mem_def, bir_env_var_is_declared_def,
-  bir_env_read_NEQ_UNKNOWN, bir_env_lookup_type_def, GSYM LEFT_FORALL_IMP_THM]);
+SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_mem_def, bir_env_read_def, GSYM bir_env_oldTheory.bir_env_var_is_declared_ALT_DEF] >>
+REPEAT STRIP_TAC
+);
 
 
 val bir_machine_lifted_mem_DECLARED_TEMP = store_thm ("bir_machine_lifted_mem_DECLARED_TEMP",
@@ -167,10 +168,10 @@ SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_mem_def,
   bir_is_lifted_exp_def, bir_is_lifted_mem_exp_def,
   bir_eval_exp_def, type_of_bir_exp_def,
   bir_var_type_def, bir_vars_of_exp_def,
-  bir_env_vars_are_initialised_INSERT,
-  bir_env_vars_are_initialised_EMPTY,
-  bir_env_var_is_initialised_def,
-  bir_env_read_NEQ_UNKNOWN, type_of_bir_val_def,
+  bir_env_oldTheory.bir_env_vars_are_initialised_INSERT,
+  bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
+  bir_env_oldTheory.bir_env_var_is_initialised_def,
+  bir_env_read_NEQ_NONE, type_of_bir_val_def,
   GSYM LEFT_FORALL_IMP_THM] >>
   REWRITE_TAC [n2w_bir_load_mmap_w2n_thm]
 );

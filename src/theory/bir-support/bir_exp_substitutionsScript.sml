@@ -321,15 +321,18 @@ REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [bir_exp_subst1_def] >>
 ONCE_REWRITE_TAC [GSYM bir_exp_subst_UNUSED_VARS] >>
 ASM_SIMP_TAC std_ss [DRESTRICT_FUPDATE, DRESTRICT_FEMPTY,
-  bir_exp_subst_EMPTY])
+  bir_exp_subst_EMPTY]);
 
 
 val bir_eval_exp_subst1_env = store_thm("bir_eval_exp_subst1_env",
-``!ex en var ty e1.
-    (?r. (bir_env_lookup var (BEnv en)) = SOME (ty, r)) ==>
+``!ex env varn ty e1 e1_va.
+    (bir_env_lookup_type varn (BEnv env) = SOME ty) ==>
+    (bir_eval_exp e1 (BEnv env) = SOME e1_va) ==>
+    (type_of_bir_val e1_va = ty) ==>
     (bir_eval_exp ex
-      (BEnv (en |+ (var,ty,SOME (bir_eval_exp e1 (BEnv en))))) =
-        bir_eval_exp (bir_exp_subst1 (BVar var ty) e1 ex) (BEnv en)
+      (BEnv ((varn =+ SOME e1_va) env)) =
+        bir_eval_exp (bir_exp_subst1 (BVar varn ty) e1 ex)
+                     (BEnv env)
     )``,
 
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
@@ -338,25 +341,17 @@ Induct_on `ex` >> (
   FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_exp_subst1_REWRS]
 ) >>
 (* Case not handled: BExp_Den *)
-Cases_on `b = BVar var ty` >- (
-  RW_TAC std_ss [bir_env_read_def, bir_var_name_def,
-                 bir_env_lookup_def] >>
-  EVAL_TAC
+Cases_on `b = BVar varn ty` >- (
+  FULL_SIMP_TAC std_ss [bir_exp_subst1_REWRS, bir_env_read_def, bir_var_name_def,
+                 bir_env_lookup_def, bir_env_check_type_def, bir_env_lookup_type_def] >>
+  FULL_SIMP_TAC std_ss [bir_var_type_def] >>
+  FULL_SIMP_TAC std_ss [combinTheory.UPDATE_def]
 ) >>
 Cases_on `b` >>
-Cases_on `var <> s` >- (
-  FULL_SIMP_TAC std_ss [bir_eval_exp_def] >>
-  EVAL_TAC >>
-  FULL_SIMP_TAC std_ss []
-) >>
-subgoal `b' <> ty` >- (
-  METIS_TAC[]
-) >>
-FULL_SIMP_TAC std_ss [bir_env_lookup_def] >>
-EVAL_TAC >>
-RW_TAC std_ss [] >>
-CASE_TAC
-);
+Cases_on `varn = s` >> (
+  FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_env_read_def, bir_env_check_type_def, bir_env_lookup_type_def, bir_var_type_def, bir_var_name_def, bir_env_lookup_def, combinTheory.UPDATE_APPLY, bir_var_eq_EXPAND] >>
+  REV_FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_env_read_def, bir_env_check_type_def, bir_env_lookup_type_def, bir_var_type_def, bir_var_name_def, bir_env_lookup_def, combinTheory.UPDATE_APPLY, bir_var_eq_EXPAND]
+));
 
 
 val _ = export_theory();
