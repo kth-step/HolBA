@@ -17,7 +17,7 @@ source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 
 # embexp git urls
 GIT_URL_PROG_PLAT=https://github.com/kth-step/EmbExp-ProgPlatform.git
-GIT_URL_REMOTE=https://github.com/kth-step/EmbExp-Remote.git
+GIT_URL_BOX=https://github.com/kth-step/EmbExp-Box.git
 
 EMBEXP_DIR=${HOLBA_OPT_DIR}/embexp
 
@@ -39,5 +39,5 @@ cd ${EMBEXP_DIR}
 
 # clone both relevant embexp repositories
 git clone ${GIT_URL_PROG_PLAT}
-git clone ${GIT_URL_REMOTE}
+git clone ${GIT_URL_BOX}
 
