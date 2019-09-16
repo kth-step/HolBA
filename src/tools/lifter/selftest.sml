@@ -1065,3 +1065,12 @@ in () end;
 
 
 val _ = TextIO.closeOut log
+
+(* check whether the result is different *)
+val diff_cmd = "git diff --exit-code " ^ log_filename;
+
+val _ = if OS.Process.isSuccess (OS.Process.system diff_cmd) then
+          ()
+        else
+          raise ERR "holba/src/tools/lifter/selftest.sml" "selftest output diverged";
+
