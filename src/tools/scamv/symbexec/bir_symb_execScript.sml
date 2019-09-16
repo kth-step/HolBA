@@ -73,6 +73,10 @@ val bir_symb_state_set_failed_def = Define `
     bir_symb_state_set_failed st = 
     st with bsst_status := BST_Failed`;
 
+val bir_symb_state_set_typeerror_def = Define `
+    bir_symb_state_set_typeerror st = 
+    st with bsst_status := BST_TypeError`;
+
 val bir_symb_state_is_terminated_def = Define `
     bir_symb_state_is_terminated st = 
         if st.bsst_status = BST_Running then F else T`;
@@ -145,7 +149,7 @@ val bir_symb_eval_exp_def = Define `
             (bir_symb_eval_exp a_e env) en (bir_symb_eval_exp v_e env))`;
 
 val bir_symb_eval_exp_empty_def = Define `
-    bir_symb_eval_exp_empty e = bir_eval_exp e (BEnv FEMPTY)
+    bir_symb_eval_exp_empty e = bir_eval_exp e (BEnv (K NONE))
     `;
 
 
@@ -182,7 +186,10 @@ val bir_symb_exec_stmt_jmp_def = Define `
 (* End of execution *)
 val bir_symb_exec_stmt_halt_def = Define `
     bir_symb_exec_stmt_halt ex (st: 'a bir_symb_state_t) = 
-    (st with bsst_status := BST_Halted (bir_symb_eval_exp_empty (bir_symb_eval_exp ex st.bsst_environ)))`;
+      case bir_symb_eval_exp_empty (bir_symb_eval_exp ex st.bsst_environ) of
+	| NONE => bir_symb_state_set_typeerror st
+	| SOME v => st with bsst_status := BST_Halted v
+    `;
 
 (* Conditional jump:
  * Return a list with two states where 
@@ -214,11 +221,6 @@ val bir_symb_exec_stmtE_def = Define `
 (********************)
 
 
-(* We declare all variables before execution, so raise error if this occurs *)
-val bir_symb_exec_stmt_declare_def = Define `
-    bir_symb_exec_stmt_declare var_name var_type st = 
-        [bir_symb_state_set_failed st] `;
-
 (* same behavior for assume *)
 val bir_symb_exec_stmt_assume_def = Define `
     bir_symb_exec_stmt_assume ex st = 
@@ -229,7 +231,7 @@ val bir_symb_exec_stmt_assign_def = Define `
     bir_symb_exec_stmt_assign v ex (st: 'a bir_symb_state_t) = 
     case (bir_symb_env_write v (bir_symb_eval_exp ex st.bsst_environ) st.bsst_environ) of 
     | SOME env => [st with bsst_environ := env]
-    | NONE     => [bir_symb_state_set_failed st]`;
+    | NONE     => [bir_symb_state_set_typeerror st]`;
 
 (* Assertions create two follow up states: 
  * One in which the assertion holds and One in which the Assertion is violated *)
@@ -267,8 +269,6 @@ val bir_symb_exec_stmt_observe_def = Define `
 
 (* Basic Statement execution *)
 val bir_symb_exec_stmtB_def = Define `
-    (bir_symb_exec_stmtB (BStmt_Declare v) st  
-           = bir_symb_exec_stmt_declare (bir_var_name v) (bir_var_type v) st) ∧
     (bir_symb_exec_stmtB (BStmt_Assign v ex) st 
            = bir_symb_exec_stmt_assign v ex st) /\
     (bir_symb_exec_stmtB (BStmt_Assert ex) st 
