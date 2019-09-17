@@ -47,6 +47,30 @@ struct
           end
       | SOME p => p;
 
+
+(* datestring helper *)
+  fun get_datestring () =
+    let
+      val date = Date.fromTimeLocal (Time.now ());
+      val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S_" date;
+    in
+      datestr
+    end;
+
+
+(* embexp run identification *)
+  val embexp_run_id_ref = ref (NONE:string option);
+  fun embexp_run_id () =
+    case !embexp_run_id_ref of
+        NONE =>
+          let
+            val datestr = get_datestring();
+            val _ = embexp_run_id_ref := SOME datestr;
+          in
+            datestr
+          end
+      | SOME p => p;
+
 (* directory creation helper *)
   fun makedir makepath path =
     let
@@ -89,14 +113,6 @@ struct
       val s    = TextIO.inputAll file before TextIO.closeIn file;
     in
       str = s
-    end;
-
-  fun get_datestring () =
-    let
-      val date = Date.fromTimeLocal (Time.now ());
-      val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S_" date;
-    in
-      datestr
     end;
 
   val tempdir = "./tempdir";
@@ -183,7 +199,7 @@ struct
     end;
 
 (* interface functions *)
-  fun bir_embexp_create exp_id exp_code_asm (s1,s2) =
+  fun bir_embexp_create exp_id exp_code_asm obs_model_name (s1,s2) =
     let
       val exp_basedir = get_experiment_basedir exp_id;
 
@@ -193,7 +209,7 @@ struct
       (* this directory possibly already exists *)
       val _ = makedir true exp_codepath;
       (* but the code should not differ if it exists already *)
-      val code_eq = write_to_file_or_compare (exp_codepath ^ "/_code.asm") exp_code_asm;
+      val code_eq = write_to_file_or_compare (exp_codepath ^ "/code.asm") exp_code_asm;
       val _ = if code_eq then () else
                 raise ERR "bir_embexp_create" ("there has been a hash clash with: " ^ exp_codepath);
 
@@ -210,11 +226,12 @@ struct
                 raise ERR "bir_embexp_create" ("there has been a hash clash with: " ^ exp_datapath);
 
       (* write out git commit and git diff of current directory. so this script needs to be executed from within the holbarepo! *)
-      val datestr = get_datestring();
+      val embexp_run_id = embexp_run_id();
       val holba_diff = get_exec_output "git diff";
       val holba_commit = get_exec_output "git rev-parse HEAD";
-      val holba_diff_file = exp_datapath ^ "/holba_" ^ datestr ^ ".diff";
-      val holba_commit_file = exp_datapath ^ "/holba_" ^ datestr ^ ".commit";
+      val holba_diff_file = exp_datapath ^ "/holba_" ^ embexp_run_id ^ ".diff";
+      val holba_commit_file = exp_datapath ^ "/holba_" ^ embexp_run_id ^ ".commit";
+      val holba_obsmodel_file = exp_datapath ^ "/holba_" ^ embexp_run_id ^ ".obsmodel";
 
       val holba_diff_eq = write_to_file_or_compare holba_diff_file holba_diff;
       val _ = if holba_diff_eq then () else
@@ -223,6 +240,10 @@ struct
       val holba_commit_eq = write_to_file_or_compare holba_commit_file holba_commit;
       val _ = if holba_commit_eq then () else
                 raise ERR "bir_embexp_create" ("there has been a clash with: " ^  holba_commit_file);
+
+      val holba_obsmodel_eq = write_to_file_or_compare holba_obsmodel_file obs_model_name;
+      val _ = if holba_obsmodel_eq then () else
+                raise ERR "bir_embexp_create" ("there has been a clash with: " ^ holba_obsmodel_file);
     in
       exp_datapath
     end;
