@@ -154,6 +154,20 @@ echo
 
 
 
+####### HOLBA_EMBEXP_LOGS
+
+if [[ -z "${HOLBA_EMBEXP_LOGS}" ]]; then
+  LOGS_DIR=${HOLBA_DIR}/logs/EmbExp-Logs
+  if [[ -d "${LOGS_DIR}" ]]; then
+    print_export_msg "HOLBA_EMBEXP_LOGS"
+    export HOLBA_EMBEXP_LOGS=${LOGS_DIR}
+  fi
+fi
+echo "Using HOLBA_EMBEXP_LOGS=${HOLBA_EMBEXP_LOGS}"
+echo
+
+
+
 ####### HOLBA_GCC_ARM8_CROSS
 
 if [[ ( -z "${HOLBA_GCC_ARM8_CROSS}" ) || ( ! -z "${OPT_DIR_PARAM}" ) ]]; then
@@ -168,18 +182,6 @@ if [[ ( ! -f "${HOLBA_GCC_ARM8_CROSS}gcc" ) ]]; then
   export HOLBA_GCC_ARM8_CROSS=
 fi
 echo "Using HOLBA_GCC_ARM8_CROSS=${HOLBA_GCC_ARM8_CROSS}"
-echo
-
-
-
-####### HOLBA_SCAMV_LOGS
-
-if [[ -z "${HOLBA_SCAMV_LOGS}" ]]; then
-  LOGS_DIR=${HOLBA_DIR}/logs
-  print_export_msg "HOLBA_SCAMV_LOGS"
-  export HOLBA_SCAMV_LOGS=${LOGS_DIR}
-fi
-echo "Using HOLBA_SCAMV_LOGS=${HOLBA_SCAMV_LOGS}"
 echo
 
 

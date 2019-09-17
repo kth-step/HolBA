@@ -271,9 +271,14 @@ fun next_test select_path =
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
         val asm_file_contents = !current_asm;
 
-        val test_result =  bir_embexp_run_cache_indistinguishability asm_file_contents s1 s2;
+        val exp_path = bir_embexp_create ("arm8", "exp_cache_multiw") asm_file_contents (s1, s2);
+        val test_result = bir_embexp_run exp_path false;
 
-        val _ = print ("result = " ^ (if test_result then "ok!" else "failed") ^ "\n\n");
+        val _ = case test_result of
+		   (NONE, msg) => print ("result = NO RESULT (" ^ msg ^ ")")
+		 | (SOME r, msg) => print ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")");
+
+        val _ = print ("\n\n");
     in
         test_result
     end
@@ -299,7 +304,7 @@ fun scamv_test_main file =
           | do_tests n =
             let val _ = next_test round_robin
                         handle e =>
-                               false;
+                               (NONE, "hext_test failed");
             in do_tests (n-1) end
     in do_tests (length (!current_antecedents)) end
 
@@ -326,9 +331,14 @@ fun scamv_test_gen_run (asm_code, sections) =
         fun isPrimedRun s = String.isSuffix "_" s;
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
 
-        val test_result =  bir_embexp_run_cache_indistinguishability asm_code s1 s2;
+        val exp_path = bir_embexp_create ("arm8", "exp_cache_multiw") asm_code (s1, s2);
+        val test_result = bir_embexp_run exp_path false;
 
-        val _ = print ("result = " ^ (if test_result then "ok!" else "failed") ^ "\n\n");
+        val _ = case test_result of
+		   (NONE, msg) => print ("result = NO RESULT (" ^ msg ^ ")")
+		 | (SOME r, msg) => print ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")");
+
+        val _ = print ("\n\n");
     in
         test_result
     end
