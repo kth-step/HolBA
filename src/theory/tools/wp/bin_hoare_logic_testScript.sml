@@ -1379,83 +1379,77 @@ rename1 `(bir_programcounter_t l1 i1)` >>
 REPEAT STRIP_TAC >> (
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
   Cases_on `stmt` >> FULL_SIMP_TAC std_ss [bir_exec_stmtB_def] >| [
-    (* TODO: Lemmata about possible effects of executing the
-     * different statements to avoid manual case splitting? *)
-    FULL_SIMP_TAC std_ss [bir_exec_stmt_declare_def, LET_DEF] >>
-    Cases_on
-      `bir_env_varname_is_bound
-	 (bir_state_t
-           (bir_programcounter_t l1 i1) b0 b1).bst_environ
-	 (bir_var_name b)` >| [
-      FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_set_failed_def, bir_state_t_fn_updates],
-
-      Cases_on `bir_env_update (bir_var_name b)
-		  (bir_declare_initial_value (bir_var_type b))
-		  (bir_var_type b) b0` >> (
-	FULL_SIMP_TAC (std_ss++holBACore_ss)
-	  [bir_state_set_failed_def, bir_state_t_fn_updates]
-      )
-    ],
-
     FULL_SIMP_TAC std_ss [bir_exec_stmt_assign_def, LET_DEF] >>
     Cases_on
-      `bir_env_write b
-	 (bir_eval_exp b0''
-	   (bir_state_t
-             (bir_programcounter_t l1 i1) b0 b1).bst_environ
-	 )
-	 (bir_state_t
-	   (bir_programcounter_t l1 i1) b0 b1
-	 ).bst_environ` >> (
+      `bir_eval_exp b0''
+         (bir_state_t (bir_programcounter_t l1 i1)
+                      b0 b1
+         ).bst_environ` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_set_failed_def, bir_state_t_fn_updates]
+	[bir_state_set_typeerror_def, bir_state_t_fn_updates]
+    ) >>
+    Cases_on
+      `bir_env_write b x b0` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss)
+	[bir_state_t_fn_updates]
     ),
 
     FULL_SIMP_TAC std_ss [bir_exec_stmt_assert_def, LET_DEF] >>
     Cases_on
-      `bir_dest_bool_val
-	 (bir_eval_exp b
-	   (bir_state_t
-             (bir_programcounter_t l1 i1) b0 b1).bst_environ
-	 )` >- (
+      `bir_eval_exp b
+         (bir_state_t (bir_programcounter_t l1 i1)
+                      b0 b1
+         ).bst_environ` >> (
        FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_set_failed_def, bir_state_t_fn_updates]
+	[bir_state_set_typeerror_def, bir_state_t_fn_updates]
     ) >> (
-      Cases_on `x` >> (
-       FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_set_failed_def, bir_state_t_fn_updates]
+      Cases_on `bir_dest_bool_val x` >- (
+        FULL_SIMP_TAC (std_ss++holBACore_ss)
+	  [bir_state_t_fn_updates]
+      ) >>
+      Cases_on `x'` >> (
+       FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_t_fn_updates]
       )
     ),
 
     FULL_SIMP_TAC std_ss [bir_exec_stmt_assume_def, LET_DEF] >>
     Cases_on
-      `bir_dest_bool_val
-	 (bir_eval_exp b
-	    (bir_state_t (bir_programcounter_t l1 i1) b0 b1
-	 ).bst_environ)` >- (
+      `bir_eval_exp b
+         (bir_state_t (bir_programcounter_t l1 i1)
+                      b0 b1
+         ).bst_environ` >> (
        FULL_SIMP_TAC (std_ss++holBACore_ss)
-	 [bir_state_set_failed_def, bir_state_t_fn_updates]
+	 [bir_state_set_typeerror_def, bir_state_t_fn_updates]
     ) >> (
-      Cases_on `x` >> (
-       FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_set_failed_def, bir_state_t_fn_updates]
+      Cases_on `bir_dest_bool_val x` >- (
+        FULL_SIMP_TAC (std_ss++holBACore_ss)
+	  [bir_state_t_fn_updates]
+      ) >>
+      Cases_on `x'` >> (
+       FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_t_fn_updates]
       )
     ),
 
     FULL_SIMP_TAC std_ss [bir_exec_stmt_observe_def, LET_DEF] >>
     Cases_on
-      `bir_dest_bool_val
-	 (bir_eval_exp b
-	   (bir_state_t
-	     (bir_programcounter_t l1 i1) b0 b1).bst_environ
-	 )` >- (
+      `bir_eval_exp b
+         (bir_state_t (bir_programcounter_t l1 i1)
+                      b0 b1
+         ).bst_environ` >> (
        FULL_SIMP_TAC (std_ss++holBACore_ss)
-	 [bir_state_set_failed_def, bir_state_t_fn_updates]
+	 [bir_state_set_typeerror_def, bir_state_t_fn_updates]
     ) >> (
-      Cases_on `x` >> (
-       FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_set_failed_def, bir_state_t_fn_updates]
+      Cases_on `bir_dest_bool_val x` >- (
+        FULL_SIMP_TAC (std_ss++holBACore_ss)
+	  [bir_state_t_fn_updates]
+      ) >>
+      Cases_on `x'` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss)
+          [bir_state_t_fn_updates]
+      ) >>
+      Cases_on `EXISTS IS_NONE (MAP (\e. bir_eval_exp e b0) l)` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss)
+          [bir_state_t_fn_updates]
       )
     )
   ]
@@ -1481,7 +1475,7 @@ Cases_on `stmt` >> FULL_SIMP_TAC std_ss [bir_exec_stmtE_def] >| [
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_jmp_def] >>
   Cases_on `bir_eval_label_exp b b0` >| [
     FULL_SIMP_TAC (std_ss++holBACore_ss)
-      [bir_state_set_failed_def, bir_state_t_fn_updates],
+      [bir_state_set_typeerror_def, bir_state_t_fn_updates],
 
     FULL_SIMP_TAC (std_ss++holBACore_ss)
                   [bir_exec_stmt_jmp_to_label_def] >>
@@ -1494,19 +1488,23 @@ Cases_on `stmt` >> FULL_SIMP_TAC std_ss [bir_exec_stmtE_def] >| [
 
   (* CJmp *)
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_cjmp_def] >>
-  Cases_on `bir_dest_bool_val (bir_eval_exp b b0)` >- (
+  Cases_on `bir_eval_exp b b0` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss)
-      [bir_state_set_failed_def, bir_state_t_fn_updates]
-  ) >> Cases_on `x` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_jmp_def] >>
+      [bir_state_set_typeerror_def, bir_state_t_fn_updates, LET_DEF]
+  ) >>
+  Cases_on `bir_dest_bool_val x` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_jmp_def]
+  ) >>
+  Cases_on `x'` >> (
+    FULL_SIMP_TAC std_ss [] >>
     rename1 `bir_eval_label_exp b0'' b0` >>
     Cases_on `bir_eval_label_exp b0'' b0` >| [
       FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_set_failed_def, bir_state_t_fn_updates],
+	[bir_state_set_typeerror_def, bir_state_t_fn_updates],
 
       FULL_SIMP_TAC (std_ss++holBACore_ss)
 		    [bir_exec_stmt_jmp_to_label_def] >>
-      Cases_on `MEM x (bir_labels_of_program prog)` >> (
+      Cases_on `MEM x' (bir_labels_of_program prog)` >> (
 	FULL_SIMP_TAC (std_ss++holBACore_ss)
 		    [bir_state_t_fn_updates,
 		     bir_state_is_terminated_def]
@@ -1516,8 +1514,10 @@ Cases_on `stmt` >> FULL_SIMP_TAC std_ss [bir_exec_stmtE_def] >| [
 
   (* Halt *)
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_halt_def] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss)
-    [bir_state_is_terminated_def, bir_state_t_fn_updates]
+  Cases_on `bir_eval_exp b b0` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss)
+      [bir_state_set_typeerror_def, bir_state_t_fn_updates]
+  )
 ]
 );
 
@@ -1540,7 +1540,7 @@ Cases_on `stmt` >> FULL_SIMP_TAC std_ss [bir_exec_stmtE_def] >| [
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_jmp_def] >>
   Cases_on `bir_eval_label_exp b b0` >| [
     FULL_SIMP_TAC (std_ss++holBACore_ss)
-      [bir_state_set_failed_def, bir_state_t_fn_updates,
+      [bir_state_set_typeerror_def, bir_state_t_fn_updates,
        bir_state_is_terminated_def],
 
     FULL_SIMP_TAC (std_ss++holBACore_ss)
@@ -1555,21 +1555,26 @@ Cases_on `stmt` >> FULL_SIMP_TAC std_ss [bir_exec_stmtE_def] >| [
 
   (* CJmp *)
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_cjmp_def] >>
-  Cases_on `bir_dest_bool_val (bir_eval_exp b b0)` >- (
+  Cases_on `bir_eval_exp b b0` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss)
-      [bir_state_set_failed_def, bir_state_t_fn_updates,
-       bir_state_is_terminated_def]
-  ) >> Cases_on `x` >> (
+      [bir_state_set_typeerror_def, bir_state_t_fn_updates,
+       bir_state_is_terminated_def,
+       optionTheory.option_case_compute, LET_DEF]
+  ) >>
+  Cases_on `bir_dest_bool_val x` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `x'` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_jmp_def] >>
     rename1 `bir_eval_label_exp b0'' b0` >>
     Cases_on `bir_eval_label_exp b0'' b0` >| [
       FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_set_failed_def, bir_state_t_fn_updates,
+	[bir_state_set_typeerror_def, bir_state_t_fn_updates,
          bir_state_is_terminated_def],
 
       FULL_SIMP_TAC (std_ss++holBACore_ss)
 		    [bir_exec_stmt_jmp_to_label_def] >>
-      Cases_on `MEM x (bir_labels_of_program prog)` >> (
+      Cases_on `MEM x' (bir_labels_of_program prog)` >> (
 	FULL_SIMP_TAC (std_ss++holBACore_ss)
 		    [bir_state_t_fn_updates, bir_block_pc_def,
 		     bir_state_is_terminated_def] >>
@@ -1579,9 +1584,12 @@ Cases_on `stmt` >> FULL_SIMP_TAC std_ss [bir_exec_stmtE_def] >| [
   ),
 
   (* Halt *)
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_halt_def,
-                                        bir_state_is_terminated_def,
-                                        bir_state_t_fn_updates]
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_halt_def] >>
+  Cases_on `bir_eval_exp b b0` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss)
+      [bir_state_set_typeerror_def, bir_state_t_fn_updates,
+       bir_state_is_terminated_def]
+  )
 ]
 );
 
