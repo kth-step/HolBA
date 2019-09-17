@@ -9,18 +9,25 @@ struct
   val wrap_exn = Feedback.wrap_exn libname
 
 
-(* directory creation helper *)
-  fun makedir makepath path =
-    let
-      val r = OS.Process.system ("mkdir " ^ (if makepath then "-p " else "") ^ path);
-      val _ = if not (OS.Process.isSuccess r) then
-                raise ERR "makedir" ("couldn't create the following directory: " ^ path)
-              else
-                ();
-    in
-      ()
-    end;
 
+(* directory variables handling *)
+  fun embexp_basedir_read () =
+      case Option.mapPartial (fn p => if p <> "" then SOME p else NONE)
+                             (OS.Process.getEnv ("HOLBA_EMBEXP_DIR")) of
+          NONE => raise ERR "embexp_basedir" "the environment variable HOLBA_EMBEXP_DIR is not set"
+        | SOME p => p;
+
+  val embexp_basedir_ref = ref (NONE:string option);
+  fun embexp_basedir () =
+    case !embexp_basedir_ref of
+        NONE =>
+          let
+            val dir_path = embexp_basedir_read();
+            val _ = embexp_basedir_ref := SOME dir_path;
+          in
+            dir_path
+          end
+      | SOME p => p;
 
   fun logfile_basedir_read () =
       case Option.mapPartial (fn p => if p <> "" then SOME p else NONE)
@@ -40,6 +47,19 @@ struct
           end
       | SOME p => p;
 
+(* directory creation helper *)
+  fun makedir makepath path =
+    let
+      val r = OS.Process.system ("mkdir " ^ (if makepath then "-p " else "") ^ path);
+      val _ = if not (OS.Process.isSuccess r) then
+                raise ERR "makedir" ("couldn't create the following directory: " ^ path)
+              else
+                ();
+    in
+      ()
+    end;
+
+(* helper functions *)
   fun get_experiment_basedir (arch_name, exp_name) =
     let
       val logfile_basedir_p = logfile_basedir()
@@ -53,7 +73,6 @@ struct
       exp_basedir
     end;
 
-(* helper function *)
   fun write_to_file filename str =
     let
       val file = TextIO.openOut (filename);
@@ -209,7 +228,19 @@ struct
     end;
 
 
-  fun bir_embexp_run exp_path with_reset = (NONE, "not implemented yet");
+  fun bir_embexp_run exp_path with_reset =
+    if with_reset then (NONE, "not implemented yet") else
+    let
+      val r = OS.Process.system ("\"" ^ (logfile_basedir()) ^ "/scripts/run_experiment.py\" " ^
+                                 "\"" ^ (embexp_basedir()) ^ "\" " ^
+                                 "\"" ^ exp_path ^ "\" ");
+      val _ = if not (OS.Process.isSuccess r) then
+                raise ERR "bir_embexp_run" ("running the following experiment was unsuccessful: " ^ exp_path)
+              else
+                ();
+    in
+      (NONE, "no result forwarding yet")
+    end;
 
 end
 
