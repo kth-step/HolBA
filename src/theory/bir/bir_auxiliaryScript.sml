@@ -216,8 +216,22 @@ FULL_SIMP_TAC std_ss [IN_DIFF, FINITE_INSERT, INSERT_SUBSET,
   CARD_INSERT]);
 
 
+val IN_UNION_ABSORB_thm = store_thm ("IN_UNION_ABSORB_thm",
+  ``! l ls. (l IN ls) ==> (({l} UNION ls) = ls)``,
+
+METIS_TAC [ABSORPTION,
+           GSYM INSERT_SING_UNION]
+);
+
+
+val SINGLETONS_UNION_thm = store_thm ("SINGLETONS_UNION_thm",
+  ``! l e. ({l} UNION {e}) = {l;e}``,
+
+METIS_TAC [INSERT_SING_UNION]
+);
+
 (* -------------------------------------------------------------------------- *)
-(* Modulus                                                                    *)
+(* Arithmetic                                                                   *)
 (* -------------------------------------------------------------------------- *)
 
 val MOD_ADD_EQ_SUB = store_thm ("MOD_ADD_EQ_SUB",
@@ -228,6 +242,12 @@ REPEAT STRIP_TAC >>
 `?i. x1 + x2 = y + i` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS] >>
 ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_MODULUS]);
 
+val NUM_LSONE_EQZ =
+  store_thm("NUM_LSONE_EQZ",
+  ``!(n:num). (n < 1) <=> (n = 0)``,
+
+FULL_SIMP_TAC arith_ss []
+);
 
 (* -------------------------------------------------------------------------- *)
 (* While lemmata                                                              *)
@@ -391,6 +411,15 @@ Induct_on `n` >> (
 val FUNPOW_OPT_compute = save_thm ("FUNPOW_OPT_compute",
   CONV_RULE (numLib.SUC_TO_NUMERAL_DEFN_CONV) FUNPOW_OPT_REWRS);
 
+val FUNPOW_OPT_ADD_thm = store_thm ("FUNPOW_OPT_ADD_thm",
+  ``!f n n' ms ms' ms''.
+    (FUNPOW_OPT f n ms = SOME ms') ==>
+    (FUNPOW_OPT f n' ms' = SOME ms'') ==> 
+    (FUNPOW_OPT f (n'+n) ms = SOME ms'')``,
+
+METIS_TAC [FUNPOW_OPT_def,
+           arithmeticTheory.FUNPOW_ADD]
+);
 
 (* -------------------------------------------------------------------------- *)
 (* lazy lists                                                                 *)

@@ -777,6 +777,28 @@ Cases_on `stmt` >> (
 ));
 
 
+val bir_get_current_statement_NONE_stmt =
+  store_thm("bir_get_current_statement_NONE_stmt",
+  ``!prog pc.
+      (bir_get_current_statement prog pc = NONE) ==>
+      (bir_get_current_block prog pc = NONE)``,
+
+FULL_SIMP_TAC (std_ss++holBACore_ss)
+              [bir_get_current_block_def,
+               bir_get_current_statement_def] >>
+REPEAT STRIP_TAC >>
+Cases_on `bir_get_program_block_info_by_label
+            prog pc.bpc_label` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+Cases_on `x` >>
+Cases_on `0 = LENGTH r.bb_statements` >>
+Cases_on `0 < LENGTH r.bb_statements` >> (
+  FULL_SIMP_TAC arith_ss []
+)
+);
+
+
 val bir_exec_block_new_block_pc = store_thm ("bir_exec_block_new_block_pc",
 ``!p bl st st' c l.
     (bir_get_current_block p st.bst_pc = SOME bl) /\

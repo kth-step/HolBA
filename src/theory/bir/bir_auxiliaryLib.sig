@@ -1,4 +1,4 @@
-signature bin_hoare_logicLib =
+signature bir_auxiliaryLib =
 sig
   include Abbrev
   type simpset = simpLib.simpset

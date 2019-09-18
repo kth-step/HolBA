@@ -1,4 +1,5 @@
 open HolKernel Parse boolLib bossLib;
+open bir_auxiliaryLib;
 open bir_programTheory bir_program_valid_stateTheory HolBACoreSimps;
 open bir_program_multistep_propsTheory bir_auxiliaryTheory
 open bir_typing_expTheory bir_envTheory
@@ -164,8 +165,6 @@ REPEAT BasicProvers.VAR_EQ_TAC >>
 `(fe = NONE) /\ (st'' = (st' with bst_status := BST_Running))` by
   METIS_TAC[bir_exec_step_terminates_no_change] >>
 FULL_SIMP_TAC list_ss [OPT_CONS_REWRS]);
-
-
 
 
 (*****************)
@@ -382,7 +381,6 @@ ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def] >>
 STRIP_TAC >>
 MP_TAC (Q.SPECL [`st' with bst_status := BST_Running`, `p`] bir_exec_step_status_jumped) >>
 ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_state_def]);
-
 
 
 (********************)
@@ -752,5 +750,251 @@ METIS_TAC[bir_exec_stmt_status_assertion]);
 *)
 
 (* TODO: Theorems *)
+
+(******************************************************************)
+(* Translation between to-label execution and block execution     *)
+(* under termination                                              *)
+(******************************************************************)
+
+(* If to-labels execution has Ended, then if the final state is
+ * terminated, then there is a number of block-steps m
+ * such that execution of m+1 block-steps will result in a
+ * quadruple with the same final state and same number of
+ * statement-steps taken as the to-label execution, with m
+ * block-steps taken. *)
+val bir_exec_to_labels_TO_bir_exec_block_n_SUC_term =
+  store_thm("bir_exec_to_labels_TO_bir_exec_block_n_SUC_term",
+  ``!ls prog st l' n' n0 st'.
+    (bir_exec_to_labels ls prog st = BER_Ended l' n' n0 st') ==>
+    bir_state_is_terminated st' ==>
+    ?m.
+    (bir_exec_block_n prog st (SUC m) = (l',n',m,st'))``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
+IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_block_n >>
+FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM] >>
+FULL_SIMP_TAC arith_ss [] >>
+FULL_SIMP_TAC std_ss [bir_state_is_terminated_def] >>
+REPEAT STRIP_TAC >>
+subgoal
+  `bir_exec_infinite_steps_fun_COUNT_PCs
+     (F,(\pc. pc.bpc_index = 0)) prog st n'' <=
+     bir_exec_infinite_steps_fun_COUNT_PCs
+       (F,(\pc. pc.bpc_index = 0)) prog st n'` >- (
+  subgoal `n'' <= n'` >- (
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  IMP_RES_TAC bir_exec_infinite_steps_fun_COUNT_PCs_MONO >>
+  FULL_SIMP_TAC std_ss []
+) >>
+FULL_SIMP_TAC arith_ss []
+);
+
+
+(* If to-labels execution starting from a non-terminated state
+ * has Ended, then if it terminated with a jump outside the program,
+ * then in the case the new PC obtained by bir_block_pc of this
+ * block has index 0, then there is a number of block-steps m
+ * such that execution of m+1 block-steps will result in a
+ * quadruple with the same final state and same number of
+ * statement-steps taken as the to-label execution, with m+1
+ * block-steps taken. *)
+val bir_exec_to_labels_TO_bir_exec_block_n_SUC_both_term =
+  store_thm("bir_exec_to_labels_TO_bir_exec_block_n_SUC_both_term",
+  ``!ls prog st l' n' n0 st' b.
+    (bir_exec_to_labels ls prog st = BER_Ended l' n' n0 st') ==>
+    ~(bir_state_is_terminated st) ==>
+    (st'.bst_status = BST_JumpOutside b) ==>
+    ((bir_block_pc b).bpc_index = 0) ==>
+    ?m.
+    (bir_exec_block_n prog st (SUC m) = (l',n',SUC m,st'))``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
+IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_step_n >>
+Cases_on `n'` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_step_n_REWR_0]
+) >>
+rename1 `bir_exec_step_n prog st (SUC n') = (l',SUC n',st')` >>
+IMP_RES_TAC bir_exec_step_n_status_jumped >>
+IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_block_n >>
+FULL_SIMP_TAC std_ss [bir_exec_block_n_TO_steps_GEN,
+                      bir_exec_step_n_TO_steps_GEN] >>
+FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended] >>
+subgoal `bir_state_COUNT_PC (F,(\pc. pc.bpc_index = 0))
+     (bir_exec_infinite_steps_fun prog st (SUC n'))` >- (
+  ASM_SIMP_TAC (std_ss++holBACore_ss)
+    [bir_state_COUNT_PC_def, LET_DEF]
+) >>
+Cases_on `c_l'` >- (
+  FULL_SIMP_TAC arith_ss
+    [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_DEF]
+) >>
+Q.EXISTS_TAC `n` >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+REPEAT STRIP_TAC >>
+ASM_SIMP_TAC std_ss
+  [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF] >>
+subgoal `n'' <= n'` >- (
+  FULL_SIMP_TAC arith_ss []
+) >>
+subgoal
+  `bir_exec_infinite_steps_fun_COUNT_PCs
+     (F,(\pc. pc.bpc_index = 0)) prog st n'' <=
+     bir_exec_infinite_steps_fun_COUNT_PCs
+       (F,(\pc. pc.bpc_index = 0)) prog st n'` >- (
+  IMP_RES_TAC bir_exec_infinite_steps_fun_COUNT_PCs_MONO >>
+  FULL_SIMP_TAC std_ss []
+) >>
+FULL_SIMP_TAC arith_ss [LET_DEF]
+);
+
+(* For to-label execution Ending through termination, there exists
+ * block execution with m and m+1 steps such that m+1 steps
+ * results in the same state as to-label execution and m steps
+ * results in some non-terminated state. *)
+val bir_exec_to_labels_bir_exec_block_n_term =
+  store_thm("bir_exec_to_labels_bir_exec_block_n_term",
+  ``!ls prog st l' n' c_l' st'.
+    (bir_exec_to_labels ls prog st =
+       BER_Ended l' n' c_l' st') ==>
+    ~(bir_state_is_terminated st) ==>
+    bir_state_is_terminated st' ==>
+    ?m m'.
+    ?l''' n'''  st'''.
+    (bir_exec_block_n prog st (SUC m) = (l', n', m', st')) /\
+    (bir_exec_block_n prog st m = (l''', n''', m, st''')) /\
+    ~(bir_state_is_terminated st''')``,
+
+REPEAT STRIP_TAC >>
+Cases_on `!b. st'.bst_status <> BST_JumpOutside b` >- (
+  IMP_RES_TAC bir_exec_to_labels_TO_bir_exec_block_n_SUC_term >>
+  IMP_RES_TAC bir_exec_block_n_block_n >>
+  Q.EXISTS_TAC `m` >>
+  Q.EXISTS_TAC `m` >>
+  Q.EXISTS_TAC `l` >>
+  Q.EXISTS_TAC `n` >>
+  Q.EXISTS_TAC `st''` >>
+  subgoal `n < n'` >- (
+    IMP_RES_TAC bir_exec_block_n_term_stmt_steps >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+    QSPECL_X_ASSUM ``!prog n' m l'. _``
+      [`prog`, `n'`, `m`, `l'`] >>
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  subgoal `~bir_state_is_terminated st''` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+  ) >>
+  FULL_SIMP_TAC arith_ss [bir_exec_block_n_EQ_THM]
+) >>
+(* Case JumpOutside: *)
+FULL_SIMP_TAC std_ss [] >>
+Cases_on `(bir_block_pc b).bpc_index = 0` >| [
+  (* Block outside program fulfils PC count *)
+  IMP_RES_TAC
+    bir_exec_to_labels_TO_bir_exec_block_n_SUC_both_term >>
+  IMP_RES_TAC bir_exec_block_n_block_n >>
+  Q.EXISTS_TAC `m` >>
+  Q.EXISTS_TAC `SUC m` >>
+  Q.EXISTS_TAC `l` >>
+  Q.EXISTS_TAC `n` >>
+  Q.EXISTS_TAC `st''` >>
+  subgoal `n < n'` >- (
+    IMP_RES_TAC bir_exec_block_n_jump_outside_pc_ok_stmt_steps
+  ) >>
+  subgoal `~bir_state_is_terminated st''` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+  ) >>
+  Cases_on `c_l < m` >- (
+    FULL_SIMP_TAC std_ss
+      [bir_exec_block_n_EQ_THM]
+  ) >>
+  FULL_SIMP_TAC arith_ss
+    [bir_exec_block_n_EQ_THM],
+
+  (* Block outside program does not fulfil PC count *)
+  IMP_RES_TAC bir_exec_to_labels_TO_bir_exec_block_n_SUC_term >>
+  IMP_RES_TAC bir_exec_block_n_block_n >>
+  Q.EXISTS_TAC `m` >>
+  Q.EXISTS_TAC `m` >>
+  Q.EXISTS_TAC `l` >>
+  Q.EXISTS_TAC `n` >>
+  Q.EXISTS_TAC `st''` >>
+  subgoal `n < n'` >- (
+    IMP_RES_TAC bir_exec_block_n_term_stmt_steps >>
+    subgoal `(!b.
+              (st'.bst_status = BST_JumpOutside b) ==>
+              (bir_block_pc b).bpc_index <> 0)` >- (
+      REPEAT STRIP_TAC >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+      Q.PAT_X_ASSUM `b' = b`
+	(fn thm => (FULL_SIMP_TAC arith_ss [thm]))
+    ) >>
+    FULL_SIMP_TAC std_ss [] >>
+    QSPECL_X_ASSUM ``!prog n' m l'. _``
+      [`prog`, `n'`, `m`, `l'`] >>
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  subgoal `~bir_state_is_terminated st''` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+  ) >>
+  FULL_SIMP_TAC arith_ss [bir_exec_block_n_EQ_THM]
+]
+);
+
+
+(* For Ended to-label execution, there exists block execution
+ * taking a fewer number of statement-steps resulting in a 
+ * non-terminated state with PC label outside ending label set. *)
+val bir_exec_to_labels_n_block_n_notin_ls =
+  store_thm("bir_exec_to_labels_n_block_n_notin_ls",
+  ``!ls prog st l l' n n' n0 c_l' c_l'' m m' st' st''.
+    (bir_exec_to_labels_n ls prog st 1 = BER_Ended l n n0 st') ==>
+    (bir_exec_block_n prog st m' = (l',n',c_l'',st'')) ==>
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (m' < m) ==>
+    (0 < m') ==>
+    ~(bir_state_is_terminated st'') ==>
+    st''.bst_pc.bpc_label NOTIN ls``,
+
+REPEAT STRIP_TAC >>
+subgoal `n' < n` >- (
+  METIS_TAC [bir_exec_block_n_block_ls_running_step_ls]
+) >>
+subgoal `~(bir_state_is_terminated st)` >- (
+  METIS_TAC [bir_exec_block_n_running]
+) >>
+subgoal `0 < n'` >- (
+  IMP_RES_TAC bir_exec_block_n_block_nz_init_running >>
+  REV_FULL_SIMP_TAC arith_ss []
+) >>
+subgoal
+  `!n'.
+     n' < n ==>
+     bir_exec_infinite_steps_fun_COUNT_PCs
+       (F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))
+       prog st n' < 1` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_to_labels_n_def,
+			bir_exec_steps_GEN_SOME_EQ_Ended]
+) >>
+QSPECL_X_ASSUM ``!n'. _`` [`n'`] >>
+REV_FULL_SIMP_TAC std_ss [NUM_LSONE_EQZ] >>
+FULL_SIMP_TAC std_ss
+  [bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
+QSPECL_X_ASSUM ``!(j:num). _`` [`PRE n'`] >>
+REV_FULL_SIMP_TAC arith_ss [arithmeticTheory.SUC_PRE,
+			    bir_state_COUNT_PC_def] >>
+subgoal `bir_exec_infinite_steps_fun prog st n' = st''` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+) >>
+FULL_SIMP_TAC std_ss [] >>
+REV_FULL_SIMP_TAC (std_ss++holBACore_ss)
+  [bir_state_is_terminated_def] >>
+METIS_TAC [arithmeticTheory.SUC_PRE,
+           bir_exec_block_n_block_nz_final_running,
+           bir_state_is_terminated_def]
+);
+
 
 val _ = export_theory();

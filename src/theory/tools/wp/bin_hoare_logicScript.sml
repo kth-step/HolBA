@@ -1,32 +1,10 @@
 open HolKernel Parse boolLib bossLib;
 
-open bin_hoare_logicLib;
+open bir_auxiliaryLib;
+
+open bir_auxiliaryTheory;
 
 val _ = new_theory "bin_hoare_logic";
-
-(* Utility theorems *)
-val FUNPOW_OPT_ADD_thm = prove(``
-  !f n n' ms ms' ms''.
-  (FUNPOW_OPT f n ms = SOME ms') ==>
-  (FUNPOW_OPT f n' ms' = SOME ms'') ==> 
-  (FUNPOW_OPT f (n'+n) ms = SOME ms'')
-  ``,
-
-METIS_TAC [bir_auxiliaryTheory.FUNPOW_OPT_def,
-           arithmeticTheory.FUNPOW_ADD]
-);
-
-val IN_UNION_ABSORB_thm = prove(``! l ls. (l IN ls) ==> (({l} UNION ls) = ls)``,
-
-METIS_TAC [pred_setTheory.ABSORPTION,
-           GSYM pred_setTheory.INSERT_SING_UNION]
-);
-
-val SINGLETONS_UNION_thm = prove(``! l e. ({l} UNION {e}) = {l;e}``,
-
-METIS_TAC [pred_setTheory.INSERT_SING_UNION]
-);
-
 
 (* Generalization of exec to label *)
 val _ = Datatype `bin_model_t =
@@ -78,7 +56,7 @@ REPEAT STRIP_TAC >>
 ) >>
 (Cases_on `n'' = n'`) >- ( METIS_TAC [] ) >>
 SUBGOAL_THEN ``n'':num = (n''-n')+n'`` ASSUME_TAC >- (FULL_SIMP_TAC arith_ss []) >>
-QSPECL_X_ASSUM ``∀n''.((n'' < n:num) ∧ (n'' > 0)) ==> P`` [`n''-n':num`] >>
+QSPECL_X_ASSUM ``!n''.((n'' < n:num) /\ (n'' > 0)) ==> P`` [`n''-n':num`] >>
 REV_FULL_SIMP_TAC arith_ss [] >>
 ASSUME_TAC (Q.SPECL [`m.trs`, `n'`, `n''-n'`, `ms`, `ms'`, `ms'''`] FUNPOW_OPT_ADD_thm) >>
 REV_FULL_SIMP_TAC arith_ss []
@@ -98,12 +76,12 @@ REV_FULL_SIMP_TAC std_ss [weak_model_def] >>
 Q.SUBGOAL_THEN `n = n'` (FULLSIMP_BY_THM arith_ss)  >>
 (Cases_on `n < n'`) >-
 (
-   QSPECL_X_ASSUM ``!n'':num.(n'' < n' ∧ n'' > 0) ⇒ P`` [`n:num`] >>
+   QSPECL_X_ASSUM ``!n'':num.(n'' < n' /\ n'' > 0) ==> P`` [`n:num`] >>
    REV_FULL_SIMP_TAC std_ss [] 
 ) >>
 (Cases_on `n > n'`) >-
 (
-   QSPECL_X_ASSUM ``!n'':num.(n'' < n ∧ n'' > 0) ⇒ P`` [`n':num`] >>
+   QSPECL_X_ASSUM ``!n'':num.(n'' < n /\ n'' > 0) ==> P`` [`n':num`] >>
    REV_FULL_SIMP_TAC arith_ss [] 
 ) >>
 FULL_SIMP_TAC arith_ss [] 
@@ -149,7 +127,7 @@ val weak_singleton_pc_thm = prove(``
  (m.weak ms {e} ms') ==> ((m.pc ms') = e)
 ``,
 
-METIS_TAC[weak_model_def, pred_setTheory.IN_SING]
+METIS_TAC [weak_model_def, pred_setTheory.IN_SING]
 );
 
 
@@ -161,9 +139,9 @@ METIS_TAC [weak_model_def]
 );
 
 val weak_union_pc_not_in_thm = prove(``
- !m. (weak_model m) ==> !ms e ls1 ls2 ms'.
- (m.weak ms (ls1 UNION ls2) ms') ==> (~((m.pc ms') IN ls2)) ==>
- (m.weak ms ls1 ms')
+  !m. (weak_model m) ==> !ms e ls1 ls2 ms'.
+  (m.weak ms (ls1 UNION ls2) ms') ==> (~((m.pc ms') IN ls2)) ==>
+  (m.weak ms ls1 ms')
 ``,
 
 REPEAT STRIP_TAC >>
@@ -265,7 +243,7 @@ METIS_TAC []
 );
 
 val weak_conj_rule_thm = prove(``
-! m. (weak_model m) ==> !l ls pre post1 post2.
+!m. (weak_model m) ==> !l ls pre post1 post2.
 (weak_triple m l ls pre post1) ==>
 (weak_triple m l ls pre post2) ==>
 (weak_triple m l ls pre (\ms. (post1 ms) /\ (post2 ms)))
@@ -292,7 +270,7 @@ val loop_fun_defn =
        Hol_defn "loop_fun" `
 loop_fun m ms var l le invariant C1  =
 let MS' = weak_loop_step m ms var l le invariant C1 in
-if MS' = ∅ then ms
+if MS' = {} then ms
 else let ms' = (CHOICE MS') in
   (loop_fun m ms' var l le invariant C1)
 `;
@@ -305,9 +283,9 @@ val (loop_fun_eqns, loop_fun_ind) = Defn.tprove(loop_fun_defn,
   WF_REL_TAC `measure (\(m, ms,var,l,le,invariant,C1). var ms)` >>
   REPEAT STRIP_TAC >>
   REV_FULL_SIMP_TAC std_ss [LET_DEF] >>
-  Q.ABBREV_TAC `MS' =  (λms'.
-               m.weak ms ({l} UNION le) ms' ∧ (invariant ms ∧ C1 ms) ∧
-               ((m.pc ms') = l) ∧ invariant ms' ∧ var ms' < var ms)` >>
+  Q.ABBREV_TAC `MS' =  (\ms'.
+               m.weak ms ({l} UNION le) ms' /\ (invariant ms /\ C1 ms) /\
+               ((m.pc ms') = l) /\ invariant ms' /\ var ms' < var ms)` >>
   ASSUME_TAC (ISPEC ``MS':'a->bool`` pred_setTheory.CHOICE_DEF)  >>
   REV_FULL_SIMP_TAC std_ss [] >>
   FULL_SIMP_TAC std_ss [Abbr `MS'`, pred_setTheory.IN_ABS]
@@ -338,7 +316,7 @@ REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [] >>
 REPEAT STRIP_TAC >>
 (* We first prove that one iteration works *)
-SUBGOAL_THEN ``(weak_loop_step m ms var l le invariant C1) ≠ ∅`` ASSUME_TAC  >-
+SUBGOAL_THEN ``(weak_loop_step m ms var l le invariant C1) <> {}`` ASSUME_TAC  >-
 (
   SIMP_TAC std_ss [weak_loop_step_def, LET_DEF] >>
   FULL_SIMP_TAC std_ss [weak_loop_contract_def] >>
@@ -384,7 +362,7 @@ FULL_SIMP_TAC std_ss [] >>
   REV_FULL_SIMP_TAC std_ss [] >>
   QSPECL_X_ASSUM ``!x.P`` [`ms`, `{l}`, `le`, `ms'`, `ms''`] >>
   REV_FULL_SIMP_TAC (std_ss) [SINGLETONS_UNION_thm] >>
-  Q.SUBGOAL_THEN `l ∉ le` (FULLSIMP_BY_THM std_ss) >- (
+  Q.SUBGOAL_THEN `l NOTIN le` (FULLSIMP_BY_THM std_ss) >- (
     FULL_SIMP_TAC std_ss [weak_loop_contract_def, pred_setTheory.IN_SING]
   ) >>
   METIS_TAC []
@@ -396,7 +374,7 @@ ASSUME_TAC (Q.SPECL [`m`] weak_comp_thm) >>
 REV_FULL_SIMP_TAC std_ss [] >>
 QSPECL_X_ASSUM ``!x.P`` [`ms`, `{l}`, `le`, `ms'`, `ms''`] >>
 REV_FULL_SIMP_TAC (std_ss) [SINGLETONS_UNION_thm] >>
-  Q.SUBGOAL_THEN `l ∉ le` (FULLSIMP_BY_THM std_ss) >- (
+  Q.SUBGOAL_THEN `l NOTIN le` (FULLSIMP_BY_THM std_ss) >- (
     FULL_SIMP_TAC std_ss [weak_loop_contract_def, pred_setTheory.IN_SING]
   ) >>
   METIS_TAC []
@@ -412,7 +390,7 @@ MP
 (weak_loop_contract m l le invariant C1 var) ==>
 (weak_triple m l le (\ms. (invariant ms) /\ (~(C1 ms))) post) ==>
 ((invariant ms) /\ ((m.pc ms) = l) /\ (C1 ms)) ==>
- (?ms'. ((m.weak ms le ms') ∧ (post ms'))))` loop_fun_ind) inductive_invariant_thm;
+ (?ms'. ((m.weak ms le ms') /\ (post ms'))))` loop_fun_ind) inductive_invariant_thm;
 
 val weak_invariant_rule_thm = prove(``
 !m. (weak_model m) ==> ! l le invariant C1 var post.

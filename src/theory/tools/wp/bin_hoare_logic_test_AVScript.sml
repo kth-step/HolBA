@@ -6,7 +6,7 @@ open bin_hoare_logicTheory;
 open bir_program_multistep_propsTheory;
 open bir_program_blocksTheory;
 
-open bin_hoare_logicLib;
+open bir_auxiliaryLib;
 
 open HolBACoreSimps;
 

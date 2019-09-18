@@ -1,7 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 open bin_hoare_logicTheory;
 
-open bin_hoare_logicLib;
+open bir_auxiliaryLib;
 
 val _ = new_theory "bin_simp_hoare_logic";
 
