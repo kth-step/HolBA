@@ -199,7 +199,7 @@ struct
     end;
 
 (* interface functions *)
-  fun bir_embexp_create exp_id exp_code_asm obs_model_name (s1,s2) =
+  fun bir_embexp_create (obs_model_name, exp_id) exp_code_asm (s1,s2) =
     let
       val exp_basedir = get_experiment_basedir exp_id;
 

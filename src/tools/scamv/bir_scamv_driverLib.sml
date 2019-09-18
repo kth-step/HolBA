@@ -271,7 +271,7 @@ fun next_test select_path =
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
         val asm_file_contents = !current_asm;
 
-        val exp_path = bir_embexp_create ("arm8", "exp_cache_multiw") asm_file_contents "obs_model_name_here" (s1, s2);
+        val exp_path = bir_embexp_create ("obs_model_name_here", ("arm8", "exp_cache_multiw")) asm_file_contents (s1, s2);
         val test_result = bir_embexp_run exp_path false;
 
         val _ = case test_result of
@@ -331,7 +331,7 @@ fun scamv_test_gen_run (asm_code, sections) =
         fun isPrimedRun s = String.isSuffix "_" s;
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
 
-        val exp_path = bir_embexp_create ("arm8", "exp_cache_multiw") asm_code "obs_model_name_here" (s1, s2);
+        val exp_path = bir_embexp_create ("obs_model_name_here", ("arm8", "exp_cache_multiw")) asm_code (s1, s2);
         val test_result = bir_embexp_run exp_path false;
 
         val _ = case test_result of
