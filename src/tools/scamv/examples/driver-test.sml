@@ -2,7 +2,8 @@ open bir_scamv_driverLib;
 open bir_rel_synthLib;
 
 (* scamv_test_main "asm/branch.s"; *)
-scamv_test_asmf "asm/branch.s";
+(*scamv_test_asmf "asm/branch.s"; *)
+scamv_run { max_iter = 2, max_tests = 4 };
 
 (*
 val (_,sections) = prog_gen_from_file "asm/branch.s";

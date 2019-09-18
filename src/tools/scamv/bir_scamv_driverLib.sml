@@ -8,6 +8,7 @@ open bir_obs_modelLib;
 open bir_exp_to_wordsLib;
 open bir_rel_synthLib;
 open bslSyntax;
+open numSyntax;
 open wordsSyntax;
 open wordsLib;
 open stringSyntax;
@@ -234,9 +235,9 @@ fun reset () =
      current_word_rel := NONE;
      current_antecedents := [])
 
-fun start_interactive file =
+fun start_interactive prog =
     let
-        val (asm_file_contents, sections) = prog_gen_from_file file;
+        val (asm_file_contents, sections) = prog;
         val _ = current_asm := asm_file_contents;
         val lifted_prog = lift_program_from_sections sections;
         val _ = current_prog := SOME lifted_prog;
@@ -271,6 +272,20 @@ fun next_test select_path =
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
         val asm_file_contents = !current_asm;
 
+        fun mk_var_mapping s =
+            let fun mk_eq (a,b) =
+                    let fun adjust_prime s =
+                            if String.isSuffix "_" s
+                            then String.map (fn c => if c = #"_" then #"'" else c) s
+                            else s;
+                        val va = mk_var (adjust_prime a,``:word64``);
+                    in ``^va = ^b``
+                    end; 
+            in list_mk_conj (map mk_eq s) end;
+        val _ = current_word_rel := SOME ``^rel /\ ~^(mk_var_mapping model)``;
+
+        val _ = print_term (valOf (!current_word_rel));
+        
         val exp_path = bir_embexp_create ("obs_model_name_here", ("arm8", "exp_cache_multiw")) asm_file_contents (s1, s2);
         val test_result = bir_embexp_run exp_path false;
 
@@ -295,21 +310,22 @@ fun mk_round_robin n =
           end
     end
 
-fun scamv_test_main file =
+fun scamv_test_main tests prog =
     let
         val _ = reset();
-        val prog_obss_result = start_interactive file;
+        val prog_obss_result = start_interactive prog;
         val round_robin = mk_round_robin (length (!current_antecedents) - 1);
         fun do_tests 0 = ()
           | do_tests n =
             let val _ = next_test round_robin
                         handle e =>
-                               (NONE, "hext_test failed");
+                               (NONE, "next_test failed"); 
             in do_tests (n-1) end
-    in do_tests (length (!current_antecedents)) end
+    in do_tests tests
+    end
 
 
-fun scamv_test_gen_run (asm_code, sections) =
+fun scamv_test_gen_run tests (asm_code, sections) =
     let
         val lifted_prog = lift_program_from_sections sections;
         val lifted_prog_w_obs =
@@ -343,10 +359,18 @@ fun scamv_test_gen_run (asm_code, sections) =
         test_result
     end
 
-val scamv_test_mock = scamv_test_gen_run o prog_gen_mock;
-val scamv_test_asmf = scamv_test_gen_run o prog_gen_from_file;
+val scamv_test_mock = scamv_test_gen_run 1 o prog_gen_mock;
+val scamv_test_asmf = scamv_test_gen_run 1 o prog_gen_from_file;
+
+type scamv_config = { max_iter : int, max_tests : int }
+
+fun scamv_run { max_iter = m, max_tests = tests } =
+    let fun main_loop 0 = ()
+         |  main_loop n =
+            let val prog = prog_gen_mock ()
+            in scamv_test_main tests prog; main_loop (n-1) end
+    in
+        main_loop (m-1)
+    end;
 
 end;
-
-
-
