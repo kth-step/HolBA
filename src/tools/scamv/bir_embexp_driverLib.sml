@@ -97,6 +97,25 @@ struct
       exp_basedir
     end;
 
+  fun read_from_file filename =
+    let
+      val file = TextIO.openIn filename;
+      val s    = TextIO.inputAll file before TextIO.closeIn file;
+    in
+      s
+    end;
+
+  fun read_from_file_lines filename =
+    let
+      val file = TextIO.openIn filename;
+      fun allLinesRevFun acc = case TextIO.inputLine file of
+			    NONE => acc
+			  | SOME l => allLinesRevFun (l::acc);
+      val lines = List.rev (allLinesRevFun []) before TextIO.closeIn file;
+    in
+      lines
+    end;
+
   fun write_to_file filename str =
     let
       val file = TextIO.openOut (filename);
@@ -109,38 +128,59 @@ struct
     let
       val _ = OS.FileSys.isDir filename
                 handle SysErr _ => (write_to_file filename str; false);
-      val file = TextIO.openIn filename;
-      val s    = TextIO.inputAll file before TextIO.closeIn file;
+      val s = read_from_file filename;
     in
       str = s
     end;
 
   val tempdir = "./tempdir";
-  fun get_exec_output exec_cmd =
+  fun get_tempfile prefix suffix =
     let
       val _ = makedir true tempdir;
       val datestr = get_datestring();
-      val outputfile = tempdir ^ "/exec_output_" ^ datestr ^ ".txt";
+      val tempfile = tempdir ^ "/" ^ prefix ^ "_" ^ datestr ^ suffix;
+    in
+      tempfile
+    end;
+
+  fun get_exec_output_gen do_print exec_cmd =
+    let
+      val outputfile = get_tempfile "exec_output" ".txt";
 
       val r = OS.Process.system (exec_cmd ^ " > " ^ outputfile);
+      val _ = if not do_print then () else
+                print (read_from_file outputfile);
       val _ = if not (OS.Process.isSuccess r) then
                 raise ERR "get_exec_output" ("the following command did not execute successfully: " ^ exec_cmd)
               else
                 ();
 
-      val file = TextIO.openIn outputfile;
-      val s    = TextIO.inputAll file before TextIO.closeIn file;
+      val s = read_from_file outputfile;
 
       val _ = OS.Process.system ("rm " ^ outputfile);
     in
       s
     end;
 
+  fun get_exec_output exec_cmd = get_exec_output_gen false exec_cmd;
+
+  fun get_exec_output_list exec_cmd =
+    let
+      val outputfile = get_tempfile "exec_output_list" ".txt";
+
+      val output = get_exec_output exec_cmd;
+      val _ = write_to_file outputfile output;
+
+      val lines = read_from_file_lines outputfile;
+
+      val _ = OS.Process.system ("rm " ^ outputfile);
+    in
+      lines
+    end;
+
   fun get_exec_python3 script argstring =
     let
-      val _ = makedir true tempdir;
-      val datestr = get_datestring();
-      val scriptfile = tempdir ^ "/exec_script_" ^ datestr ^ ".py";
+      val scriptfile = get_tempfile "exec_script" ".py";
       val _ = write_to_file scriptfile script;
 
       val s = get_exec_output ("python3 " ^ scriptfile ^ " " ^ argstring);
@@ -152,9 +192,7 @@ struct
 
   fun get_exec_python3_argvar script arg =
     let
-      val _ = makedir true tempdir;
-      val datestr = get_datestring();
-      val argfile = tempdir ^ "/exec_script_arg_" ^ datestr ^ ".txt";
+      val argfile = get_tempfile "exec_script_arg" ".txt";
       val _ = write_to_file argfile arg;
 
       val script_argread = "import sys\nwith open(sys.argv[1],'r') as f:\n\targvar = f.read()\n" ^ "\n" ^ script;
@@ -252,15 +290,19 @@ struct
   fun bir_embexp_run exp_path with_reset =
     if with_reset then (NONE, "not implemented yet") else
     let
-      val r = OS.Process.system ("\"" ^ (logfile_basedir()) ^ "/scripts/run_experiment.py\" " ^
-                                 "\"" ^ (embexp_basedir()) ^ "\" " ^
-                                 "\"" ^ exp_path ^ "\" ");
-      val _ = if not (OS.Process.isSuccess r) then
-                raise ERR "bir_embexp_run" ("running the following experiment was unsuccessful: " ^ exp_path)
-              else
-                ();
+      val cmdline = ("\"" ^ (logfile_basedir()) ^ "/scripts/run_experiment.py\" " ^
+                     "\"" ^ (embexp_basedir()) ^ "\" " ^
+                     "\"" ^ exp_path ^ "\" ");
+      val lines = get_exec_output_list cmdline;
+      val lastline = List.nth(lines, (List.length lines) - 1);
+      val result = if lastline = "result = true\n" then
+                     (SOME true, "the result is based on the python experiment runner script output")
+                   else if lastline = "result = false\n" then
+                     (SOME false, "the result is based on the python experiment runner script output")
+                   else
+                     raise ERR "bir_embexp_run" ("the last line of the python experiment runner is unexpected: " ^ lastline)
     in
-      (NONE, "no result forwarding yet")
+      result
     end;
 
 end
