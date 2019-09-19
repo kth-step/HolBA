@@ -362,15 +362,19 @@ fun scamv_test_gen_run tests (asm_code, sections) =
 val scamv_test_mock = scamv_test_gen_run 1 o prog_gen_mock;
 val scamv_test_asmf = scamv_test_gen_run 1 o prog_gen_from_file;
 
-type scamv_config = { max_iter : int, max_tests : int }
+type scamv_config = { max_iter : int, prog_size : int, max_tests : int }
 
-fun scamv_run { max_iter = m, max_tests = tests } =
-    let fun main_loop 0 = ()
+fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
+    let fun remove_junk s = hd (String.tokens (fn c => c = #";")
+                                              (remove_plus s));
+        fun unwrap xs = map (fn x => remove_junk (hd x) ^ "\n") xs;
+        fun main_loop 0 = ()
          |  main_loop n =
-            let val prog = prog_gen_mock ()
+            let val prog =
+                    process_asm_code (concat (unwrap (bir_prog_gen_arm8 sz)))
             in scamv_test_main tests prog; main_loop (n-1) end
     in
-        main_loop (m-1)
+        main_loop m
     end;
 
 end;
