@@ -322,6 +322,11 @@ fun scamv_test_main tests prog =
     end
 
 
+(*
+val _ = bir_prog_gen_arm8_mock_set [["subs w12, w12, w15, sxtb #1"]];
+val (asm_code, sections) = prog_gen_mock ();
+val (asm_code, sections) = process_asm_code (bir_prog_gen_asm_lines_to_code (bir_prog_gen_arm8_rand 5));
+*)
 fun scamv_test_gen_run tests (asm_code, sections) =
     let
         val lifted_prog = lift_program_from_sections sections;
