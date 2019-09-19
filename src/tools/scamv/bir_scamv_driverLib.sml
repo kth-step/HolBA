@@ -365,7 +365,8 @@ val scamv_test_asmf = scamv_test_gen_run 1 o prog_gen_from_file;
 type scamv_config = { max_iter : int, prog_size : int, max_tests : int }
 
 fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
-    let fun remove_junk s = hd (String.tokens (fn c => c = #";")
+    let fun remove_plus s = concat (String.tokens (fn c => c = #"+") s);
+        fun remove_junk s = hd (String.tokens (fn c => c = #";")
                                               (remove_plus s));
         fun unwrap xs = map (fn x => remove_junk (hd x) ^ "\n") xs;
         fun main_loop 0 = ()
