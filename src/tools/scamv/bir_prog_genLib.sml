@@ -98,14 +98,13 @@ in
   (1,"StorePair32-2"),                  (1,"LoadPair32-1"),                  (1,"LoadPair32-2"),
   (1,"LoadStorePair64-1"),              (1,"LoadStorePair64-2"),             (1,"LoadStorePair64-3"),
   (1,"LoadStorePair64-4"),              (1,"NoOperation")]
-
+			   
  fun instClass subs =
      hd (String.tokens  (fn c => Char.compare (c,#"-") = EQUAL) subs);
 
 (* ---------------------------------------------  *)
  type gen = Random.generator
  val rg = Random.newgenseed 1.0
- type init = unit
  val emp_str = ""
      
  fun bits gen bits =
@@ -116,9 +115,6 @@ in
      in
       fn gen => let val i = Random.range (0,ln) gen in (i,List.nth (l,i)) end
      end
-
- fun genint gen max =
-     Random.range (0,max+1) gen
 
  fun weighted_select l = select (List.concat (map (fn (n,x) => List.tabulate (n,fn _ => x)) l));
  fun flat xs = List.foldr (fn (x, acc) => x @ acc) [] xs;
@@ -209,6 +205,14 @@ in
      in
 	 (emp_str, inst)
      end
+ fun cmp_and_branch_instGen (inst, pc, base, len) =
+     let val adr = base + (4*(Random.range (pc, len) gen))
+	 val tks = (p_tokens(hd(decomp(inst))))
+	 val rinst = String.concat[List.nth(tks,0), List.nth(tks,1),", +#0x", (addr_to_hexString(adr))]
+	 val inst = (valOf o snd o cmp_mcode)(cmp_ast rinst)
+     in
+	 (emp_str, inst)
+     end     
  end
 
  fun instsGen (pc, [], base, len)  =
@@ -226,6 +230,7 @@ in
 	 case (instClass c) of 
 	     "BranchImmediate" =>  branch_instGen(pc, base, len)
 	   | "BranchConditional" => c_branch_instGen (inst,pc, base, len)
+	   | "CompareAndBranch" => cmp_and_branch_instGen (inst,pc, base, len)			   
 	   | _ =>
 	     if List.null inclusion
 	     then instsGen (pc,src, base, len) 
@@ -241,12 +246,11 @@ in
 				    in  (src:= (d::(!src)); pc:= !pc + 1);i end))
      end
 
-
+ (* The function take number of instructions and the base address *)
  fun bir_prog_gen_arm8 n = map decomp (progGen (n, 0x40000));
-
-
 
 end (* local *)
 
 end; (* struct *)
+
 
