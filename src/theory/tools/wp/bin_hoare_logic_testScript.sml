@@ -224,6 +224,7 @@ Cases_on `n` >| [
 (*                         MAIN PROOF                             *)
 (******************************************************************)
 
+(* TODO: More lemmatization... *)
 val bir_model_is_weak = store_thm("bir_model_is_weak",
   ``!(prog: 'a bir_program_t).
       weak_model (bir_etl_wm prog)``,
