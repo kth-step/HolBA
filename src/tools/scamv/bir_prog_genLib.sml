@@ -1,49 +1,56 @@
 structure bir_prog_genLib :> bir_prog_genLib =
 struct
 
-local
   open HolKernel boolLib liteLib simpLib Parse bossLib;
   open arm8_progLib arm8AssemblerLib arm8;
-in
-
-  local
-    val mock_progs_i = ref 0;
-    val mock_progs = ref [["ldr x2, [x1]"]];
-    val wrap_around = ref false;
-  in
-    fun bir_prog_gen_arm8_mock_set progs =
-      let
-        val _ = mock_progs_i := 0;
-        val _ = mock_progs := progs;
-      in
-	()
-      end;
-
-    fun bir_prog_gen_arm8_mock_set_wrap_around b =
-      let
-        val _ = wrap_around := b;
-        val _ = if not (!wrap_around) then ()
-                else mock_progs_i := Int.mod(!mock_progs_i, length (!mock_progs));
-      in
-	()
-      end;
-
-    fun bir_prog_gen_arm8_mock () =
-      let
-        val _ = if !mock_progs_i < length (!mock_progs) then ()
-                else raise ERR "bir_prog_gen_arm8_mock" "no more programs";
-
-        val prog = List.nth(!mock_progs, !mock_progs_i);
-
-        val _ = mock_progs_i := (!mock_progs_i) + 1;
-        val _ = if not (!wrap_around) then ()
-                else mock_progs_i := Int.mod(!mock_progs_i, length (!mock_progs));
-      in
-        prog
-      end;
-  end
 
 
+(* general *)
+(* ========================================================================================= *)
+  fun bir_prog_gen_asm_lines_to_code asm_lines =
+    List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "\n" asm_lines;
+
+
+(* fixed programs for mockup *)
+(* ========================================================================================= *)
+  val mock_progs_i = ref 0;
+  val mock_progs = ref [["ldr x2, [x1]"]];
+  val wrap_around = ref false;
+
+  fun bir_prog_gen_arm8_mock_set progs =
+    let
+      val _ = mock_progs_i := 0;
+      val _ = mock_progs := progs;
+    in
+      ()
+    end;
+
+  fun bir_prog_gen_arm8_mock_set_wrap_around b =
+    let
+      val _ = wrap_around := b;
+      val _ = if not (!wrap_around) then ()
+	      else mock_progs_i := Int.mod(!mock_progs_i, length (!mock_progs));
+    in
+      ()
+    end;
+
+  fun bir_prog_gen_arm8_mock () =
+    let
+      val _ = if !mock_progs_i < length (!mock_progs) then ()
+	      else raise ERR "bir_prog_gen_arm8_mock" "no more programs";
+
+      val prog = List.nth(!mock_progs, !mock_progs_i);
+
+      val _ = mock_progs_i := (!mock_progs_i) + 1;
+      val _ = if not (!wrap_around) then ()
+	      else mock_progs_i := Int.mod(!mock_progs_i, length (!mock_progs));
+    in
+      prog
+    end;
+
+
+(* randomly generated programs *)
+(* ========================================================================================= *)
  val arm8_names_weighted = [(0,"Address"),
   (1,"AddSubShiftedRegister32-1"),      (1,"AddSubShiftedRegister32-2"),     (1,"AddSubShiftedRegister32-3"),
   (1,"AddSubShiftedRegister32-4"),      (1,"AddSubShiftedRegister64-1"),     (1,"AddSubShiftedRegister64-2"),
@@ -135,6 +142,9 @@ in
 
  val random = random_hex o Option.valOf o arm8_stepLib.arm8_pattern;
 
+(*
+val el = "6B831B94"
+*)
  fun decomp el =  arm8AssemblerLib.arm8_disassemble [QUOTE el];
 
  fun inst_decomp inst =
@@ -246,10 +256,16 @@ in
 				    in  (src:= (d::(!src)); pc:= !pc + 1);i end))
      end
 
- (* The function take number of instructions and the base address *)
- fun bir_prog_gen_arm8 n = map decomp (progGen (n, 0x40000));
+  fun remove_plus s = concat (String.tokens (fn c => c = #"+") s);
+  fun remove_junk s = hd (String.tokens (fn c => c = #";")
+                                        (remove_plus s));
 
-end (* local *)
+(*
+val n = 3;
+*)
+ (* The function take number of instructions and the base address *)
+ fun bir_prog_gen_arm8 n = map (remove_junk o hd o decomp) (progGen (n, 0x40000));
+
 
 end; (* struct *)
 

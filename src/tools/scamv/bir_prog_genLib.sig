@@ -1,6 +1,14 @@
 signature bir_prog_genLib = sig
 
   (* ---------------------- *)
+  (* general                *)
+  (* ---------------------- *)
+
+  val bir_prog_gen_asm_lines_to_code : string list -> string
+
+
+
+  (* ---------------------- *)
   (* mockups for debugging  *)
   (* ---------------------- *)
 
@@ -24,6 +32,6 @@ signature bir_prog_genLib = sig
 
   (* description of the function.
   *)
-  val bir_prog_gen_arm8 : int -> string list list
+  val bir_prog_gen_arm8 : int -> string list
 
 end

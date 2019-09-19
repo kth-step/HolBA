@@ -105,10 +105,7 @@ fun prog_gen_from_file s_file =
 
 fun prog_gen_mock () =
     let
-        val asm_lines = bir_prog_gen_arm8_mock ();
-
-        val asm_code =
-            List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "\n" asm_lines;
+        val asm_code = bir_prog_gen_asm_lines_to_code (bir_prog_gen_arm8_mock ())
     in
         process_asm_code asm_code
     end
@@ -365,14 +362,10 @@ val scamv_test_asmf = scamv_test_gen_run 1 o prog_gen_from_file;
 type scamv_config = { max_iter : int, prog_size : int, max_tests : int }
 
 fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
-    let fun remove_plus s = concat (String.tokens (fn c => c = #"+") s);
-        fun remove_junk s = hd (String.tokens (fn c => c = #";")
-                                              (remove_plus s));
-        fun unwrap xs = map (fn x => remove_junk (hd x) ^ "\n") xs;
-        fun main_loop 0 = ()
+    let fun main_loop 0 = ()
          |  main_loop n =
             let val prog =
-                    process_asm_code (concat (unwrap (bir_prog_gen_arm8 sz)))
+                    process_asm_code (bir_prog_gen_asm_lines_to_code (bir_prog_gen_arm8 sz))
             in scamv_test_main tests prog; main_loop (n-1) end
     in
         main_loop m
