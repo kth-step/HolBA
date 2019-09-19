@@ -220,11 +220,194 @@ Cases_on `n` >| [
 );
 
 
+val bir_exec_to_labels_reached_ls =
+  store_thm("bir_exec_to_labels_reached_ls",
+  ``!prog ls st m m' l l' n n' n0 c_l' c_l'' st' st''.
+    (bir_exec_to_labels_n ls prog st 1 = BER_Ended l n n0 st'') ==>
+    (bir_exec_block_n prog st m = (l,n,c_l',st'')) ==>
+    (bir_exec_block_n prog st m' = (l',n',c_l'',st')) ==>
+    st'.bst_pc.bpc_label IN ls ==>
+    ~bir_state_is_terminated st'' ==>
+    m' > 0 ==>
+    ~(n' < n)``,
+
+REPEAT STRIP_TAC >>
+subgoal `m' < m` >- (
+  METIS_TAC [bir_exec_block_n_step_ls]
+) >>
+subgoal `~bir_state_is_terminated st'` >- (
+  IMP_RES_TAC bir_exec_block_n_step_ls_running
+) >>
+IMP_RES_TAC bir_exec_to_labels_n_block_n_notin_ls >>
+REV_FULL_SIMP_TAC arith_ss []
+);
+
+
+val bir_exec_to_labels_not_reached_ls =
+  store_thm("bir_exec_to_labels_not_reached_ls",
+  ``!prog ls st m m' l' l'' l''' n' n'' n''' n0 c_l' c_l'' c_l'''
+     st' st'' st'''.
+    (bir_exec_to_labels ls prog st = BER_Ended l' n' n0 st') ==>
+    (bir_exec_block_n prog st m' = (l'',n'',c_l'',st'')) ==>
+    ~bir_state_is_terminated st ==>
+    st''.bst_pc.bpc_label IN ls ==>
+    m' > 0 ==>
+    ~(n'' < n')``,
+
+REPEAT STRIP_TAC >>
+subgoal `~bir_state_is_terminated st''` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
+			bir_exec_to_labels_n_def,
+			bir_exec_steps_GEN_1_EQ_Ended] >>
+  QSPECL_X_ASSUM ``!(n:num). n < n' ==> _``
+		 [`n''`] >>
+  REV_FULL_SIMP_TAC arith_ss [] >>
+  FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+) >>
+subgoal `st''.bst_pc.bpc_label NOTIN ls \/
+         st''.bst_pc.bpc_index <> 0` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
+			bir_exec_to_labels_n_def,
+			bir_exec_steps_GEN_1_EQ_Ended] >>
+  subgoal `0 < n''` >- (
+    subgoal `0 < m'` >- (
+      FULL_SIMP_TAC arith_ss []
+    ) >>
+    IMP_RES_TAC bir_exec_block_n_block_nz_init_running
+  ) >>
+  QSPECL_X_ASSUM ``!(n:num). 0 < n /\ n < n' ==> _``
+		 [`n''`] >>
+  REV_FULL_SIMP_TAC arith_ss [] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss)
+    [bir_state_COUNT_PC_def, bir_state_is_terminated_def] >>
+  FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM] >>
+  REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >> (
+    FULL_SIMP_TAC std_ss []
+  )
+) >>
+Cases_on
+  `bir_exec_infinite_steps_fun_COUNT_PCs
+     (F,(\pc. pc.bpc_index = 0)) prog st n'' < m'` >- (
+  FULL_SIMP_TAC arith_ss [bir_exec_block_n_EQ_THM,
+			  bir_state_is_terminated_def] >>
+  REV_FULL_SIMP_TAC arith_ss []
+) >>
+subgoal
+  `bir_exec_infinite_steps_fun_COUNT_PCs
+     (F,(\pc. pc.bpc_index = 0)) prog st n'' = m'` >- (
+  FULL_SIMP_TAC arith_ss [bir_exec_block_n_EQ_THM]
+) >>
+subgoal `st''.bst_pc.bpc_index = 0` >- (
+  FULL_SIMP_TAC std_ss [bir_state_is_terminated_def] >>
+  subgoal
+    `bir_exec_infinite_steps_fun prog st n'' = st''` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss)
+      [bir_exec_block_n_EQ_THM]
+  ) >>
+  FULL_SIMP_TAC (arith_ss++holBACore_ss)
+    [bir_exec_block_n_EQ_THM, bir_state_COUNT_PC_def,
+     bir_state_is_terminated_def]
+)
+);
+
+
+val bir_exec_to_labels_nz_blocks =
+  store_thm("bir_exec_to_labels_nz_blocks",
+  ``!ls prog st l m l' n c_l' st'.
+    (bir_exec_to_labels ls prog st = BER_Looping l) ==>
+    (bir_exec_block_n prog st m = (l',n,c_l',st')) ==>
+    m > 0 ==>
+    n > 0``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
+		      bir_exec_to_labels_n_def,
+		      bir_exec_steps_GEN_1_EQ_Looping] >>
+subgoal `~bir_state_is_terminated st` >- (
+  QSPECL_X_ASSUM ``!n.
+                   ~bir_state_is_terminated
+                     (bir_exec_infinite_steps_fun prog st n)``
+                 [`0`] >>
+  FULL_SIMP_TAC std_ss [bir_state_is_terminated_def,
+			bir_exec_infinite_steps_fun_REWRS]
+) >>
+IMP_RES_TAC bir_exec_block_n_block_nz_init_running >>
+REV_FULL_SIMP_TAC arith_ss []
+);
+
+
+val bir_exec_to_labels_looping_not_reached_ls =
+  store_thm("bir_exec_to_labels_looping_not_reached_ls",
+  ``!ls prog st l m l' n c_l' st'.
+    (bir_exec_to_labels ls prog st = BER_Looping l) ==>
+    (bir_exec_block_n prog st m = (l',n,c_l',st')) ==>
+    0 < m ==>
+    st'.bst_pc.bpc_label NOTIN ls``,
+
+REPEAT STRIP_TAC >>
+subgoal `0 < n` >- (
+  IMP_RES_TAC bir_exec_to_labels_nz_blocks >>
+  FULL_SIMP_TAC arith_ss []
+) >>
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
+		      bir_exec_to_labels_n_def,
+		      bir_exec_steps_GEN_1_EQ_Looping] >>
+QSPECL_X_ASSUM ``!(n:num). (0 < n) ==> _`` [`n`] >>
+REV_FULL_SIMP_TAC arith_ss [bir_state_COUNT_PC_def] >>
+QSPECL_X_ASSUM ``!(n:num). _`` [`n`] >>
+subgoal `bir_exec_infinite_steps_fun prog st n = st'` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+) >>
+FULL_SIMP_TAC (std_ss++holBACore_ss)
+	      [bir_state_is_terminated_def] >| [
+  IMP_RES_TAC bir_exec_block_n_block_nz_final_running >>
+  REV_FULL_SIMP_TAC arith_ss [bir_state_is_terminated_def],
+
+  FULL_SIMP_TAC std_ss []
+]
+);
+
+
+val bir_exec_to_labels_term_ls =
+  store_thm("bir_exec_to_labels_term_ls",
+  ``!prog st ls m m' l' l'' l''' n' n'' n''' n0 c_l' c_l'' c_l'''
+     st' st'' st'''.
+    (bir_exec_to_labels ls prog st = BER_Ended l' n' n0 st') ==>
+    (bir_exec_block_n prog st m = (l''',n''',c_l''',st''')) ==>
+    (bir_exec_block_n prog st m' = (l'',n'',c_l'',st'')) ==>
+    (bir_exec_block_n prog st (SUC m) = (l',n',c_l',st')) ==>
+    ~bir_state_is_terminated st''' ==>
+    m' > 0 ==>
+    ~bir_state_is_terminated st'' ==>
+    st''.bst_pc.bpc_label IN ls ==>
+    bir_state_is_terminated st' ==>
+    ~(m' < (SUC m))``, 
+
+REPEAT STRIP_TAC >>
+Cases_on `n'' = n'` >- (
+  subgoal `m' >= SUC m` >- (
+    IMP_RES_TAC bir_exec_block_n_step_eq_block_gt
+  ) >>
+  FULL_SIMP_TAC arith_ss []
+) >>
+subgoal `~(n'' < n')` >- (
+  subgoal `~bir_state_is_terminated st` >- (
+    IMP_RES_TAC bir_exec_block_n_running
+  ) >>
+  IMP_RES_TAC bir_exec_to_labels_not_reached_ls
+) >>
+subgoal `n'' > n'` >- (
+  FULL_SIMP_TAC arith_ss []
+) >>
+IMP_RES_TAC bir_exec_block_n_step_ls_running >>
+REV_FULL_SIMP_TAC arith_ss []
+);
+
+
 (******************************************************************)
 (*                         MAIN PROOF                             *)
 (******************************************************************)
 
-(* TODO: More lemmatization... *)
 val bir_model_is_weak = store_thm("bir_model_is_weak",
   ``!(prog: 'a bir_program_t).
       weak_model (bir_etl_wm prog)``,
@@ -244,25 +427,27 @@ CASE_TAC >| [
   CASE_TAC >| [
     (* Case 1A: Ended + Final state has status Running - regular
      *          case *)
-    (* TODO: Move this to before CASE... *)
     FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
     IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_block_n >>
     IMP_RES_TAC bir_exec_to_labels_n_ended_running >>
-    (* TODO: Add more common stuff here... *)
+    rename1 `bir_exec_block_n prog st m = (l,n,c_l',b)` >>
+    rename1 `bir_exec_block_n prog st m = (l,n,c_l',st'')` >>
     EQ_TAC >| [
       (* Case 1AI *)
+      (* Clean-up *)
       REPEAT DISCH_TAC >>
-      (* subsume b... *)
-      rename1 `bir_exec_block_n prog st m = (l,n,c_l',b)` >>
-      rename1 `bir_exec_block_n prog st m = (l,n,c_l',st'')` >>
       rename1 `st'' = st'` >>
       Q.PAT_X_ASSUM `st'' = st'`
                     (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
       EXISTS_TAC ``m:num`` >>
       FULL_SIMP_TAC arith_ss [] >>
+      (* Prove first conjunct using
+       * bir_exec_block_n_to_FUNPOW_OPT_bir_trs *)
       FULL_SIMP_TAC std_ss
         [bir_exec_block_n_to_FUNPOW_OPT_bir_trs] >>
       REPEAT STRIP_TAC >>
+      (* Prove new first conjunct using
+       * bir_exec_block_n_to_FUNPOW_OPT_bir_trs *)
       rename1 `m' < m` >>
       ASSUME_TAC (Q.SPECL [`prog`, `st`, `m'`]
                           bir_exec_block_n_EXISTS) >>
@@ -273,62 +458,48 @@ CASE_TAC >| [
       ) >>
       FULL_SIMP_TAC std_ss
         [bir_exec_block_n_to_FUNPOW_OPT_bir_trs] >>
-      (* Use bir_exec_to_labels_n_block_n_notin_ls *)
+      (* Finally, use bir_exec_to_labels_n_block_n_notin_ls *)
       IMP_RES_TAC bir_exec_to_labels_n_block_n_notin_ls >>
       FULL_SIMP_TAC arith_ss [],
 
       (* Case 1AII: Assuming bir_trs plays nice, show that
        * b = st' (translate from bir_trs to block_n) *)
+      (* Clean-up *)
       REPEAT STRIP_TAC >>
       IMP_RES_TAC FUNPOW_OPT_bir_trs_to_bir_exec_block_n >>
-      rename1 `bir_exec_block_n prog st n' = (l',n'',c_l'',ms')` >>
       rename1 `bir_exec_block_n prog st m' = (l',n'',c_l'',ms')` >>
       rename1 `bir_exec_block_n prog st m' = (l',n',c_l'',ms')` >>
       rename1 `bir_exec_block_n prog st m' = (l',n',c_l'',st')` >>
-      (* Here, n < n' as well as n' < n leads to contradiction, so
-       * only remaining posssibility is n = n', which proves the
-       * goal. *)
-      Cases_on `n' < n` >- (
-        (* This would mean that st' does not have PC with label in
-         * ls and pointing to instruction 0, which is a
-         * contradiction. *)
-        (* Step 1: Prove m' < m *)
-	subgoal `m' < m` >- (
-	  METIS_TAC [bir_exec_block_n_step_ls]
-	) >>
-        (* Step 2: Prove st'.bst_status = BST_Running *)
-        subgoal `~bir_state_is_terminated st'` >- (
-          IMP_RES_TAC bir_exec_block_n_step_ls_running
-        ) >>
-        (* Step 3: Use bir_exec_to_labels_n_block_n_notin_ls *)
-        IMP_RES_TAC bir_exec_to_labels_n_block_n_notin_ls >>
-        REV_FULL_SIMP_TAC arith_ss []
-      ) >>
-      Cases_on `n < n'` >- (
-        (* Slightly more complex case: This would mean that state b
-         * has crossed less than m' blocks. This would mean,
-         * together with init assumption, that PC label of b is not
-         * in ls (with bir_exec_block_n_to_FUNPOW_OPT_bir_trs) *)
-        subgoal `m < m'` >- (
-          IMP_RES_TAC bir_exec_block_n_step_ls
-        ) >>
-        (* Use initial assumption *)
-        QSPECL_X_ASSUM
-          ``!n'.
-             n' < m' /\ n' > 0 ==>
-             ?ms''.
-                 (FUNPOW_OPT (bir_trs prog) n' st = SOME ms'') /\
-                 ms''.bst_pc.bpc_label NOTIN ls`` [`m`] >>
-        REV_FULL_SIMP_TAC arith_ss [] >>
-        IMP_RES_TAC bir_exec_to_labels_n_ended_running >>
-        IMP_RES_TAC bir_exec_block_n_to_FUNPOW_OPT_bir_trs >>
-        REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-        FULL_SIMP_TAC (std_ss++holBACore_ss) []
-      ) >>
-      (* Since ~(n < n') and ~(n' < n), n = n' ... *)
+      (* Prove that n = n' using the original hypothesis of the
+       * goal*)
       subgoal `n = n'` >- (
+	subgoal `~(n' < n)` >- (
+	  IMP_RES_TAC bir_exec_to_labels_reached_ls
+	) >>
+	Cases_on `n < n'` >- (
+	  (* This would mean that state b has crossed less than
+           * m' blocks. Which entails, together with init
+           * assumption, that PC label of b is not in ls (with
+           * bir_exec_block_n_to_FUNPOW_OPT_bir_trs) *)
+	  subgoal `m < m'` >- (
+	    IMP_RES_TAC bir_exec_block_n_step_ls
+	  ) >>
+	  QSPECL_X_ASSUM
+	    ``!n'.
+	       n' < m' /\ n' > 0 ==>
+	       ?ms''.
+		   (FUNPOW_OPT (bir_trs prog) n' st = SOME ms'') /\
+		   ms''.bst_pc.bpc_label NOTIN ls`` [`m`] >>
+	  REV_FULL_SIMP_TAC arith_ss [] >>
+	  IMP_RES_TAC bir_exec_block_n_to_FUNPOW_OPT_bir_trs >>
+	  REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+	  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+	) >>
         FULL_SIMP_TAC arith_ss []
       ) >>
+      (* bir_exec_block_n_step_eq_running now gives us that the
+       * number of block-steps are equal, so the block executions
+       * must evaluate to the same state, which proves the goal. *)
       subgoal `m = m'` >- (
         subgoal `~bir_state_is_terminated st'` >- (
 	  IMP_RES_TAC bir_exec_block_n_step_eq >>
@@ -336,7 +507,7 @@ CASE_TAC >| [
         ) >>
         IMP_RES_TAC bir_exec_block_n_step_eq_running
       ) >>
-      FULL_SIMP_TAC arith_ss []
+      FULL_SIMP_TAC std_ss []
     ],
 
     (* Case 1B *)
@@ -388,148 +559,38 @@ CASE_TAC >| [
       `bir_exec_block_n prog st m' = (l'',n,c_l'',st'')` >>
     rename1
       `bir_exec_block_n prog st m' = (l'',n'',c_l'',st'')` >>
-    Cases_on `m' < (SUC m)` >| [
-      (* If m' is less than SUC m, then st'' is the result of less
-       * than or equal the amount of statement-steps of
-       * bir_exec_block_n. If the number of statement-steps n'' and
-       * n' is equal, then we must also have
-       * that m' >= SUC m (since termination occurs at exactly SUC m
-       * block-steps), which contradicts the case. *)
-      Cases_on `n'' = n'` >- (
-	subgoal `m' >= SUC m` >- (
-	  IMP_RES_TAC bir_exec_block_n_step_eq_block_gt
-	) >>
-        FULL_SIMP_TAC arith_ss []
-      ) >>
-      (* If n'' < n', then we have that either PC index of st'' is
-       * non-zero or PC label is not in ls (by bir_exec_to_labels
-       * definition and bir_exec_steps_GEN_1_EQ_Ended). Since we
-       * also know that status is Running for all block-steps less
-       * than SUC m, the result of m' block-steps will always
-       * have index zero (contradiction in assumptions), and so
-       * PC label must not be in ls, which was the goal. *)
-      Cases_on `n'' < n'` >- (
-	subgoal `~bir_state_is_terminated st''` >- (
-	  FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
-                                bir_exec_to_labels_n_def,
-				bir_exec_steps_GEN_1_EQ_Ended] >>
-          QSPECL_X_ASSUM ``!(n:num). n < n' ==> _``
-                         [`n''`] >>
-          REV_FULL_SIMP_TAC arith_ss [] >>
-	  FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
-	) >>
-        subgoal `st''.bst_pc.bpc_label NOTIN ls \/
-                 st''.bst_pc.bpc_index <> 0` >- (
-	  FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
-                                bir_exec_to_labels_n_def,
-				bir_exec_steps_GEN_1_EQ_Ended] >>
-          subgoal `0 < n''` >- (
-            subgoal `0 < m'` >- (
-              FULL_SIMP_TAC arith_ss []
-            ) >>
-            IMP_RES_TAC bir_exec_block_n_block_nz_init_running
-          ) >>
-          QSPECL_X_ASSUM ``!(n:num). 0 < n /\ n < n' ==> _``
-                         [`n''`] >>
-          REV_FULL_SIMP_TAC arith_ss [] >>
-          FULL_SIMP_TAC (std_ss++holBACore_ss)
-            [bir_state_COUNT_PC_def, bir_state_is_terminated_def] >>
-	  FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM] >>
-          REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >> (
-            FULL_SIMP_TAC std_ss []
-          )
-        ) >>
-        Cases_on
-          `bir_exec_infinite_steps_fun_COUNT_PCs
-             (F,(\pc. pc.bpc_index = 0)) prog st n'' < m'` >- (
-          FULL_SIMP_TAC arith_ss [bir_exec_block_n_EQ_THM,
-                                  bir_state_is_terminated_def] >>
-          REV_FULL_SIMP_TAC arith_ss []
-        ) >>
-        subgoal
-          `bir_exec_infinite_steps_fun_COUNT_PCs
-             (F,(\pc. pc.bpc_index = 0)) prog st n'' = m'` >- (
-          FULL_SIMP_TAC arith_ss [bir_exec_block_n_EQ_THM]
-        ) >>
-        subgoal `st''.bst_pc.bpc_index = 0` >- (
-          FULL_SIMP_TAC std_ss [bir_state_is_terminated_def] >>
-          subgoal
-            `bir_exec_infinite_steps_fun prog st n'' = st''` >- (
-            FULL_SIMP_TAC (std_ss++holBACore_ss)
-              [bir_exec_block_n_EQ_THM]
-          ) >>
-          FULL_SIMP_TAC (arith_ss++holBACore_ss)
-            [bir_exec_block_n_EQ_THM, bir_state_COUNT_PC_def,
-             bir_state_is_terminated_def]
-        )
-      ) >>
-      subgoal `n'' > n'` >- (
-        FULL_SIMP_TAC arith_ss []
-      ) >>
-      (* If n'' > n', then we can obtain that st' is Running,
-       * which means a contradiction among assumptions. *)
-      FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM] >>
-      QSPECL_X_ASSUM ``!n'.
-                       n' < n'' ==>
-                       ~bir_state_is_terminated
-                         (bir_exec_infinite_steps_fun prog st n') /\
-                       _``
-		     [`n'`] >>
-      REV_FULL_SIMP_TAC arith_ss [],
-
-      (* If m' is equal to or greater than SUC m, then the status
-       * of st'' must be terminated. But this means that the return
-       * value of FUNPOW_OPT (bir_trs prog) m' st must be NONE,
-       * which is a contradiction among assumptions. *)
-      subgoal `m' >= SUC m` >- (
-        FULL_SIMP_TAC arith_ss []
-      ) >>
-      IMP_RES_TAC FUNPOW_OPT_bir_trs_running >>
-      IMP_RES_TAC bir_exec_block_n_not_running_block_ge >>
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ]
+    (* Prove contradiction using negation of goal among
+     * assumptions *)
+    CCONTR_TAC >>
+    FULL_SIMP_TAC std_ss [] >>
+    subgoal `~bir_state_is_terminated st''` >- (
+      IMP_RES_TAC FUNPOW_OPT_bir_trs_running
+    ) >>
+    subgoal `~(m' < (SUC m))` >- (
+      IMP_RES_TAC bir_exec_to_labels_term_ls
+    ) >>
+    IMP_RES_TAC FUNPOW_OPT_bir_trs_running >>
+    IMP_RES_TAC bir_exec_block_n_not_running_block_ge >>
+    FULL_SIMP_TAC (arith_ss++holBACore_ss) []
   ],
 
   (* Case 2: Result of bir_exec_to_labels is Looping *)
+  (* First, some clean-up *)
   FULL_SIMP_TAC std_ss [GSYM boolTheory.IMP_DISJ_THM] >>
   REPEAT STRIP_TAC >>
-  Cases_on `~(n > 0)` >- (
+  Cases_on `~(n > 0)` >> (
     FULL_SIMP_TAC std_ss []
   ) >>
-  FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
-			bir_exec_to_labels_n_def,
-			bir_exec_steps_GEN_1_EQ_Looping] >>
   rename1 `m > 0` >>
   DISJ1_TAC >>
   REPEAT STRIP_TAC >>
   IMP_RES_TAC FUNPOW_OPT_bir_trs_to_bir_exec_block_n >>
   rename1 `bir_exec_block_n prog st m = (l',n,c_l',ms')` >>
   rename1 `bir_exec_block_n prog st m = (l',n,c_l',st')` >>
-  QSPECL_X_ASSUM ``!(n:num). (0 < n) ==> _`` [`n`] >>
-  (* Since m is larger than zero, n has to be as well...
-   * if st is Running *)
-  subgoal `~bir_state_is_terminated st` >- (
-    QSPECL_X_ASSUM ``!(n:num). _`` [`0`] >>
-    FULL_SIMP_TAC std_ss [bir_state_is_terminated_def,
-                          bir_exec_infinite_steps_fun_REWRS]
-  ) >>
-  subgoal `0 < n` >- (
-    IMP_RES_TAC bir_exec_block_n_block_nz_init_running >>
-    FULL_SIMP_TAC arith_ss []
-  ) >>
-  FULL_SIMP_TAC arith_ss [bir_state_COUNT_PC_def] >>
-  QSPECL_X_ASSUM ``!(n:num). _`` [`n`] >>
-  subgoal `bir_exec_infinite_steps_fun prog st n = st'` >- (
-    FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
-  ) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss)
-		[bir_state_is_terminated_def] >| [
-    IMP_RES_TAC bir_exec_block_n_block_nz_final_running >>
-    REV_FULL_SIMP_TAC arith_ss [bir_state_is_terminated_def],
-
-    IMP_RES_TAC bir_exec_block_n_to_FUNPOW_OPT_bir_trs >>
-    FULL_SIMP_TAC std_ss [bir_state_is_terminated_def]
-  ]
+  (* Then, bir_exec_to_labels_looping_not_reached_ls gives us
+   * contradiction on label set membership *)
+  IMP_RES_TAC bir_exec_to_labels_looping_not_reached_ls >>
+  REV_FULL_SIMP_TAC arith_ss []
 ]
 );
 

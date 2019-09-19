@@ -2062,16 +2062,14 @@ FULL_SIMP_TAC arith_ss []
 );
 
 
-(* If the final state is not terminated, then execution with a
- * smaller number of statement-steps taken does not result in
- * a terminated state. *)
+(* Execution with a smaller number of statement-steps taken
+ * never results in a terminated state. *)
 val bir_exec_block_n_step_ls_running =
   store_thm("bir_exec_block_n_step_ls_running",
   ``!prog st l l' n n' c_l' c_l'' st' m m' st''.
     (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
     (bir_exec_block_n prog st m' = (l',n',c_l'',st'')) ==>
     (n' < n) ==>
-    ~(bir_state_is_terminated st') ==>
     ~(bir_state_is_terminated st'')``,
 
 REPEAT STRIP_TAC >>
