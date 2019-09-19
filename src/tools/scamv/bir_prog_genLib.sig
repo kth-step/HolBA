@@ -32,6 +32,6 @@ signature bir_prog_genLib = sig
 
   (* description of the function.
   *)
-  val bir_prog_gen_arm8 : int -> string list
+  val bir_prog_gen_arm8_rand : int -> string list
 
 end

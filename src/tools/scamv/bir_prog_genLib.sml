@@ -264,7 +264,7 @@ val el = "6B831B94"
 val n = 3;
 *)
  (* The function take number of instructions and the base address *)
- fun bir_prog_gen_arm8 n = map (remove_junk o hd o decomp) (progGen (n, 0x40000));
+ fun bir_prog_gen_arm8_rand n = map (remove_junk o hd o decomp) (progGen (n, 0x40000));
 
 
 end; (* struct *)

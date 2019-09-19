@@ -362,10 +362,20 @@ val scamv_test_asmf = scamv_test_gen_run 1 o prog_gen_from_file;
 type scamv_config = { max_iter : int, prog_size : int, max_tests : int }
 
 fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
-    let fun main_loop 0 = ()
+    let val is_mock = true;
+
+        val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
+
+        fun prog_gen_fun () =
+          if is_mock then
+            bir_prog_gen_arm8_mock ()
+          else
+            bir_prog_gen_arm8_rand sz;
+        
+        fun main_loop 0 = ()
          |  main_loop n =
             let val prog =
-                    process_asm_code (bir_prog_gen_asm_lines_to_code (bir_prog_gen_arm8 sz))
+                    process_asm_code (bir_prog_gen_asm_lines_to_code (prog_gen_fun ()))
             in scamv_test_main tests prog; main_loop (n-1) end
     in
         main_loop m
