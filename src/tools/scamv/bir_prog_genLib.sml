@@ -8,7 +8,7 @@ struct
 (* general *)
 (* ========================================================================================= *)
   fun bir_prog_gen_asm_lines_to_code asm_lines =
-    List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "\n" asm_lines;
+    List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "" asm_lines;
 
 
 (* fixed programs for mockup *)
@@ -55,9 +55,9 @@ struct
   (1,"AddSubShiftedRegister32-1"),      (1,"AddSubShiftedRegister32-2"),     (1,"AddSubShiftedRegister32-3"),
   (1,"AddSubShiftedRegister32-4"),      (1,"AddSubShiftedRegister64-1"),     (1,"AddSubShiftedRegister64-2"),
   (1,"AddSubShiftedRegister64-3"),      (1,"AddSubShiftedRegister64-4"),     (1,"AddSubExtendRegister-1"),
-  (1,"AddSubExtendRegister-2"),         (1,"AddSubExtendRegister-3"),        (1,"AddSubExtendRegister-4"),
-  (1,"AddSubExtendRegister-5"),         (1,"AddSubExtendRegister-6"),        (1,"AddSubExtendRegister-7"),
-  (1,"AddSubExtendRegister-8"),         (1,"AddSubImmediate-1"),             (1,"AddSubImmediate-2"),
+  (0,"AddSubExtendRegister-2"),         (1,"AddSubExtendRegister-3"),        (0,"AddSubExtendRegister-4"),
+  (1,"AddSubExtendRegister-5"),         (0,"AddSubExtendRegister-6"),        (1,"AddSubExtendRegister-7"),
+  (0,"AddSubExtendRegister-8"),         (1,"AddSubImmediate-1"),             (1,"AddSubImmediate-2"),
   (1,"AddSubImmediate-3"),              (1,"AddSubImmediate-4"),             (1,"AddSubImmediate-5"),
   (1,"AddSubImmediate-6"),              (1,"AddSubImmediate-7"),             (1,"AddSubImmediate-8"),
   (1,"AddSubCarry-1"),                  (1,"AddSubCarry-2"),                 (1,"AddSubCarry-3"),
@@ -75,7 +75,7 @@ struct
   (1,"CountLeading-1"),                 (1,"CountLeading-2"),                (1,"ExtractRegister32"),
   (1,"ExtractRegister64"),              (1,"Division-1"),                    (1,"Division-2"),
   (1,"MultiplyAddSub-1"),               (1,"MultiplyAddSub-2"),              (1,"MultiplyAddSubLong"),
-  (1,"MultiplyHigh"),                   (1,"Reverse32"),                     (1,"Reverse64"),
+  (0,"MultiplyHigh"),                   (1,"Reverse32"),                     (1,"Reverse64"),
   (1,"CRC8"),                           (1,"CRC16"),                         (1,"CRC32"),
   (1,"CRC64"),                          (1,"BranchConditional"),             (1,"BranchImmediate-1"),
   (1,"BranchImmediate-2"),              (1,"BranchRegisterJMP"),             (1,"BranchRegisterCALL"),
@@ -256,9 +256,12 @@ val el = "6B831B94"
 				    in  (src:= (d::(!src)); pc:= !pc + 1);i end))
      end
 
+  val do_debug = false;
   fun remove_plus s = concat (String.tokens (fn c => c = #"+") s);
-  fun remove_junk s = hd (String.tokens (fn c => c = #";")
-                                        (remove_plus s));
+  fun remove_minus s = concat (String.tokens (fn c => c = #"-") s);
+  fun remove_junk s = (hd (String.tokens (fn c => c = #";")
+                                        (remove_minus (remove_plus s)))) ^ (if not do_debug then ""
+                                                                            else " /* orig: " ^ s ^ " */");
 
 (*
 val n = 3;
