@@ -84,30 +84,22 @@ fun lift_program_from_sections sections =
         lifted_prog_typed
     end
 
-fun process_asm_code asm_code =
+fun process_asm_lines prog_gen_id asm_lines =
     let
+        val prog_id = bir_embexp_prog_create ("arm8", prog_gen_id) asm_lines
+        val asm_code = bir_prog_gen_asm_lines_to_code asm_lines
         val da_file = bir_gcc_assembe_disassemble asm_code "./tempdir"
 
         val (region_map, sections) = read_disassembly_file_regions da_file;
     in
-        (asm_code, sections)
-    end
-
-fun prog_gen_from_file s_file =
-    let
-        val file = TextIO.openIn s_file;
-        val s    = TextIO.inputAll file before TextIO.closeIn file;
-
-        val asm_code = s; 
-    in
-        process_asm_code asm_code
+        (prog_id, sections)
     end
 
 fun prog_gen_mock () =
     let
-        val asm_code = bir_prog_gen_asm_lines_to_code (bir_prog_gen_arm8_mock ())
+        val asm_lines = bir_prog_gen_arm8_mock ()
     in
-        process_asm_code asm_code
+        process_asm_lines "prog_gen_mock" asm_lines
     end
 
 fun symb_exec_phase prog =
@@ -218,7 +210,7 @@ fun print_model model =
 fun to_sml_Arbnums model =
     List.map (fn (name, tm) => (name, dest_word_literal tm)) model;
 
-val (current_asm : string ref) = ref "";
+val (current_prog_id : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
 val (current_pathstruct :
      (term * (term * term) list option) list ref) = ref [];
@@ -226,7 +218,7 @@ val (current_word_rel : term option ref) = ref NONE;
 val (current_antecedents : term list ref) = ref [];
 
 fun reset () =
-    (current_asm := "";
+    (current_prog_id := "";
      current_prog := NONE;
      current_pathstruct := [];
      current_word_rel := NONE;
@@ -234,8 +226,8 @@ fun reset () =
 
 fun start_interactive prog =
     let
-        val (asm_file_contents, sections) = prog;
-        val _ = current_asm := asm_file_contents;
+        val (prog_id, sections) = prog;
+        val _ = current_prog_id := prog_id;
         val lifted_prog = lift_program_from_sections sections;
         val _ = current_prog := SOME lifted_prog;
 
@@ -267,7 +259,7 @@ fun next_test select_path =
         val sml_model = to_sml_Arbnums model;
         fun isPrimedRun s = String.isSuffix "_" s;
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
-        val asm_file_contents = !current_asm;
+        val prog_id = !current_prog_id;
 
         fun mk_var_mapping s =
             let fun mk_eq (a,b) =
@@ -282,9 +274,9 @@ fun next_test select_path =
         val _ = current_word_rel := SOME ``^rel /\ ~^(mk_var_mapping model)``;
 
         val _ = print_term (valOf (!current_word_rel));
-        
-        val exp_path = bir_embexp_create ("obs_model_name_here", ("arm8", "exp_cache_multiw")) asm_file_contents (s1, s2);
-        val test_result = bir_embexp_run exp_path false;
+
+        val exp_id  =  bir_embexp_sates2_create ("arm8", "exp_cache_multiw", "obs_model_name_here") prog_id (s1, s2);
+        val test_result = bir_embexp_run exp_id false;
 
         val _ = case test_result of
 		   (NONE, msg) => print ("result = NO RESULT (" ^ msg ^ ")")
@@ -324,10 +316,10 @@ fun scamv_test_main tests prog =
 
 (*
 val _ = bir_prog_gen_arm8_mock_set [["subs w12, w12, w15, sxtb #1"]];
-val (asm_code, sections) = prog_gen_mock ();
-val (asm_code, sections) = process_asm_code (bir_prog_gen_asm_lines_to_code (bir_prog_gen_arm8_rand 5));
+val (asm_lines, sections) = prog_gen_mock ();
+val (asm_lines, sections) = process_asm_lines "interactive_test" (bir_prog_gen_arm8_rand 5);
 *)
-fun scamv_test_gen_run tests (asm_code, sections) =
+fun scamv_test_gen_run tests (prog_id, sections) =
     let
         val lifted_prog = lift_program_from_sections sections;
         val lifted_prog_w_obs =
@@ -349,8 +341,8 @@ fun scamv_test_gen_run tests (asm_code, sections) =
         fun isPrimedRun s = String.isSuffix "_" s;
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
 
-        val exp_path = bir_embexp_create ("obs_model_name_here", ("arm8", "exp_cache_multiw")) asm_code (s1, s2);
-        val test_result = bir_embexp_run exp_path false;
+        val exp_id  =  bir_embexp_sates2_create ("arm8", "exp_cache_multiw", "obs_model_name_here") prog_id (s1, s2);
+        val test_result = bir_embexp_run exp_id false;
 
         val _ = case test_result of
 		   (NONE, msg) => print ("result = NO RESULT (" ^ msg ^ ")")
@@ -362,7 +354,6 @@ fun scamv_test_gen_run tests (asm_code, sections) =
     end
 
 val scamv_test_mock = scamv_test_gen_run 1 o prog_gen_mock;
-val scamv_test_asmf = scamv_test_gen_run 1 o prog_gen_from_file;
 
 type scamv_config = { max_iter : int, prog_size : int, max_tests : int }
 
@@ -371,16 +362,16 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
 
         val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
 
-        fun prog_gen_fun () =
+        val (prog_gen_fun, prog_gen_id) =
           if is_mock then
-            bir_prog_gen_arm8_mock ()
+            (fn () => bir_prog_gen_arm8_mock (), "prog_gen_mock")
           else
-            bir_prog_gen_arm8_rand sz;
+            (fn () => bir_prog_gen_arm8_rand sz, "prog_gen_rand");
         
         fun main_loop 0 = ()
          |  main_loop n =
             let val prog =
-                    process_asm_code (bir_prog_gen_asm_lines_to_code (prog_gen_fun ()))
+                    process_asm_lines prog_gen_id (prog_gen_fun ())
             in scamv_test_main tests prog; main_loop (n-1) end
     in
         main_loop m

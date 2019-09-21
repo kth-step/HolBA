@@ -3,6 +3,8 @@ struct
 
   open HolKernel Parse boolLib bossLib;
 
+  open bir_prog_genLib;
+
 (* error handling *)
   val libname = "bir_embexp_driverLib"
   val ERR = Feedback.mk_HOL_ERR libname
@@ -41,6 +43,10 @@ struct
         NONE =>
           let
             val dir_path = logfile_basedir_read();
+            val _ = if not (OS.FileSys.isDir dir_path) then
+                      raise ERR "logfile_basedir" ("not a directory: " ^ dir_path)
+                    else
+                      ();
             val _ = logfile_basedir_ref := SOME dir_path;
           in
             dir_path
@@ -52,24 +58,10 @@ struct
   fun get_datestring () =
     let
       val date = Date.fromTimeLocal (Time.now ());
-      val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S_" date;
+      val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S" date;
     in
       datestr
     end;
-
-
-(* embexp run identification *)
-  val embexp_run_id_ref = ref (NONE:string option);
-  fun embexp_run_id () =
-    case !embexp_run_id_ref of
-        NONE =>
-          let
-            val datestr = get_datestring();
-            val _ = embexp_run_id_ref := SOME datestr;
-          in
-            datestr
-          end
-      | SOME p => p;
 
 (* directory creation helper *)
   fun makedir makepath path =
@@ -83,20 +75,26 @@ struct
       ()
     end;
 
-(* helper functions *)
-  fun get_experiment_basedir (arch_name, exp_name) =
+(* log dir helper functions *)
+  fun get_progs_basedir arch_name =
     let
       val logfile_basedir_p = logfile_basedir()
-      val _ = if not (OS.FileSys.isDir logfile_basedir_p) then
-                raise ERR "logfile_basedir" ("not a directory: " ^ logfile_basedir_p)
-              else
-                ();
-      val exp_basedir = logfile_basedir_p ^ "/" ^ arch_name ^ "/" ^ exp_name;
+      val progs_basedir = logfile_basedir_p ^ "/" ^ arch_name ^ "/progs";
+      val _ = makedir true progs_basedir;
+    in
+      progs_basedir
+    end;
+
+  fun get_experiment_basedir arch_name =
+    let
+      val logfile_basedir_p = logfile_basedir()
+      val exp_basedir = logfile_basedir_p ^ "/" ^ arch_name;
       val _ = makedir true exp_basedir;
     in
       exp_basedir
     end;
 
+(* file read/write helpers *)
   fun read_from_file filename =
     let
       val file = TextIO.openIn filename;
@@ -132,13 +130,22 @@ struct
     in
       str = s
     end;
+  fun write_to_file_or_compare_clash clash_id filename str =
+    let
+      val eq = write_to_file_or_compare filename str;
+      val _ = if eq then () else
+                raise ERR ("write_to_file_or_compare_clash___" ^ clash_id) ("there has been a clash with: " ^ filename);
+    in
+      ()
+    end;
 
+(* helper functions *)
   val tempdir = "./tempdir";
   fun get_tempfile prefix suffix =
     let
       val _ = makedir true tempdir;
       val datestr = get_datestring();
-      val tempfile = tempdir ^ "/" ^ prefix ^ "_" ^ datestr ^ suffix;
+      val tempfile = tempdir ^ "/" ^ prefix ^ "_" ^ datestr ^ "_" ^ suffix;
     in
       tempfile
     end;
@@ -211,6 +218,41 @@ struct
       get_exec_python3_argvar (pyhashprep ^ pyprint) str
     end;
 
+(* embexp run identification *)
+  val embexp_run_id_ref = ref (NONE:string option);
+  fun embexp_run_id () =
+    case !embexp_run_id_ref of
+        NONE =>
+          let
+            val logfile_basedir_p = logfile_basedir()
+	    val holbaruns_basedir = logfile_basedir_p ^ "/holbaruns";
+	    val _ = makedir true holbaruns_basedir;
+
+            (* write out git commit and git diff of current directory. *)
+            (*    so this script needs to be executed from within the holbarepo! *)
+            val run_datestr = get_datestring();
+	    val holba_diff = get_exec_output "git diff";
+	    val holba_commit = get_exec_output "git rev-parse HEAD";
+
+	    val holba_hash = hashstring (run_datestr ^ holba_diff ^ holba_commit);
+	    val runitpath = holbaruns_basedir ^ "/" ^ holba_hash;
+	    (* this directory should not exist, but possibly already exists *)
+	    val _ = makedir true runitpath;
+
+	    val run_datestr_file = runitpath ^ "/holba.time";
+	    val holba_diff_file = runitpath ^ "/holba.diff";
+	    val holba_commit_file = runitpath ^ "/holba.commit";
+
+	    val _ = write_to_file_or_compare_clash "embexp_run_id" run_datestr_file run_datestr;
+	    val _ = write_to_file_or_compare_clash "embexp_run_id" holba_diff_file holba_diff;
+	    val _ = write_to_file_or_compare_clash "embexp_run_id" holba_commit_file holba_commit;
+
+            val _ = embexp_run_id_ref := SOME holba_hash;
+          in
+            holba_hash
+          end
+      | SOME p => p;
+
 
 (* create json state *)
   fun gen_json_state isSecond s =
@@ -237,62 +279,59 @@ struct
     end;
 
 (* interface functions *)
-  fun bir_embexp_create (obs_model_name, exp_id) exp_code_asm (s1,s2) =
+  fun bir_embexp_prog_create (arch_id, prog_gen_id) asm_lines =
     let
-      val exp_basedir = get_experiment_basedir exp_id;
+      val progs_basedir = get_progs_basedir arch_id;
+      val code_asm = bir_prog_gen_asm_lines_to_code asm_lines;
 
       (* write out code *)
-      val exp_codehash = hashstring exp_code_asm;
-      val exp_codepath = exp_basedir ^ "/" ^ exp_codehash;
+      val codehash = hashstring code_asm;
+      val codepath = progs_basedir ^ "/" ^ codehash;
       (* this directory possibly already exists *)
-      val _ = makedir true exp_codepath;
+      val _ = makedir true codepath;
       (* but the code should not differ if it exists already *)
-      val code_eq = write_to_file_or_compare (exp_codepath ^ "/code.asm") exp_code_asm;
-      val _ = if code_eq then () else
-                raise ERR "bir_embexp_create" ("there has been a hash clash with: " ^ exp_codepath);
+      val _ = write_to_file_or_compare_clash "bir_embexp_prog_create" (codepath ^ "/code.asm") code_asm;
+
+      (* write out gen info *)
+      val embexp_run_file = codepath ^ "/" ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
+      val _ = write_to_file_or_compare_clash "bir_embexp_prog_create" embexp_run_file prog_gen_id;
+    in
+      codehash
+    end;
+
+  fun bir_embexp_sates2_create (arch_id, exp_type_id, state_gen_id) prog_id (s1,s2) =
+    let
+      val exp_basedir = get_experiment_basedir arch_id;
 
       (* write out data *)
       val input1 = gen_json_state false s1;
       val input2 = gen_json_state true  s2;
-      val exp_datahash = hashstring (input1 ^ input2);
-      val exp_datapath = exp_codepath ^ "/" ^ exp_datahash;
+      val exp_datahash = hashstring (prog_id ^ input1 ^ input2);
+      val exp_id = "exps2/" ^ exp_type_id ^ "/" ^ exp_datahash;
+      val exp_datapath = exp_basedir ^ "/" ^ exp_id;
       (* it can also happen that the same test is produced multiple times *)
       val _ = makedir true exp_datapath;
-      val input1_eq = write_to_file_or_compare (exp_datapath ^ "/input1.json") input1;
-      val input2_eq = write_to_file_or_compare (exp_datapath ^ "/input2.json") input2;
-      val _ = if input1_eq andalso input2_eq then () else
-                raise ERR "bir_embexp_create" ("there has been a hash clash with: " ^ exp_datapath);
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" (exp_datapath ^ "/input1.json") input1;
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" (exp_datapath ^ "/input2.json") input2;
 
-      (* write out git commit and git diff of current directory. so this script needs to be executed from within the holbarepo! *)
-      val embexp_run_id = embexp_run_id();
-      val holba_diff = get_exec_output "git diff";
-      val holba_commit = get_exec_output "git rev-parse HEAD";
-      val holba_diff_file = exp_datapath ^ "/holba_" ^ embexp_run_id ^ ".diff";
-      val holba_commit_file = exp_datapath ^ "/holba_" ^ embexp_run_id ^ ".commit";
-      val holba_obsmodel_file = exp_datapath ^ "/holba_" ^ embexp_run_id ^ ".obsmodel";
+      (* write out reference to the code (hash of the code) *)
+      val prog_id_file = exp_datapath ^ "/code.hash";
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" prog_id_file prog_id;
 
-      val holba_diff_eq = write_to_file_or_compare holba_diff_file holba_diff;
-      val _ = if holba_diff_eq then () else
-                raise ERR "bir_embexp_create" ("there has been a clash with: " ^ holba_diff_file);
-
-      val holba_commit_eq = write_to_file_or_compare holba_commit_file holba_commit;
-      val _ = if holba_commit_eq then () else
-                raise ERR "bir_embexp_create" ("there has been a clash with: " ^  holba_commit_file);
-
-      val holba_obsmodel_eq = write_to_file_or_compare holba_obsmodel_file obs_model_name;
-      val _ = if holba_obsmodel_eq then () else
-                raise ERR "bir_embexp_create" ("there has been a clash with: " ^ holba_obsmodel_file);
+      (* write out gen info *)
+      val embexp_run_file = exp_datapath ^ "/" ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
+      val _ = write_to_file_or_compare_clash "bir_embexp_prog_create" embexp_run_file state_gen_id;
     in
-      exp_datapath
+      arch_id ^ "/" ^ exp_id
     end;
 
 
-  fun bir_embexp_run exp_path with_reset =
+  fun bir_embexp_run exp_id with_reset =
     if with_reset then (NONE, "not implemented yet") else
     let
       val cmdline = ("\"" ^ (logfile_basedir()) ^ "/scripts/run_experiment.py\" " ^
                      "\"" ^ (embexp_basedir()) ^ "\" " ^
-                     "\"" ^ exp_path ^ "\" ");
+                     exp_id);
       val lines = get_exec_output_list cmdline;
       val lastline = List.nth(lines, (List.length lines) - 1);
       val result = if lastline = "result = true\n" then

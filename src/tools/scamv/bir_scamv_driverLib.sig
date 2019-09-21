@@ -8,8 +8,6 @@ signature bir_scamv_driverLib = sig
 
   val scamv_test_mock : unit -> (bool option * string)
 
-  val scamv_test_asmf : string -> (bool option * string)
-
   val scamv_run : scamv_config -> unit
 
 end
