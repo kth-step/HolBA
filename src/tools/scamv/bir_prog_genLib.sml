@@ -270,14 +270,28 @@ val len = 3
   fun remove_plus s = concat (String.tokens (fn c => c = #"+") s);
   fun remove_minus s = concat (String.tokens (fn c => c = #"-") s);
   fun remove_junk s = (hd (String.tokens (fn c => c = #";")
-                                        (remove_minus (remove_plus s)))) ^ (if not do_debug then ""
-                                                                            else " /* orig: " ^ s ^ " */");
+                                         (remove_minus (remove_plus s)))) ^ (if not do_debug then ""
+                                                                             else " /* orig: " ^ s ^ " */");
+
+  fun strip_ws_off s =
+    let
+      fun is_ws x = x = #" " orelse x = #"\t" orelse x = #"\n";
+      fun find_first_idx p l = List.foldl (fn ((idx,x),r) => if r >= 0 then r else if p x then idx else r)
+                                          (~1)
+                                          (snd (List.foldr (fn (x,(i,l)) => (i-1,(i,x)::l)) ((List.length l) - 1, []) l));
+
+      val l = String.explode s;
+      val first_c = find_first_idx (not o is_ws) l;
+      val last_c = (List.length l) - 1 - (find_first_idx (not o is_ws) (List.rev l));
+    in
+      String.extract (String.substring (s, 0, last_c + 1), first_c, NONE)
+    end;
 
 (*
 val n = 3;
 *)
  (* The function take number of instructions and the base address *)
- fun bir_prog_gen_arm8_rand_raw n = map (remove_junk o hd o decomp) (progGen (n, 0x40000));
+ fun bir_prog_gen_arm8_rand_raw n = map (strip_ws_off o remove_junk o hd o decomp) (progGen (n, 0x40000));
 
 
 local
