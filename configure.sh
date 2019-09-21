@@ -24,6 +24,7 @@ echo
 # variables to export
 declare -a vararr=(
   "HOLBA_OPT_DIR"
+  "HOLBA_LOGS_DIR"
 
   "HOLBA_HOL_DIR"
   "HOLBA_Z3_DIR"

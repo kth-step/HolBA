@@ -80,8 +80,23 @@ else
     print_export_msg "HOLBA_OPT_DIR (default in HolBA)"
     export HOLBA_OPT_DIR="${HOLBA_DIR}/opt"
   fi
+  mkdir -p ${HOLBA_OPT_DIR}
 fi
 echo "Using HOLBA_OPT_DIR=${HOLBA_OPT_DIR}"
+echo
+
+
+#####################################################
+# core parameter HOLBA_LOGS_DIR
+#####################################################
+
+# if there is no environment variable
+if [[ -z "${HOLBA_LOGS_DIR}" ]]; then
+  print_export_msg "HOLBA_LOGS_DIR (default in HolBA)"
+  export HOLBA_LOGS_DIR="${HOLBA_DIR}/logs"
+fi
+mkdir -p ${HOLBA_LOGS_DIR}
+echo "Using HOLBA_LOGS_DIR=${HOLBA_LOGS_DIR}"
 echo
 
 
@@ -157,7 +172,7 @@ echo
 ####### HOLBA_EMBEXP_LOGS
 
 if [[ -z "${HOLBA_EMBEXP_LOGS}" ]]; then
-  LOGS_DIR=${HOLBA_DIR}/logs/EmbExp-Logs
+  LOGS_DIR=${HOLBA_LOGS_DIR}/EmbExp-Logs
   if [[ -d "${LOGS_DIR}" ]]; then
     print_export_msg "HOLBA_EMBEXP_LOGS"
     export HOLBA_EMBEXP_LOGS=${LOGS_DIR}

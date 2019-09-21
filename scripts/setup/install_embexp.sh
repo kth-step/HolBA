@@ -41,3 +41,6 @@ cd ${EMBEXP_DIR}
 git clone ${GIT_URL_PROG_PLAT}
 git clone ${GIT_URL_BOX}
 
+# call install for embexp-logs
+${SETUP_DIR}/install_embexp_logs.sh
+
