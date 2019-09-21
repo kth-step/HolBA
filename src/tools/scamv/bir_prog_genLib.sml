@@ -183,6 +183,12 @@ val el = "6B831B94"
 	 if null wl then (ic, ib) else instGen ()
      end 
 
+(*
+val inst = "15c984de"
+val base = 0x40000
+val pc = 0
+val len = 3
+*)
  local 
      val gen = Random.newgenseed 1.0
      fun addr_to_hexString adr =
@@ -203,7 +209,7 @@ val el = "6B831B94"
  in
  fun branch_instGen (pc, base, len) =
      let val adr = base + (4*(Random.range (pc, len) gen))
-	 val adr_str = String.concat["bl +#0x", (addr_to_hexString(adr))]
+	 val adr_str = String.concat["b +#0x", (addr_to_hexString(adr))]
 	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
      in
 	 (emp_str, inst)
@@ -226,10 +232,14 @@ val el = "6B831B94"
  end
 
  fun instsGen (pc, [], base, len)  =
-     let val inst = snd (instGen ())
+     let val (c, inst) = instGen ()
 	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
      in
-	 (hd args, inst)
+	 case (instClass c) of 
+	     "BranchImmediate" =>  instsGen (pc, [], base, len)
+	   | "BranchConditional" => instsGen (pc, [], base, len)
+	   | "CompareAndBranch" => instsGen (pc, [], base, len)			   
+	   | _ => (hd args, inst)
      end
      
    | instsGen (pc, src, base, len) =

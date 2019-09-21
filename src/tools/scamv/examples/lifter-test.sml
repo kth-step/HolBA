@@ -67,31 +67,31 @@ fun print_asm_code asm_code = (
                 print "---------------------------------\n");
 
 
-fun lift_forever only_until_fail =
+fun lift_forever n only_until_fail =
   let
-    val asm_code_ = bir_prog_gen_asm_lines_to_code (bir_prog_gen_arm8_rand 1);
+    val asm_code_ = bir_prog_gen_asm_lines_to_code (bir_prog_gen_arm8_rand n);
     val compile_opt = SOME (process_asm_code asm_code_)
            handle HOL_ERR x => (print_asm_code asm_code_; if only_until_fail then raise (HOL_ERR x) else NONE);
   in
     case compile_opt of
-        NONE => lift_forever only_until_fail
+        NONE => lift_forever n only_until_fail
       | SOME (asm_code, sections) => 
   let
     val lifted_prog = lift_program_from_sections sections;
     val blocks = (fst o dest_list o dest_BirProgram) lifted_prog;
     (* val labels = List.map (fn t => (snd o dest_eq o concl o EVAL) ``(^t).bb_label``) blocks; *)
-    val lift_worked = (List.length blocks = 1);
+    val lift_worked = (List.length blocks = n);
     val _ = if lift_worked then ()
             else print_asm_code asm_code;
 
     val _ = if lift_worked orelse not only_until_fail then ()
             else raise ERR "lift_forever___until_fail" "error when lifting asm code, check output above"
 
-    val _ = lift_forever only_until_fail;
+    val _ = lift_forever n only_until_fail;
   in
     ()
   end
   end;
 
 
-val _ = lift_forever false;
+val _ = lift_forever 3 false;
