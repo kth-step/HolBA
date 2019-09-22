@@ -3,6 +3,7 @@ struct
 
   open HolKernel boolLib liteLib simpLib Parse bossLib;
   open arm8_progLib arm8AssemblerLib arm8;
+  open bir_embexp_paramsLib;
 
 
 (* general *)
@@ -258,9 +259,12 @@ val len = 3
      end
 
  (* ---------------------------------------------  *)
- fun progGen (n, base) =
+ fun progGen (n, base_arbnum) =
      let val src = ref ([]:string list);
 	 val pc = ref 0;
+         val base = Arbnum.toInt base_arbnum
+                      handle ex => (print "progGen::cannot convert base address, probably too large";
+                                    raise ex)
      in
 	 (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!pc,!src, base, n)) 			
 				    in  (src:= (d::(!src)); pc:= !pc + 1);i end))
@@ -291,7 +295,7 @@ val len = 3
 val n = 3;
 *)
  (* The function take number of instructions and the base address *)
- fun bir_prog_gen_arm8_rand_raw n = map (strip_ws_off o remove_junk o hd o decomp) (progGen (n, 0x40000));
+ fun bir_prog_gen_arm8_rand_raw n = map (strip_ws_off o remove_junk o hd o decomp) (progGen (n, bir_embexp_params_code));
 
 
 local

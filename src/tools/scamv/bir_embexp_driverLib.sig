@@ -1,5 +1,7 @@
 signature bir_embexp_driverLib = sig
 
+  (* experiment creation and running *)
+  (* ======================================== *)
   (* Inputs:
        - (architecture_id, prog_gen_id)
        - asm_lines
