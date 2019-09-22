@@ -371,6 +371,7 @@ local
     let
       val prog = bir_prog_gen_arm8_rand_raw n;
       val asm_code_ = bir_prog_gen_asm_lines_to_code prog;
+      val _ = print_asm_code asm_code_;
       val compile_opt = SOME (process_asm_code asm_code_)
 	     handle HOL_ERR x => (print_asm_code asm_code_; NONE);
     in
