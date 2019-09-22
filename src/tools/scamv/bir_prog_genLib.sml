@@ -240,7 +240,9 @@ val len = 3
 	     "BranchImmediate" =>  instsGen (pc, [], base, len)
 	   | "BranchConditional" => instsGen (pc, [], base, len)
 	   | "CompareAndBranch" => instsGen (pc, [], base, len)			   
-	   | _ => (hd args, inst)
+	   | _ => if String.isPrefix "bl" inst
+                  then instsGen (pc, [], base, len)
+                  else (hd args, inst)
      end
      
    | instsGen (pc, src, base, len) =
@@ -253,8 +255,8 @@ val len = 3
 	   | "BranchConditional" => c_branch_instGen (inst,pc, base, len)
 	   | "CompareAndBranch" => cmp_and_branch_instGen (inst,pc, base, len)			   
 	   | _ =>
-	     if List.null inclusion
-	     then instsGen (pc,src, base, len) 
+	     if List.null inclusion orelse String.isPrefix "bl" inst
+	     then instsGen (pc,src, base, len)
 	     else (hd args, inst)
      end
 
