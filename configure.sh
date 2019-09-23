@@ -9,6 +9,12 @@ OPT_DIR_PARAM=$1
 HOLBA_DIR=$(dirname "${BASH_SOURCE[0]}")
 HOLBA_DIR=$(readlink -f "${HOLBA_DIR}")
 
+# source the local config.env.sh if it exists already (to not overwrite already configured variables)
+set --
+if [[ -f "${HOLBA_DIR}/config.env.sh" ]]; then
+  source "${HOLBA_DIR}/config.env.sh"
+fi
+
 # find the core and base environment variables (if undefined)
 set --
 source "${HOLBA_DIR}/scripts/setup/env_config_gen.sh" "${OPT_DIR_PARAM}"
