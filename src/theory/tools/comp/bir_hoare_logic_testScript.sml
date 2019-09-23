@@ -12,7 +12,7 @@ open bir_program_terminationTheory;
 open bin_hoare_logicSimps;
 open HolBACoreSimps;
 
-val _ = new_theory "bin_hoare_logic_test";
+val _ = new_theory "bir_hoare_logic_test";
 
 (******************************************************************)
 (*                         DEFINITIONS                            *)
@@ -593,6 +593,13 @@ CASE_TAC >| [
   REV_FULL_SIMP_TAC arith_ss []
 ]
 );
+
+(*****************************************************)
+(* TODO: Prove that generated HT implies weak_triple *)
+(*****************************************************)
+
+(* bir_exec_to_labels_triple *)
+(* weak_triple *)
 
 (****************************************************)
 (* OLD BUT POTENTIALLY USEFUL STUFF: MOVE ELSEWHERE *)

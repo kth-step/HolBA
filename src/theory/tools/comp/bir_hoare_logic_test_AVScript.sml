@@ -7,14 +7,14 @@ open bir_program_multistep_propsTheory;
 open bir_program_terminationTheory;
 open bir_program_blocksTheory;
 
-open bin_hoare_logic_testTheory;
+open bir_hoare_logic_testTheory;
 
 open bir_auxiliaryLib;
 
 open HolBACoreSimps;
 open bin_hoare_logicSimps;
-(* TODO: Have this depend on bin_hoare_logic_testScript.sml? *)
-val _ = new_theory "bin_hoare_logic_test_AV";
+
+val _ = new_theory "bir_hoare_logic_test_AV";
 
 (******************************************************************)
 (*                         DEFINITIONS                            *)
@@ -22,8 +22,8 @@ val _ = new_theory "bin_hoare_logic_test_AV";
 
 (* TODO: Try bir_exec_to_addr_label - but this could cause more
  * problems *)
-(* TODO: For now, this is the same as in
- * bin_hoare_logic_testScript.sml *)
+(* TODO: For now, transition is the same as in
+ * bir_hoare_logic_testScript.sml *)
 (*
 val bir_trs_av_def = Define `
   bir_trs_av (prog:'a bir_program_t) st =
@@ -102,7 +102,7 @@ val bir_etl_wm_av_def =
 local
 
 val ws_type = mk_thy_type {Tyop="bir_weak_state_t",
-                           Thy="bin_hoare_logic_test_AV",
+                           Thy="bir_hoare_logic_test_AV",
                            Args=[]
                           };
 

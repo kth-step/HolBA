@@ -5,10 +5,10 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../../aux/Aux-heap
-NEWHOLHEAP     = HolBABir-heap
+HOLHEAP        = ../models/HolBAModels-heap
+NEWHOLHEAP     = HolBABinHoareLogic-heap
 
-HEAPINC_EXTRA  =
+HEAPINC_EXTRA  = 
 
 
 # included lines follow
