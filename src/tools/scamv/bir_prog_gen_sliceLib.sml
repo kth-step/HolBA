@@ -201,8 +201,7 @@ fun bir_prog_gen_arm8_slice (inputfile, base, len) =
 	progGen (len, instructions, base)
     end
 
-(* bir_prog_gen_arm8_slice ("input2.da", 4000, 10); *)
-
+(* bir_prog_gen_arm8_slice ("input.da", 4000, 10); *)
 
 end; (* struct *)
 
