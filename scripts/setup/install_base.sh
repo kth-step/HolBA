@@ -17,7 +17,7 @@ source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 
 # create the directory if it doesn't exist yet
 mkdir -p "${HOLBA_OPT_DIR}"
-mkdir -p "${HOLBA_SCAMV_LOGS}"
+mkdir -p "${HOLBA_LOGS_DIR}"
 
 
 
