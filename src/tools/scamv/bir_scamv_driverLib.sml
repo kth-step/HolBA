@@ -154,24 +154,28 @@ fun symb_exec_phase prog =
         (paths, all_exps)
     end
 
+fun bir_free_vars exp =
+    if is_comb exp then
+        let val (con,args) = strip_comb exp
+        in if con = ``BExp_Den`` then
+               let val v = case strip_comb (hd args) of
+                               (_,v::_) => v
+                             | _ => raise ERR "bir_free_vars" "not expected"
+               in [v]
+               end
+           else
+               List.concat (map bir_free_vars args)
+        end
+    else [];
+
+exception NoObs;
+
 (*
 val exps = all_exps;
 *)
 fun make_word_relation relation exps =
     let
-        fun bir_free_vars exp =
-            if is_comb exp then
-                let val (con,args) = strip_comb exp
-                in if con = ``BExp_Den`` then
-                       let val v = case strip_comb (hd args) of
-                                       (_,v::_) => v
-                                     | _ => raise ERR "bir_free_vars" "not expected"
-                       in [v]
-                       end
-                   else
-                       List.concat (map bir_free_vars args)
-                end
-            else [];
+        val _ = print_term relation;
 
         fun primed_subst exp =
             map (fn v =>
@@ -195,7 +199,7 @@ fun make_word_relation relation exps =
             in
 ``(^va <> ^vb)  /\ (^va < 0x80042FF8w) /\ (^vb < 0x80042FF8w)``
             end;
-        val distinct = list_mk_conj (map mk_distinct pairs);
+        val distinct = if null pairs then raise NoObs else list_mk_conj (map mk_distinct pairs);
     in
        ``^(bir2bool relation) /\ ^distinct``
     end
@@ -251,7 +255,7 @@ fun next_test select_path =
                     SOME x => x
                   | NONE => raise ERR "next_test" "no relation found";
         val word_relation = ``^rel /\ ^path``;
-
+        
         val _ = print ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
         val _ = (print "SAT model:\n"; print_model model(*; print "\n"*));
@@ -355,10 +359,13 @@ fun scamv_test_gen_run tests (prog_id, sections) =
 
 val scamv_test_mock = scamv_test_gen_run 1 o prog_gen_mock;
 
+fun show_error_no_free_vars (id,_) =
+    print ("Program " ^ id ^ " skipped because it has no free variables.\n");
+
 type scamv_config = { max_iter : int, prog_size : int, max_tests : int }
 
 fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
-    let val is_mock = true;
+    let val is_mock = false;
 
         val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
 
@@ -372,7 +379,10 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
          |  main_loop n =
             let val prog =
                     process_asm_lines prog_gen_id (prog_gen_fun ())
-            in scamv_test_main tests prog; main_loop (n-1) end
+            in (scamv_test_main tests prog
+                handle e =>
+                       print("Skipping program due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n") );
+               main_loop (n-1) end
     in
         main_loop m
     end;

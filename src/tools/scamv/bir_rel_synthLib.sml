@@ -151,8 +151,9 @@ fun mkRel_conds xs =
             in ((band (c, c')),  eqRel) end;
         val xs2 = cartesianWith processImpl somes somes_primed;
 
-        val negCond = bandl o List.map (bnot o fst);
-        val unfoldCondObs =  bandl o List.map (uncurry mk_bir_impl);
+        fun smart_bandl xs = if null xs then btrue else bandl xs;
+        val negCond = smart_bandl o List.map (bnot o fst);
+        val unfoldCondObs =  smart_bandl o List.map (uncurry mk_bir_impl);
         val _ = print ("Done!\n");
     in (List.map fst xs2,
         band (unfoldCondObs xs2, band (negCond nones, negCond nones_primed)))
