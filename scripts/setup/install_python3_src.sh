@@ -42,6 +42,10 @@ else
   echo "python3 is not in the cache, downloading it now."
 fi
 
+# install dependencies
+#sudo apt update
+#sudo apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev wget
+
 # prepare directories
 mkdir "${PYTHON3_DIR_SRC}"
 mkdir "${PYTHON3_DIR}"
