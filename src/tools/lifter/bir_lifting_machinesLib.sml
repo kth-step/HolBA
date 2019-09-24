@@ -146,7 +146,9 @@ val bmr_rec_sanity_check_basic = let
      val thms = flatten (map BODY_CONJUNCTS (#bmr_change_interval_thms r));
 
      fun entry_ok thm = let
-        val (va_tm, sz_tm, f1_tm, f2_tm) = bir_interval_expSyntax.dest_FUNS_EQ_OUTSIDE_WI_size (concl thm)
+        val (va_tm, sz_tm, f1_tm, f2_tm) =
+          bir_interval_expSyntax.dest_FUNS_EQ_OUTSIDE_WI_size
+            (concl thm)
 
         val _ = assert numSyntax.is_numeral sz_tm
         val f1_vs = FVL [f1_tm] empty_tmset
@@ -196,7 +198,8 @@ fun bmr_rec_extract_fields (r:bmr_rec) =
   dest_bir_lifting_machine_rec (rhs (concl (#bmr_eval_thm r)))
 
 fun bmr_rec_mk_pc_of_term (r:bmr_rec) = let
-  val (ms_ty, _, _)  = dest_bir_lifting_machine_rec_t_ty (type_of (#bmr_const r))
+  val (ms_ty, _, _)  =
+    dest_bir_lifting_machine_rec_t_ty (type_of (#bmr_const r))
   val ms_v = mk_var ("ms", ms_ty);
 
   val (_, _, r_pc, _, _) = bmr_rec_extract_fields r;

@@ -1,30 +1,45 @@
-structure bir_lifting_machinesLib_instances :> bir_lifting_machinesLib_instances =
+structure bir_lifting_machinesLib_instances :>
+  bir_lifting_machinesLib_instances =
 struct
-
+(* For compilation: *)
 open HolKernel boolLib liteLib simpLib Parse bossLib;
+(* Local theories: *)
 open bir_exp_liftingLib bir_lifting_machinesTheory
+     bir_nzcv_introsTheory bir_arm8_extrasTheory bir_m0_extrasTheory
+     bir_riscv_extrasTheory
+(* Local function libraries: *)
 open bir_lifting_machinesLib;
-open bir_nzcv_introsTheory bir_arm8_extrasTheory bir_m0_extrasTheory
-open arm8_stepLib m0_stepLib
+(* Function libraries from examples/l3-machine-code: *)
+open arm8_stepLib m0_stepLib riscv_stepLib
+
+(* Abbreviations used in this file:
+ * BMR: BIR machine record. *)
 
 (**************************)
 (* Instantiation for ARM8 *)
 (**************************)
 
-(* This performs some common normalisations which are many architectures. It
-   checks whether the resulting theorem is of the form
+(* This performs some normalisations which are shared across many
+ * architectures. It
+ * checks whether the resulting theorem thm is of the form
 
-   (NEXT_STEP_FUN var = SOME ...)
+     r_step_rel var = SOME ...
 
-   and renames the variable into the given one. *)
-fun bmr_normalise_step_thm (r_step_rel:term) vn thm =
-   (* check whether thm is of expected form and normalise the state variable name *)
-   let
-      val (t_lhs, t_rhs) = dest_eq (concl thm)
-      val _ = optionSyntax.dest_some t_rhs
-      val (t_rel, v) = dest_comb t_lhs
-      val _ = if (aconv t_rel r_step_rel) then () else fail ()
-   in INST [v |-> vn] thm end;
+ * and instantiates the variable var to the variable
+ * supplied in var_name, thus renaming it. *)
+fun bmr_normalise_step_thm (r_step_rel:term) var_name thm =
+  let
+    val (thm_lhs, thm_rhs) = dest_eq (concl thm)
+    (* The below line checks whether the RHS of thm has
+     * option type SOME. If that is not the case, then
+     * an exception will be thrown, which alerts the user
+     * to the error in lifting. *)
+    val _ = optionSyntax.dest_some thm_rhs
+    val (thm_rel, var) = dest_comb thm_lhs
+    val _ = if (aconv thm_rel r_step_rel) then () else fail ()
+  in
+    INST [var |-> var_name] thm
+  end;
 
 
 
@@ -66,14 +81,21 @@ fun bmr_normalise_step_thm (r_step_rel:term) vn thm =
   val thms' = arm8_step_hex' vn hex_code
 *)
 
+(* TODO: Comment this function. *)
 fun bytes_of_hex_code hex_code = let
-   val _ = if (String.size hex_code mod 2 = 0) then () else failwith "invalid hex_code";
+  val _ = if (String.size hex_code mod 2 = 0)
+          then ()
+          else failwith "invalid hex_code";
 
-   fun prepare_word8_of_substring i =
-     wordsSyntax.mk_wordi (Arbnum.fromHexString (String.substring (hex_code, i+i, 2)), 8);
+  fun prepare_word8_of_substring i =
+    wordsSyntax.mk_wordi (
+      Arbnum.fromHexString (String.substring (hex_code, i+i, 2)),
+      8
+    );
 
 in
-   List.tabulate (String.size hex_code div 2, prepare_word8_of_substring)
+  List.tabulate (String.size hex_code div 2,
+                 prepare_word8_of_substring)
 end;
 
 
@@ -248,7 +270,7 @@ val _ = assert bmr_rec_sanity_check arm8_bmr_rec
 
 
 fun m0_reorder_bytes false (b1::b2::bs) =
-    b2::b1::(m0_reorder_bytes false bs)
+      b2::b1::(m0_reorder_bytes false bs)
   | m0_reorder_bytes _ l = l
 
 local
@@ -256,20 +278,23 @@ local
   val val_ty = fcpLib.index_type (Arbnum.fromInt 8);
   val val_word_ty = wordsSyntax.mk_word_type val_ty
 in
-
-fun m0_mk_data_mm ef mem_loc hex_code = let
-  val ml_tm = wordsSyntax.mk_n2w (numSyntax.mk_numeral mem_loc, addr_ty)
-  val bytes = m0_reorder_bytes ef (bytes_of_hex_code hex_code)
-  val _ = if (length bytes = 2) orelse (length bytes = 4) then () else failwith "invalid hex-code";
-  val bytes_tm = listSyntax.mk_list (bytes, val_word_ty)
-in
-  pairSyntax.mk_pair (ml_tm, bytes_tm)
-end;
-
+fun m0_mk_data_mm ef mem_loc hex_code =
+  let
+    val ml_tm =
+      wordsSyntax.mk_n2w (numSyntax.mk_numeral mem_loc, addr_ty)
+    val bytes = m0_reorder_bytes ef (bytes_of_hex_code hex_code)
+    val _ = if (length bytes = 2) orelse (length bytes = 4)
+            then ()
+            else failwith "invalid hex-code";
+    val bytes_tm = listSyntax.mk_list (bytes, val_word_ty)
+  in
+    pairSyntax.mk_pair (ml_tm, bytes_tm)
+  end
 end;
 
 val m0_state_mem_tm = prim_mk_const{Name="m0_state_MEM", Thy="m0"};
-val m0_dest_mem = HolKernel.dest_binop m0_state_mem_tm (ERR "m0_dest_mem" "");
+val m0_dest_mem = HolKernel.dest_binop m0_state_mem_tm
+                                       (ERR "m0_dest_mem" "");
 
 val m0_REWRS = (RName_distinct :: (
    (type_rws ``:m0_state``) @
@@ -407,11 +432,6 @@ val _ = assert bmr_rec_sanity_check (m0_bmr_rec_BigEnd_Process)
 val _ = assert bmr_rec_sanity_check (m0_bmr_rec_LittleEnd_Process)
 val _ = assert bmr_rec_sanity_check (m0_bmr_rec_BigEnd_Main)
 val _ = assert bmr_rec_sanity_check (m0_bmr_rec_LittleEnd_Main)
-
-
-
-
-
 
 
 (************************)
@@ -579,5 +599,356 @@ val _ = assert bmr_rec_sanity_check (m0_mod_bmr_rec_BigEnd_Main)
 val _ = assert bmr_rec_sanity_check (m0_mod_bmr_rec_LittleEnd_Main)
 
 
+(****************************)
+(* Instantiation for RISC-V *)
+(****************************)
+(* TODO: bmr_normalise_step_thm and bytes_of_hex_code are defined
+ * above - make separate variants for RISC-V? *)
 
+(* FOR DEBUG TESTING PURPOSES:
+ * TODO: Note that none of this works for RISC-V yet.
+
+  (* TODO: riscvAssemblerLib would be located in
+   * l3-machine-code/riscv/model... if it existed. But it doesn't,
+   * so you have to write it. *)
+  fun riscv_hex_code_of_asm asm =
+    hd (riscvAssemblerLib.riscv_code [QUOTE asm])
+
+  (* riscv_state definition can be found in l3-machine-code/riscv. *)
+  val vn = ``ms:riscv_state``
+  val hex_code = "B90033E0";
+  val hex_code = "79000001"
+  val hex_code = "D345FC41"
+  val hex_code = "A9B97BFD"
+  val hex_code = "90000000"
+  val hex_code = "BA020000"
+  val hex_code = "BA000000"
+  val hex_code = "FA010000"
+  val hex_code = "FA000000"
+  val hex_code = "7100001F"
+  val hex_code = riscv_hex_code_of_asm "rev16 x1, x2";
+  val hex_code = riscv_hex_code_of_asm "rev16 w1, w2";
+  val hex_code = riscv_hex_code_of_asm "rev32 x1, x2";
+  val hex_code = riscv_hex_code_of_asm "ngc x1, x2"
+  val hex_code = riscv_hex_code_of_asm "ngc w1, w2"
+  val hex_code = riscv_hex_code_of_asm "ngcs x1, x2"
+  val hex_code = riscv_hex_code_of_asm "ngc w1, w2"
+  val hex_code = riscv_hex_code_of_asm "rbit w1, w2"
+  val hex_code = riscv_hex_code_of_asm "ror x1, x2, x3"
+  val hex_code = riscv_hex_code_of_asm "ror x1, x2, #2"
+  val hex_code = riscv_hex_code_of_asm "ror w1, w2, #2"
+  val hex_code = riscv_hex_code_of_asm "extr w1, w2, w3, #2"
+  val hex_code = riscv_hex_code_of_asm "extr x1, x2, x3, #2"
+  val hex_code = riscv_hex_code_of_asm "movk x1, #2"
+  val hex_code = riscv_hex_code_of_asm "movk w1, #2"
+  val hex_code = riscv_hex_code_of_asm "ngc w0, w1"
+  val hex_code = riscv_hex_code_of_asm "ngcs w0, w1"
+  val hex_code = riscv_hex_code_of_asm "adcs w0, w1, w2"
+  val hex_code = riscv_hex_code_of_asm "sbcs w0, w1, w2"
+
+  (* riscv_step_hex is defined in step/riscv_stepLib.sml,
+   * riscv_step_hex' should be defined below. *)
+  val thms = riscv_step_hex hex_code
+  val thms' = riscv_step_hex' vn hex_code
+*)
+
+
+
+(* This is the riscv_step_hex' function. It is based on
+ * riscv_step_hex from l3-machine-code/riscv, and it is stored
+ * in the BIR machine record, to be used to obtain effects of
+ * computational steps. *)
+
+(* WRONG: We will use the regular riscv_step_hex
+ * until bir_nzcv_introsScript, riscv_stepScript,
+ * bir_riscv_extrasScript and bir_lifting_machinesScript can be
+ * modified to accommodate the RISC-V model. *)
+
+local
+  (* The naming convention for this is slightly different in the
+   * RISC-V version of the HOL4 model. *)
+  val next_state_tm =
+    prim_mk_const{Name="NextRISCV", Thy="riscv_step"}
+
+  (* TODO: nzcv_FOLDS_RISCV would be defined in
+   * bir_nzcv_introsScript.sml in this directory, if it existed.
+   * ExtendValue_0 does not exist in riscv_stepTheory. No idea
+   * why it is useful.
+   * riscv_extra_FOLDS would be defined in
+   * bir_riscv_extrasScript.sml, if it existed. *)
+(* From ARM8:
+  val simp_conv = (SIMP_CONV std_ss [nzcv_FOLDS_ARM8] THENC
+                   SIMP_CONV std_ss [arm8_stepTheory.ExtendValue_0,
+                                     arm8_extra_FOLDS]);
+*)
+  val simp_conv = SIMP_CONV std_ss [riscv_extra_FOLDS]
+
+  (* TODO: word_add_to_sub_TYPES is from bir_arm8_extrasTheory. *)
+(* From ARM8:
+  val simp_conv2 = (SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss++
+                               wordsLib.WORD_LOGIC_ss) []
+                   ) THENC
+                   (SIMP_CONV std_ss
+                              [word_add_to_sub_TYPES,
+                               alignmentTheory.aligned_numeric,
+                               wordsTheory.WORD_SUB_INTRO,
+                               wordsTheory.WORD_MULT_CLAUSES]
+                   );
+*)
+  val simp_conv2 =
+    (SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss++
+                wordsLib.WORD_LOGIC_ss) []
+    ) THENC
+    (SIMP_CONV std_ss
+               [bir_riscv_extrasTheory.word_add_to_sub_TYPES,
+                alignmentTheory.aligned_numeric,
+                wordsTheory.WORD_SUB_INTRO,
+                wordsTheory.WORD_MULT_CLAUSES]
+    )
+
+  (* TODO: bmr_extra_ARM8 is from bir_lifting_machinesTheory. *)
+(* From ARM8:
+  fun riscv_extra_THMS vn = let
+     val thm0  = SPEC vn bmr_extra_RISCV
+     val thm1a = ASSUME (lhs (concl thm0))
+     val thm1 = CONV_RULE (K thm0) thm1a
+  in
+     CONJUNCTS thm1
+  end;
+*)
+  fun riscv_extra_THMS vn = let
+     val thm0  = SPEC vn bmr_extra_RISCV
+     val thm1a = ASSUME (lhs (concl thm0))
+     val thm1 = CONV_RULE (K thm0) thm1a
+  in
+     CONJUNCTS thm1
+  end
+
+  (* TODO: bmr_ms_mem_contains_ARM8 is from
+   * bir_lifting_machinesTheory. *)
+(* From ARM8:
+  fun prepare_mem_contains_thms vn hex_code =
+    let
+      val bytes = bytes_of_hex_code hex_code
+      val _ = if length bytes = 4
+              then ()
+              else failwith "invalid hex-code";
+
+      val thm0 = SPECL (vn::(List.rev bytes))
+                       bmr_ms_mem_contains_ARM8
+
+      val thm1a = ASSUME (lhs (concl thm0))
+      val thm2 = CONV_RULE (K thm0) thm1a
+    in
+      CONJUNCTS thm2
+    end;
+*)
+
+  fun prepare_mem_contains_thms vn hex_code =
+    let
+      val bytes = bytes_of_hex_code hex_code
+      val _ = if length bytes = 4
+              then ()
+              else failwith "invalid hex-code";
+
+      val thm0 = SPECL (vn::(List.rev bytes))
+                       bmr_ms_mem_contains_RISCV
+
+      val thm1a = ASSUME (lhs (concl thm0))
+      val thm2 = CONV_RULE (K thm0) thm1a
+    in
+      CONJUNCTS thm2
+    end
+
+  (* instantiate_riscv_thm checks for hyp (SOME _ = SOME vars)
+   * which can be discarded via instantiating it. *)
+  fun instantiate_riscv_thm thm =
+    let
+      fun process_hyp (tm, thm) =
+        let
+          val (l_tm, r_tm) = dest_eq tm;
+          val l_tm' = optionSyntax.dest_some l_tm;
+          val r_tm' = optionSyntax.dest_some r_tm;
+          val (s, _) = match_term r_tm' l_tm'
+
+          val thm0a = INST s thm
+          val thm0b = PROVE_HYP (REFL l_tm) thm0a
+        in
+          thm0b
+        end handle HOL_ERR _ => thm;
+    in
+      foldl process_hyp thm (hyp thm)
+    end;
+
+  (* process_riscv_thm uses all of the above locally defined
+   * functions to process the theorem obtained by riscv_step_hex
+   * into a more manageable format. *)
+  (* DEBUG
+   
+     val thm = hd step_thms0 
+
+  *)
+  fun process_riscv_thm vn pc_mem_thms thm = let
+    val thm0 = bmr_normalise_step_thm next_state_tm vn thm
+    val thm1 = instantiate_riscv_thm thm0
+    val thm2 = foldl (fn (pre_thm, thm) => PROVE_HYP pre_thm thm)
+                     thm1
+                     (pc_mem_thms @ (riscv_extra_THMS vn))
+
+    val thm3 = DISCH_ALL thm2
+    val thm4 = CONV_RULE (simp_conv THENC simp_conv2) thm3
+    val thm5 = UNDISCH_ALL thm4
+  in
+    thm5
+  end;
+
+in
+  fun riscv_step_hex' vn hex_code = let
+    val pc_mem_thms = prepare_mem_contains_thms vn hex_code
+
+    val step_thms0 = [riscv_step_hex hex_code]
+    val step_thms1 =
+      List.map (process_riscv_thm vn pc_mem_thms) step_thms0
+  in
+    step_thms1
+  end
+end;
+
+(* TODO: mk_data_mm obtains a memory location as a term and splits
+ * the hex code into bytes. It will likely have to be adjusted to
+ * RISC-V. *)
+(* From M0:
+fun m0_reorder_bytes false (b1::b2::bs) =
+      b2::b1::(m0_reorder_bytes false bs)
+  | m0_reorder_bytes _ l = l
+*)
+local
+  (* M0 has address type 32, where this is 64. *)
+  val addr_ty = fcpLib.index_type (Arbnum.fromInt 64);
+  val val_ty = fcpLib.index_type (Arbnum.fromInt 8);
+  val val_word_ty = wordsSyntax.mk_word_type val_ty
+in
+fun riscv_mk_data_mm mem_loc hex_code =
+  let
+    val ml_tm =
+      wordsSyntax.mk_n2w ((numSyntax.mk_numeral mem_loc), addr_ty)
+    val bytes = List.rev (bytes_of_hex_code hex_code)
+(* From M0:
+    val bytes = m0_reorder_bytes ef (bytes_of_hex_code hex_code)
+*)
+    val _ =
+      if length bytes = 4 then () else failwith "invalid hex-code";
+(* From M0:
+    val _ = if (length bytes = 2) orelse (length bytes = 4)
+            then ()
+            else failwith "invalid hex-code";
+*)
+    val bytes_tm = listSyntax.mk_list (bytes, val_word_ty)
+  in
+    pairSyntax.mk_pair (ml_tm, bytes_tm)
+  end
+end;
+
+(* Note: In the ARM8 version, this constant is called
+ * arm8_state_MEM. This is since the arm8_state record has an entry
+ * called MEM, RISC-V seems to have a corresponding one called MEM8
+ * of the same type. *)
+val riscv_state_mem_tm =
+  prim_mk_const{Name="riscv_state_MEM8", Thy="riscv"};
+val riscv_dest_mem =
+  HolKernel.dest_binop riscv_state_mem_tm (ERR "riscv_dest_mem" "");
+
+(* Type rewrites as a list of theorems (ARM8 also had rewrites
+ * for ``:ProcState``)... *)
+val riscv_REWRS = (
+  (type_rws ``:riscv_state``)
+);
+(* From M0:
+val m0_REWRS = (RName_distinct :: (
+   (type_rws ``:m0_state``) @
+   (type_rws ``:PSR``) @ (* From m0Script *)
+   (type_rws ``:RName``) @ (* From m0Script *)
+   (type_rws ``:Mode``) (* From m0Script *)
+));
+*)
+(* ... and as a simplification set. *)
+val riscv_extra_ss = rewrites riscv_REWRS
+
+(* From M0:
+ * M0 has a bmr_rec which also takes an endianness endian_fl and a
+ * "sel_fl":
+
+    val const_tm0 =
+      prim_mk_const{Name="m0_bmr", Thy="bir_lifting_machines"};
+    val const_tm =
+      mk_comb (const_tm0,
+               pairSyntax.mk_pair (endian_fl_tm, sel_fl_tm)
+      )
+
+ * with significant differences in many fields. bmr_const,
+ * bmr_ok_thm, bmr_lifted_thm, bmr_extra_lifted_thms, bmr_eval_thm,
+ * bmr_label_thm, bmr_step_hex and bmr_mk_data_mm are all dependent
+ * on these.
+
+ * The different bmr_recs resulting from these paramenters are
+ * referred to as
+
+  val m0_bmr_rec_LittleEnd_Main    = m0_bmr_rec false false
+  val m0_bmr_rec_BigEnd_Main       = m0_bmr_rec true  false
+  val m0_bmr_rec_LittleEnd_Process = m0_bmr_rec false true
+  val m0_bmr_rec_BigEnd_Process    = m0_bmr_rec true  true
+
+*)
+val riscv_bmr_rec : bmr_rec = {
+  (* Done! (Although riscv_state_is_OK_def should be expanded) *)
+  bmr_const                =
+    prim_mk_const{Name="riscv_bmr", Thy="bir_lifting_machines"},
+  (* Done! (Although riscv_state_is_OK_def should be expanded) *)
+  bmr_ok_thm               = riscv_bmr_OK,
+  (* Done! *)
+  bmr_lifted_thm           = riscv_bmr_LIFTED,
+  (* Done, but entirely WIP. *)
+  bmr_extra_lifted_thms    = [riscv_extra_LIFTS],
+  (* Done, but entirely WIP. *)
+  bmr_change_interval_thms = [riscv_CHANGE_INTERVAL_THMS],
+  (* Done! TODO: Should be above bmr_ok_thm,
+   * since it is a prerequisite. *)
+  bmr_eval_thm             = riscv_bmr_EVAL,
+  (* Done! *)
+  bmr_label_thm            = riscv_bmr_label_thm,
+  (* Done! *)
+  bmr_dest_mem             = riscv_dest_mem,
+  (* Done, but might be expanded. *)
+  bmr_extra_ss             = riscv_extra_ss,
+  (* Done, but with WIP. *)
+  bmr_step_hex             = riscv_step_hex',
+  (* Done, but no idea if it works. *)
+  bmr_mk_data_mm           = riscv_mk_data_mm,
+  (* Done, but no idea if it works: This appears to be
+   * the same for ARM8 and M0. *)
+  bmr_hex_code_size        =
+    (fn hc => Arbnum.fromInt ((String.size hc) div 2)),
+  (* Done: NONE, since no Intel HEX encoding is supported yet. *)
+  bmr_ihex_param           = NONE
+};
+
+val _ = assert bmr_rec_sanity_check riscv_bmr_rec
+(* From bir_lifting_machinesLib:
+  bmr_rec_sanity_check_basic riscv_bmr_rec (* Partially OK: *)
+    check_const (#bmr_const riscv_bmr_rec)
+
+    check_ok_thm (#bmr_const riscv_bmr_rec)
+                 (#bmr_ok_thm riscv_bmr_rec) (* OK! *)
+ 
+    check_lifted_thm riscv_bmr_rec (* OK! *)
+
+    check_change_interval_thms riscv_bmr_rec (* Not OK! *)
+
+    check_label_thm riscv_bmr_rec (* OK! *)
+
+  can bmr_rec_extract_fields riscv_bmr_rec (* OK! *)
+  can bmr_rec_mk_label_of_num riscv_bmr_rec (* OK! *)
+  can bmr_rec_mk_label_of_num_eq_pc riscv_bmr_rec (* OK! *)
+  can bmr_rec_mk_pc_of_term riscv_bmr_rec (* OK! *)
+*)
 end;

@@ -107,9 +107,15 @@ val sty_FAIL  = [FG OrangeRed];
 (****************)
 
 functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifting = struct
+  (* For debugging RISC-V:
+  val mr = riscv_bmr_rec;
+
+  *)
+
   (* For debugging
   structure MD = struct val mr = arm8_bmr_rec end;
   structure MD = struct val mr = m0_bmr_rec true true end;
+
   val pc = Arbnum.fromInt 0x10000
 
   val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x100000)
@@ -215,7 +221,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
 
   (* Instantiate the inst_lifting theorem with the record and types. *)
-  val inst_lift_THM = inst_bmr_thm true bir_is_lifted_inst_block_COMPUTE_OPTIMISED;
+  val inst_lift_THM =
+    inst_bmr_thm true bir_is_lifted_inst_block_COMPUTE_OPTIMISED;
 
   val inst_lift_THM_ex_vars = let
     val (_, t)  = dest_forall (concl inst_lift_THM)
@@ -262,6 +269,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   in (pc_var_t, pc_cond_var_t, tm1) end;
 
   (* Build cond-lift theorems for all accessed fields *)
+  (* RISC-V TODO: Some stuff here does not work as intended... *)
   val cond_lift_fields_thm = let
      val cond_tm = list_mk_icomb PROTECTED_COND_tm [
         mk_var ("c", bool),
@@ -276,8 +284,11 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   in
     LIST_CONJ (
-     (mk_lift_thm mr_mem_lf_of_ms) ::
+     (mk_lift_thm mr_mem_lf_of_ms) :: (* RISC-V TODO: OK. *)
+     (* RISC-V TODO: Below does not compute in a long time...
+      * Probably due to the new inclusion of process IDs. *)
      (mk_lift_thm (rand mr_pc_lf_of_ms)) ::
+     (* RISC-V TODO: Below does not compute in a long time... *)
      map (mk_lift_thm o rand o snd) mr_imms_lf_of_ms)
   end;
 
@@ -479,8 +490,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      for later instantiating as well as only the changes as an SML datastructure for
      computing the block-updates later. Moreover, a theorem stating that the
      computed imm_ups list is correct is produced. *)
-
+  (* RISC-V TODO: As a consequence of failing to compute
+   * cond_lift_fields_thm above, the below is missing stuff. *)
   local
+    (* RISC-V TODO: Missing stuff here... *)
     val compute_single_up_single_conv = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [
          updateTheory.APPLY_UPDATE_THM, wordsTheory.n2w_11, cond_lift_fields_thm,
          PROTECTED_COND_ID];
@@ -539,7 +552,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (* Given a new state, we compute whether updates to the memory happend. This
      is similar to computing updates to immediates via compute_imm_ups.
      The computed term, its SML representation and a correctness theorem are returned. *)
-
+  (* RISC-V TODO: As a consequence of failing to compute
+   * cond_lift_fields_thm above, the below is missing stuff. *)
   local
     val lf_ms'_CONV = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [cond_lift_fields_thm, PROTECTED_COND_ID]
    val bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_tm' = mk_icomb (bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_tm,
@@ -751,6 +765,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (* Given a next state as a term, we look at the PC of the state and
      compute an end statement update description that allows us to jump to
      that PC. *)
+  (* RISC-V TODO: As a consequence of failing to compute
+   * cond_lift_fields_thm above, the below is missing stuff. *)
   local
     val comp_thm_eup_JMP = let
        val thm0 = ISPECL [#bmr_const mr, bs_v]
@@ -1091,7 +1107,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (*-------------------------------*)
   (* Combine it all, main function *)
   (*-------------------------------*)
-
+  (* RISC-V TODO: All OK up to here, except what has been
+   * commented. *)
   (* DEBUG
 
      val (lb, ms_case_cond_t, next_thm) = el 1 sub_block_work_list
@@ -1687,12 +1704,6 @@ structure bir_inst_liftingLib :> bir_inst_liftingLib = struct
   structure bmil_m0_BigEnd_Process    = bir_inst_liftingFunctor (struct val mr = m0_bmr_rec_BigEnd_Process end);
   structure bmil_m0_BigEnd_Main       = bir_inst_liftingFunctor (struct val mr = m0_bmr_rec_BigEnd_Main end);
 
-  structure bmil_m0_mod_LittleEnd_Process = bir_inst_liftingFunctor (struct val mr = m0_mod_bmr_rec_LittleEnd_Process end);
-  structure bmil_m0_mod_LittleEnd_Main    = bir_inst_liftingFunctor (struct val mr = m0_mod_bmr_rec_LittleEnd_Main end);
-  structure bmil_m0_mod_BigEnd_Process    = bir_inst_liftingFunctor (struct val mr = m0_mod_bmr_rec_BigEnd_Process end);
-  structure bmil_m0_mod_BigEnd_Main       = bir_inst_liftingFunctor (struct val mr = m0_mod_bmr_rec_BigEnd_Main end);
-
-
-
+  (* structure bmil_riscv = bir_inst_liftingFunctor (struct val mr = riscv_bmr_rec end); *)
 
 end
