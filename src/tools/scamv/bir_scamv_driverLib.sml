@@ -168,15 +168,13 @@ fun bir_free_vars exp =
         end
     else [];
 
-exception NoObs;
+exception NoObsInPath;
 
 (*
 val exps = all_exps;
 *)
 fun make_word_relation relation exps =
     let
-        val _ = print_term relation;
-
         fun primed_subst exp =
             map (fn v =>
                     let val vp = lift_string string_ty (fromHOLstring v ^ "'")
@@ -199,7 +197,7 @@ fun make_word_relation relation exps =
             in
 ``(^va <> ^vb)  /\ (^va < 0x80042FF8w) /\ (^vb < 0x80042FF8w)``
             end;
-        val distinct = if null pairs then raise NoObs else list_mk_conj (map mk_distinct pairs);
+        val distinct = if null pairs then raise NoObsInPath else list_mk_conj (map mk_distinct pairs);
     in
        ``^(bir2bool relation) /\ ^distinct``
     end
@@ -234,14 +232,23 @@ fun start_interactive prog =
         val _ = current_prog_id := prog_id;
         val lifted_prog = lift_program_from_sections sections;
         val _ = current_prog := SOME lifted_prog;
-        val _ = print_term lifted_prog;
+(*        val _ = print_term lifted_prog; *)
         
         val lifted_prog_w_obs =
             bir_arm8_cache_line_tag_model.add_obs lifted_prog;
+(*        val _ = print_term lifted_prog_w_obs; *)
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 
+        val _ = case (hd paths) of
+                    (pc, SOME xs) => (print_term pc;
+                                      print " => ";
+                                      List.map
+                                         (fn (x,y) => (print_term x; print_term y))
+                                         xs);
+        
         val _ = current_pathstruct := paths;
         val (conds, relation) = mkRel_conds paths;
+        val _ = print_term relation;
         val _ = print ("Word relation\n");
         val word_relation = make_word_relation relation all_exps;
         val _ = current_word_rel := SOME word_relation;
@@ -278,7 +285,7 @@ fun next_test select_path =
             in list_mk_conj (map mk_eq s) end;
         val _ = current_word_rel := SOME ``^rel /\ ~^(mk_var_mapping model)``;
 
-        val _ = print_term (valOf (!current_word_rel));
+(*        val _ = print_term (valOf (!current_word_rel)); *)
 
         val exp_id  =  bir_embexp_sates2_create ("arm8", "exp_cache_multiw", "obs_model_name_here") prog_id (s1, s2);
         val test_result = bir_embexp_run exp_id false;
@@ -375,14 +382,15 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
             (fn () => bir_prog_gen_arm8_mock (), "prog_gen_mock")
           else
             (fn () => bir_prog_gen_arm8_rand sz, "prog_gen_rand");
-        
+
         fun main_loop 0 = ()
          |  main_loop n =
             let val prog =
                     process_asm_lines prog_gen_id (prog_gen_fun ())
-            in (scamv_test_main tests prog
-                handle e =>
-                       print("Skipping program due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n") );
+            in print ("Iteration: " ^ PolyML.makestring (m - n) ^ "\n");
+               (scamv_test_main tests prog
+                 handle e =>
+                        print("Skipping program due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n") );
                main_loop (n-1) end
     in
         main_loop m
