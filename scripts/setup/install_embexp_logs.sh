@@ -36,9 +36,9 @@ cd "${HOLBA_LOGS_DIR}"
 
 echo "Do you want to clone with public key authentication?"
 select yn in "Yes" "No"; do
-    case $yn in
-        Yes ) git clone "${GIT_URL_SSH}"; break;;
-        No ) git clone "${GIT_URL_HTTPS}"; break;;
-    esac
+  case $yn in
+    Yes ) git clone "${GIT_URL_SSH}"; break;;
+    No ) git clone "${GIT_URL_HTTPS}"; break;;
+  esac
 done
 
