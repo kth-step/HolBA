@@ -66,7 +66,6 @@ val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
 
 (*
 val asm_code = "ldr x3, [x1]\nldr x4, [x2]\n";
-val (asm_code, sections) = process_asm_code asm_code;
 *)
 
 val _ = scamv_test_mock ();
