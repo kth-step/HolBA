@@ -162,6 +162,8 @@ fun symb_exec_leaflist (Symb_Node (s, [])) = [s]
   fun bir_exp_rewrite rwf exp =
       if is_BExp_Const exp then
         rwf exp
+      else if is_BExp_MemConst exp then
+        rwf exp
 
       else if is_BExp_Den exp then
         rwf exp

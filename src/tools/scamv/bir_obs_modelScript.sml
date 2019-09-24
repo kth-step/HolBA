@@ -41,9 +41,10 @@ case exp of
 val observe_load_def = Define`
 observe_load (BExp_Load _ e _ _) =
          BStmt_Observe (BExp_Const (Imm1 1w))
-                       ([BExp_BinExp BIExp_And
+                       (* ([BExp_BinExp BIExp_And
                                      (BExp_Const (Imm64 0x1FC0w))
-                                     e])
+                                     e]) *)
+                       ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 13w))])
                        HD
 `;
 

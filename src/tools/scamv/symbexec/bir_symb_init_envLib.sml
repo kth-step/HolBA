@@ -76,12 +76,13 @@ fun add_symbolic_register_to_env_1 name env =
     end;
 
 fun add_memory_to_env env = 
-  let val mem = fromMLstring "MEM"
+    let val mem = fromMLstring "MEM"
+        val holmem = mk_var ("MEM",Type`:num |-> num`)
   in
     (rhs o concl o EVAL) 
     ``
     bir_symb_env_update 
-    ^mem (BExp_MemConst Bit64 Bit8 memory) (BType_Mem Bit64 Bit8) ^env
+    ^mem (BExp_MemConst Bit64 Bit8 ^holmem) (BType_Mem Bit64 Bit8) ^env
     ``
   end;
 
@@ -99,29 +100,18 @@ fun add_registers_to_env_1 [] env = env
         add_registers_to_env_1 regs (add_symbolic_register_to_env_1 reg env)
 
 fun init_env () = 
-    let 
+    let
+      fun regs n = List.tabulate (n, fn x => "R" ^ (Int.toString x))
       (* 64 Bit Registers *)
-      val reg_list_64 = [
-        "R0", "R1", "R2", "R3", "R4", 
-        "R5", "R6", "R7", "R8", "R9",
-        "R10","R11","R12", "SP_EL0",
-        "SP_process", "ADDR"]
-      (* 1 Byte registers *)
-      val reg_list_8 = [ "VAL" ]
+      val reg_list_64 =
+          regs 30;
       (* 1 Bit flags *)
       val reg_list_1  = [
         "ProcState_N", "ProcState_Z",
         "ProcState_C", "ProcState_V" ]
-    in
-      let
-        val e = add_registers_to_env_64 reg_list_64 ``BEnv FEMPTY`` 
-      in 
-        let 
-          val ee =  add_registers_to_env_8 reg_list_8 e 
-        in add_memory_to_env (
-          add_registers_to_env_1 reg_list_1 ee)
-        end
-      end
+      val e = add_registers_to_env_64 reg_list_64 ``BEnv FEMPTY`` 
+    in add_memory_to_env (
+          add_registers_to_env_1 reg_list_1 e)
     end;
 
 end (* local *)
