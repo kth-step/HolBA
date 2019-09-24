@@ -23,8 +23,8 @@ PYTHON3_URL="https://www.python.org/ftp/python/${PYTHON3_VERSION}/Python-${PYTHO
 PYTHON3_DIR=${HOLBA_OPT_DIR}/python_${PYTHON3_VERSION}
 PYTHON3_DIR_SRC=${HOLBA_OPT_DIR}/python_${PYTHON3_VERSION}_src
 
-
-
+PYTHON3_BIN=python3.7
+PYTHON3_LIN=python3
 
 
 
@@ -57,6 +57,9 @@ make -j 8
 
 # install python3 to prefix dir
 make altinstall
+
+cd "${PYTHON3_DIR}/bin"
+ln -s ${PYTHON3_BIN} ${PYTHON3_LIN}
 
 # remove source directory
 cd "${HOLBA_OPT_DIR}"
