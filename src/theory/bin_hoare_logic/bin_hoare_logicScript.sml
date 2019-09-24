@@ -305,7 +305,7 @@ Q.SPEC `(\m ms var l le invariant C1.
 (weak_loop_contract m l le invariant C1 var) ==>
 (weak_triple m l le (\ms. (invariant ms) /\ (~(C1 ms))) post) ==>
 ((invariant ms) /\ ((m.pc ms) = l) /\ (C1 ms)) ==>
- (?ms'. ((m.weak ms le ms') ∧ (post ms'))))` loop_fun_ind);
+ (?ms'. ((m.weak ms le ms') /\ (post ms'))))` loop_fun_ind);
 
 
 val inductive_invariant_thm = prove(``

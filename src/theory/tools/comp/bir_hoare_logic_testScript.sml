@@ -9,6 +9,8 @@ open bir_program_multistep_propsTheory;
 open bir_program_blocksTheory;
 open bir_program_terminationTheory;
 
+open bir_htTheory;
+
 open bin_hoare_logicSimps;
 open HolBACoreSimps;
 
@@ -600,6 +602,60 @@ CASE_TAC >| [
 
 (* bir_exec_to_labels_triple *)
 (* weak_triple *)
+
+val bir_exp_is_true_def = Define `
+  bir_exp_is_true st exp =
+    (bir_eval_exp exp st.bst_environ = SOME bir_val_true)
+`;
+
+val bir_exec_to_labels_triple_precond_def = Define `
+  bir_exec_to_labels_triple_precond st pre prog =
+    (bir_eval_exp pre st.bst_environ = SOME bir_val_true) /\
+    (bir_env_vars_are_initialised st.bst_environ
+       (bir_vars_of_program prog)) /\
+    (st.bst_pc.bpc_index = 0) /\
+    (st.bst_status = BST_Running) /\
+    (bir_is_bool_exp_env st.bst_environ pre)
+`;
+
+val bir_label_ht_impl_weak_ht =
+  store_thm("bir_label_ht_impl_weak_ht",
+  ``!prog l ls pre post.
+    bir_exec_to_labels_triple prog l ls pre post ==>
+    weak_triple (bir_etl_wm prog) l ls
+      (\s. bir_exec_to_labels_triple_precond s pre prog)
+      (\s'. bir_eval_exp post s'.bst_environ = SOME bir_val_true)``,
+
+FULL_SIMP_TAC (std_ss++bir_wm_SS)
+              [weak_triple_def, bir_etl_wm_def,
+               bir_exec_to_labels_triple_def,
+               bir_exec_to_labels_triple_precond_def] >>
+REPEAT STRIP_TAC >>
+QSPECL_X_ASSUM ``!s. _`` [`s`] >>
+REV_FULL_SIMP_TAC std_ss [] >>
+Q.EXISTS_TAC `s'` >>
+ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_weak_trs_def]
+);
+
+(* How to obtain a blacklist triple from one False dummy HT and
+ * one regular HT? *)
+(* TODO: Define regular postcond maps as in combinTheory. *)
+(* TODO: Define update with False label as in combinTheory. *)
+(* Take inspiration from new variable environment... *)
+(* TODO: Find lemma for "UNION" of two weak HTs with same l. *)
+(*
+val bir_label_hts_impl_weak_blacklist_ht =
+  store_thm("bir_label_hts_impl_weak_blacklist_ht",
+  ``!prog l ls1 ls2 pre1 pre2 post.
+    bir_exec_to_labels_triple prog l ls1 pre1 post ==>
+    bir_exec_to_labels_triple prog l ls2 pre2 bir_exp_false ==>
+    weak_triple (bir_etl_wm prog) l ls
+      (\s. bir_exec_to_labels_triple_precond s pre prog)
+      ((\s. (s.pc IN ls2 ==> F)) =+ (\s. bir_exp_is_true s post))``,
+
+cheat
+);
+*)
 
 (****************************************************)
 (* OLD BUT POTENTIALLY USEFUL STUFF: MOVE ELSEWHERE *)
