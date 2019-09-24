@@ -467,7 +467,7 @@ val bir_exp_lift_default_env = bir_exp_lift bir_var_environment_t_default;
 
 
 
-(* DEBUGING
+(* DEBUGGING
 
 val env_t = bir_var_environment_t_default
 

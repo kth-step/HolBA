@@ -14,9 +14,8 @@ open bir_expLib;
 
 in (* local *)
 
-val log = ref TextIO.stdOut;
-
-fun log_setfile log_filename = log := (TextIO.openOut log_filename);
+val log_filename = "benchmark.log";
+val log = TextIO.openOut log_filename;
 
 fun print_log_with_style sty f s = let
   val _ = if f then TextIO.output (!log, s) else ();
@@ -28,9 +27,11 @@ val print_l = print_log true;
 
 
 (* error printing function *)
-fun err_to_str disassemble_fun ((err_pc, err_inst, err_inst_desc, err_descr):bir_inst_error) =
+fun err_to_str disassemble_fun ((err_pc, err_inst, err_inst_desc,
+                                 err_descr):bir_inst_error) =
   let
-    fun asm_of_hex_code_fun code = hd (disassemble_fun [QUOTE code]);
+    fun asm_of_hex_code_fun code =
+      hd (disassemble_fun [QUOTE code]);
     val err_str = (
              case err_descr of
                  SOME x => bir_inst_liftingExn_data_to_string x
@@ -214,7 +215,8 @@ fun minmax_fromlist ls = List.foldl (fn ((min_1,max_1),(min_2,max_2)) =>
    (if Arbnum.>(max_1, max_2) then max_1 else max_2))
   ) (hd ls) (tl ls);
 
-fun da_sections_minmax sections = minmax_fromlist (List.map disassembly_section_to_minmax sections);
+fun da_sections_minmax sections =
+  minmax_fromlist (List.map disassembly_section_to_minmax sections);
 
 
 
@@ -244,9 +246,17 @@ fun split_to_non_overlapping_sections sections =
 
 
 fun arch_str_to_funs arch_str = case arch_str of
-            "arm8" => (bmil_arm8.bir_lift_prog_gen, arm8AssemblerLib.arm8_disassemble)
-          | "m0"   => (bmil_m0_LittleEnd_Process.bir_lift_prog_gen, m0AssemblerLib.m0_disassemble)
-          | _      => raise (ERR "arch_str_to_funs" ("architecture \"" ^ arch_str ^ "\" unknown"))
+            "arm8" => (bmil_arm8.bir_lift_prog_gen,
+                       arm8AssemblerLib.arm8_disassemble)
+          | "m0"   => (bmil_m0_LittleEnd_Process.bir_lift_prog_gen,
+                       m0AssemblerLib.m0_disassemble)
+     (*     | "riscv"=> (bmil_riscv.bir_lift_prog_gen,
+                       riscvAssemblerLib.riscv_disassemble) *)
+          | _      => raise (ERR "arch_str_to_funs"
+                                 ("architecture \""^arch_str^
+                                  "\" unknown"
+                                 )
+                            )
         ;
 
 fun disassembly_section_to_n_instrs section =
@@ -443,16 +453,51 @@ fun lift_sections arch_str sections idx =
     (thm_prog, errors)
   end;
 
+(* DESCRIPTION: Function transcompiling an entire program stored in a
+ * disassembled file to BIR, yielding theorems stating the
+ * correctness of the transcompilation.
+ * 
+ * ARGUMENTS: arch_str is the ISA of the instruction in string format,
+ * e.g. "arm8", "m0" or "riscv".
+ *
+ * da_file is the file containing the disassembled executable,
+ * possibly including a pathway, e.g. "binaries/aes-aarch64.da".
+ *
+ * USAGE: This is the main function for transcompilation of code.
+ *
+ * EXAMPLES OF USAGE:
 
+   val arch_str = "arm8";
+   val da_file = "binaries/bzip2-1.0.6/aarch64-libbz2-emptymain.da";
+   val thms = lift_file arch_str da_file;
+
+   val arch_str = "arm8";
+   val da_file = "binaries/aes-aarch64.da";
+   val thms = lift_file arch_str da_file;
+
+   val arch_str = "arm8";
+   val da_file = "binaries/bignum/aarch64-bignum-emptymain.da";
+   val thms = lift_file arch_str da_file;
+
+   val arch_str = "m0";
+   val da_file = "binaries/bzip2-1.0.6/m0-libbz2-emptymain.da";
+   val thms = lift_file arch_str da_file;
+
+   val arch_str = "m0";
+   val da_file = "binaries/bignum/m0-bignum-emptymain.da";
+   val thms = lift_file arch_str da_file;
+
+ * *)
 fun lift_file arch_str da_file =
   let
-    val (bmil_bir_lift_prog_gen, disassemble_fun) = arch_str_to_funs arch_str;
+    val (bmil_bir_lift_prog_gen, disassemble_fun) =
+      arch_str_to_funs arch_str;
 
     val _ = print_log_with_style [Bold, Underline] true ("Lifting \""^da_file^"\" ("^arch_str^")\n");
 
     val (region_map, sections) = read_disassembly_file_regions da_file;
 
-    (* calculate instruction number *)
+    (* Calculate the number of instructions of different categories *)
     val _ =
       let
         val (n_code, n_data, n_unknown) = da_sections_n_instrs sections;
@@ -479,10 +524,7 @@ fun lift_file arch_str da_file =
         (lift_thm::thms, lift_errors@errors)
       end) ([],[]) sections_to_lift;
 
-
-
-
-    (* print out only the failing instructions *)
+    (* Print only the failing instructions, for debug purposes *)
     val _ = if not (List.null errors) then
       let
         val _ = print_l "\n\n";
@@ -496,46 +538,60 @@ fun lift_file arch_str da_file =
     thms
   end;
 
-(*
-val da_file = "binaries/bzip2-1.0.6/aarch64-libbz2-emptymain.da";
-val da_file = "binaries/aes-aarch64.da";
-val da_file = "binaries/bignum/aarch64-bignum-emptymain.da";
-
-val arch_str = "arm8";
-val _ = lift_file arch_str da_file;
-
-val da_file = "binaries/bzip2-1.0.6/m0-libbz2-emptymain.da";
-val da_file = "binaries/bignum/m0-bignum-emptymain.da";
-
-val arch_str = "m0";
-val _ = lift_file arch_str da_file;
-*)
-
-
-
-
-
-
+(* gen_sections is an auxiliary function to list_inst. *)
 fun gen_sections disassemble_fun (pc:Arbnum.num) (inst:string) =
   let
-    fun asm_of_hex_code_fun code = hd (disassemble_fun [QUOTE code]);
+    fun asm_of_hex_code_fun code =
+      hd (disassemble_fun [QUOTE code]);
   in
-    [BILMR (pc, [(inst, BILME_code (SOME (asm_of_hex_code_fun inst)))])]
+    [BILMR (pc,
+            [(inst, BILME_code (SOME (asm_of_hex_code_fun inst)))]
+           )
+    ]
   end;
 
+(* DESCRIPTION: Function transcompiling a single instruction to BIR,
+ * yielding a theorem stating the correctness of the
+ * transcompilation.
+ * 
+ * ARGUMENTS: arch_str is the ISA of the instruction in string format,
+ * e.g. "arm8", "m0" or "riscv".
+ *
+ * pc is a program counter in the form of a number. This should
+ * correspond with the position in the disassembled code. To make
+ * it easier to see you use the correct position, convert from
+ * hexadecimal when giving the argument, e.g.: Arbnum.fromInt 0xCFEE
+ *
+ * inst is the instruction in string format, e.g.: "78206A61"
+ *
+ * USAGE: When debugging. Note that no arguments point to any program -
+ * the programs are hard-coded inside arch_str_to_funs.
+ *
+ * EXAMPLES OF USAGE:
+
+     val arch_str = "arm8";
+     val pc = (Arbnum.fromInt 0x40C2A4);
+     val inst = "78206A61";
+     val thm_prog = lift_inst arch_str pc inst;
+
+     val arch_str = "m0";
+     val pc = (Arbnum.fromInt 0xCFEE);
+     val inst = "4770";
+     val thm_prog = lift_inst arch_str pc inst;
+
+ * *)
 fun lift_inst arch_str (pc:Arbnum.num) (inst:string) =
   let
-    val (bmil_bir_lift_prog_gen, disassemble_fun) = arch_str_to_funs arch_str
-(*
-    val pc = (Arbnum.fromInt 0xCFEE);
-    val inst = "4770";
-*)
+    val (bmil_bir_lift_prog_gen, disassemble_fun) =
+      arch_str_to_funs arch_str
     val sections = gen_sections disassemble_fun pc inst;
     val prog_range = da_sections_minmax sections;
-    val (thm_prog, errors) = bmil_bir_lift_prog_gen prog_range sections;
+    val (thm_prog, errors) =
+      bmil_bir_lift_prog_gen prog_range sections;
   in
     thm_prog
   end;
+
 
 (*
 val arch_str = "arm8";
@@ -546,5 +602,3 @@ val thm_prog = lift_inst arch_str (Arbnum.fromInt 0xCFEE) ("4770");
 *)
 
 end (* local *)
-
-end
