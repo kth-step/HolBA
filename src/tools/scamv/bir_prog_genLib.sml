@@ -107,44 +107,6 @@ struct
     end;
 
 
-(* fixed programs for mockup *)
-(* ========================================================================================= *)
-  val mock_progs_i = ref 0;
-  val mock_progs = ref [["ldr x2, [x1]"]];
-  val wrap_around = ref false;
-
-  fun bir_prog_gen_arm8_mock_set progs =
-    let
-      val _ = mock_progs_i := 0;
-      val _ = mock_progs := progs;
-    in
-      ()
-    end;
-
-  fun bir_prog_gen_arm8_mock_set_wrap_around b =
-    let
-      val _ = wrap_around := b;
-      val _ = if not (!wrap_around) then ()
-	      else mock_progs_i := Int.mod(!mock_progs_i, length (!mock_progs));
-    in
-      ()
-    end;
-
-  fun bir_prog_gen_arm8_mock () =
-    let
-      val _ = if !mock_progs_i < length (!mock_progs) then ()
-	      else raise ERR "bir_prog_gen_arm8_mock" "no more programs";
-
-      val prog = List.nth(!mock_progs, !mock_progs_i);
-
-      val _ = mock_progs_i := (!mock_progs_i) + 1;
-      val _ = if not (!wrap_around) then ()
-	      else mock_progs_i := Int.mod(!mock_progs_i, length (!mock_progs));
-    in
-      prog
-    end;
-
-
 (* load file to asm_lines (assuming it is correct assembly code with only forward jumps and no use of labels) *)
 (* ========================================================================================= *)
 (* ===>>> copied from embexp_driver *)
@@ -187,6 +149,47 @@ val s = ""
     in
       asm_lines
     end
+
+(* fixed programs for mockup *)
+(* ========================================================================================= *)
+  val mock_progs_i = ref 0;
+  val mock_progs = ref [["ldr x2, [x1]"]];
+  val wrap_around = ref false;
+
+  fun bir_prog_gen_arm8_mock_set progs =
+    let
+      val _ = mock_progs_i := 0;
+      val _ = mock_progs := progs;
+    in
+      ()
+    end;
+
+  fun bir_prog_gen_arm8_mock_propagate files =
+    mock_progs := (!mock_progs)@(List.map load_asm_lines files);
+
+  fun bir_prog_gen_arm8_mock_set_wrap_around b =
+    let
+      val _ = wrap_around := b;
+      val _ = if not (!wrap_around) then ()
+	      else mock_progs_i := Int.mod(!mock_progs_i, length (!mock_progs));
+    in
+      ()
+    end;
+
+  fun bir_prog_gen_arm8_mock () =
+    let
+      val _ = if !mock_progs_i < length (!mock_progs) then ()
+	      else raise ERR "bir_prog_gen_arm8_mock" "no more programs";
+
+      val prog = List.nth(!mock_progs, !mock_progs_i);
+
+      val _ = mock_progs_i := (!mock_progs_i) + 1;
+      val _ = if not (!wrap_around) then ()
+	      else mock_progs_i := Int.mod(!mock_progs_i, length (!mock_progs));
+    in
+      prog
+    end;
+
 
 
 (* instances of program generators *)

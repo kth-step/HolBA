@@ -6,7 +6,11 @@ signature bir_prog_genLib = sig
 
   (* sets a sequence of test programs.
   *)
-  val bir_prog_gen_arm8_mock_set : string list list -> unit
+  val bir_prog_gen_arm8_mock_set : (string list) list -> unit
+
+  (* propagate with sequence of test programs (input: asm filenames).
+  *)
+  val bir_prog_gen_arm8_mock_propagate : string list -> unit
 
   (* sets whether the produced sequence wraps around.
   *)
