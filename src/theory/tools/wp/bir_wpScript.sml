@@ -1295,8 +1295,8 @@ val bir_exec_to_labels_or_assumviol_triple_def = Define `
       (
         (
 	  (s'.bst_status = BST_Running) /\
-	  bir_is_bool_exp_env s'.bst_environ post /\
-	  (bir_eval_exp post (s'.bst_environ) = SOME bir_val_true) /\
+	  bir_is_bool_exp_env s'.bst_environ (post s'.bst_pc.bpc_label) /\
+	  ((bir_eval_exp (post s'.bst_pc.bpc_label) s'.bst_environ) = SOME bir_val_true) /\
 	  ((s'.bst_pc.bpc_index = 0) /\ (s'.bst_pc.bpc_label IN ls))
         ) \/ (
           (s'.bst_status = BST_AssumptionViolated)
@@ -1380,17 +1380,22 @@ FULL_SIMP_TAC (srw_ss()) []>>
 RW_TAC std_ss []
 );
 
+(*
+FIRST CHANGE TO a PROOF for POST MAP
+this is only needed if l1 in ls to ensure  (bir_is_bool_exp post')
+bir_is_bool_exp (post l1)
+*)
 val bir_exec_to_labels_or_assumviol_triple_jmp =
   store_thm("bir_exec_to_labels_or_assumviol_triple_jmp",
   ``!p l bl l1 ls post post'.
-      bir_is_bool_exp post ==>
+      bir_is_bool_exp (post l1) ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
       MEM l (bir_labels_of_program p) ==>
       MEM l1 (bir_labels_of_program p) ==>
       (SND(THE(bir_get_program_block_info_by_label p l)) = bl) ==>
       (bl.bb_last_statement = (BStmt_Jmp (BLE_Label l1))) ==>
-      (((l1 IN ls) ==> (post' = post)) /\
+      (((l1 IN ls) ==> (post' = (post l1))) /\
        ((~(l1 IN ls)) ==>
         (bir_exec_to_labels_or_assumviol_triple p l1 ls post' post) /\
         (bir_is_bool_exp post')
@@ -1407,8 +1412,8 @@ REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 (* "s'" is the state resulting from execution with
  * bir_exec_to_labels from s. *)
 Q.ABBREV_TAC `s' = bir_exec_to_labels ls p s` >>
-Q.ABBREV_TAC `cnd = l1 IN ls /\ (post' = post) \/
-  bir_exec_to_labels_or_assumviol_triple p l1 ls pre post'` >>
+Q.ABBREV_TAC `cnd = l1 IN ls /\ (post' = (post l1)) \/
+  bir_exec_to_labels_or_assumviol_triple p l1 ls post' post` >>
 subgoal `(bir_get_current_block p s.bst_pc = SOME bl)` >- (
   FULL_SIMP_TAC std_ss [bir_get_current_block_def,
                         bir_get_program_block_info_by_label_MEM] >>
@@ -1532,7 +1537,8 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
 val bir_exec_to_labels_or_assumviol_triple_cjmp =
   store_thm("bir_exec_to_labels_or_assumviol_triple_cjmp",
   ``!p l bl e l1 l2 ls post post1' post2'.
-      bir_is_bool_exp post ==>
+      bir_is_bool_exp (post l1) ==>
+      bir_is_bool_exp (post l2) ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
       MEM l (bir_labels_of_program p) ==>
@@ -1542,13 +1548,13 @@ val bir_exec_to_labels_or_assumviol_triple_cjmp =
       (bl.bb_last_statement = (BStmt_CJmp e (BLE_Label l1)
                                             (BLE_Label l2))
       ) ==>
-      (((l1 IN ls) ==> (post1' = post)) /\
+      (((l1 IN ls) ==> (post1' = (post l1))) /\
        ((~(l1 IN ls)) ==>
          bir_exec_to_labels_or_assumviol_triple p l1 ls post1' post /\
          bir_is_bool_exp post1'
        )
       ) ==>
-      (((l2 IN ls) ==> (post2' = post)) /\
+      (((l2 IN ls) ==> (post2' = (post l2))) /\
        ((~(l2 IN ls)) ==>
          bir_exec_to_labels_or_assumviol_triple p l2 ls post2' post /\
          bir_is_bool_exp post2'
