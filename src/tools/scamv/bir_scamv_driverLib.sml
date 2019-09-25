@@ -270,7 +270,8 @@ fun start_interactive prog =
                                       print " => ";
                                       List.map
                                          (fn (x,y) => (print_term x; print_term y))
-                                         xs);
+                                         xs)
+		 | _ => raise ERR "start_interactive" "ooooooo";
         
         val _ = current_pathstruct := paths;
         val (conds, relation) = mkRel_conds paths;
@@ -353,9 +354,12 @@ fun scamv_test_main tests prog =
 
 
 (*
+val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
+val _ = bir_prog_gen_arm8_mock_set [["b #0x80"]];
 val _ = bir_prog_gen_arm8_mock_set [["subs w12, w12, w15, sxtb #1"]];
-val (asm_lines, sections) = prog_gen_store_mock ();
-val (asm_lines, sections) = prog_gen_store_rand 5;
+val (prog_id, lifted_prog) = prog_gen_store_mock ();
+val (prog_id, lifted_prog) = prog_gen_store_rand 5 ();
+val prog = lifted_prog;
 *)
 fun scamv_test_gen_run tests (prog_id, lifted_prog) =
     let
@@ -398,9 +402,10 @@ fun show_error_no_free_vars (id,_) =
 type scamv_config = { max_iter : int, prog_size : int, max_tests : int }
 
 fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
-    let val is_mock = false;
+    let val is_mock = true;
 
-        val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
+        val _ = bir_prog_gen_arm8_mock_set_wrap_around false;
+        val _ = bir_prog_gen_arm8_mock_set [["b #0x80"]];
 
         val prog_store_fun =
           if is_mock
