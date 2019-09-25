@@ -12,18 +12,12 @@ signature bir_prog_genLib = sig
   *)
   val bir_prog_gen_arm8_mock_set_wrap_around : bool -> unit
 
-  (* generates a fixed sequence of pre-defined test programs.
-  *)
-  val bir_prog_gen_arm8_mock : unit -> string list
 
+  (* ---------------------- *)
+  (* program slingers       *)
+  (* ---------------------- *)
 
-
-  (* ------------------- *)
-  (* heading             *)
-  (* ------------------- *)
-
-  (* description of the function.
-  *)
-  val bir_prog_gen_arm8_rand : int -> string list
+  val prog_gen_store_mock : unit -> string * term
+  val prog_gen_store_rand : int -> unit -> string * term
 
 end

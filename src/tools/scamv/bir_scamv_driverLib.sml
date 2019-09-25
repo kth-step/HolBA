@@ -4,7 +4,6 @@ struct
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 open bir_prog_genLib;
-open bir_prog_slingLib;
 
 open bir_obs_modelLib;
 open bir_exp_to_wordsLib;
