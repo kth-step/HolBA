@@ -178,7 +178,7 @@ fun start_interactive prog =
                                       List.map
                                          (fn (x,y) => (print_term x; print_term y))
                                          xs)
-		 | _ => raise ERR "start_interactive" "ooooooo";
+		 | _ => raise ERR "start_interactive" "no paths?!?!";
         
         val _ = current_pathstruct := paths;
         val (conds, relation) = mkRel_conds paths;
