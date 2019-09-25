@@ -278,6 +278,11 @@ struct
 
 (* interface functions *)
 (* ========================================================================================= *)
+  (* platform parameters *)
+  val bir_embexp_params_code   = Arbnum.fromHexString    "0x2000";
+  val bir_embexp_params_memory = (Arbnum.fromHexString "0x100000",
+                                  Arbnum.fromHexString  "0x40000");
+
   fun bir_embexp_prog_to_code asm_lines =
     let
       fun is_colon x = x = #":";

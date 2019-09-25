@@ -1,5 +1,10 @@
 signature bir_embexp_driverLib = sig
 
+  (* platform parameters *)
+  (* ======================================== *)
+  val bir_embexp_params_code   : Arbnum.num (* base address for placement *)
+  val bir_embexp_params_memory : Arbnum.num * Arbnum.num (* base, length *)
+
   (* conversion from asm program (asm lines) to "normal program" *)
   val bir_embexp_prog_to_code : string list -> string
 
