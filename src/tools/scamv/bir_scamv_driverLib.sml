@@ -312,12 +312,13 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
 
         fun main_loop 0 = ()
          |  main_loop n =
-            let val prog = prog_store_fun ()
-            in print ("Iteration: " ^ PolyML.makestring (m - n) ^ "\n");
-               (scamv_test_main tests prog
-                 handle e =>
-                        print("Skipping program due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n") );
-               main_loop (n-1) end
+            (print ("Iteration: " ^ PolyML.makestring (m - n) ^ "\n");
+             (let val prog =
+                      prog_store_fun ()
+              in scamv_test_main tests prog end
+              handle e =>
+                     print("Skipping program due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n"));
+             main_loop (n-1))
     in
         main_loop m
     end;
