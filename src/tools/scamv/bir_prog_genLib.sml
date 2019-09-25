@@ -186,7 +186,6 @@ val el = "6B831B94"
 
 (*
 val inst = "15c984de"
-val base = 0x40000
 val pc = 0
 val len = 3
 *)
@@ -208,22 +207,22 @@ val len = 3
             | BadCode err => ("Encode error: " ^ err,NONE));
 
  in
- fun branch_instGen (pc, base, len) =
-     let val adr = base + (4*(Random.range (pc, len) gen))
+ fun branch_instGen (pc, len) =
+     let val adr = (4*(Random.range (pc, len) gen))
 	 val adr_str = String.concat["b +#0x", (addr_to_hexString(adr))]
 	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
      in
 	 (emp_str, inst)
      end
- fun c_branch_instGen (inst, pc, base, len) =
-     let val adr = base + (4*(Random.range (pc, len) gen))
+ fun c_branch_instGen (inst, pc, len) =
+     let val adr = (4*(Random.range (pc, len) gen))
 	 val adr_str = String.concat[hd((p_tokens(hd(decomp(inst)))))," +#0x", (addr_to_hexString(adr))]
 	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
      in
 	 (emp_str, inst)
      end
- fun cmp_and_branch_instGen (inst, pc, base, len) =
-     let val adr = base + (4*(Random.range (pc, len) gen))
+ fun cmp_and_branch_instGen (inst, pc, len) =
+     let val adr = (4*(Random.range (pc, len) gen))
 	 val tks = (p_tokens(hd(decomp(inst))))
 	 val rinst = String.concat[List.nth(tks,0), List.nth(tks,1),", +#0x", (addr_to_hexString(adr))]
 	 val inst = (valOf o snd o cmp_mcode)(cmp_ast rinst)
@@ -232,43 +231,40 @@ val len = 3
      end     
  end
 
- fun instsGen (pc, [], base, len)  =
+ fun instsGen (pc, [], len)  =
      let val (c, inst) = instGen ()
 	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
      in
 	 case (instClass c) of 
-	     "BranchImmediate" =>  instsGen (pc, [], base, len)
-	   | "BranchConditional" => instsGen (pc, [], base, len)
-	   | "CompareAndBranch" => instsGen (pc, [], base, len)			   
+	     "BranchImmediate" =>  instsGen (pc, [], len)
+	   | "BranchConditional" => instsGen (pc, [], len)
+	   | "CompareAndBranch" => instsGen (pc, [], len)			   
 	   | _ => if String.isPrefix "bl" inst
-                  then instsGen (pc, [], base, len)
+                  then instsGen (pc, [], len)
                   else (hd args, inst)
      end
      
-   | instsGen (pc, src, base, len) =
+   | instsGen (pc, src, len) =
      let val (c, inst) = instGen ()
 	 val args = getReg (p_tokens ((snd o inst_decomp) inst))
 	 val inclusion =  intersect (src, tl args)
      in
 	 case (instClass c) of 
-	     "BranchImmediate" =>  branch_instGen(pc, base, len)
-	   | "BranchConditional" => c_branch_instGen (inst,pc, base, len)
-	   | "CompareAndBranch" => cmp_and_branch_instGen (inst,pc, base, len)			   
+	     "BranchImmediate" =>  branch_instGen(pc, len)
+	   | "BranchConditional" => c_branch_instGen (inst,pc, len)
+	   | "CompareAndBranch" => cmp_and_branch_instGen (inst,pc, len)			   
 	   | _ =>
 	     if List.null inclusion orelse String.isPrefix "bl" inst
-	     then instsGen (pc,src, base, len)
+	     then instsGen (pc,src, len)
 	     else (hd args, inst)
      end
 
  (* ---------------------------------------------  *)
- fun progGen (n, base_arbnum) =
+ fun progGen n =
      let val src = ref ([]:string list);
 	 val pc = ref 0;
-         val base = Arbnum.toInt base_arbnum
-                      handle ex => (print "progGen::cannot convert base address, probably too large";
-                                    raise ex)
      in
-	 (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!pc,!src, base, n)) 			
+	 (List.tabulate (n, fn _ => let val (d,i) = (instsGen (!pc,!src, n)) 			
 				    in  (src:= (d::(!src)); pc:= !pc + 1);i end))
      end
 
@@ -296,8 +292,8 @@ val len = 3
 (*
 val n = 3;
 *)
- (* The function take number of instructions and the base address *)
- fun bir_prog_gen_arm8_rand n = map (strip_ws_off o remove_junk o hd o decomp) (progGen (n, bir_embexp_params_code));
+ (* takes the number of instructions to generate *)
+ fun bir_prog_gen_arm8_rand n = map (strip_ws_off o remove_junk o hd o decomp) (progGen n);
 
 end; (* struct *)
 

@@ -402,7 +402,7 @@ fun show_error_no_free_vars (id,_) =
 type scamv_config = { max_iter : int, prog_size : int, max_tests : int }
 
 fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
-    let val is_mock = true;
+    let val is_mock = false;
 
         val _ = bir_prog_gen_arm8_mock_set_wrap_around false;
         val _ = bir_prog_gen_arm8_mock_set [["b #0x80"]];
