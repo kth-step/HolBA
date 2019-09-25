@@ -55,7 +55,7 @@ struct
 
 	val (region_map, sections) = read_disassembly_file_regions da_file;
       in
-	  (asm_code, sections)
+	  sections
       end
 
   fun print_asm_code asm_code = (
@@ -69,32 +69,30 @@ struct
     let
       val prog = prog_gen_fun ();
       val prog_len = length prog;
-      val asm_code_ = bir_prog_gen_asm_lines_to_code prog;
-      val _ = print_asm_code asm_code_;
-      val compile_opt = SOME (process_asm_code asm_code_)
-	     handle HOL_ERR x => (print_asm_code asm_code_; NONE);
+      val asm_code = bir_embexp_prog_to_code prog;
+      val _ = print_asm_code asm_code;
+      val compile_opt = SOME (process_asm_code asm_code)
+	     handle HOL_ERR x => NONE;
     in
       case compile_opt of
 	  NONE => gen_until_liftable prog_gen_fun
-	| SOME (asm_code, sections) => 
+	| SOME sections => 
     let
       val lifted_prog = lift_program_from_sections sections;
       val blocks = (fst o dest_list o dest_BirProgram) lifted_prog;
       (* val labels = List.map (fn t => (snd o dest_eq o concl o EVAL) ``(^t).bb_label``) blocks; *)
       val lift_worked = (List.length blocks = prog_len);
-      val _ = if lift_worked then ()
-	      else print_asm_code asm_code;
     in
-      if lift_worked then (prog, lifted_prog) else (gen_until_liftable prog_gen_fun)
+      if lift_worked then (asm_code, lifted_prog) else (gen_until_liftable prog_gen_fun)
     end
     end;
 
 
   fun prog_gen_store prog_gen_id prog_gen_fun () =
     let
-      val (asm_lines, lifted_prog) = gen_until_liftable prog_gen_fun;
+      val (asm_code, lifted_prog) = gen_until_liftable prog_gen_fun;
 
-      val prog_id = bir_embexp_prog_create ("arm8", prog_gen_id) asm_lines;
+      val prog_id = bir_embexp_prog_create ("arm8", prog_gen_id) asm_code;
     in
       (prog_id, lifted_prog)
     end;

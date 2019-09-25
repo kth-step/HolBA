@@ -6,12 +6,6 @@ struct
   open bir_embexp_paramsLib;
 
 
-(* general *)
-(* ========================================================================================= *)
-  fun bir_prog_gen_asm_lines_to_code asm_lines =
-    List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "" asm_lines;
-
-
 (* fixed programs for mockup *)
 (* ========================================================================================= *)
   val mock_progs_i = ref 0;

@@ -3,13 +3,11 @@ struct
 
   open HolKernel Parse boolLib bossLib;
 
-  open bir_prog_genLib;
 
 (* error handling *)
   val libname = "bir_embexp_driverLib"
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
-
 
 
 (* directory variables handling *)
@@ -279,10 +277,13 @@ struct
     end;
 
 (* interface functions *)
-  fun bir_embexp_prog_create (arch_id, prog_gen_id) asm_lines =
+(* ========================================================================================= *)
+  fun bir_embexp_prog_to_code asm_lines =
+    List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "" asm_lines;
+
+  fun bir_embexp_prog_create (arch_id, prog_gen_id) code_asm =
     let
       val progs_basedir = get_progs_basedir arch_id;
-      val code_asm = bir_prog_gen_asm_lines_to_code asm_lines;
 
       (* write out code *)
       val codehash = hashstring code_asm;

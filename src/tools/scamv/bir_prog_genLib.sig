@@ -1,14 +1,6 @@
 signature bir_prog_genLib = sig
 
   (* ---------------------- *)
-  (* general                *)
-  (* ---------------------- *)
-
-  val bir_prog_gen_asm_lines_to_code : string list -> string
-
-
-
-  (* ---------------------- *)
   (* mockups for debugging  *)
   (* ---------------------- *)
 
