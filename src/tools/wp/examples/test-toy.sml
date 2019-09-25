@@ -74,16 +74,18 @@ val aes_program_def = Define `
 	      ])`;
 
 (* Note: This approach does not obtain a HT for the last block. *)
+val aes_post_exp_tm = ``
+  (BExp_BinPred BIExp_Equal
+    (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+    (BExp_Const (Imm64 112w))
+  )``;
 val aes_post_def = Define `
-      aes_post = (BExp_BinPred BIExp_Equal
-                   (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
-                   (BExp_Const (Imm64 112w))
-                 )`;
+      aes_post (l:bir_label_t) = (^aes_post_exp_tm)`;
 val aes_ls_def = Define `
       aes_ls = \x.(x = (BL_Address (Imm64 0x400578w)))`;
 val aes_wps_def = Define `
       aes_wps = (FEMPTY |+ (BL_Address (Imm64 0x400578w),
-                            aes_post
+                            (^aes_post_exp_tm)
                            )
                 )`;
 

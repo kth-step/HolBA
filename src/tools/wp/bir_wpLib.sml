@@ -131,8 +131,8 @@ struct
       val concl_tm = (snd o dest_eq o concl)
 
       (* TODO: Create bir_is_bool_expSyntax for the below *)
-      val post_bool_thm = SIMP_CONV (srw_ss()) (post_bool_conv@defs)
-                                    ``bir_is_bool_exp ^post``
+      val post_bool_thm = SIMP_CONV (srw_ss()) (post_bool_conv@defs@[bir_wp_post_map_contains_bool_exp_def])
+                                    ``bir_wp_post_map_contains_bool_exp ^post``
       val thm = MP thm (SIMP_RULE std_ss [] post_bool_thm)
         handle e => raise wrap_exn_ e (concl_tm post_bool_thm) "The postcondition isn't a bool";
 
@@ -264,10 +264,9 @@ struct
             (inst [Type `:'a` |-> prog_obs_ty] ``bir_wp_exec_of_block:'a bir_program_t ->
                  bir_label_t ->
                  (bir_label_t -> bool) ->
-                 bir_exp_t ->
                  (bir_label_t |-> bir_exp_t) ->
                  (bir_label_t |-> bir_exp_t) option``,
-             [program, label, ls, post, wps]))
+             [program, label, ls, wps]))
 
       (* normalize *)
       val wps1_thm = SIMP_RULE pure_ss [GSYM bir_exp_subst1_def,
