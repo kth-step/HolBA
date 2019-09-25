@@ -13,7 +13,7 @@ struct
   open bir_prog_gen_randLib;
 
 
-(* randomly generated programs *)
+(* lifting infrastructure (handles retry of program generation also, in case of failure) *)
 (* ========================================================================================= *)
 
   (* for arm8 *)
@@ -70,32 +70,36 @@ struct
                 print "=================================\n";
                 print "---------------------------------\n");
 
-  fun gen_until_liftable prog_gen_fun =
+  fun gen_until_liftable retry_on_liftfail prog_gen_fun =
     let
       val prog = prog_gen_fun ();
       val prog_len = length prog;
       val asm_code = bir_embexp_prog_to_code prog;
       val _ = print_asm_code asm_code;
       val compile_opt = SOME (process_asm_code asm_code)
-	     handle HOL_ERR x => NONE;
+	     handle HOL_ERR x => if retry_on_liftfail then NONE else
+                                   raise HOL_ERR x;
     in
       case compile_opt of
-	  NONE => gen_until_liftable prog_gen_fun
+	  NONE => gen_until_liftable retry_on_liftfail prog_gen_fun
 	| SOME sections => 
     let
       val lifted_prog = lift_program_from_sections sections;
       val blocks = (fst o dest_list o dest_BirProgram) lifted_prog;
       (* val labels = List.map (fn t => (snd o dest_eq o concl o EVAL) ``(^t).bb_label``) blocks; *)
+      (* TODO: this is not correct! we have to compare the labels *)
       val lift_worked = (List.length blocks = prog_len);
     in
-      if lift_worked then (asm_code, lifted_prog) else (gen_until_liftable prog_gen_fun)
+      if lift_worked then (asm_code, lifted_prog) else
+      if retry_on_liftfail then (gen_until_liftable retry_on_liftfail prog_gen_fun) else
+      raise ERR "gen_until_liftable" "lifting failed"
     end
     end;
 
 
-  fun prog_gen_store prog_gen_id prog_gen_fun () =
+  fun prog_gen_store retry_on_liftfail prog_gen_id prog_gen_fun () =
     let
-      val (asm_code, lifted_prog) = gen_until_liftable prog_gen_fun;
+      val (asm_code, lifted_prog) = gen_until_liftable retry_on_liftfail prog_gen_fun;
 
       val prog_id = bir_embexp_prog_create ("arm8", prog_gen_id) asm_code;
     in
@@ -143,8 +147,8 @@ struct
 
 (* instances of program generators *)
 (* ========================================================================================= *)
-val prog_gen_store_mock = prog_gen_store "prog_gen_mock" bir_prog_gen_arm8_mock;
-fun prog_gen_store_rand sz = prog_gen_store "prog_gen_rand" (fn () => bir_prog_gen_arm8_rand sz);
+val prog_gen_store_mock = prog_gen_store false "prog_gen_mock" bir_prog_gen_arm8_mock;
+fun prog_gen_store_rand sz = prog_gen_store true "prog_gen_rand" (fn () => bir_prog_gen_arm8_rand sz);
 
 
 end; (* struct *)
