@@ -624,7 +624,7 @@ val bir_label_ht_impl_weak_ht =
     bir_exec_to_labels_triple prog l ls pre post ==>
     weak_triple (bir_etl_wm prog) l ls
       (\s. bir_exec_to_labels_triple_precond s pre prog)
-      (\s'. bir_eval_exp post s'.bst_environ = SOME bir_val_true)``,
+      (\s'. bir_eval_exp (post s'.bst_pc.bpc_label) s'.bst_environ = SOME bir_val_true)``,
 
 FULL_SIMP_TAC (std_ss++bir_wm_SS)
               [weak_triple_def, bir_etl_wm_def,

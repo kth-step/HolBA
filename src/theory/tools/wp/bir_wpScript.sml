@@ -1385,10 +1385,14 @@ FIRST CHANGE TO a PROOF for POST MAP
 this is only needed if l1 in ls to ensure  (bir_is_bool_exp post')
 bir_is_bool_exp (post l1)
 *)
+val bir_wp_post_map_contains_bool_exp_def = Define `
+ bir_wp_post_map_contains_bool_exp post = (!l1. bir_is_bool_exp (post l1))`;
+
+
 val bir_exec_to_labels_or_assumviol_triple_jmp =
   store_thm("bir_exec_to_labels_or_assumviol_triple_jmp",
   ``!p l bl l1 ls post post'.
-      bir_is_bool_exp (post l1) ==>
+      bir_wp_post_map_contains_bool_exp post ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
       MEM l (bir_labels_of_program p) ==>
@@ -1437,7 +1441,7 @@ subgoal `bir_is_well_typed_block bl` >- (
 FULL_SIMP_TAC std_ss [] >>
 subgoal `bir_is_bool_exp post'` >- (
   Cases_on `l1 IN ls` >> (
-    FULL_SIMP_TAC std_ss [Abbr `cnd`]
+    FULL_SIMP_TAC std_ss [Abbr `cnd`, bir_wp_post_map_contains_bool_exp_def]
   )
 ) >>
 FULL_SIMP_TAC std_ss [] >>
@@ -1537,8 +1541,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
 val bir_exec_to_labels_or_assumviol_triple_cjmp =
   store_thm("bir_exec_to_labels_or_assumviol_triple_cjmp",
   ``!p l bl e l1 l2 ls post post1' post2'.
-      bir_is_bool_exp (post l1) ==>
-      bir_is_bool_exp (post l2) ==>
+      bir_wp_post_map_contains_bool_exp post ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
       MEM l (bir_labels_of_program p) ==>
@@ -1601,13 +1604,13 @@ subgoal `bir_is_well_typed_block bl` >- (
 FULL_SIMP_TAC std_ss [] >>
 subgoal `bir_is_bool_exp post1'` >- (
   Cases_on `l1 IN ls` >> (
-    FULL_SIMP_TAC std_ss []
+    FULL_SIMP_TAC std_ss [bir_wp_post_map_contains_bool_exp_def]
   )
 ) >>
 FULL_SIMP_TAC std_ss [] >>
 subgoal `bir_is_bool_exp post2'` >- (
   Cases_on `l2 IN ls` >> (
-    FULL_SIMP_TAC std_ss []
+    FULL_SIMP_TAC std_ss [bir_wp_post_map_contains_bool_exp_def]
   )
 ) >>
 FULL_SIMP_TAC std_ss [] >>
@@ -1771,7 +1774,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
 *)
 
 val bir_wp_exec_of_block_def = Define `
-  bir_wp_exec_of_block p l ls post wps = 
+  bir_wp_exec_of_block p l ls wps = 
     case FLOOKUP wps l of
       SOME wp => SOME wps
     | NONE    => (
@@ -1965,13 +1968,12 @@ FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
 
 val bir_wp_exec_of_block_bool_thm =
   store_thm("bir_wp_exec_of_block_bool_thm",
-  ``!p l ls post wps wps'.
-      bir_is_bool_exp post ==>
+  ``!p l ls wps wps'.
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
       MEM l (bir_labels_of_program p) ==>
       FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps ==>
-      ((bir_wp_exec_of_block p l ls post wps) = SOME wps') ==>
+      ((bir_wp_exec_of_block p l ls wps) = SOME wps') ==>
       (FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps')``,
 
 REPEAT STRIP_TAC >>
@@ -2075,10 +2077,11 @@ Cases_on `FLOOKUP wps l` >- (
 FULL_SIMP_TAC std_ss [finite_mapTheory.FLOOKUP_DEF]
 );
 
+
 val bir_wp_exec_of_block_sound_thm =
   store_thm("bir_wp_exec_of_block_sound_thm",
   ``!p l ls post wps wps'.
-      bir_is_bool_exp post ==>
+      bir_wp_post_map_contains_bool_exp post ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
       MEM l (bir_labels_of_program p) ==>
@@ -2086,14 +2089,14 @@ val bir_wp_exec_of_block_sound_thm =
       ~(l IN ls) ==>
       FEVERY (\(l1, wp1). bir_is_bool_exp wp1) wps ==>
       FEVERY (\(l1, wp1).
-               ((l1 IN ls) ==> (wp1 = post)) /\
+               ((l1 IN ls) ==> (wp1 = (post l1))) /\
                ((~(l1 IN ls)) ==>
                  (bir_exec_to_labels_or_assumviol_triple p l1 ls wp1 post)
                )
              ) wps ==>
-      ((bir_wp_exec_of_block p l ls post wps) = SOME wps') ==>
+      ((bir_wp_exec_of_block p l ls wps) = SOME wps') ==>
       (FEVERY (\(l1, wp1).
-                ((l1 IN ls) ==> (wp1 = post)) /\
+                ((l1 IN ls) ==> (wp1 = (post l1))) /\
                 ((~(l1 IN ls)) ==>
                   (bir_exec_to_labels_or_assumviol_triple p l1 ls wp1 post)
                 )
@@ -2231,7 +2234,7 @@ val bir_bool_wps_map_def = Define `
 val bir_sound_wps_map_def = Define `
   bir_sound_wps_map p ls post wps =
     (FEVERY (\(l1, wp1).
-              ((l1 IN ls) ==> (wp1 = post)) /\
+              ((l1 IN ls) ==> (wp1 = (post l1))) /\
               ((~(l1 IN ls)) ==>
                 (bir_exec_to_labels_or_assumviol_triple p l1 ls wp1 post)
               )
@@ -2241,12 +2244,11 @@ val bir_sound_wps_map_def = Define `
 val bir_wp_exec_of_block_bool_exec_thm =
   store_thm("bir_wp_exec_of_block_bool_exec_thm",
   ``!p l (ls:bir_label_t->bool) post wps wps'.
-      bir_is_bool_exp post ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
       MEM l (bir_labels_of_program p) ==>
       bir_bool_wps_map wps ==>
-      ((bir_wp_exec_of_block p l ls post wps) = SOME wps') ==>
+      ((bir_wp_exec_of_block p l ls wps) = SOME wps') ==>
       (bir_bool_wps_map wps')``,
 
 REWRITE_TAC [bir_bool_wps_map_def] >>
@@ -2256,7 +2258,7 @@ METIS_TAC [bir_wp_exec_of_block_bool_thm]
 val bir_wp_exec_of_block_sound_exec_thm =
   store_thm("bir_wp_exec_of_block_sound_exec_thm",
 ``!p l ls post wps wps'.
-    bir_is_bool_exp post ==>
+    bir_wp_post_map_contains_bool_exp post ==>
     bir_is_well_typed_program p ==>
     bir_is_valid_program p ==>
     MEM l (bir_labels_of_program p) ==>
@@ -2264,7 +2266,7 @@ val bir_wp_exec_of_block_sound_exec_thm =
     ~(l IN ls) ==>
     bir_bool_wps_map wps ==>
     bir_sound_wps_map p ls post wps ==>
-    ((bir_wp_exec_of_block p l ls post wps) = SOME wps') ==>
+    ((bir_wp_exec_of_block p l ls wps) = SOME wps') ==>
     (bir_sound_wps_map p ls post wps')``,
 
   REWRITE_TAC [bir_bool_wps_map_def, bir_sound_wps_map_def] >>
@@ -2276,7 +2278,7 @@ val bir_wp_exec_of_block_sound_exec_thm =
 val bir_wp_exec_of_block_reusable_thm =
   store_thm("bir_wp_exec_of_block_reusable_thm",
   ``!p l ls post wps wps'.
-      bir_is_bool_exp post ==>
+      bir_wp_post_map_contains_bool_exp post ==>
       bir_is_well_typed_program p ==>
       bir_is_valid_program p ==>
       MEM l (bir_labels_of_program p) ==>
@@ -2285,7 +2287,7 @@ val bir_wp_exec_of_block_reusable_thm =
       ((bir_bool_wps_map wps) /\
        (bir_sound_wps_map p ls post wps)
       ) ==>
-      ((bir_wp_exec_of_block p l ls post wps) = SOME wps') ==>
+      ((bir_wp_exec_of_block p l ls wps) = SOME wps') ==>
       ((bir_bool_wps_map wps') /\
        (bir_sound_wps_map p ls post wps')
       )``,
