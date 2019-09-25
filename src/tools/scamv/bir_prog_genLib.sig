@@ -24,5 +24,6 @@ signature bir_prog_genLib = sig
   val prog_gen_store_mock : unit -> string * term
   val prog_gen_store_fromfile : string -> unit -> string * term
   val prog_gen_store_rand : int -> unit -> string * term
+  val prog_gen_store_a_la_qc : int -> unit -> string * term
 
 end

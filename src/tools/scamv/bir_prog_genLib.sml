@@ -11,7 +11,7 @@ struct
   open listSyntax;
 
   open bir_prog_gen_randLib;
-
+  open asm_genLib;
 
 (* lifting infrastructure (handles retry of program generation also, in case of failure) *)
 (* ========================================================================================= *)
@@ -197,6 +197,8 @@ val s = ""
 val prog_gen_store_mock = prog_gen_store false "prog_gen_mock" bir_prog_gen_arm8_mock ();
 fun prog_gen_store_fromfile filename = prog_gen_store false "prog_gen_fromfile" load_asm_lines filename;
 fun prog_gen_store_rand sz = prog_gen_store true "prog_gen_rand" bir_prog_gen_arm8_rand sz;
+fun prog_gen_store_a_la_qc sz =
+    prog_gen_store true "prog_gen_a_la_qc" prog_gen_a_la_qc sz;
 
 (*
 val filename = "examples/asm/branch.s";
