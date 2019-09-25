@@ -70,9 +70,9 @@ struct
                 print "=================================\n";
                 print "---------------------------------\n");
 
-  fun gen_until_liftable retry_on_liftfail prog_gen_fun =
+  fun gen_until_liftable retry_on_liftfail prog_gen_fun args =
     let
-      val prog = prog_gen_fun ();
+      val prog = prog_gen_fun args;
       val prog_len = length prog;
       val asm_code = bir_embexp_prog_to_code prog;
       val _ = print_asm_code asm_code;
@@ -81,7 +81,7 @@ struct
                                    raise HOL_ERR x;
     in
       case compile_opt of
-	  NONE => gen_until_liftable retry_on_liftfail prog_gen_fun
+	  NONE => gen_until_liftable retry_on_liftfail prog_gen_fun args
 	| SOME sections => 
     let
       val lifted_prog = lift_program_from_sections sections;
@@ -91,15 +91,15 @@ struct
       val lift_worked = (List.length blocks = prog_len);
     in
       if lift_worked then (asm_code, lifted_prog) else
-      if retry_on_liftfail then (gen_until_liftable retry_on_liftfail prog_gen_fun) else
+      if retry_on_liftfail then (gen_until_liftable retry_on_liftfail prog_gen_fun args) else
       raise ERR "gen_until_liftable" "lifting failed"
     end
     end;
 
 
-  fun prog_gen_store retry_on_liftfail prog_gen_id prog_gen_fun () =
+  fun prog_gen_store retry_on_liftfail prog_gen_id prog_gen_fun args () =
     let
-      val (asm_code, lifted_prog) = gen_until_liftable retry_on_liftfail prog_gen_fun;
+      val (asm_code, lifted_prog) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
 
       val prog_id = bir_embexp_prog_create ("arm8", prog_gen_id) asm_code;
     in
@@ -145,10 +145,69 @@ struct
     end;
 
 
+(* load file to asm_lines (assuming it is correct assembly code with only forward jumps and no use of labels) *)
+(* ========================================================================================= *)
+(* ===>>> copied from embexp_driver *)
+  fun read_from_file_lines filename =
+    let
+      val file = TextIO.openIn filename;
+      fun allLinesRevFun acc = case TextIO.inputLine file of
+			    NONE => acc
+			  | SOME l => allLinesRevFun (l::acc);
+      val lines = List.rev (allLinesRevFun []) before TextIO.closeIn file;
+    in
+      lines
+    end;
+(* ===>>> from prog_gen_rand *)
+(*
+val s = ""
+*)
+  fun strip_ws_off accept_empty_string s =
+    let
+      fun is_ws x = x = #" " orelse x = #"\t" orelse x = #"\n";
+      fun find_first_idx p l = List.foldl (fn ((idx,x),r) => if r >= 0 then r else if p x then idx else r)
+                                          (~1)
+                                          (snd (List.foldr (fn (x,(i,l)) => (i-1,(i,x)::l)) ((List.length l) - 1, []) l));
+
+      val l = String.explode s;
+      val first_c = find_first_idx (not o is_ws) l;
+      val last_c = (List.length l) - 1 - (find_first_idx (not o is_ws) (List.rev l));
+    in
+      if first_c < 0 then
+        if accept_empty_string then "" else raise ERR "strip_ws_off" "here we don't accept empty assembly lines"
+      else
+        String.extract (String.substring (s, 0, last_c + 1), first_c, NONE)
+    end;
+(* <<<=== *)
+  fun load_asm_lines filename =
+    let
+      val asm_lines = read_from_file_lines filename;
+      val asm_lines = List.map (strip_ws_off true) asm_lines;
+      val asm_lines = List.filter (fn x => not (x = "")) asm_lines;
+    in
+      asm_lines
+    end
+
+
 (* instances of program generators *)
 (* ========================================================================================= *)
-val prog_gen_store_mock = prog_gen_store false "prog_gen_mock" bir_prog_gen_arm8_mock;
-fun prog_gen_store_rand sz = prog_gen_store true "prog_gen_rand" (fn () => bir_prog_gen_arm8_rand sz);
+val prog_gen_store_mock = prog_gen_store false "prog_gen_mock" bir_prog_gen_arm8_mock ();
+fun prog_gen_store_fromfile filename = prog_gen_store false "prog_gen_fromfile" load_asm_lines filename;
+fun prog_gen_store_rand sz = prog_gen_store true "prog_gen_rand" bir_prog_gen_arm8_rand sz;
+
+(*
+val filename = "examples/asm/branch.s";
+val (prog_id, lifted_prog) = prog_gen_store_fromfile filename ();
+
+val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
+val _ = bir_prog_gen_arm8_mock_set [["b #0x80"]];
+val _ = bir_prog_gen_arm8_mock_set [["subs w12, w12, w15, sxtb #1"]];
+val (prog_id, lifted_prog) = prog_gen_store_mock ();
+
+val (prog_id, lifted_prog) = prog_gen_store_rand 5 ();
+
+val prog = lifted_prog;
+*)
 
 
 end; (* struct *)

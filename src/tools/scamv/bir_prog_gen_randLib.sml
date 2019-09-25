@@ -231,7 +231,7 @@ val len = 3
                                          (remove_minus (remove_plus s)))) ^ (if not do_debug then ""
                                                                              else " /* orig: " ^ s ^ " */");
 
-  fun strip_ws_off s =
+  fun strip_ws_off accept_empty_string s =
     let
       fun is_ws x = x = #" " orelse x = #"\t" orelse x = #"\n";
       fun find_first_idx p l = List.foldl (fn ((idx,x),r) => if r >= 0 then r else if p x then idx else r)
@@ -242,14 +242,17 @@ val len = 3
       val first_c = find_first_idx (not o is_ws) l;
       val last_c = (List.length l) - 1 - (find_first_idx (not o is_ws) (List.rev l));
     in
-      String.extract (String.substring (s, 0, last_c + 1), first_c, NONE)
+      if first_c < 0 then
+        if accept_empty_string then "" else raise ERR "strip_ws_off" "here we don't accept empty assembly lines"
+      else
+        String.extract (String.substring (s, 0, last_c + 1), first_c, NONE)
     end;
 
 (*
 val n = 3;
 *)
  (* takes the number of instructions to generate *)
- fun bir_prog_gen_arm8_rand n = map (strip_ws_off o remove_junk o hd o decomp) (progGen n);
+ fun bir_prog_gen_arm8_rand n = map ((strip_ws_off false) o remove_junk o hd o decomp) (progGen n);
 
 end; (* struct *)
 

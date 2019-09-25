@@ -259,14 +259,6 @@ fun scamv_test_main tests prog =
     end
 
 
-(*
-val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
-val _ = bir_prog_gen_arm8_mock_set [["b #0x80"]];
-val _ = bir_prog_gen_arm8_mock_set [["subs w12, w12, w15, sxtb #1"]];
-val (prog_id, lifted_prog) = prog_gen_store_mock ();
-val (prog_id, lifted_prog) = prog_gen_store_rand 5 ();
-val prog = lifted_prog;
-*)
 fun scamv_test_gen_run tests (prog_id, lifted_prog) =
     let
         val lifted_prog_w_obs =
