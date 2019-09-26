@@ -3,11 +3,14 @@ struct
 
   open HolKernel Parse boolLib bossLib;
 
+  open bir_scamv_helpersLib;
+
 
 (* error handling *)
   val libname = "bir_embexp_driverLib"
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
+
 
 
 (* directory variables handling *)
@@ -51,28 +54,6 @@ struct
           end
       | SOME p => p;
 
-
-(* datestring helper *)
-  fun get_datestring () =
-    let
-      val date = Date.fromTimeLocal (Time.now ());
-      val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S" date;
-    in
-      datestr
-    end;
-
-(* directory creation helper *)
-  fun makedir makepath path =
-    let
-      val r = OS.Process.system ("mkdir " ^ (if makepath then "-p " else "") ^ path);
-      val _ = if not (OS.Process.isSuccess r) then
-                raise ERR "makedir" ("couldn't create the following directory: " ^ path)
-              else
-                ();
-    in
-      ()
-    end;
-
 (* log dir helper functions *)
   fun get_progs_basedir arch_name =
     let
@@ -92,129 +73,6 @@ struct
       exp_basedir
     end;
 
-(* file read/write helpers *)
-  fun read_from_file filename =
-    let
-      val file = TextIO.openIn filename;
-      val s    = TextIO.inputAll file before TextIO.closeIn file;
-    in
-      s
-    end;
-
-  fun read_from_file_lines filename =
-    let
-      val file = TextIO.openIn filename;
-      fun allLinesRevFun acc = case TextIO.inputLine file of
-			    NONE => acc
-			  | SOME l => allLinesRevFun (l::acc);
-      val lines = List.rev (allLinesRevFun []) before TextIO.closeIn file;
-    in
-      lines
-    end;
-
-  fun write_to_file filename str =
-    let
-      val file = TextIO.openOut (filename);
-      val _    = TextIO.output (file, str);
-      val _    = TextIO.closeOut file;
-    in
-      ()
-    end;
-  fun write_to_file_or_compare filename str =
-    let
-      val _ = OS.FileSys.isDir filename
-                handle SysErr _ => (write_to_file filename str; false);
-      val s = read_from_file filename;
-    in
-      str = s
-    end;
-  fun write_to_file_or_compare_clash clash_id filename str =
-    let
-      val eq = write_to_file_or_compare filename str;
-      val _ = if eq then () else
-                raise ERR ("write_to_file_or_compare_clash___" ^ clash_id) ("there has been a clash with: " ^ filename);
-    in
-      ()
-    end;
-
-(* helper functions *)
-  val tempdir = "./tempdir";
-  fun get_tempfile prefix suffix =
-    let
-      val _ = makedir true tempdir;
-      val datestr = get_datestring();
-      val tempfile = tempdir ^ "/" ^ prefix ^ "_" ^ datestr ^ "_" ^ suffix;
-    in
-      tempfile
-    end;
-
-  fun get_exec_output_gen do_print exec_cmd =
-    let
-      val outputfile = get_tempfile "exec_output" ".txt";
-
-      val r = OS.Process.system (exec_cmd ^ " > " ^ outputfile);
-      val _ = if not do_print then () else
-                print (read_from_file outputfile);
-      val _ = if not (OS.Process.isSuccess r) then
-                raise ERR "get_exec_output" ("the following command did not execute successfully: " ^ exec_cmd)
-              else
-                ();
-
-      val s = read_from_file outputfile;
-
-      val _ = OS.Process.system ("rm " ^ outputfile);
-    in
-      s
-    end;
-
-  fun get_exec_output exec_cmd = get_exec_output_gen false exec_cmd;
-
-  fun get_exec_output_list exec_cmd =
-    let
-      val outputfile = get_tempfile "exec_output_list" ".txt";
-
-      val output = get_exec_output exec_cmd;
-      val _ = write_to_file outputfile output;
-
-      val lines = read_from_file_lines outputfile;
-
-      val _ = OS.Process.system ("rm " ^ outputfile);
-    in
-      lines
-    end;
-
-  fun get_exec_python3 script argstring =
-    let
-      val scriptfile = get_tempfile "exec_script" ".py";
-      val _ = write_to_file scriptfile script;
-
-      val s = get_exec_output ("python3 " ^ scriptfile ^ " " ^ argstring);
-
-      val _ = OS.Process.system ("rm " ^ scriptfile);
-    in
-      s
-    end;
-
-  fun get_exec_python3_argvar script arg =
-    let
-      val argfile = get_tempfile "exec_script_arg" ".txt";
-      val _ = write_to_file argfile arg;
-
-      val script_argread = "import sys\nwith open(sys.argv[1],'r') as f:\n\targvar = f.read()\n" ^ "\n" ^ script;
-      val s = get_exec_python3 script_argread argfile;
-
-      val _ = OS.Process.system ("rm " ^ argfile);
-    in
-      s
-    end;
-
-  fun hashstring str =
-    let
-      val pyhashprep = "import hashlib\nsha = hashlib.sha1()\nsha.update(argvar.encode('utf-8'))\n";
-      val pyprint = "print(sha.hexdigest(), end='')";
-    in
-      get_exec_python3_argvar (pyhashprep ^ pyprint) str
-    end;
 
 (* embexp run identification *)
   val embexp_run_id_ref = ref (NONE:string option);

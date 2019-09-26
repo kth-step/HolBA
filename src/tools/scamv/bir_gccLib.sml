@@ -2,6 +2,8 @@ structure bir_gccLib :> bir_gccLib =
 struct
 
 local
+  open bir_scamv_helpersLib;
+
   val libname = "bir_gccLib"
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
@@ -14,32 +16,18 @@ in
         | SOME p => p;
 
 
-  fun writeToFile str file_name =
-    let
-      val outstream = TextIO.openOut file_name;
-      val _ = TextIO.output (outstream, str) before TextIO.closeOut outstream;
-    in
-      () 
-    end;
-
 (*
 val lines = "";
-val tempdir = "./tempdir";
 *)
-  fun bir_gcc_assembe_disassemble input_code tempdir =
+  fun bir_gcc_assembe_disassemble input_code =
     let
       val gcc_prefix = gcc_prefix ();
 
-      (* if tempdir does not exist, create it *)
-      val _ = (if OS.FileSys.isDir tempdir then ()
-               else raise ERR "bir_gcc_assembe_disassemble" "tempdir has to be a directory"
-              ) handle SysErr(_) => (OS.FileSys.mkDir tempdir);
+      val path_asm_s  = get_simple_tempfile "asm.s";
+      val path_asm_o  = get_simple_tempfile "asm.o";
+      val path_asm_da = get_simple_tempfile "asm.da";
 
-      val path_asm_s  = tempdir ^ "/asm.s";
-      val path_asm_o  = tempdir ^ "/asm.o";
-      val path_asm_da = tempdir ^ "/asm.da";
-
-      val _ = writeToFile input_code path_asm_s;
+      val _ = write_to_file path_asm_s input_code;
 
       val commandline = (gcc_prefix ^ "gcc -o " ^ path_asm_o ^ " -c " ^ path_asm_s ^
                          " && " ^

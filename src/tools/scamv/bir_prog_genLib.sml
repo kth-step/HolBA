@@ -13,6 +13,8 @@ struct
   open bir_prog_gen_randLib;
   open asm_genLib;
 
+  open bir_scamv_helpersLib;
+
 (* lifting infrastructure (handles retry of program generation also, in case of failure) *)
 (* ========================================================================================= *)
 
@@ -56,7 +58,7 @@ struct
 
   fun process_asm_code asm_code =
       let
-	val da_file = bir_gcc_assembe_disassemble asm_code "./tempdir"
+	val da_file = bir_gcc_assembe_disassemble asm_code
 
 	val (region_map, sections) = read_disassembly_file_regions da_file;
       in
@@ -109,38 +111,6 @@ struct
 
 (* load file to asm_lines (assuming it is correct assembly code with only forward jumps and no use of labels) *)
 (* ========================================================================================= *)
-(* ===>>> copied from embexp_driver *)
-  fun read_from_file_lines filename =
-    let
-      val file = TextIO.openIn filename;
-      fun allLinesRevFun acc = case TextIO.inputLine file of
-			    NONE => acc
-			  | SOME l => allLinesRevFun (l::acc);
-      val lines = List.rev (allLinesRevFun []) before TextIO.closeIn file;
-    in
-      lines
-    end;
-(* ===>>> from prog_gen_rand *)
-(*
-val s = ""
-*)
-  fun strip_ws_off accept_empty_string s =
-    let
-      fun is_ws x = x = #" " orelse x = #"\t" orelse x = #"\n";
-      fun find_first_idx p l = List.foldl (fn ((idx,x),r) => if r >= 0 then r else if p x then idx else r)
-                                          (~1)
-                                          (snd (List.foldr (fn (x,(i,l)) => (i-1,(i,x)::l)) ((List.length l) - 1, []) l));
-
-      val l = String.explode s;
-      val first_c = find_first_idx (not o is_ws) l;
-      val last_c = (List.length l) - 1 - (find_first_idx (not o is_ws) (List.rev l));
-    in
-      if first_c < 0 then
-        if accept_empty_string then "" else raise ERR "strip_ws_off" "here we don't accept empty assembly lines"
-      else
-        String.extract (String.substring (s, 0, last_c + 1), first_c, NONE)
-    end;
-(* <<<=== *)
   fun load_asm_lines filename =
     let
       val asm_lines = read_from_file_lines filename;
