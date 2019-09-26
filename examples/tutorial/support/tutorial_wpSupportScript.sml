@@ -1,7 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 
 (* From tools/wp: *)
-open bir_wpLib bir_wp_expLib bir_htLib;
+open bir_wpLib bir_wp_expLib;
 open easy_noproof_wpLib;
 open bir_wpTheory bir_htTheory;
 
@@ -20,7 +20,7 @@ open HolBACoreSimps;
 open bir_exp_to_wordsLib bslSyntax;
 
 (* From examples: *)
-open tutorial_bir_to_armSupportTheory;
+open tutorial_bir_to_armSupportTheory bir_program_no_assumeTheory;
 
 (* From HOL4: *)
 open finite_mapSyntax pairSyntax pred_setSyntax;

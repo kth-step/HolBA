@@ -23,6 +23,14 @@ SIMP_TAC std_ss [bir_var_type_def, bir_var_name_def, bir_var_t_11])
 val _ = Datatype `bir_var_environment_t = BEnv (string -> (bir_val_t option))`;
 val bir_var_environment_t_11 = DB.fetch "-" "bir_var_environment_t_11";
 
+val bir_env_map_empty_def = Define `
+  bir_env_map_empty = (\(s:string). (NONE:bir_val_t option))
+`;
+
+val bir_env_empty_def = Define `
+  bir_env_empty = BEnv (bir_env_map_empty)
+`;
+
 val bir_env_lookup_def = Define `
   (bir_env_lookup varname (BEnv env) = env varname)`;
 
@@ -36,6 +44,7 @@ val bir_env_update_def = Define `
 val bir_env_lookup_UPDATE = store_thm ("bir_env_lookup_UPDATE",
 ``bir_env_lookup vn (BEnv ((vn' =+ vo) env)) =
    (if (vn' = vn) then vo else bir_env_lookup vn (BEnv env))``,
+
 SIMP_TAC std_ss [bir_env_lookup_def, APPLY_UPDATE_THM]);
 
 val bir_env_lookup_type_def = Define `

@@ -6,7 +6,7 @@ local
 open HolKernel Parse boolLib bossLib;
 
 (* From tools/wp: *)
-open bir_wpLib bir_wp_expLib bir_htLib;
+open bir_wpLib bir_wp_expLib;
 open easy_noproof_wpLib;
 
 open bir_wpTheory bir_htTheory;
@@ -34,6 +34,7 @@ open tutorial_bir_to_armTheory;
 open finite_mapSyntax pairSyntax pred_setSyntax;
 
 (* Local *)
+open bir_program_no_assumeLib;
 open tutorial_wpSupportTheory;
 
 in
@@ -80,12 +81,14 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
     val ls_tm = ``\x.(x = ^last_block_label_tm)``
     (*   A finite map of dummy labels to False *)
     val false_fmap_tm = make_false_label_fmap false_label_l
+    (* The postcondition expression of the last block label *)
+    val postcond_exp_tm = ``^postcond_tm ^last_block_label_tm``
     (*   A finite map of all the labels and all the preconditions,
      *   which will be used throughout the computation to store
      *   the WPs *)
     val wps_tm = ``
         ((^false_fmap_tm) |+ (^last_block_label_tm,
-                    ^(postcond_tm)
+                    ^postcond_exp_tm
                    )
         )
     ``;

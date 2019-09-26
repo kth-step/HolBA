@@ -75,7 +75,7 @@ val bir_add_reg_contract_1_pre_def = Define `bir_add_reg_contract_1_pre =
  (bir_add_reg_pre)
 `;
 val bir_add_reg_contract_1_post_def = Define `bir_add_reg_contract_1_post =
- (bir_add_reg_I)
+ (\(l:bir_label_t). (bir_add_reg_I))
 `;
 
 
@@ -85,7 +85,7 @@ val bir_add_reg_contract_2_pre_def = Define `bir_add_reg_contract_2_pre =
 ^(band(``bir_add_reg_I``, bir_add_reg_loop_condition))
 `;
 val bir_add_reg_contract_2_post_def = Define `bir_add_reg_contract_2_post =
- bir_add_reg_I
+ (\(l:bir_label_t). bir_add_reg_I)
 `;
 
 (* contract three: loop continue *)
@@ -94,7 +94,7 @@ val bir_add_reg_contract_3_pre_def = Define `bir_add_reg_contract_3_pre =
 ^(band(``bir_add_reg_I``, bir_add_reg_loop_condition))
 `;
 val bir_add_reg_contract_3_post_def = Define `bir_add_reg_contract_3_post =
- ^(band(``bir_add_reg_I``, bir_add_reg_loop_condition))
+ (\(l:bir_label_t). ^(band(``bir_add_reg_I``, bir_add_reg_loop_condition)))
 `;
 
 (* contract four: loop exit *)
@@ -103,7 +103,7 @@ val bir_add_reg_contract_4_pre_def = Define `bir_add_reg_contract_4_pre =
 ^(band(``bir_add_reg_I``, bnot bir_add_reg_loop_condition))
 `;
 val bir_add_reg_contract_4_post_def = Define `bir_add_reg_contract_4_post =
- bir_add_reg_post
+ (\(l:bir_label_t). bir_add_reg_post)
 `;
 
 
@@ -119,10 +119,10 @@ val bir_add_reg_contract_2_pre_variant_def = Define `bir_add_reg_contract_2_pre_
 ])
 `;
 val bir_add_reg_contract_2_post_variant_def = Define `bir_add_reg_contract_2_post_variant v  =
- ^(bandl[``bir_add_reg_I``,
+ (\(l:bir_label_t). ^(bandl[``bir_add_reg_I``,
   bnot(bsle(``(BExp_Const (Imm64 v))``, get_lx)),
   (bsle(bconst64 0, get_lx))
-])
+]))
 `;
 (* contract three: loop continue *)
 (* from cjmp to loop body start *)
@@ -130,7 +130,7 @@ val bir_add_reg_contract_3_pre_variant_def = Define `bir_add_reg_contract_3_pre_
 ^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, ``(BExp_Const (Imm64 v))``)])
 `;
 val bir_add_reg_contract_3_post_variant_def = Define `bir_add_reg_contract_3_post_variant v =
- ^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, ``(BExp_Const (Imm64 v))``)])
+ (\(l:bir_label_t). ^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, ``(BExp_Const (Imm64 v))``)]))
 `;
 
 
@@ -147,7 +147,7 @@ val bir_add_reg_contract_0_pre_def = Define `bir_add_reg_contract_0_pre =
 `;
 
 val bir_add_reg_contract_0_post_def = Define `bir_add_reg_contract_0_post =
-bir_add_reg_pre
+(\(l:bir_label_t). bir_add_reg_pre)
 `;
 
 
@@ -175,15 +175,15 @@ val arm_to_bir_exp_thms = (((CONJUNCTS o UNDISCH o fst o EQ_IMP_RULE) bir_liftin
 
 (* Then we show that the arm precondition entails the bir precondition *)
 val arm8_pre_imp_bir_pre_thm = store_thm("arm8_pre_imp_bir_pre_thm", 
-``bir_pre_arm8_to_bir arm8_add_reg_pre bir_add_reg_pre``
-,
-FULL_SIMP_TAC (std_ss) [bir_pre_arm8_to_bir_def, bir_add_reg_pre_is_bool_pred_thm] >>
+  ``bir_pre_arm8_to_bir arm8_add_reg_pre bir_add_reg_pre``,
+
+FULL_SIMP_TAC std_ss [bir_pre_arm8_to_bir_def, bir_add_reg_pre_is_bool_pred_thm] >>
 REPEAT STRIP_TAC >>
-SIMP_TAC (std_ss) [bir_add_reg_pre_def] >>
-SIMP_TAC (std_ss) arm_to_bir_exp_thms >>
+SIMP_TAC std_ss [bir_add_reg_pre_def] >>
+SIMP_TAC std_ss arm_to_bir_exp_thms >>
 EVAL_TAC >>
 UNDISCH_TAC ``arm8_add_reg_pre ms`` >>
-FULL_SIMP_TAC (std_ss) [arm8_add_reg_pre_def] >>
+FULL_SIMP_TAC std_ss [arm8_add_reg_pre_def] >>
 Q.ABBREV_TAC `a = ms.REG 2w` >>
 Q.ABBREV_TAC `b = ms.REG 3w` >>
 Q.ABBREV_TAC `c = ms.REG 4w` >>
@@ -194,13 +194,13 @@ FULL_SIMP_TAC std_ss []
 
 
 val arm8_post_imp_bir_post_thm = store_thm("arm8_post_imp_bir_post_thm", 
-``bir_post_bir_to_arm8 arm8_add_reg_post bir_add_reg_post``
-,
-FULL_SIMP_TAC (std_ss) [bir_post_bir_to_arm8_def] >>
+  ``bir_post_bir_to_arm8 arm8_add_reg_post bir_add_reg_post``,
+
+FULL_SIMP_TAC std_ss [bir_post_bir_to_arm8_def] >>
 REPEAT STRIP_TAC >>
-UNDISCH_TAC ``bir_eval_exp bir_add_reg_post bs.bst_environ = bir_val_true`` >>
-SIMP_TAC (std_ss) [bir_add_reg_post_def] >>
-SIMP_TAC (std_ss) arm_to_bir_exp_thms >>
+UNDISCH_TAC ``bir_eval_exp bir_add_reg_post bs.bst_environ = SOME bir_val_true`` >>
+SIMP_TAC std_ss [bir_add_reg_post_def] >>
+SIMP_TAC std_ss arm_to_bir_exp_thms >>
 EVAL_TAC >>
 Q.ABBREV_TAC `a = ms.REG 2w` >>
 Q.ABBREV_TAC `b = ms.REG 3w` >>
