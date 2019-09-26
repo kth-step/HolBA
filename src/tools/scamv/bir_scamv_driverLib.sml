@@ -165,20 +165,21 @@ fun start_interactive prog =
         val _ = current_prog_id := prog_id;
         val _ = current_prog := SOME lifted_prog;
 (*        val _ = print_term lifted_prog; *)
-        
+
         val lifted_prog_w_obs =
             bir_arm8_cache_line_tag_model.add_obs lifted_prog;
-(*        val _ = print_term lifted_prog_w_obs; *)
+(*      val _ = print_term lifted_prog_w_obs; *)
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 
-        val _ = case (hd paths) of
-                    (pc, SOME xs) => (print_term pc;
-                                      print " => ";
-                                      List.map
-                                         (fn (x,y) => (print_term x; print_term y))
-                                         xs)
-		 | _ => raise ERR "start_interactive" "no paths?!?!";
-        
+        fun has_observations (SOME []) = false
+          | has_observations NONE = false
+          | has_observations _ = true
+        val _ =
+            if exists (has_observations o snd) paths
+            then () (* fine, there is at least one observation
+                       in the pathstruct *)
+            else raise ERR "start_interactive" "no observations";
+
         val _ = current_pathstruct := paths;
         val (conds, relation) = mkRel_conds paths;
         val _ = print_term relation;
