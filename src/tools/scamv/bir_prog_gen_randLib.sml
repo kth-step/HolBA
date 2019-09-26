@@ -166,21 +166,21 @@ val len = 3
 
  in
  fun branch_instGen (pc, len) =
-     let val adr = (4*(Random.range (pc, len) gen))
+     let val adr = (4*(Random.range (1, 1+len-pc) gen))
 	 val adr_str = String.concat["b +#0x", (addr_to_hexString(adr))]
 	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
      in
 	 (emp_str, inst)
      end
  fun c_branch_instGen (inst, pc, len) =
-     let val adr = (4*(Random.range (pc, len) gen))
+     let val adr = (4*(Random.range (1, 1+len-pc) gen))
 	 val adr_str = String.concat[hd((p_tokens(hd(decomp(inst)))))," +#0x", (addr_to_hexString(adr))]
 	 val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
      in
 	 (emp_str, inst)
      end
  fun cmp_and_branch_instGen (inst, pc, len) =
-     let val adr = (4*(Random.range (pc, len) gen))
+     let val adr = (4*(Random.range (1, 1+len-pc) gen))
 	 val tks = (p_tokens(hd(decomp(inst))))
 	 val rinst = String.concat[List.nth(tks,0), List.nth(tks,1),", +#0x", (addr_to_hexString(adr))]
 	 val inst = (valOf o snd o cmp_mcode)(cmp_ast rinst)
