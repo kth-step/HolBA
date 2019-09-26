@@ -100,7 +100,7 @@ fun prog_gen_a_la_qc n =
     let val (p, rnd) = run_step n (!g) arb_program;
         val _ = (g := rnd);
     in
-        pp_program (generate n (!g) arb_program)
+        pp_program p
     end
 end
 
