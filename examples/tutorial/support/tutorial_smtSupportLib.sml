@@ -5,6 +5,7 @@ open HolKernel Parse;
 open bir_exp_to_wordsLib bslSyntax;
 open bir_exp_tautologiesTheory;
 open bir_expTheory bir_expSyntax;
+open optionSyntax;
 
 val wrap_exn = Feedback.wrap_exn "tutorial_smtSupportLib"
 
@@ -32,7 +33,10 @@ fun Z3_prove_or_print_model term =
 
 fun prove_bir_eval_exp_with_SMT_then_cheat_TAC (assum_list, goal) =
   let
-    val (eval_tm, rhs_tm) = dest_eq goal
+    val (eval_tm, rhs_opt_tm) = dest_eq goal
+    val _ = if (is_some rhs_opt_tm) then () else
+      raise Fail "Cannot prove the goal because the RHS isn't SOME btrue.";
+    val rhs_tm = dest_some rhs_opt_tm
     val _ = if (rhs_tm = ``BVal_Imm (Imm1 1w)``) then () else
       raise Fail "Cannot prove the goal because the RHS isn't btrue.";
     (**)
