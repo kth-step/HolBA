@@ -128,7 +128,7 @@ fun make_word_relation relation exps =
             let val va = mk_var (a,``:word64``);
                 val vb = mk_var (b,``:word64``);
             in
-``(^va <> ^vb)  /\ (^va < 0x80042FF8w) /\ (^vb < 0x80042FF8w)``
+``(^va <> ^vb)``
             end;
         val distinct = if null pairs then raise NoObsInPath else list_mk_conj (map mk_distinct pairs);
     in
@@ -263,7 +263,7 @@ fun scamv_test_main tests prog =
 fun scamv_test_gen_run tests (prog_id, lifted_prog) =
     let
         val lifted_prog_w_obs =
-            bir_arm8_cache_line_model.add_obs lifted_prog;
+            bir_arm8_cache_line_tag_model.add_obs lifted_prog;
         val _ = print_term(lifted_prog_w_obs);
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 
@@ -295,6 +295,11 @@ fun scamv_test_gen_run tests (prog_id, lifted_prog) =
 
 val scamv_test_mock = scamv_test_gen_run 1 o prog_gen_store_mock;
 
+fun scamv_test_single_file filename =
+    let val prog = prog_gen_store_fromfile filename ();
+    in scamv_test_main 1 prog
+    end;
+
 fun show_error_no_free_vars (id,_) =
     print ("Program " ^ id ^ " skipped because it has no free variables.\n");
 
@@ -306,10 +311,11 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
         val _ = bir_prog_gen_arm8_mock_set_wrap_around false;
         val _ = bir_prog_gen_arm8_mock_set [["b #0x80"]];
 
-        val prog_store_fun =
+(*        val prog_store_fun =
           if is_mock
           then prog_gen_store_mock
-          else prog_gen_store_rand sz;
+          else prog_gen_store_rand sz; *)
+        val prog_store_fun = prog_gen_store_a_la_qc sz;
 
         fun main_loop 0 = ()
          |  main_loop n =

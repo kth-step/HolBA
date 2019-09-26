@@ -1,8 +1,15 @@
 open HolKernel Parse boolLib bossLib;
 open bir_programTheory;
 open bslSyntax;
+open wordsSyntax;
+open bir_embexp_driverLib;
 
 val _ = new_theory "bir_obs_model";
+
+val (mem_base, mem_offset) = bir_embexp_params_memory;
+val (mem_min, mem_max) =
+    (mk_wordi (bir_embexp_params_cacheable mem_base, 64),
+     mk_wordi (bir_embexp_params_cacheable (Arbnum.+ (mem_base, mem_offset)), 64));
 
 val map_obs_prog_def = Define `
 map_obs_prog f (BirProgram xs) = BirProgram (MAP f xs)
@@ -41,10 +48,7 @@ case exp of
 val observe_load_def = Define`
 observe_load (BExp_Load _ e _ _) =
          BStmt_Observe (BExp_Const (Imm1 1w))
-                       (* ([BExp_BinExp BIExp_And
-                                     (BExp_Const (Imm64 0x1FC0w))
-                                     e]) *)
-                       ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 13w))])
+                       ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
                        HD
 `;
 
@@ -54,12 +58,12 @@ constrain_load (BExp_Load _ e _ _) =
        (BExp_BinExp BIExp_And
                     (BExp_BinPred
                          BIExp_LessOrEqual
-                         (BExp_Const (Imm64 0x80030000w))
+                         (BExp_Const (Imm64 0x80100000w))
                          e)
                     (BExp_BinPred
-                         BIExp_LessOrEqual
+                         BIExp_LessThan
                          e
-                         (BExp_Const (Imm64 0x80042FF8w))))
+                         (BExp_Const (Imm64 0x80140000w))))
 `;
 
 val add_obs_stmts_def = Define `
@@ -78,9 +82,7 @@ val add_obs_stmts_def = Define `
 val observe_load_tag_def = Define`
 observe_load_tag (BExp_Load _ e _ _) =
          BStmt_Observe (BExp_Const (Imm1 1w))
-                       ([BExp_BinExp BIExp_And
-                                     (BExp_Const (Imm64 0xFFFFE000w))
-                                     e])
+                       ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 13w))])
                        HD
 `;
 

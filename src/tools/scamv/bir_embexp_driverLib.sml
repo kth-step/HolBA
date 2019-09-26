@@ -5,7 +5,6 @@ struct
 
   open bir_scamv_helpersLib;
 
-
 (* error handling *)
   val libname = "bir_embexp_driverLib"
   val ERR = Feedback.mk_HOL_ERR libname
@@ -140,6 +139,8 @@ struct
   val bir_embexp_params_code   = Arbnum.fromHexString    "0x2000";
   val bir_embexp_params_memory = (Arbnum.fromHexString "0x100000",
                                   Arbnum.fromHexString  "0x40000");
+
+  fun bir_embexp_params_cacheable x = Arbnum.+ (Arbnum.fromInt 0x80000000, x);
 
   fun bir_embexp_prog_to_code asm_lines =
     let
