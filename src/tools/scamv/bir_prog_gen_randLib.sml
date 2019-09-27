@@ -262,7 +262,7 @@ val n = 3;
     fun genLoad   loc = (randSel loads)   ^ " " ^ (genReg ()) ^ ", [" ^ (genReg ()) ^ "]";
     fun genStore  loc = (randSel stores)  ^ " " ^ (genReg ()) ^ ", [" ^ (genReg ()) ^ "]";
 
-    val instrFuns = [genArith, genCondBr, genLoad, genStore];
+    val instrFuns = [genArith, genCondBr, genLoad];
   in
     fun genInstr loc = randSel instrFuns loc;
   end
