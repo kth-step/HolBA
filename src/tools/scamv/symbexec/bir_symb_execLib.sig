@@ -4,6 +4,8 @@ signature bir_symb_execLib = sig
 
   val symb_is_BST_Running  : term -> bool
 
+  val symb_is_BST_Halted   : term -> bool
+
   val symb_is_BST_AssertionViolated : term -> bool
 
   (* maxdepth (-1 is unlimited), precond, program, pred decider *)

@@ -49,7 +49,7 @@ fun symb_exec_phase prog =
 	    val obss = ((List.map dest_bir_symb_obs) o fst o dest_list) obs;
 
 	    (* determine whether this is an error state *)
-	    val isErrorState = symb_is_BST_AssertionViolated s;
+	    val isErrorState = not (symb_is_BST_Halted s);
 
 	    (* this converts BIR consts to HOL4 variables *)
 	    val obs_list = List.map (fn (ec,eo, obsf) =>
