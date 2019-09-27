@@ -2,6 +2,8 @@ open HolKernel Parse boolLib bossLib;
 open bir_expSimps;
 open HolBACoreSimps;
 
+open bir_auxiliaryLib;
+
 val _ = new_theory "tutorial_bir_to_armSupport";
 
 (* This part should be generalized *)
@@ -21,7 +23,7 @@ val arm8_triple_def = Define `
 
 
 val bir_triple_def = Define `
-  bir_triple p l ls pre post ⇔
+  bir_triple p l ls pre post =
     !s.
       bir_env_vars_are_initialised s.bst_environ
         (bir_vars_of_program p) ==>
@@ -241,100 +243,7 @@ arm8_wf_varset vset =
   (BVar "tmp_PC" (BType_Imm Bit64));
   (BVar "tmp_COND" (BType_Imm Bit1))
 })`;
-  
-(* TODO: Fix this with new map definition *)
-(*
-val default_arm8_bir_state_def = Define `default_arm8_bir_state ms =
- <|bst_pc :=  bir_block_pc (BL_Address (Imm64 ms.PC)); 
- bst_environ := BEnv (FEMPTY
- |+ ("ProcState_C",BType_Imm Bit1, SOME(BVal_Imm (bool2b ms.PSTATE.C)))
- |+ ("tmp_ProcState_C",BType_Imm Bit1, SOME(BVal_Imm (bool2b ms.PSTATE.C)))
- |+ ("ProcState_N",BType_Imm Bit1, SOME(BVal_Imm (bool2b ms.PSTATE.N)))
- |+ ("tmp_ProcState_N",BType_Imm Bit1, SOME(BVal_Imm (bool2b ms.PSTATE.N)))
- |+ ("ProcState_V",BType_Imm Bit1, SOME(BVal_Imm (bool2b ms.PSTATE.V)))
- |+ ("tmp_ProcState_V",BType_Imm Bit1, SOME(BVal_Imm (bool2b ms.PSTATE.V)))
- |+ ("ProcState_Z",BType_Imm Bit1, SOME(BVal_Imm (bool2b ms.PSTATE.Z)))
- |+ ("tmp_ProcState_Z",BType_Imm Bit1, SOME(BVal_Imm (bool2b ms.PSTATE.Z)))
- |+ ("R0",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 0w))))
- |+ ("tmp_R0",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 0w))))
- |+ ("R1",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 1w))))
- |+ ("tmp_R1",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 1w))))
- |+ ("R2",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 2w))))
- |+ ("tmp_R2",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 2w))))
- |+ ("R3",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 3w))))
- |+ ("tmp_R3",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 3w))))
- |+ ("R4",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 4w))))
- |+ ("tmp_R4",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 4w))))
- |+ ("R5",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 5w))))
- |+ ("tmp_R5",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 5w))))
- |+ ("R6",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 6w))))
- |+ ("tmp_R6",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 6w))))
- |+ ("R7",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 7w))))
- |+ ("tmp_R7",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 7w))))
- |+ ("R8",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 8w))))
- |+ ("tmp_R8",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 8w))))
- |+ ("R9",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 9w))))
- |+ ("tmp_R9",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 9w))))
- |+ ("R10",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 10w))))
- |+ ("tmp_R10",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 10w))))
- |+ ("R11",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 11w))))
- |+ ("tmp_R11",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 11w))))
- |+ ("R12",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 12w))))
- |+ ("tmp_R12",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 12w))))
- |+ ("R13",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 13w))))
- |+ ("tmp_R13",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 13w))))
- |+ ("R14",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 14w))))
- |+ ("tmp_R14",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 14w))))
- |+ ("R15",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 15w))))
- |+ ("tmp_R15",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 15w))))
- |+ ("R16",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 16w))))
- |+ ("tmp_R16",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 16w))))
- |+ ("R17",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 17w))))
- |+ ("tmp_R17",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 17w))))
- |+ ("R18",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 18w))))
- |+ ("tmp_R18",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 18w))))
- |+ ("R19",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 19w))))
- |+ ("tmp_R19",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 19w))))
- |+ ("R20",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 20w))))
- |+ ("tmp_R20",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 20w))))
- |+ ("R21",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 21w))))
- |+ ("tmp_R21",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 21w))))
- |+ ("R22",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 22w))))
- |+ ("tmp_R22",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 22w))))
- |+ ("R23",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 23w))))
- |+ ("tmp_R23",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 23w))))
- |+ ("R24",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 24w))))
- |+ ("tmp_R24",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 24w))))
- |+ ("R25",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 25w))))
- |+ ("tmp_R25",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 25w))))
- |+ ("R26",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 26w))))
- |+ ("tmp_R26",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 26w))))
- |+ ("R27",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 27w))))
- |+ ("tmp_R27",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 27w))))
- |+ ("R28",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 28w))))
- |+ ("tmp_R28",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 28w))))
- |+ ("R29",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 29w))))
- |+ ("tmp_R29",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 29w))))
- |+ ("R30",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 30w))))
- |+ ("tmp_R30",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 30w))))
- |+ ("R31",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 31w))))
- |+ ("tmp_R31",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.REG 31w))))
- |+ ("SP_EL0",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.SP_EL0))))
- |+ ("tmp_SP_EL0",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.SP_EL0))))
- |+ ("SP_EL1",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.SP_EL1))))
- |+ ("tmp_SP_EL1",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.SP_EL1))))
- |+ ("SP_EL2",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.SP_EL2))))
- |+ ("tmp_SP_EL2",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.SP_EL2))))
- |+ ("SP_EL3",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.SP_EL3))))
- |+ ("tmp_SP_EL3",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.SP_EL3))))
- |+ ("tmp_PC",BType_Imm Bit64, SOME(BVal_Imm (Imm64 (ms.PC))))
- |+ ("MEM", (BType_Mem Bit64 Bit8), SOME(BVal_Mem Bit64 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.MEM))))
- |+ ("tmp_MEM", (BType_Mem Bit64 Bit8), SOME(BVal_Mem Bit64 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.MEM))))
- |+ ("tmp_COND",BType_Imm Bit1, SOME(BVal_Imm (Imm1 0w)))
- );
-  bst_status := BST_Running|>
-`;
-*)
+
 val default_arm8_bir_state_def = Define `default_arm8_bir_state ms =
  <|bst_pc :=  bir_block_pc (BL_Address (Imm64 ms.PC)); 
  bst_environ := BEnv (
@@ -489,6 +398,19 @@ FULL_SIMP_TAC std_ss [pred_setTheory.GSPECIFICATION, bir_program_labelsTheory.IS
 );
 
 
+val bir_block_pc_alt_thm = prove(
+  ``!pc l.
+    (pc.bpc_label = l) ==>
+    (pc.bpc_index = 0) ==>
+    (pc = (bir_block_pc l))``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (std_ss++holBACore_ss)
+  [bir_programTheory.bir_block_pc_def,
+   bir_programTheory.bir_programcounter_t_component_equality]
+);
+
+
 val lift_contract_thm = store_thm("lift_contract_thm",
   ``!p mms ml mls mu mpre mpost bpre bpost.
       MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p) ==>
@@ -497,88 +419,104 @@ val lift_contract_thm = store_thm("lift_contract_thm",
       bir_is_lifted_prog arm8_bmr mu mms p ==>
       arm8_wf_varset (bir_vars_of_program p UNION bir_vars_of_exp bpre) ==>
       bir_pre_arm8_to_bir mpre bpre ==>
+      (* Note: bir_post_bir_to_arm8 needs to change for this theorem to even make sense *)
       bir_post_bir_to_arm8 mpost (bpost (BL_Address (Imm64 ml))) ==>
       arm8_triple mms ml mls mpre mpost``,
 
-cheat);
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [arm8_triple_def] >>
+REPEAT STRIP_TAC >>
+ASSUME_TAC (SPECL [``ms:arm8_state``,
+                   ``(bir_vars_of_program p) UNION (bir_vars_of_exp bpre)``]
+                  exist_bir_of_arm8_thm) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
 
+subgoal `bir_eval_exp bpre bs.bst_environ = SOME bir_val_true` >- (
+  METIS_TAC [bir_pre_arm8_to_bir_def]
+) >>
+
+FULL_SIMP_TAC std_ss [bir_triple_def] >>
+PAT_X_ASSUM ``!s. P`` (fn thm => ASSUME_TAC (SPEC ``bs:bir_state_t`` thm)) >>
+
+subgoal `(bs.bst_pc.bpc_index = 0) /\
+         (bs.bst_pc.bpc_label = BL_Address (Imm64 ml))` >- (
+  REPEAT (FULL_SIMP_TAC (srw_ss()) [bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
+                                    bir_programTheory.bir_block_pc_def])
+) >>
+FULL_SIMP_TAC std_ss [] >>
+REV_FULL_SIMP_TAC std_ss [] >>
+
+subgoal `bir_is_bool_exp_env bs.bst_environ bpre` >- (
+  REPEAT (FULL_SIMP_TAC (srw_ss()) [bir_bool_expTheory.bir_is_bool_exp_env_def,
+                                    bir_pre_arm8_to_bir_def])
+) >>
+FULL_SIMP_TAC std_ss [] >>
+
+subgoal `s'.bst_pc.bpc_label IN {l | IS_BL_Address l}` >- (
+  METIS_TAC [set_of_address_in_all_address_labels_thm]
+) >>
+
+(* TODO: What is exec_n_to_label_thm? Probably to obtain bir_exec_to_labels_n from bir_exec_block_n.
+ *       Closest that exists is
+ *         bir_program_multistep_propsTheory.bir_exec_block_n_TO_bir_exec_to_labels_n
+ *       but we need label set that is {l | IS_BL_Address l}.
+ *       (see bir_inst_liftingTheory.bir_exec_to_addr_label_n_def)
+ *       Solutions: either change the HT execution to be over n address blocks instead of n general
+ *                  blocks, or obtain a theorem stating how many general blocks of execution every
+ *                  n-address block execution takes. (s' is address label)
+*)
 (*
-val bir_block_pc_alt_thm = prove(
-  ``!pc l.
-    (pc.bpc_label = l) ==>
-    (pc.bpc_index = 0) ==>
-    (pc = (bir_block_pc l))``,
-
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [bir_programTheory.bir_block_pc_def] >>
-cheat);
-
-prove(``
-! p mms ml mls mu
-mpre mpost bpre bpost .
-(MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p)) ==>
-bir_triple p (BL_Address (Imm64 ml)) {(BL_Address (Imm64 ml')) | ml' IN mls} bpre bpost ==>
-bir_is_lifted_prog arm8_bmr mu mms p ==>
-(arm8_wf_varset ((bir_vars_of_program p) ∪ (bir_vars_of_exp bpre))) ==>
-bir_pre_arm8_to_bir mpre bpre ==>
-bir_post_bir_to_arm8 mpost bpost ==>
-arm8_triple mms ml mls mpre mpost
-``,
-
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [arm8_triple_def] >> 
-REPEAT STRIP_TAC >>
-ASSUME_TAC (SPECL [``ms:arm8_state``, ``(bir_vars_of_program p) ∪  (bir_vars_of_exp bpre)``] exist_bir_of_arm8_thm) >>
+ASSUME_TAC
+  (ISPECL [``p:'a bir_program_t``, ``bs:bir_state_t``, ``n:num``,
+           ``l1:'a list``,``c1:num``, ``c2:num``, ``s':bir_state_t``,
+           ``{l | IS_BL_Address l}``] exec_n_to_label_thm) >>
 REV_FULL_SIMP_TAC std_ss [] >>
-FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_vars_are_initialised_UNION] >>
-
-Q.SUBGOAL_THEN `(bir_eval_exp bpre bs.bst_environ = bir_val_true)` ASSUME_TAC >-
-  (METIS_TAC [bir_pre_arm8_to_bir_def]) >>
-
-(FULL_SIMP_TAC std_ss [bir_triple_def]) >>
-(PAT_X_ASSUM ``!s.P`` (fn thm => ASSUME_TAC (SPEC ``bs:bir_state_t`` thm))) >>
-
-Q.SUBGOAL_THEN ` (bs.bst_pc.bpc_index = 0) ∧
-         (bs.bst_pc.bpc_label = BL_Address (Imm64 ml))` ASSUME_TAC >-
-  (REPEAT (FULL_SIMP_TAC (srw_ss()) [bir_lifting_machinesTheory.arm8_bmr_rel_EVAL, bir_programTheory.bir_block_pc_def])) >>
-FULL_SIMP_TAC std_ss [] >>
-REV_FULL_SIMP_TAC std_ss [] >>
-
-Q.SUBGOAL_THEN `bir_is_bool_exp_env bs.bst_environ bpre` ASSUME_TAC >-
-  (REPEAT (FULL_SIMP_TAC (srw_ss()) [bir_bool_expTheory.bir_is_bool_exp_env_def, bir_pre_arm8_to_bir_def])) >>
-FULL_SIMP_TAC std_ss [] >>
-
-(Q.SUBGOAL_THEN `
-    s'.bst_pc.bpc_label ∈ {l | IS_BL_Address l}` ASSUME_TAC) >-
-    (METIS_TAC [set_of_address_in_all_address_labels_thm]) >>
-
-ASSUME_TAC (ISPECL [``p:'a bir_program_t``, ``bs:bir_state_t``, ``n:num``,
-       ``l1:'a list``,``c1:num``, ``c2:num``, ``s':bir_state_t``,
-       ``{l | IS_BL_Address l}``]exec_n_to_label_thm) >>
-REV_FULL_SIMP_TAC std_ss [] >>
-
+*)
+subgoal `?lo c_st c_addr_labels bs'.
+         bir_exec_to_labels_n {l | IS_BL_Address l} p bs n' =
+           BER_Ended lo c_st c_addr_labels s'` >- (
+  cheat
+) >>
 
 ASSUME_TAC (ISPECL [`` arm8_bmr``, ``mu:64 word_interval_t``,
-           ``mms:(word64# word8 list) list``, ``p:'a bir_program_t``]
-           bir_inst_liftingTheory.bir_is_lifted_prog_MULTI_STEP_EXEC) >>
+                    ``mms:(word64# word8 list) list``, ``p:'a bir_program_t``]
+                   bir_inst_liftingTheory.bir_is_lifted_prog_MULTI_STEP_EXEC) >>
 REV_FULL_SIMP_TAC std_ss [] >>
 
-PAT_X_ASSUM ``!n.p`` (fn thm => ASSUME_TAC (SPECL [``n':num``, ``ms:arm8_state``, ``bs:bir_state_t``] thm)) >>
+PAT_X_ASSUM ``!n ms bs. p``
+  (fn thm => ASSUME_TAC (SPECL [``n':num``, ``ms:arm8_state``, ``bs:bir_state_t``] thm)) >>
 REV_FULL_SIMP_TAC std_ss [] >>
 
-(Q.SUBGOAL_THEN `
-    (∃li.
-              MEM (BL_Address li) (bir_labels_of_program p) ∧
-              (bs.bst_pc = bir_block_pc (BL_Address li)))` ASSUME_TAC) >-
- (REPEAT STRIP_TAC >>
+(*
+subgoal `(?li.
+              MEM (BL_Address li) (bir_labels_of_program p) /\
+              (bs.bst_pc = bir_block_pc (BL_Address li)))` >- (
+  REPEAT STRIP_TAC >>
   EXISTS_TAC ``(Imm64 ml)`` >>
-  FULL_SIMP_TAC (srw_ss()) [bir_block_pc_alt_thm]) >>
+  FULL_SIMP_TAC (srw_ss()) [bir_block_pc_alt_thm]
+) >>
 FULL_SIMP_TAC std_ss [] >>
+*)
+Q.PAT_X_ASSUM `A ==> B` (fn thm => 
+  Q.SUBGOAL_THEN `(?li.
+		    MEM (BL_Address li) (bir_labels_of_program p) /\
+		    (bs.bst_pc = bir_block_pc (BL_Address li)))`
+                 (fn thm2 => ASSUME_TAC (SIMP_RULE std_ss [thm2] thm)) >- (
+    REPEAT STRIP_TAC >>
+    EXISTS_TAC ``(Imm64 ml)`` >>
+    FULL_SIMP_TAC (srw_ss()) [bir_block_pc_alt_thm]
+  )
+) >>
 
 REV_FULL_SIMP_TAC std_ss [bir_programTheory.bir_state_is_terminated_def] >>
 REV_FULL_SIMP_TAC std_ss [bir_inst_liftingTheory.bir_exec_to_addr_label_n_def] >>
 
-(Q.SUBGOAL_THEN `bs'=s'` ASSUME_TAC >- RW_TAC std_ss []) >>
+subgoal `bs'=s'` >- (
+  (* Note: this would be a result from the old exec_n_to_label_thm which was used above
+   *       previously *)
+  RW_TAC std_ss []
+) >>
 FULL_SIMP_TAC (srw_ss()) [] >>
 REV_FULL_SIMP_TAC (srw_ss()) [] >>
 
@@ -586,24 +524,38 @@ EXISTS_TAC ``c_addr_labels':num`` >>
 EXISTS_TAC ``ms':arm8_state`` >>
 FULL_SIMP_TAC (srw_ss()) [] >>
 
-Q.SUBGOAL_THEN `mpost ms'` ASSUME_TAC >-
-  (METIS_TAC [bir_post_bir_to_arm8_def]) >>
+(* TODO: This would hold if we had that ml = ml'. *)
+subgoal `mpost ms'` >- (
+(*
+  METIS_TAC [bir_post_bir_to_arm8_def]
+*)
+  cheat
+) >>
 FULL_SIMP_TAC (srw_ss()) [] >>
 
-Q.SUBGOAL_THEN `(s'.bst_pc = bir_block_pc (BL_Address (Imm64 ms'.PC)))` ASSUME_TAC >-
-  (FULL_SIMP_TAC (std_ss++holBACore_ss) [GEN_ALL bir_lifting_machinesTheory.arm8_bmr_rel_EVAL]) >>
-
+subgoal `(s'.bst_pc = bir_block_pc (BL_Address (Imm64 ms'.PC)))` >- (
+  (* Something gets wonky when you have 200+ assumptions I guess... *)
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [GEN_ALL bir_lifting_machinesTheory.arm8_bmr_rel_EVAL] >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  )
+) >>
+(* Last part of goal (ms'.PC IN mls) is proved by assumptions:
+   li = Imm64 ml'
+   ml' IN mls
+   Imm64 ms'.PC = li
+*)
+RW_TAC std_ss [] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) []
+(*
 FULL_SIMP_TAC std_ss [bir_programTheory.bir_block_pc_def] >>
 FULL_SIMP_TAC (srw_ss()) [] >>
 
-
-
 FULL_SIMP_TAC std_ss [bir_lifting_machinesTheory.bmr_rel_def,
-              bir_lifting_machinesTheory.bir_machine_lifted_pc_def,
-              bir_lifting_machinesTheory.arm8_bmr_def] >>
-
-cheat);
+                      bir_lifting_machinesTheory.bir_machine_lifted_pc_def,
+                      bir_lifting_machinesTheory.arm8_bmr_def] >>
+cheat
 *)
+);
 
 
 val _ = export_theory();
