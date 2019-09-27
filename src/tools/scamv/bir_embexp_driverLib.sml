@@ -207,7 +207,6 @@ struct
     if with_reset then (NONE, "not implemented yet") else
     let
       val cmdline = ("\"" ^ (logfile_basedir()) ^ "/scripts/run_experiment.py\" " ^
-                     "\"" ^ (embexp_basedir()) ^ "\" " ^
                      exp_id);
       val lines = get_exec_output_list cmdline;
       val lastline = List.nth(lines, (List.length lines) - 1);
