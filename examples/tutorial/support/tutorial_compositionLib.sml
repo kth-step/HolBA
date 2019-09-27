@@ -18,7 +18,7 @@ struct
 
      fun use_impl_rule contract_thm pre_impl_wp =
      let
-       val contract_thm = SIMP_RULE (std_ss) [bir_bool_expTheory.bir_exp_and_def] contract_thm;
+       val contract_thm = SIMP_RULE std_ss [bir_bool_expTheory.bir_exp_and_def] contract_thm;
        val pre = ((el 2) o snd o strip_comb o (el 2) o snd o strip_comb o hd o snd o strip_comb o concl) pre_impl_wp;
        val prog = ((el 1) o snd o strip_comb o concl) contract_thm;
        val entry = ((el 2) o snd o strip_comb o concl) contract_thm;
@@ -40,7 +40,7 @@ struct
           (SIMP_TAC vars_ss
           ) [bir_valuesTheory.BType_Bool_def]
        );
-       val new_contract_thm = ((SIMP_RULE (std_ss) [contract_thm, taut_thm, wp_var_thm, pre_var_thm]) 
+       val new_contract_thm = ((SIMP_RULE std_ss [contract_thm, taut_thm, wp_var_thm, pre_var_thm]) 
          ((ISPECL [wp, pre, prog, entry, exit, post])
              bir_triple_weak_rule_thm)
              );
