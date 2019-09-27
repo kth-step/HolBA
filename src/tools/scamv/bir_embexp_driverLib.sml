@@ -208,6 +208,7 @@ struct
     let
       val cmdline = ("\"" ^ (logfile_basedir()) ^ "/scripts/run_experiment.py\" " ^
                      exp_id);
+      val _ = print ("===>>> RUNNING EXPERIMENT: " ^ exp_id ^ "\n")
       val lines = get_exec_output_list cmdline;
       val lastline = List.nth(lines, (List.length lines) - 1);
       val result = if lastline = "result = true\n" then

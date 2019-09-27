@@ -9,6 +9,7 @@ struct
   open bir_embexp_driverLib;
 
   open listSyntax;
+  open wordsSyntax;
 
   open bir_prog_gen_randLib;
   open asm_genLib;
@@ -92,7 +93,7 @@ struct
       (* TODO: this is not correct! we have to compare the labels *)
       val lift_worked = (List.length blocks = prog_len);
     in
-      if lift_worked then (asm_code, lifted_prog) else
+      if lift_worked then (asm_code, lifted_prog, prog_len) else
       if retry_on_liftfail then (gen_until_liftable retry_on_liftfail prog_gen_fun args) else
       raise ERR "gen_until_liftable" "lifting failed"
     end
@@ -101,11 +102,24 @@ struct
 
   fun prog_gen_store retry_on_liftfail prog_gen_id prog_gen_fun args () =
     let
-      val (asm_code, lifted_prog) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
+      val (asm_code, lifted_prog, len) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
+
+
+      val prog_with_halt =
+        let
+          val (blocks,ty) = dest_list (dest_BirProgram lifted_prog);
+          val obs_ty = (hd o snd o dest_type) ty;
+          val lbl = ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt (len*4), 64)))``;
+          val new_last_block =  bir_programSyntax.mk_bir_block
+                    (lbl, mk_list ([], mk_type ("bir_stmt_basic_t", [obs_ty])),
+                     ``BStmt_Halt (BExp_Const (Imm32 0x000000w))``);
+        in
+          (mk_BirProgram o mk_list) (blocks@[new_last_block],ty)
+        end;
 
       val prog_id = bir_embexp_prog_create ("arm8", prog_gen_id) asm_code;
     in
-      (prog_id, lifted_prog)
+      (prog_id, prog_with_halt)
     end;
 
 
@@ -172,6 +186,9 @@ fun prog_gen_store_a_la_qc sz =
 
 (*
 val filename = "examples/asm/branch.s";
+val retry_on_liftfail = false
+val prog_gen_fun = load_asm_lines
+val args = filename
 val (prog_id, lifted_prog) = prog_gen_store_fromfile filename ();
 
 val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
