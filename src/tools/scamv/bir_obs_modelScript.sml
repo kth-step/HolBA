@@ -9,7 +9,7 @@ val _ = new_theory "bir_obs_model";
 val (mem_base, mem_offset) = bir_embexp_params_memory;
 val (mem_min, mem_max) =
     (mk_wordi (bir_embexp_params_cacheable mem_base, 64),
-     mk_wordi (bir_embexp_params_cacheable (Arbnum.+ (mem_base, mem_offset)), 64));
+     mk_wordi (bir_embexp_params_cacheable (Arbnum.- (Arbnum.+ (mem_base, mem_offset), Arbnum.fromInt 128)), 64));
 
 val map_obs_prog_def = Define `
 map_obs_prog f (BirProgram xs) = BirProgram (MAP f xs)
@@ -58,12 +58,12 @@ constrain_load (BExp_Load _ e _ _) =
        (BExp_BinExp BIExp_And
                     (BExp_BinPred
                          BIExp_LessOrEqual
-                         (BExp_Const (Imm64 0x80100000w))
+                         (BExp_Const (Imm64 ^(mem_min)))
                          e)
                     (BExp_BinPred
                          BIExp_LessThan
                          e
-                         (BExp_Const (Imm64 0x80140000w))))
+                         (BExp_Const (Imm64 ^(mem_max)))))
 `;
 
 val add_obs_stmts_def = Define `
