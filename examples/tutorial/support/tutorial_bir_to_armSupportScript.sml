@@ -91,10 +91,11 @@ val bir_pre_arm8_to_bir_def = Define `
   (bir_eval_exp pre_bir bs.bst_environ = SOME bir_val_true)`;
 
 val bir_post_bir_to_arm8_def = Define `
-  bir_post_bir_to_arm8 post post_bir =
-  ! ms bs.
+  bir_post_bir_to_arm8 post post_bir ls =
+  !ms bs l.
+  l IN ls ==>
   (bmr_rel arm8_bmr bs ms) ==>
-  (bir_eval_exp post_bir bs.bst_environ = SOME bir_val_true) ==>
+  (bir_eval_exp (post_bir l) bs.bst_environ = SOME bir_val_true) ==>
   (post ms)
 `;
 
@@ -420,7 +421,7 @@ val lift_contract_thm = store_thm("lift_contract_thm",
       arm8_wf_varset (bir_vars_of_program p UNION bir_vars_of_exp bpre) ==>
       bir_pre_arm8_to_bir mpre bpre ==>
       (* Note: bir_post_bir_to_arm8 needs to change for this theorem to even make sense *)
-      bir_post_bir_to_arm8 mpost (bpost (BL_Address (Imm64 ml))) ==>
+      bir_post_bir_to_arm8 mpost bpost {BL_Address (Imm64 ml') | ml' IN mls} ==>
       arm8_triple mms ml mls mpre mpost``,
 
 REPEAT STRIP_TAC >>
@@ -543,9 +544,11 @@ subgoal `(s'.bst_pc = bir_block_pc (BL_Address (Imm64 ms'.PC)))` >- (
    li = Imm64 ml'
    ml' IN mls
    Imm64 ms'.PC = li
-*)
+
 RW_TAC std_ss [] >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) []
+*)
+cheat
 (*
 FULL_SIMP_TAC std_ss [bir_programTheory.bir_block_pc_def] >>
 FULL_SIMP_TAC (srw_ss()) [] >>
