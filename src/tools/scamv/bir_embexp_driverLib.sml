@@ -204,9 +204,9 @@ struct
 
 
   fun bir_embexp_run exp_id with_reset =
-    if with_reset then (NONE, "not implemented yet") else
     let
       val cmdline = ("\"" ^ (logfile_basedir()) ^ "/scripts/run_experiment.py\" " ^
+                     (if with_reset then "--test_mode reset " else "--test_mode try ") ^
                      exp_id);
       val _ = print ("===>>> RUNNING EXPERIMENT: " ^ exp_id ^ "\n")
       val lines = get_exec_output_list cmdline;
@@ -215,6 +215,8 @@ struct
                      (SOME true, "the result is based on the python experiment runner script output")
                    else if lastline = "result = false\n" then
                      (SOME false, "the result is based on the python experiment runner script output")
+                   else if String.isPrefix "result = " lastline then
+                     (NONE, "BOARD EXCEPTION /\\/\\/\\/\\/\\/ " ^ (strip_ws_off true lastline))
                    else
                      raise ERR "bir_embexp_run" ("the last line of the python experiment runner is unexpected: " ^ lastline)
     in
