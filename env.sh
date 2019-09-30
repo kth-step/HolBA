@@ -23,6 +23,10 @@ fi
 #####################################################
 
 set --
+if [[ ! -f "${HOLBA_DIR}/config.env.sh" ]]; then
+    echo "ERROR: config.env.sh does not exist, run ./configure.sh first"
+    return 2
+fi
 source "${HOLBA_DIR}/config.env.sh"
 
 
