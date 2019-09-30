@@ -38,7 +38,7 @@ open bir_typing_expTheory;
 fun symb_exec_phase prog =
     let
         (* leaf list *)
-        val maxdepth = (~1);
+        val maxdepth = 5 * length (fst (dest_list (dest_BirProgram prog))) (* (~1); *)
         val precond = ``bir_exp_true``
         val leafs = symb_exec_process_to_leafs_nosmt maxdepth precond prog;
 
@@ -170,7 +170,7 @@ fun start_interactive prog =
             bir_arm8_cache_line_tag_model.add_obs lifted_prog;
 (*      val _ = print_term lifted_prog_w_obs; *)
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
-
+        
         fun has_observations (SOME []) = false
           | has_observations NONE = false
           | has_observations _ = true
