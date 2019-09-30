@@ -381,23 +381,23 @@ val default_arm8_bir_state_satisfies_rel_thm = prove(
     arm8_bmr.bmr_extra ms ==>
     (bmr_rel arm8_bmr (default_arm8_bir_state ms) ms)``,
 
-cheat
-(* TODO: Adapt to new variable map... *)
-(*
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [default_arm8_bir_state_def,
   bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
   bir_env_oldTheory.bir_env_var_is_declared_def,
   bir_envTheory.bir_var_name_def] >>
 FULL_SIMP_TAC (srw_ss()) [
-              bir_envTheory.bir_env_read_UPDATE, bir_envTheory.bir_var_name_def,
+              bir_envTheory.bir_env_read_UPDATE,
+              bir_envTheory.bir_var_name_def,
               bir_envTheory.bir_env_lookup_UPDATE,
-              bir_envTheory.bir_var_type_def, bir_envTheory.bir_env_lookup_type_def] >>
+              bir_envTheory.bir_var_type_def,
+              bir_envTheory.bir_env_lookup_type_def] >>
+FULL_SIMP_TAC std_ss [bir_valuesTheory.type_of_bir_val_def,
+                      type_of_bir_imm_def,
+                      bir_immTheory.type_of_bool2b] >>
 FULL_SIMP_TAC std_ss [bir_lifting_machinesTheory.bmr_extra_ARM8] >>
 FULL_SIMP_TAC (srw_ss()) [bir_exp_liftingTheory.bir_load_w2n_mf_simp_thm] >>
-(* METIS_TAC fails *)
 METIS_TAC []
-*)
 );
 
 
@@ -551,13 +551,12 @@ Q.PAT_X_ASSUM `A ==> B` (fn thm =>
   )
 ) >>
 
-REV_FULL_SIMP_TAC std_ss [bir_programTheory.bir_state_is_terminated_def] >>
-REV_FULL_SIMP_TAC std_ss [bir_inst_liftingTheory.bir_exec_to_addr_label_n_def] >>
+REV_FULL_SIMP_TAC std_ss [bir_programTheory.bir_state_is_terminated_def, bir_inst_liftingTheory.bir_exec_to_addr_label_n_def] >>
 
 subgoal `bs' = s'` >- (
   RW_TAC std_ss []
 ) >>
-REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_programTheory.bir_state_is_terminated_def] >>
+Q.PAT_X_ASSUM `bs' = s'` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
 EXISTS_TAC ``c_addr_labels':num`` >>
