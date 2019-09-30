@@ -206,7 +206,7 @@ struct
   fun bir_embexp_run exp_id with_reset =
     let
       val cmdline = ("\"" ^ (logfile_basedir()) ^ "/scripts/run_experiment.py\" " ^
-                     (if with_reset then "--test_mode reset " else "--test_mode try ") ^
+                     (if with_reset then "--conn_mode reset " else "--conn_mode try ") ^
                      exp_id);
       val _ = print ("===>>> RUNNING EXPERIMENT: " ^ exp_id ^ "\n")
       val lines = get_exec_output_list cmdline;
