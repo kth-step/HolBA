@@ -7,14 +7,14 @@ open bir_program_multistep_propsTheory;
 open bir_program_terminationTheory;
 open bir_program_blocksTheory;
 
-open bir_hoare_logic_testTheory;
+open bir_wm_instTheory;
 
 open bir_auxiliaryLib;
 
 open HolBACoreSimps;
 open bin_hoare_logicSimps;
 
-val _ = new_theory "bir_hoare_logic_test_AV";
+val _ = new_theory "bir_av_wm_inst";
 
 (******************************************************************)
 (*                         DEFINITIONS                            *)
@@ -23,7 +23,7 @@ val _ = new_theory "bir_hoare_logic_test_AV";
 (* TODO: Try bir_exec_to_addr_label - but this could cause more
  * problems *)
 (* TODO: For now, transition is the same as in
- * bir_hoare_logic_testScript.sml *)
+ * bir_wm_instScript.sml *)
 (*
 val bir_trs_av_def = Define `
   bir_trs_av (prog:'a bir_program_t) st =
@@ -102,7 +102,7 @@ val bir_etl_wm_av_def =
 local
 
 val ws_type = mk_thy_type {Tyop="bir_weak_state_t",
-                           Thy="bir_hoare_logic_test_AV",
+                           Thy="bir_av_wm_inst",
                            Args=[]
                           };
 
@@ -164,9 +164,15 @@ CASE_TAC >| [
   Cases_on `~bir_state_is_terminated b` >- (
     FULL_SIMP_TAC std_ss [] >>
     Cases_on `BWS_Regular b.bst_pc.bpc_label IN ls` >| [
-      FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
-      IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_block_n >>
-      IMP_RES_TAC bir_exec_to_labels_n_ended_running >>
+      subgoal `?m c_l'. (m > 0) /\ (bir_exec_block_n prog ms m = (l,n,c_l',b))` >- (
+	FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
+	IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_block_n >>
+	Q.EXISTS_TAC `m` >>
+	Q.EXISTS_TAC `c_l'` >>
+	FULL_SIMP_TAC arith_ss []
+      ) >>
+      FULL_SIMP_TAC std_ss [] >>
+      IMP_RES_TAC bir_exec_to_labels_ended_running >>
       EQ_TAC >| [
         (* Case 1AI: b=ms' as assumption *)
 	DISCH_TAC >>
@@ -174,6 +180,7 @@ CASE_TAC >| [
 	rename1 `bir_exec_block_n prog st m = (l,n,c_l',b)` >>
 	rename1 `bir_exec_block_n prog st m = (l,n,c_l',st'')` >>
 	rename1 `st'' = st'` >>
+        FULL_SIMP_TAC std_ss [] >>
 	Q.PAT_X_ASSUM `st'' = st'`
 		      (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
 	(* We now have the initial state st and the final state
@@ -194,7 +201,7 @@ CASE_TAC >| [
 	FULL_SIMP_TAC std_ss
 	  [bir_exec_block_n_to_FUNPOW_OPT_bir_trs] >>
 	(* Use bir_exec_to_labels_n_block_n_notin_ls *)
-	IMP_RES_TAC bir_exec_to_labels_n_block_n_notin_ls >>
+	IMP_RES_TAC bir_exec_to_labels_block_n_notin_ls >>
 	REV_FULL_SIMP_TAC arith_ss [] >>
 	(* Here comes additional part for AV definitions... *)
         FULL_SIMP_TAC std_ss [bir_ls_filter_keeps_regular],
@@ -225,7 +232,7 @@ CASE_TAC >| [
 	    IMP_RES_TAC bir_exec_block_n_step_ls_running
 	  ) >>
 	  (* Step 3: Use bir_exec_to_labels_n_block_n_notin_ls *)
-	  IMP_RES_TAC bir_exec_to_labels_n_block_n_notin_ls >>
+	  IMP_RES_TAC bir_exec_to_labels_block_n_notin_ls >>
 	  REV_FULL_SIMP_TAC arith_ss [] >>
           FULL_SIMP_TAC std_ss [bir_ls_filter_keeps_regular]
 	) >>
@@ -251,7 +258,7 @@ CASE_TAC >| [
                     BWS_Top
                   else BWS_Bottom) NOTIN ls`` [`m`] >>
 	  REV_FULL_SIMP_TAC arith_ss [] >>
-	  IMP_RES_TAC bir_exec_to_labels_n_ended_running >>
+	  IMP_RES_TAC bir_exec_to_labels_ended_running >>
 	  IMP_RES_TAC bir_exec_block_n_to_FUNPOW_OPT_bir_trs >>
 	  REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 	  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
@@ -271,8 +278,7 @@ CASE_TAC >| [
 	FULL_SIMP_TAC arith_ss []
       ],
 
-      FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
-      IMP_RES_TAC bir_exec_to_labels_n_ended_running >>
+      IMP_RES_TAC bir_exec_to_labels_ended_running >>
       IMP_RES_TAC bir_ls_filter_keeps_regular
     ]
   ) >>

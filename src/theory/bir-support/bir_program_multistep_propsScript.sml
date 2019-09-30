@@ -1288,8 +1288,6 @@ Cases_on `pc_c = 0` >- (
 (* combine multiple runs                                       *)
 (***************************************************************)
 
-
-
 val bir_exec_steps_GEN_SOME_ADD_Ended = store_thm ("bir_exec_steps_GEN_SOME_ADD_Ended",
   ``!n1 mo pc_count p state0 state1 state2 l1 l2 c_st1 c_st2 c_pc1 c_pc2.
     (bir_exec_steps_GEN pc_count p state0 (SOME n1) = BER_Ended l1 c_pc1 c_st1 state1) ==>
@@ -2363,7 +2361,8 @@ FULL_SIMP_TAC arith_ss []
 (***************************************************************)
 
 val bir_exec_block_n_TO_bir_exec_to_labels_n = store_thm ("bir_exec_block_n_TO_bir_exec_to_labels_n",
-  ``(bir_exec_block_n p st m = (ol, c_st, c_pc, st')) <=>
+  ``!p st m ol c_st c_pc st'.
+    (bir_exec_block_n p st m = (ol, c_st, c_pc, st')) <=>
     (bir_exec_to_labels_n UNIV p st m = BER_Ended ol c_st c_pc st')``,
 
 SIMP_TAC std_ss [bir_exec_block_n_TO_steps_GEN,
@@ -2371,10 +2370,12 @@ SIMP_TAC std_ss [bir_exec_block_n_TO_steps_GEN,
 
 
 val bir_exec_to_labels_n_UNIV_REWR = store_thm ("bir_exec_to_labels_n_UNIV_REWR",
-  ``bir_exec_to_labels_n UNIV p st m =
+  ``!p st m.
+    bir_exec_to_labels_n UNIV p st m =
     let (ol, c_st, c_pc, st') = bir_exec_block_n p st m in
     BER_Ended ol c_st c_pc st'``,
 
+REPEAT GEN_TAC >>
 `?ol c_st c_pc st'. bir_exec_block_n p st m = (ol, c_st, c_pc, st')`
    by METIS_TAC[pairTheory.PAIR] >>
 ASM_SIMP_TAC std_ss [LET_THM] >>
@@ -2409,7 +2410,6 @@ SIMP_TAC std_ss [bir_exec_to_labels_n_def, bir_exec_to_labels_def] >>
 SIMP_TAC arith_ss [Once bir_exec_steps_GEN_REWR_BIG_STEP, OPT_NUM_PRE_def]);
 
 
-
 val bir_exec_to_labels_n_block_1 = store_thm ("bir_exec_to_labels_n_block_1",
   ``!ls p st n.
     (bir_exec_to_labels_n ls p st (SUC n) =
@@ -2435,15 +2435,16 @@ FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_block_n_TO_steps_GEN]);
 
 (* If label execution has Ended but not in a terminated state,
  * then PC index must be zero with label in execution label set. *)
-val bir_exec_to_labels_n_ended_running =
-  store_thm("bir_exec_to_labels_n_ended_running",
+val bir_exec_to_labels_ended_running =
+  store_thm("bir_exec_to_labels_ended_running",
   ``!ls prog st l n c_l' st'.
-    (bir_exec_to_labels_n ls prog st 1 = BER_Ended l n c_l' st') ==>
+    (bir_exec_to_labels ls prog st = BER_Ended l n c_l' st') ==>
     ~(bir_state_is_terminated st') ==>
     ((st'.bst_pc.bpc_index = 0) /\ st'.bst_pc.bpc_label IN ls)``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [bir_exec_to_labels_n_def,
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
+                      bir_exec_to_labels_n_def,
 		      bir_exec_steps_GEN_SOME_EQ_Ended] >> (
   subgoal `c_l' = 1` >- (
     FULL_SIMP_TAC arith_ss []
@@ -2842,7 +2843,6 @@ SIMP_TAC std_ss [bir_exec_to_labels_n_def,
   bir_exec_step_n_EQ_THM, bir_exec_steps_GEN_EQ_Ended])
 
 
-
 val bir_exec_to_labels_n_TO_bir_exec_steps = store_thm ("bir_exec_to_labels_n_TO_bir_exec_steps",
   ``!ls p st n ll .
     (bir_exec_to_labels_n ls p st n = BER_Looping ll) ==>
@@ -2907,8 +2907,6 @@ val bir_exec_step_n_acc_REWR_NOT_TERMINATED = store_thm("bir_exec_step_n_acc_REW
 );
 
 
-
-
 val bir_exec_step_n_plus_acc_thm = store_thm("bir_exec_step_n_plus_acc_thm", ``
   !p s n aol an. (bir_exec_step_n_acc (p:'a bir_program_t) n (aol, an, s)) =
                  (\(ol, sn, s'). (APPEND (REVERSE aol) ol, sn + an, s')) (bir_exec_step_n p s n)
@@ -2955,10 +2953,6 @@ val bir_exec_step_n_plus_acc_thm = store_thm("bir_exec_step_n_plus_acc_thm", ``
 );
 
 
-
-
-
-
 val bir_exec_step_n_acc_eq_thm = store_thm("bir_exec_step_n_acc_eq_thm", ``
   !p s n. bir_exec_step_n_acc (p:'a bir_program_t) n ([], 0, s) =
           bir_exec_step_n     p s n
@@ -2975,10 +2969,6 @@ val bir_exec_step_n_acc_eq_thm = store_thm("bir_exec_step_n_acc_eq_thm", ``
 
   SIMP_TAC std_ss []
 );
-
-
-
-
 
 
 val _ = export_theory();

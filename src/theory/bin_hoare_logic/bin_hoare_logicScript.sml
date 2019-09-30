@@ -320,9 +320,9 @@ SUBGOAL_THEN ``(weak_loop_step m ms var l le invariant C1) <> {}`` ASSUME_TAC  >
 (
   SIMP_TAC std_ss [weak_loop_step_def, LET_DEF] >>
   FULL_SIMP_TAC std_ss [weak_loop_contract_def] >>
-  QSPECL_X_ASSUM ``!x.P`` [`(var (ms)):num`] >>
+  QSPECL_X_ASSUM ``!x. _`` [`(var (ms)):num`] >>
   FULL_SIMP_TAC std_ss [weak_triple_def] >>
-  QSPECL_X_ASSUM ``!x.P`` [`ms`] >>
+  QSPECL_X_ASSUM ``!x. _`` [`ms`] >>
   REV_FULL_SIMP_TAC std_ss [] >>
   FULL_SIMP_TAC std_ss [GSYM pred_setTheory.MEMBER_NOT_EMPTY] >>
   EXISTS_TAC ``ms'':'a`` >>
@@ -356,11 +356,11 @@ FULL_SIMP_TAC std_ss [] >>
 (
   (FULL_SIMP_TAC std_ss [weak_loop_step_def, LET_DEF]) >>
   (FULL_SIMP_TAC std_ss [weak_triple_def]) >>
-  QSPECL_X_ASSUM  ``!x.P`` [`ms'`] >>
+  QSPECL_X_ASSUM  ``!x. _`` [`ms'`] >>
   (REV_FULL_SIMP_TAC std_ss []) >>
   ASSUME_TAC (Q.SPECL [`m`] weak_comp_thm) >>
   REV_FULL_SIMP_TAC std_ss [] >>
-  QSPECL_X_ASSUM ``!x.P`` [`ms`, `{l}`, `le`, `ms'`, `ms''`] >>
+  QSPECL_X_ASSUM ``!x. _`` [`ms`, `{l}`, `le`, `ms'`, `ms''`] >>
   REV_FULL_SIMP_TAC (std_ss) [SINGLETONS_UNION_thm] >>
   Q.SUBGOAL_THEN `l NOTIN le` (FULLSIMP_BY_THM std_ss) >- (
     FULL_SIMP_TAC std_ss [weak_loop_contract_def, pred_setTheory.IN_SING]
@@ -372,7 +372,7 @@ FULL_SIMP_TAC std_ss [] >>
 (FULL_SIMP_TAC std_ss [weak_loop_step_def, LET_DEF] ) >>
 ASSUME_TAC (Q.SPECL [`m`] weak_comp_thm) >>
 REV_FULL_SIMP_TAC std_ss [] >>
-QSPECL_X_ASSUM ``!x.P`` [`ms`, `{l}`, `le`, `ms'`, `ms''`] >>
+QSPECL_X_ASSUM ``!x. _`` [`ms`, `{l}`, `le`, `ms'`, `ms''`] >>
 REV_FULL_SIMP_TAC (std_ss) [SINGLETONS_UNION_thm] >>
   Q.SUBGOAL_THEN `l NOTIN le` (FULLSIMP_BY_THM std_ss) >- (
     FULL_SIMP_TAC std_ss [weak_loop_contract_def, pred_setTheory.IN_SING]
@@ -405,8 +405,7 @@ REPEAT STRIP_TAC >>
 ASSUME_TAC (Q.SPECL [`m`, `ms`, `var`, `l`, `le`, `invariant`, `C1`] invariant_rule_tmp_thm) >>
 FULL_SIMP_TAC std_ss [] >>
 REV_FULL_SIMP_TAC std_ss [] >>
-(Cases_on `C1 ms`) >-
-(
+Cases_on `C1 ms` >- (
   FULL_SIMP_TAC std_ss [] >>
   Q.EXISTS_TAC `ms'`>>
   FULL_SIMP_TAC std_ss []
