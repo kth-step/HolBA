@@ -43,7 +43,7 @@ val bir_add_reg_pre_def = Define `bir_add_reg_pre =
 `;
 
 val bir_add_reg_post_def = Define `bir_add_reg_post =
-^(beq (bplus(get_y, get_x), get_ly))`;
+(\(l:bir_label_t). (^(beq (bplus(get_y, get_x), get_ly))))`;
 
 
 val original_add_reg_loop_condition =  (bnot (bsle(get_lx, bconst64 0)));
@@ -103,7 +103,7 @@ val bir_add_reg_contract_4_pre_def = Define `bir_add_reg_contract_4_pre =
 ^(band(``bir_add_reg_I``, bnot bir_add_reg_loop_condition))
 `;
 val bir_add_reg_contract_4_post_def = Define `bir_add_reg_contract_4_post =
- (\(l:bir_label_t). bir_add_reg_post)
+ bir_add_reg_post
 `;
 
 
@@ -194,11 +194,12 @@ FULL_SIMP_TAC std_ss []
 
 
 val arm8_post_imp_bir_post_thm = store_thm("arm8_post_imp_bir_post_thm", 
-  ``bir_post_bir_to_arm8 arm8_add_reg_post bir_add_reg_post``,
+  ``!(ls:bir_label_t -> bool).
+    bir_post_bir_to_arm8 arm8_add_reg_post bir_add_reg_post ls``,
 
 FULL_SIMP_TAC std_ss [bir_post_bir_to_arm8_def] >>
 REPEAT STRIP_TAC >>
-UNDISCH_TAC ``bir_eval_exp bir_add_reg_post bs.bst_environ = SOME bir_val_true`` >>
+UNDISCH_TAC ``bir_eval_exp (bir_add_reg_post l) bs.bst_environ = SOME bir_val_true`` >>
 SIMP_TAC std_ss [bir_add_reg_post_def] >>
 SIMP_TAC std_ss arm_to_bir_exp_thms >>
 EVAL_TAC >>
@@ -206,7 +207,7 @@ Q.ABBREV_TAC `a = ms.REG 2w` >>
 Q.ABBREV_TAC `b = ms.REG 3w` >>
 Q.ABBREV_TAC `c = ms.REG 4w` >>
 Q.ABBREV_TAC `d = ms.REG 5w` >>
-(fn (asl,goal) => ASSUME_TAC (HolSmtLib.Z3_ORACLE_PROVE  goal)(asl,goal)) >>
+(fn (asl,goal) => ASSUME_TAC (HolSmtLib.Z3_ORACLE_PROVE goal)(asl,goal)) >>
 FULL_SIMP_TAC std_ss []
 );
 

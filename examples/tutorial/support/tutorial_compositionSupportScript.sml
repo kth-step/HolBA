@@ -8,6 +8,8 @@ open bir_program_env_orderTheory;
 
 val _ = new_theory "tutorial_compositionSupport";
 
+(* TODO: This is all obsolete. It should be replaced with the composition theorems in bin_simp_hoare_logicTheory *)
+(*
 val comp_seq_thm = store_thm("comp_seq_thm",
   ``!l l1 ls prog P R Q.
     bir_triple prog l (\x.x=l1) P R ==>
@@ -86,7 +88,7 @@ val comp_loop_thm = store_thm("comp_loop_thm",
 (bir_triple prog l ls invariant postcondition)
 ``, cheat
 );
-
+*)
 
 
 val _ = export_theory();

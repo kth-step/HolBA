@@ -10,6 +10,28 @@ open examplesBinaryTheory;
 
 val _ = new_theory "tutorial_composition";
 
+(* New workflow:
+
+  1. Use bir_never_assumviol_block_n_ht_from_to_labels_ht to
+     translate AV HT to non-AV HT.
+  2. Use bir_label_ht_impl_weak_ht to translate HT to weak HT.
+  3. Use ??? to translate weak HT to weak map HT.
+  4. Use the theorems in bin_simp_hoare_logicTheory to compose:
+     weak_map_std_seq_comp, also weak_map_loop_comp_thm which
+     is still TODO
+
+*)
+
+
+
+
+
+
+
+
+
+
+
 (* Use the below line to debug use_impl_rule (from tutorial_compositionLib):
 
   val (contract_thm, pre_impl_wp) = (bir_add_reg_entry_ht, contract_1_imp_taut_thm);
