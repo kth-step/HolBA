@@ -18,6 +18,7 @@ open bir_embexp_driverLib;
 open bir_symb_execLib;
 open bir_symb_masterLib;
 open bir_typing_expTheory;
+open scamv_configLib;
 
 (*
  workflow:
@@ -222,15 +223,16 @@ fun next_test select_path =
 (*        val _ = print_term (valOf (!current_word_rel)); *)
 
         val exp_id  =  bir_embexp_sates2_create ("arm8", "exp_cache_multiw", "obs_model_name_here") prog_id (s1, s2);
-        val test_result = bir_embexp_run exp_id false;
-
-        val _ = case test_result of
-		   (NONE, msg) => print ("result = NO RESULT (" ^ msg ^ ")")
-		 | (SOME r, msg) => print ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")");
-
-        val _ = print ("\n\n");
     in
-        test_result
+        (if (#only_gen (scamv_getopt_config ()))
+         then print ("Generated experiment: " ^ exp_id)
+                    (* no need to do anything else *)
+         else
+             let val test_result = bir_embexp_run exp_id false;
+             in case test_result of
+		                (NONE, msg) => print ("result = NO RESULT (" ^ msg ^ ")")
+		              | (SOME r, msg) => print ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")")
+             end); print "\n\n"
     end
 
 fun mk_round_robin n =
@@ -254,7 +256,7 @@ fun scamv_test_main tests prog =
           | do_tests n =
             let val _ = next_test round_robin
                         handle e =>
-                               (NONE, "next_test failed"); 
+                               raise ERR "scamv_test_main" "next_test failed";
             in do_tests (n-1) end
     in do_tests tests
     end
@@ -303,19 +305,20 @@ fun scamv_test_single_file filename =
 fun show_error_no_free_vars (id,_) =
     print ("Program " ^ id ^ " skipped because it has no free variables.\n");
 
-type scamv_config = { max_iter : int, prog_size : int, max_tests : int }
-
-fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
-    let val is_mock = false;
-
+fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
+              , generator = gen, only_gen = og } =
+    let val is_mock = (gen = mock);
         val _ = bir_prog_gen_arm8_mock_set_wrap_around false;
         val _ = bir_prog_gen_arm8_mock_set [["b #0x80"]];
 
-(*        val prog_store_fun =
-          if is_mock
-          then prog_gen_store_mock
-          else prog_gen_store_rand sz; *)
-        val prog_store_fun = prog_gen_store_a_la_qc sz;
+        val prog_store_fun =
+            case gen of
+                gen_rand => prog_gen_store_rand sz
+              | rand_simple => prog_gen_store_rand_simple sz
+              | qc => prog_gen_store_a_la_qc sz
+              | slice => raise ERR "scamv_run" "slicing not integrated yet"
+              | from_file filename => prog_gen_store_fromfile filename
+              | mock => prog_gen_store_mock
 
         fun main_loop 0 = ()
          |  main_loop n =
@@ -328,6 +331,12 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests } =
              main_loop (n-1))
     in
         main_loop m
+    end;
+
+fun scamv_run_with_opts () =
+    let val cfg = scamv_getopt_config ();
+    in
+        scamv_run cfg
     end;
 
 end;

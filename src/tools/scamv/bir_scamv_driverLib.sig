@@ -1,6 +1,5 @@
 signature bir_scamv_driverLib = sig
-
-  type scamv_config = { max_iter : int, prog_size : int, max_tests : int }
+    include scamv_configLib
 
   val scamv_test_main : int -> (string * term) -> unit
 
@@ -8,5 +7,6 @@ signature bir_scamv_driverLib = sig
   val scamv_test_single_file : string -> unit;
 
   val scamv_run : scamv_config -> unit
+  val scamv_run_with_opts : unit -> unit
 
 end
