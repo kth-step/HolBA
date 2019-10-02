@@ -52,10 +52,14 @@ val arm_weak_model_def =
 
 
 val arm_triple_def = Define `
-  arm_triple l ls pre post =
+  arm_triple mms l ls pre post =
     weak_triple arm_weak_model l ls
-      pre
-      post
+      (\ms. (arm8_bmr.bmr_extra ms)  /\
+            (EVERY (bmr_ms_mem_contains arm8_bmr ms) mms) /\
+            (pre ms))         
+      (\ms. (arm8_bmr.bmr_extra ms)  /\
+            (EVERY (bmr_ms_mem_contains arm8_bmr ms) mms) /\
+            (post ms))         
 `;
 
 
