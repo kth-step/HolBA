@@ -12,6 +12,7 @@ struct
   open wordsSyntax;
 
   open bir_prog_gen_randLib;
+  open bir_prog_gen_sliceLib;
   open asm_genLib;
 
   open bir_scamv_helpersLib;
@@ -187,6 +188,8 @@ fun prog_gen_store_rand sz = prog_gen_store true "prog_gen_rand" bir_prog_gen_ar
 fun prog_gen_store_rand_simple sz = prog_gen_store true "prog_gen_rand_simple" bir_prog_gen_arm8_rand_simple sz;
 fun prog_gen_store_a_la_qc sz =
     prog_gen_store true "prog_gen_a_la_qc" prog_gen_a_la_qc sz;
+    
+fun prog_gen_store_rand_slice sz = prog_gen_store true "prog_gen_rand_slice" bir_prog_gen_arm8_slice sz;
 
 (*
 val filename = "examples/asm/branch.s";

@@ -4,6 +4,20 @@ struct
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 open arm8_progLib arm8AssemblerLib arm8;
 
+open bir_scamv_helpersLib;
+     
+fun remChars  (c,s) =
+    let fun rem [] = []
+          | rem (c'::cs) =
+            if c = c'
+            then rem cs
+            else c'::rem cs
+    in
+	implode (rem (explode s)) 
+    end
+
+val splitter = String.tokens (fn c => c = #";");
+
 type gen = Random.generator
 val rg = Random.newgenseed 1.0;
 
@@ -179,7 +193,7 @@ fun cmp_and_branch_instGen (inst, pc, base, len) =
 
 end
 
-fun progGen (n, insts, base) =
+fun filter_slice (n, insts, base) =
     let val pc = ref 0;
 	fun instsGen (pc, inst, cls, base, len) =
 	    case (cls) of 
@@ -192,17 +206,34 @@ fun progGen (n, insts, base) =
 	(map (fn (cls, i) => let val v = instsGen (!pc, i, cls, base, n) in (pc := !pc + 1); v end) insts)
     end
 
-fun bir_prog_gen_arm8_slice (inputfile, base, len) =
+fun bir_prog_slice_arm8_rand (inputfile, base, len) =
     let val t1  = parse_objdump inputfile
 	val t2  = map (fn i => (instructionClass ((Decode((Option.valOf o BitsN.fromHexString) (i ,32)))), i)) t1
 	val idx = genint rg ((List.length t1) - len)
 	val instructions = List.take(List.drop(t2,idx), len)
     in
-	progGen (len, instructions, base)
+	filter_slice (len, instructions, base)
     end
 
-(* bir_prog_gen_arm8_slice ("input.da", 4000, 10); *)
+  val do_debug = false;
+  fun remove_plus s = concat (String.tokens (fn c => c = #"+") s);
+  fun remove_minus s = concat (String.tokens (fn c => c = #"-") s);
+  fun remove_junk s = (hd (String.tokens (fn c => c = #";")
+                                         (remove_minus (remove_plus s)))) ^ (if not do_debug then ""
+                                                                             else " /* orig: " ^ s ^ " */");
+
+(*
+val n = 3;
+*)
+ (* takes the number of instructions to generate *)
+ fun bir_prog_gen_arm8_slice n = 
+     let val mc = map (fn i => let val a::b::l = splitter (remChars (#" ", (hd i))) in b end)(bir_prog_slice_arm8_rand ("input2.da", 0, n))
+     in
+	 map ((strip_ws_off false) o remove_junk o hd o decomp) (mc)
+     end
 
 end; (* struct *)
+
+
 
 

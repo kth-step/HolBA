@@ -316,7 +316,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
                 gen_rand => prog_gen_store_rand sz
               | rand_simple => prog_gen_store_rand_simple sz
               | qc => prog_gen_store_a_la_qc sz
-              | slice => raise ERR "scamv_run" "slicing not integrated yet"
+              | slice => prog_gen_store_rand_slice sz
               | from_file filename => prog_gen_store_fromfile filename
               | mock => prog_gen_store_mock
 
