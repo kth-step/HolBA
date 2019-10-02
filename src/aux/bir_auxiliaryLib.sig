@@ -7,4 +7,5 @@ sig
   val QSPECL_X_ASSUM : term -> Q.tmquote list -> tactic
   val FULLSIMP_BY_THM : simpset -> thm -> tactic
 
+  val HO_MATCH_MPL : thm -> thm list -> thm
 end

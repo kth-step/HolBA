@@ -4,28 +4,40 @@ open tutorial_wpTheory;
 open bslSyntax;
 open tutorial_bir_to_armSupportTheory;
 open tutorial_smtTheory;
-open tutorial_compositionLib;
 open tutorial_compositionSupportTheory;
 open examplesBinaryTheory;
+open bir_wm_instTheory;
+open bin_hoare_logicTheory;
+
+open tutorial_compositionLib;
+
+open bir_auxiliaryLib;
 
 val _ = new_theory "tutorial_composition";
 
 (* New workflow:
 
-  1. Use bir_never_assumviol_block_n_ht_from_to_labels_ht to
-     translate AV HT to non-AV HT.
-  2. Use bir_label_ht_impl_weak_ht to translate HT to weak HT.
-  3. Use ??? to translate weak HT to weak map HT.
-  4. Use the theorems in bin_simp_hoare_logicTheory to compose:
-     weak_map_std_seq_comp, also weak_map_loop_comp_thm which
-     is still TODO
+   1. Use bir_never_assumviol_block_n_ht_from_to_labels_ht to
+      translate AV HT to non-AV HT (already done in tutorial_wpSupportLib.sml) - OK
+   2. Use bir_label_ht_impl_weak_ht to translate HT to weak HT - OK
+  (3. Use ??? to translate weak HT to weak map HT.)
+   4. Use the theorems in bin_hoare_logicTheory or bin_simp_hoare_logicTheory to compose:
+      weak_invariant_rule_thm and weak_seq_rule_thm, 
+      alternatively weak_map_std_seq_comp and weak_map_loop_comp_thm which
+      is still TODO
 
 *)
 
+(* Step 2: *)
+(* Entry HT translated to weak_triple format *)
+val bir_add_reg_entry_ht = HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_entry_ht;
 
-
-
-
+(* TODO: We need to supply to the WP generation and proving procedure the label set of the
+ *       HT we want to concatenate with as well. Format at this point could be fixed by some
+ *       (brutal) proof procedure. *)
+val bir_add_reg_comp_ht =
+  HO_MATCH_MPL weak_seq_rule_thm [Q.SPEC `bir_add_reg_prog` bir_model_is_weak (*,
+                                  bir_add_reg_entry_ht *)]
 
 
 
@@ -110,7 +122,7 @@ val thm1 =
                       computeLib.RESTR_EVAL_TAC [``bir_triple``, ``bir_add_reg_prog``]
                     )] add_comp_seq_rule_thm;
 
-(* Knock out second antecedent (contract for preamble of loop), obtaining the HT for the entire
+(* Knock out second antecedent (contract for loop content), obtaining the HT for the entire
  * program. *)
 val add_reg_contract_thm =
   SIMP_RULE std_ss [prove(``^((fst o dest_imp o concl) thm1)``,

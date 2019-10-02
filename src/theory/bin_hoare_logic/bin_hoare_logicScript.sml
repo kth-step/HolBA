@@ -223,9 +223,9 @@ val weak_seq_rule_thm = store_thm("weak_seq_rule_thm",
   ``!m l ls1 ls2 pre post.
     weak_model m ==>
     weak_triple m l (ls1 UNION ls2) pre post ==>
-    (!l1. (l1 IN ls1) ==> (weak_triple m l1 ls2 post post)) ==>
-    weak_triple m l ls2 pre post
-  ``,
+    (!l1. (l1 IN ls1) ==>
+    (weak_triple m l1 ls2 post post)) ==>
+    weak_triple m l ls2 pre post``,
 
 REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [weak_triple_def] >>

@@ -177,7 +177,8 @@ val arm_to_bir_exp_thms = (((CONJUNCTS o UNDISCH o fst o EQ_IMP_RULE) bir_liftin
 val arm8_pre_imp_bir_pre_thm = store_thm("arm8_pre_imp_bir_pre_thm", 
   ``bir_pre_arm8_to_bir arm8_add_reg_pre bir_add_reg_pre``,
 
-FULL_SIMP_TAC std_ss [bir_pre_arm8_to_bir_def, bir_add_reg_pre_is_bool_pred_thm] >>
+FULL_SIMP_TAC std_ss [bir_pre_arm8_to_bir_def,
+                      bir_add_reg_pre_is_bool_pred_thm] >>
 REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [bir_add_reg_pre_def] >>
 SIMP_TAC std_ss arm_to_bir_exp_thms >>
@@ -188,8 +189,9 @@ Q.ABBREV_TAC `a = ms.REG 2w` >>
 Q.ABBREV_TAC `b = ms.REG 3w` >>
 Q.ABBREV_TAC `c = ms.REG 4w` >>
 Q.ABBREV_TAC `d = ms.REG 5w` >>
-(fn (asl,goal) => ASSUME_TAC (HolSmtLib.Z3_ORACLE_PROVE  goal)(asl,goal)) >>
-FULL_SIMP_TAC std_ss []
+Cases_on `a < 0w` >> (
+  blastLib.FULL_BBLAST_TAC
+)
 );
 
 
@@ -207,8 +209,9 @@ Q.ABBREV_TAC `a = ms.REG 2w` >>
 Q.ABBREV_TAC `b = ms.REG 3w` >>
 Q.ABBREV_TAC `c = ms.REG 4w` >>
 Q.ABBREV_TAC `d = ms.REG 5w` >>
-(fn (asl,goal) => ASSUME_TAC (HolSmtLib.Z3_ORACLE_PROVE goal)(asl,goal)) >>
-FULL_SIMP_TAC std_ss []
+Cases_on `d + c = b` >> (
+  blastLib.FULL_BBLAST_TAC
+)
 );
 
 
