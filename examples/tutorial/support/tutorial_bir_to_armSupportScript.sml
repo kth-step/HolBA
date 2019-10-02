@@ -5,7 +5,7 @@ open bir_wm_instTheory;
 open bin_hoare_logicTheory;
 open bin_hoare_logicSimps;
 open bir_program_multistep_propsTheory;
-
+. 
 open bir_expSimps;
 open HolBACoreSimps;
 
@@ -27,6 +27,39 @@ val arm8_triple_def = Define `
     (ms'.PC IN ls) /\
     (post ms')
 `;
+
+val arm_weak_trs_def = Define `
+arm_weak_trs m ls ms1 = 
+        ?n.
+          ((n > 0) /\
+           (FUNPOW_OPT arm8_bmr.bmr_step_fun n ms = SOME ms') /\
+           ((m.pc ms') IN ls)
+          ) /\
+          !n'.
+            (((n' < n) /\ (n' > 0)) ==>
+            ?ms''.
+              (FUNPOW_OPT arm8_bmr.bmr_step_fun n' ms = SOME ms'') /\
+              (~((m.pc ms'') IN ls))
+            )`;
+
+
+val arm_weak_model_def =
+  Define `arm_weak_model  = <|
+    trs  := arm8_bmr.bmr_step_fun;
+    weak := arm_weak_trs;
+    pc   := (\st. st.PC)
+  |>`;
+
+
+val arm_triple_def = Define `
+  arm_triple l ls pre post =
+    weak_triple arm_weak_model l ls
+      pre
+      post
+`;
+
+
+
 
 (* Replace below with instance of weak_triple, obtain this by using bir_label_ht_impl_weak_ht. *)
 (*
