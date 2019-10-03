@@ -6,24 +6,26 @@ signature bir_prog_genLib = sig
 
   (* sets a sequence of test programs.
   *)
-  val bir_prog_gen_arm8_mock_set : string list list -> unit
+  val bir_prog_gen_arm8_mock_set : (string list) list -> unit
+
+  (* propagate with sequence of test programs (input: asm filenames).
+  *)
+  val bir_prog_gen_arm8_mock_propagate : string list -> unit
 
   (* sets whether the produced sequence wraps around.
   *)
   val bir_prog_gen_arm8_mock_set_wrap_around : bool -> unit
 
-  (* generates a fixed sequence of pre-defined test programs.
-  *)
-  val bir_prog_gen_arm8_mock : unit -> string list
 
+  (* ---------------------- *)
+  (* program slingers       *)
+  (* ---------------------- *)
 
-
-  (* ------------------- *)
-  (* heading             *)
-  (* ------------------- *)
-
-  (* description of the function.
-  *)
-  val bir_prog_gen_arm8 : int -> string list list
+  val prog_gen_store_mock : unit -> string * term
+  val prog_gen_store_fromfile : string -> unit -> string * term
+  val prog_gen_store_rand : int -> unit -> string * term
+  val prog_gen_store_rand_simple : int -> unit -> string * term
+  val prog_gen_store_a_la_qc : int -> unit -> string * term
+  val prog_gen_store_rand_slice : int -> unit -> string * term
 
 end

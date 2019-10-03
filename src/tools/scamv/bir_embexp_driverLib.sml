@@ -1,22 +1,25 @@
 structure bir_embexp_driverLib :> bir_embexp_driverLib =
 struct
 
-  local
-
   open HolKernel Parse boolLib bossLib;
 
+  open bir_scamv_helpersLib;
+
+(* error handling *)
   val libname = "bir_embexp_driverLib"
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
-  val embexp_basedir_ref = ref (NONE:string option);
 
+
+(* directory variables handling *)
   fun embexp_basedir_read () =
       case Option.mapPartial (fn p => if p <> "" then SOME p else NONE)
                              (OS.Process.getEnv ("HOLBA_EMBEXP_DIR")) of
           NONE => raise ERR "embexp_basedir" "the environment variable HOLBA_EMBEXP_DIR is not set"
         | SOME p => p;
 
+  val embexp_basedir_ref = ref (NONE:string option);
   fun embexp_basedir () =
     case !embexp_basedir_ref of
         NONE =>
@@ -28,152 +31,197 @@ struct
           end
       | SOME p => p;
 
-  val logfile_basedir_ref = ref (NONE:string option);
-
   fun logfile_basedir_read () =
       case Option.mapPartial (fn p => if p <> "" then SOME p else NONE)
-                             (OS.Process.getEnv ("HOLBA_SCAMV_LOGS")) of
-          NONE => raise ERR "logfile_basedir" "the environment variable HOLBA_SCAMV_LOGS is not set"
+                             (OS.Process.getEnv ("HOLBA_EMBEXP_LOGS")) of
+          NONE => raise ERR "logfile_basedir" "the environment variable HOLBA_EMBEXP_LOGS is not set"
         | SOME p => p;
 
+  val logfile_basedir_ref = ref (NONE:string option);
   fun logfile_basedir () =
     case !logfile_basedir_ref of
         NONE =>
           let
             val dir_path = logfile_basedir_read();
+            val _ = if not (OS.FileSys.isDir dir_path) then
+                      raise ERR "logfile_basedir" ("not a directory: " ^ dir_path)
+                    else
+                      ();
             val _ = logfile_basedir_ref := SOME dir_path;
           in
             dir_path
           end
       | SOME p => p;
 
-  in
-
-(*
-  val s = [("R1", 0x30000 + 0x80000000+70), ("R2", 32*1024)];
-
-  val s1 = [("R1", 0x8003B000)];
-  val s2 = [("R1", 0x80033000)];
-
-  val test_asm = "ldr x2, [x1]";
-
-  bir_embexp_run_cache_distinguishability test_asm s1 s2;
-
-  val s1 = [("R1", 0x80033005)];
-  val s2 = [("R1", 0x80033000)];
-*)
-
-  fun write_to_file filename str =
+(* log dir helper functions *)
+  fun get_progs_basedir arch_name =
     let
-      val file = TextIO.openOut (filename);
-      val _    = TextIO.output (file, str);
-      val _    = TextIO.closeOut file;
+      val logfile_basedir_p = logfile_basedir()
+      val progs_basedir = logfile_basedir_p ^ "/" ^ arch_name ^ "/progs";
+      val _ = makedir true progs_basedir;
     in
-      ()
+      progs_basedir
     end;
 
-  fun set_cache_input_setupi idx s =
+  fun get_experiment_basedir arch_name =
     let
-      val s_assign = List.map (fn (k,v) =>
-             let
-               val _ = if String.isPrefix "R" k then () else
-                        raise ERR "set_cache_input_setupi" "input not as exptected";
-               val regname = "x" ^ (String.extract(k, 1, NONE));
-               val regname = if String.isSuffix "_" regname then
-                               (String.extract(regname, 0, SOME((String.size regname) - 1)))
-                             else regname;
-               val bit2_16 = Arbnumcore.fromHexString "10000";
-               val bit2_32 = Arbnumcore.fromHexString "100000000";
-               val bit2_48 = Arbnumcore.fromHexString "1000000000000";
-               val v_0 = Arbnumcore.mod(v,                          bit2_16);
-               val v_1 = Arbnumcore.mod(Arbnumcore.div(v, bit2_16), bit2_16);
-               val v_2 = Arbnumcore.mod(Arbnumcore.div(v, bit2_32), bit2_16);
-               val v_3 = Arbnumcore.mod(Arbnumcore.div(v, bit2_48), bit2_16);
-               val line0 = "\tmovz " ^ regname ^ ", #0x" ^ (Arbnumcore.toHexString v_0);
-               val line1 = "\tmovk " ^ regname ^ ", #0x" ^ (Arbnumcore.toHexString v_1) ^ ", lsl #16";
-               val line2 = "\tmovk " ^ regname ^ ", #0x" ^ (Arbnumcore.toHexString v_2) ^ ", lsl #32";
-               val line3 = "\tmovk " ^ regname ^ ", #0x" ^ (Arbnumcore.toHexString v_3) ^ ", lsl #48";
-             in
-               "\n" ^ line0 ^ "\n" ^ line1 ^ "\n" ^ line2 ^ "\n" ^ line3 ^ "\n"
-             end) s;
-
-      val str = List.foldl (op^) "" s_assign;
-
-      val _ = write_to_file ((embexp_basedir()) ^ "/EmbExp-ProgPlatform/inc/experiment/cache_run_input_setup" ^ (Int.toString idx) ^ ".h") str;
+      val logfile_basedir_p = logfile_basedir()
+      val exp_basedir = logfile_basedir_p ^ "/" ^ arch_name;
+      val _ = makedir true exp_basedir;
     in
-      ()
-    end;
-  
-  fun set_cache_input_setup s1 s2 =
-    let
-      val _ = set_cache_input_setupi 1 s1;
-      val _ = set_cache_input_setupi 2 s2;
-    in
-      ()
+      exp_basedir
     end;
 
-  (* make connect has to be run before and must be complete *)
-  fun bir_embexp_run_cache_indistinguishability test_asm s1 s2 =
+
+(* embexp run identification *)
+  val embexp_run_id_ref = ref (NONE:string option);
+  fun embexp_run_id () =
+    case !embexp_run_id_ref of
+        NONE =>
+          let
+            val logfile_basedir_p = logfile_basedir()
+	    val holbaruns_basedir = logfile_basedir_p ^ "/holbaruns";
+	    val _ = makedir true holbaruns_basedir;
+
+            (* write out git commit and git diff of current directory. *)
+            (*    so this script needs to be executed from within the holbarepo! *)
+            val run_datestr = get_datestring();
+	    val holba_diff = get_exec_output "git diff";
+	    val holba_commit = get_exec_output "git rev-parse HEAD";
+
+	    val holba_hash = hashstring (run_datestr ^ holba_diff ^ holba_commit);
+	    val runitpath = holbaruns_basedir ^ "/" ^ holba_hash;
+	    (* this directory should not exist, but possibly already exists *)
+	    val _ = makedir true runitpath;
+
+	    val run_datestr_file = runitpath ^ "/holba.time";
+	    val holba_diff_file = runitpath ^ "/holba.diff";
+	    val holba_commit_file = runitpath ^ "/holba.commit";
+
+	    val _ = write_to_file_or_compare_clash "embexp_run_id" run_datestr_file run_datestr;
+	    val _ = write_to_file_or_compare_clash "embexp_run_id" holba_diff_file holba_diff;
+	    val _ = write_to_file_or_compare_clash "embexp_run_id" holba_commit_file holba_commit;
+
+            val _ = embexp_run_id_ref := SOME holba_hash;
+          in
+            holba_hash
+          end
+      | SOME p => p;
+
+
+(* create json state *)
+  fun gen_json_state isSecond s =
     let
-      (* write the input code *)
-      val _ = write_to_file ((embexp_basedir()) ^ "/EmbExp-ProgPlatform/inc/experiment/cache_run_input.h") test_asm;
+      fun kv_to_json (k,v) =
+        let
+          val _ = if String.isPrefix "R" k then () else
+                    raise ERR "gen_json_state" "input not as exptected";
+          val _ = if isSecond = String.isSuffix "_" k then () else
+                    raise ERR "gen_json_state" "input not as exptected _";
+          val k = if isSecond then
+                    (String.extract(k, 0, SOME((String.size k) - 1)))
+                  else k;
 
-      (* write the input state preparation code *)
-      val _ = set_cache_input_setup s1 s2;
+          val regname = "x" ^ (String.extract(k, 1, NONE));
+        in
+          "\n\t\"" ^ regname ^ "\": " ^ (Arbnumcore.toString v)
+        end;
+      val s_jsonmappings = List.map kv_to_json s;
 
-      (* set embexp compilation environment EMBEXP_CROSS, EMBEXP_GDB *)
-      val eeenv_str = case OS.Process.getEnv("HOLBA_GCC_ARM8_CROSS") of
-                          NONE => ""
-                        | SOME p => "EMBEXP_CROSS=" ^ p ^ " " ^ "EMBEXP_GDB=" ^ p ^ "gdb";
-
-      (* make runlog *)
-      val _ = if OS.Process.isSuccess (OS.Process.system (eeenv_str ^ " " ^
-                                                          "make --directory=" ^
-                                                          (embexp_basedir()) ^
-                                                          "/EmbExp-ProgPlatform runlog")) then ()
-              else raise ERR "bir_embexp_run_cache_indistinguishability" "running \"make runlog\" failed somehow";
-
-      (* create logs: asm/config1/config2 *)
-      val date = Date.fromTimeLocal (Time.now ());
-      val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S" date;
-      val logdir = (logfile_basedir()) ^ "/embexp/arm8/cache2/" ^ datestr;
-      val _ = OS.Process.system ("mkdir -p " ^ logdir);
-      val _ = OS.Process.system ("cp " ^ ((embexp_basedir()) ^ "/EmbExp-ProgPlatform/inc/experiment/cache_run_inp*.h") ^ " " ^ (logdir ^ "/"));
-
-      (* evaluate uart.log *)
-      val file = TextIO.openIn ((embexp_basedir()) ^ "/EmbExp-ProgPlatform/temp/uart.log");
-      fun allLinesRevFun acc = case TextIO.inputLine file of
-			    NONE => acc
-			  | SOME l => allLinesRevFun (l::acc);
-      val uart_output_strs = List.rev (allLinesRevFun []);
-      val _    = TextIO.closeIn file;
-
-      (* skip until init complete *)
-      fun skipUntilInit [] = raise ERR "bir_embexp_run_cache_distinguishability" "init never completed"
-	| skipUntilInit (x::l) = if x = "Init complete.\r\n" then (x::l)
-                                 else skipUntilInit l;
-      val uart_output_strs = skipUntilInit uart_output_strs;
-
-      (* check if we see a full experiment *)
-      val uart_output_ok = (List.length uart_output_strs) >= 3 andalso
-                           hd uart_output_strs = "Init complete.\r\n" andalso
-                           last uart_output_strs = "Experiment complete.\r\n";
-      val _ = if uart_output_ok then () else
-               raise ERR "bir_embexp_run_cache_distinguishability" "uart experiment seems not complete";
-
-      (* check the result line *)
-      val resultline = List.nth(uart_output_strs, (length uart_output_strs) - 2);
-
-      val result = case resultline of
-          "RESULT: SUCCESS\r\n" => true
-        | "RESULT: FAILED\r\n" => false
-        | otherwise => raise ERR "bir_embexp_run_cache_distinguishability"
-          ("Unexpected result from test platform: '" ^ otherwise ^ "'")
+      val str = List.foldr (fn (m, str) => m ^ "," ^ str) "" s_jsonmappings;
     in
-      result (* return result from evaluation *)
+      "{" ^ (String.extract(str, 0, SOME((String.size str) - 1))) ^ "\n}"
     end;
 
-  end (* local end *)
+(* interface functions *)
+(* ========================================================================================= *)
+  (* platform parameters *)
+  val bir_embexp_params_code   = Arbnum.fromHexString    "0x2000";
+  val bir_embexp_params_memory = (Arbnum.fromHexString "0x100000",
+                                  Arbnum.fromHexString  "0x40000");
+
+  fun bir_embexp_params_cacheable x = Arbnum.+ (Arbnum.fromInt 0x80000000, x);
+
+  fun bir_embexp_prog_to_code asm_lines =
+    let
+      fun is_colon x = x = #":";
+      fun is_ws x = x = #" " orelse x = #"\t" orelse x = #"\n";
+      fun is_asm_line l = let val ls = String.explode l in
+                            if List.exists is_colon ls then false else
+                            if length ls < 4 then false else
+                            not (is_ws (hd ls)) andalso not (is_ws (last ls))
+                          end;
+      val _ = if List.all is_asm_line asm_lines then () else
+                raise ERR "bir_embexp_prog_to_code" "some lines are not valid asm lines"
+    in
+      List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "" asm_lines
+    end;
+
+  fun bir_embexp_prog_create (arch_id, prog_gen_id) code_asm =
+    let
+      val progs_basedir = get_progs_basedir arch_id;
+
+      (* write out code *)
+      val codehash = hashstring code_asm;
+      val codepath = progs_basedir ^ "/" ^ codehash;
+      (* this directory possibly already exists *)
+      val _ = makedir true codepath;
+      (* but the code should not differ if it exists already *)
+      val _ = write_to_file_or_compare_clash "bir_embexp_prog_create" (codepath ^ "/code.asm") code_asm;
+
+      (* write out gen info *)
+      val embexp_run_file = codepath ^ "/" ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
+      val _ = write_to_file_or_compare_clash "bir_embexp_prog_create" embexp_run_file prog_gen_id;
+    in
+      codehash
+    end;
+
+  fun bir_embexp_sates2_create (arch_id, exp_type_id, state_gen_id) prog_id (s1,s2) =
+    let
+      val exp_basedir = get_experiment_basedir arch_id;
+
+      (* write out data *)
+      val input1 = gen_json_state false s1;
+      val input2 = gen_json_state true  s2;
+      val exp_datahash = hashstring (prog_id ^ input1 ^ input2);
+      val exp_id = "exps2/" ^ exp_type_id ^ "/" ^ exp_datahash;
+      val exp_datapath = exp_basedir ^ "/" ^ exp_id;
+      (* it can also happen that the same test is produced multiple times *)
+      val _ = makedir true exp_datapath;
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" (exp_datapath ^ "/input1.json") input1;
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" (exp_datapath ^ "/input2.json") input2;
+
+      (* write out reference to the code (hash of the code) *)
+      val prog_id_file = exp_datapath ^ "/code.hash";
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" prog_id_file prog_id;
+
+      (* write out gen info *)
+      val embexp_run_file = exp_datapath ^ "/" ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
+      val _ = write_to_file_or_compare_clash "bir_embexp_prog_create" embexp_run_file state_gen_id;
+    in
+      arch_id ^ "/" ^ exp_id
+    end;
+
+
+  fun bir_embexp_run exp_id with_reset =
+    let
+      val cmdline = ("\"" ^ (logfile_basedir()) ^ "/scripts/run_experiment.py\" " ^
+                     (if with_reset then "--conn_mode reset " else "--conn_mode try ") ^
+                     exp_id);
+      val _ = print ("===>>> RUNNING EXPERIMENT: " ^ exp_id ^ "\n")
+      val lines = get_exec_output_list cmdline;
+      val lastline = List.nth(lines, (List.length lines) - 1);
+      val result = if lastline = "result = true\n" then
+                     (SOME true, "the result is based on the python experiment runner script output")
+                   else if lastline = "result = false\n" then
+                     (SOME false, "the result is based on the python experiment runner script output")
+                   else if String.isPrefix "result = " lastline then
+                     (NONE, "BOARD EXCEPTION /\\/\\/\\/\\/\\/ " ^ (strip_ws_off true lastline))
+                   else
+                     raise ERR "bir_embexp_run" ("the last line of the python experiment runner is unexpected: " ^ lastline)
+    in
+      result
+    end;
 
 end
 

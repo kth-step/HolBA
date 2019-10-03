@@ -1,6 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 
 
+open bir_prog_genLib;
 open bir_scamv_driverLib;
 
 
@@ -10,11 +11,7 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 
 (*
- example entropy-paper0:
-      b.eq l2
-      mul x1, x2, x3
-  l2: ldr x2, [x1, #8]
-
+ example entropy-paper0: asm/enpa0.s
  models:
   (if sharedline(x) then tag(x)),
   (tag(x)),
@@ -22,17 +19,11 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
  *)
 
 (*
- example entropy-paper1:
-      cmp x2, x3
-      b.lo lb
-      add x1, x2, x3
-  lb: ldr x2, [x1]
+ example entropy-paper1: asm/enpa1.s
  *)
 
 (*
- example ld-ld:
-  ldr x3, [x1]
-  ldr x4, [x2]
+ example ld-ld: asm/ldld.s
  models:
   (cache line(x)),
   (cache line(x), tag(x))
@@ -59,18 +50,11 @@ val _ = Globals.show_types := true;
 
 val (prog_name, asm_file) = List.nth (input_files, 2);
 
-(*
 val _ = bir_prog_gen_arm8_mock_set [];
-val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
-*)
-
-(*
-val asm_code = "ldr x3, [x1]\nldr x4, [x2]\n";
-val (asm_code, sections) = process_asm_code asm_code;
-*)
+val _ = bir_prog_gen_arm8_mock_set_wrap_around false;
+val _ = bir_prog_gen_arm8_mock_propagate [asm_file];
 
 val _ = scamv_test_mock ();
-(*val _ = scamv_test_asmf asm_file;*)
 
 
 (*

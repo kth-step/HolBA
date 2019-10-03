@@ -68,6 +68,13 @@ fun symb_is_BST_Running state =
     is_BST_Running status
   end;
 
+fun symb_is_BST_Halted state = 
+  let 
+    val (pc, env, pres, status, obs) = dest_bir_symb_state state;
+  in
+    is_BST_Halted status
+  end;
+
 fun symb_is_BST_AssertionViolated state = 
   let 
     val (pc, env, pres, status, obs) = dest_bir_symb_state state;
@@ -161,6 +168,8 @@ fun symb_exec_leaflist (Symb_Node (s, [])) = [s]
 (* TODO: move this to lib and possibly merge to bir_expLib *)
   fun bir_exp_rewrite rwf exp =
       if is_BExp_Const exp then
+        rwf exp
+      else if is_BExp_MemConst exp then
         rwf exp
 
       else if is_BExp_Den exp then

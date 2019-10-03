@@ -55,13 +55,14 @@ fi
 
 
 ####### HOLBA_Z3_DIR
-## derived: PYTHONPATH, LD_LIBRARY_PATH,
+## derived: PYTHONPATH, LD_LIBRARY_PATH, PATH,
 ##          HOL4_Z3_EXECUTABLE, HOL4_Z3_WRAPPED_EXECUTABLE
 # if HOLBA_Z3_DIR has been found, export derived variables
 if [[ ! -z "${HOLBA_Z3_DIR}" ]]; then
     print_export_msg "HOLBA_Z3_DIR's derived variables"
     export PYTHONPATH="${HOLBA_Z3_DIR}/bin/python"
     export LD_LIBRARY_PATH="${HOLBA_Z3_DIR}/bin:$LD_LIBRARY_PATH"
+    export PATH="${HOLBA_Z3_DIR}/bin:${PATH}"
 
     export HOL4_Z3_EXECUTABLE="${HOLBA_Z3_DIR}/bin/z3"
     export HOL4_Z3_WRAPPED_EXECUTABLE="${HOLBA_DIR}/src/shared/z3_wrapper.py"
