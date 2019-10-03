@@ -120,4 +120,38 @@ add_obs_cache_line_tag_armv8 p = map_obs_prog add_block_cache_line p
 `;
 
 
+(* observe tag & set index, if set index is in lower half *)
+val observe_mem_subset_def = Define`
+observe_mem_subset e =
+         BStmt_Observe (BExp_BinPred BIExp_Equal
+                                     (BExp_BinExp BIExp_And
+                                                  (BExp_Const (Imm1 0x1000w))
+                                                  e)
+                                     (BExp_Const (Imm1 0w)))
+                       ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
+                       HD
+`;
+
+val add_obs_stmts_subset_def = Define `
+(add_obs_stmts_subset [] = []) /\
+(add_obs_stmts_subset (x :: xs) =
+ case x of
+     BStmt_Assign v e =>
+     (case select_mem e of
+          [] => x :: add_obs_stmts_subset xs
+        | lds => (APPEND (MAP constrain_mem lds)
+                      (x :: (APPEND (MAP observe_mem_subset lds) (add_obs_stmts_subset xs)))))
+   | _ => x :: add_obs_stmts_subset xs)
+`;
+
+val add_block_cache_line_subset_def = Define`
+add_block_cache_line_subset block =
+         block with bb_statements := add_obs_stmts_subset block.bb_statements
+`;
+
+val add_obs_cache_line_subset_armv8_def = Define`
+add_obs_cache_line_subset_armv8 p = map_obs_prog add_block_cache_line_subset p
+`;
+
+
 val _ = export_theory();
