@@ -8,6 +8,7 @@ open bin_hoare_logicTheory;
 open bir_program_multistep_propsTheory;
 open bir_program_blocksTheory;
 open bir_program_terminationTheory;
+open bir_program_env_orderTheory;
 
 open bir_htTheory;
 
@@ -54,6 +55,40 @@ val bir_etl_wm_def =
 	    );
     pc   := (\st. st.bst_pc.bpc_label)
   |>`;
+
+(* bir_exec_to_labels_triple_def *)
+(* weak_triple_def *)
+
+val bir_exec_to_labels_triple_precond_def = Define `
+  bir_exec_to_labels_triple_precond st pre prog =
+    (bir_eval_exp pre st.bst_environ = SOME bir_val_true) /\
+    (bir_env_vars_are_initialised st.bst_environ
+       (bir_vars_of_program prog)) /\
+    (st.bst_pc.bpc_index = 0) /\
+    (st.bst_status = BST_Running) /\
+    (bir_is_bool_exp_env st.bst_environ pre)
+`;
+
+val bir_exec_to_labels_triple_postcond_def = Define `
+  bir_exec_to_labels_triple_postcond st post prog ls =
+    (bir_eval_exp (post st.bst_pc.bpc_label) st.bst_environ =
+       SOME bir_val_true) /\
+    (bir_env_vars_are_initialised st.bst_environ
+       (bir_vars_of_program prog)) /\
+    (st.bst_pc.bpc_index = 0) /\
+    (st.bst_status = BST_Running) /\
+    (bir_is_bool_exp_env st.bst_environ (post st.bst_pc.bpc_label)) /\
+    (st.bst_pc.bpc_label IN ls)
+`;
+
+
+(* The main BIR triple to be used for composition *)
+val bir_triple_def = Define `
+  bir_triple prog l ls pre post =
+    weak_triple (bir_etl_wm prog) l ls
+      (\s. bir_exec_to_labels_triple_precond s pre prog)
+      (\s'. bir_exec_to_labels_triple_postcond s' post prog ls)
+`;
 
 (******************************************************************)
 (*                            LEMMATA                             *)
@@ -420,435 +455,89 @@ CASE_TAC >| [
 (* TODO: Prove that generated HT implies weak_triple *)
 (*****************************************************)
 
-(* bir_exec_to_labels_triple *)
-(* weak_triple *)
-
-val bir_exp_is_true_def = Define `
-  bir_exp_is_true st exp =
-    (bir_eval_exp exp st.bst_environ = SOME bir_val_true)
-`;
-
-val bir_exec_to_labels_triple_precond_def = Define `
-  bir_exec_to_labels_triple_precond st pre prog =
-    (bir_eval_exp pre st.bst_environ = SOME bir_val_true) /\
-    (bir_env_vars_are_initialised st.bst_environ
-       (bir_vars_of_program prog)) /\
-    (st.bst_pc.bpc_index = 0) /\
-    (st.bst_status = BST_Running) /\
-    (bir_is_bool_exp_env st.bst_environ pre)
-`;
-
 val bir_label_ht_impl_weak_ht =
   store_thm("bir_label_ht_impl_weak_ht",
   ``!prog l ls pre post.
     bir_exec_to_labels_triple prog l ls pre post ==>
-    weak_triple (bir_etl_wm prog) l ls
-      (\s. bir_exec_to_labels_triple_precond s pre prog)
-      (\s'. bir_eval_exp (post s'.bst_pc.bpc_label) s'.bst_environ = SOME bir_val_true)``,
+    bir_triple prog l ls pre post``,
 
 FULL_SIMP_TAC (std_ss++bir_wm_SS)
-              [weak_triple_def, bir_etl_wm_def,
+              [bir_triple_def, weak_triple_def, bir_etl_wm_def,
                bir_exec_to_labels_triple_def,
-               bir_exec_to_labels_triple_precond_def] >>
+               bir_exec_to_labels_triple_precond_def,
+               bir_exec_to_labels_triple_postcond_def] >>
 REPEAT STRIP_TAC >>
 QSPECL_X_ASSUM ``!s. _`` [`s`] >>
 REV_FULL_SIMP_TAC std_ss [] >>
 Q.EXISTS_TAC `s'` >>
-ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_weak_trs_def]
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_weak_trs_def,
+                                      bir_exec_to_labels_def] >>
+IMP_RES_TAC bir_exec_to_labels_n_ENV_ORDER >>
+IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_ORDER
 );
 
-(* How to obtain a blacklist triple from one False dummy HT and
- * one regular HT? *)
-(* TODO: Define regular postcond maps as in combinTheory. *)
-(* TODO: Define update with False label as in combinTheory. *)
-(* Take inspiration from new variable environment... *)
-(* TODO: Find lemma for "UNION" of two weak HTs with same l. *)
-(*
-val bir_label_hts_impl_weak_blacklist_ht =
-  store_thm("bir_label_hts_impl_weak_blacklist_ht",
-  ``!prog l ls1 ls2 pre1 pre2 post.
-    bir_exec_to_labels_triple prog l ls1 pre1 post ==>
-    bir_exec_to_labels_triple prog l ls2 pre2 bir_exp_false ==>
-    weak_triple (bir_etl_wm prog) l ls
-      (\s. bir_exec_to_labels_triple_precond s pre prog)
-      ((\s. (s.pc IN ls2 ==> F)) =+ (\s. bir_exp_is_true s post))``,
+
+(* Use weak_seq_rule to prove the BIR instance of it *)
+val bir_seq_rule_thm = store_thm("bir_seq_rule_thm",
+  ``!prog l ls1 ls2 pre post.
+    bir_triple prog l (ls1 UNION ls2) pre post ==>
+    (!l1. (l1 IN ls1) ==>
+          bir_triple prog l1 ls2 (post l1) post) ==>
+    bir_triple prog l ls2 pre post``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_triple_def] >>
+ASSUME_TAC bir_model_is_weak >>
+QSPECL_X_ASSUM ``!prog. _`` [`prog`] >>
+IMP_RES_TAC weak_seq_rule_thm >>
+(* Without label set in postcondition, we would be good here. *)
+(* TODO: Here, we require that 
+   (\s'. bir_exec_to_labels_triple_postcond s' post prog ls2) ==>
+   (\s'. bir_exec_to_labels_triple_postcond s' post prog
+                                               (ls1 UNION ls2)))
+
+(OK) and
+
+  s.bst_pc.bpc_label = l1 ==>
+  (\s. bir_exec_to_labels_triple_precond s (post l1) prog) ==>
+  (\s. bir_exec_to_labels_triple_postcond s post prog
+                                          (ls1 UNION ls2)
+  )
+
+after which re obtain
+
+  weak_triple (bir_etl_wm prog) l ls2
+    (\s. bir_exec_to_labels_triple_precond s pre prog)
+    (\s'.
+	 bir_exec_to_labels_triple_postcond s' post prog
+	   (ls1 UNION ls2))
+
+Question here is: does this imply
+
+  weak_triple (bir_etl_wm prog) l ls2
+    (\s. bir_exec_to_labels_triple_precond s pre prog)
+    (\s'. bir_exec_to_labels_triple_postcond s' post prog ls2)
+
+likely yes?
+
+*)
+cheat
+);
+
+val bir_triple_precond_conj = store_thm("bir_triple_precond_conj",
+  ``!prog l le invariant C1 post.
+bir_triple prog l le
+           (BExp_BinExp BIExp_And invariant C1) post ==>
+weak_triple (bir_etl_wm prog) l le (\s. (bir_exec_to_labels_triple_precond s invariant prog) /\ (~(bir_eval_exp C1 s.bst_environ = SOME bir_val_true))) (\s'. bir_exec_to_labels_triple_postcond s' post prog le)
+``,
 
 cheat
 );
-*)
-
-(****************************************************)
-(* OLD BUT POTENTIALLY USEFUL STUFF: MOVE ELSEWHERE *)
-(* TODO: Use bir_exec_block_n_EQ_THM where appropriate *)
 
 
-(* TODO: Move to bir_programTheory? *)
-val bir_exec_stmtB_pc =
-  store_thm("bir_exec_stmtB_pc",
-  ``!stmt st fe st'.
-    (bir_exec_stmtB stmt st = (fe,st')) ==>
-    (st.bst_pc.bpc_label = st'.bst_pc.bpc_label) /\
-    (st.bst_pc.bpc_index <= st'.bst_pc.bpc_index)``,
 
-Cases_on `st` >> Cases_on `st'` >>
-Cases_on `b` >> Cases_on `b'` >>
-rename1 `(bir_programcounter_t l2 n')` >>
-rename1 `(bir_programcounter_t l2 i2)` >>
-rename1 `(bir_programcounter_t l1 n)` >>
-rename1 `(bir_programcounter_t l1 i1)` >>
-REPEAT STRIP_TAC >> (
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-  Cases_on `stmt` >> FULL_SIMP_TAC std_ss [bir_exec_stmtB_def] >| [
-    FULL_SIMP_TAC std_ss [bir_exec_stmt_assign_def, LET_DEF] >>
-    Cases_on
-      `bir_eval_exp b0''
-         (bir_state_t (bir_programcounter_t l1 i1)
-                      b0 b1
-         ).bst_environ` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_set_typeerror_def, bir_state_t_fn_updates]
-    ) >>
-    Cases_on
-      `bir_env_write b x b0` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_t_fn_updates]
-    ),
+(* How to obtain a blacklist triple from one False dummy HT and
+ * one regular HT? *)
 
-    FULL_SIMP_TAC std_ss [bir_exec_stmt_assert_def, LET_DEF] >>
-    Cases_on
-      `bir_eval_exp b
-         (bir_state_t (bir_programcounter_t l1 i1)
-                      b0 b1
-         ).bst_environ` >> (
-       FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_set_typeerror_def, bir_state_t_fn_updates]
-    ) >> (
-      Cases_on `bir_dest_bool_val x` >- (
-        FULL_SIMP_TAC (std_ss++holBACore_ss)
-	  [bir_state_t_fn_updates]
-      ) >>
-      Cases_on `x'` >> (
-       FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_t_fn_updates]
-      )
-    ),
-
-    FULL_SIMP_TAC std_ss [bir_exec_stmt_assume_def, LET_DEF] >>
-    Cases_on
-      `bir_eval_exp b
-         (bir_state_t (bir_programcounter_t l1 i1)
-                      b0 b1
-         ).bst_environ` >> (
-       FULL_SIMP_TAC (std_ss++holBACore_ss)
-	 [bir_state_set_typeerror_def, bir_state_t_fn_updates]
-    ) >> (
-      Cases_on `bir_dest_bool_val x` >- (
-        FULL_SIMP_TAC (std_ss++holBACore_ss)
-	  [bir_state_t_fn_updates]
-      ) >>
-      Cases_on `x'` >> (
-       FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_t_fn_updates]
-      )
-    ),
-
-    FULL_SIMP_TAC std_ss [bir_exec_stmt_observe_def, LET_DEF] >>
-    Cases_on
-      `bir_eval_exp b
-         (bir_state_t (bir_programcounter_t l1 i1)
-                      b0 b1
-         ).bst_environ` >> (
-       FULL_SIMP_TAC (std_ss++holBACore_ss)
-	 [bir_state_set_typeerror_def, bir_state_t_fn_updates]
-    ) >> (
-      Cases_on `bir_dest_bool_val x` >- (
-        FULL_SIMP_TAC (std_ss++holBACore_ss)
-	  [bir_state_t_fn_updates]
-      ) >>
-      Cases_on `x'` >> (
-        FULL_SIMP_TAC (std_ss++holBACore_ss)
-          [bir_state_t_fn_updates]
-      ) >>
-      Cases_on `EXISTS IS_NONE (MAP (\e. bir_eval_exp e b0) l)` >> (
-        FULL_SIMP_TAC (std_ss++holBACore_ss)
-          [bir_state_t_fn_updates]
-      )
-    )
-  ]
-)
-);
-
-(* TODO: Move to bir_programTheory? *)
-val bir_exec_stmtE_terminated_pc_unchanged =
-  store_thm("bir_exec_stmtE_terminated_pc_unchanged",
-  ``!prog stmt st st'.
-    (bir_exec_stmtE prog stmt st = st') ==>
-    ~bir_state_is_terminated st ==>
-    bir_state_is_terminated st' ==>
-    (st.bst_pc = st'.bst_pc)``,
-
-REPEAT STRIP_TAC >>
-Cases_on `st` >> Cases_on `st'` >>
-FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-rename1 `pc1 = b'` >>
-rename1 `pc1 = pc2` >>
-Cases_on `stmt` >> FULL_SIMP_TAC std_ss [bir_exec_stmtE_def] >| [
-  (* Jmp *)
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_jmp_def] >>
-  Cases_on `bir_eval_label_exp b b0` >| [
-    FULL_SIMP_TAC (std_ss++holBACore_ss)
-      [bir_state_set_typeerror_def, bir_state_t_fn_updates],
-
-    FULL_SIMP_TAC (std_ss++holBACore_ss)
-                  [bir_exec_stmt_jmp_to_label_def] >>
-    Cases_on `MEM x (bir_labels_of_program prog)` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss)
-                  [bir_state_t_fn_updates,
-                   bir_state_is_terminated_def]
-    ) 
-  ],
-
-  (* CJmp *)
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_cjmp_def] >>
-  Cases_on `bir_eval_exp b b0` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss)
-      [bir_state_set_typeerror_def, bir_state_t_fn_updates, LET_DEF]
-  ) >>
-  Cases_on `bir_dest_bool_val x` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_jmp_def]
-  ) >>
-  Cases_on `x'` >> (
-    FULL_SIMP_TAC std_ss [] >>
-    rename1 `bir_eval_label_exp b0'' b0` >>
-    Cases_on `bir_eval_label_exp b0'' b0` >| [
-      FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_set_typeerror_def, bir_state_t_fn_updates],
-
-      FULL_SIMP_TAC (std_ss++holBACore_ss)
-		    [bir_exec_stmt_jmp_to_label_def] >>
-      Cases_on `MEM x' (bir_labels_of_program prog)` >> (
-	FULL_SIMP_TAC (std_ss++holBACore_ss)
-		    [bir_state_t_fn_updates,
-		     bir_state_is_terminated_def]
-      )
-    ]
-  ),
-
-  (* Halt *)
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_halt_def] >>
-  Cases_on `bir_eval_exp b b0` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss)
-      [bir_state_set_typeerror_def, bir_state_t_fn_updates]
-  )
-]
-);
-
-(* TODO: Move to bir_programTheory? *)
-val bir_exec_stmtE_terminated_pc_changed =
-  store_thm("bir_exec_stmtE_terminated_pc_changed",
-  ``!prog stmt st st'.
-    (bir_exec_stmtE prog stmt st = st') ==>
-    ~bir_state_is_terminated st ==>
-    ~bir_state_is_terminated st' ==>
-    (st'.bst_pc.bpc_index = 0)``,
-
-REPEAT STRIP_TAC >>
-Cases_on `st` >> Cases_on `st'` >>
-FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-rename1 `pc2.bpc_index = 0` >>
-rename1 `bir_state_t pc1 b0 b1` >>
-Cases_on `stmt` >> FULL_SIMP_TAC std_ss [bir_exec_stmtE_def] >| [
-  (* Jmp *)
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_jmp_def] >>
-  Cases_on `bir_eval_label_exp b b0` >| [
-    FULL_SIMP_TAC (std_ss++holBACore_ss)
-      [bir_state_set_typeerror_def, bir_state_t_fn_updates,
-       bir_state_is_terminated_def],
-
-    FULL_SIMP_TAC (std_ss++holBACore_ss)
-                  [bir_exec_stmt_jmp_to_label_def] >>
-    Cases_on `MEM x (bir_labels_of_program prog)` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss)
-                  [bir_state_t_fn_updates, bir_block_pc_def,
-                   bir_state_is_terminated_def] >>
-      RW_TAC std_ss []
-    ) 
-  ],
-
-  (* CJmp *)
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_cjmp_def] >>
-  Cases_on `bir_eval_exp b b0` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss)
-      [bir_state_set_typeerror_def, bir_state_t_fn_updates,
-       bir_state_is_terminated_def,
-       optionTheory.option_case_compute, LET_DEF]
-  ) >>
-  Cases_on `bir_dest_bool_val x` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-  ) >>
-  Cases_on `x'` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_jmp_def] >>
-    rename1 `bir_eval_label_exp b0'' b0` >>
-    Cases_on `bir_eval_label_exp b0'' b0` >| [
-      FULL_SIMP_TAC (std_ss++holBACore_ss)
-	[bir_state_set_typeerror_def, bir_state_t_fn_updates,
-         bir_state_is_terminated_def],
-
-      FULL_SIMP_TAC (std_ss++holBACore_ss)
-		    [bir_exec_stmt_jmp_to_label_def] >>
-      Cases_on `MEM x' (bir_labels_of_program prog)` >> (
-	FULL_SIMP_TAC (std_ss++holBACore_ss)
-		    [bir_state_t_fn_updates, bir_block_pc_def,
-		     bir_state_is_terminated_def] >>
-	RW_TAC std_ss []
-      )
-    ]
-  ),
-
-  (* Halt *)
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_halt_def] >>
-  Cases_on `bir_eval_exp b b0` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss)
-      [bir_state_set_typeerror_def, bir_state_t_fn_updates,
-       bir_state_is_terminated_def]
-  )
-]
-);
-
-val test_lemma = store_thm("test_lemma",
-  ``!prog st n ls.
-    (~bir_state_is_terminated
-       (bir_exec_infinite_steps_fun prog st n)) ==>
-    ((bir_exec_infinite_steps_fun prog st n).bst_pc.bpc_label
-       NOTIN ls) ==>
-    (bir_state_is_terminated
-       (bir_exec_infinite_steps_fun prog st (SUC n))) ==>
-    ((bir_exec_infinite_steps_fun prog st (SUC n)).bst_pc.bpc_label
-       NOTIN ls)``,
-
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_def] >>
-FULL_SIMP_TAC std_ss [arithmeticTheory.FUNPOW_SUC,
-                      bir_exec_step_state_def, bir_exec_step_def] >>
-REV_FULL_SIMP_TAC std_ss [] >>
-Cases_on `bir_get_current_statement prog
-            (FUNPOW (bir_exec_step_state prog) n st).bst_pc` >- (
-  Cases_on `st` >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss)
-    [bir_state_set_failed_def, bir_state_is_terminated_def]
-) >>
-FULL_SIMP_TAC std_ss [] >>
-Cases_on `x` >> FULL_SIMP_TAC std_ss [bir_exec_stmt_def] >| [
-  (* BStmt *)
-  FULL_SIMP_TAC std_ss [bir_exec_stmt_def] >>
-  Cases_on
-    `bir_exec_stmtB b (FUNPOW (bir_exec_step_state prog) n st)` >>
-  Cases_on `bir_state_is_terminated r` >- (
-    FULL_SIMP_TAC std_ss [LET_DEF] >>
-    IMP_RES_TAC bir_exec_stmtB_pc >>
-    FULL_SIMP_TAC std_ss []
-  ) >>
-  FULL_SIMP_TAC std_ss [LET_DEF] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss)
-                [bir_state_is_terminated_def],
-
-  (* EStmt *)
-  Cases_on
-    `bir_exec_stmtE prog b
-       (FUNPOW (bir_exec_step_state prog) n st)` >>
-  IMP_RES_TAC bir_exec_stmtE_terminated_pc_unchanged >>
-    FULL_SIMP_TAC std_ss []
-]
-);
-
-val test_lemma4 = store_thm("test_lemma4",
-  ``!prog st n.
-    (~bir_state_is_terminated
-       (bir_exec_infinite_steps_fun prog st n)) ==>
-    ((bir_exec_infinite_steps_fun prog st n).bst_pc.bpc_index
-       <> 0) ==>
-    (bir_state_is_terminated
-       (bir_exec_infinite_steps_fun prog st (SUC n))) ==>
-    ((bir_exec_infinite_steps_fun prog st (SUC n)).bst_pc.bpc_index
-       <> 0)``,
-
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_def] >>
-FULL_SIMP_TAC std_ss [arithmeticTheory.FUNPOW_SUC,
-                      bir_exec_step_state_def, bir_exec_step_def] >>
-REV_FULL_SIMP_TAC std_ss [] >>
-Cases_on `bir_get_current_statement prog
-            (FUNPOW (bir_exec_step_state prog) n st).bst_pc` >- (
-  Cases_on `st` >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss)
-    [bir_state_set_failed_def, bir_state_is_terminated_def]
-) >>
-FULL_SIMP_TAC std_ss [] >>
-Cases_on `x` >> FULL_SIMP_TAC std_ss [bir_exec_stmt_def] >| [
-  (* BStmt *)
-  (* TODO: Make lemma *)
-  (* Contradiction: Can't execute from a BStmt at index nonzero
-   * and reach index zero. *)
-  Q.ABBREV_TAC `st' = FUNPOW (bir_exec_step_state prog) n st` >>
-  Cases_on `bir_exec_stmtB b st'` >>
-  IMP_RES_TAC bir_exec_stmtB_pc >>
-  Cases_on `bir_state_is_terminated r` >- (
-    FULL_SIMP_TAC std_ss [LET_DEF] >>
-    FULL_SIMP_TAC arith_ss []
-  ) >>
-  FULL_SIMP_TAC std_ss [LET_DEF] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss)
-                [bir_state_is_terminated_def],
-
-  (* EStmt *)
-  (* TODO: Make lemma *)
-  Q.ABBREV_TAC `st' = FUNPOW (bir_exec_step_state prog) n st` >>
-  Cases_on `bir_exec_stmtE prog b st'` >>
-  IMP_RES_TAC bir_exec_stmtE_terminated_pc_unchanged >>
-  FULL_SIMP_TAC std_ss []
-]
-);
-
-val test_lemma3 =
-  store_thm("test_lemma3",
-  ``!prog st n ls.
-    ((bir_exec_infinite_steps_fun prog st n).bst_pc.bpc_index <> 0) ==>
-    ((bir_exec_infinite_steps_fun prog st n).bst_pc.bpc_label NOTIN ls) ==>
-    ((bir_exec_infinite_steps_fun prog st (SUC n)).bst_pc.bpc_label IN ls) ==>
-    ((bir_exec_infinite_steps_fun prog st (SUC n)).bst_pc.bpc_index = 0)``,
-
-REPEAT STRIP_TAC >>
-Q.ABBREV_TAC `st' = bir_exec_infinite_steps_fun prog st n` >>
-    FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS2,
-                          bir_exec_step_state_def,
-                          bir_exec_step_def] >>
-Cases_on `bir_state_is_terminated st'` >- (
-  FULL_SIMP_TAC std_ss []
-) >>
-FULL_SIMP_TAC std_ss [] >>
-Cases_on `bir_get_current_statement prog st'.bst_pc` >- (
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_failed_def]
-) >>
-FULL_SIMP_TAC std_ss [] >>
-Cases_on `x` >> FULL_SIMP_TAC std_ss [bir_exec_stmt_def] >| [
-
-  Cases_on `bir_exec_stmtB b st'` >>
-  IMP_RES_TAC bir_exec_stmtB_pc >>
-  FULL_SIMP_TAC std_ss [LET_DEF] >>
-  Cases_on `bir_state_is_terminated r` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF, bir_pc_next_def]
-  ),
-
-  Cases_on `bir_exec_stmtE prog b st'` >>
-  Cases_on `bir_state_is_terminated (bir_state_t b' b0 b1)` >| [
-    IMP_RES_TAC bir_exec_stmtE_terminated_pc_unchanged >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [],
-
-    IMP_RES_TAC bir_exec_stmtE_terminated_pc_changed
-  ]
-]
-);
-
-(* TODO: Potentially useful lemma: if next state PC has non-zero
- * index, then statement-step execution did not change PC
- * label *)
 
 val _ = export_theory();

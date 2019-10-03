@@ -5,16 +5,18 @@ open bir_wm_instTheory;
 open bin_hoare_logicTheory;
 open bin_hoare_logicSimps;
 open bir_program_multistep_propsTheory;
-. 
+open bir_auxiliaryTheory;
+
 open bir_expSimps;
 open HolBACoreSimps;
+open bin_hoare_logicSimps;
 
 open bir_auxiliaryLib;
 
 val _ = new_theory "tutorial_bir_to_armSupport";
 
 (* This part should be generalized *)
-
+(*
 val arm8_triple_def = Define `
   arm8_triple mms l ls pre post =
   !ms.
@@ -27,19 +29,19 @@ val arm8_triple_def = Define `
     (ms'.PC IN ls) /\
     (post ms')
 `;
-
+*)
 val arm_weak_trs_def = Define `
-arm_weak_trs m ls ms1 = 
+  arm_weak_trs ms ls ms' = 
         ?n.
           ((n > 0) /\
            (FUNPOW_OPT arm8_bmr.bmr_step_fun n ms = SOME ms') /\
-           ((m.pc ms') IN ls)
+           (ms'.PC IN ls)
           ) /\
           !n'.
             (((n' < n) /\ (n' > 0)) ==>
             ?ms''.
               (FUNPOW_OPT arm8_bmr.bmr_step_fun n' ms = SOME ms'') /\
-              (~((m.pc ms'') IN ls))
+              (~(ms''.PC IN ls))
             )`;
 
 
@@ -51,8 +53,9 @@ val arm_weak_model_def =
   |>`;
 
 
-val arm_triple_def = Define `
-  arm_triple mms l ls pre post =
+(* The main triple to be used for ARM composition *)
+val arm8_triple_def = Define `
+  arm8_triple mms l ls pre post =
     weak_triple arm_weak_model l ls
       (\ms. (arm8_bmr.bmr_extra ms)  /\
             (EVERY (bmr_ms_mem_contains arm8_bmr ms) mms) /\
@@ -63,41 +66,6 @@ val arm_triple_def = Define `
 `;
 
 
-
-
-(* Replace below with instance of weak_triple, obtain this by using bir_label_ht_impl_weak_ht. *)
-(*
-weak_triple (bir_etl_wm prog) l ls
-            (\s. bir_exec_to_labels_triple_precond s pre prog)
-            (\s'. bir_eval_exp (post s'.bst_pc.bpc_label) s'.bst_environ = SOME bir_val_true)
-*)
-
-val bir_triple_def = Define `
-  bir_triple prog l ls pre post =
-    weak_triple (bir_etl_wm prog) l ls
-      (\s. bir_exec_to_labels_triple_precond s pre prog)
-      (\s'. bir_eval_exp (post s'.bst_pc.bpc_label) s'.bst_environ = SOME bir_val_true)
-`;
-
-(*
-val bir_triple_def = Define `
-  bir_triple p l ls pre post =
-    !s.
-      bir_env_vars_are_initialised s.bst_environ
-        (bir_vars_of_program p) ==>
-      (s.bst_pc.bpc_index = 0) /\ (s.bst_pc.bpc_label = l) ==>
-      (s.bst_status = BST_Running) ==>
-      bir_is_bool_exp_env s.bst_environ pre ==>
-      (bir_eval_exp pre s.bst_environ = SOME bir_val_true) ==>
-      ?n l1 c1 c2 s'.
-        (bir_exec_block_n p s n = (l1,c1,c2,s')) /\
-	(s'.bst_status = BST_Running) /\
-	bir_is_bool_exp_env s'.bst_environ (post s'.bst_pc.bpc_label) /\
-	(bir_eval_exp (post s'.bst_pc.bpc_label) s'.bst_environ = SOME bir_val_true) /\
-	(s'.bst_pc.bpc_index = 0) /\ s'.bst_pc.bpc_label IN ls
-`;
-*)
-
 val same_var_is_bool_exp_env_eq_thm = prove(
   ``!pre pre' s.
     (bir_exp_is_taut (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not pre') pre)) ==>
@@ -107,8 +75,8 @@ val same_var_is_bool_exp_env_eq_thm = prove(
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_is_bool_exp_env_def,
-bir_exp_tautologiesTheory.bir_exp_is_taut_def,
-bir_bool_expTheory.bir_is_bool_exp_REWRS]
+                      bir_exp_tautologiesTheory.bir_exp_is_taut_def,
+                      bir_bool_expTheory.bir_is_bool_exp_REWRS]
 );
 
 
@@ -116,9 +84,9 @@ val bir_triple_weak_rule_thm = store_thm("bir_triple_weak_rule_thm",
   ``!pre pre' p l ls post.
     ((bir_vars_of_exp pre') SUBSET (bir_vars_of_program p)) ==>
     ((bir_vars_of_exp pre) SUBSET (bir_vars_of_program p)) ==>
-    (bir_triple p l ls pre post) ==>
-    (bir_exp_is_taut (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not pre') pre)) ==>
-    (bir_triple p l ls pre' post)``,
+    bir_triple p l ls pre post ==>
+    bir_exp_is_taut (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not pre') pre) ==>
+    bir_triple p l ls pre' post``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_triple_def, weak_triple_def, bir_exec_to_labels_triple_precond_def] >>
@@ -159,20 +127,21 @@ FULL_SIMP_TAC std_ss []
 
 val bir_pre_arm8_to_bir_def = Define `
   bir_pre_arm8_to_bir pre pre_bir =
-  bir_is_bool_exp pre_bir /\
-  ! ms bs.
-  (bmr_rel arm8_bmr bs ms) ==>
-  (bir_env_vars_are_initialised bs.bst_environ (bir_vars_of_exp pre_bir)) ==>
-  (pre ms) ==>
-  (bir_eval_exp pre_bir bs.bst_environ = SOME bir_val_true)`;
+    bir_is_bool_exp pre_bir /\
+    !ms bs.
+    bmr_rel arm8_bmr bs ms ==>
+    bir_env_vars_are_initialised bs.bst_environ (bir_vars_of_exp pre_bir) ==>
+    pre ms ==>
+    (bir_eval_exp pre_bir bs.bst_environ = SOME bir_val_true)
+`;
 
 val bir_post_bir_to_arm8_def = Define `
   bir_post_bir_to_arm8 post post_bir ls =
-  !ms bs l.
-  l IN ls ==>
-  (bmr_rel arm8_bmr bs ms) ==>
-  (bir_eval_exp (post_bir l) bs.bst_environ = SOME bir_val_true) ==>
-  (post ms)
+    !ms bs l.
+    l IN ls ==>
+    bmr_rel arm8_bmr bs ms ==>
+    (bir_eval_exp (post_bir l) bs.bst_environ = SOME bir_val_true) ==>
+    post ms
 `;
 
 
@@ -416,7 +385,7 @@ val default_arm8_bir_state_def = Define `default_arm8_bir_state ms =
 val default_arm8_bir_state_satisfies_rel_thm = prove(
   ``!ms.
     arm8_bmr.bmr_extra ms ==>
-    (bmr_rel arm8_bmr (default_arm8_bir_state ms) ms)``,
+    bmr_rel arm8_bmr (default_arm8_bir_state ms) ms``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [default_arm8_bir_state_def,
@@ -443,8 +412,8 @@ val exist_bir_of_arm8_thm = prove(
     arm8_wf_varset vars ==>
     arm8_bmr.bmr_extra ms ==>
     ?bs.
-      ((bmr_rel arm8_bmr bs ms) /\ (bs.bst_status = BST_Running) /\
-       (bir_env_vars_are_initialised bs.bst_environ vars))``,
+      (bmr_rel arm8_bmr bs ms /\ (bs.bst_status = BST_Running) /\
+       bir_env_vars_are_initialised bs.bst_environ vars)``,
 
 REPEAT STRIP_TAC >> 
 EXISTS_TAC ``default_arm8_bir_state ms`` >>
@@ -479,12 +448,23 @@ val bir_block_pc_alt_thm = prove(
   ``!pc l.
     (pc.bpc_label = l) ==>
     (pc.bpc_index = 0) ==>
-    (pc = (bir_block_pc l))``,
+    (pc = bir_block_pc l)``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (std_ss++holBACore_ss)
   [bir_programTheory.bir_block_pc_def,
    bir_programTheory.bir_programcounter_t_component_equality]
+);
+
+val FUNPOW_OPT_prev_EXISTS = store_thm("FUNPOW_OPT_prev_EXISTS",
+ ``!step_fun n n' s s'.
+   n > 0 ==>
+   (FUNPOW_OPT step_fun n s = SOME s') ==>
+   n' < n ==>
+   ?s''.
+   (FUNPOW_OPT step_fun n' s = SOME s'')``,
+
+cheat
 );
 
 
@@ -500,7 +480,7 @@ val lift_contract_thm = store_thm("lift_contract_thm",
       arm8_triple mms ml mls mpre mpost``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [arm8_triple_def] >>
+FULL_SIMP_TAC std_ss [arm8_triple_def, weak_triple_def] >>
 REPEAT STRIP_TAC >>
 ASSUME_TAC (SPECL [``ms:arm8_state``,
                    ``(bir_vars_of_program p) UNION (bir_vars_of_exp bpre)``]
@@ -512,14 +492,17 @@ subgoal `bir_eval_exp bpre bs.bst_environ = SOME bir_val_true` >- (
   METIS_TAC [bir_pre_arm8_to_bir_def]
 ) >>
 
-FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_triple_def, weak_triple_def,
-                                   bir_exec_to_labels_triple_precond_def, bir_etl_wm_def] >>
-PAT_X_ASSUM ``!s. _`` (fn thm => ASSUME_TAC (SPEC ``bs:bir_state_t`` thm)) >>
+FULL_SIMP_TAC (std_ss++bir_wm_SS)
+  [bir_triple_def, weak_triple_def,
+   bir_exec_to_labels_triple_precond_def,
+   bir_exec_to_labels_triple_postcond_def, bir_etl_wm_def] >>
+PAT_X_ASSUM ``!s. _``
+            (fn thm => ASSUME_TAC (SPEC ``bs:bir_state_t`` thm)) >>
 
 subgoal `(bs.bst_pc.bpc_index = 0) /\
          (bs.bst_pc.bpc_label = BL_Address (Imm64 ml))` >- (
   REPEAT (FULL_SIMP_TAC (srw_ss()) [bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
-                                    bir_programTheory.bir_block_pc_def])
+                                    bir_programTheory.bir_block_pc_def, arm_weak_model_def])
 ) >>
 FULL_SIMP_TAC std_ss [] >>
 REV_FULL_SIMP_TAC std_ss [] >>
@@ -569,11 +552,12 @@ subgoal `?n' lo c_st c_addr_labels.
 ) >>
 
 ASSUME_TAC (ISPECL [`` arm8_bmr``, ``mu:64 word_interval_t``,
-                    ``mms:(word64# word8 list) list``, ``p:'a bir_program_t``]
+                    ``mms:(word64# word8 list) list``,
+                    ``p:'a bir_program_t``]
                    bir_inst_liftingTheory.bir_is_lifted_prog_MULTI_STEP_EXEC) >>
 REV_FULL_SIMP_TAC std_ss [] >>
 
-PAT_X_ASSUM ``!n ms bs. p``
+PAT_X_ASSUM ``!n ms bs. _``
   (fn thm => ASSUME_TAC (SPECL [``n':num``, ``ms:arm8_state``, ``bs:bir_state_t``] thm)) >>
 REV_FULL_SIMP_TAC std_ss [] >>
 
@@ -596,31 +580,58 @@ subgoal `bs' = s'` >- (
 Q.PAT_X_ASSUM `bs' = s'` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
-EXISTS_TAC ``c_addr_labels':num`` >>
+SIMP_TAC (std_ss++bir_wm_SS) [arm_weak_model_def,
+                              arm_weak_trs_def] >>
 EXISTS_TAC ``ms':arm8_state`` >>
-FULL_SIMP_TAC std_ss [] >>
+REPEAT STRIP_TAC >| [
+  (* Execution *)
+  EXISTS_TAC ``c_addr_labels':num`` >>
+  FULL_SIMP_TAC std_ss [] >>
+  subgoal `c_addr_labels' > 0` >- (
+    Cases_on `c_addr_labels' = 0` >- (
+      FULL_SIMP_TAC std_ss [FUNPOW_OPT_REWRS] >>
+      (* Contradiction between 
+bir_exec_to_labels_n {l | IS_BL_Address l} p bs n' =
+         BER_Ended lo' c_st' 0 s'
 
-subgoal `mpost ms'` >- (
+and
+
+s'.bst_status = BST_Running
+       *)
+      cheat
+    ) >>
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  subgoal `ms'.PC IN mls` >- (
+    subgoal `s'.bst_pc = bir_block_pc (BL_Address (Imm64 ms'.PC))` >- (
+      REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [GEN_ALL bir_lifting_machinesTheory.arm8_bmr_rel_EVAL]
+    ) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss++bir_wm_SS) [bir_programTheory.bir_block_pc_def, arm_weak_model_def] >>
+    RW_TAC (std_ss++holBACore_ss) [] >>
+    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+    FULL_SIMP_TAC (srw_ss()) []
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REPEAT STRIP_TAC >>
+  IMP_RES_TAC FUNPOW_OPT_prev_EXISTS >>
+  Q.EXISTS_TAC `s''` >>
+  FULL_SIMP_TAC std_ss [] >>
+  (* TODO: Left to prove: s''.PC NOTIN mls
+   * Use bir_exec_to_labels? *)
+  cheat,
+
+  (* arm8_bmr.bmr_extra ms' *)
+  FULL_SIMP_TAC std_ss [bmr_rel_def],
+
+  (* EVERY (bmr_ms_mem_contains arm8_bmr ms') mms *)
+  FULL_SIMP_TAC std_ss [],
+
+  (* mpost ms' *)
   FULL_SIMP_TAC std_ss [bir_post_bir_to_arm8_def] >>
   QSPECL_X_ASSUM ``!ms. _``
     [`ms'`, `s'`, `(bir_block_pc (BL_Address li)).bpc_label`] >>
   REV_FULL_SIMP_TAC std_ss []
-) >>
-FULL_SIMP_TAC std_ss [] >>
-
-subgoal `s'.bst_pc = bir_block_pc (BL_Address (Imm64 ms'.PC))` >- (
-  REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [GEN_ALL bir_lifting_machinesTheory.arm8_bmr_rel_EVAL]
-) >>
-
-FULL_SIMP_TAC std_ss [bir_programTheory.bir_block_pc_def] >>
-FULL_SIMP_TAC std_ss [bir_weak_trs_def] >>
-Cases_on ` bir_exec_to_labels {BL_Address (Imm64 ml') | ml' IN mls} p bs` >> (
-  FULL_SIMP_TAC (std_ss++holBACore_ss) []
-) >>
-IMP_RES_TAC bir_exec_to_labels_ended_running >>
-RW_TAC (std_ss++holBACore_ss) [] >>
-REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-FULL_SIMP_TAC (srw_ss()) []
+]
 );
 
 
