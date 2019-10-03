@@ -45,13 +45,6 @@ case exp of
   | _ => []
 `;
 
-val observe_mem_def = Define`
-observe_mem e =
-         BStmt_Observe (BExp_Const (Imm1 1w))
-                       ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
-                       HD
-`;
-
 val constrain_mem_def = Define`
 constrain_mem e =
   BStmt_Assert
@@ -66,6 +59,15 @@ constrain_mem e =
                          (BExp_Const (Imm64 ^(mem_max)))))
 `;
 
+
+(* observe tag & set index *)
+val observe_mem_def = Define`
+observe_mem e =
+         BStmt_Observe (BExp_Const (Imm1 1w))
+                       ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
+                       HD
+`;
+
 val add_obs_stmts_def = Define `
 (add_obs_stmts [] = []) /\
 (add_obs_stmts (x :: xs) =
@@ -78,14 +80,23 @@ val add_obs_stmts_def = Define `
    | _ => x :: add_obs_stmts xs)
 `;
 
+val add_block_cache_line_def = Define`
+add_block_cache_line block =
+         block with bb_statements := add_obs_stmts block.bb_statements
+`;
 
+val add_obs_cache_line_armv8_def = Define`
+add_obs_cache_line_armv8 p = map_obs_prog add_block_cache_line p
+`;
+
+
+(* observe tag only *)
 val observe_mem_tag_def = Define`
 observe_mem_tag e =
          BStmt_Observe (BExp_Const (Imm1 1w))
                        ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 13w))])
                        HD
 `;
-
 
 val add_obs_stmts_tag_def = Define `
 (add_obs_stmts_tag [] = []) /\
@@ -97,17 +108,6 @@ val add_obs_stmts_tag_def = Define `
         | lds => (APPEND (MAP constrain_mem lds)
                          (x :: (APPEND (MAP observe_mem_tag lds) (add_obs_stmts_tag xs)))))
    | _ => x :: add_obs_stmts_tag xs)
-`;
-
-
-
-val add_block_cache_line_def = Define`
-add_block_cache_line block =
-         block with bb_statements := add_obs_stmts block.bb_statements
-`;
-
-val add_obs_cache_line_armv8_def = Define`
-add_obs_cache_line_armv8 p = map_obs_prog add_block_cache_line p
 `;
 
 val add_block_cache_line_tag_def = Define`

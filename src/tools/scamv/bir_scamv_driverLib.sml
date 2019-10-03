@@ -146,8 +146,13 @@ fun print_model model =
 fun to_sml_Arbnums model =
     List.map (fn (name, tm) => (name, dest_word_literal tm)) model;
 
+
+val obs_model_id = "bir_arm8_cache_line_tag_model";
+val hw_obs_model_id = "exp_cache_multiw";
+
 val (current_prog_id : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
+val (current_obs_model_id : string ref) = ref obs_model_id;
 val (current_pathstruct :
      (term * (term * term) list option) list ref) = ref [];
 val (current_word_rel : term option ref) = ref NONE;
@@ -156,6 +161,7 @@ val (current_antecedents : term list ref) = ref [];
 fun reset () =
     (current_prog_id := "";
      current_prog := NONE;
+     current_obs_model_id := obs_model_id;
      current_pathstruct := [];
      current_word_rel := NONE;
      current_antecedents := [])
@@ -167,8 +173,9 @@ fun start_interactive prog =
         val _ = current_prog := SOME lifted_prog;
 (*        val _ = print_term lifted_prog; *)
 
-        val lifted_prog_w_obs =
-            bir_arm8_cache_line_tag_model.add_obs lifted_prog;
+        val add_obs = #add_obs (get_obs_model (!current_obs_model_id))
+
+        val lifted_prog_w_obs = add_obs lifted_prog;
         val _ = print_term lifted_prog_w_obs;
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
         
@@ -222,7 +229,7 @@ fun next_test select_path =
 
 (*        val _ = print_term (valOf (!current_word_rel)); *)
 
-        val exp_id  =  bir_embexp_sates2_create ("arm8", "exp_cache_multiw", "obs_model_name_here") prog_id (s1, s2);
+        val exp_id  =  bir_embexp_sates2_create ("arm8", hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
     in
         (if (#only_gen (scamv_getopt_config ()))
          then print ("Generated experiment: " ^ exp_id)
@@ -264,8 +271,9 @@ fun scamv_test_main tests prog =
 
 fun scamv_test_gen_run tests (prog_id, lifted_prog) =
     let
-        val lifted_prog_w_obs =
-            bir_arm8_cache_line_tag_model.add_obs lifted_prog;
+        val add_obs = #add_obs (get_obs_model (!current_obs_model_id))
+
+        val lifted_prog_w_obs = add_obs lifted_prog;
         val _ = print_term(lifted_prog_w_obs);
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 
@@ -283,7 +291,7 @@ fun scamv_test_gen_run tests (prog_id, lifted_prog) =
         fun isPrimedRun s = String.isSuffix "_" s;
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
 
-        val exp_id  =  bir_embexp_sates2_create ("arm8", "exp_cache_multiw", "obs_model_name_here") prog_id (s1, s2);
+        val exp_id  =  bir_embexp_sates2_create ("arm8", hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
         val test_result = bir_embexp_run exp_id false;
 
         val _ = case test_result of
