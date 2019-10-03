@@ -116,7 +116,7 @@ add_block_cache_line_tag block =
 `;
 
 val add_obs_cache_line_tag_armv8_def = Define`
-add_obs_cache_line_tag_armv8 p = map_obs_prog add_block_cache_line p
+add_obs_cache_line_tag_armv8 p = map_obs_prog add_block_cache_line_tag p
 `;
 
 

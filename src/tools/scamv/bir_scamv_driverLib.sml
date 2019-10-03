@@ -147,7 +147,7 @@ fun to_sml_Arbnums model =
     List.map (fn (name, tm) => (name, dest_word_literal tm)) model;
 
 
-val obs_model_id = "bir_arm8_cache_line_tag_model";
+val obs_model_id = "bir_arm8_cache_line_model";
 val hw_obs_model_id = "exp_cache_multiw";
 
 val (current_prog_id : string ref) = ref "";
