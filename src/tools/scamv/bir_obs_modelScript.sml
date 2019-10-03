@@ -31,29 +31,29 @@ val add_obs_pc_def = Define`
 add_obs_pc p = map_obs_prog add_block_pc_obs p
 `;
 
-val select_loads_def = Define`
-select_loads exp =
+val select_mem_def = Define`
+select_mem exp =
 case exp of
-    BExp_Cast c e t => select_loads e
-  | BExp_UnaryExp ue e => select_loads e
-  | BExp_BinExp be e1 e2 => select_loads e1 ++ select_loads e2
-  | BExp_BinPred bp e1 e2 => select_loads e1 ++ select_loads e2
-  | BExp_MemEq e1 e2 => select_loads e1 ++ select_loads e2
-  | BExp_IfThenElse e1 e2 e3 => select_loads e1 ++ select_loads e2 ++ select_loads e3
-  | BExp_Load e1 e2 a b => BExp_Load e1 e2 a b :: (select_loads e1 ++ select_loads e2)
-  | BExp_Store e1 e2 a e3 => select_loads e1 ++ select_loads e2 ++ select_loads e3
+    BExp_Cast c e t => select_mem e
+  | BExp_UnaryExp ue e => select_mem e
+  | BExp_BinExp be e1 e2 => select_mem e1 ++ select_mem e2
+  | BExp_BinPred bp e1 e2 => select_mem e1 ++ select_mem e2
+  | BExp_MemEq e1 e2 => select_mem e1 ++ select_mem e2
+  | BExp_IfThenElse e1 e2 e3 => select_mem e1 ++ select_mem e2 ++ select_mem e3
+  | BExp_Load e1 e2 a b => e2 :: (select_mem e1 ++ select_mem e2)
+  | BExp_Store e1 e2 a e3 => e2 :: (select_mem e1 ++ select_mem e2 ++ select_mem e3)
   | _ => []
 `;
 
-val observe_load_def = Define`
-observe_load (BExp_Load _ e _ _) =
+val observe_mem_def = Define`
+observe_mem e =
          BStmt_Observe (BExp_Const (Imm1 1w))
                        ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
                        HD
 `;
 
-val constrain_load_def = Define`
-constrain_load (BExp_Load _ e _ _) =
+val constrain_mem_def = Define`
+constrain_mem e =
   BStmt_Assert
        (BExp_BinExp BIExp_And
                     (BExp_BinPred
@@ -71,16 +71,16 @@ val add_obs_stmts_def = Define `
 (add_obs_stmts (x :: xs) =
  case x of
      BStmt_Assign v e =>
-     (case select_loads e of
+     (case select_mem e of
           [] => x :: add_obs_stmts xs
-        | lds => (APPEND (MAP constrain_load lds)
-                      (x :: (APPEND (MAP observe_load lds) (add_obs_stmts xs)))))
+        | lds => (APPEND (MAP constrain_mem lds)
+                      (x :: (APPEND (MAP observe_mem lds) (add_obs_stmts xs)))))
    | _ => x :: add_obs_stmts xs)
 `;
 
 
-val observe_load_tag_def = Define`
-observe_load_tag (BExp_Load _ e _ _) =
+val observe_mem_tag_def = Define`
+observe_mem_tag e =
          BStmt_Observe (BExp_Const (Imm1 1w))
                        ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 13w))])
                        HD
@@ -92,10 +92,10 @@ val add_obs_stmts_tag_def = Define `
 (add_obs_stmts_tag (x :: xs) =
  case x of
      BStmt_Assign v e =>
-     (case select_loads e of
+     (case select_mem e of
           [] => x :: add_obs_stmts_tag xs
-        | lds => (APPEND (MAP constrain_load lds)
-                         (x :: (APPEND (MAP observe_load_tag lds) (add_obs_stmts_tag xs)))))
+        | lds => (APPEND (MAP constrain_mem lds)
+                         (x :: (APPEND (MAP observe_mem_tag lds) (add_obs_stmts_tag xs)))))
    | _ => x :: add_obs_stmts_tag xs)
 `;
 

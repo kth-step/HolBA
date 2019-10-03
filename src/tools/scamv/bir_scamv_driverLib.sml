@@ -169,7 +169,7 @@ fun start_interactive prog =
 
         val lifted_prog_w_obs =
             bir_arm8_cache_line_tag_model.add_obs lifted_prog;
-(*      val _ = print_term lifted_prog_w_obs; *)
+        val _ = print_term lifted_prog_w_obs;
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
         
         fun has_observations (SOME []) = false
