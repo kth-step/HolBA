@@ -9,6 +9,8 @@ open bir_program_multistep_propsTheory;
 open bir_program_blocksTheory;
 open bir_program_terminationTheory;
 open bir_program_env_orderTheory;
+open bir_exp_equivTheory;
+open bir_bool_expTheory;
 
 open bir_htTheory;
 
@@ -69,16 +71,17 @@ val bir_exec_to_labels_triple_precond_def = Define `
     (bir_is_bool_exp_env st.bst_environ pre)
 `;
 
+(* We don't need the condition that st.bst_pc.bpc_label IN ls here,
+ * since we can obtain that result from weak_pc_in_thm. *)
 val bir_exec_to_labels_triple_postcond_def = Define `
-  bir_exec_to_labels_triple_postcond st post prog ls =
+  bir_exec_to_labels_triple_postcond st post prog =
     (bir_eval_exp (post st.bst_pc.bpc_label) st.bst_environ =
        SOME bir_val_true) /\
     (bir_env_vars_are_initialised st.bst_environ
        (bir_vars_of_program prog)) /\
     (st.bst_pc.bpc_index = 0) /\
     (st.bst_status = BST_Running) /\
-    (bir_is_bool_exp_env st.bst_environ (post st.bst_pc.bpc_label)) /\
-    (st.bst_pc.bpc_label IN ls)
+    (bir_is_bool_exp_env st.bst_environ (post st.bst_pc.bpc_label))
 `;
 
 
@@ -87,7 +90,7 @@ val bir_triple_def = Define `
   bir_triple prog l ls pre post =
     weak_triple (bir_etl_wm prog) l ls
       (\s. bir_exec_to_labels_triple_precond s pre prog)
-      (\s'. bir_exec_to_labels_triple_postcond s' post prog ls)
+      (\s'. bir_exec_to_labels_triple_postcond s' post prog)
 `;
 
 (******************************************************************)
@@ -477,6 +480,40 @@ IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_ORDER
 );
 
 
+val bir_weak_triple_post_pre = store_thm("bir_weak_triple_post_pre",
+  ``!prog ls1 ls2 post.
+    (!l1. l1 IN ls1 ==> weak_triple (bir_etl_wm prog) l1 ls2
+                          (\s'.
+                             bir_exec_to_labels_triple_precond s' (post l1) prog
+                          )
+                          (\s'.
+                             bir_exec_to_labels_triple_postcond s' post prog
+                          )
+    ) ==>
+    (!l1. l1 IN ls1 ==> weak_triple (bir_etl_wm prog) l1 ls2
+                          (\s'.
+                             bir_exec_to_labels_triple_postcond s' post prog
+                          )
+                          (\s'.
+                             bir_exec_to_labels_triple_postcond s' post prog
+                          )
+     )``,
+
+REPEAT STRIP_TAC >>
+ASSUME_TAC (Q.SPEC `prog` bir_model_is_weak) >>
+QSPECL_X_ASSUM ``!l1'. _`` [`l1`] >>
+REV_FULL_SIMP_TAC std_ss [weak_triple_def,
+                          bir_exec_to_labels_triple_precond_def,
+                          bir_exec_to_labels_triple_postcond_def] >>
+REPEAT STRIP_TAC >>
+QSPECL_X_ASSUM ``!s'. _`` [`s'`] >>
+REV_FULL_SIMP_TAC std_ss [] >>
+Q.SUBGOAL_THEN `s'.bst_pc.bpc_label = l1` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+  FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def]
+)
+);
+
+
 (* Use weak_seq_rule to prove the BIR instance of it *)
 val bir_seq_rule_thm = store_thm("bir_seq_rule_thm",
   ``!prog l ls1 ls2 pre post.
@@ -487,57 +524,146 @@ val bir_seq_rule_thm = store_thm("bir_seq_rule_thm",
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_triple_def] >>
+IMP_RES_TAC bir_weak_triple_post_pre >>
 ASSUME_TAC bir_model_is_weak >>
 QSPECL_X_ASSUM ``!prog. _`` [`prog`] >>
-IMP_RES_TAC weak_seq_rule_thm >>
-(* Without label set in postcondition, we would be good here. *)
-(* TODO: Here, we require that 
-   (\s'. bir_exec_to_labels_triple_postcond s' post prog ls2) ==>
-   (\s'. bir_exec_to_labels_triple_postcond s' post prog
-                                               (ls1 UNION ls2)))
-
-(OK) and
-
-  s.bst_pc.bpc_label = l1 ==>
-  (\s. bir_exec_to_labels_triple_precond s (post l1) prog) ==>
-  (\s. bir_exec_to_labels_triple_postcond s post prog
-                                          (ls1 UNION ls2)
-  )
-
-after which re obtain
-
-  weak_triple (bir_etl_wm prog) l ls2
-    (\s. bir_exec_to_labels_triple_precond s pre prog)
-    (\s'.
-	 bir_exec_to_labels_triple_postcond s' post prog
-	   (ls1 UNION ls2))
-
-Question here is: does this imply
-
-  weak_triple (bir_etl_wm prog) l ls2
-    (\s. bir_exec_to_labels_triple_precond s pre prog)
-    (\s'. bir_exec_to_labels_triple_postcond s' post prog ls2)
-
-likely yes?
-
-*)
-cheat
+IMP_RES_TAC weak_seq_rule_thm
 );
 
-val bir_triple_precond_conj = store_thm("bir_triple_precond_conj",
-  ``!prog l le invariant C1 post.
-bir_triple prog l le
-           (BExp_BinExp BIExp_And invariant C1) post ==>
-weak_triple (bir_etl_wm prog) l le (\s. (bir_exec_to_labels_triple_precond s invariant prog) /\ (~(bir_eval_exp C1 s.bst_environ = SOME bir_val_true))) (\s'. bir_exec_to_labels_triple_postcond s' post prog le)
+val bir_loop_contract_def = Define `
+  bir_loop_contract prog l le invariant C1 var =
+    (~(l IN le)) /\
+    (!x. (bir_triple prog l ({l} UNION le)
+           (* (\ms. (invariant ms) /\ (C1 ms) /\ ((var ms) = x:num)) *)
+           (BExp_BinExp BIExp_And invariant
+             (BExp_BinExp BIExp_And
+               C1
+               (BExp_BinPred BIExp_Equal var (BExp_Const (Imm64 x)))
+             )
+           )
+           (* (\ms.(((m.pc ms)=l) /\ (invariant ms) /\ ((var ms) < x) /\ ((var ms) >= 0)))) *)
+	   (\l'. if l' = l then (BExp_BinExp BIExp_And invariant
+		   		  (BExp_BinExp BIExp_And
+				    (BExp_BinPred BIExp_LessThan var (BExp_Const (Imm64 x)))
+				    (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 0w)) var)
+                                  )
+			        )
+                            else bir_exp_false
+	   )
+         )
+    )
+`;
+
+(* This theorem obtains a weak_loop_contract for the proof of bir_invariant_rule_thm *)
+val bir_weak_triple_loop = store_thm("bir_weak_triple_loop",
+  ``!prog l le invariant variant C1 post x.
+    (* TODO: Antecedents for variant? *)
+    (l NOTIN le) ==>
+    weak_triple (bir_etl_wm prog) l le
+      (\s. bir_exec_to_labels_triple_precond s
+             (BExp_BinExp BIExp_And invariant
+               (BExp_BinExp BIExp_And
+                 C1
+                 (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 (n2w x))))
+               )
+             )
+             prog
+      )
+      (\s'. bir_exec_to_labels_triple_postcond s' post prog) ==>
+
+    weak_loop_contract (bir_etl_wm prog) l le
+      (\s. bir_exec_to_labels_triple_precond s invariant prog)
+      (\s. bir_exec_to_labels_triple_precond s C1 prog)
+      (* TODO: Last argument is supposed to be a map from bir_states to num *)
+(*
+      (\s. b2n ((???)  (THE (bir_eval_exp variant s.bst_environ))))
+*)
+      some_function_of_var_and_some_state_here
 ``,
 
+FULL_SIMP_TAC std_ss [weak_triple_def, weak_loop_contract_def] >>
+REPEAT STRIP_TAC >>
+QSPECL_X_ASSUM ``!s. _`` [`s`] >>
+REV_FULL_SIMP_TAC std_ss [GSYM bir_and_equiv, bir_exec_to_labels_triple_precond_def,
+                          bir_exec_to_labels_triple_postcond_def, bir_is_bool_exp_env_REWRS] >>
+Q.EXISTS_TAC `s'` >>
+FULL_SIMP_TAC std_ss [] >>
+(* ??? *)
 cheat
 );
 
 
+(* TODO: Generalize... *)
+(* This should be used to instantiate weak_invariant_rule_thm *)
+val bir_weak_triple_precond_conj = store_thm("bir_weak_triple_precond_conj",
+  ``!prog l le invariant C1 post.
+    weak_triple (bir_etl_wm prog) l le
+      (\s.
+	   bir_exec_to_labels_triple_precond s
+	     (BExp_BinExp BIExp_And invariant
+		(BExp_UnaryExp BIExp_Not C1)) prog)
+      (\s'. bir_exec_to_labels_triple_postcond s' post prog) ==>
+    weak_triple (bir_etl_wm prog) l le
+      (\s. (bir_exec_to_labels_triple_precond s invariant prog) /\
+           (* All the precondition stuff here as well, but we only need booleanity of C1 *)
+           (bir_exec_to_labels_triple_precond s (BExp_UnaryExp BIExp_Not C1) prog)
+      )
+      (\s'. bir_exec_to_labels_triple_postcond s' post prog)``,
 
-(* How to obtain a blacklist triple from one False dummy HT and
- * one regular HT? *)
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_precond_def,
+                      bir_exec_to_labels_triple_postcond_def, weak_triple_def] >>
+REPEAT STRIP_TAC >>
+QSPECL_X_ASSUM ``!s. _`` [`s`] >>
+REV_FULL_SIMP_TAC std_ss [GSYM bir_and_equiv, bir_not_equiv, 
+                          bir_is_bool_exp_env_REWRS] >>
+Q.EXISTS_TAC `s'` >>
+FULL_SIMP_TAC std_ss []
+);
+
+
+(* Likewise, use weak_invariant_rule_thm to prove the BIR instance of it *)
+val bir_invariant_rule_thm = store_thm("bir_invariant_rule_thm",
+  ``!prog l le invariant C1 var post.
+    bir_loop_contract prog l le invariant C1 var ==>
+    bir_triple prog l le (BExp_BinExp BIExp_And invariant (BExp_UnaryExp BIExp_Not C1)) post ==>
+    bir_triple prog l le invariant post``,
+
+FULL_SIMP_TAC std_ss [bir_triple_def, bir_loop_contract_def] >>
+REPEAT STRIP_TAC >>
+ASSUME_TAC bir_model_is_weak >>
+QSPECL_X_ASSUM ``!prog. _`` [`prog`] >>
+subgoal `weak_loop_contract (bir_etl_wm prog) l le
+           (\s. bir_exec_to_labels_triple_precond s invariant prog)
+           (\s. bir_eval_exp C1 s.bst_environ = SOME bir_val_true) some_var` >- (
+  (* TODO: Use bir_weak_triple_loop here *)
+  cheat
+) >>
+subgoal `weak_triple (bir_etl_wm prog) l le
+               (\ms.
+                    (\s. bir_exec_to_labels_triple_precond s invariant prog)
+                      ms /\
+                    ~(\s. bir_eval_exp C1 s.bst_environ = SOME bir_val_true)
+                      ms)
+                    (\s. bir_exec_to_labels_triple_postcond s post prog)` >- (
+  IMP_RES_TAC bir_weak_triple_precond_conj >>
+  FULL_SIMP_TAC std_ss [weak_triple_def, bir_exec_to_labels_triple_precond_def] >>
+  REPEAT STRIP_TAC >>
+  QSPECL_X_ASSUM ``!s. _`` [`ms`] >>
+  QSPECL_X_ASSUM ``!s. _`` [`ms`] >>
+  (* TODO: Where do we get this antecedent? *)
+  subgoal `bir_is_bool_exp_env ms.bst_environ (BExp_UnaryExp BIExp_Not C1)` >- (
+    cheat
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REV_FULL_SIMP_TAC std_ss [bir_not_equiv] >>
+  (* Proof done at this point after some fiddling... *)
+  cheat
+) >>
+IMP_RES_TAC weak_invariant_rule_thm
+);
+
+
+(* TODO: How to obtain a blacklist triple? *)
 
 
 val _ = export_theory();

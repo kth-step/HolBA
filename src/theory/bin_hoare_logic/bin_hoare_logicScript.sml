@@ -300,10 +300,10 @@ val (loop_fun_eqns, loop_fun_ind) = Defn.tprove(loop_fun_defn,
 
 
 val weak_loop_contract_def = Define `
-weak_loop_contract m l le invariant C1 var =
-(~(l IN le)) /\
-(!x. (weak_triple m l ({l} UNION le) (\ms. (invariant ms) /\ (C1 ms) /\ ((var ms) = x:num))
-     (\ms.(((m.pc ms)=l) /\ (invariant ms) /\ ((var ms) < x) /\ ((var ms) >= 0)))))
+  weak_loop_contract m l le invariant C1 var =
+    (~(l IN le)) /\
+    (!x. (weak_triple m l ({l} UNION le) (\ms. (invariant ms) /\ (C1 ms) /\ ((var ms) = x:num))
+         (\ms.(((m.pc ms)=l) /\ (invariant ms) /\ ((var ms) < x) /\ ((var ms) >= 0)))))
 `;
 
 val inductive_invariant_goal = (fst o dest_imp o concl ) (
@@ -394,13 +394,13 @@ weak_triple m l le (\ms. (invariant ms) /\ (~(C1 ms))) post ==>
 ((invariant ms) /\ ((m.pc ms) = l) /\ (C1 ms)) ==>
  (?ms'. ((m.weak ms le ms') /\ (post ms'))))` loop_fun_ind) inductive_invariant_thm;
 
-val weak_invariant_rule_thm = prove(``
-  !m.
-  weak_model m ==>
-  !l le invariant C1 var post.
-  weak_loop_contract m l le invariant C1 var ==>
-  weak_triple m l le (\ms. (invariant ms) /\ (~(C1 ms))) post ==>
-  weak_triple m l le invariant post``,
+val weak_invariant_rule_thm = store_thm("weak_invariant_rule_thm",
+  ``!m.
+    weak_model m ==>
+    !l le invariant C1 var post.
+    weak_loop_contract m l le invariant C1 var ==>
+    weak_triple m l le (\ms. (invariant ms) /\ (~(C1 ms))) post ==>
+    weak_triple m l le invariant post``,
 
 REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [weak_triple_def] >>

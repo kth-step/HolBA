@@ -588,8 +588,14 @@ REPEAT STRIP_TAC >| [
   EXISTS_TAC ``c_addr_labels':num`` >>
   FULL_SIMP_TAC std_ss [] >>
   subgoal `c_addr_labels' > 0` >- (
+
+
+
     Cases_on `c_addr_labels' = 0` >- (
       FULL_SIMP_TAC std_ss [FUNPOW_OPT_REWRS] >>
+      Cases_on `n'` >- (
+        FULL_SIMP_TAC std_ss [bir_exec_to_labels_n_REWR_0]
+      ) >>
       (* Contradiction between 
 bir_exec_to_labels_n {l | IS_BL_Address l} p bs n' =
          BER_Ended lo' c_st' 0 s'
