@@ -573,7 +573,7 @@ val bir_weak_triple_loop = store_thm("bir_weak_triple_loop",
 
     weak_loop_contract (bir_etl_wm prog) l le
       (\s. bir_exec_to_labels_triple_precond s invariant prog)
-      (\s. bir_exec_to_labels_triple_precond s C1 prog)
+      (\s. bir_eval_exp C1 s.bst_environ = SOME bir_val_true)
       (* TODO: Last argument is supposed to be a map from bir_states to num *)
 (*
       (\s. b2n ((???)  (THE (bir_eval_exp variant s.bst_environ))))
@@ -624,41 +624,55 @@ FULL_SIMP_TAC std_ss []
 (* Likewise, use weak_invariant_rule_thm to prove the BIR instance of it *)
 val bir_invariant_rule_thm = store_thm("bir_invariant_rule_thm",
   ``!prog l le invariant C1 var post.
-    bir_loop_contract prog l le invariant C1 var ==>
-    bir_triple prog l le (BExp_BinExp BIExp_And invariant (BExp_UnaryExp BIExp_Not C1)) post ==>
-    bir_triple prog l le invariant post``,
+    (* Compute in place using proof procedures: *)
+    bir_is_bool_exp C1 ==>
+    (bir_vars_of_exp C1) SUBSET (bir_vars_of_program prog) ==>
+    (* Obtain bir_loop contract through some rule: *)
+    bir_loop_contract prog l le
+      invariant
+      C1 var ==>
+    bir_triple prog l le
+      (BExp_BinExp BIExp_And
+        invariant
+        (BExp_UnaryExp BIExp_Not C1)
+      ) post ==>
+    bir_triple prog l le
+      invariant
+      post``,
 
 FULL_SIMP_TAC std_ss [bir_triple_def, bir_loop_contract_def] >>
 REPEAT STRIP_TAC >>
 ASSUME_TAC bir_model_is_weak >>
 QSPECL_X_ASSUM ``!prog. _`` [`prog`] >>
+(* 1. Somehow obtain the (correct) weak_loop_contract from bir_loop_contract *)
 subgoal `weak_loop_contract (bir_etl_wm prog) l le
            (\s. bir_exec_to_labels_triple_precond s invariant prog)
            (\s. bir_eval_exp C1 s.bst_environ = SOME bir_val_true) some_var` >- (
   (* TODO: Use bir_weak_triple_loop here *)
   cheat
 ) >>
+(* Delete used-up assumptions *)
+Q.PAT_X_ASSUM `!x. _` (fn thm => ALL_TAC) >>
+Q.PAT_X_ASSUM `l NOTIN ls` (fn thm => ALL_TAC) >>
+(* 2. Change the BIR conjunction to a HOL conjunction *)
 subgoal `weak_triple (bir_etl_wm prog) l le
-               (\ms.
-                    (\s. bir_exec_to_labels_triple_precond s invariant prog)
-                      ms /\
-                    ~(\s. bir_eval_exp C1 s.bst_environ = SOME bir_val_true)
-                      ms)
-                    (\s. bir_exec_to_labels_triple_postcond s post prog)` >- (
+	   (\ms.
+	      (\s. bir_exec_to_labels_triple_precond s invariant prog) ms /\
+	      ~(\s. bir_eval_exp C1 s.bst_environ = SOME bir_val_true) ms)
+	      (\s. bir_exec_to_labels_triple_postcond s post prog)` >- (
   IMP_RES_TAC bir_weak_triple_precond_conj >>
-  FULL_SIMP_TAC std_ss [weak_triple_def, bir_exec_to_labels_triple_precond_def] >>
+  FULL_SIMP_TAC std_ss [weak_triple_def] >>
   REPEAT STRIP_TAC >>
-  QSPECL_X_ASSUM ``!s. _`` [`ms`] >>
-  QSPECL_X_ASSUM ``!s. _`` [`ms`] >>
-  (* TODO: Where do we get this antecedent? *)
-  subgoal `bir_is_bool_exp_env ms.bst_environ (BExp_UnaryExp BIExp_Not C1)` >- (
-    cheat
+  subgoal `bir_is_bool_exp_env ms.bst_environ C1` >- (
+    FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def, bir_exec_to_labels_triple_precond_def] >>
+    IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET
   ) >>
-  FULL_SIMP_TAC std_ss [] >>
-  REV_FULL_SIMP_TAC std_ss [bir_not_equiv] >>
-  (* Proof done at this point after some fiddling... *)
-  cheat
+  QSPECL_X_ASSUM ``!s. _`` [`ms`] >>
+  QSPECL_X_ASSUM ``!s. _`` [`ms`] >>
+  IMP_RES_TAC bir_not_equiv >>
+  REV_FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_REWRS, bir_exec_to_labels_triple_precond_def]
 ) >>
+(* Use weak_invariant_rule_thm *)
 IMP_RES_TAC weak_invariant_rule_thm
 );
 
