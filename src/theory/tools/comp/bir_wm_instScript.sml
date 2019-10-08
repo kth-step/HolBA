@@ -259,6 +259,33 @@ Cases_on `n` >| [
 ]
 );
 
+
+val bir_weak_trs_EQ = store_thm("bir_weak_trs_EQ",
+  ``!ls prog st st'.
+    (bir_weak_trs ls prog st = SOME st') <=>
+       (?l n n0.
+       bir_exec_to_labels ls prog st =
+         BER_Ended l n n0 st') /\
+    ~bir_state_is_terminated st' /\
+    (st'.bst_pc.bpc_index = 0) /\ st'.bst_pc.bpc_label IN ls
+``,
+
+REPEAT STRIP_TAC >>
+EQ_TAC >| [
+  DISCH_TAC >>
+  FULL_SIMP_TAC std_ss [bir_weak_trs_def] >>
+  Cases_on `bir_exec_to_labels ls prog st` >> ( 
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  IMP_RES_TAC bir_exec_to_labels_ended_running >>
+  RW_TAC std_ss [],
+
+  DISCH_TAC >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_weak_trs_def]
+]
+);
+
+
 (******************************************************************)
 (*                         MAIN PROOF                             *)
 (******************************************************************)
