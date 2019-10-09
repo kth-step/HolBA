@@ -320,13 +320,14 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
         val _ = bir_prog_gen_arm8_mock_set [["b #0x80"]];
 
         val prog_store_fun =
-            case gen of
+           case gen of
                 gen_rand => prog_gen_store_rand sz
               | rand_simple => prog_gen_store_rand_simple sz
               | qc => prog_gen_store_a_la_qc sz
               | slice => prog_gen_store_rand_slice sz
               | from_file filename => prog_gen_store_fromfile filename
               | mock => prog_gen_store_mock
+              | prefetch_strides => prog_gen_store_prefetch_stride sz;
 
         fun main_loop 0 = ()
          |  main_loop n =

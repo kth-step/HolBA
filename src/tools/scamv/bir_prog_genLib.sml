@@ -14,6 +14,7 @@ struct
   open bir_prog_gen_randLib;
   open bir_prog_gen_sliceLib;
   open asm_genLib;
+  open armv8_prefetch_genLib;
 
   open bir_scamv_helpersLib;
 
@@ -190,6 +191,7 @@ fun prog_gen_store_a_la_qc sz =
     prog_gen_store true "prog_gen_a_la_qc" prog_gen_a_la_qc sz;
     
 fun prog_gen_store_rand_slice sz = prog_gen_store true "prog_gen_rand_slice" bir_prog_gen_arm8_slice sz;
+fun prog_gen_store_prefetch_stride sz = prog_gen_store true "prog_gen_prefetch_stride" prog_gen_prefetch_stride sz;
 
 (*
 val filename = "examples/asm/branch.s";

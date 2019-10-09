@@ -9,11 +9,12 @@ datatype 'cfg opt_entry =
 
 datatype gen_type = gen_rand
                   | rand_simple
+                  | prefetch_strides
                   | mock
                   | qc
                   | slice
                   | from_file of string
-                                     
+
 type scamv_config = { max_iter : int,
                       prog_size : int,
                       max_tests : int,
@@ -32,6 +33,7 @@ fun gen_type_fromString gt =
     case gt of
         "rand" => SOME gen_rand
       | "rand_simple" => SOME rand_simple
+      | "prefetch_strides" => SOME prefetch_strides
       | "mock" => SOME mock
       | "qc" => SOME qc
       | "slice" => SOME slice
