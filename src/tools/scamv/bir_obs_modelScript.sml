@@ -125,9 +125,9 @@ val observe_mem_subset_def = Define`
 observe_mem_subset e =
          BStmt_Observe (BExp_BinPred BIExp_Equal
                                      (BExp_BinExp BIExp_And
-                                                  (BExp_Const (Imm1 0x1000w))
+                                                  (BExp_Const (Imm64 0x1000w))
                                                   e)
-                                     (BExp_Const (Imm1 0w)))
+                                     (BExp_Const (Imm64 0w)))
                        ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
                        HD
 `;
