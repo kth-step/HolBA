@@ -165,17 +165,27 @@ fun reset () =
      current_word_rel := NONE;
      current_antecedents := [])
 
+fun printv n str =
+    if (#verbosity (scamv_getopt_config ()) >= n)
+    then print str
+    else ();
+
+fun min_verb n f =
+    if (#verbosity (scamv_getopt_config ()) >= n)
+    then f ()
+    else ();
+
 fun start_interactive prog =
     let
         val (prog_id, lifted_prog) = prog;
         val _ = current_prog_id := prog_id;
         val _ = current_prog := SOME lifted_prog;
-(*      val _ = print_term lifted_prog; *)
+        val _ = min_verb 2 (fn () => print_term lifted_prog);
 
         val add_obs = #add_obs (get_obs_model (!current_obs_model_id))
 
         val lifted_prog_w_obs = add_obs lifted_prog;
-(*      val _ = print_term lifted_prog_w_obs; *)
+        val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 (*        val _ = List.map (Option.map (List.map (print_term o fst)) o snd) paths;*)
         
@@ -190,8 +200,8 @@ fun start_interactive prog =
 
         val _ = current_pathstruct := paths;
         val (conds, relation) = mkRel_conds paths;
-(*        val _ = print_term relation; *)
-        val _ = print ("Word relation\n");
+        val _ = min_verb 4 (fn () => print_term relation);
+        val _ = printv 1 ("Word relation\n");
         val word_relation = make_word_relation relation all_exps;
         val _ = current_word_rel := SOME word_relation;
         val _ = current_antecedents := List.map bir2bool conds;
@@ -200,15 +210,15 @@ fun start_interactive prog =
 fun next_test select_path =
     let
         val path = select_path (!current_antecedents);
-        val _ = (print "Selecting path: "; print_term path);
+        val _ = min_verb 1 (fn () => (print "Selecting path: "; print_term path));
         val rel = case !current_word_rel of
                     SOME x => x
                   | NONE => raise ERR "next_test" "no relation found";
         val word_relation = ``^rel /\ ^path``;
         
-        val _ = print ("Calling Z3\n");
+        val _ = printv 1 ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
-        val _ = (print "SAT model:\n"; print_model model(*; print "\n"*));
+        val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
 
         val sml_model = to_sml_Arbnums model;
         fun isPrimedRun s = String.isSuffix "_" s;
@@ -232,13 +242,13 @@ fun next_test select_path =
         val exp_id  =  bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
     in
         (if (#only_gen (scamv_getopt_config ()))
-         then print ("Generated experiment: " ^ exp_id)
+         then printv 1 ("Generated experiment: " ^ exp_id)
                     (* no need to do anything else *)
          else
              let val test_result = bir_embexp_run exp_id false;
              in case test_result of
-		                (NONE, msg) => print ("result = NO RESULT (" ^ msg ^ ")")
-		              | (SOME r, msg) => print ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")")
+		                (NONE, msg) => printv 1 ("result = NO RESULT (" ^ msg ^ ")")
+		              | (SOME r, msg) => printv 1 ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")")
              end); print "\n\n"
     end
 
@@ -270,7 +280,9 @@ fun scamv_test_main tests prog =
 
 
 fun scamv_test_gen_run tests (prog_id, lifted_prog) =
-    let
+    (raise ERR "scamv_test_gen_run" "function DEPRECATED and will be removed soon - use scamv_run with from_file generator instead"; (NONE, "DEPRECATED"));
+(*   (DEPRECATED)
+     let
         val add_obs = #add_obs (get_obs_model (!current_obs_model_id))
 
         val lifted_prog_w_obs = add_obs lifted_prog;
@@ -301,7 +313,7 @@ fun scamv_test_gen_run tests (prog_id, lifted_prog) =
         val _ = print ("\n\n");
     in
         test_result
-    end
+    end *)
 
 val scamv_test_mock = scamv_test_gen_run 1 o prog_gen_store_mock;
 
@@ -338,14 +350,16 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
                  hw_obs_model_id := "exp_cache_multiw_subset")
              | _ => ();
 
-        val _ = (print "Scam-V set to the following test params:\n";
-                 print ("Program generator: " ^ PolyML.makestring gen ^ "\n");
-                 print ("Observation model: " ^ !current_obs_model_id ^ "\n");
-                 print ("HW observation model: " ^ !hw_obs_model_id ^ "\n"));
-
+        val _ = if (verb > 0) then
+                    (print "Scam-V set to the following test params:\n";
+                     print ("Program generator: " ^ PolyML.makestring gen ^ "\n");
+                     print ("Observation model: " ^ !current_obs_model_id ^ "\n");
+                     print ("HW observation model: " ^ !hw_obs_model_id ^ "\n"))
+                else ();
+        
         fun main_loop 0 = ()
          |  main_loop n =
-            (print ("Iteration: " ^ PolyML.makestring (m - n) ^ "\n");
+            (printv 1 ("Iteration: " ^ PolyML.makestring (m - n) ^ "\n");
              (let val prog =
                       prog_store_fun ()
               in scamv_test_main tests prog end
