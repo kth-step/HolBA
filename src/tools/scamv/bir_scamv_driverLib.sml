@@ -146,9 +146,8 @@ fun print_model model =
 fun to_sml_Arbnums model =
     List.map (fn (name, tm) => (name, dest_word_literal tm)) model;
 
-
 val obs_model_id = "bir_arm8_cache_line_model";
-val hw_obs_model_id = "exp_cache_multiw";
+val hw_obs_model_id = ref "exp_cache_multiw";
 
 val (current_prog_id : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
@@ -171,13 +170,14 @@ fun start_interactive prog =
         val (prog_id, lifted_prog) = prog;
         val _ = current_prog_id := prog_id;
         val _ = current_prog := SOME lifted_prog;
-(*        val _ = print_term lifted_prog; *)
+(*      val _ = print_term lifted_prog; *)
 
         val add_obs = #add_obs (get_obs_model (!current_obs_model_id))
 
         val lifted_prog_w_obs = add_obs lifted_prog;
-        val _ = print_term lifted_prog_w_obs;
+(*      val _ = print_term lifted_prog_w_obs; *)
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
+(*        val _ = List.map (Option.map (List.map (print_term o fst)) o snd) paths;*)
         
         fun has_observations (SOME []) = false
           | has_observations NONE = false
@@ -190,7 +190,7 @@ fun start_interactive prog =
 
         val _ = current_pathstruct := paths;
         val (conds, relation) = mkRel_conds paths;
-        val _ = print_term relation;
+(*        val _ = print_term relation; *)
         val _ = print ("Word relation\n");
         val word_relation = make_word_relation relation all_exps;
         val _ = current_word_rel := SOME word_relation;
@@ -229,7 +229,7 @@ fun next_test select_path =
 
 (*        val _ = print_term (valOf (!current_word_rel)); *)
 
-        val exp_id  =  bir_embexp_sates2_create ("arm8", hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
+        val exp_id  =  bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
     in
         (if (#only_gen (scamv_getopt_config ()))
          then print ("Generated experiment: " ^ exp_id)
@@ -291,7 +291,7 @@ fun scamv_test_gen_run tests (prog_id, lifted_prog) =
         fun isPrimedRun s = String.isSuffix "_" s;
         val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
 
-        val exp_id  =  bir_embexp_sates2_create ("arm8", hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
+        val exp_id  =  bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
         val test_result = bir_embexp_run exp_id false;
 
         val _ = case test_result of
@@ -327,7 +327,21 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
               | slice => prog_gen_store_rand_slice sz
               | from_file filename => prog_gen_store_fromfile filename
               | mock => prog_gen_store_mock
-              | prefetch_strides => prog_gen_store_prefetch_stride sz;
+              | prefetch_strides => prog_gen_store_prefetch_stride sz
+              | _ => raise ERR "scamv_run" ("unknown generator type " ^ PolyML.makestring gen)
+
+        (* FIXME ad-hoc setting of obsmodel and hw obsmodel *)
+        val _ =
+            case gen of
+                prefetch_strides =>
+                (current_obs_model_id := "bir_arm8_cache_line_subset_model";
+                 hw_obs_model_id := "exp_cache_multiw_subset")
+             | _ => ();
+
+        val _ = (print "Scam-V set to the following test params:\n";
+                 print ("Program generator: " ^ PolyML.makestring gen ^ "\n");
+                 print ("Observation model: " ^ !current_obs_model_id ^ "\n");
+                 print ("HW observation model: " ^ !hw_obs_model_id ^ "\n"));
 
         fun main_loop 0 = ()
          |  main_loop n =
