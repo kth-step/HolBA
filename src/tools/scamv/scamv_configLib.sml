@@ -125,7 +125,7 @@ fun print_scamv_opt_usage () =
     in
         print "Scam-V Usage:\n\n";
         List.map print_entry opt_table;
-        print ("\ngenerator arg should be one of: rand, rand_simple, qc, mock, slice, file\n");
+        print ("\ngenerator arg should be one of: rand, prefetch_strides, rand_simple, qc, mock, slice, file\n");
         print ("\nDefaults are: " ^ PolyML.makestring default_cfg ^ "\n")
     end
 
@@ -160,7 +160,10 @@ fun scamv_getopt_config_go () =
               | OptNotFound str =>
                 (print_scamv_opt_usage ();
                  raise ERR "scamv_getopt_config"
-                       ("unrecognized command-line option " ^ str)))
+                       ("unrecognized command-line option " ^ str))
+              | Bind =>
+                (print_scamv_opt_usage ();
+                raise ERR "scamv_getopt_config" "parse error in command-line options"))
     end
 
 fun memo f =
