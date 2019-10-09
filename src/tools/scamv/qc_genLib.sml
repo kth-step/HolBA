@@ -74,6 +74,19 @@ fun frequency xs =
     in
         choose (1, tot) >>= (pick xs)
     end
+
+fun arb_list_of m =
+    sized (fn prog_size =>
+              repeat prog_size m);
+
+fun arb_option m =
+    frequency [(1,return NONE)
+              ,(2,SOME <$> m)];
+
+fun such_that f gen =
+    gen >>= (fn x =>
+                if f x then return x else such_that f gen);
+
 end
 
 (*

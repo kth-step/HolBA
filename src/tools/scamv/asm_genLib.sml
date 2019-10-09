@@ -1,4 +1,4 @@
-structure asm_genLib :> asm_genLib =
+structure asm_genLib : asm_genLib =
 struct
 
 open qc_genLib;
@@ -15,7 +15,7 @@ datatype ArmInstruction =
          | Branch of BranchCond option * Operand
 
 (* pp *)
-
+local
 fun pp_operand (Imm n) = "#0x" ^ Int.fmt StringCvt.HEX n
   | pp_operand (Ld (NONE, src)) = "[" ^ src ^ "]"
   | pp_operand (Ld (SOME offset, src)) =
@@ -41,13 +41,15 @@ fun pp_instr instr =
         "b " ^ pp_operand target
      | Branch (SOME cond, target) =>
        "b." ^ pp_cond cond ^ " " ^ pp_operand target
-
+in
 fun pp_program is = List.map pp_instr is;
+end
 
 (* arb instances *)
-
-val min_addr = 0x1000;
-val max_addr = 0x2000;
+local
+    val min_addr = 0x1000;
+    val max_addr = 0x2000;
+in
 val arb_addr = choose (min_addr, max_addr);
 
 val arb_armv8_regname =
@@ -64,10 +66,6 @@ val arb_operand =
         [(1, arb_imm)
         ,(5, arb_reg)]
 
-fun arb_option m =
-    frequency [(1,return NONE)
-              ,(2,SOME <$> m)];
-
 val arb_branchcond =
     let val arb_cond = elements [EQ, NE, LT, GT];
     in
@@ -81,13 +79,8 @@ val arb_instruction =
         [(1, Load <$> (two arb_reg (oneof [arb_ld, arb_imm])))
         ,(1, Branch <$> (two arb_branchcond arb_imm))]
 
-val max_prog_size = 10;
-
-fun arb_list_of m =
-    sized (fn prog_size =>
-              repeat prog_size m);
-
 val arb_program = arb_list_of arb_instruction;
+end
 
 local
     open Random;
