@@ -99,9 +99,10 @@ fun mk_bir_cond_obs_eq xs ys =
             let val l1leaves = buildLeaves l1;
                 val l2leaves = buildLeaves l2;
                 fun processList (c,es1) (c',es2) =
-                    mk_bir_impl (band (c, c')) (mk_bir_list_eq es1 es2)
+                    (band (c, c'), mk_bir_list_eq es1 es2)
                 val xs = cartesianWith processList l1leaves l2leaves
-            in if length xs > 0 then bandl xs else bir_true
+            in (* if length xs > 0 then bandl xs else bir_true *)
+                xs
             end
         val (trivial, nontrivial) =
             partition (fn ((c,x),(c',y)) => (c = bir_true)
@@ -113,10 +114,12 @@ fun mk_bir_cond_obs_eq xs ys =
          |  _  =>
             let val _ = print(PolyML.makestring (length trivial));
                 val trivial_eq =
-                    List.map (fn ((_,x),(_,y)) => mk_bir_eq x y) trivial;
+                    List.map (fn ((_,x),(_,y)) => (btrue, mk_bir_eq x y))
+                             trivial;
             in
                 (*        go (xs,ys) *)
-                band (bandl trivial_eq, go (unzip nontrivial))
+                trivial_eq @ go (unzip nontrivial)
+(*                band (bandl trivial_eq, go (unzip nontrivial)) *)
             end
     end
 
@@ -148,8 +151,11 @@ fun mkRel_conds xs =
                           mk_bir_cond_obs_eq l1 l2
                         | _ => raise ERR "mkRel_conds" "this should really not happen :)"
                 val _ = print (".");
-            in ((band (c, c')),  eqRel) end;
-        val xs2 = cartesianWith processImpl somes somes_primed;
+            in List.map
+                   (fn (cond,rel) => (band (band (c, c'),cond), rel))
+                   eqRel
+            end;
+        val xs2 = List.concat (cartesianWith processImpl somes somes_primed);
 
         fun smart_bandl xs = if null xs then btrue else bandl xs;
         val negCond = smart_bandl o List.map (bnot o fst);
