@@ -85,22 +85,25 @@ struct
 
             (* write out git commit and git diff of current directory. *)
             (*    so this script needs to be executed from within the holbarepo! *)
-            val run_datestr = get_datestring();
-	    val holba_diff = get_exec_output "git diff";
+            val run_datestr  = get_datestring();
+	    val holba_diff   = get_exec_output "git diff";
 	    val holba_commit = get_exec_output "git rev-parse HEAD";
+            val holba_args   = get_script_args ();
 
-	    val holba_hash = hashstring (run_datestr ^ holba_diff ^ holba_commit);
+	    val holba_hash = hashstring (run_datestr ^ holba_diff ^ holba_commit ^ holba_args);
 	    val runitpath = holbaruns_basedir ^ "/" ^ holba_hash;
 	    (* this directory should not exist, but possibly already exists *)
 	    val _ = makedir true runitpath;
 
-	    val run_datestr_file = runitpath ^ "/holba.time";
-	    val holba_diff_file = runitpath ^ "/holba.diff";
+	    val run_datestr_file  = runitpath ^ "/holba.time";
+	    val holba_diff_file   = runitpath ^ "/holba.diff";
 	    val holba_commit_file = runitpath ^ "/holba.commit";
+	    val holba_args_file   = runitpath ^ "/holba.args";
 
-	    val _ = write_to_file_or_compare_clash "embexp_run_id" run_datestr_file run_datestr;
-	    val _ = write_to_file_or_compare_clash "embexp_run_id" holba_diff_file holba_diff;
+	    val _ = write_to_file_or_compare_clash "embexp_run_id" run_datestr_file  run_datestr;
+	    val _ = write_to_file_or_compare_clash "embexp_run_id" holba_diff_file   holba_diff;
 	    val _ = write_to_file_or_compare_clash "embexp_run_id" holba_commit_file holba_commit;
+	    val _ = write_to_file_or_compare_clash "embexp_run_id" holba_args_file   holba_args;
 
             val _ = embexp_run_id_ref := SOME holba_hash;
           in
