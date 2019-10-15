@@ -12,13 +12,10 @@ fun tag_of x = x div total_sets div 64; *)
 fun set_of x = (x div 64) mod total_sets;
 fun offset_of (x,n) = 64*(set_of (x) + n);
 
-fun mk_preamble_of reg = (* thrashes x0, x1 *)
-    ["lsr x1, " ^ reg ^ ", 6"
-    ,"mov x0, #0x7f"
-    ,"and x1, x1, x0"
-    ,"lsl x1, x1, 6"
-    ,"add " ^ reg ^ ", " ^ reg ^ ", x1"] (* preoffset is in reg *)
-
+fun mk_preamble_of reg1 reg2 reg3 =
+    ["lsl " ^ reg1 ^ ", " ^ reg1 ^ ", 7"
+    ,"add " ^ reg2 ^ ", " ^ reg1 ^ ", " ^ reg2
+    ,"lsl " ^ reg3 ^ ", " ^ reg2 ^ ", 6"] (* addr is in reg3 *)
 fun arb_regname_except xs =
     such_that (fn r => not (exists (fn x => x = r) xs)) arb_armv8_regname;
 
@@ -32,9 +29,9 @@ fun arb_stride stride_step =
         fun offsets stride_length = rev (go stride_length);
     in
         choose (1,4) >>= (fn l =>
-        arb_regname_except ["x1", "x0"] >>= (fn reg =>
-        sequence (map (arb_ld_offset reg) (offsets l)) >>= (fn result =>
-        return (result, reg)
+        repeat 3 (arb_regname_except ["x1", "x0"]) >>= (fn [reg1,reg2,reg3] =>
+        sequence (map (arb_ld_offset reg3) (offsets l)) >>= (fn result =>
+        return (result, [reg1,reg2,reg3])
         )))
     end
 
@@ -49,10 +46,10 @@ local
                  else newgenseed 3141592.654);
 in
 fun prog_gen_prefetch_stride n =
-    let val ((p,reg), rnd) = run_step n (!g) arb_stride_lds;
+    let val ((p,[reg1,reg2,reg3]), rnd) = run_step n (!g) arb_stride_lds;
         val _ = (g := rnd);
     in
-        mk_preamble_of reg @ pp_program p
+        mk_preamble_of reg1 reg2 reg3 @ pp_program p
     end
 end
 
