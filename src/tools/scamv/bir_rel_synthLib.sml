@@ -90,6 +90,7 @@ fun nonridiculous_zip [] ys = []
   | nonridiculous_zip xs [] = []
   | nonridiculous_zip (x::xs) (y::ys) = (x,y) :: nonridiculous_zip xs ys
 
+val internal_counter = ref 0;
 (* unpacks xs = ys where xs and ys are lists of conditional observations
    returns a HOL term of HOL type bir_exp_t that represents
    all possible ways of making xs = ys
@@ -99,8 +100,12 @@ fun mk_bir_cond_obs_eq xs ys =
             let val l1leaves = buildLeaves l1;
                 val l2leaves = buildLeaves l2;
                 fun processList (c,es1) (c',es2) =
-                    (band (c, c'), mk_bir_list_eq es1 es2)
+                    let val t = mk_bir_list_eq es1 es2
+                    in (band (c, c'), t) end
                 val xs = cartesianWith processList l1leaves l2leaves
+                val _ = if length xs = 0
+                        then print ("nullifier index found " ^ PolyML.makestring (!internal_counter))
+                        else (internal_counter := (!internal_counter) + 1)
             in (* if length xs > 0 then bandl xs else bir_true *)
                 xs
             end
