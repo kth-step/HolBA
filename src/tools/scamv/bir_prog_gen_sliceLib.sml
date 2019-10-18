@@ -227,11 +227,11 @@ val n = 3;
 *)
  (* takes the number of instructions to generate *)
  fun bir_prog_gen_arm8_slice n = 
-     let val mc = map (fn i => let val a::b::l = splitter (remChars (#" ", (hd i))) in b end)(bir_prog_slice_arm8_rand ("input2.da", 0, n))
+     let val mc = map (fn i => let val a::b::l = splitter (remChars (#" ", (hd i))) in b end)(bir_prog_slice_arm8_rand ("/home/xmate/Projects/HolBA/HolBA/examples/aes/bin/aes-aarch64.da", 0, n))
      in
 	 map ((strip_ws_off false) o remove_junk o hd o decomp) (mc)
      end
-
+     
 end; (* struct *)
 
 

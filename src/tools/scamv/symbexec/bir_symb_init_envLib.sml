@@ -42,9 +42,8 @@ fun generate_symbolic_register_8 (name : string) =
 (* Add symbolic registers byte-wise in environment *)
 fun add_symbolic_register_to_env_64 name env = 
     let 
-        val r =
-          generate_symbolic_register_64 name
-        val name_hol = fromMLstring name 
+        val r = generate_symbolic_register_64 name
+        val name_hol = fromMLstring name
     in
         (rhs o concl o EVAL) 
     `` bir_symb_env_update 
