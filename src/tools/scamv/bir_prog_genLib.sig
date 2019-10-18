@@ -3,7 +3,8 @@ signature bir_prog_genLib = sig
   (* ---------------------- *)
   (* mockups for debugging  *)
   (* ---------------------- *)
-
+  val process_asm_code : string -> bir_inst_lifting_mem_region list
+  val lift_program_from_sections : bir_inst_lifting_mem_region list -> term
   (* sets a sequence of test programs.
   *)
   val bir_prog_gen_arm8_mock_set : (string list) list -> unit

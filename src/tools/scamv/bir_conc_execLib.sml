@@ -1,10 +1,11 @@
-open HolKernel pairLib listSyntax stringSyntax;
+open HolKernel pairLib listSyntax stringSyntax wordsSyntax;
 open bir_rel_synthLib;
 open bir_obs_modelLib;
 open bir_symb_execLib;
 open bir_symb_init_envLib;     
 open bir_scamv_driverLib;
-     
+open bir_embexp_driverLib;
+   
 
 open bir_prog_genLib;
 
@@ -132,7 +133,42 @@ fun conc_obs_compare model prog =
     end
 
 
-    (* TEST *)
-    (* val (prog, model) = test_rand (); *)
-    (* conc_obs_compare model prog; *)
+local
+    fun remove_padding s =
+	s |> Substring.full
+	  |> Substring.dropl Char.isSpace
+	  |> Substring.dropr Char.isSpace
+	  |> Substring.string;
+in
+fun inspect_counterexamples filename len () =
+    let
+	val istrm = TextIO.openIn filename;
+	val inprog = TextIO.inputAll istrm before TextIO.closeIn istrm
+	val prog_gen_id = "Test Counterexmaples";
+	val asm_code = remove_padding inprog;
+	val compile_opt = SOME (process_asm_code asm_code);
+	val lifted_prog =   case compile_opt of
+				SOME sections => lift_program_from_sections sections;
+	val prog_with_halt =
+            let
+		val (blocks,ty) = dest_list (dest_BirProgram lifted_prog);
+		val obs_ty = (hd o snd o dest_type) ty;
+		val lbl = ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt (len*4), 64)))``;
+		val new_last_block =  bir_programSyntax.mk_bir_block
+					  (lbl, mk_list ([], mk_type ("bir_stmt_basic_t", [obs_ty])),
+					   ``BStmt_Halt (BExp_Const (Imm32 0x000000w))``);
+            in
+		(mk_BirProgram o mk_list) (blocks@[new_last_block],ty)
+            end
+	val prog_id = bir_embexp_prog_create ("arm8", prog_gen_id) asm_code;
+    in
+	(prog_id, prog_with_halt)
+    end;
+end
+
+
+val test_rand = conc_test_gen_run 1 o prog_gen_store_rand 5;
+val test_rand = conc_test_gen_run 1 o (inspect_counterexamples "tempdir/code2_neq.asm" 10);
+val (prog, model) = test_rand ();
+conc_obs_compare model prog;
 

@@ -210,7 +210,4 @@ val (prog_id, lifted_prog) = prog_gen_store_rand 5 ();
 val prog = lifted_prog;
 *)
 
-
 end; (* struct *)
-
-
