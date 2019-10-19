@@ -252,7 +252,7 @@ end
 
       (* write out data *)
       val input1 = gen_json_state false s1;
-      val input2 = gen_json_state true  s2;
+      val input2 = gen_json_state false s2;
       val exp_datahash = hashstring (prog_id ^ input1 ^ input2);
       val exp_id = "exps2/" ^ exp_type_id ^ "/" ^ exp_datahash;
       val exp_datapath = exp_basedir ^ "/" ^ exp_id;
@@ -319,7 +319,7 @@ end
       val input2_file = (logs_dir ^ "/" ^ exp_id ^ "/input2.json");
 
       val s = (parse_back_json_state false input1_file,
-                   parse_back_json_state true  input2_file);
+               parse_back_json_state false input2_file);
     in
       (asm_lines, s)
     end;

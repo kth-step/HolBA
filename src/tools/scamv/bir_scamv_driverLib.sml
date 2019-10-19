@@ -239,6 +239,14 @@ fun next_test select_path =
 
 (*        val _ = print_term (valOf (!current_word_rel)); *)
 
+        (* clean up s2 *)
+        fun remove_prime str =
+          if String.isSuffix "_" str then
+            (String.extract(str, 0, SOME((String.size str) - 1)))
+          else
+            raise ERR "remove_prime" "there was no prime where there should be one";
+        val s2 = List.map (fn (r,v) => (remove_prime r,v)) s2;
+        (* create experiment files *)
         val exp_id  =  bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
     in
         (if (#only_gen (scamv_getopt_config ()))
