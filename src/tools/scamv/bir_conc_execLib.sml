@@ -79,13 +79,6 @@ fun conc_test_gen_run tests (prog_id, lifted_prog) =
 	(lifted_prog_w_obs,model)
     end
 
-val test_rand = conc_test_gen_run 1 o prog_gen_store_rand 5;
-
-(*
-val depth = 200;
-val env = env1up;
-*)
-
 fun conc_exec_program depth prog env =
     let 
 	val precond = ``BExp_Const (Imm1 1w)``;
@@ -190,51 +183,4 @@ val test_rand = conc_test_gen_run 1 o prog_gen_store_rand 5;
 val test_rand = conc_test_gen_run 1 o (inspect_counterexamples "tempdir/code2_neq.asm" 10);
 val (prog, model) = test_rand ();
 conc_obs_compare model prog;
-*)
-
-(*
-
-val prm = [("R0", ``0x8000000000030000w:word64``), ("R18", ``0x1FFFFFFFFFFFFE00w:word64``)];
-val nprm = [("R0", ``0x8000000000000000w:word64``), ("R18", ``0xEFFFFFFFFFFFFE20w:word64``)];
-
-val prog = ``
-BirProgram
-      [<|bb_label := BL_Address (Imm64 0w);
-         bb_statements :=
-           [BStmt_Assign (BVar "ProcState_C" (BType_Imm Bit1))
-              (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 0xCA2000w))
-                 (BExp_Den (BVar "R0" (BType_Imm Bit64))));
-            BStmt_Assign (BVar "ProcState_N" (BType_Imm Bit1))
-              (BExp_BinPred BIExp_SignedLessThan
-                 (BExp_BinExp BIExp_Minus
-                    (BExp_Den (BVar "R0" (BType_Imm Bit64)))
-                    (BExp_Const (Imm64 0xCA2000w))) (BExp_Const (Imm64 0w)));
-            BStmt_Assign (BVar "ProcState_V" (BType_Imm Bit1))
-              (BExp_BinPred BIExp_Equal
-                 (BExp_BinPred BIExp_SignedLessThan
-                    (BExp_BinExp BIExp_Minus
-                       (BExp_Den (BVar "R0" (BType_Imm Bit64)))
-                       (BExp_Const (Imm64 0xCA2000w)))
-                    (BExp_Const (Imm64 0w)))
-                 (BExp_BinPred BIExp_SignedLessOrEqual
-                    (BExp_Const (Imm64 0xCA2000w))
-                    (BExp_Den (BVar "R0" (BType_Imm Bit64)))));
-            BStmt_Assign (BVar "ProcState_Z" (BType_Imm Bit1))
-              (BExp_BinPred BIExp_Equal
-                 (BExp_Den (BVar "R0" (BType_Imm Bit64)))
-                 (BExp_Const (Imm64 0xCA2000w)));
-            BStmt_Assign (BVar "R15" (BType_Imm Bit64))
-              (BExp_BinExp BIExp_Minus
-                 (BExp_Den (BVar "R0" (BType_Imm Bit64)))
-                 (BExp_Const (Imm64 0xCA2000w)))];
-         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 4w)))|>;
-       <|bb_label := BL_Address (Imm64 4w); bb_statements := [];
-         bb_last_statement :=
-           BStmt_CJmp (BExp_Den (BVar "ProcState_V" (BType_Imm Bit1)))
-             (BLE_Label (BL_Address (Imm64 40w)))
-             (BLE_Label (BL_Address (Imm64 8w)))|>;
-       <|bb_label := BL_Address (Imm64 40w); bb_statements := [];
-         bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0w))|>]  
-``;
-
 *)
