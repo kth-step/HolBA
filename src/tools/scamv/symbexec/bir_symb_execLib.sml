@@ -148,9 +148,12 @@ val bir_program = ``BirProgram
                           (\x. x)];
          bb_last_statement := BStmt_Halt (BExp_Const (Imm64 4w))|>]``;
 *)
-fun symb_exec_program depth precond bir_program pd =
+fun symb_exec_program depth precond bir_program pd envupdate_o =
   let 
-    val env = init_env ();
+    val env_ = init_env ();
+    val env = case envupdate_o of
+                 NONE   => env_
+               | SOME f => f env_;
     val state = (rhs o concl o EVAL)
                   ``bir_symb_state_init ^bir_program ^env ^precond``;
     val tree  = symb_exec_run depth bir_program pd state;
