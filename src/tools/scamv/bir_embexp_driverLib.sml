@@ -143,6 +143,57 @@ struct
       "{" ^ (String.extract(str, 0, SOME((String.size str) - 1))) ^ "\n}"
     end;
 
+(* generate state from json file *)
+local
+  open wordsSyntax;
+in
+  fun parse_back_json_state isSecond filename =
+    let
+      fun splitandstrip f l =
+            List.foldr (op@) [] (List.map ((List.map (strip_ws_off false)) o f) l);
+
+      fun splitandparse isSecond kv =
+        let
+          val kvl = splitandstrip (String.tokens (fn c => c = #":")) [kv];
+          val _ = if length kvl = 2 then () else
+                  raise ERR "parse_back_json_state" "splitandparse:: format error kvl";
+          val ks = List.nth(kvl,0);
+          val vs = List.nth(kvl,1);
+          val _ = if length (String.explode ks) > 2 andalso
+                     List.hd (String.explode ks) = #"\"" andalso
+                     List.last (String.explode ks) = #"\"" then () else
+                  raise ERR "parse_back_json_state" "splitandparse:: format error ks1";
+          val ks = splitandstrip (String.tokens (fn c => c = #"\"")) [ks];
+          val _ = if length ks = 1 then () else
+                  raise ERR "parse_back_json_state" "splitandparse:: format error ks2";
+          val ks = List.hd ks;
+          val _ = if List.hd (String.explode ks) = #"x" then () else
+                  raise ERR "parse_back_json_state" "splitandparse:: format error ks3";
+          val regnum_s = (String.implode o List.tl o String.explode) ks;
+          val regnum = case Int.fromString regnum_s of
+                          SOME x => x
+                        | _ => raise ERR "parse_back_json_state" "cannot parse register number";
+          val v = mk_wordi (Arbnum.fromString vs, 64);
+          val reg_s = "R" ^ (Int.toString regnum) ^ (if isSecond then "_" else "");
+        in
+          (reg_s, v)
+        end;
+
+      val content = read_from_file filename;
+      val content = strip_ws_off false content;
+      val l = [content];
+
+      val l = splitandstrip (String.tokens (fn c => c = #"{" orelse c = #"}")) l;
+      val l = splitandstrip (String.tokens (fn c => c = #"[" orelse c = #"]")) l;
+      val _ = if length l = 1 then () else
+              raise ERR "parse_back_json_state" "file not formatted as expected";
+
+      val kvs = splitandstrip (String.tokens (fn c => c = #",")) l;
+    in
+      List.map (splitandparse isSecond) kvs
+    end;
+end
+
 (* interface functions *)
 (* ========================================================================================= *)
   (* platform parameters *)
@@ -165,6 +216,15 @@ struct
                 raise ERR "bir_embexp_prog_to_code" "some lines are not valid asm lines"
     in
       List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "" asm_lines
+    end;
+
+  fun bir_embexp_code_to_prog code_asm =
+    let
+      val asm_lines = String.tokens (fn c => c = #"\n") code_asm;
+      val asm_lines = List.map (strip_ws_off true) asm_lines;
+      val asm_lines = List.filter (fn x => not (x = "")) asm_lines;
+    in
+      asm_lines
     end;
 
   fun bir_embexp_prog_create (arch_id, prog_gen_id) code_asm =
@@ -231,6 +291,37 @@ struct
                      raise ERR "bir_embexp_run" ("the last line of the python experiment runner is unexpected: " ^ lastline)
     in
       result
+    end;
+
+
+  fun bir_embexp_load_prog_file code_file =
+    bir_embexp_code_to_prog (read_from_file code_file);
+
+
+  fun bir_embexp_load_prog arch_id prog_id =
+    let
+      val logs_dir = logfile_basedir();
+      val code_file = (logs_dir ^ "/" ^ arch_id ^ "/progs/" ^ prog_id ^ "/code.asm");
+    in
+      bir_embexp_load_prog_file code_file
+    end;
+
+
+  fun bir_embexp_load_exp exp_id =
+    let
+      val logs_dir = logfile_basedir();
+
+      val prog_id = read_from_file (logs_dir ^ "/" ^ exp_id ^ "/code.hash");
+      val code_file = (logs_dir ^ "/" ^ exp_id ^ "/../../../progs/" ^ prog_id ^ "/code.asm");
+      val asm_lines = bir_embexp_load_prog_file code_file;
+
+      val input1_file = (logs_dir ^ "/" ^ exp_id ^ "/input1.json");
+      val input2_file = (logs_dir ^ "/" ^ exp_id ^ "/input2.json");
+
+      val s = (parse_back_json_state false input1_file,
+                   parse_back_json_state true  input2_file);
+    in
+      (asm_lines, s)
     end;
 
 end
