@@ -1,3 +1,8 @@
+structure bir_conc_execLib =
+struct
+
+local
+
 open HolKernel pairLib listSyntax stringSyntax wordsSyntax;
 open bir_rel_synthLib;
 open bir_obs_modelLib;
@@ -57,6 +62,7 @@ val (current_prog_id : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
 val (current_obs_model_id : string ref) = ref obs_model_id;
 
+in (* big local *)
 
 fun conc_test_gen_run tests (prog_id, lifted_prog) =
     let
@@ -179,8 +185,25 @@ fun inspect_counterexamples filename len () =
 end
 
 (*
-val test_rand = conc_test_gen_run 1 o prog_gen_store_rand 5;
-val test_rand = conc_test_gen_run 1 o (inspect_counterexamples "tempdir/code2_neq.asm" 10);
-val (prog, model) = test_rand ();
-conc_obs_compare model prog;
+
+(*
+export HOLBA_EMBEXP_LOGS=/home/andreas/data/hol/HolBA_logs/EmbExp-Logs_hamed
 *)
+
+val exp_id = "arm8/exps2/exp_cache_multiw/269c03c7a99a2a222bc8fee1ba30a6984df76f2b";
+val (asm_lines, (s1,s2)) = bir_embexp_load_exp exp_id;
+
+val (_, lifted_prog) = prog_gen_store_fromlines asm_lines ();
+val model = s1@s2;
+
+conc_obs_compare model lifted_prog;
+
+
+
+
+
+*)
+
+end (* big local *)
+
+end (* struct *)
