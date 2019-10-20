@@ -14,6 +14,7 @@ struct
   open bir_prog_gen_randLib;
   open bir_prog_gen_sliceLib;
   open asm_genLib;
+  open armv8_prefetch_genLib;
 
   open bir_scamv_helpersLib;
 
@@ -103,8 +104,7 @@ struct
     end
     end;
 
-
-  fun prog_gen_store retry_on_liftfail prog_gen_id prog_gen_fun args () =
+  fun prog_gen_store prog_gen_id retry_on_liftfail prog_gen_fun args () =
     let
       val (asm_code, lifted_prog, len) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
 
@@ -130,13 +130,7 @@ struct
 (* load file to asm_lines (assuming it is correct assembly code with only forward jumps and no use of labels) *)
 (* ========================================================================================= *)
   fun load_asm_lines filename =
-    let
-      val asm_lines = read_from_file_lines filename;
-      val asm_lines = List.map (strip_ws_off true) asm_lines;
-      val asm_lines = List.filter (fn x => not (x = "")) asm_lines;
-    in
-      asm_lines
-    end
+    bir_embexp_code_to_prog (read_from_file filename);
 
 (* fixed programs for mockup *)
 (* ========================================================================================= *)
@@ -182,14 +176,16 @@ struct
 
 (* instances of program generators *)
 (* ========================================================================================= *)
-val prog_gen_store_mock = prog_gen_store false "prog_gen_mock" bir_prog_gen_arm8_mock ();
-fun prog_gen_store_fromfile filename = prog_gen_store false "prog_gen_fromfile" load_asm_lines filename;
-fun prog_gen_store_rand sz = prog_gen_store true "prog_gen_rand" bir_prog_gen_arm8_rand sz;
-fun prog_gen_store_rand_simple sz = prog_gen_store true "prog_gen_rand_simple" bir_prog_gen_arm8_rand_simple sz;
-fun prog_gen_store_a_la_qc sz =
-    prog_gen_store true "prog_gen_a_la_qc" prog_gen_a_la_qc sz;
+val prog_gen_store_mock                = prog_gen_store "prog_gen_mock"            false bir_prog_gen_arm8_mock        ();
+fun prog_gen_store_fromfile filename   = prog_gen_store "prog_gen_fromfile"        false load_asm_lines                filename;
+fun prog_gen_store_fromlines asmlines  = prog_gen_store "prog_gen_fromlines"       false (fn x => x)                   asmlines;
+
+fun prog_gen_store_rand sz             = prog_gen_store "prog_gen_rand"            true  bir_prog_gen_arm8_rand        sz;
+fun prog_gen_store_rand_simple sz      = prog_gen_store "prog_gen_rand_simple"     true  bir_prog_gen_arm8_rand_simple sz;
+fun prog_gen_store_a_la_qc sz          = prog_gen_store "prog_gen_a_la_qc"         true  prog_gen_a_la_qc              sz;
     
-fun prog_gen_store_rand_slice sz = prog_gen_store true "prog_gen_rand_slice" bir_prog_gen_arm8_slice sz;
+fun prog_gen_store_rand_slice sz       = prog_gen_store "prog_gen_rand_slice"      true  bir_prog_gen_arm8_slice       sz;
+fun prog_gen_store_prefetch_stride sz  = prog_gen_store "prog_gen_prefetch_stride" true  prog_gen_prefetch_stride      sz;
 
 (*
 val filename = "examples/asm/branch.s";
@@ -208,7 +204,4 @@ val (prog_id, lifted_prog) = prog_gen_store_rand 5 ();
 val prog = lifted_prog;
 *)
 
-
 end; (* struct *)
-
-

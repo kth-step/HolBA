@@ -4,34 +4,38 @@ struct
 open bir_scamv_helpersLib;
 
 datatype 'cfg opt_entry =
-         Arity0 of string * string * ('cfg -> bool -> 'cfg)
-         | Arity1 of string * string * ('cfg -> string -> 'cfg)
+         Arity0 of string * string * string * ('cfg -> bool -> 'cfg)
+         | Arity1 of string * string * string * ('cfg -> string -> 'cfg)
 
 datatype gen_type = gen_rand
                   | rand_simple
+                  | prefetch_strides
                   | mock
                   | qc
                   | slice
                   | from_file of string
-                                     
+
 type scamv_config = { max_iter : int,
                       prog_size : int,
                       max_tests : int,
                       generator : gen_type,
-                      only_gen : bool
+                      only_gen : bool,
+                      verbosity : int
                     }
 
 val default_cfg = { max_iter = 10
                   , prog_size = 5
                   , max_tests = 4
                   , generator = gen_rand
-                  , only_gen = false
+                  , only_gen = true
+                  , verbosity = 1
                   }
 
 fun gen_type_fromString gt =
     case gt of
         "rand" => SOME gen_rand
       | "rand_simple" => SOME rand_simple
+      | "prefetch_strides" => SOME prefetch_strides
       | "mock" => SOME mock
       | "qc" => SOME qc
       | "slice" => SOME slice
@@ -45,6 +49,7 @@ fun set_max_iter (cfg : scamv_config) n =
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      verbosity = # verbosity cfg,
       only_gen = # only_gen cfg };
 
 fun set_prog_size (cfg : scamv_config) n =
@@ -52,6 +57,7 @@ fun set_prog_size (cfg : scamv_config) n =
       prog_size = n,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      verbosity = # verbosity cfg,
       only_gen = # only_gen cfg };
 
 fun set_max_tests (cfg : scamv_config) n =
@@ -59,6 +65,7 @@ fun set_max_tests (cfg : scamv_config) n =
       prog_size = # prog_size cfg,
       max_tests = n,
       generator = # generator cfg,
+      verbosity = # verbosity cfg,
       only_gen = # only_gen cfg };
 
 fun set_generator (cfg : scamv_config) gen =
@@ -66,6 +73,7 @@ fun set_generator (cfg : scamv_config) gen =
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = gen,
+      verbosity = # verbosity cfg,
       only_gen = # only_gen cfg };
 
 fun set_only_gen (cfg : scamv_config) b =
@@ -73,7 +81,17 @@ fun set_only_gen (cfg : scamv_config) b =
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      verbosity = # verbosity cfg,
       only_gen = b };
+
+fun set_verbosity (cfg : scamv_config) v =
+    { max_iter = # max_iter cfg,
+      prog_size = # prog_size cfg,
+      max_tests = # max_tests cfg,
+      generator = # generator cfg,
+      verbosity = v,
+      only_gen = # only_gen cfg };
+
 
 (* end boilerplate *)
 
@@ -85,23 +103,29 @@ local
         end;
 in
 val opt_table =
-    [ Arity1 ("i", "max_iter",
-             handle_conv_arg_with Int.fromString set_max_iter)
-    , Arity1 ("sz", "prog_size",
-             handle_conv_arg_with Int.fromString set_prog_size)
-    , Arity1 ("t", "max_tests",
-             handle_conv_arg_with Int.fromString set_max_tests)
-    , Arity1 ("gen", "generator",
-             handle_conv_arg_with gen_type_fromString set_generator)
-    , Arity0 ("m", "is_mock", fn cfg => fn b => if b
-                                          then set_generator cfg mock
-                                          else cfg)
-    , Arity0 ("og", "only_gen", set_only_gen)
+    [ Arity1 ("i", "max_iter", "Number of pipeline iterations",
+              handle_conv_arg_with Int.fromString set_max_iter)
+    , Arity1 ("v", "verbosity", "Verbosity level (0 = quiet, 10 = show me everything)",
+              handle_conv_arg_with Int.fromString set_verbosity)
+    , Arity1 ("sz", "prog_size", "Size hint for program generator",
+              handle_conv_arg_with Int.fromString set_prog_size)
+    , Arity1 ("t", "max_tests", "Number of state pairs to generate per iteration",
+              handle_conv_arg_with Int.fromString set_max_tests)
+    , Arity1 ("gen", "generator", "Program generator",
+              handle_conv_arg_with gen_type_fromString set_generator)
+    , Arity0 ("m", "is_mock", "Enable mock generator (option deprecated, equivalent to -gen mock)",
+              fn cfg => fn b => if b
+                                then set_generator cfg mock
+                                else cfg)
+    , Arity0 ("og", "only_gen", "Generate experiments without running them (default)",
+              set_only_gen)
+    , Arity0 ("r", "run_experiments", "Automatically run each experiment after generating it (requires active connection)",
+              fn cfg => fn b => set_only_gen cfg (not b))
     ];
 end
 
-fun opt_strings (Arity1 (s, l, _)) = (s,l)
-  | opt_strings (Arity0 (s, l, _)) = (s,l)
+fun opt_strings (Arity1 (s, l, _, _)) = (s,l)
+  | opt_strings (Arity0 (s, l, _, _)) = (s,l)
 
 fun match_opt str (short_name, long_name) =
     str = ("-" ^ short_name) orelse str = ("--" ^ long_name)
@@ -114,16 +138,24 @@ fun opt_lookup tok [] = raise (OptNotFound tok)
     else opt_lookup tok es
 
 fun print_scamv_opt_usage () =
-    let fun print_entry entry =
+    let fun separation x = if x >= 32
+                           then "\t"
+                           else implode (List.tabulate (32 - x, fn _ => #" "));
+        fun print_entry entry =
             case entry of
-                Arity1 (s, l, _) =>
-                print ("-" ^ s ^ " <arg>, --" ^ l ^ " <arg>\n")
-              | Arity0 (s, l, _) =>
-                print ("-" ^ s ^ ", --" ^ l ^ "\n")
+                Arity1 (s, l, desc, _) =>
+                let val first_part = "-" ^ s ^ " <arg>, --" ^ l ^ " <arg>"
+                in
+                    print (first_part ^ separation (size first_part) ^ desc ^ "\n")
+                end
+              | Arity0 (s, l, desc, _) =>
+                let val first_part = "-" ^ s ^ ", --" ^ l
+                in print (first_part ^ separation (size first_part) ^ desc ^ "\n")
+                end
     in
         print "Scam-V Usage:\n\n";
         List.map print_entry opt_table;
-        print ("\ngenerator arg should be one of: rand, rand_simple, qc, mock, slice, file\n");
+        print ("\ngenerator arg should be one of: rand, prefetch_strides, rand_simple, qc, mock, slice, file\n");
         print ("\nDefaults are: " ^ PolyML.makestring default_cfg ^ "\n")
     end
 
@@ -135,12 +167,12 @@ fun scamv_getopt_config_go () =
             if String.isPrefix "-" tok
             then
             (case opt_lookup tok opt_table of
-                Arity1 (_,_,f) =>
+                Arity1 (_,_,_,f) =>
                 (case ts of
                      arg1 :: ts' =>
                      (f cfg arg1, ts')
                    | _  => raise ArgNotFound)
-              | Arity0 (_,_,f) => (f cfg true, ts))
+              | Arity0 (_,_,_,f) => (f cfg true, ts))
             else
                 (cfg, ts)
         fun process_opts ts cfg =
@@ -158,7 +190,10 @@ fun scamv_getopt_config_go () =
               | OptNotFound str =>
                 (print_scamv_opt_usage ();
                  raise ERR "scamv_getopt_config"
-                       ("unrecognized command-line option " ^ str)))
+                       ("unrecognized command-line option " ^ str))
+              | Bind =>
+                (print_scamv_opt_usage ();
+                raise ERR "scamv_getopt_config" "parse error in command-line options"))
     end
 
 fun memo f =

@@ -9,6 +9,8 @@ signature bir_embexp_driverLib = sig
 
   (* conversion from asm program (asm lines) to "normal program" *)
   val bir_embexp_prog_to_code : string list -> string
+  (* and the other direction *)
+  val bir_embexp_code_to_prog : string -> string list
 
 
   (* experiment creation and running *)
@@ -34,5 +36,16 @@ signature bir_embexp_driverLib = sig
      Returns (maybe result, comment)
    *)
   val bir_embexp_run : string -> bool -> (bool option * string)
+
+
+  (* loading programs and experiment inputs from logs *)
+  (* ======================================== *)
+  (* Inputs: - prog_id *)
+  (*         - arch_id *)
+  (* Output: asm_lines *)
+  val bir_embexp_load_prog : string -> string -> string list
+  (* Input: exp_id *)
+  (* Output: asm_lines, model pair *)
+  val bir_embexp_load_exp  : string -> string list * ((string * term) list * (string * term) list)
 
 end

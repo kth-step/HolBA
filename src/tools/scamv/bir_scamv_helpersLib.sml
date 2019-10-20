@@ -38,6 +38,33 @@ in
 	| NONE => (assign_args_data (); valOf (!script_args_data));
   end
 
+(* central random number generator *)
+local
+  fun getrealtime () =
+     let
+        val t = Time.now ()
+        val micro_s = Time.toMicroseconds t
+        val sec = micro_s div 1000000
+        val usec = micro_s mod 1000000
+     in
+        {sec = sec, usec = usec}
+     end
+  fun seedgen_real () =
+    let
+      val {sec, usec} = getrealtime ();
+    in
+      Real.fromLargeInt sec + Real.fromLargeInt usec
+    end;
+  val fresh_seed = false;
+in
+  val rand_seed = if fresh_seed then
+                    seedgen_real ()
+                  else
+                    3141592.654;
+
+  val rand_gen  = Random.newgenseed rand_seed;
+end
+
 (* datestring helper *)
   fun get_datestring () =
     let
