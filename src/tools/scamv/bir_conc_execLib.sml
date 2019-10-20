@@ -75,10 +75,16 @@ export HOLBA_EMBEXP_LOGS=/home/andreas/data/hol/HolBA_logs/EmbExp-Logs_hamed
 *)
 
 val exp_id = "arm8/exps2/exp_cache_multiw/269c03c7a99a2a222bc8fee1ba30a6984df76f2b";
+val obs_model_id = "bir_arm8_cache_line_model";
+
+
 val (asm_lines, (s1,s2)) = bir_embexp_load_exp exp_id;
 
 val (_, lifted_prog) = prog_gen_store_fromlines asm_lines ();
-val prog = lifted_prog;
+
+val add_obs = #add_obs (get_obs_model obs_model_id)
+val prog = add_obs lifted_prog;
+
 
 conc_exec_obs_compute prog s1
 conc_exec_obs_compare prog (s1,s2);
