@@ -150,7 +150,7 @@ val bir_program = ``BirProgram
 *)
 fun symb_exec_program depth precond bir_program pd envupdate_o =
   let 
-    val env_ = init_env ();
+    val env_ = init_env bir_program;
     val env = case envupdate_o of
                  NONE   => env_
                | SOME f => f env_;
