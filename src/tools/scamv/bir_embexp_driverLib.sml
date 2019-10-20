@@ -240,7 +240,7 @@ end
       val _ = write_to_file_or_compare_clash "bir_embexp_prog_create" (codepath ^ "/code.asm") code_asm;
 
       (* write out gen info *)
-      val embexp_run_file = codepath ^ "/" ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
+      val embexp_run_file = codepath ^ "/gen." ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
       val _ = write_to_file_or_compare_clash "bir_embexp_prog_create" embexp_run_file prog_gen_id;
     in
       codehash
@@ -266,7 +266,7 @@ end
       val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" prog_id_file prog_id;
 
       (* write out gen info *)
-      val embexp_run_file = exp_datapath ^ "/" ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
+      val embexp_run_file = exp_datapath ^ "/gen." ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
       val _ = write_to_file_or_compare_clash "bir_embexp_prog_create" embexp_run_file state_gen_id;
     in
       arch_id ^ "/" ^ exp_id
