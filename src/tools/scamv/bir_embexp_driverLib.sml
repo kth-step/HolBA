@@ -209,7 +209,7 @@ end
       fun is_ws x = x = #" " orelse x = #"\t" orelse x = #"\n";
       fun is_asm_line l = let val ls = String.explode l in
                             if List.exists is_colon ls then false else
-                            if length ls < 4 then false else
+                            if length ls < 1 then false else
                             not (is_ws (hd ls)) andalso not (is_ws (last ls))
                           end;
       val _ = if List.all is_asm_line asm_lines then () else
