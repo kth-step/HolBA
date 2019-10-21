@@ -324,5 +324,16 @@ end
       (asm_lines, s)
     end;
 
+  fun bir_embexp_load_exp_ids listname =
+    let
+      val logs_dir = logfile_basedir();
+      val contents = read_from_file (logs_dir ^ "/exp_lists/" ^ listname ^ ".txt");
+      val list_lines = String.tokens (fn c => c = #"\n") contents;
+      val nonempty = List.filter (fn x => x <> "") list_lines;
+      val actual_entries = List.filter (not o (String.isPrefix "#")) nonempty;
+    in
+      actual_entries
+    end;
+
 end
 
