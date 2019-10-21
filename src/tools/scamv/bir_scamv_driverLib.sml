@@ -19,6 +19,7 @@ open bir_symb_execLib;
 open bir_symb_masterLib;
 open bir_typing_expTheory;
 open scamv_configLib;
+open bir_conc_execLib;
 
 (*
  workflow:
@@ -246,6 +247,14 @@ fun next_test select_path =
           else
             raise ERR "remove_prime" "there was no prime where there should be one";
         val s2 = List.map (fn (r,v) => (remove_prime r,v)) s2;
+
+        (* check with concrete-symbolic execution whether the observations are actually equivalent *)
+        val lifted_prog = case !current_prog of
+                             SOME x => x
+                           | NONE => raise ERR "next_test" "no program found";
+        val _ = if conc_exec_obs_compare lifted_prog (s1, s2) then () else
+                raise ERR "next_test" "why did we generate a test case with unequal observations?";
+
         (* create experiment files *)
         val exp_id  =  bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
     in
