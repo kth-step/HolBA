@@ -19,7 +19,7 @@ fun remChars  (c,s) =
 val splitter = String.tokens (fn c => c = #";");
 
 type gen = Random.generator
-val rg = Random.newgenseed 1.0;
+val rg = rand_gen;
 
 fun genint gen max =
     Random.range (0,max+1) gen     
@@ -150,7 +150,7 @@ fun instructionClass ast =
       | _ => "NOI"
 
 local 
-    val gen = Random.newgenseed 1.0
+    val gen = rg
     fun addr_to_hexString adr =
 	(BitsN.toHexString (BitsN.fromInt ((IntInf.fromInt adr), 32)))
 

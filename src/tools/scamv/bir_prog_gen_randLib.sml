@@ -70,7 +70,7 @@ struct
 
 (* ---------------------------------------------  *)
  type gen = Random.generator
- val rg = Random.newgenseed 1.0
+ val gen = rand_gen
  val emp_str = ""
      
  fun bits gen bits =
@@ -86,7 +86,6 @@ struct
  fun flat xs = List.foldr (fn (x, acc) => x @ acc) [] xs;
 
  local
-     val gen = Random.newgenseed 1.0
      fun random_bit () =
 	 if Random.range (0, 2) gen = 1 then boolSyntax.T else boolSyntax.F
  in
@@ -135,7 +134,7 @@ val el = "6B831B94"
 
 
  fun instGen () =
-     let val ic = (snd(weighted_select arm8_names_weighted rg))
+     let val ic = (snd(weighted_select arm8_names_weighted gen))
 	 val ib = random ic
 	 val wl = filter (fn c => String.isSubstring "WORD" c) (decomp ib)
      in
@@ -147,8 +146,7 @@ val inst = "15c984de"
 val pc = 0
 val len = 3
 *)
- local 
-     val gen = Random.newgenseed 1.0
+ local
      fun addr_to_hexString adr =
 	 (BitsN.toHexString (BitsN.fromInt ((IntInf.fromInt adr), 32)))
 
@@ -242,8 +240,7 @@ val n = 3;
 (* super simple library for randomly generated programs *)
 (* ========================================================================================= *)
 
-  local 
-    val gen = Random.newgenseed 1.0;
+  local
     fun randSel l = List.nth (l, Random.range (0, length l) gen);
 
     fun randTarget (pc, len) = (4*(Random.range (1, 1+len-pc) gen));
