@@ -173,7 +173,7 @@ in
           val regnum = case Int.fromString regnum_s of
                           SOME x => x
                         | _ => raise ERR "parse_back_json_state" "cannot parse register number";
-          val v = mk_wordi (Arbnum.fromString vs, 64);
+          val v = Arbnum.fromString vs;
           val reg_s = "R" ^ (Int.toString regnum) ^ (if isSecond then "_" else "");
         in
           (reg_s, v)

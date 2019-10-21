@@ -2,21 +2,20 @@ structure bir_conc_execLib : bir_conc_execLib =
 struct
 
   open HolKernel pairLib listSyntax stringSyntax wordsSyntax;
-  open bir_rel_synthLib;
-  open bir_obs_modelLib;
   open bir_symb_execLib;
   open bir_symb_masterLib;
   open bir_symb_init_envLib;     
-  open bir_scamv_driverLib;
   open bir_embexp_driverLib;
 
-  open bir_prog_genLib;
 
 
   fun update_env name value env = 
-      let val hname = fromMLstring name in
+      let
+        val hname = fromMLstring name
+        val wordval = mk_wordi (value, 64);
+      in
 	  (rhs o concl o EVAL) `` bir_symb_env_update 
-			  ^hname (BExp_Const (Imm64 ^value)) (BType_Imm Bit64) ^env
+			  ^hname (BExp_Const (Imm64 ^wordval)) (BType_Imm Bit64) ^env
 			  ``
       end;
 
@@ -69,6 +68,10 @@ struct
 
 
 (*
+
+open bir_obs_modelLib;
+open bir_prog_genLib;
+
 
 (*
 export HOLBA_EMBEXP_LOGS=/home/andreas/data/hol/HolBA_logs/EmbExp-Logs_hamed
