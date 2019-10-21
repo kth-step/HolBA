@@ -251,21 +251,30 @@ fun next_test select_path =
         val lifted_prog = case !current_prog of
                              SOME x => x
                            | NONE => raise ERR "next_test" "no program found";
-        val _ = if conc_exec_obs_compare lifted_prog (s1, s2) then () else
+        val ready_to_store = conc_exec_obs_compare lifted_prog (s1, s2);
+        (*
+        val _ = if ready_to_store then () else
                 raise ERR "next_test" "why did we generate a test case with unequal observations?";
+        *)
 
-        (* create experiment files *)
-        val exp_id  =  bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
-    in
-        (if (#only_gen (scamv_getopt_config ()))
-         then printv 1 ("Generated experiment: " ^ exp_id)
-                    (* no need to do anything else *)
-         else
-             let val test_result = bir_embexp_run exp_id false;
-             in case test_result of
-		                (NONE, msg) => printv 1 ("result = NO RESULT (" ^ msg ^ ")")
-		              | (SOME r, msg) => printv 1 ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")")
-             end); print "\n\n"
+        val _ = if not ready_to_store then
+                  print ("PIPELINE ERROR: Experiment does not yield equal observations. Did not generate an experiment.")
+                else
+          (let
+          (* create experiment files *)
+          val exp_id  = bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
+           in
+             (if (#only_gen (scamv_getopt_config ()))
+              then printv 1 ("Generated experiment: " ^ exp_id)
+                         (* no need to do anything else *)
+              else
+                  let val test_result = bir_embexp_run exp_id false;
+                  in case test_result of
+                        (NONE, msg) => printv 1 ("result = NO RESULT (" ^ msg ^ ")")
+                      | (SOME r, msg) => printv 1 ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")")
+                  end); print "\n\n"
+           end);
+    in ()
     end
 
 fun mk_round_robin n =
