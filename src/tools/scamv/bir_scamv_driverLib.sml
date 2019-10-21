@@ -132,7 +132,7 @@ fun make_word_relation relation exps =
             in
 ``(^va <> ^vb)``
             end;
-        val distinct = if null pairs then raise NoObsInPath else list_mk_conj (map mk_distinct pairs);
+        val distinct = if null pairs then raise NoObsInPath else list_mk_disj (map mk_distinct pairs);
     in
        ``^(bir2bool relation) /\ ^distinct``
     end
