@@ -147,12 +147,12 @@ fun print_model model =
 fun to_sml_Arbnums model =
     List.map (fn (name, tm) => (name, dest_word_literal tm)) model;
 
-val obs_model_id = "bir_arm8_cache_line_model";
+val obs_model_id_default = "bir_arm8_cache_line_model";
 val hw_obs_model_id = ref "exp_cache_multiw";
 
 val (current_prog_id : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
-val (current_obs_model_id : string ref) = ref obs_model_id;
+val (current_obs_model_id : string ref) = ref obs_model_id_default;
 val (current_pathstruct :
      (term * (term * term) list option) list ref) = ref [];
 val (current_word_rel : term option ref) = ref NONE;
@@ -161,7 +161,6 @@ val (current_antecedents : term list ref) = ref [];
 fun reset () =
     (current_prog_id := "";
      current_prog := NONE;
-     current_obs_model_id := obs_model_id;
      current_pathstruct := [];
      current_word_rel := NONE;
      current_antecedents := [])
