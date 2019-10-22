@@ -80,7 +80,7 @@ open bir_immSyntax;
 open wordsSyntax;
 
 (*
-export HOLBA_EMBEXP_LOGS=/home/andreas/data/hol/HolBA_logs/EmbExp-Logs_hamed
+export HOLBA_EMBEXP_LOGS="/home/xmate/Projects/HolBA/logs/EmbExp-Logs";
 *)
 
 val obs_model_id = "bir_arm8_cache_line_model";
@@ -124,7 +124,12 @@ fun compare_obss_of_exp obs_model_id exp_id =
 
 val results = List.map (fn x => (compare_obss_of_exp obs_model_id x, x)) exp_ids;
 
+
 val _ = List.map (fn (b, s) => if b then print (s ^ "\n") else ()) results;
+
+conc_exec_obs_compute prog s1;
+conc_exec_obs_compute prog s2;
+conc_exec_obs_compare prog (s1,s2);
 
 *)
 
