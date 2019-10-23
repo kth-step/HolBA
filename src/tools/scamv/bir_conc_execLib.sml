@@ -74,6 +74,10 @@ open bir_obs_modelLib;
 open bir_prog_genLib;
 open bir_embexp_driverLib;
 
+open optionSyntax;
+open bir_valuesSyntax;
+open bir_immSyntax;
+open wordsSyntax;
 
 (*
 export HOLBA_EMBEXP_LOGS=/home/andreas/data/hol/HolBA_logs/EmbExp-Logs_hamed
@@ -82,7 +86,7 @@ export HOLBA_EMBEXP_LOGS=/home/andreas/data/hol/HolBA_logs/EmbExp-Logs_hamed
 val obs_model_id = "bir_arm8_cache_line_model";
 
 (*
-val exp_ids = ["arm8/exps2/exp_cache_multiw/269c03c7a99a2a222bc8fee1ba30a6984df76f2b"];
+val exp_ids = ["arm8/exps2/exp_cache_multiw/565d69f7c0cd4f8fdb0b54379ad718bfa402488f"];
 *)
 
 val listname = "hamperiments32_eqobs";
@@ -101,7 +105,14 @@ fun compare_obss_of_exp obs_model_id exp_id =
     val add_obs = #add_obs (get_obs_model obs_model_id)
     val prog = add_obs lifted_prog;
     (*
-    conc_exec_obs_compute prog s1
+    fun convobs_fun obs = (Arbnum.toHexString o (fn x => Arbnum.* (x, Arbnum.fromInt 64)) o dest_word_literal o dest_Imm64 o dest_BVal_Imm o dest_some) obs;
+    val convobsl_fun = List.map convobs_fun;
+
+    val obsl1 = conc_exec_obs_compute prog s1;
+    val obsl2 = conc_exec_obs_compute prog s2;
+
+    val obsl1_ = convobsl_fun obsl1;
+    val obsl2_ = convobsl_fun obsl2;
     *)
   in
     conc_exec_obs_compare prog (s1,s2)
