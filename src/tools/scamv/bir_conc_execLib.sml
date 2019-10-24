@@ -94,6 +94,10 @@ val exp_ids = bir_embexp_load_exp_ids listname;
 
 (*
 val exp_id = hd exp_ids;
+val exp_ids = tl exp_ids;
+val _ = print "\n\n\n\n";
+val _ = print exp_id;
+val _ = print "\n=============================\n";
 *)
 
 fun compare_obss_of_exp obs_model_id exp_id =
