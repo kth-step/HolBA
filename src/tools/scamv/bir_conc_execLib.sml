@@ -69,7 +69,7 @@ struct
 
 (*
 
-open bir_conc_execLib;
+open bir_cfgVizLib;
 open bir_obs_modelLib;
 open bir_prog_genLib;
 open bir_embexp_driverLib;
@@ -86,7 +86,7 @@ export HOLBA_EMBEXP_LOGS="/home/xmate/Projects/HolBA/logs/EmbExp-Logs";
 val obs_model_id = "bir_arm8_cache_line_model";
 
 (*
-val exp_ids = ["arm8/exps2/exp_cache_multiw/565d69f7c0cd4f8fdb0b54379ad718bfa402488f"];
+val exp_ids = ["arm8/exps2/exp_cache_multiw/7d4fd31c0865567aae1ab23c57256c3e6dc6215d"];
 *)
 
 val listname = "hamperiments32_eqobs";
@@ -127,10 +127,18 @@ val results = List.map (fn x => (compare_obss_of_exp obs_model_id x, x)) exp_ids
 
 val _ = List.map (fn (b, s) => if b then print (s ^ "\n") else ()) results;
 
+
+val exp_id = "arm8/exps2/exp_cache_multiw/113126365c7e68aa0b83ef9f42ff6ee6407b418b";
+val (asm_lines, (s1,s2)) = bir_embexp_load_exp exp_id;
+val (_, lifted_prog) = prog_gen_store_fromlines asm_lines ();
+val add_obs = #add_obs (get_obs_model obs_model_id)
+val prog = add_obs lifted_prog;
+
 conc_exec_obs_compute prog s1;
 conc_exec_obs_compute prog s2;
 conc_exec_obs_compare prog (s1,s2);
 
 *)
-
+val dot_path = "/home/xmate/Projects/HolBA/HolBA/src/tools/scamv/tempdir/cfg.dot";
+bir_cfgVizLib.bir_export_graph_from_prog prog dot_path;
 end (* struct *)
