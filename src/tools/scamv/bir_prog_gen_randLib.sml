@@ -11,59 +11,59 @@ struct
 (* ========================================================================================= *)
 
  val arm8_names_weighted = [(0,"Address"),
-  (1,"AddSubShiftedRegister32-1"),      (1,"AddSubShiftedRegister32-2"),     (1,"AddSubShiftedRegister32-3"),
-  (1,"AddSubShiftedRegister32-4"),      (1,"AddSubShiftedRegister64-1"),     (1,"AddSubShiftedRegister64-2"),
-  (1,"AddSubShiftedRegister64-3"),      (1,"AddSubShiftedRegister64-4"),     (1,"AddSubExtendRegister-1"),
-  (0,"AddSubExtendRegister-2"),         (1,"AddSubExtendRegister-3"),        (0,"AddSubExtendRegister-4"),
-  (1,"AddSubExtendRegister-5"),         (0,"AddSubExtendRegister-6"),        (1,"AddSubExtendRegister-7"),
-  (0,"AddSubExtendRegister-8"),         (1,"AddSubImmediate-1"),             (1,"AddSubImmediate-2"),
-  (1,"AddSubImmediate-3"),              (1,"AddSubImmediate-4"),             (1,"AddSubImmediate-5"),
-  (1,"AddSubImmediate-6"),              (1,"AddSubImmediate-7"),             (1,"AddSubImmediate-8"),
-  (1,"AddSubCarry-1"),                  (1,"AddSubCarry-2"),                 (1,"AddSubCarry-3"),
-  (1,"AddSubCarry-4"),                  (1,"LogicalShiftedRegister32-1"),    (1,"LogicalShiftedRegister32-2"),
-  (1,"LogicalShiftedRegister32-3"),     (1,"LogicalShiftedRegister32-4"),    (1,"LogicalShiftedRegister64-1"),
-  (1,"LogicalShiftedRegister64-2"),     (1,"LogicalShiftedRegister64-3"),    (1,"LogicalShiftedRegister64-4"),
-  (1,"LogicalImmediate32-1"),           (1,"LogicalImmediate32-2"),          (1,"LogicalImmediate32-3"),
-  (1,"LogicalImmediate32-4"),           (1,"LogicalImmediate64-1"),          (1,"LogicalImmediate64-2"),
-  (1,"LogicalImmediate64-3"),           (1,"LogicalImmediate64-4"),          (1,"Shift-1"),
-  (1,"Shift-2"),                        (1,"MoveWide32"),                    (1,"MoveWide64"),
-  (1,"BitfieldMove32"),                 (1,"BitfieldMove64"),                (0,"ConditionalCompareImmediate-1"),
-  (1,"ConditionalCompareImmediate-2"),  (1,"ConditionalCompareImmediate-3"), (1,"ConditionalCompareImmediate-4"),
-  (1,"ConditionalCompareRegister-1"),   (14,"ConditionalCompareRegister-2"), (14,"ConditionalCompareRegister-3"),
-  (1,"ConditionalCompareRegister-4"),   (1,"ConditionalSelect-1"),           (14,"ConditionalSelect-2"),
-  (1,"CountLeading-1"),                 (1,"CountLeading-2"),                (1,"ExtractRegister32"),
-  (1,"ExtractRegister64"),              (1,"Division-1"),                    (1,"Division-2"),
-  (1,"MultiplyAddSub-1"),               (1,"MultiplyAddSub-2"),              (1,"MultiplyAddSubLong"),
-  (0,"MultiplyHigh"),                   (1,"Reverse32"),                     (1,"Reverse64"),
-  (1,"CRC8"),                           (1,"CRC16"),                         (1,"CRC32"),
-  (1,"CRC64"),                          (1,"BranchConditional"),             (0,"BranchImmediate-1"),
-  (1,"BranchImmediate-2"),              (1,"BranchRegisterJMP"),             (1,"BranchRegisterCALL"),
-  (1,"BranchRegisterRET"),              (1,"CompareAndBranch-1"),            (1,"CompareAndBranch-2"),
-  (1,"TestBitAndBranch-1"),             (1,"TestBitAndBranch-2"),            (1,"TestBitAndBranch-3"),
-  (1,"TestBitAndBranch-4"),             (1,"LoadStoreImmediate-1-1"),        (1,"LoadStoreImmediate-1-2"),
-  (1,"LoadStoreImmediate-1-3"),         (1,"LoadStoreImmediate-1-4"),        (1,"LoadStoreImmediate-1-5"),
-  (1,"LoadStoreImmediate-1-6"),         (1,"LoadStoreImmediate-1-7"),        (1,"LoadStoreImmediate-1-8"),
-  (1,"LoadStoreImmediate-1-9"),         (1,"LoadStoreImmediate-1-10"),       (1,"LoadStoreImmediate-1-11"),
-  (1,"LoadStoreImmediate-1-12"),        (1,"LoadStoreImmediate-1-13"),       (1,"LoadStoreImmediate-1-14"),
-  (1,"LoadStoreImmediate-1-15"),        (1,"LoadStoreImmediate-1-16"),       (1,"LoadStoreImmediate-1-17"),
-  (1,"LoadStoreImmediate-1-18"),        (15,"LoadStoreImmediate-1-19"),       (1,"LoadStoreImmediate-1-20"),
-  (1,"LoadStoreImmediate-1-21"),        (15,"LoadStoreImmediate-1-22"),       (1,"LoadStoreImmediate-1-23"),
-  (1,"LoadStoreImmediate-1-24"),        (15,"LoadStoreImmediate-1-25"),       (1,"LoadStoreImmediate-1-26"),
-  (1,"LoadStoreImmediate-1-27"),        (1,"LoadStoreImmediate-1-28"),       (1,"LoadStoreImmediate-2-1"),
-  (1,"LoadStoreImmediate-2-2"),         (1,"LoadStoreImmediate-2-3"),        (1,"LoadStoreImmediate-2-4"),
-  (1,"LoadStoreImmediate-2-5"),         (1,"LoadStoreImmediate-2-6"),        (1,"LoadStoreImmediate-2-7"),
-  (1,"LoadStoreImmediate-2-8"),         (1,"LoadStoreImmediate-2-9"),        (1,"LoadStoreImmediate-2-10"),
-  (1,"LoadStoreImmediate-2-11"),        (1,"LoadStoreImmediate-2-12"),       (1,"LoadStoreImmediate-2-13"),
-  (1,"LoadStoreImmediate-2-14"),        (1,"LoadStoreImmediate-2-15"),       (1,"LoadLiteral-1"),
-  (1,"LoadLiteral-2"),                  (1,"LoadLiteral-3"),                 (1,"LoadLiteral-4"),
-  (1,"LoadStoreRegister-1"),            (18,"LoadStoreRegister-2"),           (15,"LoadStoreRegister-3"),
-  (1,"LoadStoreRegister-4"),            (1,"LoadStoreRegister-5"),           (15,"LoadStoreRegister-6"),
-  (1,"LoadStoreRegister-7"),            (1,"LoadStoreRegister-8"),           (1,"LoadStoreRegister-9"),
-  (1,"LoadStoreRegister-10"),           (14,"LoadStoreRegister-11"),          (1,"LoadStoreRegister-12"),
-  (1,"LoadStoreRegister-13"),           (15,"LoadStoreRegister-14"),          (1,"StorePair32-1"),
-  (1,"StorePair32-2"),                  (10,"LoadPair32-1"),                  (1,"LoadPair32-2"),
-  (1,"LoadStorePair64-1"),              (15,"LoadStorePair64-2"),             (1,"LoadStorePair64-3"),
-  (1,"LoadStorePair64-4"),              (1,"NoOperation")]
+  (10,"AddSubShiftedRegister32-1"),      (10,"AddSubShiftedRegister32-2"),     (10,"AddSubShiftedRegister32-3"),
+  (10,"AddSubShiftedRegister32-4"),      (10,"AddSubShiftedRegister64-1"),     (10,"AddSubShiftedRegister64-2"),
+  (10,"AddSubShiftedRegister64-3"),      (10,"AddSubShiftedRegister64-4"),     (10,"AddSubExtendRegister-1"),
+  (0,"AddSubExtendRegister-2"),          (10,"AddSubExtendRegister-3"),        (0,"AddSubExtendRegister-4"),
+  (10,"AddSubExtendRegister-5"),         (0,"AddSubExtendRegister-6"),         (10,"AddSubExtendRegister-7"),
+  (0,"AddSubExtendRegister-8"),          (10,"AddSubImmediate-1"),             (10,"AddSubImmediate-2"),
+  (10,"AddSubImmediate-3"),              (10,"AddSubImmediate-4"),             (10,"AddSubImmediate-5"),
+  (10,"AddSubImmediate-6"),              (10,"AddSubImmediate-7"),             (10,"AddSubImmediate-8"),
+  (10,"AddSubCarry-1"),                  (10,"AddSubCarry-2"),                 (10,"AddSubCarry-3"),
+  (10,"AddSubCarry-4"),                  (10,"LogicalShiftedRegister32-1"),    (10,"LogicalShiftedRegister32-2"),
+  (10,"LogicalShiftedRegister32-3"),     (10,"LogicalShiftedRegister32-4"),    (10,"LogicalShiftedRegister64-1"),
+  (10,"LogicalShiftedRegister64-2"),     (10,"LogicalShiftedRegister64-3"),    (10,"LogicalShiftedRegister64-4"),
+  (10,"LogicalImmediate32-1"),           (10,"LogicalImmediate32-2"),          (10,"LogicalImmediate32-3"),
+  (10,"LogicalImmediate32-4"),           (10,"LogicalImmediate64-1"),          (10,"LogicalImmediate64-2"),
+  (10,"LogicalImmediate64-3"),           (10,"LogicalImmediate64-4"),          (10,"Shift-1"),
+  (10,"Shift-2"),                        (10,"MoveWide32"),                    (10,"MoveWide64"),
+  (10,"BitfieldMove32"),                 (10,"BitfieldMove64"),                (0,"ConditionalCompareImmediate-1"),
+  (10,"ConditionalCompareImmediate-2"),  (10,"ConditionalCompareImmediate-3"), (10,"ConditionalCompareImmediate-4"),
+  (10,"ConditionalCompareRegister-1"),   (60,"ConditionalCompareRegister-2"),  (60,"ConditionalCompareRegister-3"),
+  (10,"ConditionalCompareRegister-4"),   (10,"ConditionalSelect-1"),           (60,"ConditionalSelect-2"),
+  (10,"CountLeading-1"),                 (10,"CountLeading-2"),                (10,"ExtractRegister32"),
+  (10,"ExtractRegister64"),              (10,"Division-1"),                    (10,"Division-2"),
+  (10,"MultiplyAddSub-1"),               (10,"MultiplyAddSub-2"),              (10,"MultiplyAddSubLong"),
+  (0,"MultiplyHigh"),                    (10,"Reverse32"),                     (10,"Reverse64"),
+  (0,"CRC8"),                            (0,"CRC16"),                          (0,"CRC32"),
+  (0,"CRC64"),                           (10,"BranchConditional"),             (0,"BranchImmediate-1"),
+  (10,"BranchImmediate-2"),              (10,"BranchRegisterJMP"),             (10,"BranchRegisterCALL"),
+  (10,"BranchRegisterRET"),              (0,"CompareAndBranch-1"),             (0,"CompareAndBranch-2"),
+  (10,"TestBitAndBranch-1"),             (10,"TestBitAndBranch-2"),            (10,"TestBitAndBranch-3"),
+  (10,"TestBitAndBranch-4"),             (10,"LoadStoreImmediate-1-1"),        (10,"LoadStoreImmediate-1-2"),
+  (10,"LoadStoreImmediate-1-3"),         (10,"LoadStoreImmediate-1-4"),        (10,"LoadStoreImmediate-1-5"),
+  (10,"LoadStoreImmediate-1-6"),         (10,"LoadStoreImmediate-1-7"),        (10,"LoadStoreImmediate-1-8"),
+  (10,"LoadStoreImmediate-1-9"),         (10,"LoadStoreImmediate-1-10"),       (10,"LoadStoreImmediate-1-11"),
+  (10,"LoadStoreImmediate-1-12"),        (10,"LoadStoreImmediate-1-13"),       (10,"LoadStoreImmediate-1-14"),
+  (10,"LoadStoreImmediate-1-15"),        (10,"LoadStoreImmediate-1-16"),       (10,"LoadStoreImmediate-1-17"),
+  (10,"LoadStoreImmediate-1-18"),        (15,"LoadStoreImmediate-1-19"),       (10,"LoadStoreImmediate-1-20"),
+  (10,"LoadStoreImmediate-1-21"),        (15,"LoadStoreImmediate-1-22"),       (10,"LoadStoreImmediate-1-23"),
+  (10,"LoadStoreImmediate-1-24"),        (15,"LoadStoreImmediate-1-25"),       (10,"LoadStoreImmediate-1-26"),
+  (10,"LoadStoreImmediate-1-27"),        (10,"LoadStoreImmediate-1-28"),       (10,"LoadStoreImmediate-2-1"),
+  (10,"LoadStoreImmediate-2-2"),         (10,"LoadStoreImmediate-2-3"),        (10,"LoadStoreImmediate-2-4"),
+  (10,"LoadStoreImmediate-2-5"),         (10,"LoadStoreImmediate-2-6"),        (10,"LoadStoreImmediate-2-7"),
+  (10,"LoadStoreImmediate-2-8"),         (10,"LoadStoreImmediate-2-9"),        (10,"LoadStoreImmediate-2-10"),
+  (10,"LoadStoreImmediate-2-11"),        (10,"LoadStoreImmediate-2-12"),       (10,"LoadStoreImmediate-2-13"),
+  (10,"LoadStoreImmediate-2-14"),        (10,"LoadStoreImmediate-2-15"),       (10,"LoadLiteral-1"),
+  (10,"LoadLiteral-2"),                  (10,"LoadLiteral-3"),                 (10,"LoadLiteral-4"),
+  (10,"LoadStoreRegister-1"),            (80,"LoadStoreRegister-2"),           (60,"LoadStoreRegister-3"),
+  (10,"LoadStoreRegister-4"),            (10,"LoadStoreRegister-5"),           (60,"LoadStoreRegister-6"),
+  (10,"LoadStoreRegister-7"),            (10,"LoadStoreRegister-8"),           (10,"LoadStoreRegister-9"),
+  (10,"LoadStoreRegister-10"),           (60,"LoadStoreRegister-11"),          (10,"LoadStoreRegister-12"),
+  (10,"LoadStoreRegister-13"),           (60,"LoadStoreRegister-14"),          (10,"StorePair32-1"),
+  (10,"StorePair32-2"),                  (10,"LoadPair32-1"),                  (10,"LoadPair32-2"),
+  (10,"LoadStorePair64-1"),              (10,"LoadStorePair64-2"),             (10,"LoadStorePair64-3"),
+  (10,"LoadStorePair64-4"),              (10,"NoOperation")]
 			   
  fun instClass subs =
      hd (String.tokens  (fn c => Char.compare (c,#"-") = EQUAL) subs);
@@ -133,14 +133,52 @@ val el = "6B831B94"
      map (fn arg => foldl remChars arg [#",", #" ", #"]"]) args
 
 
- fun instGen () =
-     let val ic = (snd(weighted_select arm8_names_weighted gen))
-	 val ib = random ic
-	 val wl = filter (fn c => String.isSubstring "WORD" c) (decomp ib)
-     in
-	 if null wl then (ic, ib) else instGen ()
-     end 
+ val whitespace_r =
+      STAR (ALTERNATION [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"])     
+ val lowerAlphaList = Regex.literalList "abcdefghijklmnopqrstuvwxyz"
+ val upperAlphaList = Regex.literalList "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+ val alphaList = lowerAlphaList @ upperAlphaList
+ val numList = Regex.literalList "1234567890"
+ val specialChar= Regex.literalList"[],#+-"
+ val identifierList =
+        alphaList @ numList @ (Regex.literalList "'_") @ specialChar @ [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"]
 
+ val alphabet_r = ALTERNATION (identifierList)
+
+ val pattern_ldp = CONCATENATION [ stringLiteral "ldp", whitespace_r, stringLiteral "xzr,", whitespace_r, STAR (alphabet_r), END]
+ val pattern_stp = CONCATENATION [ stringLiteral "stp", whitespace_r, stringLiteral "xzr,", whitespace_r, STAR (alphabet_r), END];
+ val pattern_cbnz = CONCATENATION [ stringLiteral "cbnz", whitespace_r, STAR (alphabet_r), END];
+
+ fun filter_inspected_instr str =
+     let
+	 fun reader nil    = NONE
+           | reader (h::t) = SOME (h, t)
+			     
+	 fun checkPatterns (pattern, str) =	     
+	     let
+		 val result = Option.map (fn (str, strm) => str) (
+		      evalRegex pattern reader (String.explode str)
+		      )
+		 val resultBool = if (isSome result) then true else false
+	     in
+		 resultBool
+	     end
+     in
+	 (
+	  checkPatterns(pattern_ldp, str) orelse
+	  checkPatterns(pattern_stp, str) orelse
+	  checkPatterns(pattern_cbnz, str) 
+	 )
+     end
+(* filter_inspected_instr "ldr xzr, x19, [x21, #0xC8]"; *)
+ fun instGen () =
+     let
+	 val ic = (snd(weighted_select arm8_names_weighted gen));
+	 val ib = random ic;
+	 val wl = filter (fn c => String.isSubstring "WORD" c) (decomp ib);
+     in
+	 if (not(null wl) orelse (filter_inspected_instr ib)) then instGen () else (ic, ib)
+     end 
 (*
 val inst = "15c984de"
 val pc = 0
@@ -268,7 +306,7 @@ val n = 3;
     List.tabulate (n, fn pc => genInstr (pc, n));
 
 (*
-bir_prog_gen_arm8_rand_simple 5
+bir_prog_gen_arm8_rand_simple 5;
 *)
 
 end; (* struct *)
