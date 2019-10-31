@@ -138,7 +138,8 @@ conc_exec_obs_compute prog s1;
 conc_exec_obs_compute prog s2;
 conc_exec_obs_compare prog (s1,s2);
 
-*)
+
 val dot_path = "/home/xmate/Projects/HolBA/HolBA/src/tools/scamv/tempdir/cfg.dot";
 bir_cfgVizLib.bir_export_graph_from_prog prog dot_path;
+*)
 end (* struct *)

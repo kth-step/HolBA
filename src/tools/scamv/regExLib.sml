@@ -1,4 +1,4 @@
-structure Regex =
+structure regExLib =
 struct
   datatype regex =
       (* No support for matching the null string *)

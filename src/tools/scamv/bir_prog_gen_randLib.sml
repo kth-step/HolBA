@@ -4,7 +4,7 @@ struct
   open HolKernel boolLib liteLib simpLib Parse bossLib;
   open arm8_progLib arm8AssemblerLib arm8;
 
-  open bir_scamv_helpersLib;
+  open bir_scamv_helpersLib regExLib;
 
 
 (* library for randomly generated programs *)
@@ -68,10 +68,11 @@ struct
  fun instClass subs =
      hd (String.tokens  (fn c => Char.compare (c,#"-") = EQUAL) subs);
 
-(* ---------------------------------------------  *)
+ (* ---------------------------------------------  *)
  type gen = Random.generator
  val gen = rand_gen
  val emp_str = ""
+ val splitter = String.tokens (fn c => c = #";");
      
  fun bits gen bits =
      map (fn x => x = 1) (Random.rangelist (0,2) (bits,gen))
@@ -100,9 +101,9 @@ struct
 
  val random = random_hex o Option.valOf o arm8_stepLib.arm8_pattern;
 
-(*
-val el = "6B831B94"
-*)
+ (*
+  val el = "6B831B94"
+  *)
  fun decomp el =  arm8AssemblerLib.arm8_disassemble [QUOTE el];
 
  fun inst_decomp inst =
@@ -134,14 +135,14 @@ val el = "6B831B94"
 
 
  val whitespace_r =
-      STAR (ALTERNATION [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"])     
- val lowerAlphaList = Regex.literalList "abcdefghijklmnopqrstuvwxyz"
- val upperAlphaList = Regex.literalList "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+     STAR (ALTERNATION [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"])     
+ val lowerAlphaList = regExLib.literalList "abcdefghijklmnopqrstuvwxyz"
+ val upperAlphaList = regExLib.literalList "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
  val alphaList = lowerAlphaList @ upperAlphaList
- val numList = Regex.literalList "1234567890"
- val specialChar= Regex.literalList"[],#+-"
+ val numList = regExLib.literalList "1234567890"
+ val specialChar= regExLib.literalList"[],#+-"
  val identifierList =
-        alphaList @ numList @ (Regex.literalList "'_") @ specialChar @ [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"]
+     alphaList @ numList @ (regExLib.literalList "'_") @ specialChar @ [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"]
 
  val alphabet_r = ALTERNATION (identifierList)
 
@@ -157,8 +158,8 @@ val el = "6B831B94"
 	 fun checkPatterns (pattern, str) =	     
 	     let
 		 val result = Option.map (fn (str, strm) => str) (
-		      evalRegex pattern reader (String.explode str)
-		      )
+			      evalRegex pattern reader (String.explode str)
+			      )
 		 val resultBool = if (isSome result) then true else false
 	     in
 		 resultBool
@@ -170,20 +171,21 @@ val el = "6B831B94"
 	  checkPatterns(pattern_cbnz, str) 
 	 )
      end
-(* filter_inspected_instr "ldr xzr, x19, [x21, #0xC8]"; *)
+ (* filter_inspected_instr "ldr xzr, x19, [x21, #0xC8]"; *)
+
  fun instGen () =
      let
 	 val ic = (snd(weighted_select arm8_names_weighted gen));
 	 val ib = random ic;
 	 val wl = filter (fn c => String.isSubstring "WORD" c) (decomp ib);
      in
-	 if (not(null wl) orelse (filter_inspected_instr ib)) then instGen () else (ic, ib)
+	 if (not(null wl) orelse (filter_inspected_instr ((hd o splitter o hd o decomp) ib))) then instGen () else (ic, ib)
      end 
-(*
-val inst = "15c984de"
-val pc = 0
-val len = 3
-*)
+ (*
+  val inst = "15c984de"
+  val pc = 0
+  val len = 3
+  *)
  local
      fun addr_to_hexString adr =
 	 (BitsN.toHexString (BitsN.fromInt ((IntInf.fromInt adr), 32)))
@@ -262,48 +264,48 @@ val len = 3
 				    in  (src:= (d::(!src)); pc:= !pc + 1);i end))
      end
 
-  val do_debug = false;
-  fun remove_plus s = concat (String.tokens (fn c => c = #"+") s);
-  fun remove_minus s = concat (String.tokens (fn c => c = #"-") s);
-  fun remove_junk s = (hd (String.tokens (fn c => c = #";")
-                                         (remove_minus (remove_plus s)))) ^ (if not do_debug then ""
-                                                                             else " /* orig: " ^ s ^ " */");
+ val do_debug = false;
+ fun remove_plus s = concat (String.tokens (fn c => c = #"+") s);
+ fun remove_minus s = concat (String.tokens (fn c => c = #"-") s);
+ fun remove_junk s = (hd (String.tokens (fn c => c = #";")
+                                        (remove_minus (remove_plus s)))) ^ (if not do_debug then ""
+                                                                            else " /* orig: " ^ s ^ " */");
 
-(*
-val n = 3;
-*)
+ (*
+  val n = 3;
+  *)
  (* takes the number of instructions to generate *)
  fun bir_prog_gen_arm8_rand n = map ((strip_ws_off false) o remove_junk o hd o decomp) (progGen n);
 
-(* super simple library for randomly generated programs *)
-(* ========================================================================================= *)
+ (* super simple library for randomly generated programs *)
+ (* ========================================================================================= *)
 
-  local
-    fun randSel l = List.nth (l, Random.range (0, length l) gen);
+ local
+     fun randSel l = List.nth (l, Random.range (0, length l) gen);
 
-    fun randTarget (pc, len) = (4*(Random.range (1, 1+len-pc) gen));
+     fun randTarget (pc, len) = (4*(Random.range (1, 1+len-pc) gen));
 
-    val regs    = List.tabulate (4, fn regnum => "x" ^ Int.toString regnum);
-    val ariths  = ["add"];
-    val condbrs = ["cbz", "cbnz"];
-    val loads   = ["ldr"];
-    val stores  = ["str"];
+     val regs    = List.tabulate (4, fn regnum => "x" ^ Int.toString regnum);
+     val ariths  = ["add"];
+     val condbrs = ["cbz", "cbnz"];
+     val loads   = ["ldr"];
+     val stores  = ["str"];
 
-    fun genReg    ()  = randSel regs;
-    fun genTarget loc = "#0x" ^ (Int.fmt (StringCvt.HEX) (randTarget loc));
+     fun genReg    ()  = randSel regs;
+     fun genTarget loc = "#0x" ^ (Int.fmt (StringCvt.HEX) (randTarget loc));
 
-    fun genArith  loc = (randSel ariths)  ^ " " ^ (genReg ()) ^ ", " ^ (genReg ()) ^ ", " ^ (genReg ());
-    fun genCondBr loc = (randSel condbrs) ^ " " ^ (genReg ()) ^ ", " ^ (genTarget loc);
-    fun genLoad   loc = (randSel loads)   ^ " " ^ (genReg ()) ^ ", [" ^ (genReg ()) ^ "]";
-    fun genStore  loc = (randSel stores)  ^ " " ^ (genReg ()) ^ ", [" ^ (genReg ()) ^ "]";
+     fun genArith  loc = (randSel ariths)  ^ " " ^ (genReg ()) ^ ", " ^ (genReg ()) ^ ", " ^ (genReg ());
+     fun genCondBr loc = (randSel condbrs) ^ " " ^ (genReg ()) ^ ", " ^ (genTarget loc);
+     fun genLoad   loc = (randSel loads)   ^ " " ^ (genReg ()) ^ ", [" ^ (genReg ()) ^ "]";
+     fun genStore  loc = (randSel stores)  ^ " " ^ (genReg ()) ^ ", [" ^ (genReg ()) ^ "]";
 
-    val instrFuns = [genArith, genCondBr, genLoad];
-  in
-    fun genInstr loc = randSel instrFuns loc;
-  end
+     val instrFuns = [genArith, genCondBr, genLoad];
+ in
+ fun genInstr loc = randSel instrFuns loc;
+ end
 
-  fun bir_prog_gen_arm8_rand_simple n =
-    List.tabulate (n, fn pc => genInstr (pc, n));
+ fun bir_prog_gen_arm8_rand_simple n =
+     List.tabulate (n, fn pc => genInstr (pc, n));
 
 (*
 bir_prog_gen_arm8_rand_simple 5;
