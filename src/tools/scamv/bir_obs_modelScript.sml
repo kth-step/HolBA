@@ -123,11 +123,11 @@ add_obs_cache_line_tag_armv8 p = map_obs_prog add_block_cache_line_tag p
 (* observe tag & set index, if set index is in upper half *)
 val observe_mem_subset_def = Define`
 observe_mem_subset e =
-BStmt_Observe (BExp_BinPred BIExp_LessOrEqual
+BStmt_Observe (BExp_BinPred BIExp_LessThan
+                            (BExp_Const (Imm64 60w))
                             (BExp_BinExp BIExp_Mod
                                          (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))
                                          (BExp_Const (Imm64 128w)))
-                            (BExp_Const (Imm64 60w))
               )
                             (* (BExp_BinExp BIExp_And *)
                             (*              (BExp_Const (Imm64 0x1000w))) *)

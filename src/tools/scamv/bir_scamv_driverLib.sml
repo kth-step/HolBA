@@ -131,7 +131,7 @@ fun make_word_relation relation exps =
             in
 ``(^va <> ^vb)``
             end;
-        val distinct = if null pairs then raise NoObsInPath else list_mk_conj (map mk_distinct pairs);
+        val distinct = if null pairs then raise NoObsInPath else list_mk_disj (map mk_distinct pairs);
     in
        ``^(bir2bool relation) /\ ^distinct``
     end
@@ -259,7 +259,7 @@ fun enumerate_line_single_input path_struct =
         case vars of
             [] => []
           | (v::vs) => [(observe_line (bden (bvarimm64 (fromHOLstring v))),
-                         bir_rel_synthLib.enum_range (62,127))]
+                         bir_rel_synthLib.enum_range (0,60))]
     end;
 
 val default_enumeration_targets = enumerate_line_single_input;
