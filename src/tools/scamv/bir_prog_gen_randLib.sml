@@ -146,9 +146,10 @@ struct
 
  val alphabet_r = ALTERNATION (identifierList)
 
- val pattern_ldp = CONCATENATION [ stringLiteral "ldp", whitespace_r, stringLiteral "xzr,", whitespace_r, STAR (alphabet_r), END]
- val pattern_stp = CONCATENATION [ stringLiteral "stp", whitespace_r, stringLiteral "xzr,", whitespace_r, STAR (alphabet_r), END];
- val pattern_cbnz = CONCATENATION [ stringLiteral "cbnz", whitespace_r, STAR (alphabet_r), END];
+ val pattern_ldp   = CONCATENATION [stringLiteral "ldp", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END]
+ val pattern_ldpsw = CONCATENATION [stringLiteral "ldpsw", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END]
+ val pattern_stp   = CONCATENATION [stringLiteral "stp", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END]
+ val pattern_cbnz  = CONCATENATION [stringLiteral "cbnz", whitespace_r, STAR (alphabet_r), END]
 
  fun filter_inspected_instr str =
      let
