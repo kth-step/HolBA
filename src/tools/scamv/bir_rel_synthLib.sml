@@ -100,17 +100,17 @@ val fresh_id =
                 String.implode (c n)
             end);
 
-val fresh_int =
+fun mk_fresh_gen () =
     stateful_tabulate (fn n => n);
 
 fun todo () = raise ERR "todo" "unimplemented";
 
-fun gen_obs_ids ts =
-    List.map (fn (c,t) => cobs (fresh_int (), c, t)) ts;
+fun gen_obs_ids fresh ts =
+    List.map (fn (c,t) => cobs (fresh (), c, t)) ts;
 
-fun gen_path_ids ps =
+fun gen_path_ids fresh ps =
     List.map (fn (pcond, cobslist) =>
-                 path (fresh_int (), pcond, gen_obs_ids cobslist)) ps;
+                 path (fresh (), pcond, gen_obs_ids fresh cobslist)) ps;
 
 fun lookup_path path_id path_struct =
     List.find (fn p => path_id_of p = path_id) path_struct;
@@ -303,7 +303,8 @@ fun preprocess_path_struct ps : (path_struct * term) =
         fun smart_bandl xs = if null xs then btrue else bandl xs;
         val negCond = smart_bandl o List.map (bnot o fst);
         val validity = negCond nones;
-    in (gen_path_ids ps', band (validity, primed_term validity))
+        val fresh = mk_fresh_gen ();
+    in (gen_path_ids fresh ps', band (validity, primed_term validity))
     end;
 
 fun partition_domains (ps : path_struct) : int list * int list =
@@ -346,9 +347,11 @@ fun rel_synth_init initial_ps (env : enum_env) =
                     handle Bind => raise ERR "next_test" "no next relation found";
                 val spec = try_spec ();
                 val constraint = next_constraint ();
-                val _ = (print ("Selected constraint: ");
-                         bir_exp_pretty_print constraint;
-                         print "\n");
+                val _ = if constraint <> btrue
+                        then (print ("Selected constraint: ");
+                              bir_exp_pretty_print constraint;
+                              print "\n")
+                        else ();
             in SOME (spec, band (band (rel_synth_jit spec ps, constraint)
                                  ,validity))
                handle e => (print (PolyML.makestring e ^ "\n");

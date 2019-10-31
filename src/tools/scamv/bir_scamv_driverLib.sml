@@ -148,8 +148,7 @@ fun to_sml_Arbnums model =
 
 val obs_model_id = "bir_arm8_cache_line_model";
 val hw_obs_model_id = ref "exp_cache_multiw";
-val do_enum = true;
-val max_lines = 10;
+val do_enum = ref false;
 
 val (current_prog_id : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
@@ -158,48 +157,6 @@ val (current_pathstruct :
      path_struct ref) = ref [];
 val (current_word_rel : term option ref) = ref NONE;
 
-(*
-(* enumerator *)
-local
-    val upper_bound = max_lines;
-    val lower_bound = 0;
-    fun enumFromTo a b =
-        let fun go n xs =
-                if n = a then (a :: xs)
-                else go (n-1) (n :: xs)
-        in go b []
-        end;
-    fun isolate [] = []
-      | isolate (x::xs) = x::isolate(List.filter (fn y => y <> x) xs)
-    val enum_domain = isolate (cartesianWith (fn x => fn y => (x,y))
-                                    (enumFromTo lower_bound upper_bound)
-                                    (enumFromTo lower_bound upper_bound))
-    val domain_lower_bound = 0;
-    val domain_upper_bound = length enum_domain;
-    val (enum_state : int ref) = ref domain_lower_bound;
-
-    fun apply_to_term line_index t =
-        beq (t, bconst64 line_index)
-in
-fun next_line_pair () =
-    let val (primed, unprimed) = !current_enumeration_targets;
-        fun result f xs =
-            if null xs then btrue
-            else
-                borl (List.map
-                           (apply_to_term
-                                (f (List.nth
-                                        (enum_domain, !enum_state))))
-                           xs)
-    in
-        (enum_state := !enum_state + 1;
-         (if !enum_state > domain_upper_bound
-          then enum_state := domain_lower_bound
-          else ());
-        band (result fst primed, result snd unprimed))
-    end
-end
-*)
 fun reset () =
     (current_prog_id := "";
      current_prog := NONE;
@@ -262,7 +219,10 @@ fun enumerate_line_single_input path_struct =
                          bir_rel_synthLib.enum_range (0,60))]
     end;
 
-val default_enumeration_targets = enumerate_line_single_input;
+fun default_enumeration_targets paths =
+    if !do_enum
+    then enumerate_line_single_input paths
+    else [];
 
 fun start_interactive prog =
     let
@@ -306,7 +266,10 @@ fun next_experiment all_exps next_relation  =
         
         (* ADHOC this constrains paths to only those where
            none of the observations appear *)
-        val guard_path_spec = all_obs_not_present;
+        val guard_path_spec =
+            if !do_enum
+            then all_obs_not_present
+            else (fn _ => true);
 
         val (path_spec, rel) =
             valOf (next_relation guard_path_spec)
@@ -330,7 +293,7 @@ fun next_experiment all_exps next_relation  =
                 NONE => new_word_relation
               | SOME r => mk_conj (new_word_relation, r);
 
-        val _ = printv 1 ("Calling Z3\n");
+        val _ = printv 2 ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
         val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
 
@@ -450,7 +413,8 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
             case gen of
                 prefetch_strides =>
                 (current_obs_model_id := "bir_arm8_cache_line_subset_model";
-                 hw_obs_model_id := "exp_cache_multiw_subset")
+                 hw_obs_model_id := "exp_cache_multiw_subset";
+                 do_enum := true)
              | _ => ();
 
         val _ = if (verb > 0) then
