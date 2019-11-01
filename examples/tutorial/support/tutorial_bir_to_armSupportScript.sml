@@ -504,6 +504,51 @@ cheat
 );
 
 
+val test_thm4 = store_thm("test_thm4",
+  ``!pc_cond p st n ol c_st c_pc st'.
+    (bir_exec_steps_GEN pc_cond p st (SOME n) = BER_Ended ol c_st c_pc st') ==>
+    (st'.bst_status = BST_Running) ==>
+    (n = c_pc)``,
+
+cheat
+);
+
+val test_thm5 = store_thm("test_thm5",
+  ``!pc_cond pc_cond' p st n1 n2 ol ol' c_st c_st' c_pc c_pc' st'.
+    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
+    (bir_exec_steps_GEN pc_cond' p st (SOME n2) = BER_Ended ol' c_st' c_pc' st') ==>
+    (c_st' = c_st)``,
+
+cheat
+);
+
+
+val test_thm6 = store_thm("test_thm6",
+  ``!pc_cond p st n ol c_st c_pc st'.
+    (bir_exec_steps_GEN pc_cond p st (SOME n) = BER_Ended ol c_st c_pc st') ==>
+    (st'.bst_status = BST_Running) ==>
+    (n > 0) ==>
+    (c_st > 0)``,
+
+cheat
+);
+
+val test_thm7 = store_thm("test_thm7",
+  ``!(a:num).
+    (a < 1) <=> (a = 0)``,
+
+cheat
+);
+
+val test_thm8 = store_thm("test_thm8",
+  ``!(a:num).
+    (a > 0) ==>
+    PRE a < a``,
+
+cheat
+);
+
+
 val lift_contract_thm = store_thm("lift_contract_thm",
   ``!p mms ml mls mu mpre mpost bpre bpost.
       MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p) ==>
@@ -643,22 +688,12 @@ REPEAT STRIP_TAC >>
  * BIR execution, prove that the resulting BIR state is Running with PC not in ls,
  * then use bir_is_lifted_prog_MULTI_STEP_EXEC *)
 subgoal `n' = c_addr_labels` >- (
-  (* OK since
-
-bir_exec_to_labels_n {l | IS_BL_Address l} p bs n' =
-         BER_Ended lo c_st c_addr_labels bs'
-
-and 
-
-bs' is Running?
-
-? *)
-  cheat
+  FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
+  IMP_RES_TAC test_thm4
 ) >>
 subgoal `?lo c_st c_addr_labels bs''.
          bir_exec_to_addr_label_n p bs n'' =
            BER_Ended lo c_st c_addr_labels bs''` >- (
-  (* OK since n'' < n'? *)
   FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
   IMP_RES_TAC test_thm2 >>
   Q.EXISTS_TAC `ol'` >>
@@ -668,7 +703,6 @@ subgoal `?lo c_st c_addr_labels bs''.
   FULL_SIMP_TAC std_ss []
 ) >>
 subgoal `bs''.bst_status = BST_Running` >- (
-  (* OK since n'' < n'? *)
   FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
   IMP_RES_TAC test_thm3
 ) >>
@@ -695,26 +729,11 @@ Q.PAT_X_ASSUM `A ==> B` (fn thm =>
 Q.SUBGOAL_THEN `(?li.
               MEM (BL_Address li) (bir_labels_of_program p) /\
               (bs.bst_pc = bir_block_pc (BL_Address li)))` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
-(*
-subgoal `(bs.bst_pc.bpc_index = 0) /\
-         (bs.bst_pc.bpc_label = BL_Address (Imm64 ml))` >- (
-  REPEAT (FULL_SIMP_TAC (srw_ss()) [arm8_bmr_rel_EVAL, bir_block_pc_def, arm_weak_model_def])
-) >>
-
-
-
-*)
-
-
-
-
-
-
-
-
-
-
-  cheat
+  Q.EXISTS_TAC `Imm64 (arm_weak_model.pc ms)` >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC std_ss [] >>
+    IMP_RES_TAC bir_block_pc_alt_thm
+  )
 ) >>
 REV_FULL_SIMP_TAC std_ss [] >>
 RW_TAC (std_ss++holBACore_ss) [] >>
@@ -723,47 +742,49 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 (* ... execution: *)
 Q.EXISTS_TAC `ms''` >>
 subgoal `c_addr_labels' = n''` >- (
-  (* Ok from n-address execution with both initial and final state Running *)
-  cheat
+  FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
+  IMP_RES_TAC test_thm4 >>
+  FULL_SIMP_TAC std_ss []
 ) >>
 RW_TAC std_ss [] >>
 (* ... and ls non-membership: *)
 subgoal `bs''.bst_pc.bpc_label NOTIN
            {BL_Address (Imm64 ml') | ml' IN mls}` >- (
   subgoal `n = c_st` >- (
-    cheat
+    FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_addr_label_n_def,
+                          bir_exec_to_labels_n_def] >>
+    IMP_RES_TAC test_thm5
   ) >>
   subgoal `c_st' < c_st` >- (
-    cheat
+    FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_addr_label_n_def,
+                          bir_exec_to_labels_n_def] >>
+    IMP_RES_TAC test_thm3
   ) >>
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_labels_n_def,
                         bir_exec_steps_GEN_SOME_EQ_Ended] >>
   QSPECL_X_ASSUM ``!(n:num). (n < c_st) ==> _`` [`c_st'`] >>
   REV_FULL_SIMP_TAC (arith_ss++holBACore_ss) [bir_exec_infinite_steps_fun_COUNT_PCs_def] >>
   subgoal `c_st' > 0` >- (
-    (* Since bs'' is Running and c_addr_labels' > 0 *)
-    cheat
+    FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_addr_label_n_def,
+                          bir_exec_to_labels_n_def] >>
+    IMP_RES_TAC test_thm6
   ) >>
   subgoal `~bir_state_COUNT_PC (F,
             (\pc.
                  (pc.bpc_index = 0) /\
                  pc.bpc_label IN {BL_Address (Imm64 ml') | ml' IN mls}))
                 (bir_exec_infinite_steps_fun p bs c_st')` >- (
-    (* Using bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0 *)
-    cheat
+    FULL_SIMP_TAC std_ss [test_thm7, bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
+    QSPECL_X_ASSUM ``!j. _`` [`PRE c_st'`] >>
+    SUBGOAL_THEN ``SUC (PRE (c_st':num)) = c_st'`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+      FULL_SIMP_TAC arith_ss []
+    ) >>
+    IMP_RES_TAC test_thm8 >>
+    FULL_SIMP_TAC std_ss []
   ) >>
   subgoal `bs''.bst_pc.bpc_index = 0` >- (
-    (* Using 
-
-bir_exec_to_addr_label_n p bs c_addr_labels' =
-         BER_Ended lo' c_st' c_addr_labels' bs''
-
-and 
-
-bs''.bst_status = BST_Running
-
- *)
-    cheat
+    IMP_RES_TAC bir_exec_to_addr_label_n_ended_running >>
+    REV_FULL_SIMP_TAC std_ss [bir_state_is_terminated_def]
   ) >>
   FULL_SIMP_TAC std_ss [bir_state_COUNT_PC_def] >>
   FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def,

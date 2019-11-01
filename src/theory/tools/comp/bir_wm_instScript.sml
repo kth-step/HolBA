@@ -638,7 +638,8 @@ val bir_weak_triple_precond_conj = store_thm("bir_weak_triple_precond_conj",
       (\s'. bir_exec_to_labels_triple_postcond s' post prog)``,
 
 FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_precond_def,
-                      bir_exec_to_labels_triple_postcond_def, weak_triple_def] >>
+                      bir_exec_to_labels_triple_postcond_def,
+                      weak_triple_def] >>
 REPEAT STRIP_TAC >>
 QSPECL_X_ASSUM ``!s. _`` [`s`] >>
 REV_FULL_SIMP_TAC std_ss [GSYM bir_and_equiv, bir_not_equiv, 

@@ -2435,6 +2435,28 @@ FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_block_n_TO_steps_GEN]);
 
 (* If label execution has Ended but not in a terminated state,
  * then PC index must be zero with label in execution label set. *)
+val bir_exec_to_labels_n_ended_running =
+  store_thm("bir_exec_to_labels_n_ended_running",
+  ``!ls prog st l n m c_l' st'.
+    (n > 0) ==>
+    (bir_exec_to_labels_n ls prog st n = BER_Ended l m c_l' st') ==>
+    ~(bir_state_is_terminated st') ==>
+    ((st'.bst_pc.bpc_index = 0) /\ st'.bst_pc.bpc_label IN ls)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_n_def,
+		      bir_exec_steps_GEN_SOME_EQ_Ended] >> (
+  subgoal `c_l' = n` >- (
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  subgoal `st'.bst_status = BST_Running` >- (
+    FULL_SIMP_TAC std_ss [bir_state_is_terminated_def]
+  ) >>
+  FULL_SIMP_TAC (arith_ss++holBACore_ss) [bir_state_COUNT_PC_def]
+)
+);
+
+
 val bir_exec_to_labels_ended_running =
   store_thm("bir_exec_to_labels_ended_running",
   ``!ls prog st l n c_l' st'.
@@ -2443,16 +2465,11 @@ val bir_exec_to_labels_ended_running =
     ((st'.bst_pc.bpc_index = 0) /\ st'.bst_pc.bpc_label IN ls)``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
-                      bir_exec_to_labels_n_def,
-		      bir_exec_steps_GEN_SOME_EQ_Ended] >> (
-  subgoal `c_l' = 1` >- (
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >> (
+  subgoal `(1:num) > 0` >- (
     FULL_SIMP_TAC arith_ss []
   ) >>
-  subgoal `st'.bst_status = BST_Running` >- (
-    FULL_SIMP_TAC std_ss [bir_state_is_terminated_def]
-  ) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_COUNT_PC_def]
+  IMP_RES_TAC bir_exec_to_labels_n_ended_running
 )
 );
 
