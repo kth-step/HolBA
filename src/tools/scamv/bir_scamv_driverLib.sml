@@ -152,6 +152,7 @@ val hw_obs_model_id = ref "exp_cache_multiw";
 
 val (current_prog_id : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
+val (current_prog_w_obs : term option ref) = ref NONE;
 val (current_obs_model_id : string ref) = ref obs_model_id_default;
 val (current_pathstruct :
      (term * (term * term) list option) list ref) = ref [];
@@ -161,6 +162,7 @@ val (current_antecedents : term list ref) = ref [];
 fun reset () =
     (current_prog_id := "";
      current_prog := NONE;
+     current_prog_w_obs := NONE;
      current_pathstruct := [];
      current_word_rel := NONE;
      current_antecedents := [])
@@ -185,6 +187,7 @@ fun start_interactive prog =
         val add_obs = #add_obs (get_obs_model (!current_obs_model_id))
 
         val lifted_prog_w_obs = add_obs lifted_prog;
+        val _ = current_prog_w_obs := SOME lifted_prog_w_obs;
         val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 (*        val _ = List.map (Option.map (List.map (print_term o fst)) o snd) paths;*)
@@ -248,10 +251,10 @@ fun next_test select_path =
         val s2 = List.map (fn (r,v) => (remove_prime r,v)) s2;
 
         (* check with concrete-symbolic execution whether the observations are actually equivalent *)
-        val lifted_prog = case !current_prog of
+        val lifted_prog_w_obs = case !current_prog_w_obs of
                              SOME x => x
                            | NONE => raise ERR "next_test" "no program found";
-        val ready_to_store = conc_exec_obs_compare lifted_prog (s1, s2);
+        val ready_to_store = conc_exec_obs_compare lifted_prog_w_obs (s1, s2);
         (*
         val _ = if ready_to_store then () else
                 raise ERR "next_test" "why did we generate a test case with unequal observations?";
