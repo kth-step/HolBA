@@ -140,7 +140,7 @@ struct
  val upperAlphaList = regExLib.literalList "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
  val alphaList = lowerAlphaList @ upperAlphaList
  val numList = regExLib.literalList "1234567890"
- val specialChar= regExLib.literalList"[],#+-"
+ val specialChar= regExLib.literalList"[],#+-!"
  val identifierList =
      alphaList @ numList @ (regExLib.literalList "'_") @ specialChar @ [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"]
 
@@ -148,7 +148,7 @@ struct
 
  val pattern_ldp   = CONCATENATION [stringLiteral "ldp", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END]
  val pattern_ldpsw = CONCATENATION [stringLiteral "ldpsw", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END]
- val pattern_stp   = CONCATENATION [stringLiteral "stp", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END]
+ (* val pattern_stp   = CONCATENATION [stringLiteral "stp", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END] *)
  val pattern_cbnz  = CONCATENATION [stringLiteral "cbnz", whitespace_r, STAR (alphabet_r), END]
 
  fun filter_inspected_instr str =
