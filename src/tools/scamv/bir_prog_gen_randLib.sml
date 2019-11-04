@@ -168,7 +168,8 @@ struct
      in
 	 (
 	  checkPatterns(pattern_ldp, str) orelse
-	  checkPatterns(pattern_stp, str) orelse
+	  checkPatterns(pattern_ldpsw, str) orelse
+	  (* checkPatterns(pattern_stp, str) orelse *)
 	  checkPatterns(pattern_cbnz, str) 
 	 )
      end
