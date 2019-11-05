@@ -256,18 +256,24 @@ end
       val exp_datahash = hashstring (prog_id ^ input1 ^ input2);
       val exp_id = "exps2/" ^ exp_type_id ^ "/" ^ exp_datahash;
       val exp_datapath = exp_basedir ^ "/" ^ exp_id;
-      (* it can also happen that the same test is produced multiple times *)
+      (* btw, it can also happen that the same test is produced multiple times *)
+      (* create directory if it didn't exist yet *)
       val _ = makedir true exp_datapath;
-      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" (exp_datapath ^ "/input1.json") input1;
-      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" (exp_datapath ^ "/input2.json") input2;
 
       (* write out reference to the code (hash of the code) *)
       val prog_id_file = exp_datapath ^ "/code.hash";
       val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" prog_id_file prog_id;
 
-      (* write out gen info *)
+      (* write the json files after reference to code per convention *)
+      (* - to indicate that experiment writing is complete *)
+      val input1_file = exp_datapath ^ "/input1.json";
+      val input2_file = exp_datapath ^ "/input2.json";
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" input1_file input1;
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" input2_file input2;
+
+      (* write out gen info, if there was no clash before! *)
       val embexp_run_file = exp_datapath ^ "/gen." ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
-      val _ = write_to_file_or_compare_clash "bir_embexp_prog_create" embexp_run_file state_gen_id;
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" embexp_run_file state_gen_id;
     in
       arch_id ^ "/" ^ exp_id
     end;
