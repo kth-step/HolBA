@@ -146,8 +146,12 @@ struct
 
  val alphabet_r = ALTERNATION (identifierList)
 
- val pattern_ldp   = CONCATENATION [stringLiteral "ldp", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END]
- val pattern_ldpsw = CONCATENATION [stringLiteral "ldpsw", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END]
+ val pattern_ld   = CONCATENATION [stringLiteral "ld", 
+				   STAR(ALTERNATION(lowerAlphaList)),		
+				   whitespace_r, 
+				   ALTERNATION[(stringLiteral "xzr,"),(stringLiteral "wzr,")], 
+				   STAR(alphabet_r),
+				   END];    
  (* val pattern_stp   = CONCATENATION [stringLiteral "stp", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END] *)
  val pattern_cbnz  = CONCATENATION [stringLiteral "cbnz", whitespace_r, STAR (alphabet_r), END]
 
@@ -167,9 +171,7 @@ struct
 	     end
      in
 	 (
-	  checkPatterns(pattern_ldp, str) orelse
-	  checkPatterns(pattern_ldpsw, str) orelse
-	  (* checkPatterns(pattern_stp, str) orelse *)
+	  checkPatterns(pattern_ld, str) orelse
 	  checkPatterns(pattern_cbnz, str) 
 	 )
      end
