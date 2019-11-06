@@ -227,6 +227,53 @@ end
       asm_lines
     end;
 
+  val prog_log = ref (NONE:TextIO.outstream option);
+  val exp_log = ref (NONE:TextIO.outstream option);
+  fun get_log_out (log, fun_name, err_msg) =
+    case !log of
+        NONE => raise ERR fun_name err_msg
+      | SOME log_out => log_out;
+
+  fun close_log log =
+    case !log of
+        NONE => ()
+      | SOME log_out => TextIO.closeOut log_out;
+
+  fun create_log log filename = (
+    (close_log log);
+    let val log_out = TextIO.openOut filename
+    in log := SOME log_out
+    end);
+
+  fun write_log_line log_t line =
+    let
+      val log_out = get_log_out log_t;
+      val _ = TextIO.output (log_out, line);
+      val _ = TextIO.output (log_out, "\n");
+    in
+      TextIO.flushOut log_out
+    end;
+
+  fun bir_embexp_log_prog_close () =
+    close_log prog_log;
+
+  fun bir_embexp_log_exp_close () =
+    close_log exp_log;
+
+  fun bir_embexp_log_prog message =
+    let
+      val line = message;
+    in
+      write_log_line (prog_log, "bir_embexp_log_prog", "no program log registered currently") line
+    end;
+
+  fun bir_embexp_log_exp message =
+    let
+      val line = message;
+    in
+      write_log_line (exp_log, "bir_embexp_log_exp", "no experiment log registered currently") line
+    end;
+
   fun bir_embexp_prog_create (arch_id, prog_gen_id) code_asm =
     let
       val progs_basedir = get_progs_basedir arch_id;
@@ -239,9 +286,11 @@ end
       (* but the code should not differ if it exists already *)
       val _ = write_to_file_or_compare_clash "bir_embexp_prog_create" (codepath ^ "/code.asm") code_asm;
 
-      (* write out gen info *)
-      val embexp_run_file = codepath ^ "/gen." ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
-      val _ = write_to_file_or_compare_clash "bir_embexp_prog_create" embexp_run_file prog_gen_id;
+      (* create prog log *)
+      val embexp_gen_file = codepath ^ "/gen." ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
+      val _ = create_log prog_log embexp_gen_file;
+      (* log generator info *)
+      val _ = write_log_line (prog_log, "bir_embexp_prog_create", "no no no") prog_gen_id;
     in
       codehash
     end;
@@ -271,9 +320,11 @@ end
       val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" input1_file input1;
       val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" input2_file input2;
 
-      (* write out gen info, if there was no clash before! *)
-      val embexp_run_file = exp_datapath ^ "/gen." ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
-      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" embexp_run_file state_gen_id;
+      (* create exp log, if there was no clash before! *)
+      val embexp_gen_file = exp_datapath ^ "/gen." ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
+      val _ = create_log exp_log embexp_gen_file;
+      (* log generator info *)
+      val _ = write_log_line (exp_log, "bir_embexp_sates2_create", "no no no") state_gen_id;
     in
       arch_id ^ "/" ^ exp_id
     end;

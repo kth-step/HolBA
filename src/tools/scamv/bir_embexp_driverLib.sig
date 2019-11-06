@@ -38,6 +38,14 @@ signature bir_embexp_driverLib = sig
   val bir_embexp_run : string -> bool -> (bool option * string)
 
 
+  (* process logging *)
+  (* ======================================== *)
+  val bir_embexp_log_prog_close : unit   -> unit
+  val bir_embexp_log_exp_close  : unit   -> unit
+  val bir_embexp_log_prog       : string -> unit
+  val bir_embexp_log_exp        : string -> unit
+
+
   (* loading programs and experiment inputs from logs *)
   (* ======================================== *)
   (* Inputs: - prog_id *)
