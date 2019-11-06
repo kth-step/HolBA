@@ -200,3 +200,21 @@ echo "Using HOLBA_GCC_ARM8_CROSS=${HOLBA_GCC_ARM8_CROSS}"
 echo
 
 
+
+####### HOLBA_GCC_ARM_CROSS
+
+if [[ ( -z "${HOLBA_GCC_ARM_CROSS}" ) || ( ! -z "${OPT_DIR_PARAM}" ) ]]; then
+  CROSS="${HOLBA_OPT_DIR}/gcc-arm-none-eabi-7-2018-q2u/bin/arm-none-eabi-"
+  if [[ -f "${CROSS}gcc" ]]; then
+    print_export_msg "HOLBA_GCC_ARM_CROSS"
+    export HOLBA_GCC_ARM_CROSS=${CROSS}
+  fi
+fi
+if [[ ( ! -f "${HOLBA_GCC_ARM_CROSS}gcc" ) ]]; then
+  print_export_msg "HOLBA_GCC_ARM_CROSS"
+  export HOLBA_GCC_ARM_CROSS=
+fi
+echo "Using HOLBA_GCC_ARM_CROSS=${HOLBA_GCC_ARM_CROSS}"
+echo
+
+
