@@ -456,16 +456,6 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
    bir_programTheory.bir_programcounter_t_component_equality]
 );
 
-val FUNPOW_OPT_prev_EXISTS = store_thm("FUNPOW_OPT_prev_EXISTS",
- ``!step_fun n n' s s'.
-   n > 0 ==>
-   (FUNPOW_OPT step_fun n s = SOME s') ==>
-   n' < n ==>
-   ?s''.
-   (FUNPOW_OPT step_fun n' s = SOME s'')``,
-
-cheat
-);
 
 (* If bir_exec_to_labels and bir_exec_to_addr_label_n both have
  * Ended in the same state, which is Running, then number of address

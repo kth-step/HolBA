@@ -421,6 +421,64 @@ METIS_TAC [FUNPOW_OPT_def,
            arithmeticTheory.FUNPOW_ADD]
 );
 
+val FUNPOW_OPT_next_1_NONE = store_thm("FUNPOW_OPT_next_1_NONE",
+  ``!step_fun n s.
+    (FUNPOW_OPT step_fun n s = NONE) ==>
+    (FUNPOW_OPT step_fun (SUC n) s = NONE)``,
+
+Induct_on `n` >| [
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [FUNPOW_OPT_REWRS],
+
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [FUNPOW_OPT_REWRS] >>
+  Cases_on `step_fun s` >| [
+    FULL_SIMP_TAC std_ss [],
+
+    FULL_SIMP_TAC std_ss []
+  ]
+]
+);
+
+val FUNPOW_OPT_next_n_NONE = store_thm("FUNPOW_OPT_next_n_NONE",
+ ``!step_fun n n' s.
+   (FUNPOW_OPT step_fun n s = NONE) ==>
+   (FUNPOW_OPT step_fun (n + n') s = NONE)``,
+
+Induct_on `n'` >| [
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [FUNPOW_OPT_REWRS],
+
+  REPEAT STRIP_TAC >>
+  QSPECL_X_ASSUM ``!step_fun n s. _`` [`step_fun`, `SUC n`, `s`] >>
+  IMP_RES_TAC FUNPOW_OPT_next_1_NONE >>
+  FULL_SIMP_TAC arith_ss [arithmeticTheory.ADD_CLAUSES]
+]
+);
+
+val FUNPOW_OPT_prev_EXISTS = store_thm("FUNPOW_OPT_prev_EXISTS",
+ ``!step_fun n n' s s'.
+   n > 0 ==>
+   (FUNPOW_OPT step_fun n s = SOME s') ==>
+   n' < n ==>
+   ?s''.
+   (FUNPOW_OPT step_fun n' s = SOME s'')``,
+
+REPEAT STRIP_TAC >>
+Cases_on `FUNPOW_OPT step_fun n' s` >| [
+  subgoal `?n''. n = n' + n''` >- (
+    `n' <= n` by FULL_SIMP_TAC arith_ss [] >>
+    METIS_TAC [arithmeticTheory.LESS_EQ_EXISTS]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  IMP_RES_TAC FUNPOW_OPT_next_n_NONE >>
+  QSPECL_X_ASSUM ``!n''. _`` [`n''`] >>
+  FULL_SIMP_TAC std_ss [],
+
+  METIS_TAC []
+]
+);
+
 (* -------------------------------------------------------------------------- *)
 (* lazy lists                                                                 *)
 (* -------------------------------------------------------------------------- *)
