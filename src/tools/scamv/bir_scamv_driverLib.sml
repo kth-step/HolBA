@@ -149,23 +149,22 @@ fun to_sml_Arbnums model =
 
 val obs_model_id_default = "bir_arm8_cache_line_model";
 val hw_obs_model_id = ref "exp_cache_multiw";
+val do_enum = ref false;
 
 val (current_prog_id : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
 val (current_prog_w_obs : term option ref) = ref NONE;
 val (current_obs_model_id : string ref) = ref obs_model_id_default;
 val (current_pathstruct :
-     (term * (term * term) list option) list ref) = ref [];
+     path_struct ref) = ref [];
 val (current_word_rel : term option ref) = ref NONE;
-val (current_antecedents : term list ref) = ref [];
 
 fun reset () =
     (current_prog_id := "";
      current_prog := NONE;
      current_prog_w_obs := NONE;
      current_pathstruct := [];
-     current_word_rel := NONE;
-     current_antecedents := [])
+     current_word_rel := NONE);
 
 fun printv n str =
     if (#verbosity (scamv_getopt_config ()) >= n)
@@ -176,6 +175,57 @@ fun min_verb n f =
     if (#verbosity (scamv_getopt_config ()) >= n)
     then f ()
     else ();
+
+fun observe_line e =
+    brshift (band (e, blshift (bconst64 0x7f, bconst64 6)), bconst64 6);
+
+fun collect_observations observe_fun pathstruct =
+    let fun collect_from_leaf NONE = []
+          | collect_from_leaf (SOME leaf) =
+            List.map (observe_fun o snd) leaf;
+
+        val leaves = List.map snd pathstruct;
+    in
+        List.concat (List.map collect_from_leaf leaves)
+    end
+
+(* fun collect_targets observe_fun path pathstruct = *)
+(*     let fun collect_from_leaf NONE = [] *)
+(*           | collect_from_leaf (SOME leaf) = *)
+(*             List.map (observe_fun o snd) leaf; *)
+
+(*         val leaf = List.find (fn entry => fst entry = path) pathstruct; *)
+(*     in *)
+(*         case leaf of *)
+(*             NONE => raise ERR "collect_targets" "wrong path given" *)
+(*          | SOME l => *)
+(*            List.concat (List.map collect_from_leaf leaves) *)
+(*     end *)
+
+fun extract_obs_variables ps =
+    List.concat (
+        List.map (fn (_,obs_list) =>
+                     case obs_list of
+                         NONE => []
+                       | SOME list => 
+                         List.concat (List.map
+                                          (fn (_,term) =>
+                                              bir_free_vars term) list))
+                ps);
+
+fun enumerate_line_single_input path_struct =
+    let val vars = extract_obs_variables path_struct;
+    in
+        case vars of
+            [] => []
+          | (v::vs) => [(observe_line (bden (bvarimm64 (fromHOLstring v))),
+                         bir_rel_synthLib.enum_range (0,60))]
+    end;
+
+fun default_enumeration_targets paths =
+    if !do_enum
+    then enumerate_line_single_input paths
+    else [];
 
 fun start_interactive prog =
     let
@@ -198,28 +248,56 @@ fun start_interactive prog =
         val _ =
             if exists (has_observations o snd) paths
             then () (* fine, there is at least one observation
-                       in the pathstruct *)
+                       in the paths list *)
             else raise ERR "start_interactive" "no observations";
 
-        val _ = current_pathstruct := paths;
-        val (conds, relation) = mkRel_conds paths;
-        val _ = min_verb 4 (fn () => print_term relation);
-        val _ = printv 1 ("Word relation\n");
-        val word_relation = make_word_relation relation all_exps;
-        val _ = current_word_rel := SOME word_relation;
-        val _ = current_antecedents := List.map bir2bool conds;
-    in paths end
+        val enum_env = default_enumeration_targets paths;
+        val (path_struct, validity, next_relation) =
+            rel_synth_init paths enum_env; (* TODO consider validity *)
+        val _ = current_pathstruct := path_struct;
+        val _ = min_verb 4 (fn () => print_path_struct path_struct);
+    in (path_struct, all_exps, next_relation) end;
 
-fun next_test select_path =
+
+fun all_obs_not_present { a_run = (_,a_obs), b_run = (_,b_obs) } =
+    let fun check xs = all (fn (b,_) => b = false) xs;
+    in check a_obs andalso check b_obs
+    end;
+
+fun next_experiment all_exps next_relation  =
     let
-        val path = select_path (!current_antecedents);
-        val _ = min_verb 1 (fn () => (print "Selecting path: "; print_term path));
-        val rel = case !current_word_rel of
-                    SOME x => x
-                  | NONE => raise ERR "next_test" "no relation found";
-        val word_relation = ``^rel /\ ^path``;
+        open bir_expLib;
         
-        val _ = printv 1 ("Calling Z3\n");
+        (* ADHOC this constrains paths to only those where
+           none of the observations appear *)
+        val guard_path_spec =
+            if !do_enum
+            then all_obs_not_present
+            else (fn _ => true);
+
+        val (path_spec, rel) =
+            valOf (next_relation guard_path_spec)
+            handle Option =>
+                   raise ERR "next_experiment" "next_relation returned a NONE";
+        
+        val _ = min_verb 1 (fn () =>
+                               (print "Selected path: ";
+                                print (PolyML.makestring path_spec);
+                                print "\n"));
+
+        val _ = min_verb 3 (fn () =>
+                               bir_exp_pretty_print rel);
+        val _ = printv 4 ("Word relation\n");
+        val new_word_relation = make_word_relation rel all_exps;
+        val _ = min_verb 4 (fn () =>
+                               (print_term new_word_relation;
+                                print "\n"));
+        val word_relation =
+            case !current_word_rel of
+                NONE => new_word_relation
+              | SOME r => mk_conj (new_word_relation, r);
+
+        val _ = printv 2 ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
         val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
 
@@ -238,7 +316,13 @@ fun next_test select_path =
                     in ``^va = ^b``
                     end; 
             in list_mk_conj (map mk_eq s) end;
-        val _ = current_word_rel := SOME ``^rel /\ ~^(mk_var_mapping model)``;
+        val new_constraint = ``~^(mk_var_mapping model)``;
+        val _ =
+            current_word_rel :=
+            (case !current_word_rel of
+                 NONE => SOME new_constraint
+               | SOME cumulative =>
+                 SOME ``^cumulative /\ ^new_constraint``);
 
 (*        val _ = print_term (valOf (!current_word_rel)); *)
 
@@ -292,16 +376,32 @@ fun mk_round_robin n =
           end
     end
 
+fun mk_round_robin_every s n =
+    let val counter = ref n;
+        val step = ref 0;
+    in fn (ys : term list) =>
+          let val c = !counter;
+          in
+              (if c = n
+               then (counter := 0; step := 0)
+               else (if (!step = s)
+                     then (counter := c + 1;
+                           step := 0)
+                     else (step := !step + 1));
+               printv 1 ("Path counter: " ^ PolyML.makestring (!counter) ^ "\n");
+               List.nth (ys, c))
+          end
+    end
+
 fun scamv_test_main tests prog =
     let
         val _ = reset();
-        val prog_obss_result = start_interactive prog;
-        val round_robin = mk_round_robin (length (!current_antecedents) - 1);
+        val (path_structure, all_exps, next_relation) = start_interactive prog;
         fun do_tests 0 = ()
           | do_tests n =
-            let val _ = next_test round_robin
+            let val _ = next_experiment all_exps next_relation
                         handle e =>
-                               raise ERR "scamv_test_main" "next_test failed";
+                               print ("Skipping test case due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n");
             in do_tests (n-1) end
     in do_tests tests
     end
@@ -309,39 +409,6 @@ fun scamv_test_main tests prog =
 
 fun scamv_test_gen_run tests (prog_id, lifted_prog) =
     (raise ERR "scamv_test_gen_run" "function DEPRECATED and will be removed soon - use scamv_run with from_file generator instead"; (NONE, "DEPRECATED"));
-(*   (DEPRECATED)
-     let
-        val add_obs = #add_obs (get_obs_model (!current_obs_model_id))
-
-        val lifted_prog_w_obs = add_obs lifted_prog;
-        val _ = print_term(lifted_prog_w_obs);
-        val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
-
-
-        val relation = mkRel paths;
-        val _ = print ("Word relation\n");
-        val word_relation = make_word_relation relation all_exps;
-        val _ = print_term(word_relation);
-        val _ = print ("Calling Z3\n");
-
-        val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
-        val _ = (print "SAT model:\n"; print_model model(*; print "\n"*));
-
-        val sml_model = to_sml_Arbnums model;
-        fun isPrimedRun s = String.isSuffix "_" s;
-        val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
-
-        val exp_id  =  bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
-        val test_result = bir_embexp_run exp_id false;
-
-        val _ = case test_result of
-		   (NONE, msg) => print ("result = NO RESULT (" ^ msg ^ ")")
-		 | (SOME r, msg) => print ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")");
-
-        val _ = print ("\n\n");
-    in
-        test_result
-    end *)
 
 val scamv_test_mock = scamv_test_gen_run 1 o prog_gen_store_mock;
 
@@ -376,7 +443,8 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
             case gen of
                 prefetch_strides =>
                 (current_obs_model_id := "bir_arm8_cache_line_subset_model";
-                 hw_obs_model_id := "exp_cache_multiw_subset")
+                 hw_obs_model_id := "exp_cache_multiw_subset";
+                 do_enum := true)
              | _ => ();
 
         val _ = if (verb > 0) then

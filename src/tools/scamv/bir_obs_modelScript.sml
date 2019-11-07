@@ -123,11 +123,11 @@ add_obs_cache_line_tag_armv8 p = map_obs_prog add_block_cache_line_tag p
 (* observe tag & set index, if set index is in upper half *)
 val observe_mem_subset_def = Define`
 observe_mem_subset e =
-BStmt_Observe (BExp_BinPred BIExp_LessOrEqual
+BStmt_Observe (BExp_BinPred BIExp_LessThan
+                            (BExp_Const (Imm64 60w))
                             (BExp_BinExp BIExp_Mod
                                          (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))
                                          (BExp_Const (Imm64 128w)))
-                            (BExp_Const (Imm64 60w))
               )
                             (* (BExp_BinExp BIExp_And *)
                             (*              (BExp_Const (Imm64 0x1000w))) *)
@@ -156,6 +156,39 @@ add_block_cache_line_subset block =
 val add_obs_cache_line_subset_armv8_def = Define`
 add_obs_cache_line_subset_armv8 p = map_obs_prog add_block_cache_line_subset p
 `;
+
+
+(* Subset with extra observation *)
+val observe_mem_line_def = Define`
+observe_mem_line e =
+BStmt_Observe ^btrue
+                   ([BExp_BinExp BIExp_RightShift (
+                       BExp_BinExp BIExp_And e (BExp_BinExp BIExp_LeftShift (BExp_Const (Imm64 0x7Fw)) (BExp_Const (Imm64 6w)))) (BExp_Const (Imm64 6w))])
+              HD
+`;
+
+val add_obs_stmts_subset_and_line_def = Define `
+(add_obs_stmts_subset_and_line [] = []) /\
+(add_obs_stmts_subset_and_line (x :: xs) =
+ case x of
+     BStmt_Assign v e =>
+     (case select_mem e of
+          [] => x :: add_obs_stmts_subset xs
+        | lds => (APPEND (MAP constrain_mem lds)
+                         (x :: (APPEND (MAP observe_mem_subset lds)
+                                       (APPEND (MAP observe_mem_line lds)
+                                               (add_obs_stmts_subset xs))))))
+   | _ => x :: add_obs_stmts_subset xs)
+`;
+
+val add_block_cache_line_subset_and_line_def = Define`
+add_block_cache_line_subset_and_line block =
+   block with bb_statements := add_obs_stmts_subset_and_line block.bb_statements
+`;
+
+val add_obs_cache_line_subset_and_line_armv8_def = Define`
+add_obs_cache_line_subset_and_line_armv8 p = map_obs_prog add_block_cache_line_subset_and_line p
+                                                                                                 `;
 
 
 val _ = export_theory();
