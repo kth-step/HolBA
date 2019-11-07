@@ -467,6 +467,11 @@ val FUNPOW_OPT_prev_EXISTS = store_thm("FUNPOW_OPT_prev_EXISTS",
 cheat
 );
 
+(* If bir_exec_to_labels and bir_exec_to_addr_label_n both have
+ * Ended in the same state, which is Running, then number of address
+ * labels executed to by bir_exec_to_addr_label_n can't have been 0,
+ * and this must also be equal to the number of address labels
+ * touched. *)
 val test_thm = store_thm("test_thm",
   ``!mls p bs bs' l n n0 n' lo c_st c_addr_labels.
     (bir_exec_to_labels {BL_Address (Imm64 ml') | ml' IN mls} p bs =
@@ -481,38 +486,8 @@ val test_thm = store_thm("test_thm",
 cheat
 );
 
-
-val test_thm2 = store_thm("test_thm2",
-  ``!pc_cond p st n1 n2 ol c_st c_pc st'.
-    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
-    (n2 < n1) ==>
-    (?ol' c_st' c_pc' st''.
-      bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'')``,
-
-cheat
-);
-
-
-val test_thm3 = store_thm("test_thm3",
-  ``!pc_cond p st n1 n2 ol ol' c_st c_st' c_pc c_pc' st' st''.
-    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
-    (n2 < n1) ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'') ==>
-    (st''.bst_status = BST_Running) /\ (c_st' < c_st)``,
-
-cheat
-);
-
-
-val test_thm4 = store_thm("test_thm4",
-  ``!pc_cond p st n ol c_st c_pc st'.
-    (bir_exec_steps_GEN pc_cond p st (SOME n) = BER_Ended ol c_st c_pc st') ==>
-    (st'.bst_status = BST_Running) ==>
-    (n = c_pc)``,
-
-cheat
-);
-
+(* If two bir_exec_steps_GEN End in the same state, then the number of steps taken
+ * to get there must be the same. *)
 val test_thm5 = store_thm("test_thm5",
   ``!pc_cond pc_cond' p st n1 n2 ol ol' c_st c_st' c_pc c_pc' st'.
     (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
@@ -522,7 +497,8 @@ val test_thm5 = store_thm("test_thm5",
 cheat
 );
 
-
+(* If bir_exec_steps_GEN End in a Running state, then if max number of PC counts is
+ * larger than zero, then the number of executed steps must be at least zero. *)
 val test_thm6 = store_thm("test_thm6",
   ``!pc_cond p st n ol c_st c_pc st'.
     (bir_exec_steps_GEN pc_cond p st (SOME n) = BER_Ended ol c_st c_pc st') ==>
@@ -533,19 +509,22 @@ val test_thm6 = store_thm("test_thm6",
 cheat
 );
 
+(* Just trivial arithmetic... *)
 val test_thm7 = store_thm("test_thm7",
   ``!(a:num).
     (a < 1) <=> (a = 0)``,
 
-cheat
+FULL_SIMP_TAC arith_ss []
 );
 
+
+(* Just trivial arithmetic... *)
 val test_thm8 = store_thm("test_thm8",
   ``!(a:num).
     (a > 0) ==>
     PRE a < a``,
 
-cheat
+FULL_SIMP_TAC arith_ss []
 );
 
 
@@ -689,22 +668,20 @@ REPEAT STRIP_TAC >>
  * then use bir_is_lifted_prog_MULTI_STEP_EXEC *)
 subgoal `n' = c_addr_labels` >- (
   FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
-  IMP_RES_TAC test_thm4
+  IMP_RES_TAC bir_exec_steps_GEN_SOME_EQ_Ended_pc_counts >>
+  METIS_TAC [bir_state_is_terminated_def]
 ) >>
 subgoal `?lo c_st c_addr_labels bs''.
          bir_exec_to_addr_label_n p bs n'' =
            BER_Ended lo c_st c_addr_labels bs''` >- (
   FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
-  IMP_RES_TAC test_thm2 >>
-  Q.EXISTS_TAC `ol'` >>
-  Q.EXISTS_TAC `c_st'` >>
-  Q.EXISTS_TAC `c_pc'` >>
-  Q.EXISTS_TAC `st''` >>
-  FULL_SIMP_TAC std_ss []
+  IMP_RES_TAC bir_exec_steps_GEN_decrease_max_steps_Ended_SOME >>
+  METIS_TAC []
 ) >>
 subgoal `bs''.bst_status = BST_Running` >- (
   FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
-  IMP_RES_TAC test_thm3
+  IMP_RES_TAC bir_exec_steps_GEN_decrease_max_steps_Ended_terminated >>
+  METIS_TAC [bir_state_is_terminated_def]
 ) >>
 ASSUME_TAC (ISPECL [``arm8_bmr``, ``mu:64 word_interval_t``,
                     ``mms:(word64# word8 list) list``,
@@ -743,8 +720,8 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 Q.EXISTS_TAC `ms''` >>
 subgoal `c_addr_labels' = n''` >- (
   FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
-  IMP_RES_TAC test_thm4 >>
-  FULL_SIMP_TAC std_ss []
+  IMP_RES_TAC bir_exec_steps_GEN_SOME_EQ_Ended_pc_counts >>
+  METIS_TAC [bir_state_is_terminated_def]
 ) >>
 RW_TAC std_ss [] >>
 (* ... and ls non-membership: *)
@@ -758,7 +735,8 @@ subgoal `bs''.bst_pc.bpc_label NOTIN
   subgoal `c_st' < c_st` >- (
     FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_addr_label_n_def,
                           bir_exec_to_labels_n_def] >>
-    IMP_RES_TAC test_thm3
+    IMP_RES_TAC bir_exec_steps_GEN_decrease_max_steps_Ended_steps_taken >>
+    METIS_TAC [bir_state_is_terminated_def]
   ) >>
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_labels_n_def,
                         bir_exec_steps_GEN_SOME_EQ_Ended] >>

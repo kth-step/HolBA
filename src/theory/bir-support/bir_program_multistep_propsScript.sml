@@ -1227,6 +1227,23 @@ REPEAT STRIP_TAC >> EQ_TAC >> REPEAT STRIP_TAC >- (
 ));
 
 
+val bir_exec_steps_GEN_SOME_EQ_Ended_pc_counts =
+  store_thm("bir_exec_steps_GEN_SOME_EQ_Ended_pc_counts",
+  ``!pc_cond p st n ol c_st c_pc st'.
+    (bir_exec_steps_GEN pc_cond p st (SOME n) = BER_Ended ol c_st c_pc st') ==>
+    (~bir_state_is_terminated st') ==>
+    (n = c_pc)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended] >>
+Cases_on `c_pc < n` >| [
+  FULL_SIMP_TAC std_ss [bir_state_is_terminated_def],
+
+  FULL_SIMP_TAC arith_ss []
+]
+);
+
+
 val bir_exec_steps_GEN_1_EQ_Ended = store_thm ("bir_exec_steps_GEN_1_EQ_Ended",
   ``!p state ol step_c pc_c state' pc_cond.
     (bir_exec_steps_GEN pc_cond p state (SOME 1) = BER_Ended ol step_c pc_c state') <=>
@@ -2668,6 +2685,89 @@ REPEAT STRIP_TAC >>
 METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ,
       arithmeticTheory.LESS_EQ_LESS_TRANS]);
 
+
+val bir_exec_steps_GEN_decrease_max_steps_Ended_SOME =
+  store_thm("bir_exec_steps_GEN_decrease_max_steps_Ended_SOME",
+  ``!pc_cond p st n1 n2 ol c_st c_pc st'.
+    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
+    (n2 < n1) ==>
+    (?ol' c_st' c_pc' st''.
+      bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'')``,
+
+REPEAT STRIP_TAC >>
+Cases_on `bir_exec_steps_GEN pc_cond p st (SOME n2)` >- ( 
+  METIS_TAC []
+) >>
+FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended,
+                      bir_exec_steps_GEN_SOME_EQ_Looping] >>
+Cases_on `c_pc = n1` >| [
+  subgoal `0 < n1` >- (
+    Cases_on `n1 = 0` >- (
+      FULL_SIMP_TAC arith_ss []
+    ) >>
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  QSPECL_X_ASSUM ``!i. _`` [`c_st`] >>
+  FULL_SIMP_TAC arith_ss [],
+
+  FULL_SIMP_TAC arith_ss []
+]
+);
+
+
+val bir_exec_steps_GEN_decrease_max_steps_Ended_terminated =
+  store_thm("bir_exec_steps_GEN_decrease_max_steps_Ended_terminated",
+  ``!pc_cond p st n1 n2 ol ol' c_st c_st' c_pc c_pc' st' st''.
+    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
+    (~bir_state_is_terminated st') ==>
+    (n2 < n1) ==>
+    (bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'') ==>
+    (~bir_state_is_terminated st'')``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended] >>
+`c_pc = n1` by FULL_SIMP_TAC arith_ss [] >>
+FULL_SIMP_TAC std_ss [] >>
+subgoal `c_st < c_st'` >- (
+  Cases_on `c_st' < c_st` >- (
+    METIS_TAC []
+  ) >>
+  Cases_on `c_st' = c_st` >- (
+    METIS_TAC []
+  ) >>
+  FULL_SIMP_TAC arith_ss []
+) >>
+QSPECL_X_ASSUM ``!n.
+                 n < c_st' ==>
+                 bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st n < n2`` [`c_st`] >>
+FULL_SIMP_TAC arith_ss []
+);
+
+
+val bir_exec_steps_GEN_decrease_max_steps_Ended_steps_taken =
+  store_thm("bir_exec_steps_GEN_decrease_max_steps_Ended_steps_taken",
+  ``!pc_cond p st n1 n2 ol ol' c_st c_st' c_pc c_pc' st' st''.
+    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
+    (~bir_state_is_terminated st') ==>
+    (n2 < n1) ==>
+    (bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'') ==>
+    (c_st' < c_st)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended] >>
+`c_pc = n1` by FULL_SIMP_TAC arith_ss [] >>
+FULL_SIMP_TAC std_ss [] >>
+Cases_on `c_st < c_st'` >- (
+  QSPECL_X_ASSUM ``!n.
+		   n < c_st' ==>
+		   bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st n < n2`` [`c_st`] >>
+  REV_FULL_SIMP_TAC arith_ss []
+) >>
+Cases_on `c_st' = c_st` >- (
+  FULL_SIMP_TAC arith_ss []
+) >>
+FULL_SIMP_TAC arith_ss []
+);
 
 
 val bir_exec_steps_GEN_change_cond_Looping_NONE = store_thm (
