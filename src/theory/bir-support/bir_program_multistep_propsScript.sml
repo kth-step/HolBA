@@ -1244,6 +1244,28 @@ Cases_on `c_pc < n` >| [
 );
 
 
+val bir_exec_steps_GEN_SOME_EQ_Ended_Running_steps =
+  store_thm("bir_exec_steps_GEN_SOME_EQ_Ended_Running_steps",
+  ``!pc_cond p st n ol c_st c_pc st'.
+    (bir_exec_steps_GEN pc_cond p st (SOME n) =
+      BER_Ended ol c_st c_pc st') ==>
+    (~bir_state_is_terminated st') ==>
+    (n > 0) ==>
+    (c_st > 0)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended] >>
+Cases_on `c_st = 0` >- (
+  FULL_SIMP_TAC std_ss
+    [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF] >>
+  `c_pc < n` by FULL_SIMP_TAC arith_ss [] >>
+  METIS_TAC [bir_state_is_terminated_def,
+             bir_exec_infinite_steps_fun_REWRS]
+) >>
+FULL_SIMP_TAC arith_ss []
+);
+
+
 val bir_exec_steps_GEN_1_EQ_Ended = store_thm ("bir_exec_steps_GEN_1_EQ_Ended",
   ``!p state ol step_c pc_c state' pc_cond.
     (bir_exec_steps_GEN pc_cond p state (SOME 1) = BER_Ended ol step_c pc_c state') <=>
