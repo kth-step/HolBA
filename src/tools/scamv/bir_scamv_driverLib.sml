@@ -422,7 +422,8 @@ fun show_error_no_free_vars (id,_) =
     print ("Program " ^ id ^ " skipped because it has no free variables.\n");
 
 fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
-              , generator = gen, verbosity = verb, only_gen = og } =
+              , generator = gen, obs_model = obs_model, hw_obs_model = hw_obs_model
+              , verbosity = verb, only_gen = og } =
     let val is_mock = (gen = mock);
         val _ = bir_prog_gen_arm8_mock_set_wrap_around false;
         val _ = bir_prog_gen_arm8_mock_set [["b #0x80"]];
