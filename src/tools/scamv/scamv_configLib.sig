@@ -10,6 +10,7 @@ sig
                       | from_file of string
 
     datatype obs_model = cache_tag_index
+                       | cache_tag_only
                        | cache_index_only
                        | cache_tag_index_part
                        | cache_tag_index_part_page
