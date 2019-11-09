@@ -86,7 +86,7 @@ end
 (* ================================ *)
 fun prog_gen_a_la_qc n =
     let
-      val g = bir_scamv_helpersLib.rand_gen;
+      val g = bir_scamv_helpersLib.rand_gen_get ();
       val (p, _) = run_step n g arb_program;
     in
         pp_program p

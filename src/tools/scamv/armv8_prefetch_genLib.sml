@@ -42,7 +42,7 @@ val arb_stride_lds =
 (* ================================ *)
 fun prog_gen_prefetch_stride n =
     let
-      val g = bir_scamv_helpersLib.rand_gen;
+      val g = bir_scamv_helpersLib.rand_gen_get ();
       val ((p,[reg1,reg2,reg3]), _) = run_step n g arb_stride_lds;
     in
        (* mk_preamble_of reg1 reg2 reg3 @ *) pp_program p

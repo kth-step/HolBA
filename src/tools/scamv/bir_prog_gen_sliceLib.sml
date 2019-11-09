@@ -19,7 +19,6 @@ fun remChars  (c,s) =
 val splitter = String.tokens (fn c => c = #";");
 
 type gen = Random.generator
-val rg = rand_gen;
 
 fun genint gen max =
     Random.range (0,max+1) gen     
@@ -150,7 +149,6 @@ fun instructionClass ast =
       | _ => "NOI"
 
 local 
-    val gen = rg
     fun addr_to_hexString adr =
 	(BitsN.toHexString (BitsN.fromInt ((IntInf.fromInt adr), 32)))
 
@@ -168,14 +166,18 @@ local
 
 in
 fun branch_instGen (pc, base, len) =
-    let val adr = base + (4*(Random.range (pc, len) gen))
+    let
+        val gen = rand_gen_get ()
+        val adr = base + (4*(Random.range (pc, len) gen))
 	val adr_str = String.concat["bl +#0x", (addr_to_hexString(adr))]
 	val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
     in
 	(inst)
     end
 fun cond_branch_instGen (inst, pc, base, len) =
-    let val adr = base + (4*(Random.range (pc, len) gen))
+    let
+        val gen = rand_gen_get ()
+        val adr = base + (4*(Random.range (pc, len) gen))
 	val adr_str = String.concat[hd((p_tokens(hd(decomp(inst)))))," +#0x", (addr_to_hexString(adr))]
 	val inst = (valOf o snd o cmp_mcode)(cmp_ast adr_str)
     in
@@ -183,7 +185,9 @@ fun cond_branch_instGen (inst, pc, base, len) =
     end
 
 fun cmp_and_branch_instGen (inst, pc, base, len) =
-    let val adr = base + (4*(Random.range (pc, len) gen))
+    let
+        val gen = rand_gen_get ()
+        val adr = base + (4*(Random.range (pc, len) gen))
 	val tks = (p_tokens(hd(decomp(inst))))
 	val rinst = String.concat[List.nth(tks,0), List.nth(tks,1),", +#0x", (addr_to_hexString(adr))]
 	val inst = (valOf o snd o cmp_mcode)(cmp_ast rinst)
@@ -209,7 +213,7 @@ fun filter_slice (n, insts, base) =
 fun bir_prog_slice_arm8_rand (inputfile, base, len) =
     let val t1  = parse_objdump inputfile
 	val t2  = map (fn i => (instructionClass ((Decode((Option.valOf o BitsN.fromHexString) (i ,32)))), i)) t1
-	val idx = genint rg ((List.length t1) - len)
+	val idx = genint (rand_gen_get ()) ((List.length t1) - len)
 	val instructions = List.take(List.drop(t2,idx), len)
     in
 	filter_slice (len, instructions, base)

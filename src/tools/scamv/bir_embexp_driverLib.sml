@@ -89,6 +89,7 @@ struct
 	    val holba_diff     = get_exec_output "git diff";
 	    val holba_commit   = get_exec_output "git rev-parse HEAD";
             val holba_args     = get_script_args ();
+            val rand_seed      = rand_seed_get ();
             val holba_randseed = Real.toString rand_seed;
 
 	    val holba_hash = hashstring (run_datestr ^
