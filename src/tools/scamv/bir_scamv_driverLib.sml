@@ -446,7 +446,10 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
                       current_obs_model_id := "cache_tag_index_part";
                       do_enum := true
                       )
-              (* | cache_tag_index_part_page => () *)
+              | cache_tag_index_part_page => (
+                      current_obs_model_id := "cache_tag_index_part_page";
+                      do_enum := true
+                      )
               | _ => raise ERR "scamv_run" ("unknown obs_model " ^ PolyML.makestring obs_model);
 
         val _ =

@@ -150,7 +150,7 @@ add_obs_cache_line_index_armv8 p = map_obs_prog add_block_cache_line_index p
 `;
 
 
-(* observe tag & set index, if set index is in upper half *)
+(* observe tag & set index, if set index is in upper half, misses page boundary by 3 sets *)
 val observe_mem_subset_def = Define`
 observe_mem_subset e =
 BStmt_Observe (BExp_BinPred BIExp_LessThan
@@ -185,6 +185,44 @@ add_block_cache_line_subset block =
 
 val add_obs_cache_line_subset_armv8_def = Define`
 add_obs_cache_line_subset_armv8 p = map_obs_prog add_block_cache_line_subset p
+`;
+
+
+(* observe tag & set index, if set index is in upper half, on page boundary *)
+val observe_mem_subset_page_def = Define`
+observe_mem_subset_page e =
+BStmt_Observe (BExp_BinPred BIExp_LessThan
+                            (BExp_Const (Imm64 63w))
+                            (BExp_BinExp BIExp_Mod
+                                         (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))
+                                         (BExp_Const (Imm64 128w)))
+              )
+                            (* (BExp_BinExp BIExp_And *)
+                            (*              (BExp_Const (Imm64 0x1000w))) *)
+                            (*          (BExp_Const (Imm64 0w))) *)
+              ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
+              HD
+`;
+
+val add_obs_stmts_subset_page_def = Define `
+(add_obs_stmts_subset_page [] = []) /\
+(add_obs_stmts_subset_page (x :: xs) =
+ case x of
+     BStmt_Assign v e =>
+     (case select_mem e of
+          [] => x :: add_obs_stmts_subset_page xs
+        | lds => (APPEND (MAP constrain_mem lds)
+                      (x :: (APPEND (MAP observe_mem_subset_page lds) (add_obs_stmts_subset_page xs)))))
+   | _ => x :: add_obs_stmts_subset_page xs)
+`;
+
+val add_block_cache_line_subset_page_def = Define`
+add_block_cache_line_subset_page block =
+         block with bb_statements := add_obs_stmts_subset_page block.bb_statements
+`;
+
+val add_obs_cache_line_subset_page_armv8_def = Define`
+add_obs_cache_line_subset_page_armv8 p = map_obs_prog add_block_cache_line_subset_page p
 `;
 
 
