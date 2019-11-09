@@ -55,14 +55,36 @@ local
     in
       Real.fromLargeInt sec + Real.fromLargeInt usec
     end;
-  val fresh_seed = false;
-in
-  val rand_seed = if fresh_seed then
-                    seedgen_real ()
-                  else
-                    3141592.654;
 
-  val rand_gen  = Random.newgenseed rand_seed;
+  fun gen_seed isfresh =
+            if isfresh then
+              seedgen_real ()
+            else
+              3141592.654;
+
+  val rand_isfresh_ref = ref (NONE: bool option);
+  val rand_seed_ref    = ref (NONE: real option);
+  val rand_gen_ref     = ref (NONE: Random.generator option);
+in
+  fun rand_isfresh_set isfresh =
+    case !rand_isfresh_ref of
+       NONE   => rand_isfresh_ref := SOME isfresh
+     | SOME _ => raise ERR "rand_isfresh_set" "freshness has been set already";
+
+  fun rand_isfresh_get () =
+    case !rand_isfresh_ref of
+       SOME v => v
+     | NONE   => (rand_isfresh_ref := SOME false; rand_isfresh_get());
+
+  fun rand_seed_get () =
+    case !rand_seed_ref of
+       SOME v => v
+     | NONE   => (rand_seed_ref := SOME (gen_seed (rand_isfresh_get())); rand_seed_get());
+
+  fun rand_gen_get () =
+    case !rand_gen_ref of
+       SOME v => v
+     | NONE   => (rand_gen_ref := SOME (Random.newgenseed (rand_seed_get())); rand_gen_get());
 end
 
 (* datestring helper *)

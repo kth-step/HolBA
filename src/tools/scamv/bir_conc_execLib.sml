@@ -2,21 +2,20 @@ structure bir_conc_execLib : bir_conc_execLib =
 struct
 
   open HolKernel pairLib listSyntax stringSyntax wordsSyntax;
-  open bir_rel_synthLib;
-  open bir_obs_modelLib;
   open bir_symb_execLib;
   open bir_symb_masterLib;
   open bir_symb_init_envLib;     
-  open bir_scamv_driverLib;
   open bir_embexp_driverLib;
 
-  open bir_prog_genLib;
 
 
   fun update_env name value env = 
-      let val hname = fromMLstring name in
+      let
+        val hname = fromMLstring name
+        val wordval = mk_wordi (value, 64);
+      in
 	  (rhs o concl o EVAL) `` bir_symb_env_update 
-			  ^hname (BExp_Const (Imm64 ^value)) (BType_Imm Bit64) ^env
+			  ^hname (BExp_Const (Imm64 ^wordval)) (BType_Imm Bit64) ^env
 			  ``
       end;
 
@@ -70,25 +69,77 @@ struct
 
 (*
 
+open bir_cfgVizLib;
+open bir_obs_modelLib;
+open bir_prog_genLib;
+open bir_embexp_driverLib;
+
+open optionSyntax;
+open bir_valuesSyntax;
+open bir_immSyntax;
+open wordsSyntax;
+
 (*
-export HOLBA_EMBEXP_LOGS=/home/andreas/data/hol/HolBA_logs/EmbExp-Logs_hamed
+export HOLBA_EMBEXP_LOGS="/home/xmate/Projects/HolBA/logs/EmbExp-Logs";
 *)
 
-val exp_id = "arm8/exps2/exp_cache_multiw/269c03c7a99a2a222bc8fee1ba30a6984df76f2b";
-val obs_model_id = "bir_arm8_cache_line_model";
+val obs_model_id = "cache_tag_index";
+
+(*
+val exp_ids = ["arm8/exps2/exp_cache_multiw/7d4fd31c0865567aae1ab23c57256c3e6dc6215d"];
+*)
+
+val listname = "hamperiments32_eqobs";
+val exp_ids = bir_embexp_load_exp_ids listname;
+
+(*
+val exp_id = hd exp_ids;
+val exp_ids = tl exp_ids;
+val _ = print "\n\n\n\n";
+val _ = print exp_id;
+val _ = print "\n=============================\n";
+*)
+
+fun compare_obss_of_exp obs_model_id exp_id =
+  let
+    val (asm_lines, (s1,s2)) = bir_embexp_load_exp exp_id;
+
+    val (_, lifted_prog) = prog_gen_store_fromlines asm_lines ();
+
+    val add_obs = #add_obs (get_obs_model obs_model_id)
+    val prog = add_obs lifted_prog;
+    (*
+    fun convobs_fun obs = (Arbnum.toHexString o (fn x => Arbnum.* (x, Arbnum.fromInt 64)) o dest_word_literal o dest_Imm64 o dest_BVal_Imm o dest_some) obs;
+    val convobsl_fun = List.map convobs_fun;
+
+    val obsl1 = conc_exec_obs_compute prog s1;
+    val obsl2 = conc_exec_obs_compute prog s2;
+
+    val obsl1_ = convobsl_fun obsl1;
+    val obsl2_ = convobsl_fun obsl2;
+    *)
+  in
+    conc_exec_obs_compare prog (s1,s2)
+  end;
+
+val results = List.map (fn x => (compare_obss_of_exp obs_model_id x, x)) exp_ids;
 
 
+val _ = List.map (fn (b, s) => if b then print (s ^ "\n") else ()) results;
+
+
+val exp_id = "arm8/exps2/exp_cache_multiw/113126365c7e68aa0b83ef9f42ff6ee6407b418b";
 val (asm_lines, (s1,s2)) = bir_embexp_load_exp exp_id;
-
 val (_, lifted_prog) = prog_gen_store_fromlines asm_lines ();
-
 val add_obs = #add_obs (get_obs_model obs_model_id)
 val prog = add_obs lifted_prog;
 
-
-conc_exec_obs_compute prog s1
+conc_exec_obs_compute prog s1;
+conc_exec_obs_compute prog s2;
 conc_exec_obs_compare prog (s1,s2);
 
-*)
 
+val dot_path = "/home/xmate/Projects/HolBA/HolBA/src/tools/scamv/tempdir/cfg.dot";
+bir_cfgVizLib.bir_export_graph_from_prog prog dot_path;
+*)
 end (* struct *)

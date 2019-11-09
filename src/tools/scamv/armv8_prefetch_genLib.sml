@@ -38,19 +38,14 @@ fun arb_stride stride_step =
 val arb_stride_lds =
     elements [1,2,3,4] >>= arb_stride
 
-local
-    open Random;
-    val fresh_seed = false;
-    val g = ref (if fresh_seed
-                 then newgen ()
-                 else newgenseed 3141592.654);
-in
+
+(* ================================ *)
 fun prog_gen_prefetch_stride n =
-    let val ((p,[reg1,reg2,reg3]), rnd) = run_step n (!g) arb_stride_lds;
-        val _ = (g := rnd);
+    let
+      val g = bir_scamv_helpersLib.rand_gen_get ();
+      val ((p,[reg1,reg2,reg3]), _) = run_step n g arb_stride_lds;
     in
-        mk_preamble_of reg1 reg2 reg3 @ pp_program p
+       (* mk_preamble_of reg1 reg2 reg3 @ *) pp_program p
     end
-end
 
 end

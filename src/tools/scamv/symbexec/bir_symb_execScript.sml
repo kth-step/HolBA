@@ -264,7 +264,7 @@ val bir_symb_exec_stmt_observe_def = Define `
 	  obs_lst_e   = MAP (\o_ex. bir_symb_eval_exp o_ex st.bsst_environ) obs_lst;
 	  obs         = <| obs_cond := obs_cond_ex; obs := obs_lst_e; obs_fun := f |>;
 	in
-	  [st with bsst_obs := (obs :: st.bsst_obs)]
+	  [st with bsst_obs := (SNOC obs st.bsst_obs)]
     `;
 
 (* Basic Statement execution *)

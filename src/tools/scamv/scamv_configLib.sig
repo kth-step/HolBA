@@ -2,12 +2,20 @@ signature scamv_configLib =
 sig
     type scamv_config
     datatype gen_type = gen_rand
-                      | rand_simple
                       | prefetch_strides
-                      | mock
                       | qc
                       | slice
                       | from_file of string
+
+    datatype obs_model = cache_tag_index
+                       | cache_tag_only
+                       | cache_index_only
+                       | cache_tag_index_part
+                       | cache_tag_index_part_page
+
+    datatype hw_obs_model = hw_cache_tag_index
+                          | hw_cache_tag_index_part
+                          | hw_cache_tag_index_part_page
 
     val default_cfg : scamv_config
     val print_scamv_opt_usage : unit -> unit

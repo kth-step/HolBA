@@ -82,19 +82,14 @@ val arb_instruction =
 val arb_program = arb_list_of arb_instruction;
 end
 
-local
-    open Random;
-    val fresh_seed = false;
-    val g = ref (if fresh_seed
-                 then newgen ()
-                 else newgenseed 3141592.654);
-in
+
+(* ================================ *)
 fun prog_gen_a_la_qc n =
-    let val (p, rnd) = run_step n (!g) arb_program;
-        val _ = (g := rnd);
+    let
+      val g = bir_scamv_helpersLib.rand_gen_get ();
+      val (p, _) = run_step n g arb_program;
     in
         pp_program p
     end
-end
 
 end

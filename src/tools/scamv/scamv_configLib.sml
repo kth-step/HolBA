@@ -8,39 +8,67 @@ datatype 'cfg opt_entry =
          | Arity1 of string * string * string * ('cfg -> string -> 'cfg)
 
 datatype gen_type = gen_rand
-                  | rand_simple
                   | prefetch_strides
-                  | mock
                   | qc
                   | slice
                   | from_file of string
 
-type scamv_config = { max_iter : int,
+datatype obs_model = cache_tag_index
+                   | cache_tag_only
+                   | cache_index_only
+                   | cache_tag_index_part
+                   | cache_tag_index_part_page
+
+datatype hw_obs_model = hw_cache_tag_index
+                      | hw_cache_tag_index_part
+                      | hw_cache_tag_index_part_page
+
+type scamv_config = { max_iter  : int,
                       prog_size : int,
                       max_tests : int,
                       generator : gen_type,
-                      only_gen : bool,
-                      verbosity : int
+                      obs_model : obs_model,
+                      hw_obs_model : hw_obs_model,
+                      only_gen  : bool,
+                      verbosity : int,
+                      seed_rand : bool
                     }
 
-val default_cfg = { max_iter = 10
+val default_cfg = { max_iter  = 10
                   , prog_size = 5
                   , max_tests = 4
                   , generator = gen_rand
-                  , only_gen = true
+                  , obs_model = cache_tag_index
+                  , hw_obs_model = hw_cache_tag_index
+                  , only_gen  = true
                   , verbosity = 1
+                  , seed_rand = true
                   }
 
 fun gen_type_fromString gt =
     case gt of
-        "rand" => SOME gen_rand
-      | "rand_simple" => SOME rand_simple
+        "rand"             => SOME gen_rand
       | "prefetch_strides" => SOME prefetch_strides
-      | "mock" => SOME mock
-      | "qc" => SOME qc
-      | "slice" => SOME slice
-      | "file" => SOME (from_file "asm/test.s") (* FIXME temporary *)
-      | _ => NONE
+      | "qc"               => SOME qc
+      | "slice"            => SOME slice
+      | "file"             => SOME (from_file "asm/test.s") (* FIXME temporary *)
+      | _                  => NONE
+
+fun obs_model_fromString om =
+    case om of
+        "cache_tag_index"           => SOME cache_tag_index
+      | "cache_tag_only"            => SOME cache_tag_only
+      | "cache_index_only"          => SOME cache_index_only
+      | "cache_tag_index_part"      => SOME cache_tag_index_part
+      | "cache_tag_index_part_page" => SOME cache_tag_index_part_page
+      | _                           => NONE
+
+fun hw_obs_model_fromString hwom =
+    case hwom of
+        "hw_cache_tag_index"           => SOME hw_cache_tag_index
+      | "hw_cache_tag_index_part"      => SOME hw_cache_tag_index_part
+      | "hw_cache_tag_index_part_page" => SOME hw_cache_tag_index_part_page
+      | _                              => NONE
 
 (* setter boilerplate because SML doesn't have lenses *)
 
@@ -49,48 +77,99 @@ fun set_max_iter (cfg : scamv_config) n =
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      obs_model = # obs_model cfg,
+      hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg };
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
 
 fun set_prog_size (cfg : scamv_config) n =
     { max_iter = # max_iter cfg,
       prog_size = n,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      obs_model = # obs_model cfg,
+      hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg };
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
 
 fun set_max_tests (cfg : scamv_config) n =
     { max_iter = # max_iter cfg,
       prog_size = # prog_size cfg,
       max_tests = n,
       generator = # generator cfg,
+      obs_model = # obs_model cfg,
+      hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg };
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
 
 fun set_generator (cfg : scamv_config) gen =
     { max_iter = # max_iter cfg,
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = gen,
+      obs_model = # obs_model cfg,
+      hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg };
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
+
+fun set_obs_model (cfg : scamv_config) om =
+    { max_iter = # max_iter cfg,
+      prog_size = # prog_size cfg,
+      max_tests = # max_tests cfg,
+      generator = # generator cfg,
+      obs_model = om,
+      hw_obs_model = # hw_obs_model cfg,
+      verbosity = # verbosity cfg,
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
+
+fun set_hw_obs_model (cfg : scamv_config) hwom =
+    { max_iter = # max_iter cfg,
+      prog_size = # prog_size cfg,
+      max_tests = # max_tests cfg,
+      generator = # generator cfg,
+      obs_model = # obs_model cfg,
+      hw_obs_model = hwom,
+      verbosity = # verbosity cfg,
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
 
 fun set_only_gen (cfg : scamv_config) b =
     { max_iter = # max_iter cfg,
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      obs_model = # obs_model cfg,
+      hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = b };
+      only_gen = b,
+      seed_rand = # seed_rand cfg };
 
 fun set_verbosity (cfg : scamv_config) v =
     { max_iter = # max_iter cfg,
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      obs_model = # obs_model cfg,
+      hw_obs_model = # hw_obs_model cfg,
       verbosity = v,
-      only_gen = # only_gen cfg };
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
+
+fun set_seed_rand (cfg : scamv_config) s =
+    { max_iter = # max_iter cfg,
+      prog_size = # prog_size cfg,
+      max_tests = # max_tests cfg,
+      generator = # generator cfg,
+      obs_model = # obs_model cfg,
+      hw_obs_model = # hw_obs_model cfg,
+      verbosity = # verbosity cfg,
+      only_gen = # only_gen cfg,
+      seed_rand = s };
 
 
 (* end boilerplate *)
@@ -113,14 +192,14 @@ val opt_table =
               handle_conv_arg_with Int.fromString set_max_tests)
     , Arity1 ("gen", "generator", "Program generator",
               handle_conv_arg_with gen_type_fromString set_generator)
-    , Arity0 ("m", "is_mock", "Enable mock generator (option deprecated, equivalent to -gen mock)",
-              fn cfg => fn b => if b
-                                then set_generator cfg mock
-                                else cfg)
-    , Arity0 ("og", "only_gen", "Generate experiments without running them (default)",
-              set_only_gen)
+    , Arity1 ("om", "obs_model", "Observation model",
+              handle_conv_arg_with obs_model_fromString set_obs_model)
+    , Arity1 ("hwom", "hw_obs_model", "HW observation model",
+              handle_conv_arg_with hw_obs_model_fromString set_hw_obs_model)
     , Arity0 ("r", "run_experiments", "Automatically run each experiment after generating it (requires active connection)",
               fn cfg => fn b => set_only_gen cfg (not b))
+    , Arity0 ("frs", "fix_rand_seed", "Fix the seed for the random number generators.",
+              fn cfg => fn b => set_seed_rand cfg (not b))
     ];
 end
 
@@ -155,7 +234,9 @@ fun print_scamv_opt_usage () =
     in
         print "Scam-V Usage:\n\n";
         List.map print_entry opt_table;
-        print ("\ngenerator arg should be one of: rand, prefetch_strides, rand_simple, qc, mock, slice, file\n");
+        print ("\ngenerator arg should be one of: rand, prefetch_strides, qc, slice, file\n");
+        print ("\nobs_model arg should be one of: cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page\n");
+        print ("\nhw_obs_model arg should be one of: hw_cache_tag_index, hw_cache_tag_index_part, hw_cache_tag_index_part_page\n");
         print ("\nDefaults are: " ^ PolyML.makestring default_cfg ^ "\n")
     end
 
