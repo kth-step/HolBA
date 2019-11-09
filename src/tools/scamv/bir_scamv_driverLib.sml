@@ -147,14 +147,13 @@ fun print_model model =
 fun to_sml_Arbnums model =
     List.map (fn (name, tm) => (name, dest_word_literal tm)) model;
 
-val obs_model_id_default = "bir_arm8_cache_line_model";
 val hw_obs_model_id = ref "exp_cache_multiw";
 val do_enum = ref false;
 
 val (current_prog_id : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
 val (current_prog_w_obs : term option ref) = ref NONE;
-val (current_obs_model_id : string ref) = ref obs_model_id_default;
+val (current_obs_model_id : string ref) = ref "";
 val (current_pathstruct :
      path_struct ref) = ref [];
 val (current_word_rel : term option ref) = ref NONE;
@@ -442,11 +441,11 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
         val _ =
            case obs_model of
                 cache_tag_index  => (
-                      current_obs_model_id := "bir_arm8_cache_line_model"
+                      current_obs_model_id := "cache_tag_index"
                       )
               (* | cache_index_only => () *)
               | cache_tag_index_part => (
-                      current_obs_model_id := "bir_arm8_cache_line_subset_model";
+                      current_obs_model_id := "cache_tag_index_part";
                       do_enum := true
                       )
               (* | cache_tag_index_part_page => () *)

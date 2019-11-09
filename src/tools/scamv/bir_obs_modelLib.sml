@@ -32,21 +32,21 @@ end
 fun get_obs_model id =
   let
     val obs_hol_type =
-          if id = "bir_arm8_cache_line_model" then
+          if id = "cache_tag_index" then
             bir_arm8_cache_line_model.obs_hol_type
-          else if id = "bir_arm8_cache_line_tag_model" then
+          else if id = "cache_tag_only" then
             bir_arm8_cache_line_tag_model.obs_hol_type
-          else if id = "bir_arm8_cache_line_subset_model" then
+          else if id = "cache_tag_index_part" then
             bir_arm8_cache_line_subset_model.obs_hol_type
           else
             raise ERR "get_obs_model" ("unknown obs_model selected: " ^ id);
 
     val add_obs =
-          if id = "bir_arm8_cache_line_model" then
+          if id = "cache_tag_index" then
             bir_arm8_cache_line_model.add_obs
-          else if id = "bir_arm8_cache_line_tag_model" then
+          else if id = "cache_tag_only" then
             bir_arm8_cache_line_tag_model.add_obs
-          else if id = "bir_arm8_cache_line_subset_model" then
+          else if id = "cache_tag_index_part" then
             bir_arm8_cache_line_subset_model.add_obs
           else
             raise ERR "get_obs_model" ("unknown obs_model selected: " ^ id);

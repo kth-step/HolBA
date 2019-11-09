@@ -83,7 +83,7 @@ open wordsSyntax;
 export HOLBA_EMBEXP_LOGS="/home/xmate/Projects/HolBA/logs/EmbExp-Logs";
 *)
 
-val obs_model_id = "bir_arm8_cache_line_model";
+val obs_model_id = "cache_tag_index";
 
 (*
 val exp_ids = ["arm8/exps2/exp_cache_multiw/7d4fd31c0865567aae1ab23c57256c3e6dc6215d"];
