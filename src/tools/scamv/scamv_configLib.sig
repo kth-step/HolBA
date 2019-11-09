@@ -4,7 +4,6 @@ sig
     datatype gen_type = gen_rand
                       | rand_simple
                       | prefetch_strides
-                      | mock
                       | qc
                       | slice
                       | from_file of string

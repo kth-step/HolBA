@@ -50,12 +50,6 @@ val _ = Globals.show_types := true;
 
 val (prog_name, asm_file) = List.nth (input_files, 2);
 
-val _ = bir_prog_gen_arm8_mock_set [];
-val _ = bir_prog_gen_arm8_mock_set_wrap_around false;
-val _ = bir_prog_gen_arm8_mock_propagate [asm_file];
-
-val _ = scamv_test_mock ();
-
 
 (*
  TODO: move the following somewhere else

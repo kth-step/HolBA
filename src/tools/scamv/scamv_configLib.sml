@@ -10,7 +10,6 @@ datatype 'cfg opt_entry =
 datatype gen_type = gen_rand
                   | rand_simple
                   | prefetch_strides
-                  | mock
                   | qc
                   | slice
                   | from_file of string
@@ -50,7 +49,6 @@ fun gen_type_fromString gt =
         "rand"             => SOME gen_rand
       | "rand_simple"      => SOME rand_simple
       | "prefetch_strides" => SOME prefetch_strides
-      | "mock"             => SOME mock
       | "qc"               => SOME qc
       | "slice"            => SOME slice
       | "file"             => SOME (from_file "asm/test.s") (* FIXME temporary *)
@@ -179,10 +177,6 @@ val opt_table =
               handle_conv_arg_with obs_model_fromString set_obs_model)
     , Arity1 ("hwom", "hw_obs_model", "HW observation model",
               handle_conv_arg_with hw_obs_model_fromString set_hw_obs_model)
-    , Arity0 ("m", "is_mock", "Enable mock generator (option deprecated, equivalent to -gen mock)",
-              fn cfg => fn b => if b
-                                then set_generator cfg mock
-                                else cfg)
     , Arity0 ("og", "only_gen", "Generate experiments without running them (default)",
               set_only_gen)
     , Arity0 ("r", "run_experiments", "Automatically run each experiment after generating it (requires active connection)",
@@ -221,7 +215,7 @@ fun print_scamv_opt_usage () =
     in
         print "Scam-V Usage:\n\n";
         List.map print_entry opt_table;
-        print ("\ngenerator arg should be one of: rand, prefetch_strides, rand_simple, qc, mock, slice, file\n");
+        print ("\ngenerator arg should be one of: rand, prefetch_strides, rand_simple, qc, slice, file\n");
         print ("\nobs_model arg should be one of: cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page\n");
         print ("\nhw_obs_model arg should be one of: hw_cache_tag_index, hw_cache_tag_index_part, hw_cache_tag_index_part_page\n");
         print ("\nDefaults are: " ^ PolyML.makestring default_cfg ^ "\n")

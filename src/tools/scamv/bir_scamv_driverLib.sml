@@ -409,8 +409,6 @@ fun scamv_test_main tests prog =
 fun scamv_test_gen_run tests (prog_id, lifted_prog) =
     (raise ERR "scamv_test_gen_run" "function DEPRECATED and will be removed soon - use scamv_run with from_file generator instead"; (NONE, "DEPRECATED"));
 
-val scamv_test_mock = scamv_test_gen_run 1 o prog_gen_store_mock;
-
 
 fun scamv_test_single_file filename =
     let val prog = prog_gen_store_fromfile filename ();
@@ -423,10 +421,7 @@ fun show_error_no_free_vars (id,_) =
 fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
               , generator = gen, obs_model = obs_model, hw_obs_model = hw_obs_model
               , verbosity = verb, only_gen = og } =
-    let val is_mock = (gen = mock);
-        val _ = bir_prog_gen_arm8_mock_set_wrap_around false;
-        val _ = bir_prog_gen_arm8_mock_set [["b #0x80"]];
-
+    let
         val prog_store_fun =
            case gen of
                 gen_rand => prog_gen_store_rand sz
@@ -434,7 +429,6 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
               | qc => prog_gen_store_a_la_qc sz
               | slice => prog_gen_store_rand_slice sz
               | from_file filename => prog_gen_store_fromfile filename
-              | mock => prog_gen_store_mock
               | prefetch_strides => prog_gen_store_prefetch_stride sz
               | _ => raise ERR "scamv_run" ("unknown generator type " ^ PolyML.makestring gen)
 

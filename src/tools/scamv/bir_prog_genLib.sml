@@ -132,51 +132,10 @@ struct
   fun load_asm_lines filename =
     bir_embexp_code_to_prog (read_from_file filename);
 
-(* fixed programs for mockup *)
-(* ========================================================================================= *)
-  val mock_progs_i = ref 0;
-  val mock_progs = ref [["ldr x2, [x1]"]];
-  val wrap_around = ref false;
-
-  fun bir_prog_gen_arm8_mock_set progs =
-    let
-      val _ = mock_progs_i := 0;
-      val _ = mock_progs := progs;
-    in
-      ()
-    end;
-
-  fun bir_prog_gen_arm8_mock_propagate files =
-    mock_progs := (!mock_progs)@(List.map load_asm_lines files);
-
-  fun bir_prog_gen_arm8_mock_set_wrap_around b =
-    let
-      val _ = wrap_around := b;
-      val _ = if not (!wrap_around) then ()
-	      else mock_progs_i := Int.mod(!mock_progs_i, length (!mock_progs));
-    in
-      ()
-    end;
-
-  fun bir_prog_gen_arm8_mock () =
-    let
-      val _ = if !mock_progs_i < length (!mock_progs) then ()
-	      else raise ERR "bir_prog_gen_arm8_mock" "no more programs";
-
-      val prog = List.nth(!mock_progs, !mock_progs_i);
-
-      val _ = mock_progs_i := (!mock_progs_i) + 1;
-      val _ = if not (!wrap_around) then ()
-	      else mock_progs_i := Int.mod(!mock_progs_i, length (!mock_progs));
-    in
-      prog
-    end;
-
 
 
 (* instances of program generators *)
 (* ========================================================================================= *)
-val prog_gen_store_mock                = prog_gen_store "prog_gen_mock"            false bir_prog_gen_arm8_mock        ();
 fun prog_gen_store_fromfile filename   = prog_gen_store "prog_gen_fromfile"        false load_asm_lines                filename;
 fun prog_gen_store_fromlines asmlines  = prog_gen_store "prog_gen_fromlines"       false (fn x => x)                   asmlines;
 
@@ -193,11 +152,6 @@ val retry_on_liftfail = false
 val prog_gen_fun = load_asm_lines
 val args = filename
 val (prog_id, lifted_prog) = prog_gen_store_fromfile filename ();
-
-val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
-val _ = bir_prog_gen_arm8_mock_set [["b #0x80"]];
-val _ = bir_prog_gen_arm8_mock_set [["subs w12, w12, w15, sxtb #1"]];
-val (prog_id, lifted_prog) = prog_gen_store_mock ();
 
 val (prog_id, lifted_prog) = prog_gen_store_rand 5 ();
 
