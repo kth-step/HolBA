@@ -147,7 +147,7 @@ fun print_model model =
 fun to_sml_Arbnums model =
     List.map (fn (name, tm) => (name, dest_word_literal tm)) model;
 
-val hw_obs_model_id = ref "exp_cache_multiw";
+val hw_obs_model_id = ref "";
 val do_enum = ref false;
 
 val (current_prog_id : string ref) = ref "";
