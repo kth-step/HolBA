@@ -439,14 +439,31 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
               | prefetch_strides => prog_gen_store_prefetch_stride sz
               | _ => raise ERR "scamv_run" ("unknown generator type " ^ PolyML.makestring gen)
 
-        (* FIXME ad-hoc setting of obsmodel and hw obsmodel *)
         val _ =
-            case gen of
-                prefetch_strides =>
-                (current_obs_model_id := "bir_arm8_cache_line_subset_model";
-                 hw_obs_model_id := "exp_cache_multiw_subset";
-                 do_enum := true)
-             | _ => ();
+           case obs_model of
+                cache_tag_index  => (
+                      current_obs_model_id := "bir_arm8_cache_line_model"
+                      )
+              (* | cache_index_only => () *)
+              | cache_tag_index_part => (
+                      current_obs_model_id := "bir_arm8_cache_line_subset_model";
+                      do_enum := true
+                      )
+              (* | cache_tag_index_part_page => () *)
+              | _ => raise ERR "scamv_run" ("unknown obs_model " ^ PolyML.makestring obs_model);
+
+        val _ =
+           case hw_obs_model of
+                hw_cache_tag_index  => (
+                      hw_obs_model_id := "exp_cache_multiw"
+                      )
+              | hw_cache_tag_index_part => (
+                      hw_obs_model_id := "exp_cache_multiw_subset"
+                      )
+              | hw_cache_tag_index_part_page => (
+                      hw_obs_model_id := "exp_cache_multiw_subset_page_boundary"
+                      )
+              | _ => raise ERR "scamv_run" ("unknown hw_obs_model " ^ PolyML.makestring hw_obs_model);
 
         val _ = if (verb > 0) then
                     (print "Scam-V set to the following test params:\n";
