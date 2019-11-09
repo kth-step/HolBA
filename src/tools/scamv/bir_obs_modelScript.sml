@@ -120,6 +120,36 @@ add_obs_cache_line_tag_armv8 p = map_obs_prog add_block_cache_line_tag p
 `;
 
 
+(* observe index only *)
+val observe_mem_index_def = Define`
+observe_mem_index e =
+         BStmt_Observe (BExp_Const (Imm1 1w))
+                       ([BExp_BinExp BIExp_And (BExp_Const (Imm64 0x7Fw)) (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))])
+                       HD
+`;
+
+val add_obs_stmts_index_def = Define `
+(add_obs_stmts_index [] = []) /\
+(add_obs_stmts_index (x :: xs) =
+ case x of
+     BStmt_Assign v e =>
+     (case select_mem e of
+          [] => x :: add_obs_stmts_index xs
+        | lds => (APPEND (MAP constrain_mem lds)
+                         (x :: (APPEND (MAP observe_mem_index lds) (add_obs_stmts_index xs)))))
+   | _ => x :: add_obs_stmts_index xs)
+`;
+
+val add_block_cache_line_index_def = Define`
+add_block_cache_line_index block =
+        block with bb_statements := add_obs_stmts_index block.bb_statements
+`;
+
+val add_obs_cache_line_index_armv8_def = Define`
+add_obs_cache_line_index_armv8 p = map_obs_prog add_block_cache_line_index p
+`;
+
+
 (* observe tag & set index, if set index is in upper half *)
 val observe_mem_subset_def = Define`
 observe_mem_subset e =

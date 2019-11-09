@@ -439,7 +439,9 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
               | cache_tag_only => (
                       current_obs_model_id := "cache_tag_only"
                       )
-              (* | cache_index_only => () *)
+              | cache_index_only => (
+                      current_obs_model_id := "cache_index_only"
+                      )
               | cache_tag_index_part => (
                       current_obs_model_id := "cache_tag_index_part";
                       do_enum := true

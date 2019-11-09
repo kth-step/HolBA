@@ -23,6 +23,12 @@ val obs_hol_type = ``bir_val_t``;
 fun add_obs t = rand (concl (EVAL ``add_obs_cache_line_tag_armv8 ^t``));
 end
 
+structure bir_arm8_cache_line_index_model : OBS_MODEL =
+struct
+val obs_hol_type = ``bir_val_t``;
+fun add_obs t = rand (concl (EVAL ``add_obs_cache_line_index_armv8 ^t``));
+end
+
 structure bir_arm8_cache_line_subset_model : OBS_MODEL =
 struct
 val obs_hol_type = ``bir_val_t``;
@@ -36,6 +42,8 @@ fun get_obs_model id =
             bir_arm8_cache_line_model.obs_hol_type
           else if id = "cache_tag_only" then
             bir_arm8_cache_line_tag_model.obs_hol_type
+          else if id = "cache_index_only" then
+            bir_arm8_cache_line_index_model.obs_hol_type
           else if id = "cache_tag_index_part" then
             bir_arm8_cache_line_subset_model.obs_hol_type
           else
@@ -46,6 +54,8 @@ fun get_obs_model id =
             bir_arm8_cache_line_model.add_obs
           else if id = "cache_tag_only" then
             bir_arm8_cache_line_tag_model.add_obs
+          else if id = "cache_index_only" then
+            bir_arm8_cache_line_index_model.add_obs
           else if id = "cache_tag_index_part" then
             bir_arm8_cache_line_subset_model.add_obs
           else
