@@ -281,40 +281,6 @@ struct
  (* takes the number of instructions to generate *)
  fun bir_prog_gen_arm8_rand n = map ((strip_ws_off false) o remove_junk o hd o decomp) (progGen n);
 
- (* super simple library for randomly generated programs *)
- (* ========================================================================================= *)
-
- local
-     fun randSel l = List.nth (l, Random.range (0, length l) gen);
-
-     fun randTarget (pc, len) = (4*(Random.range (1, 1+len-pc) gen));
-
-     val regs    = List.tabulate (4, fn regnum => "x" ^ Int.toString regnum);
-     val ariths  = ["add"];
-     val condbrs = ["cbz", "cbnz"];
-     val loads   = ["ldr"];
-     val stores  = ["str"];
-
-     fun genReg    ()  = randSel regs;
-     fun genTarget loc = "#0x" ^ (Int.fmt (StringCvt.HEX) (randTarget loc));
-
-     fun genArith  loc = (randSel ariths)  ^ " " ^ (genReg ()) ^ ", " ^ (genReg ()) ^ ", " ^ (genReg ());
-     fun genCondBr loc = (randSel condbrs) ^ " " ^ (genReg ()) ^ ", " ^ (genTarget loc);
-     fun genLoad   loc = (randSel loads)   ^ " " ^ (genReg ()) ^ ", [" ^ (genReg ()) ^ "]";
-     fun genStore  loc = (randSel stores)  ^ " " ^ (genReg ()) ^ ", [" ^ (genReg ()) ^ "]";
-
-     val instrFuns = [genArith, genCondBr, genLoad];
- in
- fun genInstr loc = randSel instrFuns loc;
- end
-
- fun bir_prog_gen_arm8_rand_simple n =
-     List.tabulate (n, fn pc => genInstr (pc, n));
-
-(*
-bir_prog_gen_arm8_rand_simple 5;
-*)
-
 end; (* struct *)
 
 

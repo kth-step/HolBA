@@ -140,7 +140,6 @@ fun prog_gen_store_fromfile filename   = prog_gen_store "prog_gen_fromfile"     
 fun prog_gen_store_fromlines asmlines  = prog_gen_store "prog_gen_fromlines"       false (fn x => x)                   asmlines;
 
 fun prog_gen_store_rand sz             = prog_gen_store "prog_gen_rand"            true  bir_prog_gen_arm8_rand        sz;
-fun prog_gen_store_rand_simple sz      = prog_gen_store "prog_gen_rand_simple"     true  bir_prog_gen_arm8_rand_simple sz;
 fun prog_gen_store_a_la_qc sz          = prog_gen_store "prog_gen_a_la_qc"         true  prog_gen_a_la_qc              sz;
     
 fun prog_gen_store_rand_slice sz       = prog_gen_store "prog_gen_rand_slice"      true  bir_prog_gen_arm8_slice       sz;

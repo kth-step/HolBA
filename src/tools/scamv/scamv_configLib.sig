@@ -2,7 +2,6 @@ signature scamv_configLib =
 sig
     type scamv_config
     datatype gen_type = gen_rand
-                      | rand_simple
                       | prefetch_strides
                       | qc
                       | slice

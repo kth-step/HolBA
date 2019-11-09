@@ -8,7 +8,6 @@ datatype 'cfg opt_entry =
          | Arity1 of string * string * string * ('cfg -> string -> 'cfg)
 
 datatype gen_type = gen_rand
-                  | rand_simple
                   | prefetch_strides
                   | qc
                   | slice
@@ -47,7 +46,6 @@ val default_cfg = { max_iter = 10
 fun gen_type_fromString gt =
     case gt of
         "rand"             => SOME gen_rand
-      | "rand_simple"      => SOME rand_simple
       | "prefetch_strides" => SOME prefetch_strides
       | "qc"               => SOME qc
       | "slice"            => SOME slice
@@ -213,7 +211,7 @@ fun print_scamv_opt_usage () =
     in
         print "Scam-V Usage:\n\n";
         List.map print_entry opt_table;
-        print ("\ngenerator arg should be one of: rand, prefetch_strides, rand_simple, qc, slice, file\n");
+        print ("\ngenerator arg should be one of: rand, prefetch_strides, qc, slice, file\n");
         print ("\nobs_model arg should be one of: cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page\n");
         print ("\nhw_obs_model arg should be one of: hw_cache_tag_index, hw_cache_tag_index_part, hw_cache_tag_index_part_page\n");
         print ("\nDefaults are: " ^ PolyML.makestring default_cfg ^ "\n")
