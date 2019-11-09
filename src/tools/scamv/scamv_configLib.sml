@@ -23,24 +23,26 @@ datatype hw_obs_model = hw_cache_tag_index
                       | hw_cache_tag_index_part
                       | hw_cache_tag_index_part_page
 
-type scamv_config = { max_iter : int,
+type scamv_config = { max_iter  : int,
                       prog_size : int,
                       max_tests : int,
                       generator : gen_type,
                       obs_model : obs_model,
                       hw_obs_model : hw_obs_model,
-                      only_gen : bool,
-                      verbosity : int
+                      only_gen  : bool,
+                      verbosity : int,
+                      seed_rand : bool
                     }
 
-val default_cfg = { max_iter = 10
+val default_cfg = { max_iter  = 10
                   , prog_size = 5
                   , max_tests = 4
                   , generator = gen_rand
                   , obs_model = cache_tag_index
                   , hw_obs_model = hw_cache_tag_index
-                  , only_gen = true
+                  , only_gen  = true
                   , verbosity = 1
+                  , seed_rand = true
                   }
 
 fun gen_type_fromString gt =
@@ -78,7 +80,8 @@ fun set_max_iter (cfg : scamv_config) n =
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg };
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
 
 fun set_prog_size (cfg : scamv_config) n =
     { max_iter = # max_iter cfg,
@@ -88,7 +91,8 @@ fun set_prog_size (cfg : scamv_config) n =
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg };
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
 
 fun set_max_tests (cfg : scamv_config) n =
     { max_iter = # max_iter cfg,
@@ -98,7 +102,8 @@ fun set_max_tests (cfg : scamv_config) n =
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg };
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
 
 fun set_generator (cfg : scamv_config) gen =
     { max_iter = # max_iter cfg,
@@ -108,7 +113,8 @@ fun set_generator (cfg : scamv_config) gen =
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg };
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
 
 fun set_obs_model (cfg : scamv_config) om =
     { max_iter = # max_iter cfg,
@@ -118,7 +124,8 @@ fun set_obs_model (cfg : scamv_config) om =
       obs_model = om,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg };
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
 
 fun set_hw_obs_model (cfg : scamv_config) hwom =
     { max_iter = # max_iter cfg,
@@ -128,7 +135,8 @@ fun set_hw_obs_model (cfg : scamv_config) hwom =
       obs_model = # obs_model cfg,
       hw_obs_model = hwom,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg };
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
 
 fun set_only_gen (cfg : scamv_config) b =
     { max_iter = # max_iter cfg,
@@ -138,7 +146,8 @@ fun set_only_gen (cfg : scamv_config) b =
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = b };
+      only_gen = b,
+      seed_rand = # seed_rand cfg };
 
 fun set_verbosity (cfg : scamv_config) v =
     { max_iter = # max_iter cfg,
@@ -148,7 +157,19 @@ fun set_verbosity (cfg : scamv_config) v =
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = v,
-      only_gen = # only_gen cfg };
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
+
+fun set_seed_rand (cfg : scamv_config) s =
+    { max_iter = # max_iter cfg,
+      prog_size = # prog_size cfg,
+      max_tests = # max_tests cfg,
+      generator = # generator cfg,
+      obs_model = # obs_model cfg,
+      hw_obs_model = # hw_obs_model cfg,
+      verbosity = # verbosity cfg,
+      only_gen = # only_gen cfg,
+      seed_rand = s };
 
 
 (* end boilerplate *)
@@ -177,6 +198,8 @@ val opt_table =
               handle_conv_arg_with hw_obs_model_fromString set_hw_obs_model)
     , Arity0 ("r", "run_experiments", "Automatically run each experiment after generating it (requires active connection)",
               fn cfg => fn b => set_only_gen cfg (not b))
+    , Arity0 ("frs", "fix_rand_seed", "Fix the seed for the random number generators.",
+              fn cfg => fn b => set_seed_rand cfg (not b))
     ];
 end
 
