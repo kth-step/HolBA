@@ -177,8 +177,6 @@ val opt_table =
               handle_conv_arg_with obs_model_fromString set_obs_model)
     , Arity1 ("hwom", "hw_obs_model", "HW observation model",
               handle_conv_arg_with hw_obs_model_fromString set_hw_obs_model)
-    , Arity0 ("og", "only_gen", "Generate experiments without running them (default)",
-              set_only_gen)
     , Arity0 ("r", "run_experiments", "Automatically run each experiment after generating it (requires active connection)",
               fn cfg => fn b => set_only_gen cfg (not b))
     ];
