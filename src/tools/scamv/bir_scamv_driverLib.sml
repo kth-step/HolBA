@@ -228,6 +228,8 @@ fun default_enumeration_targets paths =
 
 fun start_interactive prog =
     let
+        val _ = reset ();
+
         val (prog_id, lifted_prog) = prog;
         val _ = current_prog_id := prog_id;
         val _ = current_prog := SOME lifted_prog;
@@ -337,31 +339,25 @@ fun next_experiment all_exps next_relation  =
         val lifted_prog_w_obs = case !current_prog_w_obs of
                              SOME x => x
                            | NONE => raise ERR "next_test" "no program found";
-        val ready_to_store = conc_exec_obs_compare lifted_prog_w_obs (s1, s2);
-        (*
-        val _ = if ready_to_store then () else
-                raise ERR "next_test" "why did we generate a test case with unequal observations?";
-        *)
 
-        val _ = if not ready_to_store then
-                  print ("PIPELINE ERROR: Experiment does not yield equal observations. Did not generate an experiment.")
-                else
-          (let
-          (* create experiment files *)
-          val exp_id  = bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
-           in
-             (if (#only_gen (scamv_getopt_config ()))
-              then printv 1 ("Generated experiment: " ^ exp_id)
-                         (* no need to do anything else *)
-              else
-                  let val test_result = bir_embexp_run exp_id false;
-                  in case test_result of
-                        (NONE, msg) => printv 1 ("result = NO RESULT (" ^ msg ^ ")")
-                      | (SOME r, msg) => printv 1 ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")")
-                  end); print "\n\n"
-           end);
+        val _ = if conc_exec_obs_compare lifted_prog_w_obs (s1, s2) then () else
+                  raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
+
+        (* create experiment files *)
+        val exp_id  = bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
+
+        val _ =  (if (#only_gen (scamv_getopt_config ())) then
+                    printv 1 ("Generated experiment: " ^ exp_id)
+                    (* no need to do anything else *)
+                  else (
+                    let val test_result = bir_embexp_run exp_id false;
+                    in case test_result of
+                          (NONE, msg) => printv 1 ("result = NO RESULT (" ^ msg ^ ")")
+                        | (SOME r, msg) => printv 1 ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")")
+                    end);
+                 printv 1 "\n\n");
     in ()
-    end
+    end;
 
 fun mk_round_robin n =
     let val counter = ref 0;
@@ -399,8 +395,14 @@ fun scamv_test_main tests prog =
         fun do_tests 0 = ()
           | do_tests n =
             let val _ = next_experiment all_exps next_relation
-                        handle e =>
-                               print ("Skipping test case due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n");
+                        handle e => (
+                               let
+                                 val message = "Skipping test case due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n";
+                               in
+                                 bir_embexp_log_prog message;
+                                 print message
+                               end
+                        )
             in do_tests (n-1) end
     in do_tests tests
     end
@@ -468,21 +470,24 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
                       )
               | _ => raise ERR "scamv_run" ("unknown hw_obs_model " ^ PolyML.makestring hw_obs_model);
 
-        val _ = if (verb > 0) then
+        val _ = min_verb 1 (fn () =>
                     (print "Scam-V set to the following test params:\n";
                      print ("Program generator: " ^ PolyML.makestring gen ^ "\n");
                      print ("Observation model: " ^ !current_obs_model_id ^ "\n");
                      print ("HW observation model: " ^ !hw_obs_model_id ^ "\n"))
-                else ();
+                );
+
+        fun skipProgExText e = "Skipping program due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n";
         
         fun main_loop 0 = ()
          |  main_loop n =
             (printv 1 ("Iteration: " ^ PolyML.makestring (m - n) ^ "\n");
-             (let val prog =
-                      prog_store_fun ()
-              in scamv_test_main tests prog end
-              handle e =>
-                     print("Skipping program due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n"));
+             (let val prog = prog_store_fun ()
+              in
+                scamv_test_main tests prog
+                handle e => (bir_embexp_log_prog (skipProgExText e); raise e)
+              end
+              handle e => print (skipProgExText e));
              main_loop (n-1))
     in
         main_loop m
