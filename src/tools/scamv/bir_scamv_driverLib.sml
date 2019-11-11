@@ -345,9 +345,11 @@ fun next_experiment all_exps next_relation  =
 
         (* create experiment files *)
         val exp_id  = bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
+        val exp_gen_message = "Generated experiment: " ^ exp_id;
+        val _ = bir_embexp_log_prog exp_gen_message;
 
         val _ =  (if (#only_gen (scamv_getopt_config ())) then
-                    printv 1 ("Generated experiment: " ^ exp_id)
+                    printv 1 exp_gen_message
                     (* no need to do anything else *)
                   else (
                     let val test_result = bir_embexp_run exp_id false;
