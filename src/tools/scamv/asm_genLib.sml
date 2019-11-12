@@ -77,7 +77,7 @@ val arb_ld = Ld <$> two (arb_option (elements [4,8,16])) arb_armv8_regname;
 val arb_instruction =
     frequency
         [(1, Load <$> (two arb_reg (oneof [arb_ld, arb_imm])))
-        ,(1, Branch <$> (two arb_branchcond arb_imm))]
+        (*,(2, Branch <$> (two arb_branchcond arb_imm))*)]
 
 val arb_program = arb_list_of arb_instruction;
 end
@@ -87,7 +87,7 @@ end
 fun prog_gen_a_la_qc n =
     let
       val g = bir_scamv_helpersLib.rand_gen_get ();
-      val (p, _) = run_step n g arb_program;
+      val (p, _) = run_step n g (resize n arb_program);
     in
         pp_program p
     end
