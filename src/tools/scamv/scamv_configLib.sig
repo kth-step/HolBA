@@ -6,6 +6,8 @@ sig
                       | qc
                       | slice
                       | from_file
+                      | previct1
+                      | previct2
 
     datatype obs_model = cache_tag_index
                        | cache_tag_only

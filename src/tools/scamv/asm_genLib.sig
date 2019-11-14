@@ -27,6 +27,10 @@ sig
     val arb_ld : Operand Gen;
     val arb_instruction_noload_nobranch : ArmInstruction Gen;
     val arb_program_load : ArmInstruction list Gen;
+
     val prog_gen_a_la_qc : int -> string list;
+
+    val prog_gen_a_la_qc_previct1 : int -> string list;
+    val prog_gen_a_la_qc_previct2 : int -> string list;
 end
 

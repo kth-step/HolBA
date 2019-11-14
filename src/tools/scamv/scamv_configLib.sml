@@ -12,6 +12,8 @@ datatype gen_type = gen_rand
                   | qc
                   | slice
                   | from_file
+                  | previct1
+                  | previct2
 
 datatype obs_model = cache_tag_index
                    | cache_tag_only
@@ -54,6 +56,8 @@ fun gen_type_fromString gt =
       | "qc"               => SOME qc
       | "slice"            => SOME slice
       | "file"             => SOME from_file
+      | "previct1"         => SOME previct1
+      | "previct2"         => SOME previct2
       | _                  => NONE
 
 fun obs_model_fromString om =
@@ -259,7 +263,7 @@ fun print_scamv_opt_usage () =
     in
         print "Scam-V Usage:\n\n";
         List.map print_entry opt_table;
-        print ("\ngenerator arg should be one of: rand, prefetch_strides, qc, slice, file\n");
+        print ("\ngenerator arg should be one of: rand, prefetch_strides, qc, slice, file, previct1, previct2\n");
         print ("\nobs_model arg should be one of: cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page\n");
         print ("\nhw_obs_model arg should be one of: hw_cache_tag_index, hw_cache_tag_index_part, hw_cache_tag_index_part_page\n");
         print ("\nDefaults are: " ^ PolyML.makestring default_cfg ^ "\n")

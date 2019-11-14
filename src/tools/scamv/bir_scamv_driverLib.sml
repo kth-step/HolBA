@@ -439,6 +439,8 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
                                  SOME x => prog_gen_store_fromfile x
                                | NONE   => raise ERR "scamv_run" "file needs to be specified as generator_param")
               | prefetch_strides => prog_gen_store_prefetch_stride sz
+              | previct1 => prog_gen_store_a_la_qc_previct1 sz
+              | previct2 => prog_gen_store_a_la_qc_previct2 sz
               | _ => raise ERR "scamv_run" ("unknown generator type " ^ PolyML.makestring gen)
 
         val _ =
