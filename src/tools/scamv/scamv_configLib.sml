@@ -11,7 +11,7 @@ datatype gen_type = gen_rand
                   | prefetch_strides
                   | qc
                   | slice
-                  | from_file of string
+                  | from_file
 
 datatype obs_model = cache_tag_index
                    | cache_tag_only
@@ -53,7 +53,7 @@ fun gen_type_fromString gt =
       | "prefetch_strides" => SOME prefetch_strides
       | "qc"               => SOME qc
       | "slice"            => SOME slice
-      | "file"             => SOME (from_file "asm/test.s") (* FIXME temporary *)
+      | "file"             => SOME from_file
       | _                  => NONE
 
 fun obs_model_fromString om =

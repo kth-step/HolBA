@@ -5,7 +5,7 @@ sig
                       | prefetch_strides
                       | qc
                       | slice
-                      | from_file of string
+                      | from_file
 
     datatype obs_model = cache_tag_index
                        | cache_tag_only
