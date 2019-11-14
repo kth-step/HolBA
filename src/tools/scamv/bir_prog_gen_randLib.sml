@@ -157,6 +157,20 @@ struct
 
  val local_param = ref "";
 
+ val patternList = ref (NONE: regex list option);
+
+ fun get_patternList () =
+   case !patternList of
+      SOME x => x
+    | NONE   => ((patternList := SOME (
+       case !local_param of
+          ""               => [] (* default *)
+        | "wout_ldzr"      => [pattern_ld]
+        | "wout_cbnz"      => [pattern_cbnz]
+        | "wout_ldzr_cbnz" => [pattern_ld, pattern_cbnz]
+        | _                => raise ERR "prog_gen_rand::get_patternList" "unknown parameter"
+       )); get_patternList ());
+
  fun filter_inspected_instr str =
      let
 	 fun reader nil    = NONE
@@ -172,10 +186,7 @@ struct
 		 resultBool
 	     end
      in
-	 (
-	  checkPatterns(pattern_ld, str) orelse
-	  checkPatterns(pattern_cbnz, str) 
-	 )
+       List.exists (fn p => checkPatterns(p, str)) (get_patternList())
      end
  (* filter_inspected_instr "ldr xzr, x19, [x21, #0xC8]"; *)
 
