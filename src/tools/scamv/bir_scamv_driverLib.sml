@@ -423,7 +423,8 @@ fun show_error_no_free_vars (id,_) =
     print ("Program " ^ id ^ " skipped because it has no free variables.\n");
 
 fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
-              , generator = gen, obs_model = obs_model, hw_obs_model = hw_obs_model
+              , generator = gen, generator_param = generator_param
+              , obs_model = obs_model, hw_obs_model = hw_obs_model
               , verbosity = verb, only_gen = og, seed_rand = seed_rand } =
     let
 
@@ -434,7 +435,9 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
                 gen_rand => prog_gen_store_rand sz
               | qc => prog_gen_store_a_la_qc sz
               | slice => prog_gen_store_rand_slice sz
-              | from_file filename => prog_gen_store_fromfile filename
+              | from_file filename => (case generator_param of
+                                           SOME x => prog_gen_store_fromfile x
+					 | NONE   => raise ERR "scamv_run" "file needs to be specified as generator_param")
               | prefetch_strides => prog_gen_store_prefetch_stride sz
               | _ => raise ERR "scamv_run" ("unknown generator type " ^ PolyML.makestring gen)
 

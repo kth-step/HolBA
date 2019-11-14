@@ -27,6 +27,7 @@ type scamv_config = { max_iter  : int,
                       prog_size : int,
                       max_tests : int,
                       generator : gen_type,
+                      generator_param : string option,
                       obs_model : obs_model,
                       hw_obs_model : hw_obs_model,
                       only_gen  : bool,
@@ -38,6 +39,7 @@ val default_cfg = { max_iter  = 10
                   , prog_size = 5
                   , max_tests = 4
                   , generator = gen_rand
+                  , generator_param = NONE
                   , obs_model = cache_tag_index
                   , hw_obs_model = hw_cache_tag_index
                   , only_gen  = true
@@ -77,6 +79,7 @@ fun set_max_iter (cfg : scamv_config) n =
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -88,6 +91,7 @@ fun set_prog_size (cfg : scamv_config) n =
       prog_size = n,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -99,6 +103,7 @@ fun set_max_tests (cfg : scamv_config) n =
       prog_size = # prog_size cfg,
       max_tests = n,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -110,6 +115,19 @@ fun set_generator (cfg : scamv_config) gen =
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = gen,
+      generator_param = # generator_param cfg,
+      obs_model = # obs_model cfg,
+      hw_obs_model = # hw_obs_model cfg,
+      verbosity = # verbosity cfg,
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
+
+fun set_generator_param (cfg : scamv_config) gen_param =
+    { max_iter = # max_iter cfg,
+      prog_size = # prog_size cfg,
+      max_tests = # max_tests cfg,
+      generator = # generator cfg,
+      generator_param = gen_param,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -121,6 +139,7 @@ fun set_obs_model (cfg : scamv_config) om =
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = om,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -132,6 +151,7 @@ fun set_hw_obs_model (cfg : scamv_config) hwom =
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = hwom,
       verbosity = # verbosity cfg,
@@ -143,6 +163,7 @@ fun set_only_gen (cfg : scamv_config) b =
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -154,6 +175,7 @@ fun set_verbosity (cfg : scamv_config) v =
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = v,
@@ -165,6 +187,7 @@ fun set_seed_rand (cfg : scamv_config) s =
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -192,6 +215,8 @@ val opt_table =
               handle_conv_arg_with Int.fromString set_max_tests)
     , Arity1 ("gen", "generator", "Program generator",
               handle_conv_arg_with gen_type_fromString set_generator)
+    , Arity1 ("genpar", "generator_param", "Program generator parameter",
+              handle_conv_arg_with (fn x => SOME (SOME x)) set_generator_param)
     , Arity1 ("om", "obs_model", "Observation model",
               handle_conv_arg_with obs_model_fromString set_obs_model)
     , Arity1 ("hwom", "hw_obs_model", "HW observation model",
