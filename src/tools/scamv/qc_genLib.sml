@@ -67,12 +67,13 @@ fun oneof gens = elements gens >>= id;
 fun frequency xs =
     let val sum = List.foldr (op +) 0;
         val tot = sum (List.map fst xs);
-        fun pick ((k,x)::xs) n =
+        fun pick [] _ = raise ERR "qc_genLib::frequency::pick" "reached end of the list too early, something is off..."
+          | pick ((k,x)::xs) n =
             if n <= k
             then x
             else pick xs (n-k)
     in
-        choose (1, tot) >>= (pick xs)
+        choose (1, tot + 1) >>= (pick xs)
     end
 
 fun arb_list_of m =
