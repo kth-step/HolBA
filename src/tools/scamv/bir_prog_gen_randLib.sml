@@ -155,6 +155,8 @@ struct
  (* val pattern_stp   = CONCATENATION [stringLiteral "stp", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END] *)
  val pattern_cbnz  = CONCATENATION [stringLiteral "cbnz", whitespace_r, STAR (alphabet_r), END]
 
+ val local_param = ref "";
+
  fun filter_inspected_instr str =
      let
 	 fun reader nil    = NONE
@@ -286,7 +288,9 @@ struct
   val n = 3;
   *)
  (* takes the number of instructions to generate *)
- fun bir_prog_gen_arm8_rand n = map ((strip_ws_off false) o remove_junk o hd o decomp) (progGen n);
+ fun bir_prog_gen_arm8_rand param n = (
+   local_param := param;
+   map ((strip_ws_off false) o remove_junk o hd o decomp) (progGen n));
 
 end; (* struct *)
 

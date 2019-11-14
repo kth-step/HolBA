@@ -139,7 +139,7 @@ struct
 fun prog_gen_store_fromfile filename   = prog_gen_store "prog_gen_fromfile"        false load_asm_lines                filename;
 fun prog_gen_store_fromlines asmlines  = prog_gen_store "prog_gen_fromlines"       false (fn x => x)                   asmlines;
 
-fun prog_gen_store_rand sz             = prog_gen_store "prog_gen_rand"            true  bir_prog_gen_arm8_rand        sz;
+fun prog_gen_store_rand param sz       = prog_gen_store ("prog_gen_rand::"^param)  true  (bir_prog_gen_arm8_rand param)sz;
 fun prog_gen_store_a_la_qc sz          = prog_gen_store "prog_gen_a_la_qc"         true  prog_gen_a_la_qc              sz;
 fun prog_gen_store_a_la_qc_previct1 sz = prog_gen_store "prog_gen_a_la_qc_previct1"true  prog_gen_a_la_qc_previct1     sz;
 fun prog_gen_store_a_la_qc_previct2 sz = prog_gen_store "prog_gen_a_la_qc_previct2"true  prog_gen_a_la_qc_previct2     sz;
