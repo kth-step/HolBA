@@ -72,6 +72,62 @@ struct
       exp_basedir
     end;
 
+(* logging *)
+  val holbarun_log = ref (NONE:TextIO.outstream option);
+  val prog_log = ref (NONE:TextIO.outstream option);
+  val exp_log = ref (NONE:TextIO.outstream option);
+  fun get_log_out (log, fun_name, err_msg) =
+    case !log of
+        NONE => raise ERR fun_name err_msg
+      | SOME log_out => log_out;
+
+  fun close_log log =
+    case !log of
+        NONE => ()
+      | SOME log_out => TextIO.closeOut log_out;
+
+  fun create_log log filename = (
+    (close_log log);
+    let val log_out = TextIO.openOut filename
+    in log := SOME log_out
+    end);
+
+  fun write_log_line log_t line =
+    let
+      val log_out = get_log_out log_t;
+      val _ = TextIO.output (log_out, line);
+      val _ = TextIO.output (log_out, "\n");
+    in
+      TextIO.flushOut log_out
+    end;
+
+  fun bir_embexp_log_prog_close () =
+    close_log prog_log;
+
+  fun bir_embexp_log_exp_close () =
+    close_log exp_log;
+
+  fun bir_embexp_log_prog message =
+    let
+      val line = message;
+    in
+      write_log_line (prog_log, "bir_embexp_log_prog", "no program log registered currently") line
+    end;
+
+  fun bir_embexp_log_exp message =
+    let
+      val line = message;
+    in
+      write_log_line (exp_log, "bir_embexp_log_exp", "no experiment log registered currently") line
+    end;
+
+  fun bir_embexp_log_raw message =
+    let
+      val line = message;
+    in
+      write_log_line (exp_log, "bir_embexp_log", "no holbarun log registered currently (this should never happen)") line
+    end;
+
 
 (* embexp run identification *)
   val embexp_run_id_ref = ref (NONE:string option);
@@ -113,11 +169,23 @@ struct
 	    val _ = write_to_file_or_compare_clash "embexp_run_id" holba_args_file     holba_args;
 	    val _ = write_to_file_or_compare_clash "embexp_run_id" holba_randseed_file holba_randseed;
 
+	    val holba_logfile = runitpath ^ "/holba.log";
+            val _ = create_log holbarun_log holba_logfile;
+            val _ = write_log_line (holbarun_log, "embexp_run_id", "no no no") ("Starting log for: " ^ holba_hash);
+
             val _ = embexp_run_id_ref := SOME holba_hash;
           in
             holba_hash
           end
       | SOME p => p;
+
+  fun bir_embexp_log message =
+    let
+      val _ = embexp_run_id ();
+      val _ = bir_embexp_log_raw message;
+    in
+      ()
+    end;
 
 
 (* create json state *)
@@ -226,53 +294,6 @@ end
       val asm_lines = List.filter (fn x => not (x = "")) asm_lines;
     in
       asm_lines
-    end;
-
-  val prog_log = ref (NONE:TextIO.outstream option);
-  val exp_log = ref (NONE:TextIO.outstream option);
-  fun get_log_out (log, fun_name, err_msg) =
-    case !log of
-        NONE => raise ERR fun_name err_msg
-      | SOME log_out => log_out;
-
-  fun close_log log =
-    case !log of
-        NONE => ()
-      | SOME log_out => TextIO.closeOut log_out;
-
-  fun create_log log filename = (
-    (close_log log);
-    let val log_out = TextIO.openOut filename
-    in log := SOME log_out
-    end);
-
-  fun write_log_line log_t line =
-    let
-      val log_out = get_log_out log_t;
-      val _ = TextIO.output (log_out, line);
-      val _ = TextIO.output (log_out, "\n");
-    in
-      TextIO.flushOut log_out
-    end;
-
-  fun bir_embexp_log_prog_close () =
-    close_log prog_log;
-
-  fun bir_embexp_log_exp_close () =
-    close_log exp_log;
-
-  fun bir_embexp_log_prog message =
-    let
-      val line = message;
-    in
-      write_log_line (prog_log, "bir_embexp_log_prog", "no program log registered currently") line
-    end;
-
-  fun bir_embexp_log_exp message =
-    let
-      val line = message;
-    in
-      write_log_line (exp_log, "bir_embexp_log_exp", "no experiment log registered currently") line
     end;
 
   fun bir_embexp_prog_create (arch_id, prog_gen_id) code_asm =
