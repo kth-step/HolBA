@@ -4,6 +4,8 @@ struct
 datatype 'a Gen
   = Gen of (int -> Random.generator -> 'a);
 
+fun incRandRange (a, b) = Random.range (a, b + 1);
+
 (* sized :: (Int -> Gen a) -> Gen a *)
 fun sized fgen = Gen (fn n => fn r =>
                          let val (Gen m) = fgen n in m n r end);
@@ -20,13 +22,13 @@ fun promote f = Gen (fn n => fn r => fn a =>
 
 (* generate :: Int -> StdGen -> Gen a -> a *)
 fun generate n rnd (Gen m) =
-    let val sz = Random.range (0,n) rnd;
+    let val sz = incRandRange (0,n) rnd;
     in
         m sz rnd
     end
 
 fun run_step n rnd (Gen m) =
-    let val sz = Random.range (0,n) rnd;
+    let val sz = incRandRange (0,n) rnd;
     in
         (m sz rnd, rnd)
     end
@@ -56,7 +58,7 @@ fun sample amount n rnd g =
     generate n rnd (repeat amount g)
 
 fun choose (a,b) =
-    (Random.range (a,b)) <$> rand
+    (incRandRange (a,b)) <$> rand
 
 fun elements xs =
     (fn i => List.nth (xs,i)) <$> choose (0, List.length xs - 1);
@@ -73,7 +75,7 @@ fun frequency xs =
             then x
             else pick xs (n-k)
     in
-        choose (1, tot + 1) >>= (pick xs)
+        choose (1, tot) >>= (pick xs)
     end
 
 fun arb_list_of m =

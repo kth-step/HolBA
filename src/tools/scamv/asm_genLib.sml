@@ -120,7 +120,7 @@ fun arb_program_cond arb_prog_left arb_prog_right =
 
 val arb_program_previct1 =
   let
-    val arb_pad = sized (fn n => choose (0, n + 1)) >>=
+    val arb_pad = sized (fn n => choose (0, n)) >>=
                   (fn n => resize n arb_program_noload_nobranch);
     val arb_block_3ld = (List.foldr (op@) []) <$> (
                         sequence [arb_pad, (fn x => [x]) <$> arb_load
@@ -133,7 +133,7 @@ val arb_program_previct1 =
 
 val arb_program_previct2 =
   let
-    val arb_pad = sized (fn n => choose (0, n + 1)) >>=
+    val arb_pad = sized (fn n => choose (0, n)) >>=
                   (fn n => resize n arb_program_noload_nobranch);
     val arb_block_3ld = (List.foldr (op@) []) <$> (
                         sequence [(fn x => [x]) <$> arb_load
