@@ -474,12 +474,16 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
                       )
               | _ => raise ERR "scamv_run" ("unknown hw_obs_model " ^ PolyML.makestring hw_obs_model);
 
-        val _ = min_verb 1 (fn () =>
-                    (print "Scam-V set to the following test params:\n";
-                     print ("Program generator: " ^ PolyML.makestring gen ^ "\n");
-                     print ("Observation model: " ^ !current_obs_model_id ^ "\n");
-                     print ("HW observation model: " ^ !hw_obs_model_id ^ "\n"))
-                );
+        val config_str =
+          "Scam-V set to the following test params:\n" ^
+          ("Program generator    : " ^ PolyML.makestring gen ^ "\n") ^
+          ("Prog gen params      : " ^ PolyML.makestring generator_param ^ "\n") ^
+          ("Observation model    : " ^ !current_obs_model_id ^ "\n") ^
+          ("HW observation model : " ^ !hw_obs_model_id ^ "\n") ^
+          ("Enumerate            : " ^ PolyML.makestring (!do_enum) ^ "\n");
+
+        val _ = bir_embexp_log config_str;
+        val _ = min_verb 1 (fn () => print config_str);
 
         fun skipProgExText e = "Skipping program due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n";
         
