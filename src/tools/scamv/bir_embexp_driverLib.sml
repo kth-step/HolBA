@@ -125,7 +125,7 @@ struct
     let
       val line = message;
     in
-      write_log_line (exp_log, "bir_embexp_log", "no holbarun log registered currently (this should never happen)") line
+      write_log_line (holbarun_log, "bir_embexp_log", "no holbarun log registered currently (this should never happen)") line
     end;
 
 
