@@ -148,30 +148,10 @@ end
 
 
 (* ================================ *)
-fun prog_gen_a_la_qc n =
+fun prog_gen_a_la_qc gen n =
     let
       val g = bir_scamv_helpersLib.rand_gen_get ();
-      val (p, _) = run_step n g (resize n arb_program_load);
-    in
-        pp_program p
-    end
-
-
-(* ================================ *)
-fun prog_gen_a_la_qc_previct1 n =
-    let
-      val g = bir_scamv_helpersLib.rand_gen_get ();
-      val (p, _) = run_step n g (resize n arb_program_previct1);
-    in
-        pp_program p
-    end
-
-
-(* ================================ *)
-fun prog_gen_a_la_qc_previct2 n =
-    let
-      val g = bir_scamv_helpersLib.rand_gen_get ();
-      val (p, _) = run_step n g (resize n arb_program_previct2);
+      val (p, _) = run_step n g (resize n gen);
     in
         pp_program p
     end
