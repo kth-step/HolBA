@@ -422,13 +422,15 @@ fun scamv_test_single_file filename =
 fun show_error_no_free_vars (id,_) =
     print ("Program " ^ id ^ " skipped because it has no free variables.\n");
 
-fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
+fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enumerate
               , generator = gen, generator_param = generator_param
               , obs_model = obs_model, hw_obs_model = hw_obs_model
               , verbosity = verb, only_gen = og, seed_rand = seed_rand } =
     let
 
         val _ = bir_scamv_helpersLib.rand_isfresh_set seed_rand;
+
+        val _ = do_enum := enumerate;
 
         val prog_store_fun =
            case gen of
@@ -447,23 +449,16 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests
 
         val _ =
            case obs_model of
-                cache_tag_index  => (
+                cache_tag_index  =>
                       current_obs_model_id := "cache_tag_index"
-                      )
-              | cache_tag_only => (
+              | cache_tag_only =>
                       current_obs_model_id := "cache_tag_only"
-                      )
-              | cache_index_only => (
+              | cache_index_only =>
                       current_obs_model_id := "cache_index_only"
-                      )
-              | cache_tag_index_part => (
-                      current_obs_model_id := "cache_tag_index_part";
-                      do_enum := true
-                      )
-              | cache_tag_index_part_page => (
-                      current_obs_model_id := "cache_tag_index_part_page";
-                      do_enum := true
-                      )
+              | cache_tag_index_part =>
+                      current_obs_model_id := "cache_tag_index_part"
+              | cache_tag_index_part_page =>
+                      current_obs_model_id := "cache_tag_index_part_page"
               | _ => raise ERR "scamv_run" ("unknown obs_model " ^ PolyML.makestring obs_model);
 
         val _ =
