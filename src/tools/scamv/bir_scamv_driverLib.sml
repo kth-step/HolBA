@@ -463,15 +463,12 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
 
         val _ =
            case hw_obs_model of
-                hw_cache_tag_index  => (
+                hw_cache_tag_index  =>
                       hw_obs_model_id := "cache_multiw"
-                      )
-              | hw_cache_tag_index_part => (
+              | hw_cache_tag_index_part =>
                       hw_obs_model_id := "cache_multiw_subset"
-                      )
-              | hw_cache_tag_index_part_page => (
+              | hw_cache_tag_index_part_page =>
                       hw_obs_model_id := "cache_multiw_subset_page_boundary"
-                      )
               | _ => raise ERR "scamv_run" ("unknown hw_obs_model " ^ PolyML.makestring hw_obs_model);
 
         val config_str =
