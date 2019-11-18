@@ -541,7 +541,7 @@ Q.SUBGOAL_THEN `s'.bst_pc.bpc_label = l1` (fn thm => FULL_SIMP_TAC std_ss [thm])
 );
 
 
-(* Use weak_seq_rule to prove the BIR instance of it *)
+(* MAIN NEW SEQUENTIAL COMPOSITION THEOREM FOR BIR TRIPLES *)
 val bir_seq_rule_thm = store_thm("bir_seq_rule_thm",
   ``!prog l ls1 ls2 pre post.
     bir_triple prog l (ls1 UNION ls2) pre post ==>
@@ -558,21 +558,21 @@ IMP_RES_TAC weak_seq_rule_thm
 );
 
 val bir_loop_contract_def = Define `
-  bir_loop_contract prog l le invariant C1 var =
+  bir_loop_contract prog l le invariant C1 variant =
     (~(l IN le)) /\
     (!x. (bir_triple prog l ({l} UNION le)
            (* (\ms. (invariant ms) /\ (C1 ms) /\ ((var ms) = x:num)) *)
            (BExp_BinExp BIExp_And invariant
              (BExp_BinExp BIExp_And
                C1
-               (BExp_BinPred BIExp_Equal var (BExp_Const (Imm64 x)))
+               (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 x)))
              )
            )
            (* (\ms.(((m.pc ms)=l) /\ (invariant ms) /\ ((var ms) < x) /\ ((var ms) >= 0)))) *)
 	   (\l'. if l' = l then (BExp_BinExp BIExp_And invariant
 		   		  (BExp_BinExp BIExp_And
-				    (BExp_BinPred BIExp_LessThan var (BExp_Const (Imm64 x)))
-				    (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 0w)) var)
+				    (BExp_BinPred BIExp_LessThan variant (BExp_Const (Imm64 x)))
+				    (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 0w)) variant)
                                   )
 			        )
                             else bir_exp_false
@@ -581,13 +581,14 @@ val bir_loop_contract_def = Define `
     )
 `;
 
-(* This theorem obtains a weak_loop_contract for the proof of bir_invariant_rule_thm *)
+(* This theorem obtains a weak_loop_contract for obtaining the consequent of
+ * bir_invariant_rule_thm *)
 val bir_weak_triple_loop = store_thm("bir_weak_triple_loop",
   ``!prog l le invariant variant C1 post x.
     (* TODO: Antecedents for variant? *)
     (l NOTIN le) ==>
     weak_triple (bir_etl_wm prog) l le
-      (\s. bir_exec_to_labels_triple_precond s
+      (\s. bir_exec_to_labels_triple_precond st
              (BExp_BinExp BIExp_And invariant
                (BExp_BinExp BIExp_And
                  C1
@@ -596,16 +597,18 @@ val bir_weak_triple_loop = store_thm("bir_weak_triple_loop",
              )
              prog
       )
-      (\s'. bir_exec_to_labels_triple_postcond s' post prog) ==>
+      (\st'. bir_exec_to_labels_triple_postcond st' post prog) ==>
 
     weak_loop_contract (bir_etl_wm prog) l le
-      (\s. bir_exec_to_labels_triple_precond s invariant prog)
-      (\s. bir_eval_exp C1 s.bst_environ = SOME bir_val_true)
-      (* TODO: Last argument is supposed to be a map from bir_states to num *)
-(*
-      (\s. b2n ((???)  (THE (bir_eval_exp variant s.bst_environ))))
-*)
-      some_function_of_var_and_some_state_here
+      (\st. bir_exec_to_labels_triple_precond st invariant prog)
+      (\st. bir_eval_exp C1 st.bst_environ = SOME bir_val_true)
+      (* TODO: Last argument is supposed to be a map from bir_state to num
+
+           (\s. b2n ((???)  (THE (bir_eval_exp variant s.bst_environ))))
+
+         How can we do this with a function to num, and not to option num?
+       *)
+      some_function_computing_the_variant_as_a_num_using_the_state
 ``,
 
 FULL_SIMP_TAC std_ss [weak_triple_def, weak_loop_contract_def] >>

@@ -72,7 +72,7 @@ FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) 
 
 
 (* Inv is usually the fact that the program is in memory and that
-the execution mode is the exprected one *)
+the execution mode is the expected one *)
 val weak_map_triple_def = Define `
   weak_map_triple m invariant (l:'a) (ls:'a->bool) (ls':'a->bool) pre post =
     (((ls INTER ls') = EMPTY) /\
@@ -261,21 +261,16 @@ REV_FULL_SIMP_TAC std_ss []
 );
 
 
-
-
-
-
-
 (* We should generalize the other contract to handle set of labels *)
-val weak_map_std_seq_comp_thm = prove(``
-(weak_model m) ==>
-(ls1' SUBSET ls2) ==>
-(ls1 INTER ls1' = EMPTY) ==>
-(ls1' INTER ls2' = EMPTY) ==>
-(weak_map_triple m invariant l ls1 ls2 pre1 post1) ==>
-(!l1 . (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
-(weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2)
-``,
+val weak_map_std_seq_comp_thm = prove(
+  ``!m ls1 ls1' ls2 ls2' invariant l pre1 post1 post2.
+    weak_model m ==>
+    ls1' SUBSET ls2 ==>
+    (ls1 INTER ls1' = EMPTY) ==>
+    (ls1' INTER ls2' = EMPTY) ==>
+    weak_map_triple m invariant l ls1 ls2 pre1 post1 ==>
+    (!l1. (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
+    weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2``,
 
 REPEAT STRIP_TAC >>
 
