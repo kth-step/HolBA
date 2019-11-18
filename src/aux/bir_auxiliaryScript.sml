@@ -1,4 +1,7 @@
 open HolKernel Parse boolLib bossLib;
+
+open bir_auxiliaryLib;
+
 open wordsTheory bitstringTheory ASCIInumbersTheory;
 open pred_setTheory;
 
@@ -245,6 +248,13 @@ ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_MODULUS]);
 val NUM_LSONE_EQZ =
   store_thm("NUM_LSONE_EQZ",
   ``!(n:num). (n < 1) <=> (n = 0)``,
+
+FULL_SIMP_TAC arith_ss []
+);
+
+val NUM_PRE_LT =
+  store_thm("NUM_PRE_LT",
+  ``!(a:num). (a > 0) ==> PRE a < a``,
 
 FULL_SIMP_TAC arith_ss []
 );

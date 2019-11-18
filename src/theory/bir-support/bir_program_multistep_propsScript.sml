@@ -1008,9 +1008,6 @@ Cases_on `bir_exec_infinite_steps_COUNT_STEPS pc_cond mo p state` >> (
 ));
 
 
-val num_less_1_eq_0 = prove (``!x: num. (x < 1) <=> (x = 0)``, DECIDE_TAC);
-
-
 val bir_exec_steps_GEN_1_EQ_Looping = store_thm ("bir_exec_steps_GEN_1_EQ_Looping",
   ``((bir_exec_steps_GEN pc_cond p state (SOME 1)) = BER_Looping ll) <=>
     ((ll = bir_exec_steps_observe_llist p state NONE) /\
@@ -1018,7 +1015,7 @@ val bir_exec_steps_GEN_1_EQ_Looping = store_thm ("bir_exec_steps_GEN_1_EQ_Loopin
      (!n. 0 < n ==> ~(bir_state_COUNT_PC pc_cond (bir_exec_infinite_steps_fun p state n))))``,
 
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_GEN_EQ_Looping,
-  bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE, num_less_1_eq_0,
+  bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE, NUM_LSONE_EQZ,
   bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
 REPEAT STRIP_TAC >> EQ_TAC >> STRIP_TAC >- (
   GEN_TAC >> STRIP_TAC >>
