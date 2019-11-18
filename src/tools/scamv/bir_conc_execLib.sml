@@ -45,9 +45,7 @@ struct
   fun conc_exec_obs_extract symb_state =
     let
         fun eval_exp t =
-(*            let val t = (hd o snd o strip_comb ) ob *)
-            (*in*) ((rhs o concl)(EVAL ``bir_eval_exp ^t (BEnv (\x. NONE))``));
-            (*end;*)
+            ((rhs o concl)(EVAL ``bir_eval_exp ^t (BEnv (\x. NONE))``));
       val state_ = symb_state;
       val _ = if symb_is_BST_Halted state_ then () else
               raise ERR "conc_exec_program" "the final state is not halted, something is off";
@@ -58,8 +56,10 @@ struct
       val obs_exp = map (fn ob => let val (c,t,_) = (dest_bir_symb_obs)  ob in (c,t) end) (flatten obs_elem);
       val res = List.concat
                     (map (fn (cond,ob) =>
-                             if eval_exp cond = ``SOME ^btrue``
-                             then [eval_exp ob] else [])
+                             if eval_exp cond = ``SOME (BVal_Imm (Imm1 1w))``
+                             then let val t = (hd o snd o strip_comb ) ob
+                                  in [eval_exp t] end
+                             else [])
                                  obs_exp);
     in res end;
 
