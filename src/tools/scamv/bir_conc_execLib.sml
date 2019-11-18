@@ -6,6 +6,7 @@ struct
   open bir_symb_masterLib;
   open bir_symb_init_envLib;     
   open bir_embexp_driverLib;
+  open bslSyntax;
 
 
 
@@ -43,6 +44,10 @@ struct
 
   fun conc_exec_obs_extract symb_state =
     let
+        fun eval_exp t =
+(*            let val t = (hd o snd o strip_comb ) ob *)
+            (*in*) ((rhs o concl)(EVAL ``bir_eval_exp ^t (BEnv (\x. NONE))``));
+            (*end;*)
       val state_ = symb_state;
       val _ = if symb_is_BST_Halted state_ then () else
               raise ERR "conc_exec_program" "the final state is not halted, something is off";
@@ -50,8 +55,12 @@ struct
 
       val nonemp_obs = filter (fn ob => (not o List.null o snd o strip_comb) ob) [observation];
       val obs_elem = map (fn ob => (fst o dest_list) ob)nonemp_obs;
-      val obs_exp = map (fn ob => let val (_,t,_) = (dest_bir_symb_obs)  ob in t end) (flatten obs_elem);
-      val res = map (fn ob => let val t = (hd o snd o strip_comb ) ob in ((rhs o concl)(EVAL ``bir_eval_exp ^t (BEnv (\x. NONE))``))  end) obs_exp;
+      val obs_exp = map (fn ob => let val (c,t,_) = (dest_bir_symb_obs)  ob in (c,t) end) (flatten obs_elem);
+      val res = List.concat
+                    (map (fn (cond,ob) =>
+                             if eval_exp cond = ``SOME ^btrue``
+                             then [eval_exp ob] else [])
+                                 obs_exp);
     in res end;
 
   fun conc_exec_obs_compute prog s =
@@ -60,7 +69,7 @@ struct
       val state_ = conc_exec_program 200 prog envfo;
       val obs = conc_exec_obs_extract state_;
     in
-      obs
+      (List.map (fn ob => (print_term ob; print "\n")) obs; obs)
     end;
 
   fun conc_exec_obs_compare prog (s1, s2) =
