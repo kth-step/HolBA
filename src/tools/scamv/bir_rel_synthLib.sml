@@ -321,7 +321,7 @@ fun partition_domains (ps : path_struct) : int list * int list =
     in go ps
     end;
 
-val max_guard_tries = 100;
+val max_guard_tries = 10000;
 
 (* input: (bir_exp * (cobs list) option) list *)
 fun rel_synth_init initial_ps (env : enum_env) =
