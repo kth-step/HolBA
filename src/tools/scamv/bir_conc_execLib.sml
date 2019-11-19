@@ -1,12 +1,11 @@
 structure bir_conc_execLib : bir_conc_execLib =
 struct
 
-  open HolKernel pairLib listSyntax stringSyntax wordsSyntax;
+  open HolKernel pairLib listSyntax stringSyntax wordsSyntax optionSyntax;
   open bir_symb_execLib;
   open bir_symb_masterLib;
   open bir_symb_init_envLib;     
   open bir_embexp_driverLib;
-  open bslSyntax;
 
 
 
@@ -44,8 +43,24 @@ struct
 
   fun conc_exec_obs_extract symb_state =
     let
-        fun eval_exp t =
-            ((rhs o concl)(EVAL ``bir_eval_exp ^t (BEnv (\x. NONE))``));
+      fun eval_exp t = (rhs o concl o EVAL) t;
+      fun eval_exp_to_val t =
+        let
+          val res = eval_exp ``bir_eval_exp ^t (BEnv (\x. NONE))``;
+          val res_v = if is_some res then dest_some res else
+                  raise ERR "conc_exec_obs_extract::eval_exp_to_val" "could not evaluate down to a value";
+        in
+          res_v
+        end;
+      fun eval_explist_to_vallist t =
+        let
+          val (tl, tt) = dest_list t
+                         handle _ => raise ERR "conc_exec_obs_extract::eval_explist_to_vallist" "input is not a list";
+          val _ = if tt = ``:bir_exp_t`` then ()
+                  else raise ERR "conc_exec_obs_extract::eval_explist_to_vallist" "wrong list type";
+        in
+          mk_list (map eval_exp_to_val tl, ``:bir_val_t``)
+        end;
       val state_ = symb_state;
       val _ = if symb_is_BST_Halted state_ then () else
               raise ERR "conc_exec_program" "the final state is not halted, something is off";
@@ -53,11 +68,11 @@ struct
 
       val nonemp_obs = filter (fn ob => (not o List.null o snd o strip_comb) ob) [observation];
       val obs_elem = map (fn ob => (fst o dest_list) ob)nonemp_obs;
-      val obs_exp = map (fn ob => let val (c,t,_) = (dest_bir_symb_obs)  ob in (c,t) end) (flatten obs_elem);
+      val obs_exp = map (fn ob => let val (c,t,f) = (dest_bir_symb_obs)  ob in (c,t,f) end) (flatten obs_elem);
       val res = List.concat
-                    (map (fn (cond,ob) =>
-                             if eval_exp cond = ``SOME (BVal_Imm (Imm1 1w))``
-                             then let val t = (hd o snd o strip_comb ) ob
+                    (map (fn (cond,ob,f) =>
+                             if eval_exp_to_val cond = ``BVal_Imm (Imm1 1w)``
+                             then let val t = mk_comb (f, eval_explist_to_vallist ob)
                                   in [eval_exp t] end
                              else [])
                                  obs_exp);
@@ -68,8 +83,11 @@ struct
       val envfo = SOME (gen_symb_updates s);
       val state_ = conc_exec_program 200 prog envfo;
       val obs = conc_exec_obs_extract state_;
+
+      val _ = map print_term obs;
+      val _ = print "\n";
     in
-      (List.map (fn ob => (print_term ob; print "\n")) obs; obs)
+      obs
     end;
 
   fun conc_exec_obs_compare prog (s1, s2) =
