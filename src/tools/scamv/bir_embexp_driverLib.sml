@@ -131,6 +131,7 @@ struct
 
 (* embexp run identification *)
   val embexp_run_id_ref = ref (NONE:string option);
+  val embexp_run_timer_ref = ref (NONE:Time.time option);
   fun embexp_run_id () =
     case !embexp_run_id_ref of
         NONE =>
@@ -173,6 +174,7 @@ struct
             val _ = create_log holbarun_log holba_logfile;
             val _ = write_log_line (holbarun_log, "embexp_run_id", "no no no") ("Starting log for: " ^ holba_hash);
 
+            val _ = embexp_run_timer_ref := timer_start 1;
             val _ = embexp_run_id_ref := SOME holba_hash;
           in
             holba_hash
@@ -185,6 +187,20 @@ struct
       val _ = bir_embexp_log_raw message;
     in
       ()
+    end;
+
+  fun bir_embexp_finalize () =
+    let
+      val _ = embexp_run_id ();
+      val _ = timer_stop (fn d_time =>
+               bir_embexp_log_raw ("\n\n======================================\n" ^
+                                   "Experiment generation duration: " ^ d_time)
+              ) (!embexp_run_timer_ref);
+
+      val _ = embexp_run_id_ref := NONE;
+      val _ = embexp_run_timer_ref := NONE;
+    in
+      close_log holbarun_log
     end;
 
 

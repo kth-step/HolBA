@@ -259,6 +259,13 @@ val s = ""
         String.extract (String.substring (s, 0, last_c + 1), first_c, NONE)
     end;
 
+(* timers *)
+  fun timer_start level = if (1 >= level) then SOME (Time.now()) else NONE;
+  fun timer_stop f NONE = ()
+    | timer_stop f (SOME tm) = let
+       val d_time = Time.- (Time.now(), tm);
+       in f ((Time.toString d_time) ^ "s") end;
+
 end (* local *)
 
 end

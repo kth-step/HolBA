@@ -495,7 +495,8 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
               handle e => print (skipProgExText e));
              main_loop (n-1))
     in
-        main_loop m
+        (main_loop m
+         handle _ => ()); bir_embexp_finalize ()
     end;
 
 fun scamv_run_with_opts () =
