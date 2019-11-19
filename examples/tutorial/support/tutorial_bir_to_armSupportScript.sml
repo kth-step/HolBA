@@ -526,7 +526,6 @@ FULL_SIMP_TAC (std_ss++holBACore_ss++bir_wm_SS)
 
 val bir_get_ht_conseq_from_m_ante = prove(
   ``!bs p bpre bpost mpre ms ml mls.
-    (* TODO: Group antecedents by belonging to backlifting assumptions, machine HT and BIR ht *)
     bir_triple p (BL_Address (Imm64 ml))
       {BL_Address (Imm64 ml') | ml' IN mls} bpre bpost ==>
     bir_pre_arm8_to_bir mpre bpre ==>
