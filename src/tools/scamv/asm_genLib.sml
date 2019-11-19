@@ -86,7 +86,10 @@ val arb_branchcond =
 
 val arb_ld = Ld <$> two (arb_option (elements [4,8,16])) arb_armv8_regname;
 
-val arb_load = Load <$> (two arb_reg (oneof [arb_ld, arb_imm]));
+val arb_load_rel = Load <$> (two arb_reg arb_ld);
+val arb_load_abs = Load <$> (two arb_reg arb_imm);
+val arb_load = oneof [arb_load_rel, arb_load_abs];
+
 val arb_branch = Branch <$> (two arb_branchcond arb_imm);
 val arb_compare = Compare <$> (two arb_reg arb_reg);
 val arb_nop = return Nop;
@@ -162,6 +165,31 @@ val arb_program_previct3 =
                                  ,return [ld3]
                                  ]) in
           two arb_block_3ld arb_block_3ld
+        end
+      )));
+  in
+    arb_leftright >>= (fn (l,r) => arb_program_cond (return l) (return r))
+  end;
+
+val arb_program_previct4 =
+  let
+    val arb_pad = sized (fn n => choose (0, n)) >>=
+                  (fn n => resize n arb_program_noload_nobranch);
+
+    val arb_load_instr = arb_load_rel;
+
+    val arb_leftright =
+      arb_load_instr >>= (fn ld1 =>
+      arb_load_instr >>= (fn ld2 =>
+      arb_load_instr >>= (fn ld3 =>
+        let val arb_block_3ld =
+                        (List.foldr (op@) []) <$> (
+                        sequence [return [ld1]
+                                 ,arb_pad
+                                 ,return [ld2]
+                                 ,return [ld3]
+                                 ]) in
+          two (return [ld1, ld2, ld3]) arb_block_3ld
         end
       )));
   in

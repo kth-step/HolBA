@@ -31,6 +31,7 @@ sig
     val arb_program_previct1 : ArmInstruction list Gen;
     val arb_program_previct2 : ArmInstruction list Gen;
     val arb_program_previct3 : ArmInstruction list Gen;
+    val arb_program_previct4 : ArmInstruction list Gen;
 
     val prog_gen_a_la_qc : ArmInstruction list Gen -> int -> string list;
 end
