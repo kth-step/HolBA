@@ -179,6 +179,6 @@ fun prog_gen_a_la_qc gen n =
         pp_program p
     end
 
-val _ = map (fn x => (print x; print "\n")) (prog_gen_a_la_qc arb_program_previct3 5);
+
 
 end
