@@ -144,6 +144,29 @@ val arb_program_previct2 =
   in
     arb_program_cond arb_block_3ld arb_block_3ld
   end;
+
+val arb_program_previct3 =
+  let
+    val arb_pad = sized (fn n => choose (0, n)) >>=
+                  (fn n => resize n arb_program_noload_nobranch);
+
+    val arb_leftright =
+      arb_load >>= (fn ld1 =>
+      arb_load >>= (fn ld2 =>
+      arb_load >>= (fn ld3 =>
+        let val arb_block_3ld =
+                        (List.foldr (op@) []) <$> (
+                        sequence [return [ld1]
+                                 ,arb_pad
+                                 ,return [ld2]
+                                 ,return [ld3]
+                                 ]) in
+          two arb_block_3ld arb_block_3ld
+        end
+      )));
+  in
+    arb_leftright >>= (fn (l,r) => arb_program_cond (return l) (return r))
+  end;
 end
 
 
@@ -156,6 +179,6 @@ fun prog_gen_a_la_qc gen n =
         pp_program p
     end
 
-
+val _ = map (fn x => (print x; print "\n")) (prog_gen_a_la_qc arb_program_previct3 5);
 
 end
