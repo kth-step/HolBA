@@ -20,11 +20,8 @@ val _ = new_theory "tutorial_composition";
    1. Use bir_never_assumviol_block_n_ht_from_to_labels_ht to
       translate AV HT to non-AV HT (already done in tutorial_wpSupportLib.sml) - OK
    2. Use bir_label_ht_impl_weak_ht to translate HT to weak HT - OK
-  (3. Use ??? to translate weak HT to weak map HT.)
-   4. Use the theorems in bin_hoare_logicTheory or bin_simp_hoare_logicTheory to compose:
-      weak_invariant_rule_thm and weak_seq_rule_thm, 
-      alternatively weak_map_std_seq_comp and weak_map_loop_comp_thm which
-      is still TODO
+   3. Use the theorems in bir_wm_instTheory to compose:
+      bir_invariant_rule_thm and bir_seq_rule_thm
 
 *)
 

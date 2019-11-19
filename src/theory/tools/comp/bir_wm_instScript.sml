@@ -11,11 +11,16 @@ open bir_program_terminationTheory;
 open bir_program_env_orderTheory;
 open bir_exp_equivTheory;
 open bir_bool_expTheory;
+open bir_typing_expTheory;
+open bir_valuesTheory;
+open bir_immTheory;
 
 open bir_htTheory;
 
 open bin_hoare_logicSimps;
 open HolBACoreSimps;
+
+open bir_immSyntax;
 
 val _ = new_theory "bir_wm_inst";
 
@@ -581,14 +586,142 @@ val bir_loop_contract_def = Define `
     )
 `;
 
+
+(* TODO: Very ugly little critter... *)
+val iv2i_def = Define `
+    iv2i (BVal_Imm i) = i
+`;
+
+
+(* Needed for bir_lessthan_equiv. *)
+val bir_imm_word_lo_def = Define `
+  (bir_imm_word_lo (SOME (BVal_Imm (Imm1 w1)))  (SOME (BVal_Imm (Imm1 w2))) = w1 <+ w2) /\
+  (bir_imm_word_lo (SOME (BVal_Imm (Imm8 w1)))  (SOME (BVal_Imm (Imm8 w2))) = w1 <+ w2) /\
+  (bir_imm_word_lo (SOME (BVal_Imm (Imm16 w1))) (SOME (BVal_Imm (Imm16 w2))) = w1 <+ w2) /\
+  (bir_imm_word_lo (SOME (BVal_Imm (Imm32 w1))) (SOME (BVal_Imm (Imm32 w2))) = w1 <+ w2) /\
+  (bir_imm_word_lo (SOME (BVal_Imm (Imm64 w1))) (SOME (BVal_Imm (Imm64 w2))) = w1 <+ w2) /\
+  (bir_imm_word_lo (SOME (BVal_Imm (Imm128 w1))) (SOME (BVal_Imm (Imm128 w2))) = w1 <+ w2)
+`;
+
+(* TODO: Could use something already existing? *)
+val bir_eval_imm = store_thm("bir_eval_imm",
+  ``!env exp.
+    bir_env_vars_are_initialised env (bir_vars_of_exp exp) ==>
+    bir_is_imm_exp exp ==>
+    (?imm. bir_eval_exp exp env = SOME (BVal_Imm imm))``,
+
+METIS_TAC [bir_is_imm_exp_def, type_of_bir_exp_THM_with_init_vars,
+           type_of_bir_val_EQ_ELIMS]
+);
+
+(* TODO: Is there already something like this? *)
+fun bir_imm_of_size n =
+  if (n = 1)
+  then Imm1_tm
+  else if (n = 8)
+  then Imm8_tm
+  else if (n = 16)
+  then Imm16_tm
+  else if (n = 32)
+  then Imm32_tm
+  else if (n = 64)
+  then Imm64_tm
+  else if (n = 128)
+  then Imm128_tm
+  else raise (ERR "bir_imm_of_size"
+                  ("The number of bits "^(Int.toString n)^
+                   " does not correspond with any binary word"^
+                   " length in supported BIR syntax."))
+;
+
+
+val bir_eval_imm_types = save_thm("bir_eval_imm_types",
+let
+  fun prove_eval_imm_types_thms []     = []
+    | prove_eval_imm_types_thms (h::t) =
+      let
+        val immtype = bir_immtype_t_of_size h
+        val imm = bir_imm_of_size h
+      in
+        ((prove(``!env exp.
+                  (bir_env_vars_are_initialised env (bir_vars_of_exp exp)) ==>
+                  (type_of_bir_exp exp = SOME (BType_Imm ^immtype)) ==>
+                  (?w. bir_eval_exp exp env = SOME (BVal_Imm (^imm w)))
+               ``,
+            REPEAT STRIP_TAC >>
+            IMP_RES_TAC (SIMP_RULE (bool_ss++holBACore_ss) [bir_is_imm_exp_def] bir_eval_imm) >>
+            Cases_on `imm` >> (
+              IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+              FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_val_EQ_ELIMS, type_of_bir_imm_def] >>
+              RW_TAC (std_ss++holBACore_ss) [] >>
+              REV_FULL_SIMP_TAC (std_ss++holBACore_ss) []
+            )
+         ))::(prove_eval_imm_types_thms t)
+        )
+      end
+
+in
+  LIST_CONJ (prove_eval_imm_types_thms known_imm_sizes)
+end
+);
+
+
+(* Equivalence of BIR less-than with HOL less-than. *)
+val bir_lessthan_equiv = store_thm("bir_lessthan_equiv",
+  ``!exp1 exp2 env it.
+    bir_env_vars_are_initialised env (bir_vars_of_exp exp1) ==>
+    bir_env_vars_are_initialised env (bir_vars_of_exp exp2) ==>
+    (type_of_bir_exp exp1 = SOME (BType_Imm it)) ==>
+    (type_of_bir_exp exp2 = SOME (BType_Imm it)) ==>
+    ((bir_eval_exp
+       (BExp_BinPred BIExp_LessThan exp1 exp2) env = SOME bir_val_true
+    ) <=> (bir_imm_word_lo (bir_eval_exp exp1 env) (bir_eval_exp exp2 env)))``,
+
+REPEAT STRIP_TAC >> (Cases_on `it`) >| [
+  IMP_RES_TAC (el 1 (CONJUNCTS bir_eval_imm_types)) >>
+  FULL_SIMP_TAC bool_ss [bir_imm_word_lo_def],
+
+  IMP_RES_TAC (el 2 (CONJUNCTS bir_eval_imm_types)) >>
+  FULL_SIMP_TAC bool_ss [bir_imm_word_lo_def],
+
+  IMP_RES_TAC (el 3 (CONJUNCTS bir_eval_imm_types)) >>
+  FULL_SIMP_TAC bool_ss [bir_imm_word_lo_def],
+
+  IMP_RES_TAC (el 4 (CONJUNCTS bir_eval_imm_types)) >>
+  FULL_SIMP_TAC bool_ss [bir_imm_word_lo_def],
+
+  IMP_RES_TAC (el 5 (CONJUNCTS bir_eval_imm_types)) >>
+  FULL_SIMP_TAC bool_ss [bir_imm_word_lo_def],
+
+  IMP_RES_TAC (el 6 (CONJUNCTS bir_eval_imm_types)) >>
+  FULL_SIMP_TAC bool_ss [bir_imm_word_lo_def]
+] >> (
+  FULL_SIMP_TAC (bool_ss++holBACore_ss) [bir_val_true_def,
+                                         bool2b_def,
+                                         bool2w_def] >>
+  Cases_on `w' <+ w` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [word1_distinct]
+  )
+)
+);
+
+val bir_eval_imm_dim = prove(``!ex env w.
+bir_eval_exp ex env =
+              SOME (BVal_Imm (Imm64 w))
+
+
 (* This theorem obtains a weak_loop_contract for obtaining the consequent of
  * bir_invariant_rule_thm *)
 val bir_weak_triple_loop = store_thm("bir_weak_triple_loop",
-  ``!prog l le invariant variant C1 post x.
-    (* TODO: Antecedents for variant? *)
+  ``!prog l le invariant variant C1 post.
+    (* TODO: Which of these first five are needed? *)
+    (type_of_bir_exp variant = SOME (BType_Imm Bit64)) ==>
+    (bir_vars_of_exp variant) SUBSET (bir_vars_of_program prog) ==>
+    bir_is_bool_exp C1 ==>
+    (bir_vars_of_exp C1) SUBSET (bir_vars_of_program prog) ==>
     (l NOTIN le) ==>
-    weak_triple (bir_etl_wm prog) l le
-      (\s. bir_exec_to_labels_triple_precond st
+    (!x. weak_triple (bir_etl_wm prog) l ({l} UNION le)
+      (\st. bir_exec_to_labels_triple_precond st
              (BExp_BinExp BIExp_And invariant
                (BExp_BinExp BIExp_And
                  C1
@@ -597,29 +730,94 @@ val bir_weak_triple_loop = store_thm("bir_weak_triple_loop",
              )
              prog
       )
-      (\st'. bir_exec_to_labels_triple_postcond st' post prog) ==>
-
+      (* TODO: "post" must be more specific here... *)
+      (\st'. bir_exec_to_labels_triple_postcond st' 
+               (\l'.
+		  if l' = l then
+		    BExp_BinExp BIExp_And invariant
+		      (BExp_BinExp BIExp_And
+			 (BExp_BinPred BIExp_LessThan variant
+			    (BExp_Const (Imm64 (n2w x))))
+			 (BExp_BinPred BIExp_LessOrEqual
+			    (BExp_Const (Imm64 0w)) variant))
+		  else bir_exp_false
+               ) prog
+      )
+    ) ==>
     weak_loop_contract (bir_etl_wm prog) l le
       (\st. bir_exec_to_labels_triple_precond st invariant prog)
       (\st. bir_eval_exp C1 st.bst_environ = SOME bir_val_true)
-      (* TODO: Last argument is supposed to be a map from bir_state to num
-
-           (\s. b2n ((???)  (THE (bir_eval_exp variant s.bst_environ))))
-
-         How can we do this with a function to num, and not to option num?
-       *)
-      some_function_computing_the_variant_as_a_num_using_the_state
+      (\st. b2n (iv2i (THE (bir_eval_exp variant st.bst_environ))))
 ``,
 
-FULL_SIMP_TAC std_ss [weak_triple_def, weak_loop_contract_def] >>
+FULL_SIMP_TAC std_ss [weak_loop_contract_def] >>
 REPEAT STRIP_TAC >>
-QSPECL_X_ASSUM ``!s. _`` [`s`] >>
+FULL_SIMP_TAC std_ss [weak_triple_def] >>
+REPEAT STRIP_TAC >>
+QSPECL_X_ASSUM ``!x st. _`` [`x`, `st`] >>
 REV_FULL_SIMP_TAC std_ss [GSYM bir_and_equiv, bir_exec_to_labels_triple_precond_def,
                           bir_exec_to_labels_triple_postcond_def, bir_is_bool_exp_env_REWRS] >>
-Q.EXISTS_TAC `s'` >>
-FULL_SIMP_TAC std_ss [] >>
-(* ??? *)
-cheat
+IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET >>
+FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY, bir_vars_of_exp_def] >>
+IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+Q.SUBGOAL_THEN `va = (BVal_Imm (Imm64 (n2w x)))` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+  FULL_SIMP_TAC std_ss [] >>
+  Cases_on `va` >| [
+    Cases_on `b` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [iv2i_def, bir_immTheory.b2n_def] >>
+    RW_TAC std_ss [wordsTheory.n2w_w2n],
+
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ]
+) >>
+(* Q.PAT_X_ASSUM  `b2n (iv2i (BVal_Imm (Imm64 (n2w x)))) = x` (fn thm => ALL_TAC) >> *)
+subgoal `bir_eval_exp
+           (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 (n2w x))))
+           st.bst_environ =
+             SOME bir_val_true` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def]
+) >>
+subgoal `bir_is_bool_exp_env st.bst_environ C1` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_env_def]
+) >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+Q.SUBGOAL_THEN `BVal_Imm (bool2b T) = bir_val_true` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def]
+) >>
+Q.EXISTS_TAC `st'` >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+Cases_on `st'.bst_pc.bpc_label <> l` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_exp_TF, bir_val_false_def,
+                                        bir_val_true_def, word1_distinct]
+) >>
+FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def, bir_weak_trs_EQ, GSYM bir_and_equiv] >>
+subgoal `bir_is_bool_exp_env st'.bst_environ invariant` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_env_REWRS]
+) >>
+(* TODO: Should hold... *)
+subgoal `b2n (iv2i (THE (bir_eval_exp variant st'.bst_environ))) < x` >- (
+  Q.SUBGOAL_THEN `(bir_eval_exp
+                    (BExp_BinPred BIExp_LessThan variant (BExp_Const (Imm64 (n2w x))))
+                       st'.bst_environ =
+                    SOME bir_val_true) <=>
+                   bir_imm_word_lo (bir_eval_exp variant st'.bst_environ)
+                     (bir_eval_exp (BExp_Const (Imm64 (n2w x))) st'.bst_environ)`
+    (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+    (* Use bir_lessthan_equiv *)
+    cheat
+  ) >>
+  (* TODO: Type kept, variables can't be uninitialised *)
+  subgoal `?x'. bir_eval_exp variant st'.bst_environ =
+                  SOME (BVal_Imm (Imm64 x'))` >- (
+    cheat
+  ) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_imm_word_lo_def, wordsTheory.WORD_LO,
+                                        wordsTheory.w2n_n2w, iv2i_def] >>
+  FULL_SIMP_TAC arith_ss []
+) >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
 
@@ -656,6 +854,7 @@ FULL_SIMP_TAC std_ss []
 val bir_invariant_rule_thm = store_thm("bir_invariant_rule_thm",
   ``!prog l le invariant C1 var post.
     (* Compute in place using proof procedures: *)
+    (* TODO: These needed? *)
     bir_is_bool_exp C1 ==>
     (bir_vars_of_exp C1) SUBSET (bir_vars_of_program prog) ==>
     (* Obtain bir_loop contract through some rule: *)
