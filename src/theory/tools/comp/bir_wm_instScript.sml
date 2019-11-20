@@ -705,15 +705,11 @@ REPEAT STRIP_TAC >> (Cases_on `it`) >| [
 )
 );
 
-val bir_eval_imm_dim = prove(``!ex env w.
-bir_eval_exp ex env =
-              SOME (BVal_Imm (Imm64 w))
-
-
+(* TODO: Rewrite this proof to a nicer format... *)
 (* This theorem obtains a weak_loop_contract for obtaining the consequent of
  * bir_invariant_rule_thm *)
 val bir_weak_triple_loop = store_thm("bir_weak_triple_loop",
-  ``!prog l le invariant variant C1 post.
+  ``!prog l le invariant variant C1.
     (* TODO: Which of these first five are needed? *)
     (type_of_bir_exp variant = SOME (BType_Imm Bit64)) ==>
     (bir_vars_of_exp variant) SUBSET (bir_vars_of_program prog) ==>
@@ -730,7 +726,6 @@ val bir_weak_triple_loop = store_thm("bir_weak_triple_loop",
              )
              prog
       )
-      (* TODO: "post" must be more specific here... *)
       (\st'. bir_exec_to_labels_triple_postcond st' 
                (\l'.
 		  if l' = l then
@@ -772,7 +767,6 @@ Q.SUBGOAL_THEN `va = (BVal_Imm (Imm64 (n2w x)))` (fn thm => FULL_SIMP_TAC std_ss
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
   ]
 ) >>
-(* Q.PAT_X_ASSUM  `b2n (iv2i (BVal_Imm (Imm64 (n2w x)))) = x` (fn thm => ALL_TAC) >> *)
 subgoal `bir_eval_exp
            (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 (n2w x))))
            st.bst_environ =
@@ -796,8 +790,21 @@ FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def, bir_weak_trs_EQ, GSYM bir_and
 subgoal `bir_is_bool_exp_env st'.bst_environ invariant` >- (
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_env_REWRS]
 ) >>
-(* TODO: Should hold... *)
 subgoal `b2n (iv2i (THE (bir_eval_exp variant st'.bst_environ))) < x` >- (
+  subgoal `?x'. bir_eval_exp variant st'.bst_environ =
+                  SOME (BVal_Imm (Imm64 x'))` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_env_REWRS] >>
+    IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+    Cases_on `va''''` >| [
+      Cases_on `b` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) []
+      ) >>
+      Q.EXISTS_TAC `c` >>
+      FULL_SIMP_TAC std_ss [],
+
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ]
+  ) >>
   Q.SUBGOAL_THEN `(bir_eval_exp
                     (BExp_BinPred BIExp_LessThan variant (BExp_Const (Imm64 (n2w x))))
                        st'.bst_environ =
@@ -805,19 +812,13 @@ subgoal `b2n (iv2i (THE (bir_eval_exp variant st'.bst_environ))) < x` >- (
                    bir_imm_word_lo (bir_eval_exp variant st'.bst_environ)
                      (bir_eval_exp (BExp_Const (Imm64 (n2w x))) st'.bst_environ)`
     (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
-    (* Use bir_lessthan_equiv *)
-    cheat
-  ) >>
-  (* TODO: Type kept, variables can't be uninitialised *)
-  subgoal `?x'. bir_eval_exp variant st'.bst_environ =
-                  SOME (BVal_Imm (Imm64 x'))` >- (
-    cheat
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_lessthan_equiv, bir_imm_word_lo_def, bir_val_true_def]
   ) >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_imm_word_lo_def, wordsTheory.WORD_LO,
                                         wordsTheory.w2n_n2w, iv2i_def] >>
   FULL_SIMP_TAC arith_ss []
 ) >>
-FULL_SIMP_TAC (std_ss++holBACore_ss) []
+FULL_SIMP_TAC std_ss []
 );
 
 
@@ -855,6 +856,8 @@ val bir_invariant_rule_thm = store_thm("bir_invariant_rule_thm",
   ``!prog l le invariant C1 var post.
     (* Compute in place using proof procedures: *)
     (* TODO: These needed? *)
+    (type_of_bir_exp var = SOME (BType_Imm Bit64)) ==>
+    bir_vars_of_exp var SUBSET bir_vars_of_program prog ==>
     bir_is_bool_exp C1 ==>
     (bir_vars_of_exp C1) SUBSET (bir_vars_of_program prog) ==>
     (* Obtain bir_loop contract through some rule: *)
@@ -876,10 +879,12 @@ ASSUME_TAC bir_model_is_weak >>
 QSPECL_X_ASSUM ``!prog. _`` [`prog`] >>
 (* 1. Somehow obtain the (correct) weak_loop_contract from bir_loop_contract *)
 subgoal `weak_loop_contract (bir_etl_wm prog) l le
-           (\s. bir_exec_to_labels_triple_precond s invariant prog)
-           (\s. bir_eval_exp C1 s.bst_environ = SOME bir_val_true) some_var` >- (
-  (* TODO: Use bir_weak_triple_loop here *)
-  cheat
+           (\st. bir_exec_to_labels_triple_precond st invariant prog)
+           (\st. bir_eval_exp C1 st.bst_environ = SOME bir_val_true)
+           (\st. b2n (iv2i (THE (bir_eval_exp var st.bst_environ))))` >- (
+  IMP_RES_TAC bir_weak_triple_loop >>
+  QSPECL_X_ASSUM ``!invariant. _`` [`invariant`] >>
+  REV_FULL_SIMP_TAC std_ss []
 ) >>
 (* Delete used-up assumptions *)
 Q.PAT_X_ASSUM `!x. _` (fn thm => ALL_TAC) >>
