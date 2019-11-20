@@ -195,6 +195,31 @@ val arb_program_previct4 =
   in
     arb_leftright >>= (fn (l,r) => arb_program_cond (return l) (return r))
   end;
+
+val arb_program_previct5 =
+  let
+    val arb_pad = sized (fn n => choose (0, n)) >>=
+                  (fn n => resize n (arb_list_of arb_nop));
+
+    val arb_load_instr = arb_load_rel;
+
+    val arb_leftright =
+      arb_load_instr >>= (fn ld1 =>
+      arb_load_instr >>= (fn ld2 =>
+      arb_load_instr >>= (fn ld3 =>
+        let val arb_block_3ld =
+                        (List.foldr (op@) []) <$> (
+                        sequence [return [ld1]
+                                 ,arb_pad
+                                 ,return [ld2]
+                                 ,return [ld3]
+                                 ]) in
+          two (return [ld1, ld2, ld3]) arb_block_3ld
+        end
+      )));
+  in
+    arb_leftright >>= (fn (l,r) => arb_program_cond (return l) (return r))
+  end;
 end
 
 

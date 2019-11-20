@@ -148,6 +148,7 @@ fun pgen_qc_param param =
    | "previct2" => prog_gen_a_la_qc arb_program_previct2
    | "previct3" => prog_gen_a_la_qc arb_program_previct3
    | "previct4" => prog_gen_a_la_qc arb_program_previct4
+   | "previct5" => prog_gen_a_la_qc arb_program_previct5
    | _          => raise ERR "prog_gen_store_a_la_qc" "unknown qc generator";
 
 fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^param) true  (pgen_qc_param param)       sz;
