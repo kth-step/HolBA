@@ -109,13 +109,14 @@ fun arb_program_cond arb_prog_left arb_prog_right =
   let
     fun rel_jmp_after bl = Imm (((length bl) + 1) * 4);
 
-    val arb_right_block = arb_prog_right >>=
-                          (fn blockr => return ((Branch (NONE, rel_jmp_after blockr))::blockr));
-    val arb_prog      = arb_prog_left   >>= (fn blockl =>
-                        arb_right_block >>= (fn blockr =>
-                        arb_compare     >>= (fn cmp    =>
-                           return ([cmp, Branch (SOME EQ, rel_jmp_after (blockl@blockr))]@
-                                   blockl@blockr)
+    val arb_prog      = arb_prog_left  >>= (fn blockl =>
+                        arb_prog_right >>= (fn blockr =>
+                        arb_compare    >>= (fn cmp    =>
+                           let val blockl_wexit = blockl@[Branch (NONE, rel_jmp_after blockr)] in
+                             return ([cmp, Branch (SOME EQ, rel_jmp_after blockl_wexit)]
+                                    @blockl_wexit
+                                    @blockr)
+                           end
                         )));
   in
     arb_prog
