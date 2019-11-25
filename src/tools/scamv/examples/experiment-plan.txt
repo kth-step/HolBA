@@ -1,0 +1,33 @@
+
+quickcheck - finds replacement policy, and hopefully previction with only little guidance
+=====================
+00_qc_xld
+01_qc_previct1
+02_qc_previct2
+03_qc_previct3
+04_qc_previct4
+05_qc_previct5
+
+
+random gen - finds model problems (probably nothing else)
+=====================
+10_rand_plain
+11_rand_wo_ldzr
+12_rand_wo_cbnz
+13_rand_wo_both
+
+(14_rand_wo_both_long: run it for longer and see what happens)
+(15_rand_wo_both_cpart: try on cache partitioning)
+
+
+prefetch gen (use prefetch generator with enumeration and model and hw obs correctly paired)
+=====================
+20_prefetch_enum_cpart
+21_prefetch_enum_cpart_aligned
+
+
+rand gen for mismatched model
+=====================
+30_rand_wo_both_indexonly
+31_qc_xld_len4_indexonly
+
