@@ -1,30 +1,41 @@
 
 quickcheck - finds replacement policy, and hopefully previction with only little guidance
 =====================
-00_qc_xld      - len 5 - ok with a little older run, replacement policy counterexamples (and more?)
+>>>>>>> 00_qc_xld      - len 5 - ok with a little older run, replacement policy counterexamples (and more?)
 ----- driver-test --max_iter 1000 --prog_size 5 --max_tests 20 --generator qc --generator_param xld --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
-01_qc_previct1 - not run
+n_examples     = 10535
+n_cexamples    = 5
+
+>>>>>>> 01_qc_previct1 - not run
 ----- driver-test --max_iter 1000 --prog_size 5 --max_tests 20 --generator qc --generator_param previct1 --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
-02_qc_previct2 - nothing
+
+>>>>>>> 02_qc_previct2 - nothing
 ----- 
-03_qc_previct3 - nothing
+
+>>>>>>> 03_qc_previct3 - nothing
 ----- 
-04_qc_previct4 - nothing...
+
+>>>>>>> 04_qc_previct4 - nothing...
 ----- driver-test --max_iter 1000 --prog_size 20 --max_tests 20 --generator qc --generator_param previct4 --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
 -_1-- driver-test --max_iter 100 --prog_size 20 --max_tests 200 --generator qc --generator_param previct4 --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
-05_qc_previct5 - nothing???, TODO: why nothing
+n_examples     = 17800
+
+>>>>>>> 05_qc_previct5 - nothing???, TODO: why nothing
 ----- 
 
 
 random gen - finds model problems (probably nothing else)
 =====================
-10_rand_plain   - TODO: run (& go through somehow, how?)
+>>>>>>> 10_rand_plain   - TODO: run (& go through somehow, how?)
 ----- driver-test --max_iter 1000 --prog_size 5 --max_tests 20 --generator rand --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
-11_rand_wo_ldzr - TODO: run
+
+>>>>>>> 11_rand_wo_ldzr - TODO: run
 ----- driver-test --max_iter 1000 --prog_size 5 --max_tests 20 --generator rand --generator_param wout_ldzr --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
-12_rand_wo_cbnz - TODO: run
+
+>>>>>>> 12_rand_wo_cbnz - TODO: run
 ----- driver-test --max_iter 1000 --prog_size 5 --max_tests 20 --generator rand --generator_param wout_cbnz --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
-13_rand_wo_both - TODO: run
+
+>>>>>>> 13_rand_wo_both - TODO: run
 ----- driver-test --max_iter 1000 --prog_size 5 --max_tests 20 --generator rand --generator_param wout_ldzr_cbnz --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
 
 (14_rand_wo_both_long: run it for longer and see what happens)
@@ -33,16 +44,26 @@ random gen - finds model problems (probably nothing else)
 
 prefetch gen (use prefetch generator with enumeration and model and hw obs correctly paired)
 =====================
-20_prefetch_enum_cpart         - ok, prefetcher counterexamples
+>>>>>>> 20_prefetch_enum_cpart         - ok, prefetcher counterexamples
 ----- driver-test --max_iter 100 --prog_size 5 --max_tests 200 --enumerate --generator prefetch_strides --obs_model cache_tag_index_part --hw_obs_model hw_cache_tag_index_part
-21_prefetch_enum_cpart_aligned - a lot more inconclusive!!
+n_inconclusive = 772
+n_examples     = 15914
+n_cexamples    = 1550
+
+>>>>>>> 21_prefetch_enum_cpart_aligned - a lot more inconclusive!!
 ----- driver-test --max_iter 100 --prog_size 5 --max_tests 200 --enumerate --generator prefetch_strides --obs_model cache_tag_index_part_page --hw_obs_model hw_cache_tag_index_part_page
+n_inconclusive = 2941
+n_examples     = 16099
 
 
 rand gen for mismatched model
 =====================
-30_rand_wo_both_indexonly - nothing. why? .... error in command line
+>>>>>>> 30_rand_wo_both_indexonly - nothing. why? .... error in command line
 ----- driver-test --max_iter 1000 --prog_size 5 --max_tests 20 --generator rand --generator_param wout_ldzr_cbnz --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
-31_qc_xld_len4_indexonly  - counterexamples, should be good, how go through?
+n_examples     = 4160
+
+>>>>>>> 31_qc_xld_len4_indexonly  - counterexamples, should be good, how go through?
 ----- driver-test --max_iter 1000 --prog_size 4 --max_tests 20 --generator qc --generator_param xld --obs_model cache_index_only --hw_obs_model hw_cache_tag_index
+n_examples     = 1786
+n_cexamples    = 3854
 
