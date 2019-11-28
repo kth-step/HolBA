@@ -20,8 +20,8 @@ n_cexamples    = 5
 -_1-- driver-test --max_iter 100 --prog_size 20 --max_tests 200 --generator qc --generator_param previct4 --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
 n_examples     = 17800
 
->>>>>>> 05_qc_previct5_fix - ??
------ 
+>>>>>>> 05_qc_previct5_fix - little amount of counterexamples
+----- driver-test --max_iter 1000 --prog_size 20 --max_tests 20 --generator qc --generator_param previct5 --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
 
 
 random gen - finds model problems (probably nothing else)
@@ -59,11 +59,11 @@ n_examples     = 16099
 rand gen for mismatched model
 =====================
 >>>>>>> 30_rand_wo_both_indexonly - nothing. why? .... error in command line
------ driver-test --max_iter 1000 --prog_size 5 --max_tests 20 --generator rand --generator_param wout_ldzr_cbnz --obs_model cache_index_only --hw_obs_model hw_cache_tag_index
+----- driver-test --max_iter 1000 --prog_size 5 --max_tests 20 --generator rand --generator_param wout_ldzr_cbnz --obs_model cache_index_only --hw_obs_model hw_cache_index_numvalid
 n_examples     = 4160
 
 >>>>>>> 31_qc_xld_len4_indexonly  - counterexamples, should be good, how go through?
------ driver-test --max_iter 1000 --prog_size 4 --max_tests 20 --generator qc --generator_param xld --obs_model cache_index_only --hw_obs_model hw_cache_tag_index
+----- driver-test --max_iter 1000 --prog_size 4 --max_tests 20 --generator qc --generator_param xld --obs_model cache_index_only --hw_obs_model hw_cache_index_numvalid
 n_examples     = 1786
 n_cexamples    = 3854
 
