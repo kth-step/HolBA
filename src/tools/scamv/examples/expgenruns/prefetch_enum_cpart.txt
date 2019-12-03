@@ -1,0 +1,7 @@
+driver-test --max_iter 100 --prog_size 5 --max_tests 200 --enumerate --generator prefetch_strides --obs_model cache_tag_index_part --hw_obs_model hw_cache_tag_index_part
+
+>>>>>>> 20_prefetch_enum_cpart         - ok, prefetcher counterexamples
+----- 
+n_inconclusive = 772
+n_examples     = 15914
+n_cexamples    = 1550
