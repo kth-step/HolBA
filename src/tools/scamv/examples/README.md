@@ -33,6 +33,8 @@ Execute the following commands in order and in different shells and let them run
 
 See status of the run with `./scripts/4-status.sh`.
 
+Update HolBA and EmbExp-Box with `./scripts/5-update.sh `.
+
 
 ## Finish
 After completing an experiment generation or run, don't forget to commit and push in `${HOLBA_DIR}/logs/EmbExp-Logs`.
