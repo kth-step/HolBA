@@ -22,19 +22,16 @@ Setup the box connection configuration file `${HOLBA_OPT_DIR}/embexp/EmbExp-Box/
 
 
 ## Running
-Run experiment generation and experiments themselves. The configuration and notes are in text files in `${HOLBA_DIR}/src/tools/scamv/examples/expgenruns`. The first line is the scamv command line and the following lines are unstructured notes. The following script blocks have to be executed in different shells.
-```
-cd "${HOLBA_DIR}/src/tools/scamv/examples"
-./scripts/1-connect.sh rpi3
-```
-```
-cd "${HOLBA_DIR}/src/tools/scamv/examples"
-./scripts/2-gen.sh cav_2019-12-03 qc_previct5
-```
-```
-cd "${HOLBA_DIR}/src/tools/scamv/examples"
-./scripts/3-run.sh arm8/exps2
-```
+Run experiment generation and experiments themselves. Now we are operating in the directory `${HOLBA_DIR}/src/tools/scamv/examples`.
+
+The configuration and notes are in text files in `expgenruns`. The first line is the scamv command line and the following lines are unstructured notes.
+
+Execute the following commands in order and in different shells and let them run in parallel to each other.
+1. `./scripts/1-gen.sh cav_2019-12-03 qc_previct5`
+1. `./scripts/2-connect.sh rpi3`
+1. `./scripts/3-run.sh arm8/exps2`
+
+See status of the run with `./scripts/4-status.sh`.
 
 
 ## Finish
