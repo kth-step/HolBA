@@ -1,4 +1,4 @@
-driver-test --max_iter 1000 --prog_size 5 --max_tests 20 --generator rand --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
+driver-test --max_iter 5000 --prog_size 5 --max_tests 20 --generator rand --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
 
 >>>>>>> 10_rand_plain
-
+n_exps  = 4460

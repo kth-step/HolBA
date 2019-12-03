@@ -1,5 +1,5 @@
-driver-test --max_iter 1000 --prog_size 5 --max_tests 20 --generator rand --generator_param wout_ldzr_cbnz --obs_model cache_index_only --hw_obs_model hw_cache_index_numvalid
+driver-test --max_iter 5000 --prog_size 5 --max_tests 20 --generator rand --generator_param wout_ldzr_cbnz --obs_model cache_index_only --hw_obs_model hw_cache_index_numvalid
 
 >>>>>>> 30_rand_wo_both_indexonly - nothing. why? .... error in command line
 ----- 
-n_examples     = 4160
+
