@@ -27,7 +27,7 @@ Run experiment generation and experiments themselves. Now we are operating in th
 The configuration and notes are in text files in `expgenruns`. The first line is the scamv command line and the following lines are unstructured notes.
 
 Execute the following commands in order and in different shells and let them run in parallel to each other.
-1. `./scripts/1-gen.sh cav_2019-12-03 qc_previct5`
+1. `./scripts/1-gen.sh cav_19-12-03 qc_previct5`
 1. `./scripts/2-connect.sh rpi3`
 1. `./scripts/3-run.sh arm8/exps2`
 
