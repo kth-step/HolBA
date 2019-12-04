@@ -5,7 +5,7 @@ sig
                       | prefetch_strides
                       | qc
                       | slice
-                      | from_file of string
+                      | from_file
 
     datatype obs_model = cache_tag_index
                        | cache_tag_only
@@ -14,6 +14,7 @@ sig
                        | cache_tag_index_part_page
 
     datatype hw_obs_model = hw_cache_tag_index
+                          | hw_cache_index_numvalid
                           | hw_cache_tag_index_part
                           | hw_cache_tag_index_part_page
 

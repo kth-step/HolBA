@@ -11,7 +11,7 @@ datatype gen_type = gen_rand
                   | prefetch_strides
                   | qc
                   | slice
-                  | from_file of string
+                  | from_file
 
 datatype obs_model = cache_tag_index
                    | cache_tag_only
@@ -20,13 +20,16 @@ datatype obs_model = cache_tag_index
                    | cache_tag_index_part_page
 
 datatype hw_obs_model = hw_cache_tag_index
+                      | hw_cache_index_numvalid
                       | hw_cache_tag_index_part
                       | hw_cache_tag_index_part_page
 
 type scamv_config = { max_iter  : int,
                       prog_size : int,
                       max_tests : int,
+                      enumerate : bool,
                       generator : gen_type,
+                      generator_param : string option,
                       obs_model : obs_model,
                       hw_obs_model : hw_obs_model,
                       only_gen  : bool,
@@ -37,7 +40,9 @@ type scamv_config = { max_iter  : int,
 val default_cfg = { max_iter  = 10
                   , prog_size = 5
                   , max_tests = 4
+                  , enumerate = false
                   , generator = gen_rand
+                  , generator_param = NONE
                   , obs_model = cache_tag_index
                   , hw_obs_model = hw_cache_tag_index
                   , only_gen  = true
@@ -51,7 +56,7 @@ fun gen_type_fromString gt =
       | "prefetch_strides" => SOME prefetch_strides
       | "qc"               => SOME qc
       | "slice"            => SOME slice
-      | "file"             => SOME (from_file "asm/test.s") (* FIXME temporary *)
+      | "file"             => SOME from_file
       | _                  => NONE
 
 fun obs_model_fromString om =
@@ -66,6 +71,7 @@ fun obs_model_fromString om =
 fun hw_obs_model_fromString hwom =
     case hwom of
         "hw_cache_tag_index"           => SOME hw_cache_tag_index
+      | "hw_cache_index_numvalid"      => SOME hw_cache_index_numvalid
       | "hw_cache_tag_index_part"      => SOME hw_cache_tag_index_part
       | "hw_cache_tag_index_part_page" => SOME hw_cache_tag_index_part_page
       | _                              => NONE
@@ -76,7 +82,9 @@ fun set_max_iter (cfg : scamv_config) n =
     { max_iter = n,
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
+      enumerate = # enumerate cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -87,7 +95,9 @@ fun set_prog_size (cfg : scamv_config) n =
     { max_iter = # max_iter cfg,
       prog_size = n,
       max_tests = # max_tests cfg,
+      enumerate = # enumerate cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -98,7 +108,22 @@ fun set_max_tests (cfg : scamv_config) n =
     { max_iter = # max_iter cfg,
       prog_size = # prog_size cfg,
       max_tests = n,
+      enumerate = # enumerate cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
+      obs_model = # obs_model cfg,
+      hw_obs_model = # hw_obs_model cfg,
+      verbosity = # verbosity cfg,
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
+
+fun set_enumerate (cfg : scamv_config) enum =
+    { max_iter = # max_iter cfg,
+      prog_size = # prog_size cfg,
+      max_tests = # max_tests cfg,
+      enumerate = enum,
+      generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -109,7 +134,22 @@ fun set_generator (cfg : scamv_config) gen =
     { max_iter = # max_iter cfg,
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
+      enumerate = # enumerate cfg,
       generator = gen,
+      generator_param = # generator_param cfg,
+      obs_model = # obs_model cfg,
+      hw_obs_model = # hw_obs_model cfg,
+      verbosity = # verbosity cfg,
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
+
+fun set_generator_param (cfg : scamv_config) gen_param =
+    { max_iter = # max_iter cfg,
+      prog_size = # prog_size cfg,
+      max_tests = # max_tests cfg,
+      enumerate = # enumerate cfg,
+      generator = # generator cfg,
+      generator_param = gen_param,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -120,7 +160,9 @@ fun set_obs_model (cfg : scamv_config) om =
     { max_iter = # max_iter cfg,
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
+      enumerate = # enumerate cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = om,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -131,7 +173,9 @@ fun set_hw_obs_model (cfg : scamv_config) hwom =
     { max_iter = # max_iter cfg,
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
+      enumerate = # enumerate cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = hwom,
       verbosity = # verbosity cfg,
@@ -142,7 +186,9 @@ fun set_only_gen (cfg : scamv_config) b =
     { max_iter = # max_iter cfg,
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
+      enumerate = # enumerate cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -153,7 +199,9 @@ fun set_verbosity (cfg : scamv_config) v =
     { max_iter = # max_iter cfg,
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
+      enumerate = # enumerate cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = v,
@@ -164,7 +212,9 @@ fun set_seed_rand (cfg : scamv_config) s =
     { max_iter = # max_iter cfg,
       prog_size = # prog_size cfg,
       max_tests = # max_tests cfg,
+      enumerate = # enumerate cfg,
       generator = # generator cfg,
+      generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
@@ -190,8 +240,12 @@ val opt_table =
               handle_conv_arg_with Int.fromString set_prog_size)
     , Arity1 ("t", "max_tests", "Number of state pairs to generate per iteration",
               handle_conv_arg_with Int.fromString set_max_tests)
+    , Arity0 ("enum", "enumerate", "enable enumeration for test case generation",
+              fn cfg => fn b => set_enumerate cfg b)
     , Arity1 ("gen", "generator", "Program generator",
               handle_conv_arg_with gen_type_fromString set_generator)
+    , Arity1 ("genpar", "generator_param", "Program generator parameter",
+              handle_conv_arg_with (fn x => SOME (SOME x)) set_generator_param)
     , Arity1 ("om", "obs_model", "Observation model",
               handle_conv_arg_with obs_model_fromString set_obs_model)
     , Arity1 ("hwom", "hw_obs_model", "HW observation model",
@@ -236,7 +290,7 @@ fun print_scamv_opt_usage () =
         List.map print_entry opt_table;
         print ("\ngenerator arg should be one of: rand, prefetch_strides, qc, slice, file\n");
         print ("\nobs_model arg should be one of: cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page\n");
-        print ("\nhw_obs_model arg should be one of: hw_cache_tag_index, hw_cache_tag_index_part, hw_cache_tag_index_part_page\n");
+        print ("\nhw_obs_model arg should be one of: hw_cache_tag_index, hw_cache_index_numvalid, hw_cache_tag_index_part, hw_cache_tag_index_part_page\n");
         print ("\nDefaults are: " ^ PolyML.makestring default_cfg ^ "\n")
     end
 

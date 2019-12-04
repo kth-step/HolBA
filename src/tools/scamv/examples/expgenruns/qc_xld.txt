@@ -1,0 +1,5 @@
+driver-test --max_iter 1000 --prog_size 5 --max_tests 40 --generator qc --generator_param xld --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
+
+>>>>>>> 00_qc_xld      - len 5 - ok with a little older run, replacement policy counterexamples (and more?)
+n_examples     = 10535
+n_cexamples    = 5

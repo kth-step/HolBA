@@ -10,6 +10,9 @@ sig
     datatype ArmInstruction =
              Load of Operand * Operand
              | Branch of BranchCond option * Operand
+             | Compare of Operand * Operand
+             | Nop
+             | Add of Operand * Operand * Operand
 
     val pp_program : ArmInstruction list -> string list;
 
@@ -22,8 +25,15 @@ sig
 
     val arb_branchcond : BranchCond option Gen;
     val arb_ld : Operand Gen;
-    val arb_instruction : ArmInstruction Gen;
-    val arb_program : ArmInstruction list Gen;
-    val prog_gen_a_la_qc : int -> string list;
+    val arb_instruction_noload_nobranch : ArmInstruction Gen;
+
+    val arb_program_load : ArmInstruction list Gen;
+    val arb_program_previct1 : ArmInstruction list Gen;
+    val arb_program_previct2 : ArmInstruction list Gen;
+    val arb_program_previct3 : ArmInstruction list Gen;
+    val arb_program_previct4 : ArmInstruction list Gen;
+    val arb_program_previct5 : ArmInstruction list Gen;
+
+    val prog_gen_a_la_qc : ArmInstruction list Gen -> int -> string list;
 end
 

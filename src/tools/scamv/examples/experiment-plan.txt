@@ -1,0 +1,32 @@
+
+quickcheck - finds replacement policy, and hopefully previction with only little guidance
+=====================
+>>>>>>> 01_qc_previct1 - not run
+----- driver-test --max_iter 1000 --prog_size 5 --max_tests 20 --generator qc --generator_param previct1 --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
+
+>>>>>>> 02_qc_previct2 - nothing, because of bug?
+----- 
+
+>>>>>>> 03_qc_previct3 - nothing, because of bug?
+----- 
+
+>>>>>>> 04_qc_previct4 - nothing, because of bug?
+----- driver-test --max_iter 1000 --prog_size 20 --max_tests 20 --generator qc --generator_param previct4 --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
+-_1-- driver-test --max_iter 100 --prog_size 20 --max_tests 200 --generator qc --generator_param previct4 --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
+n_examples     = 17800
+
+
+random gen - finds model problems (probably nothing else)
+=====================
+
+(14_rand_wo_both_long: run it for longer and see what happens)
+(15_rand_wo_both_cpart: try on cache partitioning)
+
+
+prefetch gen (use prefetch generator with enumeration and model and hw obs correctly paired)
+=====================
+
+
+rand gen for mismatched model
+=====================
+

@@ -1,0 +1,4 @@
+driver-test --max_iter 1000 --prog_size 20 --max_tests 30 --generator qc --generator_param previct5 --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
+
+>>>>>>> 05_qc_previct5_fix - little amount of counterexamples
+

@@ -155,6 +155,22 @@ struct
  (* val pattern_stp   = CONCATENATION [stringLiteral "stp", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END] *)
  val pattern_cbnz  = CONCATENATION [stringLiteral "cbnz", whitespace_r, STAR (alphabet_r), END]
 
+ val local_param = ref "";
+
+ val patternList = ref (NONE: regex list option);
+
+ fun get_patternList () =
+   case !patternList of
+      SOME x => x
+    | NONE   => ((patternList := SOME (
+       case !local_param of
+          ""               => [] (* default *)
+        | "wout_ldzr"      => [pattern_ld]
+        | "wout_cbnz"      => [pattern_cbnz]
+        | "wout_ldzr_cbnz" => [pattern_ld, pattern_cbnz]
+        | _                => raise ERR "prog_gen_rand::get_patternList" "unknown parameter"
+       )); get_patternList ());
+
  fun filter_inspected_instr str =
      let
 	 fun reader nil    = NONE
@@ -170,10 +186,7 @@ struct
 		 resultBool
 	     end
      in
-	 (
-	  checkPatterns(pattern_ld, str) orelse
-	  checkPatterns(pattern_cbnz, str) 
-	 )
+       List.exists (fn p => checkPatterns(p, str)) (get_patternList())
      end
  (* filter_inspected_instr "ldr xzr, x19, [x21, #0xC8]"; *)
 
@@ -286,7 +299,9 @@ struct
   val n = 3;
   *)
  (* takes the number of instructions to generate *)
- fun bir_prog_gen_arm8_rand n = map ((strip_ws_off false) o remove_junk o hd o decomp) (progGen n);
+ fun bir_prog_gen_arm8_rand param n = (
+   local_param := param;
+   map ((strip_ws_off false) o remove_junk o hd o decomp) (progGen n));
 
 end; (* struct *)
 

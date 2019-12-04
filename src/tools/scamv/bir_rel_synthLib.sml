@@ -119,12 +119,18 @@ fun lookup_obs obs_id obs_list =
     List.find (fn obs => cobs_id_of obs = obs_id) obs_list;
 
 fun triangleWith f xs ys =
-    let fun go [] _ = []
-          | go _ [] = []
-          | go (x::xs) (y::ys) =
-            (map (fn p => f x p) (y::ys)) @
-            go xs ys
-    in go xs ys
+(*  full product: List.concat (map (fn a => map (fn b => f a b) xs) ys);*)
+    let fun go g [] _ = []
+          | go g _ [] = []
+          | go g (x::xs) (y::ys) =
+            (map (fn p => g x p) (y::ys)) @
+            go g xs ys
+    in
+        if length ys < length xs
+        then (* take upper triangle *)
+            go (fn x => fn y => f y x) ys xs
+        else (* take lower triangle *)
+            go f xs ys
     end;
 
 fun buildLeavesIds [] = []
@@ -321,7 +327,7 @@ fun partition_domains (ps : path_struct) : int list * int list =
     in go ps
     end;
 
-val max_guard_tries = 100;
+val max_guard_tries = 10000;
 
 (* input: (bir_exp * (cobs list) option) list *)
 fun rel_synth_init initial_ps (env : enum_env) =

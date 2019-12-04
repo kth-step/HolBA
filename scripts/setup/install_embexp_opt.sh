@@ -16,8 +16,11 @@ source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 ##################################################################
 
 # embexp git urls
-GIT_URL_PROG_PLAT=https://github.com/kth-step/EmbExp-ProgPlatform.git
-GIT_URL_BOX=https://github.com/kth-step/EmbExp-Box.git
+GIT_URL_PROG_PLAT_HTTPS=https://github.com/kth-step/EmbExp-ProgPlatform.git
+GIT_URL_BOX_HTTPS=https://github.com/kth-step/EmbExp-Box.git
+
+GIT_URL_PROG_PLAT_SSH=git@github.com:kth-step/EmbExp-ProgPlatform.git
+GIT_URL_BOX_SSH=git@github.com:kth-step/EmbExp-Box.git
 
 EMBEXP_DIR=${HOLBA_OPT_DIR}/embexp
 
@@ -38,9 +41,11 @@ mkdir ${EMBEXP_DIR}
 cd ${EMBEXP_DIR}
 
 # clone both relevant embexp repositories
-git clone ${GIT_URL_PROG_PLAT}
-git clone ${GIT_URL_BOX}
-
-# call install for embexp-logs
-${SETUP_DIR}/install_embexp_logs.sh
+echo "Do you want to clone with public key authentication?"
+select yn in "Yes" "No"; do
+  case $yn in
+    Yes ) git clone "${GIT_URL_PROG_PLAT_SSH}"; git clone "${GIT_URL_BOX_SSH}"; break;;
+    No ) git clone "${GIT_URL_PROG_PLAT_HTTPS}"; git clone "${GIT_URL_BOX_HTTPS}"; break;;
+  esac
+done
 
