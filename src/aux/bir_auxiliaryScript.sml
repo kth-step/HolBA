@@ -233,6 +233,80 @@ val SINGLETONS_UNION_thm = store_thm ("SINGLETONS_UNION_thm",
 METIS_TAC [INSERT_SING_UNION]
 );
 
+
+val INTER_SUBSET_EMPTY_thm = store_thm("INTER_SUBSET_EMPTY_thm",
+  ``!s t v.
+    s SUBSET t ==>
+    (v INTER t = EMPTY) ==>
+    (v INTER s = EMPTY)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [pred_setTheory.INTER_DEF, pred_setTheory.EMPTY_DEF, FUN_EQ_THM]  >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] >>
+FULL_SIMP_TAC std_ss [pred_setTheory.SUBSET_DEF] >>
+METIS_TAC []
+);
+
+val SUBSET_EQ_UNION_thm = store_thm("SUBSET_EQ_UNION_thm",
+  ``!s t.
+    s SUBSET t ==>
+    (? v. t = s UNION v)``,
+
+REPEAT STRIP_TAC >>
+Q.EXISTS_TAC `t` >>
+METIS_TAC [pred_setTheory.SUBSET_UNION_ABSORPTION]
+);
+
+val IN_NOT_IN_NEQ_thm = store_thm("IN_NOT_IN_NEQ_thm",
+  ``!x y z.
+    x IN z ==>
+    ~(y IN z) ==>
+    (x <> y)``,
+
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
+);
+
+val SING_DISJOINT_SING_NOT_IN_thm = store_thm("SING_DISJOINT_SING_NOT_IN_thm",
+  ``!x y.
+    (x INTER {y} = EMPTY) ==>
+    ~(y IN x)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.INTER_DEF] >>
+FULL_SIMP_TAC std_ss [pred_setTheory.EMPTY_DEF] >>
+FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
+QSPECL_X_ASSUM ``!x.P`` [`y`] >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
+);
+
+val INTER_EMPTY_IN_NOT_IN_thm = store_thm("INTER_EMPTY_IN_NOT_IN_thm",
+  ``!x y z.
+    (x INTER y = EMPTY) ==>
+    z IN x ==>
+    ~(z IN y)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.INTER_DEF] >>
+FULL_SIMP_TAC std_ss [pred_setTheory.EMPTY_DEF] >>
+FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
+QSPECL_X_ASSUM ``!x.P`` [`z`] >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] >>
+METIS_TAC []
+);
+
+val INTER_EMPTY_INTER_INTER_EMPTY_thm = store_thm("INTER_EMPTY_INTER_INTER_EMPTY_thm",
+  ``!x y z.
+    (x INTER y = EMPTY) ==>
+    (x INTER (y INTER z) = EMPTY)``,
+
+REPEAT STRIP_TAC >>
+SIMP_TAC std_ss [Once pred_setTheory.INTER_ASSOC] >>
+FULL_SIMP_TAC std_ss [] >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
+);
+
+
 (* -------------------------------------------------------------------------- *)
 (* Arithmetic                                                                   *)
 (* -------------------------------------------------------------------------- *)

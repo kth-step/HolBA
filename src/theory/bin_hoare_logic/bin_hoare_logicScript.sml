@@ -145,13 +145,13 @@ val weak_pc_in_thm = prove(``
 METIS_TAC [weak_model_def]
 );
 
-val weak_union_pc_not_in_thm = prove(``
-  !m.
-  weak_model m ==>
-  !ms e ls1 ls2 ms'.
-  (m.weak ms (ls1 UNION ls2) ms') ==>
-  (~((m.pc ms') IN ls2)) ==>
-  (m.weak ms ls1 ms')``,
+val weak_union_pc_not_in_thm = store_thm("weak_union_pc_not_in_thm",
+  ``!m.
+    weak_model m ==>
+    !ms e ls1 ls2 ms'.
+    (m.weak ms (ls1 UNION ls2) ms') ==>
+    (~((m.pc ms') IN ls2)) ==>
+    (m.weak ms ls1 ms')``,
 
 REPEAT STRIP_TAC >>
 REV_FULL_SIMP_TAC std_ss [weak_model_def] >>

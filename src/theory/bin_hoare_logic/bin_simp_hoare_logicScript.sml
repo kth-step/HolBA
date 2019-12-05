@@ -1,75 +1,10 @@
 open HolKernel Parse boolLib bossLib;
 open bin_hoare_logicTheory;
+open bir_auxiliaryTheory;
 
 open bir_auxiliaryLib;
 
 val _ = new_theory "bin_simp_hoare_logic";
-
-val INTER_SUBSET_EMPTY_thm = prove(``!s t v.
-(s SUBSET t) ==> (v INTER t = EMPTY) ==> (v INTER s = EMPTY)
-``,
-
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [pred_setTheory.INTER_DEF, pred_setTheory.EMPTY_DEF, FUN_EQ_THM]  >>
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] >>
-FULL_SIMP_TAC std_ss [pred_setTheory.SUBSET_DEF] >>
-METIS_TAC []
-);
-
-val SUBSET_EQ_UNION_thm = prove(``!s t.
-(s SUBSET t) ==> (? v. t = s UNION v)
-``,
-
-REPEAT STRIP_TAC >>
-Q.EXISTS_TAC `t` >>
-METIS_TAC [pred_setTheory.SUBSET_UNION_ABSORPTION]
-);
-
-val IN_NOT_IN_NEQ_thm = prove(``
-!x y z.
-(x IN z) ==> (~(y IN z)) ==> (x <> y)
-``,
-
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
-);
-
-val SING_DISJOINT_SING_NOT_IN_thm = prove(``
-!x y. ((x INTER {y}) = EMPTY) ==>(~(y IN x))
-``,
-
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.INTER_DEF] >>
-FULL_SIMP_TAC std_ss [pred_setTheory.EMPTY_DEF] >>
-FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
-QSPECL_X_ASSUM ``!x.P`` [`y`] >>
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
-);
-
-val INTER_EMPTY_IN_NOT_IN_thm = prove(``
-!x y z. (x INTER y = EMPTY) ==> (z IN x) ==> (~(z IN y))
-``,
-
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.INTER_DEF] >>
-FULL_SIMP_TAC std_ss [pred_setTheory.EMPTY_DEF] >>
-FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
-QSPECL_X_ASSUM ``!x.P`` [`z`] >>
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] >>
-METIS_TAC []
-);
-
-val INTER_EMPTY_INTER_INTER_EMPTY_thm = prove(``
-!x y z. (x INTER y = EMPTY) ==> (x INTER (y INTER z) = EMPTY)
-``,
-
-REPEAT STRIP_TAC >>
-SIMP_TAC std_ss [Once pred_setTheory.INTER_ASSOC] >>
-FULL_SIMP_TAC std_ss [] >>
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
-);
-
-
 
 (* Inv is usually the fact that the program is in memory and that
 the execution mode is the expected one *)
@@ -200,7 +135,7 @@ REV_FULL_SIMP_TAC std_ss []
 
 
 
-(* This prove should use the blacklist move lemma *)
+(* This proof should use the blacklist move lemma *)
 val weak_map_seq_thm = prove(
   ``!m invariant l ls1 ls ls' pre post.
     weak_model m ==>
@@ -273,63 +208,65 @@ val weak_map_std_seq_comp_thm = prove(
     weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2``,
 
 REPEAT STRIP_TAC >>
-
 (* First we extend the initial contract to have the same postcondition *)
-ASSUME_TAC (Q.SPECL [`m`, `invariant`, `l`, `ls1`, `ls2`, `pre1`, `post1`, `post2`]
-           weak_map_add_post_corollary_thm) >>
-REV_FULL_SIMP_TAC std_ss [] >>
-(* We then restrict the non-accessible addresses of the first contract *)
-Q.SUBGOAL_THEN `ls1' UNION (ls2 ∩ ls2') SUBSET ls2` ASSUME_TAC >- (
-  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) []
+subgoal `weak_map_triple m invariant l ls1 ls2 pre1
+           (\l ms. if l IN ls1 then post1 l ms else post2 l ms)` >- (
+  METIS_TAC [weak_map_add_post_corollary_thm]
 ) >>
-ASSUME_TAC (Q.SPECL [`m`, `invariant`, `l`, `ls1`, `ls2`, `ls1' UNION (ls2 INTER ls2')`, `pre1`,
-           `(λl ms. if l ∈ ls1 then post1 l ms else post2 l ms)`]
-           weak_map_subset_blacklist_rule_thm) >>
-REV_FULL_SIMP_TAC std_ss [] >>
-
+(* We then restrict the non-accessible addresses of the first contract *)
+subgoal `ls1' UNION (ls2 INTER ls2') SUBSET ls2` >- (
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+) >>
+subgoal `weak_map_triple m invariant l ls1 (ls1' UNION ls2 INTER ls2') pre1
+           (\l ms. if l IN ls1 then post1 l ms else post2 l ms)` >- (
+  METIS_TAC [weak_map_subset_blacklist_rule_thm]
+) >>
 (* Now, we extend the second contracts *)
-Q.SUBGOAL_THEN `∀l1.
-             l1 ∈ ls1 ⇒
-             weak_map_triple m invariant l1 ls1' (ls2 INTER ls2') ((λl ms. if l ∈ ls1 then post1 l ms else post2 l ms) l1)
-             (λl ms. if l ∈ ls1 then post1 l ms else post2 l ms)` ASSUME_TAC >- (
+subgoal `!l1.
+         l1 IN ls1 ==>
+         weak_map_triple m invariant l1 ls1' (ls2 INTER ls2')
+           ((\l ms. if l IN ls1 then post1 l ms else post2 l ms) l1)
+             (\l ms. if l IN ls1 then post1 l ms else post2 l ms)` >- (
   REPEAT STRIP_TAC >>
   QSPECL_X_ASSUM ``!x. _`` [`l1`] >>  
   REV_FULL_SIMP_TAC std_ss [] >>
   (* Now, we extend the second contract to have the same postcondition *)
-  ASSUME_TAC (Q.SPECL [`m`, `invariant`, `l1`, `ls1'`, `ls1`, `ls2'`, `post1 l1`, `post2`, `post1`]
-           weak_map_add_post2_corollary) >>
-  REV_FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] >>
-  (* We then restrict the non-accessible addresses of the first contract *)
-  Q.SUBGOAL_THEN `(ls2 ∩ ls2') SUBSET ls2'` ASSUME_TAC >- (
-        FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) []
+  subgoal `weak_map_triple m invariant l1 ls1' ls2' (post1 l1)
+             (\l ms. if l IN ls1 then post1 l ms else post2 l ms)` >- (
+    METIS_TAC [weak_map_add_post2_corollary, pred_setTheory.INTER_COMM]
   ) >>
-  ASSUME_TAC (Q.SPECL [`m`, `invariant`, `l1`, `ls1'`, `ls2'`, `ls2 INTER ls2'`, `post1 l1`,
-           `(λl ms. if l ∈ ls1 then post1 l ms else post2 l ms)`]
-           weak_map_subset_blacklist_rule_thm) >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-  Q.SUBGOAL_THEN `(λms. post1 l1 ms) = (post1 l1)` (FULLSIMP_BY_THM std_ss) >- (METIS_TAC [])
+  (* We then restrict the non-accessible addresses of the first contract *)
+  subgoal `weak_map_triple m invariant l1 ls1' (ls2 INTER ls2') (post1 l1)
+             (\l ms. if l IN ls1 then post1 l ms else post2 l ms)` >- (
+    METIS_TAC [weak_map_subset_blacklist_rule_thm, pred_setTheory.INTER_SUBSET]
+  ) >>
+  METIS_TAC []
 ) >>
-
-
-ASSUME_TAC (Q.SPECL [`m`, `invariant`, `l`, `ls1`, `ls1'`, `(ls2 INTER ls2')`, `pre1`, `(λl ms. if l ∈ ls1 then post1 l ms else post2 l ms)`]
-  weak_map_seq_thm) >>
-REV_FULL_SIMP_TAC  std_ss [] >>
-Q.SUBGOAL_THEN `(ls1' ∩ (ls2 ∩ ls2') = ∅)` (FULLSIMP_BY_THM std_ss) >- (
-  FULL_SIMP_TAC  std_ss [INTER_EMPTY_INTER_INTER_EMPTY_thm] >>
-  (* TODO: Cheat here... *)
-  cheat
+subgoal `weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1
+           (\l ms. if l IN ls1 then post1 l ms else post2 l ms)` >- (
+  ASSUME_TAC (Q.SPECL [`m`, `invariant`, `l`, `ls1`, `ls1'`, `(ls2 INTER ls2')`,
+                       `pre1`, `(\l ms. if l IN ls1 then post1 l ms else post2 l ms)`]
+    weak_map_seq_thm
+  ) >>
+  METIS_TAC [INTER_EMPTY_INTER_INTER_EMPTY_thm, pred_setTheory.INTER_COMM]
 ) >>
-
-Q.SUBGOAL_THEN `(∀ms. m.pc ms ∈ ls1' ⇒ (λl' ms. if l' IN ls1 then post1 (m.pc ms) ms else post2 l' ms) (m.pc ms) ms ⇒ post2 (m.pc ms) ms)` ASSUME_TAC >- (
+subgoal `(!ms. m.pc ms IN ls1' ==>
+	  (\l' ms.
+	   if l' IN ls1
+	   then post1 (m.pc ms) ms
+	   else post2 l' ms) (m.pc ms) ms ==>
+	   post2 (m.pc ms) ms)` >- (
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [] >>
-  (* TODO: Cheat here... *)
-  cheat >>
-  Q.SUBGOAL_THEN `(pc ms) <> l1` (FULLSIMP_BY_THM std_ss) >>
+  subgoal `~(m.pc ms IN ls1)` >- (
+    METIS_TAC [INTER_EMPTY_IN_NOT_IN_thm]
+  ) >>
   FULL_SIMP_TAC std_ss [] 
 ) >>
+(* Finish everything... *)
 ASSUME_TAC (Q.SPECL [`m`, `invariant`, `l`, `ls1'`, `ls2 INTER ls2'`, `pre1`,
-           `(λl' ms. if l' IN ls1 then post1 l' ms else post2 l' ms)`, `post2`]
+                     `(\l' ms. if l' IN ls1 then post1 l' ms else post2 l' ms)`,
+                     `post2`]
    weak_map_weakening_rule_thm) >>
 REV_FULL_SIMP_TAC std_ss []
 );

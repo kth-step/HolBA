@@ -132,7 +132,7 @@ val prefix = "add_reg_loop_";
 val first_block_label_tm = ``BL_Address (Imm64 0x20w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``;
 val false_label_l = [];
-val postcond_tm = ``bir_add_reg_contract_2_post``;
+val postcond_tm = ``bir_add_reg_contracxt_2_post``;
 val defs = [bir_add_reg_prog_def, bir_add_reg_contract_2_post_def,
             bir_add_reg_I_def, BType_Bool_def];
 

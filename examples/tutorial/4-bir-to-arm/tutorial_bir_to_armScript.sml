@@ -124,6 +124,7 @@ val bir_add_reg_contract_2_post_variant_def = Define `bir_add_reg_contract_2_pos
   (bsle(bconst64 0, get_lx))
 ]))
 `;
+
 (* contract three: loop continue *)
 (* from cjmp to loop body start *)
 val bir_add_reg_contract_3_pre_variant_def = Define `bir_add_reg_contract_3_pre_variant v =
