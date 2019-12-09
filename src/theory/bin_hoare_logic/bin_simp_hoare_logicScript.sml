@@ -72,13 +72,12 @@ val weak_simp_trs_blacklist_move_thm = prove(``
 ``
 *)
 
-val weak_map_weakening_rule_thm = prove(``
-!m invariant l ls ls' pre post1 post2.
-weak_model m ==>
-(!ms. (m.pc ms) IN ls ==> (post1 (m.pc ms) ms) ==> (post2 (m.pc ms) ms)) ==>
-weak_map_triple m invariant l ls ls' pre post1 ==>
-weak_map_triple m invariant l ls ls' pre post2
-``,
+val weak_map_weakening_rule_thm = store_thm("weak_map_weakening_rule_thm",
+  ``!m invariant l ls ls' pre post1 post2.
+    weak_model m ==>
+    (!ms. (m.pc ms) IN ls ==> (post1 (m.pc ms) ms) ==> (post2 (m.pc ms) ms)) ==>
+    weak_map_triple m invariant l ls ls' pre post1 ==>
+    weak_map_triple m invariant l ls ls' pre post2``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
@@ -197,7 +196,7 @@ REV_FULL_SIMP_TAC std_ss []
 
 
 (* We should generalize the other contract to handle set of labels *)
-val weak_map_std_seq_comp_thm = prove(
+val weak_map_std_seq_comp_thm = store_thm("weak_map_std_seq_comp_thm",
   ``!m ls1 ls1' ls2 ls2' invariant l pre1 post1 post2.
     weak_model m ==>
     ls1' SUBSET ls2 ==>
