@@ -109,6 +109,8 @@ val bir_SIMPLE_REWRS_imm_exp = rewrites [
 
 
 val bir_SIMPLE_REWRS_mem_exp = rewrites [
+  bir_eval_memeq_REWRS,
+
   bir_number_of_mem_splits_REWRS,
   bir_number_of_mem_splits_NEQ_SOME0,
   bir_number_of_mem_splits_ID,

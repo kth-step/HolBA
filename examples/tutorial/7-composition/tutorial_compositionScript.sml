@@ -30,10 +30,10 @@ val _ = new_theory "tutorial_composition";
 
 (* TODO for this to work:
  *
- *   Create translator from bir_triple to some bir_map_triple (?)
- *   Prove counterpart for BIR weakening rule (for bir_triple, and/or bir_map_triple?)
- *   Prove counterpart for weak_map_std_seq_comp_thm (failing that, weak_map_seq_thm) (?)
- *   Change argument to WP prover and generator to real_end UNION next_end instead of real_end
+ *   Create translator from bir_triple to some bir_map_triple - theorem part OK, function TODO (need input format)
+ *   Prove counterpart for BIR weakening rule (for bir_triple, and/or bir_map_triple?) - OK for both
+ *   Prove counterpart for weak_map_std_seq_comp_thm - OK
+ *   Change argument to WP prover and generator to real_end UNION next_end instead of real_end - TODO: Talk to Andreas if changes needed?
  *
  * *)
 

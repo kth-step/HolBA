@@ -61,7 +61,7 @@ val bir_eval_bin_pred_def = Define `
 val bir_eval_memeq_def = Define `
   (bir_eval_memeq (SOME (BVal_Mem at1 vt1 mmap1)) (SOME (BVal_Mem at2 vt2 mmap2)) =
      if ((at1 <> at2) \/ (vt1 <> vt2)) then NONE else
-     SOME(BVal_Imm (bool2b (bir_memeq at1 vt1 mmap1 mmap2)))) /\
+     SOME (BVal_Imm (bool2b (bir_memeq at1 vt1 mmap1 mmap2)))) /\
   (bir_eval_memeq _ _ = NONE)`;
 
 val bir_eval_ifthenelse_def = Define `

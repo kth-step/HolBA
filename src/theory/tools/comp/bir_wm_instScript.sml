@@ -505,10 +505,9 @@ CASE_TAC >| [
 ]
 );
 
-(*****************************************************)
-(* TODO: Prove that generated HT implies weak_triple *)
-(*****************************************************)
 
+(* Obtaining a bir_triple (weak_triple instantiation)
+ * from a bir_exec_to_labels_triple *)
 val bir_label_ht_impl_weak_ht =
   store_thm("bir_label_ht_impl_weak_ht",
   ``!prog l ls pre post.
@@ -531,6 +530,46 @@ IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_ORDER
 );
 
 
+(* TODO: Prove bir_weakening_rule_thm, similar to weak_weakening_rule_thm, here... *)
+(* TODO: This actually combines two rules: Postcondition weakening and
+ * precondition strenghtening *)
+val bir_weakening_rule_thm =
+  store_thm("bir_weakening_rule_thm",
+  ``!prog l ls pre1 pre2 post1 post2.
+    (!st. (st.bst_pc.bpc_label = l) ==>
+          (bir_exec_to_labels_triple_precond st pre2 prog) ==>
+          (bir_exec_to_labels_triple_precond st pre1 prog)
+    ) ==>
+    (!st. (st.bst_pc.bpc_label IN ls) ==>
+          (bir_exec_to_labels_triple_postcond st post1 prog) ==>
+          (bir_exec_to_labels_triple_postcond st post2 prog)
+    ) ==>
+    bir_triple prog l ls pre1 post1 ==>
+    bir_triple prog l ls pre2 post2
+  ``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_triple_def] >>
+irule weak_weakening_rule_thm >>
+REPEAT STRIP_TAC >- (
+  METIS_TAC [bir_model_is_weak]
+) >>
+Q.EXISTS_TAC `\st. (bir_exec_to_labels_triple_postcond st post1 prog)` >>
+Q.EXISTS_TAC `\st. (bir_exec_to_labels_triple_precond st pre1 prog)` >>
+REPEAT STRIP_TAC >| [
+  QSPECL_X_ASSUM ``!st. (st.bst_pc.bpc_label = l) ==> _`` [`ms`] >>
+  FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def],
+
+  QSPECL_X_ASSUM ``!st. (st.bst_pc.bpc_label IN ls) ==> _`` [`ms`] >>
+  FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def],
+
+  FULL_SIMP_TAC std_ss []
+]
+);
+
+
+(* Preconditions can be swapped for postconditions
+ * under these circumstances *)
 val bir_weak_triple_post_pre = store_thm("bir_weak_triple_post_pre",
   ``!prog ls1 ls2 post.
     (!l1. l1 IN ls1 ==> weak_triple (bir_etl_wm prog) l1 ls2
@@ -565,7 +604,7 @@ Q.SUBGOAL_THEN `s'.bst_pc.bpc_label = l1` (fn thm => FULL_SIMP_TAC std_ss [thm])
 );
 
 
-(* MAIN NEW SEQUENTIAL COMPOSITION THEOREM FOR BIR TRIPLES *)
+(* Main sequential composition theorem for bir_triples *)
 val bir_seq_rule_thm = store_thm("bir_seq_rule_thm",
   ``!prog l ls1 ls2 pre post.
     bir_triple prog l (ls1 UNION ls2) pre post ==>
@@ -599,6 +638,7 @@ val bir_loop_variant_value_def = Define `
 `;
 val bir_loop_contract_def = Define `
   bir_loop_contract prog (l:bir_label_t) le invariant C1 variant =
+    (bir_vars_of_exp v) SUBSET (bir_vars_of_prog prog) /\
     weak_loop_contract (bir_etl_wm prog) (l:bir_label_t) le
       (\s. bir_exec_to_labels_triple_precond s invariant prog)
       (\s. bir_exec_to_labels_triple_precond s C1 prog)
@@ -637,6 +677,8 @@ val iv2i_def = Define `
 `;
 
 
+(* TODO: Why do I need all of the below until bir_eval_imm_types, when
+ * type_of_bir_exp_THM_with_init_vars exists? *)
 (* TODO: Needed for bir_lessthan_equiv? *)
 val bir_imm_word_lo_def = Define `
   (bir_imm_word_lo (SOME (BVal_Imm (Imm1 w1)))  (SOME (BVal_Imm (Imm1 w2))) = w1 <+ w2) /\
@@ -647,7 +689,7 @@ val bir_imm_word_lo_def = Define `
   (bir_imm_word_lo (SOME (BVal_Imm (Imm128 w1))) (SOME (BVal_Imm (Imm128 w2))) = w1 <+ w2)
 `;
 
-(* TODO: Could use something already existing? *)
+(* TODO: Replaced by bir_eval_imm_types_EXISTS? *)
 val bir_eval_imm = store_thm("bir_eval_imm",
   ``!env ex.
     bir_env_vars_are_initialised env (bir_vars_of_exp ex) ==>
@@ -820,11 +862,11 @@ Induct_on `e` >> (
 
   (* MemEq *)
   Cases_on `bir_eval_exp e env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_memeq_def]
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
   ) >>
   Cases_on `bir_eval_exp e' env` >- (
     Cases_on `x` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_memeq_def]
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
     )
   ) >>
   METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_UNION],
@@ -934,12 +976,12 @@ Induct_on `e` >> (
 
   (* MemEq *)
   Cases_on `bir_eval_exp e env` >> Cases_on `bir_eval_exp e' env` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_memeq_def] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
     Cases_on `x` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_memeq_def]
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
     ) >>
     Cases_on `x'` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_memeq_def]
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
     )
   ) >>
   RW_TAC std_ss [type_of_bir_val_def, bir_type_is_Imm_def, bool2b_def, BType_Bool_def,
@@ -1015,16 +1057,220 @@ Induct_on `e` >> (
 );
 
 
-(* TODO *)
+val type_of_bir_exp_NOT_SOME_Imm = prove(
+  ``!ex env. 
+    (!ity. type_of_bir_exp ex <> SOME (BType_Imm ity)) ==>
+    (?aty vty. (type_of_bir_exp ex = SOME (BType_Mem aty vty)) \/
+     (type_of_bir_exp ex = NONE)
+    )``,
+
+REPEAT STRIP_TAC >>
+Cases_on `type_of_bir_exp ex` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+Cases_on `x` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+)
+);
+
+
+val type_of_2bir_exp_NOT_SOME_Imm = prove(
+  ``!ex ex'. 
+    (!ity.
+     type_of_bir_exp ex <> SOME (BType_Imm ity) \/
+     type_of_bir_exp ex' <> SOME (BType_Imm ity)) ==>
+    ((?aty vty. type_of_bir_exp ex = SOME (BType_Mem aty vty)) \/
+     (type_of_bir_exp ex = NONE) \/
+     (?aty vty. type_of_bir_exp ex' = SOME (BType_Mem aty vty)) \/
+     (type_of_bir_exp ex' = NONE) \/
+     (?ity' ity''.
+      (type_of_bir_exp ex = SOME (BType_Imm ity')) /\
+      (type_of_bir_exp ex' = SOME (BType_Imm ity'')) /\
+      (ity' <> ity'')
+     )
+    )``,
+
+REPEAT STRIP_TAC >>
+Cases_on `type_of_bir_exp ex` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+Cases_on `type_of_bir_exp ex'` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+Cases_on `x` >> Cases_on `x'` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+)
+);
+
+(* TODO: Needs the two lemmata above... *)
 val bir_type_of_bir_exp_NONE = store_thm("bir_type_of_bir_exp_NONE",
   ``!ex env.
     (type_of_bir_exp ex = NONE) ==>
     (bir_eval_exp ex env = NONE)``,
 
-cheat
+REPEAT STRIP_TAC >>
+Induct_on `ex` >> (
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_exp_EQ_NONE_REWRS]
+) >| [
+  (* Cast *)
+  IMP_RES_TAC type_of_bir_exp_NOT_SOME_Imm >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  (* The memory remains... *)
+  IMP_RES_TAC type_of_bir_exp_THM >>
+  QSPECL_X_ASSUM ``!env. _`` [`env`] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  Cases_on `v` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ),
+
+  (* UnaryExp *)
+  IMP_RES_TAC type_of_bir_exp_NOT_SOME_Imm >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  IMP_RES_TAC type_of_bir_exp_THM >>
+  QSPECL_X_ASSUM ``!env. _`` [`env`] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  Cases_on `v` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ),
+
+  (* BinExp *)
+  IMP_RES_TAC type_of_2bir_exp_NOT_SOME_Imm >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    IMP_RES_TAC type_of_bir_exp_THM >>
+    REPEAT (QSPECL_X_ASSUM ``!env. _`` [`env`]) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    Cases_on `v` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    Cases_on `v'` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    )
+  ),
+
+  (* BinPred *)
+  IMP_RES_TAC type_of_2bir_exp_NOT_SOME_Imm >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    IMP_RES_TAC type_of_bir_exp_THM >>
+    REPEAT (QSPECL_X_ASSUM ``!env. _`` [`env`]) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    Cases_on `v` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    Cases_on `v'` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    )
+  ),
+
+  (* MemEq *)
+  Cases_on `type_of_bir_exp ex` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `type_of_bir_exp ex'` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `x` >> Cases_on `x'` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    IMP_RES_TAC type_of_bir_exp_THM >>
+    REPEAT (QSPECL_X_ASSUM ``!env. _`` [`env`]) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    Cases_on `v` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    Cases_on `v'` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    )
+  ),
+
+  (* IfThenElse condition *)
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [BType_Bool_def] >>
+  Cases_on `type_of_bir_exp ex` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  IMP_RES_TAC type_of_bir_exp_THM >>
+  QSPECL_X_ASSUM ``!env. _`` [`env`] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [],
+
+  (* IfThenElse type inequality *)
+  Cases_on `type_of_bir_exp ex'` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `type_of_bir_exp ex''` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  IMP_RES_TAC type_of_bir_exp_THM >>
+  REPEAT (QSPECL_X_ASSUM ``!env. _`` [`env`]) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [],
+
+  (* Load *)
+  Cases_on `type_of_bir_exp ex` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `type_of_bir_exp ex'` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  IMP_RES_TAC type_of_bir_exp_THM >>
+  NTAC 2 (QSPECL_X_ASSUM ``!env. _`` [`env`]) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  Cases_on `v` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `v'` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `x` >> Cases_on `x'` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `b''' = b''` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `b2 = BEnd_NoEndian` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ),
+
+  (* Store *)
+  Cases_on `type_of_bir_exp ex` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `type_of_bir_exp ex'` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `type_of_bir_exp ex''` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  IMP_RES_TAC type_of_bir_exp_THM >>
+  NTAC 3 (QSPECL_X_ASSUM ``!env. _`` [`env`]) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  Cases_on `v` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `v'` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `v''` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `x` >> Cases_on `x'` >> Cases_on `x''` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `b'''' = b'''` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `b2 = BEnd_NoEndian` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  )
+]
 );
 
-
+(* TODO: Rename *)
 (* Follows from bir_eval_exp_IS_SOME_IMPLIES_TYPE, phrased for practical reasons *)
 val bir_eval_TF_is_bool = store_thm("bir_eval_TF_is_bool",
   ``!ex env w.
@@ -1229,7 +1475,7 @@ subgoal `weak_triple (bir_etl_wm prog) l le
   IMP_RES_TAC bir_not_equiv >>
   REV_FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_REWRS, bir_exec_to_labels_triple_precond_def]
 ) >>
-(* Use weak_invariant_rule_thm *)
+(* 3. Use weak_invariant_rule_thm *)
 IMP_RES_TAC weak_invariant_rule_thm
 );
 
@@ -1302,6 +1548,7 @@ EQ_TAC >> (
 
 
 (* TODO: See if this is needed... *)
+(*
 val bir_subset_rule_thm =
  store_thm("bir_subset_rule_thm",
   ``!prog l ls1 ls2 pre post .
@@ -1325,7 +1572,7 @@ subgoal `bir_eval_exp (post s'.bst_pc.bpc_label) s'.bst_environ =
 ) >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def]
 );
-
+*)
 
 val bir_map_weakening_rule_thm = store_thm("bir_map_weakening_rule_thm",
   ``!prog invariant l ls ls' pre post1 post2.
