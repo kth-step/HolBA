@@ -1,7 +1,21 @@
 driver-test --max_iter 200 --prog_size 5 --max_tests 200 --enumerate --generator prefetch_strides --obs_model cache_tag_index_part_page --hw_obs_model hw_cache_tag_index_part_page
 
->>>>>>> 21_prefetch_enum_cpart_aligned - a lot more inconclusive!!
------ 
-n_inconclusive = 2941
-n_examples     = 16099
+
+>>> cav_19_12_03_prefetch_enum_cpart_aligned
+---
+run_id = d0536c15312118473356fbe270d3c52263eaf23a.rpi3
+
+n_progs = 200 (this number is only based on the number of progs subdirectories)
+n_exps  = 37843
+
+
+n_notrun     = 0
+n_incomplete = 0
+
+n_others       = 0
+n_inconclusive = 6967
+n_examples     = 30876
+n_cexamples    = 0
+
+
 
