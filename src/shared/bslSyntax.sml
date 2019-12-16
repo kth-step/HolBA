@@ -54,7 +54,7 @@ struct
   (* Environment                                                              *)
   (****************************************************************************)
 
-  (* Variales (BVar: bir_var_t) *)
+  (* Variables (BVar: bir_var_t) *)
   fun bvar name ty_tm = mk_BVar_string (name, ty_tm)
     handle e => raise wrap_exn "bvar" e
 
@@ -342,7 +342,7 @@ struct
       | bbinexpl_ bop (fst::tms) =
         List.foldl (bbinexp bop) fst tms
   in
-    val bbinexpl = bbinexpl_
+    fun bbinexpl bop l = bbinexpl_ bop (rev l)
       handle e => raise wrap_exn "bbinexpl" e
   end
   val bandl = bbinexpl BIExp_And_tm
@@ -376,7 +376,7 @@ struct
       | bbinpredl_ bpred (fst::tms) =
         List.foldl (bbinexp bpred) fst tms
   in
-    val bbinpredl = bbinpredl_
+    fun bbinpredl bpred l = bbinpredl_ bpred (rev l)
       handle e => raise wrap_exn "bbinpredl" e
   end
   val beql = bbinpredl BIExp_Equal_tm
