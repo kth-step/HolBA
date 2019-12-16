@@ -38,42 +38,43 @@ val _ = new_theory "tutorial_composition";
  * *)
 
 (* Step 1: *)
+(* TODO: Assign new names to these after translating... *)
 (* HTs translated from bir_exec_to_labels_triple to bir_triple: *)
-val bir_add_reg_entry_ht =
+val bir_add_reg_entry_comp_ht =
   HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_entry_ht;
-val bir_add_reg_loop_ht =
+val bir_add_reg_loop_comp_ht =
   HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_ht;
-val bir_add_reg_loop_continue_ht =
+val bir_add_reg_loop_continue_comp_ht =
   HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_continue_ht;
-val bir_add_reg_loop_exit_ht =
+val bir_add_reg_loop_exit_comp_ht =
   HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_exit_ht;
-
-val bir_add_reg_loop_variant_ht =
+(* ... and variant HTs as well: *)
+val bir_add_reg_loop_variant_comp_ht =
   HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_variant_ht;
-val bir_add_reg_loop_continue_variant_ht =
+val bir_add_reg_loop_continue_variant_comp_ht =
   HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_continue_variant_ht;
 
 
 (* Use the below line to debug use_impl_rule
  * (function can be found in tutorial_compositionLib):
 
-  val (contract_thm, pre_impl_wp) = (bir_add_reg_entry_ht, contract_1_imp_taut_thm);
+  val (contract_thm, pre_impl_wp) = (bir_add_reg_entry_comp_ht, contract_1_imp_taut_thm);
 
 *)
 (* This will replace the preconditions in the HTs with the antecedents in the implications
  * supplied as second argument: basically, use_impl_rule applies the Hoare logic rule of consequence
  * for strengthening the precondition. *)
 (* TODO: use_impl_rule uses cheats! *)
-val bir_add_contract_1 = use_impl_rule bir_add_reg_entry_ht contract_1_imp_taut_thm;
-val bir_add_contract_2 = use_impl_rule bir_add_reg_loop_ht contract_2_imp_taut_thm;
-val bir_add_contract_3 = use_impl_rule bir_add_reg_loop_continue_ht contract_3_imp_taut_thm;
-val bir_add_contract_4 = use_impl_rule bir_add_reg_loop_exit_ht contract_4_imp_taut_thm;
+val bir_add_contract_1 = use_impl_rule bir_add_reg_entry_comp_ht contract_1_imp_taut_thm;
+val bir_add_contract_2 = use_impl_rule bir_add_reg_loop_comp_ht contract_2_imp_taut_thm;
+val bir_add_contract_3 = use_impl_rule bir_add_reg_loop_continue_comp_ht contract_3_imp_taut_thm;
+val bir_add_contract_4 = use_impl_rule bir_add_reg_loop_exit_comp_ht contract_4_imp_taut_thm;
 
 (* Same for contracts with loop variant: *)
 val bir_add_contract_2v =
-  use_impl_rule bir_add_reg_loop_variant_ht (Q.SPEC `v` contract_2v_imp_taut_thm);
+  use_impl_rule bir_add_reg_loop_variant_comp_ht (Q.SPEC `v` contract_2v_imp_taut_thm);
 val bir_add_contract_3v =
-  use_impl_rule bir_add_reg_loop_continue_variant_ht (Q.SPEC `v` contract_3v_imp_taut_thm);
+  use_impl_rule bir_add_reg_loop_continue_variant_comp_ht (Q.SPEC `v` contract_3v_imp_taut_thm);
 
 (* FIRST COMPOSITION: Loop composition *)
 (* TODO: Compute variables of program once and store it... *)

@@ -48,7 +48,7 @@ val bir_add_reg_post_def = Define `bir_add_reg_post =
 
 val original_add_reg_loop_condition =  (bnot (bsle(get_lx, bconst64 0)));
 
-(* Note: "BIR cjmp exits the loop is `C`, where C is the BIR ump condition*)
+(* Note: "BIR cjmp exits the loop is `C`, where C is the BIR jump condition*)
 val bir_add_reg_loop_condition =  bnot ``(BExp_BinExp BIExp_Or
                        (BExp_UnaryExp BIExp_Not
                           (BExp_BinPred BIExp_Equal
