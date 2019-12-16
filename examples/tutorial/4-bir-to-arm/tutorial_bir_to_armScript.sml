@@ -25,6 +25,8 @@ val arm8_add_reg_post_def = Define `arm8_add_reg_post m =
   ((^x_var+^y_var) = (^ly_var))
 `;
 
+
+(* BIR variables *)
 val get_y = bden (bvar "R5" ``(BType_Imm Bit64)``);
 val get_x = bden (bvar "R4" ``(BType_Imm Bit64)``);
 val get_ly = bden (bvar "R3" ``(BType_Imm Bit64)``);
@@ -32,13 +34,15 @@ val get_lx = bden (bvar "R2" ``(BType_Imm Bit64)``);
 val get_sp = bden (bvar "SP_EL0" ``(BType_Imm Bit64)``);
 val get_r0 = bden (bvar "R0" ``(BType_Imm Bit64)``);
 
+(* BIR constants *)
+val get_v = bconst ``v:word64``;
+
 
 val bir_add_reg_pre_def = Define `bir_add_reg_pre =
-^(bandl[
-        bnot (bslt(get_x, bconst64 0)),
-        beq(get_lx, get_x),
+^(bandl [bnot (bslt(get_x, bconst64 0)),
+         beq(get_lx, get_x),
          beq(get_ly, get_y)
-         ]
+        ]
 )
 `;
 
@@ -115,12 +119,12 @@ val bir_add_reg_contract_4_post_def = Define `bir_add_reg_contract_4_post =
 (* from loop body start to cjmp *)
 val bir_add_reg_contract_2_pre_variant_def = Define `bir_add_reg_contract_2_pre_variant v =
 ^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition,
-  beq(get_lx, ``(BExp_Const (Imm64 v))``)
+  beq(get_lx, get_v)
 ])
 `;
 val bir_add_reg_contract_2_post_variant_def = Define `bir_add_reg_contract_2_post_variant v  =
  (\(l:bir_label_t). ^(bandl[``bir_add_reg_I``,
-  bnot(bsle(``(BExp_Const (Imm64 v))``, get_lx)),
+  bslt(get_lx, get_v),
   (bsle(bconst64 0, get_lx))
 ]))
 `;
@@ -128,10 +132,10 @@ val bir_add_reg_contract_2_post_variant_def = Define `bir_add_reg_contract_2_pos
 (* contract three: loop continue *)
 (* from cjmp to loop body start *)
 val bir_add_reg_contract_3_pre_variant_def = Define `bir_add_reg_contract_3_pre_variant v =
-^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, ``(BExp_Const (Imm64 v))``)])
+^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, get_v)])
 `;
 val bir_add_reg_contract_3_post_variant_def = Define `bir_add_reg_contract_3_post_variant v =
- (\(l:bir_label_t). ^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, ``(BExp_Const (Imm64 v))``)]))
+ (\(l:bir_label_t). ^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, get_v)]))
 `;
 
 

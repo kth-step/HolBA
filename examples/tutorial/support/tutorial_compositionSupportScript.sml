@@ -73,7 +73,7 @@ val comp_loop_thm = store_thm("comp_loop_thm",
            ]))
   (* TODO: ??? *)
   (\l. (^(bandl[``invariant:bir_exp_t``,
-           bnot(bsle(``BExp_Const (Imm64 free_var)``, ``variant:bir_exp_t``)),
+           bslt(``variant:bir_exp_t``, ``BExp_Const (Imm64 free_var)``),
            bsle(bconst64 0, ``variant:bir_exp_t``)
            ]))))
 ==>
