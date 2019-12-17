@@ -74,3 +74,16 @@ if [[ ! -z "${HOLBA_Z3_DIR}" ]]; then
 fi
 
 
+
+####### HOLBA_USE_OWN_PYTHON3
+if [[ ! -z "${HOLBA_USE_OWN_PYTHON3}" ]]; then
+  PYTHON3_DIR=${HOLBA_OPT_DIR}/python_3.7.4
+  if [[ -d "${PYTHON3_DIR}" ]]; then
+    export PATH=${PYTHON3_DIR}/bin:${PATH}
+    echo "Using PATH=${PATH}"
+    export LD_LIBRARY_PATH=${PYTHON3_DIR}/lib:${LD_LIBRARY_PATH}
+    echo "Using LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
+  fi
+fi
+
+
