@@ -1,11 +1,18 @@
 # Experimenting procedure
+The setup procedure has been tested on Debian 10.2.0-amd64. Alternatively a HOLBA_VM can be used but it must still be prepared according to the notes in `VM_setup.txt`.
 
 ## Setup
-
-Clone HolBA somewhere, change to the branch dev_scamv, setup and compile everything. This step can be repeated multiple times for different IDX (0-99).
+Install the following packages. Make sure that at least `python3` is at least version 3.7.
 ```
-HOLBA_PARENT_DIR=/path/to/this
+apt install git build-essential libtinfo5
+```
+
+Clone HolBA somewhere, change to the branch dev_scamv, setup and compile everything. This step can be repeated multiple times for different IDX (0-99). Execute this from the directory where everything should be placed.
+```
+##################################
+HOLBA_PARENT_DIR=$(pwd)
 IDX=1
+##################################
 
 HOLBA_DIR=${HOLBA_PARENT_DIR}/HolBA_scamv_${IDX}
 HOLBA_OPT_DIR=${HOLBA_PARENT_DIR}/HolBA_opt
