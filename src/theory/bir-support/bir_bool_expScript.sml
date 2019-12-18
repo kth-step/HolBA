@@ -237,6 +237,19 @@ SIMP_TAC (std_ss++holBACore_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_is_bool_exp_def
   bir_number_of_mem_splits_BitResult] >> METIS_TAC []);
 
 
+(* TODO: Rename? *)
+val bir_eval_TF_is_bool = store_thm("bir_eval_TF_is_bool",
+  ``!ex env w.
+    (bir_eval_exp ex env = SOME (BVal_Imm (Imm1 w))) ==>
+    bir_is_bool_exp ex``,
+
+REPEAT STRIP_TAC >>
+IMP_RES_TAC bir_eval_exp_IS_SOME_IMPLIES_TYPE >>
+QSPECL_X_ASSUM ``!ty. _`` [`BType_Imm Bit1`] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_def]
+);
+
+
 (*************************)
 (* convenient shorthands *)
 (*************************)

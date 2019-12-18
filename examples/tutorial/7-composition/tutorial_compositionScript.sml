@@ -24,7 +24,7 @@ val _ = new_theory "tutorial_composition";
    2. Use bir_label_ht_impl_weak_ht to translate bir_exec_to_labels_triple
       to bir_triple - OK
    3. Use the theorems in bir_wm_instTheory to compose:
-      bir_invariant_rule_thm and bir_seq_rule_thm
+      bir_while_rule_thm and bir_seq_rule_thm
 
 *)
 
@@ -79,7 +79,7 @@ val bir_add_contract_3v =
 (* FIRST COMPOSITION: Loop composition *)
 (* TODO: Compute variables of program once and store it... *)
 
-(* Now, specialize the loop composition theorem (bir_invariant_rule_thm) in order to get
+(* Now, specialize the loop composition theorem (bir_while_rule_thm) in order to get
  * the already proved contracts as antecedents. *)
 val bir_add_comp_invariant_rule_thm =
   ISPECL [get_contract_prog bir_add_contract_2v,
@@ -89,7 +89,7 @@ val bir_add_comp_invariant_rule_thm =
           ``bir_add_reg_loop_condition``,
           bden (bvar "R2" ``(BType_Imm Bit64)``),
           (* TODO: The below should be the postcondition we want with the new composition... *)
-          ``\(x:bir_label_t). ^(get_contract_pre bir_add_contract_4)``] bir_invariant_rule_thm;
+          ``\(x:bir_label_t). ^(get_contract_pre bir_add_contract_4)``] bir_while_rule_thm;
 
 (* Attempt to prove the first antecedent of the specialised loop composition theorem and store the
  * result of modus ponens in thm1. *)
