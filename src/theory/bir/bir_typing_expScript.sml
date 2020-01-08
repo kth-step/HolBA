@@ -748,8 +748,8 @@ val bir_eval_exp_IS_SOME_IMPLIES_INIT =
 
 Induct_on `e` >> (
   REPEAT STRIP_TAC >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_exp_def, bir_vars_of_exp_def,
-                                        bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY]
+  FULL_SIMP_TAC std_ss [bir_eval_exp_def, bir_vars_of_exp_def,
+                        bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY]
 ) >| [
   (* Den *)
   subgoal `type_of_bir_val va = bir_var_type b` >- (
@@ -761,77 +761,77 @@ Induct_on `e` >> (
 
   (* Cast *)
   Cases_on `bir_eval_exp e env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_cast_REWRS]
   ) >>
   METIS_TAC [],
 
   (* UnaryExp *)
   Cases_on `bir_eval_exp e env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_unary_exp_REWRS]
   ) >>
   METIS_TAC [],
 
   (* BinExp *)
   Cases_on `bir_eval_exp e env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_bin_exp_REWRS]
   ) >>
   Cases_on `bir_eval_exp e' env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_bin_exp_REWRS]
   ) >>
   METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_UNION],
 
   (* BinPred *)
   Cases_on `bir_eval_exp e env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_bin_pred_REWRS]
   ) >>
   Cases_on `bir_eval_exp e' env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_bin_pred_REWRS]
   ) >>
   METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_UNION],
 
   (* MemEq *)
   Cases_on `bir_eval_exp e env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_memeq_REWRS]
   ) >>
   Cases_on `bir_eval_exp e' env` >- (
     Cases_on `x` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+      FULL_SIMP_TAC std_ss [bir_eval_memeq_REWRS]
     )
   ) >>
   METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_UNION],
 
   (* IfThenElse *)
   Cases_on `bir_eval_exp e env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_ifthenelse_REWRS]
   ) >>
   Cases_on `bir_eval_exp e' env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_ifthenelse_REWRS]
   ) >>
   Cases_on `bir_eval_exp e'' env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_ifthenelse_REWRS]
   ) >>
   METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_UNION],
 
   (* Load *)
   Cases_on `bir_eval_exp e env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_load_NONE_REWRS]
   ) >>
   Cases_on `bir_eval_exp e' env` >- (
     Cases_on `x` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+      FULL_SIMP_TAC std_ss [bir_eval_load_NONE_REWRS]
     )
   ) >>
   METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_UNION],
 
   (* Store *)
   Cases_on `bir_eval_exp e env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_store_NONE_REWRS]
   ) >>
   Cases_on `bir_eval_exp e' env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_store_NONE_REWRS]
   ) >>
   Cases_on `bir_eval_exp e'' env` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    FULL_SIMP_TAC std_ss [bir_eval_store_NONE_REWRS]
   ) >>
   METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_UNION]
 ]

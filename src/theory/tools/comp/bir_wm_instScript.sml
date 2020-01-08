@@ -676,144 +676,13 @@ val iv2i_def = Define `
 `;
 
 
-(* TODO: Why do I need all of the below until bir_eval_imm_types, when
- * type_of_bir_exp_THM_with_init_vars exists? *)
-(* TODO: Needed for bir_lessthan_equiv? *)
-val bir_imm_word_lo_def = Define `
-  (bir_imm_word_lo (SOME (BVal_Imm (Imm1 w1)))  (SOME (BVal_Imm (Imm1 w2))) = w1 <+ w2) /\
-  (bir_imm_word_lo (SOME (BVal_Imm (Imm8 w1)))  (SOME (BVal_Imm (Imm8 w2))) = w1 <+ w2) /\
-  (bir_imm_word_lo (SOME (BVal_Imm (Imm16 w1))) (SOME (BVal_Imm (Imm16 w2))) = w1 <+ w2) /\
-  (bir_imm_word_lo (SOME (BVal_Imm (Imm32 w1))) (SOME (BVal_Imm (Imm32 w2))) = w1 <+ w2) /\
-  (bir_imm_word_lo (SOME (BVal_Imm (Imm64 w1))) (SOME (BVal_Imm (Imm64 w2))) = w1 <+ w2) /\
-  (bir_imm_word_lo (SOME (BVal_Imm (Imm128 w1))) (SOME (BVal_Imm (Imm128 w2))) = w1 <+ w2)
-`;
-
-(* TODO: Replaced by bir_eval_imm_types_EXISTS? *)
-val bir_eval_imm = store_thm("bir_eval_imm",
-  ``!env ex.
-    bir_env_vars_are_initialised env (bir_vars_of_exp ex) ==>
-    bir_is_imm_exp ex ==>
-    (?imm. bir_eval_exp ex env = SOME (BVal_Imm imm))``,
-
-METIS_TAC [bir_is_imm_exp_def, type_of_bir_exp_THM_with_init_vars,
-           type_of_bir_val_EQ_ELIMS]
-);
-
-(* TODO: Is there already something like this? *)
-fun bir_imm_of_size n =
-  if (n = 1)
-  then Imm1_tm
-  else if (n = 8)
-  then Imm8_tm
-  else if (n = 16)
-  then Imm16_tm
-  else if (n = 32)
-  then Imm32_tm
-  else if (n = 64)
-  then Imm64_tm
-  else if (n = 128)
-  then Imm128_tm
-  else raise (ERR "bir_imm_of_size"
-                  ("The number of bits "^(Int.toString n)^
-                   " does not correspond with any binary word"^
-                   " length in supported BIR syntax."))
-;
-
-
-(* type_of_bir_imm_def *)
-(* Abstract version *)
-val bir_eval_imm_types_EXISTS = store_thm("bir_eval_imm_types_EXISTS",
-  ``!env ex ty.
-    bir_env_vars_are_initialised env (bir_vars_of_exp ex) ==>
-    (type_of_bir_exp ex = SOME (BType_Imm ty)) ==>
-    ?i. (bir_eval_exp ex env = SOME (BVal_Imm i)) /\
-        (type_of_bir_imm i = ty)``,
-
-REPEAT STRIP_TAC >>
-IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
-Cases_on `va` >> (
-  FULL_SIMP_TAC (std_ss++holBACore_ss) []
-)
-);
-
-
-(* More practical version of the above, for automatization *)
-val bir_eval_imm_types = save_thm("bir_eval_imm_types",
-let
-  fun prove_eval_imm_types_thms []     = []
-    | prove_eval_imm_types_thms (h::t) =
-      let
-        val immtype = bir_immtype_t_of_size h
-        val imm = bir_imm_of_size h
-      in
-        ((prove(``!env ex.
-                  (bir_env_vars_are_initialised env (bir_vars_of_exp ex)) ==>
-                  (type_of_bir_exp ex = SOME (BType_Imm ^immtype)) ==>
-                  (?w. bir_eval_exp ex env = SOME (BVal_Imm (^imm w)))
-               ``,
-	       REPEAT STRIP_TAC >>
-	       IMP_RES_TAC bir_eval_imm_types_EXISTS >>
-	       Cases_on `i` >> (
-		 FULL_SIMP_TAC (std_ss++holBACore_ss) []
-	       )
-         ))::(prove_eval_imm_types_thms t)
-        )
-      end
-
-in
-  LIST_CONJ (prove_eval_imm_types_thms known_imm_sizes)
-end
-);
-
-
-(* Equivalence of BIR less-than with HOL less-than. *)
-val bir_lessthan_equiv = store_thm("bir_lessthan_equiv",
-  ``!ex1 ex2 env it.
-    bir_env_vars_are_initialised env (bir_vars_of_exp ex1) ==>
-    bir_env_vars_are_initialised env (bir_vars_of_exp ex2) ==>
-    (type_of_bir_exp ex1 = SOME (BType_Imm it)) ==>
-    (type_of_bir_exp ex2 = SOME (BType_Imm it)) ==>
-    ((bir_eval_exp
-       (BExp_BinPred BIExp_LessThan ex1 ex2) env = SOME bir_val_true
-    ) <=> (bir_imm_word_lo (bir_eval_exp ex1 env) (bir_eval_exp ex2 env)))``,
-
-REPEAT STRIP_TAC >> (Cases_on `it`) >| [
-  IMP_RES_TAC (el 1 (CONJUNCTS bir_eval_imm_types)) >>
-  FULL_SIMP_TAC bool_ss [bir_imm_word_lo_def],
-
-  IMP_RES_TAC (el 2 (CONJUNCTS bir_eval_imm_types)) >>
-  FULL_SIMP_TAC bool_ss [bir_imm_word_lo_def],
-
-  IMP_RES_TAC (el 3 (CONJUNCTS bir_eval_imm_types)) >>
-  FULL_SIMP_TAC bool_ss [bir_imm_word_lo_def],
-
-  IMP_RES_TAC (el 4 (CONJUNCTS bir_eval_imm_types)) >>
-  FULL_SIMP_TAC bool_ss [bir_imm_word_lo_def],
-
-  IMP_RES_TAC (el 5 (CONJUNCTS bir_eval_imm_types)) >>
-  FULL_SIMP_TAC bool_ss [bir_imm_word_lo_def],
-
-  IMP_RES_TAC (el 6 (CONJUNCTS bir_eval_imm_types)) >>
-  FULL_SIMP_TAC bool_ss [bir_imm_word_lo_def]
-] >> (
-  FULL_SIMP_TAC (bool_ss++holBACore_ss) [bir_val_true_def,
-                                         bool2b_def,
-                                         bool2w_def] >>
-  Cases_on `w' <+ w` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [word1_distinct]
-  )
-)
-);
-
-
-(* Check all theorems containing antecedents on initialization in the entirety of HolBA
+(* TODO: Check all theorems containing antecedents on initialization in the entirety of HolBA
  * to see if they can be resolved by theorem giving variable initialisation... *)
 (* Also booleanity and bir_eval_TF_is_bool *)
 
 
-(* TODO: Rewrite this proof to a nicer format... *)
-(* This theorem obtains a weak_loop_contract for obtaining the consequent of
- * bir_while_rule_thm *)
+(* TODO: Prove bir_weak_triple_sloop here, if needed *)
+
 val bir_weak_triple_loop = store_thm("bir_weak_triple_loop",
   ``!prog l le invariant variant C1.
     (* Note: Due to the method of obtaining a number from the variant,
@@ -917,8 +786,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
 
-(* TODO: Generalize... *)
-(* This should be used to instantiate weak_invariant_rule_thm *)
+(* This should be used to instantiate weak_while_rule_thm *)
 val bir_weak_triple_precond_conj = store_thm("bir_weak_triple_precond_conj",
   ``!prog l le invariant C1 post.
     weak_triple (bir_etl_wm prog) l le
@@ -944,7 +812,6 @@ REV_FULL_SIMP_TAC std_ss [GSYM bir_and_equiv, bir_not_equiv,
 Q.EXISTS_TAC `s'` >>
 FULL_SIMP_TAC std_ss []
 );
-
 
 (* Likewise, use weak_invariant_rule_thm to prove the BIR version of it.
  * Called bir_while_rule_thm to distinguish from bir_do_while_rule_thm *)
@@ -1016,6 +883,7 @@ IMP_RES_TAC weak_invariant_rule_thm
 (*****************************************************)
 
 (* How to obtain a bir_map_triple from a bir_triple: *)
+(* TODO: Rename to something with "equiv"... *)
 val bir_triple_from_map_triple = store_thm("bir_triple_from_map_triple",
   ``!prog invariant l ls ls' pre post.
     bir_map_triple prog invariant l ls ls' pre post <=>

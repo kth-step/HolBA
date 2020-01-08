@@ -38,21 +38,62 @@ val _ = new_theory "tutorial_composition";
  * *)
 
 (* Step 1: *)
-(* TODO: Assign new names to these after translating... *)
 (* HTs translated from bir_exec_to_labels_triple to bir_triple: *)
 val bir_add_reg_entry_comp_ht =
   HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_entry_ht;
+
+(* TODO: Below two not needed? *)
 val bir_add_reg_loop_comp_ht =
   HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_ht;
 val bir_add_reg_loop_continue_comp_ht =
   HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_continue_ht;
+
 val bir_add_reg_loop_exit_comp_ht =
   HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_exit_ht;
-(* ... and variant HTs as well: *)
+(* TODO: Below two should be forged into the new loop HT *)
 val bir_add_reg_loop_variant_comp_ht =
   HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_variant_ht;
 val bir_add_reg_loop_continue_variant_comp_ht =
   HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_continue_variant_ht;
+
+(* If bir_seq_rule is used to compose bir_triple translated to loop_contract:
+open bir_wm_instTheory;
+(* Use map triples throughout everywhere possible, convert with bir_triple_from_map_triple *)
+
+(* Version 1: Do not do this *)
+(* HT1: Loop body *)
+(* HT2: Loop continuation *)
+Q.SPECL [`prog`, `loop_branch`, `loop_start`, `loop_start`, `post_loop`,
+         `bir_var_true`, `loop_start`] bir_map_std_seq_comp_thm;
+
+  (* Version 2: This is the way to go *)
+  (* HT1: Loop continuation *)
+  (* HT2: Loop body *)
+  Q.SPECL [`prog`, `loop_start`, `loop_branch`, `post_loop UNION loop_branch`, `{}`,
+	   `bir_var_true`, `loop_branch`] bir_map_std_seq_comp_thm;
+
+Consequent gets translated to the bir_loop_contract in bir_while_rule, yielding (abbreviated)
+
+bir_loop_contract loop_branch post_loop ==>
+bir_triple loop_branch post_loop ==> (* Loop exit *)
+bir_triple loop_branch post_loop
+
+Then, we need theorems for loop incipit (all program until branch) and everything after post-loop.
+*)
+
+(******************************************************************)
+                         (* New stuff *)
+(******************************************************************)
+
+(* Loop continuation *)
+(* TODO: Below two should be forged into the new loop HT *)
+val bir_add_reg_loop_variant_comp_ht =
+  HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_variant_ht;
+val bir_add_reg_loop_continue_variant_comp_ht =
+  HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_continue_variant_ht;
+
+(******************************************************************)
+(******************************************************************)
 
 
 (* Use the below line to debug use_impl_rule

@@ -110,6 +110,9 @@ sig
    (* Is the term any type of Imm constant *)
    val gen_is_Imm : term -> bool
 
+   (* Getting the Imm of a size *)
+   val bir_imm_of_size : int -> term
+
    (* making Imm from numbers, first argument is size, second the value *)
    val mk_Imm_of_num : int -> Arbnum.num -> term;
 

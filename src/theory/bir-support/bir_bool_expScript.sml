@@ -6,6 +6,8 @@ open bir_exp_memTheory bir_expTheory;
 open bir_exp_immTheory;
 open HolBACoreSimps
 
+open bir_auxiliaryLib;
+
 val _ = new_theory "bir_bool_exp";
 
 

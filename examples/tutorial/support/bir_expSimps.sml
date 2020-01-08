@@ -36,6 +36,7 @@ val thms = rewrites [
   bir_vars_of_exp_def
 ];
 
+(* Simpset for computing bir_is_bool_exp of BIR expressions *)
 val bir_is_bool_ss = simpLib.merge_ss [type_thms, thms];
 
 (* Useful when simplifying bir_env_read. *)

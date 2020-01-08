@@ -937,4 +937,20 @@ MATCH_MP_TAC listTheory.ALL_DISTINCT_MAP_INJ >>
 ASM_SIMP_TAC std_ss [FRESH_INDEXED_STRING_MK_11]);
 
 
+(* -------------------------------------------------------------------------- *)
+(* Miscellaneous                                                              *)
+(* -------------------------------------------------------------------------- *)
+
+val noteq_trans_impl = store_thm("noteq_trans_impl",
+  ``!A B x.
+    (A <> B) ==>
+    (((x = A) /\ (x = B)) <=> F)``,
+
+REPEAT STRIP_TAC >>
+RW_TAC std_ss [] >>
+CCONTR_TAC >>
+FULL_SIMP_TAC std_ss [] >>
+RW_TAC std_ss []
+);
+
 val _ = export_theory();
