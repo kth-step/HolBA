@@ -23,11 +23,11 @@ struct
       let
 	val contract_thm = SIMP_RULE std_ss [bir_bool_expTheory.bir_exp_and_def] contract_thm;
 	val pre = ((el 2) o snd o strip_comb o (el 2) o snd o strip_comb o hd o snd o strip_comb o concl) pre_impl_wp;
-	val prog = ((el 1) o snd o strip_comb o concl) contract_thm;
-	val entry = ((el 2) o snd o strip_comb o concl) contract_thm;
-	val exit = ((el 3) o snd o strip_comb o concl) contract_thm;
-	val post = ((el 5) o snd o strip_comb o concl) contract_thm;
-	val wp = ((el 4) o snd o strip_comb o concl) contract_thm;
+	val prog = get_contract_prog contract_thm;
+	val entry = get_contract_l contract_thm;
+	val exit = get_contract_ls contract_thm;
+	val post = get_contract_post contract_thm;
+	val wp = get_contract_pre contract_thm;
 	val taut_thm = computeLib.RESTR_EVAL_RULE [(fst o strip_comb) pre, ``bir_exp_is_taut``] pre_impl_wp;
 	val pre_var_thm = prove (``
 	   ((bir_vars_of_exp ^pre) ⊆ (bir_vars_of_program ^prog))
@@ -135,8 +135,8 @@ struct
 	(* Obtain the bir_loop_contract from loop_ht and loop_continuation_ht and knock
          * out the corresponding antecedent *)
 	(*   TODO: Ending label set must be union of loop end (64) and post-loop (68 or 72?). *)
-	(*   TODO: Should signed or unsigned comparisons be used? *)
 	(*   TODO: Postcondition must be a map which maps 64 to postcond and all else to false. *)
+	(*   TODO: Should signed or unsigned comparisons be used? *)
 	(*   TODO: Make syntax functions for bir_loop_contract *)
 	(*   TODO: Make composition function only for bir_loop_contract *)
 	val temp_cheat_thm =
