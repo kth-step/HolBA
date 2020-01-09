@@ -31,6 +31,7 @@ fun Z3_prove_or_print_model term =
       end
         handle _ => raise HOL_ERR e
 
+(* TODO: Rewrite this to something more sensible *)
 fun prove_bir_eval_exp_with_SMT_then_cheat_TAC (assum_list, goal) =
   let
     val (eval_tm, rhs_opt_tm) = dest_eq goal
@@ -52,12 +53,16 @@ fun prove_exp_is_taut imp_tm = (GEN_ALL o prove) (
   ``bir_exp_is_taut ^(imp_tm)``,
   PURE_REWRITE_TAC [bir_exp_is_taut_def] >>
   REPEAT STRIP_TAC >| [
-    (* Prove bir_is_bool_exp using cheat *)
-    cheat
-    ,
-    (* Prove bir_var_set_is_well_typed using cheat *)
-    cheat
-    ,
+    computeLib.RESTR_EVAL_TAC [``bir_is_bool_exp``] >>
+    FULL_SIMP_TAC (std_ss++bir_expSimps.bir_is_bool_ss) [],
+
+    (* TODO: Prove bir_var_set_is_well_typed *)
+    computeLib.EVAL_TAC >>
+    FULL_SIMP_TAC (srw_ss()) [] >>
+    (* This is as far as we get with brute force... Format should be same for all situations.
+     * Consider not simplifying this much if it fits better with theories you want to use *)
+    cheat,
+
     (* Prove ''bir_eval_exp imp env'' using the bir2bool function and SMT solver *)
     computeLib.RESTR_EVAL_TAC [``bir_eval_exp``] >>
     prove_bir_eval_exp_with_SMT_then_cheat_TAC
