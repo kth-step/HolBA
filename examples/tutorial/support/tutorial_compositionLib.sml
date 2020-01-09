@@ -62,6 +62,7 @@ struct
 	val map_equiv = ISPECL [prog, bir_bool_expSyntax.bir_exp_true_tm,
 			     l, ls, pred_setSyntax.mk_empty ``:bir_label_t``,
 			     pre, post] bir_wm_instTheory.bir_triple_from_map_triple
+        (* TODO: Review and describe what these steps are supposed to do *)
 	val map_equiv2 =
 	  SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss)
 	    [pred_setTheory.INTER_EMPTY, bir_wm_instTheory.bir_triple_def,
@@ -75,14 +76,18 @@ struct
 	    [bir_wm_instTheory.bir_exec_to_labels_triple_postcond_def,
              bir_exp_equivTheory.bir_and_op2,
              bir_bool_expTheory.bir_is_bool_exp_env_REWRS] map_equiv3
+        (* TODO: The below theorem appears to be needed for HTs with a variant in postcondition... *)
+        val spec_eta = ISPEC post boolTheory.ETA_THM
 	val map_equiv5 =
 	  SIMP_RULE std_ss [GSYM bir_wm_instTheory.bir_exec_to_labels_triple_postcond_def,
-                            GSYM bir_wm_instTheory.bir_triple_def] map_equiv4
+                            GSYM bir_wm_instTheory.bir_triple_def, spec_eta] map_equiv4
       in
 	REWRITE_RULE [GSYM map_equiv5] tr
       end
     ;
 
+    (* TODO: Fix the mess with def_list unfolding too much back and forth,
+     *       see if RESTR_EVAL_RULE can be helpful *)
     fun bir_compose_loop loop_ht loop_continuation_ht loop_exit_ht loop_invariant loop_condition
           loop_variant def_list = 
       let
@@ -170,6 +175,8 @@ struct
       end
     ;
 
+    (* TODO: Fix the mess with def_list unfolding too much back and forth,
+     *       see if RESTR_EVAL_RULE can be helpful *)
     fun bir_compose_seq ht1 ht2 def_list =
       let
 	(* 1. Specialise bir_map_std_seq_comp_thm *)
@@ -236,9 +243,15 @@ struct
 	  SIMP_RULE std_ss ([pred_setTheory.IN_ABS]@def_list)
 	    bir_add_comp_seq_rule_thm4;
 	(* Knock out the final antecedent with bir_loop_map_triple *)
-	val bir_add_comp_seq_rule_thm6 = HO_MATCH_MP bir_add_comp_seq_rule_thm5 bir_loop_map_triple;
+	val bir_add_comp_seq_rule_thm6 =
+          HO_MATCH_MP bir_add_comp_seq_rule_thm5
+            (SIMP_RULE std_ss def_list bir_loop_map_triple);
+        (* Clean-up the expanded definitions *)
+	val bir_add_comp_seq_rule_thm7 =
+          (SIMP_RULE std_ss (map GSYM def_list) bir_add_comp_seq_rule_thm6);
+
       in
-	bir_add_comp_seq_rule_thm6
+	bir_add_comp_seq_rule_thm7
       end
     ;
 

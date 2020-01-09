@@ -50,6 +50,36 @@ val bir_add_reg_loop_exit_comp_ht =
     contract_4_imp_taut_thm;
 
 (****************************************************************)
+(* Suggested new step 2: *)
+(* Compose 32 -> 64 and 64 -> 32 sequentially *)
+
+(* For debugging: *)
+  val ht1 = bir_add_reg_loop_continue_variant_comp_ht; (* 64 -> 32 *)
+  val ht2 = bir_add_reg_loop_variant_comp_ht; (* 32 -> 64 *)
+  (* The definitions of the program, plus any shorthands in  *)
+  (* TODO: Program definition could be bad to unfold in the wrong place, maybe that should be a
+   * separate argument... *)
+  val def_list = [bir_add_reg_prog_def, bir_add_reg_contract_3_post_variant_def,
+		  bir_add_reg_contract_2_pre_variant_def];
+
+val loop_map_ht =
+   bir_compose_seq ht1 ht2 def_list;
+
+(****************************************************************)
+(* Suggested new step 3: *)
+(* Compose loop from loop_map_ht and bir_add_reg_loop_exit_comp_ht (using bir_while_rule_thm) *)
+
+(* TODO: Make new bir_compose_loop_new here, based on old bir_compose_loop. *)
+
+(****************************************************************)
+(* Suggested new step 4: *)
+(* Compose loop intro with loop (using bir_map_std_seq_comp_thm) *)
+
+(* TODO *)
+
+(****************************************************************)
+(*                             OLD                              *)
+(****************************************************************)
 (* Step 2: *)
 (* Compose loop (using bir_while_rule_thm) *)
 
