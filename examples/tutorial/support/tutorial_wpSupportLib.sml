@@ -60,34 +60,34 @@ local
 
   (* This helper function takes a list of BIR program labels and
    * makes a finite map mapping these onto BIR False. *)
-  fun make_false_label_fmap false_label_l =
+  fun make_blacklist_fmap blacklist =
     List.foldl (fn (label, map) =>
 		  mk_fupdate (map,
                               mk_pair (label, bir_exp_false_tm)
                              )
 	       )
 	       (mk_fempty (bir_label_t_ty, bir_exp_t_ty))
-	       false_label_l
+	       blacklist
   ;
 
 in
 
 (* This is a wrapper function for generating and proving WPs. *)
 fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                  postcond_tm prefix false_label_l defs =
+                  postcond_tm prefix blacklist defs =
   let
     (* Some terms which will be used: *)
     (*   The terminating label set *)
     val ls_tm = ``\x.(x = ^last_block_label_tm)``
     (*   A finite map of dummy labels to False *)
-    val false_fmap_tm = make_false_label_fmap false_label_l
+    val blacklist_fmap_tm = make_blacklist_fmap blacklist
     (* The postcondition expression of the last block label *)
     val postcond_exp_tm = ``^postcond_tm ^last_block_label_tm``
     (*   A finite map of all the labels and all the preconditions,
      *   which will be used throughout the computation to store
      *   the WPs *)
     val wps_tm = ``
-        ((^false_fmap_tm) |+ (^last_block_label_tm,
+        ((^blacklist_fmap_tm) |+ (^last_block_label_tm,
                     ^postcond_exp_tm
                    )
         )
@@ -105,7 +105,7 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
         (prog_tm, postcond_tm, ls_tm) wps_tm defs
     val (wpsdom, blstodo) =
       bir_wp_init_rec_proc_jobs (eot prog_tm) wps_expand_tm
-                                false_label_l
+                                blacklist
 
     (* Prepare "problem-static" part of computation: *)
     (* For debugging bir_wp_comp_wps_iter_step0_init:

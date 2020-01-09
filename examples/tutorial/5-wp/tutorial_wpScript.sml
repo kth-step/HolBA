@@ -60,7 +60,7 @@ val last_block_label_tm =  ``BL_Address (Imm64 0x20w)``; (* 32 *)
 (* TODO: Here, we need to add address of loop branch (0x40),
  * but this makes WP procedure fail. If added first, then we
  * can't even find any HT. If last, then WP becomes False. *)
-val false_label_l = [``BL_Address (Imm64 0x44w)``, ``BL_Address (Imm64 0x40w)``];
+val blacklist = [``BL_Address (Imm64 0x44w)``, ``BL_Address (Imm64 0x40w)``];
 (* TODO: Check that this postcond is the correct one... *)
 val postcond_tm = ``bir_add_reg_contract_3_post_variant v``;
 (* defs is a list of theorems - typically definitions - which is
@@ -73,7 +73,7 @@ val defs = [bir_add_reg_prog_def, bir_add_reg_contract_3_post_variant_def,
             bir_add_reg_I_def, BType_Bool_def];
 val (bir_add_reg_new_loop_continue_variant_ht, bir_add_reg_new_loop_continue_variant_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l defs;
+                postcond_tm prefix blacklist defs;
 (* By creating a definition and saving the HT as a theorem, we 
  * allow them to be exported to later theories. *)
 val bir_add_reg_new_loop_continue_variant_wp_def =
@@ -112,7 +112,9 @@ x *
  *
  * For this exercise we will only treat single last block labels. *)
 val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``; (* 64 *)
-(* false_label_l is a list of block labels, for which we assign
+(* TODO: Update this description to be in line with everything post-
+ * new compositional HTs *)
+(* blacklist is a list of block labels, for which we assign
  * dummy HTs with False as pre- and postcondition.
  *
  * This can be hard to understand intuitively. First, consider a HT
@@ -130,7 +132,7 @@ val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``; (* 64 *)
  * one of the jump targets signifies loop continuation. This allows
  * us to separately generate HTs for loop continuation and loop
  * exit, which we then can compose.  *)
-val false_label_l = [];
+val blacklist = [];
 (* postcond_tm is the postcondition of the HT to be generated and
  * proved, which is obtained from the contract definitions in
  * tutorial_bir_to_armTheory. *)
@@ -159,7 +161,7 @@ val defs = [bir_add_reg_prog_def, bir_add_reg_contract_1_post_def,
  * *)
 val (bir_add_reg_entry_ht, bir_add_reg_entry_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l defs;
+                postcond_tm prefix blacklist defs;
 (* By creating a definition and saving the HT as a theorem, we 
  * allow them to be exported to later theories. *)
 val bir_add_reg_entry_wp_def =
@@ -175,14 +177,14 @@ val _ = save_thm ("bir_add_reg_entry_ht", bir_add_reg_entry_ht);
 val prefix = "add_reg_loop_";
 val first_block_label_tm = ``BL_Address (Imm64 0x20w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``;
-val false_label_l = [];
+val blacklist = [];
 val postcond_tm = ``bir_add_reg_contract_2_post``;
 val defs = [bir_add_reg_prog_def, bir_add_reg_contract_2_post_def,
             bir_add_reg_I_def, BType_Bool_def];
 
 val (bir_add_reg_loop_ht, bir_add_reg_loop_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l defs;
+                postcond_tm prefix blacklist defs;
 
 val bir_add_reg_loop_wp_def =
   Define `bir_add_reg_loop_wp = ^(bir_add_reg_loop_wp_tm)`;
@@ -195,11 +197,11 @@ val _ = save_thm ("bir_add_reg_loop_ht", bir_add_reg_loop_ht);
 val prefix = "add_reg_loop_continue_";
 val first_block_label_tm = ``BL_Address (Imm64 0x40w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x20w)``;
-(* Here, we use the block label for 0x44 in false_label_l. This
+(* Here, we use the block label for 0x44 in blacklist. This
  * means that we are interested in the WP which describes execution
  * which does not proceed from 0x40 to 0x44, that is, exit the
  * loop. *)
-val false_label_l = [``BL_Address (Imm64 0x44w)``];
+val blacklist = [``BL_Address (Imm64 0x44w)``];
 val postcond_tm = ``bir_add_reg_contract_3_post``;
 val defs = [bir_add_reg_prog_def, bir_add_reg_contract_3_post_def,
             bir_add_reg_I_def, BType_Bool_def];
@@ -207,7 +209,7 @@ val defs = [bir_add_reg_prog_def, bir_add_reg_contract_3_post_def,
 val (bir_add_reg_loop_continue_ht,
      bir_add_reg_loop_continue_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l defs;
+                postcond_tm prefix blacklist defs;
 
 val bir_add_reg_loop_continue_wp_def = Define `
   bir_add_reg_loop_continue_wp = ^(bir_add_reg_loop_continue_wp_tm)`
@@ -227,14 +229,14 @@ val first_block_label_tm = ``BL_Address (Imm64 0x40w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x48w)``;
 (* In similar fashion as in (3), here we instead rule out loop
  * continuation. *)
-val false_label_l = [``BL_Address (Imm64 0x20w)``];
+val blacklist = [``BL_Address (Imm64 0x20w)``];
 val postcond_tm = ``bir_add_reg_contract_4_post``;
 val defs = [bir_add_reg_prog_def, bir_add_reg_contract_4_post_def,
             bir_add_reg_post_def];
 
 val (bir_add_reg_loop_exit_ht, bir_add_reg_loop_exit_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l defs;
+                postcond_tm prefix blacklist defs;
 
 val bir_add_reg_loop_exit_wp_def = Define
   `bir_add_reg_loop_exit_wp = ^(bir_add_reg_loop_exit_wp_tm)`;
@@ -272,7 +274,7 @@ val _ =
 val prefix = "add_reg_loop_variant_";
 val first_block_label_tm = ``BL_Address (Imm64 0x20w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``;
-val false_label_l = [];
+val blacklist = [];
 val postcond_tm =
   ``bir_add_reg_contract_2_post_variant v``;
 val defs = [bir_add_reg_prog_def,
@@ -281,7 +283,7 @@ val defs = [bir_add_reg_prog_def,
 
 val (bir_add_reg_loop_variant_ht, bir_add_reg_loop_variant_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l defs;
+                postcond_tm prefix blacklist defs;
 
 val bir_add_reg_loop_variant_wp_def = Define `
   bir_add_reg_loop_variant_wp v =
@@ -298,7 +300,7 @@ val _ = save_thm ("bir_add_reg_loop_variant_ht",
 val prefix = "add_reg_loop_continue_variant_";
 val first_block_label_tm = ``BL_Address (Imm64 0x40w)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x20w)``;
-val false_label_l = [``BL_Address (Imm64 0x44w)``];
+val blacklist = [``BL_Address (Imm64 0x44w)``];
 val postcond_tm = ``bir_add_reg_contract_3_post_variant v``;
 val defs = [bir_add_reg_prog_def,
             bir_add_reg_contract_3_post_variant_def,
@@ -307,7 +309,7 @@ val defs = [bir_add_reg_prog_def,
 val (bir_add_reg_loop_continue_variant_ht,
      bir_add_reg_loop_continue_variant_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l defs;
+                postcond_tm prefix blacklist defs;
 
 val bir_add_reg_loop_continue_variant_wp_def = Define `
   bir_add_reg_loop_continue_variant_wp v =
@@ -337,14 +339,14 @@ val _ = save_thm ("bir_add_reg_loop_continue_variant_ht",
 val prefix = "add_reg_mem_";
 val first_block_label_tm = ``BL_Address (Imm64 0x0w)``; (* 28 *)
 val last_block_label_tm =  ``BL_Address (Imm64 0x1cw)``; (* 64 *)
-val false_label_l = [];
+val blacklist = [];
 val postcond_tm = ``bir_add_reg_contract_0_post``;
 val defs = [bir_add_reg_prog_def, bir_add_reg_contract_0_post_def,
             bir_add_reg_contract_0_pre_def];
 
 val (bir_add_reg_mem_ht, bir_add_reg_mem_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l defs;
+                postcond_tm prefix blacklist defs;
 
 val bir_add_reg_mem_wp_def = Define `
   bir_add_reg_mem_wp = ^(bir_add_reg_mem_wp_tm)

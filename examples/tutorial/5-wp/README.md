@@ -2,6 +2,8 @@
 
 ## Introduction
 
+NOTE: This might be outdated, in particular with regard to how blacklists are treated.
+
 This directory contains a tutorial on how to obtain the weakest precondition of code segments, given their postconditions.
 
 From the previous directory `4-bir-to-arm` we should have a number of contracts on code segments, in the shape of Hoare triples. The final goal is proving that these hold.
@@ -21,7 +23,7 @@ The main workhorse of this step will be `bir_obtain_ht`, a function which obtain
 * `last_block_label_tm`: The label of the block where execution stops.
 * `postcond_tm`: The Hoare triple postcondition stated as a BIR expression.
 * `prefix`: A (preferably unique) prefix string which is used for naming all generated definitions.
-* `false_label_l`: A list of labels, for which we will add dummy Hoare triples with `False` preconditions at the start of computation. This signifies blocks we do not want to jump to, and is used when conditional jumps are involved, where we instead want to generate separate HTs at conditional jumps.
+* `blacklist`: A list of labels, for which we will add dummy Hoare triples with `False` preconditions at the start of computation. This signifies blocks we do not want to jump to, and is used when conditional jumps are involved, where we instead want to generate separate HTs at conditional jumps.
 * `defs`: A list of definitions containing the program definition, as well as all the definitions needed to rewrite the provided postcondition down to a pure BIR expression - this might contain some abbreviations.
 
 In other words, you could say that you select the Hoare triple code segment from `prog_tm` using `first_block_label_tm` as the initial point and `last_block_label_tm` as the final point.
@@ -56,7 +58,7 @@ val first_block_label_tm = ``BL_Address (Imm64 0x1cw)``;
 val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``;
 ```
 
-`false_label_l` is a list of block labels for which we assign dummy HTs with False as precondition.
+`blacklist` is a list of block labels for which we assign dummy HTs with False as precondition.
 
 This can be hard to understand intuitively. First, consider a HT with False as precondition. Since an antecedent of the HT would be that False holds, any conclusion would always hold. This is stated by the theorem `bir_exec_to_labels_pre_F` in `bir_wpTheory`. Since this is universally true, we are always free to assume such a HT.
 
@@ -64,10 +66,10 @@ Since HTs are generated incrementally from the end of execution to the start, wh
 
 Concretely, this mechanism is used in cases with conditional jumps, where one of the jump targets signifies loop continuation. It allows us to separately generate HTs for loop continuation and loop exit, which we then can compose.
 
-For the `bir_add_reg_entry` contract, `false_label_l` is just an empty list:
+For the `bir_add_reg_entry` contract, `blacklist` is just an empty list:
 
 ```sml
-val false_label_l = [];
+val blacklist = [];
 ```
 
 We then assign as the postcondition the corresponding contract from `4-bir-to-arm`.
@@ -95,13 +97,13 @@ Next, we call `bir_obtain_ht`:
 ```sml
 val (bir_add_reg_entry_ht, bir_add_reg_entry_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l defs;
+                postcond_tm prefix blacklist defs;
 ```
 
 `bir_obtain_ht` is a convenient wrapper function created for this tutorial, which internally uses functions from `bir_wpLib`. The return value is a tuple, which firstly contains a theorem stating the HT with the following components:
 
 * __Precondition__: The _weakest precondition_, obtained from the postcondition and executed code segment through the WP predicate transformer semantics
-* __Execution__: From `first_block_label_tm` to `last_block_label_tm`, never branching to `false_label_l`
+* __Execution__: From `first_block_label_tm` to `last_block_label_tm`, never branching to `blacklist`
 * __Postcondition__: `postcond_tm` (the contractual postcondition)
 
 and secondly, simply the weakest precondition as a term. In order to be able to export the results to a compiled theory, we then define an abbreviation for the WP and save the theorem stating the HT:
@@ -120,20 +122,20 @@ Obtaining this HT is rather analoguous to the one above, so no further explanati
 
 ### `bir_add_reg_loop_continue`
 
-This is the code segment describing loop continuation. HT execution starts at the conditional jump at the endpoint of the loop (`0x40`), then branches back to the loop start (`0x20`). This is ensured by `false_label_l`, which now contains the other target of the conditional jump:
+This is the code segment describing loop continuation. HT execution starts at the conditional jump at the endpoint of the loop (`0x40`), then branches back to the loop start (`0x20`). This is ensured by `blacklist`, which now contains the other target of the conditional jump:
 
 ```sml
-val false_label_l = [``BL_Address (Imm64 0x44w)``];
+val blacklist = [``BL_Address (Imm64 0x44w)``];
 ```
 
 Adding a dummy HT with False as precondition for this address ensures that the HT obtained for `bir_add_reg_loop_continue` only describes the scenario where the loop continues.
 
 ### `bir_add_reg_loop_exit`
 
-The HT generated here covers the case opposite to the previous HT. We start at the endpoint of the loop (`0x40`), exit the loop (to `0x44`), and use `false_label_l` to forbid loop continuation:
+The HT generated here covers the case opposite to the previous HT. We start at the endpoint of the loop (`0x40`), exit the loop (to `0x44`), and use `blacklist` to forbid loop continuation:
 
 ```sml
-val false_label_l = [``BL_Address (Imm64 0x44w)``];
+val blacklist = [``BL_Address (Imm64 0x44w)``];
 ```
 
 ### `bir_add_reg_loop_variant`
