@@ -34,15 +34,38 @@ val bir_add_reg_entry_comp_ht =
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_entry_ht)
     contract_1_imp_taut_thm;
 (* 32 -> 64 *)
+(* TODO: This HT needs to have loop exit in its blacklist. Fix this in generation step. *)
 val bir_add_reg_loop_variant_comp_ht =
-  use_impl_rule
+(*use_impl_rule
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_variant_ht)
-    (Q.SPEC `v` contract_2v_imp_taut_thm);
+    (Q.SPEC `v` contract_2v_imp_taut_thm)*)
+  prove(
+    ``bir_triple bir_add_reg_prog (BL_Address (Imm64 32w))
+        (\x. (x = BL_Address (Imm64 64w)) \/ (x = BL_Address (Imm64 72w)))
+        (bir_add_reg_contract_2_pre_variant v)
+        (\l. if l = BL_Address (Imm64 64w)
+             then (bir_add_reg_contract_2_post_variant v) (BL_Address (Imm64 64w))
+             else bir_exp_false)``,
+  cheat
+);
 (* 64 -> 32 *)
+(* TODO: This HT needs to have loop exit in its blacklist. Fix this in generation step. *)
 val bir_add_reg_loop_continue_variant_comp_ht =
-  use_impl_rule
+(*use_impl_rule
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_continue_variant_ht)
-    (Q.SPEC `v` contract_3v_imp_taut_thm);
+    (Q.SPEC `v` contract_3v_imp_taut_thm)*)
+  prove(
+    ``bir_triple bir_add_reg_prog (BL_Address (Imm64 64w))
+        (\x. (x = BL_Address (Imm64 32w)) \/
+             (x = BL_Address (Imm64 64w)) \/
+             (x = BL_Address (Imm64 72w))
+        )
+        (bir_add_reg_contract_3_pre_variant v)
+        (\l. if l = BL_Address (Imm64 32w)
+             then (bir_add_reg_contract_3_post_variant v) (BL_Address (Imm64 32w))
+             else bir_exp_false)``,
+  cheat
+);
 (* 64 -> 72 *)
 val bir_add_reg_loop_exit_comp_ht =
   use_impl_rule
@@ -51,19 +74,28 @@ val bir_add_reg_loop_exit_comp_ht =
 
 (****************************************************************)
 (* Suggested new step 2: *)
-(* Compose 32 -> 64 and 64 -> 32 sequentially *)
+(* Compose 64 -> 32 and 32 -> 64 sequentially (using bir_map_std_seq_comp_thm) *)
 
 (* For debugging: *)
   val ht1 = bir_add_reg_loop_continue_variant_comp_ht; (* 64 -> 32 *)
+  (* TODO: How to not assign whitelists and blacklists manually? EVAL with postcond and test for
+   *       bir_exp_false? *)
+  val whitelist1 = ``\l. l = BL_Address (Imm64 32w)``;
+  val blacklist1 = ``\l. (l = BL_Address (Imm64 64w)) \/ (l = BL_Address (Imm64 72w))``;
   val ht2 = bir_add_reg_loop_variant_comp_ht; (* 32 -> 64 *)
-  (* The definitions of the program, plus any shorthands in  *)
+  val whitelist2 = ``\l. l = BL_Address (Imm64 64w)``;
+  val blacklist2 = ``\l. l = BL_Address (Imm64 72w)``;
+  val invariant = bir_bool_expSyntax.bir_exp_true_tm
+  (* The definitions of the program, plus any shorthands in postcondition of HT1
+   * and precondition of HT2 *)
   (* TODO: Program definition could be bad to unfold in the wrong place, maybe that should be a
    * separate argument... *)
   val def_list = [bir_add_reg_prog_def, bir_add_reg_contract_3_post_variant_def,
 		  bir_add_reg_contract_2_pre_variant_def];
 
+(* TODO: Fix MP with ht1 in this procedure... *)
 val loop_map_ht =
-   bir_compose_seq ht1 ht2 def_list;
+   bir_compose_seq ht1 whitelist1 blacklist1 ht2 whitelist2 blacklist2 invariant def_list;
 
 (****************************************************************)
 (* Suggested new step 3: *)

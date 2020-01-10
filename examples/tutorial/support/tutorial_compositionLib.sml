@@ -63,26 +63,36 @@ struct
 			     l, ls, pred_setSyntax.mk_empty ``:bir_label_t``,
 			     pre, post] bir_wm_instTheory.bir_triple_from_map_triple
         (* TODO: Review and describe what these steps are supposed to do *)
+        (* Simplify union in ending label set *)
 	val map_equiv2 =
-	  SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss)
-	    [pred_setTheory.INTER_EMPTY, bir_wm_instTheory.bir_triple_def,
+	  SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss) [] map_equiv
+        (* Simplify eventual conjunctions with bir_exp_true in precondition. Expanding bir_triple
+         * definition is needed for this. *)
+        val map_equiv3 =
+          SIMP_RULE std_ss
+	    [bir_wm_instTheory.bir_triple_def,
              bir_wm_instTheory.bir_exec_to_labels_triple_precond_def,
 	     bir_exp_equivTheory.bir_and_op2,
-             bir_bool_expTheory.bir_is_bool_exp_env_REWRS] map_equiv
-	val map_equiv3 =
-	  SIMP_RULE std_ss [GSYM bir_wm_instTheory.bir_exec_to_labels_triple_precond_def] map_equiv2
+             bir_bool_expTheory.bir_is_bool_exp_env_REWRS] map_equiv2
+        (* Fold precondition definition *)
 	val map_equiv4 =
+	  SIMP_RULE std_ss [GSYM bir_wm_instTheory.bir_exec_to_labels_triple_precond_def] map_equiv3
+        (* Do the same for the postcondition *)
+	val map_equiv5 =
 	  SIMP_RULE std_ss
 	    [bir_wm_instTheory.bir_exec_to_labels_triple_postcond_def,
              bir_exp_equivTheory.bir_and_op2,
-             bir_bool_expTheory.bir_is_bool_exp_env_REWRS] map_equiv3
-        (* TODO: The below theorem appears to be needed for HTs with a variant in postcondition... *)
+             bir_bool_expTheory.bir_is_bool_exp_env_REWRS] map_equiv4
+        (* TODO: The below theorem might be needed for some HTs... *)
+(*
         val spec_eta = ISPEC post boolTheory.ETA_THM
-	val map_equiv5 =
+*)
+        (* Fold postcondition and bir_triple definitions *)
+	val map_equiv6 =
 	  SIMP_RULE std_ss [GSYM bir_wm_instTheory.bir_exec_to_labels_triple_postcond_def,
-                            GSYM bir_wm_instTheory.bir_triple_def, spec_eta] map_equiv4
+                            GSYM bir_wm_instTheory.bir_triple_def] map_equiv5
       in
-	REWRITE_RULE [GSYM map_equiv5] tr
+	REWRITE_RULE [GSYM map_equiv6] tr
       end
     ;
 
@@ -177,15 +187,14 @@ struct
 
     (* TODO: Fix the mess with def_list unfolding too much back and forth,
      *       see if RESTR_EVAL_RULE can be helpful *)
-    fun bir_compose_seq ht1 ht2 def_list =
+    fun bir_compose_seq ht1 whitelist1 blacklist1 ht2 whitelist2 blacklist2 invariant def_list =
       let
 	(* 1. Specialise bir_map_std_seq_comp_thm *)
 	val prog = get_contract_prog ht1
-	val white_ending_label_set1 = get_contract_ls ht1
-	val white_ending_label_set2 = get_contract_ls ht2
-	val black_ending_label_set1 = get_contract_ls ht2
-	val black_ending_label_set2 = pred_setSyntax.mk_empty bir_label_t_ty
-	val invariant = bir_bool_expSyntax.bir_exp_true_tm
+	val white_ending_label_set1 = whitelist1
+	val white_ending_label_set2 = whitelist2
+	val black_ending_label_set1 = blacklist1
+	val black_ending_label_set2 = blacklist2
 	val start_label = get_contract_l ht1
 	val pre1 = get_contract_pre ht1
 	val post1 = get_contract_post ht1
@@ -200,27 +209,45 @@ struct
 	(* 2. Knock out antecedents: *)
 	(* Whitelist of HT2 should be subset of blacklist of HT1 *)
 	val bir_add_comp_seq_rule_thm1 =
-	  SIMP_RULE std_ss [prove(``^((fst o dest_imp o concl) bir_add_comp_seq_rule_thm)``,
-				       SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
-				     )] bir_add_comp_seq_rule_thm
+	  SIMP_RULE std_ss [prove (pred_setSyntax.mk_subset
+                                     (white_ending_label_set2,
+                                      black_ending_label_set1),
+
+				       SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss)
+                                         [pred_setTheory.SUBSET_DEF]
+                            )] bir_add_comp_seq_rule_thm
 
 	(* The intersection between whitelist of HT1 and whitelist of HT2 should be empty *)
-	val spec_noteq_trans_impl =
+        (* TODO: This does not work for sets of more than one... *)
+	val spec_noteq_trans_impl1 =
 	  ISPECL [get_label_from_ls white_ending_label_set1,
-		  get_label_from_ls black_ending_label_set1] bir_auxiliaryTheory.noteq_trans_impl
+		  get_label_from_ls white_ending_label_set2] bir_auxiliaryTheory.noteq_trans_impl
 	val bir_add_comp_seq_rule_thm2 =
-	  SIMP_RULE std_ss [prove(``^((fst o dest_imp o concl) bir_add_comp_seq_rule_thm1)``,
-				       SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++pred_setLib.PRED_SET_ss)
-					 [pred_setTheory.INTER_DEF, pred_setTheory.IN_ABS] >>
-				       (* TODO: srw_ss() here... *)
-				       FULL_SIMP_TAC (srw_ss()) [spec_noteq_trans_impl]
-				     )] bir_add_comp_seq_rule_thm1
+	  SIMP_RULE std_ss [prove (mk_eq
+                                     (pred_setSyntax.mk_inter
+                                        (white_ending_label_set1,
+                                         white_ending_label_set2),
+                                     pred_setSyntax.mk_empty bir_label_t_ty),
+                            (* TODO: srw_ss()... *)
+                            SIMP_TAC (srw_ss()) [pred_setTheory.INTER_DEF, pred_setTheory.IN_ABS,
+                                                 spec_noteq_trans_impl1]
+                            )] bir_add_comp_seq_rule_thm1
 
 	(* The intersection between whitelist of HT2 and blacklist of HT2 should be empty *)
+        (* TODO: This does not work for sets of more than one... *)
+	val spec_noteq_trans_impl2 =
+	  ISPECL [get_label_from_ls white_ending_label_set2,
+		  get_label_from_ls black_ending_label_set2] bir_auxiliaryTheory.noteq_trans_impl
 	val bir_add_comp_seq_rule_thm3 =
-	  SIMP_RULE std_ss [prove(``^((fst o dest_imp o concl) bir_add_comp_seq_rule_thm2)``,
-				       SIMP_TAC std_ss [pred_setTheory.INTER_EMPTY]
-				     )] bir_add_comp_seq_rule_thm2
+	  SIMP_RULE std_ss [prove(mk_eq
+                                    (pred_setSyntax.mk_inter
+                                       (white_ending_label_set2,
+                                        black_ending_label_set2),
+                                     pred_setSyntax.mk_empty bir_label_t_ty),
+                            (* TODO: srw_ss()... *)
+                            SIMP_TAC (srw_ss()) [pred_setTheory.INTER_DEF, pred_setTheory.IN_ABS,
+                                                 spec_noteq_trans_impl2]
+                            )] bir_add_comp_seq_rule_thm2
 
 	(* Obtain the bir_map_triple from ht1 and knock out the corresponding antecedent *)
 	(* Translate first HT to map_triple *)

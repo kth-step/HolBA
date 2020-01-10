@@ -17,6 +17,6 @@ sig
 
   val bir_compose_loop: thm -> thm -> thm -> term -> term -> term -> thm list -> thm;
 
-  val bir_compose_seq: thm -> thm -> thm list -> thm;
+  val bir_compose_seq: thm -> term -> term -> thm -> term -> term -> term -> thm list -> thm;
 
 end

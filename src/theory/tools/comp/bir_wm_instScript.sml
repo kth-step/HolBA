@@ -944,6 +944,21 @@ EQ_TAC >> (
 );
 
 
+(* bir_map_triples are all generated from bir_triples, which have no explicit notion
+ * of blacklist. This theorem moves ending labels which are implicitly
+ * blacklisted by the postcondition from the whitelist of a bir_map_triple to the blacklist. *)
+val bir_map_triple_move_to_blacklist = store_thm("bir_map_triple_move_to_blacklist",
+  ``!prog inv l wlist blist pre post elabel.
+    bir_map_triple prog inv l wlist blist pre post ==>
+    elabel IN wlist ==>
+    (post elabel = bir_exp_false) ==>
+    (* TODO: Use INSERT_SING_UNION if needed *)
+    bir_map_triple prog inv l (wlist DELETE elabel) (blist INSERT elabel) pre post``,
+
+cheat
+);
+
+
 (* TODO: See if this is needed... *)
 (*
 val bir_subset_rule_thm =
