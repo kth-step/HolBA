@@ -10,9 +10,23 @@ struct
     fun get_contract_ls contract_thm = ((el 3) o snd o strip_comb o concl) contract_thm;
     fun get_contract_pre contract_thm = ((el 4) o snd o strip_comb o concl) contract_thm;
     fun get_contract_post contract_thm = ((el 5) o snd o strip_comb o concl) contract_thm;
+
+    fun get_bir_map_triple_prog map_triple = ((el 1) o snd o strip_comb o concl) map_triple;
+    fun get_bir_map_triple_invariant map_triple = ((el 2) o snd o strip_comb o concl) map_triple;
+    fun get_bir_map_triple_start_label map_triple = ((el 3) o snd o strip_comb o concl) map_triple;
+    fun get_bir_map_triple_wlist map_triple = ((el 4) o snd o strip_comb o concl) map_triple;
+    fun get_bir_map_triple_blist map_triple = ((el 5) o snd o strip_comb o concl) map_triple;
+    fun get_bir_map_triple_pre map_triple = ((el 6) o snd o strip_comb o concl) map_triple;
+    fun get_bir_map_triple_post map_triple = ((el 7) o snd o strip_comb o concl) map_triple;
     (* TODO: Is there any smarter way to do this? *)
-    fun get_label_from_ls ls =
-      (snd o dest_eq o Absyn.dest_AQ o snd o Absyn.dest_lam o Absyn.mk_AQ) ls;
+    fun dest_lambda tm = (Absyn.dest_AQ o snd o Absyn.dest_lam o Absyn.mk_AQ) tm;
+    fun get_labels_from_ls ls =
+      if pred_setSyntax.is_empty ls
+      then []
+      else map (snd o dest_eq) (strip_disj (dest_lambda ls));
+    (* TODO: Is there any smarter way to do this? *)
+    fun mk_lambda_lset_from_llist label_list =
+      ``\x. ^(list_mk_disj (map (curry mk_eq (mk_var ("x", bir_label_t_ty))) label_list))``
 
     val string_ss = rewrites (type_rws ``:string``);
     val char_ss = rewrites (type_rws ``:char``);
@@ -94,6 +108,74 @@ struct
       in
 	REWRITE_RULE [GSYM map_equiv6] tr
       end
+    ;
+
+    local
+    fun remove_label list label = filter (fn el => not (term_eq el label)) list
+
+    fun bir_populate_blacklist' [] map_triple post =
+      map_triple
+      | bir_populate_blacklist' (h::t) map_triple post =
+	  let
+	    val elabel_post_is_false_tm = mk_comb ((get_bir_map_triple_post map_triple), h)
+	    val elabel_post_is_false_thm =
+	      SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss)
+                [] elabel_post_is_false_tm
+	    val elabel_post_is_false =
+	      term_eq ((snd o dest_eq o concl) elabel_post_is_false_thm)
+		bir_bool_expSyntax.bir_exp_false_tm
+	  in
+	    if elabel_post_is_false
+	    then let
+		   val new_map_triple1 =
+		     HO_MATCH_MP bir_map_triple_move_to_blacklist map_triple
+		   val elabel_in_wlist =
+		     prove (pred_setSyntax.mk_in (h, get_bir_map_triple_wlist map_triple),
+
+		     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
+		     )
+		   val new_map_triple2 =
+		     HO_MATCH_MP new_map_triple1 elabel_in_wlist
+		   val new_map_triple3 =
+		     HO_MATCH_MP new_map_triple2 (SIMP_RULE std_ss [] elabel_post_is_false_thm)
+		   (* TODO: Simplify DELETE and INSERT operations... *)
+(*
+		   val new_map_triple4 =
+		     SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss)
+		       [pred_setTheory.DELETE_DEF, pred_setTheory.DIFF_DEF]
+		       new_map_triple3
+*)
+		   (* TODO: Until these proof procedures have been created, we cheat... *)
+		   val new_wl =
+		     mk_lambda_lset_from_llist
+		       (remove_label
+                          (get_labels_from_ls (get_bir_map_triple_wlist map_triple))
+			  h)
+		   val new_bl =
+		     mk_lambda_lset_from_llist
+		       ((get_labels_from_ls (get_bir_map_triple_blist map_triple))@[h])
+		   val new_map_triple4 =
+		     bir_wm_instSyntax.mk_bir_map_triple (get_bir_map_triple_prog new_map_triple3,
+							  get_bir_map_triple_invariant
+                                                            new_map_triple3,
+							  get_bir_map_triple_start_label
+                                                            new_map_triple3,
+							  new_wl,
+							  new_bl,
+							  get_bir_map_triple_pre new_map_triple3,
+							  get_bir_map_triple_post new_map_triple3)
+		 in
+		   bir_populate_blacklist' t (prove (new_map_triple4, cheat)) post
+		 end
+	    else bir_populate_blacklist' t map_triple post
+	  end
+    in
+      fun bir_populate_blacklist map_triple =
+	bir_populate_blacklist'
+	  (get_labels_from_ls (get_bir_map_triple_wlist map_triple))
+	  map_triple
+	  (get_bir_map_triple_post map_triple)
+    end
     ;
 
     (* TODO: Fix the mess with def_list unfolding too much back and forth,
@@ -220,8 +302,8 @@ struct
 	(* The intersection between whitelist of HT1 and whitelist of HT2 should be empty *)
         (* TODO: This does not work for sets of more than one... *)
 	val spec_noteq_trans_impl1 =
-	  ISPECL [get_label_from_ls white_ending_label_set1,
-		  get_label_from_ls white_ending_label_set2] bir_auxiliaryTheory.noteq_trans_impl
+	  ISPECL [el 1 (get_labels_from_ls white_ending_label_set1),
+		  el 1 (get_labels_from_ls white_ending_label_set2)] bir_auxiliaryTheory.noteq_trans_impl
 	val bir_add_comp_seq_rule_thm2 =
 	  SIMP_RULE std_ss [prove (mk_eq
                                      (pred_setSyntax.mk_inter
@@ -236,8 +318,8 @@ struct
 	(* The intersection between whitelist of HT2 and blacklist of HT2 should be empty *)
         (* TODO: This does not work for sets of more than one... *)
 	val spec_noteq_trans_impl2 =
-	  ISPECL [get_label_from_ls white_ending_label_set2,
-		  get_label_from_ls black_ending_label_set2] bir_auxiliaryTheory.noteq_trans_impl
+	  ISPECL [el 1 (get_labels_from_ls white_ending_label_set2),
+		  el 1 (get_labels_from_ls black_ending_label_set2)] bir_auxiliaryTheory.noteq_trans_impl
 	val bir_add_comp_seq_rule_thm3 =
 	  SIMP_RULE std_ss [prove(mk_eq
                                     (pred_setSyntax.mk_inter
@@ -252,30 +334,26 @@ struct
 	(* Obtain the bir_map_triple from ht1 and knock out the corresponding antecedent *)
 	(* Translate first HT to map_triple *)
 	val bir_intro_map_triple = bir_map_triple_from_bir_triple ht1
-
-	(* TODO: bir_add_contract_1 must have address 72 in blacklist (ensure this during generation).
-	 *       Do modus ponens with the correct contract as "bir_intro_map_triple"
-	 *       here when you have it... *)
+	(* MP with the now blacklist-populated bir_map_triple... *)
 	val bir_add_comp_seq_rule_thm4 =
-	  prove(``^((snd o dest_imp o concl) bir_add_comp_seq_rule_thm3)``,
-	    cheat
-	  );
+	  HO_MATCH_MP bir_add_comp_seq_rule_thm3 (bir_populate_blacklist bir_intro_map_triple)
 
-	(* Obtain the bir_map_triple from ht1 and knock out the corresponding antecedent *)
-	val bir_loop_map_triple = bir_map_triple_from_bir_triple ht2;
+	(* Obtain the bir_map_triple from ht2 and knock out the corresponding antecedent *)
+	val bir_loop_map_triple = bir_map_triple_from_bir_triple ht2
 	(* Starting label of HT2 is the single label in whitelist of HT1
 	 * Note: The theorem used for composition actually allows for multiple connection points *)
 	val bir_add_comp_seq_rule_thm5 =
           (* HT1 postcondition definition needed *)
-	  SIMP_RULE std_ss ([pred_setTheory.IN_ABS]@def_list)
-	    bir_add_comp_seq_rule_thm4;
+	  SIMP_RULE std_ss [pred_setTheory.IN_ABS]
+	    bir_add_comp_seq_rule_thm4
 	(* Knock out the final antecedent with bir_loop_map_triple *)
 	val bir_add_comp_seq_rule_thm6 =
-          HO_MATCH_MP bir_add_comp_seq_rule_thm5
-            (SIMP_RULE std_ss def_list bir_loop_map_triple);
+          HO_MATCH_MP (SIMP_RULE std_ss def_list bir_add_comp_seq_rule_thm5)
+            (SIMP_RULE std_ss def_list (bir_populate_blacklist bir_loop_map_triple))
         (* Clean-up the expanded definitions *)
+        (* TODO: Simplify a stupid UNION in the blacklist of the result... *)
 	val bir_add_comp_seq_rule_thm7 =
-          (SIMP_RULE std_ss (map GSYM def_list) bir_add_comp_seq_rule_thm6);
+          (SIMP_RULE std_ss (map GSYM def_list) bir_add_comp_seq_rule_thm6)
 
       in
 	bir_add_comp_seq_rule_thm7

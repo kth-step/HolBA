@@ -8,6 +8,13 @@ sig
   val get_contract_pre: thm -> term;
   val get_contract_post: thm -> term;
 
+  val get_bir_map_triple_prog: thm -> term
+  val get_bir_map_triple_invariant: thm -> term
+  val get_bir_map_triple_start_label: thm -> term
+  val get_bir_map_triple_wlist: thm -> term
+  val get_bir_map_triple_blist: thm -> term
+  val get_bir_map_triple_pre: thm -> term
+  val get_bir_map_triple_post: thm -> term
 
   val vars_ss: simpset;
 
