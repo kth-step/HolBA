@@ -953,7 +953,7 @@ val bir_map_triple_move_to_blacklist = store_thm("bir_map_triple_move_to_blackli
     elabel IN wlist ==>
     (post elabel = bir_exp_false) ==>
     (* TODO: Use INSERT_SING_UNION if needed *)
-    bir_map_triple prog inv l (wlist DELETE elabel) (blist INSERT elabel) pre post``,
+    bir_map_triple prog inv l (wlist DELETE elabel) (elabel INSERT blist) pre post``,
 
 cheat
 );
