@@ -942,6 +942,75 @@ EQ_TAC >> (
   ]
 ]
 );
+(* TODO: This should really be the normal one, the other one alternative. *)
+val bir_triple_from_map_triple_alt = store_thm("bir_triple_from_map_triple_alt",
+  ``!prog invariant l ls ls' pre post.
+    bir_map_triple prog invariant l ls ls' pre post <=>
+      (((ls INTER ls') = EMPTY) /\
+       (bir_triple prog l (ls UNION ls')
+		   (BExp_BinExp BIExp_And pre invariant)
+		   (\label. if (label IN ls)
+			    then (BExp_BinExp BIExp_And (post label) invariant)
+			    else bir_exp_false
+		   )
+       )
+      )
+  ``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_triple_def, bir_map_triple_def, weak_map_triple_def] >>
+EQ_TAC >> (
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  FULL_SIMP_TAC std_ss [weak_triple_def] >>
+  REPEAT STRIP_TAC >>
+  QSPECL_X_ASSUM ``!s. _`` [`s`] >>
+  REV_FULL_SIMP_TAC std_ss []
+) >| [
+  (* bir_map_triple -> bir_triple *)
+  subgoal `bir_exec_to_labels_triple_precond s pre prog /\
+           bir_exec_to_labels_triple_precond s invariant prog` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_precond_def, bir_is_bool_exp_env_REWRS,
+                          GSYM bir_and_equiv]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `s'` >>
+  FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def] >>
+  Cases_on `s'.bst_pc.bpc_label IN ls` >| [
+    FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_REWRS, GSYM bir_and_equiv,
+                          bir_exec_to_labels_triple_precond_def],
+
+    (* We know that s'.pc NOTIN ls', but also that ls INTER ls' = {}, s'.bst_status = BST_Running and
+     * that (bir_etl_wm prog).weak s (ls UNION ls') s'. Ergo, s'.pc must be in ls. *)
+    (*FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def, bir_eval_exp_TF,
+                                         bir_val_TF_dist]*)
+    FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def] >>
+    `s'.bst_pc.bpc_label IN (ls UNION ls')` suffices_by
+      FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
+    FULL_SIMP_TAC std_ss [bir_weak_trs_EQ]
+  ],
+
+  (* bir_triple -> bir_map_triple *)
+  subgoal `bir_exec_to_labels_triple_precond s
+             (BExp_BinExp BIExp_And pre invariant) prog` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_precond_def, bir_is_bool_exp_env_REWRS,
+                          GSYM bir_and_equiv]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `s'` >>
+  FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def] >>
+  Cases_on `s'.bst_pc.bpc_label IN ls` >| [
+    (* What needs to be added is similar to cheated case above... *)
+    FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_is_bool_exp_env_REWRS, GSYM bir_and_equiv,
+                                       bir_exec_to_labels_triple_precond_def, bir_etl_wm_def,
+                                       bir_weak_trs_EQ] >>
+    METIS_TAC [INTER_EMPTY_IN_NOT_IN_thm],
+
+    FULL_SIMP_TAC std_ss [bir_eval_exp_TF, bir_val_TF_dist]
+  ]
+]
+);
 
 
 (* bir_map_triples are all generated from bir_triples, which have no explicit notion

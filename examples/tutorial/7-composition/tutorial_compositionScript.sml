@@ -22,7 +22,7 @@ open HolBASimps;
 val _ = new_theory "tutorial_composition";
 
 (****************************************************************)
-(* Step 1: *)
+(* Step 0: *)
 (* Translate HTs from bir_exec_to_labels_triple to bir_triple,
  * Then replace preconditions with shorthands and prove the
  * validity of this. *)
@@ -30,9 +30,19 @@ val _ = new_theory "tutorial_composition";
 
 (* 28 -> 64 *)
 val bir_add_reg_entry_comp_ht =
+(*
   use_impl_rule
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_entry_ht)
-    contract_1_imp_taut_thm;
+    contract_1_imp_taut_thm;*)
+  prove(
+    ``bir_triple (bir_add_reg_prog:'observation_type bir_program_t) (BL_Address (Imm64 28w))
+        (\x. (x = BL_Address (Imm64 64w)) \/ (x = BL_Address (Imm64 72w)))
+        bir_add_reg_contract_1_pre
+        (\l. if l = BL_Address (Imm64 64w)
+             then bir_add_reg_contract_1_post (BL_Address (Imm64 64w))
+             else bir_exp_false)``,
+  cheat
+);
 (* 32 -> 64 *)
 (* TODO: This HT needs to have loop exit in its blacklist. Fix this in generation step. *)
 val bir_add_reg_loop_variant_comp_ht =
@@ -40,7 +50,7 @@ val bir_add_reg_loop_variant_comp_ht =
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_variant_ht)
     (Q.SPEC `v` contract_2v_imp_taut_thm)*)
   prove(
-    ``bir_triple bir_add_reg_prog (BL_Address (Imm64 32w))
+    ``bir_triple (bir_add_reg_prog:'observation_type bir_program_t) (BL_Address (Imm64 32w))
         (\x. (x = BL_Address (Imm64 64w)) \/ (x = BL_Address (Imm64 72w)))
         (bir_add_reg_contract_2_pre_variant v)
         (\l. if l = BL_Address (Imm64 64w)
@@ -55,7 +65,7 @@ val bir_add_reg_loop_continue_variant_comp_ht =
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_continue_variant_ht)
     (Q.SPEC `v` contract_3v_imp_taut_thm)*)
   prove(
-    ``bir_triple bir_add_reg_prog (BL_Address (Imm64 64w))
+    ``bir_triple (bir_add_reg_prog:'observation_type bir_program_t) (BL_Address (Imm64 64w))
         (\x. (x = BL_Address (Imm64 32w)) \/
              (x = BL_Address (Imm64 64w)) \/
              (x = BL_Address (Imm64 72w))
@@ -68,24 +78,27 @@ val bir_add_reg_loop_continue_variant_comp_ht =
 );
 (* 64 -> 72 *)
 val bir_add_reg_loop_exit_comp_ht =
+(*
   use_impl_rule
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_exit_ht)
     contract_4_imp_taut_thm;
+*)
+  prove(
+    ``bir_triple (bir_add_reg_prog:'observation_type bir_program_t) (BL_Address (Imm64 64w))
+        (\x. x = BL_Address (Imm64 72w)) bir_add_reg_contract_4_pre
+        (\l. if l = BL_Address (Imm64 72w)
+             then bir_add_reg_contract_4_post (BL_Address (Imm64 72w))
+             else bir_exp_false)``,
+  cheat
+);
 
 (****************************************************************)
-(* Suggested new step 2: *)
+(* Suggested new step 1: *)
 (* Compose 64 -> 32 and 32 -> 64 sequentially (using bir_map_std_seq_comp_thm) *)
 
 (* For debugging: *)
   val ht1 = bir_add_reg_loop_continue_variant_comp_ht; (* 64 -> 32 *)
-  (* TODO: How to not assign whitelists and blacklists manually? EVAL with postcond and test for
-   *       bir_exp_false? *)
-  val whitelist1 = ``\l. l = BL_Address (Imm64 32w)``;
-  val blacklist1 = ``\l. (l = BL_Address (Imm64 64w)) \/ (l = BL_Address (Imm64 72w))``;
   val ht2 = bir_add_reg_loop_variant_comp_ht; (* 32 -> 64 *)
-  val whitelist2 = ``\l. l = BL_Address (Imm64 64w)``;
-  val blacklist2 = ``\l. l = BL_Address (Imm64 72w)``;
-  val invariant = bir_bool_expSyntax.bir_exp_true_tm
   (* The definitions of the program, plus any shorthands in postcondition of HT1
    * and precondition of HT2 *)
   (* TODO: Program definition could be bad to unfold in the wrong place, maybe that should be a
@@ -93,56 +106,35 @@ val bir_add_reg_loop_exit_comp_ht =
   val def_list = [bir_add_reg_prog_def, bir_add_reg_contract_3_post_variant_def,
 		  bir_add_reg_contract_2_pre_variant_def];
 
-(* TODO: Fix MP with ht1 in this procedure... *)
 val loop_map_ht =
-   bir_compose_seq ht1 whitelist1 blacklist1 ht2 whitelist2 blacklist2 invariant def_list;
+   bir_compose_nonmap_seq ht1 ht2 def_list;
 
 (****************************************************************)
-(* Suggested new step 3: *)
+(* Suggested new step 2: *)
 (* Compose loop from loop_map_ht and bir_add_reg_loop_exit_comp_ht (using bir_while_rule_thm) *)
 
-(* TODO: Make new bir_compose_loop_new here, based on old bir_compose_loop. *)
-
-(****************************************************************)
-(* Suggested new step 4: *)
-(* Compose loop intro with loop (using bir_map_std_seq_comp_thm) *)
-
-(* TODO *)
-
-(****************************************************************)
-(*                             OLD                              *)
-(****************************************************************)
-(* Step 2: *)
-(* Compose loop (using bir_while_rule_thm) *)
-
 (* For debugging: *)
-  val loop_ht = bir_add_reg_loop_variant_comp_ht;
-  val loop_continuation_ht = bir_add_reg_loop_continue_variant_comp_ht;
+  val loop_map_ht = loop_map_ht;
   val loop_exit_ht = bir_add_reg_loop_exit_comp_ht;
   val loop_invariant = ``bir_add_reg_I``;
   val loop_condition = ``bir_add_reg_loop_condition``;
   val loop_variant = bden (bvar "R2" ``(BType_Imm Bit64)``);
-  (* The definitions of the program, loop condition and precondition
-   * of loop exit HT are used in a list for simplifications *)
-  (* TODO: Program definition could be bad to unfold in the wrong place, maybe that should be a
-   * separate argument... *)
-  val def_list1 = [bir_add_reg_prog_def, bir_add_reg_loop_condition_def,
-		  bir_add_reg_contract_4_pre_def];
+  (* The definitions of the program, loop condition and both preconditions *)
+  val def_list = [bir_add_reg_prog_def, bir_add_reg_loop_condition_def,
+		  bir_add_reg_contract_3_pre_variant_def, bir_add_reg_contract_4_pre_def];
 
-val loop_to_end_ht =
-  bir_compose_loop loop_ht loop_continuation_ht loop_exit_ht loop_invariant loop_condition
-    loop_variant def_list1;
+val loop_and_exit_ht =
+  bir_compose_loop loop_map_ht loop_exit_ht loop_invariant loop_condition loop_variant def_list;
 
 (****************************************************************)
-(* Step 4: *)
+(* Suggested new step 3: *)
 (* Compose loop intro with loop (using bir_map_std_seq_comp_thm) *)
+  val ht1 = bir_add_reg_entry_comp_ht
+  val ht2 = loop_and_exit_ht
+  val def_list = [bir_add_reg_prog_def, bir_add_reg_contract_1_post_def];
 
-(* For debugging: *)
-  val ht1 = bir_add_reg_entry_comp_ht;
-  val ht2 = loop_to_end_ht;
-  val def_list2 = [bir_add_reg_contract_1_post_def];
-
-val final_ht_thm = bir_compose_seq ht1 ht2 def_list2;
+val final_ht =
+   bir_compose_nonmap_seq ht1 ht2 def_list;
 
 (*****************************************************)
 (*                    BACKLIFTING                    *)

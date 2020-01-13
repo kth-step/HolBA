@@ -22,8 +22,10 @@ sig
 
   val bir_map_triple_from_bir_triple: thm -> thm;
 
-  val bir_compose_loop: thm -> thm -> thm -> term -> term -> term -> thm list -> thm;
+  val bir_compose_loop: thm -> thm -> term -> term -> term -> thm list -> thm;
 
-  val bir_compose_seq: thm -> term -> term -> thm -> term -> term -> term -> thm list -> thm;
+  val bir_compose_seq: thm -> thm -> thm list -> thm;
+  val bir_compose_nonmap_seq: thm -> thm -> thm list -> thm;
+  val bir_compose_nonmap1_seq: thm -> thm -> thm list -> thm;
 
 end
