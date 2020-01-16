@@ -1,6 +1,6 @@
 (* Code specific for the example *)
 open HolKernel Parse boolLib bossLib;
-open bir_expSimps;
+open HolBASimps;
 open tutorial_bir_to_armSupportTheory;
 open bslSyntax;
 

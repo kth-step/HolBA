@@ -72,13 +72,33 @@ local
 
 in
 
+(* TODO: Is there any smarter way to do this? *)
+fun dest_lambda tm = (Absyn.dest_AQ o snd o Absyn.dest_lam o Absyn.mk_AQ) tm;
+fun get_labels_from_lam_disj ls =
+  if pred_setSyntax.is_empty ls
+  then []
+  else map (snd o dest_eq) (strip_disj (dest_lambda ls));
+
+fun init_wps_fmap label_list postcond postcond_exp_from_label = 
+  let
+    val empty_fmap = finite_mapSyntax.mk_fempty (bir_label_t_ty, bir_exp_t_ty)
+    val postconds_list = map (fn tm => pairSyntax.mk_pair (tm, postcond_exp_from_label postcond tm)) label_list
+  in
+    finite_mapSyntax.list_mk_fupdate (empty_fmap, postconds_list)
+  end
+;
+
 (* This is a wrapper function for generating and proving WPs. *)
-fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                  postcond_tm prefix blacklist defs =
+(* TODO: Rename arguments to more generic ones *)
+fun bir_obtain_ht prog_tm first_block_label_tm
+                  ending_lam_disj
+                    (ending_lam_disj_to_sml_list)
+                  postcond_tm
+                    (postcond_exp_from_label)
+                  prefix defs =
   let
     (* Some terms which will be used: *)
-    (*   The terminating label set *)
-    val ls_tm = ``\x.(x = ^last_block_label_tm)``
+(* OLD:
     (*   A finite map of dummy labels to False *)
     val blacklist_fmap_tm = make_blacklist_fmap blacklist
     (* The postcondition expression of the last block label *)
@@ -92,43 +112,55 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                    )
         )
     ``;
+*)
+    (* TODO: Should ending_lam_disj_to_sml_list be an argument
+     * or be used for preprocessing? *)
+    val wps_tm =
+      init_wps_fmap
+        (ending_lam_disj_to_sml_list ending_lam_disj)
+        postcond_tm
+        postcond_exp_from_label
 
     (* Initialize queue of blocks to process: *)
     val wps_expand_tm =
       (rhs o concl o (SIMP_CONV std_ss defs)) wps_tm
+    val blacklist =
+      filter (fn tm => term_eq (postcond_exp_from_label postcond_tm tm) bir_bool_expSyntax.bir_exp_false_tm)
+        (ending_lam_disj_to_sml_list ending_lam_disj)
+
     (* For debugging bir_wp_init_wps_bool_sound_thm: 
-    val (program, post, ls) = (prog_tm, postcond_tm, ls_tm)
-    val wps = wps_tm
+      val (program, post, ls) = (prog_tm, postcond_tm, ending_lam_disj)
+      val wps = wps_tm
     *)
     val wps_bool_sound_thm =
       bir_wp_init_wps_bool_sound_thm
-        (prog_tm, postcond_tm, ls_tm) wps_tm defs
+        (prog_tm, postcond_tm, ending_lam_disj) wps_tm defs
     val (wpsdom, blstodo) =
       bir_wp_init_rec_proc_jobs (eot prog_tm) wps_expand_tm
                                 blacklist
 
     (* Prepare "problem-static" part of computation: *)
     (* For debugging bir_wp_comp_wps_iter_step0_init:
-    val reusable_thm = bir_wp_exec_of_block_reusable_thm;
-    val (program, post, ls) = (prog_tm, postcond_tm, ls_tm)
+      val reusable_thm = bir_wp_exec_of_block_reusable_thm;
+      val (program, post, ls) = (prog_tm, postcond_tm, ending_lam_disj)
     *)
     val prog_thm =
       bir_wp_comp_wps_iter_step0_init
         bir_wp_exec_of_block_reusable_thm
-        (prog_tm, postcond_tm, ls_tm) defs
+        (prog_tm, postcond_tm, ending_lam_disj) defs
 
     (* Main computation: *)
     (* For debugging bir_wp_comp_wps:
       val wps = wps_tm
-      val blsotodo = List.rev blstodo
+      val blstodo = List.rev blstodo
       val program = prog_tm
       val post = postcond_tm
-      val ls = ls_tm
+      val ls = ending_lam_disj
     *)
     val (wps1, wps1_bool_sound_thm) =
       bir_wp_comp_wps prog_thm ((wps_tm, wps_bool_sound_thm),
 				(wpsdom, List.rev blstodo))
-			       (prog_tm, postcond_tm, ls_tm) defs
+			       (prog_tm, postcond_tm, ending_lam_disj) defs
 
     (* Pick out the soundness theorems, *)
     val sound_thms = ((el 2 o CONJUNCTS) wps1_bool_sound_thm)
@@ -168,10 +200,11 @@ fun bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
     val target_wp_tm = get_wp_from_ht target_bir_triple
   in
     (target_bir_triple, target_wp_tm)
-  end handle Option => raise ERR "extract_subprogram"
-	("No Hoare triple was found for the addresses "^
+  end handle Option => raise ERR "bir_obtain_ht"
+	("No Hoare triple was found for the start label "^
 	 (term_to_string first_block_label_tm)^" and "^
-	 (term_to_string last_block_label_tm)^
+         (* TODO: Ending labels here... *)
+	 "the provided Ending addresses"(*(term_to_string last_block_label_tm)*)^
 	 ". Please double-check these addresses in the BIR "^
          "program.")
 ;

@@ -8,7 +8,7 @@ open bir_wpTheory bir_htTheory;
 (* From theory/bir-support: *)
 open bir_program_labelsTheory bir_program_valid_stateTheory
      bir_program_blocksTheory bir_program_multistep_propsTheory
-     bir_subprogramTheory;
+     bir_subprogramTheory bir_bool_expTheory;
 open bir_bool_expSyntax;
 
 (* From theory/bir: *)
@@ -45,6 +45,8 @@ val _ = new_theory "tutorial_wp";
 
 (******************************************************************)
                          (* New stuff *)
+(* Attempt at generating loop continuation contract with new
+ * Ending labels and new postcondition *)
 (******************************************************************)
 
 val prog_tm = (lhs o concl) bir_add_reg_prog_def;
@@ -56,13 +58,62 @@ bir_map_triple prog bir_var_true loop_branch loop_start
 
 val prefix = "add_reg_new_loop_continue_variant_";
 val first_block_label_tm = ``BL_Address (Imm64 0x40w)``; (* 64 *)
+
+(* TODO: See which functions on the lambda disjunction are needed *)
+(* lam_disj format:
+ *   To SML list of address terms: get_labels_from_lam_disj *)
+val ending_lam_disj = ``\l.
+                        (l = BL_Address (Imm64 0x20w)) \/
+                        (l = BL_Address (Imm64 0x40w)) \/
+                        (l = BL_Address (Imm64 0x48w))``;
+(*
+(* Is label in set? thm *)
+val test = ``(^ending_lam_disj) (^first_block_label_tm)``;
+val test2 = EVAL test;
+(* sml *)
+val test3 = ((term_eq T) o snd o dest_eq o concl) test2
+
+*)
+fun postcond_exp_from_label postcond label =
+  (snd o dest_eq o concl)
+    (SIMP_CONV
+      (bool_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss) []
+      (mk_comb (postcond, label)
+    )
+  )
+val ending_lam_disj_to_sml_list = get_labels_from_lam_disj
+
+(*
 val last_block_label_tm =  ``BL_Address (Imm64 0x20w)``; (* 32 *)
+*)
 (* TODO: Here, we need to add address of loop branch (0x40),
  * but this makes WP procedure fail. If added first, then we
  * can't even find any HT. If last, then WP becomes False. *)
-val blacklist = [``BL_Address (Imm64 0x44w)``, ``BL_Address (Imm64 0x40w)``];
-(* TODO: Check that this postcond is the correct one... *)
-val postcond_tm = ``bir_add_reg_contract_3_post_variant v``;
+(*
+val blacklist = [``BL_Address (Imm64 0x48w)``, ``BL_Address (Imm64 0x40w)``];
+*)
+(* TODO: Re-defining postcondition here...
+ *  *)
+val bir_add_reg_contract_3_post_variant_def = Define `
+  bir_add_reg_contract_3_post_variant v =
+    BExp_BinExp BIExp_And bir_add_reg_I
+		    (BExp_BinExp BIExp_And
+		       (BExp_UnaryExp BIExp_Not
+			  (BExp_BinExp BIExp_Or
+			     (BExp_UnaryExp BIExp_Not
+				(BExp_BinPred BIExp_Equal
+				   (BExp_Den (BVar "ProcState_N" BType_Bool))
+				   (BExp_Den (BVar "ProcState_V" BType_Bool))))
+			     (BExp_Den (BVar "ProcState_Z" BType_Bool))))
+		       (BExp_BinPred BIExp_Equal
+			  (BExp_Den (BVar "R2" (BType_Imm Bit64)))
+			  (BExp_Const (Imm64 v))))
+`;
+val postcond_tm = ``(\l. if (l = BL_Address (Imm64 0x20w))
+                         then bir_add_reg_contract_3_post_variant v
+                         else bir_exp_false)``;
+(* Postcondition for label? thm *)
+val test = SIMP_CONV bool_ss [] ``(^postcond_tm) (BL_Address (Imm64 0x20w))``
 (* defs is a list of theorems - typically definitions - which is
  * used internally in bir_obtain_ht. This always contains the
  * program definition, the postcondition definition, and all other
@@ -70,7 +121,7 @@ val postcond_tm = ``bir_add_reg_contract_3_post_variant v``;
  * terms using only the syntax in the theory/bir directory of
  * HolBA. *)
 val defs = [bir_add_reg_prog_def, bir_add_reg_contract_3_post_variant_def,
-            bir_add_reg_I_def, BType_Bool_def];
+            bir_add_reg_I_def, bir_exp_false_def, BType_Bool_def];
 val (bir_add_reg_new_loop_continue_variant_ht, bir_add_reg_new_loop_continue_variant_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
                 postcond_tm prefix blacklist defs;
@@ -102,7 +153,7 @@ val first_block_label_tm = ``BL_Address (Imm64 0x1cw)``; (* 28 *)
 (* This is the last block of HT execution: the HT postcondition
  * (on the final state) is predicated on the state when this block
  * is reached.
-x *
+ *
  * Note that in general, the HT execution could end when any label
  * out of a set of labels is reached. This would be the case for 
  * code which branches out to multiple exit points. Sets of ending

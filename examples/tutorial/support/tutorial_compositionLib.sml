@@ -18,12 +18,7 @@ struct
     fun get_bir_map_triple_blist map_triple = ((el 5) o snd o strip_comb o concl) map_triple;
     fun get_bir_map_triple_pre map_triple = ((el 6) o snd o strip_comb o concl) map_triple;
     fun get_bir_map_triple_post map_triple = ((el 7) o snd o strip_comb o concl) map_triple;
-    (* TODO: Is there any smarter way to do this? *)
-    fun dest_lambda tm = (Absyn.dest_AQ o snd o Absyn.dest_lam o Absyn.mk_AQ) tm;
-    fun get_labels_from_ls ls =
-      if pred_setSyntax.is_empty ls
-      then []
-      else map (snd o dest_eq) (strip_disj (dest_lambda ls));
+
     (* TODO: Is there any smarter way to do this? *)
     fun mk_lambda_lset_from_llist label_list =
       ``\x. ^(list_mk_disj (map (curry mk_eq (mk_var ("x", bir_label_t_ty))) label_list))``
@@ -149,11 +144,11 @@ struct
 		   val new_wl =
 		     mk_lambda_lset_from_llist
 		       (remove_label
-                          (get_labels_from_ls (get_bir_map_triple_wlist map_triple))
+                          (get_labels_from_lam_disj (get_bir_map_triple_wlist map_triple))
 			  h)
 		   val new_bl =
 		     mk_lambda_lset_from_llist
-		       ((get_labels_from_ls (get_bir_map_triple_blist map_triple))@[h])
+		       ((get_labels_from_lam_disj (get_bir_map_triple_blist map_triple))@[h])
 		   val new_map_triple4 =
 		     bir_wm_instSyntax.mk_bir_map_triple (get_bir_map_triple_prog new_map_triple3,
 							  get_bir_map_triple_invariant
@@ -172,7 +167,7 @@ struct
     in
       fun bir_populate_blacklist map_triple =
 	bir_populate_blacklist'
-	  (get_labels_from_ls (get_bir_map_triple_wlist map_triple))
+	  (get_labels_from_lam_disj (get_bir_map_triple_wlist map_triple))
 	  map_triple
 	  (get_bir_map_triple_post map_triple)
     end
@@ -219,7 +214,7 @@ struct
         (* TODO: Construct this antecedent explicitly in place *)
 	val bir_add_comp_while_rule_thm3 =
 	  SIMP_RULE std_ss [prove((fst o dest_imp o concl) bir_add_comp_while_rule_thm2,
-				       SIMP_TAC (std_ss++bir_expSimps.bir_is_bool_ss)
+				       SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss)
 					 def_list (* bir_add_reg_loop_condition_def needed *)
 				     )] bir_add_comp_while_rule_thm2
 
@@ -351,8 +346,8 @@ struct
 	(* The intersection between whitelist of HT1 and whitelist of HT2 should be empty *)
         (* TODO: This does not work for sets of more than one... *)
 	val spec_noteq_trans_impl1 =
-	  ISPECL [el 1 (get_labels_from_ls white_ending_label_set1),
-		  el 1 (get_labels_from_ls white_ending_label_set2)]
+	  ISPECL [el 1 (get_labels_from_lam_disj white_ending_label_set1),
+		  el 1 (get_labels_from_lam_disj white_ending_label_set2)]
             bir_auxiliaryTheory.noteq_trans_impl
 	val bir_add_comp_seq_rule_thm2 =
 	  SIMP_RULE std_ss [prove (mk_eq
@@ -368,14 +363,13 @@ struct
 	(* The intersection between whitelist of HT2 and blacklist of HT2 should be empty *)
         (* TODO: This does not work for sets of more than one... Make proof procedure for
          * intersections *)
-
 	val bir_add_comp_seq_rule_thm3 =
 	  if not (pred_setSyntax.is_empty black_ending_label_set2)
 	  then
             let
 	      val spec_noteq_trans_impl2 =
-		ISPECL [el 1 (get_labels_from_ls white_ending_label_set2),
-			el 1 (get_labels_from_ls black_ending_label_set2)]
+		ISPECL [el 1 (get_labels_from_lam_disj white_ending_label_set2),
+			el 1 (get_labels_from_lam_disj black_ending_label_set2)]
 		  bir_auxiliaryTheory.noteq_trans_impl
             in
 	      SIMP_RULE std_ss [prove(mk_eq
@@ -393,7 +387,6 @@ struct
             HO_MATCH_MP
               bir_add_comp_seq_rule_thm2
               (ISPEC white_ending_label_set2 (CONJUNCT2 pred_setTheory.INTER_EMPTY))
-              
 
 	(* Knock out the bir_map_triple-antecedent *)
 	val bir_add_comp_seq_rule_thm4 =

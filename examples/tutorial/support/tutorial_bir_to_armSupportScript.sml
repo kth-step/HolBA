@@ -7,7 +7,7 @@ open bin_hoare_logicSimps;
 open bir_program_multistep_propsTheory;
 open bir_auxiliaryTheory;
 
-open bir_expSimps;
+open HolBASimps;;
 open HolBACoreSimps;
 open bin_hoare_logicSimps;
 

@@ -56,6 +56,10 @@ struct
         REWRITE_TAC defs >>
         SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss++wordsLib.WORD_ss)
           [FEVERY_FUPDATE, DRESTRICT_FEMPTY, DRESTRICT_FUPDATE, FEVERY_FEMPTY] >>
+        (* Function-specific simplification swapped for the general
+         * booleanity-of-expression simplification set: *)
+        SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) []
+(*
 	SIMP_TAC (std_ss++wordsLib.SIZES_ss++HolBACoreSimps.holBACore_ss) [
 	    bir_is_bool_exp_def,
 	    type_of_bir_exp_def,
@@ -65,6 +69,7 @@ struct
 	    BType_Bool_def,
 	    bir_exp_false_def
 	]
+*)
       )
       val wps_sound_thm =
         prove(``bir_sound_wps_map ^program ^ls ^post ^wps``,
@@ -72,6 +77,7 @@ struct
         REWRITE_TAC defs >>
         SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss++wordsLib.WORD_ss)
           [FEVERY_FUPDATE, DRESTRICT_FEMPTY, DRESTRICT_FUPDATE, FEVERY_FEMPTY] >>
+        (* TODO: Is this needed anymore? Tactic above seems to prove most goals at this point *)
         SIMP_TAC std_ss [bir_exec_to_labels_pre_F]
         (* Hopefully, this is not needed: *)
         (*  SIMP_TAC (srw_ss()) [] *)
@@ -86,7 +92,7 @@ struct
       val var_l = mk_var ("l", bir_label_t_ty)
       val var_wps = mk_var ("wps", finite_mapSyntax.mk_fmap_ty (bir_label_t_ty, bir_exp_t_ty))
       val var_wps1 = mk_var ("wps'", finite_mapSyntax.mk_fmap_ty (bir_label_t_ty, bir_exp_t_ty))
-      val thm = ISPECL [program, var_l, ls, post, var_wps, var_wps1] reusable_thm
+      val spec_reusable_thm = ISPECL [program, var_l, ls, post, var_wps, var_wps1] reusable_thm
         handle e => raise wrap_exn ("Failed to specialize the reusable thm "
           ^ "(you may need to instantiate the reusable_thm's "
           ^ "observation type to the one you're using)") e
@@ -129,30 +135,40 @@ struct
       fun wrap_exn_ exn term message = wrap_exn
         (message ^ ": \n" ^ (Hol_pp.term_to_string term) ^ "\n") exn
       val concl_tm = (snd o dest_eq o concl)
-
+      (* TODO: All of the below SIMP_RULEs coulb be replaced by rewriting
+       * with boolTheory.EQ_CLAUSES *)
       (* TODO: Create bir_is_bool_expSyntax for the below *)
-      val post_bool_thm = SIMP_CONV (srw_ss()) (post_bool_conv@defs@[bir_wp_post_map_contains_bool_exp_def])
-                                    ``bir_wp_post_map_contains_bool_exp ^post``
-      val thm = MP thm (SIMP_RULE std_ss [] post_bool_thm)
+      val post_bool_thm = prove(``bir_wp_post_map_contains_bool_exp ^post``,
+        SIMP_TAC std_ss [bir_wp_post_map_contains_bool_exp_def] >>
+        GEN_TAC >>
+        REPEAT CASE_TAC >> (
+          SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) defs
+        )
+      )
+
+      val thm1 = MP spec_reusable_thm (SIMP_RULE std_ss [] post_bool_thm)
         handle e => raise wrap_exn_ e (concl_tm post_bool_thm) "The postcondition isn't a bool";
 
       (* TODO: Make bir_typing_progSyntax *)
+      (* TODO: Make simpset for bir_is_well_typed_program in HolBASimps *)
       val prog_typed_thm = SIMP_CONV (srw_ss()) (prog_typed_conv@defs)
         ``bir_is_well_typed_program ^program``
-      val thm = MP thm (SIMP_RULE std_ss [] prog_typed_thm)
+      val thm2 = MP thm1 (SIMP_RULE std_ss [] prog_typed_thm)
         handle e => raise wrap_exn_ e (concl_tm prog_typed_thm) "The program isn't well-typed";
 
-      (*val prog_valid_thm = SIMP_CONV (srw_ss()) (prog_valid_conv@defs) ``bir_is_valid_program ^program``;*)
+      (* val prog_valid_thm = SIMP_CONV (srw_ss()) (prog_valid_conv@defs)
+           ``bir_is_valid_program ^program``;*)
       (* TODO: Make bir_program_valid_stateSyntax *)
       val prog_valid_thm = EVAL ``bir_is_valid_program ^program``
-      val thm = MP thm (SIMP_RULE std_ss [] prog_valid_thm)
+      val thm3 = MP thm2 (SIMP_RULE std_ss [] prog_valid_thm)
         handle e => raise wrap_exn_ e (concl_tm prog_valid_thm) "The program isn't valid";
 
-      val thm = GENL [var_l, var_wps, var_wps1] thm;
+      val thm4 = GENL [var_l, var_wps, var_wps1] thm3;
     in
-      thm
+      thm4
     end
-      handle e => raise wrap_exn "bir_wp_comp_wps_iter_step0_init" e;
+      handle e => raise wrap_exn "bir_wp_comp_wps_iter_step0_init" e
+  ;
 
   (* Include current label in reasoning *)
   fun bir_wp_comp_wps_iter_step1 label prog_thm (program, post, ls)
@@ -322,19 +338,20 @@ struct
     end
       handle e => raise wrap_exn "bir_wp_fmap_to_dom_list" e;
 
-  fun bir_wp_init_rec_proc_jobs prog_term wps_term false_label_l =
+  fun bir_wp_init_rec_proc_jobs prog_tm wps_tm blacklist =
     let
       val eval_label = (lhs o concl o EVAL)
-      fun label_tm_eq l1 l2 = (eval_label l1 ) = (eval_label l2)
-      val wpsdom = bir_wp_fmap_to_dom_list wps_term
-      val wpsdom_nofalsel =
-        List.filter (fn a => not (List.exists (fn b => (label_tm_eq a b)) false_label_l)) wpsdom
-      val blocks = (snd o dest_BirProgram_list) prog_term
+      fun label_tm_eq l1 l2 = (eval_label l1) = (eval_label l2)
+
+      val wpsdom = bir_wp_fmap_to_dom_list wps_tm
+      val wpsdom_whitelist =
+        List.filter (fn a => not (List.exists (fn b => (label_tm_eq a b)) blacklist)) wpsdom
+      val blocks = (snd o dest_BirProgram_list) prog_tm
       fun blstodofilter block =
         let
           val (label, _, _) = dest_bir_block block
         in
-          not (List.exists (fn el => cmp_label el label) wpsdom_nofalsel)
+          not (List.exists (fn el => cmp_label el label) wpsdom_whitelist)
         end;
       val blstodo = List.filter blstodofilter blocks
     in
@@ -350,6 +367,7 @@ struct
       val block = List.find (fn block =>
 	let
 	  val (label, _, end_statement) = dest_bir_block block
+          (* TODO: Move these function definitions outside for minimum clutter? *)
 	  (*val label = (snd o dest_eq o concl o EVAL) label;*)
 	  fun is_lbl_in_wps lbl =
 	    List.exists (fn el => cmp_label el lbl) wpsdom
@@ -376,17 +394,19 @@ struct
                   end_statement
                )
 	  else if (is_BStmt_CJmp end_statement)
-	  then ((is_lbl_in_wps o dest_BLE_Label o #2 o
-                   dest_BStmt_CJmp) end_statement)
-	         andalso
-	          ((is_lbl_in_wps o dest_BLE_Label o #3 o
-                    dest_BStmt_CJmp) end_statement)
+	  then let
+                 val (_, el1, el2) = dest_BStmt_CJmp end_statement
+               in
+                 ((is_lbl_in_wps o dest_BLE_Label) el1)
+	           andalso
+	           ((is_lbl_in_wps o dest_BLE_Label) el2)
+               end
 	  else
 	    raise ERR "bir_wp_comp_wps" "unhandled end_statement type."
 	end) blstodo
     in
       case block of
-(*
+(* For debugging:
   val bl = valOf block;
 *)
 	SOME (bl) =>
