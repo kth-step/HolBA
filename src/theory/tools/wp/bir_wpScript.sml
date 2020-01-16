@@ -2009,7 +2009,6 @@ FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
                finite_mapTheory.DRESTRICT_DEF]
 );
 
-(* TODO: Check indentation in this proof *)
 val bir_wp_exec_of_block_bool_thm =
   store_thm("bir_wp_exec_of_block_bool_thm",
   ``!p l ls wps wps' post.
@@ -2061,7 +2060,11 @@ Cases_on `FLOOKUP wps l` >- (
       subgoal `bir_is_bool_exp (
 		 bir_wp_exec_stmtsB bl.bb_statements (post l1)
 	       )` >- (
-	cheat
+	  FULL_SIMP_TAC std_ss [bir_wp_post_map_contains_bool_exp_def] >>
+	  METIS_TAC [bir_is_well_typed_program_def,
+		     bir_is_well_typed_block_def,
+		     listTheory.EVERY_MEM,
+		     bir_wp_exec_stmtsB_bool_thm]
       ) >>
       FULL_SIMP_TAC std_ss [] >>
       Q.PAT_X_ASSUM `FUPDATE A B = C`
@@ -2094,7 +2097,6 @@ Cases_on `FLOOKUP wps l` >- (
 			    FEVERY_FEVERY_DRESTRICT_thm]
     ],
 
-    (* TODO: Remake case splits below *)
     subgoal `bir_is_well_typed_stmtE
 	      (BStmt_CJmp e (BLE_Label l1)
 			    (BLE_Label l2))` >- (
