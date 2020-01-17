@@ -297,7 +297,7 @@ struct
 
       (* Simplify set membership of jumped-to label in ls *)
       val bir_wp_exec_of_block_eval_thm2 =
-        SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss) [] bir_wp_exec_of_block_eval_thm
+        SIMP_RULE (std_ss++wordsLib.WORD_ss++holBACore_ss++pred_setLib.PRED_SET_ss) [] bir_wp_exec_of_block_eval_thm
 
       (*
       val new_wp_id = wps_id_prefix^wps_id_suffix
@@ -465,7 +465,7 @@ end;
     in
       case block of
 (* For debugging:
-  val bl = valOf block;
+  val bl = valOf block
 *)
 	SOME (bl) =>
 	  let
@@ -536,6 +536,12 @@ end;
                          )
               else ();
 	  in
+(* For debugging next step:
+  val wps = wps1
+  val wps_bool_sound_thm = wps1_bool_sound_thm
+  val wpsdom = wpsdom1
+  val blstodo = blstodo1
+*)
 	    bir_wp_comp_wps prog_thm ((wps1, wps1_bool_sound_thm),
 				      (wpsdom1, blstodo1)
 				     ) (program, post, ls)

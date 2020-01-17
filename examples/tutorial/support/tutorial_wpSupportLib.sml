@@ -124,7 +124,7 @@ fun bir_obtain_ht prog_tm first_block_label_tm
 *)
       finite_mapSyntax.mk_fempty (bir_label_t_ty, bir_exp_t_ty)
 
-    (* Create SML list blacklist of labels: needed? *)
+    (* TODO: Create SML list blacklist of labels: really needed? *)
     val blacklist =
       filter (fn tm => term_eq (postcond_exp_from_label postcond_tm tm) bir_bool_expSyntax.bir_exp_false_tm)
         (ending_lam_disj_to_sml_list ending_lam_disj)
