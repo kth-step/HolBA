@@ -114,44 +114,48 @@ fun bir_obtain_ht prog_tm first_block_label_tm
     ``;
 *)
     (* TODO: Should ending_lam_disj_to_sml_list be an argument
-     * or be used for preprocessing? *)
+     * or be used in preprocessing before bir_obtain_ht? *)
     val wps_tm =
+(*
       init_wps_fmap
         (ending_lam_disj_to_sml_list ending_lam_disj)
         postcond_tm
         postcond_exp_from_label
+*)
+      finite_mapSyntax.mk_fempty (bir_label_t_ty, bir_exp_t_ty)
 
-    (* Initialize queue of blocks to process: *)
-    val wps_expand_tm =
-      (rhs o concl o (SIMP_CONV std_ss defs)) wps_tm
+    (* Create SML list blacklist of labels: needed? *)
     val blacklist =
       filter (fn tm => term_eq (postcond_exp_from_label postcond_tm tm) bir_bool_expSyntax.bir_exp_false_tm)
         (ending_lam_disj_to_sml_list ending_lam_disj)
 
+    val ending_label_list =
+      ending_lam_disj_to_sml_list ending_lam_disj
+
+    (* TODO: For all of the below, check that you are not using the huge program in a dumb way. *)
     (* For debugging bir_wp_init_wps_bool_sound_thm: 
       val (program, post, ls) = (prog_tm, postcond_tm, ending_lam_disj)
       val wps = wps_tm
     *)
+    (* Prove theorem stating booleanity and soundness of wp map for starting wps *)
     val wps_bool_sound_thm =
       bir_wp_init_wps_bool_sound_thm
         (prog_tm, postcond_tm, ending_lam_disj) wps_tm defs
-    val (wpsdom, blstodo) =
-      bir_wp_init_rec_proc_jobs (eot prog_tm) wps_expand_tm
-                                blacklist
+    val blstodo =
+      bir_wp_init_rec_proc_jobs prog_tm first_block_label_tm ending_label_list
 
     (* Prepare "problem-static" part of computation: *)
     (* For debugging bir_wp_comp_wps_iter_step0_init:
-      val reusable_thm = bir_wp_exec_of_block_reusable_thm;
       val (program, post, ls) = (prog_tm, postcond_tm, ending_lam_disj)
     *)
     val prog_thm =
       bir_wp_comp_wps_iter_step0_init
-        bir_wp_exec_of_block_reusable_thm
         (prog_tm, postcond_tm, ending_lam_disj) defs
 
     (* Main computation: *)
     (* For debugging bir_wp_comp_wps:
       val wps = wps_tm
+      val wpsdom = ([]:term list)
       val blstodo = List.rev blstodo
       val program = prog_tm
       val post = postcond_tm
@@ -159,8 +163,9 @@ fun bir_obtain_ht prog_tm first_block_label_tm
     *)
     val (wps1, wps1_bool_sound_thm) =
       bir_wp_comp_wps prog_thm ((wps_tm, wps_bool_sound_thm),
-				(wpsdom, List.rev blstodo))
-			       (prog_tm, postcond_tm, ending_lam_disj) defs
+				(([]:term list), List.rev blstodo))
+			       (prog_tm, postcond_tm, ending_lam_disj)
+                               ending_label_list defs
 
     (* Pick out the soundness theorems, *)
     val sound_thms = ((el 2 o CONJUNCTS) wps1_bool_sound_thm)

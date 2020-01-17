@@ -123,8 +123,9 @@ val test = SIMP_CONV bool_ss [] ``(^postcond_tm) (BL_Address (Imm64 0x20w))``
 val defs = [bir_add_reg_prog_def, bir_add_reg_contract_3_post_variant_def,
             bir_add_reg_I_def, bir_exp_false_def, BType_Bool_def];
 val (bir_add_reg_new_loop_continue_variant_ht, bir_add_reg_new_loop_continue_variant_wp_tm) =
-  bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix blacklist defs;
+  bir_obtain_ht prog_tm first_block_label_tm ending_lam_disj
+    (ending_lam_disj_to_sml_list)
+                postcond_tm (postcond_exp_from_label) prefix defs;
 (* By creating a definition and saving the HT as a theorem, we 
  * allow them to be exported to later theories. *)
 val bir_add_reg_new_loop_continue_variant_wp_def =

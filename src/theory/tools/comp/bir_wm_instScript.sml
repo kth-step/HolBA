@@ -95,7 +95,6 @@ val bir_exec_to_labels_triple_postcond_def = Define `
     (bir_is_bool_exp_env st.bst_environ (post st.bst_pc.bpc_label))
 `;
 
-
 (* The main BIR triple to be used for composition *)
 val bir_triple_def = Define `
   bir_triple prog l ls pre post =
@@ -1024,48 +1023,16 @@ val bir_map_triple_move_to_blacklist = store_thm("bir_map_triple_move_to_blackli
     bir_map_triple prog inv l (wlist DELETE elabel) (elabel INSERT blist) pre post``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [bir_map_triple_def, weak_map_triple_def, weak_triple_def] >>
-subgoal `?wlist'. (wlist = elabel INSERT wlist') /\ elabel NOTIN wlist'` >- (
-  METIS_TAC [pred_setTheory.DECOMPOSITION]
-) >>
-subgoal `elabel NOTIN blist` >- (
-  METIS_TAC [pred_setTheory.INSERT_INTER, pred_setTheory.NOT_INSERT_EMPTY]
-) >>
-REPEAT STRIP_TAC >| [
-  FULL_SIMP_TAC std_ss [pred_setTheory.DELETE_INTER, pred_setTheory.INSERT_INTER,
-                        pred_setTheory.COMPONENT] >>
-  ONCE_REWRITE_TAC [pred_setTheory.INTER_COMM] >>
-  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INSERT_INTER,
-                                                   pred_setTheory.COMPONENT,
-                                                   pred_setTheory.INSERT_EQ_SING] >>
-  `wlist' SUBSET wlist` suffices_by (
-    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INTER_COMM]
-  ) >>
-  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [],
-
-  QSPECL_X_ASSUM ``!s. _`` [`s`] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-  Q.EXISTS_TAC `s'` >>
-  FULL_SIMP_TAC std_ss [] >>
-  REPEAT STRIP_TAC >| [
-    `(wlist DELETE elabel UNION (elabel INSERT blist)) = (wlist UNION blist)` suffices_by
-      (FULL_SIMP_TAC std_ss []) >>
-      FULL_SIMP_TAC std_ss [pred_setTheory.DELETE_INSERT, pred_setTheory.DELETE_NON_ELEMENT,
-                            pred_setTheory.INSERT_UNION] >>
-      ONCE_REWRITE_TAC [pred_setTheory.UNION_COMM] >>
-      FULL_SIMP_TAC std_ss [pred_setTheory.DELETE_INSERT, GSYM pred_setTheory.DELETE_NON_ELEMENT,
-                            pred_setTheory.INSERT_UNION],
-
-    subgoal `(bir_etl_wm prog).pc s' = elabel` >- (
-      subgoal `(bir_etl_wm prog).pc s' IN (elabel INSERT blist) DIFF blist` >- (
-        METIS_TAC [pred_setTheory.IN_DIFF]
-      ) >>
-      NTAC 2 (FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [])
-    ) >>
-    FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def, bir_exec_to_labels_triple_postcond_def] >>
-    REV_FULL_SIMP_TAC std_ss [bir_eval_exp_TF, bir_val_TF_dist]
-  ]
-]
+FULL_SIMP_TAC std_ss [bir_map_triple_def] >>
+irule weak_map_move_to_blacklist >>
+ASSUME_TAC bir_model_is_weak >>
+QSPECL_X_ASSUM ``!prog. _`` [`prog`] >>
+FULL_SIMP_TAC std_ss [] >>
+cheat
+(*
+SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def] >>
+REV_FULL_SIMP_TAC std_ss [bir_eval_exp_TF, bir_val_TF_dist]
+*)
 );
 
 

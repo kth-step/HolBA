@@ -44,6 +44,7 @@ struct
    *
    * Local syntax function library should contain:
    * bir_bool_wps_map, bir_sound_wps_map, *)
+  (* TODO: Could be simplified if we only ever have an empty fmap... *)
   (* Establish wps_bool_sound_thm for an initial analysis context *)
   fun bir_wp_init_wps_bool_sound_thm (program, post, ls) wps defs =
     let
@@ -59,7 +60,7 @@ struct
         (* Function-specific simplification swapped for the general
          * booleanity-of-expression simplification set: *)
         SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) []
-(*
+(* Old last step: 
 	SIMP_TAC (std_ss++wordsLib.SIZES_ss++HolBACoreSimps.holBACore_ss) [
 	    bir_is_bool_exp_def,
 	    type_of_bir_exp_def,
@@ -87,14 +88,14 @@ struct
       end;
 
   (* initial_thm_for_prog_post_ls *)
-  fun bir_wp_comp_wps_iter_step0_init reusable_thm (program, post, ls) defs =
+  fun bir_wp_comp_wps_iter_step0_init (program, post, ls) defs =
     let
       val var_l = mk_var ("l", bir_label_t_ty)
       val var_wps = mk_var ("wps", finite_mapSyntax.mk_fmap_ty (bir_label_t_ty, bir_exp_t_ty))
       val var_wps1 = mk_var ("wps'", finite_mapSyntax.mk_fmap_ty (bir_label_t_ty, bir_exp_t_ty))
-      val spec_reusable_thm = ISPECL [program, var_l, ls, post, var_wps, var_wps1] reusable_thm
+      val spec_reusable_thm = ISPECL [program, var_l, ls, post, var_wps, var_wps1] bir_wp_exec_of_block_reusable_thm
         handle e => raise wrap_exn ("Failed to specialize the reusable thm "
-          ^ "(you may need to instantiate the reusable_thm's "
+          ^ "(you may need to instantiate the bir_wp_exec_of_block_reusable_thm's "
           ^ "observation type to the one you're using)") e
 
       (* TODO: Redefining these convs every call is not part of
@@ -135,7 +136,7 @@ struct
       fun wrap_exn_ exn term message = wrap_exn
         (message ^ ": \n" ^ (Hol_pp.term_to_string term) ^ "\n") exn
       val concl_tm = (snd o dest_eq o concl)
-      (* TODO: All of the below SIMP_RULEs coulb be replaced by rewriting
+      (* TODO: All of the below SIMP_RULEs could be replaced by rewriting
        * with boolTheory.EQ_CLAUSES *)
       (* TODO: Create bir_is_bool_expSyntax for the below *)
       val post_bool_thm = prove(``bir_wp_post_map_contains_bool_exp ^post``,
@@ -217,7 +218,9 @@ struct
       val l_not_in_ls_thm =
         SIMP_CONV (srw_ss()) (l_not_in_ls_conv@defs)
                   (mk_neg (mk_IN (label, ls)))
+(* TODO: Not needed if we do not have the constraint that label should not be in ls...
       val thm = MP thm (SIMP_RULE std_ss [] l_not_in_ls_thm)
+*)
 
       val thm = GENL [var_wps, var_wps1] thm
     in
@@ -243,37 +246,37 @@ struct
       fun escape_non_alphanum c = if Char.isAlphaNum c then String.str c else "_";
       fun to_ident name = String.translate escape_non_alphanum name;
 
-      val striped_label = lbl_strip_comment label;
+      val stripped_label = lbl_strip_comment label;
       val wps_id_suffix =
-        if (is_BL_Address striped_label)
-          then (term_to_string o snd o gen_dest_Imm o dest_BL_Address) striped_label
-          else (stringSyntax.fromHOLstring o dest_BL_Label) striped_label;
+        if (is_BL_Address stripped_label)
+          then (term_to_string o snd o gen_dest_Imm o dest_BL_Address) stripped_label
+          else (stringSyntax.fromHOLstring o dest_BL_Label) stripped_label;
     in
       to_ident wps_id_suffix
     end;
 
 
-  (* produce wps1 and reestablish bool_sound_thm for this one *)
+  (* produce wps' and reestablish bool_sound_thm for it *)
   fun bir_wp_comp_wps_iter_step2 (wps, wps_bool_sound_thm) prog_l_thm
 				 ((program, post, ls), (label)) defs =
     let
       val wps_id_suffix = label_to_wps_id_suffix label
 
       (* TODO: Constant, move out of function. *)
-      val var_wps1 =
+      val var_wps' =
         mk_var("wps'", finite_mapSyntax.mk_fmap_ty(bir_label_t_ty,
                                                    bir_exp_t_ty)
               )
-      val thm1 = SPECL [wps, var_wps1] prog_l_thm
+      val spec_prog_l_thm = SPECL [wps, var_wps'] prog_l_thm
 
-      (* FIXME: This seems to take some time, is that normal? *)
-      val thm2 = MP thm1 wps_bool_sound_thm
+      (* TODO: Modus ponens with program definition open here... *)
+      val wps_bool_sound_thm2 = MP spec_prog_l_thm wps_bool_sound_thm
 
       (* FIXME: This seems to take some time, is that normal? *)
       val wps_eval_restrict_consts = !bir_wp_comp_wps_iter_step2_consts;
       val prog_obs_ty = (hd o snd o dest_type o type_of) program;
 
-      val wps1_thm =
+      val bir_wp_exec_of_block_eval_thm =
         computeLib.RESTR_EVAL_CONV wps_eval_restrict_consts
           (list_mk_comb
             (* TODO: Add to bir_wpSyntax *)
@@ -281,13 +284,21 @@ struct
                  bir_label_t ->
                  (bir_label_t -> bool) ->
                  (bir_label_t |-> bir_exp_t) ->
+                 (bir_label_t -> bir_exp_t) ->
                  (bir_label_t |-> bir_exp_t) option``,
-             [program, label, ls, wps]))
+             [program, label, ls, wps, post]))
 
+(* Hmm.... This is not needed anymore since the changes to wp, it seems.
       (* normalize *)
       val wps1_thm = SIMP_RULE pure_ss [GSYM bir_exp_subst1_def,
                                         GSYM bir_exp_and_def]
-                                       wps1_thm; 
+                                       wps1_thm;
+*)
+
+      (* Simplify set membership of jumped-to label in ls *)
+      val bir_wp_exec_of_block_eval_thm2 =
+        SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss) [] bir_wp_exec_of_block_eval_thm
+
       (*
       val new_wp_id = wps_id_prefix^wps_id_suffix
       val new_wp_id_var = mk_var (new_wp_id, bir_exp_t_ty)
@@ -299,12 +310,13 @@ struct
       (*
       val new_wp_id_const = (fst o dest_eq o concl) new_wp_def
       *)
-      val wps1 = (snd o dest_comb o rhs o concl) wps1_thm
+      val wps' =
+        (snd o dest_comb o rhs o concl) bir_wp_exec_of_block_eval_thm2
 
-      val thm3 = SPEC wps1 (GEN var_wps1 thm2)
-      val wps1_bool_sound_thm = MP thm3 wps1_thm
+      val wps_bool_sound_thm3 = SPEC wps' (GEN var_wps' wps_bool_sound_thm2)
+      val wps'_bool_sound_thm = MP wps_bool_sound_thm3 bir_wp_exec_of_block_eval_thm2
     in
-      (wps1, wps1_bool_sound_thm)
+      (wps', wps'_bool_sound_thm)
     end
       handle e => raise wrap_exn "bir_wp_comp_wps_iter_step2" e;
 
@@ -314,6 +326,9 @@ struct
       (optionSyntax.is_some o snd o dest_eq o concl o EVAL) ``FLOOKUP ^wps ^label``;
   *)
 
+
+  (*EVAL ``BL_Address_HC b hc``*)
+
   fun cmp_label lbla lblb =
     let
       val lbla1 = lbl_strip_comment lbla
@@ -322,9 +337,27 @@ struct
       term_eq lbla1 lblb1
     end;
 
-  (*EVAL ``BL_Address_HC b hc``*)
+  val get_block_label = (#1 o dest_bir_block)
 
+  fun find_block label block_list =
+    List.find (fn block => cmp_label (get_block_label block) label) block_list;
 
+  fun get_block_estmt_labels block = 
+    let
+      val (_, _, estmt) = dest_bir_block block
+    in
+      if is_BStmt_Jmp estmt
+      then [dest_BStmt_Jmp estmt]
+      else if is_BStmt_CJmp estmt
+      then let
+	     val (_, l1, l2) = dest_BStmt_CJmp estmt
+	   in
+	     [l1, l2]
+	   end
+      else raise ERR "get_block_estmt_labels"
+		     "Unhandled ending statement"
+    end
+  ;
 
   fun bir_wp_fmap_to_dom_list fmap =
     if is_fempty fmap then [] else
@@ -338,31 +371,50 @@ struct
     end
       handle e => raise wrap_exn "bir_wp_fmap_to_dom_list" e;
 
-  fun bir_wp_init_rec_proc_jobs prog_tm wps_tm blacklist =
+local
+  fun bir_wp_init_rec_proc_jobs' block_list ending_label_list [] lblstodo =
+    (map valOf (map (fn l => find_block l block_list) lblstodo))
+    | bir_wp_init_rec_proc_jobs' block_list ending_label_list (h::t) lblstodo =
     let
-      val eval_label = (lhs o concl o EVAL)
-      fun label_tm_eq l1 l2 = (eval_label l1) = (eval_label l2)
-
-      val wpsdom = bir_wp_fmap_to_dom_list wps_tm
-      val wpsdom_whitelist =
-        List.filter (fn a => not (List.exists (fn b => (label_tm_eq a b)) blacklist)) wpsdom
-      val blocks = (snd o dest_BirProgram_list) prog_tm
-      fun blstodofilter block =
-        let
-          val (label, _, _) = dest_bir_block block
-        in
-          not (List.exists (fn el => cmp_label el label) wpsdom_whitelist)
-        end;
-      val blstodo = List.filter blstodofilter blocks
+      val opt_block = find_block h block_list
     in
-      (wpsdom, blstodo)
+      case opt_block of
+	SOME block => let
+                        (* Get labels from block estmt *)
+                        val estmt_labels = map dest_BLE_Label (get_block_estmt_labels block)
+                        (* Add labels to blstodo if not already there or in blacklist *)
+                        val estmt_labels1 =
+                          List.filter (fn l =>
+                                        (not (List.exists (fn l' => (cmp_label l l')) ending_label_list))
+                                      ) estmt_labels
+                        val estmt_labels2 =
+                          List.filter (fn l =>
+                                        (not (List.exists (fn l' => (cmp_label l l')) lblstodo))
+                                      ) estmt_labels1
+                      in
+                        bir_wp_init_rec_proc_jobs' block_list ending_label_list (estmt_labels2@t) (lblstodo@[h])
+                      end
+      | NONE       => raise ERR "bir_wp_init_rec_proc_jobs'"
+                                "Unhandled behaviour: WP could not be found without program jumping outside itself"
     end
-      handle e => raise wrap_exn "bir_wp_init_rec_proc_jobs" e;
+in
+  fun bir_wp_init_rec_proc_jobs prog_tm first_block_label_tm ending_label_list =
+    let
+      val block_list = (snd o dest_BirProgram_list) ((rhs o concl o EVAL) prog_tm)
+      val blstodo = bir_wp_init_rec_proc_jobs' block_list ending_label_list [first_block_label_tm] []
+    in
+      (* Previously, this used to also return a "wpsdom" which was
+       * a list of labels of the wp fmap. *)
+      blstodo
+    end
+      handle e => raise wrap_exn "bir_wp_init_rec_proc_jobs" e
+end;
 
   (* Recursive procedure for traversing the control flow graph *)
   fun bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm),
 				(wpsdom, blstodo)
-			       ) (program, post, ls) defs =
+			       ) (program, post, ls)
+                               ending_label_list defs =
     let
       val block = List.find (fn block =>
 	let
@@ -371,6 +423,8 @@ struct
 	  (*val label = (snd o dest_eq o concl o EVAL) label;*)
 	  fun is_lbl_in_wps lbl =
 	    List.exists (fn el => cmp_label el lbl) wpsdom
+	  fun is_lbl_in_endingls lbl =
+	    List.exists (fn el => cmp_label el lbl) ending_label_list
           (* Currently, we do not treat BLE_Exps. *)
           fun has_exp_lbl stmte =
             if is_BStmt_Jmp stmte
@@ -390,16 +444,20 @@ struct
           else if has_exp_lbl end_statement
           then false
           else if (is_BStmt_Jmp end_statement)
-	  then ((is_lbl_in_wps o dest_BLE_Label o dest_BStmt_Jmp)
-                  end_statement
-               )
+	  then let
+                 val l = (dest_BLE_Label o dest_BStmt_Jmp) end_statement
+               in
+                 (is_lbl_in_endingls l) orelse (is_lbl_in_wps l)
+               end
 	  else if (is_BStmt_CJmp end_statement)
 	  then let
                  val (_, el1, el2) = dest_BStmt_CJmp end_statement
+                 val l1 = dest_BLE_Label el1
+                 val l2 = dest_BLE_Label el2
                in
-                 ((is_lbl_in_wps o dest_BLE_Label) el1)
+                 ((is_lbl_in_endingls l1) orelse (is_lbl_in_wps l1))
 	           andalso
-	           ((is_lbl_in_wps o dest_BLE_Label) el2)
+	           ((is_lbl_in_endingls l2) orelse (is_lbl_in_wps l2))
                end
 	  else
 	    raise ERR "bir_wp_comp_wps" "unhandled end_statement type."
@@ -480,7 +538,8 @@ struct
 	  in
 	    bir_wp_comp_wps prog_thm ((wps1, wps1_bool_sound_thm),
 				      (wpsdom1, blstodo1)
-				     ) (program, post, ls) defs
+				     ) (program, post, ls)
+                                     ending_label_list defs
 	  end
         | NONE =>
           let
