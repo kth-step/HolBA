@@ -54,7 +54,7 @@ fun prove_exp_is_taut imp_tm = (GEN_ALL o prove) (
   PURE_REWRITE_TAC [bir_exp_is_taut_def] >>
   REPEAT STRIP_TAC >| [
     computeLib.RESTR_EVAL_TAC [``bir_is_bool_exp``] >>
-    FULL_SIMP_TAC (std_ss++holBASimps.bir_is_bool_ss) [],
+    FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [],
 
     (* TODO: Prove bir_var_set_is_well_typed *)
     computeLib.EVAL_TAC >>

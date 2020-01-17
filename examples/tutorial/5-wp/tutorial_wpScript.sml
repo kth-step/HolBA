@@ -55,91 +55,6 @@ fun postcond_exp_from_label postcond label =
 ;
 
 (******************************************************************)
-                         (* New stuff *)
-(* Attempt at generating loop continuation contract with new
- * Ending labels and new postcondition *)
-(******************************************************************)
-
-val prog_tm = (lhs o concl) bir_add_reg_prog_def;
-(* Loop continuation *)
-(*
-bir_map_triple prog bir_var_true loop_branch loop_start
-            (post_loop UNION loop_branch) pre1 post1
-*)
-
-val prefix = "add_reg_new_loop_continue_variant_";
-val first_block_label_tm = ``BL_Address (Imm64 0x40w)``; (* 64 *)
-
-(* TODO: See which functions on the lambda disjunction are needed *)
-(* lam_disj format:
- *   To SML list of address terms: get_labels_from_lam_disj *)
-val ending_lam_disj = ``\l.
-                        (l = BL_Address (Imm64 0x20w)) \/
-                        (l = BL_Address (Imm64 0x40w)) \/
-                        (l = BL_Address (Imm64 0x48w))``;
-(*
-(* Is label in set? thm *)
-val test = ``(^ending_lam_disj) (^first_block_label_tm)``;
-val test2 = EVAL test;
-(* sml *)
-val test3 = ((term_eq T) o snd o dest_eq o concl) test2
-
-*)
-
-
-(*
-val last_block_label_tm =  ``BL_Address (Imm64 0x20w)``; (* 32 *)
-*)
-(* TODO: Here, we need to add address of loop branch (0x40),
- * but this makes WP procedure fail. If added first, then we
- * can't even find any HT. If last, then WP becomes False. *)
-(*
-val blacklist = [``BL_Address (Imm64 0x48w)``, ``BL_Address (Imm64 0x40w)``];
-*)
-(* TODO: Re-defining postcondition here...
- *  *)
-val bir_add_reg_contract_3_post_variant_def = Define `
-  bir_add_reg_contract_3_post_variant v =
-    BExp_BinExp BIExp_And bir_add_reg_I
-		    (BExp_BinExp BIExp_And
-		       (BExp_UnaryExp BIExp_Not
-			  (BExp_BinExp BIExp_Or
-			     (BExp_UnaryExp BIExp_Not
-				(BExp_BinPred BIExp_Equal
-				   (BExp_Den (BVar "ProcState_N" BType_Bool))
-				   (BExp_Den (BVar "ProcState_V" BType_Bool))))
-			     (BExp_Den (BVar "ProcState_Z" BType_Bool))))
-		       (BExp_BinPred BIExp_Equal
-			  (BExp_Den (BVar "R2" (BType_Imm Bit64)))
-			  (BExp_Const (Imm64 v))))
-`;
-val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x20w))
-                         then bir_add_reg_contract_3_post_variant v
-                         else bir_exp_false``;
-(* Postcondition for label? thm *)
-val test = SIMP_CONV bool_ss [] ``(^postcond_tm) (BL_Address (Imm64 0x20w))``
-(* defs is a list of theorems - typically definitions - which is
- * used internally in bir_obtain_ht. This always contains the
- * program definition, the postcondition definition, and all other
- * nested definitions needed to rewrite these to regular BIR
- * terms using only the syntax in the theory/bir directory of
- * HolBA. *)
-val defs = [bir_add_reg_prog_def, bir_add_reg_contract_3_post_variant_def,
-            bir_add_reg_I_def, bir_exp_false_def, BType_Bool_def];
-val (bir_add_reg_new_loop_continue_variant_ht, bir_add_reg_new_loop_continue_variant_wp_tm) =
-  bir_obtain_ht prog_tm first_block_label_tm ending_lam_disj
-    ending_lam_disj_to_sml_list
-                postcond_tm postcond_exp_from_label prefix defs;
-(* By creating a definition and saving the HT as a theorem, we 
- * allow them to be exported to later theories. *)
-val bir_add_reg_new_loop_continue_variant_wp_def =
-  Define `bir_add_reg_new_loop_continue_variant_wp v =
-            ^(bir_add_reg_new_loop_continue_variant_wp_tm)`;
-val _ = save_thm ("bir_add_reg_new_loop_continue_variant_ht",
-                  bir_add_reg_new_loop_continue_variant_ht);
-
-
-(******************************************************************)
 (******************************************************************)
 
 val prog_tm = (lhs o concl) bir_add_reg_prog_def;
@@ -234,7 +149,7 @@ val first_block_label_tm = ``BL_Address (Imm64 0x20w)``;
 val ending_lam_disj =  ``\l.
                          (l = BL_Address (Imm64 0x40w)) \/ (* 64 *)
                          (l = BL_Address (Imm64 0x48w))``; (* 72 *)
-val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x20w))
+val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x40w))
                          then bir_add_reg_contract_2_post_variant v
                          else bir_exp_false``;
 val defs = [bir_add_reg_prog_def,

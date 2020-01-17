@@ -4,7 +4,6 @@ open tutorial_wpTheory;
 open bslSyntax;
 open tutorial_bir_to_armSupportTheory;
 open tutorial_smtTheory;
-open tutorial_compositionSupportTheory;
 open examplesBinaryTheory;
 open bir_wm_instTheory;
 open bin_hoare_logicTheory;
@@ -30,67 +29,27 @@ val _ = new_theory "tutorial_composition";
 
 (* 28 -> 64 *)
 val bir_add_reg_entry_comp_ht =
-(*
   use_impl_rule
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_entry_ht)
-    contract_1_imp_taut_thm;*)
-  prove(
-    ``bir_triple (bir_add_reg_prog:'observation_type bir_program_t) (BL_Address (Imm64 28w))
-        (\x. (x = BL_Address (Imm64 64w)) \/ (x = BL_Address (Imm64 72w)))
-        bir_add_reg_contract_1_pre
-        (\l. if l = BL_Address (Imm64 64w)
-             then bir_add_reg_contract_1_post (BL_Address (Imm64 64w))
-             else bir_exp_false)``,
-  cheat
-);
+    contract_1_imp_taut_thm;
+
 (* 32 -> 64 *)
-(* TODO: This HT needs to have loop exit in its blacklist. Fix this in generation step. *)
 val bir_add_reg_loop_variant_comp_ht =
-(*use_impl_rule
+  use_impl_rule
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_variant_ht)
-    (Q.SPEC `v` contract_2v_imp_taut_thm)*)
-  prove(
-    ``bir_triple (bir_add_reg_prog:'observation_type bir_program_t) (BL_Address (Imm64 32w))
-        (\x. (x = BL_Address (Imm64 64w)) \/ (x = BL_Address (Imm64 72w)))
-        (bir_add_reg_contract_2_pre_variant v)
-        (\l. if l = BL_Address (Imm64 64w)
-             then (bir_add_reg_contract_2_post_variant v) (BL_Address (Imm64 64w))
-             else bir_exp_false)``,
-  cheat
-);
+    (Q.SPEC `v` contract_2v_imp_taut_thm);
+
 (* 64 -> 32 *)
-(* TODO: This HT needs to have loop exit in its blacklist. Fix this in generation step. *)
 val bir_add_reg_loop_continue_variant_comp_ht =
-(*use_impl_rule
+  use_impl_rule
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_continue_variant_ht)
-    (Q.SPEC `v` contract_3v_imp_taut_thm)*)
-  prove(
-    ``bir_triple (bir_add_reg_prog:'observation_type bir_program_t) (BL_Address (Imm64 64w))
-        (\x. (x = BL_Address (Imm64 32w)) \/
-             (x = BL_Address (Imm64 64w)) \/
-             (x = BL_Address (Imm64 72w))
-        )
-        (bir_add_reg_contract_3_pre_variant v)
-        (\l. if l = BL_Address (Imm64 32w)
-             then (bir_add_reg_contract_3_post_variant v) (BL_Address (Imm64 32w))
-             else bir_exp_false)``,
-  cheat
-);
+    (Q.SPEC `v` contract_3v_imp_taut_thm);
+
 (* 64 -> 72 *)
 val bir_add_reg_loop_exit_comp_ht =
-(*
   use_impl_rule
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_exit_ht)
     contract_4_imp_taut_thm;
-*)
-  prove(
-    ``bir_triple (bir_add_reg_prog:'observation_type bir_program_t) (BL_Address (Imm64 64w))
-        (\x. x = BL_Address (Imm64 72w)) bir_add_reg_contract_4_pre
-        (\l. if l = BL_Address (Imm64 72w)
-             then bir_add_reg_contract_4_post (BL_Address (Imm64 72w))
-             else bir_exp_false)``,
-  cheat
-);
 
 (****************************************************************)
 (* Suggested new step 1: *)

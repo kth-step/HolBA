@@ -78,47 +78,7 @@ val contract_1_imp_taut_thm = save_thm ("contract_1_imp_taut_thm",
 
 (*********************************)
 
-(* (2) bir_add_reg_loop
- * 
- * Hoare triple: {I /\ C} loop {I}
- *)
-val contract_2_pre = (lhs o concl) bir_add_reg_contract_2_pre_def;
-val contract_2_wp  = (lhs o concl) bir_add_reg_loop_wp_def;
-val contract_2_imp = bimp (contract_2_pre, contract_2_wp);
-
-val contract_2_imp_taut_thm = save_thm ("contract_2_imp_taut_thm",
-  prove_exp_is_taut contract_2_imp);
-
-(*********************************)
-
-(* (3) bir_add_reg_loop_continue
- * 
- * Hoare triple: {I /\ C} loop {I /\ C}
- *)
-val contract_3_pre = (lhs o concl) bir_add_reg_contract_3_pre_def;
-val contract_3_wp  = (lhs o concl) bir_add_reg_loop_continue_wp_def;
-val contract_3_imp = bimp (contract_3_pre, contract_3_wp);
-
-val contract_3_imp_taut_thm = save_thm ("contract_3_imp_taut_thm",
-  prove_exp_is_taut contract_3_imp);
-
-(*********************************)
-
-(* (4) bir_add_reg_loop_exit
- * 
- * Hoare triple: {I /\ ~C} loop {Q}
- *)
-val contract_4_pre = (lhs o concl) bir_add_reg_contract_4_pre_def;
-val contract_4_wp  = (lhs o concl) bir_add_reg_loop_exit_wp_def;
-val contract_4_imp = bimp (contract_4_pre, contract_4_wp);
-
-val contract_4_imp_taut_thm = save_thm ("contract_4_imp_taut_thm",
-  prove_exp_is_taut contract_4_imp);
-
-(*****************************************************************************)
-(* 1.2. Prove variants                                                       *)
-
-(* (2v) bir_add_reg_loop_variant
+(* (2) bir_add_reg_loop_variant
  * 
  * Hoare triple: {I /\ C /\ lx = v} loop {I /\ 0 <= lx < v}
  *
@@ -137,7 +97,7 @@ val contract_2v_imp_taut_thm = save_thm ("contract_2v_imp_taut_thm",
 
 (*********************************)
 
-(* (3v) bir_add_reg_loop_continue_variant
+(* (3) bir_add_reg_loop_continue_variant
  * 
  * Hoare triple: {I /\ C /\ lx = v} loop {I /\ C /\ lx = v}
  *)
@@ -151,8 +111,21 @@ val contract_3v_imp = bimp (contract_3v_pre, contract_3v_wp);
 val contract_3v_imp_taut_thm = save_thm ("contract_3v_imp_taut_thm",
   prove_exp_is_taut contract_3v_imp);
 
+(*********************************)
+
+(* (4) bir_add_reg_loop_exit
+ * 
+ * Hoare triple: {I /\ ~C} loop {Q}
+ *)
+val contract_4_pre = (lhs o concl) bir_add_reg_contract_4_pre_def;
+val contract_4_wp  = (lhs o concl) bir_add_reg_loop_exit_wp_def;
+val contract_4_imp = bimp (contract_4_pre, contract_4_wp);
+
+val contract_4_imp_taut_thm = save_thm ("contract_4_imp_taut_thm",
+  prove_exp_is_taut contract_4_imp);
+
 (*****************************************************************************)
-(* 1.3. Hoare triples containing memories                                    *)
+(* 1.2. Hoare triples containing memories                                    *)
 (*                                                                           *)
 (* !!! WARNING !!!                                                           *)
 (*                                                                           *)
