@@ -199,95 +199,97 @@ val imm_eq_to_val_eq =
 
 REPEAT STRIP_TAC >> EVAL_TAC);
 
+val arm8_vars_def = Define `
+  arm8_vars= {
+    (BVar "ProcState_C" (BType_Imm Bit1));
+    (BVar "tmp_ProcState_C" (BType_Imm Bit1));
+    (BVar "ProcState_N" (BType_Imm Bit1));
+    (BVar "tmp_ProcState_N" (BType_Imm Bit1));
+    (BVar "ProcState_V" (BType_Imm Bit1));
+    (BVar "tmp_ProcState_V" (BType_Imm Bit1));
+    (BVar "ProcState_Z" (BType_Imm Bit1));
+    (BVar "tmp_ProcState_Z" (BType_Imm Bit1));
+    (BVar "R0" (BType_Imm Bit64));
+    (BVar "tmp_R0" (BType_Imm Bit64));
+    (BVar "R1" (BType_Imm Bit64));
+    (BVar "tmp_R1" (BType_Imm Bit64));
+    (BVar "R2" (BType_Imm Bit64));
+    (BVar "tmp_R2" (BType_Imm Bit64));
+    (BVar "R3" (BType_Imm Bit64));
+    (BVar "tmp_R3" (BType_Imm Bit64));
+    (BVar "R4" (BType_Imm Bit64));
+    (BVar "tmp_R4" (BType_Imm Bit64));
+    (BVar "R5" (BType_Imm Bit64));
+    (BVar "tmp_R5" (BType_Imm Bit64));
+    (BVar "R6" (BType_Imm Bit64));
+    (BVar "tmp_R6" (BType_Imm Bit64));
+    (BVar "R7" (BType_Imm Bit64));
+    (BVar "tmp_R7" (BType_Imm Bit64));
+    (BVar "R8" (BType_Imm Bit64));
+    (BVar "tmp_R8" (BType_Imm Bit64));
+    (BVar "R9" (BType_Imm Bit64));
+    (BVar "tmp_R9" (BType_Imm Bit64));
+    (BVar "R10" (BType_Imm Bit64));
+    (BVar "tmp_R10" (BType_Imm Bit64));
+    (BVar "R11" (BType_Imm Bit64));
+    (BVar "tmp_R11" (BType_Imm Bit64));
+    (BVar "R12" (BType_Imm Bit64));
+    (BVar "tmp_R12" (BType_Imm Bit64));
+    (BVar "R13" (BType_Imm Bit64));
+    (BVar "tmp_R13" (BType_Imm Bit64));
+    (BVar "R14" (BType_Imm Bit64));
+    (BVar "tmp_R14" (BType_Imm Bit64));
+    (BVar "R15" (BType_Imm Bit64));
+    (BVar "tmp_R15" (BType_Imm Bit64));
+    (BVar "R16" (BType_Imm Bit64));
+    (BVar "tmp_R16" (BType_Imm Bit64));
+    (BVar "R17" (BType_Imm Bit64));
+    (BVar "tmp_R17" (BType_Imm Bit64));
+    (BVar "R18" (BType_Imm Bit64));
+    (BVar "tmp_R18" (BType_Imm Bit64));
+    (BVar "R19" (BType_Imm Bit64));
+    (BVar "tmp_R19" (BType_Imm Bit64));
+    (BVar "R20" (BType_Imm Bit64));
+    (BVar "tmp_R20" (BType_Imm Bit64));
+    (BVar "R21" (BType_Imm Bit64));
+    (BVar "tmp_R21" (BType_Imm Bit64));
+    (BVar "R22" (BType_Imm Bit64));
+    (BVar "tmp_R22" (BType_Imm Bit64));
+    (BVar "R23" (BType_Imm Bit64));
+    (BVar "tmp_R23" (BType_Imm Bit64));
+    (BVar "R24" (BType_Imm Bit64));
+    (BVar "tmp_R24" (BType_Imm Bit64));
+    (BVar "R25" (BType_Imm Bit64));
+    (BVar "tmp_R25" (BType_Imm Bit64));
+    (BVar "R26" (BType_Imm Bit64));
+    (BVar "tmp_R26" (BType_Imm Bit64));
+    (BVar "R27" (BType_Imm Bit64));
+    (BVar "tmp_R27" (BType_Imm Bit64));
+    (BVar "R28" (BType_Imm Bit64));
+    (BVar "tmp_R28" (BType_Imm Bit64));
+    (BVar "R29" (BType_Imm Bit64));
+    (BVar "tmp_R29" (BType_Imm Bit64));
+    (BVar "R30" (BType_Imm Bit64));
+    (BVar "tmp_R30" (BType_Imm Bit64));
+    (BVar "R31" (BType_Imm Bit64));
+    (BVar "tmp_R31" (BType_Imm Bit64));
+    (BVar "SP_EL0" (BType_Imm Bit64));
+    (BVar "tmp_SP_EL0" (BType_Imm Bit64));
+    (BVar "SP_EL1" (BType_Imm Bit64));
+    (BVar "tmp_SP_EL1" (BType_Imm Bit64));
+    (BVar "SP_EL2" (BType_Imm Bit64));
+    (BVar "tmp_SP_EL2" (BType_Imm Bit64));
+    (BVar "SP_EL3" (BType_Imm Bit64));
+    (BVar "tmp_SP_EL3" (BType_Imm Bit64));
+    (BVar "MEM" (BType_Mem Bit64 Bit8));
+    (BVar "tmp_MEM" (BType_Mem Bit64 Bit8));
+    (BVar "tmp_PC" (BType_Imm Bit64));
+    (BVar "tmp_COND" (BType_Imm Bit1))
+  }
+`;
 
 val arm8_wf_varset_def = Define `
-arm8_wf_varset vset =
-  (vset = {
-  (BVar "ProcState_C" (BType_Imm Bit1));
-  (BVar "tmp_ProcState_C" (BType_Imm Bit1));
-  (BVar "ProcState_N" (BType_Imm Bit1));
-  (BVar "tmp_ProcState_N" (BType_Imm Bit1));
-  (BVar "ProcState_V" (BType_Imm Bit1));
-  (BVar "tmp_ProcState_V" (BType_Imm Bit1));
-  (BVar "ProcState_Z" (BType_Imm Bit1));
-  (BVar "tmp_ProcState_Z" (BType_Imm Bit1));
-  (BVar "R0" (BType_Imm Bit64));
-  (BVar "tmp_R0" (BType_Imm Bit64));
-  (BVar "R1" (BType_Imm Bit64));
-  (BVar "tmp_R1" (BType_Imm Bit64));
-  (BVar "R2" (BType_Imm Bit64));
-  (BVar "tmp_R2" (BType_Imm Bit64));
-  (BVar "R3" (BType_Imm Bit64));
-  (BVar "tmp_R3" (BType_Imm Bit64));
-  (BVar "R4" (BType_Imm Bit64));
-  (BVar "tmp_R4" (BType_Imm Bit64));
-  (BVar "R5" (BType_Imm Bit64));
-  (BVar "tmp_R5" (BType_Imm Bit64));
-  (BVar "R6" (BType_Imm Bit64));
-  (BVar "tmp_R6" (BType_Imm Bit64));
-  (BVar "R7" (BType_Imm Bit64));
-  (BVar "tmp_R7" (BType_Imm Bit64));
-  (BVar "R8" (BType_Imm Bit64));
-  (BVar "tmp_R8" (BType_Imm Bit64));
-  (BVar "R9" (BType_Imm Bit64));
-  (BVar "tmp_R9" (BType_Imm Bit64));
-  (BVar "R10" (BType_Imm Bit64));
-  (BVar "tmp_R10" (BType_Imm Bit64));
-  (BVar "R11" (BType_Imm Bit64));
-  (BVar "tmp_R11" (BType_Imm Bit64));
-  (BVar "R12" (BType_Imm Bit64));
-  (BVar "tmp_R12" (BType_Imm Bit64));
-  (BVar "R13" (BType_Imm Bit64));
-  (BVar "tmp_R13" (BType_Imm Bit64));
-  (BVar "R14" (BType_Imm Bit64));
-  (BVar "tmp_R14" (BType_Imm Bit64));
-  (BVar "R15" (BType_Imm Bit64));
-  (BVar "tmp_R15" (BType_Imm Bit64));
-  (BVar "R16" (BType_Imm Bit64));
-  (BVar "tmp_R16" (BType_Imm Bit64));
-  (BVar "R17" (BType_Imm Bit64));
-  (BVar "tmp_R17" (BType_Imm Bit64));
-  (BVar "R18" (BType_Imm Bit64));
-  (BVar "tmp_R18" (BType_Imm Bit64));
-  (BVar "R19" (BType_Imm Bit64));
-  (BVar "tmp_R19" (BType_Imm Bit64));
-  (BVar "R20" (BType_Imm Bit64));
-  (BVar "tmp_R20" (BType_Imm Bit64));
-  (BVar "R21" (BType_Imm Bit64));
-  (BVar "tmp_R21" (BType_Imm Bit64));
-  (BVar "R22" (BType_Imm Bit64));
-  (BVar "tmp_R22" (BType_Imm Bit64));
-  (BVar "R23" (BType_Imm Bit64));
-  (BVar "tmp_R23" (BType_Imm Bit64));
-  (BVar "R24" (BType_Imm Bit64));
-  (BVar "tmp_R24" (BType_Imm Bit64));
-  (BVar "R25" (BType_Imm Bit64));
-  (BVar "tmp_R25" (BType_Imm Bit64));
-  (BVar "R26" (BType_Imm Bit64));
-  (BVar "tmp_R26" (BType_Imm Bit64));
-  (BVar "R27" (BType_Imm Bit64));
-  (BVar "tmp_R27" (BType_Imm Bit64));
-  (BVar "R28" (BType_Imm Bit64));
-  (BVar "tmp_R28" (BType_Imm Bit64));
-  (BVar "R29" (BType_Imm Bit64));
-  (BVar "tmp_R29" (BType_Imm Bit64));
-  (BVar "R30" (BType_Imm Bit64));
-  (BVar "tmp_R30" (BType_Imm Bit64));
-  (BVar "R31" (BType_Imm Bit64));
-  (BVar "tmp_R31" (BType_Imm Bit64));
-  (BVar "SP_EL0" (BType_Imm Bit64));
-  (BVar "tmp_SP_EL0" (BType_Imm Bit64));
-  (BVar "SP_EL1" (BType_Imm Bit64));
-  (BVar "tmp_SP_EL1" (BType_Imm Bit64));
-  (BVar "SP_EL2" (BType_Imm Bit64));
-  (BVar "tmp_SP_EL2" (BType_Imm Bit64));
-  (BVar "SP_EL3" (BType_Imm Bit64));
-  (BVar "tmp_SP_EL3" (BType_Imm Bit64));
-  (BVar "MEM" (BType_Mem Bit64 Bit8));
-  (BVar "tmp_MEM" (BType_Mem Bit64 Bit8));
-  (BVar "tmp_PC" (BType_Imm Bit64));
-  (BVar "tmp_COND" (BType_Imm Bit1))
-})`;
+  arm8_wf_varset vset = vset SUBSET arm8_vars`;
 
 val default_arm8_bir_state_def = Define `default_arm8_bir_state ms =
  <|bst_pc :=  bir_block_pc (BL_Address (Imm64 ms.PC)); 
@@ -418,10 +420,15 @@ val exist_bir_of_arm8_thm = prove(
 REPEAT STRIP_TAC >> 
 EXISTS_TAC ``default_arm8_bir_state ms`` >>
 ASSUME_TAC (SPEC ``ms:arm8_state`` default_arm8_bir_state_satisfies_rel_thm) >>
-FULL_SIMP_TAC std_ss [] >>
-STRIP_TAC >-  EVAL_TAC >>
-PAT_X_ASSUM ``arm8_wf_varset vars``
-  (fn thm=> REWRITE_TAC [SIMP_RULE std_ss [arm8_wf_varset_def] thm]) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+STRIP_TAC >- (
+  EVAL_TAC
+) >>
+irule bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET >>
+Q.EXISTS_TAC `arm8_vars` >>
+FULL_SIMP_TAC std_ss [arm8_wf_varset_def] >>
+SIMP_TAC std_ss [arm8_vars_def] >>
+(* TODO: This proof is sloooow... *)
 FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_INSERT] >>
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_var_is_initialised_def] >>

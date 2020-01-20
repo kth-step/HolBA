@@ -124,7 +124,11 @@ irule add_lift_thm >>
 REPEAT STRIP_TAC >| [
   (* 1. Prove that the union of variables in the program and precondition are a well-founded variable
    *    set *)
-  cheat,
+  (* TODO: This subset computation is slooow... *)
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++HolBASimps.VARS_OF_PROG_ss
+                       ++pred_setLib.PRED_SET_ss)
+    [bir_add_reg_prog_def, bir_add_reg_contract_1_pre_def, bir_add_reg_pre_def, arm8_wf_varset_def,
+     arm8_vars_def],
 
   (* 2. Starting address exists in program *)
   FULL_SIMP_TAC std_ss
