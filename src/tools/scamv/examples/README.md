@@ -2,7 +2,7 @@
 The setup procedure has been tested on Debian 10.2.0-amd64. Alternatively a HOLBA_VM can be used but it must still be prepared according to the notes in `VM_setup.txt`.
 
 ## Setup
-Install the following packages. Make sure that at least `python3` is at least version 3.7.
+Install the following packages and make sure that `python3` is at least version 3.7.
 ```
 apt install git build-essential libtinfo5
 ```
