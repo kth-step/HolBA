@@ -112,7 +112,7 @@ val bir_map_triple_def = Define `
       (\s. bir_exec_to_labels_triple_precond s invariant prog)
       l ls ls'
       (\s. bir_exec_to_labels_triple_precond s pre prog)
-      (\l' s'. bir_exec_to_labels_triple_postcond s' post prog)
+      (\s'. bir_exec_to_labels_triple_postcond s' post prog)
 `;
 
 
@@ -1028,11 +1028,9 @@ irule weak_map_move_to_blacklist >>
 ASSUME_TAC bir_model_is_weak >>
 QSPECL_X_ASSUM ``!prog. _`` [`prog`] >>
 FULL_SIMP_TAC std_ss [] >>
-cheat
-(*
+GEN_TAC >> DISCH_TAC >>
 SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def] >>
-REV_FULL_SIMP_TAC std_ss [bir_eval_exp_TF, bir_val_TF_dist]
-*)
+FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def, bir_eval_exp_TF, bir_val_TF_dist]
 );
 
 
@@ -1080,7 +1078,7 @@ irule weak_map_weakening_rule_thm >>
 REPEAT STRIP_TAC >- (
   METIS_TAC [bir_model_is_weak]
 ) >>
-Q.EXISTS_TAC `\l' s'. bir_exec_to_labels_triple_postcond s' post1 prog` >>
+Q.EXISTS_TAC `\s'. bir_exec_to_labels_triple_postcond s' post1 prog` >>
 REPEAT STRIP_TAC >| [
   QSPECL_X_ASSUM ``!st. _`` [`ms`] >>
   Q.SUBGOAL_THEN `ms.bst_pc.bpc_label IN ls` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
@@ -1114,14 +1112,20 @@ REPEAT STRIP_TAC >- (
   FULL_SIMP_TAC std_ss []
 ) >>
 Q.EXISTS_TAC `ls1` >>
-Q.EXISTS_TAC `(\l1' s. bir_exec_to_labels_triple_precond s (post1 l1') prog)` >>
+Q.EXISTS_TAC `\s. bir_exec_to_labels_triple_precond s (post1 ((bir_etl_wm prog).pc s)) prog` >>
 REPEAT STRIP_TAC >> (
   FULL_SIMP_TAC std_ss []
-) >>
-FULL_SIMP_TAC (std_ss++bir_wm_SS) [weak_map_triple_def,
-                                   bir_exec_to_labels_triple_precond_def,
-                                   bir_exec_to_labels_triple_postcond_def,
-                                   bir_etl_wm_def]
+) >| [
+  QSPECL_X_ASSUM ``!l1. _`` [`l1`] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  FULL_SIMP_TAC std_ss [weak_map_triple_def, weak_triple_def,
+                        bir_exec_to_labels_triple_precond_def],
+
+  FULL_SIMP_TAC (std_ss++bir_wm_SS) [weak_map_triple_def,
+                                     bir_exec_to_labels_triple_precond_def,
+                                     bir_exec_to_labels_triple_postcond_def,
+                                     bir_etl_wm_def]
+]
 );
 
 
