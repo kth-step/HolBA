@@ -7,7 +7,9 @@ sig
 
   val bir_obtain_ht : term -> term -> term -> term -> string -> term list -> thm * thm list
 
-  val get_labels_from_lam_disj : term -> term list
+  val ending_lam_disj_to_sml_list : term -> term list
+  val ending_set_to_sml_list : term -> term list
+  val postcond_exp_from_label : term -> term -> term
 
   val prove_imp_w_smt : term -> term -> thm
 

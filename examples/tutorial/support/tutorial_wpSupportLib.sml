@@ -74,10 +74,22 @@ in
 
 (* TODO: Is there any smarter way to do this? *)
 fun dest_lambda tm = (Absyn.dest_AQ o snd o Absyn.dest_lam o Absyn.mk_AQ) tm;
-fun get_labels_from_lam_disj ls =
+fun ending_lam_disj_to_sml_list ls =
   if pred_setSyntax.is_empty ls
   then []
   else map (snd o dest_eq) (strip_disj (dest_lambda ls));
+
+val ending_set_to_sml_list = pred_setSyntax.strip_set
+
+fun postcond_exp_from_label postcond label =
+  (snd o dest_eq o concl)
+    (SIMP_CONV
+      (bool_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss) []
+      (mk_comb (postcond, label)
+    )
+  )
+;
+
 
 fun init_wps_fmap label_list postcond postcond_exp_from_label = 
   let
@@ -98,36 +110,10 @@ fun bir_obtain_ht prog_tm first_block_label_tm
                   prefix defs =
   let
     (* Some terms which will be used: *)
-(* OLD:
-    (*   A finite map of dummy labels to False *)
-    val blacklist_fmap_tm = make_blacklist_fmap blacklist
-    (* The postcondition expression of the last block label *)
-    val postcond_exp_tm = ``^postcond_tm ^last_block_label_tm``
-    (*   A finite map of all the labels and all the preconditions,
-     *   which will be used throughout the computation to store
-     *   the WPs *)
-    val wps_tm = ``
-        ((^blacklist_fmap_tm) |+ (^last_block_label_tm,
-                    ^postcond_exp_tm
-                   )
-        )
-    ``;
-*)
     (* TODO: Should ending_lam_disj_to_sml_list be an argument
      * or be used in preprocessing before bir_obtain_ht? *)
     val wps_tm =
-(*
-      init_wps_fmap
-        (ending_lam_disj_to_sml_list ending_lam_disj)
-        postcond_tm
-        postcond_exp_from_label
-*)
       finite_mapSyntax.mk_fempty (bir_label_t_ty, bir_exp_t_ty)
-
-    (* TODO: Create SML list blacklist of labels: really needed? *)
-    val blacklist =
-      filter (fn tm => term_eq (postcond_exp_from_label postcond_tm tm) bir_bool_expSyntax.bir_exp_false_tm)
-        (ending_lam_disj_to_sml_list ending_lam_disj)
 
     val ending_label_list =
       ending_lam_disj_to_sml_list ending_lam_disj

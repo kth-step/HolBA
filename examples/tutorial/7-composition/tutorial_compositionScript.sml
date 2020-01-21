@@ -14,6 +14,7 @@ open bir_exp_equivTheory;
 open bir_programTheory;
 
 open tutorial_compositionLib;
+open tutorial_wpSupportLib;
 
 open bir_auxiliaryLib;
 
@@ -22,6 +23,52 @@ open HolBASimps;
 open bin_hoare_logicSimps;
 
 val _ = new_theory "tutorial_composition";
+
+(* TODO: Where to place the below? *)
+fun el_in_set elem set =
+  EQT_ELIM (SIMP_CONV (std_ss++pred_setLib.PRED_SET_ss) [] (pred_setSyntax.mk_in (elem, set)));
+
+val mk_set = pred_setSyntax.mk_set;
+
+val simp_delete_set_rule =
+  SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss)
+    [pred_setTheory.DELETE_DEF]
+
+val simp_insert_set_rule =
+  SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss)
+    [(* ??? *)]
+
+val simp_in_sing_set_rule =
+  SIMP_RULE std_ss [pred_setTheory.IN_SING]
+
+fun simp_inter_set_rule ht =
+  REWRITE_RULE [EVAL (get_bir_map_triple_blist ht)] ht
+
+val simp_in_set_tac =
+  SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss++pred_setLib.PRED_SET_ss) []
+
+val inter_set_ss = SSFRAG {ac = [],
+                           congs = [],
+                           convs = [{conv = K (K computeLib.EVAL_CONV),
+                                    key= SOME ([], ``A INTER B``),
+                                    name = "EVAL_CONV_INTER",
+                                    trace = 2}],
+                           dprocs = [], filter = NONE, name = SOME "inter_set_ss", rewrs = []};
+
+val union_set_ss = SSFRAG {ac = [],
+                           congs = [],
+                           convs = [{conv = K (K computeLib.EVAL_CONV),
+                                    key= SOME ([], ``A UNION B``),
+                                    name = "EVAL_CONV_UNION",
+                                    trace = 2}],
+                           dprocs = [], filter = NONE, name = SOME "union_set_ss", rewrs = []};
+
+(* DEBUG *)
+val (get_labels_from_set_repr, el_in_set_repr,
+     mk_set_repr, simp_delete_set_repr_rule,
+     simp_insert_set_repr_rule, simp_in_sing_set_repr_rule, simp_inter_set_repr_rule, simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) = (ending_set_to_sml_list, el_in_set, mk_set, simp_delete_set_rule,
+     simp_insert_set_rule, simp_in_sing_set_rule, simp_inter_set_rule, simp_in_set_tac, inter_set_ss, union_set_ss);
+(************************************)
 
 (****************************************************************)
 (* Step 0: *)
@@ -69,7 +116,9 @@ val bir_add_reg_loop_exit_comp_ht =
 		  bir_add_reg_contract_2_pre_variant_def];
 
 val loop_map_ht =
-   bir_compose_nonmap_seq ht1 ht2 def_list;
+   bir_compose_nonmap_seq ht1 ht2 def_list (get_labels_from_set_repr, el_in_set_repr,
+                                            mk_set_repr, simp_delete_set_repr_rule,
+	                                    simp_insert_set_repr_rule);
 
 (****************************************************************)
 (* Step 2: *)
@@ -83,7 +132,8 @@ val loop_map_ht =
   val loop_variant = bden (bvar "R2" ``(BType_Imm Bit64)``);
   (* The definitions of the program, loop condition and both preconditions *)
   val def_list = [bir_add_reg_prog_def, bir_add_reg_loop_condition_def,
-		  bir_add_reg_contract_3_pre_variant_def, bir_add_reg_contract_4_pre_def];
+		  bir_add_reg_contract_3_pre_variant_def, bir_add_reg_contract_2_post_variant_def,
+                  bir_add_reg_contract_4_pre_def];
 
 val loop_and_exit_ht =
   bir_compose_loop loop_map_ht loop_exit_ht loop_invariant loop_condition loop_variant def_list;
@@ -95,7 +145,7 @@ val loop_and_exit_ht =
   val ht2 = loop_and_exit_ht
   val def_list = [bir_add_reg_prog_def, bir_add_reg_contract_1_post_def];
 
-(* TODO: Rename to tie to program name? *)
+(* TODO: Rename HT to tie to program name? *)
 val final_ht =
    bir_compose_nonmap_seq ht1 ht2 def_list;
 

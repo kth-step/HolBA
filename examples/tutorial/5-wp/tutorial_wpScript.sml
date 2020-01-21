@@ -43,16 +43,8 @@ val _ = new_theory "tutorial_wp";
  * HT = Hoare triple
 *)
 
-val ending_lam_disj_to_sml_list = get_labels_from_lam_disj
+(* TODO: Think about where to put these... *)
 
-fun postcond_exp_from_label postcond label =
-  (snd o dest_eq o concl)
-    (SIMP_CONV
-      (bool_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss) []
-      (mk_comb (postcond, label)
-    )
-  )
-;
 
 (******************************************************************)
 (******************************************************************)
@@ -73,15 +65,13 @@ val first_block_label_tm = ``BL_Address (Imm64 0x1cw)``; (* 28 *)
 (* This is the Ending blocks of HT execution: the HT postcondition
  * (on the final state) is predicated on the state when these blocks
  * are reached. *)
-val ending_lam_disj =  ``\l.
-                         (l = BL_Address (Imm64 0x40w)) \/ (* 64 *)
-                         (l = BL_Address (Imm64 0x48w))``; (* 72 *)
+val ending_set =  ``{BL_Address (Imm64 0x40w); BL_Address (Imm64 0x48w)}``; (* 64, 72 *)
 (* postcond_tm is the postcondition of the HT to be generated and
  * proved, which is obtained from the contract definitions in
  * tutorial_bir_to_armTheory. *)
 val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x40w))
-                         then bir_add_reg_contract_1_post
-                         else bir_exp_false``;
+                        then bir_add_reg_contract_1_post
+                        else bir_exp_false``;
 (* defs is a list of theorems - typically definitions - which is
  * used internally in bir_obtain_ht. This always contains the
  * program definition, the postcondition definition, and all other
@@ -106,7 +96,7 @@ val defs = [bir_add_reg_prog_def, bir_add_reg_contract_1_post_def,
  * *)
 val (bir_add_reg_entry_ht, bir_add_reg_entry_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm
-                ending_lam_disj ending_lam_disj_to_sml_list
+                ending_set ending_set_to_sml_list
                 postcond_tm postcond_exp_from_label
                 prefix defs;
 (* By creating a definition and saving the HT as a theorem, we 
@@ -146,9 +136,7 @@ val _ = save_thm ("bir_add_reg_entry_ht", bir_add_reg_entry_ht);
 (* 20 -> 24 -> 28 -> 2c -> 30 -> 34 -> 38 -> 3c -> 40 *)
 val prefix = "add_reg_loop_variant_";
 val first_block_label_tm = ``BL_Address (Imm64 0x20w)``;
-val ending_lam_disj =  ``\l.
-                         (l = BL_Address (Imm64 0x40w)) \/ (* 64 *)
-                         (l = BL_Address (Imm64 0x48w))``; (* 72 *)
+val ending_set =  ``{BL_Address (Imm64 0x40w); BL_Address (Imm64 0x48w)}``; (* 64, 72 *)
 val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x40w))
                          then bir_add_reg_contract_2_post_variant v
                          else bir_exp_false``;
@@ -158,7 +146,7 @@ val defs = [bir_add_reg_prog_def,
 
 val (bir_add_reg_loop_variant_ht, bir_add_reg_loop_variant_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm
-                ending_lam_disj ending_lam_disj_to_sml_list
+                ending_set ending_set_to_sml_list
                 postcond_tm postcond_exp_from_label
                 prefix defs;
 
@@ -176,10 +164,7 @@ val _ = save_thm ("bir_add_reg_loop_variant_ht",
 (* 40 -> 20 *)
 val prefix = "add_reg_loop_continue_variant_";
 val first_block_label_tm = ``BL_Address (Imm64 0x40w)``;
-val ending_lam_disj = ``\l.
-                        (l = BL_Address (Imm64 0x20w)) \/
-                        (l = BL_Address (Imm64 0x40w)) \/
-                        (l = BL_Address (Imm64 0x48w))``;
+val ending_set = ``{BL_Address (Imm64 0x20w); BL_Address (Imm64 0x40w); BL_Address (Imm64 0x48w)}``;
 val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x20w))
                          then bir_add_reg_contract_3_post_variant v
                          else bir_exp_false``;
@@ -190,7 +175,7 @@ val defs = [bir_add_reg_prog_def,
 val (bir_add_reg_loop_continue_variant_ht,
      bir_add_reg_loop_continue_variant_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm
-                ending_lam_disj ending_lam_disj_to_sml_list
+                ending_set ending_set_to_sml_list
                 postcond_tm postcond_exp_from_label
                 prefix defs;
 
@@ -209,9 +194,7 @@ val _ = save_thm ("bir_add_reg_loop_continue_variant_ht",
 (* 40 -> 48 *)
 val prefix = "add_reg_loop_exit_";
 val first_block_label_tm = ``BL_Address (Imm64 0x40w)``;
-val ending_lam_disj = ``\l.
-                        (l = BL_Address (Imm64 0x20w)) \/
-                        (l = BL_Address (Imm64 0x48w))``;
+val ending_set = ``{BL_Address (Imm64 0x20w); BL_Address (Imm64 0x48w)}``;
 val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x48w))
                          then bir_add_reg_contract_4_post
                          else bir_exp_false``;
@@ -220,7 +203,7 @@ val defs = [bir_add_reg_prog_def, bir_add_reg_contract_4_post_def,
 
 val (bir_add_reg_loop_exit_ht, bir_add_reg_loop_exit_wp_tm) =
   bir_obtain_ht prog_tm first_block_label_tm
-                ending_lam_disj ending_lam_disj_to_sml_list
+                ending_set ending_set_to_sml_list
                 postcond_tm postcond_exp_from_label
                 prefix defs;
 
