@@ -118,15 +118,27 @@ val bir_add_reg_loop_exit_comp_ht =
 val loop_map_ht =
    bir_compose_nonmap_seq ht1 ht2 def_list (get_labels_from_set_repr, el_in_set_repr,
                                             mk_set_repr, simp_delete_set_repr_rule,
-	                                    simp_insert_set_repr_rule);
+	                                    simp_insert_set_repr_rule,
+                                            simp_in_sing_set_repr_rule,
+                                            simp_inter_set_repr_rule);
 
 (****************************************************************)
 (* Step 2: *)
+(* Ditch the loop re-entry label from the loop exit contract ending list of labels *)
+
+(* For debugging: *)
+  val new_ending_label_set = ``{BL_Address (Imm64 72w)}``;
+  val ht = bir_add_reg_loop_exit_comp_ht;
+
+val loop_exit_simp_ht = bir_remove_labels_from_ending_set ht new_ending_label_set;
+
+(****************************************************************)
+(* Step 3: *)
 (* Compose loop from loop_map_ht and bir_add_reg_loop_exit_comp_ht (using bir_while_rule_thm) *)
 
 (* For debugging: *)
   val loop_map_ht = loop_map_ht;
-  val loop_exit_ht = bir_add_reg_loop_exit_comp_ht;
+  val loop_exit_ht = loop_exit_simp_ht;
   val loop_invariant = ``bir_add_reg_I``;
   val loop_condition = ``bir_add_reg_loop_condition``;
   val loop_variant = bden (bvar "R2" ``(BType_Imm Bit64)``);
@@ -136,18 +148,23 @@ val loop_map_ht =
                   bir_add_reg_contract_4_pre_def];
 
 val loop_and_exit_ht =
-  bir_compose_loop loop_map_ht loop_exit_ht loop_invariant loop_condition loop_variant def_list;
+  bir_compose_loop (simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss)
+    loop_map_ht loop_exit_ht loop_invariant loop_condition loop_variant def_list;
 
 (****************************************************************)
-(* Step 3: *)
+(* Step 4: *)
 (* Compose loop intro with loop (using bir_map_std_seq_comp_thm) *)
   val ht1 = bir_add_reg_entry_comp_ht
   val ht2 = loop_and_exit_ht
-  val def_list = [bir_add_reg_prog_def, bir_add_reg_contract_1_post_def];
+  val def_list = [bir_add_reg_prog_def, bir_add_reg_contract_1_post_def, bir_add_reg_I_def];
 
 (* TODO: Rename HT to tie to program name? *)
 val final_ht =
-   bir_compose_nonmap_seq ht1 ht2 def_list;
+   bir_compose_nonmap_seq ht1 ht2 def_list (get_labels_from_set_repr, el_in_set_repr,
+                                            mk_set_repr, simp_delete_set_repr_rule,
+	                                    simp_insert_set_repr_rule,
+                                            simp_in_sing_set_repr_rule,
+                                            simp_inter_set_repr_rule);
 
 (*****************************************************)
 (*                    BACKLIFTING                    *)

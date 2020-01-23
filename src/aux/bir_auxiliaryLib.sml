@@ -15,4 +15,16 @@ fun FULLSIMP_BY_THM ss thm = FULL_SIMP_TAC ss [thm];
 fun HO_MATCH_MPL thm []     = thm
   | HO_MATCH_MPL thm (h::t) = HO_MATCH_MPL (HO_MATCH_MP thm h) t;
 
+local
+  fun insert_tm x [] = [x]
+    | insert_tm x (y::ys) = 
+	if Term.compare (x, y) = LESS
+	then x::(y::ys)
+	else y::(insert_tm x ys)
+in
+  (* Good for sorting short lists of terms *)
+  fun ins_sort_tm [] = []
+    | ins_sort_tm (x::xs) = insert_tm x (ins_sort_tm xs)
+end;
+
 end

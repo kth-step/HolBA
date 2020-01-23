@@ -31,7 +31,8 @@ fun Z3_prove_or_print_model term =
       end
         handle _ => raise HOL_ERR e
 
-(* TODO: Rewrite this to something more sensible *)
+(* TODO: Rewrite this to something more sensible...
+ *       It cheats, while we would like to get an oracle tag instead. *)
 fun prove_bir_eval_exp_with_SMT_then_cheat_TAC (assum_list, goal) =
   let
     val (eval_tm, rhs_opt_tm) = dest_eq goal

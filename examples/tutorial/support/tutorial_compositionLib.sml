@@ -12,6 +12,15 @@ struct
     fun get_contract_pre contract_thm = ((el 4) o snd o strip_comb o concl) contract_thm;
     fun get_contract_post contract_thm = ((el 5) o snd o strip_comb o concl) contract_thm;
 
+    fun bir_triple_tm_get_sort_ls_thm ht_tm =
+      let
+	val ls = ((el 3) o snd o strip_comb) ht_tm
+	val sorted_ls = pred_setSyntax.mk_set (ins_sort_tm (pred_setSyntax.strip_set ls))
+      in 
+	EQT_ELIM (computeLib.EVAL_CONV (mk_eq (ls, sorted_ls)))
+      end
+    ;
+
     fun get_bir_map_triple_prog map_triple = ((el 1) o snd o strip_comb o concl) map_triple;
     fun get_bir_map_triple_invariant map_triple = ((el 2) o snd o strip_comb o concl) map_triple;
     fun get_bir_map_triple_start_label map_triple = ((el 3) o snd o strip_comb o concl) map_triple;
@@ -103,6 +112,58 @@ struct
                             GSYM bir_wm_instTheory.bir_triple_def] map_equiv5
       in
 	REWRITE_RULE [GSYM map_equiv6] tr
+      end
+    ;
+
+
+    fun bir_remove_labels_from_ending_set ht new_ending_label_set =
+      let
+      val prog = get_contract_prog ht
+      val start_label = get_contract_l ht
+      val to_remove_label_set =
+	pred_setSyntax.mk_set (
+	  filter (fn tm => not (exists (term_eq tm) (pred_setSyntax.strip_set new_ending_label_set)))
+		 (pred_setSyntax.strip_set (get_contract_ls ht))
+	)
+      val precondition = get_contract_pre ht
+      val postcondition = get_contract_post ht
+
+      val bir_spec_subset_rule_thm =
+	ISPECL [prog,
+		start_label,
+		new_ending_label_set,
+		to_remove_label_set,
+		precondition,
+		postcondition] (*bir_wm_instTheory.*)bir_subset_rule_thm
+      val removal_ante_thm =
+	prove ((fst o dest_imp o concl) bir_spec_subset_rule_thm,
+
+	computeLib.RESTR_EVAL_TAC [``bir_val_true``, ``bir_exp_false``] >>
+	GEN_TAC >>
+	CASE_TAC >| [
+	  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss++
+				 wordsLib.WORD_ss) [],
+
+	  FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_eval_exp_TF,
+				bir_bool_expTheory.bir_val_TF_dist]
+	]
+	)
+
+	val bir_spec_subset_rule_thm2 =
+	  (fn thm => ONCE_REWRITE_RULE [bir_triple_tm_get_sort_ls_thm
+                                          ((fst o dest_imp o concl) thm)] thm
+          )
+	  (SIMP_RULE (std_ss++union_set_ss) []
+	    (HO_MATCH_MP bir_spec_subset_rule_thm removal_ante_thm)
+	  )
+
+	val bir_spec_subset_rule_thm3 =
+	  HO_MATCH_MP bir_spec_subset_rule_thm2
+	   ((fn thm => ONCE_REWRITE_RULE [bir_triple_tm_get_sort_ls_thm (concl thm)] thm)
+	      ht
+	   )
+      in
+	bir_spec_subset_rule_thm3
       end
     ;
 

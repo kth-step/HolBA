@@ -8,4 +8,6 @@ sig
   val FULLSIMP_BY_THM : simpset -> thm -> tactic
 
   val HO_MATCH_MPL : thm -> thm list -> thm
+
+  val ins_sort_tm : term list -> term list
 end

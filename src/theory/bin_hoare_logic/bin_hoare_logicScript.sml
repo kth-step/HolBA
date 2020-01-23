@@ -368,10 +368,11 @@ Cases_on `~ (C1 ms')` >- (
     FULL_SIMP_TAC std_ss [weak_loop_contract_def, pred_setTheory.IN_SING]
   ) >>
   METIS_TAC []
+) >> (
+  FULL_SIMP_TAC std_ss []
+) >> (
+  FULL_SIMP_TAC std_ss [weak_loop_step_def, LET_DEF]
 ) >>
-
-(FULL_SIMP_TAC std_ss [] ) >>
-(FULL_SIMP_TAC std_ss [weak_loop_step_def, LET_DEF] ) >>
 ASSUME_TAC (Q.SPECL [`m`] weak_comp_thm) >>
 REV_FULL_SIMP_TAC std_ss [] >>
 QSPECL_X_ASSUM ``!x. _`` [`ms`, `{l}`, `le`, `ms'`, `ms''`] >>

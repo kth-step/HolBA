@@ -22,6 +22,8 @@ sig
 
   val bir_map_triple_from_bir_triple: thm -> thm;
 
+  val bir_remove_labels_from_ending_set : thm -> term -> thm;
+
   val bir_compose_loop: thm -> thm -> term -> term -> term -> thm list -> thm;
 
   val bir_compose_seq: thm -> thm -> thm list -> thm;

@@ -1034,9 +1034,6 @@ FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def, bir_eval_exp_TF, bir_val_TF_d
 );
 
 
-
-(* TODO: See if this is needed... *)
-(*
 val bir_subset_rule_thm =
  store_thm("bir_subset_rule_thm",
   ``!prog l ls1 ls2 pre post .
@@ -1060,7 +1057,7 @@ subgoal `bir_eval_exp (post s'.bst_pc.bpc_label) s'.bst_environ =
 ) >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def]
 );
-*)
+
 
 val bir_map_weakening_rule_thm = store_thm("bir_map_weakening_rule_thm",
   ``!prog invariant l ls ls' pre post1 post2.
