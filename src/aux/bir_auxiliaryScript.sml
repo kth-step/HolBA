@@ -273,7 +273,8 @@ val SING_DISJOINT_SING_NOT_IN_thm = store_thm("SING_DISJOINT_SING_NOT_IN_thm",
     ~(y IN x)``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.INTER_DEF] >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss)
+  [pred_setTheory.INTER_DEF] >>
 FULL_SIMP_TAC std_ss [pred_setTheory.EMPTY_DEF] >>
 FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
 QSPECL_X_ASSUM ``!x.P`` [`y`] >>
@@ -287,7 +288,8 @@ val INTER_EMPTY_IN_NOT_IN_thm = store_thm("INTER_EMPTY_IN_NOT_IN_thm",
     ~(z IN y)``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.INTER_DEF] >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss)
+  [pred_setTheory.INTER_DEF] >>
 FULL_SIMP_TAC std_ss [pred_setTheory.EMPTY_DEF] >>
 FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
 QSPECL_X_ASSUM ``!x.P`` [`z`] >>
@@ -304,6 +306,16 @@ REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [Once pred_setTheory.INTER_ASSOC] >>
 FULL_SIMP_TAC std_ss [] >>
 FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
+);
+
+val UNION_INSERT = store_thm("UNION_INSERT",
+  ``!x s t. t UNION (x INSERT s) = if x IN t then t UNION s else (x INSERT t) UNION s``,
+
+METIS_TAC [
+  pred_setTheory.INSERT_UNION,
+  pred_setTheory.UNION_COMM,
+  pred_setTheory.INSERT_UNION_EQ
+]
 );
 
 

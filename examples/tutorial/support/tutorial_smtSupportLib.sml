@@ -56,12 +56,8 @@ fun prove_exp_is_taut imp_tm = (GEN_ALL o prove) (
     computeLib.RESTR_EVAL_TAC [``bir_is_bool_exp``] >>
     FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [],
 
-    (* TODO: Prove bir_var_set_is_well_typed *)
-    computeLib.EVAL_TAC >>
-    FULL_SIMP_TAC (srw_ss()) [] >>
-    (* This is as far as we get with brute force... Format should be same for all situations.
-     * Consider not simplifying this much if it fits better with theories you want to use *)
-    cheat,
+    computeLib.RESTR_EVAL_TAC [``bir_var_set_is_well_typed``] >>
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.bir_var_set_is_well_typed_ss) [],
 
     (* Prove ''bir_eval_exp imp env'' using the bir2bool function and SMT solver *)
     computeLib.RESTR_EVAL_TAC [``bir_eval_exp``] >>
@@ -74,85 +70,5 @@ fun bimp (ante, conseq) = bor (bnot ante, conseq)
     ( "Failed to create the implication. "
     ^ "Make sure that `ante` and `conseq` are BIR expression terms.")
     (wrap_exn "bimp" e)
-
-local
-  open bir_env_oldTheory;
-  open bir_envTheory;
-
-  val bir_var_set_is_well_typed_REWRS = prove(``
-    (bir_var_set_is_well_typed (set [])) /\
-    (!v vs. bir_var_set_is_well_typed (set (v::vs)) =
-       EVERY (\v'. (bir_var_name v = bir_var_name v') ==> (bir_var_type v = bir_var_type v')) vs /\
-       bir_var_set_is_well_typed (set vs)
-       )
-  ``,
-
-    REPEAT STRIP_TAC >- (
-      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [listTheory.LIST_TO_SET,
-                              bir_var_set_is_well_typed_def, bir_vs_consistent_def]
-    ) >>
-    FULL_SIMP_TAC std_ss [listTheory.LIST_TO_SET,
-              bir_var_set_is_well_typed_INSERT, listTheory.EVERY_MEM] >>
-    METIS_TAC []
-  );
-
-  val pred_set_helper_thm = prove (
-    ``!x s t. t UNION (x INSERT s) = if x IN t then t UNION s else (x INSERT t) UNION s``,
-    METIS_TAC [
-      pred_setTheory.INSERT_UNION,
-      pred_setTheory.UNION_COMM,
-      pred_setTheory.INSERT_UNION_EQ
-    ]);
-
-
-  val string_ss = rewrites (type_rws ``:string``);
-  val char_ss = rewrites (type_rws ``:char``);
-
-  val simp_conv_for_bir_var_set_is_well_typed = (
-      (* first, convert the set to a list *)
-      (RAND_CONV (REWRITE_CONV [pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY]))
-      THENC
-      REPEATC (
-	(fn x => REWRITE_CONV [Once pred_set_helper_thm] x)
-	THENC (
-	  (RATOR_CONV o LAND_CONV) (
-	    (REWRITE_CONV [pred_setTheory.IN_INSERT])
-	    THENC
-	    (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss)
-	      [pred_setTheory.NOT_IN_EMPTY])
-	  )
-	)
-      ) THENC
-      REWRITE_CONV [pred_setTheory.UNION_EMPTY]
-    ) THENC
-    (REWRITE_CONV [GSYM listTheory.LIST_TO_SET])
-    THENC
-    (* normalize to bir_var_set_is_well_typed *)
-    (REWRITE_CONV [GSYM bir_var_set_is_well_typed_EQ_bir_vs_consistent])
-    THENC
-    (* then, repeatedly check for inconsistency of the first list element with the rest *)
-    REPEATC (
-      (fn x => REWRITE_CONV [Once bir_var_set_is_well_typed_REWRS] x)
-      THENC
-      (LAND_CONV EVAL) THENC
-      (REWRITE_CONV [])
-    ) THENC
-    (* and finish when the end of the list is reached *)
-    (REWRITE_CONV [bir_var_set_is_well_typed_REWRS]);
-
-  (*
-    val s = ``{BVar "hello"  (BType_Imm Bit64);
-               BVar "hello2" (BType_Imm Bit32);
-               BVar "hello"  (BType_Imm Bit32);
-               BVar "hello3" (BType_Imm Bit32)}``;
-  *)
-in
-  fun bir_vs_consistent_prove s =
-    let val t = ``bir_vs_consistent ^s`` in
-      prove (t,
-	REWRITE_TAC [simp_conv_for_bir_var_set_is_well_typed t]
-      )
-    end;
-end (* local for bir_vs_consistent_prove *)
 
 end
