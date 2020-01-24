@@ -22,7 +22,9 @@ $(shell mkdir -p bin)
 
 ELF	  = bin/examples.elf
 ELF_TEST = bin/test.elf
-CFLAGS	= -ggdb3 -std=gnu99 -Wall -fno-builtin # -O1
+CFLAGS_COMMON    = -Iinc
+CFLAGS_BAREMETAL = ${CFLAGS_COMMON} -ggdb3 -std=gnu99 -Wall -fno-builtin # -O1
+CFLAGS_TEST      = ${CFLAGS_COMMON}
 #LDFLAGS = --gc-sections -nostartfiles -nostdlib
 
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
@@ -52,15 +54,12 @@ all: $(OBJECT_DAS) $(ELF).da
 	${CROSS}as -o $@ $<
 
 %.o: %.c
-	${CROSS}gcc -DBAREMETAL= ${CFLAGS} -c -o $@ -fno-stack-protector $<
+	${CROSS}gcc -DBAREMETAL= ${CFLAGS_BAREMETAL} -c -o $@ -fno-stack-protector $<
 
 ##########################################################
 
 $(ELF): ${OBJECTS}
 	${CROSS}ld -o $@ $^
-
-#$(ELF): $(SOURCES)
-#	${CROSS}gcc -DBAREMETAL= ${CFLAGS} $(SOURCES) -o $@
 
 ##########################################################
 
@@ -76,7 +75,7 @@ $(ELF).da: $(ELF)
 ##########################################################
 
 $(ELF_TEST): $(SOURCES_C)
-	gcc $^ -o $@
+	gcc ${CFLAGS_TEST} $^ -o $@
 
 test: $(ELF_TEST)
 	./$(ELF_TEST)
