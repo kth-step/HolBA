@@ -134,7 +134,7 @@ struct
 		new_ending_label_set,
 		to_remove_label_set,
 		precondition,
-		postcondition] (*bir_wm_instTheory.*)bir_subset_rule_thm
+		postcondition] bir_wm_instTheory.bir_subset_rule_thm
       val removal_ante_thm =
 	prove ((fst o dest_imp o concl) bir_spec_subset_rule_thm,
 
@@ -153,7 +153,7 @@ struct
 	  (fn thm => ONCE_REWRITE_RULE [bir_triple_tm_get_sort_ls_thm
                                           ((fst o dest_imp o concl) thm)] thm
           )
-	  (SIMP_RULE (std_ss++union_set_ss) []
+	  (SIMP_RULE (std_ss++HolBACoreSimps.bir_union_var_set_ss) []
 	    (HO_MATCH_MP bir_spec_subset_rule_thm removal_ante_thm)
 	  )
 
@@ -221,8 +221,8 @@ struct
     ;
 
     (* This function composes a loop from a looping bir_map_triple and a loop exit bir_triple *)
-    fun bir_compose_loop (simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) loop_map_ht loop_exit_ht loop_invariant loop_condition
-          loop_variant def_list = 
+    fun bir_compose_loop (simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) loop_map_ht
+          loop_exit_ht loop_invariant loop_condition loop_variant def_list = 
       let
 	(* 1. Specialise bir_while_rule_thm *)
 	val prog = get_contract_prog loop_exit_ht
@@ -236,7 +236,7 @@ struct
 		  loop_invariant,
 		  loop_condition,
 		  loop_variant,
-		  get_contract_post loop_exit_ht] bir_wm_instTheory.bir_while_rule_thm
+		  get_contract_post loop_exit_ht] bir_wm_instTheory.bir_signed_while_rule_thm
 
 	(* 2. Knock out antecedents:  *)
 	(* Note: This structure enforces the property that each step only touches the
@@ -274,16 +274,15 @@ struct
 						     bir_add_reg_prog_def needed *)
 				     )] bir_add_comp_while_rule_thm3
 
-	(* Obtain the bir_loop_contract from loop_ht and loop_continuation_ht and knock
+	(* Obtain the bir_signed_loop_contract from loop_ht and loop_continuation_ht and knock
          * out the corresponding antecedent *)
-	(*   TODO: Should signed or unsigned comparisons be used? *)
-	(*   TODO: Make syntax functions for bir_loop_contract *)
-	(*   TODO: Make separate composition function for bir_loop_contract *)
+	(*   TODO: Make syntax functions for bir_signed_loop_contract *)
+	(*   TODO: Make separate composition function for bir_signed_loop_contract *)
 	val temp_cheat_thm =
-	  prove(``bir_loop_contract (^prog) (^start_label) (^ending_label_set) (^loop_invariant)
-		    (^loop_condition) (^loop_variant)``,
+	  prove(``bir_signed_loop_contract (^prog) (^start_label) (^ending_label_set)
+                    (^loop_invariant) (^loop_condition) (^loop_variant)``,
 
-	    SIMP_TAC std_ss [bir_wm_instTheory.bir_loop_contract_def] >>
+	    SIMP_TAC std_ss [bir_wm_instTheory.bir_signed_loop_contract_def] >>
 	    CONJ_TAC >| [
               simp_in_set_repr_tac,
 
@@ -309,23 +308,15 @@ struct
               Q.EXISTS_TAC `s'` >>
               FULL_SIMP_TAC std_ss [] >>
               REPEAT STRIP_TAC >| [
-                (* Weak transition *)
-                FULL_SIMP_TAC (std_ss++bin_hoare_logicSimps.bir_wm_SS)
-                  [bir_wm_instTheory.bir_etl_wm_def, bir_wm_instTheory.bir_weak_trs_EQ] >>
-                FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >> (
-                  cheat
-                ),
-
                 (* Expression evaluation *)
                 REPEAT CASE_TAC >> (
                   FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
                     [bir_exp_equivTheory.bir_and_op2,
                      bir_bool_expTheory.bir_eval_exp_TF,
-                     bir_bool_expTheory.bir_val_TF_dist] >>
-                  (* TODO: Signed and unsigned comparisons here... *)
-                  cheat
+                     bir_bool_expTheory.bir_val_TF_dist]
                 ),
 
+                (* bool_exp_env *)
                 REPEAT CASE_TAC >> (
                   FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
                     [bir_bool_expTheory.bir_is_bool_exp_env_REWRS,

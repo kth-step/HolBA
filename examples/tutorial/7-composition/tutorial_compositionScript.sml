@@ -42,32 +42,16 @@ val simp_in_sing_set_rule =
   SIMP_RULE std_ss [pred_setTheory.IN_SING]
 
 fun simp_inter_set_rule ht =
-  REWRITE_RULE [EVAL (get_bir_map_triple_blist ht)] ht
+  ONCE_REWRITE_RULE [EVAL (get_bir_map_triple_blist ht)] ht
 
 val simp_in_set_tac =
   SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss++pred_setLib.PRED_SET_ss) []
-
-val inter_set_ss = SSFRAG {ac = [],
-                           congs = [],
-                           convs = [{conv = K (K computeLib.EVAL_CONV),
-                                    key= SOME ([], ``A INTER B``),
-                                    name = "EVAL_CONV_INTER",
-                                    trace = 2}],
-                           dprocs = [], filter = NONE, name = SOME "inter_set_ss", rewrs = []};
-
-val union_set_ss = SSFRAG {ac = [],
-                           congs = [],
-                           convs = [{conv = K (K computeLib.EVAL_CONV),
-                                    key= SOME ([], ``A UNION B``),
-                                    name = "EVAL_CONV_UNION",
-                                    trace = 2}],
-                           dprocs = [], filter = NONE, name = SOME "union_set_ss", rewrs = []};
 
 (* DEBUG *)
 val (get_labels_from_set_repr, el_in_set_repr,
      mk_set_repr, simp_delete_set_repr_rule,
      simp_insert_set_repr_rule, simp_in_sing_set_repr_rule, simp_inter_set_repr_rule, simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) = (ending_set_to_sml_list, el_in_set, mk_set, simp_delete_set_rule,
-     simp_insert_set_rule, simp_in_sing_set_rule, simp_inter_set_rule, simp_in_set_tac, inter_set_ss, union_set_ss);
+     simp_insert_set_rule, simp_in_sing_set_rule, simp_inter_set_rule, simp_in_set_tac, bir_inter_var_set_ss, bir_union_var_set_ss);
 (************************************)
 
 (****************************************************************)

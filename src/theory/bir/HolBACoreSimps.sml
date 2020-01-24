@@ -236,4 +236,30 @@ val bir_var_set_is_well_typed_ss =
           name = SOME "bir_var_set_is_well_typed_ss",
           rewrs = []};
 
+val bir_inter_var_set_ss =
+  SSFRAG {ac = [],
+          congs = [],
+          convs = [{conv = K (K computeLib.EVAL_CONV),
+                    key= SOME ([], ``A INTER B``),
+                    name = "EVAL_CONV_INTER",
+                    trace = 2}],
+                    dprocs = [],
+          filter = NONE,
+          name = SOME "bir_inter_var_set_ss",
+          rewrs = []};
+
+val bir_union_var_set_ss =
+  SSFRAG {ac = [],
+          congs = [],
+          convs = [{conv = K (K computeLib.EVAL_CONV),
+                    key= SOME ([], ``A UNION B``),
+                    name = "EVAL_CONV_UNION",
+                    trace = 2}],
+          dprocs = [],
+          filter = NONE,
+          name = SOME "bir_union_var_set_ss",
+          rewrs = []};
+
+
+
 end

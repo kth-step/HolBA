@@ -668,6 +668,34 @@ val bir_loop_contract_def = Define `
     )
 `;
 
+val bir_signed_loop_contract_def = Define `
+  bir_signed_loop_contract prog l le invariant C1 variant =
+    (~(l IN le)) /\
+    (!x. (bir_triple prog l ({l} UNION le)
+           (* (\ms. (invariant ms) /\ (C1 ms) /\ ((var ms) = x:num)) *)
+           (* TODO: Variant greater than 0 here? *)
+           (BExp_BinExp BIExp_And invariant
+             (BExp_BinExp BIExp_And
+               C1
+               (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 x)))
+             )
+           )
+           (* (\ms.(((m.pc ms)=l) /\ (invariant ms) /\ ((var ms) < x) /\ ((var ms) >= 0)))) *)
+	   (\l'. if l' = l then (BExp_BinExp BIExp_And invariant
+		   		  (BExp_BinExp BIExp_And
+				    (BExp_BinPred BIExp_SignedLessThan
+                                      variant (BExp_Const (Imm64 x))
+                                    )
+				    (BExp_BinPred BIExp_SignedLessOrEqual
+                                      (BExp_Const (Imm64 0w)) variant
+                                    )
+                                  )
+			        )
+                            else bir_exp_false
+	   )
+         )
+    )
+`;
 
 (* TODO: Very ugly little critter... *)
 val iv2i_def = Define `
@@ -676,11 +704,8 @@ val iv2i_def = Define `
 
 
 (* TODO: Check all theorems containing antecedents on initialization in the entirety of HolBA
- * to see if they can be resolved by theorem giving variable initialisation... *)
+ * to see if they can be resolved by new theorem giving variable initialisation... *)
 (* Also booleanity and bir_eval_TF_is_bool *)
-
-
-(* TODO: Prove bir_weak_triple_sloop here, if needed *)
 
 val bir_weak_triple_loop = store_thm("bir_weak_triple_loop",
   ``!prog l le invariant variant C1.
@@ -759,8 +784,7 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_triple_postcond_def
 (* Prove the postcondition of the weak loop contract using the postcondition of the weak triple *)
 Q.EXISTS_TAC `st'` >>
 Cases_on `st'.bst_pc.bpc_label <> l` >- (
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_exp_TF, bir_val_false_def,
-                                        bir_val_true_def, word1_distinct]
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_exp_TF, bir_val_TF_dist]
 ) >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS)
   [bir_is_bool_exp_env_REWRS,
@@ -780,6 +804,109 @@ subgoal `b2n (iv2i (THE (bir_eval_exp variant st'.bst_environ))) < x` >- (
                                              wordsTheory.w2n_n2w, iv2i_def]
   ) >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_lessthan_equiv, bir_imm_word_lo_def, bir_val_true_def]
+) >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) []
+);
+
+val bir_weak_triple_signed_loop = store_thm("bir_weak_triple_signed_loop",
+  ``!prog l le invariant variant C1.
+    (* Note: Due to the method of obtaining a number from the variant,
+     * we need these two antecedents to prove
+     * bir_eval_exp variant st.bst_environ = SOME (BVal_Imm (Imm64 w)) *)
+    (type_of_bir_exp variant = SOME (BType_Imm Bit64)) ==>
+    (bir_vars_of_exp variant) SUBSET (bir_vars_of_program prog) ==>
+    (l NOTIN le) ==>
+    (!x. weak_triple (bir_etl_wm prog) l ({l} UNION le)
+      (\st. bir_exec_to_labels_triple_precond st
+             (BExp_BinExp BIExp_And invariant
+               (BExp_BinExp BIExp_And
+                 C1
+                 (BExp_BinPred BIExp_Equal variant (BExp_Const (Imm64 (n2w x))))
+               )
+             )
+             prog
+      )
+      (\st'. bir_exec_to_labels_triple_postcond st' 
+               (\l'.
+		  if l' = l then
+		    BExp_BinExp BIExp_And invariant
+		      (BExp_BinExp BIExp_And
+			 (BExp_BinPred BIExp_SignedLessThan variant
+			    (BExp_Const (Imm64 (n2w x))))
+			 (BExp_BinPred BIExp_SignedLessOrEqual
+			    (BExp_Const (Imm64 0w)) variant))
+		  else bir_exp_false
+               ) prog
+      )
+    ) ==>
+    weak_loop_contract (bir_etl_wm prog) l le
+      (\st. bir_exec_to_labels_triple_precond st invariant prog)
+      (\st. bir_eval_exp C1 st.bst_environ = SOME bir_val_true)
+      (\st. b2n (iv2i (THE (bir_eval_exp variant st.bst_environ))))``,
+
+FULL_SIMP_TAC std_ss [weak_loop_contract_def] >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [weak_triple_def] >>
+SIMP_TAC std_ss [bir_exec_to_labels_triple_precond_def] >>
+REPEAT STRIP_TAC >>
+QSPECL_X_ASSUM ``!x st. _`` [`x`, `st`] >>
+
+(* This is needed for both steps below *)
+subgoal `bir_eval_exp variant st.bst_environ = SOME (BVal_Imm (Imm64 (n2w x)))` >- (
+  IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET >>
+  IMP_RES_TAC type_of_bir_exp_THM_with_init_vars >>
+  Q.SUBGOAL_THEN `va = (BVal_Imm (Imm64 (n2w x)))` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+    IMP_RES_TAC (el 5 (CONJUNCTS bir_eval_imm_types)) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+    RW_TAC std_ss [wordsTheory.n2w_w2n, iv2i_def, bir_immTheory.b2n_def]
+  )
+) >>
+
+(* Prove precondition of the weak triple using precondition of the weak loop contract *)
+Q.SUBGOAL_THEN `bir_exec_to_labels_triple_precond st
+		  (BExp_BinExp BIExp_And invariant
+		     (BExp_BinExp BIExp_And C1
+			(BExp_BinPred BIExp_Equal variant
+			   (BExp_Const (Imm64 (n2w x)))))) prog`
+  (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+  SIMP_TAC std_ss [bir_exec_to_labels_triple_precond_def, GSYM bir_and_equiv,
+                   bir_is_bool_exp_env_REWRS] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss)
+    [bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
+     bir_vars_of_exp_def, bir_val_true_def, bir_is_bool_exp_env_def] >>
+  subgoal `type_of_bir_val (BVal_Imm (Imm1 1w)) = BType_Imm Bit1` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET, bir_is_bool_exp_def,
+             bir_eval_exp_IS_SOME_IMPLIES_INIT, bir_eval_exp_IS_SOME_IMPLIES_TYPE]
+) >>
+REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_triple_postcond_def] >>
+
+(* Prove the postcondition of the weak loop contract using the postcondition of the weak triple *)
+Q.EXISTS_TAC `st'` >>
+Cases_on `st'.bst_pc.bpc_label <> l` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_exp_TF, bir_val_TF_dist]
+) >>
+FULL_SIMP_TAC (std_ss++bir_wm_SS)
+  [bir_is_bool_exp_env_REWRS,
+   bir_etl_wm_def, bir_weak_trs_EQ, GSYM bir_and_equiv] >>
+subgoal `b2n (iv2i (THE (bir_eval_exp variant st'.bst_environ))) < x` >- (
+  subgoal `?x'. bir_eval_exp variant st'.bst_environ =
+                  SOME (BVal_Imm (Imm64 x'))` >- (
+    subgoal `?va. (bir_eval_exp variant st'.bst_environ = SOME va) /\
+                   (type_of_bir_val va = (BType_Imm it'))` >- (
+      METIS_TAC [type_of_bir_exp_THM_with_init_vars]
+    ) >>
+    METIS_TAC [bir_eval_imm_types]
+  ) >>
+  `bir_imm_word_lt (bir_eval_exp variant st'.bst_environ)
+                     (bir_eval_exp (BExp_Const (Imm64 (n2w x))) st'.bst_environ)` suffices_by (
+     FULL_SIMP_TAC (arith_ss++holBACore_ss++wordsLib.WORD_ss)
+       [bir_imm_word_lt_def, wordsTheory.WORD_LT,
+        iv2i_def, wordsTheory.WORD_LE,
+        bir_val_true_def]
+  ) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_slessthan_equiv, bir_imm_word_lt_def, bir_val_true_def]
 ) >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
@@ -874,8 +1001,66 @@ subgoal `weak_triple (bir_etl_wm prog) l le
 IMP_RES_TAC weak_invariant_rule_thm
 );
 
+(* Signed version of the above *)
+val bir_signed_while_rule_thm = store_thm("bir_signed_while_rule_thm",
+  ``!prog l le invariant C1 var post.
+    (* Compute in place using proof procedures: *)
+    (*   These two needed to use bir_weak_triple_loop *)
+    (type_of_bir_exp var = SOME (BType_Imm Bit64)) ==>
+    bir_vars_of_exp var SUBSET bir_vars_of_program prog ==>
+    (*   These two needed to prove bir_is_bool_exp_env ms.bst_environ C1 *)
+    bir_is_bool_exp C1 ==>
+    (bir_vars_of_exp C1) SUBSET (bir_vars_of_program prog) ==>
+    (* Obtain bir_loop contract through some rule: *)
+    bir_signed_loop_contract prog l le
+      invariant
+      C1 var ==>
+    bir_triple prog l le
+      (BExp_BinExp BIExp_And
+        invariant
+        (BExp_UnaryExp BIExp_Not C1)
+      ) post ==>
+    bir_triple prog l le
+      invariant
+      post``,
 
-(* TODO: How to obtain a blacklist triple? *)
+FULL_SIMP_TAC std_ss [bir_triple_def, bir_signed_loop_contract_def] >>
+REPEAT STRIP_TAC >>
+ASSUME_TAC bir_model_is_weak >>
+QSPECL_X_ASSUM ``!prog. _`` [`prog`] >>
+(* 1. Somehow obtain the (correct) weak_loop_contract from bir_loop_contract *)
+subgoal `weak_loop_contract (bir_etl_wm prog) l le
+           (\st. bir_exec_to_labels_triple_precond st invariant prog)
+           (\st. bir_eval_exp C1 st.bst_environ = SOME bir_val_true)
+           (\st. b2n (iv2i (THE (bir_eval_exp var st.bst_environ))))` >- (
+  IMP_RES_TAC bir_weak_triple_signed_loop >>
+  QSPECL_X_ASSUM ``!invariant. _`` [`invariant`] >>
+  REV_FULL_SIMP_TAC std_ss []
+) >>
+(* Delete used-up assumptions *)
+Q.PAT_X_ASSUM `!x. _` (fn thm => ALL_TAC) >>
+Q.PAT_X_ASSUM `l NOTIN ls` (fn thm => ALL_TAC) >>
+(* 2. Change the BIR conjunction to a HOL conjunction *)
+subgoal `weak_triple (bir_etl_wm prog) l le
+	   (\ms.
+	      (\s. bir_exec_to_labels_triple_precond s invariant prog) ms /\
+	      ~(\s. bir_eval_exp C1 s.bst_environ = SOME bir_val_true) ms)
+	      (\s. bir_exec_to_labels_triple_postcond s post prog)` >- (
+  IMP_RES_TAC bir_weak_triple_precond_conj >>
+  FULL_SIMP_TAC std_ss [weak_triple_def] >>
+  REPEAT STRIP_TAC >>
+  subgoal `bir_is_bool_exp_env ms.bst_environ C1` >- (
+    FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def, bir_exec_to_labels_triple_precond_def] >>
+    IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET
+  ) >>
+  QSPECL_X_ASSUM ``!s. _`` [`ms`] >>
+  QSPECL_X_ASSUM ``!s. _`` [`ms`] >>
+  IMP_RES_TAC bir_not_equiv >>
+  REV_FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_REWRS, bir_exec_to_labels_triple_precond_def]
+) >>
+(* 3. Use weak_invariant_rule_thm *)
+IMP_RES_TAC weak_invariant_rule_thm
+);
 
 (*****************************************************)
 (* BIR map triple theorems                           *)

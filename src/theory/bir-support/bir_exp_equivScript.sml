@@ -353,21 +353,21 @@ Cases_on `i' = i` >| [
 
 (* We need a function to extract words for the appropriate comparison *)
 val bir_imm_word_lo_def = Define `
-  (bir_imm_word_lo (SOME (BVal_Imm (Imm1 w1)))  (SOME (BVal_Imm (Imm1 w2))) = w1 <+ w2) /\
-  (bir_imm_word_lo (SOME (BVal_Imm (Imm8 w1)))  (SOME (BVal_Imm (Imm8 w2))) = w1 <+ w2) /\
-  (bir_imm_word_lo (SOME (BVal_Imm (Imm16 w1))) (SOME (BVal_Imm (Imm16 w2))) = w1 <+ w2) /\
-  (bir_imm_word_lo (SOME (BVal_Imm (Imm32 w1))) (SOME (BVal_Imm (Imm32 w2))) = w1 <+ w2) /\
-  (bir_imm_word_lo (SOME (BVal_Imm (Imm64 w1))) (SOME (BVal_Imm (Imm64 w2))) = w1 <+ w2) /\
+  (bir_imm_word_lo (SOME (BVal_Imm (Imm1 w1)))   (SOME (BVal_Imm (Imm1 w2))) = w1 <+ w2) /\
+  (bir_imm_word_lo (SOME (BVal_Imm (Imm8 w1)))   (SOME (BVal_Imm (Imm8 w2))) = w1 <+ w2) /\
+  (bir_imm_word_lo (SOME (BVal_Imm (Imm16 w1)))  (SOME (BVal_Imm (Imm16 w2))) = w1 <+ w2) /\
+  (bir_imm_word_lo (SOME (BVal_Imm (Imm32 w1)))  (SOME (BVal_Imm (Imm32 w2))) = w1 <+ w2) /\
+  (bir_imm_word_lo (SOME (BVal_Imm (Imm64 w1)))  (SOME (BVal_Imm (Imm64 w2))) = w1 <+ w2) /\
   (bir_imm_word_lo (SOME (BVal_Imm (Imm128 w1))) (SOME (BVal_Imm (Imm128 w2))) = w1 <+ w2)
 `;
 
 (* We need a function to extract words for the appropriate comparison *)
 val bir_imm_word_lt_def = Define `
-  (bir_imm_word_lt (SOME (BVal_Imm (Imm1 w1)))  (SOME (BVal_Imm (Imm1 w2))) = w1 < w2) /\
-  (bir_imm_word_lt (SOME (BVal_Imm (Imm8 w1)))  (SOME (BVal_Imm (Imm8 w2))) = w1 < w2) /\
-  (bir_imm_word_lt (SOME (BVal_Imm (Imm16 w1))) (SOME (BVal_Imm (Imm16 w2))) = w1 < w2) /\
-  (bir_imm_word_lt (SOME (BVal_Imm (Imm32 w1))) (SOME (BVal_Imm (Imm32 w2))) = w1 < w2) /\
-  (bir_imm_word_lt (SOME (BVal_Imm (Imm64 w1))) (SOME (BVal_Imm (Imm64 w2))) = w1 < w2) /\
+  (bir_imm_word_lt (SOME (BVal_Imm (Imm1 w1)))   (SOME (BVal_Imm (Imm1 w2))) = w1 < w2) /\
+  (bir_imm_word_lt (SOME (BVal_Imm (Imm8 w1)))   (SOME (BVal_Imm (Imm8 w2))) = w1 < w2) /\
+  (bir_imm_word_lt (SOME (BVal_Imm (Imm16 w1)))  (SOME (BVal_Imm (Imm16 w2))) = w1 < w2) /\
+  (bir_imm_word_lt (SOME (BVal_Imm (Imm32 w1)))  (SOME (BVal_Imm (Imm32 w2))) = w1 < w2) /\
+  (bir_imm_word_lt (SOME (BVal_Imm (Imm64 w1)))  (SOME (BVal_Imm (Imm64 w2))) = w1 < w2) /\
   (bir_imm_word_lt (SOME (BVal_Imm (Imm128 w1))) (SOME (BVal_Imm (Imm128 w2))) = w1 < w2)
 `;
 
