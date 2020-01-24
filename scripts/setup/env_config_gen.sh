@@ -218,3 +218,22 @@ echo "Using HOLBA_GCC_ARM_CROSS=${HOLBA_GCC_ARM_CROSS}"
 echo
 
 
+
+####### HOLBA_GCC_RISCV64_CROSS
+
+if [[ ( -z "${HOLBA_GCC_RISCV64_CROSS}" ) || ( ! -z "${OPT_DIR_PARAM}" ) ]]; then
+  CROSS="${HOLBA_OPT_DIR}/gcc-riscv64-unknown-elf-8.3.0-2019.08.0/bin/riscv64-unknown-elf-"
+  if [[ -f "${CROSS}gcc" ]]; then
+    print_export_msg "HOLBA_GCC_RISCV64_CROSS"
+    export HOLBA_GCC_RISCV64_CROSS=${CROSS}
+  fi
+fi
+if [[ ( ! -f "${HOLBA_GCC_RISCV64_CROSS}gcc" ) ]]; then
+  print_export_msg "HOLBA_GCC_RISCV64_CROSS"
+  export HOLBA_GCC_RISCV64_CROSS=
+fi
+echo "Using HOLBA_GCC_RISCV64_CROSS=${HOLBA_GCC_RISCV64_CROSS}"
+echo
+
+
+
