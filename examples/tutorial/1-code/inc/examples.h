@@ -19,6 +19,9 @@ int64_t add_reg (int64_t x, int64_t y);
 // new examples
 // - mutual recursion
 uint64_t is_even(uint64_t n);
-
+// - function sharing
+int64_t add_times_two(int64_t x, int64_t y);
+int64_t add_rec_times_two(int64_t x, int64_t y);
+int64_t add_reg_fast_times_two(int64_t x, int64_t y);
 
 #endif // _EXAMPLES_H

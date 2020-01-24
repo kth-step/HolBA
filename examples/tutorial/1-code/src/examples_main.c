@@ -48,6 +48,25 @@ int main(int argc, char ** argv) {
   }
 
   PRINTF(("\n"));
+  PRINTF(("=========================\n"));
+  PRINTF(("function sharing\n"));
+  PRINTF(("=========================\n"));
+  PRINTF(("(  5  +   3 ) * 2: %s\n", add_times_two( 5, 3) ==  16 ? "ok": "fail"));
+  PRINTF(("(  0  + (-3)) * 2: %s\n", add_times_two( 0,-3) ==  -6 ? "ok": "fail"));
+  PRINTF(("(  5  + (-3)) * 2: %s\n", add_times_two( 5,-3) ==   4 ? "ok": "fail"));
+  PRINTF(("((-5) + (-3)) * 2: %s\n", add_times_two(-5,-3) == -16 ? "ok": "fail"));
+
+  PRINTF(("(  5  +   3 ) * 2: %s\n", add_rec_times_two( 5, 3) ==  16 ? "ok": "fail"));
+  PRINTF(("(  0  + (-3)) * 2: %s\n", add_rec_times_two( 0,-3) ==  -6 ? "ok": "fail"));
+  PRINTF(("(  5  + (-3)) * 2: %s\n", add_rec_times_two( 5,-3) ==   4 ? "ok": "fail"));
+  PRINTF(("((-5) + (-3)) * 2: %s\n", add_rec_times_two(-5,-3) == -16 ? "ok": "fail"));
+
+  PRINTF(("(  5  +   3 ) * 2: %s\n", add_reg_fast_times_two( 5, 3) ==  16 ? "ok": "fail"));
+  PRINTF(("(  0  + (-3)) * 2: %s\n", add_reg_fast_times_two( 0,-3) ==  -6 ? "ok": "fail"));
+  PRINTF(("(  5  + (-3)) * 2: %s\n", add_reg_fast_times_two( 5,-3) ==   4 ? "ok": "fail"));
+  PRINTF(("((-5) + (-3)) * 2: %s\n", add_reg_fast_times_two(-5,-3) == -16 ? "ok": "fail"));
+
+  PRINTF(("\n"));
   return 0;
 }
 
