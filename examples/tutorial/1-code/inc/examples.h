@@ -16,5 +16,9 @@ uint8_t binary_search_ok2(uint64_t * buffer, uint8_t length, uint64_t value);
 // main tutorial example
 int64_t add_reg (int64_t x, int64_t y);
 
+// new examples
+// - mutual recursion
+uint64_t is_even(uint64_t n);
+
 
 #endif // _EXAMPLES_H

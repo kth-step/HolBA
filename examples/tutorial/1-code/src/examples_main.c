@@ -28,13 +28,26 @@ int main(int argc, char ** argv) {
   // PRINTF(("SEARCH 200 = %ld\n", binary_search_buggy2(buffer, 255, 200)));
   PRINTF(("SEARCH 200 = %ld\n", binary_search_ok2(buffer, 255, 200)));
 
+  PRINTF(("\n"));
   PRINTF(("=========================\n"));
   PRINTF(("main tutorial example\n"));
   PRINTF(("=========================\n"));
   PRINTF(("5 +   3  = %li\n", add_reg(5, 3)));
   PRINTF(("0 + (-3) = %li\n", add_reg(0,-3)));
   PRINTF(("5 + (-3) = %li\n", add_reg(5,-3)));
-  
+
+  PRINTF(("\n"));
+  PRINTF(("=========================\n"));
+  PRINTF(("mutual recursion\n"));
+  PRINTF(("=========================\n"));
+  for (int i=0; i<10; i++) {
+    if (is_even(i))
+      PRINTF(("%ld is even\n", i));
+    else
+      PRINTF(("%ld is odd\n", i));
+  }
+
+  PRINTF(("\n"));
   return 0;
 }
 
