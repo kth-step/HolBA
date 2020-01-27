@@ -1,6 +1,6 @@
 # Input program
 We use a simple C program to demonstrate HolBA: a naive function that
-adds two 64bit integers. The function is defined in [src/add_reg.c](src/add_reg.c)
+adds two 64-bit integers. The function is defined in [src/add_reg.c](src/add_reg.c)
 
 ```C
 int64_t add_reg (int64_t x, int64_t y) {
@@ -41,30 +41,30 @@ compiled by running `make`, which produces
   4c:	d65f03c0 	ret
 ```
 The produced binary consists of four blocks
-1. from `0x0` to `0x1c`: allocates 16 bytes on the stack; push the
+1. from `0x0` to `0x1c`: allocates 16 bytes on the stack; pushes the
    parameters on the stack; pushes the two parameters on the stack;
    copies the first parameter (`x0`) to `x2`
    and `x4`; copies the second parameter (`x1`) to `x3`
    and `x4`; jumps to the second block
-2. from `0x38` to `0x40` computes the while condition and exit the
+2. from `0x38` to `0x40`: computes the while condition and exit the
    loops of the condition is not satisfied. Notice that the loop
    condition is computed by updating the CPU flags (using `cmp`) and
    that if the condition holds (i.e. `x2 > 0`) then `b.gt 20`
    jumps back to the loop body
-3. from `0x20` to `0x34` increases `y` (i.e. `x3`) and decreases `x`
+3. from `0x20` to `0x34`: increases `y` (i.e. `x3`) and decreases `x`
    (i.e. `x2`) and jumps to the second block to check the while
    condition
-4. from `0x44` to `0x4c` copies the result in the register `x0`; free
+4. from `0x44` to `0x4c`: copies the result in the register `x0`; frees
    the stack frame; and returns from the function.
 
 # Some notes on the examples
 The `add_reg` function has some properties that make our analysis
 simpler:
 * there are no indirect jumps. We cannot currently automatically
-  analyze code with indirect jumps, since the weakest precondition
+  analyse code with indirect jumps, since the weakest precondition
   algorithm requires a static control flow graph.
-* there are no multiplications among variables: non linear arithmetic
-  is an hard problem for SMT solvers, therefore analyzing the
+* there are no multiplications among variables: non-linear arithmetic
+  is an hard problem for SMT solvers, therefore analysing the
   algorithm would require to verify some support theorems that can be
   used as axioms in Z3
 * memory is not updated. This dramatically reduce the problem size in
