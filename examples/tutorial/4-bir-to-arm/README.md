@@ -1,10 +1,10 @@
-# 4 Contracts and From BIR to ARM
+# 4 Contracts and Going From BIR to ARM
 We use registers ``4`` and ``5`` to refer to the original values of
 the input parameters, since these registers are never updated. 
 The precondition for our function is:
 ```
 arm8_add_reg_pre m ⇔
-m.REG 4w ≥ 0w ∧ (m.REG 4w = m.REG 2w) ∧ (m.REG 5w = m.REG 3w)
+  m.REG 4w ≥ 0w ∧ (m.REG 4w = m.REG 2w) ∧ (m.REG 5w = m.REG 3w)
 ```
 I.e. the initial value of register 4 is equal to register 2, and
 register 5 is equal to register 3. Moreover. register 4 should be

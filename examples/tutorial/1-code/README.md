@@ -1,4 +1,4 @@
-# Input program
+# 1 Input Program
 We use a simple C program to demonstrate HolBA: a naive function that
 adds two 64-bit integers. The function is defined in [src/add_reg.c](src/add_reg.c)
 

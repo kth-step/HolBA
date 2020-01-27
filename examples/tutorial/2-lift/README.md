@@ -1,5 +1,5 @@
-# 2 - Transpiling (lifting) program to BIR
-A binary program is transpiled by executing
+# 2 Transpiling Program to BIR
+A binary program is transpiled (or "lifted") by executing
 ```
 val _ = lift_da_and_store "add_reg"
                           "../1-code/src/add_reg.da"
