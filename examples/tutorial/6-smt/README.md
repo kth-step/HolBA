@@ -1,4 +1,4 @@
-# Tutorial - 6. SMT solver
+# 6 SMT Solver Used for Precondition Strengthening
 
 ## Introduction
 

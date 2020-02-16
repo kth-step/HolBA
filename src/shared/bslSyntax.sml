@@ -54,7 +54,7 @@ struct
   (* Environment                                                              *)
   (****************************************************************************)
 
-  (* Variales (BVar: bir_var_t) *)
+  (* Variables (BVar: bir_var_t) *)
   fun bvar name ty_tm = mk_BVar_string (name, ty_tm)
     handle e => raise wrap_exn "bvar" e
 
@@ -335,12 +335,14 @@ struct
   val brshift = bbinexp BIExp_RightShift_tm
   val bsrshift = bbinexp BIExp_SignedRightShift_tm
 
+  (* Canonical form of binary expression lists:
+   *   Left operator is always a leaf *)
   local
     fun bbinexpl_ bop [] = raise ERR "bbinexpl" "need at least 1 term"
       | bbinexpl_ bop (fst::tms) =
-        List.foldl (fn (lhs, rhs) => bbinexp bop (rhs, lhs)) fst tms
+        List.foldl (bbinexp bop) fst tms
   in
-    val bbinexpl = bbinexpl_
+    fun bbinexpl bop l = bbinexpl_ bop (rev l)
       handle e => raise wrap_exn "bbinexpl" e
   end
   val bandl = bbinexpl BIExp_And_tm
@@ -367,12 +369,14 @@ struct
   val ble = bbinpred BIExp_LessOrEqual_tm
   val bsle = bbinpred BIExp_SignedLessOrEqual_tm
 
+  (* Canonical form of binary predicate lists:
+   *   Left operator is always a leaf *)
   local
     fun bbinpredl_ bpred [] = raise ERR "bbinpredl" "need at least 1 term"
       | bbinpredl_ bpred (fst::tms) =
-        List.foldl (fn (lhs, rhs) => bbinexp bpred (rhs, lhs)) fst tms
+        List.foldl (bbinexp bpred) fst tms
   in
-    val bbinpredl = bbinpredl_
+    fun bbinpredl bpred l = bbinpredl_ bpred (rev l)
       handle e => raise wrap_exn "bbinpredl" e
   end
   val beql = bbinpredl BIExp_Equal_tm

@@ -5,6 +5,7 @@ open HolKernel Parse;
 open bir_exp_to_wordsLib bslSyntax;
 open bir_exp_tautologiesTheory;
 open bir_expTheory bir_expSyntax;
+open optionSyntax;
 
 val wrap_exn = Feedback.wrap_exn "tutorial_smtSupportLib"
 
@@ -30,9 +31,14 @@ fun Z3_prove_or_print_model term =
       end
         handle _ => raise HOL_ERR e
 
+(* TODO: Rewrite this to something more sensible...
+ *       It cheats, while we would like to get an oracle tag instead. *)
 fun prove_bir_eval_exp_with_SMT_then_cheat_TAC (assum_list, goal) =
   let
-    val (eval_tm, rhs_tm) = dest_eq goal
+    val (eval_tm, rhs_opt_tm) = dest_eq goal
+    val _ = if (is_some rhs_opt_tm) then () else
+      raise Fail "Cannot prove the goal because the RHS isn't SOME btrue.";
+    val rhs_tm = dest_some rhs_opt_tm
     val _ = if (rhs_tm = ``BVal_Imm (Imm1 1w)``) then () else
       raise Fail "Cannot prove the goal because the RHS isn't btrue.";
     (**)
@@ -48,12 +54,12 @@ fun prove_exp_is_taut imp_tm = (GEN_ALL o prove) (
   ``bir_exp_is_taut ^(imp_tm)``,
   PURE_REWRITE_TAC [bir_exp_is_taut_def] >>
   REPEAT STRIP_TAC >| [
-    (* Prove bir_is_bool_exp using cheat *)
-    cheat
-    ,
-    (* Prove bir_var_set_is_well_typed using cheat *)
-    cheat
-    ,
+    computeLib.RESTR_EVAL_TAC [``bir_is_bool_exp``] >>
+    FULL_SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) [],
+
+    computeLib.RESTR_EVAL_TAC [``bir_var_set_is_well_typed``] >>
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.bir_var_set_is_well_typed_ss) [],
+
     (* Prove ''bir_eval_exp imp env'' using the bir2bool function and SMT solver *)
     computeLib.RESTR_EVAL_TAC [``bir_eval_exp``] >>
     prove_bir_eval_exp_with_SMT_then_cheat_TAC

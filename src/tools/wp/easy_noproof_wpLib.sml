@@ -103,7 +103,7 @@ struct
       val wps_bool_sound_thm = (bir_wpLib.bir_wp_init_wps_bool_sound_thm
         (prog_tm, post_tm, wps_labels_lambda_tm) wps0_tm defs)
         handle exn => raise wrap_exn "compute_wp_thm::wps_bool_sound_thm" exn;
-      val (wpsdom, blstodo) = (bir_wpLib.bir_wp_init_rec_proc_jobs prog_term wps0_tm [])
+      val blstodo = (bir_wpLib.bir_wp_init_rec_proc_jobs prog_term wps0_tm [])
         handle exn => raise wrap_exn "compute_wp_thm::wpsdom, blstodo" exn;
 
       (* prepare "problem-static" part of the theorem *)
@@ -113,7 +113,6 @@ struct
 
       val _ = trace "WP: step 0 init...";
       val prog_thm = (bir_wpLib.bir_wp_comp_wps_iter_step0_init
-        reusable_thm
         (prog_tm, post_tm, wps_labels_lambda_tm)
         defs)
         handle exn => raise wrap_exn "compute_wp_thm::bir_wp_comp_wps_iter_step0_init" exn;
@@ -121,9 +120,9 @@ struct
       val _ = trace "WP: computing WPs...";
       val (new_wps_tm, new_wps_bool_sound_thm) = (bir_wpLib.bir_wp_comp_wps
         prog_thm
-        ((wps0_tm, wps_bool_sound_thm), (wpsdom, List.rev blstodo))
+        ((wps0_tm, wps_bool_sound_thm), (([]:term list), List.rev blstodo))
         (prog_tm, post_tm, wps_labels_lambda_tm)
-        defs)
+        postcond_lbls defs)
         handle exn => raise wrap_exn "compute_wp_thm::bir_wp_comp_wps" exn;
 
       val _ = trace "Done.";

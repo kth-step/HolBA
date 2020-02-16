@@ -1,6 +1,6 @@
 (* Code specific for the example *)
 open HolKernel Parse boolLib bossLib;
-open bir_expSimps;
+open HolBASimps;
 open tutorial_bir_to_armSupportTheory;
 open bslSyntax;
 
@@ -25,6 +25,8 @@ val arm8_add_reg_post_def = Define `arm8_add_reg_post m =
   ((^x_var+^y_var) = (^ly_var))
 `;
 
+
+(* BIR variables *)
 val get_y = bden (bvar "R5" ``(BType_Imm Bit64)``);
 val get_x = bden (bvar "R4" ``(BType_Imm Bit64)``);
 val get_ly = bden (bvar "R3" ``(BType_Imm Bit64)``);
@@ -32,23 +34,25 @@ val get_lx = bden (bvar "R2" ``(BType_Imm Bit64)``);
 val get_sp = bden (bvar "SP_EL0" ``(BType_Imm Bit64)``);
 val get_r0 = bden (bvar "R0" ``(BType_Imm Bit64)``);
 
+(* BIR constants *)
+val get_v = bconst ``v:word64``;
+
 
 val bir_add_reg_pre_def = Define `bir_add_reg_pre =
-^(bandl[
-        bnot (bslt(get_x, bconst64 0)),
-        beq(get_lx, get_x),
+^(bandl [bnot (bslt(get_x, bconst64 0)),
+         beq(get_lx, get_x),
          beq(get_ly, get_y)
-         ]
+        ]
 )
 `;
 
 val bir_add_reg_post_def = Define `bir_add_reg_post =
-^(beq (bplus(get_y, get_x), get_ly))`;
+ ^(beq (bplus(get_y, get_x), get_ly))`;
 
 
 val original_add_reg_loop_condition =  (bnot (bsle(get_lx, bconst64 0)));
 
-(* Note: "BIR cjmp exits the loop is `C`, where C is the BIR ump condition*)
+(* Note: "BIR cjmp exits the loop is `C`, where C is the BIR jump condition*)
 val bir_add_reg_loop_condition =  bnot ``(BExp_BinExp BIExp_Or
                        (BExp_UnaryExp BIExp_Not
                           (BExp_BinPred BIExp_Equal
@@ -75,7 +79,7 @@ val bir_add_reg_contract_1_pre_def = Define `bir_add_reg_contract_1_pre =
  (bir_add_reg_pre)
 `;
 val bir_add_reg_contract_1_post_def = Define `bir_add_reg_contract_1_post =
- (bir_add_reg_I)
+  bir_add_reg_I
 `;
 
 
@@ -85,7 +89,7 @@ val bir_add_reg_contract_2_pre_def = Define `bir_add_reg_contract_2_pre =
 ^(band(``bir_add_reg_I``, bir_add_reg_loop_condition))
 `;
 val bir_add_reg_contract_2_post_def = Define `bir_add_reg_contract_2_post =
- bir_add_reg_I
+  bir_add_reg_I
 `;
 
 (* contract three: loop continue *)
@@ -94,7 +98,7 @@ val bir_add_reg_contract_3_pre_def = Define `bir_add_reg_contract_3_pre =
 ^(band(``bir_add_reg_I``, bir_add_reg_loop_condition))
 `;
 val bir_add_reg_contract_3_post_def = Define `bir_add_reg_contract_3_post =
- ^(band(``bir_add_reg_I``, bir_add_reg_loop_condition))
+  ^(band(``bir_add_reg_I``, bir_add_reg_loop_condition))
 `;
 
 (* contract four: loop exit *)
@@ -115,22 +119,23 @@ val bir_add_reg_contract_4_post_def = Define `bir_add_reg_contract_4_post =
 (* from loop body start to cjmp *)
 val bir_add_reg_contract_2_pre_variant_def = Define `bir_add_reg_contract_2_pre_variant v =
 ^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition,
-  beq(get_lx, ``(BExp_Const (Imm64 v))``)
+  beq(get_lx, get_v)
 ])
 `;
 val bir_add_reg_contract_2_post_variant_def = Define `bir_add_reg_contract_2_post_variant v  =
  ^(bandl[``bir_add_reg_I``,
-  bnot(bsle(``(BExp_Const (Imm64 v))``, get_lx)),
+  bslt(get_lx, get_v),
   (bsle(bconst64 0, get_lx))
 ])
 `;
+
 (* contract three: loop continue *)
 (* from cjmp to loop body start *)
 val bir_add_reg_contract_3_pre_variant_def = Define `bir_add_reg_contract_3_pre_variant v =
-^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, ``(BExp_Const (Imm64 v))``)])
+^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, get_v)])
 `;
 val bir_add_reg_contract_3_post_variant_def = Define `bir_add_reg_contract_3_post_variant v =
- ^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, ``(BExp_Const (Imm64 v))``)])
+ ^(bandl[``bir_add_reg_I``, bir_add_reg_loop_condition, beq(get_lx, get_v)])
 `;
 
 
@@ -175,39 +180,43 @@ val arm_to_bir_exp_thms = (((CONJUNCTS o UNDISCH o fst o EQ_IMP_RULE) bir_liftin
 
 (* Then we show that the arm precondition entails the bir precondition *)
 val arm8_pre_imp_bir_pre_thm = store_thm("arm8_pre_imp_bir_pre_thm", 
-``bir_pre_arm8_to_bir arm8_add_reg_pre bir_add_reg_pre``
-,
-FULL_SIMP_TAC (std_ss) [bir_pre_arm8_to_bir_def, bir_add_reg_pre_is_bool_pred_thm] >>
+  ``bir_pre_arm8_to_bir arm8_add_reg_pre bir_add_reg_pre``,
+
+FULL_SIMP_TAC std_ss [bir_pre_arm8_to_bir_def,
+                      bir_add_reg_pre_is_bool_pred_thm] >>
 REPEAT STRIP_TAC >>
-SIMP_TAC (std_ss) [bir_add_reg_pre_def] >>
-SIMP_TAC (std_ss) arm_to_bir_exp_thms >>
+SIMP_TAC std_ss [bir_add_reg_pre_def] >>
+SIMP_TAC std_ss arm_to_bir_exp_thms >>
 EVAL_TAC >>
 UNDISCH_TAC ``arm8_add_reg_pre ms`` >>
-FULL_SIMP_TAC (std_ss) [arm8_add_reg_pre_def] >>
+FULL_SIMP_TAC std_ss [arm8_add_reg_pre_def] >>
 Q.ABBREV_TAC `a = ms.REG 2w` >>
 Q.ABBREV_TAC `b = ms.REG 3w` >>
 Q.ABBREV_TAC `c = ms.REG 4w` >>
 Q.ABBREV_TAC `d = ms.REG 5w` >>
-(fn (asl,goal) => ASSUME_TAC (HolSmtLib.Z3_ORACLE_PROVE  goal)(asl,goal)) >>
-FULL_SIMP_TAC std_ss []
+Cases_on `a < 0w` >> (
+  blastLib.FULL_BBLAST_TAC
+)
 );
 
 
 val arm8_post_imp_bir_post_thm = store_thm("arm8_post_imp_bir_post_thm", 
-``bir_post_bir_to_arm8 arm8_add_reg_post bir_add_reg_post``
-,
-FULL_SIMP_TAC (std_ss) [bir_post_bir_to_arm8_def] >>
+  ``!(ls:bir_label_t -> bool).
+    bir_post_bir_to_arm8 arm8_add_reg_post (\(l:bir_label_t). bir_add_reg_post) ls``,
+
+FULL_SIMP_TAC std_ss [bir_post_bir_to_arm8_def] >>
 REPEAT STRIP_TAC >>
-UNDISCH_TAC ``bir_eval_exp bir_add_reg_post bs.bst_environ = bir_val_true`` >>
-SIMP_TAC (std_ss) [bir_add_reg_post_def] >>
-SIMP_TAC (std_ss) arm_to_bir_exp_thms >>
+UNDISCH_TAC ``bir_eval_exp bir_add_reg_post bs.bst_environ = SOME bir_val_true`` >>
+SIMP_TAC std_ss [bir_add_reg_post_def] >>
+SIMP_TAC std_ss arm_to_bir_exp_thms >>
 EVAL_TAC >>
 Q.ABBREV_TAC `a = ms.REG 2w` >>
 Q.ABBREV_TAC `b = ms.REG 3w` >>
 Q.ABBREV_TAC `c = ms.REG 4w` >>
 Q.ABBREV_TAC `d = ms.REG 5w` >>
-(fn (asl,goal) => ASSUME_TAC (HolSmtLib.Z3_ORACLE_PROVE  goal)(asl,goal)) >>
-FULL_SIMP_TAC std_ss []
+Cases_on `d + c = b` >> (
+  blastLib.FULL_BBLAST_TAC
+)
 );
 
 

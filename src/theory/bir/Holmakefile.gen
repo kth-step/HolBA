@@ -5,10 +5,10 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-HOLHEAP        = 
+HOLHEAP        = ../../aux/Aux-heap
 NEWHOLHEAP     = HolBABir-heap
 
-HEAPINC_EXTRA  = wordsLib
+HEAPINC_EXTRA  =
 
 
 # included lines follow

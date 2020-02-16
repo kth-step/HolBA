@@ -124,6 +124,23 @@ SIMP_TAC std_ss [bir_exec_to_addr_label_def, bir_exec_to_addr_label_n_def,
   bir_exec_to_labels_n_REWR_SUC]);
 
 
+val bir_exec_to_addr_label_n_ended_running =
+  store_thm("bir_exec_to_addr_label_n_ended_running",
+  ``!prog st l n m c_l' st'.
+    (n > 0) ==>
+    (bir_exec_to_addr_label_n prog st n = BER_Ended l m c_l' st') ==>
+    ~(bir_state_is_terminated st') ==>
+    (st'.bst_pc.bpc_index = 0)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def] >> (
+  subgoal `(1:num) > 0` >- (
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  IMP_RES_TAC bir_exec_to_labels_n_ended_running
+)
+);
+
 
 (***************************************************)
 (* Lifting a machine instruction to a single block *)
