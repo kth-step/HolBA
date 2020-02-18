@@ -69,8 +69,7 @@ struct
 
       (** labels **)
       val (first_block_label_tm, _, _) = ((dest_bir_block o hd o fst o listSyntax.dest_list o dest_BirProgram o snd o dest_comb o concl) prog_def);
-      val ending_block_label_tm = hd postcond_lbls;
-      val _ = if length postcond_lbls <> 1 then raise ERR "aaaaaaaaaaaaaaa" "panic" else ();
+      val _ = if length postcond_lbls < 1 then raise ERR "aaaaaaaaaaaaaaa" "panic" else ();
 
       val wps_labels_lambda_tm = mk_lambda_matching_any_of postcond_lbls
         handle exn => raise wrap_exn "compute_wp_thm::wps_labels_lambda_tm" exn;
@@ -84,21 +83,20 @@ struct
       val (post_tm, post_def) = (fn x => (
         x,
         xDefine ("compute_wps_def__" ^ define_prefix ^ "__post") `post = ^x`)
-        ) ``(\l. if (l = ^ending_block_label_tm)
+        ) ((fn x => ``(\l. if (^x)
                  then ^postcond_bir_tm
-                 else bir_exp_false)``
+                 else bir_exp_false)``)
+           (List.foldl (fn (x,y) => mk_disj (``l = ^x``, y))
+                       ``l = ^(hd postcond_lbls)``
+                       (tl postcond_lbls))
+          )
         handle exn => raise wrap_exn "compute_wp_thm::post_def" exn;
 
       (** WPs map **)
-      val postcondition_list = (List.map (fn lbl => (lbl, post_tm)) postcond_lbls)
-        handle exn => raise wrap_exn "compute_wp_thm::postcondition_list" exn;
       val wps0_tm = (mk_fmap_of (Type `:bir_label_t`, Type `:bir_exp_t`) [])
         handle exn => raise wrap_exn "compute_wp_thm::wps0_tm" exn;
       val wps0_def = xDefine ("compute_wps_def__" ^ define_prefix ^ "__wps0") `wps0 = ^wps0_tm`
         handle exn => raise wrap_exn "compute_wp_thm::wps0_def" exn;
-
-      (** ending labels **)
-      val ending_label_list = postcond_lbls;
 
       (** prog **)
       val prog_tm = ((snd o dest_comb o concl) prog_def)
@@ -113,7 +111,7 @@ struct
       val wps_bool_sound_thm = (bir_wpLib.bir_wp_init_wps_bool_sound_thm
         (prog_tm, post_tm, wps_labels_lambda_tm) wps0_tm defs)
         handle exn => raise wrap_exn "compute_wp_thm::wps_bool_sound_thm" exn;
-      val blstodo = (bir_wpLib.bir_wp_init_rec_proc_jobs prog_term first_block_label_tm ending_label_list)
+      val blstodo = (bir_wpLib.bir_wp_init_rec_proc_jobs prog_term first_block_label_tm postcond_lbls)
         handle exn => raise wrap_exn "compute_wp_thm::wpsdom, blstodo" exn;
 
       (* prepare "problem-static" part of the theorem *)
@@ -132,7 +130,7 @@ struct
         prog_thm
         ((wps0_tm, wps_bool_sound_thm), (([]:term list), List.rev blstodo))
         (prog_tm, post_tm, wps_labels_lambda_tm)
-        ending_label_list defs)
+        postcond_lbls defs)
         handle exn => raise wrap_exn "compute_wp_thm::bir_wp_comp_wps" exn;
 
       val _ = trace "Done.";
