@@ -74,28 +74,30 @@ val aes_program_def = Define `
 	      ])`;
 
 (* Note: This approach does not obtain a HT for the last block. *)
+val first_block_label_tm = ``BL_Address (Imm64 0x400570w)``;
+val ending_block_label_tm = ``BL_Address (Imm64 0x400578w)``;
 val aes_post_exp_tm = ``
   (BExp_BinPred BIExp_Equal
     (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
     (BExp_Const (Imm64 112w))
   )``;
 val aes_post_def = Define `
-      aes_post (l:bir_label_t) = (^aes_post_exp_tm)`;
+      aes_post = (\l. if (l = ^ending_block_label_tm)
+                        then ^aes_post_exp_tm
+                        else bir_exp_false)`;
 val aes_ls_def = Define `
-      aes_ls = \x.(x = (BL_Address (Imm64 0x400578w)))`;
+      aes_ls = \x.(x = (^ending_block_label_tm))`;
 val aes_wps_def = Define `
-      aes_wps = (FEMPTY |+ (BL_Address (Imm64 0x400578w),
-                            (^aes_post_exp_tm)
-                           )
-                )`;
+      aes_wps = FEMPTY :bir_label_t |-> bir_exp_t`;
 
+
+val ending_label_list = [ending_block_label_tm];
 
 val program = ``aes_program``;
 val post = ``aes_post``;
 val ls = ``aes_ls``;
 val wps = ``aes_wps``;
-val defs = [aes_program_def, aes_post_def, aes_ls_def, aes_wps_def];
-
+val defs = [aes_program_def, aes_post_def, aes_ls_def, aes_wps_def, bir_bool_expTheory.bir_exp_false_def];
 
 (* wps_bool_sound_thm for initial wps *)
 val prog_term = (snd o dest_comb o concl) aes_program_def;
@@ -103,21 +105,22 @@ val wps_term =
   (snd o dest_comb o concl o (SIMP_CONV std_ss defs)) wps;
 val wps_bool_sound_thm =
   bir_wp_init_wps_bool_sound_thm (program, post, ls) wps defs;
-val (wpsdom, blstodo) =
-  bir_wp_init_rec_proc_jobs prog_term wps_term [];
+val blstodo =
+  bir_wp_init_rec_proc_jobs prog_term first_block_label_tm ending_label_list;
 
 
 (* prepare "problem-static" part of the theorem *)
 val reusable_thm = bir_wp_exec_of_block_reusable_thm;
 val prog_thm =
-  bir_wp_comp_wps_iter_step0_init reusable_thm (program, post, ls)
+  bir_wp_comp_wps_iter_step0_init (program, post, ls)
                                   defs;
 
 (* and the recursive procedure *)
 val (wpsrec, wpsrec_bool_sound_thm) =
   bir_wp_comp_wps prog_thm ((wps, wps_bool_sound_thm),
-                            (wpsdom, blstodo)
-                           ) (program, post, ls) defs;
+                            (([]:term list), List.rev blstodo)
+                           ) (program, post, ls)
+                           ending_label_list defs;
 
 (* to make it readable or speedup (copy and paste from a few lines
  * above) *)
