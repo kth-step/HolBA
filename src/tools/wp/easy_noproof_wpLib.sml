@@ -67,35 +67,45 @@ struct
     let
       val trace = trace ("compute_wps_tm::'" ^ define_prefix ^ "'")
 
-      (* Turn the postcondition list into what HolBA/tools/wp wants *)
-      val _ = trace "Translating data to HolBA/tools/wp format...";
-      (** postcondition **)
-      val (post_tm, post_def) = (
-        postcond_bir_tm,
-        xDefine ("compute_wps_def__" ^ define_prefix ^ "__post") `post = ^postcond_bir_tm`)
-        handle exn => raise wrap_exn "compute_wp_thm::post_def" exn;
-
       (** labels **)
+      val (first_block_label_tm, _, _) = ((dest_bir_block o hd o fst o listSyntax.dest_list o dest_BirProgram o snd o dest_comb o concl) prog_def);
+      val ending_block_label_tm = hd postcond_lbls;
+      val _ = if length postcond_lbls <> 1 then raise ERR "aaaaaaaaaaaaaaa" "panic" else ();
+
       val wps_labels_lambda_tm = mk_lambda_matching_any_of postcond_lbls
         handle exn => raise wrap_exn "compute_wp_thm::wps_labels_lambda_tm" exn;
       val wps_labels_lambda_def = xDefine ("compute_wps_def__" ^ define_prefix ^ "__wps_labels_lambda")
           `wps_labels_lambda = ^wps_labels_lambda_tm`
         handle exn => raise wrap_exn "compute_wp_thm::wps_labels_lambda_def" exn;
 
+      (* Turn the postcondition list into what HolBA/tools/wp wants *)
+      val _ = trace "Translating data to HolBA/tools/wp format...";
+      (** postcondition **)
+      val (post_tm, post_def) = (fn x => (
+        x,
+        xDefine ("compute_wps_def__" ^ define_prefix ^ "__post") `post = ^x`)
+        ) ``(\l. if (l = ^ending_block_label_tm)
+                 then ^postcond_bir_tm
+                 else bir_exp_false)``
+        handle exn => raise wrap_exn "compute_wp_thm::post_def" exn;
+
       (** WPs map **)
       val postcondition_list = (List.map (fn lbl => (lbl, post_tm)) postcond_lbls)
         handle exn => raise wrap_exn "compute_wp_thm::postcondition_list" exn;
-      val wps0_tm = (mk_fmap_of (Type `:bir_label_t`, Type `:bir_exp_t`) postcondition_list)
+      val wps0_tm = (mk_fmap_of (Type `:bir_label_t`, Type `:bir_exp_t`) [])
         handle exn => raise wrap_exn "compute_wp_thm::wps0_tm" exn;
       val wps0_def = xDefine ("compute_wps_def__" ^ define_prefix ^ "__wps0") `wps0 = ^wps0_tm`
         handle exn => raise wrap_exn "compute_wp_thm::wps0_def" exn;
+
+      (** ending labels **)
+      val ending_label_list = postcond_lbls;
 
       (** prog **)
       val prog_tm = ((snd o dest_comb o concl) prog_def)
         handle _ => raise Fail "compute_wp_thm::prog_def isn't a def";
 
       (** definitions **)
-      val defs = [prog_def, post_def, wps0_def, wps_labels_lambda_def];
+      val defs = [prog_def, post_def, wps0_def, wps_labels_lambda_def, bir_bool_expTheory.bir_exp_false_def];
 
       (* wps_bool_sound_thm for initial wps *)
       val _ = trace "wps_bool_sound_thm for initial WPs...";
@@ -103,7 +113,7 @@ struct
       val wps_bool_sound_thm = (bir_wpLib.bir_wp_init_wps_bool_sound_thm
         (prog_tm, post_tm, wps_labels_lambda_tm) wps0_tm defs)
         handle exn => raise wrap_exn "compute_wp_thm::wps_bool_sound_thm" exn;
-      val blstodo = (bir_wpLib.bir_wp_init_rec_proc_jobs prog_term wps0_tm [])
+      val blstodo = (bir_wpLib.bir_wp_init_rec_proc_jobs prog_term first_block_label_tm ending_label_list)
         handle exn => raise wrap_exn "compute_wp_thm::wpsdom, blstodo" exn;
 
       (* prepare "problem-static" part of the theorem *)
@@ -122,7 +132,7 @@ struct
         prog_thm
         ((wps0_tm, wps_bool_sound_thm), (([]:term list), List.rev blstodo))
         (prog_tm, post_tm, wps_labels_lambda_tm)
-        postcond_lbls defs)
+        ending_label_list defs)
         handle exn => raise wrap_exn "compute_wp_thm::bir_wp_comp_wps" exn;
 
       val _ = trace "Done.";
@@ -159,6 +169,11 @@ val (postcond_lbls, postcond_bir_tm) = (
             (BExp_Den (BVar "x" (BType_Imm Bit16)))
             (BExp_Const (Imm16 42w))
         ``);
+*)
+(*
+val define_prefix = prog_name;
+val (precond_lbl, precond_bir_tm) = (entry_lbl, precond);
+val (postcond_lbls, postcond_bir_tm) = (exit_lbls, postcond);
 *)
   fun compute_p_imp_wp_tm define_prefix prog_def
     (precond_lbl, precond_bir_tm) (postcond_lbls, postcond_bir_tm) =

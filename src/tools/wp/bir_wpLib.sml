@@ -140,7 +140,7 @@ struct
        * with boolTheory.EQ_CLAUSES *)
       (* TODO: Create bir_is_bool_expSyntax for the below *)
       val post_bool_thm = prove(``bir_wp_post_map_contains_bool_exp ^post``,
-        SIMP_TAC std_ss [bir_wp_post_map_contains_bool_exp_def] >>
+        SIMP_TAC std_ss ([bir_wp_post_map_contains_bool_exp_def]@defs) >>
         GEN_TAC >>
         REPEAT CASE_TAC >> (
           SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss) defs
@@ -277,7 +277,9 @@ struct
       val prog_obs_ty = (hd o snd o dest_type o type_of) program;
 
       val bir_wp_exec_of_block_eval_thm =
-        computeLib.RESTR_EVAL_CONV wps_eval_restrict_consts
+        ((computeLib.RESTR_EVAL_CONV wps_eval_restrict_consts) THENC
+         (REWRITE_CONV [pred_setTheory.IN_APP]) THENC
+         (computeLib.RESTR_EVAL_CONV wps_eval_restrict_consts))
           (list_mk_comb
             (* TODO: Add to bir_wpSyntax *)
             (inst [Type `:'a` |-> prog_obs_ty] ``bir_wp_exec_of_block:'a bir_program_t ->
