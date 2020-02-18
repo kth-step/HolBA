@@ -122,6 +122,23 @@ val bir_imm_t_sizes_list =
     size_of_bir_immtype_t (bir_immtype_t_of_word_ty wty)))
     bir_immtype_t_imm_list;
 
+local
+  fun bir_imm_of_size_ n (h::t) =
+	if n = (snd h)
+	then (fst h)
+	else if t <> []
+        then bir_imm_of_size_ n t
+        else
+	  raise (ERR "bir_imm_of_size"
+		     ("The number of bits "^(Int.toString n)^
+		      " does not correspond with any binary word"^
+		      " length in supported BIR syntax."))
+in
+fun bir_imm_of_size n =
+  bir_imm_of_size_ n bir_imm_t_sizes_list
+end
+;
+
 fun gen_dest_Imm tm = let
   val (c, arg) = dest_comb tm;
   val s = assoc c bir_imm_t_sizes_list

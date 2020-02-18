@@ -197,8 +197,9 @@ val _ = List.foldl (fn (config,_) =>
 	val ex_program_def = Define `
 	      ex_program = ^program
 	`;
+	val ex_post_tm = ``BExp_Const (Imm1 1w)``;
 	val ex_post_def = Define `
-	      ex_post = (BExp_Const (Imm1 1w))
+	      ex_post (l:bir_label_t) = (^ex_post_tm)
 	`;
 
         val ex_ls_term = List.foldl (fn (lab,tm) => ``(^tm) \/ (x = ^(lab))``) (``x = ^(hd last_block_labels)``) (tl last_block_labels);
@@ -206,7 +207,7 @@ val _ = List.foldl (fn (config,_) =>
 	      ex_ls = \x.(^ex_ls_term)
 	`;
 
-        val ex_wps_term = List.foldl (fn (lab,tm) => ``(^tm) |+ (^lab, ex_post)``) (``FEMPTY:bir_label_t |-> bir_exp_t``) last_block_labels;
+        val ex_wps_term = List.foldl (fn (lab,tm) => ``(^tm) |+ (^lab, (^ex_post_tm))``) (``FEMPTY:bir_label_t |-> bir_exp_t``) last_block_labels;
 	val ex_wps_def = Define `
 	      ex_wps = (^ex_wps_term)
 	`;

@@ -6,6 +6,8 @@ open bir_exp_memTheory bir_expTheory;
 open bir_exp_immTheory;
 open HolBACoreSimps
 
+open bir_auxiliaryLib;
+
 val _ = new_theory "bir_bool_exp";
 
 
@@ -235,6 +237,19 @@ val bir_is_bool_exp_REWRS = store_thm ("bir_is_bool_exp_REWRS",
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_is_bool_exp_def,
   bir_exp_true_def, bir_exp_false_def, BType_Bool_def,
   bir_number_of_mem_splits_BitResult] >> METIS_TAC []);
+
+
+(* TODO: Rename? *)
+val bir_eval_TF_is_bool = store_thm("bir_eval_TF_is_bool",
+  ``!ex env w.
+    (bir_eval_exp ex env = SOME (BVal_Imm (Imm1 w))) ==>
+    bir_is_bool_exp ex``,
+
+REPEAT STRIP_TAC >>
+IMP_RES_TAC bir_eval_exp_IS_SOME_IMPLIES_TYPE >>
+QSPECL_X_ASSUM ``!ty. _`` [`BType_Imm Bit1`] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_def]
+);
 
 
 (*************************)

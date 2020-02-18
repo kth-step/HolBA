@@ -1,0 +1,16 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   =
+
+
+# configuration
+# ----------------------------------
+HOLHEAP        = 
+NEWHOLHEAP     = Aux-heap
+
+HEAPINC_EXTRA  = wordsLib
+
+
+# included lines follow
+# ----------------------------------
+include ../Holmakefile.inc

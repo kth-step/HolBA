@@ -78,36 +78,32 @@ val tests = [
         <|bb_label := BL_Label "plus_mult";
           bb_statements := [
             BStmt_Assign (BVar "x" (BType_Imm Bit32))
-              (BExp_BinExp BIExp_Plus
-                (BExp_BinExp BIExp_Plus
-                  (BExp_BinExp BIExp_Plus
-                    (BExp_BinExp BIExp_Plus
-                      (BExp_Const (Imm32 (0w :word32)))
-                      (BExp_Const (Imm32 (1w :word32))))
-                    (BExp_BinExp BIExp_Mult
-                      (BExp_Const (Imm32 (21w :word32)))
-                      (BExp_Const (Imm32 (2w :word32)))))
-                  (BExp_Const (Imm32 (3w :word32))))
-                (BExp_Const (Imm32 (4w :word32))))
+             (BExp_BinExp BIExp_Plus (BExp_Const (Imm32 (0w :word32)))
+                (BExp_BinExp BIExp_Plus (BExp_Const (Imm32 (1w :word32)))
+                   (BExp_BinExp BIExp_Plus
+                      (BExp_BinExp BIExp_Mult
+                         (BExp_Const (Imm32 (21w :word32)))
+                         (BExp_Const (Imm32 (2w :word32))))
+                      (BExp_BinExp BIExp_Plus
+                         (BExp_Const (Imm32 (3w :word32)))
+                         (BExp_Const (Imm32 (4w :word32)))))))
           ];
           bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "minus_div"))
         |>;
         <|bb_label := BL_Label "minus_div";
           bb_statements := [
             BStmt_Assign (BVar "y" (BType_Imm Bit32))
-              (BExp_BinExp BIExp_Minus
-                (BExp_BinExp BIExp_Minus
-                  (BExp_BinExp BIExp_Minus
-                    (BExp_BinExp BIExp_Minus
-                      (BExp_Den (BVar "x" (BType_Imm Bit32)))
-                      (BExp_Const (Imm32 (1w :word32))))
-                    (BExp_BinExp BIExp_Div
+             (BExp_BinExp BIExp_Minus (BExp_Den (BVar "x" (BType_Imm Bit32)))
+                (BExp_BinExp BIExp_Minus (BExp_Const (Imm32 (1w :word32)))
+                   (BExp_BinExp BIExp_Minus
                       (BExp_BinExp BIExp_Div
-                        (BExp_Const (Imm32 (1337w :word32)))
-                        (BExp_Const (Imm32 (191w :word32))))
-                      (BExp_Const (Imm32 (7w :word32)))))
-                  (BExp_Const (Imm32 (3w :word32))))
-                (BExp_Const (Imm32 (4w :word32))))
+                         (BExp_Const (Imm32 (1337w :word32)))
+                         (BExp_BinExp BIExp_Div
+                            (BExp_Const (Imm32 (191w :word32)))
+                            (BExp_Const (Imm32 (7w :word32)))))
+                      (BExp_BinExp BIExp_Minus
+                         (BExp_Const (Imm32 (3w :word32)))
+                         (BExp_Const (Imm32 (4w :word32)))))))
           ];
           bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "epilogue"))
         |>;
