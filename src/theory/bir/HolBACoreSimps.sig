@@ -22,4 +22,7 @@ sig
 
    (* Simplifies unions of variable sets *)
    val bir_union_var_set_ss : simpLib.ssfrag
+
+   (* Simplifies loads from stores *)
+   val bir_load_store_ss : simpLib.ssfrag
 end
