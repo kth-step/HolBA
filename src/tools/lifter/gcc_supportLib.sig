@@ -65,7 +65,7 @@ signature gcc_supportLib = sig
   (******************)
 
   (* Most importantly, we can read it from a file produced by e.g. objdump *)
-  val read_disassembly_file : string (* filename *) -> disassembly_data
+  val read_disassembly_file : (string -> string -> bool) -> string (* filename *) -> disassembly_data
 
 
   (*******************)
