@@ -110,6 +110,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (* For debugging
   structure MD = struct val mr = arm8_bmr_rec end;
   structure MD = struct val mr = m0_bmr_rec true true end;
+  structure MD = struct val mr = m0_mod_bmr_rec true true end;
   val pc = Arbnum.fromInt 0x10000
 
   val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x100000)
@@ -150,6 +151,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "C500"
   val hex_code = "B5F7"
   val hex_code = "448F"
+  val hex_code = "D001"
 
   val hex_code_desc = hex_code
 *)
@@ -413,10 +415,16 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   fun preprocess_next_thms (lb:term) ([]:thm list) =
       raise bir_inst_liftingAuxExn (BILED_msg ("empty list of step theorems produced"))
-    | preprocess_next_thms lb [thm] = [(lb, T, thm)]
-    | preprocess_next_thms lb thms =
-      [(lb, T, preprocess_next_thms_simple_merge (el 1 thms) (el 2 thms))] handle HOL_ERR _ =>
-      raise bir_inst_liftingAuxExn (BILED_msg ("more than 2 next-theorems cannot be merged currently: TODO"));
+    | preprocess_next_thms lb [thm] =
+        [(lb, T, thm)]
+    | preprocess_next_thms lb [thms1, thms2] =
+      (
+        [(lb, T, preprocess_next_thms_simple_merge thms1 thms2)]
+        handle HOL_ERR _ =>
+          raise bir_inst_liftingAuxExn (BILED_msg ("unknown error during merging of 2 next-theorems"))
+      )
+    | preprocess_next_thms _ _ =
+        raise bir_inst_liftingAuxExn (BILED_msg ("more than 2 next-theorems cannot be merged currently: TODO"));
 
 
 
