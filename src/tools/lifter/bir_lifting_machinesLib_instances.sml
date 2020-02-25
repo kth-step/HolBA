@@ -285,6 +285,10 @@ val m0_extra_ss = rewrites m0_REWRS;
   val endian_fl = false
   val sel_fl = true
 
+  val vn = ``ms:m0_state``
+
+  val hex_code = "D001";
+
   val res = m0_step_hex' (endian_fl, sel_fl) vn hex_code
 
 *)
@@ -455,7 +459,11 @@ val m0_mod_extra_ss = rewrites m0_mod_REWRS;
   val endian_fl = false
   val sel_fl = true
 
-  val res = m0_step_hex' (endian_fl, sel_fl) vn hex_code
+  val vn = ``ms:m0_mod_state``
+  val hex_code = "41C8"
+  val hex_code = "D001";
+
+  val res = m0_mod_step_hex' (endian_fl, sel_fl) vn hex_code
 
 *)
 
