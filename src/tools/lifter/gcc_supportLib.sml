@@ -89,20 +89,23 @@ datatype disassembly_line =
   | DASL_whitespace
   | DASL_entry of disassembly_entry
 
-fun parse_disassembly_file_line l =
+fun parse_disassembly_file_line skipentries l =
   let val cl = butlast (String.explode l) in
   if (List.null cl) then DASL_whitespace else
-  if hd cl = #" " then let
-    val (addr_l, cl') = list_split_pred #":" cl
-    val addr = Arbnum.fromHexString (String.implode addr_l)
-    val (hc_l, cl') = list_split_pred #"\t" (tl cl')
-    val hc = String.implode (filter (fn c => c <> #" ") hc_l)
-    val mm_s = String.map (fn c => if c = #"\t" then #" " else c) (String.implode cl')
-  in DASL_entry {
-       DAE_addr = addr,
-       DAE_desc = mm_s,
-       DAE_hex  = hc}
-  end else
+  if hd cl = #" " then
+    if skipentries then DASL_whitespace else
+    let
+      val (addr_l, cl') = list_split_pred #":" cl
+      val addr = Arbnum.fromHexString (String.implode addr_l)
+      val (hc_l, cl') = list_split_pred #"\t" (tl cl')
+      val hc = String.implode (filter (fn c => c <> #" ") hc_l)
+      val mm_s = String.map (fn c => if c = #"\t" then #" " else c) (String.implode cl')
+    in DASL_entry {
+         DAE_addr = addr,
+         DAE_desc = mm_s,
+         DAE_hex  = hc}
+    end
+  else
   if hd cl = #"0" then let
     val (addr_l, lbl') = list_split_pred #" " cl
     val addr = Arbnum.fromHexString (String.implode addr_l)
@@ -115,10 +118,13 @@ fun parse_disassembly_file_line l =
 end handle HOL_ERR _ => raise (ERR "parse_disassembly_file_line" ("can't parse line '"^ l ^"'"))
 
 
-
-type disassembly_file_acc = disassembly_section list * disassembly_lbl list *
-       disassembly_block list * string * (string * num) *
-       disassembly_entry list
+type disassembly_file_acc =
+       disassembly_section list * (* finished sections                         *)
+       disassembly_lbl     list * (* finished symbols    : for current section *)
+       disassembly_block   list * (* finished block list : for current symbol  *)
+       string                   * (* current section                           *)
+       (string * num)           * (* current lbl (symbol)                      *)
+       disassembly_entry   list ; (* current state of the block                *)
 
 val empty_disassembly_file_acc:disassembly_file_acc =
   ([], [], [], "", ("", Arbnum.zero), [])
@@ -149,16 +155,20 @@ in
   (acc', [], [], ns, ("", Arbnum.zero), []):disassembly_file_acc
 end;
 
+fun is_included fi ((acc, acc_sec, acc_lbl, c_sec, (c_lbl_id, _), c_data):disassembly_file_acc) =
+  (c_lbl_id = "") orelse (fi c_sec c_lbl_id);
+
 in
 
-fun process_disassembly_file_line i l =
-  case parse_disassembly_file_line l of
-      DASL_whitespace => i
-    | DASL_entry e => add_entry i e
-    | DASL_sep => finish_block i
-    | DASL_lbl (s, a) => finish_lbl i (s, a)
-    | DASL_section n => finish_sec i n
-
+fun process_disassembly_file_line fi i l =
+  let val skip_to_next_lbl = not (is_included fi i) in
+    case parse_disassembly_file_line skip_to_next_lbl l of
+        DASL_whitespace => i
+      | DASL_entry e    => add_entry i e
+      | DASL_sep        => finish_block i
+      | DASL_lbl (s, a) => finish_lbl i (s, a)
+      | DASL_section n  => finish_sec i n
+  end;
 
 fun finish_disassembly_file_acc i : disassembly_data = let
   val (acc, _, _, _, _, _) = finish_sec i ""
@@ -170,13 +180,13 @@ end;
 end;
 
 (* val file_name = "examples/aes-aarch64.da" *)
-fun read_disassembly_file file_name = let
+fun read_disassembly_file fi file_name = let
   val instream = TextIO.openIn file_name
   fun read_it st =
     case TextIO.inputLine instream of
         NONE => st
       | SOME s => let
-          val st' = process_disassembly_file_line st s
+          val st' = process_disassembly_file_line fi st s
         in read_it st' end
   val input = read_it empty_disassembly_file_acc before TextIO.closeIn instream
 in finish_disassembly_file_acc input end;
@@ -246,8 +256,8 @@ fun disassembly_data_to_mem_regions (d:disassembly_data) =
 
 
 fun read_disassembly_file_regions_filter fi filename = let
-  val d = read_disassembly_file filename
-  val d' = disassembly_data_filter fi d;
+  val d = read_disassembly_file fi filename
+  val d' = d (*disassembly_data_filter fi d*);
   val r = disassembly_data_to_mem_regions d'
   val l =  disassembly_data_to_labels d'
 in
@@ -255,7 +265,7 @@ in
 end
 
 fun read_disassembly_file_regions filename = let
-  val d = read_disassembly_file filename
+  val d = read_disassembly_file (fn _ => fn _ => true) filename
   val r = disassembly_data_to_mem_regions d
   val l =  disassembly_data_to_labels d
 in
