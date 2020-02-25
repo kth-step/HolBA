@@ -109,8 +109,8 @@ val sty_FAIL  = [FG OrangeRed];
 functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifting = struct
   (* For debugging
   structure MD = struct val mr = arm8_bmr_rec end;
-  structure MD = struct val mr = m0_bmr_rec true true end;
-  structure MD = struct val mr = m0_mod_bmr_rec true true end;
+  structure MD = struct val mr = m0_bmr_rec false true end;
+  structure MD = struct val mr = m0_mod_bmr_rec false true end;
   val pc = Arbnum.fromInt 0x10000
 
   val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x100000)
@@ -406,6 +406,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (* val [thm_a, thm_b] = next_thms *)
   fun preprocess_next_thms_simple_merge thm_a thm_b = let
     val thm0 = MATCH_MP COMBINE_TWO_STEP_THMS_SIMPLE thm_a
+               handle HOL_ERR _ => MATCH_MP COMBINE_TWO_STEP_THMS_SIMPLE_2 thm_a
     val thm1 = MATCH_MP thm0 thm_b
     val (pre, _) = dest_imp_only (concl thm1);
     val pre_thm = SIMP_PROVE std_ss [] pre
