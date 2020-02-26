@@ -119,6 +119,10 @@ fun parse_disassembly_file_line skipentries l =
     let
       val (addr_l, cl') = list_split_pred #":" cl
       val addr = Arbnum.fromHexString (String.implode addr_l)
+    in
+    (* this seem to occur for padded locations for function/label alignment, but is this true? *)
+    if String.isPrefix "Address " (String.implode (tl cl')) then DASL_whitespace else
+    let
       val (hc_l, cl') = list_split_pred #"\t" (tl cl')
       val hc = String.implode (filter (fn c => c <> #" ") hc_l)
       val mm_s = String.map (fn c => if c = #"\t" then #" " else c) (String.implode cl')
@@ -126,7 +130,7 @@ fun parse_disassembly_file_line skipentries l =
          DAE_addr = addr,
          DAE_desc = mm_s,
          DAE_hex  = hc}
-    end
+    end end
   else
   if hd cl = #"0" then let
     val (addr_l, lbl') = list_split_pred #" " cl
