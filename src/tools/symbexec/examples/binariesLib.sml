@@ -10,34 +10,33 @@ open bir_immSyntax;
 open listSyntax;
 open wordsSyntax;
 
+open Redblackmap;
+
 (* ===================================== program behavior ======================================= *)
 val (_, mem_wi_prog_tm, mem_tm, prog_tm) = (dest_bir_is_lifted_prog o concl) balrob_program_THM;
 
-val prog_blocks = (fst o dest_list o dest_BirProgram) prog_tm;
-
-fun get_block prog_blocks lbl_tm =
+val prog_blocks_dict =
   let
-    val blocks = prog_blocks;
-    (*
-    val block = hd blocks;
-    *)
-    fun is_block block =
-      let
-        val (lbl, _, _) = dest_bir_block block;
-        val lbl2_tm     = (snd o dest_eq o concl o EVAL) lbl;
-      in
-        lbl_tm = lbl2_tm
-      end;
-
-    fun findFirst f []      = NONE
-      | findFirst f (x::xs) = if f x then SOME x else
-                                          findFirst f xs;
+    val bls = (fst o dest_list o dest_BirProgram) prog_tm;
+    val lbl_block_pairs =
+      List.foldr (fn (bl, l) => (
+        let
+          val (lbl, _, _) = dest_bir_block bl;
+          val lbl_tm      = (snd o dest_eq o concl o EVAL) lbl;
+        in
+          (lbl_tm, bl)
+        end
+      )::l) [] bls;
   in
-    findFirst is_block blocks
+    Redblackmap.insertList (Redblackmap.mkDict Term.compare, lbl_block_pairs)
   end;
 
-fun get_block_byAddr prog_tm addr =
-    get_block prog_tm ((mk_BL_Address o mk_Imm32 o mk_word) (addr, Arbnum.fromInt 32));
+fun get_block bl_dict lbl_tm =
+  SOME (Redblackmap.find (bl_dict, lbl_tm))
+  handle NotFound => NONE;
+
+fun get_block_byAddr bl_dict addr =
+    get_block bl_dict ((mk_BL_Address o mk_Imm32 o mk_word) (addr, Arbnum.fromInt 32));
 
 (* =============================== memory contents (including data) ============================= *)
 val da_file     = "binaries/balrob.elf.da.plus";
@@ -133,10 +132,10 @@ get_block_byAddr_ addr
 *)
 
 fun get_block_ lbl_tm =
-    get_block  prog_blocks lbl_tm;
+    get_block  prog_blocks_dict lbl_tm;
 
 fun get_block_byAddr_ addr =
-    get_block_byAddr  prog_blocks addr;
+    get_block_byAddr  prog_blocks_dict addr;
 
 fun mk_lbl_tm addr =
   (mk_BL_Address o mk_Imm32 o mk_word) (addr, Arbnum.fromInt 32);
