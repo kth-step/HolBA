@@ -3,6 +3,8 @@ open HolKernel Parse
 open binariesLib;
 
 open bir_programSyntax;
+open bir_valuesSyntax;
+open optionSyntax;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
@@ -42,6 +44,9 @@ type cfg_graph = {
 };
 
 (*
+val lbl_tm = mk_lbl_tm (Arbnum.fromInt 1006);
+val lbl_tm = (mk_lbl_tm o valOf) (find_label_addr_ "motor_prep_input");
+val lbl_tm = (mk_lbl_tm o valOf) (find_label_addr_ "motor_set_l");
 val lbl_tm = (mk_lbl_tm o valOf) (find_label_addr_ entry_label);
 val entry_lbl_tm = lbl_tm;
 *)
@@ -54,7 +59,17 @@ fun BLE_to_cfg_target ble =
   if is_BLE_Label ble then
     CFGT_DIR (dest_BLE_Label ble)
   else if is_BLE_Exp ble then
-    CFGT_INDIR (dest_BLE_Exp ble)
+    let
+      val exp = dest_BLE_Exp ble;
+      val res = (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp (BEnv (\x. NONE))``;
+    in
+      if is_none res then
+        CFGT_INDIR exp
+      else if is_some res then
+        CFGT_DIR ((mk_BL_Address o dest_BVal_Imm o dest_some) res)
+      else
+        raise ERR "BLE_to_cfg_target" "what happened here during trial evaluation?"
+    end
   else
     raise ERR "BLE_to_cfg_target" "unknown BLE type";
 
