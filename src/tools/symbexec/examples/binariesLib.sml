@@ -138,6 +138,9 @@ fun get_block_ lbl_tm =
 fun get_block_byAddr_ addr =
     get_block_byAddr  prog_blocks addr;
 
+fun mk_lbl_tm addr =
+  (mk_BL_Address o mk_Imm32 o mk_word) (addr, Arbnum.fromInt 32);
+
 (*
 val addr = Arbnum.fromInt 0x01;
 val addr = Arbnum.fromInt 0x10000002;
