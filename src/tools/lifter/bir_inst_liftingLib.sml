@@ -111,10 +111,16 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   structure MD = struct val mr = arm8_bmr_rec end;
   structure MD = struct val mr = m0_bmr_rec false true end;
   structure MD = struct val mr = m0_mod_bmr_rec false true end;
-  val pc = Arbnum.fromInt 0x10000
 
+  val pc = Arbnum.fromInt 0x10000
   val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x100000)
   val (_, mu_thm) = mk_WI_end_of_nums_WFE ``:64`` (Arbnum.fromInt 0x1000) (Arbnum.fromInt 0x100000)
+
+  (* debug case for m0/m0_mod *)
+  val pc = Arbnum.fromInt 0x3ee
+  val (mu_b, mu_e) = (Arbnum.fromInt 0x00, Arbnum.fromInt 0x100000)
+  val (_, mu_thm) = mk_WI_end_of_nums_WFE ``:64`` (Arbnum.fromInt 0x00) (Arbnum.fromInt 0x100000)
+  val hex_code = "f002fecb"
 
   fun hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm)
 
