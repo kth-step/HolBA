@@ -17,3 +17,8 @@ val _ = print_option print_term
 val _ = print_option (print o Arbnum.toString)
                      (find_label_addr_ "imu_handler");
 
+val _ = print_option (print)
+                     (find_label_by_addr_ (Arbnum.fromInt 0x10000002));
+
+
+

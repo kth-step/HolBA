@@ -59,7 +59,7 @@ fun find_single_SOME []             = NONE
   | find_single_SOME ((SOME x)::xs) =
       case find_single_SOME xs of
 	  NONE   => SOME x
-        | SOME _ => raise ERR "find_single_SOME" "location exists multiple times";
+        | SOME _ => raise ERR "find_single_SOME" "search criterion matched multiple times";
 
 fun find_in_lbl find_in_block_f   item (l:disassembly_lbl) =
   find_single_SOME (List.map (find_in_block_f item) (#DAL_blocks l));
@@ -77,16 +77,16 @@ fun find_in_data_at_lbl find_in_lbl_f item (d:disassembly_data) =
     find_in_data find_in_lbl_f item d;
 
 
-fun is_location_in_entry location (e: disassembly_entry) =
-  (Arbnumcore.<= (#DAE_addr e, location)) andalso
-  (Arbnumcore.< (location, Arbnumcore.+ (#DAE_addr e, Arbnumcore.fromInt ((length (explode (#DAE_hex e))) div 2))));
+fun is_addr_in_entry addr (e: disassembly_entry) =
+  (Arbnumcore.<= (#DAE_addr e, addr)) andalso
+  (Arbnumcore.< (addr, Arbnumcore.+ (#DAE_addr e, Arbnumcore.fromInt ((length (explode (#DAE_hex e))) div 2))));
 
-fun read_byte_from_block location (b: disassembly_block) =
+fun read_byte_from_block addr (b: disassembly_block) =
   let
-    val entries = List.filter (is_location_in_entry location) b;
+    val entries = List.filter (is_addr_in_entry addr) b;
     val bytes   = List.map (fn e =>
           let
-            val offset  = Arbnumcore.-(location, #DAE_addr e);
+            val offset  = Arbnumcore.-(addr, #DAE_addr e);
             val hex_idx = (Arbnumcore.toInt offset) * 2;
             val cl      = explode (#DAE_hex e);
             val hex     = implode (List.take (List.drop (cl, hex_idx), 2));
@@ -108,6 +108,18 @@ fun find_label_addr_lbl name (l:disassembly_lbl) =
     NONE
   end;
 
+
+fun find_label_by_addr_block addr name (b: disassembly_block) =
+  let
+    val entries = List.filter (is_addr_in_entry addr) b;
+  in
+    find_single_SOME (List.map (K (SOME name)) entries)
+  end;
+
+fun find_label_by_addr_lbl addr (l:disassembly_lbl) =
+  find_single_SOME (List.map (find_label_by_addr_block addr (#DAL_name l)) (#DAL_blocks l));
+
+
 (* ===================================== symbolic variables for inputs in global memory? ======================================= *)
 
 in (* local *)
@@ -127,25 +139,34 @@ fun get_block_byAddr_ addr =
     get_block_byAddr  prog_blocks addr;
 
 (*
-val location = Arbnum.fromInt 0x01;
-val location = Arbnum.fromInt 0x10000002;
-val location = Arbnum.fromInt 0x10000040;
-val location = Arbnum.fromInt 0x10000;
+val addr = Arbnum.fromInt 0x01;
+val addr = Arbnum.fromInt 0x10000002;
+val addr = Arbnum.fromInt 0x10000040;
+val addr = Arbnum.fromInt 0x10000;
 
-read_byte_from_init_mem_ location
+read_byte_from_init_mem_ addr
 
 val name = "imu_handler";
 val name = "kp";
 val name = "non_existent_symbol";
 
 find_label_addr_ name
+
+val addr = Arbnum.fromInt 65;
+val addr = Arbnum.fromInt 828;
+val addr = Arbnum.fromInt 0x10000002;
+
+find_label_by_addr_ addr
 *)
 
-fun read_byte_from_init_mem_ location =
-    find_in_data_at_block read_byte_from_block location da_data;
+fun read_byte_from_init_mem_ addr =
+    find_in_data_at_block read_byte_from_block addr da_data;
 
 fun find_label_addr_ name =
     find_in_data_at_lbl find_label_addr_lbl name da_data;
+
+fun find_label_by_addr_ addr =
+    find_in_data_at_lbl find_label_by_addr_lbl addr da_data;
 
 end (* local *)
 end (* struct *)
