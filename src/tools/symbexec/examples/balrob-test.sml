@@ -53,6 +53,8 @@ val lbl_tm = (mk_lbl_tm o valOf) (find_label_addr_ "motor_prep_input");
 val lbl_tm = (mk_lbl_tm o valOf) (find_label_addr_ "motor_set_l");
 val lbl_tm = (mk_lbl_tm o valOf) (find_label_addr_ entry_label);
 val entry_lbl_tm = lbl_tm;
+
+build_cfg entry_lbl_tm
 *)
 
 fun is_lbl_in_cfg_nodes lbl_tm (ns:cfg_node list) =
@@ -146,7 +148,7 @@ fun build_cfg_nodes acc []                 = (print ("computed " ^ (Int.toString
   | build_cfg_nodes acc (lbl_tm::lbl_tm_l) =
       let
         val bl = case get_block_ lbl_tm of SOME x => x
-                    | NONE => raise ERR "build_cfg_nodes" "label couldn't be found";
+                    | NONE => raise ERR "build_cfg_nodes" ("label couldn't be found: " ^ (term_to_string lbl_tm));
         val (_, _, bbes) = dest_bir_block bl;
 
         val cfg_t_l_jumps =
@@ -192,7 +194,9 @@ fun build_cfg entry_lbl_tm =
      CFGG_nodes = build_cfg_nodes [] [entry_lbl_tm]
     } : cfg_graph;
 
-
+val lbl_tm = (mk_lbl_tm o valOf) (find_label_addr_ entry_label);
+val entry_lbl_tm = lbl_tm;
+val _ = build_cfg entry_lbl_tm;
 
 
 (*

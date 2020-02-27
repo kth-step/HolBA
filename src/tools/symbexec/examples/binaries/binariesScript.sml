@@ -25,7 +25,10 @@ val symbs_sec_text = [
     "__aeabi_fadd",
     "__aeabi_fcmplt",
     "__aeabi_fsub",
-    "__aeabi_fdiv"
+    "__aeabi_fdiv",
+    "__lesf2",
+    "__clzsi2",
+    "__gesf2"
   ];
 
 val _ = new_theory "binaries";
