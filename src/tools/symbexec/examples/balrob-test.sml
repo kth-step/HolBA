@@ -15,7 +15,7 @@ val _ = print_option print_term
                      (get_block_byAddr_ (Arbnum.fromInt 440));
 
 val _ = print_option (print o Arbnum.toString)
-                     (find_label_addr_ "imu_handler");
+                     (find_label_addr_ "imu_handler_pid_entry");
 
 val _ = print_option (print)
                      (find_label_by_addr_ (Arbnum.fromInt 0x10000002));
