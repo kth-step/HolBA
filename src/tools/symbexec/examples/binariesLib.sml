@@ -61,6 +61,22 @@ fun find_single_SOME []             = NONE
 	  NONE   => SOME x
         | SOME _ => raise ERR "find_single_SOME" "location exists multiple times";
 
+fun find_in_lbl find_in_block_f   item (l:disassembly_lbl) =
+  find_single_SOME (List.map (find_in_block_f item) (#DAL_blocks l));
+
+fun find_in_section find_in_lbl_f item (s:disassembly_section) =
+  find_single_SOME (List.map (find_in_lbl_f item) (#DAS_lbls   s));
+
+fun find_in_data    find_in_lbl_f item (d:disassembly_data) =
+  find_single_SOME (List.map (find_in_section find_in_lbl_f item) d);
+
+fun find_in_data_at_block find_in_block_f item (d:disassembly_data) =
+    find_in_data (find_in_lbl find_in_block_f) item d;
+
+fun find_in_data_at_lbl find_in_lbl_f item (d:disassembly_data) =
+    find_in_data find_in_lbl_f item d;
+
+
 fun is_location_in_entry location (e: disassembly_entry) =
   (Arbnumcore.<= (#DAE_addr e, location)) andalso
   (Arbnumcore.< (location, Arbnumcore.+ (#DAE_addr e, Arbnumcore.fromInt ((length (explode (#DAE_hex e))) div 2))));
@@ -83,30 +99,14 @@ fun read_byte_from_block location (b: disassembly_block) =
     find_single_SOME bytes_ol
   end;
 
-fun read_byte_from_lbl      location (l:disassembly_lbl) =
-  find_single_SOME (List.map (read_byte_from_block   location) (#DAL_blocks l));
 
-fun read_byte_from_section  location (s:disassembly_section) =
-  find_single_SOME (List.map (read_byte_from_lbl     location) (#DAS_lbls   s));
-
-fun read_byte_from_data     location (d:disassembly_data) =
-  find_single_SOME (List.map (read_byte_from_section location) d);
-
-
-fun find_label_addr_lbl      name (l:disassembly_lbl) =
+fun find_label_addr_lbl name (l:disassembly_lbl) =
   let val lbl_name = #DAL_name l in
   if name = lbl_name then
     SOME (#DAL_addr l)
   else
     NONE
   end;
-
-fun find_label_addr_section  name (s:disassembly_section) =
-  find_single_SOME (List.map (find_label_addr_lbl     name) (#DAS_lbls   s));
-
-fun find_label_addr_data     name (d:disassembly_data) =
-  find_single_SOME (List.map (find_label_addr_section name) d);
-
 
 (* ===================================== symbolic variables for inputs in global memory? ======================================= *)
 
@@ -132,7 +132,7 @@ val location = Arbnum.fromInt 0x10000002;
 val location = Arbnum.fromInt 0x10000040;
 val location = Arbnum.fromInt 0x10000;
 
-read_byte_from_init_mem location
+read_byte_from_init_mem_ location
 
 val name = "imu_handler";
 val name = "kp";
@@ -142,10 +142,10 @@ find_label_addr_ name
 *)
 
 fun read_byte_from_init_mem_ location =
-    read_byte_from_data location da_data;
+    find_in_data_at_block read_byte_from_block location da_data;
 
 fun find_label_addr_ name =
-    find_label_addr_data  name da_data;
+    find_in_data_at_lbl find_label_addr_lbl name da_data;
 
 end (* local *)
 end (* struct *)
