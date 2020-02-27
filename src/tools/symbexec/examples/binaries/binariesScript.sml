@@ -8,6 +8,7 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val symbs_sec_text = [
     "imu_handler",
+    "imu_handler_pid_entry",
     "motor_set_f",
     "motor_set",
     "motor_set_l",
