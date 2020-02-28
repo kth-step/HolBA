@@ -166,6 +166,9 @@ fun prog_get_block_byAddr_ addr =
 fun mk_lbl_tm addr =
   (mk_BL_Address o mk_Imm32 o mk_word) (addr, Arbnum.fromInt 32);
 
+fun dest_lbl_tm lbl_tm =
+  (dest_word_literal o dest_Imm32 o dest_BL_Address o snd o dest_eq o concl o EVAL) lbl_tm
+
 (*
 val addr = Arbnum.fromInt 0x01;
 val addr = Arbnum.fromInt 0x10000002;
@@ -193,7 +196,7 @@ fun mem_read_byte_from_init_mem_ addr =
 fun mem_find_symbol_addr_ name =
     mem_find_in_data_at_lbl mem_find_symbol_addr_lbl name da_data_mem;
 
-fun mem_find_symbol_by_addr_ addr =
+fun mem_find_rel_symbol_by_addr_ addr =
     mem_find_in_data_at_lbl mem_find_symbol_by_addr_lbl addr da_data_mem;
 
 fun mem_symbol_to_prog_lbl name =
@@ -203,6 +206,10 @@ fun mem_symbol_to_prog_lbl name =
 
 val prog_fun_entry_lbl_tms = List.map mem_symbol_to_prog_lbl symbs_sec_text;
 val prog_lbl_tms_ = prog_lbl_tms;
+
+fun prog_lbl_to_mem_rel_symbol lbl_tm =
+  (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm) lbl_tm
+  handle Option => raise ERR "prog_lbl_to_mem_symbol" ("cannot find label: " ^ (term_to_string lbl_tm));
 
 
 val (BL_Address_HC_tm,  mk_BL_Address_HC, dest_BL_Address_HC, is_BL_Address_HC)  = (BL_Address_HC_tm,  mk_BL_Address_HC, dest_BL_Address_HC, is_BL_Address_HC);

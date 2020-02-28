@@ -22,11 +22,31 @@ datatype cfg_target =
     CFGT_DIR   of term
   | CFGT_INDIR of term;
 
+(* Unknown: if not determined yet *)
+(* Halt, Basic, Jump, CondJump can be determined from BIR code for direct jumps *)
+(* indirect jumps as well as Call and Return needs annotation or some form of analysis*)
+datatype cfg_node_type =
+    CFGNT_Unknown
+  | CFGNT_Halt
+  | CFGNT_Basic
+  | CFGNT_Jump
+  | CFGNT_CondJump
+  | CFGNT_Call   of term list (* list of possible call targets (BIR label) *)
+  | CFGNT_Return of term; (* corresponding entry point (BIR label),
+                             don't consider more complicated control flow structures *)
+ (* TODO: CFGNT_Return needs to be changed to the list of possible return points *)
+
+(* cfg nodes correspond to BIR blocks *)
 type cfg_node = {
+  (* id: BIR label term *)
   CFGN_lbl_tm : term,
-  CFGN_next   : cfg_target list,
-  CFGN_calls  : cfg_target option,
-  CFGN_exitf  : cfg_target option
+  (* meta information from binary *)
+  CFGN_descr  : string,
+  CFGN_succ   : term option,
+  (* flow information exported from BIR *)
+  CFGN_goto   : cfg_target list,
+  (* type can be unknown and filled in by later passes *)
+  CFGN_type   : cfg_node_type
 };
 
 type cfg_graph = {
@@ -38,9 +58,9 @@ type cfg_graph = {
 val lbl_tm = mk_lbl_tm (Arbnum.fromInt 1006);
 val lbl_tm = mk_lbl_tm (Arbnum.fromInt 0xc1c);
 val lbl_tm = mk_lbl_tm (Arbnum.fromInt 10164);
-val lbl_tm = (mk_lbl_tm o valOf) (mem_find_symbol_addr_ "motor_prep_input");
-val lbl_tm = (mk_lbl_tm o valOf) (mem_find_symbol_addr_ "motor_set_l");
-val lbl_tm = (mk_lbl_tm o valOf) (mem_find_symbol_addr_ entry_label);
+val lbl_tm = (mk_lbl_tm o valOf) (mem_find_rel_symbol_addr_ "motor_prep_input");
+val lbl_tm = (mk_lbl_tm o valOf) (mem_find_rel_symbol_addr_ "motor_set_l");
+val lbl_tm = (mk_lbl_tm o valOf) (mem_find_rel_symbol_addr_ entry_label);
 val entry_lbl_tm = lbl_tm;
 
 build_cfg entry_lbl_tm
@@ -69,17 +89,17 @@ fun BLE_to_cfg_target ble =
   else
     raise ERR "BLE_to_cfg_target" "unknown BLE type";
 
-fun cfg_target_to_lbl_tm (CFGT_DIR   tm) = SOME tm
-  | cfg_target_to_lbl_tm (CFGT_INDIR _ ) = NONE;
-
-val BVarLR32_tm = ``BVar "LR" (BType_Imm Bit32)``;
-fun is_Assign_LR tm =
-  if is_BStmt_Assign tm then
-    ((fst o dest_BStmt_Assign) tm) = BVarLR32_tm
-  else
-    false;
-
-
+fun bir_es_to_cfg_targets bbes = List.map BLE_to_cfg_target (
+          if is_BStmt_Jmp bbes then
+            [dest_BStmt_Jmp bbes]
+          else if is_BStmt_CJmp bbes then
+            ((fn (_, a, b) => [a, b]) (dest_BStmt_CJmp bbes))
+          else if is_BStmt_Halt bbes then
+            []
+          else
+            raise ERR "bir_es_to_bles"
+                      ("unknown BStmt end stmt type: " ^
+                       (term_to_string bbes)));
 
 local
  fun list_split_pred_aux acc p [] = fail ()
@@ -89,108 +109,212 @@ local
 
   fun list_split_pred p = list_split_pred_aux [] p
 in
-fun is_call_with_next_lbl_tm bl =
+fun lbl_hc_tm_to_descr_succ lbl =
   let
-    val (lbl, bbs, bbes) = dest_bir_block bl;
-
-    (* TODO: refine the call detection: fail if jump is to the next instruction, this should not happen normally *)
-    val isCall_lr  = List.exists is_Assign_LR ((fst o dest_list) bbs);
-
     val _ = if is_BL_Address_HC lbl then ()
-            else raise ERR "is_call_with_next_lbl_tm" "we can only deal with output from the lifter, need BL_Address_HC";
-    val (addr_tm, descr) = dest_BL_Address_HC lbl;
+            else raise ERR "lbl_hc_tm_to_descr_succ"
+                   ("we can only deal with output from the lifter, need BL_Address_HC: " ^
+                    (term_to_string lbl));
+    val (addr_tm, descr_tm) = dest_BL_Address_HC lbl;
+    val descr = stringSyntax.fromHOLstring descr_tm;
+    val addr = (dest_word_literal o dest_Imm32) addr_tm;
 
-    val instrLen2 = (length o fst o (list_split_pred #" ") o explode o stringSyntax.fromHOLstring) descr;
+    val instrLen2 = (length o fst o (list_split_pred #" ") o explode) descr;
     val _ = if instrLen2 mod 2 = 0 then () else
-            raise ERR "is_call_with_next_lbl_tm" "something went wrong when trying to find the binary instruction code";
+            raise ERR "lbl_hc_tm_to_descr_succ"
+                      ("something went wrong when trying to find the binary " ^
+                       "instruction code: " ^
+                       (term_to_string lbl));
     val instrLen = instrLen2 div 2;
     val _ = if instrLen = 2 orelse instrLen = 4 then () else
-            raise ERR "is_call_with_next_lbl_tm" "something went wrong when trying to find the binary instruction code, wrong instruction length";
+            raise ERR "lbl_hc_tm_to_descr_succ"
+                      ("something went wrong when trying to find the binary " ^
+                       "instruction code, wrong instruction length: " ^
+                       (term_to_string lbl));
 
-    val addr = (dest_word_literal o dest_Imm32) addr_tm;
-    val addr_next = Arbnum.+ (addr, Arbnum.fromInt instrLen);
-    val nextLbl = mk_lbl_tm addr_next;
-
-    val isCall = if (not (is_BStmt_Jmp bbes)) orelse
-                    (BLE_to_cfg_target (dest_BStmt_Jmp bbes) = CFGT_DIR nextLbl)
-                 then false
-                 else isCall_lr;
-
-    val theJumptoLblIsEntry = (is_BStmt_Jmp bbes) andalso (List.exists (fn x => CFGT_DIR x = (BLE_to_cfg_target (dest_BStmt_Jmp bbes))) prog_fun_entry_lbl_tms);
-    val _ = if isCall andalso not theJumptoLblIsEntry then
-              (print "WARNING: detecting a call to unlabeled address"; print_term nextLbl)
-            else if not isCall andalso theJumptoLblIsEntry then
-              (print "WARNING: detecting a branch to labeled address"; print_term nextLbl)
-            else ();
+    val addr_succ = Arbnum.+ (addr, Arbnum.fromInt instrLen);
+    val succ_lbl_tm = mk_lbl_tm addr_succ;
   in
-    (isCall, nextLbl)
+    (descr, succ_lbl_tm)
   end;
 end
 
-fun build_cfg_nodes acc []                 = (print ("computed " ^ (Int.toString (length acc)) ^ "\n"); acc)
-  | build_cfg_nodes acc (lbl_tm::lbl_tm_l) =
+fun determine_cfg_node_type cfg_t_l succ_tm_o =
+  let
+    val contains_indir = List.foldr (fn (x, b) => b orelse
+                    (fn CFGT_INDIR _ => true | CFGT_DIR _ => false) x
+                ) false cfg_t_l;
+    val cfgn_type =
+      if contains_indir then CFGNT_Unknown else
+      case cfg_t_l of
+          []  => CFGNT_Halt
+        | [x] => if not (isSome succ_tm_o) then CFGNT_Jump else
+                 if x = CFGT_DIR (valOf succ_tm_o) then CFGNT_Basic else
+                   CFGNT_Jump
+        | _   => CFGNT_CondJump;
+  in
+    cfgn_type
+  end;
+
+(*
+val lbl_tm = hd prog_lbl_tms_;
+List.map to_cfg_node prog_lbl_tms_;
+*)
+fun to_cfg_node lbl_tm =
+  let
+    val bl = case prog_get_block_ lbl_tm of SOME x => x
+                    | NONE => raise ERR "to_cfg_nodes" ("label couldn't be found: " ^ (term_to_string lbl_tm));
+    val (lbl, _, bbes) = dest_bir_block bl;
+
+    val (descr, succ_lbl_tm) = lbl_hc_tm_to_descr_succ lbl;
+    val succ_tm_o = if isSome (prog_get_block_ succ_lbl_tm) then SOME succ_lbl_tm else NONE;
+
+    val cfg_t_l = bir_es_to_cfg_targets bbes;
+
+    val cfgn_type = determine_cfg_node_type cfg_t_l succ_tm_o;
+
+    val n = { CFGN_lbl_tm = lbl_tm,
+              CFGN_descr  = descr,
+              CFGN_succ   = succ_tm_o,
+              CFGN_goto   = cfg_t_l,
+              CFGN_type   = cfgn_type
+            } : cfg_node;
+
+  in n end;
+
+
+(*
+fun cfg_target_to_lbl_tm (CFGT_DIR   tm) = SOME tm
+  | cfg_target_to_lbl_tm (CFGT_INDIR _ ) = NONE;
+*)
+fun cfg_targets_to_lbl_tms l = SOME (List.map (fn
+         CFGT_DIR tm  => tm
+       | CFGT_INDIR _ => raise ERR "cfg_targets_to_lbl_tms" "") l)
+   handle HOL_ERR _ => NONE;
+
+val BVarLR32_tm = ``BVar "LR" (BType_Imm Bit32)``;
+fun is_Assign_LR tm =
+  if is_BStmt_Assign tm then
+    ((fst o dest_BStmt_Assign) tm) = BVarLR32_tm
+  else
+    false;
+
+fun find_node (ns: cfg_node list) lbl_tm =
+  valOf (List.find (fn n => (#CFGN_lbl_tm n) = lbl_tm) ns)
+  handle Option => raise ERR "find_node" ("couldn't find node: " ^ (term_to_string lbl_tm));
+
+(*
+val ns = List.map to_cfg_node prog_lbl_tms_;
+val n  = find_node ns lbl_tm;
+val ns = List.map (update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
+*)
+fun update_node_guess_type_call n =
+  if #CFGN_type n <> CFGNT_Jump then n else
+  let
+    val debug_on = false;
+
+    val lbl_tm = #CFGN_lbl_tm n;
+    val cfg_t_l = #CFGN_goto n;
+
+    val bl = case prog_get_block_ lbl_tm of SOME x => x
+                    | NONE => raise ERR "to_cfg_nodes" ("label couldn't be found: " ^ (term_to_string lbl_tm));
+    val (_, bbs, _) = dest_bir_block bl;
+
+    val goto_tm = (((hd o valOf o cfg_targets_to_lbl_tms) cfg_t_l
+        handle Empty => raise Option)
+        handle Option => raise ERR "update_node_guess_type_call"
+                                   "there should be exactly 1 direct jump");
+
+    val isCall_lr  = List.exists is_Assign_LR ((fst o dest_list) bbs);
+    val isCall_to_entry = ((length cfg_t_l = 1) andalso
+                           (List.exists (fn x => x = goto_tm) prog_fun_entry_lbl_tms));
+
+    val _ = if isCall_lr = isCall_to_entry then ()
+            else raise ERR "update_node_guess_type_call"
+                           "something in call detection is unexpected";
+    val isCall = isCall_lr;
+
+    val _ = if not (debug_on andalso isCall) then () else
+            (print "call        ::: "; print (#CFGN_descr n); print "\t"; print_term lbl_tm);
+
+    val new_type = if isCall then CFGNT_Call [goto_tm] else #CFGN_type n;
+
+    val new_n =
+            { CFGN_lbl_tm = #CFGN_lbl_tm n,
+              CFGN_descr  = #CFGN_descr n,
+              CFGN_succ   = #CFGN_succ n,
+              CFGN_goto   = #CFGN_goto n,
+              CFGN_type   = new_type
+            } : cfg_node;
+  in
+    new_n
+  end;
+
+fun cfg_targets_to_lbl_tms_exn l et =
+    (valOf o cfg_targets_to_lbl_tms) l
+    handle Option => raise ERR "cfg_targets_to_lbl_tms_exn" ("unexpected indirection: " ^ et);
+
+fun get_cfg_walk_succ (n: cfg_node) =
+  let
+    val n_type = #CFGN_type n;
+    val n_goto = #CFGN_goto n;
+    val debug_on = false;
+  in
+    case n_type of
+        CFGNT_Unknown   => (if debug_on then print "UNRESOLVED NODE\n" else (); [])
+      | CFGNT_Halt      => []
+      | CFGNT_Basic     => cfg_targets_to_lbl_tms_exn n_goto "basic"
+      | CFGNT_Jump      => cfg_targets_to_lbl_tms_exn n_goto "jump"
+      | CFGNT_CondJump  => cfg_targets_to_lbl_tms_exn n_goto "condjump"
+      | CFGNT_Call   ls => ((valOf o #CFGN_succ) n)::ls
+                          (* TODO: remove this successor hack for the returns later *)
+      | CFGNT_Return ls => [] (* should be ls after removing the hack *)
+  end;
+
+
+fun build_cfg_nodes _  acc []                 = acc
+  | build_cfg_nodes ns acc (lbl_tm::lbl_tm_l) =
       let
-        val debug_on = false;
-        val bl = case prog_get_block_ lbl_tm of SOME x => x
-                    | NONE => raise ERR "build_cfg_nodes" ("label couldn't be found: " ^ (term_to_string lbl_tm));
-        val (lbl, _, bbes) = dest_bir_block bl;
+        val n = find_node ns lbl_tm;
+        val n_type = #CFGN_type n;
 
-        val cfg_t_l_jumps = List.map BLE_to_cfg_target (
-          if is_BStmt_Jmp bbes then
-            [dest_BStmt_Jmp bbes]
-          else if is_BStmt_CJmp bbes then
-            ((fn (_, a, b) => [a, b]) (dest_BStmt_CJmp bbes))
-          else if is_BStmt_Halt bbes then
-            []
-          else
-            raise ERR "build_cfg_nodes" "unknown BStmt end stmt type");
+        val _ = if n_type <> CFGNT_Unknown then () else
+                (print "indirection ::: in ";
+                 print (prog_lbl_to_mem_rel_symbol lbl_tm);
+                 print "\t"; print (#CFGN_descr n);
+                 print "\t"; print_term lbl_tm);
 
-        val lbl_addr = ((dest_word_literal o dest_Imm32 o fst o dest_BL_Address_HC) lbl);
-        val isIndirection = List.foldr (fn (x, b) => b orelse
-                  (fn CFGT_INDIR _ => (
-                             print "indirection ::: ";
-                             print_option print (mem_find_symbol_by_addr_ lbl_addr);
-                             print " :: "; print_term lbl; true) | _ => false) x) false cfg_t_l_jumps;
+        val new_node  = if n_type = CFGNT_Unknown then [] else [n];
+        val new_nodes = new_node@acc;
 
-        (* call detection and include the expected jump back as continuation in the worklist *)
-        val (isCall, nextLbl) = is_call_with_next_lbl_tm bl;
-        val cfg_t_l = (if isCall then [CFGT_DIR nextLbl] else [])@cfg_t_l_jumps;
-	val _ = if not (isCall andalso debug_on) then () else (print "call        ::: "; print_term lbl);
-
-        val n_calls = if isCall then SOME (CFGT_DIR nextLbl) else NONE;
-        val n_exitf = if isIndirection then SOME ((CFGT_DIR o mk_lbl_tm o valOf o mem_find_symbol_addr_ o valOf o mem_find_symbol_by_addr_) lbl_addr) else NONE
-                      handle Option => raise ERR "build_cfg_nodes" "couldn't find current function label";
-
-        val new_n = { CFGN_lbl_tm = lbl_tm,
-                      CFGN_next   = cfg_t_l_jumps,
-                      CFGN_calls  = n_calls,
-                      CFGN_exitf  = n_exitf
-                    } : cfg_node;
-        val new_nodes = new_n::acc;
-
-        val next_tm_l_full = List.map cfg_target_to_lbl_tm cfg_t_l;
-        val next_tm_l_full = List.foldr (fn (x, l) => if isSome x then (valOf x)::l else l)
-                                        [] next_tm_l_full;
         val next_tm_l      = List.filter (fn x => not ((is_lbl_in_cfg_nodes x new_nodes) orelse
                                                        (List.exists (fn y => x = y) lbl_tm_l)))
-                                         next_tm_l_full;
+                                         (get_cfg_walk_succ n);
         val new_lbl_tm_l   = next_tm_l@lbl_tm_l;
       in
-        build_cfg_nodes new_nodes new_lbl_tm_l
+        build_cfg_nodes ns new_nodes new_lbl_tm_l
       end;
 
-fun build_cfg entry_lbl_tm =
+fun build_cfg ns entry_lbl_tm =
   if not (is_BL_Address entry_lbl_tm) then
     raise ERR "build_cfg" "entry_lbl must be a BL_Address"
   else
+    let
+      val cfg_comp_ns = build_cfg_nodes ns [] [entry_lbl_tm];
+      val _ = print ("walked " ^ (Int.toString (length cfg_comp_ns)) ^ " nodes\n");
+    in
     {
      CFGG_entry = entry_lbl_tm,
-     CFGG_nodes = build_cfg_nodes [] [entry_lbl_tm]
-    } : cfg_graph;
+     CFGG_nodes = cfg_comp_ns
+    } : cfg_graph
+    end;
 
-val lbl_tm = (mk_lbl_tm o valOf) (mem_find_symbol_addr_ entry_label);
+val lbl_tm = mem_symbol_to_prog_lbl entry_label;
 val entry_lbl_tm = lbl_tm;
-val _ = build_cfg entry_lbl_tm;
+
+val ns = List.map (update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
+
+val _ = build_cfg ns entry_lbl_tm;
 
 
 (*
