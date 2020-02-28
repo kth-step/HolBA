@@ -7,7 +7,6 @@ val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val symbs_sec_text = [
-    "imu_handler",
     "imu_handler_pid_entry",
     "motor_set_f",
     "motor_set",
@@ -18,7 +17,6 @@ val symbs_sec_text = [
     "atan2f_own",
     "abs_own",
     "pid_msg_write",
-    "timer_start",
     "__aeabi_f2iz",
     "__aeabi_fmul",
     "__aeabi_i2f",
@@ -27,8 +25,7 @@ val symbs_sec_text = [
     "__aeabi_fsub",
     "__aeabi_fdiv",
     "__lesf2",
-    "__clzsi2",
-    "__gesf2"
+    "__clzsi2"
   ];
 
 val _ = new_theory "binaries";

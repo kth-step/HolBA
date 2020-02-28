@@ -61,7 +61,6 @@ build_cfg entry_lbl_tm
 *)
 
 val prog_fun_entries = [
-    "imu_handler",
     "imu_handler_pid_entry",
     "motor_set_f",
     "motor_set",
@@ -72,7 +71,6 @@ val prog_fun_entries = [
     "atan2f_own",
     "abs_own",
     "pid_msg_write",
-    "timer_start",
     "__aeabi_f2iz",
     "__aeabi_fmul",
     "__aeabi_i2f",
@@ -81,8 +79,7 @@ val prog_fun_entries = [
     "__aeabi_fsub",
     "__aeabi_fdiv",
     "__lesf2",
-    "__clzsi2",
-    "__gesf2"
+    "__clzsi2"
   ];
 val prog_fun_entry_lbl_tms = List.map (mk_lbl_tm o valOf o find_label_addr_) prog_fun_entries;
 
