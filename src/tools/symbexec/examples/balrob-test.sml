@@ -38,16 +38,14 @@ type cfg_graph = {
 val lbl_tm = mk_lbl_tm (Arbnum.fromInt 1006);
 val lbl_tm = mk_lbl_tm (Arbnum.fromInt 0xc1c);
 val lbl_tm = mk_lbl_tm (Arbnum.fromInt 10164);
-val lbl_tm = (mk_lbl_tm o valOf) (find_label_addr_ "motor_prep_input");
-val lbl_tm = (mk_lbl_tm o valOf) (find_label_addr_ "motor_set_l");
-val lbl_tm = (mk_lbl_tm o valOf) (find_label_addr_ entry_label);
+val lbl_tm = (mk_lbl_tm o valOf) (mem_find_symbol_addr_ "motor_prep_input");
+val lbl_tm = (mk_lbl_tm o valOf) (mem_find_symbol_addr_ "motor_set_l");
+val lbl_tm = (mk_lbl_tm o valOf) (mem_find_symbol_addr_ entry_label);
 val entry_lbl_tm = lbl_tm;
 
 build_cfg entry_lbl_tm
 *)
 
-val prog_fun_entries = symbs_sec_text;
-val prog_fun_entry_lbl_tms = List.map (mk_lbl_tm o valOf o find_label_addr_) prog_fun_entries;
 
 fun is_lbl_in_cfg_nodes lbl_tm (ns:cfg_node list) =
   List.exists (fn n => (#CFGN_lbl_tm n) = lbl_tm) ns;
@@ -133,7 +131,7 @@ fun build_cfg_nodes acc []                 = (print ("computed " ^ (Int.toString
   | build_cfg_nodes acc (lbl_tm::lbl_tm_l) =
       let
         val debug_on = false;
-        val bl = case get_block_ lbl_tm of SOME x => x
+        val bl = case prog_get_block_ lbl_tm of SOME x => x
                     | NONE => raise ERR "build_cfg_nodes" ("label couldn't be found: " ^ (term_to_string lbl_tm));
         val (lbl, _, bbes) = dest_bir_block bl;
 
@@ -151,7 +149,7 @@ fun build_cfg_nodes acc []                 = (print ("computed " ^ (Int.toString
         val isIndirection = List.foldr (fn (x, b) => b orelse
                   (fn CFGT_INDIR _ => (
                              print "indirection ::: ";
-                             print_option print (find_label_by_addr_ lbl_addr);
+                             print_option print (mem_find_symbol_by_addr_ lbl_addr);
                              print " :: "; print_term lbl; true) | _ => false) x) false cfg_t_l_jumps;
 
         (* call detection and include the expected jump back as continuation in the worklist *)
@@ -160,7 +158,7 @@ fun build_cfg_nodes acc []                 = (print ("computed " ^ (Int.toString
 	val _ = if not (isCall andalso debug_on) then () else (print "call        ::: "; print_term lbl);
 
         val n_calls = if isCall then SOME (CFGT_DIR nextLbl) else NONE;
-        val n_exitf = if isIndirection then SOME ((CFGT_DIR o mk_lbl_tm o valOf o find_label_addr_ o valOf o find_label_by_addr_) lbl_addr) else NONE
+        val n_exitf = if isIndirection then SOME ((CFGT_DIR o mk_lbl_tm o valOf o mem_find_symbol_addr_ o valOf o mem_find_symbol_by_addr_) lbl_addr) else NONE
                       handle Option => raise ERR "build_cfg_nodes" "couldn't find current function label";
 
         val new_n = { CFGN_lbl_tm = lbl_tm,
@@ -190,7 +188,7 @@ fun build_cfg entry_lbl_tm =
      CFGG_nodes = build_cfg_nodes [] [entry_lbl_tm]
     } : cfg_graph;
 
-val lbl_tm = (mk_lbl_tm o valOf) (find_label_addr_ entry_label);
+val lbl_tm = (mk_lbl_tm o valOf) (mem_find_symbol_addr_ entry_label);
 val entry_lbl_tm = lbl_tm;
 val _ = build_cfg entry_lbl_tm;
 
