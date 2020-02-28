@@ -250,6 +250,54 @@ fun update_node_guess_type_call n =
     new_n
   end;
 
+(*
+length ns
+
+val ns = List.map (update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
+val lbl_tm = mk_lbl_tm (Arbnum.fromInt 7936);
+val n  = find_node ns lbl_tm;
+val _ = List.map (update_node_guess_type_return o update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
+*)
+fun update_node_guess_type_return n =
+  if #CFGN_type n <> CFGNT_Unknown then n else
+  let
+    val debug_on = false;
+
+    val lbl_tm = #CFGN_lbl_tm n;
+    val descr = #CFGN_descr n;
+
+    val isReturn = ((String.isSubstring "pop {" descr) andalso
+                    (String.isSubstring "pc}" descr))
+                   orelse
+                   (String.isSubstring "(bx lr)" descr);
+
+    (* hack for hand inspected instructions *)
+    val isReturn = isReturn orelse (
+                   (lbl_tm = mk_lbl_tm (Arbnum.fromInt 0x1fc)) andalso
+                   (String.isPrefix "4718 (" descr)
+        );
+
+    val _ = if isReturn (* orelse (not debug_on) *) then ()
+            else print ("update_node_guess_type_return :: " ^
+                           "cannot determine type: " ^ descr ^
+                            "\t" ^ (term_to_string lbl_tm) ^ "\n");
+
+    val _ = if not (debug_on andalso isReturn) then () else
+            (print "return      ::: "; print descr; print "\t"; print_term lbl_tm);
+
+    val new_type = if isReturn then CFGNT_Return ``T`` else #CFGN_type n;
+
+    val new_n =
+            { CFGN_lbl_tm = #CFGN_lbl_tm n,
+              CFGN_descr  = #CFGN_descr n,
+              CFGN_succ   = #CFGN_succ n,
+              CFGN_goto   = #CFGN_goto n,
+              CFGN_type   = new_type
+            } : cfg_node;
+  in
+    new_n
+  end;
+
 fun cfg_targets_to_lbl_tms_exn l et =
     (valOf o cfg_targets_to_lbl_tms) l
     handle Option => raise ERR "cfg_targets_to_lbl_tms_exn" ("unexpected indirection: " ^ et);
@@ -312,7 +360,7 @@ fun build_cfg ns entry_lbl_tm =
 val lbl_tm = mem_symbol_to_prog_lbl entry_label;
 val entry_lbl_tm = lbl_tm;
 
-val ns = List.map (update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
+val ns = List.map (update_node_guess_type_return o update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
 
 val _ = build_cfg ns entry_lbl_tm;
 
