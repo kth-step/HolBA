@@ -13,25 +13,10 @@ open listSyntax;
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
-
 val entry_label = "imu_handler_pid_entry";
-
 
 fun print_option pf NONE     = print "NONE"
   | print_option pf (SOME x) = (print "SOME ("; pf x; print ")");
-(*
-val _ = print_option (print o Int.toString)
-                     (read_byte_from_init_mem_ (Arbnum.fromInt 0x10000002));
-
-val _ = print_option print_term
-                     (get_block_byAddr_ (Arbnum.fromInt 440));
-
-val _ = print_option (print o Arbnum.toString)
-                     (find_label_addr_ entry_label);
-
-val _ = print_option (print)
-                     (find_label_by_addr_ (Arbnum.fromInt 0x10000002));
-*)
 
 datatype cfg_target =
     CFGT_DIR   of term
@@ -96,27 +81,7 @@ fun is_Assign_LR tm =
   else
     false;
 
-local
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-open bir_immTheory bir_valuesTheory bir_programTheory;
 
-
-val ERR = mk_HOL_ERR "bir_program_labelsSyntax"
-val wrap_exn = Feedback.wrap_exn "bir_program_labelsSyntax"
-
-fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program_labels"
-
-fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0
-   (fn tm1 => fn e => fn tm2 =>
-       if Term.same_const tm1 tm2 then () else raise e)
-   (fn tm => fn () => tm) s in (tm, is_f) end;
-
-val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
-val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
-in
-val (BL_Address_HC_tm,  mk_BL_Address_HC, dest_BL_Address_HC, is_BL_Address_HC)  = syntax_fns2 "BL_Address_HC";
-end
 
 local
  fun list_split_pred_aux acc p [] = fail ()
