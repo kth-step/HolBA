@@ -277,15 +277,28 @@ fun update_node_guess_type_return n =
                    (String.isPrefix "4718 (" descr)
         );
 
-    val _ = if isReturn (* orelse (not debug_on) *) then ()
+    val _ = if not (debug_on andalso isReturn) then () else
+            (print "return      ::: "; print descr; print "\t"; print_term lbl_tm);
+
+    (* hack for indirect jumps *)
+    val isIndirJump = false (*String.isSubstring "(mov pc," descr;*);
+    val _ = if not (isReturn andalso isIndirJump) then () else
+            raise ERR "update_node_guess_type_return" "cannot be both, weird.";
+
+    val _ = if not (debug_on andalso isIndirJump) then () else
+            (print "indirect J  ::: "; print descr; print "\t"; print_term lbl_tm);
+
+    (* still unclear type... *)
+    val _ = if (isReturn orelse isIndirJump) (* orelse (not debug_on) *) then ()
             else print ("update_node_guess_type_return :: " ^
                            "cannot determine type: " ^ descr ^
                             "\t" ^ (term_to_string lbl_tm) ^ "\n");
 
-    val _ = if not (debug_on andalso isReturn) then () else
-            (print "return      ::: "; print descr; print "\t"; print_term lbl_tm);
 
-    val new_type = if isReturn then CFGNT_Return ``T`` else #CFGN_type n;
+    val new_type = #CFGN_type n;
+    val new_type = if isReturn    then CFGNT_Return ``T`` else new_type;
+    val new_type = if isIndirJump then CFGNT_Call []      else new_type;
+    (* TODO: this is a bad hack! *)
 
     val new_n =
             { CFGN_lbl_tm = #CFGN_lbl_tm n,
@@ -297,6 +310,8 @@ fun update_node_guess_type_return n =
   in
     new_n
   end;
+
+
 
 fun cfg_targets_to_lbl_tms_exn l et =
     (valOf o cfg_targets_to_lbl_tms) l
