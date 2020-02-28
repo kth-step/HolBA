@@ -15,10 +15,10 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val entry_label = "imu_handler_pid_entry";
 
-(*
-fun print_option pf NONE     = print "NONE"
-  | print_option pf (SOME x) = (print "SOME ("; pf x; print ")\n");
 
+fun print_option pf NONE     = print "NONE"
+  | print_option pf (SOME x) = (print "SOME ("; pf x; print ")");
+(*
 val _ = print_option (print o Int.toString)
                      (read_byte_from_init_mem_ (Arbnum.fromInt 0x10000002));
 
@@ -39,7 +39,8 @@ datatype cfg_target =
 type cfg_node = {
   CFGN_lbl_tm : term,
   CFGN_next   : cfg_target list,
-  CFGN_calls  : cfg_target option
+  CFGN_calls  : cfg_target option,
+  CFGN_exitf  : cfg_target option
 };
 
 type cfg_graph = {
@@ -203,16 +204,26 @@ fun build_cfg_nodes acc []                 = (print ("computed " ^ (Int.toString
           else
             raise ERR "build_cfg_nodes" "unknown BStmt end stmt type");
 
-        val _ = List.map (fn CFGT_INDIR _ => (print "indirection ::: "; print_term lbl) | _ => ()) cfg_t_l_jumps;
+        val lbl_addr = ((dest_word_literal o dest_Imm32 o fst o dest_BL_Address_HC) lbl);
+        val isIndirection = List.foldr (fn (x, b) => b orelse
+                  (fn CFGT_INDIR _ => (
+                             print "indirection ::: ";
+                             print_option print (find_label_by_addr_ lbl_addr);
+                             print " :: "; print_term lbl; true) | _ => false) x) false cfg_t_l_jumps;
 
         (* call detection and include the expected jump back as continuation in the worklist *)
         val (isCall, nextLbl) = is_call_with_next_lbl_tm bl;
         val cfg_t_l = (if isCall then [CFGT_DIR nextLbl] else [])@cfg_t_l_jumps;
 	val _ = if not (isCall andalso debug_on) then () else (print "call        ::: "; print_term lbl);
 
+        val n_calls = if isCall then SOME (CFGT_DIR nextLbl) else NONE;
+        val n_exitf = if isIndirection then SOME ((CFGT_DIR o mk_lbl_tm o valOf o find_label_addr_ o valOf o find_label_by_addr_) lbl_addr) else NONE
+                      handle Option => raise ERR "build_cfg_nodes" "couldn't find current function label";
+
         val new_n = { CFGN_lbl_tm = lbl_tm,
                       CFGN_next   = cfg_t_l_jumps,
-                      CFGN_calls  = if isCall then SOME (CFGT_DIR nextLbl) else NONE
+                      CFGN_calls  = n_calls,
+                      CFGN_exitf  = n_exitf
                     } : cfg_node;
         val new_nodes = new_n::acc;
 
