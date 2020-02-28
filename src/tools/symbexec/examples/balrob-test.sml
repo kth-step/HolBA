@@ -1,6 +1,7 @@
 open HolKernel Parse
 
 open binariesLib;
+open binariesDefsLib;
 
 open bir_programSyntax;
 open bir_valuesSyntax;
@@ -60,27 +61,7 @@ val entry_lbl_tm = lbl_tm;
 build_cfg entry_lbl_tm
 *)
 
-val prog_fun_entries = [
-    "imu_handler_pid_entry",
-    "motor_set_f",
-    "motor_set",
-    "motor_set_l",
-    "motor_set_r",
-    "motor_prep_input",
-    "timer_read",
-    "atan2f_own",
-    "abs_own",
-    "pid_msg_write",
-    "__aeabi_f2iz",
-    "__aeabi_fmul",
-    "__aeabi_i2f",
-    "__aeabi_fadd",
-    "__aeabi_fcmplt",
-    "__aeabi_fsub",
-    "__aeabi_fdiv",
-    "__lesf2",
-    "__clzsi2"
-  ];
+val prog_fun_entries = symbs_sec_text;
 val prog_fun_entry_lbl_tms = List.map (mk_lbl_tm o valOf o find_label_addr_) prog_fun_entries;
 
 fun is_lbl_in_cfg_nodes lbl_tm (ns:cfg_node list) =
