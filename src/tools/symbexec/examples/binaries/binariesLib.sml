@@ -3,6 +3,7 @@ struct
 local
 
 open binariesTheory;
+open binariesDefsLib;
 open gcc_supportLib;
 
 open bir_programSyntax;
@@ -27,6 +28,8 @@ val prog_blocks_dict =
           (lbl_tm, bl)
         end
       )::l) [] bls;
+
+    val _ = print ("found " ^ (Int.toString (length bls))  ^ " blocks in lifted program\n");
   in
     Redblackmap.insertList (Redblackmap.mkDict Term.compare, lbl_block_pairs)
   end;
@@ -39,18 +42,11 @@ fun get_block_byAddr bl_dict addr =
     get_block bl_dict ((mk_BL_Address o mk_Imm32 o mk_word) (addr, Arbnum.fromInt 32));
 
 (* =============================== memory contents (including data) ============================= *)
-val da_file     = "binaries/balrob.elf.da.plus";
-val symb_filter = fn secname =>
-  case secname of
-      ".text" => (K true)
-    | ".data" => (K true)
-    | ".bss"  => (K true)
-    | _       => (K false);
-val data_filter = fn secname => fn _ => secname = ".data" orelse secname = ".bss";
 
-val da_data = read_disassembly_file symb_filter da_file;
+
+val da_data_mem = read_disassembly_file symb_filter_mem da_file_mem;
 (*
-val _ = print_disassembly_data da_data;
+val _ = print_disassembly_data da_data_mem;
 *)
 
 fun find_single_SOME []             = NONE
@@ -162,13 +158,13 @@ find_label_by_addr_ addr
 *)
 
 fun read_byte_from_init_mem_ addr =
-    find_in_data_at_block read_byte_from_block addr da_data;
+    find_in_data_at_block read_byte_from_block addr da_data_mem;
 
 fun find_label_addr_ name =
-    find_in_data_at_lbl find_label_addr_lbl name da_data;
+    find_in_data_at_lbl find_label_addr_lbl name da_data_mem;
 
 fun find_label_by_addr_ addr =
-    find_in_data_at_lbl find_label_by_addr_lbl addr da_data;
+    find_in_data_at_lbl find_label_by_addr_lbl addr da_data_mem;
 
 end (* local *)
 end (* struct *)
