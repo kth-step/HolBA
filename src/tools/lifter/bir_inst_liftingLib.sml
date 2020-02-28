@@ -158,6 +158,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "B5F7"
   val hex_code = "448F"
   val hex_code = "D001"
+  val hex_code = "a202"
+  val hex_code = "466a"
+  val hex_code = "aa02"
 
   val hex_code_desc = hex_code
 *)
@@ -333,6 +336,49 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
 
   (*******************************************************)
+  (* patched step theorems                               *)
+  (*******************************************************)
+
+val oracletag = "BIR_step_patch";
+val StepPatchThm = mk_oracle_thm oracletag;
+val mk_patch_thms = List.map (fn tm => UNDISCH_ALL (StepPatchThm ([], tm)));
+
+val patch_thms_m0modft_a202 = mk_patch_thms [
+``(* copied an modified accordingly, based on "aa02" *)
+  (bmr_ms_mem_contains (m0_mod_bmr (F,T)) ms
+       (ms.base.REG RName_PC,[2w; 162w])) ==>
+  (ms.countw <=+ 0xFFFFFFFFFFFFFFFEw) ==>
+  ((m0_mod_bmr (F,T)).bmr_extra ms) ==>
+  (aligned 1 (ms.base.REG RName_PC)) ==>
+  (NextStateM0_mod ms =
+      SOME
+        <|base :=
+          ms.base with
+          <|REG :=
+              (RName_PC =+ ms.base.REG RName_PC + 2w)
+                ((RName_2 =+ ms.base.REG RName_PC + 8w) ms.base.REG);
+            count := w2n ms.countw + 1; pcinc := 2w|>;
+        countw := ms.countw + 1w|>)
+``];
+
+
+val is_mr_m0_mod_f_t = (#bmr_const mr = #bmr_const (m0_mod_bmr_rec false true));
+
+val patched_thms_ = [
+    (is_mr_m0_mod_f_t, "a202", patch_thms_m0modft_a202)
+  ];
+
+val patched_thms = List.foldr (fn ((a, b, c), l) => if a then (b,c)::l else l) [] patched_thms_;
+
+fun get_patched_step_hex ms_v hex_code =
+  let
+    val strToLower = implode o (List.map Char.toLower) o explode;
+    val patch = List.find (fn (b, c) => strToLower b = strToLower hex_code) patched_thms;
+  in
+    if isSome patch then snd (valOf patch) else (#bmr_step_hex mr) ms_v hex_code
+  end;
+
+  (*******************************************************)
   (* Creating lifting theorems from a single instruction *)
   (*******************************************************)
 
@@ -353,7 +399,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   fun mk_inst_lifting_theorems hex_code hex_code_desc =
   let
      val lifted_thms_raw = let
-       val res = (#bmr_step_hex mr) ms_v hex_code
+       val res = get_patched_step_hex ms_v hex_code
        val _ = assert (not o List.null) res
        val _ = assert (List.all (fn thm => not (Lib.mem F (hyp thm)))) res
      in res end handle HOL_ERR _ =>
@@ -1327,7 +1373,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     val cache' = Redblackmap.insert (cache, hex_code, thm0)
   in (thm0, cache', false) end
 
-
+(*
+val cache = lift_inst_cache_empty;
+*)
   local
      val discharge_hyp_CONV = SIMP_CONV (arith_ss) [alignmentTheory.aligned_numeric, alignmentTheory.aligned_0]
      val final_CS = wordsLib.words_compset ()
