@@ -31,10 +31,8 @@ datatype cfg_node_type =
   | CFGNT_Basic
   | CFGNT_Jump
   | CFGNT_CondJump
-  | CFGNT_Call   of term list (* list of possible call targets (BIR label) *)
-  | CFGNT_Return of term; (* corresponding entry point (BIR label),
-                             don't consider more complicated control flow structures *)
- (* TODO: CFGNT_Return needs to be changed to the list of possible return points *)
+  | CFGNT_Call
+  | CFGNT_Return;
 
 (* cfg nodes correspond to BIR blocks *)
 type cfg_node = {
@@ -50,6 +48,7 @@ type cfg_node = {
 };
 
 type cfg_graph = {
+  CFGG_name  : string,
   CFGG_entry : term,
   CFGG_nodes : cfg_node list
 };
@@ -237,7 +236,7 @@ fun update_node_guess_type_call n =
     val _ = if not (debug_on andalso isCall) then () else
             (print "call        ::: "; print (#CFGN_descr n); print "\t"; print_term lbl_tm);
 
-    val new_type = if isCall then CFGNT_Call [goto_tm] else #CFGN_type n;
+    val new_type = if isCall then CFGNT_Call else #CFGN_type n;
 
     val new_n =
             { CFGN_lbl_tm = #CFGN_lbl_tm n,
@@ -296,15 +295,16 @@ fun update_node_guess_type_return n =
 
 
     val new_type = #CFGN_type n;
-    val new_type = if isReturn    then CFGNT_Return ``T`` else new_type;
-    val new_type = if isIndirJump then CFGNT_Call []      else new_type;
-    (* TODO: this is a bad hack! *)
+    val new_type = if isReturn    then CFGNT_Return else new_type;
+    val new_type = if isIndirJump then CFGNT_Call   else new_type;
+
+    val new_goto = if false (*isReturn*)    then [] else #CFGN_goto n;
 
     val new_n =
             { CFGN_lbl_tm = #CFGN_lbl_tm n,
               CFGN_descr  = #CFGN_descr n,
               CFGN_succ   = #CFGN_succ n,
-              CFGN_goto   = #CFGN_goto n,
+              CFGN_goto   = new_goto,
               CFGN_type   = new_type
             } : cfg_node;
   in
@@ -317,26 +317,39 @@ fun cfg_targets_to_lbl_tms_exn l et =
     (valOf o cfg_targets_to_lbl_tms) l
     handle Option => raise ERR "cfg_targets_to_lbl_tms_exn" ("unexpected indirection: " ^ et);
 
-fun get_cfg_walk_succ (n: cfg_node) =
+fun cfg_targets_to_direct_lbl_tms l = List.foldr (fn
+         (CFGT_DIR   tm, ls) => tm::ls
+       | (CFGT_INDIR tm , ls) => (print ("unexpected indirection: " ^
+                                        (term_to_string tm) ^ "\n"); ls)
+  ) [] l;
+
+fun get_fun_cfg_walk_succ (n: cfg_node) =
   let
+    val lbl_tm = #CFGN_lbl_tm n;
+    val descr  = #CFGN_descr n;
     val n_type = #CFGN_type n;
     val n_goto = #CFGN_goto n;
     val debug_on = false;
+    val _ = if not debug_on then () else
+            print ("node: " ^ (term_to_string lbl_tm) ^ "\n" ^
+                   " - " ^ descr ^ "\n");
   in
     case n_type of
         CFGNT_Unknown   => (if debug_on then print "UNRESOLVED NODE\n" else (); [])
       | CFGNT_Halt      => []
-      | CFGNT_Basic     => cfg_targets_to_lbl_tms_exn n_goto "basic"
-      | CFGNT_Jump      => cfg_targets_to_lbl_tms_exn n_goto "jump"
-      | CFGNT_CondJump  => cfg_targets_to_lbl_tms_exn n_goto "condjump"
-      | CFGNT_Call   ls => ((valOf o #CFGN_succ) n)::ls
+      | CFGNT_Basic     => cfg_targets_to_direct_lbl_tms n_goto
+      | CFGNT_Jump      => cfg_targets_to_direct_lbl_tms n_goto
+      | CFGNT_CondJump  => cfg_targets_to_direct_lbl_tms n_goto
+      | CFGNT_Call      => (* ((valOf o #CFGN_succ) n)::ls*)
+                           (*cfg_targets_to_direct_lbl_tms n_goto*)
+                           [(valOf o #CFGN_succ) n]
                           (* TODO: remove this successor hack for the returns later *)
-      | CFGNT_Return ls => [] (* should be ls after removing the hack *)
+      | CFGNT_Return    => [] (* cfg_targets_to_direct_lbl_tms n_goto *)
   end;
 
 
-fun build_cfg_nodes _  acc []                 = acc
-  | build_cfg_nodes ns acc (lbl_tm::lbl_tm_l) =
+fun build_fun_cfg_nodes _  acc []                 = acc
+  | build_fun_cfg_nodes ns acc (lbl_tm::lbl_tm_l) =
       let
         val n = find_node ns lbl_tm;
         val n_type = #CFGN_type n;
@@ -352,32 +365,41 @@ fun build_cfg_nodes _  acc []                 = acc
 
         val next_tm_l      = List.filter (fn x => not ((is_lbl_in_cfg_nodes x new_nodes) orelse
                                                        (List.exists (fn y => x = y) lbl_tm_l)))
-                                         (get_cfg_walk_succ n);
+                                         (get_fun_cfg_walk_succ n);
         val new_lbl_tm_l   = next_tm_l@lbl_tm_l;
       in
-        build_cfg_nodes ns new_nodes new_lbl_tm_l
+        build_fun_cfg_nodes ns new_nodes new_lbl_tm_l
       end;
 
-fun build_cfg ns entry_lbl_tm =
-  if not (is_BL_Address entry_lbl_tm) then
-    raise ERR "build_cfg" "entry_lbl must be a BL_Address"
-  else
-    let
-      val cfg_comp_ns = build_cfg_nodes ns [] [entry_lbl_tm];
-      val _ = print ("walked " ^ (Int.toString (length cfg_comp_ns)) ^ " nodes\n");
-    in
+fun build_fun_cfg ns name =
+  let
+    val entry_lbl_tm = mem_symbol_to_prog_lbl name;
+    val cfg_comp_ns = build_fun_cfg_nodes ns [] [entry_lbl_tm];
+    val _ = print ("walked " ^ (Int.toString (length cfg_comp_ns)) ^
+                   " nodes (" ^ name ^ ")\n");
+    (* validate that all collected nodes belong to the function *)
+    val ns_names   = List.map (fn n =>
+           (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm) (#CFGN_lbl_tm n)
+      ) cfg_comp_ns
+      handle Option => raise ERR "build_fun_cfg" "cannot find label for node address";
+    val allAreName = List.foldr (fn (n,b) => b andalso (
+           n = name
+      )) true ns_names;
+  in
     {
-     CFGG_entry = entry_lbl_tm,
-     CFGG_nodes = cfg_comp_ns
+      CFGG_name  = name,
+      CFGG_entry = entry_lbl_tm,
+      CFGG_nodes = cfg_comp_ns
     } : cfg_graph
-    end;
+  end;
 
 val lbl_tm = mem_symbol_to_prog_lbl entry_label;
 val entry_lbl_tm = lbl_tm;
 
 val ns = List.map (update_node_guess_type_return o update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
 
-val _ = build_cfg ns entry_lbl_tm;
+val _ = build_fun_cfg ns entry_label;
+val _ = build_fun_cfg ns "__aeabi_fmul";
 
 
 (*
