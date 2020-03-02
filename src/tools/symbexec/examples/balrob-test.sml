@@ -371,6 +371,9 @@ fun build_fun_cfg_nodes _  acc []                 = acc
         build_fun_cfg_nodes ns new_nodes new_lbl_tm_l
       end;
 
+fun node_to_rel_symbol (n:cfg_node) =
+  (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm) (#CFGN_lbl_tm n);
+
 fun build_fun_cfg ns name =
   let
     val entry_lbl_tm = mem_symbol_to_prog_lbl name;
@@ -378,9 +381,7 @@ fun build_fun_cfg ns name =
     val _ = print ("walked " ^ (Int.toString (length cfg_comp_ns)) ^
                    " nodes (" ^ name ^ ")\n");
     (* validate that all collected nodes belong to the function *)
-    val ns_names   = List.map (fn n =>
-           (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm) (#CFGN_lbl_tm n)
-      ) cfg_comp_ns
+    val ns_names   = List.map node_to_rel_symbol cfg_comp_ns
       handle Option => raise ERR "build_fun_cfg" "cannot find label for node address";
     val allAreName = List.foldr (fn (n,b) => b andalso (
            n = name
@@ -398,9 +399,16 @@ val entry_lbl_tm = lbl_tm;
 
 val ns = List.map (update_node_guess_type_return o update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
 
-val _ = build_fun_cfg ns entry_label;
+val ns_c = build_fun_cfg ns entry_label;
 val _ = build_fun_cfg ns "__aeabi_fmul";
 
+val ns_f = List.filter ((fn s => s = entry_label) o node_to_rel_symbol) ns;
+val _ = print ("len entry: " ^ (Int.toString (length ns_f)) ^ "\n");
+
+val _ = build_fun_cfg ns_f entry_label;
+
+val dead_code = (List.filter (fn x => not (List.exists (fn y => x = y) (#CFGG_nodes ns_c))) ns_f);
+val _ = List.map (fn n => (print_term (#CFGN_lbl_tm n); print ((#CFGN_descr n) ^ "\n"))) dead_code;
 
 (*
 fun sanity_check_controlflow prog_tm entry_label =
