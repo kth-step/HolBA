@@ -399,11 +399,12 @@ val entry_lbl_tm = lbl_tm;
 
 val ns = List.map (update_node_guess_type_return o update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
 
-val ns_c = build_fun_cfg ns entry_label;
-val _ = build_fun_cfg ns "__aeabi_fmul";
+val ns_c  = build_fun_cfg ns entry_label;
+val ns_c2 = build_fun_cfg ns "__aeabi_fmul";
 
 val ns_f = List.filter ((fn s => s = entry_label) o node_to_rel_symbol) ns;
 val _ = print ("len entry: " ^ (Int.toString (length ns_f)) ^ "\n");
+val ns_f3 = List.filter ((fn s => s = "__aeabi_fmul") o node_to_rel_symbol) ns;
 
 val _ = build_fun_cfg ns_f entry_label;
 
@@ -431,12 +432,13 @@ fun to_escaped_string s =
 fun gen_graph_for_edges_proc idx (CFGT_DIR   t, (gn, ges, i)) =
       (gn, (idx, (Arbnum.toInt o dest_lbl_tm) t)::ges, i)
   | gen_graph_for_edges_proc idx (CFGT_INDIR t, (gn, ges, i)) =
-      ((i, node_shape_circle, [("indir", (to_escaped_string o term_to_string) t)])::gn, (idx, i)::ges, i+1);
+      ((i, node_shape_circle, [("indir", "???")])::gn, (idx, i)::ges, i+1);
 
 fun gen_graph_for_nodes_proc (n:cfg_node, (gns, ges, i)) =
   let
     val idx     = (Arbnum.toInt o dest_lbl_tm o #CFGN_lbl_tm) n;
-    val shape   = node_shape_default;
+    val shape   = if #CFGN_type n = CFGNT_Call orelse #CFGN_type n = CFGNT_Return
+                  then node_shape_doublecircle else node_shape_default;
     val content = [("id", "0x" ^ (Arbnum.toHexString o dest_lbl_tm o #CFGN_lbl_tm) n)];
     val node    = (idx, shape, content);
 
@@ -449,7 +451,13 @@ fun gen_graph_for_nodes_proc (n:cfg_node, (gns, ges, i)) =
     (new_gns, new_ges, new_i)
   end;
 
-val (nodes, edges, _) = List.foldr gen_graph_for_nodes_proc ([], [], 0x10000) (#CFGG_nodes ns_c);
+
+val ns_1 = #CFGG_nodes ns_c;
+val ns_2 = #CFGG_nodes ns_c2;
+val ns_3 = ns_f3;
+
+
+val (nodes, edges, _) = List.foldr gen_graph_for_nodes_proc ([], [], 0x10000) ns_3;
 
 val file = "test";
 val dot_str = gen_graph (nodes, edges);
