@@ -410,6 +410,52 @@ val _ = build_fun_cfg ns_f entry_label;
 val dead_code = (List.filter (fn x => not (List.exists (fn y => x = y) (#CFGG_nodes ns_c))) ns_f);
 val _ = List.map (fn n => (print_term (#CFGN_lbl_tm n); print ((#CFGN_descr n) ^ "\n"))) dead_code;
 
+open graphVizLib
+
+(*
+val i = 0x10000;
+val n = hd (#CFGG_nodes ns_c);
+val t = ``BL_Address (Imm32 990w)``;
+ *)
+fun to_escaped_string s =
+  let
+    fun add_escape acc []      = acc
+      | add_escape acc (c::cs) =
+          let val c_ = if c = #"\"" then [c, #"\\"] else [c] in
+            add_escape (c_@acc) cs
+          end;
+  in
+    (implode o List.rev o (add_escape []) o explode) s
+  end;
+
+fun gen_graph_for_edges_proc idx (CFGT_DIR   t, (gn, ges, i)) =
+      (gn, (idx, (Arbnum.toInt o dest_lbl_tm) t)::ges, i)
+  | gen_graph_for_edges_proc idx (CFGT_INDIR t, (gn, ges, i)) =
+      ((i, node_shape_circle, [("indir", (to_escaped_string o term_to_string) t)])::gn, (idx, i)::ges, i+1);
+
+fun gen_graph_for_nodes_proc (n:cfg_node, (gns, ges, i)) =
+  let
+    val idx     = (Arbnum.toInt o dest_lbl_tm o #CFGN_lbl_tm) n;
+    val shape   = node_shape_default;
+    val content = [("id", "0x" ^ (Arbnum.toHexString o dest_lbl_tm o #CFGN_lbl_tm) n)];
+    val node    = (idx, shape, content);
+
+    val (gns_, ged_, i_) = List.foldr (gen_graph_for_edges_proc idx) ([], [], i) (#CFGN_goto n);
+
+    val new_gns = gns_@(node::gns);
+    val new_ges = ged_@(ges);
+    val new_i   = i_;
+  in
+    (new_gns, new_ges, new_i)
+  end;
+
+val (nodes, edges, _) = List.foldr gen_graph_for_nodes_proc ([], [], 0x10000) (#CFGG_nodes ns_c);
+
+val file = "test";
+val dot_str = gen_graph (nodes, edges);
+val _ = writeToFile dot_str (file ^ ".dot");
+val _ = convertAndView file;
+
 (*
 fun sanity_check_controlflow prog_tm entry_label =
 
