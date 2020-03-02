@@ -257,7 +257,7 @@ val lbl_tm = mk_lbl_tm (Arbnum.fromInt 7936);
 val n  = find_node ns lbl_tm;
 val _ = List.map (update_node_guess_type_return o update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
 *)
-fun update_node_guess_type_return n =
+fun update_node_guess_type_return (n:cfg_node) =
   if #CFGN_type n <> CFGNT_Unknown then n else
   let
     val debug_on = false;
@@ -279,8 +279,101 @@ fun update_node_guess_type_return n =
     val _ = if not (debug_on andalso isReturn) then () else
             (print "return      ::: "; print descr; print "\t"; print_term lbl_tm);
 
-    (* hack for indirect jumps *)
-    val isIndirJump = false (*String.isSubstring "(mov pc," descr;*);
+    (* hack for indirect jumps (a.k.a. oracle) *)
+    val hack_map = [(0x2bc8, "469F (mov pc, r3)", CFGNT_Jump, [
+                         "542c0000",
+                         "fe2b0000",
+                         "fe2b0000",
+                         "2c2d0000",
+                         "fa2b0000",
+                         "fa2b0000",
+                         "222d0000",
+                         "2c2d0000",
+                         "fa2b0000",
+                         "222d0000",
+                         "fa2b0000",
+                         "2c2d0000",
+                         "302d0000",
+                         "302d0000",
+                         "302d0000",
+                         "382d0000"
+                       ]),
+                    (0x2814, "4697 (mov pc, r2)", CFGNT_Jump, [
+                         "2a290000",
+                         "66280000",
+                         "8a280000",
+                         "28280000",
+                         "8a280000",
+                         "06290000",
+                         "8a280000",
+                         "28280000",
+                         "66280000",
+                         "66280000",
+                         "06290000",
+                         "28280000",
+                         "5c290000",
+                         "5c290000",
+                         "5c290000",
+                         "12290000"
+
+                       ]),
+                    (0x28ba, "4697 (mov pc, r2)", CFGNT_Jump, [
+                         "66280000",
+                         "66280000",
+                         "8a280000",
+                         "26280000",
+                         "8a280000",
+                         "06290000",
+                         "8a280000",
+                         "26280000",
+                         "66280000",
+                         "66280000",
+                         "06290000",
+                         "26280000",
+                         "5c290000",
+                         "5c290000",
+                         "5c290000",
+                         "10290000"
+                       ])
+                   ];
+    val hackMatch = List.find (fn (loc_, descr_, _, _) =>
+                                 descr = descr_ andalso
+                                 dest_lbl_tm lbl_tm = Arbnum.fromInt loc_
+                              ) hack_map;
+    val isIndirJump = isSome hackMatch;
+    (*
+    val tl = ((fn (_, _, nt, tl) => tl) o hd) hack_map;
+    val s = hd tl;
+rev_hs_to_num (Arbnum.fromInt 0) s
+Arbnum.toHexString (rev_hs_to_num (Arbnum.fromInt 0) s)
+    *)
+    val indirJumpUpdate = Option.map (fn (_, _, nt, tl) =>
+        let
+          val tl_unique = List.foldr (fn (x,l) => if List.exists (fn y => x=y) l then l else (x::l)) [] tl;
+          fun split_string_byte s =
+            let
+              val _ = if (String.size s) mod 2 = 0 then () else
+                        raise ERR "split_string_byte" "bug: string length is wrong";
+              val len = (String.size s) div 2;
+            in
+              (Arbnum.fromHexString (String.substring(s, (len*2) - 2, 2)),
+                                     String.substring(s, 0, (len*2) - 2))
+            end;
+          fun rev_hs_to_num acc "" = acc
+	    | rev_hs_to_num acc s  =
+                let
+                  val sp = split_string_byte s;
+                  val n  = Arbnum.+(Arbnum.*(acc, Arbnum.fromInt 256), fst sp);
+                in
+                  rev_hs_to_num n (snd sp)
+                end;
+        in
+          (nt, List.map (rev_hs_to_num (Arbnum.fromInt 0)) tl_unique)
+        end
+      ) hackMatch;
+(*
+    val isIndirJump = String.isSubstring "(mov pc," descr;
+*)
     val _ = if not (isReturn andalso isIndirJump) then () else
             raise ERR "update_node_guess_type_return" "cannot be both, weird.";
 
@@ -296,9 +389,9 @@ fun update_node_guess_type_return n =
 
     val new_type = #CFGN_type n;
     val new_type = if isReturn    then CFGNT_Return else new_type;
-    val new_type = if isIndirJump then CFGNT_Call   else new_type;
+    val new_type = if isIndirJump then ((fst o valOf) indirJumpUpdate) else new_type;
 
-    val new_goto = if false (*isReturn*)    then [] else #CFGN_goto n;
+    val new_goto = if isIndirJump then (((List.map (CFGT_DIR o mk_lbl_tm)) o snd o valOf) indirJumpUpdate) else #CFGN_goto n;
 
     val new_n =
             { CFGN_lbl_tm = #CFGN_lbl_tm n,
