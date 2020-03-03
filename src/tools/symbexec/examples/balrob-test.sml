@@ -642,6 +642,48 @@ fun displayCallGraph ci symbs_sec_text =
 =================================================================================================
 *)
 
+fun count_paths_to_ret_nexts follow_call ns lbl_tm =
+  let
+    val n = find_node ns lbl_tm;
+    val n_type = #CFGN_type n;
+    val nexts = (valOf o cfg_targets_to_lbl_tms o #CFGN_goto) n;
+  in
+    case n_type of
+         CFGNT_Unknown => raise ERR "count_paths_to_ret_nexts" " unknown control flow"
+       | CFGNT_Halt    => ([], [])
+       | CFGNT_Call    => (if follow_call then nexts else
+                           [(valOf o #CFGN_succ) n]
+                           ,
+                           if follow_call then [] else
+                           List.map (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm) nexts)
+       | CFGNT_Return  => (if follow_call then nexts else [], [])
+       | _             => (nexts, [])
+  end;
+
+(* following calls doesn't work like this, we would need a call stack of course *)
+fun count_paths_to_ret follow_call ns stop_at_l lbl_tm =
+  if (List.exists (fn x => lbl_tm = x) stop_at_l) then (1, []) else
+  let
+    val (nexts, calls) = count_paths_to_ret_nexts follow_call ns lbl_tm;
+    val summary = List.map (count_paths_to_ret follow_call ns stop_at_l) nexts;
+  in
+    if length nexts = 0 then (1, []) else
+    List.foldr (fn ((i, l), (i_s, l_s)) => (i+i_s, l@l_s)) (0, calls) summary
+  end;
+
+fun to_histogram_proc (x, [])        = [(x,1)]
+  | to_histogram_proc (x, (y, n)::l) =
+      if x = y
+      then ((y, n+1)::l)
+      else (y, n)::(to_histogram_proc (x, l));
+
+fun to_histogram sum_calls =
+  List.foldr to_histogram_proc [] sum_calls;
+
+(*
+=================================================================================================
+*)
+
 val _ = displayCallGraph ci symbs_sec_text;
 
 
@@ -652,12 +694,24 @@ val ns_4 = ns_f4;
 
 val _ = display_graph_cfg_ns ns_4;
 
+val (n_paths, sum_calls) = count_paths_to_ret false ns [] (mem_symbol_to_prog_lbl entry_label);
+
+val name = "motor_set";
+val return_lbl_tms = (
+   (List.map (#CFGN_lbl_tm)) o
+   (List.filter (fn n => (#CFGN_type n) = CFGNT_Return)) o
+   (List.filter ((fn s => s = name) o node_to_rel_symbol))
+  ) ns;
+(* cannot follow calls like this *)
+val (n_paths, sum_calls) = count_paths_to_ret false ns (return_lbl_tms) (mem_symbol_to_prog_lbl name);
+
+val n_calls = length sum_calls;
+val histo_calls = to_histogram sum_calls;
+
 (*
 
-fun enumerate_paths
-(* what happens if we try this? *)
+TODO: tidy up graph handling and printing functions, and others
 
-TODO: tidy up graph handling and printing functions
 *)
 
 
