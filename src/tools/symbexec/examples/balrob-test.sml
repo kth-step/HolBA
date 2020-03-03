@@ -405,6 +405,22 @@ Arbnum.toHexString (rev_hs_to_num (Arbnum.fromInt 0) s)
   end;
 
 
+fun collect_node_callinfo (n:cfg_node) =
+  let
+    val rel_name = (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm o #CFGN_lbl_tm) n;
+    val n_type   = #CFGN_type n;
+    val n_succ   = #CFGN_succ n;
+    val n_goto   = #CFGN_goto n;
+  in
+    if n_type <> CFGNT_Call then NONE else SOME (
+     rel_name,
+     List.map (fn CFGT_DIR t => (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm) t
+                | CFGT_INDIR _ => raise ERR "collect_node_callinfo" "indirection not allowed here") n_goto,
+     valOf n_succ
+     handle Option => raise ERR "collect_node_callinfo" "no successor for a call node, something is wrong"
+    )
+  end;
+
 
 fun cfg_targets_to_lbl_tms_exn l et =
     (valOf o cfg_targets_to_lbl_tms) l
@@ -491,6 +507,10 @@ val lbl_tm = mem_symbol_to_prog_lbl entry_label;
 val entry_lbl_tm = lbl_tm;
 
 val ns = List.map (update_node_guess_type_return o update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
+val ci = List.foldr (fn (n,l) => let val vo = collect_node_callinfo n in
+                                 if isSome vo then (valOf vo)::l else l end) [] ns;
+
+(* TODO: fix return jump targets, remove corresponding TODOs and other comments *)
 
 val ns_c  = build_fun_cfg ns entry_label;
 val ns_c2 = build_fun_cfg ns "__aeabi_fmul";
@@ -498,11 +518,16 @@ val ns_c2 = build_fun_cfg ns "__aeabi_fmul";
 val ns_f = List.filter ((fn s => s = entry_label) o node_to_rel_symbol) ns;
 val _ = print ("len entry: " ^ (Int.toString (length ns_f)) ^ "\n");
 val ns_f3 = List.filter ((fn s => s = "__aeabi_fmul") o node_to_rel_symbol) ns;
+val ns_f4 = List.filter ((fn s => s = "__aeabi_fdiv") o node_to_rel_symbol) ns;
 
 val _ = build_fun_cfg ns_f entry_label;
 
 val dead_code = (List.filter (fn x => not (List.exists (fn y => x = y) (#CFGG_nodes ns_c))) ns_f);
 val _ = List.map (fn n => (print_term (#CFGN_lbl_tm n); print ((#CFGN_descr n) ^ "\n"))) dead_code;
+
+(*
+=================================================================================================
+*)
 
 open graphVizLib
 
@@ -544,24 +569,60 @@ fun gen_graph_for_nodes_proc (n:cfg_node, (gns, ges, i)) =
     (new_gns, new_ges, new_i)
   end;
 
+fun display_graph_cfg_ns ns =
+  let
+    val (nodes, edges, _) = List.foldr gen_graph_for_nodes_proc ([], [], 0x10000) ns;
+
+    val file = "test1";
+    val dot_str = gen_graph (nodes, edges);
+    val _ = writeToFile dot_str (file ^ ".dot");
+    val _ = convertAndView file;
+  in () end;
+
+fun displayCallGraph ci symbs_sec_text =
+  let
+    val node_idxs = List.tabulate (length symbs_sec_text, fn idx =>
+                              (idx, List.nth (symbs_sec_text, idx)));
+    fun find_node_n s = (fst o valOf o (List.find (fn p => snd p = s))) node_idxs
+                        handle Option => raise ERR "displayCallGraph" "bug: this must be something";
+    fun find_node_i i = (snd o List.nth) (node_idxs, i);
+
+    val nodes = List.tabulate (length symbs_sec_text, fn idx => (
+          idx,
+          node_shape_default,
+          [(Int.toString idx, find_node_i idx)]
+      ));
+    val edges = List.concat (List.map (fn (x, ys, _) =>
+                  List.map (fn y => (find_node_n x, find_node_n y)) ys) ci);
+    val edges_unique = List.foldr (fn (x,l) => if List.exists (fn y => x=y) l then l else (x::l)) [] edges;
+    val edges = edges_unique;
+
+    val file = "test2";
+    val dot_str = gen_graph (nodes, edges);
+    val _ = writeToFile dot_str (file ^ ".dot");
+    val _ = convertAndView file;
+  in () end;
+
+(*
+=================================================================================================
+*)
+
+val _ = displayCallGraph ci symbs_sec_text;
+
 
 val ns_1 = #CFGG_nodes ns_c;
 val ns_2 = #CFGG_nodes ns_c2;
 val ns_3 = ns_f3;
+val ns_4 = ns_f4;
 
-
-val (nodes, edges, _) = List.foldr gen_graph_for_nodes_proc ([], [], 0x10000) ns_3;
-
-val file = "test";
-val dot_str = gen_graph (nodes, edges);
-val _ = writeToFile dot_str (file ^ ".dot");
-val _ = convertAndView file;
+val _ = display_graph_cfg_ns ns_4;
 
 (*
-fun sanity_check_controlflow prog_tm entry_label =
 
 fun enumerate_paths
 (* what happens if we try this? *)
+
+TODO: tidy up graph handling and printing functions
 *)
 
 
