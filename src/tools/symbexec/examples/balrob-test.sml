@@ -24,7 +24,7 @@ datatype cfg_target =
 
 (* Unknown: if not determined yet *)
 (* Halt, Basic, Jump, CondJump can be determined from BIR code for direct jumps *)
-(* indirect jumps as well as Call and Return needs annotation or some form of analysis*)
+(* indirect jumps as well as Call and Return are fixed semi-automatically *)
 datatype cfg_node_type =
     CFGNT_Unknown
   | CFGNT_Halt
@@ -41,7 +41,7 @@ type cfg_node = {
   (* meta information from binary *)
   CFGN_descr  : string,
   CFGN_succ   : term option,
-  (* flow information exported from BIR *)
+  (* flow information exported from BIR, and fixed afterwards *)
   CFGN_goto   : cfg_target list,
   (* type can be unknown and filled in by later passes *)
   CFGN_type   : cfg_node_type
@@ -422,6 +422,34 @@ fun collect_node_callinfo (n:cfg_node) =
   end;
 
 
+fun lookup_calls_to ci to = List.foldr (fn ((_, tol, returnto), l) =>
+    if List.exists (fn x => x = to) tol then
+      (returnto)::l
+    else
+      l
+  ) [] ci;
+
+fun update_node_fix_return_goto lookup_calls_to_f n =
+  if #CFGN_type n <> CFGNT_Return then n else
+  let
+    val debug_on = false;
+
+    val rel_name = (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm o #CFGN_lbl_tm) n;
+
+    val new_goto = ((List.map CFGT_DIR) o lookup_calls_to_f) rel_name;
+
+    val new_n =
+            { CFGN_lbl_tm = #CFGN_lbl_tm n,
+              CFGN_descr  = #CFGN_descr n,
+              CFGN_succ   = #CFGN_succ n,
+              CFGN_goto   = new_goto,
+              CFGN_type   = #CFGN_type n
+            } : cfg_node;
+  in
+    new_n
+  end;
+
+
 fun cfg_targets_to_lbl_tms_exn l et =
     (valOf o cfg_targets_to_lbl_tms) l
     handle Option => raise ERR "cfg_targets_to_lbl_tms_exn" ("unexpected indirection: " ^ et);
@@ -449,11 +477,10 @@ fun get_fun_cfg_walk_succ (n: cfg_node) =
       | CFGNT_Basic     => cfg_targets_to_direct_lbl_tms n_goto
       | CFGNT_Jump      => cfg_targets_to_direct_lbl_tms n_goto
       | CFGNT_CondJump  => cfg_targets_to_direct_lbl_tms n_goto
-      | CFGNT_Call      => (* ((valOf o #CFGN_succ) n)::ls*)
-                           (*cfg_targets_to_direct_lbl_tms n_goto*)
+      | CFGNT_Call      => (* this accounts for a walk that
+                              doesn't follow call edges *)
                            [(valOf o #CFGN_succ) n]
-                          (* TODO: remove this successor hack for the returns later *)
-      | CFGNT_Return    => [] (* cfg_targets_to_direct_lbl_tms n_goto *)
+      | CFGNT_Return    => [] (* this terminates returns *)
   end;
 
 
@@ -503,14 +530,22 @@ fun build_fun_cfg ns name =
     } : cfg_graph
   end;
 
+
+(*
+=================================================================================================
+*)
+
 val lbl_tm = mem_symbol_to_prog_lbl entry_label;
 val entry_lbl_tm = lbl_tm;
 
-val ns = List.map (update_node_guess_type_return o update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
-val ci = List.foldr (fn (n,l) => let val vo = collect_node_callinfo n in
-                                 if isSome vo then (valOf vo)::l else l end) [] ns;
+val ns_ = List.map (update_node_guess_type_return o update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
+val ci  = List.foldr (fn (n,l) => let val vo = collect_node_callinfo n in
+                                 if isSome vo then (valOf vo)::l else l end) [] ns_;
+val ns  = List.map (update_node_fix_return_goto (lookup_calls_to ci)) ns_;
 
-(* TODO: fix return jump targets, remove corresponding TODOs and other comments *)
+(*
+=================================================================================================
+*)
 
 val ns_c  = build_fun_cfg ns entry_label;
 val ns_c2 = build_fun_cfg ns "__aeabi_fmul";
@@ -621,6 +656,8 @@ val _ = display_graph_cfg_ns ns_4;
 
 fun enumerate_paths
 (* what happens if we try this? *)
+
+TODO: fix function to read initial memory
 
 TODO: tidy up graph handling and printing functions
 *)
