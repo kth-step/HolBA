@@ -12,4 +12,8 @@ val symb_filter_mem = fn secname =>
     | _       => (K false);
 val data_filter_mem = fn secname => fn _ => secname = ".data" orelse secname = ".bss";
 
+
+val mem_file     = "balrob/balrob.elf.mem";
+
+
 end (* struct *)

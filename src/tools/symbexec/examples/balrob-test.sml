@@ -657,8 +657,6 @@ val _ = display_graph_cfg_ns ns_4;
 fun enumerate_paths
 (* what happens if we try this? *)
 
-TODO: fix function to read initial memory
-
 TODO: tidy up graph handling and printing functions
 *)
 
