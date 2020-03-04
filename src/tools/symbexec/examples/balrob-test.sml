@@ -684,8 +684,8 @@ fun to_histogram sum_calls =
 =================================================================================================
 *)
 
+(*
 val _ = displayCallGraph ci symbs_sec_text;
-
 
 val ns_1 = #CFGG_nodes ns_c;
 val ns_2 = #CFGG_nodes ns_c2;
@@ -693,6 +693,7 @@ val ns_3 = ns_f3;
 val ns_4 = ns_f4;
 
 val _ = display_graph_cfg_ns ns_4;
+*)
 
 val (n_paths, sum_calls) = count_paths_to_ret false ns [] (mem_symbol_to_prog_lbl entry_label);
 
@@ -707,6 +708,20 @@ val (n_paths, sum_calls) = count_paths_to_ret false ns (return_lbl_tms) (mem_sym
 
 val n_calls = length sum_calls;
 val histo_calls = to_histogram sum_calls;
+
+
+val _ = print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+
+fun print_fun_pathstats ns name =
+  let
+    val (n_paths, sum_calls) = count_paths_to_ret false ns [] (mem_symbol_to_prog_lbl name);
+    val _ = print ("fun " ^ name ^ " : " ^ (Int.toString n_paths) ^ ", calls " ^ (Int.toString (length sum_calls)) ^ "\n");
+  in
+    ()
+  end;
+
+val _ = List.map (print_fun_pathstats ns) (List.filter (fn x => x <> "__aeabi_fdiv") symbs_sec_text);
+
 
 (*
 
