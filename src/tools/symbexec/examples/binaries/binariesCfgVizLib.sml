@@ -2,6 +2,7 @@ structure binariesCfgVizLib =
 struct
 local
 
+open binariesDefsLib;
 open binariesLib;
 open binariesCfgLib;
 
@@ -45,13 +46,35 @@ fun gen_graph_for_nodes_proc (n:cfg_node, (gns, ges, i)) =
     (new_gns, new_ges, new_i)
   end;
 
+(* directory creation helper *)
+  fun makedir makepath path =
+    let
+      val r = OS.Process.system ("mkdir " ^ (if makepath then "-p " else "") ^ path);
+      val _ = if not (OS.Process.isSuccess r) then
+                raise ERR "makedir" ("couldn't create the following directory: " ^ path)
+              else
+                ();
+    in
+      ()
+    end;
+
+fun get_tempfile prefix =
+  let
+    val tempdir = "tempdir";
+    val _ = makedir true tempdir;
+    val date = Date.fromTimeLocal (Time.now ());
+    val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S" date;
+  in
+    tempdir ^ "/cfg_" ^ datestr
+  end;
+
 in (* local *)
 
 fun display_graph_cfg_ns ns =
   let
     val (nodes, edges, _) = List.foldr gen_graph_for_nodes_proc ([], [], 0x10000) ns;
 
-    val file = "test1";
+    val file = get_tempfile "cfg_";
     val dot_str = gen_graph (nodes, edges);
     val _ = writeToFile dot_str (file ^ ".dot");
     val _ = convertAndView file;
@@ -75,11 +98,24 @@ fun display_call_graph ci symbs_sec_text =
     val edges_unique = List.foldr (fn (x,l) => if List.exists (fn y => x=y) l then l else (x::l)) [] edges;
     val edges = edges_unique;
 
-    val file = "test2";
+    val file = get_tempfile "cfg_";
     val dot_str = gen_graph (nodes, edges);
     val _ = writeToFile dot_str (file ^ ".dot");
     val _ = convertAndView file;
   in () end;
+
+fun show_call_graph () =
+  display_call_graph ci symbs_sec_text;
+
+fun show_cfg_fun do_walk ns name =
+  let
+    val ns_1 = if do_walk then
+                 (#CFGG_nodes o (build_fun_cfg ns)) name
+               else
+                 List.filter ((fn s => s = name) o node_to_rel_symbol) ns;
+  in
+    display_graph_cfg_ns ns_1
+  end;
 
 end (* local *)
 end (* struct *)

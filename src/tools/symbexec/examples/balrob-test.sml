@@ -19,43 +19,26 @@ fun print_option pf NONE     = print "NONE"
 =================================================================================================
 *)
 
-val lbl_tm = mem_symbol_to_prog_lbl entry_label;
-val entry_lbl_tm = lbl_tm;
+(*
+val _ = show_call_graph ();
 
+val _ = show_cfg_fun true  ns entry_label;
+val _ = show_cfg_fun true  ns "__aeabi_fmul";
+val _ = show_cfg_fun false ns "__aeabi_fmul";
+val _ = show_cfg_fun false ns "__aeabi_fdiv";
+*)
 
-
-
+(*
 val ns_c  = build_fun_cfg ns entry_label;
-val ns_c2 = build_fun_cfg ns "__aeabi_fmul";
-
 val ns_f = List.filter ((fn s => s = entry_label) o node_to_rel_symbol) ns;
-val _ = print ("len entry: " ^ (Int.toString (length ns_f)) ^ "\n");
-val ns_f3 = List.filter ((fn s => s = "__aeabi_fmul") o node_to_rel_symbol) ns;
-val ns_f4 = List.filter ((fn s => s = "__aeabi_fdiv") o node_to_rel_symbol) ns;
-
-val _ = build_fun_cfg ns_f entry_label;
-
 val dead_code = (List.filter (fn x => not (List.exists (fn y => x = y) (#CFGG_nodes ns_c))) ns_f);
 val _ = List.map (fn n => (print_term (#CFGN_lbl_tm n); print ((#CFGN_descr n) ^ "\n"))) dead_code;
-
-(*
-=================================================================================================
-*)
-
-
-
-(*
-=================================================================================================
-*)
-
-
-
-(*
-=================================================================================================
 *)
 
 (*
-val _ = display_call_graph ci symbs_sec_text;
+val ns_c2 = build_fun_cfg ns "__aeabi_fmul";
+val ns_f3 = List.filter ((fn s => s = "__aeabi_fmul") o node_to_rel_symbol) ns;
+val ns_f4 = List.filter ((fn s => s = "__aeabi_fdiv") o node_to_rel_symbol) ns;
 
 val ns_1 = #CFGG_nodes ns_c;
 val ns_2 = #CFGG_nodes ns_c2;
