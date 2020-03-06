@@ -4,12 +4,17 @@ local
 
 open binariesTheory;
 open binariesDefsLib;
+
 open gcc_supportLib;
 
 open bir_programSyntax;
 open bir_immSyntax;
+open bir_exec_typingLib;
+open bir_envSyntax;
+
 open listSyntax;
 open wordsSyntax;
+open stringSyntax;
 
 open Redblackmap;
 
@@ -70,6 +75,8 @@ fun prog_get_block_byAddr bl_dict addr =
 
 val prog_lbl_tms =
   List.map ((snd o dest_eq o concl o EVAL) o (fn (a, _, _) => a) o dest_bir_block) prog_bls;
+
+val prog_vars = gen_vars_of_prog prog_tm;
 
 (* =============================== memory contents (including data) ============================= *)
 
@@ -168,6 +175,12 @@ fun mk_lbl_tm addr =
 
 fun dest_lbl_tm lbl_tm =
   (dest_word_literal o dest_Imm32 o dest_BL_Address o snd o dest_eq o concl o EVAL) lbl_tm
+
+val prog_vars = prog_vars;
+val prog_var_types = List.map (fn t =>
+      let val (bn, bty) = dest_BVar t in
+      (fromHOLstring bn, bty) end
+  ) prog_vars;
 
 (*
 val addr = Arbnum.fromInt 0x01;
