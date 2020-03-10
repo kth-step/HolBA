@@ -40,8 +40,13 @@ struct
 
     fun use_pre_str_rule contract_thm pre_impl_wp =
       let
+        fun remove_foralls t = (remove_foralls o snd o dest_forall) t
+                               handle HOL_ERR _ => t;
+
 	val contract_thm = SIMP_RULE std_ss [bir_bool_expTheory.bir_exp_and_def] contract_thm;
-	val pre = ((el 2) o snd o strip_comb o (el 2) o snd o strip_comb o hd o snd o strip_comb o concl) pre_impl_wp;
+        val pre_wo = (remove_foralls o concl) pre_impl_wp;
+	val pre = ((el 2) o snd o strip_comb o (el 2) o snd o strip_comb o hd o snd o strip_comb) pre_wo;
+
 	val prog = get_contract_prog contract_thm;
 	val entry = get_contract_l contract_thm;
 	val exit = get_contract_ls contract_thm;
