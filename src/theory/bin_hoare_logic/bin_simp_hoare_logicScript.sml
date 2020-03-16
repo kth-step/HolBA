@@ -132,6 +132,29 @@ ASSUME_TAC (Q.SPECL [`m`, `l`, `ls UNION ls'`, `\ms. pre ms /\ invariant ms`,
 REV_FULL_SIMP_TAC std_ss []
 );
 
+val weak_map_strengthening_rule_thm = store_thm("weak_map_strengthening_rule_thm",
+  ``!m invariant l ls ls' pre1 pre2 post.
+    weak_model m ==>
+    (!ms. ((m.pc ms) = l) ==> (pre2 ms) ==> (pre1 ms)) ==>
+    weak_map_triple m invariant l ls ls' pre1 post ==>
+    weak_map_triple m invariant l ls ls' pre2 post``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
+subgoal `!ms. (m.pc ms = l) ==>
+         (\ms. pre2 ms /\ invariant ms) ms ==>
+         (\ms. pre1 ms /\ invariant ms) ms` >- (
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) []
+) >>
+ASSUME_TAC (Q.SPECL [`m`, `l`, `ls UNION ls'`, `\ms. pre1 ms /\ invariant ms`, 
+                     `\ms. pre2 ms /\ invariant ms`,
+                     `\ms. m.pc ms NOTIN (ls':'b->bool) /\ post ms /\ invariant ms`,
+                     `\ms. m.pc ms NOTIN (ls':'b->bool) /\ post ms /\ invariant ms`]
+  weak_weakening_rule_thm) >>
+REV_FULL_SIMP_TAC std_ss []
+);
+
 
 val weak_map_add_post_corollary_thm = prove(``
   !m invariant l ls ls' pre post1 post2.

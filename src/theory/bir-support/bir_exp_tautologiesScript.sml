@@ -333,5 +333,18 @@ EQ_TAC >> REPEAT STRIP_TAC >| [
 );
 
 
+val bir_exp_is_taut_same_vars_both_bool = store_thm("bir_exp_is_taut_same_vars_both_bool",
+  ``!ex ex' st.
+    (bir_exp_is_taut (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not ex') ex)) ==>
+    (bir_vars_of_exp ex' = bir_vars_of_exp ex) ==>
+    ((bir_is_bool_exp_env st.bst_environ ex') =
+       (bir_is_bool_exp_env st.bst_environ ex))``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def,
+                      bir_exp_is_taut_def,
+                      bir_is_bool_exp_REWRS]
+);
+
 
 val _ = export_theory();

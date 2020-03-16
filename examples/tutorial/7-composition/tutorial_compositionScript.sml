@@ -59,29 +59,28 @@ val (get_labels_from_set_repr, el_in_set_repr,
 (* Translate HTs from bir_exec_to_labels_triple to bir_triple,
  * Then replace preconditions with shorthands and prove the
  * validity of this. *)
-(* TODO: use_impl_rule uses cheats! *)
 
 (* 28 -> 64 *)
 val bir_add_reg_entry_comp_ht =
-  use_impl_rule
+  use_pre_str_rule
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_entry_ht)
     contract_1_imp_taut_thm;
 
 (* 32 -> 64 *)
 val bir_add_reg_loop_variant_comp_ht =
-  use_impl_rule
+  use_pre_str_rule
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_variant_ht)
     (Q.SPEC `v` contract_2v_imp_taut_thm);
 
 (* 64 -> 32 *)
 val bir_add_reg_loop_continue_variant_comp_ht =
-  use_impl_rule
+  use_pre_str_rule
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_continue_variant_ht)
     (Q.SPEC `v` contract_3v_imp_taut_thm);
 
 (* 64 -> 72 *)
 val bir_add_reg_loop_exit_comp_ht =
-  use_impl_rule
+  use_pre_str_rule
     (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_add_reg_loop_exit_ht)
     contract_4_imp_taut_thm;
 
@@ -199,7 +198,7 @@ REPEAT STRIP_TAC >| [
   FULL_SIMP_TAC std_ss [examplesBinaryTheory.bir_add_reg_arm8_lift_THM],
 
   (* 6. Provide the BIR triple in the requisite format *)
-  ASSUME_TAC (CONJUNCT2 (SIMP_RULE std_ss [bir_triple_from_map_triple_alt] final_ht)) >>
+  ASSUME_TAC (CONJUNCT2 (SIMP_RULE std_ss [bir_triple_equiv_map_triple] final_ht)) >>
   FULL_SIMP_TAC std_ss [pred_setTheory.UNION_EMPTY] >>
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
 

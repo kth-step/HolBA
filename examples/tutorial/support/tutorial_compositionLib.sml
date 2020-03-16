@@ -38,7 +38,7 @@ struct
 
     val vars_ss = std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss++HolBASimps.VARS_OF_PROG_ss;
 
-    fun use_impl_rule contract_thm pre_impl_wp =
+    fun use_pre_str_rule contract_thm pre_impl_wp =
       let
 	val contract_thm = SIMP_RULE std_ss [bir_bool_expTheory.bir_exp_and_def] contract_thm;
 	val pre = ((el 2) o snd o strip_comb o (el 2) o snd o strip_comb o hd o snd o strip_comb o concl) pre_impl_wp;
@@ -48,6 +48,7 @@ struct
 	val post = get_contract_post contract_thm;
 	val wp = get_contract_pre contract_thm;
 	val taut_thm = computeLib.RESTR_EVAL_RULE [(fst o strip_comb) pre, ``bir_exp_is_taut``] pre_impl_wp;
+        (* TODO: This is slow. Replace it with something faster later. *)
 	val pre_var_thm = prove (``
 	   ((bir_vars_of_exp ^pre) SUBSET (bir_vars_of_program ^prog))
 	   ``,
@@ -55,6 +56,7 @@ struct
 	   (SIMP_TAC vars_ss
 	   ) [bir_valuesTheory.BType_Bool_def]
 	);
+        (* TODO: This is slow. Replace it with something faster later. *)
 	val wp_var_thm = prove (``
 	   ((bir_vars_of_exp ^wp) SUBSET (bir_vars_of_program ^prog))
 	   ``,
@@ -64,7 +66,43 @@ struct
 	);
 	val new_contract_thm = ((SIMP_RULE std_ss [contract_thm, taut_thm, wp_var_thm, pre_var_thm]) 
 	  ((ISPECL [wp, pre, prog, entry, exit, post])
-	      bir_triple_weak_rule_thm)
+	      bir_wm_instTheory.bir_taut_pre_str_rule_thm)
+	      );
+      in
+        new_contract_thm
+      end;
+
+    fun use_pre_str_rule_map map_ht_thm pre_impl_wp =
+      let
+	val map_ht_thm = SIMP_RULE std_ss [bir_bool_expTheory.bir_exp_and_def] map_ht_thm;
+	val pre = ((el 2) o snd o strip_comb o (el 2) o snd o strip_comb o hd o snd o strip_comb o concl) pre_impl_wp;
+	val prog = get_bir_map_triple_prog map_ht_thm;
+        val invar = get_bir_map_triple_invariant map_ht_thm;
+	val entry = get_bir_map_triple_start_label map_ht_thm;
+	val wlist = get_bir_map_triple_wlist map_ht_thm;
+	val blist = get_bir_map_triple_blist map_ht_thm;
+	val post = get_bir_map_triple_post map_ht_thm;
+	val wp = get_bir_map_triple_pre map_ht_thm;
+	val taut_thm = computeLib.RESTR_EVAL_RULE [(fst o strip_comb) pre, ``bir_exp_is_taut``] pre_impl_wp;
+        (* TODO: This is slow. Replace it with something faster later. *)
+	val pre_var_thm = prove (``
+	   ((bir_vars_of_exp ^pre) SUBSET (bir_vars_of_program ^prog))
+	   ``,
+	   computeLib.RESTR_EVAL_TAC [``bir_vars_of_exp``, ``bir_vars_of_program``] >>
+	   (SIMP_TAC vars_ss
+	   ) [bir_valuesTheory.BType_Bool_def]
+	);
+        (* TODO: This is slow. Replace it with something faster later. *)
+	val wp_var_thm = prove (``
+	   ((bir_vars_of_exp ^wp) SUBSET (bir_vars_of_program ^prog))
+	   ``,
+	   computeLib.RESTR_EVAL_TAC [``bir_vars_of_exp``, ``bir_vars_of_program``] >>
+	   (SIMP_TAC vars_ss
+	   ) [bir_valuesTheory.BType_Bool_def]
+	);
+	val new_contract_thm = ((SIMP_RULE std_ss [map_ht_thm, taut_thm, wp_var_thm, pre_var_thm]) 
+	  ((ISPECL [prog, invar, entry, wlist, blist, wp, pre, post])
+	      bir_wm_instTheory.bir_taut_map_pre_str_rule_thm)
 	      );
       in
         new_contract_thm
@@ -80,7 +118,7 @@ struct
 
 	val map_equiv = ISPECL [prog, bir_bool_expSyntax.bir_exp_true_tm,
 			     l, ls, pred_setSyntax.mk_empty ``:bir_label_t``,
-			     pre, post] bir_wm_instTheory.bir_triple_from_map_triple
+			     pre, post] bir_wm_instTheory.bir_triple_equiv_map_triple_alt
         (* TODO: Review and describe what these steps are supposed to do *)
         (* Simplify union in ending label set *)
 	val map_equiv2 =
@@ -288,7 +326,7 @@ struct
 
               GEN_TAC >>
               ASSUME_TAC (Q.SPEC `x` (GEN_ALL loop_map_ht)) >>
-              FULL_SIMP_TAC std_ss [bir_wm_instTheory.bir_triple_from_map_triple_alt] >>
+              FULL_SIMP_TAC std_ss [bir_wm_instTheory.bir_triple_equiv_map_triple] >>
               FULL_SIMP_TAC (std_ss++inter_set_repr_ss++union_set_repr_ss) [] >>
               FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
               FULL_SIMP_TAC std_ss [bir_wm_instTheory.bir_triple_def,
