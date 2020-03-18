@@ -3,6 +3,10 @@
 import string
 import sys
 from z3 import *
+import re
+
+
+z3.set_param('model_compress', False)
 
 """ Z3 wrapper for HOL4.
 
@@ -61,8 +65,7 @@ def debug_input(solver):
 
 
 def z3_to_HolTerm(exp):
-    assert(is_ast(exp))
-
+    # assert(is_ast(exp))
     if is_expr(exp):
         # Function declaration
         if is_func_decl(exp):
@@ -132,17 +135,25 @@ def z3_to_HolTerm(exp):
                 #params = " ".join(string.ascii_lowercase[:exp.num_args()])
                 expr = ", ".join(z3_to_HolTerm(p) for p in exp.children())
                 return "(FUN_MAP2 (K ({})) (UNIV))".format(expr)
-
+    res = []
+    for idx in range(0,exp.num_entries()):
+        arg = (exp.entry(idx)).arg_value(0)
+        vlu = (exp.entry(idx)).value()
+        res.append( "(({}w: {} word),({}w: {} word))".format(arg, arg.size(),vlu, vlu.size()))
+    return ("(FEMPTY : word64 |-> word8) |+" + "|+".join(t for t in res ))
+              
     raise NotImplementedError("Not handled: {} as {}".format(type(exp), exp))
 
 
 def model_to_list(model):
     sml_list = []
     names = set()
+    string_check= re.compile('!')
     for x in model:
         name = str(x.name())
+        if(string_check.search(name) != None):
+            continue   
         term = z3_to_HolTerm(model[x])
-
         stripped_name = name.split('_', maxsplit=1)[1]
         if stripped_name in names:
             raise AssertionError("Duplicated stripped name: {}".format(stripped_name))
@@ -150,11 +161,13 @@ def model_to_list(model):
 
         sml_list.append(stripped_name)
         sml_list.append(term)
+
     return sml_list
 
 
 def main():
     use_files = len(sys.argv) > 1
+    
     s = Solver()
     # debug_input(s)
     if use_files:
@@ -162,7 +175,6 @@ def main():
     else:
         stdin = "\n".join(sys.stdin.readlines())
         s.from_string(stdin)
-
     r = s.check()
     if r == unsat:
         print("unsat")

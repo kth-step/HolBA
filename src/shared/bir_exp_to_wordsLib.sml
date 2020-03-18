@@ -143,15 +143,25 @@ struct
 
   fun bir_exp_to_words exp =
     let
-      val _ = ()
+	val _ = ()
     in
-      (* Constants *)
-      if is_BExp_Const exp then
-        (snd o gen_dest_Imm o dest_BExp_Const) exp
-          handle e => raise wrap_exn "bir_exp_to_words::const" e
-      (* Memory constants *)
-      else if is_BExp_MemConst exp then
-        raise ERR "bir_exp_to_words" "unhandled: BExp_MemConst"
+	(* Constants *)
+	if is_BExp_Const exp then
+            (snd o gen_dest_Imm o dest_BExp_Const) exp
+            handle e => raise wrap_exn "bir_exp_to_words::const" e
+	(* Memory constants *)
+
+	else if is_BExp_MemConst exp then
+	    let 
+		val (addr_bir_ty, val_bir_ty, name_bir) = dest_BExp_MemConst exp
+		val name = case (dest_term name_bir) of  VAR (namen, typ): lambda => namen
+		val addr_ty = word_ty_of_bir_immtype_t addr_bir_ty
+		val val_ty = word_ty_of_bir_immtype_t val_bir_ty
+		val hol_type = Type `: ^addr_ty |-> ^val_ty`
+                    handle e => raise wrap_exn "bir_exp_to_words::MemConst" e
+	    in
+		mk_var (name,  hol_type)
+	    end
       (* Den *)
       else if is_BExp_Den exp then
         (* Manual tests
@@ -183,7 +193,24 @@ struct
           handle e => raise wrap_exn "bir_exp_to_words::den" e
       (* Casts are not handled yet. *)
       else if is_BExp_Cast exp then
-        raise ERR "bir_exp_to_words" "Cast expressions aren't handled yet."
+	  let
+	      val dw = wordsSyntax.dest_word_type
+	      val (casttyp, ex, sz) = (dest_BExp_Cast) exp
+	      val cast_ty = word_ty_of_bir_immtype_t sz
+	      val val_ty = bir_exp_to_words ex
+	      val num_of_typ = fcpLib.index_to_num(dw cast_ty)
+	      val shift_sz = numLib.term_of_int (Arbnum.toInt num_of_typ)
+
+	  in
+	      if bir_exp_immSyntax.is_BIExp_LowCast casttyp
+	      then
+		  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+	      else
+		  wordsSyntax.mk_w2w(``^val_ty >>> ^shift_sz``, dw cast_ty)
+	  end
+                  handle e => raise wrap_exn "bir_exp_to_words::BExp_Cast" e
+				    
+        (* raise ERR "bir_exp_to_words" "Cast expressions aren't handled yet." *)
       (* Unary expressions *)
       else if is_BExp_UnaryExp exp then
         (* Manual tests
@@ -302,23 +329,28 @@ struct
             BEnd_LittleEndian
             Bit128
         ``;
+	val exp = ``
+          (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                    (BExp_Const (Imm64 8w))) BEnd_LittleEndian Bit64)``
         val w = bir_exp_to_words exp;
         *)
         (*
          * ((addr+0) ' mem) @@ ((addr+1) ' mem) @@ ...
          *)
         let
-          val (bir_mem, bir_addr, bir_endi, bir_val_ty) = dest_BExp_Load exp
-          val mem_w = bir_exp_to_words bir_mem
-          val mem_right_ty = (hd o tl o snd o dest_type o type_of) mem_w
-          val mem_right_bir_ty = bir_immtype_t_of_word_ty mem_right_ty
-          val base_addr_w = bir_exp_to_words bir_addr
-          val addr_w = bir_exp_to_words bir_addr
-          val addr_bir_ty = (bir_immtype_t_of_word_ty o type_of) addr_w
+          val (bir_mem, bir_addr, bir_endi, bir_val_ty) = dest_BExp_Load exp;
+          val mem_w = bir_exp_to_words bir_mem;
+          val mem_right_ty = (hd o tl o snd o dest_type o type_of) mem_w;
+          val mem_right_bir_ty = bir_immtype_t_of_word_ty mem_right_ty;
+          val base_addr_w = bir_exp_to_words bir_addr;
+          val addr_w = bir_exp_to_words bir_addr;
+          val addr_bir_ty = (bir_immtype_t_of_word_ty o type_of) addr_w;
           (* Compute the number of splits *)
           val nsplits_o_thm = EVAL ``bir_number_of_mem_splits
-            ^mem_right_bir_ty ^bir_val_ty ^addr_bir_ty``
-          val nsplits_o_tm = (snd o dest_eq o concl) nsplits_o_thm
+            ^mem_right_bir_ty ^bir_val_ty ^addr_bir_ty``;
+          val nsplits_o_tm = (snd o dest_eq o concl) nsplits_o_thm;
           val nsplits = (Arbnumcore.fromInt o int_of_term o dest_some) nsplits_o_tm
             handle e => raise wrap_exn "bir_exp_to_words::load::nsplits" e;
           (* Create the list of reads with offsets *)

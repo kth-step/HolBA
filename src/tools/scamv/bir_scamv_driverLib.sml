@@ -144,8 +144,38 @@ fun print_model model =
             (print (" - " ^ name ^ ": "); Hol_pp.print_term tm))
         () (rev model);
 
-fun to_sml_Arbnums model =
-    List.map (fn (name, tm) => (name, dest_word_literal tm)) model;
+
+
+(* fun to_sml_Arbnums model = *)
+(*     List.map (fn (name, tm) => if finite_mapSyntax.is_fupdate tm *)
+(* 			       then *)
+(* 				   let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm *)
+(* 				       val vlsN = map (fn p =>  *)
+(* 							  let *)
+(* 							      val (ad, vl) = pairSyntax.dest_pair p  *)
+(* 							  in  *)
+(* 							      (dest_word_literal ad, dest_word_literal vl)  *)
+(* 							  end) vlsW *)
+(* 				   in *)
+(* 				       (name, vlsN) *)
+(* 				   end *)
+(* 			       else *)
+(* 				   (name, [(dest_word_literal tm, dest_word_literal ``0w:word8``)])) model; *)
+
+
+fun to_sml_Arbnums_mem (model:(string * term) list)=
+    List.map (fn (name, tm) => let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm
+				   val vlsN = map (fn p => 
+						      let
+							  val (ad, vl) = pairSyntax.dest_pair p 
+						      in 
+							  (dest_word_literal ad, dest_word_literal vl) 
+						      end) vlsW
+			       in
+				   (name, vlsN)
+			       end)
+fun to_sml_Arbnums_reg (model:(string * term) list) =
+    map (fn (name, tm) => (name, dest_word_literal tm)) model;
 
 val hw_obs_model_id = ref "";
 val do_enum = ref false;
@@ -265,6 +295,40 @@ fun all_obs_not_present { a_run = (_,a_obs), b_run = (_,b_obs) } =
     in check a_obs andalso check b_obs
     end;
 
+
+fun memConstraint [] = ``T`` 
+  | memConstraint mls =
+    let fun adjust_prime s =
+            if String.isSuffix "_" s
+            then String.map (fn c => if c = #"_" then #"'" else c) s
+            else s
+	fun mk_cnst vname vls =
+	    let 
+		val toIntls = (snd o finite_mapSyntax.strip_fupdate) vls;
+		val mem = mk_var (adjust_prime vname ,Type`:word64 |-> word8`);
+		val mem' = foldl (fn (a,b) => ``FUPDATE  ^b ^a``) mem toIntls;
+		val memconstraint = map (fn p => let val (t1,t2) = pairSyntax.dest_pair p
+						 in 
+						     ``(THE(FLOOKUP ^mem' ^t1) = ^t2)``
+						 end) toIntls;
+		val mc_conj = foldl (fn (a,b) => mk_conj (a,b)) (hd memconstraint) (tl memconstraint)
+	    in
+		mc_conj
+	    end
+	val h::t::[] = (map (fn (vn, vl) =>  mk_cnst vn vl ) mls)
+	val mc_conj = mk_conj (h,t)
+    in
+	``~(^mc_conj)``
+    end;
+
+
+fun prime_mem model =
+    let val fmem = (filter (fn el => (String.isSubstring (#1 el) "MEM_")) model)
+    in
+	case fmem of [] => model
+		   | _ => model@[("MEM_", (snd o hd) fmem )] 
+    end
+    
 fun next_experiment all_exps next_relation  =
     let
         open bir_expLib;
@@ -281,14 +345,14 @@ fun next_experiment all_exps next_relation  =
             handle Option =>
                    raise ERR "next_experiment" "next_relation returned a NONE";
         
-        val _ = min_verb 1 (fn () =>
+        val _ = min_verb 3 (fn () =>
                                (print "Selected path: ";
                                 print (PolyML.makestring path_spec);
                                 print "\n"));
 
         val _ = min_verb 3 (fn () =>
                                bir_exp_pretty_print rel);
-        val _ = printv 4 ("Word relation\n");
+        val _ = printv 3 ("Word relation\n");
         val new_word_relation = make_word_relation rel all_exps;
         val _ = min_verb 4 (fn () =>
                                (print_term new_word_relation;
@@ -298,15 +362,19 @@ fun next_experiment all_exps next_relation  =
                 NONE => new_word_relation
               | SOME r => mk_conj (new_word_relation, r);
 
-        val _ = printv 2 ("Calling Z3\n");
+        val _ = printv 1 ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
         val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
+        val _ = printv 1 ("Printed model\n");
+	(*Need to be removed later. It is just for experimental reasone*)
+	val model = prime_mem model
 
-        val sml_model = to_sml_Arbnums model;
+	val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
+        val sml_model = to_sml_Arbnums_reg regs;
         fun isPrimedRun s = String.isSuffix "_" s;
-        val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
+        val (s2,s1) = List.partition (isPrimedRun o fst) sml_model
         val prog_id = !current_prog_id;
-
+	    
         fun mk_var_mapping s =
             let fun mk_eq (a,b) =
                     let fun adjust_prime s =
@@ -317,7 +385,12 @@ fun next_experiment all_exps next_relation  =
                     in ``^va = ^b``
                     end; 
             in list_mk_conj (map mk_eq s) end;
-        val new_constraint = ``~^(mk_var_mapping model)``;
+
+        val reg_constraint = ``~^(mk_var_mapping (regs))``;
+	val mem_constraint = memConstraint ml;
+	val new_constraint = mk_conj (reg_constraint, mem_constraint)
+
+        val _ = printv 1 ("after new_constraint\n");
         val _ =
             current_word_rel :=
             (case !current_word_rel of
@@ -339,6 +412,7 @@ fun next_experiment all_exps next_relation  =
         val lifted_prog_w_obs = case !current_prog_w_obs of
                              SOME x => x
                            | NONE => raise ERR "next_test" "no program found";
+	(* remove meory for now from states*)
 
         val _ = if conc_exec_obs_compare lifted_prog_w_obs (s1, s2) then () else
                   raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
