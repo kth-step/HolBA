@@ -169,43 +169,45 @@ bir_compose_seq (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
 
 (* ====================================== *)
 (* composition of the function body *)
-(*
 local
 open tutorial_smtSupportLib;
 in
-val bir_att_sec_call_1_taut = prove_exp_is_taut
+val bir_att_sec_call_1_taut = ((*(Q.SPECL [`v2`, `v1`]) o *) prove_exp_is_taut)
        (bimp (``bir_att_sec_add_2_post v1 v2``, ``bir_att_sec_call_2_pre (v1+v2)``));
 end
 
-val contract_2_imp_taut_thm = save_thm ("contract_2_imp_taut_thm",
-  prove_exp_is_taut contract_2_imp);
-
 val bir_att_sec_call_1_map_ht_fix =
- bir_att_sec_call_1_map_ht;
-(* TODO: need theorem and procedure for implied-rule on bir_map_triple *)
+  bir_att_sec_call_1_map_ht;
+
+val bir_att_sec_call_2_map_ht_inst =
+  (INST [``v1:word32`` |-> ``(v1:word32) + (v2:word32)``])
+  bir_att_sec_call_2_map_ht;
 
 val bir_att_sec_call_2_map_ht_fix =
-(INST [``v1:word32`` |-> ``(v1:word32) + (v2:word32)``])
-bir_att_sec_call_2_map_ht;
+  use_pre_str_rule_map
+    bir_att_sec_call_2_map_ht_inst
+    bir_att_sec_call_1_taut;
+
 
 val bir_att_body_map_ht =
-bir_compose_seq (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
-                         simp_inter_set_repr_rule)
-bir_att_sec_call_1_map_ht_fix
-bir_att_sec_call_2_map_ht_fix
-                def_list;
+  bir_compose_seq (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
+                   simp_inter_set_repr_rule)
+    bir_att_sec_call_1_map_ht_fix
+    bir_att_sec_call_2_map_ht_fix
+    def_list;
 
 
-
+(*
+(* experiment with post condition weakening *)
 val bir_att_sec_call_2_comp_ht =
-  use_impl_rule
+  use_post_weak_rule_map
     bir_att_sec_call_1_map_ht
     bir_att_sec_call_1_taut;
 *)
 
 
 (* ====================================== *)
-(* final composition *)
+(* final composition, needs post condition weakening *)
 (*
 local
 open tutorial_smtSupportLib;
@@ -216,12 +218,7 @@ end
 
 *)
 
-(*
-val assmpt = ht_assmpt
-val map_triple = (bir_map_triple_from_bir_triple ht1)
-val post = 	  (get_bir_map_triple_post map_triple);
-val (_::h::t) = 	  (get_labels_from_set_repr (get_bir_map_triple_wlist map_triple));
-*)
+(* TODO: store theorem after final composition *)
 
 val _ = export_theory();
 
