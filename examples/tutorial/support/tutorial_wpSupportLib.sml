@@ -26,7 +26,7 @@ open HolBACoreSimps;
 open bir_exp_to_wordsLib bslSyntax;
 
 (* From examples: *)
-open examplesBinaryTheory;
+(*open examplesBinaryTheory;*)
 open tutorial_bir_to_armSupportTheory;
 open tutorial_bir_to_armTheory;
 
@@ -100,6 +100,10 @@ fun init_wps_fmap label_list postcond postcond_exp_from_label =
   end
 ;
 
+(*
+val ending_lam_disj = ending_set;
+val ending_lam_disj_to_sml_list = ending_set_to_sml_list;
+*)
 (* This is a wrapper function for generating and proving WPs. *)
 (* TODO: Rename arguments to more generic ones *)
 fun bir_obtain_ht prog_tm first_block_label_tm
@@ -172,7 +176,11 @@ fun bir_obtain_ht prog_tm first_block_label_tm
      * abbreviation for the postcondition), from which we can pick
      * the theorem we need. *)
     val hts_list = CONJUNCTS simp_thm4
-    val hts_list_trim = List.take (hts_list, (length hts_list) - 1)
+    val hts_list_trim =
+          if List.length hts_list <> 1 then
+            List.take (hts_list, (length hts_list) - 1)
+          else
+            hts_list
     val target_ht =
       valOf (find_ht first_block_label_tm hts_list_trim)
     (* Transform HT to bir_triple *)

@@ -18,8 +18,6 @@ sig
 
   val vars_ss: simpset;
 
-  val use_impl_rule: thm -> thm -> thm;
-
   val bir_map_triple_from_bir_triple: thm -> thm;
 
   val bir_remove_labels_from_ending_set : thm -> term -> thm;

@@ -2614,4 +2614,154 @@ METIS_TAC [bir_wp_exec_of_block_sound_exec_thm,
            bir_wp_exec_of_block_bool_exec_thm]
 );
 
+(* ============================================================================================= *)
+
+(* TODO: move to bir_exp_equivTheory *)
+val bir_eq_var_const_equiv =
+  store_thm("bir_eq_var_const_equiv", ``
+!env bv k.
+  (bir_eval_exp
+           (BExp_BinPred BIExp_Equal
+              (BExp_Den bv)
+              (BExp_Const k))
+           env
+    = SOME bir_val_true) ==>
+  (bir_eval_exp (BExp_Den bv) env = SOME (BVal_Imm k))
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `env` >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_env_read_def, bir_env_check_type_def,
+      bir_env_lookup_type_def, bir_env_lookup_def, bir_val_true_def] >>
+  Cases_on `f (bir_var_name bv)` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  Cases_on `bir_var_type bv = type_of_bir_val x` >- (
+    Cases_on `x` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    Cases_on `b` >> Cases_on `k` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_val_def]
+    )
+  ) >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+);
+
+val bir_exec_block_jmp_bv_triple_wp_thm =
+  store_thm("bir_exec_block_jmp_bv_triple_wp_thm",
+  ``!p bl post k bv.
+      (bl.bb_last_statement = (BStmt_Jmp (BLE_Exp (BExp_Den bv)))) ==>
+      (bl.bb_statements = []) ==>
+      (MEM (BL_Address k) (bir_labels_of_program p)) ==>
+      (bir_exec_block_jmp_triple p bl
+        (BExp_BinExp BIExp_And ((BExp_BinPred BIExp_Equal (BExp_Den bv) (BExp_Const k))) post)
+        post (BL_Address k))``,
+
+(* Expand definitions *)
+SIMP_TAC std_ss [bir_exec_block_jmp_triple_def] >>
+REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+(* "wp" is the weakest precondition of the block of basic
+ * statements. *)
+ASSUME_TAC (Q.SPECL [`bl.bb_statements`, `post`]
+                    bir_wp_exec_stmtsB_sound_thm
+           ) >>
+REV_FULL_SIMP_TAC std_ss [bir_is_well_typed_block_def,
+                          bir_exec_stmtsB_triple_def, bir_wp_exec_stmtsB_def] >>
+(* Start resolving the effects of execution: *)
+FULL_SIMP_TAC std_ss [bir_exec_block_def] >>
+(* "ns" is the new state resulting from execution of the block of
+ * basic BIR statements with initial state s. *)
+FULL_SIMP_TAC std_ss [bir_exec_stmtsB_def, listTheory.EVERY_DEF] >>
+
+
+FULL_SIMP_TAC std_ss [LET_DEF] >>
+PAT_X_ASSUM ``!x. p``
+            (fn thm =>
+              ASSUME_TAC (Q.SPECL [`s`] thm
+                         )
+            ) >>
+REV_FULL_SIMP_TAC std_ss
+  [bir_vars_are_initialized_block_then_every_stmts_thm] >>
+FULL_SIMP_TAC std_ss [bir_exec_stmtsB_def, listTheory.REVERSE_DEF, bir_state_is_terminated_def] >>
+
+(*  *)
+  FULL_SIMP_TAC std_ss [GSYM bir_exp_equivTheory.bir_and_equiv] >>
+
+  subgoal `bir_eval_exp (BExp_Den bv) s.bst_environ = SOME (BVal_Imm k)` >- (
+    METIS_TAC [bir_eq_var_const_equiv]
+  ) >>
+
+(*  *)
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  FULL_SIMP_TAC std_ss [bir_exec_stmtE_def, bir_exec_stmt_jmp_def,
+                        bir_eval_label_exp_def,
+                        bir_exec_stmt_jmp_to_label_def] >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  RW_TAC (srw_ss()) [bir_eval_exp_def, bir_is_valid_status_def] >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_is_bool_exp_env_def,
+       bir_typing_expTheory.bir_eval_exp_IS_SOME_IMPLIES_INIT, bir_is_bool_exp_def]
+);
+
+val bir_ret_block_triple_wp_thm =
+  store_thm("bir_ret_block_triple_wp_thm",
+  ``!p bl l k k2 bv post.
+      (MEM l (bir_labels_of_program p)) ==>
+      (SND(THE(bir_get_program_block_info_by_label p l)) = bl) ==>
+      (bl.bb_last_statement = (BStmt_Jmp (BLE_Exp (BExp_Den bv)))) ==>
+      (bl.bb_statements = []) ==>
+
+      (MEM (BL_Address k) (bir_labels_of_program p)) ==>
+      (k <> k2) ==>
+
+      (bir_exec_to_labels_or_assumviol_triple
+           p
+           l
+           {(BL_Address k); (BL_Address k2)}
+           (BExp_BinExp BIExp_And ((BExp_BinPred BIExp_Equal (BExp_Den bv) (BExp_Const k))) post)
+           (\l. if l = (BL_Address k) then post else bir_exp_false)
+      )
+``,
+  REWRITE_TAC [bir_exec_to_labels_or_assumviol_triple_def] >>
+  REPEAT STRIP_TAC >>
+
+subgoal `(bir_get_current_block p s.bst_pc = SOME bl)` >- (
+  FULL_SIMP_TAC std_ss [bir_get_current_block_def,
+                        bir_get_program_block_info_by_label_MEM] >>
+  REV_FULL_SIMP_TAC std_ss []
+) >>
+(* Evaluate execution of bir_exec_to_labels using the lemma
+ * bir_exec_to_labels_block. *)
+IMP_RES_TAC bir_exec_to_labels_block >>
+PAT_X_ASSUM ``!ls. p``
+            (fn thm => FULL_SIMP_TAC std_ss [Q.SPEC `{BL_Address k; (BL_Address k2)}` thm]) >>
+(*
+ASSUME_TAC (Q.SPECL [`p`, `bl`, `post`, `k`, `bv`]
+                    bir_exec_block_jmp_bv_triple_wp_thm
+           ) >>
+*)
+
+(* *)
+FULL_SIMP_TAC std_ss [GSYM bir_exp_equivTheory.bir_and_equiv] >>
+IMP_RES_TAC bir_eq_var_const_equiv >>
+REV_FULL_SIMP_TAC (std_ss) [] >>
+FULL_SIMP_TAC (std_ss) [bir_exec_block_def, bir_exec_stmtsB_def, LET_DEF] >>
+REV_FULL_SIMP_TAC (std_ss) [bir_exec_stmtE_def, bir_exec_stmt_jmp_def, bir_eval_label_exp_def, bir_exec_stmtsB_def] >>
+REV_FULL_SIMP_TAC (std_ss) [bir_exec_block_def, bir_exec_stmtsB_def, LET_DEF, bir_exec_stmtE_def, bir_exec_stmt_jmp_def, bir_eval_label_exp_def] >>
+FULL_SIMP_TAC (std_ss) [bir_state_is_terminated_def] >>
+REV_FULL_SIMP_TAC (std_ss) [] >>
+
+(* *)
+FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF, bir_state_COUNT_PC_def, bir_exec_stmt_jmp_to_label_def] >>
+REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_block_pc_def] >>
+
+REV_FULL_SIMP_TAC (std_ss++holBACore_ss++pred_setSimps.PRED_SET_ss) [bir_block_pc_def, listTheory.REVERSE_DEF] >>
+(* *)
+PAT_X_ASSUM ``BER_Ended A B C D = r`` (fn thm => ASSUME_TAC (GSYM thm)) >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_bool_expTheory.bir_is_bool_exp_env_REWRS]
+);
+
 val _ = export_theory();

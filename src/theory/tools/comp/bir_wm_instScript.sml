@@ -20,6 +20,7 @@ open bir_immTheory;
 open bir_envTheory;
 open bir_exp_immTheory;
 open bir_exp_memTheory;
+open bir_exp_tautologiesTheory;
 
 open bir_htTheory;
 
@@ -531,8 +532,8 @@ IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_ORDER
 
 (* TODO: This actually combines two rules: Postcondition weakening and
  * precondition strenghtening *)
-val bir_weakening_rule_thm =
-  store_thm("bir_weakening_rule_thm",
+val bir_consequence_rule_thm =
+  store_thm("bir_consequence_rule_thm",
   ``!prog l ls pre1 pre2 post1 post2.
     (!st. (st.bst_pc.bpc_label = l) ==>
           (bir_exec_to_labels_triple_precond st pre2 prog) ==>
@@ -563,6 +564,89 @@ REPEAT STRIP_TAC >| [
 
   FULL_SIMP_TAC std_ss []
 ]
+);
+
+(* Precondition strengthening rule for use with bir_exp_is_taut *)
+val bir_taut_pre_str_rule_thm = store_thm("bir_taut_pre_str_rule_thm",
+  ``!pre pre' prog l ls post.
+    ((bir_vars_of_exp pre') SUBSET (bir_vars_of_program prog)) ==>
+    ((bir_vars_of_exp pre) SUBSET (bir_vars_of_program prog)) ==>
+    bir_triple prog l ls pre post ==>
+    bir_exp_is_taut (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not pre') pre) ==>
+    bir_triple prog l ls pre' post``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_triple_def, weak_triple_def, bir_exec_to_labels_triple_precond_def] >>
+REPEAT STRIP_TAC >>
+PAT_X_ASSUM ``!s. _`` (fn thm => ASSUME_TAC (Q.SPEC `s` thm)) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+subgoal `(bir_vars_of_exp pre' = bir_vars_of_exp pre) ==>
+         !s.
+             bir_is_bool_exp_env s.bst_environ pre' <=>
+             bir_is_bool_exp_env s.bst_environ pre` >- (
+  IMP_RES_TAC bir_exp_is_taut_same_vars_both_bool
+) >>
+
+FULL_SIMP_TAC std_ss [bir_exp_tautologiesTheory.bir_exp_is_taut_def] >>
+PAT_X_ASSUM ``!env. _`` (fn thm => ASSUME_TAC (Q.SPEC `s.bst_environ` thm)) >>
+subgoal `bir_env_vars_are_initialised s.bst_environ
+           (bir_vars_of_exp
+              (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not pre') pre))` >- (
+  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def,
+                        bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
+  IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET >>
+  FULL_SIMP_TAC std_ss []
+) >>
+FULL_SIMP_TAC std_ss [] >> 
+ASSUME_TAC (Q.SPECL [`s.bst_environ`, `pre'`, `pre`]  bir_exp_equivTheory.bir_impl_equiv) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+subgoal `bir_is_bool_exp_env s.bst_environ pre` >- (
+  FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_is_bool_exp_REWRS,
+                        bir_typing_expTheory.bir_vars_of_exp_def,
+                        bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
+                        bir_bool_expTheory.bir_is_bool_exp_env_def]
+) >>
+METIS_TAC []
+);
+
+(* Postcondition weakening rule for use with bir_exp_is_taut *)
+val bir_taut_post_weak_rule_thm = store_thm("bir_taut_post_weak_rule_thm",
+  ``!pre prog l ls l2 post post'.
+    ((bir_vars_of_exp (post l2)) SUBSET (bir_vars_of_program prog)) ==>
+    ((bir_vars_of_exp (post' l2)) SUBSET (bir_vars_of_program prog)) ==>
+    (!l'. (l' <> l2) ==> (post l' = post' l')) ==>
+    bir_triple prog l ls pre post ==>
+    bir_exp_is_taut (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not (post l2)) (post' l2)) ==>
+    bir_triple prog l ls pre post'``,
+
+FULL_SIMP_TAC std_ss [bir_triple_def, weak_triple_def, bir_exec_to_labels_triple_postcond_def] >>
+REPEAT STRIP_TAC >>
+PAT_X_ASSUM ``!s. _`` (fn thm => ASSUME_TAC (Q.SPEC `s` thm)) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+
+Q.EXISTS_TAC `s'` >>
+Cases_on `s'.bst_pc.bpc_label <> l2` >- (
+  METIS_TAC []
+) >>
+Q.ABBREV_TAC `env' = s'.bst_environ` >>
+
+subgoal `bir_env_vars_are_initialised env' (bir_vars_of_exp
+                  (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not (post l2))
+                     (post' l2)))` >- (
+  FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def, bir_vars_of_exp_def,
+                        bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
+  METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET]
+) >>
+
+IMP_RES_TAC bir_exp_tautologiesTheory.bir_exp_is_taut_def >>
+
+subgoal `bir_is_bool_exp_env s'.bst_environ (post' l2)` >- (
+  FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def, bir_vars_of_exp_def,
+                        bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
+                        bir_is_bool_exp_REWRS]
+) >>
+
+METIS_TAC [bir_exp_equivTheory.bir_impl_equiv, bir_exp_tautologiesTheory.bir_exp_is_taut_def]
 );
 
 
@@ -1067,67 +1151,7 @@ IMP_RES_TAC weak_invariant_rule_thm
 (*****************************************************)
 
 (* How to obtain a bir_map_triple from a bir_triple: *)
-(* TODO: Rename to something with "equiv"... *)
-val bir_triple_from_map_triple = store_thm("bir_triple_from_map_triple",
-  ``!prog invariant l ls ls' pre post.
-    bir_map_triple prog invariant l ls ls' pre post <=>
-      (((ls INTER ls') = EMPTY) /\
-       (bir_triple prog l (ls UNION ls')
-		   (BExp_BinExp BIExp_And pre invariant)
-		   (\label. if (label IN ls')
-			    then bir_exp_false
-			    else (BExp_BinExp BIExp_And (post label) invariant)
-		   )
-       )
-      )
-  ``,
-
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_triple_def, bir_map_triple_def, weak_map_triple_def] >>
-EQ_TAC >> (
-  REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC std_ss []
-  ) >>
-  FULL_SIMP_TAC std_ss [weak_triple_def] >>
-  REPEAT STRIP_TAC >>
-  QSPECL_X_ASSUM ``!s. _`` [`s`] >>
-  REV_FULL_SIMP_TAC std_ss []
-) >| [
-  (* bir_map_triple -> bir_triple *)
-  subgoal `bir_exec_to_labels_triple_precond s pre prog /\
-           bir_exec_to_labels_triple_precond s invariant prog` >- (
-    FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_precond_def, bir_is_bool_exp_env_REWRS,
-                          GSYM bir_and_equiv]
-  ) >>
-  FULL_SIMP_TAC std_ss [] >>
-  Q.EXISTS_TAC `s'` >>
-  FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def] >>
-  Cases_on `s'.bst_pc.bpc_label IN ls'` >| [
-    FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def],
-
-    FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_REWRS, GSYM bir_and_equiv,
-                          bir_exec_to_labels_triple_precond_def]
-  ],
-
-  (* bir_triple -> bir_map_triple *)
-  subgoal `bir_exec_to_labels_triple_precond s
-             (BExp_BinExp BIExp_And pre invariant) prog` >- (
-    FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_precond_def, bir_is_bool_exp_env_REWRS,
-                          GSYM bir_and_equiv]
-  ) >>
-  FULL_SIMP_TAC std_ss [] >>
-  Q.EXISTS_TAC `s'` >>
-  FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def] >>
-  Cases_on `s'.bst_pc.bpc_label IN ls'` >| [
-    FULL_SIMP_TAC std_ss [bir_eval_exp_TF, bir_val_TF_dist],
-
-    FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_is_bool_exp_env_REWRS, GSYM bir_and_equiv,
-                                       bir_exec_to_labels_triple_precond_def, bir_etl_wm_def]
-  ]
-]
-);
-(* TODO: This should really be the normal one, the other one alternative. *)
-val bir_triple_from_map_triple_alt = store_thm("bir_triple_from_map_triple_alt",
+val bir_triple_equiv_map_triple = store_thm("bir_triple_equiv_map_triple",
   ``!prog invariant l ls ls' pre post.
     bir_map_triple prog invariant l ls ls' pre post <=>
       (((ls INTER ls') = EMPTY) /\
@@ -1196,6 +1220,66 @@ EQ_TAC >> (
 ]
 );
 
+val bir_triple_equiv_map_triple_alt = store_thm("bir_triple_equiv_map_triple_alt",
+  ``!prog invariant l ls ls' pre post.
+    bir_map_triple prog invariant l ls ls' pre post <=>
+      (((ls INTER ls') = EMPTY) /\
+       (bir_triple prog l (ls UNION ls')
+		   (BExp_BinExp BIExp_And pre invariant)
+		   (\label. if (label IN ls')
+			    then bir_exp_false
+			    else (BExp_BinExp BIExp_And (post label) invariant)
+		   )
+       )
+      )
+  ``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_triple_def, bir_map_triple_def, weak_map_triple_def] >>
+EQ_TAC >> (
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  FULL_SIMP_TAC std_ss [weak_triple_def] >>
+  REPEAT STRIP_TAC >>
+  QSPECL_X_ASSUM ``!s. _`` [`s`] >>
+  REV_FULL_SIMP_TAC std_ss []
+) >| [
+  (* bir_map_triple -> bir_triple *)
+  subgoal `bir_exec_to_labels_triple_precond s pre prog /\
+           bir_exec_to_labels_triple_precond s invariant prog` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_precond_def, bir_is_bool_exp_env_REWRS,
+                          GSYM bir_and_equiv]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `s'` >>
+  FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def] >>
+  Cases_on `s'.bst_pc.bpc_label IN ls'` >| [
+    FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def],
+
+    FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_REWRS, GSYM bir_and_equiv,
+                          bir_exec_to_labels_triple_precond_def]
+  ],
+
+  (* bir_triple -> bir_map_triple *)
+  subgoal `bir_exec_to_labels_triple_precond s
+             (BExp_BinExp BIExp_And pre invariant) prog` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_precond_def, bir_is_bool_exp_env_REWRS,
+                          GSYM bir_and_equiv]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `s'` >>
+  FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def] >>
+  Cases_on `s'.bst_pc.bpc_label IN ls'` >| [
+    FULL_SIMP_TAC std_ss [bir_eval_exp_TF, bir_val_TF_dist],
+
+    FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_is_bool_exp_env_REWRS, GSYM bir_and_equiv,
+                                       bir_exec_to_labels_triple_precond_def, bir_etl_wm_def]
+  ]
+]
+);
+
+
 
 (* bir_map_triples are all generated from bir_triples, which have no explicit notion
  * of blacklist. This theorem moves ending labels which are implicitly
@@ -1219,6 +1303,7 @@ FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def, bir_eval_exp_TF, bir_val_TF_d
 );
 
 
+(* Shrinking the Ending label set is possible if the corresponding postcondition never holds. *)
 val bir_subset_rule_thm =
  store_thm("bir_subset_rule_thm",
   ``!prog l ls1 ls2 pre post .
@@ -1272,6 +1357,92 @@ REPEAT STRIP_TAC >| [
 
   FULL_SIMP_TAC std_ss []
 ]
+);
+
+
+val bir_taut_map_pre_str_rule_thm = store_thm("bir_taut_map_pre_str_rule_thm",
+  ``!prog invariant l ls ls' pre1 pre2 post.
+    ((bir_vars_of_exp pre2) SUBSET (bir_vars_of_program prog)) ==>
+    ((bir_vars_of_exp pre1) SUBSET (bir_vars_of_program prog)) ==>
+    bir_exp_is_taut
+      (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not pre2) pre1) ==>
+    bir_map_triple prog invariant l ls ls' pre1 post ==>
+    bir_map_triple prog invariant l ls ls' pre2 post``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_map_triple_def, weak_map_triple_def, weak_triple_def,
+                      bir_exec_to_labels_triple_precond_def] >>
+REPEAT STRIP_TAC >>
+PAT_X_ASSUM ``!s. _`` (fn thm => ASSUME_TAC (Q.SPEC `s` thm)) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+subgoal `(bir_vars_of_exp pre2 = bir_vars_of_exp pre1) ==>
+         !s.
+             bir_is_bool_exp_env s.bst_environ pre2 <=>
+             bir_is_bool_exp_env s.bst_environ pre1` >- (
+  IMP_RES_TAC bir_exp_is_taut_same_vars_both_bool
+) >>
+FULL_SIMP_TAC std_ss [bir_exp_is_taut_def] >>
+PAT_X_ASSUM ``!env. _`` (fn thm => ASSUME_TAC (Q.SPEC `s.bst_environ` thm)) >>
+subgoal `bir_env_vars_are_initialised s.bst_environ
+           (bir_vars_of_exp
+              (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not pre2) pre1))` >- (
+  FULL_SIMP_TAC std_ss [bir_vars_of_exp_def,
+                        bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
+  IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET >>
+  FULL_SIMP_TAC std_ss []
+) >>
+FULL_SIMP_TAC std_ss [] >> 
+ASSUME_TAC (Q.SPECL [`s.bst_environ`, `pre2`, `pre1`]  bir_exp_equivTheory.bir_impl_equiv) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+subgoal `bir_is_bool_exp_env s.bst_environ pre1` >- (
+  FULL_SIMP_TAC std_ss [bir_is_bool_exp_REWRS, bir_vars_of_exp_def,
+                        bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
+                        bir_is_bool_exp_env_def]
+) >>
+METIS_TAC []
+);
+
+
+val bir_taut_map_post_weak_rule_thm = store_thm("bir_taut_map_post_weak_rule_thm",
+  ``!prog invariant l ls l2 ls' pre post1 post2.
+    ((bir_vars_of_exp (post1 l2)) SUBSET (bir_vars_of_program prog)) ==>
+    ((bir_vars_of_exp (post2 l2)) SUBSET (bir_vars_of_program prog)) ==>
+    (!l'. (l' <> l2) ==> (post1 l' = post2 l')) ==>
+    bir_exp_is_taut
+      (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not (post1 l2)) (post2 l2)) ==>
+    bir_map_triple prog invariant l ls ls' pre post1 ==>
+    bir_map_triple prog invariant l ls ls' pre post2``,
+
+FULL_SIMP_TAC std_ss [bir_map_triple_def, weak_map_triple_def, weak_triple_def,
+                      bir_exec_to_labels_triple_postcond_def] >>
+REPEAT STRIP_TAC >>
+PAT_X_ASSUM ``!s. _`` (fn thm => ASSUME_TAC (Q.SPEC `s` thm)) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+
+Q.EXISTS_TAC `s'` >>
+Cases_on `s'.bst_pc.bpc_label <> l2` >- (
+  METIS_TAC []
+) >>
+Q.ABBREV_TAC `env' = s'.bst_environ` >>
+FULL_SIMP_TAC std_ss [] >>
+
+subgoal `bir_env_vars_are_initialised env' (bir_vars_of_exp
+                  (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not (post1 l2))
+                     (post2 l2)))` >- (
+  FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def, bir_vars_of_exp_def,
+                        bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
+  METIS_TAC [bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET]
+) >>
+
+IMP_RES_TAC bir_exp_tautologiesTheory.bir_exp_is_taut_def >>
+
+subgoal `bir_is_bool_exp_env s'.bst_environ (post2 l2)` >- (
+  FULL_SIMP_TAC std_ss [bir_is_bool_exp_env_def, bir_vars_of_exp_def,
+                        bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
+                        bir_is_bool_exp_REWRS]
+) >>
+
+METIS_TAC [bir_exp_equivTheory.bir_impl_equiv, bir_exp_tautologiesTheory.bir_exp_is_taut_def]
 );
 
 
