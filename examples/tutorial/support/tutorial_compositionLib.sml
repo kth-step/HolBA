@@ -214,16 +214,16 @@ struct
     local
     fun remove_label list label = filter (fn el => not (term_eq el label)) list
 
-    fun bir_populate_blacklist' _ _ [] map_triple=
+    fun bir_populate_blacklist' _ _ [] map_triple assmpt=
       map_triple
       | bir_populate_blacklist' (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
                                  simp_delete_set_repr_rule, simp_insert_set_repr_rule) post
-                                (h::t) map_triple =
+                                (h::t) map_triple assmpt =
 	  let
 	    val elabel_post_is_false_tm = mk_comb ((get_bir_map_triple_post map_triple), h)
 	    val elabel_post_is_false_thm =
 	      SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss)
-                [] elabel_post_is_false_tm
+                [ASSUME assmpt] elabel_post_is_false_tm
 	    val elabel_post_is_false =
 	      term_eq ((snd o dest_eq o concl) elabel_post_is_false_thm)
 		bir_bool_expSyntax.bir_exp_false_tm
@@ -238,20 +238,30 @@ struct
 		   val new_map_triple3 =
 		     HO_MATCH_MP new_map_triple2 (SIMP_RULE std_ss [] elabel_post_is_false_thm)
 		   val new_map_triple4 =
-		     simp_delete_set_repr_rule new_map_triple3
+                     SIMP_RULE std_ss [ASSUME assmpt]
+		     (simp_delete_set_repr_rule new_map_triple3)
 		   val new_map_triple5 =
 		     simp_insert_set_repr_rule new_map_triple4
 		 in
 		   bir_populate_blacklist' (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
                                             simp_delete_set_repr_rule, simp_insert_set_repr_rule) post
-                                           t new_map_triple5 
+                                           t new_map_triple5 assmpt
                      
 		 end
 	    else bir_populate_blacklist' (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
                                           simp_delete_set_repr_rule, simp_insert_set_repr_rule) post
-                                         t map_triple  
+                                         t map_triple assmpt
 	  end
     in
+      fun bir_populate_blacklist_assmpt (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
+                                  simp_delete_set_repr_rule, simp_insert_set_repr_rule) map_triple assmpt =
+	bir_populate_blacklist'
+	  (get_labels_from_set_repr, el_in_set_repr, mk_set_repr, simp_delete_set_repr_rule,
+	   simp_insert_set_repr_rule)
+	  (get_bir_map_triple_post map_triple)
+	  (get_labels_from_set_repr (get_bir_map_triple_wlist map_triple))
+	  map_triple assmpt
+
       fun bir_populate_blacklist (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
                                   simp_delete_set_repr_rule, simp_insert_set_repr_rule) map_triple =
 	bir_populate_blacklist'
@@ -259,7 +269,7 @@ struct
 	   simp_insert_set_repr_rule)
 	  (get_bir_map_triple_post map_triple)
 	  (get_labels_from_set_repr (get_bir_map_triple_wlist map_triple))
-	  map_triple
+	  map_triple T
     end
     ;
 
@@ -390,9 +400,9 @@ struct
     (* This function composes two bir_map_triples sequentially using bir_map_std_seq_comp_thm *)
     (* TODO: Fix the mess with def_list unfolding too much back and forth,
      *       see if RESTR_EVAL_RULE can be helpful *)
-    fun bir_compose_seq (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
+    fun bir_compose_seq_assmpt (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
                          simp_inter_set_repr_rule)
-          map_ht1 map_ht2 def_list =
+          map_ht1 map_ht2 def_list assmpt =
       let
 	(* 1. Specialise bir_map_std_seq_comp_thm *)
 	val prog = get_bir_map_triple_prog map_ht1
@@ -438,7 +448,7 @@ struct
                                          white_ending_label_set2),
                                      pred_setSyntax.mk_empty bir_label_t_ty),
                             (* TODO: srw_ss()... *)
-                            SIMP_TAC (srw_ss()) [pred_setTheory.INTER_DEF, pred_setTheory.IN_ABS,
+                            SIMP_TAC (srw_ss()) [ASSUME assmpt, pred_setTheory.INTER_DEF, pred_setTheory.IN_ABS,
                                                  spec_noteq_trans_impl1]
                             )] bir_add_comp_seq_rule_thm1
 
@@ -459,7 +469,7 @@ struct
 					    black_ending_label_set2),
 					 pred_setSyntax.mk_empty bir_label_t_ty),
 				(* TODO: srw_ss()... *)
-				SIMP_TAC (srw_ss()) [pred_setTheory.INTER_DEF,
+				SIMP_TAC (srw_ss()) [ASSUME assmpt, pred_setTheory.INTER_DEF,
 						     pred_setTheory.IN_ABS,
 						     spec_noteq_trans_impl2]
 				)] bir_add_comp_seq_rule_thm2
@@ -484,11 +494,22 @@ struct
         (* Clean-up the expanded definitions *)
 	val bir_add_comp_seq_rule_thm7 =
           simp_inter_set_repr_rule (SIMP_RULE std_ss (map GSYM def_list) bir_add_comp_seq_rule_thm6)
+        val bir_add_comp_seq_rule_thm8 =
+          SIMP_RULE (std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.bir_TYPES_ss) [ASSUME assmpt] bir_add_comp_seq_rule_thm7
 
       in
-	bir_add_comp_seq_rule_thm7
+	bir_add_comp_seq_rule_thm8
       end
     ;
+
+    fun bir_compose_seq (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
+                         simp_inter_set_repr_rule)
+          map_ht1 map_ht2 def_list
+       =
+        bir_compose_seq_assmpt (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
+                         simp_inter_set_repr_rule)
+          map_ht1 map_ht2 def_list T
+       ;
 
     (* This function composes two bir_triples sequentially using bir_map_std_seq_comp_thm *)
     fun bir_compose_nonmap_seq ht1 ht2 def_list (get_labels_from_set_repr, el_in_set_repr,
@@ -509,6 +530,29 @@ struct
         bir_compose_seq (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
                          simp_inter_set_repr_rule)
           map_ht1 map_ht2 def_list
+      end
+    ;
+
+    fun bir_compose_nonmap_seq_assmpt ht1 ht2 ht_assmpt def_list (get_labels_from_set_repr, el_in_set_repr,
+                                                 mk_set_repr, simp_delete_set_repr_rule,
+	                                         simp_insert_set_repr_rule,
+                                                 simp_in_sing_set_repr_rule,
+                                                 simp_inter_set_repr_rule) =
+      let
+        val map_ht1 =
+          bir_populate_blacklist_assmpt (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
+                                  simp_delete_set_repr_rule, simp_insert_set_repr_rule)
+                                 (bir_map_triple_from_bir_triple ht1)
+                                 ht_assmpt
+        val map_ht2 =
+          bir_populate_blacklist_assmpt (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
+                                  simp_delete_set_repr_rule, simp_insert_set_repr_rule)
+                                 (bir_map_triple_from_bir_triple ht2)
+                                 ht_assmpt
+      in
+        bir_compose_seq_assmpt (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
+                         simp_inter_set_repr_rule)
+          map_ht1 map_ht2 def_list ht_assmpt
       end
     ;
 
