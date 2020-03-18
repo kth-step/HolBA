@@ -117,6 +117,46 @@ struct
         new_contract_thm
       end;
 
+    fun use_post_weak_rule_map map_ht_thm l2 post1_impl_post2 =
+      let
+	val map_ht_thm = SIMP_RULE std_ss [bir_bool_expTheory.bir_exp_and_def] map_ht_thm;
+        val post2e_wo = (remove_foralls o concl) post1_impl_post2;
+	val post2e = ((el 3) o snd o strip_comb o hd o snd o strip_comb) post2e_wo;
+	val prog = get_bir_map_triple_prog map_ht_thm;
+        val invar = get_bir_map_triple_invariant map_ht_thm;
+	val entry = get_bir_map_triple_start_label map_ht_thm;
+	val wlist = get_bir_map_triple_wlist map_ht_thm;
+	val blist = get_bir_map_triple_blist map_ht_thm;
+	val post1 = get_bir_map_triple_post map_ht_thm;
+        val post2 = ``\l. if l = ^l2 then ^post2e else ^post1 l``;
+	val pre = get_bir_map_triple_pre map_ht_thm;
+        val taut_eq_thm = computeLib.RESTR_EVAL_CONV [(fst o strip_comb) post2e, ``bir_exp_is_taut``] (concl post1_impl_post2);
+	val taut_thm = EQ_MP taut_eq_thm post1_impl_post2;
+        (* TODO: This is slow. Replace it with something faster later. *)
+	val post2_var_thm = prove (``
+	   ((bir_vars_of_exp (^post2 ^l2)) SUBSET (bir_vars_of_program ^prog))
+	   ``,
+	   computeLib.RESTR_EVAL_TAC [``bir_vars_of_exp``, ``bir_vars_of_program``] >>
+	   (SIMP_TAC vars_ss
+	   ) [bir_valuesTheory.BType_Bool_def]
+	);
+        (* TODO: This is slow. Replace it with something faster later. *)
+	val post1_var_thm = prove (``
+	   ((bir_vars_of_exp (^post1 ^l2)) SUBSET (bir_vars_of_program ^prog))
+	   ``,
+	   computeLib.RESTR_EVAL_TAC [``bir_vars_of_exp``, ``bir_vars_of_program``] >>
+	   (SIMP_TAC vars_ss
+	   ) [bir_valuesTheory.BType_Bool_def]
+	);
+	val new_contract_thm = ((SIMP_RULE std_ss [map_ht_thm, taut_thm, taut_eq_thm,
+                                                   post1_impl_post2, post1_var_thm, post2_var_thm]) 
+	  ((ISPECL [prog, invar, entry, wlist, l2, blist, pre, post1, post2])
+	      bir_wm_instTheory.bir_taut_map_post_weak_rule_thm)
+	      );
+      in
+        new_contract_thm
+      end;
+
     fun bir_map_triple_from_bir_triple tr =
       let
 	val prog = get_contract_prog tr
