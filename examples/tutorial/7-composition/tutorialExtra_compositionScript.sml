@@ -197,18 +197,28 @@ val bir_att_body_map_ht =
     def_list;
 
 
-(*
 (* experiment with post condition weakening *)
-val bir_att_sec_call_2_comp_ht =
-  use_post_weak_rule_map
-    bir_att_sec_call_1_map_ht
-    bir_att_sec_call_1_taut;
-*)
+val map_ht_thm =     bir_att_sec_call_1_map_ht
+val post1_impl_post2 =    bir_att_sec_call_1_taut;
+val l2 = ``BL_Address (Imm32 4w)``;
 
+val bir_att_sec_call_1_map_ht_alt =
+  use_post_weak_rule_map map_ht_thm l2 post1_impl_post2;
+
+val bir_att_body_map_ht_alt =
+  bir_compose_seq (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
+                   simp_inter_set_repr_rule)
+    bir_att_sec_call_1_map_ht_alt
+    bir_att_sec_call_2_map_ht_inst
+    def_list;
+
+val _ = if concl bir_att_body_map_ht_alt = concl bir_att_body_map_ht then
+          ()
+        else
+          raise ERR "composition of example code" "composition using two types of contract weakening does not give the same result";
 
 (* ====================================== *)
 (* final composition, needs post condition weakening *)
-(*
 local
 open tutorial_smtSupportLib;
 in
@@ -216,9 +226,18 @@ val bir_att_post_taut = prove_exp_is_taut
        (bimp (``bir_att_sec_add_2_post (v1 + v2) (v1 + v2)``, ``bir_att_sec_2_post v1 v2``));
 end
 
-*)
+val bir_att_post_ht =
+  use_post_weak_rule_map
+    bir_att_body_map_ht_alt
+    ``BL_Address (Imm32 8w)``
+    bir_att_post_taut;
 
-(* TODO: store theorem after final composition *)
+
+(* ====================================== *)
+(* store theorem after final composition *)
+val bir_att_ht = save_thm("bir_att_ht",
+  REWRITE_RULE [bir_att_sec_2_post_def, bir_att_sec_call_1_pre_def] bir_att_post_ht
+);
 
 val _ = export_theory();
 
