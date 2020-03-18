@@ -38,10 +38,11 @@ struct
 
     val vars_ss = std_ss++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss++stringSimps.STRING_ss++string_ss++char_ss++HolBASimps.VARS_OF_PROG_ss;
 
+    fun remove_foralls t = (remove_foralls o snd o dest_forall) t
+                           handle HOL_ERR _ => t;
+
     fun use_pre_str_rule contract_thm pre_impl_wp =
       let
-        fun remove_foralls t = (remove_foralls o snd o dest_forall) t
-                               handle HOL_ERR _ => t;
 
 	val contract_thm = SIMP_RULE std_ss [bir_bool_expTheory.bir_exp_and_def] contract_thm;
         val pre_wo = (remove_foralls o concl) pre_impl_wp;
@@ -80,7 +81,8 @@ struct
     fun use_pre_str_rule_map map_ht_thm pre_impl_wp =
       let
 	val map_ht_thm = SIMP_RULE std_ss [bir_bool_expTheory.bir_exp_and_def] map_ht_thm;
-	val pre = ((el 2) o snd o strip_comb o (el 2) o snd o strip_comb o hd o snd o strip_comb o concl) pre_impl_wp;
+        val pre_wo = (remove_foralls o concl) pre_impl_wp;
+	val pre = ((el 2) o snd o strip_comb o (el 2) o snd o strip_comb o hd o snd o strip_comb) pre_wo;
 	val prog = get_bir_map_triple_prog map_ht_thm;
         val invar = get_bir_map_triple_invariant map_ht_thm;
 	val entry = get_bir_map_triple_start_label map_ht_thm;
@@ -88,7 +90,8 @@ struct
 	val blist = get_bir_map_triple_blist map_ht_thm;
 	val post = get_bir_map_triple_post map_ht_thm;
 	val wp = get_bir_map_triple_pre map_ht_thm;
-	val taut_thm = computeLib.RESTR_EVAL_RULE [(fst o strip_comb) pre, ``bir_exp_is_taut``] pre_impl_wp;
+        val taut_eq_thm = computeLib.RESTR_EVAL_CONV [(fst o strip_comb) pre, ``bir_exp_is_taut``] (concl pre_impl_wp);
+	val taut_thm = EQ_MP taut_eq_thm pre_impl_wp;
         (* TODO: This is slow. Replace it with something faster later. *)
 	val pre_var_thm = prove (``
 	   ((bir_vars_of_exp ^pre) SUBSET (bir_vars_of_program ^prog))
@@ -105,7 +108,8 @@ struct
 	   (SIMP_TAC vars_ss
 	   ) [bir_valuesTheory.BType_Bool_def]
 	);
-	val new_contract_thm = ((SIMP_RULE std_ss [map_ht_thm, taut_thm, wp_var_thm, pre_var_thm]) 
+	val new_contract_thm = ((SIMP_RULE std_ss [map_ht_thm, taut_thm, taut_eq_thm,
+                                                   pre_impl_wp, wp_var_thm, pre_var_thm]) 
 	  ((ISPECL [prog, invar, entry, wlist, blist, wp, pre, post])
 	      bir_wm_instTheory.bir_taut_map_pre_str_rule_thm)
 	      );
