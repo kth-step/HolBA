@@ -145,37 +145,21 @@ fun print_model model =
         () (rev model);
 
 
-
-(* fun to_sml_Arbnums model = *)
-(*     List.map (fn (name, tm) => if finite_mapSyntax.is_fupdate tm *)
-(* 			       then *)
-(* 				   let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm *)
-(* 				       val vlsN = map (fn p =>  *)
-(* 							  let *)
-(* 							      val (ad, vl) = pairSyntax.dest_pair p  *)
-(* 							  in  *)
-(* 							      (dest_word_literal ad, dest_word_literal vl)  *)
-(* 							  end) vlsW *)
-(* 				   in *)
-(* 				       (name, vlsN) *)
-(* 				   end *)
-(* 			       else *)
-(* 				   (name, [(dest_word_literal tm, dest_word_literal ``0w:word8``)])) model; *)
-
-
-fun to_sml_Arbnums_mem (model:(string * term) list)=
-    List.map (fn (name, tm) => let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm
-				   val vlsN = map (fn p => 
-						      let
-							  val (ad, vl) = pairSyntax.dest_pair p 
-						      in 
-							  (dest_word_literal ad, dest_word_literal vl) 
-						      end) vlsW
-			       in
-				   (name, vlsN)
-			       end)
-fun to_sml_Arbnums_reg (model:(string * term) list) =
-    map (fn (name, tm) => (name, dest_word_literal tm)) model;
+fun to_sml_Arbnums model =
+    List.map (fn (name, tm) => if finite_mapSyntax.is_fupdate tm
+			       then
+				   let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm
+				       val vlsN = map (fn p =>
+							  let
+							      val (ad, vl) = pairSyntax.dest_pair p
+							  in
+							      (dest_word_literal ad, dest_word_literal vl)
+							  end) vlsW
+				   in
+				       memT(name, vlsN)
+				   end
+			       else
+				   regT(name, dest_word_literal tm)) model;
 
 val hw_obs_model_id = ref "";
 val do_enum = ref false;
@@ -296,19 +280,19 @@ fun all_obs_not_present { a_run = (_,a_obs), b_run = (_,b_obs) } =
     end;
 
 
-fun memConstraint [] = ``T`` 
+fun memConstraint [] = ``T``
   | memConstraint mls =
     let fun adjust_prime s =
             if String.isSuffix "_" s
             then String.map (fn c => if c = #"_" then #"'" else c) s
             else s
 	fun mk_cnst vname vls =
-	    let 
+	    let
 		val toIntls = (snd o finite_mapSyntax.strip_fupdate) vls;
 		val mem = mk_var (adjust_prime vname ,Type`:word64 |-> word8`);
 		val mem' = foldl (fn (a,b) => ``FUPDATE  ^b ^a``) mem toIntls;
 		val memconstraint = map (fn p => let val (t1,t2) = pairSyntax.dest_pair p
-						 in 
+						 in
 						     ``(THE(FLOOKUP ^mem' ^t1) = ^t2)``
 						 end) toIntls;
 		val mc_conj = foldl (fn (a,b) => mk_conj (a,b)) (hd memconstraint) (tl memconstraint)
@@ -321,20 +305,19 @@ fun memConstraint [] = ``T``
 	``~(^mc_conj)``
     end;
 
-
 fun prime_mem model =
     let val fmem = (filter (fn el => (String.isSubstring (#1 el) "MEM_")) model)
     in
 	case fmem of [] => model
-		   | _ => model@[("MEM_", (snd o hd) fmem )] 
+		   | _ => model@[("MEM_", (snd o hd) fmem )]
     end
     
 fun next_experiment all_exps next_relation  =
     let
         open bir_expLib;
         
-        (* ADHOC this constrains paths to only those where
-           none of the observations appear *)
+        (* ADHOC this constrains paths to only those where *)
+	(* none of the observations appear *)
         val guard_path_spec =
             if !do_enum
             then all_obs_not_present
@@ -364,15 +347,24 @@ fun next_experiment all_exps next_relation  =
 
         val _ = printv 1 ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
-        val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
-        val _ = printv 1 ("Printed model\n");
+        val _ = min_verb 3 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
+        val _ = printv 4 ("Printed model\n");
 	(*Need to be removed later. It is just for experimental reasone*)
 	val model = prime_mem model
 
+
+        fun remove_prime str =
+          if String.isSuffix "_" str then
+            (String.extract(str, 0, SOME((String.size str) - 1)))
+          else
+            raise ERR "remove_prime" "there was no prime where there should be one";
+
+	fun isPrimedRun s = String.isSuffix "_" s;
 	val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
-        val sml_model = to_sml_Arbnums_reg regs;
-        fun isPrimedRun s = String.isSuffix "_" s;
-        val (s2,s1) = List.partition (isPrimedRun o fst) sml_model
+	val (primed, nprimed) = List.partition (isPrimedRun o fst) model
+	val rmprime = List.map (fn (r,v) => (remove_prime r,v)) primed
+        val s1 = to_sml_Arbnums nprimed;
+	val s2 = to_sml_Arbnums primed;
         val prog_id = !current_prog_id;
 	    
         fun mk_var_mapping s =
@@ -383,14 +375,13 @@ fun next_experiment all_exps next_relation  =
                             else s;
                         val va = mk_var (adjust_prime a,``:word64``);
                     in ``^va = ^b``
-                    end; 
+                    end;
             in list_mk_conj (map mk_eq s) end;
 
         val reg_constraint = ``~^(mk_var_mapping (regs))``;
 	val mem_constraint = memConstraint ml;
 	val new_constraint = mk_conj (reg_constraint, mem_constraint)
 
-        val _ = printv 1 ("after new_constraint\n");
         val _ =
             current_word_rel :=
             (case !current_word_rel of
@@ -398,15 +389,11 @@ fun next_experiment all_exps next_relation  =
                | SOME cumulative =>
                  SOME ``^cumulative /\ ^new_constraint``);
 
-(*        val _ = print_term (valOf (!current_word_rel)); *)
+	(* val _ = print_term (valOf (!current_word_rel)); *)
 
         (* clean up s2 *)
-        fun remove_prime str =
-          if String.isSuffix "_" str then
-            (String.extract(str, 0, SOME((String.size str) - 1)))
-          else
-            raise ERR "remove_prime" "there was no prime where there should be one";
-        val s2 = List.map (fn (r,v) => (remove_prime r,v)) s2;
+        (* val s2 = List.map (fn (r,v) => (remove_prime r,v)) s2; *)
+	val s2 = to_sml_Arbnums rmprime
 
         (* check with concrete-symbolic execution whether the observations are actually equivalent *)
         val lifted_prog_w_obs = case !current_prog_w_obs of

@@ -1,5 +1,8 @@
 signature bir_embexp_driverLib = sig
 
+    
+  datatype modelValues = memT of (string * (num*num) list)
+		       | regT of (string * num)
   (* platform parameters *)
   (* ======================================== *)
   val bir_embexp_params_code   : Arbnum.num (* base address for placement *)
@@ -28,8 +31,8 @@ signature bir_embexp_driverLib = sig
        - (state1, state2)
      Returns experiment id (exp_id)
    *)
-  val bir_embexp_sates2_create : (string * string * string) -> string -> (((string * num) list) * ((string * num) list)) -> string
-
+  (* val bir_embexp_sates2_create : (string * string * string) -> string -> (((string * num) list) * ((string * num) list)) -> string *)
+  val bir_embexp_sates2_create : string * string * string ->  string -> modelValues list * modelValues list -> string
   (* Inputs:
        - exp_id (see above)
        - with_reset (run with reset or not)
