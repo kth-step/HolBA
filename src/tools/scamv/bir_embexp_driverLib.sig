@@ -1,6 +1,5 @@
 signature bir_embexp_driverLib = sig
-
-    
+  
   datatype modelValues = memT of (string * (num*num) list)
 		       | regT of (string * num)
   (* platform parameters *)

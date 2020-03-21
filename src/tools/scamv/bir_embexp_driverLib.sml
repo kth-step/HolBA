@@ -203,40 +203,11 @@ struct
       close_log holbarun_log
     end;
 
-
-(* create json state *)
-  (* fun gen_json_state isSecond s = *)
-  (*   let *)
-  (*     fun kv_to_json (k,v) = *)
-  (*       let *)
-  (*         val _ = if String.isPrefix "R" k then () else *)
-  (*                   raise ERR "gen_json_state" "input not as exptected"; *)
-  (*         val _ = if isSecond = String.isSuffix "_" k then () else *)
-  (*                   raise ERR "gen_json_state" "input not as exptected _"; *)
-  (*         val k = if isSecond then *)
-  (*                   (String.extract(k, 0, SOME((String.size k) - 1))) *)
-  (*                 else k; *)
-
-  (*         val regname = "x" ^ (String.extract(k, 1, NONE)); *)
-  (*       in *)
-  (*         "\n\t\"" ^ regname ^ "\": " ^ (Arbnumcore.toString v) *)
-  (*       end; *)
-  (*     val s_jsonmappings = List.map kv_to_json s; *)
-
-  (*     val str = List.foldr (fn (m, str) => m ^ "," ^ str) "" s_jsonmappings; *)
-  (*   in *)
-  (*     "{" ^ (String.extract(str, 0, SOME((String.size str) - 1))) ^ "\n}" *)
-  (*   end; *)
-
-  
-  datatype modelValues = memT of (string * (num*num) list)
-		       | regT of (string * num)
-  
-  fun getReg tm = case tm of regT x => x
-  fun getMem tm = case tm of memT x => x 
-(* create json state *)
+  (* create json state *)
   fun gen_json_state isSecond s =
     let
+      fun getReg tm = case tm of regT x => x
+      fun getMem tm = case tm of memT x => x
       fun is_memT tm = can getMem tm;
       fun rkv_to_json (k,v) =
         let
@@ -255,7 +226,7 @@ struct
 
       fun mkv_to_json (k,v) =
         let
-	    val memConcat = foldr (fn (a,b) => a^",\n"^b) ""
+	    val memConcat = foldr (fn (a,b) => a^",\n\t\t\t"^b) ""
             val _ = if isSecond = String.isSuffix "_" k then () else
                     raise ERR "gen_json_state" "input not as exptected _";
             val k = if isSecond then
