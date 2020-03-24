@@ -65,7 +65,7 @@ fun get_tempfile prefix =
     val date = Date.fromTimeLocal (Time.now ());
     val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S" date;
   in
-    tempdir ^ "/cfg_" ^ datestr
+    tempdir ^ "/" ^ prefix ^ datestr
   end;
 
 in (* local *)
@@ -74,7 +74,7 @@ fun display_graph_cfg_ns ns =
   let
     val (nodes, edges, _) = List.foldr gen_graph_for_nodes_proc ([], [], 0x10000) ns;
 
-    val file = get_tempfile "cfg_";
+    val file = get_tempfile "cfg";
     val dot_str = gen_graph (nodes, edges);
     val _ = writeToFile dot_str (file ^ ".dot");
     val _ = convertAndView file;
