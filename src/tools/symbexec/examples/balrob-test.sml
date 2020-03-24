@@ -162,23 +162,70 @@ fun symb_exec_stmt (s, syst) =
 
 
 
+fun get_next_exec_sts lbl_tm est syst =
+  let
+    val (vs, _) = hol88Lib.match ``BStmt_Jmp (BLE_Label xyz)`` est;
+    val tgt     = (fst o hd) vs;
+  in
+    [(tgt, syst)]
+    handle Empty =>
+      raise ERR "get_next_exec_sts" ("unexpected 1 at " ^ (term_to_string lbl_tm))
+  end
+  handle HOL_ERR _ => (
+  let
+    val (vs, _) = hol88Lib.match ``BStmt_CJmp xyzc (BLE_Label xyz1) (BLE_Label xyz2)`` est;
+    val cnd     = fst (List.nth (vs, 0));
+    val tgt1    = fst (List.nth (vs, 1));
+    val tgt2    = fst (List.nth (vs, 2));
+
+    val SymbState systr = syst;
+    val syst1   = SymbState { SYST_env = #SYST_env systr, SYST_pred = (cnd)::(#SYST_pred systr)};
+    val syst2   = SymbState { SYST_env = #SYST_env systr, SYST_pred = (bslSyntax.bnot cnd)::(#SYST_pred systr)};
+  in
+    [(tgt1, syst1), (tgt2, syst2)]
+    handle Empty =>
+      raise ERR "get_next_exec_sts" ("unexpected 1 at " ^ (term_to_string lbl_tm))
+  end
+  handle HOL_ERR _ =>
+    let
+      val n       = find_node ns lbl_tm;
+      val n_type  = #CFGN_type n;
+      val _       = if n_type = CFGNT_Call orelse n_type = CFGNT_Jump then () else
+                      raise ERR "get_next_exec_sts" ("unexpected 2 at " ^ (term_to_string lbl_tm));
+
+      val n_goto  = #CFGN_goto n;
+      val lbl_tms = (valOf o cfg_targets_to_lbl_tms) n_goto
+            handle Option => raise ERR "get_next_exec_sts" ("error for " ^ (term_to_string lbl_tm));
+    in
+      List.map (fn t => (t, syst)) lbl_tms
+    end);
 
 (*
 val syst = init_state prog_vars;
 *)
-fun symb_exec_block lbl_tm syst =
+fun symb_exec_block (lbl_tm, syst) =
   let
     val bl = (valOf o prog_get_block_) lbl_tm;
-    val (_, stmts, _) = dest_bir_block bl;
+    val (_, stmts, est) = dest_bir_block bl;
     val s_tms = (fst o listSyntax.dest_list) stmts;
 
     val syst2 = List.foldl symb_exec_stmt syst s_tms;
     val syst3 = tidyup_state syst2;
-
-    (* TODO: generate list of states from end statement *)
   in
-    syst3
+    (* generate list of states from end statement *)
+    get_next_exec_sts lbl_tm est syst3
   end;
+
+
+fun symb_exec_to_stop []                  _            acc = acc
+  | symb_exec_to_stop (exec_st::exec_sts) stop_lbl_tms acc =
+      let
+        val sts = symb_exec_block exec_st;
+        val (new_acc, new_exec_sts) =
+              List.partition (fn (t, _) => List.exists (fn x => x = t) stop_lbl_tms) sts;
+      in
+        symb_exec_to_stop (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
+      end;
 
 
 fun check_satisfiability (SymbState systr) =
@@ -194,5 +241,26 @@ fun check_satisfiability (SymbState systr) =
   end;
 
 
+val stop_lbl_tms = (List.map #CFGN_lbl_tm o
+                    List.filter (fn n => node_to_rel_symbol n = name andalso
+                                         #CFGN_type n = CFGNT_Return)
+                   ) ns;
+
+(* stop at first branch *)
+val lbl_tm = ``BL_Address (Imm32 0xb08w)``;
+val stop_lbl_tms = [``BL_Address (Imm32 0xb22w)``];
+(* just check first branch *)
+val lbl_tm = ``BL_Address (Imm32 0xb22w)``;
+val stop_lbl_tms = [``BL_Address (Imm32 0xb24w)``, ``BL_Address (Imm32 0xb2aw)``];
+
 val syst  = init_state prog_vars;
-val systs = symb_exec_block lbl_tm syst;
+val exec_st = (lbl_tm, syst);
+
+(*
+val syst_new = symb_exec_block exec_st;
+*)
+
+val exec_sts = symb_exec_to_stop [exec_st] stop_lbl_tms [];
+(*
+length exec_sts
+*)

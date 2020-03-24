@@ -472,6 +472,12 @@ val ns  = List.map (update_node_fix_return_goto (lookup_calls_to ci)) ns_;
 val ns = ns;
 val ci = ci;
 
+val cfg_targets_to_lbl_tms = cfg_targets_to_lbl_tms;
+
+fun find_node (ns:cfg_node list) lbl_tm =
+  (valOf o List.find (fn n => #CFGN_lbl_tm n = lbl_tm)) ns
+  handle Option => raise ERR "find_node" ("couldn't find node " ^ (term_to_string lbl_tm));
+
 
 fun get_fun_cfg_walk_succ (n: cfg_node) =
   let
