@@ -226,7 +226,7 @@ struct
 
       fun mkv_to_json (k,v) =
         let
-	    val memConcat = foldr (fn (a,b) => a^",\n\t\t\t"^b) ""
+	    val memConcat = foldr (fn (a,b) => a^",\n\t\t\t"^b) "";
             val _ = if isSecond = String.isSuffix "_" k then () else
                     raise ERR "gen_json_state" "input not as exptected _";
             val k = if isSecond then
@@ -234,11 +234,15 @@ struct
                     else k;
 
           val mname = "mem" ^ (String.extract(k, 3, NONE))
-	  val mappings = (map (fn el => (Arbnumcore.toString (fst el)) ^
-					" -> " ^
+	  val mappings = (map (fn el => "\""^(Arbnumcore.toString (fst el)) ^ "\"" ^
+					" : " ^
 					(Arbnumcore.toString (snd el))) v)
+	  val m_tm = memConcat mappings
+	  val m_tm_sub = if String.size(m_tm) <> 0 
+			 then String.extract (m_tm, 0, SOME(String.size(m_tm) - 5))
+			 else String.extract (m_tm, 0, NONE)
         in
-          "\n\t\"" ^ mname ^ "\": " ^ "{" ^ (memConcat mappings) ^ "}"
+          "\n\t\"" ^ mname ^ "\": " ^ "{" ^ m_tm_sub ^ "}"
         end;
 
       val (m,rg) = List.partition (is_memT) s
