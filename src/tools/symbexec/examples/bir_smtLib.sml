@@ -134,7 +134,9 @@ fun querysmt vars asserts =
           "(assert " ^ q ^ ")\n"
         )) "" asserts;
     in
-      querysmt_raw (decls ^ "\n" ^ asserts_str ^ "(check-sat)\n")
+      querysmt_raw (decls ^ "\n" ^
+                    asserts_str ^ "\n" ^
+                    "(check-sat)\n")
     end;
 
 fun smtlib_vars_compare ((an, aty),(bn, bty)) =
@@ -184,7 +186,7 @@ in
     let
       val btype = (snd o dest_BVar_string) bv;
     in
-        if      is_BType_Imm1  btype then
+        if      is_BType_Imm1  btype orelse is_BType_Bool btype then
           SMTTY_Bool
         else if is_BType_Imm8  btype then
           SMTTY_BV8
@@ -226,7 +228,10 @@ fun problem_gen_sty fname t sty =
       else if is_BIExp_SignedRightShift bop then "s>>"
 *)
       else problem_gen_sty "bop_to_smtlib" bop sty
-    else problem_gen_sty "bop_to_smtlib" bop sty;
+    else if smt_type_is_bool sty then
+      problem_gen_sty "bop_to_smtlib" bop sty
+    else
+      problem_gen_sty "bop_to_smtlib" bop sty;
 
   fun bpredop_to_smtlib sty bpredop =
     if is_BIExp_Equal bpredop then "="
@@ -239,12 +244,23 @@ fun problem_gen_sty fname t sty =
 *)
     else raise problem_gen_sty "bpredop_to_smtlib" bpredop sty;
 
-  fun uop_to_smtlib sty uop = (*
-    if is_BIExp_ChangeSign uop then "-"
-    else if is_BIExp_Not uop then "!"
-    else if is_BIExp_CLZ uop then "($CLZ)"
-    else if is_BIExp_CLS uop then "($CLS)"
-    else *) problem_gen_sty "uop_to_smtlib" uop sty;
+  fun uop_to_smtlib sty uop =
+    if smt_type_is_bv sty then (*
+      if is_BIExp_ChangeSign uop then "-"
+      else if is_BIExp_Not uop then "!"
+      else if is_BIExp_CLZ uop then "($CLZ)"
+      else if is_BIExp_CLS uop then "($CLS)"
+      else *) problem_gen_sty "uop_to_smtlib" uop sty
+    else if smt_type_is_bool sty then
+(*
+      if is_BIExp_ChangeSign uop then "-"
+      else *) if is_BIExp_Not uop then "not" (*
+      else if is_BIExp_CLZ uop then "($CLZ)"
+      else if is_BIExp_CLS uop then "($CLS)"
+*)
+      else problem_gen_sty "uop_to_smtlib" uop sty
+    else
+      problem_gen_sty "uop_to_smtlib" uop sty;
 
   fun endi_to_smtlib sty endi = (*
     if is_BEnd_BigEndian endi then "B"
@@ -357,14 +373,19 @@ fun bexp_to_smtlib vars exp =
         end
 *)
 
-(*
       else if is_BExp_IfThenElse exp then
         let
           val (expc, expt, expf) = (dest_BExp_IfThenElse) exp;
+          val (vars1, (strc, styc)) = bexp_to_smtlib vars  expc;
+          val (vars2, (strt, styt)) = bexp_to_smtlib vars1 expt;
+          val (vars3, (strf, styf)) = bexp_to_smtlib vars2 expf;
+          val _ = if smt_type_is_bool styc then () else
+                  problem exp "if-then-else needs bool in condition: ";
+          val _ = if styt = styf then () else
+                  problem exp "if-then-else needs same type for both sides: ";
         in
-          ((xf "(if ") cf (ef expc) cf (xf " then ") cf (ef expt) cf (xf " else ") cf (ef expf) cf (xf ")"))
+          (vars3, ("(ite " ^ strc ^ " " ^ strt ^ " " ^ strf ^ ")", styt))
         end
-*)
 
 (*
       else if is_BExp_Load exp then
@@ -397,7 +418,8 @@ fun bexp_to_smtlib vars exp =
         problem exp "don't know BIR expression: "
     end;
 
-
+(* poor man's unit test *)
+local
 val exp = ``BExp_Const (Imm64 3w)``
 val exp = ``BExp_Den (BVar "fr_0_countw" (BType_Imm Bit64))``
 val exp = ``BExp_Den (BVar "fr_0_Z" (BType_Imm Bit1))``
@@ -420,6 +442,8 @@ val varlist = Redblackset.listItems vars;
 *)
 
 val result = querysmt vars [str];
+in
+end
 
 end (* local *)
 

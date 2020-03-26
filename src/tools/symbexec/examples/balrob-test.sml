@@ -5,6 +5,8 @@ open binariesLib;
 open binariesCfgLib;
 open binariesCfgVizLib;
 
+open bir_smtLib;
+
 val entry_label = "imu_handler_pid_entry";
 
 (*
@@ -228,16 +230,41 @@ fun symb_exec_to_stop []                  _            acc = acc
       end;
 
 
-fun check_satisfiability (SymbState systr) =
+fun check_feasible (SymbState systr) =
   let
     val pred = #SYST_pred systr;
     val env  = #SYST_env  systr;
 
     (* memory accesses should not end up here hopefully, ignore this to begin with *)
 
-    (* TODO: implement *)
+    (* start with no variable and no assertions *)
+    val vars    = Redblackset.empty smtlib_vars_compare;
+    val asserts = [];
+
+    fun proc_preds (vars, asserts) pred =
+      List.foldr (fn (exp, (vl1,al)) =>
+        let val (vl2,a) = bexp_to_smtlib vl1 exp in
+          (vl2, a::asserts)
+        end) (vars, asserts) pred;
+
+    (* process the predicate *)
+    val (vars, asserts) = proc_preds (vars, asserts) pred;
+
+(*
+val (bv_comp,exp) = hd env;
+*)
+    (* process the environment *)
+    val (vars, asserts) = proc_preds (vars, asserts)
+                                     (List.map (fn (bv_comp,exp) =>
+      ``BExp_BinPred BIExp_Equal (BExp_Den ^(mk_BVar_string bv_comp)) ^exp``
+    ) env);
+
+    val result = querysmt vars asserts;
+
+    val _ = if result = BirSmtSat orelse result = BirSmtUnsat then () else
+            raise ERR "check_feasible" "smt solver couldn't determine feasibility"
   in
-     true
+    result <> BirSmtUnsat
   end;
 
 
@@ -263,4 +290,9 @@ val syst_new = symb_exec_block exec_st;
 val exec_sts = symb_exec_to_stop [exec_st] stop_lbl_tms [];
 (*
 length exec_sts
+
+val (SymbState systr) = (snd o hd) exec_sts
 *)
+
+val _ = check_feasible ((snd o hd) exec_sts)
+val _ = check_feasible ((snd o hd o tl) exec_sts)
