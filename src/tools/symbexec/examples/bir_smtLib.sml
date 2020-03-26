@@ -43,7 +43,7 @@ datatype bir_smt_result =
   | BirSmtUnsat
   | BirSmtUnknown;
 
-fun querysmt q =
+fun querysmt_raw q =
   let
     val tempfile = get_tempfile "smtquery";
     val _ = writeToFile q tempfile;
@@ -89,16 +89,70 @@ val q = "(echo \"Z3 does not always find solutions to non-linear problems\")\n";
 
 val q = "(check-sat)\n";
 
-val result = querysmt q;
+val result = querysmt_raw q;
 *)*)*)*)
+
+
+datatype bir_smt_type =
+    SMTTY_Bool
+  | SMTTY_BV8
+  | SMTTY_BV16
+  | SMTTY_BV32
+  | SMTTY_BV64;
+
+fun smt_type_to_smtlib SMTTY_Bool = "Bool"
+  | smt_type_to_smtlib SMTTY_BV8  = "(_ BitVec 8)"
+  | smt_type_to_smtlib SMTTY_BV16 = "(_ BitVec 16)"
+  | smt_type_to_smtlib SMTTY_BV32 = "(_ BitVec 32)"
+  | smt_type_to_smtlib SMTTY_BV64 = "(_ BitVec 64)";
+
+fun smt_type_is_bv SMTTY_Bool = false
+  | smt_type_is_bv SMTTY_BV8  = true
+  | smt_type_is_bv SMTTY_BV16 = true
+  | smt_type_is_bv SMTTY_BV32 = true
+  | smt_type_is_bv SMTTY_BV64 = true;
+
+fun smt_vars_to_smtlib vars =
+  Redblackset.foldr (fn ((vn, vty), str) => str ^ (
+        "(declare-const " ^ vn ^ " " ^ (smt_type_to_smtlib vty) ^ ")"
+      ) ^ "\n") "" vars;
+
+fun querysmt vars asserts =
+  if List.exists (fn (_,qt) => qt <> SMTTY_Bool) asserts then
+    raise ERR "querysmt" "don't know how to handle expression type in assert"
+  else
+    let
+      val decls = smt_vars_to_smtlib vars;
+      val asserts_str =
+        List.foldr (fn ((q,_), str) => str ^ (
+          "(assert " ^ q ^ ")\n"
+        )) "" asserts;
+    in
+      querysmt_raw (decls ^ "\n" ^ asserts_str ^ "(check-sat)\n")
+    end;
+
+fun smtlib_vars_compare ((an, aty),(bn, bty)) =
+  if an = bn then
+    String.compare (smt_type_to_smtlib aty, smt_type_to_smtlib bty)
+  else
+    String.compare (an, bn);
+  
+(*
+querysmt (Redblackset.fromList smtlib_vars_compare [("x", SMTTY_BV8)])
+         [("(= x #xFF)", SMTTY_Bool)]
+
+querysmt (Redblackset.fromList smtlib_vars_compare [("x", SMTTY_BV8)])
+         [("(= x #xFF)", SMTTY_Bool), ("(= x #xAA)", SMTTY_Bool)]
+*)
+
 end (* local *)
 
 (*
-querysmt "(simplify ((_ extract 3 2) #xFC))"
+querysmt_raw "(simplify ((_ extract 3 2) #xFC))"
 
-querysmt "(simplify (bvor #x6 #x3))"
+querysmt_raw "(simplify (bvor #x6 #x3))"
 
-querysmt "(display (_ bv20 10))"
+querysmt_raw "(display (_ bv20 16))"
 *)
 
 local
@@ -112,20 +166,41 @@ local
 
   val ERR = Feedback.mk_HOL_ERR "bir_smtLib";
 
+fun problem_gen fname t msg = 
+  raise ERR fname (msg ^ (term_to_string t));
+
 in
 
   fun bvar_to_smtlib_ref bv =
     "birv_" ^ ((fst o dest_BVar_string) bv);
 
-  fun castt_to_smtlib castt = (*
+  fun bvar_to_smtlib_type bv =
+    let
+      val btype = (snd o dest_BVar_string) bv;
+    in
+        if      is_BType_Imm1  btype then
+          SMTTY_Bool
+        else if is_BType_Imm8  btype then
+          SMTTY_BV8
+        else if is_BType_Imm16 btype then
+          SMTTY_BV16
+        else if is_BType_Imm32 btype then
+          SMTTY_BV32
+        else if is_BType_Imm64 btype then
+          SMTTY_BV64
+        else problem_gen "bvar_to_smtlib_type" btype "don't know how to convert BIR type: "
+    end;
+
+
+
+  fun castt_to_smtlib sty castt = (*
     if is_BIExp_LowCast castt then "CL"
     else if is_BIExp_HighCast castt then "CH"
     else if is_BIExp_SignedCast castt then "CS"
     else if is_BIExp_UnsignedCast castt then "CU"
-    else *) raise ERR "castt_to_smtlib"
-      ("don't know how to print BIR cast-type: " ^ (term_to_string castt));
+    else *) problem_gen "castt_to_smtlib" castt "don't know how to print BIR cast-type: ";
 
-  fun bop_to_smtlib bop = (*
+  fun bop_to_smtlib sty bop = (*
     if is_BIExp_And bop then "&"
     else if is_BIExp_Or bop then "|"
     else if is_BIExp_Xor bop then "^"
@@ -141,10 +216,9 @@ in
     else if is_BIExp_RightShift bop then ">>"
     else if is_BIExp_SignedRightShift bop then "s>>"
 *)
-    else raise ERR "bop_to_smtlib"
-      ("don't know how to print BIR bin-op: " ^ (term_to_string bop));
+    else problem_gen "bop_to_smtlib" bop "don't know how to print BIR bin-op: ";
 
-  fun bpredop_to_smtlib bpredop =
+  fun bpredop_to_smtlib sty bpredop =
     if is_BIExp_Equal bpredop then "="
 (*
     else if is_BIExp_NotEqual bpredop then "<>"
@@ -153,27 +227,27 @@ in
     else if is_BIExp_LessOrEqual bpredop then "<="
     else if is_BIExp_SignedLessOrEqual bpredop then "s<="
 *)
-    else raise ERR "bpredop_to_smtlib"
-      ("don't know how to print BIR bin-pred-op: " ^ (term_to_string bpredop));
+    else raise problem_gen "bpredop_to_smtlib" bpredop "don't know how to print BIR bin-pred-op: ";
 
-  fun uop_to_smtlib uop = (*
+  fun uop_to_smtlib sty uop = (*
     if is_BIExp_ChangeSign uop then "-"
     else if is_BIExp_Not uop then "!"
     else if is_BIExp_CLZ uop then "($CLZ)"
     else if is_BIExp_CLS uop then "($CLS)"
-    else *) raise ERR "uop_to_smtlib"
-      ("don't know how to print BIR unary-op: " ^ (term_to_string uop));
+    else *) problem_gen "uop_to_smtlib" uop "don't know how to print BIR unary-op: ";
 
-  fun endi_to_smtlib endi = (*
+  fun endi_to_smtlib sty endi = (*
     if is_BEnd_BigEndian endi then "B"
     else if is_BEnd_LittleEndian endi then "L"
     else if is_BEnd_NoEndian endi then "N"
-    else *) raise ERR "endi_to_smtlib"
-      ("don't know how to print endianness: " ^ (term_to_string endi));
+    else *) problem_gen "endi_to_smtlib" endi "don't know how to print endianness: ";
 
-fun bexp_to_smtlib bvars exp =
+fun bexp_to_smtlib vars exp =
     let
-      val _ = ();
+      fun problem exp msg = problem_gen "bexp_to_smtlib" exp msg;
+
+      fun smtlib_wrap_to_bool   str = "(= #b1 " ^ str ^ ")";
+      fun smtlib_wrap_from_bool str = "(ite " ^ str ^ " #b1 #b0)";
     in
       if is_BExp_Const exp then
         let
@@ -181,9 +255,22 @@ fun bexp_to_smtlib bvars exp =
           val vstr =
             if is_word_literal wv then
               (Arbnum.toString o dest_word_literal) wv
-            else raise ERR "bexp_to_smtlib" ("can only handle word literals: " ^ (term_to_string exp));
+            else problem exp "can only handle word literals: ";
         in
-          (bvars, "(_ bv" ^ vstr ^ " " ^ (Int.toString sz) ^ ")")
+          if sz = 1 then
+            if Arbnumcore.mod(((dest_word_literal) wv), Arbnumcore.fromInt 2)
+               = Arbnumcore.fromInt 1 then
+              (vars, ("true", SMTTY_Bool))
+            else
+              (vars, ("false", SMTTY_Bool))
+          else
+            (vars, ("(_ bv" ^ vstr ^ " " ^ (Int.toString sz) ^ ")",
+               case sz of
+                  8  => SMTTY_BV8
+                | 16 => SMTTY_BV16
+                | 32 => SMTTY_BV32
+                | 64 => SMTTY_BV64
+                | _  => raise ERR "bexp_to_smtlib" "..."))
         end
 
 (*
@@ -199,9 +286,12 @@ fun bexp_to_smtlib bvars exp =
 
       else if is_BExp_Den exp then
         let
-          val bv = dest_BExp_Den exp;
+          val bv    = dest_BExp_Den exp;
+          val sname = bvar_to_smtlib_ref  bv;
+          val stype = bvar_to_smtlib_type bv;
+          val var   = (sname, stype);
         in
-          (Redblackset.add(bvars, bv), bvar_to_smtlib_ref bv)
+          (Redblackset.add(vars, var), var)
         end
 
 (*
@@ -218,30 +308,34 @@ fun bexp_to_smtlib bvars exp =
       else if is_BExp_UnaryExp exp then
         let
           val (uop, exp) = (dest_BExp_UnaryExp) exp;
-          val uopstr = uop_to_smtlib uop;
-          val (bvars, str) = bexp_to_smtlib bvars exp;
+          val (bvars, (str, sty)) = bexp_to_smtlib vars exp;
+          val uopstr = uop_to_smtlib sty uop;
         in
-          (bvars, "(" ^ uopstr ^ " " ^ str ^ ")")
+          (vars, ("(" ^ uopstr ^ " " ^ str ^ ")", sty))
         end
 
       else if is_BExp_BinExp exp then
         let
           val (bop, exp1, exp2) = (dest_BExp_BinExp) exp;
-          val bopstr = bop_to_smtlib bop;
-          val (bvars1, str1) = bexp_to_smtlib bvars  exp1;
-          val (bvars2, str2) = bexp_to_smtlib bvars1 exp2;
+          val (vars1, (str1, sty1)) = bexp_to_smtlib vars  exp1;
+          val (vars2, (str2, sty2)) = bexp_to_smtlib vars1 exp2;
+          val _ = if sty1 = sty2 then () else
+                  problem exp "binary operator needs same type for both sides: ";
+          val bopstr = bop_to_smtlib sty1 bop;
         in
-          (bvars2, "(" ^ bopstr ^ " " ^ str1 ^ " " ^ str2 ^ ")")
+          (vars2, ("(" ^ bopstr ^ " " ^ str1 ^ " " ^ str2 ^ ")", sty1))
         end
 
       else if is_BExp_BinPred exp then
         let
           val (bpredop, exp1, exp2) = (dest_BExp_BinPred) exp;
-          val bpredopstr = bpredop_to_smtlib bpredop;
-          val (bvars1, str1) = bexp_to_smtlib bvars  exp1;
-          val (bvars2, str2) = bexp_to_smtlib bvars1 exp2;
+          val (vars1, (str1, sty1)) = bexp_to_smtlib vars  exp1;
+          val (vars2, (str2, sty2)) = bexp_to_smtlib vars1 exp2;
+          val _ = if sty1 = sty2 then () else
+                  problem exp "binary predicate operator needs same type for both sides: ";
+          val bpredopstr = bpredop_to_smtlib sty1 bpredop;
         in
-          (bvars2, "(" ^ bpredopstr ^ " " ^ str1 ^ " " ^ str2 ^ ")")
+          (vars2, ("(" ^ bpredopstr ^ " " ^ str1 ^ " " ^ str2 ^ ")", SMTTY_Bool))
         end
 
 (*
@@ -289,55 +383,33 @@ fun bexp_to_smtlib bvars exp =
           ((xf "(") cf (ef bir_lhs) cf (xf "==>") cf (ef bir_rhs) cf (xf ")"))
         end
 *)
-
       else
-        raise (ERR "bir_to_smtlib" ("don't know BIR expression: '" ^ term_to_string exp ^ "'"))
+        problem exp "don't know BIR expression: "
     end;
 
 
-  fun bvar_to_smtlib_decl bv =
-    let
-      val sid = bvar_to_smtlib_ref bv;
-      val btype = (snd o dest_BVar_string) bv;
-      val stype =
-        if      is_BType_Imm1  btype then
-          "(_ BitVec 1)"
-        else if is_BType_Imm8  btype then
-          "(_ BitVec 8)"
-        else if is_BType_Imm16 btype then
-          "(_ BitVec 16)"
-        else if is_BType_Imm32 btype then
-          "(_ BitVec 32)"
-        else if is_BType_Imm64 btype then
-          "(_ BitVec 64)"
-        else raise ERR "bvar_to_smtlib_decl"
-                       ("don't know how to convert BIR type: " ^ (term_to_string btype));
-    in
-      "(declare-const " ^ sid ^ " " ^ stype ^ ")"
-    end;
-
+val exp = ``BExp_Const (Imm64 3w)``
+val exp = ``BExp_Den (BVar "fr_0_countw" (BType_Imm Bit64))``
+val exp = ``BExp_Den (BVar "fr_0_Z" (BType_Imm Bit1))``
 
 val t = ``(BExp_BinExp BIExp_Plus
                (BExp_Den (BVar "fr_0_countw" (BType_Imm Bit64)))
                (BExp_Const (Imm64 3w)))``;
-val t = ``(BExp_BinPred BIExp_Equal
+val exp = ``(BExp_BinPred BIExp_Equal
              ^t
              (BExp_BinExp BIExp_Plus
                (BExp_Den (BVar "fr_0_countw" (BType_Imm Bit64)))
                (BExp_Const (Imm64 4w)))
           )``;
 
-val bvars = Redblackset.empty Term.compare;
-val (bvars, str) = bexp_to_smtlib bvars t;
+val vars_empty = Redblackset.empty smtlib_vars_compare;
+val (vars, str) = bexp_to_smtlib vars_empty exp;
 (*
-val bv = (hd o Redblackset.listItems) bvars;
+val vars = vars_empty;
+val varlist = Redblackset.listItems vars;
 *)
-val bvardecl = Redblackset.foldr (fn (bv, str) => str ^ (
-        bvar_to_smtlib_decl bv
-      ) ^ "\n") "" bvars;
 
-val q = bvardecl ^ "\n" ^ "(assert " ^ str ^ ")\n" ^ "(check-sat)\n";
-val result = querysmt q;
+val result = querysmt vars [str];
 
 end (* local *)
 
