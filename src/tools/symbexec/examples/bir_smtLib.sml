@@ -112,6 +112,12 @@ fun smt_type_is_bv SMTTY_Bool = false
   | smt_type_is_bv SMTTY_BV32 = true
   | smt_type_is_bv SMTTY_BV64 = true;
 
+fun smt_type_is_bool SMTTY_Bool = true
+  | smt_type_is_bool SMTTY_BV8  = false
+  | smt_type_is_bool SMTTY_BV16 = false
+  | smt_type_is_bool SMTTY_BV32 = false
+  | smt_type_is_bool SMTTY_BV64 = false;
+
 fun smt_vars_to_smtlib vars =
   Redblackset.foldr (fn ((vn, vty), str) => str ^ (
         "(declare-const " ^ vn ^ " " ^ (smt_type_to_smtlib vty) ^ ")"
@@ -192,31 +198,35 @@ in
     end;
 
 
+fun problem_gen_sty fname t sty =
+  problem_gen fname t ("don't know how to convert as " ^ (smt_type_to_smtlib sty) ^ ": ");
 
   fun castt_to_smtlib sty castt = (*
     if is_BIExp_LowCast castt then "CL"
     else if is_BIExp_HighCast castt then "CH"
     else if is_BIExp_SignedCast castt then "CS"
     else if is_BIExp_UnsignedCast castt then "CU"
-    else *) problem_gen "castt_to_smtlib" castt "don't know how to print BIR cast-type: ";
+    else *) problem_gen_sty "castt_to_smtlib" castt sty;
 
-  fun bop_to_smtlib sty bop = (*
-    if is_BIExp_And bop then "&"
-    else if is_BIExp_Or bop then "|"
-    else if is_BIExp_Xor bop then "^"
-    else *) if is_BIExp_Plus bop then "bvadd"
+  fun bop_to_smtlib sty bop =
+    if smt_type_is_bv sty then (*
+      if is_BIExp_And bop then "&"
+      else if is_BIExp_Or bop then "|"
+      else if is_BIExp_Xor bop then "^"
+      else *) if is_BIExp_Plus bop then "bvadd"
 (*
-    else if is_BIExp_Minus bop then "-"
-    else if is_BIExp_Mult bop then "*"
-    else if is_BIExp_Div bop then "/"
-    else if is_BIExp_SignedDiv bop then "s/"
-    else if is_BIExp_Mod bop then "%"
-    else if is_BIExp_SignedMod bop then "s<<"
-    else if is_BIExp_LeftShift bop then "<<"
-    else if is_BIExp_RightShift bop then ">>"
-    else if is_BIExp_SignedRightShift bop then "s>>"
+      else if is_BIExp_Minus bop then "-"
+      else if is_BIExp_Mult bop then "*"
+      else if is_BIExp_Div bop then "/"
+      else if is_BIExp_SignedDiv bop then "s/"
+      else if is_BIExp_Mod bop then "%"
+      else if is_BIExp_SignedMod bop then "s<<"
+      else if is_BIExp_LeftShift bop then "<<"
+      else if is_BIExp_RightShift bop then ">>"
+      else if is_BIExp_SignedRightShift bop then "s>>"
 *)
-    else problem_gen "bop_to_smtlib" bop "don't know how to print BIR bin-op: ";
+      else problem_gen_sty "bop_to_smtlib" bop sty
+    else problem_gen_sty "bop_to_smtlib" bop sty;
 
   fun bpredop_to_smtlib sty bpredop =
     if is_BIExp_Equal bpredop then "="
@@ -227,20 +237,20 @@ in
     else if is_BIExp_LessOrEqual bpredop then "<="
     else if is_BIExp_SignedLessOrEqual bpredop then "s<="
 *)
-    else raise problem_gen "bpredop_to_smtlib" bpredop "don't know how to print BIR bin-pred-op: ";
+    else raise problem_gen_sty "bpredop_to_smtlib" bpredop sty;
 
   fun uop_to_smtlib sty uop = (*
     if is_BIExp_ChangeSign uop then "-"
     else if is_BIExp_Not uop then "!"
     else if is_BIExp_CLZ uop then "($CLZ)"
     else if is_BIExp_CLS uop then "($CLS)"
-    else *) problem_gen "uop_to_smtlib" uop "don't know how to print BIR unary-op: ";
+    else *) problem_gen_sty "uop_to_smtlib" uop sty;
 
   fun endi_to_smtlib sty endi = (*
     if is_BEnd_BigEndian endi then "B"
     else if is_BEnd_LittleEndian endi then "L"
     else if is_BEnd_NoEndian endi then "N"
-    else *) problem_gen "endi_to_smtlib" endi "don't know how to print endianness: ";
+    else *) problem_gen_sty "endi_to_smtlib" endi sty;
 
 fun bexp_to_smtlib vars exp =
     let
