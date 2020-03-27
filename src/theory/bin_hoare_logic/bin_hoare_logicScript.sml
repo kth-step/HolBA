@@ -24,10 +24,11 @@ val weak_model_def = Define `
   weak_model m =
     !ms invar ls ms'.
       (m.weak ms invar ls ms') =
+        (invar ms) /\
         ?n.
           ((n > 0) /\
            (FUNPOW_OPT m.trs n ms = SOME ms') /\
-           (invar ms) /\
+           (invar ms') /\
            ((m.pc ms') IN ls)
           ) /\
           !n'.
