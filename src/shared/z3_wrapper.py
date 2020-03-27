@@ -5,7 +5,6 @@ import sys
 from z3 import *
 import re
 
-
 z3.set_param('model_compress', False)
 
 """ Z3 wrapper for HOL4.
@@ -135,13 +134,16 @@ def z3_to_HolTerm(exp):
                 #params = " ".join(string.ascii_lowercase[:exp.num_args()])
                 expr = ", ".join(z3_to_HolTerm(p) for p in exp.children())
                 return "(FUN_MAP2 (K ({})) (UNIV))".format(expr)
-    res = []
-    for idx in range(0,exp.num_entries()):
-        arg = (exp.entry(idx)).arg_value(0)
-        vlu = (exp.entry(idx)).value()
-        res.append( "(({}w: {} word),({}w: {} word))".format(arg, arg.size(),vlu, vlu.size()))
-    return ("(FEMPTY : word64 |-> word8) |+" + "|+".join(t for t in res ))
-              
+
+    # Function interpretation: Used for memory
+    if isinstance(exp, z3.FuncInterp):
+        res = []
+        for idx in range(0, exp.num_entries()):
+            arg = (exp.entry(idx)).arg_value(0)
+            vlu = (exp.entry(idx)).value()
+            res.append( "(({}w: {} word),({}w: {} word))".format(arg, arg.size(),vlu, vlu.size()))
+        return ("(FEMPTY : word64 |-> word8) |+" + "|+".join(tm for tm in res ))
+
     raise NotImplementedError("Not handled: {} as {}".format(type(exp), exp))
 
 
