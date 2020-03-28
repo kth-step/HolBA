@@ -1474,7 +1474,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
   FULL_SIMP_TAC std_ss [LET_DEF] >>
   Cases_on `l1 IN  ls` >- (
     FULL_SIMP_TAC std_ss [Abbr `cnd`, LET_DEF,
-                          bir_state_COUNT_PC_def] >>
+                          bir_state_COUNT_PC_ENV_def] >>
     ASSUME_TAC (Q.SPECL [`(BirProgram l')`, `bl`, `s`, `st10`,
                          `st11`, `st12`]
                         bir_exec_block_running_at_least_one_step
@@ -1489,7 +1489,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
   ) >>
   (* Case: We have not reach an end label *)
-  FULL_SIMP_TAC std_ss [Abbr `cnd`, LET_DEF, bir_state_COUNT_PC_def,
+  FULL_SIMP_TAC std_ss [Abbr `cnd`, LET_DEF, bir_state_COUNT_PC_ENV_def,
                         bir_block_pc_def] >>
   FULL_SIMP_TAC (srw_ss()) [bir_exec_to_labels_or_assumviol_triple_def] >>
   PAT_X_ASSUM ``!s''.p``
@@ -1523,7 +1523,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
   (* Case: st12 is AssumptionViolated *)
   quantHeuristicsLib.QUANT_TAC [("s''", `st12`, [])] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF,
-                                        bir_state_COUNT_PC_def,
+                                        bir_state_COUNT_PC_ENV_def,
                                         bir_block_pc_def] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_def] >>
   subgoal `bir_state_is_terminated st12` >- (
@@ -1654,7 +1654,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
   Cases_on `l1 IN  ls` >- (
     FULL_SIMP_TAC std_ss [LET_DEF,
-                          bir_state_COUNT_PC_def] >>
+                          bir_state_COUNT_PC_ENV_def] >>
     ASSUME_TAC (Q.SPECL [`(BirProgram l')`, `bl`, `s`, `st10`,
                          `st11`,`st12`]
                         bir_exec_block_running_at_least_one_step) >>
@@ -1669,7 +1669,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
   ) >>
   (* We have not reached an end label *)
   FULL_SIMP_TAC std_ss [LET_DEF,
-                        bir_state_COUNT_PC_def, bir_block_pc_def] >>
+                        bir_state_COUNT_PC_ENV_def, bir_block_pc_def] >>
   FULL_SIMP_TAC (srw_ss()) [bir_exec_to_labels_or_assumviol_triple_def] >>
   PAT_X_ASSUM ``!s''.p`` (fn thm=>ASSUME_TAC (Q.SPEC `st12` thm)) >>
   REV_FULL_SIMP_TAC (srw_ss()) [] >>
@@ -1706,7 +1706,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
   Cases_on `l2 IN  ls` >- (
     FULL_SIMP_TAC std_ss [LET_DEF,
-                          bir_state_COUNT_PC_def] >>
+                          bir_state_COUNT_PC_ENV_def] >>
     ASSUME_TAC (Q.SPECL [`(BirProgram l')`, `bl`, `s`, `st10`,
                          `st11`,`st12`]
                         bir_exec_block_running_at_least_one_step) >>
@@ -1721,7 +1721,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
   ) >>
   (* We have not reached an end label *)
   FULL_SIMP_TAC std_ss [LET_DEF,
-                        bir_state_COUNT_PC_def, bir_block_pc_def] >>
+                        bir_state_COUNT_PC_ENV_def, bir_block_pc_def] >>
   FULL_SIMP_TAC (srw_ss()) [bir_exec_to_labels_or_assumviol_triple_def] >>
   PAT_X_ASSUM ``!s''.p`` (fn thm=>ASSUME_TAC (Q.SPEC `st12` thm)) >>
   REV_FULL_SIMP_TAC (srw_ss()) [] >>
@@ -1752,7 +1752,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
   (* Case 3: st12 has status AssumptionViolated *)
   quantHeuristicsLib.QUANT_TAC [("s''", `st12`, [])] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF,
-                                        bir_state_COUNT_PC_def,
+                                        bir_state_COUNT_PC_ENV_def,
                                         bir_block_pc_def] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_def] >>
   subgoal `bir_state_is_terminated st12` >- (
@@ -2755,7 +2755,7 @@ FULL_SIMP_TAC (std_ss) [bir_state_is_terminated_def] >>
 REV_FULL_SIMP_TAC (std_ss) [] >>
 
 (* *)
-FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF, bir_state_COUNT_PC_def, bir_exec_stmt_jmp_to_label_def] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF, bir_state_COUNT_PC_ENV_def, bir_exec_stmt_jmp_to_label_def] >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_block_pc_def] >>
 
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss++pred_setSimps.PRED_SET_ss) [bir_block_pc_def, listTheory.REVERSE_DEF] >>

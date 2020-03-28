@@ -778,14 +778,14 @@ FULL_SIMP_TAC arith_ss [] >>
 FULL_SIMP_TAC std_ss [bir_state_is_terminated_def] >>
 REPEAT STRIP_TAC >>
 subgoal
-  `bir_exec_infinite_steps_fun_COUNT_PCs
-     (F,(\pc. pc.bpc_index = 0)) prog st n'' <=
-     bir_exec_infinite_steps_fun_COUNT_PCs
-       (F,(\pc. pc.bpc_index = 0)) prog st n'` >- (
+  `bir_exec_infinite_steps_fun_COUNT_PC_ENVs
+     (F,(\pc env. pc.bpc_index = 0)) prog st n'' <=
+     bir_exec_infinite_steps_fun_COUNT_PC_ENVs
+       (F,(\pc env. pc.bpc_index = 0)) prog st n'` >- (
   subgoal `n'' <= n'` >- (
     FULL_SIMP_TAC arith_ss []
   ) >>
-  IMP_RES_TAC bir_exec_infinite_steps_fun_COUNT_PCs_MONO >>
+  IMP_RES_TAC bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO >>
   FULL_SIMP_TAC std_ss []
 ) >>
 FULL_SIMP_TAC arith_ss []
@@ -822,29 +822,29 @@ IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_block_n >>
 FULL_SIMP_TAC std_ss [bir_exec_block_n_TO_steps_GEN,
                       bir_exec_step_n_TO_steps_GEN] >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended] >>
-subgoal `bir_state_COUNT_PC (F,(\pc. pc.bpc_index = 0))
+subgoal `bir_state_COUNT_PC_ENV (F,(\pc env. pc.bpc_index = 0))
      (bir_exec_infinite_steps_fun prog st (SUC n'))` >- (
   ASM_SIMP_TAC (std_ss++holBACore_ss)
-    [bir_state_COUNT_PC_def, LET_DEF]
+    [bir_state_COUNT_PC_ENV_def, LET_DEF]
 ) >>
 Cases_on `c_l'` >- (
   FULL_SIMP_TAC arith_ss
-    [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_DEF]
+    [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF, LET_DEF]
 ) >>
 Q.EXISTS_TAC `n` >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 REPEAT STRIP_TAC >>
 ASM_SIMP_TAC std_ss
-  [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF] >>
+  [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF] >>
 subgoal `n'' <= n'` >- (
   FULL_SIMP_TAC arith_ss []
 ) >>
 subgoal
-  `bir_exec_infinite_steps_fun_COUNT_PCs
-     (F,(\pc. pc.bpc_index = 0)) prog st n'' <=
-     bir_exec_infinite_steps_fun_COUNT_PCs
-       (F,(\pc. pc.bpc_index = 0)) prog st n'` >- (
-  IMP_RES_TAC bir_exec_infinite_steps_fun_COUNT_PCs_MONO >>
+  `bir_exec_infinite_steps_fun_COUNT_PC_ENVs
+     (F,(\pc env. pc.bpc_index = 0)) prog st n'' <=
+     bir_exec_infinite_steps_fun_COUNT_PC_ENVs
+       (F,(\pc env. pc.bpc_index = 0)) prog st n'` >- (
+  IMP_RES_TAC bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO >>
   FULL_SIMP_TAC std_ss []
 ) >>
 FULL_SIMP_TAC arith_ss [LET_DEF]
@@ -972,8 +972,8 @@ subgoal `0 < n'` >- (
 subgoal
   `!n'.
      n' < n ==>
-     bir_exec_infinite_steps_fun_COUNT_PCs
-       (F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))
+     bir_exec_infinite_steps_fun_COUNT_PC_ENVs
+       (F,(\pc env. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))
        prog st n' < 1` >- (
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
                         bir_exec_to_labels_n_def,
@@ -982,10 +982,10 @@ subgoal
 QSPECL_X_ASSUM ``!n'. _`` [`n'`] >>
 REV_FULL_SIMP_TAC std_ss [NUM_LSONE_EQZ] >>
 FULL_SIMP_TAC std_ss
-  [bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
+  [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_0] >>
 QSPECL_X_ASSUM ``!(j:num). _`` [`PRE n'`] >>
 REV_FULL_SIMP_TAC arith_ss [arithmeticTheory.SUC_PRE,
-			    bir_state_COUNT_PC_def] >>
+			    bir_state_COUNT_PC_ENV_def] >>
 subgoal `bir_exec_infinite_steps_fun prog st n' = st''` >- (
   FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
 ) >>
@@ -1061,22 +1061,22 @@ subgoal `st''.bst_pc.bpc_label NOTIN ls \/
 		 [`n''`] >>
   REV_FULL_SIMP_TAC arith_ss [] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss)
-    [bir_state_COUNT_PC_def, bir_state_is_terminated_def] >>
+    [bir_state_COUNT_PC_ENV_def, bir_state_is_terminated_def] >>
   FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM] >>
   REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >> (
     FULL_SIMP_TAC std_ss []
   )
 ) >>
 Cases_on
-  `bir_exec_infinite_steps_fun_COUNT_PCs
-     (F,(\pc. pc.bpc_index = 0)) prog st n'' < m'` >- (
+  `bir_exec_infinite_steps_fun_COUNT_PC_ENVs
+     (F,(\pc env. pc.bpc_index = 0)) prog st n'' < m'` >- (
   FULL_SIMP_TAC arith_ss [bir_exec_block_n_EQ_THM,
 			  bir_state_is_terminated_def] >>
   REV_FULL_SIMP_TAC arith_ss []
 ) >>
 subgoal
-  `bir_exec_infinite_steps_fun_COUNT_PCs
-     (F,(\pc. pc.bpc_index = 0)) prog st n'' = m'` >- (
+  `bir_exec_infinite_steps_fun_COUNT_PC_ENVs
+     (F,(\pc env. pc.bpc_index = 0)) prog st n'' = m'` >- (
   FULL_SIMP_TAC arith_ss [bir_exec_block_n_EQ_THM]
 ) >>
 subgoal `st''.bst_pc.bpc_index = 0` >- (
@@ -1087,7 +1087,7 @@ subgoal `st''.bst_pc.bpc_index = 0` >- (
       [bir_exec_block_n_EQ_THM]
   ) >>
   FULL_SIMP_TAC (arith_ss++holBACore_ss)
-    [bir_exec_block_n_EQ_THM, bir_state_COUNT_PC_def,
+    [bir_exec_block_n_EQ_THM, bir_state_COUNT_PC_ENV_def,
      bir_state_is_terminated_def]
 )
 );
@@ -1135,7 +1135,7 @@ FULL_SIMP_TAC std_ss [bir_exec_to_labels_def,
 		      bir_exec_to_labels_n_def,
 		      bir_exec_steps_GEN_1_EQ_Looping] >>
 QSPECL_X_ASSUM ``!(n:num). (0 < n) ==> _`` [`n`] >>
-REV_FULL_SIMP_TAC arith_ss [bir_state_COUNT_PC_def] >>
+REV_FULL_SIMP_TAC arith_ss [bir_state_COUNT_PC_ENV_def] >>
 QSPECL_X_ASSUM ``!(n:num). _`` [`n`] >>
 subgoal `bir_exec_infinite_steps_fun prog st n = st'` >- (
   FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]

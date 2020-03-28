@@ -308,7 +308,7 @@ val bir_prog_to_block_no_assumes =
       RW_TAC std_ss [pairTheory.SND],
 
       FULL_SIMP_TAC std_ss [] >>
-      Cases_on `INDEX_FIND 1 (\x. x.bb_label = st.bst_pc.bpc_label)                   l` >> (
+      Cases_on `INDEX_FIND 1 (\x. x.bb_label = st.bst_pc.bpc_label) l` >> (
         FULL_SIMP_TAC std_ss []
       ) >>
       Cases_on `x` >>

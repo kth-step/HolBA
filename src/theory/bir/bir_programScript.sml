@@ -365,30 +365,30 @@ val bir_exec_infinite_steps_fun_REWRS = store_thm ("bir_exec_infinite_steps_fun_
 SIMP_TAC std_ss [bir_exec_infinite_steps_fun_def, arithmeticTheory.FUNPOW]);
 
 
-val bir_state_COUNT_PC_def = Define `bir_state_COUNT_PC (count_failing:bool, pc_cond) st =
-  case st.bst_status of
-    | BST_JumpOutside l => pc_cond (bir_block_pc l)
-    | BST_Running => pc_cond st.bst_pc
-    | _ => count_failing
+val bir_state_COUNT_PC_ENV_def = Define `
+  bir_state_COUNT_PC_ENV (count_failing:bool, pc_env_cond) st =
+    case st.bst_status of
+      | BST_JumpOutside l => (pc_env_cond (bir_block_pc l) st.bst_environ)
+      | BST_Running => (pc_env_cond st.bst_pc st.bst_environ)
+      | _ => count_failing
 `;
 
-
-(* How often was a PC with a certain property reached. *)
-val bir_exec_infinite_steps_fun_COUNT_PCs_def = Define
-  `(bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st 0 = 0) /\
-   (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st (SUC n) =
-    let r = bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p
+(* How often a state obeying st_cond was reached. *)
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def = Define
+  `(bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st 0 = 0) /\
+   (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st (SUC n) =
+    let r = bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p
                (bir_exec_step_state p st) n in
-    if (bir_state_COUNT_PC pc_cond (bir_exec_step_state p st)) then SUC r else r)`
-
-
+    if (bir_state_COUNT_PC_ENV pc_env_cond (bir_exec_step_state p st)) then SUC r else r)`
 
 (* After how many steps do we terminate ? *)
 val bir_exec_infinite_steps_COUNT_STEPS_def = Define `
-  bir_exec_infinite_steps_COUNT_STEPS pc_cond max_steps_opt p st = (OLEAST i.
-     bir_state_is_terminated (bir_exec_infinite_steps_fun p st i) \/
-     (max_steps_opt = SOME (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st i))
-)`;
+  bir_exec_infinite_steps_COUNT_STEPS pc_env_cond max_COUNT_PC_ENV_opt p st =
+    (OLEAST i.
+      bir_state_is_terminated (bir_exec_infinite_steps_fun p st i) \/
+      (max_COUNT_PC_ENV_opt = SOME (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st i))
+    )
+`;
 
 
 (*************************)
@@ -402,7 +402,7 @@ val bir_exec_steps_observe_llist_def = Define `
 
 
 val bir_exec_steps_observe_llist_0 = store_thm ("bir_exec_steps_observe_llist_0",
- ``!p st. bir_exec_steps_observe_llist p st (SOME 0) = [||]``,
+  ``!p st. bir_exec_steps_observe_llist p st (SOME 0) = [||]``,
 
 REWRITE_TAC[bir_exec_steps_observe_llist_def, LGENLIST_SOME, OPT_NUM_SUC_def] >>
 SIMP_TAC std_ss [LMAP, LFILTER_THM]);
@@ -423,21 +423,21 @@ ASM_SIMP_TAC std_ss [LFILTER_THM, LET_DEF] >>
 Cases_on `fe` >> ASM_SIMP_TAC list_ss [LMAP, OPT_LCONS_REWRS]);
 
 
-
 (*************************)
 (* Now full execution    *)
 (*************************)
 
+(* TODO: Add "env_count" to BER_Ended *)
 val _ = Datatype `bir_execution_result_t =
     (* The termination ends. "BER_Ended o_list step_count pc_count st" means
        that the execution ended after "step_count" steps in state "st". During
-       execution "pc_count" pcs that satisfy the given predicate where encountered
-       (counting the pc of the final state st, but not the one of the initial state).
+       execution "pc_count" states that satisfy the given Pc_cond were encountered
+       (possibly including the final state st, but never the initial state).
        The list "o_list" of observations was observed during execution *)
     BER_Ended   ('o list) num num bir_state_t
 
     (* The execution does not terminate. Since the programs are finite, this means
-       it loops. Therefore there are no step counts and no final state. However a
+       it loops. Therefore there are no step counts and no final state. However, a
        potentially infinite lazy list of observations is returned. *)
   | BER_Looping ('o llist)
 `;
@@ -464,40 +464,106 @@ val valOf_BER_Ended_steps_def = Define `valOf_BER_Ended_steps (BER_Ended ol step
 
 
 (* Now real execution. This is a clear definition, which is not well suited for evalation
-   though. More efficient versions are derived later. We compute the no of steps and
+   though. More efficient versions are derived later. We compute the number of steps and
    then execute this number of steps, recomputing values multiple times. *)
-val bir_exec_steps_GEN_def = Define `bir_exec_steps_GEN pc_cond p state max_steps_opt =
-  let step_no = bir_exec_infinite_steps_COUNT_STEPS pc_cond max_steps_opt p state in
-  let ll = bir_exec_steps_observe_llist p state step_no in
-  (case step_no of
-    | NONE => BER_Looping ll
-    | SOME i => BER_Ended (THE (toList ll)) i
-                (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i)
-                (bir_exec_infinite_steps_fun p state i))`;
+val bir_exec_steps_GEN_def = Define `
+  bir_exec_steps_GEN pc_env_cond p state max_COUNT_PC_ENV_opt =
+    let step_no = bir_exec_infinite_steps_COUNT_STEPS pc_env_cond max_COUNT_PC_ENV_opt p state in
+    let ll = bir_exec_steps_observe_llist p state step_no in
+    (case step_no of
+      | NONE => BER_Looping ll
+      | SOME i => BER_Ended (THE (toList ll)) i
+		  (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i)
+		  (bir_exec_infinite_steps_fun p state i))
+`;
 
 
 (* A simple instance that just runs till termination. *)
 val bir_exec_steps_def = Define `
-  (bir_exec_steps p state = bir_exec_steps_GEN (T, (\_. T)) p state NONE)`;
+  (bir_exec_steps p state = bir_exec_steps_GEN (T, \_ _. T) p state NONE)`;
 
 (* A simple instance that counts all steps and has a fixed no of steps given.
    We are sure it terminates, therefore, the result is converted to a tuple. *)
 val bir_exec_step_n_def = Define `
   bir_exec_step_n p state n =
-  valOf_BER_Ended_steps (bir_exec_steps_GEN (T, (\_. T)) p state (SOME n))`
+  valOf_BER_Ended_steps (bir_exec_steps_GEN (T, \_ _. T) p state (SOME n))`
 
-(* We might be interested in executing a certain no of blocks. *)
+(* Executes until either one block has been executed, or until env invariant has been violated. *)
+val bir_exec_step_invar_def = Define `
+  bir_exec_step_invar p state invar =
+    valOf_BER_Ended_steps (bir_exec_steps_GEN (F, \pc env. (pc.bpc_index = 0) \/ ~(invar env)) p state (SOME 1))`
+
+(* We might be interested in executing a certain number of blocks. *)
 val bir_exec_block_n_def = Define `
   bir_exec_block_n p state n =
-  valOf_BER_Ended (bir_exec_steps_GEN (F, (\pc. pc.bpc_index = 0)) p state (SOME n))`
+  valOf_BER_Ended (bir_exec_steps_GEN (F, \pc _. pc.bpc_index = 0) p state (SOME n))`
 
 (* Executing till a certain set of labels is useful as well. Since we might loop
    outside this set of labels, infinite runs are possible. *)
 val bir_exec_to_labels_n_def = Define `
   bir_exec_to_labels_n ls p state n =
-  bir_exec_steps_GEN (F, \pc. (pc.bpc_index = 0) /\ (pc.bpc_label IN ls)) p state (SOME n)`
+  bir_exec_steps_GEN (F, (\pc _. (pc.bpc_index = 0) /\ (pc.bpc_label IN ls))) p state (SOME n)`
 
 val bir_exec_to_labels_def = Define `
   bir_exec_to_labels ls p state = bir_exec_to_labels_n ls p state 1`
+
+(* To-label-execution with concurrent invariant (safe for threaded machines
+ * where instructions evaluate 1 at a time): *)
+
+(* This checks whether the invariant is violated in a state resulting from
+ * execution of one block *)
+val bir_is_invar_block_viol_def = Define `
+  bir_is_invar_block_viol p invar pc (env:bir_var_environment_t) =
+    let st = <| bst_pc := pc; bst_environ := env; bst_status := BST_Running |> in
+    ~(invar (SND (SND (SND (bir_exec_block_n p st 1)))).bst_environ)
+`;
+
+val bir_exec_to_labels_block_invar_def = Define `
+  bir_exec_to_labels_block_invar ls invar p state =
+    bir_exec_steps_GEN (F, (\pc env. (bir_is_invar_block_viol p invar pc env) \/ ((pc.bpc_index = 0) /\ (pc.bpc_label IN ls)))) p state (SOME 1)`
+
+(* TODO: Place this where appropriate *)
+val bir_exec_to_labels_block_invar_T = store_thm ("bir_exec_to_labels_block_invar_T",
+ ``!ls p state.
+   (bir_exec_to_labels_block_invar ls (\_. T) p state) =
+     (bir_exec_to_labels ls p state)``,
+
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_block_invar_def, bir_exec_to_labels_def,
+                      bir_exec_to_labels_n_def, bir_is_invar_block_viol_def, LET_DEF]
+);
+
+(* To-label-execution with parallel invariant (safe for threaded machines
+ * where instructions evaluate simultaneuously): *)
+
+(* This checks whether invariant was violated anywhere inside of a block *)
+val bir_is_invar_stmt_viol_def = Define `
+  bir_is_invar_stmt_viol p invar pc env =
+    let st = <| bst_pc := pc; bst_environ  := env; bst_status := BST_Running |> in
+    (FST (SND (bir_exec_step_invar p st invar)) <> FST (SND (bir_exec_block_n p st 1)))
+`;
+
+val bir_exec_to_labels_stmt_invar_def = Define `
+  bir_exec_to_labels_stmt_invar ls invar p state =
+    bir_exec_steps_GEN (F, (\pc env. (bir_is_invar_stmt_viol p invar pc env) \/ ((pc.bpc_index = 0) /\ (pc.bpc_label IN ls)))) p state (SOME 1)`
+
+(* TODO: Place this where we have results that allow us to prove it *)
+(*
+val bir_exec_to_labels_stmt_invar_T = store_thm ("bir_exec_to_labels_stmt_invar_T",
+ ``!ls p state.
+   (bir_exec_to_labels_stmt_invar ls (\_. T) p state) =
+     (bir_exec_to_labels ls p state)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_stmt_invar_def, bir_exec_to_labels_def,
+                      bir_exec_to_labels_n_def, bir_is_invar_stmt_viol_def] >>
+(* Needs lemmata on general execution... *)
+subgoal `!p st.
+         FST (SND (bir_exec_step_invar p st (\_. T))) =
+           FST (SND (bir_exec_block_n p st 1))` >- (
+  cheat
+) >>
+FULL_SIMP_TAC std_ss [LET_DEF]
+);
+*)
 
 val _ = export_theory();

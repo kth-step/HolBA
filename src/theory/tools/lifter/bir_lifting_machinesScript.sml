@@ -415,10 +415,10 @@ REPEAT STRIP_TAC >| [
 
 val bmr_rel_IMPL_IS_BL_Block_Address = store_thm ("bmr_rel_IMPL_IS_BL_Block_Address",
   ``!r bs ms. bmr_rel r bs ms ==>
-    bir_state_COUNT_PC
-       (F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l})) bs``,
+    bir_state_COUNT_PC_ENV
+       (F,(\pc env. (pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l})) bs``,
 
-SIMP_TAC std_ss [bmr_rel_def, bir_state_COUNT_PC_def] >>
+SIMP_TAC std_ss [bmr_rel_def, bir_state_COUNT_PC_ENV_def] >>
 REPEAT STRIP_TAC >>
 Cases_on `r.bmr_pc` >> (
   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_machine_lifted_pc_def,

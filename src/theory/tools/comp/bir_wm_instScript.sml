@@ -6,6 +6,7 @@ open bir_programTheory;
 open bir_auxiliaryTheory;
 open bin_hoare_logicTheory;
 open bin_simp_hoare_logicTheory;
+
 open bir_program_multistep_propsTheory;
 open bir_program_blocksTheory;
 open bir_program_terminationTheory;
@@ -49,8 +50,8 @@ val bir_trs_def = Define `
 
 (* The weak transition of the BIR WM *)
 val bir_weak_trs_def = Define `
-  bir_weak_trs ls prog st =
-    case (bir_exec_to_labels ls prog st) of
+  bir_weak_trs ls invar prog st =
+    case (bir_exec_to_labels_block_invar ls (\env. invar (st with bst_environ = env)) prog st) of
       BER_Ended _ _ _ st' =>
         if ~(bir_state_is_terminated st')
         then SOME st'
@@ -64,8 +65,8 @@ val bir_weak_trs_def = Define `
 val bir_etl_wm_def =
   Define `bir_etl_wm (prog :'a bir_program_t) = <|
     trs  := bir_trs prog;
-    weak := (\st ls st'.
-	       (bir_weak_trs ls prog st = SOME st')
+    weak := (\st invar ls st'.
+	       (bir_weak_trs ls invar prog st = SOME st')
 	    );
     pc   := (\st. st.bst_pc.bpc_label)
   |>`;
@@ -99,7 +100,7 @@ val bir_exec_to_labels_triple_postcond_def = Define `
 (* The main BIR triple to be used for composition *)
 val bir_triple_def = Define `
   bir_triple prog l ls pre post =
-    weak_triple (bir_etl_wm prog) l ls
+    weak_triple (bir_etl_wm prog) l (\dummy. T) ls
       (\s. bir_exec_to_labels_triple_precond s pre prog)
       (\s'. bir_exec_to_labels_triple_postcond s' post prog)
 `;

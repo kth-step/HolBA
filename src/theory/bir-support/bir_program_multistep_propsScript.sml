@@ -84,57 +84,57 @@ Induct_on `n` >> REWRITE_TAC[bir_exec_infinite_steps_fun_REWRS2] >>
 ASM_SIMP_TAC std_ss [bir_exec_step_valid_pc]);
 
 
-(*****************************************)
-(* bir_exec_infinite_steps_fun_COUNT_PCs *)
-(*****************************************)
+(*********************************************)
+(* bir_exec_infinite_steps_fun_COUNT_PC_ENVs *)
+(*********************************************)
 
-val bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF = store_thm ("bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF",
- ``(!pc_cond p st.
-      bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st 0 = 0) /\
-   (!pc_cond p st n.
-     bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st (SUC n) =
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF = store_thm ("bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF",
+ ``(!pc_env_cond p st.
+      bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st 0 = 0) /\
+   (!pc_env_cond p st n.
+     bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st (SUC n) =
      (let r =
-            bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p
+            bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p
               st n
       in
-        if bir_state_COUNT_PC pc_cond (bir_exec_infinite_steps_fun p st (SUC n)) then SUC r
+        if bir_state_COUNT_PC_ENV pc_env_cond (bir_exec_infinite_steps_fun p st (SUC n)) then SUC r
         else r))``,
 
-CONJ_TAC >- REWRITE_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_def] >>
+CONJ_TAC >- REWRITE_TAC [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def] >>
 GEN_TAC >> GEN_TAC >> Induct_on `n` >- (
-  SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_def, LET_DEF,
+  SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def, LET_DEF,
     bir_exec_infinite_steps_fun_REWRS]
 ) >>
-ONCE_REWRITE_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_def, bir_programTheory.bir_exec_infinite_steps_fun_REWRS] >>
+ONCE_REWRITE_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def, bir_programTheory.bir_exec_infinite_steps_fun_REWRS] >>
 ASM_SIMP_TAC std_ss [LET_DEF] >>
 METIS_TAC[]);
 
 
-val bir_exec_infinite_steps_fun_COUNT_PCs_ADD = store_thm (
-"bir_exec_infinite_steps_fun_COUNT_PCs_ADD",
- ``!pc_cond p st n1 n2.
-      bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st (n1 + n2) =
-      (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st n1 +
-       bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p (bir_exec_infinite_steps_fun p st n1) n2)``,
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_ADD = store_thm (
+"bir_exec_infinite_steps_fun_COUNT_PC_ENVs_ADD",
+ ``!pc_env_cond p st n1 n2.
+      bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st (n1 + n2) =
+      (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st n1 +
+       bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p (bir_exec_infinite_steps_fun p st n1) n2)``,
 
 Induct_on `n2` >> (
-  ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF,
+  ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF,
     arithmeticTheory.ADD_CLAUSES, LET_DEF,
     bir_exec_infinite_steps_fun_ADD]
 ));
 
 
-val bir_exec_infinite_steps_fun_PC_COND_SET_def = Define
-  `bir_exec_infinite_steps_fun_PC_COND_SET pc_cond p state =
-   {i | i <> 0 /\ bir_state_COUNT_PC pc_cond (bir_exec_infinite_steps_fun p state i)}`;
+val bir_exec_infinite_steps_fun_PC_ENV_COND_SET_def = Define
+  `bir_exec_infinite_steps_fun_PC_ENV_COND_SET pc_env_cond p state =
+   {i | i <> 0 /\ bir_state_COUNT_PC_ENV pc_env_cond (bir_exec_infinite_steps_fun p state i)}`;
 
-val IN_bir_exec_infinite_steps_fun_PC_COND_SET = store_thm (
-  "IN_bir_exec_infinite_steps_fun_PC_COND_SET",
+val IN_bir_exec_infinite_steps_fun_PC_ENV_COND_SET = store_thm (
+  "IN_bir_exec_infinite_steps_fun_PC_ENV_COND_SET",
 
-``!i pc_cond p st. i IN (bir_exec_infinite_steps_fun_PC_COND_SET pc_cond p st) <=>
-   (i <> 0) /\ (bir_state_COUNT_PC pc_cond (bir_exec_infinite_steps_fun p st i))``,
+``!i pc_env_cond p st. i IN (bir_exec_infinite_steps_fun_PC_ENV_COND_SET pc_env_cond p st) <=>
+   (i <> 0) /\ (bir_state_COUNT_PC_ENV pc_env_cond (bir_exec_infinite_steps_fun p st i))``,
 
-SIMP_TAC (std_ss) [bir_exec_infinite_steps_fun_PC_COND_SET_def,
+SIMP_TAC (std_ss) [bir_exec_infinite_steps_fun_PC_ENV_COND_SET_def,
   GSPECIFICATION]);
 
 
@@ -145,124 +145,124 @@ SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++boolSimps.EQUIV_EXTRACT_ss) [EXTENSION
 METIS_TAC[]);
 
 
-val bir_exec_infinite_steps_fun_COUNT_PCs_ALT_DEF = store_thm (
- "bir_exec_infinite_steps_fun_COUNT_PCs_ALT_DEF",
-``!pc_cond p i state. bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i =
-  CARD ((bir_exec_infinite_steps_fun_PC_COND_SET pc_cond p state) INTER
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_ALT_DEF = store_thm (
+ "bir_exec_infinite_steps_fun_COUNT_PC_ENVs_ALT_DEF",
+``!pc_env_cond p i state. bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i =
+  CARD ((bir_exec_infinite_steps_fun_PC_ENV_COND_SET pc_env_cond p state) INTER
         (count (SUC i)))``,
 
 GEN_TAC >> GEN_TAC >>
 Induct >- (
   REWRITE_TAC[COUNT_SUC, INTER_INSERT_aux] >>
   SIMP_TAC std_ss [INTER_EMPTY,
-    CARD_EMPTY, bir_exec_infinite_steps_fun_COUNT_PCs_def, COUNT_ZERO,
-      IN_bir_exec_infinite_steps_fun_PC_COND_SET]
+    CARD_EMPTY, bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def, COUNT_ZERO,
+      IN_bir_exec_infinite_steps_fun_PC_ENV_COND_SET]
 ) >>
 GEN_TAC >>
 ONCE_REWRITE_TAC[COUNT_SUC] >>
-ASM_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_DEF,
-  INTER_INSERT_aux, IN_bir_exec_infinite_steps_fun_PC_COND_SET] >>
+ASM_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF, LET_DEF,
+  INTER_INSERT_aux, IN_bir_exec_infinite_steps_fun_PC_ENV_COND_SET] >>
 CASE_TAC >>
 SIMP_TAC std_ss [CARD_INSERT, FINITE_INTER, FINITE_COUNT,
   IN_INTER, IN_COUNT]);
 
 
-val bir_pc_cond_impl_def = Define `
-  bir_pc_cond_impl (cf1, pc_cond1) (cf2, pc_cond2) <=> (
+val bir_pc_env_cond_impl_def = Define `
+  bir_pc_env_cond_impl (cf1, pc_env_cond1) (cf2, pc_env_cond2) <=> (
     (cf1 ==> cf2) /\
-    (!pc. pc_cond1 pc ==> pc_cond2 pc))`;
+    (!pc env. pc_env_cond1 pc env ==> pc_env_cond2 pc env))`;
 
 
-val bir_state_COUNT_PC_MONO = store_thm (
- "bir_state_COUNT_PC_MONO",
-``!pc_cond pc_cond'.
-   (bir_pc_cond_impl pc_cond pc_cond') ==>
-   (!st. bir_state_COUNT_PC pc_cond st ==> bir_state_COUNT_PC pc_cond' st)``,
+val bir_state_COUNT_PC_ENV_MONO = store_thm (
+ "bir_state_COUNT_PC_ENV_MONO",
+``!pc_env_cond pc_env_cond'.
+   (bir_pc_env_cond_impl pc_env_cond pc_env_cond') ==>
+   (!st. bir_state_COUNT_PC_ENV pc_env_cond st ==> bir_state_COUNT_PC_ENV pc_env_cond' st)``,
 
 NTAC 2 Cases >>
 STRIP_TAC >> GEN_TAC >>
-FULL_SIMP_TAC std_ss [bir_state_COUNT_PC_def, bir_pc_cond_impl_def] >>
+FULL_SIMP_TAC std_ss [bir_state_COUNT_PC_ENV_def, bir_pc_env_cond_impl_def] >>
 Cases_on `st.bst_status` >> (
   ASM_SIMP_TAC (std_ss++bir_TYPES_ss) []
 ));
 
 
-val bir_exec_infinite_steps_fun_COUNT_PCs_MONO_PC_COND = store_thm (
-"bir_exec_infinite_steps_fun_COUNT_PCs_MONO_PC_COND",
-``!pc_cond pc_cond' p state i.
-   (bir_pc_cond_impl pc_cond pc_cond') ==>
-   bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i <=
-   bir_exec_infinite_steps_fun_COUNT_PCs pc_cond' p state i``,
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO_PC_ENV_COND = store_thm (
+"bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO_PC_ENV_COND",
+``!pc_env_cond pc_env_cond' p state i.
+   (bir_pc_env_cond_impl pc_env_cond pc_env_cond') ==>
+   bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i <=
+   bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond' p state i``,
 
 REPEAT STRIP_TAC >>
 Induct_on `i` >- (
-  SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_def]
+  SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def]
 ) >>
-ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_DEF] >>
+ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF, LET_DEF] >>
 Q.ABBREV_TAC `st' = (bir_exec_infinite_steps_fun p state (SUC i))` >>
-Cases_on `bir_state_COUNT_PC pc_cond st'` >- (
-  `bir_state_COUNT_PC pc_cond' st'` by METIS_TAC[bir_state_COUNT_PC_MONO] >>
+Cases_on `bir_state_COUNT_PC_ENV pc_env_cond st'` >- (
+  `bir_state_COUNT_PC_ENV pc_env_cond' st'` by METIS_TAC[bir_state_COUNT_PC_ENV_MONO] >>
   ASM_SIMP_TAC std_ss []
 ) >>
 ASM_SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) []);
 
 
-val bir_exec_infinite_steps_fun_COUNT_PCs_LESS_EQ = store_thm (
-"bir_exec_infinite_steps_fun_COUNT_PCs_LESS_EQ",
-``!pc_cond p state i.
-   bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i <= i``,
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_LESS_EQ = store_thm (
+"bir_exec_infinite_steps_fun_COUNT_PC_ENVs_LESS_EQ",
+``!pc_env_cond p state i.
+   bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i <= i``,
 
 GEN_TAC >> GEN_TAC >>
 Induct_on `i` >> (
-  ASM_SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [bir_exec_infinite_steps_fun_COUNT_PCs_def, LET_DEF]
+  ASM_SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def, LET_DEF]
 ) >>
 METIS_TAC[arithmeticTheory.LESS_EQ_SUC_REFL, arithmeticTheory.LESS_EQ_TRANS]);
 
 
-val bir_exec_infinite_steps_fun_COUNT_PCs_EQ = store_thm (
-"bir_exec_infinite_steps_fun_COUNT_PCs_EQ",
-``!pc_cond p state i.
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ = store_thm (
+"bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ",
+``!pc_env_cond p state i.
 
-   (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i = i) <=> (
-   !j. j < i ==> bir_state_COUNT_PC pc_cond (bir_exec_infinite_steps_fun p state (SUC j)))``,
+   (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i = i) <=> (
+   !j. j < i ==> bir_state_COUNT_PC_ENV pc_env_cond (bir_exec_infinite_steps_fun p state (SUC j)))``,
 
 GEN_TAC >> GEN_TAC >>
 Induct_on `i` >> (
   ASM_SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [
-    bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_DEF, prim_recTheory.LESS_THM,
+    bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF, LET_DEF, prim_recTheory.LESS_THM,
     DISJ_IMP_THM, FORALL_AND_THM]
 ) >>
 GEN_TAC >>
 DISJ2_TAC >>
 `~(SUC i <= i)` by DECIDE_TAC >>
-METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_LESS_EQ]);
+METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_LESS_EQ]);
 
 
-val bir_state_COUNT_PC_ALL_STEPS = store_thm ("bir_state_COUNT_PC_ALL_STEPS",
-  ``!st. bir_state_COUNT_PC (T, \_. T) st``,
+val bir_state_COUNT_PC_ENV_ALL_STEPS = store_thm ("bir_state_COUNT_PC_ENV_ALL_STEPS",
+  ``!st. bir_state_COUNT_PC_ENV (T, \_ _. T) st``,
 
 GEN_TAC >>
 Cases_on `st.bst_status` >> (
-  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_COUNT_PC_def]
+  ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_COUNT_PC_ENV_def]
 ));
 
 
-val bir_exec_infinite_steps_fun_COUNT_PCs_EQ_COUNT_ALL_STEPS = store_thm (
-"bir_exec_infinite_steps_fun_COUNT_PCs_EQ_COUNT_ALL_STEPS",
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_COUNT_ALL_STEPS = store_thm (
+"bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_COUNT_ALL_STEPS",
 ``!p state i.
-   (bir_exec_infinite_steps_fun_COUNT_PCs (T, \_. T) p state i = i)``,
-SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_EQ,
-  bir_state_COUNT_PC_ALL_STEPS]);
+   (bir_exec_infinite_steps_fun_COUNT_PC_ENVs (T, \_ _. T) p state i = i)``,
+SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ,
+  bir_state_COUNT_PC_ENV_ALL_STEPS]);
 
 
-val bir_exec_infinite_steps_fun_COUNT_PCs_MONO = store_thm ("bir_exec_infinite_steps_fun_COUNT_PCs_MONO",
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO = store_thm ("bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO",
 
-``!pc_cond p state i j.
+``!pc_env_cond p state i j.
    i <= j ==>
-   bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i <=
-   bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state j``,
+   bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i <=
+   bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state j``,
 
-SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_ALT_DEF] >>
+SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_ALT_DEF] >>
 REPEAT STRIP_TAC >>
 IRULE_TAC CARD_SUBSET >> REPEAT CONJ_TAC >- (
   SIMP_TAC std_ss [FINITE_INTER, FINITE_COUNT]
@@ -271,19 +271,19 @@ ASM_SIMP_TAC arith_ss [SUBSET_DEF, IN_INTER, IN_COUNT]);
 
 
 
-val bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE = store_thm (
-"bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE",
-``!pc_cond p state i c_j.
-   (c_j < bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i) ==>
-   (?j. j < i /\ (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state j = c_j))``,
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE = store_thm (
+"bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE",
+``!pc_env_cond p state i c_j.
+   (c_j < bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i) ==>
+   (?j. j < i /\ (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state j = c_j))``,
 
 REPEAT GEN_TAC >>
 Induct_on `i` >- (
-  SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_def]
+  SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def]
 ) >>
-ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_DEF] >>
+ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF, LET_DEF] >>
 STRIP_TAC >>
-Cases_on `c_j < bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i` >- (
+Cases_on `c_j < bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i` >- (
   FULL_SIMP_TAC std_ss [] >>
   Q.EXISTS_TAC `j` >>
   ASM_SIMP_TAC arith_ss []
@@ -293,20 +293,20 @@ Q.EXISTS_TAC `i` >>
 ASM_SIMP_TAC arith_ss []);
 
 
-val bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ = store_thm (
-"bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ",
-``!pc_cond p state i c_j.
-   (c_j <= bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i) ==>
-   (?j. j <= i /\ (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state j = c_j))``,
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_LESS_EQ = store_thm (
+"bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_LESS_EQ",
+``!pc_env_cond p state i c_j.
+   (c_j <= bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i) ==>
+   (?j. j <= i /\ (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state j = c_j))``,
 
 METIS_TAC[arithmeticTheory.LESS_OR_EQ,
-  bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE]);
+  bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE]);
 
 
-val bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_FORALL_NEQ = store_thm (
- "bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_FORALL_NEQ",
-``(!i. (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st i <> n)) <=>
-  (!i. (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st i < n))``,
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_FORALL_NEQ = store_thm (
+ "bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_FORALL_NEQ",
+``(!i. (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st i <> n)) <=>
+  (!i. (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st i < n))``,
 
 Tactical.REVERSE EQ_TAC >- (
   REPEAT STRIP_TAC >>
@@ -315,37 +315,37 @@ Tactical.REVERSE EQ_TAC >- (
 ) >- (
   REPEAT STRIP_TAC >>
   CCONTR_TAC >>
-  METIS_TAC[arithmeticTheory.NOT_LESS, bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ]
+  METIS_TAC[arithmeticTheory.NOT_LESS, bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_LESS_EQ]
 ));
 
 
-val bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0 = store_thm (
-"bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0",
-``!pc_cond p state i.
+val bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_0 = store_thm (
+"bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_0",
+``!pc_env_cond p state i.
 
-   (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i = 0) <=> (
-   !j. j < i ==> ~(bir_state_COUNT_PC pc_cond (bir_exec_infinite_steps_fun p state (SUC j))))``,
+   (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i = 0) <=> (
+   !j. j < i ==> ~(bir_state_COUNT_PC_ENV pc_env_cond (bir_exec_infinite_steps_fun p state (SUC j))))``,
 
 GEN_TAC >> GEN_TAC >>
 Induct_on `i` >> (
   ASM_SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [
-    bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_DEF, prim_recTheory.LESS_THM,
+    bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF, LET_DEF, prim_recTheory.LESS_THM,
     DISJ_IMP_THM, FORALL_AND_THM]
 ));
 
 
 
-val FINITE_bir_exec_infinite_steps_fun_PC_COND_SET = store_thm (
-"FINITE_bir_exec_infinite_steps_fun_PC_COND_SET",
-``!pc_cond p st c.
-  (FINITE (bir_exec_infinite_steps_fun_PC_COND_SET pc_cond p st) /\
-   CARD (bir_exec_infinite_steps_fun_PC_COND_SET pc_cond p st) < c) <=>
-  (!i. bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st i < c)``,
+val FINITE_bir_exec_infinite_steps_fun_PC_ENV_COND_SET = store_thm (
+"FINITE_bir_exec_infinite_steps_fun_PC_ENV_COND_SET",
+``!pc_env_cond p st c.
+  (FINITE (bir_exec_infinite_steps_fun_PC_ENV_COND_SET pc_env_cond p st) /\
+   CARD (bir_exec_infinite_steps_fun_PC_ENV_COND_SET pc_env_cond p st) < c) <=>
+  (!i. bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st i < c)``,
 
 REPEAT STRIP_TAC >>
-Q.ABBREV_TAC `CS = bir_exec_infinite_steps_fun_PC_COND_SET pc_cond p st` >>
+Q.ABBREV_TAC `CS = bir_exec_infinite_steps_fun_PC_ENV_COND_SET pc_env_cond p st` >>
 EQ_TAC >| [
-  FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_ALT_DEF] >>
+  FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_ALT_DEF] >>
   REPEAT STRIP_TAC >>
   `CARD (CS INTER (count (SUC i))) <= CARD CS` by
     METIS_TAC[CARD_SUBSET, INTER_SUBSET] >>
@@ -363,10 +363,10 @@ EQ_TAC >| [
   ) >>
   Q.PAT_X_ASSUM `~(_ /\ _)` (K ALL_TAC) >>
 
-  `?i. c <= bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st i` suffices_by
-     METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ,
+  `?i. c <= bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st i` suffices_by
+     METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_LESS_EQ,
        arithmeticTheory.NOT_LESS] >>
-  ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_ALT_DEF] >>
+  ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_ALT_DEF] >>
   Q.EXISTS_TAC `MAX_SET s` >>
   `s SUBSET (CS INTER count (SUC (MAX_SET s)))` suffices_by
       METIS_TAC[CARD_SUBSET, FINITE_INTER, FINITE_COUNT, arithmeticTheory.LESS_EQ_TRANS] >>
@@ -375,18 +375,18 @@ EQ_TAC >| [
 ]);
 
 
-val INFINITE_bir_exec_infinite_steps_fun_PC_COND_SET = store_thm (
-"INFINITE_bir_exec_infinite_steps_fun_PC_COND_SET",
-``!pc_cond p st.
-  INFINITE (bir_exec_infinite_steps_fun_PC_COND_SET pc_cond p st) <=>
-  (!c_i. ?i. bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st i = c_i)``,
+val INFINITE_bir_exec_infinite_steps_fun_PC_ENV_COND_SET = store_thm (
+"INFINITE_bir_exec_infinite_steps_fun_PC_ENV_COND_SET",
+``!pc_env_cond p st.
+  INFINITE (bir_exec_infinite_steps_fun_PC_ENV_COND_SET pc_env_cond p st) <=>
+  (!c_i. ?i. bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st i = c_i)``,
 
-METIS_TAC[FINITE_bir_exec_infinite_steps_fun_PC_COND_SET, prim_recTheory.LESS_SUC_REFL,
-   bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_FORALL_NEQ]);
+METIS_TAC[FINITE_bir_exec_infinite_steps_fun_PC_ENV_COND_SET, prim_recTheory.LESS_SUC_REFL,
+   bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_FORALL_NEQ]);
 
 
 
-(* If we do not terminate, for most used pc_conds the PC_COND_SET is actually infinite.
+(* If we do not terminate, for most used pc_env_conds the PC_ENV_COND_SET is actually infinite.
    The most important special case is that we count every beginning of blocks. Since
    all blocks are finite, we can only loop, if we execute infinitely many blocks. *)
 
@@ -553,28 +553,28 @@ SIMP_TAC (std_ss++bir_TYPES_ss) [bir_programcounter_t_component_equality]);
 
 
 
-val bir_exec_infinite_steps_fun_PC_COND_SET_BLOCK_PC = store_thm (
-"bir_exec_infinite_steps_fun_PC_COND_SET_BLOCK_PC",
-``!p pc_cond st.
-   (!pc. (pc.bpc_index = 0) ==> (SND pc_cond) pc) ==>
+val bir_exec_infinite_steps_fun_PC_ENV_COND_SET_BLOCK_PC = store_thm (
+"bir_exec_infinite_steps_fun_PC_ENV_COND_SET_BLOCK_PC",
+``!p pc_env_cond st.
+   (!pc env. (pc.bpc_index = 0) ==> (SND pc_env_cond) pc env) ==>
    (!n. ~(bir_state_is_terminated (bir_exec_infinite_steps_fun p st n))) ==>
-   INFINITE (bir_exec_infinite_steps_fun_PC_COND_SET pc_cond p st)``,
+   INFINITE (bir_exec_infinite_steps_fun_PC_ENV_COND_SET pc_env_cond p st)``,
 
 REPEAT GEN_TAC >>
-Cases_on `pc_cond` >>
-rename1 `SND (cf, pc_cond)` >>
+Cases_on `pc_env_cond` >>
+rename1 `SND (cf, pc_env_cond)` >>
 STRIP_TAC >> STRIP_TAC >>
 MP_TAC (Q.SPECL [`p`, `st`] bir_exec_infinite_steps_fun_LOOPING_BLOCK_EXISTS) >>
 ASM_SIMP_TAC std_ss [] >>
 STRIP_TAC >>
 
 `({i | (bir_exec_infinite_steps_fun p st i).bst_pc = bir_block_pc l} DIFF {0})
- SUBSET (bir_exec_infinite_steps_fun_PC_COND_SET (cf, pc_cond) p st)`
+ SUBSET (bir_exec_infinite_steps_fun_PC_ENV_COND_SET (cf, pc_env_cond) p st)`
   suffices_by METIS_TAC[SUBSET_FINITE, FINITE_DIFF_down, FINITE_SING] >>
 
 FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [SUBSET_DEF, IN_DIFF, IN_SING, GSPECIFICATION,
-  bir_block_pc_def, bir_exec_infinite_steps_fun_PC_COND_SET_def,
-  bir_state_COUNT_PC_def, bir_state_is_terminated_def]);
+  bir_block_pc_def, bir_exec_infinite_steps_fun_PC_ENV_COND_SET_def,
+  bir_state_COUNT_PC_ENV_def, bir_state_is_terminated_def]);
 
 
 
@@ -585,39 +585,39 @@ FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [SUBSET_DEF, IN_DIFF, IN_SING, GSPECIFICATI
 
 val bir_exec_infinite_steps_COUNT_STEPS_UNFOLD = store_thm (
   "bir_exec_infinite_steps_COUNT_STEPS_UNFOLD",
-  ``!pc_cond max_steps_opt p st.
-    (bir_exec_infinite_steps_COUNT_STEPS pc_cond max_steps_opt p st =
+  ``!pc_env_cond max_steps_opt p st.
+    (bir_exec_infinite_steps_COUNT_STEPS pc_env_cond max_steps_opt p st =
      if (bir_state_is_terminated st \/ (max_steps_opt = SOME 0)) then SOME 0 else
      (let st' = bir_exec_step_state p st in
-      let max_steps_opt' = if (bir_state_COUNT_PC pc_cond st') then OPT_NUM_PRE max_steps_opt else max_steps_opt in
-      OPT_NUM_SUC (bir_exec_infinite_steps_COUNT_STEPS pc_cond max_steps_opt' p st')))``,
+      let max_steps_opt' = if (bir_state_COUNT_PC_ENV pc_env_cond st') then OPT_NUM_PRE max_steps_opt else max_steps_opt in
+      OPT_NUM_SUC (bir_exec_infinite_steps_COUNT_STEPS pc_env_cond max_steps_opt' p st')))``,
 
 SIMP_TAC std_ss [bir_exec_infinite_steps_COUNT_STEPS_def,
   whileTheory.OLEAST_def] >>
 REPEAT GEN_TAC >>
 Q.ABBREV_TAC `P = \max_steps_opt st i.
    (bir_state_is_terminated (bir_exec_infinite_steps_fun p st i) \/
-   (max_steps_opt = SOME (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st i)))` >>
+   (max_steps_opt = SOME (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st i)))` >>
 `(bir_state_is_terminated st \/  (max_steps_opt = SOME 0)) = P max_steps_opt st 0` by (
   Q.UNABBREV_TAC `P` >>
   SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS,
-    bir_exec_infinite_steps_fun_COUNT_PCs_def]
+    bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def]
 ) >>
 
 `!i. ~(P max_steps_opt st 0) ==> (
-     (P (if bir_state_COUNT_PC pc_cond  (bir_exec_step_state p st) then OPT_NUM_PRE max_steps_opt
+     (P (if bir_state_COUNT_PC_ENV pc_env_cond  (bir_exec_step_state p st) then OPT_NUM_PRE max_steps_opt
         else max_steps_opt) (bir_exec_step_state p st) i) =
       P max_steps_opt st (SUC i))` by (
   Q.UNABBREV_TAC `P` >>
   FULL_SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_infinite_steps_fun_REWRS,
-    bir_exec_infinite_steps_fun_COUNT_PCs_def, LET_DEF] >>
+    bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def, LET_DEF] >>
   REPEAT STRIP_TAC >>
   Cases_on `max_steps_opt` >> SIMP_TAC std_ss [OPT_NUM_PRE_def] >>
   rename1 `SOME max_steps <> SOME (0:num)` >>
   FULL_SIMP_TAC std_ss [] >>
   Cases_on `max_steps` >- FULL_SIMP_TAC std_ss [] >>
   rename1 `SUC max_steps' <> (0:num)` >>
-  Cases_on `bir_state_COUNT_PC pc_cond (bir_exec_step_state p st)` >> (
+  Cases_on `bir_state_COUNT_PC_ENV pc_env_cond (bir_exec_step_state p st)` >> (
     ASM_SIMP_TAC std_ss []
   )
 ) >>
@@ -643,54 +643,54 @@ METIS_TAC[]);
 
 val bir_exec_infinite_steps_COUNT_STEPS_TERMINATED_REWR = store_thm (
   "bir_exec_infinite_steps_COUNT_STEPS_TERMINATED_REWR",
-  ``!pc_cond max_steps p st.
+  ``!pc_env_cond max_steps p st.
     bir_state_is_terminated st ==>
-    (bir_exec_infinite_steps_COUNT_STEPS pc_cond max_steps p st = SOME 0)``,
+    (bir_exec_infinite_steps_COUNT_STEPS pc_env_cond max_steps p st = SOME 0)``,
 
 SIMP_TAC std_ss [Once bir_exec_infinite_steps_COUNT_STEPS_UNFOLD]);
 
 
 val bir_exec_infinite_steps_COUNT_STEPS_NO_STEPS_REWR = store_thm (
   "bir_exec_infinite_steps_COUNT_STEPS_NO_STEPS_REWR",
-  ``!pc_cond p st.
-    (bir_exec_infinite_steps_COUNT_STEPS pc_cond (SOME 0) p st = SOME 0)``,
+  ``!pc_env_cond p st.
+    (bir_exec_infinite_steps_COUNT_STEPS pc_env_cond (SOME 0) p st = SOME 0)``,
 
 SIMP_TAC std_ss [Once bir_exec_infinite_steps_COUNT_STEPS_UNFOLD]);
 
 
 val bir_exec_infinite_steps_COUNT_STEPS_STEP_REWR = store_thm (
  "bir_exec_infinite_steps_COUNT_STEPS_STEP_REWR",
-``!pc_cond p st max_steps.
+``!pc_env_cond p st max_steps.
     ~(bir_state_is_terminated st) /\ ~(max_steps = SOME 0) ==>
 
-    (bir_exec_infinite_steps_COUNT_STEPS pc_cond max_steps p st =
+    (bir_exec_infinite_steps_COUNT_STEPS pc_env_cond max_steps p st =
     (let st' = bir_exec_step_state p st in
     let max_steps_opt' =
-          if bir_state_COUNT_PC pc_cond st' then OPT_NUM_PRE max_steps
+          if bir_state_COUNT_PC_ENV pc_env_cond st' then OPT_NUM_PRE max_steps
           else max_steps
     in
       OPT_NUM_SUC
-        (bir_exec_infinite_steps_COUNT_STEPS pc_cond max_steps_opt' p
+        (bir_exec_infinite_steps_COUNT_STEPS pc_env_cond max_steps_opt' p
            st')))``,
 
 SIMP_TAC std_ss [Once bir_exec_infinite_steps_COUNT_STEPS_UNFOLD]);
 
 
 val bir_exec_infinite_steps_COUNT_STEPS_EQ_SOME = store_thm ("bir_exec_infinite_steps_COUNT_STEPS_EQ_SOME",
-  ``(bir_exec_infinite_steps_COUNT_STEPS pc_cond max_steps_opt p state = SOME i) <=>
+  ``(bir_exec_infinite_steps_COUNT_STEPS pc_env_cond max_steps_opt p state = SOME i) <=>
     ((!n. n < i ==> ~(bir_state_is_terminated (bir_exec_infinite_steps_fun p state n)) /\
                     (max_steps_opt <> SOME
-           (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state n))) /\
+           (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state n))) /\
     ((bir_state_is_terminated (bir_exec_infinite_steps_fun p state i)) \/
-    (max_steps_opt = SOME (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i))))``,
+    (max_steps_opt = SOME (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i))))``,
 
 SIMP_TAC std_ss [bir_exec_infinite_steps_COUNT_STEPS_def, whileTheory.OLEAST_def] >>
 Q.ABBREV_TAC `P = (\max_steps_opt state i.
    (bir_state_is_terminated ((bir_exec_infinite_steps_fun p state i))) \/
    (max_steps_opt =
-      SOME (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i)))` >>
+      SOME (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i)))` >>
 `!n. (~bir_state_is_terminated (bir_exec_infinite_steps_fun p state n) /\
-     (max_steps_opt <> SOME (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state n))) =
+     (max_steps_opt <> SOME (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state n))) =
      ~(P max_steps_opt state n)` by (
   Q.UNABBREV_TAC `P` >> SIMP_TAC std_ss []) >>
 ASM_SIMP_TAC std_ss [] >> POP_ASSUM (K ALL_TAC) >>
@@ -702,16 +702,16 @@ EQ_TAC >> STRIP_TAC >| [
 
 val bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE = store_thm (
  "bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE",
-  ``(bir_exec_infinite_steps_COUNT_STEPS pc_cond max_steps_opt p state = NONE) <=>
+  ``(bir_exec_infinite_steps_COUNT_STEPS pc_env_cond max_steps_opt p state = NONE) <=>
     (!n. ~(bir_state_is_terminated (bir_exec_infinite_steps_fun p state n))) /\
     (case max_steps_opt of NONE => T | SOME max_steps =>
-       (!i. bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i < max_steps))``,
+       (!i. bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i < max_steps))``,
 
 SIMP_TAC std_ss [bir_exec_infinite_steps_COUNT_STEPS_def, whileTheory.OLEAST_def] >>
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [FORALL_AND_THM] >>
 STRIP_TAC >>
 Cases_on `max_steps_opt` >> SIMP_TAC std_ss [] >>
-METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_FORALL_NEQ]);
+METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_FORALL_NEQ]);
 
 
 
@@ -941,39 +941,39 @@ ASM_SIMP_TAC std_ss [bir_exec_steps_observe_list_to_llist_THE,
 (***************************************************************)
 
 val bir_exec_steps_GEN_REWR_TERMINATED = store_thm ("bir_exec_steps_GEN_REWR_TERMINATED",
-  ``!p st pc_cond max_steps.
+  ``!p st pc_env_cond max_steps.
     bir_state_is_terminated st ==>
-    (bir_exec_steps_GEN pc_cond p st max_steps = BER_Ended [] 0 0 st)``,
+    (bir_exec_steps_GEN pc_env_cond p st max_steps = BER_Ended [] 0 0 st)``,
 
 SIMP_TAC std_ss [bir_exec_steps_GEN_def,
  bir_exec_infinite_steps_COUNT_STEPS_TERMINATED_REWR,
   bir_exec_steps_observe_llist_0, LET_DEF,
   bir_exec_infinite_steps_fun_REWRS, toList_THM,
-  bir_exec_infinite_steps_fun_COUNT_PCs_def]);
+  bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def]);
 
 
 val bir_exec_steps_GEN_REWR_no_steps = store_thm ("bir_exec_steps_GEN_REWR_no_steps",
-  ``!pc_cond p st.
-    (bir_exec_steps_GEN pc_cond p st (SOME 0) = BER_Ended [] 0 0 st)``,
+  ``!pc_env_cond p st.
+    (bir_exec_steps_GEN pc_env_cond p st (SOME 0) = BER_Ended [] 0 0 st)``,
 
 SIMP_TAC std_ss [bir_exec_steps_GEN_def,
   bir_exec_infinite_steps_COUNT_STEPS_NO_STEPS_REWR,
   bir_exec_steps_observe_llist_0, LET_DEF,
   bir_exec_infinite_steps_fun_REWRS, toList_THM,
-  bir_exec_infinite_steps_fun_COUNT_PCs_def]);
+  bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def]);
 
 
 val bir_exec_steps_GEN_REWR_STEP = store_thm ("bir_exec_steps_GEN_REWR_STEP",
-  ``!pc_cond p st max_steps.
+  ``!pc_env_cond p st max_steps.
     ~(bir_state_is_terminated st) ==>
-    (bir_exec_steps_GEN pc_cond p st max_steps =
+    (bir_exec_steps_GEN pc_env_cond p st max_steps =
       (if (max_steps = SOME 0) then BER_Ended [] 0 0 st else (
       (let (fe, st') = bir_exec_step p st in
-       let max_steps' = if (bir_state_COUNT_PC pc_cond st') then (OPT_NUM_PRE max_steps) else max_steps in
-       (case (bir_exec_steps_GEN pc_cond p st' max_steps') of
+       let max_steps' = if (bir_state_COUNT_PC_ENV pc_env_cond st') then (OPT_NUM_PRE max_steps) else max_steps in
+       (case (bir_exec_steps_GEN pc_env_cond p st' max_steps') of
              BER_Ended ol step_count pc_count st_final =>
              BER_Ended (OPT_CONS fe ol) (SUC step_count)
-                       (if (bir_state_COUNT_PC pc_cond st') then SUC pc_count else pc_count) st_final
+                       (if (bir_state_COUNT_PC_ENV pc_env_cond st') then SUC pc_count else pc_count) st_final
            | BER_Looping oll => BER_Looping (OPT_LCONS fe oll))))))``,
 
 REPEAT GEN_TAC >>
@@ -983,15 +983,15 @@ ASM_SIMP_TAC std_ss [bir_exec_steps_GEN_def, bir_exec_infinite_steps_COUNT_STEPS
 
 ASM_SIMP_TAC std_ss [bir_exec_step_state_def, LET_THM,
   bir_exec_steps_observe_llist_OPT_NUM_SUC] >>
-Q.ABBREV_TAC `no = (bir_exec_infinite_steps_COUNT_STEPS pc_cond
-         (if bir_state_COUNT_PC pc_cond st' then OPT_NUM_PRE max_steps
+Q.ABBREV_TAC `no = (bir_exec_infinite_steps_COUNT_STEPS pc_env_cond
+         (if bir_state_COUNT_PC_ENV pc_env_cond st' then OPT_NUM_PRE max_steps
           else max_steps) p st')` >>
 Cases_on `no` >> (
   ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [OPT_NUM_SUC_def, bir_exec_infinite_steps_fun_REWRS,
     bir_exec_step_state_def]
 ) >>
 
-ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_def, LET_THM, bir_exec_step_state_def] >>
+ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def, LET_THM, bir_exec_step_state_def] >>
 Cases_on `fe` >> (
   SIMP_TAC std_ss [bir_exec_steps_observe_llist_toList_SOME, OPT_LCONS_def,
     OPT_CONS_def, toList_THM]
@@ -999,24 +999,24 @@ Cases_on `fe` >> (
 
 
 val bir_exec_steps_GEN_EQ_Looping = store_thm ("bir_exec_steps_GEN_EQ_Looping",
-  ``((bir_exec_steps_GEN pc_cond p state mo) = BER_Looping ll) <=>
+  ``((bir_exec_steps_GEN pc_env_cond p state mo) = BER_Looping ll) <=>
     ((ll = bir_exec_steps_observe_llist p state NONE) /\
-     (bir_exec_infinite_steps_COUNT_STEPS pc_cond mo p state = NONE))``,
+     (bir_exec_infinite_steps_COUNT_STEPS pc_env_cond mo p state = NONE))``,
 
-Cases_on `bir_exec_infinite_steps_COUNT_STEPS pc_cond mo p state` >> (
+Cases_on `bir_exec_infinite_steps_COUNT_STEPS pc_env_cond mo p state` >> (
   ASM_SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_GEN_def, LET_DEF]
 ));
 
 
 val bir_exec_steps_GEN_1_EQ_Looping = store_thm ("bir_exec_steps_GEN_1_EQ_Looping",
-  ``((bir_exec_steps_GEN pc_cond p state (SOME 1)) = BER_Looping ll) <=>
+  ``((bir_exec_steps_GEN pc_env_cond p state (SOME 1)) = BER_Looping ll) <=>
     ((ll = bir_exec_steps_observe_llist p state NONE) /\
      (!n. ~bir_state_is_terminated (bir_exec_infinite_steps_fun p state n)) /\
-     (!n. 0 < n ==> ~(bir_state_COUNT_PC pc_cond (bir_exec_infinite_steps_fun p state n))))``,
+     (!n. 0 < n ==> ~(bir_state_COUNT_PC_ENV pc_env_cond (bir_exec_infinite_steps_fun p state n))))``,
 
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_GEN_EQ_Looping,
   bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE, NUM_LSONE_EQZ,
-  bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
+  bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_0] >>
 REPEAT STRIP_TAC >> EQ_TAC >> STRIP_TAC >- (
   GEN_TAC >> STRIP_TAC >>
   Cases_on `n` >> FULL_SIMP_TAC arith_ss [] >>
@@ -1027,10 +1027,10 @@ REPEAT STRIP_TAC >> EQ_TAC >> STRIP_TAC >- (
 
 
 val bir_exec_steps_GEN_SOME_EQ_Looping = store_thm ("bir_exec_steps_GEN_SOME_EQ_Looping",
-  ``((bir_exec_steps_GEN pc_cond p state (SOME step_no)) = BER_Looping ll) <=>
+  ``((bir_exec_steps_GEN pc_env_cond p state (SOME step_no)) = BER_Looping ll) <=>
     ((ll = bir_exec_steps_observe_llist p state NONE) /\
      (!n. ~bir_state_is_terminated (bir_exec_infinite_steps_fun p state n)) /\
-     (!i. bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i < step_no))``,
+     (!i. bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state i < step_no))``,
 
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_GEN_EQ_Looping,
   bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE]);
@@ -1038,43 +1038,43 @@ SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_GEN_EQ_Looping,
 
 
 (* Together with the theorems about the infinity of
-   bir_exec_infinite_steps_fun_PC_COND_SET, we can derive easily, that we
+   bir_exec_infinite_steps_fun_PC_ENV_COND_SET, we can derive easily, that we
    do terminate, if a step number was given and we count at least when entering a new block. *)
 
 val bir_exec_steps_GEN_NOT_Looping_max_steps_blocks = store_thm (
  "bir_exec_steps_GEN_NOT_Looping_max_steps_blocks",
-``!pc_cond p state m.
-  (!pc. (pc.bpc_index = 0) ==> (SND pc_cond) pc) ==>
-  IS_BER_Ended (bir_exec_steps_GEN pc_cond p state (SOME m))``,
+``!pc_env_cond p state m.
+  (!pc env. (pc.bpc_index = 0) ==> (SND pc_env_cond) pc env) ==>
+  IS_BER_Ended (bir_exec_steps_GEN pc_env_cond p state (SOME m))``,
 
 REPEAT STRIP_TAC >>
-Cases_on `bir_exec_steps_GEN pc_cond p state (SOME m)` >> (
+Cases_on `bir_exec_steps_GEN pc_env_cond p state (SOME m)` >> (
   SIMP_TAC std_ss [IS_BER_Ended_def]
 ) >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Looping,
   bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE,
-  GSYM FINITE_bir_exec_infinite_steps_fun_PC_COND_SET] >>
-METIS_TAC[bir_exec_infinite_steps_fun_PC_COND_SET_BLOCK_PC]);
+  GSYM FINITE_bir_exec_infinite_steps_fun_PC_ENV_COND_SET] >>
+METIS_TAC[bir_exec_infinite_steps_fun_PC_ENV_COND_SET_BLOCK_PC]);
 
 
 
 val bir_exec_steps_GEN_EQ_Ended = store_thm ("bir_exec_steps_GEN_EQ_Ended",
-  ``!p state mo ol step_c pc_c state' pc_cond.
-    (bir_exec_steps_GEN pc_cond p state mo = BER_Ended ol step_c pc_c state') <=>
+  ``!p state mo ol step_c pc_c state' pc_env_cond.
+    (bir_exec_steps_GEN pc_env_cond p state mo = BER_Ended ol step_c pc_c state') <=>
     ((ol = bir_exec_steps_observe_list p state step_c) /\
-     (pc_c = bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state step_c) /\
+     (pc_c = bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state step_c) /\
      (case mo of NONE => (bir_state_is_terminated state')
                | SOME m => ((pc_c <= m) /\ ((pc_c < m) ==> (bir_state_is_terminated state')) /\
                             (((pc_c = m) /\ (0 < m)) ==> (
-                               bir_state_COUNT_PC pc_cond state')))) /\
+                               bir_state_COUNT_PC_ENV pc_env_cond state')))) /\
      (state' = bir_exec_infinite_steps_fun p state step_c) /\
      (!n. n < step_c ==> (~(bir_state_is_terminated (bir_exec_infinite_steps_fun p state n)) /\
-                          mo <> SOME (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state n))))``,
+                          mo <> SOME (bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state n))))``,
 
 REPEAT GEN_TAC >>
 EQ_TAC >- (
   SIMP_TAC std_ss [bir_exec_steps_GEN_def, LET_DEF] >>
-  Cases_on `bir_exec_infinite_steps_COUNT_STEPS pc_cond mo p state` >> (
+  Cases_on `bir_exec_infinite_steps_COUNT_STEPS pc_env_cond mo p state` >> (
     ASM_SIMP_TAC (std_ss++bir_TYPES_ss) []
   ) >>
   STRIP_TAC >> REPEAT (BasicProvers.VAR_EQ_TAC) >>
@@ -1090,20 +1090,20 @@ EQ_TAC >- (
   FULL_SIMP_TAC std_ss [FORALL_AND_THM, IMP_CONJ_THM] >>
   Cases_on `step_c` >- (
     Q.UNABBREV_TAC `P` >>
-    FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [bir_exec_infinite_steps_fun_COUNT_PCs_def]
+    FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def]
   ) >>
   rename1 `P (SUC step_c') (SOME m)` >>
-  `bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state step_c' < m` by (
+  `bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state step_c' < m` by (
      CCONTR_TAC >>
      FULL_SIMP_TAC std_ss [arithmeticTheory.NOT_LESS, GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC] >>
-     METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ]
+     METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_LESS_EQ]
   ) >>
-  ASM_SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_DEF] >>
+  ASM_SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF, LET_DEF] >>
   Q.UNABBREV_TAC `P` >> (
     FULL_SIMP_TAC std_ss []
   ) >>
-  FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_DEF] >>
-  Cases_on `bir_state_COUNT_PC pc_cond
+  FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF, LET_DEF] >>
+  Cases_on `bir_state_COUNT_PC_ENV pc_env_cond
           (bir_exec_infinite_steps_fun p state (SUC step_c'))` >> (
     FULL_SIMP_TAC arith_ss []
   )
@@ -1111,13 +1111,13 @@ EQ_TAC >- (
   SIMP_TAC std_ss [bir_exec_steps_GEN_def, LET_DEF] >>
   REPEAT STRIP_TAC >>
   REPEAT BasicProvers.VAR_EQ_TAC >>
-  Cases_on ` bir_exec_infinite_steps_COUNT_STEPS pc_cond mo p state` >- (
+  Cases_on ` bir_exec_infinite_steps_COUNT_STEPS pc_env_cond mo p state` >- (
     SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
     FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE] >>
     Cases_on `mo` >> FULL_SIMP_TAC std_ss [] >>
     rename1 `_ <= (m:num)` >>
-    `m = bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state step_c` by DECIDE_TAC >>
-    METIS_TAC[FINITE_bir_exec_infinite_steps_fun_PC_COND_SET]
+    `m = bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state step_c` by DECIDE_TAC >>
+    METIS_TAC[FINITE_bir_exec_infinite_steps_fun_PC_ENV_COND_SET]
   ) >>
   rename1 `_ = SOME (step_c':num)` >>
   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_steps_observe_llist_toList_SOME] >>
@@ -1153,13 +1153,13 @@ EQ_TAC >- (
 
 
 val bir_exec_steps_GEN_EQ_Ended_0 = store_thm ("bir_exec_steps_GEN_EQ_Ended_0",
-  ``(!pc_cond p st max_steps ol c_pc st'.
-    (bir_exec_steps_GEN pc_cond p st max_steps = BER_Ended ol 0 c_pc st') <=> (
+  ``(!pc_env_cond p st max_steps ol c_pc st'.
+    (bir_exec_steps_GEN pc_env_cond p st max_steps = BER_Ended ol 0 c_pc st') <=> (
        (ol = []) /\ (c_pc = 0) /\ (st' = st) /\
        (bir_state_is_terminated st \/ (max_steps = SOME 0))))``,
 
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_GEN_EQ_Ended,
-  bir_exec_infinite_steps_fun_COUNT_PCs_def, bir_exec_steps_observe_list_REWRS,
+  bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def, bir_exec_steps_observe_list_REWRS,
   bir_exec_infinite_steps_fun_REWRS] >>
 Cases_on `max_steps` >> (
   SIMP_TAC std_ss []
@@ -1170,15 +1170,15 @@ Cases_on `m` >> SIMP_TAC arith_ss []);
 
 
 val bir_exec_steps_GEN_EQ_Ended_SUC = store_thm ("bir_exec_steps_GEN_EQ_Ended_SUC",
-  ``(!pc_cond p st max_steps c_st ol c_pc st'.
-    (bir_exec_steps_GEN pc_cond p st max_steps = BER_Ended ol (SUC c_st) c_pc st') <=> (
+  ``(!pc_env_cond p st max_steps c_st ol c_pc st'.
+    (bir_exec_steps_GEN pc_env_cond p st max_steps = BER_Ended ol (SUC c_st) c_pc st') <=> (
        ~(bir_state_is_terminated st) /\ (max_steps <> SOME 0) /\
 
        let (fe, st1) = bir_exec_step p st in
-       let max_steps' = if bir_state_COUNT_PC pc_cond st1 then OPT_NUM_PRE max_steps else max_steps in
-       ?ol' c_pc'. (bir_exec_steps_GEN pc_cond p st1 max_steps' = BER_Ended ol' c_st c_pc' st') /\
+       let max_steps' = if bir_state_COUNT_PC_ENV pc_env_cond st1 then OPT_NUM_PRE max_steps else max_steps in
+       ?ol' c_pc'. (bir_exec_steps_GEN pc_env_cond p st1 max_steps' = BER_Ended ol' c_st c_pc' st') /\
                    (ol = OPT_CONS fe ol') /\
-                   (c_pc = if (bir_state_COUNT_PC pc_cond st1) then SUC c_pc' else c_pc')))``,
+                   (c_pc = if (bir_state_COUNT_PC_ENV pc_env_cond st1) then SUC c_pc' else c_pc')))``,
 
 
 REPEAT STRIP_TAC >>
@@ -1190,34 +1190,34 @@ Cases_on `max_steps = SOME 0` >- (
 ) >>
 `?fe st1. bir_exec_step p st = (fe, st1)` by METIS_TAC[pairTheory.PAIR] >>
 ASM_SIMP_TAC std_ss [bir_exec_steps_GEN_REWR_STEP, LET_DEF] >>
-Q.ABBREV_TAC `max_steps' = if bir_state_COUNT_PC pc_cond st1 then OPT_NUM_PRE max_steps else max_steps` >>
+Q.ABBREV_TAC `max_steps' = if bir_state_COUNT_PC_ENV pc_env_cond st1 then OPT_NUM_PRE max_steps else max_steps` >>
 
-Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_cond p st1 max_steps'`) >- (
+Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_env_cond p st1 max_steps'`) >- (
   SIMP_TAC (std_ss++bir_TYPES_ss) []
 ) >>
 SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.EQUIV_EXTRACT_ss) []);
 
 
 val bir_exec_steps_GEN_SOME_EQ_Ended = store_thm ("bir_exec_steps_GEN_SOME_EQ_Ended",
-  ``!pc_cond p m state mo ol step_c pc_c state'.
-    (bir_exec_steps_GEN pc_cond p state (SOME m) = BER_Ended ol step_c pc_c state') <=>
+  ``!pc_env_cond p m state mo ol step_c pc_c state'.
+    (bir_exec_steps_GEN pc_env_cond p state (SOME m) = BER_Ended ol step_c pc_c state') <=>
     ((ol = bir_exec_steps_observe_list p state step_c) /\
      (pc_c =
-      bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state step_c) /\
+      bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state step_c) /\
      (pc_c <= m /\ (pc_c < m ==> bir_state_is_terminated state') /\
-      ((pc_c = m) /\ 0 < m ==> bir_state_COUNT_PC pc_cond state')) /\
+      ((pc_c = m) /\ 0 < m ==> bir_state_COUNT_PC_ENV pc_env_cond state')) /\
      (state' = bir_exec_infinite_steps_fun p state step_c) /\
      (!n.
        n < step_c ==>
        ~bir_state_is_terminated
           (bir_exec_infinite_steps_fun p state n)) /\
      (!n. n < step_c ==>
-       bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state n < m))``,
+       bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state n < m))``,
 
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_GEN_EQ_Ended,
   IMP_CONJ_THM, FORALL_AND_THM] >>
 REPEAT STRIP_TAC >> EQ_TAC >> REPEAT STRIP_TAC >- (
-  METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ,
+  METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_LESS_EQ,
     arithmeticTheory.NOT_LESS, arithmeticTheory.LESS_EQ_LESS_TRANS]
 ) >- (
   METIS_TAC[prim_recTheory.LESS_REFL]
@@ -1226,8 +1226,8 @@ REPEAT STRIP_TAC >> EQ_TAC >> REPEAT STRIP_TAC >- (
 
 val bir_exec_steps_GEN_SOME_EQ_Ended_pc_counts =
   store_thm("bir_exec_steps_GEN_SOME_EQ_Ended_pc_counts",
-  ``!pc_cond p st n ol c_st c_pc st'.
-    (bir_exec_steps_GEN pc_cond p st (SOME n) = BER_Ended ol c_st c_pc st') ==>
+  ``!pc_env_cond p st n ol c_st c_pc st'.
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n) = BER_Ended ol c_st c_pc st') ==>
     (~bir_state_is_terminated st') ==>
     (n = c_pc)``,
 
@@ -1243,8 +1243,8 @@ Cases_on `c_pc < n` >| [
 
 val bir_exec_steps_GEN_SOME_EQ_Ended_Running_steps =
   store_thm("bir_exec_steps_GEN_SOME_EQ_Ended_Running_steps",
-  ``!pc_cond p st n ol c_st c_pc st'.
-    (bir_exec_steps_GEN pc_cond p st (SOME n) =
+  ``!pc_env_cond p st n ol c_st c_pc st'.
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n) =
       BER_Ended ol c_st c_pc st') ==>
     (~bir_state_is_terminated st') ==>
     (n > 0) ==>
@@ -1254,7 +1254,7 @@ REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended] >>
 Cases_on `c_st = 0` >- (
   FULL_SIMP_TAC std_ss
-    [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF] >>
+    [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF] >>
   `c_pc < n` by FULL_SIMP_TAC arith_ss [] >>
   METIS_TAC [bir_state_is_terminated_def,
              bir_exec_infinite_steps_fun_REWRS]
@@ -1264,16 +1264,16 @@ FULL_SIMP_TAC arith_ss []
 
 
 val bir_exec_steps_GEN_1_EQ_Ended = store_thm ("bir_exec_steps_GEN_1_EQ_Ended",
-  ``!p state ol step_c pc_c state' pc_cond.
-    (bir_exec_steps_GEN pc_cond p state (SOME 1) = BER_Ended ol step_c pc_c state') <=>
+  ``!p state ol step_c pc_c state' pc_env_cond.
+    (bir_exec_steps_GEN pc_env_cond p state (SOME 1) = BER_Ended ol step_c pc_c state') <=>
     ((ol = bir_exec_steps_observe_list p state step_c) /\
-     (if (0 < step_c /\ (bir_state_COUNT_PC pc_cond state')) then
+     (if (0 < step_c /\ (bir_state_COUNT_PC_ENV pc_env_cond state')) then
         (pc_c = 1) else (pc_c = 0)) /\
      ((pc_c = 0) ==> (bir_state_is_terminated state')) /\
      (state' = bir_exec_infinite_steps_fun p state step_c) /\
      (!n. n < step_c ==> (~(bir_state_is_terminated (bir_exec_infinite_steps_fun p state n)))) /\
      (!n. (0 < n /\ n < step_c) ==>
-       ~(bir_state_COUNT_PC pc_cond (bir_exec_infinite_steps_fun p state n))))``,
+       ~(bir_state_COUNT_PC_ENV pc_env_cond (bir_exec_infinite_steps_fun p state n))))``,
 
 
 REPEAT GEN_TAC >>
@@ -1281,12 +1281,12 @@ SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_GEN_EQ_Ended,
   IMP_CONJ_THM, FORALL_AND_THM] >>
 Cases_on `step_c` >- (
   SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [
-    bir_exec_infinite_steps_fun_REWRS, bir_exec_infinite_steps_fun_COUNT_PCs_def]
+    bir_exec_infinite_steps_fun_REWRS, bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def]
 ) >>
 rename1 `bir_exec_steps_observe_list p state (SUC step_c')` >>
 Cases_on `pc_c = 0` >- (
   ASM_SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [
-    bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
+    bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_0] >>
   REPEAT STRIP_TAC >> EQ_TAC >> STRIP_TAC >- (
     ASM_SIMP_TAC arith_ss [] >>
     Cases >> ASM_SIMP_TAC arith_ss []
@@ -1296,25 +1296,25 @@ Cases_on `pc_c = 0` >- (
       Cases_on `j = step_c'` >> ASM_SIMP_TAC arith_ss []
     ) >- (
       GEN_TAC >> STRIP_TAC >>
-      `bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state n = 0`
+      `bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state n = 0`
          suffices_by (ASM_SIMP_TAC arith_ss []) >>
-      ASM_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0]
+      ASM_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_0]
     )
   )
 ) >- (
   ASM_SIMP_TAC std_ss [] >>
   Cases_on `pc_c = 1` >> ASM_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss) [] >>
   REPEAT STRIP_TAC >>
-  ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_DEF,
-    bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
+  ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF, LET_DEF,
+    bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_0] >>
   EQ_TAC >> STRIP_TAC >- (
     Cases >> ASM_SIMP_TAC arith_ss []
   ) >- (
     CONJ_TAC >- ASM_SIMP_TAC arith_ss [] >>
     GEN_TAC >> STRIP_TAC >>
-    `bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state n = 0` suffices_by
+    `bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p state n = 0` suffices_by
       ASM_SIMP_TAC arith_ss [] >>
-    ASM_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0]
+    ASM_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_0]
   )
 ));
 
@@ -1334,27 +1334,27 @@ val bir_exec_steps_GEN_SOME_ADD_Ended = store_thm ("bir_exec_steps_GEN_SOME_ADD_
 SIMP_TAC arith_ss [bir_exec_steps_GEN_EQ_Ended,
   GSYM bir_exec_steps_observe_list_ADD,
   GSYM bir_exec_infinite_steps_fun_ADD,
-  bir_exec_infinite_steps_fun_COUNT_PCs_ADD] >>
+  bir_exec_infinite_steps_fun_COUNT_PC_ENVs_ADD] >>
 REPEAT GEN_TAC >> REPEAT DISCH_TAC >>
 FULL_SIMP_TAC std_ss [] >>
 Q.ABBREV_TAC `st1 = (bir_exec_infinite_steps_fun p state0 c_pc1)` >>
-Cases_on ` bir_exec_infinite_steps_fun_COUNT_PCs pc_count p state0 c_pc1 < n1` >- (
+Cases_on ` bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_count p state0 c_pc1 < n1` >- (
   FULL_SIMP_TAC std_ss [] >>
   Q.PAT_X_ASSUM `bir_state_is_terminated _` ASSUME_TAC >>
   FULL_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_TERMINATED_0,
     arithmeticTheory.NOT_LESS] >>
   Tactical.REVERSE (Cases_on `c_pc2`) >- METIS_TAC[arithmeticTheory.NOT_SUC_LESS_EQ_0] >>
-  FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [bir_exec_infinite_steps_fun_COUNT_PCs_def] >>
+  FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def] >>
   Tactical.REVERSE CONJ_TAC >- (
     REPEAT STRIP_TAC >>
     DISJ2_TAC >>
     `n1 <= n1 + n2` by DECIDE_TAC >>
-    METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ,
+    METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_LESS_EQ,
       arithmeticTheory.LESS_EQ_LESS_TRANS]
   ) >>
   Cases_on `mo` >> FULL_SIMP_TAC arith_ss []
 ) >>
-`bir_exec_infinite_steps_fun_COUNT_PCs pc_count p state0 c_pc1 = n1` by DECIDE_TAC >>
+`bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_count p state0 c_pc1 = n1` by DECIDE_TAC >>
 FULL_SIMP_TAC arith_ss [GSYM bir_exec_infinite_steps_fun_ADD] >>
 Tactical.REVERSE CONJ_TAC >- (
   GEN_TAC >> STRIP_TAC >>
@@ -1364,12 +1364,12 @@ Tactical.REVERSE CONJ_TAC >- (
     GEN_TAC >> DISJ2_TAC >>
     rename1 `_ <> (n1:num) + n2` >>
     `n1 <= n1 + n2` by DECIDE_TAC >>
-    METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ,
+    METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_LESS_EQ,
       arithmeticTheory.LESS_EQ_LESS_TRANS]
   ) >>
   `?n'. n = c_pc1 + n'` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS, arithmeticTheory.NOT_LESS] >>
   FULL_SIMP_TAC arith_ss [GSYM bir_exec_infinite_steps_fun_ADD,
-    bir_exec_infinite_steps_fun_COUNT_PCs_ADD]
+    bir_exec_infinite_steps_fun_COUNT_PC_ENVs_ADD]
 ) >>
 Cases_on `mo` >> (
   FULL_SIMP_TAC std_ss []
@@ -1378,7 +1378,7 @@ rename1 `0 < n1 + n2` >>
 Cases_on `n2 = 0` >- (
   `c_pc2 = 0` by (
      Q.PAT_X_ASSUM `!n. n < c_pc2 ==> _` (MP_TAC o Q.SPEC `0`) >>
-     ASM_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PCs_def]
+     ASM_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def]
   ) >>
   FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS]
 ) >>
@@ -1405,48 +1405,48 @@ CONJ_TAC >- (
 ) >>
 Cases_on `mo` >> FULL_SIMP_TAC std_ss [] >>
 REPEAT STRIP_TAC >>
-rename1 `bir_exec_infinite_steps_fun_COUNT_PCs _ _ _ i < n1 + n2` >>
+rename1 `bir_exec_infinite_steps_fun_COUNT_PC_ENVs _ _ _ i < n1 + n2` >>
 `n2 <> 0` by (
   CCONTR_TAC >>
   FULL_SIMP_TAC arith_ss []
 ) >>
 Cases_on `i <= c_pc1` >- (
-  `bir_exec_infinite_steps_fun_COUNT_PCs pc_count p state0 i <= n1` by
-    METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_MONO,
+  `bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_count p state0 i <= n1` by
+    METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO,
       arithmeticTheory.LESS_EQ_TRANS] >>
   DECIDE_TAC
 ) >>
 `c_pc1 <= i` by DECIDE_TAC >>
 `?i'. i = c_pc1 + i'` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS] >>
-FULL_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PCs_ADD] >>
+FULL_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_ADD] >>
 Q.PAT_X_ASSUM `!i. _ < n2` (ASSUME_TAC o Q.SPEC `i'`) >>
 DECIDE_TAC);
 
 
 val bir_exec_steps_GEN_combine = store_thm ("bir_exec_steps_GEN_combine",
-  ``!pc_cond p st mo n.
+  ``!pc_env_cond p st mo n.
 
     (!m. (mo = SOME m) ==> n <= m) ==>
 
-    (bir_exec_steps_GEN pc_cond p st mo =
-      case (bir_exec_steps_GEN pc_cond p st (SOME n)) of
+    (bir_exec_steps_GEN pc_env_cond p st mo =
+      case (bir_exec_steps_GEN pc_env_cond p st (SOME n)) of
         BER_Looping ll1 => BER_Looping ll1
       | BER_Ended l1 c1 c1' st1 =>
-         (case bir_exec_steps_GEN pc_cond p st1 (OPTION_MAP (\m. m - n) mo) of
+         (case bir_exec_steps_GEN pc_env_cond p st1 (OPTION_MAP (\m. m - n) mo) of
            BER_Looping ll2 => BER_Looping (LAPPEND (fromList l1) ll2)
          | BER_Ended l2 c2 c2' st2 =>
            BER_Ended (l1++l2) (c1 + c2) (c1' + c2') st2))``,
 
 
 REPEAT STRIP_TAC >>
-Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_cond p st (SOME n)`) >- (
+Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_env_cond p st (SOME n)`) >- (
   rename1 `_ = BER_Looping ll1` >>
   ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
   FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Looping,
     bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE] >>
   Cases_on `mo` >> FULL_SIMP_TAC std_ss [] >>
   GEN_TAC >>
-  `bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st i < n` by METIS_TAC[] >>
+  `bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st i < n` by METIS_TAC[] >>
   DECIDE_TAC
 ) >>
 
@@ -1454,8 +1454,8 @@ rename1 `_ = BER_Ended l1 c1 c1' st1` >>
 ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
 Q.ABBREV_TAC `mo' = OPTION_MAP (\m. m - n) mo` >>
 
-MP_TAC (Q.SPECL [`n`, `mo'`, `pc_cond`, `p`, `st`] bir_exec_steps_GEN_SOME_ADD_Looping) >>
-MP_TAC (Q.SPECL [`n`, `mo'`, `pc_cond`, `p`, `st`] bir_exec_steps_GEN_SOME_ADD_Ended) >>
+MP_TAC (Q.SPECL [`n`, `mo'`, `pc_env_cond`, `p`, `st`] bir_exec_steps_GEN_SOME_ADD_Looping) >>
+MP_TAC (Q.SPECL [`n`, `mo'`, `pc_env_cond`, `p`, `st`] bir_exec_steps_GEN_SOME_ADD_Ended) >>
 
 ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
 
@@ -1466,28 +1466,28 @@ Q.SUBGOAL_THEN `(OPTION_MAP (\n2. n + n2) mo') = mo` SUBST1_TAC >- (
   )
 ) >>
 
-Cases_on `bir_exec_steps_GEN pc_cond p st1 mo'` >> (
+Cases_on `bir_exec_steps_GEN pc_env_cond p st1 mo'` >> (
   ASM_SIMP_TAC (std_ss++bir_TYPES_ss) []
 ));
 
 
 val bir_exec_steps_GEN_REWR_BIG_STEP = store_thm ("bir_exec_steps_GEN_REWR_BIG_STEP",
-  ``!pc_cond p st mo.
+  ``!pc_env_cond p st mo.
 
     (mo <> SOME 0) ==>
 
-    (bir_exec_steps_GEN pc_cond p st mo =
-      case (bir_exec_steps_GEN pc_cond p st (SOME 1)) of
+    (bir_exec_steps_GEN pc_env_cond p st mo =
+      case (bir_exec_steps_GEN pc_env_cond p st (SOME 1)) of
         BER_Looping ll1 => BER_Looping ll1
       | BER_Ended l1 c1 c1' st1 =>
-         (case bir_exec_steps_GEN pc_cond p st1 (OPT_NUM_PRE mo) of
+         (case bir_exec_steps_GEN pc_env_cond p st1 (OPT_NUM_PRE mo) of
            BER_Looping ll2 => BER_Looping (LAPPEND (fromList l1) ll2)
          | BER_Ended l2 c2 c2' st2 =>
            BER_Ended (l1++l2) (c1 + c2) (c1' + c2') st2))``,
 
 
 REPEAT STRIP_TAC >>
-MP_TAC (Q.SPECL [`pc_cond`, `p`, `st`, `mo`, `1`] bir_exec_steps_GEN_combine) >>
+MP_TAC (Q.SPECL [`pc_env_cond`, `p`, `st`, `mo`, `1`] bir_exec_steps_GEN_combine) >>
 `(!m. (mo = SOME m) ==> 1 <= m) /\ ((OPTION_MAP (\m. m - 1) mo = OPT_NUM_PRE mo))` by (
   Cases_on `mo` >> FULL_SIMP_TAC arith_ss [OPT_NUM_PRE_def]
 ) >>
@@ -1497,34 +1497,34 @@ ASM_SIMP_TAC std_ss []);
 
 
 val bir_exec_steps_GEN_1_step_weaker_cond_1 = store_thm ("bir_exec_steps_GEN_1_step_weaker_cond_1",
-  ``!pc_cond pc_cond' p st.
-    bir_pc_cond_impl pc_cond pc_cond' ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME 1) =
-      case (bir_exec_steps_GEN pc_cond' p st (SOME 1)) of
+  ``!pc_env_cond pc_env_cond' p st.
+    bir_pc_env_cond_impl pc_env_cond pc_env_cond' ==>
+    (bir_exec_steps_GEN pc_env_cond p st (SOME 1) =
+      case (bir_exec_steps_GEN pc_env_cond' p st (SOME 1)) of
         BER_Looping ll1 => BER_Looping ll1
       | BER_Ended l1 c1 c1' st1 =>
-         if (0 < c1) /\ (bir_state_COUNT_PC pc_cond st1) then
+         if (0 < c1) /\ (bir_state_COUNT_PC_ENV pc_env_cond st1) then
            BER_Ended l1 c1 1 st1
          else
-         (case bir_exec_steps_GEN pc_cond p st1 (SOME 1) of
+         (case bir_exec_steps_GEN pc_env_cond p st1 (SOME 1) of
            BER_Looping ll2 => BER_Looping (LAPPEND (fromList l1) ll2)
          | BER_Ended l2 c2 c2' st2 =>
            BER_Ended (l1++l2) (c1 + c2) c2' st2))``,
 
 
 REPEAT STRIP_TAC >>
-`!st. bir_state_COUNT_PC pc_cond st ==> bir_state_COUNT_PC pc_cond' st` by
-  METIS_TAC [bir_state_COUNT_PC_MONO] >>
-Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_cond' p st (SOME 1)`) >- (
+`!st. bir_state_COUNT_PC_ENV pc_env_cond st ==> bir_state_COUNT_PC_ENV pc_env_cond' st` by
+  METIS_TAC [bir_state_COUNT_PC_ENV_MONO] >>
+Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_env_cond' p st (SOME 1)`) >- (
   rename1 `_ = BER_Looping ll1` >>
   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_steps_GEN_1_EQ_Looping] >>
   METIS_TAC[]
 ) >>
 rename1 `_ = BER_Ended l1 c1 c1' st1` >>
 ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
-Q.ABBREV_TAC `cpc = \n. bir_state_COUNT_PC pc_cond
+Q.ABBREV_TAC `cpc = \n. bir_state_COUNT_PC_ENV pc_env_cond
     (bir_exec_infinite_steps_fun p st n)` >>
-Q.SUBGOAL_THEN `bir_state_COUNT_PC pc_cond st1 = cpc c1` SUBST1_TAC >- (
+Q.SUBGOAL_THEN `bir_state_COUNT_PC_ENV pc_env_cond st1 = cpc c1` SUBST1_TAC >- (
   FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Ended]
 ) >>
 Cases_on `bir_state_is_terminated st` >- (
@@ -1539,11 +1539,11 @@ Cases_on `bir_state_is_terminated st` >- (
 ) >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_1_EQ_Ended] >>
 
-Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_cond p st (SOME 1)`) >- (
+Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_env_cond p st (SOME 1)`) >- (
   FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_1_EQ_Looping] >>
   REV_FULL_SIMP_TAC std_ss [] >>
 
-  `bir_exec_steps_GEN pc_cond p (bir_exec_infinite_steps_fun p st c1) (SOME 1) =
+  `bir_exec_steps_GEN pc_env_cond p (bir_exec_infinite_steps_fun p st c1) (SOME 1) =
    BER_Looping (bir_exec_steps_observe_llist p (bir_exec_infinite_steps_fun p st c1)
    NONE)` by (
     ASM_SIMP_TAC arith_ss [bir_exec_steps_GEN_1_EQ_Looping,
@@ -1573,7 +1573,7 @@ Cases_on `cpc c1` >- (
 ) >>
 ASM_SIMP_TAC std_ss [] >>
 
-Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_cond
+Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_env_cond
   p (bir_exec_infinite_steps_fun p st c1) (SOME 1)`) >- (
   FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_1_EQ_Looping, bir_exec_infinite_steps_fun_ADD] >>
   REV_FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
@@ -1620,15 +1620,15 @@ DECIDE_TAC);
 
 
 val bir_exec_steps_GEN_1_step_weaker_cond = store_thm ("bir_exec_steps_GEN_1_step_weaker_cond",
-  ``!pc_cond pc_cond' p st n.
-    bir_pc_cond_impl pc_cond pc_cond' ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME n) =
+  ``!pc_env_cond pc_env_cond' p st n.
+    bir_pc_env_cond_impl pc_env_cond pc_env_cond' ==>
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n) =
       if (n = 0) then BER_Ended [] 0 0 st else
-      case (bir_exec_steps_GEN pc_cond' p st (SOME 1)) of
+      case (bir_exec_steps_GEN pc_env_cond' p st (SOME 1)) of
         BER_Looping ll1 => BER_Looping ll1
       | BER_Ended l1 c1 _ st1 =>
-         let c1' = if (0 < c1) /\ (bir_state_COUNT_PC pc_cond st1) then 1 else 0 in
-         (case bir_exec_steps_GEN pc_cond p st1 (SOME (n - c1')) of
+         let c1' = if (0 < c1) /\ (bir_state_COUNT_PC_ENV pc_env_cond st1) then 1 else 0 in
+         (case bir_exec_steps_GEN pc_env_cond p st1 (SOME (n - c1')) of
            BER_Looping ll2 => BER_Looping (LAPPEND (fromList l1) ll2)
          | BER_Ended l2 c2 c2' st2 =>
            BER_Ended (l1++l2) (c1 + c2) (c1' + c2') st2))``,
@@ -1637,29 +1637,29 @@ REPEAT STRIP_TAC >>
 Cases_on `n` >- SIMP_TAC std_ss [bir_exec_steps_GEN_REWR_no_steps] >>
 rename1 `SOME (SUC n')` >>
 SIMP_TAC arith_ss [Once bir_exec_steps_GEN_REWR_BIG_STEP, OPT_NUM_PRE_def] >>
-MP_TAC (Q.SPECL [`pc_cond`, `pc_cond'`, `p`, `st`] bir_exec_steps_GEN_1_step_weaker_cond_1) >>
+MP_TAC (Q.SPECL [`pc_env_cond`, `pc_env_cond'`, `p`, `st`] bir_exec_steps_GEN_1_step_weaker_cond_1) >>
 ASM_SIMP_TAC std_ss [] >>
 DISCH_TAC >> POP_ASSUM (K ALL_TAC) >>
 
-Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_cond' p st (SOME 1)`) >> (
+Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_env_cond' p st (SOME 1)`) >> (
   ASM_SIMP_TAC (std_ss++bir_TYPES_ss) []
 ) >>
 rename1 `_ = BER_Ended l1 c1 c1' st1` >>
 ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
-Q.ABBREV_TAC `cond = 0 < c1 /\ bir_state_COUNT_PC pc_cond st1` >>
+Q.ABBREV_TAC `cond = 0 < c1 /\ bir_state_COUNT_PC_ENV pc_env_cond st1` >>
 
 Cases_on `cond` >> (
   ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [LET_DEF]
 ) >>
-MP_TAC (Q.SPECL [`pc_cond`, `p`, `st1`, `(SOME (SUC n'))`]
+MP_TAC (Q.SPECL [`pc_env_cond`, `p`, `st1`, `(SOME (SUC n'))`]
    bir_exec_steps_GEN_REWR_BIG_STEP) >>
 ASM_SIMP_TAC arith_ss [OPT_NUM_PRE_def] >>
 
-Cases_on `bir_exec_steps_GEN pc_cond p st1 (SOME 1)` >> (
+Cases_on `bir_exec_steps_GEN pc_env_cond p st1 (SOME 1)` >> (
   ASM_SIMP_TAC (std_ss++bir_TYPES_ss) []
 ) >>
 rename1 `_ = BER_Ended l1' c1'' c1''' st1'` >>
-Cases_on `bir_exec_steps_GEN pc_cond p st1' (SOME n')` >> (
+Cases_on `bir_exec_steps_GEN pc_env_cond p st1' (SOME n')` >> (
   ASM_SIMP_TAC (list_ss++bir_TYPES_ss) [GSYM llistTheory.LAPPEND_fromList,
     llistTheory.LAPPEND_ASSOC]
 ));
@@ -1675,17 +1675,17 @@ Cases_on `bir_exec_steps_GEN pc_cond p st1' (SOME n')` >> (
 
 val bir_exec_step_n_TO_steps_GEN = store_thm ("bir_exec_step_n_TO_steps_GEN",
   ``((bir_exec_step_n p state n = (l, c, state'))) <=>
-     (bir_exec_steps_GEN (T, \_. T) p state (SOME n) =
+     (bir_exec_steps_GEN (T, \_ _. T) p state (SOME n) =
      (BER_Ended l c c state'))``,
 
-`IS_BER_Ended (bir_exec_steps_GEN (T, \_. T) p state (SOME n))` by (
+`IS_BER_Ended (bir_exec_steps_GEN (T, \_ _. T) p state (SOME n))` by (
   MATCH_MP_TAC bir_exec_steps_GEN_NOT_Looping_max_steps_blocks >>
   SIMP_TAC std_ss []
 ) >>
 FULL_SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.EQUIV_EXTRACT_ss) [
   bir_exec_step_n_def, IS_BER_Ended_EXISTS,
   valOf_BER_Ended_steps_def] >>
-FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_EQ_COUNT_ALL_STEPS,
+FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_COUNT_ALL_STEPS,
   bir_exec_steps_GEN_EQ_Ended]);
 
 
@@ -1701,8 +1701,8 @@ val bir_exec_step_n_EQ_THM = store_thm ("bir_exec_step_n_EQ_THM",
 
 SIMP_TAC std_ss [bir_exec_step_n_TO_steps_GEN] >>
 FULL_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_GEN_EQ_Ended,
-  bir_exec_infinite_steps_fun_COUNT_PCs_EQ_COUNT_ALL_STEPS,
-  bir_state_COUNT_PC_ALL_STEPS]);
+  bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_COUNT_ALL_STEPS,
+  bir_state_COUNT_PC_ENV_ALL_STEPS]);
 
 
 val bir_exec_step_n_combine = store_thm ("bir_exec_step_n_combine",
@@ -1830,10 +1830,10 @@ SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_step_n_EQ_THM,
 
 val bir_exec_block_n_TO_steps_GEN = store_thm ("bir_exec_block_n_TO_steps_GEN",
   ``((bir_exec_block_n p state n = (l, c_bl, c_st, state'))) <=>
-     (bir_exec_steps_GEN (F, \pc. pc.bpc_index = 0) p state (SOME n) =
+     (bir_exec_steps_GEN (F, \pc env. pc.bpc_index = 0) p state (SOME n) =
      (BER_Ended l c_bl c_st state'))``,
 
-`IS_BER_Ended (bir_exec_steps_GEN (F, \pc. pc.bpc_index = 0) p state (SOME n))` by (
+`IS_BER_Ended (bir_exec_steps_GEN (F, \pc env. pc.bpc_index = 0) p state (SOME n))` by (
   MATCH_MP_TAC bir_exec_steps_GEN_NOT_Looping_max_steps_blocks >>
   SIMP_TAC std_ss []
 ) >>
@@ -1846,15 +1846,15 @@ val bir_exec_block_n_EQ_THM = store_thm ("bir_exec_block_n_EQ_THM",
   ``((bir_exec_block_n p state n = (l, c_st, c_bl, state'))) <=>
 
     ((l = bir_exec_steps_observe_list p state c_st) /\
-     (c_bl = bir_exec_infinite_steps_fun_COUNT_PCs (F, \pc. pc.bpc_index = 0) p state c_st) /\
+     (c_bl = bir_exec_infinite_steps_fun_COUNT_PC_ENVs (F, \pc env. pc.bpc_index = 0) p state c_st) /\
      (c_bl <= n) /\ (c_bl < n ==> bir_state_is_terminated state') /\
      (state' = bir_exec_infinite_steps_fun p state c_st) /\
-     ((bir_exec_infinite_steps_fun_COUNT_PCs (F, \pc. pc.bpc_index = 0) p state c_st = n) /\
+     ((bir_exec_infinite_steps_fun_COUNT_PC_ENVs (F, \pc env. pc.bpc_index = 0) p state c_st = n) /\
        0 < n ==>
-       (bir_state_COUNT_PC (F, \pc. pc.bpc_index = 0) (bir_exec_infinite_steps_fun p state c_st))) /\
+       (bir_state_COUNT_PC_ENV (F, \pc env. pc.bpc_index = 0) (bir_exec_infinite_steps_fun p state c_st))) /\
        (!n'. n' < c_st ==>
           ~bir_state_is_terminated (bir_exec_infinite_steps_fun p state n') /\
-          bir_exec_infinite_steps_fun_COUNT_PCs (F, \pc. pc.bpc_index = 0) p state n' < n))``,
+          bir_exec_infinite_steps_fun_COUNT_PC_ENVs (F, \pc env. pc.bpc_index = 0) p state n' < n))``,
 
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_block_n_TO_steps_GEN,
   bir_exec_steps_GEN_EQ_Ended, IMP_CONJ_THM, FORALL_AND_THM] >>
@@ -1867,7 +1867,7 @@ Tactical.REVERSE EQ_TAC >- (
 REPEAT STRIP_TAC >>
 CCONTR_TAC >>
 FULL_SIMP_TAC arith_ss [arithmeticTheory.NOT_LESS] >>
-METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ,
+METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_LESS_EQ,
   arithmeticTheory.LESS_EQ_LESS_TRANS]);
 
 
@@ -1878,7 +1878,7 @@ val bir_exec_block_n_combine = store_thm ("bir_exec_block_n_combine",
     (bir_exec_block_n p state0 (n1 + n2) = (l1++l2, c_bl1+c_bl2, c_st1 + c_st2, state2))``,
 
 REPEAT STRIP_TAC >>
-MP_TAC (Q.SPECL [`n1`, `SOME n2`, `(F, \pc. pc.bpc_index = 0)`, `p`, `state0`]
+MP_TAC (Q.SPECL [`n1`, `SOME n2`, `(F, \pc env. pc.bpc_index = 0)`, `p`, `state0`]
   bir_exec_steps_GEN_SOME_ADD_Ended) >>
 FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_block_n_TO_steps_GEN]);
 
@@ -2005,7 +2005,7 @@ FULL_SIMP_TAC arith_ss [] >>
 IMP_RES_TAC bir_exec_block_n_0_steps >>
 FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM] >>
 FULL_SIMP_TAC (arith_ss++holBACore_ss)
-              [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF]
+              [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF]
 );
 
 
@@ -2027,7 +2027,7 @@ subgoal `c_l' = m` >- (
 FULL_SIMP_TAC std_ss [] >>
 REV_FULL_SIMP_TAC std_ss [] >>
 FULL_SIMP_TAC (std_ss++holBACore_ss)
-	      [bir_state_is_terminated_def, bir_state_COUNT_PC_def]
+	      [bir_state_is_terminated_def, bir_state_COUNT_PC_ENV_def]
 );
 
 
@@ -2345,7 +2345,7 @@ Cases_on `n = n'` >- (
   Q.PAT_X_ASSUM `st' = st''`
     (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
   subgoal `0 < m ==>
-	   bir_state_COUNT_PC (F,(\pc. pc.bpc_index = 0))
+	   bir_state_COUNT_PC_ENV (F,(\pc env. pc.bpc_index = 0))
 	     (bir_exec_infinite_steps_fun prog st n)` >- (
     FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
   ) >>
@@ -2354,7 +2354,7 @@ Cases_on `n = n'` >- (
     Q.PAT_X_ASSUM `st = st''`
       (fn thm => FULL_SIMP_TAC std_ss [thm])
   ) >>
-  FULL_SIMP_TAC arith_ss [bir_state_COUNT_PC_def] >>
+  FULL_SIMP_TAC arith_ss [bir_state_COUNT_PC_ENV_def] >>
   subgoal `bir_exec_infinite_steps_fun prog st n = st''` >- (
     FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
   ) >>
@@ -2450,8 +2450,8 @@ val bir_exec_to_labels_n_block_1 = store_thm ("bir_exec_to_labels_n_block_1",
   ``!ls p st n.
     (bir_exec_to_labels_n ls p st (SUC n) =
       let (l1, c1, _, st1) = bir_exec_block_n p st 1 in
-      let c1' = if (0 < c1) /\ (bir_state_COUNT_PC (F,
-         \pc. (pc.bpc_index = 0) /\ (pc.bpc_label IN ls)) st1) then 1 else 0 in
+      let c1' = if (0 < c1) /\ (bir_state_COUNT_PC_ENV (F,
+         \pc env . (pc.bpc_index = 0) /\ (pc.bpc_label IN ls)) st1) then 1 else 0 in
       case bir_exec_to_labels_n ls p st1 (SUC n-c1') of
         BER_Looping ll2 => BER_Looping (LAPPEND (fromList l1) ll2)
       | BER_Ended l2 c2 c2' st2 =>
@@ -2459,10 +2459,10 @@ val bir_exec_to_labels_n_block_1 = store_thm ("bir_exec_to_labels_n_block_1",
 
 REPEAT STRIP_TAC >>
 SIMP_TAC std_ss [bir_exec_to_labels_n_def] >>
-MP_TAC (Q.SPECL [`(F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))`,
-                 `(F,(\pc. pc.bpc_index = 0))`, `p`, `st`, `SUC n`]
+MP_TAC (Q.SPECL [`(F,(\pc env. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))`,
+                 `(F,(\pc env. pc.bpc_index = 0))`, `p`, `st`, `SUC n`]
    bir_exec_steps_GEN_1_step_weaker_cond) >>
-ASM_SIMP_TAC arith_ss [bir_pc_cond_impl_def] >>
+ASM_SIMP_TAC arith_ss [bir_pc_env_cond_impl_def] >>
 DISCH_TAC >> POP_ASSUM (K ALL_TAC) >>
 `?l1 c1 c1_aux st1. bir_exec_block_n p st 1 = (l1, c1, c1_aux, st1)` by METIS_TAC[pairTheory.PAIR] >>
 ASM_SIMP_TAC std_ss [LET_THM] >>
@@ -2488,7 +2488,7 @@ FULL_SIMP_TAC std_ss [bir_exec_to_labels_n_def,
   subgoal `st'.bst_status = BST_Running` >- (
     FULL_SIMP_TAC std_ss [bir_state_is_terminated_def]
   ) >>
-  FULL_SIMP_TAC (arith_ss++holBACore_ss) [bir_state_COUNT_PC_def]
+  FULL_SIMP_TAC (arith_ss++holBACore_ss) [bir_state_COUNT_PC_ENV_def]
 )
 );
 
@@ -2532,7 +2532,7 @@ val bir_exec_steps_EQ_Ended = store_thm ("bir_exec_steps_EQ_Ended",
      (!n. n < c1 ==> ~(bir_state_is_terminated (bir_exec_infinite_steps_fun p state n)))))``,
 
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_def, bir_exec_steps_GEN_EQ_Ended,
-  bir_exec_infinite_steps_fun_COUNT_PCs_EQ_COUNT_ALL_STEPS]);
+  bir_exec_infinite_steps_fun_COUNT_PC_ENVs_EQ_COUNT_ALL_STEPS]);
 
 
 val bir_exec_steps_REWR_TERMINATED = store_thm ("bir_exec_steps_REWR_TERMINATED",
@@ -2553,7 +2553,7 @@ val bir_exec_steps_REWR_NOT_TERMINATED = store_thm ("bir_exec_steps_REWR_NOT_TER
          | BER_Looping oll => BER_Looping (OPT_LCONS fe oll))``,
 
 SIMP_TAC std_ss [bir_exec_steps_def, bir_exec_steps_GEN_REWR_STEP,
-  OPT_NUM_PRE_def, LET_THM, bir_state_COUNT_PC_ALL_STEPS]);
+  OPT_NUM_PRE_def, LET_THM, bir_state_COUNT_PC_ENV_ALL_STEPS]);
 
 
 val bir_exec_steps_combine = store_thm ("bir_exec_steps_combine",
@@ -2567,8 +2567,8 @@ val bir_exec_steps_combine = store_thm ("bir_exec_steps_combine",
          | BER_Looping oll => BER_Looping (LAPPEND (fromList l1) oll))``,
 
 REPEAT STRIP_TAC >>
-MP_TAC (Q.SPECL [`n1`, `NONE`, `(T, \_. T)`, `p`, `state0`] bir_exec_steps_GEN_SOME_ADD_Ended) >>
-MP_TAC (Q.SPECL [`n1`, `NONE`, `(T, \_. T)`, `p`, `state0`] bir_exec_steps_GEN_SOME_ADD_Looping) >>
+MP_TAC (Q.SPECL [`n1`, `NONE`, `(T, \_ _. T)`, `p`, `state0`] bir_exec_steps_GEN_SOME_ADD_Ended) >>
+MP_TAC (Q.SPECL [`n1`, `NONE`, `(T, \_ _. T)`, `p`, `state0`] bir_exec_steps_GEN_SOME_ADD_Looping) >>
 FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_step_n_TO_steps_GEN, GSYM bir_exec_steps_def] >>
 
 Cases_on `bir_exec_steps p state1` >> (
@@ -2606,10 +2606,10 @@ FULL_SIMP_TAC (list_ss++bir_TYPES_ss) [bir_exec_steps_REWR_TERMINATED]);
 (* If we do not terminate, we can increase the max-step-count *)
 val bir_exec_steps_GEN_increase_max_steps_looping_SOME = store_thm (
 "bir_exec_steps_GEN_increase_max_steps_looping_SOME",
-  ``!pc_cond p st ll n1 n2.
+  ``!pc_env_cond p st ll n1 n2.
     (n1 <= n2) ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Looping ll) ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Looping ll)``,
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n1) = BER_Looping ll) ==>
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n2) = BER_Looping ll)``,
 
 SIMP_TAC arith_ss [bir_exec_steps_GEN_EQ_Looping,
   bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE] >>
@@ -2620,9 +2620,9 @@ ASM_SIMP_TAC arith_ss []);
 
 val bir_exec_steps_GEN_increase_max_steps_looping_NONE = store_thm (
 "bir_exec_steps_GEN_increase_max_steps_looping_NONE",
-  ``!pc_cond p st ll n.
-    (bir_exec_steps_GEN pc_cond p st (SOME n) = BER_Looping ll) ==>
-    (bir_exec_steps_GEN pc_cond p st NONE = BER_Looping ll)``,
+  ``!pc_env_cond p st ll n.
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n) = BER_Looping ll) ==>
+    (bir_exec_steps_GEN pc_env_cond p st NONE = BER_Looping ll)``,
 
 SIMP_TAC arith_ss [bir_exec_steps_GEN_EQ_Looping,
   bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE]);
@@ -2630,10 +2630,10 @@ SIMP_TAC arith_ss [bir_exec_steps_GEN_EQ_Looping,
 
 val bir_exec_steps_GEN_EQ_Ended_FIX_STEPS = store_thm (
 "bir_exec_steps_GEN_EQ_Ended_FIX_STEPS",
-  ``!pc_cond p st ol c_pc c_st st' mo.
-    ((bir_exec_steps_GEN pc_cond p st mo = BER_Ended ol c_st c_pc st')) ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME
-       (if (bir_state_COUNT_PC pc_cond st' \/ (mo = SOME 0)) then c_pc else SUC c_pc)) = BER_Ended ol c_st c_pc st')``,
+  ``!pc_env_cond p st ol c_pc c_st st' mo.
+    ((bir_exec_steps_GEN pc_env_cond p st mo = BER_Ended ol c_st c_pc st')) ==>
+    (bir_exec_steps_GEN pc_env_cond p st (SOME
+       (if (bir_state_COUNT_PC_ENV pc_env_cond st' \/ (mo = SOME 0)) then c_pc else SUC c_pc)) = BER_Ended ol c_st c_pc st')``,
 
 REPEAT STRIP_TAC >>
 `(mo = SOME 0) ==> (c_st = 0)` by (
@@ -2643,21 +2643,21 @@ REPEAT STRIP_TAC >>
 ) >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Ended] >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
-Q.ABBREV_TAC `cc =  bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st c_st` >>
+Q.ABBREV_TAC `cc =  bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st c_st` >>
 Q.ABBREV_TAC `st' = bir_exec_infinite_steps_fun p st c_st` >>
 
-Cases_on `bir_state_COUNT_PC pc_cond st'` >- (
+Cases_on `bir_state_COUNT_PC_ENV pc_env_cond st'` >- (
    FULL_SIMP_TAC std_ss [] >>
    Q.UNABBREV_TAC `cc` >>
    Q.UNABBREV_TAC `st'` >>
    Cases_on `c_st` >- FULL_SIMP_TAC std_ss [] >>
-   FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_THM,
+   FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF, LET_THM,
      GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC] >>
    GEN_TAC >> STRIP_TAC >>
    rename1 `(na:num) <= nb` >>
-   `bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st na <=
-    bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st nb` by
-    METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_MONO] >>
+   `bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st na <=
+    bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st nb` by
+    METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO] >>
    ASM_SIMP_TAC arith_ss []
 ) >- (
    Cases_on `mo = SOME 0` >- (
@@ -2668,8 +2668,8 @@ Cases_on `bir_state_COUNT_PC pc_cond st'` >- (
    ) >>
    ASM_SIMP_TAC std_ss [] >>
    REPEAT STRIP_TAC >>
-   `bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st n <= cc`
-      by METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_MONO,
+   `bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st n <= cc`
+      by METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO,
            arithmeticTheory.LESS_IMP_LESS_OR_EQ] >>
    FULL_SIMP_TAC arith_ss []
 ));
@@ -2677,21 +2677,21 @@ Cases_on `bir_state_COUNT_PC pc_cond st'` >- (
 
 val bir_exec_steps_GEN_increase_max_steps_Ended_NONE = store_thm (
 "bir_exec_steps_GEN_increase_max_steps_Ended_NONE",
-  ``!pc_cond p st ol c_pc c_st st' n.
+  ``!pc_env_cond p st ol c_pc c_st st' n.
     (bir_state_is_terminated st') ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME n) = BER_Ended ol c_pc c_st st') ==>
-    (bir_exec_steps_GEN pc_cond p st NONE = BER_Ended ol c_pc c_st st')``,
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n) = BER_Ended ol c_pc c_st st') ==>
+    (bir_exec_steps_GEN pc_env_cond p st NONE = BER_Ended ol c_pc c_st st')``,
 
 SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Ended]);
 
 
 val bir_exec_steps_GEN_increase_max_steps_Ended_SOME = store_thm (
 "bir_exec_steps_GEN_increase_max_steps_Ended_SOME",
-  ``!pc_cond p st ol c_pc c_st st' n1 n2.
+  ``!pc_env_cond p st ol c_pc c_st st' n1 n2.
     (n1 <= n2) ==>
     (bir_state_is_terminated st') ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_pc c_st st') ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Ended ol c_pc c_st st')``,
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n1) = BER_Ended ol c_pc c_st st') ==>
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n2) = BER_Ended ol c_pc c_st st')``,
 
 REPEAT STRIP_TAC >>
 `?i. n2 = n1 + i` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS] >>
@@ -2701,20 +2701,20 @@ REPEAT (BasicProvers.VAR_EQ_TAC) >>
 FULL_SIMP_TAC arith_ss [] >>
 REPEAT STRIP_TAC >>
 `n1 <= i + n1` by DECIDE_TAC >>
-METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ,
+METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_COMPLETE_LESS_EQ,
       arithmeticTheory.LESS_EQ_LESS_TRANS]);
 
 
 val bir_exec_steps_GEN_decrease_max_steps_Ended_SOME =
   store_thm("bir_exec_steps_GEN_decrease_max_steps_Ended_SOME",
-  ``!pc_cond p st n1 n2 ol c_st c_pc st'.
-    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
+  ``!pc_env_cond p st n1 n2 ol c_st c_pc st'.
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
     (n2 < n1) ==>
     (?ol' c_st' c_pc' st''.
-      bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'')``,
+      bir_exec_steps_GEN pc_env_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'')``,
 
 REPEAT STRIP_TAC >>
-Cases_on `bir_exec_steps_GEN pc_cond p st (SOME n2)` >- ( 
+Cases_on `bir_exec_steps_GEN pc_env_cond p st (SOME n2)` >- ( 
   METIS_TAC []
 ) >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended,
@@ -2736,11 +2736,11 @@ Cases_on `c_pc = n1` >| [
 
 val bir_exec_steps_GEN_decrease_max_steps_Ended_terminated =
   store_thm("bir_exec_steps_GEN_decrease_max_steps_Ended_terminated",
-  ``!pc_cond p st n1 n2 ol ol' c_st c_st' c_pc c_pc' st' st''.
-    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
+  ``!pc_env_cond p st n1 n2 ol ol' c_st c_st' c_pc c_pc' st' st''.
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
     (~bir_state_is_terminated st') ==>
     (n2 < n1) ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'') ==>
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'') ==>
     (~bir_state_is_terminated st'')``,
 
 REPEAT STRIP_TAC >>
@@ -2758,18 +2758,18 @@ subgoal `c_st < c_st'` >- (
 ) >>
 QSPECL_X_ASSUM ``!n.
                  n < c_st' ==>
-                 bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st n < n2`` [`c_st`] >>
+                 bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st n < n2`` [`c_st`] >>
 FULL_SIMP_TAC arith_ss []
 );
 
 
 val bir_exec_steps_GEN_decrease_max_steps_Ended_steps_taken =
   store_thm("bir_exec_steps_GEN_decrease_max_steps_Ended_steps_taken",
-  ``!pc_cond p st n1 n2 ol ol' c_st c_st' c_pc c_pc' st' st''.
-    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
+  ``!pc_env_cond p st n1 n2 ol ol' c_st c_st' c_pc c_pc' st' st''.
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
     (~bir_state_is_terminated st') ==>
     (n2 < n1) ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'') ==>
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'') ==>
     (c_st' < c_st)``,
 
 REPEAT STRIP_TAC >>
@@ -2779,7 +2779,7 @@ FULL_SIMP_TAC std_ss [] >>
 Cases_on `c_st < c_st'` >- (
   QSPECL_X_ASSUM ``!n.
 		   n < c_st' ==>
-		   bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st n < n2`` [`c_st`] >>
+		   bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st n < n2`` [`c_st`] >>
   REV_FULL_SIMP_TAC arith_ss []
 ) >>
 Cases_on `c_st' = c_st` >- (
@@ -2791,9 +2791,9 @@ FULL_SIMP_TAC arith_ss []
 
 val bir_exec_steps_GEN_change_cond_Looping_NONE = store_thm (
 "bir_exec_steps_GEN_change_cond_Looping_NONE",
-  ``!pc_cond pc_cond' mo p st ll.
-    (bir_exec_steps_GEN pc_cond p st mo = BER_Looping ll) ==>
-    (bir_exec_steps_GEN pc_cond' p st NONE = BER_Looping ll)``,
+  ``!pc_env_cond pc_env_cond' mo p st ll.
+    (bir_exec_steps_GEN pc_env_cond p st mo = BER_Looping ll) ==>
+    (bir_exec_steps_GEN pc_env_cond' p st NONE = BER_Looping ll)``,
 
 SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Looping,
   bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE]);
@@ -2802,32 +2802,32 @@ SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Looping,
 
 val bir_exec_steps_GEN_change_cond_Looping_SOME = store_thm (
 "bir_exec_steps_GEN_change_cond_Looping_SOME",
-  ``!pc_cond pc_cond' p st ll n1.
-    (bir_pc_cond_impl pc_cond' pc_cond) ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Looping ll) ==>
-    (?n2. (n2 <= n1) /\ ((bir_exec_steps_GEN pc_cond' p st (SOME n2) = BER_Looping ll)))``,
+  ``!pc_env_cond pc_env_cond' p st ll n1.
+    (bir_pc_env_cond_impl pc_env_cond' pc_env_cond) ==>
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n1) = BER_Looping ll) ==>
+    (?n2. (n2 <= n1) /\ ((bir_exec_steps_GEN pc_env_cond' p st (SOME n2) = BER_Looping ll)))``,
 
 SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Looping,
   bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE,
-  GSYM FINITE_bir_exec_infinite_steps_fun_PC_COND_SET] >>
+  GSYM FINITE_bir_exec_infinite_steps_fun_PC_ENV_COND_SET] >>
 REPEAT STRIP_TAC >>
-Q.EXISTS_TAC `SUC (CARD (bir_exec_infinite_steps_fun_PC_COND_SET pc_cond p st))` >>
+Q.EXISTS_TAC `SUC (CARD (bir_exec_infinite_steps_fun_PC_ENV_COND_SET pc_env_cond p st))` >>
 FULL_SIMP_TAC std_ss [GSYM arithmeticTheory.LESS_EQ,
   GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC] >>
-`(bir_exec_infinite_steps_fun_PC_COND_SET pc_cond' p st) SUBSET
- (bir_exec_infinite_steps_fun_PC_COND_SET pc_cond p st)` suffices_by
+`(bir_exec_infinite_steps_fun_PC_ENV_COND_SET pc_env_cond' p st) SUBSET
+ (bir_exec_infinite_steps_fun_PC_ENV_COND_SET pc_env_cond p st)` suffices_by
   METIS_TAC[SUBSET_FINITE, CARD_SUBSET] >>
-ASM_SIMP_TAC std_ss [SUBSET_DEF, IN_bir_exec_infinite_steps_fun_PC_COND_SET] >>
-METIS_TAC[bir_state_COUNT_PC_MONO]);
+ASM_SIMP_TAC std_ss [SUBSET_DEF, IN_bir_exec_infinite_steps_fun_PC_ENV_COND_SET] >>
+METIS_TAC[bir_state_COUNT_PC_ENV_MONO]);
 
 
 
 val bir_exec_steps_GEN_change_cond_Ended_terminated = store_thm (
 "bir_exec_steps_GEN_change_cond_Ended_terminated",
-  ``!pc_cond pc_cond' p st ol c_pc c_st mo st'.
+  ``!pc_env_cond pc_env_cond' p st ol c_pc c_st mo st'.
     bir_state_is_terminated st' ==>
-    (bir_exec_steps_GEN pc_cond p st mo = BER_Ended ol c_st c_pc st') ==>
-    (?c_pc'. bir_exec_steps_GEN pc_cond' p st NONE = BER_Ended ol c_st c_pc' st')``,
+    (bir_exec_steps_GEN pc_env_cond p st mo = BER_Ended ol c_st c_pc st') ==>
+    (?c_pc'. bir_exec_steps_GEN pc_env_cond' p st NONE = BER_Ended ol c_st c_pc' st')``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Ended]);
@@ -2835,9 +2835,9 @@ FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Ended]);
 
 val bir_exec_steps_GEN_change_cond_Ended_NONE = store_thm (
 "bir_exec_steps_GEN_change_cond_Ended_NONE",
-  ``!pc_cond pc_cond' p st ol c_pc c_st st'.
-    (bir_exec_steps_GEN pc_cond p st NONE = BER_Ended ol c_st c_pc st') ==>
-    (?c_pc'. bir_exec_steps_GEN pc_cond' p st NONE = BER_Ended ol c_st c_pc' st')``,
+  ``!pc_env_cond pc_env_cond' p st ol c_pc c_st st'.
+    (bir_exec_steps_GEN pc_env_cond p st NONE = BER_Ended ol c_st c_pc st') ==>
+    (?c_pc'. bir_exec_steps_GEN pc_env_cond' p st NONE = BER_Ended ol c_st c_pc' st')``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Ended]);
@@ -2845,23 +2845,23 @@ FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Ended]);
 
 val bir_exec_steps_GEN_change_cond_Ended_SOME = store_thm (
 "bir_exec_steps_GEN_change_cond_Ended_SOME",
-  ``!pc_cond pc_cond' p st n1 ol c_pc c_st st'.
-    (bir_pc_cond_impl pc_cond pc_cond') ==>
-    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
-    ?n2 c_pc'. (n1 <= n2) /\ (bir_exec_steps_GEN pc_cond' p st (SOME n2) = BER_Ended ol c_st c_pc' st')``,
+  ``!pc_env_cond pc_env_cond' p st n1 ol c_pc c_st st'.
+    (bir_pc_env_cond_impl pc_env_cond pc_env_cond') ==>
+    (bir_exec_steps_GEN pc_env_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
+    ?n2 c_pc'. (n1 <= n2) /\ (bir_exec_steps_GEN pc_env_cond' p st (SOME n2) = BER_Ended ol c_st c_pc' st')``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Ended]  >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
 
-Q.ABBREV_TAC `cc = bir_exec_infinite_steps_fun_COUNT_PCs pc_cond' p st c_st` >>
+Q.ABBREV_TAC `cc = bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond' p st c_st` >>
 Q.ABBREV_TAC `st' = (bir_exec_infinite_steps_fun p st c_st)` >>
-`bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st c_st <= cc` by
-  METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_MONO_PC_COND] >>
+`bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond p st c_st <= cc` by
+  METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO_PC_ENV_COND] >>
 Cases_on `c_st` >- (
   Q.UNABBREV_TAC `cc` >>
   Q.EXISTS_TAC `n1` >>
-  FULL_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PCs_def]
+  FULL_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def]
 ) >>
 rename1 `SUC c_st'` >>
 
@@ -2869,32 +2869,32 @@ Cases_on `n1` >- (
   Q.UNABBREV_TAC `cc` >>
   Q.EXISTS_TAC `0` >>
   Q.PAT_X_ASSUM `!n. n < _ ==> _` (MP_TAC o Q.SPEC `0`) >>
-  FULL_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PCs_def,
+  FULL_SIMP_TAC arith_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_def,
     arithmeticTheory.NOT_LESS]
 ) >>
 rename1 `SUC n1' <= _` >>
 
 Cases_on `n1' < cc` >- (
-  Cases_on `bir_state_COUNT_PC pc_cond' st'` >- (
+  Cases_on `bir_state_COUNT_PC_ENV pc_env_cond' st'` >- (
     Q.EXISTS_TAC `cc` >>
     Q.UNABBREV_TAC `cc` >>
     FULL_SIMP_TAC arith_ss [GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC] >>
-    ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_THM] >>
+    ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF, LET_THM] >>
     REPEAT STRIP_TAC  >>
-    `bir_exec_infinite_steps_fun_COUNT_PCs pc_cond' p st n <=
-     bir_exec_infinite_steps_fun_COUNT_PCs pc_cond' p st c_st'` by
-       METIS_TAC [bir_exec_infinite_steps_fun_COUNT_PCs_MONO] >>
+    `bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond' p st n <=
+     bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond' p st c_st'` by
+       METIS_TAC [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO] >>
     DECIDE_TAC
   ) >- (
     Q.EXISTS_TAC `SUC cc` >>
-    `~(bir_state_COUNT_PC pc_cond st')` by METIS_TAC[bir_state_COUNT_PC_MONO] >>
+    `~(bir_state_COUNT_PC_ENV pc_env_cond st')` by METIS_TAC[bir_state_COUNT_PC_ENV_MONO] >>
     FULL_SIMP_TAC arith_ss [GSYM arithmeticTheory.LESS_EQ_IFF_LESS_SUC] >>
     Q.UNABBREV_TAC `cc` >>
-    ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF, LET_THM] >>
+    ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_END_DEF, LET_THM] >>
     REPEAT STRIP_TAC  >>
-    `bir_exec_infinite_steps_fun_COUNT_PCs pc_cond' p st n <=
-     bir_exec_infinite_steps_fun_COUNT_PCs pc_cond' p st c_st'` by
-       METIS_TAC [bir_exec_infinite_steps_fun_COUNT_PCs_MONO] >>
+    `bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond' p st n <=
+     bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond' p st c_st'` by
+       METIS_TAC [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO] >>
     DECIDE_TAC
   )
 ) >- (
@@ -2903,8 +2903,8 @@ Cases_on `n1' < cc` >- (
   Q.UNABBREV_TAC `cc` >>
   REPEAT STRIP_TAC >>
   `SUC n1' <=
-   bir_exec_infinite_steps_fun_COUNT_PCs pc_cond' p st (SUC c_st')` by
-       METIS_TAC [bir_exec_infinite_steps_fun_COUNT_PCs_MONO,
+   bir_exec_infinite_steps_fun_COUNT_PC_ENVs pc_env_cond' p st (SUC c_st')` by
+       METIS_TAC [bir_exec_infinite_steps_fun_COUNT_PC_ENVs_MONO,
                   arithmeticTheory.LESS_EQ_SUC_REFL,
                   arithmeticTheory.LESS_EQ_TRANS] >>
   DECIDE_TAC
@@ -2919,8 +2919,8 @@ Cases_on `n1' < cc` >- (
 
 
 val bir_exec_steps_GEN_TO_bir_exec_step_n = store_thm ("bir_exec_steps_GEN_TO_bir_exec_step_n",
-  ``!p st st' mo c_st c_pc ol pc_cond.
-    (bir_exec_steps_GEN pc_cond p st mo = BER_Ended ol c_st c_pc st') ==>
+  ``!p st st' mo c_st c_pc ol pc_env_cond.
+    (bir_exec_steps_GEN pc_env_cond p st mo = BER_Ended ol c_st c_pc st') ==>
     (bir_exec_step_n p st c_st = (ol, c_st, st'))``,
 
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_GEN_EQ_Ended, bir_exec_step_n_EQ_THM]);
@@ -2953,10 +2953,10 @@ val bir_exec_to_labels_n_change_labels = store_thm ("bir_exec_to_labels_n_change
 
 SIMP_TAC std_ss [bir_exec_to_labels_n_def] >>
 REPEAT STRIP_TAC >>
-MP_TAC (Q.SPECL [`(F, \pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls)`,
-                 `(F, \pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls')`,
+MP_TAC (Q.SPECL [`(F, \pc env. (pc.bpc_index = 0) /\ pc.bpc_label IN ls)`,
+                 `(F, \pc env. (pc.bpc_index = 0) /\ pc.bpc_label IN ls')`,
                  `p`, `st`, `n`] bir_exec_steps_GEN_change_cond_Ended_SOME) >>
-FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [SUBSET_DEF, bir_pc_cond_impl_def]);
+FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [SUBSET_DEF, bir_pc_env_cond_impl_def]);
 
 
 val bir_exec_to_labels_n_TO_bir_exec_block_n = store_thm ("bir_exec_to_labels_n_TO_bir_exec_block_n",

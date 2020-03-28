@@ -617,7 +617,7 @@ val bir_exec_block_n_1_TO_step_n = store_thm ("bir_exec_block_n_1_TO_step_n",
 
     (bir_exec_block_n p st 1 = (
        let (ol, c, st') = bir_exec_step_n p st (bir_block_size bl) in
-       (ol, c, (if (0 < c) /\ (bir_state_COUNT_PC (F, \pc. pc.bpc_index = 0) st') then 1 else 0), st')))``,
+       (ol, c, (if (0 < c) /\ (bir_state_COUNT_PC_ENV (F, \pc env. pc.bpc_index = 0) st') then 1 else 0), st')))``,
 
 REPEAT STRIP_TAC >>
 `?ol c st'. bir_exec_step_n p st (bir_block_size bl) = (ol, c, st')` by METIS_TAC[pairTheory.PAIR] >>
@@ -654,13 +654,13 @@ FULL_SIMP_TAC std_ss [bir_get_current_block_SOME] >>
    ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_programcounter_t_component_equality,
      bir_pc_next_def, bir_exec_stmtB_pc_unchanged]
 ) >>
-Q.ABBREV_TAC `cpc = \n. bir_state_COUNT_PC (F, \pc. pc.bpc_index = 0)
+Q.ABBREV_TAC `cpc = \n. bir_state_COUNT_PC_ENV (F, \pc env. pc.bpc_index = 0)
       (bir_exec_infinite_steps_fun p st n)` >>
 
 ASM_SIMP_TAC std_ss [] >>
 `!n. (0 < n /\ n < c) ==> ~(cpc n)` by (
    Q.UNABBREV_TAC `cpc` >>
-   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_COUNT_PC_def, bir_state_is_terminated_def]
+   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_COUNT_PC_ENV_def, bir_state_is_terminated_def]
 ) >>
 ASM_SIMP_TAC std_ss [] >>
 Cases_on `cpc c` >> ASM_SIMP_TAC std_ss [] >>
@@ -678,9 +678,9 @@ ASM_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS2,
      bir_block_size_def]
 ) >>
 ONCE_REWRITE_TAC [boolTheory.MONO_NOT_EQ] >>
-SIMP_TAC std_ss [bir_state_COUNT_PC_def] >>
+SIMP_TAC std_ss [bir_state_COUNT_PC_ENV_def] >>
 
-ASM_SIMP_TAC std_ss [bir_exec_stmt_def, bir_state_COUNT_PC_def,
+ASM_SIMP_TAC std_ss [bir_exec_stmt_def, bir_state_COUNT_PC_ENV_def,
   bir_exec_stmtE_block_pc] >>
 SIMP_TAC (std_ss++bir_TYPES_ss) [bir_state_is_terminated_def]
 
@@ -733,7 +733,7 @@ COND_CASES_TAC >- (
      METIS_TAC[bir_exec_stmtE_terminates_no_change] >>
 
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_states_EQ_EXCEPT_PC_REWRS,
-    bir_state_t_component_equality, bir_state_COUNT_PC_def]
+    bir_state_t_component_equality, bir_state_COUNT_PC_ENV_def]
 ) >- (
   MATCH_MP_TAC bir_exec_stmtE_pc_unimportant_strong >>
   ASM_SIMP_TAC std_ss []
@@ -746,7 +746,7 @@ val bir_exec_block_SEMANTICS = store_thm ("bir_exec_block_SEMANTICS",
 
     (bir_exec_block_n p st 1 = (
        let (ol, st_c, st') = bir_exec_block p bl st in
-       (ol, st_c, (if (0 < st_c /\ bir_state_COUNT_PC (F, \pc. pc.bpc_index = 0) st') then 1 else 0), st')))``,
+       (ol, st_c, (if (0 < st_c /\ bir_state_COUNT_PC_ENV (F, \pc env. pc.bpc_index = 0) st') then 1 else 0), st')))``,
 
 REPEAT STRIP_TAC >>
 MP_TAC (Q.SPECL [`p`, `bl`, `st`] bir_exec_block_n_1_TO_step_n) >>
@@ -846,7 +846,7 @@ val bir_exec_block_n_block = store_thm ("bir_exec_block_n_block",
     (bir_exec_block_n p st (SUC n) =
       let (l1, c1, st1) = bir_exec_block p bl st in
       let (l2, c2, c_bl2, st2) = bir_exec_block_n p st1 n in
-      (l1 ++ l2, c1+c2, if (0 < c1 /\ bir_state_COUNT_PC (F, \pc. pc.bpc_index = 0) st1) then
+      (l1 ++ l2, c1+c2, if (0 < c1 /\ bir_state_COUNT_PC_ENV (F, \pc env. pc.bpc_index = 0) st1) then
           SUC c_bl2 else c_bl2, st2))``,
 
 REPEAT STRIP_TAC >>
@@ -904,8 +904,8 @@ val bir_exec_to_labels_n_block = store_thm ("bir_exec_to_labels_n_block",
 
     (bir_exec_to_labels_n ls p st (SUC n) =
       let (l1, c1, st1) = bir_exec_block p bl st in
-      let c1' = if (0 < c1) /\ (bir_state_COUNT_PC (F,
-         \pc. (pc.bpc_index = 0) /\ (pc.bpc_label IN ls)) st1) then 1 else 0 in
+      let c1' = if (0 < c1) /\ (bir_state_COUNT_PC_ENV (F,
+         \pc env. (pc.bpc_index = 0) /\ (pc.bpc_label IN ls)) st1) then 1 else 0 in
       case bir_exec_to_labels_n ls p st1 (SUC n-c1') of
         BER_Looping ll2 => BER_Looping (LAPPEND (fromList l1) ll2)
       | BER_Ended l2 c2 c2' st2 =>
@@ -926,8 +926,8 @@ val bir_exec_to_labels_block = store_thm ("bir_exec_to_labels_block",
 
     (bir_exec_to_labels ls p st =
       let (l1, c1, st1) = bir_exec_block p bl st in
-      if (0 < c1) /\ (bir_state_COUNT_PC (F,
-         \pc. (pc.bpc_index = 0) /\ (pc.bpc_label IN ls)) st1) then
+      if (0 < c1) /\ (bir_state_COUNT_PC_ENV (F,
+         \pc env. (pc.bpc_index = 0) /\ (pc.bpc_label IN ls)) st1) then
          BER_Ended l1 c1 1 st1
       else
       case bir_exec_to_labels ls p st1 of
@@ -1048,7 +1048,7 @@ ASM_SIMP_TAC std_ss [] >>
 STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_state_EQ_FOR_VARS_ALT_DEF] >>
 ASM_SIMP_TAC (std_ss++bir_TYPES_ss++boolSimps.LIFT_COND_ss) [bir_exec_block_def, LET_THM,
-  bir_state_COUNT_PC_def, bir_block_pc_def,
+  bir_state_COUNT_PC_ENV_def, bir_block_pc_def,
   bir_program_valid_stateTheory.bir_exec_stmtE_env_unchanged,
   bir_state_is_terminated_def]);
 

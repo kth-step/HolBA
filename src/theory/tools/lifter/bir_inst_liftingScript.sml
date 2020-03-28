@@ -587,8 +587,8 @@ val bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_def = Define
      bir_updateE_desc_OK bs.bst_environ eup /\
 
      (case (bir_updateE_desc_var eup) of NONE => T
-       | SOME var => case r.bmr_pc of BMLPC v_pc v_pc_cond _ =>
-         ((var = v_pc) \/ (var = v_pc_cond))) /\
+       | SOME var => case r.bmr_pc of BMLPC v_pc v_pc_env_cond _ =>
+         ((var = v_pc) \/ (var = v_pc_env_cond))) /\
 
      (bir_updateE_SEM eup = BUpdateValE_Jmp (BL_Address (bmr_pc_lf r ms')))`;
 
@@ -990,7 +990,7 @@ SIMP_TAC std_ss [bir_update_block_desc_OK_def, bir_update_blockB_desc_OK_def] >>
 
 ASM_SIMP_TAC std_ss [] >>
 
-Cases_on `r.bmr_pc` >> rename1 `BMLPC v_pc v_pc_cond lf_pc` >>
+Cases_on `r.bmr_pc` >> rename1 `BMLPC v_pc v_pc_env_cond lf_pc` >>
 REPEAT CONJ_TAC >- (
   METIS_TAC[]
 ) >- (
@@ -1000,7 +1000,7 @@ REPEAT CONJ_TAC >- (
   `(v' <> mem_v) /\ (!b. v' <> bir_temp_var b mem_v) /\
    ~(MEM v' (MAP (\i. case i of BMLI v v2 => v) r.bmr_imms)) /\
    (!b. ~(MEM v' (MAP (\i. case i of BMLI v v2 => bir_temp_var b v) r.bmr_imms)))` by (
-    `v IN {v_pc; v_pc_cond}` by (
+    `v IN {v_pc; v_pc_env_cond}` by (
      FULL_SIMP_TAC (std_ss++bmr_ss) [bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_def,
        IN_INSERT]
     ) >>
@@ -1217,7 +1217,7 @@ store_thm ("bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS___CJMP",
         e_c c (BL_Address l_t) (BL_Address l_f)) ms'``,
 
 REPEAT GEN_TAC >>
-Cases_on `r.bmr_pc` >> rename1 `BMLPC pc_v pc_cond_v lf` >>
+Cases_on `r.bmr_pc` >> rename1 `BMLPC pc_v pc_env_cond_v lf` >>
 ASM_SIMP_TAC (std_ss++bmr_ss) [bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_def,
   bir_updateE_desc_var_def, bir_updateE_SEM_def,
   bir_updateE_desc_OK_def, bir_updateE_desc_exp_def,
@@ -1229,7 +1229,7 @@ ASM_SIMP_TAC (std_ss++bmr_ss) [bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_V
 REPEAT STRIP_TAC >- (
   `EVERY (bir_env_var_is_declared bs.bst_environ) (bmr_temp_vars r)` by
      METIS_TAC[bmr_temp_vars_DECLARED] >>
-  `MEM pc_cond_v (bmr_temp_vars r)` by (
+  `MEM pc_env_cond_v (bmr_temp_vars r)` by (
      ASM_SIMP_TAC (list_ss++bmr_ss) [bmr_temp_vars_def]
   ) >>
   METIS_TAC[EVERY_MEM]
@@ -1251,7 +1251,7 @@ store_thm ("bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS___XJMP",
         e (bmr_pc_lf r ms')) ms'``,
 
 REPEAT GEN_TAC >>
-Cases_on `r.bmr_pc` >> rename1 `BMLPC pc_v pc_cond_v lf` >>
+Cases_on `r.bmr_pc` >> rename1 `BMLPC pc_v pc_env_cond_v lf` >>
 ASM_SIMP_TAC (std_ss++bmr_ss) [bir_is_lifted_inst_block_COMPUTE_eup_COND_FIXED_VARS_def,
   bir_updateE_desc_var_def, bir_updateE_SEM_def,
   bir_updateE_desc_OK_def, bir_updateE_desc_exp_def,
@@ -1924,10 +1924,10 @@ REPEAT STRIP_TAC >>
 ) >>
 REPEAT (Q.PAT_X_ASSUM `MEM (BL_Address li) _ ==> _` (K ALL_TAC)) >>
 
-Q.ABBREV_TAC `pc_cond = (F,
-      (\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l}))` >>
+Q.ABBREV_TAC `pc_env_cond = (F,
+      (\pc (env:bir_var_environment_t). (pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l}))` >>
 
-`!(p:'o bir_program_t) st. bir_exec_steps_GEN pc_cond p st (SOME 1) =
+`!(p:'o bir_program_t) st. bir_exec_steps_GEN pc_env_cond p st (SOME 1) =
         bir_exec_to_addr_label p st` by (
   ASM_SIMP_TAC std_ss [bir_exec_to_addr_label_def,
     bir_exec_to_labels_def, bir_exec_to_labels_n_def]
@@ -1957,20 +1957,20 @@ Q.ABBREV_TAC `pc_cond = (F,
 
 
 Cases_on `bs'.bst_status = BST_AssertionViolated` >- (
-  MP_TAC (Q.SPECL [`pc_cond`, `bs`, `SOME 1`] (ISPECL [``p':'o bir_program_t``, ``(bir_program_combine p1 p2):'o bir_program_t``] bir_exec_steps_GEN_Ended_SUBPROGRAM_EQ)) >>
+  MP_TAC (Q.SPECL [`pc_env_cond`, `bs`, `SOME 1`] (ISPECL [``p':'o bir_program_t``, ``(bir_program_combine p1 p2):'o bir_program_t``] bir_exec_steps_GEN_Ended_SUBPROGRAM_EQ)) >>
 
   ASM_SIMP_TAC (std_ss++bir_TYPES_ss) []
 ) >>
 
-MP_TAC (Q.SPECL [`pc_cond`, `bs`, `SOME 1`] (ISPECL [``p':'o bir_program_t``, ``(bir_program_combine p1 p2):'o bir_program_t``] bir_exec_steps_GEN_Ended_SUBPROGRAM)) >>
+MP_TAC (Q.SPECL [`pc_env_cond`, `bs`, `SOME 1`] (ISPECL [``p':'o bir_program_t``, ``(bir_program_combine p1 p2):'o bir_program_t``] bir_exec_steps_GEN_Ended_SUBPROGRAM)) >>
 
 FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
 
-`bir_state_COUNT_PC pc_cond bs'` by (
+`bir_state_COUNT_PC_ENV pc_env_cond bs'` by (
   Cases_on `r.bmr_pc` >>
-  Q.UNABBREV_TAC `pc_cond` >>
+  Q.UNABBREV_TAC `pc_env_cond` >>
   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bmr_rel_def, bir_machine_lifted_pc_def,
-      bir_state_COUNT_PC_def, bir_block_pc_def, GSPECIFICATION,
+      bir_state_COUNT_PC_ENV_def, bir_block_pc_def, GSPECIFICATION,
       IS_BL_Address_def]
 ) >>
 
@@ -2058,8 +2058,8 @@ FULL_SIMP_TAC std_ss [] >>
 `(c_addr_labels = 1) /\ (?d. c_st = SUC d)` by (
   FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_def,
     bir_exec_to_labels_n_def, bir_exec_to_labels_def, bir_exec_steps_GEN_1_EQ_Ended] >>
-  `bir_state_COUNT_PC (F,
-    (\pc.(pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l}))
+  `bir_state_COUNT_PC_ENV (F,
+    (\pc env.(pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l}))
     (bir_exec_infinite_steps_fun p bs c_st)` by METIS_TAC[bmr_rel_IMPL_IS_BL_Block_Address] >>
   FULL_SIMP_TAC std_ss [] >>
   Cases_on `c_st` >> FULL_SIMP_TAC arith_ss [] >>
