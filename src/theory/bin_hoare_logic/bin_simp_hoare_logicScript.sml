@@ -9,7 +9,7 @@ val _ = new_theory "bin_simp_hoare_logic";
 (* Inv is usually the fact that the program is in memory and that
  * the execution mode is the expected one *)
 val weak_map_triple_def = Define `
-  weak_map_triple (m:('a, 'b) bin_model_t) invar l ls ls' pre post =
+  weak_map_triple (m:('a, 'b, 'c) bin_model_t) invar l ls ls' pre post =
     (((ls INTER ls') = EMPTY) /\
      (weak_triple m l invar (ls UNION ls')
                  (\ms. pre ms)

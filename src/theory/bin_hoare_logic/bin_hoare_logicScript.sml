@@ -15,27 +15,28 @@ val _ = Datatype `bin_model_t =
      * states is OK, through using a set of labels for which
      * execution must halt if reached, meaning they cannot be
      * touched in any intermediate step *)
-    weak : 'a -> ('a -> bool) -> ('b -> bool) -> 'a -> bool;
+    weak : 'a -> ('c -> bool) -> ('b -> bool) -> 'a -> bool;
     (* A function to obtain the program counter from a state *)
-    pc : 'a -> 'b
+    pc : 'a -> 'b;
+    (* A function to obtain the variable environment from a state *)
+    env : 'a -> 'c
    |>`;
 
 val weak_model_def = Define `
   weak_model m =
     !ms invar ls ms'.
       (m.weak ms invar ls ms') =
-        (invar ms) /\
         ?n.
           ((n > 0) /\
            (FUNPOW_OPT m.trs n ms = SOME ms') /\
-           (invar ms') /\
+           (invar (m.env ms')) /\
            ((m.pc ms') IN ls)
           ) /\
           !n'.
             (((n' < n) /\ (n' > 0)) ==>
             ?ms''.
               (FUNPOW_OPT m.trs n' ms = SOME ms'') /\
-              (invar ms'') /\
+              (invar (m.env ms'')) /\
               (~((m.pc ms'') IN ls))
             )`;
 
@@ -245,10 +246,10 @@ Cases_on `C1 ms` >> (
   FULL_SIMP_TAC std_ss [weak_model_def]
 (* Manually specialising the first assumption speeds up the proof significantly... *)
 ) >| [
-  QSPECL_X_ASSUM ``!ms invar ls ms'. _`` [`ms:'a`, `invar1:'a -> bool`, `ls:'b -> bool`, `ms':'a`] >>
+  QSPECL_X_ASSUM ``!ms invar ls ms'. _`` [`ms:'a`, `invar1:'c -> bool`, `ls:'b -> bool`, `ms':'a`] >>
   METIS_TAC [],
 
-  QSPECL_X_ASSUM ``!ms invar ls ms'. _`` [`ms:'a`, `invar2:'a -> bool`, `ls:'b -> bool`, `ms':'a`] >>
+  QSPECL_X_ASSUM ``!ms invar ls ms'. _`` [`ms:'a`, `invar2:'c -> bool`, `ls:'b -> bool`, `ms':'a`] >>
   METIS_TAC []
 ]
 );
