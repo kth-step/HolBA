@@ -518,9 +518,13 @@ val bir_is_invar_block_viol_def = Define `
     ~(invar (SND (SND (SND (bir_exec_block_n p st 1)))).bst_environ)
 `;
 
+val bir_exec_to_labels_block_invar_n_def = Define `
+  bir_exec_to_labels_block_invar_n ls invar p state n =
+    bir_exec_steps_GEN (F, (\pc env. (bir_is_invar_block_viol p invar pc env) \/ ((pc.bpc_index = 0) /\ (pc.bpc_label IN ls)))) p state (SOME n)`
+
 val bir_exec_to_labels_block_invar_def = Define `
   bir_exec_to_labels_block_invar ls invar p state =
-    bir_exec_steps_GEN (F, (\pc env. (bir_is_invar_block_viol p invar pc env) \/ ((pc.bpc_index = 0) /\ (pc.bpc_label IN ls)))) p state (SOME 1)`
+    bir_exec_to_labels_block_invar_n ls invar p state 1`
 
 (* TODO: Place this where appropriate *)
 val bir_exec_to_labels_block_invar_T = store_thm ("bir_exec_to_labels_block_invar_T",
@@ -528,10 +532,11 @@ val bir_exec_to_labels_block_invar_T = store_thm ("bir_exec_to_labels_block_inva
    (bir_exec_to_labels_block_invar ls (\_. T) p state) =
      (bir_exec_to_labels ls p state)``,
 
-FULL_SIMP_TAC std_ss [bir_exec_to_labels_block_invar_def, bir_exec_to_labels_def,
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_block_invar_def, bir_exec_to_labels_block_invar_n_def, bir_exec_to_labels_def,
                       bir_exec_to_labels_n_def, bir_is_invar_block_viol_def, LET_DEF]
 );
 
+(* TODO *)
 (* To-label-execution with parallel invariant (safe for threaded machines
  * where instructions evaluate simultaneuously): *)
 

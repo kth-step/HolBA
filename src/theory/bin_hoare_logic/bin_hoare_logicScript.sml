@@ -15,13 +15,22 @@ val _ = Datatype `bin_model_t =
      * states is OK, through using a set of labels for which
      * execution must halt if reached, meaning they cannot be
      * touched in any intermediate step *)
-    weak : 'a -> ('c -> bool) -> ('b -> bool) -> 'a -> bool;
-    (* A function to obtain the program counter from a state *)
-    pc : 'a -> 'b;
+    weak : 'a -> ('b -> bool) -> ('c -> bool) -> 'a -> bool;
+    (* The below two functions exist to allow instantiations to state
+     * predicates on parts of the state. Note that these can also
+     * just map state to state, so they place no demands on the
+     * structure of the state of the implementation. *)
     (* A function to obtain the variable environment from a state *)
-    env : 'a -> 'c
+    env : 'a -> 'b;
+    (* A function to obtain the program counter from a state *)
+    pc : 'a -> 'c
    |>`;
 
+(* "ms" is the starting state of execution and "ms'" is the final
+ * state. "invar" is an invariant which must hold for env of
+ * every intermediate state (but not the initial state).
+ * "ls" is a label set, which execution should end upon encountering,
+ * while always taking at least one step. *)
 val weak_model_def = Define `
   weak_model m =
     !ms invar ls ms'.
@@ -50,8 +59,10 @@ val weak_comp_thm = prove(``
 
 REPEAT STRIP_TAC >>
 REV_FULL_SIMP_TAC std_ss [weak_model_def] >>
-EXISTS_TAC ``n'+n:num`` >>
-ASSUME_TAC (Q.SPECL [`m.trs`, `n'`, `n`, `ms`, `ms'`, `ms''`] FUNPOW_OPT_ADD_thm) >>
+Q.EXISTS_TAC `n'+n` >>
+subgoal `FUNPOW_OPT m.trs (n + n') ms = SOME ms''` >- (
+  IMP_RES_TAC FUNPOW_OPT_ADD_thm
+) >>
 REV_FULL_SIMP_TAC arith_ss [] >>
 REPEAT STRIP_TAC >>
 Cases_on `n'' < n'` >- (

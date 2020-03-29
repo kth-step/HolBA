@@ -2639,7 +2639,7 @@ REPEAT STRIP_TAC >>
 `(mo = SOME 0) ==> (c_st = 0)` by (
   STRIP_TAC >>
   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_steps_GEN_REWR_no_steps] >>
-  REPEAT (BasicProvers.VAR_EQ_TAC) >> REWRITE_TAC[]
+  REPEAT (BasicProvers.VAR_EQ_TAC) >> REWRITE_TAC []
 ) >>
 FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_EQ_Ended] >>
 REPEAT BasicProvers.VAR_EQ_TAC >>
