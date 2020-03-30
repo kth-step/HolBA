@@ -165,9 +165,34 @@ val lbl_tm = (mk_lbl_tm o valOf o mem_find_symbol_addr_) name;
 datatype symb_state =
   SymbState of {
       SYST_env  : ((string * term) * term) list,
-      SYST_pred : term list
+      SYST_pred : term list,
+      SYST_pc : term
     };
 
+fun SYST_get_env (SymbState systr) =
+  #SYST_env systr;
+fun SYST_get_pred (SymbState systr) =
+  #SYST_pred systr;
+fun SYST_get_pc (SymbState systr) =
+  #SYST_pc systr;
+
+fun SYST_update_env env' (SymbState systr) =
+  SymbState {SYST_env  = env',
+             SYST_pred = #SYST_pred systr,
+             SYST_pc   = #SYST_pc systr };
+fun SYST_update_pred pred' (SymbState systr) =
+  SymbState {SYST_env  = #SYST_env systr,
+             SYST_pred = pred',
+             SYST_pc   = #SYST_pc systr };
+fun SYST_update_pc pc' (SymbState systr) =
+  SymbState {SYST_env  = #SYST_env systr,
+             SYST_pred = #SYST_pred systr,
+             SYST_pc   = pc' };
+
+fun SYST_mk env pred pc =
+  SymbState {SYST_env  = env,
+             SYST_pred = pred,
+             SYST_pc   = pc };
 
 
 open bir_envSyntax;
@@ -203,13 +228,14 @@ end
 (*
 val t = hd prog_vars;
 *)
-fun init_state prog_vars =
+fun init_state lbl_tm prog_vars =
   let
     val initsymblist = List.map init_exp_from_bvar prog_vars;
     val init_countw = (("countw", ``BType_Imm Bit64``), ``BExp_Const (Imm64 0w)``);
   in
-    SymbState { SYST_pred = [],
-                SYST_env  = [init_countw] }
+    SYST_mk [init_countw]
+            []
+            lbl_tm
   end;
 
 open bir_exp_substitutionsSyntax;
@@ -220,13 +246,14 @@ val s = ``BStmt_Assign (BVar "R5" (BType_Imm Bit32)) (BExp_Den (BVar "R4" (BType
 val (bv, be) = dest_BStmt_Assign s
 *)
 val subst_exp = (snd o dest_eq o concl o EVAL o mk_bir_exp_const_prop o mk_bir_exp_subst1);
-fun update_state (SymbState systr) (bv, be) =
+fun update_state syst (bv, be) =
   let
     val (sear, repl, bv_fresh_e) = get_fresh_var bv;
 
+    val old_env = SYST_get_env syst;
     fun match_sear s_ = (s_ = sear);
-    val old_env_filt = List.filter (not o match_sear o fst) (#SYST_env systr);
-    val elem = (valOf o List.find (match_sear o fst)) (#SYST_env systr)
+    val old_env_filt = List.filter (not o match_sear o fst) old_env;
+    val elem = (valOf o List.find (match_sear o fst)) old_env
 (*
                handle Option => raise ERR "update_state" ("couldn't find searched variable: " ^ (fst sear));
 *)
@@ -236,20 +263,21 @@ fun update_state (SymbState systr) (bv, be) =
     fun subst_exp_ e = subst_exp (bv, bv_fresh_e, e);
     val new_env_subst = List.map (fn (x, e) => (x, subst_exp_ e)) new_env;
 
-    val old_pred_conjs = #SYST_pred systr;
+    val old_pred_conjs = SYST_get_pred syst;
     val pred_conjs_subst = List.map subst_exp_ old_pred_conjs;
   in
-    SymbState { SYST_pred = pred_conjs_subst,
-                SYST_env  = new_env_subst }
+    (SYST_update_pred pred_conjs_subst o
+     SYST_update_env  new_env_subst
+    ) syst
   end;
 
 (*
 val SymbState systr = update_state (SymbState systr) (bv, be);
 *)
-fun tidyup_state (SymbState systr) =
+fun tidyup_state syst =
   let
-    val old_pred = #SYST_pred systr;
-    val old_env  = #SYST_env  systr;
+    val old_pred = SYST_get_pred syst;
+    val old_env  = SYST_get_env  syst;
 
     val exps_env = List.map (fn (_, e) => e) old_env;
 
@@ -265,12 +293,13 @@ fun tidyup_state (SymbState systr) =
     val pred = old_pred;
     val env  = List.filter is_used old_env;
   in
-    SymbState { SYST_pred = pred,
-                SYST_env  = env }
+    (SYST_update_pred pred o
+     SYST_update_env  env
+    ) syst
   end;
 
 
-fun simplify_state (SymbState systr) =
+fun simplify_state syst =
   let
     (* implement search for possible simplifications, and simiplifications *)
     (* first approach: try to simplify memory loads by expanding variables successively, abort if it fails *)
@@ -282,7 +311,7 @@ fun simplify_state (SymbState systr) =
     (* - tidy up state *)
     (* - resolve load and store pairs, use smt solver if reasoning arguments are needed *)
   in
-    (SymbState systr)
+    syst
   end;
 
 
@@ -303,7 +332,7 @@ fun get_next_exec_sts lbl_tm est syst =
     val (vs, _) = hol88Lib.match ``BStmt_Jmp (BLE_Label xyz)`` est;
     val tgt     = (fst o hd) vs;
   in
-    [(tgt, syst)]
+    [SYST_update_pc tgt syst]
     handle Empty =>
       raise ERR "get_next_exec_sts" ("unexpected 1 at " ^ (term_to_string lbl_tm))
   end
@@ -314,11 +343,16 @@ fun get_next_exec_sts lbl_tm est syst =
     val tgt1    = fst (List.nth (vs, 1));
     val tgt2    = fst (List.nth (vs, 2));
 
-    val SymbState systr = syst;
-    val syst1   = SymbState { SYST_env = #SYST_env systr, SYST_pred = (cnd)::(#SYST_pred systr)};
-    val syst2   = SymbState { SYST_env = #SYST_env systr, SYST_pred = (bslSyntax.bnot cnd)::(#SYST_pred systr)};
+    val syst1   =
+      (SYST_update_pred ((cnd)::(SYST_get_pred syst)) o
+       SYST_update_pc   tgt1
+      ) syst;
+    val syst2   =
+      (SYST_update_pred ((bslSyntax.bnot cnd)::(SYST_get_pred syst)) o
+       SYST_update_pc   tgt2
+      ) syst;
   in
-    [(tgt1, syst1), (tgt2, syst2)]
+    [syst1, syst2]
     handle Empty =>
       raise ERR "get_next_exec_sts" ("unexpected 1 at " ^ (term_to_string lbl_tm))
   end
@@ -333,14 +367,16 @@ fun get_next_exec_sts lbl_tm est syst =
       val lbl_tms = (valOf o cfg_targets_to_lbl_tms) n_goto
             handle Option => raise ERR "get_next_exec_sts" ("error for " ^ (term_to_string lbl_tm));
     in
-      List.map (fn t => (t, syst)) lbl_tms
+      List.map (fn t => SYST_update_pc t syst) lbl_tms
     end);
 
 (*
 val syst = init_state prog_vars;
 *)
-fun symb_exec_block (lbl_tm, syst) =
+fun symb_exec_block syst =
   let
+    val lbl_tm = SYST_get_pc syst;
+
     val bl = (valOf o prog_get_block_) lbl_tm;
     val (_, stmts, est) = dest_bir_block bl;
     val s_tms = (fst o listSyntax.dest_list) stmts;
@@ -362,16 +398,16 @@ fun symb_exec_to_stop []                  _            acc = acc
       let
         val sts = symb_exec_block exec_st;
         val (new_acc, new_exec_sts) =
-              List.partition (fn (t, _) => List.exists (fn x => x = t) stop_lbl_tms) sts;
+              List.partition (fn (syst) => List.exists (fn x => (SYST_get_pc syst) = x) stop_lbl_tms) sts;
       in
         symb_exec_to_stop (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
       end;
 
 
-fun check_feasible (SymbState systr) =
+fun check_feasible syst =
   let
-    val pred = #SYST_pred systr;
-    val env  = #SYST_env  systr;
+    val pred = SYST_get_pred syst;
+    val env  = SYST_get_env  syst;
 
     (* memory accesses should not end up here hopefully, ignore this to begin with *)
 
@@ -418,23 +454,22 @@ val stop_lbl_tms = [``BL_Address (Imm32 0xb22w)``];
 val lbl_tm = ``BL_Address (Imm32 0xb22w)``;
 val stop_lbl_tms = [``BL_Address (Imm32 0xb24w)``, ``BL_Address (Imm32 0xb2aw)``];
 
-val syst  = init_state prog_vars;
-val exec_st = (lbl_tm, syst);
+val syst  = init_state lbl_tm prog_vars;
 
 (*
-val syst_new = symb_exec_block exec_st;
+al syst_new = symb_exec_block syst;
 *)
 
 (* TODO: speed up, probably by implementing a lookup map for "ns" *)
-val exec_sts = symb_exec_to_stop [exec_st] stop_lbl_tms [];
+val systs = symb_exec_to_stop [syst] stop_lbl_tms [];
 (*
-length exec_sts
+length systs
 
-val (SymbState systr) = (snd o hd) exec_sts
+val syst = hd systs
 *)
 
-val _ = check_feasible ((snd o hd) exec_sts)
-val _ = check_feasible ((snd o hd o tl) exec_sts)
+val _ = check_feasible (hd systs)
+val _ = check_feasible ((hd o tl) systs)
 
 
 (* TODO: need min-max-abstraction for cycle counter to enable merging of states,
