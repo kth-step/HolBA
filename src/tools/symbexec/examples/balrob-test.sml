@@ -299,22 +299,6 @@ fun tidyup_state syst =
   end;
 
 
-fun simplify_state syst =
-  let
-    (* implement search for possible simplifications, and simiplifications *)
-    (* first approach: try to simplify memory loads by expanding variables successively, abort if it fails *)
-    (* TODO: implement *)
-
-    (* - derive constants from the state predicate (update both places to not loose information) *)
-    (* - propagate constant variable assignments to expressions *)
-    (* - constant propagation in expressions *)
-    (* - tidy up state *)
-    (* - resolve load and store pairs, use smt solver if reasoning arguments are needed *)
-  in
-    syst
-  end;
-
-
 
 
 fun symb_exec_stmt (s, syst) =
@@ -370,6 +354,26 @@ fun get_next_exec_sts lbl_tm est syst =
       List.map (fn t => SYST_update_pc t syst) lbl_tms
     end);
 
+
+
+
+fun simplify_state syst =
+  let
+    val syst2 = tidyup_state syst;
+
+    (* implement search for possible simplifications, and simiplifications *)
+    (* first approach: try to simplify memory loads by expanding variables successively, abort if it fails *)
+    (* TODO: implement *)
+
+    (* - derive constants from the state predicate (update both places to not loose information) *)
+    (* - propagate constant variable assignments to expressions *)
+    (* - constant propagation in expressions *)
+    (* - tidy up state *)
+    (* - resolve load and store pairs, use smt solver if reasoning arguments are needed *)
+  in
+    syst2
+  end;
+
 (*
 val syst = init_state prog_vars;
 *)
@@ -382,14 +386,11 @@ fun symb_exec_block syst =
     val s_tms = (fst o listSyntax.dest_list) stmts;
 
     val syst2 = List.foldl symb_exec_stmt syst s_tms;
-    val syst3 = tidyup_state syst2;
-    (* TODO: apply simplifications and tidy up (move this there) AFTER generating the next states,
-                use function "simplify_state" *)
-  in
+
     (* generate list of states from end statement *)
-    (* TODO: move program counter into symbolic state record,
-               we execute block by block, no block indexes, just labels *)
-    get_next_exec_sts lbl_tm est syst3
+    val systs = get_next_exec_sts lbl_tm est syst2;
+  in
+    List.map simplify_state systs
   end;
 
 
@@ -472,8 +473,10 @@ val _ = check_feasible (hd systs)
 val _ = check_feasible ((hd o tl) systs)
 
 
-(* TODO: need min-max-abstraction for cycle counter to enable merging of states,
+(* TODO: introduce abstraction as possible value,
+           the current values are concrete values (special sort),
+           "top" is fresh variable,
+           model unknown stack space as memory interval,
+           need interval-abstraction for cycle counter to enable merging of states,
            we can start with considering max only *)
-(* TODO: QUESTION: how to handle introduction of symbolic variables after function call?
-           we cannot make the memory symbolic, we need to keep most of it, how to characterize this? *)
 
