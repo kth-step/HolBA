@@ -65,7 +65,7 @@ REV_FULL_SIMP_TAC std_ss []
 
 
 val weak_map_move_to_blacklist = store_thm("weak_map_move_to_blacklist",
-  ``!m invariant l l' ls ls' ls'' pre post.
+  ``!m invariant l l' ls ls' pre post.
     weak_model m ==>
     l' IN ls ==>
     (!ms. (m.pc ms = l') ==> (post ms = F)) ==>
@@ -107,6 +107,42 @@ REPEAT STRIP_TAC >| [
   METIS_TAC [pred_setTheory.UNION_COMM, pred_setTheory.INSERT_UNION_EQ,
              pred_setTheory.DELETE_INSERT, pred_setTheory.DELETE_NON_ELEMENT]
 ]
+);
+
+val weak_map_move_set_to_blacklist = store_thm("weak_map_move_set_to_blacklist",
+  ``!m invariant l ls ls' ls'' pre post.
+    weak_model m ==>
+    FINITE ls'' ==>
+    ls'' SUBSET ls ==>
+    (!ms l'.
+     (l' IN ls'') ==>
+     (m.pc ms = l') ==>
+     (post ms = F)
+    ) ==>
+    weak_map_triple m invariant l ls ls' pre post ==>
+    weak_map_triple m invariant l (ls DIFF ls'') (ls' UNION ls'') pre post``,
+
+REPEAT STRIP_TAC >>
+Induct_on `ls''` >>
+REPEAT STRIP_TAC >- (
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
+) >>
+subgoal `ls'' SUBSET ls` >- (
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
+) >>
+ASSUME_TAC
+  (Q.SPECL [`m`, `invariant`, `l`, `e`, `(ls DIFF ls'')`,
+            `(ls' UNION ls'')`, `pre`, `post`] weak_map_move_to_blacklist) >>
+REV_FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
+subgoal `ls DIFF (e INSERT ls'') = (ls DIFF ls'' DELETE e)` >- (
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.DIFF_INSERT] >>
+  FULL_SIMP_TAC std_ss [pred_setTheory.DELETE_DEF, pred_setTheory.DIFF_COMM]
+) >>
+subgoal `(ls' UNION (e INSERT ls'')) = (e INSERT ls' UNION ls'')` >- (
+  ONCE_REWRITE_TAC [pred_setTheory.INSERT_SING_UNION] >>
+  METIS_TAC [pred_setTheory.UNION_COMM, pred_setTheory.UNION_ASSOC]
+) >>
+FULL_SIMP_TAC std_ss []
 );
 
 val weak_map_weakening_rule_thm = store_thm("weak_map_weakening_rule_thm",
