@@ -92,31 +92,37 @@ val q = "(check-sat)\n";
 val result = querysmt_raw q;
 *)*)*)*)
 
-
-datatype bir_smt_type =
-    SMTTY_Bool
-  | SMTTY_BV8
+datatype bir_smt_type_bv =
+    SMTTY_BV8
   | SMTTY_BV16
   | SMTTY_BV32
   | SMTTY_BV64;
 
-fun smt_type_to_smtlib SMTTY_Bool = "Bool"
-  | smt_type_to_smtlib SMTTY_BV8  = "(_ BitVec 8)"
-  | smt_type_to_smtlib SMTTY_BV16 = "(_ BitVec 16)"
-  | smt_type_to_smtlib SMTTY_BV32 = "(_ BitVec 32)"
-  | smt_type_to_smtlib SMTTY_BV64 = "(_ BitVec 64)";
+fun smt_type_bv_to_int SMTTY_BV8  = 8
+  | smt_type_bv_to_int SMTTY_BV16 = 16
+  | smt_type_bv_to_int SMTTY_BV32 = 32
+  | smt_type_bv_to_int SMTTY_BV64 = 64;
 
-fun smt_type_is_bv SMTTY_Bool = false
-  | smt_type_is_bv SMTTY_BV8  = true
-  | smt_type_is_bv SMTTY_BV16 = true
-  | smt_type_is_bv SMTTY_BV32 = true
-  | smt_type_is_bv SMTTY_BV64 = true;
+fun smt_type_bv_to_smtlib bvt = "(_ BitVec " ^ (Int.toString (smt_type_bv_to_int bvt)) ^ ")";
+
+datatype bir_smt_type =
+    SMTTY_Bool
+  | SMTTY_BV of bir_smt_type_bv
+  | SMTTY_MEM of bir_smt_type_bv;
+
+fun smt_type_to_smtlib SMTTY_Bool      = "Bool"
+  | smt_type_to_smtlib (SMTTY_BV  bvt) = smt_type_bv_to_smtlib bvt
+  | smt_type_to_smtlib (SMTTY_MEM bvt) = "(Array " ^ (smt_type_bv_to_smtlib bvt) ^
+                                               " " ^ (smt_type_bv_to_smtlib bvt) ^ ")";
+
+fun smt_type_is_bv (SMTTY_BV _) = true
+  | smt_type_is_bv _            = false;
 
 fun smt_type_is_bool SMTTY_Bool = true
-  | smt_type_is_bool SMTTY_BV8  = false
-  | smt_type_is_bool SMTTY_BV16 = false
-  | smt_type_is_bool SMTTY_BV32 = false
-  | smt_type_is_bool SMTTY_BV64 = false;
+  | smt_type_is_bool _          = false;
+
+fun smt_type_is_mem (SMTTY_MEM _) = true
+  | smt_type_is_mem _             = false;
 
 fun smt_vars_to_smtlib vars =
   Redblackset.foldr (fn ((vn, vty), str) => str ^ (
@@ -189,13 +195,16 @@ in
         if      is_BType_Imm1  btype orelse is_BType_Bool btype then
           SMTTY_Bool
         else if is_BType_Imm8  btype then
-          SMTTY_BV8
+          (SMTTY_BV SMTTY_BV8)
         else if is_BType_Imm16 btype then
-          SMTTY_BV16
+          (SMTTY_BV SMTTY_BV16)
         else if is_BType_Imm32 btype then
-          SMTTY_BV32
+          (SMTTY_BV SMTTY_BV32)
         else if is_BType_Imm64 btype then
-          SMTTY_BV64
+          (SMTTY_BV SMTTY_BV64)
+        else if is_BType_Mem btype andalso dest_BType_Mem btype = (Bit32_tm, Bit8_tm) then
+          (* NOTICE: we assume byte addressing in the rest of the code *)
+          (SMTTY_MEM SMTTY_BV32)
         else problem_gen "bvar_to_smtlib_type" btype "don't know how to convert BIR type: "
     end;
 
@@ -263,16 +272,16 @@ fun problem_gen_sty fname t sty =
       val sty = get_smtlib_type_args probfun args;
       fun gen_exp opstr = gen_smtlib_expr opstr args SMTTY_Bool;
     in
-    if is_BIExp_Equal bpredop then gen_exp "="
+    if is_BIExp_Equal bpredop then gen_exp "=" (* BIExp_Equal cannot be applied to memories! *)
     else if is_BIExp_NotEqual bpredop then apply_smtlib_op (fn s => "(not " ^ s ^ ")")
                                                            (gen_exp "=")
-(*
-    else if is_BIExp_LessThan bpredop then "<"
-    else if is_BIExp_SignedLessThan bpredop then "s<"
-    else if is_BIExp_LessOrEqual bpredop then "<="
-    else if is_BIExp_SignedLessOrEqual bpredop then "s<="
-*)
-    else raise problem_gen_sty "bpredop_to_smtlib" bpredop sty
+    else if smt_type_is_bv sty then
+      if is_BIExp_LessThan bpredop then gen_exp "bvult"
+      else if is_BIExp_SignedLessThan bpredop then gen_exp "bvslt"
+      else if is_BIExp_LessOrEqual bpredop then gen_exp "bvule"
+      else if is_BIExp_SignedLessOrEqual bpredop then gen_exp "bvsle"
+      else problem_gen_sty "bpredop_to_smtlib" bpredop sty
+    else problem_gen_sty "bpredop_to_smtlib" bpredop sty
     end;
 
   fun uop_to_smtlib uop (str, sty) =
@@ -297,9 +306,12 @@ fun problem_gen_sty fname t sty =
 
   fun endi_to_smtlib sty endi = (*
     if is_BEnd_BigEndian endi then "B"
-    else if is_BEnd_LittleEndian endi then "L"
+    else *) if is_BEnd_LittleEndian endi then ()
+(* NOTICE: stick to little endian for now! *)
+(*
     else if is_BEnd_NoEndian endi then "N"
-    else *) problem_gen_sty "endi_to_smtlib" endi sty;
+*)
+    else problem_gen_sty "endi_to_smtlib" endi sty;
 
 fun bexp_to_smtlib vars exp =
     let
@@ -325,10 +337,10 @@ fun bexp_to_smtlib vars exp =
           else
             (vars, ("(_ bv" ^ vstr ^ " " ^ (Int.toString sz) ^ ")",
                case sz of
-                  8  => SMTTY_BV8
-                | 16 => SMTTY_BV16
-                | 32 => SMTTY_BV32
-                | 64 => SMTTY_BV64
+                  8  => SMTTY_BV SMTTY_BV8
+                | 16 => SMTTY_BV SMTTY_BV16
+                | 32 => SMTTY_BV SMTTY_BV32
+                | 64 => SMTTY_BV SMTTY_BV64
                 | _  => raise ERR "bexp_to_smtlib" "..."))
         end
 
@@ -429,32 +441,66 @@ fun bexp_to_smtlib vars exp =
         end
 
 (*
+fun problem _ _ = raise ERR "" "";
+val vars_empty = Redblackset.empty smtlib_vars_compare;
+val vars = vars_empty;
+val exp = ``
+BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
+          (BExp_BinExp BIExp_Plus (BExp_Den (BVar "R7" (BType_Imm Bit32)))
+             (BExp_Const (Imm32 4w))) BEnd_LittleEndian Bit32``
+*)
       else if is_BExp_Load exp then
         let
           val (expm, expad, endi, sz) = (dest_BExp_Load) exp;
-          val endistr = endi_to_smtlib endi;
-          val szstr = (Int.toString o size_of_bir_immtype_t) sz;
+          val (vars1, valm)  = bexp_to_smtlib vars  expm;
+          val (vars2, valad) = bexp_to_smtlib vars1 expad;
+
+          val (_,stym) = valm;
+          val (_,styad) = valad;
+          val _ = endi_to_smtlib stym endi;
+          val szi = (size_of_bir_immtype_t) sz;
+
+          val _ = case stym of
+                    SMTTY_MEM SMTTY_BV32 => ()
+                  | _ => problem exp "memory type cannot be handled: ";
+          val _ = if styad = (SMTTY_BV SMTTY_BV32) then () else
+                    problem exp "address type doesn't match memory address type: ";
+          val _ = if szi = 32 then () else
+                    problem exp "value type - memory type - combination cannot be handled: ";
         in
-          ((xf "(") cf (ef expm) cf (xf ":") cf (xf endistr) cf (xf szstr) cf (xf "[") cf (ef expad) cf (xf "])"))
+          (vars2, gen_smtlib_expr "select" [valm, valad] (SMTTY_BV SMTTY_BV32))
         end
 
+(*
+val exp = ``
+BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
+          (BExp_BinExp BIExp_Plus (BExp_Den (BVar "R7" (BType_Imm Bit32)))
+             (BExp_Const (Imm32 4w))) BEnd_LittleEndian
+          (BExp_Den (BVar "fr_270_R3" (BType_Imm Bit32)))``
+*)
       else if is_BExp_Store exp then
         let
           val (expm, expad, endi, expv) = (dest_BExp_Store) exp;
-          val endistr = endi_to_smtlib endi;
-        in
-          ((xf "(") cf (ef expm) cf (xf ":") cf (xf endistr) cf (xf "[") cf (ef expad) cf (xf "] = ") cf (ef expv) cf (xf ")"))
-        end
-*)
+          val (vars1, valm)  = bexp_to_smtlib vars  expm;
+          val (vars2, valad) = bexp_to_smtlib vars1 expad;
+          val (vars3, valv)  = bexp_to_smtlib vars2 expv;
 
-(*
-      else if is_bir_exp_imp exp then
-        let
-          val (bir_lhs, bir_rhs) = dest_bir_exp_imp exp
+          val (_,stym) = valm;
+          val (_,styad) = valad;
+          val (_,styv) = valv;
+          val () = endi_to_smtlib stym endi;
+
+          val _ = case stym of
+                    SMTTY_MEM SMTTY_BV32 => ()
+                  | _ => problem exp "memory type cannot be handled: ";
+          val _ = if styad = (SMTTY_BV SMTTY_BV32) then () else
+                    problem exp "address type doesn't match memory address type: ";
+          val _ = if styv = (SMTTY_BV SMTTY_BV32) then () else
+                    problem exp "value type - memory type - combination cannot be handled: ";
         in
-          ((xf "(") cf (ef bir_lhs) cf (xf "==>") cf (ef bir_rhs) cf (xf ")"))
+          (vars3, gen_smtlib_expr "store" [valm, valad, valv] stym)
         end
-*)
+
       else
         problem exp "don't know BIR expression: "
     end;
