@@ -103,6 +103,13 @@ fun smt_type_bv_to_int SMTTY_BV8  = 8
   | smt_type_bv_to_int SMTTY_BV32 = 32
   | smt_type_bv_to_int SMTTY_BV64 = 64;
 
+fun smt_type_bv_from_int 8  = SMTTY_BV8
+  | smt_type_bv_from_int 16 = SMTTY_BV16
+  | smt_type_bv_from_int 32 = SMTTY_BV32
+  | smt_type_bv_from_int 64 = SMTTY_BV64
+  | smt_type_bv_from_int i  = raise ERR "smt_type_bv_from_int"
+                                        ("unknown bitvector length: " ^ (Int.toString i));
+
 fun smt_type_bv_to_smtlib bvt = "(_ BitVec " ^ (Int.toString (smt_type_bv_to_int bvt)) ^ ")";
 
 datatype bir_smt_type =
@@ -233,12 +240,21 @@ fun problem_gen_sty fname t sty =
   fun apply_smtlib_op wrapfun (str, sty) =
      (wrapfun str, sty);
 
-  fun castt_to_smtlib sty castt = (*
-    if is_BIExp_LowCast castt then "CL"
-    else if is_BIExp_HighCast castt then "CH"
+(* unsignedcast and lowcast is the same: lowest bits *)
+(* highcast: highest bits (shift right and lowest bits) *)
+(* signedcast: preserve signed bit (highest bit), take lowest bits otherwise
+     - should be sign extension as in SIGN_EXTEND *)
+  fun castt_to_smtlib castt str szi_from szi_to =
+    if is_BIExp_LowCast castt orelse is_BIExp_UnsignedCast castt then
+      "((_ extract " ^ (Int.toString (szi_to-1)) ^ " 0) " ^ str ^ ")"
+    else if is_BIExp_HighCast castt then
+      "((_ extract " ^ (Int.toString (szi_from - 1)) ^
+                 " " ^ (Int.toString (szi_from - szi_to)) ^
+                ") " ^ str ^ ")"
+(*
     else if is_BIExp_SignedCast castt then "CS"
-    else if is_BIExp_UnsignedCast castt then "CU"
-    else *) problem_gen_sty "castt_to_smtlib" castt sty;
+*)
+    else problem_gen_sty "castt_to_smtlib" castt sty;
 
   fun bop_to_smtlib sty bop =
     if smt_type_is_bv sty then
@@ -248,10 +264,10 @@ fun problem_gen_sty fname t sty =
       else if is_BIExp_Plus bop then "bvadd"
       else if is_BIExp_Minus bop then "bvsub"
       else if is_BIExp_Mult bop then "bvmul"
+      else if is_BIExp_Div bop then "bvudiv"
+      else if is_BIExp_SignedDiv bop then "bvsdiv"
 (*
-      else if is_BIExp_Div bop then "/"
-      else if is_BIExp_SignedDiv bop then "s/"
-      else if is_BIExp_Mod bop then "%"
+      else if is_BIExp_Mod bop then "bvurem" (* TODO: is bvurem the correct correspondence? *)
 *)
       else if is_BIExp_SignedMod bop then "bvsmod"
       else if is_BIExp_LeftShift bop then "bvshl"
@@ -272,9 +288,11 @@ fun problem_gen_sty fname t sty =
       val sty = get_smtlib_type_args probfun args;
       fun gen_exp opstr = gen_smtlib_expr opstr args SMTTY_Bool;
     in
-    if is_BIExp_Equal bpredop then gen_exp "=" (* BIExp_Equal cannot be applied to memories! *)
+    (* TODO: BinPred cannot be applied to memories! *)
+    if is_BIExp_Equal bpredop then gen_exp "="
     else if is_BIExp_NotEqual bpredop then apply_smtlib_op (fn s => "(not " ^ s ^ ")")
                                                            (gen_exp "=")
+    (* TODO: BinPred can be applied to Imm1! *)
     else if smt_type_is_bv sty then
       if is_BIExp_LessThan bpredop then gen_exp "bvult"
       else if is_BIExp_SignedLessThan bpredop then gen_exp "bvslt"
@@ -289,13 +307,15 @@ fun problem_gen_sty fname t sty =
     if smt_type_is_bv sty then
       if is_BIExp_ChangeSign uop then gen_exp "bvneg"
       else if is_BIExp_Not uop then gen_exp "bvnot"
-      else (* if is_BIExp_CLZ uop then "($CLZ)"
-      else if is_BIExp_CLS uop then "($CLS)"
-      else *) problem_gen_sty "uop_to_smtlib" uop sty
-    else if smt_type_is_bool sty then
 (*
-      if is_BIExp_ChangeSign uop then "-"
-      else *) if is_BIExp_Not uop then gen_exp "not" (*
+      else if is_BIExp_CLZ uop then "($CLZ)"
+      else if is_BIExp_CLS uop then "($CLS)"
+*)
+      else problem_gen_sty "uop_to_smtlib" uop sty
+    else if smt_type_is_bool sty then
+      if is_BIExp_ChangeSign uop then (str, sty)
+      else if is_BIExp_Not uop then gen_exp "not"
+(*
       else if is_BIExp_CLZ uop then "($CLZ)"
       else if is_BIExp_CLS uop then "($CLS)"
 *)
@@ -304,11 +324,11 @@ fun problem_gen_sty fname t sty =
       problem_gen_sty "uop_to_smtlib" uop sty
     end;
 
-  fun endi_to_smtlib sty endi = (*
-    if is_BEnd_BigEndian endi then "B"
-    else *) if is_BEnd_LittleEndian endi then ()
+  fun endi_to_smtlib sty endi =
 (* NOTICE: stick to little endian for now! *)
+    if is_BEnd_LittleEndian endi then ()
 (*
+    else if is_BEnd_BigEndian endi then "B"
     else if is_BEnd_NoEndian endi then "N"
 *)
     else problem_gen_sty "endi_to_smtlib" endi sty;
@@ -336,12 +356,8 @@ fun bexp_to_smtlib vars exp =
               (vars, ("false", SMTTY_Bool))
           else
             (vars, ("(_ bv" ^ vstr ^ " " ^ (Int.toString sz) ^ ")",
-               case sz of
-                  8  => SMTTY_BV SMTTY_BV8
-                | 16 => SMTTY_BV SMTTY_BV16
-                | 32 => SMTTY_BV SMTTY_BV32
-                | 64 => SMTTY_BV SMTTY_BV64
-                | _  => raise ERR "bexp_to_smtlib" "..."))
+               SMTTY_BV (smt_type_bv_from_int sz)
+               handle HOL_ERR _ => raise ERR "bexp_to_smtlib" "..."))
         end
 
 (*
@@ -366,23 +382,43 @@ fun bexp_to_smtlib vars exp =
         end
 
 (*
+val exp = 
+``
+BExp_Cast BIExp_UnsignedCast
+           (BExp_Cast BIExp_LowCast
+              (BExp_Den (BVar "fr_229_R3" (BType_Imm Bit32))) Bit8) Bit32
+``
+val exp = ``
+BExp_Cast BIExp_LowCast
+              (BExp_Den (BVar "fr_229_R3" (BType_Imm Bit32))) Bit8
+``
+*)
       else if is_BExp_Cast exp then
         let
           val (castt, exp, sz) = (dest_BExp_Cast) exp;
-          val casttstr = castt_to_smtlib castt;
-          val szstr = (Int.toString o size_of_bir_immtype_t) sz;
+          val (vars1, (stre, stye)) = bexp_to_smtlib vars exp;
+
+          val szi = size_of_bir_immtype_t sz;
+          val sty = SMTTY_BV (smt_type_bv_from_int szi)
+                    handle HOL_ERR _ => raise ERR "bexp_to_smtlib" "...";
+          val exp_szi = case stye of
+                           SMTTY_BV bvt => smt_type_bv_to_int bvt
+                         | _ => problem exp "cast can only be applied to imm (not imm1): ";
+
+          val caststr = castt_to_smtlib castt stre exp_szi szi;
+
+          val castval = (caststr, sty);
         in
-          ((xf "(") cf (ef exp) cf (xf ":") cf (xf casttstr) cf (xf szstr) cf (xf ")"))
+          (vars1, castval)
         end
-*)
 
       else if is_BExp_UnaryExp exp then
         let
           val (uop, exp) = (dest_BExp_UnaryExp) exp;
-          val (bvars, (str, sty)) = bexp_to_smtlib vars exp;
+          val (vars1, (str, sty)) = bexp_to_smtlib vars exp;
           val uopval = uop_to_smtlib uop (str, sty);
         in
-          (vars, uopval)
+          (vars1, uopval)
         end
 
       else if is_BExp_BinExp exp then
