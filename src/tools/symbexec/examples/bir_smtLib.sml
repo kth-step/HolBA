@@ -203,6 +203,27 @@ in
 fun problem_gen_sty fname t sty =
   problem_gen fname t ("don't know how to convert as " ^ (smt_type_to_smtlib sty) ^ ": ");
 
+  fun get_smtlib_type_args probfun args =
+    let
+      val _   = if length(args) > 0 then () else
+                  (print "\n!!!\nneed at least one argument for type unification!!!\n"; probfun ());
+      val sty = snd (hd args);
+      val _   = if List.all (fn x => snd x = sty) args then () else
+                  probfun ();
+    in
+      sty
+    end
+
+  fun gen_smtlib_expr opstr args sty =
+    let
+      val argstr = List.foldl (fn ((s,_),str) => str ^ " " ^ s) "" args;
+    in
+      ("(" ^ opstr ^ argstr ^ ")", sty)
+    end;
+
+  fun apply_smtlib_op wrapfun (str, sty) =
+     (wrapfun str, sty);
+
   fun castt_to_smtlib sty castt = (*
     if is_BIExp_LowCast castt then "CL"
     else if is_BIExp_HighCast castt then "CH"
@@ -211,56 +232,68 @@ fun problem_gen_sty fname t sty =
     else *) problem_gen_sty "castt_to_smtlib" castt sty;
 
   fun bop_to_smtlib sty bop =
-    if smt_type_is_bv sty then (*
-      if is_BIExp_And bop then "&"
-      else if is_BIExp_Or bop then "|"
-      else if is_BIExp_Xor bop then "^"
-      else *) if is_BIExp_Plus bop then "bvadd"
+    if smt_type_is_bv sty then
+      if is_BIExp_And bop then "bvand"
+      else if is_BIExp_Or bop then "bvor"
+      else if is_BIExp_Xor bop then "bvxor"
+      else if is_BIExp_Plus bop then "bvadd"
+      else if is_BIExp_Minus bop then "bvsub"
+      else if is_BIExp_Mult bop then "bvmul"
 (*
-      else if is_BIExp_Minus bop then "-"
-      else if is_BIExp_Mult bop then "*"
       else if is_BIExp_Div bop then "/"
       else if is_BIExp_SignedDiv bop then "s/"
       else if is_BIExp_Mod bop then "%"
-      else if is_BIExp_SignedMod bop then "s<<"
-      else if is_BIExp_LeftShift bop then "<<"
-      else if is_BIExp_RightShift bop then ">>"
-      else if is_BIExp_SignedRightShift bop then "s>>"
 *)
+      else if is_BIExp_SignedMod bop then "bvsmod"
+      else if is_BIExp_LeftShift bop then "bvshl"
+      else if is_BIExp_RightShift bop then "bvlshr"
+      else if is_BIExp_SignedRightShift bop then "bvashr"
+
       else problem_gen_sty "bop_to_smtlib" bop sty
     else if smt_type_is_bool sty then
-      problem_gen_sty "bop_to_smtlib" bop sty
+      if is_BIExp_And bop then "and"
+      else if is_BIExp_Or bop then "or"
+      else if is_BIExp_Xor bop then "xor"
+      else problem_gen_sty "bop_to_smtlib" bop sty
     else
       problem_gen_sty "bop_to_smtlib" bop sty;
 
-  fun bpredop_to_smtlib sty bpredop =
-    if is_BIExp_Equal bpredop then "="
+  fun bpredop_to_smtlib probfun bpredop args =
+    let
+      val sty = get_smtlib_type_args probfun args;
+      fun gen_exp opstr = gen_smtlib_expr opstr args SMTTY_Bool;
+    in
+    if is_BIExp_Equal bpredop then gen_exp "="
+    else if is_BIExp_NotEqual bpredop then apply_smtlib_op (fn s => "(not " ^ s ^ ")")
+                                                           (gen_exp "=")
 (*
-    else if is_BIExp_NotEqual bpredop then "<>"
     else if is_BIExp_LessThan bpredop then "<"
     else if is_BIExp_SignedLessThan bpredop then "s<"
     else if is_BIExp_LessOrEqual bpredop then "<="
     else if is_BIExp_SignedLessOrEqual bpredop then "s<="
 *)
-    else raise problem_gen_sty "bpredop_to_smtlib" bpredop sty;
+    else raise problem_gen_sty "bpredop_to_smtlib" bpredop sty
+    end;
 
-  fun uop_to_smtlib sty uop =
-    if smt_type_is_bv sty then (*
-      if is_BIExp_ChangeSign uop then "-"
-      else if is_BIExp_Not uop then "!"
-      else if is_BIExp_CLZ uop then "($CLZ)"
+  fun uop_to_smtlib uop (str, sty) =
+    let fun gen_exp opstr = gen_smtlib_expr opstr [(str, sty)] sty in
+    if smt_type_is_bv sty then
+      if is_BIExp_ChangeSign uop then gen_exp "bvneg"
+      else if is_BIExp_Not uop then gen_exp "bvnot"
+      else (* if is_BIExp_CLZ uop then "($CLZ)"
       else if is_BIExp_CLS uop then "($CLS)"
       else *) problem_gen_sty "uop_to_smtlib" uop sty
     else if smt_type_is_bool sty then
 (*
       if is_BIExp_ChangeSign uop then "-"
-      else *) if is_BIExp_Not uop then "not" (*
+      else *) if is_BIExp_Not uop then gen_exp "not" (*
       else if is_BIExp_CLZ uop then "($CLZ)"
       else if is_BIExp_CLS uop then "($CLS)"
 *)
       else problem_gen_sty "uop_to_smtlib" uop sty
     else
-      problem_gen_sty "uop_to_smtlib" uop sty;
+      problem_gen_sty "uop_to_smtlib" uop sty
+    end;
 
   fun endi_to_smtlib sty endi = (*
     if is_BEnd_BigEndian endi then "B"
@@ -335,33 +368,41 @@ fun bexp_to_smtlib vars exp =
         let
           val (uop, exp) = (dest_BExp_UnaryExp) exp;
           val (bvars, (str, sty)) = bexp_to_smtlib vars exp;
-          val uopstr = uop_to_smtlib sty uop;
+          val uopval = uop_to_smtlib uop (str, sty);
         in
-          (vars, ("(" ^ uopstr ^ " " ^ str ^ ")", sty))
+          (vars, uopval)
         end
 
       else if is_BExp_BinExp exp then
         let
           val (bop, exp1, exp2) = (dest_BExp_BinExp) exp;
-          val (vars1, (str1, sty1)) = bexp_to_smtlib vars  exp1;
-          val (vars2, (str2, sty2)) = bexp_to_smtlib vars1 exp2;
-          val _ = if sty1 = sty2 then () else
-                  problem exp "binary operator needs same type for both sides: ";
-          val bopstr = bop_to_smtlib sty1 bop;
+          val (vars1, val1) = bexp_to_smtlib vars  exp1;
+          val (vars2, val2) = bexp_to_smtlib vars1 exp2;
+          val args = [val1, val2];
+
+          val sty =
+            get_smtlib_type_args
+              (fn () => problem exp "binary operator needs same type for both sides: ")
+              args;
+          val bopstr = bop_to_smtlib sty bop;
+                                         
+          val bopval = gen_smtlib_expr bopstr args sty;
         in
-          (vars2, ("(" ^ bopstr ^ " " ^ str1 ^ " " ^ str2 ^ ")", sty1))
+          (vars2, bopval)
         end
 
       else if is_BExp_BinPred exp then
         let
           val (bpredop, exp1, exp2) = (dest_BExp_BinPred) exp;
-          val (vars1, (str1, sty1)) = bexp_to_smtlib vars  exp1;
-          val (vars2, (str2, sty2)) = bexp_to_smtlib vars1 exp2;
-          val _ = if sty1 = sty2 then () else
-                  problem exp "binary predicate operator needs same type for both sides: ";
-          val bpredopstr = bpredop_to_smtlib sty1 bpredop;
+          val (vars1, val1) = bexp_to_smtlib vars  exp1;
+          val (vars2, val2) = bexp_to_smtlib vars1 exp2;
+          val args = [val1, val2];
+
+          fun probfun () = problem exp "binary predicate operator needs same type for both sides: ";
+
+          val bpredopval = bpredop_to_smtlib probfun bpredop args;
         in
-          (vars2, ("(" ^ bpredopstr ^ " " ^ str1 ^ " " ^ str2 ^ ")", SMTTY_Bool))
+          (vars2, bpredopval)
         end
 
 (*

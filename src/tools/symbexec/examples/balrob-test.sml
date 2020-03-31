@@ -359,7 +359,7 @@ fun get_next_exec_sts lbl_tm est syst =
 
 fun simplify_state syst =
   let
-    val syst2 = tidyup_state syst;
+(*    val syst2 = tidyup_state syst; *)
 
     (* implement search for possible simplifications, and simiplifications *)
     (* first approach: try to simplify memory loads by expanding variables successively, abort if it fails *)
@@ -371,7 +371,7 @@ fun simplify_state syst =
     (* - tidy up state *)
     (* - resolve load and store pairs, use smt solver if reasoning arguments are needed *)
   in
-    syst2
+    syst
   end;
 
 (*
@@ -448,11 +448,16 @@ val stop_lbl_tms = (List.map #CFGN_lbl_tm o
                                          #CFGN_type n = CFGNT_Return)
                    ) ns;
 
+(*
 (* stop at first branch *)
 val lbl_tm = ``BL_Address (Imm32 0xb08w)``;
 val stop_lbl_tms = [``BL_Address (Imm32 0xb22w)``];
 (* just check first branch *)
 val lbl_tm = ``BL_Address (Imm32 0xb22w)``;
+val stop_lbl_tms = [``BL_Address (Imm32 0xb24w)``, ``BL_Address (Imm32 0xb2aw)``];
+*)
+(* stop after first branch *)
+val lbl_tm = ``BL_Address (Imm32 0xb08w)``;
 val stop_lbl_tms = [``BL_Address (Imm32 0xb24w)``, ``BL_Address (Imm32 0xb2aw)``];
 
 val syst  = init_state lbl_tm prog_vars;
@@ -461,16 +466,25 @@ val syst  = init_state lbl_tm prog_vars;
 al syst_new = symb_exec_block syst;
 *)
 
-(* TODO: speed up, probably by implementing a lookup map for "ns" *)
+(* TODO: speed up: tidyup_state
+           later: need a lookup map for "ns" in get_next_exec_sts (find_node) *)
+(* 5s to branch with tidy up
+   8s whole function without tidy up *)
 val systs = symb_exec_to_stop [syst] stop_lbl_tms [];
 (*
 length systs
 
 val syst = hd systs
+
+length(SYST_get_env syst)
 *)
+
+(*
+check_feasible (syst)
 
 val _ = check_feasible (hd systs)
 val _ = check_feasible ((hd o tl) systs)
+*)
 
 
 (* TODO: introduce abstraction as possible value,
