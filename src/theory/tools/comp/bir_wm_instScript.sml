@@ -1302,6 +1302,26 @@ SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def] >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def, bir_eval_exp_TF, bir_val_TF_dist]
 );
 
+val bir_map_triple_move_set_to_blacklist = store_thm("bir_map_triple_move_set_to_blacklist",
+  ``!prog inv l wlist blist pre post elabels.
+    bir_map_triple prog inv l wlist blist pre post ==>
+    FINITE elabels ==>
+    elabels SUBSET wlist ==>
+    (!elabel. elabel IN elabels ==> (post elabel = bir_exp_false)) ==>
+    bir_map_triple prog inv l (wlist DIFF elabels) (elabels UNION blist) pre post``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_map_triple_def, pred_setTheory.UNION_COMM] >>
+irule weak_map_move_set_to_blacklist >>
+ASSUME_TAC bir_model_is_weak >>
+QSPECL_X_ASSUM ``!prog. _`` [`prog`] >>
+FULL_SIMP_TAC std_ss [] >>
+NTAC 2 STRIP_TAC >>
+QSPECL_X_ASSUM ``!prog. _`` [`(bir_etl_wm prog).pc ms`] >>
+SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def] >>
+FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def, bir_eval_exp_TF, bir_val_TF_dist]
+);
+
 
 (* Shrinking the Ending label set is possible if the corresponding postcondition never holds. *)
 val bir_subset_rule_thm =
