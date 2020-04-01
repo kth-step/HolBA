@@ -418,8 +418,8 @@ fun check_feasible syst =
 
     fun proc_preds (vars, asserts) pred =
       List.foldr (fn (exp, (vl1,al)) =>
-        let val (vl2,a) = bexp_to_smtlib vl1 exp in
-          (vl2, a::asserts)
+        let val (_,vl2,a) = bexp_to_smtlib [] vl1 exp in
+          (vl2, a::al)
         end) (vars, asserts) pred;
 
     (* process the predicate *)
@@ -457,8 +457,10 @@ val lbl_tm = ``BL_Address (Imm32 0xb22w)``;
 val stop_lbl_tms = [``BL_Address (Imm32 0xb24w)``, ``BL_Address (Imm32 0xb2aw)``];
 *)
 (* stop after first branch *)
+(*
 val lbl_tm = ``BL_Address (Imm32 0xb08w)``;
 val stop_lbl_tms = [``BL_Address (Imm32 0xb24w)``, ``BL_Address (Imm32 0xb2aw)``];
+*)
 
 val syst  = init_state lbl_tm prog_vars;
 
