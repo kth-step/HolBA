@@ -77,11 +77,11 @@ struct
         | _ =>
           ()
       else ()
-    (* delete all temporary files *)
-    (* val _ = if !Library.trace < 4 then *)
-    (*     List.app (fn path => OS.FileSys.remove path handle SysErr _ => ()) *)
-    (*       [infile, outfile] *)
-    (*   else () *)
+    delete all temporary files
+    val _ = if !Library.trace < 4 then
+        List.app (fn path => OS.FileSys.remove path handle SysErr _ => ())
+          [infile, outfile]
+      else ()
   in
     result
   end
