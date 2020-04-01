@@ -434,7 +434,7 @@ val (bv_comp,exp) = hd env;
       ``BExp_BinPred BIExp_Equal (BExp_Den ^(mk_BVar_string bv_comp)) ^exp``
     ) env);
 
-    val result = querysmt vars asserts;
+    val result = querysmt smtlib_prelude vars asserts;
 
     val _ = if result = BirSmtSat orelse result = BirSmtUnsat then () else
             raise ERR "check_feasible" "smt solver couldn't determine feasibility"

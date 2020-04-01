@@ -1,0 +1,29 @@
+(define-fun loadfun_32_8_8  ((a (Array (_ BitVec 32) (_ BitVec 8))) (ad (_ BitVec 32)))
+                            (_ BitVec  8)
+  (select a ad)
+)
+(define-fun loadfun_32_8_32 ((a (Array (_ BitVec 32) (_ BitVec 8))) (ad (_ BitVec 32)))
+                            (_ BitVec 32)
+  (concat (select a (bvadd ad (_ bv3 32)))
+          (select a (bvadd ad (_ bv2 32)))
+          (select a (bvadd ad (_ bv1 32)))
+          (select a (bvadd ad (_ bv0 32)))
+  )
+)
+
+(define-fun storefun_32_8_8  ((a (Array (_ BitVec 32) (_ BitVec 8))) (ad (_ BitVec 32)) (v (_ BitVec 8)))
+                             (Array (_ BitVec 32) (_ BitVec 8))
+  (store a ad v)
+)
+
+(define-fun storefun_32_8_32 ((a (Array (_ BitVec 32) (_ BitVec 8))) (ad (_ BitVec 32)) (v (_ BitVec 32)))
+                             (Array (_ BitVec 32) (_ BitVec 8))
+  (store 
+    (store
+      (store 
+        (store a (bvadd ad (_ bv3 32)) ((_ extract 31 24) v))
+                 (bvadd ad (_ bv2 32)) ((_ extract 23 16) v))
+                 (bvadd ad (_ bv1 32)) ((_ extract 15  8) v))
+                 (bvadd ad (_ bv0 32)) ((_ extract  7  0) v))
+)
+

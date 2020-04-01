@@ -60,7 +60,7 @@ fun querysmt_raw q =
       (print "\n============================\n";
        print out;
        print "\n============================\n";
-       raise ERR "querysmt" "unknown output from z3")
+       raise ERR "querysmt_raw" "unknown output from z3")
   end;
 
 (* https://rise4fun.com/z3/tutorial *)
@@ -115,12 +115,12 @@ fun smt_type_bv_to_smtlib bvt = "(_ BitVec " ^ (Int.toString (smt_type_bv_to_int
 datatype bir_smt_type =
     SMTTY_Bool
   | SMTTY_BV of bir_smt_type_bv
-  | SMTTY_MEM of bir_smt_type_bv;
+  | SMTTY_MEM of (bir_smt_type_bv * bir_smt_type_bv);
 
-fun smt_type_to_smtlib SMTTY_Bool      = "Bool"
-  | smt_type_to_smtlib (SMTTY_BV  bvt) = smt_type_bv_to_smtlib bvt
-  | smt_type_to_smtlib (SMTTY_MEM bvt) = "(Array " ^ (smt_type_bv_to_smtlib bvt) ^
-                                               " (_ BitVec 30))";
+fun smt_type_to_smtlib SMTTY_Bool                = "Bool"
+  | smt_type_to_smtlib (SMTTY_BV  bvt)           = smt_type_bv_to_smtlib bvt
+  | smt_type_to_smtlib (SMTTY_MEM (bvtad, bvtv)) = "(Array " ^ (smt_type_bv_to_smtlib bvtad) ^
+                                                         " " ^ (smt_type_bv_to_smtlib bvtv) ^ ")";
 
 fun smt_type_is_bv (SMTTY_BV _) = true
   | smt_type_is_bv _            = false;
@@ -136,7 +136,7 @@ fun smt_vars_to_smtlib vars =
         "(declare-const " ^ vn ^ " " ^ (smt_type_to_smtlib vty) ^ ")"
       ) ^ "\n") "" vars;
 
-fun querysmt vars asserts =
+fun querysmt prelude vars asserts =
   if List.exists (fn (_,qt) => qt <> SMTTY_Bool) asserts then
     raise ERR "querysmt" "don't know how to handle expression type in assert"
   else
@@ -147,7 +147,8 @@ fun querysmt vars asserts =
           "(assert " ^ q ^ ")\n"
         )) "" asserts;
     in
-      querysmt_raw (decls ^ "\n" ^
+      querysmt_raw (prelude     ^ "\n" ^
+                    decls       ^ "\n" ^
                     asserts_str ^ "\n" ^
                     "(check-sat)\n")
     end;
@@ -159,10 +160,10 @@ fun smtlib_vars_compare ((an, aty),(bn, bty)) =
     String.compare (an, bn);
   
 (*
-querysmt (Redblackset.fromList smtlib_vars_compare [("x", SMTTY_BV8)])
+querysmt "" (Redblackset.fromList smtlib_vars_compare [("x", SMTTY_BV8)])
          [("(= x #xFF)", SMTTY_Bool)]
 
-querysmt (Redblackset.fromList smtlib_vars_compare [("x", SMTTY_BV8)])
+querysmt "" (Redblackset.fromList smtlib_vars_compare [("x", SMTTY_BV8)])
          [("(= x #xFF)", SMTTY_Bool), ("(= x #xAA)", SMTTY_Bool)]
 *)
 
@@ -190,6 +191,14 @@ local
 fun problem_gen fname t msg = 
   raise ERR fname (msg ^ (term_to_string t));
 
+  fun read_from_file filename =
+    let
+      val file = TextIO.openIn filename;
+      val s    = TextIO.inputAll file before TextIO.closeIn file;
+    in
+      s
+    end;
+
 in
 
   fun bvar_to_smtlib_ref bv =
@@ -210,8 +219,7 @@ in
         else if is_BType_Imm64 btype then
           (SMTTY_BV SMTTY_BV64)
         else if is_BType_Mem btype andalso dest_BType_Mem btype = (Bit32_tm, Bit8_tm) then
-          (* NOTICE: we assume byte addressing in the rest of the code *)
-          (SMTTY_MEM SMTTY_BV32)
+          (SMTTY_MEM (SMTTY_BV32, SMTTY_BV8))
         else problem_gen "bvar_to_smtlib_type" btype "don't know how to convert BIR type: "
     end;
 
@@ -228,7 +236,7 @@ fun problem_gen_sty fname t sty =
                   probfun ();
     in
       sty
-    end
+    end;
 
   fun gen_smtlib_expr opstr args sty =
     let
@@ -255,6 +263,9 @@ fun problem_gen_sty fname t sty =
     else if is_BIExp_SignedCast castt then "CS"
 *)
     else raise ERR "castt_to_smtlib" "don't know about SignedCast";
+
+  val smtlib_prelude = read_from_file "bir_smtLib.z3_prelude";
+
 
   fun bop_to_smtlib sty bop =
     if smt_type_is_bv sty then
@@ -333,7 +344,7 @@ fun problem_gen_sty fname t sty =
 *)
     else problem_gen_sty "endi_to_smtlib" endi sty;
 
-fun bexp_to_smtlib conds vars exp =
+  fun bexp_to_smtlib conds vars exp =
     let
       fun problem exp msg = problem_gen "bexp_to_smtlib" exp msg;
 
@@ -480,6 +491,7 @@ BExp_Cast BIExp_LowCast
 fun problem _ _ = raise ERR "" "";
 val vars_empty = Redblackset.empty smtlib_vars_compare;
 val vars = vars_empty;
+val conds = [];
 val exp = ``
 BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           (BExp_BinExp BIExp_Plus (BExp_Den (BVar "R7" (BType_Imm Bit32)))
@@ -492,47 +504,36 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val (conds2, vars2, valad) = bexp_to_smtlib conds1 vars1 expad;
 
           val (_,stym) = valm;
-          val (strad,styad) = valad;
+          val (_,styad) = valad;
           val _ = endi_to_smtlib stym endi;
-          val szi = (size_of_bir_immtype_t) sz;
-          val sty = SMTTY_BV (smt_type_bv_from_int szi)
-                    handle HOL_ERR _ => raise ERR "bexp_to_smtlib" "...";
 
-          val styad_bvt = case stym of
-                    SMTTY_MEM bvt => bvt
+          val (styad_bvt, styc_bvt) = case stym of
+                    SMTTY_MEM (ad, c) => (ad, c)
                   | _ => problem exp "memory must be of memory type: ";
           val _ = if styad = (SMTTY_BV styad_bvt) then () else
                     problem exp "address type doesn't match memory address type: ";
+          val szadi = smt_type_bv_to_int styad_bvt;
+          val szci  = smt_type_bv_to_int styc_bvt;
+
+          val szi  = (size_of_bir_immtype_t) sz;
+          val styv = SMTTY_BV (smt_type_bv_from_int szi)
+                    handle HOL_ERR _ => raise ERR "bexp_to_smtlib" "...";
 
           (* current restrictions *)
-          val _ = if styad_bvt = SMTTY_BV32 then () else
+          val _ = if szadi = 32 then () else
                     problem exp "address type other than 32bits cannot be handled currently: ";
-          val memc_szi = smt_type_bv_to_int SMTTY_BV32;
-          val _ = if szi <= memc_szi then () else
-                    problem exp "cannot load more than memory cell size: ";
-          val _ = if memc_szi mod szi = 0 then () else
-                    problem exp "cannot load fractions: ";
+          val _ = if szci  =  8 then () else
+                    problem exp "cell types other than 8bits cannot be handled currently: ";
+          val _ = if szi   =  8 orelse
+                     szi   = 32 then () else
+                    problem exp "load types other than 8 and 32bits cannot be handled currently: ";
 
-          (* express that we assume aligned access *)
-          val numbits = case memc_szi div szi of
-             1 => 0
-           | 2 => 1
-           | 4 => 2
-           | _ => problem exp "unsupported combination of types: ";
-          fun mk_0s i = String.implode (List.tabulate(i,fn _ => #"0"));
-          val newconds = (if numbits = 0 then [] else [
-                          "(= #b" ^ (mk_0s numbits) ^
-                          "((_ extract " ^ (Int.toString (numbits - 1)) ^ " 0) " ^ strad ^ "))"
-                         ])@conds;
-
-          val valad_fix = ("((_ extract 31 2) " ^ strad ^ ")", styad);
-          val simpleval = gen_smtlib_expr "select" [valm, valad_fix] sty;
-          fun fixfun s  = if numbits = 0 then s else
-                          "(bvlshr " ^ s ^
-                                 " (bvlshl (concat #b" ^ (mk_0s 30) ^
-                                                 " " ^ "((_ extract 1 0) " ^ strad ^ ")" ^ ") #x00000003))";
+          val z3funname = "loadfun_" ^ (Int.toString szadi) ^
+                                 "_" ^ (Int.toString szci) ^
+                                 "_" ^ (Int.toString szi);
+          val loadval = gen_smtlib_expr z3funname [valm, valad] styv;
         in
-          (newconds, vars2, apply_smtlib_op fixfun simpleval)
+          (conds2, vars2, loadval)
         end
 
 (*
@@ -550,15 +551,17 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val (conds3, vars3, valv)  = bexp_to_smtlib conds2 vars2 expv;
 
           val (_,stym) = valm;
-          val (strad,styad) = valad;
-          val (strv,styv) = valv;
+          val (_,styad) = valad;
+          val (_,styv) = valv;
           val () = endi_to_smtlib stym endi;
 
-          val styad_bvt = case stym of
-                    SMTTY_MEM bvt => bvt
+          val (styad_bvt, styc_bvt) = case stym of
+                    SMTTY_MEM (ad, c) => (ad, c)
                   | _ => problem exp "memory must be of memory type: ";
           val _ = if styad = (SMTTY_BV styad_bvt) then () else
                     problem exp "address type doesn't match memory address type: ";
+          val szadi = smt_type_bv_to_int styad_bvt;
+          val szci  = smt_type_bv_to_int styc_bvt;
 
           val styv_bvt = case styv of
                     SMTTY_BV bvt => bvt
@@ -566,44 +569,20 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val szi = smt_type_bv_to_int styv_bvt;
 
           (* current restrictions *)
-          val _ = if styad_bvt = SMTTY_BV32 then () else
+          val _ = if szadi = 32 then () else
                     problem exp "address type other than 32bits cannot be handled currently: ";
-          val memc_szi = smt_type_bv_to_int SMTTY_BV32;
-          val _ = if szi <= memc_szi then () else
-                    problem exp "cannot store more than memory cell size: ";
-          val _ = if memc_szi mod szi = 0 then () else
-                    problem exp "cannot store fractions: ";
+          val _ = if szci  =  8 then () else
+                    problem exp "cell types other than 8bits cannot be handled currently: ";
+          val _ = if szi   =  8 orelse
+                     szi   = 32 then () else
+                    problem exp "load types other than 8 and 32bits cannot be handled currently: ";
 
-          (* express that we assume aligned access *)
-          val numbits = case memc_szi div szi of
-             1 => 0
-           | 2 => 1
-           | 4 => 2
-           | _ => problem exp "unsupported combination of types: ";
-          fun mk_0s i = String.implode (List.tabulate(i,fn _ => #"0"));
-          val newconds = (if numbits = 0 then [] else [
-                          "(= #b" ^ (mk_0s numbits) ^
-                          "((_ extract " ^ (Int.toString (numbits - 1)) ^ " 0) " ^ strad ^ "))"
-                         ])@conds;
-
-          val valad_fix = ("((_ extract 31 2) " ^ strad ^ ")", styad);
-
-          val (strload,_) = gen_smtlib_expr "select" [valm, valad_fix] styv;
-          val valv_fix = if numbits = 0 then valv else
-(* TODO: things are wrongly hacked together here *)
-                         if numbits = 1 then ("(concat " ^ strv ^ " " ^ strv ^ ")", SMTTY_BV SMTTY_BV32) else
-                         if numbits = 2 then ("(concat " ^ strv ^ " " ^ strv ^ 
-                                                     " " ^ strv ^ " " ^ strv ^ ")", SMTTY_BV SMTTY_BV32) else
-                         raise ERR "aaaaa" "bbbbbbbbbbbbb"
-                           (* TODO: this is the wrong aproach *);
-
-          fun fixfun s  = if numbits = 0 then s else
-                          "(bvlshr " ^ s ^
-                                 " (bvlshl (concat #b" ^ (mk_0s 30) ^
-                                                 " " ^ "((_ extract 1 0) " ^ strad ^ ")" ^ ") #x00000003))";
-
+          val z3funname = "storefun_" ^ (Int.toString szadi) ^
+                                 "_" ^ (Int.toString szci) ^
+                                 "_" ^ (Int.toString szi);
+          val storeval = gen_smtlib_expr z3funname [valm, valad, valv] stym;
         in
-          (newconds, vars3, gen_smtlib_expr "store" [valm, valad_fix, valv_fix] stym)
+          (conds3, vars3, storeval)
         end
 
       else
@@ -633,7 +612,7 @@ val vars = vars_empty;
 val varlist = Redblackset.listItems vars;
 *)
 
-val result = querysmt vars [str];
+val result = querysmt smtlib_prelude vars [str];
 in
 end
 
