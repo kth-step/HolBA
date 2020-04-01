@@ -92,35 +92,15 @@ val q = "(check-sat)\n";
 val result = querysmt_raw q;
 *)*)*)*)
 
-datatype bir_smt_type_bv =
-    SMTTY_BV8
-  | SMTTY_BV16
-  | SMTTY_BV32
-  | SMTTY_BV64;
-
-fun smt_type_bv_to_int SMTTY_BV8  = 8
-  | smt_type_bv_to_int SMTTY_BV16 = 16
-  | smt_type_bv_to_int SMTTY_BV32 = 32
-  | smt_type_bv_to_int SMTTY_BV64 = 64;
-
-fun smt_type_bv_from_int 8  = SMTTY_BV8
-  | smt_type_bv_from_int 16 = SMTTY_BV16
-  | smt_type_bv_from_int 32 = SMTTY_BV32
-  | smt_type_bv_from_int 64 = SMTTY_BV64
-  | smt_type_bv_from_int i  = raise ERR "smt_type_bv_from_int"
-                                        ("unknown bitvector length: " ^ (Int.toString i));
-
-fun smt_type_bv_to_smtlib bvt = "(_ BitVec " ^ (Int.toString (smt_type_bv_to_int bvt)) ^ ")";
-
 datatype bir_smt_type =
     SMTTY_Bool
-  | SMTTY_BV of bir_smt_type_bv
-  | SMTTY_MEM of (bir_smt_type_bv * bir_smt_type_bv);
+  | SMTTY_BV   of int
+  | SMTTY_MEM  of (int * int);
 
-fun smt_type_to_smtlib SMTTY_Bool                = "Bool"
-  | smt_type_to_smtlib (SMTTY_BV  bvt)           = smt_type_bv_to_smtlib bvt
-  | smt_type_to_smtlib (SMTTY_MEM (bvtad, bvtv)) = "(Array " ^ (smt_type_bv_to_smtlib bvtad) ^
-                                                         " " ^ (smt_type_bv_to_smtlib bvtv) ^ ")";
+fun smt_type_to_smtlib SMTTY_Bool          = "Bool"
+  | smt_type_to_smtlib (SMTTY_BV  i)       = "(_ BitVec " ^ (Int.toString i) ^ ")"
+  | smt_type_to_smtlib (SMTTY_MEM (ad, v)) = "(Array " ^ (smt_type_to_smtlib (SMTTY_BV ad)) ^
+                                                   " " ^ (smt_type_to_smtlib (SMTTY_BV v)) ^ ")";
 
 fun smt_type_is_bv (SMTTY_BV _) = true
   | smt_type_is_bv _            = false;
@@ -160,10 +140,10 @@ fun smtlib_vars_compare ((an, aty),(bn, bty)) =
     String.compare (an, bn);
   
 (*
-querysmt "" (Redblackset.fromList smtlib_vars_compare [("x", SMTTY_BV8)])
+querysmt "" (Redblackset.fromList smtlib_vars_compare [("x", SMTTY_BV 8)])
          [("(= x #xFF)", SMTTY_Bool)]
 
-querysmt "" (Redblackset.fromList smtlib_vars_compare [("x", SMTTY_BV8)])
+querysmt "" (Redblackset.fromList smtlib_vars_compare [("x", SMTTY_BV 8)])
          [("(= x #xFF)", SMTTY_Bool), ("(= x #xAA)", SMTTY_Bool)]
 *)
 
@@ -211,15 +191,15 @@ in
         if      is_BType_Imm1  btype orelse is_BType_Bool btype then
           SMTTY_Bool
         else if is_BType_Imm8  btype then
-          (SMTTY_BV SMTTY_BV8)
+          (SMTTY_BV  8)
         else if is_BType_Imm16 btype then
-          (SMTTY_BV SMTTY_BV16)
+          (SMTTY_BV 16)
         else if is_BType_Imm32 btype then
-          (SMTTY_BV SMTTY_BV32)
+          (SMTTY_BV 32)
         else if is_BType_Imm64 btype then
-          (SMTTY_BV SMTTY_BV64)
+          (SMTTY_BV 64)
         else if is_BType_Mem btype andalso dest_BType_Mem btype = (Bit32_tm, Bit8_tm) then
-          (SMTTY_MEM (SMTTY_BV32, SMTTY_BV8))
+          (SMTTY_MEM (32, 8))
         else problem_gen "bvar_to_smtlib_type" btype "don't know how to convert BIR type: "
     end;
 
@@ -353,6 +333,7 @@ fun problem_gen_sty fname t sty =
 *)
     else problem_gen_sty "endi_to_smtlib" endi sty;
 
+
   fun bexp_to_smtlib conds vars exp =
     let
       fun problem exp msg = problem_gen "bexp_to_smtlib" exp msg;
@@ -376,7 +357,7 @@ fun problem_gen_sty fname t sty =
               (conds, vars, ("false", SMTTY_Bool))
           else
             (conds, vars, ("(_ bv" ^ vstr ^ " " ^ (Int.toString sz) ^ ")",
-               SMTTY_BV (smt_type_bv_from_int sz)
+               SMTTY_BV sz
                handle HOL_ERR _ => raise ERR "bexp_to_smtlib" "..."))
         end
 
@@ -419,10 +400,9 @@ BExp_Cast BIExp_LowCast
           val (conds1, vars1, (stre, stye)) = bexp_to_smtlib conds vars exp;
 
           val szi = size_of_bir_immtype_t sz;
-          val sty = SMTTY_BV (smt_type_bv_from_int szi)
-                    handle HOL_ERR _ => raise ERR "bexp_to_smtlib" "...";
+          val sty = SMTTY_BV szi;
           val exp_szi = case stye of
-                           SMTTY_BV bvt => smt_type_bv_to_int bvt
+                           SMTTY_BV i => i
                          | _ => problem exp "cast can only be applied to imm (not imm1): ";
 
           val caststr = castt_to_smtlib castt stre exp_szi szi;
@@ -521,12 +501,11 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
                   | _ => problem exp "memory must be of memory type: ";
           val _ = if styad = (SMTTY_BV styad_bvt) then () else
                     problem exp "address type doesn't match memory address type: ";
-          val szadi = smt_type_bv_to_int styad_bvt;
-          val szci  = smt_type_bv_to_int styc_bvt;
+          val szadi = styad_bvt;
+          val szci  = styc_bvt;
 
           val szi  = (size_of_bir_immtype_t) sz;
-          val styv = SMTTY_BV (smt_type_bv_from_int szi)
-                    handle HOL_ERR _ => raise ERR "bexp_to_smtlib" "...";
+          val styv = SMTTY_BV szi;
 
           (* current restrictions *)
           val _ = if szadi = 32 then () else
@@ -569,13 +548,13 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
                   | _ => problem exp "memory must be of memory type: ";
           val _ = if styad = (SMTTY_BV styad_bvt) then () else
                     problem exp "address type doesn't match memory address type: ";
-          val szadi = smt_type_bv_to_int styad_bvt;
-          val szci  = smt_type_bv_to_int styc_bvt;
+          val szadi = styad_bvt;
+          val szci  = styc_bvt;
 
           val styv_bvt = case styv of
                     SMTTY_BV bvt => bvt
                   | _ => problem exp "can only write bitvectors to memory: ";
-          val szi = smt_type_bv_to_int styv_bvt;
+          val szi = styv_bvt;
 
           (* current restrictions *)
           val _ = if szadi = 32 then () else
