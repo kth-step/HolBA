@@ -515,9 +515,10 @@ BExp_Load (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           val _ = if szci  =  8 then () else
                     problem exp "cell types other than 8bits cannot be handled currently: ";
           val _ = if szi   =  8 orelse
+                     szi   = 16 orelse
                      szi   = 32 orelse
                      szi   = 64 then () else
-                    problem exp "load types other than 8, 32 and 64bits cannot be handled currently: ";
+                    problem exp "load types other than 8, 16, 32 and 64bits cannot be handled currently: ";
 
           val z3funname = "loadfun_" ^ (Int.toString szadi) ^
                                  "_" ^ (Int.toString szci) ^
