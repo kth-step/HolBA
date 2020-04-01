@@ -55,7 +55,8 @@ struct
 				     val (_, a, _, _) = dest_BExp_Load ldexp
 				     val addr = case (find_terms is_BExp_Load a) of
 					 [] => a
-					 | _ => let
+					 | _ => 
+					   let
 					       val (_, a', _, _) = dest_BExp_Load ((hd o find_terms is_BExp_Load) a) 
 					   in 
 					       a'
@@ -116,10 +117,11 @@ struct
       val precond = ``BExp_Const (Imm1 1w)``
       val states = symb_exec_process_to_leafs_pdecide (fn x => true) envfo depth precond prog
 
+
       (* filter for the concrete path *)
       fun eq_true t = t = ``SOME (BVal_Imm (Imm1 1w))``
       fun pathcond_val s =
-	  let 
+	  let
 	      val bsst_pred_init_mem = mem_init_conc_exec ``(^s).bsst_pred`` mls
 	      val restr_eval_tm = computeLib.RESTR_EVAL_CONV [``bir_eval_load``, ``bir_eval_store``] 
 					``bir_eval_exp (^bsst_pred_init_mem) (BEnv (K NONE))``;
@@ -133,6 +135,7 @@ struct
 		     in
 			 res
 		     end)
+
 	  in
 	      (snd o dest_eq o concl o EVAL) bsst_simp_tm
 	  end
@@ -141,6 +144,7 @@ struct
 			   [s] => s
 			 | []  => raise ERR "conc_obs_compute" "no state has a true path condition?!?!?!"
                          | _   => raise ERR "conc_obs_compute" "more than one state has a true path condition?!?!?!";
+
     in
       final_state
     end;
@@ -206,9 +210,9 @@ struct
 
       fun getReg tm = case tm of regT x => x
       fun getMem tm = case tm of memT x => x 
-      fun is_memT tm = can getMem tm;
-      val (m, rg) = List.partition (is_memT) s;
-      val m = if List.null m then ("MEM", []:( (num * num) list)) else getMem (hd m)
+      fun is_memT tm = can getMem tm
+      val (m, rg) = List.partition (is_memT) s
+      val m = if List.null m then ("MEM", []:((num * num) list)) else (getMem (hd m))
       val rg = map getReg rg
       val envfo = SOME (gen_symb_updates rg)
       val state_ = conc_exec_program 200 prog envfo (#2 m)

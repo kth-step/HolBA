@@ -368,8 +368,8 @@ struct
           val reads = offset_reads_up_to nsplits []
             handle e => raise wrap_exn "bir_exp_to_words::load::reads" e;
           (* Reorder reads according to endianess *)
-          val ordered_reads = if is_BEnd_BigEndian bir_endi then reads
-            else if is_BEnd_LittleEndian bir_endi then rev reads
+          val ordered_reads = if is_BEnd_BigEndian bir_endi then rev reads
+            else if is_BEnd_LittleEndian bir_endi then reads
             else if is_BEnd_NoEndian bir_endi then
               if nsplits = Arbnumcore.one then reads
                  else raise ERR "bir_exp_to_words" "BEnd_NoEndian and nsplits>1"

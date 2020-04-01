@@ -33,30 +33,26 @@ add_obs_pc p = map_obs_prog add_block_pc_obs p
 
 val select_mem_def = Define`
 select_mem exp =
-case exp of
+(case exp of
     BExp_Cast c e t => select_mem e
   | BExp_UnaryExp ue e => select_mem e
   | BExp_BinExp be e1 e2 => select_mem e1 ++ select_mem e2
   | BExp_BinPred bp e1 e2 => select_mem e1 ++ select_mem e2
   | BExp_MemEq e1 e2 => select_mem e1 ++ select_mem e2
   | BExp_IfThenElse e1 e2 e3 => select_mem e1 ++ select_mem e2 ++ select_mem e3
-  | BExp_Load e1 e2 a b => e2 :: (select_mem e1 ++ select_mem e2)
+  | BExp_Load e1 e2 a b =>   e2 :: (select_mem e1 ++ select_mem e2) 
   | BExp_Store e1 e2 a e3 => e2 :: (select_mem e1 ++ select_mem e2 ++ select_mem e3)
-  | _ => []
+  | _ => [])
+
 `;
+
 
 val constrain_mem_def = Define`
 constrain_mem e =
-  BStmt_Assert
-       (BExp_BinExp BIExp_And
-                    (BExp_BinPred
-                         BIExp_LessOrEqual
-                         (BExp_Const (Imm64 ^(mem_min)))
-                         e)
-                    (BExp_BinPred
-                         BIExp_LessThan
-                         e
-                         (BExp_Const (Imm64 ^(mem_max)))))
+    BStmt_Assert
+     (BExp_BinExp BIExp_And
+       (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 ^(mem_min))) (e))
+       (BExp_BinPred BIExp_LessThan (e) (BExp_Const (Imm64 ^(mem_max)))))
 `;
 
 val add_obs_1_stmts_def = Define `
