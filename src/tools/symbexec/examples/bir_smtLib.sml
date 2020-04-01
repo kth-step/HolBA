@@ -248,21 +248,30 @@ fun problem_gen_sty fname t sty =
   fun apply_smtlib_op wrapfun (str, sty) =
      (wrapfun str, sty);
 
+  fun mk_0s i = String.implode (List.tabulate(i,fn _ => #"0"));
+
 (* unsignedcast and lowcast is the same: lowest bits *)
 (* highcast: highest bits (shift right and lowest bits) *)
 (* signedcast: preserve signed bit (highest bit), take lowest bits otherwise
      - should be sign extension as in SIGN_EXTEND *)
   fun castt_to_smtlib castt str szi_from szi_to =
-    if is_BIExp_LowCast castt orelse is_BIExp_UnsignedCast castt then
-      "((_ extract " ^ (Int.toString (szi_to-1)) ^ " 0) " ^ str ^ ")"
-    else if is_BIExp_HighCast castt then
-      "((_ extract " ^ (Int.toString (szi_from - 1)) ^
-                 " " ^ (Int.toString (szi_from - szi_to)) ^
-                ") " ^ str ^ ")"
+    if szi_from >= szi_to then
+      if is_BIExp_LowCast castt orelse is_BIExp_UnsignedCast castt then
+        "((_ extract " ^ (Int.toString (szi_to-1)) ^ " 0) " ^ str ^ ")"
+      else if is_BIExp_HighCast castt then
+        "((_ extract " ^ (Int.toString (szi_from - 1)) ^
+                   " " ^ (Int.toString (szi_from - szi_to)) ^
+                  ") " ^ str ^ ")"
 (*
     else if is_BIExp_SignedCast castt then "CS"
 *)
-    else raise ERR "castt_to_smtlib" "don't know about SignedCast";
+      else raise ERR "castt_to_smtlib" "don't know about down-SignedCast"
+    else
+      if is_BIExp_LowCast castt orelse is_BIExp_UnsignedCast castt then
+        "(concat #b" ^ (mk_0s (szi_to - szi_from)) ^ " " ^ str ^ ")"
+      else if is_BIExp_HighCast castt then
+        "(concat " ^ str ^ " #b" ^ (mk_0s (szi_to - szi_from)) ^ ")"
+      else raise ERR "castt_to_smtlib" "don't know about up-SignedCast";
 
   val smtlib_prelude = read_from_file "bir_smtLib.z3_prelude";
 
