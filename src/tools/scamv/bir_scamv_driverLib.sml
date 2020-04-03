@@ -91,13 +91,13 @@ fun symb_exec_phase prog =
 
 fun bir_free_vars exp =
     let 
-	val fvs=
+	val fvs =
 	    if is_comb exp then
 		let val (con,args) = strip_comb exp
 		in
-		    (* if con = ``BExp_MemConst`` *)
-		    (* then [(List.last args)] *)
-		    (* else *) if con = ``BExp_Den``
+		    if con = ``BExp_MemConst``
+		    then [``"MEM"``]
+		    else if con = ``BExp_Den``
 		    then
 		       let val v = case strip_comb (hd args) of
 				       (_,v::_) => v
@@ -126,6 +126,7 @@ fun make_word_relation relation exps =
                     in ``BVar ^v`` |-> ``BVar ^vp`` end)
                 (bir_free_vars exp);
 
+
         fun primed_vars exp = map (#residue) (primed_subst exp);
         fun nub [] = []
           | nub (x::xs) = x::nub(List.filter (fn y => y <> x) xs);
@@ -135,15 +136,28 @@ fun make_word_relation relation exps =
         val unprimed = sort (curry String.<=)
                             (nub (map fromHOLstring
                                       (flatten (map bir_free_vars exps))));
+
+	
         val pairs = zip unprimed primed;
-        fun mk_distinct (a,b) =
+	val (mpair, rpair) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM")) pairs
+
+
+        fun mk_distinct_reg (a,b) =
             let val va = mk_var (a,``:word64``);
                 val vb = mk_var (b,``:word64``);
             in
 		``(^va <> ^vb)``
             end;
+	fun mk_distinct_mem (a,b) =
+	    let val va = mk_var (a, ``:word64 |-> word8``);
+		val vb = mk_var (b, ``:word64 |-> word8``);
+	    in
+		``(^va <> ^vb)``
+	    end
 
-        val distinct = if null pairs then raise NoObsInPath else list_mk_disj (map mk_distinct pairs);
+        val distinct = if null pairs 
+		       then raise NoObsInPath 
+		       else list_mk_disj ((map mk_distinct_reg rpair) (* @ ([mk_distinct_mem (hd mpair)]) *)) ;
     in
        ``^(bir2bool relation) /\ ^distinct``
     end

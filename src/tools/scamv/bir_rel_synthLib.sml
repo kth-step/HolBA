@@ -36,13 +36,19 @@ fun obs_domain_path xs =
 fun obs_domain (ps : path_struct) =
     List.concat (List.map (obs_domain_path o path_obs_of) ps);
 
+
+fun rmDuplicates [] = []
+  | rmDuplicates (x::xs) = x::rmDuplicates(List.filter (fn y => y <> x) xs);
+
 fun bir_free_vars exp =
     let 
 	val fvs =
 	    if is_comb exp then
 		let val (con,args) = strip_comb exp
 		in
-		    if con = ``BExp_Den``
+		    if con = ``BExp_MemConst``
+		    then [``"MEM"``]
+		    else if con = ``BExp_Den``
 		    then
 		       let val v = case strip_comb (hd args) of
 				       (_,v::_) => v
@@ -55,27 +61,33 @@ fun bir_free_vars exp =
 		end
 	    else []
     in
-	fvs
+	rmDuplicates fvs
     end;
 
 exception ListMkBir of string
 
 fun primed_subst exp =
-    map (fn v =>
-            let val vp = lift_string string_ty (fromHOLstring v ^ "'")
-            in
-            ``BVar ^v`` |-> ``BVar ^vp`` end)
-        (bir_free_vars exp);
-
+    let 
+	val (mfvs, rfvs) = List.partition (fn el =>  Term.term_eq el ``"MEM"``)(bir_free_vars exp)
+	val regs =
+	    map (fn v =>
+		    let val vp = lift_string string_ty (fromHOLstring v ^ "'")
+		    in
+			``BVar ^v`` |-> ``BVar ^vp`` end) rfvs
+	val mem  = mk_var ("MEM" ,Type`:num |-> num`)
+	val mem' = mk_var ("MEM'",Type`:num |-> num`)
+    in
+	if List.null mfvs
+	then regs
+	else [mem |-> mem']@regs
+    end
+	
 fun primed_vars exp = map (#residue) (primed_subst exp);
-
 
 fun primed_term exp =
     let val psub = primed_subst exp
-	val mem = mk_var ("MEM",Type`:num |-> num`);
-	val mem' = mk_var ("MEM'",Type`:num |-> num`);
-
-    in subst[mem |-> mem'](subst psub exp)
+    in
+	subst psub exp
     end;
 
 fun primed ys =
