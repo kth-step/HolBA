@@ -79,7 +79,24 @@ fun ending_lam_disj_to_sml_list ls =
   then []
   else map (snd o dest_eq) (strip_disj (dest_lambda ls));
 
-val ending_set_to_sml_list = pred_setSyntax.strip_set
+(*
+val tm =   ``(BL_Address x) INSERT abc``
+*)
+fun dest_until_var tm =
+  if not (pred_setSyntax.is_insert tm) then
+    if is_var tm then [] else raise ERR "dest_until_var" ("is no variable: " ^ (term_to_string tm))
+  else
+    let val (x, tm') = pred_setSyntax.dest_insert tm in
+      x::(dest_until_var tm')
+    end;
+
+fun ending_set_to_sml_list tm =
+  pred_setSyntax.strip_set tm
+  handle HOL_ERR _ => (
+    print ("\nnotice that the variable set has to be a blacklist: " ^
+           (term_to_string tm) ^ "\n");
+    dest_until_var tm
+  );
 
 fun postcond_exp_from_label postcond label =
   (snd o dest_eq o concl)

@@ -486,20 +486,36 @@ struct
 		  el 1 (get_labels_from_set_repr white_ending_label_set2)]
             bir_auxiliaryTheory.noteq_trans_impl
 	val bir_add_comp_seq_rule_thm2 =
-	  SIMP_RULE std_ss [prove (mk_eq
+	  SIMP_RULE std_ss [UNDISCH_ALL (prove (mk_imp (assmpt,
+                                    mk_eq
                                      (pred_setSyntax.mk_inter
                                         (white_ending_label_set1,
                                          white_ending_label_set2),
-                                     pred_setSyntax.mk_empty bir_label_t_ty),
+                                     pred_setSyntax.mk_empty bir_label_t_ty)),
                             (* TODO: srw_ss()... *)
+                            STRIP_TAC >>
                             SIMP_TAC (srw_ss()) [ASSUME assmpt, pred_setTheory.INTER_DEF, pred_setTheory.IN_ABS,
-                                                 spec_noteq_trans_impl1]
-                            )] bir_add_comp_seq_rule_thm1
+                                                 spec_noteq_trans_impl1] >>
+                            FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.EXTENSION, pred_setTheory.IN_INSERT]
+                            ))] bir_add_comp_seq_rule_thm1
 
 	(* The intersection between whitelist of HT2 and blacklist of HT2 should be empty *)
         (* TODO: Does this work for larger than singleton sets? *)
 	val bir_add_comp_seq_rule_thm3 =
-	  if not (pred_setSyntax.is_empty black_ending_label_set2)
+          if is_var black_ending_label_set2 then
+            let
+              val t = UNDISCH_ALL (prove(mk_imp(assmpt, mk_eq
+					(pred_setSyntax.mk_inter
+					   (white_ending_label_set2,
+					    black_ending_label_set2),
+					 pred_setSyntax.mk_empty bir_label_t_ty)),
+                       STRIP_TAC >>
+                       FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INSERT_INTER]
+                       ));
+            in
+              REWRITE_RULE [t] bir_add_comp_seq_rule_thm2
+            end
+	  else if not (pred_setSyntax.is_empty black_ending_label_set2)
 	  then
             let
 	      val spec_noteq_trans_impl2 =
@@ -507,7 +523,8 @@ struct
 			el 1 (get_labels_from_set_repr black_ending_label_set2)]
 		  bir_auxiliaryTheory.noteq_trans_impl
             in
-	      SIMP_RULE std_ss [prove(mk_eq
+	      (SIMP_RULE std_ss [prove(
+                                       mk_eq
 					(pred_setSyntax.mk_inter
 					   (white_ending_label_set2,
 					    black_ending_label_set2),
@@ -516,7 +533,7 @@ struct
 				SIMP_TAC (srw_ss()) [ASSUME assmpt, pred_setTheory.INTER_DEF,
 						     pred_setTheory.IN_ABS,
 						     spec_noteq_trans_impl2]
-				)] bir_add_comp_seq_rule_thm2
+				)] bir_add_comp_seq_rule_thm2)
             end
 	  else
             HO_MATCH_MP
@@ -550,9 +567,11 @@ struct
                          simp_inter_set_repr_rule)
           map_ht1 map_ht2 def_list
        =
-        bir_compose_seq_assmpt (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
-                         simp_inter_set_repr_rule)
-          map_ht1 map_ht2 def_list T
+        ((REWRITE_RULE []) o DISCH_ALL) (
+          bir_compose_seq_assmpt (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
+                           simp_inter_set_repr_rule)
+            map_ht1 map_ht2 def_list T
+        )
        ;
 
     (* This function composes two bir_triples sequentially using bir_map_std_seq_comp_thm *)
