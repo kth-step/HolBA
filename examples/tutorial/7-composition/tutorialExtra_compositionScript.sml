@@ -92,34 +92,105 @@ fun try_disch_all_assump_w_EVAL t =
 
 (* ====================================== *)
 (* ADD function *)
-(*
-, ````
-SPECL [``bprog_add_times_two``, ``bir_exp_true``, ````]
- bir_map_triple_move_set_to_blacklist
-*)
+  val ht_assmpt = ``(FINITE v4s) /\
+                    ((BL_Address (Imm32 v3)) NOTIN v4s) /\
+                    ((BL_Address (Imm32 260w)) NOTIN ((BL_Address (Imm32 v3)) INSERT v4s))``;
 
-  val ht_assmpt = ``((v3:word32) <> 260w) /\ ((v4:word32) <> 260w) /\ (v4 <> v3)``;
+  val assumes = ASSUME ht_assmpt;
+
+val notin_insert_thm = prove(``(A NOTIN (B INSERT C)) ==> (A NOTIN C)``, 
+  Cases_on `A = B` >> (
+    SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
+  )
+);
+  val fix3_thm = (UNDISCH_ALL o prove) (``
+^ht_assmpt ==>
+(!l.
+          l IN BL_Address (Imm32 v3) INSERT v4s ==>
+          ((if l = BL_Address (Imm32 260w) then
+              bir_att_sec_add_1_post v1 v2 v3
+            else bir_exp_false) =
+           bir_exp_false))``,
+  REPEAT STRIP_TAC >>
+  CASE_TAC >>
+  METIS_TAC []
+);
+  val fix3_2_thm = (UNDISCH_ALL o prove) (``
+^ht_assmpt ==>
+(!l.
+          l IN v4s ==>
+          ((if l = BL_Address (Imm32 v3) then
+              bir_att_sec_add_2_post v1 v2
+            else bir_exp_false) =
+           bir_exp_false))``,
+  REPEAT STRIP_TAC >>
+  CASE_TAC >>
+  METIS_TAC []
+);
+
+
+  fun fix_assmt map_ht =
+    REWRITE_RULE [(SIMP_CONV (std_ss++pred_setLib.PRED_SET_ss) [assumes] o
+                  fst o dest_imp o concl) map_ht] map_ht;
+  fun fix_assmt2 map_ht =
+    REWRITE_RULE [(SIMP_CONV (std_ss) [assumes, pred_setTheory.SUBSET_OF_INSERT] o
+                  fst o dest_imp o concl) map_ht] map_ht;
+  fun fix_assmt3 map_ht =
+    REWRITE_RULE [(SIMP_CONV (std_ss) [fix3_thm, fix3_2_thm] o
+                  fst o dest_imp o concl) map_ht] map_ht;
+
+  fun populate_blacklist_set_hack elabels map_ht =
+    let
+  val map_ht1 =
+  ((SPEC elabels) o
+   (HO_MATCH_MP bir_map_triple_move_set_to_blacklist))
+  map_ht;
+  val map_ht1_1 = fix_assmt map_ht1;
+  val map_ht1_2 = fix_assmt2 map_ht1_1;
+  val map_ht1_3 = fix_assmt3 map_ht1_2;
+  val map_ht1 = REWRITE_RULE [pred_setTheory.UNION_EMPTY,
+                              pred_setTheory.INSERT_DIFF,
+                              pred_setTheory.COMPONENT,
+                              (REWRITE_RULE [pred_setTheory.SUBSET_OF_INSERT]
+                               (Q.SPECL [`a`,`b INSERT a`] pred_setTheory.SUBSET_DIFF_EMPTY)),
+                              pred_setTheory.DIFF_EQ_EMPTY,
+                              assumes]
+                             map_ht1_3
+    in
+      map_ht1
+    end;
 
   val ht1 = bir_att_sec_add_1_comp_ht;
+  val map_ht1_ = bir_map_triple_from_bir_triple ht1;
+
+  val elabels = ``(BL_Address (Imm32 v3)) INSERT v4s``;
+  val map_ht1 = populate_blacklist_set_hack elabels map_ht1_;
 
   val ht2 = 
-    (HO_MATCH_MP bir_label_ht_impl_weak_ht ((UNDISCH o UNDISCH o (Q.SPECL [`v1`, `v2`, `v3`, `{BL_Address (Imm32 v4)}`])) bir_att_sec_add_2_ht));
+    (HO_MATCH_MP bir_label_ht_impl_weak_ht ((UNDISCH o UNDISCH o (Q.SPECL [`v1`, `v2`, `v3`, `v4s`])) bir_att_sec_add_2_ht));
+  val map_ht2_ = bir_map_triple_from_bir_triple ht2;
+
+  val elabels = ``v4s:bir_label_t->bool``;
+  val map_ht2 = populate_blacklist_set_hack elabels map_ht2_;
+
+
 
   val def_list = [bprog_add_times_two_def, bir_att_sec_add_2_post_def,
 		  bir_att_sec_add_1_post_def];
 
-val bir_att_sec_add_ht =
-   bir_compose_nonmap_seq_assmpt ht1 ht2 ht_assmpt def_list (get_labels_from_set_repr, el_in_set_repr,
-                                            mk_set_repr, simp_delete_set_repr_rule,
-	                                    simp_insert_set_repr_rule,
-                                            simp_in_sing_set_repr_rule,
-                                            simp_inter_set_repr_rule);
+  val assmpt = ht_assmpt;
+  val bir_att_sec_add_ht = bir_compose_seq_assmpt (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
+                                           simp_inter_set_repr_rule)
+                           map_ht1 map_ht2 def_list assmpt;
+
+
+
 
 (* ====================================== *)
 (* call 1 *)
 val bir_att_sec_add_0x4_ht = (try_disch_all_assump_w_EVAL o
                               ((INST [``v3:word32`` |-> ``0x004w:word32``,
-                                      ``v4:word32`` |-> ``0x008w:word32``])))
+                                      ``v4s:bir_label_t->bool`` |-> ``{BL_Address (Imm32 0x008w)}``])))
                              bir_att_sec_add_ht;
 
 val bir_att_sec_call_1_comp_map_ht =
@@ -144,10 +215,9 @@ bir_compose_seq (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
 
 (* ====================================== *)
 (* call 2 *)
-(* introduce dummy address 0x200 (hack for simplification) *)
 val bir_att_sec_add_0x8_ht = (try_disch_all_assump_w_EVAL o
                               ((INST [``v3:word32`` |-> ``0x008w:word32``,
-                                      ``v4:word32`` |-> ``0x200w:word32``,
+                                      ``v4s:bir_label_t->bool`` |-> ``{}:bir_label_t->bool``,
                                       ``v2:word32`` |-> ``v1:word32``])))
                              bir_att_sec_add_ht;
 

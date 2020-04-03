@@ -129,7 +129,7 @@ val bir_att_sec_2_post_def = Define `bir_att_sec_2_post v1 v2 =
 
 val prefix = "bir_att_sec_add_1_";
 val first_block_label_tm = ``BL_Address (Imm32 0x100w)``;
-val ending_set =  ``{BL_Address (Imm32 0x104w); BL_Address (Imm32 v3); BL_Address (Imm32 v4)}``;
+val ending_set =  ``(BL_Address (Imm32 0x104w)) INSERT (BL_Address (Imm32 v3)) INSERT v4s``;
 val postcond_tm = ``\l. if (l = BL_Address (Imm32 0x104w))
                         then bir_att_sec_add_1_post v1 v2 v3
                         else bir_exp_false``;
