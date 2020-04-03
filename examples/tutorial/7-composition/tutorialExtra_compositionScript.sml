@@ -169,13 +169,6 @@ bir_compose_seq (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
 
 (* ====================================== *)
 (* composition of the function body *)
-local
-open tutorial_smtSupportLib;
-in
-val bir_att_sec_call_1_taut = ((*(Q.SPECL [`v2`, `v1`]) o *) prove_exp_is_taut)
-       (bimp (``bir_att_sec_add_2_post v1 v2``, ``bir_att_sec_call_2_pre (v1+v2)``));
-end
-
 val bir_att_sec_call_1_map_ht_fix =
   bir_att_sec_call_1_map_ht;
 
@@ -186,7 +179,7 @@ val bir_att_sec_call_2_map_ht_inst =
 val bir_att_sec_call_2_map_ht_fix =
   use_pre_str_rule_map
     bir_att_sec_call_2_map_ht_inst
-    bir_att_sec_call_1_taut;
+    bir_att_sec_call_1_taut_thm;
 
 
 val bir_att_body_map_ht =
@@ -199,7 +192,7 @@ val bir_att_body_map_ht =
 
 (* experiment with post condition weakening *)
 val map_ht_thm =     bir_att_sec_call_1_map_ht
-val post1_impl_post2 =    bir_att_sec_call_1_taut;
+val post1_impl_post2 =    bir_att_sec_call_1_taut_thm;
 val l2 = ``BL_Address (Imm32 4w)``;
 
 val bir_att_sec_call_1_map_ht_alt =
@@ -219,18 +212,11 @@ val _ = if concl bir_att_body_map_ht_alt = concl bir_att_body_map_ht then
 
 (* ====================================== *)
 (* final composition, needs post condition weakening *)
-local
-open tutorial_smtSupportLib;
-in
-val bir_att_post_taut = prove_exp_is_taut
-       (bimp (``bir_att_sec_add_2_post (v1 + v2) (v1 + v2)``, ``bir_att_sec_2_post v1 v2``));
-end
-
 val bir_att_post_ht =
   use_post_weak_rule_map
     bir_att_body_map_ht_alt
     ``BL_Address (Imm32 8w)``
-    bir_att_post_taut;
+    bir_att_post_taut_thm;
 
 
 (* ====================================== *)
