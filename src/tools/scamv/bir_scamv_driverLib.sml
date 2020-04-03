@@ -90,18 +90,28 @@ fun symb_exec_phase prog =
     end
 
 fun bir_free_vars exp =
-    if is_comb exp then
-        let val (con,args) = strip_comb exp
-        in if con = ``BExp_Den`` then
-               let val v = case strip_comb (hd args) of
-                               (_,v::_) => v
-                             | _ => raise ERR "bir_free_vars" "not expected"
-               in [v]
-               end
-           else
-               List.concat (map bir_free_vars args)
-        end
-    else [];
+    let 
+	val fvs=
+	    if is_comb exp then
+		let val (con,args) = strip_comb exp
+		in
+		    (* if con = ``BExp_MemConst`` *)
+		    (* then [(List.last args)] *)
+		    (* else *) if con = ``BExp_Den``
+		    then
+		       let val v = case strip_comb (hd args) of
+				       (_,v::_) => v
+				     | _ => raise ERR "bir_free_vars" "not expected"
+		       in
+			   [v]
+		       end
+		   else
+		       List.concat (map bir_free_vars args)
+		end
+	    else []
+    in
+	fvs
+    end;
 
 exception NoObsInPath;
 
@@ -130,8 +140,9 @@ fun make_word_relation relation exps =
             let val va = mk_var (a,``:word64``);
                 val vb = mk_var (b,``:word64``);
             in
-``(^va <> ^vb)``
+		``(^va <> ^vb)``
             end;
+
         val distinct = if null pairs then raise NoObsInPath else list_mk_disj (map mk_distinct pairs);
     in
        ``^(bir2bool relation) /\ ^distinct``
@@ -347,10 +358,10 @@ fun next_experiment all_exps next_relation  =
 
         val _ = printv 1 ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
-        val _ = min_verb 3 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
-        val _ = printv 4 ("Printed model\n");
+        val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
+        val _ = printv 1 ("Printed model\n");
 	(*Need to be removed later. It is just for experimental reasone*)
-	val model = prime_mem model
+	(* val model = prime_mem model *)
 
 
         fun remove_prime str =

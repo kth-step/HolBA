@@ -37,18 +37,26 @@ fun obs_domain (ps : path_struct) =
     List.concat (List.map (obs_domain_path o path_obs_of) ps);
 
 fun bir_free_vars exp =
-    if is_comb exp then
-        let val (con,args) = strip_comb exp
-        in if con = ``BExp_Den`` then
-               let val v = case strip_comb (hd args) of
-                                     (_,v::_) => v
-                                   | _ => raise ERR "bir_free_vars" "not expected"
-               in [v]
-               end
-           else
-               List.concat (map bir_free_vars args)
-        end
-    else [];
+    let 
+	val fvs =
+	    if is_comb exp then
+		let val (con,args) = strip_comb exp
+		in
+		    if con = ``BExp_Den``
+		    then
+		       let val v = case strip_comb (hd args) of
+				       (_,v::_) => v
+				     | _ => raise ERR "bir_free_vars" "not expected"
+		       in
+			   [v]
+		       end
+		   else
+		       List.concat (map bir_free_vars args)
+		end
+	    else []
+    in
+	fvs
+    end;
 
 exception ListMkBir of string
 
@@ -61,9 +69,13 @@ fun primed_subst exp =
 
 fun primed_vars exp = map (#residue) (primed_subst exp);
 
+
 fun primed_term exp =
     let val psub = primed_subst exp
-    in subst psub exp
+	val mem = mk_var ("MEM",Type`:num |-> num`);
+	val mem' = mk_var ("MEM'",Type`:num |-> num`);
+
+    in subst[mem |-> mem'](subst psub exp)
     end;
 
 fun primed ys =
@@ -265,8 +277,9 @@ fun mk_bir_list_eq l1 l2 =
          in list_eq l1 l2
          end
 
-fun op mem (x, xs) =
+fun op  mem (x, xs) =
     is_some (List.find (fn y => x = y) xs);
+
 infix 5 mem;
 
 fun rel_synth_jit
@@ -304,7 +317,8 @@ val example_initial_ps = [(``A``, SOME [(``B``,``C``)]), (``D``,NONE)];
 
 (* input: (bir_exp * (cobs list) option) list *)
 fun preprocess_path_struct ps : (path_struct * term) =
-    let val (somes, nones) = partition (is_some o snd) ps;
+    let
+	val (somes, nones) = partition (is_some o snd) ps;
         val ps' = List.map (fn (p,ob) => (p, Option.getOpt (ob,[]))) somes;
         fun smart_bandl xs = if null xs then btrue else bandl xs;
         val negCond = smart_bandl o List.map (bnot o fst);
@@ -328,10 +342,10 @@ fun partition_domains (ps : path_struct) : int list * int list =
     end;
 
 val max_guard_tries = 10000;
-
 (* input: (bir_exp * (cobs list) option) list *)
 fun rel_synth_init initial_ps (env : enum_env) =
-    let val (ps : path_struct, validity) = preprocess_path_struct initial_ps;
+    let
+	val (ps : path_struct, validity) = preprocess_path_struct initial_ps;
         val (static_obs_domain, dynamic_obs_domain) = partition_domains ps;
         val (full_specs, next) =
             enumerate_relation (path_domain ps)
