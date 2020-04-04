@@ -37,11 +37,11 @@ fun obs_domain (ps : path_struct) =
     List.concat (List.map (obs_domain_path o path_obs_of) ps);
 
 
-fun rmDuplicates [] = []
-  | rmDuplicates (x::xs) = x::rmDuplicates(List.filter (fn y => y <> x) xs);
-
 fun bir_free_vars exp =
     let 
+	fun nub [] = []
+	  | nub (x::xs) = x::nub(List.filter (fn y => y <> x) xs)
+
 	val fvs =
 	    if is_comb exp then
 		let val (con,args) = strip_comb exp
@@ -61,7 +61,7 @@ fun bir_free_vars exp =
 		end
 	    else []
     in
-	rmDuplicates fvs
+	nub fvs
     end;
 
 exception ListMkBir of string
