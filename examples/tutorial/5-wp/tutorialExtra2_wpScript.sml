@@ -96,10 +96,10 @@ bir_ieo_invariant v1
 `;
 
 val bir_ieo_sec_iseven_1_post_def = Define `bir_ieo_sec_iseven_1_post v1 =
-\l. if l = BL_Address (Imm32 200w) then
+\l. if l = BL_Address (Imm32 0x200w) then
       bir_ieo_ev_post_yes v1
-    else if l = BL_Address (Imm32 004w) then
-      bir_ieo_invariant v1
+    else if l = BL_Address (Imm32 0x100w) then
+      bir_ieo_invariant_mid v1
     else
       bir_exp_false
 `;
@@ -119,10 +119,10 @@ bir_ieo_invariant_mid v1
 `;
 
 val bir_ieo_sec_isodd_1_post_def = Define `bir_ieo_sec_isodd_1_post v1 =
-\l. if l = BL_Address (Imm32 200w) then
+\l. if l = BL_Address (Imm32 0x204w) then
       bir_ieo_ev_post_no v1
-    else if l = BL_Address (Imm32 004w) then
-      bir_ieo_invariant_mid v1
+    else if l = BL_Address (Imm32 0x000w) then
+      bir_ieo_invariant v1
     else
       bir_exp_false
 `;
@@ -135,6 +135,55 @@ bir_ieo_invariant_mid v1
 val bir_ieo_sec_isodd_2_post_def = Define `bir_ieo_sec_isodd_2_post v1 =
 bir_ieo_invariant v1
 `;
+
+
+
+(* =============================================================== *)
+(* =============================================================== *)
+(* =============================================================== *)
+
+
+
+val prefix = "bir_ieo_sec_iseven_1_";
+val first_block_label_tm = ``BL_Address (Imm32 0x000w)``;
+val ending_set =  ``{BL_Address (Imm32 0x200w); BL_Address (Imm32 0x100w);
+                     BL_Address (Imm32 0x204w); BL_Address (Imm32 0x000w)}``;
+val postcond_tm = ``bir_ieo_sec_iseven_1_post v1``;
+
+val defs = [bprog_is_even_odd_def, bir_ieo_sec_iseven_1_post_def,
+            bir_ieo_ev_post_yes_def, bir_ieo_invariant_mid_def,
+            bir_exp_false_def, BType_Bool_def];
+
+val (bir_ieo_sec_iseven_1_ht, bir_ieo_sec_iseven_1_wp_tm) =
+  bir_obtain_ht prog_tm first_block_label_tm
+                ending_set ending_set_to_sml_list
+                postcond_tm postcond_exp_from_label
+                prefix defs;
+
+val bir_ieo_sec_iseven_1_wp_def =
+  Define `bir_ieo_sec_iseven_1_wp v1 = ^(bir_ieo_sec_iseven_1_wp_tm)`;
+val _ = save_thm (prefix ^ "ht", bir_ieo_sec_iseven_1_ht);
+
+
+
+val prefix = "bir_ieo_sec_isodd_1_";
+val first_block_label_tm = ``BL_Address (Imm32 0x100w)``;
+val ending_set =  ``{BL_Address (Imm32 0x204w); BL_Address (Imm32 0x000w)}``;
+val postcond_tm = ``bir_ieo_sec_isodd_1_post v1``;
+
+val defs = [bprog_is_even_odd_def, bir_ieo_sec_isodd_1_post_def,
+            bir_ieo_ev_post_no_def, bir_ieo_invariant_def,
+            bir_exp_false_def, BType_Bool_def];
+
+val (bir_ieo_sec_isodd_1_ht, bir_ieo_sec_isodd_1_wp_tm) =
+  bir_obtain_ht prog_tm first_block_label_tm
+                ending_set ending_set_to_sml_list
+                postcond_tm postcond_exp_from_label
+                prefix defs;
+
+val bir_ieo_sec_isodd_1_wp_def =
+  Define `bir_ieo_sec_isodd_1_wp v1 = ^(bir_ieo_sec_isodd_1_wp_tm)`;
+val _ = save_thm (prefix ^ "ht", bir_ieo_sec_isodd_1_ht);
 
 
 val _ = export_theory();
