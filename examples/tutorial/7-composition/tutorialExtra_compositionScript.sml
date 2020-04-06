@@ -9,8 +9,6 @@ open bir_auxiliaryTheory;
 open bir_exp_equivTheory;
 open bir_programTheory;
 
-open tutorial_bir_to_armTheory;
-
 open tutorial_compositionLib;
 open tutorial_wpSupportLib;
 

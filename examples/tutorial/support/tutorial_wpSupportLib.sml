@@ -28,7 +28,6 @@ open bir_exp_to_wordsLib bslSyntax;
 (* From examples: *)
 (*open examplesBinaryTheory;*)
 open tutorial_bir_to_armSupportTheory;
-open tutorial_bir_to_armTheory;
 
 (* From HOL4: *)
 open finite_mapSyntax pairSyntax pred_setSyntax;
