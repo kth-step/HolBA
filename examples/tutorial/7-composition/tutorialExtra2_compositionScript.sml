@@ -1,6 +1,5 @@
 open HolKernel Parse boolLib bossLib;
 open bslSyntax;
-open birExamplesBinaryTheory;
 open bir_wm_instTheory;
 open bin_hoare_logicTheory;
 open bir_valuesTheory;
@@ -12,6 +11,7 @@ open bir_programTheory;
 open tutorial_compositionLib;
 open tutorial_wpSupportLib;
 
+open birExamples2BinaryTheory;
 open tutorialExtra2_wpTheory;
 open tutorialExtra2_smtTheory;
 
@@ -39,7 +39,7 @@ val simp_insert_set_rule =
     [(* ??? *)]
 
 val simp_in_sing_set_rule =
-  SIMP_RULE std_ss [pred_setTheory.IN_SING]
+  SIMP_RULE std_ss [pred_setTheory.IN_SING, pred_setTheory.IN_INSERT]
 
 fun simp_inter_set_rule ht =
   ONCE_REWRITE_RULE [EVAL (get_bir_map_triple_blist ht)] ht
@@ -56,18 +56,128 @@ val (get_labels_from_set_repr, el_in_set_repr,
 
 (* =============================================================== *)
 
-val bir_ieo_sec_iseven_1_comp_ht =
+val bir_ieo_sec_iseven_loop_comp_ht =
   use_pre_str_rule
-    (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_ieo_sec_iseven_1_ht)
+    (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_ieo_sec_iseven_loop_ht)
     contract_1_imp_taut_thm;
 
-val bir_ieo_sec_isodd_1_comp_ht =
+val bir_ieo_sec_iseven_exit_comp_ht =
   use_pre_str_rule
-    (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_ieo_sec_isodd_1_ht)
+    (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_ieo_sec_iseven_exit_ht)
     contract_2_imp_taut_thm;
 
 
+
 (* =============================================================== *)
+
+  val abs_intro = prove(``bir_ieo_sec_iseven_post v1 = \l. bir_ieo_sec_iseven_post v1 l``, EVAL_TAC >> REWRITE_TAC []);
+  val abs_intro2 = prove(``bir_ieo_sec_iseven_exit_post v1 = \l. bir_ieo_sec_iseven_exit_post v1 l``, EVAL_TAC >> REWRITE_TAC []);
+
+  val loop_ht = REWRITE_RULE [Once abs_intro] bir_ieo_sec_iseven_loop_comp_ht;
+  val loop_map_ht_ = bir_map_triple_from_bir_triple loop_ht;
+
+  val new_ending_label_set = ``{BL_Address (Imm32 0x200w); BL_Address (Imm32 0x204w)}``;
+  val ht = REWRITE_RULE [Once abs_intro] bir_ieo_sec_iseven_exit_comp_ht;
+
+  val loop_exit_simp_ht = bir_remove_labels_from_ending_set ht new_ending_label_set;
+
+  val loop_map_exit_simp_ht = bir_map_triple_from_bir_triple (REWRITE_RULE [Once abs_intro2] loop_exit_simp_ht);
+  val loop_map_exit_simp2_ht =
+    use_post_weak_rule_map loop_map_exit_simp_ht ``BL_Address (Imm32 0x000w)`` contract_3_imp_taut_thm;
+
+val eq_thm = prove(``(\l.
+            if l = BL_Address (Imm32 0w) then bir_ieo_invariant v1
+            else bir_ieo_sec_iseven_exit_post v1 l)
+        = (\l. bir_ieo_sec_iseven_post v1 l)
+``,
+  EVAL_TAC >>
+  ABS_TAC >>
+  REPEAT (CASE_TAC >> EVAL_TAC)
+);
+  val loop_map_exit_simp3_ht = REWRITE_RULE [eq_thm] loop_map_exit_simp2_ht;
+
+
+  val loop_exit_simp1_ht = (REWRITE_RULE [Once abs_intro2] loop_exit_simp_ht);
+  val loop_exit_simp2_ht =
+    use_post_weak_rule loop_exit_simp1_ht ``BL_Address (Imm32 0x000w)`` contract_3_imp_taut_thm;
+  val loop_exit_simp3_ht = REWRITE_RULE [eq_thm] loop_exit_simp2_ht;
+
+
+  val loop_map_ht  = REWRITE_RULE [bir_ieo_sec_iseven_loop_pre_def,
+                                   bir_ieo_variant_def] loop_map_ht_;
+  val loop_exit_ht = REWRITE_RULE [bir_ieo_sec_iseven_exit_pre_def,
+                                   bir_ieo_variant_def] loop_exit_simp3_ht;
+
+(* =============================================================== *)
+
+(*
+bir_while_rule_thm
+bir_loop_contract_def
+
+
+  val def_list = [bprog_add_times_two_def,
+                  bir_ieo_sec_iseven_1_pre_def, bir_ieo_sec_iseven_1_post_def,
+                  bir_ieo_sec_isodd_1_pre_def, bir_ieo_sec_isodd_1_post_def,
+                  bir_ieo_ev_post_no_def, bir_ieo_ev_post_yes_def,
+                  bir_ieo_invariant_mid_def, bir_ieo_invariant_def];
+
+val loop_map_ht =
+   bir_compose_nonmap_seq ht1 ht2 def_list (get_labels_from_set_repr, el_in_set_repr,
+                                            mk_set_repr, simp_delete_set_repr_rule,
+	                                    simp_insert_set_repr_rule,
+                                            simp_in_sing_set_repr_rule,
+                                            simp_inter_set_repr_rule);
+*)
+
+(* =============================================================== *)
+
+(* For debugging: *)
+  val loop_map_ht    = loop_map_ht;
+  val loop_exit_ht   = loop_exit_ht;
+  val loop_invariant = ``bir_ieo_invariant v1``;
+  val loop_condition = ``bir_ieo_condition``;
+  val loop_variant   = ``bir_ieo_variant``;
+
+  val def_list = [bprog_is_even_odd_def,
+                  bir_ieo_condition_def,
+		  bir_ieo_variant_def,
+                  bir_ieo_invariant_def,
+                  bir_ieo_sec_iseven_post_def,
+                  bir_ieo_sec_iseven_loop_pre_def,
+                  bir_ieo_sec_iseven_exit_pre_def];
+
+val loop_and_exit_ht =
+  bir_compose_loop_unsigned (simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss)
+    loop_map_ht loop_exit_ht loop_invariant loop_condition loop_variant def_list;
+
+
+(* =============================================================== *)
+
+val is_even_1_ht =
+  REWRITE_RULE [contract_4_imp_taut_thm] (use_pre_str_rule loop_and_exit_ht contract_4_imp_taut_thm);
+
+val thm1 = ((Q.SPECL [`bprog_is_even_odd`,
+          `BL_Address (Imm32 0w)`, `{BL_Address (Imm32 512w); BL_Address (Imm32 516w)}`,
+          `bir_ieo_ev_pre v1`, `bir_ieo_ev_pre v1`,
+          `\l. bir_ieo_sec_iseven_post v1 l`, `bir_ieo_sec_iseven_exit_post v1`])
+	      bir_wm_instTheory.bir_consequence_rule_thm);
+val thm2 = (fn x => REWRITE_RULE [(((REWRITE_CONV []) o fst o dest_imp o concl) x)] x) thm1;
+val thm3 = REWRITE_RULE [is_even_1_ht] thm2;
+val is_even_2_ht = REWRITE_RULE [prove(``^((fst o dest_imp o concl) thm3)``,
+  SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
+  REPEAT STRIP_TAC >> (
+    REV_FULL_SIMP_TAC std_ss
+       [bir_ieo_sec_iseven_exit_post_def,
+        bir_ieo_sec_iseven_post_def,
+        bir_exec_to_labels_triple_postcond_def]
+  )
+  )] thm3;
+
+
+val bir_ieo_is_even_ht = save_thm("bir_ieo_is_even_ht",
+  is_even_2_ht
+);
+
 
 
 val _ = export_theory();
