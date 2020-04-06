@@ -485,6 +485,9 @@ struct
 	  ISPECL [el 1 (get_labels_from_set_repr white_ending_label_set1),
 		  el 1 (get_labels_from_set_repr white_ending_label_set2)]
             bir_auxiliaryTheory.noteq_trans_impl
+        val white_inter_lbls = (get_labels_from_set_repr white_ending_label_set1)@
+                               (get_labels_from_set_repr white_ending_label_set2)
+        val cases_on_x_lbls_tac = List.foldr (fn (lbl, st) => Cases_on `x = ^lbl` >> st) ALL_TAC white_inter_lbls
 	val bir_add_comp_seq_rule_thm2 =
 	  SIMP_RULE std_ss [UNDISCH_ALL (prove (mk_imp (assmpt,
                                     mk_eq
@@ -496,7 +499,11 @@ struct
                             STRIP_TAC >>
                             SIMP_TAC (srw_ss()) [ASSUME assmpt, pred_setTheory.INTER_DEF, pred_setTheory.IN_ABS,
                                                  spec_noteq_trans_impl1] >>
-                            FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.EXTENSION, pred_setTheory.IN_INSERT]
+                            FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.EXTENSION, pred_setTheory.IN_INSERT] >>
+                            REPEAT STRIP_TAC >>
+                            cases_on_x_lbls_tac >> (
+                                FULL_SIMP_TAC (std_ss++HolBACoreSimps.bir_TYPES_ss++wordsLib.WORD_ss) []
+                              )
                             ))] bir_add_comp_seq_rule_thm1
 
 	(* The intersection between whitelist of HT2 and blacklist of HT2 should be empty *)
