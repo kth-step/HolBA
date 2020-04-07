@@ -148,8 +148,9 @@ struct
 	   (SIMP_TAC vars_ss
 	   ) [bir_valuesTheory.BType_Bool_def]
 	);
-	val new_contract_thm = ((SIMP_RULE std_ss [map_ht_thm, taut_thm, taut_eq_thm,
-                                                   post1_impl_post2, post1_var_thm, post2_var_thm]) 
+	val new_contract_thm = ((SIMP_RULE (std_ss++HolBACoreSimps.bir_TYPES_ss++wordsLib.WORD_ss)
+                                           [map_ht_thm, taut_thm, taut_eq_thm,
+                                            post1_impl_post2, post1_var_thm, post2_var_thm]) 
 	  ((ISPECL [prog, invar, entry, wlist, l2, blist, pre, post1, post2])
 	      bir_wm_instTheory.bir_taut_map_post_weak_rule_thm)
 	      );
