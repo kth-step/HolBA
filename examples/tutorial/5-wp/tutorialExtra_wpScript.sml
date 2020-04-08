@@ -213,7 +213,7 @@ val postcond_tm = ``\l. if (l = BL_Address (Imm32 v3))
 val prog_block_addr = ``(Imm32 0x104w)``;
 val prog_tm = ``bprog_add_times_two``;
 val prog_block = (snd o dest_eq o concl o EVAL) ``(SND (THE (bir_get_program_block_info_by_label ^prog_tm (BL_Address ^prog_block_addr))))``;
-val ret_block_specl = [prog_tm, prog_block, ``BL_Address ^prog_block_addr``, ``Imm32 v3``, ``Imm32 v4``, ``(BVar "t" (BType_Imm Bit32))``, ``bir_att_sec_add_2_post v1 v2``];
+val ret_block_specl = [prog_tm, prog_block, ``BL_Address ^prog_block_addr``, ``Imm32 v3``, ``v4s:bir_label_t->bool``, ``(BVar "t" (BType_Imm Bit32))``, ``bir_att_sec_add_2_post v1 v2``];
 val ret_block_thm =
        (try_disch_assump_w_EVAL o try_disch_assump_w_EVAL o
         try_disch_assump_w_EVAL o try_disch_assump_w_EVAL)
@@ -222,14 +222,14 @@ val prog_no_assum_thm = REWRITE_RULE [EVAL ``bir_prog_has_no_assumes ^prog_tm``]
                                      (SPEC prog_tm bir_never_assumviol_ht);
 
 val bir_att_sec_add_2_ht = prove(``
-!v1 v2 v3 v4.
+!v1 v2 v3 v4s.
 (MEM (BL_Address (Imm32 v3))
      (bir_labels_of_program ^prog_tm)) ==>
-(v3 <> v4) ==>
+((BL_Address (Imm32 v3)) NOTIN v4s) ==>
 (bir_exec_to_labels_triple
    ^prog_tm
    (BL_Address ^prog_block_addr)
-   {BL_Address (Imm32 v3); BL_Address (Imm32 v4)}
+   ((BL_Address (Imm32 v3)) INSERT v4s)
    ^(precond_tm)
    ^(postcond_tm))
 ``,

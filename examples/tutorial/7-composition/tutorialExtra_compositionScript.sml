@@ -92,14 +92,18 @@ fun try_disch_all_assump_w_EVAL t =
 
 (* ====================================== *)
 (* ADD function *)
-
+(*
+, ````
+SPECL [``bprog_add_times_two``, ``bir_exp_true``, ````]
+ bir_map_triple_move_set_to_blacklist
+*)
 
   val ht_assmpt = ``((v3:word32) <> 260w) /\ ((v4:word32) <> 260w) /\ (v4 <> v3)``;
 
   val ht1 = bir_att_sec_add_1_comp_ht;
 
   val ht2 = 
-    (HO_MATCH_MP bir_label_ht_impl_weak_ht ((UNDISCH o UNDISCH o (Q.SPECL [`v1`, `v2`, `v3`, `v4`])) bir_att_sec_add_2_ht));
+    (HO_MATCH_MP bir_label_ht_impl_weak_ht ((UNDISCH o UNDISCH o (Q.SPECL [`v1`, `v2`, `v3`, `{BL_Address (Imm32 v4)}`])) bir_att_sec_add_2_ht));
 
   val def_list = [bprog_add_times_two_def, bir_att_sec_add_2_post_def,
 		  bir_att_sec_add_1_post_def];
