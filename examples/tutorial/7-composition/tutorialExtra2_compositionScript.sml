@@ -70,7 +70,7 @@ val bir_ieo_sec_iseven_exit_comp_ht =
 
 (* =============================================================== *)
 
-  val abs_intro = prove(``bir_ieo_sec_iseven_post v1 = \l. bir_ieo_sec_iseven_post v1 l``, EVAL_TAC >> REWRITE_TAC []);
+  val abs_intro = prove(``bir_ieo_sec_iseven_post v1 v = \l. bir_ieo_sec_iseven_post v1 v l``, EVAL_TAC >> REWRITE_TAC []);
   val abs_intro2 = prove(``bir_ieo_sec_iseven_exit_post v1 = \l. bir_ieo_sec_iseven_exit_post v1 l``, EVAL_TAC >> REWRITE_TAC []);
 
   val loop_ht = REWRITE_RULE [Once abs_intro] bir_ieo_sec_iseven_loop_comp_ht;
@@ -81,6 +81,7 @@ val bir_ieo_sec_iseven_exit_comp_ht =
 
   val loop_exit_simp_ht = bir_remove_labels_from_ending_set ht new_ending_label_set;
 
+(*
   val loop_map_exit_simp_ht = bir_map_triple_from_bir_triple (REWRITE_RULE [Once abs_intro2] loop_exit_simp_ht);
   val loop_map_exit_simp2_ht =
     use_post_weak_rule_map loop_map_exit_simp_ht ``BL_Address (Imm32 0x000w)`` contract_3_imp_taut_thm;
@@ -95,12 +96,12 @@ val eq_thm = prove(``(\l.
   REPEAT (CASE_TAC >> EVAL_TAC)
 );
   val loop_map_exit_simp3_ht = REWRITE_RULE [eq_thm] loop_map_exit_simp2_ht;
-
+*)
 
   val loop_exit_simp1_ht = (REWRITE_RULE [Once abs_intro2] loop_exit_simp_ht);
   val loop_exit_simp2_ht =
     use_post_weak_rule loop_exit_simp1_ht ``BL_Address (Imm32 0x000w)`` contract_3_imp_taut_thm;
-  val loop_exit_simp3_ht = REWRITE_RULE [eq_thm] loop_exit_simp2_ht;
+  val loop_exit_simp3_ht = loop_exit_simp2_ht;
 
 
   val loop_map_ht  = REWRITE_RULE [bir_ieo_sec_iseven_loop_pre_def,
@@ -159,14 +160,17 @@ val is_even_1_ht =
 val thm1 = ((Q.SPECL [`bprog_is_even_odd`,
           `BL_Address (Imm32 0w)`, `{BL_Address (Imm32 512w); BL_Address (Imm32 516w)}`,
           `bir_ieo_ev_pre v1`, `bir_ieo_ev_pre v1`,
-          `\l. bir_ieo_sec_iseven_post v1 l`, `bir_ieo_sec_iseven_exit_post v1`])
+          `\l.
+            if l = BL_Address (Imm32 0w) then bir_ieo_invariant v1
+            else bir_ieo_sec_iseven_exit_post v1 l`,
+          `bir_ieo_sec_iseven_exit_post v1`])
 	      bir_wm_instTheory.bir_consequence_rule_thm);
 val thm2 = (fn x => REWRITE_RULE [(((REWRITE_CONV []) o fst o dest_imp o concl) x)] x) thm1;
 val thm3 = REWRITE_RULE [is_even_1_ht] thm2;
 val is_even_2_ht = REWRITE_RULE [prove(``^((fst o dest_imp o concl) thm3)``,
   SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
   REPEAT STRIP_TAC >> (
-    REV_FULL_SIMP_TAC std_ss
+    REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.bir_TYPES_ss++wordsLib.WORD_ss)
        [bir_ieo_sec_iseven_exit_post_def,
         bir_ieo_sec_iseven_post_def,
         bir_exec_to_labels_triple_postcond_def]

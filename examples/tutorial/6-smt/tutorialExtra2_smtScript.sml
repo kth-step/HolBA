@@ -25,7 +25,7 @@ fun get_contract_vars n = (lhs o concl o (SPECL (List.take(h_vars,n))));
 
 
 val contract_1_pre = get_contract_vars 2 bir_ieo_sec_iseven_loop_pre_def;
-val contract_1_wp  = get_contract_vars 1 bir_ieo_sec_iseven_loop_wp_def;
+val contract_1_wp  = get_contract_vars 2 bir_ieo_sec_iseven_loop_wp_def;
 val contract_1_imp = bimp (contract_1_pre, contract_1_wp);
 
 val contract_1_imp_taut_thm = save_thm ("contract_1_imp_taut_thm",

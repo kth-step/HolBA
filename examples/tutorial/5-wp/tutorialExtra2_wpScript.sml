@@ -91,13 +91,12 @@ val bir_ieo_sec_iseven_exit_pre_def = Define `bir_ieo_sec_iseven_exit_pre v1 =
 
 
 (* section is_even post *)
-val bir_ieo_sec_iseven_post_def = Define `bir_ieo_sec_iseven_post v1 =
-\l. if l = BL_Address (Imm32 0x200w) then
-      bir_ieo_ev_post_yes v1
-    else if l = BL_Address (Imm32 0x204w) then
-      bir_ieo_ev_post_no v1
-    else if l = BL_Address (Imm32 0x000w) then
-      bir_ieo_invariant v1
+val bir_ieo_sec_iseven_post_def = Define `bir_ieo_sec_iseven_post v1 v =
+\l. if l = BL_Address (Imm32 0x000w) then
+       (BExp_BinExp BIExp_And (bir_ieo_invariant v1)
+                  (BExp_BinExp BIExp_And
+                     (BExp_BinPred BIExp_LessThan bir_ieo_variant ^get_v)
+                     (BExp_BinPred BIExp_LessOrEqual ^get_0 bir_ieo_variant)))
     else
       bir_exp_false
 `;
@@ -109,8 +108,6 @@ val bir_ieo_sec_iseven_exit_post_def = Define `bir_ieo_sec_iseven_exit_post v1 =
       bir_ieo_ev_post_yes v1
     else if l = BL_Address (Imm32 0x204w) then
       bir_ieo_ev_post_no v1
-    else if l = BL_Address (Imm32 0x000w) then
-      bir_exp_false
     else
       bir_exp_false
 `;
@@ -125,11 +122,12 @@ val bir_ieo_sec_iseven_exit_post_def = Define `bir_ieo_sec_iseven_exit_post v1 =
 
 val prefix = "bir_ieo_sec_iseven_loop_";
 val first_block_label_tm = ``BL_Address (Imm32 0x000w)``;
-val ending_set =  ``{BL_Address (Imm32 0x200w); BL_Address (Imm32 0x000w); BL_Address (Imm32 0x204w)}``;
-val postcond_tm = ``bir_ieo_sec_iseven_post v1``;
+val ending_set =  ``{BL_Address (Imm32 0x000w); BL_Address (Imm32 0x200w); BL_Address (Imm32 0x204w)}``;
+val postcond_tm = ``bir_ieo_sec_iseven_post v1 v``;
 
 val defs = [bprog_is_even_odd_def, bir_ieo_sec_iseven_post_def,
-            bir_ieo_ev_post_no_def, bir_ieo_ev_post_yes_def, bir_ieo_invariant_def,
+            bir_ieo_ev_post_no_def, bir_ieo_ev_post_yes_def,
+            bir_ieo_invariant_def, bir_ieo_condition_def, bir_ieo_variant_def,
             bir_exp_false_def, BType_Bool_def];
 
 val (bir_ieo_sec_iseven_loop_ht, bir_ieo_sec_iseven_loop_wp_tm) =
@@ -139,14 +137,14 @@ val (bir_ieo_sec_iseven_loop_ht, bir_ieo_sec_iseven_loop_wp_tm) =
                 prefix defs;
 
 val bir_ieo_sec_iseven_loop_wp_def =
-  Define `bir_ieo_sec_iseven_loop_wp v1 = ^(bir_ieo_sec_iseven_loop_wp_tm)`;
+  Define `bir_ieo_sec_iseven_loop_wp v1 v = ^(bir_ieo_sec_iseven_loop_wp_tm)`;
 val _ = save_thm (prefix ^ "ht", bir_ieo_sec_iseven_loop_ht);
 
 
 
 val prefix = "bir_ieo_sec_iseven_exit_";
 val first_block_label_tm = ``BL_Address (Imm32 0x000w)``;
-val ending_set =  ``{BL_Address (Imm32 0x200w); BL_Address (Imm32 0x000w); BL_Address (Imm32 0x204w)}``;
+val ending_set =  ``{BL_Address (Imm32 0x000w); BL_Address (Imm32 0x200w); BL_Address (Imm32 0x204w)}``;
 val postcond_tm = ``bir_ieo_sec_iseven_exit_post v1``;
 
 val defs = [bprog_is_even_odd_def, bir_ieo_sec_iseven_exit_post_def,
