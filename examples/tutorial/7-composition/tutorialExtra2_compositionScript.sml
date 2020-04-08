@@ -76,7 +76,7 @@ val bir_ieo_sec_iseven_exit_comp_ht =
   val loop_ht = REWRITE_RULE [Once abs_intro] bir_ieo_sec_iseven_loop_comp_ht;
   val loop_map_ht_ = bir_map_triple_from_bir_triple loop_ht;
 
-  val new_ending_label_set = ``{BL_Address (Imm32 0x200w); BL_Address (Imm32 0x204w)}``;
+  val new_ending_label_set = ``{BL_Address (Imm32 0x204w); BL_Address (Imm32 0x200w)}``;
   val ht = REWRITE_RULE [Once abs_intro] bir_ieo_sec_iseven_exit_comp_ht;
 
   val loop_exit_simp_ht = bir_remove_labels_from_ending_set ht new_ending_label_set;
@@ -104,8 +104,8 @@ val eq_thm = prove(``(\l.
   val loop_exit_simp3_ht = loop_exit_simp2_ht;
 
 
-  val loop_map_ht  = REWRITE_RULE [bir_ieo_sec_iseven_loop_pre_def,
-                                   bir_ieo_variant_def] loop_map_ht_;
+  val loop_map_ht_2  = REWRITE_RULE [bir_ieo_sec_iseven_loop_pre_def,
+                                     bir_ieo_variant_def] loop_map_ht_;
   val loop_exit_ht = REWRITE_RULE [bir_ieo_sec_iseven_exit_pre_def,
                                    bir_ieo_variant_def] loop_exit_simp3_ht;
 
@@ -133,7 +133,11 @@ val loop_map_ht =
 (* =============================================================== *)
 
 (* For debugging: *)
-  val loop_map_ht    = loop_map_ht;
+  val loop_map_ht    = REWRITE_RULE [GSYM bir_ieo_sec_iseven_post_def, Once abs_intro]
+          (bir_populate_blacklist (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
+                                   simp_delete_set_repr_rule, simp_insert_set_repr_rule)
+           (REWRITE_RULE [GSYM abs_intro, bir_ieo_sec_iseven_post_def] loop_map_ht_2));
+
   val loop_exit_ht   = loop_exit_ht;
   val loop_invariant = ``bir_ieo_invariant v1``;
   val loop_condition = ``bir_ieo_condition``;
@@ -158,7 +162,7 @@ val is_even_1_ht =
   REWRITE_RULE [contract_4_imp_taut_thm] (use_pre_str_rule loop_and_exit_ht contract_4_imp_taut_thm);
 
 val thm1 = ((Q.SPECL [`bprog_is_even_odd`,
-          `BL_Address (Imm32 0w)`, `{BL_Address (Imm32 512w); BL_Address (Imm32 516w)}`,
+          `BL_Address (Imm32 0w)`, `{BL_Address (Imm32 516w); BL_Address (Imm32 512w)}`,
           `bir_ieo_ev_pre v1`, `bir_ieo_ev_pre v1`,
           `\l.
             if l = BL_Address (Imm32 0w) then bir_ieo_invariant v1
