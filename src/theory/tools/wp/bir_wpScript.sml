@@ -2708,19 +2708,19 @@ FULL_SIMP_TAC std_ss [bir_exec_stmtsB_def, listTheory.REVERSE_DEF, bir_state_is_
 
 val bir_ret_block_triple_wp_thm =
   store_thm("bir_ret_block_triple_wp_thm",
-  ``!p bl l k k2 bv post.
+  ``!p bl l k ks bv post.
       (MEM l (bir_labels_of_program p)) ==>
       (SND(THE(bir_get_program_block_info_by_label p l)) = bl) ==>
       (bl.bb_last_statement = (BStmt_Jmp (BLE_Exp (BExp_Den bv)))) ==>
       (bl.bb_statements = []) ==>
 
       (MEM (BL_Address k) (bir_labels_of_program p)) ==>
-      (k <> k2) ==>
+      ((BL_Address k) NOTIN ks) ==>
 
       (bir_exec_to_labels_or_assumviol_triple
            p
            l
-           {(BL_Address k); (BL_Address k2)}
+           ((BL_Address k) INSERT ks)
            (BExp_BinExp BIExp_And ((BExp_BinPred BIExp_Equal (BExp_Den bv) (BExp_Const k))) post)
            (\l. if l = (BL_Address k) then post else bir_exp_false)
       )
@@ -2737,7 +2737,7 @@ subgoal `(bir_get_current_block p s.bst_pc = SOME bl)` >- (
  * bir_exec_to_labels_block. *)
 IMP_RES_TAC bir_exec_to_labels_block >>
 PAT_X_ASSUM ``!ls. p``
-            (fn thm => FULL_SIMP_TAC std_ss [Q.SPEC `{BL_Address k; (BL_Address k2)}` thm]) >>
+            (fn thm => FULL_SIMP_TAC std_ss [Q.SPEC `((BL_Address k) INSERT ks)` thm]) >>
 (*
 ASSUME_TAC (Q.SPECL [`p`, `bl`, `post`, `k`, `bv`]
                     bir_exec_block_jmp_bv_triple_wp_thm
