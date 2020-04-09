@@ -46,9 +46,6 @@ val bprog_is_even_odd_def = Define `
         [BStmt_Assign (BVar "r" (BType_Imm Bit1))
                       (BExp_Const (Imm1 1w))
         ];
-      bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm32 0x210w)))|>;
-    <|bb_label := BL_Address (Imm32 0x210w);
-      bb_statements := [];
       bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0x0w))|>;
 
 
@@ -58,9 +55,6 @@ val bprog_is_even_odd_def = Define `
         [BStmt_Assign (BVar "r" (BType_Imm Bit1))
                       (BExp_Const (Imm1 0w))
         ];
-      bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm32 0x214w)))|>;
-    <|bb_label := BL_Address (Imm32 0x214w);
-      bb_statements := [];
       bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0x0w))|>
 ]) : 'a bir_program_t
 `;
