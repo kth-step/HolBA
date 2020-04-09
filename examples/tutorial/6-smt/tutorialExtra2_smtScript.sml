@@ -48,7 +48,7 @@ val contract_3_imp_taut_thm = save_thm ("contract_3_imp_taut_thm",
   prove_exp_is_taut contract_3_imp);
 
 
-val contract_4_pre = ``bir_ieo_ev_pre v1``;
+val contract_4_pre = ``bir_ieo_pre v1``;
 val contract_4_wp  = ``bir_ieo_invariant v1``;
 val contract_4_imp = bimp (contract_4_pre, contract_4_wp);
 

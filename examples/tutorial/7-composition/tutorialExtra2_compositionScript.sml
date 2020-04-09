@@ -70,7 +70,7 @@ val bir_ieo_sec_iseven_exit_comp_ht =
 
 (* =============================================================== *)
 
-  val abs_intro = prove(``bir_ieo_sec_iseven_post v1 v = \l. bir_ieo_sec_iseven_post v1 v l``, EVAL_TAC >> REWRITE_TAC []);
+  val abs_intro = prove(``bir_ieo_sec_iseven_loop_post v1 v = \l. bir_ieo_sec_iseven_loop_post v1 v l``, EVAL_TAC >> REWRITE_TAC []);
   val abs_intro2 = prove(``bir_ieo_sec_iseven_exit_post v1 = \l. bir_ieo_sec_iseven_exit_post v1 l``, EVAL_TAC >> REWRITE_TAC []);
 
   val loop_ht = REWRITE_RULE [Once abs_intro] bir_ieo_sec_iseven_loop_comp_ht;
@@ -80,23 +80,6 @@ val bir_ieo_sec_iseven_exit_comp_ht =
   val ht = REWRITE_RULE [Once abs_intro] bir_ieo_sec_iseven_exit_comp_ht;
 
   val loop_exit_simp_ht = bir_remove_labels_from_ending_set ht new_ending_label_set;
-
-(*
-  val loop_map_exit_simp_ht = bir_map_triple_from_bir_triple (REWRITE_RULE [Once abs_intro2] loop_exit_simp_ht);
-  val loop_map_exit_simp2_ht =
-    use_post_weak_rule_map loop_map_exit_simp_ht ``BL_Address (Imm32 0x000w)`` contract_3_imp_taut_thm;
-
-val eq_thm = prove(``(\l.
-            if l = BL_Address (Imm32 0w) then bir_ieo_invariant v1
-            else bir_ieo_sec_iseven_exit_post v1 l)
-        = (\l. bir_ieo_sec_iseven_post v1 l)
-``,
-  EVAL_TAC >>
-  ABS_TAC >>
-  REPEAT (CASE_TAC >> EVAL_TAC)
-);
-  val loop_map_exit_simp3_ht = REWRITE_RULE [eq_thm] loop_map_exit_simp2_ht;
-*)
 
   val loop_exit_simp1_ht = (REWRITE_RULE [Once abs_intro2] loop_exit_simp_ht);
   val loop_exit_simp2_ht =
@@ -111,32 +94,11 @@ val eq_thm = prove(``(\l.
 
 (* =============================================================== *)
 
-(*
-bir_while_rule_thm
-bir_loop_contract_def
-
-
-  val def_list = [bprog_add_times_two_def,
-                  bir_ieo_sec_iseven_1_pre_def, bir_ieo_sec_iseven_1_post_def,
-                  bir_ieo_sec_isodd_1_pre_def, bir_ieo_sec_isodd_1_post_def,
-                  bir_ieo_ev_post_no_def, bir_ieo_ev_post_yes_def,
-                  bir_ieo_invariant_mid_def, bir_ieo_invariant_def];
-
-val loop_map_ht =
-   bir_compose_nonmap_seq ht1 ht2 def_list (get_labels_from_set_repr, el_in_set_repr,
-                                            mk_set_repr, simp_delete_set_repr_rule,
-	                                    simp_insert_set_repr_rule,
-                                            simp_in_sing_set_repr_rule,
-                                            simp_inter_set_repr_rule);
-*)
-
-(* =============================================================== *)
-
 (* For debugging: *)
-  val loop_map_ht    = REWRITE_RULE [GSYM bir_ieo_sec_iseven_post_def, Once abs_intro]
+  val loop_map_ht    = REWRITE_RULE [GSYM bir_ieo_sec_iseven_loop_post_def, Once abs_intro]
           (bir_populate_blacklist (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
                                    simp_delete_set_repr_rule, simp_insert_set_repr_rule)
-           (REWRITE_RULE [GSYM abs_intro, bir_ieo_sec_iseven_post_def] loop_map_ht_2));
+           (REWRITE_RULE [GSYM abs_intro, bir_ieo_sec_iseven_loop_post_def] loop_map_ht_2));
 
   val loop_exit_ht   = loop_exit_ht;
   val loop_invariant = ``bir_ieo_invariant v1``;
@@ -147,7 +109,7 @@ val loop_map_ht =
                   bir_ieo_condition_def,
 		  bir_ieo_variant_def,
                   bir_ieo_invariant_def,
-                  bir_ieo_sec_iseven_post_def,
+                  bir_ieo_sec_iseven_loop_post_def,
                   bir_ieo_sec_iseven_loop_pre_def,
                   bir_ieo_sec_iseven_exit_pre_def];
 
@@ -163,7 +125,7 @@ val is_even_1_ht =
 
 val thm1 = ((Q.SPECL [`bprog_is_even_odd`,
           `BL_Address (Imm32 0w)`, `{BL_Address (Imm32 516w); BL_Address (Imm32 512w)}`,
-          `bir_ieo_ev_pre v1`, `bir_ieo_ev_pre v1`,
+          `bir_ieo_pre v1`, `bir_ieo_pre v1`,
           `\l.
             if l = BL_Address (Imm32 0w) then bir_ieo_invariant v1
             else bir_ieo_sec_iseven_exit_post v1 l`,
@@ -176,7 +138,7 @@ val is_even_2_ht = REWRITE_RULE [prove(``^((fst o dest_imp o concl) thm3)``,
   REPEAT STRIP_TAC >> (
     REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.bir_TYPES_ss++wordsLib.WORD_ss)
        [bir_ieo_sec_iseven_exit_post_def,
-        bir_ieo_sec_iseven_post_def,
+        bir_ieo_sec_iseven_loop_post_def,
         bir_exec_to_labels_triple_postcond_def]
   )
   )] thm3;
