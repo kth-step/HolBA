@@ -112,6 +112,43 @@ val bir_ieo_sec_iseven_exit_post_def = Define `bir_ieo_sec_iseven_exit_post v1 =
       bir_exp_false
 `;
 
+(* =============================================================== *)
+
+(* section is_odd loop pre *)
+val bir_ieo_sec_isodd_loop_pre_def = Define `bir_ieo_sec_isodd_loop_pre v1 v =
+(BExp_BinExp BIExp_And (bir_ieo_invariant v1)
+                  (BExp_BinExp BIExp_And bir_ieo_condition
+                     (BExp_BinPred BIExp_Equal bir_ieo_variant ^(get_v))))
+`;
+
+(* section is_odd exit pre *)
+val bir_ieo_sec_isodd_exit_pre_def = Define `bir_ieo_sec_isodd_exit_pre v1 =
+(BExp_BinExp BIExp_And (bir_ieo_invariant v1) (BExp_UnaryExp BIExp_Not bir_ieo_condition))
+`;
+
+
+(* section is_odd loop post *)
+val bir_ieo_sec_isodd_loop_post_def = Define `bir_ieo_sec_isodd_loop_post v1 v =
+\l. if l = BL_Address (Imm32 0x100w) then
+       (BExp_BinExp BIExp_And (bir_ieo_invariant v1)
+                  (BExp_BinExp BIExp_And
+                     (BExp_BinPred BIExp_LessThan bir_ieo_variant ^get_v)
+                     (BExp_BinPred BIExp_LessOrEqual ^get_0 bir_ieo_variant)))
+    else
+      bir_exp_false
+`;
+
+
+(* section is_odd exit post *)
+val bir_ieo_sec_isodd_exit_post_def = Define `bir_ieo_sec_isodd_exit_post v1 =
+\l. if l = BL_Address (Imm32 0x200w) then
+      bir_ieo_post_odd v1
+    else if l = BL_Address (Imm32 0x204w) then
+      bir_ieo_post_even v1
+    else
+      bir_exp_false
+`;
+
 
 
 (* =============================================================== *)
@@ -160,5 +197,49 @@ val (bir_ieo_sec_iseven_exit_ht, bir_ieo_sec_iseven_exit_wp_tm) =
 val bir_ieo_sec_iseven_exit_wp_def =
   Define `bir_ieo_sec_iseven_exit_wp v1 = ^(bir_ieo_sec_iseven_exit_wp_tm)`;
 val _ = save_thm (prefix ^ "ht", bir_ieo_sec_iseven_exit_ht);
+
+(* =============================================================== *)
+
+val prefix = "bir_ieo_sec_isodd_loop_";
+val first_block_label_tm = ``BL_Address (Imm32 0x100w)``;
+val ending_set =  ``{BL_Address (Imm32 0x100w); BL_Address (Imm32 0x200w); BL_Address (Imm32 0x204w)}``;
+val postcond_tm = ``bir_ieo_sec_isodd_loop_post v1 v``;
+
+val defs = [bprog_is_even_odd_def, bir_ieo_sec_isodd_loop_post_def,
+            bir_ieo_post_odd_def, bir_ieo_post_even_def,
+            bir_ieo_invariant_def, bir_ieo_condition_def, bir_ieo_variant_def,
+            bir_exp_false_def, BType_Bool_def];
+
+val (bir_ieo_sec_isodd_loop_ht, bir_ieo_sec_isodd_loop_wp_tm) =
+  bir_obtain_ht prog_tm first_block_label_tm
+                ending_set ending_set_to_sml_list
+                postcond_tm postcond_exp_from_label
+                prefix defs;
+
+val bir_ieo_sec_isodd_loop_wp_def =
+  Define `bir_ieo_sec_isodd_loop_wp v1 v = ^(bir_ieo_sec_isodd_loop_wp_tm)`;
+val _ = save_thm (prefix ^ "ht", bir_ieo_sec_isodd_loop_ht);
+
+
+
+val prefix = "bir_ieo_sec_isodd_exit_";
+val first_block_label_tm = ``BL_Address (Imm32 0x100w)``;
+val ending_set =  ``{BL_Address (Imm32 0x100w); BL_Address (Imm32 0x200w); BL_Address (Imm32 0x204w)}``;
+val postcond_tm = ``bir_ieo_sec_isodd_exit_post v1``;
+
+val defs = [bprog_is_even_odd_def, bir_ieo_sec_isodd_exit_post_def,
+            bir_ieo_post_odd_def, bir_ieo_post_even_def, bir_ieo_invariant_def,
+            bir_exp_false_def, BType_Bool_def];
+
+val (bir_ieo_sec_isodd_exit_ht, bir_ieo_sec_isodd_exit_wp_tm) =
+  bir_obtain_ht prog_tm first_block_label_tm
+                ending_set ending_set_to_sml_list
+                postcond_tm postcond_exp_from_label
+                prefix defs;
+
+val bir_ieo_sec_isodd_exit_wp_def =
+  Define `bir_ieo_sec_isodd_exit_wp v1 = ^(bir_ieo_sec_isodd_exit_wp_tm)`;
+val _ = save_thm (prefix ^ "ht", bir_ieo_sec_isodd_exit_ht);
+
 
 val _ = export_theory();
