@@ -36,7 +36,6 @@ open bir_conc_execLib;
  - driver decision (jump to a, b or c)
  *)
 
-
 fun symb_exec_phase prog =
     let
         (* leaf list *)
@@ -118,6 +117,16 @@ exception NoObsInPath;
 (*
 val exps = all_exps;
 *)
+
+fun rpeat f n tm =
+    if n = 0 then tm else f (rpeat f (n-1) tm); 
+
+fun dest_mem_load size tm =
+    if size = 7 
+    then ((finite_mapSyntax.dest_fapply o (rpeat (#2 o dest_word_concat) 7)) tm)
+    else ((finite_mapSyntax.dest_fapply o (rpeat (#2 o dest_word_concat) size) o (#1 o dest_word_lsr o #1 o dest_w2w)) tm);
+
+
 fun make_word_relation relation exps =
     let
         fun primed_subst exp =
@@ -134,13 +143,11 @@ fun make_word_relation relation exps =
                      (map (fromHOLstring o snd o dest_comb)
                          (nub (flatten (map primed_vars exps))));
         val unprimed = sort (curry String.<=)
-                            (nub (map fromHOLstring
-                                      (flatten (map bir_free_vars exps))));
+                       (nub (map fromHOLstring
+                            (flatten (map bir_free_vars exps))));
 
-	
         val pairs = zip unprimed primed;
 	val (mpair, rpair) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM")) pairs
-
 
         fun mk_distinct_reg (a,b) =
             let val va = mk_var (a,``:word64``);
@@ -148,20 +155,36 @@ fun make_word_relation relation exps =
             in
 		``(^va <> ^vb)``
             end;
-	fun mk_distinct_mem (a,b) =
-	    let val va = mk_var (a, ``:word64 |-> word8``);
-		val vb = mk_var (b, ``:word64 |-> word8``);
-	    in
-		``(^va <> ^vb)``
-	    end
+	val rel2w = (bir2bool relation)
+	(* val _ = print "Relation is:\n" *)
+	(* val _ = print_term rel2w *)
+		    
+	fun mk_distinct_mem (a, b) rel = 
+	    let 
+		open finite_mapSyntax
+		val va = mk_var (a, ``:word64 |-> word8``)
+		val vb = mk_var (b, ``:word64 |-> word8``)
+		fun memList  tm_list = filter (fn tm => (#1 (dest_fapply(find_term is_fapply tm)) = va)) tm_list
+		fun memList' tm_list = filter (fn tm => (#1 (dest_fapply(find_term is_fapply tm)) = vb)) tm_list
+		fun extract_mem_load n rel = ((nub o find_terms (can (dest_mem_load n))) rel)
+		(* val rm_lsr = map (fn tm => (#1 o dest_word_lsr o #1 o dest_w2w) tm) *)
+		val memop  =
+		    if      not(List.null (extract_mem_load 7 rel)) then (extract_mem_load 7 rel)
+		    else if not(List.null (extract_mem_load 3 rel)) then (extract_mem_load 3 rel)
+		    else if not(List.null (extract_mem_load 1 rel)) then (extract_mem_load 1 rel)
+		    else                                                 (extract_mem_load 0 rel)
 
+		val m1 = zip (memList memop) (memList' memop)
+	    in 
+		if List.null m1 then T else list_mk_disj (map (fn (tm, tm') => ``^tm <> ^tm'`` ) m1)
+	    end;
         val distinct = if null pairs 
 		       then raise NoObsInPath 
-		       else (* if List.null mpair *)
-		       (* then *) list_mk_disj (map mk_distinct_reg rpair)
-		       (* else list_mk_disj ((map mk_distinct_reg rpair) @ ([mk_distinct_mem (hd mpair)])) *)
+		       else if List.null mpair
+		       then list_mk_disj (map mk_distinct_reg rpair)
+		       else mk_conj (list_mk_disj ((map mk_distinct_reg rpair)), (mk_distinct_mem (hd mpair) rel2w))
     in
-       ``^(bir2bool relation) /\ ^distinct``
+       ``^rel2w /\ ^distinct``
     end
 
 (* Prints a model, one variable per line. *)
@@ -537,7 +560,9 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
 
         val _ =
            case obs_model of
-                cache_tag_index  =>
+	       (*  mem_address_pc_trace => *)
+	      (* 	      current_obs_model_id := "mem_address_pc_trace" *)
+              (* | *) cache_tag_index  =>
                       current_obs_model_id := "cache_tag_index"
               | cache_tag_only =>
                       current_obs_model_id := "cache_tag_only"

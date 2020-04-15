@@ -3,6 +3,8 @@
 set -e
 
 ARCH_EXPTYPE_PARAM=$1
+BOARD=$2
+BRANCH=$3
 
 # get scamv examples and holba directory path
 SCAMV_EXAMPLES_DIR=$(dirname "${BASH_SOURCE[0]}")
@@ -25,7 +27,7 @@ mkdir -p "${EMBEXP_PROGPLATFORM}"
 rm -rf "${EMBEXP_PROGPLATFORM}"
 git clone https://github.com/kth-step/EmbExp-ProgPlatform.git "${EMBEXP_PROGPLATFORM}"
 cd "${EMBEXP_PROGPLATFORM}"
-git checkout scamv
+git checkout $BRANCH
 
 # in the logs directory ...
 cd "${HOLBA_EMBEXP_LOGS}"
@@ -37,7 +39,7 @@ do
   dir=${dir##*/}
 
   # and start the experiments
-  ./scripts/run_batch.py --exp_class "${ARCH_EXPTYPE_PARAM}/${dir}"
+  ./scripts/run_batch.py --exp_class "${ARCH_EXPTYPE_PARAM}/${dir}" --board_type "$BOARD" --branchname "$BRANCH"
 done
 
 

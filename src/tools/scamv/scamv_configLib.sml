@@ -13,7 +13,8 @@ datatype gen_type = gen_rand
                   | slice
                   | from_file
 
-datatype obs_model = cache_tag_index
+datatype obs_model = mem_address_pc_trace
+                   | cache_tag_index
                    | cache_tag_only
                    | cache_index_only
                    | cache_tag_index_part
@@ -61,7 +62,8 @@ fun gen_type_fromString gt =
 
 fun obs_model_fromString om =
     case om of
-        "cache_tag_index"           => SOME cache_tag_index
+	"mem_address_pc_trace"      => SOME mem_address_pc_trace
+      | "cache_tag_index"           => SOME cache_tag_index
       | "cache_tag_only"            => SOME cache_tag_only
       | "cache_index_only"          => SOME cache_index_only
       | "cache_tag_index_part"      => SOME cache_tag_index_part

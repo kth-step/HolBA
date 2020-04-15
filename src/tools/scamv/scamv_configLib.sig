@@ -7,7 +7,8 @@ sig
                       | slice
                       | from_file
 
-    datatype obs_model = cache_tag_index
+    datatype obs_model = mem_address_pc_trace
+	               | cache_tag_index
                        | cache_tag_only
                        | cache_index_only
                        | cache_tag_index_part

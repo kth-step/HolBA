@@ -46,7 +46,6 @@ select_mem exp =
 
 `;
 
-
 val constrain_mem_def = Define`
 constrain_mem e =
     BStmt_Assert
@@ -72,7 +71,23 @@ add_obs_1_block obs_fun block =
          block with bb_statements := add_obs_1_stmts obs_fun block.bb_statements
 `;
 
+ 
+(* Spectre like attacks. Observation includes, addresses for load and store insructions together with the pc value *)
+(* ============================================================================== *)
+val add_obs_spctr_block_def = Define`
+add_obs_spctr_block obs_fun block =
+        block with bb_statements := APPEND (add_obs_1_stmts obs_fun block.bb_statements) [observe_label (block.bb_label)]
+`;
+  
+val observe_mem_addr_def = Define`
+observe_mem_addr e = 
+      BStmt_Observe (BExp_Const (Imm1 1w)) [e] HD
+`;
 
+val add_obs_mem_addr_pc_armv8_def = Define`
+add_obs_mem_addr_pc_armv8 p = 
+      map_obs_prog (add_obs_spctr_block observe_mem_addr) (add_obs_pc p)
+`;
 
 (* observe tag & set index *)
 (* ============================================================================== *)
