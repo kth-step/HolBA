@@ -360,6 +360,39 @@ ASSUME_TAC (Q.SPECL [`m`, `invariant`, `l`, `ls1'`, `ls2 INTER ls2'`, `pre1`,
 REV_FULL_SIMP_TAC std_ss []
 );
 
+
+val weak_map_loop_thm = store_thm("weak_map_loop_thm",
+  ``!m.
+    weak_model m ==>
+    !l wl bl invariant C1 var post.
+    l NOTIN wl ==> 
+    l NOTIN bl ==>
+    (wl INTER bl = EMPTY) ==>
+    (!x. weak_map_triple m invariant l ({l} UNION wl) bl
+      (\ms. C1 ms /\ (var ms = (x:num)))
+      (\ms. (m.pc ms = l) /\ var ms < x /\ var ms >= 0)) ==>
+    weak_map_triple m invariant l wl bl (\ms. ~(C1 ms)) post ==>
+    weak_map_triple m invariant l wl bl (\ms. T) post``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
+irule weak_invariant_rule_thm >>
+FULL_SIMP_TAC std_ss [] >>
+Q.EXISTS_TAC `C1` >>
+Q.EXISTS_TAC `var` >>
+FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss)
+  [weak_loop_contract_def, Once boolTheory.CONJ_SYM] >>
+STRIP_TAC >>
+QSPECL_X_ASSUM ``!x. _`` [`x`] >>  
+irule weak_weakening_rule_thm >>
+FULL_SIMP_TAC std_ss [] >>
+Q.EXISTS_TAC `(\ms.
+                m.pc ms NOTIN bl /\ ((m.pc ms = l) /\ var ms < x) /\
+                invariant ms)` >>
+Q.EXISTS_TAC `(\ms. (C1 ms /\ (var ms = x)) /\ invariant ms)` >>
+FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.UNION_ASSOC]
+);
+
 (* The below are still TODO: *)
 (*
 (* Condition *)
@@ -374,18 +407,6 @@ val weak_map_std_seq_comp_thm = prove(``
 ``,
 
 cheat);
-
-
-(* Loop *)
-val weak_map_std_seq_comp_thm = prove(``
-(weak_model m) ==>
-(ls1' SUBSET ls2) ==>
-(ls1 INTER ls1' = EMPTY) ==>
-(ls1' INTER ls2' = EMPTY) ==>
-(weak_map_triple m invariant l ls1 ls2 pre1 post1) ==>
-(!l1 . (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
-(weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2)
-``,cheat);
 
 
 (* Function call *)
