@@ -179,9 +179,9 @@ fun make_word_relation relation exps =
 	    end;
         val distinct = if null pairs 
 		       then raise NoObsInPath 
-		       else if List.null mpair
-		       then list_mk_disj (map mk_distinct_reg rpair)
-		       else mk_disj (list_mk_disj ((map mk_distinct_reg rpair)), (mk_distinct_mem (hd mpair) rel2w))
+		       else (* if List.null mpair *)
+		       (* then *) list_mk_disj (map mk_distinct_reg rpair)
+		       (* else mk_disj (list_mk_disj ((map mk_distinct_reg rpair)), (mk_distinct_mem (hd mpair) rel2w)) *)
     in
        ``^rel2w /\ ^distinct``
     end
