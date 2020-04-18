@@ -118,13 +118,11 @@ exception NoObsInPath;
 val exps = all_exps;
 *)
 
-fun rpeat f n tm =
-    if n = 0 then tm else f (rpeat f (n-1) tm); 
-
+fun n_times 0 f x = x | n_times n f x = n_times (n-1) f (f x);
 fun dest_mem_load size tm =
     if size = 7 
-    then ((finite_mapSyntax.dest_fapply o (rpeat (#2 o dest_word_concat) 7)) tm)
-    else ((finite_mapSyntax.dest_fapply o (rpeat (#2 o dest_word_concat) size) o (#1 o dest_word_lsr o #1 o dest_w2w)) tm);
+    then ((finite_mapSyntax.dest_fapply o (n_times 7 (#2 o dest_word_concat))) tm)
+    else ((finite_mapSyntax.dest_fapply o (n_times size (#2 o dest_word_concat)) o (#1 o dest_word_lsr o #1 o dest_w2w)) tm);
 
 
 fun make_word_relation relation exps =
@@ -155,9 +153,10 @@ fun make_word_relation relation exps =
             in
 		``(^va <> ^vb)``
             end;
-	val rel2w = (bir2bool relation)
 	(* val _ = print "Relation is:\n" *)
-	(* val _ = print_term rel2w *)
+	(* val _ = print_term relation *)
+	val rel2w = (bir2bool relation)
+
 		    
 	fun mk_distinct_mem (a, b) rel = 
 	    let 
@@ -180,9 +179,9 @@ fun make_word_relation relation exps =
 	    end;
         val distinct = if null pairs 
 		       then raise NoObsInPath 
-		       else (* if List.null mpair *)
-		       (* then *) list_mk_disj (map mk_distinct_reg rpair)
-		       (* else mk_conj (list_mk_disj ((map mk_distinct_reg rpair)), (mk_distinct_mem (hd mpair) rel2w)) *)
+		       else if List.null mpair
+		       then list_mk_disj (map mk_distinct_reg rpair)
+		       else mk_disj (list_mk_disj ((map mk_distinct_reg rpair)), (mk_distinct_mem (hd mpair) rel2w))
     in
        ``^rel2w /\ ^distinct``
     end
