@@ -254,6 +254,49 @@ struct
       end
     ;
 
+    (* This function applies bir_map_subset_blacklist_rule_thm
+     * to a contract, given a set of labels to remove from the
+     * blacklist *)
+    fun bir_remove_labels_from_blist (simp_in_set_repr_tac) map_ct to_remove_from_blist =
+      let
+	val prog = get_bir_map_triple_prog map_ct
+        val invariant = get_bir_map_triple_invariant map_ct
+	val start_label = get_bir_map_triple_start_label map_ct
+        val wlist = get_bir_map_triple_wlist map_ct
+        val blist = get_bir_map_triple_blist map_ct
+        (* TODO: Parametrize this over different set representations *)
+        val new_blist_sml =
+          filter (fn tm => not (exists (term_eq tm) (pred_setSyntax.strip_set to_remove_from_blist)))
+		 (pred_setSyntax.strip_set blist)
+	val new_blist =
+          if null new_blist_sml
+          then pred_setSyntax.mk_empty bir_label_t_ty
+	  else pred_setSyntax.mk_set new_blist_sml
+	val precondition = get_bir_map_triple_pre map_ct
+	val postcondition = get_bir_map_triple_post map_ct
+
+      val bir_spec_subset_rule_thm =
+	ISPECL [prog,
+                invariant,
+                start_label,
+                wlist,
+		blist,
+		new_blist,
+		precondition,
+		postcondition] bir_wm_instTheory.bir_map_subset_blacklist_rule_thm
+
+      val bir_spec_subset_rule_thm2 =
+	SIMP_RULE std_ss [prove((fst o dest_imp o concl) bir_spec_subset_rule_thm,
+				     simp_in_set_repr_tac
+				   )] bir_spec_subset_rule_thm
+
+	val bir_spec_subset_rule_thm3 =
+	  HO_MATCH_MP bir_spec_subset_rule_thm2
+	   map_ct
+      in
+	bir_spec_subset_rule_thm3
+      end
+    ;
 
     local
     fun remove_label list label = filter (fn el => not (term_eq el label)) list
@@ -316,6 +359,19 @@ struct
 	  map_triple T
     end
     ;
+
+    (* This function translates a bir_exec_to_labels_triple to bir_map_triple,
+     * and abbreviates the precondition according to a given tautology *)
+    fun label_ct_to_map_ct (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
+			    simp_delete_set_repr_rule, simp_insert_set_repr_rule) label_ct taut_thm =
+      bir_populate_blacklist (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
+			      simp_delete_set_repr_rule, simp_insert_set_repr_rule)
+	(bir_map_triple_from_bir_triple (
+	  use_pre_str_rule
+	    (HO_MATCH_MP bir_wm_instTheory.bir_label_ht_impl_weak_ht label_ct)
+	    taut_thm
+	)
+      );
 
     (* This function composes a loop from a looping bir_map_triple and a loop exit bir_triple *)
     fun bir_compose_loop (simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) loop_map_ht
@@ -440,6 +496,146 @@ struct
       end
     ;
 
+    (* This function composes a loop from a looping contract and a loop exit contract *)
+    fun bir_compose_map_loop (simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) loop_map_ht
+          loop_exit_map_ht loop_invariant loop_condition loop_variant def_list = 
+      let
+	(* 1. Specialise bir_map_signed_loop_thm *)
+	val prog = get_bir_map_triple_prog loop_exit_map_ht
+	val start_label = get_bir_map_triple_start_label loop_map_ht
+	val wlist = get_bir_map_triple_wlist loop_exit_map_ht
+	val blist = get_bir_map_triple_blist loop_exit_map_ht
+
+	val bir_add_comp_while_rule_thm =
+	  ISPECL [prog,
+		  start_label,
+		  wlist,
+		  blist,
+		  loop_invariant,
+		  loop_condition,
+		  loop_variant,
+		  get_bir_map_triple_post loop_exit_map_ht] bir_wm_instTheory.bir_map_signed_loop_thm
+
+	(* 2. Knock out antecedents:  *)
+	(* Note: This structure enforces the property that each step only touches the
+	 * relevant antecedent. This makes it clearer what is needed to do for each
+	 * separate step, especially in failure states. *)
+	(* type_of_bir_exp of variant should be 64-bit Imm *)
+        (* TODO: Construct this antecedent explicitly in place *)
+	val bir_add_comp_while_rule_thm1 =
+	  SIMP_RULE std_ss [prove((fst o dest_imp o concl) bir_add_comp_while_rule_thm,
+				       SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
+				     )] bir_add_comp_while_rule_thm
+
+	(* Variables in variant should be subset of vars_of_prog *)
+        (* TODO: Construct this antecedent explicitly in place *)
+	val bir_add_comp_while_rule_thm2 =
+	  SIMP_RULE std_ss [prove((fst o dest_imp o concl) bir_add_comp_while_rule_thm1,
+				       SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss)
+					 def_list (* bir_add_reg_prog_def needed *)
+				     )] bir_add_comp_while_rule_thm1
+
+	(* Loop condition should be a Boolean expression *)
+        (* TODO: Construct this antecedent explicitly in place *)
+	val bir_add_comp_while_rule_thm3 =
+	  SIMP_RULE std_ss [prove((fst o dest_imp o concl) bir_add_comp_while_rule_thm2,
+				       SIMP_TAC (std_ss++HolBASimps.bir_is_bool_ss)
+					 def_list (* bir_add_reg_loop_condition_def needed *)
+				     )] bir_add_comp_while_rule_thm2
+
+	(* Variables in loop condition should be a subset of vars_of_prog *)
+	(* TODO: Construct this antecedent explicitly in place (need maker for bir_vars_of_program) *)
+	val bir_add_comp_while_rule_thm4 =
+	  SIMP_RULE std_ss [prove((fst o dest_imp o concl) bir_add_comp_while_rule_thm3,
+				       SIMP_TAC (std_ss++HolBASimps.VARS_OF_PROG_ss++pred_setLib.PRED_SET_ss)
+					 def_list (* bir_add_reg_loop_condition_def and
+						     bir_add_reg_prog_def needed *)
+				     )] bir_add_comp_while_rule_thm3
+
+	(* Start label should not be in whitelist *)
+	(* TODO: Construct this antecedent explicitly in place *)
+	val bir_add_comp_while_rule_thm5 =
+	  SIMP_RULE std_ss [prove((fst o dest_imp o concl) bir_add_comp_while_rule_thm4,
+				       simp_in_set_repr_tac
+				     )] bir_add_comp_while_rule_thm4
+
+	(* Start label should not be in blacklist *)
+	(* TODO: Construct this antecedent explicitly in place *)
+	val bir_add_comp_while_rule_thm6 =
+	  SIMP_RULE std_ss [prove((fst o dest_imp o concl) bir_add_comp_while_rule_thm5,
+				       simp_in_set_repr_tac
+				     )] bir_add_comp_while_rule_thm5
+
+	(* Intersection of whitelist and blacklist should be empty set *)
+	(* TODO: Construct this antecedent explicitly in place *)
+	val bir_add_comp_while_rule_thm7 =
+	  SIMP_RULE std_ss [prove((fst o dest_imp o concl) bir_add_comp_while_rule_thm6,
+				       simp_in_set_repr_tac
+				     )] bir_add_comp_while_rule_thm6
+
+	(* Obtain the loop contract in required format and knock out the
+         * corresponding antecedent *)
+	(*   TODO: Make separate function for this? *)
+	val loop_variant_jgmt =
+	  prove((fst o dest_imp o concl) bir_add_comp_while_rule_thm7,
+	    GEN_TAC >>
+	    ASSUME_TAC (Q.SPEC `x` (GEN_ALL loop_map_ht)) >>
+	    FULL_SIMP_TAC std_ss [bir_wm_instTheory.bir_triple_equiv_map_triple] >>
+	    FULL_SIMP_TAC (std_ss++inter_set_repr_ss++union_set_repr_ss) [] >>
+	    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
+	    FULL_SIMP_TAC std_ss [bir_wm_instTheory.bir_triple_def,
+				  bin_hoare_logicTheory.weak_triple_def,
+				  bir_wm_instTheory.bir_exec_to_labels_triple_precond_def,
+				  bir_wm_instTheory.bir_exec_to_labels_triple_postcond_def] >>
+	    REPEAT STRIP_TAC >>
+	    QSPECL_X_ASSUM ``!s. _`` [`s`] >>
+	    REV_FULL_SIMP_TAC std_ss [] >>
+            (* TODO: We do NOT want to unfold program definition here... *)
+	    FULL_SIMP_TAC std_ss (def_list@[bir_exp_equivTheory.bir_and_op2,
+					   bir_bool_expTheory.bir_is_bool_exp_env_REWRS]) >>
+(* For debugging the bir_add_reg example, fold it back:
+		FULL_SIMP_TAC std_ss [GSYM bir_add_reg_prog_def] >>
+*)
+	    REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
+	      [bir_valuesTheory.BType_Bool_def, Once (GSYM bir_exp_equivTheory.bir_and_equiv)] >>
+	    Q.EXISTS_TAC `s'` >>
+	    FULL_SIMP_TAC std_ss [] >>
+	    REPEAT STRIP_TAC >| [
+	      (* Expression evaluation *)
+	      REPEAT CASE_TAC >> (
+		FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
+		  [bir_exp_equivTheory.bir_and_op2,
+		   bir_bool_expTheory.bir_eval_exp_TF,
+		   bir_bool_expTheory.bir_val_TF_dist, GSYM bir_exp_equivTheory.bir_and_equiv]
+	      ),
+
+	      (* bool_exp_env *)
+	      REPEAT CASE_TAC >> (
+		FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
+		  [bir_bool_expTheory.bir_is_bool_exp_env_REWRS,
+                   bir_bool_expTheory.bir_eval_exp_TF,
+                   bir_bool_expTheory.bir_val_TF_dist,
+		   bir_bool_expTheory.bir_exp_false_def]
+	      )
+	    ]
+	  )
+	val bir_add_comp_while_rule_thm8 =
+	  HO_MATCH_MP bir_add_comp_while_rule_thm7 loop_variant_jgmt
+
+	(* Finally, obtain conclusion through MP with loop exit contract and some piecing
+         * together of precondition of loop exit and loop condition *)
+	val bir_add_comp_while_rule_thm9 =
+	  prove((snd o dest_imp o concl) bir_add_comp_while_rule_thm8,
+
+	    irule bir_add_comp_while_rule_thm8 >>
+	    ASSUME_TAC loop_exit_map_ht >>
+	    FULL_SIMP_TAC std_ss def_list
+	  )
+
+      in
+	bir_add_comp_while_rule_thm9
+      end
+    ;
 
     (* This function composes two bir_map_triples sequentially using bir_map_std_seq_comp_thm *)
     (* TODO: Fix the mess with def_list unfolding too much back and forth,

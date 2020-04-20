@@ -18,13 +18,14 @@ val weak_map_triple_def = Define `
     )
 `;
 
-val weak_map_subset_blacklist_rule_thm = prove(``
-  !m.
-  !invariant. !l ls ls' ls'' pre post.
-  weak_model m ==>
-  ls'' SUBSET ls' ==>
-  weak_map_triple m invariant l ls ls' pre post ==>
-  weak_map_triple m invariant l ls ls'' pre post``,
+val weak_map_subset_blacklist_rule_thm =
+  store_thm("weak_map_subset_blacklist_rule_thm",
+  ``!m.
+    !invariant. !l ls ls' ls'' pre post.
+    weak_model m ==>
+    ls'' SUBSET ls' ==>
+    weak_map_triple m invariant l ls ls' pre post ==>
+    weak_map_triple m invariant l ls ls'' pre post``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
@@ -371,8 +372,8 @@ val weak_map_loop_thm = store_thm("weak_map_loop_thm",
     (!x. weak_map_triple m invariant l ({l} UNION wl) bl
       (\ms. C1 ms /\ (var ms = (x:num)))
       (\ms. (m.pc ms = l) /\ var ms < x /\ var ms >= 0)) ==>
-    weak_map_triple m invariant l wl bl (\ms. ~(C1 ms)) post ==>
-    weak_map_triple m invariant l wl bl (\ms. T) post``,
+    weak_map_triple m (\ms. T) l wl bl (\ms. ~(C1 ms) /\ invariant ms) post ==>
+    weak_map_triple m (\ms. T) l wl bl invariant post``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
