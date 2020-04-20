@@ -146,7 +146,6 @@ val loop_and_exit_ct =
   val ct2 = loop_and_exit_ct
   val def_list = [bir_add_reg_contract_1_post_def, bir_add_reg_I_def];
 
-(* TODO: Rename HT to tie to program name? *)
 val bir_add_reg_ct =
   bir_compose_seq_predset ct1 ct2 def_list;
 

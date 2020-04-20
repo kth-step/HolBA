@@ -65,6 +65,50 @@ REV_FULL_SIMP_TAC std_ss []
 );
 
 
+val weak_map_move_to_whitelist = store_thm("weak_map_move_to_whitelist",
+  ``!m invariant l l' ls ls' pre post.
+    weak_model m ==>
+    l' IN ls' ==>
+    weak_map_triple m invariant l ls ls' pre post ==>
+    weak_map_triple m invariant l (l' INSERT ls) (ls' DELETE l') pre post``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [weak_map_triple_def, weak_triple_def] >>
+subgoal `?ls''. (ls' = l' INSERT ls'') /\ l' NOTIN ls''` >- (
+  METIS_TAC [pred_setTheory.DECOMPOSITION]
+) >>
+subgoal `l' NOTIN ls` >- (
+  CCONTR_TAC >>
+  subgoal `?ls'''. (ls = l' INSERT ls''') /\ l' NOTIN ls'''` >- (
+    METIS_TAC [pred_setTheory.DECOMPOSITION]
+  ) >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INSERT_INTER]
+) >>
+REPEAT STRIP_TAC >| [
+  ONCE_REWRITE_TAC [pred_setTheory.INTER_COMM] >>
+  FULL_SIMP_TAC std_ss [pred_setTheory.DELETE_INTER, pred_setTheory.INSERT_INTER,
+                        pred_setTheory.COMPONENT] >>
+
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INSERT_INTER,
+                                                   pred_setTheory.COMPONENT,
+                                                   pred_setTheory.INSERT_EQ_SING] >>
+  FULL_SIMP_TAC std_ss [Once pred_setTheory.INTER_COMM] >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INSERT_INTER] >>
+  FULL_SIMP_TAC std_ss [Once pred_setTheory.INTER_COMM],
+
+  QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `ms'` >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
+  `((l' INSERT ls) UNION ((l' INSERT ls'') DELETE l')) = (ls UNION (l' INSERT ls''))` suffices_by (
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  METIS_TAC [pred_setTheory.UNION_COMM, pred_setTheory.INSERT_UNION_EQ,
+             pred_setTheory.DELETE_INSERT, pred_setTheory.DELETE_NON_ELEMENT]
+]
+);
+
+
 val weak_map_move_to_blacklist = store_thm("weak_map_move_to_blacklist",
   ``!m invariant l l' ls ls' pre post.
     weak_model m ==>
