@@ -131,7 +131,9 @@ Notice that this sequence is exemplary and it is possible to selectively run the
   * non proof-producing
   * experimental passification transformation to SSA
 - `tools/scamv`:
-  * experimental and under development
+  * works for small programs
+  * cannot handle certain cases, like memory dependent observations
+  * includes a selection of cache side channel models
 
 ### Dependency graph
 
