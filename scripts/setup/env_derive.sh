@@ -4,7 +4,7 @@
 
 # get current holba directory path
 HOLBA_DIR=$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")/../..
-HOLBA_DIR=$(readlink -f "${HOLBA_DIR}")
+export HOLBA_DIR=$(readlink -f "${HOLBA_DIR}")
 
 
 #####################################################
