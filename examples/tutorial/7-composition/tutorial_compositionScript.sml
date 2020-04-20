@@ -69,6 +69,9 @@ val bir_remove_labels_from_blist_predset = bir_remove_labels_from_blist (simp_in
 val bir_compose_map_loop_predset =
   bir_compose_map_loop (simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss);
 
+(* Program stays the same *)
+val prog_def = bir_add_reg_prog_def;
+
 (****************************************************************)
 (* Step 0: *)
 (* Translate contracts from bir_exec_to_labels_triple to bir_map_triple,
@@ -98,11 +101,9 @@ val bir_add_reg_loop_exit_comp_ct =
 (* For debugging: *)
   val ct1 = bir_add_reg_loop_continue_variant_comp_ct; (* 64 -> 32 *)
   val ct2 = bir_add_reg_loop_variant_comp_ct; (* 32 -> 64 *)
-  (* The definitions of the program, plus any shorthands in postcondition of contract 1
+  (* The definitions of any shorthands in postcondition of contract 1
    * and precondition of contract 2 *)
-  (* TODO: Program definition could be bad to unfold in the wrong place, maybe that should be a
-   * separate argument... *)
-  val def_list = [bir_add_reg_prog_def, bir_add_reg_contract_3_post_variant_def,
+  val def_list = [bir_add_reg_contract_3_post_variant_def,
 		  bir_add_reg_contract_2_pre_variant_def];
 
 val loop_map_ct =
@@ -130,20 +131,20 @@ val loop_exit_simp_ct =
   val loop_condition = ``bir_add_reg_loop_condition``;
   val loop_variant = bden (bvar "R2" ``(BType_Imm Bit64)``);
   (* The definitions of the program, loop condition and both preconditions *)
-  val def_list = [bir_add_reg_prog_def, bir_add_reg_loop_condition_def,
+  val def_list = [bir_add_reg_loop_condition_def,
 		  bir_add_reg_contract_3_pre_variant_def, bir_add_reg_contract_2_post_variant_def,
                   bir_add_reg_contract_4_pre_def];
 
 val loop_and_exit_ct =
   bir_compose_map_loop_predset
-    loop_map_ct loop_exit_map_ct loop_invariant loop_condition loop_variant def_list;
+    loop_map_ct loop_exit_map_ct loop_invariant loop_condition loop_variant prog_def def_list;
 
 (****************************************************************)
 (* Step 4: *)
 (* Compose loop intro with loop (using bir_map_std_seq_comp_thm) *)
   val ct1 = bir_add_reg_entry_comp_ct
   val ct2 = loop_and_exit_ct
-  val def_list = [bir_add_reg_prog_def, bir_add_reg_contract_1_post_def, bir_add_reg_I_def];
+  val def_list = [bir_add_reg_contract_1_post_def, bir_add_reg_I_def];
 
 (* TODO: Rename HT to tie to program name? *)
 val bir_add_reg_ct =
