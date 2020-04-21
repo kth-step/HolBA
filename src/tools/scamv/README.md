@@ -61,6 +61,7 @@ New program generators can be added as follows:
 1. Add an interface function in the general library.
 1. Add a configuration option to the SCAM-V configuration parser.
 1. Add a new case to handle the new option in the SCAM-V driver.
+
 The commit history of this directory should be useful to understand how previous additions have been made.
 
 
@@ -81,5 +82,6 @@ New observation models can be added as follows:
 1. Add an SML library function to use the new HOL4 definition.
 1. Add a configuration option to the SCAM-V configuration parser.
 1. Add a new case to handle the new option in the SCAM-V driver.
+
 The commit history of this directory should be useful to understand how previous additions have been made.
 
