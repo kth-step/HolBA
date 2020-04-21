@@ -271,10 +271,58 @@ REV_FULL_SIMP_TAC std_ss []
 );
 
 
+val weak_map_seq_one_thm = store_thm("weak_map_seq_one_thm",
+  ``!m invariant l wl1 wl2 bl1 bl2 pre post.
+    weak_model m ==>
+    (bl1 INTER bl2 = {}) ==>
+    weak_map_triple m invariant l (wl1 UNION wl2) (bl1 UNION bl2) pre post ==>
+    (!l1.
+     (l1 IN wl1) ==>
+     weak_map_triple m invariant l1 (wl2 UNION bl1) bl2 post post
+    ) ==>
+    (weak_map_triple m invariant l (wl2 UNION bl1) bl2 pre post)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
+STRIP_TAC >- (
+  subgoal `(wl2) INTER (bl2) = {}` >- (
+    irule bir_auxiliaryTheory.INTER_SUBSET_EMPTY_thm >>
+    Q.EXISTS_TAC `bl1 UNION bl2` >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [Once pred_setTheory.INTER_COMM] >>
+    irule bir_auxiliaryTheory.INTER_SUBSET_EMPTY_thm >>
+    Q.EXISTS_TAC `wl1 UNION wl2` >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+  ) >>
+  FULL_SIMP_TAC std_ss [Once pred_setTheory.INTER_COMM,
+                        pred_setTheory.UNION_OVER_INTER,
+                        pred_setTheory.UNION_EMPTY]
+) >>
+irule weak_seq_rule_thm >>
+FULL_SIMP_TAC std_ss [] >>
+Q.EXISTS_TAC `wl1` >>
+STRIP_TAC >| [
+  REPEAT STRIP_TAC >>
+  QSPECL_X_ASSUM ``!l1. _`` [`l1`] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  irule weak_weakening_rule_thm >>
+  FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `\ms. m.pc ms NOTIN bl2 /\ post ms /\ invariant ms` >>
+  Q.EXISTS_TAC `\ms. post ms /\ invariant ms` >>
+  FULL_SIMP_TAC std_ss [],
+
+  irule weak_weakening_rule_thm >>
+  FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `\ms. m.pc ms NOTIN bl1 UNION bl2 /\ post ms /\ invariant ms` >>
+  Q.EXISTS_TAC `\ms. pre ms /\ invariant ms` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.UNION_ASSOC]
+]
+);
+
 (* This proof should use the blacklist move lemma *)
 val weak_map_seq_thm = prove(
   ``!m invariant l ls1 ls ls' pre post.
     weak_model m ==>
+    (* TODO: This really needed? *)
     (ls INTER ls' = {}) ==>
     weak_map_triple m invariant l ls1 (ls UNION ls') pre post ==>
     (!l1.
@@ -330,7 +378,7 @@ REV_FULL_SIMP_TAC std_ss []
 );
 
 
-(* We should generalize the other contract to handle set of labels *)
+(* TODO: Do new version of this *)
 val weak_map_std_seq_comp_thm = store_thm("weak_map_std_seq_comp_thm",
   ``!m ls1 ls1' ls2 ls2' invariant l pre1 post1 post2.
     weak_model m ==>
