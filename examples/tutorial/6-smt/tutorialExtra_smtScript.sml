@@ -44,6 +44,17 @@ val contract_3_imp = bimp (contract_3_pre, contract_3_wp);
 val contract_3_imp_taut_thm = save_thm ("contract_3_imp_taut_thm",
   prove_exp_is_taut contract_3_imp);
 
+(* meeting the subcontracts *)
+val bir_att_sec_call_1_taut_thm = save_thm("bir_att_sec_call_1_taut_thm",
+((*(Q.SPECL [`v2`, `v1`]) o *) prove_exp_is_taut)
+       (bimp (``bir_att_sec_add_2_post v1 v2``, ``bir_att_sec_call_2_pre (v1+v2)``))
+);
+
+val bir_att_post_taut_thm = save_thm("bir_att_post_taut_thm",
+prove_exp_is_taut
+       (bimp (``bir_att_sec_add_2_post (v1 + v2) (v1 + v2)``, ``bir_att_sec_2_post v1 v2``))
+);
+
 
 val _ = export_theory();
 
