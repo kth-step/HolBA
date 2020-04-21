@@ -1,7 +1,20 @@
 driver-test --max_iter 200 --prog_size 5 --max_tests 200 --enumerate --generator prefetch_strides --obs_model cache_tag_index_part --hw_obs_model hw_cache_tag_index_part
 
->>>>>>> 20_prefetch_enum_cpart         - ok, prefetcher counterexamples
------ 
-n_inconclusive = 772
-n_examples     = 15914
-n_cexamples    = 1550
+
+>>> cav_19_12_03_prefetch_enum_cpart
+---
+run_id = d0536c15312118473356fbe270d3c52263eaf23a.rpi3
+
+n_progs = 200 (this number is only based on the number of progs subdirectories)
+n_exps  = 36160
+
+
+n_notrun     = 0
+n_incomplete = 0
+
+n_others       = 0
+n_inconclusive = 5426
+n_examples     = 27274
+n_cexamples    = 3460
+
+

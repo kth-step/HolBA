@@ -38,6 +38,7 @@ declare -a vararr=(
   "HOLBA_EMBEXP_LOGS"
   "HOLBA_GCC_ARM8_CROSS"
   "HOLBA_GCC_ARM_CROSS"
+  "HOLBA_GCC_RISCV64_CROSS"
 )
 
 # collect output in variable

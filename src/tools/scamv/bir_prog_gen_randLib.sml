@@ -38,7 +38,7 @@ struct
   (0,"CRC8"),                            (0,"CRC16"),                          (0,"CRC32"),
   (0,"CRC64"),                           (10,"BranchConditional"),             (0,"BranchImmediate-1"),
   (10,"BranchImmediate-2"),              (10,"BranchRegisterJMP"),             (10,"BranchRegisterCALL"),
-  (10,"BranchRegisterRET"),              (0,"CompareAndBranch-1"),             (0,"CompareAndBranch-2"),
+  (10,"BranchRegisterRET"),              (10,"CompareAndBranch-1"),             (10,"CompareAndBranch-2"),
   (10,"TestBitAndBranch-1"),             (10,"TestBitAndBranch-2"),            (10,"TestBitAndBranch-3"),
   (10,"TestBitAndBranch-4"),             (10,"LoadStoreImmediate-1-1"),        (10,"LoadStoreImmediate-1-2"),
   (10,"LoadStoreImmediate-1-3"),         (10,"LoadStoreImmediate-1-4"),        (10,"LoadStoreImmediate-1-5"),
@@ -146,12 +146,19 @@ struct
 
  val alphabet_r = ALTERNATION (identifierList)
 
+(*
  val pattern_ld   = CONCATENATION [stringLiteral "ld", 
 				   STAR(ALTERNATION(lowerAlphaList)),		
 				   whitespace_r, 
 				   ALTERNATION[(stringLiteral "xzr,"),(stringLiteral "wzr,")], 
 				   STAR(alphabet_r),
 				   END];    
+*)
+ val pattern_xzrwzr   = CONCATENATION [stringLiteral "ld",
+                                       STAR (alphabet_r),
+                                       ALTERNATION [stringLiteral "xzr", stringLiteral "wzr"],
+                                       STAR (alphabet_r),
+                                       END]
  (* val pattern_stp   = CONCATENATION [stringLiteral "stp", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END] *)
  val pattern_cbnz  = CONCATENATION [stringLiteral "cbnz", whitespace_r, STAR (alphabet_r), END]
 
@@ -159,19 +166,32 @@ struct
 
  val patternList = ref (NONE: regex list option);
 
+(*
+val p = pattern_xzrwzr
+val p = pattern_cbnz
+
+val str = "ldp wzr, w30, [x15, #76]"
+val str = "ldp xzr, w30, [x15, #76]"
+val str = "ldp wzr w30, [x15, #76]"
+val str = "ldp xzr w"
+val str = "cbnz r3, #342"
+
+checkPatterns(p, str)
+*)
+
  fun get_patternList () =
    case !patternList of
       SOME x => x
     | NONE   => ((patternList := SOME (
        case !local_param of
           ""               => [] (* default *)
-        | "wout_ldzr"      => [pattern_ld]
+        | "wout_ldzr"      => [pattern_xzrwzr]
         | "wout_cbnz"      => [pattern_cbnz]
-        | "wout_ldzr_cbnz" => [pattern_ld, pattern_cbnz]
+        | "wout_ldzr_cbnz" => [pattern_xzrwzr, pattern_cbnz]
         | _                => raise ERR "prog_gen_rand::get_patternList" "unknown parameter"
        )); get_patternList ());
 
- fun filter_inspected_instr str =
+ fun filter_inspected_instr_doesntwork str =
      let
 	 fun reader nil    = NONE
            | reader (h::t) = SOME (h, t)
@@ -189,6 +209,32 @@ struct
        List.exists (fn p => checkPatterns(p, str)) (get_patternList())
      end
  (* filter_inspected_instr "ldr xzr, x19, [x21, #0xC8]"; *)
+
+
+ val filter_blacklist = ref (NONE: string list option);
+
+ fun get_filter_blacklist () =
+   case !filter_blacklist of
+      SOME x => x
+    | NONE   => ((filter_blacklist := SOME (
+       case !local_param of
+          ""               => [] (* default *)
+        | "wout_ldzr"      => ["xzr","wzr"]
+        | "wout_cbnz"      => ["cbnz"]
+        | "wout_ldzr_cbnz" => ["cbnz","xzr","wzr"]
+        | _                => raise ERR "prog_gen_rand::get_filter_blacklist" "unknown parameter"
+       )); get_filter_blacklist ());
+
+(*
+ List.exists (fn sub => String.isSubstring sub "ld x4, x5, [x30]") ["cbnz","xzr","wzr"];
+ List.exists (fn sub => String.isSubstring sub "ld xzr, x5, [x30]") ["cbnz","xzr","wzr"];
+ List.exists (fn sub => String.isSubstring sub "ld x4, wzr, [x30]") ["cbnz","xzr","wzr"];
+ List.exists (fn sub => String.isSubstring sub "cbz x4, x8, [x30]") ["cbnz","xzr","wzr"];
+ List.exists (fn sub => String.isSubstring sub "cbnz x4, x8, [x30]") ["cbnz","xzr","wzr"];
+*)
+ fun filter_inspected_instr str =
+   List.exists (fn sub => String.isSubstring sub str) (get_filter_blacklist ());
+
 
  fun instGen () =
      let
