@@ -56,16 +56,30 @@ For structured monadic program generation, we provide a quickcheck library to su
 This library enables succint representations of intended program structures, which is used in a collection of generators as well as a generator to trigger the ARMv8 prefetching with load stride patterns.
 The collection consists of a simple load generator as well as a family of generators to trigger "previction".
 
-New program generators should be added as library or as functions to the existing libraries first.
-Then, an interface function in the general library is needed.
-Finally, a configuration option has to be added to the SCAM-V configuration parser as well as a new case to handle the new option in the SCAM-V driver.
+New program generators can be added as follows:
+1. Add a library or a functions to the existing libraries.
+1. Add an interface function in the general library.
+1. Add a configuration option to the SCAM-V configuration parser.
+1. Add a new case to handle the new option in the SCAM-V driver.
 The commit history of this directory should be useful to understand how previous additions have been made.
 
 
 ## Observation models
-where
+All our observation models are currently in one library and and accompanying theory.
+The theory contains HOL4 definitions to describe the code augmentation with observations as well as memory location constraints according to the experiment setup.
+The library is simply an interface that applies the definitions to obtain a program with observations accordingly.
 
-what we have
+We have the following observation models to be used for the Raspberry Pi 3 (ARMv8) cache geometry:
+- Cache tag and set index
+- Cache tag only
+- Cache set index only
+- Cache tag and set index for a partition of the cache (not aligned to page boundary)
+- Cache tag and set index for a partition of the cache (aligned to page boundary)
 
-where extend
+New observation models can be added as follows:
+1. Add a HOL4 function to transform a program to add observations.
+1. Add an SML library function to use the new HOL4 definition.
+1. Add a configuration option to the SCAM-V configuration parser.
+1. Add a new case to handle the new option in the SCAM-V driver.
+The commit history of this directory should be useful to understand how previous additions have been made.
 
