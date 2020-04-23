@@ -248,38 +248,6 @@ METIS_TAC []
 );
 
 
-val weak_seq_rule_mid_thm = store_thm("weak_seq_rule_mid_thm",
-  ``!m l ls1 ls2 pre mid post.
-    weak_model m ==>
-    weak_triple m l (ls1 UNION ls2) pre mid ==>
-    (!ms. (m.pc ms) IN ls2 ==> (mid ms ==> post ms)) ==>
-    (!l1. (l1 IN ls1) ==>
-          (weak_triple m l1 ls2 mid post)
-    ) ==>
-    weak_triple m l ls2 pre post``,
-
-REPEAT STRIP_TAC >>
-SIMP_TAC std_ss [weak_triple_def] >>
-REPEAT STRIP_TAC >>
-PAT_X_ASSUM ``weak_triple m l (ls1 UNION ls2) pre mid``
-              (fn thm => ASSUME_TAC (SIMP_RULE std_ss [weak_triple_def] thm)) >>
-QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
-REV_FULL_SIMP_TAC std_ss [] >>
-Cases_on `(m.pc ms') IN ls2` >- (
-  METIS_TAC [weak_union2_thm]
-) >>
-Q.SUBGOAL_THEN `(m.pc ms') IN ls1` ASSUME_TAC >- (
-  METIS_TAC [weak_union_thm, weak_pc_in_thm]
-) >>
-QSPECL_X_ASSUM ``!l1. _`` [`m.pc ms'`] >>
-REV_FULL_SIMP_TAC std_ss [weak_triple_def] >>
-QSPECL_X_ASSUM ``!m. _`` [`ms'`] >>
-REV_FULL_SIMP_TAC std_ss[] >>
-ASSUME_TAC (Q.SPECL [`m`] weak_comp_thm) >>
-METIS_TAC []
-);
-
-
 val weak_conj_rule_thm = prove(``
   !m.
   weak_model m ==>
