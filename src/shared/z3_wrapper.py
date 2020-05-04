@@ -146,26 +146,36 @@ def z3_to_HolTerm(exp):
 
     raise NotImplementedError("Not handled: {} as {}".format(type(exp), exp))
 
-
+# Dirty hack to fix the problem of memory stores when mem <> mem' 
 def model_to_list(model):
+    mem_list = []
     sml_list = []
     names = set()
-    string_check= re.compile('!')
+    mem_check = re.compile('MEM')
+    array_check = re.compile('!')
     for x in model:
         name = str(x.name())
-        if(string_check.search(name) != None):
-            continue   
+        if(mem_check.search(name)): 
+            continue
         term = z3_to_HolTerm(model[x])
-        stripped_name = name.split('_', maxsplit=1)[1]
+
+        stripped_name = len (name.split('_', maxsplit=1)) > 1 and name.split('_', maxsplit=1)[1] or name.split('_', maxsplit=1)[0]
         if stripped_name in names:
             raise AssertionError("Duplicated stripped name: {}".format(stripped_name))
         names.add(stripped_name)
 
-        sml_list.append(stripped_name)
-        sml_list.append(term)
+        if(array_check.search(name)):
+            mem_list.append((stripped_name,term))
+        else:
+            sml_list.append(stripped_name)
+            sml_list.append(term)
 
+    mem_list.sort()
+    mem_var_names = ['MEM_', 'MEM']
+    for m in mem_list:
+        sml_list.append(mem_var_names.pop())
+        sml_list.append(m[1])
     return sml_list
-
 
 def main():
     use_files = len(sys.argv) > 1
