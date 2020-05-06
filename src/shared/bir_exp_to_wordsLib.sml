@@ -4,7 +4,7 @@ struct
   open Abbrev
 
   local
-
+(* HOL_Interactive.toggle_quietdec(); *)
   open HolKernel Parse boolLib bossLib;
   open optionSyntax numSyntax;
   open wordsSyntax fcpSyntax;
@@ -21,7 +21,7 @@ struct
 
   open bir_exp_immTheory;
   open bir_exp_memTheory;
-
+(* HOL_Interactive.toggle_quietdec(); *)
   (*open bir_wp_simpLib;*)
 
   val ERR = mk_HOL_ERR "bir_exp_to_wordsLib";
@@ -133,13 +133,24 @@ struct
       handle e => raise wrap_exn "w2bool" e;
 
   fun bool2w exp_tm =
-    let
-      val to_rewrite = ``bool2w ^exp_tm``
-      val rewritten = PURE_REWRITE_CONV [bool2w_def] to_rewrite
-    in
-      (snd o dest_comb o concl) rewritten
-    end
+      let
+	  val to_rewrite = ``bool2w ^exp_tm``
+	  val rewritten = PURE_REWRITE_CONV [bool2w_def] to_rewrite
+      in
+	  (snd o dest_comb o concl) rewritten
+      end
       handle e => raise wrap_exn "bool2w" e;
+
+  val dim_of = dest_word_type o Term.type_of;
+
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_imm";
+  val s = syntax_fns 1
+		     (fn tm1 => fn e => fn w => (HolKernel.dest_monop tm1 e w, dim_of w))
+		     (fn tm => fn (w, ty) =>
+				  Term.mk_comb
+				      (Term.inst [Type.alpha |-> dim_of w, Type.beta |-> ty] tm, w));
+
+  val (w2wh_tm, mk_w2wh, dest_w2wh, is_w2wh)= s "w2wh";
 
   fun bir_exp_to_words exp =
     let
@@ -194,22 +205,28 @@ struct
       (* Casts are not handled yet. *)
       else if is_BExp_Cast exp then
 	  let
-	      val dw = wordsSyntax.dest_word_type
-	      val (casttyp, ex, sz) = (dest_BExp_Cast) exp
-	      val cast_ty = word_ty_of_bir_immtype_t sz
-	      val val_ty = bir_exp_to_words ex
-	      val num_of_typ = fcpLib.index_to_num(dw cast_ty)
-	      val shift_sz = numLib.term_of_int (Arbnum.toInt num_of_typ)
-
+	      val dw = wordsSyntax.dest_word_type;
+	      val (casttyp, ex, sz) = (dest_BExp_Cast) exp;
+	      val cast_ty = word_ty_of_bir_immtype_t sz;
+	      val val_ty = bir_exp_to_words ex;
 	  in
-	      if bir_exp_immSyntax.is_BIExp_LowCast casttyp
-	      then
-		  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
-	      else
-		  wordsSyntax.mk_w2w(``^val_ty >>> ^shift_sz``, dw cast_ty)
+	      case (term_to_string casttyp) of 
+		  "BIExp_UnsignedCast" =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+		| "BIExp_SignedCast"   =>  wordsSyntax.mk_sw2sw(val_ty, dw cast_ty)
+		| "BIExp_LowCast"      =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+		  (* let  *)
+		  (*     val num_of_exp_type = fcpLib.index_to_num(dw cast_ty); *)
+		  (*     val masked_val = case (Arbnum.toInt num_of_exp_type) of  *)
+		  (* 			   8 => ``^val_ty && 0x00000000000000FFw:word64`` *)
+		  (* 			 |16 => ``^val_ty && 0x000000000000FFFFw:word64`` *)
+		  (* 			 |32 => ``^val_ty && 0x00000000FFFFFFFFw:word64`` *)
+		  (* in *)
+		  (*     wordsSyntax.mk_w2w(masked_val, dw cast_ty) *)
+		  (* end *)	
+		| "BIExp_HighCast"     =>  mk_w2wh(val_ty, dw cast_ty)
 	  end
-                  handle e => raise wrap_exn "bir_exp_to_words::BExp_Cast" e
-				    
+	      handle e => raise ERR "bir_exp_to_words" "Cast expressions aren't handled yet."
+		    
         (* raise ERR "bir_exp_to_words" "Cast expressions aren't handled yet." *)
       (* Unary expressions *)
       else if is_BExp_UnaryExp exp then
