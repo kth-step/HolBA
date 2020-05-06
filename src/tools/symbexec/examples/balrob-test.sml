@@ -512,18 +512,67 @@ fun expand_exp env var =
 (*
 (hd(SYST_get_env syst))
 
-val syst = hd systs
+val syst = hd (tl systs)
 val env = (SYST_get_env syst);
+val pred = (SYST_get_pred syst);
+
+val (p::ps) = pred;
+val benvmap = ((snd o dest_comb) ``BEnv (K NONE)``);
+
+simple_pred_to_benvmap pred benvmap
 *)
 
-fun eval_countw_in_env env =
+(*
+             mk_comb (combinSyntax.mk_update (``2:num``,``"c"``),
+                      ``\x. if x = 5:num then "a" else "b"``)
+*)
+
+open bir_exp_immSyntax;
+
+val benvmap_empty = ((snd o dest_comb) ``BEnv (K NONE)``);
+val bvalo_true = ``SOME (BVal_Imm (Imm1 1w))``;
+val bvalo_false = ``SOME (BVal_Imm (Imm1 0w))``;
+fun simple_pred_to_benvmap [] benvmap = benvmap
+  | simple_pred_to_benvmap (p::ps) benvmap =
+      let
+        val benvmap_ =
+          if not (is_BExp_Den p) then
+            if not (is_BExp_UnaryExp p) orelse
+               not ((fst o dest_BExp_UnaryExp) p = BIExp_Not_tm) orelse
+               not ((is_BExp_Den o snd o dest_BExp_UnaryExp) p)
+            then
+              let
+                val _ = print (term_to_string p);
+                val _ = print "\n\n";
+              in
+                benvmap
+              end
+            else
+              let
+                val p_ = (snd o dest_BExp_UnaryExp) p;
+                val (vn, _) = (dest_BVar o dest_BExp_Den) p_;
+              in
+                mk_comb (combinSyntax.mk_update(vn,bvalo_false), benvmap)
+              end
+          else
+          let val (vn, _) = (dest_BVar o dest_BExp_Den) p; in
+             mk_comb (combinSyntax.mk_update(vn,bvalo_true), benvmap)
+          end
+      in
+        simple_pred_to_benvmap ps benvmap_
+      end;
+
+fun eval_countw_in_syst syst =
   let
+    val env = (SYST_get_env syst);
+    val pred = (SYST_get_pred syst);
+    val pred_benv = mk_BEnv (simple_pred_to_benvmap pred benvmap_empty);
     val exp = expand_exp env ("countw", ``(BType_Imm Bit64)``);
   in
-    (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp (BEnv (K NONE))``
+    (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp ^pred_benv``
   end;
 
-val countws = List.map (fn syst => eval_countw_in_env (SYST_get_env syst)) systs;
+val countws = List.map eval_countw_in_syst systs;
 
 
 (*
