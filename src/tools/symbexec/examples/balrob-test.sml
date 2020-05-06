@@ -200,6 +200,8 @@ open bir_expSyntax;
 open stringSyntax;
 open bir_programSyntax;
 
+
+
 local
 val freshvarcounter_ = ref (0:int);
 fun get_fresh_var_counter () =
@@ -208,19 +210,17 @@ fun get_fresh_var_counter () =
 in
   fun get_fresh_var bv =
     let
-      val (bn, bty) = dest_BVar bv;
-      val s = fromHOLstring bn;
+      val (s, bty) = dest_BVar_string bv;
       val new_s = "fr_" ^ (Int.toString (get_fresh_var_counter ())) ^ "_" ^ s;
     in
-      ((s, bty), (new_s, bty), (mk_BExp_Den o mk_BVar) (fromMLstring new_s, bty))
+      ((s, bty), (new_s, bty), (mk_BExp_Den o mk_BVar_string) (new_s, bty))
     end;
 
   fun init_exp_from_bvar bv =
     let
-      val (bstr, bty) = dest_BVar bv;
-      val name = fromHOLstring bstr;
+      val (name, bty) = dest_BVar_string bv;
     in
-      ((name, bty), (mk_BExp_Den o mk_BVar) (fromMLstring("sy_" ^ name), bty))
+      ((name, bty), (mk_BExp_Den o mk_BVar_string) ("sy_" ^ name, bty))
     end;
 end
 
@@ -480,6 +480,51 @@ val syst = hd systs
 
 length(SYST_get_env syst)
 *)
+
+fun simpleholset_to_list t =
+  if pred_setSyntax.is_empty t then [] else
+  if not (pred_setSyntax.is_insert t) then
+    raise ERR "simpleholset_to_list" "cannot handle syntax"
+  else
+    let val (x, rset) = pred_setSyntax.dest_insert t in
+      x::(simpleholset_to_list rset)
+    end;
+
+
+fun expand_exp env var =
+  let
+    val exp_o = List.find (fn (x, _) => x = var) env;
+    val exp = case exp_o of
+                 SOME x => snd x
+               | NONE => raise ERR "expand_exp" ("\" ^ varname ^ \" not found");
+    val exp_vars = (snd o dest_eq o concl o EVAL) ``(bir_vars_of_exp ^exp)``;
+    val vars = (List.map dest_BVar_string o simpleholset_to_list) exp_vars;
+
+    val subexps_raw = List.filter ((fn x => List.exists (fn y => x = y) vars) o fst) env;
+    (* recursion on varexpressions first *)
+    val subexps = List.map (fn (x, _) => (x, expand_exp env x)) subexps_raw;
+
+    val exp_ = List.foldl (fn ((x, e), exp_) => subst_exp (mk_BVar_string x, e, exp_)) exp subexps;
+  in
+    exp_
+  end;
+
+(*
+(hd(SYST_get_env syst))
+
+val syst = hd systs
+val env = (SYST_get_env syst);
+*)
+
+fun eval_countw_in_env env =
+  let
+    val exp = expand_exp env ("countw", ``(BType_Imm Bit64)``);
+  in
+    (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp (BEnv (K NONE))``
+  end;
+
+val countws = List.map (fn syst => eval_countw_in_env (SYST_get_env syst)) systs;
+
 
 (*
 check_feasible (syst)
