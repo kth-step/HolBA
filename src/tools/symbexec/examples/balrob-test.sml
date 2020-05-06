@@ -512,7 +512,8 @@ fun expand_exp env var =
 (*
 (hd(SYST_get_env syst))
 
-val syst = hd (tl systs)
+val syst = List.nth(systs,0)
+
 val env = (SYST_get_env syst);
 val pred = (SYST_get_pred syst);
 
@@ -562,18 +563,45 @@ fun simple_pred_to_benvmap [] benvmap = benvmap
         simple_pred_to_benvmap ps benvmap_
       end;
 
+fun simple_p_to_subst p =
+  if is_BExp_UnaryExp p andalso
+     (fst o dest_BExp_UnaryExp) p = BIExp_Not_tm then
+    subst [((snd o dest_BExp_UnaryExp) p) |-> ``(BExp_Const (Imm1 0w))``]
+  else
+    subst [p |-> ``(BExp_Const (Imm1 1w))``];
+
+fun simple_pred_to_subst pred exp =
+  List.foldl (fn (p, exp) => simple_p_to_subst p exp) exp pred;
+
 fun eval_countw_in_syst syst =
   let
     val env = (SYST_get_env syst);
     val pred = (SYST_get_pred syst);
-    val pred_benv = mk_BEnv (simple_pred_to_benvmap pred benvmap_empty);
-    val exp = expand_exp env ("countw", ``(BType_Imm Bit64)``);
+(*
+    val benv = mk_BEnv (simple_pred_to_benvmap pred benvmap_empty);
+*)
+    val benv = ``BEnv (K NONE)``;
+    val exp_ = expand_exp env ("countw", ``(BType_Imm Bit64)``);
+    val exp = simple_pred_to_subst pred exp_;
   in
-    (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp ^pred_benv``
+    (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp ^benv``
   end;
 
 val countws = List.map eval_countw_in_syst systs;
+val counts = List.map (wordsSyntax.dest_word_literal o
+                       bir_valuesSyntax.dest_BVal_Imm64 o
+                       optionSyntax.dest_some) countws;
 
+fun find_bound comp l =
+  List.foldr (fn (x,m) => if comp (x, m) then x else m) (hd l) l;
+
+val count_max = find_bound (Arbnum.>) counts;
+val count_min = find_bound (Arbnum.<) counts;
+
+val _ = print "\n\n\n";
+val _ = print ("funname = " ^ (name) ^ "\n");
+val _ = print ("max = " ^ (Arbnum.toString count_max) ^ "\n");
+val _ = print ("min = " ^ (Arbnum.toString count_min) ^ "\n");
 
 (*
 check_feasible (syst)
