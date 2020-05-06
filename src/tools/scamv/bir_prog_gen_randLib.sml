@@ -69,13 +69,10 @@ struct
      hd (String.tokens  (fn c => Char.compare (c,#"-") = EQUAL) subs);
 
  (* ---------------------------------------------  *)
- type gen = Random.generator
+ val _ = bir_scamv_helpersLib.rand_isfresh_set true;
 
  val emp_str = ""
  val splitter = String.tokens (fn c => c = #";");
-     
- fun bits gen bits =
-     map (fn x => x = 1) (Random.rangelist (0,2) (bits,gen))
 
  fun select l =
      let val ln = length l
@@ -133,51 +130,54 @@ struct
  fun getReg args = 
      map (fn arg => foldl remChars arg [#",", #" ", #"]"]) args
 
+ val local_param = ref "";
+ val patternList = ref (NONE: regex list option);
 
  val whitespace_r =
-     STAR (ALTERNATION [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"])     
+     STAR (ALTERNATION [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"])
  val lowerAlphaList = regExLib.literalList "abcdefghijklmnopqrstuvwxyz"
  val upperAlphaList = regExLib.literalList "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
  val alphaList = lowerAlphaList @ upperAlphaList
  val numList = regExLib.literalList "1234567890"
- val specialChar= regExLib.literalList"[],#+-!"
+ val specialChar= regExLib.literalList"[],#+-!'():|->"
  val identifierList =
      alphaList @ numList @ (regExLib.literalList "'_") @ specialChar @ [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"]
+ val alphabet_r = ALTERNATION (identifierList);
 
- val alphabet_r = ALTERNATION (identifierList)
+ val Any = STAR alphabet_r;
+ (* val PatConcat = stringLiteral "@@"; *)
+ val Star = STAR;
+ val OrRegx = ALTERNATION;
+ val ThenRegx = CONCATENATION;
+ fun RepeatRegx re n =
+     let fun repeat 0 i = []
+ 	   | repeat n i = i :: repeat (n - 1) i
+     in
+ 	 flatten(repeat re n)
+     end;
 
-(*
- val pattern_ld   = CONCATENATION [stringLiteral "ld", 
-				   STAR(ALTERNATION(lowerAlphaList)),		
-				   whitespace_r, 
-				   ALTERNATION[(stringLiteral "xzr,"),(stringLiteral "wzr,")], 
-				   STAR(alphabet_r),
-				   END];    
-*)
- val pattern_xzrwzr   = CONCATENATION [stringLiteral "ld",
-                                       STAR (alphabet_r),
-                                       ALTERNATION [stringLiteral "xzr", stringLiteral "wzr"],
-                                       STAR (alphabet_r),
-                                       END]
- (* val pattern_stp   = CONCATENATION [stringLiteral "stp", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END] *)
- val pattern_cbnz  = CONCATENATION [stringLiteral "cbnz", whitespace_r, STAR (alphabet_r), END]
 
- val local_param = ref "";
+ val pattern_xzrwzr1  =  ThenRegx([stringLiteral "ld",  Star(OrRegx(alphaList)), whitespace_r]
+ 				 @[OrRegx[stringLiteral "xzr", stringLiteral "wzr"], Any, END]);
 
- val patternList = ref (NONE: regex list option);
+ val pattern_xzrwzr2  =  ThenRegx([stringLiteral "ld",  Star(OrRegx(alphaList)), whitespace_r]
+ 				 @[Star (OrRegx(alphaList@numList@specialChar)), whitespace_r]
+ 				 @[OrRegx[stringLiteral "xzr", stringLiteral "wzr"], Any, END]);
 
-(*
-val p = pattern_xzrwzr
-val p = pattern_cbnz
+ val pattern_xzrwzr = OrRegx[pattern_xzrwzr1, pattern_xzrwzr2];
 
-val str = "ldp wzr, w30, [x15, #76]"
-val str = "ldp xzr, w30, [x15, #76]"
-val str = "ldp wzr w30, [x15, #76]"
-val str = "ldp xzr w"
-val str = "cbnz r3, #342"
+ val pattern_cbnz  = ThenRegx[stringLiteral "cbnz", whitespace_r, Any, END];
 
-checkPatterns(p, str)
-*)
+ (*  val p = pattern_xzrwzr *)
+ (*  val p = pattern_cbnz *)
+
+ (*  val str = "ldp wzr, w30, [x15, #76]" *)
+ (*  val str = "ldp xzr, w30, [x15, #76]" *)
+ (*  val str = "ldp wzr w30, [x15, #76]" *)
+ (*  val str = "ldp xzr w" *)
+ (*  val str = "cbnz r3, #342" *)
+
+ (*  checkPatterns(p, str) *)
 
  fun get_patternList () =
    case !patternList of
@@ -191,20 +191,20 @@ checkPatterns(p, str)
         | _                => raise ERR "prog_gen_rand::get_patternList" "unknown parameter"
        )); get_patternList ());
 
- fun filter_inspected_instr_doesntwork str =
+ fun filter_inspected_instr str =
      let
-	 fun reader nil    = NONE
+ 	 fun reader nil    = NONE
            | reader (h::t) = SOME (h, t)
 			     
-	 fun checkPatterns (pattern, str) =	     
-	     let
-		 val result = Option.map (fn (str, strm) => str) (
-			      evalRegex pattern reader (String.explode str)
-			      )
-		 val resultBool = if (isSome result) then true else false
-	     in
-		 resultBool
-	     end
+ 	 fun checkPatterns (pattern, str) =
+ 	     let
+ 		 val result = Option.map (fn (str, strm) => str) (
+ 			      evalRegex pattern reader (String.explode str)
+ 			      )
+ 		 val resultBool = if (isSome result) then true else false
+ 	     in
+ 		 resultBool
+ 	     end
      in
        List.exists (fn p => checkPatterns(p, str)) (get_patternList())
      end
@@ -232,7 +232,7 @@ checkPatterns(p, str)
  List.exists (fn sub => String.isSubstring sub "cbz x4, x8, [x30]") ["cbnz","xzr","wzr"];
  List.exists (fn sub => String.isSubstring sub "cbnz x4, x8, [x30]") ["cbnz","xzr","wzr"];
 *)
- fun filter_inspected_instr str =
+ fun filter_inspected_instr_notprecise str =
    List.exists (fn sub => String.isSubstring sub str) (get_filter_blacklist ());
 
 
@@ -350,5 +350,3 @@ checkPatterns(p, str)
    map ((strip_ws_off false) o remove_junk o hd o decomp) (progGen n));
 
 end; (* struct *)
-
-
