@@ -62,7 +62,7 @@ val add_obs_1_stmts_def = Define `
      (case select_mem e of
           [] => x :: add_obs_1_stmts obs_fun xs
         | lds => (APPEND (MAP constrain_mem lds)
-                      (x :: (APPEND (MAP obs_fun lds) (add_obs_1_stmts obs_fun xs)))))
+                      (APPEND (APPEND (MAP obs_fun lds) (add_obs_1_stmts obs_fun xs)) [x])))
    | _ => x :: add_obs_1_stmts obs_fun xs)
 `;
 
