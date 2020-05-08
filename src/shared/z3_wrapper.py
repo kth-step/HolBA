@@ -153,22 +153,25 @@ def model_to_list(model):
     names = set()
     mem_check = re.compile('MEM')
     array_check = re.compile('!')
-    for x in model:
-        name = str(x.name())
-        if(mem_check.search(name)): 
-            continue
-        term = z3_to_HolTerm(model[x])
-
-        stripped_name = len (name.split('_', maxsplit=1)) > 1 and name.split('_', maxsplit=1)[1] or name.split('_', maxsplit=1)[0]
-        if stripped_name in names:
-            raise AssertionError("Duplicated stripped name: {}".format(stripped_name))
-        names.add(stripped_name)
-
-        if(array_check.search(name)):
-            mem_list.append((stripped_name,term))
-        else:
-            sml_list.append(stripped_name)
-            sml_list.append(term)
+    try:
+        for x in model:
+            name = str(x.name())
+            if(mem_check.search(name)): 
+                continue
+            term = z3_to_HolTerm(model[x])
+            
+            stripped_name = len (name.split('_', maxsplit=1)) > 1 and name.split('_', maxsplit=1)[1] or name.split('_', maxsplit=1)[0]
+            if stripped_name in names:
+                raise AssertionError("Duplicated stripped name: {}".format(stripped_name))
+            names.add(stripped_name)
+            
+            if(array_check.search(name)):
+                mem_list.append((stripped_name,term))
+            else:
+                sml_list.append(stripped_name)
+                sml_list.append(term)
+    except Exception as e:
+        sys.exit(str(e))  # Print the message to stderr and exit with status 1
 
     mem_list.sort()
     mem_var_names = ['MEM_', 'MEM']
