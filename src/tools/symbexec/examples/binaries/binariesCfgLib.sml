@@ -206,6 +206,9 @@ fun update_node_guess_type_call n =
     val lbl_tm = #CFGN_lbl_tm n;
     val cfg_t_l = #CFGN_goto n;
 
+    val _ = if not debug_on then () else
+            print ((term_to_string lbl_tm) ^ "\n");
+
     val bl = case prog_get_block_ lbl_tm of SOME x => x
                     | NONE => raise ERR "to_cfg_nodes" ("label couldn't be found: " ^ (term_to_string lbl_tm));
     val (_, bbs, _) = dest_bir_block bl;
@@ -270,8 +273,10 @@ fun update_node_guess_type_return (n:cfg_node) =
     val _ = if not (debug_on andalso isReturn) then () else
             (print "return      ::: "; print descr; print "\t"; print_term lbl_tm);
 
+
     (* hack for indirect jumps (a.k.a. oracle) *)
-    val hack_map = [(0x2bc8, "469F (mov pc, r3)", CFGNT_Jump, [
+    val hack_map_1
+             = [(0x2bc8, "469F (mov pc, r3)", CFGNT_Jump, [
                          "542c0000",
                          "fe2b0000",
                          "fe2b0000",
@@ -327,6 +332,69 @@ fun update_node_guess_type_return (n:cfg_node) =
                          "10290000"
                        ])
                    ];
+(* -0x428‬ *)
+(*
+ 000033d4
+ 00003354
+ 00003394
+*)
+    val hack_map_2
+             = [(0x27a0, "469F (mov pc, r3)", CFGNT_Jump, [
+                         "282c0000",
+                         "27d60000",
+                         "27d60000",
+                         "29040000",
+                         "27d20000",
+                         "27d20000",
+                         "28fa0000",
+                         "29040000",
+                         "27d20000",
+                         "28fa0000",
+                         "27d20000",
+                         "29040000",
+                         "29080000",
+                         "29080000",
+                         "29080000",
+                         "29100000"
+                       ]),
+                    (0x23ec, "4697 (mov pc, r2)", CFGNT_Jump, [
+                         "25020000",
+                         "243e0000",
+                         "24620000",
+                         "24000000",
+                         "24620000",
+                         "24de0000",
+                         "24620000",
+                         "24000000",
+                         "243e0000",
+                         "243e0000",
+                         "24de0000",
+                         "24000000",
+                         "25340000",
+                         "25340000",
+                         "25340000",
+                         "24ea0000"
+                       ]),
+                    (0x2492, "4697 (mov pc, r2)", CFGNT_Jump, [
+                         "243e0000",
+                         "243e0000",
+                         "24620000",
+                         "23fe0000",
+                         "24620000",
+                         "24de0000",
+                         "24620000",
+                         "23fe0000",
+                         "243e0000",
+                         "243e0000",
+                         "24de0000",
+                         "23fe0000",
+                         "25340000",
+                         "25340000",
+                         "25340000",
+                         "24e80000"
+                       ])
+                   ];
+    val hack_map = hack_map_1@hack_map_2;
     val hackMatch = List.find (fn (loc_, descr_, _, _) =>
                                  descr = descr_ andalso
                                  dest_lbl_tm lbl_tm = Arbnum.fromInt loc_

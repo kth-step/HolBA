@@ -46,7 +46,11 @@ end
 
 
 (* ===================================== program behavior ======================================= *)
-val (_, mem_wi_prog_tm, mem_tm, prog_tm) = (dest_bir_is_lifted_prog o concl) balrob_program_THM;
+val (_, mem_wi_prog_tm, mem_tm, prog_tm) =
+  (dest_bir_is_lifted_prog o concl)
+    (DB.fetch "binaries" thm_name);
+
+
 val prog_bls = (fst o dest_list o dest_BirProgram) prog_tm;
 
 val prog_blocks_dict =
@@ -217,7 +221,9 @@ fun mem_symbol_to_prog_lbl name =
     handle Option => raise ERR "mem_symbol_to_prog_lbl" ("cannot find addr for label: " ^ name);
 
 
-val prog_fun_entry_lbl_tms = List.map mem_symbol_to_prog_lbl symbs_sec_text;
+val prog_fun_entry_lbl_tms = List.foldr (fn (symb, l) =>
+      (mem_symbol_to_prog_lbl symb)::l handle HOL_ERR _ => l
+) [] symbs_sec_text;
 val prog_lbl_tms_ = prog_lbl_tms;
 
 fun prog_lbl_to_mem_rel_symbol lbl_tm =
