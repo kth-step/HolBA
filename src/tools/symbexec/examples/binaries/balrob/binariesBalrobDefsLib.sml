@@ -27,8 +27,20 @@ val symbs_sec_text = [
 val arch_str         = "m0";
 val prog_range       = ((Arbnum.fromInt 0), (Arbnum.fromInt 0x8000));
 
-val lift_list        = [("balrob.elf.da", "balrob_program_THM"),
-                        ("balrob_opt.elf.da", "balrob_opt_program_THM")];
+val configs          = [("balrob",
+                           ("balrob.elf.da", "balrob/balrob.elf.da.plus", "balrob/balrob.elf.mem"),
+                           "balrob_program_THM",
+                           ((Arbnum.fromInt 0x00000000, Arbnum.fromInt 0x00003564),
+                            (Arbnum.fromInt 0x10000000, Arbnum.fromInt (0x00000018 + 0x30d)),
+                            (Arbnum.fromInt 0x10001000, Arbnum.fromInt 0x00000ff0))
+                        ),
+                        ("balrob_opt",
+                           ("balrob_opt.elf.da", "balrob/balrob_opt.elf.da.plus", "balrob/balrob_opt.elf.mem"),
+                           "balrob_opt_program_THM",
+                           ((Arbnum.fromInt 0x00000000, Arbnum.fromInt 0x00003414),
+                            (Arbnum.fromInt 0x10000000, Arbnum.fromInt (0x00000018 + 0x310)),
+                            (Arbnum.fromInt 0x10001000, Arbnum.fromInt 0x00000ff0))
+                        )];
 
 val symb_filter_lift = fn secname =>
   case secname of

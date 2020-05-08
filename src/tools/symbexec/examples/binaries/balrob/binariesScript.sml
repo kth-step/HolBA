@@ -11,7 +11,7 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 val _ = new_theory "binaries";
 
 
-fun lift_da_file_to_thm (da_file_lift, thm_name) =
+fun lift_da_file_to_thm (prog_id, (da_file_lift, da_file_mem, mem_file), thm_name, (mem_region_const, mem_region_data, mem_region_stack)) =
   let
     val _ = print_with_style_ [Bold, Underline] ("Lifting " ^ da_file_lift ^ " (" ^ arch_str ^ ")\n");
 
@@ -24,7 +24,7 @@ fun lift_da_file_to_thm (da_file_lift, thm_name) =
     ()
   end;
 
-val _ = List.map lift_da_file_to_thm lift_list;
+val _ = List.map lift_da_file_to_thm configs;
 
 
 val _ = export_theory();
