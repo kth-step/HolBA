@@ -1,11 +1,13 @@
 structure bir_conc_execLib : bir_conc_execLib =
 struct
+(* HOL_Interactive.toggle_quietdec(); *)
 
   open HolKernel pairLib listSyntax stringSyntax wordsSyntax optionSyntax;
   open bir_symb_execLib;
   open bir_symb_masterLib;
   open bir_symb_init_envLib;     
   open bir_embexp_driverLib;
+(* HOL_Interactive.toggle_quietdec(); *)
 
 
   val EVAL_CONV =
@@ -39,6 +41,8 @@ struct
     foldr (fn ((n,v),e) => update_env n v e) (env) s;
 
   fun econcl exp = (rhs o concl o EVAL) exp
+  val toTerm = rhs o concl
+
   fun mem_init_conc_exec exp [] =
       let 
 	  open bir_expSyntax
@@ -104,12 +108,23 @@ struct
 	  val (_,mmp,a,_) = dest_bir_update_mmap ( find_term is_bir_update_mmap tm);
 	  val (vty,aty,_,_,en,addr) = (dest_bir_load_from_mem) (find_term is_bir_load_from_mem tm)
 	  val tm' = SIMP_RULE ((std_ss++HolBACoreSimps.holBACore_ss)) [bir_store_in_mem_def, LET_DEF]
-      			      (ISPECL[a, en, vty, aty, ``(Imm64 (dummy :word64))``, mmp] bir_store_in_mem_used_addrs_THM)
-	  val res = (rhs o concl o EVAL_CONV) (concl (SIMP_RULE (arith_ss) [] (SPECL[addr] tm')))
+          (ISPECL[a, en, vty, aty, ``(Imm64 (dummy :word64))``, mmp] bir_store_in_mem_used_addrs_THM)
+	  val res = (toTerm o EVAL_CONV) (concl (SIMP_RULE (arith_ss) [] (SPECL[addr] tm')))
       in
 	  res
       end
 
+  fun load_store_simp_tac1 tm =
+      let
+	  open bir_exp_memTheory
+	  open bir_exec_expLib
+      in
+	  ((#2 o dest_eq o toTerm) o (SIMP_CONV (std_ss) [bir_mem_addr_def, bitTheory.MOD_2EXP_def, size_of_bir_immtype_def]) 
+	   o load_store_simp_tac
+	   o toTerm o SIMP_RULE (std_ss++HolBACoreSimps.bir_load_store_ss) []
+	   o (computeLib.RESTR_EVAL_RULE [``bir_eval_load``, ``bir_eval_store``]) 
+	   o SIMP_CONV(std_ss++HolBACoreSimps.bir_load_store_ss) [bir_eval_load_def, bir_eval_store_def]) tm
+      end
 
   fun conc_exec_program depth prog envfo mls =
     let 
@@ -122,24 +137,34 @@ struct
       fun eq_true t = t = ``SOME (BVal_Imm (Imm1 1w))``
       fun pathcond_val s =
 	  let
+	      
 	      val bsst_pred_init_mem = mem_init_conc_exec ``(^s).bsst_pred`` mls
-	      val restr_eval_tm = computeLib.RESTR_EVAL_CONV [``bir_eval_load``, ``bir_eval_store``] 
+	      (* val _ = print "afetr bsst_pred_init_mem \n" *)
+
+	      val restr_eval_tm = (rhs o concl o computeLib.RESTR_EVAL_CONV [``bir_eval_load``, ``bir_eval_store``])
 					``bir_eval_exp (^bsst_pred_init_mem) (BEnv (K NONE))``;
+	      (* val _ = print "afetr restr_eval_tm \n" *)
+	      (* val _ = print_term (restr_eval_tm) *)
 	      val bsst_simp_tm = 
                     (let 
-			 val tm = ((rhs o concl) (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] 
-								       ((rhs o concl) restr_eval_tm))) 
-				       handle _ => ((rhs o concl) restr_eval_tm)
-			 val res =load_store_simp_tac tm
-			     handle _ => tm
+			 val tm = ((rhs o concl) (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] (restr_eval_tm)))  
+			     handle _ => restr_eval_tm
+			 val (f,t) = Lib.first (fn (tac,t) => (Lib.can tac) t) [(load_store_simp_tac,tm), (load_store_simp_tac1,tm)]
+			     handle _ => ((fn t => t), tm)
+			 val res = f t
 		     in
 			 res
 		     end)
+	      (* val _ = print "afetr bsst_simp_tm \n" *)
+	      (* val _ = print_term bsst_simp_tm *)
+	      (* val _ = print "\n\n\n" *)
 
 	  in
 	      (snd o dest_eq o concl o EVAL) bsst_simp_tm
 	  end
+      (* val _ = print "before calling pathcond_val \n" *)
       val filteredStates = List.filter (eq_true o pathcond_val) states
+      (* val _ = print "afetr calling pathcond_val \n" *)
       val final_state = case filteredStates of
 			   [s] => s
 			 | []  => raise ERR "conc_obs_compute" "no state has a true path condition?!?!?!"
@@ -215,8 +240,11 @@ struct
       val m = if List.null m then ("MEM", []:((num * num) list)) else (getMem (hd m))
       val rg = map getReg rg
       val envfo = SOME (gen_symb_updates rg)
+      (* val _ = print "before conc_exec_program \n" *)
       val state_ = conc_exec_program 200 prog envfo (#2 m)
+      (* val _ = print "after conc_exec_program \n" *)
       val obs = conc_exec_obs_extract state_
+      (* val _ = print "after conc_exec_obs_extract \n" *)
 
       val _ = map print_term obs
       val _ = print "\n";

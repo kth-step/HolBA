@@ -210,7 +210,7 @@ struct
       fun getMem tm = case tm of memT x => x
       fun is_memT tm = can getMem tm;
       fun rkv_to_json (k,v) =
-        let
+        let (* TODO: Stack pointer need to be handled *) 
           val _ = if String.isPrefix "R" k then () else
                     raise ERR "gen_json_state" "input not as exptected";
           val _ = if isSecond = String.isSuffix "_" k then () else
