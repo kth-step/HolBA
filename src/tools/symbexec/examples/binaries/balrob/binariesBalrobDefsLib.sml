@@ -25,9 +25,11 @@ val symbs_sec_text = [
   ];
 
 val arch_str         = "m0";
-val da_file_lift     = "balrob.elf.da";
 val prog_range       = ((Arbnum.fromInt 0), (Arbnum.fromInt 0x8000));
-val thm_name         = "balrob_program_THM";
+
+val lift_list        = [("balrob.elf.da", "balrob_program_THM"),
+                        ("balrob_opt.elf.da", "balrob_opt_program_THM")];
+
 val symb_filter_lift = fn secname =>
   case secname of
       ".text" => (fn symbname => List.exists (fn x => x = symbname) symbs_sec_text)

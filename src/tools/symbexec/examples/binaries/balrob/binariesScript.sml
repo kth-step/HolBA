@@ -11,13 +11,20 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 val _ = new_theory "binaries";
 
 
-val _ = print_with_style_ [Bold, Underline] ("Lifting " ^ da_file_lift ^ " (" ^ arch_str ^ ")\n");
+fun lift_da_file_to_thm (da_file_lift, thm_name) =
+  let
+    val _ = print_with_style_ [Bold, Underline] ("Lifting " ^ da_file_lift ^ " (" ^ arch_str ^ ")\n");
 
-val (region_map, sections) = read_disassembly_file_regions_filter symb_filter_lift da_file_lift;
+    val (region_map, sections) = read_disassembly_file_regions_filter symb_filter_lift da_file_lift;
 
-val (thm, errors) = bmil_m0_mod_LittleEnd_Process.bir_lift_prog_gen prog_range sections;
+    val (thm, errors) = bmil_m0_mod_LittleEnd_Process.bir_lift_prog_gen prog_range sections;
 
-val _ = save_thm (thm_name, thm);
+    val _ = save_thm (thm_name, thm);
+  in
+    ()
+  end;
+
+val _ = List.map lift_da_file_to_thm lift_list;
 
 
 val _ = export_theory();
