@@ -9,6 +9,7 @@ struct
   open bir_embexp_driverLib;
 (* HOL_Interactive.toggle_quietdec(); *)
 
+  val bir_endian_ss = rewrites (type_rws ``:bir_endian_t``)
 
   val EVAL_CONV =
       computeLib.compset_conv (reduceLib.num_compset())
@@ -100,6 +101,11 @@ struct
   val (bir_load_from_mem_tm,  mk_bir_load_from_mem, dest_bir_load_from_mem, is_bir_load_from_mem)  =
       (syntax_fns6 ) "bir_load_from_mem";
 
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_mem";
+  val syntax_fnss2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+  val (bitstring_split_tm,  mk_bitstring_split, dest_bitstring_split, is_bitstring_split)  =
+      (syntax_fnss2 ) "bitstring_split";
+
   fun load_store_simp_tac tm =
       let 
 	  open bir_exp_memTheory
@@ -126,6 +132,35 @@ struct
 	   o SIMP_CONV(std_ss++HolBACoreSimps.bir_load_store_ss) [bir_eval_load_def, bir_eval_store_def]) tm
       end
 
+  fun load_store_simp_tac2 tm =
+      let 
+	  open bir_exp_memTheory
+	  open bir_exec_expLib
+	  open listTheory
+	  open bitTheory bitstringTheory
+
+	  val tm1 = toTerm (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss++bir_endian_ss) 
+				      [bir_eval_load_def, bir_eval_store_def, bir_store_in_mem_def, type_of_bir_imm_def,
+  				       bir_number_of_mem_splits_def, size_of_bir_immtype_def, LET_DEF] tm)
+	  val tm2 = load_store_simp_tac tm1 
+					|> (SIMP_CONV(srw_ss())[bir_mem_addr_def,size_of_bir_immtype_def,b2n_def]) 
+					|> (#2 o dest_eq o toTerm)
+
+	  val (aty,mmp,a,vs) = dest_bir_update_mmap (find_term is_bir_update_mmap tm2)
+	  val (_,addr) = dest_comb tm2
+	  val tm3 = (ISPECL[aty, mmp, a, vs, addr] bir_update_mmap_UNCHANGED);
+	  val res = (toTerm o EVAL_CONV)(concl(SIMP_RULE(arith_ss)[bir_mem_addr_def, MOD_2EXP_def, LENGTH_REVERSE] tm3))
+
+	  val (n, bs) = dest_bitstring_split (find_term is_bitstring_split res);
+	  val m = (toTerm o EVAL) ``(LENGTH ^bs) DIV ^n``;
+	  val thm = (SIMP_RULE (srw_ss()) [length_w2v] (ISPECL[``^n``, ``^m``,``^bs``] bitstring_split_LENGTHS));
+      in
+	  tm3 |> SIMP_RULE (srw_ss() ++ ARITH_ss) [thm, bir_mem_addr_def, bitTheory.MOD_2EXP_def, size_of_bir_immtype_def] 
+	      |> EVAL_RULE
+	      |> (#2 o dest_eq o concl) 
+      end
+
+
   fun conc_exec_program depth prog envfo mls =
     let 
       val holba_ss = ((std_ss++HolBACoreSimps.holBACore_ss))
@@ -149,7 +184,8 @@ struct
                     (let 
 			 val tm = ((rhs o concl) (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] (restr_eval_tm)))  
 			     handle _ => restr_eval_tm
-			 val (f,t) = Lib.first (fn (tac,t) => (Lib.can tac) t) [(load_store_simp_tac,tm), (load_store_simp_tac1,tm)]
+			 val (f,t) = Lib.first (fn (tac,t) => (Lib.can tac) t) 
+			   [(load_store_simp_tac,tm), (load_store_simp_tac1,tm), (load_store_simp_tac2, tm)]
 			     handle _ => ((fn t => t), tm)
 			 val res = f t
 		     in
