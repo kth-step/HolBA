@@ -121,8 +121,9 @@ val exps = all_exps;
 fun n_times 0 f x = x | n_times n f x = n_times (n-1) f (f x);
 fun dest_mem_load size tm =
     if size = 7 
-    then ((finite_mapSyntax.dest_fapply o (n_times 7 (#2 o dest_word_concat))) tm)
-    else ((finite_mapSyntax.dest_fapply o (n_times size (#2 o dest_word_concat)) o (#1 o dest_word_lsr o #1 o dest_w2w)) tm);
+    then tm |> (finite_mapSyntax.dest_fapply  o  (n_times  7 (#2 o dest_word_concat))) 
+    else tm |> (#1 o dest_word_lsr o #1 o dest_w2w)
+	    |> (finite_mapSyntax.dest_fapply o (n_times size (#2 o dest_word_concat)));
 
 
 fun make_word_relation relation exps =
@@ -131,8 +132,7 @@ fun make_word_relation relation exps =
             map (fn v =>
                     let val vp = lift_string string_ty (fromHOLstring v ^ "'")
                     in ``BVar ^v`` |-> ``BVar ^vp`` end)
-                (bir_free_vars exp);
-
+                (bir_free_vars exp)
 
         fun primed_vars exp = map (#residue) (primed_subst exp);
         fun nub [] = []
@@ -153,35 +153,27 @@ fun make_word_relation relation exps =
             in
 		``(^va <> ^vb)``
             end;
-	(* val _ = print "Relation is:\n" *)
-	(* val _ = print_term relation *)
 	val rel2w = (bir2bool relation)
 
-		    
 	fun mk_distinct_mem (a, b) rel = 
 	    let 
 		open finite_mapSyntax
 		val va = mk_var (a, ``:word64 |-> word8``)
 		val vb = mk_var (b, ``:word64 |-> word8``)
-		fun memList  tm_list = filter (fn tm => (#1 (dest_fapply(find_term is_fapply tm)) = va)) tm_list
-		fun memList' tm_list = filter (fn tm => (#1 (dest_fapply(find_term is_fapply tm)) = vb)) tm_list
-		fun extract_mem_load n rel = ((nub o find_terms (can (dest_mem_load n))) rel)
-		(* val rm_lsr = map (fn tm => (#1 o dest_word_lsr o #1 o dest_w2w) tm) *)
-		val memop  =
-		    if      not(List.null (extract_mem_load 7 rel)) then (extract_mem_load 7 rel)
-		    else if not(List.null (extract_mem_load 3 rel)) then (extract_mem_load 3 rel)
-		    else if not(List.null (extract_mem_load 1 rel)) then (extract_mem_load 1 rel)
-		    else                                                 (extract_mem_load 0 rel)
-
-		val m1 = zip (memList memop) (memList' memop)
+		fun split_mem  tms m = filter (fn tm => (#1 (dest_fapply(find_term is_fapply tm)) = m)) tms
+		fun extract_mem_load n rel = ((nub o find_terms (can (dest_mem_load n))) rel);
+		val memop  = (extract_mem_load 7 rel)@(extract_mem_load 3 rel)@(extract_mem_load 1 rel)@(extract_mem_load 0 rel)
+		val m1 = zip (split_mem  memop va) (split_mem memop vb)
+		val res = if List.null m1 then T else list_mk_disj (map (fn (tm, tm') => ``^tm <> ^tm'`` ) m1)
 	    in 
-		if List.null m1 then T else list_mk_disj (map (fn (tm, tm') => ``^tm <> ^tm'`` ) m1)
+		res
 	    end;
+
         val distinct = if null pairs 
 		       then raise NoObsInPath 
-		       else (* if List.null mpair *)
-		       (* then *) list_mk_disj (map mk_distinct_reg rpair)
-		       (* else mk_disj (list_mk_disj ((map mk_distinct_reg rpair)), (mk_distinct_mem (hd mpair) rel2w)) *)
+		       else if List.null mpair
+		       then list_mk_disj (map mk_distinct_reg rpair)
+		       else mk_conj (list_mk_disj ((map mk_distinct_reg rpair)), (mk_distinct_mem (hd mpair) rel2w))
     in
        ``^rel2w /\ ^distinct``
     end
@@ -209,6 +201,24 @@ fun to_sml_Arbnums model =
 				   end
 			       else
 				   regT(name, dest_word_literal tm)) model;
+
+(* fun to_sml_Arbnums model = *)
+(*     List.map (fn (name, tm) => if finite_mapSyntax.is_fupdate tm *)
+(* 			       then *)
+(* 				   let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm *)
+(* 				       val vlsN = map (fn p => *)
+(* 							  let *)
+(* 							      val (ad, vl) = pairSyntax.dest_pair p *)
+(* 							  in *)
+(* 							      (dest_word_literal ad, dest_word_literal vl) *)
+(* 								  handle _ => (Arbnum.fromInt 969696, dest_word_literal vl) *)
+(* 							  end) vlsW *)
+(* 				   in *)
+(* 				       memT(name, vlsN) *)
+(* 				   end *)
+(* 			       else *)
+(* 				   regT(name, dest_word_literal tm)) model; *)
+
 
 val hw_obs_model_id = ref "";
 val do_enum = ref false;
@@ -276,7 +286,7 @@ fun extract_obs_variables ps =
                 ps);
 
 fun enumerate_line_single_input path_struct =
-    let val vars = extract_obs_variables path_struct;
+    let val vars = extract_obs_variables path_struct
     in
         case vars of
             [] => []
@@ -384,9 +394,9 @@ fun next_experiment all_exps next_relation  =
 
         val _ = min_verb 3 (fn () =>
                                bir_exp_pretty_print rel);
-        val _ = printv 3 ("Word relation\n");
+        val _ = printv 4 ("Word relation\n");
         val new_word_relation = make_word_relation rel all_exps;
-        val _ = min_verb 4 (fn () =>
+        val _ = min_verb 3 (fn () =>
                                (print_term new_word_relation;
                                 print "\n"));
         val word_relation =
@@ -446,12 +456,26 @@ fun next_experiment all_exps next_relation  =
 
         (* check with concrete-symbolic execution whether the observations are actually equivalent *)
         val lifted_prog_w_obs = case !current_prog_w_obs of
-                             SOME x => x
-                           | NONE => raise ERR "next_test" "no program found";
-	(* remove meory for now from states*)
+				    SOME x => x
+				  | NONE => raise ERR "next_test" "no program found";
 
+	(* remove meory for now from states*)
         val _ = if conc_exec_obs_compare lifted_prog_w_obs (s1, s2) then () else
-                  raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
+		raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
+
+	(* fun is_state_mem_emp s = *)
+	(*     let *)
+	(* 	fun getMem tm = case tm of memT x => x  *)
+	(* 	fun is_memT tm = can getMem tm; *)
+	(*     in *)
+	(* 	getMem(filter is_memT s1 |> hd) |> #2 |> List.null *)
+	(*     end *)
+	(* val ce = conc_exec_obs_compare lifted_prog_w_obs (s1, s2) *)
+        (* val _ = if #1 ce then () else *)
+        (*           raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment."; *)
+	(* val (s1, s2) = if not (#2 ce |> hd |> is_state_mem_emp) *)
+	(* 	       then let val s1'::s2'::_ = #2 ce in (s1',s2') end *)
+	(* 	       else (s1,s2) *)
 
         (* create experiment files *)
         val exp_id  = bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);

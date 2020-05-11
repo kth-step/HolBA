@@ -133,7 +133,8 @@ def z3_to_HolTerm(exp):
                     raise NotImplementedError("Not handled: special constant array: {}".format(exp))
                 #params = " ".join(string.ascii_lowercase[:exp.num_args()])
                 expr = ", ".join(z3_to_HolTerm(p) for p in exp.children())
-                return "(FUN_MAP2 (K ({})) (UNIV))".format(expr)
+                # return "(FUN_MAP2 (K ({})) (UNIV))".format(expr)
+                return "(FEMPTY : word64 |-> word8) |+" + "((Xw: 64 word),({}: 8 word))".format(expr)
 
     # Function interpretation: Used for memory
     if isinstance(exp, z3.FuncInterp):
@@ -153,10 +154,13 @@ def model_to_list(model):
     names = set()
     mem_check = re.compile('MEM')
     array_check = re.compile('!')
+    # flag = (not list(filter(lambda x: array_check.search(str(x.name)), model)))
+
     try:
         for x in model:
             name = str(x.name())
-            if(mem_check.search(name)): 
+            # if(mem_check.search(name) and not flag): 
+            if(mem_check.search(name)):
                 continue
             term = z3_to_HolTerm(model[x])
             
