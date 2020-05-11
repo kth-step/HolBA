@@ -185,39 +185,23 @@ fun print_model model =
             (print (" - " ^ name ^ ": "); Hol_pp.print_term tm))
         () (rev model);
 
-
 fun to_sml_Arbnums model =
-    List.map (fn (name, tm) => if finite_mapSyntax.is_fupdate tm
-			       then
-				   let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm
-				       val vlsN = map (fn p =>
-							  let
-							      val (ad, vl) = pairSyntax.dest_pair p
-							  in
-							      (dest_word_literal ad, dest_word_literal vl)
-							  end) vlsW
+    List.map (fn (name, tm) => 
+        if finite_mapSyntax.is_fupdate tm
+	then
+	    let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm
+		val vlsN = map (fn p =>
+				   let
+				       val (ad, vl) = pairSyntax.dest_pair p
 				   in
-				       memT(name, vlsN)
-				   end
-			       else
-				   regT(name, dest_word_literal tm)) model;
-
-(* fun to_sml_Arbnums model = *)
-(*     List.map (fn (name, tm) => if finite_mapSyntax.is_fupdate tm *)
-(* 			       then *)
-(* 				   let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm *)
-(* 				       val vlsN = map (fn p => *)
-(* 							  let *)
-(* 							      val (ad, vl) = pairSyntax.dest_pair p *)
-(* 							  in *)
-(* 							      (dest_word_literal ad, dest_word_literal vl) *)
-(* 								  handle _ => (Arbnum.fromInt 969696, dest_word_literal vl) *)
-(* 							  end) vlsW *)
-(* 				   in *)
-(* 				       memT(name, vlsN) *)
-(* 				   end *)
-(* 			       else *)
-(* 				   regT(name, dest_word_literal tm)) model; *)
+				       (dest_word_literal ad, dest_word_literal vl)
+				       handle _ => (Arbnum.fromInt 969696, dest_word_literal vl)
+				   end) vlsW
+	    in
+		memT(name, vlsN)
+	    end
+	else
+	    regT(name, dest_word_literal tm)) model;
 
 
 val hw_obs_model_id = ref "";
@@ -371,6 +355,10 @@ fun prime_mem model =
 		   | _ => model@[("MEM_", (snd o hd) fmem )]
     end
     
+
+val getReg = (fn tm => case tm of regT x => x)
+val getMem = (fn tm => case tm of memT x => x) 
+val is_memT= (fn tm => can getMem tm)
 fun next_experiment all_exps next_relation  =
     let
         open bir_expLib;
@@ -409,8 +397,6 @@ fun next_experiment all_exps next_relation  =
         val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
         val _ = printv 1 ("Printed model\n");
 	(*Need to be removed later. It is just for experimental reasone*)
-	(* val model = prime_mem model *)
-
 
         fun remove_prime str =
           if String.isSuffix "_" str then
@@ -460,22 +446,13 @@ fun next_experiment all_exps next_relation  =
 				  | NONE => raise ERR "next_test" "no program found";
 
 	(* remove meory for now from states*)
-        val _ = if conc_exec_obs_compare lifted_prog_w_obs (s1, s2) then () else
-		raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
-
-	(* fun is_state_mem_emp s = *)
-	(*     let *)
-	(* 	fun getMem tm = case tm of memT x => x  *)
-	(* 	fun is_memT tm = can getMem tm; *)
-	(*     in *)
-	(* 	getMem(filter is_memT s1 |> hd) |> #2 |> List.null *)
-	(*     end *)
-	(* val ce = conc_exec_obs_compare lifted_prog_w_obs (s1, s2) *)
-        (* val _ = if #1 ce then () else *)
-        (*           raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment."; *)
-	(* val (s1, s2) = if not (#2 ce |> hd |> is_state_mem_emp) *)
-	(* 	       then let val s1'::s2'::_ = #2 ce in (s1',s2') end *)
-	(* 	       else (s1,s2) *)
+	val is_state_mem_emp = (fn s => getMem(filter is_memT s |> hd) |> #2 |> List.null)
+	val ce_obs_comp = conc_exec_obs_compare lifted_prog_w_obs (s1, s2)
+        val _ = if #1 ce_obs_comp then () else
+                  raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
+	val (s1, s2) = if not (#2 ce_obs_comp |> hd |> is_state_mem_emp)
+		       then let val s1'::s2'::_ = #2 ce_obs_comp in (s1',s2') end
+		       else (s1,s2)
 
         (* create experiment files *)
         val exp_id  = bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
