@@ -9,10 +9,17 @@ struct
   open bir_embexp_driverLib;
 (* HOL_Interactive.toggle_quietdec(); *)
 
+  val (mem_state) = ref ([]:modelValues list);
 
   val getReg = (fn tm => case tm of regT x => x)
   val getMem = (fn tm => case tm of memT x => x) 
   val is_memT= (fn tm => can getMem tm)
+  val toTerm = rhs o concl
+
+  fun econcl exp = (rhs o concl o EVAL) exp
+  fun fromTerm tm = Arbnum.fromString (Parse.term_to_string tm);
+  fun t2n tm = tm |> strip_comb |> #2 |> (fn a::b::_ => (fromTerm a , fromTerm b));
+  fun mk_mem_state tms = memT("MEM", (map (fn p => t2n p) tms));
   fun print_state s =
       let
 	  val (m, rg) = List.partition (is_memT) s;
@@ -24,6 +31,19 @@ struct
 	  val _ =   map (fn x => let val(n,v) = getReg x in print ("(" ^ n ^ ", " ^(Arbnum.toString( v))^ ")") end) rg
 	  val _ = print "\n"
       in () end;
+
+  fun update_env name value env = 
+      let
+        val hname = fromMLstring name
+        val wordval = mk_wordi (value, 64);
+      in
+	  (rhs o concl o EVAL) ``bir_symb_env_update ^hname (BExp_Const (Imm64 ^wordval)) (BType_Imm Bit64) ^env``
+      end;
+
+  fun gen_symb_updates s env =
+    foldr (fn ((n,v),e) => update_env n v e) (env) s;
+
+  (* ---------------------- Simplification conversions ---------------------- *)
 
   val bir_endian_ss = rewrites (type_rws ``:bir_endian_t``)
   val EVAL_CONV =
@@ -42,22 +62,6 @@ struct
 	      (``words$word_mod:'a word -> 'a word -> 'a word``, 2,
 	       wordsLib.WORD_MOD_BITS_CONV)]];
 
-  fun update_env name value env = 
-      let
-        val hname = fromMLstring name
-        val wordval = mk_wordi (value, 64);
-      in
-	  (rhs o concl o EVAL) ``bir_symb_env_update ^hname (BExp_Const (Imm64 ^wordval)) (BType_Imm Bit64) ^env``
-      end;
-
-  fun gen_symb_updates s env =
-    foldr (fn ((n,v),e) => update_env n v e) (env) s;
-
-  fun econcl exp = (rhs o concl o EVAL) exp
-  val toTerm = rhs o concl
-  fun fromTerm tm = Arbnum.fromString (Parse.term_to_string tm);
-  fun t2n tm = tm |> strip_comb |> #2 |> (fn a::b::_ => (fromTerm a , fromTerm b));
-  fun mk_mem_state tms = memT("MEM", (map (fn p => t2n p) tms));
 
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_mem";
   val syntax_fns6 = syntax_fns 6 dest_sexop mk_sexop;
@@ -122,6 +126,7 @@ struct
 	      |> EVAL_RULE
 	      |> (#2 o dest_eq o concl) 
       end
+  (* ------------------------------------------------------------------------ *)
 
   fun mem_init_conc_exec exp ([],v) =
       let 
@@ -139,7 +144,7 @@ struct
 				 let
 				     val (_, a, _, _) = dest_BExp_Load ldexp
 				     val addr = case (find_terms is_BExp_Load a) of
-						  [] => a
+					         [] => a
 						| _ =>  let val (_, a', _, _) = dest_BExp_Load ((hd o find_terms is_BExp_Load) a) in a' end
 				 in
 				     econcl ``bir_eval_exp ^addr (BEnv (K NONE))``
@@ -172,7 +177,6 @@ struct
 	  (memSubs,(mk_mem_state []))
       end
 
-  val (mem_state) = ref ([]:modelValues list);
   fun conc_exec_program depth prog envfo (mls,v) =
       let 
 	  val holba_ss = ((std_ss++HolBACoreSimps.holBACore_ss))
