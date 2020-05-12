@@ -69,33 +69,33 @@ struct
   val (bitstring_split_tm,  mk_bitstring_split, dest_bitstring_split, is_bitstring_split)  =
       (syntax_fnss2 ) "bitstring_split";
 
-  fun load_store_simp_tac tm =
+  fun load_store_simp_unchange_conv tm =
       let 
 	  open bir_exp_memTheory
 	  open bir_exec_expLib
 
 	  val (_,mmp,a,_) = dest_bir_update_mmap ( find_term is_bir_update_mmap tm);
 	  val (vty,aty,_,_,en,addr) = (dest_bir_load_from_mem) (find_term is_bir_load_from_mem tm)
-	  val tm' = SIMP_RULE ((std_ss++HolBACoreSimps.holBACore_ss)) [bir_store_in_mem_def, LET_DEF]
-          (ISPECL[a, en, vty, aty, ``(Imm64 (dummy :word64))``, mmp] bir_store_in_mem_used_addrs_THM)
-	  val res = (toTerm o EVAL_CONV) (concl (SIMP_RULE (arith_ss) [] (SPECL[addr] tm')))
-      in
-	  res
+	  val thm  = ISPECL[a, en, vty, aty, ``(Imm64 (dummy :word64))``, mmp] bir_store_in_mem_used_addrs_THM
+	  val thm' = SIMP_RULE ((std_ss++HolBACoreSimps.holBACore_ss)) [bir_store_in_mem_def, LET_DEF] thm
+      in  
+	  (toTerm o EVAL_CONV) (concl (SIMP_RULE (arith_ss) [] (SPECL[addr] thm')))
       end
 
-  fun load_store_simp_tac1 tm =
+  fun load_store_simp_unchange1_conv tm =
       let
 	  open bir_exp_memTheory
 	  open bir_exec_expLib
       in
-	  ((#2 o dest_eq o toTerm) o (SIMP_CONV (std_ss) [bir_mem_addr_def, bitTheory.MOD_2EXP_def, size_of_bir_immtype_def]) 
-	   o load_store_simp_tac
-	   o toTerm o SIMP_RULE (std_ss++HolBACoreSimps.bir_load_store_ss) []
-	   o (computeLib.RESTR_EVAL_RULE [``bir_eval_load``, ``bir_eval_store``]) 
-	   o SIMP_CONV(std_ss++HolBACoreSimps.bir_load_store_ss) [bir_eval_load_def, bir_eval_store_def]) tm
+	  tm |> SIMP_CONV(std_ss++HolBACoreSimps.bir_load_store_ss)[bir_eval_load_def, bir_eval_store_def]
+	     |> computeLib.RESTR_EVAL_RULE [``bir_eval_load``, ``bir_eval_store``]
+	     |> (toTerm o SIMP_RULE (std_ss++HolBACoreSimps.bir_load_store_ss) [])
+	     |> load_store_simp_unchange_conv
+	     |> SIMP_CONV (std_ss) [bir_mem_addr_def, bitTheory.MOD_2EXP_def, size_of_bir_immtype_def]
+	     |> (#2 o dest_eq o toTerm)
       end
 
-  fun load_store_simp_tac2 tm =
+  fun load_store_simp_unchange2_conv tm =
       let 
 	  open bir_exp_memTheory
 	  open bir_exec_expLib
@@ -103,11 +103,11 @@ struct
 	  open bitTheory bitstringTheory
 
 	  val tm1 = toTerm (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss++bir_endian_ss) 
-				      [bir_eval_load_def, bir_eval_store_def, bir_store_in_mem_def, type_of_bir_imm_def,
-  				       bir_number_of_mem_splits_def, size_of_bir_immtype_def, LET_DEF] tm)
-	  val tm2 = load_store_simp_tac tm1 
-					|> (SIMP_CONV(srw_ss())[bir_mem_addr_def,size_of_bir_immtype_def,b2n_def]) 
-					|> (#2 o dest_eq o toTerm)
+		      [bir_eval_load_def, bir_eval_store_def, bir_store_in_mem_def, type_of_bir_imm_def,
+  		            bir_number_of_mem_splits_def, size_of_bir_immtype_def, LET_DEF] tm)
+	  val tm2 = load_store_simp_unchange_conv tm1 
+		|> (SIMP_CONV(srw_ss())[bir_mem_addr_def,size_of_bir_immtype_def,b2n_def]) 
+		|> (#2 o dest_eq o toTerm)
 
 	  val (aty,mmp,a,vs) = dest_bir_update_mmap (find_term is_bir_update_mmap tm2)
 	  val (_,addr) = dest_comb tm2
@@ -139,13 +139,8 @@ struct
 				 let
 				     val (_, a, _, _) = dest_BExp_Load ldexp
 				     val addr = case (find_terms is_BExp_Load a) of
-						    [] => a
-						  | _ => 
-						    let
-							val (_, a', _, _) = dest_BExp_Load ((hd o find_terms is_BExp_Load) a) 
-						    in 
-							a'
-						    end
+						  [] => a
+						| _ =>  let val (_, a', _, _) = dest_BExp_Load ((hd o find_terms is_BExp_Load) a) in a' end
 				 in
 				     econcl ``bir_eval_exp ^addr (BEnv (K NONE))``
 				 end) loadList;
@@ -168,6 +163,7 @@ struct
     | mem_init_conc_exec exp (xs,_) =
       let open numSyntax
 	  open Arbnum
+
 	  val val_pairt = map (fn (a,b) => ( mk_pair((term_of_int o toInt) a, (term_of_int o toInt) b))) xs
 	  val mem = mk_var ("MEM",Type`:num |-> num`);
 	  val memInit = foldl (fn (x,y) => ``^y |+ ^x``) ``(FEMPTY: num |-> num)`` val_pairt
@@ -189,14 +185,16 @@ struct
 	      let
 		  val (bsst_pred_init_mem, ms) = mem_init_conc_exec ``(^s).bsst_pred`` (mls,v)
 		  val _ =  mem_state := ms::(!mem_state)
-		  val restr_eval_tm = (rhs o concl o computeLib.RESTR_EVAL_CONV [``bir_eval_load``, ``bir_eval_store``])
+		  val restr_eval_tm = (toTerm o computeLib.RESTR_EVAL_CONV [``bir_eval_load``, ``bir_eval_store``])
 					  ``bir_eval_exp (^bsst_pred_init_mem) (BEnv (K NONE))``;
 		  val bsst_simp_tm = 
                       (let 
 			   val tm = ((rhs o concl) (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] (restr_eval_tm)))  
 			       handle _ => restr_eval_tm
-			   val (f,t) = Lib.first (fn (tac,t) => (Lib.can tac) t) 
-						 [(load_store_simp_tac,tm), (load_store_simp_tac1,tm), (load_store_simp_tac2, tm)]
+			   val (f,t) = Lib.first (fn (tac,t) => (Lib.can tac) t)
+			   			 [(load_store_simp_unchange_conv,tm), 
+						  (load_store_simp_unchange1_conv,tm), 
+						  (load_store_simp_unchange2_conv, tm)]
 			       handle _ => ((fn t => t), tm)
 			   val res = f t
 		       in
@@ -220,14 +218,13 @@ struct
       fun eval_exp t = (rhs o concl o EVAL) t;
       fun eval_exp_to_val t =
         let
-	    val esimp = computeLib.RESTR_EVAL_CONV [``bir_eval_load``, ``bir_eval_store``]
-	    					   ``bir_eval_exp (^t) (BEnv (K NONE))``;
+	    val esimp = computeLib.RESTR_EVAL_CONV [``bir_eval_load``, ``bir_eval_store``] ``bir_eval_exp (^t) (BEnv (K NONE))``;
 	    val res =
                 eval_exp
 	    	    (let
-	    	     val tm = ((rhs o concl) (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] ((rhs o concl) esimp)))
-	    		 handle _ => ((rhs o concl) esimp)
-	    	     val res = load_store_simp_tac tm
+	    	     val tm = (toTerm (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] ((rhs o concl) esimp)))
+	    		 handle _ => (toTerm esimp)
+	    	     val res = load_store_simp_unchange_conv tm
 	    		 handle _ => tm
 	    	 in
 	    	     res

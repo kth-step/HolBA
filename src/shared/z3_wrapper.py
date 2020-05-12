@@ -154,13 +154,13 @@ def model_to_list(model):
     names = set()
     mem_check = re.compile('MEM')
     array_check = re.compile('!')
-    # flag = (not list(filter(lambda x: array_check.search(str(x.name)), model)))
+    flag = (not list(filter(lambda x: array_check.search(str(x.name)), model)))
 
     try:
         for x in model:
             name = str(x.name())
-            # if(mem_check.search(name) and not flag): 
-            if(mem_check.search(name)):
+            if(mem_check.search(name) and not flag): 
+            # if(mem_check.search(name)):
                 continue
             term = z3_to_HolTerm(model[x])
             

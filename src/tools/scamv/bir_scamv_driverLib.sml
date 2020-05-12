@@ -114,10 +114,6 @@ fun bir_free_vars exp =
 
 exception NoObsInPath;
 
-(*
-val exps = all_exps;
-*)
-
 fun n_times 0 f x = x | n_times n f x = n_times (n-1) f (f x);
 fun dest_mem_load size tm =
     if size = 7 
@@ -264,9 +260,7 @@ fun extract_obs_variables ps =
                      case obs_list of
                          NONE => []
                        | SOME list => 
-                         List.concat (List.map
-                                          (fn (_,term) =>
-                                              bir_free_vars term) list))
+                         List.concat (List.map (fn (_,term) => bir_free_vars term) list))
                 ps);
 
 fun enumerate_line_single_input path_struct =
@@ -274,8 +268,7 @@ fun enumerate_line_single_input path_struct =
     in
         case vars of
             [] => []
-          | (v::vs) => [(observe_line (bden (bvarimm64 (fromHOLstring v))),
-                         bir_rel_synthLib.enum_range (0,60))]
+          | (v::vs) => [(observe_line (bden (bvarimm64 (fromHOLstring v))), bir_rel_synthLib.enum_range (0,60))]
     end;
 
 fun default_enumeration_targets paths =
@@ -323,8 +316,8 @@ fun all_obs_not_present { a_run = (_,a_obs), b_run = (_,b_obs) } =
     end;
 
 
-fun memConstraint [] = ``T``
-  | memConstraint mls =
+fun mem_constraint [] = ``T``
+  | mem_constraint mls =
     let fun adjust_prime s =
             if String.isSuffix "_" s
             then String.map (fn c => if c = #"_" then #"'" else c) s
@@ -354,7 +347,6 @@ fun prime_mem model =
 	case fmem of [] => model
 		   | _ => model@[("MEM_", (snd o hd) fmem )]
     end
-    
 
 val getReg = (fn tm => case tm of regT x => x)
 val getMem = (fn tm => case tm of memT x => x) 
@@ -424,7 +416,7 @@ fun next_experiment all_exps next_relation  =
             in list_mk_conj (map mk_eq s) end;
 
         val reg_constraint = ``~^(mk_var_mapping (regs))``;
-	val mem_constraint = memConstraint ml;
+	val mem_constraint = mem_constraint ml;
 	val new_constraint = mk_conj (reg_constraint, mem_constraint)
 
         val _ =
