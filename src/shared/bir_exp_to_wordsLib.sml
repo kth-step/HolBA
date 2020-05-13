@@ -208,10 +208,17 @@ struct
 	      val (casttyp, ex, sz) = (dest_BExp_Cast) exp;
 	      val cast_ty = word_ty_of_bir_immtype_t sz;
 	      val val_ty = bir_exp_to_words ex;
+	      val val_typ_sz = val_ty |> type_of |> dest_word_type |> mk_itself 
+			       |> (fn x => (rhs o concl o EVAL)``dimindex(^x)``)
+			       |> term_to_string |> Int.fromString
+	                       |> (fn x => case x of SOME y => y);
+	      val cast_typ_to_int = size_of_bir_immtype_t sz;
 	  in
 	      case (term_to_string casttyp) of 
 		  "BIExp_UnsignedCast" =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
-		| "BIExp_SignedCast"   =>  wordsSyntax.mk_sw2sw(val_ty, dw cast_ty)
+		| "BIExp_SignedCast"   =>  if val_typ_sz >= cast_typ_to_int
+					   then wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+					   else wordsSyntax.mk_sw2sw(val_ty, dw cast_ty) 
 		| "BIExp_LowCast"      =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
 		  (* let *)
 		  (*     val num_of_exp_type = fcpLib.index_to_num(dw cast_ty); *)

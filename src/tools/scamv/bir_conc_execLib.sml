@@ -280,7 +280,6 @@ struct
       val m'  = if List.null m then ("MEM",[]:((num * num) list)) else (getMem (hd m))
       val rg' = map getReg rg
       val envfo = SOME (gen_symb_updates rg')
-
       val elm = (filter (fn (a,b) => a = (Arbnum.fromInt 969696)) (#2 m'));
       val (m, v) = if   not(List.null elm) 
 		   then (
@@ -288,9 +287,9 @@ struct
 		          numSyntax.term_of_int(Arbnum.toInt((#2 o hd) elm))
 		        )
 		   else (m', ``(0:num)``);
-
       val state_ = conc_exec_program 200 prog envfo ((#2 m),``^v``)
       val obs = conc_exec_obs_extract state_
+
       val new_state = (!mem_state) @ rg
       val _ = map print_term obs
       val _ = print "\n";
