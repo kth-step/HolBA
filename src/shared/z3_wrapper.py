@@ -134,7 +134,7 @@ def z3_to_HolTerm(exp):
                 #params = " ".join(string.ascii_lowercase[:exp.num_args()])
                 expr = ", ".join(z3_to_HolTerm(p) for p in exp.children())
                 # return "(FUN_MAP2 (K ({})) (UNIV))".format(expr)
-                return "(FEMPTY : word64 |-> word8) |+" + "((Xw: 64 word),({}: 8 word))".format(expr)
+                return "(FEMPTY : word64 |-> word8) |+" + "((BitVec: 64 word),({}: 8 word))".format(expr)
 
     # Function interpretation: Used for memory
     if isinstance(exp, z3.FuncInterp):
@@ -147,41 +147,52 @@ def z3_to_HolTerm(exp):
 
     raise NotImplementedError("Not handled: {} as {}".format(type(exp), exp))
 
-# Dirty hack to fix the problem of memory stores when mem <> mem' 
+# Python code t get difference of two lists 
+# Using set() 
+def Diff(li1, li2): 
+    return (list(set(li1) - set(li2)))
+
 def model_to_list(model):
-    mem_list = []
     sml_list = []
     names = set()
-    mem_check = re.compile('MEM')
+    # search filters
+    mem_check   = re.compile('MEM')
     array_check = re.compile('!')
-    flag = (not list(filter(lambda x: array_check.search(str(x.name)), model)))
+
+    # processing model
+    m2list = sorted(list(map(lambda x: (str(x.name()), model[x]), model)))
+    mvars  = list(filter (lambda x: mem_check.search(str(x.name)), model))
+    mnames = sorted (list(map(lambda x: str(x.name()), mvars)))
+    mnames.reverse()
+
+    # filtering k!x maps
+    kmap = list(filter (lambda x: array_check.search(str(x.name)), model))
+
+    # making the right model to process
+    if len(kmap) == 2:
+        model_no_mem = [pair for pair in m2list if not mem_check.search(pair[0])]
+        mdl = list(map(lambda pair: (mnames.pop(), pair[1]) if array_check.search(pair[0]) else pair, model_no_mem))
+    elif len(kmap) == 1:
+        funcInterp_mem = sorted([pair for pair in m2list if isinstance(pair[1], z3.FuncInterp)])       
+        mdl1 = (funcInterp_mem[1][0], funcInterp_mem[0][1])
+        mdl = Diff(m2list, funcInterp_mem)
+        mdl.append(mdl1)
+    else:
+        mdl = m2list
 
     try:
-        for x in model:
-            name = str(x.name())
-            if(mem_check.search(name) and not flag): 
-            # if(mem_check.search(name)):
-                continue
-            term = z3_to_HolTerm(model[x])
+        for (name, mvalue) in mdl:
+            term = z3_to_HolTerm(mvalue)
             
             stripped_name = len (name.split('_', maxsplit=1)) > 1 and name.split('_', maxsplit=1)[1] or name.split('_', maxsplit=1)[0]
             if stripped_name in names:
                 raise AssertionError("Duplicated stripped name: {}".format(stripped_name))
             names.add(stripped_name)
-            
-            if(array_check.search(name)):
-                mem_list.append((stripped_name,term))
-            else:
-                sml_list.append(stripped_name)
-                sml_list.append(term)
+            sml_list.append(stripped_name)
+            sml_list.append(term)
     except Exception as e:
         sys.exit(str(e))  # Print the message to stderr and exit with status 1
 
-    mem_list.sort()
-    mem_var_names = ['MEM_', 'MEM']
-    for m in mem_list:
-        sml_list.append(mem_var_names.pop())
-        sml_list.append(m[1])
     return sml_list
 
 def main():

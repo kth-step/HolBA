@@ -167,9 +167,9 @@ fun make_word_relation relation exps =
 
         val distinct = if null pairs 
 		       then raise NoObsInPath 
-		       else if List.null mpair
-		       then list_mk_disj (map mk_distinct_reg rpair)
-		       else mk_conj (list_mk_disj ((map mk_distinct_reg rpair)), (mk_distinct_mem (hd mpair) rel2w))
+		       else (* if List.null mpair *)
+		       (* then *) list_mk_disj (map mk_distinct_reg rpair)
+		       (* else mk_conj (list_mk_disj ((map mk_distinct_reg rpair)), (mk_distinct_mem (hd mpair) rel2w)) *)
     in
        ``^rel2w /\ ^distinct``
     end
@@ -291,7 +291,7 @@ fun start_interactive prog =
         val _ = current_prog_w_obs := SOME lifted_prog_w_obs;
         val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
-(*        val _ = List.map (Option.map (List.map (print_term o fst)) o snd) paths;*)
+	(* val _ = List.map (Option.map (List.map (print_term o fst)) o snd) paths; *)
         
         fun has_observations (SOME []) = false
           | has_observations NONE = false
@@ -315,37 +315,31 @@ fun all_obs_not_present { a_run = (_,a_obs), b_run = (_,b_obs) } =
     in check a_obs andalso check b_obs
     end;
 
-
+(* This is used to build the next relation for path enumeration *)
 fun mem_constraint [] = ``T``
   | mem_constraint mls =
-    let fun adjust_prime s =
+    let fun is_addr_numeral tm = tm |> pairSyntax.dest_pair |> fst |> (fn x => (rhs o concl o EVAL) ``w2n ^x``) |> is_numeral
+	fun adjust_prime s =
             if String.isSuffix "_" s
             then String.map (fn c => if c = #"_" then #"'" else c) s
             else s
 	fun mk_cnst vname vls =
 	    let
-		val toIntls = (snd o finite_mapSyntax.strip_fupdate) vls;
-		val mem = mk_var (adjust_prime vname ,Type`:word64 |-> word8`);
-		val mem' = foldl (fn (a,b) => ``FUPDATE  ^b ^a``) mem toIntls;
+		val toIntls = (snd o finite_mapSyntax.strip_fupdate) vls
+		val mem = mk_var (adjust_prime vname ,Type`:word64 |-> word8`)
 		val memconstraint = map (fn p => let val (t1,t2) = pairSyntax.dest_pair p
 						 in
-						     ``(THE(FLOOKUP ^mem' ^t1) = ^t2)``
+						     ``^mem ' (^t1) = ^t2``
 						 end) toIntls;
-		val mc_conj = foldl (fn (a,b) => mk_conj (a,b)) (hd memconstraint) (tl memconstraint)
+		val mc_conj = foldl (fn (a,b) => mk_conj (a,b)) (hd memconstraint) (tl memconstraint);
 	    in
-		mc_conj
+		(``~(^mc_conj)``, toIntls)
 	    end
-	val h::t::[] = (map (fn (vn, vl) =>  mk_cnst vn vl ) mls)
-	val mc_conj = mk_conj (h,t)
-    in
-	``~(^mc_conj)``
-    end;
 
-fun prime_mem model =
-    let val fmem = (filter (fn el => (String.isSubstring (#1 el) "MEM_")) model)
+	val (hc, hv)::(tc, tv)::[] = (map (fn (vn, vl) =>  mk_cnst vn vl ) mls)
+	val mc_conj = mk_conj ((if is_addr_numeral (hd hv) then hc else ``T``), (if is_addr_numeral (hd tv) then tc else ``T``))
     in
-	case fmem of [] => model
-		   | _ => model@[("MEM_", (snd o hd) fmem )]
+	mc_conj
     end
 
 val getReg = (fn tm => case tm of regT x => x)
@@ -382,6 +376,7 @@ fun next_experiment all_exps next_relation  =
         val word_relation =
             case !current_word_rel of
                 NONE => new_word_relation
+	      (* r is a constraint used to build the next relation for path enumeration *)
               | SOME r => mk_conj (new_word_relation, r);
 
         val _ = printv 1 ("Calling Z3\n");
@@ -429,7 +424,6 @@ fun next_experiment all_exps next_relation  =
 	(* val _ = print_term (valOf (!current_word_rel)); *)
 
         (* clean up s2 *)
-        (* val s2 = List.map (fn (r,v) => (remove_prime r,v)) s2; *)
 	val s2 = to_sml_Arbnums rmprime
 
         (* check with concrete-symbolic execution whether the observations are actually equivalent *)
@@ -548,6 +542,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
                                  SOME x => prog_gen_store_fromfile x
                                | NONE   => raise ERR "scamv_run::from_file" "file needs to be specified as generator_param")
               | prefetch_strides => prog_gen_store_prefetch_stride sz
+	      | spectre => prog_gen_rand_spectre sz
               | _ => raise ERR "scamv_run" ("unknown generator type " ^ PolyML.makestring gen)
 
         val _ =

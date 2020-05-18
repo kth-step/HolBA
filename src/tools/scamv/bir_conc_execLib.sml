@@ -16,7 +16,7 @@ struct
   val is_memT= (fn tm => can getMem tm)
   val toTerm = rhs o concl
 
-  fun econcl exp = (rhs o concl o EVAL) exp
+  fun econcl exp = (toTerm o EVAL) exp
   fun fromTerm tm = Arbnum.fromString (Parse.term_to_string tm);
   fun t2n tm = tm |> strip_comb |> #2 |> (fn a::b::_ => (fromTerm a , fromTerm b));
   fun mk_mem_state tms = memT("MEM", (map (fn p => t2n p) tms));
@@ -37,7 +37,7 @@ struct
         val hname = fromMLstring name
         val wordval = mk_wordi (value, 64);
       in
-	  (rhs o concl o EVAL) ``bir_symb_env_update ^hname (BExp_Const (Imm64 ^wordval)) (BType_Imm Bit64) ^env``
+	  (toTerm o EVAL) ``bir_symb_env_update ^hname (BExp_Const (Imm64 ^wordval)) (BType_Imm Bit64) ^env``
       end;
 
   fun gen_symb_updates s env =
@@ -193,11 +193,11 @@ struct
 					  ``bir_eval_exp (^bsst_pred_init_mem) (BEnv (K NONE))``;
 		  val bsst_simp_tm = 
                       (let 
-			   val tm = ((rhs o concl) (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] (restr_eval_tm)))  
+			   val tm = ((toTerm) (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] (restr_eval_tm)))  
 			       handle _ => restr_eval_tm
 			   val (f,t) = Lib.first (fn (tac,t) => (Lib.can tac) t)
-			   			 [(load_store_simp_unchange_conv,tm), 
-						  (load_store_simp_unchange1_conv,tm), 
+			   			 [( load_store_simp_unchange_conv,tm ), 
+						  (load_store_simp_unchange1_conv,tm ), 
 						  (load_store_simp_unchange2_conv, tm)]
 			       handle _ => ((fn t => t), tm)
 			   val res = f t
@@ -217,16 +217,16 @@ struct
 	  final_state
       end;
 
-  fun conc_exec_obs_extract symb_state =
+  fun conc_exec_obs_extract symb_state (mls,v) =
     let
-      fun eval_exp t = (rhs o concl o EVAL) t;
+      fun eval_exp t = (toTerm o EVAL) t;
       fun eval_exp_to_val t =
         let
 	    val esimp = computeLib.RESTR_EVAL_CONV [``bir_eval_load``, ``bir_eval_store``] ``bir_eval_exp (^t) (BEnv (K NONE))``;
 	    val res =
                 eval_exp
 	    	    (let
-	    	     val tm = (toTerm (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] ((rhs o concl) esimp)))
+	    	     val tm = (toTerm (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] (toTerm esimp)))
 	    		 handle _ => (toTerm esimp)
 	    	     val res = load_store_simp_unchange_conv tm
 	    		 handle _ => tm
@@ -234,14 +234,9 @@ struct
 	    	     res
 	    	 end)
 
-          (* val res = eval_exp ``bir_eval_exp ^t (BEnv (\x. NONE))``; *)
           val res_v = if is_some res 
 		      then dest_some res 
-		      else 
-			  let
-			      val ex = rhs res 
-			  in (``(BVal_Imm (Imm64 ((n2w ^ex):word64)))``) 
-			  end
+		      else let val ex = rhs res in (``(BVal_Imm (Imm64 ((n2w ^ex):word64)))``) end
                   (* raise ERR "conc_exec_obs_extract::eval_exp_to_val" "could not evaluate down to a value"; *)
         in
           res_v
@@ -256,10 +251,12 @@ struct
           mk_list (map eval_exp_to_val tl, ``:bir_val_t``)
         end;
       val state_ = symb_state;
+
       val _ = if symb_is_BST_Halted state_ then () else
               raise ERR "conc_exec_program" "the final state is not halted, something is off";
       val (_,_,_,_,observation) = dest_bir_symb_state state_;
-      val bsst_obs_init_mem = #1(mem_init_conc_exec observation ([], ``(0:num)``))
+      val bsst_obs_init_mem = #1(mem_init_conc_exec observation (mls,v)) 
+
       val nonemp_obs = filter (fn ob => (not o List.null o snd o strip_comb) ob) [bsst_obs_init_mem];
       val obs_elem = map (fn ob => (fst o dest_list) ob)nonemp_obs;
       val obs_exp = map (fn ob => let val (c,t,f) = (dest_bir_symb_obs)  ob in (c,t,f) end) (flatten obs_elem);
@@ -288,7 +285,7 @@ struct
 		        )
 		   else (m', ``(0:num)``);
       val state_ = conc_exec_program 200 prog envfo ((#2 m),``^v``)
-      val obs = conc_exec_obs_extract state_
+      val obs = conc_exec_obs_extract state_ ((#2 m),``^v``)
 
       val new_state = (!mem_state) @ rg
       val _ = map print_term obs

@@ -18,5 +18,6 @@ signature bir_prog_genLib = sig
 
   val prog_gen_store_rand_slice      : int         -> unit -> string * term
   val prog_gen_store_prefetch_stride : int         -> unit -> string * term
+  val prog_gen_rand_spectre               : int         -> unit -> string * term
 
 end
