@@ -1,0 +1,89 @@
+0 (unoptimized)
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+==========================================================
+== Testing: src/tools/symbexec/examples/balrob-test.exe ==
+==========================================================
+<<HOL message: mk_functional: 
+  pattern completion has added 9 clauses to the original specification.>>
+Saved definition __ "bir_exp_is_const_def"
+Saved induction ___ "bir_exp_is_const_ind"
+<<HOL message: mk_functional: 
+  pattern completion has added 9 clauses to the original specification.>>
+Saved definition __ "bir_exp_is_mem_const_def"
+Saved induction ___ "bir_exp_is_mem_const_ind"
+Saved definition __ "bir_val_to_const_def"
+Saved definition __ "bir_exp_eval_consts_def"
+Saved definition __ "bir_exp_const_prop_def"
+
+
+
+funname = motor_prep_input
+max = 47
+min = 44
+==================================================================
+== Test successful: src/tools/symbexec/examples/balrob-test.exe ==
+== Elapsed time: 15.9114 sec.                                   ==
+==================================================================
+
+
+
+
+1 (optimized)
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+==========================================================
+== Testing: src/tools/symbexec/examples/balrob-test.exe ==
+==========================================================
+<<HOL message: mk_functional: 
+  pattern completion has added 9 clauses to the original specification.>>
+Saved definition __ "bir_exp_is_const_def"
+Saved induction ___ "bir_exp_is_const_ind"
+<<HOL message: mk_functional: 
+  pattern completion has added 9 clauses to the original specification.>>
+Saved definition __ "bir_exp_is_mem_const_def"
+Saved induction ___ "bir_exp_is_mem_const_ind"
+Saved definition __ "bir_val_to_const_def"
+Saved definition __ "bir_exp_eval_consts_def"
+Saved definition __ "bir_exp_const_prop_def"
+
+
+
+funname = motor_prep_input
+max = 12
+min = 11
+==================================================================
+== Test successful: src/tools/symbexec/examples/balrob-test.exe ==
+== Elapsed time: 5.49476 sec.                                   ==
+==================================================================
+
+
+
+
+2 (optimized constant-time)
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+==========================================================
+== Testing: src/tools/symbexec/examples/balrob-test.exe ==
+==========================================================
+<<HOL message: mk_functional: 
+  pattern completion has added 9 clauses to the original specification.>>
+Saved definition __ "bir_exp_is_const_def"
+Saved induction ___ "bir_exp_is_const_ind"
+<<HOL message: mk_functional: 
+  pattern completion has added 9 clauses to the original specification.>>
+Saved definition __ "bir_exp_is_mem_const_def"
+Saved induction ___ "bir_exp_is_mem_const_ind"
+Saved definition __ "bir_val_to_const_def"
+Saved definition __ "bir_exp_eval_consts_def"
+Saved definition __ "bir_exp_const_prop_def"
+
+
+
+funname = motor_prep_input_ct
+max = 12
+min = 12
+==================================================================
+== Test successful: src/tools/symbexec/examples/balrob-test.exe ==
+== Elapsed time: 4.45838 sec.                                   ==
+==================================================================
