@@ -9,6 +9,7 @@ val symbs_sec_text = [
     "motor_set_l",
     "motor_set_r",
     "motor_prep_input",
+    "motor_prep_input_ct",
     "timer_read",
     "atan2f_own",
     "abs_own",
@@ -39,6 +40,13 @@ val configs          = [("balrob",
                            "balrob_opt_program_THM",
                            ((Arbnum.fromInt 0x00000000, Arbnum.fromInt 0x00003414),
                             (Arbnum.fromInt 0x10000000, Arbnum.fromInt (0x00000018 + 0x310)),
+                            (Arbnum.fromInt 0x10001000, Arbnum.fromInt 0x00000ff0))
+                        ),
+                        ("balrob_ct",
+                           ("balrob_ct.elf.da", "balrob/balrob_ct.elf.da.plus", "balrob/balrob_ct.elf.mem"),
+                           "balrob_program_THM",
+                           ((Arbnum.fromInt 0x00000000, Arbnum.fromInt 0x00003564),
+                            (Arbnum.fromInt 0x10000000, Arbnum.fromInt (0x00000018 + 0x30d)),
                             (Arbnum.fromInt 0x10001000, Arbnum.fromInt 0x00000ff0))
                         )];
 
