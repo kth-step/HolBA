@@ -7,7 +7,7 @@ open binariesCfgVizLib;
 
 open bir_smtLib;
 
-val entry_label = "imu_handler_pid_entry";
+val entry_label = "motor_prep_input";
 
 (*
 fun print_option pf NONE     = print "NONE"
