@@ -44,7 +44,7 @@ val configs          = [("balrob",
                         ),
                         ("balrob_ct",
                            ("balrob_ct.elf.da", "balrob/balrob_ct.elf.da.plus", "balrob/balrob_ct.elf.mem"),
-                           "balrob_program_THM",
+                           "balrob_ct_program_THM",
                            ((Arbnum.fromInt 0x00000000, Arbnum.fromInt 0x00003564),
                             (Arbnum.fromInt 0x10000000, Arbnum.fromInt (0x00000018 + 0x30d)),
                             (Arbnum.fromInt 0x10001000, Arbnum.fromInt 0x00000ff0))
