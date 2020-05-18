@@ -6,6 +6,7 @@ open binariesBalrobDefsLib;
 val symb_filter_mem = fn secname =>
   case secname of
       ".text" => (K true)
+    | ".reloadtext" => (K true)
     | ".data" => (K true)
     | ".bss"  => (K true)
     | _       => (K false);

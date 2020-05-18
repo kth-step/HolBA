@@ -222,6 +222,12 @@ fun update_node_guess_type_call n =
     val isCall_to_entry = ((length cfg_t_l = 1) andalso
                            (List.exists (fn x => x = goto_tm) prog_fun_entry_lbl_tms));
 
+
+    val _ = if (isCall_lr = isCall_to_entry) then ()
+            else print ("update_node_guess_type_call :: " ^
+                           "???: " ^ (#CFGN_descr n) ^
+                            "\t" ^ (term_to_string lbl_tm) ^ "\n");
+
     val _ = if isCall_lr = isCall_to_entry then ()
             else raise ERR "update_node_guess_type_call"
                            "something in call detection is unexpected";
@@ -266,7 +272,7 @@ fun update_node_guess_type_return (n:cfg_node) =
 
     (* hack for hand inspected instructions *)
     val isReturn = isReturn orelse (
-                   (lbl_tm = mk_lbl_tm (Arbnum.fromInt 0x1fc)) andalso
+                   (lbl_tm = mk_lbl_tm (Arbnum.fromInt 0x2ffc)) andalso
                    (String.isPrefix "4718 (" descr)
         );
 
@@ -394,7 +400,65 @@ fun update_node_guess_type_return (n:cfg_node) =
                          "24e80000"
                        ])
                    ];
-    val hack_map = hack_map_1@hack_map_2;
+
+    val hack_map_3
+             = [(0xdb0, "469F (mov pc, r3)", CFGNT_Jump, [
+                         "3c0e0000",
+                         "e60d0000",
+                         "e60d0000",
+                         "140f0000",
+                         "e20d0000",
+                         "e20d0000",
+                         "0a0f0000",
+                         "140f0000",
+                         "e20d0000",
+                         "0a0f0000",
+                         "e20d0000",
+                         "140f0000",
+                         "180f0000",
+                         "180f0000",
+                         "180f0000",
+                         "200f0000"
+                       ]),
+                    (0x80c, "4697 (mov pc, r2)", CFGNT_Jump, [
+                         "22090000",
+                         "5e080000",
+                         "82080000",
+                         "20080000",
+                         "82080000",
+                         "fe080000",
+                         "82080000",
+                         "20080000",
+                         "5e080000",
+                         "5e080000",
+                         "fe080000",
+                         "20080000",
+                         "54090000",
+                         "54090000",
+                         "54090000",
+                         "0a090000"
+                       ]),
+                    (0x8b2, "4697 (mov pc, r2)", CFGNT_Jump, [
+                         "5e080000",
+                         "5e080000",
+                         "82080000",
+                         "1e080000",
+                         "82080000",
+                         "fe080000",
+                         "82080000",
+                         "1e080000",
+                         "5e080000",
+                         "5e080000",
+                         "fe080000",
+                         "1e080000",
+                         "54090000",
+                         "54090000",
+                         "54090000",
+                         "08090000"
+                       ])
+                   ];
+
+    val hack_map = hack_map_3;
     val hackMatch = List.find (fn (loc_, descr_, _, _) =>
                                  descr = descr_ andalso
                                  dest_lbl_tm lbl_tm = Arbnum.fromInt loc_
