@@ -5,6 +5,7 @@ struct
     open tutorial_bir_to_armSupportTheory;
     open tutorial_wpSupportLib;
     open bir_auxiliaryLib;
+    open HolBACoreSimps;
   in
     fun get_contract_prog contract_thm = ((el 1) o snd o strip_comb o concl) contract_thm;
     fun get_contract_l contract_thm = ((el 2) o snd o strip_comb o concl) contract_thm;
@@ -793,6 +794,59 @@ struct
           map_ht1 map_ht2 def_list ht_assmpt
       end
     ;
+
+    (**********************************************************************************)
+    (* These are the various functions and rules to facilitate treatment of pred_sets *)
+    (* TODO: Where to place the below? *)
+    fun el_in_set elem set =
+      EQT_ELIM (SIMP_CONV (std_ss++pred_setLib.PRED_SET_ss) [] (pred_setSyntax.mk_in (elem, set)));
+
+    val mk_set = pred_setSyntax.mk_set;
+
+    val simp_delete_set_rule =
+      SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss)
+	[pred_setTheory.DELETE_DEF]
+
+    val simp_insert_set_rule =
+      SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss)
+	[(* ??? *)]
+
+    val simp_in_sing_set_rule =
+      SIMP_RULE std_ss [pred_setTheory.IN_SING]
+
+    fun simp_inter_set_rule ht =
+      ONCE_REWRITE_RULE [EVAL (get_bir_map_triple_blist ht)] ht
+
+    val simp_in_set_tac =
+      SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss++pred_setLib.PRED_SET_ss) []
+
+    (*
+    (* For debugging: *)
+    val (get_labels_from_set_repr, el_in_set_repr,
+	 mk_set_repr, simp_delete_set_repr_rule,
+	 simp_insert_set_repr_rule, simp_in_sing_set_repr_rule, simp_inter_set_repr_rule, simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) =
+           (ending_set_to_sml_list, el_in_set, mk_set, simp_delete_set_rule,
+	    simp_insert_set_rule, simp_in_sing_set_rule, simp_inter_set_rule, simp_in_set_tac, bir_inter_var_set_ss, bir_union_var_set_ss);
+    *)
+
+   (* These are instantiations of composition rules for pred_sets *)
+   val label_ct_to_map_ct_predset =
+     label_ct_to_map_ct (ending_set_to_sml_list, el_in_set, mk_set,
+			 simp_delete_set_rule, simp_insert_set_rule);
+
+   val bir_compose_seq_predset =
+     bir_compose_seq (ending_set_to_sml_list,
+		      simp_in_sing_set_rule,
+		      simp_inter_set_rule);
+
+   val bir_compose_seq_assmpt_predset =
+     bir_compose_seq_assmpt (ending_set_to_sml_list, simp_in_sing_set_rule,
+                             simp_inter_set_rule)
+
+   val bir_remove_labels_from_blist_predset = bir_remove_labels_from_blist (simp_in_set_tac);
+
+   val bir_compose_map_loop_predset =
+     bir_compose_map_loop (simp_in_set_tac, bir_inter_var_set_ss, bir_union_var_set_ss);
 
   end
 end

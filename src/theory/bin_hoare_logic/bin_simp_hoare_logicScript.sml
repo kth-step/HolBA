@@ -460,7 +460,6 @@ val weak_map_loop_thm = store_thm("weak_map_loop_thm",
     !l wl bl invariant C1 var post.
     l NOTIN wl ==> 
     l NOTIN bl ==>
-    (wl INTER bl = EMPTY) ==>
     (!x. weak_map_triple m invariant l ({l} UNION wl) bl
       (\ms. C1 ms /\ (var ms = (x:num)))
       (\ms. (m.pc ms = l) /\ var ms < x /\ var ms >= 0)) ==>
