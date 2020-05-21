@@ -191,7 +191,7 @@ fun to_sml_Arbnums model =
 				       val (ad, vl) = pairSyntax.dest_pair p
 				   in
 				       (dest_word_literal ad, dest_word_literal vl)
-				       handle _ => (Arbnum.fromInt 969696, dest_word_literal vl)
+				       handle _ => (Arbnum.fromInt 4294967295, dest_word_literal vl)
 				   end) vlsW
 	    in
 		memT(name, vlsN)
@@ -432,13 +432,10 @@ fun next_experiment all_exps next_relation  =
 				  | NONE => raise ERR "next_test" "no program found";
 
 	(* remove meory for now from states*)
-	val is_state_mem_emp = (fn s => getMem(filter is_memT s |> hd) |> #2 |> List.null)
 	val ce_obs_comp = conc_exec_obs_compare lifted_prog_w_obs (s1, s2)
         val _ = if #1 ce_obs_comp then () else
                   raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
-	val (s1, s2) = if not (#2 ce_obs_comp |> hd |> is_state_mem_emp)
-		       then let val s1'::s2'::_ = #2 ce_obs_comp in (s1',s2') end
-		       else (s1,s2)
+	val s1::s2::_ = #2 ce_obs_comp
 
         (* create experiment files *)
         val exp_id  = bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);

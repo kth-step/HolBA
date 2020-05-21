@@ -134,7 +134,7 @@ struct
 	  open bir_immSyntax
 	  open bir_valuesSyntax
 	  open bir_exp_substitutionsSyntax
-
+	  
 	  fun distinct [] = []
 	    | distinct (x::xs) = x::distinct(List.filter (fn y => y <> x) xs);
 
@@ -273,11 +273,14 @@ struct
 
   fun conc_exec_obs_compute prog s =
     let
+      val is_state_mem_emp = (fn s => (#1 (List.partition (is_memT) s)) |> hd |> (#2 o getMem) |> List.null);
+      val _ =  mem_state := []
+      
       val (m, rg) = List.partition (is_memT) s
       val m'  = if List.null m then ("MEM",[]:((num * num) list)) else (getMem (hd m))
       val rg' = map getReg rg
       val envfo = SOME (gen_symb_updates rg')
-      val elm = (filter (fn (a,b) => a = (Arbnum.fromInt 969696)) (#2 m'));
+      val elm = (filter (fn (a,b) => a = (Arbnum.fromInt 4294967295)) (#2 m'));
       val (m, v) = if   not(List.null elm) 
 		   then (
 		          getMem (hd m) |> (fn x => ((#1 x), []:((num * num) list))),
@@ -287,7 +290,8 @@ struct
       val state_ = conc_exec_program 200 prog envfo ((#2 m),``^v``)
       val obs = conc_exec_obs_extract state_ ((#2 m),``^v``)
 
-      val new_state = (!mem_state) @ rg
+      val new_state = if (is_state_mem_emp ((!mem_state) @ rg)) then s else (!mem_state) @ rg
+
       val _ = map print_term obs
       val _ = print "\n";
     in
