@@ -170,8 +170,9 @@ def model_to_list(model):
 
     # making the right model to process
     if len(kmap) == 2:
-        model_no_mem = [pair for pair in m2list if not mem_check.search(pair[0])]
-        mdl = list(map(lambda pair: (mnames.pop(), pair[1]) if array_check.search(pair[0]) else pair, model_no_mem))
+        mdl = [pair for pair in m2list if not array_check.search(pair[0])]
+        # model_no_mem = [pair for pair in m2list if not mem_check.search(pair[0])]
+        # mdl = list(map(lambda pair: (mnames.pop(), pair[1]) if array_check.search(pair[0]) else pair, model_no_mem))
     elif len(kmap) == 1:
         funcInterp_mem = sorted([pair for pair in m2list if isinstance(pair[1], z3.FuncInterp)])       
         mdl1 = (funcInterp_mem[1][0], funcInterp_mem[0][1])
