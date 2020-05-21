@@ -73,8 +73,9 @@ struct
 	);
 	val new_contract_thm = ((SIMP_RULE std_ss [contract_thm, taut_thm, wp_var_thm, pre_var_thm]) 
 	  ((ISPECL [wp, pre, prog, entry, exit, post])
-	      bir_wm_instTheory.bir_taut_pre_str_rule_thm)
-	      );
+	     bir_wm_instTheory.bir_taut_pre_str_rule_thm
+          )
+	);
       in
         new_contract_thm
       end;
@@ -374,6 +375,29 @@ struct
 	)
       );
 
+    fun label_ct_to_map_ct_assmpt (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
+			           simp_delete_set_repr_rule, simp_insert_set_repr_rule) label_ct taut_thm assmpt =
+      bir_populate_blacklist_assmpt (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
+			             simp_delete_set_repr_rule, simp_insert_set_repr_rule)
+	(bir_map_triple_from_bir_triple (
+	  use_pre_str_rule
+	    (HO_MATCH_MP bir_wm_instTheory.bir_label_ht_impl_weak_ht
+              (UNDISCH_ALL (SPEC_ALL label_ct))
+            )
+	    taut_thm
+	)
+      ) assmpt;
+
+    fun label_ct_to_map_ct_no_taut_assmpt (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
+			                   simp_delete_set_repr_rule, simp_insert_set_repr_rule) label_ct assmpt =
+      bir_populate_blacklist_assmpt (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
+			             simp_delete_set_repr_rule, simp_insert_set_repr_rule)
+	(bir_map_triple_from_bir_triple 
+	  (HO_MATCH_MP bir_wm_instTheory.bir_label_ht_impl_weak_ht
+	    (UNDISCH_ALL (SPEC_ALL label_ct))
+	  )
+      ) assmpt;
+
     (* This function composes a loop from a looping bir_map_triple and a loop exit bir_triple *)
     fun bir_compose_loop (simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) loop_map_ht
           loop_exit_ht loop_invariant loop_condition loop_variant def_list = 
@@ -638,7 +662,7 @@ struct
     (* TODO: Fix the mess with def_list unfolding too much back and forth,
      *       see if RESTR_EVAL_RULE can be helpful *)
     fun bir_compose_seq_assmpt (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
-                         simp_inter_set_repr_rule)
+                                simp_inter_set_repr_rule)
           map_ht1 map_ht2 def_list assmpt =
       let
 	(* 1. Specialise bir_map_std_seq_comp_thm *)
@@ -744,7 +768,7 @@ struct
           map_ht1 map_ht2 def_list
        =
         bir_compose_seq_assmpt (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
-                         simp_inter_set_repr_rule)
+                                simp_inter_set_repr_rule)
           map_ht1 map_ht2 def_list T
        ;
 
@@ -795,6 +819,27 @@ struct
       end
     ;
 
+    local
+      fun try_disch_all_assmpt_w_EVAL ct =
+	let
+	  val ct_d      = DISCH_ALL ct;
+	  val assmpt_tm = (fst o dest_imp o concl) ct_d;
+	  val ct_as     = EVAL assmpt_tm;
+	  val ct2       = REWRITE_RULE [ct_as] (DISCH assmpt_tm ct)
+	in
+	  try_disch_all_assmpt_w_EVAL ct2
+	end
+	handle HOL_ERR _ => ct;
+    in
+    fun inst_vars ct []     = try_disch_all_assmpt_w_EVAL ct
+      | inst_vars ct ((h1, h2)::t) =
+	let
+	  val ct1 = INST [h1 |-> h2] ct
+	in
+	  inst_vars ct1 t
+	end
+    end;
+
     (**********************************************************************************)
     (* These are the various functions and rules to facilitate treatment of pred_sets *)
     (* TODO: Where to place the below? *)
@@ -833,6 +878,14 @@ struct
    val label_ct_to_map_ct_predset =
      label_ct_to_map_ct (ending_set_to_sml_list, el_in_set, mk_set,
 			 simp_delete_set_rule, simp_insert_set_rule);
+
+   val label_ct_to_map_ct_assmpt_predset =
+     label_ct_to_map_ct_assmpt (ending_set_to_sml_list, el_in_set, mk_set,
+			        simp_delete_set_rule, simp_insert_set_rule);
+
+   val label_ct_to_map_ct_no_taut_assmpt_predset =
+     label_ct_to_map_ct_no_taut_assmpt (ending_set_to_sml_list, el_in_set, mk_set,
+			                simp_delete_set_rule, simp_insert_set_rule);
 
    val bir_compose_seq_predset =
      bir_compose_seq (ending_set_to_sml_list,
