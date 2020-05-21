@@ -191,7 +191,7 @@ struct
 	    [bir_wm_instTheory.bir_exec_to_labels_triple_postcond_def,
              bir_exp_equivTheory.bir_and_op2,
              bir_bool_expTheory.bir_is_bool_exp_env_REWRS] map_equiv4
-        (* TODO: The below theorem might be needed for some HTs... *)
+        (* TODO: The below theorem might be needed for some contracts... *)
 (*
         val spec_eta = ISPEC post boolTheory.ETA_THM
 *)
@@ -686,7 +686,7 @@ struct
 	    bir_wm_instTheory.bir_map_std_seq_comp_thm
 
 	(* 2. Knock out antecedents: *)
-	(* Whitelist of HT2 should be subset of blacklist of HT1 *)
+	(* Whitelist of contract 2 should be subset of blacklist of contract 1 *)
 	val bir_add_comp_seq_rule_thm1 =
 	  SIMP_RULE std_ss [prove (pred_setSyntax.mk_subset
                                      (white_ending_label_set2,
@@ -696,7 +696,7 @@ struct
                                          [pred_setTheory.SUBSET_DEF]
                             )] bir_add_comp_seq_rule_thm
 
-	(* The intersection between whitelist of HT1 and whitelist of HT2 should be empty *)
+	(* The intersection between whitelist of contract 1 and whitelist of contract 2 should be empty *)
         (* TODO: Does this work for larger than singleton sets? *)
 	val spec_noteq_trans_impl1 =
 	  ISPECL [el 1 (get_labels_from_set_repr white_ending_label_set1),
@@ -713,7 +713,7 @@ struct
                                                  spec_noteq_trans_impl1]
                             )] bir_add_comp_seq_rule_thm1
 
-	(* The intersection between whitelist of HT2 and blacklist of HT2 should be empty *)
+	(* The intersection between whitelist of contract 2 and blacklist of contract 2 should be empty *)
         (* TODO: Does this work for larger than singleton sets? *)
 	val bir_add_comp_seq_rule_thm3 =
 	  if not (pred_setSyntax.is_empty black_ending_label_set2)
@@ -744,7 +744,7 @@ struct
 	val bir_add_comp_seq_rule_thm4 =
 	  HO_MATCH_MP bir_add_comp_seq_rule_thm3 map_ht1
 
-	(* Starting label of HT2 is the single label in whitelist of HT1
+	(* Starting label of contract 2 is the single label in whitelist of contract 1
 	 * Note: The theorem used for composition actually allows for multiple connection points *)
 	val bir_add_comp_seq_rule_thm5 =
           simp_in_sing_set_repr_rule bir_add_comp_seq_rule_thm4
