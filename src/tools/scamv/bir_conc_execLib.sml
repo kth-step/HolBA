@@ -155,7 +155,8 @@ struct
 				       val wa = ( snd o gen_dest_Imm o dest_BVal_Imm) ((snd o dest_comb) waddr) 
 				       val na = (econcl ``w2n ^wa``)
 				   in
-				       [``(^na, ^v)``, ``(^na+1, ^v)``, ``(^na+2, ^v)``, ``(^na+3, ^v)``]
+				       [``(^na,  ^v) ``, ``(^na+1, ^v)``, ``(^na+2, ^v)``, ``(^na+3, ^v)``,
+					``(^na+4, ^v)``, ``(^na+5, ^v)``, ``(^na+6, ^v)``, ``(^na+7, ^v)``]
 				   end) (distinct addrList)
 
 	  val evalMemLocAddr = map (fn el => econcl el ) (flatten memLocInit);

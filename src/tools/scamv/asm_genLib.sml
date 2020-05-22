@@ -269,7 +269,7 @@ local
     return (Store (Reg reg, Ld (SOME offset, target))));
 
   fun arb_mem_op_selected_source  reg  offset   =
-    oneof[arb_ld_offset_selected_source reg offset, arb_str_offset_selected_source reg offset]
+    oneof[arb_ld_offset_selected_source reg offset(* , arb_str_offset_selected_source reg offset *)]
 
   val arb_pad = sized (fn n => choose (0, n)) >>=
 		      (fn n => resize n arb_program_noload_nobranch);
@@ -342,22 +342,22 @@ in
   	  arb_prog
       end;
 
-  val arb_program_spectre =
-      let
-  	  val arb_pad = sized (fn n => choose (0, n)) >>=
-  			      (fn n => resize n arb_program_noload_nobranch);
+  (* val arb_program_spectre = *)
+  (*     let *)
+  (* 	  val arb_pad = sized (fn n => choose (0, n)) >>= *)
+  (* 			      (fn n => resize n arb_program_noload_nobranch); *)
 
-  	  val arb_load_instr = arb_load_indir;
-  	  val arb_store_instr= arb_store_indir;
+  (* 	  val arb_load_instr = arb_load_indir; *)
+  (* 	  val arb_store_instr= arb_store_indir; *)
 
-  	  val arb_block_l = (List.foldr (op@) []) <$> (
-                            sequence [arb_pad, (fn x => [x]) <$> oneof[arb_load_instr, arb_store_instr]]);
+  (* 	  val arb_block_l = (List.foldr (op@) []) <$> ( *)
+  (*                           sequence [arb_pad, (fn x => [x]) <$> oneof[arb_load_instr, arb_store_instr]]); *)
 
-  	  val arb_block_r = (List.foldr (op@) []) <$> (
-                            sequence [arb_pad, (fn x => [x]) <$> oneof[arb_load_instr, arb_store_instr]]);
-      in
-  	  arb_program_cond_spectre (arb_cmp_r ()) arb_block_l arb_block_r
-      end;
+  (* 	  val arb_block_r = (List.foldr (op@) []) <$> ( *)
+  (*                           sequence [arb_pad, (fn x => [x]) <$> oneof[arb_load_instr, arb_store_instr]]); *)
+  (*     in *)
+  (* 	  arb_program_cond_spectre (arb_cmp_r ()) arb_block_l arb_block_r *)
+  (*     end; *)
 
   fun arb_program_glue_spectre arb_prog_preamble_left arb_prog_right =
       let
@@ -377,18 +377,18 @@ in
   	  arb_prog
       end;
 
-  (* val arb_program_spectre = *)
-  (*     let *)
-  (* 	  val offsets = choose(0, 255); *)
-  (* 	  val arb_load_instr  =  arb_load_indir; *)
-  (* 	  val arb_store_instr = arb_store_indir; *)
+  val arb_program_spectre =
+      let
+  	  val offsets = choose(0, 255);
+  	  val arb_load_instr  =  arb_load_indir;
+  	  val arb_store_instr = arb_store_indir;
 
 
-  (* 	  val arb_block_r = (List.foldr (op@) []) <$> ( *)
-  (*             sequence [arb_pad, (fn x => [x]) <$> oneof[arb_load_indir, arb_store_indir]]); *)
-  (*     in *)
-  (* 	  arb_program_glue_spectre arb_block_l arb_block_r *)
-  (*     end *)
+  	  val arb_block_r = (List.foldr (op@) []) <$> (
+              sequence [arb_pad, (fn x => [x]) <$> oneof[arb_load_indir(* , arb_store_indir *)]]);
+      in
+  	  arb_program_glue_spectre arb_block_l arb_block_r
+      end
 end
 
 end

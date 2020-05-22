@@ -62,6 +62,69 @@ def debug_input(solver):
         (get-model)
     """)
 
+class MProcess(object):
+    def __init__(self, model):
+        self.model    = model
+        self.memory   = {}
+        self.adr_mask = 4294967288
+        self.off_mask = 7
+        self.arg_size = 0
+        self.vlu_size = 0
+
+    def partition(self, addresses, patterns):
+        for pat in patterns:
+            yield [a[0] for a in addresses if a[1] == pat]
+
+    def dictionary(self, lst):
+        return dict(lst)
+
+    def update(self, d1, d2):
+        for k in d1.keys():
+            d2[k] = d1[k]
+        return d2
+    
+    def parse(self, memory):
+        flatten  = lambda l: [item for sublist in l for item in sublist]
+
+        masked_addresses = list(map(lambda x : bin(x & self.adr_mask), memory.keys()))
+        patterns = set(masked_addresses)
+        addr_pat = list(zip (memory.keys(), masked_addresses))
+        partitioned_based_on_pattern = self.partition(addr_pat, patterns)
+        
+        # (address, offset, value)
+        address_and_offset_value = list(map(lambda x :
+                                       (list(map (lambda y :
+                                            (y & self.adr_mask, y & self.off_mask, memory[y]), x))),
+                                        list(partitioned_based_on_pattern)))
+       
+        return (flatten (address_and_offset_value))
+    
+
+    def mk_memory_complete(self):
+        model_as_list = self.model.as_list()
+        else_value = model_as_list.pop()
+        (mem_to_string, self.arg_size, self.vlu_size) = (z3_to_HolTerm(self.model))
+
+        mem_to_intList = (list(map (lambda x : tuple(int(el) for el in x.split(' ')), mem_to_string)))
+        mem_to_dic = self.dictionary(mem_to_intList)
+        mem_processed  = self.parse(mem_to_dic)
+    
+        unique_addresses = list(set(e[0] for i,e in enumerate(mem_processed)
+                                    if (e[0],e[1]) not in mem_processed[:i]))
+        mem_full = {}
+        for adr in unique_addresses:
+            for i in range(0,8):
+                mem_full[adr+i] = else_value
+        # update main dictionary
+        self.memory = self.update(mem_to_dic, mem_full)
+
+    def mem_to_word(self):
+        res = []
+        self.mk_memory_complete()
+        for k in self.memory.keys():
+            res.append( "(({}w: {} word),({}w: {} word))".format(k, self.arg_size, self.memory[k], self.vlu_size))
+        return ("(FEMPTY : word64 |-> word8) |+" + "|+".join(tm for tm in res ))
+
 
 def z3_to_HolTerm(exp):
     # assert(is_ast(exp))
@@ -142,8 +205,8 @@ def z3_to_HolTerm(exp):
         for idx in range(0, exp.num_entries()):
             arg = (exp.entry(idx)).arg_value(0)
             vlu = (exp.entry(idx)).value()
-            res.append( "(({}w: {} word),({}w: {} word))".format(arg, arg.size(),vlu, vlu.size()))
-        return ("(FEMPTY : word64 |-> word8) |+" + "|+".join(tm for tm in res ))
+            res.append("{} {}".format(arg, vlu))
+        return (res, arg.size(),vlu.size())
 
     raise NotImplementedError("Not handled: {} as {}".format(type(exp), exp))
 
@@ -152,15 +215,33 @@ def z3_to_HolTerm(exp):
 def Diff(li1, li2): 
     return (list(set(li1) - set(li2)))
 
+# Dirty hack to fix the problem of memory stores when mem <> mem' 
 def model_to_list(model):
+    mem_list = []
     sml_list = []
     names = set()
     # search filters
     mem_check   = re.compile('MEM')
     array_check = re.compile('!')
+    strip_name = lambda x: len(x.split('_', maxsplit=1)) > 1 and x.split('_', maxsplit=1)[1] or x.split('_', maxsplit=1)[0]
+    def model_to_word (mdl):
+        try:
+            for (name, mvalue) in mdl:
+                term = z3_to_HolTerm(mvalue)
+            
+                stripped_name = strip_name(name)
+                if stripped_name in names:
+                    raise AssertionError("Duplicated stripped name: {}".format(stripped_name))
+                names.add(stripped_name)
+                sml_list.append(stripped_name)
+                sml_list.append(term)
+            return sml_list
+        except Exception as e:
+            sys.exit(str(e))  # Print the message to stderr and exit with status 1
 
+    
     # processing model
-    m2list = sorted(list(map(lambda x: (str(x.name()), model[x]), model)))
+    m2list = sorted(list(map(lambda x: (str(x.name()), model[x]), model)))  
     mvars  = list(filter (lambda x: mem_check.search(str(x.name)), model))
     mnames = sorted (list(map(lambda x: str(x.name()), mvars)))
     mnames.reverse()
@@ -168,31 +249,25 @@ def model_to_list(model):
     # filtering k!x maps
     kmap = list(filter (lambda x: array_check.search(str(x.name)), model))
 
-    # making the right model to process
+    # making right model
     if len(kmap) == 2:
-        mdl = [pair for pair in m2list if not array_check.search(pair[0])]
-        # model_no_mem = [pair for pair in m2list if not mem_check.search(pair[0])]
-        # mdl = list(map(lambda pair: (mnames.pop(), pair[1]) if array_check.search(pair[0]) else pair, model_no_mem))
+        funcInterps = sorted([pair for pair in m2list if isinstance(pair[1], z3.FuncInterp)])
+        funcInterp_mem = sorted([pair for pair in funcInterps if mem_check.search(pair[0])])
+        mdl = Diff(m2list, funcInterps)
+        sml_list = model_to_word(mdl)
+        (list(map(lambda x : (sml_list.append(strip_name(x[0])),
+                              sml_list.append(MProcess(x[1]).mem_to_word())),
+                  funcInterp_mem)))     
+        
     elif len(kmap) == 1:
         funcInterp_mem = sorted([pair for pair in m2list if isinstance(pair[1], z3.FuncInterp)])       
-        mdl1 = (funcInterp_mem[1][0], funcInterp_mem[0][1])
         mdl = Diff(m2list, funcInterp_mem)
-        mdl.append(mdl1)
-    else:
-        mdl = m2list
+        sml_list = model_to_word(mdl)
+        sml_list.append(strip_name(funcInterp_mem[1][0]))
+        sml_list.append(MProcess  (funcInterp_mem[0][1]).mem_to_word())
 
-    try:
-        for (name, mvalue) in mdl:
-            term = z3_to_HolTerm(mvalue)
-            
-            stripped_name = len (name.split('_', maxsplit=1)) > 1 and name.split('_', maxsplit=1)[1] or name.split('_', maxsplit=1)[0]
-            if stripped_name in names:
-                raise AssertionError("Duplicated stripped name: {}".format(stripped_name))
-            names.add(stripped_name)
-            sml_list.append(stripped_name)
-            sml_list.append(term)
-    except Exception as e:
-        sys.exit(str(e))  # Print the message to stderr and exit with status 1
+    else:
+        sml_list = model_to_word(m2list)
 
     return sml_list
 
