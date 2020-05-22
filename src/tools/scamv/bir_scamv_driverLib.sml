@@ -66,7 +66,7 @@ fun symb_exec_phase prog =
 				 raise ERR "extract_cond_obs" ("currently we only support HD as observation function, not \"" ^ (term_to_string obsf) ^ "\"");
 		     in
 		       if length otl <> 1 then
-			 raise ERR "extract_cond_obs" "currently we support only singleton observations"
+		       	 raise ERR "extract_cond_obs" "currently we support only singleton observations"
 		       else
 			 (ec, hd otl)
 		     end
@@ -544,9 +544,9 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
 
         val _ =
            case obs_model of
-	       (*  mem_address_pc_trace => *)
-	      (* 	      current_obs_model_id := "mem_address_pc_trace" *)
-              (* | *) cache_tag_index  =>
+	         mem_address_pc_trace =>
+	      	      current_obs_model_id := "mem_address_pc_trace"
+              | cache_tag_index  =>
                       current_obs_model_id := "cache_tag_index"
               | cache_tag_only =>
                       current_obs_model_id := "cache_tag_only"
