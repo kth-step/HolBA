@@ -13,15 +13,10 @@ open bir_program_env_orderTheory;
 open bir_exp_equivTheory;
 open bir_bool_expTheory;
 open bir_typing_expTheory;
-(* Most of these added for stuff that should be moved anyway... *)
-open bir_valuesTheory;
-open bir_expTheory;
-open bir_immTheory;
-open bir_envTheory;
-open bir_exp_immTheory;
-open bir_exp_memTheory;
+open bir_subprogramTheory;
+open bir_program_valid_stateTheory;
+open bir_typing_progTheory;
 open bir_exp_tautologiesTheory;
-
 open bir_htTheory;
 
 open bin_hoare_logicSimps;
@@ -1815,5 +1810,98 @@ val bir_map_subset_blacklist_rule_thm =
 METIS_TAC [bir_map_triple_def, bir_model_is_weak,
            weak_map_subset_blacklist_rule_thm]
 );
+
+val bir_exec_to_labels_triple_precond_subprogram =
+  store_thm("bir_exec_to_labels_triple_precond_subprogram",
+  ``!prog1 prog2 s pre.
+    bir_is_subprogram prog1 prog2 ==>
+    bir_exec_to_labels_triple_precond s pre prog2 ==>
+    bir_exec_to_labels_triple_precond s pre prog1``,
+
+METIS_TAC [bir_exec_to_labels_triple_precond_def,
+           bir_env_vars_are_initialised_SUBPROGRAM]
+);
+
+val bir_is_valid_pc_exec =
+  store_thm("bir_is_valid_pc_exec",
+  ``!s pre prog ls l' n n0 s'.
+    bir_exec_to_labels_triple_precond s pre prog ==>
+    (bir_exec_to_labels ls prog s = BER_Ended l' n n0 s') ==>
+    ~bir_state_is_terminated s' ==>
+    bir_is_valid_pc prog s.bst_pc``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_labels_n_def] >>
+subgoal `~bir_state_is_terminated s` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_triple_precond_def]
+) >>
+IMP_RES_TAC bir_exec_steps_GEN_REWR_STEP >> 
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_step_def] >>
+Cases_on `bir_get_current_statement prog s.bst_pc` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF, bir_state_set_failed_def] >>
+  subgoal `bir_state_is_terminated (s with bst_status := BST_Failed)` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  IMP_RES_TAC bir_exec_steps_GEN_REWR_TERMINATED >>
+  QSPECL_X_ASSUM ``!pc_cond p max_steps. _``
+    [`(F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))`,
+     `prog`,
+     `(if
+	bir_state_COUNT_PC
+	  (F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))
+	  (s with bst_status := BST_Failed)
+       then
+	 OPT_NUM_PRE (SOME 1)
+       else SOME 1)`] >>
+  (* !!! *)
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  RW_TAC (std_ss++holBACore_ss) [] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+FULL_SIMP_TAC std_ss [GSYM bir_get_current_statement_IS_SOME]
+);
+
+val bir_map_prog_comp_thm =
+  store_thm("bir_map_prog_comp_thm",
+  ``!prog1 prog2 invariant wl bl l pre post.
+    bir_is_subprogram prog1 prog2 ==>
+    bir_is_valid_labels prog2 ==>
+    bir_map_triple prog1 invariant l wl bl pre post ==>
+    bir_map_triple prog2 invariant l wl bl pre post``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_map_triple_def, weak_map_triple_def] >>
+FULL_SIMP_TAC (std_ss++bir_wm_SS) [weak_triple_def,
+				   bir_etl_wm_def, bir_weak_trs_def] >>
+REPEAT STRIP_TAC >>
+QSPECL_X_ASSUM ``!s. _`` [`s`] >>
+IMP_RES_TAC bir_exec_to_labels_triple_precond_subprogram >>
+FULL_SIMP_TAC std_ss [] >>
+REV_FULL_SIMP_TAC std_ss [] >>
+Cases_on `bir_exec_to_labels (wl UNION bl) prog1 s` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+Q.PAT_X_ASSUM `b = s'` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
+subgoal `bir_is_valid_pc prog1 s.bst_pc` >- (
+  METIS_TAC [bir_is_valid_pc_exec]
+) >>
+subgoal `(!l.
+	    (s'.bst_status = BST_JumpOutside l) ==>
+	    ~MEM l (bir_labels_of_program prog2))` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_triple_precond_def]
+) >>
+IMP_RES_TAC bir_exec_to_labels_TERMINATES_SUBPROGRAM_EQ >>
+Q.EXISTS_TAC `s'` >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF] >>
+CONJ_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_triple_postcond_def,
+					bir_exec_to_labels_triple_precond_def] >>
+  irule bir_env_oldTheory.bir_env_vars_are_initialised_ORDER >>
+  Q.EXISTS_TAC `s.bst_environ` >>
+  FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
+  METIS_TAC [bir_program_env_orderTheory.bir_exec_to_labels_n_ENV_ORDER]
+)
+);
+
 
 val _ = export_theory();
