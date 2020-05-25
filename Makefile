@@ -81,6 +81,9 @@ $(HOLMAKEFILE_DIRS): Holmakefiles
 main_measure: Holmakefiles
 	source ./scripts/setup/env_derive.sh && cd src && $(HOLBA_HOLMAKE) -j1 $(HOLBA_HOLMAKE_OPTS) > ../make_measure_output.txt
 
+composition_measure: Holmakefiles
+	source ./scripts/setup/env_derive.sh && cd examples/tutorial/7-composition && $(HOLBA_HOLMAKE) -j1 $(HOLBA_HOLMAKE_OPTS) > ../../../make_composition_measure_output.txt
+
 
 %.exe: %.sml Holmakefiles
 	@/usr/bin/env HOLBA_HOLMAKE="$(HOLBA_HOLMAKE)" ./scripts/mk-exe.sh $(@:.exe=.sml)
