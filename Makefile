@@ -78,6 +78,9 @@ Holmakefiles: $(HOLMAKEFILES)
 $(HOLMAKEFILE_DIRS): Holmakefiles
 	source ./scripts/setup/env_derive.sh && cd $@ && $(HOLBA_HOLMAKE) $(HOLBA_HOLMAKE_OPTS)
 
+main_measure: Holmakefiles
+	source ./scripts/setup/env_derive.sh && cd src && $(HOLBA_HOLMAKE) -j1 $(HOLBA_HOLMAKE_OPTS) > ../make_measure_output.txt
+
 
 %.exe: %.sml Holmakefiles
 	@/usr/bin/env HOLBA_HOLMAKE="$(HOLBA_HOLMAKE)" ./scripts/mk-exe.sh $(@:.exe=.sml)
