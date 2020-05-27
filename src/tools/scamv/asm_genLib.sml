@@ -16,7 +16,8 @@ datatype ArmInstruction =
          | Branch  of BranchCond option * Operand
          | Compare of Operand * Operand
          | Nop
-         | Add of Operand * Operand * Operand
+         | Add     of Operand * Operand * Operand
+	 | Lsl     of Operand * Operand * Operand
 
 (* pp *)
 local
@@ -32,6 +33,7 @@ fun pp_opcode (Load _)    = "ldr"
   | pp_opcode (Compare _) = "cmp"
   | pp_opcode (Nop)       = "nop"
   | pp_opcode (Add _)     = "add"
+  | pp_opcode (Lsl _)     = "lsl"
 
 fun pp_cond bc =
     case bc of
@@ -58,6 +60,8 @@ fun pp_instr instr =
        "nop"
      | Add (target, a, b) =>
        "add " ^ pp_operand target ^ ", " ^ pp_operand a ^ ", " ^ pp_operand b
+     | Lsl (target,source ,b) =>
+       "lsl " ^ pp_operand target ^ ", " ^ pp_operand source ^ ", " ^ pp_operand b
 in
 fun pp_program is = List.map pp_instr is;
 end
@@ -262,14 +266,17 @@ local
 
   fun arb_ld_offset_selected_source reg  offset =
     arb_regname_except [reg] >>= (fn target =>
-    return (Load (Reg target, Ld (SOME offset, reg))));
+    return (target, Load (Reg target, Ld (SOME offset, reg))));
 
   fun arb_str_offset_selected_source reg offset =
     arb_regname_except [reg] >>= (fn target =>
-    return (Store (Reg reg, Ld (SOME offset, target))));
+    return (target, Store (Reg reg, Ld (SOME offset, target))));
 
   fun arb_mem_op_selected_source  reg  offset   =
-    oneof[arb_ld_offset_selected_source reg offset(* , arb_str_offset_selected_source reg offset *)]
+    oneof[arb_ld_offset_selected_source reg offset, arb_str_offset_selected_source reg offset];
+
+  fun arb_shift_left_selected_source reg offset =
+      return (Lsl (Reg reg, Reg reg, Imm offset));
 
   val arb_pad = sized (fn n => choose (0, n)) >>=
 		      (fn n => resize n arb_program_noload_nobranch);
@@ -306,13 +313,20 @@ local
 	val offsets = choose(0, 255);
 	val regs    = arb_regname_except ["x1", "x0"];
 	val zipped  = regs >>= (fn reg1 => offsets 
-			   >>= (fn off => arb_regname_except [reg1]
-                           >>= (fn reg2 =>  return ([(reg1, off)], [reg1,reg2]))));
+			   >>= (fn off1 => arb_regname_except [reg1]
+                           >>= (fn reg2 => offsets
+		           >>= (fn off2 => return ([(reg1, off1), (reg2, off2)], [reg1,reg2])))));
     in
 	
         zipped >>= (fn (pairs, [reg1, reg2]) => sequence((map (fn (r,i) => arb_ld_offset r i) pairs)@[arb_cmp_g reg1 reg2])
 	       >>= (fn result => return (result, [reg1, reg2])))
     end;
+
+  fun left_gen reg offset =
+      (arb_ld_offset_selected_source reg  offset) 
+               >>= (fn (reg, ld1) => arb_shift_left_selected_source  reg 9
+               >>= (fn   shift    => arb_mem_op_selected_source reg offset
+               >>= (fn (_,   ld2) => return [ld1, shift, ld2])));
 
   val arb_block_l = 
       let 
@@ -320,9 +334,9 @@ local
       in
     preamble() >>= (fn (prmbl, [reg1, _]) => offsets 
                >>= (fn offset => ((List.foldr (op@) []) <$> 
-   	            (sequence [arb_pad, (fn x => [x])   <$> arb_mem_op_selected_source reg1 offset]))
-               >>= (fn left_gen => return (prmbl, left_gen))))
-      end
+   	            (sequence [arb_pad, (left_gen reg1 offset)]))
+               >>= (fn left => return (prmbl, left))))
+      end;
 in
   fun arb_program_cond_spectre preamble arb_prog_left arb_prog_right =
       let
