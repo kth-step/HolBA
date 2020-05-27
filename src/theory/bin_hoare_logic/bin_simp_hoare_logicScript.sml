@@ -73,7 +73,7 @@ val weak_map_move_to_blacklist = store_thm("weak_map_move_to_blacklist",
     weak_map_triple m invariant l (ls DELETE l') (l' INSERT ls') pre post``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [weak_map_triple_def, weak_triple_def] >>
+FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
 subgoal `?ls''. (ls = l' INSERT ls'') /\ l' NOTIN ls''` >- (
   METIS_TAC [pred_setTheory.DECOMPOSITION]
 ) >>
@@ -92,22 +92,25 @@ REPEAT STRIP_TAC >| [
   ) >>
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [],
 
-  QSPECL_X_ASSUM ``!ms. (m.pc ms = l) ==> _`` [`ms`] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-  QSPECL_X_ASSUM ``!ms. _`` [`ms'`] >>
-  Q.EXISTS_TAC `ms'` >>
-  subgoal `m.pc ms' <> l'` >- (
-    CCONTR_TAC >>
-    FULL_SIMP_TAC std_ss []
+  irule weak_weakening_rule_thm >>
+  FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `\ms. m.pc ms NOTIN ls' /\ post ms /\ invariant ms` >>
+  Q.EXISTS_TAC `\ms. pre ms /\ invariant ms` >>
+  FULL_SIMP_TAC std_ss [] >>
+  REPEAT STRIP_TAC >- (
+    QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
+    Cases_on `m.pc ms = l'` >> (
+    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
+    )
   ) >>
-  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
-  `((l' INSERT ls'') DELETE l' UNION (l' INSERT ls')) = ((l' INSERT ls'') UNION ls')` suffices_by (
+  `(l' INSERT ls'') DELETE l' UNION (l' INSERT ls') = ((l' INSERT ls'') UNION ls')` suffices_by (
     FULL_SIMP_TAC std_ss []
   ) >>
   METIS_TAC [pred_setTheory.UNION_COMM, pred_setTheory.INSERT_UNION_EQ,
              pred_setTheory.DELETE_INSERT, pred_setTheory.DELETE_NON_ELEMENT]
 ]
 );
+
 
 val weak_map_move_set_to_blacklist = store_thm("weak_map_move_set_to_blacklist",
   ``!m invariant l ls ls' ls'' pre post.
@@ -329,7 +332,15 @@ subgoal `!l1.
              (\ms. if m.pc ms IN ls1 then post1 ms else post2 ms)` >- (
     METIS_TAC [weak_map_subset_blacklist_rule_thm, pred_setTheory.INTER_SUBSET]
   ) >>
-  FULL_SIMP_TAC std_ss [weak_triple_def, weak_map_triple_def]
+  FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
+  irule weak_weakening_rule_thm >>
+  FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `\ms.
+                  m.pc ms NOTIN ls2 INTER ls2' /\
+                  (if m.pc ms IN ls1 then post1 ms else post2 ms) /\
+                  invariant ms` >>
+  Q.EXISTS_TAC `\ms. post1 ms /\ invariant ms` >>
+  FULL_SIMP_TAC std_ss []
 ) >>
 subgoal `weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1
            (\ms. if m.pc ms IN ls1 then post1 ms else post2 ms)` >- (
