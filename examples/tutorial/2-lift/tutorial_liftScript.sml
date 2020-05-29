@@ -21,6 +21,9 @@ open bir_inst_liftingHelpersLib;
 
 open examplesBinaryTheory;
 
+open birExamplesBinaryTheory;
+open birExamples2BinaryTheory;
+
 val _ = new_theory "tutorial_lift";
 
 bir_is_lifted_prog_def;
@@ -33,6 +36,21 @@ fun get_n_stmts_of_block bl =
 
 val n_blocks = length blocks;
 val n_stmts = List.foldr (op+) 0 (List.map get_n_stmts_of_block blocks);
+
+local
+
+val blocks = (fst o listSyntax.dest_list o dest_BirProgram o snd o dest_eq o concl o EVAL) ``bprog_add_times_two``;
+val n_blocks = length blocks;
+val n_stmts = List.foldr (op+) 0 (List.map get_n_stmts_of_block blocks);
+
+
+val blocks = (fst o listSyntax.dest_list o dest_BirProgram o snd o dest_eq o concl o EVAL) ``bprog_is_even_odd``;
+val n_blocks = length blocks;
+val n_stmts = List.foldr (op+) 0 (List.map get_n_stmts_of_block blocks);
+
+in
+end;
+
 
 (el 1)blocks;
 (el 2)blocks;
