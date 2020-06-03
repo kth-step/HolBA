@@ -19,11 +19,13 @@ open HolBACoreSimps;
 (* From shared: *)
 open bir_exp_to_wordsLib bslSyntax;
 
+(* From examples support: *)
+open tutorial_bir_to_armSupportTheory;
+open tutorial_wpSupportLib;
+
 (* From examples: *)
 open examplesBinaryTheory;
-open tutorial_bir_to_armSupportTheory;
 open tutorial_bir_to_armTheory;
-open tutorial_wpSupportLib;
 
 (* From HOL4: *)
 open finite_mapSyntax pairSyntax pred_setSyntax;

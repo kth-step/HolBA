@@ -29,7 +29,16 @@ if [[ ! -z "$(git status --porcelain)" ]]; then
   echo "logs repository is not clean, cannot go ahead"
   exit 1
 fi
-git push
+
+# see if git push is desired
+echo "Do you want to push the current branch of EmbExp-Logs?"
+select yn in "Yes" "No"; do
+  case $yn in
+    Yes ) git push; break;;
+    No ) break;;
+  esac
+done
+
 # clean everything
 git checkout master
 git clean -fd

@@ -26,8 +26,8 @@ val add_lift_thm =
           get_bir_map_triple_post bir_add_reg_ct] tutorial_bir_to_armSupportTheory.lift_contract_thm;
 
 (* Prove the ARM triple by supplying the antecedents of lift_contract_thm *)
-val arm_add_reg_contract_thm =
-  prove(``arm8_triple bir_add_reg_progbin 28w {72w} arm8_add_reg_pre
+val arm_add_reg_contract_thm = store_thm("arm_add_reg_contract_thm",
+  ``arm8_triple bir_add_reg_progbin 28w {72w} arm8_add_reg_pre
             arm8_add_reg_post``,
 
 irule add_lift_thm >>

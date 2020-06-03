@@ -4,7 +4,7 @@
 
 # get current holba directory path
 HOLBA_DIR=$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")/../..
-HOLBA_DIR=$(readlink -f "${HOLBA_DIR}")
+export HOLBA_DIR=$(readlink -f "${HOLBA_DIR}")
 
 
 #####################################################
@@ -71,6 +71,19 @@ if [[ ! -z "${HOLBA_Z3_DIR}" ]]; then
     echo "Using LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
     echo "Using HOL4_Z3_EXECUTABLE=${HOL4_Z3_EXECUTABLE}"
     echo "Using HOL4_Z3_WRAPPED_EXECUTABLE=${HOL4_Z3_WRAPPED_EXECUTABLE}"
+fi
+
+
+
+####### HOLBA_USE_OWN_PYTHON3
+if [[ ! -z "${HOLBA_USE_OWN_PYTHON3}" ]]; then
+  PYTHON3_DIR=${HOLBA_OPT_DIR}/python_3.7.4
+  if [[ -d "${PYTHON3_DIR}" ]]; then
+    export PATH=${PYTHON3_DIR}/bin:${PATH}
+    echo "Using PATH=${PATH}"
+    export LD_LIBRARY_PATH=${PYTHON3_DIR}/lib:${LD_LIBRARY_PATH}
+    echo "Using LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
+  fi
 fi
 
 
