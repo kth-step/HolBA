@@ -4,6 +4,7 @@ val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = Globals.show_tags := true;
 
 open tutorial_compositionTheory;
+open tutorial_backliftingTheory;
 open tutorialExtra_compositionTheory;
 open tutorialExtra2_compositionTheory;
 
@@ -21,7 +22,21 @@ fun print_and_check_thm name thm t_concl =
 
 
 val _ = print_and_check_thm
-  "HolBA tutorial example"
+  "HolBA tutorial example (BIR only)"
+  bir_add_reg_ct
+  ``
+  bir_map_triple
+    (bir_add_reg_prog:'observation_type bir_program_t)
+    bir_exp_true
+    (BL_Address (Imm64 28w))
+    {BL_Address (Imm64 72w)} EMPTY bir_add_reg_contract_1_pre
+    (\l.
+       if l = BL_Address (Imm64 72w) then bir_add_reg_contract_4_post
+       else bir_exp_false)
+  ``;
+
+val _ = print_and_check_thm
+  "HolBA tutorial example (back to ARMv8)"
   arm_add_reg_contract_thm
   ``arm8_triple
       bir_add_reg_progbin
@@ -33,7 +48,7 @@ val _ = print_and_check_thm
 
 val _ = print_and_check_thm
   "Example \"BIR function reuse\""
-  bir_att_ht
+  bir_att_ct
   ``
   bir_map_triple
     bprog_add_times_two

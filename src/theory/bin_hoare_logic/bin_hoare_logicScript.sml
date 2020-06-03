@@ -218,7 +218,6 @@ METIS_TAC [weak_union_pc_not_in_thm]
 );
 
 
-
 val weak_seq_rule_thm = store_thm("weak_seq_rule_thm",
   ``!m l ls1 ls2 pre post.
     weak_model m ==>
@@ -247,6 +246,7 @@ REV_FULL_SIMP_TAC std_ss[] >>
 ASSUME_TAC (Q.SPECL [`m`] weak_comp_thm) >>
 METIS_TAC []
 );
+
 
 val weak_conj_rule_thm = prove(``
   !m.

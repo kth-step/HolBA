@@ -18,13 +18,14 @@ val weak_map_triple_def = Define `
     )
 `;
 
-val weak_map_subset_blacklist_rule_thm = prove(``
-  !m.
-  !invariant. !l ls ls' ls'' pre post.
-  weak_model m ==>
-  ls'' SUBSET ls' ==>
-  weak_map_triple m invariant l ls ls' pre post ==>
-  weak_map_triple m invariant l ls ls'' pre post``,
+val weak_map_subset_blacklist_rule_thm =
+  store_thm("weak_map_subset_blacklist_rule_thm",
+  ``!m.
+    !invariant. !l ls ls' ls'' pre post.
+    weak_model m ==>
+    ls'' SUBSET ls' ==>
+    weak_map_triple m invariant l ls ls' pre post ==>
+    weak_map_triple m invariant l ls ls'' pre post``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
@@ -61,6 +62,50 @@ ASSUME_TAC (Q.SPECL [`m`, `l`, `ls UNION ls''`,
            ] 
   weak_weakening_rule_thm) >>
 REV_FULL_SIMP_TAC std_ss []
+);
+
+
+val weak_map_move_to_whitelist = store_thm("weak_map_move_to_whitelist",
+  ``!m invariant l l' ls ls' pre post.
+    weak_model m ==>
+    l' IN ls' ==>
+    weak_map_triple m invariant l ls ls' pre post ==>
+    weak_map_triple m invariant l (l' INSERT ls) (ls' DELETE l') pre post``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [weak_map_triple_def, weak_triple_def] >>
+subgoal `?ls''. (ls' = l' INSERT ls'') /\ l' NOTIN ls''` >- (
+  METIS_TAC [pred_setTheory.DECOMPOSITION]
+) >>
+subgoal `l' NOTIN ls` >- (
+  CCONTR_TAC >>
+  subgoal `?ls'''. (ls = l' INSERT ls''') /\ l' NOTIN ls'''` >- (
+    METIS_TAC [pred_setTheory.DECOMPOSITION]
+  ) >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INSERT_INTER]
+) >>
+REPEAT STRIP_TAC >| [
+  ONCE_REWRITE_TAC [pred_setTheory.INTER_COMM] >>
+  FULL_SIMP_TAC std_ss [pred_setTheory.DELETE_INTER, pred_setTheory.INSERT_INTER,
+                        pred_setTheory.COMPONENT] >>
+
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INSERT_INTER,
+                                                   pred_setTheory.COMPONENT,
+                                                   pred_setTheory.INSERT_EQ_SING] >>
+  FULL_SIMP_TAC std_ss [Once pred_setTheory.INTER_COMM] >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INSERT_INTER] >>
+  FULL_SIMP_TAC std_ss [Once pred_setTheory.INTER_COMM],
+
+  QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `ms'` >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
+  `((l' INSERT ls) UNION ((l' INSERT ls'') DELETE l')) = (ls UNION (l' INSERT ls''))` suffices_by (
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  METIS_TAC [pred_setTheory.UNION_COMM, pred_setTheory.INSERT_UNION_EQ,
+             pred_setTheory.DELETE_INSERT, pred_setTheory.DELETE_NON_ELEMENT]
+]
 );
 
 
@@ -226,10 +271,58 @@ REV_FULL_SIMP_TAC std_ss []
 );
 
 
+val weak_map_seq_one_thm = store_thm("weak_map_seq_one_thm",
+  ``!m invariant l wl1 wl2 bl1 bl2 pre post.
+    weak_model m ==>
+    (bl1 INTER bl2 = {}) ==>
+    weak_map_triple m invariant l (wl1 UNION wl2) (bl1 UNION bl2) pre post ==>
+    (!l1.
+     (l1 IN wl1) ==>
+     weak_map_triple m invariant l1 (wl2 UNION bl1) bl2 post post
+    ) ==>
+    (weak_map_triple m invariant l (wl2 UNION bl1) bl2 pre post)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
+STRIP_TAC >- (
+  subgoal `(wl2) INTER (bl2) = {}` >- (
+    irule bir_auxiliaryTheory.INTER_SUBSET_EMPTY_thm >>
+    Q.EXISTS_TAC `bl1 UNION bl2` >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [Once pred_setTheory.INTER_COMM] >>
+    irule bir_auxiliaryTheory.INTER_SUBSET_EMPTY_thm >>
+    Q.EXISTS_TAC `wl1 UNION wl2` >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+  ) >>
+  FULL_SIMP_TAC std_ss [Once pred_setTheory.INTER_COMM,
+                        pred_setTheory.UNION_OVER_INTER,
+                        pred_setTheory.UNION_EMPTY]
+) >>
+irule weak_seq_rule_thm >>
+FULL_SIMP_TAC std_ss [] >>
+Q.EXISTS_TAC `wl1` >>
+STRIP_TAC >| [
+  REPEAT STRIP_TAC >>
+  QSPECL_X_ASSUM ``!l1. _`` [`l1`] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  irule weak_weakening_rule_thm >>
+  FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `\ms. m.pc ms NOTIN bl2 /\ post ms /\ invariant ms` >>
+  Q.EXISTS_TAC `\ms. post ms /\ invariant ms` >>
+  FULL_SIMP_TAC std_ss [],
+
+  irule weak_weakening_rule_thm >>
+  FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `\ms. m.pc ms NOTIN bl1 UNION bl2 /\ post ms /\ invariant ms` >>
+  Q.EXISTS_TAC `\ms. pre ms /\ invariant ms` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.UNION_ASSOC]
+]
+);
+
 (* This proof should use the blacklist move lemma *)
 val weak_map_seq_thm = prove(
   ``!m invariant l ls1 ls ls' pre post.
     weak_model m ==>
+    (* TODO: This really needed? *)
     (ls INTER ls' = {}) ==>
     weak_map_triple m invariant l ls1 (ls UNION ls') pre post ==>
     (!l1.
@@ -285,7 +378,7 @@ REV_FULL_SIMP_TAC std_ss []
 );
 
 
-(* We should generalize the other contract to handle set of labels *)
+(* TODO: Do new version of this *)
 val weak_map_std_seq_comp_thm = store_thm("weak_map_std_seq_comp_thm",
   ``!m ls1 ls1' ls2 ls2' invariant l pre1 post1 post2.
     weak_model m ==>
@@ -360,6 +453,38 @@ ASSUME_TAC (Q.SPECL [`m`, `invariant`, `l`, `ls1'`, `ls2 INTER ls2'`, `pre1`,
 REV_FULL_SIMP_TAC std_ss []
 );
 
+
+val weak_map_loop_thm = store_thm("weak_map_loop_thm",
+  ``!m.
+    weak_model m ==>
+    !l wl bl invariant C1 var post.
+    l NOTIN wl ==> 
+    l NOTIN bl ==>
+    (!x. weak_map_triple m invariant l ({l} UNION wl) bl
+      (\ms. C1 ms /\ (var ms = (x:num)))
+      (\ms. (m.pc ms = l) /\ var ms < x /\ var ms >= 0)) ==>
+    weak_map_triple m (\ms. T) l wl bl (\ms. ~(C1 ms) /\ invariant ms) post ==>
+    weak_map_triple m (\ms. T) l wl bl invariant post``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
+irule weak_invariant_rule_thm >>
+FULL_SIMP_TAC std_ss [] >>
+Q.EXISTS_TAC `C1` >>
+Q.EXISTS_TAC `var` >>
+FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss)
+  [weak_loop_contract_def, Once boolTheory.CONJ_SYM] >>
+STRIP_TAC >>
+QSPECL_X_ASSUM ``!x. _`` [`x`] >>  
+irule weak_weakening_rule_thm >>
+FULL_SIMP_TAC std_ss [] >>
+Q.EXISTS_TAC `(\ms.
+                m.pc ms NOTIN bl /\ ((m.pc ms = l) /\ var ms < x) /\
+                invariant ms)` >>
+Q.EXISTS_TAC `(\ms. (C1 ms /\ (var ms = x)) /\ invariant ms)` >>
+FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.UNION_ASSOC]
+);
+
 (* The below are still TODO: *)
 (*
 (* Condition *)
@@ -374,18 +499,6 @@ val weak_map_std_seq_comp_thm = prove(``
 ``,
 
 cheat);
-
-
-(* Loop *)
-val weak_map_std_seq_comp_thm = prove(``
-(weak_model m) ==>
-(ls1' SUBSET ls2) ==>
-(ls1 INTER ls1' = EMPTY) ==>
-(ls1' INTER ls2' = EMPTY) ==>
-(weak_map_triple m invariant l ls1 ls2 pre1 post1) ==>
-(!l1 . (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
-(weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2)
-``,cheat);
 
 
 (* Function call *)
