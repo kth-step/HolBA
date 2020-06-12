@@ -65,8 +65,8 @@ REV_FULL_SIMP_TAC arith_ss []
 );
 
 
-val weak_unique_thm = prove(``
-  !m.
+val weak_unique_thm = store_thm("weak_unique_thm",
+``!m.
   (weak_model m) ==>
   !ms ls ms' ms''.
   (m.weak ms ls ms') ==>
@@ -102,7 +102,7 @@ Q.EXISTS_TAC `n` >>
 METIS_TAC [pred_setTheory.IN_UNION]
 );
 
-val weak_union2_thm = prove(``
+val weak_union2_thm = store_thm("weak_union2_thm",``
   !m.
   weak_model m ==>
   !ms ls1 ls2 ms'.
@@ -137,11 +137,11 @@ METIS_TAC [weak_model_def, pred_setTheory.IN_SING]
 );
 
 
-val weak_pc_in_thm = prove(``
-  !m.
-  weak_model m ==>
-  !ms ls ms'.
-  (m.weak ms ls ms') ==> ((m.pc ms') IN ls)``,
+val weak_pc_in_thm = store_thm("weak_pc_in_thm",
+  ``!m.
+    weak_model m ==>
+    !ms ls ms'.
+    (m.weak ms ls ms') ==> ((m.pc ms') IN ls)``,
 
 METIS_TAC [weak_model_def]
 );
@@ -237,7 +237,7 @@ val abstract_subset_rule_thm =
 REPEAT STRIP_TAC >>
 REV_FULL_SIMP_TAC std_ss [abstract_jgmt_def] >>
 REPEAT STRIP_TAC >>
-QSPECL_X_ASSUM ``!x. _`` [`ms`] >>
+QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
 METIS_TAC [weak_union_pc_not_in_thm]
 );
 
