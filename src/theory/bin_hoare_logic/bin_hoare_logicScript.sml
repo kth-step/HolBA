@@ -173,11 +173,10 @@ val weak_triple_def = Define `
 
 
 val weak_model_comp_rule_thm = store_thm("weak_model_comp_rule_thm",
-  ``!m n.
+  ``!m n l ls pre post.
     weak_model m ==>
     weak_model n ==>
-    !ls l pre post.
-    (!ms ms'. m.weak ms ls ms' ==> n.weak ms ls ms') ==>
+    (!ms ls ms'. m.weak ms ls ms' ==> n.weak ms ls ms') ==>
     (!ms l'. (n.pc ms = l')  ==> (m.pc ms = l')) ==>
     weak_triple m l ls pre post ==>
     weak_triple n l ls pre post``,
@@ -189,7 +188,7 @@ QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
 QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
 REV_FULL_SIMP_TAC std_ss [] >>
 FULL_SIMP_TAC std_ss [] >>
-QSPECL_X_ASSUM ``!ms ms'. _`` [`ms`, `ms'`] >>
+QSPECL_X_ASSUM ``!ms ls ms'. _`` [`ms`, `ls`, `ms'`] >>
 REV_FULL_SIMP_TAC std_ss [] >>
 Q.EXISTS_TAC `ms'` >>
 FULL_SIMP_TAC std_ss []
