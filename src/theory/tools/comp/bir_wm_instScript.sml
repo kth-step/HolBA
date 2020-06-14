@@ -1275,7 +1275,6 @@ EQ_TAC >> (
 );
 
 
-
 (* bir_map_triples are all generated from bir_triples, which have no explicit notion
  * of blacklist. This theorem moves ending labels which are implicitly
  * blacklisted by the postcondition from the whitelist of a bir_map_triple to the blacklist. *)
@@ -1825,15 +1824,20 @@ METIS_TAC [bir_exec_to_labels_triple_precond_def,
 val bir_is_valid_pc_exec =
   store_thm("bir_is_valid_pc_exec",
   ``!s pre prog ls l' n n0 s'.
-    bir_exec_to_labels_triple_precond s pre prog ==>
     (bir_exec_to_labels ls prog s = BER_Ended l' n n0 s') ==>
+    (* TODO: Why is this assumption required? *)
+    bir_exec_to_labels_triple_precond s pre prog ==>
     ~bir_state_is_terminated s' ==>
     bir_is_valid_pc prog s.bst_pc``,
 
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_labels_n_def] >>
 subgoal `~bir_state_is_terminated s` >- (
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_triple_precond_def]
+  CCONTR_TAC >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def,
+                                        bir_exec_steps_GEN_REWR_TERMINATED] >>
+  RW_TAC std_ss [] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
 ) >>
 IMP_RES_TAC bir_exec_steps_GEN_REWR_STEP >> 
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_step_def] >>
@@ -1903,5 +1907,65 @@ CONJ_TAC >> (
 )
 );
 
+(* Sketch for alternative proof using weak_map_model_comp_rule_thm
+val bir_map_prog_comp_alt_thm =
+  store_thm("bir_map_prog_comp_alt_thm",
+  ``!prog1 prog2 invariant wl bl l pre post.
+    bir_is_subprogram prog1 prog2 ==>
+    bir_is_valid_labels prog2 ==>
+    bir_map_triple prog1 invariant l wl bl pre post ==>
+    bir_map_triple prog2 invariant l wl bl pre post``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_map_triple_def] >>
+irule weak_map_model_comp_rule_thm >>
+FULL_SIMP_TAC std_ss [bir_model_is_weak] >>
+Q.EXISTS_TAC `bir_etl_wm prog1` >>
+REPEAT STRIP_TAC >| [
+  (* (bir_etl_wm prog1).pc ms = (bir_etl_wm prog2).pc ms *)
+  FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def],
+
+  (* (bir_etl_wm prog2).weak ms ls ms' *)
+  FULL_SIMP_TAC (std_ss++bir_wm_SS) [bir_etl_wm_def, bir_weak_trs_def, weak_map_triple_def] >>
+  Cases_on `bir_exec_to_labels ls prog2 ms` >> Cases_on `bir_exec_to_labels ls prog1 ms` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    Q.PAT_X_ASSUM `b' = ms'` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
+    subgoal `bir_is_valid_pc prog1 ms.bst_pc` >- (
+      cheat >>
+      (* TODO: Why does bir_is_valid_pc_exec require precondition? *)
+      METIS_TAC [bir_is_valid_pc_exec]
+    ) >>
+    subgoal `(!l.
+		(ms'.bst_status = BST_JumpOutside l) ==>
+		~MEM l (bir_labels_of_program prog2))` >- (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def]
+    ) >>
+    IMP_RES_TAC bir_exec_to_labels_TERMINATES_SUBPROGRAM_EQ >>
+    (* This should work out... *)
+    cheat
+  ),
+
+  FULL_SIMP_TAC std_ss [bir_model_is_weak],
+
+  FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
+  FULL_SIMP_TAC (std_ss++bir_wm_SS) [weak_triple_def,
+				     bir_etl_wm_def, bir_weak_trs_def] >>
+  REPEAT STRIP_TAC >>
+  IMP_RES_TAC bir_exec_to_labels_triple_precond_subprogram >>
+  QSPECL_X_ASSUM ``!s. _`` [`s`] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_triple_postcond_def,
+					bir_exec_to_labels_triple_precond_def] >>
+  irule bir_env_oldTheory.bir_env_vars_are_initialised_ORDER >>
+  Q.EXISTS_TAC `s.bst_environ` >>
+  Cases_on `bir_exec_to_labels (wl UNION bl) prog1 s` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >>
+  METIS_TAC [bir_program_env_orderTheory.bir_exec_to_labels_n_ENV_ORDER]
+]
+);
+*)
 
 val _ = export_theory();

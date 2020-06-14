@@ -177,7 +177,7 @@ val weak_model_comp_rule_thm = store_thm("weak_model_comp_rule_thm",
     weak_model m ==>
     weak_model n ==>
     (!ms ls ms'. m.weak ms ls ms' ==> n.weak ms ls ms') ==>
-    (!ms l'. (n.pc ms = l')  ==> (m.pc ms = l')) ==>
+    (!ms l. (n.pc ms = l)  ==> (m.pc ms = l)) ==>
     weak_triple m l ls pre post ==>
     weak_triple n l ls pre post``,
 
