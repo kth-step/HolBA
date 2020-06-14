@@ -128,6 +128,14 @@ val notin_insert_thm = prove(``(A NOTIN (B INSERT C)) ==> (A NOTIN C)``,
     SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
   )
 );
+val notin_insert_neq_thm = prove(``!set el. el NOTIN set ==> (set <> el INSERT set)``,
+
+REPEAT STRIP_TAC >>
+subgoal `el IN (el INSERT set')` >- (
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
+) >>
+METIS_TAC [pred_setTheory.NOT_EQUAL_SETS]
+);
   val fix3_thm = (UNDISCH_ALL o prove) (``
 ^ht_assmpt ==>
 (!l.
@@ -154,33 +162,45 @@ val notin_insert_thm = prove(``(A NOTIN (B INSERT C)) ==> (A NOTIN C)``,
 );
 
 
-  fun fix_assmt map_ht =
+  fun fix_assmt ct =
     REWRITE_RULE [(SIMP_CONV (std_ss++pred_setLib.PRED_SET_ss) [assumes] o
-                  fst o dest_imp o concl) map_ht] map_ht;
-  fun fix_assmt2 map_ht =
-    REWRITE_RULE [(SIMP_CONV (std_ss) [assumes, pred_setTheory.SUBSET_OF_INSERT] o
-                  fst o dest_imp o concl) map_ht] map_ht;
-  fun fix_assmt3 map_ht =
-    REWRITE_RULE [(SIMP_CONV (std_ss) [fix3_thm, fix3_2_thm] o
-                  fst o dest_imp o concl) map_ht] map_ht;
+                  fst o dest_imp o concl) ct] ct;
+
+  fun fix_assmt2 ct =
+    let
+      val ante_term = (fst o dest_imp o concl) ct
+      val ante_term2 =
+        EQT_ELIM (
+          SIMP_CONV std_ss [assumes, pred_setTheory.SUBSET_OF_INSERT,
+                            pred_setTheory.PSUBSET_DEF, notin_insert_neq_thm]
+            ante_term
+        )
+    in
+      SIMP_RULE std_ss [ante_term2] ct
+    end;
+
+  fun fix_assmt3 ct =
+    REWRITE_RULE [(SIMP_CONV std_ss [fix3_thm, fix3_2_thm] o
+                  fst o dest_imp o concl) ct] ct;
 
   fun populate_blacklist_set_hack elabels map_ht =
     let
-  val map_ht1 =
-  ((SPEC elabels) o
-   (HO_MATCH_MP bir_map_triple_move_set_to_blacklist))
-  map_ht;
-  val map_ht1_1 = fix_assmt map_ht1;
-  val map_ht1_2 = fix_assmt2 map_ht1_1;
-  val map_ht1_3 = fix_assmt3 map_ht1_2;
-  val map_ht1 = REWRITE_RULE [pred_setTheory.UNION_EMPTY,
-                              pred_setTheory.INSERT_DIFF,
-                              pred_setTheory.COMPONENT,
-                              (REWRITE_RULE [pred_setTheory.SUBSET_OF_INSERT]
-                               (Q.SPECL [`a`,`b INSERT a`] pred_setTheory.SUBSET_DIFF_EMPTY)),
-                              pred_setTheory.DIFF_EQ_EMPTY,
-                              assumes]
-                             map_ht1_3
+      val map_ht1 =
+	((SPEC elabels) o
+	 (HO_MATCH_MP bir_map_triple_move_set_to_blacklist))
+	map_ht;
+      val map_ht1_1 = fix_assmt map_ht1;
+      val map_ht1_2 = fix_assmt2 map_ht1_1;
+      val map_ht1_3 = fix_assmt3 map_ht1_2;
+      val map_ht1 =
+        REWRITE_RULE [pred_setTheory.UNION_EMPTY,
+		      pred_setTheory.INSERT_DIFF,
+		      pred_setTheory.COMPONENT,
+		      (REWRITE_RULE [pred_setTheory.SUBSET_OF_INSERT]
+		       (Q.SPECL [`a`,`b INSERT a`] pred_setTheory.SUBSET_DIFF_EMPTY)),
+		      pred_setTheory.DIFF_EQ_EMPTY,
+		      assumes]
+		     map_ht1_3
     in
       map_ht1
     end;

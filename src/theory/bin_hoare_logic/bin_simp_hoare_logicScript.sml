@@ -73,7 +73,7 @@ val weak_map_move_to_whitelist = store_thm("weak_map_move_to_whitelist",
     weak_map_triple m invariant l (l' INSERT ls) (ls' DELETE l') pre post``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [weak_map_triple_def, weak_triple_def] >>
+FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
 subgoal `?ls''. (ls' = l' INSERT ls'') /\ l' NOTIN ls''` >- (
   METIS_TAC [pred_setTheory.DECOMPOSITION]
 ) >>
@@ -88,7 +88,6 @@ REPEAT STRIP_TAC >| [
   ONCE_REWRITE_TAC [pred_setTheory.INTER_COMM] >>
   FULL_SIMP_TAC std_ss [pred_setTheory.DELETE_INTER, pred_setTheory.INSERT_INTER,
                         pred_setTheory.COMPONENT] >>
-
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INSERT_INTER,
                                                    pred_setTheory.COMPONENT,
                                                    pred_setTheory.INSERT_EQ_SING] >>
@@ -96,9 +95,12 @@ REPEAT STRIP_TAC >| [
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INSERT_INTER] >>
   FULL_SIMP_TAC std_ss [Once pred_setTheory.INTER_COMM],
 
-  QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-  Q.EXISTS_TAC `ms'` >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [],
+
+  irule weak_weakening_rule_thm >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
+  Q.EXISTS_TAC `(\ms. m.pc ms NOTIN l' INSERT ls'' /\ post ms /\ invariant ms)` >>
+  Q.EXISTS_TAC `(\ms. pre ms /\ invariant ms)` >>
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
   `((l' INSERT ls) UNION ((l' INSERT ls'') DELETE l')) = (ls UNION (l' INSERT ls''))` suffices_by (
     FULL_SIMP_TAC std_ss []
@@ -317,6 +319,10 @@ STRIP_TAC >- (
                         pred_setTheory.UNION_OVER_INTER,
                         pred_setTheory.UNION_EMPTY]
 ) >>
+STRIP_TAC >- (
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  METIS_TAC [pred_setTheory.MEMBER_NOT_EMPTY]
+) >>
 irule weak_seq_rule_thm >>
 FULL_SIMP_TAC std_ss [] >>
 Q.EXISTS_TAC `wl1` >>
@@ -399,14 +405,11 @@ METIS_TAC [pred_setTheory.MEMBER_NOT_EMPTY]
 );
 
 
-(* TODO: Do new version of this *)
 val weak_map_std_seq_comp_thm = store_thm("weak_map_std_seq_comp_thm",
   ``!m ls1 ls1' ls2 ls2' invariant l pre1 post1 post2.
     weak_model m ==>
     ls1' SUBSET ls2 ==>
     (ls1 INTER ls1' = EMPTY) ==>
-(*    (ls1' INTER ls2' = EMPTY) ==>*)
-(*    ls1 <> {} ==> *)
     weak_map_triple m invariant l ls1 ls2 pre1 post1 ==>
     (!l1. (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' post1 post2)) ==>
     weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2``,
