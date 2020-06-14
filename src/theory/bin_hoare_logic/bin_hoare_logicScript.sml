@@ -172,6 +172,30 @@ val weak_triple_def = Define `
 `;
 
 
+val weak_model_comp_rule_thm = store_thm("weak_model_comp_rule_thm",
+  ``!m n.
+    weak_model m ==>
+    weak_model n ==>
+    !ls l pre post.
+    (!ms ms'. m.weak ms ls ms' ==> n.weak ms ls ms') ==>
+    (!ms l'. (n.pc ms = l')  ==> (m.pc ms = l')) ==>
+    weak_triple m l ls pre post ==>
+    weak_triple n l ls pre post``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [weak_triple_def] >>
+REPEAT STRIP_TAC >>
+QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
+QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
+REV_FULL_SIMP_TAC std_ss [] >>
+FULL_SIMP_TAC std_ss [] >>
+QSPECL_X_ASSUM ``!ms ms'. _`` [`ms`, `ms'`] >>
+REV_FULL_SIMP_TAC std_ss [] >>
+Q.EXISTS_TAC `ms'` >>
+FULL_SIMP_TAC std_ss []
+);
+
+
 val weak_case_rule_thm = prove(``
 !m l ls pre post C1.
   weak_triple m l ls (\ms. (pre ms) /\ (C1 ms)) post ==>
