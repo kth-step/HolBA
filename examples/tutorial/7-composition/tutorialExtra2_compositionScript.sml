@@ -28,6 +28,26 @@ val _ = new_theory "tutorialExtra2_composition";
 fun el_in_set elem set =
   EQT_ELIM (SIMP_CONV (std_ss++pred_setLib.PRED_SET_ss) [] (pred_setSyntax.mk_in (elem, set)));
 
+fun delete_not_empty_set elem set =
+  let
+    val delete_tm = pred_setSyntax.mk_delete (set, elem)
+
+    val delete_thm =
+      SIMP_CONV (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss)
+	[pred_setTheory.DELETE_DEF]
+	delete_tm
+
+    val notempty_thm =
+      SIMP_CONV (std_ss++pred_setLib.PRED_SET_ss) []
+	(mk_neg (mk_eq ((snd o dest_eq o concl) delete_thm, pred_setSyntax.mk_empty bir_label_t_ty)))
+
+  in
+    EQT_ELIM (SIMP_CONV std_ss [delete_thm, notempty_thm] 
+      (mk_neg (mk_eq (delete_tm, pred_setSyntax.mk_empty bir_label_t_ty)))
+    )
+  end
+;
+
 val mk_set = pred_setSyntax.mk_set;
 
 val simp_delete_set_rule =
@@ -48,9 +68,9 @@ val simp_in_set_tac =
   SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss++pred_setLib.PRED_SET_ss) []
 
 (* DEBUG *)
-val (get_labels_from_set_repr, el_in_set_repr,
+val (get_labels_from_set_repr, el_in_set_repr, delete_not_empty_set_repr,
      mk_set_repr, simp_delete_set_repr_rule,
-     simp_insert_set_repr_rule, simp_in_sing_set_repr_rule, simp_inter_set_repr_rule, simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) = (ending_set_to_sml_list, el_in_set, mk_set, simp_delete_set_rule,
+     simp_insert_set_repr_rule, simp_in_sing_set_repr_rule, simp_inter_set_repr_rule, simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) = (ending_set_to_sml_list, el_in_set, delete_not_empty_set, mk_set, simp_delete_set_rule,
      simp_insert_set_rule, simp_in_sing_set_rule, simp_inter_set_rule, simp_in_set_tac, bir_inter_var_set_ss, bir_union_var_set_ss);
 (************************************)
 
@@ -130,7 +150,8 @@ val bir_ieo_sec_isodd_exit_comp_ht =
 
 (* For debugging: *)
   val loop_map_ht    = REWRITE_RULE [GSYM bir_ieo_sec_iseven_loop_post_def, Once abs_ev_intro]
-          (bir_populate_blacklist (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
+          (bir_populate_blacklist (get_labels_from_set_repr, el_in_set_repr,
+                                   delete_not_empty_set_repr, mk_set_repr,
                                    simp_delete_set_repr_rule, simp_insert_set_repr_rule)
            (REWRITE_RULE [GSYM abs_ev_intro, bir_ieo_sec_iseven_loop_post_def] loop_ev_map_ht_2));
 
@@ -154,7 +175,8 @@ val loop_and_exit_ev_ht =
 
 (* For debugging: *)
   val loop_map_ht    = REWRITE_RULE [GSYM bir_ieo_sec_isodd_loop_post_def, Once abs_od_intro]
-          (bir_populate_blacklist (get_labels_from_set_repr, el_in_set_repr, mk_set_repr,
+          (bir_populate_blacklist (get_labels_from_set_repr, el_in_set_repr,
+                                   delete_not_empty_set_repr, mk_set_repr,
                                    simp_delete_set_repr_rule, simp_insert_set_repr_rule)
            (REWRITE_RULE [GSYM abs_od_intro, bir_ieo_sec_isodd_loop_post_def] loop_od_map_ht_2));
 

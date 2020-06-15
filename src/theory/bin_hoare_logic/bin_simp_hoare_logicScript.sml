@@ -10,7 +10,7 @@ val _ = new_theory "bin_simp_hoare_logic";
  * the execution mode is the expected one *)
 val weak_map_triple_def = Define `
   weak_map_triple m invariant (l:'a) (ls:'a->bool) (ls':'a->bool) pre post =
-    (((ls INTER ls') = EMPTY) /\
+    (((ls INTER ls') = EMPTY) /\ (ls <> EMPTY) /\
      (weak_triple m l (ls UNION ls')
                  (\ms. (pre ms) /\ (invariant ms))
                  (\ms. if ((m.pc ms) IN ls') then F else ((post ms) /\ (invariant ms)))
@@ -73,7 +73,7 @@ val weak_map_move_to_whitelist = store_thm("weak_map_move_to_whitelist",
     weak_map_triple m invariant l (l' INSERT ls) (ls' DELETE l') pre post``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [weak_map_triple_def, weak_triple_def] >>
+FULL_SIMP_TAC std_ss [weak_map_triple_def] >>
 subgoal `?ls''. (ls' = l' INSERT ls'') /\ l' NOTIN ls''` >- (
   METIS_TAC [pred_setTheory.DECOMPOSITION]
 ) >>
@@ -88,7 +88,6 @@ REPEAT STRIP_TAC >| [
   ONCE_REWRITE_TAC [pred_setTheory.INTER_COMM] >>
   FULL_SIMP_TAC std_ss [pred_setTheory.DELETE_INTER, pred_setTheory.INSERT_INTER,
                         pred_setTheory.COMPONENT] >>
-
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INSERT_INTER,
                                                    pred_setTheory.COMPONENT,
                                                    pred_setTheory.INSERT_EQ_SING] >>
@@ -96,9 +95,12 @@ REPEAT STRIP_TAC >| [
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.INSERT_INTER] >>
   FULL_SIMP_TAC std_ss [Once pred_setTheory.INTER_COMM],
 
-  QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-  Q.EXISTS_TAC `ms'` >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [],
+
+  irule weak_weakening_rule_thm >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
+  Q.EXISTS_TAC `(\ms. m.pc ms NOTIN l' INSERT ls'' /\ post ms /\ invariant ms)` >>
+  Q.EXISTS_TAC `(\ms. pre ms /\ invariant ms)` >>
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
   `((l' INSERT ls) UNION ((l' INSERT ls'') DELETE l')) = (ls UNION (l' INSERT ls''))` suffices_by (
     FULL_SIMP_TAC std_ss []
@@ -113,6 +115,7 @@ val weak_map_move_to_blacklist = store_thm("weak_map_move_to_blacklist",
   ``!m invariant l l' ls ls' pre post.
     weak_model m ==>
     l' IN ls ==>
+    (ls DELETE l') <> {} ==>
     (!ms. (m.pc ms = l') ==> (post ms = F)) ==>
     weak_map_triple m invariant l ls ls' pre post ==>
     weak_map_triple m invariant l (ls DELETE l') (l' INSERT ls') pre post``,
@@ -161,7 +164,7 @@ val weak_map_move_set_to_blacklist = store_thm("weak_map_move_set_to_blacklist",
   ``!m invariant l ls ls' ls'' pre post.
     weak_model m ==>
     FINITE ls'' ==>
-    ls'' SUBSET ls ==>
+    ls'' PSUBSET ls ==>
     (!ms l'.
      (l' IN ls'') ==>
      (m.pc ms = l') ==>
@@ -175,7 +178,23 @@ Induct_on `ls''` >>
 REPEAT STRIP_TAC >- (
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
 ) >>
-subgoal `ls'' SUBSET ls` >- (
+subgoal `ls'' PSUBSET ls` >- (
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.PSUBSET_DEF] >>
+  METIS_TAC [pred_setTheory.NOT_EQUAL_SETS]
+) >>
+subgoal `e IN ls` >- (
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.PSUBSET_DEF]
+) >>
+subgoal `ls DIFF ls'' <> {e}` >- (
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.PSUBSET_MEMBER] >>
+  subgoal `y IN ls DIFF ls''` >- (
+    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.IN_DIFF]
+  ) >>
+  subgoal `y NOTIN {e}` >- (
+    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
+  ) >>
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.NOT_EQUAL_SETS] >>
+  Q.EXISTS_TAC `y` >>
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
 ) >>
 ASSUME_TAC
@@ -300,6 +319,10 @@ STRIP_TAC >- (
                         pred_setTheory.UNION_OVER_INTER,
                         pred_setTheory.UNION_EMPTY]
 ) >>
+STRIP_TAC >- (
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  METIS_TAC [pred_setTheory.MEMBER_NOT_EMPTY]
+) >>
 irule weak_seq_rule_thm >>
 FULL_SIMP_TAC std_ss [] >>
 Q.EXISTS_TAC `wl1` >>
@@ -377,17 +400,16 @@ ASSUME_TAC (Q.SPECL [`m`, `l`, `ls1`, `ls UNION ls'`,
                      `\ms. pre ms /\ invariant ms`,
                      `\ms. m.pc ms NOTIN ls' /\ post ms /\ invariant ms`]
   weak_seq_rule_thm) >>
-REV_FULL_SIMP_TAC std_ss []
+REV_FULL_SIMP_TAC std_ss [] >>
+METIS_TAC [pred_setTheory.MEMBER_NOT_EMPTY]
 );
 
 
-(* TODO: Do new version of this *)
 val weak_map_std_seq_comp_thm = store_thm("weak_map_std_seq_comp_thm",
   ``!m ls1 ls1' ls2 ls2' invariant l pre1 post1 post2.
     weak_model m ==>
     ls1' SUBSET ls2 ==>
     (ls1 INTER ls1' = EMPTY) ==>
-    (ls1' INTER ls2' = EMPTY) ==>
     weak_map_triple m invariant l ls1 ls2 pre1 post1 ==>
     (!l1. (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' post1 post2)) ==>
     weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2``,
@@ -440,6 +462,16 @@ subgoal `weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1
   ASSUME_TAC (Q.SPECL [`m`, `invariant`, `l`, `ls1`, `ls1'`, `(ls2 INTER ls2')`,
                        `pre1`, `(\ms. if m.pc ms IN ls1 then post1 ms else post2 ms)`]
     weak_map_seq_thm
+  ) >>
+  subgoal `!l1. l1 IN ls1 ==> (ls1' INTER ls2' = {})` >- (
+    REPEAT STRIP_TAC >>
+    METIS_TAC [weak_map_triple_def]
+  ) >>
+  subgoal `ls1 <> EMPTY` >- (
+    METIS_TAC [weak_map_triple_def]
+  ) >>
+  subgoal `ls1' INTER ls2' = {}` >- (
+    METIS_TAC [pred_setTheory.MEMBER_NOT_EMPTY]
   ) >>
   METIS_TAC [INTER_EMPTY_INTER_INTER_EMPTY_thm, pred_setTheory.INTER_COMM]
 ) >>

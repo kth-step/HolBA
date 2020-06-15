@@ -1154,7 +1154,7 @@ IMP_RES_TAC weak_invariant_rule_thm
 val bir_triple_equiv_map_triple = store_thm("bir_triple_equiv_map_triple",
   ``!prog invariant l ls ls' pre post.
     bir_map_triple prog invariant l ls ls' pre post <=>
-      (((ls INTER ls') = EMPTY) /\
+      (((ls INTER ls') = EMPTY) /\ (ls <> EMPTY) /\
        (bir_triple prog l (ls UNION ls')
 		   (BExp_BinExp BIExp_And pre invariant)
 		   (\label. if (label IN ls)
@@ -1223,7 +1223,7 @@ EQ_TAC >> (
 val bir_triple_equiv_map_triple_alt = store_thm("bir_triple_equiv_map_triple_alt",
   ``!prog invariant l ls ls' pre post.
     bir_map_triple prog invariant l ls ls' pre post <=>
-      (((ls INTER ls') = EMPTY) /\
+      (((ls INTER ls') = EMPTY) /\ (ls <> EMPTY) /\
        (bir_triple prog l (ls UNION ls')
 		   (BExp_BinExp BIExp_And pre invariant)
 		   (\label. if (label IN ls')
@@ -1288,6 +1288,7 @@ val bir_map_triple_move_to_blacklist = store_thm("bir_map_triple_move_to_blackli
   ``!prog inv l wlist blist pre post elabel.
     bir_map_triple prog inv l wlist blist pre post ==>
     elabel IN wlist ==>
+    wlist DELETE elabel <> {} ==>
     (post elabel = bir_exp_false) ==>
     bir_map_triple prog inv l (wlist DELETE elabel) (elabel INSERT blist) pre post``,
 
@@ -1306,7 +1307,7 @@ val bir_map_triple_move_set_to_blacklist = store_thm("bir_map_triple_move_set_to
   ``!prog inv l wlist blist pre post elabels.
     bir_map_triple prog inv l wlist blist pre post ==>
     FINITE elabels ==>
-    elabels SUBSET wlist ==>
+    elabels PSUBSET wlist ==>
     (!elabel. elabel IN elabels ==> (post elabel = bir_exp_false)) ==>
     bir_map_triple prog inv l (wlist DIFF elabels) (elabels UNION blist) pre post``,
 
@@ -1471,7 +1472,6 @@ val bir_map_std_seq_comp_thm =
   ``!prog ls1 ls1' ls2 ls2' invariant l pre1 post1 post2.
     ls1' SUBSET ls2 ==>
     (ls1 INTER ls1' = EMPTY) ==>
-    (ls1' INTER ls2' = EMPTY) ==>
     bir_map_triple prog invariant l ls1 ls2 pre1 post1 ==>
     (!l1. (l1 IN ls1) ==> (bir_map_triple prog invariant l1 ls1' ls2' (post1 l1) post2)) ==>
     bir_map_triple prog invariant l ls1' (ls2 INTER ls2') pre1 post2``,
