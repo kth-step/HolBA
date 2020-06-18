@@ -21,6 +21,16 @@ open bir_typing_expTheory;
 open scamv_configLib;
 open bir_conc_execLib;
 
+
+(* C like macros *)
+val endif__ = (fn id => id);
+fun ifdef__else__ x c c' e = (if x then c else c') |> e;
+fun ifdef__ x c e = case x of true => c |> e;
+fun force f = f ();
+
+val SPECTRE = true;
+val DISTINCT_MEM = false;
+
 (*
  workflow:
  - (a) program generation
@@ -121,7 +131,6 @@ fun dest_mem_load size tm =
     else tm |> (#1 o dest_word_lsr o #1 o dest_w2w)
 	    |> (finite_mapSyntax.dest_fapply o (n_times size (#2 o dest_word_concat)));
 
-
 fun make_word_relation relation exps =
     let
         fun primed_subst exp =
@@ -146,8 +155,12 @@ fun make_word_relation relation exps =
         fun mk_distinct_reg (a,b) =
             let val va = mk_var (a,``:word64``);
                 val vb = mk_var (b,``:word64``);
+		val in_range = (fn x => ``(0x80100000w <= ^x /\ ^x < 0x8013FE80w)``);
             in
-		``(^va <> ^vb)``
+		ifdef__else__ SPECTRE
+		    (``(^va <> ^vb) /\ (^(in_range(``^va``))) /\ (^(in_range(``^vb``))) /\ (^va && 0xffw = ^vb && 0xefw) ``)
+		    (``(^va <> ^vb)``)
+		endif__
             end;
 	val rel2w = (bir2bool relation)
 
@@ -165,11 +178,17 @@ fun make_word_relation relation exps =
 		res
 	    end;
 
-        val distinct = if null pairs 
-		       then raise NoObsInPath 
-		       else (* if List.null mpair *)
-		       (* then *) list_mk_disj (map mk_distinct_reg rpair)
-		       (* else mk_conj (list_mk_disj ((map mk_distinct_reg rpair)), (mk_distinct_mem (hd mpair) rel2w)) *)
+        val distinct = force (ifdef__else__ DISTINCT_MEM
+	                      (fn () => if null pairs 
+			          then raise NoObsInPath 
+			          else if List.null mpair
+			          then list_mk_disj (map mk_distinct_reg rpair)
+		                  else mk_conj (list_mk_disj ((map mk_distinct_reg rpair)), (mk_distinct_mem (hd mpair) rel2w)))
+
+		  	      (fn () => if null pairs 
+			          then raise NoObsInPath 
+			          else list_mk_disj (map mk_distinct_reg rpair))
+		             endif__)
     in
        ``^rel2w /\ ^distinct``
     end
@@ -210,6 +229,7 @@ val (current_obs_model_id : string ref) = ref "";
 val (current_pathstruct :
      path_struct ref) = ref [];
 val (current_word_rel : term option ref) = ref NONE;
+val (next_iter_rel    : (path_spec * term) option ref) = ref NONE;
 
 fun reset () =
     (current_prog_id := "";
@@ -348,7 +368,7 @@ val is_memT= (fn tm => can getMem tm)
 fun next_experiment all_exps next_relation  =
     let
         open bir_expLib;
-        
+
         (* ADHOC this constrains paths to only those where *)
 	(* none of the observations appear *)
         val guard_path_spec =
@@ -357,10 +377,11 @@ fun next_experiment all_exps next_relation  =
             else (fn _ => true);
 
         val (path_spec, rel) =
-            valOf (next_relation guard_path_spec)
-            handle Option =>
-                   raise ERR "next_experiment" "next_relation returned a NONE";
-        
+	    case !next_iter_rel of
+		NONE        => valOf (next_relation guard_path_spec) 
+	      | SOME (p, r) => let val _ = next_iter_rel := NONE in (p, r) end
+		handle Option =>
+                       raise ERR "next_experiment" "next_relation returned a NONE";
         val _ = min_verb 3 (fn () =>
                                (print "Selected path: ";
                                 print (PolyML.makestring path_spec);
@@ -421,6 +442,35 @@ fun next_experiment all_exps next_relation  =
                | SOME cumulative =>
                  SOME ``^cumulative /\ ^new_constraint``);
 
+	(* ------------------------- training start ------------------------- *)
+	local
+	    fun training_input_mining tries =
+		if tries > 0
+		then
+		    let val (tpath_spec, trel) =
+			    valOf (next_relation guard_path_spec)
+			    handle Option =>
+				   raise ERR "next_experiment" "next_relation returned a NONE";
+			val _ = next_iter_rel := SOME (tpath_spec, trel)
+			val new_word_relation = make_word_relation trel all_exps
+					    
+			val training_relation =
+			    case !current_word_rel of
+				NONE => new_word_relation
+			      | SOME r => mk_conj (new_word_relation, r);
+			val _ = printv 1 ("Calling Z3 to get training state\n")		
+		    in
+			(Z3_SAT_modelLib.Z3_GET_SAT_MODEL training_relation)
+			handle e => training_input_mining (tries - 1)
+		    end
+		else raise ERR "next_test" "no training input found";
+	in
+	 val st = force (ifdef__else__ SPECTRE
+		          (fn () => training_input_mining 8 |> List.partition (isPrimedRun o fst) |> (to_sml_Arbnums o #2))
+		          (fn () => [])
+		         endif__)
+	end
+	(* ------------------------- training end ------------------------- *)
 	(* val _ = print_term (valOf (!current_word_rel)); *)
 
         (* clean up s2 *)
@@ -438,7 +488,7 @@ fun next_experiment all_exps next_relation  =
 	val s1::s2::_ = #2 ce_obs_comp
 
         (* create experiment files *)
-        val exp_id  = bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
+        val exp_id  = bir_embexp_sates3_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2, st);
         val exp_gen_message = "Generated experiment: " ^ exp_id;
         val _ = bir_embexp_log_prog exp_gen_message;
 
@@ -488,7 +538,7 @@ fun scamv_test_main tests prog =
     let
         val _ = reset();
         val (path_structure, all_exps, next_relation) = start_interactive prog;
-        fun do_tests 0 = ()
+        fun do_tests 0 =  (next_iter_rel := NONE; current_word_rel := NONE)
           | do_tests n =
             let val _ = next_experiment all_exps next_relation
                         handle e => (

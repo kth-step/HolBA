@@ -32,6 +32,7 @@ signature bir_embexp_driverLib = sig
    *)
   (* val bir_embexp_sates2_create : (string * string * string) -> string -> (((string * num) list) * ((string * num) list)) -> string *)
   val bir_embexp_sates2_create : string * string * string ->  string -> modelValues list * modelValues list -> string
+  val bir_embexp_sates3_create : string * string * string ->  string -> modelValues list * modelValues list * modelValues list -> string
   (* Inputs:
        - exp_id (see above)
        - with_reset (run with reset or not)

@@ -397,6 +397,44 @@ end
       arch_id ^ "/" ^ exp_id
     end;
 
+  fun bir_embexp_sates3_create (arch_id, exp_type_id, state_gen_id) prog_id (s1,s2,st) =
+    let
+      val exp_basedir = get_experiment_basedir arch_id;
+
+      (* write out data *)
+      val input1 = gen_json_state false s1;
+      val input2 = gen_json_state false s2;
+      val train  = gen_json_state false st;
+      val exp_datahash = hashstring (prog_id ^ input1 ^ input2);
+      val exp_id = "exps2/" ^ exp_type_id ^ "/" ^ exp_datahash;
+      val exp_datapath = exp_basedir ^ "/" ^ exp_id;
+      (* btw, it can also happen that the same test is produced multiple times *)
+      (* create directory if it didn't exist yet *)
+      val _ = makedir true exp_datapath;
+
+      (* write out reference to the code (hash of the code) *)
+      val prog_id_file = exp_datapath ^ "/code.hash";
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" prog_id_file prog_id;
+
+      (* write the json files after reference to code per convention *)
+      (* - to indicate that experiment writing is complete *)
+      val input1_file = exp_datapath ^ "/input1.json";
+      val input2_file = exp_datapath ^ "/input2.json";
+      val train_file  = exp_datapath ^ "/train.json";
+
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates3_create" input1_file input1;
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates3_create" input2_file input2;
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates3_create" train_file  train;
+
+      (* create exp log, if there was no clash before! *)
+      val embexp_gen_file = exp_datapath ^ "/gen." ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
+      val _ = create_log exp_log embexp_gen_file;
+      (* log generator info *)
+      val _ = write_log_line (exp_log, "bir_embexp_sates2_create", "no no no") state_gen_id;
+    in
+      arch_id ^ "/" ^ exp_id
+    end;      
+
 
   fun bir_embexp_run exp_id with_reset =
     let
