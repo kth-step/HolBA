@@ -12,7 +12,7 @@ local
 
 in
 
-(*Data type for memory constrain generation*)
+(* Data type for memory constraint generation *)
 datatype modelValues = memT of (string * (num*num) list)
 		       | regT of (string * num)
 (* script input helper *)
