@@ -91,9 +91,9 @@ struct
 	  open bir_exp_memTheory
 	  open bir_exec_expLib
       in
-	  tm |> SIMP_CONV(std_ss++HolBACoreSimps.bir_load_store_ss)[bir_eval_load_def, bir_eval_store_def]
+	  tm |> SIMP_CONV(std_ss++ScamvSimps.bir_load_store_ss)[bir_eval_load_def, bir_eval_store_def]
 	     |> computeLib.RESTR_EVAL_RULE [``bir_eval_load``, ``bir_eval_store``]
-	     |> (toTerm o SIMP_RULE (std_ss++HolBACoreSimps.bir_load_store_ss) [])
+	     |> (toTerm o SIMP_RULE (std_ss++ScamvSimps.bir_load_store_ss) [])
 	     |> load_store_simp_unchange_conv
 	     |> SIMP_CONV (std_ss) [bir_mem_addr_def, bitTheory.MOD_2EXP_def, size_of_bir_immtype_def]
 	     |> (#2 o dest_eq o toTerm)
@@ -106,7 +106,7 @@ struct
 	  open listTheory
 	  open bitTheory bitstringTheory
 
-	  val tm1 = toTerm (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss++bir_endian_ss) 
+	  val tm1 = toTerm (SIMP_CONV (std_ss++ScamvSimps.bir_load_store_ss++bir_endian_ss) 
 		      [bir_eval_load_def, bir_eval_store_def, bir_store_in_mem_def, type_of_bir_imm_def,
   		            bir_number_of_mem_splits_def, size_of_bir_immtype_def, LET_DEF] tm)
 	  val tm2 = load_store_simp_unchange_conv tm1 
@@ -194,7 +194,7 @@ struct
 					  ``bir_eval_exp (^bsst_pred_init_mem) (BEnv (K NONE))``;
 		  val bsst_simp_tm = 
                       (let 
-			   val tm = ((toTerm) (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] (restr_eval_tm)))  
+			   val tm = ((toTerm) (SIMP_CONV (std_ss++ScamvSimps.bir_load_store_ss) [] (restr_eval_tm)))  
 			       handle _ => restr_eval_tm
 			   val (f,t) = Lib.first (fn (tac,t) => (Lib.can tac) t)
 			   			 [( load_store_simp_unchange_conv,tm ), 
@@ -227,7 +227,7 @@ struct
 	    val res =
                 eval_exp
 	    	    (let
-	    	     val tm = (toTerm (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] (toTerm esimp)))
+	    	     val tm = (toTerm (SIMP_CONV (std_ss++ScamvSimps.bir_load_store_ss) [] (toTerm esimp)))
 	    		 handle _ => (toTerm esimp)
 	    	     val res = load_store_simp_unchange_conv tm
 	    		 handle _ => tm
