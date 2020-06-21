@@ -13,7 +13,4 @@ sig
 
    (* All holBA stuff *)
    val holBACore_ss : simpLib.ssfrag
-
-   (* Simplifies loads from stores *)
-   val bir_load_store_ss : simpLib.ssfrag		      
 end

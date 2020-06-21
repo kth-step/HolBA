@@ -182,59 +182,6 @@ val bir_SIMPLE_REWRS_ss = simpLib.merge_ss [
   bir_SIMPLE_REWRS_typing_exp
 ];
 
-
-(* TODO: These should only be defined once in HolBA... *)
-
-fun simp_conv_load_store match_tm =
-    let
-	val store_tm = (el 1 o snd o strip_comb) match_tm;
-	val eval_store_thm =
-	    computeLib.RESTR_EVAL_CONV [``bir_store_in_mem``] store_tm;
-	val bir_store_in_mem_thm =
-	    EVAL (#2 ((TypeBase.dest_case o rhs o concl) eval_store_thm));
-	val bir_load_thm =
-	    REWRITE_RULE [type_of_bir_imm_def]
-			 (HO_MATCH_MP bir_store_load_mem_THM bir_store_in_mem_thm);
-	val final_thm1 =
-	    computeLib.RESTR_EVAL_CONV [``bir_load_from_mem``] match_tm
-    in
-	SIMP_RULE std_ss [bir_load_thm] final_thm1
-    end;
-
-val bir_load_store_ss =
-    SSFRAG {ac = [],
-            congs = [],
-            convs = [{conv = K (K simp_conv_load_store),
-                      key= SOME ([],
-				 ``bir_eval_load
-                                   (bir_eval_store (SOME (BVal_Mem at vt mmap))
-						   (SOME (BVal_Imm addr))
-						   en
-						   (SOME (BVal_Imm va))
-                                   )
-                                   (SOME (BVal_Imm load_addr))
-                                   en
-                                   t``),
-                      name = "simp_conv_load_store",
-                      trace = 2}],
-            dprocs = [],
-            filter = NONE,
-            name = SOME "bir_load_store_ss",
-            rewrs = []}; 
-
-val bir_SIMPLE_REWRS_ss = simpLib.merge_ss [
-  bir_TYPES_ss,
-  bir_load_store_ss,
-  bir_SIMPLE_REWRS_imm,
-  bir_SIMPLE_REWRS_values,
-  bir_SIMPLE_REWRS_env,
-  bir_SIMPLE_REWRS_imm_exp,
-  bir_SIMPLE_REWRS_mem_exp,
-  bir_SIMPLE_REWRS_exp,
-  bir_SIMPLE_REWRS_program,
-  bir_SIMPLE_REWRS_typing_exp
-];
-
 val holBACore_ss = bir_SIMPLE_REWRS_ss;
 
 end
