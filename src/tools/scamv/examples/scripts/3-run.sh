@@ -3,8 +3,7 @@
 set -e
 
 ARCH_EXPTYPE_PARAM=$1
-BOARD=$2
-BRANCH=$3
+BOARD_TYPE=$2
 
 # get scamv examples and holba directory path
 SCAMV_EXAMPLES_DIR=$(dirname "${BASH_SOURCE[0]}")
@@ -15,6 +14,13 @@ HOLBA_DIR=$(readlink -f "${SCAMV_EXAMPLES_DIR}/../../../..")
 if [[ -z "${ARCH_EXPTYPE_PARAM}" ]]; then
   echo "ERROR: please provide experiment architecture and type as parameter (e.g. arm8/exps2)"
   exit 1
+fi
+
+# prepare options board_type and branchname
+if [[ ! -z "${BOARD_TYPE}" ]]; then
+  BOARD_TYPE_OPTION=--board_type "${BOARD_TYPE}"
+else
+  BOARD_TYPE_OPTION=
 fi
 
 # find the environment
@@ -39,7 +45,7 @@ do
   dir=${dir##*/}
 
   # and start the experiments
-  ./scripts/run_batch.py --exp_class "${ARCH_EXPTYPE_PARAM}/${dir}" --board_type "$BOARD" --branchname "$BRANCH"
+  ./scripts/run_batch.py --exp_class "${ARCH_EXPTYPE_PARAM}/${dir}" ${BOARD_TYPE_OPTION}
 done
 
 

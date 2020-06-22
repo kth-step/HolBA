@@ -2,8 +2,8 @@
 
 set -e
 
-ID=$1
-OPTIONS=$2
+RUN_ID=$1
+EXTRA_OPTION=$2
 
 # get scamv examples and holba directory path
 SCAMV_EXAMPLES_DIR=$(dirname "${BASH_SOURCE[0]}")
@@ -16,5 +16,5 @@ echo "============================"
 
 # in the logs directory, call the status script
 cd "${HOLBA_EMBEXP_LOGS}"
-./scripts/status.py -ri ${ID} ${OPTIONS}
+./scripts/status.py -ri ${RUN_ID} ${EXTRA_OPTION}
 
