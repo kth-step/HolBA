@@ -55,6 +55,19 @@ val bir_exprs = [
         BEnd_BigEndian
         (BExp_Const (Imm16 (42w :word16))))``,
     ``(memory :word32 |-> word8)
+        |+ ((address + (1w :word32),
+            ((((7 :num) >< (0 :num)) :word16 -> word8) (42w :word16))))
+        |+ ((address :word32) + (0w :word32),
+            ((((15 :num) >< (8 :num)) :word16 -> word8) (42w :word16)))
+        ``),
+
+  ("16-bit value store (little endian)",
+    ``(BExp_Store
+        (BExp_Den (BVar "memory" (BType_Mem Bit32 Bit8)))
+        (BExp_Den (BVar "address" (BType_Imm Bit32)))
+        BEnd_LittleEndian
+        (BExp_Const (Imm16 (42w :word16))))``,
+    ``(memory :word32 |-> word8)
         |+ ((address :word32) + (1w :word32),
             ((((15 :num) >< (8 :num)) :word16 -> word8) (42w :word16)))
         |+ ((address + (0w :word32),
@@ -65,7 +78,7 @@ val bir_exprs = [
     ``(BExp_Load
         (BExp_Den (BVar "memory" (BType_Mem Bit64 Bit8)))
         (BExp_Den (BVar "address" (BType_Imm Bit64)))
-        BEnd_LittleEndian
+        BEnd_BigEndian
         Bit128)``,
     ``(word_concat :word8 -> 120 word -> word128 )
        (((memory :word64 |-> word8) ' ((address :word64) + (0w :word64))) :word8)
@@ -97,7 +110,45 @@ val bir_exprs = [
        ((memory ' (address + (13w :word64))) :word8)
      ((word_concat :word8 -> word8 -> word16 )
        ((memory ' (address + (14w :word64))) :word8)
-     ((memory ' (address + (15w :word64))) :word8)))))))))))))))``)
+     ((memory ' (address + (15w :word64))) :word8)))))))))))))))``),
+
+  ("128-bit value load (little endian)",
+    ``(BExp_Load
+        (BExp_Den (BVar "memory" (BType_Mem Bit64 Bit8)))
+        (BExp_Den (BVar "address" (BType_Imm Bit64)))
+        BEnd_LittleEndian
+        Bit128)``,
+    ``(word_concat :word8 -> 120 word -> word128 )
+       (((memory :word64 |-> word8) ' ((address :word64) + (15w :word64))) :word8)
+     ((word_concat :word8 -> 112 word -> 120 word )
+       ((memory ' (address + (14w :word64))) :word8)
+     ((word_concat :word8 -> 104 word -> 112 word )
+       ((memory ' (address + (13w :word64))) :word8)
+     ((word_concat :word8 -> word96 -> 104 word )
+       ((memory ' (address + (12w :word64))) :word8)
+     ((word_concat :word8 -> 88 word -> word96 )
+       ((memory ' (address + (11w :word64))) :word8)
+     ((word_concat :word8 -> 80 word -> 88 word )
+       ((memory ' (address + (10w :word64))) :word8)
+     ((word_concat :word8 -> 72 word -> 80 word )
+       ((memory ' (address + (9w :word64))) :word8)
+     ((word_concat :word8 -> word64 -> 72 word )
+       ((memory ' (address + (8w :word64))) :word8)
+     ((word_concat :word8 -> 56 word -> word64 )
+       ((memory ' (address + (7w :word64))) :word8)
+     ((word_concat :word8 -> word48 -> 56 word )
+       ((memory ' (address + (6w :word64))) :word8)
+     ((word_concat :word8 -> 40 word -> word48 )
+       ((memory ' (address + (5w :word64))) :word8)
+     ((word_concat :word8 -> word32 -> 40 word )
+       ((memory ' (address + (4w :word64))) :word8)
+     ((word_concat :word8 -> word24 -> word32 )
+       ((memory ' (address + (3w :word64))) :word8)
+     ((word_concat :word8 -> word16 -> word24 )
+       ((memory ' (address + (2w :word64))) :word8)
+     ((word_concat :word8 -> word8 -> word16 )
+       ((memory ' (address + (1w :word64))) :word8)
+     ((memory ' (address + (0w :word64))) :word8)))))))))))))))``)
 ];
 
 (* Print all BIR expressions as words expressions and check that they are correct. *)

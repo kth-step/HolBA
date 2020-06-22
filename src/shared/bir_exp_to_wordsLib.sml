@@ -466,12 +466,31 @@ struct
                 val high_bit_tm = mk_numeral high_bit
                 val val_tm = mk_word_extract
                   (high_bit_tm, low_bit_tm, val_w, write_len_ty)
-                val store_tm = ``(\x. (FUPDATE x (^addr_tm, ^val_tm)))``
               in
-                offset_writes_up_to (Arbnumcore.- (n, Arbnumcore.one)) (store_tm::acc)
+                offset_writes_up_to (Arbnumcore.- (n, Arbnumcore.one)) ((addr_tm,val_tm)::acc)
               end
-          val writes = offset_writes_up_to nsplits []
+          val write_pairs = offset_writes_up_to nsplits []
             handle e => raise wrap_exn "bir_exp_to_words::store::writes" e;
+
+          val (write_addrs, write_vals) = List.foldr (fn ((x,y), (xs,ys)) => (x::xs, y::ys)) ([],[]) write_pairs;
+
+          (* Reorder writes according to endianess *)
+          val ordered_write_vals = if is_BEnd_BigEndian bir_endi then rev write_vals
+            else if is_BEnd_LittleEndian bir_endi then write_vals
+            else if is_BEnd_NoEndian bir_endi then
+              if nsplits = Arbnumcore.one then write_vals
+                 else raise ERR "bir_exp_to_words" "BEnd_NoEndian and nsplits>1"
+            else raise ERR "bir_exp_to_words"
+              ("Unknown endianess: " ^ (term_to_string bir_endi))
+            handle e => raise wrap_exn "bir_exp_to_words::store::endianess" e;
+
+          fun ziplists [] [] = []
+            | ziplists (x::xs) (y::ys) = (x,y)::(ziplists (xs) (ys))
+            | ziplists _ _ = raise ERR "ziplists" "size of lists doesn't match";
+
+          val writes = List.map (fn (addr_tm,val_tm) => ``(\x. (FUPDATE x (^addr_tm, ^val_tm)))``)
+                                (ziplists write_addrs ordered_write_vals);
+
           (* Fold using mk_comb *)
           val whole_store_tm = List.foldr (fn (update_tm, mem_tm) =>
             mk_comb (update_tm, mem_tm))
