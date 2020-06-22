@@ -254,7 +254,9 @@ val exp = ``BExp_Const (Imm32 r1)``;
   val bir_exp_hvar_to_bvar_bexp = bir_exp_rewrite (fn exp => if not (is_BExp_Const exp) then exp else
         let val (imm_t_i, w) = (gen_dest_Imm o dest_BExp_Const) exp in
           if not (is_var w) then exp else
-          let val (v_n, v_t) = dest_var w in
+          let val (v_n, v_t) = dest_var w 
+		  handle HOL_ERR _ => raise ERR "dest_bir_symb_obs" ("cannot destruct term \"" ^ (term_to_string w) ^ "\"")
+	  in
             (mk_BExp_Den o mk_BVar_string) (v_n, mk_BType_Imm(bir_immtype_t_of_word_ty v_t))
           end
         end);

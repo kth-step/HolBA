@@ -203,12 +203,14 @@ struct
       close_log holbarun_log
     end;
 
-
-(* create json state *)
+  (* create json state *)
   fun gen_json_state isSecond s =
     let
-      fun kv_to_json (k,v) =
-        let
+      fun getReg tm = case tm of regT x => x
+      fun getMem tm = case tm of memT x => x
+      fun is_memT tm = can getMem tm;
+      fun rkv_to_json (k,v) =
+        let (* TODO: Stack pointer need to be handled *) 
           val _ = if String.isPrefix "R" k then () else
                     raise ERR "gen_json_state" "input not as exptected";
           val _ = if isSecond = String.isSuffix "_" k then () else
@@ -221,9 +223,37 @@ struct
         in
           "\n\t\"" ^ regname ^ "\": " ^ (Arbnumcore.toString v)
         end;
-      val s_jsonmappings = List.map kv_to_json s;
 
-      val str = List.foldr (fn (m, str) => m ^ "," ^ str) "" s_jsonmappings;
+      fun mkv_to_json (k,v) =
+        let
+	    val memConcat = foldr (fn (a,b) => a^",\n\t\t\t"^b) "";
+            val _ = if isSecond = String.isSuffix "_" k then () else
+                    raise ERR "gen_json_state" "input not as exptected _";
+            val k = if isSecond then
+			(String.extract(k, 2, SOME((String.size k) - 1)))
+                    else k;
+
+          val mname = "mem" ^ (String.extract(k, 3, NONE))
+	  val mappings = (map (fn el => "\""^(Arbnumcore.toString (fst el)) ^ "\"" ^
+					" : " ^
+					(Arbnumcore.toString (snd el))) v)
+	  val m_tm = memConcat mappings
+	  val m_tm_sub = if String.size(m_tm) <> 0 
+			 then String.extract (m_tm, 0, SOME(String.size(m_tm) - 5))
+			 else String.extract (m_tm, 0, NONE)
+        in
+          "\n\t\"" ^ mname ^ "\": " ^ "{" ^ m_tm_sub ^ "}"
+        end;
+
+      val (m,rg) = List.partition (is_memT) s
+      val m = if List.null m then ("MEM", []:( (num * num) list)) else getMem (hd m)
+      val rg = map getReg rg
+
+      val s_jsonmappings_reg = List.map rkv_to_json rg
+      val s_jsonmappings_mem = mkv_to_json m
+      val s_jsonmappings = s_jsonmappings_reg@[s_jsonmappings_mem]
+
+      val str = List.foldr (fn (m, str) => m ^ "," ^ str) "" s_jsonmappings
     in
       "{" ^ (String.extract(str, 0, SOME((String.size str) - 1))) ^ "\n}"
     end;
@@ -366,6 +396,44 @@ end
     in
       arch_id ^ "/" ^ exp_id
     end;
+
+  fun bir_embexp_sates3_create (arch_id, exp_type_id, state_gen_id) prog_id (s1,s2,st) =
+    let
+      val exp_basedir = get_experiment_basedir arch_id;
+
+      (* write out data *)
+      val input1 = gen_json_state false s1;
+      val input2 = gen_json_state false s2;
+      val train  = gen_json_state false st;
+      val exp_datahash = hashstring (prog_id ^ input1 ^ input2);
+      val exp_id = "exps2/" ^ exp_type_id ^ "/" ^ exp_datahash;
+      val exp_datapath = exp_basedir ^ "/" ^ exp_id;
+      (* btw, it can also happen that the same test is produced multiple times *)
+      (* create directory if it didn't exist yet *)
+      val _ = makedir true exp_datapath;
+
+      (* write out reference to the code (hash of the code) *)
+      val prog_id_file = exp_datapath ^ "/code.hash";
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" prog_id_file prog_id;
+
+      (* write the json files after reference to code per convention *)
+      (* - to indicate that experiment writing is complete *)
+      val input1_file = exp_datapath ^ "/input1.json";
+      val input2_file = exp_datapath ^ "/input2.json";
+      val train_file  = exp_datapath ^ "/train.json";
+
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates3_create" input1_file input1;
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates3_create" input2_file input2;
+      val _ = write_to_file_or_compare_clash "bir_embexp_sates3_create" train_file  train;
+
+      (* create exp log, if there was no clash before! *)
+      val embexp_gen_file = exp_datapath ^ "/gen." ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
+      val _ = create_log exp_log embexp_gen_file;
+      (* log generator info *)
+      val _ = write_log_line (exp_log, "bir_embexp_sates2_create", "no no no") state_gen_id;
+    in
+      arch_id ^ "/" ^ exp_id
+    end;      
 
 
   fun bir_embexp_run exp_id with_reset =

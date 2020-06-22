@@ -149,9 +149,10 @@ fun pgen_qc_param param =
    | "previct3" => prog_gen_a_la_qc arb_program_previct3
    | "previct4" => prog_gen_a_la_qc arb_program_previct4
    | "previct5" => prog_gen_a_la_qc arb_program_previct5
+   | "spectre"  => prog_gen_a_la_qc_noresize arb_program_spectre
    | _          => raise ERR "prog_gen_store_a_la_qc" "unknown qc generator";
 
-fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^param) true  (pgen_qc_param param)       sz;
+fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^param) true  (pgen_qc_param param)          sz;
     
 fun prog_gen_store_rand_slice sz       = prog_gen_store "prog_gen_rand_slice"        true  bir_prog_gen_arm8_slice        sz;
 fun prog_gen_store_prefetch_stride sz  = prog_gen_store "prog_gen_prefetch_stride"   true  prog_gen_prefetch_stride       sz;
@@ -163,7 +164,7 @@ val prog_gen_fun = load_asm_lines
 val args = filename
 val (prog_id, lifted_prog) = prog_gen_store_fromfile filename ();
 
-val (prog_id, lifted_prog) = prog_gen_store_rand 5 ();
+val (prog_id, lifted_prog) = prog_gen_store_rand "" 6 ();
 
 val prog = lifted_prog;
 *)

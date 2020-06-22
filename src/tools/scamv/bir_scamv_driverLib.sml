@@ -21,6 +21,16 @@ open bir_typing_expTheory;
 open scamv_configLib;
 open bir_conc_execLib;
 
+
+(* C like macros *)
+val endif__ = (fn id => id);
+fun ifdef__else__ x c c' e = (if x then c else c') |> e;
+fun ifdef__ x c e = case x of true => c |> e;
+fun force f = f ();
+
+val SPECTRE = true;
+val DISTINCT_MEM = false;
+
 (*
  workflow:
  - (a) program generation
@@ -35,7 +45,6 @@ open bir_conc_execLib;
  - test execution
  - driver decision (jump to a, b or c)
  *)
-
 
 fun symb_exec_phase prog =
     let
@@ -67,7 +76,7 @@ fun symb_exec_phase prog =
 				 raise ERR "extract_cond_obs" ("currently we only support HD as observation function, not \"" ^ (term_to_string obsf) ^ "\"");
 		     in
 		       if length otl <> 1 then
-			 raise ERR "extract_cond_obs" "currently we support only singleton observations"
+		       	 raise ERR "extract_cond_obs" "currently we support only singleton observations"
 		       else
 			 (ec, hd otl)
 		     end
@@ -90,31 +99,45 @@ fun symb_exec_phase prog =
     end
 
 fun bir_free_vars exp =
-    if is_comb exp then
-        let val (con,args) = strip_comb exp
-        in if con = ``BExp_Den`` then
-               let val v = case strip_comb (hd args) of
-                               (_,v::_) => v
-                             | _ => raise ERR "bir_free_vars" "not expected"
-               in [v]
-               end
-           else
-               List.concat (map bir_free_vars args)
-        end
-    else [];
+    let 
+	val fvs =
+	    if is_comb exp then
+		let val (con,args) = strip_comb exp
+		in
+		    if con = ``BExp_MemConst``
+		    then [``"MEM"``]
+		    else if con = ``BExp_Den``
+		    then
+		       let val v = case strip_comb (hd args) of
+				       (_,v::_) => v
+				     | _ => raise ERR "bir_free_vars" "not expected"
+		       in
+			   [v]
+		       end
+		   else
+		       List.concat (map bir_free_vars args)
+		end
+	    else []
+    in
+	fvs
+    end;
 
 exception NoObsInPath;
 
-(*
-val exps = all_exps;
-*)
+fun n_times 0 f x = x | n_times n f x = n_times (n-1) f (f x);
+fun dest_mem_load size tm =
+    if size = 7 
+    then tm |> (finite_mapSyntax.dest_fapply  o  (n_times  7 (#2 o dest_word_concat))) 
+    else tm |> (#1 o dest_word_lsr o #1 o dest_w2w)
+	    |> (finite_mapSyntax.dest_fapply o (n_times size (#2 o dest_word_concat)));
+
 fun make_word_relation relation exps =
     let
         fun primed_subst exp =
             map (fn v =>
                     let val vp = lift_string string_ty (fromHOLstring v ^ "'")
                     in ``BVar ^v`` |-> ``BVar ^vp`` end)
-                (bir_free_vars exp);
+                (bir_free_vars exp)
 
         fun primed_vars exp = map (#residue) (primed_subst exp);
         fun nub [] = []
@@ -123,18 +146,51 @@ fun make_word_relation relation exps =
                      (map (fromHOLstring o snd o dest_comb)
                          (nub (flatten (map primed_vars exps))));
         val unprimed = sort (curry String.<=)
-                            (nub (map fromHOLstring
-                                      (flatten (map bir_free_vars exps))));
+                       (nub (map fromHOLstring
+                            (flatten (map bir_free_vars exps))));
+
         val pairs = zip unprimed primed;
-        fun mk_distinct (a,b) =
+	val (mpair, rpair) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM")) pairs
+
+        fun mk_distinct_reg (a,b) =
             let val va = mk_var (a,``:word64``);
                 val vb = mk_var (b,``:word64``);
+		val in_range = (fn x => ``(0x80100000w <= ^x /\ ^x < 0x8013FE80w)``);
             in
-``(^va <> ^vb)``
+		ifdef__else__ SPECTRE
+		    (``(^va <> ^vb) /\ (^(in_range(``^va``))) /\ (^(in_range(``^vb``))) /\ (^va && 0xffw = ^vb && 0xefw) ``)
+		    (``(^va <> ^vb)``)
+		endif__
             end;
-        val distinct = if null pairs then raise NoObsInPath else list_mk_disj (map mk_distinct pairs);
+	val rel2w = (bir2bool relation)
+
+	fun mk_distinct_mem (a, b) rel = 
+	    let 
+		open finite_mapSyntax
+		val va = mk_var (a, ``:word64 |-> word8``)
+		val vb = mk_var (b, ``:word64 |-> word8``)
+		fun split_mem  tms m = filter (fn tm => (#1 (dest_fapply(find_term is_fapply tm)) = m)) tms
+		fun extract_mem_load n rel = ((nub o find_terms (can (dest_mem_load n))) rel);
+		val memop  = (extract_mem_load 7 rel)@(extract_mem_load 3 rel)@(extract_mem_load 1 rel)@(extract_mem_load 0 rel)
+		val m1 = zip (split_mem  memop va) (split_mem memop vb)
+		val res = if List.null m1 then T else list_mk_disj (map (fn (tm, tm') => ``^tm <> ^tm'`` ) m1)
+	    in 
+		res
+	    end;
+
+        val distinct = force (ifdef__else__ DISTINCT_MEM
+	                      (fn () => if null pairs 
+			          then raise NoObsInPath 
+			          else if List.null mpair
+			          then list_mk_disj (map mk_distinct_reg rpair)
+		                  else mk_conj (list_mk_disj ((map mk_distinct_reg rpair)), (mk_distinct_mem (hd mpair) rel2w)))
+
+		  	      (fn () => if null pairs 
+			          then raise NoObsInPath 
+			          else list_mk_disj (map mk_distinct_reg rpair))
+		             endif__)
     in
-       ``^(bir2bool relation) /\ ^distinct``
+       ``^rel2w /\ ^distinct``
     end
 
 (* Prints a model, one variable per line. *)
@@ -145,7 +201,23 @@ fun print_model model =
         () (rev model);
 
 fun to_sml_Arbnums model =
-    List.map (fn (name, tm) => (name, dest_word_literal tm)) model;
+    List.map (fn (name, tm) => 
+        if finite_mapSyntax.is_fupdate tm
+	then
+	    let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm
+		val vlsN = map (fn p =>
+				   let
+				       val (ad, vl) = pairSyntax.dest_pair p
+				   in
+				       (dest_word_literal ad, dest_word_literal vl)
+				       handle _ => (Arbnum.fromInt 4294967295, dest_word_literal vl)
+				   end) vlsW
+	    in
+		memT(name, vlsN)
+	    end
+	else
+	    regT(name, dest_word_literal tm)) model;
+
 
 val hw_obs_model_id = ref "";
 val do_enum = ref false;
@@ -157,6 +229,7 @@ val (current_obs_model_id : string ref) = ref "";
 val (current_pathstruct :
      path_struct ref) = ref [];
 val (current_word_rel : term option ref) = ref NONE;
+val (next_iter_rel    : (path_spec * term) option ref) = ref NONE;
 
 fun reset () =
     (current_prog_id := "";
@@ -207,18 +280,15 @@ fun extract_obs_variables ps =
                      case obs_list of
                          NONE => []
                        | SOME list => 
-                         List.concat (List.map
-                                          (fn (_,term) =>
-                                              bir_free_vars term) list))
+                         List.concat (List.map (fn (_,term) => bir_free_vars term) list))
                 ps);
 
 fun enumerate_line_single_input path_struct =
-    let val vars = extract_obs_variables path_struct;
+    let val vars = extract_obs_variables path_struct
     in
         case vars of
             [] => []
-          | (v::vs) => [(observe_line (bden (bvarimm64 (fromHOLstring v))),
-                         bir_rel_synthLib.enum_range (0,60))]
+          | (v::vs) => [(observe_line (bden (bvarimm64 (fromHOLstring v))), bir_rel_synthLib.enum_range (0,60))]
     end;
 
 fun default_enumeration_targets paths =
@@ -241,7 +311,7 @@ fun start_interactive prog =
         val _ = current_prog_w_obs := SOME lifted_prog_w_obs;
         val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
-(*        val _ = List.map (Option.map (List.map (print_term o fst)) o snd) paths;*)
+	(* val _ = List.map (Option.map (List.map (print_term o fst)) o snd) paths; *)
         
         fun has_observations (SOME []) = false
           | has_observations NONE = false
@@ -265,23 +335,54 @@ fun all_obs_not_present { a_run = (_,a_obs), b_run = (_,b_obs) } =
     in check a_obs andalso check b_obs
     end;
 
+(* This is used to build the next relation for path enumeration *)
+fun mem_constraint [] = ``T``
+  | mem_constraint mls =
+    let fun is_addr_numeral tm = tm |> pairSyntax.dest_pair |> fst |> (fn x => (rhs o concl o EVAL) ``w2n ^x``) |> is_numeral
+	fun adjust_prime s =
+            if String.isSuffix "_" s
+            then String.map (fn c => if c = #"_" then #"'" else c) s
+            else s
+	fun mk_cnst vname vls =
+	    let
+		val toIntls = (snd o finite_mapSyntax.strip_fupdate) vls
+		val mem = mk_var (adjust_prime vname ,Type`:word64 |-> word8`)
+		val memconstraint = map (fn p => let val (t1,t2) = pairSyntax.dest_pair p
+						 in
+						     ``^mem ' (^t1) = ^t2``
+						 end) toIntls;
+		val mc_conj = foldl (fn (a,b) => mk_conj (a,b)) (hd memconstraint) (tl memconstraint);
+	    in
+		(``~(^mc_conj)``, toIntls)
+	    end
+
+	val (hc, hv)::(tc, tv)::[] = (map (fn (vn, vl) =>  mk_cnst vn vl ) mls)
+	val mc_conj = mk_conj ((if is_addr_numeral (hd hv) then hc else ``T``), (if is_addr_numeral (hd tv) then tc else ``T``))
+    in
+	mc_conj
+    end
+
+val getReg = (fn tm => case tm of regT x => x)
+val getMem = (fn tm => case tm of memT x => x) 
+val is_memT= (fn tm => can getMem tm)
 fun next_experiment all_exps next_relation  =
     let
         open bir_expLib;
-        
-        (* ADHOC this constrains paths to only those where
-           none of the observations appear *)
+
+        (* ADHOC this constrains paths to only those where *)
+	(* none of the observations appear *)
         val guard_path_spec =
             if !do_enum
             then all_obs_not_present
             else (fn _ => true);
 
         val (path_spec, rel) =
-            valOf (next_relation guard_path_spec)
-            handle Option =>
-                   raise ERR "next_experiment" "next_relation returned a NONE";
-        
-        val _ = min_verb 1 (fn () =>
+	    case !next_iter_rel of
+		NONE        => valOf (next_relation guard_path_spec) 
+	      | SOME (p, r) => let val _ = next_iter_rel := NONE in (p, r) end
+		handle Option =>
+                       raise ERR "next_experiment" "next_relation returned a NONE";
+        val _ = min_verb 3 (fn () =>
                                (print "Selected path: ";
                                 print (PolyML.makestring path_spec);
                                 print "\n"));
@@ -290,23 +391,35 @@ fun next_experiment all_exps next_relation  =
                                bir_exp_pretty_print rel);
         val _ = printv 4 ("Word relation\n");
         val new_word_relation = make_word_relation rel all_exps;
-        val _ = min_verb 4 (fn () =>
+        val _ = min_verb 3 (fn () =>
                                (print_term new_word_relation;
                                 print "\n"));
         val word_relation =
             case !current_word_rel of
                 NONE => new_word_relation
+	      (* r is a constraint used to build the next relation for path enumeration *)
               | SOME r => mk_conj (new_word_relation, r);
 
-        val _ = printv 2 ("Calling Z3\n");
+        val _ = printv 1 ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
         val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
+        val _ = printv 1 ("Printed model\n");
+	(*Need to be removed later. It is just for experimental reasone*)
 
-        val sml_model = to_sml_Arbnums model;
-        fun isPrimedRun s = String.isSuffix "_" s;
-        val (s2,s1) = List.partition (isPrimedRun o fst) sml_model;
+        fun remove_prime str =
+          if String.isSuffix "_" str then
+            (String.extract(str, 0, SOME((String.size str) - 1)))
+          else
+            raise ERR "remove_prime" "there was no prime where there should be one";
+
+	fun isPrimedRun s = String.isSuffix "_" s;
+	val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
+	val (primed, nprimed) = List.partition (isPrimedRun o fst) model
+	val rmprime = List.map (fn (r,v) => (remove_prime r,v)) primed
+        val s1 = to_sml_Arbnums nprimed;
+	val s2 = to_sml_Arbnums primed;
         val prog_id = !current_prog_id;
-
+	    
         fun mk_var_mapping s =
             let fun mk_eq (a,b) =
                     let fun adjust_prime s =
@@ -315,9 +428,13 @@ fun next_experiment all_exps next_relation  =
                             else s;
                         val va = mk_var (adjust_prime a,``:word64``);
                     in ``^va = ^b``
-                    end; 
+                    end;
             in list_mk_conj (map mk_eq s) end;
-        val new_constraint = ``~^(mk_var_mapping model)``;
+
+        val reg_constraint = ``~^(mk_var_mapping (regs))``;
+	val mem_constraint = mem_constraint ml;
+	val new_constraint = mk_conj (reg_constraint, mem_constraint)
+
         val _ =
             current_word_rel :=
             (case !current_word_rel of
@@ -325,26 +442,53 @@ fun next_experiment all_exps next_relation  =
                | SOME cumulative =>
                  SOME ``^cumulative /\ ^new_constraint``);
 
-(*        val _ = print_term (valOf (!current_word_rel)); *)
+	(* ------------------------- training start ------------------------- *)
+	local
+	    fun training_input_mining tries =
+		if tries > 0
+		then
+		    let val (tpath_spec, trel) =
+			    valOf (next_relation guard_path_spec)
+			    handle Option =>
+				   raise ERR "next_experiment" "next_relation returned a NONE";
+			val _ = next_iter_rel := SOME (tpath_spec, trel)
+			val new_word_relation = make_word_relation trel all_exps
+					    
+			val training_relation =
+			    case !current_word_rel of
+				NONE => new_word_relation
+			      | SOME r => mk_conj (new_word_relation, r);
+			val _ = printv 1 ("Calling Z3 to get training state\n")		
+		    in
+			(Z3_SAT_modelLib.Z3_GET_SAT_MODEL training_relation)
+			handle e => training_input_mining (tries - 1)
+		    end
+		else raise ERR "next_test" "no training input found";
+	in
+	 val st = force (ifdef__else__ SPECTRE
+		          (fn () => training_input_mining 8 |> List.partition (isPrimedRun o fst) |> (to_sml_Arbnums o #2))
+		          (fn () => [])
+		         endif__)
+	end
+	(* ------------------------- training end ------------------------- *)
+	(* val _ = print_term (valOf (!current_word_rel)); *)
 
         (* clean up s2 *)
-        fun remove_prime str =
-          if String.isSuffix "_" str then
-            (String.extract(str, 0, SOME((String.size str) - 1)))
-          else
-            raise ERR "remove_prime" "there was no prime where there should be one";
-        val s2 = List.map (fn (r,v) => (remove_prime r,v)) s2;
+	val s2 = to_sml_Arbnums rmprime
 
         (* check with concrete-symbolic execution whether the observations are actually equivalent *)
         val lifted_prog_w_obs = case !current_prog_w_obs of
-                             SOME x => x
-                           | NONE => raise ERR "next_test" "no program found";
+				    SOME x => x
+				  | NONE => raise ERR "next_test" "no program found";
 
-        val _ = if conc_exec_obs_compare lifted_prog_w_obs (s1, s2) then () else
+	(* remove meory for now from states*)
+	val ce_obs_comp = conc_exec_obs_compare lifted_prog_w_obs (s1, s2)
+        val _ = if #1 ce_obs_comp then () else
                   raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
+	val s1::s2::_ = #2 ce_obs_comp
 
         (* create experiment files *)
-        val exp_id  = bir_embexp_sates2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2);
+        val exp_id  = bir_embexp_sates3_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2, st);
         val exp_gen_message = "Generated experiment: " ^ exp_id;
         val _ = bir_embexp_log_prog exp_gen_message;
 
@@ -394,7 +538,7 @@ fun scamv_test_main tests prog =
     let
         val _ = reset();
         val (path_structure, all_exps, next_relation) = start_interactive prog;
-        fun do_tests 0 = ()
+        fun do_tests 0 =  (next_iter_rel := NONE; current_word_rel := NONE)
           | do_tests n =
             let val _ = next_experiment all_exps next_relation
                         handle e => (
@@ -449,7 +593,9 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
 
         val _ =
            case obs_model of
-                cache_tag_index  =>
+	         mem_address_pc_trace =>
+	      	      current_obs_model_id := "mem_address_pc_trace"
+              | cache_tag_index  =>
                       current_obs_model_id := "cache_tag_index"
               | cache_tag_only =>
                       current_obs_model_id := "cache_tag_only"

@@ -27,10 +27,10 @@ struct
   (10,"LogicalImmediate32-4"),           (10,"LogicalImmediate64-1"),          (10,"LogicalImmediate64-2"),
   (10,"LogicalImmediate64-3"),           (10,"LogicalImmediate64-4"),          (10,"Shift-1"),
   (10,"Shift-2"),                        (10,"MoveWide32"),                    (10,"MoveWide64"),
-  (10,"BitfieldMove32"),                 (10,"BitfieldMove64"),                (0,"ConditionalCompareImmediate-1"),
-  (10,"ConditionalCompareImmediate-2"),  (10,"ConditionalCompareImmediate-3"), (10,"ConditionalCompareImmediate-4"),
-  (10,"ConditionalCompareRegister-1"),   (60,"ConditionalCompareRegister-2"),  (60,"ConditionalCompareRegister-3"),
-  (10,"ConditionalCompareRegister-4"),   (10,"ConditionalSelect-1"),           (60,"ConditionalSelect-2"),
+  (10,"BitfieldMove32"),                 (10,"BitfieldMove64"),                (20,"ConditionalCompareImmediate-1"),
+  (30,"ConditionalCompareImmediate-2"),  (30,"ConditionalCompareImmediate-3"), (30,"ConditionalCompareImmediate-4"),
+  (30,"ConditionalCompareRegister-1"),   (30,"ConditionalCompareRegister-2"),  (60,"ConditionalCompareRegister-3"),
+  (30,"ConditionalCompareRegister-4"),   (10,"ConditionalSelect-1"),           (60,"ConditionalSelect-2"),
   (10,"CountLeading-1"),                 (10,"CountLeading-2"),                (10,"ExtractRegister32"),
   (10,"ExtractRegister64"),              (10,"Division-1"),                    (10,"Division-2"),
   (10,"MultiplyAddSub-1"),               (10,"MultiplyAddSub-2"),              (10,"MultiplyAddSubLong"),
@@ -40,21 +40,21 @@ struct
   (10,"BranchImmediate-2"),              (10,"BranchRegisterJMP"),             (10,"BranchRegisterCALL"),
   (10,"BranchRegisterRET"),              (10,"CompareAndBranch-1"),             (10,"CompareAndBranch-2"),
   (10,"TestBitAndBranch-1"),             (10,"TestBitAndBranch-2"),            (10,"TestBitAndBranch-3"),
-  (10,"TestBitAndBranch-4"),             (10,"LoadStoreImmediate-1-1"),        (10,"LoadStoreImmediate-1-2"),
-  (10,"LoadStoreImmediate-1-3"),         (10,"LoadStoreImmediate-1-4"),        (10,"LoadStoreImmediate-1-5"),
-  (10,"LoadStoreImmediate-1-6"),         (10,"LoadStoreImmediate-1-7"),        (10,"LoadStoreImmediate-1-8"),
-  (10,"LoadStoreImmediate-1-9"),         (10,"LoadStoreImmediate-1-10"),       (10,"LoadStoreImmediate-1-11"),
-  (10,"LoadStoreImmediate-1-12"),        (10,"LoadStoreImmediate-1-13"),       (10,"LoadStoreImmediate-1-14"),
-  (10,"LoadStoreImmediate-1-15"),        (10,"LoadStoreImmediate-1-16"),       (10,"LoadStoreImmediate-1-17"),
-  (10,"LoadStoreImmediate-1-18"),        (15,"LoadStoreImmediate-1-19"),       (10,"LoadStoreImmediate-1-20"),
-  (10,"LoadStoreImmediate-1-21"),        (15,"LoadStoreImmediate-1-22"),       (10,"LoadStoreImmediate-1-23"),
-  (10,"LoadStoreImmediate-1-24"),        (15,"LoadStoreImmediate-1-25"),       (10,"LoadStoreImmediate-1-26"),
-  (10,"LoadStoreImmediate-1-27"),        (10,"LoadStoreImmediate-1-28"),       (10,"LoadStoreImmediate-2-1"),
-  (10,"LoadStoreImmediate-2-2"),         (10,"LoadStoreImmediate-2-3"),        (10,"LoadStoreImmediate-2-4"),
-  (10,"LoadStoreImmediate-2-5"),         (10,"LoadStoreImmediate-2-6"),        (10,"LoadStoreImmediate-2-7"),
-  (10,"LoadStoreImmediate-2-8"),         (10,"LoadStoreImmediate-2-9"),        (10,"LoadStoreImmediate-2-10"),
-  (10,"LoadStoreImmediate-2-11"),        (10,"LoadStoreImmediate-2-12"),       (10,"LoadStoreImmediate-2-13"),
-  (10,"LoadStoreImmediate-2-14"),        (10,"LoadStoreImmediate-2-15"),       (10,"LoadLiteral-1"),
+  (10,"TestBitAndBranch-4"),             (20,"LoadStoreImmediate-1-1"),        (20,"LoadStoreImmediate-1-2"),
+  (20,"LoadStoreImmediate-1-3"),         (20,"LoadStoreImmediate-1-4"),        (20,"LoadStoreImmediate-1-5"),
+  (20,"LoadStoreImmediate-1-6"),         (20,"LoadStoreImmediate-1-7"),        (20,"LoadStoreImmediate-1-8"),
+  (20,"LoadStoreImmediate-1-9"),         (20,"LoadStoreImmediate-1-10"),       (20,"LoadStoreImmediate-1-11"),
+  (20,"LoadStoreImmediate-1-12"),        (20,"LoadStoreImmediate-1-13"),       (20,"LoadStoreImmediate-1-14"),
+  (20,"LoadStoreImmediate-1-15"),        (20,"LoadStoreImmediate-1-16"),       (20,"LoadStoreImmediate-1-17"),
+  (20,"LoadStoreImmediate-1-18"),        (15,"LoadStoreImmediate-1-19"),       (20,"LoadStoreImmediate-1-20"),
+  (20,"LoadStoreImmediate-1-21"),        (15,"LoadStoreImmediate-1-22"),       (20,"LoadStoreImmediate-1-23"),
+  (20,"LoadStoreImmediate-1-24"),        (15,"LoadStoreImmediate-1-25"),       (20,"LoadStoreImmediate-1-26"),
+  (20,"LoadStoreImmediate-1-27"),        (20,"LoadStoreImmediate-1-28"),       (20,"LoadStoreImmediate-2-1"),
+  (20,"LoadStoreImmediate-2-2"),         (20,"LoadStoreImmediate-2-3"),        (20,"LoadStoreImmediate-2-4"),
+  (20,"LoadStoreImmediate-2-5"),         (20,"LoadStoreImmediate-2-6"),        (20,"LoadStoreImmediate-2-7"),
+  (20,"LoadStoreImmediate-2-8"),         (20,"LoadStoreImmediate-2-9"),        (20,"LoadStoreImmediate-2-10"),
+  (20,"LoadStoreImmediate-2-11"),        (20,"LoadStoreImmediate-2-12"),       (20,"LoadStoreImmediate-2-13"),
+  (20,"LoadStoreImmediate-2-14"),        (20,"LoadStoreImmediate-2-15"),       (10,"LoadLiteral-1"),
   (10,"LoadLiteral-2"),                  (10,"LoadLiteral-3"),                 (10,"LoadLiteral-4"),
   (10,"LoadStoreRegister-1"),            (80,"LoadStoreRegister-2"),           (60,"LoadStoreRegister-3"),
   (10,"LoadStoreRegister-4"),            (10,"LoadStoreRegister-5"),           (60,"LoadStoreRegister-6"),
@@ -69,13 +69,10 @@ struct
      hd (String.tokens  (fn c => Char.compare (c,#"-") = EQUAL) subs);
 
  (* ---------------------------------------------  *)
- type gen = Random.generator
+ val _ = bir_scamv_helpersLib.rand_isfresh_set true;
 
  val emp_str = ""
  val splitter = String.tokens (fn c => c = #";");
-     
- fun bits gen bits =
-     map (fn x => x = 1) (Random.rangelist (0,2) (bits,gen))
 
  fun select l =
      let val ln = length l
@@ -133,51 +130,54 @@ struct
  fun getReg args = 
      map (fn arg => foldl remChars arg [#",", #" ", #"]"]) args
 
+ val local_param = ref "";
+ val patternList = ref (NONE: regex list option);
 
  val whitespace_r =
-     STAR (ALTERNATION [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"])     
+     STAR (ALTERNATION [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"])
  val lowerAlphaList = regExLib.literalList "abcdefghijklmnopqrstuvwxyz"
  val upperAlphaList = regExLib.literalList "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
  val alphaList = lowerAlphaList @ upperAlphaList
  val numList = regExLib.literalList "1234567890"
- val specialChar= regExLib.literalList"[],#+-!"
+ val specialChar= regExLib.literalList"[],#+-!'():|->"
  val identifierList =
      alphaList @ numList @ (regExLib.literalList "'_") @ specialChar @ [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"]
+ val alphabet_r = ALTERNATION (identifierList);
 
- val alphabet_r = ALTERNATION (identifierList)
+ val Any = STAR alphabet_r;
+ (* val PatConcat = stringLiteral "@@"; *)
+ val Star = STAR;
+ val OrRegx = ALTERNATION;
+ val ThenRegx = CONCATENATION;
+ fun RepeatRegx re n =
+     let fun repeat 0 i = []
+ 	   | repeat n i = i :: repeat (n - 1) i
+     in
+ 	 flatten(repeat re n)
+     end;
 
-(*
- val pattern_ld   = CONCATENATION [stringLiteral "ld", 
-				   STAR(ALTERNATION(lowerAlphaList)),		
-				   whitespace_r, 
-				   ALTERNATION[(stringLiteral "xzr,"),(stringLiteral "wzr,")], 
-				   STAR(alphabet_r),
-				   END];    
-*)
- val pattern_xzrwzr   = CONCATENATION [stringLiteral "ld",
-                                       STAR (alphabet_r),
-                                       ALTERNATION [stringLiteral "xzr", stringLiteral "wzr"],
-                                       STAR (alphabet_r),
-                                       END]
- (* val pattern_stp   = CONCATENATION [stringLiteral "stp", whitespace_r, stringLiteral "xzr,", STAR (alphabet_r), END] *)
- val pattern_cbnz  = CONCATENATION [stringLiteral "cbnz", whitespace_r, STAR (alphabet_r), END]
 
- val local_param = ref "";
+ val pattern_xzrwzr1  =  ThenRegx([stringLiteral "ld",  Star(OrRegx(alphaList)), whitespace_r]
+ 				 @[OrRegx[stringLiteral "xzr", stringLiteral "wzr"], Any, END]);
 
- val patternList = ref (NONE: regex list option);
+ val pattern_xzrwzr2  =  ThenRegx([stringLiteral "ld",  Star(OrRegx(alphaList)), whitespace_r]
+ 				 @[Star (OrRegx(alphaList@numList@specialChar)), whitespace_r]
+ 				 @[OrRegx[stringLiteral "xzr", stringLiteral "wzr"], Any, END]);
 
-(*
-val p = pattern_xzrwzr
-val p = pattern_cbnz
+ val pattern_xzrwzr = OrRegx[pattern_xzrwzr1, pattern_xzrwzr2];
 
-val str = "ldp wzr, w30, [x15, #76]"
-val str = "ldp xzr, w30, [x15, #76]"
-val str = "ldp wzr w30, [x15, #76]"
-val str = "ldp xzr w"
-val str = "cbnz r3, #342"
+ val pattern_cbnz  = ThenRegx[stringLiteral "cbnz", whitespace_r, Any, END];
 
-checkPatterns(p, str)
-*)
+ (*  val p = pattern_xzrwzr *)
+ (*  val p = pattern_cbnz *)
+
+ (*  val str = "ldp wzr, w30, [x15, #76]" *)
+ (*  val str = "ldp xzr, w30, [x15, #76]" *)
+ (*  val str = "ldp wzr w30, [x15, #76]" *)
+ (*  val str = "ldp xzr w" *)
+ (*  val str = "cbnz r3, #342" *)
+
+ (*  checkPatterns(p, str) *)
 
  fun get_patternList () =
    case !patternList of
@@ -191,20 +191,20 @@ checkPatterns(p, str)
         | _                => raise ERR "prog_gen_rand::get_patternList" "unknown parameter"
        )); get_patternList ());
 
- fun filter_inspected_instr_doesntwork str =
+ fun filter_inspected_instr str =
      let
-	 fun reader nil    = NONE
+ 	 fun reader nil    = NONE
            | reader (h::t) = SOME (h, t)
 			     
-	 fun checkPatterns (pattern, str) =	     
-	     let
-		 val result = Option.map (fn (str, strm) => str) (
-			      evalRegex pattern reader (String.explode str)
-			      )
-		 val resultBool = if (isSome result) then true else false
-	     in
-		 resultBool
-	     end
+ 	 fun checkPatterns (pattern, str) =
+ 	     let
+ 		 val result = Option.map (fn (str, strm) => str) (
+ 			      evalRegex pattern reader (String.explode str)
+ 			      )
+ 		 val resultBool = if (isSome result) then true else false
+ 	     in
+ 		 resultBool
+ 	     end
      in
        List.exists (fn p => checkPatterns(p, str)) (get_patternList())
      end
@@ -232,7 +232,7 @@ checkPatterns(p, str)
  List.exists (fn sub => String.isSubstring sub "cbz x4, x8, [x30]") ["cbnz","xzr","wzr"];
  List.exists (fn sub => String.isSubstring sub "cbnz x4, x8, [x30]") ["cbnz","xzr","wzr"];
 *)
- fun filter_inspected_instr str =
+ fun filter_inspected_instr_notprecise str =
    List.exists (fn sub => String.isSubstring sub str) (get_filter_blacklist ());
 
 
@@ -350,5 +350,3 @@ checkPatterns(p, str)
    map ((strip_ws_off false) o remove_junk o hd o decomp) (progGen n));
 
 end; (* struct *)
-
-

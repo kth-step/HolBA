@@ -33,30 +33,25 @@ add_obs_pc p = map_obs_prog add_block_pc_obs p
 
 val select_mem_def = Define`
 select_mem exp =
-case exp of
+(case exp of
     BExp_Cast c e t => select_mem e
   | BExp_UnaryExp ue e => select_mem e
   | BExp_BinExp be e1 e2 => select_mem e1 ++ select_mem e2
   | BExp_BinPred bp e1 e2 => select_mem e1 ++ select_mem e2
   | BExp_MemEq e1 e2 => select_mem e1 ++ select_mem e2
   | BExp_IfThenElse e1 e2 e3 => select_mem e1 ++ select_mem e2 ++ select_mem e3
-  | BExp_Load e1 e2 a b => e2 :: (select_mem e1 ++ select_mem e2)
+  | BExp_Load e1 e2 a b =>   e2 :: (select_mem e1 ++ select_mem e2) 
   | BExp_Store e1 e2 a e3 => e2 :: (select_mem e1 ++ select_mem e2 ++ select_mem e3)
-  | _ => []
+  | _ => [])
+
 `;
 
 val constrain_mem_def = Define`
 constrain_mem e =
-  BStmt_Assert
-       (BExp_BinExp BIExp_And
-                    (BExp_BinPred
-                         BIExp_LessOrEqual
-                         (BExp_Const (Imm64 ^(mem_min)))
-                         e)
-                    (BExp_BinPred
-                         BIExp_LessThan
-                         e
-                         (BExp_Const (Imm64 ^(mem_max)))))
+    BStmt_Assert
+     (BExp_BinExp BIExp_And
+       (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 ^(mem_min))) (e))
+       (BExp_BinPred BIExp_LessThan (e) (BExp_Const (Imm64 ^(mem_max)))))
 `;
 
 val add_obs_1_stmts_def = Define `
@@ -67,7 +62,7 @@ val add_obs_1_stmts_def = Define `
      (case select_mem e of
           [] => x :: add_obs_1_stmts obs_fun xs
         | lds => (APPEND (MAP constrain_mem lds)
-                      (x :: (APPEND (MAP obs_fun lds) (add_obs_1_stmts obs_fun xs)))))
+                      (APPEND (APPEND (MAP obs_fun lds) (add_obs_1_stmts obs_fun xs)) [x])))
    | _ => x :: add_obs_1_stmts obs_fun xs)
 `;
 
@@ -76,7 +71,30 @@ add_obs_1_block obs_fun block =
          block with bb_statements := add_obs_1_stmts obs_fun block.bb_statements
 `;
 
+ 
+(* Spectre like attacks. Observation includes, addresses for load and store insructions together with the pc value *)
+(* ============================================================================== *)
+val add_obs_spctr_block_def = Define`
+add_obs_spctr_block obs_fun block =
+     let memObs = add_obs_1_stmts obs_fun block.bb_statements in
+     let pcObs  = observe_label (block.bb_label)              in
+	 block with bb_statements := APPEND memObs [pcObs]
+`;
+  
+(* val lable_to_exp_def = Define` *)
+(* lable_to_exp l =   *)
+(*       case l of BL_Address x => BExp_Const x *)
+(* `; *)
 
+val observe_mem_addr_def = Define`
+observe_mem_addr (* l *) e = 
+      BStmt_Observe (BExp_Const (Imm1 1w)) [e(* ;lable_to_exp l *)] HD
+`;
+
+val add_obs_mem_addr_pc_armv8_def = Define`
+add_obs_mem_addr_pc_armv8 p = 
+      map_obs_prog (add_obs_spctr_block observe_mem_addr) p
+`;
 
 (* observe tag & set index *)
 (* ============================================================================== *)
