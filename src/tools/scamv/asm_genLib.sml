@@ -246,13 +246,19 @@ end
 
 
 (* ================================ *)
-fun prog_gen_a_la_qc gen n =
+fun prog_gen_a_la_qc_gen do_resize gen n =
     let
       val g = bir_scamv_helpersLib.rand_gen_get ();
-      val (p, _) = run_step n g (resize n gen);
+      val (p, _) = run_step n g (if do_resize then (resize n gen) else gen);
     in
         pp_program p
-    end
+    end;
+
+val prog_gen_a_la_qc =
+    prog_gen_a_la_qc_gen true;
+
+val prog_gen_a_la_qc_noresize =
+    prog_gen_a_la_qc_gen false;
 
 
 (*=========== Spectre Gen ========+=*)

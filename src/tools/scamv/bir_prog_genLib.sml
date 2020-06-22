@@ -15,7 +15,6 @@ struct
   open bir_prog_gen_sliceLib;
   open asm_genLib;
   open armv8_prefetch_genLib;
-  open bir_prog_gen_spectreLib;
 
   open bir_scamv_helpersLib;
 
@@ -150,7 +149,7 @@ fun pgen_qc_param param =
    | "previct3" => prog_gen_a_la_qc arb_program_previct3
    | "previct4" => prog_gen_a_la_qc arb_program_previct4
    | "previct5" => prog_gen_a_la_qc arb_program_previct5
-   | "spectre"  => prog_gen_spectre
+   | "spectre"  => prog_gen_a_la_qc_noresize arb_program_spectre
    | _          => raise ERR "prog_gen_store_a_la_qc" "unknown qc generator";
 
 fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^param) true  (pgen_qc_param param)          sz;
