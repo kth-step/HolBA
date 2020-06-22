@@ -6,7 +6,6 @@ sig
                       | qc
                       | slice
                       | from_file
-		      | spectre
 
     datatype obs_model = mem_address_pc_trace
 	               | cache_tag_index

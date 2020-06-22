@@ -150,6 +150,7 @@ fun pgen_qc_param param =
    | "previct3" => prog_gen_a_la_qc arb_program_previct3
    | "previct4" => prog_gen_a_la_qc arb_program_previct4
    | "previct5" => prog_gen_a_la_qc arb_program_previct5
+   | "spectre"  => prog_gen_spectre
    | _          => raise ERR "prog_gen_store_a_la_qc" "unknown qc generator";
 
 fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^param) true  (pgen_qc_param param)          sz;
@@ -157,7 +158,6 @@ fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^pa
 fun prog_gen_store_rand_slice sz       = prog_gen_store "prog_gen_rand_slice"        true  bir_prog_gen_arm8_slice        sz;
 fun prog_gen_store_prefetch_stride sz  = prog_gen_store "prog_gen_prefetch_stride"   true  prog_gen_prefetch_stride       sz;
 
-fun prog_gen_rand_spectre sz           = prog_gen_store "prog_gen_spectre"           true  prog_gen_spectre               sz;
 (*
 val filename = "examples/asm/branch.s";
 val retry_on_liftfail = false
