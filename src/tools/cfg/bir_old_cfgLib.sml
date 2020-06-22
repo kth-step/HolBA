@@ -1,4 +1,4 @@
-structure bir_cfgLib =
+structure bir_old_cfgLib =
 struct
 
 local
@@ -6,7 +6,7 @@ local
 open HolKernel Parse boolLib bossLib;
 open bir_programSyntax;
 
-val ERR = Feedback.mk_HOL_ERR "bir_cfgLib";
+val ERR = Feedback.mk_HOL_ERR "bir_old_cfgLib";
 
 in
 
@@ -442,4 +442,4 @@ bir_show_graph_inout true nodes g
 
 end (* local *)
 
-end (* bir_cfgLib *)
+end (* bir_old_cfgLib *)

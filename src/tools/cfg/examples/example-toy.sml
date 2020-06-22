@@ -5,8 +5,8 @@ open toyBinaryTheory;
 open listSyntax;
 
 
-open bir_cfgLib;
-open bir_cfgVizLib;
+open bir_old_cfgLib;
+open bir_old_cfgVizLib;
 
 
 (*

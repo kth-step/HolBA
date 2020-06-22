@@ -34,7 +34,7 @@ val _ = Hol_pp.print_term program_tm;
 
 (* Export the CFG *)
 val _ = print "Exporting the CFG...\n";
-val _ = bir_cfgVizLib.bir_export_graph_from_prog program_tm dot_path;
+val _ = bir_old_cfgVizLib.bir_export_graph_from_prog program_tm dot_path;
 val _ = if show_cfg then (
   print "Opening the CFG...\n";
   graphVizLib.convertAndView (OS.Path.base dot_path)
