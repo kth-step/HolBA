@@ -51,10 +51,6 @@ in
 
     open HolBACoreSimps;
 
-    open bir_exec_auxLib;
-    open bir_exec_envLib;
-    open bir_exec_expLib;
-
     open optionSyntax;
     open pairSyntax;
     open numSyntax;
