@@ -267,5 +267,11 @@ val (bir_exec_steps_tm,  mk_bir_exec_steps, dest_bir_exec_steps, is_bir_exec_ste
 
 val (bir_exec_step_n_tm,  mk_bir_exec_step_n, dest_bir_exec_step_n, is_bir_exec_step_n)  = syntax_fns3 "bir_exec_step_n";
 
+val (bir_get_program_block_info_by_label_tm,  mk_bir_get_program_block_info_by_label, dest_bir_get_program_block_info_by_label, is_bir_get_program_block_info_by_label)  = syntax_fns2 "bir_get_program_block_info_by_label";
+
+val (bir_exec_stmt_jmp_to_label_tm,  mk_bir_exec_stmt_jmp_to_label, dest_bir_exec_stmt_jmp_to_label, is_bir_exec_stmt_jmp_to_label)  = syntax_fns3 "bir_exec_stmt_jmp_to_label";
+
+val (bir_labels_of_program_tm,  mk_bir_labels_of_program, dest_bir_labels_of_program, is_bir_labels_of_program)  = syntax_fns1 "bir_labels_of_program";
+
 
 end

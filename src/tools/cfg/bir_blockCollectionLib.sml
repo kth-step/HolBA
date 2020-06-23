@@ -43,35 +43,12 @@ in
   *)
 
   local
-    open HolKernel boolLib liteLib simpLib Parse bossLib;
-
-    open bir_programTheory;
-    open bir_programSyntax;
-    open bir_valuesTheory;
-
-    open HolBACoreSimps;
-
-    open optionSyntax;
-    open pairSyntax;
     open numSyntax;
-
-    open listTheory;
-    open listSyntax;
     open wordsLib;
 
-    open Redblackmap;
-
+    open HolBACoreSimps;
+    open bir_programSyntax;
     open bir_program_valid_stateTheory;
-    open bir_program_labelsTheory;
-
-    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program"
-    val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
-    val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-    val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
-
-    val (bir_get_program_block_info_by_label_tm,  mk_bir_get_program_block_info_by_label, dest_bir_get_program_block_info_by_label, is_bir_get_program_block_info_by_label)  = syntax_fns2 "bir_get_program_block_info_by_label";
-    val (bir_exec_stmt_jmp_to_label_tm,  mk_bir_exec_stmt_jmp_to_label, dest_bir_exec_stmt_jmp_to_label, is_bir_exec_stmt_jmp_to_label)  = syntax_fns3 "bir_exec_stmt_jmp_to_label";
-    val (bir_labels_of_program_tm,  mk_bir_labels_of_program, dest_bir_labels_of_program, is_bir_labels_of_program)  = syntax_fns1 "bir_labels_of_program";
   in
     fun gen_MEM_thm_block_dict prog_l_def valid_prog_thm =
       let
@@ -127,7 +104,7 @@ in
 	       end
 	     )) augm_block_lst;
       in
-	insertList (mkDict Term.compare, block_l_thm_list)
+	Redblackmap.insertList (Redblackmap.mkDict Term.compare, block_l_thm_list)
       end;
   end (* local *)
 
