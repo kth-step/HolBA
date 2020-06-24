@@ -1938,7 +1938,7 @@ METIS_TAC [pairTheory.PAIR]
  * equal to the final state of execution of 1 block. *)
 val bir_exec_block_n_inter =
   store_thm("bir_exec_block_n_inter",
-  ``!prog st m (l':'a list) l''' n n'' c_l' c_l''' st' st''.
+  ``!prog st m (l':(num # 'a) list) l''' n n'' c_l' c_l''' st' st''.
     (bir_exec_block_n prog st (SUC m) =
        (l''', n'', c_l''', st'')) ==>
     (bir_exec_block_n prog st 1 = (l',n,c_l',st')) ==>
@@ -3001,7 +3001,7 @@ SIMP_TAC std_ss [bir_exec_step_n_EQ_THM]);
 (***********************************************)
 
 val bir_exec_step_n_acc_def = Define `
-  bir_exec_step_n_acc (p:'a bir_program_t) (n:num) (aol:'a list, an:num, s:bir_state_t) =
+  bir_exec_step_n_acc (p:'a bir_program_t) (n:num) (aol:(num # 'a) list, an:num, s:bir_state_t) =
             if (n = 0) \/ (bir_state_is_terminated s) then
               (REVERSE aol, an, s)
             else

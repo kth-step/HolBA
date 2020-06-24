@@ -18,6 +18,7 @@ fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0
 val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
 val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
 val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
+val syntax_fns4 = syntax_fns 4 HolKernel.dest_quadop HolKernel.mk_quadop;
 
 
 
@@ -53,7 +54,7 @@ val is_bir_stmt_basic_t_ty = can dest_bir_stmt_basic_t_ty;
 val (BStmt_Assign_tm,  mk_BStmt_Assign, dest_BStmt_Assign, is_BStmt_Assign)  = syntax_fns2 "BStmt_Assign";
 val (BStmt_Assert_tm,  mk_BStmt_Assert, dest_BStmt_Assert, is_BStmt_Assert)  = syntax_fns1 "BStmt_Assert";
 val (BStmt_Assume_tm,  mk_BStmt_Assume, dest_BStmt_Assume, is_BStmt_Assume)  = syntax_fns1 "BStmt_Assume";
-val (BStmt_Observe_tm,  mk_BStmt_Observe, dest_BStmt_Observe, is_BStmt_Observe)  = syntax_fns3 "BStmt_Observe";
+val (BStmt_Observe_tm,  mk_BStmt_Observe, dest_BStmt_Observe, is_BStmt_Observe)  = syntax_fns4 "BStmt_Observe";
 
 
 

@@ -63,9 +63,9 @@ sig
    val mk_BStmt_Assume   : term -> term
 
    val BStmt_Observe_tm   : term
-   val dest_BStmt_Observe : term -> term * term * term
+   val dest_BStmt_Observe : term -> term * term * term * term
    val is_BStmt_Observe   : term -> bool
-   val mk_BStmt_Observe   : term * term * term -> term
+   val mk_BStmt_Observe   : term * term * term * term -> term
 
 
    (******************)
