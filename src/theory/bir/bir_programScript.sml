@@ -24,6 +24,12 @@ val _ = Datatype `bir_label_exp_t =
 `;
 
 
+(*
+  Assign variable expression
+  Assert expression
+  Assume expression
+  Observe observation_id condition_expression expression_list observation_function
+*)
 val _ = Datatype `bir_stmt_basic_t =
   | BStmt_Assign  bir_var_t bir_exp_t
   | BStmt_Assert  bir_exp_t
@@ -433,7 +439,8 @@ val _ = Datatype `bir_execution_result_t =
        that the execution ended after "step_count" steps in state "st". During
        execution "pc_count" pcs that satisfy the given predicate where encountered
        (counting the pc of the final state st, but not the one of the initial state).
-       The list "o_list" of observations was observed during execution *)
+       The list "o_list" of observations was observed during execution
+       (observations are produced from the observation_id and applying the observation_function). *)
     BER_Ended   ((num # 'o) list) num num bir_state_t
 
     (* The execution does not terminate. Since the programs are finite, this means
