@@ -52,6 +52,12 @@ If you want to violate the rules for temporary development or experiments (only 
   2. Do a good mess
   3. Merge in feature branch after history rewrite
 
+### Merging pull requests with GitHub
+  1. Preferably and if possible, rebase the changes for a cleaner and more readable history. And to avoid merging overhead for ongoing work later.
+  2. Have somebody review the pull request, especially if the change is more involving or around the core parts.
+  3. Make sure that one of the CI tasks that build and run the tests completes successfully. One is allowed to timeout for unclear PolyML/HOL4 reasons.
+  4. Merge the pull request with a merge commit to enable a standard GitHub commit message with reference to the pull request it belongs to.
+
 ### CI > Static analysis
 
 This CI performs basic static analysis on the code:
