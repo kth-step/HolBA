@@ -17,7 +17,7 @@ map_obs_prog f (BirProgram xs) = BirProgram (MAP f xs)
 
 val observe_label_def = Define `
 observe_label (BL_Address addr) =
-BStmt_Observe (BExp_Const (Imm1 1w)) [BExp_Const addr]
+BStmt_Observe 0 (BExp_Const (Imm1 1w)) [BExp_Const addr]
               HD
 `;
 
@@ -82,7 +82,8 @@ add_obs_1_block obs_fun block =
 (* ============================================================================== *)
 val observe_mem_def = Define`
 observe_mem e =
-         BStmt_Observe (BExp_Const (Imm1 1w))
+         BStmt_Observe 0
+                       (BExp_Const (Imm1 1w))
                        ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
                        HD
 `;
@@ -96,7 +97,8 @@ add_obs_cache_line_armv8 p = map_obs_prog (add_obs_1_block observe_mem) p
 (* ============================================================================== *)
 val observe_mem_tag_def = Define`
 observe_mem_tag e =
-         BStmt_Observe (BExp_Const (Imm1 1w))
+         BStmt_Observe 0
+                       (BExp_Const (Imm1 1w))
                        ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 13w))])
                        HD
 `;
@@ -110,7 +112,8 @@ add_obs_cache_line_tag_armv8 p = map_obs_prog (add_obs_1_block observe_mem_tag) 
 (* ============================================================================== *)
 val observe_mem_index_def = Define`
 observe_mem_index e =
-         BStmt_Observe (BExp_Const (Imm1 1w))
+         BStmt_Observe 0
+                       (BExp_Const (Imm1 1w))
                        ([BExp_BinExp BIExp_And (BExp_Const (Imm64 0x7Fw)) (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))])
                        HD
 `;
@@ -124,7 +127,8 @@ add_obs_cache_line_index_armv8 p = map_obs_prog (add_obs_1_block observe_mem_ind
 (* ============================================================================== *)
 val observe_mem_subset_def = Define`
 observe_mem_subset e =
-BStmt_Observe (BExp_BinPred BIExp_LessThan
+BStmt_Observe 0
+              (BExp_BinPred BIExp_LessThan
                             (BExp_Const (Imm64 60w))
                             (BExp_BinExp BIExp_Mod
                                          (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))
@@ -146,7 +150,8 @@ add_obs_cache_line_subset_armv8 p = map_obs_prog (add_obs_1_block observe_mem_su
 (* ============================================================================== *)
 val observe_mem_subset_page_def = Define`
 observe_mem_subset_page e =
-BStmt_Observe (BExp_BinPred BIExp_LessThan
+BStmt_Observe 0
+              (BExp_BinPred BIExp_LessThan
                             (BExp_Const (Imm64 63w))
                             (BExp_BinExp BIExp_Mod
                                          (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))
@@ -168,7 +173,8 @@ add_obs_cache_line_subset_page_armv8 p = map_obs_prog (add_obs_1_block observe_m
 (* ============================================================================== *)
 val observe_mem_line_def = Define`
 observe_mem_line e =
-BStmt_Observe ^btrue
+BStmt_Observe 0
+              ^btrue
                    ([BExp_BinExp BIExp_RightShift (
                        BExp_BinExp BIExp_And e (BExp_BinExp BIExp_LeftShift (BExp_Const (Imm64 0x7Fw)) (BExp_Const (Imm64 6w)))) (BExp_Const (Imm64 6w))])
               HD
