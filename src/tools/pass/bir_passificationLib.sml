@@ -227,12 +227,12 @@ local
 
   fun rename_vars_observe stmt =
     let
-      val (exp, explist_tm, valmap) = dest_BStmt_Observe stmt
+      val (oid, exp, explist_tm, valmap) = dest_BStmt_Observe stmt
       val renamed_exp = rename_vars_in_exp exp
       val (explist, hty) = dest_list explist_tm
       val renamed_explist = map rename_vars_in_exp explist
     in
-      mk_BStmt_Observe (renamed_exp, mk_list (renamed_explist, hty),
+      mk_BStmt_Observe (oid, renamed_exp, mk_list (renamed_explist, hty),
                         valmap)
     end
 

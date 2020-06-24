@@ -367,7 +367,7 @@ fun lift_sections arch_str sections idx =
                             else if is_BStmt_Assume s then
                                [(dest_BStmt_Assume) s]
                             else if is_BStmt_Observe s then
-                               let val (oe,oes,_) = (dest_BStmt_Observe) s; in
+                               let val (_,oe,oes,_) = (dest_BStmt_Observe) s; in
                                  (oe::((fst o dest_list) oes))
                                end
                             else raise ERR "lift_file" "unknown statement type"
