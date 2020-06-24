@@ -30,6 +30,7 @@ val _ = new_theory "bir_symb_exec";
  * obs: Observation
  **)
 val _ = Datatype `bir_symb_obs_t = <|
+  obs_id       : num;
   obs_cond     : bir_exp_t;
   obs          : bir_exp_t list;
   obs_fun      : bir_val_t list -> 'a;
@@ -253,7 +254,7 @@ val bir_symb_exec_stmt_assert_def = Define `
 
 (* add observations as symbolic stubstitutions *)
 val bir_symb_exec_stmt_observe_def = Define `
-    bir_symb_exec_stmt_observe c_ex obs_lst f st =
+    bir_symb_exec_stmt_observe oid c_ex obs_lst f st =
 (*
       if f <> (\x. x) then
         [bir_symb_state_set_failed st]
@@ -262,7 +263,7 @@ val bir_symb_exec_stmt_observe_def = Define `
 	let
 	  obs_cond_ex = bir_symb_eval_exp c_ex st.bsst_environ;
 	  obs_lst_e   = MAP (\o_ex. bir_symb_eval_exp o_ex st.bsst_environ) obs_lst;
-	  obs         = <| obs_cond := obs_cond_ex; obs := obs_lst_e; obs_fun := f |>;
+	  obs         = <| obs_id := oid; obs_cond := obs_cond_ex; obs := obs_lst_e; obs_fun := f |>;
 	in
 	  [st with bsst_obs := (SNOC obs st.bsst_obs)]
     `;
@@ -275,8 +276,8 @@ val bir_symb_exec_stmtB_def = Define `
            = bir_symb_exec_stmt_assert ex st) /\ 
     (bir_symb_exec_stmtB (BStmt_Assume ex) st 
            = bir_symb_exec_stmt_assume ex st) /\ 
-    (bir_symb_exec_stmtB (BStmt_Observe ex ex_lst f) st
-           = bir_symb_exec_stmt_observe ex ex_lst f st)
+    (bir_symb_exec_stmtB (BStmt_Observe oid ex ex_lst f) st
+           = bir_symb_exec_stmt_observe oid ex ex_lst f st)
     `;
 
 (* Execute one statement *)
