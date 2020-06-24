@@ -466,7 +466,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def,
 
 
 (* Now combine it! This is what we are really interested in. *)
-val bir_update_blockB_SEM = store_thm ("bir_update_blockB_SEM", ``!st c (l:'a list) updates.
+val bir_update_blockB_SEM = store_thm ("bir_update_blockB_SEM", ``!st c (l:(num # 'a) list) updates.
 
 (* We start with valid updates in a non-terminated state. *)
 bir_update_blockB_desc_OK st.bst_environ updates /\
@@ -491,7 +491,7 @@ bir_update_blockB_desc_OK st.bst_environ updates /\
         (bir_env_lookup vn st'.bst_environ = bir_env_lookup vn st.bst_environ)))``,
 
 REPEAT STRIP_TAC >>
-MP_TAC (Q.SPECL [`st`, `c`, `l:'a list`, `updates`] bir_update_blockB_SEM1) >>
+MP_TAC (Q.SPECL [`st`, `c`, `l:(num # 'a) list`, `updates`] bir_update_blockB_SEM1) >>
 ASM_SIMP_TAC std_ss [] >> STRIP_TAC >>
 ASM_SIMP_TAC list_ss [bir_update_blockB_def, bir_exec_stmtsB_APPEND, LET_THM] >>
 
@@ -764,7 +764,7 @@ val bir_update_block_def = Define `bir_update_block l eup updates =
 
 val bir_update_blockE_INIT_SEM =
   store_thm ("bir_update_blockE_INIT_SEM",
-  ``!st eup (l:'a list) c.
+  ``!st eup (l:(num # 'a) list) c.
     bir_updateE_desc_OK st.bst_environ eup /\
     ~(bir_state_is_terminated st) ==>
     (?st'. (bir_exec_stmtsB (bir_update_blockE_INIT eup) (l,c,st) =
@@ -821,7 +821,7 @@ bir_update_block_desc_OK st.bst_environ eup updates /\
 ~(bir_state_is_terminated st) ==>
 
 (* Then we terminate in a state ... *)
-(?st'. (bir_exec_block p bl st = (([]:'a list), bir_block_size bl, st')) /\
+(?st'. (bir_exec_block p bl st = (([]:(num # 'a) list), bir_block_size bl, st')) /\
 
   (* Such that we are either
       - running and jumped to the intended label
@@ -855,11 +855,11 @@ REPEAT STRIP_TAC >>
 Q.ABBREV_TAC `ibl = bir_update_blockE_INIT eup` >>
 Q.ABBREV_TAC `mbl = bir_update_blockB updates` >>
 Q.ABBREV_TAC `c = LENGTH ibl` >>
-MP_TAC (Q.SPECL [`st`, `eup`, `[]:'a list`, `0`] bir_update_blockE_INIT_SEM) >>
+MP_TAC (Q.SPECL [`st`, `eup`, `[]:(num # 'a) list`, `0`] bir_update_blockE_INIT_SEM) >>
 ASM_SIMP_TAC list_ss [] >>
 STRIP_TAC >>
 rename1 `_ = ([], _, st_init)` >>
-MP_TAC (Q.SPECL [`st_init`, `c`, `[]:'a list`, `updates`]
+MP_TAC (Q.SPECL [`st_init`, `c`, `[]:(num # 'a) list`, `updates`]
    bir_update_blockB_SEM) >>
 
 `bir_update_blockB_desc_OK st_init.bst_environ updates` by (
@@ -1031,7 +1031,7 @@ CASE_TAC >> SIMP_TAC (arith_ss++pairSimps.gen_beta_ss) [pairTheory.pair_CASE_def
 
 
 val bir_assert_block_SEM_NOT_FAIL = store_thm ("bir_assert_block_SEM_NOT_FAIL", ``
-  !st al (l:'a list) c l' c' st'.
+  !st al (l:(num # 'a) list) c l' c' st'.
   EVERY (bir_assert_desc_OK st.bst_environ) al ==>
   ~(bir_state_is_terminated st) ==>
   (bir_exec_stmtsB (bir_assert_block al) (l, c, st) = (l', c', st')) ==>
@@ -1055,7 +1055,7 @@ FULL_SIMP_TAC (std_ss++bir_TYPES_ss) []);
 
 
 val bir_assert_block_SEM_NOT_FAIL_BLOCK = store_thm ("bir_assert_block_SEM_NOT_FAIL_BLOCK", ``
-  !al bl (p : 'a bir_program_t) (l:'a list) c st st'.
+  !al bl (p : 'a bir_program_t) (l:(num # 'a) list) c st st'.
   EVERY (bir_assert_desc_OK st.bst_environ) al ==>
   ~(bir_state_is_terminated st) ==>
   (bir_exec_block p (bl with bb_statements := (bir_assert_block al) ++ bl.bb_statements) st = (l, c, st')) ==>
@@ -1071,7 +1071,7 @@ val bir_assert_block_SEM_NOT_FAIL_BLOCK = store_thm ("bir_assert_block_SEM_NOT_F
 SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_block_def,
   bir_exec_stmtsB_APPEND] >>
 REPEAT GEN_TAC >>
-`?l' c' st''. bir_exec_stmtsB (bir_assert_block al) (([]:'a list),0,st) = (l', c', st'')` by
+`?l' c' st''. bir_exec_stmtsB (bir_assert_block al) (([]:(num # 'a) list),0,st) = (l', c', st'')` by
   METIS_TAC[pairTheory.PAIR] >>
 `?l'' c'' st'''.  bir_exec_stmtsB bl.bb_statements ([],0,st) = (l'', c'', st''')` by
   METIS_TAC[pairTheory.PAIR] >>
@@ -1086,7 +1086,7 @@ Cases_on `st''.bst_status = BST_AssertionViolated` >- (
   FULL_SIMP_TAC (std_ss++bir_TYPES_ss) []
 ) >>
 NTAC 2 DISCH_TAC >>
-MP_TAC (Q.SPECL [`st`, `al`, `[]:'a list`, `0`] bir_assert_block_SEM_NOT_FAIL) >>
+MP_TAC (Q.SPECL [`st`, `al`, `[]:(num # 'a) list`, `0`] bir_assert_block_SEM_NOT_FAIL) >>
 ASM_SIMP_TAC list_ss [LET_THM] >>
 STRIP_TAC >> REPEAT (BasicProvers.VAR_EQ_TAC) >>
 Tactical.REVERSE (Cases_on `bir_state_is_terminated st'''`) >- (
@@ -1140,7 +1140,7 @@ EVERY (bir_assert_desc_OK st.bst_environ) al ==>
 bir_update_block_desc_OK st.bst_environ eup updates ==>
 (bl = (bir_update_assert_block l al eup updates)) ==>
 ~(bir_state_is_terminated st) ==>
-(bir_exec_block p bl st = (lo:'a list, n', st')) ==>
+(bir_exec_block p bl st = (lo:(num # 'a) list, n', st')) ==>
 ~(st'.bst_status = BST_AssertionViolated) ==> (
 
 (* Then we terminate in a state ... *)

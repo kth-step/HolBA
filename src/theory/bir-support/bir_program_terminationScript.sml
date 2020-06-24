@@ -482,9 +482,9 @@ Cases_on `bir_eval_exp e st.bst_environ` >> (
 
 
 val bir_exec_stmtB_status_typeerror_Observe = store_thm ("bir_exec_stmtB_status_typeerror_Observe",
-``!st stmt ec es osf.
+``!st stmt oid ec es osf.
   (st.bst_status <> BST_TypeError) ==>
-  (((bir_exec_stmtB_state (BStmt_Observe ec es osf) st).bst_status = BST_TypeError) <=>
+  (((bir_exec_stmtB_state (BStmt_Observe oid ec es osf) st).bst_status = BST_TypeError) <=>
     ((bir_eval_exp ec st.bst_environ = NONE) \/
      (?va.
       (bir_eval_exp ec st.bst_environ = SOME va) /\

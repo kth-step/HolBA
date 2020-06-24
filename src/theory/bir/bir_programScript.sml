@@ -28,7 +28,7 @@ val _ = Datatype `bir_stmt_basic_t =
   | BStmt_Assign  bir_var_t bir_exp_t
   | BStmt_Assert  bir_exp_t
   | BStmt_Assume  bir_exp_t
-  | BStmt_Observe bir_exp_t (bir_exp_t list) (bir_val_t list -> 'a)
+  | BStmt_Observe num bir_exp_t (bir_exp_t list) (bir_val_t list -> 'a)
 `;
 
 val _ = Datatype `bir_stmt_end_t =
@@ -188,7 +188,7 @@ val bir_exec_stmt_assume_def = Define `bir_exec_stmt_assume ex (st : bir_state_t
     | NONE => bir_state_set_typeerror st`;
 
 
-val bir_exec_stmt_observe_def = Define `bir_exec_stmt_observe ec el obf (st : bir_state_t) =
+val bir_exec_stmt_observe_def = Define `bir_exec_stmt_observe oid ec el obf (st : bir_state_t) =
   let
     vol = MAP (\e. bir_eval_exp e st.bst_environ) el;
     vobc = option_CASE (bir_eval_exp ec st.bst_environ) NONE bir_dest_bool_val
@@ -197,7 +197,7 @@ val bir_exec_stmt_observe_def = Define `bir_exec_stmt_observe ec el obf (st : bi
     | SOME T =>   if EXISTS IS_NONE vol then
                     (NONE, bir_state_set_typeerror st)
                   else
-                    (SOME (obf (MAP THE vol)), st)
+                    (SOME (oid, obf (MAP THE vol)), st)
     | SOME F =>   if EXISTS IS_NONE vol then
                     (NONE, bir_state_set_typeerror st)
                   else
@@ -218,7 +218,7 @@ val bir_exec_stmt_observe_state_def = Define `bir_exec_stmt_observe_state ec el 
 
 
 val bir_exec_stmt_observe_state_THM = store_thm ("bir_exec_stmt_observe_state_THM",
-  ``!ec el obf st. SND (bir_exec_stmt_observe ec el obf st) = bir_exec_stmt_observe_state ec el st``,
+  ``!oid ec el obf st. SND (bir_exec_stmt_observe oid ec el obf st) = bir_exec_stmt_observe_state ec el st``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bir_exec_stmt_observe_def, bir_exec_stmt_observe_state_def, LET_DEF] >>
@@ -229,7 +229,7 @@ val bir_exec_stmtB_def = Define `
   (bir_exec_stmtB (BStmt_Assert ex) st = (NONE, bir_exec_stmt_assert ex st)) /\
   (bir_exec_stmtB (BStmt_Assume ex) st = (NONE, bir_exec_stmt_assume ex st)) /\
   (bir_exec_stmtB (BStmt_Assign v ex) st = (NONE, bir_exec_stmt_assign v ex st)) /\
-  (bir_exec_stmtB (BStmt_Observe ec el obf) st = bir_exec_stmt_observe ec el obf st)`
+  (bir_exec_stmtB (BStmt_Observe oid ec el obf) st = bir_exec_stmt_observe oid ec el obf st)`
 
 
 val bir_exec_stmtB_state_def = Define `bir_exec_stmtB_state stmt st =
@@ -264,7 +264,7 @@ val bir_exec_stmtB_state_REWRS = store_thm ("bir_exec_stmtB_state_REWRS",
 ``(!ex st. (bir_exec_stmtB_state (BStmt_Assert ex) st = (bir_exec_stmt_assert ex st))) /\
   (!ex st. (bir_exec_stmtB_state (BStmt_Assume ex) st = (bir_exec_stmt_assume ex st))) /\
   (!v ex st. (bir_exec_stmtB_state (BStmt_Assign v ex) st = (bir_exec_stmt_assign v ex st))) /\
-  (!ec el obf st. (bir_exec_stmtB_state (BStmt_Observe ec el obf) st = bir_exec_stmt_observe_state ec el st))``,
+  (!oid ec el obf st. (bir_exec_stmtB_state (BStmt_Observe oid ec el obf) st = bir_exec_stmt_observe_state ec el st))``,
 
 SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def, bir_exec_stmt_observe_state_THM]);
 
@@ -434,12 +434,12 @@ val _ = Datatype `bir_execution_result_t =
        execution "pc_count" pcs that satisfy the given predicate where encountered
        (counting the pc of the final state st, but not the one of the initial state).
        The list "o_list" of observations was observed during execution *)
-    BER_Ended   ('o list) num num bir_state_t
+    BER_Ended   ((num # 'o) list) num num bir_state_t
 
     (* The execution does not terminate. Since the programs are finite, this means
        it loops. Therefore there are no step counts and no final state. However a
        potentially infinite lazy list of observations is returned. *)
-  | BER_Looping ('o llist)
+  | BER_Looping ((num # 'o) llist)
 `;
 
 val bir_execution_result_ss = rewrites (type_rws ``:'a bir_execution_result_t``);

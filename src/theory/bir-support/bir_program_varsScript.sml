@@ -270,7 +270,7 @@ Cases_on `stmt` >> (
   ),
 
   (* observe *)
-  rename1 `bir_exec_stmt_observe e el fl` >>
+  rename1 `bir_exec_stmt_observe oid e el fl` >>
   `!e'. MEM e' (e::el) ==> (bir_eval_exp e' (BEnv env1) = bir_eval_exp e' (BEnv env2))` by (
      REPEAT STRIP_TAC >>
      MATCH_MP_TAC bir_vars_of_exp_THM_EQ_FOR_VARS >>

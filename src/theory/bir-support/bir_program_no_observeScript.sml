@@ -18,11 +18,11 @@ val _ = new_theory "bir_program_no_observe";
 (***************************************************************)
 
 val bir_stmtB_is_observe_def = Define `
-  (bir_stmtB_is_observe (BStmt_Observe _ _ _) = T) /\
+  (bir_stmtB_is_observe (BStmt_Observe _ _ _ _) = T) /\
   (bir_stmtB_is_observe _ = F)`;
 
 val bir_stmtB_is_observe_ALT_DEF = store_thm ("bir_stmtB_is_observe_ALT_DEF",
-  ``bir_stmtB_is_observe stmt <=> (?ec el obf. stmt = BStmt_Observe ec el obf)``,
+  ``bir_stmtB_is_observe stmt <=> (?oid ec el obf. stmt = BStmt_Observe oid ec el obf)``,
 Cases_on `stmt` >> SIMP_TAC (std_ss++holBACore_ss) [bir_stmtB_is_observe_def]);
 
 val bir_stmt_is_observe_def = Define `

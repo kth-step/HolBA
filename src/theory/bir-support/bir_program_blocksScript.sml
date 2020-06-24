@@ -570,7 +570,7 @@ Cases_on `prog` >>
 FULL_SIMP_TAC std_ss [bir_exec_block_def] >>
 REPEAT STRIP_TAC >>
 ASSUME_TAC (SPECL [``bl.bb_statements:'a bir_stmt_basic_t list``,
-                   ``[]: 'a list``, ``0:num``, ``st:bir_state_t``]
+                   ``[]: (num # 'a) list``, ``0:num``, ``st:bir_state_t``]
                   bir_exec_stmtsB_exists) >>
 FULL_SIMP_TAC std_ss [LET_DEF] >>
 Cases_on `bir_state_is_terminated st'` >> (
