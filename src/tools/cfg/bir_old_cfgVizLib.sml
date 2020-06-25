@@ -1,4 +1,4 @@
-structure bir_cfgVizLib =
+structure bir_old_cfgVizLib =
 struct
 
 local
@@ -7,10 +7,10 @@ open HolKernel Parse boolLib bossLib;
 open bir_programSyntax;
 open bir_immSyntax;
 open graphVizLib;
-open bir_cfgLib;
+open bir_old_cfgLib;
 open listSyntax;
 
-val ERR = mk_HOL_ERR "bir_cfgVizLib"
+val ERR = mk_HOL_ERR "bir_old_cfgVizLib"
 
 in
 
@@ -156,4 +156,4 @@ fun bir_show_graph_from_prog prog path =
 
 end (* local *)
 
-end (* bir_cfgVizLib *)
+end (* bir_old_cfgVizLib *)

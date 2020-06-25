@@ -1,6 +1,6 @@
 open HolKernel Parse;
 
-open aesBinaryTheory;
+open toyBinaryTheory;
 
 open listSyntax;
 
@@ -19,7 +19,7 @@ toy_m0_program_THM
 aes_m0_program_THM
 aes_arm8_program_THM
 *)
-val liftertheorem = aes_m0_program_THM;
+val liftertheorem = toy_m0_program_THM;
 
 val printgraphs = true;
 val printsimple = true;
