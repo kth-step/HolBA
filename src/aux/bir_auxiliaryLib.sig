@@ -10,4 +10,6 @@ sig
   val HO_MATCH_MPL : thm -> thm list -> thm
 
   val ins_sort_tm : term list -> term list
+
+  val list_split_pred : ''a -> ''a list -> ''a list * ''a list
 end

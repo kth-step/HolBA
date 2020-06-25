@@ -165,14 +165,7 @@ in
 
   local
 
-(* TODO: put this in the right place and cleanup elsewhere too *)
-  fun list_split_pred_aux acc p [] = fail ()
-    | list_split_pred_aux acc p (x::xs) =
-      (if x = p then (List.rev acc, xs)
-       else list_split_pred_aux (x::acc) p xs)
-
-  fun list_split_pred p = list_split_pred_aux [] p
-
+    open bir_auxiliaryLib;
     open bir_immSyntax;
     open wordsSyntax;
 
