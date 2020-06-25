@@ -50,7 +50,7 @@ in
     let
       val (nodes, edges, _) = List.foldr gen_graph_for_nodes_proc ([], [], 0x10000) ns;
 
-      val file = get_tempfile "cfg";
+      val file = get_tempfile "cfg" "nil";
       val dot_str = gen_graph (nodes, edges);
       val _ = writeToFile dot_str (file ^ ".dot");
       val _ = convertAndView file;
