@@ -6,33 +6,19 @@ val _ = Globals.show_types := true;
 
 (* prepare test program terms and theorems *)
 open toyBinaryTheory;
-val lift_thm = toy_m0_program_THM;
-val prog_tm = ((snd o dest_comb o concl) lift_thm);
+val lift_thm_in = toy_m0_program_THM;
+val prog_tm = ((snd o dest_comb o concl) lift_thm_in);
 val prog_l_tm = dest_BirProgram prog_tm;
 val prog_l_def = Define `toy_m0_program_l = ^prog_l_tm`;
-val prog_l_const = (fst o dest_eq o concl) prog_l_def;
-val lift_thm_abbr = REWRITE_RULE [GSYM prog_l_def] lift_thm;
-val prog_tm_abbr = ((snd o dest_comb o concl) lift_thm_abbr);
+val lift_thm = REWRITE_RULE [GSYM prog_l_def] lift_thm_in;
+val prog_tm_abbr = ((snd o dest_comb o concl) lift_thm);
 
-val valid_labels_thm = prove(``
-  bir_is_lifted_prog r mu mms p ==> bir_is_valid_labels p
-``,
-  METIS_TAC [bir_inst_liftingTheory.bir_is_lifted_prog_def]
-);
-
-val valid_prog_thm = prove(``bir_is_valid_program (^prog_tm_abbr)``,
-  REWRITE_TAC [bir_program_valid_stateTheory.bir_is_valid_program_def] >>
-  STRIP_TAC >- (
-    METIS_TAC [valid_labels_thm, lift_thm_abbr]
-  ) >>
-  SIMP_TAC list_ss [bir_program_valid_stateTheory.bir_program_is_empty_def, prog_l_def]
-);
 
 (* build the dictionaries using the library under test *)
 val _ = print "Building dictionaries.\n";
 open bir_block_collectionLib;
 val block_dict = gen_block_dict prog_tm;
-val MEM_block_dict = gen_MEM_thm_block_dict prog_l_def valid_prog_thm;
+val MEM_block_dict = gen_MEM_thm_block_dict_from_lift_thm prog_l_def lift_thm;
 val _ = print "\n";
 val _ = print "\n";
 
