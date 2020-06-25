@@ -7,27 +7,11 @@ struct
   open bir_inst_liftingLibTypes
 
   open bir_auxiliaryLib;
+  open bir_fileLib;
 
   val ERR = mk_HOL_ERR "gcc_supportLib"
 
-  (*******************)
-  (* Auxiliary stuff *)
-  (*******************)
-
-  fun read_file_lines file_name = let
-    val instream = TextIO.openIn file_name
-    fun read_it acc =
-      case TextIO.inputLine instream of
-          NONE => List.rev acc
-        | SOME s => read_it (s::acc);
-    val input = read_it [] before TextIO.closeIn instream
-  in input end;
-
   in (* local *)
-
-  (*******************)
-  (* File Operations *)
-  (*******************)
 
 (*
 val file_name = "examples/wolfssl-aarch64.da"

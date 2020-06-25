@@ -10,6 +10,8 @@ local
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
+  open bir_fileLib;
+
 in
 
 (* script input helper *)
@@ -94,18 +96,6 @@ end
       val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S" date;
     in
       datestr
-    end;
-
-(* directory creation helper *)
-  fun makedir makepath path =
-    let
-      val r = OS.Process.system ("mkdir " ^ (if makepath then "-p " else "") ^ path);
-      val _ = if not (OS.Process.isSuccess r) then
-                raise ERR "makedir" ("couldn't create the following directory: " ^ path)
-              else
-                ();
-    in
-      ()
     end;
 
 (* file read/write helpers *)
