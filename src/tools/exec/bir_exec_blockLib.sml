@@ -21,7 +21,7 @@ struct
   open listSyntax;
   open wordsLib;
 
-  open bir_blockCollectionLib;
+  open bir_block_collectionLib;
 
   open bir_program_valid_stateTheory;
   open bir_program_labelsTheory;
