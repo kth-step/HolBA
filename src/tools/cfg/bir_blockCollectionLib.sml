@@ -25,7 +25,7 @@ in
 	      end
 	    )::l) [] prog_bls;
 
-	  val _ = print ("found " ^ (Int.toString (length prog_bls))  ^ " blocks in lifted program\n");
+	  val _ = print ("found " ^ (Int.toString (length prog_bls))  ^ " blocks in program\n");
 	in
 	  Redblackmap.insertList (Redblackmap.mkDict Term.compare, lbl_block_pairs)
 	end;

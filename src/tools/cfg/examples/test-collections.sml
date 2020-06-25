@@ -38,7 +38,7 @@ val _ = print "\n";
 
 (* test cases *)
 val bir_blocks = [
-  (Arbnum.fromInt 33126,
+  (Arbnum.fromHexString "8166",
     ``<|bb_label :=
          BL_Address_HC (Imm32 (33126w :word32)) "E004 (b.n 8172 <main+0x6e>)";
        bb_statements := ([] :'observation_type bir_stmt_basic_t list);
