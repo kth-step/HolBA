@@ -7,6 +7,7 @@ local
 
   open bir_cfgLib;
 
+  open bir_fileLib;
   open graphVizLib;
 
   (*
@@ -14,16 +15,6 @@ local
   val n = hd (#CFGG_nodes ns_c);
   val t = ``BL_Address (Imm32 990w)``;
    *)
-  fun to_escaped_string s =
-    let
-      fun add_escape acc []      = acc
-	| add_escape acc (c::cs) =
-	    let val c_ = if c = #"\"" then [c, #"\\"] else [c] in
-	      add_escape (c_@acc) cs
-	    end;
-    in
-      (implode o List.rev o (add_escape []) o explode) s
-    end;
 
   val dest_lbl_tm = dest_word_literal o snd o gen_dest_Imm o dest_BL_Address;
 
@@ -51,29 +42,6 @@ local
       val new_i   = i_;
     in
       (new_gns, new_ges, new_i)
-    end;
-
-(* TODO: make this available under shared and cleanup where it appears already *)
-  (* directory creation helper *)
-    fun makedir makepath path =
-      let
-	val r = OS.Process.system ("mkdir " ^ (if makepath then "-p " else "") ^ path);
-	val _ = if not (OS.Process.isSuccess r) then
-		  raise ERR "makedir" ("couldn't create the following directory: " ^ path)
-		else
-		  ();
-      in
-	()
-      end;
-
-  fun get_tempfile prefix =
-    let
-      val tempdir = "tempdir";
-      val _ = makedir true tempdir;
-      val date = Date.fromTimeLocal (Time.now ());
-      val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S" date;
-    in
-      tempdir ^ "/" ^ prefix ^ datestr
     end;
 
 in

@@ -9,6 +9,18 @@ val ERR = mk_HOL_ERR "graphVizLib";
 
 in
 
+
+  fun to_graphViz_escaped_string s =
+    let
+      fun add_escape acc []      = acc
+	| add_escape acc (c::cs) =
+	    let val c_ = if c = #"\"" then [c, #"\\"] else [c] in
+	      add_escape (c_@acc) cs
+	    end;
+    in
+      (implode o List.rev o (add_escape []) o explode) s
+    end;
+
 (*
  ----------------------------------------
         node naming convention
