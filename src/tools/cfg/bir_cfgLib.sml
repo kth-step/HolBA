@@ -1,445 +1,240 @@
 structure bir_cfgLib =
 struct
-
 local
 
-open HolKernel Parse boolLib bossLib;
-open bir_programSyntax;
-
-val ERR = Feedback.mk_HOL_ERR "bir_cfgLib";
+open bir_program_labelsSyntax;
+open bir_block_collectionLib;
 
 in
 
-(*
-=================================================================
-              translate to edge by node list
-=================================================================
- *)
-val eval_label = (snd o dest_eq o concl o EVAL);
+  (* pass 1: Jump, CondJump, Halt will be determined from BIR code.
+             for jumps/condjumps, fill with direct jump targets where applicable,
+             otherwise empty list *)
+  (* pass 2: look at Jump nodes with one direct target and update
+             if they appear to be Basic (determinded from disassembly metadata) *)
+  (* pass 3: check all jump blocks, which have no targets yet,
+             determine Call and Return based on heuristic and static fixes (semi-automatic) *)
+  (* pass 4: resolve remaining jumps/condjumps with no targets using static fixes *)
+  datatype cfg_node_type =
+      (* Core BIR types *)
+      CFGNT_Jump
+    | CFGNT_CondJump
+    | CFGNT_Halt
+      (* Special purpose types: used for visualization or higher level abstraction *)
+    | CFGNT_Basic
+    | CFGNT_Call
+    | CFGNT_Return;
 
-fun find_idxs P xs =
-  let
-    fun find_idx_acc _ _ [] = []
-      | find_idx_acc P a (x::xs) = if P x then a::(find_idx_acc P (a+1) (xs)) else (find_idx_acc P (a+1) (xs))
-    ;
-  in
-    find_idx_acc P 0 xs
-  end;
+  (* cfg nodes correspond to BIR blocks, lbl_tm is normalized label of block and represents its id *)
+  type cfg_node = {
+    (* id: BIR label term of BIR block *)
+    CFGN_lbl_tm   : term,
+    (* meta information from disassembled and lifted binary *)
+    CFGN_hc_descr : string option,
+    (* flow information. statically exported from BIR blocks, or fixed semi-automatically *)
+    CFGN_goto     : term list,
+    (* type is initialized from BIR blocks, but may be updated by later passes *)
+    CFGN_type     : cfg_node_type
+  };
 
-fun find_idx P xs =
-  let
-    val idxs = find_idxs P xs;
-  in
-    if idxs = [] then ~1 else hd idxs
-  end;
+  (* a graph structure as list of relevant nodes with entry points *)
+  type cfg_graph = {
+    CFGG_name       : string,
+    (* node key lists *)
+    CFGG_entries    : term list,
+    CFGG_exits      : term list,
+    CFGG_nodes      : term list,
+    (* block data *)
+    CFGG_node_dict  : (term, cfg_node) Redblackmap.dict,
+    CFGG_block_dict : (term, term)     Redblackmap.dict
+  };
 
-val blocks_to_labels = List.map (fn block =>
+
+  (* pass 1 - extract all directly available information from the blocks *)
+  (* =================================== *)
+  fun cfg_BLEs_to_targets bles =
     let
-      val (raw_BL_term, _, _) = dest_bir_block block;
-      val BL_term = eval_label raw_BL_term;
+      fun BLE_to_target ble =
+        if is_BLE_Label ble then
+          (true, dest_BLE_Label ble)
+        else
+          (* it's possibile to handle other simple cases here *)
+          (false, ble)
+
+      val target_list = List.map BLE_to_target bles;
+
+      val is_all_direct = List.all fst target_list;
+      val targets = List.map snd target_list;
     in
-      BL_term
-    end
-  );
+      if is_all_direct then targets else []
+    end;
 
-fun block_to_outidxs labels block =
-  let
-    val (_, _, last_stmt) = dest_bir_block block;
-    val raw_targets =
-      if is_BStmt_Jmp last_stmt then
-        [dest_BStmt_Jmp last_stmt]
-      else if is_BStmt_CJmp last_stmt then
-        let
-          val (_,j1,j2) = dest_BStmt_CJmp last_stmt;
-        in
-          [j1, j2]
-        end
-      else if is_BStmt_Halt last_stmt then
-        []
-      else
-        raise ERR "block_to_outidxs" "unknown end statement"
-      ;
-(*
-(print ("\nooops:"^(term_to_string l)^"\n");ls)
-*)
-    
-    fun find_target_idx y = find_idx (fn x => x=y) labels;
-    val targets = List.foldl (fn (l,ls) =>
-          if is_BLE_Label l then
-            ((find_target_idx o eval_label o dest_BLE_Label) l)::ls
+  fun cfg_block_to_node bl =
+    let
+      val (lbl, _, bbes) = dest_bir_block bl;
+
+      val lbl_tm = (snd o dest_eq o concl o EVAL) lbl;
+
+      val descr = if not (is_BL_Address_HC lbl) then
+                    NONE
+                  else
+                    SOME ((stringSyntax.fromHOLstring o snd o dest_BL_Address_HC) lbl);
+
+      val (cfgn_type, cfg_t_l) =
+          if is_BStmt_Jmp bbes then
+            (CFGNT_Jump,
+             cfg_BLEs_to_targets [dest_BStmt_Jmp bbes])
+          else if is_BStmt_CJmp bbes then
+            (CFGNT_CondJump,
+             cfg_BLEs_to_targets ((fn (_, a, b) => [a, b]) (dest_BStmt_CJmp bbes)))
+          else if is_BStmt_Halt bbes then
+            (CFGNT_Halt, [])
           else
-            (~1)::ls (* if is is an expression the jump target is unknown *)
-      ) [] raw_targets;
-    (* we could filter out the entry points from the symbol table *)
-    (* here we can only find matches if the targets are in the program *)
-    (*val targets = List.map (eval_label) proc_targets;*)
-  in
-    targets
-  end;
+            raise ERR "cfg_block_to_node"
+                      ("unknown BStmt end stmt type: " ^
+                       (term_to_string bbes))
 
-fun cfg_compute_outedges_as_idxs blocks =
-  let
-    val labels = blocks_to_labels blocks;
-    val out_idxs = List.map (block_to_outidxs labels) blocks;
-  in
-    (blocks, out_idxs)
-  end;
+      val n = { CFGN_lbl_tm   = lbl_tm,
+		CFGN_hc_descr = descr,
+		CFGN_goto     = cfg_t_l,
+		CFGN_type     = cfgn_type
+	      } : cfg_node;
 
-fun cfg_compute_inedges_as_idxs (blocks, out_idxs) =
-  let
-    val in_idxs = List.tabulate (length out_idxs, fn i => find_idxs (fn is => List.exists (fn x => x=i) is) out_idxs);
-  in
-    (blocks, in_idxs, out_idxs)
-  end;
+    in n end;
 
-val cfg_compute_inoutedges_as_idxs = cfg_compute_inedges_as_idxs o cfg_compute_outedges_as_idxs;
+  fun cfg_build_node_dict bl_dict lbl_tms =
+    let
+      fun lbl_to_lblnode lbl_tm =
+        (lbl_tm, cfg_block_to_node (
+                   case lookup_block_dict bl_dict lbl_tm of
+                      SOME x => x
+                    | NONE => raise ERR "cfg_build_node_dict" ("cannot find label " ^ (term_to_string lbl_tm))));
+      val lbl_node_list = List.map lbl_to_lblnode lbl_tms;
+    in
+      Redblackmap.insertList (Redblackmap.mkDict Term.compare, lbl_node_list)
+    end;
 
 
-
-(*
-
-val (_,out_idxs) = cfg_compute_outedges_as_idxs blocks;
-val (_,in_idxs,_) = cfg_compute_inedges_as_idxs (blocks, out_idxs);
-
-val (_,in_idxs,out_idxs) = cfg_compute_inoutedges_as_idxs blocks;
-
-*)
-
-
-(*
-    could be visualized already now (graphviz lib)
- *)
-
-
-(*
-=================================================================
-            find connected components
-=================================================================
- *)
-
-fun find_conn_comp (blocks, in_idxs, out_idxs) =
-  let
-    val exit_nodes = find_idxs (fn is => List.exists (fn x => x=(~1)) is) out_idxs;
-    fun process_conccomp [] acc = acc
-      | process_conccomp (n::ns) (nodes, entries, exits) =
-           let
-             val ins = List.nth(in_idxs,n);
-             val outs = List.nth(out_idxs,n);
-             val outs_filt = List.filter (fn x => x <> (~1)) outs;
-
-             val new_entries = if ins = [] then (n::entries) else entries;
-             val new_exits   = if outs <> outs_filt then (n::exits) else exits;
-
-             val new_ns_0 = (List.filter (fn x => not (List.exists (fn y => y = x) (ns@nodes)))
-                               ins) @ ns;
-             val new_ns_1 = (List.filter (fn x => not (List.exists (fn y => y = x) (ns@nodes)))
-                               outs_filt) @ new_ns_0;
-           in
-             process_conccomp new_ns_1 (n::nodes, new_entries, new_exits)
-           end;
-    fun process_conccomps [] acc = acc
-      | process_conccomps (n::exit_nodes) acc =
-           let
-             val conn_comp = process_conccomp [n] ([],[],[]);
-             val (_,_,conn_comp_exits) = conn_comp;
-             val new_exit_nodes = List.filter (fn x => not (List.exists (fn y => x = y) conn_comp_exits)) exit_nodes;
-           in
-             process_conccomps (new_exit_nodes) (conn_comp::acc)
-           end;
-    val conncomp = process_conccomps exit_nodes [];
-    (* verify that all nodes are captures in the connected components *)
-  in
-    conncomp
-  end;
-
-(*
-val conn_comps = find_conn_comp (blocks, in_idxs, out_idxs);
-*)
-
-
-
-(*
-=================================================================
-            reachability
-=================================================================
- *)
-
-(*
-    fun is_reachable_ nodes outs (done, []) = false
-      | is_reachable_ nodes outs (done, n::todo) =
-      if List.exists (fn x => x = n) outs then true else
-      let
-        val outs = List.nth(out_idxs,n;
-        val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) outs);
-        val todo_outs = List.filter (fn x => List.exists (fn y => x = y) done) n_outs);
-      in
-      end;
-*)
-
-fun is_reachable_chk out_idxs nodes outs n =
-  if List.exists (fn x => x = n) outs then true else
-  let
-    val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) (List.nth(out_idxs,n));
-  in
-    List.exists (fn x => is_reachable_chk out_idxs nodes outs x) n_outs
-  end;
-
-fun reachable_nodes_ out_idxs nodes (acc,[]) = acc
-  | reachable_nodes_ out_idxs nodes (acc,n::todo) =
-  let
-    val n_outs = List.filter (fn x => List.exists (fn y => x = y) nodes) (List.nth(out_idxs,n));
-    val n_outs_filtered = List.filter (fn x => not (List.exists (fn y => x = y) (todo@acc))) n_outs;
-  in
-    reachable_nodes_ out_idxs nodes (n::acc,n_outs_filtered@todo)
-  end;
-
-fun reachable_nodes out_idxs nodes n =
-  let
-    val outs = List.filter (fn x => List.exists (fn y => x = y) nodes) (List.nth(out_idxs,n));
-  in
-    reachable_nodes_ out_idxs nodes ([],outs)
-  end;
-
-fun is_reachable out_idxs nodes outs n =
-  let
-    val reachable_nodes_l = reachable_nodes out_idxs nodes n;
-    val result = List.exists (fn x => List.exists (fn y => x = y) outs) reachable_nodes_l;
-(*
-    val _ = if result = is_reachable_chk out_idxs nodes outs n then ()
-	    else raise ERR "" "some error in is_rechable implementation";
-*)
-  in
-    result
-  end;
-
-
-
-
-
-(*
-=================================================================
-      divide into sequence fragments (therefore-loopfree)
-=================================================================
- *)
-
-fun divide_linear_fragments (blocks, in_idxs, out_idxs) conn_comps =
-  let
-    fun process_frag n acc =
-      let
-        val new_acc = n::acc;
-        val ins = List.nth(in_idxs,n);
-        val is_split = (length ins = 0) orelse
-                       (length ins > 1) orelse
-                       (length ins = 1 andalso (length (List.nth(out_idxs,hd ins)) > 1))
-      in
-        if is_split then new_acc else process_frag (hd ins) new_acc
-      end;
-
-    fun process_frags [] _ acc = acc
-      | process_frags (n::ns) visited acc =
-          let
-            val outs = List.nth(out_idxs,n);
-            val new_frag = if (length outs > 1) then [n] else process_frag n [];
-            (*val new_frag = process_frag n [];*)
-
-            val _ = if (length new_frag = 0) orelse
-                       (length new_frag = 1 andalso (is_reachable out_idxs new_frag [hd new_frag] (hd new_frag))) orelse
-                       (length new_frag > 1 andalso (is_reachable out_idxs new_frag [hd new_frag] (hd (tl new_frag))))
-                    then raise ERR "divide_linear_fragments" "unknown error, created a sequence with a loop?!"
-                    else ();
-
-            val new_visited = new_frag @ visited;
-
-            val ins = List.nth(in_idxs,hd new_frag);
-            val new_ns = (List.filter (fn x => not (List.exists (fn y => y = x) (ns@new_visited)))
-                            ins) @ ns;
-          in
-            process_frags new_ns new_visited (new_frag::acc)
-          end;
-
-    fun process_comp_frags (_, _, exits) =
-      process_frags exits [] [];
-  in
-    List.foldl (fn (c,fs) => (process_comp_frags c)@fs) [] conn_comps
-  end;
-
-(*
-val frags = divide_linear_fragments (blocks, in_idxs, out_idxs) conn_comps;
-*)
-
-
-(*
-=================================================================
-            divide into loop-free fragments
-=================================================================
- *)
-
-fun divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps =
-  let
-    fun prep_frag_todo_for_compnent c =
-      List.map (fn frag =>
+  (* build a cfg *)
+  (* =================================== *)
+  fun cfg_collect_nodes n_dict [] acc_ns acc_ex = (acc_ns, acc_ex)
+    | cfg_collect_nodes n_dict ((lbl_tm)::todo) acc_ns acc_ex =
         let
-          val entries = List.filter (fn z => (List.nth(in_idxs,z)) = [] orelse not (List.all (fn x => List.exists (fn y => x = y) frag) (List.nth(in_idxs,z)))) frag;
-          val exits = List.filter (fn z => not (List.all (fn x => (List.exists (fn y => x = y) frag)) (List.nth(out_idxs,z)))) frag;
-          val _ = if entries = [hd frag] andalso exits = [List.last frag] then ()
-                  else raise ERR "prep_frag_todo_for_compnent" "something is fishy";
+          val n = case lookup_block_dict n_dict lbl_tm of
+                     SOME x => x
+                   | NONE => raise ERR "cfg_collect_nodes" ("cannot find label " ^ (term_to_string lbl_tm));
+          val targets = #CFGN_goto (n:cfg_node);
+
+          val exclude_list = (lbl_tm::acc_ns)@acc_ex@todo;
+          val new_todo = List.filter (fn x => List.all (fn y => x <> y) exclude_list) targets;
+
+          val (acc_ns', acc_ex') =
+            if targets <> [] then
+              (lbl_tm::acc_ns, acc_ex)
+            else
+              (acc_ns, lbl_tm::acc_ex)
         in
-          (frag, entries, exits)
-        end) (divide_linear_fragments (blocks, in_idxs, out_idxs) [c]);
+          cfg_collect_nodes n_dict (new_todo@todo) (acc_ns') (acc_ex')
+        end;
 
-    fun merge_frags (ns_1,en_1,ex_1) (ns_2,en_2,ex_2) =
+  fun cfg_create name entries n_dict bl_dict =
+    let
+      val (nodes,exits) = cfg_collect_nodes n_dict entries [] [];
+
+      val g = { CFGG_name       = name,
+		CFGG_entries    = entries,
+		CFGG_exits      = exits,
+		CFGG_nodes      = nodes,
+		CFGG_node_dict  = n_dict,
+		CFGG_block_dict = bl_dict
+	      } : cfg_graph;
+    in g end;
+
+  fun cfg_update (g:cfg_graph) n_dict =
+    let
+      val name    = #CFGG_name g;
+      val entries = #CFGG_entries g;
+      val bl_dict = #CFGG_block_dict g;
+    in
+      cfg_create name entries n_dict bl_dict
+    end;
+
+
+  (* pass 2 - determine basic blocks (i.e., straight to next "instruction") *)
+  (* =================================== *)
+
+  local
+
+    open bir_auxiliaryLib;
+    open bir_immSyntax;
+    open wordsSyntax;
+
+  in
+
+    fun cfg_node_to_succ_lbl_tm (n:cfg_node) =
       let
-        val ins_2 = List.foldl (fn (en,l) => List.foldl (fn (x,l) => if List.exists (fn y => x = y) l then l else (x::l)) l (List.nth(in_idxs,en))) [] en_2;
-        val outs_2 = List.foldl (fn (ex,l) => List.foldl (fn (x,l) => if List.exists (fn y => x = y) l then l else (x::l)) l (List.nth(out_idxs,ex))) [] ex_2;
-
-        val connects_in = List.exists (fn x => List.exists (fn y => x = y) ins_2) ex_1;
-        val connects_out = List.exists (fn x => List.exists (fn y => x = y) outs_2) en_1;
-
-	val createscircle = connects_in andalso
-			    connects_out andalso
-			    (List.exists (fn x => is_reachable out_idxs ns_1 ins_2 x) ex_2);
-
-        val mergable = (not createscircle) andalso (connects_in orelse connects_out);
+	val lbl_tm   = #CFGN_lbl_tm n;
+	val descr_o  = #CFGN_hc_descr n;
       in
-        if not mergable then NONE else SOME (
-          let
-	  val new_nodes = ns_2 @ ns_1;
+      if (not (is_BL_Address lbl_tm)) orelse
+	 (is_none descr_o)
+      then NONE else
+       let
+	val descr = valOf descr_o;
+	val (i, addr_w_tm) = (gen_dest_Imm o dest_BL_Address) lbl_tm;
+	val addr = dest_word_literal addr_w_tm;
 
-	  val new_entries = List.filter (fn z => (List.nth(in_idxs,z)) = [] orelse not (List.all (fn x => List.exists (fn y => x = y) new_nodes) (List.nth(in_idxs,z)))) new_nodes;
-	  val new_exits = List.filter (fn z => not (List.all (fn x => (List.exists (fn y => x = y) new_nodes)) (List.nth(out_idxs,z)))) new_nodes;
-                (*
-                val (new_entries,new_exits) = if isgluedin andalso connects_out then ((
-                    List.filter (fn x =>
-                        let
-                          val x_ins = List.nth(in_idxs,x);
-                        in
-                          (not (List.exists (fn y => ex = y) x_ins)) orelse
-                          (List.exists (fn y => not (List.exists (fn z => z = y) new_nodes)) x_ins)
-                        end
-                      ) (en::entries)
-                  ),exits) else (entries,exits);
+	val instrLen2 = (length o fst o (list_split_pred #" ") o explode) descr;
+	val _ = if instrLen2 mod 2 = 0 then () else
+		raise ERR "cfg_node_to_succ_lbl_tm"
+			  ("something went wrong when trying to find the binary " ^
+			   "instruction addr: " ^ (term_to_string lbl_tm) ^
+			   ", descr: " ^ descr);
+	val instrLen = instrLen2 div 2;
+	val _ = if instrLen = 2 orelse instrLen = 4 then () else
+		raise ERR "cfg_node_to_succ_lbl_tm"
+			  ("something went wrong when trying to find the binary " ^
+			   "instruction addr: " ^ (term_to_string lbl_tm) ^
+			   ", wrong instruction length, descr: " ^ descr);
 
-                val (new_entries,new_exits) = if isgluedin andalso connects_in then (new_entries,(
-                    List.filter (fn x =>
-                        let
-                          val x_outs = List.nth(out_idxs,x);
-                        in
-                          (not (List.exists (fn y => en = y) x_outs)) orelse
-                          (List.exists (fn y => not (List.exists (fn z => z = y) new_nodes)) x_outs)
-                        end
-                      ) (List.foldl () (ex::new_exits) ins)
-                  )) else (new_entries,new_exits);
-                *)
-          in
-            (new_nodes,new_entries,new_exits)
-          end
-          )
+	val addr_succ = Arbnum.+ (addr, Arbnum.fromInt instrLen);
+	val succ_lbl_tm = mk_key_from_address i addr_succ;
+       in
+	SOME succ_lbl_tm
+       end
       end;
 
-    fun merge_fragl l _ [] = NONE
-      | merge_fragl l frag1 (frag2::fs) =
-          case merge_frags frag1 frag2 of
-	      NONE          => merge_fragl (frag2::l) frag1 fs
-	    | SOME new_frag => SOME (l @ (new_frag::fs));
+end
 
-    fun merge_through l [] = NONE
-      | merge_through l (frag::fs) =
-          case merge_fragl l frag fs of
-	      NONE => merge_through (frag::l) fs
-	    | x    => x;
+  (* cfg update functions take: bl_dict lbl_tms n_dict *)
+  fun cfg_update_nodes_basic bl_dict lbl_tms n_dict =
+    let
+      fun update_n_dict (lbl_tm, n_dict) =
+        let
+          val n = case lookup_block_dict n_dict lbl_tm of
+                     SOME x => x
+                   | NONE => raise ERR "cfg_update_nodes_basic" ("cannot find label " ^ (term_to_string lbl_tm));
 
-    fun process_comp_frags fs =
-          case merge_through [] fs of
-	      NONE        => fs
-	    | SOME new_fs => process_comp_frags new_fs;
+          val succ_lbl_tm_o = cfg_node_to_succ_lbl_tm n;
+          val targets       = #CFGN_goto n;
 
-    val result = List.concat (List.map (fn c => process_comp_frags (prep_frag_todo_for_compnent c)) conn_comps);
+          val update_this = is_some succ_lbl_tm_o andalso
+                            targets = [valOf succ_lbl_tm_o];
 
-    val _ = if (List.all (fn (ns,en,ex) =>
-		  let
-		    val entries = List.filter (fn z =>
-			    (List.nth(in_idxs,z)) = [] orelse
-			    not (List.all (fn x => List.exists (fn y => x = y) ns) (List.nth(in_idxs,z)))
-			  ) ns;
-		    val exits = List.filter (fn z =>
-			    not (List.all (fn x => (List.exists (fn y => x = y) ns)) (List.nth(out_idxs,z)))
-			  ) ns;
-		  in
-		    en = entries andalso ex = exits
-		  end) result) then ()
-	    else raise ERR "divide_loopfree_fragments" "there is a fragment where entry and exit points are wrong";
-  in
-    result
-  end;
-
-
-(*
-val conn_comps = tl conn_comps;
-val frags = divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps;
-
-val c = hd conn_comps;
-val todo = prep_frag_todo_for_compnent c;
-(divide_linear_fragments (blocks, in_idxs, out_idxs) [c])
-val frags = process_comp_frags [] [];
-
-val frags =[([0,1,3],[0],[3])]
-val ((ns,en,ex)::todo) = [([2],2,2)]
-val (nodes,entries,exits) = hd frags
-process_comp_frags frags ((ns,en,ex)::todo)
-
-
-
-
-fun find_component conn_comp target_label = find_idx (fn (n,_,_) => List.exists (fn i =>
-  let
-    val block = List.nth(blocks,i);
-
-    val eval_label = (snd o dest_eq o concl o EVAL);
-    val (raw_BL_term, _, _) = dest_bir_block block;
-    val BL_term = eval_label raw_BL_term;
-
-  in
-    BL_term = target_label
-  end) n) conn_comp;
-
-
-val addr = 0x40379C;
-val target_label = ``BL_Address (Imm64 ^(wordsSyntax.mk_word(Arbnum.fromInt addr, Arbnum.fromInt 64)))``
-find_component conn_comps target_label
-val conn_comps = [List.nth(conn_comps,17)]
-
-val frags = divide_loopfree_fragments (blocks, in_idxs, out_idxs) conn_comps;
-List.map (fn (nodes,_,_) => bir_show_graph_inout true nodes (blocks, in_idxs, out_idxs)) frags
-
-length frags;
-
-val frag = hd frags;
-
-val (frag_ns, _, _) = frag;
-val _ = bir_show_graph_inout true frag_ns g;
-
-
-
-
-process_comp_frags 
-
-val fs = (prep_frag_todo_for_compnent (hd conn_comps))
-
-val SOME fs = merge_through [] fs;
-List.map (fn (nodes,_,_) => bir_show_graph_inout true nodes g) fs
-length fs
-
-
-List.nth (in_idxs,3232)
-List.nth (out_idxs,3232)
-
-val simplified = true
-val nodes = ((fn (nodes,_,_) => nodes)) (hd fs)
-bir_show_graph_inout true nodes g
-
-
-*)
+          val n' = if not update_this then n else
+              { CFGN_lbl_tm   = #CFGN_lbl_tm n,
+		CFGN_hc_descr = #CFGN_hc_descr n,
+		CFGN_goto     = #CFGN_goto n,
+		CFGN_type     = CFGNT_Basic
+	      } : cfg_node;
+          val n_dict' = if not update_this then n_dict else
+                        Redblackmap.update (n_dict, lbl_tm, K n');
+        in
+          n_dict'
+        end;
+    in
+      List.foldr update_n_dict n_dict lbl_tms
+    end;
 
 end (* local *)
-
-end (* bir_cfgLib *)
+end (* struct *)

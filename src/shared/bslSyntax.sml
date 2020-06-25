@@ -12,6 +12,7 @@ struct
   open bir_exp_memSyntax
   open bir_immSyntax
   open bir_programSyntax
+  open bir_program_labelsSyntax
   open bir_typing_expSyntax
   open bir_valuesSyntax
   open bir_extra_expsSyntax
@@ -39,14 +40,6 @@ struct
   fun app2th4 f b = (fn a => fn c => fn d => f a b c d)
   fun app3th4 f c = (fn a => fn b => fn d => f a b c d)
   fun app4th4 f d = (fn a => fn b => fn c => f a b c d)
-
-  local
-    open bir_program_labelsTheory
-    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program_labels"
-    val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop
-  in
-    val (BL_Address_HC_tm, mk_BL_Address_HC, dest_BL_Address_HC, is_BL_Address_HC) = syntax_fns2 "BL_Address_HC"
-  end
 
   in
 

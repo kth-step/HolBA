@@ -63,9 +63,9 @@ sig
    val mk_BStmt_Assume   : term -> term
 
    val BStmt_Observe_tm   : term
-   val dest_BStmt_Observe : term -> term * term * term
+   val dest_BStmt_Observe : term -> term * term * term * term
    val is_BStmt_Observe   : term -> bool
-   val mk_BStmt_Observe   : term * term * term -> term
+   val mk_BStmt_Observe   : term * term * term * term -> term
 
 
    (******************)
@@ -248,5 +248,20 @@ sig
    val dest_bir_exec_step_n : term -> term * term * term
    val is_bir_exec_step_n   : term -> bool
    val mk_bir_exec_step_n   : term * term * term -> term
+
+   val bir_get_program_block_info_by_label_tm   : term
+   val dest_bir_get_program_block_info_by_label : term -> term * term
+   val is_bir_get_program_block_info_by_label   : term -> bool
+   val mk_bir_get_program_block_info_by_label   : term * term -> term
+
+   val bir_exec_stmt_jmp_to_label_tm   : term
+   val dest_bir_exec_stmt_jmp_to_label : term -> term * term * term
+   val is_bir_exec_stmt_jmp_to_label   : term -> bool
+   val mk_bir_exec_stmt_jmp_to_label   : term * term * term -> term
+
+   val bir_labels_of_program_tm   : term
+   val dest_bir_labels_of_program : term -> term
+   val is_bir_labels_of_program   : term -> bool
+   val mk_bir_labels_of_program   : term -> term
 
 end

@@ -682,9 +682,9 @@ FULL_SIMP_TAC std_ss []
 );
 
 val bir_env_vars_are_initialised_observe_INSERT = prove(
-  ``!e ec el obf.
+  ``!e oid ec el obf.
       bir_env_vars_are_initialised e
-        (bir_vars_of_stmtB (BStmt_Observe ec el obf)) ==>
+        (bir_vars_of_stmtB (BStmt_Observe oid ec el obf)) ==>
       bir_env_vars_are_initialised e (bir_vars_of_exp ec)``,
 
 REPEAT GEN_TAC >>
@@ -700,13 +700,13 @@ FULL_SIMP_TAC std_ss [bir_vars_of_stmtB_def,
  *)
 val bir_observe_state_invar =
   store_thm("bir_observe_state_invar",
-  ``!s s' ec el obf obs.
+  ``!s s' oid ec el obf obs.
       (* Antecedents from outside the Hoare triple: *)
-      bir_is_well_typed_stmtB (BStmt_Observe ec el obf) ==>
+      bir_is_well_typed_stmtB (BStmt_Observe oid ec el obf) ==>
       (* Antecedents from within the Hoare triple: *)
       bir_env_vars_are_initialised s.bst_environ
-           (bir_vars_of_stmtB (BStmt_Observe ec el obf)) ==>
-      (bir_exec_stmtB (BStmt_Observe ec el obf) s = (obs, s')) ==>
+           (bir_vars_of_stmtB (BStmt_Observe oid ec el obf)) ==>
+      (bir_exec_stmtB (BStmt_Observe oid ec el obf) s = (obs, s')) ==>
       (s = s')``,
 
 REPEAT STRIP_TAC >>
@@ -747,9 +747,9 @@ Cases_on `bir_eval_bool_exp ec s.bst_environ` >> (
 (* {Q} Observe ex {Q} *)
 val bir_triple_exec_stmtB_observe_thm =
   store_thm("bir_triple_exec_stmtB_observe_thm",
-  ``!ec el obf post.
-      bir_is_well_typed_stmtB (BStmt_Observe ec el obf) ==>
-      bir_exec_stmtB_triple (BStmt_Observe ec el obf) post post``,
+  ``!oid ec el obf post.
+      bir_is_well_typed_stmtB (BStmt_Observe oid ec el obf) ==>
+      bir_exec_stmtB_triple (BStmt_Observe oid ec el obf) post post``,
 
 REWRITE_TAC [bir_exec_stmtB_triple_def, bir_pre_post_def] >>
 REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
@@ -763,7 +763,7 @@ val bir_wp_exec_stmtB_def = Define `
     (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not ex) post)) /\
   (bir_wp_exec_stmtB (BStmt_Assign v ex) post =
     (bir_exp_subst1 v ex post)) /\
-  (bir_wp_exec_stmtB (BStmt_Observe ec el obf) post = post)`;
+  (bir_wp_exec_stmtB (BStmt_Observe oid ec el obf) post = post)`;
 
 val bir_wp_exec_stmtB_sound_thm =
   store_thm("bir_wp_exec_stmtB_sound_thm",
@@ -1069,7 +1069,7 @@ pairLib.PairCases_on `ns` >>
 FULL_SIMP_TAC std_ss [LET_DEF] >>
 PAT_X_ASSUM ``!x. p``
             (fn thm =>
-              ASSUME_TAC (Q.SPECL [`s`, `ns2`, `[]:'a list`, `ns0`,
+              ASSUME_TAC (Q.SPECL [`s`, `ns2`, `[]:(num # 'a) list`, `ns0`,
                                    `0:num`, `ns1`] thm
                          )
             ) >>
@@ -1186,7 +1186,7 @@ Q.ABBREV_TAC `ns = bir_exec_stmtsB bl.bb_statements ([],0,s)` >>
 pairLib.PairCases_on `ns` >>
 FULL_SIMP_TAC std_ss [LET_DEF] >>
 PAT_X_ASSUM ``!x. p`` (fn thm =>
-  ASSUME_TAC (Q.SPECL [`s`, `ns2`, `[]:'a list`, `ns0`, `0:num`,
+  ASSUME_TAC (Q.SPECL [`s`, `ns2`, `[]:(num # 'a) list`, `ns0`, `0:num`,
                        `ns1`] thm)) >>
 REV_FULL_SIMP_TAC std_ss
   [bir_vars_are_initialized_block_then_every_stmts_thm] >>
@@ -1482,7 +1482,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
     REV_FULL_SIMP_TAC std_ss [] >>
     FULL_SIMP_TAC std_ss [] >>
     FULL_SIMP_TAC (srw_ss()) [bir_block_pc_def, Abbr `s'`] >>
-    EXISTS_TAC ``st10:'a list`` >>
+    EXISTS_TAC ``st10:(num # 'a) list`` >>
     EXISTS_TAC ``st11:num`` >>
     EXISTS_TAC ``1:num`` >>
     EXISTS_TAC ``st12:bir_state_t`` >>
@@ -1513,7 +1513,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
    * postconditions in the assumption HT *)
   FULL_SIMP_TAC std_ss [] >> (
     FULL_SIMP_TAC (srw_ss()) [Abbr `s'`] >>
-    EXISTS_TAC ``(st10 ++ l1'):'a list`` >>
+    EXISTS_TAC ``(st10 ++ l1'):(num # 'a) list`` >>
     EXISTS_TAC ``(st11 + c1):num`` >>
     EXISTS_TAC ``c2:num`` >>
     EXISTS_TAC ``s'':bir_state_t`` >>
@@ -1661,7 +1661,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
     REV_FULL_SIMP_TAC std_ss [] >>
     FULL_SIMP_TAC std_ss [] >>
     FULL_SIMP_TAC (srw_ss()) [bir_block_pc_def, Abbr `s'`] >>
-    EXISTS_TAC ``st10:'a list`` >>
+    EXISTS_TAC ``st10:(num # 'a) list`` >>
     EXISTS_TAC ``st11:num`` >>
     EXISTS_TAC ``1:num`` >>
     EXISTS_TAC ``st12:bir_state_t`` >>
@@ -1692,7 +1692,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
    * postconditions in the assumption HT *)
   FULL_SIMP_TAC std_ss [] >> (
     FULL_SIMP_TAC (srw_ss()) [Abbr `s'`] >>
-    EXISTS_TAC ``(st10 ++ l1'):'a list`` >>
+    EXISTS_TAC ``(st10 ++ l1'):(num # 'a) list`` >>
     EXISTS_TAC ``(st11 + c1):num`` >>
     EXISTS_TAC ``c2:num`` >>
     EXISTS_TAC ``s'':bir_state_t`` >>
@@ -1713,7 +1713,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
     REV_FULL_SIMP_TAC std_ss [] >>
     FULL_SIMP_TAC std_ss [] >>
     FULL_SIMP_TAC (srw_ss()) [bir_block_pc_def, Abbr `s'`] >>
-    EXISTS_TAC ``st10:'a list`` >>
+    EXISTS_TAC ``st10:(num # 'a) list`` >>
     EXISTS_TAC ``st11:num`` >>
     EXISTS_TAC ``1:num`` >>
     EXISTS_TAC ``st12:bir_state_t`` >>
@@ -1742,7 +1742,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
    * postconditions in the assumption HT *)
   FULL_SIMP_TAC std_ss [] >> (
     FULL_SIMP_TAC (srw_ss()) [Abbr `s'`] >>
-    EXISTS_TAC ``(st10 ++ l1'):'a list`` >>
+    EXISTS_TAC ``(st10 ++ l1'):(num # 'a) list`` >>
     EXISTS_TAC ``(st11 + c1):num`` >>
     EXISTS_TAC ``c2:num`` >>
     EXISTS_TAC ``s'':bir_state_t`` >>

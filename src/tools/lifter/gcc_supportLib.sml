@@ -6,34 +6,12 @@ struct
   open HolKernel boolLib liteLib;
   open bir_inst_liftingLibTypes
 
+  open bir_auxiliaryLib;
+  open bir_fileLib;
+
   val ERR = mk_HOL_ERR "gcc_supportLib"
 
-  (*******************)
-  (* Auxiliary stuff *)
-  (*******************)
-
-  fun list_split_pred_aux acc p [] = fail ()
-    | list_split_pred_aux acc p (x::xs) =
-      (if x = p then (List.rev acc, xs)
-       else list_split_pred_aux (x::acc) p xs)
-
-  fun list_split_pred p = list_split_pred_aux [] p
-
-
-  fun read_file_lines file_name = let
-    val instream = TextIO.openIn file_name
-    fun read_it acc =
-      case TextIO.inputLine instream of
-          NONE => List.rev acc
-        | SOME s => read_it (s::acc);
-    val input = read_it [] before TextIO.closeIn instream
-  in input end;
-
   in (* local *)
-
-  (*******************)
-  (* File Operations *)
-  (*******************)
 
 (*
 val file_name = "examples/wolfssl-aarch64.da"
