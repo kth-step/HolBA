@@ -2,7 +2,7 @@ structure bir_cfgLib =
 struct
 local
 
-open bir_blockCollectionLib;
+open bir_block_collectionLib;
 
 in
 

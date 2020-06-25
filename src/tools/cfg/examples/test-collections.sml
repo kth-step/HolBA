@@ -30,7 +30,7 @@ val valid_prog_thm = prove(``bir_is_valid_program (^prog_tm_abbr)``,
 
 (* build the dictionaries using the library under test *)
 val _ = print "Building dictionaries.\n";
-open bir_blockCollectionLib;
+open bir_block_collectionLib;
 val block_dict = gen_block_dict prog_tm;
 val MEM_block_dict = gen_MEM_thm_block_dict prog_l_def valid_prog_thm;
 val _ = print "\n";

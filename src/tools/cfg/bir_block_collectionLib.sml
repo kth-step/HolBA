@@ -1,4 +1,4 @@
-structure bir_blockCollectionLib =
+structure bir_block_collectionLib =
 struct
 local
 
