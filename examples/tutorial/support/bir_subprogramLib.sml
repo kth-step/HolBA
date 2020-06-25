@@ -3,26 +3,13 @@ struct
 
   local
     open bir_programSyntax;
+    open bir_program_labelsSyntax;
     open bir_immSyntax;
     open wordsSyntax;
 
   in
  
     val ERR = mk_HOL_ERR "bir_subprogramLib"
-
-    (* TODO: Copied from bslSyntax (not in bslSyntax.sig). This should
-     * really be placed in bir_programlabelsSyntax.  *)
-    local
-      open bir_program_labelsTheory
-      fun syntax_fns n d m =
-	HolKernel.syntax_fns {n = n, dest = d, make = m}
-			     "bir_program_labels"
-      val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop
-				     HolKernel.mk_binop
-    in
-      val (BL_Address_HC_tm, mk_BL_Address_HC, dest_BL_Address_HC,
-	     is_BL_Address_HC) = syntax_fns2 "BL_Address_HC"
-    end
 
     (* DESCRIPTION: Function extracting subrograms from BirProgram
      * terms.

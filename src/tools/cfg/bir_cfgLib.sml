@@ -2,6 +2,7 @@ structure bir_cfgLib =
 struct
 local
 
+open bir_program_labelsSyntax;
 open bir_block_collectionLib;
 
 in
@@ -68,23 +69,6 @@ in
       if is_all_direct then targets else []
     end;
 
-local
-
-(* TODO: put this in the right place and cleanup elsewhere too *)
-fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program_labels"
-
-fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0
-   (fn tm1 => fn e => fn tm2 =>
-       if Term.same_const tm1 tm2 then () else raise e)
-   (fn tm => fn () => tm) s in (tm, is_f) end;
-
-val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
-val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
-
-val (BL_Address_HC_tm,  mk_BL_Address_HC, dest_BL_Address_HC, is_BL_Address_HC)  = syntax_fns2 "BL_Address_HC";
-
-in
   fun cfg_block_to_node bl =
     let
       val (lbl, _, bbes) = dest_bir_block bl;
@@ -117,7 +101,6 @@ in
 	      } : cfg_node;
 
     in n end;
-end
 
   fun cfg_build_node_dict bl_dict lbl_tms =
     let
