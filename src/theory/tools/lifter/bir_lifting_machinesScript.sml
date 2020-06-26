@@ -10,8 +10,8 @@ open arm8Theory arm8_stepTheory
      riscvTheory riscv_stepTheory
 (* Theories from HolBA/src/core: *)
 open bir_expTheory bir_typing_expTheory bir_valuesTheory
-     bir_envTheory bir_immTheory bir_imm_expTheory 
-     bir_mem_expTheory bir_programTheory
+     bir_envTheory bir_immTheory bir_exp_immTheory 
+     bir_exp_memTheory bir_programTheory
 (* Theories from HolBA/src/core-props: *)
 open bir_bool_expTheory bir_program_labelsTheory
      bir_interval_expTheory bir_temp_varsTheory
@@ -833,7 +833,7 @@ val riscv_state_is_OK_def = Define `
 `;
 
 (* Lifting RISC-V general-purpose registers. Note that while these are referred
- * to as "general-purpose", by convention they include harwired zero, sp, gp, tp,
+ * to as "general-purpose", by convention they include hardwired zero, sp, gp, tp,
  * ra, and so on. *)
 val riscv_GPRS_lifted_imms_LIST_def = Define `
   riscv_GPRS_lifted_imms_LIST =
@@ -880,7 +880,7 @@ val riscv_bmr_def = Define `
      * OK state is now minimal. *)
     bmr_extra := \ms. riscv_state_is_OK ms;
     (* Registers are the 32 general-purpose registers as well as the
-     * 32 fprs (fpr = ???). *)
+     * 32 fprs (fpr = floating point register?). *)
     bmr_imms := (riscv_GPRS_lifted_imms_LIST++riscv_FPRS_lifted_imms_LIST);
     (* Done! *)
     bmr_mem := riscv_lifted_mem;
