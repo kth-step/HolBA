@@ -132,7 +132,7 @@ in
             if targets <> [] then
               (lbl_tm::acc_ns, acc_ex)
             else
-              (acc_ns, lbl_tm::acc_ex)
+              (lbl_tm::acc_ns, lbl_tm::acc_ex)
         in
           cfg_collect_nodes n_dict (new_todo@todo) (acc_ns') (acc_ex')
         end;
