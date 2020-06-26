@@ -88,7 +88,7 @@ add_obs_spctr_block obs_fun block =
 
 val observe_mem_addr_def = Define`
 observe_mem_addr (* l *) e = 
-      BStmt_Observe (BExp_Const (Imm1 1w)) [e(* ;lable_to_exp l *)] HD
+      BStmt_Observe 0 (BExp_Const (Imm1 1w)) [e(* ;lable_to_exp l *)] HD
 `;
 
 val add_obs_mem_addr_pc_armv8_def = Define`
