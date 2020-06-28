@@ -31,15 +31,21 @@ in (* local *)
 *)
   local
 
+
+val n_dict_0 = cfg_build_node_dict bl_dict_ prog_lbl_tms_;
+val n_dict_1 = cfg_update_nodes_basic prog_lbl_tms_ n_dict_0;
+
 (*
+val lbl_tm = mk_key_from_address 32 (Arbnum.fromHexString "c10");
+
+val lbl_tm = ``BL_Address (Imm32 1198w)``;
+
 val bl_dict = bl_dict_;
-val n_dict = cfg_build_node_dict bl_dict_ prog_lbl_tms_;
-val lbl_tm = mk_key_from_address 32 (Arbnum.fromHexString "c1c");
-val n      = valOf (lookup_block_dict n_dict lbl_tm);
-val bl     = valOf (lookup_block_dict bl_dict lbl_tm);
+val n      = valOf (lookup_block_dict n_dict_1 lbl_tm);
+val bl     = valOf (lookup_block_dict bl_dict_ lbl_tm);
 *)
 fun update_node_guess_type_call bl_dict n =
-  if #CFGN_type n <> CFGNT_Jump orelse #CFGN_targets n = [] then n else
+  if #CFGN_type n <> CFGNT_Jump orelse #CFGN_targets n = [] then NONE else
   (* take jumps with direct target to filter out the calls *)
   let
     val debug_on = false;
@@ -60,7 +66,7 @@ fun update_node_guess_type_call bl_dict n =
 
     val _ = if length targets = 1 then () else
             raise ERR "update_node_guess_type_call"
-                                   "there should be exactly 1 direct jump target"
+                      "there should be exactly 1 direct jump target"
     val goto_tm = hd targets;
 
     val isCall_lr       =  List.exists is_Assign_LR ((fst o dest_list) bbs);
@@ -68,15 +74,20 @@ fun update_node_guess_type_call bl_dict n =
 
     val _ = if isCall_lr = isCall_to_entry then ()
             else raise ERR "update_node_guess_type_call"
-                           "something in call detection is unexpected";
+                           ("something in call detection is unexpected: " ^ (term_to_string lbl_tm));
     val isCall = isCall_lr;
 
     val _ = if not (debug_on andalso isCall) then () else
             (print "call        ::: "; print (Option.getOpt(#CFGN_hc_descr n, "NONE")); print "\t"; print_term lbl_tm);
 
-    val call_targets_guess = [cfg_node_to_succ_lbl_tm n];
+    val call_cont_o = cfg_node_to_succ_lbl_tm n;
+    val _ = if isSome call_cont_o then () else
+            raise ERR "update_node_guess_type_call"
+                      "cannot determine continuation block for call";
 
-    val new_type = if isCall then CFGNT_Call call_targets_guess else #CFGN_type n;
+    val call_conts_guess = [valOf call_cont_o];
+
+    val new_type = if isCall then CFGNT_Call call_conts_guess else #CFGN_type n;
 
     val new_n =
             { CFGN_lbl_tm   = #CFGN_lbl_tm n,
@@ -85,10 +96,14 @@ fun update_node_guess_type_call bl_dict n =
               CFGN_type     = new_type
             } : cfg_node;
   in
-    new_n
+    SOME new_n
   end;
 
 
+val n_dict_2 = cfg_update_nodes_gen "update_node_guess_type_call"
+                                    (update_node_guess_type_call bl_dict_)
+                                    prog_lbl_tms_
+                                    n_dict_1;
 
 (* =============================================================================== *)
 (* =============================================================================== *)
@@ -219,7 +234,7 @@ fun update_node_guess_type_call bl_dict n =
 (* =============================================================================== *)
 
 fun update_node_manual_indir_jump resolv_map (n:cfg_node) =
-  if #CFGN_type n <> CFGNT_Jump orelse #CFGN_targets n <> [] then n else
+  if #CFGN_type n <> CFGNT_Jump orelse #CFGN_targets n <> [] then NONE else
   (* take jumps with no resolved direct targets to filter out the returns *)
   let
     val debug_on = false;
@@ -277,7 +292,11 @@ Arbnum.toHexString (rev_hs_to_num (Arbnum.fromInt 0) s)
 
     val new_type = if isIndirJump then ((fst o valOf) indirJumpUpdate) else #CFGN_type n;
 
-    val new_goto = if isIndirJump then (((List.map (mk_lbl_tm)) o snd o valOf) indirJumpUpdate) else #CFGN_targets n;
+    val new_targets =
+          if isIndirJump then
+            (((List.map (mk_lbl_tm)) o snd o valOf) indirJumpUpdate)
+          else
+            #CFGN_targets n;
 
     val new_n =
             { CFGN_lbl_tm   = #CFGN_lbl_tm n,
@@ -286,9 +305,14 @@ Arbnum.toHexString (rev_hs_to_num (Arbnum.fromInt 0) s)
               CFGN_type     = new_type
             } : cfg_node;
   in
-    new_n
+    SOME new_n
   end;
 
+
+val n_dict_3 = cfg_update_nodes_gen "update_node_manual_indir_jump"
+                                    (update_node_manual_indir_jump resolv_map)
+                                    prog_lbl_tms_
+                                    n_dict_2;
 
 
 (*
@@ -300,7 +324,7 @@ val n  = find_node ns lbl_tm;
 val _ = List.map (update_node_guess_type_return o update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
 *)
 fun update_node_guess_type_return (n:cfg_node) =
-  if #CFGN_type n <> CFGNT_Jump orelse #CFGN_targets n <> [] then n else
+  if #CFGN_type n <> CFGNT_Jump orelse #CFGN_targets n <> [] then NONE else
   (* take jumps with no resolved direct targets to filter out the returns *)
   let
     val debug_on = false;
@@ -342,9 +366,13 @@ fun update_node_guess_type_return (n:cfg_node) =
               CFGN_type     = new_type
             } : cfg_node;
   in
-    new_n
+    SOME new_n
   end;
 
+val n_dict_4 = cfg_update_nodes_gen "update_node_guess_type_return"
+                                    (update_node_guess_type_return)
+                                    prog_lbl_tms_
+                                    n_dict_3;
 
 
 
@@ -368,12 +396,12 @@ fun collect_node_callinfo (n:cfg_node) =
      List.map (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm) n_targets,
      let
        val call_conts = case n_type of
-                           CFGNT_Call c => c
+                           CFGNT_Call cs => cs
                          | _ => raise ERR "collect_node_callinfo" "this would never happen";
-       val _ = if length c = 1 then () else
+       val _ = if length call_conts = 1 then () else
                raise ERR "collect_node_callinfo" "expecting exactly one call continuation target";
      in
-       hd c
+       hd call_conts
      end
     )
   end;
@@ -386,132 +414,160 @@ fun lookup_calls_to ci to = List.foldr (fn ((_, tol, returnto), l) =>
       l
   ) [] ci;
 
-fun update_node_fix_return_goto lookup_calls_to_f n =
-  if #CFGN_type n <> CFGNT_Return then n else
+fun update_node_fix_return_goto lookup_calls_to_f (n:cfg_node) =
+  if #CFGN_type n <> CFGNT_Return then NONE else
   let
     val debug_on = false;
 
     val rel_name = (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm o #CFGN_lbl_tm) n;
 
-    val new_goto = ((List.map CFGT_DIR) o lookup_calls_to_f) rel_name;
+    val new_targets = (lookup_calls_to_f) rel_name;
 
     val new_n =
-            { CFGN_lbl_tm = #CFGN_lbl_tm n,
-              CFGN_descr  = #CFGN_descr n,
-              CFGN_succ   = #CFGN_succ n,
-              CFGN_goto   = new_goto,
-              CFGN_type   = #CFGN_type n
+            { CFGN_lbl_tm   = #CFGN_lbl_tm n,
+              CFGN_hc_descr = #CFGN_hc_descr n,
+              CFGN_targets  = new_targets,
+              CFGN_type     = #CFGN_type n
             } : cfg_node;
   in
-    new_n
+    SOME new_n
   end;
 
-
+(*
 fun cfg_targets_to_lbl_tms_exn l et =
     (valOf o cfg_targets_to_lbl_tms) l
     handle Option => raise ERR "cfg_targets_to_lbl_tms_exn" ("unexpected indirection: " ^ et);
-
-fun cfg_targets_to_direct_lbl_tms l = List.foldr (fn
-         (CFGT_DIR   tm, ls) => tm::ls
-       | (CFGT_INDIR tm , ls) => (print ("unexpected indirection: " ^
-                                        (term_to_string tm) ^ "\n"); ls)
-  ) [] l;
-
+*)
 
 (*
 =================================================================================================
 *)
 
-val ns_ = List.map (update_node_guess_type_return o update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
+
+(*
+
+val lbl_tm = mk_key_from_address 32 (Arbnum.fromHexString "c1c");
+val lbl_tm = ``BL_Address (Imm32 11098w)``;
+
+val n      = valOf (lookup_block_dict n_dict_1 lbl_tm);
+val bl     = valOf (lookup_block_dict bl_dict lbl_tm);
+
+*)
+
+val ns_ = List.map snd (Redblackmap.listItems n_dict_4);
+
 val ci  = List.foldr (fn (n,l) => let val vo = collect_node_callinfo n in
                                  if isSome vo then (valOf vo)::l else l end) [] ns_;
 
-val ns  = List.map (update_node_fix_return_goto (lookup_calls_to ci)) ns_;
+
+val n_dict_5 = cfg_update_nodes_gen "update_node_fix_return_goto"
+                                    (update_node_fix_return_goto (lookup_calls_to ci))
+                                    prog_lbl_tms_
+                                    n_dict_4;
+
+val ns  = List.map snd (Redblackmap.listItems n_dict_5);
 
 
 (*
+=================================================================================================
+=================================================================================================
+=================================================================================================
 =================================================================================================
 =================================================================================================
 *)
   in (* local *)
 
-val ns = ns;
+val n_dict = n_dict_5;
 val ci = ci;
 
+(*
 val cfg_targets_to_lbl_tms = cfg_targets_to_lbl_tms;
+*)
 
-fun find_node (ns:cfg_node list) lbl_tm =
-  (valOf o List.find (fn n => #CFGN_lbl_tm n = lbl_tm)) ns
+fun find_node n_dict lbl_tm =
+  valOf (lookup_block_dict n_dict lbl_tm)
   handle Option => raise ERR "find_node" ("couldn't find node " ^ (term_to_string lbl_tm));
 
 
 fun get_fun_cfg_walk_succ (n: cfg_node) =
   let
-    val lbl_tm = #CFGN_lbl_tm n;
-    val descr  = #CFGN_descr n;
-    val n_type = #CFGN_type n;
-    val n_goto = #CFGN_goto n;
+    val lbl_tm    = #CFGN_lbl_tm n;
+    val descr_o   = #CFGN_hc_descr n;
+    val n_type    = #CFGN_type n;
+    val n_targets = #CFGN_targets n;
     val debug_on = false;
+
+    val descr = case descr_o of
+                   SOME x => x
+                 | NONE => raise ERR "get_fun_cfg_walk_succ"
+                                     ("need node description text from lifter: " ^ (term_to_string lbl_tm));
+
     val _ = if not debug_on then () else
             print ("node: " ^ (term_to_string lbl_tm) ^ "\n" ^
                    " - " ^ descr ^ "\n");
   in
     case n_type of
-        CFGNT_Unknown   => (if debug_on then print "UNRESOLVED NODE\n" else (); [])
-      | CFGNT_Halt      => []
-      | CFGNT_Basic     => cfg_targets_to_direct_lbl_tms n_goto
-      | CFGNT_Jump      => cfg_targets_to_direct_lbl_tms n_goto
-      | CFGNT_CondJump  => cfg_targets_to_direct_lbl_tms n_goto
-      | CFGNT_Call      => (* this accounts for a walk that
+        CFGNT_Halt      => []
+      | CFGNT_Jump      => n_targets
+      | CFGNT_CondJump  => n_targets
+      | CFGNT_Basic     => n_targets
+      | CFGNT_Call cs   => (* this accounts for a walk that
                               doesn't follow call edges *)
-                           [(valOf o #CFGN_succ) n]
+                           cs
       | CFGNT_Return    => [] (* this terminates returns *)
   end;
 
 
-fun build_fun_cfg_nodes _  acc []                 = acc
-  | build_fun_cfg_nodes ns acc (lbl_tm::lbl_tm_l) =
+fun build_fun_cfg_nodes _  acc []                     = acc
+  | build_fun_cfg_nodes n_dict acc (lbl_tm::lbl_tm_l) =
       let
-        val n = find_node ns lbl_tm;
-        val n_type = #CFGN_type n;
+        val n         = find_node n_dict lbl_tm;
+        val n_type    = #CFGN_type n;
+        val n_targets = #CFGN_targets n;
 
-        val _ = if n_type <> CFGNT_Unknown then () else
+        val _ = if n_type <> CFGNT_Halt andalso n_targets <> [] then () else
                 (print "indirection ::: in ";
                  print (prog_lbl_to_mem_rel_symbol lbl_tm);
-                 print "\t"; print (#CFGN_descr n);
+                 print "\t"; print (valOf (#CFGN_hc_descr n) handle Option => "NONE");
                  print "\t"; print_term lbl_tm);
 
-        val new_node  = if n_type = CFGNT_Unknown then [] else [n];
-        val new_nodes = new_node@acc;
+        val new_nodes = lbl_tm::acc;
 
-        val next_tm_l      = List.filter (fn x => not ((is_lbl_in_cfg_nodes x new_nodes) orelse
-                                                       (List.exists (fn y => x = y) lbl_tm_l)))
-                                         (get_fun_cfg_walk_succ n);
+        val next_tm_l      =
+              List.filter (fn x => not ((List.exists (fn y => x = y) (new_nodes@lbl_tm_l))))
+                          (get_fun_cfg_walk_succ n);
         val new_lbl_tm_l   = next_tm_l@lbl_tm_l;
       in
-        build_fun_cfg_nodes ns new_nodes new_lbl_tm_l
+        build_fun_cfg_nodes n_dict new_nodes new_lbl_tm_l
       end;
 
-fun node_to_rel_symbol (n:cfg_node) =
-  (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm) (#CFGN_lbl_tm n);
 
-fun build_fun_cfg ns name =
+fun lbl_tm_to_rel_symbol lbl_tm =
+  (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm) lbl_tm;
+
+fun node_to_rel_symbol (n:cfg_node) =
+  lbl_tm_to_rel_symbol (#CFGN_lbl_tm n);
+
+fun build_fun_cfg bl_dict n_dict name =
   let
     val entry_lbl_tm = mem_symbol_to_prog_lbl name;
-    val cfg_comp_ns = build_fun_cfg_nodes ns [] [entry_lbl_tm];
-    val _ = print ("walked " ^ (Int.toString (length cfg_comp_ns)) ^
+    val cfg_comp_lbls = build_fun_cfg_nodes n_dict [] [entry_lbl_tm];
+    val _ = print ("walked " ^ (Int.toString (length cfg_comp_lbls)) ^
                    " nodes (" ^ name ^ ")\n");
     (* validate that all collected nodes belong to the function *)
-    val ns_names   = List.map node_to_rel_symbol cfg_comp_ns
+    val ns_names   = List.map (lbl_tm_to_rel_symbol) cfg_comp_lbls
       handle Option => raise ERR "build_fun_cfg" "cannot find label for node address";
     val allAreName = List.foldr (fn (n,b) => b andalso (
            n = name
       )) true ns_names;
   in
     {
-      CFGG_name  = name,
-      CFGG_entry = entry_lbl_tm,
-      CFGG_nodes = cfg_comp_ns
+      CFGG_name       = name,
+      CFGG_entries    = [entry_lbl_tm],
+      CFGG_exits      = [], (* this is not right *)
+      CFGG_nodes      = cfg_comp_lbls,
+      CFGG_node_dict  = n_dict,
+      CFGG_block_dict = bl_dict
     } : cfg_graph
   end;
 
@@ -520,20 +576,20 @@ fun build_fun_cfg ns name =
 =================================================================================================
 *)
 
-fun count_paths_to_ret_nexts follow_call ns lbl_tm =
+fun count_paths_to_ret_nexts follow_call n_dict lbl_tm =
   let
-    val n = find_node ns lbl_tm;
+    val n:cfg_node = find_node n_dict lbl_tm;
     val n_type = #CFGN_type n;
-    val nexts = (valOf o cfg_targets_to_lbl_tms o #CFGN_goto) n;
+    val nexts = #CFGN_targets n;
   in
     case n_type of
-         CFGNT_Unknown => raise ERR "count_paths_to_ret_nexts" " unknown control flow"
-       | CFGNT_Halt    => ([], [])
-       | CFGNT_Call    => (if follow_call then nexts else
-                           [(valOf o #CFGN_succ) n]
-                           ,
+         CFGNT_Halt    => ([], [])
+       | CFGNT_Call cs => (if follow_call then nexts else
+                           cs
+                          ,
                            if follow_call then [] else
-                           List.map (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm) nexts)
+                           List.map (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm) nexts
+                          )
        | CFGNT_Return  => (if follow_call then nexts else [], [])
        | _             => (nexts, [])
   end;

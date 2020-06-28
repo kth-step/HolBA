@@ -5,6 +5,9 @@ open binariesLib;
 open binariesCfgLib;
 open binariesCfgVizLib;
 
+open bir_cfgLib;
+open bir_cfg_vizLib;
+
 open bir_smtLib;
 
 val entry_label = "motor_prep_input";
@@ -342,14 +345,13 @@ fun get_next_exec_sts lbl_tm est syst =
   end
   handle HOL_ERR _ =>
     let
-      val n       = find_node ns lbl_tm;
+      val n       = find_node n_dict lbl_tm;
       val n_type  = #CFGN_type n;
-      val _       = if n_type = CFGNT_Call orelse n_type = CFGNT_Jump then () else
+      val _       = if cfg_nodetype_is_call n_type orelse n_type = CFGNT_Jump then () else
                       raise ERR "get_next_exec_sts" ("unexpected 2 at " ^ (term_to_string lbl_tm));
 
-      val n_goto  = #CFGN_goto n;
-      val lbl_tms = (valOf o cfg_targets_to_lbl_tms) n_goto
-            handle Option => raise ERR "get_next_exec_sts" ("error for " ^ (term_to_string lbl_tm));
+      val n_targets  = #CFGN_targets n;
+      val lbl_tms = n_targets
     in
       List.map (fn t => SYST_update_pc t syst) lbl_tms
     end);
@@ -446,7 +448,7 @@ val (bv_comp,exp) = hd env;
 val stop_lbl_tms = (List.map #CFGN_lbl_tm o
                     List.filter (fn n => node_to_rel_symbol n = name andalso
                                          #CFGN_type n = CFGNT_Return)
-                   ) ns;
+                   ) (List.map snd (Redblackmap.listItems n_dict));
 
 (*
 (* stop at first branch *)

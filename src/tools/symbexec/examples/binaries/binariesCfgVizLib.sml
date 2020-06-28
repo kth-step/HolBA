@@ -8,77 +8,10 @@ open binariesCfgLib;
 
 open graphVizLib;
 
-(*
-val i = 0x10000;
-val n = hd (#CFGG_nodes ns_c);
-val t = ``BL_Address (Imm32 990w)``;
- *)
-fun to_escaped_string s =
-  let
-    fun add_escape acc []      = acc
-      | add_escape acc (c::cs) =
-          let val c_ = if c = #"\"" then [c, #"\\"] else [c] in
-            add_escape (c_@acc) cs
-          end;
-  in
-    (implode o List.rev o (add_escape []) o explode) s
-  end;
-
-fun gen_graph_for_edges_proc idx (CFGT_DIR   t, (gn, ges, i)) =
-      (gn, (idx, (Arbnum.toInt o dest_lbl_tm) t)::ges, i)
-  | gen_graph_for_edges_proc idx (CFGT_INDIR t, (gn, ges, i)) =
-      ((i, node_shape_circle, [("indir", "???")])::gn, (idx, i)::ges, i+1);
-
-fun gen_graph_for_nodes_proc (n:cfg_node, (gns, ges, i)) =
-  let
-    val idx     = (Arbnum.toInt o dest_lbl_tm o #CFGN_lbl_tm) n;
-    val shape   = if #CFGN_type n = CFGNT_Call orelse #CFGN_type n = CFGNT_Return
-                  then node_shape_doublecircle else node_shape_default;
-    val content = [("id", "0x" ^ (Arbnum.toHexString o dest_lbl_tm o #CFGN_lbl_tm) n)];
-    val node    = (idx, shape, content);
-
-    val (gns_, ged_, i_) = List.foldr (gen_graph_for_edges_proc idx) ([], [], i) (#CFGN_goto n);
-
-    val new_gns = gns_@(node::gns);
-    val new_ges = ged_@(ges);
-    val new_i   = i_;
-  in
-    (new_gns, new_ges, new_i)
-  end;
-
-(* directory creation helper *)
-  fun makedir makepath path =
-    let
-      val r = OS.Process.system ("mkdir " ^ (if makepath then "-p " else "") ^ path);
-      val _ = if not (OS.Process.isSuccess r) then
-                raise ERR "makedir" ("couldn't create the following directory: " ^ path)
-              else
-                ();
-    in
-      ()
-    end;
-
-fun get_tempfile prefix =
-  let
-    val tempdir = "tempdir";
-    val _ = makedir true tempdir;
-    val date = Date.fromTimeLocal (Time.now ());
-    val datestr = Date.fmt "%Y-%m-%d_%H-%M-%S" date;
-  in
-    tempdir ^ "/" ^ prefix ^ datestr
-  end;
+open bir_cfg_vizLib;
+open bir_fileLib;
 
 in (* local *)
-
-fun display_graph_cfg_ns ns =
-  let
-    val (nodes, edges, _) = List.foldr gen_graph_for_nodes_proc ([], [], 0x10000) ns;
-
-    val file = get_tempfile "cfg";
-    val dot_str = gen_graph (nodes, edges);
-    val _ = writeToFile dot_str (file ^ ".dot");
-    val _ = convertAndView file;
-  in () end;
 
 fun display_call_graph ci symbs_sec_text =
   let
@@ -98,7 +31,7 @@ fun display_call_graph ci symbs_sec_text =
     val edges_unique = List.foldr (fn (x,l) => if List.exists (fn y => x=y) l then l else (x::l)) [] edges;
     val edges = edges_unique;
 
-    val file = get_tempfile "cfg_";
+    val file = get_tempfile "cfg_" "nil";
     val dot_str = gen_graph (nodes, edges);
     val _ = writeToFile dot_str (file ^ ".dot");
     val _ = convertAndView file;
@@ -107,19 +40,20 @@ fun display_call_graph ci symbs_sec_text =
 fun show_call_graph () =
   display_call_graph ci symbs_sec_text;
 
-fun show_cfg_fun do_walk ns name =
+fun show_cfg_fun do_walk bl_dict n_dict name =
   let
-    val ns_1 = if do_walk then
-                 (#CFGG_nodes o (build_fun_cfg ns)) name
-               else
-                 List.filter ((fn s => s = name) o node_to_rel_symbol) ns;
+    val lbl_tms = if do_walk then
+                    (#CFGG_nodes o (build_fun_cfg bl_dict n_dict)) name
+                  else
+                     List.filter ((fn s => s = name) o lbl_tm_to_rel_symbol) (List.map fst (Redblackmap.listItems n_dict));
+    val ns = List.map (find_node n_dict) lbl_tms;
   in
-    display_graph_cfg_ns ns_1
+    cfg_display_graph_ns ns
   end;
 
-fun print_fun_pathstats with_histogram ns name =
+fun print_fun_pathstats with_histogram n_dict name =
   let
-    val (n_paths, sum_calls) = count_paths_to_ret false ns [] (mem_symbol_to_prog_lbl name);
+    val (n_paths, sum_calls) = count_paths_to_ret false n_dict [] (mem_symbol_to_prog_lbl name);
     val n_calls = length sum_calls;
     val histo_calls = to_histogram sum_calls;
 
@@ -131,16 +65,19 @@ fun print_fun_pathstats with_histogram ns name =
     ()
   end;
 
-fun print_dead_code ns name =
+fun print_dead_code bl_dict n_dict name =
   let
-    val ns_c  = build_fun_cfg ns name;
-    val ns_f = List.filter ((fn s => s = name) o node_to_rel_symbol) ns;
+    val g  = build_fun_cfg bl_dict n_dict name;
+    val lbls_f = List.filter ((fn s => s = name) o lbl_tm_to_rel_symbol)
+                           (List.map fst (Redblackmap.listItems n_dict));
 
     val _ = print ("---------------------\n");
-    val dead_code = (List.filter (fn x => not (List.exists (fn y => x = y) (#CFGG_nodes ns_c))) ns_f);
+    val dead_code = (List.filter (fn x => not (List.exists (fn y => x = y) (#CFGG_nodes g))) lbls_f);
 
     val _ = print ("dead code (" ^ name ^ "):\n^^^^^^^^^^^^^^^^^^\n");
-    val _ = List.map (fn n => (print_term (#CFGN_lbl_tm n); print ((#CFGN_descr n) ^ "\n"))) dead_code;
+    val _ = List.map (fn n => (print_term (#CFGN_lbl_tm n);
+                               print ((valOf (#CFGN_hc_descr n) handle Option => "NONE") ^ "\n")))
+                     (List.map (find_node n_dict) dead_code);
   in
     ()
   end;

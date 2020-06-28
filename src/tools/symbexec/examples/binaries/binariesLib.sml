@@ -10,6 +10,7 @@ open gcc_supportLib;
 
 open bir_programSyntax;
 open bir_program_labelsSyntax;
+open bir_valuesSyntax;
 open bir_immSyntax;
 open bir_exec_typingLib;
 open bir_envSyntax;
@@ -18,19 +19,70 @@ open listSyntax;
 open wordsSyntax;
 open stringSyntax;
 
+
+(* helpers *)
+  fun update_dict_gen err_src_str update_fun lbl_tms_in n_dict_in =
+      let
+	fun update_n_dict (lbl_tm, n_dict) =
+	  let
+	    val n =
+		    case lookup_block_dict n_dict lbl_tm of
+		       SOME x => x
+		     | NONE => raise ERR ("cfg_update_nodes_gen::" ^ err_src_str)
+                                         ("cannot find label " ^ (term_to_string lbl_tm));
+
+	    val n_o = update_fun n;
+	    val n_dict' = if isSome n_o then
+				Redblackmap.update (n_dict, lbl_tm, K (valOf n_o))
+			      else
+				n_dict;
+	  in
+	    n_dict'
+	  end;
+      in
+	List.foldr update_n_dict n_dict_in lbl_tms_in
+      end;
+
+
 (* ===================================== program behavior ======================================= *)
 val (_, _, _, prog_tm) =
   (dest_bir_is_lifted_prog o concl)
     (DB.fetch "binaries" thm_name);
 
-val bl_dict    = gen_block_dict prog_tm;
+val bl_dict_0    = gen_block_dict prog_tm;
+val prog_lbl_tms = get_block_dict_keys bl_dict_0;
+
+(* TODO: why is this step necessary? what's wrong in the lifter? *)
+fun fix_jumps bl =
+  let
+    val (lbl_tm, bs, bes) = dest_bir_block bl;
+  in
+    if not (is_BStmt_Jmp bes) then NONE else
+    let val ble = dest_BStmt_Jmp bes; in
+      if is_BLE_Label ble then NONE else
+      let
+        val ble_exp_tm = dest_BLE_Exp ble;
+        val ble_exp_eval_tm = (snd o dest_eq o concl o EVAL) (``bir_eval_exp ^ble_exp_tm (BEnv (K NONE))``);
+      in
+        if is_none ble_exp_eval_tm then NONE else
+        let
+          val imm = ((dest_BVal_Imm o dest_some) ble_exp_eval_tm);
+          val bes' = (mk_BStmt_Jmp o mk_BLE_Label o mk_BL_Address) imm;
+        in
+          SOME (mk_bir_block (lbl_tm, bs, bes'))
+        end
+      end
+    end
+  end;
+
+
+val bl_dict    = update_dict_gen "fix_jumps" (fix_jumps) prog_lbl_tms bl_dict_0;
 
 (* this is redundant *)
 fun prog_get_block bl_dict lbl_tm = lookup_block_dict bl_dict lbl_tm;
 fun prog_get_block_byAddr bl_dict addr = lookup_block_dict_byAddr32 bl_dict addr;
 (* --- *)
 
-val prog_lbl_tms = get_block_dict_keys bl_dict;
 
 val prog_vars = gen_vars_of_prog prog_tm;
 
