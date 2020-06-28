@@ -15,7 +15,9 @@ struct
 
 (*
 val file_name = "examples/wolfssl-aarch64.da"
-val file_name = "../symbexec/examples/binaries/balrob.elf.da.plus"
+val file_name = "../symbexec/examples/binaries/balrob/balrob.elf.da"
+val file_name = "../symbexec/examples/binaries/balrob/balrob.elf.da.plus"
+val file_name = "../cfg/examples/toy/m0-toy.da"
 
 read_disassembly_file_regions file_name
 
@@ -126,6 +128,10 @@ fun parse_dataline skipentries cl =
          DAE_hex  = hc}
     end end;
 
+fun is_hex_char x = (#"0" <= x andalso x <= #"9") orelse
+                    (#"a" <= x andalso x <= #"f") orelse
+                    (#"A" <= x andalso x <= #"F");
+
 fun parse_disassembly_file_line skipentries l =
   let val cl = butlast (String.explode l) in
   if (List.null cl) then DASL_whitespace else
@@ -134,9 +140,19 @@ fun parse_disassembly_file_line skipentries l =
   if hd cl = #" " then
     parse_dataline skipentries cl
   else
-  if (fn x => (#"0" <= x andalso x <= #"9") orelse (#"a" <= x andalso x <= #"f") orelse (#"A" <= x andalso x <= #"F")) (hd cl) then let
+  if not (List.exists (fn x => x = #":") cl) then
+    DASL_sep
+  else
+  let
     val (cl1, cl2) = list_split_pred #":" cl;
   in
+  if let
+       val clx = if List.exists (fn x => x = #" ") cl1 then (fst o list_split_pred #" ") cl1 else cl1;
+     in
+       not (List.all is_hex_char clx)
+     end then
+    DASL_sep
+  else
   if not (List.exists (fn x => x = #"<") cl1)
     then
       parse_dataline skipentries cl
@@ -147,7 +163,6 @@ fun parse_disassembly_file_line skipentries l =
   in
     (DASL_lbl (lbl, addr))
   end end
-  else DASL_sep
 end handle HOL_ERR _ => raise (ERR "parse_disassembly_file_line" ("can't parse line '"^ l ^"'"))
 
 
