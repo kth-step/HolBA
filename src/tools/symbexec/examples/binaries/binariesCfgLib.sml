@@ -25,6 +25,14 @@ fun is_Assign_LR tm =
 
 in (* local *)
 
+(* continuation of bir_cfgLib passes: *)
+  (* pass 3: check all jump blocks, which have no targets yet,
+             determine Calls based on heuristic and static fixes (semi-automatic) *)
+  (* pass 4: resolve indirect jumps (jumps with not yet resolved targets) using static fixes *)
+  (* pass 5: check all remaining jump blocks without targets,
+             try to determine Returns based on heuristic and static fixes (semi-automatic) *)
+
+
 (*
 =================================================================================================
 =================================================================================================

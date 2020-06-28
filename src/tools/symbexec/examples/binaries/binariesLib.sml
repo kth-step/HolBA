@@ -20,7 +20,7 @@ open wordsSyntax;
 open stringSyntax;
 
 
-(* helpers *)
+(* ad hoc helpers *)
   fun update_dict_gen err_src_str update_fun lbl_tms_in n_dict_in =
       let
 	fun update_n_dict (lbl_tm, n_dict) =
@@ -43,16 +43,6 @@ open stringSyntax;
 	List.foldr update_n_dict n_dict_in lbl_tms_in
       end;
 
-
-(* ===================================== program behavior ======================================= *)
-val (_, _, _, prog_tm) =
-  (dest_bir_is_lifted_prog o concl)
-    (DB.fetch "binaries" thm_name);
-
-val bl_dict_0    = gen_block_dict prog_tm;
-val prog_lbl_tms = get_block_dict_keys bl_dict_0;
-
-(* TODO: why is this step necessary? what's wrong in the lifter? *)
 fun fix_jumps bl =
   let
     val (lbl_tm, bs, bes) = dest_bir_block bl;
@@ -76,6 +66,15 @@ fun fix_jumps bl =
   end;
 
 
+(* ===================================== program behavior ======================================= *)
+val (_, _, _, prog_tm) =
+  (dest_bir_is_lifted_prog o concl)
+    (DB.fetch "binaries" thm_name);
+
+val bl_dict_0    = gen_block_dict prog_tm;
+val prog_lbl_tms = get_block_dict_keys bl_dict_0;
+
+(* TODO: why is this step necessary? what's wrong in the lifter? *)
 val bl_dict    = update_dict_gen "fix_jumps" (fix_jumps) prog_lbl_tms bl_dict_0;
 
 (* this is redundant *)
