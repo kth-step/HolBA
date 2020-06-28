@@ -25,12 +25,12 @@ local
     let
       val idx_num = (dest_lbl_tm o #CFGN_lbl_tm) n;
       val idx     = Arbnum.toInt idx_num;
-      val shape   = if #CFGN_type n = CFGNT_Call orelse #CFGN_type n = CFGNT_Return
+      val shape   = if cfg_nodetype_is_call (#CFGN_type n) orelse #CFGN_type n = CFGNT_Return
 		    then node_shape_doublecircle else node_shape_default;
       val content = [("id", "0x" ^ (Arbnum.toHexString idx_num))];
       val node    = (idx, shape, content);
 
-      val targets = #CFGN_goto n;
+      val targets = #CFGN_targets n;
       val (gns_, ged_, i_) =
         if targets <> [] then
           List.foldr (gen_graph_for_edges_proc idx) ([], [], i) (targets)

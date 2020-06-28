@@ -23,7 +23,7 @@ val entries = [mk_key_from_address 32 (Arbnum.fromHexString "8104")];
 val _ = print "Building cfg.\n";
 val g1 = cfg_create "toy" entries n_dict bl_dict;
 val _ = print "Updating cfg.\n";
-val n_dict = cfg_update_nodes_basic bl_dict lbl_tms n_dict;
+val n_dict = cfg_update_nodes_basic lbl_tms n_dict;
 val g2 = cfg_update g1 n_dict;
 
 (* execute the test cases *)
@@ -44,13 +44,17 @@ val expected_basic = mk_key_from_address 32 (Arbnum.fromHexString "8144");
 val _ = if CFGNT_Basic = #CFGN_type (lookup_block_dict_value (#CFGG_node_dict g2) expected_basic "" "oh no") then () else
         raise Fail ("Unexpected node type. Should be Basic.");
 
+val expected_no_targets = mk_key_from_address 32 (Arbnum.fromHexString "817a");
+val _ = if [] = #CFGN_targets (lookup_block_dict_value (#CFGG_node_dict g2) expected_no_targets "" "oh no") then () else
+        raise Fail ("Unexpected node targets. Should be no targets.");
+
 
 (* traversal example, single entry recursion, stop at first revisit or exit *)
 fun traverse_graph (g:cfg_graph) entry visited acc =
   let
     val n = lookup_block_dict_value (#CFGG_node_dict g) entry "traverse_graph" "n";
 
-    val targets = #CFGN_goto n;
+    val targets = #CFGN_targets n;
     val descr_o = #CFGN_hc_descr n;
     val n_type  = #CFGN_type n;
 
