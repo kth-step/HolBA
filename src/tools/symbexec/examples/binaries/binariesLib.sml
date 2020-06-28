@@ -5,9 +5,11 @@ local
 open binariesTheory;
 open binariesDefsLib;
 
+open bir_block_collectionLib;
 open gcc_supportLib;
 
 open bir_programSyntax;
+open bir_program_labelsSyntax;
 open bir_immSyntax;
 open bir_exec_typingLib;
 open bir_envSyntax;
@@ -16,69 +18,19 @@ open listSyntax;
 open wordsSyntax;
 open stringSyntax;
 
-open Redblackmap;
-
-(* ====================== put in the right place =================================== *)
-
-local
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-open bir_immTheory bir_valuesTheory bir_programTheory;
-
-
-val ERR = mk_HOL_ERR "bir_program_labelsSyntax"
-val wrap_exn = Feedback.wrap_exn "bir_program_labelsSyntax"
-
-fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_program_labels"
-
-fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0
-   (fn tm1 => fn e => fn tm2 =>
-       if Term.same_const tm1 tm2 then () else raise e)
-   (fn tm => fn () => tm) s in (tm, is_f) end;
-
-val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
-val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
-val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
-in
-val (BL_Address_HC_tm,  mk_BL_Address_HC, dest_BL_Address_HC, is_BL_Address_HC)  = syntax_fns2 "BL_Address_HC";
-end
-
-(* ================================================================================= *)
-
-
 (* ===================================== program behavior ======================================= *)
-val (_, mem_wi_prog_tm, mem_tm, prog_tm) =
+val (_, _, _, prog_tm) =
   (dest_bir_is_lifted_prog o concl)
     (DB.fetch "binaries" thm_name);
 
+val bl_dict    = gen_block_dict prog_tm;
 
-val prog_bls = (fst o dest_list o dest_BirProgram) prog_tm;
+(* this is redundant *)
+fun prog_get_block bl_dict lbl_tm = lookup_block_dict bl_dict lbl_tm;
+fun prog_get_block_byAddr bl_dict addr = lookup_block_dict_byAddr32 bl_dict addr;
+(* --- *)
 
-val prog_blocks_dict =
-  let
-    val lbl_block_pairs =
-      List.foldr (fn (bl, l) => (
-        let
-          val (lbl, _, _) = dest_bir_block bl;
-          val lbl_tm      = (snd o dest_eq o concl o EVAL) lbl;
-        in
-          (lbl_tm, bl)
-        end
-      )::l) [] prog_bls;
-
-    val _ = print ("found " ^ (Int.toString (length prog_bls))  ^ " blocks in lifted program\n");
-  in
-    Redblackmap.insertList (Redblackmap.mkDict Term.compare, lbl_block_pairs)
-  end;
-
-fun prog_get_block bl_dict lbl_tm =
-  SOME (Redblackmap.find (bl_dict, lbl_tm))
-  handle NotFound => NONE;
-
-fun prog_get_block_byAddr bl_dict addr =
-    prog_get_block bl_dict ((mk_BL_Address o mk_Imm32 o mk_word) (addr, Arbnum.fromInt 32));
-
-val prog_lbl_tms =
-  List.map ((snd o dest_eq o concl o EVAL) o (fn (a, _, _) => a) o dest_bir_block) prog_bls;
+val prog_lbl_tms = get_block_dict_keys bl_dict;
 
 val prog_vars = gen_vars_of_prog prog_tm;
 
@@ -169,10 +121,10 @@ prog_get_block_byAddr_ addr
 *)
 
 fun prog_get_block_ lbl_tm =
-    prog_get_block  prog_blocks_dict lbl_tm;
+    prog_get_block  bl_dict lbl_tm;
 
 fun prog_get_block_byAddr_ addr =
-    prog_get_block_byAddr  prog_blocks_dict addr;
+    prog_get_block_byAddr  bl_dict addr;
 
 fun mk_lbl_tm addr =
   (mk_BL_Address o mk_Imm32 o mk_word) (addr, Arbnum.fromInt 32);
@@ -224,14 +176,13 @@ fun mem_symbol_to_prog_lbl name =
 val prog_fun_entry_lbl_tms = List.foldr (fn (symb, l) =>
       (mem_symbol_to_prog_lbl symb)::l handle HOL_ERR _ => l
 ) [] symbs_sec_text;
+val bl_dict_ = bl_dict;
 val prog_lbl_tms_ = prog_lbl_tms;
 
 fun prog_lbl_to_mem_rel_symbol lbl_tm =
   (valOf o mem_find_rel_symbol_by_addr_ o dest_lbl_tm) lbl_tm
   handle Option => raise ERR "prog_lbl_to_mem_symbol" ("cannot find label: " ^ (term_to_string lbl_tm));
 
-
-val (BL_Address_HC_tm,  mk_BL_Address_HC, dest_BL_Address_HC, is_BL_Address_HC)  = (BL_Address_HC_tm,  mk_BL_Address_HC, dest_BL_Address_HC, is_BL_Address_HC);
 
 end (* local *)
 end (* struct *)
