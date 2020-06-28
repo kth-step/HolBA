@@ -12,9 +12,6 @@ in
              otherwise empty list *)
   (* pass 2: look at Jump nodes with one direct target and update
              if they appear to be Basic (determinded from disassembly metadata) *)
-  (* pass 3: check all jump blocks, which have no targets yet,
-             determine Call and Return based on heuristic and static fixes (semi-automatic) *)
-  (* pass 4: resolve remaining jumps/condjumps with no targets using static fixes *)
   datatype cfg_node_type =
       (* Core BIR types *)
       CFGNT_Jump
@@ -236,28 +233,29 @@ in
 
   end
 
-  fun cfg_update_nodes_basic lbl_tms n_dict_in =
+  fun cfg_update_node_basic (n:cfg_node) =
     let
-      fun update_fun n =
-        let
-          val succ_lbl_tm_o = cfg_node_to_succ_lbl_tm n;
-          val targets       = #CFGN_targets n;
+      val succ_lbl_tm_o = cfg_node_to_succ_lbl_tm n;
+      val targets       = #CFGN_targets n;
 
-          val update_this = is_some succ_lbl_tm_o andalso
-                            targets = [valOf succ_lbl_tm_o];
+      val update_this = is_some succ_lbl_tm_o andalso
+			targets = [valOf succ_lbl_tm_o];
 
-          val n' =
-              { CFGN_lbl_tm   = #CFGN_lbl_tm n,
-		CFGN_hc_descr = #CFGN_hc_descr n,
-		CFGN_targets  = #CFGN_targets n,
-		CFGN_type     = CFGNT_Basic
-	      } : cfg_node;
-        in
-          if update_this then SOME n' else NONE
-        end
+      val n' =
+	  { CFGN_lbl_tm   = #CFGN_lbl_tm n,
+	    CFGN_hc_descr = #CFGN_hc_descr n,
+	    CFGN_targets  = #CFGN_targets n,
+	    CFGN_type     = CFGNT_Basic
+	  } : cfg_node;
     in
-      cfg_update_nodes_gen "cfg_update_nodes_basic" update_fun lbl_tms n_dict_in
-    end;
+      if update_this then SOME n' else NONE
+    end
+
+
+  fun cfg_update_nodes_basic lbl_tms n_dict_in =
+      cfg_update_nodes_gen "cfg_update_node_basic"
+                           cfg_update_node_basic
+                           lbl_tms n_dict_in;
 
 end (* local *)
 end (* struct *)
