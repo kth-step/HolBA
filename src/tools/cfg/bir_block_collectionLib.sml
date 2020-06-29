@@ -127,6 +127,11 @@ in
     SOME (Redblackmap.find (bl_dict, lbl_tm))
     handle NotFound => NONE;
 
+  fun lookup_block_dict_value bl_dict lbl_tm error_src error_msg =
+        case lookup_block_dict bl_dict lbl_tm of
+           SOME x => x
+         | NONE => raise ERR ("lookup_block_dict_value::" ^ error_src) ("value not found (" ^ (term_to_string lbl_tm) ^ ") :: " ^ error_msg);
+
   fun mk_key_from_address i addr = (mk_BL_Address o mk_Imm32 o mk_word) (addr, Arbnum.fromInt i);
 
   fun lookup_block_dict_byAddr i bl_dict addr =

@@ -12,9 +12,6 @@ in
              otherwise empty list *)
   (* pass 2: look at Jump nodes with one direct target and update
              if they appear to be Basic (determinded from disassembly metadata) *)
-  (* pass 3: check all jump blocks, which have no targets yet,
-             determine Call and Return based on heuristic and static fixes (semi-automatic) *)
-  (* pass 4: resolve remaining jumps/condjumps with no targets using static fixes *)
   datatype cfg_node_type =
       (* Core BIR types *)
       CFGNT_Jump
@@ -22,7 +19,8 @@ in
     | CFGNT_Halt
       (* Special purpose types: used for visualization or higher level abstraction *)
     | CFGNT_Basic
-    | CFGNT_Call
+    | CFGNT_Call of (term list) (* direct labels for continuation after the call,
+                                   used for resolution of return targets *)
     | CFGNT_Return;
 
   (* cfg nodes correspond to BIR blocks, lbl_tm is normalized label of block and represents its id *)
@@ -32,7 +30,7 @@ in
     (* meta information from disassembled and lifted binary *)
     CFGN_hc_descr : string option,
     (* flow information. statically exported from BIR blocks, or fixed semi-automatically *)
-    CFGN_goto     : term list,
+    CFGN_targets  : term list,
     (* type is initialized from BIR blocks, but may be updated by later passes *)
     CFGN_type     : cfg_node_type
   };
@@ -48,6 +46,11 @@ in
     CFGG_node_dict  : (term, cfg_node) Redblackmap.dict,
     CFGG_block_dict : (term, term)     Redblackmap.dict
   };
+
+  fun cfg_nodetype_is_call nt =
+    case nt of
+       CFGNT_Call _ => true
+     | _            => false;
 
 
   (* pass 1 - extract all directly available information from the blocks *)
@@ -96,7 +99,7 @@ in
 
       val n = { CFGN_lbl_tm   = lbl_tm,
 		CFGN_hc_descr = descr,
-		CFGN_goto     = cfg_t_l,
+		CFGN_targets  = cfg_t_l,
 		CFGN_type     = cfgn_type
 	      } : cfg_node;
 
@@ -123,7 +126,7 @@ in
           val n = case lookup_block_dict n_dict lbl_tm of
                      SOME x => x
                    | NONE => raise ERR "cfg_collect_nodes" ("cannot find label " ^ (term_to_string lbl_tm));
-          val targets = #CFGN_goto (n:cfg_node);
+          val targets = #CFGN_targets (n:cfg_node);
 
           val exclude_list = (lbl_tm::acc_ns)@acc_ex@todo;
           val new_todo = List.filter (fn x => List.all (fn y => x <> y) exclude_list) targets;
@@ -132,7 +135,7 @@ in
             if targets <> [] then
               (lbl_tm::acc_ns, acc_ex)
             else
-              (acc_ns, lbl_tm::acc_ex)
+              (lbl_tm::acc_ns, lbl_tm::acc_ex)
         in
           cfg_collect_nodes n_dict (new_todo@todo) (acc_ns') (acc_ex')
         end;
@@ -158,6 +161,30 @@ in
     in
       cfg_create name entries n_dict bl_dict
     end;
+
+  (* subsequent passes - with generic update function *)
+  (* =================================== *)
+  fun cfg_update_nodes_gen err_src_str update_fun lbl_tms_in n_dict_in =
+      let
+	fun update_n_dict (lbl_tm, n_dict) =
+	  let
+	    val n:cfg_node =
+		    case lookup_block_dict n_dict lbl_tm of
+		       SOME x => x
+		     | NONE => raise ERR ("cfg_update_nodes_gen::" ^ err_src_str)
+                                         ("cannot find label " ^ (term_to_string lbl_tm));
+
+	    val n_o = update_fun n;
+	    val n_dict' = if isSome n_o then
+				Redblackmap.update (n_dict, lbl_tm, K (valOf n_o))
+			      else
+				n_dict;
+	  in
+	    n_dict'
+	  end;
+      in
+	List.foldr update_n_dict n_dict_in lbl_tms_in
+      end;
 
 
   (* pass 2 - determine basic blocks (i.e., straight to next "instruction") *)
@@ -204,37 +231,31 @@ in
        end
       end;
 
-end
+  end
 
-  (* cfg update functions take: bl_dict lbl_tms n_dict *)
-  fun cfg_update_nodes_basic bl_dict lbl_tms n_dict =
+  fun cfg_update_node_basic (n:cfg_node) =
     let
-      fun update_n_dict (lbl_tm, n_dict) =
-        let
-          val n = case lookup_block_dict n_dict lbl_tm of
-                     SOME x => x
-                   | NONE => raise ERR "cfg_update_nodes_basic" ("cannot find label " ^ (term_to_string lbl_tm));
+      val succ_lbl_tm_o = cfg_node_to_succ_lbl_tm n;
+      val targets       = #CFGN_targets n;
 
-          val succ_lbl_tm_o = cfg_node_to_succ_lbl_tm n;
-          val targets       = #CFGN_goto n;
+      val update_this = is_some succ_lbl_tm_o andalso
+			targets = [valOf succ_lbl_tm_o];
 
-          val update_this = is_some succ_lbl_tm_o andalso
-                            targets = [valOf succ_lbl_tm_o];
-
-          val n' = if not update_this then n else
-              { CFGN_lbl_tm   = #CFGN_lbl_tm n,
-		CFGN_hc_descr = #CFGN_hc_descr n,
-		CFGN_goto     = #CFGN_goto n,
-		CFGN_type     = CFGNT_Basic
-	      } : cfg_node;
-          val n_dict' = if not update_this then n_dict else
-                        Redblackmap.update (n_dict, lbl_tm, K n');
-        in
-          n_dict'
-        end;
+      val n' =
+	  { CFGN_lbl_tm   = #CFGN_lbl_tm n,
+	    CFGN_hc_descr = #CFGN_hc_descr n,
+	    CFGN_targets  = #CFGN_targets n,
+	    CFGN_type     = CFGNT_Basic
+	  } : cfg_node;
     in
-      List.foldr update_n_dict n_dict lbl_tms
-    end;
+      if update_this then SOME n' else NONE
+    end
+
+
+  fun cfg_update_nodes_basic lbl_tms n_dict_in =
+      cfg_update_nodes_gen "cfg_update_node_basic"
+                           cfg_update_node_basic
+                           lbl_tms n_dict_in;
 
 end (* local *)
 end (* struct *)
