@@ -10,6 +10,8 @@ open bir_cfg_vizLib;
 
 open bir_smtLib;
 
+open bir_block_collectionLib;
+
 val entry_label = "motor_prep_input";
 
 (*
@@ -379,11 +381,11 @@ fun simplify_state syst =
 (*
 val syst = init_state prog_vars;
 *)
-fun symb_exec_block syst =
+fun symb_exec_block bl_dict syst =
   let
     val lbl_tm = SYST_get_pc syst;
 
-    val bl = (valOf o prog_get_block_) lbl_tm;
+    val bl = (valOf o (lookup_block_dict bl_dict)) lbl_tm;
     val (_, stmts, est) = dest_bir_block bl;
     val s_tms = (fst o listSyntax.dest_list) stmts;
 
@@ -396,14 +398,14 @@ fun symb_exec_block syst =
   end;
 
 
-fun symb_exec_to_stop []                  _            acc = acc
-  | symb_exec_to_stop (exec_st::exec_sts) stop_lbl_tms acc =
+fun symb_exec_to_stop _       []                  _            acc = acc
+  | symb_exec_to_stop bl_dict (exec_st::exec_sts) stop_lbl_tms acc =
       let
-        val sts = symb_exec_block exec_st;
+        val sts = symb_exec_block bl_dict exec_st;
         val (new_acc, new_exec_sts) =
               List.partition (fn (syst) => List.exists (fn x => (SYST_get_pc syst) = x) stop_lbl_tms) sts;
       in
-        symb_exec_to_stop (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
+        symb_exec_to_stop bl_dict (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
       end;
 
 
@@ -467,14 +469,14 @@ val stop_lbl_tms = [``BL_Address (Imm32 0xb24w)``, ``BL_Address (Imm32 0xb2aw)``
 val syst  = init_state lbl_tm prog_vars;
 
 (*
-al syst_new = symb_exec_block syst;
+al syst_new = symb_exec_block bl_dict_ syst;
 *)
 
 (* TODO: speed up: tidyup_state
            later: need a lookup map for "ns" in get_next_exec_sts (find_node) *)
 (* 5s to branch with tidy up
    8s whole function without tidy up *)
-val systs = symb_exec_to_stop [syst] stop_lbl_tms [];
+val systs = symb_exec_to_stop bl_dict_ [syst] stop_lbl_tms [];
 (*
 length systs
 
