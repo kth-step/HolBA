@@ -1,0 +1,16 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   = 
+
+
+# configuration
+# ----------------------------------
+HOLHEAP        = balrob/HolBATools_SymbExec_ExampleBinariesBalrob-heap
+NEWHOLHEAP     = HolBATools_SymbExec_ExampleBinaries-heap
+
+HEAPINC_EXTRA  = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../../../Holmakefile.inc
