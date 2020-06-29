@@ -5,24 +5,12 @@ local
 
 open binariesDefsLib;
 
+open bir_auxiliaryLib;
 
-  fun list_split_pred_aux acc p [] = fail ()
-    | list_split_pred_aux acc p (x::xs) =
-      (if x = p then (List.rev acc, xs)
-       else list_split_pred_aux (x::acc) p xs)
-
-  fun list_split_pred p = list_split_pred_aux [] p
-
-  fun read_file_lines file_name = let
-    val instream = TextIO.openIn file_name
-    fun read_it acc =
-      case TextIO.inputLine instream of
-          NONE => List.rev acc
-        | SOME s => read_it (s::acc);
-    val input = read_it [] before TextIO.closeIn instream
-  in input end;
+open bir_fileLib;
 
 
+(* helpers *)
               fun find_two _   _     _ []     = NONE
 		| find_two acc true  c (x::l) = if (c = x) then SOME (acc-1)
                                                            else find_two (acc+1) false c l
