@@ -8,11 +8,10 @@ open binariesDefsLib;
 open bir_block_collectionLib;
 
 open bir_programSyntax;
-open bir_program_labelsSyntax;
 open bir_valuesSyntax;
 open bir_immSyntax;
+
 open bir_exec_typingLib;
-open bir_envSyntax;
 
 open listSyntax;
 open wordsSyntax;
