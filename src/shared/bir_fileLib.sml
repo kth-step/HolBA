@@ -40,8 +40,7 @@ in
   fun write_to_file filename str =
     let
       val file = TextIO.openOut (filename);
-      val _    = TextIO.output (file, str);
-      val _    = TextIO.closeOut file;
+      val _    = TextIO.output (file, str) before TextIO.closeOut file;
     in
       ()
     end;
