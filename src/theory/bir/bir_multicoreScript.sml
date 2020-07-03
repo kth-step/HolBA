@@ -190,3 +190,5 @@ compute_next_par_steps (n:num) (cores:(num # sys_st) list, m) =
       then [(cores,m)]
       else LIST_BIND (compute_next_par (cores,m)) (\s2. compute_next_par_steps (n-1) s2)
 `;
+
+val _ = export_theory ();
