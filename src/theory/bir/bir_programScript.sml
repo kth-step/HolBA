@@ -1,3 +1,4 @@
+
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
@@ -78,6 +79,15 @@ val _ = Datatype `bir_state_t = <|
   bst_inflight : (string bir_inflight_stmt_t) list;
   bst_counter  : num
 |>`;
+
+val remove_inflight_def = Define`
+remove_inflight t l =
+    FILTER (\bi . case bi of BirInflight t0 _ => (t <> t0)) l
+`;
+
+val fresh_def = Define`
+fresh s = STRCAT "t" (n2s s.bst_counter)
+`;
 
 val bir_state_t_component_equality = DB.fetch "-" "bir_state_t_component_equality";
 val bir_programcounter_t_component_equality = DB.fetch "-" "bir_programcounter_t_component_equality";
@@ -351,241 +361,6 @@ val bir_exec_step_def = Define `bir_exec_step p state =
 `;
 
 val bir_exec_step_state_def = Define `bir_exec_step_state p state = SND (bir_exec_step p state)`;
-
-(* ------------------------------------------------------------------------- *)
-(*  Nondeterministic step relation with pipelining                           *)
-(* ------------------------------------------------------------------------- *)
-
-val next_stmt_def = Define`
-next_stmt s = case s.bst_inflight of
-        [] => NONE
-      | ((BirInflight t0 stm)::stms) => SOME (t0,stm)
-`;
-
-val remove_inflight_def = Define`
-remove_inflight t l =
-  FILTER (\bi . case bi of BirInflight t0 _ => (t <> t0)) l
-`;
-
-val fresh_def = Define`
-fresh s = STRCAT "t" (n2s s.bst_counter)
-`;
-
-val (bir_pstep_rules, bir_pstep_ind, bir_pstep_cases) = Hol_reln `
-(!p s1 s2 stm oo. ((next_stmt s1 = SOME (t0,stm))
-                   /\ (bir_exec_stmt p stm s1 = (oo,s2)))
-    ==> pstep p s1 (s2 with bst_inflight updated_by (remove_inflight t0)))
-
-/\ (!p s1 stm istm.  ((bir_get_current_statement p s1.bst_pc = SOME stm)
-                             /\ (istm = BirInflight (fresh s1) stm))
-     ==> pstep p s1 (s1 with <| bst_inflight updated_by (APPEND [istm]);
-                     bst_pc updated_by bir_pc_next;
-                     bst_counter updated_by (\n:num.n+1) |>)
-   )
-`;
-
-val bir_next_fetch_def = Define`
-    bir_next_fetch p s =
-       case bir_get_current_statement p s.bst_pc of
-           NONE => []
-           | SOME stm =>
-             [ s with <| bst_inflight updated_by (APPEND [BirInflight (fresh s) stm]);
-               bst_pc updated_by bir_pc_next; bst_counter updated_by (\n:num.n+1) |> ]
-`;
-
-val bir_next_exec_def = Define`
-    bir_next_exec p s =
-       case next_stmt s of
-           NONE => []
-         | SOME (t0,stm) => [ SND (bir_exec_stmt p stm s) with
-                              <| bst_inflight updated_by (remove_inflight t0); |> ]
-`;
-
-val bir_compute_next_def = Define`
-bir_compute_next p s =
-   bir_next_fetch p s ++ bir_next_exec p s
-`;
-
-val bir_compute_steps_defn = Hol_defn "bir_compute_steps" `
-bir_compute_steps (n:num) p s = if n = 0
-                          then [s]
-                          else LIST_BIND (bir_compute_next p s) (\s2. bir_compute_steps (n-1) p s2)
-`;
-
-(* Defn.tgoal bir_compute_steps_defn *)
-val (bir_compute_steps_def, bir_compute_steps_ind) = Defn.tprove (bir_compute_steps_defn,
-WF_REL_TAC `measure (\ (n,_,_). n)`);
-
-val bir_next_states_def = Define`
-bir_next_states p s =
-  { s2 | pstep p s s2 }
-`;
-
-val (is_trace_rules, is_trace_ind, is_trace_cases)  = Hol_reln `
-(!p s. is_trace p [s]) /\
-(!p s2 s1 t . ((is_trace p (APPEND t [s1])) /\ (pstep p s1 s2))
-    ==> (is_trace p (APPEND t [s1;s2])))
-`;
-
-val bir_traces_def = Define`
-bir_traces p = { t | is_trace p t }
-`;
-
-(* ------------------------------------------------------------------------- *)
-(*  Memory                                                                   *)
-(* ------------------------------------------------------------------------- *)
-
-val mem_state_def = Datatype`
-mem_state_t = <|
-  bmst_environ  : bir_var_environment_t;
-  (*  bmst_status   : bir_status_t; *)
-  bmst_counter  : num;
-  bmst_inflight : (string bir_inflight_stmt_t) list
-  |>
-`;
-
-val memfresh_def = Define`
-memfresh s = STRCAT "mt" (n2s s.bmst_counter)
-`;
-
-
-val next_memop_def = Define`
-next_memop s = case s.bmst_inflight of
-                   [] => NONE
-                 | ((BirInflight t0 stm)::stms) => SOME (t0,stm)
-`;
-
-val commit_memop_def = Define`
-commit_memop (BStmtB (BStmt_Assign v ex)) s =
-case bir_eval_exp ex s.bmst_environ of
-     | SOME va =>
-            (case bir_env_write v va s.bmst_environ of
-                  | SOME env => (s with bmst_environ := env)
-                  | NONE => ARB)
-     | NONE => ARB
-`;
-
-val (memstep_rules, memstep_ind, memstep_cases) = Hol_reln`
-(!s1 s2 stm. ((next_memop s1 = SOME (t0,stm))
-              /\ (commit_memop stm s1 = s2))
-     ==> memstep s1 (s2 with bmst_inflight updated_by (remove_inflight t0)))
-`;
-
-val mem_init_def = Define`
-mem_init =
-<| bmst_environ  := bir_env_default (bir_envty_of_vs {});
-   bmst_counter  := 0;
-   bmst_inflight := []
-|>`;
-
-(* ------------------------------------------------------------------------- *)
-(*  Parallel evaluation                                                      *)
-(* ------------------------------------------------------------------------- *)
-
-val sys_st_def = Datatype`
-    sys_st = core (string bir_program_t) bir_state_t
-           | mem mem_state_t 
-`;
-
-val exp_is_load_def = Define`
-(exp_is_load (BExp_Load _ _ _ _) = T)
-/\ (exp_is_load _ = F)
-`;
-
-val is_mem_def = Define`
-(is_mem (BVar "MEM" _) = T)
-/\ (is_mem _ = F)
-`;
-
-val (parstep_rules, parstep_ind, parstep_cases) = Hol_reln`
-   (pstep p s s' /\ (core p s) ∈ system
-   ==> parstep system (system DIFF {core p s} UNION {core p s'}))
-/\ (memstep m m' /\ (mem m) ∈ system
-   ==> parstep system (system DIFF {mem m} UNION {mem m'}))
-/\ ( (core p s) ∈ system /\ (mem m) ∈ system
-     /\ (next_stmt s = SOME (t0, (BStmtB (BStmt_Assign v ex))))
-     /\ (?t. v = BVar "MEM" t)
-     /\ (m' = m with <| bmst_inflight updated_by
-                (APPEND [BirInflight (memfresh m) (BStmtB (BStmt_Assign v ex))]);
-                       bmst_counter updated_by (\n:num.n+1) |>)
-     /\ (s' = s with bst_inflight updated_by (remove_inflight t0))
-   ) ==>
-   parstep system ((system DIFF {mem m} UNION {mem m'}) DIFF {core p s} UNION {core p s'})
-/\  ((core p s) ∈ system /\ (mem m) ∈ system
-      /\ (next_stmt s = SOME (t0, BStmtB (BStmt_Assign v ex)))
-      /\ (exp_is_load ex)
-      /\ (SOME value = bir_eval_exp ex m.bmst_environ)
-      /\ (SOME env' = bir_env_write v value s.bst_environ)
-      /\ (s' = s with <| bst_inflight updated_by (remove_inflight t0);
-                         bst_environ := env'  |>)
-    ) ==>
-    parstep system (system DIFF {core p s} UNION {core p s'})
-
-
-(* /\ parstep p p' ==> parstep (par p q) (par p' q) *)
-(* /\ parstep q q' ==> parstep (par p q) (par p q') *)
-(* /\ (next_stmt p = SOME (t, stm) /\ is_store_inst stm *)
-(*    /\ p' = step_pc p /\ m' = mem_add_store m stm) ==> *)
-(*    parstep (par (core p) (mem m)) (par (core p') (mem m')) *)
-(* /\ (next_stmt p = SOME (t, stm) /\ load_dest stm = SOME (_,addr) *)
-(*    /\ mem_load m a = v *)
-(*    /\ p' = (step_pc p) with <| bst_environ updated_by bst_env_write a v |>) *)
-(*    ==> parstep (par (core p) (mem m)) (par (core p') (mem m)) *)
-`;
-
-val compute_next_par_single_def = Define`
-compute_next_par_single (core p s) mem = [(core p (bir_compute_next p s), mem)]
-`;
-val compute_next_par_mem_def = Define`
-compute_next_par_mem c (mem m) = [(c, mem (mem_compute_next m))]
-`;
-val compute_next_store_def = Define`
-compute_next_store (core p s) (mem m) =
-    case next_stmt s of
-         NONE => []
-       | SOME (t0, BStmtB (BStmt_Assign v ex)) =>
-         if is_mem v
-         then (let m' = m with <| bmst_inflight updated_by
-                             (APPEND [BirInflight (memfresh m) (BStmtB (BStmt_Assign v ex))]);
-                  bmst_counter updated_by (\n:num.n+1) |>;
-                  
-              in let s' = s with bst_inflight updated_by (remove_inflight t0)
- in [(core p s', mem m')])
-         else []
-`;
-val compute_next_load_def = Define`
-compute_next_load (core p s) (mem m) =
-              case next_stmt s of
-                  NONE => []
-                | SOME (t0, BStmtB (BStmt_Assign v ex)) =>
-                  if exp_is_load ex
-                  then case bir_eval_exp ex m.bmst_environ of
-                       NONE => []
-                       | SOME value =>
-                       case bir_env_write v value s.bst_environ of
-                           NONE => []
-                           | SOME env' =>
-                           (let s' = s with <| bst_inflight updated_by (remove_inflight t0);
-                                bst_environ := env'  |>
-                            in [(core p s', mem m)])
-                  else []
-`;
-val compute_next_par_def = Define`
-compute_next_par (cores, mem) =
-   do (cid,c) <- cores;
-      (c',mem') <- (compute_next_single c mem
-                    ++ compute_next_mem c mem
-                    ++ compute_next_load c mem
-                    ++ compute_next_store c mem)
-      return (update_core cid c cores, mem')
-   od
-`;
-val compute_next_par_steps_def = Define`
-compute_next_par_steps (n:num) (cores, mem) =
-      if n = 0
-      then [(cores,mem)]
-      else LIST_BIND (compute_next_par (cores,mem)) (\s2. compute_next_par_steps (n-1) s2)
-`;
 
 (* ------------------------------------------------------------------------- *)
 (*  Executing multiple steps                                                 *)

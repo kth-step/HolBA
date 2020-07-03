@@ -66,7 +66,8 @@ val type_of_bir_exp_def = Define `
        (SOME (BType_Mem aty vty), SOME (BType_Imm aty'), SOME (BType_Imm rty)) => (if (
             (aty = aty') /\ (if en = BEnd_NoEndian then (vty = rty) else (bir_number_of_mem_splits vty rty aty <> NONE))
            ) then SOME (BType_Mem aty vty) else NONE)
-       | _, _, _ => NONE))`;
+                                               | _, _, _ => NONE))
+  `;
 
 
 val type_of_bir_exp_THM = store_thm ("type_of_bir_exp_THM",
