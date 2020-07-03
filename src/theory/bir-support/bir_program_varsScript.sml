@@ -197,6 +197,7 @@ val bir_state_EQ_FOR_VARS_ALT_DEF = store_thm ("bir_state_EQ_FOR_VARS_ALT_DEF",
 ``!vs st1 st2.
   bir_state_EQ_FOR_VARS vs st1 st2 <=>
   (st1.bst_pc = st2.bst_pc) /\ (st1.bst_status = st2.bst_status) /\
+  (st1.bst_inflight = st2.bst_inflight) /\ (st1.bst_counter = st2.bst_counter) /\
   bir_env_EQ_FOR_VARS vs st1.bst_environ st2.bst_environ``,
 
 SIMP_TAC (std_ss++holBACore_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_state_t_component_equality,

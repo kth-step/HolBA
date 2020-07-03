@@ -80,7 +80,7 @@ val bir_stmtB_not_assume_never_assumviol =
       FULL_SIMP_TAC (std_ss++holBACore_ss)
             [bir_state_set_typeerror_def,
              bir_state_t_bst_status_fupd] >>
-      Cases_on `(EXISTS IS_NONE (MAP (λe. bir_eval_exp e b0) l))` >> (
+      Cases_on `(EXISTS IS_NONE (MAP (λe. bir_eval_exp e b0) l''))` >> (
         FULL_SIMP_TAC (std_ss++holBACore_ss)
               [bir_state_set_typeerror_def,
                bir_state_t_bst_status_fupd]
