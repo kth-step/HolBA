@@ -222,6 +222,9 @@ in
     in
 	foldl (fn(ts, p) => add_obs_speculative_exec p ts g1 depth bl_dict) prog targets
     end
-end
 
+(* Exmaple usage: inputs are lifted program with intial observation and depth of execution      *)
+(* branch_instrumentation_obs lifted_prog_w_obs 3; *)
+
+end (* local *)
 end (* struct *)
