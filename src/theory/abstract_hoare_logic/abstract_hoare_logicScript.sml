@@ -134,6 +134,7 @@ REPEAT STRIP_TAC >>
 METIS_TAC [weak_unique_thm]
 );
 
+(* Old definition *)
 (*
 val weak_loop_step_def = Define `
   weak_loop_step m ms var l le invariant C1 =
@@ -145,32 +146,179 @@ val weak_loop_step_def = Define `
 `;
 *)
 
+(* New definition *)
 (* TODO: Address minimum? (var ms' >= 0)
  *       Should this have assumption "WF wf_rel"?*)
-
 val weak_loop_step_def = Define `
   weak_loop_step m ms wf_rel var l le invariant C1 =
     let x = var ms in
-      (\ms'. (*(WF wf_rel) ==> *) (WF wf_rel) /\
+      (\ms'. (*(WF wf_rel) ==> *)
              m.weak ms ({l} UNION le) ms' /\
              (invariant ms /\ C1 ms) /\
              ((m.pc ms' = l) /\ invariant ms' /\ (wf_rel (var ms') x))
       )
 `;
-(*
+
 val loop_fun_defn =
   Hol_defn "loop_fun" `
     loop_fun m ms wf_rel var l le invariant C1  =
-      let MS' = weak_loop_step m ms wf_rel var l le invariant C1 in
-        if MS' = {}
-        then ms
-	else let ms' = (CHOICE MS') in
-	       (loop_fun m ms' wf_rel var l le invariant C1)
+      if ~WF wf_rel
+      then ms
+      else
+	let MS' = weak_loop_step m ms wf_rel var l le invariant C1 in
+	  if MS' = {}
+	  then ms
+	  else let ms' = (CHOICE MS') in
+		 (loop_fun m ms' wf_rel var l le invariant C1)
 `;
-*)
+
+
 (* For debugging:
 Defn.tgoal loop_fun_defn
 *)
+(* New attempt at WF proof: *)
+val (loop_fun_eqns, loop_fun_ind) = Defn.tprove(loop_fun_defn,
+
+FULL_SIMP_TAC std_ss [weak_loop_step_def] >>
+WF_REL_TAC `(\(m, ms, wf_rel, var, l, le, invariant, C1).
+             \(m', ms', wf_rel', var', l', le', invariant', C1').
+              if (WF wf_rel /\ (wf_rel = wf_rel'))
+              then wf_rel (var ms) (var' ms')
+              else F)` >- (
+  FULL_SIMP_TAC std_ss [Once relationTheory.WF_DEF] >>
+  REPEAT STRIP_TAC >>
+  Cases_on `?m ms wf_rel var l le invariant C1. B (m,ms,wf_rel,var,l,le,invariant,C1) /\ ~WF wf_rel` >| [
+    FULL_SIMP_TAC std_ss [] >>
+    Q.EXISTS_TAC `(m,ms,wf_rel,var,l,le,invariant,C1)` >>
+    FULL_SIMP_TAC std_ss [] >>
+    REPEAT STRIP_TAC >>
+    PairCases_on `b` >>
+    FULL_SIMP_TAC std_ss [] >>
+    RW_TAC std_ss [] >>
+    FULL_SIMP_TAC std_ss [],
+
+    FULL_SIMP_TAC std_ss [] >>
+    (* Define B' = {b in B| b.wf_rel = w.wf_rel} *)
+    Q.ABBREV_TAC `get_wf_rel = \loop_fun_st. FST(SND(SND (loop_fun_st:(α, β) bin_model_t #
+     α #
+     (γ -> γ -> bool) # (α -> γ) # β # (β -> bool) # (α -> bool) # (α -> bool))))` >>
+    Q.ABBREV_TAC `B' = \b. (b IN B /\ (get_wf_rel b = get_wf_rel w))` >>
+    (* B' <> 0 *)
+    subgoal `B' <> {}` >- (
+      FULL_SIMP_TAC std_ss [GSYM pred_setTheory.MEMBER_NOT_EMPTY] >>
+      Q.EXISTS_TAC `w` >>
+      Q.UNABBREV_TAC `B'` >>
+      FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS, pred_setTheory.IN_APP]
+    ) >>
+    (* Define A' = {b.var b | b in B'} *)
+    Q.ABBREV_TAC `get_var = \loop_fun_st. FST(SND(SND(SND (loop_fun_st:(α, β) bin_model_t #
+     α #
+     (γ -> γ -> bool) # (α -> γ) # β # (β -> bool) # (α -> bool) # (α -> bool)))))` >>
+    Q.ABBREV_TAC `get_state = \loop_fun_st. FST(SND (loop_fun_st:(α, β) bin_model_t #
+     α #
+     (γ -> γ -> bool) # (α -> γ) # β # (β -> bool) # (α -> bool) # (α -> bool)))` >>
+    Q.ABBREV_TAC `A' = IMAGE (\a. ((get_var a) (get_state a))) (\b. b IN B')` >>
+    (* A' <> 0 *)
+    subgoal `A' <> {}` >- (
+      FULL_SIMP_TAC std_ss [GSYM pred_setTheory.MEMBER_NOT_EMPTY] >>
+      Q.EXISTS_TAC `get_var w (get_state w)` >>
+      Q.UNABBREV_TAC `A'` >>
+      FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS, pred_setTheory.IN_APP,
+                            pred_setTheory.IMAGE_applied] >>
+      Q.EXISTS_TAC `w` >>
+      FULL_SIMP_TAC std_ss [] >>
+      Q.UNABBREV_TAC `B'` >>
+      FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS, pred_setTheory.IN_APP]
+    ) >>
+    (* Define x = MIN(A', w.wf_rel) *)
+    subgoal `WF (get_wf_rel w)` >- (
+      PairCases_on `w` >>
+      QSPECL_X_ASSUM ``!m. _`` [`w0`,`w1`,`w2`,`w3`,`w4`,`w5`,`w6`,`w7`] >>
+      Q.UNABBREV_TAC `get_wf_rel` >>
+      (* ??? *)
+      FULL_SIMP_TAC std_ss [] >>
+      FULL_SIMP_TAC std_ss []
+    ) >>
+    subgoal `?x. A' x /\ !y. (get_wf_rel w) y x ==> ~A' y` >- (
+      FULL_SIMP_TAC std_ss [relationTheory.WF_DEF] >>
+      QSPECL_X_ASSUM ``!B. _`` [`A'`] >>
+      FULL_SIMP_TAC std_ss [GSYM pred_setTheory.MEMBER_NOT_EMPTY, pred_setTheory.IN_APP] >>
+      METIS_TAC []
+    ) >>
+    (* Define B'' = {b in B' | b.var b = x} *)
+    Q.ABBREV_TAC `B'' = \b. (b IN B' /\ (get_var b (get_state b) = x))` >>
+    (* B'' <> 0 *)
+    subgoal `B'' <> {}` >- (
+      FULL_SIMP_TAC std_ss [GSYM pred_setTheory.MEMBER_NOT_EMPTY] >>
+      Q.UNABBREV_TAC `B''` >>
+      FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS, pred_setTheory.IN_APP,
+                            pred_setTheory.IMAGE_applied, relationTheory.WF_DEF] >>
+      QSPECL_X_ASSUM ``!B. (?w. B w) ==> ?min. B min /\ !b. get_wf_rel w b min ==> ~B b`` [`A'`] >>
+      RES_TAC >>
+      Q.UNABBREV_TAC `A'` >>
+      FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS, pred_setTheory.IN_APP,
+                            pred_setTheory.IMAGE_applied] >>
+      Q.EXISTS_TAC `a'` >>
+      FULL_SIMP_TAC std_ss []
+    ) >>
+    (* min = CHOICE(B'') *)
+    Q.ABBREV_TAC `min_wf = $@ B''` >>
+    (*********************************************************)
+    Q.EXISTS_TAC `min_wf` >>
+    CONJ_TAC >| [
+      Q.UNABBREV_TAC `min_wf` >>
+      Q.UNABBREV_TAC `B''` >>
+      Q.UNABBREV_TAC `B'` >>
+      irule SELECT_ELIM_THM >>
+      REPEAT STRIP_TAC >| [
+        FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS, pred_setTheory.IN_APP],
+
+        FULL_SIMP_TAC std_ss [GSYM pred_setTheory.MEMBER_NOT_EMPTY] >>
+        Q.EXISTS_TAC `x'''` >>
+        FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS]
+      ],
+
+      REPEAT STRIP_TAC >>
+      PairCases_on `b` >>
+      PairCases_on `min_wf` >>
+      FULL_SIMP_TAC std_ss [] >>
+      Q.UNABBREV_TAC `B''` >>
+      subgoal `min_wf3 min_wf1 = x` >- (
+	cheat
+      ) >>
+      subgoal `get_wf_rel w = min_wf2` >- (
+	cheat
+      ) >>
+      RW_TAC std_ss [] >>
+      QSPECL_X_ASSUM ``!y. get_wf_rel w y (min_wf3 min_wf1) ==> ~A' y`` [`(b3 b1)`] >>
+      REV_FULL_SIMP_TAC std_ss [] >>
+      Q.UNABBREV_TAC `A'` >>
+      Q.UNABBREV_TAC `B'` >>
+      FULL_SIMP_TAC std_ss [] >>
+      `IMAGE (\a. get_var a (get_state a))
+	     (\b. b IN (\b. b IN B /\ (get_wf_rel b = get_wf_rel w))) (b3 b1)` suffices_by (
+	FULL_SIMP_TAC std_ss []
+      ) >>
+      FULL_SIMP_TAC std_ss [pred_setTheory.IMAGE_applied] >>
+      Q.EXISTS_TAC `(b0,b1,get_wf_rel w,b3,b4,b5,b6,b7)` >>
+      Q.UNABBREV_TAC `get_var` >>
+      Q.UNABBREV_TAC `get_state` >>
+      Q.UNABBREV_TAC `get_wf_rel` >>
+      FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS] >>
+      FULL_SIMP_TAC std_ss [pred_setTheory.IN_APP]
+    ]
+  ]
+) >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [LET_DEF] >>
+IMP_RES_TAC pred_setTheory.CHOICE_DEF >>
+FULL_SIMP_TAC std_ss [pred_setTheory.CHOICE_DEF] >>
+FULL_SIMP_TAC std_ss [GSYM pred_setTheory.MEMBER_NOT_EMPTY] >>
+FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS]
+);
+
+(* Done until here... *)
+
 (*
 ``?R'.
        WF R' /\
