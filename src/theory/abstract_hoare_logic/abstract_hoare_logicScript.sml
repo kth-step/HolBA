@@ -134,19 +134,7 @@ REPEAT STRIP_TAC >>
 METIS_TAC [weak_unique_thm]
 );
 
-(* Old definition *)
-(*
-val weak_loop_step_def = Define `
-  weak_loop_step m ms var l le invariant C1 =
-    let x:num = var ms in
-      (\ms'. m.weak ms ({l} UNION le) ms' /\
-             (invariant ms /\ C1 ms) /\
-             ((m.pc ms' = l) /\ invariant ms' /\ (var ms' < x) /\ (var ms' >= 0))
-      )
-`;
-*)
 
-(* New definition *)
 (* TODO: Address minimum? (var ms' >= 0)
  *       Should this have assumption "WF wf_rel"?*)
 val weak_loop_step_def = Define `
@@ -176,7 +164,6 @@ val loop_fun_defn =
 (* For debugging:
 Defn.tgoal loop_fun_defn
 *)
-(* New attempt at WF proof: *)
 val (loop_fun_eqns, loop_fun_ind) = Defn.tprove(loop_fun_defn,
 
 FULL_SIMP_TAC std_ss [weak_loop_step_def] >>
@@ -317,91 +304,6 @@ FULL_SIMP_TAC std_ss [GSYM pred_setTheory.MEMBER_NOT_EMPTY] >>
 FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS]
 );
 
-(* Done until here... *)
-
-(*
-``?R'.
-       WF R' /\
-       !C1 invariant le l wf_rel var ms m MS' ms'.
-           (MS' = weak_loop_step m ms wf_rel var l le invariant C1) /\
-           MS' <> {} /\ (ms' = CHOICE MS') ==>
-           R' (m,ms',wf_rel,var,l,le,invariant,C1)
-             (m,ms,wf_rel,var,l,le,invariant,C1)``
-
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [weak_loop_step_def] >>
-Q.EXISTS_TAC `\(m, ms,wf_rel,var,l,le,invariant,C1) (m, ms',wf_rel,var,l,le,invariant,C1). wf_rel  (var ms) (var ms')` >>
-REPEAT STRIP_TAC >| [
-  (* This we need to have as assumption... *)
-Q.EXISTS_TAC `\(m, ms,wf_rel',var,l,le,invariant,C1) (m, ms',wf_rel',var,l,le,invariant,C1). wf_rel (var ms) (var ms')` >>
-  cheat,
-
-  (* From assumption to be added... *)
-  REV_FULL_SIMP_TAC std_ss [LET_DEF] >>
-  FULL_SIMP_TAC std_ss [] >>
-  Q.ABBREV_TAC `MS' =  (\ms'.
-	       WF wf_rel /\ m.weak ms ({l} UNION le) ms' /\ (invariant ms /\ C1 ms) /\
-	       ((m.pc ms') = l) /\ invariant ms' /\ wf_rel (var ms') (var ms))` >>
-  ASSUME_TAC (ISPEC ``MS':'a->bool`` pred_setTheory.CHOICE_DEF)  >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-  FULL_SIMP_TAC std_ss [Abbr `MS'`, pred_setTheory.IN_ABS]
-]
-*)
-(* TODO: Look at the resulting loop_fun_ind, see if you can prove it separately...*)
-val loop_fun_ind = prove(
-``!P.
-  (!m ms wf_rel var l le invariant C1.
-       (!MS' ms'.
-	    (MS' = weak_loop_step m ms wf_rel var l le invariant C1) /\
-	    MS' <> {} /\ (ms' = CHOICE MS') ==>
-	    P m ms' wf_rel var l le invariant C1) ==>
-       P m ms wf_rel var l le invariant C1) ==>
-  !v v1 v2 v3 v4 v5 v6 v7. P v v1 v2 v3 v4 v5 v6 v7``,
-
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [weak_loop_step_def] >>
-QSPECL_X_ASSUM ``!m. _`` [`v`, `v1`, `v2`, `v3`, `v4`, `v5`, `v6`, `v7`] >>
-Cases_on `WF v2` >>
-  REV_FULL_SIMP_TAC std_ss [LET_DEF] >>
-
-  Q.ABBREV_TAC `MS' =  (λms'.
-          WF v2 ∧ v.weak v1 ({v4} ∪ v5) ms' ∧ (v6 v1 ∧ v7 v1) ∧
-          (v.pc ms' = v4) ∧ v6 ms' ∧ v2 (v3 ms') (v3 v1))` >>
- ASSUME_TAC (ISPEC ``MS':'a->bool`` pred_setTheory.CHOICE_DEF)  >>
-  subgoal `MS' <> {}` >- (
-    cheat
-  ) >>
-FULL_SIMP_TAC std_ss [] >>
-cheat
-);
-
-
-
-(*
-val (loop_fun_eqns, loop_fun_ind) =
-  Defn.tprove(loop_fun_defn,
-
-FULL_SIMP_TAC std_ss [weak_loop_step_def] >>
-Q.EXISTS_TAC `\(m, ms,wf_rel,var,l,le,invariant,C1) (m, ms',wf_rel,var,l,le,invariant,C1). wf_rel (var ms) (var ms')` >>
-REPEAT STRIP_TAC >| [
-  (* This we need to have as assumption... *)
-  cheat,
-
-  (* From assumption to be added... *)
-  subgoal `WF wf_rel` >- (
-    cheat
-  ) >>
-  REV_FULL_SIMP_TAC std_ss [LET_DEF] >>
-  FULL_SIMP_TAC std_ss [] >>
-  Q.ABBREV_TAC `MS' =  (\ms'.
-	       m.weak ms ({l} UNION le) ms' /\ (invariant ms /\ C1 ms) /\
-	       ((m.pc ms') = l) /\ invariant ms' /\ wf_rel (var ms') (var ms))` >>
-  ASSUME_TAC (ISPEC ``MS':'a->bool`` pred_setTheory.CHOICE_DEF)  >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-  FULL_SIMP_TAC std_ss [Abbr `MS'`, pred_setTheory.IN_ABS]
-]
-);
-*)
 
 val abstract_loop_jgmt_def = Define `
   abstract_loop_jgmt m l le invariant C1 wf_rel var =
