@@ -818,7 +818,7 @@ local
   fun process_riscv_thm vn pc_mem_thms thm = let
     val thm0 = bmr_normalise_step_thm next_state_tm vn thm
     val thm1 =
-	UNDISCH_ALL (SIMP_RULE (empty_ss++bitstringLib.v2w_n2w_ss) [] (DISCH_ALL thm0))
+	UNDISCH_ALL (SIMP_RULE (empty_ss++bitstringLib.v2w_n2w_ss++bitstringLib.BITSTRING_GROUND_ss) [] (DISCH_ALL thm0))
           handle UNCHANGED => thm0
     val thm2 =
 	SIMP_RULE (std_ss++riscv_extra_ss) [riscvTheory.Skip_def] thm1
