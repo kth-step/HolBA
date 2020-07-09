@@ -119,6 +119,6 @@ signature bir_inst_liftingLib = sig
 
 
   (* RISC-V instance *)
-  (* structure bmil_riscv : bir_inst_lifting *)
+  structure bmil_riscv : bir_inst_lifting
 
 end

@@ -788,11 +788,40 @@ SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ss) [bmr_ms_mem_contains_def, m0_bmr_EVA
 (* 1. riscv_bmr_OK                                                    *)
 (**********************************************************************)
 
-(* TODO: When can we say that the RISC-V state is "well-defined"? *)
 val riscv_state_is_OK_def = Define `
   riscv_state_is_OK (ms:riscv_state) <=> (
-    (* TODO: Limit architecture? Privilege? *)
-    (ms.exception = NoException)
+    (* Interpreted from https://github.com/SRI-CSL/l3riscv/blob/master/src/l3/riscv.spec
+     * specifically from the older version https://github.com/SRI-CSL/l3riscv/blob/3d1cd4f8f922fb60a04f75ebcdbfd74919c4e585/src/l3/riscv.spec
+*)
+    (ms.exception = NoException) /\
+(*   
+     * MCSRs are machine mode control and status registers, mstatus is status register,
+     * "VM" is "memory management and virtualization", 5 bits.
+     * Page 23 of https://people.eecs.berkeley.edu/~krste/papers/riscv-privileged-v1.9.1.pdf
+     * explains that memory management field being zero corresponds to "Mbare", no translation or
+     * protection.
+     * Don't know why this must always be 0 for a simple add, but it is checked only in
+     * "translateAddr" in the Fetch step of Next. Perhaps it is some limitation of the model (version).
+*)
+    ((ms.c_MCSR ms.procID).mstatus.VM = 0w) /\
+(* 
+     * Fetch state from interpreter execution context must be NONE. Type is
+     * TransferControl option:
+
+         type SynchronousTrap = { badaddr: BitsN.nbit option, trap: ExceptionType }
+
+           datatype TransferControl
+             = BranchTo of BitsN.nbit | Ereturn | Mrts | Trap of SynchronousTrap
+
+     * we see in riscv.sml that in the Next function, after Fetch-Decode-Run
+     * "NextFetch" is accessed, which returns a tuple where the first element is a TransferControl
+     * option. This has been written to NextFetch in the Run step. Effects on PC are resolved and
+     * NextFetch is then set to NONE.
+     * The reason for why this must be NONE in the initial state is likely that in regular situations
+     * when non-control transfer instructions are executed, NextFetch is never written to (instead of
+     * explicitly writing NONE).
+*)
+    (ms.c_NextFetch ms.procID = NONE)
   )
 (* For ARM8:
     (* https://static.docs.arm.com/100878/0100/fundamentals_of_armv8_a_100878_0100_en.pdf
@@ -970,7 +999,9 @@ SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, riscv_bmr_EVAL,
 val bmr_extra_RISCV = store_thm ("bmr_extra_RISCV",
 ``!ms.
     riscv_bmr.bmr_extra ms = 
-      (ms.exception = NoException)
+      (ms.exception = NoException) /\
+      ((ms.c_MCSR ms.procID).mstatus.VM = 0w) /\
+      (ms.c_NextFetch ms.procID = NONE)
 ``,
 
 SIMP_TAC (std_ss++bmr_ss++boolSimps.EQUIV_EXTRACT_ss)

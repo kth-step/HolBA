@@ -1,7 +1,7 @@
 open HolKernel Parse
 open testutils
 open bir_inst_liftingLib;
-open PPBackEnd Parse
+open PPBackEnd
 
 (******************)
 (* Config options *)

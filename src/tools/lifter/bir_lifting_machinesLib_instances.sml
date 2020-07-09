@@ -83,7 +83,7 @@ fun bmr_normalise_step_thm (r_step_rel:term) var_name thm =
   val thms' = arm8_step_hex' vn hex_code
 *)
 
-(* TODO: Comment this function. *)
+(* TODO: Document this function. *)
 fun bytes_of_hex_code hex_code = let
   val _ = if (String.size hex_code mod 2 = 0)
           then ()
@@ -626,6 +626,8 @@ val _ = assert bmr_rec_sanity_check (m0_mod_bmr_rec_LittleEnd_Main)
 
   (* riscv_state definition can be found in l3-machine-code/riscv. *)
   val vn = ``ms:riscv_state``
+
+  (* TODO: Are these ARMv8 instructions? *)
   val hex_code = "B90033E0";
   val hex_code = "79000001"
   val hex_code = "D345FC41"
@@ -673,6 +675,22 @@ val _ = assert bmr_rec_sanity_check (m0_mod_bmr_rec_LittleEnd_Main)
  * until bir_nzcv_introsScript, riscv_stepScript,
  * bir_riscv_extrasScript and bir_lifting_machinesScript can be
  * modified to accommodate the RISC-V model. *)
+
+(* Type rewrites as a list of theorems (ARM8 also had rewrites
+ * for ``:ProcState``)... *)
+val riscv_REWRS = (
+  (type_rws ``:riscv_state``)
+);
+(* From M0:
+val m0_REWRS = (RName_distinct :: (
+   (type_rws ``:m0_state``) @
+   (type_rws ``:PSR``) @ (* From m0Script *)
+   (type_rws ``:RName``) @ (* From m0Script *)
+   (type_rws ``:Mode``) (* From m0Script *)
+));
+*)
+(* ... and as a simplification set. *)
+val riscv_extra_ss = rewrites riscv_REWRS
 
 local
   (* The naming convention for this is slightly different in the
@@ -753,7 +771,6 @@ local
       CONJUNCTS thm2
     end;
 *)
-
   fun prepare_mem_contains_thms vn hex_code =
     let
       val bytes = bytes_of_hex_code hex_code
@@ -800,16 +817,22 @@ local
   *)
   fun process_riscv_thm vn pc_mem_thms thm = let
     val thm0 = bmr_normalise_step_thm next_state_tm vn thm
-    val thm1 = instantiate_riscv_thm thm0
-    val thm2 = foldl (fn (pre_thm, thm) => PROVE_HYP pre_thm thm)
-                     thm1
+    val thm1 =
+	UNDISCH_ALL (SIMP_RULE (empty_ss++bitstringLib.v2w_n2w_ss) [] (DISCH_ALL thm0))
+          handle UNCHANGED => thm0
+    val thm2 =
+	SIMP_RULE (std_ss++riscv_extra_ss) [riscvTheory.Skip_def] thm1
+          handle UNCHANGED => thm1
+    val thm3 = instantiate_riscv_thm thm2
+    val thm4 = foldl (fn (pre_thm, thm) => PROVE_HYP pre_thm thm)
+                     thm3
                      (pc_mem_thms @ (riscv_extra_THMS vn))
 
-    val thm3 = DISCH_ALL thm2
-    val thm4 = CONV_RULE (simp_conv THENC simp_conv2) thm3
-    val thm5 = UNDISCH_ALL thm4
+    val thm5 = DISCH_ALL thm4
+    val thm6 = CONV_RULE (simp_conv THENC simp_conv2) thm5
+    val thm7 = UNDISCH_ALL thm6
   in
-    thm5
+    thm7
   end;
 
 in
@@ -867,22 +890,6 @@ val riscv_state_mem_tm =
   prim_mk_const{Name="riscv_state_MEM8", Thy="riscv"};
 val riscv_dest_mem =
   HolKernel.dest_binop riscv_state_mem_tm (ERR "riscv_dest_mem" "");
-
-(* Type rewrites as a list of theorems (ARM8 also had rewrites
- * for ``:ProcState``)... *)
-val riscv_REWRS = (
-  (type_rws ``:riscv_state``)
-);
-(* From M0:
-val m0_REWRS = (RName_distinct :: (
-   (type_rws ``:m0_state``) @
-   (type_rws ``:PSR``) @ (* From m0Script *)
-   (type_rws ``:RName``) @ (* From m0Script *)
-   (type_rws ``:Mode``) (* From m0Script *)
-));
-*)
-(* ... and as a simplification set. *)
-val riscv_extra_ss = rewrites riscv_REWRS
 
 (* From M0:
  * M0 has a bmr_rec which also takes an endianness endian_fl and a
@@ -942,17 +949,18 @@ val riscv_bmr_rec : bmr_rec = {
   bmr_ihex_param           = NONE
 };
 
-val _ = assert bmr_rec_sanity_check riscv_bmr_rec
+val _ = assert bmr_rec_sanity_check riscv_bmr_rec;
 (* From bir_lifting_machinesLib:
-  bmr_rec_sanity_check_basic riscv_bmr_rec (* Partially OK: *)
-    check_const (#bmr_const riscv_bmr_rec)
+
+  bmr_rec_sanity_check_basic riscv_bmr_rec (* OK! *)
+    check_const (#bmr_const riscv_bmr_rec) (* OK! *)
 
     check_ok_thm (#bmr_const riscv_bmr_rec)
                  (#bmr_ok_thm riscv_bmr_rec) (* OK! *)
  
     check_lifted_thm riscv_bmr_rec (* OK! *)
 
-    check_change_interval_thms riscv_bmr_rec (* Not OK! *)
+    check_change_interval_thms riscv_bmr_rec (* OK! *)
 
     check_label_thm riscv_bmr_rec (* OK! *)
 
