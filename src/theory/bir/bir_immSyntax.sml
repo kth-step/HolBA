@@ -1,7 +1,7 @@
 structure bir_immSyntax :> bir_immSyntax =
 struct
 
-open HolKernel boolLib liteLib simpLib Parse bossLib;
+open HolKernel boolLib liteLib simpLib Parse bossLib bir_utilLib;
 open bir_immTheory;
 
 
@@ -81,19 +81,19 @@ val bir_immtype_t_sizes_list =
 
 val known_imm_sizes = map fst bir_immtype_t_sizes_list;
 
-fun bir_immtype_t_of_size n = assoc n bir_immtype_t_sizes_list handle HOL_ERR _ =>
+fun bir_immtype_t_of_size n = assoc_with (op =) n bir_immtype_t_sizes_list handle HOL_ERR _ =>
   raise ERR "bir_immtype_t_of_size" "unknown size";
 
-fun size_of_bir_immtype_t tm = rev_assoc tm bir_immtype_t_sizes_list handle HOL_ERR _ =>
+fun size_of_bir_immtype_t tm = rev_assoc_with (op ~~) tm bir_immtype_t_sizes_list handle HOL_ERR _ =>
   raise ERR "size_of_bir_immtype_t" "unknown value";
 
 val bir_immtype_t_word_ty_list =
   map (fn (n, tm) => (wordsSyntax.mk_int_word_type n, tm)) bir_immtype_t_sizes_list;
 
-fun bir_immtype_t_of_word_ty wty = assoc wty bir_immtype_t_word_ty_list handle HOL_ERR _ =>
+fun bir_immtype_t_of_word_ty wty = assoc_with (op =) wty bir_immtype_t_word_ty_list handle HOL_ERR _ =>
   raise ERR "bir_immtype_t_of_word_ty" "unknown size";
 
-fun word_ty_of_bir_immtype_t tm = rev_assoc tm bir_immtype_t_word_ty_list handle HOL_ERR _ =>
+fun word_ty_of_bir_immtype_t tm = rev_assoc_with (op ~~) tm bir_immtype_t_word_ty_list handle HOL_ERR _ =>
   raise ERR "word_ty_of_bir_immtype_t" "unknown value";
 
 val is_known_word_ty = can bir_immtype_t_of_word_ty;
@@ -104,7 +104,7 @@ val bir_immtype_t_imm_list =
 
 fun gen_mk_Imm tm =
   if (wordsSyntax.is_word_type (type_of tm)) then
-    (mk_comb (assoc (type_of tm) bir_immtype_t_imm_list, tm) handle HOL_ERR _ =>
+    (mk_comb (assoc_with (op =) (type_of tm) bir_immtype_t_imm_list, tm) handle HOL_ERR _ =>
      raise (ERR "gen_mkImm" ("unsupported word-type ``"^(type_to_string (type_of tm))^"``")))
   else if (type_of tm = bool) then
     mk_bool2b tm
@@ -124,7 +124,7 @@ val bir_imm_t_sizes_list =
 
 fun gen_dest_Imm tm = let
   val (c, arg) = dest_comb tm;
-  val s = assoc c bir_imm_t_sizes_list
+  val s = assoc_with (op ~~) c bir_imm_t_sizes_list
 in
   (s, arg)
 end handle e => raise wrap_exn "gen_dest_Imm" e;

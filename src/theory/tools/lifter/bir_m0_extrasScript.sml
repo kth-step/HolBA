@@ -49,7 +49,7 @@ val RName_distinct = save_thm ("RName_distinct", let
 
   val thm1 = REWRITE_RULE [GSYM rich_listTheory.MEM_COUNT_LIST] thm0
   val thm2 = SIMP_RULE std_ss [rich_listTheory.COUNT_LIST_compute,
-     rich_listTheory.COUNT_LIST_AUX_def_compute, listTheory.MEM,
+     rich_listTheory.COUNT_LIST_AUX_compute, listTheory.MEM,
      DISJ_IMP_THM, FORALL_AND_THM, m0Theory.num2RName_thm] thm1
   val thm3 = SIMP_RULE std_ss [GSYM CONJ_ASSOC] thm2
 in thm3 end);

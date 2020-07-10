@@ -92,7 +92,7 @@ val bir_stmtB_not_assume_never_assumviol =
 val bir_stmtsB_has_no_assumes_def = Define `
   (bir_stmtsB_has_no_assumes [] = T) /\
   (bir_stmtsB_has_no_assumes (h::t) =
-    (bir_stmtB_is_not_assume h) /\ (bir_stmtsB_has_no_assumes t)
+    ((bir_stmtB_is_not_assume h) /\ (bir_stmtsB_has_no_assumes t))
   )
 `;
 
@@ -281,8 +281,8 @@ val bir_block_not_assume_never_assumviol =
 val bir_prog_has_no_assumes_def = Define `
   (bir_prog_has_no_assumes (BirProgram []) = T) /\
   (bir_prog_has_no_assumes (BirProgram (h::t)) =
-    (bir_block_has_no_assumes h) /\
-    (bir_prog_has_no_assumes (BirProgram t))
+    ((bir_block_has_no_assumes h) /\
+    (bir_prog_has_no_assumes (BirProgram t)))
   )
 `;
 

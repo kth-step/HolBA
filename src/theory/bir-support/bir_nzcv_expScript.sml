@@ -172,7 +172,7 @@ METIS_TAC[]);
 
 
 val nzcv_BIR_ADD_C_raw = prove (
-  ``!w1 w2. (nzcv_BIR_ADD_C w1 w2 = (w1 >=+ -w2) /\ (w2 <> 0w))``,
+  ``!w1 w2. nzcv_BIR_ADD_C w1 w2 = ((w1 >=+ -w2) /\ (w2 <> 0w))``,
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [nzcv_BIR_SUB_C_def, nzcv_def, LET_THM, nzcv_BIR_ADD_C_def,
   WORD_NEG_NEG, GSYM nzcv_BIR_SUB_C_raw, WORD_NEG_EQ_0] >>

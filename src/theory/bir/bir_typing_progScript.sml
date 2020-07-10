@@ -55,9 +55,9 @@ val bir_is_well_typed_label_exp_def = Define `
 val bir_is_well_typed_stmtE_def = Define `
   (bir_is_well_typed_stmtE (BStmt_Jmp le) = bir_is_well_typed_label_exp le) /\
   (bir_is_well_typed_stmtE (BStmt_CJmp c le1 le2) =
-       (type_of_bir_exp c = SOME BType_Bool) /\
+       ((type_of_bir_exp c = SOME BType_Bool) /\
        (bir_is_well_typed_label_exp le1) /\
-       (bir_is_well_typed_label_exp le2)) /\
+       (bir_is_well_typed_label_exp le2))) /\
   (bir_is_well_typed_stmtE (BStmt_Halt e) = (type_of_bir_exp e <> NONE))`
 
 val bir_is_well_typed_stmtB_def = Define `

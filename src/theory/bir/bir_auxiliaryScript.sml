@@ -192,7 +192,7 @@ val SEG_SUC_LENGTH = store_thm ("SEG_SUC_LENGTH",
 ``!l n m. (n + m < LENGTH l) ==>
           (SEG (SUC n) m l = (EL m l)::SEG n (SUC m) l)``,
 
-SIMP_TAC arith_ss [rich_listTheory.SEG_TAKE_BUTFISTN] >>
+SIMP_TAC arith_ss [rich_listTheory.SEG_TAKE_DROP] >>
 REPEAT STRIP_TAC >>
 ASM_SIMP_TAC list_ss [rich_listTheory.DROP_EL_CONS, arithmeticTheory.ADD1]);
 

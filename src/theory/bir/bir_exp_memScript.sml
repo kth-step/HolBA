@@ -594,7 +594,7 @@ let
        listTheory.TAKE_LENGTH_TOO_LONG,
        listTheory.DROP_LENGTH_TOO_LONG, rich_listTheory.DROP_DROP_T,
        ASSUME pre] t
-    val thm1 = CONV_RULE (RHS_CONV (SIMP_CONV list_ss [GSYM rich_listTheory.SEG_TAKE_BUTFISTN,
+    val thm1 = CONV_RULE (RHS_CONV (SIMP_CONV list_ss [GSYM rich_listTheory.SEG_TAKE_DROP,
                  ASSUME pre, rich_listTheory.DROP_SEG, rich_listTheory.TAKE_SEG])) thm0
     val thm2 = GEN l_tm (DISCH pre thm1)
   in thm2 end
