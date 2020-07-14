@@ -70,25 +70,25 @@ val bir_etl_wm_def =
 
 val bir_exec_to_labels_triple_precond_def = Define `
   bir_exec_to_labels_triple_precond st pre prog =
-    (bir_eval_exp pre st.bst_environ = SOME bir_val_true) /\
+    ((bir_eval_exp pre st.bst_environ = SOME bir_val_true) /\
     (bir_env_vars_are_initialised st.bst_environ
        (bir_vars_of_program prog)) /\
     (st.bst_pc.bpc_index = 0) /\
     (st.bst_status = BST_Running) /\
-    (bir_is_bool_exp_env st.bst_environ pre)
+    (bir_is_bool_exp_env st.bst_environ pre))
 `;
 
 (* We don't need the condition that st.bst_pc.bpc_label IN ls here,
  * since we can obtain that result from weak_pc_in_thm. *)
 val bir_exec_to_labels_triple_postcond_def = Define `
   bir_exec_to_labels_triple_postcond st post prog =
-    (bir_eval_exp (post st.bst_pc.bpc_label) st.bst_environ =
+    ((bir_eval_exp (post st.bst_pc.bpc_label) st.bst_environ =
        SOME bir_val_true) /\
     (bir_env_vars_are_initialised st.bst_environ
        (bir_vars_of_program prog)) /\
     (st.bst_pc.bpc_index = 0) /\
     (st.bst_status = BST_Running) /\
-    (bir_is_bool_exp_env st.bst_environ (post st.bst_pc.bpc_label))
+    (bir_is_bool_exp_env st.bst_environ (post st.bst_pc.bpc_label)))
 `;
 
 (* The main BIR triple to be used for composition *)
@@ -725,7 +725,7 @@ val bir_loop_contract_def = Define `
  *)
 val bir_loop_contract_def = Define `
   bir_loop_contract prog l le invariant C1 variant =
-    (~(l IN le)) /\
+    ((~(l IN le)) /\
     (!x. (bir_triple prog l ({l} UNION le)
            (* (\ms. (invariant ms) /\ (C1 ms) /\ ((var ms) = x:num)) *)
            (BExp_BinExp BIExp_And invariant
@@ -744,12 +744,12 @@ val bir_loop_contract_def = Define `
                             else bir_exp_false
 	   )
          )
-    )
+    ))
 `;
 
 val bir_signed_loop_contract_def = Define `
   bir_signed_loop_contract prog l le invariant C1 variant =
-    (~(l IN le)) /\
+    ((~(l IN le)) /\
     (!x. (bir_triple prog l ({l} UNION le)
            (* (\ms. (invariant ms) /\ (C1 ms) /\ ((var ms) = x:num)) *)
            (* TODO: Variant greater than 0 here? *)
@@ -773,7 +773,7 @@ val bir_signed_loop_contract_def = Define `
                             else bir_exp_false
 	   )
          )
-    )
+    ))
 `;
 
 (* TODO: Very ugly little critter... *)

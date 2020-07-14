@@ -5,6 +5,8 @@ struct
 
   open m0_mod_stepTheory;
 
+  val ERR = mk_HOL_ERR "m0_mod_stepLib"
+
 (*
 open m0Theory m0_stepTheory;
 open m0_stepLib;

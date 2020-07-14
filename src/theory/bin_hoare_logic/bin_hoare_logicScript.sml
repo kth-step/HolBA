@@ -324,9 +324,9 @@ val (loop_fun_eqns, loop_fun_ind) = Defn.tprove(loop_fun_defn,
 
 val weak_loop_contract_def = Define `
   weak_loop_contract m l le invariant C1 var =
-    (~(l IN le)) /\
+    ((~(l IN le)) /\
     (!x. (weak_triple m l ({l} UNION le) (\ms. (invariant ms) /\ (C1 ms) /\ ((var ms) = x:num))
-         (\ms.(((m.pc ms)=l) /\ (invariant ms) /\ ((var ms) < x) /\ ((var ms) >= 0)))))
+         (\ms.(((m.pc ms)=l) /\ (invariant ms) /\ ((var ms) < x) /\ ((var ms) >= 0))))))
 `;
 
 val inductive_invariant_goal = (fst o dest_imp o concl ) (
