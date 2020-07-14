@@ -13,4 +13,13 @@ sig
 
    (* All holBA stuff *)
    val holBACore_ss : simpLib.ssfrag
+
+   (* Simplifies bir_var_set_is_well_typed of variable sets *)
+   val bir_var_set_is_well_typed_ss : simpLib.ssfrag
+
+   (* Simplifies intersections of variable sets *)
+   val bir_inter_var_set_ss : simpLib.ssfrag
+
+   (* Simplifies unions of variable sets *)
+   val bir_union_var_set_ss : simpLib.ssfrag
 end

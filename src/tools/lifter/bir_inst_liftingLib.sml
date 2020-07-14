@@ -109,11 +109,18 @@ val sty_FAIL  = [FG OrangeRed];
 functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifting = struct
   (* For debugging
   structure MD = struct val mr = arm8_bmr_rec end;
-  structure MD = struct val mr = m0_bmr_rec true true end;
-  val pc = Arbnum.fromInt 0x10000
+  structure MD = struct val mr = m0_bmr_rec false true end;
+  structure MD = struct val mr = m0_mod_bmr_rec false true end;
 
+  val pc = Arbnum.fromInt 0x10000
   val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x100000)
   val (_, mu_thm) = mk_WI_end_of_nums_WFE ``:64`` (Arbnum.fromInt 0x1000) (Arbnum.fromInt 0x100000)
+
+  (* debug case for m0/m0_mod *)
+  val pc = Arbnum.fromInt 0x3ee
+  val (mu_b, mu_e) = (Arbnum.fromInt 0x00, Arbnum.fromInt 0x100000)
+  val (_, mu_thm) = mk_WI_end_of_nums_WFE ``:64`` (Arbnum.fromInt 0x00) (Arbnum.fromInt 0x100000)
+  val hex_code = "f002fecb"
 
   fun hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code asm)
 
@@ -150,6 +157,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val hex_code = "C500"
   val hex_code = "B5F7"
   val hex_code = "448F"
+  val hex_code = "D001"
+  val hex_code = "a202"
+  val hex_code = "466a"
+  val hex_code = "aa02"
 
   val hex_code_desc = hex_code
 *)
@@ -325,6 +336,49 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
 
   (*******************************************************)
+  (* patched step theorems                               *)
+  (*******************************************************)
+
+val oracletag = "BIR_step_patch";
+val StepPatchThm = mk_oracle_thm oracletag;
+val mk_patch_thms = List.map (fn tm => UNDISCH_ALL (StepPatchThm ([], tm)));
+
+val patch_thms_m0modft_a202 = mk_patch_thms [
+``(* copied an modified accordingly, based on "aa02" *)
+  (bmr_ms_mem_contains (m0_mod_bmr (F,T)) ms
+       (ms.base.REG RName_PC,[2w; 162w])) ==>
+  (ms.countw <=+ 0xFFFFFFFFFFFFFFFEw) ==>
+  ((m0_mod_bmr (F,T)).bmr_extra ms) ==>
+  (aligned 1 (ms.base.REG RName_PC)) ==>
+  (NextStateM0_mod ms =
+      SOME
+        <|base :=
+          ms.base with
+          <|REG :=
+              (RName_PC =+ ms.base.REG RName_PC + 2w)
+                ((RName_2 =+ ms.base.REG RName_PC + 8w) ms.base.REG);
+            count := w2n ms.countw + 1; pcinc := 2w|>;
+        countw := ms.countw + 1w|>)
+``];
+
+
+val is_mr_m0_mod_f_t = (#bmr_const mr = #bmr_const (m0_mod_bmr_rec false true));
+
+val patched_thms_ = [
+    (is_mr_m0_mod_f_t, "a202", patch_thms_m0modft_a202)
+  ];
+
+val patched_thms = List.foldr (fn ((a, b, c), l) => if a then (b,c)::l else l) [] patched_thms_;
+
+fun get_patched_step_hex ms_v hex_code =
+  let
+    val strToLower = implode o (List.map Char.toLower) o explode;
+    val patch = List.find (fn (b, c) => strToLower b = strToLower hex_code) patched_thms;
+  in
+    if isSome patch then snd (valOf patch) else (#bmr_step_hex mr) ms_v hex_code
+  end;
+
+  (*******************************************************)
   (* Creating lifting theorems from a single instruction *)
   (*******************************************************)
 
@@ -345,7 +399,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   fun mk_inst_lifting_theorems hex_code hex_code_desc =
   let
      val lifted_thms_raw = let
-       val res = (#bmr_step_hex mr) ms_v hex_code
+       val res = get_patched_step_hex ms_v hex_code
        val _ = assert (not o List.null) res
        val _ = assert (List.all (fn thm => not (Lib.mem F (hyp thm)))) res
      in res end handle HOL_ERR _ =>
@@ -404,6 +458,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   (* val [thm_a, thm_b] = next_thms *)
   fun preprocess_next_thms_simple_merge thm_a thm_b = let
     val thm0 = MATCH_MP COMBINE_TWO_STEP_THMS_SIMPLE thm_a
+               handle HOL_ERR _ => MATCH_MP COMBINE_TWO_STEP_THMS_SIMPLE_2 thm_a
     val thm1 = MATCH_MP thm0 thm_b
     val (pre, _) = dest_imp_only (concl thm1);
     val pre_thm = SIMP_PROVE std_ss [] pre
@@ -413,10 +468,16 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   fun preprocess_next_thms (lb:term) ([]:thm list) =
       raise bir_inst_liftingAuxExn (BILED_msg ("empty list of step theorems produced"))
-    | preprocess_next_thms lb [thm] = [(lb, T, thm)]
-    | preprocess_next_thms lb thms =
-      [(lb, T, preprocess_next_thms_simple_merge (el 1 thms) (el 2 thms))] handle HOL_ERR _ =>
-      raise bir_inst_liftingAuxExn (BILED_msg ("more than 2 next-theorems cannot be merged currently: TODO"));
+    | preprocess_next_thms lb [thm] =
+        [(lb, T, thm)]
+    | preprocess_next_thms lb [thms1, thms2] =
+      (
+        [(lb, T, preprocess_next_thms_simple_merge thms1 thms2)]
+        handle HOL_ERR _ =>
+          raise bir_inst_liftingAuxExn (BILED_msg ("unknown error during merging of 2 next-theorems"))
+      )
+    | preprocess_next_thms _ _ =
+        raise bir_inst_liftingAuxExn (BILED_msg ("more than 2 next-theorems cannot be merged currently: TODO"));
 
 
 
@@ -874,17 +935,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
      (* compute var names of expression. Return both a theorem and add them to the given
         string set. *)
-     val comp_varnames_conv = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) [
+     val comp_varnames_conv = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++pred_setSimps.PRED_SET_ss++HolBACoreSimps.holBACore_ss) ([
          pred_setTheory.INSERT_UNION_EQ,
-         bir_temp_varsTheory.bir_temp_var_name_def,
-         bir_bool_expTheory.bir_exp_true_def,
-         bir_bool_expTheory.bir_exp_false_def,
-         bir_nzcv_expTheory.BExp_nzcv_ADD_vars_of, bir_nzcv_expTheory.BExp_nzcv_SUB_vars_of,
-         bir_nzcv_expTheory.BExp_ADD_WITH_CARRY_vars_of,
-         BExp_word_reverse_vars_of, BExp_Align_vars_of, BExp_Aligned_vars_of,
-         BExp_MSB_vars_of, BExp_LSB_vars_of, BExp_word_bit_vars_of, BExp_word_bit_exp_vars_of,
-         BExp_ror_vars_of, BExp_ror_exp_vars_of, BExp_rol_vars_of, BExp_rol_exp_vars_of,
-         BExp_extr_vars_of]
+         bir_temp_varsTheory.bir_temp_var_name_def]@
+         HolBASimps.common_exp_defs)
 
      val comp_upd_imm_varname_conv = SIMP_CONV (list_ss++stringSimps.STRING_ss) [bir_temp_varsTheory.bir_temp_var_def, bir_envTheory.bir_var_name_def, bir_temp_varsTheory.bir_temp_var_name_def]
 
@@ -1319,7 +1373,9 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
     val cache' = Redblackmap.insert (cache, hex_code, thm0)
   in (thm0, cache', false) end
 
-
+(*
+val cache = lift_inst_cache_empty;
+*)
   local
      val discharge_hyp_CONV = SIMP_CONV (arith_ss) [alignmentTheory.aligned_numeric, alignmentTheory.aligned_0]
      val final_CS = wordsLib.words_compset ()

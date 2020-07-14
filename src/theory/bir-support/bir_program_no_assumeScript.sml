@@ -124,10 +124,10 @@ val bir_stmtsB_not_assume_never_assumviol =
     IMP_RES_TAC bir_stmtB_not_assume_never_assumviol >>
     PAT_X_ASSUM ``!l'' c'' st''. _``
                 (fn thm => ASSUME_TAC
-                  (SPECL [``(OPT_CONS obs_test l): 'a list``,
+                  (SPECL [``(OPT_CONS obs_test l): (num # 'a) list``,
                           ``(SUC c):num``,
                           ``st_test:bir_state_t``,
-                          ``l': 'a list``,
+                          ``l': (num # 'a) list``,
                           ``c':num``,
                           ``st':bir_state_t``] thm
                   )
@@ -241,8 +241,8 @@ val bir_block_not_assume_never_assumviol =
   PAT_X_ASSUM ``!st' l' l c' c. _``
           (fn thm => ASSUME_TAC
             (SPECL [``st'_test:bir_state_t``,
-                ``l_test: 'a list``,
-                        ``[]:'a list``,
+                ``l_test: (num # 'a) list``,
+                        ``[]: (num # 'a) list``,
                 ``c_test:num``,
                 ``0:num``] thm
             )

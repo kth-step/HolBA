@@ -1,4 +1,7 @@
 open HolKernel Parse boolLib bossLib;
+
+open bir_auxiliaryLib;
+
 open wordsTheory bitstringTheory ASCIInumbersTheory;
 open pred_setTheory;
 
@@ -216,8 +219,108 @@ FULL_SIMP_TAC std_ss [IN_DIFF, FINITE_INSERT, INSERT_SUBSET,
   CARD_INSERT]);
 
 
+val IN_UNION_ABSORB_thm = store_thm ("IN_UNION_ABSORB_thm",
+  ``! l ls. (l IN ls) ==> (({l} UNION ls) = ls)``,
+
+METIS_TAC [ABSORPTION,
+           GSYM INSERT_SING_UNION]
+);
+
+
+val SINGLETONS_UNION_thm = store_thm ("SINGLETONS_UNION_thm",
+  ``! l e. ({l} UNION {e}) = {l;e}``,
+
+METIS_TAC [INSERT_SING_UNION]
+);
+
+
+val INTER_SUBSET_EMPTY_thm = store_thm("INTER_SUBSET_EMPTY_thm",
+  ``!s t v.
+    s SUBSET t ==>
+    (v INTER t = EMPTY) ==>
+    (v INTER s = EMPTY)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [pred_setTheory.INTER_DEF, pred_setTheory.EMPTY_DEF, FUN_EQ_THM]  >>
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] >>
+FULL_SIMP_TAC std_ss [pred_setTheory.SUBSET_DEF] >>
+METIS_TAC []
+);
+
+val SUBSET_EQ_UNION_thm = store_thm("SUBSET_EQ_UNION_thm",
+  ``!s t.
+    s SUBSET t ==>
+    (? v. t = s UNION v)``,
+
+REPEAT STRIP_TAC >>
+Q.EXISTS_TAC `t` >>
+METIS_TAC [pred_setTheory.SUBSET_UNION_ABSORPTION]
+);
+
+val IN_NOT_IN_NEQ_thm = store_thm("IN_NOT_IN_NEQ_thm",
+  ``!x y z.
+    x IN z ==>
+    ~(y IN z) ==>
+    (x <> y)``,
+
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
+);
+
+val SING_DISJOINT_SING_NOT_IN_thm = store_thm("SING_DISJOINT_SING_NOT_IN_thm",
+  ``!x y.
+    (x INTER {y} = EMPTY) ==>
+    ~(y IN x)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss)
+  [pred_setTheory.INTER_DEF] >>
+FULL_SIMP_TAC std_ss [pred_setTheory.EMPTY_DEF] >>
+FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
+QSPECL_X_ASSUM ``!x.P`` [`y`] >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
+);
+
+val INTER_EMPTY_IN_NOT_IN_thm = store_thm("INTER_EMPTY_IN_NOT_IN_thm",
+  ``!x y z.
+    (x INTER y = EMPTY) ==>
+    z IN x ==>
+    ~(z IN y)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss)
+  [pred_setTheory.INTER_DEF] >>
+FULL_SIMP_TAC std_ss [pred_setTheory.EMPTY_DEF] >>
+FULL_SIMP_TAC std_ss [FUN_EQ_THM] >>
+QSPECL_X_ASSUM ``!x.P`` [`z`] >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] >>
+METIS_TAC []
+);
+
+val INTER_EMPTY_INTER_INTER_EMPTY_thm = store_thm("INTER_EMPTY_INTER_INTER_EMPTY_thm",
+  ``!x y z.
+    (x INTER y = EMPTY) ==>
+    (x INTER (y INTER z) = EMPTY)``,
+
+REPEAT STRIP_TAC >>
+SIMP_TAC std_ss [Once pred_setTheory.INTER_ASSOC] >>
+FULL_SIMP_TAC std_ss [] >>
+FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_AC_ss++pred_setSimps.PRED_SET_ss) [] 
+);
+
+val UNION_INSERT = store_thm("UNION_INSERT",
+  ``!x s t. t UNION (x INSERT s) = if x IN t then t UNION s else (x INSERT t) UNION s``,
+
+METIS_TAC [
+  pred_setTheory.INSERT_UNION,
+  pred_setTheory.UNION_COMM,
+  pred_setTheory.INSERT_UNION_EQ
+]
+);
+
+
 (* -------------------------------------------------------------------------- *)
-(* Modulus                                                                    *)
+(* Arithmetic                                                                   *)
 (* -------------------------------------------------------------------------- *)
 
 val MOD_ADD_EQ_SUB = store_thm ("MOD_ADD_EQ_SUB",
@@ -228,6 +331,19 @@ REPEAT STRIP_TAC >>
 `?i. x1 + x2 = y + i` by METIS_TAC[arithmeticTheory.LESS_EQ_EXISTS] >>
 ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_MODULUS]);
 
+val NUM_LSONE_EQZ =
+  store_thm("NUM_LSONE_EQZ",
+  ``!(n:num). (n < 1) <=> (n = 0)``,
+
+FULL_SIMP_TAC arith_ss []
+);
+
+val NUM_PRE_LT =
+  store_thm("NUM_PRE_LT",
+  ``!(a:num). (a > 0) ==> PRE a < a``,
+
+FULL_SIMP_TAC arith_ss []
+);
 
 (* -------------------------------------------------------------------------- *)
 (* While lemmata                                                              *)
@@ -391,6 +507,73 @@ Induct_on `n` >> (
 val FUNPOW_OPT_compute = save_thm ("FUNPOW_OPT_compute",
   CONV_RULE (numLib.SUC_TO_NUMERAL_DEFN_CONV) FUNPOW_OPT_REWRS);
 
+val FUNPOW_OPT_ADD_thm = store_thm ("FUNPOW_OPT_ADD_thm",
+  ``!f n n' ms ms' ms''.
+    (FUNPOW_OPT f n ms = SOME ms') ==>
+    (FUNPOW_OPT f n' ms' = SOME ms'') ==> 
+    (FUNPOW_OPT f (n'+n) ms = SOME ms'')``,
+
+METIS_TAC [FUNPOW_OPT_def,
+           arithmeticTheory.FUNPOW_ADD]
+);
+
+val FUNPOW_OPT_next_1_NONE = store_thm("FUNPOW_OPT_next_1_NONE",
+  ``!step_fun n s.
+    (FUNPOW_OPT step_fun n s = NONE) ==>
+    (FUNPOW_OPT step_fun (SUC n) s = NONE)``,
+
+Induct_on `n` >| [
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [FUNPOW_OPT_REWRS],
+
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [FUNPOW_OPT_REWRS] >>
+  Cases_on `step_fun s` >| [
+    FULL_SIMP_TAC std_ss [],
+
+    FULL_SIMP_TAC std_ss []
+  ]
+]
+);
+
+val FUNPOW_OPT_next_n_NONE = store_thm("FUNPOW_OPT_next_n_NONE",
+ ``!step_fun n n' s.
+   (FUNPOW_OPT step_fun n s = NONE) ==>
+   (FUNPOW_OPT step_fun (n + n') s = NONE)``,
+
+Induct_on `n'` >| [
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [FUNPOW_OPT_REWRS],
+
+  REPEAT STRIP_TAC >>
+  QSPECL_X_ASSUM ``!step_fun n s. _`` [`step_fun`, `SUC n`, `s`] >>
+  IMP_RES_TAC FUNPOW_OPT_next_1_NONE >>
+  FULL_SIMP_TAC arith_ss [arithmeticTheory.ADD_CLAUSES]
+]
+);
+
+val FUNPOW_OPT_prev_EXISTS = store_thm("FUNPOW_OPT_prev_EXISTS",
+ ``!step_fun n n' s s'.
+   n > 0 ==>
+   (FUNPOW_OPT step_fun n s = SOME s') ==>
+   n' < n ==>
+   ?s''.
+   (FUNPOW_OPT step_fun n' s = SOME s'')``,
+
+REPEAT STRIP_TAC >>
+Cases_on `FUNPOW_OPT step_fun n' s` >| [
+  subgoal `?n''. n = n' + n''` >- (
+    `n' <= n` by FULL_SIMP_TAC arith_ss [] >>
+    METIS_TAC [arithmeticTheory.LESS_EQ_EXISTS]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  IMP_RES_TAC FUNPOW_OPT_next_n_NONE >>
+  QSPECL_X_ASSUM ``!n''. _`` [`n''`] >>
+  FULL_SIMP_TAC std_ss [],
+
+  METIS_TAC []
+]
+);
 
 (* -------------------------------------------------------------------------- *)
 (* lazy lists                                                                 *)
@@ -765,5 +948,21 @@ FULL_SIMP_TAC list_ss [listTheory.EVERY_MAP] >>
 MATCH_MP_TAC listTheory.ALL_DISTINCT_MAP_INJ >>
 ASM_SIMP_TAC std_ss [FRESH_INDEXED_STRING_MK_11]);
 
+
+(* -------------------------------------------------------------------------- *)
+(* Miscellaneous                                                              *)
+(* -------------------------------------------------------------------------- *)
+
+val noteq_trans_impl = store_thm("noteq_trans_impl",
+  ``!A B x.
+    (A <> B) ==>
+    (((x = A) /\ (x = B)) <=> F)``,
+
+REPEAT STRIP_TAC >>
+RW_TAC std_ss [] >>
+CCONTR_TAC >>
+FULL_SIMP_TAC std_ss [] >>
+RW_TAC std_ss []
+);
 
 val _ = export_theory();

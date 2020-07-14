@@ -19,7 +19,8 @@ val prog_ldld_w_obs = ("prog_ldld_w_obs", ``
               (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
                  (BExp_Den (BVar "R1" (BType_Imm Bit64))) BEnd_LittleEndian
                  Bit64);
-            BStmt_Observe (BExp_Const (Imm1 1w))
+            BStmt_Observe 0
+                          (BExp_Const (Imm1 1w))
                           ([BExp_BinExp BIExp_And
                                         (BExp_Const (Imm64 0x1FC0w))
                                         (BExp_Den (BVar "R1" (BType_Imm Bit64)))])
@@ -33,7 +34,8 @@ val prog_ldld_w_obs = ("prog_ldld_w_obs", ``
               (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
                  (BExp_Den (BVar "R2" (BType_Imm Bit64))) BEnd_LittleEndian
                  Bit64);
-            BStmt_Observe (BExp_Const (Imm1 1w))
+            BStmt_Observe 0
+                          (BExp_Const (Imm1 1w))
                           ([BExp_BinExp BIExp_And
                                         (BExp_Const (Imm64 0x1FC0w))
                                         (BExp_Den (BVar "R2" (BType_Imm Bit64)))])

@@ -35,8 +35,8 @@ val bir_exec_to_labels_triple_def = Define `
     (?l1 c1 c2 s'.
       (r = BER_Ended l1 c1 c2 s') /\
       (s'.bst_status = BST_Running) /\
-      bir_is_bool_exp_env s'.bst_environ post /\
-      (bir_eval_exp post (s'.bst_environ) = SOME bir_val_true) /\
+      bir_is_bool_exp_env s'.bst_environ (post s'.bst_pc.bpc_label) /\
+      (bir_eval_exp (post s'.bst_pc.bpc_label) s'.bst_environ = SOME bir_val_true) /\
       ((s'.bst_pc.bpc_index = 0) /\ (s'.bst_pc.bpc_label IN ls))
     )`;
 

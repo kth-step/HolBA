@@ -1,0 +1,39 @@
+# download and import VM: https://kth.box.com/s/fkk94gi76dd0retya08kr0kn0c5814xl
+# check hash of downloaded VM file
+# Filename: HOLBA_VM.ova
+# MD5: adaa26e31a0a653dad261a3e3b627e81
+
+# in the VM: prepare the following
+# ================================
+
+# install required packages
+sudo apt install libtinfo5
+
+# prepare SSH keys for convenience
+scp lindnera@u-shell.csc.kth.se:/home/l/i/lindnera/.ssh/id_rsa /home/holba/.ssh/
+scp lindnera@u-shell.csc.kth.se:/home/l/i/lindnera/.ssh/id_rsa.pub /home/holba/.ssh/
+chmod 444 id_rsa.pub
+chmod 400 id_rsa
+
+# prepare embexp
+cd /home/holba/data/HolBA_opt/embexp/EmbExp-ProgPlatform
+git checkout scamv
+cd /home/holba/data/HolBA_opt/embexp/EmbExp-Box/config
+cp networks.json.example networks.json
+gedit networks.json
+
+# finish holba preparation
+cd /home/holba/data/HolBA_scamv
+./scripts/setup/install_embexp_logs.sh
+# fix the path to embexp logs in config.env.sh:
+# HOLBA_EMBEXP_LOGS=/home/holba/data/HolBA_scamv/logs/EmbExp-Logs
+gedit config.env.sh
+
+# test the setup
+cd /home/holba/data/HolBA_scamv/src/tools/scamv/examples
+# open multiple shells in this directory and execute the following in order in each shell
+./scripts/1-gen.sh test123 qc_xld
+./scripts/2-connect.sh rpi3
+./scripts/3-run.sh arm8/exps2
+./scripts/4-status.sh
+

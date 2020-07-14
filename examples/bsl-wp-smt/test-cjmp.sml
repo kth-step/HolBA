@@ -55,7 +55,7 @@ val show_cfg = false;
 val dot_path = "./cjmp-test.dot";
 val _ = if not show_cfg then () else
   let
-    val _ = bir_cfgVizLib.bir_export_graph_from_prog ((snd o dest_eq o concl) cjmp_prog_def) dot_path;
+    val _ = bir_old_cfgVizLib.bir_export_graph_from_prog ((snd o dest_eq o concl) cjmp_prog_def) dot_path;
     val _ = graphVizLib.convertAndView (OS.Path.base dot_path);
   in () end;
 

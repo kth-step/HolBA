@@ -21,4 +21,7 @@ sig
     val elements : 'a list -> 'a Gen;
     val oneof : 'a Gen list -> 'a Gen;
     val frequency : (int * 'a Gen) list -> 'a Gen;
+    val arb_list_of : 'a Gen -> 'a list Gen;
+    val arb_option : 'a Gen -> 'a option Gen;
+    val such_that : ('a -> bool) -> 'a Gen -> 'a Gen;
 end

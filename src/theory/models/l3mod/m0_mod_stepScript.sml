@@ -106,5 +106,36 @@ val m0_mod_step_gen_thm = store_thm("m0_mod_step_gen_thm", ``
   SIMP_TAC std_ss [m0_mod_step_thm]
 );
 
+(* simplified relaxed theorem for use by the step function *)
+val m0_mod_step_gen_relaxed_thm = store_thm("m0_mod_step_gen_relaxed_thm", ``
+  !s' (d:word64) (dmax:word64) sm.
+    (NextStateM0 (m0_mod_inv sm) = SOME s') ==>
+    (d <=+ dmax) ==>
+    (s'.count = (m0_mod_inv sm).count + (w2n d)) ==>
+
+    (sm.countw <=+ (n2w ((2 ** 64) - 1)) - dmax) ==>
+    (NextStateM0_mod sm = SOME (<| base := s'; countw := sm.countw + d |>))
+``,
+  REPEAT STRIP_TAC >>
+  ASSUME_TAC (Q.SPECL [`s'`, `d`, `sm`] m0_mod_step_gen_thm) >>
+
+  `sm.countw <=+ n2w (2 ** 64 − 1) − d` by (
+    POP_ASSUM (K ALL_TAC) >>
+    POP_ASSUM (fn t => POP_ASSUM (K (ASSUME_TAC t))) >>
+    POP_ASSUM (fn t => POP_ASSUM (fn t2 => POP_ASSUM (K (ASSUME_TAC t >> ASSUME_TAC t2)))) >>
+
+    FULL_SIMP_TAC std_ss [WORD_LS, w2n_min_thm] >>
+
+    `w2n (0xFFFFFFFFFFFFFFFFw:word64) − w2n dmax <= w2n (0xFFFFFFFFFFFFFFFFw:word64) − w2n d` by (
+      POP_ASSUM (fn t => POP_ASSUM (K (ASSUME_TAC t))) >>
+      ASM_SIMP_TAC std_ss [LE_SUB_LCANCEL]
+    ) >>
+
+    METIS_TAC [LESS_EQ_TRANS]
+  ) >>
+
+  ASM_SIMP_TAC std_ss []
+);
+
 
 val _ = export_theory();

@@ -4,6 +4,8 @@ struct
 datatype 'a Gen
   = Gen of (int -> Random.generator -> 'a);
 
+fun incRandRange (a, b) = Random.range (a, b + 1);
+
 (* sized :: (Int -> Gen a) -> Gen a *)
 fun sized fgen = Gen (fn n => fn r =>
                          let val (Gen m) = fgen n in m n r end);
@@ -20,13 +22,13 @@ fun promote f = Gen (fn n => fn r => fn a =>
 
 (* generate :: Int -> StdGen -> Gen a -> a *)
 fun generate n rnd (Gen m) =
-    let val sz = Random.range (0,n) rnd;
+    let val sz = incRandRange (0,n) rnd;
     in
         m sz rnd
     end
 
 fun run_step n rnd (Gen m) =
-    let val sz = Random.range (0,n) rnd;
+    let val sz = incRandRange (0,n) rnd;
     in
         (m sz rnd, rnd)
     end
@@ -56,7 +58,7 @@ fun sample amount n rnd g =
     generate n rnd (repeat amount g)
 
 fun choose (a,b) =
-    (Random.range (a,b)) <$> rand
+    (incRandRange (a,b)) <$> rand
 
 fun elements xs =
     (fn i => List.nth (xs,i)) <$> choose (0, List.length xs - 1);
@@ -67,13 +69,27 @@ fun oneof gens = elements gens >>= id;
 fun frequency xs =
     let val sum = List.foldr (op +) 0;
         val tot = sum (List.map fst xs);
-        fun pick ((k,x)::xs) n =
+        fun pick [] _ = raise ERR "qc_genLib::frequency::pick" "reached end of the list too early, something is off..."
+          | pick ((k,x)::xs) n =
             if n <= k
             then x
             else pick xs (n-k)
     in
         choose (1, tot) >>= (pick xs)
     end
+
+fun arb_list_of m =
+    sized (fn prog_size =>
+              repeat prog_size m);
+
+fun arb_option m =
+    frequency [(1,return NONE)
+              ,(2,SOME <$> m)];
+
+fun such_that f gen =
+    gen >>= (fn x =>
+                if f x then return x else such_that f gen);
+
 end
 
 (*

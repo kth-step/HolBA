@@ -1,0 +1,18 @@
+driver-test --max_iter 5000 --prog_size 5 --max_tests 20 --generator rand --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
+
+
+>>> cav_20-01-22_rand_plain
+---
+run_id = d0536c15312118473356fbe270d3c52263eaf23a.rpi3
+
+n_progs = 5972 (this number is only based on the number of progs subdirectories)
+n_exps  = 21243
+
+
+n_notrun     = 1
+n_incomplete = 0
+
+n_others       = 133
+n_inconclusive = 1
+n_examples     = 21105
+n_cexamples    = 3

@@ -1,4 +1,7 @@
 open HolKernel Parse boolLib bossLib;
+
+open bir_auxiliaryLib;
+
 open wordsTheory bitstringTheory;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
 open bir_exp_immTheory bir_exp_memTheory bir_envTheory;
@@ -1005,9 +1008,6 @@ Cases_on `bir_exec_infinite_steps_COUNT_STEPS pc_cond mo p state` >> (
 ));
 
 
-val num_less_1_eq_0 = prove (``!x: num. (x < 1) <=> (x = 0)``, DECIDE_TAC);
-
-
 val bir_exec_steps_GEN_1_EQ_Looping = store_thm ("bir_exec_steps_GEN_1_EQ_Looping",
   ``((bir_exec_steps_GEN pc_cond p state (SOME 1)) = BER_Looping ll) <=>
     ((ll = bir_exec_steps_observe_llist p state NONE) /\
@@ -1015,7 +1015,7 @@ val bir_exec_steps_GEN_1_EQ_Looping = store_thm ("bir_exec_steps_GEN_1_EQ_Loopin
      (!n. 0 < n ==> ~(bir_state_COUNT_PC pc_cond (bir_exec_infinite_steps_fun p state n))))``,
 
 SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) [bir_exec_steps_GEN_EQ_Looping,
-  bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE, num_less_1_eq_0,
+  bir_exec_infinite_steps_COUNT_STEPS_EQ_NONE, NUM_LSONE_EQZ,
   bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
 REPEAT STRIP_TAC >> EQ_TAC >> STRIP_TAC >- (
   GEN_TAC >> STRIP_TAC >>
@@ -1224,6 +1224,45 @@ REPEAT STRIP_TAC >> EQ_TAC >> REPEAT STRIP_TAC >- (
 ));
 
 
+val bir_exec_steps_GEN_SOME_EQ_Ended_pc_counts =
+  store_thm("bir_exec_steps_GEN_SOME_EQ_Ended_pc_counts",
+  ``!pc_cond p st n ol c_st c_pc st'.
+    (bir_exec_steps_GEN pc_cond p st (SOME n) = BER_Ended ol c_st c_pc st') ==>
+    (~bir_state_is_terminated st') ==>
+    (n = c_pc)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended] >>
+Cases_on `c_pc < n` >| [
+  FULL_SIMP_TAC std_ss [bir_state_is_terminated_def],
+
+  FULL_SIMP_TAC arith_ss []
+]
+);
+
+
+val bir_exec_steps_GEN_SOME_EQ_Ended_Running_steps =
+  store_thm("bir_exec_steps_GEN_SOME_EQ_Ended_Running_steps",
+  ``!pc_cond p st n ol c_st c_pc st'.
+    (bir_exec_steps_GEN pc_cond p st (SOME n) =
+      BER_Ended ol c_st c_pc st') ==>
+    (~bir_state_is_terminated st') ==>
+    (n > 0) ==>
+    (c_st > 0)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended] >>
+Cases_on `c_st = 0` >- (
+  FULL_SIMP_TAC std_ss
+    [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF] >>
+  `c_pc < n` by FULL_SIMP_TAC arith_ss [] >>
+  METIS_TAC [bir_state_is_terminated_def,
+             bir_exec_infinite_steps_fun_REWRS]
+) >>
+FULL_SIMP_TAC arith_ss []
+);
+
+
 val bir_exec_steps_GEN_1_EQ_Ended = store_thm ("bir_exec_steps_GEN_1_EQ_Ended",
   ``!p state ol step_c pc_c state' pc_cond.
     (bir_exec_steps_GEN pc_cond p state (SOME 1) = BER_Ended ol step_c pc_c state') <=>
@@ -1284,8 +1323,6 @@ Cases_on `pc_c = 0` >- (
 (***************************************************************)
 (* combine multiple runs                                       *)
 (***************************************************************)
-
-
 
 val bir_exec_steps_GEN_SOME_ADD_Ended = store_thm ("bir_exec_steps_GEN_SOME_ADD_Ended",
   ``!n1 mo pc_count p state0 state1 state2 l1 l2 c_st1 c_st2 c_pc1 c_pc2.
@@ -1866,10 +1903,493 @@ SIMP_TAC std_ss [bir_exec_block_n_def, bir_exec_steps_GEN_REWR_no_steps,
   valOf_BER_Ended_def]);
 
 
+val bir_exec_block_n_0_steps =
+  store_thm("bir_exec_block_n_0_steps",
+  ``!prog st m l n c_l' st'.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (n = 0) ==>
+    (st' = st)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM,
+                      bir_exec_infinite_steps_fun_REWRS]
+);
+
+
 val bir_exec_block_n_REWR_TERMINATED = store_thm ("bir_exec_block_n_REWR_TERMINATED",
   ``!p state n. bir_state_is_terminated state ==> (bir_exec_block_n p state n = ([], 0, 0, state))``,
 SIMP_TAC std_ss [bir_exec_block_n_def, bir_exec_steps_GEN_REWR_TERMINATED,
   valOf_BER_Ended_def]);
+
+
+val bir_exec_block_n_EXISTS =
+  store_thm ("bir_exec_block_n_EXISTS",
+  ``!prog st m.
+    ?l n c_l st'.
+    bir_exec_block_n prog st m = (l, n, c_l, st')``,
+
+METIS_TAC [pairTheory.PAIR]
+);
+
+
+(* Consider block execution of m+1 and 1 blocks, both from the
+ * same initial state, where m > 0. Then there exists a return
+ * quadruple for m block-steps of execution from the initial state
+ * equal to the final state of execution of 1 block. *)
+val bir_exec_block_n_inter =
+  store_thm("bir_exec_block_n_inter",
+  ``!prog st m (l':(num # 'a) list) l''' n n'' c_l' c_l''' st' st''.
+    (bir_exec_block_n prog st (SUC m) =
+       (l''', n'', c_l''', st'')) ==>
+    (bir_exec_block_n prog st 1 = (l',n,c_l',st')) ==>
+    (m > 0) ==>
+    ?l'' n'' c_l''.
+    (bir_exec_block_n prog st' m = (l'',n'',c_l'',st''))``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [arithmeticTheory.ADD1] >>
+Q.PAT_X_ASSUM
+  `bir_exec_block_n prog st (m + 1) = (l''',n'',c_l''',st'')`
+  (fn thm =>
+    (subgoal `bir_exec_block_n prog st (1 + m) =
+                (l''',n'',c_l''',st'')`
+             >- (FULL_SIMP_TAC arith_ss [thm])
+    )
+  ) >>
+FULL_SIMP_TAC std_ss [bir_exec_block_n_add] >>
+REV_FULL_SIMP_TAC std_ss [LET_DEF] >>
+Cases_on `bir_exec_block_n prog st' m` >> Cases_on `r` >>
+  Cases_on `r'` >>
+FULL_SIMP_TAC std_ss []
+);
+
+
+val bir_exec_block_n_block_n =
+  store_thm ("bir_exec_block_n_block_n",
+  ``!p st m l' n'' c_l'' st''.
+    (bir_exec_block_n p st (SUC m) = (l',n'',c_l'',st'')) ==>
+    (?l n c_l st' l' n' c_l'.
+     (bir_exec_block_n p st m = (l,n,c_l,st')) /\
+     (bir_exec_block_n p st' 1 = (l',n',c_l',st'')))``,
+
+REPEAT STRIP_TAC >>
+Q.SUBGOAL_THEN `SUC m = m + 1`
+  (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+  DECIDE_TAC
+) >>
+FULL_SIMP_TAC std_ss [bir_exec_block_n_add] >>
+`?l1 c1 c_bl1 st1. bir_exec_block_n p st m = (l1, c1, c_bl1, st1)`
+  by FULL_SIMP_TAC std_ss [bir_exec_block_n_EXISTS] >>
+`?l2 c2 c_bl2 st2. bir_exec_block_n p st1 1 = (l2, c2, c_bl2, st2)`
+  by FULL_SIMP_TAC std_ss [bir_exec_block_n_EXISTS] >>
+FULL_SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [LET_DEF]
+);
+
+
+(* If number of block steps is greater than zero, and if initial
+ * state is not terminated, then the number of statement-steps must
+ * be greater than zero. *)
+val bir_exec_block_n_block_nz_init_running =
+  store_thm("bir_exec_block_n_block_nz_init_running",
+  ``!prog st m l n c_l' st'.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (0 < m) ==>
+    ~(bir_state_is_terminated st) ==>
+    0 < n``,
+
+REPEAT STRIP_TAC >>
+Cases_on `n <> 0` >- (
+  FULL_SIMP_TAC arith_ss []
+) >>
+FULL_SIMP_TAC arith_ss [] >>
+IMP_RES_TAC bir_exec_block_n_0_steps >>
+FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM] >>
+FULL_SIMP_TAC (arith_ss++holBACore_ss)
+              [bir_exec_infinite_steps_fun_COUNT_PCs_END_DEF]
+);
+
+
+(* If number of block steps is greater than zero, then if final
+ * state is not terminated PC index must be zero. *)
+val bir_exec_block_n_block_nz_final_running =
+  store_thm("bir_exec_block_n_block_nz_final_running",
+  ``!prog st m l n c_l' st'.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (0 < m) ==>
+    ~(bir_state_is_terminated st') ==>
+    (st'.bst_pc.bpc_index = 0)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM] >>
+subgoal `c_l' = m` >- (
+  FULL_SIMP_TAC arith_ss []
+) >>
+FULL_SIMP_TAC std_ss [] >>
+REV_FULL_SIMP_TAC std_ss [] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss)
+	      [bir_state_is_terminated_def, bir_state_COUNT_PC_def]
+);
+
+
+(* If final state is not terminated, then initial state must also
+ * not be terminated. *)
+val bir_exec_block_n_running =
+  store_thm("bir_exec_block_n_running",
+  ``!prog st m m' l n c_l' st' l' n' c_l'' st''.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    ~(bir_state_is_terminated st') ==>
+    ~(bir_state_is_terminated st)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM] >>
+Cases_on `n = 0` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_infinite_steps_fun_REWRS] >>
+  REV_FULL_SIMP_TAC std_ss []
+) >>
+subgoal `n > 0` >- (
+  FULL_SIMP_TAC arith_ss []
+) >>
+QSPECL_X_ASSUM ``!n'. _`` [`0`] >>
+REV_FULL_SIMP_TAC arith_ss [bir_state_is_terminated_def,
+                            bir_exec_infinite_steps_fun_REWRS]
+);
+
+
+(* Consider the resulting quadruple of block execution with
+ * a different number of block steps: a smaller number of
+ * statement-steps taken implies a smaller number of block steps. *)
+val bir_exec_block_n_step_ls =
+  store_thm("bir_exec_block_n_step_ls",
+  ``!prog st m m' l n c_l' st' l' n' c_l'' st''.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (bir_exec_block_n prog st m' = (l',n',c_l'',st'')) ==>
+    (n' < n) ==>
+    m' < m``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM] >>
+QSPECL_X_ASSUM ``!n'.
+                 n' < n ==>
+                 ~bir_state_is_terminated
+                   (bir_exec_infinite_steps_fun prog st n') /\
+                 _`` [`n'`] >>
+PAT_ASSUM ``(n':num) < n``
+          (fn  thm => FULL_SIMP_TAC arith_ss [thm])
+);
+
+
+(* Consider the resulting quadruple of block execution with
+ * a different number of block steps: a smaller number of
+ * block-steps implies a smaller or equal number of
+ * statement-steps. *)
+val bir_exec_block_n_block_ls =
+  store_thm("bir_exec_block_n_block_ls",
+  ``!prog st l l' n n' c_l' c_l'' st' m m' st''.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (bir_exec_block_n prog st m' = (l',n',c_l'',st'')) ==>
+    (m' < m) ==>
+    ~(n < n')``,
+
+REPEAT STRIP_TAC >>
+IMP_RES_TAC bir_exec_block_n_step_ls >>
+FULL_SIMP_TAC arith_ss []
+);
+
+
+(* Execution with a smaller number of statement-steps taken
+ * never results in a terminated state. *)
+val bir_exec_block_n_step_ls_running =
+  store_thm("bir_exec_block_n_step_ls_running",
+  ``!prog st l l' n n' c_l' c_l'' st' m m' st''.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (bir_exec_block_n prog st m' = (l',n',c_l'',st'')) ==>
+    (n' < n) ==>
+    ~(bir_state_is_terminated st'')``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM] >>
+QSPECL_X_ASSUM ``!n'.
+                 n' < n ==>
+                 ~bir_state_is_terminated
+                   (bir_exec_infinite_steps_fun prog st n') /\
+                 _`` [`n'`] >>
+REV_FULL_SIMP_TAC std_ss [bir_state_is_terminated_def]
+);
+
+
+(* Block execution taking the same number of statement-steps will
+ * result in the same final state. *)
+val bir_exec_block_n_step_eq =
+  store_thm("bir_exec_block_n_step_eq",
+  ``!prog st m m' l n c_l' st' l' n' c_l'' st''.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (bir_exec_block_n prog st m' = (l',n',c_l'',st'')) ==>
+    (n' = n) ==>
+    (st' = st'')``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+);
+
+(* If block execution of m steps results in a terminated state, then
+ * executing more block steps will just yield the same final state. 
+ * *)
+val bir_exec_block_n_not_running_block_ge =
+  store_thm("bir_exec_block_n_not_running_block_ge",
+  ``!prog st m m' l n c_l' st' l' n' c_l'' st''.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (bir_exec_block_n prog st m' = (l',n',c_l'',st'')) ==>
+    bir_state_is_terminated st' ==>
+    (m' >= m) ==>
+    (st' = st'')``,
+
+REPEAT STRIP_TAC >>
+Cases_on `m' = m` >- (
+  FULL_SIMP_TAC std_ss []
+) >>
+subgoal `~(n' < n)` >- (
+  IMP_RES_TAC bir_exec_block_n_block_ls >>
+  REV_FULL_SIMP_TAC arith_ss []
+) >>
+Cases_on `n' = n` >- (
+  METIS_TAC [bir_exec_block_n_step_eq]
+) >>
+subgoal `n' > n` >- (
+  FULL_SIMP_TAC arith_ss []
+) >>
+subgoal `!n.
+         n < n' ==>
+         ~bir_state_is_terminated
+           (bir_exec_infinite_steps_fun prog st n)` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+) >>
+subgoal `st' = bir_exec_infinite_steps_fun prog st n` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+) >>
+QSPECL_X_ASSUM ``!n. _`` [`n`] >>
+REV_FULL_SIMP_TAC arith_ss [bir_state_is_terminated_def] >>
+FULL_SIMP_TAC std_ss []
+);
+
+
+(* Assuming block executions take the same number of
+ * statement-steps, then if (either) final state is not terminated,
+ * the number of block-steps must be equal. *)
+val bir_exec_block_n_step_eq_running =
+  store_thm("bir_exec_block_n_step_eq_running",
+  ``!prog st m m' l n c_l' st' l' n' c_l'' st''.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (bir_exec_block_n prog st m' = (l',n',c_l'',st'')) ==>
+    (n' = n) ==>
+    ~(bir_state_is_terminated st') ==>
+    (m' = m)``,
+
+REPEAT STRIP_TAC >>
+IMP_RES_TAC bir_exec_block_n_step_eq >>
+FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM] >>
+Cases_on `c_l' < m` >- (
+  METIS_TAC [bir_state_is_terminated_def]
+) >>
+FULL_SIMP_TAC arith_ss []
+);
+
+
+(* If final state is not terminated, then execution with fewer
+ * block-steps will result in non-terminated final states. *)
+val bir_exec_block_n_block_ls_running_running =
+  store_thm("bir_exec_block_n_block_ls_running_running",
+  ``!prog st l l' n n' c_l' c_l'' st' m m' st''.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (bir_exec_block_n prog st m' = (l',n',c_l'',st'')) ==>
+    (m' < m) ==>
+    ~(bir_state_is_terminated st') ==>
+    ~(bir_state_is_terminated st'')``,
+
+REPEAT STRIP_TAC >>
+Cases_on `n' = n` >- (
+  IMP_RES_TAC bir_exec_block_n_step_eq_running >>
+  FULL_SIMP_TAC arith_ss []
+) >>
+Cases_on `n < n'` >- (
+  METIS_TAC [bir_exec_block_n_block_ls]
+) >>
+subgoal `n' < n` >- (
+  FULL_SIMP_TAC arith_ss []
+) >>
+IMP_RES_TAC bir_exec_block_n_step_ls_running
+);
+
+
+(* If execution of different numbers of block-steps has resulted
+ * in the same amount of statement-steps taken, then the state
+ * resulting from the strictly greatest number of block steps
+ * must be terminated. *)
+val bir_exec_block_n_step_eq_block_ls_not_running =
+  store_thm("bir_exec_block_n_step_eq_block_ls_not_running",
+  ``!prog st m m' l n c_l' st' l' n' c_l'' st''.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (bir_exec_block_n prog st m' = (l',n',c_l'',st'')) ==>
+    (n' = n) ==>
+    (m' < m) ==>
+    bir_state_is_terminated st''``,
+
+REPEAT STRIP_TAC >>
+IMP_RES_TAC bir_exec_block_n_step_eq >>
+Q.PAT_X_ASSUM `st' = st''` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
+IMP_RES_TAC bir_exec_block_n_step_eq_running >>
+Cases_on `bir_state_is_terminated st''` >> (
+  FULL_SIMP_TAC arith_ss []
+)
+);
+
+
+(* Consider execution of different numbers of block-steps where
+ * the final state resulting from execution of the (strictly) least
+ * number of block-steps is not terminated, then the associated
+ * number of statement-steps taken must also be the least of the
+ * two. *)
+val bir_exec_block_n_block_ls_running_step_ls =
+  store_thm("bir_exec_block_n_block_ls_running_step_ls",
+  ``!prog st m m' l n c_l' st' l' n' c_l'' st''.
+    (bir_exec_block_n prog st m = (l,n,c_l',st')) ==>
+    (bir_exec_block_n prog st m' = (l',n',c_l'',st'')) ==>
+    (m' < m) ==>
+    ~(bir_state_is_terminated st'') ==>
+    n' < n``,
+
+REPEAT STRIP_TAC >>
+Cases_on `n' = n` >- (
+  IMP_RES_TAC bir_exec_block_n_step_eq_block_ls_not_running
+) >>
+Cases_on `n < n'` >- (
+  IMP_RES_TAC bir_exec_block_n_block_ls
+) >>
+FULL_SIMP_TAC arith_ss []
+);
+
+
+(* Consider block execution of m, m+1 and m' block-steps. If
+ * executing m+1 blocks result in a terminated state, while
+ * executing m block-steps does not, then if the number of
+ * statement-steps taken while executing m' and m+1 blocks is the
+ * same, m' is greater than or equal to m+1. *)
+val bir_exec_block_n_step_eq_block_gt =
+  store_thm("bir_exec_block_n_step_eq_block_gt",
+  ``!prog st m m' l' n' c_l' st' l'' n'' c_l'' st'' l''' n'''
+    c_l''' st'''.
+    (bir_exec_block_n prog st (SUC m) = (l',n',c_l',st')) ==>
+    (bir_exec_block_n prog st m' = (l'',n'',c_l'',st'')) ==>
+    (bir_exec_block_n prog st m = (l''',n''',c_l''',st''')) ==>
+    (bir_state_is_terminated st') ==>
+    ~(bir_state_is_terminated st''') ==>
+    (n'' = n') ==>
+    (m' >= SUC m)``,
+
+REPEAT STRIP_TAC >>
+Cases_on `n'' = n'''` >- (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_block_n_EQ_THM] >>
+  RW_TAC (std_ss++holBACore_ss) [] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+Cases_on `n'' < n'''` >- (
+  subgoal `!n.
+	   n < n''' ==>
+	   ~bir_state_is_terminated
+	     (bir_exec_infinite_steps_fun prog st n)` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+  ) >>
+  QSPECL_X_ASSUM ``!n. _`` [`n''`] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_block_n_EQ_THM] >>
+  RW_TAC (std_ss++holBACore_ss) [] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+subgoal `n''' < n''` >- (
+  FULL_SIMP_TAC arith_ss []
+) >>
+subgoal `m < m'` >- (
+  IMP_RES_TAC bir_exec_block_n_step_ls
+) >>
+FULL_SIMP_TAC arith_ss []
+);
+
+
+val bir_exec_block_n_term_stmt_steps =
+  store_thm("bir_exec_block_n_term_stmt_steps",
+  ``!prog st m l l' n n' c_l st' st''.
+    (bir_exec_block_n prog st m = (l,n,c_l,st'')) ==>
+    (bir_exec_block_n prog st (SUC m) = (l',n',m,st')) ==>
+    ~(bir_state_is_terminated st) ==>
+    bir_state_is_terminated st' ==>
+    (!b. (st'.bst_status = BST_JumpOutside b) ==>
+     ((bir_block_pc b).bpc_index <> 0)
+    ) ==>
+    n < n'``,
+
+REPEAT STRIP_TAC >>
+subgoal `~(n' < n)` >- (
+  subgoal `m < SUC m` >- (
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  IMP_RES_TAC bir_exec_block_n_block_ls
+) >>
+Cases_on `n = n'` >- (
+  subgoal `c_l = m` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+  ) >>
+  Q.PAT_X_ASSUM `c_l = m`
+    (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
+  subgoal `st' = st''` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+  ) >>
+  Q.PAT_X_ASSUM `st' = st''`
+    (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
+  subgoal `0 < m ==>
+	   bir_state_COUNT_PC (F,(\pc. pc.bpc_index = 0))
+	     (bir_exec_infinite_steps_fun prog st n)` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+  ) >>
+  Cases_on `m` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_block_n_REWR_0] >>
+    Q.PAT_X_ASSUM `st = st''`
+      (fn thm => FULL_SIMP_TAC std_ss [thm])
+  ) >>
+  FULL_SIMP_TAC arith_ss [bir_state_COUNT_PC_def] >>
+  subgoal `bir_exec_infinite_steps_fun prog st n = st''` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  Cases_on `st''.bst_status` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  )
+) >>
+FULL_SIMP_TAC arith_ss []
+);
+
+
+val bir_exec_block_n_jump_outside_pc_ok_stmt_steps =
+  store_thm("bir_exec_block_n_jump_outside_pc_ok_stmt_steps",
+  ``!prog st m l l' n n' c_l st' st'' b.
+    (bir_exec_block_n prog st m = (l,n,c_l,st'')) ==>
+    (bir_exec_block_n prog st (SUC m) = (l',n',SUC m,st')) ==>
+    ~(bir_state_is_terminated st) ==>
+    bir_state_is_terminated st' ==>
+    (st'.bst_status = BST_JumpOutside b) ==>
+    ((bir_block_pc b).bpc_index = 0) ==>
+    n < n'``,
+
+REPEAT STRIP_TAC >>
+subgoal `~(n' < n)` >- (
+  subgoal `m < SUC m` >- (
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  IMP_RES_TAC bir_exec_block_n_block_ls
+) >>
+Cases_on `n = n'` >- (
+  FULL_SIMP_TAC arith_ss [bir_exec_block_n_EQ_THM]
+) >>
+FULL_SIMP_TAC arith_ss []
+);
 
 
 (***************************************************************)
@@ -1877,7 +2397,8 @@ SIMP_TAC std_ss [bir_exec_block_n_def, bir_exec_steps_GEN_REWR_TERMINATED,
 (***************************************************************)
 
 val bir_exec_block_n_TO_bir_exec_to_labels_n = store_thm ("bir_exec_block_n_TO_bir_exec_to_labels_n",
-  ``(bir_exec_block_n p st m = (ol, c_st, c_pc, st')) <=>
+  ``!p st m ol c_st c_pc st'.
+    (bir_exec_block_n p st m = (ol, c_st, c_pc, st')) <=>
     (bir_exec_to_labels_n UNIV p st m = BER_Ended ol c_st c_pc st')``,
 
 SIMP_TAC std_ss [bir_exec_block_n_TO_steps_GEN,
@@ -1885,10 +2406,12 @@ SIMP_TAC std_ss [bir_exec_block_n_TO_steps_GEN,
 
 
 val bir_exec_to_labels_n_UNIV_REWR = store_thm ("bir_exec_to_labels_n_UNIV_REWR",
-  ``bir_exec_to_labels_n UNIV p st m =
+  ``!p st m.
+    bir_exec_to_labels_n UNIV p st m =
     let (ol, c_st, c_pc, st') = bir_exec_block_n p st m in
     BER_Ended ol c_st c_pc st'``,
 
+REPEAT GEN_TAC >>
 `?ol c_st c_pc st'. bir_exec_block_n p st m = (ol, c_st, c_pc, st')`
    by METIS_TAC[pairTheory.PAIR] >>
 ASM_SIMP_TAC std_ss [LET_THM] >>
@@ -1923,10 +2446,8 @@ SIMP_TAC std_ss [bir_exec_to_labels_n_def, bir_exec_to_labels_def] >>
 SIMP_TAC arith_ss [Once bir_exec_steps_GEN_REWR_BIG_STEP, OPT_NUM_PRE_def]);
 
 
-
 val bir_exec_to_labels_n_block_1 = store_thm ("bir_exec_to_labels_n_block_1",
   ``!ls p st n.
-
     (bir_exec_to_labels_n ls p st (SUC n) =
       let (l1, c1, _, st1) = bir_exec_block_n p st 1 in
       let c1' = if (0 < c1) /\ (bir_state_COUNT_PC (F,
@@ -1948,6 +2469,45 @@ ASM_SIMP_TAC std_ss [LET_THM] >>
 FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_block_n_TO_steps_GEN]);
 
 
+(* If label execution has Ended but not in a terminated state,
+ * then PC index must be zero with label in execution label set. *)
+val bir_exec_to_labels_n_ended_running =
+  store_thm("bir_exec_to_labels_n_ended_running",
+  ``!ls prog st l n m c_l' st'.
+    (n > 0) ==>
+    (bir_exec_to_labels_n ls prog st n = BER_Ended l m c_l' st') ==>
+    ~(bir_state_is_terminated st') ==>
+    ((st'.bst_pc.bpc_index = 0) /\ st'.bst_pc.bpc_label IN ls)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_n_def,
+		      bir_exec_steps_GEN_SOME_EQ_Ended] >> (
+  subgoal `c_l' = n` >- (
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  subgoal `st'.bst_status = BST_Running` >- (
+    FULL_SIMP_TAC std_ss [bir_state_is_terminated_def]
+  ) >>
+  FULL_SIMP_TAC (arith_ss++holBACore_ss) [bir_state_COUNT_PC_def]
+)
+);
+
+
+val bir_exec_to_labels_ended_running =
+  store_thm("bir_exec_to_labels_ended_running",
+  ``!ls prog st l n c_l' st'.
+    (bir_exec_to_labels ls prog st = BER_Ended l n c_l' st') ==>
+    ~(bir_state_is_terminated st') ==>
+    ((st'.bst_pc.bpc_index = 0) /\ st'.bst_pc.bpc_label IN ls)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_def] >> (
+  subgoal `(1:num) > 0` >- (
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  IMP_RES_TAC bir_exec_to_labels_n_ended_running
+)
+);
 
 
 (***************************************************************)
@@ -2145,6 +2705,89 @@ METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ,
       arithmeticTheory.LESS_EQ_LESS_TRANS]);
 
 
+val bir_exec_steps_GEN_decrease_max_steps_Ended_SOME =
+  store_thm("bir_exec_steps_GEN_decrease_max_steps_Ended_SOME",
+  ``!pc_cond p st n1 n2 ol c_st c_pc st'.
+    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
+    (n2 < n1) ==>
+    (?ol' c_st' c_pc' st''.
+      bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'')``,
+
+REPEAT STRIP_TAC >>
+Cases_on `bir_exec_steps_GEN pc_cond p st (SOME n2)` >- ( 
+  METIS_TAC []
+) >>
+FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended,
+                      bir_exec_steps_GEN_SOME_EQ_Looping] >>
+Cases_on `c_pc = n1` >| [
+  subgoal `0 < n1` >- (
+    Cases_on `n1 = 0` >- (
+      FULL_SIMP_TAC arith_ss []
+    ) >>
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  QSPECL_X_ASSUM ``!i. _`` [`c_st`] >>
+  FULL_SIMP_TAC arith_ss [],
+
+  FULL_SIMP_TAC arith_ss []
+]
+);
+
+
+val bir_exec_steps_GEN_decrease_max_steps_Ended_terminated =
+  store_thm("bir_exec_steps_GEN_decrease_max_steps_Ended_terminated",
+  ``!pc_cond p st n1 n2 ol ol' c_st c_st' c_pc c_pc' st' st''.
+    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
+    (~bir_state_is_terminated st') ==>
+    (n2 < n1) ==>
+    (bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'') ==>
+    (~bir_state_is_terminated st'')``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended] >>
+`c_pc = n1` by FULL_SIMP_TAC arith_ss [] >>
+FULL_SIMP_TAC std_ss [] >>
+subgoal `c_st < c_st'` >- (
+  Cases_on `c_st' < c_st` >- (
+    METIS_TAC []
+  ) >>
+  Cases_on `c_st' = c_st` >- (
+    METIS_TAC []
+  ) >>
+  FULL_SIMP_TAC arith_ss []
+) >>
+QSPECL_X_ASSUM ``!n.
+                 n < c_st' ==>
+                 bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st n < n2`` [`c_st`] >>
+FULL_SIMP_TAC arith_ss []
+);
+
+
+val bir_exec_steps_GEN_decrease_max_steps_Ended_steps_taken =
+  store_thm("bir_exec_steps_GEN_decrease_max_steps_Ended_steps_taken",
+  ``!pc_cond p st n1 n2 ol ol' c_st c_st' c_pc c_pc' st' st''.
+    (bir_exec_steps_GEN pc_cond p st (SOME n1) = BER_Ended ol c_st c_pc st') ==>
+    (~bir_state_is_terminated st') ==>
+    (n2 < n1) ==>
+    (bir_exec_steps_GEN pc_cond p st (SOME n2) = BER_Ended ol' c_st' c_pc' st'') ==>
+    (c_st' < c_st)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_steps_GEN_SOME_EQ_Ended] >>
+`c_pc = n1` by FULL_SIMP_TAC arith_ss [] >>
+FULL_SIMP_TAC std_ss [] >>
+Cases_on `c_st < c_st'` >- (
+  QSPECL_X_ASSUM ``!n.
+		   n < c_st' ==>
+		   bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p st n < n2`` [`c_st`] >>
+  REV_FULL_SIMP_TAC arith_ss []
+) >>
+Cases_on `c_st' = c_st` >- (
+  FULL_SIMP_TAC arith_ss []
+) >>
+FULL_SIMP_TAC arith_ss []
+);
+
 
 val bir_exec_steps_GEN_change_cond_Looping_NONE = store_thm (
 "bir_exec_steps_GEN_change_cond_Looping_NONE",
@@ -2336,7 +2979,6 @@ SIMP_TAC std_ss [bir_exec_to_labels_n_def,
   bir_exec_step_n_EQ_THM, bir_exec_steps_GEN_EQ_Ended])
 
 
-
 val bir_exec_to_labels_n_TO_bir_exec_steps = store_thm ("bir_exec_to_labels_n_TO_bir_exec_steps",
   ``!ls p st n ll .
     (bir_exec_to_labels_n ls p st n = BER_Looping ll) ==>
@@ -2359,7 +3001,7 @@ SIMP_TAC std_ss [bir_exec_step_n_EQ_THM]);
 (***********************************************)
 
 val bir_exec_step_n_acc_def = Define `
-  bir_exec_step_n_acc (p:'a bir_program_t) (n:num) (aol:'a list, an:num, s:bir_state_t) =
+  bir_exec_step_n_acc (p:'a bir_program_t) (n:num) (aol:(num # 'a) list, an:num, s:bir_state_t) =
             if (n = 0) \/ (bir_state_is_terminated s) then
               (REVERSE aol, an, s)
             else
@@ -2399,8 +3041,6 @@ val bir_exec_step_n_acc_REWR_NOT_TERMINATED = store_thm("bir_exec_step_n_acc_REW
   REPEAT STRIP_TAC >>
   ASM_SIMP_TAC list_ss [Once bir_exec_step_n_acc_def]
 );
-
-
 
 
 val bir_exec_step_n_plus_acc_thm = store_thm("bir_exec_step_n_plus_acc_thm", ``
@@ -2449,10 +3089,6 @@ val bir_exec_step_n_plus_acc_thm = store_thm("bir_exec_step_n_plus_acc_thm", ``
 );
 
 
-
-
-
-
 val bir_exec_step_n_acc_eq_thm = store_thm("bir_exec_step_n_acc_eq_thm", ``
   !p s n. bir_exec_step_n_acc (p:'a bir_program_t) n ([], 0, s) =
           bir_exec_step_n     p s n
@@ -2469,10 +3105,6 @@ val bir_exec_step_n_acc_eq_thm = store_thm("bir_exec_step_n_acc_eq_thm", ``
 
   SIMP_TAC std_ss []
 );
-
-
-
-
 
 
 val _ = export_theory();

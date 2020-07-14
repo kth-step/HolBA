@@ -3,7 +3,8 @@ open listTheory
 open bir_programTheory bir_program_valid_stateTheory HolBACoreSimps;
 open bir_program_multistep_propsTheory bir_auxiliaryTheory
 open bir_valuesTheory bir_immTheory bir_program_valid_stateTheory
-open bir_program_terminationTheory
+open bir_program_terminationTheory bir_typing_progTheory
+open bir_program_multistep_propsTheory;
 open sortingTheory pred_setTheory
 
 val _ = new_theory "bir_subprogram";
@@ -346,6 +347,36 @@ Tactical.REVERSE (Cases_on `bir_get_current_statement p1 pc`) >- (
 ) >>
 Cases_on `bir_get_current_statement p2 pc` >- REWRITE_TAC[] >>
 METIS_TAC [bir_get_current_statement_SUBPROGRAM, optionTheory.option_CLAUSES]);
+
+
+
+(*************)
+(* Variables *)
+(*************)
+
+val bir_vars_of_program_SUBPROGRAM =
+  store_thm("bir_vars_of_program_SUBPROGRAM",
+  ``!env prog1 prog2.
+    bir_is_subprogram prog1 prog2 ==>
+    ((bir_vars_of_program prog1) SUBSET (bir_vars_of_program prog2))``,
+
+Cases_on `prog1` >>
+Cases_on `prog2` >>
+METIS_TAC [bir_vars_of_program_def, BIGUNION_IMAGE_set_SUBSET,
+           bir_is_subprogram_BLOCKS_SUBLIST,
+           SUBSET_BIGUNION_I, IMAGE_IN]
+); 
+
+val bir_env_vars_are_initialised_SUBPROGRAM =
+  store_thm("bir_env_vars_are_initialised_SUBPROGRAM",
+  ``!env prog1 prog2.
+    bir_is_subprogram prog1 prog2 ==>
+    bir_env_vars_are_initialised env (bir_vars_of_program prog2) ==>
+    bir_env_vars_are_initialised env (bir_vars_of_program prog1)``,
+
+METIS_TAC [bir_vars_of_program_SUBPROGRAM,
+           bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET]
+); 
 
 
 (*************)
@@ -879,13 +910,14 @@ val bir_exec_steps_TERMINATES_SUBPROGRAM_EQ = store_thm ("bir_exec_steps_TERMINA
   (bir_exec_steps p2 st = BER_Ended ol n n' st')``,
 
 SIMP_TAC std_ss [bir_exec_steps_TO_bir_exec_step_n] >>
-METIS_TAC [bir_exec_step_n_SUBPROGRAM_EQ]);
+METIS_TAC [bir_exec_step_n_SUBPROGRAM_EQ]
+);
 
 
 
 
 val bir_exec_steps_NO_TERMINATE_SUBPROGRAM = store_thm ("bir_exec_steps_NO_TERMINATE_SUBPROGRAM",
-``!p1 p2 st st' ll n.
+``!p1 p2 st ll.
   bir_is_subprogram p1 p2 ==>
   bir_is_valid_labels p2 ==>
   (bir_exec_steps p1 st = BER_Looping ll) ==>
@@ -906,6 +938,54 @@ val bir_exec_steps_PROGRAM_EQ = store_thm ("bir_exec_steps_PROGRAM_EQ",
 REPEAT STRIP_TAC >>
 MP_TAC (Q.SPECL [`p1`, `p2`, `(T, \_. T)`] bir_exec_steps_GEN_PROGRAM_EQ) >>
 ASM_SIMP_TAC std_ss [FUN_EQ_THM, bir_exec_steps_def]);
+
+
+(************************************)
+(* Lifting it to to-label execution *)
+(************************************)
+
+val bir_exec_to_labels_TERMINATES_SUBPROGRAM_EQ =
+  store_thm ("bir_exec_to_labels_TERMINATES_SUBPROGRAM_EQ",
+``!ls p1 p2 st c st' ol n n'.
+  bir_is_subprogram p1 p2 ==>
+  bir_is_valid_labels p2 ==>
+  bir_is_valid_pc p1 st.bst_pc ==>
+  (bir_exec_to_labels ls p1 st  = BER_Ended ol n n' st') ==>
+  (!l. (st'.bst_status = BST_JumpOutside l) ==>
+       ~(MEM l (bir_labels_of_program p2))) ==>
+  (bir_exec_to_labels ls p2 st = BER_Ended ol n n' st')``,
+
+REPEAT STRIP_TAC >>
+MP_TAC (Q.SPECL [`p1`, `p2`, `(F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))`]
+          bir_exec_steps_GEN_Ended_SUBPROGRAM_EQ
+       ) >>
+FULL_SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_to_labels_def, bir_exec_to_labels_n_def,
+  bir_state_COUNT_PC_ALL_STEPS]
+);
+
+val bir_exec_to_labels_NO_TERMINATE_SUBPROGRAM =
+  store_thm ("bir_exec_to_labels_NO_TERMINATE_SUBPROGRAM",
+``!ls p1 p2 st ll.
+  bir_is_subprogram p1 p2 ==>
+  bir_is_valid_labels p2 ==>
+  (bir_exec_to_labels ls p1 st = BER_Looping ll) ==>
+  (bir_exec_to_labels ls p2 st = BER_Looping ll)``,
+
+REPEAT STRIP_TAC >>
+MP_TAC (Q.SPECL [`p1`, `p2`, `(F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))`, `st`, `SOME 1`] bir_exec_steps_GEN_Looping_SUBPROGRAM) >>
+FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_labels_n_def]
+);
+
+val bir_exec_to_labels_PROGRAM_EQ =
+  store_thm ("bir_exec_to_labels_PROGRAM_EQ",
+``!ls p1 p2.
+  bir_program_eq p1 p2 ==>
+  bir_is_valid_labels p2 ==>
+  (bir_exec_to_labels ls p1 = bir_exec_to_labels ls p2)``,
+
+REPEAT STRIP_TAC >>
+MP_TAC (Q.SPECL [`p1`, `p2`, `(F,(\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN ls))`] bir_exec_steps_GEN_PROGRAM_EQ) >>
+ASM_SIMP_TAC std_ss [FUN_EQ_THM, bir_exec_to_labels_def, bir_exec_to_labels_n_def]);
 
 
 

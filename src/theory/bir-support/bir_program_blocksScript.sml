@@ -570,7 +570,7 @@ Cases_on `prog` >>
 FULL_SIMP_TAC std_ss [bir_exec_block_def] >>
 REPEAT STRIP_TAC >>
 ASSUME_TAC (SPECL [``bl.bb_statements:'a bir_stmt_basic_t list``,
-                   ``[]: 'a list``, ``0:num``, ``st:bir_state_t``]
+                   ``[]: (num # 'a) list``, ``0:num``, ``st:bir_state_t``]
                   bir_exec_stmtsB_exists) >>
 FULL_SIMP_TAC std_ss [LET_DEF] >>
 Cases_on `bir_state_is_terminated st'` >> (
@@ -775,6 +775,28 @@ Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_get_current_block_block_pc_IS_SOME,
     bir_state_set_typeerror_def]
 ));
+
+
+val bir_get_current_statement_NONE_stmt =
+  store_thm("bir_get_current_statement_NONE_stmt",
+  ``!prog pc.
+      (bir_get_current_statement prog pc = NONE) ==>
+      (bir_get_current_block prog pc = NONE)``,
+
+FULL_SIMP_TAC (std_ss++holBACore_ss)
+              [bir_get_current_block_def,
+               bir_get_current_statement_def] >>
+REPEAT STRIP_TAC >>
+Cases_on `bir_get_program_block_info_by_label
+            prog pc.bpc_label` >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+) >>
+Cases_on `x` >>
+Cases_on `0 = LENGTH r.bb_statements` >>
+Cases_on `0 < LENGTH r.bb_statements` >> (
+  FULL_SIMP_TAC arith_ss []
+)
+);
 
 
 val bir_exec_block_new_block_pc = store_thm ("bir_exec_block_new_block_pc",

@@ -40,7 +40,7 @@ REPEAT CASE_TAC >> SIMP_TAC (std_ss++holBACore_ss) [
 
 
 val bir_exec_stmt_observe_SAME_ENV = store_thm("bir_exec_stmt_observe_SAME_ENV",
-  ``!ec el obf st. (SND (bir_exec_stmt_observe ec el obf st)).bst_environ = st.bst_environ``,
+  ``!oid ec el obf st. (SND (bir_exec_stmt_observe oid ec el obf st)).bst_environ = st.bst_environ``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_observe_def, LET_DEF] >>
 REPEAT STRIP_TAC >>
 REPEAT CASE_TAC >> SIMP_TAC (std_ss++holBACore_ss) [

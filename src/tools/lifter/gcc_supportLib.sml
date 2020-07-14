@@ -6,37 +6,20 @@ struct
   open HolKernel boolLib liteLib;
   open bir_inst_liftingLibTypes
 
+  open bir_auxiliaryLib;
+  open bir_fileLib;
+
   val ERR = mk_HOL_ERR "gcc_supportLib"
-
-  (*******************)
-  (* Auxiliary stuff *)
-  (*******************)
-
-  fun list_split_pred_aux acc p [] = fail ()
-    | list_split_pred_aux acc p (x::xs) =
-      (if x = p then (List.rev acc, xs)
-       else list_split_pred_aux (x::acc) p xs)
-
-  fun list_split_pred p = list_split_pred_aux [] p
-
-
-  fun read_file_lines file_name = let
-    val instream = TextIO.openIn file_name
-    fun read_it acc =
-      case TextIO.inputLine instream of
-          NONE => List.rev acc
-        | SOME s => read_it (s::acc);
-    val input = read_it [] before TextIO.closeIn instream
-  in input end;
 
   in (* local *)
 
-  (*******************)
-  (* File Operations *)
-  (*******************)
-
 (*
 val file_name = "examples/wolfssl-aarch64.da"
+val file_name = "../symbexec/examples/binaries/balrob/balrob.elf.da"
+val file_name = "../symbexec/examples/binaries/balrob/balrob.elf.da.plus"
+val file_name = "../cfg/examples/toy/m0-toy.da"
+
+read_disassembly_file_regions file_name
 
 val lines = read_file_lines file_name
 val l = el 70 lines
@@ -111,36 +94,85 @@ datatype disassembly_line =
   | DASL_whitespace
   | DASL_entry of disassembly_entry
 
-fun parse_disassembly_file_line l =
+fun parse_dataline skipentries cl =
+    if skipentries then DASL_whitespace else
+    let
+      val (addr_l, cl') = list_split_pred #":" cl
+      val addr = Arbnum.fromHexString (String.implode addr_l)
+    in
+    (* this seem to occur for padded locations for function/label alignment, but is this true? *)
+    if String.isPrefix "Address " (String.implode (tl cl')) then DASL_whitespace else
+    let
+      val (hc_l, cl') = list_split_pred #"\t" (tl cl')
+          handle HOL_ERR _ =>
+            let
+              fun find_two _   _     _ []     = NONE
+		| find_two acc true  c (x::l) = if (c = x) then SOME (acc-1)
+                                                           else find_two (acc+1) false c l
+		| find_two acc false c (x::l) = if (c = x) then find_two (acc+1) true  c l
+                                                           else find_two (acc+1) false c l;
+              fun split_at_two c cl =
+                case find_two 0 false c cl of
+		   NONE   => raise ERR "parse_disassembly_file_line" "couldn't find the two characters"
+	         | SOME i => i;
+              val cl = tl cl';
+              val i = split_at_two #" " cl;
+            in
+              (List.take (cl, i), List.drop (cl, i))
+            end;
+      val hc = String.implode (filter (fn c => c <> #" ") hc_l)
+      val mm_s = String.map (fn c => if c = #"\t" then #" " else c) (String.implode cl')
+    in DASL_entry {
+         DAE_addr = addr,
+         DAE_desc = mm_s,
+         DAE_hex  = hc}
+    end end;
+
+fun is_hex_char x = (#"0" <= x andalso x <= #"9") orelse
+                    (#"a" <= x andalso x <= #"f") orelse
+                    (#"A" <= x andalso x <= #"F");
+
+fun parse_disassembly_file_line skipentries l =
   let val cl = butlast (String.explode l) in
   if (List.null cl) then DASL_whitespace else
-  if hd cl = #" " then let
-    val (addr_l, cl') = list_split_pred #":" cl
-    val addr = Arbnum.fromHexString (String.implode addr_l)
-    val (hc_l, cl') = list_split_pred #"\t" (tl cl')
-    val hc = String.implode (filter (fn c => c <> #" ") hc_l)
-    val mm_s = String.map (fn c => if c = #"\t" then #" " else c) (String.implode cl')
-  in DASL_entry {
-       DAE_addr = addr,
-       DAE_desc = mm_s,
-       DAE_hex  = hc}
-  end else
-  if hd cl = #"0" then let
+  if String.isPrefix "Disassembly of section" l then
+    DASL_section (String.implode (butlast (List.drop (cl, 23)))) else
+  if hd cl = #" " then
+    parse_dataline skipentries cl
+  else
+  if not (List.exists (fn x => x = #":") cl) then
+    DASL_sep
+  else
+  let
+    val (cl1, cl2) = list_split_pred #":" cl;
+  in
+  if let
+       val clx = if List.exists (fn x => x = #" ") cl1 then (fst o list_split_pred #" ") cl1 else cl1;
+     in
+       not (List.all is_hex_char clx)
+     end then
+    DASL_sep
+  else
+  if not (List.exists (fn x => x = #"<") cl1)
+    then
+      parse_dataline skipentries cl
+    else let
     val (addr_l, lbl') = list_split_pred #" " cl
     val addr = Arbnum.fromHexString (String.implode addr_l)
     val lbl = String.implode (List.take (List.drop (lbl',1), List.length lbl' - 3))
   in
     (DASL_lbl (lbl, addr))
-  end else if String.isPrefix "Disassembly of section" l then
-    DASL_section (String.implode (butlast (List.drop (cl, 23))))
-  else DASL_sep
+  end end
 end handle HOL_ERR _ => raise (ERR "parse_disassembly_file_line" ("can't parse line '"^ l ^"'"))
 
 
-
-type disassembly_file_acc = disassembly_section list * disassembly_lbl list *
-       disassembly_block list * string * (string * num) *
-       disassembly_entry list
+type disassembly_file_acc =
+       disassembly_section list * (* finished sections                         *)
+       disassembly_lbl     list * (* finished symbols    : for current section *)
+       disassembly_block   list * (* finished block list : for current symbol  *)
+       string                   * (* current section                           *)
+       (string * num)           * (* current lbl (symbol)                      *)
+       disassembly_entry   list ; (* current state of the block                *)
 
 val empty_disassembly_file_acc:disassembly_file_acc =
   ([], [], [], "", ("", Arbnum.zero), [])
@@ -171,16 +203,20 @@ in
   (acc', [], [], ns, ("", Arbnum.zero), []):disassembly_file_acc
 end;
 
+fun is_included fi ((acc, acc_sec, acc_lbl, c_sec, (c_lbl_id, _), c_data):disassembly_file_acc) =
+  (c_lbl_id = "") orelse (fi c_sec c_lbl_id);
+
 in
 
-fun process_disassembly_file_line i l =
-  case parse_disassembly_file_line l of
-      DASL_whitespace => i
-    | DASL_entry e => add_entry i e
-    | DASL_sep => finish_block i
-    | DASL_lbl (s, a) => finish_lbl i (s, a)
-    | DASL_section n => finish_sec i n
-
+fun process_disassembly_file_line fi i l =
+  let val skip_to_next_lbl = not (is_included fi i) in
+    case parse_disassembly_file_line skip_to_next_lbl l of
+        DASL_whitespace => i
+      | DASL_entry e    => add_entry i e
+      | DASL_sep        => finish_block i
+      | DASL_lbl (s, a) => finish_lbl i (s, a)
+      | DASL_section n  => finish_sec i n
+  end;
 
 fun finish_disassembly_file_acc i : disassembly_data = let
   val (acc, _, _, _, _, _) = finish_sec i ""
@@ -192,13 +228,13 @@ end;
 end;
 
 (* val file_name = "examples/aes-aarch64.da" *)
-fun read_disassembly_file file_name = let
+fun read_disassembly_file fi file_name = let
   val instream = TextIO.openIn file_name
   fun read_it st =
     case TextIO.inputLine instream of
         NONE => st
       | SOME s => let
-          val st' = process_disassembly_file_line st s
+          val st' = process_disassembly_file_line fi st s
         in read_it st' end
   val input = read_it empty_disassembly_file_acc before TextIO.closeIn instream
 in finish_disassembly_file_acc input end;
@@ -243,46 +279,51 @@ fun disassembly_data_relocate fi (d:disassembly_data) : disassembly_data =
   List.map (fn s => disassembly_section_relocate (fi (#DAS_name s)) s) d;
 
 
-fun desc_string_to_entry_type s =
-    if String.isPrefix ".word" s then BILME_data else
-    if String.isPrefix ".inst" s then BILME_data else
-    BILME_code (SOME s)
+fun desc_string_to_entry_type fd s =
+    if (String.isPrefix ".word" s) orelse
+       (String.isPrefix ".inst" s) orelse
+       (fd)
+    then
+      BILME_data
+    else
+      BILME_code (SOME s);
 
-fun disassembly_entry_to_annotated_hex (e:disassembly_entry) =
-  (#DAE_hex e, desc_string_to_entry_type (#DAE_desc e));
+fun disassembly_entry_to_annotated_hex fd (e:disassembly_entry) =
+  (#DAE_hex e, desc_string_to_entry_type fd (#DAE_desc e));
 
-fun disassembly_block_to_mem_region ([]:disassembly_block) = failwith "empty block"
-  | disassembly_block_to_mem_region (e::bl) =
-    BILMR (#DAE_addr e, List.map disassembly_entry_to_annotated_hex (e::bl))
-
-
-fun disassembly_lbl_to_mem_regions (l:disassembly_lbl) =
-  List.map disassembly_block_to_mem_region (#DAL_blocks l);
-
-fun disassembly_section_to_mem_regions (s:disassembly_section) =
-  flatten (List.map disassembly_lbl_to_mem_regions (#DAS_lbls s));
+fun disassembly_block_to_mem_region _  ([]:disassembly_block) = failwith "empty block"
+  | disassembly_block_to_mem_region fd (e::bl) =
+    BILMR (#DAE_addr e, List.map (disassembly_entry_to_annotated_hex fd) (e::bl))
 
 
-fun disassembly_data_to_mem_regions (d:disassembly_data) =
-  flatten (List.map disassembly_section_to_mem_regions d);
+fun disassembly_lbl_to_mem_regions dss (l:disassembly_lbl) =
+  List.map (disassembly_block_to_mem_region (dss (#DAL_name l))) (#DAL_blocks l);
+
+fun disassembly_section_to_mem_regions ds (s:disassembly_section) =
+  flatten (List.map (disassembly_lbl_to_mem_regions (ds (#DAS_name s))) (#DAS_lbls s));
 
 
-fun read_disassembly_file_regions_filter fi filename = let
-  val d = read_disassembly_file filename
-  val d' = disassembly_data_filter fi d;
-  val r = disassembly_data_to_mem_regions d'
+fun disassembly_data_to_mem_regions_dataspec ds (d:disassembly_data) =
+  flatten (List.map (disassembly_section_to_mem_regions ds) d);
+
+val disassembly_data_to_mem_regions =
+    disassembly_data_to_mem_regions_dataspec (K (K false));
+
+
+fun read_disassembly_file_regions_dataspec_filter ds fi filename = let
+  val d = read_disassembly_file fi filename
+  val d' = d (*disassembly_data_filter fi d*);
+  val r = disassembly_data_to_mem_regions_dataspec ds d'
   val l =  disassembly_data_to_labels d'
 in
   (l, r)
 end
 
-fun read_disassembly_file_regions filename = let
-  val d = read_disassembly_file filename
-  val r = disassembly_data_to_mem_regions d
-  val l =  disassembly_data_to_labels d
-in
-  (l, r)
-end
+val read_disassembly_file_regions_filter =
+    read_disassembly_file_regions_dataspec_filter (K (K false));
+
+val read_disassembly_file_regions =
+    read_disassembly_file_regions_filter (K (K true));
 
 end (* local *)
 

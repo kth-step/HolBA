@@ -1,30 +1,32 @@
-# Tutorial on Weakest Precondition Generation and Proving with HolBA
+# 5 Generating and Proving Weakest Preconditions
 
 ## Introduction
 
-This directory contains a tutorial on how to obtain the weakest precondition of code segments, given their postconditions.
+This directory contains a tutorial on how to obtain the _weakest precondition_ of BIR code segments, given their postconditions. The weakest precondition is the least restrictive condition on the initial state so that it always leads to execution reaching a final state satisfying the postcondition. The theorems stating generic weakest preconditions corresponding with the individual BIR statements can be found in `bir_wpTheory`.
 
-From the previous directory `4-bir-to-arm` we should have a number of contracts on code segments, in the shape of Hoare triples. The final goal is proving that these hold.
-
-The current step consists of taking the postcondition and code segment of the contract, then generating and proving the corresponding _weakest precondition_, thereby obtaining a new Hoare triple. The weakest precondition is the least restrictive condition on the initial state so that it always leads to execution reaching a final state satisfying the postcondition. The theorems stating generic weakest preconditions corresponding with the individual BIR statements can be found in `bir_wpTheory`.
-
-Since the postcondition and code segment are the same, proving the contract can be done (without going into details) by proving that the contractual precondition implies the weakest precondition. This will be performed in the next directory, `6-smt`.
+From the previous directory `4-bir-to-arm` we should have a number of to-be-proven contracts on code segments, in the shape of Hoare triples. The goal here is obtaining the weakest preconditions of their postconditions, after which they we will prove in the next step (`6-smt`) that these weakest preconditions imply the contractual preconditions, from which we obtain the to-be-proven Hoare triples.
 
 ## Stepwise walkthrough
 
-Open `bir_wpScript.sml`. Start the HOL4 REPL, then open all the included theories and function libraries.
+Open `tutorial_wpScript.sml`. Start the HOL4 REPL, then open all the included theories and function libraries.
 
 The main workhorse of this step will be `bir_obtain_ht`, a function which obtains a Hoare triple from the following arguments:
 
+prog_tm first_block_label_tm
+                ending_set ending_set_to_sml_list
+                postcond_tm postcond_exp_from_label
+                prefix defs;
+
 * `prog_tm`: The BIR program to analyse, in the form of a HOL term.
 * `first_block_label_tm`: The label of the block where execution starts off (inclusive).
-* `last_block_label_tm`: The label of the block where execution stops.
-* `postcond_tm`: The Hoare triple postcondition stated as a BIR expression.
-* `prefix`: A (preferably unique) prefix string which is used for naming all generated definitions.
-* `false_label_l`: A list of labels, for which we will add dummy Hoare triples with `False` preconditions at the start of computation. This signifies blocks we do not want to jump to, and is used when conditional jumps are involved, where we instead want to generate separate HTs at conditional jumps.
-* `defs`: A list of definitions containing the program definition, as well as all the definitions needed to rewrite the provided postcondition down to a pure BIR expression - this might contain some abbreviations.
+* `ending_set`: A set of labels for which execution ends and the postcondition must hold. Note that the set of labels must not be a HOL4 set, but can be any function with the type signature `bir_label_t -> bool`.
+** `ending_set_to_sml_list`: A SML function which takes a term representing a set and obtains an SML list of labels in the program which are contained in the set.
+* `postcond_tm`: The Hoare triple postcondition stated as a map from labels to BIR expressions.
+** `postcond_exp_from_label`: A SML function taking a label term and obtaining a BIR expression term with the postcondition for the given label.
+* `prefix`: A (preferably unique) prefix string which is used for naming all internally generated definitions.
+* `defs`: A list of definitions containing the program definition, as well as all the definitions needed to rewrite the provided pre-and postconditions down to a BIR expression - typically some abbreviations.
 
-In other words, you could say that you select the Hoare triple code segment from `prog_tm` using `first_block_label_tm` as the initial point and `last_block_label_tm` as the final point.
+In other words, you could say that you select the Hoare triple code segment from `prog_tm` using `first_block_label_tm` as the initial point and `ending_set` as the final points.
 
 Now that we know what we need to call `bir_obtain_ht`, you can first assign the correct program term to `prog_tm` once and for all:
 
@@ -45,63 +47,70 @@ We choose a name which will identify theorems and definitions with the entry con
 val prefix = "add_reg_entry_";
 ```
 
-Then we need to tell the function about the initial and final points of execution, which will give us the code segment we need from the program. If you want, go back the the disassembly file in `1-code` and look at it to understand what the domain of the current HT is.
+Then we need to tell the function about the initial and final points of execution, which will give us the code segment we need from the program. If you want, go back the the disassembly file in `1-code` and look at it to understand what the domain of the current HT is. This code segment starts before the loop and goes all the way to the branch point.
 
-Note that in general, the HT execution could end when any label out of a set of labels is reached. For example, this would be the case for code which branches out to multiple exit points. Sets of ending labels are supported by the current WP generation and proving procedure, however different postconditions for different end labels are not.
-
-For this exercise we will only treat single last block labels.
+Additionally, we add `0x48` as an ending point (even though this will never be reached before `0x40`) in order to compose with Hoare triples ending at `0x48` later on.
 
 ```sml
 val first_block_label_tm = ``BL_Address (Imm64 0x1cw)``;
-val last_block_label_tm =  ``BL_Address (Imm64 0x40w)``;
+val ending_set =  ``{BL_Address (Imm64 0x40w); BL_Address (Imm64 0x48w)}``;
 ```
 
-`false_label_l` is a list of block labels for which we assign dummy HTs with False as precondition.
-
-This can be hard to understand intuitively. First, consider a HT with False as precondition. Since an antecedent of the HT would be that False holds, any conclusion would always hold. This is stated by the theorem `bir_exec_to_labels_pre_F` in `bir_wpTheory`. Since this is universally true, we are always free to assume such a HT.
-
-Since HTs are generated incrementally from the end of execution to the start, when a block which could jump to a block with dummy HT is processed, the resulting HT would in effect be stating the effect of execution assuming we do not jump to the block with a dummy HT.
-
-Concretely, this mechanism is used in cases with conditional jumps, where one of the jump targets signifies loop continuation. It allows us to separately generate HTs for loop continuation and loop exit, which we then can compose.
-
-For the `bir_add_reg_entry` contract, `false_label_l` is just an empty list:
-
-```sml
-val false_label_l = [];
-```
+Since this ending label set is a regular good old HOL4 set, we can use `strip_set` from `pred_setSyntax` to obtain an SML list of labels from it. This is mapped to `ending_set_to_sml_list` in `tutorial_wpSupportLib`.
 
 We then assign as the postcondition the corresponding contract from `4-bir-to-arm`.
 
-Note that just like `prog_tm`, this holds just an abbreviation, so we also need the definitions needed to see the concrete BIR expression.
-
 ```sml
-val postcond_tm = ``bir_add_reg_contract_1_post``;
+val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x40w))
+                        then bir_add_reg_contract_1_post
+                        else bir_exp_false``;
 ```
 
-And finally, we can supply `bir_obtain_ht` with a list of definitions. This list must contain all definitions needed to fully expand the program (`prog_tm`) and the postcondition (`postcondition_tm`) into their explicit forms, using only regular BIR syntax from `theory/bir`. Please open the definitions to see what we are dealing with.
+Note that this maps all labels apart from `0x40` onto `bir_exp_false`, meaning the the contract will ensure those are not reached. In other words, you could say they are blacklisted. Specifically, this is done for `0x48`.
+
+Just like `prog_tm`, this otherwise holds just an abbreviation for the postcondition, so we also need the definitions needed to see the concrete BIR expression. As for the function needed to obtain a BIR expression from the above, this is also given in `tutorial_wpSupportLib`:
 
 ```sml
-val defs = [bir_add_reg_prog_def, bir_add_reg_contract_1_post_def, bir_add_reg_I_def, BType_Bool_def];
+fun postcond_exp_from_label postcond label =
+  (snd o dest_eq o concl)
+    (SIMP_CONV
+      (bool_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss) []
+      (mk_comb (postcond, label)
+    )
+  )
+;
+```
+
+And finally, we also supply `bir_obtain_ht` with a list of definitions. This list must contain all definitions needed to fully expand the program (`prog_tm`) and the postcondition (`postcondition_tm`) into their explicit forms, using only regular BIR syntax from `theory/bir`. Please open the definitions (e.g. `bir_add_reg_contract_1_post_def;`, <kbd>↵ Enter</kbd> in the HOL4 REPL) to see what we are dealing with.
+
+```sml
+val defs = [bir_add_reg_prog_def,
+            bir_add_reg_contract_1_post_def,
+            bir_add_reg_I_def,
+            bir_exp_false_def,
+            BType_Bool_def];
 ```
 
 You might ask why `prog_tm` and `postcond_tm` do not contain the explicit values, and why the definition list is needed. In fact, calling `bir_obtain_ht` like this would also work. However, never abbreviating commonly used terms would make proofs much slower, since we would be forced to match entire explicit abbreviations at every point, instead of abbreviations (for example with `MATCH_MP`).
 
-On the other hand, if you only ever wanted to use definitions with abbreviations, the `prog_tm` and `postcond_tm` terms are not needed as arguments, since these can be obtained from the definitions. The current approach has chosen flexibility over optimization.
+On the other hand, if you only ever wanted to use definitions with abbreviations, the `prog_tm` and `postcond_tm` terms are not needed as arguments, since these can be obtained from the definitions. The current approach has chosen flexibility over performance optimization.
 
-There is also the vague urge of avoiding to generate definitions automatically. Possibly it is good programming practice to make it very explicit to the use where definitions are introduced.
+There is also the vague urge of avoiding generation of definitions automatically. Possibly it is good programming practice to make it very explicit where definitions are introduced.
 
 Next, we call `bir_obtain_ht`:
 
 ```sml
 val (bir_add_reg_entry_ht, bir_add_reg_entry_wp_tm) =
-  bir_obtain_ht prog_tm first_block_label_tm last_block_label_tm
-                postcond_tm prefix false_label_l defs;
+  bir_obtain_ht prog_tm first_block_label_tm
+                ending_set ending_set_to_sml_list
+                postcond_tm postcond_exp_from_label
+                prefix defs;
 ```
 
 `bir_obtain_ht` is a convenient wrapper function created for this tutorial, which internally uses functions from `bir_wpLib`. The return value is a tuple, which firstly contains a theorem stating the HT with the following components:
 
 * __Precondition__: The _weakest precondition_, obtained from the postcondition and executed code segment through the WP predicate transformer semantics
-* __Execution__: From `first_block_label_tm` to `last_block_label_tm`, never branching to `false_label_l`
+* __Execution__: From `first_block_label_tm` to `ending_set`
 * __Postcondition__: `postcond_tm` (the contractual postcondition)
 
 and secondly, simply the weakest precondition as a term. In order to be able to export the results to a compiled theory, we then define an abbreviation for the WP and save the theorem stating the HT:
@@ -112,39 +121,43 @@ val bir_add_reg_entry_wp_def =
 val _ = save_thm ("bir_add_reg_entry_ht", bir_add_reg_entry_ht);
 ```
 
-### `bir_add_reg_loop`
-
-This is the code segment containing the loop body - `0x20` to `0x40`.
-
-Obtaining this HT is rather analoguous to the one above, so no further explanation is needed. You might want to look at the disassembly again to see which code segment is currently being treated.
-
-### `bir_add_reg_loop_continue`
-
-This is the code segment describing loop continuation. HT execution starts at the conditional jump at the endpoint of the loop (`0x40`), then branches back to the loop start (`0x20`). This is ensured by `false_label_l`, which now contains the other target of the conditional jump:
-
-```sml
-val false_label_l = [``BL_Address (Imm64 0x44w)``];
-```
-
-Adding a dummy HT with False as precondition for this address ensures that the HT obtained for `bir_add_reg_loop_continue` only describes the scenario where the loop continues.
-
-### `bir_add_reg_loop_exit`
-
-The HT generated here covers the case opposite to the previous HT. We start at the endpoint of the loop (`0x40`), exit the loop (to `0x44`), and use `false_label_l` to forbid loop continuation:
-
-```sml
-val false_label_l = [``BL_Address (Imm64 0x44w)``];
-```
-
 ### `bir_add_reg_loop_variant`
 
-This part is similar to `bir_add_reg_loop`. The difference lies in the postcondition, which now features a free variable. This free variable is used to state that the loop variant is strictly decreasing with every loop iteration.
+This is the code segment containing the loop body - `0x20` to `0x40`. Similar to previously, we also have `0x48w` in the ending set, but now for two reasons. Firstly, we want to avoid branching out of the loop. Secondly, we want to compose later on with the post-loop content, which has this as end point. Accordingly, the postcondition now is
 
-Other than the different contract, there is not much to say about this part. However, inside `bir_obtain_ht`, the free variable must be taken special care of in several places.
+```sml
+val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x40w))
+                        then bir_add_reg_contract_2_post_variant v
+                        else bir_exp_false``;
+```
+
+which is similar to previously, apart from the addition of `v` as just a free variable inside the postcondition expression. This is used internally in the expression to denote the value of the loop variant at the beginning of the loop.
+
+Obtaining this HT is rather analoguous to the one above in the other respects, so no further explanation is needed. You might want to look at the disassembly again to see which code segment is currently being treated.
 
 ### `bir_add_reg_loop_continue_variant`
 
-Just like the above, but similar instead to `add_reg_loop_continue`. 
+This is the code segment describing loop continuation. HT execution starts at the branch point of the loop (`0x40`), then branches back to the loop start (`0x20`). This is ensured by the ending set and the postcondition:
+
+```sml
+val ending_set = ``{BL_Address (Imm64 0x20w); BL_Address (Imm64 0x40w); BL_Address (Imm64 0x48w)}``;
+val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x20w))
+                        then bir_add_reg_contract_3_post_variant v
+                        else bir_exp_false``;
+```
+
+We can't reach `0x20` again - this is a property needed when composing the loop. We want the postcondition to hold at the branch-back point `0x20` and we don't want `0x48` to be reached, which is needed when composing with post-loop code.
+
+### `bir_add_reg_loop_exit`
+
+The HT generated here covers the case opposite to the previous HT. We start at the branchpoint of the loop (`0x40`), then exit the loop and reach the end of the program (at `0x48`), and use the ending set and postcondition to forbid loop continuation:
+
+```sml
+val ending_set = ``{BL_Address (Imm64 0x20w); BL_Address (Imm64 0x48w)}``;
+val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x48w))
+                        then bir_add_reg_contract_4_post
+                        else bir_exp_false``;
+```
 
 ### Bonus: `bir_add_reg_mem`
 

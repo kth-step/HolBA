@@ -14,6 +14,7 @@ struct
   open bir_prog_gen_randLib;
   open bir_prog_gen_sliceLib;
   open asm_genLib;
+  open armv8_prefetch_genLib;
 
   open bir_scamv_helpersLib;
 
@@ -103,8 +104,7 @@ struct
     end
     end;
 
-
-  fun prog_gen_store retry_on_liftfail prog_gen_id prog_gen_fun args () =
+  fun prog_gen_store prog_gen_id retry_on_liftfail prog_gen_fun args () =
     let
       val (asm_code, lifted_prog, len) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
 
@@ -130,66 +130,31 @@ struct
 (* load file to asm_lines (assuming it is correct assembly code with only forward jumps and no use of labels) *)
 (* ========================================================================================= *)
   fun load_asm_lines filename =
-    let
-      val asm_lines = read_from_file_lines filename;
-      val asm_lines = List.map (strip_ws_off true) asm_lines;
-      val asm_lines = List.filter (fn x => not (x = "")) asm_lines;
-    in
-      asm_lines
-    end
-
-(* fixed programs for mockup *)
-(* ========================================================================================= *)
-  val mock_progs_i = ref 0;
-  val mock_progs = ref [["ldr x2, [x1]"]];
-  val wrap_around = ref false;
-
-  fun bir_prog_gen_arm8_mock_set progs =
-    let
-      val _ = mock_progs_i := 0;
-      val _ = mock_progs := progs;
-    in
-      ()
-    end;
-
-  fun bir_prog_gen_arm8_mock_propagate files =
-    mock_progs := (!mock_progs)@(List.map load_asm_lines files);
-
-  fun bir_prog_gen_arm8_mock_set_wrap_around b =
-    let
-      val _ = wrap_around := b;
-      val _ = if not (!wrap_around) then ()
-	      else mock_progs_i := Int.mod(!mock_progs_i, length (!mock_progs));
-    in
-      ()
-    end;
-
-  fun bir_prog_gen_arm8_mock () =
-    let
-      val _ = if !mock_progs_i < length (!mock_progs) then ()
-	      else raise ERR "bir_prog_gen_arm8_mock" "no more programs";
-
-      val prog = List.nth(!mock_progs, !mock_progs_i);
-
-      val _ = mock_progs_i := (!mock_progs_i) + 1;
-      val _ = if not (!wrap_around) then ()
-	      else mock_progs_i := Int.mod(!mock_progs_i, length (!mock_progs));
-    in
-      prog
-    end;
+    bir_embexp_code_to_prog (read_from_file filename);
 
 
 
 (* instances of program generators *)
 (* ========================================================================================= *)
-val prog_gen_store_mock = prog_gen_store false "prog_gen_mock" bir_prog_gen_arm8_mock ();
-fun prog_gen_store_fromfile filename = prog_gen_store false "prog_gen_fromfile" load_asm_lines filename;
-fun prog_gen_store_rand sz = prog_gen_store true "prog_gen_rand" bir_prog_gen_arm8_rand sz;
-fun prog_gen_store_rand_simple sz = prog_gen_store true "prog_gen_rand_simple" bir_prog_gen_arm8_rand_simple sz;
-fun prog_gen_store_a_la_qc sz =
-    prog_gen_store true "prog_gen_a_la_qc" prog_gen_a_la_qc sz;
+fun prog_gen_store_fromfile filename   = prog_gen_store "prog_gen_fromfile"          false load_asm_lines                 filename;
+fun prog_gen_store_fromlines asmlines  = prog_gen_store "prog_gen_fromlines"         false (fn x => x)                    asmlines;
+
+fun prog_gen_store_rand param sz       = prog_gen_store ("prog_gen_rand::"^param)    true  (bir_prog_gen_arm8_rand param) sz;
+
+fun pgen_qc_param param =
+  case param of
+     "xld"      => prog_gen_a_la_qc arb_program_load
+   | "previct1" => prog_gen_a_la_qc arb_program_previct1
+   | "previct2" => prog_gen_a_la_qc arb_program_previct2
+   | "previct3" => prog_gen_a_la_qc arb_program_previct3
+   | "previct4" => prog_gen_a_la_qc arb_program_previct4
+   | "previct5" => prog_gen_a_la_qc arb_program_previct5
+   | _          => raise ERR "prog_gen_store_a_la_qc" "unknown qc generator";
+
+fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^param) true  (pgen_qc_param param)       sz;
     
-fun prog_gen_store_rand_slice sz = prog_gen_store true "prog_gen_rand_slice" bir_prog_gen_arm8_slice sz;
+fun prog_gen_store_rand_slice sz       = prog_gen_store "prog_gen_rand_slice"        true  bir_prog_gen_arm8_slice        sz;
+fun prog_gen_store_prefetch_stride sz  = prog_gen_store "prog_gen_prefetch_stride"   true  prog_gen_prefetch_stride       sz;
 
 (*
 val filename = "examples/asm/branch.s";
@@ -198,17 +163,9 @@ val prog_gen_fun = load_asm_lines
 val args = filename
 val (prog_id, lifted_prog) = prog_gen_store_fromfile filename ();
 
-val _ = bir_prog_gen_arm8_mock_set_wrap_around true;
-val _ = bir_prog_gen_arm8_mock_set [["b #0x80"]];
-val _ = bir_prog_gen_arm8_mock_set [["subs w12, w12, w15, sxtb #1"]];
-val (prog_id, lifted_prog) = prog_gen_store_mock ();
-
 val (prog_id, lifted_prog) = prog_gen_store_rand 5 ();
 
 val prog = lifted_prog;
 *)
 
-
 end; (* struct *)
-
-

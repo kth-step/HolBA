@@ -77,6 +77,15 @@ val COMBINE_TWO_STEP_THMS_SIMPLE = store_thm ("COMBINE_TWO_STEP_THMS_SIMPLE",
 REPEAT STRIP_TAC >>
 Cases_on `cond2` >> FULL_SIMP_TAC std_ss [PROTECTED_COND_def]);
 
+val COMBINE_TWO_STEP_THMS_SIMPLE_2 = store_thm ("COMBINE_TWO_STEP_THMS_SIMPLE_2",
+``!next cond1 cond2 cond3 ms ms1 ms2.
+     (cond3 ==> cond1 ==> (next ms = SOME ms1)) ==>
+     (cond3 ==> cond2 ==> (next ms = SOME ms2)) ==>
+     (cond1 <=> ~cond2) ==>
+     (cond3) ==> 
+     (next ms = SOME (PROTECTED_COND cond1 ms1 ms2))``,
+
+SIMP_TAC std_ss [COMBINE_TWO_STEP_THMS_SIMPLE]);
 
 
 
