@@ -20,35 +20,32 @@ open bitstringTheory
 
 val _ = new_theory "bir_riscv_extras";
 
-(**************************************)
-(* Store: Same as for ARM8 currently. *)
-(**************************************)
-(* Note: actually, might even be more accurate on RISC-V than
- * on ARMv8, since RISC-V is always little-endian... These stores
- * seem to be hard-coded to be little-endian. *)
+(**********)
+(* Store  *)
+(**********)
 val rv_mem_store_dword_def = Define `
   rv_mem_store_dword (a:word64) (w:word64) (mmap : (word64 -> word8)) =
-    (a + 7w =+ (63 >< 56) w)
-   ((a + 6w =+ (55 >< 48) w)
-   ((a + 5w =+ (47 >< 40) w)
-   ((a + 4w =+ (39 >< 32) w)
-   ((a + 3w =+ (31 >< 24) w)
+    (a + 0w =+ (7 >< 0) w)
+   ((a + 1w =+ (15 >< 8) w)
    ((a + 2w =+ (23 >< 16) w)
-   ((a + 1w =+ (15 >< 8)  w)
-   ((a + 0w  =+ (7  >< 0)  w) mmap)))))))`;
+   ((a + 3w =+ (31 >< 24) w)
+   ((a + 4w =+ (39 >< 32) w)
+   ((a + 5w =+ (47 >< 40) w)
+   ((a + 6w =+ (55 >< 48)  w)
+   ((a + 7w  =+ (63  >< 56)  w) mmap)))))))`;
 
 val rv_mem_store_word_def = Define `
   rv_mem_store_word (a:word64) (w:word32) (mmap : (word64 -> word8)) =
-    (a + 3w =+ (31 >< 24) w)
-   ((a + 2w =+ (23 >< 16) w)
-   ((a + 1w =+ (15 >< 8)  w)
-   ((a + 0w =+ (7  >< 0)  w) mmap)))
+    (a + 0w =+ (7 >< 0) w)
+   ((a + 1w =+ (15 >< 8) w)
+   ((a + 2w =+ (23 >< 16)  w)
+   ((a + 3w =+ (31  >< 24)  w) mmap)))
 `;
 
 val rv_mem_store_half_def = Define `
   rv_mem_store_half (a:word64) (w:word16) (mmap : (word64 -> word8)) =
-    (a + 1w =+ (15 >< 8)  w)
-   ((a + 0w =+ (7  >< 0)  w) mmap)
+    (a + 0w =+ (7 >< 0)  w)
+   ((a + 1w =+ (15  >< 8)  w) mmap)
 `;
 
 val rv_mem_store_byte_def = Define `
@@ -196,8 +193,7 @@ val riscv_extra_LIFTS = save_thm ("riscv_extra_LIFTS",
   LIST_CONJ [TRUTH] (* TODO: What should be here? *)
 );
 
-(* TODO: What should be here? ARMv8 theorems are for little-endian
- * systems, so they should work fine. *)
+(* TODO: What should be here? *)
 val riscv_CHANGE_INTERVAL_THMS =
   save_thm ("riscv_CHANGE_INTERVAL_THMS",
   LIST_CONJ [riscv_LIFT_STORE_DWORD_CHANGE_INTERVAL,

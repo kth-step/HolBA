@@ -614,6 +614,11 @@ val bir_update_mmap_def = Define `
     (!mmap aty a v vs. (bir_update_mmap aty mmap a (v::vs) =
                         bir_update_mmap aty (FUPDATE mmap ((bir_mem_addr aty a), v2n v)) (SUC a) vs))`;
 
+val bir_update_mmap_rev_def = Define `
+    (!mmap aty a.      (bir_update_mmap_rev aty mmap a [] = mmap)) /\
+    (!mmap aty a v vs. (bir_update_mmap_rev aty mmap a (v::vs) =
+                         (FUPDATE (bir_update_mmap_rev aty mmap (SUC a) vs) ((bir_mem_addr aty a), v2n v))))`;
+
 
 val bir_update_mmap_UNCHANGED = store_thm ("bir_update_mmap_UNCHANGED",
   ``!aty mmap a vs a'.
@@ -635,6 +640,25 @@ REPEAT STRIP_TAC >>
 Q.PAT_X_ASSUM `!n. n < SUC _ ==> _` (MP_TAC o Q.SPEC `0`) >>
 ASM_SIMP_TAC arith_ss [bir_load_mmap_FUPDATE_THM]);
 
+val bir_update_mmap_rev_UNCHANGED = store_thm ("bir_update_mmap_rev_UNCHANGED",
+  ``!aty mmap a vs a'.
+      (!n. n < LENGTH vs ==> (a' <> bir_mem_addr aty (a+n))) ==>
+      (bir_load_mmap (bir_update_mmap_rev aty mmap a vs) a' = bir_load_mmap mmap a')``,
+
+GEN_TAC >>
+Induct_on `vs` >> (
+  SIMP_TAC list_ss [bir_update_mmap_rev_def]
+) >>
+REPEAT STRIP_TAC >>
+`bir_load_mmap (bir_update_mmap_rev aty (FUPDATE mmap (bir_mem_addr aty a, v2n h)) (SUC a) vs) a' =
+ bir_load_mmap (FUPDATE mmap (bir_mem_addr aty a, v2n h)) a'` by (
+   Q.PAT_X_ASSUM `!mmap a a'. _` MATCH_MP_TAC >>
+   REPEAT STRIP_TAC >>
+   Q.PAT_X_ASSUM `!n. _` (MP_TAC o Q.SPEC `SUC n`) >>
+   ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_CLAUSES]
+) >>
+Q.PAT_X_ASSUM `!n. n < SUC _ ==> _` (MP_TAC o Q.SPEC `0`) >>
+ASM_SIMP_TAC arith_ss [bir_load_mmap_FUPDATE_THM]);
 
 
 

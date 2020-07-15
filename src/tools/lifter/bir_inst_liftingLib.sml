@@ -1053,7 +1053,7 @@ fun get_patched_step_hex ms_v hex_code =
 (* For debugging RISC-V:
 
   val (mu_thm:thm, mm_precond_thm:thm) = test_RISCV.bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-  val hex_code = String.map Char.toUpper "007302B3";
+  val hex_code = String.map Char.toUpper "00E12423";
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
     val bir_is_lifted_inst_block_COMPUTE_precond_tm_mr =
@@ -1085,6 +1085,11 @@ fun get_patched_step_hex ms_v hex_code =
     list_mk_comb (bir_is_lifted_inst_block_COMPUTE_precond_tm_mr,
      [label_tm, (rand (concl mu_thm)), mm_tm])
   val (lb, ms_case_cond_t, next_thm) = el 1 (preprocess_next_thms label_tm next_thms)
+
+  val next_thm0 = REWRITE_RULE [ASSUME ms_case_cond_t] next_thm
+     fun raiseErr s = raise (bir_inst_liftingAuxExn (BILED_msg s));
+
+
      (* compute ms' and al_step *)
      val (ms'_t, al_step_t, ms'_thm) = compute_al_step_ms' next_thm0
        handle HOL_ERR _ => raiseErr "computing al_step and ms' failed";
