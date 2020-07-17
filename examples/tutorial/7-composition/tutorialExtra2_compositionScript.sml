@@ -1,12 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open bslSyntax;
 open bir_wm_instTheory;
-open bin_hoare_logicTheory;
-open bir_valuesTheory;
-open bir_bool_expTheory;
-open bir_auxiliaryTheory;
-open bir_exp_equivTheory;
-open bir_programTheory;
 
 open tutorial_compositionLib;
 open tutorial_wpSupportLib;
