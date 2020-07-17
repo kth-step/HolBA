@@ -36,16 +36,16 @@ val simp_in_set_tac =
   SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss++pred_setLib.PRED_SET_ss) []
 
 (* DEBUG *)
-val (get_labels_from_set_repr, el_in_set_repr,
+val (not_empty_set_repr, get_labels_from_set_repr, el_in_set_repr,
      mk_set_repr, simp_delete_set_repr_rule,
-     simp_insert_set_repr_rule, simp_in_sing_set_repr_rule, simp_inter_set_repr_rule, simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) = (ending_set_to_sml_list, el_in_set, mk_set, simp_delete_set_rule,
+     simp_insert_set_repr_rule, simp_in_sing_set_repr_rule, simp_inter_set_repr_rule, simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) = (not_empty_set, ending_set_to_sml_list, el_in_set, mk_set, simp_delete_set_rule,
      simp_insert_set_rule, simp_in_sing_set_rule, simp_inter_set_rule, simp_in_set_tac, bir_inter_var_set_ss, bir_union_var_set_ss);
 (************************************)
 
 
 val bir_att_sec_add_1_comp_ct =
-  use_pre_str_rule
-    (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_att_sec_add_1_ht)
+  use_pre_str_rule_map
+    (HO_MATCH_MP (HO_MATCH_MP bir_label_ht_impl_weak_ht (not_empty_set (get_contract_ls bir_att_sec_add_1_ht))) bir_att_sec_add_1_ht)
     contract_1_imp_taut_thm;
 
 val bir_att_sec_call_1_ct = bir_att_sec_call_1_ht;
@@ -205,15 +205,15 @@ METIS_TAC [pred_setTheory.NOT_EQUAL_SETS]
       map_ht1
     end;
 
-  val ht1 = bir_att_sec_add_1_comp_ct;
-  val map_ht1_ = bir_map_triple_from_bir_triple ht1;
+  val map_ht1_ = bir_att_sec_add_1_comp_ct;
 
   val elabels = ``(BL_Address (Imm32 v3)) INSERT v4s``;
   val map_ht1 = populate_blacklist_set_hack elabels map_ht1_;
 
-  val ht2 = 
-    (HO_MATCH_MP bir_label_ht_impl_weak_ht ((UNDISCH o UNDISCH o (Q.SPECL [`v1`, `v2`, `v3`, `v4s`])) bir_att_sec_add_2_ht));
-  val map_ht2_ = bir_map_triple_from_bir_triple ht2;
+  val ht2_undisch = ((UNDISCH o UNDISCH o (Q.SPECL [`v1`, `v2`, `v3`, `v4s`])) bir_att_sec_add_2_ht);
+  val map_ht2_ = 
+    HO_MATCH_MP
+      (HO_MATCH_MP bir_label_ht_impl_weak_ht (not_empty_set (get_contract_ls ht2_undisch))) ht2_undisch;
 
   val elabels = ``v4s:bir_label_t->bool``;
   val map_ht2 = populate_blacklist_set_hack elabels map_ht2_;

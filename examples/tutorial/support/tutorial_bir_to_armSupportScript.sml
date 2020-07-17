@@ -3,6 +3,7 @@ open HolKernel Parse boolLib bossLib;
 open bir_programTheory;
 open bir_wm_instTheory;
 open bin_hoare_logicTheory;
+open bin_simp_hoare_logicTheory;
 open bin_hoare_logicSimps;
 open bir_program_multistep_propsTheory;
 open bir_auxiliaryTheory;
@@ -474,8 +475,8 @@ FULL_SIMP_TAC (std_ss++holBACore_ss++bir_wm_SS)
 
 val bir_get_ht_conseq_from_m_ante = prove(
   ``!bs p bpre bpost mpre ms ml mls.
-    bir_triple p (BL_Address (Imm64 ml))
-      {BL_Address (Imm64 ml') | ml' IN mls} bpre bpost ==>
+    bir_map_triple p bir_exp_true (BL_Address (Imm64 ml))
+      {BL_Address (Imm64 ml') | ml' IN mls} {} bpre bpost ==>
     bir_pre_arm8_to_bir mpre bpre ==>
     mpre ms ==>
     bmr_rel arm8_bmr bs ms ==>
@@ -493,7 +494,7 @@ val bir_get_ht_conseq_from_m_ante = prove(
 REPEAT GEN_TAC >>
 REPEAT DISCH_TAC >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS)
-  [bir_triple_def, weak_triple_def,
+  [bir_map_triple_def, weak_map_triple_def, weak_triple_def,
    bir_exec_to_labels_triple_precond_def,
    bir_exec_to_labels_triple_postcond_def, bir_etl_wm_def] >>
 PAT_X_ASSUM ``!s. _``
@@ -503,7 +504,10 @@ subgoal `bir_is_bool_exp_env bs.bst_environ bpre /\
          (bir_eval_exp bpre bs.bst_environ = SOME bir_val_true)` >- (
   METIS_TAC [bir_pre_arm8_to_bir_def, bir_bool_expTheory.bir_is_bool_exp_env_def]
 ) >>
-FULL_SIMP_TAC std_ss [bir_block_pc_def] >>
+FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss)
+  [bir_bool_expTheory.bir_eval_exp_TF,
+   bir_bool_expTheory.bir_is_bool_exp_env_REWRS,
+   bir_block_pc_def] >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
@@ -682,8 +686,8 @@ FULL_SIMP_TAC (std_ss++holBACore_ss++bir_wm_SS++pred_setLib.PRED_SET_ss)
 val lift_contract_thm = store_thm("lift_contract_thm",
   ``!p mms ml mls mu mpre mpost bpre bpost.
       MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p) ==>
-      bir_triple p (BL_Address (Imm64 ml))
-	{BL_Address (Imm64 ml') | ml' IN mls} bpre bpost ==>
+      bir_map_triple p bir_exp_true (BL_Address (Imm64 ml))
+	{BL_Address (Imm64 ml') | ml' IN mls} {} bpre bpost ==>
       bir_is_lifted_prog arm8_bmr mu mms p ==>
       arm8_wf_varset (bir_vars_of_program p UNION bir_vars_of_exp bpre) ==>
       bir_pre_arm8_to_bir mpre bpre ==>

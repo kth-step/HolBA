@@ -545,64 +545,6 @@ Q.EXISTS_TAC `(\ms. (C1 ms /\ (var ms = x)) /\ invariant ms)` >>
 FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.UNION_ASSOC]
 );
 
-(* The below are still TODO: *)
-(*
-(* Condition *)
-val weak_map_std_seq_comp_thm = prove(``
-(weak_model m) ==>
-(ls1' SUBSET ls2) ==>
-(ls1 INTER ls1' = EMPTY) ==>
-(ls1' INTER ls2' = EMPTY) ==>
-(weak_map_triple m invariant l ls1 ls2 pre1 post1) ==>
-(!l1 . (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
-(weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2)
-``,
-
-cheat);
-
-
-(* Function call *)
-val weak_map_std_seq_comp_thm = prove(``
-(weak_model m) ==>
-(ls1' SUBSET ls2) ==>
-(ls1 INTER ls1' = EMPTY) ==>
-(ls1' INTER ls2' = EMPTY) ==>
-(weak_map_triple m invariant l ls1 ls2 pre1 post1) ==>
-(!l1 . (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
-(weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2)
-``,
-
-cheat);
-
-
-(* Recursive function *)
-val weak_map_std_seq_comp_thm = prove(``
-(weak_model m) ==>
-(ls1' SUBSET ls2) ==>
-(ls1 INTER ls1' = EMPTY) ==>
-(ls1' INTER ls2' = EMPTY) ==>
-(weak_map_triple m invariant l ls1 ls2 pre1 post1) ==>
-(!l1 . (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
-(weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2)
-``,
-
-cheat);
-
-
-(* Mutually Recursive function *)
-val weak_map_std_seq_comp_thm = prove(``
-(weak_model m) ==>
-(ls1' SUBSET ls2) ==>
-(ls1 INTER ls1' = EMPTY) ==>
-(ls1' INTER ls2' = EMPTY) ==>
-(weak_map_triple m invariant l ls1 ls2 pre1 post1) ==>
-(!l1 . (l1 IN ls1) ==> (weak_map_triple m invariant l1 ls1' ls2' (post1 l1) post2)) ==>
-(weak_map_triple m invariant l ls1' (ls2 INTER ls2') pre1 post2)
-``,
-
-cheat);
-*)
-
 val _ = export_theory();
 
 
