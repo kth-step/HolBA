@@ -287,6 +287,9 @@ val wp_tests =
 *)
 ];
 
+val _ = bir_fileLib.makedir true "tempdir";
+val _ = OS.FileSys.chDir "tempdir";
+
 (*
 val (prog_name, prog, (entry_lbl, precond), (exit_lbls, postcond), wp_expect) = List.nth (wp_tests,0);
 *)
@@ -296,7 +299,7 @@ fun wp_test_fun (prog_name, prog, (entry_lbl, precond), (exit_lbls, postcond), w
     val prog_def = Define [QUOTE (prog_name ^ "_def = "), ANTIQUOTE prog];
     val wp = easy_noproof_wpLib.compute_p_imp_wp_tm prog_name prog_def (entry_lbl, precond) (exit_lbls, postcond);
   in
-    if wp <> wp_expect then
+    if not (identical wp wp_expect) then
       raise ERR "test-wp.sml" ("unexpected wp: " ^ prog_name)
     else
       print ("SUCCESS, WP as expected: " ^ prog_name ^ "\r\n")
