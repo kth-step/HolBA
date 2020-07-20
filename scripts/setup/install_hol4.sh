@@ -30,9 +30,9 @@ export LD_LIBRARY_PATH=${POLY_DIR}/lib:$LD_LIBRARY_PATH
 
 # HOL4 source and branch
 GIT_URL=https://github.com/kth-step/HOL.git
-GIT_BRANCH=for_holba
+GIT_BRANCH=for_holba_k13
 
-HOL4_DIR=${HOLBA_OPT_DIR}/hol_k12_holba
+HOL4_DIR=${HOLBA_OPT_DIR}/hol_k13_holba
 
 
 ##################################################################

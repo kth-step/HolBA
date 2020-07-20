@@ -5,7 +5,7 @@ Be sure to check out the Wiki, which contains some useful general information ab
 ## Software versions
 
 - HOL4 (`https://github.com/kth-step/HOL`)
-  - branch: for_holba (i.e. tags/kananaskis-12 + holsmt-arrays + syntax-errors)
+  - branch: for_holba_k13 (i.e. tags/kananaskis-12 + holsmt-arrays + syntax-errors)
 - Poly/ML (e.g. current Poly/ML version packaged for Ubuntu, 5.7.1)
 - Z3 v4.8.4
 

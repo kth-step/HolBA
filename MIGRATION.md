@@ -15,7 +15,7 @@
     
 * Type `term` is no longer an equality type
 
-  - Equality on terms is now implemented by operator ~~
+  - Equality on terms is now implemented by operator ~~, and previous (AST) equality is provided by the function `identical`.
   
   - bir_utilLib provides some helper functions that expect an explicit equality function
     (might be better to move this somewhere else)
