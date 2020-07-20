@@ -29,7 +29,7 @@ struct
       val states = symb_exec_process_to_leafs_pdecide (fn x => true) envfo depth precond prog;
 
       (* filter for the concrete path *)
-      fun eq_true t = t = ``SOME (BVal_Imm (Imm1 1w))``;
+      fun eq_true t = identical t ``SOME (BVal_Imm (Imm1 1w))``;
       fun pathcond_val s = (snd o dest_eq o concl o EVAL)
 			   ``bir_eval_exp ((^s).bsst_pred) (BEnv (K NONE))``;
       val filteredStates = List.filter (eq_true o pathcond_val) states;
@@ -71,7 +71,8 @@ struct
       val obs_exp = map (fn ob => let val (c,t,f) = (dest_bir_symb_obs)  ob in (c,t,f) end) (flatten obs_elem);
       val res = List.concat
                     (map (fn (cond,ob,f) =>
-                             if eval_exp_to_val cond = ``BVal_Imm (Imm1 1w)``
+                             if identical (eval_exp_to_val cond)
+                                          ``BVal_Imm (Imm1 1w)``
                              then let val t = mk_comb (f, eval_explist_to_vallist ob)
                                   in [eval_exp t] end
                              else [])
@@ -91,7 +92,7 @@ struct
     end;
 
   fun conc_exec_obs_compare prog (s1, s2) =
-    conc_exec_obs_compute prog s1 = conc_exec_obs_compute prog s2;
+    list_eq identical (conc_exec_obs_compute prog s1) (conc_exec_obs_compute prog s2);
 
 
 (*

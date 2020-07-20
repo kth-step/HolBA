@@ -39,7 +39,7 @@ fun obs_domain (ps : path_struct) =
 fun bir_free_vars exp =
     if is_comb exp then
         let val (con,args) = strip_comb exp
-        in if con = ``BExp_Den`` then
+        in if identical con ``BExp_Den`` then
                let val v = case strip_comb (hd args) of
                                      (_,v::_) => v
                                    | _ => raise ERR "bir_free_vars" "not expected"
@@ -315,7 +315,7 @@ fun preprocess_path_struct ps : (path_struct * term) =
 
 fun partition_domains (ps : path_struct) : int list * int list =
     let fun partition_obs_list xs =
-            List.partition (fn (cobs (id,cond,term)) => cond = btrue) xs;
+            List.partition (fn (cobs (id,cond,term)) => identical cond btrue) xs;
         fun go [] = ([],[])
           | go (path (_,_,xs)::ps) =
             let val (static, dyn) = partition_obs_list xs;
@@ -353,7 +353,7 @@ fun rel_synth_init initial_ps (env : enum_env) =
                     handle Bind => raise ERR "next_test" "no next relation found";
                 val spec = try_spec ();
                 val constraint = next_constraint ();
-                val _ = if constraint <> btrue
+                val _ = if identical constraint btrue
                         then (print ("Selected constraint: ");
                               bir_exp_pretty_print constraint;
                               print "\n")

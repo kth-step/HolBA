@@ -79,7 +79,7 @@ fun symb_is_BST_AssertionViolated state =
   let 
     val (pc, env, pres, status, obs) = dest_bir_symb_state state;
   in
-    status = ``BST_AssertionViolated``
+    identical status ``BST_AssertionViolated``
   end;
 
 (* We represent an Execution as a tree, where branches
