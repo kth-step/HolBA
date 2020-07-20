@@ -518,7 +518,8 @@ Q.EXISTS_TAC `s'` >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_weak_trs_def,
 				      bir_exec_to_labels_def] >>
 IMP_RES_TAC bir_exec_to_labels_n_ENV_ORDER >>
-IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_ORDER
+IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_ORDER >>
+ASM_SIMP_TAC std_ss [bir_eval_exp_TF, bir_is_bool_exp_env_REWRS]
 );
 
 (* This theorem moves ending labels which are implicitly
