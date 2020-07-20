@@ -1,9 +1,11 @@
-structure bir_utilLib =
+structure bir_eq_utilLib =
 struct
 
-open HolKernel Parse;
+local
+  open HolKernel Parse;
 
-val ERR = mk_HOL_ERR "bir_utilLib"
+  val ERR = mk_HOL_ERR "bir_eq_utilLib"
+in
 
 (* val assoc_with : ('b * 'b -> bool) -> 'b -> ('b * 'a) list -> 'a *)
 fun assoc_with eq x [] = raise ERR "assoc_with" "not found"
@@ -19,4 +21,12 @@ fun rev_assoc_with eq x [] = raise ERR "rev_assoc_with" "not found"
     then b
     else rev_assoc_with eq x xs;
 
-end
+fun mem_with eq a []      = false
+  | mem_with eq a (x::xs) =
+    if eq (a,x)
+    then true
+    else mem_with eq a xs;
+
+end (* local *)
+
+end (* struct *)

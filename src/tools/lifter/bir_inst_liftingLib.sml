@@ -401,7 +401,7 @@ fun get_patched_step_hex ms_v hex_code =
      val lifted_thms_raw = let
        val res = get_patched_step_hex ms_v hex_code
        val _ = assert (not o List.null) res
-       val _ = assert (List.all (fn thm => not (bir_lifter_utilLib.mem_with (fn (a,b) => identical a b) F (hyp thm)))) res
+       val _ = assert (List.all (fn thm => not (bir_eq_utilLib.mem_with (fn (a,b) => identical a b) F (hyp thm)))) res
      in res end handle HOL_ERR _ =>
        raise (bir_inst_liftingExn (hex_code, BILED_msg "bmr_step_hex failed"));
 
