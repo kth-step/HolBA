@@ -123,7 +123,8 @@ val bir_imm_t_sizes_list =
     bir_immtype_t_imm_list;
 
 local
-  fun bir_imm_of_size_ n ((h:term * int)::t) =
+  fun bir_imm_of_size_ _ [] = raise ERR "bir_imm_of_size_" "empty sizes list"
+    | bir_imm_of_size_ n ((h:term * int)::t) =
 	if n = (snd h)
 	then (fst h)
 	else if not (null t)
