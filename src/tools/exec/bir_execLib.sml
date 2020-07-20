@@ -155,7 +155,7 @@ val _ = debug_trace := 2;
       val prog = (snd o dest_eq o concl o (REWRITE_CONV [prog_l_def])) prog_const;
 (*      val prog = bir_exec_prog_normalize prog handle UNCHANGED => prog;*)
       val _ = if not (is_const prog_l_const) orelse
-                 (concl valid_prog_thm) <> ``bir_is_valid_program ^prog_const`` then
+                 not (identical (concl valid_prog_thm) ``bir_is_valid_program ^prog_const``) then
                 raise ERR "bir_exec_prog_gen"
                           "input validation failed"
               else

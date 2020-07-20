@@ -137,7 +137,7 @@ for now, we're taking single steps, not whole blocks
                                    (* maybe we jump outside? *)
                                    let
                                      val mem_labels_thm = EVAL ``MEM ^cur_lbl (bir_labels_of_program ^prog_tm)``;
-                                     val _ = if (snd o dest_eq o concl) mem_labels_thm = F then () else
+                                     val _ = if identical ((snd o dest_eq o concl) mem_labels_thm) F then () else
                                               raise ERR "bir_exec_prog_step_conv" ("label is not in the dictionary and cannot resolve: " ^ (term_to_string jutola));
                                    in
                                      (REWRITE_RULE []) mem_labels_thm
