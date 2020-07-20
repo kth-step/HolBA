@@ -7,45 +7,19 @@ open tutorialExtra_wpTheory tutorialExtra_smtTheory;
 
 open tutorial_wpSupportLib tutorial_compositionLib;
 
-val _ = new_theory "tutorialExtra_composition";
-
-(************************************)
-(* TODO: Where to place the below? *)
 open HolBACoreSimps;
 
-fun el_in_set elem set =
-  EQT_ELIM (SIMP_CONV (std_ss++pred_setLib.PRED_SET_ss) [] (pred_setSyntax.mk_in (elem, set)));
-
-val mk_set = pred_setSyntax.mk_set;
-
-val simp_delete_set_rule =
-  SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss)
-    [pred_setTheory.DELETE_DEF]
-
-val simp_insert_set_rule =
-  SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss)
-    [(* ??? *)]
-
-val simp_in_sing_set_rule =
-  SIMP_RULE std_ss [pred_setTheory.IN_SING]
-
-fun simp_inter_set_rule ht =
-  ONCE_REWRITE_RULE [EVAL (get_bir_map_triple_blist ht)] ht
-
-val simp_in_set_tac =
-  SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++wordsLib.WORD_ss++pred_setLib.PRED_SET_ss) []
-
-(* DEBUG *)
-val (get_labels_from_set_repr, el_in_set_repr,
-     mk_set_repr, simp_delete_set_repr_rule,
-     simp_insert_set_repr_rule, simp_in_sing_set_repr_rule, simp_inter_set_repr_rule, simp_in_set_repr_tac, inter_set_repr_ss, union_set_repr_ss) = (ending_set_to_sml_list, el_in_set, mk_set, simp_delete_set_rule,
-     simp_insert_set_rule, simp_in_sing_set_rule, simp_inter_set_rule, simp_in_set_tac, bir_inter_var_set_ss, bir_union_var_set_ss);
-(************************************)
-
+val _ = new_theory "tutorialExtra_composition";
 
 val bir_att_sec_add_1_comp_ct =
-  use_pre_str_rule
-    (HO_MATCH_MP bir_label_ht_impl_weak_ht bir_att_sec_add_1_ht)
+(* TODO: Why not use
+  label_ct_to_map_ct_predset
+    bir_att_sec_add_1_ht
+    contract_1_imp_taut_thm;
+  ?
+*)
+  use_pre_str_rule_map
+    (HO_MATCH_MP (HO_MATCH_MP bir_label_ht_impl_weak_ht (not_empty_set (get_contract_ls bir_att_sec_add_1_ht))) bir_att_sec_add_1_ht)
     contract_1_imp_taut_thm;
 
 val bir_att_sec_call_1_ct = bir_att_sec_call_1_ht;
@@ -123,11 +97,6 @@ val bir_att_sec_add_ct =
 
   val assumes = ASSUME ht_assmpt;
 
-val notin_insert_thm = prove(``(A NOTIN (B INSERT C)) ==> (A NOTIN C)``, 
-  Cases_on `A = B` >> (
-    SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
-  )
-);
 val notin_insert_neq_thm = prove(``!set el. el NOTIN set ==> (set <> el INSERT set)``,
 
 REPEAT STRIP_TAC >>
@@ -205,30 +174,33 @@ METIS_TAC [pred_setTheory.NOT_EQUAL_SETS]
       map_ht1
     end;
 
-  val ht1 = bir_att_sec_add_1_comp_ct;
-  val map_ht1_ = bir_map_triple_from_bir_triple ht1;
-
+(* For debugging:
   val elabels = ``(BL_Address (Imm32 v3)) INSERT v4s``;
-  val map_ht1 = populate_blacklist_set_hack elabels map_ht1_;
+  val map_ht = bir_att_sec_add_1_comp_ct;
+*)
+  val map_ht1 = populate_blacklist_set_hack ``(BL_Address (Imm32 v3)) INSERT v4s`` bir_att_sec_add_1_comp_ct;
 
-  val ht2 = 
-    (HO_MATCH_MP bir_label_ht_impl_weak_ht ((UNDISCH o UNDISCH o (Q.SPECL [`v1`, `v2`, `v3`, `v4s`])) bir_att_sec_add_2_ht));
-  val map_ht2_ = bir_map_triple_from_bir_triple ht2;
+  val ht2_undisch = ((UNDISCH o UNDISCH o (Q.SPECL [`v1`, `v2`, `v3`, `v4s`])) bir_att_sec_add_2_ht);
+  val map_ht2_ = 
+    HO_MATCH_MP
+      (HO_MATCH_MP bir_label_ht_impl_weak_ht (not_empty_set (get_contract_ls ht2_undisch))) ht2_undisch;
 
+
+(* For debugging:
   val elabels = ``v4s:bir_label_t->bool``;
-  val map_ht2 = populate_blacklist_set_hack elabels map_ht2_;
+  val map_ht = map_ht2_;
+*)
+  val map_ht2 = populate_blacklist_set_hack ``v4s:bir_label_t->bool`` map_ht2_;
 
 
-
+(* For debugging:
   val def_list = [bprog_add_times_two_def, bir_att_sec_add_2_post_def,
 		  bir_att_sec_add_1_post_def];
 
   val assmpt = ht_assmpt;
-  val bir_att_sec_add_ct = bir_compose_seq_assmpt (get_labels_from_set_repr, simp_in_sing_set_repr_rule,
-                                           simp_inter_set_repr_rule)
-                           map_ht1 map_ht2 def_list assmpt;
-
-
+*)
+  val bir_att_sec_add_ct =
+    bir_compose_seq_assmpt_predset map_ht1 map_ht2 [bprog_add_times_two_def, bir_att_sec_add_2_post_def, bir_att_sec_add_1_post_def] ht_assmpt;
 
 
 (* ====================================== *)
