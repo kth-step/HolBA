@@ -105,7 +105,7 @@ val _ = List.foldl
   (fn ((name, bir_exp, expected), _) =>
     let
       val word_exp = bir2w bir_exp
-      val correct = (word_exp = expected)
+      val correct = (identical word_exp expected)
       val _ = print (name ^ ":\n")
       val _ = Hol_pp.print_term word_exp
       val _ = if correct then () else (
