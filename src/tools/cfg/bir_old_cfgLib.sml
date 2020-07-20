@@ -63,7 +63,7 @@ fun block_to_outidxs labels block =
 (print ("\nooops:"^(term_to_string l)^"\n");ls)
 *)
     
-    fun find_target_idx y = find_idx (fn x => x=y) labels;
+    fun find_target_idx y = find_idx (fn x => identical x y) labels;
     val targets = List.foldl (fn (l,ls) =>
           if is_BLE_Label l then
             ((find_target_idx o eval_label o dest_BLE_Label) l)::ls
