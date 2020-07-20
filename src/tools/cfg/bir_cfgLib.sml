@@ -254,8 +254,7 @@ in
       val targets       = #CFGN_targets n;
 
       val update_this = is_some succ_lbl_tm_o andalso
-			length targets = 1 andalso
-                        identical (hd targets) (valOf succ_lbl_tm_o);
+			list_eq identical targets [valOf succ_lbl_tm_o];
 
       val n' =
 	  { CFGN_lbl_tm   = #CFGN_lbl_tm n,

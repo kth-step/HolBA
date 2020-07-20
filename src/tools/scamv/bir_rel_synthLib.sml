@@ -353,7 +353,7 @@ fun rel_synth_init initial_ps (env : enum_env) =
                     handle Bind => raise ERR "next_test" "no next relation found";
                 val spec = try_spec ();
                 val constraint = next_constraint ();
-                val _ = if identical constraint btrue
+                val _ = if not (identical constraint btrue)
                         then (print ("Selected constraint: ");
                               bir_exp_pretty_print constraint;
                               print "\n")
