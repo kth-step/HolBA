@@ -124,11 +124,14 @@ val t = ``
 (EVAL o mk_bir_exp_const_prop) t
 *)
 
+  open bir_exp_substitutionsSyntax;
+
 in (* local *)
 
 
   fun eval_constprop t = (snd o dest_eq o concl o EVAL o mk_bir_exp_const_prop) t;
 
+  val subst_exp = (eval_constprop o mk_bir_exp_subst1);
 
 end (* local *)
 end (* struct *)
