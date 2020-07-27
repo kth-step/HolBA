@@ -1,13 +1,7 @@
 open HolKernel Parse
 
-(*
-open binariesDefsLib;
-*)
 open binariesLib;
 open binariesCfgLib;
-(*
-open binariesCfgVizLib;
-*)
 
 open bir_symbexecLib;
 open bir_countw_simplificationLib;
@@ -24,8 +18,9 @@ fun print_option pf NONE     = print "NONE"
 *)
 
 (*
-open bir_cfgLib;
-open bir_cfg_vizLib;
+open binariesCfgVizLib;
+open binariesDefsLib;
+
 val _ = show_call_graph ();
 
 val _ = show_cfg_fun true  bl_dict_ n_dict entry_label;
@@ -44,7 +39,7 @@ val _ = print_dead_code bl_dict_ n_dict entry_label;
 =================================================================================================
 *)
 
-val name   = "motor_prep_input";
+val name   = entry_label;
 val lbl_tm = (mk_lbl_tm o valOf o mem_find_symbol_addr_) name;
 
 local
@@ -57,6 +52,7 @@ in
 end
 
 (*
+FOR DEBUGGING:
 (* stop at first branch *)
 val lbl_tm = ``BL_Address (Imm32 0xb08w)``;
 val stop_lbl_tms = [``BL_Address (Imm32 0xb22w)``];
@@ -71,21 +67,14 @@ val stop_lbl_tms = [``BL_Address (Imm32 0xb24w)``, ``BL_Address (Imm32 0xb2aw)``
 *)
 
 val syst  = init_state lbl_tm prog_vars;
-
 (*
-al syst_new = symb_exec_block bl_dict_ syst;
+val syst_new = symb_exec_block bl_dict_ syst;
 *)
 
-(* TODO: speed up: tidyup_state
-           later: need a lookup map for "ns" in get_next_exec_sts (find_node) *)
-(* 5s to branch with tidy up
-   8s whole function without tidy up *)
 val systs = symb_exec_to_stop bl_dict_ [syst] stop_lbl_tms [];
 (*
 length systs
-
 val syst = hd systs
-
 length(SYST_get_env syst)
 *)
 
@@ -107,9 +96,7 @@ val _ = print ("min = " ^ (Arbnum.toString count_min) ^ "\n");
 
 (*
 check_feasible (syst)
-
-val _ = check_feasible (hd systs)
-val _ = check_feasible ((hd o tl) systs)
+List.map check_feasible systs;
 *)
 
 
