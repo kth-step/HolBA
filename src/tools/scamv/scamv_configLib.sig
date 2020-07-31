@@ -13,6 +13,7 @@ sig
                        | cache_index_only
                        | cache_tag_index_part
                        | cache_tag_index_part_page
+                       | cache_speculation
 
     datatype hw_obs_model = hw_cache_tag_index
                           | hw_cache_index_numvalid

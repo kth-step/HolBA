@@ -19,6 +19,7 @@ datatype obs_model = mem_address_pc_trace
                    | cache_index_only
                    | cache_tag_index_part
                    | cache_tag_index_part_page
+                   | cache_speculation
 
 datatype hw_obs_model = hw_cache_tag_index
                       | hw_cache_index_numvalid
@@ -32,6 +33,8 @@ type scamv_config = { max_iter  : int,
                       generator : gen_type,
                       generator_param : string option,
                       obs_model : obs_model,
+                      refined_obs_model : obs_model option,
+                      obs_projection : int,
                       hw_obs_model : hw_obs_model,
                       only_gen  : bool,
                       verbosity : int,
@@ -45,6 +48,8 @@ val default_cfg = { max_iter  = 10
                   , generator = gen_rand
                   , generator_param = NONE
                   , obs_model = cache_tag_index
+                  , refined_obs_model = NONE
+                  , obs_projection = 1
                   , hw_obs_model = hw_cache_tag_index
                   , only_gen  = true
                   , verbosity = 1
@@ -68,6 +73,7 @@ fun obs_model_fromString om =
       | "cache_index_only"          => SOME cache_index_only
       | "cache_tag_index_part"      => SOME cache_tag_index_part
       | "cache_tag_index_part_page" => SOME cache_tag_index_part_page
+      | "cache_speculation"         => SOME cache_speculation
       | _                           => NONE
 
 fun hw_obs_model_fromString hwom =
@@ -88,6 +94,8 @@ fun set_max_iter (cfg : scamv_config) n =
       generator = # generator cfg,
       generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
+      refined_obs_model = # refined_obs_model cfg,
+      obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
       only_gen = # only_gen cfg,
@@ -101,6 +109,8 @@ fun set_prog_size (cfg : scamv_config) n =
       generator = # generator cfg,
       generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
+      refined_obs_model = # refined_obs_model cfg, 
+      obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
       only_gen = # only_gen cfg,
@@ -114,6 +124,8 @@ fun set_max_tests (cfg : scamv_config) n =
       generator = # generator cfg,
       generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
+      refined_obs_model = # refined_obs_model cfg, 
+      obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
       only_gen = # only_gen cfg,
@@ -127,6 +139,8 @@ fun set_enumerate (cfg : scamv_config) enum =
       generator = # generator cfg,
       generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
+      refined_obs_model = # refined_obs_model cfg,
+      obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
       only_gen = # only_gen cfg,
@@ -140,6 +154,8 @@ fun set_generator (cfg : scamv_config) gen =
       generator = gen,
       generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
+      refined_obs_model = # refined_obs_model cfg, 
+      obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
       only_gen = # only_gen cfg,
@@ -153,6 +169,8 @@ fun set_generator_param (cfg : scamv_config) gen_param =
       generator = # generator cfg,
       generator_param = gen_param,
       obs_model = # obs_model cfg,
+      refined_obs_model = # refined_obs_model cfg, 
+      obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
       only_gen = # only_gen cfg,
@@ -166,10 +184,44 @@ fun set_obs_model (cfg : scamv_config) om =
       generator = # generator cfg,
       generator_param = # generator_param cfg,
       obs_model = om,
+      refined_obs_model = # refined_obs_model cfg, 
+      obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
       only_gen = # only_gen cfg,
       seed_rand = # seed_rand cfg };
+
+fun set_refined_obs_model (cfg : scamv_config) om =
+    { max_iter = # max_iter cfg,
+      prog_size = # prog_size cfg,
+      max_tests = # max_tests cfg,
+      enumerate = # enumerate cfg,
+      generator = # generator cfg,
+      generator_param = # generator_param cfg,
+      obs_model = # obs_model cfg,
+      refined_obs_model = om,
+      obs_projection = # obs_projection cfg,
+      hw_obs_model = # hw_obs_model cfg,
+      verbosity = # verbosity cfg,
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
+
+
+fun set_obs_projection (cfg : scamv_config) obs_number =
+    { max_iter = # max_iter cfg,
+      prog_size = # prog_size cfg,
+      max_tests = # max_tests cfg,
+      enumerate = # enumerate cfg,
+      generator = # generator cfg,
+      generator_param = # generator_param cfg,
+      obs_model = # obs_model cfg,
+      refined_obs_model = # refined_obs_model cfg,
+      obs_projection = obs_number,
+      hw_obs_model = # hw_obs_model cfg,
+      verbosity = # verbosity cfg,
+      only_gen = # only_gen cfg,
+      seed_rand = # seed_rand cfg };
+
 
 fun set_hw_obs_model (cfg : scamv_config) hwom =
     { max_iter = # max_iter cfg,
@@ -179,6 +231,8 @@ fun set_hw_obs_model (cfg : scamv_config) hwom =
       generator = # generator cfg,
       generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
+      refined_obs_model = # refined_obs_model cfg, 
+      obs_projection = # obs_projection cfg,
       hw_obs_model = hwom,
       verbosity = # verbosity cfg,
       only_gen = # only_gen cfg,
@@ -192,6 +246,8 @@ fun set_only_gen (cfg : scamv_config) b =
       generator = # generator cfg,
       generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
+      refined_obs_model = # refined_obs_model cfg, 
+      obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
       only_gen = b,
@@ -205,6 +261,8 @@ fun set_verbosity (cfg : scamv_config) v =
       generator = # generator cfg,
       generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
+      refined_obs_model = # refined_obs_model cfg, 
+      obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = v,
       only_gen = # only_gen cfg,
@@ -218,6 +276,8 @@ fun set_seed_rand (cfg : scamv_config) s =
       generator = # generator cfg,
       generator_param = # generator_param cfg,
       obs_model = # obs_model cfg,
+      refined_obs_model = # refined_obs_model cfg, 
+      obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
       only_gen = # only_gen cfg,
@@ -250,6 +310,10 @@ val opt_table =
               handle_conv_arg_with (fn x => SOME (SOME x)) set_generator_param)
     , Arity1 ("om", "obs_model", "Observation model",
               handle_conv_arg_with obs_model_fromString set_obs_model)
+    , Arity1 ("rom", "refined_obs_model", "Refined observation model",
+              handle_conv_arg_with (SOME o obs_model_fromString) set_refined_obs_model)
+    , Arity1 ("proj", "obs_projection", "Observation projection",
+              handle_conv_arg_with Int.fromString set_obs_projection)
     , Arity1 ("hwom", "hw_obs_model", "HW observation model",
               handle_conv_arg_with hw_obs_model_fromString set_hw_obs_model)
     , Arity0 ("r", "run_experiments", "Automatically run each experiment after generating it (requires active connection)",

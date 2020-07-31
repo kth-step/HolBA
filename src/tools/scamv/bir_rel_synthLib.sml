@@ -7,12 +7,13 @@ open stringSyntax;
 open bir_programTheory;
 
 open bslSyntax;
+open numSyntax;
 in
 
 type exp = term;
-type cobs = term * term;
+type cobs = term * term * term;
 
-datatype cobs_repr = cobs of int * term * term;
+datatype cobs_repr = cobs of int * term * term * term;
 datatype path_repr = path of int * term * (cobs_repr list);
 type path_struct = path_repr list;
 type path_spec = {a_run: int * (bool * int) list, b_run: int * (bool * int) list};
@@ -25,7 +26,7 @@ fun mapPair f (c, oCobs) = (f c, f oCobs);
 fun path_id_of (path (id, _, _)) = id;
 fun path_cond_of (path (_,cond,_)) = cond;
 fun path_obs_of (path (_,_,obs)) = obs;
-fun cobs_id_of (cobs (id,_,_)) = id;
+fun cobs_id_of (cobs (id,_,_,_)) = id;
 
 fun path_domain (ps : path_struct) =
     List.map path_id_of ps;
@@ -95,8 +96,8 @@ fun primed ys =
                       Option.map (map (mapPair primed_term)) y)) ys;
 
 fun primed_obs (cos : cobs_repr list) =
-    let fun primed_cobs (cobs (id, c, t)) =
-            cobs (id, primed_term c, primed_term t);
+    let fun primed_cobs (cobs (id, oid, c, t)) =
+            cobs (id, oid, primed_term c, primed_term t);
     in List.map primed_cobs cos
     end;
 
@@ -129,8 +130,14 @@ fun mk_fresh_gen () =
 
 fun todo () = raise ERR "todo" "unimplemented";
 
+fun split_obs_list n xs =
+    let val (refs, base) = Portable.partition (fn (oid,_) => oid = n) xs;
+    in
+      (List.map snd refs, List.map snd base)
+    end
+
 fun gen_obs_ids fresh ts =
-    List.map (fn (c,t) => cobs (fresh (), c, t)) ts;
+    List.map (fn (oid, c,t) => cobs (fresh (), oid, c, t)) ts;
 
 fun gen_path_ids fresh ps =
     List.map (fn (pcond, cobslist) =>
@@ -252,11 +259,11 @@ fun enumerate_relation path_dom static_obs_dom dynamic_obs_dom =
 
 fun trace_cobs_jit [] obs_list = ([],[])
   | trace_cobs_jit ((b,id) :: ids) obs_list  =
-    let val (SOME (cobs (_, cond, obs_term))) = lookup_obs id obs_list;
+    let val (SOME (cobs (_, oid, cond, obs_term))) = lookup_obs id obs_list;
         val (conds, obs) = trace_cobs_jit ids obs_list;
     in
         if b
-        then (cond :: conds, obs_term :: obs)
+        then (cond :: conds, (int_of_term oid,obs_term) :: obs)
         else (bnot cond :: conds, obs)
     end handle Bind =>
                raise ERR "trace_cobs_jit"
@@ -264,7 +271,7 @@ fun trace_cobs_jit [] obs_list = ([],[])
 
 val example_bir_path_struct =
     [path (1, blt (bden (bvarimm64 "A"), bconst64 0),
-           [cobs (2, blt (bden (bvarimm64 "B"), bconst64 64),
+           [cobs (2, term_of_int 0, blt (bden (bvarimm64 "B"), bconst64 64),
                      bden(bvarimm64 "A"))])
            ,path (3, bnot (blt (bden (bvarimm64 "A"), bconst64 0)), [])];
 
@@ -296,6 +303,7 @@ infix 5 mem;
 
 fun rel_synth_jit
         (spec as {a_run = (a_path, a_obs_spec), b_run = (b_path, b_obs_spec)})
+        obs_projection
         path_struct =
     let val SOME (path (_,a_cond,a_obs)) = lookup_path a_path path_struct;
         val SOME (path (_,b_cond_unprimed,b_obs_unprimed)) =
@@ -310,6 +318,10 @@ fun rel_synth_jit
             trace_cobs_jit (project a_obs a_obs_spec) a_obs;
         val (b_obs_cond, b_obs_terms) =
             trace_cobs_jit (project b_obs b_obs_spec) b_obs;
+        val (a_obs_terms_refined, a_obs_terms_base) =
+            split_obs_list obs_projection a_obs_terms;
+        val (b_obs_terms_refined, b_obs_terms_base) =
+            split_obs_list obs_projection b_obs_terms;
         fun bandl' xs =
             case xs of
                 [] => btrue
@@ -318,7 +330,8 @@ fun rel_synth_jit
         band (a_cond,
               band (b_cond,
                     bandl' [bandl' a_obs_cond, bandl' b_obs_cond,
-                            mk_bir_list_eq a_obs_terms b_obs_terms]))
+                            band (mk_bir_list_eq a_obs_terms_base b_obs_terms_base
+                                 ,bnot (mk_bir_list_eq a_obs_terms_refined b_obs_terms_refined))]))
     end
     handle Bind =>
            raise ERR "rel_synth_jit"
@@ -341,7 +354,7 @@ fun preprocess_path_struct ps : (path_struct * term) =
 
 fun partition_domains (ps : path_struct) : int list * int list =
     let fun partition_obs_list xs =
-            List.partition (fn (cobs (id,cond,term)) => cond = btrue) xs;
+            List.partition (fn (cobs (id,oid,cond,term)) => cond = btrue) xs;
         fun go [] = ([],[])
           | go (path (_,_,xs)::ps) =
             let val (static, dyn) = partition_obs_list xs;
@@ -355,10 +368,10 @@ fun partition_domains (ps : path_struct) : int list * int list =
 
 val max_guard_tries = 10000;
 (* input: (bir_exp * (cobs list) option) list *)
-fun rel_synth_init initial_ps (env : enum_env) =
+fun rel_synth_init initial_ps obs_projection (env : enum_env) =
     let
-	val (ps : path_struct, validity) = preprocess_path_struct initial_ps;
-        val (static_obs_domain, dynamic_obs_domain) = partition_domains ps;
+	    val (ps : path_struct, validity) = preprocess_path_struct initial_ps;
+      val (static_obs_domain, dynamic_obs_domain) = partition_domains ps;
         val (full_specs, next) =
             enumerate_relation (path_domain ps)
                                static_obs_domain dynamic_obs_domain;
@@ -384,7 +397,7 @@ fun rel_synth_init initial_ps (env : enum_env) =
                               bir_exp_pretty_print constraint;
                               print "\n")
                         else ();
-            in SOME (spec, band (band (rel_synth_jit spec ps, constraint)
+            in SOME (spec, band (band (rel_synth_jit spec obs_projection ps, constraint)
                                  ,validity))
                handle e => (print (PolyML.makestring e ^ "\n");
                             print (PolyML.makestring spec ^ "\n");
@@ -396,8 +409,9 @@ fun rel_synth_init initial_ps (env : enum_env) =
     end
 
 fun print_path_struct path_struct =
-    let fun print_obs (cobs (id, obs_cond, obs_term)) =
-            (print ("Obs " ^ PolyML.makestring id ^ ": ");
+    let fun print_obs (cobs (id, oid, obs_cond, obs_term)) =
+            (print ("Obs " ^ PolyML.makestring id
+                    ^ ": (model " ^ PolyML.makestring (int_of_term oid) ^ ") ");
              print_term obs_cond;
              print (" => ");
              print_term obs_term;
