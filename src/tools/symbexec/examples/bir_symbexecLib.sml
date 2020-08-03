@@ -3,9 +3,11 @@ struct
 
 datatype symb_state =
   SymbState of {
-      SYST_env  : ((string * term) * term) list,
-      SYST_pred : term list,
-      SYST_pc : term
+      SYST_env    : ((string * term) * term) list,
+      SYST_pred   : term list,
+      SYST_pc     : term,
+      SYST_status : term,
+      SYST_obss   : term list
     };
 
 fun SYST_get_env (SymbState systr) =
@@ -14,24 +16,48 @@ fun SYST_get_pred (SymbState systr) =
   #SYST_pred systr;
 fun SYST_get_pc (SymbState systr) =
   #SYST_pc systr;
+fun SYST_get_status (SymbState systr) =
+  #SYST_status systr;
+fun SYST_get_obss (SymbState systr) =
+  #SYST_obss systr;
 
 fun SYST_update_env env' (SymbState systr) =
-  SymbState {SYST_env  = env',
-             SYST_pred = #SYST_pred systr,
-             SYST_pc   = #SYST_pc systr };
+  SymbState {SYST_env    = env',
+             SYST_pred   = #SYST_pred systr,
+             SYST_pc     = #SYST_pc systr,
+             SYST_status = #SYST_status systr,
+             SYST_obss   = #SYST_obss systr };
 fun SYST_update_pred pred' (SymbState systr) =
-  SymbState {SYST_env  = #SYST_env systr,
-             SYST_pred = pred',
-             SYST_pc   = #SYST_pc systr };
+  SymbState {SYST_env    = #SYST_env systr,
+             SYST_pred   = pred',
+             SYST_pc     = #SYST_pc systr,
+             SYST_status = #SYST_status systr,
+             SYST_obss   = #SYST_obss systr };
 fun SYST_update_pc pc' (SymbState systr) =
-  SymbState {SYST_env  = #SYST_env systr,
-             SYST_pred = #SYST_pred systr,
-             SYST_pc   = pc' };
+  SymbState {SYST_env    = #SYST_env systr,
+             SYST_pred   = #SYST_pred systr,
+             SYST_pc     = pc',
+             SYST_status = #SYST_status systr,
+             SYST_obss   = #SYST_obss systr };
+fun SYST_update_status status' (SymbState systr) =
+  SymbState {SYST_env    = #SYST_env systr,
+             SYST_pred   = #SYST_pred systr,
+             SYST_pc     = #SYST_pc systr,
+             SYST_status = status',
+             SYST_obss   = #SYST_obss systr };
+fun SYST_update_obss obss' (SymbState systr) =
+  SymbState {SYST_env    = #SYST_env systr,
+             SYST_pred   = #SYST_pred systr,
+             SYST_pc     = #SYST_pc systr,
+             SYST_status = #SYST_status systr,
+             SYST_obss   = obss' };
 
-fun SYST_mk env pred pc =
-  SymbState {SYST_env  = env,
-             SYST_pred = pred,
-             SYST_pc   = pc };
+fun SYST_mk env pred pc status obss =
+  SymbState {SYST_env    = env,
+             SYST_pred   = pred,
+             SYST_pc     = pc,
+             SYST_status = status,
+             SYST_obss   = obss };
 
 
 local
@@ -69,6 +95,8 @@ fun init_state lbl_tm prog_vars =
     SYST_mk [init_countw]
             []
             lbl_tm
+            ``BST_Running``
+            []
   end;
 
 local
