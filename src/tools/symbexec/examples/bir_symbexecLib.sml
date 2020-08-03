@@ -166,11 +166,15 @@ local
   open bir_programSyntax;
 in (* local *)
 fun symb_exec_stmt (s, syst) =
+  (* TODO: no update if state is not running *)
   if is_BStmt_Assign s then
-      update_state syst (dest_BStmt_Assign s)
-  else if is_BStmt_Assert s orelse is_BStmt_Assume s orelse is_BStmt_Observe s then
-    (* TODO: shortcut for now, needs smt solver interaction, and ignore observe *)
-    syst
+      [update_state syst (dest_BStmt_Assign s)]
+  else if is_BStmt_Assert s then
+      [syst] (* TODO: fix *)
+  else if is_BStmt_Assume s then
+      [syst] (* TODO: fix *)
+  else if is_BStmt_Observe s then
+      [syst] (* TODO: fix *)
   else raise ERR "symb_exec_stmt" "unknown statement type";
 end (* local *)
 
@@ -252,10 +256,10 @@ fun symb_exec_block bl_dict syst =
     val (_, stmts, est) = dest_bir_block bl;
     val s_tms = (fst o listSyntax.dest_list) stmts;
 
-    val syst2 = List.foldl symb_exec_stmt syst s_tms;
+    val systs2 = List.foldl (fn (s, systs) => List.concat(List.map (fn x => symb_exec_stmt (s,x)) systs)) [syst] s_tms;
 
     (* generate list of states from end statement *)
-    val systs = get_next_exec_sts lbl_tm est syst2;
+    val systs = List.concat(List.map (get_next_exec_sts lbl_tm est) systs2);
   in
     List.map simplify_state systs
   end;
