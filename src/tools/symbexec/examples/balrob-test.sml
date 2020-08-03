@@ -64,6 +64,10 @@ val stop_lbl_tms = [``BL_Address (Imm32 0xb24w)``, ``BL_Address (Imm32 0xb2aw)``
 (*
 val lbl_tm = ``BL_Address (Imm32 0xb08w)``;
 val stop_lbl_tms = [``BL_Address (Imm32 0xb24w)``, ``BL_Address (Imm32 0xb2aw)``];
+
+open bir_block_collectionLib;
+val lbl_tm = ``BL_Address (Imm32 0xb22w)``;
+lookup_block_dict bl_dict_ lbl_tm
 *)
 
 val syst  = init_state lbl_tm prog_vars;
