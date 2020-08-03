@@ -73,6 +73,7 @@ lookup_block_dict bl_dict_ lbl_tm
 val syst  = init_state lbl_tm prog_vars;
 (*
 val syst_new = symb_exec_block bl_dict_ syst;
+val envl = (Redblackmap.listItems o SYST_get_env o hd) syst_new;
 *)
 
 val systs = symb_exec_to_stop bl_dict_ [syst] stop_lbl_tms [];
