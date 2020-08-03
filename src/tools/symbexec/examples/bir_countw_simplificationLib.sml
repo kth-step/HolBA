@@ -20,18 +20,22 @@ fun simpleholset_to_list t =
 
 fun expand_exp env var =
   let
-    val exp_o = List.find (fn (x, _) => x = var) env;
-    val exp = case exp_o of
-                 SOME x => snd x
-               | NONE => raise ERR "expand_exp" ("\" ^ varname ^ \" not found");
+    val symbv_o = Redblackmap.peek (env, var);
+    val symbv = case symbv_o of
+                   SOME x => x
+                 | NONE => raise ERR "expand_exp" ((term_to_string var) ^ " not found");
+    val exp = case symbv of
+                 SymbValBE be => be
+               | _ => raise ERR "expand_exp" "unhandled symbolic value type";
     val exp_vars = (snd o dest_eq o concl o EVAL) ``(bir_vars_of_exp ^exp)``;
-    val vars = (List.map dest_BVar_string o simpleholset_to_list) exp_vars;
+    val vars = (simpleholset_to_list) exp_vars;
 
-    val subexps_raw = List.filter ((fn x => List.exists (fn y => x = y) vars) o fst) env;
+    val envl = ((Redblackmap.listItems) env);
+    val subexps_raw = List.filter ((fn x => List.exists (fn y => x = y) vars) o fst) envl;
     (* recursion on varexpressions first *)
     val subexps = List.map (fn (x, _) => (x, expand_exp env x)) subexps_raw;
 
-    val exp_ = List.foldl (fn ((x, e), exp_) => subst_exp (mk_BVar_string x, e, exp_)) exp subexps;
+    val exp_ = List.foldl (fn ((bv, e), exp_) => subst_exp (bv, e, exp_)) exp subexps;
   in
     exp_
   end;
@@ -106,13 +110,13 @@ in (* local *)
 
 fun eval_countw_in_syst syst =
   let
-    val env = (SYST_get_env syst);
     val pred = (SYST_get_pred syst);
+    val env  = (SYST_get_env  syst);
 (*
     val benv = mk_BEnv (simple_pred_to_benvmap pred benvmap_empty);
 *)
     val benv = ``BEnv (K NONE)``;
-    val exp_ = expand_exp env ("countw", ``(BType_Imm Bit64)``);
+    val exp_ = expand_exp env (mk_BVar_string ("countw", ``(BType_Imm Bit64)``));
     val exp = simple_pred_to_subst pred exp_;
   in
     (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp ^benv``

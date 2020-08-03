@@ -1,9 +1,13 @@
 structure bir_symbexecLib =
 struct
 
+datatype symb_value =
+    SymbValBE of term
+  | SymbValRange of (term * term);
+
 datatype symb_state =
   SymbState of {
-      SYST_env    : ((string * term) * term) list,
+      SYST_env    : (term, symb_value) Redblackmap.dict,
       SYST_pred   : term list,
       SYST_pc     : term,
       SYST_status : term,
@@ -84,20 +88,25 @@ in
     end;
 end
 
-(*
-val t = hd prog_vars;
-*)
-fun init_state lbl_tm prog_vars =
-  let
-    val initsymblist = List.map init_exp_from_bvar prog_vars;
-    val init_countw = (("countw", ``BType_Imm Bit64``), ``BExp_Const (Imm64 0w)``);
-  in
-    SYST_mk [init_countw]
-            []
-            lbl_tm
-            ``BST_Running``
-            []
-  end;
+local
+  open bir_envSyntax;
+in
+  (*
+  val t = hd prog_vars;
+  *)
+  fun init_state lbl_tm prog_vars =
+    let
+      val initsymblist = List.map init_exp_from_bvar prog_vars;
+      val init_countw = (("countw", ``BType_Imm Bit64``), SymbValBE ``BExp_Const (Imm64 0w)``);
+      val initenvlist = List.map (fn (a,b) => (mk_BVar_string a,b)) [init_countw];
+    in
+      SYST_mk (Redblackmap.fromList Term.compare initenvlist)
+              []
+              lbl_tm
+              ``BST_Running``
+              []
+    end;
+end
 
 local
   open bir_constpropLib;
@@ -111,20 +120,26 @@ val (bv, be) = dest_BStmt_Assign s
 *)
 fun update_state syst (bv, be) =
   let
-    val (sear, repl, bv_fresh_e) = get_fresh_var bv;
+    val (sear, repl, bv_fresh_e) = (get_fresh_var) bv;
 
     val old_env = SYST_get_env syst;
-    fun match_sear s_ = (s_ = sear);
-    val old_env_filt = List.filter (not o match_sear o fst) old_env;
-    val elem = (valOf o List.find (match_sear o fst)) old_env
+    val elem = (valOf o Redblackmap.peek) (old_env, mk_BVar_string sear)
 (*
                handle Option => raise ERR "update_state" ("couldn't find searched variable: " ^ (fst sear));
 *)
-               handle Option => init_exp_from_bvar bv;
+               handle Option => (SymbValBE o snd o init_exp_from_bvar) bv;
 
-    val new_env = (sear, be)::(repl, snd elem)::old_env_filt;
+    val new_assignments =
+      [(mk_BVar_string sear, SymbValBE be),
+       (mk_BVar_string repl, elem)];
+
+    val new_env = Redblackmap.insertList (old_env, new_assignments);
+
     fun subst_exp_ e = subst_exp (bv, bv_fresh_e, e);
-    val new_env_subst = List.map (fn (x, e) => (x, subst_exp_ e)) new_env;
+    val new_env_subst = Redblackmap.map (fn (_, symbv) =>
+            case symbv of
+               SymbValBE e  => SymbValBE (subst_exp_ e)
+             | _ => raise ERR "update_state" "unhandled symbolic value type") new_env;
 
     val old_pred_conjs = SYST_get_pred syst;
     val pred_conjs_subst = List.map subst_exp_ old_pred_conjs;
@@ -137,6 +152,7 @@ fun update_state syst (bv, be) =
 (*
 val SymbState systr = update_state (SymbState systr) (bv, be);
 *)
+(*
 fun tidyup_state prog_vars syst =
   let
     val old_pred = SYST_get_pred syst;
@@ -149,7 +165,7 @@ fun tidyup_state prog_vars syst =
       let val bv = mk_BVar_string (s, bty)
           val exp_test = subst_exp_test bv in
       (((isSome o (List.find (fn x => x = bv))) prog_vars) orelse
-       ((isSome o (List.find exp_test)) exps_env) orelse
+       ((isSome o (List.find exp_test)) (Redblackmap.listItems exps_env)) orelse
        ((isSome o (List.find exp_test)) old_pred))
       end;
 
@@ -160,6 +176,7 @@ fun tidyup_state prog_vars syst =
      SYST_update_env  env
     ) syst
   end;
+*)
 end (* local *)
 
 local
@@ -283,6 +300,7 @@ fun check_feasible syst =
   let
     val pred = SYST_get_pred syst;
     val env  = SYST_get_env  syst;
+    val envl = Redblackmap.listItems env;
 
     (* memory accesses should not end up here hopefully, ignore this to begin with *)
 
@@ -300,13 +318,16 @@ fun check_feasible syst =
     val (vars, asserts) = proc_preds (vars, asserts) pred;
 
 (*
-val (bv_comp,exp) = hd env;
+val (bv_comp,exp) = hd envl;
 *)
     (* process the environment *)
     val (vars, asserts) = proc_preds (vars, asserts)
-                                     (List.map (fn (bv_comp,exp) =>
-      ``BExp_BinPred BIExp_Equal (BExp_Den ^(mk_BVar_string bv_comp)) ^exp``
-    ) env);
+                                     (List.map (fn (bv,symbv) =>
+      case symbv of
+          SymbValBE exp =>
+            ``BExp_BinPred BIExp_Equal (BExp_Den ^bv) ^exp``
+        | _ => raise ERR "check_feasible" "cannot handle symbolic value type"
+    ) envl);
 
     val result = querysmt bir_smtLib_z3_prelude vars asserts;
 
