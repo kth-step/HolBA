@@ -2,8 +2,12 @@ structure bir_symbexecLib =
 struct
 
 datatype symb_value =
-    SymbValBE of term
-  | SymbValRange of (term * term);
+    SymbValBE    of (term)
+  | SymbValRange of (term * term)
+                    (* TODO: generalize this *)
+                    (* memory layout: flash, globals, stack;
+                                      start and size of middle portion (globals) *)
+  | SymbValMem   of (((Arbnum.num -> Arbnum.num) * term * term) * (Arbnum.num * Arbnum.num));
 
 datatype symb_state =
   SymbState of {
