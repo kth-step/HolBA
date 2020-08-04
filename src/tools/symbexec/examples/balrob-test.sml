@@ -70,10 +70,20 @@ val lbl_tm = ``BL_Address (Imm32 0xb22w)``;
 lookup_block_dict bl_dict_ lbl_tm
 *)
 
-val syst  = init_state lbl_tm prog_vars;
+val pred_conjs = [];
+val syst  = init_state lbl_tm pred_conjs prog_vars;
 (*
-val syst_new = symb_exec_block bl_dict_ syst;
-val envl = (Redblackmap.listItems o SYST_get_env o hd) syst_new;
+val systs_new = symb_exec_block bl_dict_ syst;
+val [syst] = systs_new;
+
+val [syst,syst2] = systs_new;
+val [syst2,syst] = systs_new;
+val syst = syst2;
+
+val envl = (Redblackmap.listItems o SYST_get_env) syst;
+val valsl = (Redblackmap.listItems o SYST_get_vals) syst;
+
+Redblackmap.peek (SYST_get_vals syst, ``BVar "fr_175_countw" (BType_Imm Bit64)``)
 *)
 
 val systs = symb_exec_to_stop bl_dict_ [syst] stop_lbl_tms [];

@@ -2,7 +2,7 @@ structure bir_symbexecLib =
 struct
 
 datatype symb_value =
-    SymbValBE    of (term)
+    SymbValBE    of (term * term Redblackset.set)
   | SymbValRange of (term * term)
                     (* TODO: generalize this *)
                     (* memory layout: flash, globals, stack;
@@ -11,147 +11,214 @@ datatype symb_value =
 
 datatype symb_state =
   SymbState of {
-      SYST_env    : (term, symb_value) Redblackmap.dict,
-      SYST_pred   : term list,
       SYST_pc     : term,
+      SYST_env    : (term, term) Redblackmap.dict,
       SYST_status : term,
-      SYST_obss   : term list
+      (* symbolic observation list *)
+      SYST_obss   : (Arbnum.num * term * term list * term) list,
+      (* path condition conjuncts *)
+      SYST_pred   : term list,
+      (* abstracted symbolic values for some "fresh" variables *)
+      SYST_vals   : (term, symb_value) Redblackmap.dict
     };
 
-fun SYST_get_env (SymbState systr) =
-  #SYST_env systr;
-fun SYST_get_pred (SymbState systr) =
-  #SYST_pred systr;
-fun SYST_get_pc (SymbState systr) =
+val symbvalbe_dep_empty = Redblackset.empty Term.compare;
+
+fun SYST_get_pc     (SymbState systr) =
   #SYST_pc systr;
+fun SYST_get_env    (SymbState systr) =
+  #SYST_env systr;
 fun SYST_get_status (SymbState systr) =
   #SYST_status systr;
-fun SYST_get_obss (SymbState systr) =
+fun SYST_get_obss   (SymbState systr) =
   #SYST_obss systr;
+fun SYST_get_pred   (SymbState systr) =
+  #SYST_pred systr;
+fun SYST_get_vals   (SymbState systr) =
+  #SYST_vals systr;
 
-fun SYST_update_env env' (SymbState systr) =
-  SymbState {SYST_env    = env',
-             SYST_pred   = #SYST_pred systr,
-             SYST_pc     = #SYST_pc systr,
-             SYST_status = #SYST_status systr,
-             SYST_obss   = #SYST_obss systr };
-fun SYST_update_pred pred' (SymbState systr) =
-  SymbState {SYST_env    = #SYST_env systr,
-             SYST_pred   = pred',
-             SYST_pc     = #SYST_pc systr,
-             SYST_status = #SYST_status systr,
-             SYST_obss   = #SYST_obss systr };
-fun SYST_update_pc pc' (SymbState systr) =
-  SymbState {SYST_env    = #SYST_env systr,
-             SYST_pred   = #SYST_pred systr,
-             SYST_pc     = pc',
-             SYST_status = #SYST_status systr,
-             SYST_obss   = #SYST_obss systr };
-fun SYST_update_status status' (SymbState systr) =
-  SymbState {SYST_env    = #SYST_env systr,
-             SYST_pred   = #SYST_pred systr,
-             SYST_pc     = #SYST_pc systr,
-             SYST_status = status',
-             SYST_obss   = #SYST_obss systr };
-fun SYST_update_obss obss' (SymbState systr) =
-  SymbState {SYST_env    = #SYST_env systr,
-             SYST_pred   = #SYST_pred systr,
-             SYST_pc     = #SYST_pc systr,
-             SYST_status = #SYST_status systr,
-             SYST_obss   = obss' };
-
-fun SYST_mk env pred pc status obss =
-  SymbState {SYST_env    = env,
-             SYST_pred   = pred,
-             SYST_pc     = pc,
+fun SYST_mk pc env status obss pred vals =
+  SymbState {SYST_pc     = pc,
+             SYST_env    = env,
              SYST_status = status,
-             SYST_obss   = obss };
+             SYST_obss   = obss,
+             SYST_pred   = pred,
+             SYST_vals   = vals };
+
+fun SYST_update_pc pc' (SymbState systr) =
+  SYST_mk (pc')
+          (#SYST_env    systr)
+          (#SYST_status systr)
+          (#SYST_obss   systr)
+          (#SYST_pred   systr)
+          (#SYST_vals   systr);
+fun SYST_update_env env' (SymbState systr) =
+  SYST_mk (#SYST_pc     systr)
+          (env')
+          (#SYST_status systr)
+          (#SYST_obss   systr)
+          (#SYST_pred   systr)
+          (#SYST_vals   systr);
+fun SYST_update_status status' (SymbState systr) =
+  SYST_mk (#SYST_pc     systr)
+          (#SYST_env    systr)
+          (status')
+          (#SYST_obss   systr)
+          (#SYST_pred   systr)
+          (#SYST_vals   systr);
+fun SYST_update_obss obss' (SymbState systr) =
+  SYST_mk (#SYST_pc     systr)
+          (#SYST_env    systr)
+          (#SYST_status systr)
+          (obss')
+          (#SYST_pred   systr)
+          (#SYST_vals   systr);
+fun SYST_update_pred pred' (SymbState systr) =
+  SYST_mk (#SYST_pc     systr)
+          (#SYST_env    systr)
+          (#SYST_status systr)
+          (#SYST_obss   systr)
+          (pred')
+          (#SYST_vals   systr);
+fun SYST_update_vals vals' (SymbState systr) =
+  SYST_mk (#SYST_pc     systr)
+          (#SYST_env    systr)
+          (#SYST_status systr)
+          (#SYST_obss   systr)
+          (#SYST_pred   systr)
+          (vals');
+
 
 
 local
-open bir_envSyntax;
-open bir_expSyntax;
-val freshvarcounter_ = ref (0:int);
-fun get_fresh_var_counter () =
-  let val i = !freshvarcounter_; in
-  (freshvarcounter_ := i + 1; i) end;
+  open bir_envSyntax;
+  open bir_expSyntax;
+  val freshvarcounter_ = ref (0:int);
+  fun get_fresh_var_counter () =
+    let val i = !freshvarcounter_; in
+    (freshvarcounter_ := i + 1; i) end;
 in
-  fun get_fresh_var bv =
+  fun get_bvar_fresh bv =
     let
       val (s, bty) = dest_BVar_string bv;
       val new_s = "fr_" ^ (Int.toString (get_fresh_var_counter ())) ^ "_" ^ s;
     in
-      ((s, bty), (new_s, bty), (mk_BExp_Den o mk_BVar_string) (new_s, bty))
+      mk_BVar_string (new_s, bty)
     end;
 
-  fun init_exp_from_bvar bv =
+  fun get_bvar_init bv =
     let
-      val (name, bty) = dest_BVar_string bv;
+      val (s, bty) = dest_BVar_string bv;
+      val new_s = "sy_" ^ s;
     in
-      ((name, bty), (mk_BExp_Den o mk_BVar_string) ("sy_" ^ name, bty))
+      mk_BVar_string (new_s, bty)
+    end;
+
+  fun is_bvar_init bv =
+    let
+      val (s, _) = dest_BVar_string bv;
+    in
+      String.isPrefix "sy_" s
     end;
 end
 
 local
   open bir_envSyntax;
 in
-  (*
-  val t = hd prog_vars;
-  *)
-  fun init_state lbl_tm prog_vars =
+  fun init_state lbl_tm pred_conjs prog_vars_0 =
     let
-      val initsymblist = List.map init_exp_from_bvar prog_vars;
-      val init_countw = (("countw", ``BType_Imm Bit64``), SymbValBE ``BExp_Const (Imm64 0w)``);
-      val initenvlist = List.map (fn (a,b) => (mk_BVar_string a,b)) [init_countw];
+(*
+      val prog_vars_1      = List.map (snd o dest_eq o concl o EVAL) prog_vars_0;
+*)
+      val prog_vars_1      = prog_vars_0;
+      val prog_vars        = List.filter ((fn x => x <> "countw") o fst o dest_BVar_string) prog_vars_1;
+      val envlist_progvars = List.map (fn bv => (bv, get_bvar_init bv)) prog_vars;
+
+      val countw_bv       = mk_BVar_string ("countw", ``BType_Imm Bit64``);
+      val countw_bv_fresh = get_bvar_fresh countw_bv;
+      val countw_exp_init = SymbValBE (``BExp_Const (Imm64 0w)``, symbvalbe_dep_empty);
+
+      val envlist_init  = [(countw_bv, countw_bv_fresh)]@envlist_progvars;
+      val varslist_init = [(countw_bv_fresh, countw_exp_init)];
+
+      (* TODO: process pred_conjs with substitutions for initial variable names *)
     in
-      SYST_mk (Redblackmap.fromList Term.compare initenvlist)
-              []
-              lbl_tm
+      SYST_mk lbl_tm
+              (Redblackmap.fromList Term.compare envlist_init)
               ``BST_Running``
               []
+              pred_conjs
+              (Redblackmap.fromList Term.compare varslist_init)
     end;
 end
 
 local
   open bir_constpropLib;
   open bir_envSyntax;
+  open bir_expSyntax;
+  open bir_exp_helperLib;
 in (* local *)
-(*
-val syst = init_state prog_vars;
-val SymbState systr = syst;
-val s = ``BStmt_Assign (BVar "R5" (BType_Imm Bit32)) (BExp_Den (BVar "R4" (BType_Imm Bit32)))``;
-val (bv, be) = dest_BStmt_Assign s
-*)
-fun update_state syst (bv, be) =
-  let
-    val (sear, repl, bv_fresh_e) = (get_fresh_var) bv;
 
-    val old_env = SYST_get_env syst;
-    val elem = (valOf o Redblackmap.peek) (old_env, mk_BVar_string sear)
-(*
-               handle Option => raise ERR "update_state" ("couldn't find searched variable: " ^ (fst sear));
-*)
-               handle Option => (SymbValBE o snd o init_exp_from_bvar) bv;
+  fun subst_fun env (bev, (e, vars)) =
+    let
+      val bv_ofvars = (valOf o Redblackmap.peek) (env, bev)
+                      handle Option =>
+                      raise ERR "subst_fun"
+                                ("couldn't find state variable: " ^ (term_to_string bev));
+    in
+      (subst_exp (bev, mk_BExp_Den bv_ofvars, e),
+       bv_ofvars::vars)
+    end;
 
-    val new_assignments =
-      [(mk_BVar_string sear, SymbValBE be),
-       (mk_BVar_string repl, elem)];
+  fun compute_val_and_resolve_deps vals (besubst, besubst_vars) =
+    let
+      fun find_symbval bv = if is_bvar_init bv then (SymbValBE (F, symbvalbe_dep_empty)) else
+                            (valOf o Redblackmap.peek) (vals, bv)
+                            handle Option =>
+                            raise ERR "compute_val_and_resolve_deps"
+                                      ("couldn't find symbolic value variable: " ^ (term_to_string bv));
+      fun find_deps bv = case find_symbval bv of
+                            SymbValBE (_,deps) => deps
+                          | _ => raise ERR "compute_val_and_resolve_deps"
+                                           ("expect bir expression for variable: " ^ (term_to_string bv));
 
-    val new_env = Redblackmap.insertList (old_env, new_assignments);
+      val deps_l2 = List.foldr (Redblackset.union)
+                               symbvalbe_dep_empty
+                               (List.map find_deps besubst_vars);
+      val deps = Redblackset.addList(deps_l2, besubst_vars);
+      val be_new_val = SymbValBE (besubst, deps);
+    in
+      be_new_val
+    end;
 
-    fun subst_exp_ e = subst_exp (bv, bv_fresh_e, e);
-    val new_env_subst = Redblackmap.map (fn (_, symbv) =>
-            case symbv of
-               SymbValBE e  => SymbValBE (subst_exp_ e)
-             | _ => raise ERR "update_state" "unhandled symbolic value type") new_env;
+  (*
+  val syst = init_state prog_vars;
+  val SymbState systr = syst;
+  val s = ``BStmt_Assign (BVar "R5" (BType_Imm Bit32)) (BExp_Den (BVar "R4" (BType_Imm Bit32)))``;
+  val (bv, be) = dest_BStmt_Assign s
+  *)
+  fun update_state syst (bv, be) =
+    let
+      val bv_fresh = (get_bvar_fresh) bv;
 
-    val old_pred_conjs = SYST_get_pred syst;
-    val pred_conjs_subst = List.map subst_exp_ old_pred_conjs;
-  in
-    (SYST_update_pred pred_conjs_subst o
-     SYST_update_env  new_env_subst
-    ) syst
-  end;
+      val env  = SYST_get_env  syst;
+      val vals = SYST_get_vals syst;
+
+      val be_vars = get_birexp_vars be;
+      val besubst_with_vars = List.foldr (subst_fun env) (be, []) be_vars;
+
+      val be_new_val = compute_val_and_resolve_deps vals besubst_with_vars;
+
+      val env'  = Redblackmap.insert (env,  bv,       bv_fresh);
+      val vals' = Redblackmap.insert (vals, bv_fresh, be_new_val);
+
+    in
+      (SYST_update_env  env' o
+       SYST_update_vals vals'
+      ) syst
+    end;
+
+
 
 (*
 val SymbState systr = update_state (SymbState systr) (bv, be);
@@ -302,9 +369,11 @@ local
 in (* local *)
 fun check_feasible syst =
   let
-    val pred = SYST_get_pred syst;
-    val env  = SYST_get_env  syst;
-    val envl = Redblackmap.listItems env;
+    val pred  = SYST_get_pred syst;
+    val env   = SYST_get_env  syst;
+    val envl  = Redblackmap.listItems env;
+    val vals  = SYST_get_vals syst;
+    val valsl = Redblackmap.listItems vals;
 
     (* memory accesses should not end up here hopefully, ignore this to begin with *)
 
@@ -326,12 +395,18 @@ val (bv_comp,exp) = hd envl;
 *)
     (* process the environment *)
     val (vars, asserts) = proc_preds (vars, asserts)
+                                     (List.map (fn (bv,bv_s) =>
+            ``BExp_BinPred BIExp_Equal (BExp_Den ^bv) (BExp_Den ^bv_s)``
+    ) envl);
+
+    (* process the symbolic values *)
+    val (vars, asserts) = proc_preds (vars, asserts)
                                      (List.map (fn (bv,symbv) =>
       case symbv of
-          SymbValBE exp =>
+          SymbValBE (exp,_) =>
             ``BExp_BinPred BIExp_Equal (BExp_Den ^bv) ^exp``
         | _ => raise ERR "check_feasible" "cannot handle symbolic value type"
-    ) envl);
+    ) valsl);
 
     val result = querysmt bir_smtLib_z3_prelude vars asserts;
 

@@ -8,32 +8,25 @@ local
   open bir_envSyntax;
   open bir_expSyntax;
 
-fun simpleholset_to_list t =
-  if pred_setSyntax.is_empty t then [] else
-  if not (pred_setSyntax.is_insert t) then
-    raise ERR "simpleholset_to_list" "cannot handle syntax"
-  else
-    let val (x, rset) = pred_setSyntax.dest_insert t in
-      x::(simpleholset_to_list rset)
-    end;
+  open bir_exp_helperLib;
 
-
-fun expand_exp env var =
+(*
+val var = bv_countw_fr;
+*)
+fun expand_exp vals var =
   let
-    val symbv_o = Redblackmap.peek (env, var);
-    val symbv = case symbv_o of
-                   SOME x => x
-                 | NONE => raise ERR "expand_exp" ((term_to_string var) ^ " not found");
+    val symbv = (valOf o Redblackmap.peek) (vals, var)
+                handle Option => raise ERR "expand_exp" ((term_to_string var) ^ " not found");
     val exp = case symbv of
-                 SymbValBE be => be
+                 SymbValBE (be,_) => be
                | _ => raise ERR "expand_exp" "unhandled symbolic value type";
-    val exp_vars = (snd o dest_eq o concl o EVAL) ``(bir_vars_of_exp ^exp)``;
-    val vars = (simpleholset_to_list) exp_vars;
 
-    val envl = ((Redblackmap.listItems) env);
-    val subexps_raw = List.filter ((fn x => List.exists (fn y => x = y) vars) o fst) envl;
+    val vars = get_birexp_vars exp;
+
+    val valsl = ((Redblackmap.listItems) vals);
+    val subexps_raw = List.filter ((fn x => List.exists (fn y => x = y) vars) o fst) valsl;
     (* recursion on varexpressions first *)
-    val subexps = List.map (fn (x, _) => (x, expand_exp env x)) subexps_raw;
+    val subexps = List.map (fn (x, _) => (x, expand_exp vals x)) subexps_raw;
 
     val exp_ = List.foldl (fn ((bv, e), exp_) => subst_exp (bv, e, exp_)) exp subexps;
   in
@@ -112,11 +105,19 @@ fun eval_countw_in_syst syst =
   let
     val pred = (SYST_get_pred syst);
     val env  = (SYST_get_env  syst);
+    val vals = (SYST_get_vals syst);
+
+    val bv_countw = mk_BVar_string ("countw", ``(BType_Imm Bit64)``);
+    val bv_countw_fr = (valOf o Redblackmap.peek) (env, bv_countw)
+                       handle Option =>
+                       raise ERR "eval_countw_in_syst"
+                                 ("couldn't find countw");
+
 (*
     val benv = mk_BEnv (simple_pred_to_benvmap pred benvmap_empty);
 *)
     val benv = ``BEnv (K NONE)``;
-    val exp_ = expand_exp env (mk_BVar_string ("countw", ``(BType_Imm Bit64)``));
+    val exp_ = expand_exp vals bv_countw_fr;
     val exp = simple_pred_to_subst pred exp_;
   in
     (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp ^benv``
