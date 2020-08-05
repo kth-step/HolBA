@@ -72,6 +72,7 @@ lookup_block_dict bl_dict_ lbl_tm
 
 val pred_conjs = [];
 val syst  = init_state lbl_tm pred_conjs prog_vars;
+val _ = print "initial state created.\n\n";
 (*
 val systs_new = symb_exec_block bl_dict_ syst;
 val [syst] = systs_new;
@@ -87,6 +88,7 @@ Redblackmap.peek (SYST_get_vals syst, ``BVar "fr_175_countw" (BType_Imm Bit64)``
 *)
 
 val systs = symb_exec_to_stop bl_dict_ [syst] stop_lbl_tms [];
+val _ = print "finished exploration of all paths.\n\n";
 (*
 length systs
 val syst = hd systs
@@ -94,6 +96,9 @@ length(SYST_get_env syst)
 *)
 
 val systs_feasible = List.filter check_feasible systs;
+
+val _ = print ("number of feasible paths found: " ^ (Int.toString (length systs_feasible)));
+val _ = print "\n\n";
 
 val countws = List.map eval_countw_in_syst systs_feasible;
 val counts = List.map (wordsSyntax.dest_word_literal o

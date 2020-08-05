@@ -413,31 +413,49 @@ local
         (vl2, a::al)
       end) (vars, asserts) pred;
 
-  fun env_eq_to_bexp (bv,bv_s) =
-    mk_BExp_BinPred (BIExp_Equal_tm, mk_BExp_Den bv, mk_BExp_Den bv_s);
-
   fun symbval_eq_to_bexp (bv, symbv) =
        case symbv of
           SymbValBE (exp,_) =>
             mk_BExp_BinPred (BIExp_Equal_tm, mk_BExp_Den bv, exp)
-        | _ => raise ERR "check_feasible" "cannot handle symbolic value type";
+        | _ => raise ERR "symbval_eq_to_bexp" "cannot handle symbolic value type";
+
+  fun collect_pred_expsdeps vals (bv, (exps, deps)) =
+    let
+      val symbv = (valOf o Redblackmap.peek) (vals, bv)
+                  handle Option => raise ERR "collect_pred_expsdeps"
+                                      ("couldn't fine symbolic value for " ^ (term_to_string bv));
+      val (exp, deps_delta) =
+       case symbv of
+          SymbValBE x => x
+        | _ => raise ERR "collect_pred_expsdeps" "cannot handle symbolic value type";
+    in
+      (exp::exps, Redblackset.union(deps_delta, deps))
+    end;
 
 in (* local *)
 
 fun check_feasible syst =
   let
-    val pred_conjs =
-      List.map mk_BExp_Den (SYST_get_pred syst);
-
-    val env   = SYST_get_env  syst;
-    val env_eql =
-      List.map env_eq_to_bexp (Redblackmap.listItems env);
-
     val vals  = SYST_get_vals syst;
-    val vals_eql =
-      List.map symbval_eq_to_bexp (Redblackmap.listItems vals);
+    val pred_bvl = SYST_get_pred syst;
 
-    (* memory accesses should not end up here hopefully, ignore this for now *)
+    val (pred_conjs, pred_deps) =
+      List.foldr (collect_pred_expsdeps vals) ([], symbvalbe_dep_empty) pred_bvl;
+
+    val pred_depsl_ = Redblackset.listItems pred_deps;
+    val pred_depsl = List.filter (not o is_bvar_init) pred_depsl_;
+
+    val valsl = List.map (fn bv => (bv, (valOf o Redblackmap.peek) (vals, bv)
+                                        handle Option =>
+                                          raise ERR
+                                                "check_feasible"
+                                                ("couldn't fine symbolic value for " ^ (term_to_string bv))))
+                         pred_depsl;
+    val vals_eql =
+      List.map symbval_eq_to_bexp valsl;
+
+    (* memory accesses should not end up here (actually only SymbValBE should be relevant),
+       ignore this detail for now *)
 
     (* start with no variable and no assertions *)
     val vars    = Redblackset.empty smtlib_vars_compare;
@@ -445,12 +463,6 @@ fun check_feasible syst =
 
     (* process the predicate conjuncts *)
     val (vars, asserts) = proc_preds (vars, asserts) pred_conjs;
-
-(*
-val (bv_comp,exp) = hd envl;
-*)
-    (* process the environment *)
-    val (vars, asserts) = proc_preds (vars, asserts) env_eql;
 
     (* process the symbolic values *)
     val (vars, asserts) = proc_preds (vars, asserts) vals_eql;
