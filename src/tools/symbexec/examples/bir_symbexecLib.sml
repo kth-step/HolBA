@@ -170,7 +170,7 @@ in (* local *)
 
   fun compute_val_and_resolve_deps vals (besubst, besubst_vars) =
     let
-      fun find_symbval bv = if is_bvar_init bv then (SymbValBE (F, symbvalbe_dep_empty)) else
+      fun find_symbval bv = if is_bvar_init bv then (SymbValBE (F, Redblackset.add(symbvalbe_dep_empty,bv))) else
                             (valOf o Redblackmap.peek) (vals, bv)
                             handle Option =>
                             raise ERR "compute_val_and_resolve_deps"
@@ -183,10 +183,28 @@ in (* local *)
       val deps_l2 = List.foldr (Redblackset.union)
                                symbvalbe_dep_empty
                                (List.map find_deps besubst_vars);
-      val deps = Redblackset.addList(deps_l2, besubst_vars);
-      val be_new_val = SymbValBE (besubst, deps);
     in
-      be_new_val
+      if List.all (not o is_bvar_init) besubst_vars andalso
+         Redblackset.numItems deps_l2 = 0 andalso
+         length besubst_vars = 1 andalso
+         (case find_symbval (hd besubst_vars) of SymbValBE (exp,_) => is_BExp_Const exp | _ => false)
+      then
+        let
+          val bv_dep = hd besubst_vars;
+          val symbv_dep = find_symbval bv_dep;
+          val exp = case symbv_dep of
+                       SymbValBE (exp,_) => exp
+                     | _ => raise ERR "compute_val_and_resolve_deps" "cannot happen";
+        in
+          SymbValBE (subst_exp (bv_dep, exp, besubst), symbvalbe_dep_empty)
+        end
+      else
+      let
+        val deps = Redblackset.addList(deps_l2, besubst_vars);
+        val be_new_val = SymbValBE (besubst, deps);
+      in
+        be_new_val
+      end
     end;
 
   fun compute_valbe be syst =
