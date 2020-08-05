@@ -120,7 +120,10 @@ fun eval_countw_in_syst syst =
 *)
     val benv = ``BEnv (K NONE)``;
     val exp_ = expand_exp vals bv_countw_fr;
+(*
     val exp = simple_pred_to_subst pred exp_;
+*)
+    val exp = exp_;
   in
     (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp ^benv``
   end;

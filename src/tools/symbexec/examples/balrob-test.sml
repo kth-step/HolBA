@@ -93,7 +93,9 @@ val syst = hd systs
 length(SYST_get_env syst)
 *)
 
-val countws = List.map eval_countw_in_syst systs;
+val systs_feasible = List.filter check_feasible systs;
+
+val countws = List.map eval_countw_in_syst systs_feasible;
 val counts = List.map (wordsSyntax.dest_word_literal o
                        bir_valuesSyntax.dest_BVal_Imm64 o
                        optionSyntax.dest_some) countws;
@@ -109,9 +111,9 @@ val _ = print ("funname = " ^ (name) ^ "\n");
 val _ = print ("max = " ^ (Arbnum.toString count_max) ^ "\n");
 val _ = print ("min = " ^ (Arbnum.toString count_min) ^ "\n");
 
+
 (*
 check_feasible (syst)
-List.map check_feasible systs;
 *)
 
 

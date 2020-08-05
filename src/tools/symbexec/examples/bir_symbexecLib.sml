@@ -197,7 +197,10 @@ in (* local *)
       val vals = SYST_get_vals syst;
 
       val be_vars = get_birexp_vars be;
-      val besubst_with_vars = List.foldr (subst_fun env) (be, []) be_vars;
+      (* TODO: this is a quickfix, should be handled in bir smtlib exporter: probably together with all other syntactic sugar!!!! *)
+      val be_ = (snd o dest_eq o concl o REWRITE_CONV [bir_bool_expTheory.bir_exp_false_def, bir_bool_expTheory.bir_exp_true_def]) be
+                handle UNCHANGED => be;
+      val besubst_with_vars = List.foldr (subst_fun env) (be_, []) be_vars;
 
       val be_new_val = compute_val_and_resolve_deps vals besubst_with_vars;
 
@@ -212,7 +215,28 @@ in (* local *)
   val s = ``BStmt_Assign (BVar "R5" (BType_Imm Bit32)) (BExp_Den (BVar "R4" (BType_Imm Bit32)))``;
   val (bv, be) = dest_BStmt_Assign s
   *)
-  fun update_state syst (bv, be) =
+  fun update_state (bv, be) syst =
+    if is_BExp_IfThenElse be then
+      let
+        val (cnd, be1, be2) = dest_BExp_IfThenElse be;
+
+        val cnd_bv = bir_envSyntax.mk_BVar_string ("assign_cnd", ``BType_Bool``);
+        val cnd_bv_1 = get_bvar_fresh cnd_bv;
+        val cnd_bv_2 = get_bvar_fresh cnd_bv;
+      in
+        List.concat [
+          (update_state (bv, be1) o
+           SYST_update_pred ((cnd_bv_1)::(SYST_get_pred syst)) o
+           insert_valbe cnd_bv_1 cnd
+          ) syst
+         ,
+          (update_state (bv, be2) o
+           SYST_update_pred ((cnd_bv_2)::(SYST_get_pred syst)) o
+           insert_valbe cnd_bv_2 (bslSyntax.bnot cnd)
+          ) syst
+        ]
+      end
+    else
     let
       val env  = SYST_get_env  syst;
 
@@ -220,15 +244,15 @@ in (* local *)
 
       val env'  = Redblackmap.insert (env, bv, bv_fresh);
     in
-      (SYST_update_env  env' o
-       insert_valbe bv_fresh be
-      ) syst
+      [(SYST_update_env  env' o
+        insert_valbe bv_fresh be
+      ) syst]
     end;
 
 
 
 (*
-val SymbState systr = update_state (SymbState systr) (bv, be);
+val SymbState systr = update_state (bv, be) (SymbState systr);
 *)
 (*
 fun tidyup_state prog_vars syst =
@@ -263,7 +287,7 @@ in (* local *)
 fun symb_exec_stmt (s, syst) =
   (* TODO: no update if state is not running *)
   if is_BStmt_Assign s then
-      [update_state syst (dest_BStmt_Assign s)]
+      update_state (dest_BStmt_Assign s) syst
   else if is_BStmt_Assert s then
       [syst] (* TODO: fix *)
   else if is_BStmt_Assume s then
@@ -377,49 +401,59 @@ fun symb_exec_to_stop _       []                  _            acc = acc
 end (* local *)
 
 local
+  open bir_expSyntax;
   open bir_envSyntax;
   open bir_smtLib;
+
+  val BIExp_Equal_tm = ``BIExp_Equal``;
+
+  fun proc_preds (vars, asserts) pred =
+    List.foldr (fn (exp, (vl1,al)) =>
+      let val (_,vl2,a) = bexp_to_smtlib [] vl1 exp in
+        (vl2, a::al)
+      end) (vars, asserts) pred;
+
+  fun env_eq_to_bexp (bv,bv_s) =
+    mk_BExp_BinPred (BIExp_Equal_tm, mk_BExp_Den bv, mk_BExp_Den bv_s);
+
+  fun symbval_eq_to_bexp (bv, symbv) =
+       case symbv of
+          SymbValBE (exp,_) =>
+            mk_BExp_BinPred (BIExp_Equal_tm, mk_BExp_Den bv, exp)
+        | _ => raise ERR "check_feasible" "cannot handle symbolic value type";
+
 in (* local *)
+
 fun check_feasible syst =
   let
-    val pred  = SYST_get_pred syst;
-    val env   = SYST_get_env  syst;
-    val envl  = Redblackmap.listItems env;
-    val vals  = SYST_get_vals syst;
-    val valsl = Redblackmap.listItems vals;
+    val pred_conjs =
+      List.map mk_BExp_Den (SYST_get_pred syst);
 
-    (* memory accesses should not end up here hopefully, ignore this to begin with *)
+    val env   = SYST_get_env  syst;
+    val env_eql =
+      List.map env_eq_to_bexp (Redblackmap.listItems env);
+
+    val vals  = SYST_get_vals syst;
+    val vals_eql =
+      List.map symbval_eq_to_bexp (Redblackmap.listItems vals);
+
+    (* memory accesses should not end up here hopefully, ignore this for now *)
 
     (* start with no variable and no assertions *)
     val vars    = Redblackset.empty smtlib_vars_compare;
     val asserts = [];
 
-    fun proc_preds (vars, asserts) pred =
-      List.foldr (fn (exp, (vl1,al)) =>
-        let val (_,vl2,a) = bexp_to_smtlib [] vl1 exp in
-          (vl2, a::al)
-        end) (vars, asserts) pred;
-
-    (* process the predicate *)
-    val (vars, asserts) = proc_preds (vars, asserts) pred;
+    (* process the predicate conjuncts *)
+    val (vars, asserts) = proc_preds (vars, asserts) pred_conjs;
 
 (*
 val (bv_comp,exp) = hd envl;
 *)
     (* process the environment *)
-    val (vars, asserts) = proc_preds (vars, asserts)
-                                     (List.map (fn (bv,bv_s) =>
-            ``BExp_BinPred BIExp_Equal (BExp_Den ^bv) (BExp_Den ^bv_s)``
-    ) envl);
+    val (vars, asserts) = proc_preds (vars, asserts) env_eql;
 
     (* process the symbolic values *)
-    val (vars, asserts) = proc_preds (vars, asserts)
-                                     (List.map (fn (bv,symbv) =>
-      case symbv of
-          SymbValBE (exp,_) =>
-            ``BExp_BinPred BIExp_Equal (BExp_Den ^bv) ^exp``
-        | _ => raise ERR "check_feasible" "cannot handle symbolic value type"
-    ) valsl);
+    val (vars, asserts) = proc_preds (vars, asserts) vals_eql;
 
     val result = querysmt bir_smtLib_z3_prelude vars asserts;
 
