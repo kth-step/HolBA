@@ -4,7 +4,7 @@ struct
 datatype symb_value =
     SymbValBE    of (term * term Redblackset.set)
   | SymbValRange of (term * term)
-                    (* TODO: generalize this *)
+                    (* TODO: generalize this later *)
                     (* memory layout: flash, globals, stack;
                                       start and size of middle portion (globals) *)
   | SymbValMem   of (((Arbnum.num -> Arbnum.num) * term * term) * (Arbnum.num * Arbnum.num));
@@ -125,11 +125,8 @@ end
 local
   open bir_envSyntax;
 in
-  fun init_state lbl_tm pred_conjs prog_vars_0 =
+  fun init_state lbl_tm pred_exp_conjs prog_vars_0 =
     let
-(*
-      val prog_vars_1      = List.map (snd o dest_eq o concl o EVAL) prog_vars_0;
-*)
       val prog_vars_1      = prog_vars_0;
       val prog_vars        = List.filter ((fn x => x <> "countw") o fst o dest_BVar_string) prog_vars_1;
       val envlist_progvars = List.map (fn bv => (bv, get_bvar_init bv)) prog_vars;
@@ -142,6 +139,7 @@ in
       val varslist_init = [(countw_bv_fresh, countw_exp_init)];
 
       (* TODO: process pred_conjs with substitutions for initial variable names *)
+      val pred_conjs = pred_exp_conjs;
     in
       SYST_mk lbl_tm
               (Redblackmap.fromList Term.compare envlist_init)
