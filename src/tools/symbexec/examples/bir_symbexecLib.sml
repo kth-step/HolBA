@@ -191,7 +191,7 @@ in (* local *)
       be_new_val
     end;
 
-  fun insert_valbe bv_fr be syst =
+  fun compute_valbe be syst =
     let
       val env  = SYST_get_env  syst;
       val vals = SYST_get_vals syst;
@@ -203,11 +203,21 @@ in (* local *)
       val besubst_with_vars = List.foldr (subst_fun env) (be_, []) be_vars;
 
       val be_new_val = compute_val_and_resolve_deps vals besubst_with_vars;
+    in
+      be_new_val
+    end;
 
-      val vals' = Redblackmap.insert (vals, bv_fr, be_new_val);
+  fun insert_bvfrexp bv_fr exp syst =
+    let
+      val vals = SYST_get_vals syst;
+
+      val vals' = Redblackmap.insert (vals, bv_fr, exp);
     in
       (SYST_update_vals vals') syst
     end;
+
+  fun insert_valbe bv_fr be syst =
+    insert_bvfrexp bv_fr (compute_valbe be syst) syst;
 
   (*
   val syst = init_state prog_vars;
@@ -317,24 +327,52 @@ fun get_next_exec_sts lbl_tm est syst =
     val tgt1    = fst (List.nth (vs, 1));
     val tgt2    = fst (List.nth (vs, 2));
 
-    val cnd_bv = bir_envSyntax.mk_BVar_string ("cjmp_cnd", ``BType_Bool``);
-    val cnd_bv_1 = get_bvar_fresh cnd_bv;
-    val cnd_bv_2 = get_bvar_fresh cnd_bv;
+    val cnd_valbe = compute_valbe cnd syst;
+    val (cnd_exp, cnd_deps) =
+       case cnd_valbe of
+          SymbValBE x => x
+        | _ => raise ERR "get_next_exec_sts" "cannot handle symbolic value type for conditions";
 
-    val syst1   =
-      (SYST_update_pred ((cnd_bv_1)::(SYST_get_pred syst)) o
-       insert_valbe cnd_bv_1 cnd o
-       SYST_update_pc   tgt1
-      ) syst;
-    val syst2   =
-      (SYST_update_pred ((cnd_bv_2)::(SYST_get_pred syst)) o
-       insert_valbe cnd_bv_2 (bslSyntax.bnot cnd) o
-       SYST_update_pc   tgt2
-      ) syst;
+    val pred = SYST_get_pred syst;
+    val vals = SYST_get_vals syst;
+    val last_pred_bv = hd pred
+                    handle Empty => raise ERR "get_next_exec_sts" "oh no, pred is empty!";
+    val last_pred_symbv =
+                (valOf o Redblackmap.peek) (vals, last_pred_bv)
+                handle Option => raise ERR "get_next_exec_sts"
+                                    ("couldn't fine symbolic value for " ^ (term_to_string last_pred_bv));
+    val last_pred_exp =
+       case last_pred_symbv of
+          SymbValBE (x,_) => x
+        | _ => raise ERR "get_next_exec_sts" "cannot handle symbolic value type for last pred exp";
   in
-    [syst1, syst2]
-    handle Empty =>
-      raise ERR "get_next_exec_sts" ("unexpected 1 at " ^ (term_to_string lbl_tm))
+    if cnd_exp = last_pred_exp then
+      [(SYST_update_pc tgt1
+       ) syst]
+    else if bslSyntax.bnot cnd_exp = last_pred_exp then
+      [(SYST_update_pc tgt2
+       ) syst]
+    else
+    let
+      val cnd_bv = bir_envSyntax.mk_BVar_string ("cjmp_cnd", ``BType_Bool``);
+      val cnd_bv_1 = get_bvar_fresh cnd_bv;
+      val cnd_bv_2 = get_bvar_fresh cnd_bv;
+
+      val syst1   =
+        (SYST_update_pred ((cnd_bv_1)::(SYST_get_pred syst)) o
+         insert_bvfrexp cnd_bv_1 (SymbValBE (cnd_exp, cnd_deps)) o
+         SYST_update_pc   tgt1
+        ) syst;
+      val syst2   =
+        (SYST_update_pred ((cnd_bv_2)::(SYST_get_pred syst)) o
+         insert_bvfrexp cnd_bv_2 (SymbValBE (bslSyntax.bnot cnd_exp, cnd_deps)) o
+         SYST_update_pc   tgt2
+        ) syst;
+    in
+      [syst1, syst2]
+      handle Empty =>
+        raise ERR "get_next_exec_sts" ("unexpected 1 at " ^ (term_to_string lbl_tm))
+    end
   end
   handle HOL_ERR _ =>
     let
