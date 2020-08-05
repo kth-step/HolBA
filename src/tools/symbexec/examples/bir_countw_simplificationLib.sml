@@ -100,7 +100,9 @@ fun simple_pred_to_subst pred exp =
 
 in (* local *)
 
-
+(*
+val syst = hd systs;
+*)
 fun eval_countw_in_syst syst =
   let
     val pred = (SYST_get_pred syst);
