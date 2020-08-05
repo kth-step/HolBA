@@ -258,38 +258,60 @@ in (* local *)
         insert_valbe bv_fresh be
       ) syst]
     end;
-
-
-
-(*
-val SymbState systr = update_state (bv, be) (SymbState systr);
-*)
-(*
-fun tidyup_state prog_vars syst =
-  let
-    val old_pred = SYST_get_pred syst;
-    val old_env  = SYST_get_env  syst;
-
-    val exps_env = List.map (fn (_, e) => e) old_env;
-
-    fun subst_exp_test bv e = (subst_exp (bv, e, e) <> e);
-    fun is_used ((s,bty), _) =
-      let val bv = mk_BVar_string (s, bty)
-          val exp_test = subst_exp_test bv in
-      (((isSome o (List.find (fn x => x = bv))) prog_vars) orelse
-       ((isSome o (List.find exp_test)) (Redblackmap.listItems exps_env)) orelse
-       ((isSome o (List.find exp_test)) old_pred))
-      end;
-
-    val pred = old_pred;
-    val env  = List.filter is_used old_env;
-  in
-    (SYST_update_pred pred o
-     SYST_update_env  env
-    ) syst
-  end;
-*)
 end (* local *)
+
+
+fun union_deps vals (bv, deps) =
+  let
+    val symbv = (valOf o Redblackmap.peek) (vals,bv)
+                handle Option => raise ERR
+                                       "union_deps"
+                                       ("coudln't find symbolic value for " ^ (term_to_string bv));
+    val deps_delta =
+       case symbv of
+          SymbValBE (_,deps) => deps
+        | _ => raise ERR "union_deps" "cannot handle symbolic value type";
+  in
+    Redblackset.union (deps_delta, deps)
+  end;
+
+fun tidyup_state_vals syst =
+  let
+    val pred = SYST_get_pred syst;
+    val env  = SYST_get_env  syst;
+    val vals = SYST_get_vals syst;
+
+    val entry_vars = symbvalbe_dep_empty;
+    val entry_vars = Redblackset.addList(entry_vars, pred);
+    val entry_vars = Redblackset.addList(entry_vars, (List.map snd o Redblackmap.listItems) env);
+    val entry_vars = Redblackset.filter (not o is_bvar_init) entry_vars;
+
+    val deps = Redblackset.foldl (union_deps vals) symbvalbe_dep_empty entry_vars;
+
+    val keep_vals = Redblackset.filter (not o is_bvar_init) (Redblackset.union(entry_vars, deps));
+
+    val num_vals = Redblackmap.numItems vals;
+    val num_keep_vals = Redblackset.numItems keep_vals;
+
+    val num_diff = num_vals - num_keep_vals;
+
+    val _ = if num_diff = 0 then () else
+            if num_diff < 0 then
+              raise ERR "tidyup_state_vals" "this shouldn't be negative"
+            else
+              print ("TIDIED UP " ^ (Int.toString num_diff) ^ " VALUES.\n");
+
+    val vals' = Redblackset.foldl
+                (fn (bv,vals_) => Redblackmap.insert(vals_, bv, (valOf o Redblackmap.peek) (vals,bv))
+                                  handle Option => raise ERR
+                                                         "tidyup_state_vals"
+                                                         ("coudln't find symbolic value for " ^ (term_to_string bv)))
+                (Redblackmap.mkDict Term.compare)
+                keep_vals;
+  in
+    (SYST_update_vals vals') syst
+  end;
+
 
 local
   open bir_programSyntax;
@@ -312,6 +334,8 @@ local
   open binariesCfgLib;
 in (* local *)
 fun get_next_exec_sts lbl_tm est syst =
+  (* TODO: rename function maybe to capture connection to end statement/cfg? *)
+  (* TODO: no update if state is not running *)
   let
     val (vs, _) = hol88Lib.match ``BStmt_Jmp (BLE_Label xyz)`` est;
     val tgt     = (fst o hd) vs;

@@ -98,11 +98,13 @@ length(SYST_get_env syst)
 *)
 
 val systs_feasible = List.filter check_feasible systs;
-
 val _ = print ("number of feasible paths found: " ^ (Int.toString (length systs_feasible)));
 val _ = print "\n\n";
 
-val countws = List.map eval_countw_in_syst systs_feasible;
+val systs_tidiedup = List.map tidyup_state_vals systs_feasible;
+val _ = print "finished tidying up all paths.\n\n";
+
+val countws = List.map eval_countw_in_syst systs_tidiedup;
 val counts = List.map (wordsSyntax.dest_word_literal o
                        bir_valuesSyntax.dest_BVal_Imm64 o
                        optionSyntax.dest_some) countws;
