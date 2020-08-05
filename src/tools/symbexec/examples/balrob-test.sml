@@ -88,7 +88,9 @@ Redblackmap.peek (SYST_get_vals syst, ``BVar "fr_175_countw" (BType_Imm Bit64)``
 *)
 
 val systs = symb_exec_to_stop bl_dict_ [syst] stop_lbl_tms [];
-val _ = print "finished exploration of all paths.\n\n";
+val _ = print "finished exploration of all paths.\n";
+val _ = print ("number of paths found: " ^ (Int.toString (length systs)));
+val _ = print "\n\n";
 (*
 length systs
 val syst = hd systs
