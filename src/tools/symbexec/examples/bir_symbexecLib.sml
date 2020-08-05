@@ -367,38 +367,7 @@ fun simplify_state syst =
     syst
   end;
 
-local
-  open bir_block_collectionLib;
-in (* local *)
-(*
-val syst = init_state prog_vars;
-*)
-fun symb_exec_block bl_dict syst =
-  let
-    val lbl_tm = SYST_get_pc syst;
 
-    val bl = (valOf o (lookup_block_dict bl_dict)) lbl_tm;
-    val (_, stmts, est) = dest_bir_block bl;
-    val s_tms = (fst o listSyntax.dest_list) stmts;
-
-    val systs2 = List.foldl (fn (s, systs) => List.concat(List.map (fn x => symb_exec_stmt (s,x)) systs)) [syst] s_tms;
-
-    (* generate list of states from end statement *)
-    val systs = List.concat(List.map (get_next_exec_sts lbl_tm est) systs2);
-  in
-    List.map simplify_state systs
-  end;
-
-fun symb_exec_to_stop _       []                  _            acc = acc
-  | symb_exec_to_stop bl_dict (exec_st::exec_sts) stop_lbl_tms acc =
-      let
-        val sts = symb_exec_block bl_dict exec_st;
-        val (new_acc, new_exec_sts) =
-              List.partition (fn (syst) => List.exists (fn x => (SYST_get_pc syst) = x) stop_lbl_tms) sts;
-      in
-        symb_exec_to_stop bl_dict (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
-      end;
-end (* local *)
 
 local
   open bir_expSyntax;
@@ -471,9 +440,54 @@ fun check_feasible syst =
 
     val _ = if result = BirSmtSat orelse result = BirSmtUnsat then () else
             raise ERR "check_feasible" "smt solver couldn't determine feasibility"
+
+    val resultvalue = result <> BirSmtUnsat;
+
+    val _ = if resultvalue then () else
+            print "FOUND AN INFEASIBLE PATH...\n";
   in
-    result <> BirSmtUnsat
+    resultvalue
   end;
+end (* local *)
+
+
+
+local
+  open bir_block_collectionLib;
+in (* local *)
+(*
+val syst = init_state prog_vars;
+*)
+fun symb_exec_block bl_dict syst =
+  let
+    val lbl_tm = SYST_get_pc syst;
+
+    val bl = (valOf o (lookup_block_dict bl_dict)) lbl_tm;
+    val (_, stmts, est) = dest_bir_block bl;
+    val s_tms = (fst o listSyntax.dest_list) stmts;
+
+    val systs2 = List.foldl (fn (s, systs) => List.concat(List.map (fn x => symb_exec_stmt (s,x)) systs)) [syst] s_tms;
+
+    (* generate list of states from end statement *)
+    val systs = List.concat(List.map (get_next_exec_sts lbl_tm est) systs2);
+    val systs_simplified = List.map simplify_state systs;
+    val systs_filtered = if length systs_simplified > 1 then
+                           List.filter check_feasible systs_simplified
+                         else
+                           systs_simplified;
+  in
+    systs_filtered
+  end;
+
+fun symb_exec_to_stop _       []                  _            acc = acc
+  | symb_exec_to_stop bl_dict (exec_st::exec_sts) stop_lbl_tms acc =
+      let
+        val sts = symb_exec_block bl_dict exec_st;
+        val (new_acc, new_exec_sts) =
+              List.partition (fn (syst) => List.exists (fn x => (SYST_get_pc syst) = x) stop_lbl_tms) sts;
+      in
+        symb_exec_to_stop bl_dict (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
+      end;
 end (* local *)
 
 end (* struct *)
