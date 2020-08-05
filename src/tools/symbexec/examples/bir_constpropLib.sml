@@ -129,7 +129,7 @@ val t = ``
 in (* local *)
 
 
-  fun eval_constprop t = (snd o dest_eq o concl o EVAL o mk_bir_exp_const_prop) t;
+  fun eval_constprop t = (snd o dest_eq o concl o computeLib.RESTR_EVAL_CONV [``BType_Bool``] o mk_bir_exp_const_prop) t;
 
   val subst_exp = (eval_constprop o mk_bir_exp_subst1);
 

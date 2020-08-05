@@ -14,7 +14,7 @@ datatype symb_state =
       SYST_pc     : term,
       SYST_env    : (term, term) Redblackmap.dict,
       SYST_status : term,
-      (* symbolic observation list *)
+      (* symbolic observation list: id, condition, value list, aggregation function *)
       SYST_obss   : (Arbnum.num * term * term list * term) list,
       (* path condition conjuncts *)
       SYST_pred   : term list,
@@ -191,16 +191,8 @@ in (* local *)
       be_new_val
     end;
 
-  (*
-  val syst = init_state prog_vars;
-  val SymbState systr = syst;
-  val s = ``BStmt_Assign (BVar "R5" (BType_Imm Bit32)) (BExp_Den (BVar "R4" (BType_Imm Bit32)))``;
-  val (bv, be) = dest_BStmt_Assign s
-  *)
-  fun update_state syst (bv, be) =
+  fun insert_valbe bv_fr be syst =
     let
-      val bv_fresh = (get_bvar_fresh) bv;
-
       val env  = SYST_get_env  syst;
       val vals = SYST_get_vals syst;
 
@@ -209,12 +201,27 @@ in (* local *)
 
       val be_new_val = compute_val_and_resolve_deps vals besubst_with_vars;
 
-      val env'  = Redblackmap.insert (env,  bv,       bv_fresh);
-      val vals' = Redblackmap.insert (vals, bv_fresh, be_new_val);
+      val vals' = Redblackmap.insert (vals, bv_fr, be_new_val);
+    in
+      (SYST_update_vals vals') syst
+    end;
 
+  (*
+  val syst = init_state prog_vars;
+  val SymbState systr = syst;
+  val s = ``BStmt_Assign (BVar "R5" (BType_Imm Bit32)) (BExp_Den (BVar "R4" (BType_Imm Bit32)))``;
+  val (bv, be) = dest_BStmt_Assign s
+  *)
+  fun update_state syst (bv, be) =
+    let
+      val env  = SYST_get_env  syst;
+
+      val bv_fresh = (get_bvar_fresh) bv;
+
+      val env'  = Redblackmap.insert (env, bv, bv_fresh);
     in
       (SYST_update_env  env' o
-       SYST_update_vals vals'
+       insert_valbe bv_fresh be
       ) syst
     end;
 
@@ -286,12 +293,18 @@ fun get_next_exec_sts lbl_tm est syst =
     val tgt1    = fst (List.nth (vs, 1));
     val tgt2    = fst (List.nth (vs, 2));
 
+    val cnd_bv = bir_envSyntax.mk_BVar_string ("cjmp_cnd", ``BType_Bool``);
+    val cnd_bv_1 = get_bvar_fresh cnd_bv;
+    val cnd_bv_2 = get_bvar_fresh cnd_bv;
+
     val syst1   =
-      (SYST_update_pred ((cnd)::(SYST_get_pred syst)) o
+      (SYST_update_pred ((cnd_bv_1)::(SYST_get_pred syst)) o
+       insert_valbe cnd_bv_1 cnd o
        SYST_update_pc   tgt1
       ) syst;
     val syst2   =
-      (SYST_update_pred ((bslSyntax.bnot cnd)::(SYST_get_pred syst)) o
+      (SYST_update_pred ((cnd_bv_2)::(SYST_get_pred syst)) o
+       insert_valbe cnd_bv_2 (bslSyntax.bnot cnd) o
        SYST_update_pc   tgt2
       ) syst;
   in
