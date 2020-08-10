@@ -245,13 +245,26 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V\n\
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
 (* R-format *)
 val res = riscv_test_hex "007302B3"; (* OK: "add x5, x6, x7" *)
+
 (* I-format *)
 val res = riscv_test_hex "FCE08793"; (* OK: "addi x15,x1,-50" *)
+
 (* S-format *)
+(* String widths:
+ * 000: byte
+ * 001: halfword
+ * 010: word
+ * 011: doubleword *)
+(* TODO: Should work pending fixing the lifter to be able to store 32-bits of 64-bit registers... *)
 val res = riscv_test_hex "00E12423"; (* "sw x14, 8(x2)" *)
+(* Should only work in 64-bit mode *)
+val res = riscv_test_hex "00E13423"; (* OK: "sd x14, 8(x2)" *)
+
 (* B-format *)
 val res = riscv_test_hex "00A98863"; (* "beq x19, x10, offset = 16 bytes" *)
+
 (* U-format *)
 val res = riscv_test_hex "0DEAD537"; (* OK: "lui x10, 0xDEAD" *)
+
 (* J-format *)
 val res = riscv_test_hex "0000006F"; (* "jal x0, 0x0" *)

@@ -615,56 +615,6 @@ val _ = assert bmr_rec_sanity_check (m0_mod_bmr_rec_LittleEnd_Main)
 (* TODO: bmr_normalise_step_thm and bytes_of_hex_code are defined
  * above - make separate variants for RISC-V? *)
 
-(* FOR DEBUG TESTING PURPOSES:
- * TODO: Note that none of this works for RISC-V yet.
-
-  (* TODO: riscvAssemblerLib would be located in
-   * l3-machine-code/riscv/model... if it existed. But it doesn't,
-   * so you have to write it. *)
-  fun riscv_hex_code_of_asm asm =
-    hd (riscvAssemblerLib.riscv_code [QUOTE asm])
-
-  (* riscv_state definition can be found in l3-machine-code/riscv. *)
-  val vn = ``ms:riscv_state``
-
-  (* TODO: Are these ARMv8 instructions? *)
-  val hex_code = "B90033E0";
-  val hex_code = "79000001"
-  val hex_code = "D345FC41"
-  val hex_code = "A9B97BFD"
-  val hex_code = "90000000"
-  val hex_code = "BA020000"
-  val hex_code = "BA000000"
-  val hex_code = "FA010000"
-  val hex_code = "FA000000"
-  val hex_code = "7100001F"
-  val hex_code = riscv_hex_code_of_asm "rev16 x1, x2";
-  val hex_code = riscv_hex_code_of_asm "rev16 w1, w2";
-  val hex_code = riscv_hex_code_of_asm "rev32 x1, x2";
-  val hex_code = riscv_hex_code_of_asm "ngc x1, x2"
-  val hex_code = riscv_hex_code_of_asm "ngc w1, w2"
-  val hex_code = riscv_hex_code_of_asm "ngcs x1, x2"
-  val hex_code = riscv_hex_code_of_asm "ngc w1, w2"
-  val hex_code = riscv_hex_code_of_asm "rbit w1, w2"
-  val hex_code = riscv_hex_code_of_asm "ror x1, x2, x3"
-  val hex_code = riscv_hex_code_of_asm "ror x1, x2, #2"
-  val hex_code = riscv_hex_code_of_asm "ror w1, w2, #2"
-  val hex_code = riscv_hex_code_of_asm "extr w1, w2, w3, #2"
-  val hex_code = riscv_hex_code_of_asm "extr x1, x2, x3, #2"
-  val hex_code = riscv_hex_code_of_asm "movk x1, #2"
-  val hex_code = riscv_hex_code_of_asm "movk w1, #2"
-  val hex_code = riscv_hex_code_of_asm "ngc w0, w1"
-  val hex_code = riscv_hex_code_of_asm "ngcs w0, w1"
-  val hex_code = riscv_hex_code_of_asm "adcs w0, w1, w2"
-  val hex_code = riscv_hex_code_of_asm "sbcs w0, w1, w2"
-
-  (* riscv_step_hex is defined in step/riscv_stepLib.sml,
-   * riscv_step_hex' should be defined below. *)
-  val thms = riscv_step_hex hex_code
-  val thms' = riscv_step_hex' vn hex_code
-*)
-
-
 
 (* This is the riscv_step_hex' function. It is based on
  * riscv_step_hex from l3-machine-code/riscv, and it is stored

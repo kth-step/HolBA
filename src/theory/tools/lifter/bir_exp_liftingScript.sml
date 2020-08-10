@@ -791,12 +791,12 @@ val bir_update_mmap_words_def = Define `
     (!mmap a.      (bir_update_mmap_words mmap a [] = mmap)) /\
     (!mmap a v vs. (bir_update_mmap_words mmap a (v::vs) =
                         bir_update_mmap_words ((a =+ v2w v) mmap) (a + 1w) vs))`;
-
+(* TODO: Order of updates in memory representation
 val bir_update_mmap_words_rev_def = Define `
     (!mmap a.      (bir_update_mmap_words_rev mmap a [] = mmap)) /\
     (!mmap a v vs. (bir_update_mmap_words_rev mmap a (v::vs) =
                          ((a =+ v2w v) (bir_update_mmap_words_rev mmap (a + 1w) vs))))`;
-
+*)
 val bir_store_in_mem_words_def = Define `bir_store_in_mem_words
   (value_ty : bir_immtype_t) (a_ty : bir_immtype_t) (result : bir_imm_t) (mmap : 'a word -> 'v word) (en: bir_endian_t) (a : 'a word) =
 
@@ -812,7 +812,7 @@ val bir_store_in_mem_words_def = Define `bir_store_in_mem_words
         case vs' of NONE => NONE
                  |  SOME vs'' => SOME (bir_update_mmap_words mmap a vs'')
    )`;
-
+(* TODO: Order of updates in memory representation
 val bir_store_in_mem_words_rev_def = Define `bir_store_in_mem_words_rev
   (value_ty : bir_immtype_t) (a_ty : bir_immtype_t) (result : bir_imm_t) (mmap : 'a word -> 'v word) (en: bir_endian_t) (a : 'a word) =
 
@@ -828,7 +828,7 @@ val bir_store_in_mem_words_rev_def = Define `bir_store_in_mem_words_rev
         case vs' of NONE => NONE
                  |  SOME vs'' => SOME (bir_update_mmap_words_rev mmap a vs'')
    )`;
-
+*)
 val v2w_w2v_SEG_GEN = store_thm ("v2w_w2v_SEG_GEN",
   ``!s b (w:'a word).
       (s + b <= dimindex (:'a)) ==>
@@ -927,7 +927,7 @@ let
 
 in thm6
 end);
-
+(* TODO: Order of updates in memory representation
 val bir_store_in_mem_words_rev_REWRS = save_thm ("bir_store_in_mem_words_rev_REWRS",
 let
   val thm_def = prove (``!(value_ty :bir_immtype_t) (a_ty :bir_immtype_t) (result :bir_imm_t)
@@ -979,7 +979,7 @@ let
 
 in thm6
 end);
-
+*)
 
 
 val bir_update_mmap_words_INTRO = store_thm ("bir_update_mmap_words_INTRO",
@@ -1007,7 +1007,7 @@ val bir_update_mmap_words_INTRO = store_thm ("bir_update_mmap_words_INTRO",
   ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [(* updateTheory.UPDATE_def, *)
     w2n_11, bitstringTheory.n2w_v2n, bir_load_mmap_n2w_FUPDATE_thm]
 );
-
+(* TODO: Order of updates in memory representation
 val bir_update_mmap_words_rev_INTRO = store_thm ("bir_update_mmap_words_rev_INTRO",
 ``!sa (a: 'a word).
     (size_of_bir_immtype sa = dimindex (:'a)) ==>
@@ -1039,7 +1039,7 @@ val bir_update_mmap_words_rev_INTRO = store_thm ("bir_update_mmap_words_rev_INTR
   ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [(* updateTheory.UPDATE_def, *)
     w2n_11, bitstringTheory.n2w_v2n, bir_load_mmap_n2w_FUPDATE_thm, bir_update_mmap_words_rev_def]
 );
-
+*)
 
 val bir_update_mmap_words_INTRO_w2n = store_thm ("bir_update_mmap_words_INTRO_w2n",
 ``!sa (a: 'a word) vs va_n va mem_n.

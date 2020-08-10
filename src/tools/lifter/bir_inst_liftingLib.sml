@@ -320,14 +320,14 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
 (* For debugging RISC-V:
 
-  val hex_code = String.map Char.toUpper "007302B3";
+  val hex_code = String.map Char.toUpper "00E13423"; (* "sd x14, 8(x2)" *)
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
   val (lb, ms_case_cond_t, next_thm) = el 1 (preprocess_next_thms label_tm next_thms)
   val next_thm0 = REWRITE_RULE [ASSUME ms_case_cond_t] next_thm
   val (preconds, next_tm) = strip_imp_only (concl next_thm0)
   val tm = el 1 preconds
-
+  (* In case of several preconds, continue with the following for 2, 3, 4, ...*)
   (* val tm = el 2 preconds *)
 
 *)
@@ -523,7 +523,7 @@ fun get_patched_step_hex ms_v hex_code =
   in
 (* For debugging RISC-V:
 
-  val hex_code = String.map Char.toUpper "007302B3";
+  val hex_code = String.map Char.toUpper "00E13423";
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
   val (lb, ms_case_cond_t, next_thm) = el 1 (preprocess_next_thms label_tm next_thms)
@@ -1109,12 +1109,10 @@ fun get_patched_step_hex ms_v hex_code =
   fun compute_updates mem_up_t imm_ups_t eup_t =
   let
      (* Deal with mem_up *)
+     (* TODO: Something goes wrong here *)
      val (init_thm, vn_set) = if (optionSyntax.is_none mem_up_t) then
           (comp_thm_updates_INTRO_NO_MEM, vn_set_empty)
         else let
-           (* DEBUG:
-              val mem_up_t = optionSyntax.mk_some mr_mem_lf_of_ms
-            *)
            val mem_ms' = optionSyntax.dest_some mem_up_t
            val lift_thm = exp_lift_fn mem_ms'
            val e_tm = rand (rator (concl lift_thm));
@@ -1138,7 +1136,7 @@ fun get_patched_step_hex ms_v hex_code =
         end)
         (fst (listSyntax.dest_list imm_ups_t)));
 
-     (* TODO: Something goes wrong here... *)
+     (* TODO: Something will go wrong here??? *)
      val (full_rel_thm, vn_set_final) = foldl add_imm_up (init_thm, vn_set) imm_ups_tm_list;
 
      (* add eup *)

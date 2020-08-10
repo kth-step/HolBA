@@ -613,12 +613,12 @@ val bir_update_mmap_def = Define `
     (!mmap aty a.      (bir_update_mmap aty mmap a [] = mmap)) /\
     (!mmap aty a v vs. (bir_update_mmap aty mmap a (v::vs) =
                         bir_update_mmap aty (FUPDATE mmap ((bir_mem_addr aty a), v2n v)) (SUC a) vs))`;
-
+(* TODO: Order of updates in memory representation
 val bir_update_mmap_rev_def = Define `
     (!mmap aty a.      (bir_update_mmap_rev aty mmap a [] = mmap)) /\
     (!mmap aty a v vs. (bir_update_mmap_rev aty mmap a (v::vs) =
                          (FUPDATE (bir_update_mmap_rev aty mmap (SUC a) vs) ((bir_mem_addr aty a), v2n v))))`;
-
+*)
 
 val bir_update_mmap_UNCHANGED = store_thm ("bir_update_mmap_UNCHANGED",
   ``!aty mmap a vs a'.
@@ -640,6 +640,7 @@ REPEAT STRIP_TAC >>
 Q.PAT_X_ASSUM `!n. n < SUC _ ==> _` (MP_TAC o Q.SPEC `0`) >>
 ASM_SIMP_TAC arith_ss [bir_load_mmap_FUPDATE_THM]);
 
+(* TODO: Order of updates in memory representation
 val bir_update_mmap_rev_UNCHANGED = store_thm ("bir_update_mmap_rev_UNCHANGED",
   ``!aty mmap a vs a'.
       (!n. n < LENGTH vs ==> (a' <> bir_mem_addr aty (a+n))) ==>
@@ -659,7 +660,7 @@ REPEAT STRIP_TAC >>
 ) >>
 Q.PAT_X_ASSUM `!n. n < SUC _ ==> _` (MP_TAC o Q.SPEC `0`) >>
 ASM_SIMP_TAC arith_ss [bir_load_mmap_FUPDATE_THM]);
-
+*)
 
 
 (* ================= *)

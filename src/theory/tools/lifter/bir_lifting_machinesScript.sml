@@ -821,7 +821,23 @@ val riscv_state_is_OK_def = Define `
      * when non-control transfer instructions are executed, NextFetch is never written to (instead of
      * explicitly writing NONE).
 *)
-    (ms.c_NextFetch ms.procID = NONE)
+    (ms.c_NextFetch ms.procID = NONE) /\
+(*
+
+     * It seems the size of the general-purpose registers is hard-coded as 64-bit in the L3 model.
+     * When trying to store values of 64-bit registers as 32-bit words, the lifter runs into
+     * a lot of trouble. For this reason, we fix the architecture to 64-bit.
+
+     * TODO: For technical reasons, we don't write this as
+
+         ((ms.c_MCSR ms.procID).mcpuid.ArchBase = 2w)
+
+     * which is a more direct representation of what is really stored, but rather as two separate
+     * conjuncts to be able to lift without performing additional word arithmetic (effectively,
+     * comparing 2w to 0w and 1w)
+*)
+     ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 0w) /\
+     ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 1w)
   )
 (* For ARM8:
     (* https://static.docs.arm.com/100878/0100/fundamentals_of_armv8_a_100878_0100_en.pdf
@@ -999,9 +1015,12 @@ SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, riscv_bmr_EVAL,
 val bmr_extra_RISCV = store_thm ("bmr_extra_RISCV",
 ``!ms.
     riscv_bmr.bmr_extra ms = 
-      (ms.exception = NoException) /\
-      ((ms.c_MCSR ms.procID).mstatus.VM = 0w) /\
-      (ms.c_NextFetch ms.procID = NONE)
+      ((ms.exception = NoException) /\
+       ((ms.c_MCSR ms.procID).mstatus.VM = 0w) /\
+       (ms.c_NextFetch ms.procID = NONE) /\
+       ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 0w) /\
+       ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 1w)
+      )
 ``,
 
 SIMP_TAC (std_ss++bmr_ss++boolSimps.EQUIV_EXTRACT_ss)
