@@ -19,15 +19,21 @@ in (* local *)
     end;
 
   fun compute_val_try vals (besubst, besubst_vars) deps_l2 =
-      if List.all (not o is_bvar_init) besubst_vars andalso
-         Redblackset.numItems deps_l2 = 0 andalso
-         length besubst_vars = 1 andalso
-         (case find_val vals (hd besubst_vars) "compute_val_try" of
-             SymbValBE (exp,_) => is_BExp_Const exp
-           | _ => false)
-      then
+    let
+      val all_deps_const = List.all (fn bv =>
+             (not o is_bvar_init) bv andalso
+             (case find_val vals bv "compute_val_try" of
+                 SymbValBE (exp,_) => is_BExp_Const exp
+               | _ => false)
+           ) besubst_vars;
+    in
+      (* TODO: remove quickfix for at least 1 dependency *)
+      if (List.length besubst_vars) > 0 andalso all_deps_const then
         let
-          val bv_dep = hd besubst_vars;
+          (* TODO: fix this so that it is general for arbitrary number of dependencies *)
+          (* TODO: assert that deps_l2 is indeed empty *)
+          val bv_dep = hd besubst_vars
+                       handle Empty => raise ERR "aaaaaaaa" (term_to_string besubst);
           val symbv_dep = find_val vals bv_dep "compute_val_try";
           val exp = case symbv_dep of
                        SymbValBE (exp,_) => exp
@@ -36,7 +42,8 @@ in (* local *)
           SOME (SymbValBE (subst_exp (bv_dep, exp, besubst), symbvalbe_dep_empty))
         end
       else
-        NONE;
+        NONE
+    end;
 
   fun compute_val_and_resolve_deps vals (besubst, besubst_vars) =
     let
