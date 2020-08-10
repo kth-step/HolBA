@@ -22,10 +22,8 @@ in (* local *)
     let
       fun find_symbval_f bv = if is_bvar_init bv then (SymbValBE (F, Redblackset.add(symbvalbe_dep_empty,bv))) else
                             find_val vals bv "compute_val_and_resolve_deps";
-      fun find_deps bv = case find_symbval_f bv of
-                            SymbValBE (_,deps) => deps
-                          | _ => raise ERR "compute_val_and_resolve_deps"
-                                           ("expect bir expression for variable: " ^ (term_to_string bv));
+      fun find_deps bv = deps_of_symbval (find_symbval_f bv) "compute_val_and_resolve_deps";
+(* handle _ => raise ERR "" ("expect bir expression for variable: " ^ (term_to_string bv)); *)
 
       val deps_l2 = List.foldr (Redblackset.union)
                                symbvalbe_dep_empty

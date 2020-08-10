@@ -156,23 +156,28 @@ in
 end
 
 
-(* helper function *)
+(* helper functions *)
 fun find_val vals bv err_src_string =
       (valOf o Redblackmap.peek) (vals,bv)
       handle Option => raise ERR
                              err_src_string
                              ("coudln't find value for " ^ (term_to_string bv));
 
+
+(* symbval dependencies *)
+fun deps_of_symbval symbv err_src_string =
+  case symbv of
+          SymbValBE (_,deps) => deps
+        | _ => raise ERR err_src_string "cannot handle symbolic value type to find dependencies";
+
 fun union_deps vals (bv, deps) =
   let
     val symbv = find_val vals bv "union_deps";
-    val deps_delta =
-       case symbv of
-          SymbValBE (_,deps) => deps
-        | _ => raise ERR "union_deps" "cannot handle symbolic value type";
+    val deps_delta = deps_of_symbval symbv "union_deps";
   in
     Redblackset.union (deps_delta, deps)
   end;
+
 
 (* tidy up states *)
 fun tidyup_state_vals syst =
