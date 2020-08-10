@@ -1053,7 +1053,7 @@ fun get_patched_step_hex ms_v hex_code =
 (* For debugging RISC-V:
 
   val (mu_thm:thm, mm_precond_thm:thm) = test_RISCV.bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-  val hex_code = String.map Char.toUpper "00E12423";
+  val hex_code = String.map Char.toUpper "00A98863"; (* "beq x19, x10, offset = 16 bytes" *)
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
     val bir_is_lifted_inst_block_COMPUTE_precond_tm_mr =

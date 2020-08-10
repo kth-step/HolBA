@@ -255,7 +255,12 @@ val res = riscv_test_hex "FCE08793"; (* OK: "addi x15,x1,-50" *)
  * 001: halfword
  * 010: word
  * 011: doubleword *)
-(* TODO: Should work pending fixing the lifter to be able to store 32-bits of 64-bit registers... *)
+(* TODO: Should work pending fixing the lifter to be able to store 32-bits of 64-bit registers...
+ * One solution is to replicate all theorems involved in storing for more types.
+ * Another solution would be to conditionally rewrite words to the sensible type, for example,
+ * if the first 8 bits are cut from a 64-bit word w, the result is the same as if it was a
+ * 32-bit word.
+ * Unsure if this occurs "in the wild" ,or just in lecture slides. *)
 val res = riscv_test_hex "00E12423"; (* "sw x14, 8(x2)" *)
 (* Should only work in 64-bit mode *)
 val res = riscv_test_hex "00E13423"; (* OK: "sd x14, 8(x2)" *)
@@ -267,4 +272,4 @@ val res = riscv_test_hex "00A98863"; (* "beq x19, x10, offset = 16 bytes" *)
 val res = riscv_test_hex "0DEAD537"; (* OK: "lui x10, 0xDEAD" *)
 
 (* J-format *)
-val res = riscv_test_hex "0000006F"; (* "jal x0, 0x0" *)
+val res = riscv_test_hex "0000006F"; (* OK: "jal x0, 0x0" *)

@@ -640,7 +640,7 @@ val m0_REWRS = (RName_distinct :: (
 ));
 *)
 (* ... and as a simplification set. *)
-val riscv_extra_ss = rewrites riscv_REWRS
+val riscv_extra_ss = rewrites (riscv_REWRS@[combinTheory.APPLY_UPDATE_THM])
 
 local
   (* The naming convention for this is slightly different in the
