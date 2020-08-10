@@ -1012,6 +1012,8 @@ SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, riscv_bmr_EVAL,
 
 (*******************************************************************)
 
+(* This is documented further up, in the context of
+ * riscv_state_is_OK_def *)
 val bmr_extra_RISCV = store_thm ("bmr_extra_RISCV",
 ``!ms.
     riscv_bmr.bmr_extra ms = 

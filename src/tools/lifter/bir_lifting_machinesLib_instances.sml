@@ -760,7 +760,7 @@ local
   (* process_riscv_thm uses all of the above locally defined
    * functions to process the theorem obtained by riscv_step_hex
    * into a more manageable format. *)
-  (* DEBUG
+  (* DEBUG (when called from riscv_step_hex')
    
      val thm = hd step_thms0 
 
@@ -779,13 +779,26 @@ local
                      (pc_mem_thms @ (riscv_extra_THMS vn))
 
     val thm5 = DISCH_ALL thm4
-    val thm6 = CONV_RULE (simp_conv THENC simp_conv2) thm5
+    (* TODO: Simplifying with riscv_extra_THMS is useful when things like 32-bit mode comes up in
+     * expressions. This doesn't need to be handled using the explicit assumptions in
+     * riscv_extra_THMS, but could be lifted along with the MCSR and treated dynamically as part of
+     * the program. In other words, remove the last conversion when you start lifting system
+     * registers. *)
+    val thm6 =
+      CONV_RULE (simp_conv THENC simp_conv2 THENC (SIMP_CONV std_ss (riscv_extra_THMS vn))) thm5
     val thm7 = UNDISCH_ALL thm6
   in
     thm7
   end;
 
 in
+(* Debugging RISC-V:
+
+  val (ms_ty, addr_sz_ty, mem_val_sz_ty)  = dest_bir_lifting_machine_rec_t_ty (type_of (prim_mk_const{Name="riscv_bmr", Thy="bir_lifting_machines"}))
+  val vn = mk_var ("ms", ms_ty);
+  val hexcode = "00A98863" (* "beq x19, x10, offset = 16 bytes" *)
+
+*)
   fun riscv_step_hex' vn hex_code = let
     val pc_mem_thms = prepare_mem_contains_thms vn hex_code
 
