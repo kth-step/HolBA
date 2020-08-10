@@ -54,10 +54,7 @@ in (* local *)
       val vals = SYST_get_vals syst;
       val last_pred_bv = hd pred
                       handle Empty => raise ERR "get_next_exec_sts" "oh no, pred is empty!";
-      val last_pred_symbv =
-                  (valOf o Redblackmap.peek) (vals, last_pred_bv)
-                  handle Option => raise ERR "get_next_exec_sts"
-                                      ("couldn't fine symbolic value for " ^ (term_to_string last_pred_bv));
+      val last_pred_symbv = find_val vals last_pred_bv "get_next_exec_sts";
       val last_pred_exp =
          case last_pred_symbv of
             SymbValBE (x,_) => x

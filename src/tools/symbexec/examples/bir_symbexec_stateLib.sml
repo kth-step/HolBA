@@ -157,12 +157,15 @@ end
 
 
 (* helper function *)
+fun find_val vals bv err_src_string =
+      (valOf o Redblackmap.peek) (vals,bv)
+      handle Option => raise ERR
+                             err_src_string
+                             ("coudln't find value for " ^ (term_to_string bv));
+
 fun union_deps vals (bv, deps) =
   let
-    val symbv = (valOf o Redblackmap.peek) (vals,bv)
-                handle Option => raise ERR
-                                       "union_deps"
-                                       ("coudln't find symbolic value for " ^ (term_to_string bv));
+    val symbv = find_val vals bv "union_deps";
     val deps_delta =
        case symbv of
           SymbValBE (_,deps) => deps
@@ -199,10 +202,7 @@ fun tidyup_state_vals syst =
               print ("TIDIED UP " ^ (Int.toString num_diff) ^ " VALUES.\n");
 
     val vals' = Redblackset.foldl
-                (fn (bv,vals_) => Redblackmap.insert(vals_, bv, (valOf o Redblackmap.peek) (vals,bv))
-                                  handle Option => raise ERR
-                                                         "tidyup_state_vals"
-                                                         ("coudln't find symbolic value for " ^ (term_to_string bv)))
+                (fn (bv,vals_) => Redblackmap.insert(vals_, bv, find_val vals bv "tidyup_state_vals"))
                 (Redblackmap.mkDict Term.compare)
                 keep_vals;
   in
@@ -232,9 +232,7 @@ local
 
   fun collect_pred_expsdeps vals (bv, (exps, deps)) =
     let
-      val symbv = (valOf o Redblackmap.peek) (vals, bv)
-                  handle Option => raise ERR "collect_pred_expsdeps"
-                                      ("couldn't fine symbolic value for " ^ (term_to_string bv));
+      val symbv = find_val vals bv "collect_pred_expsdeps";
       val (exp, deps_delta) =
        case symbv of
           SymbValBE x => x
@@ -255,11 +253,7 @@ in (* local *)
       val pred_depsl_ = Redblackset.listItems pred_deps;
       val pred_depsl = List.filter (not o is_bvar_init) pred_depsl_;
 
-      val valsl = List.map (fn bv => (bv, (valOf o Redblackmap.peek) (vals, bv)
-                                          handle Option =>
-                                            raise ERR
-                                                  "check_feasible"
-                                                  ("couldn't fine symbolic value for " ^ (term_to_string bv))))
+      val valsl = List.map (fn bv => (bv, find_val vals bv "check_feasible"))
                            pred_depsl;
       val vals_eql =
         List.map symbval_eq_to_bexp valsl;

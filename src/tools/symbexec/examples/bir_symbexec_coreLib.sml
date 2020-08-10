@@ -12,10 +12,7 @@ in (* local *)
 
   fun subst_fun env (bev, (e, vars)) =
     let
-      val bv_ofvars = (valOf o Redblackmap.peek) (env, bev)
-                      handle Option =>
-                      raise ERR "subst_fun"
-                                ("couldn't find state variable: " ^ (term_to_string bev));
+      val bv_ofvars = find_val env bev "subst_fun";
     in
       (subst_exp (bev, mk_BExp_Den bv_ofvars, e),
        bv_ofvars::vars)
@@ -23,12 +20,9 @@ in (* local *)
 
   fun compute_val_and_resolve_deps vals (besubst, besubst_vars) =
     let
-      fun find_symbval bv = if is_bvar_init bv then (SymbValBE (F, Redblackset.add(symbvalbe_dep_empty,bv))) else
-                            (valOf o Redblackmap.peek) (vals, bv)
-                            handle Option =>
-                            raise ERR "compute_val_and_resolve_deps"
-                                      ("couldn't find symbolic value variable: " ^ (term_to_string bv));
-      fun find_deps bv = case find_symbval bv of
+      fun find_symbval_f bv = if is_bvar_init bv then (SymbValBE (F, Redblackset.add(symbvalbe_dep_empty,bv))) else
+                            find_val vals bv "compute_val_and_resolve_deps";
+      fun find_deps bv = case find_symbval_f bv of
                             SymbValBE (_,deps) => deps
                           | _ => raise ERR "compute_val_and_resolve_deps"
                                            ("expect bir expression for variable: " ^ (term_to_string bv));
@@ -40,11 +34,11 @@ in (* local *)
       if List.all (not o is_bvar_init) besubst_vars andalso
          Redblackset.numItems deps_l2 = 0 andalso
          length besubst_vars = 1 andalso
-         (case find_symbval (hd besubst_vars) of SymbValBE (exp,_) => is_BExp_Const exp | _ => false)
+         (case find_symbval_f (hd besubst_vars) of SymbValBE (exp,_) => is_BExp_Const exp | _ => false)
       then
         let
           val bv_dep = hd besubst_vars;
-          val symbv_dep = find_symbval bv_dep;
+          val symbv_dep = find_symbval_f bv_dep;
           val exp = case symbv_dep of
                        SymbValBE (exp,_) => exp
                      | _ => raise ERR "compute_val_and_resolve_deps" "cannot happen";
