@@ -178,6 +178,12 @@ fun union_deps vals (bv, deps) =
     Redblackset.union (deps_delta, deps)
   end;
 
+fun find_symbval_deps err_src_string vals bv =
+  if is_bvar_init bv then Redblackset.add(symbvalbe_dep_empty,bv) else (
+    deps_of_symbval (find_val vals bv err_src_string) err_src_string
+    (* TODO: wrap this: handle _ => raise ERR "" ("expect bir expression for variable: " ^ (term_to_string bv)); *)
+  );
+
 
 (* tidy up states *)
 fun tidyup_state_vals syst =

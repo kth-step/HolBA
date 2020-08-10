@@ -18,38 +18,41 @@ in (* local *)
        bv_ofvars::vars)
     end;
 
-  fun compute_val_and_resolve_deps vals (besubst, besubst_vars) =
-    let
-      fun find_symbval_f bv = if is_bvar_init bv then (SymbValBE (F, Redblackset.add(symbvalbe_dep_empty,bv))) else
-                            find_val vals bv "compute_val_and_resolve_deps";
-      fun find_deps bv = deps_of_symbval (find_symbval_f bv) "compute_val_and_resolve_deps";
-(* handle _ => raise ERR "" ("expect bir expression for variable: " ^ (term_to_string bv)); *)
-
-      val deps_l2 = List.foldr (Redblackset.union)
-                               symbvalbe_dep_empty
-                               (List.map find_deps besubst_vars);
-    in
+  fun compute_val_try vals (besubst, besubst_vars) deps_l2 =
       if List.all (not o is_bvar_init) besubst_vars andalso
          Redblackset.numItems deps_l2 = 0 andalso
          length besubst_vars = 1 andalso
-         (case find_symbval_f (hd besubst_vars) of SymbValBE (exp,_) => is_BExp_Const exp | _ => false)
+         (case find_val vals (hd besubst_vars) "compute_val_try" of
+             SymbValBE (exp,_) => is_BExp_Const exp
+           | _ => false)
       then
         let
           val bv_dep = hd besubst_vars;
-          val symbv_dep = find_symbval_f bv_dep;
+          val symbv_dep = find_val vals bv_dep "compute_val_try";
           val exp = case symbv_dep of
                        SymbValBE (exp,_) => exp
                      | _ => raise ERR "compute_val_and_resolve_deps" "cannot happen";
         in
-          SymbValBE (subst_exp (bv_dep, exp, besubst), symbvalbe_dep_empty)
+          SOME (SymbValBE (subst_exp (bv_dep, exp, besubst), symbvalbe_dep_empty))
         end
       else
-      let
-        val deps = Redblackset.addList(deps_l2, besubst_vars);
-        val be_new_val = SymbValBE (besubst, deps);
-      in
-        be_new_val
-      end
+        NONE;
+
+  fun compute_val_and_resolve_deps vals (besubst, besubst_vars) =
+    let
+      val deps_l2 = List.foldr (Redblackset.union)
+                               symbvalbe_dep_empty
+                               (List.map (find_symbval_deps "compute_val_and_resolve_deps" vals) besubst_vars);
+    in
+      case compute_val_try vals (besubst, besubst_vars) deps_l2 of
+         SOME x => x
+       | NONE   =>
+          let
+            val deps = Redblackset.addList(deps_l2, besubst_vars);
+            val be_new_val = SymbValBE (besubst, deps);
+          in
+            be_new_val
+          end
     end;
 
   fun compute_valbe be syst =
