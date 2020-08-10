@@ -1,9 +1,9 @@
 structure bir_countw_simplificationLib =
 struct
 local
+  open bir_symbexec_stateLib;
 
   open bir_constpropLib;
-  open bir_symbexecLib;
 
   open bir_envSyntax;
   open bir_expSyntax;

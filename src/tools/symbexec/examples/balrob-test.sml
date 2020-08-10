@@ -3,7 +3,8 @@ open HolKernel Parse
 open binariesLib;
 open binariesCfgLib;
 
-open bir_symbexecLib;
+open bir_symbexec_stateLib;
+open bir_symbexec_stepLib;
 open bir_countw_simplificationLib;
 
 val entry_label = "motor_prep_input";
