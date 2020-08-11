@@ -135,31 +135,10 @@ in (* local *)
       end);
 end (* local *)
 
-fun simplify_state syst =
-  let
-(*    val syst2 = tidyup_state syst; *)
-
-    (* implement search for possible simplifications, and simiplifications *)
-    (* first approach: try to simplify memory loads by expanding variables successively, abort if it fails *)
-    (* TODO: implement *)
-
-    (* - derive constants from the state predicate (update both places to not loose information) *)
-    (* - propagate constant variable assignments to expressions *)
-    (* - constant propagation in expressions *)
-    (* - tidy up state *)
-    (* - resolve load and store pairs, use smt solver if reasoning arguments are needed *)
-  in
-    syst
-  end;
-
-
 
 local
   open bir_block_collectionLib;
 in (* local *)
-  (*
-  val syst = init_state prog_vars;
-  *)
   fun symb_exec_block cfb n_dict bl_dict syst =
     let
       val lbl_tm = SYST_get_pc syst;
@@ -172,11 +151,10 @@ in (* local *)
 
       (* generate list of states from end statement *)
       val systs = List.concat(List.map (symb_exec_endstmt n_dict lbl_tm est) systs2);
-      val systs_simplified = List.map simplify_state systs;
-      val systs_filtered = if cfb andalso length systs_simplified > 1 then
-                             List.filter check_feasible systs_simplified
+      val systs_filtered = if cfb andalso length systs > 1 then
+                             List.filter check_feasible systs
                            else
-                             systs_simplified;
+                             systs;
     in
       systs_filtered
     end;

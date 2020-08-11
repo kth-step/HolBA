@@ -130,10 +130,9 @@ check_feasible (syst)
 *)
 
 
-(* TODO: introduce abstraction as possible value,
-           the current values are concrete values (special sort),
-           "top" is fresh variable,
-           model unknown stack space as memory interval,
-           need interval-abstraction for cycle counter to enable merging of states,
-           we can start with considering max only *)
+(* TODO:   model unknown stack space as memory interval,
+           need interval-abstraction for cycle counter to enable merging of states *)
+
+    (* - derive constants from the state predicate (update both places to not loose information) *)
+    (* - constant propagation in expressions *)
 
