@@ -146,10 +146,38 @@ local
 	    fun Obs_prime_single x =
 		let val obs = x |> dest_BStmt_Observe |> #3 
 		in
-		   List.foldl (fn (record, tm) => subst[#redex record |-> #residue record] tm) x (primed_subst obs)
+		    List.foldl (fn (record, tm) => subst[#redex record |-> #residue record] tm) x (primed_subst obs)
 		end
 	in
 	    map Obs_prime_single xs
+	end
+
+    val constrain_spec_obs_vars_def = Define`
+        constrain_spec_obs_vars (e1, e2) =
+        BStmt_Assert  (BExp_BinPred BIExp_Equal  (e1) (e2)) :bir_val_t bir_stmt_basic_t
+        `;
+
+    val append_list_def = Define`
+        append_list (lbl, (l1:  bir_val_t bir_stmt_basic_t list)) l2 =
+        let combLst =   APPEND l1 l2 in (lbl, combLst)
+        `;
+
+    fun mk_eq_assert e =
+	let open stringSyntax
+	    fun remove_prime str =
+		if String.isSuffix "*" str then
+		    (String.extract(str, 0, SOME((String.size str) - 1)))
+		else
+		    raise ERR "remove_prime" "there was no prime where there should be one"
+	    val p_fv  = bir_free_vars e
+	    val np_fv = map (fn x => (remove_prime (fromHOLstring x)) |> (fn y => lift_string string_ty y)) p_fv 
+	    val p_exp = map (fn x => subst [``"tmplate"``|-> x] ``(BExp_Den (BVar "tmplate" (BType_Imm Bit64)))``) 
+			     p_fv
+	    val np_exp=  map (fn x => subst[``"tmplate"``|-> x] ``(BExp_Den (BVar "tmplate" (BType_Imm Bit64)))``) 
+			     np_fv
+	    val comb_p_np = zip p_exp np_exp
+	in
+	    map (fn (a,b) => (rhs o concl o EVAL)``constrain_spec_obs_vars (^a,^b)``) comb_p_np  
 	end
 
     fun add_obs_speculative_exec prog targets g depth dict = 
@@ -161,10 +189,14 @@ local
 	    val Obs_dict_primed = Redblackmap.map (fn (k,v) => Obs_prime v) Obs_dict;
 	    val Obs_lst_primed  = map (fn tm => mk_pair(fst tm, mk_list(snd tm, ``:bir_val_t bir_stmt_basic_t``))) 
 				      (Redblackmap.listItems Obs_dict_primed)
+	    val asserted_obs = map (fn e => mk_list((mk_eq_assert e), ``:bir_val_t bir_stmt_basic_t``)) 
+				      Obs_lst_primed;
+	    val zip_assertedObs_primed = zip Obs_lst_primed asserted_obs;
+	    val Obs_lst = map (fn (a, b) => (rhs o concl o EVAL)``append_list ^a ^b`` ) zip_assertedObs_primed;
 	in
 	    foldl (fn(itm, p) => (rhs o concl o EVAL)``add_obs_speculative_exec_armv8 ^p ^itm``) 
 		  prog 
-		  Obs_lst_primed
+		  Obs_lst
 	end
 
 in

@@ -96,9 +96,10 @@ add_obs_mem_addr_pc_armv8 p =
       map_obs_prog (add_obs_spctr_block observe_mem_addr) p
 `;
 (* ------------------------------------------------------------------------------ *)
- val add_obs_bir_prog_def = Define`
+val add_obs_bir_prog_def = Define`
       add_obs_bir_prog id_obs block = 
 	let (lbl, obs) = id_obs in
+	   
 	    if lbl = block.bb_label
 	    then block with bb_statements := APPEND block.bb_statements obs
 	    else block

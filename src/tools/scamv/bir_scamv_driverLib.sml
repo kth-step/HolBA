@@ -575,8 +575,8 @@ fun show_error_no_free_vars (id,_) =
 
 fun match_obs_model obs_model =
     case obs_model of
-	      mem_address_pc_trace =>
-	      "mem_address_pc_trace"
+      mem_address_pc_trace =>
+      "mem_address_pc_trace"
       | cache_tag_index  =>
         "cache_tag_index"
       | cache_tag_only =>
