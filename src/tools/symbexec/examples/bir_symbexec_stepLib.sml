@@ -11,15 +11,25 @@ local
 in (* local *)
   fun symb_exec_stmt (s, syst) =
     (* no update if state is not running *)
-    if SYST_get_status syst <> ``BST_Running`` then [syst]
+    if SYST_get_status syst <> BST_Running_tm then [syst]
     (* assignment *)
     else if is_BStmt_Assign s then
         update_state (dest_BStmt_Assign s) syst
     (* assert and assume *)
     else if is_BStmt_Assert s then
-        [syst] (* TODO: fix *)
+        branch_state_simp
+           "assert"
+           (dest_BStmt_Assert s)
+           (I)
+           (SYST_update_status BST_AssertionViolated_tm)
+           syst
     else if is_BStmt_Assume s then
-        [syst] (* TODO: fix *)
+        branch_state_simp
+           "assume"
+           (dest_BStmt_Assume s)
+           (I)
+           (SYST_update_status BST_AssumptionViolated_tm)
+           syst
     (* observations *)
     else if is_BStmt_Observe s then
         [syst] (* TODO: fix *)
@@ -32,7 +42,9 @@ local
 in (* local *)
   fun get_next_exec_sts lbl_tm est syst =
     (* TODO: rename function maybe to capture connection to end statement/cfg? *)
-    (* TODO: no update if state is not running *)
+    (* no update if state is not running *)
+    if SYST_get_status syst <> BST_Running_tm then [syst] else
+    (* try to match direct jump *)
     let
       val (vs, _) = hol88Lib.match ``BStmt_Jmp (BLE_Label xyz)`` est;
       val tgt     = (fst o hd) vs;
@@ -40,18 +52,15 @@ in (* local *)
       [SYST_update_pc tgt syst]
     end
     handle HOL_ERR _ => (
+    (* try to match direct branch *)
     let
       val (vs, _) = hol88Lib.match ``BStmt_CJmp xyzc (BLE_Label xyz1) (BLE_Label xyz2)`` est;
       val cnd     = fst (List.nth (vs, 0));
       val tgt1    = fst (List.nth (vs, 1));
       val tgt2    = fst (List.nth (vs, 2));
 
-      val cnd_valbe = compute_valbe cnd syst;
-      val (cnd_exp, cnd_deps) =
-         case cnd_valbe of
-            SymbValBE x => x
-          | _ => raise ERR "get_next_exec_sts" "cannot handle symbolic value type for conditions";
-
+      (* see whether the latest addition to the path condition
+         matches the unnegated or negated branch condition *)
       val pred = SYST_get_pred syst;
       val vals = SYST_get_vals syst;
       val last_pred_bv = hd pred
@@ -61,13 +70,22 @@ in (* local *)
          case last_pred_symbv of
             SymbValBE (x,_) => x
           | _ => raise ERR "get_next_exec_sts" "cannot handle symbolic value type for last pred exp";
+
+      (* get branch condition *)
+      val cnd_exp =
+         case compute_valbe cnd syst of
+            SymbValBE (x,_) => x
+          | _ => raise ERR "get_next_exec_sts" "cannot handle symbolic value type for conditions";
     in
+      (* does unnegated condition match? *)
       if cnd_exp = last_pred_exp then
         [(SYST_update_pc tgt1
          ) syst]
+      (* does negated condition match? *)
       else if bslSyntax.bnot cnd_exp = last_pred_exp then
         [(SYST_update_pc tgt2
          ) syst]
+      (* no match *)
       else
       branch_state_simp
          "cjmp"
@@ -76,6 +94,7 @@ in (* local *)
          (SYST_update_pc tgt2)
          syst
     end
+    (* no match, then we have some indirection and need to use cfg *)
     handle HOL_ERR _ =>
       let
         val n       = find_node n_dict lbl_tm;
@@ -115,7 +134,7 @@ in (* local *)
   (*
   val syst = init_state prog_vars;
   *)
-  fun symb_exec_block bl_dict syst =
+  fun symb_exec_block cfb bl_dict syst =
     let
       val lbl_tm = SYST_get_pc syst;
 
@@ -128,7 +147,7 @@ in (* local *)
       (* generate list of states from end statement *)
       val systs = List.concat(List.map (get_next_exec_sts lbl_tm est) systs2);
       val systs_simplified = List.map simplify_state systs;
-      val systs_filtered = if length systs_simplified > 1 then
+      val systs_filtered = if cfb andalso length systs_simplified > 1 then
                              List.filter check_feasible systs_simplified
                            else
                              systs_simplified;
@@ -136,14 +155,17 @@ in (* local *)
       systs_filtered
     end;
 
-  fun symb_exec_to_stop _       []                  _            acc = acc
-    | symb_exec_to_stop bl_dict (exec_st::exec_sts) stop_lbl_tms acc =
+  fun symb_exec_to_stop cfb _       []                  _            acc = acc
+    | symb_exec_to_stop cfb bl_dict (exec_st::exec_sts) stop_lbl_tms acc =
         let
-          val sts = symb_exec_block bl_dict exec_st;
-          val (new_acc, new_exec_sts) =
-                List.partition (fn (syst) => List.exists (fn x => (SYST_get_pc syst) = x) stop_lbl_tms) sts;
+          fun state_stops syst =
+            (List.exists (fn x => (SYST_get_pc syst) = x) stop_lbl_tms) orelse
+            SYST_get_status syst <> BST_Running_tm;
+
+          val sts = symb_exec_block cfb bl_dict exec_st;
+          val (new_acc, new_exec_sts) = List.partition state_stops sts;
         in
-          symb_exec_to_stop bl_dict (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
+          symb_exec_to_stop cfb bl_dict (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
         end;
 end (* local *)
 

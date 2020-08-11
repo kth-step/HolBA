@@ -27,6 +27,13 @@ datatype symb_state =
       SYST_vals   : (term, symb_value) Redblackmap.dict
     };
 
+val BST_Running_tm =
+  ``BST_Running``;
+val BST_AssertionViolated_tm =
+  ``BST_AssertionViolated``;
+val BST_AssumptionViolated_tm =
+  ``BST_AssumptionViolated``;
+
 fun SYST_get_pc     (SymbState systr) =
   #SYST_pc systr;
 fun SYST_get_env    (SymbState systr) =
@@ -148,7 +155,7 @@ in
     in
       SYST_mk lbl_tm
               (Redblackmap.fromList Term.compare envlist_init)
-              ``BST_Running``
+              BST_Running_tm
               []
               pred_conjs
               (Redblackmap.fromList Term.compare varslist_init)

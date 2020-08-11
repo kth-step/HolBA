@@ -88,7 +88,7 @@ val valsl = (Redblackmap.listItems o SYST_get_vals) syst;
 Redblackmap.peek (SYST_get_vals syst, ``BVar "fr_175_countw" (BType_Imm Bit64)``)
 *)
 
-val systs = symb_exec_to_stop bl_dict_ [syst] stop_lbl_tms [];
+val systs = symb_exec_to_stop false bl_dict_ [syst] stop_lbl_tms [];
 val _ = print "finished exploration of all paths.\n";
 val _ = print ("number of paths found: " ^ (Int.toString (length systs)));
 val _ = print "\n\n";
@@ -97,8 +97,11 @@ length systs
 val syst = hd systs
 length(SYST_get_env syst)
 *)
+val systs_noassertfailed = List.filter (fn syst => SYST_get_status syst <> BST_AssertionViolated_tm) systs;
+val _ = print ("number of \"no assert failed\" paths found: " ^ (Int.toString (length systs_noassertfailed)));
+val _ = print "\n\n";
 
-val systs_feasible = List.filter check_feasible systs;
+val systs_feasible = List.filter check_feasible systs_noassertfailed;
 val _ = print ("number of feasible paths found: " ^ (Int.toString (length systs_feasible)));
 val _ = print "\n\n";
 
