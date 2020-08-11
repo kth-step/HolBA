@@ -27,19 +27,25 @@ in (* local *)
                | _ => false)
            ) besubst_vars;
     in
-      (* TODO: remove quickfix for at least 1 dependency *)
-      if (List.length besubst_vars) > 0 andalso all_deps_const then
+      if all_deps_const then
+        if List.null besubst_vars then NONE else
         let
-          (* TODO: fix this so that it is general for arbitrary number of dependencies *)
-          (* TODO: assert that deps_l2 is indeed empty *)
-          val bv_dep = hd besubst_vars
-                       handle Empty => raise ERR "aaaaaaaa" (term_to_string besubst);
-          val symbv_dep = find_val vals bv_dep "compute_val_try";
-          val exp = case symbv_dep of
-                       SymbValBE (exp,_) => exp
-                     | _ => raise ERR "compute_val_and_resolve_deps" "cannot happen";
+          val _ = if Redblackset.isEmpty deps_l2 then () else
+                  raise ERR "compute_val_try" "deps_l2 is not empty. Unexpected here.";
+
+          fun subst_fun_symbvalbe vals (bv_dep, e) =
+            let
+              val symbv_dep = find_val vals bv_dep "compute_val_try";
+              val exp = case symbv_dep of
+                           SymbValBE (exp,_) => exp
+                         | _ => raise ERR "compute_val_and_resolve_deps" "cannot happen";
+            in
+              subst_exp (bv_dep, exp, e)
+            end;
+
+          val becomp = List.foldr (subst_fun_symbvalbe vals) besubst besubst_vars;
         in
-          SOME (SymbValBE (subst_exp (bv_dep, exp, besubst), symbvalbe_dep_empty))
+          SOME (SymbValBE (becomp, symbvalbe_dep_empty))
         end
       else
         NONE
