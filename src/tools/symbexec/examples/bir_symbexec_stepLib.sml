@@ -39,8 +39,7 @@ end (* local *)
 local
   open bir_cfgLib;
 in (* local *)
-  fun get_next_exec_sts n_dict lbl_tm est syst =
-    (* TODO: rename function maybe to capture connection to end statement/cfg? *)
+  fun symb_exec_endstmt n_dict lbl_tm est syst =
     (* no update if state is not running *)
     if SYST_get_status syst <> BST_Running_tm then [syst] else
     (* try to match direct jump *)
@@ -63,18 +62,18 @@ in (* local *)
       val pred = SYST_get_pred syst;
       val vals = SYST_get_vals syst;
       val last_pred_bv = hd pred
-                      handle Empty => raise ERR "get_next_exec_sts" "oh no, pred is empty!";
-      val last_pred_symbv = find_val vals last_pred_bv "get_next_exec_sts";
+                      handle Empty => raise ERR "symb_exec_endstmt" "oh no, pred is empty!";
+      val last_pred_symbv = find_val vals last_pred_bv "symb_exec_endstmt";
       val last_pred_exp =
          case last_pred_symbv of
             SymbValBE (x,_) => x
-          | _ => raise ERR "get_next_exec_sts" "cannot handle symbolic value type for last pred exp";
+          | _ => raise ERR "symb_exec_endstmt" "cannot handle symbolic value type for last pred exp";
 
       (* get branch condition *)
       val cnd_exp =
          case compute_valbe cnd syst of
             SymbValBE (x,_) => x
-          | _ => raise ERR "get_next_exec_sts" "cannot handle symbolic value type for conditions";
+          | _ => raise ERR "symb_exec_endstmt" "cannot handle symbolic value type for conditions";
     in
       (* does unnegated condition match? *)
       if cnd_exp = last_pred_exp then
@@ -99,7 +98,7 @@ in (* local *)
         val n:cfg_node = binariesCfgLib.find_node n_dict lbl_tm;
         val n_type  = #CFGN_type n;
         val _       = if cfg_nodetype_is_call n_type orelse n_type = CFGNT_Jump then () else
-                        raise ERR "get_next_exec_sts" ("unexpected 2 at " ^ (term_to_string lbl_tm));
+                        raise ERR "symb_exec_endstmt" ("unexpected 2 at " ^ (term_to_string lbl_tm));
 
         val n_targets  = #CFGN_targets n;
         val lbl_tms = n_targets
@@ -144,7 +143,7 @@ in (* local *)
       val systs2 = List.foldl (fn (s, systs) => List.concat(List.map (fn x => symb_exec_stmt (s,x)) systs)) [syst] s_tms;
 
       (* generate list of states from end statement *)
-      val systs = List.concat(List.map (get_next_exec_sts n_dict lbl_tm est) systs2);
+      val systs = List.concat(List.map (symb_exec_endstmt n_dict lbl_tm est) systs2);
       val systs_simplified = List.map simplify_state systs;
       val systs_filtered = if cfb andalso length systs_simplified > 1 then
                              List.filter check_feasible systs_simplified
