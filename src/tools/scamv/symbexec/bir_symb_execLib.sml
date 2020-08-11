@@ -52,11 +52,12 @@ fun dest_bir_symb_obs tm =
                (fst o dest_type) ty = "bir_symb_obs_t" andalso
                (length o snd o dest_type) ty = 1
             then () else fail()
+    val obs_id = Lib.assoc "obs_id" l
     val obs_cond = Lib.assoc "obs_cond" l
     val obs = Lib.assoc "obs" l
     val obs_fun = Lib.assoc "obs_fun" l
   in 
-    (obs_cond, obs, obs_fun)
+    (obs_id, obs_cond, obs, obs_fun)
   end handle HOL_ERR _ => raise ERR "dest_bir_symb_obs" ("cannot destruct term \"" ^ (term_to_string tm) ^ "\"");
 (* ------------------------------------------------------------------- *)
 

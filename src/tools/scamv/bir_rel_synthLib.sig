@@ -14,6 +14,9 @@ sig
     val path_obs_of : path_repr -> cobs_repr list
     val cobs_id_of : cobs_repr -> int
     val path_domain : path_struct -> int list
+    val split_obs_list :
+        ''a ->
+        (''a * 'b) list -> 'b list * 'b list
     val obs_domain_path : cobs_repr list -> int list
     val obs_domain : path_struct -> int list
     val lookup_path : int -> path_repr list -> path_repr option
@@ -22,10 +25,11 @@ sig
     val print_path_struct : path_struct -> unit;
 
     val rel_synth_jit :
-        path_spec -> path_repr list -> exp
+        path_spec -> int -> path_repr list -> exp
 
     val rel_synth_init :
         (exp * cobs list option) list ->
+        int ->
         enum_env ->
         path_struct * exp * ((path_spec -> bool) -> (path_spec * term) option)
 

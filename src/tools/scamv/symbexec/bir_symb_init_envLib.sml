@@ -95,21 +95,21 @@ fun init_env bir_program =
 
       val vars_in_prog = List.map bvar_tovarname (gen_vars_of_prog bir_program);
       val bir_vars = List.filter (fn (x, _) => List.exists (fn y => x = y) vars_in_prog) bir_vars;
-
       val env = List.foldl (update_env) ``BEnv FEMPTY`` bir_vars;
-
 
       val vars_in_env = List.map fst bir_vars;
       val missing_vars = List.foldr (fn (x,l) => if not (List.exists (fn y => x = y) vars_in_env) then x::l else l) [] vars_in_prog;
+
+    (* TODO check why this was needed
       val _ = if missing_vars = [] then () else (
               print "\n";
               print "missing variables:\n";
-              PolyML.print missing_vars;
+              map PolyML.print missing_vars;
               print "\n";
               print "\n";
-              raise ERR "init_env" "the symbolic environment doesn't contain all variables of the program");
+              raise ERR "init_env" "the symbolic environment doesn't contain all variables of the program"); *)
     in
-      env
+      List.foldl update_env env (gen_genf_list (genf_reg_n 64) missing_vars)
     end;
 
 end (* local *)

@@ -70,9 +70,10 @@ local
   val rand_gen_ref     = ref (NONE: Random.generator option);
 in
   fun rand_isfresh_set isfresh =
-    case !rand_isfresh_ref of
+    rand_isfresh_ref := SOME isfresh;
+(*    case !rand_isfresh_ref of
        NONE   => rand_isfresh_ref := SOME isfresh
-     | SOME _ => raise ERR "rand_isfresh_set" "freshness has been set already";
+     | SOME _ => raise ERR "rand_isfresh_set" "freshness has been set already"; *)
 
   fun rand_isfresh_get () =
     case !rand_isfresh_ref of

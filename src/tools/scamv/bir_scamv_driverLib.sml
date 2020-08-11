@@ -63,12 +63,12 @@ fun symb_exec_phase prog =
 	    val isErrorState = not (symb_is_BST_Halted s);
 
 	    (* this converts BIR consts to HOL4 variables *)
-	    val obs_list = List.map (fn (ec,eo, obsf) =>
-		   (bir_exp_hvar_to_bvar ec, bir_exp_hvar_to_bvar eo, obsf)) obss;
+	    val obs_list = List.map (fn (oid,ec,eo, obsf) =>
+		   (oid,bir_exp_hvar_to_bvar ec, bir_exp_hvar_to_bvar eo, obsf)) obss;
 
 	    (* we require singleton lists for the observations at the moment *)
 	    (* check that we have HD as observation function, and apply it *)
-	    val obs_list' = List.map (fn (ec,eo,obsf) =>
+	    val obs_list' = List.map (fn (oid,ec,eo,obsf) =>
 		     let
 		       val (otl,_) = dest_list eo;
 		       val _ = (if listSyntax.is_hd ``^obsf x`` then () else raise ERR "" "")
@@ -78,7 +78,7 @@ fun symb_exec_phase prog =
 		       if length otl <> 1 then
 		       	 raise ERR "extract_cond_obs" "currently we support only singleton observations"
 		       else
-			 (ec, hd otl)
+			 (oid, ec, hd otl)
 		     end
 		   ) obs_list;
 	  in
@@ -89,7 +89,7 @@ fun symb_exec_phase prog =
 
         (* we also need all generated expressions to collect the variables *)
         val path_conds = List.map fst paths;
-        val obs_exps = flatten (List.map (fn (x,y) => [x,y])
+        val obs_exps = flatten (List.map (fn (_,x,y) => [x,y])
                           (flatten (List.map ((fn x =>
                              case x of NONE => [] 
                                      | SOME y => y) o snd) paths)));
@@ -225,7 +225,10 @@ val do_enum = ref false;
 val (current_prog_id : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
 val (current_prog_w_obs : term option ref) = ref NONE;
+val (current_prog_w_refined_obs : term option ref) = ref NONE;
 val (current_obs_model_id : string ref) = ref "";
+val (current_refined_obs_model_id : string option ref) = ref NONE;
+val (current_obs_projection : int ref) = ref 1;
 val (current_pathstruct :
      path_struct ref) = ref [];
 val (current_word_rel : term option ref) = ref NONE;
@@ -235,7 +238,9 @@ fun reset () =
     (current_prog_id := "";
      current_prog := NONE;
      current_prog_w_obs := NONE;
+     current_prog_w_refined_obs := NONE;
      current_pathstruct := [];
+     current_obs_projection := 1;
      current_word_rel := NONE);
 
 fun printv n str =
@@ -280,7 +285,7 @@ fun extract_obs_variables ps =
                      case obs_list of
                          NONE => []
                        | SOME list => 
-                         List.concat (List.map (fn (_,term) => bir_free_vars term) list))
+                         List.concat (List.map (fn (_,_,term) => bir_free_vars term) list))
                 ps);
 
 fun enumerate_line_single_input path_struct =
@@ -305,14 +310,16 @@ fun start_interactive prog =
         val _ = current_prog := SOME lifted_prog;
         val _ = min_verb 2 (fn () => print_term lifted_prog);
 
-        val add_obs = #add_obs (get_obs_model (!current_obs_model_id))
-
+        val _ = printv 1 "Adding obs\n";
+        val add_obs = #add_obs (get_obs_model (!current_obs_model_id));
         val lifted_prog_w_obs = add_obs lifted_prog;
+        val _ = printv 1 "Obs added\n";
         val _ = current_prog_w_obs := SOME lifted_prog_w_obs;
         val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
+
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
-	(* val _ = List.map (Option.map (List.map (print_term o fst)) o snd) paths; *)
-        
+	      val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths; 
+
         fun has_observations (SOME []) = false
           | has_observations NONE = false
           | has_observations _ = true
@@ -324,7 +331,7 @@ fun start_interactive prog =
 
         val enum_env = default_enumeration_targets paths;
         val (path_struct, validity, next_relation) =
-            rel_synth_init paths enum_env; (* TODO consider validity *)
+            rel_synth_init paths (!current_obs_projection) enum_env; (* TODO consider validity *)
         val _ = current_pathstruct := path_struct;
         val _ = min_verb 4 (fn () => print_path_struct path_struct);
     in (path_struct, all_exps, next_relation) end;
@@ -566,16 +573,36 @@ fun scamv_test_single_file filename =
 fun show_error_no_free_vars (id,_) =
     print ("Program " ^ id ^ " skipped because it has no free variables.\n");
 
+fun match_obs_model obs_model =
+    case obs_model of
+	      mem_address_pc_trace =>
+	      "mem_address_pc_trace"
+      | cache_tag_index  =>
+        "cache_tag_index"
+      | cache_tag_only =>
+        "cache_tag_only"
+      | cache_index_only =>
+        "cache_index_only"
+      | cache_tag_index_part =>
+        "cache_tag_index_part"
+      | cache_speculation =>
+        "cache_speculation"
+      | cache_tag_index_part_page =>
+        "cache_tag_index_part_page"
+      | _ => raise ERR "match_obs_model" ("unknown obs_model " ^ PolyML.makestring obs_model);
+
 fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enumerate
               , generator = gen, generator_param = generator_param
               , obs_model = obs_model, hw_obs_model = hw_obs_model
+              , refined_obs_model = refined_obs_model, obs_projection = proj
               , verbosity = verb, only_gen = og, seed_rand = seed_rand } =
     let
 
         val _ = bir_scamv_helpersLib.rand_isfresh_set seed_rand;
 
         val _ = do_enum := enumerate;
-
+        val _ = current_obs_projection := proj;
+        
         val prog_store_fun =
            case gen of
                 gen_rand => (case generator_param of
@@ -592,20 +619,10 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
               | _ => raise ERR "scamv_run" ("unknown generator type " ^ PolyML.makestring gen)
 
         val _ =
-           case obs_model of
-	         mem_address_pc_trace =>
-	      	      current_obs_model_id := "mem_address_pc_trace"
-              | cache_tag_index  =>
-                      current_obs_model_id := "cache_tag_index"
-              | cache_tag_only =>
-                      current_obs_model_id := "cache_tag_only"
-              | cache_index_only =>
-                      current_obs_model_id := "cache_index_only"
-              | cache_tag_index_part =>
-                      current_obs_model_id := "cache_tag_index_part"
-              | cache_tag_index_part_page =>
-                      current_obs_model_id := "cache_tag_index_part_page"
-              | _ => raise ERR "scamv_run" ("unknown obs_model " ^ PolyML.makestring obs_model);
+            current_obs_model_id := match_obs_model obs_model;
+
+        val _ =
+            current_refined_obs_model_id := Option.map match_obs_model refined_obs_model;
 
         val _ =
            case hw_obs_model of
@@ -624,6 +641,8 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
           ("Program generator    : " ^ PolyML.makestring gen ^ "\n") ^
           ("Prog gen params      : " ^ PolyML.makestring generator_param ^ "\n") ^
           ("Observation model    : " ^ !current_obs_model_id ^ "\n") ^
+          ("Refined observation model: " ^ PolyML.makestring (!current_refined_obs_model_id) ^ "\n") ^
+          ("Projection model: " ^ PolyML.makestring proj ^ "\n") ^
           ("HW observation model : " ^ !hw_obs_model_id ^ "\n") ^
           ("Enumerate            : " ^ PolyML.makestring (!do_enum) ^ "\n");
 

@@ -260,9 +260,9 @@ struct
 
       val nonemp_obs = filter (fn ob => (not o List.null o snd o strip_comb) ob) [bsst_obs_init_mem];
       val obs_elem = map (fn ob => (fst o dest_list) ob)nonemp_obs;
-      val obs_exp = map (fn ob => let val (c,t,f) = (dest_bir_symb_obs)  ob in (c,t,f) end) (flatten obs_elem);
+      val obs_exp = map dest_bir_symb_obs (flatten obs_elem);
       val res = List.concat
-                    (map (fn (cond,ob,f) =>
+                    (map (fn (_,cond,ob,f) =>
                              if eval_exp_to_val cond = ``BVal_Imm (Imm1 1w)``
                              then let val t = mk_comb (f, eval_explist_to_vallist ob)
                                   in [eval_exp t] end
