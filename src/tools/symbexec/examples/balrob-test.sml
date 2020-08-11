@@ -4,6 +4,7 @@ open binariesLib;
 open binariesCfgLib;
 
 open bir_symbexec_stateLib;
+open bir_symbexec_coreLib;
 open bir_symbexec_stepLib;
 open bir_countw_simplificationLib;
 
@@ -71,9 +72,32 @@ val lbl_tm = ``BL_Address (Imm32 0xb22w)``;
 lookup_block_dict bl_dict_ lbl_tm
 *)
 
-val pred_conjs = [];
-val syst = init_state lbl_tm pred_conjs prog_vars;
+(* TODO: how much space do we actually have? we should "enforce" this with the linker... *)
+val stack_size  = 0x100;
+val stack_start = 0x10000000 + 0x2000 -16;
+val stack_end   = stack_start - stack_size;
+
+val stack_space_req = 0x80;
+
+val pred_conjs = [
+``BExp_BinPred BIExp_Equal
+    (BExp_BinExp BIExp_And
+        (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+        (BExp_Const (Imm32 3w)))
+    (BExp_Const (Imm32 0w))``,
+``BExp_BinExp BIExp_And
+          (BExp_BinPred BIExp_LessOrEqual
+             (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+             (BExp_Const (Imm32 ^(wordsSyntax.mk_wordii(stack_start, 32)))))
+          (BExp_BinPred BIExp_LessThan
+             (BExp_Const (Imm32 ^(wordsSyntax.mk_wordii(stack_end + stack_space_req, 32))))
+             (BExp_Den (BVar "SP_process" (BType_Imm Bit32))))``
+];
+
+val syst = init_state lbl_tm prog_vars;
 val syst = init_state_set_const ``BVar "countw" (BType_Imm Bit64)`` ``(Imm64 0w)`` syst;
+val syst = state_add_preds "init_pred" pred_conjs syst;
+
 val _ = print "initial state created.\n\n";
 (*
 val systs_new = symb_exec_block bl_dict_ syst;
@@ -98,9 +122,14 @@ length systs
 val syst = hd systs
 length(SYST_get_env syst)
 *)
-val systs_noassertfailed = List.filter (fn syst => SYST_get_status syst <> BST_AssertionViolated_tm) systs;
+val (systs_noassertfailed, systs_assertfailed) =
+  List.partition (fn syst => SYST_get_status syst <> BST_AssertionViolated_tm) systs;
 val _ = print ("number of \"no assert failed\" paths found: " ^ (Int.toString (length systs_noassertfailed)));
 val _ = print "\n\n";
+
+(*
+val syst = hd systs_assertfailed;
+*)
 
 val systs_feasible = List.filter check_feasible systs_noassertfailed;
 val _ = print ("number of feasible paths found: " ^ (Int.toString (length systs_feasible)));

@@ -87,6 +87,21 @@ in (* local *)
   fun insert_valbe bv_fr be syst =
     insert_bvfrexp bv_fr (compute_valbe be syst) syst;
 
+
+fun state_add_pred bv_str pred syst =
+  let
+    val bv = bir_envSyntax.mk_BVar_string (bv_str, ``BType_Bool``);
+    val bv_fresh = get_bvar_fresh bv;
+  in
+    (SYST_update_pred ((bv_fresh)::(SYST_get_pred syst)) o
+     insert_valbe bv_fresh pred
+    ) syst
+  end;
+
+fun state_add_preds bv_str preds syst =
+  List.foldr (fn (pred, syst_) => state_add_pred bv_str pred syst_) syst preds;
+
+
   fun branch_state str_prefix cnd f_bt f_bf syst =
     let
         val cnd_bv = bir_envSyntax.mk_BVar_string (str_prefix ^ "_cnd", ``BType_Bool``);

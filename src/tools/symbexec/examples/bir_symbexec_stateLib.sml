@@ -132,6 +132,25 @@ in
     end;
 end
 
+
+(* initial state *)
+local
+  open bir_envSyntax;
+in
+  fun init_state lbl_tm prog_vars =
+    let
+      val envlist_progvars = List.map (fn bv => (bv, get_bvar_init bv)) prog_vars;
+    in
+      SYST_mk lbl_tm
+              (Redblackmap.fromList Term.compare envlist_progvars)
+              BST_Running_tm
+              []
+              []
+              (Redblackmap.fromList Term.compare [])
+    end;
+end
+
+
 (* state update primitives *)
 (* TODO: better names *)
 fun insert_bvfrexp bv_fresh symbv syst =
@@ -155,30 +174,10 @@ fun update_env bv bv_fresh syst =
     (SYST_update_env env') syst
   end;
 
-(* initial states *)
-local
-  open bir_envSyntax;
-in
-  fun init_state lbl_tm pred_exp_conjs prog_vars =
-    let
-      val envlist_progvars = List.map (fn bv => (bv, get_bvar_init bv)) prog_vars;
-
-      (* TODO: process pred_conjs with substitutions for initial variable names *)
-      val pred_conjs = pred_exp_conjs;
-
-      val envlist_init  = (*[(countw_bv, countw_bv_fresh)]@*)envlist_progvars;
-      val varslist_init = [(*(countw_bv_fresh, countw_exp_init)*)];
-    in
-      SYST_mk lbl_tm
-              (Redblackmap.fromList Term.compare envlist_init)
-              BST_Running_tm
-              []
-              pred_conjs
-              (Redblackmap.fromList Term.compare varslist_init)
-    end;
-end
 
 (* state updates *)
+(* TODO: generalize this a bit more - to general state updates - move this to core lib
+          ??? including state update primitives ??? *)
 fun init_state_set_const bv bimm syst =
   let
     val bv_fresh = get_bvar_fresh bv;
