@@ -96,6 +96,28 @@ in (* local *)
   fun insert_valbe bv_fr be syst =
     insert_bvfrexp bv_fr (compute_valbe be syst) syst;
 
+  fun branch_state str_prefix cnd f_bt f_bf syst =
+    let
+        val cnd_bv = bir_envSyntax.mk_BVar_string (str_prefix ^ "_cnd", ``BType_Bool``);
+        val cnd_bv_t = get_bvar_fresh cnd_bv;
+        val cnd_bv_f = get_bvar_fresh cnd_bv;
+    in
+        List.concat [
+          (f_bt o
+           SYST_update_pred ((cnd_bv_t)::(SYST_get_pred syst)) o
+           insert_valbe cnd_bv_t cnd
+          ) syst
+         ,
+          (f_bf o
+           SYST_update_pred ((cnd_bv_f)::(SYST_get_pred syst)) o
+           insert_valbe cnd_bv_f (bslSyntax.bnot cnd)
+          ) syst
+        ]
+    end;
+
+  fun branch_state_simp str_prefix cnd f_bt f_bf syst =
+      branch_state str_prefix cnd (fn s => [f_bt s]) (fn s => [f_bf s]) syst
+
   (*
   val syst = init_state prog_vars;
   val SymbState systr = syst;
@@ -106,22 +128,12 @@ in (* local *)
     if is_BExp_IfThenElse be then
       let
         val (cnd, be1, be2) = dest_BExp_IfThenElse be;
-
-        val cnd_bv = bir_envSyntax.mk_BVar_string ("assign_cnd", ``BType_Bool``);
-        val cnd_bv_1 = get_bvar_fresh cnd_bv;
-        val cnd_bv_2 = get_bvar_fresh cnd_bv;
       in
-        List.concat [
-          (update_state (bv, be1) o
-           SYST_update_pred ((cnd_bv_1)::(SYST_get_pred syst)) o
-           insert_valbe cnd_bv_1 cnd
-          ) syst
-         ,
-          (update_state (bv, be2) o
-           SYST_update_pred ((cnd_bv_2)::(SYST_get_pred syst)) o
-           insert_valbe cnd_bv_2 (bslSyntax.bnot cnd)
-          ) syst
-        ]
+        branch_state "assign"
+                     cnd
+                     (update_state (bv, be1))
+                     (update_state (bv, be2))
+                     syst
       end
     else
     let

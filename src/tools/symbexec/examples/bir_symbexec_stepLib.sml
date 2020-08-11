@@ -10,16 +10,20 @@ local
   open bir_programSyntax;
 in (* local *)
   fun symb_exec_stmt (s, syst) =
-    (* TODO: no update if state is not running *)
-    if is_BStmt_Assign s then
+    (* no update if state is not running *)
+    if SYST_get_status syst <> ``BST_Running`` then [syst]
+    (* assignment *)
+    else if is_BStmt_Assign s then
         update_state (dest_BStmt_Assign s) syst
+    (* assert and assume *)
     else if is_BStmt_Assert s then
         [syst] (* TODO: fix *)
     else if is_BStmt_Assume s then
         [syst] (* TODO: fix *)
+    (* observations *)
     else if is_BStmt_Observe s then
         [syst] (* TODO: fix *)
-    else raise ERR "symb_exec_stmt" "unknown statement type";
+    else raise ERR "symb_exec_stmt" ("unknown statement type for: " ^ (term_to_string s));
 end (* local *)
 
 local
@@ -34,8 +38,6 @@ in (* local *)
       val tgt     = (fst o hd) vs;
     in
       [SYST_update_pc tgt syst]
-      handle Empty =>
-        raise ERR "get_next_exec_sts" ("unexpected 1 at " ^ (term_to_string lbl_tm))
     end
     handle HOL_ERR _ => (
     let
@@ -67,26 +69,12 @@ in (* local *)
         [(SYST_update_pc tgt2
          ) syst]
       else
-      let
-        val cnd_bv = bir_envSyntax.mk_BVar_string ("cjmp_cnd", ``BType_Bool``);
-        val cnd_bv_1 = get_bvar_fresh cnd_bv;
-        val cnd_bv_2 = get_bvar_fresh cnd_bv;
-
-        val syst1   =
-          (SYST_update_pred ((cnd_bv_1)::(SYST_get_pred syst)) o
-           insert_bvfrexp cnd_bv_1 (SymbValBE (cnd_exp, cnd_deps)) o
-           SYST_update_pc   tgt1
-          ) syst;
-        val syst2   =
-          (SYST_update_pred ((cnd_bv_2)::(SYST_get_pred syst)) o
-           insert_bvfrexp cnd_bv_2 (SymbValBE (bslSyntax.bnot cnd_exp, cnd_deps)) o
-           SYST_update_pc   tgt2
-          ) syst;
-      in
-        [syst1, syst2]
-        handle Empty =>
-          raise ERR "get_next_exec_sts" ("unexpected 1 at " ^ (term_to_string lbl_tm))
-      end
+      branch_state_simp
+         "cjmp"
+         cnd
+         (SYST_update_pc tgt1)
+         (SYST_update_pc tgt2)
+         syst
     end
     handle HOL_ERR _ =>
       let
