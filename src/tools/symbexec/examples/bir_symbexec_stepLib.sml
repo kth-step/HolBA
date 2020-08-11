@@ -38,9 +38,8 @@ end (* local *)
 
 local
   open bir_cfgLib;
-  open binariesCfgLib;
 in (* local *)
-  fun get_next_exec_sts lbl_tm est syst =
+  fun get_next_exec_sts n_dict lbl_tm est syst =
     (* TODO: rename function maybe to capture connection to end statement/cfg? *)
     (* no update if state is not running *)
     if SYST_get_status syst <> BST_Running_tm then [syst] else
@@ -97,7 +96,7 @@ in (* local *)
     (* no match, then we have some indirection and need to use cfg *)
     handle HOL_ERR _ =>
       let
-        val n       = find_node n_dict lbl_tm;
+        val n:cfg_node = binariesCfgLib.find_node n_dict lbl_tm;
         val n_type  = #CFGN_type n;
         val _       = if cfg_nodetype_is_call n_type orelse n_type = CFGNT_Jump then () else
                         raise ERR "get_next_exec_sts" ("unexpected 2 at " ^ (term_to_string lbl_tm));
@@ -134,7 +133,7 @@ in (* local *)
   (*
   val syst = init_state prog_vars;
   *)
-  fun symb_exec_block cfb bl_dict syst =
+  fun symb_exec_block cfb n_dict bl_dict syst =
     let
       val lbl_tm = SYST_get_pc syst;
 
@@ -145,7 +144,7 @@ in (* local *)
       val systs2 = List.foldl (fn (s, systs) => List.concat(List.map (fn x => symb_exec_stmt (s,x)) systs)) [syst] s_tms;
 
       (* generate list of states from end statement *)
-      val systs = List.concat(List.map (get_next_exec_sts lbl_tm est) systs2);
+      val systs = List.concat(List.map (get_next_exec_sts n_dict lbl_tm est) systs2);
       val systs_simplified = List.map simplify_state systs;
       val systs_filtered = if cfb andalso length systs_simplified > 1 then
                              List.filter check_feasible systs_simplified
@@ -155,17 +154,17 @@ in (* local *)
       systs_filtered
     end;
 
-  fun symb_exec_to_stop cfb _       []                  _            acc = acc
-    | symb_exec_to_stop cfb bl_dict (exec_st::exec_sts) stop_lbl_tms acc =
+  fun symb_exec_to_stop cfb _      _       []                  _            acc = acc
+    | symb_exec_to_stop cfb n_dict bl_dict (exec_st::exec_sts) stop_lbl_tms acc =
         let
           fun state_stops syst =
             (List.exists (fn x => (SYST_get_pc syst) = x) stop_lbl_tms) orelse
             SYST_get_status syst <> BST_Running_tm;
 
-          val sts = symb_exec_block cfb bl_dict exec_st;
+          val sts = symb_exec_block cfb n_dict bl_dict exec_st;
           val (new_acc, new_exec_sts) = List.partition state_stops sts;
         in
-          symb_exec_to_stop cfb bl_dict (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
+          symb_exec_to_stop cfb n_dict bl_dict (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
         end;
 end (* local *)
 
