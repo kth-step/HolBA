@@ -319,8 +319,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   end;
 
 (* For debugging RISC-V:
+  (* TODO: Make shortcuts for debugging other things than preconds *)
 
-  val hex_code = String.map Char.toUpper "00E13423"; (* "sd x14, 8(x2)" *)
+  val hex_code = String.map Char.toUpper "007322B3"; (* "slt x5, x6, x7" *)
+
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
   val (lb, ms_case_cond_t, next_thm) = el 1 (preprocess_next_thms label_tm next_thms)
@@ -1002,15 +1004,11 @@ fun get_patched_step_hex ms_v hex_code =
          CONV_RULE (RATOR_CONV (RATOR_CONV (RAND_CONV c)))
        end;
 
-(*
-     val vn_set0 = vn_set
-     val full_rel_thm = init_thm
+(* For debugging (from compute_updates):
 
-     val (full_rel_thm, vn_set) = foldl add_imm_up (init_thm, vn_set)
-         (List.take (imm_ups_tm_list, 38));
-
-
-     val (v_t, lf_t, SOME res_t) = el 39 imm_ups_tm_list
+         val (full_rel_thm, vn_set) =
+           foldl add_imm_up (init_thm, vn_set) (List.take (imm_ups_tm_list, 58));
+         val (v_t, lf_t, SOME res_t) = el 59 imm_ups_tm_list;
 *)
      fun add_imm_up ((v_t, lf_t, NONE), (full_rel_thm, vn_set)) =
          let
@@ -1053,7 +1051,7 @@ fun get_patched_step_hex ms_v hex_code =
 (* For debugging RISC-V:
 
   val (mu_thm:thm, mm_precond_thm:thm) = test_RISCV.bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-  val hex_code = String.map Char.toUpper "00A98863"; (* "beq x19, x10, offset = 16 bytes" *)
+  val hex_code = String.map Char.toUpper "007322B3"; (* "slt x5, x6, x7" *)
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
     val bir_is_lifted_inst_block_COMPUTE_precond_tm_mr =
@@ -1109,7 +1107,6 @@ fun get_patched_step_hex ms_v hex_code =
   fun compute_updates mem_up_t imm_ups_t eup_t =
   let
      (* Deal with mem_up *)
-     (* TODO: Something goes wrong here *)
      val (init_thm, vn_set) = if (optionSyntax.is_none mem_up_t) then
           (comp_thm_updates_INTRO_NO_MEM, vn_set_empty)
         else let

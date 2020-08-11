@@ -3,6 +3,7 @@ open bir_expTheory HolBACoreSimps;
 open bir_typing_expTheory bir_valuesTheory
 open bir_envTheory bir_immTheory bir_exp_immTheory
 open bir_immSyntax wordsTheory
+open wordsSyntax
 open bir_exp_memTheory bir_bool_expTheory
 open bir_nzcv_expTheory bir_interval_expTheory
 open bir_lifter_general_auxTheory
@@ -388,7 +389,6 @@ SIMP_TAC std_ss [bir_is_lifted_imm_exp_def,
 
 val thm_t = build_immtype_t_conj
 ``!s uo env (w:'a word) e.
-
       bir_is_lifted_imm_exp env e (w2bs w s) ==>
       bir_is_lifted_imm_exp env (BExp_UnaryExp uo e)
         (w2bs (bir_unary_exp_GET_OPER uo w) s)``;
@@ -791,12 +791,7 @@ val bir_update_mmap_words_def = Define `
     (!mmap a.      (bir_update_mmap_words mmap a [] = mmap)) /\
     (!mmap a v vs. (bir_update_mmap_words mmap a (v::vs) =
                         bir_update_mmap_words ((a =+ v2w v) mmap) (a + 1w) vs))`;
-(* TODO: Order of updates in memory representation
-val bir_update_mmap_words_rev_def = Define `
-    (!mmap a.      (bir_update_mmap_words_rev mmap a [] = mmap)) /\
-    (!mmap a v vs. (bir_update_mmap_words_rev mmap a (v::vs) =
-                         ((a =+ v2w v) (bir_update_mmap_words_rev mmap (a + 1w) vs))))`;
-*)
+
 val bir_store_in_mem_words_def = Define `bir_store_in_mem_words
   (value_ty : bir_immtype_t) (a_ty : bir_immtype_t) (result : bir_imm_t) (mmap : 'a word -> 'v word) (en: bir_endian_t) (a : 'a word) =
 
@@ -812,23 +807,7 @@ val bir_store_in_mem_words_def = Define `bir_store_in_mem_words
         case vs' of NONE => NONE
                  |  SOME vs'' => SOME (bir_update_mmap_words mmap a vs'')
    )`;
-(* TODO: Order of updates in memory representation
-val bir_store_in_mem_words_rev_def = Define `bir_store_in_mem_words_rev
-  (value_ty : bir_immtype_t) (a_ty : bir_immtype_t) (result : bir_imm_t) (mmap : 'a word -> 'v word) (en: bir_endian_t) (a : 'a word) =
 
-   let result_ty = type_of_bir_imm result in
-   case (bir_number_of_mem_splits value_ty result_ty a_ty) of
-    | NONE => NONE
-    | SOME (n:num) => (
-        let vs = bitstring_split (size_of_bir_immtype value_ty) (b2v result) in
-        let vs' = (case en of BEnd_LittleEndian => SOME (REVERSE vs)
-                          |  BEnd_BigEndian => SOME vs
-                          |  BEnd_NoEndian => if (n = 1) then SOME vs else NONE) in
-
-        case vs' of NONE => NONE
-                 |  SOME vs'' => SOME (bir_update_mmap_words_rev mmap a vs'')
-   )`;
-*)
 val v2w_w2v_SEG_GEN = store_thm ("v2w_w2v_SEG_GEN",
   ``!s b (w:'a word).
       (s + b <= dimindex (:'a)) ==>
@@ -927,59 +906,6 @@ let
 
 in thm6
 end);
-(* TODO: Order of updates in memory representation
-val bir_store_in_mem_words_rev_REWRS = save_thm ("bir_store_in_mem_words_rev_REWRS",
-let
-  val thm_def = prove (``!(value_ty :bir_immtype_t) (a_ty :bir_immtype_t) (result :bir_imm_t)
-      (mmap :'a word -> 'v word) (en :bir_endian_t) (a :'a word).
-     (size_of_bir_immtype value_ty = dimindex (:'v)) ==>
-     (size_of_bir_immtype a_ty = dimindex (:'a)) ==> (
-     bir_store_in_mem_words_rev value_ty a_ty result mmap en a =
-     (let (result_ty :bir_immtype_t) = type_of_bir_imm result
-      in
-        case bir_number_of_mem_splits value_ty result_ty a_ty of
-          (NONE :num option) => (NONE :('a word -> 'v word) option)
-        | SOME n =>
-            (let (vs :bitstring list) =
-                   bitstring_split (size_of_bir_immtype value_ty)
-                     (b2v result)
-             in
-             let (vs' :bitstring list option) =
-                   case en of
-                     BEnd_BigEndian => SOME vs
-                   | BEnd_LittleEndian => SOME (REVERSE vs)
-                   | BEnd_NoEndian =>
-                       if n = (1 :num) then SOME vs
-                       else (NONE :bitstring list option)
-             in
-               case vs' of
-                 (NONE :bitstring list option) =>
-                   (NONE :('a word -> 'v word) option)
-               | SOME vs'' => SOME (bir_update_mmap_words_rev mmap a vs''))))``,
-     SIMP_TAC std_ss [bir_store_in_mem_words_rev_def])
-
-
-  val thms1 = MP_size_of_bir_immtype_t_EQ_dimindex thm_def
-  val thms2 = flatten (map MP_size_of_bir_immtype_t_EQ_dimindex thms1)
-  val thm0 = LIST_CONJ thms2
-
-  val thm1 = SIMP_RULE (list_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``, ``:bir_imm_t``]) [
-    bir_number_of_mem_splits_REWRS, LET_DEF, type_of_bir_imm_def] thm0
-
-  val thm2 = SIMP_RULE (list_ss++wordsLib.SIZES_ss) [b2v_def, bitstring_split_num_REWRS,
-     bitstringTheory.length_w2v, size_of_bir_immtype_def] thm1
-  val thm3 = SIMP_RULE (list_ss++holBACore_ss++(DatatypeSimps.expand_type_quants_ss [``:bir_endian_t``])) [LET_DEF] thm2
-
-  val thm4 = Ho_Rewrite.REWRITE_RULE [fold_bir_endian_THM] thm3
-
-  val thm5 = SIMP_RULE (std_ss++wordsLib.WORD_ss) [bir_update_mmap_words_rev_def, bitstringTheory.v2w_w2v, v2w_w2v_SEG_REWRS] thm4
-
-
-  val thm6 = SIMP_RULE list_ss [GSYM CONJ_ASSOC, FORALL_AND_THM] thm5
-
-in thm6
-end);
-*)
 
 
 val bir_update_mmap_words_INTRO = store_thm ("bir_update_mmap_words_INTRO",
@@ -1007,39 +933,7 @@ val bir_update_mmap_words_INTRO = store_thm ("bir_update_mmap_words_INTRO",
   ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [(* updateTheory.UPDATE_def, *)
     w2n_11, bitstringTheory.n2w_v2n, bir_load_mmap_n2w_FUPDATE_thm]
 );
-(* TODO: Order of updates in memory representation
-val bir_update_mmap_words_rev_INTRO = store_thm ("bir_update_mmap_words_rev_INTRO",
-``!sa (a: 'a word).
-    (size_of_bir_immtype sa = dimindex (:'a)) ==>
-    !vs va_n va mem_n.
-    (bir_mem_addr sa va_n = w2n va) ==>
-    (n2w (bir_load_mmap (bir_update_mmap sa mem_n va_n vs) (w2n a)) =
-                        (bir_update_mmap_words_rev (bir_load_mmap_w (bir_mmap_n2w mem_n)) va vs) a)
-``,
-  NTAC 2 GEN_TAC >> STRIP_TAC >>
-  Induct >> (
-    SIMP_TAC std_ss [bir_update_mmap_def, bir_update_mmap_words_rev_def,
-                     bir_load_mmap_w_bir_mmap_n2w_thm]
-  ) >>
-  REPEAT STRIP_TAC >>
-  Q.PAT_X_ASSUM `!va_n va mem_n. _` (MP_TAC o Q.SPECL [`SUC va_n`, `va + 1w`]) >>
-  `bir_mem_addr sa (SUC va_n) = w2n (va + 1w)` by (
-    Q.PAT_X_ASSUM `_ = w2n va` (MP_TAC o GSYM) >>
-    FULL_SIMP_TAC std_ss [bir_mem_addr_def, bitTheory.MOD_2EXP_def,
-      GSYM dimword_def] >>
-    Cases_on `va` >>
-    ASM_SIMP_TAC arith_ss [w2n_n2w, word_add_n2w,
-      bitTheory.MOD_PLUS_LEFT, arithmeticTheory.ADD1]
-  ) >>
 
-
-  REPEAT STRIP_TAC >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  ASM_SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [(* updateTheory.UPDATE_def, *)
-    w2n_11, bitstringTheory.n2w_v2n, bir_load_mmap_n2w_FUPDATE_thm, bir_update_mmap_words_rev_def]
-);
-*)
 
 val bir_update_mmap_words_INTRO_w2n = store_thm ("bir_update_mmap_words_INTRO_w2n",
 ``!sa (a: 'a word) vs va_n va mem_n.

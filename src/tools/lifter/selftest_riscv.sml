@@ -397,6 +397,7 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V\n\
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
 (* R-format *)
   
+  (* Addition *)
   (* "add x5, x6, x7" *)
   (* OK *)
   (* funct7  rs2   rs1   funct3 rd    opcode  *)
@@ -404,20 +405,24 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V\n\
   (* 0000000 00111 00110 000    00101 0110011 *)
   val res = riscv_test_hex "007302B3";
 
+  (* Subtraction *)
   (* "sub x5, x6, x7" *)
   (* OK *)
   val res = riscv_test_hex "407202B3";
 
+  (* Logical left shift *)
   (* "sll x5, x6, x7" *)
-  (* FAILED *)
+  (* OK *)
   val res = riscv_test_hex "007312B3";
 
+  (* Signed comparison *)
   (* "slt x5, x6, x7" *)
-  (* FAILED *)
+  (* OK *)
   val res = riscv_test_hex "007322B3";
 
+  (* Unsigned comparison *)
   (* "sltu x5, x6, x7" *)
-  (* FAILED *)
+  (* OK *)
   val res = riscv_test_hex "007332B3";
 
   (* "xor x5, x6, x7" *)
@@ -425,11 +430,11 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V\n\
   val res = riscv_test_hex "007342B3";
 
   (* "srl x5, x6, x7" *)
-  (* FAILED *)
+  (* OK *)
   val res = riscv_test_hex "007352B3";
 
   (* "sra x5, x6, x7" *)
-  (* FAILED *)
+  (* OK *)
   val res = riscv_test_hex "407352B3";
 
   (* "or x5, x6, x7" *)

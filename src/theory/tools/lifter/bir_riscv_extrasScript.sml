@@ -1,5 +1,10 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory
+open HolBACoreSimps
+open bir_immSyntax
+open bir_exp_immTheory
+open bir_immTheory
+open bir_valuesTheory
 open bir_exp_liftingTheory
 open riscv_stepTheory
 open bir_lifter_general_auxTheory;
@@ -9,7 +14,7 @@ open bir_arm8_extrasTheory
 open bitstringTheory
 open combinTheory
 
-(* TODO: This file is still entirely WIP. Draw inspiration from
+(* TODO: This file is still WIP. Draw inspiration from
  *       the corresponding ARM8 and M0 files. *)
 
 (* In order to produce decent BIR code from step theorems,
@@ -218,7 +223,7 @@ SIMP_TAC std_ss [riscv_mem_store_word_def, elim_zero_for_def_thm,
 );
 
 (*
-(* It seems theorems like this are needed since you can (partially) store longer words using
+(* TODO: It seems theorems like this are needed since you can (partially) store longer words using
  * instructions for storing smaller ones. *)
 val riscv_LIFT_STORE_WORD_64 = store_thm ("riscv_LIFT_STORE_WORD_64",
 ``!env em ea va ev vv ms mem_f.
@@ -311,6 +316,36 @@ SIMP_TAC (list_ss++wordsLib.WORD_ss)
           FUNS_EQ_OUTSIDE_WI_size_def]
 );
 
+(************)
+(* 6 LSBs   *)
+(************)
+
+local
+  fun power b e =
+    if e = 0
+    then 1
+    else b * power b (e-1);
+in
+fun get_bitmask_word final_bit size =
+  wordsSyntax.mk_wordii ((power 2 final_bit) - 1, size)
+end
+;
+
+val thm_t =
+``!env w e.
+  bir_is_lifted_imm_exp env e (Imm64 w) ==>
+  bir_is_lifted_imm_exp env (BExp_BinExp BIExp_And (BExp_Const (Imm64 (^(get_bitmask_word 6 64)))) e)
+    (Imm64 ((w2w (((5 >< 0) w):word6)):word64))``;
+
+val bir_is_lifted_imm_exp_LSBs = prove (``^thm_t``,
+
+SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
+   bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
+   bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
+   w2w_id, BType_Bool_def] >>
+blastLib.BBLAST_TAC
+);
+
 (****************)
 (* Add to sub   *)
 (****************)
@@ -335,6 +370,49 @@ in
   thm2
 end)
 
+(*******************************************************)
+(* RISC-V predicates are usually cast to 64-bit format *)
+(*******************************************************)
+(* TODO: Check that this cannot also be solved by some
+ * simple rewriting to a format compatible with existing
+ * lifting theorems. *)
+(* TODO: Move to auxiliary *)
+val v2w_ground1 = store_thm("v2w_ground1",
+  ``v2w [T] = 1w /\ v2w [F] = 0w``,
+
+SIMP_TAC (std_ss++bitstringLib.v2w_n2w_ss) []
+);
+
+
+val thm_t = build_immtype_t_conj
+``!s bo env (w1:'a word) (w2 :'a word) e1 e2.
+      bir_is_lifted_imm_exp env e1 (w2bs w1 s) ==>
+      bir_is_lifted_imm_exp env e2 (w2bs w2 s) ==>
+      bir_is_lifted_imm_exp env (BExp_Cast BIExp_UnsignedCast (BExp_BinPred bo e1 e2) Bit64)
+        (Imm64 (v2w [bir_bin_pred_GET_OPER bo w1 w2]))``;
+
+val riscv_is_lifted_imm_exp_BIN_PRED0 = prove (``^thm_t``,
+
+SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, BType_Bool_def, w2w_id,
+  bool2b_def] >>
+REPEAT STRIP_TAC >> (
+  Cases_on `bir_bin_pred_GET_OPER bo w1 w2` >> (
+    FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) [bool2w_def, v2w_ground1]
+  )
+)
+);
+
+
+val riscv_is_lifted_imm_exp_BIN_PRED = save_thm ("bir_is_lifted_imm_exp_BIN_PRED",
+let
+  val thm0 = riscv_is_lifted_imm_exp_BIN_PRED0
+  val thm1 = SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_bin_pred_t``]) [
+    bir_bin_pred_GET_OPER_def, GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id] thm0
+in
+  thm1
+end);
+
 (****************)
 (* Combinations *)
 (****************)
@@ -347,7 +425,9 @@ val riscv_extra_LIFTS = save_thm ("riscv_extra_LIFTS",
     riscv_LIFT_STORE_BYTE,
     riscv_LIFT_STORE_HALF,
     riscv_LIFT_STORE_WORD,
-    riscv_LIFT_STORE_DWORD]
+    riscv_LIFT_STORE_DWORD,
+    riscv_is_lifted_imm_exp_BIN_PRED,
+    bir_is_lifted_imm_exp_LSBs]
 );
 
 (* TODO: What should be here? *)
