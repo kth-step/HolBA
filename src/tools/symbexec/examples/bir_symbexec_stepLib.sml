@@ -6,6 +6,25 @@ local
   open bir_symbexec_coreLib;
 in
 
+fun symb_exec_stmt_observe ((id_tm, cnd_tm, exp_tms, ofun_tm), syst) =
+  let
+    val _  = if numSyntax.is_numeral id_tm then () else
+             raise ERR "symb_exec_stmt_observe" "the observation id has to be a numeral.";
+    val id = numSyntax.dest_numeral id_tm;
+
+    val cnd_bv = bir_envSyntax.mk_BVar_string ("observe_cnd", ``BType_Bool``);
+
+    val exp_bvs = []; (* TODO: fix this, needs to use type checking *)
+
+    val obs = (id, cnd_bv, exp_bvs, ofun_tm);
+    val obss' = obs::(SYST_get_obss syst);
+  in
+    [(SYST_update_obss obss' o
+      (* TODO: insert_valbe with all of exp_bvs and exp_tms *)
+      insert_valbe cnd_bv cnd_tm
+      ) syst]
+  end;
+
 local
   open bir_programSyntax;
 in (* local *)
@@ -32,7 +51,7 @@ in (* local *)
            syst
     (* observations *)
     else if is_BStmt_Observe s then
-        [syst] (* TODO: fix *)
+        symb_exec_stmt_observe ((dest_BStmt_Observe s), syst)
     else raise ERR "symb_exec_stmt" ("unknown statement type for: " ^ (term_to_string s));
 end (* local *)
 
