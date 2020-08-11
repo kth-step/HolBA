@@ -72,7 +72,8 @@ lookup_block_dict bl_dict_ lbl_tm
 *)
 
 val pred_conjs = [];
-val syst  = init_state lbl_tm pred_conjs prog_vars;
+val syst = init_state lbl_tm pred_conjs prog_vars;
+val syst = init_state_set_const ``BVar "countw" (BType_Imm Bit64)`` ``(Imm64 0w)`` syst;
 val _ = print "initial state created.\n\n";
 (*
 val systs_new = symb_exec_block bl_dict_ syst;

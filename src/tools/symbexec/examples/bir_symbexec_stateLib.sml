@@ -132,26 +132,42 @@ in
     end;
 end
 
+(* state update primitives *)
+(* TODO: better names *)
+fun insert_bvfrexp bv_fresh symbv syst =
+  let
+    val vals  = SYST_get_vals syst;
+    val vals' = Redblackmap.insert (vals, bv_fresh, symbv);
+  in
+    (SYST_update_vals vals') syst
+  end;
+
+fun update_env bv bv_fresh syst =
+  let
+    val env   = SYST_get_env  syst;
+
+    val _     = if (isSome o Redblackmap.peek) (env, bv) then () else
+                raise ERR
+                   "update_env"
+                   ("can only update existing state variables, tried to update: " ^ (term_to_string bv));
+    val env'  = Redblackmap.insert (env, bv, bv_fresh);
+  in
+    (SYST_update_env env') syst
+  end;
+
 (* initial states *)
 local
   open bir_envSyntax;
 in
-  fun init_state lbl_tm pred_exp_conjs prog_vars_0 =
+  fun init_state lbl_tm pred_exp_conjs prog_vars =
     let
-      (* TODO: generalize this and remove countw here (if needed, assign it a value with a separate function) *)
-      val prog_vars_1      = prog_vars_0;
-      val prog_vars        = List.filter ((fn x => x <> "countw") o fst o dest_BVar_string) prog_vars_1;
       val envlist_progvars = List.map (fn bv => (bv, get_bvar_init bv)) prog_vars;
-
-      val countw_bv       = mk_BVar_string ("countw", ``BType_Imm Bit64``);
-      val countw_bv_fresh = get_bvar_fresh countw_bv;
-      val countw_exp_init = SymbValBE (``BExp_Const (Imm64 0w)``, symbvalbe_dep_empty);
-
-      val envlist_init  = [(countw_bv, countw_bv_fresh)]@envlist_progvars;
-      val varslist_init = [(countw_bv_fresh, countw_exp_init)];
 
       (* TODO: process pred_conjs with substitutions for initial variable names *)
       val pred_conjs = pred_exp_conjs;
+
+      val envlist_init  = (*[(countw_bv, countw_bv_fresh)]@*)envlist_progvars;
+      val varslist_init = [(*(countw_bv_fresh, countw_exp_init)*)];
     in
       SYST_mk lbl_tm
               (Redblackmap.fromList Term.compare envlist_init)
@@ -161,6 +177,17 @@ in
               (Redblackmap.fromList Term.compare varslist_init)
     end;
 end
+
+(* state updates *)
+fun init_state_set_const bv bimm syst =
+  let
+    val bv_fresh = get_bvar_fresh bv;
+    val symbv_init = SymbValBE (``BExp_Const ^bimm``, symbvalbe_dep_empty);
+  in
+    (update_env bv bv_fresh o
+     insert_bvfrexp bv_fresh symbv_init
+    ) syst
+  end;
 
 
 (* helper functions *)

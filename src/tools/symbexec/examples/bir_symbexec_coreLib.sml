@@ -84,15 +84,6 @@ in (* local *)
       be_new_val
     end;
 
-  fun insert_bvfrexp bv_fr exp syst =
-    let
-      val vals = SYST_get_vals syst;
-
-      val vals' = Redblackmap.insert (vals, bv_fr, exp);
-    in
-      (SYST_update_vals vals') syst
-    end;
-
   fun insert_valbe bv_fr be syst =
     insert_bvfrexp bv_fr (compute_valbe be syst) syst;
 
@@ -137,13 +128,9 @@ in (* local *)
       end
     else
     let
-      val env  = SYST_get_env  syst;
-
       val bv_fresh = (get_bvar_fresh) bv;
-
-      val env'  = Redblackmap.insert (env, bv, bv_fresh);
     in
-      [(SYST_update_env  env' o
+      [(update_env bv bv_fresh o
         insert_valbe bv_fresh be
       ) syst]
     end;
