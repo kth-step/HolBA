@@ -154,28 +154,29 @@ local
 
     val constrain_spec_obs_vars_def = Define`
         constrain_spec_obs_vars (e1, e2) =
-        BStmt_Assert  (BExp_BinPred BIExp_Equal  (e1) (e2)) :bir_val_t bir_stmt_basic_t
+        BStmt_Assign  (e1) (e2) :bir_val_t bir_stmt_basic_t
         `;
 
     val append_list_def = Define`
         append_list (lbl, (l1:  bir_val_t bir_stmt_basic_t list)) l2 =
-        let combLst =   APPEND l1 l2 in (lbl, combLst)
+        let combLst =   APPEND l2 l1 in (lbl, combLst)
         `;
 
     fun mk_eq_assert e =
-	let open stringSyntax
+	let 
+	    open stringSyntax;
 	    fun remove_prime str =
 		if String.isSuffix "*" str then
 		    (String.extract(str, 0, SOME((String.size str) - 1)))
 		else
 		    raise ERR "remove_prime" "there was no prime where there should be one"
-	    val p_fv  = bir_free_vars e
-	    val np_fv = map (fn x => (remove_prime (fromHOLstring x)) |> (fn y => lift_string string_ty y)) p_fv 
-	    val p_exp = map (fn x => subst [``"tmplate"``|-> x] ``(BExp_Den (BVar "tmplate" (BType_Imm Bit64)))``) 
-			     p_fv
-	    val np_exp=  map (fn x => subst[``"tmplate"``|-> x] ``(BExp_Den (BVar "tmplate" (BType_Imm Bit64)))``) 
-			     np_fv
-	    val comb_p_np = zip p_exp np_exp
+	    val p_fv  = bir_free_vars e;
+	    val np_fv = map (fn x => (remove_prime (fromHOLstring x)) |> (fn y => lift_string string_ty y)) p_fv;
+	    val p_exp = map (fn x => subst [``"template"``|-> x] ``(BVar "template" (BType_Imm Bit64))``) 
+			     p_fv;
+	    val np_exp= map (fn x => subst[``"template"``|-> x]``(BExp_Den (BVar "template" (BType_Imm Bit64)))``) 
+			     np_fv;
+	    val comb_p_np = zip p_exp np_exp;
 	in
 	    map (fn (a,b) => (rhs o concl o EVAL)``constrain_spec_obs_vars (^a,^b)``) comb_p_np  
 	end

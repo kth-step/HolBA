@@ -101,7 +101,7 @@ val add_obs_bir_prog_def = Define`
 	let (lbl, obs) = id_obs in
 	   
 	    if lbl = block.bb_label
-	    then block with bb_statements := APPEND block.bb_statements obs
+	    then block with bb_statements := APPEND obs block.bb_statements
 	    else block
 `;
 
