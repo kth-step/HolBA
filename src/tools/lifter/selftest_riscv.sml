@@ -236,7 +236,7 @@ val riscv_test_asm = riscv_lift_instr_asm mu_b mu_e pc
 fun riscv_test_hex hex = test_RISCV.lift_instr mu_b mu_e pc hex NONE
 fun riscv_test_asm asm = riscv_test_hex (riscv_hex_from_asm asm)
 
-val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V\n\n";
+val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV64I Base Instruction Set\n\n";
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
 (* R-format *)
   
@@ -293,64 +293,96 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V\n\
   (* OK *)
   val res = riscv_test_hex "007372B3";
 
+(* TODO: SLLIW, SRLIW, SRAIW, ADDW, SUBW, SLLW, SRLW, SRAW *)
+
 (* I-format *)
+  (* Addition by constant *)
   (* "addi x15,x1,-50" *)
   (* OK *)
   val res = riscv_test_hex "FCE08793";
 
+  (* Signed less-than comparison with constant *)
   (* "slti x15,x1,5" *)
   (* OK *)
   val res = riscv_test_hex "0050A793";
 
+  (* Unsigned less-than comparison with constant *)
   (* "sltiu x15,x1,5" *)
   (* OK *)
   val res = riscv_test_hex "0050B793";
 
+  (* Exclusive OR with constant *)
   (* "xori x15,x1,5" *)
   (* OK *)
   val res = riscv_test_hex "0050C793";
 
+  (* OR with constant *)
   (* "ori x15,x1,5" *)
   (* OK *)
   val res = riscv_test_hex "0050E793";
 
+  (* AND with constant *)
   (* "andi x15,x1,5" *)
   (* OK *)
   val res = riscv_test_hex "0050F793";
 
+  (* Logical left shift by constant *)
   (* "slli x15,x1,5" *)
   (* OK *)
   val res = riscv_test_hex "00509793";
 
+  (* Logical right shift by constant *)
   (* "srli x15,x1,5" *)
   (* OK *)
   val res = riscv_test_hex "0050D793";
 
-  (* "srai x15,x1,5" *)
+  (* Arithmetic right shift by constant (note funky format of immediate) *)
+  (* "srai x15,x1,1029" *)
   (* OK *)
-  val res = riscv_test_hex "0050D793";
+  val res = riscv_test_hex "4050D793";
+
+(* TODO: JALR? LB, LH, LW, LBU, LHU, LWU, LD, ADDIW *)
 
 (* S-format *)
-(* String widths:
- * 000: byte
- * 001: halfword
- * 010: word
- * 011: doubleword *)
-(* TODO: Should work pending fixing the lifter to be able to store 32-bits of 64-bit registers...
- * One solution is to replicate all theorems involved in storing for more types.
- * Another solution would be to conditionally rewrite words to the sensible type, for example,
- * if the first 8 bits are cut from a 64-bit word w, the result is the same as if it was a
- * 32-bit word.
- * Unsure if this occurs "in the wild" ,or just in lecture slides. *)
-val res = riscv_test_hex "00E12423"; (* "sw x14, 8(x2)" *)
-(* Should only work in 64-bit mode *)
-val res = riscv_test_hex "00E13423"; (* OK: "sd x14, 8(x2)" *)
+  (* String widths:
+   * 000: byte
+   * 001: halfword
+   * 010: word
+   * 011: doubleword *)
+  (* TODO: Should work pending fixing the lifter to be able to store 32-bits of 64-bit registers...
+   * One solution is to replicate all theorems involved in storing for more types.
+   * Another solution would be to conditionally rewrite words to the sensible type, for example,
+   * if the first 8 bits are cut from a 64-bit word w, the result is the same as if it was a
+   * 32-bit word.
+   * Unsure if this occurs "in the wild" ,or just in lecture slides. *)
+  
+  (* TODO: SB instruction *)
+  (* TODO: SH instruction *)
+
+  (* Store the word (32 bits) in x14 to the memory address in x2 with offset 8 *)
+  (* "sw x14, 8(x2)" *)
+  (* FAILED *)
+  val res = riscv_test_hex "00E12423";
+
+  (* Store the doubleword (64 bits) in x14 to the memory address in x2 with offset 8 *)
+  (* "sd x14, 8(x2)" *)
+  (* OK *)
+  val res = riscv_test_hex "00E13423"; 
 
 (* B-format *)
+(* Immediate is signed value denoting multiples of two bytes (so 2 means 4 bytes)
+ * which is added to the PC to give the target address. *)
+(* TODO: BNE, BLT, BLTU, BGE, BGEU *)
 val res = riscv_test_hex "00A98863"; (* OK: "beq x19, x10, offset = 16 bytes" *)
 
 (* U-format *)
+(* TODO: AUIPC *)
 val res = riscv_test_hex "0DEAD537"; (* OK: "lui x10, 0xDEAD" *)
 
 (* J-format *)
 val res = riscv_test_hex "0000006F"; (* OK: "jal x0, 0x0" *)
+
+(* Unknown format *)
+(* TODO: FENCE, FENCE.I *)
+(* TODO: ECALL, EBREAK *)
+(* TODO: CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI *)

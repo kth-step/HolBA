@@ -12,6 +12,7 @@ datatype inst_type =
     R of string * string * string
       (* opcode,  funct3 *)
   | I of string * string
+  (* TODO: S-type instructions *)
   | UnknownInstType;
 
 datatype inst_args =
@@ -19,6 +20,7 @@ datatype inst_args =
     R_args of string * string * string
            (* rd,      rs1,     imm[11:0] *)
   | I_args of string * string * string
+  (* TODO: S-type instructions *)
   | UnknownInstArg
 ;
 
@@ -58,11 +60,10 @@ end;
 
 (* Adds leading zeroes to the string str until it reaches length target_length *)
 local
-fun generate_zeroes' 0 str = str
-  | generate_zeroes' n str = generate_zeroes' (n-1) ("0"^str)
+  fun generate_zeroes' 0 str = str
+    | generate_zeroes' n str = generate_zeroes' (n-1) ("0"^str)
 
-fun generate_zeroes n = generate_zeroes' n ""
-
+  fun generate_zeroes n = generate_zeroes' n ""
 in
 fun add_leading_zeroes target_length str =
   let
@@ -75,33 +76,9 @@ fun add_leading_zeroes target_length str =
 end
 ;
 
-
-fun get_inst_type inst_t_str =
-  case inst_t_str of
-  (* R-type instructions *)
-    "add"  => R ("0110011", "000", "0000000")
-  | "sub"  => R ("0110011", "000", "0100000")
-  | "sll"  => R ("0110011", "001", "0000000")
-  | "slt"  => R ("0110011", "010", "0000000")
-  | "sltu" => R ("0110011", "011", "0000000")
-  | "xor"  => R ("0110011", "100", "0000000")
-  | "srl"  => R ("0110011", "101", "0000000")
-  | "sra"  => R ("0110011", "101", "0100000")
-  | "or"   => R ("0110011", "110", "0000000")
-  | "and"  => R ("0110011", "111", "0000000")
-  (* I-type instructions *)
-  | "addi"   => I ("0010011", "000")
-  | "slti"   => I ("0010011", "010")
-  | "sltiu"  => I ("0010011", "011")
-  | "xori"   => I ("0010011", "100")
-  | "ori"    => I ("0010011", "110")
-  | "andi"   => I ("0010011", "111")
-  | "slli"   => I ("0010011", "001") (* "0000000" *)
-  | "srli"   => I ("0010011", "101") (* "0000000" *)
-  | "srai"   => I ("0010011", "101") (* "0100000" *)
-  (* Unknown instruction *)
-  | _        => UnknownInstType
-;
+(********************)
+(* Register parsing *)
+(********************)
 
 (* Gets a RISC-V GPR as a binary string of length len from
  * a string arg_str.
@@ -122,6 +99,10 @@ fun get_bin_reg_arg len arg_str =
     add_leading_zeroes len reg_bin_str
   end
 ;
+
+(*********************)
+(* Immediate parsing *)
+(*********************)
 
 (* Gets a binary (twos complement) representation of length len
  * of the number (in decimal representation) in the string arg_str *)
@@ -176,9 +157,41 @@ fun get_bin_imm_arg len arg_str =
 end
 ;
 
+(*********************************)
+(* Conversion to datatype format *)
+(*********************************)
+
+fun get_inst_type inst_t_str =
+  case inst_t_str of
+  (* R-type instructions *)
+    "add"  => R ("0110011", "000", "0000000")
+  | "sub"  => R ("0110011", "000", "0100000")
+  | "sll"  => R ("0110011", "001", "0000000")
+  | "slt"  => R ("0110011", "010", "0000000")
+  | "sltu" => R ("0110011", "011", "0000000")
+  | "xor"  => R ("0110011", "100", "0000000")
+  | "srl"  => R ("0110011", "101", "0000000")
+  | "sra"  => R ("0110011", "101", "0100000")
+  | "or"   => R ("0110011", "110", "0000000")
+  | "and"  => R ("0110011", "111", "0000000")
+  (* I-type instructions *)
+  | "addi"   => I ("0010011", "000")
+  | "slti"   => I ("0010011", "010")
+  | "sltiu"  => I ("0010011", "011")
+  | "xori"   => I ("0010011", "100")
+  | "ori"    => I ("0010011", "110")
+  | "andi"   => I ("0010011", "111")
+  | "slli"   => I ("0010011", "001")
+  | "srli"   => I ("0010011", "101")
+  | "srai"   => I ("0010011", "101")
+  (* TODO: S-type instructions *)
+  (* Unknown instruction *)
+  | _        => UnknownInstType
+;
+
 (* Gets a datatype representation of the instruction arguments in args_str, given
  * the instruction type in inst *)
-fun get_inst_args inst args_str = 
+fun get_inst_args inst_t_str inst args_str = 
   let
     val args_clean_list =
       map remove_whitespaces (split_by_comma args_str)
@@ -198,9 +211,34 @@ fun get_inst_args inst args_str =
           val reg_args_bin_list = map (get_bin_reg_arg 5) (List.take (args_clean_list, 2))
           val imm_arg_bin = get_bin_imm_arg 12 (el 3 args_clean_list)
         in
-	  I_args (el 1 reg_args_bin_list,
-		  el 2 reg_args_bin_list,
-		  imm_arg_bin)
+          case inst_t_str of
+            "slli" =>
+              if ((String.substring (imm_arg_bin, 0, 6)) = "000000")
+              then I_args (el 1 reg_args_bin_list,
+		           el 2 reg_args_bin_list,
+		           imm_arg_bin)
+              else raise (ERR "get_inst_args"
+	                   (imm_arg_bin^" is an invalid immediate value for the SLLI instruction.")
+	                 )
+          | "srli" =>
+              if ((String.substring (imm_arg_bin, 0, 6)) = "000000")
+              then I_args (el 1 reg_args_bin_list,
+		           el 2 reg_args_bin_list,
+		           imm_arg_bin)
+              else raise (ERR "get_inst_args"
+	                   (imm_arg_bin^" is an invalid immediate value for the SRLI instruction.")
+	                 )
+          | "srai" =>
+              if ((String.substring (imm_arg_bin, 0, 6)) = "010000")
+              then I_args (el 1 reg_args_bin_list,
+		           el 2 reg_args_bin_list,
+		           imm_arg_bin)
+              else raise (ERR "get_inst_args"
+	                   (imm_arg_bin^" is an invalid immediate value for the SRAI instruction.")
+	                 )
+          | _ => I_args (el 1 reg_args_bin_list,
+		         el 2 reg_args_bin_list,
+		         imm_arg_bin)
         end
       )
     | _                          =>
@@ -209,6 +247,10 @@ fun get_inst_args inst args_str =
 	      )
   end
 ;
+
+(**************************************)
+(* Assembly of binary and hex strings *)
+(**************************************)
 
 (* Assembles a binary string from a datatype representation of the instruction *)
 fun assemble_bin_inst (R (opcode, funct3, funct7))
@@ -233,9 +275,14 @@ in
   fun bconv s = foldr (fn (x, y) => x+y) 0 (bconv_a (explode s) [])
 end;
 
+(* Gets a hex instruction from a binary string instruction *)
 fun get_hex_inst bin_inst =
   add_leading_zeroes 8 (Int.fmt StringCvt.HEX (bconv bin_inst))
 ;
+
+(*****************)
+(* Main function *)
+(*****************)
 
 (* Debugging:
 
@@ -254,7 +301,7 @@ fun riscv_hex_from_asm asm_str =
     (* 3. Get datatype representations of static instruction parts
      *    as well as arguments *)
     val inst = get_inst_type inst_t_str
-    val args = get_inst_args inst args_str
+    val args = get_inst_args inst_t_str inst args_str
 
     (* 4. Assemble a binary string from the datatype
      *    representations *)
