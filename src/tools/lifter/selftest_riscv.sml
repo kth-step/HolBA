@@ -365,7 +365,7 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
   (* OK *)
   val res = riscv_test_hex "4050D793";
 
-(* I-type variants (opcode OP-IMM-32) *)
+(* I-type variant (opcode OP-IMM-32) *)
   (* Addition by constant (32-bit) *)
   (* "addiw x15,x1,-50" *)
   (* OK *)
@@ -386,7 +386,43 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
   (* OK *)
   val res = riscv_test_hex "4050D79B";
 
-(* TODO: JALR?, LB, LH, LW, LBU, LHU, LWU, LD *)
+(* I-type variant (opcode LOAD) *)
+  (* Load byte *)
+  (* "lb x0,x1,-50" *)
+  (* OK *)
+  val res = riscv_test_hex "FCE08003";
+
+  (* Load halfword *)
+  (* "lh x0,x1,-50" *)
+  (* OK *)
+  val res = riscv_test_hex "FCE09003";
+
+  (* Load word *)
+  (* "lw x0,x1,-50" *)
+  (* OK *)
+  val res = riscv_test_hex "FCE0A003";
+
+  (* Load byte (unsigned) *)
+  (* "lbu x0,x1,-50" *)
+  (* OK *)
+  val res = riscv_test_hex "FCE0C003";
+
+  (* Load halfword (unsigned) *)
+  (* "lhu x0,x1,-50" *)
+  (* OK *)
+  val res = riscv_test_hex "FCE0D003";
+
+  (* Load word (unsigned) *)
+  (* "lwu x0,x1,-50" *)
+  (* OK *)
+  val res = riscv_test_hex "FCE0E003";
+
+  (* Load doubleword *)
+  (* "ld x0,x1,-50" *)
+  (* OK *)
+  val res = riscv_test_hex "FCE0B003";
+
+(* TODO: LWU, LD *)
 
 (* S-format *)
   (* String widths:
@@ -448,6 +484,7 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
   val res = riscv_test_hex "00A9F863";
 
 (* U-format *)
+(* TODO: Integrate with assembler *)
   (* Load upper immediate - places imm value in top 20 bits of destination register, zeroing rest *)
   (* "lui x10, 0xDEAD" *)
   (* OK *)
@@ -460,7 +497,15 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
   val res = riscv_test_hex "0DEAD517";
 
 (* J-format *)
-  val res = riscv_test_hex "0000006F"; (* OK: "jal x0, 0x0" *)
+(* TODO: Integrate with assembler *)
+  (* Jump and link register *)
+  (* "jal x0, 0x0" *)
+  (* OK *)
+  val res = riscv_test_hex "00000067";
+  (* Jump and link *)
+  (* "jal x0, 0x0" *)
+  (* OK *)
+  val res = riscv_test_hex "0000006F";
 
 (* Unknown format *)
 (* TODO: FENCE, FENCE.I *)

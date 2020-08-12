@@ -10,26 +10,22 @@ val ERR = mk_HOL_ERR "riscv_assemblerLib";
 datatype inst_type =
       (* OP/OP-32,  funct3,  funct7 *)
     R of string * string * string
-      (* OP-IMM,  funct3 *)
+      (* OP-IMM/OP-IMM-32,  funct3 *)
   | I of string * string
   (* TODO: S-type instructions *)
       (* BRANCH,  funct3 *)
   | B of string * string
-      (* OP-IMM-32,  funct3 *)
-  | I2 of string * string
   | UnknownInstType;
 
 datatype inst_args =
            (* rd,      rs1,     rs2 *)
     R_args of string * string * string
-           (* rd,      rs1,     imm[11:0] *)
+           (* Note the funky immediate used to convey
+            * 2-multiples (copied from RISC-V spec) *)
+           (* rd,      rs1,     imm[11:0]/imm[12:1] *)
   | I_args of string * string * string
            (* rs1,     rs2,     imm[11:0] *)
   | B_args of string * string * string
-           (* Note the funky immediate used to convey
-            * 2-multiples (copied from RISC-V spec) *)
-           (* rd,      rs1,     imm[12:1] *)
-  | I2_args of string * string * string
   (* TODO: S-type instructions *)
   | UnknownInstArg
 ;
@@ -44,13 +40,13 @@ fun to_lowercase char =
   else char
 ;
 
-fun to_lowercases str = String.implode (map to_lowercase (String.explode str));
+fun to_lowercases str = implode (map to_lowercase (String.explode str));
 
 val split_by_comma = String.tokens (fn c => c = #",");
 
 fun remove_whitespaces str =
-  String.implode 
-    (filter (fn c => c <> #" ") (String.explode str))
+  implode 
+    (filter (fn c => c <> #" ") (explode str))
 ;
 
 (* Gets the substring before first whitespace *)
@@ -65,7 +61,7 @@ local
 	     end
 in
 fun split_first_whitespace str =
-    (fn (a, b) => (String.implode a, String.implode b)) (split_first_whitespace' (String.explode str))
+    (fn (a, b) => (implode a, implode b)) (split_first_whitespace' (explode str))
 end;
 
 (* Adds leading zeroes to the string str until it reaches length target_length *)
@@ -95,8 +91,8 @@ end
  * Example: get_bin_reg_arg 5 "x2" = "00010" *)
 fun get_bin_reg_arg len arg_str =
   let
-    val char_list = String.explode arg_str
-    val reg_index_str = String.implode (tl char_list)
+    val char_list = explode arg_str
+    val reg_index_str = implode (tl char_list)
     val reg_index_opt = Int.fromString reg_index_str
     val reg_bin_str =
       case reg_index_opt of
@@ -202,20 +198,28 @@ fun get_inst_type inst_t_str =
   | "slli"   => I ("0010011", "001")
   | "srli"   => I ("0010011", "101")
   | "srai"   => I ("0010011", "101")
-  (* TODO: S-type instructions *)
-  (* I-type instructions for 32-bit operations in RV64I extension *)
   (* Opcode OP-IMM-32 *)
-  | "addiw"   => I2 ("0011011", "000")
-  | "slliw"   => I2 ("0011011", "001")
-  | "srliw"   => I2 ("0011011", "101")
-  | "sraiw"   => I2 ("0011011", "101")
+  | "addiw"   => I ("0011011", "000")
+  | "slliw"   => I ("0011011", "001")
+  | "srliw"   => I ("0011011", "101")
+  | "sraiw"   => I ("0011011", "101")
+  (* Opcode LOAD *)
+  | "lb"    => I ("0000011", "000")
+  | "lh"    => I ("0000011", "001")
+  | "lw"    => I ("0000011", "010")
+  | "lbu"   => I ("0000011", "100")
+  | "lhu"   => I ("0000011", "101")
+  | "lwu"   => I ("0000011", "110")
+  | "ld"    => I ("0000011", "011")
+  (* TODO: S-type instructions *)
   (* Opcode BRANCH *)
-  | "beq"   => B ("1100011", "000")
-  | "bne"   => B ("1100011", "001")
-  | "blt"   => B ("1100011", "100")
-  | "bge"   => B ("1100011", "101")
+  | "beq"    => B ("1100011", "000")
+  | "bne"    => B ("1100011", "001")
+  | "blt"    => B ("1100011", "100")
+  | "bge"    => B ("1100011", "101")
   | "bltu"   => B ("1100011", "110")
   | "bgeu"   => B ("1100011", "111")
+  (* TODO: U-type instructions (LUI, AUIPC) *)
   (* Unknown instruction *)
   | _        => UnknownInstType
 ;
@@ -244,7 +248,7 @@ fun get_inst_args inst_t_str inst args_str =
         in
           case inst_t_str of
             "slli" =>
-              if ((String.substring (imm_arg_bin, 0, 6)) = "000000")
+              if ((substring (imm_arg_bin, 0, 6)) = "000000")
               then I_args (el 1 reg_args_bin_list,
 		           el 2 reg_args_bin_list,
 		           imm_arg_bin)
@@ -252,7 +256,7 @@ fun get_inst_args inst_t_str inst args_str =
 	                   (imm_arg_bin^" is an invalid immediate value for the SLLI instruction.")
 	                 )
           | "srli" =>
-              if ((String.substring (imm_arg_bin, 0, 6)) = "000000")
+              if ((substring (imm_arg_bin, 0, 6)) = "000000")
               then I_args (el 1 reg_args_bin_list,
 		           el 2 reg_args_bin_list,
 		           imm_arg_bin)
@@ -260,49 +264,38 @@ fun get_inst_args inst_t_str inst args_str =
 	                   (imm_arg_bin^" is an invalid immediate value for the SRLI instruction.")
 	                 )
           | "srai" =>
-              if ((String.substring (imm_arg_bin, 0, 6)) = "010000")
+              if ((substring (imm_arg_bin, 0, 6)) = "010000")
               then I_args (el 1 reg_args_bin_list,
 		           el 2 reg_args_bin_list,
 		           imm_arg_bin)
               else raise (ERR "get_inst_args"
 	                   (imm_arg_bin^" is an invalid immediate value for the SRAI instruction.")
 	                 )
-          | _ => I_args (el 1 reg_args_bin_list,
-		         el 2 reg_args_bin_list,
-		         imm_arg_bin)
-        end
-      )
-    | I2 (opcode, funct3)         => (
-        let
-          val reg_args_bin_list = map (get_bin_reg_arg 5) (List.take (args_clean_list, 2))
-          val imm_arg_bin = get_bin_imm_arg 12 (el 3 args_clean_list)
-        in
-          case inst_t_str of
-            "slliw" =>
-              if ((String.substring (imm_arg_bin, 0, 7)) = "0000000")
-              then I2_args (el 1 reg_args_bin_list,
+          | "slliw" =>
+              if ((substring (imm_arg_bin, 0, 7)) = "0000000")
+              then I_args (el 1 reg_args_bin_list,
 		           el 2 reg_args_bin_list,
 		           imm_arg_bin)
               else raise (ERR "get_inst_args"
 	                   (imm_arg_bin^" is an invalid immediate value for the SLLIW instruction.")
 	                 )
           | "srliw" =>
-              if ((String.substring (imm_arg_bin, 0, 7)) = "0000000")
-              then I2_args (el 1 reg_args_bin_list,
+              if ((substring (imm_arg_bin, 0, 7)) = "0000000")
+              then I_args (el 1 reg_args_bin_list,
 		           el 2 reg_args_bin_list,
 		           imm_arg_bin)
               else raise (ERR "get_inst_args"
 	                   (imm_arg_bin^" is an invalid immediate value for the SRLIW instruction.")
 	                 )
           | "sraiw" =>
-              if ((String.substring (imm_arg_bin, 0, 7)) = "0100000")
-              then I2_args (el 1 reg_args_bin_list,
+              if ((substring (imm_arg_bin, 0, 7)) = "0100000")
+              then I_args (el 1 reg_args_bin_list,
 		           el 2 reg_args_bin_list,
 		           imm_arg_bin)
               else raise (ERR "get_inst_args"
 	                   (imm_arg_bin^" is an invalid immediate value for the SRAIW instruction.")
 	                 )
-          | _ => I2_args (el 1 reg_args_bin_list,
+          | _ => I_args (el 1 reg_args_bin_list,
 		         el 2 reg_args_bin_list,
 		         imm_arg_bin)
         end
@@ -335,14 +328,11 @@ fun assemble_bin_inst (R (opcode, funct3, funct7))
  | assemble_bin_inst (I (opcode, funct3))
                      (I_args (rd, rs1, imm)) =
   (imm^rs1^funct3^rd^opcode)
- | assemble_bin_inst (I2 (opcode, funct3))
-                     (I2_args (rd, rs1, imm)) =
-  (imm^rs1^funct3^rd^opcode)
  | assemble_bin_inst (B (opcode, funct3))
                      (B_args (rs1, rs2, imm)) =
-  ((String.substring(imm, 0, 1))^(String.substring(imm, 2, 6))^
-   rs2^rs1^funct3^(String.substring(imm, 8, 4))^
-   (String.substring(imm, 1, 1))^opcode)
+  ((substring(imm, 0, 1))^(substring(imm, 2, 6))^
+   rs2^rs1^funct3^(substring(imm, 8, 4))^
+   (substring(imm, 1, 1))^opcode)
  | assemble_bin_inst _ _ = raise (ERR "assemble_bin_inst"
 	        ("The instruction and/or arguments' type is unknown.")
 	      )
