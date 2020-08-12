@@ -417,36 +417,50 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
 (* B-format *)
   (* Immediate is signed value denoting multiples of two bytes (so 2 means 4 bytes)
    * which is added to the PC to give the target address. *)
+  (* Branch on equality of registers *)
   (* "beq x19, x10, 8" *)
   (* OK *)
   val res = riscv_test_hex "00A98863"; 
 
+  (* Branch on non-equality of registers *)
   (* "bne x19, x10, 8" *)
   (* OK *)
   val res = riscv_test_hex "00A99863";
 
+  (* Branch on less-than relation between registers *)
   (* "blt x19, x10, 8" *)
   (* OK *)
   val res = riscv_test_hex "00A9C863";
 
+  (* Branch on unsigned less-than relation between registers *)
   (* "bltu x19, x10, 8" *)
-  (* OK*)
+  (* OK *)
   val res = riscv_test_hex "00A9E863";
 
+  (* Branch on greater-than relation between registers *)
   (* "bge x19, x10, 8" *)
-  (* FAILED*)
+  (* FAILED *)
   val res = riscv_test_hex "00A9D863";
 
+  (* Branch on unsigned greater-than relation between registers *)
   (* "bgeu x19, x10, 8" *)
-  (* FAILED*)
+  (* FAILED *)
   val res = riscv_test_hex "00A9F863";
 
 (* U-format *)
-(* TODO: AUIPC *)
-val res = riscv_test_hex "0DEAD537"; (* OK: "lui x10, 0xDEAD" *)
+  (* Load upper immediate - places imm value in top 20 bits of destination register, zeroing rest *)
+  (* "lui x10, 0xDEAD" *)
+  (* OK *)
+  val res = riscv_test_hex "0DEAD537";
+
+  (* Add upper immediate to PC - shifting immediate 12 bits to left, then adding address to this and
+   * placing value in destination register *)
+  (* "auipc x10, 0xDEAD" *)
+  (* OK *)
+  val res = riscv_test_hex "0DEAD517";
 
 (* J-format *)
-val res = riscv_test_hex "0000006F"; (* OK: "jal x0, 0x0" *)
+  val res = riscv_test_hex "0000006F"; (* OK: "jal x0, 0x0" *)
 
 (* Unknown format *)
 (* TODO: FENCE, FENCE.I *)
