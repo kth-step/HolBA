@@ -294,7 +294,6 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
   val res = riscv_test_hex "007372B3";
 
 (* R-type variants (opcode OP-32) *)
-(* TODO: SLLW, SRLW, SRAW *)
   (* Addition (32-bit) *)
   (* "addw x5, x6, x7" *)
   (* OK *)
@@ -307,7 +306,6 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
 
   (* Logical left shift (32-bit) *)
   (* "sllw x5, x6, x7" *)
-  (* FAILED *)
   (* OK *)
   val res = riscv_test_hex "007312BB";
 
@@ -417,10 +415,31 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
   val res = riscv_test_hex "00E13423"; 
 
 (* B-format *)
-(* Immediate is signed value denoting multiples of two bytes (so 2 means 4 bytes)
- * which is added to the PC to give the target address. *)
-(* TODO: BNE, BLT, BLTU, BGE, BGEU *)
-val res = riscv_test_hex "00A98863"; (* OK: "beq x19, x10, offset = 16 bytes" *)
+  (* Immediate is signed value denoting multiples of two bytes (so 2 means 4 bytes)
+   * which is added to the PC to give the target address. *)
+  (* "beq x19, x10, 8" *)
+  (* OK *)
+  val res = riscv_test_hex "00A98863"; 
+
+  (* "bne x19, x10, 8" *)
+  (* OK *)
+  val res = riscv_test_hex "00A99863";
+
+  (* "blt x19, x10, 8" *)
+  (* OK *)
+  val res = riscv_test_hex "00A9C863";
+
+  (* "bltu x19, x10, 8" *)
+  (* OK*)
+  val res = riscv_test_hex "00A9E863";
+
+  (* "bge x19, x10, 8" *)
+  (* FAILED*)
+  val res = riscv_test_hex "00A9D863";
+
+  (* "bgeu x19, x10, 8" *)
+  (* FAILED*)
+  val res = riscv_test_hex "00A9F863";
 
 (* U-format *)
 (* TODO: AUIPC *)

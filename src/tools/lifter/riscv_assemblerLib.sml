@@ -13,6 +13,8 @@ datatype inst_type =
       (* OP-IMM,  funct3 *)
   | I of string * string
   (* TODO: S-type instructions *)
+      (* BRANCH,  funct3 *)
+  | B of string * string
       (* OP-IMM-32,  funct3 *)
   | I2 of string * string
   | UnknownInstType;
@@ -22,7 +24,11 @@ datatype inst_args =
     R_args of string * string * string
            (* rd,      rs1,     imm[11:0] *)
   | I_args of string * string * string
-           (* rd,      rs1,     imm[11:0] *)
+           (* rs1,     rs2,     imm[11:0] *)
+  | B_args of string * string * string
+           (* Note the funky immediate used to convey
+            * 2-multiples (copied from RISC-V spec) *)
+           (* rd,      rs1,     imm[12:1] *)
   | I2_args of string * string * string
   (* TODO: S-type instructions *)
   | UnknownInstArg
@@ -203,6 +209,13 @@ fun get_inst_type inst_t_str =
   | "slliw"   => I2 ("0011011", "001")
   | "srliw"   => I2 ("0011011", "101")
   | "sraiw"   => I2 ("0011011", "101")
+  (* Opcode BRANCH *)
+  | "beq"   => B ("1100011", "000")
+  | "bne"   => B ("1100011", "001")
+  | "blt"   => B ("1100011", "100")
+  | "bge"   => B ("1100011", "101")
+  | "bltu"   => B ("1100011", "110")
+  | "bgeu"   => B ("1100011", "111")
   (* Unknown instruction *)
   | _        => UnknownInstType
 ;
@@ -294,6 +307,16 @@ fun get_inst_args inst_t_str inst args_str =
 		         imm_arg_bin)
         end
       )
+    | B (opcode, funct3) => (
+        let
+          val reg_args_bin_list = map (get_bin_reg_arg 5) (List.take (args_clean_list, 2))
+          val imm_arg_bin = get_bin_imm_arg 12 (el 3 args_clean_list)
+        in
+	  B_args (el 1 reg_args_bin_list,
+		  el 2 reg_args_bin_list,
+		  imm_arg_bin)
+        end
+      )
     | _                          =>
         raise (ERR "get_inst_args"
 	        ("The instruction type is unknown.")
@@ -315,6 +338,11 @@ fun assemble_bin_inst (R (opcode, funct3, funct7))
  | assemble_bin_inst (I2 (opcode, funct3))
                      (I2_args (rd, rs1, imm)) =
   (imm^rs1^funct3^rd^opcode)
+ | assemble_bin_inst (B (opcode, funct3))
+                     (B_args (rs1, rs2, imm)) =
+  ((String.substring(imm, 0, 1))^(String.substring(imm, 2, 6))^
+   rs2^rs1^funct3^(String.substring(imm, 8, 4))^
+   (String.substring(imm, 1, 1))^opcode)
  | assemble_bin_inst _ _ = raise (ERR "assemble_bin_inst"
 	        ("The instruction and/or arguments' type is unknown.")
 	      )
