@@ -238,7 +238,7 @@ fun riscv_test_asm asm = riscv_test_hex (riscv_hex_from_asm asm)
 
 val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV64I Base Instruction Set\n\n";
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
-(* R-format *)
+(* R-format (opcode OP) *)
   
   (* Addition *)
   (* "add x5, x6, x7" *)
@@ -293,9 +293,9 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
   (* OK *)
   val res = riscv_test_hex "007372B3";
 
-(* TODO: SLLIW, SRLIW, SRAIW, ADDW, SUBW, SLLW, SRLW, SRAW *)
+(* TODO: ADDW, SUBW, SLLW, SRLW, SRAW *)
 
-(* I-format *)
+(* I-format (opcode OP-IMM) *)
   (* Addition by constant *)
   (* "addi x15,x1,-50" *)
   (* OK *)
@@ -341,7 +341,29 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
   (* OK *)
   val res = riscv_test_hex "4050D793";
 
-(* TODO: JALR? LB, LH, LW, LBU, LHU, LWU, LD, ADDIW *)
+(* I-type variants (opcode OP-IMM-32) *)
+  (* Addition by constant (32-bit) *)
+  (* "addiw x15,x1,-50" *)
+  (* OK *)
+  (* TODO: Result looks like regular 64-bit addition... Try with overflowing integer? *)
+  val res = riscv_test_hex "FCE08793";
+
+  (* Logical left shift by constant (32-bit) *)
+  (* "slliw x15,x1,5" *)
+  (* OK *)
+  val res = riscv_test_hex "00509793";
+
+  (* Logical right shift by constant (32-bit) *)
+  (* "srliw x15,x1,5" *)
+  (* OK *)
+  val res = riscv_test_hex "0050D793";
+
+  (* Arithmetic right shift by constant (note funky format of immediate) (32-bit) *)
+  (* "sraiw x15,x1,1029" *)
+  (* OK *)
+  val res = riscv_test_hex "4050D793";
+
+(* TODO: SLLIW, SRLIW, SRAIW, JALR?, LB, LH, LW, LBU, LHU, LWU, LD *)
 
 (* S-format *)
   (* String widths:

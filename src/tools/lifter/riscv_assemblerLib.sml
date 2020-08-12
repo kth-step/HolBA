@@ -8,11 +8,13 @@ val ERR = mk_HOL_ERR "riscv_assemblerLib";
 
 (* TODO: These should be nested... *)
 datatype inst_type =
-      (* opcode,  funct3,  funct7 *)
+      (* OP,  funct3,  funct7 *)
     R of string * string * string
-      (* opcode,  funct3 *)
+      (* OP-IMM,  funct3 *)
   | I of string * string
   (* TODO: S-type instructions *)
+      (* OP-IMM-32,  funct3 *)
+  | I2 of string * string
   | UnknownInstType;
 
 datatype inst_args =
@@ -20,6 +22,8 @@ datatype inst_args =
     R_args of string * string * string
            (* rd,      rs1,     imm[11:0] *)
   | I_args of string * string * string
+           (* rd,      rs1,     imm[11:0] *)
+  | I2_args of string * string * string
   (* TODO: S-type instructions *)
   | UnknownInstArg
 ;
@@ -164,6 +168,7 @@ end
 fun get_inst_type inst_t_str =
   case inst_t_str of
   (* R-type instructions *)
+  (* Opcode OP *)
     "add"  => R ("0110011", "000", "0000000")
   | "sub"  => R ("0110011", "000", "0100000")
   | "sll"  => R ("0110011", "001", "0000000")
@@ -175,6 +180,7 @@ fun get_inst_type inst_t_str =
   | "or"   => R ("0110011", "110", "0000000")
   | "and"  => R ("0110011", "111", "0000000")
   (* I-type instructions *)
+  (* Opcode OP-IMM *)
   | "addi"   => I ("0010011", "000")
   | "slti"   => I ("0010011", "010")
   | "sltiu"  => I ("0010011", "011")
@@ -185,6 +191,12 @@ fun get_inst_type inst_t_str =
   | "srli"   => I ("0010011", "101")
   | "srai"   => I ("0010011", "101")
   (* TODO: S-type instructions *)
+  (* I-type instructions for 32-bit operations in RV64I extension *)
+  (* Opcode OP-IMM-32 *)
+  | "addiw"   => I2 ("0010011", "000")
+  | "slliw"   => I2 ("0010011", "001")
+  | "srliw"   => I2 ("0010011", "101")
+  | "sraiw"   => I2 ("0010011", "101")
   (* Unknown instruction *)
   | _        => UnknownInstType
 ;
@@ -241,6 +253,41 @@ fun get_inst_args inst_t_str inst args_str =
 		         imm_arg_bin)
         end
       )
+    | I2 (opcode, funct3)         => (
+        let
+          val reg_args_bin_list = map (get_bin_reg_arg 5) (List.take (args_clean_list, 2))
+          val imm_arg_bin = get_bin_imm_arg 12 (el 3 args_clean_list)
+        in
+          case inst_t_str of
+            "slliw" =>
+              if ((String.substring (imm_arg_bin, 0, 7)) = "0000000")
+              then I2_args (el 1 reg_args_bin_list,
+		           el 2 reg_args_bin_list,
+		           imm_arg_bin)
+              else raise (ERR "get_inst_args"
+	                   (imm_arg_bin^" is an invalid immediate value for the SLLIW instruction.")
+	                 )
+          | "srliw" =>
+              if ((String.substring (imm_arg_bin, 0, 7)) = "0000000")
+              then I2_args (el 1 reg_args_bin_list,
+		           el 2 reg_args_bin_list,
+		           imm_arg_bin)
+              else raise (ERR "get_inst_args"
+	                   (imm_arg_bin^" is an invalid immediate value for the SRLIW instruction.")
+	                 )
+          | "sraiw" =>
+              if ((String.substring (imm_arg_bin, 0, 7)) = "0100000")
+              then I2_args (el 1 reg_args_bin_list,
+		           el 2 reg_args_bin_list,
+		           imm_arg_bin)
+              else raise (ERR "get_inst_args"
+	                   (imm_arg_bin^" is an invalid immediate value for the SRAIW instruction.")
+	                 )
+          | _ => I2_args (el 1 reg_args_bin_list,
+		         el 2 reg_args_bin_list,
+		         imm_arg_bin)
+        end
+      )
     | _                          =>
         raise (ERR "get_inst_args"
 	        ("The instruction type is unknown.")
@@ -258,6 +305,9 @@ fun assemble_bin_inst (R (opcode, funct3, funct7))
   (funct7^rs2^rs1^funct3^rd^opcode)
  | assemble_bin_inst (I (opcode, funct3))
                      (I_args (rd, rs1, imm)) =
+  (imm^rs1^funct3^rd^opcode)
+ | assemble_bin_inst (I2 (opcode, funct3))
+                     (I2_args (rd, rs1, imm)) =
   (imm^rs1^funct3^rd^opcode)
  | assemble_bin_inst _ _ = raise (ERR "assemble_bin_inst"
 	        ("The instruction and/or arguments' type is unknown.")
