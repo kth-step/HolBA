@@ -320,15 +320,15 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V\n\
 
   (* "slli x15,x1,5" *)
   (* OK *)
-  val res = riscv_test_hex "0050C793";
+  val res = riscv_test_hex "00509793";
 
   (* "srli x15,x1,5" *)
   (* OK *)
-  val res = riscv_test_hex "0050E793";
+  val res = riscv_test_hex "0050D793";
 
   (* "srai x15,x1,5" *)
   (* OK *)
-  val res = riscv_test_hex "0050F793";
+  val res = riscv_test_hex "0050D793";
 
 (* S-format *)
 (* String widths:
