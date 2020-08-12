@@ -5,7 +5,7 @@ DEPENDENCIES   = ../theory/bir ../theory/bir-support ./HolSmt
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ./HolSmt/HolBATheoryHolSmt-heap
+HOLHEAP        = ./HolSmt/HolBASharedHolSmt-heap
 NEWHOLHEAP     = HolBAShared-heap
 
 HEAPINC_EXTRA  = 
