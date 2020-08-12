@@ -2,6 +2,7 @@ open HolKernel Parse
 open testutils
 open bir_inst_liftingLib;
 open PPBackEnd
+open riscv_assemblerLib;
 
 val unicode = false;
 val raw_output = false;
@@ -230,7 +231,6 @@ fun riscv_lift_instr_asm mu_b mu_e pc asm =
   test_RISCV.lift_instr mu_b mu_e pc (riscv_hex_code_of_asm asm) (SOME asm);
 *)
 
-
 (* TODO: Double-check these numbers are OK, should work with arbitrary ones though *)
 val mu_b = Arbnum.fromInt 0; (* Memory starts at address 0x0 *)
 val mu_e = Arbnum.fromInt 0x1000000; (* Memory ends at address 0x1000000 *)
@@ -240,158 +240,6 @@ val pc =   Arbnum.fromInt 0x10030; (* Program counter is at address 0x10030 *)
 val riscv_test_asm = riscv_lift_instr_asm mu_b mu_e pc
 *)
 fun riscv_test_hex hex = test_RISCV.lift_instr mu_b mu_e pc hex NONE
-
-fun to_lowercase char =
-  if ((ord char) >= (ord #"A")) andalso ((ord char) <= (ord #"Z"))
-  then chr ( (ord char) + ((ord #"a") - (ord #"A")) )
-  else char
-;
-
-fun to_lowercases str = String.implode (map to_lowercase (String.explode str));
-
-local
-  fun split_inst_str' [] = ([], [])  
-    | split_inst_str' (h::t) =
-	if Char.isSpace h
-        then ([], t)
-	else let
-               val (l, r) = split_inst_str' t
-	     in (h::l, r)
-	     end
-in
-fun split_inst_str str =
-    (fn (a, b) => (String.implode a, String.implode b)) (split_inst_str' (String.explode str))
-end;
-
-datatype inst_type =
-      (* opcode,  funct3,  funct7 *)
-    R of string * string * string
-  | UnknownInstType;
-
-fun get_inst_type inst_t_str =
-  case inst_t_str of
-    "add"  => R ("0110011", "000", "0000000")
-  | "sub"  => R ("0110011", "000", "0100000")
-  | "sll"  => R ("0110011", "001", "0000000")
-  | "slt"  => R ("0110011", "010", "0000000")
-  | "sltu" => R ("0110011", "011", "0000000")
-  | "xor"  => R ("0110011", "100", "0000000")
-  | "srl"  => R ("0110011", "101", "0000000")
-  | "sra"  => R ("0110011", "101", "0100000")
-  | "or"   => R ("0110011", "110", "0000000")
-  | "and"  => R ("0110011", "111", "0000000")
-  | _      => UnknownInstType
-;
-
-datatype inst_args =
-           (* rd,      rs1,     rs2 *)
-    R_args of string * string * string
-  | UnknownInstArg
-;
-
-
-val split_by_comma = String.tokens (fn c => c = #",");
-
-fun remove_whitespaces str =
-  String.implode 
-    (filter (fn c => c <> #" ") (String.explode str))
-;
-
-
-fun get_bin_arg arg_str =
-  let
-    val char_list = String.explode arg_str
-    val reg_index_str = String.implode (tl char_list)
-    val SOME reg_index = Int.fromString reg_index_str
-    val reg_bin_str = Int.fmt StringCvt.BIN reg_index
-  in
-    reg_bin_str
-  end
-;
-
-local
-fun generate_zeroes' 0 str = str
-  | generate_zeroes' n str = generate_zeroes' (n-1) ("0"^str)
-
-fun generate_zeroes n = generate_zeroes' n ""
-
-in
-fun add_leading_zeroes target_length str =
-  let
-    val str_len = String.size str
-
-
-  in
-    if str_len >= target_length
-    then str
-    else ((generate_zeroes (target_length-str_len))^str)
-  end
-end
-;
-
-(* TODO: This should take a regtype, now it only treats R-type *)
-fun get_inst_args args_str = 
-  let
-    val args_clean_list =
-      map remove_whitespaces (split_by_comma args_str)
-    val args_bin_list =
-      map get_bin_arg args_clean_list
-  in
-    R_args (add_leading_zeroes 5 (el 1 args_bin_list),
-            add_leading_zeroes 5 (el 2 args_bin_list),
-            add_leading_zeroes 5 (el 3 args_bin_list))    
-  end
-;
-
-fun assemble_bin_inst (R (opcode, funct3, funct7))
-                      (R_args (rd, rs1, rs2)) =
-  (funct7^rs2^rs1^funct3^rd^opcode)
-;
-
-local
-fun mul_2 [] = [] |
-    mul_2 (h::t) = (h*2)::(mul_2 t)
-
-fun bconv_a [] list = list |
-    bconv_a (h::t) list = (bconv_a t (((ord h)-48)::(mul_2 list)))
-in
-  fun bconv s = foldr (fn (x, y) => x+y) 0 (bconv_a (explode s) [])
-end;
-
-fun get_hex_inst bin_inst =
-  add_leading_zeroes 8 (Int.fmt StringCvt.HEX (bconv bin_inst))
-;
-
-(* Debugging:
-
-   val asm_str = "add x5, x6, x7"
-
-*)
-fun riscv_hex_from_asm asm_str = 
-  let
-    (* 1. Convert all capital letters to lowercase for easier
-     *    matching later on *)
-    val lowercase_str = to_lowercases asm_str
-
-    (* 2. Get the type of instruction from the string *)
-    val (inst_t_str, args_str) = split_inst_str lowercase_str
-
-    (* 3. Get datatype representations of static instruction parts
-     *    as well as arguments *)
-    val inst = get_inst_type inst_t_str
-    val args = get_inst_args args_str
-
-    (* 4. Assemble a binary string from the datatype
-     *    representations *)
-    val bin_inst = assemble_bin_inst inst args
-
-    (* 5. Get the hexcode of the bit string *)
-    val hex_inst = get_hex_inst bin_inst
-
-  in
-    hex_inst
-  end
-;
 
 val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V\n\n";
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
@@ -425,28 +273,35 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V\n\
   (* OK *)
   val res = riscv_test_hex "007332B3";
 
+  (* Exclusive OR *)
   (* "xor x5, x6, x7" *)
   (* OK *)
   val res = riscv_test_hex "007342B3";
 
+  (* Logical right shift *)
   (* "srl x5, x6, x7" *)
   (* OK *)
   val res = riscv_test_hex "007352B3";
 
+  (* Arithmetic right shift *)
   (* "sra x5, x6, x7" *)
   (* OK *)
   val res = riscv_test_hex "407352B3";
 
+  (* OR *)
   (* "or x5, x6, x7" *)
   (* OK *)
   val res = riscv_test_hex "007362B3";
 
+  (* AND *)
   (* "and x5, x6, x7" *)
   (* OK *)
   val res = riscv_test_hex "007372B3";
 
 (* I-format *)
-val res = riscv_test_hex "FCE08793"; (* OK: "addi x15,x1,-50" *)
+  (* "addi x15,x1,-50" *)
+  (* OK *)
+  val res = riscv_test_hex "FCE08793"; 
 
 (* S-format *)
 (* String widths:
