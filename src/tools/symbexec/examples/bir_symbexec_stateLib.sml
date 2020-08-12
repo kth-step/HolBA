@@ -1,6 +1,11 @@
 structure bir_symbexec_stateLib =
 struct
 
+local
+val ERR = Feedback.mk_HOL_ERR "bir_symbexec_stateLib"
+val wrap_exn = Feedback.wrap_exn "bir_symbexec_stateLib"
+in
+
 (* symbolic values *)
 datatype symb_value =
     SymbValBE    of (term * term Redblackset.set)
@@ -214,7 +219,7 @@ fun union_deps vals (bv, deps) =
 fun find_symbval_deps err_src_string vals bv =
   if is_bvar_init bv then Redblackset.add(symbvalbe_dep_empty,bv) else (
     deps_of_symbval (find_val vals bv err_src_string) err_src_string
-    (* TODO: wrap this: handle _ => raise ERR "" ("expect bir expression for variable: " ^ (term_to_string bv)); *)
+    handle e => raise wrap_exn ("find_symbval_deps::expect bir expression for variable: " ^ (term_to_string bv)) e
   );
 
 
@@ -329,5 +334,6 @@ in (* local *)
     end;
 end (* local *)
 
+end (* outermost local *)
 
 end (* struct *)
