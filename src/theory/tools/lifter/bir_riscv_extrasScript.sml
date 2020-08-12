@@ -316,9 +316,9 @@ SIMP_TAC (list_ss++wordsLib.WORD_ss)
           FUNS_EQ_OUTSIDE_WI_size_def]
 );
 
-(**********************)
-(* 6 LSBs - for RV64I *)
-(**********************)
+(**************************************)
+(* 6 LSBs - for RV64I SLL, SRL, et.c. *)
+(**************************************)
 
 local
   fun power b e =
@@ -337,12 +337,46 @@ val thm_t =
   bir_is_lifted_imm_exp env (BExp_BinExp BIExp_And (BExp_Const (Imm64 (^(get_bitmask_word 6 64)))) e)
     (Imm64 ((w2w (((5 >< 0) w):word6)):word64))``;
 
-val bir_is_lifted_imm_exp_LSBs = prove (``^thm_t``,
+val bir_is_lifted_imm_exp_6LSBs = prove (``^thm_t``,
 
-SIMP_TAC (std_ss++holBACore_ss++boolSimps.LIFT_COND_ss) [bir_is_lifted_imm_exp_def,
+SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
    bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
-   bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY,
-   w2w_id, BType_Bool_def] >>
+   bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY] >>
+blastLib.BBLAST_TAC
+);
+
+(*************************************************)
+(* 5 LSBs (32-bit) - for RV64I SLLW, SRLW, et.c. *)
+(*************************************************)
+
+val thm_t =
+``!env w e.
+  bir_is_lifted_imm_exp env e (Imm64 w) ==>
+  bir_is_lifted_imm_exp env (BExp_BinExp BIExp_And (BExp_Const (Imm32 (^(get_bitmask_word 5 32)))) (BExp_Cast BIExp_LowCast e Bit32))
+    (Imm32 ((w2w (((4 >< 0) w):word5)):word32))``;
+
+val bir_is_lifted_imm_exp_5LSBs = prove (``^thm_t``,
+
+SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+   bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
+   bir_env_oldTheory.bir_env_vars_are_initialised_EMPTY] >>
+blastLib.BBLAST_TAC
+);
+
+(********************************************************************)
+(* 32 LSBs - for 32-bit instructions (ending in "W") of RV64I       *)
+(********************************************************************)
+
+val thm_t =
+``!env w e.
+  bir_is_lifted_imm_exp env e (Imm64 w) ==>
+  bir_is_lifted_imm_exp env (BExp_Cast BIExp_LowCast e Bit32)
+    (Imm32 ((31 >< 0) w))``;
+
+val bir_is_lifted_imm_exp_32LSBsLC = prove (``^thm_t``,
+
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
+   bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
 blastLib.BBLAST_TAC
 );
 
@@ -427,7 +461,9 @@ val riscv_extra_LIFTS = save_thm ("riscv_extra_LIFTS",
     riscv_LIFT_STORE_WORD,
     riscv_LIFT_STORE_DWORD,
     riscv_is_lifted_imm_exp_BIN_PRED,
-    bir_is_lifted_imm_exp_LSBs]
+    bir_is_lifted_imm_exp_6LSBs,
+    bir_is_lifted_imm_exp_5LSBs,
+    bir_is_lifted_imm_exp_32LSBsLC]
 );
 
 (* TODO: What should be here? *)
@@ -445,16 +481,3 @@ val riscv_extra_FOLDS = save_thm ("riscv_extra_FOLDS",
 );
 
 val _ = export_theory();
-(*
-
-
-             mem_store_byte (ms.c_gpr ms.procID (2w :word5) + (11w :word64))
-               (((31 :num) >< (24 :num)) (ms.c_gpr ms.procID (14w :word5)) :
-                word8)
-               (mem_store_byte
-                  (ms.c_gpr ms.procID (2w :word5) + (10w :word64))
-                  (((23 :num) >< (16 :num))
-                     (ms.c_gpr ms.procID (14w :word5)) :word8)
-                  (riscv_mem_store_half
-                     (ms.c_gpr ms.procID (2w :word5) + (8w :word64))
-                     (ms.c_gpr ms.procID (14w :word5)) ms.MEM8));*)

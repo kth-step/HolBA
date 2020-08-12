@@ -8,7 +8,7 @@ val ERR = mk_HOL_ERR "riscv_assemblerLib";
 
 (* TODO: These should be nested... *)
 datatype inst_type =
-      (* OP,  funct3,  funct7 *)
+      (* OP/OP-32,  funct3,  funct7 *)
     R of string * string * string
       (* OP-IMM,  funct3 *)
   | I of string * string
@@ -179,6 +179,12 @@ fun get_inst_type inst_t_str =
   | "sra"  => R ("0110011", "101", "0100000")
   | "or"   => R ("0110011", "110", "0000000")
   | "and"  => R ("0110011", "111", "0000000")
+  (* Opcode OP-32 *)
+  | "addw"  => R ("0111011", "000", "0000000")
+  | "subw"  => R ("0111011", "000", "0100000")
+  | "sllw"  => R ("0111011", "001", "0000000")
+  | "srlw"  => R ("0111011", "101", "0000000")
+  | "sraw"  => R ("0111011", "101", "0100000")
   (* I-type instructions *)
   (* Opcode OP-IMM *)
   | "addi"   => I ("0010011", "000")
@@ -193,10 +199,10 @@ fun get_inst_type inst_t_str =
   (* TODO: S-type instructions *)
   (* I-type instructions for 32-bit operations in RV64I extension *)
   (* Opcode OP-IMM-32 *)
-  | "addiw"   => I2 ("0010011", "000")
-  | "slliw"   => I2 ("0010011", "001")
-  | "srliw"   => I2 ("0010011", "101")
-  | "sraiw"   => I2 ("0010011", "101")
+  | "addiw"   => I2 ("0011011", "000")
+  | "slliw"   => I2 ("0011011", "001")
+  | "srliw"   => I2 ("0011011", "101")
+  | "sraiw"   => I2 ("0011011", "101")
   (* Unknown instruction *)
   | _        => UnknownInstType
 ;

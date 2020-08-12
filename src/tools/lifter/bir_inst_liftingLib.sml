@@ -321,7 +321,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 (* For debugging RISC-V:
   (* TODO: Make shortcuts for debugging other things than preconds *)
 
-  val hex_code = String.map Char.toUpper "007322B3"; (* "slt x5, x6, x7" *)
+  val hex_code = String.map Char.toUpper "FCE0879B"; (* "addiw x15,x1,-50" *)
 
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
@@ -1051,7 +1051,7 @@ fun get_patched_step_hex ms_v hex_code =
 (* For debugging RISC-V:
 
   val (mu_thm:thm, mm_precond_thm:thm) = test_RISCV.bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-  val hex_code = String.map Char.toUpper "007322B3"; (* "slt x5, x6, x7" *)
+  val hex_code = String.map Char.toUpper "FCE0879B"; (* "addiw x15,x1,-50" *)
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
     val bir_is_lifted_inst_block_COMPUTE_precond_tm_mr =
@@ -1133,7 +1133,7 @@ fun get_patched_step_hex ms_v hex_code =
         end)
         (fst (listSyntax.dest_list imm_ups_t)));
 
-     (* TODO: Something will go wrong here??? *)
+     (* TODO: Something will go wrong here when failing to lift an expression... *)
      val (full_rel_thm, vn_set_final) = foldl add_imm_up (init_thm, vn_set) imm_ups_tm_list;
 
      (* add eup *)
