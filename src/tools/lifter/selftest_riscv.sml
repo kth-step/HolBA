@@ -224,12 +224,6 @@ end;
 
 
 structure test_RISCV = test_bmr(bmil_riscv);
-(* In order to use the below, we need a RISC-V assembler *)
-(*
-fun riscv_hex_code_of_asm asm = hd (riscvAssemblerLib.riscv_code [QUOTE asm])
-fun riscv_lift_instr_asm mu_b mu_e pc asm =
-  test_RISCV.lift_instr mu_b mu_e pc (riscv_hex_code_of_asm asm) (SOME asm);
-*)
 
 (* TODO: Double-check these numbers are OK, should work with arbitrary ones though *)
 val mu_b = Arbnum.fromInt 0; (* Memory starts at address 0x0 *)
@@ -240,6 +234,7 @@ val pc =   Arbnum.fromInt 0x10030; (* Program counter is at address 0x10030 *)
 val riscv_test_asm = riscv_lift_instr_asm mu_b mu_e pc
 *)
 fun riscv_test_hex hex = test_RISCV.lift_instr mu_b mu_e pc hex NONE
+fun riscv_test_asm asm = riscv_test_hex (riscv_hex_from_asm asm)
 
 val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V\n\n";
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
@@ -301,7 +296,39 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V\n\
 (* I-format *)
   (* "addi x15,x1,-50" *)
   (* OK *)
-  val res = riscv_test_hex "FCE08793"; 
+  val res = riscv_test_hex "FCE08793";
+
+  (* "slti x15,x1,5" *)
+  (* OK *)
+  val res = riscv_test_hex "0050A793";
+
+  (* "sltiu x15,x1,5" *)
+  (* OK *)
+  val res = riscv_test_hex "0050B793";
+
+  (* "xori x15,x1,5" *)
+  (* OK *)
+  val res = riscv_test_hex "0050C793";
+
+  (* "ori x15,x1,5" *)
+  (* OK *)
+  val res = riscv_test_hex "0050E793";
+
+  (* "andi x15,x1,5" *)
+  (* OK *)
+  val res = riscv_test_hex "0050F793";
+
+  (* "slli x15,x1,5" *)
+  (* OK *)
+  val res = riscv_test_hex "0050C793";
+
+  (* "srli x15,x1,5" *)
+  (* OK *)
+  val res = riscv_test_hex "0050E793";
+
+  (* "srai x15,x1,5" *)
+  (* OK *)
+  val res = riscv_test_hex "0050F793";
 
 (* S-format *)
 (* String widths:

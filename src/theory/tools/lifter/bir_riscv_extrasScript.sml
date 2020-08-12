@@ -316,9 +316,9 @@ SIMP_TAC (list_ss++wordsLib.WORD_ss)
           FUNS_EQ_OUTSIDE_WI_size_def]
 );
 
-(************)
-(* 6 LSBs   *)
-(************)
+(**********************)
+(* 6 LSBs - for RV64I *)
+(**********************)
 
 local
   fun power b e =
