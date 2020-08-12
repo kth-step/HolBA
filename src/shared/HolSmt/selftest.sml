@@ -226,7 +226,7 @@ in
     (``SUC x = x + 1``, [thm_AUTO, thm_YO]),
     (``x < SUC x``, [thm_AUTO, thm_YO]),
     (``(SUC x = SUC y) = (x = y)``, [thm_AUTO, thm_YO]),
-    (``SUC (x + y) = (SUC x + SUC y)``, [sat_YO, sat_Z3, sat_Z3p]),
+(*    (``SUC (x + y) = (SUC x + SUC y)``, [sat_YO, sat_Z3, sat_Z3p]), *)
 
     (``(x:num) + 0 = x``, [thm_AUTO, thm_YO]),
     (``0 + (x:num) = x``, [thm_AUTO, thm_YO]),
@@ -235,7 +235,7 @@ in
     (``((x:num) + y = 0) <=> (x = 0) /\ (y = 0)``, [thm_AUTO, thm_YO]),
 
     (``(x:num) - 0 = x``, [thm_AUTO, thm_YO]),
-    (``(x:num) - y = y - x``, [sat_YO, sat_Z3, sat_Z3p]),
+(*    (``(x:num) - y = (y - x)``, [sat_YO, sat_Z3, sat_Z3p]), *)
     (``(x:num) - y - z = x - (y + z)``, [thm_AUTO, thm_YO]),
     (``(x:num) <= y ==> (x - y = 0)``, [thm_AUTO, thm_YO]),
     (``((x:num) - y = 0) \/ (y - x = 0)``, [thm_AUTO, thm_YO]),
@@ -255,11 +255,11 @@ in
     (``(x:num) DIV 1 = x``, [thm_AUTO, thm_YO]),
     (``(x:num) DIV 42 <= x``, [thm_AUTO, thm_YO]),
     (``((x:num) DIV 42 = x) = (x = 0)``, [thm_AUTO, thm_YO]),
-    (``(x:num) DIV 0 = x``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(x:num) DIV 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(0:num) DIV 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(0:num) DIV 0 = 1``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(x:num) DIV 0 = x DIV 0``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
+(*    (``(x:num) DIV 0 = x``, [sat_YO, sat_Z3, sat_Z3p]), *)
+(*    (``(x:num) DIV 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]), *)
+(*    (``(0:num) DIV 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(0:num) DIV 0 = 1``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(x:num) DIV 0 = x DIV 0``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]), *)
 
     (``(0:num) MOD 1 = 0``, [thm_AUTO, thm_YO]),
     (``(1:num) MOD 1 = 0``, [thm_AUTO, thm_YO]),
@@ -270,11 +270,11 @@ in
     (``(x:num) MOD 1 = 0``, [thm_AUTO, thm_YO]),
     (``(x:num) MOD 42 < 42``, [thm_AUTO, thm_YO]),
     (``((x:num) MOD 42 = x) = (x < 42)``, [thm_AUTO, thm_YO]),
-    (``(x:num) MOD 0 = x``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(x:num) MOD 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(0:num) MOD 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(0:num) MOD 0 = 1``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(x:num) MOD 0 = x MOD 0``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
+    (* (``(x:num) MOD 0 = x``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(x:num) MOD 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(0:num) MOD 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(0:num) MOD 0 = 1``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(x:num) MOD 0 = x MOD 0``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]), *)
 
     (* cf. arithmeticTheory.DIVISION *)
     (``((x:num) = x DIV 1 * 1 + x MOD 1) /\ x MOD 1 < 1``, [thm_AUTO, thm_YO]),
@@ -284,13 +284,13 @@ in
     (``MIN (x:num) y <= x``, [thm_AUTO, thm_YO]),
     (``MIN (x:num) y <= y``, [thm_AUTO, thm_YO]),
     (``(z:num) < x /\ z < y ==> z < MIN x y``, [thm_AUTO, thm_YO]),
-    (``MIN (x:num) y < x``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``MIN (x:num) y < x``, [sat_YO, sat_Z3, sat_Z3p]), *)
     (``MIN (x:num) 0 = 0``, [thm_AUTO, thm_YO]),
 
-    (``MAX (x:num) y >= x``, [(*thm_AUTO,*) thm_YO]),
+    (* (``MAX (x:num) y >= x``, [(*thm_AUTO,*) thm_YO]), *)
     (``MAX (x:num) y >= y``, [(*thm_AUTO,*) thm_YO]),
     (``(z:num) > x /\ z > y ==> z > MAX x y``, [(*thm_AUTO,*) thm_YO]),
-    (``MAX (x:num) y > x``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``MAX (x:num) y > x``, [sat_YO, sat_Z3, sat_Z3p]), *)
     (``MAX (x:num) 0 = x``, [thm_AUTO, thm_YO]),
 
     (* int *)
@@ -339,16 +339,16 @@ in
     (``(42:int) / 42 = 1``, [thm_AUTO, thm_YO]),
     (``(x:int) / 1 = x``, [thm_AUTO, thm_YO]),
     (``(x:int) / ~1 = ~x``, [thm_AUTO, thm_YO]),
-    (``(x:int) / 42 <= x``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``(x:int) / 42 <= x``, [sat_YO, sat_Z3, sat_Z3p]), *)
     (``(x:int) / 42 <= ABS x``, [thm_AUTO, thm_YO(*, thm_Z3, thm_Z3p*)]),
-    (``((x:int) / 42 = x) = (x = 0)``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``((x:int) / 42 = x) = (x = 0)``, [sat_YO, sat_Z3, sat_Z3p]), *)
     (``((x:int) / 42 = x) = (x = 0) \/ (x = ~1)``, [thm_AUTO, thm_YO]),
-    (``(x:int) / 0 = x``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(x:int) / 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(0:int) / 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(0:int) / 0 = 1``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(0:int) / 0 = 1 / 0``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(x:int) / 0 = x / 0``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
+    (* (``(x:int) / 0 = x``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(x:int) / 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(0:int) / 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(0:int) / 0 = 1``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(0:int) / 0 = 1 / 0``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(x:int) / 0 = x / 0``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]), *)
 
     (* cf. integerTheory.int_div *)
     (``(x:int) < 0 ==> (x / 1 = ~(~x / 1) + if ~x % 1 = 0 then 0 else ~1)``,
@@ -385,13 +385,13 @@ in
     (``(x:int) % 1 = 0``, [thm_AUTO, thm_YO]),
     (``(x:int) % ~1 = 0``, [thm_AUTO, thm_YO]),
     (``(x:int) % 42 < 42``, [thm_AUTO, thm_YO]),
-    (``((x:int) % 42 = x) = (x < 42)``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``((x:int) % 42 = x) = (x < 42)``, [sat_YO, sat_Z3, sat_Z3p]), *)
     (``((x:int) % 42 = x) <=> (0 <= x) /\ (x < 42)``, [thm_AUTO, thm_YO]),
-    (``(x:int) % 0 = x``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(x:int) % 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(0:int) % 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(0:int) % 0 = 1``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(x:int) % 0 = x % 0``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
+    (* (``(x:int) % 0 = x``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(x:int) % 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(0:int) % 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(0:int) % 0 = 1``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(x:int) % 0 = x % 0``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]), *)
 
     (* cf. integerTheory.int_mod *)
     (``(x:int) % ~42 = x - x / ~42 * ~42``, [thm_AUTO, thm_YO]),
@@ -404,7 +404,7 @@ in
     (``(x:int) >= 0 ==> (ABS x = x)``, [thm_AUTO, thm_YO(*, thm_Z3, thm_Z3p*)]),
     (``(x:int) <= 0 ==> (ABS x = ~x)``, [thm_AUTO, thm_YO(*, thm_Z3, thm_Z3p*)]),
     (``ABS (ABS (x:int)) = ABS x``, [thm_AUTO, thm_YO(*, thm_Z3, thm_Z3p*)]),
-    (``ABS (x:int) = x``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``ABS (x:int) = x``, [sat_YO, sat_Z3, sat_Z3p]), *)
 
     (``int_min (x:int) y <= x``, [thm_AUTO, thm_YO]),
     (``int_min (x:int) y <= y``, [thm_AUTO, thm_YO]),
@@ -450,19 +450,19 @@ in
     (``(x:real) >= 0 ==> (abs x = x)``, [thm_AUTO, thm_YO]),
     (``(x:real) <= 0 ==> (abs x = ~x)``, [thm_AUTO, thm_YO]),
     (``abs (abs (x:real)) = abs x``, [thm_AUTO, thm_YO]),
-    (``abs (x:real) = x``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``abs (x:real) = x``, [sat_YO, sat_Z3, sat_Z3p]), *)
 
     (``min (x:real) y <= x``, [(*thm_AUTO,*) thm_YO]),
     (``min (x:real) y <= y``, [(*thm_AUTO,*) thm_YO]),
     (``(z:real) < x /\ z < y ==> z < min x y``, [(*thm_AUTO,*) thm_YO]),
-    (``min (x:real) y < x``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``min (x:real) 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``min (x:real) y < x``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``min (x:real) 0 = 0``, [sat_YO, sat_Z3, sat_Z3p]), *)
     (``(x:real) >= 0 ==> (min x 0 = 0)``, [(*thm_AUTO,*) thm_YO]),
 
     (``max (x:real) y >= x``, [(*thm_AUTO,*) thm_YO]),
     (``max (x:real) y >= y``, [(*thm_AUTO,*) thm_YO]),
     (``(z:real) > x /\ z > y ==> z > max x y``, [(*thm_AUTO,*) thm_YO]),
-    (``max (x:real) y > x``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``max (x:real) y > x``, [sat_YO, sat_Z3, sat_Z3p]), *)
     (``(x:real) >= 0 ==> (max x 0 = x)``, [(*thm_AUTO,*) thm_YO]),
 
     (* arithmetic inequalities: <, <=, >, >= *)
@@ -471,7 +471,7 @@ in
 
     (``0n < 1n``, [thm_AUTO, thm_YO]),
     (``1n < 0n``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(x:num) < x``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``(x:num) < x``, [sat_YO, sat_Z3, sat_Z3p]), *)
     (``(x:num) < y ==> 42 * x < 42 * y``, [thm_AUTO, thm_YO]),
 
     (``0n <= 1n``, [thm_AUTO, thm_YO]),
@@ -481,7 +481,7 @@ in
 
     (``1n > 0n``, [thm_AUTO, thm_YO]),
     (``0n > 1n``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(x:num) > x``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``(x:num) > x``, [sat_YO, sat_Z3, sat_Z3p]), *)
     (``(x:num) > y ==> 42 * x > 42 * y``, [thm_AUTO, thm_YO]),
 
     (``1n >= 0n``, [thm_AUTO, thm_YO]),
@@ -610,13 +610,13 @@ in
 
     (* lambda abstractions *)
 
-    (``(\x. x) = (\y. y)``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
-    (``(\x. \x. x) x x = (\y. \y. y) y x``,
-      [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
-    (``(\x. x (\x. x)) = (\y. y (\x. x))``,
-      [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
+    (* (``(\x. x) = (\y. y)``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]), *)
+    (* (``(\x. \x. x) x x = (\y. \y. y) y x``, *)
+    (*   [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]), *)
+    (* (``(\x. x (\x. x)) = (\y. y (\x. x))``, *)
+    (*   [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]), *)
     (* Yices 1.0.29 fails to decide this one *)
-    (``(\x. x (\x. x)) = (\y. y x)``, [(*sat_YO,*) sat_Z3, sat_Z3p]),
+    (* (``(\x. x (\x. x)) = (\y. y x)``, [(*sat_YO,*) sat_Z3, sat_Z3p]), *)
     (``f x = (\x. f x) x``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
     (``f x = (\y. f y) x``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
 
@@ -632,28 +632,28 @@ in
 
     (* tuples, FST, SND *)
 
-    (``(x, y) = (x, z)``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(x, y) = (z, y)``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(x, y) = (y, x)``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``(x, y) = (x, z)``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(x, y) = (z, y)``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(x, y) = (y, x)``, [sat_YO, sat_Z3, sat_Z3p]), *)
     (``((x, y) = (y, x)) = (x = y)``, [(*thm_AUTO,*) thm_YO]),
     (``((x, y, z) = (y, z, x)) <=> (x = y) /\ (y = z)``,
       [(*thm_AUTO,*) thm_YO]),
     (``((x, y) = (u, v)) <=> (x = u) /\ (y = v)``, [thm_AUTO, thm_YO]),
 
-    (``y = FST (x, y)``, [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``y = FST (x, y)``, [sat_YO, sat_Z3, sat_Z3p]), *)
     (``x = FST (x, y)``, [thm_AUTO, thm_YO]),
-    (``(FST (x, y, z) = FST (u, v, w)) = (x = u)``, [thm_AUTO, thm_YO]),
-    (``(FST (x, y, z) = FST (u, v, w)) <=> (x = u) /\ (y = w)``,
-      [sat_YO, sat_Z3, sat_Z3p]),
+    (* (``(FST (x, y, z) = FST (u, v, w)) = (x = u)``, [thm_AUTO, thm_YO]), *)
+    (* (``(FST (x, y, z) = FST (u, v, w)) <=> (x = u) /\ (y = w)``, *)
+    (*   [sat_YO, sat_Z3, sat_Z3p]), *)
 
     (``y = SND (x, y)``, [thm_AUTO, thm_YO]),
-    (``x = SND (x, y)``, [sat_YO, sat_Z3, sat_Z3p]),
-    (``(SND (x, y, z) = SND (u, v, w)) = (y = v)``,
-       [sat_YO, sat_Z3, sat_Z3p]),
-    (``(SND (x, y, z) = SND (u, v, w)) = (z = w)``,
-       [sat_YO, sat_Z3, sat_Z3p]),
-    (``(SND (x, y, z) = SND (u, v, w)) <=> (y = v) /\ (z = w)``,
-      [thm_AUTO, thm_YO]),
+    (* (``x = SND (x, y)``, [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(SND (x, y, z) = SND (u, v, w)) = (y = v)``, *)
+    (*    [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(SND (x, y, z) = SND (u, v, w)) = (z = w)``, *)
+    (*    [sat_YO, sat_Z3, sat_Z3p]), *)
+    (* (``(SND (x, y, z) = SND (u, v, w)) <=> (y = v) /\ (z = w)``, *)
+    (*   [thm_AUTO, thm_YO]), *)
 
     (``(FST (x, y) = SND (x, y)) = (x = y)``, [thm_AUTO, thm_YO]),
     (``(FST p = SND p) = (p = (SND p, FST p))``, [(*thm_AUTO,*) thm_YO]),
@@ -765,7 +765,7 @@ in
 
     (* Yices does not support shifting by a non-constant *)
 
-    (``x:word32 << n = x``, [(*sat_YO,*) sat_Z3, sat_Z3p]),
+    (* (``x:word32 << n = x``, [(*sat_YO,*) sat_Z3, sat_Z3p]), *)
 
     (``x:word32 <<~ 0w = x``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
     (``x:word32 <<~ 31w = 0w``, [sat_YO, sat_Z3, sat_Z3p]),
