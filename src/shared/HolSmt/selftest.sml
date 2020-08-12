@@ -16,6 +16,7 @@ val _ = wordsLib.add_word_cast_printer ()
 *)
 
 val _ = Feedback.set_trace "HolSmtLib" 0
+
 (*
 val _ = Feedback.set_trace "HolSmtLib" 4
 *)
@@ -1031,14 +1032,14 @@ in
     (``x IN P UNION {} <=> x IN P``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
     (``x IN P UNION UNIV``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
     (``x IN P UNION Q <=> x IN Q UNION P``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
-    (``x IN P UNION (Q UNION R) <=> x IN (P UNION Q) UNION R``,
+    (``x IN P UNION (Q UNION R') <=> x IN (P UNION Q) UNION R'``,
       [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
 
     (``x IN P INTER Q <=> P x /\ Q x``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
     (``x NOTIN P INTER {}``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
     (``x IN P INTER UNIV <=> x IN P``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
     (``x IN P INTER Q <=> x IN Q INTER P``, [thm_AUTO, thm_YO, thm_Z3, thm_Z3p]),
-    (``x IN P INTER (Q INTER R) <=> x IN (P INTER Q) INTER R``,
+    (``x IN P INTER (Q INTER R') <=> x IN (P INTER Q) INTER R'``,
       [thm_AUTO, thm_YO, thm_Z3, thm_Z3p])
 
   ]  (* tests *)
