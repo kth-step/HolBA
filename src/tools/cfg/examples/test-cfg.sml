@@ -29,23 +29,23 @@ val g2 = cfg_update g1 n_dict;
 (* execute the test cases *)
 val _ = print "Running simple test cases.\n";
 val expected_exits = [mk_key_from_address 32 (Arbnum.fromHexString "817a")];
-val _ = if expected_exits = #CFGG_exits g2 then () else
+val _ = if list_eq identical expected_exits (#CFGG_exits g2) then () else
         raise Fail ("Unexpected exit list.");
 
 val expected_jump = mk_key_from_address 32 (Arbnum.fromHexString "817a");
-val _ = if CFGNT_Jump = #CFGN_type (lookup_block_dict_value (#CFGG_node_dict g2) expected_jump "" "oh no") then () else
+val _ = if cfg_node_type_eq (CFGNT_Jump, #CFGN_type (lookup_block_dict_value (#CFGG_node_dict g2) expected_jump "" "oh no")) then () else
         raise Fail ("Unexpected node type. Should be Jump.");
 
 val expected_condjump = mk_key_from_address 32 (Arbnum.fromHexString "8140");
-val _ = if CFGNT_CondJump = #CFGN_type (lookup_block_dict_value (#CFGG_node_dict g2) expected_condjump "" "oh no") then () else
+val _ = if cfg_node_type_eq (CFGNT_CondJump, #CFGN_type (lookup_block_dict_value (#CFGG_node_dict g2) expected_condjump "" "oh no")) then () else
         raise Fail ("Unexpected node type. Should be CondJump.");
 
 val expected_basic = mk_key_from_address 32 (Arbnum.fromHexString "8144");
-val _ = if CFGNT_Basic = #CFGN_type (lookup_block_dict_value (#CFGG_node_dict g2) expected_basic "" "oh no") then () else
+val _ = if cfg_node_type_eq (CFGNT_Basic, #CFGN_type (lookup_block_dict_value (#CFGG_node_dict g2) expected_basic "" "oh no")) then () else
         raise Fail ("Unexpected node type. Should be Basic.");
 
 val expected_no_targets = mk_key_from_address 32 (Arbnum.fromHexString "817a");
-val _ = if [] = #CFGN_targets (lookup_block_dict_value (#CFGG_node_dict g2) expected_no_targets "" "oh no") then () else
+val _ = if List.null (#CFGN_targets (lookup_block_dict_value (#CFGG_node_dict g2) expected_no_targets "" "oh no")) then () else
         raise Fail ("Unexpected node targets. Should be no targets.");
 
 
@@ -61,14 +61,14 @@ fun traverse_graph (g:cfg_graph) entry visited acc =
     val descr   = case descr_o of
                      SOME x => x
                    | NONE   => raise ERR "traverse_graph" "I expect descriptions on all nodes (becasue of lifting)";
-    val _ = if n_type = CFGNT_CondJump then
+    val _ = if cfg_node_type_eq (n_type, CFGNT_CondJump) then
               print ("cjmp node --- " ^ descr ^ "\n")
             else
               ();
 
-    val acc_new = (if n_type = CFGNT_CondJump then [entry] else [])@acc;
+    val acc_new = (if cfg_node_type_eq (n_type, CFGNT_CondJump) then [entry] else [])@acc;
 
-    val targets_to_visit = List.filter (fn x => List.all (fn y => x <> y) visited) targets;
+    val targets_to_visit = List.filter (fn x => List.all (fn y => not (identical x y)) visited) targets;
 
     val result = List.foldr (fn (entry',(visited',acc')) => traverse_graph g entry' visited' acc') (entry::visited, acc_new) targets_to_visit;
   in result end;
@@ -86,8 +86,8 @@ Arbnum.toHexString (Arbnum.fromString "33146")
 *)
 fun compare_list_contents l1 l2 =
   (length l1 = length l2) andalso
-  (List.all (fn x => (List.exists (fn y => x = y) l2)) l1) andalso
-  (List.all (fn x => (List.exists (fn y => x = y) l1)) l2);
+  (List.all (fn x => (List.exists (fn y => identical x y) l2)) l1) andalso
+  (List.all (fn x => (List.exists (fn y => identical x y) l1)) l2);
 
 val expected_cjmp_nodes =
   List.filter (fn lbl_tm =>
@@ -95,7 +95,7 @@ val expected_cjmp_nodes =
       val n = lookup_block_dict_value (#CFGG_node_dict g2) lbl_tm "expected_cjmp_nodes" "n";
       val n_type  = #CFGN_type n;
     in
-      n_type = CFGNT_CondJump
+      cfg_node_type_eq (n_type, CFGNT_CondJump)
     end
   ) (#CFGG_nodes g2);
 

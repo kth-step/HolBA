@@ -454,8 +454,8 @@ REPEAT STRIP_TAC >- (
 val bmr_ms_mem_contains_def = Define `
   (bmr_ms_mem_contains (r : ('a, 'b, 'ms) bir_lifting_machine_rec_t)  (ms : 'ms) (ba, []) = T) /\
   (bmr_ms_mem_contains r ms (ba, v::vs) =
-     (bmr_mem_lf r ms ba = (v:'b word)) /\
-     (bmr_ms_mem_contains r ms (ba+1w, vs)))`;
+     ((bmr_mem_lf r ms ba = (v:'b word)) /\
+     (bmr_ms_mem_contains r ms (ba+1w, vs))))`;
 
 val bmr_ms_mem_contains_interval_def = Define `
   bmr_ms_mem_contains_interval (ba: 'a word, wl:'b word list) <=>
@@ -724,8 +724,8 @@ in
 end);
 
 val bmr_extra_M0 = store_thm ("bmr_extra_M0",
-``!ef sel ms. (m0_bmr (ef, sel)).bmr_extra ms = (ms.AIRCR.ENDIANNESS ⇔ ef) ∧ (ms.CONTROL.SPSEL ⇔ sel) ∧
-  (ms.exception = NoException)``,
+``!ef sel ms. (m0_bmr (ef, sel)).bmr_extra ms = ((ms.AIRCR.ENDIANNESS ⇔ ef) ∧ (ms.CONTROL.SPSEL ⇔ sel) ∧
+  (ms.exception = NoException))``,
 
 SIMP_TAC (std_ss++bmr_ss++boolSimps.EQUIV_EXTRACT_ss) [m0_bmr_EVAL]);
 
@@ -863,8 +863,8 @@ in
 end);
 
 val bmr_extra_M0_mod = store_thm ("bmr_extra_M0_mod",
-``!ef sel ms. (m0_mod_bmr (ef, sel)).bmr_extra ms = (ms.base.AIRCR.ENDIANNESS ⇔ ef) ∧ (ms.base.CONTROL.SPSEL ⇔ sel) ∧
-  (ms.base.exception = NoException)``,
+``!ef sel ms. (m0_mod_bmr (ef, sel)).bmr_extra ms = ((ms.base.AIRCR.ENDIANNESS ⇔ ef) ∧ (ms.base.CONTROL.SPSEL ⇔ sel) ∧
+  (ms.base.exception = NoException))``,
 
 SIMP_TAC (std_ss++bmr_ss++boolSimps.EQUIV_EXTRACT_ss) [m0_mod_bmr_EVAL]);
 

@@ -68,13 +68,13 @@ val arm8_triple_def = Define `
 
 
 val bir_pre_arm8_to_bir_def = Define `
-  bir_pre_arm8_to_bir pre pre_bir =
+  bir_pre_arm8_to_bir pre pre_bir = (
     bir_is_bool_exp pre_bir /\
     !ms bs.
     bmr_rel arm8_bmr bs ms ==>
     bir_env_vars_are_initialised bs.bst_environ (bir_vars_of_exp pre_bir) ==>
     pre ms ==>
-    (bir_eval_exp pre_bir bs.bst_environ = SOME bir_val_true)
+    (bir_eval_exp pre_bir bs.bst_environ = SOME bir_val_true))
 `;
 
 val bir_post_bir_to_arm8_def = Define `
@@ -231,7 +231,7 @@ val arm8_vars_def = Define `
 `;
 
 val arm8_wf_varset_def = Define `
-  arm8_wf_varset vset = vset SUBSET arm8_vars`;
+  arm8_wf_varset vset = (vset SUBSET arm8_vars)`;
 
 val default_arm8_bir_state_def = Define `default_arm8_bir_state ms =
  <|bst_pc :=  bir_block_pc (BL_Address (Imm64 ms.PC)); 

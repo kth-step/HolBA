@@ -263,7 +263,7 @@ val bir_att_body_map_ct_alt =
     [];
 
 val _ =
-  if concl bir_att_body_map_ct_alt = concl bir_att_body_map_ct
+  if identical (concl bir_att_body_map_ct_alt) (concl bir_att_body_map_ct)
   then ()
   else
     raise ERR "composition of example code"

@@ -441,7 +441,7 @@ fun bir_exp_lift_final thm = let
 
   fun gen_newname uvs c = let
      val v = mk_var ("e"^(int_to_string c), bir_expSyntax.bir_exp_t_ty)
-  in if (mem v uvs) then gen_newname uvs (c + 1) else (v::uvs, c, v) end;
+  in if (bir_eq_utilLib.mem_with (fn (a,b) => identical a b) v uvs) then gen_newname uvs (c + 1) else (v::uvs, c, v) end;
 
   val (s, _, _) = foldl (fn (gv, (s, uvs, c)) => let
     val (uvs', c', v) = gen_newname uvs c

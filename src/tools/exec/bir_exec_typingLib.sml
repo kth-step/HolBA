@@ -59,7 +59,7 @@ val t = ``type_of_bir_val (BVal_Mem Bit32 Bit32 (K 0))``
       val var_usage_list = GEN_find_all_subterm is_BVar prog;
 
       fun filter_doubles [] acc = acc
-	| filter_doubles (x::xs) acc = filter_doubles (List.filter (fn y => y <> x) xs) (x::acc);
+	| filter_doubles (x::xs) acc = filter_doubles (List.filter (fn y => not (identical y x)) xs) (x::acc);
     in
       filter_doubles var_usage_list [] (* TODO: double check that these are all variables? *)
     end;
@@ -70,7 +70,7 @@ val t = ``type_of_bir_val (BVal_Mem Bit32 Bit32 (K 0))``
       val rep_gen_set_and_eval_conv =
                    (REWRITE_CONV [bir_labels_of_program_def]) THENC
                    (REPEATC ((SIMP_CONV list_ss []) THENC
-                             ((fn t => if op=((dest_eq o concl) t) then raise UNCHANGED else t) o EVAL)
+                             ((fn t => if (fn (x,y) => identical x y) ((dest_eq o concl) t) then raise UNCHANGED else t) o EVAL)
                             ));
       val label_set = (snd o dest_eq o concl o rep_gen_set_and_eval_conv) ``bir_labels_of_program ^prog``;
     in
@@ -117,7 +117,7 @@ bir_is_well_typed_program
       val rep_gen_set_and_eval_conv =
                    (REWRITE_CONV [bir_labels_of_program_def]) THENC
                    (REPEATC ((SIMP_CONV list_ss []) THENC
-                             ((fn t => if op=((dest_eq o concl) t) then raise UNCHANGED else t) o EVAL)
+                             ((fn t => if (fn (x,y) => identical x y) ((dest_eq o concl) t) then raise UNCHANGED else t) o EVAL)
                             ));
       val label_set_thm = (REWRITE_CONV [prog_l_def] THENC (rep_gen_set_and_eval_conv)) ``bir_labels_of_program ^prog_const``;
       val valid_labels_thm =

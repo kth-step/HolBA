@@ -23,6 +23,21 @@ in
                                    used for resolution of return targets *)
     | CFGNT_Return;
 
+  fun cfg_node_type_eq (CFGNT_Jump,
+                        CFGNT_Jump)     = true
+    | cfg_node_type_eq (CFGNT_CondJump,
+                        CFGNT_CondJump) = true
+    | cfg_node_type_eq (CFGNT_Halt,
+                        CFGNT_Halt)     = true
+    | cfg_node_type_eq (CFGNT_Basic,
+                        CFGNT_Basic)    = true
+    | cfg_node_type_eq (CFGNT_Call c1,
+                        CFGNT_Call c2)  = Portable.list_eq identical c1 c2
+    | cfg_node_type_eq (CFGNT_Return,
+                        CFGNT_Return)   = true
+    | cfg_node_type_eq (_,
+                        _)              = false;
+
   (* cfg nodes correspond to BIR blocks, lbl_tm is normalized label of block and represents its id *)
   type cfg_node = {
     (* id: BIR label term of BIR block *)
@@ -129,10 +144,10 @@ in
           val targets = #CFGN_targets (n:cfg_node);
 
           val exclude_list = (lbl_tm::acc_ns)@acc_ex@todo;
-          val new_todo = List.filter (fn x => List.all (fn y => x <> y) exclude_list) targets;
+          val new_todo = List.filter (fn x => List.all (fn y => not (identical x y)) exclude_list) targets;
 
           val (acc_ns', acc_ex') =
-            if targets <> [] then
+            if not (List.null targets) then
               (lbl_tm::acc_ns, acc_ex)
             else
               (lbl_tm::acc_ns, lbl_tm::acc_ex)
@@ -239,7 +254,7 @@ in
       val targets       = #CFGN_targets n;
 
       val update_this = is_some succ_lbl_tm_o andalso
-			targets = [valOf succ_lbl_tm_o];
+			list_eq identical targets [valOf succ_lbl_tm_o];
 
       val n' =
 	  { CFGN_lbl_tm   = #CFGN_lbl_tm n,

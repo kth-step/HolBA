@@ -95,7 +95,7 @@ struct
       val lifted_prog = lift_program_from_sections sections;
       val blocks = (fst o dest_list o dest_BirProgram) lifted_prog;
       val labels = List.map (fn t => (snd o dest_eq o concl o EVAL) ``(^t).bb_label``) blocks;
-      fun lbl_exists idx = List.exists (fn x => x = ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt (idx*4), 64)))``) labels;
+      fun lbl_exists idx = List.exists (fn x => identical x ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt (idx*4), 64)))``) labels;
       val lift_worked = List.all lbl_exists (List.tabulate (prog_len, fn x => x));
     in
       if lift_worked then (asm_code, lifted_prog, prog_len) else

@@ -92,7 +92,7 @@ fun symb_exec_phase prog =
 fun bir_free_vars exp =
     if is_comb exp then
         let val (con,args) = strip_comb exp
-        in if con = ``BExp_Den`` then
+        in if identical con ``BExp_Den`` then
                let val v = case strip_comb (hd args) of
                                (_,v::_) => v
                              | _ => raise ERR "bir_free_vars" "not expected"
@@ -117,13 +117,13 @@ fun make_word_relation relation exps =
                 (bir_free_vars exp);
 
         fun primed_vars exp = map (#residue) (primed_subst exp);
-        fun nub [] = []
-          | nub (x::xs) = x::nub(List.filter (fn y => y <> x) xs);
+        fun nub_with eq [] = []
+          | nub_with eq (x::xs) = x::nub_with eq (List.filter (fn y => not (eq(y,x))) xs);
         val primed = sort (curry String.<=)
                      (map (fromHOLstring o snd o dest_comb)
-                         (nub (flatten (map primed_vars exps))));
+                         (nub_with (fn (x,y) => identical x y) (flatten (map primed_vars exps))));
         val unprimed = sort (curry String.<=)
-                            (nub (map fromHOLstring
+                            (nub_with (op=) (map fromHOLstring
                                       (flatten (map bir_free_vars exps))));
         val pairs = zip unprimed primed;
         fun mk_distinct (a,b) =

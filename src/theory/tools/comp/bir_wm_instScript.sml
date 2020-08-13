@@ -70,25 +70,25 @@ val bir_etl_wm_def =
 
 val bir_exec_to_labels_triple_precond_def = Define `
   bir_exec_to_labels_triple_precond st pre prog =
-    (bir_eval_exp pre st.bst_environ = SOME bir_val_true) /\
+    ((bir_eval_exp pre st.bst_environ = SOME bir_val_true) /\
     (bir_env_vars_are_initialised st.bst_environ
        (bir_vars_of_program prog)) /\
     (st.bst_pc.bpc_index = 0) /\
     (st.bst_status = BST_Running) /\
-    (bir_is_bool_exp_env st.bst_environ pre)
+    (bir_is_bool_exp_env st.bst_environ pre))
 `;
 
 (* We don't need the condition that st.bst_pc.bpc_label IN ls here,
  * since we can obtain that result from weak_pc_in_thm. *)
 val bir_exec_to_labels_triple_postcond_def = Define `
   bir_exec_to_labels_triple_postcond st post prog =
-    (bir_eval_exp (post st.bst_pc.bpc_label) st.bst_environ =
+    ((bir_eval_exp (post st.bst_pc.bpc_label) st.bst_environ =
        SOME bir_val_true) /\
     (bir_env_vars_are_initialised st.bst_environ
        (bir_vars_of_program prog)) /\
     (st.bst_pc.bpc_index = 0) /\
     (st.bst_status = BST_Running) /\
-    (bir_is_bool_exp_env st.bst_environ (post st.bst_pc.bpc_label))
+    (bir_is_bool_exp_env st.bst_environ (post st.bst_pc.bpc_label)))
 `;
 
 
@@ -519,8 +519,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_weak_trs_def,
 				      bir_exec_to_labels_def] >>
 IMP_RES_TAC bir_exec_to_labels_n_ENV_ORDER >>
 IMP_RES_TAC bir_env_oldTheory.bir_env_vars_are_initialised_ORDER >>
-FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_eval_exp_TF,
-		      bir_bool_expTheory.bir_is_bool_exp_env_REWRS]
+ASM_SIMP_TAC std_ss [bir_eval_exp_TF, bir_is_bool_exp_env_REWRS]
 );
 
 (* This theorem moves ending labels which are implicitly

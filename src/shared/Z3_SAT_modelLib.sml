@@ -107,7 +107,7 @@ struct
           end
         val model = parse_tm_list instream [];
       in
-        if model = [] then
+        if List.null model then
           SAT NONE
         else
           SAT (SOME model)

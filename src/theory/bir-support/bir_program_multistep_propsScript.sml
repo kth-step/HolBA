@@ -1646,7 +1646,7 @@ Tactical.REVERSE (Cases_on `bir_exec_steps_GEN pc_cond' p st (SOME 1)`) >> (
 ) >>
 rename1 `_ = BER_Ended l1 c1 c1' st1` >>
 ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [] >>
-Q.ABBREV_TAC `cond = 0 < c1 /\ bir_state_COUNT_PC pc_cond st1` >>
+Q.ABBREV_TAC `cond = (0 < c1 /\ bir_state_COUNT_PC pc_cond st1)` >>
 
 Cases_on `cond` >> (
   ASM_SIMP_TAC (std_ss++bir_TYPES_ss) [LET_DEF]

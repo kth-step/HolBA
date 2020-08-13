@@ -19,8 +19,8 @@ val _ = new_theory "bir_nzcv_intros";
 
 val nzcv_SUB_V_fold_ARM8 = store_thm ("nzcv_SUB_V_fold_ARM8",
 ``!w1 w0:'a word.
-  (word_msb w0 <=> word_msb (~w1)) /\
-  (word_msb w0 <=/=> BIT  (dimindex (:'a) - 1) (w2n w0 + w2n (~w1) + 1)) =
+  ((word_msb w0 <=> word_msb (~w1)) /\
+  (word_msb w0 <=/=> BIT  (dimindex (:'a) - 1) (w2n w0 + w2n (~w1) + 1))) =
   nzcv_BIR_SUB_V w0 w1``,
 
 REPEAT GEN_TAC >>
@@ -71,8 +71,8 @@ val nzcv_SUB_FOLDS_ARM8_GEN = save_thm ("nzcv_SUB_FOLDS_ARM8_GEN",
 
 val nzcv_ADD_V_fold_ARM8 = store_thm ("nzcv_ADD_V_fold_ARM8",
 ``!w1:'a word w0:'a word.
-  (word_msb w0 <=> word_msb w1) /\
-  (word_msb w0 <=/=> BIT (dimindex (:'a) - 1) (w2n w0 + w2n w1)) = nzcv_BIR_ADD_V w0 w1``,
+  ((word_msb w0 <=> word_msb w1) /\
+  (word_msb w0 <=/=> BIT (dimindex (:'a) - 1) (w2n w0 + w2n w1))) = nzcv_BIR_ADD_V w0 w1``,
 
 SIMP_TAC std_ss [nzcv_BIR_ADD_V_CARRY_DEF, awc_BIR_V_def,
   add_with_carry_def, LET_THM, GSYM word_msb_n2w]);
@@ -122,8 +122,8 @@ val nzcv_ADD_FOLDS_ARM8_GEN = save_thm ("nzcv_ADD_FOLDS_ARM8_GEN",
 
 val awc_BIR_V_fold_ARM8 = store_thm ("awc_BIR_V_fold_ARM8",
 ``!w1:'a word w0:'a word c.
-  (word_msb w0 <=> word_msb w1) /\
-  (word_msb w0 <=/=> BIT (dimindex (:'a) - 1) (w2n w0 + w2n w1 + (if c then 1 else 0))) = awc_BIR_V w0 w1 c``,
+  ((word_msb w0 <=> word_msb w1) /\
+  (word_msb w0 <=/=> BIT (dimindex (:'a) - 1) (w2n w0 + w2n w1 + (if c then 1 else 0)))) = awc_BIR_V w0 w1 c``,
 
 SIMP_TAC std_ss [awc_BIR_V_def,
   add_with_carry_def, LET_THM, GSYM word_msb_n2w]);
@@ -137,8 +137,8 @@ SIMP_TAC std_ss [GSYM awc_BIR_V_fold_ARM8]);
 
 val awc_BIR_V_fold_ARM8_ngcs = store_thm ("awc_BIR_V_fold_ARM8_ngcs",
 ``!w:'a word c.
-  (~word_msb (~w)) /\
-  (BIT (dimindex (:'a) - 1) (w2n (~w) + (if c then 1 else 0))) =
+  ((~word_msb (~w)) /\
+  (BIT (dimindex (:'a) - 1) (w2n (~w) + (if c then 1 else 0)))) =
    awc_BIR_V 0w (~w) c``,
 
 SIMP_TAC arith_ss [awc_BIR_V_def,
@@ -358,8 +358,8 @@ in thm3 end);
    relevant cases be that large. *)
 val nzcv_SUB_V_fold_ARM8_CONST = store_thm ("nzcv_SUB_V_fold_ARM8_CONST",
 ``!w0 n. n < dimword (:'a) ==> INT_MIN (:'a) <= n ==>
-   ((word_msb w0) /\
-    (word_msb w0 <=/=> BIT  (dimindex (:'a) - 1) (w2n w0 + n + 1)) =
+   (((word_msb w0) /\
+    (word_msb w0 <=/=> BIT  (dimindex (:'a) - 1) (w2n w0 + n + 1))) =
 
    (nzcv_BIR_SUB_V (w0:'a word) (n2w (dimword (:'a) - SUC n))))``,
 

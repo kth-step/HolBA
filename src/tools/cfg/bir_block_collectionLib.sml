@@ -79,7 +79,7 @@ in
 		 val thm2 = CONV_RULE (RAND_CONV (EVAL)) thm1;
 		 val thm3 = (REWRITE_RULE [] thm2);
 
-		 val _ = if ((fn t => t <> T) o snd o dest_eq o concl) thm2
+		 val _ = if ((fn t => not (identical t T)) o snd o dest_eq o concl) thm2
 			 then (print_term ((concl) thm2);raise ERR "block_l_thm_list" "something went wrong")
 			 else ();
 		 (*

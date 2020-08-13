@@ -56,7 +56,7 @@ val progvars_expected = ``
 
 val progvars_val = (rhs o concl o ((SIMP_CONV (pure_ss++VARS_OF_PROG_ss) []) THENC EVAL)) ``bir_vars_of_program ^prog``;
 
-val _ = if progvars_expected = progvars_val then () else
+val _ = if identical progvars_expected progvars_val then () else
         raise Fail "Incorrect result for variables of program.";
 
 

@@ -468,7 +468,7 @@ struct
       fun test_bir_exp_to_words exp expected =
         let
           val actual = bir_exp_to_words exp;
-          val _ = if actual = expected then () else
+          val _ = if identical actual expected then () else
             raise ERR "test_bir_exp_to_words" ("Test failed:"
             ^ "\n - actual: " ^ (term_to_string actual)
             ^ "\n - expected: " ^ (term_to_string expected)

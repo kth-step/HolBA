@@ -7,6 +7,8 @@ open bir_lifting_machinesLib;
 open bir_nzcv_introsTheory bir_arm8_extrasTheory bir_m0_extrasTheory
 open arm8_stepLib m0_stepLib
 
+val ERR = mk_HOL_ERR "bir_lifting_machinesLib_instances"
+
 (**************************)
 (* Instantiation for ARM8 *)
 (**************************)

@@ -17,9 +17,9 @@ val x_var = ``(m.REG 4w)``;
 val ly_var = ``(m.REG 3w)``;
 val lx_var = ``(m.REG 2w)``;
 
-val arm8_add_reg_pre_def = Define `arm8_add_reg_pre m =
+val arm8_add_reg_pre_def = Define `arm8_add_reg_pre m = (
   ((^x_var) >= 0w) /\
-  ((^x_var = ^lx_var) /\ (^y_var = ^ly_var))
+  ((^x_var = ^lx_var) /\ (^y_var = ^ly_var)))
 `;
 val arm8_add_reg_post_def = Define `arm8_add_reg_post m =
   ((^x_var+^y_var) = (^ly_var))
@@ -222,9 +222,9 @@ Cases_on `d + c = b` >> (
 
 
 
-
+(*
 EVAL ``arm8_wf_varset (bir_vars_of_exp bir_add_reg_contract_1_pre)``;
-
+*)
 
 
 

@@ -171,7 +171,7 @@ rename1 `HEX y` >>
     rich_listTheory.MEM_COUNT_LIST]
 ) >>
 FULL_SIMP_TAC std_ss [rich_listTheory.COUNT_LIST_compute,
-  rich_listTheory.COUNT_LIST_AUX_def_compute] >>
+  rich_listTheory.COUNT_LIST_AUX_compute] >>
 FULL_SIMP_TAC std_ss [MEM, HEX_def]);
 
 
