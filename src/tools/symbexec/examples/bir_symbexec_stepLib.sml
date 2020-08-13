@@ -53,12 +53,12 @@ local
 
       val (exp_tms,_) = listSyntax.dest_list exps_tm;
 
-      val cnd_bv = bir_envSyntax.mk_BVar_string ("observe_cnd", ``BType_Bool``);
+      val cnd_bv = bir_envSyntax.mk_BVar_string ("observe_cnd", bir_valuesSyntax.BType_Bool_tm);
 
       fun fold_exp (exp_tm, (exp_bvs, insert_fun)) =
         let
           (* TODO: fix this, it needs to use type checking to be of the right type *)
-          val exp_ty = ``BType_Bool``;
+          val exp_ty = bir_valuesSyntax.BType_Bool_tm;
           val exp_bv = bir_envSyntax.mk_BVar_string ("observe_exp", exp_ty);
         in
           (exp_bv::exp_bvs, (state_insert_symbval_from_be exp_bv exp_tm) o insert_fun)
@@ -96,10 +96,11 @@ end (* local *)
 
 (* execution of an end statement *)
 local
+  val jmp_label_match_tm = ``BStmt_Jmp (BLE_Label xyz)``;
   fun state_exec_try_jmp_label est syst =
     SOME (
     let
-      val (vs, _) = hol88Lib.match ``BStmt_Jmp (BLE_Label xyz)`` est;
+      val (vs, _) = hol88Lib.match jmp_label_match_tm est;
       val tgt     = (fst o hd) vs;
     in
       [SYST_update_pc tgt syst]
@@ -107,10 +108,11 @@ local
     )
     handle HOL_ERR _ => NONE;
 
+  val cjmp_label_match_tm = ``BStmt_CJmp xyzc (BLE_Label xyz1) (BLE_Label xyz2)``;
   fun state_exec_try_cjmp_label est syst =
     SOME (
     let
-      val (vs, _) = hol88Lib.match ``BStmt_CJmp xyzc (BLE_Label xyz1) (BLE_Label xyz2)`` est;
+      val (vs, _) = hol88Lib.match cjmp_label_match_tm est;
       val cnd     = fst (List.nth (vs, 0));
       val tgt1    = fst (List.nth (vs, 1));
       val tgt2    = fst (List.nth (vs, 2));

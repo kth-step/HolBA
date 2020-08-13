@@ -107,7 +107,7 @@ end (* local *)
 local
   fun state_add_pred bv_str pred syst =
     let
-      val bv = bir_envSyntax.mk_BVar_string (bv_str, ``BType_Bool``);
+      val bv = bir_envSyntax.mk_BVar_string (bv_str, bir_valuesSyntax.BType_Bool_tm);
       val bv_fresh = get_bvar_fresh bv;
     in
       (SYST_update_pred ((bv_fresh)::(SYST_get_pred syst)) o
@@ -122,7 +122,7 @@ end (* local *)
 (* primitives for branching states based on a boolean condition expression *)
   fun state_branch str_prefix cnd f_bt f_bf syst =
     let
-        val cnd_bv = bir_envSyntax.mk_BVar_string (str_prefix ^ "_cnd", ``BType_Bool``);
+        val cnd_bv = bir_envSyntax.mk_BVar_string (str_prefix ^ "_cnd", bir_valuesSyntax.BType_Bool_tm);
         val cnd_bv_t = get_bvar_fresh cnd_bv;
         val cnd_bv_f = get_bvar_fresh cnd_bv;
     in
