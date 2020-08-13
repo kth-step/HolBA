@@ -57,7 +57,8 @@ local
 
       fun fold_exp (exp_tm, (exp_bvs, insert_fun)) =
         let
-          val exp_ty = ``BType_Bool``; (* TODO: fix this, it needs to use type checking *)
+          (* TODO: fix this, it needs to use type checking to be of the right type *)
+          val exp_ty = ``BType_Bool``;
           val exp_bv = bir_envSyntax.mk_BVar_string ("observe_exp", exp_ty);
         in
           (exp_bv::exp_bvs, (state_insert_symbval_from_be exp_bv exp_tm) o insert_fun)
@@ -95,20 +96,19 @@ end (* local *)
 
 (* execution of an end statement *)
 local
-  open bir_cfgLib;
-in (* local *)
-  fun symb_exec_endstmt n_dict lbl_tm est syst =
-    (* no update if state is not running *)
-    if SYST_get_status syst <> BST_Running_tm then [syst] else
-    (* try to match direct jump *)
+  fun state_exec_try_jmp_label est syst =
+    SOME (
     let
       val (vs, _) = hol88Lib.match ``BStmt_Jmp (BLE_Label xyz)`` est;
       val tgt     = (fst o hd) vs;
     in
       [SYST_update_pc tgt syst]
     end
-    handle HOL_ERR _ => (
-    (* try to match direct branch *)
+    )
+    handle HOL_ERR _ => NONE;
+
+  fun state_exec_try_cjmp_label est syst =
+    SOME (
     let
       val (vs, _) = hol88Lib.match ``BStmt_CJmp xyzc (BLE_Label xyz1) (BLE_Label xyz2)`` est;
       val cnd     = fst (List.nth (vs, 0));
@@ -150,19 +150,38 @@ in (* local *)
          (SYST_update_pc tgt2)
          syst
     end
-    (* no match, then we have some indirection and need to use cfg *)
-    handle HOL_ERR _ =>
-      let
-        val n:cfg_node = binariesCfgLib.find_node n_dict lbl_tm;
-        val n_type  = #CFGN_type n;
-        val _       = if cfg_nodetype_is_call n_type orelse n_type = CFGNT_Jump then () else
-                        raise ERR "symb_exec_endstmt" ("unexpected 2 at " ^ (term_to_string lbl_tm));
+    )
+    handle HOL_ERR _ => NONE;
 
-        val n_targets  = #CFGN_targets n;
-        val lbl_tms = n_targets
-      in
-        List.map (fn t => SYST_update_pc t syst) lbl_tms
-      end);
+  open bir_cfgLib;
+
+  fun state_exec_from_cfg n_dict lbl_tm syst =
+    let
+      val n:cfg_node = binariesCfgLib.find_node n_dict lbl_tm;
+      val n_type  = #CFGN_type n;
+      val _       = if cfg_nodetype_is_call n_type orelse n_type = CFGNT_Jump then () else
+                    raise ERR "symb_exec_endstmt" ("unexpected 2 at " ^ (term_to_string lbl_tm));
+      val n_targets  = #CFGN_targets n;
+      val lbl_tms = n_targets
+    in
+      List.map (fn t => SYST_update_pc t syst) lbl_tms
+    end;
+
+in (* local *)
+  fun symb_exec_endstmt n_dict lbl_tm est syst =
+    (* no update if state is not running *)
+    if SYST_get_status syst <> BST_Running_tm then [syst] else
+    (* try to match direct jump *)
+    case state_exec_try_jmp_label est syst of
+       SOME systs => systs
+     | NONE       => (
+    (* try to match direct branch *)
+    case state_exec_try_cjmp_label est syst of
+       SOME systs => systs
+     | NONE       => (
+    (* no match, then we have some indirection and need to use cfg (or it's another end statement) *)
+    state_exec_from_cfg n_dict lbl_tm syst
+    ));
 end (* local *)
 
 
