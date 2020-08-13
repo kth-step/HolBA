@@ -27,13 +27,7 @@ local
                      syst
       end
     else
-    let
-      val bv_fresh = (get_bvar_fresh) bv;
-    in
-      [(update_envvar bv bv_fresh o
-        state_insert_symbval_from_be bv_fresh be
-      ) syst]
-    end;
+      state_assign_bv bv be syst;
 
   fun state_exec_assert cnd syst =
         state_branch_simp

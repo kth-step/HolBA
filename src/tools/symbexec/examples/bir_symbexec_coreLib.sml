@@ -93,6 +93,16 @@ end (* local *)
   fun state_insert_symbval_from_be bv_fr be syst =
       insert_symbval bv_fr (compute_valbe be syst) syst;
 
+(* primitive to carry out assignment *)
+  fun state_assign_bv bv be syst =
+    let
+      val bv_fresh = (get_bvar_fresh) bv;
+    in
+      [(update_envvar bv bv_fresh o
+        state_insert_symbval_from_be bv_fresh be
+      ) syst]
+    end;
+
 (* primitives for adding conjuncts to the path predicate *)
 local
   fun state_add_pred bv_str pred syst =
