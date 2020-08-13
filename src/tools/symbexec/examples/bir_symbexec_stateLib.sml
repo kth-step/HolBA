@@ -4,7 +4,7 @@ struct
 local
 val ERR = Feedback.mk_HOL_ERR "bir_symbexec_stateLib"
 val wrap_exn = Feedback.wrap_exn "bir_symbexec_stateLib"
-in
+in (* outermost local *)
 
 (* symbolic values *)
 datatype symb_value =
@@ -159,6 +159,7 @@ end
 (* state update primitives *)
 fun insert_symbval bv_fresh symbv syst =
   let
+    (* TODO: make sure that bv_fresh is indeed fresh and is not an initial variable *)
     val vals  = SYST_get_vals syst;
     val vals' = Redblackmap.insert (vals, bv_fresh, symbv);
   in

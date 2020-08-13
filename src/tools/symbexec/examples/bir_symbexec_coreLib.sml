@@ -6,9 +6,13 @@ local
 
   open bir_constpropLib;
   open bir_envSyntax;
-  open bir_expSyntax;
   open bir_exp_helperLib;
-in (* local *)
+in (* outermost local *)
+
+
+(* primitive for symbolic/abstract computation for expressions *)
+local
+  open bir_expSyntax;
 
   fun subst_fun env (bev, (e, vars)) =
     let
@@ -68,6 +72,7 @@ in (* local *)
           end
     end;
 
+in (* local *)
   fun compute_valbe be syst =
     let
       val env  = SYST_get_env  syst;
@@ -78,31 +83,34 @@ in (* local *)
       val be_ = (snd o dest_eq o concl o REWRITE_CONV [bir_bool_expTheory.bir_exp_false_def, bir_bool_expTheory.bir_exp_true_def]) be
                 handle UNCHANGED => be;
       val besubst_with_vars = List.foldr (subst_fun env) (be_, []) be_vars;
-
-      val be_new_val = compute_val_and_resolve_deps vals besubst_with_vars;
     in
-      be_new_val
+      compute_val_and_resolve_deps vals besubst_with_vars
     end;
-
-  fun insert_valbe bv_fr be syst =
-    insert_symbval bv_fr (compute_valbe be syst) syst;
+end (* local *)
 
 
-fun state_add_pred bv_str pred syst =
-  let
-    val bv = bir_envSyntax.mk_BVar_string (bv_str, ``BType_Bool``);
-    val bv_fresh = get_bvar_fresh bv;
-  in
-    (SYST_update_pred ((bv_fresh)::(SYST_get_pred syst)) o
-     insert_valbe bv_fresh pred
-    ) syst
-  end;
+(* primitive to compute expression and store result using free variable *)
+  fun state_insert_symbval_from_be bv_fr be syst =
+      insert_symbval bv_fr (compute_valbe be syst) syst;
 
-fun state_add_preds bv_str preds syst =
-  List.foldr (fn (pred, syst_) => state_add_pred bv_str pred syst_) syst preds;
+(* primitives for adding conjuncts to the path predicate *)
+local
+  fun state_add_pred bv_str pred syst =
+    let
+      val bv = bir_envSyntax.mk_BVar_string (bv_str, ``BType_Bool``);
+      val bv_fresh = get_bvar_fresh bv;
+    in
+      (SYST_update_pred ((bv_fresh)::(SYST_get_pred syst)) o
+       state_insert_symbval_from_be bv_fresh pred
+      ) syst
+    end;
+in (* local *)
+  fun state_add_preds bv_str preds syst =
+    List.foldr (fn (pred, syst_) => state_add_pred bv_str pred syst_) syst preds;
+end (* local *)
 
-
-  fun branch_state str_prefix cnd f_bt f_bf syst =
+(* primitives for branching states based on a boolean condition expression *)
+  fun state_branch str_prefix cnd f_bt f_bf syst =
     let
         val cnd_bv = bir_envSyntax.mk_BVar_string (str_prefix ^ "_cnd", ``BType_Bool``);
         val cnd_bv_t = get_bvar_fresh cnd_bv;
@@ -111,44 +119,19 @@ fun state_add_preds bv_str preds syst =
         List.concat [
           (f_bt o
            SYST_update_pred ((cnd_bv_t)::(SYST_get_pred syst)) o
-           insert_valbe cnd_bv_t cnd
+           state_insert_symbval_from_be cnd_bv_t cnd
           ) syst
          ,
           (f_bf o
            SYST_update_pred ((cnd_bv_f)::(SYST_get_pred syst)) o
-           insert_valbe cnd_bv_f (bslSyntax.bnot cnd)
+           state_insert_symbval_from_be cnd_bv_f (bslSyntax.bnot cnd)
           ) syst
         ]
     end;
 
-  fun branch_state_simp str_prefix cnd f_bt f_bf syst =
-      branch_state str_prefix cnd (fn s => [f_bt s]) (fn s => [f_bf s]) syst
+  fun state_branch_simp str_prefix cnd f_bt f_bf syst =
+      state_branch str_prefix cnd (fn s => [f_bt s]) (fn s => [f_bf s]) syst
 
-  (*
-  val syst = init_state prog_vars;
-  val SymbState systr = syst;
-  val s = ``BStmt_Assign (BVar "R5" (BType_Imm Bit32)) (BExp_Den (BVar "R4" (BType_Imm Bit32)))``;
-  val (bv, be) = dest_BStmt_Assign s
-  *)
-  fun update_state (bv, be) syst =
-    if is_BExp_IfThenElse be then
-      let
-        val (cnd, be1, be2) = dest_BExp_IfThenElse be;
-      in
-        branch_state "assign"
-                     cnd
-                     (update_state (bv, be1))
-                     (update_state (bv, be2))
-                     syst
-      end
-    else
-    let
-      val bv_fresh = (get_bvar_fresh) bv;
-    in
-      [(update_envvar bv bv_fresh o
-        insert_valbe bv_fresh be
-      ) syst]
-    end;
-end (* local *)
+end (* outermost local *)
 
 end (* struct *)
