@@ -2,8 +2,8 @@ structure bir_symbexec_stateLib =
 struct
 
 local
-val ERR = Feedback.mk_HOL_ERR "bir_symbexec_stateLib"
-val wrap_exn = Feedback.wrap_exn "bir_symbexec_stateLib"
+val ERR      = Feedback.mk_HOL_ERR "bir_symbexec_stateLib"
+val wrap_exn = Feedback.wrap_exn   "bir_symbexec_stateLib"
 in (* outermost local *)
 
 (* symbolic values *)
@@ -159,8 +159,14 @@ end
 (* state update primitives *)
 fun insert_symbval bv_fresh symbv syst =
   let
-    (* TODO: make sure that bv_fresh is indeed fresh and is not an initial variable *)
     val vals  = SYST_get_vals syst;
+
+    (* make sure that bv_fresh is indeed fresh and is not an initial variable *)
+    val _ = if (not o is_bvar_init) bv_fresh then () else
+            raise ERR "insert_symbval" ("variable cannot be an initial variable: " ^ (term_to_string bv_fresh));
+    val _ = if (not o isSome o Redblackmap.peek) (vals, bv_fresh) then () else
+            raise ERR "insert_symbval" ("variable needs to be fresh: " ^ (term_to_string bv_fresh));
+
     val vals' = Redblackmap.insert (vals, bv_fresh, symbv);
   in
     (SYST_update_vals vals') syst
@@ -170,10 +176,10 @@ fun update_envvar bv bv_fresh syst =
   let
     val env   = SYST_get_env  syst;
 
-    val _     = if (isSome o Redblackmap.peek) (env, bv) then () else
-                raise ERR
-                   "update_envvar"
-                   ("can only update existing state variables, tried to update: " ^ (term_to_string bv));
+    val _ = if (isSome o Redblackmap.peek) (env, bv) then () else
+            raise ERR
+                  "update_envvar"
+                  ("can only update existing state variables, tried to update: " ^ (term_to_string bv));
     val env'  = Redblackmap.insert (env, bv, bv_fresh);
   in
     (SYST_update_env env') syst
