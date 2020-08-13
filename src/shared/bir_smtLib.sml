@@ -170,9 +170,9 @@ in
           (SMTTY_BV 32)
         else if is_BType_Imm64 btype then
           (SMTTY_BV 64)
-        else if is_BType_Mem btype andalso dest_BType_Mem btype = (Bit32_tm, Bit8_tm) then
+        else if is_BType_Mem btype andalso pair_eq identical identical (dest_BType_Mem btype) (Bit32_tm, Bit8_tm) then
           (SMTTY_MEM (32, 8))
-        else if is_BType_Mem btype andalso dest_BType_Mem btype = (Bit64_tm, Bit8_tm) then
+        else if is_BType_Mem btype andalso pair_eq identical identical (dest_BType_Mem btype) (Bit64_tm, Bit8_tm) then
           (SMTTY_MEM (64, 8))
         else problem_gen "bvar_to_smtlib_type" btype "don't know how to convert BIR type: "
     end;
@@ -560,7 +560,7 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
         let
           val eqexp = (snd o dest_eq o concl o EVAL) exp;
         in
-          if exp <> eqexp then
+          if not (identical exp eqexp) then
             bexp_to_smtlib conds vars eqexp
           else
             problem exp "don't know BIR expression: "
