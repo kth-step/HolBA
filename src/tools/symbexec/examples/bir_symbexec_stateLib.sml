@@ -185,21 +185,6 @@ fun update_envvar bv bv_fresh syst =
     (SYST_update_env env') syst
   end;
 
-
-(* state updates *)
-(* TODO: generalize this a bit more - to general state updates - move this to core lib
-          ??? including state update primitives ??? *)
-fun init_state_set_const bv bimm syst =
-  let
-    val bv_fresh = get_bvar_fresh bv;
-    val symbv_init = SymbValBE (``BExp_Const ^bimm``, symbvalbe_dep_empty);
-  in
-    (update_envvar bv bv_fresh o
-     insert_symbval bv_fresh symbv_init
-    ) syst
-  end;
-
-
 (* helper functions *)
 fun find_bv_val err_src_string vals bv =
       (valOf o Redblackmap.peek) (vals,bv)

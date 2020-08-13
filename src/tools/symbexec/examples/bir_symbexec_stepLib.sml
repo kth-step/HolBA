@@ -27,7 +27,7 @@ local
                      syst
       end
     else
-      state_assign_bv bv be syst;
+      [state_assign_bv bv be syst];
 
   fun state_exec_assert cnd syst =
         state_branch_simp

@@ -98,9 +98,9 @@ end (* local *)
     let
       val bv_fresh = (get_bvar_fresh) bv;
     in
-      [(update_envvar bv bv_fresh o
+      (update_envvar bv bv_fresh o
         state_insert_symbval_from_be bv_fresh be
-      ) syst]
+      ) syst
     end;
 
 (* primitives for adding conjuncts to the path predicate *)
