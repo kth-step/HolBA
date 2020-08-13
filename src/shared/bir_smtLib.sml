@@ -138,18 +138,12 @@ local
   open bir_valuesSyntax;
   open wordsSyntax;
 
+  open bir_fileLib;
+
   val ERR = Feedback.mk_HOL_ERR "bir_smtLib";
 
   fun problem_gen fname t msg = 
     raise ERR fname (msg ^ (term_to_string t));
-
-  fun read_from_file filename =
-    let
-      val file = TextIO.openIn filename;
-      val s    = TextIO.inputAll file before TextIO.closeIn file;
-    in
-      s
-    end;
 
 in
 
