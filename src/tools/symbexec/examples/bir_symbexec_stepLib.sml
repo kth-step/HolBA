@@ -91,7 +91,7 @@ in (* local *)
       val vals = SYST_get_vals syst;
       val last_pred_bv = hd pred
                       handle Empty => raise ERR "symb_exec_endstmt" "oh no, pred is empty!";
-      val last_pred_symbv = find_val vals last_pred_bv "symb_exec_endstmt";
+      val last_pred_symbv = find_bv_val "symb_exec_endstmt" vals last_pred_bv;
       val last_pred_exp =
          case last_pred_symbv of
             SymbValBE (x,_) => x

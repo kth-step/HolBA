@@ -157,8 +157,7 @@ end
 
 
 (* state update primitives *)
-(* TODO: better names *)
-fun insert_bvfrexp bv_fresh symbv syst =
+fun insert_symbval bv_fresh symbv syst =
   let
     val vals  = SYST_get_vals syst;
     val vals' = Redblackmap.insert (vals, bv_fresh, symbv);
@@ -166,13 +165,13 @@ fun insert_bvfrexp bv_fresh symbv syst =
     (SYST_update_vals vals') syst
   end;
 
-fun update_env bv bv_fresh syst =
+fun update_envvar bv bv_fresh syst =
   let
     val env   = SYST_get_env  syst;
 
     val _     = if (isSome o Redblackmap.peek) (env, bv) then () else
                 raise ERR
-                   "update_env"
+                   "update_envvar"
                    ("can only update existing state variables, tried to update: " ^ (term_to_string bv));
     val env'  = Redblackmap.insert (env, bv, bv_fresh);
   in
@@ -188,14 +187,14 @@ fun init_state_set_const bv bimm syst =
     val bv_fresh = get_bvar_fresh bv;
     val symbv_init = SymbValBE (``BExp_Const ^bimm``, symbvalbe_dep_empty);
   in
-    (update_env bv bv_fresh o
-     insert_bvfrexp bv_fresh symbv_init
+    (update_envvar bv bv_fresh o
+     insert_symbval bv_fresh symbv_init
     ) syst
   end;
 
 
 (* helper functions *)
-fun find_val vals bv err_src_string =
+fun find_bv_val err_src_string vals bv =
       (valOf o Redblackmap.peek) (vals,bv)
       handle Option => raise ERR
                              err_src_string
@@ -203,23 +202,23 @@ fun find_val vals bv err_src_string =
 
 
 (* symbval dependencies *)
-fun deps_of_symbval symbv err_src_string =
+fun deps_of_symbval err_src_string symbv =
   case symbv of
           SymbValBE (_,deps) => deps
         | _ => raise ERR err_src_string "cannot handle symbolic value type to find dependencies";
 
-fun union_deps vals (bv, deps) =
+fun deps_union vals (bv, deps) =
   let
-    val symbv = find_val vals bv "union_deps";
-    val deps_delta = deps_of_symbval symbv "union_deps";
+    val symbv = find_bv_val "deps_union" vals bv;
+    val deps_delta = deps_of_symbval "deps_union" symbv;
   in
     Redblackset.union (deps_delta, deps)
   end;
 
-fun find_symbval_deps err_src_string vals bv =
+fun deps_find_symbval err_src_string vals bv =
   if is_bvar_init bv then Redblackset.add(symbvalbe_dep_empty,bv) else (
-    deps_of_symbval (find_val vals bv err_src_string) err_src_string
-    handle e => raise wrap_exn ("find_symbval_deps::expect bir expression for variable: " ^ (term_to_string bv)) e
+    deps_of_symbval err_src_string (find_bv_val err_src_string vals bv)
+    handle e => raise wrap_exn ("deps_find_symbval::expect bir expression for variable: " ^ (term_to_string bv)) e
   );
 
 
@@ -235,7 +234,7 @@ fun tidyup_state_vals syst =
     val entry_vars = Redblackset.addList(entry_vars, (List.map snd o Redblackmap.listItems) env);
     val entry_vars = Redblackset.filter (not o is_bvar_init) entry_vars;
 
-    val deps = Redblackset.foldl (union_deps vals) symbvalbe_dep_empty entry_vars;
+    val deps = Redblackset.foldl (deps_union vals) symbvalbe_dep_empty entry_vars;
 
     val keep_vals = Redblackset.filter (not o is_bvar_init) (Redblackset.union(entry_vars, deps));
 
@@ -251,7 +250,7 @@ fun tidyup_state_vals syst =
               print ("TIDIED UP " ^ (Int.toString num_diff) ^ " VALUES.\n");
 
     val vals' = Redblackset.foldl
-                (fn (bv,vals_) => Redblackmap.insert(vals_, bv, find_val vals bv "tidyup_state_vals"))
+                (fn (bv,vals_) => Redblackmap.insert(vals_, bv, find_bv_val "tidyup_state_vals" vals bv))
                 (Redblackmap.mkDict Term.compare)
                 keep_vals;
   in
@@ -281,7 +280,7 @@ local
 
   fun collect_pred_expsdeps vals (bv, (exps, deps)) =
     let
-      val symbv = find_val vals bv "collect_pred_expsdeps";
+      val symbv = find_bv_val "collect_pred_expsdeps" vals bv;
       val (exp, deps_delta) =
        case symbv of
           SymbValBE x => x
@@ -302,7 +301,7 @@ in (* local *)
       val pred_depsl_ = Redblackset.listItems pred_deps;
       val pred_depsl = List.filter (not o is_bvar_init) pred_depsl_;
 
-      val valsl = List.map (fn bv => (bv, find_val vals bv "check_feasible"))
+      val valsl = List.map (fn bv => (bv, find_bv_val "check_feasible" vals bv))
                            pred_depsl;
       val vals_eql =
         List.map symbval_eq_to_bexp valsl;

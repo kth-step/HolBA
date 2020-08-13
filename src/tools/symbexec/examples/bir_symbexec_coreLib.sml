@@ -12,7 +12,7 @@ in (* local *)
 
   fun subst_fun env (bev, (e, vars)) =
     let
-      val bv_ofvars = find_val env bev "subst_fun";
+      val bv_ofvars = find_bv_val "subst_fun" env bev;
     in
       (subst_exp (bev, mk_BExp_Den bv_ofvars, e),
        bv_ofvars::vars)
@@ -22,7 +22,7 @@ in (* local *)
     let
       val all_deps_const = List.all (fn bv =>
              (not o is_bvar_init) bv andalso
-             (case find_val vals bv "compute_val_try" of
+             (case find_bv_val "compute_val_try" vals bv of
                  SymbValBE (exp,_) => is_BExp_Const exp
                | _ => false)
            ) besubst_vars;
@@ -35,7 +35,7 @@ in (* local *)
 
           fun subst_fun_symbvalbe vals (bv_dep, e) =
             let
-              val symbv_dep = find_val vals bv_dep "compute_val_try";
+              val symbv_dep = find_bv_val "compute_val_try" vals bv_dep;
               val exp = case symbv_dep of
                            SymbValBE (exp,_) => exp
                          | _ => raise ERR "compute_val_and_resolve_deps" "cannot happen";
@@ -55,7 +55,7 @@ in (* local *)
     let
       val deps_l2 = List.foldr (Redblackset.union)
                                symbvalbe_dep_empty
-                               (List.map (find_symbval_deps "compute_val_and_resolve_deps" vals) besubst_vars);
+                               (List.map (deps_find_symbval "compute_val_and_resolve_deps" vals) besubst_vars);
     in
       case compute_val_try vals (besubst, besubst_vars) deps_l2 of
          SOME x => x
@@ -85,7 +85,7 @@ in (* local *)
     end;
 
   fun insert_valbe bv_fr be syst =
-    insert_bvfrexp bv_fr (compute_valbe be syst) syst;
+    insert_symbval bv_fr (compute_valbe be syst) syst;
 
 
 fun state_add_pred bv_str pred syst =
@@ -145,7 +145,7 @@ fun state_add_preds bv_str preds syst =
     let
       val bv_fresh = (get_bvar_fresh) bv;
     in
-      [(update_env bv bv_fresh o
+      [(update_envvar bv bv_fresh o
         insert_valbe bv_fresh be
       ) syst]
     end;
