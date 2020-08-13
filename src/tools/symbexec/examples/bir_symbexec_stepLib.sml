@@ -132,7 +132,7 @@ local
 in (* local *)
   fun symb_exec_stmt (s, syst) =
     (* no update if state is not running *)
-    if SYST_get_status syst <> BST_Running_tm then
+    if not (identical (SYST_get_status syst) BST_Running_tm) then
       [syst]
     (* assignment *)
     else if is_BStmt_Assign s then
@@ -190,11 +190,11 @@ local
           | _ => raise ERR "symb_exec_endstmt" "cannot handle symbolic value type for conditions";
     in
       (* does unnegated condition match? *)
-      if cnd_exp = last_pred_exp then
+      if identical cnd_exp last_pred_exp then
         [(SYST_update_pc tgt1
          ) syst]
       (* does negated condition match? *)
-      else if bslSyntax.bnot cnd_exp = last_pred_exp then
+      else if identical (bslSyntax.bnot cnd_exp) last_pred_exp then
         [(SYST_update_pc tgt2
          ) syst]
       (* no match *)
@@ -215,7 +215,8 @@ local
     let
       val n:cfg_node = binariesCfgLib.find_node n_dict lbl_tm;
       val n_type  = #CFGN_type n;
-      val _       = if cfg_nodetype_is_call n_type orelse n_type = CFGNT_Jump then () else
+      val _       = if cfg_nodetype_is_call n_type orelse
+                       cfg_node_type_eq (n_type, CFGNT_Jump) then () else
                     raise ERR "symb_exec_endstmt" ("unexpected 2 at " ^ (term_to_string lbl_tm));
       val n_targets  = #CFGN_targets n;
       val lbl_tms = n_targets
@@ -226,7 +227,7 @@ local
 in (* local *)
   fun symb_exec_endstmt n_dict lbl_tm est syst =
     (* no update if state is not running *)
-    if SYST_get_status syst <> BST_Running_tm then [syst] else
+    if not (identical (SYST_get_status syst) BST_Running_tm) then [syst] else
     (* try to match direct jump *)
     case state_exec_try_jmp_label est syst of
        SOME systs => systs
@@ -270,8 +271,8 @@ in (* local *)
     | symb_exec_to_stop cfb n_dict bl_dict (exec_st::exec_sts) stop_lbl_tms acc =
         let
           fun state_stops syst =
-            (List.exists (fn x => (SYST_get_pc syst) = x) stop_lbl_tms) orelse
-            SYST_get_status syst <> BST_Running_tm;
+            (List.exists (fn x => identical (SYST_get_pc syst) x) stop_lbl_tms) orelse
+            not (identical (SYST_get_status syst) BST_Running_tm);
 
           val sts = symb_exec_block cfb n_dict bl_dict exec_st;
           val (new_acc, new_exec_sts) = List.partition state_stops sts;

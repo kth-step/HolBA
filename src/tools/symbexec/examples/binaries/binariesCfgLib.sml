@@ -252,7 +252,8 @@ fun build_fun_cfg_nodes _  acc []                     = acc
         val n_type    = #CFGN_type n;
         val n_targets = #CFGN_targets n;
 
-        val _ = if n_type <> CFGNT_Halt andalso n_targets <> [] then () else
+        val _ = if not (cfg_node_type_eq (n_type, CFGNT_Halt)) andalso
+                   not (List.null n_targets) then () else
                 (print "indirection ::: in ";
                  print (prog_lbl_to_mem_rel_symbol lbl_tm);
                  print "\t"; print (valOf (#CFGN_hc_descr n) handle Option => "NONE");
@@ -261,7 +262,7 @@ fun build_fun_cfg_nodes _  acc []                     = acc
         val new_nodes = lbl_tm::acc;
 
         val next_tm_l      =
-              List.filter (fn x => not ((List.exists (fn y => x = y) (new_nodes@lbl_tm_l))))
+              List.filter (fn x => not ((List.exists (fn y => identical x y) (new_nodes@lbl_tm_l))))
                           (get_fun_cfg_walk_succ n);
         val new_lbl_tm_l   = next_tm_l@lbl_tm_l;
       in
@@ -323,7 +324,7 @@ fun count_paths_to_ret_nexts follow_call n_dict lbl_tm =
 
 (* following calls doesn't work like this, we would need a call stack of course *)
 fun count_paths_to_ret follow_call ns stop_at_l lbl_tm =
-  if (List.exists (fn x => lbl_tm = x) stop_at_l) then (1, []) else
+  if (List.exists (fn x => identical lbl_tm x) stop_at_l) then (1, []) else
   let
     val (nexts, calls) = count_paths_to_ret_nexts follow_call ns lbl_tm;
     val summary = List.map (count_paths_to_ret follow_call ns stop_at_l) nexts;

@@ -24,7 +24,7 @@ fun expand_exp vals var =
     val vars = get_birexp_vars exp;
 
     val valsl = ((Redblackmap.listItems) vals);
-    val subexps_raw = List.filter ((fn x => List.exists (fn y => x = y) vars) o fst) valsl;
+    val subexps_raw = List.filter ((fn x => List.exists (fn y => identical x y) vars) o fst) valsl;
     (* recursion on varexpressions first *)
     val subexps = List.map (fn (x, _) => (x, expand_exp vals x)) subexps_raw;
 
@@ -63,7 +63,7 @@ fun simple_pred_to_benvmap [] benvmap = benvmap
         val benvmap_ =
           if not (is_BExp_Den p) then
             if not (is_BExp_UnaryExp p) orelse
-               not ((fst o dest_BExp_UnaryExp) p = BIExp_Not_tm) orelse
+               not (identical ((fst o dest_BExp_UnaryExp) p) BIExp_Not_tm) orelse
                not ((is_BExp_Den o snd o dest_BExp_UnaryExp) p)
             then
               let
@@ -89,7 +89,7 @@ fun simple_pred_to_benvmap [] benvmap = benvmap
 
 fun simple_p_to_subst p =
   if is_BExp_UnaryExp p andalso
-     (fst o dest_BExp_UnaryExp) p = BIExp_Not_tm then
+     identical ((fst o dest_BExp_UnaryExp) p) BIExp_Not_tm then
     subst [((snd o dest_BExp_UnaryExp) p) |-> ``(BExp_Const (Imm1 0w))``]
   else
     subst [p |-> ``(BExp_Const (Imm1 1w))``];

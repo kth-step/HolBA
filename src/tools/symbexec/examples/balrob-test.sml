@@ -49,7 +49,7 @@ local
 in
   val stop_lbl_tms = (List.map #CFGN_lbl_tm o
                       List.filter (fn n => node_to_rel_symbol n = name andalso
-                                           #CFGN_type n = CFGNT_Return)
+                                           cfg_node_type_eq (#CFGN_type n, CFGNT_Return))
                      ) (List.map snd (Redblackmap.listItems n_dict));
 end
 
@@ -123,7 +123,7 @@ val syst = hd systs
 length(SYST_get_env syst)
 *)
 val (systs_noassertfailed, systs_assertfailed) =
-  List.partition (fn syst => SYST_get_status syst <> BST_AssertionViolated_tm) systs;
+  List.partition (fn syst => not (identical (SYST_get_status syst) BST_AssertionViolated_tm)) systs;
 val _ = print ("number of \"no assert failed\" paths found: " ^ (Int.toString (length systs_noassertfailed)));
 val _ = print "\n\n";
 

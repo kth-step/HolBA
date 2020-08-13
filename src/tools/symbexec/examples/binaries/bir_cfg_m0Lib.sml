@@ -16,7 +16,7 @@ local
   val BVarLR32_tm = ``BVar "LR" (BType_Imm Bit32)``;
   fun is_Assign_LR tm =
     if is_BStmt_Assign tm then
-      ((fst o dest_BStmt_Assign) tm) = BVarLR32_tm
+      identical ((fst o dest_BStmt_Assign) tm) BVarLR32_tm
     else
       false;
 
@@ -44,8 +44,9 @@ in (* local *)
   val n      = valOf (lookup_block_dict n_dict_1 lbl_tm);
   val bl     = valOf (lookup_block_dict bl_dict_ lbl_tm);
   *)
-  fun update_node_guess_type_call bl_dict fun_entry_lbl_tms n =
-    if #CFGN_type n <> CFGNT_Jump orelse #CFGN_targets n = [] then NONE else
+  fun update_node_guess_type_call bl_dict fun_entry_lbl_tms (n:cfg_node) =
+    if not (cfg_node_type_eq (#CFGN_type n, CFGNT_Jump)) orelse
+       List.null (#CFGN_targets n) then NONE else
     (* take jumps with direct target to filter out the calls *)
     let
       val debug_on = false;
@@ -70,7 +71,7 @@ in (* local *)
       val goto_tm = hd targets;
 
       val isCall_lr       =  List.exists is_Assign_LR ((fst o dest_list) bbs);
-      val isCall_to_entry = (List.exists (fn x => x = goto_tm) fun_entry_lbl_tms);
+      val isCall_to_entry = (List.exists (fn x => identical x goto_tm) fun_entry_lbl_tms);
 
       val _ = if isCall_lr = isCall_to_entry then ()
 	      else raise ERR "update_node_guess_type_call"
@@ -101,7 +102,8 @@ in (* local *)
 
 
   fun update_node_manual_indir_jump resolv_map (n:cfg_node) =
-    if #CFGN_type n <> CFGNT_Jump orelse #CFGN_targets n <> [] then NONE else
+    if not (cfg_node_type_eq (#CFGN_type n, CFGNT_Jump)) orelse
+       not (List.null (#CFGN_targets n)) then NONE else
     (* take jumps with no resolved direct targets to filter out the returns *)
     let
       val debug_on = false;
@@ -185,7 +187,8 @@ in (* local *)
   val _ = List.map (update_node_guess_type_return o update_node_guess_type_call o to_cfg_node) prog_lbl_tms_;
   *)
   fun update_node_guess_type_return (n:cfg_node) =
-    if #CFGN_type n <> CFGNT_Jump orelse #CFGN_targets n <> [] then NONE else
+    if not (cfg_node_type_eq (#CFGN_type n, CFGNT_Jump)) orelse
+       not (List.null (#CFGN_targets n)) then NONE else
     (* take jumps with no resolved direct targets to filter out the returns *)
     let
       val debug_on = false;
@@ -205,7 +208,7 @@ in (* local *)
 
       (* hack for hand inspected instructions *)
       val isReturn = isReturn orelse (
-		     (lbl_tm = mk_lbl_tm (Arbnum.fromInt 0x1fc)) andalso
+		     (identical lbl_tm (mk_lbl_tm (Arbnum.fromInt 0x1fc))) andalso
 		     (String.isPrefix "4718 (" descr)
 	  );
 
@@ -264,7 +267,7 @@ in (* local *)
     ) [] ci;
 
   fun update_node_fix_return_goto find_rel_symbol_from_lbl_tm lookup_calls_to_f (n:cfg_node) =
-    if #CFGN_type n <> CFGNT_Return then NONE else
+    if not (cfg_node_type_eq (#CFGN_type n, CFGNT_Return)) then NONE else
     let
       val debug_on = false;
 

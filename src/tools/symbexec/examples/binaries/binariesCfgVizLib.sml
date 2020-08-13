@@ -72,7 +72,7 @@ fun print_dead_code bl_dict n_dict name =
                            (List.map fst (Redblackmap.listItems n_dict));
 
     val _ = print ("---------------------\n");
-    val dead_code = (List.filter (fn x => not (List.exists (fn y => x = y) (#CFGG_nodes g))) lbls_f);
+    val dead_code = (List.filter (fn x => not (List.exists (fn y => identical x y) (#CFGG_nodes g))) lbls_f);
 
     val _ = print ("dead code (" ^ name ^ "):\n^^^^^^^^^^^^^^^^^^\n");
     val _ = List.map (fn n => (print_term (#CFGN_lbl_tm n);
