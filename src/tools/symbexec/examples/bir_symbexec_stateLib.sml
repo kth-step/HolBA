@@ -2,8 +2,8 @@ structure bir_symbexec_stateLib =
 struct
 
 local
-val ERR      = Feedback.mk_HOL_ERR "bir_symbexec_stateLib"
-val wrap_exn = Feedback.wrap_exn   "bir_symbexec_stateLib"
+  val ERR      = Feedback.mk_HOL_ERR "bir_symbexec_stateLib"
+  val wrap_exn = Feedback.wrap_exn   "bir_symbexec_stateLib"
 in (* outermost local *)
 
 (* symbolic values *)

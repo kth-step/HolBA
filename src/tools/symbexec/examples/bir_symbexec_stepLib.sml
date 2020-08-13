@@ -4,6 +4,9 @@ struct
 local
   open bir_symbexec_stateLib;
   open bir_symbexec_coreLib;
+
+  val ERR      = Feedback.mk_HOL_ERR "bir_symbexec_stepLib"
+  val wrap_exn = Feedback.wrap_exn   "bir_symbexec_stepLib"
 in (* outermost local *)
 
 (* execution of a basic statement *)
@@ -45,6 +48,56 @@ local
            (SYST_update_status BST_AssumptionViolated_tm)
            syst;
 
+  (* helper, TODO: needs to be moved more centrally
+     (taken from bir_exp_to_wordsLib.type_of_bir_exp_CONV) *)
+  (* could probably be improved by properly building simplification set *)
+  fun type_of_bir_exp_CONV term =
+    (* Manual test
+    val term = ``
+      BExp_BinExp BIExp_Plus
+        (BExp_Const (Imm32 20w))
+        (BExp_Const (Imm32 22w))
+    ``;
+    val thm = type_of_bir_exp_CONV ``type_of_bir_exp ^term``;
+    *)
+    let
+      open bir_immTheory
+      open bir_valuesTheory
+      open bir_envTheory
+      open bir_exp_memTheory
+      open bir_bool_expTheory
+      open bir_extra_expsTheory
+      open bir_nzcv_expTheory
+      val type_of_bir_exp_thms = [
+        type_of_bir_exp_def,
+        bir_var_type_def,
+        bir_type_is_Imm_def,
+        type_of_bir_imm_def,
+        BExp_Aligned_type_of,
+        BExp_unchanged_mem_interval_distinct_type_of,
+        bir_number_of_mem_splits_REWRS,
+        BType_Bool_def,
+        bir_exp_true_def,
+        bir_exp_false_def,
+        BExp_MSB_type_of,
+        BExp_nzcv_ADD_DEFS,
+        BExp_nzcv_SUB_DEFS,
+        n2bs_def,
+        BExp_word_bit_def,
+        BExp_Align_type_of,
+        BExp_ror_type_of,
+        BExp_LSB_type_of,
+        BExp_word_bit_exp_type_of,
+        BExp_ADD_WITH_CARRY_type_of,
+        BExp_word_reverse_type_of,
+        BExp_ror_exp_type_of
+      ]
+      val conv = SIMP_CONV (srw_ss()) type_of_bir_exp_thms
+    in
+      conv term
+    end
+      handle e => raise wrap_exn "type_of_bir_exp_CONV" e;
+
   fun state_exec_observe (id_tm, cnd_tm, exps_tm, ofun_tm) syst =
     let
       val _  = if numSyntax.is_numeral id_tm then () else
@@ -57,8 +110,9 @@ local
 
       fun fold_exp (exp_tm, (exp_bvs, insert_fun)) =
         let
-          (* TODO: fix this, it needs to use type checking to be of the right type *)
-          val exp_ty = bir_valuesSyntax.BType_Bool_tm;
+          val exp_ty_thm = type_of_bir_exp_CONV (bir_typing_expSyntax.mk_type_of_bir_exp exp_tm);
+          val exp_ty = (optionSyntax.dest_some o snd o dest_eq o concl) exp_ty_thm
+                       handle e => raise wrap_exn "state_exec_observe::typpeofthm not as expected" e;
           val exp_bv = bir_envSyntax.mk_BVar_string ("observe_exp", exp_ty);
         in
           (exp_bv::exp_bvs, (state_insert_symbval_from_be exp_bv exp_tm) o insert_fun)
