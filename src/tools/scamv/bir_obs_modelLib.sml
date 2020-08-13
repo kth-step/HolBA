@@ -159,7 +159,7 @@ local
 
     val append_list_def = Define`
         append_list (lbl, (l1:  bir_val_t bir_stmt_basic_t list)) l2 =
-        let combLst =   APPEND l2 l1 in (lbl, combLst)
+        let combLst = APPEND l2 l1 in (lbl, combLst)
         `;
 
     fun mk_eq_assert e =
