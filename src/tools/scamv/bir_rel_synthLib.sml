@@ -331,7 +331,7 @@ fun rel_synth_jit
               band (b_cond,
                     bandl' [bandl' a_obs_cond, bandl' b_obs_cond,
                             band (mk_bir_list_eq a_obs_terms_base b_obs_terms_base
-                                 ,bnot (mk_bir_list_eq a_obs_terms_refined b_obs_terms_refined))]))
+                                 ,bnot (if null a_obs_terms_refined andalso null b_obs_terms_refined then bfalse else mk_bir_list_eq a_obs_terms_refined b_obs_terms_refined))]))
     end
     handle Bind =>
            raise ERR "rel_synth_jit"

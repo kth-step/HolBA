@@ -137,16 +137,18 @@ local
 	end;
 
     fun Obs_prime xs = 
-	let open stringSyntax;
+	let open stringSyntax numSyntax;
 	    fun primed_subst exp =
 		List.map (fn v =>
 			     let val vp = lift_string string_ty (fromHOLstring v ^ "*")
 			     in ``^v`` |-> ``^vp`` end)
 			 (bir_free_vars exp) 
 	    fun Obs_prime_single x =
-		let val obs = x |> dest_BStmt_Observe |> #3 
+		      let val obs = x |> dest_BStmt_Observe |> #3
+              val (id, a, b, c) = dest_BStmt_Observe x
+              val new_x = mk_BStmt_Observe (term_of_int 1, a, b, c)
 		in
-		    List.foldl (fn (record, tm) => subst[#redex record |-> #residue record] tm) x (primed_subst obs)
+		    List.foldl (fn (record, tm) => subst[#redex record |-> #residue record] tm) new_x (primed_subst obs)
 		end
 	in
 	    map Obs_prime_single xs

@@ -82,7 +82,7 @@ struct
       val asm_code = bir_embexp_prog_to_code prog;
       val _ = print_asm_code asm_code;
       val compile_opt = SOME (process_asm_code asm_code)
-	     handle HOL_ERR x => if retry_on_liftfail then NONE else
+	     handle HOL_ERR x => if retry_on_liftfail then (print ("not liftable:\n" ^ PolyML.makestring x); NONE) else
                                    raise HOL_ERR x;
     in
       case compile_opt of
