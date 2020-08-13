@@ -651,9 +651,7 @@ local
   (* TODO: nzcv_FOLDS_RISCV would be defined in
    * bir_nzcv_introsScript.sml in this directory, if it existed.
    * ExtendValue_0 does not exist in riscv_stepTheory. No idea
-   * why it is useful.
-   * riscv_extra_FOLDS would be defined in
-   * bir_riscv_extrasScript.sml, if it existed. *)
+   * why it is useful. *)
 (* From ARM8:
   val simp_conv = (SIMP_CONV std_ss [nzcv_FOLDS_ARM8] THENC
                    SIMP_CONV std_ss [arm8_stepTheory.ExtendValue_0,
@@ -796,7 +794,9 @@ in
 
   val (ms_ty, addr_sz_ty, mem_val_sz_ty)  = dest_bir_lifting_machine_rec_t_ty (type_of (prim_mk_const{Name="riscv_bmr", Thy="bir_lifting_machines"}))
   val vn = mk_var ("ms", ms_ty);
-  val hexcode = "00A98863" (* "beq x19, x10, offset = 16 bytes" *)
+  val hex_code = "FCE14083" (* "lbu x1,x2,-50" *)
+
+  val hex_code = "340090F3" (* "csrrw x1,mscratch, x1" *)
 
 *)
   fun riscv_step_hex' vn hex_code = let

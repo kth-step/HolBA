@@ -238,6 +238,17 @@ fun riscv_test_asm asm = riscv_test_hex (riscv_hex_from_asm asm)
 
 val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV64I Base Instruction Set\n\n";
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
+(* 62 instructions in initial scope *)
+(* 15 still TODO:
+ *  3 stores
+ *  2 comparisons (involving greater-than)
+ *  2 fences
+ *  environment call and breakpoint
+ *  6 CSR instructions *)
+
+(* Upon BILED_lifting_failed exception, debug from
+ * exp_lift_fn in bir_inst_liftingLib *)
+
 (* R-format (opcode OP) *)
   
   (* Addition *)
@@ -250,6 +261,7 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
 
   (* Subtraction *)
   (* "sub x5, x6, x7" *)
+  (* TODO: Rewrite multiplication??? *)
   (* OK *)
   val res = riscv_test_hex "407202B3";
 
@@ -388,41 +400,39 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
 
 (* I-type variant (opcode LOAD) *)
   (* Load byte *)
-  (* "lb x0,x1,-50" *)
+  (* "lb x1,x2,-50" *)
   (* OK *)
-  val res = riscv_test_hex "FCE08003";
+  val res = riscv_test_hex "FCE10083";
 
   (* Load halfword *)
-  (* "lh x0,x1,-50" *)
+  (* "lh x1,x2,-50" *)
   (* OK *)
-  val res = riscv_test_hex "FCE09003";
+  val res = riscv_test_hex "FCE11083";
 
   (* Load word *)
-  (* "lw x0,x1,-50" *)
+  (* "lw x1,x2,-50" *)
   (* OK *)
-  val res = riscv_test_hex "FCE0A003";
+  val res = riscv_test_hex "FCE12083";
 
   (* Load byte (unsigned) *)
-  (* "lbu x0,x1,-50" *)
+  (* "lbu x1,x2,-50" *)
   (* OK *)
-  val res = riscv_test_hex "FCE0C003";
+  val res = riscv_test_hex "FCE14083";
 
   (* Load halfword (unsigned) *)
-  (* "lhu x0,x1,-50" *)
+  (* "lhu x1,x2,-50" *)
   (* OK *)
-  val res = riscv_test_hex "FCE0D003";
+  val res = riscv_test_hex "FCE15083";
 
   (* Load word (unsigned) *)
-  (* "lwu x0,x1,-50" *)
+  (* "lwu x1,x2,-50" *)
   (* OK *)
-  val res = riscv_test_hex "FCE0E003";
+  val res = riscv_test_hex "FCE16083";
 
   (* Load doubleword *)
-  (* "ld x0,x1,-50" *)
+  (* "ld x1,x2,-50" *)
   (* OK *)
-  val res = riscv_test_hex "FCE0B003";
-
-(* TODO: LWU, LD *)
+  val res = riscv_test_hex "FCE13083";
 
 (* S-format *)
   (* String widths:
@@ -448,7 +458,7 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
   (* Store the doubleword (64 bits) in x14 to the memory address in x2 with offset 8 *)
   (* "sd x14, 8(x2)" *)
   (* OK *)
-  val res = riscv_test_hex "00E13423"; 
+  val res = riscv_test_hex "00E13423";
 
 (* B-format *)
   (* Immediate is signed value denoting multiples of two bytes (so 2 means 4 bytes)
@@ -499,7 +509,8 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
 (* J-format *)
 (* TODO: Integrate with assembler *)
   (* Jump and link register *)
-  (* "jal x0, 0x0" *)
+  (* "jalr x0, 0x0" *)
+  (* TODO: Check assembly instruction... *)
   (* OK *)
   val res = riscv_test_hex "00000067";
   (* Jump and link *)
@@ -508,6 +519,14 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
   val res = riscv_test_hex "0000006F";
 
 (* Unknown format *)
-(* TODO: FENCE, FENCE.I *)
-(* TODO: ECALL, EBREAK *)
-(* TODO: CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI *)
+(* TODO: FENCE, FENCE.I (memory-ordering instructions + instruction fetch fence) *)
+(* TODO: ECALL, EBREAK (environment call and breakpoints) *)
+(* TODO: CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI (CSR instructions) *)
+
+(* TODO: Fix loads *)
+(* TODO: Fix stores *)
+(* TODO: Fix greater-than *)
+(* TODO: Are NOPs in riscv_stepLib for real? *)
+(* TODO: FENCE, FENCE.I ECALL, EBREAK, CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI not in riscv_stepLib *)
+(* TODO: Most important extensions: A, M (exists in riscv_stepLib), C *)
+(* TODO: Take second look at stepLib code for Sail model (test.sml) *)

@@ -328,7 +328,11 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   val (lb, ms_case_cond_t, next_thm) = el 1 (preprocess_next_thms label_tm next_thms)
   val next_thm0 = REWRITE_RULE [ASSUME ms_case_cond_t] next_thm
   val (preconds, next_tm) = strip_imp_only (concl next_thm0)
-  val tm = el 1 preconds
+  val tm = (* Put term returned by exception here, don't forget type information... *)
+
+val tm = ``Imm64
+                (w2w ((riscv_mem_half ms.MEM8 (ms.c_gpr ms.procID 2w - 50w)):word16))``;
+
   (* In case of several preconds, continue with the following for 2, 3, 4, ...*)
   (* val tm = el 2 preconds *)
 
@@ -1007,8 +1011,8 @@ fun get_patched_step_hex ms_v hex_code =
 (* For debugging (from compute_updates):
 
          val (full_rel_thm, vn_set) =
-           foldl add_imm_up (init_thm, vn_set) (List.take (imm_ups_tm_list, 58));
-         val (v_t, lf_t, SOME res_t) = el 59 imm_ups_tm_list;
+           foldl add_imm_up (init_thm, vn_set) (List.take (imm_ups_tm_list, 62));
+         val (v_t, lf_t, SOME res_t) = el 63 imm_ups_tm_list;
 *)
      fun add_imm_up ((v_t, lf_t, NONE), (full_rel_thm, vn_set)) =
          let
@@ -1051,7 +1055,7 @@ fun get_patched_step_hex ms_v hex_code =
 (* For debugging RISC-V:
 
   val (mu_thm:thm, mm_precond_thm:thm) = test_RISCV.bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-  val hex_code = String.map Char.toUpper "FCE0879B"; (* "addiw x15,x1,-50" *)
+  val hex_code = String.map Char.toUpper "FCE14083"; (* "lbu x1,x2,-50" *)
   val hex_code_desc = hex_code;
   val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
     val bir_is_lifted_inst_block_COMPUTE_precond_tm_mr =

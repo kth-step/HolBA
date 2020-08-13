@@ -27,10 +27,88 @@ open combinTheory
 
 val _ = new_theory "bir_riscv_extras";
 
+val _ = wordsLib.guess_lengths()
+
+(********)
+(* Load *)
+(********)
+
+val riscv_mem_load_half_def = Define `riscv_mem_load_half (m : (word64 -> word8)) (a:word64) =
+  ((m (a + 1w) @@ m a):word16)`;
+
+val riscv_mem_load_word_def = Define `
+  riscv_mem_load_word (m : word64 -> word8) a =
+    (m (a + 3w) @@ m (a + 2w) @@ m (a + 1w) @@ m a) : word32`;
+
+val riscv_mem_load_dword_def = Define `riscv_mem_load_dword (m : (word64 -> word8)) (a:word64) =
+  (m (a + 7w) @@ m (a + 6w) @@ m (a + 5w) @@ m (a + 4w) @@
+      m (a + 3w) @@ m (a + 2w) @@ m (a + 1w) @@ m a) : word64`;
+
+val riscv_mem_load_word_half = store_thm ("riscv_mem_load_word_half",
+  ``!m a. riscv_mem_load_word m a = (m (a + 3w) @@ m (a + 2w) @@ (riscv_mem_load_half m a))``,
+
+SIMP_TAC std_ss [riscv_mem_load_half_def, riscv_mem_load_word_def]
+);
+
+val riscv_mem_load_dword_half = store_thm ("riscv_mem_load_dword_half",
+  ``!m a. riscv_mem_load_dword m a = (m (a + 7w) @@ m (a + 6w) @@ m (a + 5w) @@ m (a + 4w) @@
+      m (a + 3w) @@ m (a + 2w) @@ (riscv_mem_load_half m a))``,
+
+SIMP_TAC std_ss [riscv_mem_load_half_def, riscv_mem_load_dword_def]
+);
+
+val riscv_mem_load_dword_word = store_thm ("riscv_mem_load_dword_word",
+  ``!m a. riscv_mem_load_dword m a = (m (a + 7w) @@ m (a + 6w) @@ m (a + 5w) @@ m (a + 4w) @@
+      (riscv_mem_load_word m a))``,
+
+SIMP_TAC std_ss [riscv_mem_load_word_def, riscv_mem_load_dword_def]
+);
+
+val riscv_LIFT_LOAD_DWORD = store_thm ("riscv_LIFT_LOAD_DWORD",
+``!env em ea va ms.
+     bir_is_lifted_mem_exp env em ms.MEM8 ==>
+     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+     bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit64)
+       (Imm64 (riscv_mem_load_dword ms.MEM8 va))``,
+SIMP_TAC std_ss [riscv_mem_load_dword_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+
+val riscv_LIFT_LOAD_WORD = store_thm ("riscv_LIFT_LOAD_WORD",
+``!env em ea va ms.
+     bir_is_lifted_mem_exp env em ms.MEM8 ==>
+     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+     bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit32)
+       (Imm32 (riscv_mem_load_word ms.MEM8 va))``,
+SIMP_TAC std_ss [riscv_mem_load_word_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]);
+
+val riscv_LIFT_LOAD_HALF = store_thm ("riscv_LIFT_LOAD_HALF",
+``!env em ea va ms.
+     bir_is_lifted_mem_exp env em ms.MEM8 ==>
+     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+     bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit16)
+       (Imm16 (riscv_mem_load_half ms.MEM8 va))``,
+
+SIMP_TAC std_ss [riscv_mem_load_half_def, bir_is_lifted_imm_exp_LOAD_ENDIAN_BYTE]
+);
+
+val riscv_LIFT_LOAD_BYTE = store_thm ("riscv_LIFT_LOAD_BYTE",
+``!env em ea va ms.
+     bir_is_lifted_mem_exp env em ms.MEM8 ==>
+     bir_is_lifted_imm_exp env ea (Imm64 va) ==>
+     bir_is_lifted_imm_exp env (BExp_Load em ea BEnd_LittleEndian Bit8)
+       (Imm8 (ms.MEM8 va))``,
+
+REPEAT STRIP_TAC >>
+ASM_SIMP_TAC std_ss [bir_is_lifted_imm_exp_LOAD_NO_ENDIAN]
+);
+
+(* TODO: Make riscv_mem_load_FOLDS with riscv_mem_half_def et.c. *)
+
+
 (**********)
 (* Store  *)
 (**********)
 
+(* TODO: These are now superfluous? Can use same as for ARMv8? *)
 val riscv_mem_store_dword_def = Define `riscv_mem_store_dword (a:word64) w (mmap : (word64 -> word8)) =
    (a + 7w =+ (63 >< 56) w)
   ((a + 6w =+ (55 >< 48) w)
@@ -412,7 +490,7 @@ end)
  * lifting theorems. *)
 (* TODO: Move to auxiliary *)
 val v2w_ground1 = store_thm("v2w_ground1",
-  ``v2w [T] = 1w /\ v2w [F] = 0w``,
+  ``(v2w [T] = 1w) /\ (v2w [F] = 0w)``,
 
 SIMP_TAC (std_ss++bitstringLib.v2w_n2w_ss) []
 );
@@ -452,10 +530,11 @@ end);
 (****************)
 
 val riscv_extra_LIFTS = save_thm ("riscv_extra_LIFTS",
-  LIST_CONJ [(*riscv_LIFT_LOAD_BYTE,
-    riscv_LIFT_LOAD_HALF,
+  LIST_CONJ [
+    riscv_LIFT_LOAD_DWORD,
     riscv_LIFT_LOAD_WORD,
-    riscv_LIFT_LOAD_DWORD,*)
+    riscv_LIFT_LOAD_HALF,
+    riscv_LIFT_LOAD_BYTE,
     riscv_LIFT_STORE_BYTE,
     riscv_LIFT_STORE_HALF,
     riscv_LIFT_STORE_WORD,
@@ -476,7 +555,13 @@ val riscv_CHANGE_INTERVAL_THMS =
 );
 
 val riscv_extra_FOLDS = save_thm ("riscv_extra_FOLDS",
-  LIST_CONJ [riscv_mem_store_FOLDS, w2w_REMOVE_FOLDS, GSYM word_reverse_REWRS,
+  LIST_CONJ [GSYM riscv_mem_load_dword_def,
+             GSYM riscv_mem_load_word_def,
+             GSYM riscv_mem_load_half_def,
+             GSYM riscv_mem_load_word_half,
+             GSYM riscv_mem_load_dword_half,
+             GSYM riscv_mem_load_dword_word,
+             riscv_mem_store_FOLDS, w2w_REMOVE_FOLDS, GSYM word_reverse_REWRS,
              word_shift_extract_ID]
 );
 
