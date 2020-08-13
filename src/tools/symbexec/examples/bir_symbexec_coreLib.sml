@@ -79,10 +79,7 @@ in (* local *)
       val vals = SYST_get_vals syst;
 
       val be_vars = get_birexp_vars be;
-      (* TODO: this is a quickfix, should be handled in bir smtlib exporter: probably together with all other syntactic sugar!!!! *)
-      val be_ = (snd o dest_eq o concl o REWRITE_CONV [bir_bool_expTheory.bir_exp_false_def, bir_bool_expTheory.bir_exp_true_def]) be
-                handle UNCHANGED => be;
-      val besubst_with_vars = List.foldr (subst_fun env) (be_, []) be_vars;
+      val besubst_with_vars = List.foldr (subst_fun env) (be, []) be_vars;
     in
       compute_val_and_resolve_deps vals besubst_with_vars
     end;
