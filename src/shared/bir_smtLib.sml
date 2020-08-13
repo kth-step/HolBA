@@ -549,8 +549,22 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
           (conds3, vars3, storeval)
         end
 
+      else if bir_bool_expSyntax.is_bir_exp_false exp then
+        (conds, vars, ("false", SMTTY_Bool))
+      else if bir_bool_expSyntax.is_bir_exp_true  exp then
+        (conds, vars, ("true",  SMTTY_Bool))
+
       else
-        problem exp "don't know BIR expression: "
+        (* TODO: this is a generic solution for BIR syntactic sugar but we actually
+                 want to export some specific expressions in a direct way, if possible *)
+        let
+          val eqexp = (snd o dest_eq o concl o EVAL) exp;
+        in
+          if exp <> eqexp then
+            bexp_to_smtlib conds vars eqexp
+          else
+            problem exp "don't know BIR expression: "
+        end
     end;
 
 end (* local *)
