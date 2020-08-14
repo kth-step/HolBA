@@ -8,7 +8,13 @@ open bir_symbexec_coreLib;
 open bir_symbexec_stepLib;
 open bir_countw_simplificationLib;
 
-val entry_label = "motor_prep_input";
+val entry_labels = ["motor_prep_input",
+                    "__lesf2",
+                    "__clzsi2",
+                    "__aeabi_f2iz",
+                    "pid_msg_write",
+                    "timer_read"];
+val entry_label = List.nth (entry_labels, 0);
 
 (*
 fun print_option pf NONE     = print "NONE"
@@ -95,10 +101,10 @@ val pred_conjs = [
 ];
 
 val syst = init_state lbl_tm prog_vars;
-(*
 val syst = state_assign_bv ``BVar "countw" (BType_Imm Bit64)`` ``BExp_Const (Imm64 0w)`` syst;
-*)
+(*
 val syst = state_make_interval ``BVar "countw" (BType_Imm Bit64)`` syst;
+*)
 val syst = state_add_preds "init_pred" pred_conjs syst;
 
 val _ = print "initial state created.\n\n";
