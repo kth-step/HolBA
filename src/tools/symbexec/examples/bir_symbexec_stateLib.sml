@@ -8,12 +8,12 @@ in (* outermost local *)
 
 (* symbolic values *)
 datatype symb_value =
-    SymbValBE    of (term * term Redblackset.set)
-  | SymbValRange of (term * term)
+    SymbValBE       of (term * term Redblackset.set)
+  | SymbValInterval of ((term * term) * term Redblackset.set)
                     (* TODO: generalize this later *)
                     (* memory layout: flash, globals, stack;
-                                      start and size of middle portion (globals) *)
-  | SymbValMem   of (((Arbnum.num -> Arbnum.num) * term * term) * (Arbnum.num * Arbnum.num));
+                                      size of first (constants) and middle portion (globals) *)
+  | SymbValMem      of (((Arbnum.num -> Arbnum.num) * term * term) * (Arbnum.num * Arbnum.num));
 
 val symbvalbe_dep_empty = Redblackset.empty Term.compare;
 
@@ -197,6 +197,7 @@ fun find_bv_val err_src_string vals bv =
 fun deps_of_symbval err_src_string symbv =
   case symbv of
           SymbValBE (_,deps) => deps
+        | SymbValInterval (_, deps) => deps
         | _ => raise ERR err_src_string "cannot handle symbolic value type to find dependencies";
 
 fun deps_union vals (bv, deps) =
@@ -256,27 +257,45 @@ local
   open bir_envSyntax;
   open bir_smtLib;
 
-  val BIExp_Equal_tm = ``BIExp_Equal``;
-
   fun proc_preds (vars, asserts) pred =
     List.foldr (fn (exp, (vl1,al)) =>
       let val (_,vl2,a) = bexp_to_smtlib [] vl1 exp in
         (vl2, a::al)
       end) (vars, asserts) pred;
 
+  open bslSyntax;
+
   fun symbval_eq_to_bexp (bv, symbv) =
+    let
+      val bv_exp = bden bv;
+
+      val bexp =
        case symbv of
           SymbValBE (exp,_) =>
-            mk_BExp_BinPred (BIExp_Equal_tm, mk_BExp_Den bv, exp)
+            beq (bv_exp, exp)
+        | SymbValInterval ((exp1, exp2), _) =>
+            band (ble (exp1, bv_exp), ble (bv_exp, exp2))
         | _ => raise ERR "symbval_eq_to_bexp" "cannot handle symbolic value type";
+      (*
+      val _ = print (term_to_string bv);
+      val _ = print "\n";
+      *)
+    in
+      bexp
+    end;
 
   fun collect_pred_expsdeps vals (bv, (exps, deps)) =
     let
       val symbv = find_bv_val "collect_pred_expsdeps" vals bv;
-      val (exp, deps_delta) =
+      val deps_delta = deps_of_symbval "collect_pred_expsdeps" symbv;
+      val exp =
        case symbv of
-          SymbValBE x => x
+          SymbValBE (x, _) => x
         | _ => raise ERR "collect_pred_expsdeps" "cannot handle symbolic value type";
+      (*
+      val _ = print (term_to_string exp);
+      val _ = print "\n";
+      *)
     in
       (exp::exps, Redblackset.union(deps_delta, deps))
     end;
@@ -291,7 +310,7 @@ in (* local *)
         List.foldr (collect_pred_expsdeps vals) ([], symbvalbe_dep_empty) pred_bvl;
 
       val pred_depsl_ = Redblackset.listItems pred_deps;
-      val pred_depsl = List.filter (not o is_bvar_init) pred_depsl_;
+      val pred_depsl  = List.filter (not o is_bvar_init) pred_depsl_;
 
       val valsl = List.map (fn bv => (bv, find_bv_val "check_feasible" vals bv))
                            pred_depsl;

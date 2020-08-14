@@ -51,6 +51,7 @@ local
   (* helper, TODO: needs to be moved more centrally
      (taken from bir_exp_to_wordsLib.type_of_bir_exp_CONV) *)
   (* could probably be improved by properly building simplification set *)
+  (* also, does it really need srw_ss if there are just BIR expression constructors around? *)
   fun type_of_bir_exp_CONV term =
     (* Manual test
     val term = ``

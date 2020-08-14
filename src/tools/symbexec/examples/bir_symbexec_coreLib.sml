@@ -96,7 +96,25 @@ end (* local *)
       val bv_fresh = (get_bvar_fresh) bv;
     in
       (update_envvar bv bv_fresh o
-        state_insert_symbval_from_be bv_fresh be
+       state_insert_symbval_from_be bv_fresh be
+      ) syst
+    end;
+
+  fun state_make_interval bv syst =
+    let
+      val env    = SYST_get_env syst;
+      val bv_val = find_bv_val "state_make_interval" env bv;
+      val _ = if is_bvar_init bv_val then () else
+              raise ERR "state_make_interval" "can only make interval values from initial variables currently";
+
+      val exp   = bir_expSyntax.mk_BExp_Den bv_val;
+      val deps  = Redblackset.add (symbvalbe_dep_empty, bv_val);
+      val symbv = SymbValInterval ((exp, exp), deps);
+
+      val bv_fresh = (get_bvar_fresh) bv;
+    in
+      (update_envvar bv bv_fresh o
+       insert_symbval bv_fresh symbv
       ) syst
     end;
 
