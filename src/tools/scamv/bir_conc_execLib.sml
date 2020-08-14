@@ -218,8 +218,9 @@ struct
 	  final_state
       end;
 
-  fun conc_exec_obs_extract symb_state (mls,v) =
+  fun conc_exec_obs_extract obs_projection symb_state (mls,v) =
     let
+      open numSyntax;
       fun eval_exp t = (toTerm o EVAL) t;
       fun eval_exp_to_val t =
         let
@@ -262,17 +263,17 @@ struct
       val obs_elem = map (fn ob => (fst o dest_list) ob)nonemp_obs;
       val obs_exp = map dest_bir_symb_obs (flatten obs_elem);
       val res = List.concat
-                    (map (fn (_,cond,ob,f) =>
-                             if eval_exp_to_val cond = ``BVal_Imm (Imm1 1w)``
+                    (map (fn (id,cond,ob,f) =>
+                             if eval_exp_to_val cond = ``BVal_Imm (Imm1 1w)`` andalso int_of_term id <> obs_projection
                              then let val t = mk_comb (f, eval_explist_to_vallist ob)
-                                  in [eval_exp t] end
+                                  in [(int_of_term id,eval_exp t)] end
                              else [])
                                  obs_exp);
     in res end;
 
 
 
-  fun conc_exec_obs_compute prog s =
+  fun conc_exec_obs_compute obs_projection prog s =
     let
       val is_state_mem_emp = (fn s => (#1 (List.partition (is_memT) s)) |> hd |> (#2 o getMem) |> List.null);
       val _ =  mem_state := []
@@ -289,20 +290,20 @@ struct
 		        )
 		   else (m', ``(0:num)``);
       val state_ = conc_exec_program 200 prog envfo ((#2 m),``^v``)
-      val obs = conc_exec_obs_extract state_ ((#2 m),``^v``)
+      val obs = conc_exec_obs_extract obs_projection state_ ((#2 m),``^v``)
 
       val new_state = if (is_state_mem_emp ((!mem_state) @ rg)) then s else (!mem_state) @ rg
 
-      val _ = map print_term obs
+      val _ = map (fn (id,ob) => (print (PolyML.makestring id ^ " "); print_term ob)) obs
       val _ = print "\n";
     in
       (obs, new_state)
     end;
 
-  fun conc_exec_obs_compare prog (s1, s2) =
+  fun conc_exec_obs_compare obs_projection prog (s1, s2) =
       let
-	  val (obs1, state1) = conc_exec_obs_compute prog s1 
-	  val (obs2, state2) = conc_exec_obs_compute prog s2
+	      val (obs1, state1) = conc_exec_obs_compute obs_projection prog s1;
+	      val (obs2, state2) = conc_exec_obs_compute obs_projection prog s2;
       in
 	  (obs1 = obs2, [state1, state2])
       end;
