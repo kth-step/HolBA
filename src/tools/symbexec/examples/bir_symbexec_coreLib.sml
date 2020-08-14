@@ -22,6 +22,9 @@ local
        bv_ofvars::vars)
     end;
 
+  open bslSyntax;
+  val var_add_const_match_tm = bplus (bden ``x:bir_var_t``, bconstimm ``y:bir_imm_t``);
+
   fun compute_val_try vals (besubst, besubst_vars) deps_l2 =
     let
       val all_deps_const = List.all (fn bv =>
@@ -30,6 +33,13 @@ local
                  SymbValBE (exp,_) => is_BExp_Const exp
                | _ => false)
            ) besubst_vars;
+
+      val depends_on_single_interval =
+             length besubst_vars = 1 andalso
+             (not o is_bvar_init) (hd besubst_vars) andalso
+             (case find_bv_val "compute_val_try" vals (hd besubst_vars) of
+                 SymbValInterval _ => true
+               | _ => false);
     in
       if all_deps_const then
         if List.null besubst_vars then NONE else
@@ -42,7 +52,7 @@ local
               val symbv_dep = find_bv_val "compute_val_try" vals bv_dep;
               val exp = case symbv_dep of
                            SymbValBE (exp,_) => exp
-                         | _ => raise ERR "compute_val_and_resolve_deps" "cannot happen";
+                         | _ => raise ERR "compute_val_try" "cannot happen";
             in
               subst_exp (bv_dep, exp, e)
             end;
@@ -51,6 +61,38 @@ local
         in
           SOME (SymbValBE (becomp, symbvalbe_dep_empty))
         end
+      else if depends_on_single_interval then
+        let
+          val (vs, _) = hol88Lib.match var_add_const_match_tm besubst;
+          val bv      = fst (List.nth (vs, 0));
+          val imm_val = fst (List.nth (vs, 1));
+
+          val _ = if identical bv (hd besubst_vars) then () else
+                  raise ERR "compute_val_try" "something is not right 1...";
+
+          val ((itv_exp1, itv_exp2), itv_deps) =
+             (case find_bv_val "compute_val_try" vals bv of
+                 SymbValInterval x => x
+               | _ => raise ERR "compute_val_try" "something is not right 2...");
+
+          fun add_const exp imm_val =
+            if is_BExp_Den exp then bplus (exp, bconstimm imm_val) else
+            let
+              val (vs, _) = hol88Lib.match var_add_const_match_tm exp;
+              val bv_       = fst (List.nth (vs, 0));
+              val imm_val_2 = fst (List.nth (vs, 1));
+
+              val add_tm = ``bir_bin_exp BIExp_Plus ^imm_val ^imm_val_2``;
+              val res_tm = (snd o dest_eq o concl o EVAL) add_tm;
+            in
+              bplus (bden bv_, bconstimm res_tm)
+            end;
+        in
+          SOME (SymbValInterval ((add_const itv_exp1 imm_val,
+                                  add_const itv_exp2 imm_val),
+                                 itv_deps))
+        end
+        handle HOL_ERR _ => NONE
       else
         NONE
     end;

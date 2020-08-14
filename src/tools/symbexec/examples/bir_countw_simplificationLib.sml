@@ -97,6 +97,7 @@ fun simple_p_to_subst p =
 fun simple_pred_to_subst pred exp =
   List.foldl (fn (p, exp) => simple_p_to_subst p exp) exp pred;
 
+val bv_countw = mk_BVar_string ("countw", ``(BType_Imm Bit64)``);
 
 in (* local *)
 
@@ -109,11 +110,7 @@ fun eval_countw_in_syst syst =
     val env  = (SYST_get_env  syst);
     val vals = (SYST_get_vals syst);
 
-    val bv_countw = mk_BVar_string ("countw", ``(BType_Imm Bit64)``);
-    val bv_countw_fr = (valOf o Redblackmap.peek) (env, bv_countw)
-                       handle Option =>
-                       raise ERR "eval_countw_in_syst"
-                                 ("couldn't find countw");
+    val bv_countw_fr = find_bv_val "eval_countw_in_syst" env bv_countw;
 
 (*
     val benv = mk_BEnv (simple_pred_to_benvmap pred benvmap_empty);
@@ -126,6 +123,18 @@ fun eval_countw_in_syst syst =
     val exp = exp_;
   in
     (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp ^benv``
+  end;
+
+
+fun get_countw_in_syst syst =
+  let
+    val env  = (SYST_get_env  syst);
+    val vals = (SYST_get_vals syst);
+
+    val bv_countw_fr = find_bv_val "get_countw_in_syst::env"  env  bv_countw;
+    val symbv        = find_bv_val "get_countw_in_syst::vals" vals bv_countw_fr;
+  in
+    symbv
   end;
 
 end (* local *)

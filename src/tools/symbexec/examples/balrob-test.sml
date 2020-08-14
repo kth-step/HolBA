@@ -141,6 +141,8 @@ val _ = print "\n\n";
 val systs_tidiedup = List.map tidyup_state_vals systs_feasible;
 val _ = print "finished tidying up all paths.\n\n";
 
+val countw_symbvs = List.map get_countw_in_syst systs_tidiedup;
+
 val countws = List.map eval_countw_in_syst systs_tidiedup;
 val counts = List.map (wordsSyntax.dest_word_literal o
                        bir_valuesSyntax.dest_BVal_Imm64 o
