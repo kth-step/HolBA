@@ -135,6 +135,16 @@ in
     in
       String.isPrefix "sy_" s
     end;
+
+  fun is_bvar_free vals bv =
+    (not o isSome o Redblackmap.peek) (vals,bv);
+
+  fun is_bvar_initorfree vals bv =
+    (is_bvar_init) bv orelse
+    (is_bvar_free vals) bv;
+
+  fun is_bvar_bound vals bv =
+    not (is_bvar_initorfree vals bv);
 end
 
 
@@ -209,7 +219,8 @@ fun deps_union vals (bv, deps) =
   end;
 
 fun deps_find_symbval err_src_string vals bv =
-  if is_bvar_init bv then Redblackset.add(symbvalbe_dep_empty,bv) else (
+  if is_bvar_initorfree vals bv
+  then Redblackset.add(symbvalbe_dep_empty,bv) else (
     deps_of_symbval err_src_string (find_bv_val err_src_string vals bv)
     handle e => raise wrap_exn ("deps_find_symbval::expect bir expression for variable: " ^ (term_to_string bv)) e
   );
@@ -225,12 +236,11 @@ fun tidyup_state_vals syst =
     val entry_vars = symbvalbe_dep_empty;
     val entry_vars = Redblackset.addList(entry_vars, pred);
     val entry_vars = Redblackset.addList(entry_vars, (List.map snd o Redblackmap.listItems) env);
-    val entry_vars = Redblackset.filter (not o is_bvar_init) entry_vars;
-    val entry_vars = Redblackset.filter (fn bv => List.exists (identical bv) (List.map fst (Redblackmap.listItems vals))) entry_vars;
+    val entry_vars = Redblackset.filter (is_bvar_bound vals) entry_vars;
 
     val deps = Redblackset.foldl (deps_union vals) symbvalbe_dep_empty entry_vars;
 
-    val keep_vals = Redblackset.filter (not o is_bvar_init) (Redblackset.union(entry_vars, deps));
+    val keep_vals = Redblackset.filter (is_bvar_bound vals) (Redblackset.union(entry_vars, deps));
 
     val num_vals = Redblackmap.numItems vals;
     val num_keep_vals = Redblackset.numItems keep_vals;
@@ -311,7 +321,7 @@ in (* local *)
         List.foldr (collect_pred_expsdeps vals) ([], symbvalbe_dep_empty) pred_bvl;
 
       val pred_depsl_ = Redblackset.listItems pred_deps;
-      val pred_depsl  = List.filter (not o is_bvar_init) pred_depsl_;
+      val pred_depsl  = List.filter (is_bvar_bound vals) pred_depsl_;
 
       val valsl = List.map (fn bv => (bv, find_bv_val "check_feasible" vals bv))
                            pred_depsl;

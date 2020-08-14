@@ -28,7 +28,7 @@ local
   fun compute_val_try vals (besubst, besubst_vars) deps_l2 =
     let
       val all_deps_const = List.all (fn bv =>
-             (not o is_bvar_init) bv andalso
+             (is_bvar_bound vals) bv andalso
              (case find_bv_val "compute_val_try" vals bv of
                  SymbValBE (exp,_) => is_BExp_Const exp
                | _ => false)
@@ -36,7 +36,7 @@ local
 
       val depends_on_single_interval =
              length besubst_vars = 1 andalso
-             (not o is_bvar_init) (hd besubst_vars) andalso
+             (is_bvar_bound vals) (hd besubst_vars) andalso
              (case find_bv_val "compute_val_try" vals (hd besubst_vars) of
                  SymbValInterval _ => true
                | _ => false);
@@ -128,7 +128,7 @@ in (* local *)
 end (* local *)
 
 
-(* primitive to compute expression and store result using free variable *)
+(* primitive to compute expression and store result using fresh variable *)
   fun state_insert_symbval_from_be bv_fr be syst =
       insert_symbval bv_fr (compute_valbe be syst) syst;
 
