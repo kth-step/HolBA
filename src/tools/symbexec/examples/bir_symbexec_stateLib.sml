@@ -226,6 +226,7 @@ fun tidyup_state_vals syst =
     val entry_vars = Redblackset.addList(entry_vars, pred);
     val entry_vars = Redblackset.addList(entry_vars, (List.map snd o Redblackmap.listItems) env);
     val entry_vars = Redblackset.filter (not o is_bvar_init) entry_vars;
+    val entry_vars = Redblackset.filter (fn bv => List.exists (identical bv) (List.map fst (Redblackmap.listItems vals))) entry_vars;
 
     val deps = Redblackset.foldl (deps_union vals) symbvalbe_dep_empty entry_vars;
 
@@ -343,6 +344,56 @@ in (* local *)
       resultvalue
     end;
 end (* local *)
+
+  fun merge_states_by_intervalvar bv (syst1, syst2) =
+    let
+      val lbl_tm = SYST_get_pc     syst1;
+      val status = SYST_get_status syst1;
+
+      val _ = if identical lbl_tm (SYST_get_pc     syst2) then () else
+              raise ERR "merge_states_by_intervalvar"
+                        "lbl_tm must be the same";
+      val _ = if identical status (SYST_get_status syst2) then () else
+              raise ERR "merge_states_by_intervalvar"
+                        "status must be the same";
+      (* TODO: validate that env uses the same
+               set of state variables (keys) *)
+
+      val env    = SYST_get_env  syst1;
+      val vals   = SYST_get_vals syst1;
+
+      (* TODO: find pred_bvs prefix *)
+      (* take exactly two for now *)
+      (* notice that in pred the list head is the lastly added pred *)
+      val pred_bvs_prefix_len = 2;
+      val pred_bvs = List.rev (List.take (List.rev (SYST_get_pred syst1), pred_bvs_prefix_len));
+      val _ = if list_eq identical
+                   pred_bvs
+                   (List.rev (List.take (List.rev (SYST_get_pred syst2), pred_bvs_prefix_len)))
+              then () else
+                raise ERR "merge_states_by_intervalvar" "pred prefix must be the equal";
+
+      (* for our application, we may need to preserve
+         more than a pred prefix when merging *)
+      (* for now, scatch env completely, and use fresh variables *)
+      val env_vars = List.map fst (Redblackmap.listItems env);
+      val env = Redblackmap.fromList Term.compare (
+            List.map (fn bv => (bv, get_bvar_fresh bv)) env_vars);
+
+      (* TODO: collect vals for pred_bvs *)
+      (* this can be conveniently done with the function to tidy up states *)
+
+      val syst_merged =
+      SYST_mk lbl_tm
+              env
+              status
+              []
+              pred_bvs
+              vals;
+      val syst_new = tidyup_state_vals syst_merged;
+    in
+      syst_new
+    end;
 
 end (* outermost local *)
 

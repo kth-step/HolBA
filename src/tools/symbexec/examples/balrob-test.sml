@@ -147,6 +147,18 @@ val _ = print "\n\n";
 val systs_tidiedup = List.map tidyup_state_vals systs_feasible;
 val _ = print "finished tidying up all paths.\n\n";
 
+(* intermediate code follows --- *)
+val syst1 = List.nth (systs_tidiedup, 0);
+val syst2 = List.nth (systs_tidiedup, 1);
+
+val syst = merge_states_by_intervalvar bv_countw (syst1, syst2);
+(* intermediate code ends --- *)
+
+(*
+val envl = (Redblackmap.listItems o SYST_get_env) syst;
+val valsl = (Redblackmap.listItems o SYST_get_vals) syst;
+*)
+
 val countw_symbvs = List.map get_countw_in_syst systs_tidiedup;
 
 val countws = List.map eval_countw_in_syst systs_tidiedup;

@@ -97,9 +97,10 @@ fun simple_p_to_subst p =
 fun simple_pred_to_subst pred exp =
   List.foldl (fn (p, exp) => simple_p_to_subst p exp) exp pred;
 
-val bv_countw = mk_BVar_string ("countw", ``(BType_Imm Bit64)``);
 
 in (* local *)
+
+val bv_countw = mk_BVar_string ("countw", ``(BType_Imm Bit64)``);
 
 (*
 val syst = hd systs;
