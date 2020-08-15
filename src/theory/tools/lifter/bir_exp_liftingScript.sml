@@ -960,29 +960,30 @@ val bir_is_lifted_mem_exp_STORE0 = prove (
     (bir_store_in_mem_words sv sa (w2bs vr sr) mem_f en va = SOME r) ==>
     (bir_is_lifted_mem_exp env (BExp_Store em ea en er) r))
 ``,
-  SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
-    bir_is_lifted_mem_exp_def, PULL_EXISTS,
-    bir_env_oldTheory.bir_env_vars_are_initialised_UNION, bir_eval_store_BASIC_REWR] >>
-  REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
-  `sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
-  `sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
-  REPEAT (BasicProvers.VAR_EQ_TAC) >>
 
-  FULL_SIMP_TAC std_ss [w2n_n2w, w2bs_def, b2n_n2bs, bitTheory.MOD_2EXP_def,
-    GSYM dimword_def, w2n_lt] >>
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
+  bir_is_lifted_mem_exp_def, PULL_EXISTS,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, bir_eval_store_BASIC_REWR] >>
+REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+`sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
+`sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
+REPEAT (BasicProvers.VAR_EQ_TAC) >>
 
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_store_in_mem_words_def, LET_DEF,
-    bir_store_in_mem_def] >>
+FULL_SIMP_TAC std_ss [w2n_n2w, w2bs_def, b2n_n2bs, bitTheory.MOD_2EXP_def,
+  GSYM dimword_def, w2n_lt] >>
 
-  Cases_on `bir_number_of_mem_splits sb sr sa` >> FULL_SIMP_TAC std_ss [] >>
-  rename1 `_ = SOME n` >>
-  REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-    REPEAT BasicProvers.VAR_EQ_TAC >>
-    ASM_SIMP_TAC (std_ss++boolSimps.ETA_ss) [bir_update_mmap_words_INTRO_w2n, n2w_w2n] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_store_in_mem_words_def, LET_DEF,
+  bir_store_in_mem_def] >>
 
-    METIS_TAC [bir_update_mmap_words_INTRO_w2n, n2w_w2n, bir_load_mmap_w_bir_mmap_n2w_thm]
-  )
+Cases_on `bir_number_of_mem_splits sb sr sa` >> FULL_SIMP_TAC std_ss [] >>
+rename1 `_ = SOME n` >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  REPEAT BasicProvers.VAR_EQ_TAC >>
+  ASM_SIMP_TAC (std_ss++boolSimps.ETA_ss) [bir_update_mmap_words_INTRO_w2n, n2w_w2n] >>
+
+  METIS_TAC [bir_update_mmap_words_INTRO_w2n, n2w_w2n, bir_load_mmap_w_bir_mmap_n2w_thm]
+)
 );
 
 

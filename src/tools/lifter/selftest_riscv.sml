@@ -435,27 +435,22 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
   val res = riscv_test_hex "FCE13083";
 
 (* S-format *)
-  (* String widths:
-   * 000: byte
-   * 001: halfword
-   * 010: word
-   * 011: doubleword *)
-  (* TODO: Should work pending fixing the lifter to be able to store 32-bits of 64-bit registers...
-   * One solution is to replicate all theorems involved in storing for more types.
-   * Another solution would be to conditionally rewrite words to the sensible type, for example,
-   * if the first 8 bits are cut from a 64-bit word w, the result is the same as if it was a
-   * 32-bit word.
-   * Unsure if this occurs "in the wild" ,or just in lecture slides. *)
-  
-  (* TODO: SB instruction *)
-  (* TODO: SH instruction *)
+  (* Store the byte (8 least significant bits) in x14 to the memory address in x2 with offset 8 *)
+  (* "sb x14, 8(x2)" *)
+  (* OK *)
+  val res = riscv_test_hex "00E10423";
 
-  (* Store the word (32 bits) in x14 to the memory address in x2 with offset 8 *)
+  (* Store the halfword (16 least significant bits) in x14 to the memory address in x2 with offset 8 *)
+  (* "sh x14, 8(x2)" *)
+  (* OK *)
+  val res = riscv_test_hex "00E11423";
+
+  (* Store the word (32 least significant bits) in x14 to the memory address in x2 with offset 8 *)
   (* "sw x14, 8(x2)" *)
-  (* FAILED *)
+  (* OK *)
   val res = riscv_test_hex "00E12423";
 
-  (* Store the doubleword (64 bits) in x14 to the memory address in x2 with offset 8 *)
+  (* Store the doubleword (64 bits, the entire 64-bit register) in x14 to the memory address in x2 with offset 8 *)
   (* "sd x14, 8(x2)" *)
   (* OK *)
   val res = riscv_test_hex "00E13423";
@@ -523,7 +518,6 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
 (* TODO: ECALL, EBREAK (environment call and breakpoints) *)
 (* TODO: CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI (CSR instructions) *)
 
-(* TODO: Fix loads *)
 (* TODO: Fix stores *)
 (* TODO: Fix greater-than *)
 (* TODO: Are NOPs in riscv_stepLib for real? *)
