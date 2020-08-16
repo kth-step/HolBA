@@ -478,14 +478,14 @@ val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS (HEX) - RISC-V RV
   (* OK *)
   val res = riscv_test_hex "00A9E863";
 
-  (* Branch on greater-than relation between registers *)
+  (* Branch on greater-than-or-equal relation between registers *)
   (* "bge x19, x10, 8" *)
-  (* FAILED *)
+  (* OK *)
   val res = riscv_test_hex "00A9D863";
 
-  (* Branch on unsigned greater-than relation between registers *)
+  (* Branch on unsigned greater-than-or-equal relation between registers *)
   (* "bgeu x19, x10, 8" *)
-  (* FAILED *)
+  (* OK *)
   val res = riscv_test_hex "00A9F863";
 
 (* U-format *)
