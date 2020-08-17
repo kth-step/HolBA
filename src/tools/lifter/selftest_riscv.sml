@@ -252,16 +252,16 @@ val _ = print_msg "\n";
 val _ = print_header "RV64M Standard Extension (instructions inherited from RV32M)\n";
 val _ = print_msg "\n";
 
-(* TODO: Fix MULH, MULHSU, MULHU (64 MSBs of 128-bit word), REM (some kind of if-not statement) *)
+(* TODO: Fix REM (some kind of if-not statement) *)
 (* R-type variants (opcode OP) *)
   val _ = riscv_test_asms [
     (* Multiplication *)
     "MUL x5, x6, x7",
-    (* FAILED *)
+    (*  *)
     "MULH x5, x6, x7",
-    (* FAILED *)
+    (*  *)
     "MULHSU x5, x6, x7",
-    (* FAILED *)
+    (*  *)
     "MULHU x5, x6, x7",
     (*  *)
     "DIV x5, x6, x7",

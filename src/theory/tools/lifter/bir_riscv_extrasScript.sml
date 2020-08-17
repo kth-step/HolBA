@@ -669,6 +669,22 @@ SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
 blastLib.BBLAST_TAC
 );
 
+(*************************************************************************)
+(* 64 MSBs (of 128-bit) - for multiplication instructions in RV64M       *)
+(*************************************************************************)
+
+val thm_t =
+``!env w e.
+  bir_is_lifted_imm_exp env e (Imm128 w) ==>
+  bir_is_lifted_imm_exp env (BExp_Cast BIExp_HighCast e Bit64)
+    (Imm64 ((127 >< 64) w))``;
+
+val riscv_is_lifted_imm_exp_64MSBs = prove (``^thm_t``,
+
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
+   bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2wh_def]
+);
+
 (*******************************)
 (* Greater-than-or-equal       *)
 (*******************************)
@@ -786,6 +802,7 @@ val riscv_extra_LIFTS = save_thm ("riscv_extra_LIFTS",
     riscv_is_lifted_imm_exp_6LSBs,
     riscv_is_lifted_imm_exp_5LSBs,
     riscv_is_lifted_imm_exp_32LSBsLC,
+    riscv_is_lifted_imm_exp_64MSBs,
     riscv_is_lifted_imm_exp_GE,
     riscv_is_lifted_imm_exp_GEU]
 );
