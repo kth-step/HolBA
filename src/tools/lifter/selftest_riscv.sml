@@ -273,6 +273,10 @@ val _ = print_msg "\n";
     "REMU x5, x6, x7"
   ];
 
+val _ = print_msg "\n";
+val _ = print_header "RV64M Standard Extension (instructions added to RV32M)\n";
+val _ = print_msg "\n";
+
 (* TODO: Fix REMW (probably will fix itself when fixing REM)*)
 (* R-type variants (opcode OP-32) *)
   val _ = riscv_test_asms [

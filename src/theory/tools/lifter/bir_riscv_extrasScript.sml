@@ -638,13 +638,10 @@ blastLib.BBLAST_TAC
 (* 5 LSBs (32-bit) - for RV64I SLLW, SRLW, et.c. *)
 (*************************************************)
 
-val thm_t =
-``!env w e.
+val riscv_is_lifted_imm_exp_5LSBs = prove (``!env w e.
   bir_is_lifted_imm_exp env e (Imm64 w) ==>
   bir_is_lifted_imm_exp env (BExp_BinExp BIExp_And (BExp_Const (Imm32 (^(get_bitmask_word 5 32)))) (BExp_Cast BIExp_LowCast e Bit32))
-    (Imm32 ((w2w (((4 >< 0) w):word5)):word32))``;
-
-val riscv_is_lifted_imm_exp_5LSBs = prove (``^thm_t``,
+    (Imm32 ((w2w (((4 >< 0) w):word5)):word32))``,
 
 SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
    bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
@@ -656,13 +653,10 @@ blastLib.BBLAST_TAC
 (* 32 LSBs - for 32-bit instructions (ending in "W") of RV64I       *)
 (********************************************************************)
 
-val thm_t =
-``!env w e.
+val riscv_is_lifted_imm_exp_32LSBsLC = prove (``!env w e.
   bir_is_lifted_imm_exp env e (Imm64 w) ==>
   bir_is_lifted_imm_exp env (BExp_Cast BIExp_LowCast e Bit32)
-    (Imm32 ((31 >< 0) w))``;
-
-val riscv_is_lifted_imm_exp_32LSBsLC = prove (``^thm_t``,
+    (Imm32 ((31 >< 0) w))``,
 
 SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
    bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
@@ -673,13 +667,10 @@ blastLib.BBLAST_TAC
 (* 64 MSBs (of 128-bit) - for multiplication instructions in RV64M       *)
 (*************************************************************************)
 
-val thm_t =
-``!env w e.
+val riscv_is_lifted_imm_exp_64MSBs = prove (``!env w e.
   bir_is_lifted_imm_exp env e (Imm128 w) ==>
   bir_is_lifted_imm_exp env (BExp_Cast BIExp_HighCast e Bit64)
-    (Imm64 ((127 >< 64) w))``;
-
-val riscv_is_lifted_imm_exp_64MSBs = prove (``^thm_t``,
+    (Imm64 ((127 >< 64) w))``,
 
 SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
    bir_env_oldTheory.bir_env_vars_are_initialised_UNION, w2wh_def]
@@ -727,8 +718,8 @@ val word_add_to_sub_GEN = store_thm ("word_add_to_sub_GEN",
    (w + n2w n = w - n2w (dimword (:'a) - n))``,
 
 REPEAT STRIP_TAC >>
-ASM_SIMP_TAC arith_ss [wordsTheory.word_sub_def,
-  wordsTheory.word_2comp_n2w]);
+ASM_SIMP_TAC arith_ss [word_sub_def,
+  word_2comp_n2w]);
 
 val word_add_to_sub_TYPES = save_thm ("word_add_to_sub_TYPES",
 let
@@ -824,7 +815,9 @@ val riscv_extra_FOLDS = save_thm ("riscv_extra_FOLDS",
              GSYM riscv_mem_load_dword_half,
              GSYM riscv_mem_load_dword_word,
              riscv_mem_store_FOLDS, w2w_REMOVE_FOLDS, GSYM word_reverse_REWRS,
-             word_shift_extract_ID]
+             word_shift_extract_ID,
+             (* For REM and REMW instructions *)
+             word_rem_def]
 );
 
 val _ = export_theory();
