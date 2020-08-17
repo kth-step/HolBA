@@ -110,11 +110,9 @@ val syst =
   else
     state_make_interval ``BVar "countw" (BType_Imm Bit64)`` syst;
 
-(*
 val syst = state_make_mem ``BVar "MEM" (BType_Mem Bit32 Bit8)``
                           (Arbnum.fromInt 0x10000000, Arbnum.fromInt 0x400)
                           syst;
-*)
 
 val syst = state_add_preds "init_pred" pred_conjs syst;
 

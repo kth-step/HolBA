@@ -22,6 +22,25 @@ local
        bv_ofvars::vars)
     end;
 
+  (* TODO: make this available at some more central location (it is from src/tools/exec/auxLib *)
+  fun find_subterm is_tm_fun tm =
+    if is_tm_fun tm then
+      SOME tm
+    else if is_comb tm then
+      let
+        val (l,r) = dest_comb tm;
+      in
+        case find_subterm is_tm_fun l of
+           SOME tm2 => SOME tm2
+         | NONE => find_subterm is_tm_fun r
+      end
+    else
+      NONE
+    ;
+
+  fun subterm_satisfies is_tm_fun tm =
+    (isSome o find_subterm is_tm_fun) tm;
+
   open bslSyntax;
   val var_add_const_match_tm = bplus (bden ``x:bir_var_t``, bconstimm ``y:bir_imm_t``);
 
@@ -93,6 +112,17 @@ local
                                  itv_deps))
         end
         handle HOL_ERR _ => NONE
+      else if is_BExp_Load besubst then
+        NONE
+      else if is_BExp_Store besubst then
+        NONE
+(*
+      else if subterm_satisfies is_BExp_Load besubst orelse
+              subterm_satisfies is_BExp_Store besubst then
+        raise ERR "compute_val_try"
+                  ("found load or store as subexpression, unexpected: " ^
+                   term_to_string besubst)
+*)
       else
         NONE
     end;
