@@ -68,11 +68,15 @@ val _ = print_msg "\n";
 val _ = print_header "MANUAL TESTS (HEX) - RISC-V\nRV64I Base Instruction Set (instructions inherited from RV32I)\n";
 val _ = print_msg "\n";
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
-(* 62 instructions in initial scope *)
+(* 75 instructions in initial scope (including M extension) *)
 (* 10 still TODO:
  *  2 fences
  *  environment call and breakpoint
  *  6 CSR instructions *)
+(* TODO: Instructions from privileged instruction set: MRET (exists in latest L3 version), SRET (S ext., exists in latest L3 version), URET (N ext., exists in latest L3 version) *)
+(* TODO: Most important extensions: A (atomics), C (compressed) *)
+(* TODO: Are NOPs in riscv_stepLib correct? *)
+(* TODO: Take second look at stepLib code for Sail model (test.sml) *)
 
 (* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! *)
 (* Upon BILED_lifting_failed exception, debug from
@@ -198,6 +202,9 @@ val _ = fail_with_msg "FENCE.I not yet supported by stepLib";
 val _ = fail_with_msg "ECALL not yet supported by stepLib";
 val _ = fail_with_msg "EBREAK not yet supported by stepLib";
 (* TODO: CSR instructions go here... *)
+(* Example of instruction failing at stepLib:
+val _ = riscv_test_hex_print_asm "CSRRW x1, ustatus(0x000), x2" "0110F3";
+*)
 val _ = fail_with_msg "CSRRW not yet supported by stepLib";
 val _ = fail_with_msg "CSRRS not yet supported by stepLib";
 val _ = fail_with_msg "CSRRC not yet supported by stepLib";
@@ -289,9 +296,3 @@ val _ = print_msg "\n";
     (*  *)
     "REMUW x5, x6, x7"
   ];
-
-(* TODO: Instructions from privileged instruction set: MRET (exists in latest L3 version), SRET (S ext., exists in latest L3 version), URET (N ext., exists in latest L3 version) *)
-(* TODO: Most important extensions: A (atomics), C (compressed) *)
-
-(* TODO: Are NOPs in riscv_stepLib correct? *)
-(* TODO: Take second look at stepLib code for Sail model (test.sml) *)

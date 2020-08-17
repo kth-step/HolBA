@@ -110,7 +110,7 @@ Notice that this sequence is exemplary and it is possible to selectively run the
 ### Tools status:
 
 - `tools/cfg`:
-  * non proof-producing
+  * non-proof-producing
   * no clear interface yet
   * GraphViz exporter working
 - `tools/exec`:
@@ -121,18 +121,18 @@ Notice that this sequence is exemplary and it is possible to selectively run the
   * very stable
   * proof-producing
   * widely used in examples
-  * supports: ARMv8, Cortex-M0, Cortex-M0 with clock cycke counter
+  * supports: RISC-V, ARMv8, Cortex-M0, Cortex-M0 with clock cycle counter
 - `tools/wp`:
   * proof-producing
   * experimental implementation
     * includes prototype of substitution simplification
   * interface in progress
 - `tools/pass`:
-  * non proof-producing
+  * non-proof-producing
   * experimental passification transformation to SSA
 - `tools/scamv`:
   * works for small programs
-  * cannot handle certain cases, like memory dependent observations
+  * cannot handle certain cases, like memory-dependent observations
   * includes a selection of cache side channel models
 
 ### Dependency graph
@@ -145,7 +145,7 @@ Key:
 ### PolyML heaps
 
 - The heap chain is no longer represented in the diagram. You can see it by
-  reading the `Holmakefil.gen` files.
+  reading the `Holmakefile.gen` files.
 - See HOL's Description Manual for more information about PolyML heaps.
 - You can temporarily change the heap chain order if you don't need a dependency
   in order to reduce build times.
