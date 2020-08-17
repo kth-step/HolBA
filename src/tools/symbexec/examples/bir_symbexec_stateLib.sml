@@ -17,6 +17,23 @@ datatype symb_value =
 
 val symbvalbe_dep_empty = Redblackset.empty Term.compare;
 
+fun symbv_to_string (SymbValBE (exp, deps)) =
+       ("SymbValBE (" ^
+        (term_to_string exp) ^
+        ", " ^
+        (Int.toString (Redblackset.numItems deps)) ^
+        ")")
+  | symbv_to_string (SymbValInterval ((min, max), deps)) =
+       ("SymbValInterval ((" ^
+        (term_to_string min) ^
+        ", " ^
+        (term_to_string max) ^
+        "), " ^
+        (Int.toString (Redblackset.numItems deps)) ^
+        ")")
+  | symbv_to_string (SymbValMem _) =
+       "SymbValMem";
+
 
 (* symbolic states *)
 datatype symb_state =
@@ -202,6 +219,19 @@ fun find_bv_val err_src_string vals bv =
                              err_src_string
                              ("coudln't find value for " ^ (term_to_string bv));
 
+fun get_state_symbv err_src_string bv syst =
+  let
+    val env  = (SYST_get_env  syst);
+    val vals = (SYST_get_vals syst);
+
+    val bv_fr = find_bv_val (err_src_string ^ "::get_state_symbv::env")
+                            env  bv;
+    val symbv = find_bv_val (err_src_string ^ "get_state_symbv::vals")
+                            vals bv_fr;
+  in
+    symbv
+  end;
+
 
 (* symbval dependencies *)
 fun deps_of_symbval err_src_string symbv =
@@ -355,7 +385,62 @@ in (* local *)
     end;
 end (* local *)
 
-  fun merge_states_by_intervalvar bv (syst1, syst2) =
+local
+  open bslSyntax;
+  open bir_immSyntax;
+  open bir_expSyntax;
+
+  fun bconst_gt_try exp1 exp2 =
+    if not (is_BExp_Const exp1 andalso is_BExp_Const exp2) then NONE else
+    let
+      val imm1 = dest_BExp_Const exp1;
+      val imm2 = dest_BExp_Const exp2;
+
+      val (i1,w1) = gen_dest_Imm imm1;
+      val (i2,w2) = gen_dest_Imm imm2;
+
+      val _ = if i1 = i2 then () else
+              raise ERR "bconst_order_try" "constants must match in immtype";
+    in
+      SOME (Arbnum.> ((wordsSyntax.dest_word_literal w1),
+                      (wordsSyntax.dest_word_literal w2)))
+    end;
+
+  val var_add_const_match_tm = bplus (bden ``x:bir_var_t``, bconstimm ``y:bir_imm_t``);
+
+  fun spec_gt_plus_const exp1 exp2 =
+    case bconst_gt_try exp1 exp2 of
+            SOME b => b
+          | NONE => 
+      raise ERR "spec_gt_plus_const"
+                ("don't know how to handle: " ^
+                 (term_to_string exp1) ^
+                 " and " ^
+                 (term_to_string exp2));
+
+  fun merge_to_interval (SymbValInterval ((min1, max1), deps1))
+                        (SymbValInterval ((min2, max2), deps2)) =
+        SymbValInterval ((if spec_gt_plus_const min2 min1
+                          then min1 else min2,
+                          if spec_gt_plus_const max1 max2
+                          then max1 else max2),
+                         Redblackset.union (deps1, deps2))
+
+    | merge_to_interval symbv1
+                        (SymbValBE (exp2, deps2)) =
+      merge_to_interval symbv1
+                        (SymbValInterval ((exp2, exp2), deps2))
+
+    | merge_to_interval (SymbValBE (exp1, deps1))
+                        symbv2 =
+      merge_to_interval (SymbValInterval ((exp1, exp1), deps1))
+                        symbv2
+
+    | merge_to_interval _ _ = raise ERR "merge_to_interval" "cannot handle symb value type";
+
+in (* local *)
+
+  fun merge_states_vartointerval bv (syst1, syst2) =
     let
       val lbl_tm = SYST_get_pc     syst1;
       val status = SYST_get_status syst1;
@@ -371,6 +456,13 @@ end (* local *)
 
       val env    = SYST_get_env  syst1;
       val vals   = SYST_get_vals syst1;
+
+      (* merge BIR variable bv to interval *)
+      val symbv1  = get_state_symbv "merge_states_vartointerval" bv syst1;
+      val symbv2  = get_state_symbv "merge_states_vartointerval" bv syst2;
+
+      val bv_fresh = get_bvar_fresh bv;
+      val symbv    = merge_to_interval symbv1 symbv2;
 
       (* TODO: find pred_bvs prefix *)
       (* take exactly two for now *)
@@ -391,19 +483,22 @@ end (* local *)
             List.map (fn bv => (bv, get_bvar_fresh bv)) env_vars);
 
       (* TODO: collect vals for pred_bvs *)
-      (* this can be conveniently done with the function to tidy up states *)
+      (* for now, this can be conveniently done with the function to tidy up states *)
 
       val syst_merged =
-      SYST_mk lbl_tm
-              env
-              status
-              []
-              pred_bvs
-              vals;
+      (update_envvar bv bv_fresh o
+       insert_symbval bv_fresh symbv)
+      (SYST_mk lbl_tm
+               env
+               status
+               []
+               pred_bvs
+               vals);
       val syst_new = tidyup_state_vals syst_merged;
     in
       syst_new
     end;
+end (* local *)
 
 end (* outermost local *)
 

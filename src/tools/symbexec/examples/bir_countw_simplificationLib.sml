@@ -126,17 +126,5 @@ fun eval_countw_in_syst syst =
     (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp ^benv``
   end;
 
-
-fun get_countw_in_syst syst =
-  let
-    val env  = (SYST_get_env  syst);
-    val vals = (SYST_get_vals syst);
-
-    val bv_countw_fr = find_bv_val "get_countw_in_syst::env"  env  bv_countw;
-    val symbv        = find_bv_val "get_countw_in_syst::vals" vals bv_countw_fr;
-  in
-    symbv
-  end;
-
 end (* local *)
 end (* struct *)

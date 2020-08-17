@@ -147,35 +147,40 @@ val _ = print "\n\n";
 val systs_tidiedup = List.map tidyup_state_vals systs_feasible;
 val _ = print "finished tidying up all paths.\n\n";
 
-(* intermediate code follows --- *)
-val syst1 = List.nth (systs_tidiedup, 0);
-val syst2 = List.nth (systs_tidiedup, 1);
-
-val syst = merge_states_by_intervalvar bv_countw (syst1, syst2);
-(* intermediate code ends --- *)
-
 (*
+val countw_symbvs = List.map (symbv_to_string o get_state_symbv "script" bv_countw) systs_tidiedup;
+
+val syst1 = List.nth (systs_tidiedup, 1);
+val syst2 = List.nth (systs_tidiedup, 2);
+
+val syst = merge_states_vartointerval bv_countw (syst1, syst2);
+
 val envl = (Redblackmap.listItems o SYST_get_env) syst;
 val valsl = (Redblackmap.listItems o SYST_get_vals) syst;
 *)
 
-val countw_symbvs = List.map get_countw_in_syst systs_tidiedup;
+val syst_merged =
+  (fn x => List.foldr (merge_states_vartointerval bv_countw)
+                      (hd x)
+                      (tl x)
+  ) systs_tidiedup;
 
-val countws = List.map eval_countw_in_syst systs_tidiedup;
-val counts = List.map (wordsSyntax.dest_word_literal o
-                       bir_valuesSyntax.dest_BVal_Imm64 o
-                       optionSyntax.dest_some) countws;
+val syst_merged_countw = get_state_symbv "script" bv_countw syst_merged;
 
-fun find_bound comp l =
-  List.foldr (fn (x,m) => if comp (x, m) then x else m) (hd l) l;
+(*
+val _ = print (symbv_to_string syst_merged_countw);
+*)
 
-val count_max = find_bound (Arbnum.>) counts;
-val count_min = find_bound (Arbnum.<) counts;
+val (count_min, count_max) =
+  case syst_merged_countw of
+     SymbValInterval ((min, max), _) =>
+        (term_to_string min, term_to_string max)
+   | _ => raise ERR "balrob-test" "should be an interval";
 
 val _ = print "\n\n\n";
 val _ = print ("funname = " ^ (name) ^ "\n");
-val _ = print ("max = " ^ (Arbnum.toString count_max) ^ "\n");
-val _ = print ("min = " ^ (Arbnum.toString count_min) ^ "\n");
+val _ = print ("min = " ^ count_min ^ "\n");
+val _ = print ("max = " ^ count_max ^ "\n");
 
 
 (*
