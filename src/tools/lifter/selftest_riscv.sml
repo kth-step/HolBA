@@ -252,7 +252,6 @@ val _ = print_msg "\n";
 val _ = print_header "RV64M Standard Extension (instructions inherited from RV32M)\n";
 val _ = print_msg "\n";
 
-(* TODO: Fix REM (some kind of if-not statement) *)
 (* R-type variants (opcode OP) *)
   val _ = riscv_test_asms [
     (* Multiplication *)
@@ -277,7 +276,6 @@ val _ = print_msg "\n";
 val _ = print_header "RV64M Standard Extension (instructions added to RV32M)\n";
 val _ = print_msg "\n";
 
-(* TODO: Fix REMW (probably will fix itself when fixing REM)*)
 (* R-type variants (opcode OP-32) *)
   val _ = riscv_test_asms [
     (* Multiplication (32-bit) *)
