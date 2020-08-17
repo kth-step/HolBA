@@ -100,11 +100,16 @@ val pred_conjs = [
              (BExp_Den (BVar "SP_process" (BType_Imm Bit32))))``
 ];
 
+val use_countw_const_only = false;
+
 val syst = init_state lbl_tm prog_vars;
-val syst = state_assign_bv ``BVar "countw" (BType_Imm Bit64)`` ``BExp_Const (Imm64 0w)`` syst;
-(*
-val syst = state_make_interval ``BVar "countw" (BType_Imm Bit64)`` syst;
-*)
+
+val syst =
+  if use_countw_const_only then
+    state_assign_bv ``BVar "countw" (BType_Imm Bit64)`` ``BExp_Const (Imm64 0w)`` syst
+  else
+    state_make_interval ``BVar "countw" (BType_Imm Bit64)`` syst;
+
 val syst = state_add_preds "init_pred" pred_conjs syst;
 
 val _ = print "initial state created.\n\n";

@@ -406,17 +406,37 @@ local
                       (wordsSyntax.dest_word_literal w2)))
     end;
 
-  val var_add_const_match_tm = bplus (bden ``x:bir_var_t``, bconstimm ``y:bir_imm_t``);
+  (* TODO: notice that this comparison is only true under the assumption that the variable is not assigned with too high values! i.e. has space for the const in max *)
+  val var_add_match_tm = bplus (bden ``x:bir_var_t``, ``y:bir_exp_t``);
+  fun bvar_add_const_gt_try exp1 exp2 =
+    let
+      val (vs, _) = hol88Lib.match var_add_match_tm exp1;
+      val bv1     = fst (List.nth (vs, 0));
+      val bconst1 = fst (List.nth (vs, 1));
+
+      val (vs, _) = hol88Lib.match var_add_match_tm exp2;
+      val bv2     = fst (List.nth (vs, 0));
+      val bconst2 = fst (List.nth (vs, 1));
+
+      val _ = if identical bv1 bv2 then () else
+              raise ERR "bvar_add_const_gt_try" "the variables have to match";
+    in
+      bconst_gt_try bconst1 bconst2
+    end
+    handle HOL_ERR _ => NONE;
 
   fun spec_gt_plus_const exp1 exp2 =
     case bconst_gt_try exp1 exp2 of
             SOME b => b
-          | NONE => 
+          | NONE => (
+    case bvar_add_const_gt_try exp1 exp2 of
+            SOME b => b
+          | NONE => (  
       raise ERR "spec_gt_plus_const"
                 ("don't know how to handle: " ^
                  (term_to_string exp1) ^
                  " and " ^
-                 (term_to_string exp2));
+                 (term_to_string exp2))));
 
   fun merge_to_interval (SymbValInterval ((min1, max1), deps1))
                         (SymbValInterval ((min2, max2), deps2)) =
