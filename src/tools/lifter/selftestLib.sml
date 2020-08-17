@@ -1,6 +1,19 @@
 (**************************)
 (* Testing infrastructure *)
 (**************************)
+
+structure selftestLib :> selftestLib = struct
+
+  (* TODO: Put test instances here? *)
+
+  (* Styles for success, fail and header *)
+  val sty_OK     = [FG Green];
+  val sty_CACHE  = [FG Yellow];
+  val sty_FAIL   = [FG OrangeRed];
+  val sty_HEADER = [Bold, Underline];
+
+end
+
 (* Struct for lifter testing *)
 functor test_bmr (structure MD : bir_inst_lifting; structure log_name_str : sig val log_name: string end) = struct
 (* For debugging:
@@ -24,12 +37,6 @@ end;
 
   open log_name_str;
   val log = TextIO.openOut log_name;
-
-  (* Styles for success, fail and header *)
-  val sty_OK     = [FG Green];
-  val sty_CACHE  = [FG Yellow];
-  val sty_FAIL   = [FG OrangeRed];
-  val sty_HEADER = [Bold, Underline];
 
   (* Used internally for storing failed and succeeding hexcodes *)
   val failed_hexcodes_list = ref ([]:(string * string option * bir_inst_liftingExn_data option) list);
@@ -66,19 +73,19 @@ end;
     val _ = case res of
 	       SOME (thm, _, cache_used) =>
 		   (success_hexcodes_list := (hex_code, desc, thm)::(!success_hexcodes_list);
-		   (print_log_with_style sty_OK log_f "OK");
-		   (if cache_used then (print_log log_f " - "; print_log_with_style sty_CACHE log_f "cached") else ());
+		   (print_log_with_style selftestLib.sty_OK log_f "OK");
+		   (if cache_used then (print_log log_f " - "; print_log_with_style selftestLib.sty_CACHE log_f "cached") else ());
 		   (print_log log_f "\n");
 		   (if log_f then ((TextIO.output (log, thm_to_string thm));
 				   (TextIO.output (log, "\n"))) else ()))
 	     | NONE =>
 	       (failed_hexcodes_list := (hex_code, desc, ed)::(!failed_hexcodes_list);
-	       (print_log_with_style sty_FAIL log_f "FAILED\n"));
+	       (print_log_with_style selftestLib.sty_FAIL log_f "FAILED\n"));
     val _ = case ed of
 	NONE => ()
       | SOME d => (let
 	  val s = ("   "^(bir_inst_liftingExn_data_to_string d) ^ "\n");
-	in print_log_with_style sty_FAIL log_f s end)
+	in print_log_with_style selftestLib.sty_FAIL log_f s end)
     val _ = if log_f then TextIO.output (log, "\n") else ();
   in
     (res', ed, d_s, cache')
@@ -130,7 +137,7 @@ end;
 
 
   fun final_results name expected_failed_hexcodes = let
-    val _ = print_log_with_style sty_HEADER true ("\n\n\nSUMMARY FAILING HEXCODES " ^ name ^ "\n\n");
+    val _ = print_log_with_style selftestLib.sty_HEADER true ("\n\n\nSUMMARY FAILING HEXCODES " ^ name ^ "\n\n");
     val _ = print_log true "\n";
     val failing_l = op_mk_set (fn (x, _, _) => fn (y, _, _) => (x = y)) (!failed_hexcodes_list)
     val ok_l = op_mk_set (fn (x, _, _) => fn (y, _, _) => (x = y)) (!success_hexcodes_list)
@@ -157,7 +164,7 @@ end;
       | print_failed ((hex_code, desc, ed_opt, broken)::l) =
     let
       (* print the ones that failed, but were not excepted to in red *)
-      val st = if broken then sty_FAIL else [];
+      val st = if broken then selftestLib.sty_FAIL else [];
       val _ = print_log true "   ";
       val _ = print_log_with_style st true ("\""^hex_code^"\"");
 
@@ -172,14 +179,14 @@ end;
     (* Show the hex-codes that were expected to fail, but succeeded. These
        are the ones fixed by recent changes. *)
     val _ = print_log true ("Instructions FIXED: " ^ (Int.toString (length fixed_l)) ^ "\n\n");
-    val _ = List.map (fn s => print_log_with_style sty_OK true ("   " ^ s ^"\n")) fixed_l;
+    val _ = List.map (fn s => print_log_with_style selftestLib.sty_OK true ("   " ^ s ^"\n")) fixed_l;
     val _ = print_log true "\n\n";
 
     (* Show the hex-codes that were expected to succeed, but failed. These
        are the ones broken by recent changes. *)
     val broken_l = List.filter (fn (hc, d, edo, br) => br) failing_l';
     val _ = print_log true ("Instructions BROKEN: " ^ (Int.toString (List.length broken_l)) ^ "\n\n");
-    val _ = List.map (fn (hc, desc, ed_opt, _) => print_log_with_style sty_FAIL true ("   " ^ hc ^
+    val _ = List.map (fn (hc, desc, ed_opt, _) => print_log_with_style selftestLib.sty_FAIL true ("   " ^ hc ^
 	 (comment_of_failing desc ed_opt) ^ "\n")) broken_l;
     val _ = print_log true "\n\n";
 
@@ -188,9 +195,3 @@ end;
   end;
   end
 end;
-
-structure selftestLib :> selftestLib = struct
-
-    (* TODO: Put test instances here? *)
-
-end
