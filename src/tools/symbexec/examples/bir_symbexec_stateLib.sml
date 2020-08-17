@@ -13,7 +13,7 @@ datatype symb_value =
                     (* TODO: generalize this later *)
                     (* memory layout: flash, globals, stack;
                                       size of first (constants) and middle portion (globals) *)
-  | SymbValMem      of (((Arbnum.num -> Arbnum.num) * term * term) * (Arbnum.num * Arbnum.num));
+  | SymbValMem      of (((Arbnum.num -> Arbnum.num) * term * term) * (Arbnum.num * Arbnum.num) * term Redblackset.set);
 
 val symbvalbe_dep_empty = Redblackset.empty Term.compare;
 
@@ -238,7 +238,10 @@ fun deps_of_symbval err_src_string symbv =
   case symbv of
           SymbValBE (_,deps) => deps
         | SymbValInterval (_, deps) => deps
+        | SymbValMem (_, _, deps) => deps
+(*
         | _ => raise ERR err_src_string "cannot handle symbolic value type to find dependencies";
+*)
 
 fun deps_union vals (bv, deps) =
   let
