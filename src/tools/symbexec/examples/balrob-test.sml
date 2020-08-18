@@ -209,13 +209,11 @@ val syst = hd systs_tidiedup;
 val syst = List.nth (systs_feasible, 0);
 
 
-val bv_fr = ``BVar "fr_7_tmp_SP_process" (BType_Imm Bit32)``;
-val bv_fr = ``(BVar "fr_11_SP_process" (BType_Imm Bit32))``;
+val bv_fr = ``BVar "fr_10_tmp_SP_process" (BType_Imm Bit32)``;
+val bv_fr = ``(BVar "fr_15_SP_process" (BType_Imm Bit32))``;
 
 val bv_fr = ````;
-val bv_fr = ````;
-val bv_fr = ``BVar "fr_36_R1" (BType_Imm Bit32)``;
-val bv_fr = ``(BVar "fr_43_R3" (BType_Imm Bit32))``;
+val bv_fr = ``(BVar "fr_57_R3" (BType_Imm Bit32))``;
 
 find_bv_val "script" (SYST_get_vals syst) bv_fr;
 

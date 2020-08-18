@@ -14,12 +14,28 @@ in (* outermost local *)
 local
   open bir_expSyntax;
 
-  fun subst_fun env (bev, (e, vars)) =
+  fun subst_fun env vals (bev, (e, vars)) =
     let
-      val bv_ofvars = find_bv_val "subst_fun" env bev;
+      val bv_ofvals = find_bv_val "subst_fun" env bev;
+
+      val (exp, vars') =
+        let
+          val symbv = find_bv_val "subst_fun" vals bv_ofvals;
+          val expo = case symbv of
+                       SymbValBE (x, _) => SOME x
+                     | _ => NONE;
+          val use_expo_var =
+            isSome expo andalso
+            (bir_expSyntax.is_BExp_Const o valOf) expo;
+        in
+          if use_expo_var then
+            (valOf expo, vars)
+          else raise ERR "subst_fun" "this is never seen"
+        end
+        handle _ => (mk_BExp_Den bv_ofvals, bv_ofvals::vars);
     in
-      (subst_exp (bev, mk_BExp_Den bv_ofvars, e),
-       bv_ofvars::vars)
+      (subst_exp (bev, exp, e),
+       vars')
     end;
 
   (* TODO: make this available at some more central location (it is from src/tools/exec/auxLib *)
@@ -116,10 +132,11 @@ local
         NONE
       else if is_BExp_Store besubst then
         let
-(*
-          val _ = print_term besubst;
-          val _ = print "\n==========================================\n\n";
-*)
+          val debugOn = false;
+          val _ = if not debugOn then () else
+                  print_term besubst;
+          val _ = if not debugOn then () else 
+                  print "\n==========================================\n\n";
         in
           if true then NONE else raise ERR "compute_val_try" "store debugging"
         end
@@ -158,7 +175,7 @@ in (* local *)
       val vals = SYST_get_vals syst;
 
       val be_vars = get_birexp_vars be;
-      val besubst_with_vars = List.foldr (subst_fun env) (be, []) be_vars;
+      val besubst_with_vars = List.foldr (subst_fun env vals) (be, []) be_vars;
     in
       compute_val_and_resolve_deps vals besubst_with_vars
     end;
@@ -261,12 +278,16 @@ end (* local *)
   fun state_branch str_prefix cnd f_bt f_bf syst =
     let
       val bv_str = str_prefix ^ "_cnd";
+
+      val debugOn = false;
+
+      val systs1 = (f_bt o state_add_pred bv_str cnd) syst;
+      val systs2 = (f_bf o state_add_pred bv_str (bslSyntax.bnot cnd)) syst;
     in
-        List.concat [
-          (f_bt o state_add_pred bv_str cnd) syst
-         ,
-          (f_bf o state_add_pred bv_str (bslSyntax.bnot cnd)) syst
-        ]
+      if not debugOn then
+        systs1@systs2
+      else
+        systs1
     end;
 
   fun state_branch_simp str_prefix cnd f_bt f_bf syst =
