@@ -36,7 +36,7 @@ local
         state_branch_simp
            "assert"
            cnd
-           (I) (* TODO: remove assert condition again (make function to remove specific or just lastly added pred) *)
+           (I)
            (SYST_update_status BST_AssertionViolated_tm)
            syst;
 
