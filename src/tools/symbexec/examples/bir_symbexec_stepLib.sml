@@ -255,6 +255,10 @@ in (* local *)
       val (_, stmts, est) = dest_bir_block bl;
       val s_tms = (fst o listSyntax.dest_list) stmts;
 
+      val debugOn = false;
+      val _ = if not debugOn then () else
+              (print_term bl; print "\n ==================== \n\n");
+
       val systs2 = List.foldl (fn (s, systs) => List.concat(List.map (fn x => symb_exec_stmt (s,x)) systs)) [syst] s_tms;
 
       (* generate list of states from end statement *)
