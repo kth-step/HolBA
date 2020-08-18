@@ -81,6 +81,11 @@ val _ = print_msg "\n";
 (* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! *)
 (* Upon BILED_lifting_failed exception, debug from
  * exp_lift_fn in bir_inst_liftingLib *)
+(* When you get something like
+ *
+ *   lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed
+ *
+ * you must lift more registers (mstatus in this case). *)
 
 (* U-format *)
 (* TODO: Integrate with assembler *)
@@ -195,42 +200,31 @@ val _ = print_msg "\n";
     "AND x5, x6, x7"
   ];
 
-(* TODO: Fence instructions go here... *)
+(* Memory ordering isntructions (opcode MISC-MEM) *)
+(*   0000  1000  1000   00010  000  00001  0001111
+
+Not sure about asm formatting...
+val _ = riscv_test_hex_print_asm "FENCE x1, x2, i, i" "0881008F";
+*)
 val _ = fail_with_msg "FENCE not yet supported by stepLib";
-val _ = fail_with_msg "FENCE.I not yet supported by stepLib";
-(* TODO: ECALL/EBREAK goes here... *)
-val _ = fail_with_msg "ECALL not yet supported by stepLib";
-val _ = fail_with_msg "EBREAK not yet supported by stepLib";
-(* TODO: CSR instructions go here... *)
-(* CSRRW x1, mscratch(0x340), x2 : 001101000000    00010 001000011110011
+(* Environment Call and Breakpoints (opcode SYSTEM) *)
+(*
 
-  Test only step:
   open riscv_stepLib;
-  val _ = riscv_step_hex "340110F3";
+  val _ = riscv_step_hex "00000073";
 
+val _ = riscv_test_hex_print_asm "ECALL" "00000073";
 *)
-val _ = riscv_test_hex_print_asm "CSRRW x1, mscratch(0x340), x2" "340110F3";
-val _ = fail_with_msg "CSRRS not yet supported by stepLib";
-(* Times out at riscv_step_hex...
+val _ = fail_with_msg "ECALL not yet supported by stepLib";
+(* 
 
-   CSRRS x1, mscratch(0x340), x2 : 001101000000    00010 010000011110011
+  open riscv_stepLib;
+  val _ = riscv_step_hex "00100073";
 
-  val _ = riscv_step_hex "340120F3";
-
-val _ = riscv_test_hex_print_asm "CSRRS x1, mscratch(0x340), x2" "340120F3";
+val _ = riscv_test_hex_print_asm "EBREAK" "00100073";
 *)
-val _ = fail_with_msg "CSRRC not yet supported by stepLib";
-(* "bmr_step_hex failed" - probably more rewrites needed
+val _ = fail_with_msg "EBREAK not yet supported by stepLib";
 
-   CSRRC x1, mscratch(0x340), x2 : 001101000000    00010 011000011110011
-
-  val _ = riscv_step_hex "340130F3";
-
-val _ = riscv_test_hex_print_asm "CSRRC x1, mscratch(0x340), x2" "340130F3";
-*)
-val _ = fail_with_msg "CSRRWI not yet supported by stepLib";
-val _ = fail_with_msg "CSRRSI not yet supported by stepLib";
-val _ = fail_with_msg "CSRRCI not yet supported by stepLib";
 
 val _ = print_msg "\n";
 val _ = print_header "RV64I Base Instruction Set (instructions added to RV32I)\n";
@@ -274,6 +268,62 @@ val _ = print_msg "\n";
     (* Arithmetic right shift (32-bit) *)
     "SRAW x5, x6, x7"
   ];
+
+val _ = print_msg "\n";
+val _ = print_header "RV64 Zifencei Standard Extension\n";
+val _ = print_msg "\n";
+
+val _ = fail_with_msg "FENCE.I not yet supported by stepLib";
+
+val _ = print_msg "\n";
+val _ = print_header "RV64 Zicsr Standard Extension\n";
+val _ = print_msg "\n";
+
+(* CSR instructions (opcode SYSTEM) *)
+(* TODO: Note that machine mode is currently assumed for these instructions
+ * (see bottom of riscv_stepScript.sml) *)
+(* CSRRW x1, mscratch(0x340), x2 : 001101000000    00010 001000011110011
+
+  open riscv_stepLib;
+  val _ = riscv_step_hex "340110F3";
+
+*)
+val _ = riscv_test_hex_print_asm "CSRRW x1, mscratch(0x340), x2" "340110F3";
+(* CSRRS x1, mscratch(0x340), x2 : 001101000000    00010 010000011110011
+
+  open riscv_stepLib;
+  val test = riscv_step_hex "340120F3";
+
+*)
+val _ = riscv_test_hex_print_asm "CSRRS x1, mscratch(0x340), x2" "340120F3";
+(* CSRRC x1, mscratch(0x340), x2 : 001101000000    00010 011000011110011
+
+  open riscv_stepLib;
+  val test = riscv_step_hex "340130F3";
+
+*)
+val _ = riscv_test_hex_print_asm "CSRRC x1, mscratch(0x340), x2" "340130F3";
+(* CSRRWI x1, mscratch(0x340), 0x1 : 001101000000    00001 101 000011110011
+
+  open riscv_stepLib;
+  val _ = riscv_step_hex "3400D0F3";
+
+*)
+val _ = riscv_test_hex_print_asm "CSRRWI x1, mscratch(0x340), 0x1" "3400D0F3";
+(* CSRRSI x1, mscratch(0x340), 0x1 : 001101000000    00001 110 00001 1110011
+
+  open riscv_stepLib;
+  val test = riscv_step_hex "3400E0F3";
+
+*)
+val _ = riscv_test_hex_print_asm "CSRRSI x1, mscratch(0x340), 0x1" "3400E0F3";
+(* CSRRCI x1, mscratch(0x340), 0x1 : 001101000000    00001 111 000011110011
+
+  open riscv_stepLib;
+  val test = riscv_step_hex "3400F0F3";
+
+*)
+val _ = riscv_test_hex_print_asm "CSRRCI x1, mscratch(0x340), 0x1" "3400F0F3";
 
 val _ = print_msg "\n";
 val _ = print_header "RV64M Standard Extension (instructions inherited from RV32M)\n";
