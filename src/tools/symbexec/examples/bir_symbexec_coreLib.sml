@@ -115,7 +115,14 @@ local
       else if is_BExp_Load besubst then
         NONE
       else if is_BExp_Store besubst then
-        NONE
+        let
+(*
+          val _ = print_term besubst;
+          val _ = print "\n==========================================\n\n";
+*)
+        in
+          if true then NONE else raise ERR "compute_val_try" "store debugging"
+        end
 (*
       else if subterm_satisfies is_BExp_Load besubst orelse
               subterm_satisfies is_BExp_Store besubst then
@@ -165,10 +172,24 @@ end (* local *)
 (* primitive to carry out assignment *)
   fun state_assign_bv bv be syst =
     let
-      val bv_fresh = (get_bvar_fresh) bv;
+      val symbv = compute_valbe be syst;
+      val expo = case symbv of
+                    SymbValBE (x, _) => SOME x
+                  | _ => NONE;
+      val use_expo_var =
+            isSome expo andalso
+            (bir_expSyntax.is_BExp_Den o valOf) expo;
+
+      val bv_fr = if use_expo_var then
+                    (bir_expSyntax.dest_BExp_Den o valOf) expo
+                  else
+                    (get_bvar_fresh) bv;
     in
-      (update_envvar bv bv_fresh o
-       state_insert_symbval_from_be bv_fresh be
+      (update_envvar bv bv_fr o
+       (if use_expo_var then
+          I
+        else
+          insert_symbval bv_fr symbv)
       ) syst
     end;
 
