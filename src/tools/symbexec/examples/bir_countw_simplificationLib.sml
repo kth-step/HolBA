@@ -10,6 +10,8 @@ local
 
   open bir_exp_helperLib;
 
+  val ERR      = Feedback.mk_HOL_ERR "bir_countw_simplificationLib"
+  val wrap_exn = Feedback.wrap_exn   "bir_countw_simplificationLib"
 (*
 val var = bv_countw_fr;
 *)
@@ -19,7 +21,8 @@ fun expand_exp vals var =
                 handle Option => raise ERR "expand_exp" ((term_to_string var) ^ " not found");
     val exp = case symbv of
                  SymbValBE (be,_) => be
-               | _ => raise ERR "expand_exp" "unhandled symbolic value type";
+               | x => raise ERR "expand_exp"
+                        ("unhandled symbolic value type: " ^ (term_to_string var) ^ " and " ^ (symbv_to_string x));
 
     val vars = get_birexp_vars exp;
 
@@ -31,7 +34,10 @@ fun expand_exp vals var =
     val exp_ = List.foldl (fn ((bv, e), exp_) => subst_exp (bv, e, exp_)) exp subexps;
   in
     exp_
-  end;
+  end
+  handle e => raise wrap_exn
+               ("simple_pred_to_benvmap: " ^ (term_to_string var))
+               e;
 
 (*
 (hd(SYST_get_env syst))
@@ -105,26 +111,45 @@ val bv_countw = mk_BVar_string ("countw", ``(BType_Imm Bit64)``);
 (*
 val syst = hd systs;
 *)
-fun eval_countw_in_syst syst =
+fun expand_bv_fr_in_syst bv_fr syst =
+  let
+    val vals = (SYST_get_vals syst);
+
+    (*
+    val exp = simple_pred_to_subst pred exp_;
+    *)
+
+    val symbv = find_bv_val "expand_bv_fr_in_syst" vals bv_fr;
+  in
+    (expand_exp vals bv_fr, Redblackset.listItems (deps_of_symbval "expand_bv_fr_in_syst" symbv))
+  end;
+
+fun expand_bv_in_syst bv syst =
+  let
+    val env  = (SYST_get_env  syst);
+
+    val bv_fr = find_bv_val "expand_bv_in_syst" env bv;
+  in
+    (fst o expand_bv_fr_in_syst bv_fr) syst
+  end;
+
+fun eval_exp_in_syst exp syst =
   let
     val pred = (SYST_get_pred syst);
     val env  = (SYST_get_env  syst);
     val vals = (SYST_get_vals syst);
 
-    val bv_countw_fr = find_bv_val "eval_countw_in_syst" env bv_countw;
-
-(*
+    (*
     val benv = mk_BEnv (simple_pred_to_benvmap pred benvmap_empty);
-*)
+    *)
     val benv = ``BEnv (K NONE)``;
-    val exp_ = expand_exp vals bv_countw_fr;
-(*
-    val exp = simple_pred_to_subst pred exp_;
-*)
-    val exp = exp_;
   in
     (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp ^benv``
   end;
+
+
+fun eval_countw_in_syst syst =
+    eval_exp_in_syst (expand_bv_in_syst bv_countw syst) syst;
 
 end (* local *)
 end (* struct *)
