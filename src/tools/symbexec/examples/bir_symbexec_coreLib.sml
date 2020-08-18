@@ -209,7 +209,6 @@ end (* local *)
     end;
 
 (* primitives for adding conjuncts to the path predicate *)
-local
   fun state_add_pred bv_str pred syst =
     let
       val bv = bir_envSyntax.mk_BVar_string (bv_str, bir_valuesSyntax.BType_Bool_tm);
@@ -219,28 +218,28 @@ local
        state_insert_symbval_from_be bv_fresh pred
       ) syst
     end;
-in (* local *)
+
   fun state_add_preds bv_str preds syst =
     List.foldr (fn (pred, syst_) => state_add_pred bv_str pred syst_) syst preds;
-end (* local *)
+
+(*
+(* primitive for removing the head of the path predicate *)
+  fun state_remove_preds_head pred syst =
+    let
+    in
+      ()
+    end;
+*)
 
 (* primitives for branching states based on a boolean condition expression *)
   fun state_branch str_prefix cnd f_bt f_bf syst =
     let
-        val cnd_bv = bir_envSyntax.mk_BVar_string (str_prefix ^ "_cnd", bir_valuesSyntax.BType_Bool_tm);
-        val cnd_bv_t = get_bvar_fresh cnd_bv;
-        val cnd_bv_f = get_bvar_fresh cnd_bv;
+      val bv_str = str_prefix ^ "_cnd";
     in
         List.concat [
-          (f_bt o
-           SYST_update_pred ((cnd_bv_t)::(SYST_get_pred syst)) o
-           state_insert_symbval_from_be cnd_bv_t cnd
-          ) syst
+          (f_bt o state_add_pred bv_str cnd) syst
          ,
-          (f_bf o
-           SYST_update_pred ((cnd_bv_f)::(SYST_get_pred syst)) o
-           state_insert_symbval_from_be cnd_bv_f (bslSyntax.bnot cnd)
-          ) syst
+          (f_bf o state_add_pred bv_str (bslSyntax.bnot cnd)) syst
         ]
     end;
 

@@ -110,9 +110,11 @@ val syst =
   else
     state_make_interval ``BVar "countw" (BType_Imm Bit64)`` syst;
 
+(*
 val syst = state_make_mem ``BVar "MEM" (BType_Mem Bit32 Bit8)``
                           (Arbnum.fromInt 0x10000000, Arbnum.fromInt 0x400)
                           syst;
+*)
 
 val syst = state_add_preds "init_pred" pred_conjs syst;
 
@@ -156,6 +158,7 @@ val _ = print "\n\n";
 val systs_tidiedup = List.map tidyup_state_vals systs_feasible;
 val _ = print "finished tidying up all paths.\n\n";
 
+
 (*
 val countw_symbvs = List.map (symbv_to_string o get_state_symbv "script" bv_countw) systs_tidiedup;
 
@@ -167,6 +170,8 @@ val syst = merge_states_vartointerval bv_countw (syst1, syst2);
 val envl = (Redblackmap.listItems o SYST_get_env) syst;
 val valsl = (Redblackmap.listItems o SYST_get_vals) syst;
 *)
+
+val _ = print ("num preds: " ^ ((Int.toString o length o SYST_get_pred o List.nth) (systs_tidiedup, 0)) ^ "\n");
 
 val syst_merged =
   (fn x => List.foldr (merge_states_vartointerval bv_countw)
