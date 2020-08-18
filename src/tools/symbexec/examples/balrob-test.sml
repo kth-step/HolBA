@@ -133,7 +133,21 @@ val valsl = (Redblackmap.listItems o SYST_get_vals) syst;
 Redblackmap.peek (SYST_get_vals syst, ``BVar "fr_175_countw" (BType_Imm Bit64)``)
 *)
 
-val systs = symb_exec_to_stop false n_dict bl_dict_ [syst] stop_lbl_tms [];
+val cfb = false;
+
+fun abpfun systs =
+  let
+    val systs_filtered =
+      if cfb andalso length systs > 1 then
+        List.filter check_feasible systs
+      else
+        systs;
+    val systs_noassertpreds = List.map (I) systs;
+  in
+    systs_noassertpreds
+  end;
+
+val systs = symb_exec_to_stop abpfun n_dict bl_dict_ [syst] stop_lbl_tms [];
 val _ = print "finished exploration of all paths.\n";
 val _ = print ("number of paths found: " ^ (Int.toString (length systs)));
 val _ = print "\n\n";

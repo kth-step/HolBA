@@ -247,7 +247,7 @@ local
   open bir_block_collectionLib;
 in (* local *)
   (* execution of a whole block *)
-  fun symb_exec_block cfb n_dict bl_dict syst =
+  fun symb_exec_block abpfun n_dict bl_dict syst =
     let
       val lbl_tm = SYST_get_pc syst;
 
@@ -259,26 +259,23 @@ in (* local *)
 
       (* generate list of states from end statement *)
       val systs = List.concat(List.map (symb_exec_endstmt n_dict lbl_tm est) systs2);
-      val systs_filtered = if cfb andalso length systs > 1 then
-                             List.filter check_feasible systs
-                           else
-                             systs;
+      val systs_processed = abpfun systs;
     in
-      systs_filtered
+      systs_processed
     end;
 
   (* execution of blocks until not running anymore or end label set is reached *)
-  fun symb_exec_to_stop cfb _      _       []                  _            acc = acc
-    | symb_exec_to_stop cfb n_dict bl_dict (exec_st::exec_sts) stop_lbl_tms acc =
+  fun symb_exec_to_stop _      _      _       []                  _            acc = acc
+    | symb_exec_to_stop abpfun n_dict bl_dict (exec_st::exec_sts) stop_lbl_tms acc =
         let
           fun state_stops syst =
             (List.exists (fn x => identical (SYST_get_pc syst) x) stop_lbl_tms) orelse
             not (identical (SYST_get_status syst) BST_Running_tm);
 
-          val sts = symb_exec_block cfb n_dict bl_dict exec_st;
+          val sts = symb_exec_block abpfun n_dict bl_dict exec_st;
           val (new_acc, new_exec_sts) = List.partition state_stops sts;
         in
-          symb_exec_to_stop cfb n_dict bl_dict (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
+          symb_exec_to_stop abpfun n_dict bl_dict (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
         end;
 end (* local *)
 
