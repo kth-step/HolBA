@@ -222,14 +222,19 @@ end (* local *)
   fun state_add_preds bv_str preds syst =
     List.foldr (fn (pred, syst_) => state_add_pred bv_str pred syst_) syst preds;
 
-(*
 (* primitive for removing the head of the path predicate *)
-  fun state_remove_preds_head pred syst =
+  fun state_remove_preds_by_suffix pred_suffix syst =
     let
+      val preds = SYST_get_pred syst;
+      val (preds_keep, preds_removed) =
+        List.partition (not o String.isSuffix pred_suffix o
+                        fst o bir_envSyntax.dest_BVar_string)
+                       preds;
+
+      (* notice: rely on tidy up state function for stale values *)
     in
-      ()
+      SYST_update_pred preds_keep syst
     end;
-*)
 
 (* primitives for branching states based on a boolean condition expression *)
   fun state_branch str_prefix cnd f_bt f_bf syst =
@@ -244,7 +249,7 @@ end (* local *)
     end;
 
   fun state_branch_simp str_prefix cnd f_bt f_bf syst =
-      state_branch str_prefix cnd (fn s => [f_bt s]) (fn s => [f_bf s]) syst
+      state_branch str_prefix cnd (fn s => [f_bt s]) (fn s => [f_bf s]) syst;
 
 end (* outermost local *)
 

@@ -97,7 +97,10 @@ val pred_conjs = [
              (BExp_Const (Imm32 ^(wordsSyntax.mk_wordii(stack_start, 32)))))
           (BExp_BinPred BIExp_LessThan
              (BExp_Const (Imm32 ^(wordsSyntax.mk_wordii(stack_end + stack_space_req, 32))))
-             (BExp_Den (BVar "SP_process" (BType_Imm Bit32))))``
+             (BExp_Den (BVar "SP_process" (BType_Imm Bit32))))``,
+``BExp_BinPred BIExp_LessOrEqual
+     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+     (BExp_Const (Imm64 ^(wordsSyntax.mk_wordii(0x10000000, 64))))``
 ];
 
 val use_countw_const_only = false;
@@ -142,7 +145,23 @@ fun abpfun systs =
         List.filter check_feasible systs
       else
         systs;
-    val systs_noassertpreds = List.map (I) systs;
+
+    val _ = if not cfb then () else
+            List.app (fn syst =>
+              if state_is_running syst then () else
+              print "a non-running state is still present after feasibility check\n"
+            ) systs_filtered;
+
+    fun remove_asserts_from_running syst =
+        if state_is_running syst then
+          state_remove_preds_by_suffix "assert_cnd" syst
+        else
+          syst;
+
+    val systs_noassertpreds =
+           List.map
+           remove_asserts_from_running
+           systs_filtered;
   in
     systs_noassertpreds
   end;
@@ -179,6 +198,7 @@ val countw_symbvs = List.map (symbv_to_string o get_state_symbv "script" bv_coun
 val syst1 = List.nth (systs_tidiedup, 1);
 val syst2 = List.nth (systs_tidiedup, 2);
 
+val syst = hd systs_tidiedup;
 val syst = merge_states_vartointerval bv_countw (syst1, syst2);
 
 val envl = (Redblackmap.listItems o SYST_get_env) syst;
