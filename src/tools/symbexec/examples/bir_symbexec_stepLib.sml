@@ -133,7 +133,7 @@ local
 in (* local *)
   fun symb_exec_stmt (s, syst) =
     (* no update if state is not running *)
-    if not (identical (SYST_get_status syst) BST_Running_tm) then
+    if (not o state_is_running) syst then
       [syst]
     (* assignment *)
     else if is_BStmt_Assign s then
@@ -228,7 +228,7 @@ local
 in (* local *)
   fun symb_exec_endstmt n_dict lbl_tm est syst =
     (* no update if state is not running *)
-    if not (identical (SYST_get_status syst) BST_Running_tm) then [syst] else
+    if (not o state_is_running) syst then [syst] else
     (* try to match direct jump *)
     case state_exec_try_jmp_label est syst of
        SOME systs => systs
@@ -270,7 +270,7 @@ in (* local *)
         let
           fun state_stops syst =
             (List.exists (fn x => identical (SYST_get_pc syst) x) stop_lbl_tms) orelse
-            not (identical (SYST_get_status syst) BST_Running_tm);
+            (not o state_is_running) syst;
 
           val sts = symb_exec_block abpfun n_dict bl_dict exec_st;
           val (new_acc, new_exec_sts) = List.partition state_stops sts;

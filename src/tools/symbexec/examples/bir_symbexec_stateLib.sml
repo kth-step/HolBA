@@ -123,6 +123,9 @@ fun SYST_update_vals vals' (SymbState systr) =
           (vals');
 
 
+fun state_is_running syst =
+  identical (SYST_get_status syst) BST_Running_tm;
+
 (* fresh variables and initial state variables *)
 local
   open bir_envSyntax;
