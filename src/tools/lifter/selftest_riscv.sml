@@ -202,12 +202,32 @@ val _ = fail_with_msg "FENCE.I not yet supported by stepLib";
 val _ = fail_with_msg "ECALL not yet supported by stepLib";
 val _ = fail_with_msg "EBREAK not yet supported by stepLib";
 (* TODO: CSR instructions go here... *)
-(* Example of instruction failing at stepLib:
-val _ = riscv_test_hex_print_asm "CSRRW x1, ustatus(0x000), x2" "0110F3";
+(* CSRRW x1, mscratch(0x340), x2 : 001101000000    00010 001000011110011
+
+  Test only step:
+  open riscv_stepLib;
+  val _ = riscv_step_hex "340110F3";
+
 *)
-val _ = fail_with_msg "CSRRW not yet supported by stepLib";
+val _ = riscv_test_hex_print_asm "CSRRW x1, mscratch(0x340), x2" "340110F3";
 val _ = fail_with_msg "CSRRS not yet supported by stepLib";
+(* Times out at riscv_step_hex...
+
+   CSRRS x1, mscratch(0x340), x2 : 001101000000    00010 010000011110011
+
+  val _ = riscv_step_hex "340120F3";
+
+val _ = riscv_test_hex_print_asm "CSRRS x1, mscratch(0x340), x2" "340120F3";
+*)
 val _ = fail_with_msg "CSRRC not yet supported by stepLib";
+(* "bmr_step_hex failed" - probably more rewrites needed
+
+   CSRRC x1, mscratch(0x340), x2 : 001101000000    00010 011000011110011
+
+  val _ = riscv_step_hex "340130F3";
+
+val _ = riscv_test_hex_print_asm "CSRRC x1, mscratch(0x340), x2" "340130F3";
+*)
 val _ = fail_with_msg "CSRRWI not yet supported by stepLib";
 val _ = fail_with_msg "CSRRSI not yet supported by stepLib";
 val _ = fail_with_msg "CSRRCI not yet supported by stepLib";
