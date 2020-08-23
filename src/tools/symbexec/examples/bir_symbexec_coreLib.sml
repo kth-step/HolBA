@@ -218,21 +218,61 @@ local
         NONE
     end;
 
+  fun process_addr str_op vals addr_tm =
+    let
+      val debugOn = false;
+      val _ = if not debugOn then () else
+              print (str_op ^ "\n---------------\n");
+      (*
+      val _ = (print ("addr " ^ str_op ^ ": [[[\n"); print_term addr_tm; print "]]]\n\n");
+      *)
+      val addr_tm_vars = get_birexp_vars addr_tm;
+      val addr_ =
+          if is_BExp_Den addr_tm then
+            SOME (find_bv_val "state_make_interval" vals (dest_BExp_Den addr_tm))
+          else
+            compute_val_try_expplusminusconst vals (addr_tm, addr_tm_vars);
+      (*
+      val _ = if isSome addr_ then print (symbv_to_string (valOf addr_)) else
+              print "NONE";
+      *)
+      val (addr, addr_deps) =
+          case addr_ of
+             SOME (SymbValBE x) => x
+           | NONE => (addr_tm, Redblackset.addList (symbvalbe_dep_empty, addr_tm_vars))
+           | _ => raise ERR "process_addr" "NEEDS TO BE A SYMBOLIC EXPRESSION";
+
+      val _ = if not debugOn then () else
+              (print ("addr proc: {{{\n"); print_term addr; print "}}}\n\n");
+    in
+      (addr, addr_deps)
+    end;
+
   fun compute_val_try_mem vals (besubst, besubst_vars) =
     let
-          val debugOn = false;
-          val _ = if not debugOn then () else
-                  print_term besubst;
-          val _ = if not debugOn then () else 
-                  print "\n==========================================\n\n";
+      val debugOn = false;
+      val _ = if not debugOn then () else
+              print_term besubst;
+      val _ = if not debugOn then () else 
+              print "\n==========================================\n\n";
     in
       if is_BExp_Load besubst then
         let
+          val (mem_tm, addr_tm, end_tm, sz_tm) = dest_BExp_Load besubst;
+          val (addr, addr_deps) = process_addr "load" vals addr_tm;
+
+          val _ = if not debugOn then () else
+                  print_term sz_tm;
         in
           if true then NONE else raise ERR "compute_val_try" "load debugging"
         end
       else if is_BExp_Store besubst orelse is_BExp_Load besubst then
         let
+          val (mem_tm, addr_tm, end_tm, val_tm) = dest_BExp_Store besubst;
+          val (addr, addr_deps) = process_addr "store" vals addr_tm;
+
+          val _ = if not debugOn then () else
+                  print_term val_tm;
         in
           if true then NONE else raise ERR "compute_val_try" "store debugging"
         end
@@ -414,7 +454,7 @@ end (* local *)
     let
       val bv_str = str_prefix ^ "_cnd";
 
-      val debugOn = true;
+      val debugOn = false;
 
       val systs1 = (f_bt o state_add_pred bv_str cnd) syst;
       val systs2 = (f_bf o state_add_pred bv_str (bslSyntax.bnot cnd)) syst;
