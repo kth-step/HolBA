@@ -227,7 +227,7 @@ structure bir_arm8_cache_speculation_model : OBS_MODEL =
  val obs_hol_type = ``bir_val_t``;
  val pipeline_depth = 3;
  fun add_obs t =
-     branch_instrumentation_obs (bir_arm8_cache_line_model.add_obs t) pipeline_depth;
+     branch_instrumentation_obs (bir_arm8_mem_addr_pc_model.add_obs t) pipeline_depth;
  end;
 
 
