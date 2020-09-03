@@ -75,6 +75,133 @@ fun find_subterm is_tm_fun tm =
       NONE
     ;
 
+fun collect_subterm is_tm_fun combine_fun acc tm =
+    if is_comb tm then
+      let
+        val (l,r) = dest_comb tm;
+
+        val acc_   = if is_tm_fun tm then
+                       combine_fun (tm, acc)
+                     else
+                       acc;
+        val acc_l  = collect_subterm is_tm_fun combine_fun acc_  l;
+        val acc_lr = collect_subterm is_tm_fun combine_fun acc_l r;
+      in
+        acc_lr
+      end
+    else
+      acc
+    ;
+
+fun load_to_size tm =
+  if (not o is_BExp_Load) tm then
+    raise ERR "load_to_size" "not a load!"
+  else
+  let
+    val (_,_,_,sz) = dest_BExp_Load tm;
+  in
+    sz
+  end;
+
+(* ================================================================================= *)
+(* this is copied code from somewhere else *)
+  fun type_of_bir_exp_CONV term =
+    (* Manual test
+    val term = ``
+      BExp_BinExp BIExp_Plus
+        (BExp_Const (Imm32 20w))
+        (BExp_Const (Imm32 22w))
+    ``;
+    val thm = type_of_bir_exp_CONV ``type_of_bir_exp ^term``;
+    *)
+    let
+      open bir_immTheory
+      open bir_valuesTheory
+      open bir_envTheory
+      open bir_exp_memTheory
+      open bir_bool_expTheory
+      open bir_extra_expsTheory
+      open bir_nzcv_expTheory
+      val type_of_bir_exp_thms = [
+        type_of_bir_exp_def,
+        bir_var_type_def,
+        bir_type_is_Imm_def,
+        type_of_bir_imm_def,
+        BExp_Aligned_type_of,
+        BExp_unchanged_mem_interval_distinct_type_of,
+        bir_number_of_mem_splits_REWRS,
+        BType_Bool_def,
+        bir_exp_true_def,
+        bir_exp_false_def,
+        BExp_MSB_type_of,
+        BExp_nzcv_ADD_DEFS,
+        BExp_nzcv_SUB_DEFS,
+        n2bs_def,
+        BExp_word_bit_def,
+        BExp_Align_type_of,
+        BExp_ror_type_of,
+        BExp_LSB_type_of,
+        BExp_word_bit_exp_type_of,
+        BExp_ADD_WITH_CARRY_type_of,
+        BExp_word_reverse_type_of,
+        BExp_ror_exp_type_of
+      ]
+      val conv = SIMP_CONV (srw_ss()) type_of_bir_exp_thms
+    in
+      conv term
+    end;
+(* ================================================================================= *)
+
+(*
+val tm = ``
+BExp_Store
+       (BExp_Store
+          (BExp_Store
+             (BExp_Store (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                (BExp_BinExp BIExp_Minus
+                   (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                   (BExp_Const (Imm32 16w))) BEnd_LittleEndian
+                (BExp_Den (BVar "R5" (BType_Imm Bit32))))
+             (BExp_BinExp BIExp_Minus
+                (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+                (BExp_Const (Imm32 12w))) BEnd_LittleEndian
+             (BExp_Den (BVar "R6" (BType_Imm Bit32))))
+          (BExp_BinExp BIExp_Minus
+             (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+             (BExp_Const (Imm32 8w))) BEnd_LittleEndian
+          (BExp_Den (BVar "R7" (BType_Imm Bit32))))
+       (BExp_BinExp BIExp_Minus
+          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+          (BExp_Const (Imm32 4w))) BEnd_LittleEndian
+       (BExp_Den (BVar "LR" (BType_Imm Bit32)))
+``;
+*)
+
+fun store_to_size tm =
+  if (not o is_BExp_Store) tm then
+    raise ERR "store_to_size" "not a store!"
+  else
+  let
+    val (_,_,_,tm_v) = dest_BExp_Store tm;
+    val bty_v_o = (snd o dest_eq o concl o type_of_bir_exp_CONV) ``type_of_bir_exp ^tm_v``;
+    val bty_v = if optionSyntax.is_some bty_v_o then
+                  optionSyntax.dest_some bty_v_o
+                else
+                  raise ERR "store_to_size" "couldn't resolve expression type";
+
+    val sz =
+      if bir_valuesSyntax.is_BType_Imm bty_v then
+        bir_valuesSyntax.dest_BType_Imm bty_v
+      else
+        raise ERR "store_to_size" "no bir imm";
+  in
+    sz
+  end;
+
+(*
+collect_subterm is_BExp_Store (fn (tm, acc) => (store_to_size tm)::acc) [] tm
+*)
+
 val n_sub_loads =
   (List.length o
    List.filter (isSome o find_subterm is_BExp_Load)
@@ -89,3 +216,30 @@ val exact_sub_loads =
   (List.filter (fn tm => (isSome o find_subterm is_BExp_Load) tm andalso
                          (not o is_BExp_Load) tm)
   ) exps;
+
+
+val size_loads =
+   (List.concat o List.map (collect_subterm is_BExp_Load (fn (tm, acc) => (load_to_size tm)::acc) [])) exps;
+
+val size_stores =
+   (List.concat o List.map (collect_subterm is_BExp_Store (fn (tm, acc) => (store_to_size tm)::acc) [])) exps;
+
+
+fun mk_histogram_h []        acc = acc
+  | mk_histogram_h (tm::tms) acc =
+     let
+       val tm_num = Redblackmap.find (acc, tm) handle _ => 0;
+       val acc_n  = Redblackmap.insert (acc, tm, tm_num + 1);
+     in
+       mk_histogram_h tms acc_n
+     end;
+
+
+fun mk_histogram tms =
+  (Redblackmap.listItems o mk_histogram_h tms) (Redblackmap.mkDict Term.compare);
+
+val size_loads_nums =
+  mk_histogram size_loads;
+
+val size_stores_nums =
+  mk_histogram size_stores;
