@@ -251,13 +251,19 @@ local
   fun compute_val_try_mem vals (besubst, besubst_vars) =
     let
       val debugOn = false;
-      val _ = if not debugOn then () else
-              print_term besubst;
-      val _ = if not debugOn then () else 
-              print "\n==========================================\n\n";
+
+      fun debug_prints debugOn =
+        let
+          val _ = if not debugOn then () else
+                  print_term besubst;
+          val _ = if not debugOn then () else 
+                  print "\n==========================================\n\n";
+        in () end;
     in
       if is_BExp_Load besubst then
         let
+          val _ = debug_prints debugOn;
+
           val (mem_tm, addr_tm, end_tm, sz_tm) = dest_BExp_Load besubst;
           val (addr, addr_deps) = process_addr "load" vals addr_tm;
 
@@ -268,6 +274,8 @@ local
         end
       else if is_BExp_Store besubst orelse is_BExp_Load besubst then
         let
+          val _ = debug_prints debugOn;
+
           val (mem_tm, addr_tm, end_tm, val_tm) = dest_BExp_Store besubst;
           val (addr, addr_deps) = process_addr "store" vals addr_tm;
 
