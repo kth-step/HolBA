@@ -2,6 +2,7 @@ open HolKernel Parse
 
 open binariesLib;
 open binariesCfgLib;
+open binariesMemLib;
 
 open bir_symbexec_stateLib;
 open bir_symbexec_coreLib;
@@ -79,8 +80,11 @@ lookup_block_dict bl_dict_ lbl_tm
 *)
 
 (* TODO: how much space do we actually have? we should "enforce" this with the linker... *)
+val mem_ram_start = 0x10000000;
+val mem_ram_size  = 0x2000;
+
 val stack_size  = 0x100;
-val stack_start = 0x10000000 + 0x2000 -16;
+val stack_start = mem_ram_start + mem_ram_size -16;
 val stack_end   = stack_start - stack_size;
 
 val stack_space_req = 0x80;
@@ -113,9 +117,17 @@ val syst =
   else
     state_make_interval ``BVar "countw" (BType_Imm Bit64)`` syst;
 
+val mem_sz_const = mem_ram_start;
+val mem_sz_globl = 0x1000;
+val mem_sz_stack = mem_ram_size - mem_sz_globl;
+val _ = if mem_sz_stack > 0 then () else
+        raise ERR "script" "mem_sz_stack should be greater than 0";
+
 (*
 val syst = state_make_mem ``BVar "MEM" (BType_Mem Bit32 Bit8)``
-                          (Arbnum.fromInt 0x10000000, Arbnum.fromInt 0x400)
+                          (Arbnum.fromInt mem_sz_const, Arbnum.fromInt mem_sz_globl, Arbnum.fromInt mem_sz_stack)
+                          (mem_read_byte binary_mem)
+                          ``BVar "SP_process" (BType_Imm Bit32)``
                           syst;
 *)
 

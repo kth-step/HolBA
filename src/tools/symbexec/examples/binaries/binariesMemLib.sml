@@ -85,6 +85,8 @@ fun parse_line_acc (s, l) =
       l (* skip line *)
   end;
 
+in (* local *)
+
 fun parse_file mem_file =
   let
     val lines   = read_file_lines mem_file;
@@ -98,10 +100,14 @@ fun parse_file mem_file =
 
 val binary_mem = parse_file mem_file;
 
-in (* local *)
-
 (*
+
+List.rev binary_mem
+
 val addr = Arbnum.fromInt (0x10000018);
+val addr = Arbnum.fromInt (0x10000010);
+val addr = Arbnum.fromInt (0x10001410);
+val addr = Arbnum.fromInt (0x118);
 val hs   = (Option.map Arbnum.toHexString) (mem_read_byte binary_mem addr)
 *)
 fun mem_read_byte binary_mem addr =

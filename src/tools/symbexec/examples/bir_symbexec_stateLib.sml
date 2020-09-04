@@ -13,8 +13,11 @@ datatype symb_value =
                     (* TODO: generalize this later *)
                     (* memory layout: flash, globals, stack;
                                       size of first (constants) and middle portion (globals) *)
-  | SymbValMem      of (((Arbnum.num -> Arbnum.num) * term * term) *
-                        (Arbnum.num * Arbnum.num) *
+  | SymbValMem      of ((Arbnum.num * Arbnum.num * Arbnum.num) *
+                        ((Arbnum.num -> Arbnum.num option) *
+                         (Arbnum.num, term * term Redblackset.set) Redblackmap.dict *
+                         (term * (Arbnum.num, term * term Redblackset.set) Redblackmap.dict)
+                        ) *
                         term Redblackset.set);
 
 val symbvalbe_dep_empty = Redblackset.empty Term.compare;

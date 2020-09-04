@@ -411,16 +411,33 @@ end (* local *)
       ) syst
     end;
 
-  fun state_make_mem bv layout syst =
+  fun state_make_mem bv layout mem_const_fun bv_sp syst =
     let
       val env    = SYST_get_env syst;
-      val bv_val = find_bv_val "state_make_interval" env bv;
+      val bv_val = find_bv_val "state_make_mem" env bv;
       val _ = if is_bvar_init bv_val then () else
-              raise ERR "state_make_mem" "can only make interval values from initial variables currently";
+              raise ERR "state_make_mem" "can only make memory values from initial variables currently";
 
-      val exp   = bir_expSyntax.mk_BExp_Den bv_val;
+      val bv_sp_val = find_bv_val "state_make_mem" env bv_sp;
+      val _ = if is_bvar_init bv_sp_val then () else
+              raise ERR "state_make_mem" "can only make memory values from initial variables currently";
+
+      (* TODO: should/need we somehow add that bv_val is equal to the introduced memory abstraction? *)
+      (* val exp   = bir_expSyntax.mk_BExp_Den bv_val; *)
+
+      (* constant memory *)
+      val mem_const = mem_const_fun;
+
+      (* global memory *)
+      (* TODO: add initial global memory, and a function to remove mappings (abstract again) *)
+      val mem_globl = Redblackmap.mkDict Arbnum.compare;
+
+      (* stack memory *)
+      val mem_stack = (bv_sp_val, Redblackmap.mkDict Arbnum.compare);
+
+      val mem_parts = (mem_const, mem_globl, mem_stack);
       val deps  = Redblackset.add (symbvalbe_dep_empty, bv_val);
-      val symbv = SymbValMem ((I, exp, exp), layout, deps);
+      val symbv = SymbValMem (layout, mem_parts, deps);
 
       val bv_fresh = (get_bvar_fresh) bv;
     in
