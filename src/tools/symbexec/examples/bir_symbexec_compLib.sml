@@ -265,6 +265,35 @@ in (* outermost local *)
 
 (* ================================================================ *)
 
+  fun mem_store_stack mem bv_sp imm_offset val_tm =
+    let
+      val ((mem_const_size, mem_globl_size, mem_stack_size),
+           (mem_const, mem_globl, (bv_sp_, mem_stack)),
+           deps) = mem;
+
+      val _ = if identical bv_sp bv_sp_ then () else
+              raise ERR "mem_store_stack" "stackpointer doesn't match memory abstraction";
+
+      (* TODO: add check that addr is well in stack memory (would require pred, and maybe smt solver for simplicity) *)
+
+      val val_tm_deps = Redblackset.fromList Term.compare (get_birexp_vars val_tm);
+      (* this is an overapproximation, because variables may get lost when overwriting *)
+      val deps_new = Redblackset.union (deps, val_tm_deps);
+
+      val val_tm_sz = (bittype_to_size o bexp_to_bittype) val_tm;
+      (* TODO: fix for wordlengths other than 32 *)
+      (* TODO: to allow 8 here is a bug at the moment! *)
+      val _ = if val_tm_sz = 32 orelse val_tm_sz = 8 then () else
+              raise ERR "mem_store_const" "cannot handle anything other than 32 currently";
+
+      val offset = (wordsSyntax.dest_word_literal o bir_immSyntax.dest_Imm32) imm_offset;
+      val mem_stack_new = Redblackmap.insert (mem_stack, offset, (val_tm, val_tm_deps));
+    in
+      SymbValMem ((mem_const_size, mem_globl_size, mem_stack_size),
+                  (mem_const, mem_globl, (bv_sp, mem_stack_new)),
+                  deps_new)
+    end;
+
   fun mem_store_const mem caddr val_tm =
     let
       val ((mem_const_size, mem_globl_size, mem_stack_size),
@@ -286,9 +315,9 @@ in (* outermost local *)
          Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), caddr) then
         raise ERR "mem_store_const" "global store out of global memory range"
       else
-      SOME (SymbValMem ((mem_const_size, mem_globl_size, mem_stack_size),
-                        (mem_const, mem_globl_new, (bv_sp, mem_stack)),
-                        deps_new))
+      SymbValMem ((mem_const_size, mem_globl_size, mem_stack_size),
+                  (mem_const, mem_globl_new, (bv_sp, mem_stack)),
+                  deps_new)
     end;
 
   fun mem_store mem addr_tm end_tm val_tm =
@@ -302,24 +331,46 @@ in (* outermost local *)
         let
           val caddr = (wordsSyntax.dest_word_literal o bir_immSyntax.dest_Imm32 o dest_BExp_Const) addr_tm;
         in
-          mem_store_const mem caddr val_tm
+          SOME (mem_store_const mem caddr val_tm)
         end
       else
       let
-        val (vs, _) = hol88Lib.match var_sub_const_match_tm addr_tm;
+        val (vs, _) = hol88Lib.match var_sub_const_match_tm addr_tm
+                       handle _ => raise ERR "mem_store"
+                                      ("couldn't resolve addr_tm: " ^ (term_to_string addr_tm));
         val bv      = fst (List.nth (vs, 0));
         val imm_val = fst (List.nth (vs, 1));
       in
-        (* TODO: mem_store_stack, add TODO for checking addr is in stack memory *)
-        SOME (SymbValMem mem)
+        SOME (mem_store_stack mem bv imm_val val_tm)
       end
-      handle _ => raise ERR "mem_store" ("couldn't resolve addr_tm: " ^ (term_to_string addr_tm))
     end;
 
 
 (* ================================================================ *)
 
 (* TODO: add initial memory symbol and add it to memory abstractions for loads from "unpopulated" memory *)
+
+  fun mem_load_stack mem bv_sp imm_offset sz_tm =
+    let
+      val ((mem_const_size, mem_globl_size, mem_stack_size),
+           (mem_const, mem_globl, (bv_sp_, mem_stack)),
+           deps) = mem;
+
+      val _ = if identical bv_sp bv_sp_ then () else
+              raise ERR "mem_store_stack" "stackpointer doesn't match memory abstraction";
+
+      (* TODO: add check that addr is well in stack memory (would require pred, and maybe smt solver for simplicity) *)
+
+      val sz = (bittype_to_size) sz_tm;
+      (* TODO: fix for wordlengths other than 32 *)
+      val _ = if sz = 32 then () else
+              raise ERR "mem_store_const" "cannot handle anything other than 32 currently";
+
+      val offset = (wordsSyntax.dest_word_literal o bir_immSyntax.dest_Imm32) imm_offset;
+    in
+      SymbValBE (Redblackmap.find (mem_stack, offset))
+      handle _ => raise ERR "mem_load_stack" "address is not mapped in global memory"
+    end;
 
   fun mem_load_const_le_sz mem_const addr sz acc =
     if sz = 0 then
@@ -384,19 +435,19 @@ in (* outermost local *)
         end
       else
       let
-        val (vs, _) = hol88Lib.match var_sub_const_match_tm addr_tm;
+        val (vs, _) = hol88Lib.match var_sub_const_match_tm addr_tm
+                      handle _ => raise ERR "mem_load"
+                                    ("couldn't resolve addr_tm: " ^ (term_to_string addr_tm));
         val bv      = fst (List.nth (vs, 0));
         val imm_val = fst (List.nth (vs, 1));
       in
-        (* TODO: mem_store_stack, add TODO for checking addr is in stack memory *)
-        NONE
+        SOME (mem_load_stack mem bv imm_val sz_tm)
       end
-      handle _ => raise ERR "mem_load" ("couldn't resolve addr_tm: " ^ (term_to_string addr_tm))
     end;
 
 (* ================================================================ *)
 
-  val debug_memOn = true;
+  val debug_memOn = false;
 
   fun compute_val_try_mem_load compute_val_and_resolve_deps vals (besubst, besubst_vars) =
     if is_BExp_Load besubst then
@@ -407,13 +458,15 @@ in (* outermost local *)
       val mem_symbv_resolve = compute_val_and_resolve_deps vals (mem_tm, besubst_vars);
       val mem_symbv_o = SOME (lookup_mem_symbv vals mem_symbv_resolve)
                         handle _ => NONE;
+
+      val mem_o = case mem_symbv_o of
+                     SOME (SymbValMem m) => SOME m
+                   | _ => NONE;
     in
-      if is_none mem_symbv_o then NONE else
+      if is_none mem_o then NONE else
       let
-        val mem_symbv = valOf  mem_symbv_o;
-        val mem = case mem_symbv of
-                     SymbValMem m => m
-                   | _ => raise ERR "compute_val_try_mem_load" "can only store in symbolic memory";
+        val mem_symbv = valOf mem_symbv_o;
+        val mem       = valOf mem_o;
 
         val _ = if not debug_memOn then () else (
                   print "\n\n============ load\n";
@@ -422,14 +475,14 @@ in (* outermost local *)
                   print_term sz_tm
                 );
 
-        val ld_res = mem_load mem addr end_tm sz_tm;
+        val res = mem_load mem addr end_tm sz_tm;
 
         val _ = if not debug_memOn then () else (
-                  if is_none ld_res then () else
-                  print ((symbv_to_string (valOf ld_res)) ^ "\n")
+                  if is_none res then print "NONE\n" else
+                  print ((symbv_to_string (valOf res)) ^ "\n")
                 );
       in
-        ld_res
+        res
       end
     end
     else NONE;
@@ -443,13 +496,15 @@ in (* outermost local *)
       val mem_symbv_resolve = compute_val_and_resolve_deps vals (mem_tm, besubst_vars);
       val mem_symbv_o = SOME (lookup_mem_symbv vals mem_symbv_resolve)
                         handle _ => NONE;
+
+      val mem_o = case mem_symbv_o of
+                     SOME (SymbValMem m) => SOME m
+                   | _ => NONE;
     in
-      if is_none mem_symbv_o then NONE else
+      if is_none mem_o then NONE else
       let
-        val mem_symbv = valOf  mem_symbv_o;
-        val mem = case mem_symbv of
-                     SymbValMem m => m
-                   | _ => raise ERR "compute_val_try_mem_store" "can only store in symbolic memory";
+        val mem_symbv = valOf mem_symbv_o;
+        val mem       = valOf mem_o;
 
         val _ = if not debug_memOn then () else (
                   print "\n\n============ store\n";
@@ -457,20 +512,29 @@ in (* outermost local *)
                   print_term addr;
                   print_term val_tm
                 );
+
+        val res = mem_store mem addr end_tm val_tm;
+
+        val _ = if not debug_memOn then () else (
+                  if is_none res then print "NONE\n" else
+                  print ((symbv_to_string (valOf res)) ^ "\n")
+                );
       in
-        mem_store mem addr end_tm val_tm
+        res
       end
     end
     else NONE;
 
+  (* TODO: this should probably not be separate... *)
   fun compute_val_try_mem_subexp compute_val_and_resolve_deps vals (besubst, besubst_vars) =
     if subterm_satisfies is_BExp_Load besubst then
         (* TODO: need to carry out load and subsistute in expression *)
         NONE
     else if subterm_satisfies is_BExp_Store besubst then
+        NONE (*
       raise ERR "compute_val_try_mem"
                 ("found store as subexpression, unexpected: " ^
-                 term_to_string besubst)
+                 term_to_string besubst) *)
     else NONE;
 
   fun compute_val_try_mem compute_val_and_resolve_deps vals (besubst, besubst_vars) =

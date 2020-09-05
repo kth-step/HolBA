@@ -168,7 +168,7 @@ end (* local *)
       (* TODO: should/need we somehow add that bv_val is equal to the introduced memory abstraction? *)
       (* val exp   = bir_expSyntax.mk_BExp_Den bv_val; *)
 
-      (* constant memory *)
+      (* constant memory (8-bit words) *)
       val mem_const = mem_const_fun;
 
       (* global memory *)
