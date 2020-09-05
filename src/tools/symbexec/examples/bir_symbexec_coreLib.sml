@@ -248,7 +248,22 @@ local
       (addr, addr_deps)
     end;
 
-  fun compute_val_try_mem vals (besubst, besubst_vars) =
+  val bexpden_match_tm = bden ``x:bir_var_t``;
+  fun lookup_mem_symbv vals symbv =
+    case symbv of
+       SymbValBE (t, _) => (
+         let
+           val (vs, _) = hol88Lib.match bexpden_match_tm t;
+           val bv      = fst (List.nth (vs, 0));
+         in
+           find_bv_val "lookup_mem_symbv" vals bv
+         end
+         handle _ => raise ERR "lookup_mem_symbv" "SymbValBE didn't match bexpden"
+        )
+     | SymbValMem _ => symbv
+     | _ => raise ERR "lookup_mem_symbv" "needs to be SymbValBE or SymbValMem";
+
+  fun compute_val_try_mem compute_val_and_resolve_deps vals (besubst, besubst_vars) =
     let
       val debugOn = false;
 
@@ -267,6 +282,8 @@ local
           val (mem_tm, addr_tm, end_tm, sz_tm) = dest_BExp_Load besubst;
           val (addr, addr_deps) = process_addr "load" vals addr_tm;
 
+          val mem_tm_resolve = compute_val_and_resolve_deps vals (mem_tm, besubst_vars);
+
           val _ = if not debugOn then () else
                   print_term sz_tm;
         in
@@ -279,9 +296,16 @@ local
           val (mem_tm, addr_tm, end_tm, val_tm) = dest_BExp_Store besubst;
           val (addr, addr_deps) = process_addr "store" vals addr_tm;
 
+          val mem_symbv_resolve = compute_val_and_resolve_deps vals (mem_tm, besubst_vars);
+(*
+          val mem_symbv = lookup_mem_symbv vals mem_symbv_resolve;
+          val _ = print ((symbv_to_string mem_symbv) ^ "\n\n");
+*)
+
           val _ = if not debugOn then () else
                   print_term val_tm;
         in
+          (*SOME mem_symbv*)
           if true then NONE else raise ERR "compute_val_try" "store debugging"
         end
 (*
@@ -295,7 +319,7 @@ local
         NONE
     end;
 
-  fun compute_val_try vals (besubst, besubst_vars) deps_l2 =
+  fun compute_val_try compute_val_and_resolve_deps vals (besubst, besubst_vars) deps_l2 =
     case compute_val_try_const_only vals (besubst, besubst_vars) deps_l2 of
         SOME x => SOME x
       | NONE => (
@@ -305,7 +329,7 @@ local
     case compute_val_try_expplusminusconst vals (besubst, besubst_vars) of
         SOME x => SOME x
       | NONE => (
-         compute_val_try_mem vals (besubst, besubst_vars)
+         compute_val_try_mem compute_val_and_resolve_deps vals (besubst, besubst_vars)
     )));
 
   fun compute_val_and_resolve_deps vals (besubst, besubst_vars) =
@@ -314,7 +338,7 @@ local
                                symbvalbe_dep_empty
                                (List.map (deps_find_symbval "compute_val_and_resolve_deps" vals) besubst_vars);
     in
-      case compute_val_try vals (besubst, besubst_vars) deps_l2 of
+      case compute_val_try compute_val_and_resolve_deps vals (besubst, besubst_vars) deps_l2 of
          SOME x => x
        | NONE   =>
           let
