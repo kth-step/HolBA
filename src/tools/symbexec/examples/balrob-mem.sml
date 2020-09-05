@@ -93,14 +93,14 @@ fun collect_subterm is_tm_fun combine_fun acc tm =
       acc
     ;
 
-fun load_to_size tm =
+fun load_to_size_endi tm =
   if (not o is_BExp_Load) tm then
     raise ERR "load_to_size" "not a load!"
   else
   let
-    val (_,_,_,sz) = dest_BExp_Load tm;
+    val (_,_,en,sz) = dest_BExp_Load tm;
   in
-    sz
+    (sz,en)
   end;
 
 (* ================================================================================= *)
@@ -177,12 +177,12 @@ BExp_Store
 ``;
 *)
 
-fun store_to_size tm =
+fun store_to_size_endi tm =
   if (not o is_BExp_Store) tm then
     raise ERR "store_to_size" "not a store!"
   else
   let
-    val (_,_,_,tm_v) = dest_BExp_Store tm;
+    val (_,_,en,tm_v) = dest_BExp_Store tm;
     val bty_v_o = (snd o dest_eq o concl o type_of_bir_exp_CONV) ``type_of_bir_exp ^tm_v``;
     val bty_v = if optionSyntax.is_some bty_v_o then
                   optionSyntax.dest_some bty_v_o
@@ -195,11 +195,11 @@ fun store_to_size tm =
       else
         raise ERR "store_to_size" "no bir imm";
   in
-    sz
+    (sz,en)
   end;
 
 (*
-collect_subterm is_BExp_Store (fn (tm, acc) => (store_to_size tm)::acc) [] tm
+collect_subterm is_BExp_Store (fn (tm, acc) => ((store_to_size_endi) tm)::acc) [] tm
 *)
 
 val n_sub_loads =
@@ -219,10 +219,10 @@ val exact_sub_loads =
 
 
 val size_loads =
-   (List.concat o List.map (collect_subterm is_BExp_Load (fn (tm, acc) => (load_to_size tm)::acc) [])) exps;
+   (List.concat o List.map (collect_subterm is_BExp_Load (fn (tm, acc) => ((pairSyntax.mk_pair o load_to_size_endi) tm)::acc) [])) exps;
 
 val size_stores =
-   (List.concat o List.map (collect_subterm is_BExp_Store (fn (tm, acc) => (store_to_size tm)::acc) [])) exps;
+   (List.concat o List.map (collect_subterm is_BExp_Store (fn (tm, acc) => ((pairSyntax.mk_pair o store_to_size_endi) tm)::acc) [])) exps;
 
 
 fun mk_histogram_h []        acc = acc

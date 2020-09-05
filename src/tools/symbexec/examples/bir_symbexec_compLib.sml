@@ -261,6 +261,7 @@ in (* outermost local *)
           if true then NONE else raise ERR "compute_val_try" "load debugging"
         end
       else if is_BExp_Store besubst orelse is_BExp_Load besubst then
+      (
         let
           val _ = debug_prints debugOn;
 
@@ -268,17 +269,18 @@ in (* outermost local *)
           val (addr, addr_deps) = process_addr "store" vals addr_tm;
 
           val mem_symbv_resolve = compute_val_and_resolve_deps vals (mem_tm, besubst_vars);
-(*
+
           val mem_symbv = lookup_mem_symbv vals mem_symbv_resolve;
-          val _ = print ((symbv_to_string mem_symbv) ^ "\n\n");
-*)
+          (* val _ = print ((symbv_to_string mem_symbv) ^ "\n\n"); *)
 
           val _ = if not debugOn then () else
                   print_term val_tm;
         in
-          (*SOME mem_symbv*)
-          if true then NONE else raise ERR "compute_val_try" "store debugging"
+          SOME mem_symbv
+          (*if true then NONE else raise ERR "compute_val_try" "store debugging"*)
         end
+        handle _ => NONE
+      )
 (*
       else if subterm_satisfies is_BExp_Load besubst orelse
               subterm_satisfies is_BExp_Store besubst then

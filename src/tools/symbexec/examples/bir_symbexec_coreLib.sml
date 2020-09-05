@@ -8,7 +8,6 @@ local
   open bir_exp_helperLib;
 in (* outermost local *)
 
-
 (* primitive for symbolic/abstract computation for expressions *)
 local
   open bir_expSyntax;
