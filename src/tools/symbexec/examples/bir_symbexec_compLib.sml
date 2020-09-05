@@ -234,6 +234,12 @@ in (* outermost local *)
      | SymbValMem _ => symbv
      | _ => raise ERR "lookup_mem_symbv" "needs to be SymbValBE or SymbValMem";
 
+  fun mem_store_symbv mem_symbv addr_tm end_tm val_tm =
+    let
+    in
+      mem_symbv
+    end;
+
   fun compute_val_try_mem compute_val_and_resolve_deps vals (besubst, besubst_vars) =
     let
       val debugOn = false;
@@ -271,23 +277,23 @@ in (* outermost local *)
           val mem_symbv_resolve = compute_val_and_resolve_deps vals (mem_tm, besubst_vars);
 
           val mem_symbv = lookup_mem_symbv vals mem_symbv_resolve;
-          (* val _ = print ((symbv_to_string mem_symbv) ^ "\n\n"); *)
+          val _ = print ((symbv_to_string mem_symbv) ^ "\n\n");
 
           val _ = if not debugOn then () else
                   print_term val_tm;
         in
-          SOME mem_symbv
+          SOME (mem_store_symbv mem_symbv addr end_tm val_tm)
           (*if true then NONE else raise ERR "compute_val_try" "store debugging"*)
         end
         handle _ => NONE
       )
-(*
-      else if subterm_satisfies is_BExp_Load besubst orelse
-              subterm_satisfies is_BExp_Store besubst then
-        raise ERR "compute_val_try"
-                  ("found load or store as subexpression, unexpected: " ^
+      else if subterm_satisfies is_BExp_Load besubst then
+        (* TODO: need to carry out load and subsistute in expression *)
+        NONE
+      else if subterm_satisfies is_BExp_Store besubst then
+        raise ERR "compute_val_try_mem"
+                  ("found store as subexpression, unexpected: " ^
                    term_to_string besubst)
-*)
       else
         NONE
     end;
