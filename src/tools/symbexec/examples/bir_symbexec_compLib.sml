@@ -278,23 +278,19 @@ in (* outermost local *)
       Word.toInt zeromasked
     end;
 
-(* ================================================================ *)
-
-(* TODO: add initial memory symbol and add it to memory abstractions for loads from "unpopulated" memory *)
-
-  fun mem_load_exp_gen exp suboff sz =
+  fun mem_sec_exp_gen exp suboff sz =
     let
       val _ =
         if sz = 32 orelse
            sz = 16 orelse
            sz =  8 then ()
         else
-          raise ERR "mem_load_exp_gen" "cannot handle word size";
+          raise ERR "mem_sec_exp_gen" "cannot handle word size";
 
       val bytes = sz div 8;
 
       val _ = if suboff >= 0 orelse suboff + bytes <= 4 then () else
-              raise ERR "mem_load_exp_gen" "reading outside of word32";
+              raise ERR "mem_sec_exp_gen" "reading outside of word32";
     in
       if sz = 32 then
         exp
@@ -310,8 +306,49 @@ in (* outermost local *)
         blowcast8 (bhighcast16 exp)
       else if sz =  8 andalso suboff = 3 then
         bhighcast8 exp
-      else raise ERR "mem_load_exp_gen" "this should never happen"
+      else raise ERR "mem_sec_exp_gen" "this should never happen"
     end;
+
+  fun mem_upd_sec_exp_gen exp_ml exp suboff sz =
+    let
+      val _ =
+        if sz = 32 orelse
+           sz = 16 orelse
+           sz =  8 then ()
+        else
+          raise ERR "mem_sec_exp_gen" "cannot handle word size";
+
+      val bytes = sz div 8;
+
+      val _ = if suboff >= 0 orelse suboff + bytes <= 4 then () else
+              raise ERR "mem_upd_sec_exp_gen" "reading outside of word32";
+    in
+      if sz = 32 then
+        exp
+      else if sz = 16 andalso suboff = 0 then
+        bor (band (exp_ml, bconst32 0xFFFF0000), blshift (blowcast32 exp, bconst32 0))
+      else if sz = 16 andalso suboff = 2 then
+        bor (band (exp_ml, bconst32 0x0000FFFF), blshift (blowcast32 exp, bconst32 16))
+      else if sz =  8 andalso suboff = 0 then
+        bor (band (exp_ml, bconst32 0xFFFFFF00), blshift (blowcast32 exp, bconst32 0))
+      else if sz =  8 andalso suboff = 1 then
+        bor (band (exp_ml, bconst32 0xFFFF00FF), blshift (blowcast32 exp, bconst32 8))
+      else if sz =  8 andalso suboff = 2 then
+        bor (band (exp_ml, bconst32 0xFF00FFFF), blshift (blowcast32 exp, bconst32 16))
+      else if sz =  8 andalso suboff = 3 then
+        bor (band (exp_ml, bconst32 0x00FFFFFF), blshift (blowcast32 exp, bconst32 24))
+      else raise ERR "mem_sec_exp_gen" "this should never happen"
+    end;
+
+(*
+bir_constpropLib.eval_constprop (bhighcast16 (bconst32 0x00223344))
+bir_constpropLib.eval_constprop (blowcast8 (bconst32 0x00223344))
+bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
+*)
+
+(* ================================================================ *)
+
+(* TODO: add initial memory symbol and add it to memory abstractions for loads from "unpopulated" memory *)
 
   fun mem_load_stack mem bv_sp imm_offset sz_tm =
     let
@@ -337,9 +374,9 @@ in (* outermost local *)
       val (exp, deps) = Redblackmap.find (mem_stack, Arbnum.fromInt offset)
         handle _ => raise ERR "mem_load_stack" "address is not mapped in global memory";
 
-      val exp' = mem_load_exp_gen exp suboff sz;
+      val exp' = mem_sec_exp_gen exp suboff sz;
     in
-      SymbValBE (exp', deps)
+      (exp', deps)
     end;
 
   fun mem_load_const_le_sz mem_const addr sz acc =
@@ -377,34 +414,35 @@ in (* outermost local *)
 
       val zeromasked = mem_addr_sz_offset (Arbnum.toInt caddr) sz;
       val suboff = mem_addr_sz_offset (Arbnum.toInt caddr) 32;
+      val ldaddr = Arbnum.fromInt ((Arbnum.toInt caddr) - suboff);
 
       val _ = if zeromasked = 0 then () else
               raise ERR "mem_load_const" "load address is not aligned";
     in
-      if Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), caddr) then
+      if Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), ldaddr) then
         raise ERR "mem_load_const" "const/global load out of corresponding memory range"
-      else if Arbnum.<= (mem_const_size, caddr) then
+      else if Arbnum.<= (mem_const_size, ldaddr) then
         (* global load *)
         (
           let
-            val (exp, deps) = Redblackmap.find (mem_globl, caddr)
+            val (exp, deps) = Redblackmap.find (mem_globl, ldaddr)
               handle _ => raise ERR "mem_load_const" "address is not mapped in global memory";
-            val exp' = mem_load_exp_gen exp suboff sz;
+            val exp' = mem_sec_exp_gen exp suboff sz;
           in
-            SymbValBE (exp', deps)
+            (exp', deps)
           end
         )
       else (
         (* const load *)
         let
           val exp = (bconst32 o Arbnum.toInt o valOf)
-                     (mem_load_const_le_sz mem_const caddr sz (SOME Arbnum.zero))
+                     (mem_load_const_le_sz mem_const ldaddr sz (SOME Arbnum.zero))
               handle _ => raise ERR "mem_load_const"
-                             ("memory at addr " ^ (Arbnum.toHexString caddr) ^
+                             ("memory at addr " ^ (Arbnum.toHexString ldaddr) ^
                               " seems not available (" ^ (term_to_string sz_tm) ^ ")");
-          val exp' = mem_load_exp_gen exp suboff sz;
+          val exp' = mem_sec_exp_gen exp suboff sz;
         in
-          SymbValBE (exp', symbvalbe_dep_empty)
+          (exp', symbvalbe_dep_empty)
         end
       )
     end;
@@ -420,7 +458,7 @@ in (* outermost local *)
         let
           val caddr = (wordsSyntax.dest_word_literal o bir_immSyntax.dest_Imm32 o dest_BExp_Const) addr_tm;
         in
-          SOME (mem_load_const mem caddr sz_tm)
+          SOME (SymbValBE (mem_load_const mem caddr sz_tm))
         end
       else
       let
@@ -430,7 +468,7 @@ in (* outermost local *)
         val bv      = fst (List.nth (vs, 0));
         val imm_val = fst (List.nth (vs, 1));
       in
-        SOME (mem_load_stack mem bv imm_val sz_tm)
+        SOME (SymbValBE (mem_load_stack mem bv imm_val sz_tm))
       end
     end;
 
@@ -448,18 +486,33 @@ in (* outermost local *)
       (* TODO: add check that addr is well in stack memory (would require pred, and maybe smt solver for simplicity) *)
       (* TODO: add check that addr is aligned? is this needed? probably not *)
 
-      val val_tm_deps = Redblackset.fromList Term.compare (get_birexp_vars val_tm);
+      val sz_tm = bexp_to_bittype val_tm;
+      val sz = bittype_to_size sz_tm;
+
+      val sp_offset = (Arbnum.toInt o wordsSyntax.dest_word_literal o bir_immSyntax.dest_Imm32) imm_offset;
+
+      val suboff = 4 - (mem_addr_sz_offset sp_offset 32);
+      val offset = if suboff = 4
+                   then sp_offset
+                   else sp_offset + suboff;
+
+      val (exp_ml, exp_ml_deps) =
+            mem_load_stack mem
+                           bv_sp
+                           (bir_immSyntax.mk_Imm32 (wordsSyntax.mk_wordii(offset, 32)))
+                           bir_immSyntax.Bit32_tm
+            (* hack to resolve unmapped stack *)
+            handle _ => (bden (bir_envSyntax.mk_BVar_string ("hack_mem_stack", bir_valuesSyntax.BType_Imm32_tm)), symbvalbe_dep_empty);
+
+      val exp = mem_upd_sec_exp_gen exp_ml val_tm suboff sz;
+
+      val exp_deps = Redblackset.fromList Term.compare (get_birexp_vars exp);
+
       (* this is an overapproximation, because variables may get lost when overwriting *)
-      val deps_new = Redblackset.union (deps, val_tm_deps);
+      val deps_new = Redblackset.union (deps, exp_deps);
 
-      val val_tm_sz = (bittype_to_size o bexp_to_bittype) val_tm;
-      (* TODO: fix for wordlengths other than 32 *)
-      (* TODO: to allow 8 here is a bug at the moment! *)
-      val _ = if val_tm_sz = 32 orelse val_tm_sz = 8 then () else
-              raise ERR "mem_store_const" "cannot handle anything other than 32 currently";
-
-      val offset = (wordsSyntax.dest_word_literal o bir_immSyntax.dest_Imm32) imm_offset;
-      val mem_stack_new = Redblackmap.insert (mem_stack, offset, (val_tm, val_tm_deps));
+      val mem_stack_new = Redblackmap.insert (mem_stack, Arbnum.fromInt offset,
+                                                (exp, exp_deps));
     in
       SymbValMem ((mem_const_size, mem_globl_size, mem_stack_size),
                   (mem_const, mem_globl, (bv_sp, mem_stack_new)),
@@ -472,31 +525,33 @@ in (* outermost local *)
            (mem_const, mem_globl, (bv_sp, mem_stack)),
            deps) = mem;
 
-      val val_tm_deps = Redblackset.fromList Term.compare (get_birexp_vars val_tm);
-      (* this is an overapproximation, because variables may get lost when overwriting *)
-      val deps_new = Redblackset.union (deps, val_tm_deps);
+      val sz_tm = bexp_to_bittype val_tm;
+      val sz = bittype_to_size sz_tm;
 
-      val val_tm_sz = (bittype_to_size o bexp_to_bittype) val_tm;
-
-      val _ = if val_tm_sz = 32 orelse
-                 val_tm_sz = 16 orelse
-                 val_tm_sz =  8 then () else
+      val _ = if sz = 32 orelse
+                 sz = 16 orelse
+                 sz =  8 then () else
               raise ERR "mem_store_const" "cannot handle anything other than 32/16/8 bit stores currently";
 
-      val zeromasked = mem_addr_sz_offset (Arbnum.toInt caddr) val_tm_sz;
-      (*val suboff = mem_addr_sz_offset (Arbnum.toInt caddr) 32;*)
+      val zeromasked = mem_addr_sz_offset (Arbnum.toInt caddr) sz;
+      val suboff = mem_addr_sz_offset (Arbnum.toInt caddr) 32;
+      val ldaddr = Arbnum.fromInt ((Arbnum.toInt caddr) - suboff);
 
       val _ = if zeromasked = 0 then () else
               raise ERR "mem_store_const" "store address is not aligned";
 
-      (* TODO: fix for wordlengths other than 32 *)
-      val _ = if val_tm_sz = 32 then () else
-              raise ERR "mem_store_const" "cannot handle anything other than 32 currently";
+      val (exp_ml, exp_ml_deps) = mem_load_const mem ldaddr bir_immSyntax.Bit32_tm;
 
-      val mem_globl_new = Redblackmap.insert (mem_globl, caddr, (val_tm, val_tm_deps));
+      val exp = mem_upd_sec_exp_gen exp_ml val_tm suboff sz;
+      val exp_deps = Redblackset.fromList Term.compare (get_birexp_vars exp);
+
+      (* this is an overapproximation, because variables may get lost when overwriting *)
+      val deps_new = Redblackset.union (deps, exp_deps);
+
+      val mem_globl_new = Redblackmap.insert (mem_globl, ldaddr, (exp, exp_deps));
     in
-      if Arbnum.<  (caddr, mem_const_size) orelse
-         Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), caddr) then
+      if Arbnum.<  (ldaddr, mem_const_size) orelse
+         Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), ldaddr) then
         raise ERR "mem_store_const" "global store out of global memory range"
       else
       SymbValMem ((mem_const_size, mem_globl_size, mem_stack_size),
