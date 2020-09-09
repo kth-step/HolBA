@@ -108,6 +108,7 @@ val pred_conjs = [
 ];
 
 val use_countw_const_only = false;
+val use_mem_symbolic = false;
 
 val syst = init_state lbl_tm prog_vars;
 
@@ -123,13 +124,12 @@ val mem_sz_stack = mem_ram_size - mem_sz_globl;
 val _ = if mem_sz_stack > 0 then () else
         raise ERR "script" "mem_sz_stack should be greater than 0";
 
-(*
-val syst = state_make_mem ``BVar "MEM" (BType_Mem Bit32 Bit8)``
+val syst = if not use_mem_symbolic then syst else
+             state_make_mem ``BVar "MEM" (BType_Mem Bit32 Bit8)``
                           (Arbnum.fromInt mem_sz_const, Arbnum.fromInt mem_sz_globl, Arbnum.fromInt mem_sz_stack)
                           (mem_read_byte binary_mem)
                           ``BVar "SP_process" (BType_Imm Bit32)``
                           syst;
-*)
 
 val syst = state_add_preds "init_pred" pred_conjs syst;
 

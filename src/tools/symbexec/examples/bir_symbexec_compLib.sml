@@ -305,6 +305,25 @@ in (* outermost local *)
       val deps_new = Redblackset.union (deps, val_tm_deps);
 
       val val_tm_sz = (bittype_to_size o bexp_to_bittype) val_tm;
+
+      val _ = if val_tm_sz = 32 orelse
+                 val_tm_sz = 16 orelse
+                 val_tm_sz =  8 then () else
+              raise ERR "mem_store_const" "cannot handle anything other than 32/16/8 bit stores currently";
+
+      val zerobits = (val_tm_sz div 8) - 1;
+      val zeromask =
+           Word.- (Word.<< (Word.fromInt 1, Word.fromInt zerobits), Word.fromInt 1);
+      val zeromasked =
+           Word.andb (Word.fromInt (Arbnum.toInt caddr), zeromask);
+      (*
+      val _ = print ((Word.toString zeromask) ^ "\n");
+      val _ = print ((Word.toString zeromasked) ^ "\n");
+      *)
+
+      val _ = if zeromasked = Word.fromInt 0 then () else
+              raise ERR "mem_store_const" "store address is not aligned";
+
       (* TODO: fix for wordlengths other than 32 *)
       val _ = if val_tm_sz = 32 then () else
               raise ERR "mem_store_const" "cannot handle anything other than 32 currently";
@@ -399,12 +418,31 @@ in (* outermost local *)
            deps) = mem;
 
       val sz = (bittype_to_size) sz_tm;
+
+      val _ = if sz = 32 orelse
+                 sz = 16 orelse
+                 sz =  8 then () else
+              raise ERR "mem_load_const" "cannot handle anything other than 32/16/8 bit loads currently";
+
+      val zerobits = (sz div 8) - 1;
+      val zeromask =
+           Word.- (Word.<< (Word.fromInt 1, Word.fromInt zerobits), Word.fromInt 1);
+      val zeromasked =
+           Word.andb (Word.fromInt (Arbnum.toInt caddr), zeromask);
+      (*
+      val _ = print ((Word.toString zeromask) ^ "\n");
+      val _ = print ((Word.toString zeromasked) ^ "\n");
+      *)
+
+      val _ = if zeromasked = Word.fromInt 0 then () else
+              raise ERR "mem_load_const" "load address is not aligned";
+
       (* TODO: fix for wordlengths other than 32 *)
       val _ = if sz = 32 then () else
-              raise ERR "mem_store_const" "cannot handle anything other than 32 currently";
+              raise ERR "mem_load_const" "cannot handle anything other than 32 currently";
     in
       if Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), caddr) then
-        raise ERR "mem_store_const" "const/global load out of corresponding memory range"
+        raise ERR "mem_load_const" "const/global load out of corresponding memory range"
       else if Arbnum.<= (mem_const_size, caddr) then
         (* global load *)
         (
