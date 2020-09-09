@@ -22,6 +22,9 @@ datatype symb_value =
 
 val symbvalbe_dep_empty = Redblackset.empty Term.compare;
 
+val symbvdebugOn = false;
+fun memmap_string_fold ((addr, (exp, deps)), str) =
+  "[" ^ (Arbnum.toString addr) ^ " -> " ^ (term_to_string exp) ^ "]\n" ^ str;
 fun symbv_to_string (SymbValBE (exp, deps)) =
        ("SymbValBE (" ^
         (term_to_string exp) ^
@@ -36,8 +39,17 @@ fun symbv_to_string (SymbValBE (exp, deps)) =
         "), " ^
         (Int.toString (Redblackset.numItems deps)) ^
         ")")
-  | symbv_to_string (SymbValMem _) =
-       "SymbValMem";
+  | symbv_to_string (SymbValMem (_, (_, mapglobl, (sp, mapstack)), deps)) =
+       "SymbValMem (" ^ (if not symbvdebugOn then "" else
+           "\nglobl=" ^
+           (List.foldr memmap_string_fold "" (Redblackmap.listItems mapglobl)) ^
+           "\t,\nsp=" ^
+           (term_to_string sp) ^
+           "\t,\nstack=\n" ^
+           (List.foldr memmap_string_fold "" (Redblackmap.listItems mapstack)) ^
+           "\t,\ndeps=\n" ^
+           (Int.toString (Redblackset.numItems deps))
+       ) ^ "\t)";
 
 
 (* symbolic states *)
