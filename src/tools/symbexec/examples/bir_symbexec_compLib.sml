@@ -280,102 +280,6 @@ in (* outermost local *)
 
 (* ================================================================ *)
 
-  fun mem_store_stack mem bv_sp imm_offset val_tm =
-    let
-      val ((mem_const_size, mem_globl_size, mem_stack_size),
-           (mem_const, mem_globl, (bv_sp_, mem_stack)),
-           deps) = mem;
-
-      val _ = if identical bv_sp bv_sp_ then () else
-              raise ERR "mem_store_stack" "stackpointer doesn't match memory abstraction";
-
-      (* TODO: add check that addr is well in stack memory (would require pred, and maybe smt solver for simplicity) *)
-      (* TODO: add check that addr is aligned? is this needed? probably not *)
-
-      val val_tm_deps = Redblackset.fromList Term.compare (get_birexp_vars val_tm);
-      (* this is an overapproximation, because variables may get lost when overwriting *)
-      val deps_new = Redblackset.union (deps, val_tm_deps);
-
-      val val_tm_sz = (bittype_to_size o bexp_to_bittype) val_tm;
-      (* TODO: fix for wordlengths other than 32 *)
-      (* TODO: to allow 8 here is a bug at the moment! *)
-      val _ = if val_tm_sz = 32 orelse val_tm_sz = 8 then () else
-              raise ERR "mem_store_const" "cannot handle anything other than 32 currently";
-
-      val offset = (wordsSyntax.dest_word_literal o bir_immSyntax.dest_Imm32) imm_offset;
-      val mem_stack_new = Redblackmap.insert (mem_stack, offset, (val_tm, val_tm_deps));
-    in
-      SymbValMem ((mem_const_size, mem_globl_size, mem_stack_size),
-                  (mem_const, mem_globl, (bv_sp, mem_stack_new)),
-                  deps_new)
-    end;
-
-  fun mem_store_const mem caddr val_tm =
-    let
-      val ((mem_const_size, mem_globl_size, mem_stack_size),
-           (mem_const, mem_globl, (bv_sp, mem_stack)),
-           deps) = mem;
-
-      val val_tm_deps = Redblackset.fromList Term.compare (get_birexp_vars val_tm);
-      (* this is an overapproximation, because variables may get lost when overwriting *)
-      val deps_new = Redblackset.union (deps, val_tm_deps);
-
-      val val_tm_sz = (bittype_to_size o bexp_to_bittype) val_tm;
-
-      val _ = if val_tm_sz = 32 orelse
-                 val_tm_sz = 16 orelse
-                 val_tm_sz =  8 then () else
-              raise ERR "mem_store_const" "cannot handle anything other than 32/16/8 bit stores currently";
-
-      val zeromasked = mem_addr_sz_offset (Arbnum.toInt caddr) val_tm_sz;
-      (*val suboff = mem_addr_sz_offset (Arbnum.toInt caddr) 32;*)
-
-      val _ = if zeromasked = 0 then () else
-              raise ERR "mem_store_const" "store address is not aligned";
-
-      (* TODO: fix for wordlengths other than 32 *)
-      val _ = if val_tm_sz = 32 then () else
-              raise ERR "mem_store_const" "cannot handle anything other than 32 currently";
-
-      val mem_globl_new = Redblackmap.insert (mem_globl, caddr, (val_tm, val_tm_deps));
-    in
-      if Arbnum.<  (caddr, mem_const_size) orelse
-         Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), caddr) then
-        raise ERR "mem_store_const" "global store out of global memory range"
-      else
-      SymbValMem ((mem_const_size, mem_globl_size, mem_stack_size),
-                  (mem_const, mem_globl_new, (bv_sp, mem_stack)),
-                  deps_new)
-    end;
-
-  fun mem_store mem addr_tm end_tm val_tm =
-    let
-      (* NOTE: this only works for (BType_Mem Bit32 Bit8) and
-                          little endian memory operations *)
-      val _ = if identical end_tm ``BEnd_LittleEndian`` then () else
-              raise ERR "mem_store" "needs to be little endian";
-    in
-      if is_BExp_Const addr_tm then
-        let
-          val caddr = (wordsSyntax.dest_word_literal o bir_immSyntax.dest_Imm32 o dest_BExp_Const) addr_tm;
-        in
-          SOME (mem_store_const mem caddr val_tm)
-        end
-      else
-      let
-        val (vs, _) = hol88Lib.match var_sub_const_match_tm addr_tm
-                       handle _ => raise ERR "mem_store"
-                                      ("couldn't resolve addr_tm: " ^ (term_to_string addr_tm));
-        val bv      = fst (List.nth (vs, 0));
-        val imm_val = fst (List.nth (vs, 1));
-      in
-        SOME (mem_store_stack mem bv imm_val val_tm)
-      end
-    end;
-
-
-(* ================================================================ *)
-
 (* TODO: add initial memory symbol and add it to memory abstractions for loads from "unpopulated" memory *)
 
   fun mem_load_exp_gen exp suboff sz =
@@ -529,6 +433,102 @@ in (* outermost local *)
         SOME (mem_load_stack mem bv imm_val sz_tm)
       end
     end;
+
+(* ================================================================ *)
+
+  fun mem_store_stack mem bv_sp imm_offset val_tm =
+    let
+      val ((mem_const_size, mem_globl_size, mem_stack_size),
+           (mem_const, mem_globl, (bv_sp_, mem_stack)),
+           deps) = mem;
+
+      val _ = if identical bv_sp bv_sp_ then () else
+              raise ERR "mem_store_stack" "stackpointer doesn't match memory abstraction";
+
+      (* TODO: add check that addr is well in stack memory (would require pred, and maybe smt solver for simplicity) *)
+      (* TODO: add check that addr is aligned? is this needed? probably not *)
+
+      val val_tm_deps = Redblackset.fromList Term.compare (get_birexp_vars val_tm);
+      (* this is an overapproximation, because variables may get lost when overwriting *)
+      val deps_new = Redblackset.union (deps, val_tm_deps);
+
+      val val_tm_sz = (bittype_to_size o bexp_to_bittype) val_tm;
+      (* TODO: fix for wordlengths other than 32 *)
+      (* TODO: to allow 8 here is a bug at the moment! *)
+      val _ = if val_tm_sz = 32 orelse val_tm_sz = 8 then () else
+              raise ERR "mem_store_const" "cannot handle anything other than 32 currently";
+
+      val offset = (wordsSyntax.dest_word_literal o bir_immSyntax.dest_Imm32) imm_offset;
+      val mem_stack_new = Redblackmap.insert (mem_stack, offset, (val_tm, val_tm_deps));
+    in
+      SymbValMem ((mem_const_size, mem_globl_size, mem_stack_size),
+                  (mem_const, mem_globl, (bv_sp, mem_stack_new)),
+                  deps_new)
+    end;
+
+  fun mem_store_const mem caddr val_tm =
+    let
+      val ((mem_const_size, mem_globl_size, mem_stack_size),
+           (mem_const, mem_globl, (bv_sp, mem_stack)),
+           deps) = mem;
+
+      val val_tm_deps = Redblackset.fromList Term.compare (get_birexp_vars val_tm);
+      (* this is an overapproximation, because variables may get lost when overwriting *)
+      val deps_new = Redblackset.union (deps, val_tm_deps);
+
+      val val_tm_sz = (bittype_to_size o bexp_to_bittype) val_tm;
+
+      val _ = if val_tm_sz = 32 orelse
+                 val_tm_sz = 16 orelse
+                 val_tm_sz =  8 then () else
+              raise ERR "mem_store_const" "cannot handle anything other than 32/16/8 bit stores currently";
+
+      val zeromasked = mem_addr_sz_offset (Arbnum.toInt caddr) val_tm_sz;
+      (*val suboff = mem_addr_sz_offset (Arbnum.toInt caddr) 32;*)
+
+      val _ = if zeromasked = 0 then () else
+              raise ERR "mem_store_const" "store address is not aligned";
+
+      (* TODO: fix for wordlengths other than 32 *)
+      val _ = if val_tm_sz = 32 then () else
+              raise ERR "mem_store_const" "cannot handle anything other than 32 currently";
+
+      val mem_globl_new = Redblackmap.insert (mem_globl, caddr, (val_tm, val_tm_deps));
+    in
+      if Arbnum.<  (caddr, mem_const_size) orelse
+         Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), caddr) then
+        raise ERR "mem_store_const" "global store out of global memory range"
+      else
+      SymbValMem ((mem_const_size, mem_globl_size, mem_stack_size),
+                  (mem_const, mem_globl_new, (bv_sp, mem_stack)),
+                  deps_new)
+    end;
+
+  fun mem_store mem addr_tm end_tm val_tm =
+    let
+      (* NOTE: this only works for (BType_Mem Bit32 Bit8) and
+                          little endian memory operations *)
+      val _ = if identical end_tm ``BEnd_LittleEndian`` then () else
+              raise ERR "mem_store" "needs to be little endian";
+    in
+      if is_BExp_Const addr_tm then
+        let
+          val caddr = (wordsSyntax.dest_word_literal o bir_immSyntax.dest_Imm32 o dest_BExp_Const) addr_tm;
+        in
+          SOME (mem_store_const mem caddr val_tm)
+        end
+      else
+      let
+        val (vs, _) = hol88Lib.match var_sub_const_match_tm addr_tm
+                       handle _ => raise ERR "mem_store"
+                                      ("couldn't resolve addr_tm: " ^ (term_to_string addr_tm));
+        val bv      = fst (List.nth (vs, 0));
+        val imm_val = fst (List.nth (vs, 1));
+      in
+        SOME (mem_store_stack mem bv imm_val val_tm)
+      end
+    end;
+
 
 (* ================================================================ *)
 
