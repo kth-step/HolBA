@@ -98,7 +98,12 @@ val is_mem_def = Define`
 `;
 
 val (parstep_rules, parstep_ind, parstep_cases) = Hol_reln`
-   (!p s s' system. pstep p s s' /\ (core p s) ∈ system
+(!p s s' system.
+    ((core p s) ∈ system
+     /\ (next_block s).bb_atomic
+     /\ pstep_block p s s')
+    ==> parstep system (system DIFF {core p s} UNION {core p s'}))
+/\ (!p s s' system. pstep p s s' /\ (core p s) ∈ system
    ==> parstep system (system DIFF {core p s} UNION {core p s'}))
 /\ (!m m' system. memstep m m' /\ (mem m) ∈ system
    ==> parstep system (system DIFF {mem m} UNION {mem m'}))
