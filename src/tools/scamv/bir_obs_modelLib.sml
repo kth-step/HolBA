@@ -202,6 +202,102 @@ local
 		  Obs_lst
 	end
 
+(* ------------------------------------------------------------------------------ *)
+(*                                    Previction                                  *)
+(* ------------------------------------------------------------------------------ *)
+
+     fun extract_observations targets g bl_dict =
+	let  
+	    val f =  (fn l => Redblackmap.find (bl_dict, l)|> bir_programSyntax.dest_bir_block|> not o listSyntax.is_nil o #2);
+	    fun extratc_obs labels = 
+		List.map (fn label => 
+			     let val block = Redblackmap.find (bl_dict, label)
+				 val (_, statements, _) = bir_programSyntax.dest_bir_block block
+			     in
+				 find_term is_BStmt_Observe statements
+			     end) (filter f labels)
+
+	    val Obs_dict = Redblackmap.insert(Obs_dict, last targets , extratc_obs targets);
+	in
+	    Obs_dict
+	end;
+
+
+     val itag_def = Define`
+	itag pa = 
+ 	  BExp_BinExp BIExp_RightShift pa (BExp_Const (Imm64 13w))			      
+	`;
+
+     val iset_def = Define`
+	iset pa = 
+ 	  ([BExp_BinExp BIExp_And 
+	      (BExp_Const (Imm64 0x7Fw)) 
+	      (BExp_BinExp BIExp_RightShift pa (BExp_Const (Imm64 6w)))])
+	`;
+     (* tag1 tag1 tag1 tag2 tag3 *)
+     val preEvict_hyp1_def = Define`
+       preEvict_hyp1 tml = 
+          BStmt_Observe 0 (BExp_Const (Imm1 1w))
+			[(BExp_BinExp BIExp_And
+		            (BExp_BinExp BIExp_And
+		              (BExp_BinExp BIExp_And
+		                (BExp_BinExp BIExp_And
+		                  (BExp_BinPred BIExp_Equal  (itag (EL 0 tml)) (itag (EL 1 tml))) 
+			 	  (BExp_BinPred BIExp_Equal  (itag (EL 1 tml)) (itag (EL 2 tml))))
+				(BExp_BinPred BIExp_NotEqual (itag (EL 0 tml)) (itag (EL 3 tml))))
+			      (BExp_BinPred BIExp_NotEqual (itag (EL 0 tml)) (itag (EL 4 tml))))
+			    (BExp_BinPred BIExp_NotEqual (itag (EL 3 tml)) (itag (EL 4 tml))))] HD
+       `;
+
+    fun mk_assertion_obs e =
+	let 
+	    open stringSyntax
+	    open listSyntax
+	    open pairSyntax
+	    open bir_expSyntax
+	    fun remove_prime str =
+		if String.isSuffix "*" str then
+		    (String.extract(str, 0, SOME((String.size str) - 1)))
+		else
+		    raise ERR "remove_prime" "there was no prime where there should be one"
+	    val p_fv  = bir_free_vars e;
+	    val np_fv = map (fn x => (remove_prime (fromHOLstring x)) |> (fn y => lift_string string_ty y)) p_fv
+	    val p_exp = map (fn x => subst [``"template"``|-> x] ``(BVar "template" (BType_Imm Bit64))``) p_fv;
+
+	    val ols   = (#1 o dest_list o #2 o dest_pair) e
+	    val adds  = map (fn tm => (#2 o dest_BExp_BinExp) (find_term is_BExp_BinExp tm)) ols
+
+	    val np_exp= map (fn x => subst[``"template"``|-> x]``(BExp_Den (BVar "template" (BType_Imm Bit64)))``)
+			     np_fv;
+	    val comb_p_np = zip p_exp np_exp;
+	in
+	   (
+	    mk_list(   [(rhs o concl o EVAL)``preEvict_hyp1 ^(mk_list(adds, ``:bir_exp_t``))``],
+		    ``:bir_val_t bir_stmt_basic_t``),
+	    mk_list(map (fn (a,b) => (rhs o concl o EVAL)``constrain_spec_obs_vars (^a,^b)``) comb_p_np,
+		    ``:bir_val_t bir_stmt_basic_t``)
+	   )
+	end
+
+
+    fun add_obs_previction prog targets g  dict = 
+	let
+	    open listSyntax
+	    open pairSyntax;
+	    val Obs_dict = extract_observations targets g dict 
+			      |> (fst o (fn d => Redblackmap.remove (d, ``dummy``)));	
+	    val Obs_dict_primed = Redblackmap.map (fn (k,v) => Obs_prime v) Obs_dict;
+	    val Obs_lst_primed  = map (fn tm => mk_pair(fst tm, mk_list(snd tm, ``:bir_val_t bir_stmt_basic_t``))) 
+				      (Redblackmap.listItems Obs_dict_primed);
+	    val (obs, asrt) = (mk_assertion_obs (hd Obs_lst_primed));
+	    val asrt_lst = mk_pair(last targets, asrt);
+	    val obs_lst  = mk_pair(hd targets,   obs);	
+	    
+	in
+	    (asrt_lst, obs_lst)
+	end
+(* ------------------------------------------------------------------------------ *)
+
 in
  fun branch_instrumentation_obs prog depth = 	
     let (* build the dictionaries using the library under test *)
@@ -222,6 +318,25 @@ in
 (* Exmaple usage: inputs are lifted program with intial observation and depth of execution      *)
 (* branch_instrumentation_obs lifted_prog_w_obs 3; *)
 
+ fun previction_instrumentation_obs prog = 	
+     let (* build the dictionaries using the library under test *)
+	 val bl_dict = gen_block_dict prog;
+	 val lbl_tms = get_block_dict_keys bl_dict;
+	 (* build the cfg and update the basic blocks *)
+	 val n_dict = cfg_build_node_dict bl_dict lbl_tms;
+	     
+	 val entries = [mk_key_from_address64 64 (Arbnum.fromHexString "0")];
+	 val g1 = cfg_create "PreEvict" entries n_dict bl_dict;
+	     
+	 val (visited_nodes, _) = traverse_graph g1 (hd (#CFGG_entries g1)) [] [];
+	 val (asrt_lst, obs_lst) = add_obs_previction prog visited_nodes g1 bl_dict;
+     in
+	 foldl (fn(itm, p) => (rhs o concl o EVAL)``add_obs_speculative_exec_armv8 ^p ^itm``)
+	       prog
+	       [asrt_lst, obs_lst]
+     end
+
+
 structure bir_arm8_cache_speculation_model : OBS_MODEL =
  struct
  val obs_hol_type = ``bir_val_t``;
@@ -230,6 +345,12 @@ structure bir_arm8_cache_speculation_model : OBS_MODEL =
      branch_instrumentation_obs (bir_arm8_mem_addr_pc_model.add_obs t) pipeline_depth;
  end;
 
+structure bir_arm8_cache_previction_model : OBS_MODEL =
+ struct
+ val obs_hol_type = ``bir_val_t``;
+ fun add_obs t =
+     previction_instrumentation_obs (bir_arm8_cache_line_index_model.add_obs t);
+ end;
 
 fun get_obs_model id =
   let
@@ -248,6 +369,8 @@ fun get_obs_model id =
           bir_arm8_cache_line_subset_page_model.obs_hol_type
         else if id = "cache_speculation" then
           bir_arm8_cache_speculation_model.obs_hol_type
+	else if id = "cache_previction" then
+          bir_arm8_cache_previction_model.obs_hol_type
         else
             raise ERR "get_obs_model" ("unknown obs_model selected: " ^ id);
 
@@ -266,6 +389,8 @@ fun get_obs_model id =
           bir_arm8_cache_line_subset_page_model.add_obs
         else if id = "cache_speculation" then
           bir_arm8_cache_speculation_model.add_obs
+        else if id = "cache_previction" then
+          bir_arm8_cache_previction_model.add_obs
         else
           raise ERR "get_obs_model" ("unknown obs_model selected: " ^ id);
   in

@@ -315,7 +315,7 @@ fun start_interactive prog =
         val lifted_prog_w_obs = add_obs lifted_prog;
         val _ = printv 1 "Obs added\n";
         val _ = current_prog_w_obs := SOME lifted_prog_w_obs;
-        val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
+        val _ = min_verb 1 (fn () => print_term lifted_prog_w_obs);
 
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 	val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths; 
@@ -333,7 +333,7 @@ fun start_interactive prog =
         val (path_struct, validity, next_relation) =
             rel_synth_init paths (!current_obs_projection) enum_env; (* TODO consider validity *)
         val _ = current_pathstruct := path_struct;
-        val _ = min_verb 4 (fn () => print_path_struct path_struct);
+        val _ = min_verb 1 (fn () => print_path_struct path_struct);
     in (path_struct, all_exps, next_relation) end;
 
 
@@ -587,6 +587,8 @@ fun match_obs_model obs_model =
         "cache_tag_index_part"
       | cache_speculation =>
         "cache_speculation"
+      | cache_previction =>
+        "cache_previction"
       | cache_tag_index_part_page =>
         "cache_tag_index_part_page"
       | _ => raise ERR "match_obs_model" ("unknown obs_model " ^ PolyML.makestring obs_model);

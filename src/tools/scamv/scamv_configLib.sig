@@ -14,6 +14,7 @@ sig
                        | cache_tag_index_part
                        | cache_tag_index_part_page
                        | cache_speculation
+		       | cache_previction
 
     datatype hw_obs_model = hw_cache_tag_index
                           | hw_cache_index_numvalid

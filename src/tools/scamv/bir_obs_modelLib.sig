@@ -4,6 +4,7 @@ signature bir_obs_modelLib =
                                         obs_hol_type : term,
                                         add_obs : term -> term }
         val branch_instrumentation_obs : term -> int -> term
+	val previction_instrumentation_obs : term -> term
     end
 
 signature OBS_MODEL =
