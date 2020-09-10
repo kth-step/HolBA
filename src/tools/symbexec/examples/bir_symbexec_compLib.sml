@@ -665,27 +665,51 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
     end
     else NONE;
 
-  (* TODO: this should probably not be separate... *)
   fun compute_val_try_mem_subexp compute_val_and_resolve_deps vals (besubst, besubst_vars) =
-    if subterm_satisfies is_BExp_Load besubst then
-        (* TODO: need to carry out load and subsistute in expression *)
-        NONE
-    else if subterm_satisfies is_BExp_Store besubst then
-        NONE (*
-      raise ERR "compute_val_try_mem"
-                ("found store as subexpression, unexpected: " ^
-                 term_to_string besubst) *)
+    if is_BExp_Load besubst then
+      compute_val_try_mem_load  compute_val_and_resolve_deps vals (besubst, besubst_vars)
+    else if is_BExp_Store besubst then
+      compute_val_try_mem_store compute_val_and_resolve_deps vals (besubst, besubst_vars)
+    else if subterm_satisfies is_BExp_Load besubst orelse
+            subterm_satisfies is_BExp_Store besubst then
+      let
+        fun resolve_to_term tm_from =
+          case compute_val_try_mem_subexp
+                  compute_val_and_resolve_deps vals (tm_from, besubst_vars) of
+             SOME (SymbValBE (t, _)) => t
+           | NONE => tm_from
+           | _ => raise ERR "compute_val_try_mem_subexp" "this better doesn't happen";
+
+        val tm = besubst;
+        val tm_new = if is_comb tm then
+            let
+              val (tm_l, tm_r) = dest_comb tm;
+              val tm_l_new = resolve_to_term tm_l;
+              val tm_r_new = resolve_to_term tm_r;
+            in
+              mk_comb (tm_l_new, tm_r_new)
+            end
+          else
+            tm;
+
+        val tm_new_vars = besubst_vars
+                          (*get_birexp_vars tm_new
+                          handle _ => []*);
+        val tm_new_deps = Redblackset.fromList Term.compare tm_new_vars;
+      in
+        SOME (SymbValBE (tm_new, tm_new_deps))
+      end
     else NONE;
 
   fun compute_val_try_mem compute_val_and_resolve_deps vals (besubst, besubst_vars) =
-    case compute_val_try_mem_load   compute_val_and_resolve_deps vals (besubst, besubst_vars) of
-        SOME x => SOME x
-      | NONE => (
-    case compute_val_try_mem_store  compute_val_and_resolve_deps vals (besubst, besubst_vars) of
-        SOME x => SOME x
-      | NONE => (
-         compute_val_try_mem_subexp compute_val_and_resolve_deps vals (besubst, besubst_vars)
-    ));
+    (
+      if not debug_memOn orelse true then () else (
+        print "\n\n(((((((\n";
+        print_term besubst;
+        print ")))))))\n"
+      );
+      compute_val_try_mem_subexp compute_val_and_resolve_deps vals (besubst, besubst_vars)
+    );
 
 end (* outermost local *)
 
