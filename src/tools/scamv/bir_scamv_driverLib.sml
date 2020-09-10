@@ -28,7 +28,7 @@ fun ifdef__else__ x c c' e = (if x then c else c') |> e;
 fun ifdef__ x c e = case x of true => c |> e;
 fun force f = f ();
 
-val SPECTRE = true;
+val SPECTRE = false;
 val DISTINCT_MEM = false;
 
 (*
@@ -318,7 +318,7 @@ fun start_interactive prog =
         val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
 
         val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
-	      val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths; 
+	val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths; 
 
         fun has_observations (SOME []) = false
           | has_observations NONE = false
@@ -396,9 +396,9 @@ fun next_experiment all_exps next_relation  =
 
         val _ = min_verb 3 (fn () =>
                                bir_exp_pretty_print rel);
-        val _ = printv 4 ("Word relation\n");
+        val _ = printv 1 ("Word relation\n");
         val new_word_relation = make_word_relation rel all_exps;
-        val _ = min_verb 3 (fn () =>
+        val _ = min_verb 1 (fn () =>
                                (print_term new_word_relation;
                                 print "\n"));
         val word_relation =
