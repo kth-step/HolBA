@@ -692,9 +692,9 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
           else
             tm;
 
-        val tm_new_vars = besubst_vars
-                          (*get_birexp_vars tm_new
-                          handle _ => []*);
+        val tm_new_vars = if (type_of tm_new) = ``:bir_exp_t``
+                          then get_birexp_vars tm_new
+                          else besubst_vars (* [] *);
         val tm_new_deps = Redblackset.fromList Term.compare tm_new_vars;
       in
         SOME (SymbValBE (tm_new, tm_new_deps))
