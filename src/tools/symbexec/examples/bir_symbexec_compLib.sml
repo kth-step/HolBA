@@ -589,13 +589,13 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
 
   val debug_memOn = false;
 
-  fun compute_val_try_mem_load compute_val_and_resolve_deps vals (besubst, besubst_vars) =
+  fun compute_val_try_mem_load compute_val_and_resolve_deps preds vals (besubst, besubst_vars) =
     if is_BExp_Load besubst then
     let
       val (mem_tm, addr_tm, end_tm, sz_tm) = dest_BExp_Load besubst;
       val (addr, addr_deps) = process_addr "load" vals addr_tm;
 
-      val mem_symbv_resolve = compute_val_and_resolve_deps vals (mem_tm, besubst_vars);
+      val mem_symbv_resolve = compute_val_and_resolve_deps preds vals (mem_tm, besubst_vars);
       val mem_symbv_o = SOME (lookup_mem_symbv vals mem_symbv_resolve)
                         handle _ => NONE;
 
@@ -627,13 +627,13 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
     end
     else NONE;
 
-  fun compute_val_try_mem_store compute_val_and_resolve_deps vals (besubst, besubst_vars) =
+  fun compute_val_try_mem_store compute_val_and_resolve_deps preds vals (besubst, besubst_vars) =
     if is_BExp_Store besubst then
     let
       val (mem_tm, addr_tm, end_tm, val_tm) = dest_BExp_Store besubst;
       val (addr, addr_deps) = process_addr "store" vals addr_tm;
 
-      val mem_symbv_resolve = compute_val_and_resolve_deps vals (mem_tm, besubst_vars);
+      val mem_symbv_resolve = compute_val_and_resolve_deps preds vals (mem_tm, besubst_vars);
       val mem_symbv_o = SOME (lookup_mem_symbv vals mem_symbv_resolve)
                         handle _ => NONE;
 
@@ -665,17 +665,17 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
     end
     else NONE;
 
-  fun compute_val_try_mem_subexp compute_val_and_resolve_deps vals (besubst, besubst_vars) =
+  fun compute_val_try_mem_subexp compute_val_and_resolve_deps preds vals (besubst, besubst_vars) =
     if is_BExp_Load besubst then
-      compute_val_try_mem_load  compute_val_and_resolve_deps vals (besubst, besubst_vars)
+      compute_val_try_mem_load   compute_val_and_resolve_deps preds vals (besubst, besubst_vars)
     else if is_BExp_Store besubst then
-      compute_val_try_mem_store compute_val_and_resolve_deps vals (besubst, besubst_vars)
+      compute_val_try_mem_store  compute_val_and_resolve_deps preds vals (besubst, besubst_vars)
     else if subterm_satisfies is_BExp_Load besubst orelse
             subterm_satisfies is_BExp_Store besubst then
       let
         fun resolve_to_term tm_from =
           case compute_val_try_mem_subexp
-                  compute_val_and_resolve_deps vals (tm_from, besubst_vars) of
+                  compute_val_and_resolve_deps preds vals (tm_from, besubst_vars) of
              SOME (SymbValBE (t, _)) => t
            | NONE => tm_from
            | _ => raise ERR "compute_val_try_mem_subexp" "this better doesn't happen";
@@ -701,14 +701,14 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
       end
     else NONE;
 
-  fun compute_val_try_mem compute_val_and_resolve_deps vals (besubst, besubst_vars) =
+  fun compute_val_try_mem compute_val_and_resolve_deps preds vals (besubst, besubst_vars) =
     (
       if not debug_memOn orelse true then () else (
         print "\n\n(((((((\n";
         print_term besubst;
         print ")))))))\n"
       );
-      compute_val_try_mem_subexp compute_val_and_resolve_deps vals (besubst, besubst_vars)
+      compute_val_try_mem_subexp compute_val_and_resolve_deps preds vals (besubst, besubst_vars)
     );
 
 end (* outermost local *)

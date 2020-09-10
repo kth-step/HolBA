@@ -38,7 +38,7 @@ local
 
   open bir_symbexec_compLib;
 
-  fun compute_val_try compute_val_and_resolve_deps vals (besubst, besubst_vars) deps_l2 =
+  fun compute_val_try compute_val_and_resolve_deps preds vals (besubst, besubst_vars) deps_l2 =
     case compute_val_try_const_only vals (besubst, besubst_vars) deps_l2 of
         SOME x => SOME x
       | NONE => (
@@ -48,16 +48,16 @@ local
     case compute_val_try_expplusminusconst vals (besubst, besubst_vars) of
         SOME x => SOME x
       | NONE => (
-         compute_val_try_mem compute_val_and_resolve_deps vals (besubst, besubst_vars)
+         compute_val_try_mem compute_val_and_resolve_deps preds vals (besubst, besubst_vars)
     )));
 
-  fun compute_val_and_resolve_deps vals (besubst, besubst_vars) =
+  fun compute_val_and_resolve_deps preds vals (besubst, besubst_vars) =
     let
       val deps_l2 = List.foldr (Redblackset.union)
                                symbvalbe_dep_empty
                                (List.map (deps_find_symbval "compute_val_and_resolve_deps" vals) besubst_vars);
     in
-      case compute_val_try compute_val_and_resolve_deps vals (besubst, besubst_vars) deps_l2 of
+      case compute_val_try compute_val_and_resolve_deps preds vals (besubst, besubst_vars) deps_l2 of
          SOME x => x
        | NONE   =>
           let
@@ -93,8 +93,9 @@ in (* local *)
 
   fun compute_valbe be syst =
     let
-      val env  = SYST_get_env  syst;
-      val vals = SYST_get_vals syst;
+      val env   = SYST_get_env  syst;
+      val vals  = SYST_get_vals syst;
+      val preds = SYST_get_pred syst;
 
       val be_   = simplify_be be syst;
       (* TODO: we may be left with an expression that fetches a single variable from the environment *)
@@ -102,7 +103,7 @@ in (* local *)
       val be_vars = get_birexp_vars be_;
       val besubst_with_vars = List.foldr (subst_fun env vals) (be_, []) be_vars;
     in
-      compute_val_and_resolve_deps vals besubst_with_vars
+      compute_val_and_resolve_deps preds vals besubst_with_vars
     end;
 
 end (* local *)
