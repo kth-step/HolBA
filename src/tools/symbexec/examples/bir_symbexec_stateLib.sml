@@ -351,7 +351,13 @@ local
   fun collect_pred_expsdeps vals (bv, (exps, deps)) =
     let
       val symbv = find_bv_val "collect_pred_expsdeps" vals bv;
+      val _ = if true then () else
+              print ("pred: " ^ (symbv_to_string symbv) ^ "\n");
+
       val deps_delta = deps_of_symbval "collect_pred_expsdeps" symbv;
+      val _ = if true then () else
+              print ("pred_deps: " ^ (List.foldr (fn (x,s) => s ^ "; " ^ (term_to_string x)) "" (Redblackset.listItems deps_delta)) ^ "\n");
+
       val exp =
        case symbv of
           SymbValBE (x, _) => x

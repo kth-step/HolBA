@@ -108,7 +108,7 @@ val pred_conjs = [
 ];
 
 val use_countw_const_only = false;
-val use_mem_symbolic = false;
+val use_mem_symbolic = true;
 
 val syst = init_state lbl_tm prog_vars;
 
@@ -194,6 +194,7 @@ val _ = print "\n\n";
 
 (*
 val syst = hd systs_assertfailed;
+val syst = hd systs_noassertfailed;
 *)
 
 val systs_feasible = List.filter check_feasible systs_noassertfailed;
@@ -227,7 +228,13 @@ val bv_fr = ``(BVar "fr_15_SP_process" (BType_Imm Bit32))``;
 val bv_fr = ````;
 val bv_fr = ``(BVar "fr_57_R3" (BType_Imm Bit32))``;
 
+
+val bv_fr = ``BVar "fr_82_PSR_Z" BType_Bool``;
+val bv_fr = ``BVar "fr_75_R3" (BType_Imm Bit32)``;
+val bv_fr = ``BVar "fr_43_R2" (BType_Imm Bit32)``;
+
 find_bv_val "script" (SYST_get_vals syst) bv_fr;
+(Redblackset.listItems o deps_of_symbval "script") (find_bv_val "script" (SYST_get_vals syst) bv_fr);
 
 expand_bv_fr_in_syst bv_fr syst
 *)
