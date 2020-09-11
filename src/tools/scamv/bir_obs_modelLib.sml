@@ -234,11 +234,13 @@ local
 	      (BExp_Const (Imm64 0x7Fw)) 
 	      (BExp_BinExp BIExp_RightShift pa (BExp_Const (Imm64 6w)))])
 	`;
+
      (* tag1 tag1 tag1 tag2 tag3 *)
      val preEvict_hyp1_def = Define`
        preEvict_hyp1 tml = 
           BStmt_Observe 0 (BExp_Const (Imm1 1w))
-			[(BExp_BinExp BIExp_And
+			[
+			 (BExp_BinExp BIExp_And
 		            (BExp_BinExp BIExp_And
 		              (BExp_BinExp BIExp_And
 		                (BExp_BinExp BIExp_And
@@ -246,7 +248,8 @@ local
 			 	  (BExp_BinPred BIExp_Equal  (itag (EL 1 tml)) (itag (EL 2 tml))))
 				(BExp_BinPred BIExp_NotEqual (itag (EL 0 tml)) (itag (EL 3 tml))))
 			      (BExp_BinPred BIExp_NotEqual (itag (EL 0 tml)) (itag (EL 4 tml))))
-			    (BExp_BinPred BIExp_NotEqual (itag (EL 3 tml)) (itag (EL 4 tml))))] HD
+			    (BExp_BinPred BIExp_NotEqual (itag (EL 3 tml)) (itag (EL 4 tml))))
+			] HD
        `;
 
     fun mk_assertion_obs e =
@@ -272,7 +275,7 @@ local
 	    val comb_p_np = zip p_exp np_exp;
 	in
 	   (
-	    mk_list(   [(rhs o concl o EVAL)``preEvict_hyp1 ^(mk_list(adds, ``:bir_exp_t``))``],
+	    mk_list(   [(rhs o concl o EVAL)``preEvict_hyp1  ^(mk_list((rev adds),  ``:bir_exp_t``))``],
 		    ``:bir_val_t bir_stmt_basic_t``),
 	    mk_list(map (fn (a,b) => (rhs o concl o EVAL)``constrain_spec_obs_vars (^a,^b)``) comb_p_np,
 		    ``:bir_val_t bir_stmt_basic_t``)
@@ -349,7 +352,7 @@ structure bir_arm8_cache_previction_model : OBS_MODEL =
  struct
  val obs_hol_type = ``bir_val_t``;
  fun add_obs t =
-     previction_instrumentation_obs (bir_arm8_cache_line_index_model.add_obs t);
+     previction_instrumentation_obs (bir_arm8_cache_line_model.add_obs t);
  end;
 
 fun get_obs_model id =
