@@ -230,25 +230,94 @@ local
 
      val iset_def = Define`
 	iset pa = 
- 	  ([BExp_BinExp BIExp_And 
+ 	  BExp_BinExp BIExp_And 
 	      (BExp_Const (Imm64 0x7Fw)) 
-	      (BExp_BinExp BIExp_RightShift pa (BExp_Const (Imm64 6w)))])
+	      (BExp_BinExp BIExp_RightShift pa (BExp_Const (Imm64 6w)))
+	`;
+
+     val iword_def = Define`
+	iword pa = 
+ 	  BExp_BinExp BIExp_And  pa (BExp_Const (Imm64 0x3Cw))
+	`;
+
+     val bus_round_def = Define`
+	bus_round pa =
+	  BExp_BinExp BIExp_RightShift (iword(pa)) (BExp_Const (Imm64 2w))
 	`;
 
      (* tag1 tag1 tag1 tag2 tag3 *)
      val preEvict_hyp1_def = Define`
        preEvict_hyp1 tml = 
+          let v1 = BExp_BinExp BIExp_Plus (bus_round (EL 0 tml)) (BExp_Const (Imm64 1w)) in
+	  let v2 = BExp_BinExp BIExp_Mod v1 (BExp_Const (Imm64 4w))                      in
           BStmt_Observe 0 (BExp_Const (Imm1 1w))
 			[
 			 (BExp_BinExp BIExp_And
-		            (BExp_BinExp BIExp_And
-		              (BExp_BinExp BIExp_And
-		                (BExp_BinExp BIExp_And
-		                  (BExp_BinPred BIExp_Equal  (itag (EL 0 tml)) (itag (EL 1 tml))) 
-			 	  (BExp_BinPred BIExp_Equal  (itag (EL 1 tml)) (itag (EL 2 tml))))
-				(BExp_BinPred BIExp_NotEqual (itag (EL 0 tml)) (itag (EL 3 tml))))
-			      (BExp_BinPred BIExp_NotEqual (itag (EL 0 tml)) (itag (EL 4 tml))))
-			    (BExp_BinPred BIExp_NotEqual (itag (EL 3 tml)) (itag (EL 4 tml))))
+			    (BExp_BinExp BIExp_And
+		               (BExp_BinExp BIExp_And
+		                  (BExp_BinExp BIExp_And
+		                     (BExp_BinExp BIExp_And
+		                        (BExp_BinPred BIExp_Equal  (itag (EL 0 tml)) (itag (EL 1 tml))) 
+			 		(BExp_BinPred BIExp_Equal  (itag (EL 1 tml)) (itag (EL 2 tml))))
+				     (BExp_BinPred BIExp_NotEqual (itag (EL 0 tml)) (itag (EL 3 tml))))
+				  (BExp_BinPred BIExp_NotEqual (itag (EL 0 tml)) (itag (EL 4 tml))))
+			       (BExp_BinPred BIExp_NotEqual (itag (EL 3 tml)) (itag (EL 4 tml))))
+			    (BExp_BinPred BIExp_NotEqual (bus_round (EL 0 tml)) v2))
+			] HD
+       `;
+
+     (* tag2 tag1 tag1 tag1 tag3 *)
+     val preEvict_hyp2_def = Define`
+       preEvict_hyp2 tml = 
+          let v1 = BExp_BinExp BIExp_Plus (bus_round (EL 2 tml)) (BExp_Const (Imm64 1w)) in
+	  let v2 = BExp_BinExp BIExp_Mod v1 (BExp_Const (Imm64 4w))                      in
+          BStmt_Observe 0 (BExp_Const (Imm1 1w))
+			[
+			 (* (BExp_BinExp BIExp_And *)
+			    (BExp_BinExp BIExp_And
+		               (BExp_BinExp BIExp_And
+		                  (BExp_BinExp BIExp_And
+		                     (BExp_BinExp BIExp_And
+		                        (BExp_BinPred BIExp_NotEqual  (itag (EL 0 tml)) (itag (EL 1 tml))) 
+			 		(BExp_BinPred BIExp_Equal  (itag (EL 1 tml)) (itag (EL 2 tml))))
+				     (BExp_BinPred BIExp_Equal (itag (EL 1 tml)) (itag (EL 3 tml))))
+				  (BExp_BinPred BIExp_NotEqual (itag (EL 0 tml)) (itag (EL 4 tml))))
+			       (BExp_BinPred BIExp_NotEqual (itag (EL 1 tml)) (itag (EL 4 tml))))
+			    (* (BExp_BinPred BIExp_Equal (bus_round (EL 1 tml)) v2)) *)
+			] HD
+       `;
+
+     (* tag2 tag1 tag1 tag(set2) tag3 *)
+     val preEvict_hyp3_def = Define`
+       preEvict_hyp3 tml = 
+          let v1 = BExp_BinExp BIExp_Plus (bus_round (EL 2 tml)) (BExp_Const (Imm64 1w)) in
+	  let v2 = BExp_BinExp BIExp_Mod v1 (BExp_Const (Imm64 4w))                      in
+          BStmt_Observe 0 (BExp_Const (Imm1 1w))
+			[
+			 (* (BExp_BinExp BIExp_And *)
+		         (
+			  BExp_BinExp BIExp_And 
+                            (BExp_BinExp BIExp_And
+		               (BExp_BinExp BIExp_And
+		                  (BExp_BinExp BIExp_And
+		                     (BExp_BinPred BIExp_Equal  (iset (EL 0 tml)) (iset (EL 1 tml))) 
+			 	     (BExp_BinPred BIExp_Equal  (iset (EL 1 tml)) (iset (EL 2 tml))))
+				  (BExp_BinPred BIExp_NotEqual (iset (EL 2 tml)) (iset (EL 3 tml))))
+			       (BExp_BinPred BIExp_Equal (iset (EL 2 tml)) (iset (EL 4 tml))))
+			       
+
+			    (BExp_BinExp BIExp_And
+		               (BExp_BinExp BIExp_And
+		                  (BExp_BinExp BIExp_And
+		                     (BExp_BinExp BIExp_And
+		                        (BExp_BinPred BIExp_NotEqual  (itag (EL 0 tml)) (itag (EL 1 tml))) 
+			 		(BExp_BinPred BIExp_Equal  (itag (EL 1 tml)) (itag (EL 2 tml))))
+				     (BExp_BinPred BIExp_Equal (itag (EL 1 tml)) (itag (EL 3 tml))))
+				  (BExp_BinPred BIExp_NotEqual (itag (EL 0 tml)) (itag (EL 4 tml))))
+			       (BExp_BinPred BIExp_NotEqual (itag (EL 1 tml)) (itag (EL 4 tml))))
+			    )
+			    (* (BExp_BinPred BIExp_Equal (bus_round (EL 1 tml)) v2)) *)
+
 			] HD
        `;
 
@@ -275,7 +344,7 @@ local
 	    val comb_p_np = zip p_exp np_exp;
 	in
 	   (
-	    mk_list(   [(rhs o concl o EVAL)``preEvict_hyp1  ^(mk_list((rev adds),  ``:bir_exp_t``))``],
+	    mk_list(   [(rhs o concl o EVAL)``preEvict_hyp3  ^(mk_list((rev adds),  ``:bir_exp_t``))``],
 		    ``:bir_val_t bir_stmt_basic_t``),
 	    mk_list(map (fn (a,b) => (rhs o concl o EVAL)``constrain_spec_obs_vars (^a,^b)``) comb_p_np,
 		    ``:bir_val_t bir_stmt_basic_t``)
