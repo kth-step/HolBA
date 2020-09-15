@@ -441,8 +441,8 @@ struct
 	    FULL_SIMP_TAC (std_ss++inter_set_repr_ss++union_set_repr_ss) [] >>
 	    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
 	    FULL_SIMP_TAC std_ss [bir_wm_instTheory.bir_map_triple_def,
-				  bin_simp_hoare_logicTheory.weak_map_triple_def,
-				  bin_hoare_logicTheory.weak_triple_def,
+				  abstract_simp_hoare_logicTheory.weak_map_triple_def,
+				  abstract_hoare_logicTheory.weak_triple_def,
 				  bir_wm_instTheory.bir_exec_to_labels_triple_precond_def,
 				  bir_wm_instTheory.bir_exec_to_labels_triple_postcond_def] >>
 	    REPEAT STRIP_TAC >> (
@@ -486,7 +486,7 @@ struct
               ),
 
               (* bool_exp_env of invariant *)
-	      FULL_SIMP_TAC (std_ss++bin_hoare_logicSimps.bir_wm_SS)
+	      FULL_SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS)
 		[bir_bool_expTheory.bir_is_bool_exp_env_def, bir_wm_instTheory.bir_etl_wm_def, bir_wm_instTheory.bir_weak_trs_def] >>
               Cases_on `bir_exec_to_labels
               (^(pred_setSyntax.mk_set [start_label]) UNION (^wlist))
@@ -599,8 +599,8 @@ struct
 	    FULL_SIMP_TAC (std_ss++inter_set_repr_ss++union_set_repr_ss) [] >>
 	    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
 	    FULL_SIMP_TAC std_ss [bir_wm_instTheory.bir_map_triple_def,
-				  bin_simp_hoare_logicTheory.weak_map_triple_def,
-				  bin_hoare_logicTheory.weak_triple_def,
+				  abstract_simp_hoare_logicTheory.weak_map_triple_def,
+				  abstract_hoare_logicTheory.weak_triple_def,
 				  bir_wm_instTheory.bir_exec_to_labels_triple_precond_def,
 				  bir_wm_instTheory.bir_exec_to_labels_triple_postcond_def] >>
 	    REPEAT STRIP_TAC >> (
@@ -648,7 +648,7 @@ struct
               ),
 
               (* bool_exp_env of invariant *)
-	      FULL_SIMP_TAC (std_ss++bin_hoare_logicSimps.bir_wm_SS)
+	      FULL_SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS)
 		[bir_bool_expTheory.bir_is_bool_exp_env_def, bir_wm_instTheory.bir_etl_wm_def, bir_wm_instTheory.bir_weak_trs_def] >>
               Cases_on `bir_exec_to_labels
               (^(pred_setSyntax.mk_set [start_label]) UNION (^wlist))

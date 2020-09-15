@@ -13,7 +13,7 @@ open bir_auxiliaryLib;
 
 open HolBACoreSimps;
 open HolBASimps;
-open bin_hoare_logicSimps;
+open abstract_hoare_logicSimps;
 
 val _ = new_theory "tutorialExtra2_composition";
 

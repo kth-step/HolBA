@@ -2,15 +2,15 @@ open HolKernel Parse boolLib bossLib;
 
 open bir_programTheory;
 open bir_wm_instTheory;
-open bin_hoare_logicTheory;
-open bin_simp_hoare_logicTheory;
-open bin_hoare_logicSimps;
 open bir_program_multistep_propsTheory;
 open bir_auxiliaryTheory;
 
+open abstract_hoare_logicTheory;
+open abstract_simp_hoare_logicTheory;
+
 open HolBASimps;
 open HolBACoreSimps;
-open bin_hoare_logicSimps;
+open abstract_hoare_logicSimps;
 
 open bir_auxiliaryLib;
 

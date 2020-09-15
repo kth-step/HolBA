@@ -4,8 +4,6 @@ open bir_auxiliaryLib;
 
 open bir_programTheory;
 open bir_auxiliaryTheory;
-open bin_hoare_logicTheory;
-open bin_simp_hoare_logicTheory;
 open bir_program_multistep_propsTheory;
 open bir_program_blocksTheory;
 open bir_program_terminationTheory;
@@ -19,7 +17,10 @@ open bir_typing_progTheory;
 open bir_exp_tautologiesTheory;
 open bir_htTheory;
 
-open bin_hoare_logicSimps;
+open abstract_hoare_logicTheory;
+open abstract_simp_hoare_logicTheory;
+
+open abstract_hoare_logicSimps;
 open HolBACoreSimps;
 
 open bir_immSyntax;
