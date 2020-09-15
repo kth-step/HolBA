@@ -25,7 +25,7 @@ val _ = print_and_check_thm
   "HolBA tutorial example (BIR only)"
   bir_add_reg_ct
   ``
-  bir_map_triple
+  bir_simp_jgmt
     (bir_add_reg_prog:'observation_type bir_program_t)
     bir_exp_true
     (BL_Address (Imm64 28w))
@@ -50,7 +50,7 @@ val _ = print_and_check_thm
   "Example \"BIR function reuse\""
   bir_att_ct
   ``
-  bir_map_triple
+  bir_simp_jgmt
     bprog_add_times_two
     bir_exp_true
     (BL_Address (Imm32 (0w :word32)))
@@ -75,7 +75,7 @@ val _ = print_and_check_thm
   "Example \"BIR optimized mutual recursion\" - is_even"
   bir_ieo_is_even_ht
   ``
-  bir_map_triple
+  bir_simp_jgmt
     bprog_is_even_odd
     bir_exp_true
     (BL_Address (Imm32 (0w :word32)))
@@ -88,7 +88,7 @@ val _ = print_and_check_thm
   "Example \"BIR optimized mutual recursion\" - is_odd"
   bir_ieo_is_odd_ht
   ``
-  bir_map_triple
+  bir_simp_jgmt
     bprog_is_even_odd
     bir_exp_true
     (BL_Address (Imm32 (256w :word32)))
