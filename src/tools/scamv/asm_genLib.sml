@@ -270,6 +270,10 @@ local
     arb_regname_except [reg] >>= (fn source =>
     return (Load (Reg reg, Ld (SOME offset, source))));
 
+  fun arb_ld_offset_src reg offset =
+    arb_regname_except [reg] >>= (fn source => 
+    return (source, Load (Reg reg, Ld (SOME offset, source))))
+
   fun arb_ld_offset_selected_source reg  offset =
     arb_regname_except [reg] >>= (fn target =>
     return (target, Load (Reg target, Ld (SOME offset, reg))));
@@ -328,6 +332,24 @@ local
 	       >>= (fn result => return (result, [reg1, reg2])))
     end;
 
+
+  fun preamble1 () =
+    let
+	val offsets = choose(0, 255)
+	val regs    = arb_regname_except ["x1", "x0"]
+	val zipped  = regs >>= (fn reg1 => offsets 
+			   >>= (fn off1 => arb_regname_except [reg1]
+                           >>= (fn reg2 => offsets
+		           >>= (fn off2 => return ([(reg1, off1), (reg2, off2)], [reg1,reg2])))))
+	val ext_src = zipped >>= (fn (pairs, [reg1,reg2]) => sequence (map (fn (r,i) => arb_ld_offset_src r i) pairs)
+			     >>= (fn h::t::_ => (return ([fst h, fst t], [snd h, snd t], [reg1, reg2]))
+				 ))
+    in
+	ext_src >>= (fn (srcs, lds, [reg1, reg2]) =>  (arb_cmp_g (hd srcs) reg2)
+                >>= (fn cmpi => return (lds@[cmpi], [reg1, reg2])))
+    end;
+
+
   fun left_gen reg offset =
       (arb_ld_offset_selected_source reg  offset)
               >>= (fn (_, mop) => return [mop])
@@ -335,7 +357,7 @@ local
                (* >>= (fn (reg, ld1) => arb_shift_left_selected_source  reg 9 *)
                (* >>= (fn   shift    => arb_mem_op_selected_source reg offset *)
                (* >>= (fn (_,   ld2) => return [ld1, shift, ld2]))) *);
-
+      
   val arb_block_l = 
       let 
 	  val offsets = choose(0, 255)
@@ -350,12 +372,23 @@ local
       let 
 	  val offsets = choose(0, 255)
       in
-    preamble() >>= (fn (prmbl, regs) => offsets 
+    preamble1() >>= (fn (prmbl, regs) => offsets 
 	       >>= (fn offset =>  arb_regname_except regs
                >>= (fn reg1 => ((List.foldr (op@) []) <$> 
    	            (sequence [(* arb_pad, *) (left_gen reg1 offset)]))
                >>= (fn left => return (prmbl, left)))))
       end;
+
+  val arb_block_l3 = 
+      let 
+	  val offsets = choose(0, 255)
+      in
+    preamble1() >>= (fn (prmbl,  [reg1, reg2]) => offsets 
+               >>= (fn offset => ((List.foldr (op@) []) <$> 
+   	             (sequence [(left_gen reg1 offset)]))
+               >>= (fn left => return (prmbl, left))))
+      end;
+
 in
   fun arb_program_cond_spectre preamble arb_prog_left arb_prog_right =
       let
@@ -409,7 +442,7 @@ in
       in
   	  arb_prog
       end;
-
+    
   val arb_program_spectre =
       let
   	  val offsets = choose(0, 255);
@@ -420,8 +453,9 @@ in
   	  val arb_block_r = (List.foldr (op@) []) <$> (
               sequence [(* arb_pad, *) (fn x => [x]) <$> oneof[arb_load_indir(* , arb_store_indir *)]]);
       in
-  	  arb_program_glue_spectre arb_block_l2 arb_block_r
+  	  arb_program_glue_spectre arb_block_l3 arb_block_r
       end
+      
 end
 
 end

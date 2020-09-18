@@ -396,9 +396,9 @@ fun next_experiment all_exps next_relation  =
 
         val _ = min_verb 3 (fn () =>
                                bir_exp_pretty_print rel);
-        val _ = printv 4 ("Word relation\n");
+        val _ = printv 1 ("Word relation\n");
         val new_word_relation = make_word_relation rel all_exps;
-        val _ = min_verb 3 (fn () =>
+        val _ = min_verb 1 (fn () =>
                                (print_term new_word_relation;
                                 print "\n"));
         val word_relation =
@@ -473,7 +473,7 @@ fun next_experiment all_exps next_relation  =
 		else raise ERR "next_test" "no training input found";
 	in
 	 val st = force (ifdef__else__ SPECTRE
-		          (fn () => training_input_mining 8 |> List.partition (isPrimedRun o fst) |> (to_sml_Arbnums o #2))
+		          (fn () => training_input_mining 6 |> List.partition (isPrimedRun o fst) |>  (* (to_sml_Arbnums o #2)) *) (List.map (fn (r,v) => (remove_prime r,v)) o #1) |> to_sml_Arbnums)
 		          (fn () => [])
 		         endif__)
 	end
