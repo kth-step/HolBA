@@ -447,6 +447,14 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
       )
     end;
 
+  fun case_term_match err_src err_str _  [] =
+        raise ERR err_src (err_str ())
+    | case_term_match err_src err_str tm ((match_tm,match_fun)::matchfunlist) =
+        (
+          match_fun (hol88Lib.match match_tm tm)
+          handle _ => case_term_match err_src err_str tm matchfunlist
+        );
+
   fun mem_load mem addr_tm end_tm sz_tm =
     let
       (* NOTE: this only works for (BType_Mem Bit32 Bit8) and
@@ -461,15 +469,30 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
           SOME (SymbValBE (mem_load_const mem caddr sz_tm))
         end
       else
-      let
-        val (vs, _) = hol88Lib.match var_sub_const_match_tm addr_tm
-                      handle _ => raise ERR "mem_load"
-                                    ("couldn't resolve addr_tm: " ^ (term_to_string addr_tm));
+        case_term_match "mem_load"
+                        (fn () => "couldn't resolve addr_tm: " ^ (term_to_string addr_tm))
+                        addr_tm
+   [(var_sub_const_match_tm,
+      fn res => let
+        val (vs, _) = res;
         val bv      = fst (List.nth (vs, 0));
         val imm_val = fst (List.nth (vs, 1));
       in
         SOME (SymbValBE (mem_load_stack mem bv imm_val sz_tm))
-      end
+      end),
+    (var_add_const_match_tm,
+      fn res => let
+        val (vs, _) = res;
+        val bv      = fst (List.nth (vs, 0));
+        val imm_val = fst (List.nth (vs, 1));
+
+        val _ = if false then () else
+                print "found indirect load!\n";
+        (* TODO: make sure that this memory access is really in the program memory only *)
+      in
+        SOME (SymbValBE (bden (bir_envSyntax.mk_BVar_string ("hack_mem_load_pc_relative", bir_valuesSyntax.BType_Imm32_tm)), symbvalbe_dep_empty))
+      end)
+   ]
     end;
 
 (* ================================================================ *)
