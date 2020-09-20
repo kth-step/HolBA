@@ -15,7 +15,7 @@ val entry_labels = ["motor_prep_input",
                     "__lesf2",
                     "__clzsi2",
                     "__aeabi_f2iz",
-                    "pid_msg_write",
+                    (*"pid_msg_write",*)
                     "timer_read"];
 
 
