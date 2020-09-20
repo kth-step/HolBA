@@ -435,7 +435,11 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
         (
           let
             val (exp, deps) = Redblackmap.find (mem_globl, ldaddr)
-              handle _ => raise ERR "mem_load_const" "address is not mapped in global memory";
+              handle _ => (print "global memory not mapped\n";
+                           (* TODO: fix variable sizes here and in other places, and introduce function to generate free variables *)
+                           (* TODO: is it correct to have an empty deps set for free variable expressions? *)
+                           (bden (bir_envSyntax.mk_BVar_string ("hack_mem_load_global", bir_valuesSyntax.BType_Imm32_tm)), symbvalbe_dep_empty))
+                          (*raise ERR "mem_load_const" "address is not mapped in global memory"*);
             val exp' = mem_sec_exp_gen exp suboff sz;
           in
             (exp', deps)
