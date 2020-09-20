@@ -428,14 +428,19 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
       val _ = if zeromasked = 0 then () else
               raise ERR "mem_load_const" "load address is not aligned";
     in
-      if Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), ldaddr) then
+      if Arbnum.<= (Arbnum.fromInt (0x40000000), ldaddr) then
+        (* TODO: peripheral memory range -> add this to memory layout *)
+        (print "!!! loading from device memory!\n";
+         (bden (bir_envSyntax.mk_BVar_string ("hack_mem_load_devices", bir_valuesSyntax.BType_Imm32_tm)), symbvalbe_dep_empty)
+        )
+      else if Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), ldaddr) then
         raise ERR "mem_load_const" "const/global load out of corresponding memory range"
       else if Arbnum.<= (mem_const_size, ldaddr) then
         (* global load *)
         (
           let
             val (exp, deps) = Redblackmap.find (mem_globl, ldaddr)
-              handle _ => (print "global memory not mapped\n";
+              handle _ => (print "!!! global memory not mapped\n";
                            (* TODO: fix variable sizes here and in other places, and introduce function to generate free variables *)
                            (* TODO: is it correct to have an empty deps set for free variable expressions? *)
                            (bden (bir_envSyntax.mk_BVar_string ("hack_mem_load_global", bir_valuesSyntax.BType_Imm32_tm)), symbvalbe_dep_empty))
@@ -500,7 +505,7 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
         val imm_val = fst (List.nth (vs, 1));
 
         val _ = if false then () else
-                print "found indirect load!\n";
+                print "!!! found indirect load!\n";
         (* TODO: make sure that this memory access is really in the program memory only *)
       in
         SOME (SymbValBE (bden (bir_envSyntax.mk_BVar_string ("hack_mem_load_pc_relative", bir_valuesSyntax.BType_Imm32_tm)), symbvalbe_dep_empty))
@@ -586,7 +591,11 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
 
       val mem_globl_new = Redblackmap.insert (mem_globl, ldaddr, (exp, exp_deps));
     in
-      if Arbnum.<  (ldaddr, mem_const_size) orelse
+      if Arbnum.<= (Arbnum.fromInt (0x40000000), caddr) then
+        (* TODO: peripheral memory range -> add this to memory layout *)
+        (print "!!! storing to device memory!\n";
+         SymbValMem mem)
+      else if Arbnum.<  (ldaddr, mem_const_size) orelse
          Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), ldaddr) then
         raise ERR "mem_store_const" "global store out of global memory range"
       else
