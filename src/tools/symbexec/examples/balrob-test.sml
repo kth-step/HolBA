@@ -51,6 +51,9 @@ val _ = print_dead_code bl_dict_ n_dict entry_label;
 *)
 
 val name   = entry_label;
+
+val _ = print ("\n\nfunname = " ^ (name) ^ "\n\n");
+
 val lbl_tm = (mk_lbl_tm o valOf o mem_find_symbol_addr_) name;
 
 local
@@ -201,7 +204,6 @@ val (count_min, count_max) =
    | _ => raise ERR "balrob-test" "should be an interval";
 
 val _ = print "\n\n\n";
-val _ = print ("funname = " ^ (name) ^ "\n");
 val _ = print ("min = " ^ count_min ^ "\n");
 val _ = print ("max = " ^ count_max ^ "\n");
 
