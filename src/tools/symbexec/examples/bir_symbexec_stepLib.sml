@@ -202,7 +202,10 @@ in (* local *)
       val lbl_tm = SYST_get_pc syst;
 
       val bl = (valOf o (lookup_block_dict bl_dict)) lbl_tm;
-      val (_, stmts, est) = dest_bir_block bl;
+      val (lbl_block_tm, stmts, est) = dest_bir_block bl;
+      val _ = if true then () else
+              print_term (lbl_block_tm);
+
       val s_tms = (fst o listSyntax.dest_list) stmts;
 
       val debugOn = false;

@@ -304,6 +304,7 @@ fun tidyup_state_vals syst =
             if num_diff < 0 then
               raise ERR "tidyup_state_vals" "this shouldn't be negative"
             else
+              if true then () else
               print ("TIDIED UP " ^ (Int.toString num_diff) ^ " VALUES.\n");
 
     val vals' = Redblackset.foldl
@@ -408,6 +409,7 @@ in (* local *)
       val resultvalue = result <> BirSmtUnsat;
 
       val _ = if resultvalue then () else
+              if true then () else
               print "FOUND AN INFEASIBLE PATH...\n";
     in
       resultvalue
