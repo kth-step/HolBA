@@ -265,7 +265,11 @@ in (* outermost local *)
 
   fun mem_addr_sz_offset addrint szint =
     let
-      val zerobits = (szint div 8) - 1;
+      val zerobits = case szint of
+                          8 => 0
+                       | 16 => 1
+                       | 32 => 2
+                       | _  => raise ERR "mem_addr_sz_offset" "cannot handle sizetype";
       val zeromask =
            Word.- (Word.<< (Word.fromInt 1, Word.fromInt zerobits), Word.fromInt 1);
       val zeromasked =
@@ -415,6 +419,11 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
       val zeromasked = mem_addr_sz_offset (Arbnum.toInt caddr) sz;
       val suboff = mem_addr_sz_offset (Arbnum.toInt caddr) 32;
       val ldaddr = Arbnum.fromInt ((Arbnum.toInt caddr) - suboff);
+
+      val _ = if true then () else
+              print ("mem_load_const\n" ^
+                     "  addr: " ^ (Arbnum.toHexString caddr) ^ "\n" ^
+                     "  sz:   " ^ (Int.toString sz) ^ "\n");
 
       val _ = if zeromasked = 0 then () else
               raise ERR "mem_load_const" "load address is not aligned";
