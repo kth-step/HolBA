@@ -242,7 +242,7 @@ local
 
      val bus_round_def = Define`
 	bus_round pa =
-	  BExp_BinExp BIExp_RightShift (iword(pa)) (BExp_Const (Imm64 3w))
+	  BExp_BinExp BIExp_RightShift (iword(pa)) (BExp_Const (Imm64 4w))
 	`;
 
      (* tag1 tag1 tag1 tag2 tag3 *)
