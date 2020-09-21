@@ -274,6 +274,11 @@ local
     arb_regname_except [reg] >>= (fn source => 
     return (source, Load (Reg reg, Ld (SOME offset, source))))
 
+  fun arb_ld_reg_src reg =
+    arb_regname_except [reg] >>= (fn source => 
+    arb_regname_except [reg] >>= (fn reg'   =>
+      return (source, Load (Reg reg, Ld (NONE, source^","^reg')))));
+
   fun arb_ld_offset_selected_source reg  offset =
     arb_regname_except [reg] >>= (fn target =>
     return (target, Load (Reg target, Ld (SOME offset, reg))));
@@ -349,6 +354,21 @@ local
                 >>= (fn cmpi => return (lds@[cmpi], [reg1, reg2])))
     end;
 
+  fun preamble2 () =
+    let
+	val offsets = choose(0, 255)
+	val regs    = arb_regname_except ["x1", "x0"]
+	val zipped  = regs >>= (fn reg1 => offsets 
+			   >>= (fn off1 => arb_regname_except [reg1]
+                           >>= (fn reg2 => return ([(reg1, off1), (reg2, 0)], [reg1,reg2]))))
+
+	val ext_src = zipped >>= (fn (p1::p2::_ , [reg1, reg2]) =>
+                                         sequence ([arb_ld_reg_src (fst p1), arb_ld_offset_src (fst p2) (snd p2)])
+			     >>= (fn h::t::_ => (return ([fst h, fst t], [snd h, snd t], [reg1, reg2]))))
+    in
+	ext_src >>= (fn (srcs, lds, [reg1, reg2]) =>  (arb_cmp_g (hd srcs) reg2)
+                >>= (fn cmpi => return (lds@[cmpi], [reg1, reg2])))
+    end;
 
   fun left_gen reg offset =
       (arb_ld_offset_selected_source reg  offset)
@@ -383,7 +403,7 @@ local
       let 
 	  val offsets = choose(0, 255)
       in
-    preamble1() >>= (fn (prmbl,  [reg1, reg2]) => offsets 
+    preamble2() >>= (fn (prmbl,  [reg1, reg2]) => offsets 
                >>= (fn offset => ((List.foldr (op@) []) <$> 
    	             (sequence [(left_gen reg1 offset)]))
                >>= (fn left => return (prmbl, left))))
