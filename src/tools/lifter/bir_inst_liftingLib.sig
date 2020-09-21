@@ -118,6 +118,19 @@ signature bir_inst_liftingLib = sig
   structure bmil_m0_BigEnd_Main : bir_inst_lifting;
 
 
+  (* M0 mod instance, little endian, process SP *)
+  structure bmil_m0_mod_LittleEnd_Process : bir_inst_lifting;
+
+  (* M0 mod instance, little endian, main SP *)
+  structure bmil_m0_mod_LittleEnd_Main : bir_inst_lifting;
+
+  (* M0 mod instance, big endian, process SP *)
+  structure bmil_m0_mod_BigEnd_Process : bir_inst_lifting;
+
+  (* M0 mod instance, big endian, main SP *)
+  structure bmil_m0_mod_BigEnd_Main : bir_inst_lifting;
+
+
   (* RISC-V instance *)
   structure bmil_riscv : bir_inst_lifting
 

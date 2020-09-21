@@ -366,3 +366,5 @@ val _ = print_msg "\n";
     (*  *)
     "REMUW x5, x6, x7"
   ];
+
+val _ = test_RISCV.close_log();

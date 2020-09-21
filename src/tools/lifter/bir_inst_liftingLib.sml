@@ -1914,6 +1914,11 @@ structure bir_inst_liftingLib :> bir_inst_liftingLib = struct
   structure bmil_m0_BigEnd_Process    = bir_inst_liftingFunctor (struct val mr = m0_bmr_rec_BigEnd_Process end);
   structure bmil_m0_BigEnd_Main       = bir_inst_liftingFunctor (struct val mr = m0_bmr_rec_BigEnd_Main end);
 
+  structure bmil_m0_mod_LittleEnd_Process = bir_inst_liftingFunctor (struct val mr = m0_mod_bmr_rec_LittleEnd_Process end);
+  structure bmil_m0_mod_LittleEnd_Main    = bir_inst_liftingFunctor (struct val mr = m0_mod_bmr_rec_LittleEnd_Main end);
+  structure bmil_m0_mod_BigEnd_Process    = bir_inst_liftingFunctor (struct val mr = m0_mod_bmr_rec_BigEnd_Process end);
+  structure bmil_m0_mod_BigEnd_Main       = bir_inst_liftingFunctor (struct val mr = m0_mod_bmr_rec_BigEnd_Main end);
+
   structure bmil_riscv = bir_inst_liftingFunctor (struct val mr = riscv_bmr_rec end);
 
 end

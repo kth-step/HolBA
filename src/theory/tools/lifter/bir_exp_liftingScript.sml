@@ -547,9 +547,9 @@ SIMP_TAC std_ss [bir_immTheory.bool2b_def]);
 (* Casting *)
 (***********)
 
-(* The semantics of casting in bir contain a lot of redundancy.
+(* The semantics of casting in BIR contain a lot of redundancy.
    A low-cast is for example the same as a normal cast. So, the theorems
-   below are designed carefully use the most appropriate cast operation. *)
+   below are designed to carefully use the most appropriate cast operation. *)
 
 (* No cast needed, since types are identical *)
 

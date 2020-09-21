@@ -193,5 +193,13 @@ end;
   in
     ()
   end;
+
+  fun close_log () =
+    let
+      val _ = TextIO.closeOut log
+    in
+      ()
+    end;
+
   end
 end;
