@@ -356,7 +356,8 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
 
   fun mem_load_stack mem bv_sp imm_offset sz_tm =
     let
-      val ((mem_const_size, mem_globl_size, mem_stack_size),
+      val (basem_bv,
+           (mem_const_size, mem_globl_size, mem_stack_size),
            (mem_const, mem_globl, (bv_sp_, mem_stack)),
            deps) = mem;
 
@@ -403,9 +404,11 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
           )
     );
 
+  (* TODO: make all the hack vars to be fresh vars *)
   fun mem_load_const mem caddr sz_tm =
     let
-      val ((mem_const_size, mem_globl_size, mem_stack_size),
+      val (basem_bv,
+           (mem_const_size, mem_globl_size, mem_stack_size),
            (mem_const, mem_globl, (bv_sp, mem_stack)),
            deps) = mem;
 
@@ -517,7 +520,8 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
 
   fun mem_store_stack mem bv_sp imm_offset val_tm =
     let
-      val ((mem_const_size, mem_globl_size, mem_stack_size),
+      val (basem_bv,
+           (mem_const_size, mem_globl_size, mem_stack_size),
            (mem_const, mem_globl, (bv_sp_, mem_stack)),
            deps) = mem;
 
@@ -555,14 +559,16 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
       val mem_stack_new = Redblackmap.insert (mem_stack, Arbnum.fromInt offset,
                                                 (exp, exp_deps));
     in
-      SymbValMem ((mem_const_size, mem_globl_size, mem_stack_size),
+      SymbValMem (basem_bv,
+                  (mem_const_size, mem_globl_size, mem_stack_size),
                   (mem_const, mem_globl, (bv_sp, mem_stack_new)),
                   deps_new)
     end;
 
   fun mem_store_const mem caddr val_tm =
     let
-      val ((mem_const_size, mem_globl_size, mem_stack_size),
+      val (basem_bv,
+           (mem_const_size, mem_globl_size, mem_stack_size),
            (mem_const, mem_globl, (bv_sp, mem_stack)),
            deps) = mem;
 
@@ -599,7 +605,8 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
          Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), ldaddr) then
         raise ERR "mem_store_const" "global store out of global memory range"
       else
-      SymbValMem ((mem_const_size, mem_globl_size, mem_stack_size),
+      SymbValMem (basem_bv,
+                  (mem_const_size, mem_globl_size, mem_stack_size),
                   (mem_const, mem_globl_new, (bv_sp, mem_stack)),
                   deps_new)
     end;

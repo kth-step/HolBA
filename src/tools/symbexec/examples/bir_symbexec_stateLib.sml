@@ -13,7 +13,8 @@ datatype symb_value =
                     (* TODO: generalize this later *)
                     (* memory layout: flash, globals, stack;
                                       size of first (constants) and middle portion (globals) *)
-  | SymbValMem      of ((Arbnum.num * Arbnum.num * Arbnum.num) *
+  | SymbValMem      of (term *
+                        (Arbnum.num * Arbnum.num * Arbnum.num) *
                         ((Arbnum.num -> Arbnum.num option) *
                          (Arbnum.num, term * term Redblackset.set) Redblackmap.dict *
                          (term * (Arbnum.num, term * term Redblackset.set) Redblackmap.dict)
@@ -39,8 +40,9 @@ fun symbv_to_string (SymbValBE (exp, deps)) =
         "), " ^
         (Int.toString (Redblackset.numItems deps)) ^
         ")")
-  | symbv_to_string (SymbValMem (_, (_, mapglobl, (sp, mapstack)), deps)) =
+  | symbv_to_string (SymbValMem (basem_bv, _, (_, mapglobl, (sp, mapstack)), deps)) =
        "SymbValMem (" ^ (if not symbvdebugOn then "" else
+           "\nbasem= " ^ (term_to_string basem_bv) ^
            "\nglobl=" ^
            (List.foldr memmap_string_fold "" (Redblackmap.listItems mapglobl)) ^
            "\t,\nsp=" ^
@@ -258,7 +260,7 @@ fun deps_of_symbval err_src_string symbv =
   case symbv of
           SymbValBE (_,deps) => deps
         | SymbValInterval (_, deps) => deps
-        | SymbValMem (_, _, deps) => deps
+        | SymbValMem (_, _, _, deps) => deps
 (*
         | _ => raise ERR err_src_string "cannot handle symbolic value type to find dependencies";
 *)
@@ -491,6 +493,8 @@ local
 
 in (* local *)
 
+  (* TODO: - bv should be list of variables (keep if equal in both, otherwise interval merge)
+           - this would allow to keep stack pointer also *)
   fun merge_states_vartointerval bv (syst1, syst2) =
     let
       val lbl_tm = SYST_get_pc     syst1;

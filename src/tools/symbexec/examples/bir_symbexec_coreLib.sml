@@ -181,7 +181,7 @@ end (* local *)
 
       val mem_parts = (mem_const, mem_globl, mem_stack);
       val deps  = Redblackset.add (symbvalbe_dep_empty, bv_val);
-      val symbv = SymbValMem (layout, mem_parts, deps);
+      val symbv = SymbValMem (bv_val, layout, mem_parts, deps);
 
       val bv_fresh = (get_bvar_fresh) bv;
     in
