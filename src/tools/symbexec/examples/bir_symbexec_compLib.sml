@@ -352,8 +352,6 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
 
 (* ================================================================ *)
 
-(* TODO: add initial memory symbol and add it to memory abstractions for loads from "unpopulated" memory *)
-
   fun mem_load_stack mem bv_sp imm_offset sz_tm =
     let
       val (basem_bv,
@@ -404,7 +402,6 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
           )
     );
 
-  (* TODO: make all the hack vars to be fresh vars *)
   fun mem_load_const mem caddr sz_tm =
     let
       val (basem_bv,
@@ -434,8 +431,7 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
       if Arbnum.<= (Arbnum.fromInt (0x40000000), ldaddr) then
         (* TODO: peripheral memory range -> add this to memory layout *)
         (print "!!! loading from device memory!\n";
-         (bden (bir_envSyntax.mk_BVar_string ("hack_mem_load_devices", bir_valuesSyntax.BType_Imm32_tm)), symbvalbe_dep_empty)
-        )
+         get_symbv_bexp_free_sz "devload" sz)
       else if Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), ldaddr) then
         raise ERR "mem_load_const" "const/global load out of corresponding memory range"
       else if Arbnum.<= (mem_const_size, ldaddr) then
@@ -443,10 +439,9 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
         (
           let
             val (exp, deps) = Redblackmap.find (mem_globl, ldaddr)
-              handle _ => (print "!!! global memory not mapped\n";
-                           (* TODO: fix variable sizes here and in other places, and introduce function to generate free variables *)
-                           (* TODO: is it correct to have an empty deps set for free variable expressions? *)
-                           (bden (bir_envSyntax.mk_BVar_string ("hack_mem_load_global", bir_valuesSyntax.BType_Imm32_tm)), symbvalbe_dep_empty))
+              handle _ => (print "!!! global memory not mapped (hack)\n";
+                           (* TODO: this should be a load from the base mem var *)
+                           get_symbv_bexp_free_sz "hack_load_global" 32)
                           (*raise ERR "mem_load_const" "address is not mapped in global memory"*);
             val exp' = mem_sec_exp_gen exp suboff sz;
           in
@@ -508,10 +503,12 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
         val imm_val = fst (List.nth (vs, 1));
 
         val _ = if false then () else
-                print "!!! found indirect load!\n";
-        (* TODO: make sure that this memory access is really in the program memory only *)
+                print "!!! found indirect load! (unjustified currently)\n";
+        (* TODO: add check to make sure that this memory access is really in the program memory only *)
+
+        val sz = bittype_to_size sz_tm;
       in
-        SOME (SymbValBE (bden (bir_envSyntax.mk_BVar_string ("hack_mem_load_pc_relative", bir_valuesSyntax.BType_Imm32_tm)), symbvalbe_dep_empty))
+        SOME (SymbValBE (get_symbv_bexp_free_sz "memload_pcrel" sz))
       end)
    ]
     end;
@@ -546,8 +543,10 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
                            bv_sp
                            (bir_immSyntax.mk_Imm32 (wordsSyntax.mk_wordii(offset, 32)))
                            bir_immSyntax.Bit32_tm
-            (* hack to resolve unmapped stack *)
-            handle _ => (bden (bir_envSyntax.mk_BVar_string ("hack_mem_stack", bir_valuesSyntax.BType_Imm32_tm)), symbvalbe_dep_empty);
+            (* TODO: this should be a load from the base mem var *)
+            (* TODO: and exception handling should probably be more specific *)
+            handle _ => (print "!!! unmapped stack! (hack)\n";
+                         get_symbv_bexp_free_sz "hack_unmapdstack" 32);
 
       val exp = mem_upd_sec_exp_gen exp_ml val_tm suboff sz;
 

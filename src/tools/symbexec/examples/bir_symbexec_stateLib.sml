@@ -184,6 +184,25 @@ in
 
   fun is_bvar_bound vals bv =
     not (is_bvar_initorfree vals bv);
+
+  fun get_symbv_bexp_free_sz varstr ty_sz =
+    let
+      open bslSyntax;
+      open bir_envSyntax;
+      open bir_valuesSyntax;
+
+      val ty = case ty_sz of
+                   1 => BType_Imm1_tm
+                |  8 => BType_Imm8_tm
+                | 16 => BType_Imm16_tm
+                | 32 => BType_Imm32_tm
+                | _  => raise ERR "get_symbv_bexp_free_sz" ("cannot handle size " ^ (Int.toString ty_sz));
+
+      val bv = mk_BVar_string (varstr, ty);
+      val deps = Redblackset.add (symbvalbe_dep_empty, bv);
+    in
+      (bden (bv), deps)
+    end;
 end
 
 
