@@ -191,6 +191,8 @@ val syst_merged =
                       (tl x)
   ) systs_tidiedup;
 
+val syst_symmary = (lbl_tm, "path predicate goes here", [syst_merged]);
+
 val syst_merged_countw = get_state_symbv "script" bv_countw syst_merged;
 
 (*
@@ -218,4 +220,189 @@ check_feasible (syst)
 
     (* - derive constants from the state predicate (update both places to not loose information) *)
     (* - constant propagation in expressions *)
+
+
+
+
+
+(* find correct function summary *)
+val (func_lbl_tm, func_precond, func_systs) = syst_symmary;
+val func_syst =
+        if length func_systs = 1 then hd func_systs else
+        raise ERR "script" "more than one symbolic state in function summary";
+
+
+
+
+
+
+val entry_label = "motor_set_l";
+(*
+"c1c" call
+"c20" return
+*)
+
+val name   = entry_label;
+
+val _ = print ("\n\nfunname = " ^ (name) ^ "\n\n");
+
+val lbl_tm = (mk_lbl_tm o valOf o mem_find_symbol_addr_) name;
+
+val stop_lbl_tms = [func_lbl_tm]; (*``BL_Address (Imm32 0xc1cw)``];*)
+
+val syst = init_state lbl_tm prog_vars;
+val syst = state_make_interval ``BVar "countw" (BType_Imm Bit64)`` syst;
+val syst = state_make_mem ``BVar "MEM" (BType_Mem Bit32 Bit8)``
+                          (Arbnum.fromInt mem_sz_const, Arbnum.fromInt mem_sz_globl, Arbnum.fromInt mem_sz_stack)
+                          (mem_read_byte binary_mem)
+                          ``BVar "SP_process" (BType_Imm Bit32)``
+                          syst;
+
+val syst = state_add_preds "init_pred" pred_conjs syst;
+
+val _ = print "initial state created.\n\n";
+
+val cfb = false;
+
+val systs = symb_exec_to_stop (abpfun cfb) n_dict bl_dict_ [syst] stop_lbl_tms [];
+val _ = print "finished exploration of all paths.\n";
+val _ = print ("number of paths found: " ^ (Int.toString (length systs)));
+val _ = print "\n\n";
+
+val (systs_noassertfailed, systs_assertfailed) =
+  List.partition (fn syst => not (identical (SYST_get_status syst) BST_AssertionViolated_tm)) systs;
+val _ = print ("number of \"no assert failed\" paths found: " ^ (Int.toString (length systs_noassertfailed)));
+val _ = print "\n\n";
+
+
+
+(* now instanciation ... *)
+val syst = if length systs_noassertfailed = 1 then hd systs_noassertfailed else
+           raise ERR "script" "more than one symbolic state in current path/state";
+
+(*
+val (vals, varsubstmap) = (vals_1, varsubstmap_2);
+val prvall = (Redblackmap.listItems vals_func);
+*)
+fun subst_vals_and_append (vals, varsubstmap) [] = (vals, varsubstmap)
+  | subst_vals_and_append (vals, varsubstmap) prvall =
+     let
+       val (prvall_r, prvall_l) = List.partition (fn (_,symbv) =>
+         List.all
+           (fn bv =>
+              is_bvar_init bv orelse
+              is_bvar_bound vals bv orelse
+              isSome (Redblackmap.peek (varsubstmap, bv)))
+         (Redblackset.listItems (deps_of_symbval "subst_vals_and_append" symbv))
+        ) prvall;
+
+       val _ = if not (List.null prvall_r) then () else
+               raise ERR "subst_vals_and_append" "cannot continue substitution: loop?";
+
+       val (vals', varsubstmap') = List.foldl
+         (fn ((bv, symbv), (vals_, varsubstmap_)) =>
+           let
+             val bv_fr = get_bvar_fresh bv;
+             val symbv_subst = symbv; (* TODO: subst *)
+           in
+             (Redblackmap.insert (vals_, bv_fr, symbv_subst),
+              Redblackmap.insert (varsubstmap_, bv, bv_fr))
+           end)
+         (vals, varsubstmap)
+         prvall_r;
+     in
+       subst_vals_and_append (vals', varsubstmap') prvall_l
+     end;
+
+(*
+    val (vals_3, varsubstmap_3) =
+      subst_vals_and_append
+        (vals_1, varsubstmap_2)
+        (Redblackmap.listItems vals_func);
+    val varsubstmap = varsubstmap_3;
+    val env = env_func;
+
+Redblackmap.listItems env
+Redblackmap.listItems varsubstmap
+Redblackmap.listItems (subst_in_env varsubstmap env)
+*)
+fun subst_in_env varsubstmap env =
+  Redblackmap.map
+    (fn (_, bv_val) =>
+     Redblackmap.find (varsubstmap, bv_val)
+     handle _ => bv_val)
+     (* raise ERR "subst_in_env" ("didn't find mapping for " ^ (term_to_string bv_val)) *)
+    env;
+
+val syst_inst =
+  let
+    val syst_strt = syst;
+
+    val lbl_tm_func = func_lbl_tm;
+    val syst_func = func_syst;
+
+    (* pc: take after func pc *)
+    val pc_strt = SYST_get_pc syst_strt;
+    val _ = if identical lbl_tm_func pc_strt then () else
+        raise ERR "script_syst_instanciate" "starting label doesn't match";
+    val pc_inst = SYST_get_pc syst_func;
+
+    (* starting syst needs to be running *)
+    val status_strt = SYST_get_status syst_strt;
+    val _ = if identical BST_Running_tm status_strt then () else
+            raise ERR "script_syst_instanciate" "starting status needs to be running";
+    val status_inst = SYST_get_status syst_func;
+
+    (* for now we don't deal with observations here *)
+    val obss_strt = SYST_get_obss syst_strt;
+    val obss_func = SYST_get_obss syst_func;
+    val _ = if List.null obss_strt andalso
+               List.null obss_func then () else
+            raise ERR "script_syst_instanciate" "cannot handle observations for now";
+    val obss_inst = [];
+
+    (* prep: vals and env *)
+    val vals_strt = SYST_get_vals syst_strt;
+    val vals_func = SYST_get_vals syst_func;
+    val env_strt  = SYST_get_env  syst_strt;
+    val env_func  = SYST_get_env  syst_func;
+
+    (* pred: take starting path predicate *)
+    val pred_strt = SYST_get_pred syst_strt;
+    (* TODO: check precondition entailment *)
+    val pred_inst = pred_strt;
+
+    (* vals and env *)
+    (* 1. initialize new vals with starting vals *)
+    val vals_1 = vals_strt;
+
+    (* 2. initialize var substitute map from starting env *)
+    val varsubstmap_2 =
+      List.foldl
+        (fn ((bv, bv_val), map) =>
+          Redblackmap.insert (map, get_bvar_init bv, bv_val))
+        (Redblackmap.mkDict Term.compare)
+        (Redblackmap.listItems env_strt);
+
+    (* 3. incrementally substitute vars in func vals(&deps), and add to vals_1 and varsubstmap *)
+    val (vals_3, varsubstmap_3) =
+      subst_vals_and_append
+        (vals_1, varsubstmap_2)
+        (Redblackmap.listItems vals_func);
+    val vals_inst = vals_3;
+
+    (* 4. apply substitution to func env *)
+    val env_inst  = subst_in_env varsubstmap_3 env_func;
+  in
+    SYST_mk pc_inst
+            env_inst
+            status_inst
+            obss_inst
+            pred_inst
+            vals_inst
+  end;
+
+val systs_inst_tidiedup = tidyup_state_vals syst_inst;
+
+(* ... and continuation *)
 
