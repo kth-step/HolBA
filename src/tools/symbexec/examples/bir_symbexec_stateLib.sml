@@ -198,10 +198,10 @@ in
                 | 32 => BType_Imm32_tm
                 | _  => raise ERR "get_symbv_bexp_free_sz" ("cannot handle size " ^ (Int.toString ty_sz));
 
-      val bv = mk_BVar_string (varstr, ty);
-      val deps = Redblackset.add (symbvalbe_dep_empty, bv);
+      val bv_fr = get_bvar_fresh (mk_BVar_string (varstr, ty));
+      val deps = Redblackset.add (symbvalbe_dep_empty, bv_fr);
     in
-      (bden (bv), deps)
+      (bden (bv_fr), deps)
     end;
 end
 
@@ -512,8 +512,7 @@ local
 
 in (* local *)
 
-  (* TODO: - bv should be list of variables (keep if equal in both, otherwise interval merge)
-           - this would allow to keep stack pointer also *)
+  (* TODO: - should bv be list of variables? (keep if equal in both, otherwise interval merge) *)
   fun merge_states_vartointerval bv (syst1, syst2) =
     let
       val lbl_tm = SYST_get_pc     syst1;
@@ -530,6 +529,9 @@ in (* local *)
 
       val env    = SYST_get_env  syst1;
       val vals   = SYST_get_vals syst1;
+
+      (* TODO: create list of env vars with identical expressions in vals in both states *)
+      (* keep the ones from syst1 *)
 
       (* merge BIR variable bv to interval *)
       val symbv1  = get_state_symbv "merge_states_vartointerval" bv syst1;
@@ -553,7 +555,7 @@ in (* local *)
          more than a pred prefix when merging *)
       (* for now, scatch env completely, and use fresh variables *)
       val env_vars = List.map fst (Redblackmap.listItems env);
-      val env = Redblackmap.fromList Term.compare (
+      val env' = Redblackmap.fromList Term.compare (
             List.map (fn bv => (bv, get_bvar_fresh bv)) env_vars);
 
       (* TODO: collect vals for pred_bvs *)
@@ -563,7 +565,7 @@ in (* local *)
       (update_envvar bv bv_fresh o
        insert_symbval bv_fresh symbv)
       (SYST_mk lbl_tm
-               env
+               env'
                status
                []
                pred_bvs

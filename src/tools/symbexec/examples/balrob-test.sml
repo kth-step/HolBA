@@ -281,18 +281,35 @@ val syst = if length systs_noassertfailed = 1 then hd systs_noassertfailed else
            raise ERR "script" "more than one symbolic state in current path/state";
 
 (*
+Redblackset.listItems (freevars_of_vals vals_func)
+Redblackset.listItems (freevars_of_vals vals_strt)
+*)
+fun freevars_of_vals vals =
+  Redblackmap.foldr
+    (fn (_, symbv, freevars) =>
+      Redblackset.union (
+        Redblackset.filter (is_bvar_free vals) (deps_of_symbval "freevars_of_vals" symbv)
+        , freevars))
+    symbvalbe_dep_empty
+    vals;
+
+(*
+Redblackmap.listItems vals_1
+Redblackmap.listItems varsubstmap_2
+Redblackmap.listItems vals_func
+
+val prfrvars = ;
 val (vals, varsubstmap) = (vals_1, varsubstmap_2);
 val prvall = (Redblackmap.listItems vals_func);
 *)
-fun subst_vals_and_append (vals, varsubstmap) [] = (vals, varsubstmap)
-  | subst_vals_and_append (vals, varsubstmap) prvall =
+fun subst_vals_and_append prfrvars (vals, varsubstmap) [] = (vals, varsubstmap)
+  | subst_vals_and_append prfrvars (vals, varsubstmap) prvall =
      let
        val (prvall_r, prvall_l) = List.partition (fn (_,symbv) =>
          List.all
            (fn bv =>
-              is_bvar_init bv orelse
-              is_bvar_bound vals bv orelse
-              isSome (Redblackmap.peek (varsubstmap, bv)))
+              isSome (Redblackmap.peek (varsubstmap, bv)) orelse
+              Redblackset.member (prfrvars, bv))
          (Redblackset.listItems (deps_of_symbval "subst_vals_and_append" symbv))
         ) prvall;
 
@@ -303,7 +320,9 @@ fun subst_vals_and_append (vals, varsubstmap) [] = (vals, varsubstmap)
          (fn ((bv, symbv), (vals_, varsubstmap_)) =>
            let
              val bv_fr = get_bvar_fresh bv;
-             val symbv_subst = symbv; (* TODO: subst *)
+             (* TODO: subst, gen fresh vars if not mapped
+                     (i.e. must be in prfrvars then) *)
+             val symbv_subst = symbv;
            in
              (Redblackmap.insert (vals_, bv_fr, symbv_subst),
               Redblackmap.insert (varsubstmap_, bv, bv_fr))
@@ -311,7 +330,7 @@ fun subst_vals_and_append (vals, varsubstmap) [] = (vals, varsubstmap)
          (vals, varsubstmap)
          prvall_r;
      in
-       subst_vals_and_append (vals', varsubstmap') prvall_l
+       subst_vals_and_append prfrvars (vals', varsubstmap') prvall_l
      end;
 
 (*
@@ -385,8 +404,10 @@ val syst_inst =
         (Redblackmap.listItems env_strt);
 
     (* 3. incrementally substitute vars in func vals(&deps), and add to vals_1 and varsubstmap *)
+    val prfrvars = freevars_of_vals vals_func;
     val (vals_3, varsubstmap_3) =
       subst_vals_and_append
+        prfrvars
         (vals_1, varsubstmap_2)
         (Redblackmap.listItems vals_func);
     val vals_inst = vals_3;
@@ -401,6 +422,14 @@ val syst_inst =
             pred_inst
             vals_inst
   end;
+
+(*
+Redblackmap.listItems env_func;
+Redblackmap.listItems env_inst;
+
+val envl = (Redblackmap.listItems o SYST_get_env) syst_inst;
+val valsl = (Redblackmap.listItems o SYST_get_vals) syst_inst;
+*)
 
 val systs_inst_tidiedup = tidyup_state_vals syst_inst;
 
