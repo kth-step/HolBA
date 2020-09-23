@@ -529,6 +529,7 @@ in (* local *)
 
       val env    = SYST_get_env  syst1;
       val vals   = SYST_get_vals syst1;
+      val vals2  = SYST_get_vals syst2;
 
       (* TODO: create list of env vars with identical expressions in vals in both states *)
       (* keep the ones from syst1 *)
@@ -540,10 +541,25 @@ in (* local *)
       val bv_fresh = get_bvar_fresh bv;
       val symbv    = merge_to_interval symbv1 symbv2;
 
-      (* TODO: find pred_bvs prefix *)
+      (* find pred_bvs "prefix" *)
+      (* TODO: bad, "quick" and dirty implementation... *)
+      fun identical_prefix (x::xs) (y::ys) acc =
+            if identical (case find_bv_val "merge_states_vartointerval" vals x of
+                              SymbValBE (e, _) => e
+                            | _ => raise ERR "merge_states_vartointerval" "ooops, nooo")
+                         (case find_bv_val "merge_states_vartointerval" vals2 y of
+                              SymbValBE (e, _) => e
+                            | _ => raise ERR "merge_states_vartointerval" "ooops, nooo") then
+              identical_prefix xs ys (x::acc)
+            else ((*
+              (print ( ((symbv_to_string o find_bv_val "merge_states_vartointerval" vals) x) ^ "\n"));
+              (print ( ((symbv_to_string o find_bv_val "merge_states_vartointerval" vals2) y) ^ "\n"));*)
+              List.rev acc)
+	| identical_prefix _ _ acc = List.rev acc
       (* take exactly two for now *)
       (* notice that in pred the list head is the lastly added pred *)
-      val pred_bvs_prefix_len = 2;
+      val pred_bvs_prefix_len = length (identical_prefix (List.rev (SYST_get_pred syst1)) (List.rev (SYST_get_pred syst2)) []);
+      val _ = print ("pred prefix length : " ^ (Int.toString pred_bvs_prefix_len) ^ "\n");
       val pred_bvs = List.rev (List.take (List.rev (SYST_get_pred syst1), pred_bvs_prefix_len));
       val _ = if list_eq identical
                    pred_bvs
