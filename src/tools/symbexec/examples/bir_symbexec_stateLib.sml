@@ -529,10 +529,43 @@ in (* local *)
 
       val env    = SYST_get_env  syst1;
       val vals   = SYST_get_vals syst1;
+      val env2   = SYST_get_env  syst2;
       val vals2  = SYST_get_vals syst2;
+
+      fun find_symbv_bexp vals_ bv_ =
+        case find_bv_val "merge_states_vartointerval" vals_ bv_ of
+           SymbValBE (e, _) => e
+         | _ => raise ERR "merge_states_vartointerval" "ooops, nooo";
+
+      fun is_symbv_bexp_appfun f env_ vals_ bv_ =
+        let val bv_val = find_bv_val "merge_states_vartointerval" env_ bv_; in
+        if is_bvar_init bv_val then f (bden bv_val) else
+        let val symbvo = SOME (find_bv_val "merge_states_vartointerval" vals_ bv_val)
+                         handle _ => NONE; in
+        
+        case symbvo of
+           SOME (SymbValBE (e, _)) => (*(print_term e; f e)*) f e
+         | _ => false
+        end end;
+
+(* TODO: merge SP and MEM properly *)
+(*
+      val _ = print "........................\n\n";
+      val _ = is_symbv_bexp_appfun (fn e => (print_term e; false)) env  vals  ``BVar "SP_process" (BType_Imm Bit32)``;
+      val _ = is_symbv_bexp_appfun (fn e => (print_term e; false)) env2 vals2 ``BVar "SP_process" (BType_Imm Bit32)``;
+      val _ = print "\n........................\n";
+*)
 
       (* TODO: create list of env vars with identical expressions in vals in both states *)
       (* keep the ones from syst1 *)
+      val env_idents = Redblackset.fromList Term.compare (
+        List.filter
+          (fn bv =>
+             is_symbv_bexp_appfun (fn e1 =>
+                 is_symbv_bexp_appfun (identical e1) env2 vals2 bv
+             ) env vals bv)
+          (List.map fst (Redblackmap.listItems env))
+        );
 
       (* merge BIR variable bv to interval *)
       val symbv1  = get_state_symbv "merge_states_vartointerval" bv syst1;
@@ -544,12 +577,8 @@ in (* local *)
       (* find pred_bvs "prefix" *)
       (* TODO: bad, "quick" and dirty implementation... *)
       fun identical_prefix (x::xs) (y::ys) acc =
-            if identical (case find_bv_val "merge_states_vartointerval" vals x of
-                              SymbValBE (e, _) => e
-                            | _ => raise ERR "merge_states_vartointerval" "ooops, nooo")
-                         (case find_bv_val "merge_states_vartointerval" vals2 y of
-                              SymbValBE (e, _) => e
-                            | _ => raise ERR "merge_states_vartointerval" "ooops, nooo") then
+            if identical (find_symbv_bexp vals x)
+                         (find_symbv_bexp vals2 y) then
               identical_prefix xs ys (x::acc)
             else ((*
               (print ( ((symbv_to_string o find_bv_val "merge_states_vartointerval" vals) x) ^ "\n"));
@@ -567,12 +596,17 @@ in (* local *)
               then () else
                 raise ERR "merge_states_by_intervalvar" "pred prefix must be the equal";
 
-      (* for our application, we may need to preserve
-         more than a pred prefix when merging *)
+      (* for our application, merging needs to preserve
+         at least: pred "prefix", SP, something about MEM *)
       (* for now, scatch env completely, and use fresh variables *)
-      val env_vars = List.map fst (Redblackmap.listItems env);
+      val env_vars = List.map I (Redblackmap.listItems env);
       val env' = Redblackmap.fromList Term.compare (
-            List.map (fn bv => (bv, get_bvar_fresh bv)) env_vars);
+        List.map (fn (bv, bv_val_) =>
+         (bv, if Redblackset.member (env_idents, bv) then
+                bv_val_
+              else
+                get_bvar_fresh bv)
+        ) env_vars);
 
       (* TODO: collect vals for pred_bvs *)
       (* for now, this can be conveniently done with the function to tidy up states *)
