@@ -204,27 +204,28 @@ val _ = print_msg "\n";
 (*   0000  1000  1000   00010  000  00001  0001111
 
 Not sure about asm formatting...
-val _ = riscv_test_hex_print_asm "FENCE x1, x2, i, i" "0881008F";
-*)
 val _ = fail_with_msg "FENCE not yet supported by stepLib";
+*)
+val _ = riscv_test_hex_print_asm "FENCE x1, x2, i, i" "0881008F";
+
 (* Environment Call and Breakpoints (opcode SYSTEM) *)
 (*
 
   open riscv_stepLib;
   val _ = riscv_step_hex "00000073";
 
-val _ = riscv_test_hex_print_asm "ECALL" "00000073";
-*)
 val _ = fail_with_msg "ECALL not yet supported by stepLib";
+*)
+val _ = riscv_test_hex_print_asm "ECALL" "00000073";
+
 (* 
 
   open riscv_stepLib;
   val _ = riscv_step_hex "00100073";
 
-val _ = riscv_test_hex_print_asm "EBREAK" "00100073";
-*)
 val _ = fail_with_msg "EBREAK not yet supported by stepLib";
-
+*)
+val _ = riscv_test_hex_print_asm "EBREAK" "00100073";
 
 val _ = print_msg "\n";
 val _ = print_header "RV64I Base Instruction Set (instructions added to RV32I)\n";
@@ -273,7 +274,15 @@ val _ = print_msg "\n";
 val _ = print_header "RV64 Zifencei Standard Extension\n";
 val _ = print_msg "\n";
 
+(* FENCE.I x0, x0, 0 :  000000000000   00000  001   00000  0001111
+
+  open riscv_stepLib;
+  val _ = riscv_step_hex "0000100F";
+
 val _ = fail_with_msg "FENCE.I not yet supported by stepLib";
+*)
+
+val _ = riscv_test_hex_print_asm "FENCE.I x0, x0, 0" "0000100F";
 
 val _ = print_msg "\n";
 val _ = print_header "RV64 Zicsr Standard Extension\n";
@@ -367,4 +376,31 @@ val _ = print_msg "\n";
     "REMUW x5, x6, x7"
   ];
 
+
+val riscv_expected_failed_hexcodes:string list =
+[
+   (* Base *)
+   "0881008F" (* FENCE x1, x2, i, i *),
+   "00000073" (* ECALL *),
+   "00100073" (* EBREAK *),
+   (* Zifencei *)
+   "0000100F" (* FENCE.I *),
+   (* Zicsr *)
+   "340110F3" (* CSRRW x1, mscratch(0x340), x2 *),
+   "340120F3" (* CSRRS x1, mscratch(0x340), x2 *),
+   "340130F3" (* CSRRC x1, mscratch(0x340), x2 *),
+   "3400D0F3" (* CSRRWI x1, mscratch(0x340), 0x1 *),
+   "3400E0F3" (* CSRRWI x1, mscratch(0x340), 0x1 *),
+   "3400F0F3" (* CSRRCI x1, mscratch(0x340), 0x1 *)
+];
+
+val _ = test_RISCV.final_results "RISC-V" riscv_expected_failed_hexcodes;
+
 val _ = test_RISCV.close_log();
+
+(* check whether the result is different *)
+val _ =
+  if OS.Process.isSuccess (OS.Process.system ("git diff --exit-code riscv_selftest.log"))
+  then ()
+  else
+    raise ERR "holba/src/tools/lifter/selftest.sml" ("Output in riscv_selftest.log has diverged")

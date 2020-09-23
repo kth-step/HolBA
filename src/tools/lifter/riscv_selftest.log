@@ -584,9 +584,15 @@ AND x5, x6, x7: 007372B3 @ 0x10030 - OK
            bb_last_statement :=
              BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
 
-FENCE not yet supported by stepLib - FAILED
-ECALL not yet supported by stepLib - FAILED
-EBREAK not yet supported by stepLib - FAILED
+FENCE x1, x2, i, i: 0881008F @ 0x10030 - FAILED
+   bmr_step_hex failed
+
+ECALL: 00000073 @ 0x10030 - FAILED
+   bmr_step_hex failed
+
+EBREAK: 00100073 @ 0x10030 - FAILED
+   bmr_step_hex failed
+
 
 RV64I Base Instruction Set (instructions added to RV32I)
 
@@ -817,7 +823,9 @@ SRAW x5, x6, x7: 407352BB @ 0x10030 - OK
 
 RV64 Zifencei Standard Extension
 
-FENCE.I not yet supported by stepLib - FAILED
+FENCE.I x0, x0, 0: 0000100F @ 0x10030 - FAILED
+   bmr_step_hex failed
+
 
 RV64 Zicsr Standard Extension
 
@@ -1127,4 +1135,84 @@ REMW x5, x6, x7: 027362BB @ 0x10030 - OK
                                         (BExp_Den
                                            (BVar "x6" (BType_Imm Bit64)))
                                         Bit32))
-          
+                                  (BExp_Cast BIExp_LowCast
+                                     (BExp_Den (BVar "x7" (BType_Imm Bit64)))
+                                     Bit32))))
+                         (BExp_IfThenElse
+                            (BExp_MSB Bit32
+                               (BExp_Cast BIExp_LowCast
+                                  (BExp_Den (BVar "x7" (BType_Imm Bit64)))
+                                  Bit32))
+                            (BExp_BinExp BIExp_Mod
+                               (BExp_Cast BIExp_LowCast
+                                  (BExp_Den (BVar "x6" (BType_Imm Bit64)))
+                                  Bit32)
+                               (BExp_UnaryExp BIExp_ChangeSign
+                                  (BExp_Cast BIExp_LowCast
+                                     (BExp_Den (BVar "x7" (BType_Imm Bit64)))
+                                     Bit32)))
+                            (BExp_BinExp BIExp_Mod
+                               (BExp_Cast BIExp_LowCast
+                                  (BExp_Den (BVar "x6" (BType_Imm Bit64)))
+                                  Bit32)
+                               (BExp_Cast BIExp_LowCast
+                                  (BExp_Den (BVar "x7" (BType_Imm Bit64)))
+                                  Bit32)))) Bit64))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
+
+REMUW x5, x6, x7: 027372BB @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
+     (65584w,[187w; 114w; 115w; 2w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 65584w) "027372BB";
+           bb_statements :=
+             [BStmt_Assign (BVar "x5" (BType_Imm Bit64))
+                (BExp_IfThenElse
+                   (BExp_BinPred BIExp_Equal
+                      (BExp_Cast BIExp_LowCast
+                         (BExp_Den (BVar "x7" (BType_Imm Bit64))) Bit32)
+                      (BExp_Const (Imm32 0w)))
+                   (BExp_Cast BIExp_SignedCast
+                      (BExp_Cast BIExp_LowCast
+                         (BExp_Den (BVar "x6" (BType_Imm Bit64))) Bit32)
+                      Bit64)
+                   (BExp_Cast BIExp_SignedCast
+                      (BExp_BinExp BIExp_Mod
+                         (BExp_Cast BIExp_LowCast
+                            (BExp_Den (BVar "x6" (BType_Imm Bit64))) Bit32)
+                         (BExp_Cast BIExp_LowCast
+                            (BExp_Den (BVar "x7" (BType_Imm Bit64))) Bit32))
+                      Bit64))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
+
+
+
+
+SUMMARY FAILING HEXCODES RISC-V
+
+
+Instructions FAILED: 10/72
+
+   "3400F0F3" (* bmr_step_hex failed *),
+   "3400E0F3" (* bmr_step_hex failed *),
+   "3400D0F3" (* bmr_step_hex failed *),
+   "340130F3" (* bmr_step_hex failed *),
+   "340120F3" (* bmr_step_hex failed *),
+   "340110F3" (* bmr_step_hex failed *),
+   "0000100F" (* bmr_step_hex failed *),
+   "00100073" (* bmr_step_hex failed *),
+   "00000073" (* bmr_step_hex failed *),
+   "0881008F" (* bmr_step_hex failed *)
+]
+
+Instructions FIXED: 0
+
+
+
+Instructions BROKEN: 0
+
+
+
