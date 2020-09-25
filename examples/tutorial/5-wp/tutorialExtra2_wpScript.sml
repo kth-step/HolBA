@@ -21,7 +21,7 @@ open bir_exp_to_wordsLib bslSyntax;
 
 (* From examples support: *)
 open tutorial_bir_to_armSupportTheory;
-open tutorial_wpSupportLib;
+open bir_wp_frontendLib;
 
 (* From examples: *)
 open birExamples2BinaryTheory;

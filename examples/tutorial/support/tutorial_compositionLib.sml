@@ -3,7 +3,7 @@ struct
   local
     open bslSyntax;
     open tutorial_bir_to_armSupportTheory;
-    open tutorial_wpSupportLib;
+    open bir_wp_frontendLib;
     open bir_auxiliaryLib;
     open HolBACoreSimps;
   in
