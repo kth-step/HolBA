@@ -4,7 +4,7 @@ open examplesBinaryTheory;
 open tutorial_bir_to_armTheory tutorial_wpTheory
      tutorial_smtTheory;
 
-open tutorial_wpSupportLib tutorial_compositionLib;
+open bir_wp_frontendLib tutorial_compositionLib;
 
 open bslSyntax;
 

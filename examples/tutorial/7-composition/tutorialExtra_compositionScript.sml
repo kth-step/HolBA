@@ -5,7 +5,7 @@ open bir_wm_instTheory;
 open birExamplesBinaryTheory;
 open tutorialExtra_wpTheory tutorialExtra_smtTheory;
 
-open tutorial_wpSupportLib tutorial_compositionLib;
+open bir_wp_frontendLib tutorial_compositionLib;
 
 open HolBACoreSimps;
 

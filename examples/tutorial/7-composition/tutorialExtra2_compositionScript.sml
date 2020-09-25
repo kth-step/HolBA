@@ -3,7 +3,7 @@ open bslSyntax;
 open bir_wm_instTheory;
 
 open tutorial_compositionLib;
-open tutorial_wpSupportLib;
+open bir_wp_frontendLib;
 
 open birExamples2BinaryTheory;
 open tutorialExtra2_wpTheory;

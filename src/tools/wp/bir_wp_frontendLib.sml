@@ -1,4 +1,4 @@
-structure tutorial_wpSupportLib =
+structure bir_wp_frontendLib =
 struct
 
 local
@@ -7,7 +7,7 @@ open HolKernel Parse boolLib bossLib;
 
 (* From tools/wp: *)
 open bir_wpLib bir_wp_expLib;
-open easy_noproof_wpLib;
+open bir_program_no_assumeLib;
 
 open bir_wpTheory bir_htTheory;
 
@@ -22,19 +22,8 @@ open bir_programTheory;
 open bir_expSyntax bir_programSyntax bir_immSyntax;
 open HolBACoreSimps;
 
-(* From shared: *)
-open bir_exp_to_wordsLib bslSyntax;
-
-(* From examples: *)
-(*open examplesBinaryTheory;*)
-open tutorial_bir_to_armSupportTheory;
-
 (* From HOL4: *)
 open finite_mapSyntax pairSyntax pred_setSyntax;
-
-(* Local *)
-open bir_program_no_assumeLib;
-open tutorial_wpSupportTheory;
 
 in
 
@@ -208,7 +197,7 @@ fun bir_obtain_ht prog_tm first_block_label_tm
     val target_bir_triple =
       HO_MATCH_MP
         (HO_MATCH_MP
-           bir_never_assumviol_block_n_ht_from_to_labels_ht
+           bir_never_assumviol_ht
            no_assumes_thm
         ) target_ht
     (* Obtain WP of target_bir_triple *)

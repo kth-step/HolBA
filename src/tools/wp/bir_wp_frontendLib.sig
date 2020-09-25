@@ -1,4 +1,4 @@
-signature tutorial_wpSupportLib =
+signature bir_wp_frontendLib =
 sig
    include Abbrev
 
