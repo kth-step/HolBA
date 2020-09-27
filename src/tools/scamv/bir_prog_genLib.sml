@@ -133,11 +133,39 @@ struct
     bir_embexp_code_to_prog (read_from_file filename);
 
 
+(* load from embexp progs listfile *)
+(* ========================================================================================= *)
+local
+  val last_filelist  = ref "";
+  val last_prog_list = ref [];
+  val last_cur_idx   = ref 0;
+in
+  fun load_next_fromlistfile filename =
+    let
+      val _ =
+        if !last_filelist = filename then
+          (last_cur_idx   := !last_cur_idx + 1)
+        else
+          (last_filelist  := filename;
+           last_prog_list := bir_embexp_load_progs filename;
+           last_cur_idx   := 0);
+
+      val (prog_list, cur_idx) = (!last_prog_list, !last_cur_idx);
+    in
+      if cur_idx < List.length prog_list then
+        List.nth (prog_list, cur_idx)
+      else
+        raise ERR "load_next_fromlistfile" "end of progs listfile reached"
+    end
+end;
+
 
 (* instances of program generators *)
 (* ========================================================================================= *)
 fun prog_gen_store_fromfile filename   = prog_gen_store "prog_gen_fromfile"          false load_asm_lines                 filename;
 fun prog_gen_store_fromlines asmlines  = prog_gen_store "prog_gen_fromlines"         false (fn x => x)                    asmlines;
+
+fun prog_gen_store_listfile filename   = prog_gen_store "prog_gen_listfile"          false load_next_fromlistfile         filename;
 
 fun prog_gen_store_rand param sz       = prog_gen_store ("prog_gen_rand::"^param)    true  (bir_prog_gen_arm8_rand param) sz;
 

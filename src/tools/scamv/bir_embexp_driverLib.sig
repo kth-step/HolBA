@@ -68,4 +68,5 @@ signature bir_embexp_driverLib = sig
 
   val bir_embexp_load_exp_ids : string -> string list
 
+  val bir_embexp_load_progs : string -> string list list
 end

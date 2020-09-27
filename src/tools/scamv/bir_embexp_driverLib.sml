@@ -333,14 +333,27 @@ end
       List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "" asm_lines
     end;
 
-  fun bir_embexp_code_to_prog code_asm =
+  fun bir_embexp_code_to_prog_raw cleanup code_asm =
     let
       val asm_lines = String.tokens (fn c => c = #"\n") code_asm;
-      val asm_lines = List.map (strip_ws_off true) asm_lines;
-      val asm_lines = List.filter (fn x => not (x = "")) asm_lines;
+
+      val asm_lines = if not cleanup then asm_lines else
+                      List.map (strip_ws_off true) asm_lines;
+      val asm_lines = if not cleanup then asm_lines else
+                      List.filter (fn x => not (x = "")) asm_lines;
+
+      val asm_lines_p = List.exists (fn x =>
+            x <> (strip_ws_off true x) orelse
+            x = ""
+        ) asm_lines;
+      val _ = if not asm_lines_p then () else
+              raise ERR "bir_embexp_code_to_prog_raw" "unexpected asm formatting";
     in
       asm_lines
     end;
+  
+  fun bir_embexp_code_to_prog code_asm =
+    bir_embexp_code_to_prog_raw true code_asm;
 
   fun bir_embexp_prog_create (arch_id, prog_gen_id) code_asm =
     let
@@ -487,16 +500,30 @@ end
       (asm_lines, s)
     end;
 
-  fun bir_embexp_load_exp_ids listname =
+  fun bir_embexp_load_list listtype listname =
     let
       val logs_dir = logfile_basedir();
-      val contents = read_from_file (logs_dir ^ "/exp_lists/" ^ listname ^ ".txt");
+      val contents = read_from_file (logs_dir ^ "/lists/" ^ listtype ^ "_" ^ listname ^ ".txt");
       val list_lines = String.tokens (fn c => c = #"\n") contents;
       val nonempty = List.filter (fn x => x <> "") list_lines;
       val actual_entries = List.filter (not o (String.isPrefix "#")) nonempty;
     in
       actual_entries
     end;
+
+  fun bir_embexp_load_progs listname =
+    let
+      val logs_dir = logfile_basedir();
+      val archprog_ids = bir_embexp_load_list "progs" listname;
+      val progs = List.map (fn apid =>
+            bir_embexp_code_to_prog_raw false (read_from_file (logs_dir ^ "/" ^ apid ^ "/code.asm"))
+          ) archprog_ids;
+    in
+      progs
+    end;
+
+  fun bir_embexp_load_exp_ids listname =
+    bir_embexp_load_list "exps" listname;
 
 end
 
