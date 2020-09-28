@@ -538,7 +538,7 @@ in (* local *)
       fun find_symbv_bexp vals_ bv_ =
         case find_bv_val "merge_states_vartointerval" vals_ bv_ of
            SymbValBE (e, _) => e
-         | _ => raise ERR "merge_states_vartointerval" "ooops, nooo";
+         | _ => raise ERR "merge_states_vartointerval" "ooops, nooo bexp";
 
       fun is_symbv_bexp_appfun f env_ vals_ bv_ =
         let val bv_val = find_bv_val "merge_states_vartointerval" env_ bv_; in
@@ -571,7 +571,55 @@ in (* local *)
         raise ERR "merge_states_vartointerval" "stack pointers are not equal!"
        );
 
-      (* TODO: merge MEM properly *)
+      (* merge MEM properly *)
+      fun find_symbv_mem syst_ bv_ =
+        case get_state_symbv "merge_states_vartointerval::getmem" bv_ syst_ of
+           SymbValMem m => m
+         | _ => raise ERR "merge_states_vartointerval" "ooops, nooo mem";
+
+      val symbv_mem =
+       let
+        val (basem1_bv,
+             mem1_layout,
+             (mem1_const, mem1_globl, (bv_sp1, mem1_stack)),
+             mem_deps1) = find_symbv_mem syst1 bv_mem;
+        val (basem2_bv,
+             mem2_layout,
+             (_, mem2_globl, (bv_sp2, mem2_stack)),
+             mem_deps2) = find_symbv_mem syst2 bv_mem;
+
+        (* check that base memory variable, memory layout, and initial stack pointer variable are identical *)
+        val _ = if identical basem1_bv basem2_bv then () else
+                raise ERR "merge_states_vartointerval" "base memory variables are not the same";
+        val _ = if mem1_layout = mem2_layout then () else
+                raise ERR "merge_states_vartointerval" "memory layouts are not the same";
+        val _ = if identical bv_sp1 bv_sp2 then () else
+                raise ERR "merge_states_vartointerval" "initial stack pointer variables are not the same";
+
+        (* merge the global memory *)
+        val mem_globl = List.foldr (fn ((a,_),m) =>
+               Redblackmap.insert (m, a, get_symbv_bexp_free_sz "memgmerge_forget" 32)
+            ) (Redblackmap.mkDict Arbnum.compare)
+              ((Redblackmap.listItems mem1_globl)@(Redblackmap.listItems mem2_globl));
+        (* merge the stack *)
+        val mem_stack = List.foldr (fn ((a,_),m) =>
+               Redblackmap.insert (m, a, get_symbv_bexp_free_sz "memsmerge_forget" 32)
+            ) (Redblackmap.mkDict Arbnum.compare)
+              ((Redblackmap.listItems mem1_stack)@(Redblackmap.listItems mem2_stack));
+        (* compute deps *)
+        val mem_deps =
+             List.foldr (fn ((_,(_,d)),s) =>
+                Redblackset.union (d, s)
+              )
+              (Redblackset.fromList Term.compare [basem1_bv, bv_sp1])
+              ((Redblackmap.listItems mem_globl)@(Redblackmap.listItems mem_stack));
+       in
+         SymbValMem (basem1_bv,
+             mem1_layout,
+             (mem1_const, mem_globl, (bv_sp1, mem_stack)),
+             mem_deps)
+       end;
+      val bv_fresh_mem = get_bvar_fresh bv;
 
       (* merge BIR variable bv to interval *)
       val symbv1  = get_state_symbv "merge_states_vartointerval" bv syst1;
@@ -619,7 +667,9 @@ in (* local *)
       (* for now, this can be conveniently done with the function to tidy up states *)
 
       val syst_merged =
-      (update_envvar bv bv_fresh o
+      (update_envvar bv_mem bv_fresh_mem o
+       insert_symbval bv_fresh_mem symbv_mem o
+       update_envvar bv bv_fresh o
        insert_symbval bv_fresh symbv)
       (SYST_mk lbl_tm
                env'

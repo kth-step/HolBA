@@ -157,6 +157,11 @@ val syst2 = List.nth (systs_tidiedup, 2);
 
 val syst = merge_states_vartointerval bv_countw (syst1, syst2);
 
+val syst = List.nth (systs_tidiedup, 0);
+val syst = List.nth (systs_tidiedup, 1);
+val syst = List.nth (systs_tidiedup, 2);
+val syst = List.nth (systs_tidiedup, 3);
+
 val envl = (Redblackmap.listItems o SYST_get_env) syst;
 val valsl = (Redblackmap.listItems o SYST_get_vals) syst;
 *)
@@ -165,17 +170,16 @@ val valsl = (Redblackmap.listItems o SYST_get_vals) syst;
 val syst = hd systs_tidiedup;
 val syst = List.nth (systs_feasible, 0);
 
-
 val bv_fr = ``BVar "fr_10_tmp_SP_process" (BType_Imm Bit32)``;
 val bv_fr = ``(BVar "fr_15_SP_process" (BType_Imm Bit32))``;
 
-val bv_fr = ````;
 val bv_fr = ``(BVar "fr_57_R3" (BType_Imm Bit32))``;
-
 
 val bv_fr = ``BVar "fr_82_PSR_Z" BType_Bool``;
 val bv_fr = ``BVar "fr_75_R3" (BType_Imm Bit32)``;
 val bv_fr = ``BVar "fr_43_R2" (BType_Imm Bit32)``;
+
+val bv_fr = ``BVar "fr_353_MEM" (BType_Mem Bit32 Bit8)``;
 
 find_bv_val "script" (SYST_get_vals syst) bv_fr;
 (Redblackset.listItems o deps_of_symbval "script") (find_bv_val "script" (SYST_get_vals syst) bv_fr);
