@@ -92,15 +92,15 @@ val syst = init_state lbl_tm prog_vars;
 
 val syst =
   if use_countw_const_only then
-    state_assign_bv ``BVar "countw" (BType_Imm Bit64)`` ``BExp_Const (Imm64 0w)`` syst
+    state_assign_bv bv_countw ``BExp_Const (Imm64 0w)`` syst
   else
-    state_make_interval ``BVar "countw" (BType_Imm Bit64)`` syst;
+    state_make_interval bv_countw syst;
 
 val syst = if not use_mem_symbolic then syst else
-             state_make_mem ``BVar "MEM" (BType_Mem Bit32 Bit8)``
+             state_make_mem bv_mem
                           (Arbnum.fromInt mem_sz_const, Arbnum.fromInt mem_sz_globl, Arbnum.fromInt mem_sz_stack)
                           (mem_read_byte binary_mem)
-                          ``BVar "SP_process" (BType_Imm Bit32)``
+                          bv_sp
                           syst;
 
 val syst = state_add_preds "init_pred" pred_conjs syst;
@@ -186,12 +186,12 @@ expand_bv_fr_in_syst bv_fr syst
 val _ = print ("num preds: " ^ ((Int.toString o length o SYST_get_pred o List.nth) (systs_tidiedup, 0)) ^ "\n");
 
 val syst_merged =
-  (fn x => List.foldr (merge_states_vartointerval bv_countw)
+  (fn x => List.foldr (merge_states_vartointerval bv_countw bv_mem bv_sp)
                       (hd x)
                       (tl x)
   ) systs_tidiedup;
 
-val syst_symmary = (lbl_tm, "path predicate goes here", [syst_merged]);
+val syst_summary = (lbl_tm, "path predicate goes here", [syst_merged]);
 
 val syst_merged_countw = get_state_symbv "script" bv_countw syst_merged;
 
@@ -226,12 +226,15 @@ check_feasible (syst)
 
 
 (* find correct function summary *)
-val (func_lbl_tm, func_precond, func_systs) = syst_symmary;
+val (func_lbl_tm, func_precond, func_systs) = syst_summary;
 val func_syst =
         if length func_systs = 1 then hd func_systs else
         raise ERR "script" "more than one symbolic state in function summary";
 
-
+(*
+val envl = (Redblackmap.listItems o SYST_get_env) func_syst;
+val valsl = (Redblackmap.listItems o SYST_get_vals) func_syst;
+*)
 
 
 
@@ -251,11 +254,11 @@ val lbl_tm = (mk_lbl_tm o valOf o mem_find_symbol_addr_) name;
 val stop_lbl_tms = [func_lbl_tm]; (*``BL_Address (Imm32 0xc1cw)``];*)
 
 val syst = init_state lbl_tm prog_vars;
-val syst = state_make_interval ``BVar "countw" (BType_Imm Bit64)`` syst;
-val syst = state_make_mem ``BVar "MEM" (BType_Mem Bit32 Bit8)``
+val syst = state_make_interval bv_countw syst;
+val syst = state_make_mem bv_mem
                           (Arbnum.fromInt mem_sz_const, Arbnum.fromInt mem_sz_globl, Arbnum.fromInt mem_sz_stack)
                           (mem_read_byte binary_mem)
-                          ``BVar "SP_process" (BType_Imm Bit32)``
+                          bv_sp
                           syst;
 
 val syst = state_add_preds "init_pred" pred_conjs syst;

@@ -162,6 +162,8 @@ in (* outermost local *)
 
   fun compute_val_try_expplusminusconst vals (besubst, besubst_vars) =
     let
+      val debugOn = false;
+
       val depends_on_single_exp =
              length besubst_vars = 1 andalso
              (is_bvar_bound vals) (hd besubst_vars) andalso
@@ -171,12 +173,21 @@ in (* outermost local *)
     in
       if depends_on_single_exp then
         let
+          val _ = if not debugOn then () else (
+                  print "\n--------------start-----\n";
+                  print_term besubst);
+
           val (bv, imm_val_pm) = get_var_plusminus_const besubst;
 
           val (exp2, deps2) =
              (case find_bv_val "compute_val_try_expplusminusconst" vals bv of
                  SymbValBE x => x
                | _ => raise ERR "compute_val_try_expplusminusconst" "something is not right 2...");
+
+          val _ = if not debugOn then () else (
+                  print "\n";
+                  print_term exp2;
+                  print "----------------stop---\n\n");
 
           val (bv2, imm_val_pm2) = get_var_plusminus_const exp2;
 

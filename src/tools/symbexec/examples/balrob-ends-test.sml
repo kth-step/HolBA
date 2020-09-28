@@ -38,12 +38,12 @@ val _ = List.map (fn entry_label => let
 
   val syst = init_state lbl_tm prog_vars;
 
-  val syst = state_make_interval ``BVar "countw" (BType_Imm Bit64)`` syst;
+  val syst = state_make_interval bv_countw syst;
 
-  val syst = state_make_mem ``BVar "MEM" (BType_Mem Bit32 Bit8)``
+  val syst = state_make_mem bv_mem
                             (Arbnum.fromInt mem_sz_const, Arbnum.fromInt mem_sz_globl, Arbnum.fromInt mem_sz_stack)
                             (mem_read_byte binary_mem)
-                            ``BVar "SP_process" (BType_Imm Bit32)``
+                            bv_sp
                             syst;
 
   val syst = state_add_preds "init_pred" pred_conjs syst;
@@ -74,7 +74,7 @@ val _ = List.map (fn entry_label => let
 
   (* -------------------------------------------------------------- *)
   val syst_merged =
-    (fn x => List.foldr (merge_states_vartointerval bv_countw)
+    (fn x => List.foldr (merge_states_vartointerval bv_countw bv_mem bv_sp)
                         (hd x)
                         (tl x)
     ) systs_tidiedup;

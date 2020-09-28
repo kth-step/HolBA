@@ -107,6 +107,8 @@ fun simple_pred_to_subst pred exp =
 in (* local *)
 
 val bv_countw = mk_BVar_string ("countw", ``(BType_Imm Bit64)``);
+val bv_mem = ``BVar "MEM" (BType_Mem Bit32 Bit8)``;
+val bv_sp = ``BVar "SP_process" (BType_Imm Bit32)``;
 
 (*
 val syst = hd systs;

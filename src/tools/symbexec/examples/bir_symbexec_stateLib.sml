@@ -17,6 +17,8 @@ datatype symb_value =
                         (Arbnum.num * Arbnum.num * Arbnum.num) *
                         ((Arbnum.num -> Arbnum.num option) *
                          (Arbnum.num, term * term Redblackset.set) Redblackmap.dict *
+                         (* notes: need to keep information what on the stack is unknown after merging!
+                                   use free variables for this *)
                          (term * (Arbnum.num, term * term Redblackset.set) Redblackmap.dict)
                         ) *
                         term Redblackset.set);
@@ -512,8 +514,9 @@ local
 
 in (* local *)
 
-  (* TODO: - should bv be list of variables? (keep if equal in both, otherwise interval merge) *)
-  fun merge_states_vartointerval bv (syst1, syst2) =
+  (* TODO: - should bv be list of variables? (keep if equal in both, otherwise based on type:
+                 interval merge/memory merge/ensure equality) *)
+  fun merge_states_vartointerval bv bv_mem bv_sp (syst1, syst2) =
     let
       val lbl_tm = SYST_get_pc     syst1;
       val status = SYST_get_status syst1;
@@ -548,24 +551,27 @@ in (* local *)
          | _ => false
         end end;
 
-(* TODO: merge SP and MEM properly *)
-(*
-      val _ = print "........................\n\n";
-      val _ = is_symbv_bexp_appfun (fn e => (print_term e; false)) env  vals  ``BVar "SP_process" (BType_Imm Bit32)``;
-      val _ = is_symbv_bexp_appfun (fn e => (print_term e; false)) env2 vals2 ``BVar "SP_process" (BType_Imm Bit32)``;
-      val _ = print "\n........................\n";
-*)
-
-      (* TODO: create list of env vars with identical expressions in vals in both states *)
+      (* create list of env vars with identical expressions in vals in both states *)
       (* keep the ones from syst1 *)
       val env_idents = Redblackset.fromList Term.compare (
         List.filter
-          (fn bv =>
+          (fn bv_ =>
              is_symbv_bexp_appfun (fn e1 =>
-                 is_symbv_bexp_appfun (identical e1) env2 vals2 bv
-             ) env vals bv)
+                 is_symbv_bexp_appfun (identical e1) env2 vals2 bv_
+             ) env vals bv_)
           (List.map fst (Redblackmap.listItems env))
         );
+
+      (* check that SPs match *)
+      val _ = if Redblackset.member (env_idents, bv_sp) then () else (
+        print "........................\n\n";
+        is_symbv_bexp_appfun (fn e => (print_term e; false)) env  vals  ``BVar "SP_process" (BType_Imm Bit32)``;
+        is_symbv_bexp_appfun (fn e => (print_term e; false)) env2 vals2 ``BVar "SP_process" (BType_Imm Bit32)``;
+        print "\n........................\n";
+        raise ERR "merge_states_vartointerval" "stack pointers are not equal!"
+       );
+
+      (* TODO: merge MEM properly *)
 
       (* merge BIR variable bv to interval *)
       val symbv1  = get_state_symbv "merge_states_vartointerval" bv syst1;
@@ -575,7 +581,7 @@ in (* local *)
       val symbv    = merge_to_interval symbv1 symbv2;
 
       (* find pred_bvs "prefix" *)
-      (* TODO: bad, "quick" and dirty implementation... *)
+      (* TODO: bad, "quick" and dirty implementation... improve it *)
       fun identical_prefix (x::xs) (y::ys) acc =
             if identical (find_symbv_bexp vals x)
                          (find_symbv_bexp vals2 y) then
@@ -588,7 +594,8 @@ in (* local *)
       (* take exactly two for now *)
       (* notice that in pred the list head is the lastly added pred *)
       val pred_bvs_prefix_len = length (identical_prefix (List.rev (SYST_get_pred syst1)) (List.rev (SYST_get_pred syst2)) []);
-      val _ = print ("pred prefix length : " ^ (Int.toString pred_bvs_prefix_len) ^ "\n");
+      val _ = if pred_bvs_prefix_len = 3 then () else
+              print ("pred prefix length : " ^ (Int.toString pred_bvs_prefix_len) ^ "\n");
       val pred_bvs = List.rev (List.take (List.rev (SYST_get_pred syst1), pred_bvs_prefix_len));
       val _ = if list_eq identical
                    pred_bvs

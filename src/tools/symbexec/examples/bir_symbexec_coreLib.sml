@@ -6,6 +6,9 @@ local
 
   open bir_constpropLib;
   open bir_exp_helperLib;
+
+  val debugAssignments = false;
+  val debugPaths = false;
 in (* outermost local *)
 
 (* primitive for symbolic/abstract computation for expressions *)
@@ -39,6 +42,8 @@ local
   open bir_symbexec_compLib;
 
   fun compute_val_try compute_val_and_resolve_deps preds vals (besubst, besubst_vars) deps_l2 =
+    let val _ = if not debugAssignments then () else
+                (print "BESUBST: "; print_term besubst); in
     case compute_val_try_const_only vals (besubst, besubst_vars) deps_l2 of
         SOME x => SOME x
       | NONE => (
@@ -49,7 +54,7 @@ local
         SOME x => SOME x
       | NONE => (
          compute_val_try_mem compute_val_and_resolve_deps preds vals (besubst, besubst_vars)
-    )));
+    ))) end;
 
   fun compute_val_and_resolve_deps preds vals (besubst, besubst_vars) =
     let
@@ -73,6 +78,14 @@ local
           (BExp_Align Bit32 2 (BExp_Den (BVar "SP_process" (BType_Imm Bit32))))
           (BExp_Const y))``;
 
+  val sp_align_add_const_match_tm = ``
+        (BExp_BinExp BIExp_Plus
+          (BExp_Align Bit32 2 (BExp_Den (BVar "SP_process" (BType_Imm Bit32))))
+          (BExp_Const y))``;
+
+  val sp_align_r7_match_tm = ``
+        (BExp_Align Bit32 2 (BExp_Den (BVar "R7" (BType_Imm Bit32))))``;
+
   fun simplify_be be syst =
     let
       val (vs, _) = hol88Lib.match sp_align_sub_const_match_tm be;
@@ -83,11 +96,45 @@ local
           (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
           (BExp_Const ^imm_val))``;
 
+      val _ = if not debugAssignments then () else
+              (print "- replace minus :"; print_term imm_val);
+
       (* TODO: use smt solver to prove equality under path predicate *)
     in
       replacewith_tm
     end
-    handle HOL_ERR _ => be;
+    handle HOL_ERR _ => (
+    let
+      val (vs, _) = hol88Lib.match sp_align_add_const_match_tm be;
+      val imm_val = fst (List.nth (vs, 0));
+
+      val replacewith_tm = ``
+        (BExp_BinExp BIExp_Plus
+          (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+          (BExp_Const ^imm_val))``;
+
+      val _ = if not debugAssignments then () else
+              (print "- replace plus :"; print_term imm_val);
+
+      (* TODO: use smt solver to prove equality under path predicate *)
+    in
+      replacewith_tm
+    end
+    handle HOL_ERR _ => (
+    let
+      val (vs, _) = hol88Lib.match sp_align_r7_match_tm be;
+
+      val replacewith_tm = ``
+        BExp_Den (BVar "R7" (BType_Imm Bit32))``;
+
+      val _ = if not debugAssignments then () else
+              (print "- replace r7 :");
+
+      (* TODO: use smt solver to prove equality under path predicate *)
+    in
+      replacewith_tm
+    end
+    handle HOL_ERR _ => be));
 
 in (* local *)
 
@@ -116,6 +163,9 @@ end (* local *)
 (* primitive to carry out assignment *)
   fun state_assign_bv bv be syst =
     let
+      val _ = if not debugAssignments then () else
+              (print "\n\n===============\nASSIGN: "; print_term bv; print_term be);
+
       val symbv = compute_valbe be syst;
       val expo = case symbv of
                     SymbValBE (x, _) => SOME x
@@ -223,7 +273,7 @@ end (* local *)
     let
       val bv_str = str_prefix ^ "_cnd";
 
-      val debugOn = false;
+      val debugOn = debugPaths;
 
       val systs1 = (f_bt o state_add_pred bv_str cnd) syst;
       val systs2 = (f_bf o state_add_pred bv_str (bslSyntax.bnot cnd)) syst;
