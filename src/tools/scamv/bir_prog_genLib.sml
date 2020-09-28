@@ -147,8 +147,9 @@ in
           (last_cur_idx   := !last_cur_idx + 1)
         else
           (last_filelist  := filename;
-           last_prog_list := bir_embexp_load_progs filename;
-           last_cur_idx   := 0);
+           last_prog_list := [];
+           last_cur_idx   := 0;
+           last_prog_list := bir_embexp_load_progs filename);
 
       val (prog_list, cur_idx) = (!last_prog_list, !last_cur_idx);
     in

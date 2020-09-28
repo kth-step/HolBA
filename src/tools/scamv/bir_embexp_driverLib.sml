@@ -333,14 +333,38 @@ end
       List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "" asm_lines
     end;
 
-  fun bir_embexp_code_to_prog_raw cleanup code_asm =
+  fun bir_embexp_prog_std_preproc asm_lines =
+    let
+(*
+      val asm_lines = if List.last asm_lines = "\n" then
+                        List.take (asm_lines, (length asm_lines) - 1)
+                      else
+                        raise ERR "bir_embexp_prog_std_preproc" "no final newline";
+*)
+      val asm_lines = List.map (fn line =>
+         let val fixedline = strip_ws_off true line; in
+           if line = "\t" ^ fixedline then
+             fixedline
+           else
+             raise ERR "bir_embexp_prog_std_preproc" "lines are not as expected"
+         end
+       ) asm_lines;
+    in
+      asm_lines
+    end;
+
+  fun bir_embexp_prog_cleanup asm_lines =
+    let
+      val asm_lines = List.map (strip_ws_off true) asm_lines;
+      val asm_lines = List.filter (fn x => not (x = "")) asm_lines;
+    in
+      asm_lines
+    end;
+
+  fun bir_embexp_code_to_prog_raw preproc_fun code_asm =
     let
       val asm_lines = String.tokens (fn c => c = #"\n") code_asm;
-
-      val asm_lines = if not cleanup then asm_lines else
-                      List.map (strip_ws_off true) asm_lines;
-      val asm_lines = if not cleanup then asm_lines else
-                      List.filter (fn x => not (x = "")) asm_lines;
+      val asm_lines = preproc_fun asm_lines;
 
       val asm_lines_p = List.exists (fn x =>
             x <> (strip_ws_off true x) orelse
@@ -353,7 +377,7 @@ end
     end;
   
   fun bir_embexp_code_to_prog code_asm =
-    bir_embexp_code_to_prog_raw true code_asm;
+    bir_embexp_code_to_prog_raw bir_embexp_prog_cleanup code_asm;
 
   fun bir_embexp_prog_create (arch_id, prog_gen_id) code_asm =
     let
@@ -516,7 +540,8 @@ end
       val logs_dir = logfile_basedir();
       val archprog_ids = bir_embexp_load_list "progs" listname;
       val progs = List.map (fn apid =>
-            bir_embexp_code_to_prog_raw false (read_from_file (logs_dir ^ "/" ^ apid ^ "/code.asm"))
+            (bir_embexp_code_to_prog_raw bir_embexp_prog_std_preproc)
+               (read_from_file (logs_dir ^ "/" ^ apid ^ "/code.asm"))
           ) archprog_ids;
     in
       progs
