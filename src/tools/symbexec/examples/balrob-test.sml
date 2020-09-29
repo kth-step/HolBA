@@ -360,7 +360,7 @@ fun subst_in_symbv_interval (vals, varsubstmap) ((be1, be2), deps) =
             print ("------min-\n" ^ (symbv_to_string symbv_min) ^ "\n");
     val _ = if not debugOn then () else
             print ("------max-\n" ^ (symbv_to_string symbv_max) ^ "\n");
-    
+
     val (be_min, deps_min) =
       case symbv_min of
          SymbValInterval ((bemin, _), deps) => (bemin, deps)
@@ -382,12 +382,85 @@ fun subst_in_symbv_interval (vals, varsubstmap) ((be1, be2), deps) =
     symbv
   end;
 
+fun subst_in_symbv_mem (vals, varsubstmap) mem =
+  let
+    val debugOn = true;
+
+    val (basem_bv,
+         layout,
+         (_, mem_globl, (bv_sp, mem_stack)),
+         deps) = mem;
+
+    val _ = if not debugOn then () else (
+            print ("\n==============\n");
+            print_term basem_bv;
+            print ("deps: " ^ (Int.toString (Redblackset.numItems deps)) ^ "\n"));
+
+    (* get base memory *)
+    val basemem = case Redblackmap.peek (varsubstmap, basem_bv) of
+                     NONE => raise ERR "subst_in_symbv_mem" "couldn't find base memory"
+                   | SOME basemem_bv => (
+                  case find_bv_val "subst_in_symbv_mem::variablenotfound_mem" vals basemem_bv of
+                     SymbValMem m => m
+                   | _ => raise ERR "subst_in_symbv_mem" "wrong value type mem");
+
+    val (b_basem_bv,
+         b_layout,
+         (b_mem_const, b_mem_globl, (b_bv_sp, b_mem_stack)),
+         b_deps) = basemem;
+
+    val _ = if layout = b_layout then () else
+            raise ERR "subst_in_symbv_mem" "memory layouts are not the same";
+
+    (* get base relative sp *)
+    val be_sp   = case Redblackmap.peek (varsubstmap, bv_sp) of
+                     NONE => raise ERR "subst_in_symbv_mem" "couldn't find sp"
+                   | SOME bv_sp_ofvals => (
+                  case find_bv_val "subst_in_symbv_mem::variablenotfound_sp" vals bv_sp_ofvals of
+                     SymbValBE (be,_) => be
+                   | _ => raise ERR "subst_in_symbv_mem" "wrong value type sp");
+
+    val _ = if not debugOn then () else (
+            print ("-------\n");
+            print_term be_sp);
+
+    (* merge the global memory *)
+    val mem_globl_new = b_mem_globl;
+
+    (* merge the stack memory *)
+    val mem_stack_new = b_mem_stack;
+
+    (* compute deps *)
+    val deps_new =
+         List.foldr (fn ((_,(_,d)),s) =>
+            Redblackset.union (d, s)
+          )
+          (Redblackset.fromList Term.compare [b_basem_bv, b_bv_sp])
+          ((Redblackmap.listItems mem_globl_new)@(Redblackmap.listItems mem_stack_new));
+
+    val symbv =
+      SymbValMem
+       (b_basem_bv,
+         b_layout,
+         (b_mem_const, mem_globl_new, (b_bv_sp, mem_stack_new)),
+         deps_new);
+
+    val _ = if not debugOn then () else
+            print ("-------\n" ^ (symbv_to_string_raw true symbv) ^ "\n");
+  in
+    symbv
+  end;
+
 fun subst_in_symbv (vals, varsubstmap) (SymbValBE symbvbe) =
       subst_in_symbv_bexp (vals, varsubstmap) symbvbe
   | subst_in_symbv (vals, varsubstmap) (SymbValInterval symbvint) =
       subst_in_symbv_interval (vals, varsubstmap) symbvint
+  | subst_in_symbv (vals, varsubstmap) (SymbValMem symbvmem) =
+      subst_in_symbv_mem (vals, varsubstmap) symbvmem
+(*
   | subst_in_symbv (vals, varsubstmap) symbv =
       raise ERR "subst_in_symbv" ("cannot handle symbolic value type: " ^ (symbv_to_string symbv));
+*)
 
 (*
 Redblackmap.listItems vals_1
