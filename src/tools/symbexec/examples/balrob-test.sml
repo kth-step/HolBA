@@ -341,10 +341,51 @@ fun subst_in_symbv_bexp (vals, varsubstmap) (be,_) =
   in
     symbv
   end;
-  
 
-fun subst_in_symbv (vals, varsubstmap) (SymbValBE (be, deps)) =
-      subst_in_symbv_bexp (vals, varsubstmap) (be, deps)
+fun subst_in_symbv_interval (vals, varsubstmap) ((be1, be2), deps) =
+  let
+    open bir_expSyntax;
+
+    val debugOn = false;
+
+    val _ = if not debugOn then () else (
+            print ("\n==============\n");
+            print_term be1;
+            print_term be2);
+
+    val symbv_min = subst_in_symbv_bexp (vals, varsubstmap) (be1,deps);
+    val symbv_max = subst_in_symbv_bexp (vals, varsubstmap) (be2,deps);
+
+    val _ = if not debugOn then () else
+            print ("------min-\n" ^ (symbv_to_string symbv_min) ^ "\n");
+    val _ = if not debugOn then () else
+            print ("------max-\n" ^ (symbv_to_string symbv_max) ^ "\n");
+    
+    val (be_min, deps_min) =
+      case symbv_min of
+         SymbValInterval ((bemin, _), deps) => (bemin, deps)
+       | _ => raise ERR "subst_in_symbv_interval" "min did not result in interval";
+
+    val (be_max, deps_max) =
+      case symbv_max of
+         SymbValInterval ((_, bemax), deps) => (bemax, deps)
+       | _ => raise ERR "subst_in_symbv_interval" "max did not result in interval";
+
+    val _ = if Redblackset.equal (deps_min, deps_max) then () else
+            raise ERR "subst_in_symbv_interval" "dependency set is not equal";
+
+    val symbv = SymbValInterval ((be_min, be_max), deps_min);
+
+    val _ = if not debugOn then () else
+            print ("-------\n" ^ (symbv_to_string symbv) ^ "\n");
+  in
+    symbv
+  end;
+
+fun subst_in_symbv (vals, varsubstmap) (SymbValBE symbvbe) =
+      subst_in_symbv_bexp (vals, varsubstmap) symbvbe
+  | subst_in_symbv (vals, varsubstmap) (SymbValInterval symbvint) =
+      subst_in_symbv_interval (vals, varsubstmap) symbvint
   | subst_in_symbv (vals, varsubstmap) symbv =
       raise ERR "subst_in_symbv" ("cannot handle symbolic value type: " ^ (symbv_to_string symbv));
 
