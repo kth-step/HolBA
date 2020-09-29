@@ -2,7 +2,6 @@ open HolKernel Parse boolLib bossLib;
 
 (* From tools/wp: *)
 open bir_wpLib bir_wp_expLib;
-open easy_noproof_wpLib;
 open bir_wpTheory bir_htTheory;
 open bir_wp_interfaceLib;
 
@@ -41,8 +40,6 @@ val _ = new_theory "tutorial_wp";
  * WP = Weakest precondition
  * HT = Hoare triple
 *)
-
-(* TODO: Think about where to put these... *)
 
 
 (******************************************************************)
