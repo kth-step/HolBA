@@ -306,23 +306,62 @@ fun freevars_of_vals vals =
     symbvalbe_dep_empty
     vals;
 
+
+(*
+TODO: don't forget symbolic computation
+*)
+fun subst_in_symbv_bexp (vals, varsubstmap) (be,_) =
+  let
+    open bir_expSyntax;
+    open bir_constpropLib;
+    open bir_exp_helperLib;
+
+    val debugOn = false;
+
+    val _ = if not debugOn then () else (
+            print ("\n==============\n");
+            print_term be);
+
+    val be_vars = get_birexp_vars be;
+
+    fun subst_fun2 map (bev, (e, vars)) =
+      let
+        val bv_ofvals = find_bv_val "subst_fun2" map bev;
+        val (exp, vars') = (mk_BExp_Den bv_ofvals, bv_ofvals::vars);
+      in
+        (subst_exp (bev, exp, e), vars')
+      end;
+
+    val besubst_with_vars = List.foldr (subst_fun2 varsubstmap) (be, []) be_vars;
+
+    val symbv = bir_symbexec_coreLib.compute_val_and_resolve_deps [] vals besubst_with_vars;
+
+    val _ = if not debugOn then () else
+            print ("-------\n" ^ (symbv_to_string symbv) ^ "\n");
+  in
+    symbv
+  end;
+  
+
+fun subst_in_symbv (vals, varsubstmap) (SymbValBE (be, deps)) =
+      subst_in_symbv_bexp (vals, varsubstmap) (be, deps)
+  | subst_in_symbv (vals, varsubstmap) symbv =
+      raise ERR "subst_in_symbv" ("cannot handle symbolic value type: " ^ (symbv_to_string symbv));
+
 (*
 Redblackmap.listItems vals_1
 Redblackmap.listItems varsubstmap_2
 Redblackmap.listItems vals_func
 
-val prfrvars = ;
 val (vals, varsubstmap) = (vals_1, varsubstmap_2);
 val prvall = (Redblackmap.listItems vals_func);
 *)
-fun subst_vals_and_append prfrvars (vals, varsubstmap) [] = (vals, varsubstmap)
-  | subst_vals_and_append prfrvars (vals, varsubstmap) prvall =
+fun subst_vals_and_append (vals, varsubstmap) [] = (vals, varsubstmap)
+  | subst_vals_and_append (vals, varsubstmap) prvall =
      let
        val (prvall_r, prvall_l) = List.partition (fn (_,symbv) =>
          List.all
-           (fn bv =>
-              isSome (Redblackmap.peek (varsubstmap, bv)) orelse
-              Redblackset.member (prfrvars, bv))
+           (fn bv => isSome (Redblackmap.peek (varsubstmap, bv)))
          (Redblackset.listItems (deps_of_symbval "subst_vals_and_append" symbv))
         ) prvall;
 
@@ -333,9 +372,7 @@ fun subst_vals_and_append prfrvars (vals, varsubstmap) [] = (vals, varsubstmap)
          (fn ((bv, symbv), (vals_, varsubstmap_)) =>
            let
              val bv_fr = get_bvar_fresh bv;
-             (* TODO: subst, gen fresh vars if not mapped
-                     (i.e. must be in prfrvars then) *)
-             val symbv_subst = symbv;
+             val symbv_subst = subst_in_symbv (vals, varsubstmap) symbv;
            in
              (Redblackmap.insert (vals_, bv_fr, symbv_subst),
               Redblackmap.insert (varsubstmap_, bv, bv_fr))
@@ -343,7 +380,7 @@ fun subst_vals_and_append prfrvars (vals, varsubstmap) [] = (vals, varsubstmap)
          (vals, varsubstmap)
          prvall_r;
      in
-       subst_vals_and_append prfrvars (vals', varsubstmap') prvall_l
+       subst_vals_and_append (vals', varsubstmap') prvall_l
      end;
 
 (*
@@ -416,17 +453,24 @@ val syst_inst =
         (Redblackmap.mkDict Term.compare)
         (Redblackmap.listItems env_strt);
 
-    (* 3. incrementally substitute vars in func vals(&deps), and add to vals_1 and varsubstmap *)
-    val prfrvars = freevars_of_vals vals_func;
-    val (vals_3, varsubstmap_3) =
-      subst_vals_and_append
-        prfrvars
-        (vals_1, varsubstmap_2)
-        (Redblackmap.listItems vals_func);
-    val vals_inst = vals_3;
+    (* 3. insert mappings for all free variables in func vals -> fresh variables *)
+    val varsubstmap_3 =
+      Redblackset.foldr
+        (fn (bv_free, map) =>
+          if is_bvar_init bv_free then map else
+          Redblackmap.insert(map, bv_free, get_bvar_fresh bv_free))
+        varsubstmap_2
+        (freevars_of_vals vals_func);
 
-    (* 4. apply substitution to func env *)
-    val env_inst  = subst_in_env varsubstmap_3 env_func;
+    (* 4. incrementally substitute vars in func vals(&deps), and add to vals_1 and varsubstmap_3 *)
+    val (vals_4, varsubstmap_4) =
+      subst_vals_and_append
+        (vals_1, varsubstmap_3)
+        (Redblackmap.listItems vals_func);
+    val vals_inst = vals_4;
+
+    (* 5. apply substitution to func env *)
+    val env_inst  = subst_in_env varsubstmap_4 env_func;
   in
     SYST_mk pc_inst
             env_inst
