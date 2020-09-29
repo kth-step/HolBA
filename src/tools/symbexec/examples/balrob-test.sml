@@ -195,6 +195,12 @@ val syst_merged =
                       (tl x)
   ) systs_tidiedup;
 
+(* print sp and mem *)
+val syst_merged_sp_symbv  = get_state_symbv "script" bv_sp syst_merged;
+val _ = print ("\nSP  = " ^ (symbv_to_string_raw true syst_merged_sp_symbv) ^ "\n\n");
+val syst_merged_mem_symbv = get_state_symbv "script" bv_mem syst_merged;
+val _ = print ("\nMEM = " ^ (symbv_to_string_raw true syst_merged_mem_symbv) ^ "\n\n");
+
 val syst_summary = (lbl_tm, "path predicate goes here", [syst_merged]);
 
 val syst_merged_countw = get_state_symbv "script" bv_countw syst_merged;

@@ -28,13 +28,13 @@ val symbvalbe_dep_empty = Redblackset.empty Term.compare;
 val symbvdebugOn = false;
 fun memmap_string_fold ((addr, (exp, deps)), str) =
   "[" ^ (Arbnum.toString addr) ^ " -> " ^ (term_to_string exp) ^ "]\n" ^ str;
-fun symbv_to_string (SymbValBE (exp, deps)) =
+fun symbv_to_string_raw verb (SymbValBE (exp, deps)) =
        ("SymbValBE (" ^
         (term_to_string exp) ^
         ", " ^
         (Int.toString (Redblackset.numItems deps)) ^
         ")")
-  | symbv_to_string (SymbValInterval ((min, max), deps)) =
+  | symbv_to_string_raw verb (SymbValInterval ((min, max), deps)) =
        ("SymbValInterval ((" ^
         (term_to_string min) ^
         ", " ^
@@ -42,8 +42,8 @@ fun symbv_to_string (SymbValBE (exp, deps)) =
         "), " ^
         (Int.toString (Redblackset.numItems deps)) ^
         ")")
-  | symbv_to_string (SymbValMem (basem_bv, _, (_, mapglobl, (sp, mapstack)), deps)) =
-       "SymbValMem (" ^ (if not symbvdebugOn then "" else
+  | symbv_to_string_raw verb (SymbValMem (basem_bv, _, (_, mapglobl, (sp, mapstack)), deps)) =
+       "SymbValMem (" ^ (if not verb then "" else
            "\nbasem= " ^ (term_to_string basem_bv) ^
            "\nglobl=" ^
            (List.foldr memmap_string_fold "" (Redblackmap.listItems mapglobl)) ^
@@ -54,6 +54,7 @@ fun symbv_to_string (SymbValBE (exp, deps)) =
            "\t,\ndeps=\n" ^
            (Int.toString (Redblackset.numItems deps))
        ) ^ "\t)";
+fun symbv_to_string symbv = symbv_to_string_raw symbvdebugOn symbv;
 
 
 (* symbolic states *)
@@ -597,15 +598,29 @@ in (* local *)
                 raise ERR "merge_states_vartointerval" "initial stack pointer variables are not the same";
 
         (* merge the global memory *)
-        val mem_globl = List.foldr (fn ((a,_),m) =>
-               Redblackmap.insert (m, a, get_symbv_bexp_free_sz "memgmerge_forget" 32)
+        val mem_globl_ads = Redblackset.fromList Arbnum.compare
+              (List.map (fst) ((Redblackmap.listItems mem1_globl)@(Redblackmap.listItems mem2_globl)));
+        val mem_globl = Redblackset.foldr (fn (a,m) =>
+               Redblackmap.insert (m, a,
+                   case (Redblackmap.peek (mem1_globl, a), Redblackmap.peek (mem2_globl, a)) of
+                       (SOME (e1,deps1), SOME (e2,_)) =>
+                         if identical e1 e2 then (e1, deps1) else
+                         get_symbv_bexp_free_sz "memgmerge_forget" 32
+                     | _ => get_symbv_bexp_free_sz "memgmerge_forget" 32)
             ) (Redblackmap.mkDict Arbnum.compare)
-              ((Redblackmap.listItems mem1_globl)@(Redblackmap.listItems mem2_globl));
+              mem_globl_ads;
         (* merge the stack *)
-        val mem_stack = List.foldr (fn ((a,_),m) =>
-               Redblackmap.insert (m, a, get_symbv_bexp_free_sz "memsmerge_forget" 32)
+        val mem_stack_ads = Redblackset.fromList Arbnum.compare
+              (List.map (fst) ((Redblackmap.listItems mem1_stack)@(Redblackmap.listItems mem2_stack)));
+        val mem_stack = Redblackset.foldr (fn (a,m) =>
+               Redblackmap.insert (m, a,
+                   case (Redblackmap.peek (mem1_stack, a), Redblackmap.peek (mem2_stack, a)) of
+                       (SOME (e1,deps1), SOME (e2,_)) =>
+                         if identical e1 e2 then (e1, deps1) else
+                         get_symbv_bexp_free_sz "memgmerge_forget" 32
+                     | _ => get_symbv_bexp_free_sz "memgmerge_forget" 32)
             ) (Redblackmap.mkDict Arbnum.compare)
-              ((Redblackmap.listItems mem1_stack)@(Redblackmap.listItems mem2_stack));
+              mem_stack_ads;
         (* compute deps *)
         val mem_deps =
              List.foldr (fn ((_,(_,d)),s) =>
