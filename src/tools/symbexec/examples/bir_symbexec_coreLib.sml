@@ -198,7 +198,11 @@ end (* local *)
       val _ = if is_bvar_init bv_val then () else
               raise ERR "state_make_interval" "can only make interval values from initial variables currently";
 
-      val exp   = bir_expSyntax.mk_BExp_Den bv_val;
+      val exp   = ``
+        BExp_BinExp BIExp_Plus
+          ^(bir_expSyntax.mk_BExp_Den bv_val)
+          (BExp_Const (Imm64 0w))``;
+
       val deps  = Redblackset.add (symbvalbe_dep_empty, bv_val);
       val symbv = SymbValInterval ((exp, exp), deps);
 
