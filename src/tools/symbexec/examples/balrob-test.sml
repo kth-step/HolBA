@@ -384,7 +384,7 @@ fun subst_in_symbv_interval (vals, varsubstmap) ((be1, be2), deps) =
 
 fun subst_in_symbv_mem (vals, varsubstmap) mem =
   let
-    val debugOn = true;
+    val debugOn = false;
 
     val (basem_bv,
          layout,
@@ -424,11 +424,54 @@ fun subst_in_symbv_mem (vals, varsubstmap) mem =
             print ("-------\n");
             print_term be_sp);
 
-    (* merge the global memory *)
-    val mem_globl_new = b_mem_globl;
+    val sp_offset =
+     let
+      val match_tm = ``
+        BExp_BinExp BIExp_Minus (BExp_Den x)
+          (BExp_Const (Imm32 y))``;
+      val (vs, _) = hol88Lib.match match_tm be_sp
+                    handle _ => raise ERR "subst_in_symbv_mem" "unable to match sp expression";
+      val sp_offset_bv = fst (List.nth (vs, 0));
+      val imm_val = fst (List.nth (vs, 1));
 
-    (* merge the stack memory *)
-    val mem_stack_new = b_mem_stack;
+      val _ = if identical sp_offset_bv b_bv_sp then () else
+              raise ERR "subst_in_symbv_mem" "sp variable not identical";
+     in
+       wordsLib.dest_word_literal imm_val
+     end;
+
+    val _ = if not debugOn then () else (
+            print ("-------\n");
+            print ((Arbnum.toString sp_offset) ^ "\n"));
+
+    (* update expressions in all memory locations *)
+    fun update_mem_entry (_,(be_,deps_)) =
+      let
+        val symbv_ = subst_in_symbv_bexp (vals, varsubstmap) (be_,deps_);
+      in
+        case symbv_ of
+           SymbValBE v_ => v_
+         | _ => raise ERR "subst_in_symbv_mem" "a memory location didn't evaluate to symb val be"
+      end;
+
+    val mem_globl_ = Redblackmap.map update_mem_entry mem_globl;
+    val mem_stack_ = Redblackmap.map update_mem_entry mem_stack;
+
+    (* merge the global memory *)
+    val mem_globl_new =
+      Redblackmap.foldr (fn (a, v, m) =>
+          Redblackmap.insert (m, a, v)
+        )
+        b_mem_globl
+        mem_globl_;
+
+    (* merge the stack memory, with stack pointer displacement *)
+    val mem_stack_new =
+      Redblackmap.foldr (fn (a, v, m) =>
+          Redblackmap.insert (m, Arbnum.+(sp_offset, a), v)
+        )
+        b_mem_stack
+        mem_stack_;
 
     (* compute deps *)
     val deps_new =
