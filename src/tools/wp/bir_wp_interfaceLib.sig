@@ -1,4 +1,4 @@
-signature bir_wp_frontendLib =
+signature bir_wp_interfaceLib =
 sig
    include Abbrev
 

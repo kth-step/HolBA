@@ -1,7 +1,7 @@
 (* Code specific for the example *)
 open HolKernel Parse boolLib bossLib;
 open HolBASimps;
-open tutorial_bir_to_armSupportTheory;
+open bir_backlifterTheory;
 open bslSyntax;
 
 val _ = new_theory "tutorial_bir_to_arm";

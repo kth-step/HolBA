@@ -1,4 +1,4 @@
-structure bir_wp_frontendLib =
+structure bir_wp_interfaceLib =
 struct
 
 local
