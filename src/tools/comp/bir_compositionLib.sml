@@ -1,9 +1,8 @@
-structure tutorial_compositionLib =
+structure bir_compositionLib =
 struct
   local
     open bslSyntax;
-    open tutorial_bir_to_armSupportTheory;
-    open bir_wp_frontendLib;
+    open bir_wp_interfaceLib;
     open bir_auxiliaryLib;
     open HolBACoreSimps;
   in

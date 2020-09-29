@@ -1,10 +1,16 @@
 open HolKernel Parse boolLib bossLib;
 
+open bir_immTheory;
 open bir_programTheory;
 open bir_wm_instTheory;
 open bir_program_multistep_propsTheory;
 open bir_auxiliaryTheory;
 
+(* From lifter: *)
+open bir_inst_liftingTheory;
+open bir_lifting_machinesTheory;
+
+(* From comp: *)
 open abstract_hoare_logicTheory;
 open abstract_simp_hoare_logicTheory;
 
@@ -14,7 +20,7 @@ open abstract_hoare_logicSimps;
 
 open bir_auxiliaryLib;
 
-val _ = new_theory "tutorial_bir_to_armSupport";
+val _ = new_theory "bir_backlifter";
 
 (* This part should be generalized *)
 (*

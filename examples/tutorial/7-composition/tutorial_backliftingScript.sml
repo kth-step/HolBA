@@ -3,7 +3,7 @@ open HolKernel Parse boolLib bossLib;
 open examplesBinaryTheory tutorial_bir_to_armTheory
      tutorial_compositionTheory;
 
-open tutorial_backliftingLib;
+open bir_backlifterLib;
 
 val _ = new_theory "tutorial_backlifting";
 
