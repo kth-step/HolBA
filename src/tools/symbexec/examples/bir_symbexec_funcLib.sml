@@ -266,6 +266,361 @@ in (* local *)
     end;
 end (* local *)
 
+
+local
+fun freevars_of_vals vals =
+  Redblackmap.foldr
+    (fn (_, symbv, freevars) =>
+      Redblackset.union (
+        Redblackset.filter (is_bvar_free vals) (deps_of_symbval "freevars_of_vals" symbv)
+        , freevars))
+    symbvalbe_dep_empty
+    vals;
+
+fun subst_in_symbv_bexp (vals, varsubstmap) (be,_) =
+  let
+    open bir_expSyntax;
+    open bir_constpropLib;
+    open bir_exp_helperLib;
+
+    val debugOn = false;
+
+    val _ = if not debugOn then () else (
+            print ("\n==============\n");
+            print_term be);
+
+    val be_vars = get_birexp_vars be;
+
+    fun subst_fun2 map (bev, (e, vars)) =
+      let
+        val bv_ofvals = find_bv_val "subst_fun2" map bev;
+        val (exp, vars') = (mk_BExp_Den bv_ofvals, bv_ofvals::vars);
+      in
+        (subst_exp (bev, exp, e), vars')
+      end;
+
+    val besubst_with_vars = List.foldr (subst_fun2 varsubstmap) (be, []) be_vars;
+
+    val symbv = bir_symbexec_coreLib.compute_val_and_resolve_deps [] vals besubst_with_vars;
+
+    val _ = if not debugOn then () else
+            print ("-------\n" ^ (symbv_to_string symbv) ^ "\n");
+  in
+    symbv
+  end;
+
+fun subst_in_symbv_interval (vals, varsubstmap) ((be1, be2), deps) =
+  let
+    open bir_expSyntax;
+
+    val debugOn = false;
+
+    val _ = if not debugOn then () else (
+            print ("\n==============\n");
+            print_term be1;
+            print_term be2);
+
+    val symbv_min = subst_in_symbv_bexp (vals, varsubstmap) (be1,deps);
+    val symbv_max = subst_in_symbv_bexp (vals, varsubstmap) (be2,deps);
+
+    val _ = if not debugOn then () else
+            print ("------min-\n" ^ (symbv_to_string symbv_min) ^ "\n");
+    val _ = if not debugOn then () else
+            print ("------max-\n" ^ (symbv_to_string symbv_max) ^ "\n");
+
+    val (be_min, deps_min) =
+      case symbv_min of
+         SymbValInterval ((bemin, _), deps) => (bemin, deps)
+       | _ => raise ERR "subst_in_symbv_interval" "min did not result in interval";
+
+    val (be_max, deps_max) =
+      case symbv_max of
+         SymbValInterval ((_, bemax), deps) => (bemax, deps)
+       | _ => raise ERR "subst_in_symbv_interval" "max did not result in interval";
+
+    val _ = if Redblackset.equal (deps_min, deps_max) then () else
+            raise ERR "subst_in_symbv_interval" "dependency set is not equal";
+
+    val symbv = SymbValInterval ((be_min, be_max), deps_min);
+
+    val _ = if not debugOn then () else
+            print ("-------\n" ^ (symbv_to_string symbv) ^ "\n");
+  in
+    symbv
+  end;
+
+fun subst_in_symbv_mem (vals, varsubstmap) mem =
+  let
+    val debugOn = false;
+
+    val (basem_bv,
+         layout,
+         (_, mem_globl, (bv_sp, mem_stack)),
+         deps) = mem;
+
+    val _ = if not debugOn then () else (
+            print ("\n==============\n");
+            print_term basem_bv;
+            print ("deps: " ^ (Int.toString (Redblackset.numItems deps)) ^ "\n"));
+
+    (* get base memory *)
+    val basemem = case Redblackmap.peek (varsubstmap, basem_bv) of
+                     NONE => raise ERR "subst_in_symbv_mem" "couldn't find base memory"
+                   | SOME basemem_bv => (
+                  case find_bv_val "subst_in_symbv_mem::variablenotfound_mem" vals basemem_bv of
+                     SymbValMem m => m
+                   | _ => raise ERR "subst_in_symbv_mem" "wrong value type mem");
+
+    val (b_basem_bv,
+         b_layout,
+         (b_mem_const, b_mem_globl, (b_bv_sp, b_mem_stack)),
+         b_deps) = basemem;
+
+    val _ = if layout = b_layout then () else
+            raise ERR "subst_in_symbv_mem" "memory layouts are not the same";
+
+    (* get base relative sp *)
+    val be_sp   = case Redblackmap.peek (varsubstmap, bv_sp) of
+                     NONE => raise ERR "subst_in_symbv_mem" "couldn't find sp"
+                   | SOME bv_sp_ofvals => (
+                  case find_bv_val "subst_in_symbv_mem::variablenotfound_sp" vals bv_sp_ofvals of
+                     SymbValBE (be,_) => be
+                   | _ => raise ERR "subst_in_symbv_mem" "wrong value type sp");
+
+    val _ = if not debugOn then () else (
+            print ("-------\n");
+            print_term be_sp);
+
+    val sp_offset =
+     let
+      val match_tm = ``
+        BExp_BinExp BIExp_Minus (BExp_Den x)
+          (BExp_Const (Imm32 y))``;
+      val (vs, _) = hol88Lib.match match_tm be_sp
+                    handle _ => raise ERR "subst_in_symbv_mem" "unable to match sp expression";
+      val sp_offset_bv = fst (List.nth (vs, 0));
+      val imm_val = fst (List.nth (vs, 1));
+
+      val _ = if identical sp_offset_bv b_bv_sp then () else
+              raise ERR "subst_in_symbv_mem" "sp variable not identical";
+     in
+       wordsLib.dest_word_literal imm_val
+     end;
+
+    val _ = if not debugOn then () else (
+            print ("-------\n");
+            print ((Arbnum.toString sp_offset) ^ "\n"));
+
+    (* update expressions in all memory locations *)
+    fun update_mem_entry (_,(be_,deps_)) =
+      let
+        val symbv_ = subst_in_symbv_bexp (vals, varsubstmap) (be_,deps_);
+      in
+        case symbv_ of
+           SymbValBE v_ => v_
+         | _ => raise ERR "subst_in_symbv_mem" "a memory location didn't evaluate to symb val be"
+      end;
+
+    val mem_globl_ = Redblackmap.map update_mem_entry mem_globl;
+    val mem_stack_ = Redblackmap.map update_mem_entry mem_stack;
+
+    (* merge the global memory *)
+    val mem_globl_new =
+      Redblackmap.foldr (fn (a, v, m) =>
+          Redblackmap.insert (m, a, v)
+        )
+        b_mem_globl
+        mem_globl_;
+
+    (* merge the stack memory, with stack pointer displacement *)
+    val mem_stack_new =
+      Redblackmap.foldr (fn (a, v, m) =>
+          Redblackmap.insert (m, Arbnum.+(sp_offset, a), v)
+        )
+        b_mem_stack
+        mem_stack_;
+
+    (* compute deps *)
+    val deps_new =
+         List.foldr (fn ((_,(_,d)),s) =>
+            Redblackset.union (d, s)
+          )
+          (Redblackset.fromList Term.compare [b_basem_bv, b_bv_sp])
+          ((Redblackmap.listItems mem_globl_new)@(Redblackmap.listItems mem_stack_new));
+
+    val symbv =
+      SymbValMem
+       (b_basem_bv,
+         b_layout,
+         (b_mem_const, mem_globl_new, (b_bv_sp, mem_stack_new)),
+         deps_new);
+
+    val _ = if not debugOn then () else
+            print ("-------\n" ^ (symbv_to_string_raw true symbv) ^ "\n");
+  in
+    symbv
+  end;
+
+fun subst_in_symbv (vals, varsubstmap) (SymbValBE symbvbe) =
+      subst_in_symbv_bexp (vals, varsubstmap) symbvbe
+  | subst_in_symbv (vals, varsubstmap) (SymbValInterval symbvint) =
+      subst_in_symbv_interval (vals, varsubstmap) symbvint
+  | subst_in_symbv (vals, varsubstmap) (SymbValMem symbvmem) =
+      subst_in_symbv_mem (vals, varsubstmap) symbvmem;
+(*
+  | subst_in_symbv (vals, varsubstmap) symbv =
+      raise ERR "subst_in_symbv" ("cannot handle symbolic value type: " ^ (symbv_to_string symbv));
+*)
+
+(*
+Redblackmap.listItems vals_1
+Redblackmap.listItems varsubstmap_2
+Redblackmap.listItems vals_func
+
+val (vals, varsubstmap) = (vals_1, varsubstmap_2);
+val prvall = (Redblackmap.listItems vals_func);
+*)
+fun subst_vals_and_append (vals, varsubstmap) [] = (vals, varsubstmap)
+  | subst_vals_and_append (vals, varsubstmap) prvall =
+     let
+       val (prvall_r, prvall_l) = List.partition (fn (_,symbv) =>
+         List.all
+           (fn bv => isSome (Redblackmap.peek (varsubstmap, bv)))
+         (Redblackset.listItems (deps_of_symbval "subst_vals_and_append" symbv))
+        ) prvall;
+
+       val _ = if not (List.null prvall_r) then () else
+               raise ERR "subst_vals_and_append" "cannot continue substitution: loop?";
+
+       val (vals', varsubstmap') = List.foldl
+         (fn ((bv, symbv), (vals_, varsubstmap_)) =>
+           let
+             val bv_fr = get_bvar_fresh bv;
+             val symbv_subst = subst_in_symbv (vals, varsubstmap) symbv;
+           in
+             (Redblackmap.insert (vals_, bv_fr, symbv_subst),
+              Redblackmap.insert (varsubstmap_, bv, bv_fr))
+           end)
+         (vals, varsubstmap)
+         prvall_r;
+     in
+       subst_vals_and_append (vals', varsubstmap') prvall_l
+     end;
+
+(*
+    val (vals_3, varsubstmap_3) =
+      subst_vals_and_append
+        (vals_1, varsubstmap_2)
+        (Redblackmap.listItems vals_func);
+    val varsubstmap = varsubstmap_3;
+    val env = env_func;
+
+Redblackmap.listItems env
+Redblackmap.listItems varsubstmap
+Redblackmap.listItems (subst_in_env varsubstmap env)
+*)
+fun subst_in_env varsubstmap env =
+  Redblackmap.map
+    (fn (_, bv_val) =>
+     Redblackmap.find (varsubstmap, bv_val)
+     handle _ => bv_val)
+     (* raise ERR "subst_in_env" ("didn't find mapping for " ^ (term_to_string bv_val)) *)
+    env;
+
+in (* local *)
+
+fun instantiate_function_summary syst_summary syst =
+  let
+    (* find correct function summary *)
+    val (func_lbl_tm, func_precond, func_systs) = syst_summary;
+    val func_syst =
+            if length func_systs = 1 then hd func_systs else
+            raise ERR "instantiate_function_summary"
+                      "more than one symbolic state in function summary";
+
+    val syst_strt = syst;
+
+    val lbl_tm_func = func_lbl_tm;
+    val syst_func = func_syst;
+
+    (* pc: take after func pc *)
+    val pc_strt = SYST_get_pc syst_strt;
+    val _ = if identical lbl_tm_func pc_strt then () else
+        raise ERR "script_syst_instanciate" "starting label doesn't match";
+    val pc_inst = SYST_get_pc syst_func;
+
+    (* starting syst needs to be running *)
+    val status_strt = SYST_get_status syst_strt;
+    val _ = if identical BST_Running_tm status_strt then () else
+            raise ERR "script_syst_instanciate" "starting status needs to be running";
+    val status_inst = SYST_get_status syst_func;
+
+    (* for now we don't deal with observations here *)
+    val obss_strt = SYST_get_obss syst_strt;
+    val obss_func = SYST_get_obss syst_func;
+    val _ = if List.null obss_strt andalso
+               List.null obss_func then () else
+            raise ERR "script_syst_instanciate" "cannot handle observations for now";
+    val obss_inst = [];
+
+    (* prep: vals and env *)
+    val vals_strt = SYST_get_vals syst_strt;
+    val vals_func = SYST_get_vals syst_func;
+    val env_strt  = SYST_get_env  syst_strt;
+    val env_func  = SYST_get_env  syst_func;
+
+    (* pred: take starting path predicate *)
+    val pred_strt = SYST_get_pred syst_strt;
+    (* TODO: check precondition entailment *)
+    val pred_inst = pred_strt;
+
+    (* vals and env *)
+    (* 1. initialize new vals with starting vals *)
+    val vals_1 = vals_strt;
+
+    (* 2. initialize var substitute map from starting env *)
+    val varsubstmap_2 =
+      List.foldl
+        (fn ((bv, bv_val), map) =>
+          Redblackmap.insert (map, get_bvar_init bv, bv_val))
+        (Redblackmap.mkDict Term.compare)
+        (Redblackmap.listItems env_strt);
+
+    (* 3. insert mappings for all free variables in func vals -> fresh variables *)
+    val varsubstmap_3 =
+      Redblackset.foldr
+        (fn (bv_free, map) =>
+          if is_bvar_init bv_free then map else
+          Redblackmap.insert(map, bv_free, get_bvar_fresh bv_free))
+        varsubstmap_2
+        (freevars_of_vals vals_func);
+
+    (* 4. incrementally substitute vars in func vals(&deps), and add to vals_1 and varsubstmap_3 *)
+    val (vals_4, varsubstmap_4) =
+      subst_vals_and_append
+        (vals_1, varsubstmap_3)
+        (Redblackmap.listItems vals_func);
+    val vals_inst = vals_4;
+
+    (* 5. apply substitution to func env *)
+    val env_inst  = subst_in_env varsubstmap_4 env_func;
+
+    (* 6. create state and tidy up *)
+    val syst_after_raw =
+      SYST_mk pc_inst
+              env_inst
+              status_inst
+              obss_inst
+              pred_inst
+              vals_inst;
+    val syst_after = tidyup_state_vals syst_after_raw;
+  in
+    syst_after
+  end;
+
+end (* local *)
+
+
 end (* outermost local *)
 
 end (* struct *)
