@@ -310,4 +310,49 @@ val stop_lbl_tms = [``BL_Address (Imm32 0xc74w)``];
 
 val systs = symb_exec_to_stop (abpfun cfb) n_dict bl_dict_ [syst_inst] stop_lbl_tms [];
 
+val (systs_noassertfailed, systs_assertfailed) =
+  List.partition (fn syst => not (identical (SYST_get_status syst) BST_AssertionViolated_tm)) systs;
+val _ = print ("number of \"no assert failed\" paths found: " ^ (Int.toString (length systs_noassertfailed)));
+val _ = print "\n\n";
 
+(*
+val syst = hd systs_assertfailed;
+val syst = hd systs_noassertfailed;
+*)
+
+val systs_feasible = List.filter check_feasible systs_noassertfailed;
+val _ = print ("number of feasible paths found: " ^ (Int.toString (length systs_feasible)));
+val _ = print "\n\n";
+
+val systs_tidiedup = List.map tidyup_state_vals systs_feasible;
+val _ = print "finished tidying up all paths.\n\n";
+
+val syst_merged =
+  (fn x => List.foldr (merge_states_vartointerval bv_countw bv_mem bv_sp)
+                      (hd x)
+                      (tl x)
+  ) systs_tidiedup;
+
+(* print sp and mem *)
+val syst_merged_sp_symbv  = get_state_symbv "script" bv_sp syst_merged;
+val _ = print ("\nSP  = " ^ (symbv_to_string_raw true syst_merged_sp_symbv) ^ "\n\n");
+val syst_merged_mem_symbv = get_state_symbv "script" bv_mem syst_merged;
+val _ = print ("\nMEM = " ^ (symbv_to_string_raw true syst_merged_mem_symbv) ^ "\n\n");
+
+val syst_summary = (lbl_tm, "path predicate goes here", [syst_merged]);
+
+val syst_merged_countw = get_state_symbv "script" bv_countw syst_merged;
+
+(*
+val _ = print (symbv_to_string syst_merged_countw);
+*)
+
+val (count_min, count_max) =
+  case syst_merged_countw of
+     SymbValInterval ((min, max), _) =>
+        (term_to_string min, term_to_string max)
+   | _ => raise ERR "balrob-test" "should be an interval";
+
+val _ = print "\n\n\n";
+val _ = print ("min = " ^ count_min ^ "\n");
+val _ = print ("max = " ^ count_max ^ "\n");

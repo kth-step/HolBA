@@ -160,6 +160,34 @@ local
     )
     handle HOL_ERR _ => NONE;
 
+  val jmp_exp_var_match_tm = ``BStmt_Jmp (BLE_Exp (BExp_Den x))``;
+  fun state_exec_try_jmp_exp_var est syst =
+    SOME (
+    let
+      val (vs, _) = hol88Lib.match jmp_exp_var_match_tm est;
+      val bv_tgt  = (fst o hd) vs;
+
+      val symbv = get_state_symbv "state_exec_try_jmp_exp_var" bv_tgt syst;
+      val (tgt_exp_, tgt_deps) =
+        case symbv of
+           SymbValBE v => v
+         | _ => raise ERR "state_exec_try_jmp_exp_var" "jump target is not symbvbexp";
+
+      val tgt_exp = bir_constpropLib.eval_constprop tgt_exp_;
+
+      val _ = if Redblackset.numItems tgt_deps = 0 then () else
+              raise ERR "state_exec_try_jmp_exp_var" "can only handle indirect jumps to constant locations";
+
+      open bir_expSyntax;
+      val tgt = (mk_BL_Address o dest_BExp_Const) tgt_exp
+                handle _ => raise ERR "state_exec_try_jmp_exp_var"
+                  ("target value is no const: " ^ (term_to_string tgt_exp));
+    in
+      [SYST_update_pc tgt syst]
+    end
+    )
+    handle HOL_ERR _ => NONE;
+
   open bir_cfgLib;
 
   fun state_exec_from_cfg n_dict lbl_tm syst =
@@ -187,9 +215,13 @@ in (* local *)
     case state_exec_try_cjmp_label est syst of
        SOME systs => systs
      | NONE       => (
+    (* try to match indirect jump *)
+    case state_exec_try_jmp_exp_var est syst of
+       SOME systs => systs
+     | NONE       => (
     (* no match, then we have some indirection and need to use cfg (or it's another end statement) *)
     state_exec_from_cfg n_dict lbl_tm syst
-    ));
+    )));
 end (* local *)
 
 
