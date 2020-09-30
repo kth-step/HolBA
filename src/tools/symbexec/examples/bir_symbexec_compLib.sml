@@ -381,14 +381,28 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
       val sp_offset = (Arbnum.toInt o wordsSyntax.dest_word_literal o bir_immSyntax.dest_Imm32) imm_offset;
 
       val suboff = 4 - (mem_addr_sz_offset sp_offset 32);
-      val offset = if suboff = 4
-                   then sp_offset
-                   else sp_offset + suboff;
+      val suboff = if suboff = 4 then 0 else suboff;
+      val offset = sp_offset + suboff;
 
       val (exp, deps) = Redblackmap.find (mem_stack, Arbnum.fromInt offset)
         handle _ => raise ERR "mem_load_stack" "address is not mapped in global memory";
 
+(*
+val suboff = 0;
+val sz = 8
+val exp = ``BExp_Const (Imm32 3105w)``;
+*)
+(*
+      val _ = print ("aaabbbcccddd " ^ (Int.toString suboff) ^ " " ^ (Int.toString sz) ^ "\n");
+      val _ = print_term exp;
+*)
+
       val exp' = mem_sec_exp_gen exp suboff sz;
+
+(*
+      val _ = print_term exp';
+      val _ = print "aaabbbcccdddeee\n";
+*)
     in
       (exp', deps)
     end;
@@ -504,6 +518,11 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
         val (vs, _) = res;
         val bv      = fst (List.nth (vs, 0));
         val imm_val = fst (List.nth (vs, 1));
+(*
+        val _ = print_term addr_tm;
+        val _ = print (symbv_to_string_raw true (SymbValMem mem));
+        val _ = print ("\n");
+*)
       in
         SOME (SymbValBE (mem_load_stack mem bv imm_val sz_tm))
       end),

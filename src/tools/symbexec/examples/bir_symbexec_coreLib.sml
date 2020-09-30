@@ -56,8 +56,6 @@ local
          compute_val_try_mem compute_val_and_resolve_deps preds vals (besubst, besubst_vars)
     ))) end;
 
-in
-
   fun compute_val_and_resolve_deps preds vals (besubst, besubst_vars) =
     let
       val deps_l2 = List.foldr (Redblackset.union)
@@ -138,9 +136,10 @@ in
     end
     handle HOL_ERR _ => be));
 
-(*
 in (* local *)
-*)
+
+  (* TODO: think if it makes sense to have this function available outside or if we want another interface for this part *)
+  val compute_val_and_resolve_deps = compute_val_and_resolve_deps;
 
   fun compute_valbe be syst =
     let

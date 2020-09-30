@@ -268,6 +268,10 @@ end (* local *)
 
 
 local
+(*
+Redblackset.listItems (freevars_of_vals vals_func)
+Redblackset.listItems (freevars_of_vals vals_strt)
+*)
 fun freevars_of_vals vals =
   Redblackmap.foldr
     (fn (_, symbv, freevars) =>

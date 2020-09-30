@@ -289,21 +289,25 @@ val _ = print "\n\n";
 val syst = if length systs_noassertfailed = 1 then hd systs_noassertfailed else
            raise ERR "script" "more than one symbolic state in current path/state";
 
-(*
-Redblackset.listItems (freevars_of_vals vals_func)
-Redblackset.listItems (freevars_of_vals vals_strt)
-*)
-
 val syst_inst = instantiate_function_summary syst_summary syst;
 
 (*
-Redblackmap.listItems env_func;
-Redblackmap.listItems env_inst;
-
 val envl = (Redblackmap.listItems o SYST_get_env) syst_inst;
 val valsl = (Redblackmap.listItems o SYST_get_vals) syst_inst;
 *)
 
+(* ... and continuation up to the return of the function *)
+val _ = print "\n========================\n";
+val _ = print "continue after instantiation...\n\n";
 
-(* ... and continuation *)
+(*
+open bir_block_collectionLib;
+val lbl_tm = SYST_get_pc syst_inst;
+lookup_block_dict bl_dict_ lbl_tm
+ *)
+
+val stop_lbl_tms = [``BL_Address (Imm32 0xc74w)``];
+
+val systs = symb_exec_to_stop (abpfun cfb) n_dict bl_dict_ [syst_inst] stop_lbl_tms [];
+
 
