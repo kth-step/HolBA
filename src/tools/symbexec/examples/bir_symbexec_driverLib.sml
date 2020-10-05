@@ -100,10 +100,18 @@ val syst_merged =
   ) systs_tidiedup;
 
 (* print sp and mem *)
+val _ =
+  let
 val syst_merged_sp_symbv  = get_state_symbv "script" bv_sp syst_merged;
 val _ = print ("\nSP  = " ^ (symbv_to_string_raw true syst_merged_sp_symbv) ^ "\n\n");
+  in () end
+  handle _ => print "\nSP  = n/a\n\n";
+val _ =
+  let
 val syst_merged_mem_symbv = get_state_symbv "script" bv_mem syst_merged;
 val _ = print ("\nMEM = " ^ (symbv_to_string_raw true syst_merged_mem_symbv) ^ "\n\n");
+  in () end
+  handle _ => print "\nSP  = n/a\n\n";
 
 val syst_summary = (lbl_tm, "path predicate goes here", [syst_merged]);
 
@@ -128,12 +136,8 @@ end;
 
 (* TODO: find precondition representation for instantiation and use it in instantiation *)
 (* TODO: adapt for multiple states *)
-fun instantiate_func systs syst_summary =
+fun instantiate_func_syst syst syst_summary =
 let
-val systs_noassertfailed = systs;
-val syst = if length systs_noassertfailed = 1 then hd systs_noassertfailed else
-           raise ERR "script" "more than one symbolic state in current path/state";
-
 val syst_inst = instantiate_function_summary syst_summary syst;
 
 (*
@@ -145,7 +149,16 @@ val valsl = (Redblackmap.listItems o SYST_get_vals) syst_inst;
 val _ = print "\n========================\n";
 val _ = print "continue after instantiation...\n\n";
 in
-  [syst_inst]
+  syst_inst
+end;
+
+fun instantiate_func systs syst_summary =
+let
+val systs_noassertfailed = systs;
+val syst = if length systs_noassertfailed = 1 then hd systs_noassertfailed else
+           raise ERR "script" "more than one symbolic state in current path/state";
+in
+  [instantiate_func_syst syst syst_summary]
 end;
 
 end (* outermost local *)

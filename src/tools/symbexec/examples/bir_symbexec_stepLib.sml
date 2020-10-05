@@ -263,6 +263,9 @@ in (* local *)
 
           val sts = symb_exec_block abpfun n_dict bl_dict exec_st;
           val (new_acc, new_exec_sts) = List.partition state_stops sts;
+
+          val _ = if List.length new_acc = 0 orelse true then () else
+                  print ("stops: " ^ (Int.toString ((List.length acc) + (List.length new_acc))) ^ "\n");
         in
           symb_exec_to_stop abpfun n_dict bl_dict (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
         end;
