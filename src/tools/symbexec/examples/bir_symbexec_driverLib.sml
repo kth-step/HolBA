@@ -154,11 +154,18 @@ end;
 
 fun instantiate_func systs syst_summary =
 let
-val systs_noassertfailed = systs;
-val syst = if length systs_noassertfailed = 1 then hd systs_noassertfailed else
-           raise ERR "script" "more than one symbolic state in current path/state";
+  val (func_lbl_tm, _, _) = syst_summary;
+  fun instantiate_appropriate syst =
+    let
+      val lbl_tm = SYST_get_pc syst;
+    in
+      if identical func_lbl_tm lbl_tm then
+        instantiate_func_syst syst syst_summary
+      else
+        syst
+    end;
 in
-  [instantiate_func_syst syst syst_summary]
+  List.map instantiate_appropriate systs
 end;
 
 end (* outermost local *)

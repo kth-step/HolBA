@@ -257,17 +257,25 @@ in (* local *)
   fun symb_exec_to_stop _      _      _       []                  _            acc = acc
     | symb_exec_to_stop abpfun n_dict bl_dict (exec_st::exec_sts) stop_lbl_tms acc =
         let
-          fun state_stops syst =
+          fun is_state_stopped syst =
             (List.exists (fn x => identical (SYST_get_pc syst) x) stop_lbl_tms) orelse
             (not o state_is_running) syst;
 
-          val sts = symb_exec_block abpfun n_dict bl_dict exec_st;
-          val (new_acc, new_exec_sts) = List.partition state_stops sts;
+          val exec_stopped = is_state_stopped exec_st;
 
-          val _ = if List.length new_acc = 0 orelse true then () else
-                  print ("stops: " ^ (Int.toString ((List.length acc) + (List.length new_acc))) ^ "\n");
+          val _ = if (not exec_stopped) orelse true then () else
+                  print ("stops: " ^ (Int.toString ((List.length acc) + 1)) ^ "\n");
+
+          val sts = if exec_stopped then [] else
+                    symb_exec_block abpfun n_dict bl_dict exec_st;
+
+          val new_exec_sts = sts@exec_sts;
+          val new_acc = if exec_stopped then
+                          exec_st::acc
+                        else
+                          acc;
         in
-          symb_exec_to_stop abpfun n_dict bl_dict (new_exec_sts@exec_sts) stop_lbl_tms (new_acc@acc)
+          symb_exec_to_stop abpfun n_dict bl_dict new_exec_sts stop_lbl_tms new_acc
         end;
 end (* local *)
 
