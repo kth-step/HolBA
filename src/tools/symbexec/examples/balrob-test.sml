@@ -36,6 +36,9 @@ open binariesDefsLib;
 val _ = show_call_graph ();
 
 val _ = show_cfg_fun true  bl_dict_ n_dict entry_label;
+
+val _ = show_cfg_fun false  bl_dict_ n_dict "__aeabi_fadd";
+
 val _ = show_cfg_fun true  bl_dict_ n_dict "__aeabi_fmul";
 val _ = show_cfg_fun false bl_dict_ n_dict "__aeabi_fmul";
 val _ = show_cfg_fun false bl_dict_ n_dict "__aeabi_fdiv";
