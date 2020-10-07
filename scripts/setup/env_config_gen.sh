@@ -222,7 +222,7 @@ echo
 ####### HOLBA_GCC_RISCV64_CROSS
 
 if [[ ( -z "${HOLBA_GCC_RISCV64_CROSS}" ) || ( ! -z "${OPT_DIR_PARAM}" ) ]]; then
-  CROSS="${HOLBA_OPT_DIR}/gcc-riscv64-unknown-elf-8.3.0-2019.08.0/bin/riscv64-unknown-elf-"
+  CROSS="${HOLBA_OPT_DIR}/gcc-riscv64-unknown-elf-8.3.0-2020.04.1/bin/riscv64-unknown-elf-"
   if [[ -f "${CROSS}gcc" ]]; then
     print_export_msg "HOLBA_GCC_RISCV64_CROSS"
     export HOLBA_GCC_RISCV64_CROSS=${CROSS}

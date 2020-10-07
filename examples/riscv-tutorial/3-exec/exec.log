@@ -1,0 +1,33 @@
+
+executing add_reg
+================================
+checking block list definition...
+--------------------------------
+ok
+
+program validity...
+--------------------------------
+ok
+ - 0.254 s - 
+
+typechecking...
+--------------------------------
+ok
+ - 0.119 s - 
+
+state checking/generation...
+--------------------------------
+ok
+ - 0.000 s - 
+
+executing...
+--------------------------------
+input validation starts
+done
+
+preprocessing starts
+done
+ - 0.710 s - 
+
+execution starts
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

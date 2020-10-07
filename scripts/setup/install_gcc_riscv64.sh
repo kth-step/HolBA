@@ -17,9 +17,9 @@ source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 
 
 # download package
-GCC_URL="https://static.dev.sifive.com/dev-tools/riscv64-unknown-elf-gcc-8.3.0-2019.08.0-x86_64-linux-ubuntu14.tar.gz"
+GCC_URL="https://static.dev.sifive.com/dev-tools/riscv64-unknown-elf-gcc-8.3.0-2020.04.1-x86_64-linux-ubuntu14.tar.gz"
 
-GCC_DIR=${HOLBA_OPT_DIR}/gcc-riscv64-unknown-elf-8.3.0-2019.08.0
+GCC_DIR=${HOLBA_OPT_DIR}/gcc-riscv64-unknown-elf-8.3.0-2020.04.1
 
 
 

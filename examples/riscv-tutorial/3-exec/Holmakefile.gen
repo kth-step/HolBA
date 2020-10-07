@@ -1,0 +1,16 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   = ../2-lift
+
+
+# configuration
+# ----------------------------------
+HOLHEAP        = ../../../src/HolBA-heap
+NEWHOLHEAP     = 
+
+HEAPINC_EXTRA  = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../../src/Holmakefile.inc
