@@ -4,7 +4,9 @@ open HolBASimps;
 open bir_backlifterTheory;
 open bslSyntax;
 
-val _ = new_theory "tutorial_bir_to_arm";
+val _ = new_theory "tutorial_bir_to_riscv";
+
+(* TODO: Adapt this from ARMv8 to RISC-V *)
 
 (* unsigned comparison *)
 EVAL ``255w <=+ (0w:word8)``;

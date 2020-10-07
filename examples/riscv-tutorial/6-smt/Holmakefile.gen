@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../support ../4-bir-to-arm ../5-wp
+DEPENDENCIES   = ../support ../4-bir-to-riscv ../5-wp
 
 
 # configuration
