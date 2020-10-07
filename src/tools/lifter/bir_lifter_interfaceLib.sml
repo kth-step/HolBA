@@ -17,21 +17,22 @@ in
   val bmil = bmil_arm8
 *)
 
-bmil_arm8.bir_lift_prog_gen
+val ERR = mk_HOL_ERR "bir_lifter_interfaceLib"
 
 fun choose_isa_lift_fun isa_name =
+  case isa_name of
     "arm8" => bmil_arm8.bir_lift_prog_gen
   | "riscv" => bmil_riscv.bir_lift_prog_gen
-
+  | _ => Raise (ERR "lift_da_and_store" ("Unknown ISA: "^isa_name))
 ;
 
-fun lift_da_and_store prog_name da_name isa_name prog_interval bmil =
+fun lift_da_and_store prog_name da_name isa_name prog_interval =
   let
     val _ = print_with_style_ [Bold, Underline] ("Lifting "^da_name^"\n");
 
     val (region_map, aes_sections) = read_disassembly_file_regions da_name
 
-    val (thm_lifted, errors) = bmil.bir_lift_prog_gen
+    val (thm_lifted, errors) = (choose_isa_lift_fun isa_name)
 			       prog_interval
 			       aes_sections
 

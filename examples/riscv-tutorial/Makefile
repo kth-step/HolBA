@@ -13,7 +13,7 @@ $(MAKEFILE_DIRS):
 	make --directory=$@
 
 $(HOLMAKEFILE_DIRS):
-	make --directory=../.. examples/tutorial/$@
+	make --directory=../.. examples/riscv-tutorial/$@
 
 ##########################################################
 
