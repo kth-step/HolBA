@@ -23,7 +23,7 @@ $(shell mkdir -p bin)
 ELF	  = bin/examples.elf
 ELF_TEST = bin/test.elf
 CFLAGS_COMMON    = -Iinc
-CFLAGS_BAREMETAL = ${CFLAGS_COMMON} -ggdb3 -std=gnu99 -Wall -fno-builtin  -O1
+CFLAGS_BAREMETAL = ${CFLAGS_COMMON} -ggdb3 -std=gnu99 -Wall -fno-builtin -march=rv64g # -O1
 CFLAGS_TEST      = ${CFLAGS_COMMON}
 #LDFLAGS = --gc-sections -nostartfiles -nostdlib
 
