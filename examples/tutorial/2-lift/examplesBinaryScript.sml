@@ -10,6 +10,7 @@ val _ = new_theory "examplesBinary";
 
 val _ = lift_da_and_store "add_reg"
                           "../1-code/src/add_reg.da"
+                          "arm8"
                           ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000));
 
 val _ = export_theory();

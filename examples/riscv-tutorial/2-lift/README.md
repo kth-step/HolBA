@@ -3,15 +3,19 @@ A binary program is transpiled (or "lifted") by executing
 ```
 val _ = lift_da_and_store "add_reg"
                           "../1-code/src/add_reg.da"
-                          ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000));
+                          "riscv"
+                          ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
+                          bmil_riscv;
 ```
 The parameters of this functions are:
 * "add_reg": string representing the name of the HOL4 term that will
   be defined to be equal to the transpiled program
 * "../1-code/src/add_reg.da": path of the disassembled program
+* "riscv": the name of the ISA used
 * ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000)): superset of the
   addresses that contains the program code. We call this memory region
   `UnmodifiableMemory`.
+* `bmil_riscv`: BIR machine instruction lifter structure (see `bir_inst_liftingLib.sml`).
 
 Transpilation of the example is executed using the command `make
 examples/tutorial/2-lift`, which transpiles the program and generates
