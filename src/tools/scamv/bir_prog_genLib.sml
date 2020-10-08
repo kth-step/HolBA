@@ -75,19 +75,18 @@ struct
                 print "=================================\n";
                 print "---------------------------------\n");
 
-  fun gen_until_liftable retry_on_liftfail prog_gen_fun args =
+  fun lift_prog_preproc err_handler prog =
     let
-      val prog = prog_gen_fun args;
       val prog_len = length prog;
       val asm_code = bir_embexp_prog_to_code prog;
       val _ = print_asm_code asm_code;
       val compile_opt = SOME (process_asm_code asm_code)
-	     handle HOL_ERR x => if retry_on_liftfail then (print ("not liftable:\n" ^ PolyML.makestring x); NONE) else
-                                   raise HOL_ERR x;
+	     handle HOL_ERR x => err_handler x;
     in
-      case compile_opt of
-	  NONE => gen_until_liftable retry_on_liftfail prog_gen_fun args
-	| SOME sections => 
+      Option.map (fn a => (prog_len, asm_code, a)) compile_opt
+    end;
+
+  fun lift_prog_lift err_handler (prog_len, asm_code, sections) =
     let
       (*
       val SOME sections = compile_opt;
@@ -98,10 +97,26 @@ struct
       fun lbl_exists idx = List.exists (fn x => x = ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt (idx*4), 64)))``) labels;
       val lift_worked = List.all lbl_exists (List.tabulate (prog_len, fn x => x));
     in
-      if lift_worked then (asm_code, lifted_prog, prog_len) else
-      if retry_on_liftfail then (gen_until_liftable retry_on_liftfail prog_gen_fun args) else
-      raise ERR "gen_until_liftable" "lifting failed"
-    end
+      if lift_worked
+      then (asm_code, lifted_prog, prog_len)
+      else err_handler ()
+    end;
+
+  fun gen_until_liftable retry_on_liftfail prog_gen_fun args =
+    let
+      fun err_handler_preproc x =
+        if retry_on_liftfail
+        then (print ("not liftable:\n" ^ PolyML.makestring x); NONE)
+        else raise HOL_ERR x
+      fun err_handler_lift () =
+        if retry_on_liftfail then
+          gen_until_liftable retry_on_liftfail prog_gen_fun args
+        else
+          raise ERR "gen_until_liftable" "lifting failed";
+    in
+      case lift_prog_preproc err_handler_preproc (prog_gen_fun args) of
+	  NONE => gen_until_liftable retry_on_liftfail prog_gen_fun args
+	| SOME prog_preproc => lift_prog_lift err_handler_lift prog_preproc
     end;
 
   fun prog_gen_store prog_gen_id retry_on_liftfail prog_gen_fun args () =
