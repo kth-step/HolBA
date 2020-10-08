@@ -83,7 +83,7 @@ bir_traces p = { t | is_trace p t }
 (* ------------------------------------------------------------------------- *)
 
 val sys_st_def = Datatype`
-    sys_st = core (string bir_program_t) bir_state_t
+    sys_st = core num (string bir_program_t) bir_state_t
            | mem mem_state_t 
 `;
 
@@ -97,49 +97,66 @@ val is_mem_def = Define`
 /\ (is_mem _ = F)
 `;
 
+val next_is_atomic_def = Define`
+(next_is_atomic p s =
+ case (bir_get_program_block_info_by_label p (s.bst_pc.bpc_label)) of
+     NONE => F
+   | SOME (i,blk) => blk.bb_atomic)
+`;
+
 val (parstep_rules, parstep_ind, parstep_cases) = Hol_reln`
-(!p s s' system.
-    ((core p s) ∈ system
-     /\ (next_block s).bb_atomic
-     /\ pstep_block p s s')
-    ==> parstep system (system DIFF {core p s} UNION {core p s'}))
-/\ (!p s s' system. pstep p s s' /\ (core p s) ∈ system
-   ==> parstep system (system DIFF {core p s} UNION {core p s'}))
+(!p s system m cid. (core cid p s) ∈ system
+                 /\ (mem m) ∈ system
+                 /\ next_is_atomic p s
+                 /\ m.bmst_lock = NONE
+                 /\ m' = m with <| bmst_lock := SOME cid |>
+   ==> parstep system (system DIFF {mem m} UNION {mem m'}))
+/\ (!p s system m t0 cid stm. (core cid p s) ∈ system
+                 /\ (mem m) ∈ system
+                 /\ m.bmst_lock = SOME cid
+                 /\ (next_stmt s = SOME (t0,stm))
+                 /\ (?end_stmt . stm = BStmtE end_stmt)
+                 /\ m' = m with <| bmst_lock := NONE |>
+    ==> parstep system (system DIFF {mem m} UNION {mem m'}))
+/\ (!p s s' system. pstep p s s' /\ (core cid p s) ∈ system
+   ==> parstep system (system DIFF {core cid p s} UNION {core cid p s'}))
 /\ (!m m' system. memstep m m' /\ (mem m) ∈ system
    ==> parstep system (system DIFF {mem m} UNION {mem m'}))
 /\ (!p s m m' s' t0 v ex system.
-    ((core p s) ∈ system /\ (mem m) ∈ system
+    ((core cid p s) ∈ system /\ (mem m) ∈ system
      /\ (next_stmt s = SOME (t0, (BStmtB (BStmt_Assign v ex))))
+     /\ (m.bmst_lock = SOME cid)
      /\ (?t. v = BVar "MEM" t)
      /\ (m' = m with <| bmst_inflight updated_by
                 (APPEND [BirInflight (memfresh m) (BStmtB (BStmt_Assign v ex))]);
                        bmst_counter updated_by (\n:num.n+1) |>)
      /\ (s' = s with bst_inflight updated_by (remove_inflight t0))
    ) ==>
-   parstep system ((system DIFF {mem m} UNION {mem m'}) DIFF {core p s} UNION {core p s'}))
+   parstep system ((system DIFF {mem m} UNION {mem m'}) DIFF {core cid p s} UNION {core cid p s'}))
 /\  (!p s s' v ex t0 value env' system.
-     ((core p s) ∈ system /\ (mem m) ∈ system
+     ((core cid p s) ∈ system /\ (mem m) ∈ system
       /\ (next_stmt s = SOME (t0, BStmtB (BStmt_Assign v ex)))
+      /\ (m.bmst_lock = SOME cid)
       /\ (exp_is_load ex)
       /\ (SOME value = bir_eval_exp ex m.bmst_environ)
       /\ (SOME env' = bir_env_write v value s.bst_environ)
       /\ (s' = s with <| bst_inflight updated_by (remove_inflight t0);
                          bst_environ := env'  |>)
      ) ==>
-    parstep system (system DIFF {core p s} UNION {core p s'}))
+    parstep system (system DIFF {core cid p s} UNION {core cid p s'}))
     `;
 
 
 val compute_next_par_single_def = Define`
-compute_next_par_single (core p s) m =
-    LIST_BIND (bir_compute_next p s) (\s'. [(core p s', m)])
+compute_next_par_single (core cid p s) m =
+    LIST_BIND (bir_compute_next p s) (\s'. [(core cid p s', m)])
 `;
 val compute_next_par_mem_def = Define`
 compute_next_par_mem c (mem m) =
     LIST_BIND (mem_compute_next m) (\m'. [(c, mem m')])
 `;
 val compute_next_store_def = Define`
-compute_next_store (core p s) (mem m) =
+compute_next_store (core cid p s) (mem m) =
     case next_stmt s of
          NONE => []
        | SOME (t0, BStmtB (BStmt_Assign v ex)) =>
@@ -149,11 +166,11 @@ compute_next_store (core p s) (mem m) =
                   bmst_counter updated_by (\n:num.n+1) |>;
                   
               in let s' = s with bst_inflight updated_by (remove_inflight t0)
- in [(core p s', mem m')])
+ in [(core cid p s', mem m')])
          else []
 `;
 val compute_next_load_def = Define`
-compute_next_load (core p s) (mem m) =
+compute_next_load (core cid p s) (mem m) =
               case next_stmt s of
                   NONE => []
                 | SOME (t0, BStmtB (BStmt_Assign v ex)) =>
@@ -166,7 +183,7 @@ compute_next_load (core p s) (mem m) =
                            | SOME env' =>
                            (let s' = s with <| bst_inflight updated_by (remove_inflight t0);
                                 bst_environ := env'  |>
-                            in [(core p s', mem m)])
+                            in [(core cid p s', mem m)])
                   else []
 `;
 
