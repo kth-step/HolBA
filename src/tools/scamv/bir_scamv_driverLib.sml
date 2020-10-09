@@ -396,9 +396,9 @@ fun next_experiment all_exps next_relation  =
 
         val _ = min_verb 3 (fn () =>
                                bir_exp_pretty_print rel);
-        val _ = printv 1 ("Word relation\n");
+        val _ = printv 4 ("Word relation\n");
         val new_word_relation = make_word_relation rel all_exps;
-        val _ = min_verb 1 (fn () =>
+        val _ = min_verb 4 (fn () =>
                                (print_term new_word_relation;
                                 print "\n"));
         val word_relation =
@@ -409,8 +409,8 @@ fun next_experiment all_exps next_relation  =
 
         val _ = printv 1 ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
-        val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
-        val _ = printv 1 ("Printed model\n");
+        val _ = min_verb 3 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
+        val _ = printv 3 ("Printed model\n");
 	(*Need to be removed later. It is just for experimental reasone*)
 
         fun remove_prime str =
