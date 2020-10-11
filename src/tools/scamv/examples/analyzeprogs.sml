@@ -41,9 +41,16 @@ val listname = "M1_zeroedstate_160";
 
 val exp_ids = bir_embexp_load_exp_ids listname;
 val exp_id = List.nth(exp_ids,1);
+(*
+val exp_id = "arm8/exps2/cache_multiw/96092ba1f752f2e06ffefb9a186575c6351bf9ab";
+*)
 
 val _ = List.map (fn exp_id =>
   let
+
+val _ = print ("\n=========================================================\n");
+val _ = print (exp_id ^ "\n");
+
 val (asm_lines, s) = bir_embexp_load_exp exp_id;
 
 (*
@@ -126,12 +133,202 @@ fun pathtocondvars (pcond, obss:(term * term * term) list) =
     val varlist_exp_raw = flatten (List.map get_birexp_vars (pcond::obs_exps));
     val vars = Redblackset.fromList Term.compare (bv_mem_l@varlist_exp_raw);
   in
-    (pcond, vars)
+    (pcond,obs_exps, vars)
   end;
 
 val pathcondvarsmap = List.map pathtocondvars paths_i;
+val _ = if length pathcondvarsmap = 2 then () else
+        raise ERR "script" "was checked before";
 
-val path_conds = List.map fst paths;
+val (s1,s2) = s;
+(*
+val s_ = s2;
+*)
+
+val memtype = inst [Type.alpha |-> ``:num``, Type.beta |-> ``:num``] finite_mapSyntax.fempty_t;
+fun modelVal_to_expmap (regT (n, v)) =
+      (n, ``BExp_Const (Imm64 ^(wordsSyntax.mk_wordi (v, 64)))``)
+  | modelVal_to_expmap (memT (n, l)) =
+      (n, List.foldr (fn ((a,v), t) => finite_mapSyntax.mk_fupdate
+                (t, pairSyntax.mk_pair (numSyntax.mk_numeral a, numSyntax.mk_numeral v))
+            ) memtype l);
+
+val (sm1,sm2) = (Redblackmap.fromList String.compare (List.map modelVal_to_expmap s1),
+                 Redblackmap.fromList String.compare (List.map modelVal_to_expmap s2));
+
+(*
+val sm_ = sm1;
+val sm_ = sm2;
+val (pcond_,obs_exps_, vars_) = hd (tl pathcondvarsmap);
+val (pcond_,obs_exps_, vars_) = hd pathcondvarsmap;
+val e_ = pcond_;
+*)
+
+fun substvars_scamv_hack sm_ e_ =
+  if bir_expSyntax.is_BExp_Den e_ then
+    let
+      val (vn,vt) = (bir_envSyntax.dest_BVar_string o bir_expSyntax.dest_BExp_Den) e_;
+
+      val bexp = Redblackmap.find (sm_, vn)
+                 handle _ => raise ERR "script" ("coudln't find state variable for substitution: " ^ vn);
+
+      val _ = if vt = ``BType_Imm Bit64`` then () else
+              raise ERR "script" "check type of bexp";
+    in
+      bexp
+    end
+  else if not (is_comb e_) then
+    if is_var e_ then
+      let
+        val (vn,vt) = dest_var e_;
+
+        val hexp = Redblackmap.find (sm_, vn)
+                   handle _ => raise ERR "script" ("coudln't find state variable for substitution: " ^ vn);
+
+        val _ = if vt = ``:(num |-> num)`` then () else
+                raise ERR "script" "check type of hexp";
+      in
+        hexp
+      end
+    else
+      e_
+  else
+  let
+    val (e1,e2) = dest_comb e_;
+  in
+    mk_comb (substvars_scamv_hack sm_ e1, substvars_scamv_hack sm_ e2)
+  end;
+
+(*
+(snd o dest_eq o concl o EVAL) ``bir_eval_exp ^(substvars_scamv_hack sm_ pcond_) (bir_env$BEnv (K NONE))``
+*)
+
+(* returns some if eval succeeded to eval to a bir value *)
+fun eval_to_bval sm_ e_ =
+  let
+    val substexp = substvars_scamv_hack sm_ e_;
+    val res = (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^(substexp) (bir_env$BEnv (K NONE))``;
+  in
+    if optionSyntax.is_some res then
+      SOME (optionSyntax.dest_some res)
+    else
+      NONE
+  end;
+
+fun pcond_evals_to_birtrue pcond_ sm_ =
+  let
+    val reso = eval_to_bval sm_ pcond_;
+  in
+    reso = SOME ``(BVal_Imm (Imm1 1w))``
+  end
+  handle _ => false;
+
+fun is_validpath (sm1, sm2) (pcond_, _, _) =
+  pcond_evals_to_birtrue pcond_ sm1 andalso
+  pcond_evals_to_birtrue pcond_ sm2;
+
+val validpath_l = List.filter (is_validpath (sm1, sm2)) pathcondvarsmap;
+val _ = if length validpath_l = 1 then () else
+        raise ERR "script" "should be exactly one valid path";
+val validpath = hd validpath_l;
+
+(* found the observation expressions of the valid path *)
+val (_, obs_exps, vars) = validpath;
+
+val mem_hvar_tm = mk_var ("MEM", ``:num |-> num``);
+(*
+val obs_exp = List.nth (obs_exps, 0);
+val obs_exp = List.nth (obs_exps, 6);
+val e_ = obs_exp;
+val e_ =
+``
+BExp_Load (BExp_MemConst Bit64 Bit8 ^(mem_hvar_tm))
+         (BExp_BinExp BIExp_Plus (BExp_Den (BVar "R25" (BType_Imm Bit64)))
+            (BExp_Den (BVar "R12" (BType_Imm Bit64)))) BEnd_LittleEndian
+         Bit64
+``;
+val e_ =
+``
+BExp_Load (BExp_MemConst Bit64 Bit8 ^(mem_hvar_tm))
+         (BExp_BinExp BIExp_Plus (
+
+BExp_Load (BExp_MemConst Bit64 Bit8 ^(mem_hvar_tm))
+         (BExp_BinExp BIExp_Plus (BExp_Den (BVar "R25" (BType_Imm Bit64)))
+            (BExp_Den (BVar "R12" (BType_Imm Bit64)))) BEnd_LittleEndian
+         Bit64
+
+)
+            (BExp_Den (BVar "R12" (BType_Imm Bit64)))) BEnd_LittleEndian
+         Bit64
+``;
+*)
+fun find_state_access_deps e_ =
+  if bir_expSyntax.is_BExp_Den e_ then
+    let
+      val bv = bir_expSyntax.dest_BExp_Den e_;
+    in
+      [bv]
+    end
+  else if bir_expSyntax.is_BExp_Load e_ then
+    let
+      val (be_m, be_a, be_endi, be_sz) = bir_expSyntax.dest_BExp_Load e_;
+
+      val _ = if identical be_m ``BExp_MemConst Bit64 Bit8 ^mem_hvar_tm`` then () else
+              raise ERR "script" "memory not as expected";
+      val _ = if identical be_endi ``BEnd_LittleEndian`` then () else
+              raise ERR "script" "endianness not as expected";
+      val _ = if identical be_sz ``Bit64`` then () else
+              raise ERR "script" "size not as expected";
+
+      val deps = find_state_access_deps be_a;
+    in
+      be_a::deps
+    end
+  else if not (is_comb e_) then
+    []
+  else
+  let
+    val (e1,e2) = dest_comb e_;
+  in
+    (find_state_access_deps e1)@(find_state_access_deps e2)
+  end;
+
+fun compute_addr sm_ e_ =
+  if bir_envSyntax.is_BVar e_ then
+    e_
+  else
+    let val bvo = eval_to_bval sm_ e_; in
+      if isSome bvo then valOf bvo else
+      raise ERR "script" "coudln't evaluate address, why?"
+    end;
+
+(*
+(List.map (compute_addr sm1) o find_state_access_deps) e_
+*)
+
+(*
+val sm_ = sm1;
+val sm_ = sm2;
+*)
+fun get_state_deps sm_ =
+  let
+    val deps_terms_hack = flatten (List.map (List.map (compute_addr sm_) o find_state_access_deps) obs_exps);
+    val (bvs, addrs) = List.partition (bir_envSyntax.is_BVar) deps_terms_hack;
+
+    val addrs_nums = List.map (wordsSyntax.dest_word_literal o bir_valuesSyntax.dest_BVal_Imm64) addrs;
+    val addr_multlist = List.tabulate (8, Arbnum.fromInt);
+    val addrs_nums_bytes = flatten (List.map (fn x => List.map (fn y => Arbnum.+ (x,y)) addr_multlist) addrs_nums);
+    val addrs_set = Redblackset.fromList Arbnum.compare addrs_nums_bytes;
+
+    val bvs_set = Redblackset.fromList Term.compare bvs;
+  in
+    (bvs_set, addrs_set)
+  end;
+
+val deps_sm1 = get_state_deps sm1;
+val deps_sm2 = get_state_deps sm2;
+(* NOTICE: everything is fixed to 64bit accesses -> memory addresses + {0-7} *)
+
 
   in
     ()
