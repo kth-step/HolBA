@@ -592,10 +592,16 @@ end
       val input1_file = (logs_dir ^ "/" ^ exp_id ^ "/input1.json");
       val input2_file = (logs_dir ^ "/" ^ exp_id ^ "/input2.json");
 
-      val s = (parse_back_json_state false input1_file,
-               parse_back_json_state false input2_file);
+      val train_file = (logs_dir ^ "/" ^ exp_id ^ "/train.json");
+      val train_filename = (read_from_file train_file; SOME train_file)
+                           handle _ => NONE;
+
+      val s1 = parse_back_json_state false input1_file;
+      val s2 = parse_back_json_state false input2_file;
+
+      val traino = Option.map (fn filename => parse_back_json_state false filename) train_filename;
     in
-      (asm_lines, s)
+      (asm_lines, (s1,s2), traino)
     end;
 
   fun bir_embexp_load_list listtype listname =

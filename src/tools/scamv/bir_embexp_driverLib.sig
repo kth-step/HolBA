@@ -64,7 +64,7 @@ signature bir_embexp_driverLib = sig
 
   (* Input: exp_id *)
   (* Output: asm_lines, model pair *)
-  val bir_embexp_load_exp  : string -> string list * (modelValues list * modelValues list)
+  val bir_embexp_load_exp  : string -> string list * (modelValues list * modelValues list) * modelValues list option
 
   val bir_embexp_load_exp_ids : string -> string list
 
