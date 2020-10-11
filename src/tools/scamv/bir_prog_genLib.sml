@@ -119,12 +119,7 @@ struct
 	| SOME prog_preproc => lift_prog_lift err_handler_lift prog_preproc
     end;
 
-  fun prog_gen_store prog_gen_id retry_on_liftfail prog_gen_fun args () =
-    let
-      val (asm_code, lifted_prog, len) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
-
-
-      val prog_with_halt =
+  fun add_halt_to_prog len lifted_prog =
         let
           val (blocks,ty) = dest_list (dest_BirProgram lifted_prog);
           val obs_ty = (hd o snd o dest_type) ty;
@@ -135,6 +130,12 @@ struct
         in
           (mk_BirProgram o mk_list) (blocks@[new_last_block],ty)
         end;
+
+  fun prog_gen_store prog_gen_id retry_on_liftfail prog_gen_fun args () =
+    let
+      val (asm_code, lifted_prog, len) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
+
+      val prog_with_halt = add_halt_to_prog len lifted_prog;
 
       val prog_id = bir_embexp_prog_create ("arm8", prog_gen_id) asm_code;
     in

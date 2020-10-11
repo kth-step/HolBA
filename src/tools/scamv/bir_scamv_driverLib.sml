@@ -59,7 +59,7 @@ fun symb_exec_phase prog =
           in (length o fst o dest_list) obs end) leafs);
         val message = "found " ^ (Int.toString numobss) ^ " observations in all paths.";
         val _ = print (message ^ "\n");
-        val _ = bir_embexp_log (message);
+        (* val _ = bir_embexp_log (message); *)
 
         (* retrieval of path condition and observation expressions *)
 	fun extract_cond_obs s =
