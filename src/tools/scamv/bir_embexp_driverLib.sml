@@ -264,48 +264,122 @@ local
 in
   fun parse_back_json_state isSecond filename =
     let
-      fun splitandstrip f l =
-            List.foldr (op@) [] (List.map ((List.map (strip_ws_off false)) o f) l);
-
-      fun splitandparse isSecond kv =
+      fun unpackOne c1 c2 s =
         let
-          val kvl = splitandstrip (String.tokens (fn c => c = #":")) [kv];
-          val _ = if length kvl = 2 then () else
-                  raise ERR "parse_back_json_state" "splitandparse:: format error kvl";
-          val ks = List.nth(kvl,0);
-          val vs = List.nth(kvl,1);
-          val _ = if length (String.explode ks) > 2 andalso
-                     List.hd (String.explode ks) = #"\"" andalso
-                     List.last (String.explode ks) = #"\"" then () else
-                  raise ERR "parse_back_json_state" "splitandparse:: format error ks1";
-          val ks = splitandstrip (String.tokens (fn c => c = #"\"")) [ks];
-          val _ = if length ks = 1 then () else
-                  raise ERR "parse_back_json_state" "splitandparse:: format error ks2";
-          val ks = List.hd ks;
-          val _ = if List.hd (String.explode ks) = #"x" then () else
-                  raise ERR "parse_back_json_state" "splitandparse:: format error ks3";
-          val regnum_s = (String.implode o List.tl o String.explode) ks;
+          val s_ = strip_ws_off false s;
+
+          val s_l = String.explode s_;
+          val _ = if length s_l > 1 then () else
+                  raise ERR "parse_back_json_state::unpackOne" "string is too short";
+
+          val c_fst = hd   s_l;
+          val c_snd = last s_l;
+
+          val _ = if c1 = c_fst andalso c2 = c_snd then () else
+                  raise ERR "parse_back_json_state::unpackOne" "chars not matching";
+(*
+          val l = String.tokens (fn c => c = c1 orelse c = c2) s_;
+          val _ = if length l = 1 then () else
+                  raise ERR "parse_back_json_state::unpackOne" "cannot unpack simply";
+*)
+        in
+          String.implode (List.take (tl s_l, (length s_l) - 2))
+        end;
+
+      fun parseRegT isSecond name vs =
+        let
+          val _ = if List.hd (String.explode name) = #"x" then () else
+                  raise ERR "parse_back_json_state" "splitandparse:: format error, expect register name";
+          val regnum_s = (String.implode o List.tl o String.explode) name;
           val regnum = case Int.fromString regnum_s of
                           SOME x => x
                         | _ => raise ERR "parse_back_json_state" "cannot parse register number";
           val v = Arbnum.fromString vs;
           val reg_s = "R" ^ (Int.toString regnum) ^ (if isSecond then "_" else "");
         in
-          (reg_s, v)
+          regT (reg_s, v)
+        end;
+
+      fun parseMemT isSecond name vs =
+        let
+          val _ = if name = "mem" then () else
+                  raise ERR "parse_back_json_state" "splitandparse:: format error, expect memory name";
+          val mem_s = "MEM" ^ (if isSecond then "_" else "");
+
+          val mapping_raw = String.tokens (fn c => c = #",") (unpackOne #"{" #"}" vs);
+          fun map_s_to_kv s =
+            let
+              val kvl = String.tokens (fn c => c = #":") s;
+              val _ = if length kvl = 2 then () else
+                      raise ERR "parse_back_json_state" "error parsing memory mapping";
+              val ks = unpackOne #"\"" #"\"" (strip_ws_off false (hd kvl));
+              val vs = strip_ws_off false (hd (tl kvl));
+            in
+              (Arbnum.fromString ks, Arbnum.fromString vs)
+            end;
+          val kvmap = List.map map_s_to_kv mapping_raw;
+        in
+          memT (mem_s, kvmap)
+        end;
+
+      fun splitandparse isSecond (ks,vs) =
+        let
+          val _ = if length (String.explode ks) > 2 andalso
+                     List.hd (String.explode ks) = #"\"" andalso
+                     List.last (String.explode ks) = #"\"" then () else
+                  raise ERR "parse_back_json_state" "splitandparse:: format error string quote";
+          val name = unpackOne #"\"" #"\"" ks;
+        in
+          if name = "mem" then
+            parseMemT isSecond name vs
+          else
+            parseRegT isSecond name vs
         end;
 
       val content = read_from_file filename;
-      val content = strip_ws_off false content;
-      val l = [content];
 
-      val l = splitandstrip (String.tokens (fn c => c = #"{" orelse c = #"}")) l;
-      val l = splitandstrip (String.tokens (fn c => c = #"[" orelse c = #"]")) l;
-      val _ = if length l = 1 then () else
-              raise ERR "parse_back_json_state" "file not formatted as expected";
+      val toplevel = strip_ws_off false (unpackOne #"{" #"}" content);
 
-      val kvs = splitandstrip (String.tokens (fn c => c = #",")) l;
+      val (p_s,p_acc,p_l) = List.foldl (fn (c, (s, acc, l)) =>
+        case s of
+           0 => (case c of
+                    #"," => (s, [], acc::l)
+                  | #"{" => (1, c::acc, l)
+                  | #"}" => raise ERR "parse_back_json_state::parseentries" "aaa 1"
+                  | _    => (s, c::acc, l))
+         | 1 => (case c of
+                    #"{" => raise ERR "parse_back_json_state::parseentries" "aaa 2"
+                  | #"}" => (0, c::acc, l)
+                  | _    => (s, c::acc, l))
+         | _ => raise ERR "parse_back_json_state::parseentries" "impossible state")
+       (0, [], [])
+       (String.explode toplevel);
+
+      val mapslist_ = if p_s = 0 andalso List.null p_acc then p_l else
+                      if p_s = 0 then p_acc::p_l else
+                      raise ERR "parse_back_json_state" "parser state is unexpected";
+
+      fun splitfirstchar c s =
+        let
+          val l = String.explode (strip_ws_off false s);
+          fun firstchar [] _ = raise ERR "parse_back_json_state" "mapsplit error"
+            | firstchar (c_::l_) acc =
+                if c_ = c then (List.rev acc, l_)
+                else firstchar l_ (c_::acc);
+
+          val (l1,l2) = firstchar l [];
+        in
+          ((strip_ws_off false o String.implode) l1, (strip_ws_off false o String.implode) l2)
+        end;
+
+      val mapslist = List.map ((splitfirstchar #":") o String.implode o List.rev)  mapslist_;
+
+(*
+      val (ks,vs) = hd mapslist;
+      val (ks,vs) = hd (tl mapslist);
+*)
     in
-      List.map (splitandparse isSecond) kvs
+      List.map (splitandparse isSecond) mapslist
     end;
 end
 
