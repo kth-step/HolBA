@@ -307,28 +307,69 @@ fun compute_addr sm_ e_ =
 *)
 
 (*
+val obs_exps_ = obs_exps;
 val sm_ = sm1;
 val sm_ = sm2;
 *)
-fun get_state_deps sm_ =
+fun get_state_deps sm_ obs_exps_ =
   let
-    val deps_terms_hack = flatten (List.map (List.map (compute_addr sm_) o find_state_access_deps) obs_exps);
+    val deps_terms_hack = flatten (List.map (List.map (compute_addr sm_) o find_state_access_deps) obs_exps_);
     val (bvs, addrs) = List.partition (bir_envSyntax.is_BVar) deps_terms_hack;
 
     val addrs_nums = List.map (wordsSyntax.dest_word_literal o bir_valuesSyntax.dest_BVal_Imm64) addrs;
+    (* NOTICE: everything is fixed to 64bit accesses -> memory addresses + {0-7} *)
     val addr_multlist = List.tabulate (8, Arbnum.fromInt);
     val addrs_nums_bytes = flatten (List.map (fn x => List.map (fn y => Arbnum.+ (x,y)) addr_multlist) addrs_nums);
     val addrs_set = Redblackset.fromList Arbnum.compare addrs_nums_bytes;
 
-    val bvs_set = Redblackset.fromList Term.compare bvs;
+    val vns = List.map (fst o bir_envSyntax.dest_BVar_string) bvs;
+    val vns_set = Redblackset.fromList String.compare vns;
   in
-    (bvs_set, addrs_set)
+    (vns_set, addrs_set)
   end;
 
-val deps_sm1 = get_state_deps sm1;
-val deps_sm2 = get_state_deps sm2;
-(* NOTICE: everything is fixed to 64bit accesses -> memory addresses + {0-7} *)
+(*
+val obs_exps_ = obs_exps;
+val sm_ = sm1;
+val s_ = s1;
+*)
 
+fun filter_state s_ (sm_, obs_exps_) =
+  let
+    val (vns_set_, addrs_set_) = get_state_deps sm_ obs_exps_;
+
+    fun memlistentry_in_set set (a,_) =
+      Redblackset.member (set, a);
+
+    fun transformmapping (regT (n,v)) =
+          if Redblackset.member (vns_set_, n) then
+            SOME (regT (n,v))
+          else
+            NONE
+      | transformmapping (memT (n,l)) =
+          if n = "MEM" then
+            SOME (memT (n, List.filter (memlistentry_in_set addrs_set_) l))
+          else
+            raise ERR "script" "unexpected memory name";
+  in
+    List.map valOf (List.filter isSome (List.map transformmapping s_))
+  end;
+
+fun get_state_size s_ =
+  let
+    fun modelValueSize (regT _) = 1
+      | modelValueSize (memT (_, l)) = length l;
+  in
+    List.foldr (op+) 0 (List.map modelValueSize s_)
+  end;
+
+val s1_filtered = filter_state s1 (sm1, obs_exps);
+val s2_filtered = filter_state s2 (sm2, obs_exps);
+
+val _ = print ("\n");
+val _ = print ("shrinked s1 from " ^ (Int.toString (get_state_size s1)) ^ " to " ^ (Int.toString (get_state_size s1_filtered)) ^ "\n");
+val _ = print ("shrinked s2 from " ^ (Int.toString (get_state_size s2)) ^ " to " ^ (Int.toString (get_state_size s2_filtered)) ^ "\n");
+val _ = print ("\n");
 
   in
     ()
