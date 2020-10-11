@@ -38,20 +38,26 @@ fun get_birexp_vars exp =
 
 (* branch: tacas_29_09_01_cache_addr_pc *)
 val listname = "M1_zeroedstate_160";
+val (arch_id, exp_type_id, state_gen_id) =
+    ("arm8", "cache_multiw", "regen_for_hypothesis");
+val prog_gen_id = "regen_for_hypothesis_this_prog_should_exist_already";
 
 val exp_ids = bir_embexp_load_exp_ids listname;
 val exp_id = List.nth(exp_ids,1);
 (*
 val exp_id = "arm8/exps2/cache_multiw/96092ba1f752f2e06ffefb9a186575c6351bf9ab";
 *)
+val exp_id = List.last exp_ids;
 
-val _ = List.map (fn exp_id =>
+val exp_ids_new = List.map (fn exp_id =>
   let
 
 val _ = print ("\n=========================================================\n");
 val _ = print (exp_id ^ "\n");
 
-val (asm_lines, s) = bir_embexp_load_exp exp_id;
+val (asm_lines, (s1,s2), traino) = bir_embexp_load_exp exp_id;
+val s_train = valOf traino
+              handle _ => raise ERR "script" "no training data";
 
 (*
 val asm_code = bir_embexp_prog_to_code asm_lines;
@@ -140,7 +146,6 @@ val pathcondvarsmap = List.map pathtocondvars paths_i;
 val _ = if length pathcondvarsmap = 2 then () else
         raise ERR "script" "was checked before";
 
-val (s1,s2) = s;
 (*
 val s_ = s2;
 *)
@@ -371,6 +376,30 @@ val _ = print ("shrinked s1 from " ^ (Int.toString (get_state_size s1)) ^ " to "
 val _ = print ("shrinked s2 from " ^ (Int.toString (get_state_size s2)) ^ " to " ^ (Int.toString (get_state_size s2_filtered)) ^ "\n");
 val _ = print ("\n");
 
+val code_asm = bir_embexp_prog_to_code asm_lines;
+val prog_id = bir_embexp_prog_create (arch_id, prog_gen_id) code_asm;
+
+val exp_id_new = bir_embexp_sates3_create (arch_id, exp_type_id, state_gen_id) prog_id (s1,s2,s_train);
+
   in
-    ()
+    exp_id_new
   end) exp_ids;
+
+
+val _ = print ("\n\n");
+val _ = print ("=================================================\n");
+val _ = print (":::::::::::::::::::::::::::::::::::::::::::::::::\n");
+val _ = print ("=================================================\n");
+val _ = print ("\n");
+
+val _ = List.map (fn exp_id =>
+  let
+    val _ = print (exp_id ^ "\n");
+  in () end
+) exp_ids_new;
+
+val _ = print ("\n");
+val _ = print ("=================================================\n");
+val _ = print (":::::::::::::::::::::::::::::::::::::::::::::::::\n");
+val _ = print ("=================================================\n");
+
