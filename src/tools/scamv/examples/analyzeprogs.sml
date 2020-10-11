@@ -57,8 +57,17 @@ val prog_preproc = valOf prog_preproc_o
 
 val (asm_code, lifted_prog, prog_len) = lift_prog_lift (fn x => raise ERR "script" "lifting failed") prog_preproc;
 
+(* add halt statement in the end *)
+val lifted_prog_w_halt = add_halt_to_prog prog_len lifted_prog;
+
+(* obs augmentation *)
+val current_obs_model_id = "mem_address_pc_trace";
+
+val add_obs = #add_obs (bir_obs_modelLib.get_obs_model (current_obs_model_id));
+val lifted_prog_w_obs = add_obs lifted_prog_w_halt;
+
 (* symbolic execution *)
-val prog = lifted_prog
+val prog = lifted_prog_w_obs;
 val (paths, all_exps) = symb_exec_phase prog;
 
 (*
@@ -75,26 +84,55 @@ val vars_exp = Redblackset.fromList Term.compare varlist_exp_raw;
 *)
 
 (*
-val (pcond, obss) = List.nth (paths, 0);
 length paths
 List.map snd paths
 
-fun pathtocondvars (pcond, obss) =
-  let
-    val obs_exps = List.map (fn (_,x,y) => [x,y])
-                      (flatten (List.map ((fn x =>
-                        case x of NONE => [] 
-                         | SOME y => y)) obss));
+val (pcond, obss) = hd paths_i;
+*)
 
-    val vars = 
+val paths_i = List.foldr (fn (p, l) => if isSome (#2 p) then (#1 p, valOf (#2 p))::l else l) [] paths;
+val _ = if length paths_i = 2 then () else
+        raise ERR "script" "expecting two interesting paths";
+
+fun pathtocondvars (pcond, obss:(term * term * term) list) =
+  let
+    val bir_obs_ch0 = ``0:num``;
+    val bir_true = ``BExp_Const (Imm1 1w)``;
+
+    val obs_ch   = List.map #1 obss;
+    val _ = if List.all (identical bir_obs_ch0) obs_ch then () else
+            raise ERR "script" "expecting always obs channel 0";
+    val obs_cond = List.map #2 obss;
+    val _ = if List.all (identical bir_true) obs_cond  then () else
+            raise ERR "script" "expecting always obs condition true";
+
+    val obs_exps = List.map #3 obss;
+    fun scan_for_vars t =
+      if not (is_comb t) then
+        if not (is_var t) then false else
+        (print ("found var: " ^ (term_to_string t) ^ "\n"); true)
+      else
+      let
+        val (t1, t2) = dest_comb t;
+      in
+        scan_for_vars t1 orelse scan_for_vars t2
+      end;
+    val foundMem = List.exists scan_for_vars obs_exps;
+    val _ = if foundMem then print ("found MEM!\n") else ();
+
+    (* NOTE: freevar hack, there is also always MEM *)
+    val bv_mem = ``BVar "MEM" (BType_Mem Bit64 Bit8)``;
+    val bv_mem_l = if foundMem then [bv_mem] else [];
+    val varlist_exp_raw = flatten (List.map get_birexp_vars (pcond::obs_exps));
+    val vars = Redblackset.fromList Term.compare (bv_mem_l@varlist_exp_raw);
   in
     (pcond, vars)
   end;
 
-val pathcondvarsmap = List.map pathtocondvars paths;
+val pathcondvarsmap = List.map pathtocondvars paths_i;
 
 val path_conds = List.map fst paths;
-*)
+
   in
     ()
   end) exp_ids;
