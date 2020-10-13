@@ -615,6 +615,14 @@ end
       actual_entries
     end;
 
+  fun bir_embexp_create_list_open listtype listname =
+    let
+      val logs_dir = logfile_basedir();
+      val filename = logs_dir ^ "/lists/" ^ listtype ^ "_" ^ listname ^ ".txt";
+    in
+      TextIO.openOut filename
+    end;
+
   fun bir_embexp_load_progs listname =
     let
       val logs_dir = logfile_basedir();
