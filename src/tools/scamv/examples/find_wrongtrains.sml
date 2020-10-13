@@ -53,7 +53,7 @@ val exp_id = List.nth(exp_ids,1);
 (*
 val exp_id = "arm8/exps2/cache_multiw/96092ba1f752f2e06ffefb9a186575c6351bf9ab";
 *)
-val exp_id = List.last exp_ids;
+val exp_id = List.hd exp_ids;
 
 val file_train_ok   = bir_embexp_create_list_open "exps" (listname ^ "_train_ok"  );
 val file_train_bad  = bir_embexp_create_list_open "exps" (listname ^ "_train_bad" );
@@ -256,6 +256,17 @@ fun is_validpath sm (pcond_, _, _) =
 fun is_validpath2 (sm1, sm2) (pcond_, _, _) =
   pcond_evals_to_birtrue pcond_ sm1 andalso
   pcond_evals_to_birtrue pcond_ sm2;
+
+(*
+(* this exp id seems to expose some bug, no path condition is satisfied in sm1 at least, probably in all *)
+val exp_id = "arm8/exps2/cache_multiw/8375b66ab52589ff0ed3adc7bd64e464d19b25bf";
+
+List.map (fn pcond_ => pcond_evals_to_birtrue pcond_ sm1) (List.map #1 paths)
+
+List.map (is_validpath sm1) pathcondvarsmap
+List.map (is_validpath sm2) pathcondvarsmap
+List.map (is_validpath sm_train) pathcondvarsmap
+*)
 
 val validpath_l = List.filter (is_validpath2 (sm1, sm2)) pathcondvarsmap;
 val _ = if length validpath_l = 1 then () else
