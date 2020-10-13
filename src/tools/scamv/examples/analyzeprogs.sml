@@ -53,10 +53,13 @@ val exp_id = List.nth(exp_ids,1);
 (*
 val exp_id = "arm8/exps2/cache_multiw/96092ba1f752f2e06ffefb9a186575c6351bf9ab";
 *)
-val exp_id = List.last exp_ids;
+val exp_id = List.hd exp_ids;
 
-val file_stateshrink_new   = bir_embexp_create_list_open "exps" (listname ^ "_stateshrink_new" );
-val file_stateshrink_fail  = bir_embexp_create_list_open "exps" (listname ^ "_stateshrink_fail");
+val file_analyze_ok       = bir_embexp_create_list_open "exps" (listname ^ "_analyze_ok"  );
+val file_analyze_new      = bir_embexp_create_list_open "exps" (listname ^ "_analyze_new" );
+val file_analyze_fail     = bir_embexp_create_list_open "exps" (listname ^ "_analyze_fail");
+val file_analyze_train_ok = bir_embexp_create_list_open "exps" (listname ^ "_analyze_train_ok");
+val file_analyze_train_bd = bir_embexp_create_list_open "exps" (listname ^ "_analyze_train_bd");
 
 val n_exps = length exp_ids;
 val iref = ref 0;
@@ -178,8 +181,9 @@ fun modelVal_to_expmap (regT (n, v)) =
                 (t, pairSyntax.mk_pair (numSyntax.mk_numeral a, numSyntax.mk_numeral v))
             ) memtype l);
 
-val (sm1,sm2) = (Redblackmap.fromList String.compare (List.map modelVal_to_expmap s1),
-                 Redblackmap.fromList String.compare (List.map modelVal_to_expmap s2));
+val sm1 = Redblackmap.fromList String.compare (List.map modelVal_to_expmap s1);
+val sm2 = Redblackmap.fromList String.compare (List.map modelVal_to_expmap s2);
+val sm_train = Redblackmap.fromList String.compare (List.map modelVal_to_expmap s_train);
 
 (*
 val sm_ = sm1;
@@ -248,14 +252,52 @@ fun pcond_evals_to_birtrue pcond_ sm_ =
   end
   handle _ => false;
 
-fun is_validpath (sm1, sm2) (pcond_, _, _) =
+fun is_validpath sm (pcond_, _, _) =
+  pcond_evals_to_birtrue pcond_ sm;
+
+fun is_validpath2 (sm1, sm2) (pcond_, _, _) =
   pcond_evals_to_birtrue pcond_ sm1 andalso
   pcond_evals_to_birtrue pcond_ sm2;
 
-val validpath_l = List.filter (is_validpath (sm1, sm2)) pathcondvarsmap;
+(*
+(* this exp id seems to expose some bug, no path condition is satisfied in sm1 at least, probably in all *)
+val exp_id = "arm8/exps2/cache_multiw/8375b66ab52589ff0ed3adc7bd64e464d19b25bf";
+
+List.map (fn pcond_ => pcond_evals_to_birtrue pcond_ sm1) (List.map #1 paths)
+
+List.map (is_validpath sm1) pathcondvarsmap
+List.map (is_validpath sm2) pathcondvarsmap
+List.map (is_validpath sm_train) pathcondvarsmap
+*)
+
+val validpath_l = List.filter (is_validpath2 (sm1, sm2)) pathcondvarsmap;
 val _ = if length validpath_l = 1 then () else
         raise ERR "script" "should be exactly one valid path";
+
+val validpath_train_l = List.filter (is_validpath sm_train) pathcondvarsmap;
+val _ = if length validpath_train_l = 1 then () else
+        raise ERR "script" "should be exactly one valid path (training)";
+
 val validpath = hd validpath_l;
+val validpath_train = hd validpath_train_l;
+
+(* check if path conditions of experiment states and training state match *)
+local
+  (* pathconditions of the valid paths *)
+  val (pathcond, _, _) = validpath;
+  val (pathcond_train, _, _) = validpath_train;
+
+  val trainsSamePath = identical pathcond pathcond_train;
+in
+  (* store exp_id during operation: ok and bad *)
+  val _ = if trainsSamePath then (
+            TextIO.output  (file_analyze_train_bd, exp_id ^ "\n");
+            TextIO.flushOut file_analyze_train_bd
+          ) else (
+            TextIO.output  (file_analyze_train_ok, exp_id ^ "\n");
+            TextIO.flushOut file_analyze_train_ok
+          );
+end;
 
 (* found the observation expressions of the valid path *)
 val (_, obs_exps, vars) = validpath;
@@ -401,23 +443,30 @@ val prog_id = bir_embexp_prog_create (arch_id, prog_gen_id) code_asm;
 
 val exp_id_new = bir_embexp_sates3_create (arch_id, exp_type_id, state_gen_id) prog_id (s1,s2,s_train);
 
-(* store exp_id_new during operation: also fail *)
+(* store exp_id_new during operation: ok, new, and also fail *)
 val _ = (
-          TextIO.output  (file_stateshrink_new, exp_id_new ^ "\n");
-          TextIO.flushOut file_stateshrink_new
+          TextIO.output  (file_analyze_ok, exp_id ^ "\n");
+          TextIO.flushOut file_analyze_ok
+        );
+val _ = (
+          TextIO.output  (file_analyze_new, exp_id_new ^ "\n");
+          TextIO.flushOut file_analyze_new
         );
 
   in
     ()
   end
   handle _=> (
-    TextIO.output  (file_stateshrink_fail, exp_id ^ "\n");
-    TextIO.flushOut file_stateshrink_fail;
+    TextIO.output  (file_analyze_fail, exp_id ^ "\n");
+    TextIO.flushOut file_analyze_fail;
     print ("!!!!!!!!!! ERROR !!!!!!!!!!!\n")
   )) exp_ids;
 
-val _ = TextIO.closeOut file_stateshrink_new;
-val _ = TextIO.closeOut file_stateshrink_fail;
+val _ = TextIO.closeOut file_analyze_ok;
+val _ = TextIO.closeOut file_analyze_new;
+val _ = TextIO.closeOut file_analyze_fail;
+val _ = TextIO.closeOut file_analyze_train_ok;
+val _ = TextIO.closeOut file_analyze_train_bd;
 
 (* done *)
 val _ = print ("\n\n");
