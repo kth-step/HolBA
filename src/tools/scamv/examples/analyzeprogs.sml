@@ -1,3 +1,5 @@
+open bir_fileLib;
+
 open bir_embexp_driverLib;
 
 open bir_prog_genLib;
@@ -385,7 +387,30 @@ val exp_id_new = bir_embexp_sates3_create (arch_id, exp_type_id, state_gen_id) p
     exp_id_new
   end) exp_ids;
 
+(* done *)
+val _ = print ("\n\n");
+val _ = print ("=================================================\n");
+val _ = print (":::::::::::::::::::   done   ::::::::::::::::::::\n");
+val _ = print ("=================================================\n");
+val _ = print ("\n");
 
+(* print summary *)
+val _ = print ("Number of items in list before: " ^
+          (Int.toString (List.length exp_ids)) ^
+          "\n");
+val _ = print ("Number of items in list afterwards: " ^
+          (Int.toString (List.length exp_ids_new)) ^
+           "\n");
+
+(* store in file *)
+val filename = get_tempfile "exps_newexps" "shrinkedexpsvars.txt";
+val str = List.foldl (fn (x, s) => s ^ (x ^ "\n")) "" exp_ids_new;
+val _ = write_to_file filename str;
+val _ = print("output file: " ^ filename ^ "\n");
+
+
+
+(*
 val _ = print ("\n\n");
 val _ = print ("=================================================\n");
 val _ = print (":::::::::::::::::::::::::::::::::::::::::::::::::\n");
@@ -402,4 +427,5 @@ val _ = print ("\n");
 val _ = print ("=================================================\n");
 val _ = print (":::::::::::::::::::::::::::::::::::::::::::::::::\n");
 val _ = print ("=================================================\n");
+*)
 

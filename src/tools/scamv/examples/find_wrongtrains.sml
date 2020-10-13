@@ -266,9 +266,10 @@ val _ = print (":::::::::::::::::::   done   ::::::::::::::::::::\n");
 val _ = print ("=================================================\n");
 val _ = print ("\n");
 
-(* process and print summary *)
+(* process *)
 val exp_ids_new = List.map valOf (List.filter isSome exp_ids_opts);
 
+(* print summary *)
 val _ = print ("Number of items in list before: " ^
           (Int.toString (List.length exp_ids)) ^
           "\n");
