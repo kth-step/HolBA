@@ -1,4 +1,10 @@
-open bir_fileLib;
+
+(* branch: tacas_29_09_01_cache_addr_pc *)
+val listname = "test123";
+
+(*
+=================================== general stuff starts here ====================================
+*)
 
 open bir_embexp_driverLib;
 
@@ -38,8 +44,6 @@ fun get_birexp_vars exp =
 =================================== script starts here ====================================
 *)
 
-(* branch: tacas_29_09_01_cache_addr_pc *)
-val listname = "M1_zeroedstate_160";
 val (arch_id, exp_type_id, state_gen_id) =
     ("arm8", "cache_multiw", "regen_for_hypothesis");
 val prog_gen_id = "regen_for_hypothesis_this_prog_should_exist_already";
@@ -51,8 +55,23 @@ val exp_id = "arm8/exps2/cache_multiw/96092ba1f752f2e06ffefb9a186575c6351bf9ab";
 *)
 val exp_id = List.last exp_ids;
 
-val exp_ids_opts = List.map (fn exp_id =>
+val file_train_ok   = bir_embexp_create_list_open "exps" (listname ^ "_train_ok"  );
+val file_train_bad  = bir_embexp_create_list_open "exps" (listname ^ "_train_bad" );
+val file_train_fail = bir_embexp_create_list_open "exps" (listname ^ "_train_fail");
+
+val n_exps = length exp_ids;
+val iref = ref 0;
+val _ = List.map (fn exp_id =>
   let
+
+val i = !iref;
+val _ = iref := i + 1;
+
+val p10k = Real.round ((Real.fromInt i) / (Real.fromInt n_exps) * 10000.0);
+val pb = p10k div 100;
+val pa = p10k mod 100;
+val percent_s = (Int.toString pb) ^ "." ^ (Int.toString pa) ^ "%";
+val _ = print ("progress: " ^ percent_s);
 
 val _ = print ("\n=========================================================\n");
 val _ = print (exp_id ^ "\n");
@@ -255,9 +274,27 @@ val (pathcond_train, _, _) = validpath_train;
 
 val trainsSamePath = identical pathcond pathcond_train;
 
+(* store exp_id during operation: ok, bad and fail *)
+val _ = if trainsSamePath then (
+          TextIO.output  (file_train_bad, exp_id ^ "\n");
+          TextIO.flushOut file_train_bad
+        ) else (
+          TextIO.output  (file_train_ok, exp_id ^ "\n");
+          TextIO.flushOut file_train_ok
+        );
+
   in
-    if trainsSamePath then SOME (exp_id) else NONE
-  end) exp_ids;
+    ()
+  end
+  handle _=> (
+    TextIO.output  (file_train_fail, exp_id ^ "\n");
+    TextIO.flushOut file_train_fail;
+    print ("!!!!!!!!!! ERROR !!!!!!!!!!!\n")
+  )) exp_ids;
+
+val _ = TextIO.closeOut file_train_ok;
+val _ = TextIO.closeOut file_train_bad;
+val _ = TextIO.closeOut file_train_fail;
 
 (* done *)
 val _ = print ("\n\n");
@@ -266,6 +303,7 @@ val _ = print (":::::::::::::::::::   done   ::::::::::::::::::::\n");
 val _ = print ("=================================================\n");
 val _ = print ("\n");
 
+(*
 (* process *)
 val exp_ids_new = List.map valOf (List.filter isSome exp_ids_opts);
 
@@ -282,6 +320,7 @@ val filename = get_tempfile "exps_analyzeoutput" "wrongtrain.txt";
 val str = List.foldl (fn (x, s) => s ^ (x ^ "\n")) "" exp_ids_new;
 val _ = write_to_file filename str;
 val _ = print("output file: " ^ filename ^ "\n");
+*)
 
 
 (*
