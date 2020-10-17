@@ -397,16 +397,16 @@ fun next_experiment all_exps next_relation  =
 	      | SOME (p, r) => let val _ = next_iter_rel := NONE in (p, r) end
 		handle Option =>
                        raise ERR "next_experiment" "next_relation returned a NONE";
-        val _ = min_verb 3 (fn () =>
+        val _ = min_verb 1 (fn () =>
                                (print "Selected path: ";
                                 print (PolyML.makestring path_spec);
                                 print "\n"));
 
         val _ = min_verb 3 (fn () =>
                                bir_exp_pretty_print rel);
-        val _ = printv 1 ("Word relation\n");
+        val _ = printv 4 ("Word relation\n");
         val new_word_relation = make_word_relation rel all_exps;
-        val _ = min_verb 1 (fn () =>
+        val _ = min_verb 4 (fn () =>
                                (print_term new_word_relation;
                                 print "\n"));
         val word_relation =
@@ -415,11 +415,9 @@ fun next_experiment all_exps next_relation  =
 	      (* r is a constraint used to build the next relation for path enumeration *)
               | SOME r => mk_conj (new_word_relation, r);
 
-        val _ = printv 1 ("Calling Z3\n");
+        val _ = printv 2 ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
-        val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
-        val _ = printv 1 ("Printed model\n");
-	(*Need to be removed later. It is just for experimental reasone*)
+        val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model; print "\nSAT model finished.\n"));
 
         fun remove_prime str =
           if String.isSuffix "_" str then
