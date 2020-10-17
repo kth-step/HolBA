@@ -581,6 +581,25 @@ fun scamv_test_single_file filename =
 fun show_error_no_free_vars (id,_) =
     print ("Program " ^ id ^ " skipped because it has no free variables.\n");
 
+fun match_prog_gen gen sz generator_param =
+    case gen of
+        gen_rand => (
+          case generator_param of
+              SOME x => prog_gen_store_rand x  sz
+            | NONE   => prog_gen_store_rand "" sz)
+      | qc => (case generator_param of
+              SOME x => prog_gen_store_a_la_qc x sz
+            | NONE   => raise ERR "match_prog_gen::qc" "qc type needs to be specified as generator_param")
+      | slice => prog_gen_store_rand_slice sz
+      | from_file => (case generator_param of
+              SOME x => prog_gen_store_fromfile x
+            | NONE   => raise ERR "match_prog_gen::from_file" "file needs to be specified as generator_param")
+      | from_listfile => (case generator_param of
+              SOME x => prog_gen_store_listfile x
+            | NONE   => raise ERR "match_prog_gen::from_file" "listfile needs to be specified as generator_param")
+      | prefetch_strides => prog_gen_store_prefetch_stride sz
+      | _ => raise ERR "match_prog_gen" ("unknown generator type: " ^ (PolyML.makestring gen));
+
 fun match_obs_model obs_model =
     case obs_model of
         mem_address_pc =>
@@ -599,6 +618,18 @@ fun match_obs_model obs_model =
         "cache_tag_index_part_page"
       | _ => raise ERR "match_obs_model" ("unknown obs_model " ^ PolyML.makestring obs_model);
 
+fun match_hw_obs_model hw_obs_model =
+    case hw_obs_model of
+        hw_cache_tag_index  =>
+        "cache_multiw"
+      | hw_cache_index_numvalid =>
+        "cache_multiw_numinset"
+      | hw_cache_tag_index_part =>
+        "cache_multiw_subset"
+      | hw_cache_tag_index_part_page =>
+        "cache_multiw_subset_page_boundary"
+      | _ => raise ERR "match_hw_obs_model" ("unknown hw_obs_model: " ^ (PolyML.makestring hw_obs_model));
+
 fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enumerate
               , generator = gen, generator_param = generator_param
               , obs_model = obs_model, hw_obs_model = hw_obs_model
@@ -612,22 +643,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
         val _ = current_obs_projection := proj;
         
         val prog_store_fun =
-           case gen of
-                gen_rand => (case generator_param of
-                                 SOME x => prog_gen_store_rand x  sz
-                               | NONE   => prog_gen_store_rand "" sz)
-              | qc => (case generator_param of
-                                 SOME x => prog_gen_store_a_la_qc x sz
-                               | NONE   => raise ERR "scamv_run::qc" "qc type needs to be specified as generator_param")
-              | slice => prog_gen_store_rand_slice sz
-              | from_file => (case generator_param of
-                                 SOME x => prog_gen_store_fromfile x
-                               | NONE   => raise ERR "scamv_run::from_file" "file needs to be specified as generator_param")
-              | from_listfile => (case generator_param of
-                                 SOME x => prog_gen_store_listfile x
-                               | NONE   => raise ERR "scamv_run::from_file" "listfile needs to be specified as generator_param")
-              | prefetch_strides => prog_gen_store_prefetch_stride sz
-              | _ => raise ERR "scamv_run" ("unknown generator type " ^ PolyML.makestring gen)
+            match_prog_gen gen sz generator_param;
 
         val _ =
             current_obs_model_id := match_obs_model obs_model;
@@ -636,16 +652,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
             current_refined_obs_model_id := Option.map match_obs_model refined_obs_model;
 
         val _ =
-           case hw_obs_model of
-                hw_cache_tag_index  =>
-                      hw_obs_model_id := "cache_multiw"
-              | hw_cache_index_numvalid =>
-                      hw_obs_model_id := "cache_multiw_numinset"
-              | hw_cache_tag_index_part =>
-                      hw_obs_model_id := "cache_multiw_subset"
-              | hw_cache_tag_index_part_page =>
-                      hw_obs_model_id := "cache_multiw_subset_page_boundary"
-              | _ => raise ERR "scamv_run" ("unknown hw_obs_model " ^ PolyML.makestring hw_obs_model);
+            hw_obs_model_id := match_hw_obs_model hw_obs_model;
 
         val config_str =
           "Scam-V set to the following test params:\n" ^
