@@ -133,25 +133,46 @@ struct
       handle e => raise wrap_exn "w2bool" e;
 
   fun bool2w exp_tm =
-    let
-      val to_rewrite = ``bool2w ^exp_tm``
-      val rewritten = PURE_REWRITE_CONV [bool2w_def] to_rewrite
-    in
-      (snd o dest_comb o concl) rewritten
-    end
+      let
+	  val to_rewrite = ``bool2w ^exp_tm``
+	  val rewritten = PURE_REWRITE_CONV [bool2w_def] to_rewrite
+      in
+	  (snd o dest_comb o concl) rewritten
+      end
       handle e => raise wrap_exn "bool2w" e;
+
+  val dim_of = dest_word_type o Term.type_of;
+
+  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_imm";
+  val s = syntax_fns 1
+		     (fn tm1 => fn e => fn w => (HolKernel.dest_monop tm1 e w, dim_of w))
+		     (fn tm => fn (w, ty) =>
+				  Term.mk_comb
+				      (Term.inst [Type.alpha |-> dim_of w, Type.beta |-> ty] tm, w));
+
+  val (w2wh_tm, mk_w2wh, dest_w2wh, is_w2wh)= s "w2wh";
 
   fun bir_exp_to_words exp =
     let
-      val _ = ()
+	val _ = ()
     in
-      (* Constants *)
-      if is_BExp_Const exp then
-        (snd o gen_dest_Imm o dest_BExp_Const) exp
-          handle e => raise wrap_exn "bir_exp_to_words::const" e
-      (* Memory constants *)
-      else if is_BExp_MemConst exp then
-        raise ERR "bir_exp_to_words" "unhandled: BExp_MemConst"
+	(* Constants *)
+	if is_BExp_Const exp then
+            (snd o gen_dest_Imm o dest_BExp_Const) exp
+            handle e => raise wrap_exn "bir_exp_to_words::const" e
+	(* Memory constants *)
+
+	else if is_BExp_MemConst exp then
+	    let 
+		val (addr_bir_ty, val_bir_ty, name_bir) = dest_BExp_MemConst exp
+		val name = case (dest_term name_bir) of  VAR (namen, typ): lambda => namen
+		val addr_ty = word_ty_of_bir_immtype_t addr_bir_ty
+		val val_ty = word_ty_of_bir_immtype_t val_bir_ty
+		val hol_type = Type `: ^addr_ty |-> ^val_ty`
+                    handle e => raise wrap_exn "bir_exp_to_words::MemConst" e
+	    in
+		mk_var (name,  hol_type)
+	    end
       (* Den *)
       else if is_BExp_Den exp then
         (* Manual tests
@@ -181,9 +202,38 @@ struct
           mk_var (name, hol_type)
         end
           handle e => raise wrap_exn "bir_exp_to_words::den" e
-      (* Casts are not handled yet. *)
       else if is_BExp_Cast exp then
-        raise ERR "bir_exp_to_words" "Cast expressions aren't handled yet."
+	  let
+	      val dw = wordsSyntax.dest_word_type;
+	      val (casttyp, ex, sz) = (dest_BExp_Cast) exp;
+	      val cast_ty = word_ty_of_bir_immtype_t sz;
+	      val val_ty = bir_exp_to_words ex;
+	      val val_typ_sz = val_ty |> type_of |> dest_word_type |> mk_itself
+	      		       |> (fn x => (rhs o concl o EVAL)``dimindex(^x)``)
+	      		       |> term_to_string |> Int.fromString
+	                       |> (fn x => case x of SOME y => y);
+	      val cast_typ_to_int = size_of_bir_immtype_t sz;
+	  in
+	      case (term_to_string casttyp) of 
+		  "BIExp_UnsignedCast" =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+		| "BIExp_SignedCast"   =>  let val _ = print "BIExp_SignedCast\n" in
+		                           if val_typ_sz >= cast_typ_to_int
+					   then wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+					   else wordsSyntax.mk_sw2sw(val_ty, dw cast_ty) 
+					   end
+		| "BIExp_LowCast"      =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+		  (* let *)
+		  (*     val num_of_exp_type = fcpLib.index_to_num(dw cast_ty); *)
+		  (*     val masked_val = case (Arbnum.toInt num_of_exp_type) of *)
+		  (* 			   8 => ``^val_ty && 0x00000000000000FFw:word64`` *)
+		  (* 			 |16 => ``^val_ty && 0x000000000000FFFFw:word64`` *)
+		  (* 			 |32 => ``^val_ty && 0x00000000FFFFFFFFw:word64`` *)
+		  (* in *)
+		  (*     wordsSyntax.mk_w2w(masked_val, dw cast_ty) *)
+		  (* end	 *)
+		| "BIExp_HighCast"     =>  mk_w2wh(val_ty, dw cast_ty)
+	  end
+	      handle e => raise ERR "bir_exp_to_words" "Cast expressions aren't handled yet."
       (* Unary expressions *)
       else if is_BExp_UnaryExp exp then
         (* Manual tests
@@ -302,23 +352,28 @@ struct
             BEnd_LittleEndian
             Bit128
         ``;
+	val exp = ``
+          (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                    (BExp_Const (Imm64 8w))) BEnd_LittleEndian Bit64)``
         val w = bir_exp_to_words exp;
         *)
         (*
          * ((addr+0) ' mem) @@ ((addr+1) ' mem) @@ ...
          *)
         let
-          val (bir_mem, bir_addr, bir_endi, bir_val_ty) = dest_BExp_Load exp
-          val mem_w = bir_exp_to_words bir_mem
-          val mem_right_ty = (hd o tl o snd o dest_type o type_of) mem_w
-          val mem_right_bir_ty = bir_immtype_t_of_word_ty mem_right_ty
-          val base_addr_w = bir_exp_to_words bir_addr
-          val addr_w = bir_exp_to_words bir_addr
-          val addr_bir_ty = (bir_immtype_t_of_word_ty o type_of) addr_w
+          val (bir_mem, bir_addr, bir_endi, bir_val_ty) = dest_BExp_Load exp;
+          val mem_w = bir_exp_to_words bir_mem;
+          val mem_right_ty = (hd o tl o snd o dest_type o type_of) mem_w;
+          val mem_right_bir_ty = bir_immtype_t_of_word_ty mem_right_ty;
+          val base_addr_w = bir_exp_to_words bir_addr;
+          val addr_w = bir_exp_to_words bir_addr;
+          val addr_bir_ty = (bir_immtype_t_of_word_ty o type_of) addr_w;
           (* Compute the number of splits *)
           val nsplits_o_thm = EVAL ``bir_number_of_mem_splits
-            ^mem_right_bir_ty ^bir_val_ty ^addr_bir_ty``
-          val nsplits_o_tm = (snd o dest_eq o concl) nsplits_o_thm
+            ^mem_right_bir_ty ^bir_val_ty ^addr_bir_ty``;
+          val nsplits_o_tm = (snd o dest_eq o concl) nsplits_o_thm;
           val nsplits = (Arbnumcore.fromInt o int_of_term o dest_some) nsplits_o_tm
             handle e => raise wrap_exn "bir_exp_to_words::load::nsplits" e;
           (* Create the list of reads with offsets *)
@@ -336,8 +391,8 @@ struct
           val reads = offset_reads_up_to nsplits []
             handle e => raise wrap_exn "bir_exp_to_words::load::reads" e;
           (* Reorder reads according to endianess *)
-          val ordered_reads = if is_BEnd_BigEndian bir_endi then reads
-            else if is_BEnd_LittleEndian bir_endi then rev reads
+          val ordered_reads = if is_BEnd_BigEndian bir_endi then rev reads
+            else if is_BEnd_LittleEndian bir_endi then reads
             else if is_BEnd_NoEndian bir_endi then
               if nsplits = Arbnumcore.one then reads
                  else raise ERR "bir_exp_to_words" "BEnd_NoEndian and nsplits>1"
