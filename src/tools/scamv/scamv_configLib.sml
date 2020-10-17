@@ -357,7 +357,9 @@ fun print_scamv_opt_usage () =
         print "Scam-V Usage:\n\n";
         List.map print_entry opt_table;
         print ("\ngenerator arg should be one of: rand, prefetch_strides, qc, slice, file, listfile\n");
-        print ("\nobs_model arg should be one of: mem_address_pc, cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page\n");
+        print ("\nobs_model arg should be one of: mem_address_pc, cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page, cache_speculation\n");
+        print ("\nrefined_obs_model arg is like obs_model\n");
+        print ("\nobs_projection is an observation id as a number\n");
         print ("\nhw_obs_model arg should be one of: hw_cache_tag_index, hw_cache_index_numvalid, hw_cache_tag_index_part, hw_cache_tag_index_part_page\n");
         print ("\nDefaults are: " ^ PolyML.makestring default_cfg ^ "\n")
     end
