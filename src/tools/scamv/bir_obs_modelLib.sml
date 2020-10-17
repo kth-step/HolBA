@@ -11,6 +11,12 @@ val obs_hol_type = ``bir_val_t``;
 fun add_obs t = rand (concl (EVAL ``add_obs_pc ^t``));
 end
 
+structure bir_arm8_mem_addr_model : OBS_MODEL =
+struct
+val obs_hol_type = ``bir_val_t``;
+fun add_obs t = rand (concl (EVAL ``add_obs_mem_addr_armv8 ^t``));
+end
+
 structure bir_arm8_mem_addr_pc_model : OBS_MODEL =
 struct
 val obs_hol_type = ``bir_val_t``;
@@ -229,7 +235,7 @@ in
       fun add_obs t =
         (* TODO: we don't want to augment with the pc here, or am I wrong?
                  this could be the reason for unsatisfiable... *)
-        branch_instrumentation_obs (bir_arm8_mem_addr_pc_model.add_obs t) pipeline_depth;
+        branch_instrumentation_obs (bir_arm8_mem_addr_model.add_obs t) pipeline_depth;
     end;
 
 end (* local *)

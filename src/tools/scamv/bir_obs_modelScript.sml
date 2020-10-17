@@ -77,7 +77,7 @@ val add_obs_pc_def = Define`
 `;
 
 
-(* observe whole memory address and pc *)
+(* observe whole memory address *)
 (* ============================================================================== *)
 val observe_mem_addr_def = Define`
     observe_mem_addr e = 
@@ -87,15 +87,14 @@ val observe_mem_addr_def = Define`
                     HD
 `;
 
-(* TODO: better use add_obs_pc_block and don't append in the end for no reason
-         but, it seems that at the moment use of add_obs_pc_block always leads to
-              unsatisfiable... what's that??? *)
-val append_obs_pc_block_def = Define`
-    append_obs_pc_block block =
-      block with bb_statements :=
-        APPEND (block.bb_statements) [observe_label (block.bb_label)]
+val add_obs_mem_addr_armv8_def = Define`
+    add_obs_mem_addr_armv8 p = 
+      map_obs_prog (add_obs_1_block observe_mem_addr) p
 `;
 
+
+(* observe whole memory address and pc *)
+(* ============================================================================== *)
 val add_obs_mem_addr_pc_armv8_def = Define`
     add_obs_mem_addr_pc_armv8 p = 
       map_obs_prog (add_obs_pc_block o (add_obs_1_block observe_mem_addr)) p
