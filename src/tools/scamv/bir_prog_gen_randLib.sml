@@ -69,8 +69,6 @@ struct
      hd (String.tokens  (fn c => Char.compare (c,#"-") = EQUAL) subs);
 
  (* ---------------------------------------------  *)
- val _ = bir_scamv_helpersLib.rand_isfresh_set true;
-
  val emp_str = ""
  val splitter = String.tokens (fn c => c = #";");
 

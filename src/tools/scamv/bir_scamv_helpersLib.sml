@@ -70,10 +70,12 @@ local
   val rand_gen_ref     = ref (NONE: Random.generator option);
 in
   fun rand_isfresh_set isfresh =
-    rand_isfresh_ref := SOME isfresh;
-(*    case !rand_isfresh_ref of
+    case !rand_isfresh_ref of
        NONE   => rand_isfresh_ref := SOME isfresh
-     | SOME _ => raise ERR "rand_isfresh_set" "freshness has been set already"; *)
+     | SOME x => if x = isfresh then () else
+                 raise ERR "rand_isfresh_set"
+                    ("random freshness has already been set to " ^
+                       (if x then "true" else "false"));
 
   fun rand_isfresh_get () =
     case !rand_isfresh_ref of
@@ -96,5 +98,5 @@ end
   open bir_exec_wrapLib;
 
 end (* local *)
-  
+
 end
