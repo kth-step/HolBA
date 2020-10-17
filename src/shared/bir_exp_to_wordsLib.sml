@@ -141,38 +141,49 @@ struct
       end
       handle e => raise wrap_exn "bool2w" e;
 
-  val dim_of = dest_word_type o Term.type_of;
+  (* helper for high cast, but probably this is not useful because HolSmt cannot handle this "custom" cast definition *)
+  local
+    val dim_of = dest_word_type o Term.type_of;
 
-  fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_imm";
-  val s = syntax_fns 1
+    fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_imm";
+    val s = syntax_fns 1
 		     (fn tm1 => fn e => fn w => (HolKernel.dest_monop tm1 e w, dim_of w))
 		     (fn tm => fn (w, ty) =>
 				  Term.mk_comb
 				      (Term.inst [Type.alpha |-> dim_of w, Type.beta |-> ty] tm, w));
 
-  val (w2wh_tm, mk_w2wh, dest_w2wh, is_w2wh)= s "w2wh";
+    val (w2wh_tm, mk_w2wh, dest_w2wh, is_w2wh)= s "w2wh";
+  in
+    val mk_w2wh = mk_w2wh;
+  end
 
   fun bir_exp_to_words exp =
     let
 	val _ = ()
     in
-	(* Constants *)
-	if is_BExp_Const exp then
-            (snd o gen_dest_Imm o dest_BExp_Const) exp
-            handle e => raise wrap_exn "bir_exp_to_words::const" e
-	(* Memory constants *)
+      (* Constants *)
+      if is_BExp_Const exp then
+        (snd o gen_dest_Imm o dest_BExp_Const) exp
+        handle e => raise wrap_exn "bir_exp_to_words::const" e
 
-	else if is_BExp_MemConst exp then
-	    let 
-		val (addr_bir_ty, val_bir_ty, name_bir) = dest_BExp_MemConst exp
-		val name = case (dest_term name_bir) of  VAR (namen, typ): lambda => namen
-		val addr_ty = word_ty_of_bir_immtype_t addr_bir_ty
-		val val_ty = word_ty_of_bir_immtype_t val_bir_ty
-		val hol_type = Type `: ^addr_ty |-> ^val_ty`
-                    handle e => raise wrap_exn "bir_exp_to_words::MemConst" e
-	    in
-		mk_var (name,  hol_type)
-	    end
+      (* Memory constants *)
+      else if is_BExp_MemConst exp then
+        (* NOTICE: can only handle mem const with a hol variable at the moment.
+                   it translates the bir types to hol words and creates a
+                   finite word map variable with exactly the same name. *)
+        let 
+          val (addr_bir_ty, val_bir_ty, tm_map) = dest_BExp_MemConst exp;
+          val name = (fst o dest_var) tm_map
+            handle _ => raise ERR "bir_exp_to_words::MemConst"
+              "term of memory constant is not a hol variable, cannot handle it";
+          val addr_ty = word_ty_of_bir_immtype_t addr_bir_ty;
+          val val_ty = word_ty_of_bir_immtype_t val_bir_ty;
+          val hol_type = finite_mapSyntax.mk_fmap_ty (addr_ty, val_ty);
+        in
+          mk_var (name,  hol_type)
+        end
+        handle e => raise wrap_exn "bir_exp_to_words::MemConst" e
+
       (* Den *)
       else if is_BExp_Den exp then
         (* Manual tests
@@ -202,38 +213,35 @@ struct
           mk_var (name, hol_type)
         end
           handle e => raise wrap_exn "bir_exp_to_words::den" e
+
+      (* Casts *)
       else if is_BExp_Cast exp then
-	  let
-	      val dw = wordsSyntax.dest_word_type;
-	      val (casttyp, ex, sz) = (dest_BExp_Cast) exp;
-	      val cast_ty = word_ty_of_bir_immtype_t sz;
-	      val val_ty = bir_exp_to_words ex;
-	      val val_typ_sz = val_ty |> type_of |> dest_word_type |> mk_itself
-	      		       |> (fn x => (rhs o concl o EVAL)``dimindex(^x)``)
-	      		       |> term_to_string |> Int.fromString
-	                       |> (fn x => case x of SOME y => y);
-	      val cast_typ_to_int = size_of_bir_immtype_t sz;
-	  in
-	      case (term_to_string casttyp) of 
+        let
+          val dw = wordsSyntax.dest_word_type;
+          val (casttyp, ex, sz) = (dest_BExp_Cast) exp;
+          val cast_ty = word_ty_of_bir_immtype_t sz;
+          val val_ty = bir_exp_to_words ex;
+          val val_typ_sz =
+            val_ty |> type_of |> dest_word_type |> mk_itself
+              |> (fn x => (rhs o concl o EVAL)``dimindex(^x)``)
+              |> (fn dimindex_t =>
+                    (Arbnum.toInt (numSyntax.dest_numeral dimindex_t))
+                    handle _ => raise ERR "could not resolve dimindex" (term_to_string dimindex_t));
+          val cast_typ_to_int = size_of_bir_immtype_t sz;
+        in
+          case (term_to_string casttyp) of 
 		  "BIExp_UnsignedCast" =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
-		| "BIExp_SignedCast"   =>  let val _ = print "BIExp_SignedCast\n" in
-		                           if val_typ_sz >= cast_typ_to_int
-					   then wordsSyntax.mk_w2w(val_ty, dw cast_ty)
-					   else wordsSyntax.mk_sw2sw(val_ty, dw cast_ty) 
-					   end
 		| "BIExp_LowCast"      =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
-		  (* let *)
-		  (*     val num_of_exp_type = fcpLib.index_to_num(dw cast_ty); *)
-		  (*     val masked_val = case (Arbnum.toInt num_of_exp_type) of *)
-		  (* 			   8 => ``^val_ty && 0x00000000000000FFw:word64`` *)
-		  (* 			 |16 => ``^val_ty && 0x000000000000FFFFw:word64`` *)
-		  (* 			 |32 => ``^val_ty && 0x00000000FFFFFFFFw:word64`` *)
-		  (* in *)
-		  (*     wordsSyntax.mk_w2w(masked_val, dw cast_ty) *)
-		  (* end	 *)
-		| "BIExp_HighCast"     =>  mk_w2wh(val_ty, dw cast_ty)
-	  end
-	      handle e => raise ERR "bir_exp_to_words" "Cast expressions aren't handled yet."
+		| "BIExp_SignedCast"   =>  if val_typ_sz >= cast_typ_to_int
+					   then wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+					   else wordsSyntax.mk_sw2sw(val_ty, dw cast_ty)
+		| "BIExp_HighCast"     =>  if val_typ_sz >= cast_typ_to_int
+					   then mk_w2wh(val_ty, dw cast_ty)
+					   else wordsSyntax.mk_w2w(val_ty, dw cast_ty)
+		| x => raise ERR "unknown cast" ("cast type unknown: " ^ x)
+        end
+        handle e => raise wrap_exn "bir_exp_to_words::Cast" e
+
       (* Unary expressions *)
       else if is_BExp_UnaryExp exp then
         (* Manual tests
@@ -253,6 +261,7 @@ struct
           (rhs o concl) rewritten
         end
           handle e => raise wrap_exn "bir_exp_to_words::unary_exp" e
+
       (* Binary expressions *)
       else if is_BExp_BinExp exp then
         (* Manual tests
@@ -268,6 +277,7 @@ struct
           (snd o dest_comb o concl) rewritten
         end
           handle e => raise wrap_exn "bir_exp_to_words::binary_exp" e
+
       (* Binary predicates *)
       else if is_BExp_BinPred exp then
         (* Manual tests
@@ -290,6 +300,7 @@ struct
           (bool2w w_bool_bin_pred)
         end
           handle e => raise wrap_exn "bir_exp_to_words::binary_pred" e
+
       (* MemEq expressions *)
       else if is_BExp_MemEq exp then
         (* Manual tests
@@ -308,12 +319,12 @@ struct
           val (bir_lhs, bir_rhs) = dest_BExp_MemEq exp
           val lhs = bir_exp_to_words bir_lhs
           val rhs = bir_exp_to_words bir_rhs
-          val eq = mk_eq (lhs, rhs)
-            handle e => raise wrap_exn "bir_exp_to_words::mem_eq" e;
+          val eq = mk_eq (lhs, rhs);
         in
           bool2w eq
-            handle e => raise wrap_exn "bir_exp_to_words::mem_eq" e
         end
+        handle e => raise wrap_exn "bir_exp_to_words::mem_eq" e
+
       (* If-then-else *)
       else if is_BExp_IfThenElse exp then
         (* Manual tests
@@ -334,7 +345,8 @@ struct
         in
           mk_cond (bool_cond_exp, w_then_exp, w_else_exp)
         end
-          handle e => raise wrap_exn "bir_exp_to_words::if_then_else" e
+        handle e => raise wrap_exn "bir_exp_to_words::if_then_else" e
+
       (* Load expressions *)
       else if is_BExp_Load exp then
         (* Manual tests
@@ -410,6 +422,8 @@ struct
         in
           concat_w
         end
+        handle e => raise wrap_exn "bir_exp_to_words::mem_load" e
+
       (* Store expressions *)
       else if is_BExp_Store exp then
         (* Manual tests
@@ -499,6 +513,8 @@ struct
         in
           (snd o dest_eq o concl o (SIMP_CONV pure_ss [boolTheory.BETA_THM])) whole_store_tm
         end
+        handle e => raise wrap_exn "bir_exp_to_words::mem_store" e
+
       (*** WP specific terms ***)
       (* Implications *)
       else if is_bir_exp_imp exp then
@@ -521,7 +537,8 @@ struct
         in
           bool2w imp
         end
-          handle e => raise wrap_exn "bir_exp_to_words::imp" e
+        handle e => raise wrap_exn "bir_exp_to_words::imp" e
+
       (*** Unknown expressions ***)
       else
         raise ERR "bir_exp_to_words" ("Don't know BIR expression: " ^ (term_to_string exp))
