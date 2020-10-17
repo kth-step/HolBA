@@ -43,8 +43,8 @@ fun pdecide btm =
   end;
 
 
-fun symb_exec_process_to_leafs_pdecide pdecide fo maxdepth precond prog =
-  symb_exec_leaflist (symb_exec_program maxdepth precond prog pdecide fo);
+fun symb_exec_process_to_leafs_pdecide pdecide fo maxdepth precond prog rso =
+  symb_exec_leaflist (symb_exec_program maxdepth precond prog rso pdecide fo);
 
 val symb_exec_process_to_leafs_nosmt =
   symb_exec_process_to_leafs_pdecide (fn _ => true) NONE;

@@ -188,3 +188,24 @@ val prog4 = ``BirProgram
 
 fun leafs_of p = symb_exec_process_to_leafs_nosmt maxdepth precond p;
 
+(*
+============================
+*)
+
+val leafs_prog4 = leafs_of prog4 NONE;
+
+val prog5 = ``BirProgram
+  [<|bb_label :=
+   BL_Address_HC (Imm64 4w) "B5010034 (cbnz x20, 2008 <.text+0x2008>)";
+   bb_statements := [];
+   bb_last_statement :=
+   BStmt_CJmp
+       (BExp_BinPred BIExp_Equal (BExp_Den (BVar "R20*" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 0w))) (BLE_Label (BL_Address (Imm64 8200w)))
+       (BLE_Label (BL_Address (Imm64 8w)))|>]``;
+
+val leafs_prog5 =
+  case (SOME (leafs_of prog5 NONE)
+       handle _ => NONE) of
+     SOME _ => raise ERR "script" "this is not right"
+   | NONE => leafs_of prog5 (SOME "*");

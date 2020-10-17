@@ -51,7 +51,7 @@ fun symb_exec_phase prog =
         (* leaf list *)
         val maxdepth = 5 * length (fst (dest_list (dest_BirProgram prog))) (* (~1); *)
         val precond = ``bir_exp_true``
-        val leafs = symb_exec_process_to_leafs_nosmt maxdepth precond prog;
+        val leafs = symb_exec_process_to_leafs_nosmt maxdepth precond prog NONE;
 
         val numobss = List.foldr (op+) 0 (List.map (fn s => 
 	  let

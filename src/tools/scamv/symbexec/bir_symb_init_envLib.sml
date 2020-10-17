@@ -69,7 +69,7 @@ fun genf_mem_a_n a n name =
   end;
 
 
-fun init_env bir_program = 
+fun init_env bir_program accept_regsuffix_o = 
     let
       fun bvar_tovarname t = (fromHOLstring o snd o dest_eq o concl o EVAL) ``bir_var_name ^t``;
       fun regs n = List.tabulate (n, fn x => "R" ^ (Int.toString x));
@@ -100,14 +100,22 @@ fun init_env bir_program =
       val vars_in_env = List.map fst bir_vars;
       val missing_vars = List.foldr (fn (x,l) => if not (List.exists (fn y => x = y) vars_in_env) then x::l else l) [] vars_in_prog;
 
-    (* TODO check why this was needed
-      val _ = if missing_vars = [] then () else (
+      val missing_vars_have_allowed_regsuffix =
+        List.all (fn vn =>
+           case accept_regsuffix_o of
+               NONE => false 
+             | SOME suff => (String.isPrefix "R" vn andalso
+                             String.isSuffix suff vn)
+          ) missing_vars;
+
+      val _ = if missing_vars_have_allowed_regsuffix then () else (
               print "\n";
               print "missing variables:\n";
               map PolyML.print missing_vars;
               print "\n";
+              print_term bir_program;
               print "\n";
-              raise ERR "init_env" "the symbolic environment doesn't contain all variables of the program"); *)
+              raise ERR "init_env" "the symbolic environment doesn't contain all variables of the program");
     in
       List.foldl update_env env (gen_genf_list (genf_reg_n 64) missing_vars)
     end;
