@@ -46,12 +46,12 @@ val DISTINCT_MEM = false;
  - driver decision (jump to a, b or c)
  *)
 
-fun symb_exec_phase prog =
+fun symb_exec_phase prog rso =
     let
         (* leaf list *)
         val maxdepth = 5 * length (fst (dest_list (dest_BirProgram prog))) (* (~1); *)
         val precond = ``bir_exp_true``
-        val leafs = symb_exec_process_to_leafs_nosmt maxdepth precond prog NONE;
+        val leafs = symb_exec_process_to_leafs_nosmt maxdepth precond prog rso;
 
         val numobss = List.foldr (op+) 0 (List.map (fn s => 
 	  let
@@ -325,7 +325,7 @@ fun start_interactive prog =
         val _ = current_prog_w_obs := SOME lifted_prog_w_obs;
         val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
 
-        val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
+        val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs (SOME "*");
 	      val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths; 
 
         fun has_observations (SOME []) = false
