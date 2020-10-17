@@ -20,7 +20,7 @@ end
 structure bir_arm8_cache_line_model : OBS_MODEL =
 struct
 val obs_hol_type = ``bir_val_t``;
-fun add_obs t = rand (concl (EVAL ``add_obs_cache_line_armv8 ^t``));
+fun add_obs t = rand (concl (EVAL ``add_obs_cache_line_tag_index_armv8 ^t``));
 end
 
 structure bir_arm8_cache_line_tag_model : OBS_MODEL =
@@ -197,12 +197,11 @@ local
 	    val zip_assertedObs_primed = zip Obs_lst_primed asserted_obs;
 	    val Obs_lst = map (fn (a, b) => (rhs o concl o EVAL)``append_list ^a ^b`` ) zip_assertedObs_primed;
 	in
-	    foldl (fn(itm, p) => (rhs o concl o EVAL)``add_obs_speculative_exec_armv8 ^p ^itm``) 
+	    foldl (fn(itm, p) => (rhs o concl o EVAL)``prepend_obs_in_bir_prog_block ^itm ^p``) 
 		  prog 
 		  Obs_lst
 	end
 
-in
  fun branch_instrumentation_obs prog depth = 	
     let (* build the dictionaries using the library under test *)
 	val bl_dict = gen_block_dict prog;
@@ -218,24 +217,29 @@ in
     in
 	foldl (fn(ts, p) => add_obs_speculative_exec p ts g1 depth bl_dict) prog targets
     end
+in
 
-(* Exmaple usage: inputs are lifted program with intial observation and depth of execution      *)
-(* branch_instrumentation_obs lifted_prog_w_obs 3; *)
+  (* Exmaple usage: inputs are lifted program with intial observation and depth of execution      *)
+  (* branch_instrumentation_obs lifted_prog_w_obs 3; *)
 
-structure bir_arm8_cache_speculation_model : OBS_MODEL =
- struct
- val obs_hol_type = ``bir_val_t``;
- val pipeline_depth = 3;
- fun add_obs t =
-     branch_instrumentation_obs (bir_arm8_mem_addr_pc_model.add_obs t) pipeline_depth;
- end;
+  structure bir_arm8_cache_speculation_model : OBS_MODEL =
+    struct
+      val obs_hol_type = ``bir_val_t``;
+      val pipeline_depth = 3;
+      fun add_obs t =
+        (* TODO: we don't want to augment with the pc here, or am I wrong?
+                 this could be the reason for unsatisfiable... *)
+        branch_instrumentation_obs (bir_arm8_mem_addr_pc_model.add_obs t) pipeline_depth;
+    end;
+
+end (* local *)
 
 
 fun get_obs_model id =
   let
     val obs_hol_type =
-	      if id = "mem_address_pc" then
-	        bir_arm8_mem_addr_pc_model.obs_hol_type
+             if id = "mem_address_pc" then
+	  bir_arm8_mem_addr_pc_model.obs_hol_type
         else if id = "cache_tag_index" then
           bir_arm8_cache_line_model.obs_hol_type
         else if id = "cache_tag_only" then
@@ -252,8 +256,8 @@ fun get_obs_model id =
             raise ERR "get_obs_model" ("unknown obs_model selected: " ^ id);
 
     val add_obs =
-	      if id = "mem_address_pc" then
-	        bir_arm8_mem_addr_pc_model.add_obs
+             if id = "mem_address_pc" then
+          bir_arm8_mem_addr_pc_model.add_obs
         else if id = "cache_tag_index" then
           bir_arm8_cache_line_model.add_obs
         else if id = "cache_tag_only" then
@@ -274,5 +278,4 @@ fun get_obs_model id =
       add_obs = add_obs }
   end;
 
-end
-end (* local *)
+end (* struct *)

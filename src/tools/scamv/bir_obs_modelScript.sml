@@ -15,22 +15,6 @@ val map_obs_prog_def = Define `
 map_obs_prog f (BirProgram xs) = BirProgram (MAP f xs)
 `;
 
-val observe_label_def = Define `
-observe_label (BL_Address addr) =
-BStmt_Observe 0 (BExp_Const (Imm1 1w)) [BExp_Const addr]
-              HD
-`;
-
-val add_block_pc_obs_def = Define`
-add_block_pc_obs block =
-block with bb_statements :=
-observe_label (block.bb_label) :: block.bb_statements
-`;
-
-val add_obs_pc_def = Define`
-add_obs_pc p = map_obs_prog add_block_pc_obs p
-`;
-
 val select_mem_def = Define`
 select_mem exp =
 (case exp of
@@ -67,67 +51,93 @@ val add_obs_1_stmts_def = Define `
 `;
 
 val add_obs_1_block_def = Define`
-add_obs_1_block obs_fun block =
-         block with bb_statements := add_obs_1_stmts obs_fun block.bb_statements
+    add_obs_1_block obs_fun block =
+      block with bb_statements := add_obs_1_stmts obs_fun block.bb_statements
 `;
 
- 
-(* Spectre like attacks. Observation includes, addresses for load and store insructions together with the pc value *)
+
+(* observe pc *)
 (* ============================================================================== *)
-val add_obs_spctr_block_def = Define`
-add_obs_spctr_block obs_fun block =
-     let memObs = add_obs_1_stmts obs_fun block.bb_statements in
-     let pcObs  = observe_label (block.bb_label)              in
-	 block with bb_statements := APPEND memObs [pcObs]
+val observe_label_def = Define `
+    observe_label (BL_Address addr) =
+         BStmt_Observe 0
+                       (BExp_Const (Imm1 1w))
+                       [BExp_Const addr]
+                       HD
 `;
-  
-(* val lable_to_exp_def = Define` *)
-(* lable_to_exp l =   *)
-(*       case l of BL_Address x => BExp_Const x *)
-(* `; *)
 
+val add_obs_pc_block_def = Define`
+    add_obs_pc_block block =
+      block with bb_statements :=
+        observe_label (block.bb_label) :: block.bb_statements
+`;
+
+val add_obs_pc_def = Define`
+    add_obs_pc p = map_obs_prog add_obs_pc_block p
+`;
+
+
+(* observe whole memory address and pc *)
+(* ============================================================================== *)
 val observe_mem_addr_def = Define`
-observe_mem_addr (* l *) e = 
-      BStmt_Observe 0 (BExp_Const (Imm1 1w)) [e(* ;lable_to_exp l *)] HD
+    observe_mem_addr e = 
+      BStmt_Observe 0
+                    (BExp_Const (Imm1 1w))
+                    [e]
+                    HD
+`;
+
+(* TODO: better use add_obs_pc_block and don't append in the end for no reason
+         but, it seems that at the moment use of add_obs_pc_block always leads to
+              unsatisfiable... what's that??? *)
+val append_obs_pc_block_def = Define`
+    append_obs_pc_block block =
+      block with bb_statements :=
+        APPEND (block.bb_statements) [observe_label (block.bb_label)]
 `;
 
 val add_obs_mem_addr_pc_armv8_def = Define`
-add_obs_mem_addr_pc_armv8 p = 
-      map_obs_prog (add_obs_spctr_block observe_mem_addr) p
-`;
-(* ------------------------------------------------------------------------------ *)
-val add_obs_bir_prog_def = Define`
-      add_obs_bir_prog id_obs block = 
-	let (lbl, obs) = id_obs in
-	   
-	    if lbl = block.bb_label
-	    then block with bb_statements := APPEND obs block.bb_statements
-	    else block
+    add_obs_mem_addr_pc_armv8 p = 
+      map_obs_prog (add_obs_pc_block o (add_obs_1_block observe_mem_addr)) p
 `;
 
-val add_obs_speculative_exec_armv8_def = Define`
-     add_obs_speculative_exec_armv8 p id_obs =  
-       map_obs_prog (add_obs_bir_prog id_obs) p
+
+(* generic helper for augmentation of transient execution
+   (prepend observation to specific block) *)
+(* ============================================================================== *)
+val prepend_obs_in_bir_block_def = Define`
+    prepend_obs_in_bir_block id_obs block = 
+      let (lbl, obs) = id_obs in
+        if lbl = block.bb_label
+        then block with bb_statements := APPEND obs block.bb_statements
+        else block
 `;
+
+val prepend_obs_in_bir_prog_block_def = Define`
+    prepend_obs_in_bir_prog_block id_obs p =
+      map_obs_prog (prepend_obs_in_bir_block id_obs) p
+`;
+
+
 (* observe tag & set index *)
 (* ============================================================================== *)
-val observe_mem_def = Define`
-observe_mem e =
+val observe_mem_tag_index_def = Define`
+    observe_mem_tag_index e =
          BStmt_Observe 0
                        (BExp_Const (Imm1 1w))
                        ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
                        HD
 `;
 
-val add_obs_cache_line_armv8_def = Define`
-add_obs_cache_line_armv8 p = map_obs_prog (add_obs_1_block observe_mem) p
+val add_obs_cache_line_tag_index_armv8_def = Define`
+    add_obs_cache_line_tag_index_armv8 p = map_obs_prog (add_obs_1_block observe_mem_tag_index) p
 `;
 
 
 (* observe tag only *)
 (* ============================================================================== *)
 val observe_mem_tag_def = Define`
-observe_mem_tag e =
+    observe_mem_tag e =
          BStmt_Observe 0
                        (BExp_Const (Imm1 1w))
                        ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 13w))])
@@ -135,18 +145,21 @@ observe_mem_tag e =
 `;
 
 val add_obs_cache_line_tag_armv8_def = Define`
-add_obs_cache_line_tag_armv8 p = map_obs_prog (add_obs_1_block observe_mem_tag) p
+    add_obs_cache_line_tag_armv8 p = map_obs_prog (add_obs_1_block observe_mem_tag) p
 `;
 
 
 (* observe index only *)
 (* ============================================================================== *)
 val observe_mem_index_def = Define`
-observe_mem_index e =
-         BStmt_Observe 0
-                       (BExp_Const (Imm1 1w))
-                       ([BExp_BinExp BIExp_And (BExp_Const (Imm64 0x7Fw)) (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))])
-                       HD
+    observe_mem_index e =
+         BStmt_Observe
+           0
+           (BExp_Const (Imm1 1w))
+           ([BExp_BinExp BIExp_And
+                    (BExp_Const (Imm64 0x7Fw))
+                    (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))])
+           HD
 `;
 
 val add_obs_cache_line_index_armv8_def = Define`
@@ -157,42 +170,42 @@ add_obs_cache_line_index_armv8 p = map_obs_prog (add_obs_1_block observe_mem_ind
 (* observe tag & set index, if set index is in upper half, misses page boundary by 3 sets *)
 (* ============================================================================== *)
 val observe_mem_subset_def = Define`
-observe_mem_subset e =
-BStmt_Observe 0
-              (BExp_BinPred BIExp_LessThan
-                            (BExp_Const (Imm64 60w))
-                            (BExp_BinExp BIExp_Mod
-                                         (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))
-                                         (BExp_Const (Imm64 128w)))
-              )
+    observe_mem_subset e =
+         BStmt_Observe
+           0
+           (BExp_BinPred BIExp_LessThan
+               (BExp_Const (Imm64 60w))
+               (BExp_BinExp BIExp_Mod
+                     (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))
+                     (BExp_Const (Imm64 128w))))
                             (* (BExp_BinExp BIExp_And *)
                             (*              (BExp_Const (Imm64 0x1000w))) *)
                             (*          (BExp_Const (Imm64 0w))) *)
-              ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
-              HD
+           ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
+           HD
 `;
 
 val add_obs_cache_line_subset_armv8_def = Define`
-add_obs_cache_line_subset_armv8 p = map_obs_prog (add_obs_1_block observe_mem_subset) p
+    add_obs_cache_line_subset_armv8 p = map_obs_prog (add_obs_1_block observe_mem_subset) p
 `;
 
 
 (* observe tag & set index, if set index is in upper half, on page boundary *)
 (* ============================================================================== *)
 val observe_mem_subset_page_def = Define`
-observe_mem_subset_page e =
-BStmt_Observe 0
-              (BExp_BinPred BIExp_LessThan
-                            (BExp_Const (Imm64 63w))
-                            (BExp_BinExp BIExp_Mod
-                                         (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))
-                                         (BExp_Const (Imm64 128w)))
-              )
+    observe_mem_subset_page e =
+         BStmt_Observe
+           0
+           (BExp_BinPred BIExp_LessThan
+                (BExp_Const (Imm64 63w))
+                (BExp_BinExp BIExp_Mod
+                   (BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w)))
+                   (BExp_Const (Imm64 128w))))
                             (* (BExp_BinExp BIExp_And *)
                             (*              (BExp_Const (Imm64 0x1000w))) *)
                             (*          (BExp_Const (Imm64 0w))) *)
-              ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
-              HD
+           ([BExp_BinExp BIExp_RightShift e (BExp_Const (Imm64 6w))])
+           HD
 `;
 
 val add_obs_cache_line_subset_page_armv8_def = Define`
@@ -203,11 +216,16 @@ add_obs_cache_line_subset_page_armv8 p = map_obs_prog (add_obs_1_block observe_m
 (* Subset with extra observation *)
 (* ============================================================================== *)
 val observe_mem_line_def = Define`
-observe_mem_line e =
-BStmt_Observe 0
+    observe_mem_line e =
+         BStmt_Observe
+              0
               ^btrue
-                   ([BExp_BinExp BIExp_RightShift (
-                       BExp_BinExp BIExp_And e (BExp_BinExp BIExp_LeftShift (BExp_Const (Imm64 0x7Fw)) (BExp_Const (Imm64 6w)))) (BExp_Const (Imm64 6w))])
+              ([BExp_BinExp BIExp_RightShift (
+                  BExp_BinExp BIExp_And e (
+                    BExp_BinExp BIExp_LeftShift
+                         (BExp_Const (Imm64 0x7Fw))
+                         (BExp_Const (Imm64 6w))))
+                (BExp_Const (Imm64 6w))])
               HD
 `;
 
