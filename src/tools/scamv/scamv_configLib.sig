@@ -8,7 +8,7 @@ sig
                       | from_file
                       | from_listfile
 
-    datatype obs_model = mem_address_pc_trace
+    datatype obs_model = mem_address_pc
 	               | cache_tag_index
                        | cache_tag_only
                        | cache_index_only

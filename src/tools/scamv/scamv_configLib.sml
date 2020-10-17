@@ -14,7 +14,7 @@ datatype gen_type = gen_rand
                   | from_file
                   | from_listfile
 
-datatype obs_model = mem_address_pc_trace
+datatype obs_model = mem_address_pc
                    | cache_tag_index
                    | cache_tag_only
                    | cache_index_only
@@ -69,7 +69,7 @@ fun gen_type_fromString gt =
 
 fun obs_model_fromString om =
     case om of
-	"mem_address_pc_trace"      => SOME mem_address_pc_trace
+        "mem_address_pc"            => SOME mem_address_pc
       | "cache_tag_index"           => SOME cache_tag_index
       | "cache_tag_only"            => SOME cache_tag_only
       | "cache_index_only"          => SOME cache_index_only
@@ -357,7 +357,7 @@ fun print_scamv_opt_usage () =
         print "Scam-V Usage:\n\n";
         List.map print_entry opt_table;
         print ("\ngenerator arg should be one of: rand, prefetch_strides, qc, slice, file, listfile\n");
-        print ("\nobs_model arg should be one of: mem_address_pc_trace, cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page\n");
+        print ("\nobs_model arg should be one of: mem_address_pc, cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page\n");
         print ("\nhw_obs_model arg should be one of: hw_cache_tag_index, hw_cache_index_numvalid, hw_cache_tag_index_part, hw_cache_tag_index_part_page\n");
         print ("\nDefaults are: " ^ PolyML.makestring default_cfg ^ "\n")
     end

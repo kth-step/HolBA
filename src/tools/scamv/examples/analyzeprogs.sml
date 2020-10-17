@@ -97,7 +97,7 @@ val (asm_code, lifted_prog, prog_len) = lift_prog_lift (fn x => raise ERR "scrip
 val lifted_prog_w_halt = add_halt_to_prog prog_len lifted_prog;
 
 (* obs augmentation *)
-val current_obs_model_id = "mem_address_pc_trace";
+val current_obs_model_id = "mem_address_pc";
 
 val add_obs = #add_obs (bir_obs_modelLib.get_obs_model (current_obs_model_id));
 val lifted_prog_w_obs = add_obs lifted_prog_w_halt;
