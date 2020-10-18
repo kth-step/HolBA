@@ -296,7 +296,6 @@ in
           String.implode (List.take (tl s_l, (length s_l) - 2))
         end;
 
-      (* TODO: did I place the unpacking op for quotes correctly? *)
       fun parseReg name vs =
         let
           val _ = if List.hd (String.explode name) = #"x" then () else
@@ -311,7 +310,6 @@ in
           (reg_s, v)
         end;
 
-      (* TODO: did I place the unpacking op for quotes correctly? *)
       fun parseMem name vs =
         let
           val _ = if name = "mem" then () else

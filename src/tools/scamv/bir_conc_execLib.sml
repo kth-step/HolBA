@@ -125,7 +125,7 @@ struct
 	  open bir_exp_substitutionsSyntax
 	  
 	  fun distinct [] = []
-	    | distinct (x::xs) = x::distinct(List.filter (fn y => y <> x) xs);
+	    | distinct (x::xs) = x::distinct(List.filter (fn y => not (identical y x)) xs);
 
 	  val mem = mk_var ("MEM",Type`:num |-> num`)
 	  val loadList = find_terms is_BExp_Load (econcl exp)
@@ -174,7 +174,7 @@ struct
 	  val states   = symb_exec_process_to_leafs_pdecide (fn x => true) envfo depth precond prog (SOME "*")
 
 	  (* filter for the concrete path *)
-	  fun eq_true t = t = ``SOME (BVal_Imm (Imm1 1w))``
+	  fun eq_true t = identical t ``SOME (BVal_Imm (Imm1 1w))``
 	  fun pathcond_val s =
 	      let
 		  val (bsst_pred_init_mem, ms) = mem_init_conc_exec ``(^s).bsst_pred`` (mls,v)
@@ -253,7 +253,7 @@ struct
       val obs_exp = map dest_bir_symb_obs (flatten obs_elem);
       val res = List.concat
                     (map (fn (id,cond,ob,f) =>
-                             if eval_exp_to_val cond = ``BVal_Imm (Imm1 1w)`` andalso int_of_term id <> obs_projection
+                             if identical (eval_exp_to_val cond) ``BVal_Imm (Imm1 1w)`` andalso int_of_term id <> obs_projection
                              then let val t = mk_comb (f, eval_explist_to_vallist ob)
                                   in [(int_of_term id,eval_exp t)] end
                              else [])
@@ -304,7 +304,7 @@ struct
 	      val (obs1, state1) = conc_exec_obs_compute obs_projection prog s1;
 	      val (obs2, state2) = conc_exec_obs_compute obs_projection prog s2;
       in
-	  (obs1 = obs2, [state1, state2])
+	  (list_eq (fn (i1,t1) => fn (i2,t2) => i1 = i2 andalso identical t1 t2) obs1 obs2, [state1, state2])
       end;
 
 

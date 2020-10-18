@@ -112,9 +112,9 @@ fun bir_free_vars exp =
 	    if is_comb exp then
 		let val (con,args) = strip_comb exp
 		in
-		    if con = ``BExp_MemConst``
+		    if identical con ``BExp_MemConst``
 		    then [``"MEM"``]
-		    else if con = ``BExp_Den``
+		    else if identical con ``BExp_Den``
 		    then
 		       let val v = case strip_comb (hd args) of
 				       (_,v::_) => v
@@ -154,7 +154,7 @@ fun make_word_relation relation exps =
                      (map (fromHOLstring o snd o dest_comb)
                          (nub_with (fn (x,y) => identical x y) (flatten (map primed_vars exps))));
         val unprimed = sort (curry String.<=)
-                       (nub (map fromHOLstring
+                       (nub_with (op=) (map fromHOLstring
                             (flatten (map bir_free_vars exps))));
 
         val pairs = zip unprimed primed;
@@ -177,8 +177,8 @@ fun make_word_relation relation exps =
 		open finite_mapSyntax
 		val va = mk_var (a, ``:word64 |-> word8``)
 		val vb = mk_var (b, ``:word64 |-> word8``)
-		fun split_mem  tms m = filter (fn tm => (#1 (dest_fapply(find_term is_fapply tm)) = m)) tms
-		fun extract_mem_load n rel = ((nub o find_terms (can (dest_mem_load n))) rel);
+		fun split_mem  tms m = filter (fn tm => (identical (#1 (dest_fapply(find_term is_fapply tm))) m)) tms
+		fun extract_mem_load n rel = ((nub_with (fn (x,y) => identical x y) o find_terms (can (dest_mem_load n))) rel);
 		val memop  = (extract_mem_load 7 rel)@(extract_mem_load 3 rel)@(extract_mem_load 1 rel)@(extract_mem_load 0 rel)
 		val m1 = zip (split_mem  memop va) (split_mem memop vb)
 		val res = if List.null m1 then T else list_mk_disj (map (fn (tm, tm') => ``^tm <> ^tm'`` ) m1)

@@ -70,8 +70,8 @@ local
 	    val descr_o = #CFGN_hc_descr n;
 	    val n_type  = #CFGN_type n;
 		
-	    val acc_new = (if n_type = CFGNT_CondJump then [entry] else [])@acc;
-	    val targets_to_visit = List.filter (fn x => List.all (fn y => x <> y) visited) targets;
+	    val acc_new = (if cfg_node_type_eq (n_type, CFGNT_CondJump) then [entry] else [])@acc;
+	    val targets_to_visit = List.filter (fn x => List.all (fn y => not (identical x y)) visited) targets;
 	    
 	in
 	    List.foldr (fn (entry',(visited',acc')) => traverse_graph g entry' visited' acc') 
@@ -87,10 +87,10 @@ local
 	    val n_type  = #CFGN_type n;
 
 	    val (targets_to_visit, acc_new) = 
-		if (n_type = CFGNT_CondJump) orelse (depth = 0) 
-		then ([], (if n_type = CFGNT_CondJump then [entry] else [])@acc)
-		else (List.filter (fn x => List.all (fn y => x <> y) visited) targets,
-		      (if n_type = CFGNT_CondJump then [entry] else [])@acc)
+		if (cfg_node_type_eq (n_type, CFGNT_CondJump)) orelse (depth = 0) 
+		then ([], (if cfg_node_type_eq (n_type, CFGNT_CondJump) then [entry] else [])@acc)
+		else (List.filter (fn x => List.all (fn y => not (identical x y)) visited) targets,
+		      (if cfg_node_type_eq (n_type, CFGNT_CondJump) then [entry] else [])@acc)
 	in
 
 	    List.foldr (fn(entry',(visited',acc')) => traverse_graph_branch g (depth-1) entry' visited' acc') 
@@ -110,8 +110,8 @@ local
 			     end) (filter f labels)
 
 	    val bn1::bn2::_ = List.map (fn t => fst (traverse_graph_branch g depth (t) [] [])) targets;
-	    val b1_nodes = List.filter (fn x => (List.all (fn y => x <> y) bn1)) bn2;
-	    val b2_nodes = List.filter (fn x => (List.all (fn y => x <> y) bn2)) bn1;
+	    val b1_nodes = List.filter (fn x => (List.all (fn y => not (identical x y)) bn1)) bn2;
+	    val b2_nodes = List.filter (fn x => (List.all (fn y => not (identical x y)) bn2)) bn1;
 	    val Obs_dict = Redblackmap.insert(Obs_dict, hd targets (* hd b2_nodes *), extratc_obs b1_nodes);
 	    val Obs_dict = Redblackmap.insert(Obs_dict, last targets (* hd b1_nodes *), extratc_obs b2_nodes);
 	in
@@ -124,9 +124,9 @@ local
 		if is_comb exp then
 		    let val (con,args) = strip_comb exp
 		    in
-			if con = ``BExp_MemConst``
+			if identical con ``BExp_MemConst``
 			then [``"MEM"``]
-			else if con = ``BExp_Den``
+			else if identical con ``BExp_Den``
 			then
 			    let val v = case strip_comb (hd args) of
 					    (_,v::_) => v

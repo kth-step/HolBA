@@ -81,6 +81,7 @@ val _ = print (exp_id ^ "\n");
 val (asm_lines, (s1, s2, traino)) = bir_embexp_load_exp exp_id;
 
 val _ = machstate_print s1;
+val _ = machstate_print s2;
 
 val s_train = valOf traino
               handle _ => raise ERR "script" "no training data";
@@ -205,7 +206,7 @@ fun substvars_scamv_hack sm_ e_ =
       val bexp = Redblackmap.find (sm_, vn)
                  handle _ => raise ERR "script" ("coudln't find state variable for substitution: " ^ vn);
 
-      val _ = if vt = ``BType_Imm Bit64`` then () else
+      val _ = if identical vt ``BType_Imm Bit64`` then () else
               raise ERR "script" "check type of bexp";
     in
       bexp
@@ -252,7 +253,7 @@ fun pcond_evals_to_birtrue pcond_ sm_ =
   let
     val reso = eval_to_bval sm_ pcond_;
   in
-    reso = SOME ``(BVal_Imm (Imm1 1w))``
+    option_eq identical reso (SOME ``(BVal_Imm (Imm1 1w))``)
   end
   handle _ => false;
 
