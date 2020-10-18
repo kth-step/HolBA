@@ -242,11 +242,12 @@ struct
           "\n\t\"" ^ regname ^ "\": \"0x" ^ (Arbnumcore.toHexString v) ^ "\""
         end;
 
+      fun memConcat midstr l =
+             if List.null l then "" else
+             List.foldr (fn (a,b) => b^midstr^a) (hd l) (List.rev (tl l));
+
       fun mkv_to_json m =
         let
-          fun memConcat l = if List.null l then "" else
-                            foldr (fn (a,b) => a^",\n"^b) (hd l) (tl l);
-
           val mname = "mem";
           fun mentry_to_json entr =
                 "\t\t" ^
@@ -254,7 +255,7 @@ struct
 		" : \"0x" ^ (Arbnumcore.toHexString (snd entr)) ^ "\"";
 	  val mappings = List.map mentry_to_json (Redblackmap.listItems m);
 
-          val m_tm = memConcat mappings;
+          val m_tm = memConcat ",\n" mappings;
         in
           "\n\t\"" ^ mname ^ "\": " ^ "{\n" ^ m_tm ^ "\n\t}"
         end;
@@ -263,9 +264,9 @@ struct
       val s_jsonmappings_mem = mkv_to_json memmap
       val s_jsonmappings = s_jsonmappings_reg@[s_jsonmappings_mem]
 
-      val str = List.foldr (fn (m, str) => m ^ "," ^ str) "" s_jsonmappings
+      val str = memConcat "," s_jsonmappings;
     in
-      "{" ^ (String.extract(str, 0, SOME((String.size str) - 1))) ^ "\n}"
+      "{" ^  str ^ "\n}"
     end;
 
 (* generate state from json file *)
