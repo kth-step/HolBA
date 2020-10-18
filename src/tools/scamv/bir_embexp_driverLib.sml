@@ -209,14 +209,14 @@ struct
 
   fun machstate_print (MACHSTATE (regmap, (wsz, memmap))) =
       let
-	  val _ = print ("State is =  ");
-	  val _ = print ("(mem, ");
-	  val _ = List.map (fn x =>  print ("("^(Arbnum.toString(#1 x))^","^(Arbnum.toString(#2 x))^")"))
+	  val _ = print ("MACHSTATE = (\n");
+	  val _ = print ("  mem := {\n");
+	  val _ = List.map (fn (a,v) =>  print ("\t(0x"^(Arbnum.toHexString(a))^"\t-> 0x"^(Arbnum.toHexString(v))^")\n"))
                            (Redblackmap.listItems memmap);
-	  val _ = print "), ";
-	  val _ = List.map (fn (n,v) => print ("(" ^ n ^ ", " ^(Arbnum.toString( v))^ ")"))
+	  val _ = print "  }\n  regs := {\n";
+	  val _ = List.map (fn (n,v) => print ("\t(" ^ n ^ "\t-> 0x" ^(Arbnum.toHexString( v))^ ")\n"))
                            (Redblackmap.listItems regmap);
-	  val _ = print "\n";
+	  val _ = print "  }\n)\n";
       in () end;
 
   fun machstate_add_reg (rn, rv) (MACHSTATE (rm, m)) =

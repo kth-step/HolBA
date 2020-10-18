@@ -80,8 +80,11 @@ val _ = print (exp_id ^ "\n");
 
 val (asm_lines, (s1, s2, traino)) = bir_embexp_load_exp exp_id;
 
+(*
 val _ = machstate_print s1;
 val _ = machstate_print s2;
+val _ = Option.map machstate_print traino;
+*)
 
 val s_train = valOf traino
               handle _ => raise ERR "script" "no training data";
