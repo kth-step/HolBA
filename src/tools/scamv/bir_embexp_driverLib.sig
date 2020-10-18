@@ -1,7 +1,13 @@
 signature bir_embexp_driverLib = sig
-  
-  datatype modelValues = memT of (string * (num*num) list)
-		       | regT of (string * num)
+  (* a machine consists of register to value mappings and a memory mapping *)
+  (* register names are for example R0 - R29, unmapped registers are 0 *)
+  (* memory mapping has a word size, unmapped memory is 0 *)
+  datatype machineState = MACHSTATE of (((string, num) Redblackmap.dict) * (int * ((num, num) Redblackmap.dict)));
+  val machstate_empty   : machineState;
+  val machstate_print   : machineState -> unit
+  val machstate_add_reg : string * num -> machineState -> machineState
+  val machstate_replace_mem : int * (num, num) Redblackmap.dict -> machineState -> machineState
+
   (* platform parameters *)
   (* ======================================== *)
   val bir_embexp_params_code   : Arbnum.num (* base address for placement *)
@@ -27,12 +33,13 @@ signature bir_embexp_driverLib = sig
   (* Inputs:
        - (architecture_id, experiment_type_id/attacker_id, state_gen_id/obs_model_id)
        - prog_id (see above)
-       - (state1, state2)
+       - (state1, state2, train_option)
      Returns experiment id (exp_id)
    *)
-  (* val bir_embexp_sates2_create : (string * string * string) -> string -> (((string * num) list) * ((string * num) list)) -> string *)
-  val bir_embexp_sates2_create : string * string * string ->  string -> modelValues list * modelValues list -> string
-  val bir_embexp_sates3_create : string * string * string ->  string -> modelValues list * modelValues list * modelValues list -> string
+  val bir_embexp_states2_create : (string * string * string) ->
+                                  string ->
+                                  (machineState * machineState * machineState option) ->
+                                  string
   (* Inputs:
        - exp_id (see above)
        - with_reset (run with reset or not)
@@ -64,7 +71,7 @@ signature bir_embexp_driverLib = sig
 
   (* Input: exp_id *)
   (* Output: asm_lines, model pair *)
-  val bir_embexp_load_exp  : string -> string list * (modelValues list * modelValues list) * modelValues list option
+  val bir_embexp_load_exp  : string -> string list * (machineState * machineState * machineState option)
 
   val bir_embexp_load_exp_ids : string -> string list
 

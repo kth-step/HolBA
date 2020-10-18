@@ -78,7 +78,10 @@ val _ = print ("progress: " ^ percent_s);
 val _ = print ("\n=========================================================\n");
 val _ = print (exp_id ^ "\n");
 
-val (asm_lines, (s1,s2), traino) = bir_embexp_load_exp exp_id;
+val (asm_lines, (s1, s2, traino)) = bir_embexp_load_exp exp_id;
+
+val _ = machstate_print s1;
+
 val s_train = valOf traino
               handle _ => raise ERR "script" "no training data";
 
@@ -104,7 +107,7 @@ val lifted_prog_w_obs = add_obs lifted_prog_w_halt;
 
 (* symbolic execution *)
 val prog = lifted_prog_w_obs;
-val (paths, all_exps) = symb_exec_phase prog;
+val (paths, all_exps) = symb_exec_phase prog NONE;
 
 (*
 (* collect variables in programs, and [path condition and observation list] per path *)
@@ -171,19 +174,20 @@ val _ = if length pathcondvarsmap = 2 then () else
 
 (*
 val s_ = s2;
+
+val (MACHSTATE (regmap, (wsz, memmap))) = s1;
 *)
 
 val memtype = inst [Type.alpha |-> ``:num``, Type.beta |-> ``:num``] finite_mapSyntax.fempty_t;
-fun modelVal_to_expmap (regT (n, v)) =
-      (n, ``BExp_Const (Imm64 ^(wordsSyntax.mk_wordi (v, 64)))``)
-  | modelVal_to_expmap (memT (n, l)) =
-      (n, List.foldr (fn ((a,v), t) => finite_mapSyntax.mk_fupdate
+fun model_to_explist (MACHSTATE (regmap, (wsz, memmap))) =
+  (("MEM", List.foldr (fn ((a,v), t) => finite_mapSyntax.mk_fupdate
                 (t, pairSyntax.mk_pair (numSyntax.mk_numeral a, numSyntax.mk_numeral v))
-            ) memtype l);
+            ) memtype (Redblackmap.listItems memmap)))::
+  (List.map (fn (n,v) => (n, ``BExp_Const (Imm64 ^(wordsSyntax.mk_wordi (v, 64)))``)) (Redblackmap.listItems regmap));
 
-val sm1 = Redblackmap.fromList String.compare (List.map modelVal_to_expmap s1);
-val sm2 = Redblackmap.fromList String.compare (List.map modelVal_to_expmap s2);
-val sm_train = Redblackmap.fromList String.compare (List.map modelVal_to_expmap s_train);
+val sm1 = Redblackmap.fromList String.compare (model_to_explist s1);
+val sm2 = Redblackmap.fromList String.compare (model_to_explist s2);
+val sm_train = Redblackmap.fromList String.compare (model_to_explist s_train);
 
 (*
 val sm_ = sm1;
@@ -399,36 +403,30 @@ fun get_state_deps sm_ obs_exps_ =
 val obs_exps_ = obs_exps;
 val sm_ = sm1;
 val s_ = s1;
+
+val (MACHSTATE (regmap, (wsz, memmap))) = s1;
 *)
 
-fun filter_state s_ (sm_, obs_exps_) =
+fun filter_state (MACHSTATE (regmap, (wsz, memmap))) (sm_, obs_exps_) =
   let
     val (vns_set_, addrs_set_) = get_state_deps sm_ obs_exps_;
 
-    fun memlistentry_in_set set (a,_) =
+    fun listentry_in_set set (a,_) =
       Redblackset.member (set, a);
 
-    fun transformmapping (regT (n,v)) =
-          if Redblackset.member (vns_set_, n) then
-            SOME (regT (n,v))
-          else
-            NONE
-      | transformmapping (memT (n,l)) =
-          if n = "MEM" then
-            SOME (memT (n, List.filter (memlistentry_in_set addrs_set_) l))
-          else
-            raise ERR "script" "unexpected memory name";
+    val regmap' = Redblackmap.fromList String.compare (
+        List.filter (listentry_in_set vns_set_) (Redblackmap.listItems regmap)
+      );
+
+    val memmap' = Redblackmap.fromList Arbnum.compare (
+        List.filter (listentry_in_set addrs_set_) (Redblackmap.listItems memmap)
+      );
   in
-    List.map valOf (List.filter isSome (List.map transformmapping s_))
+    (MACHSTATE (regmap', (wsz, memmap')))
   end;
 
-fun get_state_size s_ =
-  let
-    fun modelValueSize (regT _) = 1
-      | modelValueSize (memT (_, l)) = length l;
-  in
-    List.foldr (op+) 0 (List.map modelValueSize s_)
-  end;
+fun get_state_size (MACHSTATE (regmap, (_, memmap))) =
+  (Redblackmap.numItems regmap) + (Redblackmap.numItems memmap);
 
 val s1_filtered = filter_state s1 (sm1, obs_exps);
 val s2_filtered = filter_state s2 (sm2, obs_exps);
@@ -441,7 +439,7 @@ val _ = print ("\n");
 val code_asm = bir_embexp_prog_to_code asm_lines;
 val prog_id = bir_embexp_prog_create (arch_id, prog_gen_id) code_asm;
 
-val exp_id_new = bir_embexp_sates3_create (arch_id, exp_type_id, state_gen_id) prog_id (s1,s2,s_train);
+val exp_id_new = bir_embexp_states2_create (arch_id, exp_type_id, state_gen_id) prog_id (s1,s2,SOME s_train);
 
 (* store exp_id_new during operation: ok, new, and also fail *)
 val _ = (

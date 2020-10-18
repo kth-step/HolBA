@@ -209,7 +209,7 @@ fun print_model model =
         () (rev model);
 
 fun to_sml_Arbnums model =
-    List.map (fn (name, tm) => 
+    List.foldl (fn ((name, tm), mst) => 
         if finite_mapSyntax.is_fupdate tm
 	then
 	    let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm
@@ -218,13 +218,14 @@ fun to_sml_Arbnums model =
 				       val (ad, vl) = pairSyntax.dest_pair p
 				   in
 				       (dest_word_literal ad, dest_word_literal vl)
+                                       (* TODO: are you serious?! *)
 				       handle _ => (Arbnum.fromInt 4294967295, dest_word_literal vl)
 				   end) vlsW
 	    in
-		memT(name, vlsN)
+		machstate_replace_mem (8, Redblackmap.fromList Arbnum.compare vlsN) mst
 	    end
 	else
-	    regT(name, dest_word_literal tm)) model;
+	    machstate_add_reg (name, dest_word_literal tm) mst) machstate_empty model;
 
 
 val hw_obs_model_id = ref "";
@@ -377,9 +378,6 @@ fun mem_constraint [] = ``T``
 	mc_conj
     end
 
-val getReg = (fn tm => case tm of regT x => x)
-val getMem = (fn tm => case tm of memT x => x) 
-val is_memT= (fn tm => can getMem tm)
 fun next_experiment all_exps next_relation  =
     let
         open bir_expLib;
@@ -480,7 +478,7 @@ fun next_experiment all_exps next_relation  =
 	in
 	 val st = force (ifdef__else__ SPECTRE
 		          (fn () => training_input_mining 6 |> List.partition (isPrimedRun o fst) |>  (* (to_sml_Arbnums o #2)) *) (List.map (fn (r,v) => (remove_prime r,v)) o #1) |> to_sml_Arbnums)
-		          (fn () => [])
+		          (fn () => machstate_empty)
 		         endif__)
 	end
 	(* ------------------------- training end ------------------------- *)
@@ -501,7 +499,7 @@ fun next_experiment all_exps next_relation  =
 	val s1::s2::_ = #2 ce_obs_comp
 
         (* create experiment files *)
-        val exp_id  = bir_embexp_sates3_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2, st);
+        val exp_id  = bir_embexp_states2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2, SOME st);
         val exp_gen_message = "Generated experiment: " ^ exp_id;
         val _ = bir_embexp_log_prog exp_gen_message;
 

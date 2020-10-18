@@ -12,9 +12,6 @@ local
 
 in
 
-(* Data type for memory constraint generation *)
-datatype modelValues = memT of (string * (num*num) list)
-		       | regT of (string * num)
 (* script input helper *)
   local
     val script_args_data = ref (NONE: string option);

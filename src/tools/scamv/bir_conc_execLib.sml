@@ -8,28 +8,18 @@ struct
   open bir_embexp_driverLib;
 (* HOL_Interactive.toggle_quietdec(); *)
 
-  val (mem_state) = ref ([]:modelValues list);
+  val (mem_state) = ref machstate_empty;
 
-  val getReg = (fn tm => case tm of regT x => x)
-  val getMem = (fn tm => case tm of memT x => x) 
-  val is_memT= (fn tm => can getMem tm)
   val toTerm = rhs o concl
-
   fun econcl exp = (toTerm o EVAL) exp
   fun fromTerm tm = Arbnum.fromString (Parse.term_to_string tm);
+
   fun t2n tm = tm |> strip_comb |> #2 |> (fn a::b::_ => (fromTerm a , fromTerm b));
-  fun mk_mem_state tms = memT("MEM", (map (fn p => t2n p) tms));
-  fun print_state s =
-      let
-	  val (m, rg) = List.partition (is_memT) s;
-	  val(n,v) = getMem(hd m);
-	  val _ = print ("State is =  ")
-	  val _ = print ("(" ^ n ^ ", ")
-	  val _ = map (fn x =>  print ("("^(Arbnum.toString(#1 x))^","^(Arbnum.toString(#2 x))^")")) v
-	  val _ = print "), "
-	  val _ =   map (fn x => let val(n,v) = getReg x in print ("(" ^ n ^ ", " ^(Arbnum.toString( v))^ ")") end) rg
-	  val _ = print "\n"
-      in () end;
+  fun mk_mem_state tms = (8, Redblackmap.fromList Arbnum.compare (map (fn p => t2n p) tms));
+  fun is_state_mem_emp (MACHSTATE (_, (_, m))) =
+    (Redblackmap.numItems m = 0);
+  val add_reg_state = machstate_add_reg;
+  val replace_mem_state = machstate_replace_mem;
 
   fun update_env name value env = 
       let
@@ -175,7 +165,7 @@ struct
 	  val memSubs = subst [mem |-> memInit] (econcl exp)
       in
 	  (memSubs,(mk_mem_state []))
-      end
+      end;
 
   fun conc_exec_program depth prog envfo (mls,v) =
       let 
@@ -188,7 +178,7 @@ struct
 	  fun pathcond_val s =
 	      let
 		  val (bsst_pred_init_mem, ms) = mem_init_conc_exec ``(^s).bsst_pred`` (mls,v)
-		  val _ =  mem_state := ms::(!mem_state)
+		  val _ =  mem_state := replace_mem_state ms (!mem_state);
 		  val restr_eval_tm = (toTerm o computeLib.RESTR_EVAL_CONV [``bir_eval_load``, ``bir_eval_store``])
 					  ``bir_eval_exp (^bsst_pred_init_mem) (BEnv (K NONE))``;
 		  val bsst_simp_tm = 
@@ -274,24 +264,34 @@ struct
 
   fun conc_exec_obs_compute obs_projection prog s =
     let
-      val is_state_mem_emp = (fn s => (#1 (List.partition (is_memT) s)) |> hd |> (#2 o getMem) |> List.null);
-      val _ =  mem_state := []
-      
-      val (m, rg) = List.partition (is_memT) s
-      val m'  = if List.null m then ("MEM",[]:((num * num) list)) else (getMem (hd m))
-      val rg' = map getReg rg
-      val envfo = SOME (gen_symb_updates rg')
-      val elm = (filter (fn (a,b) => a = (Arbnum.fromInt 4294967295)) (#2 m'));
+      val (MACHSTATE (regmap, (wsz, memmap))) = s;
+
+      val _ =  mem_state := machstate_empty;
+
+      val _ = if wsz = 8 then () else
+              raise ERR "conc_exec_obs_compute" "can only handle byte addressed memory";
+
+      val regmap' = Redblackmap.listItems regmap;
+      val memmap' = Redblackmap.listItems memmap;
+
+      val envfo = SOME (gen_symb_updates regmap');
+
+      (* TODO: what is this magic thing here? care to comment? *)
+      val elm = (filter (fn (a,b) => a = (Arbnum.fromInt 4294967295)) memmap');
+
+      (* TODO: what is this magic thing? *)
       val (m, v) = if   not(List.null elm) 
 		   then (
-		          getMem (hd m) |> (fn x => ((#1 x), []:((num * num) list))),
-		          numSyntax.term_of_int(Arbnum.toInt((#2 o hd) elm))
+		          [],
+		          numSyntax.term_of_int(Arbnum.toInt((snd o hd) elm))
 		        )
-		   else (m', ``(0:num)``);
-      val state_ = conc_exec_program 200 prog envfo ((#2 m),``^v``)
-      val obs = conc_exec_obs_extract obs_projection state_ ((#2 m),``^v``)
+		   else (memmap', ``(0:num)``);
 
-      val new_state = if (is_state_mem_emp ((!mem_state) @ rg)) then s else (!mem_state) @ rg
+      val state_ = conc_exec_program 200 prog envfo (m,``^v``)
+      val obs = conc_exec_obs_extract obs_projection state_ (m,``^v``)
+
+      val state_wregs = List.foldl (fn (r,s) => add_reg_state r s) (!mem_state) regmap';
+      val new_state = if (is_state_mem_emp state_wregs) then s else state_wregs;
 
       val _ = map (fn (id,ob) => (print (PolyML.makestring id ^ " "); print_term ob)) obs
       val _ = print "\n";
