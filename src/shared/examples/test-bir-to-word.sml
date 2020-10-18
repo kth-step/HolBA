@@ -148,15 +148,79 @@ val bir_exprs = [
        ((memory ' (address + (2w :word64))) :word8)
      ((word_concat :word8 -> word8 -> word16 )
        ((memory ' (address + (1w :word64))) :word8)
-     ((memory ' (address + (0w :word64))) :word8)))))))))))))))``)
+     ((memory ' (address + (0w :word64))) :word8)))))))))))))))``),
+
+  ("Memory constant (128->16) with hol variable for the memory map",
+    ``BExp_MemConst Bit128 Bit16 amap``,
+    ``amap :word128 |-> word16``),
+
+  ("Cast Unsigned with a 128bit bir variable to 16bit (down)",
+    ``BExp_Cast BIExp_UnsignedCast (BExp_Den (BVar "avar" (BType_Imm Bit128))) Bit16``,
+    ``(w2w :word128  -> word16 ) (avar :word128)``),
+
+  ("Cast Unsigned with a 16bit bir variable to 128bit (up)",
+    ``BExp_Cast BIExp_UnsignedCast (BExp_Den (BVar "avar" (BType_Imm Bit16))) Bit128``,
+    ``(w2w :word16  -> word128 ) (avar :word16)``),
+
+  ("Cast Low with a 128bit bir variable to 16bit (down)",
+    ``BExp_Cast BIExp_LowCast (BExp_Den (BVar "avar" (BType_Imm Bit128))) Bit16``,
+    ``(w2w :word128  -> word16 ) (avar :word128)``),
+
+  ("Cast Low with a 16bit bir variable to 128bit (up)",
+    ``BExp_Cast BIExp_LowCast (BExp_Den (BVar "avar" (BType_Imm Bit16))) Bit128``,
+    ``(w2w :word16  -> word128 ) (avar :word16)``),
+
+  ("Cast Signed with a 128bit bir variable to 16bit (down)",
+    ``BExp_Cast BIExp_SignedCast (BExp_Den (BVar "avar" (BType_Imm Bit128))) Bit16``,
+    ``(w2w :word128  -> word16 ) (avar :word128)``),
+
+  ("Cast Signed with a 16bit bir variable to 128bit (up - extend with sign bit)",
+    ``BExp_Cast BIExp_SignedCast (BExp_Den (BVar "avar" (BType_Imm Bit16))) Bit128``,
+    ``(sw2sw :word16 -> word128) (avar :word16)``),
+
+  ("Cast High with a 128bit bir variable to 16bit (down - take the highest bits)",
+    ``BExp_Cast BIExp_HighCast (BExp_Den (BVar "avar" (BType_Imm Bit128))) Bit16``,
+    ``(w2wh :word128 -> word16 ) (avar :word128)``),
+
+  ("Cast High with a 16bit bir variable to 128bit (up)",
+    ``BExp_Cast BIExp_HighCast (BExp_Den (BVar "avar" (BType_Imm Bit16))) Bit128``,
+    ``(w2w :word16 -> word128 ) (avar :word16)``)
+
+(*
+  (* TODO: Unsigned and Low casts are straightforward,
+           Signed and High cast seems correct now,
+           but, can HolSmt actually handle w2wh? I think it cannot, can it?! *)
+*)
 ];
+
+(*
+open bir_exp_immTheory;
+bir_cast_REWRS;
+bir_scast_REWRS;
+bir_hcast_REWRS;
+
+val exp = ``
+BExp_Cast BIExp_SignedCast (BExp_Const (Imm16 0x8001w)) Bit8
+``;
+val exp = ``
+BExp_Cast BIExp_SignedCast (BExp_Const (Imm8 0x81w)) Bit16
+``;
+val exp = ``
+BExp_Cast BIExp_LowCast (BExp_Const (Imm8 0x81w)) Bit8
+``;
+
+(EVAL) ``bir_eval_exp ^exp (BEnv (K NONE))``
+
+(EVAL) ``(sw2sw :word8  -> word16) (0x81w:word8)``
+(EVAL) ``(w2w   :word16 -> word8 ) (0x8001w:word16)``
+*)
 
 (* Print all BIR expressions as words expressions and check that they are correct. *)
 val _ = List.foldl
   (fn ((name, bir_exp, expected), _) =>
     let
       val word_exp = bir2w bir_exp
-      val correct = (word_exp = expected)
+      val correct = (identical word_exp expected)
       val _ = print (name ^ ":\n")
       val _ = Hol_pp.print_term word_exp
       val _ = if correct then () else (

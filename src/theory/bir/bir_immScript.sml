@@ -10,12 +10,12 @@ val _ = new_theory "bir_imm";
 
 (* Immediates can be words of various sizes *)
 val _ = Datatype `bir_imm_t =
-    Imm1   bool[1]
-  | Imm8   bool[8]
-  | Imm16  bool[16]
-  | Imm32  bool[32]
-  | Imm64  bool[64]
-  | Imm128 bool[128]
+    Imm1   (bool[1])
+  | Imm8   (bool[8])
+  | Imm16  (bool[16])
+  | Imm32  (bool[32])
+  | Imm64  (bool[64])
+  | Imm128 (bool[128])
 `;
 
 

@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../../bir ../../bir-support ../../bin_hoare_logic
+DEPENDENCIES   = ../../bir ../../bir-support ../../abstract_hoare_logic
 
 
 # configuration

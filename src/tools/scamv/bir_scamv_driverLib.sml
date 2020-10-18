@@ -148,11 +148,11 @@ fun make_word_relation relation exps =
                 (bir_free_vars exp)
 
         fun primed_vars exp = map (#residue) (primed_subst exp);
-        fun nub [] = []
-          | nub (x::xs) = x::nub(List.filter (fn y => y <> x) xs);
+        fun nub_with eq [] = []
+          | nub_with eq (x::xs) = x::nub_with eq (List.filter (fn y => not (eq(y,x))) xs);
         val primed = sort (curry String.<=)
                      (map (fromHOLstring o snd o dest_comb)
-                         (nub (flatten (map primed_vars exps))));
+                         (nub_with (fn (x,y) => identical x y) (flatten (map primed_vars exps))));
         val unprimed = sort (curry String.<=)
                        (nub (map fromHOLstring
                             (flatten (map bir_free_vars exps))));

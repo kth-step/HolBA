@@ -292,8 +292,13 @@ val bir_vs_consistent_IMP_includes_envty_of_vs = store_thm("bir_vs_consistent_IM
     ) >>
     `~(vs x)` by METIS_TAC [IN_APP] >>
     ASM_SIMP_TAC (std_ss) []
-  ) >>
-  ASM_SIMP_TAC std_ss [CHOICE_SING]
+  ) >|
+  [
+    Q.EXISTS_TAC `v` >>
+    fs[]
+  ,
+    ASM_SIMP_TAC std_ss [CHOICE_SING]
+  ]
 );
 
 val bir_envty_includes_vs_EMPTY = store_thm("bir_envty_includes_vs_EMPTY", ``

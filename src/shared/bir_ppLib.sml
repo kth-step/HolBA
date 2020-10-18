@@ -112,8 +112,8 @@ struct
         if is_BExp_Const exp then
           let
             val prec = Prec (2000, "bir_exp_const")
-            val is_false = (exp = mk_BExp_Const (mk_Imm_of_int 1 0))
-            val is_true = (exp = mk_BExp_Const (mk_Imm_of_int 1 1))
+            val is_false = (identical exp (mk_BExp_Const (mk_Imm_of_int 1 0)))
+            val is_true = (identical exp (mk_BExp_Const (mk_Imm_of_int 1 1)))
           in
             if is_false then
               (paren_required, fn () => add_string "BExp_False")

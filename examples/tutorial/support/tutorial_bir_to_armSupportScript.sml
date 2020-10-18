@@ -2,14 +2,15 @@ open HolKernel Parse boolLib bossLib;
 
 open bir_programTheory;
 open bir_wm_instTheory;
-open bin_hoare_logicTheory;
-open bin_hoare_logicSimps;
 open bir_program_multistep_propsTheory;
 open bir_auxiliaryTheory;
 
+open abstract_hoare_logicTheory;
+open abstract_simp_hoare_logicTheory;
+
 open HolBASimps;
 open HolBACoreSimps;
-open bin_hoare_logicSimps;
+open abstract_hoare_logicSimps;
 
 open bir_auxiliaryLib;
 
@@ -56,7 +57,7 @@ val arm_weak_model_def =
 (* The main triple to be used for ARM composition *)
 val arm8_triple_def = Define `
   arm8_triple mms l ls pre post =
-    weak_triple arm_weak_model l ls
+    abstract_jgmt arm_weak_model l ls
       (\ms. (arm8_bmr.bmr_extra ms)  /\
             (EVERY (bmr_ms_mem_contains arm8_bmr ms) mms) /\
             (pre ms))         
@@ -67,13 +68,13 @@ val arm8_triple_def = Define `
 
 
 val bir_pre_arm8_to_bir_def = Define `
-  bir_pre_arm8_to_bir pre pre_bir =
+  bir_pre_arm8_to_bir pre pre_bir = (
     bir_is_bool_exp pre_bir /\
     !ms bs.
     bmr_rel arm8_bmr bs ms ==>
     bir_env_vars_are_initialised bs.bst_environ (bir_vars_of_exp pre_bir) ==>
     pre ms ==>
-    (bir_eval_exp pre_bir bs.bst_environ = SOME bir_val_true)
+    (bir_eval_exp pre_bir bs.bst_environ = SOME bir_val_true))
 `;
 
 val bir_post_bir_to_arm8_def = Define `
@@ -230,7 +231,7 @@ val arm8_vars_def = Define `
 `;
 
 val arm8_wf_varset_def = Define `
-  arm8_wf_varset vset = vset SUBSET arm8_vars`;
+  arm8_wf_varset vset = (vset SUBSET arm8_vars)`;
 
 val default_arm8_bir_state_def = Define `default_arm8_bir_state ms =
  <|bst_pc :=  bir_block_pc (BL_Address (Imm64 ms.PC)); 
@@ -474,8 +475,8 @@ FULL_SIMP_TAC (std_ss++holBACore_ss++bir_wm_SS)
 
 val bir_get_ht_conseq_from_m_ante = prove(
   ``!bs p bpre bpost mpre ms ml mls.
-    bir_triple p (BL_Address (Imm64 ml))
-      {BL_Address (Imm64 ml') | ml' IN mls} bpre bpost ==>
+    bir_simp_jgmt p bir_exp_true (BL_Address (Imm64 ml))
+      {BL_Address (Imm64 ml') | ml' IN mls} {} bpre bpost ==>
     bir_pre_arm8_to_bir mpre bpre ==>
     mpre ms ==>
     bmr_rel arm8_bmr bs ms ==>
@@ -493,7 +494,7 @@ val bir_get_ht_conseq_from_m_ante = prove(
 REPEAT GEN_TAC >>
 REPEAT DISCH_TAC >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS)
-  [bir_triple_def, weak_triple_def,
+  [bir_simp_jgmt_def, abstract_simp_jgmt_def, abstract_jgmt_def,
    bir_exec_to_labels_triple_precond_def,
    bir_exec_to_labels_triple_postcond_def, bir_etl_wm_def] >>
 PAT_X_ASSUM ``!s. _``
@@ -503,7 +504,10 @@ subgoal `bir_is_bool_exp_env bs.bst_environ bpre /\
          (bir_eval_exp bpre bs.bst_environ = SOME bir_val_true)` >- (
   METIS_TAC [bir_pre_arm8_to_bir_def, bir_bool_expTheory.bir_is_bool_exp_env_def]
 ) >>
-FULL_SIMP_TAC std_ss [bir_block_pc_def] >>
+FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss)
+  [bir_bool_expTheory.bir_eval_exp_TF,
+   bir_bool_expTheory.bir_is_bool_exp_env_REWRS,
+   bir_block_pc_def] >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
@@ -682,8 +686,8 @@ FULL_SIMP_TAC (std_ss++holBACore_ss++bir_wm_SS++pred_setLib.PRED_SET_ss)
 val lift_contract_thm = store_thm("lift_contract_thm",
   ``!p mms ml mls mu mpre mpost bpre bpost.
       MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p) ==>
-      bir_triple p (BL_Address (Imm64 ml))
-	{BL_Address (Imm64 ml') | ml' IN mls} bpre bpost ==>
+      bir_simp_jgmt p bir_exp_true (BL_Address (Imm64 ml))
+	{BL_Address (Imm64 ml') | ml' IN mls} {} bpre bpost ==>
       bir_is_lifted_prog arm8_bmr mu mms p ==>
       arm8_wf_varset (bir_vars_of_program p UNION bir_vars_of_exp bpre) ==>
       bir_pre_arm8_to_bir mpre bpre ==>
@@ -691,7 +695,7 @@ val lift_contract_thm = store_thm("lift_contract_thm",
       arm8_triple mms ml mls mpre mpost``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [arm8_triple_def, weak_triple_def] >>
+FULL_SIMP_TAC std_ss [arm8_triple_def, abstract_jgmt_def] >>
 REPEAT STRIP_TAC >>
 (* 1. Among the assumptions we now also have the antecedents of the arm8
  *    HT. Combining these, exist_bir_of_arm8_thm gives that there is a

@@ -67,7 +67,7 @@ val align_AND_INTROS = save_thm ("align_AND_INTROS", let
   val thm2 = LIST_CONJ (List.map (fn sz => INST_TYPE [``:'a`` |-> sz] thm0) words_sizes)
 
   val thm3 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM, FORALL_AND_THM, GSYM CONJ_ASSOC] thm2
+    rich_listTheory.COUNT_LIST_AUX_compute, DISJ_IMP_THM, listTheory.MEM, FORALL_AND_THM, GSYM CONJ_ASSOC] thm2
 in thm3 end);
 
 
@@ -242,7 +242,7 @@ REPEAT STRIP_TAC >> REPEAT CASE_TAC >> (
   REPEAT STRIP_TAC >>
   Q.PAT_X_ASSUM `i < _` (STRIP_ASSUME_TAC o SIMP_RULE std_ss [GSYM rich_listTheory.MEM_COUNT_LIST,
     rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, listTheory.MEM]) >>
+    rich_listTheory.COUNT_LIST_AUX_compute, listTheory.MEM]) >>
   ASM_SIMP_TAC std_ss [] >> (
       EVAL_TAC
   )

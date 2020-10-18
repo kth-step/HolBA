@@ -54,12 +54,16 @@ val bir_load_mmap_w_alt_thm = store_thm("bir_load_mmap_w_alt_thm", ``
   ) >>
 
   `((w2n a) IN (IMAGE w2n (FDOM mmap_w)))` by (
-    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [FLOOKUP_DEF]
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [FLOOKUP_DEF] >>
+    METIS_TAC[]
   ) >>
   `a IN (FDOM mmap_w)` by (
     FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [w2n_11]
   ) >>
-  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [FLOOKUP_FUN_FMAP, FDOM_FINITE, IMAGE_FINITE, n2w_w2n, FLOOKUP_DEF]
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [FLOOKUP_FUN_FMAP, FDOM_FINITE, IMAGE_FINITE, n2w_w2n, FLOOKUP_DEF] >>
+`(?x.w2n x' = w2n x /\ x IN FDOM mmap_w) = T` by (REWRITE_TAC[EQ_CLAUSES] >> METIS_TAC[]) >>
+ASM_REWRITE_TAC[] >>
+  EVAL_TAC
 );
 
 
@@ -319,20 +323,20 @@ val n2w_bir_load_mmap_w2n_thm = store_thm("n2w_bir_load_mmap_w2n_thm", ``
 
 
 val bir_is_lifted_mem_exp_def = Define `bir_is_lifted_mem_exp
-  (env:bir_var_environment_t) (e : bir_exp_t) (mem : 'a word -> 'b word) <=>
+  (env:bir_var_environment_t) (e : bir_exp_t) (m : 'a word -> 'b word) <=>
   (?sa sb mem_n.
      (size_of_bir_immtype sa = (dimindex (:'a))) /\
      (size_of_bir_immtype sb = (dimindex (:'b))) /\
      (type_of_bir_exp e = SOME (BType_Mem sa sb)) /\
      (bir_env_vars_are_initialised env (bir_vars_of_exp e)) /\
      (bir_eval_exp e env = SOME (BVal_Mem sa sb mem_n)) /\
-     (mem = bir_load_mmap_w (bir_mmap_n2w mem_n)))
+     (m = bir_load_mmap_w (bir_mmap_n2w mem_n)))
 `;
 
 val bir_is_lifted_imm_exp_def = Define `bir_is_lifted_imm_exp env e i =
-  (type_of_bir_exp e = SOME (BType_Imm (type_of_bir_imm i))) /\
+  ((type_of_bir_exp e = SOME (BType_Imm (type_of_bir_imm i))) /\
   (bir_env_vars_are_initialised env (bir_vars_of_exp e)) /\
-  (bir_eval_exp e env = SOME (BVal_Imm i))`;
+  (bir_eval_exp e env = SOME (BVal_Imm i)))`;
 
 
 val _ = Datatype `bir_lift_val_t =
@@ -449,7 +453,7 @@ let
     bir_bin_exp_GET_OPER_def, GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id,
     DISJ_IMP_THM, FORALL_AND_THM, n2bs_def] thm0
   val thm2 = SIMP_RULE (std_ss) [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    rich_listTheory.COUNT_LIST_AUX_compute, DISJ_IMP_THM, listTheory.MEM,
     FORALL_AND_THM] thm1
 in
   thm2
@@ -815,7 +819,7 @@ ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 ASM_SIMP_TAC (list_ss++boolSimps.EQUIV_EXTRACT_ss) [bitstringTheory.v2w_def, fcpTheory.FCP_BETA,
   bitstringTheory.testbit, LET_DEF, rich_listTheory.LENGTH_SEG, word_extract_def,
   bitstringTheory.length_w2v, w2w,
-  rich_listTheory.SEG_TAKE_BUTFISTN,
+  rich_listTheory.SEG_TAKE_DROP,
   rich_listTheory.EL_TAKE,
   rich_listTheory.EL_DROP,
   bitstringTheory.el_w2v,
@@ -1300,7 +1304,7 @@ let
     FORALL_AND_THM, w2w_id, n2bs_def] thm0
 
   val thm2 = SIMP_RULE std_ss [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    rich_listTheory.COUNT_LIST_AUX_compute, DISJ_IMP_THM, listTheory.MEM,
     FORALL_AND_THM] thm1
 in
   thm2
@@ -1617,7 +1621,7 @@ let
   val thm1 = SIMP_RULE (list_ss++wordsLib.WORD_ss) [
     GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id, n2bs_def] thm0
   val thm2 = SIMP_RULE (std_ss) [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    rich_listTheory.COUNT_LIST_AUX_compute, DISJ_IMP_THM, listTheory.MEM,
     FORALL_AND_THM] thm1
 in
   thm2
@@ -1714,7 +1718,7 @@ let
   val thm1 = SIMP_RULE (list_ss++wordsLib.WORD_ss) [
     GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id, n2bs_def] thm0
   val thm2 = SIMP_RULE (std_ss) [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    rich_listTheory.COUNT_LIST_AUX_compute, DISJ_IMP_THM, listTheory.MEM,
     FORALL_AND_THM] thm1
 in
   thm2
@@ -1746,7 +1750,7 @@ let
   val thm1 = SIMP_RULE (list_ss++wordsLib.WORD_ss) [
     GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id, n2bs_def] thm0
   val thm2 = SIMP_RULE (std_ss) [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    rich_listTheory.COUNT_LIST_AUX_compute, DISJ_IMP_THM, listTheory.MEM,
     FORALL_AND_THM] thm1
 in
   thm2

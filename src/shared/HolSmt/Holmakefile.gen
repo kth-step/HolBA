@@ -1,12 +1,12 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   =
+DEPENDENCIES   = 
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../models/HolBAModels-heap
-NEWHOLHEAP     = HolBABinHoareLogic-heap
+HOLHEAP        = ../../theory/HolBATheory-heap
+NEWHOLHEAP     = HolBASharedHolSmt-heap
 
 HEAPINC_EXTRA  = 
 

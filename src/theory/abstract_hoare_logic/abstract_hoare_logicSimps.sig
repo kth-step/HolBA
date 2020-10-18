@@ -1,4 +1,4 @@
-signature bin_hoare_logicSimps =
+signature abstract_hoare_logicSimps =
 sig
    include Abbrev
 
