@@ -219,7 +219,7 @@ local
 
     val _ = overload_on ("<&>", Term`$BExp_BinExp BIExp_And`)
     val _ = set_fixity "<&>" (Infix (NONASSOC, 425));
-     fun extract_observations targets g bl_dict =
+    fun extract_observations targets g bl_dict =
 	let  
 	    val f =  (fn l => Redblackmap.find (bl_dict, l)|> bir_programSyntax.dest_bir_block|> not o listSyntax.is_nil o #2);
 	    fun extratc_obs labels = 
@@ -236,24 +236,24 @@ local
 	end;
 
 
-     val itag_def = Define`
+    val itag_def = Define`
 	itag pa = 
  	  BExp_BinExp BIExp_RightShift pa (BExp_Const (Imm64 13w))			      
 	`;
 
-     val iset_def = Define`
+    val iset_def = Define`
 	iset pa = 
  	  BExp_BinExp BIExp_And 
 	      (BExp_Const (Imm64 0x7Fw)) 
 	      (BExp_BinExp BIExp_RightShift pa (BExp_Const (Imm64 6w)))
 	`;
 
-     val iword_def = Define`
+    val iword_def = Define`
 	iword pa = 
  	  BExp_BinExp BIExp_And  pa (BExp_Const (Imm64 0x3Cw))
 	`;
 
-     val bus_round_def = Define`
+    val bus_round_def = Define`
 	bus_round pa =
 	  BExp_BinExp BIExp_RightShift (iword(pa)) (BExp_Const (Imm64 4w))
 	`;
@@ -347,7 +347,7 @@ local
 	    val comb_p_np = zip p_exp np_exp;
 	in
 	   (
-	    mk_list(   [(rhs o concl o EVAL)``preEvict_hyp3  ^(mk_list((rev adds),  ``:bir_exp_t``))``],
+	    mk_list(   [(rhs o concl o EVAL)``preEvict_hyp1  ^(mk_list((rev adds),  ``:bir_exp_t``))``],
 		    ``:bir_val_t bir_stmt_basic_t``),
 	    mk_list(map (fn (a,b) => (rhs o concl o EVAL)``constrain_spec_obs_vars (^a,^b)``) comb_p_np,
 		    ``:bir_val_t bir_stmt_basic_t``)
