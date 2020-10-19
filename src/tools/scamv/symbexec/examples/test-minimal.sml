@@ -204,8 +204,12 @@ val prog5 = ``BirProgram
                      (BExp_Const (Imm64 0w))) (BLE_Label (BL_Address (Imm64 8200w)))
        (BLE_Label (BL_Address (Imm64 8w)))|>]``;
 
-val leafs_prog5 =
-  case (SOME (leafs_of prog5 NONE)
+fun check_with_wrong_suffix suffopt suff prog =
+  case (SOME (leafs_of prog suffopt)
        handle _ => NONE) of
      SOME _ => raise ERR "script" "this is not right"
-   | NONE => leafs_of prog5 (SOME "*");
+   | NONE => leafs_of prog (SOME suff);
+
+val leafs_prog5_1 = check_with_wrong_suffix NONE "*" prog5;
+val leafs_prog5_2 = check_with_wrong_suffix (SOME "?") "*" prog5;
+

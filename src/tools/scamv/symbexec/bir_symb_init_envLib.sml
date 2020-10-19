@@ -97,6 +97,7 @@ fun init_env bir_program accept_regsuffix_o =
       val bir_vars = List.filter (fn (x, _) => List.exists (fn y => x = y) vars_in_prog) bir_vars;
       val env = List.foldl (update_env) ``BEnv FEMPTY`` bir_vars;
 
+      (* TODO: think about changing the initialization to just take all variables from the program, with their corresponding types, and check for type mismatches *)
       val vars_in_env = List.map fst bir_vars;
       val missing_vars = List.foldr (fn (x,l) => if not (List.exists (fn y => x = y) vars_in_env) then x::l else l) [] vars_in_prog;
 
@@ -110,7 +111,11 @@ fun init_env bir_program accept_regsuffix_o =
 
       val _ = if missing_vars_have_allowed_regsuffix then () else (
               print "\n";
-              print "missing variables:\n";
+              print (if isSome accept_regsuffix_o then
+                       "accepted register suffix: " ^ (valOf accept_regsuffix_o) ^ "\n"
+                     else
+                       "no register suffix is allowed\n");
+              print "some variables are not allowed. all unexpected variables:\n";
               map PolyML.print missing_vars;
               print "\n";
               print_term bir_program;
