@@ -258,7 +258,7 @@ local
 	  BExp_BinExp BIExp_RightShift (iword(pa)) (BExp_Const (Imm64 4w))
 	`;
 
-     (* tag1 tag1 tag1 tag2 tag3 *)
+    (* tag1 tag1 tag1 tag2 tag3 *)
     val preEvict_hyp1_def = Define`
         preEvict_hyp1 tml = 
           let v1 = ((bus_round (EL 1 tml)) <+> (BExp_Const (Imm64 1w))) <%> (BExp_Const (Imm64 4w)) in
@@ -280,6 +280,7 @@ local
      	    ):bir_val_t bir_stmt_basic_t
     `;
 
+    (* tag2 tag1 tag1 tag1 tag3 *)
     val preEvict_hyp2_def = Define`
         preEvict_hyp2 tml = 
          let v1 = ((bus_round (EL 2 tml)) <+> (BExp_Const (Imm64 1w))) <%> (BExp_Const (Imm64 4w)) in
@@ -306,9 +307,9 @@ local
         preEvict_hyp3 tml = 
          let v1 = ((bus_round (EL 2 tml)) <+> (BExp_Const (Imm64 1w))) <%> (BExp_Const (Imm64 4w)) in
            BStmt_Assert(
-     	   (
-	    (
-     	     (((((iset (EL 0 tml)) == (iset (EL 1 tml))) <&> ((iset (EL 1 tml)) == (iset (EL 2 tml))))
+      	    (
+	     (
+     	      (((((iset (EL 0 tml)) == (iset (EL 1 tml))) <&> ((iset (EL 1 tml)) == (iset (EL 2 tml))))
      		   <&> ((iset (EL 2 tml)) == (iset (EL 4 tml)))
      	      ) <&> ((iset (EL 3 tml)) =/= (iset (EL 4 tml)))
      	     )
