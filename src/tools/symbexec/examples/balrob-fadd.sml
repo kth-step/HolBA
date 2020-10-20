@@ -88,6 +88,9 @@ val syst_summary_1 = merge_func lbl_tm systs_after;
 
 (*
 progress info
-run without function instantiation for comparison
-some approach to collapse components?
+count paths (have a traversal function for what-if-we-try-experiments)
+run without function instantiation for comparison (write down numbers to see effects of optimizations)
+some approach to "collapse" components?
+- cutting/instantiation experiment, based on inspected CFG
+- if this works and has positive effect, automatically find cutting points by trying each branch and see if it is possible to find common merge point?
 *)
