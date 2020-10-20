@@ -66,6 +66,7 @@ in
   stop_lbl_tms
 end;
 
+(* only keeps running paths and then checks feasibility *)
 fun drive_to n_dict bl_dict_ systs_start stop_lbl_tms =
 let
 val cfb = false;
@@ -135,7 +136,6 @@ in
 end;
 
 (* TODO: find precondition representation for instantiation and use it in instantiation *)
-(* TODO: adapt for multiple states *)
 fun instantiate_func_syst syst syst_summary =
 let
 val syst_inst = instantiate_function_summary syst_summary syst;
@@ -152,6 +152,7 @@ in
   syst_inst
 end;
 
+(* adaption for multiple states *)
 fun instantiate_func systs syst_summary =
 let
   val (func_lbl_tm, _, _) = syst_summary;

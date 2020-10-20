@@ -15,28 +15,29 @@ local
 (*
 val var = bv_countw_fr;
 *)
-fun expand_exp vals var =
+fun expand_exp_symbv vals symbv =
   let
-    val symbv = (valOf o Redblackmap.peek) (vals, var)
-                handle Option => raise ERR "expand_exp" ((term_to_string var) ^ " not found");
     val exp = case symbv of
                  SymbValBE (be,_) => be
-               | x => raise ERR "expand_exp"
-                        ("unhandled symbolic value type: " ^ (term_to_string var) ^ " and " ^ (symbv_to_string x));
+               | x => raise ERR "expand_exp_symbv"
+                        ("unhandled symbolic value type: " ^ (symbv_to_string symbv) ^ " and " ^ (symbv_to_string x));
 
     val vars = get_birexp_vars exp;
 
     val valsl = ((Redblackmap.listItems) vals);
     val subexps_raw = List.filter ((fn x => List.exists (fn y => identical x y) vars) o fst) valsl;
     (* recursion on varexpressions first *)
-    val subexps = List.map (fn (x, _) => (x, expand_exp vals x)) subexps_raw;
+    val subexps = List.map (fn (x, _) =>
+                       (x, expand_exp_symbv vals
+                             (find_bv_val "expand_exp_symbv" vals x)))
+                  subexps_raw;
 
     val exp_ = List.foldl (fn ((bv, e), exp_) => subst_exp (bv, e, exp_)) exp subexps;
   in
     exp_
   end
   handle e => raise wrap_exn
-               ("simple_pred_to_benvmap: " ^ (term_to_string var))
+               ("expand_exp_symbv: " ^ (symbv_to_string symbv))
                e;
 
 (*
@@ -123,7 +124,7 @@ fun expand_bv_fr_in_syst bv_fr syst =
 
     val symbv = find_bv_val "expand_bv_fr_in_syst" vals bv_fr;
   in
-    (expand_exp vals bv_fr, Redblackset.listItems (deps_of_symbval "expand_bv_fr_in_syst" symbv))
+    (expand_exp_symbv vals symbv, Redblackset.listItems (deps_of_symbval "expand_bv_fr_in_syst" symbv))
   end;
 
 fun expand_bv_in_syst bv syst =
@@ -137,13 +138,31 @@ fun expand_bv_in_syst bv syst =
 
 fun eval_exp_in_syst exp syst =
   let
-    val pred = (SYST_get_pred syst);
-    val env  = (SYST_get_env  syst);
     val vals = (SYST_get_vals syst);
 
     (*
+    val pred = (SYST_get_pred syst);
+    val env  = (SYST_get_env  syst);
     val benv = mk_BEnv (simple_pred_to_benvmap pred benvmap_empty);
     *)
+
+    open bir_symbexec_coreLib;
+    val symbv = compute_valbe exp syst;
+    val exp_ = expand_exp_symbv vals symbv;
+
+    val benv = ``BEnv (K NONE)``;
+  in
+    (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp_ ^benv``
+  end;
+
+fun eval_exp_no_deps exp =
+  let
+    (*
+    val pred = (SYST_get_pred syst);
+    val env  = (SYST_get_env  syst);
+    val vals = (SYST_get_vals syst);
+    *)
+
     val benv = ``BEnv (K NONE)``;
   in
     (snd o dest_eq o concl o EVAL) ``bir_eval_exp ^exp ^benv``

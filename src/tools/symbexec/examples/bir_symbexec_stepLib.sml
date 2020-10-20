@@ -160,33 +160,35 @@ local
     )
     handle HOL_ERR _ => NONE;
 
-  val jmp_exp_var_match_tm = ``BStmt_Jmp (BLE_Exp (BExp_Den x))``;
+  val jmp_exp_var_match_tm = ``BStmt_Jmp (BLE_Exp x)``;
   fun state_exec_try_jmp_exp_var est syst =
     SOME (
     let
-      val (vs, _) = hol88Lib.match jmp_exp_var_match_tm est;
-      val bv_tgt  = (fst o hd) vs;
+      val (vs, _) = hol88Lib.match jmp_exp_var_match_tm est
+                    handle _ => (
+                      print ("couldn't match end statement: " ^ (term_to_string est) ^ "\n");
+                      raise ERR "couldn't match" (term_to_string est));
+      val be_tgt  = (fst o hd) vs;
 
-      val symbv = get_state_symbv "state_exec_try_jmp_exp_var" bv_tgt syst;
-      val (tgt_exp_, tgt_deps) =
-        case symbv of
-           SymbValBE v => v
-         | _ => raise ERR "state_exec_try_jmp_exp_var" "jump target is not symbvbexp";
+      open bir_countw_simplificationLib;
+      val bvalo = eval_exp_in_syst be_tgt syst
+                  handle e => (
+                    print ("ooops, something went wrong in evaluation: " ^ (term_to_string be_tgt) ^ "\n");
+                    raise wrap_exn ("ooops, something went wrong in evaluation: " ^ (term_to_string be_tgt)) e);
 
-      val tgt_exp = bir_constpropLib.eval_constprop tgt_exp_;
-
-      val _ = if Redblackset.numItems tgt_deps = 0 then () else
-              raise ERR "state_exec_try_jmp_exp_var" "can only handle indirect jumps to constant locations";
-
-      open bir_expSyntax;
-      val tgt = (mk_BL_Address o dest_BExp_Const) tgt_exp
-                handle _ => raise ERR "state_exec_try_jmp_exp_var"
-                  ("target value is no const: " ^ (term_to_string tgt_exp));
+      open bir_valuesSyntax;
+      open optionSyntax;
+      val tgt = (mk_BL_Address o dest_BVal_Imm o dest_some) bvalo
+                handle _ => (
+                  print ("state_exec_try_jmp_exp_var::no const: " ^ (term_to_string bvalo) ^ "\n");
+                  raise ERR "state_exec_try_jmp_exp_var"
+                    ("target value is no const: " ^ (term_to_string bvalo) ^ " ;; " ^ (term_to_string be_tgt)));
     in
       [SYST_update_pc tgt syst]
     end
     )
-    handle HOL_ERR _ => NONE;
+    handle e =>
+      raise wrap_exn ("state_exec_try_jmp_exp_var::") e;
 
   open bir_cfgLib;
 
@@ -196,7 +198,7 @@ local
       val n_type  = #CFGN_type n;
       val _       = if cfg_nodetype_is_call n_type orelse
                        cfg_node_type_eq (n_type, CFGNT_Jump) then () else
-                    raise ERR "symb_exec_endstmt" ("unexpected 2 at " ^ (term_to_string lbl_tm));
+                    raise ERR "symb_exec_endstmt" ("can only handle a call or a jump here, problem at " ^ (term_to_string lbl_tm));
       val n_targets  = #CFGN_targets n;
       val lbl_tms = n_targets
     in
@@ -204,7 +206,7 @@ local
     end;
 
 in (* local *)
-  fun symb_exec_endstmt n_dict lbl_tm est syst =
+  fun symb_exec_endstmt n_dict lbl_tm est syst = (
     (* no update if state is not running *)
     if (not o state_is_running) syst then [syst] else
     (* try to match direct jump *)
@@ -219,9 +221,11 @@ in (* local *)
     case state_exec_try_jmp_exp_var est syst of
        SOME systs => systs
      | NONE       => (
-    (* no match, then we have some indirection and need to use cfg (or it's another end statement) *)
+    (* no match, then we have some indirection and need to rely on cfg (or it's another end statement) *)
     state_exec_from_cfg n_dict lbl_tm syst
-    )));
+    ))))
+   handle e =>
+     raise wrap_exn (term_to_string lbl_tm) e;;
 end (* local *)
 
 
