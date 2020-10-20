@@ -13,28 +13,39 @@ EVAL ``255w <=+ (0w:word8)``;
 (* Signed comparison *)
 EVAL ``255w <= (0w:word8)``;
 
-(* register add *)
-val y_var = ``(m.REG 5w)``;
-val x_var = ``(m.REG 4w)``;
-val ly_var = ``(m.REG 3w)``;
-val lx_var = ``(m.REG 2w)``;
+(* TODO: why reg. names x10 instead of a0 in BIR *)
 
-val arm8_add_reg_pre_def = Define `arm8_add_reg_pre m = (
+(* register add *)
+(* x10 = a0 *)
+(* x11 = a1 *)
+(* x12 = a2 *)
+(* x13 = a3 *)
+(* unused x14 = a4 *)
+(* x15 = a5 *)
+val x_var = ``(m.c_gpr 0w 12w)``;
+val y_var = ``(m.c_gpr 0w 13w)``;
+val lx_var = ``(m.c_gpr 0w 10w)``;
+val ly_var = ``(m.c_gpr 0w 11w)``;
+val tmp_var = ``(m.c_gpr 02 15w)``;
+
+(* Precondition implies verification from 0x24 to 0x4c *)
+val riscv_add_reg_pre_def = Define `riscv_add_reg_pre m = (
   ((^x_var) >= 0w) /\
   ((^x_var = ^lx_var) /\ (^y_var = ^ly_var)))
 `;
-val arm8_add_reg_post_def = Define `arm8_add_reg_post m =
+val riscv_add_reg_post_def = Define `riscv_add_reg_post m =
   ((^x_var+^y_var) = (^ly_var))
 `;
 
 
 (* BIR variables *)
-val get_y = bden (bvar "R5" ``(BType_Imm Bit64)``);
-val get_x = bden (bvar "R4" ``(BType_Imm Bit64)``);
-val get_ly = bden (bvar "R3" ``(BType_Imm Bit64)``);
-val get_lx = bden (bvar "R2" ``(BType_Imm Bit64)``);
-val get_sp = bden (bvar "SP_EL0" ``(BType_Imm Bit64)``);
-val get_r0 = bden (bvar "R0" ``(BType_Imm Bit64)``);
+val get_x = bden (bvar "x12" ``(BType_Imm Bit64)``);
+val get_y = bden (bvar "x13" ``(BType_Imm Bit64)``);
+val get_lx = bden (bvar "x10" ``(BType_Imm Bit64)``);
+val get_ly = bden (bvar "x11" ``(BType_Imm Bit64)``);
+val get_tmp = bden (bvar "x15" ``(BType_Imm Bit64)``);
+val get_sp = bden (bvar "x2" ``(BType_Imm Bit64)``);
+val get_r0 = bden (bvar "x1" ``(BType_Imm Bit64)``);
 
 (* BIR constants *)
 val get_v = bconst ``v:word64``;
@@ -52,9 +63,11 @@ val bir_add_reg_post_def = Define `bir_add_reg_post =
  ^(beq (bplus(get_y, get_x), get_ly))`;
 
 
-val original_add_reg_loop_condition =  (bnot (bsle(get_lx, bconst64 0)));
+val original_add_reg_loop_condition =  (bnot (bsle(get_tmp, bconst64 0)));
 
 (* Note: "BIR cjmp exits the loop is `C`, where C is the BIR jump condition*)
+(* TODO: this in RISC-V *)
+(*
 val bir_add_reg_loop_condition =  bnot ``(BExp_BinExp BIExp_Or
                        (BExp_UnaryExp BIExp_Not
                           (BExp_BinPred BIExp_Equal
@@ -62,15 +75,14 @@ val bir_add_reg_loop_condition =  bnot ``(BExp_BinExp BIExp_Or
                              (BExp_Den (BVar "ProcState_V" BType_Bool))))
                        (BExp_Den (BVar "ProcState_Z" BType_Bool)))``;
 
-
 val bir_add_reg_loop_condition_def = Define `
  bir_add_reg_loop_condition = ^bir_add_reg_loop_condition`;
+*)
 
 val bir_add_reg_I_def = Define `bir_add_reg_I =
 ^(bandl [
    (beq (bplus(get_y, get_x), bplus(get_ly, get_lx))),
-   (bsle(bconst64 0, get_lx)),
-   (beq (original_add_reg_loop_condition, bir_add_reg_loop_condition))
+   (bsle(bconst64 0, get_lx))
    ])
 `;
 
@@ -142,6 +154,7 @@ val bir_add_reg_contract_3_post_variant_def = Define `bir_add_reg_contract_3_pos
 
 
 (* contract entry mem *)
+(*
 val bir_add_reg_contract_0_pre_def = Define `bir_add_reg_contract_0_pre =
 ^(bandl[
         bnot (bslt(get_r0, bconst64 0)),
@@ -156,6 +169,7 @@ val bir_add_reg_contract_0_pre_def = Define `bir_add_reg_contract_0_pre =
 val bir_add_reg_contract_0_post_def = Define `bir_add_reg_contract_0_post =
 bir_add_reg_pre
 `;
+*)
 
 
 
