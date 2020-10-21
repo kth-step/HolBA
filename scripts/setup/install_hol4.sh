@@ -29,11 +29,12 @@ export PATH=${POLY_DIR}/bin:$PATH
 export LD_LIBRARY_PATH=${POLY_DIR}/lib:$LD_LIBRARY_PATH
 
 # HOL4 source and branch
-GIT_URL=https://github.com/HOL-Theorem-Prover/HOL.git
-GIT_BRANCH=kananaskis-13
-GIT_IS_TAG=1
+# NOTE: For the experimental RISC-V stepLib, work is done on a branch on our fork
+GIT_URL=https://github.com/kth-step/HOL.git
+GIT_BRANCH=dev_riscv_l3
+GIT_IS_TAG=0
 
-HOL4_DIR=${HOLBA_OPT_DIR}/hol_k13
+HOL4_DIR=${HOLBA_OPT_DIR}/hol_k13_riscv_l3
 
 
 ##################################################################
@@ -100,4 +101,3 @@ do
   cd "${HOL4_DIR}/${dir}"
   ${HOL4_DIR}/bin/Holmake
 done
-
