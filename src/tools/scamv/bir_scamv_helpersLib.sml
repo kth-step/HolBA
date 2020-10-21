@@ -38,12 +38,6 @@ in
 	| NONE => (assign_args_data (); valOf (!script_args_data));
   end
 
-
-
-  open bir_miscLib;
-  open bir_fileLib;
-  open bir_exec_wrapLib;
-
 end (* local *)
 
 end
