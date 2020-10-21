@@ -45,7 +45,9 @@ signature bir_embexp_driverLib = sig
        - with_reset (run with reset or not)
      Returns (maybe result, comment)
    *)
+(*
   val bir_embexp_run : string -> bool -> (bool option * string)
+*)
 
 
   (* progress logging *)

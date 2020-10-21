@@ -513,6 +513,7 @@ fun next_experiment all_exps next_relation  =
         val exp_gen_message = "Generated experiment: " ^ exp_id;
         val _ = bir_embexp_log_prog exp_gen_message;
 
+(*
         val _ =  (if (#only_gen (scamv_getopt_config ())) then
                     printv 1 exp_gen_message
                     (* no need to do anything else *)
@@ -523,6 +524,7 @@ fun next_experiment all_exps next_relation  =
                         | (SOME r, msg) => printv 1 ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")")
                     end);
                  printv 1 "\n\n");
+*)
     in ()
     end;
 
@@ -640,7 +642,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
               , generator = gen, generator_param = generator_param
               , obs_model = obs_model, hw_obs_model = hw_obs_model
               , refined_obs_model = refined_obs_model, obs_projection = proj
-              , verbosity = verb, only_gen = og, seed_rand = seed_rand } =
+              , verbosity = verb, seed_rand = seed_rand } =
     let
 
         val _ = bir_randLib.rand_isfresh_set seed_rand;
