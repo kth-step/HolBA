@@ -2,14 +2,8 @@ open HolKernel Parse boolLib bossLib;
 open bir_programTheory;
 open bslSyntax;
 open wordsSyntax;
-open bir_embexp_driverLib;
 
 val _ = new_theory "bir_obs_model";
-
-val (mem_base, mem_offset) = bir_embexp_params_memory;
-val (mem_min, mem_max) =
-    (mk_wordi (bir_embexp_params_cacheable mem_base, 64),
-     mk_wordi (bir_embexp_params_cacheable (Arbnum.- (Arbnum.+ (mem_base, mem_offset), Arbnum.fromInt 128)), 64));
 
 val map_obs_prog_def = Define `
 map_obs_prog f (BirProgram xs) = BirProgram (MAP f xs)
@@ -31,28 +25,29 @@ select_mem exp =
 `;
 
 val constrain_mem_def = Define`
-constrain_mem e =
+constrain_mem (mem_min, mem_max) e =
     BStmt_Assert
      (BExp_BinExp BIExp_And
-       (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 ^(mem_min))) (e))
-       (BExp_BinPred BIExp_LessThan (e) (BExp_Const (Imm64 ^(mem_max)))))
+       (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 mem_min)) (e))
+       (BExp_BinPred BIExp_LessThan (e) (BExp_Const (Imm64 mem_max))))
 `;
 
-val add_obs_1_stmts_def = Define `
-(add_obs_1_stmts obs_fun [] = []) /\
-(add_obs_1_stmts obs_fun (x :: xs) =
+val add_obs_constr_mem_stmts_def = Define `
+(add_obs_constr_mem_stmts mem_bounds obs_fun [] = []) /\
+(add_obs_constr_mem_stmts mem_bounds obs_fun (x :: xs) =
  case x of
      BStmt_Assign v e =>
      (case select_mem e of
-          [] => x :: add_obs_1_stmts obs_fun xs
-        | lds => (APPEND (MAP constrain_mem lds)
-                      (APPEND (APPEND (MAP obs_fun lds) (add_obs_1_stmts obs_fun xs)) [x])))
-   | _ => x :: add_obs_1_stmts obs_fun xs)
+          [] => x :: add_obs_constr_mem_stmts mem_bounds obs_fun xs
+        | lds => (APPEND (MAP (constrain_mem mem_bounds) lds)
+                      (* TODO: (Andreas:) Can it be that there is a bug here with the order, first xs, and then x? *)
+                      (APPEND (APPEND (MAP obs_fun lds) (add_obs_constr_mem_stmts mem_bounds obs_fun xs)) [x])))
+   | _ => x :: add_obs_constr_mem_stmts mem_bounds obs_fun xs)
 `;
 
-val add_obs_1_block_def = Define`
-    add_obs_1_block obs_fun block =
-      block with bb_statements := add_obs_1_stmts obs_fun block.bb_statements
+val add_obs_constr_mem_block_def = Define`
+    add_obs_constr_mem_block mem_bounds obs_fun block =
+      block with bb_statements := add_obs_constr_mem_stmts mem_bounds obs_fun block.bb_statements
 `;
 
 
@@ -88,16 +83,16 @@ val observe_mem_addr_def = Define`
 `;
 
 val add_obs_mem_addr_armv8_def = Define`
-    add_obs_mem_addr_armv8 p = 
-      map_obs_prog (add_obs_1_block observe_mem_addr) p
+    add_obs_mem_addr_armv8 mem_bounds p = 
+      map_obs_prog (add_obs_constr_mem_block mem_bounds observe_mem_addr) p
 `;
 
 
 (* observe whole memory address and pc *)
 (* ============================================================================== *)
 val add_obs_mem_addr_pc_armv8_def = Define`
-    add_obs_mem_addr_pc_armv8 p = 
-      map_obs_prog (add_obs_pc_block o (add_obs_1_block observe_mem_addr)) p
+    add_obs_mem_addr_pc_armv8 mem_bounds p = 
+      map_obs_prog (add_obs_pc_block o (add_obs_constr_mem_block mem_bounds observe_mem_addr)) p
 `;
 
 
@@ -129,7 +124,7 @@ val observe_mem_tag_index_def = Define`
 `;
 
 val add_obs_cache_line_tag_index_armv8_def = Define`
-    add_obs_cache_line_tag_index_armv8 p = map_obs_prog (add_obs_1_block observe_mem_tag_index) p
+    add_obs_cache_line_tag_index_armv8 mem_bounds p = map_obs_prog (add_obs_constr_mem_block mem_bounds observe_mem_tag_index) p
 `;
 
 
@@ -144,7 +139,7 @@ val observe_mem_tag_def = Define`
 `;
 
 val add_obs_cache_line_tag_armv8_def = Define`
-    add_obs_cache_line_tag_armv8 p = map_obs_prog (add_obs_1_block observe_mem_tag) p
+    add_obs_cache_line_tag_armv8 mem_bounds p = map_obs_prog (add_obs_constr_mem_block mem_bounds observe_mem_tag) p
 `;
 
 
@@ -162,7 +157,7 @@ val observe_mem_index_def = Define`
 `;
 
 val add_obs_cache_line_index_armv8_def = Define`
-add_obs_cache_line_index_armv8 p = map_obs_prog (add_obs_1_block observe_mem_index) p
+add_obs_cache_line_index_armv8 mem_bounds p = map_obs_prog (add_obs_constr_mem_block mem_bounds observe_mem_index) p
 `;
 
 
@@ -185,7 +180,7 @@ val observe_mem_subset_def = Define`
 `;
 
 val add_obs_cache_line_subset_armv8_def = Define`
-    add_obs_cache_line_subset_armv8 p = map_obs_prog (add_obs_1_block observe_mem_subset) p
+    add_obs_cache_line_subset_armv8 mem_bounds p = map_obs_prog (add_obs_constr_mem_block mem_bounds observe_mem_subset) p
 `;
 
 
@@ -208,11 +203,11 @@ val observe_mem_subset_page_def = Define`
 `;
 
 val add_obs_cache_line_subset_page_armv8_def = Define`
-add_obs_cache_line_subset_page_armv8 p = map_obs_prog (add_obs_1_block observe_mem_subset_page) p
+add_obs_cache_line_subset_page_armv8 mem_bounds p = map_obs_prog (add_obs_constr_mem_block mem_bounds observe_mem_subset_page) p
 `;
 
 
-(* Subset with extra observation *)
+(* Subset with extra observation: (Andreas: extra obs seems to be only added if first stmt is an Assign) *)
 (* ============================================================================== *)
 val observe_mem_line_def = Define`
     observe_mem_line e =
@@ -229,30 +224,30 @@ val observe_mem_line_def = Define`
 `;
 
 val add_obs_stmts_subset_def = Define `
-    add_obs_stmts_subset = add_obs_1_stmts observe_mem_subset`;
+    add_obs_stmts_subset mem_bounds = add_obs_constr_mem_stmts mem_bounds observe_mem_subset`;
 
 val add_obs_stmts_subset_and_line_def = Define `
-(add_obs_stmts_subset_and_line [] = []) /\
-(add_obs_stmts_subset_and_line (x :: xs) =
+(add_obs_constr_mem_stmts_subset_and_line mem_bounds [] = []) /\
+(add_obs_constr_mem_stmts_subset_and_line mem_bounds (x :: xs) =
  case x of
      BStmt_Assign v e =>
      (case select_mem e of
-          [] => x :: add_obs_stmts_subset xs
-        | lds => (APPEND (MAP constrain_mem lds)
+          [] => x :: add_obs_stmts_subset mem_bounds xs
+        | lds => (APPEND (MAP (constrain_mem mem_bounds) lds)
                          (x :: (APPEND (MAP observe_mem_subset lds)
                                        (APPEND (MAP observe_mem_line lds)
-                                               (add_obs_stmts_subset xs))))))
-   | _ => x :: add_obs_stmts_subset xs)
+                                               (add_obs_stmts_subset mem_bounds xs))))))
+   | _ => x :: add_obs_stmts_subset mem_bounds xs)
 `;
 
 val add_block_cache_line_subset_and_line_def = Define`
-add_block_cache_line_subset_and_line block =
-   block with bb_statements := add_obs_stmts_subset_and_line block.bb_statements
+add_block_cache_line_subset_and_line mem_bounds block =
+   block with bb_statements := add_obs_constr_mem_stmts_subset_and_line mem_bounds block.bb_statements
 `;
 
 val add_obs_cache_line_subset_and_line_armv8_def = Define`
-add_obs_cache_line_subset_and_line_armv8 p = map_obs_prog add_block_cache_line_subset_and_line p
-                                                                                                 `;
+add_obs_cache_line_subset_and_line_armv8 mem_bounds p = map_obs_prog (add_block_cache_line_subset_and_line mem_bounds) p
+`;
 
 
 val _ = export_theory();

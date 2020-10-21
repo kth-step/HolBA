@@ -5,7 +5,7 @@ DEPENDENCIES   = ../../theory/bir ../../theory/bir-support ../../shared ../lifte
 
 # configuration
 # ----------------------------------
-HOLHEAP        = proggen/HolBATools_ScamV_proggen-heap
+HOLHEAP        = obsmodel/HolBATools_ScamV_obsmodel-heap
 NEWHOLHEAP     = HolBATools_ScamV-heap
 
 HEAPINC_EXTRA  = 

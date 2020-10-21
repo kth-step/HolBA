@@ -8,49 +8,49 @@ in
 structure bir_pc_model : OBS_MODEL =
 struct
 val obs_hol_type = ``bir_val_t``;
-fun add_obs t = rand (concl (EVAL ``add_obs_pc ^t``));
+fun add_obs mb t = rand (concl (EVAL ``add_obs_pc ^mb ^t``));
 end
 
 structure bir_arm8_mem_addr_model : OBS_MODEL =
 struct
 val obs_hol_type = ``bir_val_t``;
-fun add_obs t = rand (concl (EVAL ``add_obs_mem_addr_armv8 ^t``));
+fun add_obs mb t = rand (concl (EVAL ``add_obs_mem_addr_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_mem_addr_pc_model : OBS_MODEL =
 struct
 val obs_hol_type = ``bir_val_t``;
-fun add_obs t = rand (concl (EVAL ``add_obs_mem_addr_pc_armv8 ^t``));
+fun add_obs mb t = rand (concl (EVAL ``add_obs_mem_addr_pc_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_model : OBS_MODEL =
 struct
 val obs_hol_type = ``bir_val_t``;
-fun add_obs t = rand (concl (EVAL ``add_obs_cache_line_tag_index_armv8 ^t``));
+fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_tag_index_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_tag_model : OBS_MODEL =
 struct
 val obs_hol_type = ``bir_val_t``;
-fun add_obs t = rand (concl (EVAL ``add_obs_cache_line_tag_armv8 ^t``));
+fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_tag_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_index_model : OBS_MODEL =
 struct
 val obs_hol_type = ``bir_val_t``;
-fun add_obs t = rand (concl (EVAL ``add_obs_cache_line_index_armv8 ^t``));
+fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_index_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_subset_model : OBS_MODEL =
 struct
 val obs_hol_type = ``bir_val_t``;
-fun add_obs t = rand (concl (EVAL ``add_obs_cache_line_subset_armv8 ^t``));
+fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_subset_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_subset_page_model : OBS_MODEL =
 struct
 val obs_hol_type = ``bir_val_t``;
-fun add_obs t = rand (concl (EVAL ``add_obs_cache_line_subset_page_armv8 ^t``));
+fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_subset_page_armv8 ^mb ^t``));
 end
 
 end (* local *)
@@ -232,10 +232,10 @@ in
     struct
       val obs_hol_type = ``bir_val_t``;
       val pipeline_depth = 3;
-      fun add_obs t =
+      fun add_obs mb t =
         (* TODO: we don't want to augment with the pc here, or am I wrong?
                  this could be the reason for unsatisfiable... *)
-        branch_instrumentation_obs (bir_arm8_mem_addr_model.add_obs t) pipeline_depth;
+        branch_instrumentation_obs (bir_arm8_mem_addr_model.add_obs mb t) pipeline_depth;
     end;
 
 end (* local *)
