@@ -4,7 +4,8 @@ struct
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 open arm8_progLib arm8AssemblerLib arm8;
 
-open bir_scamv_helpersLib;
+open bir_randLib;
+open bir_miscLib;
      
 fun remChars  (c,s) =
     let fun rem [] = []

@@ -633,7 +633,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
               , verbosity = verb, only_gen = og, seed_rand = seed_rand } =
     let
 
-        val _ = bir_scamv_helpersLib.rand_isfresh_set seed_rand;
+        val _ = bir_randLib.rand_isfresh_set seed_rand;
 
         val _ = do_enum := enumerate;
         val _ = current_obs_projection := proj;

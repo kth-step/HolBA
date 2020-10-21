@@ -2,7 +2,7 @@ structure bir_gccLib :> bir_gccLib =
 struct
 
 local
-  open bir_scamv_helpersLib;
+  open bir_fileLib;
 
   val libname = "bir_gccLib"
   val ERR = Feedback.mk_HOL_ERR libname

@@ -16,7 +16,8 @@ struct
   open asm_genLib;
   open armv8_prefetch_genLib;
 
-  open bir_scamv_helpersLib;
+  open bir_fileLib;
+  open bir_randLib;
 
 (* lifting infrastructure (handles retry of program generation also, in case of failure) *)
 (* ========================================================================================= *)

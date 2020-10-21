@@ -3,6 +3,11 @@ struct
 
   open HolKernel Parse boolLib bossLib;
 
+  open bir_randLib;
+  open bir_miscLib;
+  open bir_fileLib;
+  open bir_exec_wrapLib;
+
   open bir_scamv_helpersLib;
 
 (* error handling *)

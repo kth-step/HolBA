@@ -1,15 +1,14 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../../theory/bir ../../theory/bir-support ../../shared ../lifter \
-                 $(HOLDIR)/examples/l3-machine-code/arm8/prog
+DEPENDENCIES   = ../../theory/bir ../../theory/bir-support ../../shared ../lifter
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = symbexec/HolBATools_ScamV_symbexec-heap
+HOLHEAP        = proggen/HolBATools_ScamV_proggen-heap
 NEWHOLHEAP     = HolBATools_ScamV-heap
 
-HEAPINC_EXTRA  = $(HOLDIR)/examples/l3-machine-code/arm8/prog/arm8_progLib
+HEAPINC_EXTRA  = 
 
 
 # included lines follow

@@ -4,7 +4,9 @@ struct
   open HolKernel boolLib liteLib simpLib Parse bossLib;
   open arm8_progLib arm8AssemblerLib arm8;
 
-  open bir_scamv_helpersLib regExLib;
+  open bir_randLib;
+  open bir_miscLib;
+  open regExLib;
 
 
 (* library for randomly generated programs *)
