@@ -231,6 +231,8 @@ end (* local *)
 
 local
   open bir_block_collectionLib;
+
+  val symb_exec_to_stop_last_print = ref (NONE : Time.time option);
 in (* local *)
   (* execution of a whole block *)
   fun symb_exec_block abpfun n_dict bl_dict syst =
@@ -258,9 +260,18 @@ in (* local *)
     end;
 
   (* execution of blocks until not running anymore or end label set is reached *)
-  fun symb_exec_to_stop _      _      _       []                  _            acc = acc
+  fun symb_exec_to_stop _      _      _       []                  _            acc =
+        (symb_exec_to_stop_last_print := NONE; acc)
     | symb_exec_to_stop abpfun n_dict bl_dict (exec_st::exec_sts) stop_lbl_tms acc =
         let
+          val lastTime = !symb_exec_to_stop_last_print;
+          val timeToPrint = (Time.fromReal o LargeReal.-) (Time.toReal(Time.now()), LargeReal.fromInt 5)
+          val _ = if not(isSome lastTime) orelse
+                     Time.<(valOf lastTime, timeToPrint) then (
+                    symb_exec_to_stop_last_print := SOME (Time.now());
+                    print ("current number of stopped states: " ^ (Int.toString (length acc)) ^ "\n")
+                  ) else ();
+
           fun is_state_stopped syst =
             (List.exists (fn x => identical (SYST_get_pc syst) x) stop_lbl_tms) orelse
             (not o state_is_running) syst;
