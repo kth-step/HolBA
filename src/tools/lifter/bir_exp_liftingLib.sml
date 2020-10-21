@@ -413,7 +413,7 @@ fun bir_exp_lift_step (c : exp_lifting_cache) (n:exp_lifting_net) thm tm = let
   val mthm = eln_apply n env_t vt
   val (env_t', et', vt') = dest_bir_is_lifted_exp (concl mthm)
 
-  (* Safty checks *)
+  (* Safety checks *)
   val _ = assert (aconv env_t) env_t'
   val _ = assert (aconv vt) vt'
 
@@ -467,7 +467,7 @@ val bir_exp_lift_default_env = bir_exp_lift bir_var_environment_t_default;
 
 
 
-(* DEBUGING
+(* DEBUGGING
 
 val env_t = bir_var_environment_t_default
 

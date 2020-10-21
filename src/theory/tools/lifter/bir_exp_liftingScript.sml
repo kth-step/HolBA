@@ -3,12 +3,14 @@ open bir_expTheory HolBACoreSimps;
 open bir_typing_expTheory bir_valuesTheory
 open bir_envTheory bir_immTheory bir_exp_immTheory
 open bir_immSyntax wordsTheory
+open wordsSyntax
 open bir_exp_memTheory bir_bool_expTheory
 open bir_nzcv_expTheory bir_interval_expTheory
 open bir_lifter_general_auxTheory
 open bir_extra_expsTheory
 open finite_mapTheory;
 open pred_setTheory;
+open bir_auxiliaryLib;
 
 val _ = new_theory "bir_exp_lifting";
 
@@ -387,7 +389,6 @@ SIMP_TAC std_ss [bir_is_lifted_imm_exp_def,
 
 val thm_t = build_immtype_t_conj
 ``!s uo env (w:'a word) e.
-
       bir_is_lifted_imm_exp env e (w2bs w s) ==>
       bir_is_lifted_imm_exp env (BExp_UnaryExp uo e)
         (w2bs (bir_unary_exp_GET_OPER uo w) s)``;
@@ -546,9 +547,9 @@ SIMP_TAC std_ss [bir_immTheory.bool2b_def]);
 (* Casting *)
 (***********)
 
-(* The semantics of casting in bir contain a lot of redundancy.
+(* The semantics of casting in BIR contain a lot of redundancy.
    A low-cast is for example the same as a normal cast. So, the theorems
-   below are designed carefully use the most appropriate cast operation. *)
+   below are designed to carefully use the most appropriate cast operation. *)
 
 (* No cast needed, since types are identical *)
 
@@ -907,7 +908,6 @@ in thm6
 end);
 
 
-
 val bir_update_mmap_words_INTRO = store_thm ("bir_update_mmap_words_INTRO",
 ``!sa (a: 'a word).
     (size_of_bir_immtype sa = dimindex (:'a)) ==>
@@ -960,29 +960,30 @@ val bir_is_lifted_mem_exp_STORE0 = prove (
     (bir_store_in_mem_words sv sa (w2bs vr sr) mem_f en va = SOME r) ==>
     (bir_is_lifted_mem_exp env (BExp_Store em ea en er) r))
 ``,
-  SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
-    bir_is_lifted_mem_exp_def, PULL_EXISTS,
-    bir_env_oldTheory.bir_env_vars_are_initialised_UNION, bir_eval_store_BASIC_REWR] >>
-  REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
-  `sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
-  `sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
-  REPEAT (BasicProvers.VAR_EQ_TAC) >>
 
-  FULL_SIMP_TAC std_ss [w2n_n2w, w2bs_def, b2n_n2bs, bitTheory.MOD_2EXP_def,
-    GSYM dimword_def, w2n_lt] >>
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
+  bir_is_lifted_mem_exp_def, PULL_EXISTS,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, bir_eval_store_BASIC_REWR] >>
+REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+`sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
+`sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
+REPEAT (BasicProvers.VAR_EQ_TAC) >>
 
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_store_in_mem_words_def, LET_DEF,
-    bir_store_in_mem_def] >>
+FULL_SIMP_TAC std_ss [w2n_n2w, w2bs_def, b2n_n2bs, bitTheory.MOD_2EXP_def,
+  GSYM dimword_def, w2n_lt] >>
 
-  Cases_on `bir_number_of_mem_splits sb sr sa` >> FULL_SIMP_TAC std_ss [] >>
-  rename1 `_ = SOME n` >>
-  REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-    REPEAT BasicProvers.VAR_EQ_TAC >>
-    ASM_SIMP_TAC (std_ss++boolSimps.ETA_ss) [bir_update_mmap_words_INTRO_w2n, n2w_w2n] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_store_in_mem_words_def, LET_DEF,
+  bir_store_in_mem_def] >>
 
-    METIS_TAC [bir_update_mmap_words_INTRO_w2n, n2w_w2n, bir_load_mmap_w_bir_mmap_n2w_thm]
-  )
+Cases_on `bir_number_of_mem_splits sb sr sa` >> FULL_SIMP_TAC std_ss [] >>
+rename1 `_ = SOME n` >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  REPEAT BasicProvers.VAR_EQ_TAC >>
+  ASM_SIMP_TAC (std_ss++boolSimps.ETA_ss) [bir_update_mmap_words_INTRO_w2n, n2w_w2n] >>
+
+  METIS_TAC [bir_update_mmap_words_INTRO_w2n, n2w_w2n, bir_load_mmap_w_bir_mmap_n2w_thm]
+)
 );
 
 
