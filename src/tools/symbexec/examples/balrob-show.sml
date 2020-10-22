@@ -21,6 +21,8 @@ val _ = show_call_graph ();
 
 val _ = show_cfg_fun true  bl_dict_ n_dict entry_label;
 
+val _ = show_cfg_fun false  bl_dict_ n_dict "__aeabi_fsub";
+
 (*
 fun print_option pf NONE     = print "NONE"
   | print_option pf (SOME x) = (print "SOME ("; pf x; print ")");
