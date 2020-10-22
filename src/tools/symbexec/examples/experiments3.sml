@@ -16,7 +16,12 @@ val sum_ =
       create_func_summary n_dict bl_dict_ sums entry_label;
 *)
 
-open balrob_pends_Lib;
+(* __lesf2 *)
+
+val sums        = [];
+val entry_label = "__lesf2";
+val sum___lesf2 =
+      create_func_summary n_dict bl_dict_ sums entry_label;
 
 (* ========= pfmisc ======== *)
 

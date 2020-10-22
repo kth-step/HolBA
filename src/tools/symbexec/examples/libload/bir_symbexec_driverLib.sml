@@ -11,7 +11,7 @@ local
   open bir_symbexec_stateLib;
   open bir_symbexec_coreLib;
   open bir_symbexec_stepLib;
-  open bir_symbexec_funcLib;
+  open bir_symbexec_sumLib;
   open bir_countw_simplificationLib;
 
   open commonBalrobScriptLib;

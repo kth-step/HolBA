@@ -1,11 +1,11 @@
-structure bir_symbexec_funcLib =
+structure bir_symbexec_sumLib =
 struct
 
 local
   open bir_symbexec_stateLib;
 
-  val ERR      = Feedback.mk_HOL_ERR "bir_symbexec_funcLib"
-  val wrap_exn = Feedback.wrap_exn   "bir_symbexec_funcLib"
+  val ERR      = Feedback.mk_HOL_ERR "bir_symbexec_sumLib"
+  val wrap_exn = Feedback.wrap_exn   "bir_symbexec_sumLib"
 in (* outermost local *)
 
 local
