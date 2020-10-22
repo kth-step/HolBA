@@ -143,8 +143,7 @@ key - a states in total,
 - restricting ite branching to assignments to countw cuts the final states and execution time in half. more dramatic for whole fadd (from 25min to 7min) minmax stays the same.
 *)
 time for fun2 until call (collect travinfo, drive symbexec):
-187s
-395s (210s after ite-countw)
+187s, 395s (210s after ite-countw)
 
 count nodes on all paths (fun1, fun2 until call):
 61
