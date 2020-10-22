@@ -30,7 +30,5 @@ val syst_summary___clzsi2 =
 val summaries   = [syst_summary___clzsi2];
 val entry_label = "__aeabi_fadd";
 
-(*
 val syst_summary___aeabi_fadd =
       create_func_summary n_dict bl_dict_ summaries entry_label;
-*)

@@ -16,6 +16,7 @@ open bir_countw_simplificationLib;
 open commonBalrobScriptLib;
 *)
 
+open bir_symbexec_funcLib;
 open bir_symbexec_driverLib;
 
 
@@ -75,7 +76,7 @@ val _ = List.map (fn i =>
   let
     val _ = print ("processing " ^ (Int.toString i) ^ "\n");
     val syst_abc = List.nth (systs_precall, i);
-    val systs_callinst = instantiate_func [syst_abc] syst_summary;
+    val systs_callinst = instantiate_summaries [syst_summary] [syst_abc];
 (*
     val syst = hd systs_callinst;
 
@@ -95,7 +96,7 @@ val (some_systs, _) = List.partition bir_symbexec_stateLib.state_is_running syst
 
 (* continue after the call *)
 (* ================================================================ *)
-val systs_callinst = instantiate_func systs_precall syst_summary;
+val systs_callinst = instantiate_summaries [syst_summary] systs_precall;
 
 (*
 val stop_lbl_tms = find_func_ends n_dict entry_label;

@@ -29,6 +29,7 @@ fun cfg_trav_depth travfun state0 n_dict []          = state0
     cfg_trav_depth travfun state1 n_dict (l_new@l_todo)
   end;
 
+(* TODO: needs to be somewhere else *)
 fun mem_eq eq x [] = false
   | mem_eq eq x (y::ys) =
       eq (x,y) orelse

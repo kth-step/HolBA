@@ -533,14 +533,9 @@ fun subst_in_env varsubstmap env =
 
 in (* local *)
 
-fun instantiate_function_summary syst_summary syst =
+fun instantiate_summary_single syst_summary syst =
   let
-    (* find correct function summary *)
-    val (func_lbl_tm, func_precond, func_systs) = syst_summary;
-    val func_syst =
-            if length func_systs = 1 then hd func_systs else
-            raise ERR "instantiate_function_summary"
-                      "more than one symbolic state in function summary";
+    val (func_lbl_tm, func_precond, func_syst) = syst_summary;
 
     val syst_strt = syst;
 
@@ -621,6 +616,32 @@ fun instantiate_function_summary syst_summary syst =
   in
     syst_after
   end;
+
+fun instantiate_summary sum syst =
+  let
+    val (sum_lbl_tm, sum_precond, sum_systs) = sum;
+
+    fun instantiate sum_syst =
+      instantiate_summary_single (sum_lbl_tm, sum_precond, sum_syst) syst;
+  in
+    List.map instantiate sum_systs
+  end;
+
+fun instantiate_summaries sums systs =
+  flatten (List.map (fn syst =>
+  let
+    val lbl_tm = SYST_get_pc syst;
+
+    val sums_select = List.filter (fn (x,_,_) => identical lbl_tm x) sums;
+  in
+    if length sums_select = 0 then
+      [syst]
+    else if length sums_select = 1 then
+      instantiate_summary (hd sums_select) syst
+    else
+      raise ERR "instantiate_sumaries"
+                "need that not multiple summaries match"
+  end) systs);
 
 end (* local *)
 

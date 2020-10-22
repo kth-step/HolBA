@@ -14,6 +14,7 @@ open bir_countw_simplificationLib;
 open commonBalrobScriptLib;
 *)
 
+open bir_symbexec_funcLib;
 open bir_symbexec_driverLib;
 
 
@@ -49,7 +50,7 @@ val systs_start = [syst_start];
 val stop_lbl_tms = [func_lbl_tm]; (*``BL_Address (Imm32 0xc1cw)``];*)
 val systs_precall = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
 
-val systs_callinst = instantiate_func systs_precall syst_summary;
+val systs_callinst = instantiate_summaries [syst_summary] systs_precall;
 
 val stop_lbl_tms = find_func_ends n_dict entry_label;
 val systs_after = drive_to n_dict bl_dict_ systs_callinst stop_lbl_tms;
@@ -71,7 +72,7 @@ val systs_start = [syst_start];
 val stop_lbl_tms = [func_lbl_tm];
 val systs_precall = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
 
-val systs_callinst = instantiate_func systs_precall syst_summary;
+val systs_callinst = instantiate_summaries [syst_summary] systs_precall;
 
 val stop_lbl_tms = find_func_ends n_dict entry_label;
 val systs_after = drive_to n_dict bl_dict_ systs_callinst stop_lbl_tms;
@@ -93,10 +94,10 @@ val systs_start = [syst_start];
 val stop_lbl_tms = [func_lbl_tm_1, func_lbl_tm_2];
 val systs_precall = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
 
-val systs_callinst = instantiate_func systs_precall syst_summary_1;
+val systs_callinst = instantiate_summaries [syst_summary_1] systs_precall;
 val systs_precall = drive_to n_dict bl_dict_ systs_callinst stop_lbl_tms;
 
-val systs_callinst = instantiate_func systs_precall syst_summary_2;
+val systs_callinst = instantiate_summaries [syst_summary_2] systs_precall;
 
 val stop_lbl_tms = find_func_ends n_dict entry_label;
 val systs_after = drive_to n_dict bl_dict_ systs_callinst stop_lbl_tms;

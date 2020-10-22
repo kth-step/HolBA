@@ -292,9 +292,10 @@ val _ = print "\n\n";
 val syst = if length systs_noassertfailed = 1 then hd systs_noassertfailed else
            raise ERR "script" "more than one symbolic state in current path/state";
 
-val syst_inst = instantiate_function_summary syst_summary syst;
+val systs_inst = instantiate_summaries [syst_summary] [syst];
 
 (*
+val syst_inst = hd systs_inst;
 val envl = (Redblackmap.listItems o SYST_get_env) syst_inst;
 val valsl = (Redblackmap.listItems o SYST_get_vals) syst_inst;
 *)
@@ -311,7 +312,7 @@ lookup_block_dict bl_dict_ lbl_tm
 
 val stop_lbl_tms = [``BL_Address (Imm32 0xc74w)``];
 
-val systs = symb_exec_to_stop (abpfun cfb) n_dict bl_dict_ [syst_inst] stop_lbl_tms [];
+val systs = symb_exec_to_stop (abpfun cfb) n_dict bl_dict_ systs_inst stop_lbl_tms [];
 
 val (systs_noassertfailed, systs_assertfailed) =
   List.partition (fn syst => not (identical (SYST_get_status syst) BST_AssertionViolated_tm)) systs;

@@ -119,6 +119,9 @@ in (* outermost local *)
   (* TODO: restructure this to capture fuction summaries better *)
   fun merge_func lbl_tm systs_tidiedup =
     let
+      val _ = if not (List.null systs_tidiedup) then () else
+              raise ERR "merge_func" "cannot merge an emptry list of states, expecting at least one";
+
       val syst_merged =
         (fn x => List.foldr
                   (merge_states_vartointerval bv_countw bv_mem bv_sp)
@@ -162,43 +165,6 @@ in (* outermost local *)
     end;
 
 
-  (* instantiate execution summary - does not need to be a function! *)
-  (* ================================================================== *)
-  (* TODO: find precondition representation for instantiation and use it in instantiation *)
-  fun instantiate_func_syst syst syst_summary =
-    let
-      val syst_inst = instantiate_function_summary syst_summary syst;
-
-      (*
-      val envl = (Redblackmap.listItems o SYST_get_env) syst_inst;
-      val valsl = (Redblackmap.listItems o SYST_get_vals) syst_inst;
-      *)
-
-      (* ... and continuation up to the return of the function *)
-      val _ = print "\n========================\n";
-      val _ = print "continue after instantiation...\n\n";
-    in
-      syst_inst
-    end;
-
-  (* adaption for multiple states *)
-  fun instantiate_func systs syst_summary =
-    let
-      val (func_lbl_tm, _, _) = syst_summary;
-      fun instantiate_appropriate syst =
-        let
-          val lbl_tm = SYST_get_pc syst;
-        in
-          if identical func_lbl_tm lbl_tm then
-            instantiate_func_syst syst syst_summary
-          else
-            syst
-        end;
-    in
-      List.map instantiate_appropriate systs
-    end;
-
-
   (* creation of summaries (semi-recursively uses summaries!) *)
   (* ================================================================== *)
 
@@ -232,28 +198,61 @@ in (* outermost local *)
       syst
     end;
 
-  fun obtain_summary n_dict bl_dict summaries lbl_tm end_lbl_tms =
+  (* TODO: needs to be somewhere else, and this here is a copy from bir_symbexec_hypoLib *)
+  fun mem_eq eq x [] = false
+    | mem_eq eq x (y::ys) =
+        eq (x,y) orelse
+        mem_eq eq x ys;
+
+  fun drive_through_summaries n_dict bl_dict sums []    end_lbl_tms acc = acc
+    | drive_through_summaries n_dict bl_dict sums systs end_lbl_tms acc =
+    let
+      val stop_lbl_tms = end_lbl_tms@(List.map (fn (x,_,_) => x) sums);
+      val systs_after = drive_to n_dict bl_dict systs stop_lbl_tms;
+
+      (* filter out ended states *)
+      val (systs_noassertfailed, systs_assertfailed) =
+        List.partition
+          (fn syst => not (identical (SYST_get_status syst) BST_AssertionViolated_tm))
+          systs_after;
+
+      val (systs_ended, systs_continue) =
+        List.partition
+          (fn syst_ => mem_eq (fn (x,y) => identical x y) (SYST_get_pc syst_) end_lbl_tms)
+          systs_noassertfailed;
+
+      (* instantiation and recursion with what is not yet in end_lbl_tms *)
+      val systs_new = instantiate_summaries sums systs_continue;
+
+      (* append ended states *)
+      val acc_new = (systs_ended@systs_assertfailed@acc);
+    in
+      drive_through_summaries n_dict bl_dict sums systs_new end_lbl_tms acc_new
+    end;
+
+  fun obtain_summary n_dict bl_dict sums lbl_tm end_lbl_tms =
     let
       val syst_start = init_summary lbl_tm;
-      val systs_start = [syst_start];
+      val systs = [syst_start];
 
       (*
+      (* TODO: this needs to be patched to account for summary "jumps" *)
+(*
+    fun sum_to_sumjumps (lbl_tm_, _, systs_) =
+      List.map (fn syst_ => (lbl_tm_, SYST_get_pc syst_)) systs_;
+    val sumjump_list = flatten (List.map sum_to_sumjumps sums);
+*)
       val timer_meas = timer_start 1;
       val (num_nodetravs, num_pahts, num_paths_wasserts) =
-	bir_symbexec_hypoLib.collect_trav_info bl_dict n_dict [lbl_tm] stop_lbl_tms;
+	bir_symbexec_hypoLib.collect_trav_info bl_dict n_dict [lbl_tm] end_lbl_tms;
       val _ = print ("number of cfg nodes to traverse: " ^ (Int.toString (num_nodetravs)) ^ "\n");
       val _ = print ("number of paths to traverse: " ^ (Int.toString (num_pahts)) ^ "\n");
       val _ = print ("number of paths with assert: " ^ (Int.toString (num_paths_wasserts)) ^ "\n");
       val _ = timer_stop (fn s => print("time to collect traversal info: " ^ s ^ "\n")) timer_meas;
       *)
 
-      (*
-      val (func_lbl_tm, _, _) = syst_summary;
-      val stop_lbl_tms = [func_lbl_tm]@(find_func_ends n_dict entry_label);
-      *)
-
       val timer_meas = timer_start 1;
-      val systs_after = drive_to n_dict bl_dict systs_start end_lbl_tms;
+      val systs_after = drive_through_summaries n_dict bl_dict sums systs end_lbl_tms [];
       val _ = timer_stop (fn s => print("time to drive symbolic execution: " ^ s ^ "\n")) timer_meas;
 
       val syst_summary = merge_func lbl_tm systs_after;
@@ -264,12 +263,12 @@ in (* outermost local *)
 
   (* creation of summaries for functions *)
   (* ================================================================== *)
-  fun create_func_summary n_dict bl_dict summaries entry_label =
+  fun create_func_summary n_dict bl_dict sums entry_label =
     let
       val lbl_tm      = find_func_lbl_tm entry_label;
       val end_lbl_tms = find_func_ends n_dict entry_label;
 
-      val syst_summary = obtain_summary n_dict bl_dict summaries lbl_tm end_lbl_tms;
+      val syst_summary = obtain_summary n_dict bl_dict sums lbl_tm end_lbl_tms;
     in
       syst_summary
     end;
