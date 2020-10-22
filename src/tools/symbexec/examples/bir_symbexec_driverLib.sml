@@ -66,6 +66,32 @@ in
   stop_lbl_tms
 end;
 
+fun filter_with_progress filtfun l =
+  let
+    val print_again_t = ref (Time.now());
+    val llenr = Real.fromInt (length l);
+    val iref = ref 0;
+    fun filter_spec x =
+      let
+        val _ = iref := !iref + 1;
+        val frac = Real./(Real.fromInt (!iref), llenr);
+        val frac1000 = Real.*(frac, Real.fromInt 1000);
+        val frac1000i = Real.round frac1000;
+
+        val _ = if Time.<(Time.now(), !print_again_t) then () else (
+          print_again_t := (Time.fromReal o LargeReal.+) (Time.toReal(Time.now()), LargeReal.fromInt 5);
+          print ((Int.toString (frac1000i div 10)) ^ "." ^ (Int.toString (frac1000i mod 10)) ^ "%\n")
+         );
+      in
+        filtfun x
+      end;
+
+    val result = List.filter filter_spec l;
+  in
+    print "filtering done\n";
+    result
+  end;
+
 (* only keeps running paths and then checks feasibility *)
 fun drive_to n_dict bl_dict_ systs_start stop_lbl_tms =
 let
@@ -81,7 +107,7 @@ val (systs_noassertfailed, systs_assertfailed) =
 val _ = print ("number of \"no assert failed\" paths found: " ^ (Int.toString (length systs_noassertfailed)));
 val _ = print "\n\n";
 
-val systs_feasible = List.filter check_feasible systs_noassertfailed;
+val systs_feasible = filter_with_progress check_feasible systs_noassertfailed;
 val _ = print ("number of feasible paths found: " ^ (Int.toString (length systs_feasible)));
 val _ = print "\n\n";
 
