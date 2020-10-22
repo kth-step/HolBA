@@ -131,7 +131,10 @@ key - a states in total,
     - x - min_countw,
     - y - max_countw.
 
-- plain running: about 25min, a=21000::48000, b=1129::2781, c=129::297, x=58, y=161.
+- plain running: about 25min,
+    a=21000::48000, b=1129::2781, c=129::297, x=58, y=161.
+- plain running with ite-countw: about 7min,
+    a=11417:: 8709, b= 613:: 585, c=129::203, x=58, y=161.
 
 
 (* why are these numbers so different?
@@ -141,7 +144,7 @@ key - a states in total,
 *)
 time for fun2 until call (collect travinfo, drive symbexec):
 187s
-395s
+395s (210s after ite-countw)
 
 count nodes on all paths (fun1, fun2 until call):
 61
