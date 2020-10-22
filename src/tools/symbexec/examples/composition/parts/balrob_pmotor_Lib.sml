@@ -1,4 +1,4 @@
-structure balrob_pends_Lib =
+structure balrob_pmotor_Lib =
 struct
 
 local

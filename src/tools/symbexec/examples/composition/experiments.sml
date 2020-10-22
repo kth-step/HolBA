@@ -30,9 +30,19 @@ open balrob_pends_Lib;
 
 (* __aeabi_fsub *)
 
+val sums        = [sum___clzsi2(*,
+                   sum___aeabi_fmul_c1,
+                   sum___aeabi_fmul_c2,
+                   sum___aeabi_fmul_c3*)];
+val entry_label = "__aeabi_fsub";
+
+val sum___aeabi_fsub =
+      create_func_summary n_dict bl_dict_ sums entry_label;
+
+(*
 (* __aeabi_fmul *)
 
-val sums        = [balrob_pends_Lib.sumclzsi2(*,
+val sums        = [sum___clzsi2(*,
                    sum___aeabi_fmul_c1,
                    sum___aeabi_fmul_c2,
                    sum___aeabi_fmul_c3*)];
@@ -40,3 +50,13 @@ val entry_label = "__aeabi_fmul";
 
 val sum___aeabi_fmul =
       create_func_summary n_dict bl_dict_ sums entry_label;
+
+(*
+Exception-
+   HOL_ERR
+     {message =
+      "couldn't resolve addr_tm: BExp_BinExp BIExp_Plus (BExp_Const (Imm32 13604w))\n  (BExp_Den (BVar \"fr_237957_R3\" (BType_Imm Bit32)))",
+      origin_function = "mem_load", origin_structure = "bir_inst_liftingLib"}
+   raised
+*)
+*)

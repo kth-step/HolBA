@@ -12,7 +12,7 @@ local
 
 open balrob_pends_Lib;
 
-(*
+
 (* __aeabi_fadd_c1 *)
 
 val sums        = [];
@@ -54,13 +54,11 @@ val entry_label = "__aeabi_fadd";
 
 val sum___aeabi_fadd =
       create_func_summary n_dict bl_dict_ sums entry_label;
-*)
+
 
 in (* outermost local *)
 
-(*
 val sum___aeabi_fadd = sum___aeabi_fadd;
-*)
 
 end (* outermost local *)
 
