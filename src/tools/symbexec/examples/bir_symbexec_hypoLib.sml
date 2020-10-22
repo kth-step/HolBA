@@ -39,7 +39,11 @@ fun cfg_trav_depth_to_end travfun state0 n_dict l_entry l_end =
    cfg_trav_depth (fn n => fn n_succ => fn s =>
     let
       val is_end = mem_eq (fn (x,y) => identical x y) (#CFGN_lbl_tm n) l_end;
-      val (s', n_new) = travfun n n_succ is_end s;
+      val (s', n_newo) = travfun n n_succ is_end s;
+      val n_new = if isSome n_newo then
+                    valOf n_newo
+                  else
+                    if is_end then [] else n_succ;
       val _ = if not is_end then () else
               print (".");
     in
@@ -81,7 +85,7 @@ fun collect_trav_info bl_dict n_dict l_entry l_end =
               else ();
 *)
 
-      val n_new = if is_end then [] else n_succ;(*(flatten (List.tabulate (num_stmtsbr, K n_succ)));*)
+      val n_newo = NONE; (*SOME (if is_end then [] else (flatten (List.tabulate (num_stmtsbr, K n_succ))));*)
 
       val i1_inc = if is_end then 0 else 1;
       val i2_inc = if is_end then 1 else 0;
@@ -91,7 +95,7 @@ fun collect_trav_info bl_dict n_dict l_entry l_end =
       val i2' = i2 + i2_inc;
       val i3' = i3 + i3_inc;
     in
-      ((i1', i2', i3'), n_new)
+      ((i1', i2', i3'), n_newo)
     end
   ) (0, 0, 0) n_dict l_entry l_end;
 
