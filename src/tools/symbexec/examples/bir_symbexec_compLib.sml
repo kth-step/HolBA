@@ -212,7 +212,7 @@ in (* outermost local *)
       val addr_tm_vars = get_birexp_vars addr_tm;
       val addr_ =
           if is_BExp_Den addr_tm then
-            SOME (find_bv_val "state_make_interval" vals (dest_BExp_Den addr_tm))
+            SOME (find_bv_val "process_addr" vals (dest_BExp_Den addr_tm))
           else
             compute_val_try_expplusminusconst vals (addr_tm, addr_tm_vars);
       (*
