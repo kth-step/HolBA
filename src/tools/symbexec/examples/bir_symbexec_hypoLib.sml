@@ -39,8 +39,7 @@ fun cfg_trav_depth_to_end travfun state0 n_dict l_entry l_end =
    cfg_trav_depth (fn n => fn n_succ => fn s =>
     let
       val is_end = mem_eq (fn (x,y) => identical x y) (#CFGN_lbl_tm n) l_end;
-      val s' = travfun n n_succ is_end s;
-      val n_new = if is_end then [] else n_succ;
+      val (s', n_new) = travfun n n_succ is_end s;
       val _ = if not is_end then () else
               print (".");
     in
@@ -55,25 +54,44 @@ in (* outermost local *)
 
 (* (# node travs, # paths, # paths with asserts) *)
 fun collect_trav_info bl_dict n_dict l_entry l_end =
-  cfg_trav_depth_to_end (fn n => fn _ => fn is_end => fn (i1,i2,i3) =>
+  cfg_trav_depth_to_end (fn n => fn n_succ => fn is_end => fn (i1,i2,i3) =>
     let
       val l = #CFGN_lbl_tm n;
       val bl = lookup_block_dict_value bl_dict l
                "collect_trav_info"
                ("couldn't find block: " ^ (term_to_string l));
-      val (_, stmts, _) = bir_programSyntax.dest_bir_block bl;
+      open bir_programSyntax;
+      open bir_expSyntax;
+      val (_, stmts, _) = dest_bir_block bl;
       val s_tms = (fst o listSyntax.dest_list) stmts;
-      val num_asserts = length (List.map bir_programSyntax.is_BStmt_Assert s_tms);
+      val (num_stmtsbr, num_assertbr) = List.foldl (fn (t,(i_,ia_)) =>
+            if is_BStmt_Assert t then
+              (i_,ia_ + i_)
+            else (
+            if is_BStmt_Assign t then
+              if (is_BExp_IfThenElse o snd o dest_BStmt_Assign) t then i_ * 2 else i_
+            else
+              i_
+            , ia_)
+          ) (1,0) s_tms;
+
+(*
+      val _ = if num_stmtsbr > 1 andalso length n_succ < 2 then
+                print_term bl
+              else ();
+*)
+
+      val n_new = if is_end then [] else n_succ;(*(flatten (List.tabulate (num_stmtsbr, K n_succ)));*)
 
       val i1_inc = if is_end then 0 else 1;
       val i2_inc = if is_end then 1 else 0;
-      val i3_inc = i2_inc + num_asserts;
+      val i3_inc = i2_inc + (if is_end then 0 else num_assertbr);
 
       val i1' = i1 + i1_inc;
       val i2' = i2 + i2_inc;
       val i3' = i3 + i3_inc;
     in
-      (i1', i2', i3')
+      ((i1', i2', i3'), n_new)
     end
   ) (0, 0, 0) n_dict l_entry l_end;
 

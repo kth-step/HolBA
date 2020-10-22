@@ -37,7 +37,6 @@ val systs_after = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
 
 val syst_summary = merge_func lbl_tm systs_after;
 
-
 (* __aeabi_fadd *)
 
 val (func_lbl_tm, _, _) = syst_summary;
@@ -59,7 +58,6 @@ val _ = timer_stop (fn s => print("time to collect traversal info: " ^ s ^ "\n")
 val timer_meas = timer_start 1;
 val systs_precall = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
 val _ = timer_stop (fn s => print("time to drive symbolic execution: " ^ s ^ "\n")) timer_meas;
-
 
 (* Analysis *)
 (* ================================================================ *)
@@ -137,21 +135,24 @@ key - a states in total,
 - plain running: about 25min, a=21000::48000, b=1129::2781, c=129::297, x=58, y=161.
 
 
-(* TODO: why are these numbers so different? *)
+(* why are these numbers so different?
+- ite assignment branching and merging at cjmp complicates this kind of validation
+- now hypoLib is fixed to underestimate the branching - does not account for lsls instructions for example that assign ite exp, which is not used for countw and not used for cjmp, not what we actually want
+*)
 time for fun2 until call (collect travinfo, drive symbexec):
 187s
 395s
 
 count nodes on all paths (fun1, fun2 until call):
 61
-9705
+9705 (here we probably visit more nodes)
 
 number of paths (fun1, fun2 until call):
 8
-580 (should be 1129?!)
+580 (actually it's 1129?!)
 
 number of paths including assert (fun1, fun2 until call)
-343
-53947 (should be 20937?!)
+69
+10857 (actually it's 20937)
 
 *)
