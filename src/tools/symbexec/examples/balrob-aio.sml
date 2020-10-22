@@ -33,7 +33,9 @@ val syst_summary = merge_func lbl_tm systs_after;
 (* motor_set *)
 
 val entry_label = "motor_set";
-val (lbl_tm, syst_start) = init_func entry_label;
+val lbl_tm      = find_func_lbl_tm entry_label;
+
+val syst_start  = init_summary lbl_tm;
 val systs_start = [syst_start];
 
 val stop_lbl_tms = find_func_ends n_dict entry_label;

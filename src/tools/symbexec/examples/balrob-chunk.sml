@@ -20,7 +20,9 @@ open bir_symbexec_driverLib;
 (* motor_prep_input *)
 
 val entry_label = "motor_prep_input";
-val (lbl_tm, syst_start) = init_func entry_label;
+val lbl_tm      = find_func_lbl_tm entry_label;
+
+val syst_start  = init_summary lbl_tm;
 val systs_start = [syst_start];
 
 val stop_lbl_tms = find_func_ends n_dict entry_label;
@@ -39,7 +41,9 @@ val entry_label = "motor_set_l";
 "c1c" call
 "c20" return
 *)
-val (lbl_tm, syst_start) = init_func entry_label;
+val lbl_tm      = find_func_lbl_tm entry_label;
+
+val syst_start  = init_summary lbl_tm;
 val systs_start = [syst_start];
 
 val stop_lbl_tms = [func_lbl_tm]; (*``BL_Address (Imm32 0xc1cw)``];*)
@@ -59,7 +63,9 @@ val syst_summary_1 = merge_func lbl_tm systs_after;
 val (func_lbl_tm, _, _) = syst_summary;
 
 val entry_label = "motor_set_r";
-val (lbl_tm, syst_start) = init_func entry_label;
+val lbl_tm      = find_func_lbl_tm entry_label;
+
+val syst_start  = init_summary lbl_tm;
 val systs_start = [syst_start];
 
 val stop_lbl_tms = [func_lbl_tm];
@@ -79,7 +85,9 @@ val (func_lbl_tm_1, _, _) = syst_summary_1;
 val (func_lbl_tm_2, _, _) = syst_summary_2;
 
 val entry_label = "motor_set";
-val (lbl_tm, syst_start) = init_func entry_label;
+val lbl_tm      = find_func_lbl_tm entry_label;
+
+val syst_start  = init_summary lbl_tm;
 val systs_start = [syst_start];
 
 val stop_lbl_tms = [func_lbl_tm_1, func_lbl_tm_2];

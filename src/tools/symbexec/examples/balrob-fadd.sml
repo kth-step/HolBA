@@ -22,7 +22,9 @@ open bir_symbexec_driverLib;
 (* __clzsi2 *)
 
 val entry_label = "__clzsi2";
-val (lbl_tm, syst_start) = init_func entry_label;
+val lbl_tm      = find_func_lbl_tm entry_label;
+
+val syst_start  = init_summary lbl_tm;
 val systs_start = [syst_start];
 
 val stop_lbl_tms = find_func_ends n_dict entry_label;
@@ -37,12 +39,15 @@ val systs_after = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
 
 val syst_summary = merge_func lbl_tm systs_after;
 
+
 (* __aeabi_fadd *)
 
 val (func_lbl_tm, _, _) = syst_summary;
 
 val entry_label = "__aeabi_fadd";
-val (lbl_tm, syst_start) = init_func entry_label;
+val lbl_tm      = find_func_lbl_tm entry_label;
+
+val syst_start  = init_summary lbl_tm;
 val systs_start = [syst_start];
 
 val stop_lbl_tms = [func_lbl_tm]@(find_func_ends n_dict entry_label);
