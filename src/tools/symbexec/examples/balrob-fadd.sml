@@ -24,6 +24,13 @@ val (lbl_tm, syst_start) = init_func entry_label;
 val systs_start = [syst_start];
 
 val stop_lbl_tms = find_func_ends n_dict entry_label;
+
+val (num_nodetravs, num_pahts, num_paths_wasserts) =
+  bir_symbexec_hypoLib.collect_trav_info bl_dict_ n_dict [lbl_tm] stop_lbl_tms;
+val _ = print ("number of cfg nodes to traverse: " ^ (Int.toString (num_nodetravs)) ^ "\n");
+val _ = print ("number of paths to traverse: " ^ (Int.toString (num_pahts)) ^ "\n");
+val _ = print ("number of paths with assert: " ^ (Int.toString (num_paths_wasserts)) ^ "\n");
+
 val systs_after = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
 
 val syst_summary = merge_func lbl_tm systs_after;
@@ -38,6 +45,13 @@ val (lbl_tm, syst_start) = init_func entry_label;
 val systs_start = [syst_start];
 
 val stop_lbl_tms = [func_lbl_tm]@(find_func_ends n_dict entry_label);
+
+val (num_nodetravs, num_pahts, num_paths_wasserts) =
+  bir_symbexec_hypoLib.collect_trav_info bl_dict_ n_dict [lbl_tm] stop_lbl_tms;
+val _ = print ("number of cfg nodes to traverse: " ^ (Int.toString (num_nodetravs)) ^ "\n");
+val _ = print ("number of paths to traverse: " ^ (Int.toString (num_pahts)) ^ "\n");
+val _ = print ("number of paths with assert: " ^ (Int.toString (num_paths_wasserts)) ^ "\n");
+
 val systs_precall = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
 
 (*
@@ -87,10 +101,45 @@ val final_lbl_tms = Redblackset.listItems (Redblackset.fromList Term.compare fin
 val syst_summary_1 = merge_func lbl_tm systs_after;
 
 (*
-progress info
+TODO:
 count paths (have a traversal function for what-if-we-try-experiments)
-run without function instantiation for comparison (write down numbers to see effects of optimizations)
 some approach to "collapse" components?
 - cutting/instantiation experiment, based on inspected CFG
 - if this works and has positive effect, automatically find cutting points by trying each branch and see if it is possible to find common merge point?
+
+no point to do this with fadd:
+- run without function instantiation for comparison (write down numbers to see effects of optimizations)
+- expected runtime 4h, but no difference in exectime due to constant execution time of subfunction
+
+
+*)
+
+(*
+
+results:
+(consider cut before the function call, which involves feasibility check, for state counting)
+
+key - a states in total,
+    - b are not assert failed/still running/reached the end,
+    - c are feasible,
+    - x - min_countw,
+    - y - max_countw.
+
+- plain running: about 25min, a=21000::48000, b=1129::2781, c=129::297, x=58, y=161.
+
+
+(* TODO: why are these numbers so different? *)
+
+count nodes on all paths (fun1, fun2 until call):
+69
+10285
+
+number of paths (fun1, fun2 until call):
+8
+580
+
+number of paths including assert (fun1, fun2 until call)
+343
+53947
+
 *)
