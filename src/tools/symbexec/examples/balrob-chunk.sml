@@ -19,7 +19,7 @@ val systs_start = [syst_start];
 val stop_lbl_tms = find_func_ends n_dict entry_label;
 val systs_after = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
 
-val syst_summary = merge_func lbl_tm systs_after;
+val syst_summary = merge_to_summary lbl_tm systs_after;
 
 
 
@@ -45,7 +45,7 @@ val systs_callinst = instantiate_summaries [syst_summary] systs_precall;
 val stop_lbl_tms = find_func_ends n_dict entry_label;
 val systs_after = drive_to n_dict bl_dict_ systs_callinst stop_lbl_tms;
 
-val syst_summary_1 = merge_func lbl_tm systs_after;
+val syst_summary_1 = merge_to_summary lbl_tm systs_after;
 
 
 
@@ -67,7 +67,7 @@ val systs_callinst = instantiate_summaries [syst_summary] systs_precall;
 val stop_lbl_tms = find_func_ends n_dict entry_label;
 val systs_after = drive_to n_dict bl_dict_ systs_callinst stop_lbl_tms;
 
-val syst_summary_2 = merge_func lbl_tm systs_after;
+val syst_summary_2 = merge_to_summary lbl_tm systs_after;
 
 
 (* motor_set *)
@@ -92,4 +92,4 @@ val systs_callinst = instantiate_summaries [syst_summary_2] systs_precall;
 val stop_lbl_tms = find_func_ends n_dict entry_label;
 val systs_after = drive_to n_dict bl_dict_ systs_callinst stop_lbl_tms;
 
-val syst_summary_3 = merge_func lbl_tm systs_after;
+val syst_summary_3 = merge_to_summary lbl_tm systs_after;

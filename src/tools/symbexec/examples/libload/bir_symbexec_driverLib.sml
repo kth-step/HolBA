@@ -116,52 +116,68 @@ in (* outermost local *)
 
   (* merging symbolic state list (assuming that all states have same pc) *)
   (* ================================================================== *)
-  (* TODO: restructure this to capture fuction summaries better *)
-  fun merge_func lbl_tm systs_tidiedup =
+  (* TODO: restructure this to capture summaries better *)
+  fun merge_to_summary lbl_tm systs_tidiedup =
     let
       val _ = if not (List.null systs_tidiedup) then () else
-              raise ERR "merge_func" "cannot merge an emptry list of states, expecting at least one";
+              raise ERR "merge_to_summary" "cannot merge an emptry list of states, expecting at least one";
 
-      val syst_merged =
+      val systs_wlbl = List.map (fn syst => (SYST_get_pc syst, syst)) systs_tidiedup;
+      fun group_by_fst lbl_tm [] acc = acc
+	| group_by_fst lbl_tm sywlbs acc =
+            let
+              val (sywlbs_grp, sywlbs_new) = List.partition (identical lbl_tm o fst) sywlbs;
+              val acc_new = sywlbs_grp::acc;
+              val lbl_tm_new = if List.null sywlbs_new then lbl_tm else (fst o hd) sywlbs_new;
+            in
+              group_by_fst lbl_tm_new sywlbs_new acc_new
+            end;
+      val systs_grps = List.map (List.map snd) (group_by_fst ((fst o hd) systs_wlbl) systs_wlbl []);
+
+      val systs_merged =
+        List.map
         (fn x => List.foldr
                   (merge_states_vartointerval bv_countw bv_mem bv_sp)
                   (hd x)
                   (tl x)
-        ) systs_tidiedup;
+        ) systs_grps;
 
-      (* print sp and mem *)
-      val _ =
+      val _ = List.map (fn syst_merged =>
         let
-          val syst_merged_sp_symbv  = get_state_symbv "script" bv_sp syst_merged;
-          val _ = print ("\nSP  = " ^ (symbv_to_string_raw true syst_merged_sp_symbv) ^ "\n\n");
-        in () end
-        handle _ => print "\nSP  = n/a\n\n";
-      val _ =
-        let
-          val syst_merged_mem_symbv = get_state_symbv "script" bv_mem syst_merged;
-          val _ = print ("\nMEM = " ^ (symbv_to_string_raw true syst_merged_mem_symbv) ^ "\n\n");
-        in () end
-        handle _ => print "\nSP  = n/a\n\n";
+          (* print sp and mem *)
+          val _ =
+            let
+              val syst_merged_sp_symbv  = get_state_symbv "merge_to_summary" bv_sp syst_merged;
+              val _ = print ("\nSP  = " ^ (symbv_to_string_raw true syst_merged_sp_symbv) ^ "\n\n");
+            in () end
+            handle _ => print "\nSP  = n/a\n\n";
+          val _ =
+            let
+              val syst_merged_mem_symbv = get_state_symbv "merge_to_summary" bv_mem syst_merged;
+              val _ = print ("\nMEM = " ^ (symbv_to_string_raw true syst_merged_mem_symbv) ^ "\n\n");
+            in () end
+            handle _ => print "\nSP  = n/a\n\n";
 
-      val syst_summary = (lbl_tm, "path predicate goes here", [syst_merged]);
+          val syst_merged_countw = get_state_symbv "script" bv_countw syst_merged;
 
-      val syst_merged_countw = get_state_symbv "script" bv_countw syst_merged;
+          (*
+          val _ = print (symbv_to_string syst_merged_countw);
+          *)
 
-      (*
-      val _ = print (symbv_to_string syst_merged_countw);
-      *)
+          val (count_min, count_max) =
+            case syst_merged_countw of
+               SymbValInterval ((min, max), _) =>
+                  (term_to_string min, term_to_string max)
+             | _ => raise ERR "merge_to_summary" "should be an interval";
 
-      val (count_min, count_max) =
-        case syst_merged_countw of
-           SymbValInterval ((min, max), _) =>
-              (term_to_string min, term_to_string max)
-         | _ => raise ERR "balrob-test" "should be an interval";
+          val _ = print "\n\n\n";
+          val _ = print ("min = " ^ count_min ^ "\n");
+          val _ = print ("max = " ^ count_max ^ "\n");
+        in () end) systs_merged;
 
-      val _ = print "\n\n\n";
-      val _ = print ("min = " ^ count_min ^ "\n");
-      val _ = print ("max = " ^ count_max ^ "\n");
+      val sum = (lbl_tm, "path predicate goes here", systs_merged);
     in
-      syst_summary
+      sum
     end;
 
 
@@ -255,9 +271,9 @@ in (* outermost local *)
       val systs_after = drive_through_summaries n_dict bl_dict sums systs end_lbl_tms [];
       val _ = timer_stop (fn s => print("time to drive symbolic execution: " ^ s ^ "\n")) timer_meas;
 
-      val syst_summary = merge_func lbl_tm systs_after;
+      val sum = merge_to_summary lbl_tm systs_after;
     in
-      syst_summary
+      sum
     end;
 
 
@@ -268,9 +284,9 @@ in (* outermost local *)
       val lbl_tm      = find_func_lbl_tm entry_label;
       val end_lbl_tms = find_func_ends n_dict entry_label;
 
-      val syst_summary = obtain_summary n_dict bl_dict sums lbl_tm end_lbl_tms;
+      val sum = obtain_summary n_dict bl_dict sums lbl_tm end_lbl_tms;
     in
-      syst_summary
+      sum
     end;
 
 end (* outermost local *)

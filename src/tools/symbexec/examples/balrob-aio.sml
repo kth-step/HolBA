@@ -16,7 +16,7 @@ val systs_start = [syst_start];
 val stop_lbl_tms = find_func_ends n_dict entry_label;
 val systs_after = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
 
-val syst_summary = merge_func lbl_tm systs_after;
+val sum = merge_to_summary lbl_tm systs_after;
 *)
 
 
@@ -31,5 +31,5 @@ val systs_start = [syst_start];
 val stop_lbl_tms = find_func_ends n_dict entry_label;
 val systs_after = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
 
-val syst_summary = merge_func lbl_tm systs_after;
+val sum = merge_to_summary lbl_tm systs_after;
 

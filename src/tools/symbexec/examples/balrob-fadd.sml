@@ -28,7 +28,7 @@ val _ = print ("number of paths with assert: " ^ (Int.toString (num_paths_wasser
 
 val systs_after = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
 
-val syst_summary = merge_func lbl_tm systs_after;
+val syst_summary = merge_to_summary lbl_tm systs_after;
 
 
 (* __aeabi_fadd *)
@@ -98,7 +98,7 @@ val systs_after = drive_to n_dict bl_dict_ systs_callinst stop_lbl_tms;
 val final_lbl_tms_ = List.map bir_symbexec_stateLib.SYST_get_pc systs_after;
 val final_lbl_tms = Redblackset.listItems (Redblackset.fromList Term.compare final_lbl_tms_);
 
-val syst_summary_1 = merge_func lbl_tm systs_after;
+val syst_summary_1 = merge_to_summary lbl_tm systs_after;
 
 
 (* notes *)
