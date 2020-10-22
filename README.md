@@ -87,53 +87,69 @@ Notice that this sequence is exemplary and it is possible to selectively run the
 ## Folders and organization
 
 ```
-├─ doc
-├─ src
-│  ├─ theory
-│  │  ├─ bir: core BIR language
-│  │  ├─ bir-support: various supporting theories for bir
-│  │  ├─ models: various machine models
-│  │  └─ tools: theories used by the tool libraries in src/tools
-│  │     ├─ ...
-│  │     ...
-│  ├─ shared: general BIR libraries, used by libraries in tools
-│  └─ tools
-│     ├─ cfg: Control Flow Graph utilities
-│     ├─ exec: concrete execution
-│     ├─ lifter: proof-producing binary lifter
-│     ├─ pass: Passification utility
-│     ├─ wp: weakest precondition propagation
-│     └─ scamv: abstract side channel model validation framework
-└──── examples: to showcase HolBA
+├─ doc: Documentation material
+├─ examples: Showcasing HolBA
+│  ├─ aes: lifting + WP of AES on Cortex-M0
+│  ├─ bsl-wp-smt: Simplified BIR generation and SMT interface
+│  ├─ nic: NIC formalization
+│  ├─ tutorial: End-to-end tutorial of simple ARMv8 examples
+├─ scripts: CI and installation scripts
+└─ src
+   ├─ aux: Non-HolBA-specific theories and libraries
+   ├─ shared: Libraries shared between tools
+   ├─ theory
+   │  ├─ abstract-hoare-logic: Abstract Hoare-style logic for unstructured code
+   │  ├─ bir: Core BIR language
+   │  ├─ bir-support: Extensions and supporting theories for BIR
+   │  ├─ models: Additional machine models
+   │  └─ tools: Theories for the tool libraries in src/tools
+   └─ tools
+      ├─ backlifter: Gets ISA-level contracts from BIR contracts
+      ├─ cfg: Control Flow Graph utilities
+      ├─ comp: Composition of contracts
+      ├─ exec: Concrete execution
+      ├─ lifter: Transpiler from binary to BIR
+      ├─ pass: Passification utility
+      ├─ scamv: Abstract side channel model validation framework
+      └─ wp: Weakest precondition propagation
 ```
 
 ### Tools status:
 
+- `tools/backlifter`:
+  * Proof-producing
+  * Clear interface
+  * Experimental implementation
 - `tools/cfg`:
-  * non proof-producing
-  * no clear interface yet
+  * Non-proof-producing
+  * No clear interface yet
   * GraphViz exporter working
+- `tools/comp`:
+  * Proof-producing
+  * Decent interface
+  * Experimental implementation
+  * Requires documentation
 - `tools/exec`:
-  * proof-producing
-  * unstable BIR evaluation utilities (no clear interface yet)
-  * quite easy to use
+  * Proof-producing
+  * Unstable BIR evaluation utilities (no clear interface yet)
+  * Quite easy to use
 - `tools/lifter`:
-  * very stable
-  * proof-producing
-  * widely used in examples
-  * supports: ARMv8, Cortex-M0, Cortex-M0 with clock cycke counter
-- `tools/wp`:
-  * proof-producing
-  * experimental implementation
-    * includes prototype of substitution simplification
-  * interface in progress
+  * Proof-producing
+  * Very stable
+  * Widely used in examples
+  * Supports: ARMv8, Cortex-M0, Cortex-M0 with clock cycle counter, RISC-V
 - `tools/pass`:
-  * non proof-producing
-  * experimental passification transformation to SSA
+  * Non-proof-producing
+  * Experimental passification transformation to SSA
 - `tools/scamv`:
-  * works for small programs
-  * cannot handle certain cases, like memory dependent observations
-  * includes a selection of cache side channel models
+  * Works for small programs
+  * Cannot handle certain cases, like memory dependent observations
+  * Includes a selection of cache side channel models
+- `tools/wp`:
+  * Proof-producing
+  * Interface in progress
+  * Fairly stable
+  * Includes prototype of substitution simplification
 
 ### Dependency graph
 
@@ -145,7 +161,7 @@ Key:
 ### PolyML heaps
 
 - The heap chain is no longer represented in the diagram. You can see it by
-  reading the `Holmakefil.gen` files.
+  reading the `Holmakefile.gen` files.
 - See HOL's Description Manual for more information about PolyML heaps.
 - You can temporarily change the heap chain order if you don't need a dependency
   in order to reduce build times.
