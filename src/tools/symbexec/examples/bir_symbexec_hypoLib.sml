@@ -65,7 +65,7 @@ fun collect_trav_info bl_dict n_dict l_entry l_end =
       val s_tms = (fst o listSyntax.dest_list) stmts;
       val num_asserts = length (List.map bir_programSyntax.is_BStmt_Assert s_tms);
 
-      val i1_inc = 1;
+      val i1_inc = if is_end then 0 else 1;
       val i2_inc = if is_end then 1 else 0;
       val i3_inc = i2_inc + num_asserts;
 
