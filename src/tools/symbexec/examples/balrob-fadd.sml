@@ -47,6 +47,7 @@ val systs_start = [syst_start];
 
 val stop_lbl_tms = [func_lbl_tm]@(find_func_ends n_dict entry_label);
 
+(*
 val timer_meas = timer_start 1;
 val (num_nodetravs, num_pahts, num_paths_wasserts) =
   bir_symbexec_hypoLib.collect_trav_info bl_dict_ n_dict [lbl_tm] stop_lbl_tms;
@@ -54,6 +55,7 @@ val _ = print ("number of cfg nodes to traverse: " ^ (Int.toString (num_nodetrav
 val _ = print ("number of paths to traverse: " ^ (Int.toString (num_pahts)) ^ "\n");
 val _ = print ("number of paths with assert: " ^ (Int.toString (num_paths_wasserts)) ^ "\n");
 val _ = timer_stop (fn s => print("time to collect traversal info: " ^ s ^ "\n")) timer_meas;
+*)
 
 val timer_meas = timer_start 1;
 val systs_precall = drive_to n_dict bl_dict_ systs_start stop_lbl_tms;
@@ -88,7 +90,6 @@ val (some_systs, _) = List.partition bir_symbexec_stateLib.state_is_running syst
 
 (* continue after the call *)
 (* ================================================================ *)
-(*
 val systs_callinst = instantiate_func systs_precall syst_summary;
 
 (*
@@ -102,7 +103,6 @@ val final_lbl_tms_ = List.map bir_symbexec_stateLib.SYST_get_pc systs_after;
 val final_lbl_tms = Redblackset.listItems (Redblackset.fromList Term.compare final_lbl_tms_);
 
 val syst_summary_1 = merge_func lbl_tm systs_after;
-*)
 
 
 (* notes *)
@@ -137,6 +137,7 @@ key - a states in total,
 (* why are these numbers so different?
 - ite assignment branching and merging at cjmp complicates this kind of validation
 - now hypoLib is fixed to underestimate the branching - does not account for lsls instructions for example that assign ite exp, which is not used for countw and not used for cjmp, not what we actually want
+- restricting ite branching to assignments to countw cuts the final states and execution time in half. more dramatic for whole fadd (from 25min to 7min) minmax stays the same.
 *)
 time for fun2 until call (collect travinfo, drive symbexec):
 187s
@@ -148,10 +149,10 @@ count nodes on all paths (fun1, fun2 until call):
 
 number of paths (fun1, fun2 until call):
 8
-580 (actually it's 1129?!)
+580 (actually it's 1129, 613 after after restricting ite branching to countw)
 
 number of paths including assert (fun1, fun2 until call)
 69
-10857 (actually it's 20937)
+10857 (actually it's 20937, 11417 after restricting ite branching to countw)
 
 *)

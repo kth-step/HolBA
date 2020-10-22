@@ -18,8 +18,11 @@ local
   val s = ``BStmt_Assign (BVar "R5" (BType_Imm Bit32)) (BExp_Den (BVar "R4" (BType_Imm Bit32)))``;
   val (bv, be) = dest_BStmt_Assign s
   *)
+  (* TODO: this branching can be considered a hack because of
+           the way that countw is assigned to for conditional branches *)
+  val bv_countw = bir_envSyntax.mk_BVar_string ("countw", ``(BType_Imm Bit64)``);
   fun state_exec_assign (bv, be) syst =
-    if bir_expSyntax.is_BExp_IfThenElse be then
+    if identical bv bv_countw andalso bir_expSyntax.is_BExp_IfThenElse be then
       let
         val (cnd, be1, be2) = bir_expSyntax.dest_BExp_IfThenElse be;
       in
