@@ -93,26 +93,39 @@ fun filter_with_progress filtfun l =
   end;
 
 (* only keeps running paths and then checks feasibility *)
+fun drive_to_raw n_dict bl_dict_ systs_start stop_lbl_tms =
+let
+  val cfb = false;
+
+  val systs = symb_exec_to_stop (abpfun cfb) n_dict bl_dict_ systs_start stop_lbl_tms [];
+  val _ = print "finished exploration of all paths.\n";
+  val _ = print ("number of paths found: " ^ (Int.toString (length systs)));
+  val _ = print "\n\n";
+in
+  systs
+end;
+
+fun check_feasible_and_tidyup systs =
+let
+  val (systs_noassertfailed, systs_assertfailed) =
+    List.partition (fn syst => not (identical (SYST_get_status syst) BST_AssertionViolated_tm)) systs;
+  val _ = print ("number of \"no assert failed\" paths found: " ^ (Int.toString (length systs_noassertfailed)));
+  val _ = print "\n\n";
+
+  val systs_feasible = filter_with_progress check_feasible systs_noassertfailed;
+  val _ = print ("number of feasible paths found: " ^ (Int.toString (length systs_feasible)));
+  val _ = print "\n\n";
+
+  val systs_tidiedup = List.map tidyup_state_vals systs_feasible;
+  val _ = print "finished tidying up all paths.\n\n";
+in
+  systs_tidiedup
+end;
+
 fun drive_to n_dict bl_dict_ systs_start stop_lbl_tms =
 let
-val cfb = false;
-
-val systs = symb_exec_to_stop (abpfun cfb) n_dict bl_dict_ systs_start stop_lbl_tms [];
-val _ = print "finished exploration of all paths.\n";
-val _ = print ("number of paths found: " ^ (Int.toString (length systs)));
-val _ = print "\n\n";
-
-val (systs_noassertfailed, systs_assertfailed) =
-  List.partition (fn syst => not (identical (SYST_get_status syst) BST_AssertionViolated_tm)) systs;
-val _ = print ("number of \"no assert failed\" paths found: " ^ (Int.toString (length systs_noassertfailed)));
-val _ = print "\n\n";
-
-val systs_feasible = filter_with_progress check_feasible systs_noassertfailed;
-val _ = print ("number of feasible paths found: " ^ (Int.toString (length systs_feasible)));
-val _ = print "\n\n";
-
-val systs_tidiedup = List.map tidyup_state_vals systs_feasible;
-val _ = print "finished tidying up all paths.\n\n";
+  val systs = drive_to_raw n_dict bl_dict_ systs_start stop_lbl_tms;
+  val systs_tidiedup = check_feasible_and_tidyup systs;
 in
   systs_tidiedup
 end;
