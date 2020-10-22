@@ -1,30 +1,18 @@
-open HolKernel Parse
+structure balrob_pfadd_Lib =
+struct
 
-open binariesLib;
-open binariesCfgLib;
-open binariesMemLib;
+local
+  open HolKernel Parse
+
+  open binariesLib;
+  open binariesCfgLib;
+  open binariesMemLib;
+
+  open bir_symbexec_driverLib;
+
+open balrob_pends_Lib;
 
 (*
-open bir_symbexec_stateLib;
-open bir_symbexec_coreLib;
-open bir_symbexec_stepLib;
-open bir_symbexec_funcLib;
-open bir_countw_simplificationLib;
-
-open commonBalrobScriptLib;
-*)
-
-open bir_symbexec_driverLib;
-
-
-(* __clzsi2 *)
-
-val sums        = [];
-val entry_label = "__clzsi2";
-val sum___clzsi2 =
-      create_func_summary n_dict bl_dict_ sums entry_label;
-
-
 (* __aeabi_fadd_c1 *)
 
 val sums        = [];
@@ -66,9 +54,14 @@ val entry_label = "__aeabi_fadd";
 
 val sum___aeabi_fadd =
       create_func_summary n_dict bl_dict_ sums entry_label;
+*)
+
+in (* outermost local *)
 
 (*
-now this takes just about 2 minutes and we gain a little bit extra overapproximation on the countw
-minmax = (58,168)
-hopefully we can find suitable preconditions
+val sum___aeabi_fadd = sum___aeabi_fadd;
 *)
+
+end (* outermost local *)
+
+end (* struct *)
