@@ -4,7 +4,8 @@ struct
   local
 
   open HolKernel boolLib liteLib;
-  open bir_inst_liftingLibTypes
+
+  open bir_inst_liftingLibTypes;
 
   open bir_auxiliaryLib;
   open bir_fileLib;
