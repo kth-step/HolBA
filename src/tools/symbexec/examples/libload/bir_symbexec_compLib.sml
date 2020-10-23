@@ -7,6 +7,9 @@ local
   open bir_constpropLib;
   open bir_exp_helperLib;
   open bir_expSyntax;
+
+  val ERR      = Feedback.mk_HOL_ERR "bir_symbexec_compLib"
+  val wrap_exn = Feedback.wrap_exn   "bir_symbexec_compLib"
 in (* outermost local *)
 
   (* TODO: make this available at some more central location (it is from src/tools/exec/auxLib *)
@@ -321,7 +324,7 @@ in (* outermost local *)
         blowcast8 (bhighcast16 exp)
       else if sz =  8 andalso suboff = 3 then
         bhighcast8 exp
-      else raise ERR "mem_sec_exp_gen" "this should never happen"
+      else raise ERR "mem_sec_exp_gen" ("this should never happen: " ^ (term_to_string exp) ^ " ;; " ^ (Int.toString suboff) ^ " ;; " ^ (Int.toString sz))
     end;
 
   fun mem_upd_sec_exp_gen exp_ml exp suboff sz =
@@ -331,7 +334,7 @@ in (* outermost local *)
            sz = 16 orelse
            sz =  8 then ()
         else
-          raise ERR "mem_sec_exp_gen" "cannot handle word size";
+          raise ERR "mem_upd_sec_exp_gen" "cannot handle word size";
 
       val bytes = sz div 8;
 
@@ -352,7 +355,7 @@ in (* outermost local *)
         bor (band (exp_ml, bconst32 0xFF00FFFF), blshift (blowcast32 exp, bconst32 16))
       else if sz =  8 andalso suboff = 3 then
         bor (band (exp_ml, bconst32 0x00FFFFFF), blshift (blowcast32 exp, bconst32 24))
-      else raise ERR "mem_sec_exp_gen" "this should never happen"
+      else raise ERR "mem_upd_sec_exp_gen" ("this should never happen: " ^ (term_to_string exp_ml) ^ " ;; " ^ (term_to_string exp) ^ " ;; " ^ (Int.toString suboff) ^ " ;; " ^ (Int.toString sz))
     end;
 
 (*
