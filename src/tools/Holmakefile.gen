@@ -5,7 +5,7 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-HOLHEAP        = scamv/HolBATools_ScamV-heap
+HOLHEAP        = wp/HolBATools_Wp-heap
 NEWHOLHEAP     = HolBATools-heap
 
 HEAPINC_EXTRA  = 
