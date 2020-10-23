@@ -242,9 +242,8 @@ local
 in (* local *)
   (* execution of a whole block *)
   fun symb_exec_block abpfun n_dict bl_dict syst =
+    let val lbl_tm = SYST_get_pc syst; in
     let
-      val lbl_tm = SYST_get_pc syst;
-
       val bl = (valOf o (lookup_block_dict bl_dict)) lbl_tm;
       val (lbl_block_tm, stmts, est) = dest_bir_block bl;
       val _ = if true then () else
@@ -263,7 +262,8 @@ in (* local *)
       val systs_processed = abpfun systs;
     in
       systs_processed
-    end;
+    end
+    handle e => raise wrap_exn ("symb_exec_block::" ^ term_to_string lbl_tm) e end;
 
   (* execution of blocks until not running anymore or end label set is reached *)
   fun symb_exec_to_stop _      _      _       []                  _            acc =

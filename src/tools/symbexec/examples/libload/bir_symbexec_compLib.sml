@@ -609,7 +609,8 @@ val exp = ``BExp_Const (Imm32 3105w)``;
                   (mem_const_size, mem_globl_size, mem_stack_size),
                   (mem_const, mem_globl, (bv_sp, mem_stack_new)),
                   deps_new)
-    end;
+    end
+    handle e => raise wrap_exn ("mem_store_stack") e;
 
   fun mem_store_const mem caddr val_tm =
     let
@@ -655,7 +656,8 @@ val exp = ``BExp_Const (Imm32 3105w)``;
                   (mem_const_size, mem_globl_size, mem_stack_size),
                   (mem_const, mem_globl_new, (bv_sp, mem_stack)),
                   deps_new)
-    end;
+    end
+    handle e => raise wrap_exn ("mem_store_const") e;
 
   fun mem_store mem addr_tm end_tm val_tm =
     let
