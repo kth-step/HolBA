@@ -18,7 +18,6 @@ print src_path
 print
 
 
-#TODO Add more stuff here...
 modules = ["aux",
            "shared",
            "shared/HolSmt",
@@ -26,11 +25,19 @@ modules = ["aux",
            "theory/bir",
            "theory/bir-support",
            "theory/models/l3mod",
+           "theory/tools/backlifter",
            "theory/tools/comp",
            "theory/tools/lifter",
            "theory/tools/wp",
+           "tools/backlifter",
            "tools/cfg",
-           "tools/lifter"]
+           "tools/comp",
+           "tools/exec",
+           "tools/lifter",
+           "tools/pass",
+           "tools/scamv",
+           "tools/scamv/symbexec",
+           "tools/wp"]
 
 
 def read_dep_file(filename):
@@ -158,7 +165,7 @@ edges = "\n".join(map(lambda (m,ds): "\n".join(map(lambda d: edge_simple(find_un
 #print edges
 
 
-print_simple = False
+print_simple = True
 if print_simple:
 	print (format_simple % (nodes,edges))
 	print
