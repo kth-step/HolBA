@@ -48,10 +48,6 @@ if use sum___aeabi_fcmplt:
 *)
 
 
-(* atan2f_own *)
-(* requires fadd, fdiv, absown, fcmplt, fsub, fmul *)
-
-
 in (* outermost local *)
 
   val sum___aeabi_i2f = sum___aeabi_i2f;
