@@ -21,7 +21,7 @@ functor test_bmr (structure MD : bir_inst_lifting; structure log_name_str : sig 
   structure MD = bmil_riscv;
 structure log_name_str =
 struct
-  val log_name = "riscv_selftest.log";
+  val log_name = "selftest_riscv.log";
 end;
 
 *)
