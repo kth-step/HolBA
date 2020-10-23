@@ -23,7 +23,7 @@ val entry_label = List.nth (entry_labels, 0);
 val _ = show_cfg_fun true  bl_dict_ n_dict entry_label;
 *)
 
-val _ = show_cfg_fun false  bl_dict_ n_dict "__aeabi_fmul";
+val _ = show_cfg_fun false  bl_dict_ n_dict "__aeabi_fdiv";
 
 (*
 fun print_option pf NONE     = print "NONE"
