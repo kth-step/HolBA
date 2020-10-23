@@ -164,6 +164,7 @@ local
     handle HOL_ERR _ => NONE;
 
   val jmp_exp_var_match_tm = ``BStmt_Jmp (BLE_Exp x)``;
+  exception state_exec_try_jmp_exp_var_exn;
   fun state_exec_try_jmp_exp_var est syst =
     SOME (
     let
@@ -183,15 +184,17 @@ local
       open optionSyntax;
       val tgt = (mk_BL_Address o dest_BVal_Imm o dest_some) bvalo
                 handle _ => (
-                  print ("state_exec_try_jmp_exp_var::no const: " ^ (term_to_string bvalo) ^ "\n");
-                  raise ERR "state_exec_try_jmp_exp_var"
-                    ("target value is no const: " ^ (term_to_string bvalo) ^ " ;; " ^ (term_to_string be_tgt)));
+                  print ("state_exec_try_jmp_exp_var::no const: " ^
+                         (term_to_string bvalo) ^ " ;; " ^ 
+                         (term_to_string be_tgt) ^ "\n");
+                  raise state_exec_try_jmp_exp_var_exn);(*ERR "state_exec_try_jmp_exp_var"
+                    ("target value is no const: " ^ (term_to_string bvalo)));*)
     in
       [SYST_update_pc tgt syst]
     end
     )
-    handle e =>
-      raise wrap_exn ("state_exec_try_jmp_exp_var::") e;
+    handle state_exec_try_jmp_exp_var_exn => NONE
+         | e => raise wrap_exn ("state_exec_try_jmp_exp_var::") e;
 
   open bir_cfgLib;
 
