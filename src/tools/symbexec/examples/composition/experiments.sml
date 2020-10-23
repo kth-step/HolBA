@@ -22,23 +22,27 @@ open balrob_pfadd_Lib;
 open balrob_pfsub_Lib;
 open balrob_pfmul_Lib;
 open balrob_pfdiv_Lib;
+open balrob_ptop_Lib;
 
 
-(* atan2f_own *)
-val sums        = [sum___lesf2,
-                   sum_abs_own,
+(* imu_handler_pid_entry *)
+val sums        = [sum_timer_read,
+                   sum_motor_set_f,
+                   sum_atan2f_own,
+                   sum___lesf2,
+                   sum___aeabi_i2f,
                    sum___aeabi_fadd,
                    sum___aeabi_fsub,
                    sum___aeabi_fmul,
-                   sum___aeabi_fdiv];(*sum___aeabi_fcmplt];*)
-val entry_label = "atan2f_own";
+                   sum___aeabi_fdiv];
 
-val sum_atan2f_own =
-      create_func_summary n_dict bl_dict_ sums entry_label;
+val entry_label     = "imu_handler_pid_entry";
+val entry_label_sub = "pid_msg_write"; (* don't go into pid_msg_write *)
 
-(*
-time to drive symbolic execution: 10.120s
+val lbl_tm      = find_func_lbl_tm entry_label;
+val end_lbl_tms = (find_func_lbl_tm entry_label_sub)::(find_func_ends n_dict entry_label);
 
-min = 808w
-max = 2038w
-*)
+val sum_imu_handler_pid_entry =
+      obtain_summary n_dict bl_dict_ sums lbl_tm end_lbl_tms;
+
+
