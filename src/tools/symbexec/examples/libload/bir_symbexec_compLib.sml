@@ -539,6 +539,20 @@ val exp = ``BExp_Const (Imm32 3105w)``;
         val sz = bittype_to_size sz_tm;
       in
         SOME (SymbValBE (get_symbv_bexp_free_sz "memload_pcrel" sz))
+      end),
+    (const_add_var_match_tm,
+      fn res => let
+        val (vs, _) = res;
+        val imm_val = fst (List.nth (vs, 0));
+        val bv      = fst (List.nth (vs, 1));
+
+        val _ = if false then () else
+                print "!!! found indirect load - const add var! (unjustified currently)\n";
+        (* TODO: add check to make sure that this memory access is really in the program memory only *)
+
+        val sz = bittype_to_size sz_tm;
+      in
+        SOME (SymbValBE (get_symbv_bexp_free_sz "memload_pcrel" sz))
       end)
    ]
     end;
