@@ -581,9 +581,8 @@ val exp = ``BExp_Const (Imm32 3105w)``;
       val sp_offset = (Arbnum.toInt o wordsSyntax.dest_word_literal o bir_immSyntax.dest_Imm32) imm_offset;
 
       val suboff = 4 - (mem_addr_sz_offset sp_offset 32);
-      val offset = if suboff = 4
-                   then sp_offset
-                   else sp_offset + suboff;
+      val suboff = if suboff = 4 then 0 else suboff;
+      val offset = sp_offset + suboff;
 
       val (exp_ml, exp_ml_deps) =
             mem_load_stack mem
