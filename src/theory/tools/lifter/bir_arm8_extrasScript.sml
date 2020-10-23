@@ -29,7 +29,7 @@ val _ = new_theory "bir_arm8_extras";
 
 val shift_neg1w_rewr = prove (
 ``(-1w << n):'a word = -(n2w (2**n))``,
-METIS_TAC[WORD_NEG_MUL, WORD_MUL_LSL, WORD_MULT_COMM])
+METIS_TAC [WORD_NEG_MUL, WORD_MUL_LSL, WORD_MULT_COMM])
 
 val shift_neg1w_rewr2 = prove (
 ``(-1w << n):'a word = (n2w (dimword (:'a) - 2 ** n MOD dimword (:'a)))``,

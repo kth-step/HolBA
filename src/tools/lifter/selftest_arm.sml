@@ -1,7 +1,9 @@
 open HolKernel Parse
 open testutils
 open bir_inst_liftingLib;
-open PPBackEnd Parse
+open PPBackEnd
+
+open selftestLib;
 
 (******************)
 (* Config options *)
@@ -19,195 +21,78 @@ val test_arm8 = true;
 (* Run only manual tests *)
 val test_fast = false;
 
-val log_filename = "selftest.log";
 
 val _ = Parse.current_backend := (if (raw_output) then PPBackEnd.raw_terminal else
                                      PPBackEnd.vt100_terminal);
 val _ = Feedback.set_trace "Unicode" (if unicode then 1 else 0)
 
-val log = TextIO.openOut log_filename;
 
 
-(**************************)
-(* Testing infrastructure *)
-(**************************)
-
-(* style for success, fail and header *)
-val sty_OK     = [FG Green];
-val sty_CACHE  = [FG Yellow];
-val sty_FAIL   = [FG OrangeRed];
-val sty_HEADER = [Bold, Underline];
-
-fun print_log_with_style sty f s = let
-  val _ = if f then TextIO.output (log, s) else ();
-  val _ = print_with_style_ sty s;
-in () end;
-
-fun print_log s = print_log_with_style [] s;
-
-
-functor test_bmr (MD : bir_inst_lifting) = struct
-
-open MD;
-
-val failed_hexcodes_list = ref ([]:(string * string option * bir_inst_liftingExn_data option) list);
-val success_hexcodes_list = ref ([]: (string * string option * thm) list);
-fun lift_instr_cached log_f mu_be mu_thms cache pc hex_code desc = let
-  val hex_code = String.map Char.toUpper hex_code
-  val _ = print_log log_f hex_code;
-  val d' = case desc of
-            NONE => hex_code
-          | SOME d => (print_log log_f (" (" ^ d ^")"); d)
-  val _ = print_log log_f (" @ 0x" ^ (Arbnum.toHexString pc));
-  val timer = (Time.now())
-  val (res, ed) = (SOME (bir_lift_instr_mu mu_be mu_thms cache pc hex_code d'), NONE) handle
-                   bir_inst_liftingExn (_, d)  => (NONE, SOME d)
-                 | HOL_ERR _ => (NONE, NONE);
-
-  val d_time = Time.- (Time.now(), timer);
-  val d_s = (Time.toString d_time);
-
-  val _ = print_log log_f (" - ");
-  val _ = print (d_s ^ " s - ");
-  val (res', cache') = case res of
-             SOME (thm, cache', _) => ((SOME thm), cache')
-           | NONE => (NONE, cache)
-  val _ = case res of
-             SOME (thm, _, cache_used) =>
-                 (success_hexcodes_list := (hex_code, desc, thm)::(!success_hexcodes_list);
-                 (print_log_with_style sty_OK log_f "OK");
-                 (if cache_used then (print_log log_f " - "; print_log_with_style sty_CACHE log_f "cached") else ());
-                 (print_log log_f "\n");
-                 (if log_f then ((TextIO.output (log, thm_to_string thm));
-                                 (TextIO.output (log, "\n"))) else ()))
-           | NONE =>
-             (failed_hexcodes_list := (hex_code, desc, ed)::(!failed_hexcodes_list);
-             (print_log_with_style sty_FAIL log_f "FAILED\n"));
-  val _ = case ed of
-      NONE => ()
-    | SOME d => (let
-        val s = ("   "^(bir_inst_liftingExn_data_to_string d) ^ "\n");
-      in print_log_with_style sty_FAIL log_f s end)
-  val _ = if log_f then TextIO.output (log, "\n") else ();
-in
-  (res', ed, d_s, cache')
+(* TODO: Any other way to supply this to the functor? *)
+structure log_name =
+struct
+  val log_name = "arm8_selftest.log";
 end;
+structure test_ARM8 = test_bmr(structure MD = bmil_arm8; structure log_name_str = log_name);
 
-fun lift_instr mu_b mu_e pc hex_code desc = let
-  val mu_thms = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-  val (res, ed, d_s, _) = lift_instr_cached true (mu_b, mu_e) mu_thms lift_inst_cache_empty pc hex_code desc
-in
-  (res, ed, d_s)
+structure m0_le_proc_log =
+struct
+  val log_name = "m0_le_proc_selftest.log";
 end;
-
-
-(* And a list version *)
-
-fun lift_instr_list mu_b mu_e pc hex_codes = let
-  val timer = (Time.now())
-  val len_codes = (length hex_codes);
-
-  val _ = print ("running " ^ (Int.toString (len_codes)) ^ " instrutions; first pc 0x" ^
-              (Arbnum.toHexString pc) ^ "\n\n");
-
-  val mu_thms = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-
-  fun run_inst (i, (c, pc, res, cache)) = let
-    val _ = print ((Int.toString c) ^ "/" ^ (Int.toString (length hex_codes)) ^ ": ");
-    val (r', ed, d_s, cache') = lift_instr_cached false (mu_b, mu_e) mu_thms cache pc i NONE
-    val c' = c+1;
-    val pc' = Arbnum.+ (pc, (#bmr_hex_code_size mr) i);
-    val r = (r', ed, d_s);
-  in (c+1, pc', r::res, cache') end
-
-  val (_, _, resL, _) = foldl run_inst (1, pc, [], lift_inst_cache_empty) hex_codes
-
-  val d_time = Time.- (Time.now(), timer);
-  val d_s = (Time.toString d_time);
-  val success_c = foldl (fn ((res, _, _), c) =>
-       if (is_some res) then c+1 else c) 0 resL
-  val fail_c = len_codes - success_c
-
-  val _ = print "\n";
-  val _ = print ("Instructions OK    : " ^ (Int.toString success_c) ^ "\n");
-  val _ = print ("Instructions FAILED: " ^ (Int.toString fail_c) ^ "\n");
-
-  val _ = print ("Time needed        : " ^ d_s ^ " s\n\n");
-in
-  (fail_c, success_c, resL)
+structure test_m0_le_proc = test_bmr(structure MD = bmil_m0_LittleEnd_Process;
+                                     structure log_name_str = log_name
+);
+structure log_name =
+struct
+  val log_name = "m0_be_proc_selftest.log";
 end;
-
-
-fun final_results name expected_failed_hexcodes = let
-  val _ = print_log_with_style sty_HEADER true ("\n\n\nSUMMARY FAILING HEXCODES " ^ name ^ "\n\n");
-  val _ = print_log true "\n";
-  val failing_l = op_mk_set (fn (x, _, _) => fn (y, _, _) => (x = y)) (!failed_hexcodes_list)
-  val ok_l = op_mk_set (fn (x, _, _) => fn (y, _, _) => (x = y)) (!success_hexcodes_list)
-
-  (* look for freshly failing ones *)
-  val failing_l' = map (fn (hc, d, edo) =>
-     (hc, d, edo, not (Lib.mem hc expected_failed_hexcodes))) failing_l;
-  val fixed_l = List.filter (fn hc => List.exists (fn (e, _, _) => e = hc) ok_l) expected_failed_hexcodes
-
-  (* Show all failing instructions and format them such that they can be copied
-     in the code of selftest.sml
-     as content of list expected_failed_hexcodes *)
-  val _ = print_log true ("Instructions FAILED: " ^ (Int.toString (length failing_l)) ^ "/" ^
-         (Int.toString (length failing_l + length ok_l)) ^ "\n\n");
-
-  fun comment_of_failing desc ed_opt =
-    case (desc, ed_opt) of
-         (NONE, NONE) => ""
-       | (SOME d, NONE) => (" (* " ^ d ^ " *)")
-       | (NONE, SOME d') => (" (* " ^ (bir_inst_liftingExn_data_to_string d') ^ " *)")
-       | (SOME d, SOME d') => (" (* " ^ d ^ "; "^(bir_inst_liftingExn_data_to_string d')  ^ " *)");
-
-  fun print_failed [] = ()
-    | print_failed ((hex_code, desc, ed_opt, broken)::l) =
-  let
-    (* print the ones that failed, but were not excepted to in red *)
-    val st = if broken then sty_FAIL else [];
-    val _ = print_log true "   ";
-    val _ = print_log_with_style st true ("\""^hex_code^"\"");
-
-    val _ = print_log_with_style st true (comment_of_failing desc ed_opt)
-
-  in if List.null l then (print_log true "\n]\n\n") else
-         (print_log true ",\n"; print_failed l)
-  end;
-  val _ = if List.null failing_l' then () else (print "[\n"; print_failed failing_l');
-
-
-  (* Show the hex-codes that were expected to fail, but succeeded. These
-     are the ones fixed by recent changes. *)
-  val _ = print_log true ("Instructions FIXED: " ^ (Int.toString (length fixed_l)) ^ "\n\n");
-  val _ = List.map (fn s => print_log_with_style sty_OK true ("   " ^ s ^"\n")) fixed_l;
-  val _ = print_log true "\n\n";
-
-  (* Show the hex-codes that were expected to succeed, but failed. These
-     are the ones broken by recent changes. *)
-  val broken_l = List.filter (fn (hc, d, edo, br) => br) failing_l';
-  val _ = print_log true ("Instructions BROKEN: " ^ (Int.toString (List.length broken_l)) ^ "\n\n");
-  val _ = List.map (fn (hc, desc, ed_opt, _) => print_log_with_style sty_FAIL true ("   " ^ hc ^
-       (comment_of_failing desc ed_opt) ^ "\n")) broken_l;
-  val _ = print_log true "\n\n";
-
-in
-  ()
+structure test_m0_be_proc = test_bmr(structure MD = bmil_m0_BigEnd_Process;
+                                     structure log_name_str = log_name
+);
+structure log_name =
+struct
+  val log_name = "m0_le_main_selftest.log";
 end;
+structure test_m0_le_main = test_bmr(structure MD = bmil_m0_LittleEnd_Main;
+                                     structure log_name_str = log_name
+);
+structure log_name =
+struct
+  val log_name = "m0_be_main_selftest.log";
 end;
+structure test_m0_be_main = test_bmr(structure MD = bmil_m0_BigEnd_Main;
+                                     structure log_name_str = log_name
+);
 
-structure test_ARM8 = test_bmr(bmil_arm8);
 
-structure test_M0_1 = test_bmr(bmil_m0_LittleEnd_Process)
-structure test_M0_2 = test_bmr(bmil_m0_BigEnd_Process)
-structure test_M0_3 = test_bmr(bmil_m0_LittleEnd_Main)
-structure test_M0_4 = test_bmr(bmil_m0_BigEnd_Main);
-
-structure test_M0_mod_1 = test_bmr(bmil_m0_mod_LittleEnd_Process)
-structure test_M0_mod_2 = test_bmr(bmil_m0_mod_BigEnd_Process)
-structure test_M0_mod_3 = test_bmr(bmil_m0_mod_LittleEnd_Main)
-structure test_M0_mod_4 = test_bmr(bmil_m0_mod_BigEnd_Main);
+structure log_name =
+struct
+  val log_name = "m0_mod_le_proc_selftest.log";
+end;
+structure test_m0_mod_le_proc = test_bmr(structure MD = bmil_m0_mod_LittleEnd_Process;
+                                     structure log_name_str = log_name
+);
+structure log_name =
+struct
+  val log_name = "m0_mod_be_proc_selftest.log";
+end;
+structure test_m0_mod_be_proc = test_bmr(structure MD = bmil_m0_mod_BigEnd_Process;
+                                     structure log_name_str = log_name
+);
+structure log_name =
+struct
+  val log_name = "m0_mod_le_main_selftest.log";
+end;
+structure test_m0_mod_le_main = test_bmr(structure MD = bmil_m0_mod_LittleEnd_Main;
+                                     structure log_name_str = log_name
+);
+structure log_name =
+struct
+  val log_name = "m0_mod_be_main_selftest.log";
+end;
+structure test_m0_mod_be_main = test_bmr(structure MD = bmil_m0_mod_BigEnd_Main;
+                                     structure log_name_str = log_name
+);
 
 
 
@@ -227,240 +112,240 @@ val arm8_test_asm = arm8_lift_instr_asm mu_b mu_e pc
 fun arm8_test_hex hex = test_ARM8.lift_instr mu_b mu_e pc hex NONE
 
 val _ = if not test_arm8 then () else let
-val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS - ARM 8\n\n";
-val res = arm8_test_asm "add x0, x1, x2";
-val res = arm8_test_asm "add x1, x1, x1";
-val res = arm8_test_asm "adds x0, x1, x2";
-val res = arm8_test_asm "add x0, x0, x2";
-val res = arm8_test_asm "sub x0, x1, x2";
-val res = arm8_test_asm "adc x0, x1, x2";
-val res = arm8_test_asm "adc x0, x1, x1";
-val res = arm8_test_asm "adc w0, w1, w1";
-val res = arm8_test_asm "adcs x0, x1, x2";
-val res = arm8_test_asm "adcs x0, x1, x1";
-val res = arm8_test_asm "adcs w0, w1, w2";
-val res = arm8_test_asm "adcs w0, w1, w1";
-val res = arm8_test_asm "sbcs x0, x0, x2";
-val res = arm8_test_asm "sbcs x0, x1, x1";
-val res = arm8_test_asm "sbcs w0, w1, w2";
-val res = arm8_test_asm "sbcs w0, w1, w1";
-val res = arm8_test_asm "sbc x0, x0, x2";
-val res = arm8_test_asm "sub x0, x1, x2";
-val res = arm8_test_asm "mul x0, x1, x2";
-val res = arm8_test_asm "mul w0, w1, w1";
-val res = arm8_test_asm "cmp w0, #0";
-val res = arm8_test_asm "cmn w0, #0";
-val res = arm8_test_asm "cmn w0, w1";
-val res = arm8_test_asm "cmn x0, x9";
-val res = arm8_test_asm "ret";
-val res = arm8_test_asm "mov x0, #4";
-val res = arm8_test_asm "mov x0, x1";
-val res = arm8_test_asm "mvn x0, x1";
-val res = arm8_test_asm "adds x0, x2, #8";
-val res = arm8_test_asm "subs x0, x2, #8";
-val res = arm8_test_asm "adds x0, x1, x2";
-val res = arm8_test_asm "add x0, x0, x2";
-val res = arm8_test_asm "sub x0, x1, x2";
-val res = arm8_test_asm "add x0, x0, x2, LSL #2";
-val res = arm8_test_asm "add x0, x0, x2, ASR #2";
-val res = arm8_test_asm "add x0, x0, x2, LSR #2";
-val res = arm8_test_asm "add x0, x0, x2, LSL #0";
-val res = arm8_test_asm "add x0, x0, x2, ASR #0";
-val res = arm8_test_asm "add x0, x0, x2, LSR #0";
-val res = arm8_test_asm "add x4, SP, #8";
-val res = arm8_test_asm "add x4, SP, #8";
-val res = arm8_test_asm "adds x1, x1, #0";
-val res = arm8_test_asm "lsr x1, x2, #5";
-val res = arm8_test_asm "lsr x1, x2, #0";
-val res = arm8_test_asm "lsr x1, x1, #0";
-val res = arm8_test_asm "lsr x1, x2, x3";
-val res = arm8_test_asm "lsl x1, x2, #5";
-val res = arm8_test_asm "lsl x1, x2, #0";
-val res = arm8_test_asm "lsl x1, x1, #0";
-val res = arm8_test_asm "lsl x1, x2, x3";
-val res = arm8_test_asm "asr x1, x2, #5";
-val res = arm8_test_asm "asr x1, x2, #0";
-val res = arm8_test_asm "asr x1, x1, #0";
-val res = arm8_test_asm "asr x1, x2, x3";
-val res = arm8_test_asm "ror x1, x2, x3";
-val res = arm8_test_asm "ror x1, x2, #0";
-val res = arm8_test_asm "ror x1, x2, #2";
-val res = arm8_test_asm "ror x1, x2, #32";
-val res = arm8_test_asm "ror x1, x2, #63";
-val res = arm8_test_asm "ror w1, w2, #0";
-val res = arm8_test_asm "ror w1, w2, #2";
-val res = arm8_test_asm "l: b.eq l";
-val res = arm8_test_asm "l: cbnz w0, l";
-val res = arm8_test_asm "l: cbnz x0, l";
-val res = arm8_test_asm "l: tbnz w0, #3, l";
-val res = arm8_test_asm "l: tbnz x0, #3, l";
-val res = arm8_test_asm "l: cbz w0, l";
-val res = arm8_test_asm "l: cbz x0, l";
-val res = arm8_test_asm "l: tbz w0, #3, l";
-val res = arm8_test_asm "l: tbz x0, #3, l";
-val res = arm8_test_asm "ldr x0, [x2, #0]";
-val res = arm8_test_asm "lsl x0, x2, #8";
-val res = arm8_test_asm "lsl x0, x2, #8";
-val res = arm8_test_asm "lsr x0, x2, #8";
-val res = arm8_test_asm "str x0, [x2, #8]";
-val res = arm8_test_asm "ldp x1, x2, [x3]";
-val res = arm8_test_asm "ldp w1, w2, [x3]";
-val res = arm8_test_asm "stp x1, x2, [x3]";
-val res = arm8_test_asm "stp w1, w2, [x3]";
-val res = arm8_test_asm "ldpsw x1, x2, [x3]";
-val res = arm8_test_asm "movz w0, #4";
-val res = arm8_test_asm "movz x0, #4";
-val res = arm8_test_asm "movn x0, #4";
-val res = arm8_test_asm "movn w0, #4";
-val res = arm8_test_asm "movk w0, #4";
-val res = arm8_test_asm "movk x0, #4";
-val res = arm8_test_asm "bfm w1, w2, #2, #4";
-val res = arm8_test_asm "bfm w1, w2, #2, #8";
-val res = arm8_test_asm "bfm w1, w2, #8, #2";
-val res = arm8_test_asm "sbfm w1, w2, #2, #4";
-val res = arm8_test_asm "sbfm w1, w2, #2, #8";
-val res = arm8_test_asm "sbfm w1, w2, #8, #2";
-val res = arm8_test_asm "ubfm w1, w2, #2, #4";
-val res = arm8_test_asm "ubfm w1, w2, #2, #8";
-val res = arm8_test_asm "ubfm w1, w2, #8, #2";
-val res = arm8_test_asm "extr w1, w2, w3, #2";
-val res = arm8_test_asm "extr x1, x2, x3, #2";
-val res = arm8_test_asm "extr x1, x3, x2, #2";
-val res = arm8_test_asm "sxth w1, w2";
-val res = arm8_test_asm "sxtb w1, w2";
-val res = arm8_test_asm "sxtw x1, x2";
-val res = arm8_test_asm "uxth w1, w2";
-val res = arm8_test_asm "uxtb w1, w2";
-val res = arm8_test_asm "add x0, x1, w3, UXTB #2";
-val res = arm8_test_asm "add x0, x1, w3, SXTB #2";
-val res = arm8_test_asm "adds x0, x1, w3, SXTB #4";
-val res = arm8_test_asm "adds x0, x1, w3, SXTB #0";
-val res = arm8_test_asm "sub x0, x1, w3, UXTB #2";
-val res = arm8_test_asm "sub x0, x1, w3, SXTB #2";
-val res = arm8_test_asm "subs x0, x1, w3, SXTB #4";
-val res = arm8_test_asm "subs x0, x1, w3, SXTB #0";
-val res = arm8_test_asm "bic x1, x2, x3, LSL #2"
-val res = arm8_test_asm "bic x1, x2, x3, LSR #2"
-val res = arm8_test_asm "bic x1, x2, x3, ASR #2"
-val res = arm8_test_asm "bic x1, x2, x2"
-val res = arm8_test_asm "bics x1, x2, x3, LSL #2"
-val res = arm8_test_asm "bics x1, x2, x3, LSR #2"
-val res = arm8_test_asm "bics x1, x2, x3, ASR #2"
-val res = arm8_test_asm "bics x1, x2, x2"
-val res = arm8_test_asm "eon x1, x2, x3, LSL #2"
-val res = arm8_test_asm "eon x1, x2, x3, LSR #2"
-val res = arm8_test_asm "eon x1, x2, x3, ASR #2"
-val res = arm8_test_asm "eon x1, x2, x2"
-val res = arm8_test_asm "lslv w1, w2, w3"
-val res = arm8_test_asm "lslv x1, x2, x3"
-val res = arm8_test_asm "lsrv w1, w2, w3"
-val res = arm8_test_asm "lsrv x1, x2, x3"
-val res = arm8_test_asm "asrv w1, w2, w3"
-val res = arm8_test_asm "asrv x1, x2, x3"
-val res = arm8_test_asm "rorv w1, w2, w3"
-val res = arm8_test_asm "rorv x1, x2, x3"
-val res = arm8_test_asm "cls w1, w2"
-val res = arm8_test_asm "cls x1, x2"
-val res = arm8_test_asm "clz w1, w2"
-val res = arm8_test_asm "clz x1, x2"
-val res = arm8_test_asm "rbit x1, x2"
-val res = arm8_test_asm "rbit w1, w2"
-val res = arm8_test_asm "rev w1, w2"
-val res = arm8_test_asm "rev x1, x2"
-val res = arm8_test_asm "rev16 w1, w2"
-val res = arm8_test_asm "rev16 x1, x2"
-val res = arm8_test_asm "rev32 x1, x2"
-val res = arm8_test_asm "csel w1, w2, w3, EQ"
-val res = arm8_test_asm "csel x1, x2, x3, EQ"
-val res = arm8_test_asm "csel x1, x2, x3, LE"
-val res = arm8_test_asm "csel x1, x2, x3, LT"
-val res = arm8_test_asm "csel x1, x2, x3, NE"
+  val res = test_ARM8.print_log_with_style sty_HEADER true "\nMANUAL TESTS - ARMv8\n\n";
+  val res = arm8_test_asm "add x0, x1, x2";
+  val res = arm8_test_asm "add x1, x1, x1";
+  val res = arm8_test_asm "adds x0, x1, x2";
+  val res = arm8_test_asm "add x0, x0, x2";
+  val res = arm8_test_asm "sub x0, x1, x2";
+  val res = arm8_test_asm "adc x0, x1, x2";
+  val res = arm8_test_asm "adc x0, x1, x1";
+  val res = arm8_test_asm "adc w0, w1, w1";
+  val res = arm8_test_asm "adcs x0, x1, x2";
+  val res = arm8_test_asm "adcs x0, x1, x1";
+  val res = arm8_test_asm "adcs w0, w1, w2";
+  val res = arm8_test_asm "adcs w0, w1, w1";
+  val res = arm8_test_asm "sbcs x0, x0, x2";
+  val res = arm8_test_asm "sbcs x0, x1, x1";
+  val res = arm8_test_asm "sbcs w0, w1, w2";
+  val res = arm8_test_asm "sbcs w0, w1, w1";
+  val res = arm8_test_asm "sbc x0, x0, x2";
+  val res = arm8_test_asm "sub x0, x1, x2";
+  val res = arm8_test_asm "mul x0, x1, x2";
+  val res = arm8_test_asm "mul w0, w1, w1";
+  val res = arm8_test_asm "cmp w0, #0";
+  val res = arm8_test_asm "cmn w0, #0";
+  val res = arm8_test_asm "cmn w0, w1";
+  val res = arm8_test_asm "cmn x0, x9";
+  val res = arm8_test_asm "ret";
+  val res = arm8_test_asm "mov x0, #4";
+  val res = arm8_test_asm "mov x0, x1";
+  val res = arm8_test_asm "mvn x0, x1";
+  val res = arm8_test_asm "adds x0, x2, #8";
+  val res = arm8_test_asm "subs x0, x2, #8";
+  val res = arm8_test_asm "adds x0, x1, x2";
+  val res = arm8_test_asm "add x0, x0, x2";
+  val res = arm8_test_asm "sub x0, x1, x2";
+  val res = arm8_test_asm "add x0, x0, x2, LSL #2";
+  val res = arm8_test_asm "add x0, x0, x2, ASR #2";
+  val res = arm8_test_asm "add x0, x0, x2, LSR #2";
+  val res = arm8_test_asm "add x0, x0, x2, LSL #0";
+  val res = arm8_test_asm "add x0, x0, x2, ASR #0";
+  val res = arm8_test_asm "add x0, x0, x2, LSR #0";
+  val res = arm8_test_asm "add x4, SP, #8";
+  val res = arm8_test_asm "add x4, SP, #8";
+  val res = arm8_test_asm "adds x1, x1, #0";
+  val res = arm8_test_asm "lsr x1, x2, #5";
+  val res = arm8_test_asm "lsr x1, x2, #0";
+  val res = arm8_test_asm "lsr x1, x1, #0";
+  val res = arm8_test_asm "lsr x1, x2, x3";
+  val res = arm8_test_asm "lsl x1, x2, #5";
+  val res = arm8_test_asm "lsl x1, x2, #0";
+  val res = arm8_test_asm "lsl x1, x1, #0";
+  val res = arm8_test_asm "lsl x1, x2, x3";
+  val res = arm8_test_asm "asr x1, x2, #5";
+  val res = arm8_test_asm "asr x1, x2, #0";
+  val res = arm8_test_asm "asr x1, x1, #0";
+  val res = arm8_test_asm "asr x1, x2, x3";
+  val res = arm8_test_asm "ror x1, x2, x3";
+  val res = arm8_test_asm "ror x1, x2, #0";
+  val res = arm8_test_asm "ror x1, x2, #2";
+  val res = arm8_test_asm "ror x1, x2, #32";
+  val res = arm8_test_asm "ror x1, x2, #63";
+  val res = arm8_test_asm "ror w1, w2, #0";
+  val res = arm8_test_asm "ror w1, w2, #2";
+  val res = arm8_test_asm "l: b.eq l";
+  val res = arm8_test_asm "l: cbnz w0, l";
+  val res = arm8_test_asm "l: cbnz x0, l";
+  val res = arm8_test_asm "l: tbnz w0, #3, l";
+  val res = arm8_test_asm "l: tbnz x0, #3, l";
+  val res = arm8_test_asm "l: cbz w0, l";
+  val res = arm8_test_asm "l: cbz x0, l";
+  val res = arm8_test_asm "l: tbz w0, #3, l";
+  val res = arm8_test_asm "l: tbz x0, #3, l";
+  val res = arm8_test_asm "ldr x0, [x2, #0]";
+  val res = arm8_test_asm "lsl x0, x2, #8";
+  val res = arm8_test_asm "lsl x0, x2, #8";
+  val res = arm8_test_asm "lsr x0, x2, #8";
+  val res = arm8_test_asm "str x0, [x2, #8]";
+  val res = arm8_test_asm "ldp x1, x2, [x3]";
+  val res = arm8_test_asm "ldp w1, w2, [x3]";
+  val res = arm8_test_asm "stp x1, x2, [x3]";
+  val res = arm8_test_asm "stp w1, w2, [x3]";
+  val res = arm8_test_asm "ldpsw x1, x2, [x3]";
+  val res = arm8_test_asm "movz w0, #4";
+  val res = arm8_test_asm "movz x0, #4";
+  val res = arm8_test_asm "movn x0, #4";
+  val res = arm8_test_asm "movn w0, #4";
+  val res = arm8_test_asm "movk w0, #4";
+  val res = arm8_test_asm "movk x0, #4";
+  val res = arm8_test_asm "bfm w1, w2, #2, #4";
+  val res = arm8_test_asm "bfm w1, w2, #2, #8";
+  val res = arm8_test_asm "bfm w1, w2, #8, #2";
+  val res = arm8_test_asm "sbfm w1, w2, #2, #4";
+  val res = arm8_test_asm "sbfm w1, w2, #2, #8";
+  val res = arm8_test_asm "sbfm w1, w2, #8, #2";
+  val res = arm8_test_asm "ubfm w1, w2, #2, #4";
+  val res = arm8_test_asm "ubfm w1, w2, #2, #8";
+  val res = arm8_test_asm "ubfm w1, w2, #8, #2";
+  val res = arm8_test_asm "extr w1, w2, w3, #2";
+  val res = arm8_test_asm "extr x1, x2, x3, #2";
+  val res = arm8_test_asm "extr x1, x3, x2, #2";
+  val res = arm8_test_asm "sxth w1, w2";
+  val res = arm8_test_asm "sxtb w1, w2";
+  val res = arm8_test_asm "sxtw x1, x2";
+  val res = arm8_test_asm "uxth w1, w2";
+  val res = arm8_test_asm "uxtb w1, w2";
+  val res = arm8_test_asm "add x0, x1, w3, UXTB #2";
+  val res = arm8_test_asm "add x0, x1, w3, SXTB #2";
+  val res = arm8_test_asm "adds x0, x1, w3, SXTB #4";
+  val res = arm8_test_asm "adds x0, x1, w3, SXTB #0";
+  val res = arm8_test_asm "sub x0, x1, w3, UXTB #2";
+  val res = arm8_test_asm "sub x0, x1, w3, SXTB #2";
+  val res = arm8_test_asm "subs x0, x1, w3, SXTB #4";
+  val res = arm8_test_asm "subs x0, x1, w3, SXTB #0";
+  val res = arm8_test_asm "bic x1, x2, x3, LSL #2"
+  val res = arm8_test_asm "bic x1, x2, x3, LSR #2"
+  val res = arm8_test_asm "bic x1, x2, x3, ASR #2"
+  val res = arm8_test_asm "bic x1, x2, x2"
+  val res = arm8_test_asm "bics x1, x2, x3, LSL #2"
+  val res = arm8_test_asm "bics x1, x2, x3, LSR #2"
+  val res = arm8_test_asm "bics x1, x2, x3, ASR #2"
+  val res = arm8_test_asm "bics x1, x2, x2"
+  val res = arm8_test_asm "eon x1, x2, x3, LSL #2"
+  val res = arm8_test_asm "eon x1, x2, x3, LSR #2"
+  val res = arm8_test_asm "eon x1, x2, x3, ASR #2"
+  val res = arm8_test_asm "eon x1, x2, x2"
+  val res = arm8_test_asm "lslv w1, w2, w3"
+  val res = arm8_test_asm "lslv x1, x2, x3"
+  val res = arm8_test_asm "lsrv w1, w2, w3"
+  val res = arm8_test_asm "lsrv x1, x2, x3"
+  val res = arm8_test_asm "asrv w1, w2, w3"
+  val res = arm8_test_asm "asrv x1, x2, x3"
+  val res = arm8_test_asm "rorv w1, w2, w3"
+  val res = arm8_test_asm "rorv x1, x2, x3"
+  val res = arm8_test_asm "cls w1, w2"
+  val res = arm8_test_asm "cls x1, x2"
+  val res = arm8_test_asm "clz w1, w2"
+  val res = arm8_test_asm "clz x1, x2"
+  val res = arm8_test_asm "rbit x1, x2"
+  val res = arm8_test_asm "rbit w1, w2"
+  val res = arm8_test_asm "rev w1, w2"
+  val res = arm8_test_asm "rev x1, x2"
+  val res = arm8_test_asm "rev16 w1, w2"
+  val res = arm8_test_asm "rev16 x1, x2"
+  val res = arm8_test_asm "rev32 x1, x2"
+  val res = arm8_test_asm "csel w1, w2, w3, EQ"
+  val res = arm8_test_asm "csel x1, x2, x3, EQ"
+  val res = arm8_test_asm "csel x1, x2, x3, LE"
+  val res = arm8_test_asm "csel x1, x2, x3, LT"
+  val res = arm8_test_asm "csel x1, x2, x3, NE"
 
-val res = arm8_test_asm "csinc w1, w2, w3, LE"
-val res = arm8_test_asm "csinc x1, x2, x3, EQ"
-val res = arm8_test_asm "csinv w1, w2, w3, LE"
-val res = arm8_test_asm "csinv x1, x2, x3, EQ"
-val res = arm8_test_asm "csneg w1, w2, w3, LE"
-val res = arm8_test_asm "csneg x1, x2, x3, EQ"
-val res = arm8_test_asm "cset w1, LE"
-val res = arm8_test_asm "cset x1, LE"
-val res = arm8_test_asm "csetm w1, LE"
-val res = arm8_test_asm "csetm x1, LE"
+  val res = arm8_test_asm "csinc w1, w2, w3, LE"
+  val res = arm8_test_asm "csinc x1, x2, x3, EQ"
+  val res = arm8_test_asm "csinv w1, w2, w3, LE"
+  val res = arm8_test_asm "csinv x1, x2, x3, EQ"
+  val res = arm8_test_asm "csneg w1, w2, w3, LE"
+  val res = arm8_test_asm "csneg x1, x2, x3, EQ"
+  val res = arm8_test_asm "cset w1, LE"
+  val res = arm8_test_asm "cset x1, LE"
+  val res = arm8_test_asm "csetm w1, LE"
+  val res = arm8_test_asm "csetm x1, LE"
 
-val res = arm8_test_asm "cinc w1, w2, LE"
-val res = arm8_test_asm "cinc x1, x2, EQ"
-val res = arm8_test_asm "cinv w1, w2, LE"
-val res = arm8_test_asm "cinv x1, x2, EQ"
-val res = arm8_test_asm "cneg w1, w2, LE"
-val res = arm8_test_asm "cneg x1, x2, EQ"
-val res = arm8_test_asm "ngc w1, w2"
-val res = arm8_test_asm "ngc x1, x2"
-val res = arm8_test_asm "ngcs w1, w2"
-val res = arm8_test_asm "ngcs x1, x2"
+  val res = arm8_test_asm "cinc w1, w2, LE"
+  val res = arm8_test_asm "cinc x1, x2, EQ"
+  val res = arm8_test_asm "cinv w1, w2, LE"
+  val res = arm8_test_asm "cinv x1, x2, EQ"
+  val res = arm8_test_asm "cneg w1, w2, LE"
+  val res = arm8_test_asm "cneg x1, x2, EQ"
+  val res = arm8_test_asm "ngc w1, w2"
+  val res = arm8_test_asm "ngc x1, x2"
+  val res = arm8_test_asm "ngcs w1, w2"
+  val res = arm8_test_asm "ngcs x1, x2"
 
-val res = arm8_test_asm "ccmn w1, w2, #3, le"
-val res = arm8_test_asm "ccmp w1, w2, #3, le"
-val res = arm8_test_asm "ccmn x1, x2, #3, le"
-val res = arm8_test_asm "ccmp x1, x2, #3, le"
+  val res = arm8_test_asm "ccmn w1, w2, #3, le"
+  val res = arm8_test_asm "ccmp w1, w2, #3, le"
+  val res = arm8_test_asm "ccmn x1, x2, #3, le"
+  val res = arm8_test_asm "ccmp x1, x2, #3, le"
 
-val res = arm8_test_asm "madd w1, w2, w3, w4"
-val res = arm8_test_asm "madd x1, x2, x3, x4"
-val res = arm8_test_asm "msub w1, w2, w3, w4"
-val res = arm8_test_asm "msub x1, x2, x3, x4"
-val res = arm8_test_asm "msub x1, x2, x3, xzr"
-val res = arm8_test_asm "mneg w1, w2, w3"
-val res = arm8_test_asm "mneg x1, x2, x3"
+  val res = arm8_test_asm "madd w1, w2, w3, w4"
+  val res = arm8_test_asm "madd x1, x2, x3, x4"
+  val res = arm8_test_asm "msub w1, w2, w3, w4"
+  val res = arm8_test_asm "msub x1, x2, x3, x4"
+  val res = arm8_test_asm "msub x1, x2, x3, xzr"
+  val res = arm8_test_asm "mneg w1, w2, w3"
+  val res = arm8_test_asm "mneg x1, x2, x3"
 
-val res = arm8_test_asm "smaddl x1, w2, w3, x4"
-val res = arm8_test_asm "smsubl x1, w2, w3, x4"
-val res = arm8_test_asm "smull x1, w2, w3"
-val res = arm8_test_asm "smulh x1, x2, x3"
+  val res = arm8_test_asm "smaddl x1, w2, w3, x4"
+  val res = arm8_test_asm "smsubl x1, w2, w3, x4"
+  val res = arm8_test_asm "smull x1, w2, w3"
+  val res = arm8_test_asm "smulh x1, x2, x3"
 
-val res = arm8_test_asm "umaddl x1, w2, w3, x4"
-val res = arm8_test_asm "umsubl x1, w2, w3, x4"
-val res = arm8_test_asm "umull x1, w2, w3"
-val res = arm8_test_asm "umulh x1, x2, x3"
+  val res = arm8_test_asm "umaddl x1, w2, w3, x4"
+  val res = arm8_test_asm "umsubl x1, w2, w3, x4"
+  val res = arm8_test_asm "umull x1, w2, w3"
+  val res = arm8_test_asm "umulh x1, x2, x3"
 
-val res = arm8_test_asm "sdiv w1, w2, w3"
-val res = arm8_test_asm "sdiv x1, x2, x3"
-val res = arm8_test_asm "udiv w1, w2, w3"
-val res = arm8_test_asm "udiv x1, x2, x3"
-
-
-  (* some instructions I din't see in this file *)
-(*  4003a0:     d61f0220        br      x17 *)
-val res = arm8_test_asm "br  x17";
-(*  4003a4:     d503201f        nop *)
-val res = arm8_test_asm "nop";
-(*  400510:     d63f0020        blr     x1 *)
-val res = arm8_test_asm "blr x1";
-(*  400430:     b4000040        cbz     x0, 400438 <call_weak_fn+0x10> *)
-val res = arm8_test_hex "B4000040";
-(*  4004cc:     35000080        cbnz    w0, 4004dc <__do_global_dtors_aux+0x24> *)
-val res = arm8_test_hex "35000080";
-
-  (* another one, load with lsl, decode error *)
-(*  4005f8:     b8617801        ldr     w1, [x0,x1,lsl #2] *)
-val res = arm8_test_hex "b8617801";
+  val res = arm8_test_asm "sdiv w1, w2, w3"
+  val res = arm8_test_asm "sdiv x1, x2, x3"
+  val res = arm8_test_asm "udiv w1, w2, w3"
+  val res = arm8_test_asm "udiv x1, x2, x3"
 
 
+    (* some instructions I din't see in this file *)
+  (*  4003a0:     d61f0220        br      x17 *)
+  val res = arm8_test_asm "br  x17";
+  (*  4003a4:     d503201f        nop *)
+  val res = arm8_test_asm "nop";
+  (*  400510:     d63f0020        blr     x1 *)
+  val res = arm8_test_asm "blr x1";
+  (*  400430:     b4000040        cbz     x0, 400438 <call_weak_fn+0x10> *)
+  val res = arm8_test_hex "B4000040";
+  (*  4004cc:     35000080        cbnz    w0, 4004dc <__do_global_dtors_aux+0x24> *)
+  val res = arm8_test_hex "35000080";
+
+    (* another one, load with lsl, decode error *)
+  (*  4005f8:     b8617801        ldr     w1, [x0,x1,lsl #2] *)
+  val res = arm8_test_hex "b8617801";
 
 
-(* dummy prog lifting tests *)
-val region_1 = mk_bir_inst_lifting_region (Arbnum.fromInt 0x400470) [
-  "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3","B94017E0","51000400",
-  "B9004FE0","F94007E0","B9400000","B9002FE0","F94007E0","B9400400","B90033E0"]
 
-val region_2 = mk_bir_inst_lifting_data_region (Arbnum.fromInt 0x400584) [
-  "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3"]
 
-val region_3 = BILMR (Arbnum.fromInt 0x401970, [
-  ("D101C3FF", BILME_unknown), ("F9000FE0", BILME_code (SOME "???")) ,
-   ("B90017E1", BILME_code NONE), ("F90007E2", BILME_data)])
+  (* dummy prog lifting tests *)
+  val region_1 = mk_bir_inst_lifting_region (Arbnum.fromInt 0x400470) [
+    "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3","B94017E0","51000400",
+    "B9004FE0","F94007E0","B9400000","B9002FE0","F94007E0","B9400400","B90033E0"]
 
-val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
-val (res, fl) = test_ARM8.bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
-  [region_1, region_2, region_3]
+  val region_2 = mk_bir_inst_lifting_data_region (Arbnum.fromInt 0x400584) [
+    "D101C3FF","F9000FE0","B90017E1","F90007E2","F90003E3"]
+
+  val region_3 = BILMR (Arbnum.fromInt 0x401970, [
+    ("D101C3FF", BILME_unknown), ("F9000FE0", BILME_code (SOME "???")) ,
+     ("B90017E1", BILME_code NONE), ("F90007E2", BILME_data)])
+
+  val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
+  val (res, fl) = test_ARM8.bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
+    [region_1, region_2, region_3]
 
 in () end;
 
@@ -471,16 +356,16 @@ in () end;
 
 
 fun m0_lift_instr mu_b mu_e pc hex_code desc = let
-  val r1 = (print "LP "; test_M0_1.lift_instr mu_b mu_e pc hex_code desc)
+  val r1 = (print "LP "; test_m0_le_proc.lift_instr mu_b mu_e pc hex_code desc)
 in if (test_fast) then (r1, r1, r1, r1, r1, r1, r1, r1) else let
-  val r2 = (print "BP "; test_M0_2.lift_instr mu_b mu_e pc hex_code desc)
-  val r3 = (print "LM "; test_M0_3.lift_instr mu_b mu_e pc hex_code desc)
-  val r4 = (print "BM "; test_M0_4.lift_instr mu_b mu_e pc hex_code desc)
+  val r2 = (print "BP "; test_m0_be_proc.lift_instr mu_b mu_e pc hex_code desc)
+  val r3 = (print "LM "; test_m0_le_main.lift_instr mu_b mu_e pc hex_code desc)
+  val r4 = (print "BM "; test_m0_be_main.lift_instr mu_b mu_e pc hex_code desc)
 
-  val r5 = (print "LP_mod "; test_M0_mod_1.lift_instr mu_b mu_e pc hex_code desc)
-  val r6 = (print "BP_mod "; test_M0_mod_2.lift_instr mu_b mu_e pc hex_code desc)
-  val r7 = (print "LM_mod "; test_M0_mod_3.lift_instr mu_b mu_e pc hex_code desc)
-  val r8 = (print "BM_mod "; test_M0_mod_4.lift_instr mu_b mu_e pc hex_code desc)
+  val r5 = (print "LP_mod "; test_m0_mod_le_proc.lift_instr mu_b mu_e pc hex_code desc)
+  val r6 = (print "BP_mod "; test_m0_mod_be_proc.lift_instr mu_b mu_e pc hex_code desc)
+  val r7 = (print "LM_mod "; test_m0_mod_le_main.lift_instr mu_b mu_e pc hex_code desc)
+  val r8 = (print "BM_mod "; test_m0_mod_be_main.lift_instr mu_b mu_e pc hex_code desc)
 in
   (r1, r2, r3, r4, r5, r6, r7, r8)
 end end;
@@ -497,135 +382,135 @@ val m0_test_asm = m0_lift_instr_asm mu_b mu_e pc
 fun m0_test_hex hex = m0_lift_instr mu_b mu_e pc hex NONE
 
 val _ = if not test_m0 then () else let
-val res = print_log_with_style sty_HEADER true "\nMANUAL TESTS - M0\n\n";
+  val res = test_m0_le_proc.print_log_with_style sty_HEADER true "\nMANUAL TESTS - M0\n\n";
 
-val res = m0_test_asm "mov r0, r1";
-val res = m0_test_asm "movs r0, r1";
-val res = m0_test_asm "mov pc, r1";
-
-
-val res = m0_test_asm "adds r0, r1, #0";
-val res = m0_test_asm "adds r0, r1, #2";
-val res = m0_test_asm "adds r0, r1, r2";
-val res = m0_test_asm "add r0, r1";
-val res = m0_test_asm "add pc, r1"; (* TODO: improve result *)
-val res = m0_test_asm "adds r0, #128";
-val res = m0_test_asm "adcs r0, r1";
-val res = m0_test_asm "add sp, #128";
-val res = m0_test_asm "add r0, sp, #128";
+  val res = m0_test_asm "mov r0, r1";
+  val res = m0_test_asm "movs r0, r1";
+  val res = m0_test_asm "mov pc, r1";
 
 
-val res = m0_test_asm "subs r0, r1, r2";
-val res = m0_test_asm "subs r0, r1, #3";
-val res = m0_test_asm "subs r0, r1, r1";
-val res = m0_test_asm "subs r0, r1, #0";
-val res = m0_test_asm "subs r0, #128";
-val res = m0_test_asm "subs r0, #0";
-val res = m0_test_asm "sbcs r0, r3";
-val res = m0_test_asm "sub sp, #8";
-val res = m0_test_asm "sub sp, #16";
-val res = m0_test_asm "rsbs r1, r2, #0";
-val res = m0_test_asm "muls r1, r3";
-val res = m0_test_asm "cmp r1, r3";
-val res = m0_test_asm "cmp r1, r1";
-val res = m0_test_asm "cmp r1, #0";
-val res = m0_test_asm "cmp r1, #12";
-val res = m0_test_asm "cmn r1, r3";
-val res = m0_test_asm "cmn r1, r1";
-
-val res = m0_test_asm "ands r1, r1";
-val res = m0_test_asm "ands r1, r2";
-val res = m0_test_asm "eors r1, r2";
-val res = m0_test_asm "eors r1, r1";
-val res = m0_test_asm "orrs r1, r2";
-val res = m0_test_asm "orrs r1, r1";
-val res = m0_test_asm "bics r1, r2";
-val res = m0_test_asm "bics r1, r1";
-val res = m0_test_asm "mvns r1, r2";
-val res = m0_test_asm "mvns r1, r1";
-val res = m0_test_asm "tst r1, r2";
-val res = m0_test_asm "tst r1, r1";
-val res = m0_test_asm "lsls r0, r1";
-val res = m0_test_asm "lsls r0, #2";
-val res = m0_test_asm "lsls r0, #0";
-val res = m0_test_asm "lsrs r0, r1";
-val res = m0_test_asm "lsrs r0, #2";
-val res = m0_test_asm "asrs r0, r1";
-val res = m0_test_asm "asrs r0, #2";
-
-val res = m0_test_asm "rors r0, r1";
+  val res = m0_test_asm "adds r0, r1, #0";
+  val res = m0_test_asm "adds r0, r1, #2";
+  val res = m0_test_asm "adds r0, r1, r2";
+  val res = m0_test_asm "add r0, r1";
+  val res = m0_test_asm "add pc, r1"; (* TODO: improve result *)
+  val res = m0_test_asm "adds r0, #128";
+  val res = m0_test_asm "adcs r0, r1";
+  val res = m0_test_asm "add sp, #128";
+  val res = m0_test_asm "add r0, sp, #128";
 
 
-val res = m0_test_asm "ldr r1, [r0]"
-val res = m0_test_asm "ldr r1, [r0, #4]"
-val res = m0_test_asm "ldr r1, [r0, #8]"
-val res = m0_test_asm "ldrh r1, [r0, #8]"
-val res = m0_test_asm "ldrh r1, [r0, #0]"
-val res = m0_test_asm "ldrh r1, [r0, #2]"
-val res = m0_test_asm "ldrb r1, [r0]"
-val res = m0_test_asm "ldrb r1, [r0, #1]"
-val res = m0_test_asm "ldrb r1, [r0, #19]"
-val res = m0_test_asm "ldr r1, [r0, r2]"
-val res = m0_test_asm "ldrh r1, [r0, r2]"
-val res = m0_test_asm "ldrsh r1, [r0, r2]"
-val res = m0_test_asm "ldrb r1, [r0, r2]"
-val res = m0_test_asm "ldrsb r1, [r0, r2]"
-val res = m0_test_asm "ldr r1, [pc, #8]"
-val res = m0_test_asm "ldr r1, [sp, #8]"
-val res = m0_test_asm "ldm r3, {r1, r2, r3}"
+  val res = m0_test_asm "subs r0, r1, r2";
+  val res = m0_test_asm "subs r0, r1, #3";
+  val res = m0_test_asm "subs r0, r1, r1";
+  val res = m0_test_asm "subs r0, r1, #0";
+  val res = m0_test_asm "subs r0, #128";
+  val res = m0_test_asm "subs r0, #0";
+  val res = m0_test_asm "sbcs r0, r3";
+  val res = m0_test_asm "sub sp, #8";
+  val res = m0_test_asm "sub sp, #16";
+  val res = m0_test_asm "rsbs r1, r2, #0";
+  val res = m0_test_asm "muls r1, r3";
+  val res = m0_test_asm "cmp r1, r3";
+  val res = m0_test_asm "cmp r1, r1";
+  val res = m0_test_asm "cmp r1, #0";
+  val res = m0_test_asm "cmp r1, #12";
+  val res = m0_test_asm "cmn r1, r3";
+  val res = m0_test_asm "cmn r1, r1";
 
-val res = m0_test_asm "str r1, [r0]"
-val res = m0_test_asm "str r1, [r0, #4]"
-val res = m0_test_asm "str r1, [r0, #8]"
-val res = m0_test_asm "strh r1, [r0, #8]"
-val res = m0_test_asm "strh r1, [r0, #0]"
-val res = m0_test_asm "strh r1, [r0, #2]"
-val res = m0_test_asm "strb r1, [r0]"
-val res = m0_test_asm "strb r1, [r0, #1]"
-val res = m0_test_asm "strb r1, [r0, #19]"
-val res = m0_test_asm "str r1, [r0, r2]"
-val res = m0_test_asm "strh r1, [r0, r2]"
-val res = m0_test_asm "strb r1, [r0, r2]"
-val res = m0_test_asm "str r1, [sp, #8]"
-val res = m0_test_asm "stm r1!, {r1, r2, r3}"
+  val res = m0_test_asm "ands r1, r1";
+  val res = m0_test_asm "ands r1, r2";
+  val res = m0_test_asm "eors r1, r2";
+  val res = m0_test_asm "eors r1, r1";
+  val res = m0_test_asm "orrs r1, r2";
+  val res = m0_test_asm "orrs r1, r1";
+  val res = m0_test_asm "bics r1, r2";
+  val res = m0_test_asm "bics r1, r1";
+  val res = m0_test_asm "mvns r1, r2";
+  val res = m0_test_asm "mvns r1, r1";
+  val res = m0_test_asm "tst r1, r2";
+  val res = m0_test_asm "tst r1, r1";
+  val res = m0_test_asm "lsls r0, r1";
+  val res = m0_test_asm "lsls r0, #2";
+  val res = m0_test_asm "lsls r0, #0";
+  val res = m0_test_asm "lsrs r0, r1";
+  val res = m0_test_asm "lsrs r0, #2";
+  val res = m0_test_asm "asrs r0, r1";
+  val res = m0_test_asm "asrs r0, #2";
 
-val res = m0_test_asm "push {r1, r2, r3}"
-val res = m0_test_asm "pop {r1, r2, r3}"
-val res = m0_test_asm "push {r1, r2, r3, lr}"
-val res = m0_test_asm "pop {r1, r2, r3, pc}"
+  val res = m0_test_asm "rors r0, r1";
 
-val res = m0_test_asm "bx r1"
-val res = m0_test_asm "blx r1"
 
-val res = m0_test_asm "sxth r1, r2"
-val res = m0_test_asm "sxtb r1, r2"
-val res = m0_test_asm "uxth r1, r2"
-val res = m0_test_asm "uxtb r1, r2"
+  val res = m0_test_asm "ldr r1, [r0]"
+  val res = m0_test_asm "ldr r1, [r0, #4]"
+  val res = m0_test_asm "ldr r1, [r0, #8]"
+  val res = m0_test_asm "ldrh r1, [r0, #8]"
+  val res = m0_test_asm "ldrh r1, [r0, #0]"
+  val res = m0_test_asm "ldrh r1, [r0, #2]"
+  val res = m0_test_asm "ldrb r1, [r0]"
+  val res = m0_test_asm "ldrb r1, [r0, #1]"
+  val res = m0_test_asm "ldrb r1, [r0, #19]"
+  val res = m0_test_asm "ldr r1, [r0, r2]"
+  val res = m0_test_asm "ldrh r1, [r0, r2]"
+  val res = m0_test_asm "ldrsh r1, [r0, r2]"
+  val res = m0_test_asm "ldrb r1, [r0, r2]"
+  val res = m0_test_asm "ldrsb r1, [r0, r2]"
+  val res = m0_test_asm "ldr r1, [pc, #8]"
+  val res = m0_test_asm "ldr r1, [sp, #8]"
+  val res = m0_test_asm "ldm r3, {r1, r2, r3}"
 
-val res = m0_test_asm "rev r1, r2"
-val res = m0_test_asm "rev16 r1, r2"
-val res = m0_test_asm "revsh r1, r2"
+  val res = m0_test_asm "str r1, [r0]"
+  val res = m0_test_asm "str r1, [r0, #4]"
+  val res = m0_test_asm "str r1, [r0, #8]"
+  val res = m0_test_asm "strh r1, [r0, #8]"
+  val res = m0_test_asm "strh r1, [r0, #0]"
+  val res = m0_test_asm "strh r1, [r0, #2]"
+  val res = m0_test_asm "strb r1, [r0]"
+  val res = m0_test_asm "strb r1, [r0, #1]"
+  val res = m0_test_asm "strb r1, [r0, #19]"
+  val res = m0_test_asm "str r1, [r0, r2]"
+  val res = m0_test_asm "strh r1, [r0, r2]"
+  val res = m0_test_asm "strb r1, [r0, r2]"
+  val res = m0_test_asm "str r1, [sp, #8]"
+  val res = m0_test_asm "stm r1!, {r1, r2, r3}"
 
-val res = m0_test_hex "3104";
-val res = m0_test_hex "b007";
-val res = m0_test_hex "4A15";
-val res = m0_test_hex "4011";
-val res = m0_test_hex "b510";
-val res = m0_test_hex "BA18";
-val res = m0_test_hex "f000f858";
-val res = m0_test_hex "BDF7";
-val res = m0_test_hex "3202";
-val res = m0_test_hex "635c";
-val res = m0_test_hex "70E8";
-val res = m0_test_hex "B285";
-val res = m0_test_hex "8028";
-val res = m0_test_hex "DFB8";
-val res = m0_test_hex "A1BC";
-val res = m0_test_hex "4182";
-val res = m0_test_hex "1000";
-val res = m0_test_hex "4088";
-val res = m0_test_hex "B5F7";
-val res = m0_test_hex "C29C";
+  val res = m0_test_asm "push {r1, r2, r3}"
+  val res = m0_test_asm "pop {r1, r2, r3}"
+  val res = m0_test_asm "push {r1, r2, r3, lr}"
+  val res = m0_test_asm "pop {r1, r2, r3, pc}"
+
+  val res = m0_test_asm "bx r1"
+  val res = m0_test_asm "blx r1"
+
+  val res = m0_test_asm "sxth r1, r2"
+  val res = m0_test_asm "sxtb r1, r2"
+  val res = m0_test_asm "uxth r1, r2"
+  val res = m0_test_asm "uxtb r1, r2"
+
+  val res = m0_test_asm "rev r1, r2"
+  val res = m0_test_asm "rev16 r1, r2"
+  val res = m0_test_asm "revsh r1, r2"
+
+  val res = m0_test_hex "3104";
+  val res = m0_test_hex "b007";
+  val res = m0_test_hex "4A15";
+  val res = m0_test_hex "4011";
+  val res = m0_test_hex "b510";
+  val res = m0_test_hex "BA18";
+  val res = m0_test_hex "f000f858";
+  val res = m0_test_hex "BDF7";
+  val res = m0_test_hex "3202";
+  val res = m0_test_hex "635c";
+  val res = m0_test_hex "70E8";
+  val res = m0_test_hex "B285";
+  val res = m0_test_hex "8028";
+  val res = m0_test_hex "DFB8";
+  val res = m0_test_hex "A1BC";
+  val res = m0_test_hex "4182";
+  val res = m0_test_hex "1000";
+  val res = m0_test_hex "4088";
+  val res = m0_test_hex "B5F7";
+  val res = m0_test_hex "C29C";
 
 in () end;
 
@@ -681,8 +566,8 @@ val instrs = [ "4b1b", "cb04", "0010", "0019", "3010", "7814",
 "46c0"]
 
 val _ = if (test_fast orelse not test_m0) then () else let
-  val _ = print_with_style_ sty_HEADER "\n\n\nTESTING AES CODE - M0 LitteEnd, Main SP\n\n";
-  val _ = test_M0_3.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x100000) (Arbnum.fromInt 0x470) instrs
+  val _ = print_with_style_ sty_HEADER "\n\n\nTESTING AES CODE - M0 LittleEnd, Main SP\n\n";
+  val _ = test_m0_le_main.lift_instr_list (Arbnum.fromInt 0) (Arbnum.fromInt 0x100000) (Arbnum.fromInt 0x470) instrs
 in () end
 
 
@@ -1057,20 +942,43 @@ val m0_expected_failed_hexcodes:string list =
 
 
 val _ = if (not test_m0) then () else let
-  val _ = test_M0_1.final_results "M0 LittleEnd, Process SP" m0_expected_failed_hexcodes;
-  val _ = test_M0_2.final_results "M0 BigEnd, Process SP" m0_expected_failed_hexcodes;
-  val _ = test_M0_3.final_results "M0 LittleEnd, Main SP" m0_expected_failed_hexcodes;
-  val _ = test_M0_4.final_results "M0 BigEnd, Main SP" m0_expected_failed_hexcodes;
+  val _ = test_m0_le_proc.final_results "M0 LittleEnd, Process SP" m0_expected_failed_hexcodes;
+  val _ = test_m0_be_proc.final_results "M0 BigEnd, Process SP" m0_expected_failed_hexcodes;
+  val _ = test_m0_le_main.final_results "M0 LittleEnd, Main SP" m0_expected_failed_hexcodes;
+  val _ = test_m0_be_main.final_results "M0 BigEnd, Main SP" m0_expected_failed_hexcodes;
 in () end;
 
+val _ = test_ARM8.close_log();
 
-val _ = TextIO.closeOut log
+val _ = test_m0_le_proc.close_log();
+val _ = test_m0_be_proc.close_log();
+val _ = test_m0_le_main.close_log();
+val _ = test_m0_be_main.close_log();
+
+val _ = test_m0_mod_le_proc.close_log();
+val _ = test_m0_mod_be_proc.close_log();
+val _ = test_m0_mod_le_main.close_log();
+val _ = test_m0_mod_be_main.close_log();
 
 (* check whether the result is different *)
-val diff_cmd = "git diff --exit-code " ^ log_filename;
-
-val _ = if OS.Process.isSuccess (OS.Process.system diff_cmd) then
-          ()
+local
+  val diff_cmd = "git diff --exit-code ";
+in
+  fun check_logs _      = ()
+    | check_logs (h::t) = 
+        if OS.Process.isSuccess (OS.Process.system (diff_cmd^h))
+        then ()
         else
-          raise ERR "holba/src/tools/lifter/selftest.sml" "selftest output diverged";
+          raise ERR "holba/src/tools/lifter/selftest.sml" ("Output in "^h^" has diverged")
+end;
 
+val _ = check_logs ["arm8_selftest.log",
+                    "m0_le_proc_selftest.log",
+                    "m0_be_proc_selftest.log",
+                    "m0_le_main_selftest.log",
+                    "m0_be_main_selftest.log",
+                    "m0_mod_le_proc_selftest.log",
+                    "m0_mod_be_proc_selftest.log",
+                    "m0_mod_le_main_selftest.log",
+                    "m0_mod_be_main_selftest.log"]
+; 

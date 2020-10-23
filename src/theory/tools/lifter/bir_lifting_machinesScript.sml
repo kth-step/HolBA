@@ -1,19 +1,26 @@
-open HolKernel Parse boolLib bossLib;
-open rich_listTheory listTheory
-open bir_expTheory HolBACoreSimps;
-open bir_typing_expTheory bir_valuesTheory
-open bir_envTheory bir_immTheory bir_exp_immTheory
-open bir_immSyntax wordsTheory
-open bir_exp_memTheory bir_bool_expTheory
-open bir_exp_liftingTheory
-open bir_temp_varsTheory
-open bir_programTheory
-open bir_program_labelsTheory;
-open bir_interval_expTheory
-
+(* For compilation: *)
+open HolKernel Parse boolLib bossLib
+(* Generic HOL theories: *)
+open rich_listTheory listTheory wordsTheory
+(* Architecture-specific theories from the examples/l3-machine-code
+ * directory. *)
 open arm8Theory arm8_stepTheory
-open m0Theory m0_stepTheory
-open m0_mod_stepTheory
+     m0_mod_stepTheory
+     m0Theory m0_stepTheory
+     riscvTheory riscv_stepTheory
+(* Theories from HolBA/src/core: *)
+open bir_expTheory bir_typing_expTheory bir_valuesTheory
+     bir_envTheory bir_immTheory bir_exp_immTheory 
+     bir_exp_memTheory bir_programTheory
+(* Theories from HolBA/src/core-props: *)
+open bir_bool_expTheory bir_program_labelsTheory
+     bir_interval_expTheory bir_temp_varsTheory
+(* Local theories: *)
+open bir_exp_liftingTheory
+(* Syntaxes from HolBA/src/core: *)
+open bir_immSyntax
+(* HolBA simplification set: *)
+open HolBACoreSimps
 
 (* The lifting library is in principle able to lift
    machine code for multiple architectures. However,
@@ -582,7 +589,8 @@ SIMP_CONV (list_ss++bmr_ss++holBACore_ss) [
 val arm8_bmr_LIFTED = save_thm ("arm8_bmr_LIFTED",
 let
   val thm0 = MATCH_MP bmr_lifted arm8_bmr_OK
-  val c = SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, GSYM CONJ_ASSOC]
+  val c =
+    SIMP_CONV (list_ss++bmr_ss) [arm8_bmr_EVAL, GSYM CONJ_ASSOC]
   val thm1 = CONV_RULE (STRIP_QUANT_CONV (RAND_CONV c)) thm0
 in
   thm1
@@ -749,6 +757,295 @@ val bmr_ms_mem_contains_M0_2 = store_thm ("bmr_ms_mem_contains_M0_2",
 
 SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ss) [bmr_ms_mem_contains_def, m0_bmr_EVAL, bmr_mem_lf_def]);
 
+(**********)
+(* RISC-V *)
+(**********)
+(* Hmmm.... Looking at riscv_state, it seems like everything except
+ * clock, memory, done (whatever that is?), exception, log and
+ * totalCore is dependent upon a process ID. procID is a 8-bit
+ * field, meaning you could have up to 256 hardware processes.
+ *
+ * This is just a complete guess as to what the things mean though.
+ *
+ * These processes are typically known as hardware threads or
+ * "harts". See https://wiki.osdev.org/RISC-V#Hardware_Threads
+ * and Section 2.7 of the RISC-V User-Level ISA.
+ *
+ * c_gpr and c_fpr are the candidates for general-purpose registers,
+ * but c_fpr is probably the registers in the extended RV64I base
+ * integer instruction set. *)
+
+(* With starting point in bir_lifting_machinesLib_instances.riscv_bmr_rec, 
+ * we try to prove all the fields, starting from the top:
+
+     bir_lifting_machinesScript.riscv_bmr_OK
+     bir_lifting_machinesScript.riscv_bmr_LIFTED
+     bir_lifting_machinesScript.riscv_bmr_EVAL
+     bir_lifting_machinesScript.riscv_bmr_label_thm
+*)
+
+(**********************************************************************)
+(* 1. riscv_bmr_OK                                                    *)
+(**********************************************************************)
+
+val riscv_state_is_OK_def = Define `
+  riscv_state_is_OK (ms:riscv_state) <=> (
+    (* Interpreted from https://github.com/SRI-CSL/l3riscv/blob/master/src/l3/riscv.spec
+     * specifically from the older version https://github.com/SRI-CSL/l3riscv/blob/3d1cd4f8f922fb60a04f75ebcdbfd74919c4e585/src/l3/riscv.spec
+*)
+    (ms.exception = NoException) /\
+(*   
+     * MCSRs are machine mode control and status registers, mstatus is status register,
+     * "VM" is "memory management and virtualization", 5 bits.
+     * Page 23 of https://people.eecs.berkeley.edu/~krste/papers/riscv-privileged-v1.9.1.pdf
+     * explains that memory management field being zero corresponds to "Mbare", no translation or
+     * protection.
+     * Don't know why this must always be 0 for a simple add, but it is checked only in
+     * "translateAddr" in the Fetch step of Next. Perhaps it is some limitation of the model (version).
+*)
+    ((ms.c_MCSR ms.procID).mstatus.VM = 0w) /\
+(* 
+     * Fetch state from interpreter execution context must be NONE. Type is
+     * TransferControl option:
+
+         type SynchronousTrap = { badaddr: BitsN.nbit option, trap: ExceptionType }
+
+           datatype TransferControl
+             = BranchTo of BitsN.nbit | Ereturn | Mrts | Trap of SynchronousTrap
+
+     * we see in riscv.sml that in the Next function, after Fetch-Decode-Run
+     * "NextFetch" is accessed, which returns a tuple where the first element is a TransferControl
+     * option. This has been written to NextFetch in the Run step. Effects on PC are resolved and
+     * NextFetch is then set to NONE.
+     * The reason for why this must be NONE in the initial state is likely that in regular situations
+     * when non-control transfer instructions are executed, NextFetch is never written to (instead of
+     * explicitly writing NONE).
+*)
+    (ms.c_NextFetch ms.procID = NONE) /\
+(*
+
+     * It seems the size of the general-purpose registers is hard-coded as 64-bit in the L3 model.
+     * When trying to store values of 64-bit registers as 32-bit words, the lifter runs into
+     * a lot of trouble. For this reason, we fix the architecture to 64-bit.
+
+     * TODO: For technical reasons, we don't write this as
+
+         ((ms.c_MCSR ms.procID).mcpuid.ArchBase = 2w)
+
+     * which is a more direct representation of what is really stored, but rather as two separate
+     * conjuncts to be able to lift without performing additional word arithmetic (effectively,
+     * comparing 2w to 0w and 1w)
+*)
+     ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 0w) /\
+     ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 1w)
+  )
+(* For ARM8:
+    (* https://static.docs.arm.com/100878/0100/fundamentals_of_armv8_a_100878_0100_en.pdf
+     * tells us that
+     * ELn: Exception level n. EL0 is user, EL1 kernel, EL2 Hypervisor, EL3 firmware (p. 4 of PDF).
+     * SCTLR: System control register; for EL1, EL2 and EL3 (p. 24 of PDF). 
+     * PSTATE: Processor state flags, accessed through special-purpose registers. (p. 16 of PDF)
+     * TCR: Translation Control Register; for EL1, EL2 and EL3. Determines
+     *      Translation Table Base Register. *)
+
+    (* Explicit data accesses at EL0 MUST be little-endian. *)
+    ~ms.SCTLR_EL1.E0E /\
+    (* Exception level must be 0 (user) *)
+    (ms.PSTATE.EL = 0w) /\
+    (* Exception must be NoException (as opposed to ALIGNMENT_FAULT,
+     * UNDEFINED_FAULT and ASSERT).*)
+    (ms.exception = NoException) /\
+    (* Stack Alignment Check MUST NOT be enabled for EL0. *)
+    ~ms.SCTLR_EL1.SA0 /\
+    (* Translation control register for EL1 must not be TBI0 or TBI1,
+     * meaning it must be "tcr_el1'rst", which is a 62-bit field.
+     * TODO: What is TBI0 and TBI1? *)
+    ~ms.TCR_EL1.TBI0 /\
+    ~ms.TCR_EL1.TBI1
+  )
+*)
+(* For Cortex-M0:
+    (* AIRCR: Application Interrupt and Reset Control Register.
+     * CONTROL: Special register in Cortex-M processor. Can be accessed using MSR and MRS. *)
+
+    (* Endianness must match argument ef. *)
+    (s.AIRCR.ENDIANNESS = ef) /\
+    (* Stack pointer selection bit in the control register must match argument sel. *)
+    (s.CONTROL.SPSEL = sel) /\
+    (* Exception must be NoException. *)
+    (s.exception = NoException)
+*)
+`;
+
+(* Lifting RISC-V general-purpose registers. Note that while these are referred
+ * to as "general-purpose", by convention they include hardwired zero, sp, gp, tp,
+ * ra, and so on. *)
+val riscv_GPRS_lifted_imms_LIST_def = Define `
+  riscv_GPRS_lifted_imms_LIST =
+    (MAP (\n. (BMLI (BVar (STRCAT "x" (n2s 10 HEX n)) (BType_Imm Bit64))
+               (\ms:riscv_state. Imm64 (ms.c_gpr ms.procID (n2w n) ))))  (COUNT_LIST 32))
+`;
+val riscv_GPRS_lifted_imms_LIST_EVAL = save_thm("riscv_GPRS_lifted_imms_LIST_EVAL",
+  EVAL ``riscv_GPRS_lifted_imms_LIST``
+);
+
+(* Lifting RISC-V HardFloat registers. *)
+val riscv_FPRS_lifted_imms_LIST_def = Define `
+  riscv_FPRS_lifted_imms_LIST =
+    (MAP (\n. (BMLI (BVar (STRCAT "f" (n2s 10 HEX n)) (BType_Imm Bit64))
+               (\ms:riscv_state. Imm64 (ms.c_fpr ms.procID (n2w n) ))))  (COUNT_LIST 32))
+`;
+val riscv_FPRS_lifted_imms_LIST_EVAL = save_thm("riscv_FPRS_lifted_imms_LIST_EVAL",
+  EVAL ``riscv_FPRS_lifted_imms_LIST``
+);
+
+(* Note: For some reason, MEM is named MEM8 in the RISC-V state.
+ * Since memory is shared between processes, this does not require
+ * a process ID. *)
+val riscv_lifted_mem_def = Define `
+  riscv_lifted_mem = BMLM (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                          (\ms:riscv_state. ms.MEM8)
+`;
+
+(* Compared to the ARM8 version, this also has to take a procID from the
+ * machine state. See riscv_state in riscvScript.sml in l3-machine-code. *)
+val riscv_lifted_pc_def = Define `
+  riscv_lifted_pc = BMLPC (BVar (bir_temp_var_name "PC") (BType_Imm Bit64))
+                          (BVar (bir_temp_var_name "COND") BType_Bool)
+                          (\ms:riscv_state. Imm64 (ms.c_PC ms.procID))
+`;
+
+(* HOL definition of RISC-V BIR machine record. *)
+(* Prerequisites: riscv_lifted_pc, riscv_lifted_mem,
+ * riscv_PSTATE_lifted_imms_LIST, riscv_REGS_lifted_imms_LIST,
+ * riscv_EXTRA_lifted_imms_LIST *)
+val riscv_bmr_def = Define `
+  riscv_bmr = <|
+    (* TODO: This needs to be expended upon, the definition of
+     * OK state is now minimal. *)
+    bmr_extra := \ms. riscv_state_is_OK ms;
+    (* Registers are the 32 general-purpose registers as well as the
+     * 32 fprs (fpr = floating point register?). *)
+    bmr_imms := (riscv_GPRS_lifted_imms_LIST++riscv_FPRS_lifted_imms_LIST);
+    (* Done! *)
+    bmr_mem := riscv_lifted_mem;
+    (* Done! *)
+    bmr_pc := riscv_lifted_pc;
+    (* Done! *)
+    bmr_step_fun := NextRISCV
+  |>
+`;
+
+(* Evaluation theorem of RISC-V BMR. *)
+val riscv_bmr_EVAL = save_thm("riscv_bmr_EVAL",
+SIMP_CONV list_ss [riscv_bmr_def, riscv_state_is_OK_def,
+                   riscv_GPRS_lifted_imms_LIST_EVAL, riscv_FPRS_lifted_imms_LIST_EVAL,
+                   riscv_lifted_mem_def,
+                   riscv_lifted_pc_def, bir_temp_var_name_def]
+          ``riscv_bmr``
+);
+
+(* Evaluation theorem of variables in a RISC-V BMR. *)
+val riscv_bmr_vars_EVAL = save_thm("riscv_bmr_vars_EVAL",
+SIMP_CONV (list_ss++bmr_ss) [riscv_bmr_EVAL, bmr_vars_def] ``bmr_vars riscv_bmr``
+);
+(* Evaluation theorem of variables + temporary variables (???) in a RISC-V BMR. *)
+val riscv_bmr_temp_vars_EVAL = save_thm ("riscv_bmr_temp_vars_EVAL",
+SIMP_CONV (list_ss++bmr_ss) [riscv_bmr_EVAL, bmr_vars_def, bmr_temp_vars_def,
+                             bir_temp_var_def, bir_temp_var_name_def]
+          ``bmr_temp_vars riscv_bmr``
+);
+
+(* The property of all varnames being distinct. *)
+val riscv_bmr_varnames_distinct = prove(
+``bmr_varnames_distinct riscv_bmr``,
+
+SIMP_TAC std_ss [bmr_varnames_distinct_def,
+                 riscv_bmr_vars_EVAL, riscv_bmr_temp_vars_EVAL,
+                 MAP, bir_var_name_def,
+                 APPEND] >>
+SIMP_TAC (list_ss++stringSimps.STRING_ss) [ALL_DISTINCT]
+);
+
+(* Theorem stating that the BIR machine record stored in riscv_bmr is
+ * OK (in the sense of bmr_ok). *)
+val riscv_bmr_OK = store_thm ("riscv_bmr_OK",
+  ``bmr_ok riscv_bmr``,
+
+SIMP_TAC std_ss [bmr_ok_def, riscv_bmr_varnames_distinct] >>
+SIMP_TAC (list_ss++bmr_ss++stringSimps.STRING_ss++wordsLib.WORD_ss++holBACore_ss)
+         [riscv_bmr_EVAL, bir_machine_lifted_mem_OK_def, bir_machine_lifted_imm_OK_def,
+          bir_is_temp_var_name_def, BType_Bool_def,
+          bir_machine_lifted_pc_OK_def,
+          bmr_varnames_distinct_def]
+);
+
+(**********************************************************************)
+(* 2. riscv_bmr_LIFTED                                                *)
+(**********************************************************************)
+
+val riscv_bmr_LIFTED = save_thm ("riscv_bmr_LIFTED",
+let
+  val thm0 = MATCH_MP bmr_lifted riscv_bmr_OK
+  val c =
+    SIMP_CONV (list_ss++bmr_ss) [riscv_bmr_EVAL, GSYM CONJ_ASSOC]
+  val thm1 = CONV_RULE (STRIP_QUANT_CONV (RAND_CONV c)) thm0
+in
+  thm1
+end
+);
+
+(**********************************************************************)
+(* 3. riscv_bmr_label_thm                                             *)
+(**********************************************************************)
+
+val riscv_bmr_label_thm = store_thm ("riscv_bmr_label_thm",
+``!ms n hc.
+    (BL_Address (bmr_pc_lf riscv_bmr ms) =
+      BL_Address_HC (Imm64 (n2w n)) hc) ==>
+    ((ms.c_PC ms.procID) = n2w n)
+``,
+
+SIMP_TAC (std_ss++bir_TYPES_ss++bmr_ss) [bmr_pc_lf_def, riscv_bmr_EVAL,
+                                         BL_Address_HC_def]
+);
+
+(*******************************************************************)
+
+(* This is documented further up, in the context of
+ * riscv_state_is_OK_def *)
+val bmr_extra_RISCV = store_thm ("bmr_extra_RISCV",
+``!ms.
+    riscv_bmr.bmr_extra ms = 
+      ((ms.exception = NoException) /\
+       ((ms.c_MCSR ms.procID).mstatus.VM = 0w) /\
+       (ms.c_NextFetch ms.procID = NONE) /\
+       ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 0w) /\
+       ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 1w)
+      )
+``,
+
+SIMP_TAC (std_ss++bmr_ss++boolSimps.EQUIV_EXTRACT_ss)
+         [riscv_bmr_EVAL]
+);
+
+val bmr_ms_mem_contains_RISCV =
+  store_thm ("bmr_ms_mem_contains_RISCV",
+``!ms v1 v2 v3 v4.
+    (bmr_ms_mem_contains riscv_bmr ms (ms.c_PC ms.procID,
+                                      [v1; v2; v3; v4]) <=>
+      ((ms.MEM8 (ms.c_PC ms.procID) = v1) /\
+       (ms.MEM8 ((ms.c_PC ms.procID) + 1w) = v2) /\
+       (ms.MEM8 ((ms.c_PC ms.procID) + 2w) = v3) /\
+       (ms.MEM8 ((ms.c_PC ms.procID) + 3w) = v4)
+      )
+    )
+``,
+
+SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ss) [bmr_ms_mem_contains_def,
+                                             riscv_bmr_EVAL,
+                                             bmr_mem_lf_def]
+);
 
 
 

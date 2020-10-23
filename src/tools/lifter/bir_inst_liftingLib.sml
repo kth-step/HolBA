@@ -88,9 +88,9 @@ val (bir_is_lifted_inst_prog_tm,  mk_bir_is_lifted_inst_prog, dest_bir_is_lifted
 val (bir_is_lifted_inst_block_tm,  mk_bir_is_lifted_inst_block, dest_bir_is_lifted_inst_block, is_bir_is_lifted_inst_block) = syntax_fns6 "bir_is_lifted_inst_block";
 
 
-(******************)
-(* Auxilary stuff *)
-(******************)
+(*******************)
+(* Auxiliary stuff *)
+(*******************)
 
 exception bir_inst_liftingAuxExn of bir_inst_liftingExn_data;
 
@@ -107,10 +107,17 @@ val sty_FAIL  = [FG OrangeRed];
 (****************)
 
 functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifting = struct
+  (* For debugging RISC-V:
+
+    val mr = riscv_bmr_rec;
+
+  *)
+
   (* For debugging
   structure MD = struct val mr = arm8_bmr_rec end;
   structure MD = struct val mr = m0_bmr_rec false true end;
   structure MD = struct val mr = m0_mod_bmr_rec false true end;
+  structure MD = struct val mr = riscv_bmr_rec end;
 
   val pc = Arbnum.fromInt 0x10000
   val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x100000)
@@ -210,7 +217,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   fun mk_mem_addr_from_num (n:num) =
     wordsSyntax.mk_n2w (numSyntax.mk_numeral n, addr_sz_ty);
 
-  (* Insiantiate some useful syntax funs *)
+  (* Instantiate some useful syntax funs *)
   val (pc_sz, mk_pc_of_term) = bmr_rec_mk_pc_of_term mr
   val mk_label_of_num = bmr_rec_mk_label_of_num mr
   val mk_label_of_num_eq_pc = bmr_rec_mk_label_of_num_eq_pc mr;
@@ -226,7 +233,8 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
 
   (* Instantiate the inst_lifting theorem with the record and types. *)
-  val inst_lift_THM = inst_bmr_thm true bir_is_lifted_inst_block_COMPUTE_OPTIMISED;
+  val inst_lift_THM =
+    inst_bmr_thm true bir_is_lifted_inst_block_COMPUTE_OPTIMISED;
 
   val inst_lift_THM_ex_vars = let
     val (_, t)  = dest_forall (concl inst_lift_THM)
@@ -273,21 +281,24 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
   in (pc_var_t, pc_cond_var_t, tm1) end;
 
   (* Build cond-lift theorems for all accessed fields *)
+  (* RISC-V TODO: Some stuff here does not work as intended... *)
   val cond_lift_fields_thm = let
      val cond_tm = list_mk_icomb PROTECTED_COND_tm [
         mk_var ("c", bool),
         mk_var ("ms1", ms_ty),
         mk_var ("ms2", ms_ty)];
 
+  (* RISC-V TODO: This changed to not loop in presence of process IDs, see if it still works... *)
      fun mk_lift_thm tm =
-       GEN_ALL (QCONV (SIMP_CONV std_ss [PROTECTED_COND_RAND, PROTECTED_COND_RATOR])
-                 (subst [ms_v |-> cond_tm] tm))
+       GEN_ALL (QCONV (SIMP_CONV std_ss [PROTECTED_COND_RAND, Once PROTECTED_COND_RATOR])
+                      (subst [ms_v |-> cond_tm] tm))
+
 
      fun mk_imm_thm (_, tm) =  mk_lift_thm ( (rand tm))
 
   in
     LIST_CONJ (
-     (mk_lift_thm mr_mem_lf_of_ms) ::
+     (mk_lift_thm mr_mem_lf_of_ms) :: (* RISC-V TODO: OK. *)
      (mk_lift_thm (rand mr_pc_lf_of_ms)) ::
      map (mk_lift_thm o rand o snd) mr_imms_lf_of_ms)
   end;
@@ -295,7 +306,7 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
 
   (* Constructing net for expression lifting. The _raw version does the lifting for
      the environment in a specially prepared net. Since we usually want the whole
-     lifting to fail, if some preconds remain, the wrapper exp_lift_fn checks for
+     lifting to fail if some preconds remain, the wrapper exp_lift_fn checks for
      the existence of such preconds. Notice that this does not mean hypothesis, i.e.
      according to the implementation of bir_exp_lift only "bir_is_lifted_exp" terms. *)
   val exp_lift_fn_raw = let
@@ -307,6 +318,25 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bmr_rec end) : bir_inst_lifti
      bir_exp_lift env_t eln2
   end;
 
+(* For debugging RISC-V:
+  (* TODO: Make shortcuts for debugging other things than preconds *)
+
+  val hex_code = String.map Char.toUpper "FCE0879B"; (* "addiw x15,x1,-50" *)
+
+  val hex_code_desc = hex_code;
+  val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
+  val (lb, ms_case_cond_t, next_thm) = el 1 (preprocess_next_thms label_tm next_thms)
+  val next_thm0 = REWRITE_RULE [ASSUME ms_case_cond_t] next_thm
+  val (preconds, next_tm) = strip_imp_only (concl next_thm0)
+  val tm = (* Put term returned by exception here, don't forget type information... *)
+
+val tm = ``Imm64
+                (w2w ((riscv_mem_half ms.MEM8 (ms.c_gpr ms.procID 2w - 50w)):word16))``;
+
+  (* In case of several preconds, continue with the following for 2, 3, 4, ...*)
+  (* val tm = el 2 preconds *)
+
+*)
   fun exp_lift_fn tm = let
      val res = exp_lift_fn_raw tm
      val _ = if is_imp_only (concl res) then failwith "exp_lift_fn: preconds present" else ()
@@ -497,7 +527,15 @@ fun get_patched_step_hex ms_v hex_code =
    val bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK_tm' = mk_icomb (bir_is_lifted_inst_block_COMPUTE_ms'_COND_WITH_DESC_OK_tm,
           (#bmr_const mr))
   in
+(* For debugging RISC-V:
 
+  val hex_code = String.map Char.toUpper "00E13423";
+  val hex_code_desc = hex_code;
+  val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
+  val (lb, ms_case_cond_t, next_thm) = el 1 (preprocess_next_thms label_tm next_thms)
+  val next_thm0 = REWRITE_RULE [ASSUME ms_case_cond_t] next_thm
+
+*)
   fun compute_al_step_ms' next_thm0 =
   let
     (* all possible simplifications of remaining conditions have been tried before,
@@ -506,6 +544,7 @@ fun get_patched_step_hex ms_v hex_code =
     val ms'_t = rand (rhs (next_tm))
 
     (* lift all preconds *)
+    (* TODO: Should the below be empty list? *)
     val lift_thms = map exp_lift_fn preconds
     val assert_ok_thms = map (MATCH_MP bir_assert_desc_OK_via_lifting) lift_thms
     val al_step_l = map (fn thm => (rand (concl thm))) assert_ok_thms
@@ -540,7 +579,6 @@ fun get_patched_step_hex ms_v hex_code =
      for later instantiating as well as only the changes as an SML datastructure for
      computing the block-updates later. Moreover, a theorem stating that the
      computed imm_ups list is correct is produced. *)
-
   local
     val compute_single_up_single_conv = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [
          updateTheory.APPLY_UPDATE_THM, wordsTheory.n2w_11, cond_lift_fields_thm,
@@ -600,7 +638,6 @@ fun get_patched_step_hex ms_v hex_code =
   (* Given a new state, we compute whether updates to the memory happend. This
      is similar to computing updates to immediates via compute_imm_ups.
      The computed term, its SML representation and a correctness theorem are returned. *)
-
   local
     val lf_ms'_CONV = SIMP_CONV (std_ss++(#bmr_extra_ss mr)++wordsLib.SIZES_ss) [cond_lift_fields_thm, PROTECTED_COND_ID]
    val bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_tm' = mk_icomb (bir_is_lifted_inst_block_COMPUTE_mem_COND_NO_UPDATES_tm,
@@ -653,8 +690,8 @@ fun get_patched_step_hex ms_v hex_code =
     If the memory is not updated, finding such a list is trival, just return the
     empty list of assertions.
 
-    More interesting, if the memory is updated, we need to find out at which addressed.
-    Usually this is a interval of addresses, seldomly multiple interval. The start of the
+    More interestingly, if the memory is updated, we need to find out at which address.
+    Usually this is a interval of addresses, seldomly multiple intervals. The start of the
     interval usually depends on the current state, e.g. on the value stored in a register.
     So, we need an assertion to enforce that the addresses computed at runtime are not
     inside the protected region.
@@ -971,15 +1008,11 @@ fun get_patched_step_hex ms_v hex_code =
          CONV_RULE (RATOR_CONV (RATOR_CONV (RAND_CONV c)))
        end;
 
-(*
-     val vn_set0 = vn_set
-     val full_rel_thm = init_thm
+(* For debugging (from compute_updates):
 
-     val (full_rel_thm, vn_set) = foldl add_imm_up (init_thm, vn_set)
-         (List.take (imm_ups_tm_list, 38));
-
-
-     val (v_t, lf_t, SOME res_t) = el 39 imm_ups_tm_list
+         val (full_rel_thm, vn_set) =
+           foldl add_imm_up (init_thm, vn_set) (List.take (imm_ups_tm_list, 62));
+         val (v_t, lf_t, SOME res_t) = el 63 imm_ups_tm_list;
 *)
      fun add_imm_up ((v_t, lf_t, NONE), (full_rel_thm, vn_set)) =
          let
@@ -1019,16 +1052,68 @@ fun get_patched_step_hex ms_v hex_code =
            (thm4, vn_set')
          end;
   in
+(* For debugging RISC-V:
 
+  val (mu_thm:thm, mm_precond_thm:thm) = test_RISCV.bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
+  val hex_code = String.map Char.toUpper "FCE14083"; (* "lbu x1,x2,-50" *)
+  val hex_code_desc = hex_code;
+  val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
+    val bir_is_lifted_inst_block_COMPUTE_precond_tm_mr =
+      list_mk_comb (
+        mk_icomb ( bir_is_lifted_inst_block_COMPUTE_precond_tm, #bmr_const mr),
+        [bs_v, ms_v]);
+
+    val list_CONV = SIMP_CONV list_ss []
+  val inst_lift_thm0 =
+    let
+      val thm0 = MP (SPEC (rand (concl mu_thm)) inst_lift_THM) mu_thm
+      val thm1 = SPECL [mm_tm, label_tm] thm0
+
+      val precond_thm =
+	let
+	  val (pc_n_tm0, ml_tm) = pairSyntax.dest_pair mm_tm
+	  val pc_n_tm = rand pc_n_tm0;
+	  val thmp_0 = SPECL [pc_n_tm, ml_tm] mm_precond_thm
+	  val thmp_1 = CONV_RULE (RATOR_CONV (RAND_CONV list_CONV)) thmp_0
+	in
+	  UNDISCH thmp_1
+	end;
+
+      val thm2 = MP thm1 precond_thm
+    in
+      thm2
+    end;
+  val bir_is_lifted_inst_block_COMPUTE_precond_tm0 =
+    list_mk_comb (bir_is_lifted_inst_block_COMPUTE_precond_tm_mr,
+     [label_tm, (rand (concl mu_thm)), mm_tm])
+  val (lb, ms_case_cond_t, next_thm) = el 1 (preprocess_next_thms label_tm next_thms)
+
+  val next_thm0 = REWRITE_RULE [ASSUME ms_case_cond_t] next_thm
+     fun raiseErr s = raise (bir_inst_liftingAuxExn (BILED_msg s));
+
+
+     (* compute ms' and al_step *)
+     val (ms'_t, al_step_t, ms'_thm) = compute_al_step_ms' next_thm0
+       handle HOL_ERR _ => raiseErr "computing al_step and ms' failed";
+
+     (* next compute imm_ups *)
+     val (imm_ups_t, imm_ups_thm) = compute_imm_ups ms'_t
+       handle HOL_ERR _ => raiseErr "computing imm_ups failed";
+
+     (* compute eup *)
+     val (eup_t, eup_THM) = compute_eup ms'_t
+       handle HOL_ERR _ => raiseErr "computing eup failed";
+
+     (* compute mem_up *)
+     val (mem_up_t, real_mem_up_opt, mem_up_thm, mem_ms'_thm) = compute_mem_up ms'_t
+       handle HOL_ERR _ => raiseErr "computing mem_up failed";
+*)
   fun compute_updates mem_up_t imm_ups_t eup_t =
   let
      (* Deal with mem_up *)
      val (init_thm, vn_set) = if (optionSyntax.is_none mem_up_t) then
           (comp_thm_updates_INTRO_NO_MEM, vn_set_empty)
         else let
-           (* DEBUG:
-              val mem_up_t = optionSyntax.mk_some mr_mem_lf_of_ms
-            *)
            val mem_ms' = optionSyntax.dest_some mem_up_t
            val lift_thm = exp_lift_fn mem_ms'
            val e_tm = rand (rator (concl lift_thm));
@@ -1052,6 +1137,7 @@ fun get_patched_step_hex ms_v hex_code =
         end)
         (fst (listSyntax.dest_list imm_ups_t)));
 
+     (* TODO: Something will go wrong here when failing to lift an expression... *)
      val (full_rel_thm, vn_set_final) = foldl add_imm_up (init_thm, vn_set) imm_ups_tm_list;
 
      (* add eup *)
@@ -1152,11 +1238,49 @@ fun get_patched_step_hex ms_v hex_code =
   (*-------------------------------*)
   (* Combine it all, main function *)
   (*-------------------------------*)
-
+  (* RISC-V TODO: All seemingly OK in lifting procedure up to here, except what has been
+   * commented. *)
   (* DEBUG
 
      val (lb, ms_case_cond_t, next_thm) = el 1 sub_block_work_list
   *)
+(* For debugging RISC-V:
+
+  val (mu_thm:thm, mm_precond_thm:thm) = test_RISCV.bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
+  val hex_code = String.map Char.toUpper "007302B3";
+  val hex_code_desc = hex_code;
+  val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
+    val bir_is_lifted_inst_block_COMPUTE_precond_tm_mr =
+      list_mk_comb (
+        mk_icomb ( bir_is_lifted_inst_block_COMPUTE_precond_tm, #bmr_const mr),
+        [bs_v, ms_v]);
+
+    val list_CONV = SIMP_CONV list_ss []
+  val inst_lift_thm0 =
+    let
+      val thm0 = MP (SPEC (rand (concl mu_thm)) inst_lift_THM) mu_thm
+      val thm1 = SPECL [mm_tm, label_tm] thm0
+
+      val precond_thm =
+	let
+	  val (pc_n_tm0, ml_tm) = pairSyntax.dest_pair mm_tm
+	  val pc_n_tm = rand pc_n_tm0;
+	  val thmp_0 = SPECL [pc_n_tm, ml_tm] mm_precond_thm
+	  val thmp_1 = CONV_RULE (RATOR_CONV (RAND_CONV list_CONV)) thmp_0
+	in
+	  UNDISCH thmp_1
+	end;
+
+      val thm2 = MP thm1 precond_thm
+    in
+      thm2
+    end;
+  val bir_is_lifted_inst_block_COMPUTE_precond_tm0 =
+    list_mk_comb (bir_is_lifted_inst_block_COMPUTE_precond_tm_mr,
+     [label_tm, (rand (concl mu_thm)), mm_tm])
+  val (lb, ms_case_cond_t, next_thm) = el 1 (preprocess_next_thms label_tm next_thms)
+
+*)
 
   (* This is the main workhorse. It gets a single next theorem and tries to
      instantiate inst_thm to generate a block mimicking this next_thm. The
@@ -1171,6 +1295,7 @@ fun get_patched_step_hex ms_v hex_code =
        handle HOL_ERR _ => raiseErr "computing al_step and ms' failed";
 
      (* next compute imm_ups *)
+     (* Gives lots of stuff... Is this correct? *)
      val (imm_ups_t, imm_ups_thm) = compute_imm_ups ms'_t
        handle HOL_ERR _ => raiseErr "computing imm_ups failed";
 
@@ -1187,7 +1312,8 @@ fun get_patched_step_hex ms_v hex_code =
        handle HOL_ERR _ => raiseErr "computing al_mem failed";
 
      (* Now we need to compute the updates. This involves lifting of all computed immediates
-        in imm_ups and checking whether the vars don't interfer with each other. *)
+        in imm_ups and checking whether the vars don't interfere with each other. *)
+     (* TODO: Here, something fails... *)
      val (updates_t, eup_temp_t, updates_THM) = compute_updates mem_up_t imm_ups_t eup_t
        handle HOL_ERR _ => raiseErr "computing updates failed";
 
@@ -1325,25 +1451,40 @@ fun get_patched_step_hex ms_v hex_code =
 
     val list_CONV = SIMP_CONV list_ss []
   in
+(* For debugging RISC-V:
+
+  val (mu_thm:thm, mm_precond_thm:thm) = test_RISCV.bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
+  val hex_code = String.map Char.toUpper "007302B3";
+  val hex_code_desc = hex_code;
+
+*)
   fun bir_lift_instr_mu_gen_pc_compute (mu_thm:thm, mm_precond_thm : thm) hex_code hex_code_desc =
   let
      (* call step lib to generate step theorems, compute mm and label *)
+    (* TODO: Does this work correctly for RISC-V? Probably, but usage of "+=" as "assign" is funny.
+     * Also see if it is necessary to use a static procID. *)
      val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
 
      (* instantiate inst theorem *)
-     val inst_lift_thm0 = let
-       val thm0 = MP (SPEC (rand (concl mu_thm)) inst_lift_THM) mu_thm
-       val thm1 = SPECL [mm_tm, label_tm] thm0
+     val inst_lift_thm0 =
+       let
+         val thm0 = MP (SPEC (rand (concl mu_thm)) inst_lift_THM) mu_thm
+         val thm1 = SPECL [mm_tm, label_tm] thm0
 
-       val precond_thm = let
-         val (pc_n_tm0, ml_tm) = pairSyntax.dest_pair mm_tm
-         val pc_n_tm = rand pc_n_tm0;
-         val thmp_0 = SPECL [pc_n_tm, ml_tm] mm_precond_thm
-         val thmp_1 = CONV_RULE (RATOR_CONV (RAND_CONV list_CONV)) thmp_0
-       in UNDISCH thmp_1 end;
+         val precond_thm =
+           let
+             val (pc_n_tm0, ml_tm) = pairSyntax.dest_pair mm_tm
+             val pc_n_tm = rand pc_n_tm0;
+             val thmp_0 = SPECL [pc_n_tm, ml_tm] mm_precond_thm
+             val thmp_1 = CONV_RULE (RATOR_CONV (RAND_CONV list_CONV)) thmp_0
+           in
+             UNDISCH thmp_1
+           end;
 
-       val thm2 = MP thm1 precond_thm
-     in thm2 end;
+         val thm2 = MP thm1 precond_thm
+       in
+         thm2
+       end;
 
      val bir_is_lifted_inst_block_COMPUTE_precond_tm0 =
        list_mk_comb (bir_is_lifted_inst_block_COMPUTE_precond_tm_mr,
@@ -1355,6 +1496,7 @@ fun get_patched_step_hex ms_v hex_code =
        handle HOL_ERR _ =>
          raise bir_inst_liftingAuxExn (BILED_msg ("preprocessing next theorems failed"));
 
+     (* TODO: Here, something fails... *)
      val sub_block_thms = map (lift_single_block inst_lift_thm0 bir_is_lifted_inst_block_COMPUTE_precond_tm0 mu_thm) sub_block_work_list
 
      val prog_thm = merge_block_thms sub_block_thms handle HOL_ERR _ =>
@@ -1366,6 +1508,14 @@ fun get_patched_step_hex ms_v hex_code =
   end
 
   (* Add a cache *)
+(* For debugging RISC-V:
+
+  val (mu_thm:thm, mm_precond_thm:thm) = test_RISCV.bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
+  val (cache:(string, thm) Redblackmap.dict) = Redblackmap.mkDict String.compare
+  val hex_code = String.map Char.toUpper "007302B3";
+  val hex_code_desc = hex_code;
+
+*)
   fun bir_lift_instr_mu_gen_pc (mu_thm:thm, mm_precond_thm : thm) (cache : lift_inst_cache) hex_code hex_code_desc =
     (Redblackmap.find (cache, hex_code), cache, true) handle NotFound =>
   let
@@ -1381,9 +1531,23 @@ val cache = lift_inst_cache_empty;
      val final_CS = wordsLib.words_compset ()
      val final_CONV = computeLib.CBV_CONV final_CS
   in
+(* For debugging RISC-V:
+
+  val (mu_b, mu_e) = (Arbnum.fromInt 0, Arbnum.fromInt 0x1000000);
+  val (mu_thm:thm, mm_precond_thm:thm) = test_RISCV.bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
+  val (cache:(string, thm) Redblackmap.dict) = Redblackmap.mkDict String.compare
+  val pc =   Arbnum.fromInt 0x10030;
+  val hex_code = String.map Char.toUpper "007302B3";
+  val hex_code_desc = hex_code;
+
+*)
   fun bir_lift_instr_mu (mu_b, mu_e) (mu_thm:thm, mm_precond_thm : thm)  cache (pc : Arbnum.num) hex_code hex_code_desc = let
     val _ = if (Arbnum.< (pc, mu_e) andalso Arbnum.<= (mu_b, pc)) then () else
             raise (bir_inst_liftingExn (hex_code, BILED_msg "pc outside unchanged memory region"))
+(*
+  val (thm0, cache', cache_used) =  bir_lift_instr_mu_gen_pc (mu_thm, mm_precond_thm) cache hex_code hex_code_desc
+*)
+    (* TODO: This fails... *)
     val (thm0, cache', cache_used) =  bir_lift_instr_mu_gen_pc (mu_thm, mm_precond_thm) cache hex_code hex_code_desc
 
     (* instantiate PC *)
@@ -1755,7 +1919,6 @@ structure bir_inst_liftingLib :> bir_inst_liftingLib = struct
   structure bmil_m0_mod_BigEnd_Process    = bir_inst_liftingFunctor (struct val mr = m0_mod_bmr_rec_BigEnd_Process end);
   structure bmil_m0_mod_BigEnd_Main       = bir_inst_liftingFunctor (struct val mr = m0_mod_bmr_rec_BigEnd_Main end);
 
-
-
+  structure bmil_riscv = bir_inst_liftingFunctor (struct val mr = riscv_bmr_rec end);
 
 end
