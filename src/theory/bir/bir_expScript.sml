@@ -16,7 +16,7 @@ val bir_type_ss = rewrites ((type_rws ``:bir_type_t``));
 
 val _ = Datatype `bir_exp_t =
     BExp_Const             bir_imm_t
-  | BExp_MemConst          bir_immtype_t (*Addr-Type*) bir_immtype_t (* value-type *) (num |-> num)
+  | BExp_MemConst          bir_immtype_t (*Address type*) bir_immtype_t (* Value type *) (num |-> num)
   | BExp_Den               bir_var_t
 
   | BExp_Cast              bir_cast_t bir_exp_t bir_immtype_t
@@ -26,7 +26,6 @@ val _ = Datatype `bir_exp_t =
   | BExp_BinPred           bir_bin_pred_t bir_exp_t bir_exp_t
   | BExp_MemEq             bir_exp_t bir_exp_t
 
-    (* For some reason if-then-else officially misses in BAP documentation *)
   | BExp_IfThenElse        bir_exp_t bir_exp_t bir_exp_t
 
   | BExp_Load              bir_exp_t bir_exp_t bir_endian_t bir_immtype_t

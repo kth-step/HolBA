@@ -14,6 +14,7 @@ open bir_expLib;
 
 in (* local *)
 
+
 val log = ref TextIO.stdOut;
 
 fun log_setfile log_filename = log := (TextIO.openOut log_filename);
@@ -479,10 +480,7 @@ fun lift_file arch_str da_file =
         (lift_thm::thms, lift_errors@errors)
       end) ([],[]) sections_to_lift;
 
-
-
-
-    (* print out only the failing instructions *)
+    (* Print only the failing instructions, for debug purposes *)
     val _ = if not (List.null errors) then
       let
         val _ = print_l "\n\n";
@@ -500,13 +498,10 @@ fun lift_file arch_str da_file =
 val da_file = "binaries/bzip2-1.0.6/aarch64-libbz2-emptymain.da";
 val da_file = "binaries/aes-aarch64.da";
 val da_file = "binaries/bignum/aarch64-bignum-emptymain.da";
-
 val arch_str = "arm8";
 val _ = lift_file arch_str da_file;
-
 val da_file = "binaries/bzip2-1.0.6/m0-libbz2-emptymain.da";
 val da_file = "binaries/bignum/m0-bignum-emptymain.da";
-
 val arch_str = "m0";
 val _ = lift_file arch_str da_file;
 *)
@@ -540,11 +535,10 @@ fun lift_inst arch_str (pc:Arbnum.num) (inst:string) =
 (*
 val arch_str = "arm8";
 val thm_prog = lift_inst arch_str (Arbnum.fromInt 0x40C2A4) ("78206A61");
-
 val arch_str = "m0";
 val thm_prog = lift_inst arch_str (Arbnum.fromInt 0xCFEE) ("4770");
 *)
 
 end (* local *)
 
-end
+end;
