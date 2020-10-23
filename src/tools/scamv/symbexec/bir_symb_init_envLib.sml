@@ -11,6 +11,8 @@ app load ["bir_symb_envTheory", "bir_symb_execTheory", "stringLib"]
 structure bir_symb_init_envLib :> bir_symb_init_envLib = 
 struct
 
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+
 local
 
 open HolKernel;
@@ -32,6 +34,11 @@ open bir_immSyntax;
 open bir_valuesSyntax;
 open bir_expSyntax;
 open wordsSyntax;
+
+  (* error handling *)
+  val libname  = "bir_symb_init_envLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
 in
 
