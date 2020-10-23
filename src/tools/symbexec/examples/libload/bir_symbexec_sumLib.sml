@@ -353,6 +353,10 @@ fun subst_in_symbv_interval (vals, varsubstmap) ((be1, be2), deps) =
     symbv
   end;
 
+val sy_sp_var = ``BVar "sy_SP_process" (BType_Imm Bit32)``;
+val sy_sp_plus_zero_exp =
+  ``BExp_BinExp BIExp_Minus (BExp_Den ^sy_sp_var)
+          (BExp_Const (Imm32 0w))``;
 fun subst_in_symbv_mem (vals, varsubstmap) mem =
   let
     val debugOn = false;
@@ -387,6 +391,10 @@ fun subst_in_symbv_mem (vals, varsubstmap) mem =
     val be_sp   = case Redblackmap.peek (varsubstmap, bv_sp) of
                      NONE => raise ERR "subst_in_symbv_mem" "couldn't find sp"
                    | SOME bv_sp_ofvals => (
+                  (* TODO: !!! check that this is correct !!! and avoid the two parser calls that got added now *)
+                  if identical bv_sp_ofvals sy_sp_var then
+                    sy_sp_plus_zero_exp
+                  else
                   case find_bv_val "subst_in_symbv_mem::variablenotfound_sp" vals bv_sp_ofvals of
                      SymbValBE (be,_) => be
                    | _ => raise ERR "subst_in_symbv_mem" "wrong value type sp");
