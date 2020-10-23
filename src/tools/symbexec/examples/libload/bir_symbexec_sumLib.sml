@@ -354,7 +354,7 @@ fun subst_in_symbv_interval (vals, varsubstmap) ((be1, be2), deps) =
   end;
 
 val sy_sp_var = ``BVar "sy_SP_process" (BType_Imm Bit32)``;
-val sy_sp_plus_zero_exp =
+val sy_sp_minus_zero_exp =
   ``BExp_BinExp BIExp_Minus (BExp_Den ^sy_sp_var)
           (BExp_Const (Imm32 0w))``;
 fun subst_in_symbv_mem (vals, varsubstmap) mem =
@@ -391,9 +391,10 @@ fun subst_in_symbv_mem (vals, varsubstmap) mem =
     val be_sp   = case Redblackmap.peek (varsubstmap, bv_sp) of
                      NONE => raise ERR "subst_in_symbv_mem" "couldn't find sp"
                    | SOME bv_sp_ofvals => (
-                  (* TODO: !!! check that this is correct !!! and avoid the two parser calls that got added now *)
+                  (* need this to ensure shape of formula for extracting the offset value,
+                     like this it's not very general but works for our cases now *)
                   if identical bv_sp_ofvals sy_sp_var then
-                    sy_sp_plus_zero_exp
+                    sy_sp_minus_zero_exp
                   else
                   case find_bv_val "subst_in_symbv_mem::variablenotfound_sp" vals bv_sp_ofvals of
                      SymbValBE (be,_) => be
