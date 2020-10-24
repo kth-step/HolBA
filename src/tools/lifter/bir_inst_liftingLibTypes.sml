@@ -1,6 +1,6 @@
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-
 structure bir_inst_liftingLibTypes :> bir_inst_liftingLibTypes = struct
+
+open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 (* If lifting of an instruction fails, it is returned (hexcode) together with
    some explantion in the from of a bir_inst_liftingExn_data value. *)

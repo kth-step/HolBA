@@ -1,7 +1,7 @@
 structure tutorial_smtSupportLib =
 struct
 
-open HolKernel Parse;
+open HolKernel boolLib liteLib simpLib Parse bossLib;
 open bir_exp_to_wordsLib bslSyntax;
 open bir_exp_tautologiesTheory;
 open bir_expTheory bir_expSyntax;

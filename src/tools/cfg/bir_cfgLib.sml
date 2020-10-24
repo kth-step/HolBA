@@ -2,8 +2,16 @@ structure bir_cfgLib =
 struct
 local
 
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+open bir_programSyntax;
+
 open bir_program_labelsSyntax;
 open bir_block_collectionLib;
+
+  (* error handling *)
+  val libname  = "bir_cfgLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
 in
 

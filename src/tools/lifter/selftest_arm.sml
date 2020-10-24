@@ -1,7 +1,9 @@
-open HolKernel Parse
-open testutils
+open HolKernel Parse;
+open testutils;
 open bir_inst_liftingLib;
-open PPBackEnd
+open bir_inst_liftingLibTypes;
+open bir_inst_liftingHelpersLib;
+open PPBackEnd;
 
 open selftestLib;
 
@@ -31,34 +33,34 @@ val _ = Feedback.set_trace "Unicode" (if unicode then 1 else 0)
 (* TODO: Any other way to supply this to the functor? *)
 structure log_name =
 struct
-  val log_name = "arm8_selftest.log";
+  val log_name = "selftest_arm8.log";
 end;
 structure test_ARM8 = test_bmr(structure MD = bmil_arm8; structure log_name_str = log_name);
 
-structure m0_le_proc_log =
+structure log_name =
 struct
-  val log_name = "m0_le_proc_selftest.log";
+  val log_name = "selftest_m0_le_proc.log";
 end;
 structure test_m0_le_proc = test_bmr(structure MD = bmil_m0_LittleEnd_Process;
                                      structure log_name_str = log_name
 );
 structure log_name =
 struct
-  val log_name = "m0_be_proc_selftest.log";
+  val log_name = "selftest_m0_be_proc.log";
 end;
 structure test_m0_be_proc = test_bmr(structure MD = bmil_m0_BigEnd_Process;
                                      structure log_name_str = log_name
 );
 structure log_name =
 struct
-  val log_name = "m0_le_main_selftest.log";
+  val log_name = "selftest_m0_le_main.log";
 end;
 structure test_m0_le_main = test_bmr(structure MD = bmil_m0_LittleEnd_Main;
                                      structure log_name_str = log_name
 );
 structure log_name =
 struct
-  val log_name = "m0_be_main_selftest.log";
+  val log_name = "selftest_m0_be_main.log";
 end;
 structure test_m0_be_main = test_bmr(structure MD = bmil_m0_BigEnd_Main;
                                      structure log_name_str = log_name
@@ -67,28 +69,28 @@ structure test_m0_be_main = test_bmr(structure MD = bmil_m0_BigEnd_Main;
 
 structure log_name =
 struct
-  val log_name = "m0_mod_le_proc_selftest.log";
+  val log_name = "selftest_m0_mod_le_proc.log";
 end;
 structure test_m0_mod_le_proc = test_bmr(structure MD = bmil_m0_mod_LittleEnd_Process;
                                      structure log_name_str = log_name
 );
 structure log_name =
 struct
-  val log_name = "m0_mod_be_proc_selftest.log";
+  val log_name = "selftest_m0_mod_be_proc.log";
 end;
 structure test_m0_mod_be_proc = test_bmr(structure MD = bmil_m0_mod_BigEnd_Process;
                                      structure log_name_str = log_name
 );
 structure log_name =
 struct
-  val log_name = "m0_mod_le_main_selftest.log";
+  val log_name = "selftest_m0_mod_le_main.log";
 end;
 structure test_m0_mod_le_main = test_bmr(structure MD = bmil_m0_mod_LittleEnd_Main;
                                      structure log_name_str = log_name
 );
 structure log_name =
 struct
-  val log_name = "m0_mod_be_main_selftest.log";
+  val log_name = "selftest_m0_mod_be_main.log";
 end;
 structure test_m0_mod_be_main = test_bmr(structure MD = bmil_m0_mod_BigEnd_Main;
                                      structure log_name_str = log_name
@@ -964,21 +966,21 @@ val _ = test_m0_mod_be_main.close_log();
 local
   val diff_cmd = "git diff --exit-code ";
 in
-  fun check_logs _      = ()
+  fun check_logs []     = ()
     | check_logs (h::t) = 
         if OS.Process.isSuccess (OS.Process.system (diff_cmd^h))
         then ()
         else
-          raise ERR "holba/src/tools/lifter/selftest.sml" ("Output in "^h^" has diverged")
+          raise Fail ("selftest_arm.sml::Output in "^h^" has diverged")
 end;
 
-val _ = check_logs ["arm8_selftest.log",
-                    "m0_le_proc_selftest.log",
-                    "m0_be_proc_selftest.log",
-                    "m0_le_main_selftest.log",
-                    "m0_be_main_selftest.log",
-                    "m0_mod_le_proc_selftest.log",
-                    "m0_mod_be_proc_selftest.log",
-                    "m0_mod_le_main_selftest.log",
-                    "m0_mod_be_main_selftest.log"]
+val _ = check_logs ["selftest_arm8.log",
+                    "selftest_m0_le_proc.log",
+                    "selftest_m0_be_proc.log",
+                    "selftest_m0_le_main.log",
+                    "selftest_m0_be_main.log",
+                    "selftest_m0_mod_le_proc.log",
+                    "selftest_m0_mod_be_proc.log",
+                    "selftest_m0_mod_le_main.log",
+                    "selftest_m0_mod_be_main.log"]
 ; 

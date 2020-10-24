@@ -40,3 +40,47 @@ val result = querysmt bir_smtLib_z3_prelude vars ([str]@conds);
 
 val _ = if result = BirSmtUnsat then () else
         raise Fail "Unexpected result. Should be unsat.";
+
+val _ = print "Testing the exporting of a few expressions\n";
+(* can be tested in z3 with "(simplify expressionhere)" *)
+val exporting_exp_testcases = [
+  (``BExp_Cast BIExp_UnsignedCast (BExp_Const (Imm16 0x80w)) Bit8``,
+   ("((_ extract 7 0) (_ bv128 16))", SMTTY_BV 8)),
+  (``BExp_Cast BIExp_UnsignedCast (BExp_Const (Imm8 0x80w)) Bit16``,
+   ("(concat #b00000000 (_ bv128 8))", SMTTY_BV 16)),
+
+
+  (``BExp_Cast BIExp_LowCast (BExp_Const (Imm16 0x80w)) Bit8``,
+   ("((_ extract 7 0) (_ bv128 16))", SMTTY_BV 8)),
+  (``BExp_Cast BIExp_LowCast (BExp_Const (Imm8 0x80w)) Bit16``,
+   ("(concat #b00000000 (_ bv128 8))", SMTTY_BV 16)),
+
+
+  (``BExp_Cast BIExp_SignedCast (BExp_Const (Imm16 0x80w)) Bit8``,
+   ("((_ extract 7 0) (_ bv128 16))", SMTTY_BV 8)),
+  (``BExp_Cast BIExp_SignedCast (BExp_Const (Imm8 0x80w)) Bit16``,
+   ("((_ sign_extend 8) (_ bv128 8))", SMTTY_BV 16)),
+  (``BExp_Cast BIExp_SignedCast (BExp_Const (Imm8 0x7Cw)) Bit16``,
+   ("((_ sign_extend 8) (_ bv124 8))", SMTTY_BV 16)),
+
+
+  (``BExp_Cast BIExp_HighCast (BExp_Const (Imm16 0x4480w)) Bit8``,
+   ("((_ extract 15 8) (_ bv17536 16))", SMTTY_BV 8)),
+  (``BExp_Cast BIExp_HighCast (BExp_Const (Imm8 0x80w)) Bit16``,
+   ("(concat #b00000000 (_ bv128 8))", SMTTY_BV 16))
+];
+
+(*
+val (exp, expected) = List.nth(exporting_exp_testcases, 0);
+*)
+val _ = List.map (fn (exp, expected) =>
+  let
+    val (_, _, res) = bexp_to_smtlib [] vars_empty exp;
+    val _ = if res = expected then () else (
+            print ("have: ");
+            PolyML.print res;
+            print ("expecting: ");
+            PolyML.print expected;
+            raise Fail ("unexpected export: " ^ (term_to_string exp)));
+  in () end) exporting_exp_testcases;
+

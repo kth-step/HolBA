@@ -1,5 +1,25 @@
+(* these dependencies probably need cleanup *)
+(* ================================================ *)
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+open bir_inst_liftingTheory
+open bir_lifting_machinesTheory
+open bir_lifting_machinesLib bir_lifting_machinesLib_instances;
+open bir_interval_expTheory bir_update_blockTheory
+open bir_exp_liftingLib bir_typing_expSyntax
+open bir_typing_expTheory
+open bir_extra_expsTheory
+open bir_lifter_general_auxTheory
+open bir_programSyntax bir_interval_expSyntax
+open bir_program_labelsTheory
+open bir_immTheory
+open intel_hexLib
+open bir_inst_liftingLibTypes
+open PPBackEnd Parse
+
+open bir_inst_liftingHelpersLib;
+(* ================================================ *)
+
 (* Code specific for the example *)
-open HolKernel Parse boolLib bossLib;
 open HolBASimps;
 open bir_backlifterTheory;
 open bslSyntax;
