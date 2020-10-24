@@ -17,7 +17,7 @@ val _ = Feedback.set_trace "Unicode" (if unicode then 1 else 0)
 (* TODO: Any other way to supply this to the functor? *)
 structure log_name =
 struct
-  val log_name = "riscv_selftest.log";
+  val log_name = "selftest_riscv.log";
 end;
 
 structure test_RISCV = test_bmr(structure MD = bmil_riscv; structure log_name_str = log_name);
@@ -400,7 +400,7 @@ val _ = test_RISCV.close_log();
 
 (* check whether the result is different *)
 val _ =
-  if OS.Process.isSuccess (OS.Process.system ("git diff --exit-code riscv_selftest.log"))
+  if OS.Process.isSuccess (OS.Process.system ("git diff --exit-code selftest_riscv.log"))
   then ()
   else
-    raise Fail ("selftest_riscv.sml::Output in riscv_selftest.log has diverged")
+    raise Fail ("selftest_riscv.sml::Output in selftest_riscv.log has diverged")
