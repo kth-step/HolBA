@@ -1,6 +1,13 @@
 structure bir_obs_modelLib :> bir_obs_modelLib =
 struct
 
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+
+  (* error handling *)
+  val libname  = "bir_obs_modelLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
+
 local
     open bir_obs_modelTheory;
 in
@@ -56,6 +63,28 @@ end
 end (* local *)
 
 local
+
+(* these dependencies probably need cleanup *)
+(* ================================================ *)
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+open bir_inst_liftingTheory
+open bir_lifting_machinesTheory
+open bir_lifting_machinesLib bir_lifting_machinesLib_instances;
+open bir_interval_expTheory bir_update_blockTheory
+open bir_exp_liftingLib bir_typing_expSyntax
+open bir_typing_expTheory
+open bir_extra_expsTheory
+open bir_lifter_general_auxTheory
+open bir_programSyntax bir_interval_expSyntax
+open bir_program_labelsTheory
+open bir_immTheory
+open intel_hexLib
+open bir_inst_liftingLibTypes
+open PPBackEnd Parse
+
+open bir_inst_liftingHelpersLib;
+(* ================================================ *)
+
     open bir_block_collectionLib;
     open bir_cfgLib;
 

@@ -1,6 +1,8 @@
 structure armv8_prefetch_genLib : armv8_prefetch_genLib =
 struct
 
+open List;
+
 open asm_genLib;
 infix 5 <$>;
 infix 5 >>=;

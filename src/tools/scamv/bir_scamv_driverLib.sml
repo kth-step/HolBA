@@ -18,8 +18,14 @@ open bir_embexp_driverLib;
 open bir_symb_execLib;
 open bir_symb_masterLib;
 open bir_typing_expTheory;
+open bir_programSyntax;
 open scamv_configLib;
 open bir_conc_execLib;
+
+  (* error handling *)
+  val libname  = "bir_scamv_driverLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
 
 (* C like macros *)

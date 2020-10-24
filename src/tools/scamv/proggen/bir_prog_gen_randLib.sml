@@ -8,6 +8,11 @@ struct
   open bir_miscLib;
   open regExLib;
 
+  (* error handling *)
+  val libname  = "bir_prog_gen_randLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
+
 
 (* library for randomly generated programs *)
 (* ========================================================================================= *)

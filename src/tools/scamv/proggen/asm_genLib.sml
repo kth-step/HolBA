@@ -1,6 +1,8 @@
 structure asm_genLib : asm_genLib =
 struct
 
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+
 open qc_genLib;
 infix 5 <$>;
 infix 5 >>=;

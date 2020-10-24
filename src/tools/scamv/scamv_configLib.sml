@@ -3,6 +3,11 @@ struct
 
 open bir_scamv_helpersLib;
 
+  (* error handling *)
+  val libname  = "scamv_configLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
+
 datatype 'cfg opt_entry =
          Arity0 of string * string * string * ('cfg -> bool -> 'cfg)
          | Arity1 of string * string * string * ('cfg -> string -> 'cfg)

@@ -2,11 +2,11 @@ signature bir_embexp_driverLib = sig
   (* a machine consists of register to value mappings and a memory mapping *)
   (* register names are for example R0 - R29, unmapped registers are 0 *)
   (* memory mapping has a word size, unmapped memory is 0 *)
-  datatype machineState = MACHSTATE of (((string, num) Redblackmap.dict) * (int * ((num, num) Redblackmap.dict)));
+  datatype machineState = MACHSTATE of (((string, Arbnum.num) Redblackmap.dict) * (int * ((Arbnum.num, Arbnum.num) Redblackmap.dict)));
   val machstate_empty   : machineState;
   val machstate_print   : machineState -> unit
-  val machstate_add_reg : string * num -> machineState -> machineState
-  val machstate_replace_mem : int * (num, num) Redblackmap.dict -> machineState -> machineState
+  val machstate_add_reg : string * Arbnum.num -> machineState -> machineState
+  val machstate_replace_mem : int * (Arbnum.num, Arbnum.num) Redblackmap.dict -> machineState -> machineState
 
   (* platform parameters *)
   (* ======================================== *)

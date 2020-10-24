@@ -4,6 +4,11 @@ struct
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 open arm8_progLib arm8AssemblerLib arm8;
 
+  (* error handling *)
+  val libname  = "bir_prog_gen_sliceLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
+
 open bir_randLib;
 open bir_miscLib;
      

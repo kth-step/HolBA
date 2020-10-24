@@ -1,5 +1,7 @@
 signature bir_rel_synthLib =
 sig
+    include Abbrev;
+
     type exp;
     type cobs;
     type cobs_repr;

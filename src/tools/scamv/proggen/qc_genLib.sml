@@ -1,6 +1,13 @@
 structure qc_genLib : qc_genLib =
 struct
 
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+
+  (* error handling *)
+  val libname  = "qc_genLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
+
 datatype 'a Gen
   = Gen of (int -> Random.generator -> 'a);
 

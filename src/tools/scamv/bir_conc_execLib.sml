@@ -2,11 +2,18 @@ structure bir_conc_execLib : bir_conc_execLib =
 struct
 
 (* HOL_Interactive.toggle_quietdec(); *)
-  open HolKernel pairLib listSyntax stringSyntax wordsSyntax optionSyntax;
+  open HolKernel boolLib liteLib simpLib Parse bossLib;
+  open pairLib listSyntax stringSyntax wordsSyntax optionSyntax;
   open bir_symb_execLib;
   open bir_symb_masterLib;
   open bir_embexp_driverLib;
 (* HOL_Interactive.toggle_quietdec(); *)
+
+  (* error handling *)
+  val libname  = "bir_conc_execLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
+
 
   val (mem_state) = ref machstate_empty;
 
@@ -51,7 +58,9 @@ struct
 	      (``words$word_mod:'a word -> 'a word -> 'a word``, 2,
 	       wordsLib.WORD_MOD_BITS_CONV)]];
 
-
+  local
+    open bir_inst_liftingHelpersLib;
+  in
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_mem";
   val syntax_fns6 = syntax_fns 6 dest_sexop mk_sexop;
   val (bir_load_from_mem_tm,  mk_bir_load_from_mem, dest_bir_load_from_mem, is_bir_load_from_mem)  =
@@ -61,6 +70,7 @@ struct
   val syntax_fnss2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
   val (bitstring_split_tm,  mk_bitstring_split, dest_bitstring_split, is_bitstring_split)  =
       (syntax_fnss2 ) "bitstring_split";
+  end
 
   fun load_store_simp_unchange_conv tm =
       let 

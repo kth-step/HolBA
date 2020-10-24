@@ -5,8 +5,11 @@ struct
   open bir_inst_liftingLib;
   open gcc_supportLib;
   open bir_gccLib;
+  open bir_programSyntax;
 
   open bir_embexp_driverLib;
+
+  open bir_inst_liftingLibTypes;
 
   open listSyntax;
   open wordsSyntax;
@@ -18,6 +21,11 @@ struct
 
   open bir_fileLib;
   open bir_randLib;
+
+  (* error handling *)
+  val libname  = "bir_prog_genLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
 (* lifting infrastructure (handles retry of program generation also, in case of failure) *)
 (* ========================================================================================= *)

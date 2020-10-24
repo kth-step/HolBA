@@ -1,6 +1,13 @@
 structure bir_rel_synthLib : bir_rel_synthLib =
 struct
 
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+
+  (* error handling *)
+  val libname  = "bir_rel_synthLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
+
 local
 open HolKernel Parse boolLib bossLib;
 open stringSyntax;
