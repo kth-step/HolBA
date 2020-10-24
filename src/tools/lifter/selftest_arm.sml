@@ -964,7 +964,7 @@ val _ = test_m0_mod_be_main.close_log();
 local
   val diff_cmd = "git diff --exit-code ";
 in
-  fun check_logs _      = ()
+  fun check_logs []     = ()
     | check_logs (h::t) = 
         if OS.Process.isSuccess (OS.Process.system (diff_cmd^h))
         then ()
