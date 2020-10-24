@@ -84,3 +84,13 @@ val _ = List.map (fn (exp, expected) =>
             raise Fail ("unexpected export: " ^ (term_to_string exp)));
   in () end) exporting_exp_testcases;
 
+(* TODO: need a bunch of test cases that can be automatically checked,
+    such that we know what's supposed to come out.
+    maybe use EVAL and BIR semantics together with z3's simplify?
+*)
+
+(* TODO: addition to the last TODO. with a model importer we can check a full round:
+   - send query based on BIR expression
+   - get model satisfying BIR expression in terms of bir var assignments
+   - evaluate model on BIR expression
+*)

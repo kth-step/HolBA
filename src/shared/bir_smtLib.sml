@@ -561,6 +561,8 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
         end
     end;
 
+(* TODO: add a model importer *)
+
 end (* local *)
 
 end (* struct *)
