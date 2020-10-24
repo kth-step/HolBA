@@ -2,16 +2,9 @@
 
 Be sure to check out the Wiki, which contains some useful general information about HolBA.
 
-## Software versions
-
-- HOL4 (`https://github.com/HOL-Theorem-Prover/HOL`)
-  - tag: kananaskis-13
-- Poly/ML (e.g. current Poly/ML version packaged for Ubuntu, 5.7.1)
-- Z3 v4.8.4
-
 ## How to setup and compile
 
-The directory scripts/setup contains a relatively flexible set of shell scripts to help with the initial setup. The most simple setup can be done with a few shell commands and requires no manual dealing with environment variables. More sophisticated setups allow convenient sharing of the required software packages and setup environment variables in a custom shell script.
+The directory scripts/setup contains a relatively flexible set of shell scripts to automate the setup. The most simple setup can be done with a few shell commands and does not require manually installing dependencies and dealing with environment variables. More sophisticated setups allow convenient sharing of the required software packages and setup environment variables in a custom shell script.
 
 ### Simple setup
 ```bash
@@ -62,6 +55,13 @@ ${HOLBA_HOLMAKE}
 
 * You can use `make --directory=${HOLBA_DIR} rulename`.
 
+### Software versions
+
+- HOL4 (`https://github.com/HOL-Theorem-Prover/HOL`)
+  - tag: kananaskis-13
+- Poly/ML 5.7.1 (version packaged for Ubuntu 20.04)
+- Z3 v4.8.4
+
 
 ### More advanced setup with shared dependencies and `~/.bashrc`
 
@@ -80,7 +80,7 @@ cd /path/to/{HOLBA_DIR}
 make main
 ```
 
-Notice that this sequence is exemplary and it is possible to selectively run the `install_*.sh` scripts for the components that are desired. The script `config.env.sh` is generated and contains all variables for components which can be found in `${HOLBA_OPT_DIR}` or are available in the shell when `./configure.sh` runs. Sourcing the script `./env.sh` in the respective copy of the HolBA repository will setup the currently running shell for development there.
+Notice that this sequence is just an example, and it is possible to selectively run the `install_*.sh` scripts for the components that are desired. The script `config.env.sh` is generated and contains all variables for components which can be found in `${HOLBA_OPT_DIR}` or are available in the shell when `./configure.sh` runs. Sourcing the script `./env.sh` in the respective copy of the HolBA repository will setup the currently running shell for development there.
 
 
 
@@ -151,13 +151,6 @@ Notice that this sequence is exemplary and it is possible to selectively run the
   * Fairly stable
   * Includes prototype of substitution simplification
 
-### Dependency graph
-
-![Dependency diagram](./doc/diagrams/dependencies.png?raw=true)
-
-Key:
- - Blue edges represent dependencies between HolBA modules.
-
 ### PolyML heaps
 
 - The heap chain is no longer represented in the diagram. You can see it by
@@ -165,8 +158,6 @@ Key:
 - See HOL's Description Manual for more information about PolyML heaps.
 - You can temporarily change the heap chain order if you don't need a dependency
   in order to reduce build times.
-
-
 
 ## References
 
@@ -177,6 +168,3 @@ Key:
 * R. Metere, A. Lindner and R. Guanciale, **"Sound Transpilation from Binary to Machine-Independent Code"**, in 20th Brazilian Symposium on Formal Methods, p. 197-214, 2017. [Link](https://doi.org/10.1007/978-3-319-70848-5_13). _(formalization of intermediate language and proof-producing lifter in HOL4)_
 
 * D. Lundberg, R. Guanciale, A. Lindner and M. Dam, **"Hoare-Style Logic for Unstructured Programs"**, in Software Engineering and Formal Methods, p. 193-213, 2020. [Link](https://doi.org/10.1007/978-3-030-58768-0_11). _(program logic used for decomposition of verification)_
-
-
-
