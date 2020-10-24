@@ -1,7 +1,7 @@
 structure scamv_configLib : scamv_configLib =
 struct
 
-open bir_scamv_helpersLib;
+open holba_entryLib;
 
   (* error handling *)
   val libname  = "scamv_configLib"
