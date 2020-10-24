@@ -60,7 +60,7 @@ fun traverse_graph (g:cfg_graph) entry visited acc =
 
     val descr   = case descr_o of
                      SOME x => x
-                   | NONE   => raise ERR "traverse_graph" "I expect descriptions on all nodes (becasue of lifting)";
+                   | NONE   => raise Fail "traverse_graph::expecting descriptions on all nodes (becasue of lifting)";
     val _ = if cfg_node_type_eq (n_type, CFGNT_CondJump) then
               print ("cjmp node --- " ^ descr ^ "\n")
             else
