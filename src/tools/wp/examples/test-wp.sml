@@ -300,7 +300,7 @@ fun wp_test_fun (prog_name, prog, (entry_lbl, precond), (exit_lbls, postcond), w
     val wp = easy_noproof_wpLib.compute_p_imp_wp_tm prog_name prog_def (entry_lbl, precond) (exit_lbls, postcond);
   in
     if not (identical wp wp_expect) then
-      raise ERR "test-wp.sml" ("unexpected wp: " ^ prog_name)
+      raise Fail ("test-wp.sml::unexpected wp: " ^ prog_name)
     else
       print ("SUCCESS, WP as expected: " ^ prog_name ^ "\r\n")
   end;

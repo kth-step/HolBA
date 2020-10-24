@@ -1,5 +1,7 @@
 signature bir_symb_execLib = sig
 
+  include Abbrev;
+
   type 'a symb_tree_t;
 
   val symb_is_BST_Running  : term -> bool

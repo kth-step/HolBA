@@ -1,4 +1,4 @@
-open HolKernel Parse;
+open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 val _ = new_theory "birExamples2Binary";
 

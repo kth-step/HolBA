@@ -1,4 +1,5 @@
 open HolKernel Parse boolLib bossLib;
+open bir_programSyntax;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = wordsLib.add_word_cast_printer ();

@@ -1,5 +1,7 @@
 signature bir_symb_init_envLib = sig
 
+  include Abbrev;
+
 (*
   val add_memory_to_env               : term -> term
   val add_registers_to_env_1          : string list -> term -> term

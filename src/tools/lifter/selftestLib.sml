@@ -4,6 +4,8 @@
 
 structure selftestLib :> selftestLib = struct
 
+  open PPBackEnd;
+
   (* TODO: Put test instances here? *)
 
   (* Styles for success, fail and header *)
@@ -21,11 +23,33 @@ functor test_bmr (structure MD : bir_inst_lifting; structure log_name_str : sig 
   structure MD = bmil_riscv;
 structure log_name_str =
 struct
-  val log_name = "riscv_selftest.log";
+  val log_name = "selftest_riscv.log";
 end;
 
 *)
   local
+
+(* these dependencies probably need cleanup *)
+(* ================================================ *)
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+open bir_inst_liftingTheory
+open bir_lifting_machinesTheory
+open bir_lifting_machinesLib bir_lifting_machinesLib_instances;
+open bir_interval_expTheory bir_update_blockTheory
+open bir_exp_liftingLib bir_typing_expSyntax
+open bir_typing_expTheory
+open bir_extra_expsTheory
+open bir_lifter_general_auxTheory
+open bir_programSyntax bir_interval_expSyntax
+open bir_program_labelsTheory
+open bir_immTheory
+open intel_hexLib
+open bir_inst_liftingLibTypes
+open PPBackEnd Parse
+
+open bir_inst_liftingHelpersLib;
+(* ================================================ *)
+
     open HolKernel Parse;
     open testutils;
     open PPBackEnd;

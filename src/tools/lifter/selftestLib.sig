@@ -1,13 +1,12 @@
-open Abbrev
-open bir_inst_liftingLibTypes
-open PPBackEnd
-open bir_inst_liftingLib
-
 signature test_bmr = sig
   type lift_inst_cache
 
+  include Arbnum;
+  include Abbrev;
+  include bir_inst_liftingLibTypes;
+
   (* For printing stylish comments to log *)
-  val print_log_with_style : pp_style list -> bool -> string -> unit
+  val print_log_with_style : PPBackEnd.pp_style list -> bool -> string -> unit
   (* For printing basic comments to log *)
   val print_log : bool -> string -> unit
   (* This lifts single instructions, but uses a cache to remedy duplication of computation *)
@@ -43,10 +42,12 @@ end
 
 signature selftestLib = sig
 
+  include PPBackEnd;
+
   (* TODO: Put test instances here? *)
-  val sty_OK : pp_style list
-  val sty_CACHE : pp_style list
-  val sty_FAIL : pp_style list
+  val sty_OK     : pp_style list
+  val sty_CACHE  : pp_style list
+  val sty_FAIL   : pp_style list
   val sty_HEADER : pp_style list
 
 end
