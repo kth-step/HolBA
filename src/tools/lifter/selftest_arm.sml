@@ -35,7 +35,7 @@ struct
 end;
 structure test_ARM8 = test_bmr(structure MD = bmil_arm8; structure log_name_str = log_name);
 
-structure m0_le_proc_log =
+structure log_name =
 struct
   val log_name = "selftest_m0_le_proc.log";
 end;
