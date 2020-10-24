@@ -1,7 +1,9 @@
-open HolKernel Parse
-open testutils
+open HolKernel Parse;
+open testutils;
 open bir_inst_liftingLib;
-open PPBackEnd
+open bir_inst_liftingLibTypes;
+open bir_inst_liftingHelpersLib;
+open PPBackEnd;
 
 open selftestLib;
 
@@ -969,7 +971,7 @@ in
         if OS.Process.isSuccess (OS.Process.system (diff_cmd^h))
         then ()
         else
-          raise ERR "holba/src/tools/lifter/selftest_arm.sml" ("Output in "^h^" has diverged")
+          raise Fail ("selftest_arm.sml::Output in "^h^" has diverged")
 end;
 
 val _ = check_logs ["selftest_arm8.log",

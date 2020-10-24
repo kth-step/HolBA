@@ -403,4 +403,4 @@ val _ =
   if OS.Process.isSuccess (OS.Process.system ("git diff --exit-code selftest_riscv.log"))
   then ()
   else
-    raise ERR "holba/src/tools/lifter/selftest.sml" ("Output in selftest_riscv.log has diverged")
+    raise Fail ("selftest_riscv.sml::Output in selftest_riscv.log has diverged")
