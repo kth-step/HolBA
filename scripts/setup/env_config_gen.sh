@@ -109,9 +109,10 @@ echo
 ####### HOLBA_HOL_DIR
 
 # first define HOLBA_HOL_DIR if undefined (default)
+# Note: This has been changed for the dev_riscv_l3_lifter branch
 if [[ ( -z "${HOLBA_HOL_DIR}" ) || ( ! -z "${OPT_DIR_PARAM}" ) ]]; then
   print_export_msg "HOLBA_HOL_DIR"
-  export HOLBA_HOL_DIR="${HOLBA_OPT_DIR}/hol_k13"
+  export HOLBA_HOL_DIR="${HOLBA_OPT_DIR}/hol_k13_riscv_l3"
 fi
 
 HOLBA_HOL_BIN_DIR="${HOLBA_HOL_DIR}/bin"

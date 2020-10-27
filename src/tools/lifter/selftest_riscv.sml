@@ -65,8 +65,10 @@ val riscv_test_asms = map riscv_test_asm
 (* Tests *)
 (*********)
 val _ = print_msg "\n";
-val _ = print_header "MANUAL TESTS (HEX) - RISC-V\nRV64I Base Instruction Set (instructions inherited from RV32I)\n";
+val _ = print_header "MANUAL TESTS (HEX) - RISC-V";
 val _ = print_msg "\n";
+val _ = print_header "RV64I Base Instruction Set (instructions inherited from RV32I)";
+val _ = print_msg "\n\n";
 (* Good presentation of RISC-V instructions at https://inst.eecs.berkeley.edu/~cs61c/sp19/lectures/lec05.pdf *)
 (* 75 instructions in initial scope (including M extension) *)
 (* 10 still TODO:
@@ -228,8 +230,8 @@ val _ = fail_with_msg "EBREAK not yet supported by stepLib";
 val _ = riscv_test_hex_print_asm "EBREAK" "00100073";
 
 val _ = print_msg "\n";
-val _ = print_header "RV64I Base Instruction Set (instructions added to RV32I)\n";
-val _ = print_msg "\n";
+val _ = print_header "RV64I Base Instruction Set (instructions added to RV32I)";
+val _ = print_msg "\n\n";
 
 (* I-type load variants *)
   val _ = riscv_test_asms [
@@ -271,8 +273,8 @@ val _ = print_msg "\n";
   ];
 
 val _ = print_msg "\n";
-val _ = print_header "RV64 Zifencei Standard Extension\n";
-val _ = print_msg "\n";
+val _ = print_header "RV64 Zifencei Standard Extension";
+val _ = print_msg "\n\n";
 
 (* FENCE.I x0, x0, 0 :  000000000000   00000  001   00000  0001111
 
@@ -285,8 +287,8 @@ val _ = fail_with_msg "FENCE.I not yet supported by stepLib";
 val _ = riscv_test_hex_print_asm "FENCE.I x0, x0, 0" "0000100F";
 
 val _ = print_msg "\n";
-val _ = print_header "RV64 Zicsr Standard Extension\n";
-val _ = print_msg "\n";
+val _ = print_header "RV64 Zicsr Standard Extension";
+val _ = print_msg "\n\n";
 
 (* CSR instructions (opcode SYSTEM) *)
 (* TODO: Note that machine mode is currently assumed for these instructions
@@ -335,8 +337,8 @@ val _ = riscv_test_hex_print_asm "CSRRSI x1, mscratch(0x340), 0x1" "3400E0F3";
 val _ = riscv_test_hex_print_asm "CSRRCI x1, mscratch(0x340), 0x1" "3400F0F3";
 
 val _ = print_msg "\n";
-val _ = print_header "RV64M Standard Extension (instructions inherited from RV32M)\n";
-val _ = print_msg "\n";
+val _ = print_header "RV64M Standard Extension (instructions inherited from RV32M)";
+val _ = print_msg "\n\n";
 
 (* R-type variants (opcode OP) *)
   val _ = riscv_test_asms [
@@ -359,8 +361,8 @@ val _ = print_msg "\n";
   ];
 
 val _ = print_msg "\n";
-val _ = print_header "RV64M Standard Extension (instructions added to RV32M)\n";
-val _ = print_msg "\n";
+val _ = print_header "RV64M Standard Extension (instructions added to RV32M)";
+val _ = print_msg "\n\n";
 
 (* R-type variants (opcode OP-32) *)
   val _ = riscv_test_asms [
