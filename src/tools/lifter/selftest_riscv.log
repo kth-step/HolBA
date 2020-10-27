@@ -928,22 +928,22 @@ FENCE.I x0, x0, 0: 0000100F @ 0x10030 - FAILED
 RV64 Zicsr Standard Extension
 
 CSRRW x1, mscratch(0x340), x2: 340110F3 @ 0x10030 - FAILED
-   bmr_step_hex failed
+   lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed
 
 CSRRS x1, mscratch(0x340), x2: 340120F3 @ 0x10030 - FAILED
-   bmr_step_hex failed
+   lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed
 
 CSRRC x1, mscratch(0x340), x2: 340130F3 @ 0x10030 - FAILED
-   bmr_step_hex failed
+   lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed
 
 CSRRWI x1, mscratch(0x340), 0x1: 3400D0F3 @ 0x10030 - FAILED
-   bmr_step_hex failed
+   lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed
 
 CSRRSI x1, mscratch(0x340), 0x1: 3400E0F3 @ 0x10030 - FAILED
-   bmr_step_hex failed
+   lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed
 
 CSRRCI x1, mscratch(0x340), 0x1: 3400F0F3 @ 0x10030 - FAILED
-   bmr_step_hex failed
+   lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed
 
 
 RV64M Standard Extension (instructions inherited from RV32M)
@@ -1294,12 +1294,12 @@ SUMMARY FAILING HEXCODES RISC-V
 
 Instructions FAILED: 10/77
 
-   "3400F0F3" (* bmr_step_hex failed *),
-   "3400E0F3" (* bmr_step_hex failed *),
-   "3400D0F3" (* bmr_step_hex failed *),
-   "340130F3" (* bmr_step_hex failed *),
-   "340120F3" (* bmr_step_hex failed *),
-   "340110F3" (* bmr_step_hex failed *),
+   "3400F0F3" (* lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed *),
+   "3400E0F3" (* lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed *),
+   "3400D0F3" (* lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed *),
+   "340130F3" (* lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed *),
+   "340120F3" (* lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed *),
+   "340110F3" (* lifting of ``(ms.c_MCSR ms.procID).mstatus.MPRV = 3w`` failed *),
    "0000100F" (* bmr_step_hex failed *),
    "00100073" (* bmr_step_hex failed *),
    "00000073" (* bmr_step_hex failed *),

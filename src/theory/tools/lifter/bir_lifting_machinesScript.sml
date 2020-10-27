@@ -1028,7 +1028,7 @@ Definition riscv_bmr_def:
      * OK state is now minimal. *)
     bmr_extra := \ms. riscv_state_is_OK ms;
     (* Registers are the 32 general-purpose registers as well as the
-     * 32 fprs (fpr = floating point register?). *)
+     * 32 floating-point registers. *)
     bmr_imms := (riscv_GPRS_lifted_imms_LIST++riscv_FPRS_lifted_imms_LIST);
     (* Done! *)
     bmr_mem := riscv_lifted_mem;

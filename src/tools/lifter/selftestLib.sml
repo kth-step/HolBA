@@ -145,8 +145,9 @@ end;
 
 
   fun final_results name expected_failed_hexcodes = let
-    val _ = print_log_with_style sty_HEADER true ("\n\n\nSUMMARY FAILING HEXCODES " ^ name ^ "\n\n");
-    val _ = print_log true "\n";
+    val _ = print_log true "\n\n\n";
+    val _ = print_log_with_style selftestLib.sty_HEADER true ("SUMMARY FAILING HEXCODES " ^ name);
+    val _ = print_log true "\n\n\n";
     val failing_l = op_mk_set (fn (x, _, _) => fn (y, _, _) => (x = y)) (!failed_hexcodes_list)
     val ok_l = op_mk_set (fn (x, _, _) => fn (y, _, _) => (x = y)) (!success_hexcodes_list)
 
