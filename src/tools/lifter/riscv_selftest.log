@@ -1304,14 +1304,8 @@ Instructions FAILED: 4/72
    "0000100F" (* bmr_step_hex failed *)
 ]
 
-Instructions FIXED: 6
+Instructions FIXED: 0
 
-   340110F3
-   340120F3
-   340130F3
-   3400D0F3
-   3400E0F3
-   3400F0F3
 
 
 Instructions BROKEN: 0
