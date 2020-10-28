@@ -2,8 +2,8 @@ open HolKernel Parse boolLib bossLib;
 
 (* From tools/wp: *)
 open bir_wpLib bir_wp_expLib;
-open easy_noproof_wpLib;
 open bir_wpTheory bir_htTheory;
+open bir_wp_interfaceLib;
 
 (* From theory/bir-support: *)
 open bir_program_labelsTheory bir_program_valid_stateTheory
@@ -18,10 +18,6 @@ open HolBACoreSimps;
 
 (* From shared: *)
 open bir_exp_to_wordsLib bslSyntax;
-
-(* From examples support: *)
-open tutorial_bir_to_armSupportTheory;
-open tutorial_wpSupportLib;
 
 (* From examples: *)
 open birExamples2BinaryTheory;

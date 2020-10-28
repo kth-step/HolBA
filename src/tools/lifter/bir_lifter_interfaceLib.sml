@@ -31,10 +31,10 @@ open gcc_supportLib;
 
 in
 
-(*
-val da_name = "../1-code/src/add_reg.da"
-val prog_name = "add_reg"
-val prog_interval = ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
+(* Debug values:
+  val da_name = "../1-code/src/add_reg.da"
+  val prog_name = "add_reg"
+  val prog_interval = ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
 *)
 fun lift_da_and_store prog_name da_name prog_interval =
   let

@@ -18,7 +18,26 @@ print src_path
 print
 
 
-modules = ["core", "lib", "tools/cfg", "tools/lifter"]#, "tools/wp"]
+modules = ["aux",
+           "shared",
+           "shared/HolSmt",
+           "theory/abstract_hoare_logic",
+           "theory/bir",
+           "theory/bir-support",
+           "theory/models/l3mod",
+           "theory/tools/backlifter",
+           "theory/tools/comp",
+           "theory/tools/lifter",
+           "theory/tools/wp",
+           "tools/backlifter",
+           "tools/cfg",
+           "tools/comp",
+           "tools/exec",
+           "tools/lifter",
+           "tools/pass",
+           "tools/scamv",
+           "tools/scamv/symbexec",
+           "tools/wp"]
 
 
 def read_dep_file(filename):
@@ -54,6 +73,11 @@ def find_deps(module_name):
 		result = map(lambda m: (m,map(lambda (_,x): x, filter(lambda (x, _): m == x, temp))), modules)
 		result = filter(lambda (_,x): x != [], result)
 
+		#DEBUG
+		#for m in modules:
+		#	print m
+		#for t in temp:
+		#	print t
 		assert all(any(m_ == m for m in modules) for (m_,_) in temp)
 
 		return result
@@ -64,7 +88,7 @@ def find_deps(module_name):
 	deps_l = map(read_dep_file, dep_files)
 	deps = list(set([item for sublist in deps_l for item in sublist]))
 
-	assert all((d.startswith(src_path) or d.startswith("$(HOLDIR)")) for d in deps)
+	assert all((d.startswith(src_path) or d.startswith("$(HOLDIR)") or d.startswith(os.environ['HOLBA_HOL_DIR']) for d in deps))
 	deps = map(lambda x: remove_path(src_path, x), filter(lambda x: x.startswith(src_path), deps))
 
 	deps = map(lambda x: os.path.split(x)[0], deps)
@@ -141,7 +165,7 @@ edges = "\n".join(map(lambda (m,ds): "\n".join(map(lambda d: edge_simple(find_un
 #print edges
 
 
-print_simple = False
+print_simple = True
 if print_simple:
 	print (format_simple % (nodes,edges))
 	print

@@ -2,6 +2,8 @@ structure bir_subprogramLib =
 struct
 
   local
+    open HolKernel boolLib liteLib simpLib Parse bossLib;
+
     open bir_programSyntax;
     open bir_program_labelsSyntax;
     open bir_immSyntax;
