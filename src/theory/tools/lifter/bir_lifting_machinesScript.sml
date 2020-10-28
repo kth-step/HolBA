@@ -607,13 +607,29 @@ Definition arm8_lifted_pc_def:
                          (\ms:arm8_state. Imm64 (ms.PC))
 End
 
-(* Well defined state *)
+(* Well-defined state *)
+(* https://static.docs.arm.com/100878/0100/fundamentals_of_armv8_a_100878_0100_en.pdf
+ * tells us that
+ * ELn: Exception level n. EL0 is user, EL1 kernel, EL2 Hypervisor, EL3 firmware (p. 4 of PDF).
+ * SCTLR: System control register; for EL1, EL2 and EL3 (p. 24 of PDF). 
+ * PSTATE: Processor state flags, accessed through special-purpose registers. (p. 16 of PDF)
+ * TCR: Translation Control Register; for EL1, EL2 and EL3. Determines
+ *      Translation Table Base Register. *)
 Definition arm8_state_is_OK_def:
-  arm8_state_is_OK (ms:arm8_state) <=> (
-   ~ms.SCTLR_EL1.E0E ∧ (ms.PSTATE.EL = 0w) ∧ (ms.exception = NoException) /\
-   ~ms.SCTLR_EL1.SA0 /\
-   ~ms.TCR_EL1.TBI0 /\
-   ~ms.TCR_EL1.TBI1)
+  (* Explicit data accesses at EL0 MUST be little-endian. *)
+  ~ms.SCTLR_EL1.E0E /\
+  (* Exception level must be 0 (user) *)
+  (ms.PSTATE.EL = 0w) /\
+  (* Exception must be NoException (as opposed to ALIGNMENT_FAULT,
+   * UNDEFINED_FAULT and ASSERT).*)
+  (ms.exception = NoException) /\
+  (* Stack Alignment Check MUST NOT be enabled for EL0. *)
+  ~ms.SCTLR_EL1.SA0 /\
+  (* Translation control register for EL1 must not be TBI0 or TBI1,
+   * meaning it must be "tcr_el1'rst", which is a 62-bit field.
+   * TODO: What is TBI0 and TBI1? *)
+  ~ms.TCR_EL1.TBI0 /\
+  ~ms.TCR_EL1.TBI1
 End
 
 Definition arm8_bmr_def:
@@ -759,10 +775,16 @@ Definition m0_lifted_pc_def:
                        (\ms:m0_state. Imm32 (ms.REG RName_PC))
 End
 
+(* AIRCR: Application Interrupt and Reset Control Register.
+ * CONTROL: Special register in Cortex-M processor. Can be accessed using MSR and MRS. *)
 Definition m0_state_is_OK_def:
   m0_state_is_OK (ef, sel) (s:m0_state) =
-  ((s.AIRCR.ENDIANNESS <=> ef) /\ (s.CONTROL.SPSEL <=> sel) /\
-  (s.exception = NoException))
+   (* Endianness must match argument ef. *)
+   ((s.AIRCR.ENDIANNESS <=> ef) /\
+   (* Stack pointer selection bit in the control register must match argument sel. *)
+   (s.CONTROL.SPSEL <=> sel) /\
+   (* Exception must be NoException. *)
+   (s.exception = NoException))
 End
 
 (* Just a dummy for now *)
@@ -1001,6 +1023,24 @@ Definition riscv_FPRS_lifted_imms_LIST_def:
 End
 Theorem riscv_FPRS_lifted_imms_LIST_EVAL = EVAL ``riscv_FPRS_lifted_imms_LIST``
 
+(* NOTE: Since the L3 model uses separate immediate values for the fields
+ * of a single system register (instead of letting the entire system register
+ * be represented as one immediate), we do so here as well. *)
+val riscv_sysregs_lifted_imms_LIST_def = Define `
+  riscv_sysregs_lifted_imms_LIST = [
+    (* MPRV (from the mstatus register) is really a 2-bit value,
+     * but is represented as an 8-bit immediate *)
+    (BMLI (BVar "MPRV" (BType_Imm Bit8))
+          (\ms:riscv_state. Imm8 (w2w((ms.c_MCSR ms.procID).mstatus.MPRV)))
+    );
+    (BMLI (BVar "mscratch" (BType_Imm Bit64))
+          (\ms:riscv_state. Imm64 ((ms.c_MCSR ms.procID).mscratch))
+    )
+  ]
+`;
+val riscv_sysregs_lifted_imms_LIST_EVAL = save_thm("riscv_sysregs_lifted_imms_LIST_EVAL",
+  EVAL ``riscv_sysregs_lifted_imms_LIST``
+);
 
 (* Note: For some reason, MEM is named MEM8 in the RISC-V state.
  * Since memory is shared between processes, this does not require
@@ -1029,7 +1069,7 @@ Definition riscv_bmr_def:
     bmr_extra := \ms. riscv_state_is_OK ms;
     (* Registers are the 32 general-purpose registers as well as the
      * 32 floating-point registers. *)
-    bmr_imms := (riscv_GPRS_lifted_imms_LIST++riscv_FPRS_lifted_imms_LIST);
+    bmr_imms := (riscv_GPRS_lifted_imms_LIST++riscv_FPRS_lifted_imms_LIST++riscv_sysregs_lifted_imms_LIST);
     (* Done! *)
     bmr_mem := riscv_lifted_mem;
     (* Done! *)
@@ -1042,6 +1082,7 @@ End
 (* Evaluation theorem of RISC-V BMR. *)
 Theorem riscv_bmr_EVAL = SIMP_CONV list_ss [riscv_bmr_def, riscv_state_is_OK_def,
                    riscv_GPRS_lifted_imms_LIST_EVAL, riscv_FPRS_lifted_imms_LIST_EVAL,
+                   riscv_sysregs_lifted_imms_LIST_EVAL,
                    riscv_lifted_mem_def,
                    riscv_lifted_pc_def, bir_temp_var_name_def]
           ``riscv_bmr``

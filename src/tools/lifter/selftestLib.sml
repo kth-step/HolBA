@@ -169,18 +169,22 @@ end;
 	 | (NONE, SOME d') => (" (* " ^ (bir_inst_liftingExn_data_to_string d') ^ " *)")
 	 | (SOME d, SOME d') => (" (* " ^ d ^ "; "^(bir_inst_liftingExn_data_to_string d')  ^ " *)");
 
-    fun print_failed [] = ()
-      | print_failed ((hex_code, desc, ed_opt, broken)::l) =
-    let
-      (* print the ones that failed, but were not excepted to in red *)
-      val st = if broken then sty_FAIL else [];
-      val _ = print_log true "   ";
-      val _ = print_log_with_style st true ("\""^hex_code^"\"");
+    local
+      fun print_failed' [] = ()
+	| print_failed' ((hex_code, desc, ed_opt, broken)::l) =
+      let
+	(* print the ones that failed, but were not excepted to in red *)
+	val st = if broken then selftestLib.sty_FAIL else [];
+	val _ = print_log true "   ";
+	val _ = print_log_with_style st true ("\""^hex_code^"\"");
 
-      val _ = print_log_with_style st true (comment_of_failing desc ed_opt)
+	val _ = print_log_with_style st true (comment_of_failing desc ed_opt)
 
-    in if List.null l then (print_log true "\n]\n\n") else
-	   (print_log true ",\n"; print_failed l)
+      in if List.null l then (print_log true "\n]\n\n") else
+	     (print_log true ",\n"; print_failed' l)
+      end
+    in
+      fun print_failed failing_l = print_failed' (rev failing_l)
     end;
     val _ = if List.null failing_l' then () else (print "[\n"; print_failed failing_l');
 
