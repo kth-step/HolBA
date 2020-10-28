@@ -17,9 +17,6 @@ open bir_expTheory;
 open bir_exp_memTheory;
 open bir_bool_expTheory;
 
-(* TODO: This file is still WIP. Draw inspiration from
- *       the corresponding ARM8 and M0 files. *)
-
 (* In order to produce decent BIR code from step theorems,
  * the concepts described by the step theorems need to be
  * made very explicit. This is mostly due to the fact that
@@ -732,6 +729,35 @@ in
   thm2
 end)
 
+(****************************************)
+(* Lifting 2-word predicates            *)
+(* (related to system register entries) *)
+(****************************************)
+
+(* This is a very ugly solution, since we don't have 2-bit
+ * immediates... *)
+(* TODO: Instantiate this with all possible concrete values *)
+val riscv_is_lifted_imm_exp_2EQ = store_thm ("riscv_is_lifted_imm_exp_2EQ",
+  ``!env w1 e1 e2.
+      bir_is_lifted_imm_exp env e1 (Imm8 (w2w w1)) ==>
+      bir_is_lifted_imm_exp env e2 (Imm8 3w) ==>
+      bir_is_lifted_imm_exp env (BExp_BinPred BIExp_Equal e1 e2)
+        (bool2b (w1 = (3w:word2)))``,
+
+cheat
+);
+
+(*
+val w2w_word2_to_word8 = store_thm ("w2w_word2_to_word8",
+  ``((w2w (0w:word2)):word8) = (0w:word8) /\
+    ((w2w (1w:word2)):word8) = (1w:word8) /\
+    ((w2w (2w:word2)):word8) = (2w:word8) /\
+    ((w2w (3w:word2)):word8) = (3w:word8)``,
+
+blastLib.BBLAST_TAC
+);
+*)
+
 (*******************************************************)
 (* RISC-V predicates are usually cast to 64-bit format *)
 (*******************************************************)
@@ -766,7 +792,7 @@ REPEAT STRIP_TAC >> (
 );
 
 
-val riscv_is_lifted_imm_exp_BIN_PRED = save_thm ("bir_is_lifted_imm_exp_BIN_PRED",
+val riscv_is_lifted_imm_exp_BIN_PRED = save_thm ("riscv_is_lifted_imm_exp_BIN_PRED",
 let
   val thm0 = riscv_is_lifted_imm_exp_BIN_PRED0
   val thm1 = SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_bin_pred_t``]) [
@@ -795,7 +821,8 @@ val riscv_extra_LIFTS = save_thm ("riscv_extra_LIFTS",
     riscv_is_lifted_imm_exp_32LSBsLC,
     riscv_is_lifted_imm_exp_64MSBs,
     riscv_is_lifted_imm_exp_GE,
-    riscv_is_lifted_imm_exp_GEU]
+    riscv_is_lifted_imm_exp_GEU,
+    riscv_is_lifted_imm_exp_2EQ]
 );
 
 (* TODO: What should be here? *)
