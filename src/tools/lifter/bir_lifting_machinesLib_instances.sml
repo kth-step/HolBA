@@ -618,7 +618,8 @@ val _ = assert bmr_rec_sanity_check (m0_mod_bmr_rec_LittleEnd_Main)
 (* Type rewrites as a list of theorems (ARM8 also had rewrites
  * for ``:ProcState``)... *)
 val riscv_REWRS = (
-  (type_rws ``:riscv_state``)
+  (type_rws ``:riscv_state``)@
+  (type_rws ``:MachineCSR``)
 );
 
 (* ... and as a simplification set. *)

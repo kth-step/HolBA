@@ -829,23 +829,125 @@ FENCE.I x0, x0, 0: 0000100F @ 0x10030 - FAILED
 
 RV64 Zicsr Standard Extension
 
-CSRRW x1, mscratch(0x340), x2: 340110F3 @ 0x10030 - FAILED
-   computing al_step and ms' failed
+CSRRW x1, mscratch(0x340), x2: 340110F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
+     (65584w,[243w; 16w; 1w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 65584w) "340110F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+                (BExp_Den (BVar "mscratch" (BType_Imm Bit64)));
+              BStmt_Assign (BVar "mscratch" (BType_Imm Bit64))
+                (BExp_Den (BVar "x2" (BType_Imm Bit64)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
 
-CSRRS x1, mscratch(0x340), x2: 340120F3 @ 0x10030 - FAILED
-   computing al_step and ms' failed
+CSRRS x1, mscratch(0x340), x2: 340120F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
+     (65584w,[243w; 32w; 1w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 65584w) "340120F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+                (BExp_Den (BVar "mscratch" (BType_Imm Bit64)));
+              BStmt_Assign (BVar "mscratch" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_Or
+                   (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
+                   (BExp_Den (BVar "x2" (BType_Imm Bit64))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
 
-CSRRC x1, mscratch(0x340), x2: 340130F3 @ 0x10030 - FAILED
-   computing al_step and ms' failed
+CSRRC x1, mscratch(0x340), x2: 340130F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
+     (65584w,[243w; 48w; 1w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 65584w) "340130F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+                (BExp_Den (BVar "mscratch" (BType_Imm Bit64)));
+              BStmt_Assign (BVar "mscratch" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_And
+                   (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
+                   (BExp_BinExp BIExp_Minus
+                      (BExp_BinExp BIExp_Mult
+                         (BExp_Const (Imm64 18446744073709551615w))
+                         (BExp_Den (BVar "x2" (BType_Imm Bit64))))
+                      (BExp_Const (Imm64 1w))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
 
-CSRRWI x1, mscratch(0x340), 0x1: 3400D0F3 @ 0x10030 - FAILED
-   computing al_step and ms' failed
+CSRRWI x1, mscratch(0x340), 0x1: 3400D0F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
+     (65584w,[243w; 208w; 0w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 65584w) "3400D0F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+                (BExp_Den (BVar "mscratch" (BType_Imm Bit64)));
+              BStmt_Assign (BVar "mscratch" (BType_Imm Bit64))
+                (BExp_Const (Imm64 1w))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
 
-CSRRSI x1, mscratch(0x340), 0x1: 3400E0F3 @ 0x10030 - FAILED
-   computing al_step and ms' failed
+CSRRSI x1, mscratch(0x340), 0x1: 3400E0F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
+     (65584w,[243w; 224w; 0w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 65584w) "3400E0F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+                (BExp_Den (BVar "mscratch" (BType_Imm Bit64)));
+              BStmt_Assign (BVar "mscratch" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_Or
+                   (BExp_Den (BVar "mscratch" (BType_Imm Bit64)))
+                   (BExp_Const (Imm64 1w)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
 
-CSRRCI x1, mscratch(0x340), 0x1: 3400F0F3 @ 0x10030 - FAILED
-   computing al_step and ms' failed
+CSRRCI x1, mscratch(0x340), 0x1: 3400F0F3 @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog riscv_bmr (Imm64 65584w) (WI_end 0w 16777216w)
+     (65584w,[243w; 240w; 0w; 52w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm64 65584w) "3400F0F3";
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_Equal
+                   (BExp_Den (BVar "MPRV" (BType_Imm Bit8)))
+                   (BExp_Const (Imm8 3w)));
+              BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+                (BExp_Den (BVar "mscratch" (BType_Imm Bit64)));
+              BStmt_Assign (BVar "mscratch" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_And
+                   (BExp_Const (Imm64 18446744073709551614w))
+                   (BExp_Den (BVar "mscratch" (BType_Imm Bit64))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 65588w)))|>])
 
 
 RV64M Standard Extension (instructions inherited from RV32M)
@@ -1194,22 +1296,22 @@ REMUW x5, x6, x7: 027372BB @ 0x10030 - OK
 SUMMARY FAILING HEXCODES RISC-V
 
 
-Instructions FAILED: 10/72
+Instructions FAILED: 4/72
 
    "0881008F" (* bmr_step_hex failed *),
    "00000073" (* bmr_step_hex failed *),
    "00100073" (* bmr_step_hex failed *),
-   "0000100F" (* bmr_step_hex failed *),
-   "340110F3" (* computing al_step and ms' failed *),
-   "340120F3" (* computing al_step and ms' failed *),
-   "340130F3" (* computing al_step and ms' failed *),
-   "3400D0F3" (* computing al_step and ms' failed *),
-   "3400E0F3" (* computing al_step and ms' failed *),
-   "3400F0F3" (* computing al_step and ms' failed *)
+   "0000100F" (* bmr_step_hex failed *)
 ]
 
-Instructions FIXED: 0
+Instructions FIXED: 6
 
+   340110F3
+   340120F3
+   340130F3
+   3400D0F3
+   3400E0F3
+   3400F0F3
 
 
 Instructions BROKEN: 0

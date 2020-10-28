@@ -733,30 +733,85 @@ end)
 (* Lifting 2-word predicates            *)
 (* (related to system register entries) *)
 (****************************************)
-
 (* This is a very ugly solution, since we don't have 2-bit
  * immediates... *)
-(* TODO: Instantiate this with all possible concrete values *)
-val riscv_is_lifted_imm_exp_2EQ = store_thm ("riscv_is_lifted_imm_exp_2EQ",
-  ``!env w1 e1 e2.
+(* TODO: Do the same for 5-bit immediates (mstatus.VM) *)
+
+(* For specialisation of theorem with concrete values.
+ * Apparently it doesn't work with an abstract :word2... *)
+local
+  fun power b e =
+    if e = 0
+    then 1
+    else b * power b (e-1);
+
+  fun specialise_word' word_size thm 0     thm_acc =
+    let
+      val word = wordsSyntax.mk_wordii(0, word_size)
+      val new_thm =
+        SPEC word thm
+    in
+      (new_thm::thm_acc)
+    end
+    | specialise_word' word_size thm value thm_acc =
+    let
+      val word = wordsSyntax.mk_wordii(value, word_size)
+      val new_thm =
+        SPEC word thm
+    in
+      specialise_word' word_size thm (value-1) (new_thm::thm_acc)
+    end
+
+in
+fun specialise_word thm =
+  let
+    val word_size =
+      (Arbnum.toInt o wordsSyntax.size_of o fst o
+         dest_forall o concl) thm
+    val max_val = (power 2 word_size) - 1
+  in
+    LIST_CONJ (specialise_word' word_size thm max_val [])
+  end
+end;
+
+val riscv_is_lifted_imm_exp_2EQ_GEN =
+  store_thm ("riscv_is_lifted_imm_exp_2EQ_GEN",
+  ``!w2 env w1 e1 e2.
       bir_is_lifted_imm_exp env e1 (Imm8 (w2w w1)) ==>
-      bir_is_lifted_imm_exp env e2 (Imm8 3w) ==>
+      bir_is_lifted_imm_exp env e2 (Imm8 (w2w w2)) ==>
       bir_is_lifted_imm_exp env (BExp_BinPred BIExp_Equal e1 e2)
-        (bool2b (w1 = (3w:word2)))``,
+        (bool2b (w1 = (w2:word2)))``,
 
-cheat
+wordsLib.Cases_word_value >> (
+  SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+    bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
+    BType_Bool_def] >>
+  blastLib.BBLAST_TAC
+)
 );
 
-(*
-val w2w_word2_to_word8 = store_thm ("w2w_word2_to_word8",
-  ``((w2w (0w:word2)):word8) = (0w:word8) /\
-    ((w2w (1w:word2)):word8) = (1w:word8) /\
-    ((w2w (2w:word2)):word8) = (2w:word8) /\
-    ((w2w (3w:word2)):word8) = (3w:word8)``,
+val riscv_is_lifted_imm_exp_2EQ = 
+  SIMP_RULE (std_ss++wordsLib.WORD_ss) [] (specialise_word riscv_is_lifted_imm_exp_2EQ_GEN);
 
-blastLib.BBLAST_TAC
+(* 0 -> 31 *)
+val riscv_is_lifted_imm_exp_5EQ_GEN =
+  store_thm ("riscv_is_lifted_imm_exp_5EQ_GEN",
+  ``!w2 env w1 e1 e2.
+      bir_is_lifted_imm_exp env e1 (Imm8 (w2w w1)) ==>
+      bir_is_lifted_imm_exp env e2 (Imm8 (w2w w2)) ==>
+      bir_is_lifted_imm_exp env (BExp_BinPred BIExp_Equal e1 e2)
+        (bool2b (w1 = (w2:word5)))``,
+
+wordsLib.Cases_word_value >> (
+  SIMP_TAC (std_ss++holBACore_ss) [bir_is_lifted_imm_exp_def,
+    bir_env_oldTheory.bir_env_vars_are_initialised_UNION,
+    BType_Bool_def] >>
+  blastLib.BBLAST_TAC
+)
 );
-*)
+
+val riscv_is_lifted_imm_exp_5EQ = 
+  SIMP_RULE (std_ss++wordsLib.WORD_ss) [] (specialise_word riscv_is_lifted_imm_exp_5EQ_GEN);
 
 (*******************************************************)
 (* RISC-V predicates are usually cast to 64-bit format *)
@@ -822,7 +877,9 @@ val riscv_extra_LIFTS = save_thm ("riscv_extra_LIFTS",
     riscv_is_lifted_imm_exp_64MSBs,
     riscv_is_lifted_imm_exp_GE,
     riscv_is_lifted_imm_exp_GEU,
-    riscv_is_lifted_imm_exp_2EQ]
+    (* CSR stuff *)
+    riscv_is_lifted_imm_exp_2EQ,
+    riscv_is_lifted_imm_exp_5EQ]
 );
 
 (* TODO: What should be here? *)
