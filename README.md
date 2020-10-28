@@ -89,8 +89,8 @@ Notice that this sequence is just an example, and it is possible to selectively 
 ```
 ├─ doc: Documentation material
 ├─ examples: Showcasing HolBA
-│  ├─ aes: lifting + WP of AES on Cortex-M0
-│  ├─ bsl-wp-smt: Simplified BIR generation and SMT interface
+│  ├─ aes: lifting + WP of AES on ARMv8 and for Cortex-M0
+│  ├─ bsl-wp-smt: Small BIR example programs to test simplified BIR generation, WP propagation and SMT interface
 │  ├─ nic: NIC formalization
 │  ├─ tutorial: End-to-end tutorial of simple ARMv8 examples
 ├─ scripts: CI and installation scripts
