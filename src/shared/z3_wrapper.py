@@ -62,62 +62,48 @@ def debug_input(solver):
         (get-model)
     """)
 
-class MProcess(object):
+class z3_memory (object):
     def __init__(self, model):
         self.model    = model
         self.memory   = {}
-        self.adr_mask = 4294967288
-        self.off_mask = 7
+        # This is equivalent to 0xFFFFFFF8 and it is used to find out the base address of a (8 bytes) memory address
+        self.adr_mask = 4294967288 
         self.arg_size = 0
-        self.vlu_size = 0
 
-    def partition(self, addresses, patterns):
-        for pat in patterns:
-            yield [a[0] for a in addresses if a[1] == pat]
-
-    def dictionary(self, lst):
-        return dict(lst)
-
+    # Update dictionary d2 with values in d1    
     def update(self, d1, d2):
         for k in d1.keys():
             d2[k] = d1[k]
         return d2
     
-    def parse(self, memory):
-        flatten  = lambda l: [item for sublist in l for item in sublist]
-
-        masked_addresses = list(map(lambda x : bin(x & self.adr_mask), memory.keys()))
-        patterns = set(masked_addresses)
-        addr_pat = list(zip (memory.keys(), masked_addresses))
-        partitioned_based_on_pattern = self.partition(addr_pat, patterns)
-        
-        # (address, offset, value)
-        address_and_offset_value = list(map(lambda x :
-                                       (list(map (lambda y :
-                                            (y & self.adr_mask, y & self.off_mask, memory[y]), x))),
-                                        list(partitioned_based_on_pattern)))
-       
-        return (flatten (address_and_offset_value))
-    
-
     def mk_memory_complete(self):
+        # Deconstruct z3 model and convert it to a list
         model_as_list = self.model.as_list()
+        # find out the value for the else statement for the memory in the z3 model
         else_value = model_as_list.pop()
+        # This part relies on the result constructed by the "Function interpretation" in the z3_to_HolTerm function
         (mem_to_string, self.arg_size, self.vlu_size) = (z3_to_HolTerm(self.model))
 
-        mem_to_intList = (list(map (lambda x : tuple(int(el) for el in x.split(' ')), mem_to_string)))
-        mem_to_dic = self.dictionary(mem_to_intList)
-        mem_processed  = self.parse(mem_to_dic)
+        # Convert the result returned by z3_to_HolTerm into pairs of (address, value) where address and value are integers
+        mem_to_intList = map (lambda x : tuple(int(el) for el in x.split(' ')), mem_to_string)
+        # Convert the pairs of (address, value) into dictionary {address: value}
+        mem_to_dict = dict(mem_to_intList)
+        # Make complete the ranges of addresses in the returned model
+        base_addresses = set(map(lambda x : (x & self.adr_mask), mem_to_dict.keys()))
     
-        unique_addresses = list(set(e[0] for i,e in enumerate(mem_processed)
-                                    if (e[0],e[1]) not in mem_processed[:i]))
         mem_full = {}
-        for adr in unique_addresses:
+        for adr in base_addresses:
             for i in range(0,8):
-                mem_full[adr+i] = else_value
+                mem_full[adr + i] = else_value
         # update main dictionary
-        self.memory = self.update(mem_to_dic, mem_full)
+        self.memory = self.update(mem_to_dict, mem_full)
 
+    '''
+    The function is meant to convert memory in the model returned by  z3 to  HOL4 terms using words library.
+    Before this conversion the function compelets(be invking mk_memory_complete) the range of memory assignments in the model using the value of the "else" statement.
+    For exmaple [0 -> 23, 1-> 48, 4 -> 67, 6 -> 65, else -> 1] would be [0 -> 23, 1-> 48, 2 -> 1, 3 -> 1, 4 -> 67, 5 -> 1, 6 -> 65, 7 -> 1].
+    This is important to not export wrong values.
+    '''
     def mem_to_word(self):
         res = []
         self.mk_memory_complete()
@@ -200,6 +186,9 @@ def z3_to_HolTerm(exp):
                 return "(FEMPTY : word64 |-> word8) |+" + "((BitVec: 64 word),({}: 8 word))".format(expr)
 
     # Function interpretation: Used for memory
+    # Example the input [3 -> 0, 5 -> 0, 7 -> 0, 2 -> 0, 0 -> 20, 4 -> 0, 1 -> 0, 6 -> 0, else -> 0]
+    # Will be turned into (['3 0', '5 0', '7 0', '2 0', '0 20', '4 0', '1 0', '6 0'], 64, 8)
+    # Note that arg.size and vlu.size are in bits (I think)
     if isinstance(exp, z3.FuncInterp):
         res = []
         for idx in range(0, exp.num_entries()):
@@ -240,34 +229,24 @@ def model_to_list(model):
             sys.exit(str(e))  # Print the message to stderr and exit with status 1
 
     
-    # processing model
-    m2list = sorted(list(map(lambda x: (str(x.name()), model[x]), model)))  
-    mvars  = list(filter (lambda x: mem_check.search(str(x.name)), model))
-    mnames = sorted (list(map(lambda x: str(x.name()), mvars)))
-    mnames.reverse()
-
+    # processing the model
+    # Deconstruct the z3 model and create a list of pairs (model variables, variables value)
+    model_2_list = sorted(list(map(lambda x: (str(x.name()), model[x]), model)))
     # filtering k!x maps
-    kmap = list(filter (lambda x: array_check.search(str(x.name)), model))
+    kmap = list( filter (lambda x: array_check.search(str(x.name)), model) )
 
-    # making right model
-    if len(kmap) == 2:
-        funcInterps = sorted([pair for pair in m2list if isinstance(pair[1], z3.FuncInterp)])
-        funcInterp_mem = sorted([pair for pair in funcInterps if mem_check.search(pair[0])])
-        mdl = Diff(m2list, funcInterps)
-        sml_list = model_to_word(mdl)
-        (list(map(lambda x : (sml_list.append(strip_name(x[0])),
-                              sml_list.append(MProcess(x[1]).mem_to_word())),
-                  funcInterp_mem)))     
-        
-    elif len(kmap) == 1:
-        funcInterp_mem = sorted([pair for pair in m2list if isinstance(pair[1], z3.FuncInterp)])       
-        mdl = Diff(m2list, funcInterp_mem)
-        sml_list = model_to_word(mdl)
-        sml_list.append(strip_name(funcInterp_mem[1][0]))
-        sml_list.append(MProcess  (funcInterp_mem[0][1]).mem_to_word())
+    # Get memory mappings from the model
+    funcInterps = sorted([pair for pair in model_2_list if isinstance(pair[1], z3.FuncInterp)])
+    funcInterps_mem = sorted([pair for pair in funcInterps if mem_check.search(pair[0])])
+    # Find model register assignments
+    model_regs = Diff(model_2_list, funcInterps)
+    # Convert register and memory assignments to HOL4 words 
+    sml_list = model_to_word(model_regs)    
 
+    if len(kmap) > 0:
+        list(map(lambda x : (sml_list.append(strip_name(x[0])), sml_list.append(z3_memory(x[1]).mem_to_word())), funcInterps_mem))     
     else:
-        sml_list = model_to_word(m2list)
+        sml_list = model_to_word(model_2_list)
 
     return sml_list
 
