@@ -228,9 +228,11 @@ local
 				 val (_, statements, _) = bir_programSyntax.dest_bir_block block
 			     in
 				 find_term is_BStmt_Observe statements
+					   handle _ => ``Dummy``
 			     end) (filter f labels)
 
-	    val Obs_dict = Redblackmap.insert(Obs_dict, last targets , extratc_obs targets);
+	    val Obs_dict = Redblackmap.insert(Obs_dict, last targets , 
+                 (filter (fn x =>  is_BStmt_Observe x) (extratc_obs targets)))
 	in
 	    Obs_dict
 	end;
@@ -260,12 +262,12 @@ local
 
     (* tag1 tag1 tag1 tag2 tag3 *)
     val preEvict_hyp1_def = Define`
-        preEvict_hyp1 tml = 
+        preEvict_hyp1 tml =
           let v1 = ((bus_round (EL 1 tml)) <+> (BExp_Const (Imm64 1w))) <%> (BExp_Const (Imm64 4w)) in
             BStmt_Assert(
               (
                  (
-                  (((((iset (EL 0 tml)) == (iset (EL 1 tml))) <&> ((iset (EL 1 tml)) == (iset (EL 2 tml)))) 
+                  (((((iset (EL 0 tml)) == (iset (EL 1 tml))) <&> ((iset (EL 1 tml)) == (iset (EL 2 tml))))
      			<&> ((iset (EL 2 tml)) == (iset (EL 3 tml)))
      		   ) <&> ((iset (EL 3 tml)) == (iset (EL 4 tml)))
      		  )
@@ -275,40 +277,40 @@ local
      		     )  <&> ((itag (EL 0 tml)) =/= (itag (EL 4 tml)))
      		    ) <&> ((itag (EL 3 tml)) =/= (itag (EL 4 tml)))
      		   )
-     		 ) 
-     		     <&> ((bus_round (EL 0 tml)) =/= v1))
+     		 )
+     		     (* <&> ((bus_round (EL 0 tml)) =/= v1) *))
      	    ):bir_val_t bir_stmt_basic_t
     `;
 
     (* tag2 tag1 tag1 tag1 tag3 *)
     val preEvict_hyp2_def = Define`
-        preEvict_hyp2 tml = 
+        preEvict_hyp2 tml =
          let v1 = ((bus_round (EL 2 tml)) <+> (BExp_Const (Imm64 1w))) <%> (BExp_Const (Imm64 4w)) in
            BStmt_Assert(
             (
-     	     ( 
+     	     (
               (((((iset (EL 0 tml)) == (iset (EL 1 tml))) <&> ((iset (EL 1 tml)) == (iset (EL 2 tml))))
      		    <&> ((iset (EL 2 tml)) == (iset (EL 3 tml)))
      	       ) <&> ((iset (EL 3 tml)) == (iset (EL 4 tml)))
      	      )
-     		  <&>	    
+     		  <&>
      		((((((itag (EL 0 tml)) =/= (itag (EL 1 tml))) <&> ((itag (EL 1 tml)) == (itag (EL 2 tml))))
      		       <&> ((itag (EL 2 tml)) == (itag (EL 3 tml)))
      		  )  <&> ((itag (EL 0 tml)) =/= (itag (EL 4 tml)))
      		 ) <&> ((itag (EL 1 tml)) =/= (itag (EL 4 tml)))
      		)
      	     )
-     		 <&> ((bus_round (EL 1 tml)) == v1))
+     		 (* <&> ((bus_round (EL 1 tml)) == v1) *))
            ):bir_val_t bir_stmt_basic_t
     `;
 
     (* tag2 tag1 tag1 tag(set2) tag3 *)
     val preEvict_hyp3_def = Define`
-        preEvict_hyp3 tml = 
+        preEvict_hyp3 tml =
          let v1 = ((bus_round (EL 2 tml)) <+> (BExp_Const (Imm64 1w))) <%> (BExp_Const (Imm64 4w)) in
            BStmt_Assert(
       	    (
-	     (
+    	     (
      	      (((((iset (EL 0 tml)) == (iset (EL 1 tml))) <&> ((iset (EL 1 tml)) == (iset (EL 2 tml))))
      		   <&> ((iset (EL 2 tml)) == (iset (EL 4 tml)))
      	      ) <&> ((iset (EL 3 tml)) =/= (iset (EL 4 tml)))
@@ -319,37 +321,47 @@ local
      		)  <&> ((itag (EL 0 tml)) =/= (itag (EL 4 tml)))
      	       ) <&> ((itag (EL 1 tml)) =/= (itag (EL 4 tml)))
      	      )
-	    )
-		<&> ((bus_round (EL 1 tml)) == v1))
+    	    )
+    		<&> ((bus_round (EL 1 tml)) == v1))
            ):bir_val_t bir_stmt_basic_t
     `;
 
+    (* tag2 tag1 tag1 tag2 tag3 *)
+    val preEvict_hyp4_def = Define`
+        preEvict_hyp4 tml =
+         let v1 = ((bus_round (EL 2 tml)) <+> (BExp_Const (Imm64 1w))) <%> (BExp_Const (Imm64 4w)) in
+           BStmt_Assert(
+            (
+     	     (
+              (((((iset (EL 0 tml)) == (iset (EL 1 tml))) <&> ((iset (EL 1 tml)) == (iset (EL 2 tml))))
+     		    <&> ((iset (EL 2 tml)) == (iset (EL 3 tml)))
+     	       ) <&> ((iset (EL 3 tml)) == (iset (EL 4 tml)))
+     	      )
+     		  <&>
+     		((((((itag (EL 0 tml)) =/= (itag (EL 1 tml))) <&> ((itag (EL 1 tml)) == (itag (EL 2 tml))))
+     		       <&> ((itag (EL 0 tml)) == (itag (EL 3 tml)))
+     		  )  <&> ((itag (EL 0 tml)) =/= (itag (EL 4 tml)))
+     		 ) <&> ((itag (EL 1 tml)) =/= (itag (EL 4 tml)))
+     		)
+     	     )
+     		 <&> ((bus_round (EL 1 tml)) == v1))
+           ):bir_val_t bir_stmt_basic_t
+    `;
+	
     fun mk_assertion_obs e =
 	let 
-	    open stringSyntax
 	    open listSyntax
 	    open pairSyntax
-	    open bir_expSyntax
-	    fun remove_prime str =
-		if String.isSuffix "*" str then
-		    (String.extract(str, 0, SOME((String.size str) - 1)))
-		else
-		    raise ERR "remove_prime" "there was no prime where there should be one"
-	    val p_fv  = bir_free_vars e;
-	    val np_fv = map (fn x => (remove_prime (fromHOLstring x)) |> (fn y => lift_string string_ty y)) p_fv
-	    val p_exp = map (fn x => subst [``"template"``|-> x] ``(BVar "template" (BType_Imm Bit64))``) p_fv;
+	    open bir_expSyntax;
 
-	    val ols   = (#1 o dest_list o #2 o dest_pair) e
+	    val ols   = (#1 o dest_list o #2 o dest_pair) e;
 	    val adds  = map (fn tm => (#2 o dest_BExp_BinExp) (find_term is_BExp_BinExp tm)) ols
+		handle Option =>
+		       raise ERR "mk_assertion_obs" "no term";
 
-	    val np_exp= map (fn x => subst[``"template"``|-> x]``(BExp_Den (BVar "template" (BType_Imm Bit64)))``)
-			     np_fv;
-	    val comb_p_np = zip p_exp np_exp;
 	in
 	   (
 	    mk_list(   [(rhs o concl o EVAL)``preEvict_hyp1  ^(mk_list((rev adds),  ``:bir_exp_t``))``],
-		    ``:bir_val_t bir_stmt_basic_t``),
-	    mk_list(map (fn (a,b) => (rhs o concl o EVAL)``constrain_spec_obs_vars (^a,^b)``) comb_p_np,
 		    ``:bir_val_t bir_stmt_basic_t``)
 	   )
 	end
@@ -361,16 +373,16 @@ local
 	    open pairSyntax;
 	    val Obs_dict = extract_observations targets g dict 
 			      |> (fst o (fn d => Redblackmap.remove (d, ``dummy``)));	
-	    val Obs_dict_primed = Redblackmap.map (fn (k,v) => Obs_prime v) Obs_dict;
+
+	    (* val Obs_dict_primed = Redblackmap.map (fn (k,v) => Obs_prime v) Obs_dict; *)
 	    val Obs_lst_primed  = map (fn tm => mk_pair(fst tm, mk_list(snd tm, ``:bir_val_t bir_stmt_basic_t``))) 
-				      (Redblackmap.listItems Obs_dict_primed);
-	    val (obs, asrt) = (mk_assertion_obs (hd Obs_lst_primed));
-	    val asrt_lst = mk_pair(last targets, asrt);
-	    val obs_lst  = mk_pair(hd targets,   obs);	
-	    
+				      (Redblackmap.listItems Obs_dict);
+	    val (obs) = (mk_assertion_obs (hd Obs_lst_primed));
+	    val obs_lst  = mk_pair(hd targets, obs);	
 	in
-	    (asrt_lst, obs_lst)
+	    obs_lst
 	end
+
 (* ------------------------------------------------------------------------------ *)
 
 in
@@ -395,20 +407,19 @@ in
 
  fun previction_instrumentation_obs prog = 	
      let (* build the dictionaries using the library under test *)
-	 val bl_dict = gen_block_dict prog;
+	 val bl_dict = gen_block_dict prog
 	 val lbl_tms = get_block_dict_keys bl_dict;
 	 (* build the cfg and update the basic blocks *)
 	 val n_dict = cfg_build_node_dict bl_dict lbl_tms;
-	     
 	 val entries = [mk_key_from_address64 64 (Arbnum.fromHexString "0")];
 	 val g1 = cfg_create "PreEvict" entries n_dict bl_dict;
 	     
 	 val (visited_nodes, _) = traverse_graph g1 (hd (#CFGG_entries g1)) [] [];
-	 val (asrt_lst, obs_lst) = add_obs_previction prog visited_nodes g1 bl_dict;
+	 val ( obs_lst) = add_obs_previction prog visited_nodes g1 bl_dict;
      in
 	 foldl (fn(itm, p) => (rhs o concl o EVAL)``add_obs_speculative_exec_armv8 ^p ^itm``)
 	       prog
-	       [asrt_lst, obs_lst]
+	       [obs_lst]
      end
 
 
