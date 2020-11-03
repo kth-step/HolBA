@@ -23,7 +23,7 @@ val entries = [mk_key_from_address 32 (Arbnum.fromHexString "8104")];
 val _ = print "Building cfg.\n";
 val g1 = cfg_create "toy" entries n_dict bl_dict;
 val _ = print "Updating cfg.\n";
-val n_dict = cfg_update_nodes_basic bl_dict lbl_tms n_dict;
+val n_dict = cfg_update_nodes_basic lbl_tms n_dict;
 val g2 = cfg_update g1 n_dict;
 
 (* display the cfg *)

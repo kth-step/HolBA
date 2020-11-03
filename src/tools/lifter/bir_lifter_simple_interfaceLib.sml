@@ -3,6 +3,27 @@ struct
 
 local
 
+(* these dependencies probably need cleanup *)
+(* ================================================ *)
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+open bir_inst_liftingTheory
+open bir_lifting_machinesTheory
+open bir_lifting_machinesLib bir_lifting_machinesLib_instances;
+open bir_interval_expTheory bir_update_blockTheory
+open bir_exp_liftingLib bir_typing_expSyntax
+open bir_typing_expTheory
+open bir_extra_expsTheory
+open bir_lifter_general_auxTheory
+open bir_programSyntax bir_interval_expSyntax
+open bir_program_labelsTheory
+open bir_immTheory
+open intel_hexLib
+open bir_inst_liftingLibTypes
+open PPBackEnd Parse
+
+open bir_inst_liftingHelpersLib;
+(* ================================================ *)
+
 open bir_expSyntax bir_immSyntax bir_envSyntax bir_exp_immSyntax bir_exp_memSyntax;
 open bir_bool_expSyntax;
 
@@ -13,6 +34,7 @@ open listSyntax;
 open bir_expLib;
 
 in (* local *)
+
 
 val log = ref TextIO.stdOut;
 
@@ -412,7 +434,7 @@ fun lift_sections arch_str sections idx =
                        let
                          val nonstd_exp = List.concat (List.map bir_exp_nonstandards exps);
                        in
-                         if nonstd_exp = [] then ()
+                         if List.null nonstd_exp then ()
                          else (
                            print_l "something is fishy! non standard expressions found\n";
                            List.map ((K (print_l "\n")) o print_l o term_to_string) nonstd_exp;
@@ -479,11 +501,8 @@ fun lift_file arch_str da_file =
         (lift_thm::thms, lift_errors@errors)
       end) ([],[]) sections_to_lift;
 
-
-
-
-    (* print out only the failing instructions *)
-    val _ = if errors <> [] then
+    (* Print only the failing instructions, for debug purposes *)
+    val _ = if not (List.null errors) then
       let
         val _ = print_l "\n\n";
         val _ = print_log_with_style [Bold, Underline] true ("There are " ^ (Int.toString (length errors)) ^ " failing instruction(s)\n");
@@ -500,13 +519,10 @@ fun lift_file arch_str da_file =
 val da_file = "binaries/bzip2-1.0.6/aarch64-libbz2-emptymain.da";
 val da_file = "binaries/aes-aarch64.da";
 val da_file = "binaries/bignum/aarch64-bignum-emptymain.da";
-
 val arch_str = "arm8";
 val _ = lift_file arch_str da_file;
-
 val da_file = "binaries/bzip2-1.0.6/m0-libbz2-emptymain.da";
 val da_file = "binaries/bignum/m0-bignum-emptymain.da";
-
 val arch_str = "m0";
 val _ = lift_file arch_str da_file;
 *)
@@ -540,11 +556,10 @@ fun lift_inst arch_str (pc:Arbnum.num) (inst:string) =
 (*
 val arch_str = "arm8";
 val thm_prog = lift_inst arch_str (Arbnum.fromInt 0x40C2A4) ("78206A61");
-
 val arch_str = "m0";
 val thm_prog = lift_inst arch_str (Arbnum.fromInt 0xCFEE) ("4770");
 *)
 
 end (* local *)
 
-end
+end;

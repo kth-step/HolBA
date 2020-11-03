@@ -4,6 +4,11 @@ struct
   open HolKernel boolLib liteLib simpLib Parse bossLib;
   open bir_envSyntax;
 
+  (* error handling *)
+  val libname  = "bir_exec_auxLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
+
   val debug_trace = ref (1:int)
   val _ = register_trace ("bir_exec.DEBUG_LEVEL", debug_trace, 2)
 

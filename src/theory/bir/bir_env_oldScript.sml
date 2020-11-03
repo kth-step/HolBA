@@ -303,10 +303,10 @@ val bir_var_set_is_well_typed_REWRS =
   store_thm("bir_var_set_is_well_typed_REWRS",
   ``(bir_var_set_is_well_typed (set [])) /\
     (!v vs. bir_var_set_is_well_typed (set (v::vs)) =
-       EVERY (\v'. (bir_var_name v = bir_var_name v') ==>
+       (EVERY (\v'. (bir_var_name v = bir_var_name v') ==>
 		   (bir_var_type v = bir_var_type v')
 	     ) vs /\
-       bir_var_set_is_well_typed (set vs)
+       bir_var_set_is_well_typed (set vs))
     )``,
 
 REPEAT STRIP_TAC >- (

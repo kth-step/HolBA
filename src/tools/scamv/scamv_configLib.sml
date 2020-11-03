@@ -1,7 +1,12 @@
 structure scamv_configLib : scamv_configLib =
 struct
 
-open bir_scamv_helpersLib;
+open holba_entryLib;
+
+  (* error handling *)
+  val libname  = "scamv_configLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
 datatype 'cfg opt_entry =
          Arity0 of string * string * string * ('cfg -> bool -> 'cfg)
@@ -14,7 +19,7 @@ datatype gen_type = gen_rand
                   | from_file
                   | from_listfile
 
-datatype obs_model = mem_address_pc_trace
+datatype obs_model = mem_address_pc
                    | cache_tag_index
                    | cache_tag_only
                    | cache_index_only
@@ -37,7 +42,6 @@ type scamv_config = { max_iter  : int,
                       refined_obs_model : obs_model option,
                       obs_projection : int,
                       hw_obs_model : hw_obs_model,
-                      only_gen  : bool,
                       verbosity : int,
                       seed_rand : bool
                     }
@@ -52,7 +56,6 @@ val default_cfg = { max_iter  = 10
                   , refined_obs_model = NONE
                   , obs_projection = 1
                   , hw_obs_model = hw_cache_tag_index
-                  , only_gen  = true
                   , verbosity = 1
                   , seed_rand = true
                   }
@@ -69,7 +72,7 @@ fun gen_type_fromString gt =
 
 fun obs_model_fromString om =
     case om of
-	"mem_address_pc_trace"      => SOME mem_address_pc_trace
+        "mem_address_pc"            => SOME mem_address_pc
       | "cache_tag_index"           => SOME cache_tag_index
       | "cache_tag_only"            => SOME cache_tag_only
       | "cache_index_only"          => SOME cache_index_only
@@ -100,7 +103,6 @@ fun set_max_iter (cfg : scamv_config) n =
       obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg,
       seed_rand = # seed_rand cfg };
 
 fun set_prog_size (cfg : scamv_config) n =
@@ -115,7 +117,6 @@ fun set_prog_size (cfg : scamv_config) n =
       obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg,
       seed_rand = # seed_rand cfg };
 
 fun set_max_tests (cfg : scamv_config) n =
@@ -130,7 +131,6 @@ fun set_max_tests (cfg : scamv_config) n =
       obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg,
       seed_rand = # seed_rand cfg };
 
 fun set_enumerate (cfg : scamv_config) enum =
@@ -145,7 +145,6 @@ fun set_enumerate (cfg : scamv_config) enum =
       obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg,
       seed_rand = # seed_rand cfg };
 
 fun set_generator (cfg : scamv_config) gen =
@@ -160,7 +159,6 @@ fun set_generator (cfg : scamv_config) gen =
       obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg,
       seed_rand = # seed_rand cfg };
 
 fun set_generator_param (cfg : scamv_config) gen_param =
@@ -175,7 +173,6 @@ fun set_generator_param (cfg : scamv_config) gen_param =
       obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg,
       seed_rand = # seed_rand cfg };
 
 fun set_obs_model (cfg : scamv_config) om =
@@ -190,7 +187,6 @@ fun set_obs_model (cfg : scamv_config) om =
       obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg,
       seed_rand = # seed_rand cfg };
 
 fun set_refined_obs_model (cfg : scamv_config) om =
@@ -205,7 +201,6 @@ fun set_refined_obs_model (cfg : scamv_config) om =
       obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg,
       seed_rand = # seed_rand cfg };
 
 
@@ -221,7 +216,6 @@ fun set_obs_projection (cfg : scamv_config) obs_number =
       obs_projection = obs_number,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg,
       seed_rand = # seed_rand cfg };
 
 
@@ -237,22 +231,6 @@ fun set_hw_obs_model (cfg : scamv_config) hwom =
       obs_projection = # obs_projection cfg,
       hw_obs_model = hwom,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg,
-      seed_rand = # seed_rand cfg };
-
-fun set_only_gen (cfg : scamv_config) b =
-    { max_iter = # max_iter cfg,
-      prog_size = # prog_size cfg,
-      max_tests = # max_tests cfg,
-      enumerate = # enumerate cfg,
-      generator = # generator cfg,
-      generator_param = # generator_param cfg,
-      obs_model = # obs_model cfg,
-      refined_obs_model = # refined_obs_model cfg, 
-      obs_projection = # obs_projection cfg,
-      hw_obs_model = # hw_obs_model cfg,
-      verbosity = # verbosity cfg,
-      only_gen = b,
       seed_rand = # seed_rand cfg };
 
 fun set_verbosity (cfg : scamv_config) v =
@@ -267,7 +245,6 @@ fun set_verbosity (cfg : scamv_config) v =
       obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = v,
-      only_gen = # only_gen cfg,
       seed_rand = # seed_rand cfg };
 
 fun set_seed_rand (cfg : scamv_config) s =
@@ -282,7 +259,6 @@ fun set_seed_rand (cfg : scamv_config) s =
       obs_projection = # obs_projection cfg,
       hw_obs_model = # hw_obs_model cfg,
       verbosity = # verbosity cfg,
-      only_gen = # only_gen cfg,
       seed_rand = s };
 
 
@@ -318,8 +294,6 @@ val opt_table =
               handle_conv_arg_with Int.fromString set_obs_projection)
     , Arity1 ("hwom", "hw_obs_model", "HW observation model",
               handle_conv_arg_with hw_obs_model_fromString set_hw_obs_model)
-    , Arity0 ("r", "run_experiments", "Automatically run each experiment after generating it (requires active connection)",
-              fn cfg => fn b => set_only_gen cfg (not b))
     , Arity0 ("frs", "fix_rand_seed", "Fix the seed for the random number generators.",
               fn cfg => fn b => set_seed_rand cfg (not b))
     ];
@@ -357,7 +331,9 @@ fun print_scamv_opt_usage () =
         print "Scam-V Usage:\n\n";
         List.map print_entry opt_table;
         print ("\ngenerator arg should be one of: rand, prefetch_strides, qc, slice, file, listfile\n");
-        print ("\nobs_model arg should be one of: mem_address_pc_trace, cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page\n");
+        print ("\nobs_model arg should be one of: mem_address_pc, cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page, cache_speculation\n");
+        print ("\nrefined_obs_model arg is like obs_model\n");
+        print ("\nobs_projection is an observation id as a number\n");
         print ("\nhw_obs_model arg should be one of: hw_cache_tag_index, hw_cache_index_numvalid, hw_cache_tag_index_part, hw_cache_tag_index_part_page\n");
         print ("\nDefaults are: " ^ PolyML.makestring default_cfg ^ "\n")
     end

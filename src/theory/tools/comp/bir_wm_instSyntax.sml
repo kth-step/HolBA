@@ -19,7 +19,7 @@ fun mk_septop tm = HolKernel.list_mk_icomb tm o list_of_septuple
 
 val syntax_fns7 = syntax_fns 7 dest_septop mk_septop;
 
-(* bir_map_triple *)
-val (bir_map_triple_tm, mk_bir_map_triple, dest_bir_map_triple, is_bir_map_triple) = syntax_fns7 "bir_map_triple";
+(* bir_simp_jgmt *)
+val (bir_simp_jgmt_tm, mk_bir_simp_jgmt, dest_bir_simp_jgmt, is_bir_simp_jgmt) = syntax_fns7 "bir_simp_jgmt";
 
 end

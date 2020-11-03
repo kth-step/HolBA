@@ -1,5 +1,25 @@
+(* these dependencies probably need cleanup *)
+(* ================================================ *)
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+open bir_inst_liftingTheory
+open bir_lifting_machinesTheory
+open bir_lifting_machinesLib bir_lifting_machinesLib_instances;
+open bir_interval_expTheory bir_update_blockTheory
+open bir_exp_liftingLib bir_typing_expSyntax
+open bir_typing_expTheory
+open bir_extra_expsTheory
+open bir_lifter_general_auxTheory
+open bir_programSyntax bir_interval_expSyntax
+open bir_program_labelsTheory
+open bir_immTheory
+open intel_hexLib
+open bir_inst_liftingLibTypes
+open PPBackEnd Parse
+
+open bir_inst_liftingHelpersLib;
+(* ================================================ *)
+
 (* Code specific for the example *)
-open HolKernel Parse boolLib bossLib;
 open HolBASimps;
 open tutorial_bir_to_armSupportTheory;
 open bslSyntax;
@@ -17,9 +37,9 @@ val x_var = ``(m.REG 4w)``;
 val ly_var = ``(m.REG 3w)``;
 val lx_var = ``(m.REG 2w)``;
 
-val arm8_add_reg_pre_def = Define `arm8_add_reg_pre m =
+val arm8_add_reg_pre_def = Define `arm8_add_reg_pre m = (
   ((^x_var) >= 0w) /\
-  ((^x_var = ^lx_var) /\ (^y_var = ^ly_var))
+  ((^x_var = ^lx_var) /\ (^y_var = ^ly_var)))
 `;
 val arm8_add_reg_post_def = Define `arm8_add_reg_post m =
   ((^x_var+^y_var) = (^ly_var))
@@ -222,9 +242,9 @@ Cases_on `d + c = b` >> (
 
 
 
-
+(*
 EVAL ``arm8_wf_varset (bir_vars_of_exp bir_add_reg_contract_1_pre)``;
-
+*)
 
 
 

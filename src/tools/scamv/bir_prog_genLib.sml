@@ -5,8 +5,11 @@ struct
   open bir_inst_liftingLib;
   open gcc_supportLib;
   open bir_gccLib;
+  open bir_programSyntax;
 
   open bir_embexp_driverLib;
+
+  open bir_inst_liftingLibTypes;
 
   open listSyntax;
   open wordsSyntax;
@@ -16,7 +19,13 @@ struct
   open asm_genLib;
   open armv8_prefetch_genLib;
 
-  open bir_scamv_helpersLib;
+  open bir_fileLib;
+  open bir_randLib;
+
+  (* error handling *)
+  val libname  = "bir_prog_genLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
 (* lifting infrastructure (handles retry of program generation also, in case of failure) *)
 (* ========================================================================================= *)
@@ -94,7 +103,7 @@ struct
       val lifted_prog = lift_program_from_sections sections;
       val blocks = (fst o dest_list o dest_BirProgram) lifted_prog;
       val labels = List.map (fn t => (snd o dest_eq o concl o EVAL) ``(^t).bb_label``) blocks;
-      fun lbl_exists idx = List.exists (fn x => x = ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt (idx*4), 64)))``) labels;
+      fun lbl_exists idx = List.exists (fn x => identical x ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt (idx*4), 64)))``) labels;
       val lift_worked = List.all lbl_exists (List.tabulate (prog_len, fn x => x));
     in
       if lift_worked
@@ -119,12 +128,7 @@ struct
 	| SOME prog_preproc => lift_prog_lift err_handler_lift prog_preproc
     end;
 
-  fun prog_gen_store prog_gen_id retry_on_liftfail prog_gen_fun args () =
-    let
-      val (asm_code, lifted_prog, len) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
-
-
-      val prog_with_halt =
+  fun add_halt_to_prog len lifted_prog =
         let
           val (blocks,ty) = dest_list (dest_BirProgram lifted_prog);
           val obs_ty = (hd o snd o dest_type) ty;
@@ -135,6 +139,12 @@ struct
         in
           (mk_BirProgram o mk_list) (blocks@[new_last_block],ty)
         end;
+
+  fun prog_gen_store prog_gen_id retry_on_liftfail prog_gen_fun args () =
+    let
+      val (asm_code, lifted_prog, len) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
+
+      val prog_with_halt = add_halt_to_prog len lifted_prog;
 
       val prog_id = bir_embexp_prog_create ("arm8", prog_gen_id) asm_code;
     in

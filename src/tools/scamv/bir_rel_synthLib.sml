@@ -1,6 +1,13 @@
 structure bir_rel_synthLib : bir_rel_synthLib =
 struct
 
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+
+  (* error handling *)
+  val libname  = "bir_rel_synthLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
+
 local
 open HolKernel Parse boolLib bossLib;
 open stringSyntax;
@@ -40,16 +47,16 @@ fun obs_domain (ps : path_struct) =
 
 fun bir_free_vars exp =
     let 
-	fun nub [] = []
-	  | nub (x::xs) = x::nub(List.filter (fn y => y <> x) xs)
+	fun nub_with eq [] = []
+	  | nub_with eq (x::xs) = x::(nub_with eq (List.filter (fn y => not (eq (y, x))) xs))
 
 	val fvs =
 	    if is_comb exp then
 		let val (con,args) = strip_comb exp
 		in
-		    if con = ``BExp_MemConst``
+		    if identical con ``BExp_MemConst``
 		    then [``"MEM"``]
-		    else if con = ``BExp_Den``
+		    else if identical con ``BExp_Den``
 		    then
 		       let val v = case strip_comb (hd args) of
 				       (_,v::_) => v
@@ -62,7 +69,7 @@ fun bir_free_vars exp =
 		end
 	    else []
     in
-	nub fvs
+	nub_with (fn (x,y) => identical x y) fvs
     end;
 
 exception ListMkBir of string
@@ -354,7 +361,7 @@ fun preprocess_path_struct ps : (path_struct * term) =
 
 fun partition_domains (ps : path_struct) : int list * int list =
     let fun partition_obs_list xs =
-            List.partition (fn (cobs (id,oid,cond,term)) => cond = btrue) xs;
+            List.partition (fn (cobs (id,oid,cond,term)) => identical cond btrue) xs;
         fun go [] = ([],[])
           | go (path (_,_,xs)::ps) =
             let val (static, dyn) = partition_obs_list xs;
@@ -392,7 +399,7 @@ fun rel_synth_init initial_ps obs_projection (env : enum_env) =
                     handle Bind => raise ERR "next_test" "no next relation found";
                 val spec = try_spec ();
                 val constraint = next_constraint ();
-                val _ = if constraint <> btrue
+                val _ = if not (identical constraint btrue)
                         then (print ("Selected constraint: ");
                               bir_exp_pretty_print constraint;
                               print "\n")

@@ -64,16 +64,16 @@ REV_FULL_SIMP_TAC std_ss [bir_exec_stmtB_state_def]
  * AssumptionViolated. *)
 val bir_is_valid_status_def = Define `
   bir_is_valid_status state = 
-    (state.bst_status <> BST_Failed) /\
+    ((state.bst_status <> BST_Failed) /\
     (state.bst_status <> BST_TypeError) /\
     (!l. state.bst_status <> BST_JumpOutside l) /\
     (!v. state.bst_status <> BST_Halted v) /\
-    (state.bst_status <> BST_AssertionViolated)`;
+    (state.bst_status <> BST_AssertionViolated))`;
 
 (* The pre- and postcondition of the Hoare triple. *)
 val bir_pre_post_def = Define `
   bir_pre_post s pre s' post =
-    bir_is_bool_exp_env s.bst_environ pre ==>
+    (bir_is_bool_exp_env s.bst_environ pre ==>
     (
       (bir_is_valid_status s /\
        (bir_eval_exp pre (s.bst_environ) = SOME bir_val_true)
@@ -87,7 +87,7 @@ val bir_pre_post_def = Define `
         ) \/
         (s'.bst_status = BST_AssumptionViolated)
       )
-    )`;
+    ))`;
 
 (* Hoare triple for the execution of one basic BIR statement. *)
 val bir_exec_stmtB_triple_def = Define `
@@ -1416,8 +1416,8 @@ REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 (* "s'" is the state resulting from execution with
  * bir_exec_to_labels from s. *)
 Q.ABBREV_TAC `s' = bir_exec_to_labels ls p s` >>
-Q.ABBREV_TAC `cnd = l1 IN ls /\ (post' = (post l1)) \/
-  bir_exec_to_labels_or_assumviol_triple p l1 ls post' post` >>
+Q.ABBREV_TAC `cnd = (l1 IN ls /\ (post' = (post l1)) \/
+  bir_exec_to_labels_or_assumviol_triple p l1 ls post' post)` >>
 subgoal `(bir_get_current_block p s.bst_pc = SOME bl)` >- (
   FULL_SIMP_TAC std_ss [bir_get_current_block_def,
                         bir_get_program_block_info_by_label_MEM] >>
@@ -1864,11 +1864,11 @@ val bir_jmp_direct_labels_only_def = Define `
 val bir_jmp_direct_labels_only_exec_def = Define `
   (bir_jmp_direct_labels_only_exec (BirProgram []) = T) /\
   (bir_jmp_direct_labels_only_exec (BirProgram (h::l)) =
-    (case h.bb_last_statement of
+    ((case h.bb_last_statement of
       BStmt_Jmp (BLE_Label _) => T
     | BStmt_CJmp _ (BLE_Label _) (BLE_Label _) => T
     | _ => F) /\
-  (bir_jmp_direct_labels_only_exec (BirProgram l)))`;
+  (bir_jmp_direct_labels_only_exec (BirProgram l))))`;
 
 val bir_jmp_direct_labels_only_exec_eq_thm =
   store_thm("bir_jmp_direct_labels_only_exec_eq_thm",

@@ -17,7 +17,7 @@ fun test_eq (name, bsl_blocks, bir_prog_tm) =
     val _ = print "\n"
     (* Compare against the same hand-written BIR program *)
     val bsl_prog_tm = (snd o dest_eq o concl) bsl_prog_def
-    val is_correct = (bsl_prog_tm = bir_prog_tm)
+    val is_correct = (identical bsl_prog_tm bir_prog_tm)
   in
     if is_correct
       then print "Ok.\n"

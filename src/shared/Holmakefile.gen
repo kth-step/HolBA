@@ -1,11 +1,11 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../theory/bir ../theory/bir-support
+DEPENDENCIES   = ../theory/bir ../theory/bir-support ./HolSmt
 
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../theory/HolBATheory-heap
+HOLHEAP        = ./HolSmt/HolBASharedHolSmt-heap
 NEWHOLHEAP     = HolBAShared-heap
 
 HEAPINC_EXTRA  = 

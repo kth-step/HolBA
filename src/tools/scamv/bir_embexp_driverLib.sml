@@ -3,7 +3,12 @@ struct
 
   open HolKernel Parse boolLib bossLib;
 
-  open bir_scamv_helpersLib;
+  open bir_randLib;
+  open bir_miscLib;
+  open bir_fileLib;
+  open bir_exec_wrapLib;
+
+  open holba_entryLib;
 
 (* error handling *)
   val libname = "bir_embexp_driverLib"
@@ -203,111 +208,205 @@ struct
       close_log holbarun_log
     end;
 
+  (* machine state definition from the signature *)
+  datatype machineState = MACHSTATE of (((string, num) Redblackmap.dict) * (int * ((num, num) Redblackmap.dict)));
+  val machstate_empty = MACHSTATE ((Redblackmap.mkDict String.compare), (8, Redblackmap.mkDict Arbnum.compare));
+
+  fun machstate_print (MACHSTATE (regmap, (wsz, memmap))) =
+      let
+	  val _ = print ("MACHSTATE = (\n");
+	  val _ = print ("  mem := {\n");
+	  val _ = List.map (fn (a,v) =>  print ("\t(0x"^(Arbnum.toHexString(a))^"\t-> 0x"^(Arbnum.toHexString(v))^")\n"))
+                           (Redblackmap.listItems memmap);
+	  val _ = print "  }\n  regs := {\n";
+	  val _ = List.map (fn (n,v) => print ("\t(" ^ n ^ "\t-> 0x" ^(Arbnum.toHexString( v))^ ")\n"))
+                           (Redblackmap.listItems regmap);
+	  val _ = print "  }\n)\n";
+      in () end;
+
+  fun machstate_add_reg (rn, rv) (MACHSTATE (rm, m)) =
+    (MACHSTATE (Redblackmap.insert (rm, rn, rv), m));
+  fun machstate_replace_mem newm (MACHSTATE (rm, m)) =
+    (MACHSTATE (rm, newm));
+
   (* create json state *)
-  fun gen_json_state isSecond s =
+  fun gen_json_state (MACHSTATE (regmap, (wsz, memmap))) =
     let
-      fun getReg tm = case tm of regT x => x
-      fun getMem tm = case tm of memT x => x
-      fun is_memT tm = can getMem tm;
+      val _ = if wsz = 8 then () else
+              raise ERR "gen_json_state" "word size has to be one byte";
+
       fun rkv_to_json (k,v) =
-        let (* TODO: Stack pointer need to be handled *) 
+        let
+          (* TODO: Stack pointer needs to be handled *)
+          (* TODO: maybe want to check that we indeed get R0-R29 or whatever *) 
           val _ = if String.isPrefix "R" k then () else
                     raise ERR "gen_json_state" "input not as exptected";
-          val _ = if isSecond = String.isSuffix "_" k then () else
-                    raise ERR "gen_json_state" "input not as exptected _";
-          val k = if isSecond then
-                    (String.extract(k, 0, SOME((String.size k) - 1)))
-                  else k;
 
           val regname = "x" ^ (String.extract(k, 1, NONE));
         in
-          "\n\t\"" ^ regname ^ "\": " ^ (Arbnumcore.toString v)
+          "\n\t\"" ^ regname ^ "\": \"0x" ^ (Arbnumcore.toHexString v) ^ "\""
         end;
 
-      fun mkv_to_json (k,v) =
+      fun memConcat midstr l =
+             if List.null l then "" else
+             List.foldr (fn (a,b) => b^midstr^a) (hd l) (List.rev (tl l));
+
+      fun mkv_to_json m =
         let
-	    val memConcat = foldr (fn (a,b) => a^",\n\t\t\t"^b) "";
-            val _ = if isSecond = String.isSuffix "_" k then () else
-                    raise ERR "gen_json_state" "input not as exptected _";
-            val k = if isSecond then
-			(String.extract(k, 2, SOME((String.size k) - 1)))
-                    else k;
+          val mname = "mem";
+          fun mentry_to_json entr =
+                "\t\t" ^
+                "\"0x"^(Arbnumcore.toHexString (fst entr)) ^ "\"" ^
+		" : \"0x" ^ (Arbnumcore.toHexString (snd entr)) ^ "\"";
+	  val mappings = List.map mentry_to_json (Redblackmap.listItems m);
 
-          val mname = "mem" ^ (String.extract(k, 3, NONE))
-	  val mappings = (map (fn el => "\""^(Arbnumcore.toString (fst el)) ^ "\"" ^
-					" : " ^
-					(Arbnumcore.toString (snd el))) v)
-	  val m_tm = memConcat mappings
-	  val m_tm_sub = if String.size(m_tm) <> 0 
-			 then String.extract (m_tm, 0, SOME(String.size(m_tm) - 5))
-			 else String.extract (m_tm, 0, NONE)
+          val m_tm = memConcat ",\n" mappings;
         in
-          "\n\t\"" ^ mname ^ "\": " ^ "{" ^ m_tm_sub ^ "}"
+          "\n\t\"" ^ mname ^ "\": " ^ "{\n" ^ m_tm ^ "\n\t}"
         end;
 
-      val (m,rg) = List.partition (is_memT) s
-      val m = if List.null m then ("MEM", []:( (num * num) list)) else getMem (hd m)
-      val rg = map getReg rg
-
-      val s_jsonmappings_reg = List.map rkv_to_json rg
-      val s_jsonmappings_mem = mkv_to_json m
+      val s_jsonmappings_reg = List.map rkv_to_json (Redblackmap.listItems regmap);
+      val s_jsonmappings_mem = mkv_to_json memmap
       val s_jsonmappings = s_jsonmappings_reg@[s_jsonmappings_mem]
 
-      val str = List.foldr (fn (m, str) => m ^ "," ^ str) "" s_jsonmappings
+      val str = memConcat "," s_jsonmappings;
     in
-      "{" ^ (String.extract(str, 0, SOME((String.size str) - 1))) ^ "\n}"
+      "{" ^  str ^ "\n}"
     end;
 
 (* generate state from json file *)
 local
   open wordsSyntax;
 in
-  fun parse_back_json_state isSecond filename =
+  fun parse_back_json_state filename =
     let
-      fun splitandstrip f l =
-            List.foldr (op@) [] (List.map ((List.map (strip_ws_off false)) o f) l);
-
-      fun splitandparse isSecond kv =
+      fun unpackOne c1 c2 s =
         let
-          val kvl = splitandstrip (String.tokens (fn c => c = #":")) [kv];
-          val _ = if length kvl = 2 then () else
-                  raise ERR "parse_back_json_state" "splitandparse:: format error kvl";
-          val ks = List.nth(kvl,0);
-          val vs = List.nth(kvl,1);
-          val _ = if length (String.explode ks) > 2 andalso
-                     List.hd (String.explode ks) = #"\"" andalso
-                     List.last (String.explode ks) = #"\"" then () else
-                  raise ERR "parse_back_json_state" "splitandparse:: format error ks1";
-          val ks = splitandstrip (String.tokens (fn c => c = #"\"")) [ks];
-          val _ = if length ks = 1 then () else
-                  raise ERR "parse_back_json_state" "splitandparse:: format error ks2";
-          val ks = List.hd ks;
-          val _ = if List.hd (String.explode ks) = #"x" then () else
-                  raise ERR "parse_back_json_state" "splitandparse:: format error ks3";
-          val regnum_s = (String.implode o List.tl o String.explode) ks;
+          val s_ = strip_ws_off false s;
+
+          val s_l = String.explode s_;
+          val _ = if length s_l > 1 then () else
+                  raise ERR "parse_back_json_state::unpackOne" "string is too short";
+
+          val c_fst = hd   s_l;
+          val c_snd = last s_l;
+
+          val _ = if c1 = c_fst andalso c2 = c_snd then () else
+                  raise ERR "parse_back_json_state::unpackOne" "chars not matching";
+(*
+          val l = String.tokens (fn c => c = c1 orelse c = c2) s_;
+          val _ = if length l = 1 then () else
+                  raise ERR "parse_back_json_state::unpackOne" "cannot unpack simply";
+*)
+        in
+          String.implode (List.take (tl s_l, (length s_l) - 2))
+        end;
+
+      fun parseReg name vs =
+        let
+          val _ = if List.hd (String.explode name) = #"x" then () else
+                  raise ERR "parse_back_json_state" "splitandparse:: format error, expect register name";
+          val regnum_s = (String.implode o List.tl o String.explode) name;
           val regnum = case Int.fromString regnum_s of
                           SOME x => x
                         | _ => raise ERR "parse_back_json_state" "cannot parse register number";
-          val v = Arbnum.fromString vs;
-          val reg_s = "R" ^ (Int.toString regnum) ^ (if isSecond then "_" else "");
+          val v = Arbnum.fromHexString (unpackOne #"\"" #"\"" vs);
+          val reg_s = "R" ^ (Int.toString regnum);
         in
           (reg_s, v)
         end;
 
+      fun parseMem name vs =
+        let
+          val _ = if name = "mem" then () else
+                  raise ERR "parse_back_json_state" "splitandparse:: format error, expect memory name";
+
+          val mapping_raw = String.tokens (fn c => c = #",") (unpackOne #"{" #"}" vs);
+          fun map_s_to_kv s =
+            let
+              val kvl = String.tokens (fn c => c = #":") s;
+              val _ = if length kvl = 2 then () else
+                      raise ERR "parse_back_json_state" "error parsing memory mapping";
+              val ks = unpackOne #"\"" #"\"" (strip_ws_off false (hd kvl));
+              val vs = unpackOne #"\"" #"\"" (strip_ws_off false (hd (tl kvl)));
+            in
+              (Arbnum.fromHexString ks, Arbnum.fromHexString vs)
+            end;
+          val kvmap = Redblackmap.fromList Arbnum.compare (List.map map_s_to_kv mapping_raw);
+        in
+          (8, kvmap)
+        end;
+
+      fun splitandparse ((ks,vs), (st_regmap, st_memmap_o)) =
+        let
+          val _ = if length (String.explode ks) > 2 andalso
+                     List.hd (String.explode ks) = #"\"" andalso
+                     List.last (String.explode ks) = #"\"" then () else
+                  raise ERR "parse_back_json_state" "splitandparse:: format error string quote";
+          val name = unpackOne #"\"" #"\"" ks;
+        in
+          if name = "mem" then
+            if not (isSome st_memmap_o) then
+              (st_regmap, SOME (parseMem name vs))
+            else
+              raise ERR "parse_back_json_state" "splitandparse:: can only handle one memory"
+          else
+            ((parseReg name vs)::st_regmap, st_memmap_o)
+        end;
+
       val content = read_from_file filename;
-      val content = strip_ws_off false content;
-      val l = [content];
 
-      val l = splitandstrip (String.tokens (fn c => c = #"{" orelse c = #"}")) l;
-      val l = splitandstrip (String.tokens (fn c => c = #"[" orelse c = #"]")) l;
-      val _ = if length l = 1 then () else
-              raise ERR "parse_back_json_state" "file not formatted as expected";
+      val toplevel = strip_ws_off false (unpackOne #"{" #"}" content);
 
-      val kvs = splitandstrip (String.tokens (fn c => c = #",")) l;
+      val (p_s,p_acc,p_l) = List.foldl (fn (c, (s, acc, l)) =>
+        case s of
+           0 => (case c of
+                    #"," => (s, [], acc::l)
+                  | #"{" => (1, c::acc, l)
+                  | #"}" => raise ERR "parse_back_json_state::parseentries" "aaa 1"
+                  | _    => (s, c::acc, l))
+         | 1 => (case c of
+                    #"{" => raise ERR "parse_back_json_state::parseentries" "aaa 2"
+                  | #"}" => (0, c::acc, l)
+                  | _    => (s, c::acc, l))
+         | _ => raise ERR "parse_back_json_state::parseentries" "impossible state")
+       (0, [], [])
+       (String.explode toplevel);
+
+      val mapslist_ = if p_s = 0 andalso List.null p_acc then p_l else
+                      if p_s = 0 then p_acc::p_l else
+                      raise ERR "parse_back_json_state" "parser state is unexpected";
+
+      fun splitfirstchar c s =
+        let
+          val l = String.explode (strip_ws_off false s);
+          fun firstchar [] _ = raise ERR "parse_back_json_state" "mapsplit error"
+            | firstchar (c_::l_) acc =
+                if c_ = c then (List.rev acc, l_)
+                else firstchar l_ (c_::acc);
+
+          val (l1,l2) = firstchar l [];
+        in
+          ((strip_ws_off false o String.implode) l1, (strip_ws_off false o String.implode) l2)
+        end;
+
+      val mapslist = List.map ((splitfirstchar #":") o String.implode o List.rev)  mapslist_;
+
+(*
+      val (ks,vs) = hd mapslist;
+      val (ks,vs) = hd (tl mapslist);
+*)
+      val (st_regmap, st_memmap_o) = List.foldl splitandparse ([], NONE) mapslist
+
+      val regmap = Redblackmap.fromList String.compare (List.rev st_regmap);
+      val mem = if isSome st_memmap_o then
+                  valOf st_memmap_o
+                else
+                  (8, Redblackmap.mkDict Arbnum.compare);
     in
-      List.map (splitandparse isSecond) kvs
+      MACHSTATE (regmap, mem)
     end;
-end
+end;
 
 (* interface functions *)
 (* ========================================================================================= *)
@@ -400,13 +499,15 @@ end
       codehash
     end;
 
-  fun bir_embexp_sates2_create (arch_id, exp_type_id, state_gen_id) prog_id (s1,s2) =
+  fun bir_embexp_states2_create (arch_id, exp_type_id, state_gen_id) prog_id (s1,s2,straino) =
     let
       val exp_basedir = get_experiment_basedir arch_id;
 
       (* write out data *)
-      val input1 = gen_json_state false s1;
-      val input2 = gen_json_state false s2;
+      val input1 = gen_json_state s1;
+      val input2 = gen_json_state s2;
+      val traino = Option.map gen_json_state straino;
+
       val exp_datahash = hashstring (prog_id ^ input1 ^ input2);
       val exp_id = "exps2/" ^ exp_type_id ^ "/" ^ exp_datahash;
       val exp_datapath = exp_basedir ^ "/" ^ exp_id;
@@ -416,42 +517,7 @@ end
 
       (* write out reference to the code (hash of the code) *)
       val prog_id_file = exp_datapath ^ "/code.hash";
-      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" prog_id_file prog_id;
-
-      (* write the json files after reference to code per convention *)
-      (* - to indicate that experiment writing is complete *)
-      val input1_file = exp_datapath ^ "/input1.json";
-      val input2_file = exp_datapath ^ "/input2.json";
-      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" input1_file input1;
-      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" input2_file input2;
-
-      (* create exp log, if there was no clash before! *)
-      val embexp_gen_file = exp_datapath ^ "/gen." ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
-      val _ = create_log exp_log embexp_gen_file;
-      (* log generator info *)
-      val _ = write_log_line (exp_log, "bir_embexp_sates2_create", "no no no") state_gen_id;
-    in
-      arch_id ^ "/" ^ exp_id
-    end;
-
-  fun bir_embexp_sates3_create (arch_id, exp_type_id, state_gen_id) prog_id (s1,s2,st) =
-    let
-      val exp_basedir = get_experiment_basedir arch_id;
-
-      (* write out data *)
-      val input1 = gen_json_state false s1;
-      val input2 = gen_json_state false s2;
-      val train  = gen_json_state false st;
-      val exp_datahash = hashstring (prog_id ^ input1 ^ input2);
-      val exp_id = "exps2/" ^ exp_type_id ^ "/" ^ exp_datahash;
-      val exp_datapath = exp_basedir ^ "/" ^ exp_id;
-      (* btw, it can also happen that the same test is produced multiple times *)
-      (* create directory if it didn't exist yet *)
-      val _ = makedir true exp_datapath;
-
-      (* write out reference to the code (hash of the code) *)
-      val prog_id_file = exp_datapath ^ "/code.hash";
-      val _ = write_to_file_or_compare_clash "bir_embexp_sates2_create" prog_id_file prog_id;
+      val _ = write_to_file_or_compare_clash "bir_embexp_states2_create" prog_id_file prog_id;
 
       (* write the json files after reference to code per convention *)
       (* - to indicate that experiment writing is complete *)
@@ -459,19 +525,19 @@ end
       val input2_file = exp_datapath ^ "/input2.json";
       val train_file  = exp_datapath ^ "/train.json";
 
-      val _ = write_to_file_or_compare_clash "bir_embexp_sates3_create" input1_file input1;
-      val _ = write_to_file_or_compare_clash "bir_embexp_sates3_create" input2_file input2;
-      val _ = write_to_file_or_compare_clash "bir_embexp_sates3_create" train_file  train;
+      val _ = write_to_file_or_compare_clash "bir_embexp_states2_create" input1_file input1;
+      val _ = write_to_file_or_compare_clash "bir_embexp_states2_create" input2_file input2;
+      val _ = if not (isSome traino) then () else
+               write_to_file_or_compare_clash "bir_embexp_states2_create" train_file (valOf traino);
 
       (* create exp log, if there was no clash before! *)
       val embexp_gen_file = exp_datapath ^ "/gen." ^ (embexp_run_id()) ^ "." ^ (get_datestring ());
       val _ = create_log exp_log embexp_gen_file;
       (* log generator info *)
-      val _ = write_log_line (exp_log, "bir_embexp_sates2_create", "no no no") state_gen_id;
+      val _ = write_log_line (exp_log, "bir_embexp_states2_create", "no no no") state_gen_id;
     in
       arch_id ^ "/" ^ exp_id
-    end;      
-
+    end;
 
   fun bir_embexp_run exp_id with_reset =
     let
@@ -518,10 +584,16 @@ end
       val input1_file = (logs_dir ^ "/" ^ exp_id ^ "/input1.json");
       val input2_file = (logs_dir ^ "/" ^ exp_id ^ "/input2.json");
 
-      val s = (parse_back_json_state false input1_file,
-               parse_back_json_state false input2_file);
+      val train_file = (logs_dir ^ "/" ^ exp_id ^ "/train.json");
+      val train_filename = (read_from_file train_file; SOME train_file)
+                           handle _ => NONE;
+
+      val s1 = parse_back_json_state input1_file;
+      val s2 = parse_back_json_state input2_file;
+
+      val traino = Option.map (fn filename => parse_back_json_state filename) train_filename;
     in
-      (asm_lines, s)
+      (asm_lines, (s1, s2, traino))
     end;
 
   fun bir_embexp_load_list listtype listname =
@@ -533,6 +605,14 @@ end
       val actual_entries = List.filter (not o (String.isPrefix "#")) nonempty;
     in
       actual_entries
+    end;
+
+  fun bir_embexp_create_list_open listtype listname =
+    let
+      val logs_dir = logfile_basedir();
+      val filename = logs_dir ^ "/lists/" ^ listtype ^ "_" ^ listname ^ ".txt";
+    in
+      TextIO.openOut filename
     end;
 
   fun bir_embexp_load_progs listname =

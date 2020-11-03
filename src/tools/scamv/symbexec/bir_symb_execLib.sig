@@ -1,5 +1,7 @@
 signature bir_symb_execLib = sig
 
+  include Abbrev;
+
   type 'a symb_tree_t;
 
   val symb_is_BST_Running  : term -> bool
@@ -9,7 +11,7 @@ signature bir_symb_execLib = sig
   val symb_is_BST_AssertionViolated : term -> bool
 
   (* maxdepth (-1 is unlimited), precond, program, pred decider *)
-  val symb_exec_program    : int -> term -> term -> (term -> bool) -> (term -> term) option -> term symb_tree_t
+  val symb_exec_program    : int -> term -> term -> string option -> (term -> bool) -> (term -> term) option -> term symb_tree_t
 
   val dest_bir_symb_obs    : term -> term * term * term * term
   val dest_bir_symb_state  : term -> term * term * term * term * term

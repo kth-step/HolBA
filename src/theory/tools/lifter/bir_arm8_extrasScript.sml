@@ -29,7 +29,7 @@ val _ = new_theory "bir_arm8_extras";
 
 val shift_neg1w_rewr = prove (
 ``(-1w << n):'a word = -(n2w (2**n))``,
-METIS_TAC[WORD_NEG_MUL, WORD_MUL_LSL, WORD_MULT_COMM])
+METIS_TAC [WORD_NEG_MUL, WORD_MUL_LSL, WORD_MULT_COMM])
 
 val shift_neg1w_rewr2 = prove (
 ``(-1w << n):'a word = (n2w (dimword (:'a) - 2 ** n MOD dimword (:'a)))``,
@@ -372,7 +372,7 @@ let
 
   val thm1 = CONJ thm0a thm0b
   val thm2 = SIMP_RULE (std_ss++wordsLib.SIZES_ss) [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, w2v_def,
+    rich_listTheory.COUNT_LIST_AUX_compute, w2v_def,
     listTheory.GENLIST_GENLIST_AUX, listTheory.GENLIST_AUX_compute, listTheory.APPEND] thm1
   val thm3 = SIMP_RULE std_ss [rich_listTheory.BUTLASTN_def,rich_listTheory.LASTN_def,
     listTheory.REVERSE_REVERSE] thm2
@@ -957,7 +957,7 @@ Q.ABBREV_TAC `iaa = (i − (dimindex (:'c) + 16))` >>
   ASM_SIMP_TAC (bool_ss) [word_index, bitTheory.BIT_EXP_SUB1]
 ) >>
 
-`(n2w (2 ** dimindex (:'c) − 1) ' i) = i < (dimindex (:'c))` by (
+`(n2w (2 ** dimindex (:'c) − 1) ' i) = (i < (dimindex (:'c)))` by (
   ASM_SIMP_TAC (bool_ss) [word_index, bitTheory.BIT_EXP_SUB1]
 ) >>
 

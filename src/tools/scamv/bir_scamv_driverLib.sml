@@ -18,8 +18,14 @@ open bir_embexp_driverLib;
 open bir_symb_execLib;
 open bir_symb_masterLib;
 open bir_typing_expTheory;
+open bir_programSyntax;
 open scamv_configLib;
 open bir_conc_execLib;
+
+  (* error handling *)
+  val libname  = "bir_scamv_driverLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
 
 (* C like macros *)
@@ -46,12 +52,20 @@ val DISTINCT_MEM = false;
  - driver decision (jump to a, b or c)
  *)
 
-fun symb_exec_phase prog =
+fun symb_exec_phase prog rso =
     let
         (* leaf list *)
         val maxdepth = 5 * length (fst (dest_list (dest_BirProgram prog))) (* (~1); *)
         val precond = ``bir_exp_true``
-        val leafs = symb_exec_process_to_leafs_nosmt maxdepth precond prog;
+        val leafs = symb_exec_process_to_leafs_nosmt maxdepth precond prog rso;
+
+        val numobss = List.foldr (op+) 0 (List.map (fn s => 
+	  let
+	    val (_,_,_,_,obs) = dest_bir_symb_state s;
+          in (length o fst o dest_list) obs end) leafs);
+        val message = "found " ^ (Int.toString numobss) ^ " observations in all paths.";
+        val _ = print (message ^ "\n");
+        (* val _ = bir_embexp_log (message); *)
 
         (* retrieval of path condition and observation expressions *)
 	fun extract_cond_obs s =
@@ -104,9 +118,9 @@ fun bir_free_vars exp =
 	    if is_comb exp then
 		let val (con,args) = strip_comb exp
 		in
-		    if con = ``BExp_MemConst``
+		    if identical con ``BExp_MemConst``
 		    then [``"MEM"``]
-		    else if con = ``BExp_Den``
+		    else if identical con ``BExp_Den``
 		    then
 		       let val v = case strip_comb (hd args) of
 				       (_,v::_) => v
@@ -140,13 +154,13 @@ fun make_word_relation relation exps =
                 (bir_free_vars exp)
 
         fun primed_vars exp = map (#residue) (primed_subst exp);
-        fun nub [] = []
-          | nub (x::xs) = x::nub(List.filter (fn y => y <> x) xs);
+        fun nub_with eq [] = []
+          | nub_with eq (x::xs) = x::nub_with eq (List.filter (fn y => not (eq(y,x))) xs);
         val primed = sort (curry String.<=)
                      (map (fromHOLstring o snd o dest_comb)
-                         (nub (flatten (map primed_vars exps))));
+                         (nub_with (fn (x,y) => identical x y) (flatten (map primed_vars exps))));
         val unprimed = sort (curry String.<=)
-                       (nub (map fromHOLstring
+                       (nub_with (op=) (map fromHOLstring
                             (flatten (map bir_free_vars exps))));
 
         val pairs = zip unprimed primed;
@@ -169,8 +183,8 @@ fun make_word_relation relation exps =
 		open finite_mapSyntax
 		val va = mk_var (a, ``:word64 |-> word8``)
 		val vb = mk_var (b, ``:word64 |-> word8``)
-		fun split_mem  tms m = filter (fn tm => (#1 (dest_fapply(find_term is_fapply tm)) = m)) tms
-		fun extract_mem_load n rel = ((nub o find_terms (can (dest_mem_load n))) rel);
+		fun split_mem  tms m = filter (fn tm => (identical (#1 (dest_fapply(find_term is_fapply tm))) m)) tms
+		fun extract_mem_load n rel = ((nub_with (fn (x,y) => identical x y) o find_terms (can (dest_mem_load n))) rel);
 		val memop  = (extract_mem_load 7 rel)@(extract_mem_load 3 rel)@(extract_mem_load 1 rel)@(extract_mem_load 0 rel)
 		val m1 = zip (split_mem  memop va) (split_mem memop vb)
 		val res = if List.null m1 then T else list_mk_disj (map (fn (tm, tm') => ``^tm <> ^tm'`` ) m1)
@@ -201,7 +215,7 @@ fun print_model model =
         () (rev model);
 
 fun to_sml_Arbnums model =
-    List.map (fn (name, tm) => 
+    List.foldl (fn ((name, tm), mst) => 
         if finite_mapSyntax.is_fupdate tm
 	then
 	    let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm
@@ -210,13 +224,14 @@ fun to_sml_Arbnums model =
 				       val (ad, vl) = pairSyntax.dest_pair p
 				   in
 				       (dest_word_literal ad, dest_word_literal vl)
+                                       (* TODO: are you serious?! *)
 				       handle _ => (Arbnum.fromInt 4294967295, dest_word_literal vl)
 				   end) vlsW
 	    in
-		memT(name, vlsN)
+		machstate_replace_mem (8, Redblackmap.fromList Arbnum.compare vlsN) mst
 	    end
 	else
-	    regT(name, dest_word_literal tm)) model;
+	    machstate_add_reg (name, dest_word_literal tm) mst) machstate_empty model;
 
 
 val hw_obs_model_id = ref "";
@@ -312,12 +327,22 @@ fun start_interactive prog =
 
         val _ = printv 1 "Adding obs\n";
         val add_obs = #add_obs (get_obs_model (!current_obs_model_id));
-        val lifted_prog_w_obs = add_obs lifted_prog;
+        val mem_bounds =
+          let
+            open bir_embexp_driverLib;
+            val (mem_base, mem_len) = bir_embexp_params_memory;
+            val mem_end = (Arbnum.- (Arbnum.+ (mem_base, mem_len), Arbnum.fromInt 128));
+          in
+            pairSyntax.mk_pair
+            (mk_wordi (bir_embexp_params_cacheable mem_base, 64),
+             mk_wordi (bir_embexp_params_cacheable mem_end, 64))
+          end;
+        val lifted_prog_w_obs = add_obs mem_bounds lifted_prog;
         val _ = printv 1 "Obs added\n";
         val _ = current_prog_w_obs := SOME lifted_prog_w_obs;
         val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
 
-        val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
+        val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs (SOME "*");
 	      val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths; 
 
         fun has_observations (SOME []) = false
@@ -369,9 +394,6 @@ fun mem_constraint [] = ``T``
 	mc_conj
     end
 
-val getReg = (fn tm => case tm of regT x => x)
-val getMem = (fn tm => case tm of memT x => x) 
-val is_memT= (fn tm => can getMem tm)
 fun next_experiment all_exps next_relation  =
     let
         open bir_expLib;
@@ -389,7 +411,7 @@ fun next_experiment all_exps next_relation  =
 	      | SOME (p, r) => let val _ = next_iter_rel := NONE in (p, r) end
 		handle Option =>
                        raise ERR "next_experiment" "next_relation returned a NONE";
-        val _ = min_verb 3 (fn () =>
+        val _ = min_verb 1 (fn () =>
                                (print "Selected path: ";
                                 print (PolyML.makestring path_spec);
                                 print "\n"));
@@ -407,11 +429,9 @@ fun next_experiment all_exps next_relation  =
 	      (* r is a constraint used to build the next relation for path enumeration *)
               | SOME r => mk_conj (new_word_relation, r);
 
-        val _ = printv 1 ("Calling Z3\n");
+        val _ = printv 2 ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
-        val _ = min_verb 3 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
-        val _ = printv 3 ("Printed model\n");
-	(*Need to be removed later. It is just for experimental reasone*)
+        val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model; print "\nSAT model finished.\n"));
 
         fun remove_prime str =
           if String.isSuffix "_" str then
@@ -474,7 +494,7 @@ fun next_experiment all_exps next_relation  =
 	in
 	 val st = force (ifdef__else__ SPECTRE
 		          (fn () => training_input_mining 6 |> List.partition (isPrimedRun o fst) |>  (* (to_sml_Arbnums o #2)) *) (List.map (fn (r,v) => (remove_prime r,v)) o #1) |> to_sml_Arbnums)
-		          (fn () => [])
+		          (fn () => machstate_empty)
 		         endif__)
 	end
 	(* ------------------------- training end ------------------------- *)
@@ -495,10 +515,11 @@ fun next_experiment all_exps next_relation  =
 	val s1::s2::_ = #2 ce_obs_comp
 
         (* create experiment files *)
-        val exp_id  = bir_embexp_sates3_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2, st);
+        val exp_id  = bir_embexp_states2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2, SOME st);
         val exp_gen_message = "Generated experiment: " ^ exp_id;
         val _ = bir_embexp_log_prog exp_gen_message;
 
+(*
         val _ =  (if (#only_gen (scamv_getopt_config ())) then
                     printv 1 exp_gen_message
                     (* no need to do anything else *)
@@ -509,6 +530,7 @@ fun next_experiment all_exps next_relation  =
                         | (SOME r, msg) => printv 1 ("result = " ^ (if r then "ok!" else "failed") ^ " (" ^ msg ^ ")")
                     end);
                  printv 1 "\n\n");
+*)
     in ()
     end;
 
@@ -573,10 +595,29 @@ fun scamv_test_single_file filename =
 fun show_error_no_free_vars (id,_) =
     print ("Program " ^ id ^ " skipped because it has no free variables.\n");
 
+fun match_prog_gen gen sz generator_param =
+    case gen of
+        gen_rand => (
+          case generator_param of
+              SOME x => prog_gen_store_rand x  sz
+            | NONE   => prog_gen_store_rand "" sz)
+      | qc => (case generator_param of
+              SOME x => prog_gen_store_a_la_qc x sz
+            | NONE   => raise ERR "match_prog_gen::qc" "qc type needs to be specified as generator_param")
+      | slice => prog_gen_store_rand_slice sz
+      | from_file => (case generator_param of
+              SOME x => prog_gen_store_fromfile x
+            | NONE   => raise ERR "match_prog_gen::from_file" "file needs to be specified as generator_param")
+      | from_listfile => (case generator_param of
+              SOME x => prog_gen_store_listfile x
+            | NONE   => raise ERR "match_prog_gen::from_file" "listfile needs to be specified as generator_param")
+      | prefetch_strides => prog_gen_store_prefetch_stride sz
+      | _ => raise ERR "match_prog_gen" ("unknown generator type: " ^ (PolyML.makestring gen));
+
 fun match_obs_model obs_model =
     case obs_model of
-      mem_address_pc_trace =>
-      "mem_address_pc_trace"
+        mem_address_pc =>
+        "mem_address_pc"
       | cache_tag_index  =>
         "cache_tag_index"
       | cache_tag_only =>
@@ -591,35 +632,32 @@ fun match_obs_model obs_model =
         "cache_tag_index_part_page"
       | _ => raise ERR "match_obs_model" ("unknown obs_model " ^ PolyML.makestring obs_model);
 
+fun match_hw_obs_model hw_obs_model =
+    case hw_obs_model of
+        hw_cache_tag_index  =>
+        "cache_multiw"
+      | hw_cache_index_numvalid =>
+        "cache_multiw_numinset"
+      | hw_cache_tag_index_part =>
+        "cache_multiw_subset"
+      | hw_cache_tag_index_part_page =>
+        "cache_multiw_subset_page_boundary"
+      | _ => raise ERR "match_hw_obs_model" ("unknown hw_obs_model: " ^ (PolyML.makestring hw_obs_model));
+
 fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enumerate
               , generator = gen, generator_param = generator_param
               , obs_model = obs_model, hw_obs_model = hw_obs_model
               , refined_obs_model = refined_obs_model, obs_projection = proj
-              , verbosity = verb, only_gen = og, seed_rand = seed_rand } =
+              , verbosity = verb, seed_rand = seed_rand } =
     let
 
-        val _ = bir_scamv_helpersLib.rand_isfresh_set seed_rand;
+        val _ = bir_randLib.rand_isfresh_set seed_rand;
 
         val _ = do_enum := enumerate;
         val _ = current_obs_projection := proj;
         
         val prog_store_fun =
-           case gen of
-                gen_rand => (case generator_param of
-                                 SOME x => prog_gen_store_rand x  sz
-                               | NONE   => prog_gen_store_rand "" sz)
-              | qc => (case generator_param of
-                                 SOME x => prog_gen_store_a_la_qc x sz
-                               | NONE   => raise ERR "scamv_run::qc" "qc type needs to be specified as generator_param")
-              | slice => prog_gen_store_rand_slice sz
-              | from_file => (case generator_param of
-                                 SOME x => prog_gen_store_fromfile x
-                               | NONE   => raise ERR "scamv_run::from_file" "file needs to be specified as generator_param")
-              | from_listfile => (case generator_param of
-                                 SOME x => prog_gen_store_listfile x
-                               | NONE   => raise ERR "scamv_run::from_file" "listfile needs to be specified as generator_param")
-              | prefetch_strides => prog_gen_store_prefetch_stride sz
-              | _ => raise ERR "scamv_run" ("unknown generator type " ^ PolyML.makestring gen)
+            match_prog_gen gen sz generator_param;
 
         val _ =
             current_obs_model_id := match_obs_model obs_model;
@@ -628,16 +666,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
             current_refined_obs_model_id := Option.map match_obs_model refined_obs_model;
 
         val _ =
-           case hw_obs_model of
-                hw_cache_tag_index  =>
-                      hw_obs_model_id := "cache_multiw"
-              | hw_cache_index_numvalid =>
-                      hw_obs_model_id := "cache_multiw_numinset"
-              | hw_cache_tag_index_part =>
-                      hw_obs_model_id := "cache_multiw_subset"
-              | hw_cache_tag_index_part_page =>
-                      hw_obs_model_id := "cache_multiw_subset_page_boundary"
-              | _ => raise ERR "scamv_run" ("unknown hw_obs_model " ^ PolyML.makestring hw_obs_model);
+            hw_obs_model_id := match_hw_obs_model hw_obs_model;
 
         val config_str =
           "Scam-V set to the following test params:\n" ^

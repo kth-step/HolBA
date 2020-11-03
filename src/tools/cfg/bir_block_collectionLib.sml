@@ -2,10 +2,36 @@ structure bir_block_collectionLib =
 struct
 local
 
+(* these dependencies probably need cleanup *)
+(* ================================================ *)
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+open bir_inst_liftingTheory
+open bir_lifting_machinesTheory
+open bir_lifting_machinesLib bir_lifting_machinesLib_instances;
+open bir_interval_expTheory bir_update_blockTheory
+open bir_exp_liftingLib bir_typing_expSyntax
+open bir_typing_expTheory
+open bir_extra_expsTheory
+open bir_lifter_general_auxTheory
+open bir_programSyntax bir_interval_expSyntax
+open bir_program_labelsTheory
+open bir_immTheory
+open intel_hexLib
+open bir_inst_liftingLibTypes
+open PPBackEnd Parse
+
+open bir_inst_liftingHelpersLib;
+(* ================================================ *)
+
   open listSyntax;
   open wordsSyntax;
 
   open bir_immSyntax;
+
+  (* error handling *)
+  val libname  = "bir_block_collectionLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
 in
 
@@ -79,7 +105,7 @@ in
 		 val thm2 = CONV_RULE (RAND_CONV (EVAL)) thm1;
 		 val thm3 = (REWRITE_RULE [] thm2);
 
-		 val _ = if ((fn t => t <> T) o snd o dest_eq o concl) thm2
+		 val _ = if ((fn t => not (identical t T)) o snd o dest_eq o concl) thm2
 			 then (print_term ((concl) thm2);raise ERR "block_l_thm_list" "something went wrong")
 			 else ();
 		 (*

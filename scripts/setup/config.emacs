@@ -1,4 +1,4 @@
-(add-to-list 'load-path (substitute-in-file-name "${HOLBA_OPT_DIR}/hol_k12_holba/tools"))
+(add-to-list 'load-path (substitute-in-file-name "${HOLBA_HOL_DIR}/tools"))
 
 (cua-mode)
 

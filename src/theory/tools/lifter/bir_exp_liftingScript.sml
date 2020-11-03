@@ -3,12 +3,14 @@ open bir_expTheory HolBACoreSimps;
 open bir_typing_expTheory bir_valuesTheory
 open bir_envTheory bir_immTheory bir_exp_immTheory
 open bir_immSyntax wordsTheory
+open wordsSyntax
 open bir_exp_memTheory bir_bool_expTheory
 open bir_nzcv_expTheory bir_interval_expTheory
 open bir_lifter_general_auxTheory
 open bir_extra_expsTheory
 open finite_mapTheory;
 open pred_setTheory;
+open bir_auxiliaryLib;
 
 val _ = new_theory "bir_exp_lifting";
 
@@ -54,12 +56,16 @@ val bir_load_mmap_w_alt_thm = store_thm("bir_load_mmap_w_alt_thm", ``
   ) >>
 
   `((w2n a) IN (IMAGE w2n (FDOM mmap_w)))` by (
-    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [FLOOKUP_DEF]
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [FLOOKUP_DEF] >>
+    METIS_TAC[]
   ) >>
   `a IN (FDOM mmap_w)` by (
     FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [w2n_11]
   ) >>
-  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [FLOOKUP_FUN_FMAP, FDOM_FINITE, IMAGE_FINITE, n2w_w2n, FLOOKUP_DEF]
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [FLOOKUP_FUN_FMAP, FDOM_FINITE, IMAGE_FINITE, n2w_w2n, FLOOKUP_DEF] >>
+`(?x.w2n x' = w2n x /\ x IN FDOM mmap_w) = T` by (REWRITE_TAC[EQ_CLAUSES] >> METIS_TAC[]) >>
+ASM_REWRITE_TAC[] >>
+  EVAL_TAC
 );
 
 
@@ -319,20 +325,20 @@ val n2w_bir_load_mmap_w2n_thm = store_thm("n2w_bir_load_mmap_w2n_thm", ``
 
 
 val bir_is_lifted_mem_exp_def = Define `bir_is_lifted_mem_exp
-  (env:bir_var_environment_t) (e : bir_exp_t) (mem : 'a word -> 'b word) <=>
+  (env:bir_var_environment_t) (e : bir_exp_t) (m : 'a word -> 'b word) <=>
   (?sa sb mem_n.
      (size_of_bir_immtype sa = (dimindex (:'a))) /\
      (size_of_bir_immtype sb = (dimindex (:'b))) /\
      (type_of_bir_exp e = SOME (BType_Mem sa sb)) /\
      (bir_env_vars_are_initialised env (bir_vars_of_exp e)) /\
      (bir_eval_exp e env = SOME (BVal_Mem sa sb mem_n)) /\
-     (mem = bir_load_mmap_w (bir_mmap_n2w mem_n)))
+     (m = bir_load_mmap_w (bir_mmap_n2w mem_n)))
 `;
 
 val bir_is_lifted_imm_exp_def = Define `bir_is_lifted_imm_exp env e i =
-  (type_of_bir_exp e = SOME (BType_Imm (type_of_bir_imm i))) /\
+  ((type_of_bir_exp e = SOME (BType_Imm (type_of_bir_imm i))) /\
   (bir_env_vars_are_initialised env (bir_vars_of_exp e)) /\
-  (bir_eval_exp e env = SOME (BVal_Imm i))`;
+  (bir_eval_exp e env = SOME (BVal_Imm i)))`;
 
 
 val _ = Datatype `bir_lift_val_t =
@@ -383,7 +389,6 @@ SIMP_TAC std_ss [bir_is_lifted_imm_exp_def,
 
 val thm_t = build_immtype_t_conj
 ``!s uo env (w:'a word) e.
-
       bir_is_lifted_imm_exp env e (w2bs w s) ==>
       bir_is_lifted_imm_exp env (BExp_UnaryExp uo e)
         (w2bs (bir_unary_exp_GET_OPER uo w) s)``;
@@ -449,7 +454,7 @@ let
     bir_bin_exp_GET_OPER_def, GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id,
     DISJ_IMP_THM, FORALL_AND_THM, n2bs_def] thm0
   val thm2 = SIMP_RULE (std_ss) [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    rich_listTheory.COUNT_LIST_AUX_compute, DISJ_IMP_THM, listTheory.MEM,
     FORALL_AND_THM] thm1
 in
   thm2
@@ -542,9 +547,9 @@ SIMP_TAC std_ss [bir_immTheory.bool2b_def]);
 (* Casting *)
 (***********)
 
-(* The semantics of casting in bir contain a lot of redundancy.
+(* The semantics of casting in BIR contain a lot of redundancy.
    A low-cast is for example the same as a normal cast. So, the theorems
-   below are designed carefully use the most appropriate cast operation. *)
+   below are designed to carefully use the most appropriate cast operation. *)
 
 (* No cast needed, since types are identical *)
 
@@ -815,7 +820,7 @@ ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
 ASM_SIMP_TAC (list_ss++boolSimps.EQUIV_EXTRACT_ss) [bitstringTheory.v2w_def, fcpTheory.FCP_BETA,
   bitstringTheory.testbit, LET_DEF, rich_listTheory.LENGTH_SEG, word_extract_def,
   bitstringTheory.length_w2v, w2w,
-  rich_listTheory.SEG_TAKE_BUTFISTN,
+  rich_listTheory.SEG_TAKE_DROP,
   rich_listTheory.EL_TAKE,
   rich_listTheory.EL_DROP,
   bitstringTheory.el_w2v,
@@ -903,7 +908,6 @@ in thm6
 end);
 
 
-
 val bir_update_mmap_words_INTRO = store_thm ("bir_update_mmap_words_INTRO",
 ``!sa (a: 'a word).
     (size_of_bir_immtype sa = dimindex (:'a)) ==>
@@ -956,29 +960,30 @@ val bir_is_lifted_mem_exp_STORE0 = prove (
     (bir_store_in_mem_words sv sa (w2bs vr sr) mem_f en va = SOME r) ==>
     (bir_is_lifted_mem_exp env (BExp_Store em ea en er) r))
 ``,
-  SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
-    bir_is_lifted_mem_exp_def, PULL_EXISTS,
-    bir_env_oldTheory.bir_env_vars_are_initialised_UNION, bir_eval_store_BASIC_REWR] >>
-  REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
-  `sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
-  `sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
-  REPEAT (BasicProvers.VAR_EQ_TAC) >>
 
-  FULL_SIMP_TAC std_ss [w2n_n2w, w2bs_def, b2n_n2bs, bitTheory.MOD_2EXP_def,
-    GSYM dimword_def, w2n_lt] >>
+SIMP_TAC (std_ss++holBACore_ss++wordsLib.WORD_ss) [bir_is_lifted_imm_exp_def,
+  bir_is_lifted_mem_exp_def, PULL_EXISTS,
+  bir_env_oldTheory.bir_env_vars_are_initialised_UNION, bir_eval_store_BASIC_REWR] >>
+REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+`sa' = sa` by METIS_TAC[size_of_bir_immtype_INJ] >>
+`sb = sv` by METIS_TAC[size_of_bir_immtype_INJ] >>
+REPEAT (BasicProvers.VAR_EQ_TAC) >>
 
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_store_in_mem_words_def, LET_DEF,
-    bir_store_in_mem_def] >>
+FULL_SIMP_TAC std_ss [w2n_n2w, w2bs_def, b2n_n2bs, bitTheory.MOD_2EXP_def,
+  GSYM dimword_def, w2n_lt] >>
 
-  Cases_on `bir_number_of_mem_splits sb sr sa` >> FULL_SIMP_TAC std_ss [] >>
-  rename1 `_ = SOME n` >>
-  REPEAT CASE_TAC >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-    REPEAT BasicProvers.VAR_EQ_TAC >>
-    ASM_SIMP_TAC (std_ss++boolSimps.ETA_ss) [bir_update_mmap_words_INTRO_w2n, n2w_w2n] >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_store_in_mem_words_def, LET_DEF,
+  bir_store_in_mem_def] >>
 
-    METIS_TAC [bir_update_mmap_words_INTRO_w2n, n2w_w2n, bir_load_mmap_w_bir_mmap_n2w_thm]
-  )
+Cases_on `bir_number_of_mem_splits sb sr sa` >> FULL_SIMP_TAC std_ss [] >>
+rename1 `_ = SOME n` >>
+REPEAT CASE_TAC >> (
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  REPEAT BasicProvers.VAR_EQ_TAC >>
+  ASM_SIMP_TAC (std_ss++boolSimps.ETA_ss) [bir_update_mmap_words_INTRO_w2n, n2w_w2n] >>
+
+  METIS_TAC [bir_update_mmap_words_INTRO_w2n, n2w_w2n, bir_load_mmap_w_bir_mmap_n2w_thm]
+)
 );
 
 
@@ -1300,7 +1305,7 @@ let
     FORALL_AND_THM, w2w_id, n2bs_def] thm0
 
   val thm2 = SIMP_RULE std_ss [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    rich_listTheory.COUNT_LIST_AUX_compute, DISJ_IMP_THM, listTheory.MEM,
     FORALL_AND_THM] thm1
 in
   thm2
@@ -1617,7 +1622,7 @@ let
   val thm1 = SIMP_RULE (list_ss++wordsLib.WORD_ss) [
     GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id, n2bs_def] thm0
   val thm2 = SIMP_RULE (std_ss) [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    rich_listTheory.COUNT_LIST_AUX_compute, DISJ_IMP_THM, listTheory.MEM,
     FORALL_AND_THM] thm1
 in
   thm2
@@ -1714,7 +1719,7 @@ let
   val thm1 = SIMP_RULE (list_ss++wordsLib.WORD_ss) [
     GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id, n2bs_def] thm0
   val thm2 = SIMP_RULE (std_ss) [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    rich_listTheory.COUNT_LIST_AUX_compute, DISJ_IMP_THM, listTheory.MEM,
     FORALL_AND_THM] thm1
 in
   thm2
@@ -1746,7 +1751,7 @@ let
   val thm1 = SIMP_RULE (list_ss++wordsLib.WORD_ss) [
     GSYM CONJ_ASSOC, w2bs_REWRS, w2w_id, n2bs_def] thm0
   val thm2 = SIMP_RULE (std_ss) [rich_listTheory.COUNT_LIST_compute,
-    rich_listTheory.COUNT_LIST_AUX_def_compute, DISJ_IMP_THM, listTheory.MEM,
+    rich_listTheory.COUNT_LIST_AUX_compute, DISJ_IMP_THM, listTheory.MEM,
     FORALL_AND_THM] thm1
 in
   thm2

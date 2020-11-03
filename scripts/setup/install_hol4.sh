@@ -29,10 +29,11 @@ export PATH=${POLY_DIR}/bin:$PATH
 export LD_LIBRARY_PATH=${POLY_DIR}/lib:$LD_LIBRARY_PATH
 
 # HOL4 source and branch
-GIT_URL=https://github.com/kth-step/HOL.git
-GIT_BRANCH=for_holba
+GIT_URL=https://github.com/HOL-Theorem-Prover/HOL.git
+GIT_BRANCH=kananaskis-13
+GIT_IS_TAG=1
 
-HOL4_DIR=${HOLBA_OPT_DIR}/hol_k12_holba
+HOL4_DIR=${HOLBA_OPT_DIR}/hol_k13
 
 
 ##################################################################
@@ -40,26 +41,30 @@ HOL4_DIR=${HOLBA_OPT_DIR}/hol_k12_holba
 
 # if HOL does exist, check if it is up-to-date and remove it in case it is not
 if [[ -d "${HOL4_DIR}" ]]; then
-  cd "${HOL4_DIR}"
-  git fetch origin
-
-  # does the remote branch exist locally?
-  if [[ ! `git branch --all --list origin/${GIT_BRANCH}` ]]; then
-    echo "the cached HOL4 version seems to be on another branch, deleting it now"
-    # delete the stale HOL4 build
-    cd "${HOLBA_OPT_DIR}"
-    rm -rf "${HOL4_DIR}"
+  if [[ ! -z "${GIT_IS_TAG}" ]]; then
+    echo "the cached HOL4 version is based on a tag, keeping it"
   else
-    # is there a difference between the current and the remote branch?
-    GIT_DIFF=$(git diff)
-    GIT_DIFF_REMOTE=$(git diff HEAD remotes/origin/${GIT_BRANCH})
-    if [[ "${GIT_DIFF}${GIT_DIFF_REMOTE}" ]]; then
-      echo "the cached HOL4 version has differences, deleting it now"
+    cd "${HOL4_DIR}"
+    git fetch origin
+
+    # does the remote branch exist locally?
+    if [[ ! `git branch --all --list origin/${GIT_BRANCH}` ]]; then
+      echo "the cached HOL4 version seems to be on another branch, deleting it now"
       # delete the stale HOL4 build
       cd "${HOLBA_OPT_DIR}"
       rm -rf "${HOL4_DIR}"
     else
-      echo "the cached HOL4 version is correct, keeping it"
+      # is there a difference between the current and the remote branch?
+      GIT_DIFF=$(git diff)
+      GIT_DIFF_REMOTE=$(git diff HEAD remotes/origin/${GIT_BRANCH})
+      if [[ "${GIT_DIFF}${GIT_DIFF_REMOTE}" ]]; then
+        echo "the cached HOL4 version has differences, deleting it now"
+        # delete the stale HOL4 build
+        cd "${HOLBA_OPT_DIR}"
+        rm -rf "${HOL4_DIR}"
+      else
+        echo "the cached HOL4 version is correct, keeping it"
+      fi
     fi
   fi
 fi

@@ -4,11 +4,9 @@
 
    A module with this signature is provided for multiple architectures. *)
 
-open Abbrev
-open bir_inst_liftingLibTypes
-
 signature bir_inst_lifting = sig
 
+  include Abbrev
   (* ------------------- *)
   (* Single instructions *)
   (* ------------------- *)
@@ -79,7 +77,7 @@ signature bir_inst_lifting = sig
                       (thm (* resulting theorem *) *
                        (* Errors in from: (PC, hex-code, hex-code human, error_data option),
                           as defined in bir_inst_liftingLibTypes  *)
-                       (bir_inst_error list))
+                       (bir_inst_liftingLibTypes.bir_inst_error list))
 
   (* Sometimes we want to lift a program that contains more than one code region.
      Or we want explicitly mark data in the hex-codes. bir_lift_prog_gen allows to
@@ -87,14 +85,14 @@ signature bir_inst_lifting = sig
      bir_inst_liftingLibTypes. *)
 
   val bir_lift_prog_gen : (Arbnum.num * Arbnum.num) (* memory unchanged begin, end *) ->
-                          (bir_inst_lifting_mem_region list) (* list of regions *) ->
-                          (thm * (bir_inst_error list))
+                          (bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list) (* list of regions *) ->
+                          (thm * (bir_inst_liftingLibTypes.bir_inst_error list))
 
 
   (* Reading and Writing code to and from intel hex files. The HEX files unluckily
      do not store whether it is a code or a data section. Therefore we always assume code. *)
-  val read_hex_file : string -> bir_inst_lifting_mem_region list
-  val write_hex_file : string -> bir_inst_lifting_mem_region list -> unit
+  val read_hex_file : string -> bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list
+  val write_hex_file : string -> bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list -> unit
 
 end
 
@@ -129,5 +127,9 @@ signature bir_inst_liftingLib = sig
 
   (* M0_mod instance, big endian, main SP *)
   structure bmil_m0_mod_BigEnd_Main : bir_inst_lifting;
+
+
+  (* RISC-V instance *)
+  structure bmil_riscv : bir_inst_lifting
 
 end

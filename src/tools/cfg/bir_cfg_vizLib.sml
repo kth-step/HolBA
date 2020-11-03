@@ -2,6 +2,9 @@ structure bir_cfg_vizLib =
 struct
 local
 
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+open bir_programSyntax;
+
   open wordsSyntax;
   open bir_immSyntax;
 
@@ -9,6 +12,11 @@ local
 
   open bir_fileLib;
   open graphVizLib;
+
+  (* error handling *)
+  val libname  = "bir_cfg_vizLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
   (*
   val i = 0x10000;
@@ -25,14 +33,14 @@ local
     let
       val idx_num = (dest_lbl_tm o #CFGN_lbl_tm) n;
       val idx     = Arbnum.toInt idx_num;
-      val shape   = if cfg_nodetype_is_call (#CFGN_type n) orelse #CFGN_type n = CFGNT_Return
+      val shape   = if cfg_nodetype_is_call (#CFGN_type n) orelse cfg_node_type_eq (#CFGN_type n, CFGNT_Return)
 		    then node_shape_doublecircle else node_shape_default;
       val content = [("id", "0x" ^ (Arbnum.toHexString idx_num))];
       val node    = (idx, shape, content);
 
       val targets = #CFGN_targets n;
       val (gns_, ged_, i_) =
-        if targets <> [] then
+        if not (List.null targets) then
           List.foldr (gen_graph_for_edges_proc idx) ([], [], i) (targets)
         else
           ((i, node_shape_circle, [("indir", "???")])::[], (idx, i)::[], i+1);

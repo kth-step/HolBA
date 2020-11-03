@@ -2,35 +2,31 @@ structure bir_conc_execLib : bir_conc_execLib =
 struct
 
 (* HOL_Interactive.toggle_quietdec(); *)
-  open HolKernel pairLib listSyntax stringSyntax wordsSyntax optionSyntax;
+  open HolKernel boolLib liteLib simpLib Parse bossLib;
+  open pairLib listSyntax stringSyntax wordsSyntax optionSyntax;
   open bir_symb_execLib;
   open bir_symb_masterLib;
-  open bir_symb_init_envLib;     
   open bir_embexp_driverLib;
 (* HOL_Interactive.toggle_quietdec(); *)
 
-  val (mem_state) = ref ([]:modelValues list);
+  (* error handling *)
+  val libname  = "bir_conc_execLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
-  val getReg = (fn tm => case tm of regT x => x)
-  val getMem = (fn tm => case tm of memT x => x) 
-  val is_memT= (fn tm => can getMem tm)
+
+  val (mem_state) = ref machstate_empty;
+
   val toTerm = rhs o concl
-
   fun econcl exp = (toTerm o EVAL) exp
   fun fromTerm tm = Arbnum.fromString (Parse.term_to_string tm);
+
   fun t2n tm = tm |> strip_comb |> #2 |> (fn a::b::_ => (fromTerm a , fromTerm b));
-  fun mk_mem_state tms = memT("MEM", (map (fn p => t2n p) tms));
-  fun print_state s =
-      let
-	  val (m, rg) = List.partition (is_memT) s;
-	  val(n,v) = getMem(hd m);
-	  val _ = print ("State is =  ")
-	  val _ = print ("(" ^ n ^ ", ")
-	  val _ = map (fn x =>  print ("("^(Arbnum.toString(#1 x))^","^(Arbnum.toString(#2 x))^")")) v
-	  val _ = print "), "
-	  val _ =   map (fn x => let val(n,v) = getReg x in print ("(" ^ n ^ ", " ^(Arbnum.toString( v))^ ")") end) rg
-	  val _ = print "\n"
-      in () end;
+  fun mk_mem_state tms = (8, Redblackmap.fromList Arbnum.compare (map (fn p => t2n p) tms));
+  fun is_state_mem_emp (MACHSTATE (_, (_, m))) =
+    (Redblackmap.numItems m = 0);
+  val add_reg_state = machstate_add_reg;
+  val replace_mem_state = machstate_replace_mem;
 
   fun update_env name value env = 
       let
@@ -62,7 +58,9 @@ struct
 	      (``words$word_mod:'a word -> 'a word -> 'a word``, 2,
 	       wordsLib.WORD_MOD_BITS_CONV)]];
 
-
+  local
+    open bir_inst_liftingHelpersLib;
+  in
   fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_exp_mem";
   val syntax_fns6 = syntax_fns 6 dest_sexop mk_sexop;
   val (bir_load_from_mem_tm,  mk_bir_load_from_mem, dest_bir_load_from_mem, is_bir_load_from_mem)  =
@@ -72,6 +70,7 @@ struct
   val syntax_fnss2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
   val (bitstring_split_tm,  mk_bitstring_split, dest_bitstring_split, is_bitstring_split)  =
       (syntax_fnss2 ) "bitstring_split";
+  end
 
   fun load_store_simp_unchange_conv tm =
       let 
@@ -91,9 +90,9 @@ struct
 	  open bir_exp_memTheory
 	  open bir_exec_expLib
       in
-	  tm |> SIMP_CONV(std_ss++ScamvSimps.bir_load_store_ss)[bir_eval_load_def, bir_eval_store_def]
+	  tm |> SIMP_CONV(std_ss++HolBACoreSimps.bir_load_store_ss)[bir_eval_load_def, bir_eval_store_def]
 	     |> computeLib.RESTR_EVAL_RULE [``bir_eval_load``, ``bir_eval_store``]
-	     |> (toTerm o SIMP_RULE (std_ss++ScamvSimps.bir_load_store_ss) [])
+	     |> (toTerm o SIMP_RULE (std_ss++HolBACoreSimps.bir_load_store_ss) [])
 	     |> load_store_simp_unchange_conv
 	     |> SIMP_CONV (std_ss) [bir_mem_addr_def, bitTheory.MOD_2EXP_def, size_of_bir_immtype_def]
 	     |> (#2 o dest_eq o toTerm)
@@ -106,7 +105,7 @@ struct
 	  open listTheory
 	  open bitTheory bitstringTheory
 
-	  val tm1 = toTerm (SIMP_CONV (std_ss++ScamvSimps.bir_load_store_ss++bir_endian_ss) 
+	  val tm1 = toTerm (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss++bir_endian_ss) 
 		      [bir_eval_load_def, bir_eval_store_def, bir_store_in_mem_def, type_of_bir_imm_def,
   		            bir_number_of_mem_splits_def, size_of_bir_immtype_def, LET_DEF] tm)
 	  val tm2 = load_store_simp_unchange_conv tm1 
@@ -136,7 +135,7 @@ struct
 	  open bir_exp_substitutionsSyntax
 	  
 	  fun distinct [] = []
-	    | distinct (x::xs) = x::distinct(List.filter (fn y => y <> x) xs);
+	    | distinct (x::xs) = x::distinct(List.filter (fn y => not (identical y x)) xs);
 
 	  val mem = mk_var ("MEM",Type`:num |-> num`)
 	  val loadList = find_terms is_BExp_Load (econcl exp)
@@ -176,25 +175,25 @@ struct
 	  val memSubs = subst [mem |-> memInit] (econcl exp)
       in
 	  (memSubs,(mk_mem_state []))
-      end
+      end;
 
   fun conc_exec_program depth prog envfo (mls,v) =
       let 
 	  val holba_ss = ((std_ss++HolBACoreSimps.holBACore_ss))
 	  val precond  = ``BExp_Const (Imm1 1w)``
-	  val states   = symb_exec_process_to_leafs_pdecide (fn x => true) envfo depth precond prog
+	  val states   = symb_exec_process_to_leafs_pdecide (fn x => true) envfo depth precond prog (SOME "*")
 
 	  (* filter for the concrete path *)
-	  fun eq_true t = t = ``SOME (BVal_Imm (Imm1 1w))``
+	  fun eq_true t = identical t ``SOME (BVal_Imm (Imm1 1w))``
 	  fun pathcond_val s =
 	      let
 		  val (bsst_pred_init_mem, ms) = mem_init_conc_exec ``(^s).bsst_pred`` (mls,v)
-		  val _ =  mem_state := ms::(!mem_state)
+		  val _ =  mem_state := replace_mem_state ms (!mem_state);
 		  val restr_eval_tm = (toTerm o computeLib.RESTR_EVAL_CONV [``bir_eval_load``, ``bir_eval_store``])
 					  ``bir_eval_exp (^bsst_pred_init_mem) (BEnv (K NONE))``;
 		  val bsst_simp_tm = 
                       (let 
-			   val tm = ((toTerm) (SIMP_CONV (std_ss++ScamvSimps.bir_load_store_ss) [] (restr_eval_tm)))  
+			   val tm = ((toTerm) (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] (restr_eval_tm)))  
 			       handle _ => restr_eval_tm
 			   val (f,t) = Lib.first (fn (tac,t) => (Lib.can tac) t)
 			   			 [( load_store_simp_unchange_conv,tm ), 
@@ -228,7 +227,7 @@ struct
 	    val res =
                 eval_exp
 	    	    (let
-	    	     val tm = (toTerm (SIMP_CONV (std_ss++ScamvSimps.bir_load_store_ss) [] (toTerm esimp)))
+	    	     val tm = (toTerm (SIMP_CONV (std_ss++HolBACoreSimps.bir_load_store_ss) [] (toTerm esimp)))
 	    		 handle _ => (toTerm esimp)
 	    	     val res = load_store_simp_unchange_conv tm
 	    		 handle _ => tm
@@ -264,7 +263,7 @@ struct
       val obs_exp = map dest_bir_symb_obs (flatten obs_elem);
       val res = List.concat
                     (map (fn (id,cond,ob,f) =>
-                             if eval_exp_to_val cond = ``BVal_Imm (Imm1 1w)`` andalso int_of_term id <> obs_projection
+                             if identical (eval_exp_to_val cond) ``BVal_Imm (Imm1 1w)`` andalso int_of_term id <> obs_projection
                              then let val t = mk_comb (f, eval_explist_to_vallist ob)
                                   in [(int_of_term id,eval_exp t)] end
                              else [])
@@ -275,24 +274,34 @@ struct
 
   fun conc_exec_obs_compute obs_projection prog s =
     let
-      val is_state_mem_emp = (fn s => (#1 (List.partition (is_memT) s)) |> hd |> (#2 o getMem) |> List.null);
-      val _ =  mem_state := []
-      
-      val (m, rg) = List.partition (is_memT) s
-      val m'  = if List.null m then ("MEM",[]:((num * num) list)) else (getMem (hd m))
-      val rg' = map getReg rg
-      val envfo = SOME (gen_symb_updates rg')
-      val elm = (filter (fn (a,b) => a = (Arbnum.fromInt 4294967295)) (#2 m'));
+      val (MACHSTATE (regmap, (wsz, memmap))) = s;
+
+      val _ =  mem_state := machstate_empty;
+
+      val _ = if wsz = 8 then () else
+              raise ERR "conc_exec_obs_compute" "can only handle byte addressed memory";
+
+      val regmap' = Redblackmap.listItems regmap;
+      val memmap' = Redblackmap.listItems memmap;
+
+      val envfo = SOME (gen_symb_updates regmap');
+
+      (* TODO: what is this magic thing here? care to comment? *)
+      val elm = (filter (fn (a,b) => a = (Arbnum.fromInt 4294967295)) memmap');
+
+      (* TODO: what is this magic thing? *)
       val (m, v) = if   not(List.null elm) 
 		   then (
-		          getMem (hd m) |> (fn x => ((#1 x), []:((num * num) list))),
-		          numSyntax.term_of_int(Arbnum.toInt((#2 o hd) elm))
+		          [],
+		          numSyntax.term_of_int(Arbnum.toInt((snd o hd) elm))
 		        )
-		   else (m', ``(0:num)``);
-      val state_ = conc_exec_program 200 prog envfo ((#2 m),``^v``)
-      val obs = conc_exec_obs_extract obs_projection state_ ((#2 m),``^v``)
+		   else (memmap', ``(0:num)``);
 
-      val new_state = if (is_state_mem_emp ((!mem_state) @ rg)) then s else (!mem_state) @ rg
+      val state_ = conc_exec_program 200 prog envfo (m,``^v``)
+      val obs = conc_exec_obs_extract obs_projection state_ (m,``^v``)
+
+      val state_wregs = List.foldl (fn (r,s) => add_reg_state r s) (!mem_state) regmap';
+      val new_state = if (is_state_mem_emp state_wregs) then s else state_wregs;
 
       val _ = map (fn (id,ob) => (print (PolyML.makestring id ^ " "); print_term ob)) obs
       val _ = print "\n";
@@ -305,7 +314,7 @@ struct
 	      val (obs1, state1) = conc_exec_obs_compute obs_projection prog s1;
 	      val (obs2, state2) = conc_exec_obs_compute obs_projection prog s2;
       in
-	  (obs1 = obs2, [state1, state2])
+	  (list_eq (fn (i1,t1) => fn (i2,t2) => i1 = i2 andalso identical t1 t2) obs1 obs2, [state1, state2])
       end;
 
 

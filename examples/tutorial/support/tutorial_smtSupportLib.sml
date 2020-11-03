@@ -1,7 +1,7 @@
 structure tutorial_smtSupportLib =
 struct
 
-open HolKernel Parse;
+open HolKernel boolLib liteLib simpLib Parse bossLib;
 open bir_exp_to_wordsLib bslSyntax;
 open bir_exp_tautologiesTheory;
 open bir_expTheory bir_expSyntax;
@@ -45,7 +45,7 @@ fun prove_bir_eval_exp_with_SMT_then_oracle_TAC (assum_list, goal) =
     val _ = if (is_some rhs_opt_tm) then () else
       raise Fail "Cannot prove the goal because the RHS isn't SOME btrue.";
     val rhs_tm = dest_some rhs_opt_tm
-    val _ = if (rhs_tm = ``BVal_Imm (Imm1 1w)``) then () else
+    val _ = if (identical rhs_tm ``BVal_Imm (Imm1 1w)``) then () else
       raise Fail "Cannot prove the goal because the RHS isn't btrue.";
     (**)
     val (bir_tm, env_tm) = dest_bir_eval_exp eval_tm

@@ -1,10 +1,14 @@
 structure bir_symb_execLib :> bir_symb_execLib = 
 struct
 
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+open Abbrev;
+
 local
 (* 
 app load ["bir_symb_execTheory", "bir_symb_envTheory", "bir_symb_init_envLib"];
 *)
+
 
 open HolKernel
 open pairLib
@@ -18,6 +22,11 @@ open bir_expSyntax;
 open bir_envSyntax;
 
 val debug_on = false;
+
+  (* error handling *)
+  val libname  = "bir_symb_execLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
 in
 
@@ -80,7 +89,7 @@ fun symb_is_BST_AssertionViolated state =
   let 
     val (pc, env, pres, status, obs) = dest_bir_symb_state state;
   in
-    status = ``BST_AssertionViolated``
+    identical status ``BST_AssertionViolated``
   end;
 
 (* We represent an Execution as a tree, where branches
@@ -149,9 +158,9 @@ val bir_program = ``BirProgram
                           (\x. x)];
          bb_last_statement := BStmt_Halt (BExp_Const (Imm64 4w))|>]``;
 *)
-fun symb_exec_program depth precond bir_program pd envupdate_o =
+fun symb_exec_program depth precond bir_program rso pd envupdate_o =
   let 
-    val env_ = init_env bir_program;
+    val env_ = init_env bir_program rso;
     val env = case envupdate_o of
                  NONE   => env_
                | SOME f => f env_;
@@ -255,9 +264,7 @@ val exp = ``BExp_Const (Imm32 r1)``;
   val bir_exp_hvar_to_bvar_bexp = bir_exp_rewrite (fn exp => if not (is_BExp_Const exp) then exp else
         let val (imm_t_i, w) = (gen_dest_Imm o dest_BExp_Const) exp in
           if not (is_var w) then exp else
-          let val (v_n, v_t) = dest_var w 
-		  handle HOL_ERR _ => raise ERR "dest_bir_symb_obs" ("cannot destruct term \"" ^ (term_to_string w) ^ "\"")
-	  in
+          let val (v_n, v_t) = dest_var w in
             (mk_BExp_Den o mk_BVar_string) (v_n, mk_BType_Imm(bir_immtype_t_of_word_ty v_t))
           end
         end);

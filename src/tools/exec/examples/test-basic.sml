@@ -12,7 +12,7 @@ val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 fun assert_same_progs (a, b) =
   let
     val semantically_equals_thm = EVAL ``^(snd a) = ^(snd b)``;
-    val semantically_equals = ((snd o dest_eq o concl) semantically_equals_thm) = T;
+    val semantically_equals = identical ((snd o dest_eq o concl) semantically_equals_thm) T;
     (*val semantically_equals = ((snd a) = (snd b));*)
   in if semantically_equals then ()
   else let

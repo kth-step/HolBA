@@ -69,7 +69,8 @@ echo
 echo "-----------------------------------------------"
 echo "------------- installing embexp ---------------"
 echo "-----------------------------------------------"
-"${SETUP_DIR}/install_embexp.sh"
+"${SETUP_DIR}/install_embexp_opt.sh"
+"${SETUP_DIR}/install_embexp_logs.sh"
 echo
 
 
