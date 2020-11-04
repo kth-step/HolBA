@@ -287,6 +287,8 @@ struct
       val envfo = SOME (gen_symb_updates regmap');
 
       (* TODO: what is this magic thing here? care to comment? *)
+      (* Next two statements are to handle cases where Z3 returns K(BitVec(64), 0) instead of explicitly assigning values to memory addresses. *)
+      (* The magic number 4294967295 is an out of range address used to mark such cases.  *)
       val elm = (filter (fn (a,b) => a = (Arbnum.fromInt 4294967295)) memmap');
 
       (* TODO: what is this magic thing? *)

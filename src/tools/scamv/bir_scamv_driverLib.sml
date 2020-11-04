@@ -225,6 +225,8 @@ fun to_sml_Arbnums model =
 				   in
 				       (dest_word_literal ad, dest_word_literal vl)
                                        (* TODO: are you serious?! *)
+				       (* Yes I am serious! Sometime Z3 returns a function like K(BitVec(64), 0) instead of explicitly assigning values to memory addresses. *)
+				       (* To mark such cases I used an out range address 0xFFFFFFFF. This is aslo the magic number which showes up in conc_exe_lib. *)
 				       handle _ => (Arbnum.fromInt 4294967295, dest_word_literal vl)
 				   end) vlsW
 	    in
