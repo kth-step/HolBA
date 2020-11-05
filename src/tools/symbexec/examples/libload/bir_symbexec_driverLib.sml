@@ -158,7 +158,7 @@ in (* outermost local *)
             in () end
             handle _ => print "\nSP  = n/a\n\n";
 
-          val syst_merged_countw = get_state_symbv "script" bv_countw syst_merged;
+          val syst_merged_countw = get_state_symbv "merge_to_summary" bv_countw syst_merged;
 
           (*
           val _ = print (symbv_to_string syst_merged_countw);
@@ -272,6 +272,47 @@ in (* outermost local *)
       val _ = timer_stop (fn s => print("time to drive symbolic execution: " ^ s ^ "\n")) timer_meas;
 
       val sum = merge_to_summary lbl_tm systs_after;
+
+      (* print max stack usage and max clock cycle usgae *)
+      val _ = print ("\n\nSummary info\n");
+      val _ = print (">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+      val (_, _, sum_systs) = sum;
+      val _ = print ("Have " ^ (Int.toString (length sum_systs)) ^ " states in summary.\n");
+      val _ = List.map (fn syst_merged =>
+        let
+          val syst_merged_mem_symbv = get_state_symbv "obtain_summary" bv_mem syst_merged;
+          val (mem_sp, mem_stack) =
+            case syst_merged_mem_symbv of
+               SymbValMem (_, _, (_,_, m), _) => m
+	     | _ => raise ERR "obtain_summary" "should be a symbolic memory";
+          val mem_stack_max =
+            let
+              val addrs = (List.map fst o Redblackmap.listItems) mem_stack;
+              val max_r = List.foldr (fn (a,max_) => if Arbnum.< (max_, a) then a else max_) Arbnum.zero addrs;
+              val max   = if List.null addrs
+                          then Arbnum.zero
+                          else Arbnum.+ (max_r, Arbnum.fromInt 0);
+            in
+              Arbnum.toString max
+            end;
+          val _ = print ("\nstack max = " ^ (mem_stack_max) ^ "\n");
+          val syst_merged_countw = get_state_symbv "obtain_summary" bv_countw syst_merged;
+          val countw_max_tm =
+            case syst_merged_countw of
+               SymbValInterval ((_, max), _) => max
+             | _ => raise ERR "obtain_summary" "should be an interval";
+          val countw_inc = ((fn add_tm =>
+            let
+              val match_tm = ``BExp_BinExp BIExp_Plus
+                               (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                               (BExp_Const (Imm64 x))``;
+              val (vs, _) = hol88Lib.match match_tm add_tm;
+              val inc_val = fst (List.nth (vs, 0));
+            in term_to_string inc_val end
+            ) countw_max_tm)
+            handle _ => raise ERR "obtain_summary" ("countw max expression not as expected" ^ (term_to_string countw_max_tm))
+          val _ = print ("countw max = " ^ countw_inc ^ "\n");
+        in () end) sum_systs;
     in
       sum
     end;
@@ -285,6 +326,9 @@ in (* outermost local *)
       val end_lbl_tms = find_func_ends n_dict entry_label;
 
       val sum = obtain_summary n_dict bl_dict sums lbl_tm end_lbl_tms;
+
+      val _ = print ("\nFinished summary for " ^ entry_label ^ "\n");
+      val _ = print (">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n");
     in
       sum
     end;
