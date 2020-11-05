@@ -4,43 +4,15 @@ struct
 local
   open bir_symbexec_stateLib;
 
-  open bir_constpropLib;
-  open bir_exp_helperLib;
-
   val debugAssignments = false;
   val debugPaths = false;
 in (* outermost local *)
 
 (* primitive for symbolic/abstract computation for expressions *)
 local
-  open bir_expSyntax;
-
-  fun subst_fun env vals (bev, (e, vars)) =
-    let
-      val bv_ofvals = find_bv_val "subst_fun" env bev;
-
-      val (exp, vars') =
-        let
-          val symbv = find_bv_val "subst_fun" vals bv_ofvals;
-          val expo = case symbv of
-                       SymbValBE (x, _) => SOME x
-                     | _ => NONE;
-          val use_expo_var =
-            isSome expo andalso
-            (bir_expSyntax.is_BExp_Const o valOf) expo;
-        in
-          if use_expo_var then
-            (valOf expo, vars)
-          else raise ERR "subst_fun" "this is never seen"
-        end
-        handle _ => (mk_BExp_Den bv_ofvals, bv_ofvals::vars);
-    in
-      (subst_exp (bev, exp, e),
-       vars')
-    end;
-
-  open bir_symbexec_compLib;
-
+  local
+    open bir_symbexec_compLib;
+  in
   fun compute_val_try compute_val_and_resolve_deps preds vals (besubst, besubst_vars) deps_l2 =
     let val _ = if not debugAssignments then () else
                 (print "BESUBST: "; print_term besubst); in
@@ -55,7 +27,11 @@ local
       | NONE => (
          compute_val_try_mem compute_val_and_resolve_deps preds vals (besubst, besubst_vars)
     ))) end;
+  end;
 
+in (* local *)
+
+  (* TODO: think if it makes sense to have this function available outside or if we want another interface for this part *)
   fun compute_val_and_resolve_deps preds vals (besubst, besubst_vars) =
     let
       val deps_l2 = List.foldr (Redblackset.union)
@@ -73,6 +49,9 @@ local
           end
     end;
 
+end (* local *)
+
+local (* local *)
   val sp_align_sub_const_match_tm = ``
         (BExp_BinExp BIExp_Minus
           (BExp_Align Bit32 2 (BExp_Den (BVar "SP_process" (BType_Imm Bit32))))
@@ -136,11 +115,33 @@ local
     end
     handle HOL_ERR _ => be));
 
+  fun subst_fun env vals (bev, (e, vars)) =
+    let
+      open bir_expSyntax;
+      open bir_constpropLib;
+      val bv_ofvals = find_bv_val "subst_fun" env bev;
+
+      val (exp, vars') =
+        let
+          val symbv = find_bv_val "subst_fun" vals bv_ofvals;
+          val expo = case symbv of
+                       SymbValBE (x, _) => SOME x
+                     | _ => NONE;
+          val use_expo_var =
+            isSome expo andalso
+            (bir_expSyntax.is_BExp_Const o valOf) expo;
+        in
+          if use_expo_var then
+            (valOf expo, vars)
+          else raise ERR "subst_fun" "this is never seen"
+        end
+        handle _ => (mk_BExp_Den bv_ofvals, bv_ofvals::vars);
+    in
+      (subst_exp (bev, exp, e),
+       vars')
+    end;
+
 in (* local *)
-
-  (* TODO: think if it makes sense to have this function available outside or if we want another interface for this part *)
-  val compute_val_and_resolve_deps = compute_val_and_resolve_deps;
-
   fun compute_valbe be syst =
     let
       val env   = SYST_get_env  syst;
@@ -150,6 +151,7 @@ in (* local *)
       val be_   = simplify_be be syst;
       (* TODO: we may be left with an expression that fetches a single variable from the environment *)
 
+      open bir_exp_helperLib;
       val be_vars = get_birexp_vars be_;
       val besubst_with_vars = List.foldr (subst_fun env vals) (be_, []) be_vars;
     in

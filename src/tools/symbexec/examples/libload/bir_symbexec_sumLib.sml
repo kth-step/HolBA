@@ -236,7 +236,6 @@ in (* local *)
 
       (* for our application, merging needs to preserve
          at least: pred "prefix", SP, something about MEM *)
-      (* for now, scatch env completely, and use fresh variables *)
       val env_vars = List.map I (Redblackmap.listItems env);
       val env' = Redblackmap.fromList Term.compare (
         List.map (fn (bv, bv_val_) =>

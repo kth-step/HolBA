@@ -226,7 +226,7 @@ in (* outermost local *)
           case addr_ of
              SOME (SymbValBE x) => x
            | NONE => (addr_tm, Redblackset.addList (symbvalbe_dep_empty, addr_tm_vars))
-           | _ => raise ERR "process_addr" "NEEDS TO BE A SYMBOLIC EXPRESSION";
+           | _ => raise ERR "process_addr" ("NEEDS TO BE A SYMBOLIC EXPRESSION: " ^ (term_to_string addr_tm));
 
       val _ = if not debug_addrOn then () else
               (print ("addr proc: {{{\n"); print_term addr; print "}}}\n\n");
@@ -388,7 +388,7 @@ bir_constpropLib.eval_constprop (bhighcast16 (blowcast8 (bconst32 0x00223344)))
       val offset = sp_offset + suboff;
 
       val (exp, deps) = Redblackmap.find (mem_stack, Arbnum.fromInt offset)
-        handle _ => raise ERR "mem_load_stack" "address is not mapped in global memory";
+        handle _ => raise ERR "mem_load_stack" "address is not mapped in stack memory";
 
 (*
 val suboff = 0;
