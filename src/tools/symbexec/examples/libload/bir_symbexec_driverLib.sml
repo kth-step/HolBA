@@ -272,9 +272,25 @@ in (* outermost local *)
       val _ = timer_stop (fn s => print("time to drive symbolic execution: " ^ s ^ "\n")) timer_meas;
 
       val sum = merge_to_summary lbl_tm systs_after;
+    in
+      sum
+    end;
 
+
+  (* creation of summaries for functions *)
+  (* ================================================================== *)
+  fun create_func_summary n_dict bl_dict sums entry_label =
+    let
+      val lbl_tm      = find_func_lbl_tm entry_label;
+      val end_lbl_tms = find_func_ends n_dict entry_label;
+
+      val sum = obtain_summary n_dict bl_dict sums lbl_tm end_lbl_tms;
+
+      val _ =
+      let
       (* print max stack usage and max clock cycle usgae *)
-      val _ = print ("\n\nSummary info\n");
+      val _ = print ("\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+      val _ = print ("Summary info for " ^ entry_label ^ "\n");
       val _ = print (">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
       val (_, _, sum_systs) = sum;
       val _ = print ("Have " ^ (Int.toString (length sum_systs)) ^ " states in summary.\n");
@@ -295,7 +311,7 @@ in (* outermost local *)
             in
               Arbnum.toString max
             end;
-          val _ = print ("\nstack max = " ^ (mem_stack_max) ^ "\n");
+          val _ = print ("\nstack  max = " ^ (mem_stack_max) ^ "\n");
           val syst_merged_countw = get_state_symbv "obtain_summary" bv_countw syst_merged;
           val countw_max_tm =
             case syst_merged_countw of
@@ -313,22 +329,8 @@ in (* outermost local *)
             handle _ => raise ERR "obtain_summary" ("countw max expression not as expected" ^ (term_to_string countw_max_tm))
           val _ = print ("countw max = " ^ countw_inc ^ "\n");
         in () end) sum_systs;
-    in
-      sum
-    end;
-
-
-  (* creation of summaries for functions *)
-  (* ================================================================== *)
-  fun create_func_summary n_dict bl_dict sums entry_label =
-    let
-      val lbl_tm      = find_func_lbl_tm entry_label;
-      val end_lbl_tms = find_func_ends n_dict entry_label;
-
-      val sum = obtain_summary n_dict bl_dict sums lbl_tm end_lbl_tms;
-
-      val _ = print ("\nFinished summary for " ^ entry_label ^ "\n");
-      val _ = print (">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n");
+      val _ = print ("\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n");
+      in () end;
     in
       sum
     end;
