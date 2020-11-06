@@ -285,76 +285,8 @@ local
     arb_regname_except [reg] >>= (fn target =>
     return (target, Load (Reg target, Ld (SOME offset, reg))));
 
-  fun arb_str_offset_selected_target reg offset =
-    arb_regname_except [reg] >>= (fn source =>
-    return (source, Store (Reg source, Ld (SOME offset, reg))));
-
-  fun arb_mem_op_selected_source  reg  offset   =
-    oneof[arb_ld_offset_selected_source reg offset, arb_str_offset_selected_target reg offset];
-
-  fun arb_shift_left_selected_source reg offset =
-      return (Lsl (Reg reg, Reg reg, Imm offset));
-
-  val arb_pad = sized (fn n => choose (0, n)) >>=
-		      (fn n => resize n arb_program_noload_nobranch);
-
   fun arb_cmp_g reg1 reg2 =
     return (Compare (Reg reg1, Reg reg2));
-
-  fun arb_cmp () =
-    let
-	val offsets = repeat 2 (choose(0, 255))
-	val regs    = repeat 2 (arb_regname_except ["x1", "x0"])
-	val zipped  = regs >>= (fn reg => offsets >>= (fn off =>  return ((zip reg off), reg)))
-    in
-	
-        zipped >>= (fn (pairs, [reg1, reg2]) => sequence((map (fn (r,i) => arb_ld_offset r i) pairs)@[arb_cmp_g reg1 reg2])
-	       >>= (fn result => return (result)))
-    end;
-
-  fun arb_cmp_r () =
-    let
-	val offsets = choose(0, 255)
-	val regs    = arb_regname_except ["x1", "x0"];
-	val zipped  = regs >>= (fn reg1 => offsets 
-			   >>= (fn off => arb_regname_except [reg1]
-                           >>= (fn reg2 =>  return ([(reg1, off)], [reg1,reg2]))));
-    in
-	
-        zipped >>= (fn (pairs, [reg1, reg2]) => sequence((map (fn (r,i) => arb_ld_offset r i) pairs)@[arb_cmp_g reg1 reg2])
-	       >>= (fn result => return (result)))
-    end;
-
-  fun preamble () =
-    let
-	val offsets = choose(0, 255);
-	val regs    = arb_regname_except ["x1", "x0"];
-	val zipped  = regs >>= (fn reg1 => offsets 
-			   >>= (fn off1 => arb_regname_except [reg1]
-                           >>= (fn reg2 => offsets
-		           >>= (fn off2 => return ([(reg1, off1), (reg2, off2)], [reg1,reg2])))));
-    in
-	
-        zipped >>= (fn (pairs, [reg1, reg2]) => sequence((map (fn (r,i) => arb_ld_offset r i) pairs)@[arb_cmp_g reg1 reg2])
-	       >>= (fn result => return (result, [reg1, reg2])))
-    end;
-
-
-  fun preamble1 () =
-    let
-	val offsets = choose(0, 255)
-	val regs    = arb_regname_except ["x1", "x0"]
-	val zipped  = regs >>= (fn reg1 => offsets 
-			   >>= (fn off1 => arb_regname_except [reg1]
-                           >>= (fn reg2 => offsets
-		           >>= (fn off2 => return ([(reg1, off1), (reg2, off2)], [reg1,reg2])))))
-	val ext_src = zipped >>= (fn (pairs, [reg1,reg2]) => sequence (map (fn (r,i) => arb_ld_offset_src r i) pairs)
-			     >>= (fn h::t::_ => (return ([fst h, fst t], [snd h, snd t], [reg1, reg2]))
-				 ))
-    in
-	ext_src >>= (fn (srcs, lds, [reg1, reg2]) =>  (arb_cmp_g (hd srcs) reg2)
-                >>= (fn cmpi => return (lds@[cmpi], [reg1, reg2])))
-    end;
 
   fun preamble2 () =
     let
@@ -375,32 +307,7 @@ local
   fun left_gen reg offset =
       (arb_ld_offset_selected_source reg  offset)
               >>= (fn (_, mop) => return [mop])
-      (* (arb_ld_offset_selected_source reg  offset)  *)
-               (* >>= (fn (reg, ld1) => arb_shift_left_selected_source  reg 9 *)
-               (* >>= (fn   shift    => arb_mem_op_selected_source reg offset *)
-               (* >>= (fn (_,   ld2) => return [ld1, shift, ld2]))) *);
       
-  val arb_block_l = 
-      let 
-	  val offsets = choose(0, 255)
-      in
-    preamble() >>= (fn (prmbl, [reg1, _]) => offsets 
-               >>= (fn offset => ((List.foldr (op@) []) <$> 
-   	            (sequence [arb_pad, (left_gen reg1 offset)]))
-               >>= (fn left => return (prmbl, left))))
-      end;
-
-  val arb_block_l2 = 
-      let 
-	  val offsets = choose(0, 255)
-      in
-    preamble1() >>= (fn (prmbl, regs) => offsets 
-	       >>= (fn offset =>  arb_regname_except regs
-               >>= (fn reg1 => ((List.foldr (op@) []) <$> 
-   	            (sequence [(* arb_pad, *) (left_gen reg1 offset)]))
-               >>= (fn left => return (prmbl, left)))))
-      end;
-
   val arb_block_l3 = 
       let 
 	  val offsets = choose(0, 255)
@@ -412,40 +319,6 @@ local
       end;
 
 in
-  fun arb_program_cond_spectre preamble arb_prog_left arb_prog_right =
-      let
-  	  fun rel_jmp_after bl = Imm (((length bl) + 1) * 4);
-
-  	  val arb_prog =arb_prog_left  >>= (fn blockl =>
-                        arb_prog_right >>= (fn blockr =>
-                        preamble       >>= (fn prmbl  =>
-                           let val blockl_wexit = blockl@[Branch (NONE, rel_jmp_after blockr)] in
-                             return (prmbl
-  			            @[Branch (SOME EQ, rel_jmp_after blockl_wexit)]
-                                    @blockl_wexit
-                                    @blockr)
-                           end
-                        )));
-      in
-  	  arb_prog
-      end;
-
-  (* val arb_program_spectre = *)
-  (*     let *)
-  (* 	  val arb_pad = sized (fn n => choose (0, n)) >>= *)
-  (* 			      (fn n => resize n arb_program_noload_nobranch); *)
-
-  (* 	  val arb_load_instr = arb_load_indir; *)
-  (* 	  val arb_store_instr= arb_store_indir; *)
-
-  (* 	  val arb_block_l = (List.foldr (op@) []) <$> ( *)
-  (*                           sequence [arb_pad, (fn x => [x]) <$> oneof[arb_load_instr, arb_store_instr]]); *)
-
-  (* 	  val arb_block_r = (List.foldr (op@) []) <$> ( *)
-  (*                           sequence [arb_pad, (fn x => [x]) <$> oneof[arb_load_instr, arb_store_instr]]); *)
-  (*     in *)
-  (* 	  arb_program_cond_spectre (arb_cmp_r ()) arb_block_l arb_block_r *)
-  (*     end; *)
 
   fun arb_program_glue_spectre arb_prog_preamble_left arb_prog_right =
       let
@@ -473,7 +346,7 @@ in
 
 
   	  val arb_block_r = (List.foldr (op@) []) <$> (
-              sequence [(* arb_pad, *) (fn x => [x]) <$> oneof[arb_load_indir(* , arb_store_indir *)]]);
+              sequence [(fn x => [x]) <$> oneof[arb_load_indir]]);
       in
   	  arb_program_glue_spectre arb_block_l3 arb_block_r
       end

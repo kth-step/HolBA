@@ -39,9 +39,6 @@ sig
     val prog_gen_a_la_qc : ArmInstruction list Gen -> int -> string list;
     val prog_gen_a_la_qc_noresize : ArmInstruction list Gen -> int -> string list;
 
-    val arb_program_cond_spectre : ArmInstruction list Gen ->
-    				   ArmInstruction list Gen ->
-    				   ArmInstruction list Gen -> ArmInstruction list Gen
     val arb_program_glue_spectre : (ArmInstruction list * ArmInstruction list) Gen ->
 				   ArmInstruction list Gen -> ArmInstruction list Gen
     val arb_program_spectre : ArmInstruction list Gen

@@ -218,23 +218,24 @@ fun to_sml_Arbnums model =
     List.foldl (fn ((name, tm), mst) => 
         if finite_mapSyntax.is_fupdate tm
 	then
-	    let val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm
+	    let val bitvec = (can o find_term) (fn x => identical ``(BitVec: 64 word)`` x )
+		val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm
 		val vlsN = map (fn p =>
 				   let
 				       val (ad, vl) = pairSyntax.dest_pair p
 				   in
-				       (dest_word_literal ad, dest_word_literal vl)
-                                       (* TODO: are you serious?! *)
-				       (* Yes I am serious! Sometime Z3 returns a function like K(BitVec(64), 0) instead of explicitly assigning values to memory addresses. *)
-				       (* To mark such cases I used an out range address 0xFFFFFFFF. This is aslo the magic number which showes up in conc_exe_lib. *)
-				       handle _ => (Arbnum.fromInt 4294967295, dest_word_literal vl)
+				       (* Sometime Z3 returns a function like K(BitVec(64), 0) instead of explicitly assigning values to memory addresses. *)
+				       (* To mark such cases I used an out of range address 0xFFFFFFFF. This is also the magic number which showes up in bir_conc_execLib. *)
+
+				       if bitvec ad
+				       then (Arbnum.fromInt 4294967295, dest_word_literal vl)
+				       else (dest_word_literal ad, dest_word_literal vl)
 				   end) vlsW
 	    in
 		machstate_replace_mem (8, Redblackmap.fromList Arbnum.compare vlsN) mst
 	    end
 	else
 	    machstate_add_reg (name, dest_word_literal tm) mst) machstate_empty model;
-
 
 val hw_obs_model_id = ref "";
 val do_enum = ref false;
