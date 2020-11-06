@@ -216,11 +216,9 @@ struct
 	  in
 	      case (term_to_string casttyp) of 
 		  "BIExp_UnsignedCast" =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
-		| "BIExp_SignedCast"   =>  let val _ = print "BIExp_SignedCast\n" in
-		                           if val_typ_sz >= cast_typ_to_int
+		| "BIExp_SignedCast"   =>  if val_typ_sz >= cast_typ_to_int
 					   then wordsSyntax.mk_w2w(val_ty, dw cast_ty)
 					   else wordsSyntax.mk_sw2sw(val_ty, dw cast_ty) 
-					   end
 		| "BIExp_LowCast"      =>  wordsSyntax.mk_w2w(val_ty, dw cast_ty)
 		  (* let *)
 		  (*     val num_of_exp_type = fcpLib.index_to_num(dw cast_ty); *)

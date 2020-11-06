@@ -409,7 +409,7 @@ fun next_experiment all_exps next_relation  =
 
         val _ = printv 1 ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
-        val _ = min_verb 4 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
+        val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model(*; print "\n"*)));
         val _ = printv 1 ("Printed model\n");
 	(*Need to be removed later. It is just for experimental reasone*)
 

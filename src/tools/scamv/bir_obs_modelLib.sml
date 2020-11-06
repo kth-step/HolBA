@@ -261,6 +261,28 @@ local
 	`;
 
     (* tag1 tag1 tag1 tag2 tag3 *)
+    val preEvict_hyp1_crypto_def = Define`
+        preEvict_hyp1_crypto tml =
+          let v1 = ((bus_round (EL 3 tml)) <+> (BExp_Const (Imm64 1w))) <%> (BExp_Const (Imm64 4w)) in
+            BStmt_Assert(
+              (
+                 (
+                  (((((iset (EL 2 tml)) == (iset (EL 3 tml))) <&> ((iset (EL 3 tml)) == (iset (EL 4 tml))))
+     			<&> ((iset (EL 4 tml)) == (iset (EL 5 tml)))
+     		   ) <&> ((iset (EL 5 tml)) == (iset (EL 6 tml)))
+     		  )
+     		      <&>
+     		   ((((((itag (EL 2 tml)) == (itag (EL 3 tml))) <&> ((itag (EL 3 tml)) == (itag (EL 4 tml))))
+     			  <&> ((itag (EL 2 tml)) =/= (itag (EL 5 tml)))
+     		     )  <&> ((itag (EL 2 tml)) =/= (itag (EL 6 tml)))
+     		    ) <&> ((itag (EL 5 tml)) =/= (itag (EL 6 tml)))
+     		   )
+     		 )
+     		     <&> ((bus_round (EL 2 tml)) =/= v1))
+     	    ):bir_val_t bir_stmt_basic_t
+    `;
+	
+    (* tag1 tag1 tag1 tag2 tag3 *)
     val preEvict_hyp1_def = Define`
         preEvict_hyp1 tml =
           let v1 = ((bus_round (EL 1 tml)) <+> (BExp_Const (Imm64 1w))) <%> (BExp_Const (Imm64 4w)) in
@@ -278,7 +300,7 @@ local
      		    ) <&> ((itag (EL 3 tml)) =/= (itag (EL 4 tml)))
      		   )
      		 )
-     		     (* <&> ((bus_round (EL 0 tml)) =/= v1) *))
+     		     <&> ((bus_round (EL 0 tml)) =/= v1))
      	    ):bir_val_t bir_stmt_basic_t
     `;
 
@@ -361,7 +383,7 @@ local
 
 	in
 	   (
-	    mk_list(   [(rhs o concl o EVAL)``preEvict_hyp1  ^(mk_list((rev adds),  ``:bir_exp_t``))``],
+	    mk_list(   [(rhs o concl o EVAL)``preEvict_hyp1_crypto  ^(mk_list((rev adds),  ``:bir_exp_t``))``],
 		    ``:bir_val_t bir_stmt_basic_t``)
 	   )
 	end
