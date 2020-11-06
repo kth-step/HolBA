@@ -277,17 +277,10 @@ in (* outermost local *)
     end;
 
 
-  (* creation of summaries for functions *)
+  (* print usage info of summaries *)
   (* ================================================================== *)
-  fun create_func_summary n_dict bl_dict sums entry_label =
+  fun print_summary_info sum entry_label =
     let
-      val lbl_tm      = find_func_lbl_tm entry_label;
-      val end_lbl_tms = find_func_ends n_dict entry_label;
-
-      val sum = obtain_summary n_dict bl_dict sums lbl_tm end_lbl_tms;
-
-      val _ =
-      let
       (* print max stack usage and max clock cycle usgae *)
       val _ = print ("\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
       val _ = print ("Summary info for " ^ entry_label ^ "\n");
@@ -330,7 +323,21 @@ in (* outermost local *)
           val _ = print ("countw max = " ^ countw_inc ^ "\n");
         in () end) sum_systs;
       val _ = print ("\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n");
-      in () end;
+    in
+      ()
+    end;
+
+
+  (* creation of summaries for functions *)
+  (* ================================================================== *)
+  fun create_func_summary n_dict bl_dict sums entry_label =
+    let
+      val lbl_tm      = find_func_lbl_tm entry_label;
+      val end_lbl_tms = find_func_ends n_dict entry_label;
+
+      val sum = obtain_summary n_dict bl_dict sums lbl_tm end_lbl_tms;
+
+      val _ = print_summary_info sum entry_label;
     in
       sum
     end;
