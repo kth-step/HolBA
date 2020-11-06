@@ -18,7 +18,7 @@ open balrob_pends_Lib;
 val sums        = [];
 val lbl_tm      =  ``BL_Address (Imm32 0x257Aw)``;
 val end_lbl_tms = [``BL_Address (Imm32 0x2598w)``];
-val usage = (0, 20);
+val usage = (0, 15);
 
 val sum___aeabi_fadd_c1 =
       obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
@@ -31,7 +31,7 @@ val sums        = [];
 val lbl_tm      =  ``BL_Address (Imm32 0x25A0w)``;
 val end_lbl_tms = [``BL_Address (Imm32 0x25AEw)``];
 val end_lbl_tms = [``BL_Address (Imm32 0x24C2w)``];
-val usage = (0, 20);
+val usage = (0, 29);
 
 val sum___aeabi_fadd_c2 =
       obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
@@ -43,7 +43,7 @@ val _ = print_summary_info sum___aeabi_fadd_c2 "sum___aeabi_fadd_c2";
 val sums        = [];
 val lbl_tm      =  ``BL_Address (Imm32 0x25D0w)``;
 val end_lbl_tms = [``BL_Address (Imm32 0x24C2w)``];
-val usage = (0, 20);
+val usage = (0, 10);
 
 val sum___aeabi_fadd_c3 =
       obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;

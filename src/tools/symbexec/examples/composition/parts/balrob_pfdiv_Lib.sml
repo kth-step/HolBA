@@ -47,7 +47,7 @@ open balrob_pends_Lib;
 val sums        = [];
 val lbl_tm      =  ``BL_Address (Imm32 0x293Cw)``;
 val end_lbl_tms = [``BL_Address (Imm32 0x294Ew)``];
-val usage = (0, 20);
+val usage = (0, 9);
 
 val sum___aeabi_fdiv_loop_body =
       obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
@@ -58,7 +58,7 @@ val _ = print_summary_info sum___aeabi_fdiv_loop_body "sum___aeabi_fdiv_loop_bod
 val sums        = [sum___aeabi_fdiv_loop_body];
 val lbl_tm      =  ``BL_Address (Imm32 0x2930w)``;
 val end_lbl_tms = [``BL_Address (Imm32 0x2952w)``];
-val usage = (0, 20);
+val usage = (0, 381);
 
 val sum___aeabi_fdiv_loop =
       obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
@@ -72,7 +72,7 @@ val _ = print_summary_info sum___aeabi_fdiv_loop "sum___aeabi_fdiv_loop";
 val sums        = [];
 val lbl_tm      =  ``BL_Address (Imm32 0x27CAw)``;
 val end_lbl_tms = [``BL_Address (Imm32 0x27DCw)``];
-val usage = (0, 20);
+val usage = (0, 15);
 
 val sum___aeabi_fdiv_c1 =
       obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
@@ -95,7 +95,7 @@ val _ = print_summary_info sum___aeabi_fdiv_c2 "sum___aeabi_fdiv_c2";
 val sums        = [];
 val lbl_tm      =  ``BL_Address (Imm32 0x2842w)``;
 val end_lbl_tms = [``BL_Address (Imm32 0x284Ew)``];
-val usage = (0, 20);
+val usage = (0, 7);
 
 val sum___aeabi_fdiv_c3 =
       obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
@@ -106,7 +106,7 @@ val _ = print_summary_info sum___aeabi_fdiv_c3 "sum___aeabi_fdiv_c3";
 val sums        = [];
 val lbl_tm      =  ``BL_Address (Imm32 0x2850w)``;
 val end_lbl_tms = [``BL_Address (Imm32 0x285Aw)``];
-val usage = (0, 20);
+val usage = (0, 6);
 
 val sum___aeabi_fdiv_c4 =
       obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
@@ -117,7 +117,7 @@ val _ = print_summary_info sum___aeabi_fdiv_c4 "sum___aeabi_fdiv_c4";
 val sums        = [];
 val lbl_tm      =  ``BL_Address (Imm32 0x2996w)``;
 val end_lbl_tms = [``BL_Address (Imm32 0x29A2w)``];
-val usage = (0, 20);
+val usage = (0, 7);
 
 val sum___aeabi_fdiv_c5 =
       obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
@@ -128,7 +128,7 @@ val _ = print_summary_info sum___aeabi_fdiv_c5 "sum___aeabi_fdiv_c5";
 val sums        = [];
 val lbl_tm      =  ``BL_Address (Imm32 0x29A4w)``;
 val end_lbl_tms = [``BL_Address (Imm32 0x286Aw)``];
-val usage = (0, 20);
+val usage = (0, 8);
 
 val sum___aeabi_fdiv_c6 =
       obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
@@ -139,7 +139,7 @@ val _ = print_summary_info sum___aeabi_fdiv_c6 "sum___aeabi_fdiv_c6";
 val sums        = [];
 val lbl_tm      =  ``BL_Address (Imm32 0x2918w)``;
 val end_lbl_tms = [``BL_Address (Imm32 0x286Aw)``];
-val usage = (0, 20);
+val usage = (0, 15);
 
 val sum___aeabi_fdiv_c7 =
       obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
