@@ -17,6 +17,10 @@ in
   val stack_space_req = 0x80;
 *)
 
+  (* TODO: need to fix this to handlermode -> needs change of the used lifter machine *)
+  val pred_not_handlermode =
+  ``BExp_UnaryExp BIExp_Not (BExp_Den (BVar "ModeHandler" BType_Bool))``;
+
   val pred_sp_aligned =
   ``BExp_BinPred BIExp_Equal
       (BExp_BinExp BIExp_And
@@ -39,7 +43,8 @@ in
        (BExp_Const (Imm64 ^(wordsSyntax.mk_wordii(0x10000000 - countw_space_req, 64))))``;
 
   fun pred_conjs (stack_space_req, countw_space_req) =
-    [pred_sp_aligned,
+    [pred_not_handlermode,
+     pred_sp_aligned,
      pred_sp_space_req stack_space_req,
      pred_countw_space_req countw_space_req];
 
