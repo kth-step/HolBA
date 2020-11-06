@@ -70,12 +70,14 @@ in (* outermost local *)
       result
     end;
 
+  val symbexecdriver_checkfeasibility = false;
+
 
   (* driving and book keeping of symbolic execution *)
   (* ================================================================== *)
   fun drive_to_raw n_dict bl_dict_ systs_start stop_lbl_tms =
     let
-      val cfb = false;
+      val cfb = symbexecdriver_checkfeasibility;
 
       open commonBalrobScriptLib;
 
@@ -92,7 +94,25 @@ in (* outermost local *)
       val (systs_noassertfailed, systs_assertfailed) =
         List.partition (fn syst => not (identical (SYST_get_status syst) BST_AssertionViolated_tm)) systs;
       val _ = print ("number of \"no assert failed\" paths found: " ^ (Int.toString (length systs_noassertfailed)));
-      val _ = print "\n\n";
+      val _ = print "\n";
+
+      val systs_assertfailed_feasible =
+       (if symbexecdriver_checkfeasibility then filter_with_progress check_feasible else I) systs_assertfailed;
+      val _ = print ("number of" ^ (if symbexecdriver_checkfeasibility then " feasible" else "") ^ " \"assert failed\" paths found: " ^ (Int.toString (length systs_assertfailed_feasible)));
+      val _ = print "\n";
+
+      val _ =
+        if not symbexecdriver_checkfeasibility then [] else
+        List.map (fn syst =>
+          let
+            val vals = SYST_get_vals syst;
+            val pred = hd (SYST_get_pred syst)
+                       handle _ => raise Fail "oh no! no preds?!";
+            val _ = print_term pred;
+            val symbv = find_bv_val "check_feasible_and_tidyup" vals pred;
+            val _ = print (symbv_to_string symbv);
+          in () end
+        ) systs_assertfailed_feasible;
 
       val systs_feasible = filter_with_progress check_feasible systs_noassertfailed;
       val _ = print ("number of feasible paths found: " ^ (Int.toString (length systs_feasible)));
