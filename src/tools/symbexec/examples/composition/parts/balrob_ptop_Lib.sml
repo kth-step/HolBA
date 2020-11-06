@@ -70,8 +70,10 @@ val entry_label_sub = "pid_msg_write"; (* don't go into pid_msg_write *)
 val lbl_tm      = find_func_lbl_tm entry_label;
 val end_lbl_tms = (find_func_lbl_tm entry_label_sub)::(find_func_ends n_dict entry_label);
 
+val usage = commonBalrobScriptLib.get_fun_usage entry_label;
+
 val sum_imu_handler_pid_entry =
-      obtain_summary n_dict bl_dict_ sums lbl_tm end_lbl_tms;
+      obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
 val _ = print_summary_info sum_imu_handler_pid_entry entry_label;
 
 in (* outermost local *)

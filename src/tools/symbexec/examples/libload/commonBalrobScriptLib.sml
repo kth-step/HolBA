@@ -13,25 +13,35 @@ in
   val stack_start = mem_ram_start + mem_ram_size -16;
   val stack_end   = stack_start - stack_size;
 
+(*
   val stack_space_req = 0x80;
+*)
 
-  val pred_conjs = [
+  val pred_sp_aligned =
   ``BExp_BinPred BIExp_Equal
       (BExp_BinExp BIExp_And
           (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
           (BExp_Const (Imm32 3w)))
-      (BExp_Const (Imm32 0w))``,
+      (BExp_Const (Imm32 0w))``;
+
+  fun pred_sp_space_req stack_space_req =
   ``BExp_BinExp BIExp_And
             (BExp_BinPred BIExp_LessOrEqual
                (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
                (BExp_Const (Imm32 ^(wordsSyntax.mk_wordii(stack_start, 32)))))
             (BExp_BinPred BIExp_LessThan
                (BExp_Const (Imm32 ^(wordsSyntax.mk_wordii(stack_end + stack_space_req, 32))))
-               (BExp_Den (BVar "SP_process" (BType_Imm Bit32))))``,
+               (BExp_Den (BVar "SP_process" (BType_Imm Bit32))))``;
+
+  fun pred_countw_space_req countw_space_req =
   ``BExp_BinPred BIExp_LessOrEqual
        (BExp_Den (BVar "countw" (BType_Imm Bit64)))
-       (BExp_Const (Imm64 ^(wordsSyntax.mk_wordii(0x10000000, 64))))``
-  ];
+       (BExp_Const (Imm64 ^(wordsSyntax.mk_wordii(0x10000000 - countw_space_req, 64))))``;
+
+  fun pred_conjs (stack_space_req, countw_space_req) =
+    [pred_sp_aligned,
+     pred_sp_space_req stack_space_req,
+     pred_countw_space_req countw_space_req];
 
   val mem_sz_const = mem_ram_start;
   val mem_sz_globl = 0x1000;
@@ -67,6 +77,46 @@ in
     in
       systs_noassertpreds
     end;
+
+  fun get_fun_usage entry_name =
+    case entry_name of
+       "__lesf2"
+        => (12, 49)
+     | "__clzsi2"
+        => (0, 21)
+     | "__aeabi_f2iz"
+        => (0, 27)
+     | "timer_read"
+        => (8, 10)
+     | "__aeabi_fadd"
+        => (32, 168)
+     | "__aeabi_fdiv"
+        => (40, 581)
+     | "__aeabi_i2f"
+        => (16, 89)
+     | "__aeabi_fcmplt"
+        => (20, 68)
+     | "abs_own"
+        => (36, 101)
+     | "__aeabi_fmul"
+        => (44, 244)
+     | "__aeabi_fsub"
+        => (32, 187)
+     | "motor_prep_input"
+        => (20, 47)
+     | "motor_set_l"
+        => (44, 113)
+     | "motor_set_r"
+        => (44, 113)
+     | "motor_set"
+        => (60, 264)
+     | "motor_set_f"
+        => (84, 885)
+     | "atan2f_own"
+        => (92, 2038)
+     | "imu_handler_pid_entry"
+        => (204, 8312)
+     | _ => raise Fail "get_fun_usage: don't know function";
 
 end
 

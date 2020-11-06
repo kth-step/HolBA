@@ -10,8 +10,6 @@ open bir_symbexec_stepLib;
 open bir_symbexec_sumLib;
 open bir_countw_simplificationLib;
 
-open commonBalrobScriptLib;
-
 val entry_labels = ["motor_prep_input",
                     "__lesf2",
                     "__clzsi2",
@@ -67,6 +65,9 @@ val syst =
   else
     state_make_interval bv_countw syst;
 
+local
+  open commonBalrobScriptLib;
+in
 val syst = if not use_mem_symbolic then syst else
              state_make_mem bv_mem
                           (Arbnum.fromInt mem_sz_const, Arbnum.fromInt mem_sz_globl, Arbnum.fromInt mem_sz_stack)
@@ -74,7 +75,8 @@ val syst = if not use_mem_symbolic then syst else
                           bv_sp
                           syst;
 
-val syst = state_add_preds "init_pred" pred_conjs syst;
+val syst = state_add_preds "init_pred" (pred_conjs (get_fun_usage entry_label)) syst;
+end
 
 val _ = print "initial state created.\n\n";
 (*
@@ -93,7 +95,7 @@ Redblackmap.peek (SYST_get_vals syst, ``BVar "fr_175_countw" (BType_Imm Bit64)``
 
 val cfb = false;
 
-val systs = symb_exec_to_stop (abpfun cfb) n_dict bl_dict_ [syst] stop_lbl_tms [];
+val systs = symb_exec_to_stop (commonBalrobScriptLib.abpfun cfb) n_dict bl_dict_ [syst] stop_lbl_tms [];
 val _ = print "finished exploration of all paths.\n";
 val _ = print ("number of paths found: " ^ (Int.toString (length systs)));
 val _ = print "\n\n";
@@ -231,19 +233,23 @@ val stop_lbl_tms = [func_lbl_tm]; (*``BL_Address (Imm32 0xc1cw)``];*)
 
 val syst = init_state lbl_tm prog_vars;
 val syst = state_make_interval bv_countw syst;
+local
+  open commonBalrobScriptLib;
+in
 val syst = state_make_mem bv_mem
                           (Arbnum.fromInt mem_sz_const, Arbnum.fromInt mem_sz_globl, Arbnum.fromInt mem_sz_stack)
                           (mem_read_byte binary_mem)
                           bv_sp
                           syst;
 
-val syst = state_add_preds "init_pred" pred_conjs syst;
+val syst = state_add_preds "init_pred" (pred_conjs (get_fun_usage entry_label)) syst;
+end
 
 val _ = print "initial state created.\n\n";
 
 val cfb = false;
 
-val systs = symb_exec_to_stop (abpfun cfb) n_dict bl_dict_ [syst] stop_lbl_tms [];
+val systs = symb_exec_to_stop (commonBalrobScriptLib.abpfun cfb) n_dict bl_dict_ [syst] stop_lbl_tms [];
 val _ = print "finished exploration of all paths.\n";
 val _ = print ("number of paths found: " ^ (Int.toString (length systs)));
 val _ = print "\n\n";
@@ -279,7 +285,7 @@ lookup_block_dict bl_dict_ lbl_tm
 
 val stop_lbl_tms = [``BL_Address (Imm32 0xc74w)``];
 
-val systs = symb_exec_to_stop (abpfun cfb) n_dict bl_dict_ systs_inst stop_lbl_tms [];
+val systs = symb_exec_to_stop (commonBalrobScriptLib.abpfun cfb) n_dict bl_dict_ systs_inst stop_lbl_tms [];
 
 val (systs_noassertfailed, systs_assertfailed) =
   List.partition (fn syst => not (identical (SYST_get_status syst) BST_AssertionViolated_tm)) systs;

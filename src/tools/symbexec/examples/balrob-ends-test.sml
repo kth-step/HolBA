@@ -10,8 +10,6 @@ open bir_symbexec_stepLib;
 open bir_symbexec_sumLib;
 open bir_countw_simplificationLib;
 
-open commonBalrobScriptLib;
-
 val entry_labels = ["motor_prep_input",
                     "__lesf2",
                     "__clzsi2",
@@ -41,20 +39,24 @@ val _ = List.map (fn entry_label => let
 
   val syst = state_make_interval bv_countw syst;
 
+  local
+    open commonBalrobScriptLib;
+  in
   val syst = state_make_mem bv_mem
                             (Arbnum.fromInt mem_sz_const, Arbnum.fromInt mem_sz_globl, Arbnum.fromInt mem_sz_stack)
                             (mem_read_byte binary_mem)
                             bv_sp
                             syst;
 
-  val syst = state_add_preds "init_pred" pred_conjs syst;
+  val syst = state_add_preds "init_pred" (pred_conjs (get_fun_usage entry_label)) syst;
+  end
 
   val _ = print "initial state created.\n";
 
   (* -------------------------------------------------------------- *)
   val cfb = false;
 
-  val systs = symb_exec_to_stop (abpfun cfb) n_dict bl_dict_ [syst] stop_lbl_tms [];
+  val systs = symb_exec_to_stop (commonBalrobScriptLib.abpfun cfb) n_dict bl_dict_ [syst] stop_lbl_tms [];
   val _ = print ("finished exploration of all paths. number = " ^ (Int.toString (length systs)));
   val _ = print "\n";
 

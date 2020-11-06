@@ -14,8 +14,6 @@ local
   open bir_symbexec_sumLib;
   open bir_countw_simplificationLib;
 
-  open commonBalrobScriptLib;
-
   val ERR      = Feedback.mk_HOL_ERR "bir_symbexec_driverLib"
   val wrap_exn = Feedback.wrap_exn   "bir_symbexec_driverLib"
 in (* outermost local *)
@@ -78,6 +76,8 @@ in (* outermost local *)
   fun drive_to_raw n_dict bl_dict_ systs_start stop_lbl_tms =
     let
       val cfb = false;
+
+      open commonBalrobScriptLib;
 
       val systs = symb_exec_to_stop (abpfun cfb) n_dict bl_dict_ systs_start stop_lbl_tms [];
       val _ = print "finished exploration of all paths.\n";
@@ -187,7 +187,7 @@ in (* outermost local *)
   (* TODO: include stack usage and wcet estimation -> preconditions *)
   (* TODO: carry through preconditions *)
 
-  fun init_summary lbl_tm =
+  fun init_summary lbl_tm usage =
     let
       val use_countw_const_only = false;
       val use_mem_symbolic = true;
@@ -200,6 +200,8 @@ in (* outermost local *)
         else
           state_make_interval bv_countw syst;
 
+      open commonBalrobScriptLib;
+
       val syst = if not use_mem_symbolic then syst else
            state_make_mem bv_mem
              (Arbnum.fromInt mem_sz_const, Arbnum.fromInt mem_sz_globl, Arbnum.fromInt mem_sz_stack)
@@ -207,7 +209,10 @@ in (* outermost local *)
                  bv_sp
                  syst;
 
-      val syst = state_add_preds "init_pred" pred_conjs syst;
+      val syst = state_add_preds
+                   "init_pred"
+                   (pred_conjs usage)
+                   syst;
 
       val _ = print "initial state created.\n\n";
     in
@@ -246,9 +251,9 @@ in (* outermost local *)
       drive_through_summaries n_dict bl_dict sums systs_new end_lbl_tms acc_new
     end;
 
-  fun obtain_summary n_dict bl_dict sums lbl_tm end_lbl_tms =
+  fun obtain_summary n_dict bl_dict sums usage lbl_tm end_lbl_tms =
     let
-      val syst_start = init_summary lbl_tm;
+      val syst_start = init_summary lbl_tm usage;
       val systs = [syst_start];
 
       (*
@@ -335,7 +340,9 @@ in (* outermost local *)
       val lbl_tm      = find_func_lbl_tm entry_label;
       val end_lbl_tms = find_func_ends n_dict entry_label;
 
-      val sum = obtain_summary n_dict bl_dict sums lbl_tm end_lbl_tms;
+      val usage = commonBalrobScriptLib.get_fun_usage entry_label;
+
+      val sum = obtain_summary n_dict bl_dict sums usage lbl_tm end_lbl_tms;
 
       val _ = print_summary_info sum entry_label;
     in

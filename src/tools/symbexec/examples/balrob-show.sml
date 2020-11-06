@@ -4,8 +4,6 @@ open binariesLib;
 open binariesCfgLib;
 open binariesMemLib;
 
-open commonBalrobScriptLib;
-
 val entry_labels = ["motor_prep_input",
                     "__lesf2",
                     "__clzsi2",
