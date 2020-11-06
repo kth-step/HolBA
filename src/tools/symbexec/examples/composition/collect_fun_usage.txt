@@ -1,0 +1,168 @@
+sed -n '/>>>>>>>>>>>>>>>>>>/,/<<<<<<<<<<<<<<<<<</p' composition/parts/.hollogs/HolBATools_SymbExec_ExampleCompParts-heap > composition/collect_fun_usage.txt
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __lesf2
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 12
+countw max = 49w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __clzsi2
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 21w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_f2iz
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 27w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for timer_read
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 8
+countw max = 10w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_fadd
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 32
+countw max = 168w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_fdiv
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 40
+countw max = 581w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_i2f
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 16
+countw max = 89w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_fcmplt
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 2 states in summary.
+
+stack  max = 20
+countw max = 66w
+
+stack  max = 20
+countw max = 68w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for abs_own
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 36
+countw max = 101w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_fmul
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 44
+countw max = 244w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_fsub
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 32
+countw max = 187w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for motor_prep_input
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 20
+countw max = 47w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for motor_set_l
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 44
+countw max = 113w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for motor_set_r
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 44
+countw max = 113w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for motor_set
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 60
+countw max = 264w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for motor_set_f
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 84
+countw max = 885w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for atan2f_own
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 92
+countw max = 2038w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for imu_handler_pid_entry
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 204
+countw max = 8312w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
