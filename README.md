@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.com/kth-step/HolBA.svg?branch=master)](https://travis-ci.com/kth-step/HolBA)
-
 # HolBA - Binary analysis in HOL 
+
+[![Build Status](https://travis-ci.com/kth-step/HolBA.svg?branch=master)](https://travis-ci.com/kth-step/HolBA)
 
 Be sure to check out the Wiki, which contains some useful general information about HolBA.
 
