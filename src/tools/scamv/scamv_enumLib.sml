@@ -1,4 +1,4 @@
-structure scamv_enumLib =
+structure scamv_enumLib :> scamv_enumLib =
 struct
 
 (* An enumeration is represented by a pair of a reference to the current value
@@ -32,6 +32,11 @@ fun peek (e as mk_enum (curr,_)) =
     case !curr of
         NONE => next e
         | SOME c => c
+
+(* Skips (n-1) elements from enumeration e and returns the nth value from the
+current position *)
+fun nth 0 e = peek e
+  | nth n e = (next e; nth (n-1) e);
 
 fun constant x = enum (fn _ => x);
 fun unfold head tail seed =
