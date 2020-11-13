@@ -12,6 +12,8 @@ local
 open HolKernel Parse boolLib bossLib;
 open stringSyntax;
 open bir_programTheory;
+open bir_utilLib;
+open scamv_path_structLib;
 
 open bslSyntax;
 open numSyntax;
@@ -20,57 +22,12 @@ in
 type exp = term;
 type cobs = term * term * term;
 
-datatype cobs_repr = cobs of int * term * term * term;
-datatype path_repr = path of int * term * (cobs_repr list);
-type path_struct = path_repr list;
 type path_spec = {a_run: int * (bool * int) list, b_run: int * (bool * int) list};
 datatype enum_strategy = enum_extensional of int list
                        | enum_range of int * int;
 type enum_env = (term * enum_strategy) list;
 
 fun mapPair f (c, oCobs) = (f c, f oCobs);
-
-fun path_id_of (path (id, _, _)) = id;
-fun path_cond_of (path (_,cond,_)) = cond;
-fun path_obs_of (path (_,_,obs)) = obs;
-fun cobs_id_of (cobs (id,_,_,_)) = id;
-
-fun path_domain (ps : path_struct) =
-    List.map path_id_of ps;
-
-fun obs_domain_path xs =
-    List.map cobs_id_of xs;
-
-fun obs_domain (ps : path_struct) =
-    List.concat (List.map (obs_domain_path o path_obs_of) ps);
-
-
-fun bir_free_vars exp =
-    let 
-	fun nub_with eq [] = []
-	  | nub_with eq (x::xs) = x::(nub_with eq (List.filter (fn y => not (eq (y, x))) xs))
-
-	val fvs =
-	    if is_comb exp then
-		let val (con,args) = strip_comb exp
-		in
-		    if identical con ``BExp_MemConst``
-		    then [``"MEM"``]
-		    else if identical con ``BExp_Den``
-		    then
-		       let val v = case strip_comb (hd args) of
-				       (_,v::_) => v
-				     | _ => raise ERR "bir_free_vars" "not expected"
-		       in
-			   [v]
-		       end
-		   else
-		       List.concat (map bir_free_vars args)
-		end
-	    else []
-    in
-	nub_with (fn (x,y) => identical x y) fvs
-    end;
 
 exception ListMkBir of string
 
@@ -142,19 +99,6 @@ fun split_obs_list n xs =
     in
       (List.map snd refs, List.map snd base)
     end
-
-fun gen_obs_ids fresh ts =
-    List.map (fn (oid, c,t) => cobs (fresh (), oid, c, t)) ts;
-
-fun gen_path_ids fresh ps =
-    List.map (fn (pcond, cobslist) =>
-                 path (fresh (), pcond, gen_obs_ids fresh cobslist)) ps;
-
-fun lookup_path path_id path_struct =
-    List.find (fn p => path_id_of p = path_id) path_struct;
-
-fun lookup_obs obs_id obs_list =
-    List.find (fn obs => cobs_id_of obs = obs_id) obs_list;
 
 fun triangleWith f xs ys =
 (*  full product: List.concat (map (fn a => map (fn b => f a b) xs) ys);*)
@@ -347,18 +291,6 @@ fun rel_synth_jit
 
 val example_initial_ps = [(``A``, SOME [(``B``,``C``)]), (``D``,NONE)];
 
-(* input: (bir_exp * (cobs list) option) list *)
-fun preprocess_path_struct ps : (path_struct * term) =
-    let
-	val (somes, nones) = partition (is_some o snd) ps;
-        val ps' = List.map (fn (p,ob) => (p, Option.getOpt (ob,[]))) somes;
-        fun smart_bandl xs = if null xs then btrue else bandl xs;
-        val negCond = smart_bandl o List.map (bnot o fst);
-        val validity = negCond nones;
-        val fresh = mk_fresh_gen ();
-    in (gen_path_ids fresh ps', band (validity, primed_term validity))
-    end;
-
 fun partition_domains (ps : path_struct) : int list * int list =
     let fun partition_obs_list xs =
             List.partition (fn (cobs (id,oid,cond,term)) => identical cond btrue) xs;
@@ -374,62 +306,46 @@ fun partition_domains (ps : path_struct) : int list * int list =
     end;
 
 val max_guard_tries = 10000;
-(* input: (bir_exp * (cobs list) option) list *)
-fun rel_synth_init initial_ps obs_projection (env : enum_env) =
+(* input: path_struct *)
+fun rel_synth_init ps obs_projection (env : enum_env) =
     let
-	    val (ps : path_struct, validity) = preprocess_path_struct initial_ps;
+      val validity = btrue;
       val (static_obs_domain, dynamic_obs_domain) = partition_domains ps;
-        val (full_specs, next) =
-            enumerate_relation (path_domain ps)
-                               static_obs_domain dynamic_obs_domain;
-        val (full_enums, next_constraint) =
-            enumerate_domains env;
-        fun next_test guard_path_spec =
-            let open bir_expLib;
-                fun try_spec () =
-                    let fun go 0 = raise ERR "next_test" "guard_path_spec failed too many times in a row"
-                          | go n =
-                            let val SOME p = next ();
-                            in if guard_path_spec p
-                               then (print "\n"; p)
-                               else (print "~"; go (n-1))
-                            end;
-                    in go max_guard_tries
-                    end
-                    handle Bind => raise ERR "next_test" "no next relation found";
-                val spec = try_spec ();
-                val constraint = next_constraint ();
-                val _ = if not (identical constraint btrue)
-                        then (print ("Selected constraint: ");
-                              bir_exp_pretty_print constraint;
-                              print "\n")
-                        else ();
-            in SOME (spec, band (band (rel_synth_jit spec obs_projection ps, constraint)
-                                 ,validity))
-               handle e => (print (PolyML.makestring e ^ "\n");
-                            print (PolyML.makestring spec ^ "\n");
-                            NONE)
-            end
-                handle Bind => NONE;
+      val (full_specs, next) =
+          enumerate_relation (path_domain ps)
+                             static_obs_domain dynamic_obs_domain;
+      val (full_enums, next_constraint) =
+          enumerate_domains env;
+      fun next_test guard_path_spec =
+          let open bir_expLib;
+              fun try_spec () =
+                  let fun go 0 = raise ERR "next_test" "guard_path_spec failed too many times in a row"
+                        | go n =
+                          let val SOME p = next ();
+                          in if guard_path_spec p
+                             then (print "\n"; p)
+                             else (print "~"; go (n-1))
+                          end;
+                  in go max_guard_tries
+                  end
+                  handle Bind => raise ERR "next_test" "no next relation found";
+              val spec = try_spec ();
+              val constraint = next_constraint ();
+              val _ = if not (identical constraint btrue)
+                      then (print ("Selected constraint: ");
+                            bir_exp_pretty_print constraint;
+                            print "\n")
+                      else ();
+          in SOME (spec, band (band (rel_synth_jit spec obs_projection ps, constraint)
+                              ,validity))
+             handle e => (print (PolyML.makestring e ^ "\n");
+                          print (PolyML.makestring spec ^ "\n");
+                          NONE)
+          end
+          handle Bind => NONE;
     in
-        (ps, validity, next_test)
+      (ps, validity, next_test)
     end
-
-fun print_path_struct path_struct =
-    let fun print_obs (cobs (id, oid, obs_cond, obs_term)) =
-            (print ("Obs " ^ PolyML.makestring id
-                    ^ ": (model " ^ PolyML.makestring (int_of_term oid) ^ ") ");
-             print_term obs_cond;
-             print (" => ");
-             print_term obs_term;
-             print "\n");
-        fun print_path (path (id, path_cond, obs_list)) =
-            (print ("Path " ^ PolyML.makestring id ^ ": ");
-             print_term path_cond;
-             print (" =>\n");
-             List.app print_obs obs_list);
-    in List.app print_path path_struct
-    end;
 
 end
 
