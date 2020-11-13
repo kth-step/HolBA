@@ -20,7 +20,9 @@ open bir_symb_masterLib;
 open bir_typing_expTheory;
 open bir_programSyntax;
 open scamv_configLib;
+open scamv_symb_exec_interfaceLib;
 open bir_conc_execLib;
+open scamv_path_structLib;
 
   (* error handling *)
   val libname  = "bir_scamv_driverLib"
@@ -34,7 +36,7 @@ fun ifdef__else__ x c c' e = (if x then c else c') |> e;
 fun ifdef__ x c e = case x of true => c |> e;
 fun force f = f ();
 
-val SPECTRE = true;
+val SPECTRE = false;
 val DISTINCT_MEM = false;
 
 (*
@@ -51,66 +53,6 @@ val DISTINCT_MEM = false;
  - test execution
  - driver decision (jump to a, b or c)
  *)
-
-fun symb_exec_phase prog rso =
-    let
-        (* leaf list *)
-        val maxdepth = 5 * length (fst (dest_list (dest_BirProgram prog))) (* (~1); *)
-        val precond = ``bir_exp_true``
-        val leafs = symb_exec_process_to_leafs_nosmt maxdepth precond prog rso;
-
-        val numobss = List.foldr (op+) 0 (List.map (fn s => 
-	  let
-	    val (_,_,_,_,obs) = dest_bir_symb_state s;
-          in (length o fst o dest_list) obs end) leafs);
-        val message = "found " ^ (Int.toString numobss) ^ " observations in all paths.";
-        val _ = print (message ^ "\n");
-        (* val _ = bir_embexp_log (message); *)
-
-        (* retrieval of path condition and observation expressions *)
-	fun extract_cond_obs s =
-	  let
-	    val (_,_,cond,_,obs) = dest_bir_symb_state s;
-	    val obss = ((List.map dest_bir_symb_obs) o fst o dest_list) obs;
-
-	    (* determine whether this is an error state *)
-	    val isErrorState = not (symb_is_BST_Halted s);
-
-	    (* this converts BIR consts to HOL4 variables *)
-	    val obs_list = List.map (fn (oid,ec,eo, obsf) =>
-		   (oid,bir_exp_hvar_to_bvar ec, bir_exp_hvar_to_bvar eo, obsf)) obss;
-
-	    (* we require singleton lists for the observations at the moment *)
-	    (* check that we have HD as observation function, and apply it *)
-	    val obs_list' = List.map (fn (oid,ec,eo,obsf) =>
-		     let
-		       val (otl,_) = dest_list eo;
-		       val _ = (if listSyntax.is_hd ``^obsf x`` then () else raise ERR "" "")
-			       handle _ =>
-				 raise ERR "extract_cond_obs" ("currently we only support HD as observation function, not \"" ^ (term_to_string obsf) ^ "\"");
-		     in
-		       if length otl <> 1 then
-		       	 raise ERR "extract_cond_obs" "currently we support only singleton observations"
-		       else
-			 (oid, ec, hd otl)
-		     end
-		   ) obs_list;
-	  in
-	    (bir_exp_hvar_to_bvar cond, if isErrorState then NONE else SOME obs_list')
-	  end;
-
-        val paths = List.map extract_cond_obs leafs;
-
-        (* we also need all generated expressions to collect the variables *)
-        val path_conds = List.map fst paths;
-        val obs_exps = flatten (List.map (fn (_,x,y) => [x,y])
-                          (flatten (List.map ((fn x =>
-                             case x of NONE => [] 
-                                     | SOME y => y) o snd) paths)));
-        val all_exps = (path_conds @ obs_exps);
-    in
-        (paths, all_exps)
-    end
 
 fun bir_free_vars exp =
     let 
@@ -145,7 +87,7 @@ fun dest_mem_load size tm =
     else tm |> (#1 o dest_word_lsr o #1 o dest_w2w)
 	    |> (finite_mapSyntax.dest_fapply o (n_times size (#2 o dest_word_concat)));
 
-fun make_word_relation relation exps =
+fun make_word_relation relation =
     let
         fun primed_subst exp =
             map (fn v =>
@@ -156,15 +98,18 @@ fun make_word_relation relation exps =
         fun primed_vars exp = map (#residue) (primed_subst exp);
         fun nub_with eq [] = []
           | nub_with eq (x::xs) = x::nub_with eq (List.filter (fn y => not (eq(y,x))) xs);
-        val primed = sort (curry String.<=)
-                     (map (fromHOLstring o snd o dest_comb)
-                         (nub_with (fn (x,y) => identical x y) (flatten (map primed_vars exps))));
-        val unprimed = sort (curry String.<=)
-                       (nub_with (op=) (map fromHOLstring
-                            (flatten (map bir_free_vars exps))));
+        val vars =
+            sort (curry String.<=)
+                 (List.map fromHOLstring
+                           (nub_with (fn (x,y) => identical x y) (bir_free_vars relation)));
+        val primed =
+            List.filter (String.isSuffix "'") vars
+
+        val unprimed =
+            List.filter (not o String.isSuffix "'") vars
 
         val pairs = zip unprimed primed;
-	val (mpair, rpair) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM")) pairs
+	      val (mpair, rpair) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM")) pairs
 
         fun mk_distinct_reg (a,b) =
             let val va = mk_var (a,``:word64``);
@@ -180,7 +125,8 @@ fun make_word_relation relation exps =
 
 	fun mk_distinct_mem (a, b) rel = 
 	    let 
-		open finite_mapSyntax
+		    open finite_mapSyntax;
+        open List;
 		val va = mk_var (a, ``:word64 |-> word8``)
 		val vb = mk_var (b, ``:word64 |-> word8``)
 		fun split_mem  tms m = filter (fn tm => (identical (#1 (dest_fapply(find_term is_fapply tm))) m)) tms
@@ -248,7 +194,7 @@ val (current_obs_model_id : string ref) = ref "";
 val (current_refined_obs_model_id : string option ref) = ref NONE;
 val (current_obs_projection : int ref) = ref 1;
 val (current_pathstruct :
-     path_struct ref) = ref [];
+     path_struct option ref) = ref NONE;
 val (current_word_rel : term option ref) = ref NONE;
 val (next_iter_rel    : (path_spec * term) option ref) = ref NONE;
 
@@ -257,7 +203,7 @@ fun reset () =
      current_prog := NONE;
      current_prog_w_obs := NONE;
      current_prog_w_refined_obs := NONE;
-     current_pathstruct := [];
+     current_pathstruct := NONE;
      current_obs_projection := 1;
      current_word_rel := NONE);
 
@@ -297,21 +243,13 @@ fun collect_observations observe_fun pathstruct =
 (*            List.concat (List.map collect_from_leaf leaves) *)
 (*     end *)
 
-fun extract_obs_variables ps =
-    List.concat (
-        List.map (fn (_,obs_list) =>
-                     case obs_list of
-                         NONE => []
-                       | SOME list => 
-                         List.concat (List.map (fn (_,_,term) => bir_free_vars term) list))
-                ps);
-
 fun enumerate_line_single_input path_struct =
     let val vars = extract_obs_variables path_struct
     in
         case vars of
             [] => []
-          | (v::vs) => [(observe_line (bden (bvarimm64 (fromHOLstring v))), bir_rel_synthLib.enum_range (0,60))]
+          | (v::vs) => [(observe_line (bden (bvarimm64 (fromHOLstring v))),
+                         bir_rel_synthLib.enum_range (0,60))]
     end;
 
 fun default_enumeration_targets paths =
@@ -319,51 +257,68 @@ fun default_enumeration_targets paths =
     then enumerate_line_single_input paths
     else [];
 
-fun start_interactive prog =
-    let
-        val _ = reset ();
-
-        val (prog_id, lifted_prog) = prog;
+fun scamv_set_prog_state prog =
+    let val (prog_id, lifted_prog) = prog;
         val _ = current_prog_id := prog_id;
         val _ = current_prog := SOME lifted_prog;
         val _ = min_verb 2 (fn () => print_term lifted_prog);
+    in
+      (prog_id, lifted_prog)
+    end;
 
-        val _ = printv 1 "Adding obs\n";
-        val add_obs = #add_obs (get_obs_model (!current_obs_model_id));
-        val mem_bounds =
-          let
-            open bir_embexp_driverLib;
-            val (mem_base, mem_len) = bir_embexp_params_memory;
-            val mem_end = (Arbnum.- (Arbnum.+ (mem_base, mem_len), Arbnum.fromInt 128));
-          in
-            pairSyntax.mk_pair
+fun scamv_phase_add_obs () =
+let 
+  val _ = printv 1 "Adding obs\n";
+  val add_obs = #add_obs (get_obs_model (!current_obs_model_id));
+  val mem_bounds =
+      let
+        open bir_embexp_driverLib;
+        val (mem_base, mem_len) = bir_embexp_params_memory;
+        val mem_end = (Arbnum.- (Arbnum.+ (mem_base, mem_len), Arbnum.fromInt 128));
+      in
+        pairSyntax.mk_pair
             (mk_wordi (bir_embexp_params_cacheable mem_base, 64),
              mk_wordi (bir_embexp_params_cacheable mem_end, 64))
-          end;
-        val lifted_prog_w_obs = add_obs mem_bounds lifted_prog;
-        val _ = printv 1 "Obs added\n";
-        val _ = current_prog_w_obs := SOME lifted_prog_w_obs;
-        val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
+      end;
+  val lifted_prog_w_obs = add_obs mem_bounds (valOf (!current_prog));
+  val _ = printv 1 "Obs added\n";
+  val _ = current_prog_w_obs := SOME lifted_prog_w_obs;
+  val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
+in
+  lifted_prog_w_obs
+end;
 
-        val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs (SOME "*");
-	      val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths; 
+fun scamv_phase_symb_exec () =
+    let
+      val (paths, all_exps) = scamv_run_symb_exec (valOf (!current_prog_w_obs)) (SOME "*");
+	    val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths;
+      val ps = initialise paths;
+      val _ = current_pathstruct := SOME ps;
+      val _ = min_verb 4 (fn () => print_path_struct ps);
+    in
+      ps
+    end;
 
-        fun has_observations (SOME []) = false
-          | has_observations NONE = false
-          | has_observations _ = true
-        val _ =
-            if exists (has_observations o snd) paths
-            then () (* fine, there is at least one observation
-                       in the paths list *)
-            else raise ERR "start_interactive" "no observations";
+fun scamv_phase_rel_synth_init () =
+    let
+      val paths = valOf (!current_pathstruct);
+      val enum_env = default_enumeration_targets paths;
+      val relation_enumeration =
+          rel_synth_init paths (!current_obs_projection) enum_env; (* TODO consider validity *)
+    in
+      relation_enumeration
+    end;
 
-        val enum_env = default_enumeration_targets paths;
-        val (path_struct, validity, next_relation) =
-            rel_synth_init paths (!current_obs_projection) enum_env; (* TODO consider validity *)
-        val _ = current_pathstruct := path_struct;
-        val _ = min_verb 4 (fn () => print_path_struct path_struct);
-    in (path_struct, all_exps, next_relation) end;
+fun scamv_per_program_init prog =
+    let
+        val _ = reset ();
 
+        val _ = scamv_set_prog_state prog;
+        val _ = scamv_phase_add_obs ();
+        val _ = scamv_phase_symb_exec ();
+
+        val result = scamv_phase_rel_synth_init ();
+    in result end;
 
 fun all_obs_not_present { a_run = (_,a_obs), b_run = (_,b_obs) } =
     let fun check xs = all (fn (b,_) => b = false) xs;
@@ -422,7 +377,7 @@ fun next_experiment all_exps next_relation  =
         val _ = min_verb 3 (fn () =>
                                bir_exp_pretty_print rel);
         val _ = printv 4 ("Word relation\n");
-        val new_word_relation = make_word_relation rel all_exps;
+        val new_word_relation = make_word_relation rel;
         val _ = min_verb 4 (fn () =>
                                (print_term new_word_relation;
                                 print "\n"));
@@ -482,7 +437,7 @@ fun next_experiment all_exps next_relation  =
 			    handle Option =>
 				   raise ERR "next_experiment" "next_relation returned a NONE";
 			val _ = next_iter_rel := SOME (tpath_spec, trel)
-			val new_word_relation = make_word_relation trel all_exps
+			val new_word_relation = make_word_relation trel
 					    
 			val training_relation =
 			    case !current_word_rel of
@@ -537,42 +492,13 @@ fun next_experiment all_exps next_relation  =
     in ()
     end;
 
-fun mk_round_robin n =
-    let val counter = ref 0;
-    in fn (ys : term list) =>
-          let val c = !counter;
-          in
-              (if c = n
-               then counter := 0
-               else counter := c + 1) ;
-              List.nth (ys, c)
-          end
-    end
-
-fun mk_round_robin_every s n =
-    let val counter = ref n;
-        val step = ref 0;
-    in fn (ys : term list) =>
-          let val c = !counter;
-          in
-              (if c = n
-               then (counter := 0; step := 0)
-               else (if (!step = s)
-                     then (counter := c + 1;
-                           step := 0)
-                     else (step := !step + 1));
-               printv 1 ("Path counter: " ^ PolyML.makestring (!counter) ^ "\n");
-               List.nth (ys, c))
-          end
-    end
-
 fun scamv_test_main tests prog =
     let
         val _ = reset();
-        val (path_structure, all_exps, next_relation) = start_interactive prog;
+        val (path_structure, validity, next_relation) = scamv_per_program_init prog;
         fun do_tests 0 =  (next_iter_rel := NONE; current_word_rel := NONE)
           | do_tests n =
-            let val _ = next_experiment all_exps next_relation
+            let val _ = next_experiment [] next_relation
                         handle e => (
                                let
                                  val message = "Skipping test case due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n";
@@ -584,11 +510,6 @@ fun scamv_test_main tests prog =
             in do_tests (n-1) end
     in do_tests tests
     end
-
-
-fun scamv_test_gen_run tests (prog_id, lifted_prog) =
-    (raise ERR "scamv_test_gen_run" "function DEPRECATED and will be removed soon - use scamv_run with from_file generator instead"; (NONE, "DEPRECATED"));
-
 
 fun scamv_test_single_file filename =
     let val prog = prog_gen_store_fromfile filename ();

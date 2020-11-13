@@ -2,8 +2,7 @@ signature bir_scamv_driverLib = sig
     include Abbrev;
 
     (* include bir_rel_synthLib *)
-  val symb_exec_phase : term -> string option -> (term * (term * term * term) list option) list * term list
-  val make_word_relation : term -> term list -> term
+  val make_word_relation : term -> term
   val scamv_test_main : int -> (string * term) -> unit
 
   val scamv_test_single_file : string -> unit;
