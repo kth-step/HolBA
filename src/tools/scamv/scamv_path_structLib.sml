@@ -1,0 +1,117 @@
+structure scamv_path_structLib =
+struct
+
+local
+  open HolKernel Parse boolLib bossLib;
+  open stringSyntax;
+  open bir_programTheory;
+
+  open bslSyntax;
+  open numSyntax;
+
+  (* error handling *)
+  val libname  = "bir_rel_synthLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
+in
+
+datatype cobs_repr = cobs of int * term * term * term;
+datatype path_repr = path of int * term * (cobs_repr list);
+type path_struct = path_repr list;
+
+fun stateful_tabulate f =
+    let val current = ref 0;
+        fun next () =
+            let val result = f (!current);
+            in (current := !current + 1;
+                result)
+            end
+    in
+      next
+    end;
+
+fun path_id_of (path (id, _, _)) = id;
+fun path_cond_of (path (_,cond,_)) = cond;
+fun path_obs_of (path (_,_,obs)) = obs;
+fun cobs_id_of (cobs (id,_,_,_)) = id;
+
+fun path_domain (ps : path_struct) =
+    List.map path_id_of ps;
+
+fun obs_domain_path xs =
+    List.map cobs_id_of xs;
+
+fun obs_domain (ps : path_struct) =
+    List.concat (List.map (obs_domain_path o path_obs_of) ps);
+
+fun gen_obs_ids fresh ts =
+    List.map (fn (oid, c,t) => cobs (fresh (), oid, c, t)) ts;
+
+fun gen_path_ids fresh ps =
+    List.map (fn (pcond, cobslist) =>
+                 path (fresh (), pcond, gen_obs_ids fresh cobslist)) ps;
+
+fun lookup_path path_id path_struct =
+    List.find (fn p => path_id_of p = path_id) path_struct;
+
+fun lookup_obs obs_id obs_list =
+    List.find (fn obs => cobs_id_of obs = obs_id) obs_list;
+
+val fresh_id =
+    stateful_tabulate
+        (fn n =>
+            let fun onechar n =
+                    (Char.chr (Char.ord (#"A") + (n mod 26)));
+                fun c m =
+                    if m < 26
+                    then [onechar m]
+                    else #"Z" :: (String.explode (Int.toString (n-25)));
+            in
+              String.implode (c n)
+            end);
+
+fun mk_fresh_gen () =
+    stateful_tabulate (fn n => n);
+
+(* input: (bir_exp * (cobs list) option) list *)
+fun initialise ps : (path_struct * term) =
+    let
+	    val (somes, nones) = partition (is_some o snd) ps;
+      val ps' = List.map (fn (p,ob) => (p, Option.getOpt (ob,[]))) somes;
+      fun smart_bandl xs = if null xs then btrue else bandl xs;
+(*      val negCond = smart_bandl o List.map (bnot o fst);
+      val validity = negCond nones; *)
+      val fresh = mk_fresh_gen ();
+    in (gen_path_ids fresh ps') (*, band (validity, primed_term validity)) *)
+    end;
+
+fun filter pred ps =
+    let fun check p =
+            pred (path_id_of p, path_cond_of p)
+    in
+      List.filter check ps
+    end;
+
+fun get_distinct_path path_id ps =
+    filter (fn (id,_) => not (id = path_id));
+
+fun print_path_struct path_struct =
+    let fun print_obs (cobs (id, oid, obs_cond, obs_term)) =
+            (print ("Obs " ^ PolyML.makestring id
+                    ^ ": (model " ^ PolyML.makestring (int_of_term oid) ^ ") ");
+             print_term obs_cond;
+             print (" => ");
+             print_term obs_term;
+             print "\n");
+        fun print_path (path (id, path_cond, obs_list)) =
+            (print ("Path " ^ PolyML.makestring id ^ ": ");
+             print_term path_cond;
+             print (" =>\n");
+             List.app print_obs obs_list);
+    in List.app print_path path_struct
+    end;
+
+end
+
+end
+
