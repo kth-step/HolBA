@@ -101,4 +101,35 @@ fun skipWhile f e =
       else x
     end;
 
+(* unused for now *)
+fun mk_round_robin n =
+    let val counter = ref 0;
+    in fn (ys : term list) =>
+          let val c = !counter;
+          in
+            (if c = n
+             then counter := 0
+             else counter := c + 1) ;
+            List.nth (ys, c)
+          end
+    end
+
+fun mk_round_robin_every s n =
+    let val counter = ref n;
+        val step = ref 0;
+    in fn (ys : term list) =>
+          let val c = !counter;
+          in
+            (if c = n
+             then (counter := 0; step := 0)
+             else (if (!step = s)
+                   then (counter := c + 1;
+                         step := 0)
+                   else (step := !step + 1));
+             printv 1 ("Path counter: " ^ PolyML.makestring (!counter) ^ "\n");
+             List.nth (ys, c))
+          end
+    end
+
+
 end
