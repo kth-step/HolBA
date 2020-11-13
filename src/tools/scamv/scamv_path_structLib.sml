@@ -2,12 +2,13 @@ structure scamv_path_structLib =
 struct
 
 local
-  open HolKernel Parse boolLib bossLib;
+  open HolKernel Parse liteLib boolLib bossLib;
   open stringSyntax;
-  open bir_programTheory;
-
   open bslSyntax;
   open numSyntax;
+  open bir_utilLib;
+
+  open bir_programTheory;
 
   (* error handling *)
   val libname  = "bir_rel_synthLib"
@@ -74,7 +75,7 @@ fun mk_fresh_gen () =
     stateful_tabulate (fn n => n);
 
 (* input: (bir_exp * (cobs list) option) list *)
-fun initialise ps : (path_struct * term) =
+fun initialise ps : path_struct =
     let
 	    val (somes, nones) = partition (is_some o snd) ps;
       val ps' = List.map (fn (p,ob) => (p, Option.getOpt (ob,[]))) somes;
@@ -82,6 +83,15 @@ fun initialise ps : (path_struct * term) =
 (*      val negCond = smart_bandl o List.map (bnot o fst);
       val validity = negCond nones; *)
       val fresh = mk_fresh_gen ();
+      fun has_observations (SOME []) = false
+        | has_observations NONE = false
+        | has_observations _ = true
+      val _ =
+          if exists (has_observations o snd) ps
+          then () (* fine, there is at least one observation
+                       in the paths list *)
+          else raise ERR "scamv_path_structLib.initialise" "no observations";
+
     in (gen_path_ids fresh ps') (*, band (validity, primed_term validity)) *)
     end;
 
@@ -94,6 +104,12 @@ fun filter pred ps =
 
 fun get_distinct_path path_id ps =
     filter (fn (id,_) => not (id = path_id));
+
+fun extract_obs_variables ps =
+    List.concat (
+      List.map (fn (path (_,_,obs_list)) =>
+                    List.concat (List.map (fn (cobs (_,_,_,term)) => bir_free_vars term) obs_list))
+               ps);
 
 fun print_path_struct path_struct =
     let fun print_obs (cobs (id, oid, obs_cond, obs_term)) =
