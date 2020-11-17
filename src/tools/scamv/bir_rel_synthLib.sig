@@ -4,7 +4,8 @@ sig
 
     type exp;
     type cobs;
-    type path_spec;
+    type path_spec = {a_run: int * (bool * int) list, b_run: int * (bool * int) list};
+    
     datatype enum_strategy = enum_extensional of int list
                            | enum_range of int * int;
     type enum_env;
