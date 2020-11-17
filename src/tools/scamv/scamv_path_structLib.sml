@@ -1,24 +1,25 @@
-structure scamv_path_structLib =
+structure scamv_path_structLib : scamv_path_structLib =
 struct
 
-local
-  open HolKernel Parse liteLib boolLib bossLib;
-  open stringSyntax;
-  open bslSyntax;
-  open numSyntax;
-  open bir_utilLib;
+open HolKernel Parse liteLib boolLib bossLib;
+open stringSyntax;
+open bslSyntax;
+open numSyntax;
+open bir_utilLib;
 
-  open bir_programTheory;
+open bir_programTheory;
 
-  (* error handling *)
-  val libname  = "bir_rel_synthLib"
-  val ERR      = Feedback.mk_HOL_ERR libname
-  val wrap_exn = Feedback.wrap_exn libname
-in
+(* error handling *)
+val libname  = "bir_rel_synthLib"
+val ERR      = Feedback.mk_HOL_ERR libname
+val wrap_exn = Feedback.wrap_exn libname
+
 
 datatype cobs_repr = cobs of int * term * term * term;
 datatype path_repr = path of int * term * (cobs_repr list);
 type path_struct = path_repr list;
+
+type path_spec = {a_run: int * (bool * int) list, b_run: int * (bool * int) list};
 
 fun stateful_tabulate f =
     let val current = ref 0;
@@ -126,8 +127,6 @@ fun print_path_struct path_struct =
              List.app print_obs obs_list);
     in List.app print_path path_struct
     end;
-
-end
 
 end
 

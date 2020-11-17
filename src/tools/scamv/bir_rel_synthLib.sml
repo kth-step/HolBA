@@ -22,7 +22,6 @@ in
 type exp = term;
 type cobs = term * term * term;
 
-type path_spec = {a_run: int * (bool * int) list, b_run: int * (bool * int) list};
 datatype enum_strategy = enum_extensional of int list
                        | enum_range of int * int;
 type enum_env = (term * enum_strategy) list;

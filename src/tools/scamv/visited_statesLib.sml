@@ -1,11 +1,11 @@
 structure visited_statesLib :> visited_statesLib =
 struct
 
-local
-
 open HolKernel Parse boolLib;
 open Redblackmap;
 open bir_utilLib;
+
+type path_spec = scamv_path_structLib.path_spec;
 
 fun order2bool ord =
     case ord of
@@ -17,9 +17,6 @@ fun order2eq ord =
         EQUAL => true
       | _ => false;
 
-in
-
-open bir_rel_synthLib;
 type visited_map = (path_spec, term) dict;
 
 fun path_spec_compare (pspec1:path_spec, pspec2:path_spec) =
@@ -51,13 +48,17 @@ fun add_visited vmap pspec t =
     end;
 
 fun lookup_visited vmap pspec =
-    find (vmap,pspec);
+    let val x = find (vmap,pspec);
+        val _ = print "Visited lookup: ";
+        val _ = print_term x;
+    in
+      x
+    end;
 
 fun lookup_visited_all_paths (vmap : visited_map) =
     foldr (fn (_,conjunct,result) => mk_conj (conjunct,result)) ``T`` vmap;
 
 fun transform_visited (vmap : visited_map) f : visited_map = transform f vmap;
 
-end
 
 end

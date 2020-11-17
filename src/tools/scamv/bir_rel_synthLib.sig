@@ -4,8 +4,7 @@ sig
 
     type exp;
     type cobs;
-    type path_spec = {a_run: int * (bool * int) list, b_run: int * (bool * int) list};
-    
+
     datatype enum_strategy = enum_extensional of int list
                            | enum_range of int * int;
     type enum_env;
@@ -15,12 +14,15 @@ sig
         (''a * 'b) list -> 'b list * 'b list
 
     val rel_synth_jit :
-        path_spec -> int -> scamv_path_structLib.path_struct -> exp
+        scamv_path_structLib.path_spec ->
+        int -> scamv_path_structLib.path_struct -> exp
 
     val rel_synth_init :
         scamv_path_structLib.path_struct ->
         int ->
         enum_env ->
-        scamv_path_structLib.path_struct * exp * ((path_spec -> bool) -> (path_spec * term) option)
+        scamv_path_structLib.path_struct *
+            exp * ((scamv_path_structLib.path_spec -> bool) ->
+                   (scamv_path_structLib.path_spec * term) option)
 
 end;

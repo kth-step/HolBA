@@ -23,6 +23,7 @@ open scamv_configLib;
 open scamv_symb_exec_interfaceLib;
 open bir_conc_execLib;
 open scamv_path_structLib;
+open visited_statesLib;
 
   (* error handling *)
   val libname  = "bir_scamv_driverLib"
@@ -195,6 +196,7 @@ val (current_refined_obs_model_id : string option ref) = ref NONE;
 val (current_obs_projection : int ref) = ref 1;
 val (current_pathstruct :
      path_struct option ref) = ref NONE;
+val (current_visited_map : visited_map ref) = ref (init_visited ());
 val (current_word_rel : term option ref) = ref NONE;
 val (next_iter_rel    : (path_spec * term) option ref) = ref NONE;
 
@@ -204,6 +206,7 @@ fun reset () =
      current_prog_w_obs := NONE;
      current_prog_w_refined_obs := NONE;
      current_pathstruct := NONE;
+     current_visited_map := init_visited ();
      current_obs_projection := 1;
      current_word_rel := NONE);
 
@@ -381,11 +384,13 @@ fun next_experiment all_exps next_relation  =
         val _ = min_verb 4 (fn () =>
                                (print_term new_word_relation;
                                 print "\n"));
-        val word_relation =
+(*        val word_relation =
             case !current_word_rel of
                 NONE => new_word_relation
 	      (* r is a constraint used to build the next relation for path enumeration *)
-              | SOME r => mk_conj (new_word_relation, r);
+              | SOME r => mk_conj (new_word_relation, r); *)
+        val word_relation = mk_conj(new_word_relation, lookup_visited (!current_visited_map) path_spec)
+                            handle NotFound => new_word_relation;
 
         val _ = printv 2 ("Calling Z3\n");
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
@@ -396,15 +401,15 @@ fun next_experiment all_exps next_relation  =
             (String.extract(str, 0, SOME((String.size str) - 1)))
           else
             raise ERR "remove_prime" "there was no prime where there should be one";
-
-	fun isPrimedRun s = String.isSuffix "_" s;
-	val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
-	val (primed, nprimed) = List.partition (isPrimedRun o fst) model
-	val rmprime = List.map (fn (r,v) => (remove_prime r,v)) primed
+        
+	      fun isPrimedRun s = String.isSuffix "_" s;
+	      val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
+	      val (primed, nprimed) = List.partition (isPrimedRun o fst) model
+	      val rmprime = List.map (fn (r,v) => (remove_prime r,v)) primed
         val s1 = to_sml_Arbnums nprimed;
-	val s2 = to_sml_Arbnums primed;
+	      val s2 = to_sml_Arbnums primed;
         val prog_id = !current_prog_id;
-	    
+	      
         fun mk_var_mapping s =
             let fun mk_eq (a,b) =
                     let fun adjust_prime s =
@@ -417,15 +422,18 @@ fun next_experiment all_exps next_relation  =
             in list_mk_conj (map mk_eq s) end;
 
         val reg_constraint = ``~^(mk_var_mapping (regs))``;
-	val mem_constraint = mem_constraint ml;
-	val new_constraint = mk_conj (reg_constraint, mem_constraint)
-
+	      val mem_constraint = mem_constraint ml;
+	      val new_constraint = mk_conj (reg_constraint, mem_constraint);
+                                     
         val _ =
-            current_word_rel :=
+            current_visited_map := add_visited (!current_visited_map) path_spec new_constraint;
+        val _ =
+            current_word_rel := SOME (lookup_visited_all_paths (!current_visited_map));
+(*                        current_word_rel :=
             (case !current_word_rel of
                  NONE => SOME new_constraint
                | SOME cumulative =>
-                 SOME ``^cumulative /\ ^new_constraint``);
+                 SOME ``^cumulative /\ ^new_constraint``); *)
 
 	(* ------------------------- training start ------------------------- *)
 	local
@@ -496,7 +504,7 @@ fun scamv_test_main tests prog =
     let
         val _ = reset();
         val (path_structure, validity, next_relation) = scamv_per_program_init prog;
-        fun do_tests 0 =  (next_iter_rel := NONE; current_word_rel := NONE)
+        fun do_tests 0 =  (next_iter_rel := NONE; current_word_rel := NONE; current_visited_map := init_visited ())
           | do_tests n =
             let val _ = next_experiment [] next_relation
                         handle e => (
