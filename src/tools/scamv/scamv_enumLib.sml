@@ -1,6 +1,6 @@
 structure scamv_enumLib :> scamv_enumLib =
 struct
-
+open HolKernel;
 (* An enumeration is represented by a pair of a reference to the current value
 and a 'step' function that returns the next value. This step function usually
 contains in its closure the real state of the enumeration, whereas the current
@@ -126,7 +126,7 @@ fun mk_round_robin_every s n =
                    then (counter := c + 1;
                          step := 0)
                    else (step := !step + 1));
-             printv 1 ("Path counter: " ^ PolyML.makestring (!counter) ^ "\n");
+             print ("Path counter: " ^ PolyML.makestring (!counter) ^ "\n");
              List.nth (ys, c))
           end
     end
