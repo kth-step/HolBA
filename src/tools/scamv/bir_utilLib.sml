@@ -13,11 +13,13 @@ local
 
 in
 
+fun nub_with eq [] = []
+	| nub_with eq (x::xs) = x::(nub_with eq (List.filter (fn y => not (eq (y, x))) xs))
+
+fun nub xs = nub_with (op=);
+
 fun bir_free_vars exp =
     let 
-	    fun nub_with eq [] = []
-	      | nub_with eq (x::xs) = x::(nub_with eq (List.filter (fn y => not (eq (y, x))) xs))
-
 	    val fvs =
 	        if is_comb exp then
 		        let val (con,args) = strip_comb exp
