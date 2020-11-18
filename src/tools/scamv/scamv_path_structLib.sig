@@ -27,5 +27,4 @@ sig
   val path_obs_of: path_repr -> cobs_repr list
   val cobs_id_of: cobs_repr -> int;
   val print_path_struct: path_repr list -> unit
-  val stateful_tabulate: (int -> 'a) -> unit -> 'a
 end

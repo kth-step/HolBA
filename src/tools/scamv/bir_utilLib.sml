@@ -13,6 +13,19 @@ local
 
 in
 
+fun stateful_tabulate f =
+    let val current = ref 0;
+        fun next () =
+            let val result = f (!current);
+            in (current := !current + 1;
+                result)
+            end
+    in
+      next
+    end;
+
+fun mapPair f (c, oCobs) = (f c, f oCobs);
+
 fun nub_with eq [] = []
 	| nub_with eq (x::xs) = x::(nub_with eq (List.filter (fn y => not (eq (y, x))) xs))
 

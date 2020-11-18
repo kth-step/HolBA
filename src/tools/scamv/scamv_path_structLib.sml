@@ -21,17 +21,6 @@ type path_struct = path_repr list;
 
 type path_spec = {a_run: int * (bool * int) list, b_run: int * (bool * int) list};
 
-fun stateful_tabulate f =
-    let val current = ref 0;
-        fun next () =
-            let val result = f (!current);
-            in (current := !current + 1;
-                result)
-            end
-    in
-      next
-    end;
-
 fun path_id_of (path (id, _, _)) = id;
 fun path_cond_of (path (_,cond,_)) = cond;
 fun path_obs_of (path (_,_,obs)) = obs;
