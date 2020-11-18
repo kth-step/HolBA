@@ -204,7 +204,6 @@ def z3_to_HolTerm(exp):
 def Diff(li1, li2): 
     return (list(set(li1) - set(li2)))
 
-# Dirty hack to fix the problem of memory stores when mem <> mem' 
 def model_to_list(model):
     mem_list = []
     sml_list = []
@@ -237,13 +236,13 @@ def model_to_list(model):
 
     # Get memory mappings from the model
     funcInterps = sorted([pair for pair in model_2_list if isinstance(pair[1], z3.FuncInterp)])
-    funcInterps_mem = sorted([pair for pair in funcInterps if mem_check.search(pair[0])])
-    # Find model register assignments
-    model_regs = Diff(model_2_list, funcInterps)
-    # Convert register and memory assignments to HOL4 words 
-    sml_list = model_to_word(model_regs)    
+    funcInterps_mem = sorted([pair for pair in funcInterps if mem_check.search(pair[0])]) 
 
     if len(kmap) > 0:
+        # Find model register assignments
+        model_regs = Diff(model_2_list, funcInterps)
+        # Convert register and memory assignments to HOL4 words 
+        sml_list = model_to_word(model_regs)
         list(map(lambda x : (sml_list.append(strip_name(x[0])), sml_list.append(z3_memory(x[1]).mem_to_word())), funcInterps_mem))     
     else:
         sml_list = model_to_word(model_2_list)
