@@ -14,6 +14,7 @@ open stringSyntax;
 open bir_programTheory;
 open bir_utilLib;
 open scamv_path_structLib;
+open scamv_enumLib;
 
 open bslSyntax;
 open numSyntax;
@@ -26,15 +27,13 @@ datatype enum_strategy = enum_extensional of int list
                        | enum_range of int * int;
 type enum_env = (term * enum_strategy) list;
 
-fun mapPair f (c, oCobs) = (f c, f oCobs);
-
 exception ListMkBir of string
 
 fun primed_subst exp =
     let 
 	val (mfvs, rfvs) = List.partition (fn el =>  Term.term_eq el ``"MEM"``)(bir_free_vars exp)
 	val regs =
-	    map (fn v =>
+	    List.map (fn v =>
 		    let val vp = lift_string string_ty (fromHOLstring v ^ "'")
 		    in
 			``BVar ^v`` |-> ``BVar ^vp`` end) rfvs
@@ -46,7 +45,7 @@ fun primed_subst exp =
 	else [mem |-> mem']@regs
     end
 	
-fun primed_vars exp = map (#residue) (primed_subst exp);
+fun primed_vars exp = List.map (#residue) (primed_subst exp);
 
 fun primed_term exp =
     let val psub = primed_subst exp
@@ -56,25 +55,14 @@ fun primed_term exp =
 
 fun primed ys =
     map (fn (x,y) => (primed_term x,
-                      Option.map (map (mapPair primed_term)) y)) ys;
+                      Option.map (List.map (mapPair primed_term)) y)) ys;
 
 fun primed_obs (cos : cobs_repr list) =
     let fun primed_cobs (cobs (id, oid, c, t)) =
             cobs (id, oid, primed_term c, primed_term t);
     in List.map primed_cobs cos
     end;
-
-fun stateful_tabulate f =
-    let val current = ref 0;
-        fun next () =
-            let val result = f (!current);
-            in (current := !current + 1;
-                result)
-            end
-    in
-        next
-    end;
-
+(*
 val fresh_id =
     stateful_tabulate
         (fn n =>
@@ -90,7 +78,7 @@ val fresh_id =
 
 fun mk_fresh_gen () =
     stateful_tabulate (fn n => n);
-
+*)
 fun todo () = raise ERR "todo" "unimplemented";
 
 fun split_obs_list n xs =
@@ -104,7 +92,7 @@ fun triangleWith f xs ys =
     let fun go g [] _ = []
           | go g _ [] = []
           | go g (x::xs) (y::ys) =
-            (map (fn p => g x p) (y::ys)) @
+            (List.map (fn p => g x p) (y::ys)) @
             go g xs ys
     in
         if length ys < length xs
@@ -118,8 +106,8 @@ fun buildLeavesIds [] = []
   | buildLeavesIds [oid] = [[(true, oid)], [(false,oid)]]
   | buildLeavesIds (oid::rest) =
     let val cobs' = buildLeavesIds rest;
-        val oHolds    = map (fn spec => (true, oid) :: spec) cobs';
-        val oNotHolds = map (fn spec => (false, oid) :: spec) cobs';
+        val oHolds    = List.map (fn spec => (true, oid) :: spec) cobs';
+        val oNotHolds = List.map (fn spec => (false, oid) :: spec) cobs';
     in oHolds @ oNotHolds
     end
 
@@ -139,24 +127,25 @@ fun enumerate_domain (a_term, strategy) =
             fun apply_pair v1 v2 =
                 band (beq (a_term, bconst64 v1), beq (b_term, bconst64 v2))
             val prod = triangleWith apply_pair xs xs;
-            val len = length prod;
+(*            val len = length prod;
             fun next_constraint n =
                 SOME (List.nth (prod, n mod len))
-                     handle _ => NONE;
-        in (prod, stateful_tabulate next_constraint)
+                     handle _ => NONE; *)
+        in (prod, roundrobin_list prod)
         end;
 
-fun enumerate_domains env =
-    let val (prods, funs) = unzip (List.map enumerate_domain env)
-        fun nexts () =
-            let fun go [] = []
-                  | go (NONE :: xs) = go xs
-                  | go (SOME x :: xs) = x :: (go xs)
-            in
-                bandl (go (List.map (fn f => f ()) funs))
-                handle _ => btrue
-            end;
-    in (prods, nexts)
+fun enumerate_domains [] = ([], constant btrue)
+  | enumerate_domains env =
+    let val (prods, enums) = unzip (List.map enumerate_domain env)
+        (* fun nexts () =
+             (*let fun go [] = [] *)
+            (*       | go (NONE :: xs) = go xs *)
+            (*       | go (SOME x :: xs) = x :: (go xs) *)
+            (* in
+            bandl (List.map next enums)
+            handle _ => btrue
+            end; *) *)
+    in (prods, list_reduce bandl enums)
     end;
 
 fun enumerate_relation path_dom static_obs_dom dynamic_obs_dom =
@@ -199,12 +188,12 @@ fun enumerate_relation path_dom static_obs_dom dynamic_obs_dom =
                         specs;
 
         (* iterator *)
-        val len = length full_specs;
+(*        val len = length full_specs;
         fun next_test_case n =
             SOME (List.nth (full_specs, n mod len))
-                     handle _ => NONE;
+                     handle _ => NONE; *)
     in
-        (full_specs, stateful_tabulate next_test_case)
+        (full_specs, roundrobin_list full_specs)
     end;
 
 fun trace_cobs_jit [] obs_list = ([],[])
@@ -288,7 +277,7 @@ fun rel_synth_jit
                  ("invalid id in arg " ^
                   PolyML.makestring spec);
 
-val example_initial_ps = [(``A``, SOME [(``B``,``C``)]), (``D``,NONE)];
+val example_initial_ps = [(``A``, SOME [(``0``,``B``,``C``)]), (``D``,NONE)];
 
 fun partition_domains (ps : path_struct) : int list * int list =
     let fun partition_obs_list xs =
@@ -310,17 +299,17 @@ fun rel_synth_init ps obs_projection (env : enum_env) =
     let
       val validity = btrue;
       val (static_obs_domain, dynamic_obs_domain) = partition_domains ps;
-      val (full_specs, next) =
+      val (full_specs, relation) =
           enumerate_relation (path_domain ps)
                              static_obs_domain dynamic_obs_domain;
-      val (full_enums, next_constraint) =
+      val (full_enums, constraints) =
           enumerate_domains env;
       fun next_test guard_path_spec =
           let open bir_expLib;
               fun try_spec () =
                   let fun go 0 = raise ERR "next_test" "guard_path_spec failed too many times in a row"
                         | go n =
-                          let val SOME p = next ();
+                          let val p = next relation;
                           in if guard_path_spec p
                              then (print "\n"; p)
                              else (print "~"; go (n-1))
@@ -329,7 +318,7 @@ fun rel_synth_init ps obs_projection (env : enum_env) =
                   end
                   handle Bind => raise ERR "next_test" "no next relation found";
               val spec = try_spec ();
-              val constraint = next_constraint ();
+              val constraint = next constraints;
               val _ = if not (identical constraint btrue)
                       then (print ("Selected constraint: ");
                             bir_exp_pretty_print constraint;
