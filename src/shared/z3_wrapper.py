@@ -5,7 +5,16 @@ import sys
 from z3 import *
 import re
 
-z3.set_param('model_compress', False)
+def model_compress_string():
+    major,minor,build,rev = z3.get_version()
+    result = ""
+    if major >= 4 and minor >= 8 and build >= 7:
+        result = "model.compact"
+    else:
+        result = "model_compress"
+    return result
+
+z3.set_param(model_compress_string(), False)
 
 """ Z3 wrapper for HOL4.
 
