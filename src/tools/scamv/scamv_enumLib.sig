@@ -17,6 +17,7 @@ sig
   val map : ('a -> 'b) -> 'a enumeration -> 'b enumeration
   val iterate : ('a -> 'a) -> 'a -> 'a enumeration
   val zipWith : ('a -> 'b -> 'c) -> 'a enumeration -> 'b enumeration -> 'c enumeration
+  val list_reduce : ('a list -> 'b) -> ('a enumeration list) -> 'b enumeration
   val cartesian : 'a enumeration -> 'b enumeration -> ('a * 'b) enumeration
   val prefix : 'a list -> 'a enumeration -> 'a enumeration
   val interleave : 'a enumeration -> 'a enumeration -> 'a enumeration

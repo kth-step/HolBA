@@ -83,6 +83,9 @@ fun range_from_to a b =
     else raise InvalidRange;
 fun interleave e1 e2 =
     map (fn n => if n mod 2 = 0 then next e2 else next e1) (range_from_to 1 2);
+fun list_reduce (f : ('a list -> 'b)) (es : 'a enumeration list) =
+    enum (fn _ =>
+             f (List.map next es));
 
 fun take 0 e = []
   | take n e = next e :: take (n-1) e;
