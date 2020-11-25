@@ -32,13 +32,19 @@ fun nub_with eq [] = []
 fun nub xs = nub_with (op=);
 
 fun bir_free_vars exp =
-    let 
+    let
+      open stringSyntax;
+      fun var_to_str v =
+          let val (name,_) = dest_var v
+          in
+            fromMLstring name
+          end
 	    val fvs =
 	        if is_comb exp then
 		        let val (con,args) = strip_comb exp
 		        in
 		          if identical con ``BExp_MemConst``
-		          then [``"MEM"``]
+		          then [var_to_str (List.nth(args, 2))]
 		          else if identical con ``BExp_Den``
 		          then
 		            let val v = case strip_comb (hd args) of
