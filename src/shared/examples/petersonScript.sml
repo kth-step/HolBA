@@ -39,13 +39,14 @@ fun petersons core =
                  (bjmp o belabel_str) "loop")
 
                   ,(blabel_str "loop",
-                    (* TODO each stmt should be atomic *)
-                    [bassign (bvarimm 1 "cond",
+                    [bassign (bvarimm8 "f", bloadvar "flag" (other_core core))
+                    ,bassign (bvarimm8 "t", bloadvar "turn" 0)
+                    ,bassign (bvarimm 1 "cond",
                               band (beq
-                                        (bloadvar "flag" (other_core core),
+                                        (bden (bvarimm8 "f"),
                                          (bconst64 1))
                                    ,beq
-                                        (bloadvar "turn" 0,
+                                        (bden (bvarimm8 "t"),
                                          bconst1 (other_core core))))
                     ],
 
