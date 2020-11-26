@@ -40,7 +40,7 @@ Cases_on `stmt` >> (
   SIMP_TAC std_ss [bir_exec_stmtB_def, LET_DEF,
     bir_exec_stmt_assume_def,
     bir_exec_stmt_assign_def, bir_exec_stmt_assert_def,
-    bir_exec_stmt_observe_def] >>
+    bir_exec_stmt_observe_def, bir_exec_stmt_fence_def] >>
   REPEAT GEN_TAC >> STRIP_TAC >>
   REPEAT CASE_TAC >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def,
@@ -177,7 +177,7 @@ val bir_exec_stmtB_status_not_halted = store_thm ("bir_exec_stmtB_status_not_hal
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtB_state_REWRS, LET_DEF,
     bir_exec_stmt_assume_def,
-    bir_exec_stmt_assign_def, bir_exec_stmt_assert_def,
+    bir_exec_stmt_assign_def, bir_exec_stmt_assert_def, bir_exec_stmt_fence_state_def,
     bir_exec_stmt_observe_state_def, bir_state_set_typeerror_def] >>
   REPEAT GEN_TAC >>
   REPEAT CASE_TAC >>
@@ -244,7 +244,7 @@ val bir_exec_stmtB_status_not_jumped = store_thm ("bir_exec_stmtB_status_not_jum
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtB_state_REWRS, LET_DEF,
     bir_exec_stmt_assume_def,
-    bir_exec_stmt_assign_def, bir_exec_stmt_assert_def,
+    bir_exec_stmt_assign_def, bir_exec_stmt_assert_def, bir_exec_stmt_fence_state_def,
     bir_exec_stmt_observe_state_def, bir_state_set_typeerror_def] >>
   REPEAT GEN_TAC >>
   REPEAT CASE_TAC >>
@@ -601,7 +601,7 @@ val bir_exec_stmtB_status_assumption = store_thm ("bir_exec_stmtB_status_assumpt
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtB_state_REWRS, LET_DEF,
     bir_exec_stmt_assume_def,
-    bir_exec_stmt_assign_def, bir_exec_stmt_assert_def,
+    bir_exec_stmt_assign_def, bir_exec_stmt_assert_def, bir_exec_stmt_fence_state_def,
     bir_exec_stmt_observe_state_def, bir_state_set_typeerror_def] >>
   REPEAT GEN_TAC >>
   REPEAT CASE_TAC >>
@@ -676,7 +676,7 @@ val bir_exec_stmtB_status_assertion = store_thm ("bir_exec_stmtB_status_assertio
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtB_state_REWRS, LET_DEF,
     bir_exec_stmt_assume_def,
-    bir_exec_stmt_assign_def, bir_exec_stmt_assert_def,
+    bir_exec_stmt_assign_def, bir_exec_stmt_assert_def, bir_exec_stmt_fence_state_def,
     bir_exec_stmt_observe_state_def, bir_state_set_typeerror_def] >>
   REPEAT GEN_TAC >>
   REPEAT CASE_TAC >>

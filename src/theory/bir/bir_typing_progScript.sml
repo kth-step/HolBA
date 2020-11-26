@@ -186,7 +186,8 @@ val bir_changed_vars_of_stmtB_def = Define `
   (bir_changed_vars_of_stmtB (BStmt_Assert ex) = {}) /\
   (bir_changed_vars_of_stmtB (BStmt_Assume ex) = {}) /\
   (bir_changed_vars_of_stmtB (BStmt_Assign v ex) = {v}) /\
-  (bir_changed_vars_of_stmtB (BStmt_Observe _ ec el obf) = {})`;
+  (bir_changed_vars_of_stmtB (BStmt_Observe _ ec el obf) = {}) /\
+  (bir_changed_vars_of_stmtB BStmt_Fence = {})`;
 
 val bir_changed_vars_of_stmt_def = Define `
   (bir_changed_vars_of_stmt (BStmtE s) = {}) /\
@@ -273,7 +274,8 @@ val bir_exps_of_stmtB_def = Define `
   (bir_exps_of_stmtB (BStmt_Assert ex) = {ex}) /\
   (bir_exps_of_stmtB (BStmt_Assume ex) = {ex}) /\
   (bir_exps_of_stmtB (BStmt_Assign v ex) = {ex}) /\
-  (bir_exps_of_stmtB (BStmt_Observe _ ec el obf) = set (ec::el))`;
+  (bir_exps_of_stmtB (BStmt_Observe _ ec el obf) = set (ec::el)) /\
+  (bir_exps_of_stmtB BStmt_Fence = {})`;
 
 val bir_exps_of_label_exp_def = Define `
   (bir_exps_of_label_exp (BLE_Label l) = {}) /\

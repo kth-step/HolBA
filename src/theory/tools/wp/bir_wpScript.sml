@@ -742,6 +742,21 @@ Cases_on `bir_eval_bool_exp ec s.bst_environ` >> (
 )
 );
 
+val bir_fence_state_invar =
+    store_thm("bir_fence_state_invar",
+``!s s' obs.
+             (* Antecedents from outside the Hoare triple: *)
+             bir_is_well_typed_stmtB BStmt_Fence ==>
+             (* Antecedents from within the Hoare triple: *)
+             bir_env_vars_are_initialised s.bst_environ
+             (bir_vars_of_stmtB BStmt_Fence) ==>
+             (bir_exec_stmtB BStmt_Fence s = (obs, s')) ==>
+             (s = s')``,
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [bir_exec_stmtB_def, bir_exec_stmt_fence_def,
+                      bir_is_well_typed_stmtB_def, bir_is_bool_exp_GSYM]
+);
+
 (* Theorem stating the soundness of the precondition Q for
  * the statement Observe ex, with the postcondition Q. *)
 (* {Q} Observe ex {Q} *)
@@ -756,6 +771,17 @@ REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
 METIS_TAC [bir_observe_state_invar]
 );
 
+(* {Q} Fence {Q} *)
+val bir_triple_exec_stmtB_fence_thm =
+  store_thm("bir_triple_exec_stmtB_fence_thm",
+  ``!post.
+    bir_is_well_typed_stmtB BStmt_Fence ==>
+    bir_exec_stmtB_triple BStmt_Fence post post``,
+  REWRITE_TAC [bir_exec_stmtB_triple_def, bir_pre_post_def] >>
+  REPEAT (GEN_TAC ORELSE DISCH_TAC) >>
+  METIS_TAC [bir_fence_state_invar]
+);
+
 val bir_wp_exec_stmtB_def = Define `
   (bir_wp_exec_stmtB (BStmt_Assert ex) post =
     (BExp_BinExp BIExp_And ex post)) /\
@@ -763,7 +789,8 @@ val bir_wp_exec_stmtB_def = Define `
     (BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not ex) post)) /\
   (bir_wp_exec_stmtB (BStmt_Assign v ex) post =
     (bir_exp_subst1 v ex post)) /\
-  (bir_wp_exec_stmtB (BStmt_Observe oid ec el obf) post = post)`;
+  (bir_wp_exec_stmtB (BStmt_Observe oid ec el obf) post = post) /\
+  (bir_wp_exec_stmtB BStmt_Fence post = post)`;
 
 val bir_wp_exec_stmtB_sound_thm =
   store_thm("bir_wp_exec_stmtB_sound_thm",
@@ -777,7 +804,8 @@ FULL_SIMP_TAC std_ss [bir_wp_exec_stmtB_def,
                       bir_triple_exec_stmtB_assign_thm,
                       bir_triple_exec_stmtB_assert_thm,
                       bir_triple_exec_stmtB_assume_thm,
-                      bir_triple_exec_stmtB_observe_thm] >> (
+                      bir_triple_exec_stmtB_observe_thm,
+                      bir_triple_exec_stmtB_fence_thm] >> (
   RW_TAC std_ss []
 )
 );

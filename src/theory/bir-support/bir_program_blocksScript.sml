@@ -73,7 +73,7 @@ Cases_on `stmt` >> (
   FULL_SIMP_TAC std_ss [bir_exec_stmtB_def, LET_DEF,
     bir_exec_stmt_assume_def,
     bir_exec_stmt_assign_def, bir_exec_stmt_assert_def,
-    bir_exec_stmt_observe_def,
+    bir_exec_stmt_observe_def, bir_exec_stmt_fence_def,
     bir_observation_states_EQ_EXCEPT_PC_def, bir_states_EQ_EXCEPT_PC_REWRS] >>
   REPEAT CASE_TAC >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def]

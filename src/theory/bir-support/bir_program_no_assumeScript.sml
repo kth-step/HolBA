@@ -85,7 +85,9 @@ val bir_stmtB_not_assume_never_assumviol =
               [bir_state_set_typeerror_def,
                bir_state_t_bst_status_fupd]
       )
-    )
+    ),
+
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_fence_def]
   ]
 );
 

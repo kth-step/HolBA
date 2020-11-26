@@ -105,6 +105,7 @@ Cases_on `stmt` >> (
     bir_exec_stmt_assume_SAME_ENV,
     bir_exec_stmt_assert_SAME_ENV,
     bir_exec_stmt_observe_SAME_ENV,
+    bir_exec_stmt_fence_SAME_ENV,
     bir_exec_stmtB_state_def, bir_exec_stmtB_def,
     bir_env_EQ_FOR_VARS_EQUIV
   ]
@@ -225,6 +226,7 @@ Cases_on `stmt` >> (
     bir_exec_stmt_assume_SAME_ENV,
     bir_exec_stmt_assert_SAME_ENV,
     bir_exec_stmt_observe_SAME_ENV,
+    bir_exec_stmt_fence_SAME_ENV,
     bir_exec_stmtB_state_def, bir_exec_stmtB_def,
     bir_env_EQ_FOR_VARS_EQUIV, LET_THM
   ]
@@ -290,7 +292,10 @@ Cases_on `stmt` >> (
       ASM_SIMP_TAC std_ss [listTheory.MAP_EQ_f]
     ) >>
     FULL_SIMP_TAC std_ss []
-  )
+  ),
+
+  (* fence *)
+  FULL_SIMP_TAC (list_ss++holBACore_ss++pairSimps.gen_beta_ss) [bir_exec_stmt_fence_def]
 ]
 );
 

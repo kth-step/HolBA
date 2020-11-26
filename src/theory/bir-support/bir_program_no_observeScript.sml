@@ -43,7 +43,7 @@ val bir_program_contains_observe_def = Define `bir_program_contains_observe (Bir
 val bir_exec_stmtB_only_observe_produces_observation = store_thm ("bir_exec_stmtB_only_observe_produces_observation",
 
   ``!stmt st. IS_SOME (FST (bir_exec_stmtB stmt st)) ==> bir_stmtB_is_observe stmt``,
-Cases >> SIMP_TAC std_ss [bir_exec_stmtB_def, bir_stmtB_is_observe_def]);
+Cases >> SIMP_TAC std_ss [bir_exec_stmtB_def, bir_stmtB_is_observe_def, bir_exec_stmt_fence_def]);
 
 
 val bir_exec_stmt_only_observe_produces_observation = store_thm ("bir_exec_stmt_only_observe_produces_observation",

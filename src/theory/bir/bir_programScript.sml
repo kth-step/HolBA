@@ -38,6 +38,7 @@ val _ = Datatype `bir_stmt_basic_t =
   | BStmt_Assert  bir_exp_t
   | BStmt_Assume  bir_exp_t
   | BStmt_Observe num bir_exp_t (bir_exp_t list) (bir_val_t list -> 'a)
+  | BStmt_Fence
 `;
 
 val _ = Datatype `bir_stmt_end_t =
@@ -212,6 +213,9 @@ val bir_exec_stmt_assume_def = Define `bir_exec_stmt_assume ex (st : bir_state_t
     | SOME F => (st with bst_status := BST_AssumptionViolated)
     | NONE => bir_state_set_typeerror st`;
 
+(* In sequential semantics, the fence is a nop *)
+val bir_exec_stmt_fence_def = Define `bir_exec_stmt_fence (st : bir_state_t) = (NONE,st)`;
+val bir_exec_stmt_fence_state_def = Define `bir_exec_stmt_fence_state (st : bir_state_t) = st`;
 
 val bir_exec_stmt_observe_def = Define `bir_exec_stmt_observe oid ec el obf (st : bir_state_t) =
   let
@@ -254,8 +258,8 @@ val bir_exec_stmtB_def = Define `
   (bir_exec_stmtB (BStmt_Assert ex) st = (NONE, bir_exec_stmt_assert ex st)) /\
   (bir_exec_stmtB (BStmt_Assume ex) st = (NONE, bir_exec_stmt_assume ex st)) /\
   (bir_exec_stmtB (BStmt_Assign v ex) st = (NONE, bir_exec_stmt_assign v ex st)) /\
-  (bir_exec_stmtB (BStmt_Observe oid ec el obf) st = bir_exec_stmt_observe oid ec el obf st)`
-
+  (bir_exec_stmtB (BStmt_Observe oid ec el obf) st = bir_exec_stmt_observe oid ec el obf st) /\
+  (bir_exec_stmtB BStmt_Fence st = bir_exec_stmt_fence st)`;
 
 val bir_exec_stmtB_state_def = Define `bir_exec_stmtB_state stmt st =
   SND (bir_exec_stmtB stmt st)`;
@@ -270,7 +274,7 @@ val bir_exec_stmtB_exists =
 Cases_on `h` >> (
   STRIP_TAC >>
   FULL_SIMP_TAC std_ss [bir_exec_stmtB_def]
-) >>
+) >| [
 FULL_SIMP_TAC std_ss [bir_exec_stmt_observe_def] >>
 Cases_on `option_CASE (bir_eval_exp b st.bst_environ) NONE bir_dest_bool_val` >| [
   FULL_SIMP_TAC std_ss [LET_DEF],
@@ -281,6 +285,8 @@ Cases_on `option_CASE (bir_eval_exp b st.bst_environ) NONE bir_dest_bool_val` >|
       FULL_SIMP_TAC std_ss []
     )
   )
+],
+FULL_SIMP_TAC std_ss [bir_exec_stmt_fence_def]
 ]
 );
 
@@ -289,9 +295,10 @@ val bir_exec_stmtB_state_REWRS = store_thm ("bir_exec_stmtB_state_REWRS",
 ``(!ex st. (bir_exec_stmtB_state (BStmt_Assert ex) st = (bir_exec_stmt_assert ex st))) /\
   (!ex st. (bir_exec_stmtB_state (BStmt_Assume ex) st = (bir_exec_stmt_assume ex st))) /\
   (!v ex st. (bir_exec_stmtB_state (BStmt_Assign v ex) st = (bir_exec_stmt_assign v ex st))) /\
-  (!oid ec el obf st. (bir_exec_stmtB_state (BStmt_Observe oid ec el obf) st = bir_exec_stmt_observe_state ec el st))``,
+  (!oid ec el obf st. (bir_exec_stmtB_state (BStmt_Observe oid ec el obf) st = bir_exec_stmt_observe_state ec el st)) /\
+  (!st. (bir_exec_stmtB_state BStmt_Fence st = bir_exec_stmt_fence_state st))``,
 
-SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def, bir_exec_stmt_observe_state_THM]);
+SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def, bir_exec_stmt_observe_state_THM, bir_exec_stmt_fence_state_def, bir_exec_stmt_fence_def]);
 
 
 val bir_exec_stmt_halt_def = Define `bir_exec_stmt_halt ex (st : bir_state_t) =

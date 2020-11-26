@@ -77,7 +77,16 @@ val bir_traces_def = Define`
 bir_traces p = { t | is_trace p t }
 `;
 
+val (is_gen_trace_rules, is_gen_trace_ind, is_gen_trace_cases)  = Hol_reln `
+(!R s. is_gen_trace R [s]) /\
+(!R s2 s1 t . ((is_gen_trace R (APPEND t [s1])) /\ (R s1 s2))
+    ==> (is_gen_trace R (APPEND t [s1;s2])))
+`;
 
+val bir_gen_traces_def = Define`
+gen_traces R = { t | is_gen_trace R t }
+`;
+                   
 (* ------------------------------------------------------------------------- *)
 (*  Parallel evaluation                                                      *)
 (* ------------------------------------------------------------------------- *)
@@ -146,6 +155,9 @@ val (parstep_rules, parstep_ind, parstep_cases) = Hol_reln`
     parstep system (system DIFF {core cid p s} UNION {core cid p s'}))
     `;
 
+val par_traces_def = Define`
+par_traces system = gen_traces parstep
+`;
 
 val compute_next_par_single_def = Define`
 compute_next_par_single (core cid p s) m =

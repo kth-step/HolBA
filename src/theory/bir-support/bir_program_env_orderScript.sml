@@ -47,6 +47,9 @@ REPEAT CASE_TAC >> SIMP_TAC (std_ss++holBACore_ss) [
    bir_state_set_typeerror_SAME_ENV]
 );
 
+val bir_exec_stmt_fence_SAME_ENV = store_thm("bir_exec_stmt_fence_SAME_ENV",
+  ``!st. (SND (bir_exec_stmt_fence st)).bst_environ = st.bst_environ``,
+SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_fence_def]);
 
 (* ------------------------------------------------------------------------- *)
 (*  However, assign only extends the environment                             *)
@@ -80,7 +83,7 @@ val bir_exec_stmtB_ENV_ORDER = store_thm ("bir_exec_stmtB_ENV_ORDER",
 
 GEN_TAC >> Cases_on `stmt` >> (
   SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def, bir_exec_stmt_observe_SAME_ENV,
-    bir_exec_stmt_assert_SAME_ENV, bir_exec_stmt_assume_SAME_ENV,
+    bir_exec_stmt_assert_SAME_ENV, bir_exec_stmt_assume_SAME_ENV, bir_exec_stmt_fence_SAME_ENV,
     bir_env_oldTheory.bir_env_order_REFL, bir_exec_stmt_assign_ENV]
 ) >- (
   Cases_on `bir_eval_exp b0 st.bst_environ` >> (

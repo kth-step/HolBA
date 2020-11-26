@@ -251,6 +251,11 @@ val bir_exec_stmtB_well_typed_env_observe = prove (
       bir_is_well_typed_env (bir_exec_stmt_observe_state ec el st).bst_environ``,
 METIS_TAC[bir_env_oldTheory.bir_is_well_typed_env_THM]);
 
+val bir_exec_stmtB_well_typed_env_fence = prove (
+``!st el ec.
+      bir_is_well_typed_env st.bst_environ ==>
+      bir_is_well_typed_env (bir_exec_stmt_fence_state st).bst_environ``,
+METIS_TAC[bir_env_oldTheory.bir_is_well_typed_env_THM]);
 
 val bir_exec_stmtB_well_typed_env = store_thm ("bir_exec_stmtB_well_typed_env",
 ``!st stmt. bir_is_well_typed_env st.bst_environ ==>
@@ -262,7 +267,8 @@ Cases_on `stmt` >> (
     bir_exec_stmtB_well_typed_env_assign,
     bir_exec_stmtB_well_typed_env_assume,
     bir_exec_stmtB_well_typed_env_assert,
-    bir_exec_stmtB_well_typed_env_observe]
+    bir_exec_stmtB_well_typed_env_observe,
+    bir_exec_stmtB_well_typed_env_fence]
 ));
 
 
@@ -274,7 +280,8 @@ Cases_on `stmt` >> (
   ASM_SIMP_TAC std_ss [bir_exec_stmtB_state_REWRS, LET_DEF,
     bir_exec_stmt_assume_def,
     bir_exec_stmt_assign_def, bir_exec_stmt_assert_def,
-    bir_exec_stmt_observe_state_def] >>
+    bir_exec_stmt_observe_state_def,
+    bir_exec_stmt_fence_state_def] >>
   REPEAT CASE_TAC >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def]
 ));
