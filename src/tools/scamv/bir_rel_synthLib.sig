@@ -21,7 +21,7 @@ sig
         scamv_path_structLib.path_struct ->
         int ->
         enum_env ->
-        scamv_path_structLib.path_struct *
+        scamv_path_structLib.path_spec list *
             exp * ((scamv_path_structLib.path_spec -> bool) ->
                    (scamv_path_structLib.path_spec * term) option)
 

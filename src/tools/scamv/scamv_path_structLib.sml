@@ -29,6 +29,8 @@ fun cobs_id_of (cobs (id,_,_,_)) = id;
 fun path_domain (ps : path_struct) =
     List.map path_id_of ps;
 
+fun num_paths (ps : path_struct) = length (path_domain ps);
+
 fun obs_domain_path xs =
     List.map cobs_id_of xs;
 
@@ -44,6 +46,11 @@ fun gen_path_ids fresh ps =
 
 fun lookup_path path_id path_struct =
     List.find (fn p => path_id_of p = path_id) path_struct;
+
+fun lookup_spec path1 path2 path_specs =
+    List.find
+        (fn sp => fst (#a_run sp) = path1 andalso fst (#b_run sp) = path2)
+        path_specs;
 
 fun lookup_obs obs_id obs_list =
     List.find (fn obs => cobs_id_of obs = obs_id) obs_list;
@@ -93,7 +100,7 @@ fun filter pred ps =
     end;
 
 fun get_distinct_path path_id ps =
-    filter (fn (id,_) => not (id = path_id));
+    filter (fn (id,_) => not (id = path_id)) ps;
 
 fun extract_obs_variables ps =
     List.concat (

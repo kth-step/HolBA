@@ -13,12 +13,14 @@ sig
       (unit -> int) -> (term * term * term) list -> cobs_repr list
   val gen_path_ids:
       (unit -> int) -> (term * (term * term * term) list) list -> path_repr list
-  val get_distinct_path: int -> 'a -> path_repr list -> path_repr list
+  val get_distinct_path: int -> path_repr list -> path_repr list
   val initialise:
    (term * (term * term * term) list option) list -> path_struct
   val lookup_obs : int -> cobs_repr list -> cobs_repr option
   val lookup_path : int -> path_repr list -> path_repr option
+  val lookup_spec : int -> int -> path_spec list -> path_spec option
 
+  val num_paths: path_struct -> int
   val obs_domain: path_struct -> int list
   val obs_domain_path: cobs_repr list -> int list
   val path_cond_of: path_repr -> term
