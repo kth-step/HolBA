@@ -332,7 +332,7 @@ fun rel_synth_init ps obs_projection (env : enum_env) =
           end
           handle Bind => NONE;
     in
-      (ps, validity, next_test)
+      (full_specs, validity, next_test)
     end
 
 end

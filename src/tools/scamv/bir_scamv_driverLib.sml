@@ -24,6 +24,8 @@ open scamv_symb_exec_interfaceLib;
 open bir_conc_execLib;
 open scamv_path_structLib;
 open visited_statesLib;
+open bir_utilLib;
+open scamv_trainingLib;
 
   (* error handling *)
   val libname  = "bir_scamv_driverLib"
@@ -54,30 +56,6 @@ val DISTINCT_MEM = false;
  - test execution
  - driver decision (jump to a, b or c)
  *)
-
-fun bir_free_vars exp =
-    let 
-	val fvs =
-	    if is_comb exp then
-		let val (con,args) = strip_comb exp
-		in
-		    if identical con ``BExp_MemConst``
-		    then [``"MEM"``]
-		    else if identical con ``BExp_Den``
-		    then
-		       let val v = case strip_comb (hd args) of
-				       (_,v::_) => v
-				     | _ => raise ERR "bir_free_vars" "not expected"
-		       in
-			   [v]
-		       end
-		   else
-		       List.concat (map bir_free_vars args)
-		end
-	    else []
-    in
-	fvs
-    end;
 
 exception NoObsInPath;
 
@@ -161,31 +139,10 @@ fun print_model model =
             (print (" - " ^ name ^ ": "); Hol_pp.print_term tm))
         () (rev model);
 
-fun to_sml_Arbnums model =
-    List.foldl (fn ((name, tm), mst) => 
-        if finite_mapSyntax.is_fupdate tm
-	then
-	    let val bitvec = (can o find_term) (fn x => identical ``(BitVec: 64 word)`` x )
-		val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm
-		val vlsN = map (fn p =>
-				   let
-				       val (ad, vl) = pairSyntax.dest_pair p
-				   in
-				       (* Sometime Z3 returns a function like K(BitVec(64), 0) instead of explicitly assigning values to memory addresses. *)
-				       (* To mark such cases I used an out of range address 0xFFFFFFFF. This is also the magic number which showes up in bir_conc_execLib. *)
-
-				       if bitvec ad
-				       then (Arbnum.fromInt 4294967295, dest_word_literal vl)
-				       else (dest_word_literal ad, dest_word_literal vl)
-				   end) vlsW
-	    in
-		machstate_replace_mem (8, Redblackmap.fromList Arbnum.compare vlsN) mst
-	    end
-	else
-	    machstate_add_reg (name, dest_word_literal tm) mst) machstate_empty model;
 
 val hw_obs_model_id = ref "";
 val do_enum = ref false;
+val do_training = ref false;
 
 val (current_prog_id : string ref) = ref "";
 val (current_prog : term option ref) = ref NONE;
@@ -196,6 +153,7 @@ val (current_refined_obs_model_id : string option ref) = ref NONE;
 val (current_obs_projection : int ref) = ref 1;
 val (current_pathstruct :
      path_struct option ref) = ref NONE;
+val (current_full_specs : path_spec list ref) = ref [];
 val (current_visited_map : visited_map ref) = ref (init_visited ());
 val (current_word_rel : term option ref) = ref NONE;
 val (next_iter_rel    : (path_spec * term) option ref) = ref NONE;
@@ -207,6 +165,7 @@ fun reset () =
      current_prog_w_refined_obs := NONE;
      current_pathstruct := NONE;
      current_visited_map := init_visited ();
+     current_full_specs := [];
      current_obs_projection := 1;
      current_word_rel := NONE);
 
@@ -396,20 +355,13 @@ fun next_experiment all_exps next_relation  =
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
         val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model; print "\nSAT model finished.\n"));
 
-        fun remove_prime str =
-          if String.isSuffix "_" str then
-            (String.extract(str, 0, SOME((String.size str) - 1)))
-          else
-            raise ERR "remove_prime" "there was no prime where there should be one";
-        
-	      fun isPrimedRun s = String.isSuffix "_" s;
 	      val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
 	      val (primed, nprimed) = List.partition (isPrimedRun o fst) model
 	      val rmprime = List.map (fn (r,v) => (remove_prime r,v)) primed
         val s1 = to_sml_Arbnums nprimed;
 	      val s2 = to_sml_Arbnums primed;
         val prog_id = !current_prog_id;
-	      
+
         fun mk_var_mapping s =
             let fun mk_eq (a,b) =
                     let fun adjust_prime s =
@@ -424,7 +376,7 @@ fun next_experiment all_exps next_relation  =
         val reg_constraint = ``~^(mk_var_mapping (regs))``;
 	      val mem_constraint = mem_constraint ml;
 	      val new_constraint = mk_conj (reg_constraint, mem_constraint);
-                                     
+
         val _ =
             current_visited_map := add_visited (!current_visited_map) path_spec new_constraint;
         val _ =
@@ -436,33 +388,18 @@ fun next_experiment all_exps next_relation  =
                  SOME ``^cumulative /\ ^new_constraint``); *)
 
 	(* ------------------------- training start ------------------------- *)
-	local
-	    fun training_input_mining tries =
-		if tries > 0
-		then
-		    let val (tpath_spec, trel) =
-			    valOf (next_relation guard_path_spec)
-			    handle Option =>
-				   raise ERR "next_experiment" "next_relation returned a NONE";
-			val _ = next_iter_rel := SOME (tpath_spec, trel)
-			val new_word_relation = make_word_relation trel
-					    
-			val training_relation =
-			    case !current_word_rel of
-				NONE => new_word_relation
-			      | SOME r => mk_conj (new_word_relation, r);
-			val _ = printv 1 ("Calling Z3 to get training state\n")		
-		    in
-			(Z3_SAT_modelLib.Z3_GET_SAT_MODEL training_relation)
-			handle e => training_input_mining (tries - 1)
-		    end
-		else raise ERR "next_test" "no training input found";
-	in
-	 val st = force (ifdef__else__ SPECTRE
-		          (fn () => training_input_mining 6 |> List.partition (isPrimedRun o fst) |>  (* (to_sml_Arbnums o #2)) *) (List.map (fn (r,v) => (remove_prime r,v)) o #1) |> to_sml_Arbnums)
-		          (fn () => machstate_empty)
-		         endif__)
-	end
+        val paths = valOf (!current_pathstruct);
+        val st =
+            if !do_training
+            then
+              compute_training_state (!current_full_specs)
+                                     (!current_obs_projection)
+                                     (lookup_visited (!current_visited_map) path_spec)
+                                     (fst (#a_run path_spec))
+                                     paths
+            else
+              machstate_empty;
+
 	(* ------------------------- training end ------------------------- *)
 	(* val _ = print_term (valOf (!current_word_rel)); *)
 
@@ -503,8 +440,9 @@ fun next_experiment all_exps next_relation  =
 fun scamv_test_main tests prog =
     let
         val _ = reset();
-        val (path_structure, validity, next_relation) = scamv_per_program_init prog;
-        fun do_tests 0 =  (next_iter_rel := NONE; current_word_rel := NONE; current_visited_map := init_visited ())
+        val (full_specs, validity, next_relation) = scamv_per_program_init prog;
+        val _ = current_full_specs := full_specs;
+        fun do_tests 0 =  (next_iter_rel := NONE; current_word_rel := NONE; current_full_specs := []; current_visited_map := init_visited ())
           | do_tests n =
             let val _ = next_experiment [] next_relation
                         handle e => (
@@ -580,12 +518,13 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
               , generator = gen, generator_param = generator_param
               , obs_model = obs_model, hw_obs_model = hw_obs_model
               , refined_obs_model = refined_obs_model, obs_projection = proj
-              , verbosity = verb, seed_rand = seed_rand } =
+              , verbosity = verb, seed_rand = seed_rand, do_training = train } =
     let
 
         val _ = bir_randLib.rand_isfresh_set seed_rand;
 
         val _ = do_enum := enumerate;
+        val _ = do_training := train;
         val _ = current_obs_projection := proj;
         
         val prog_store_fun =
@@ -608,7 +547,8 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
           ("Refined observation model: " ^ PolyML.makestring (!current_refined_obs_model_id) ^ "\n") ^
           ("Projection model: " ^ PolyML.makestring proj ^ "\n") ^
           ("HW observation model : " ^ !hw_obs_model_id ^ "\n") ^
-          ("Enumerate            : " ^ PolyML.makestring (!do_enum) ^ "\n");
+          ("Enumerate            : " ^ PolyML.makestring (!do_enum) ^ "\n") ^
+          ("Train branch pred.   : " ^ PolyML.makestring (!do_training) ^ "\n");
 
         val _ = bir_embexp_log config_str;
         val _ = min_verb 1 (fn () => print config_str);
