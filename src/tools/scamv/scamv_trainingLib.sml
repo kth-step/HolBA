@@ -28,9 +28,9 @@ fun compute_training_state current_full_specs current_obs_projection
                                                  ("no path spec found that exercises path "
                                                   ^ PolyML.makestring (path_id_of new_path))
                                  | SOME s => s
-			          val new_word_relation = rel_synth_jit new_spec current_obs_projection path_struct;
-		            val training_relation = mk_conj (new_word_relation, current_word_rel);
-			          val _ = print ("Calling Z3 to get training state\n")
+			          val new_word_relation =  make_word_relation (rel_synth_jit new_spec current_obs_projection path_struct);
+				  val training_relation = mk_conj (new_word_relation, current_word_rel);
+				  val _ = print ("Calling Z3 to get training state\n")
 		        in
 			        (Z3_SAT_modelLib.Z3_GET_SAT_MODEL training_relation)
 			        handle e => training_input_mining (tries - 1)
