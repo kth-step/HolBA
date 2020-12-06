@@ -39,8 +39,6 @@ fun ifdef__else__ x c c' e = (if x then c else c') |> e;
 fun ifdef__ x c e = case x of true => c |> e;
 fun force f = f ();
 
-val SPECTRE = false;
-
 (*
  workflow:
  - (a) program generation

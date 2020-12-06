@@ -81,7 +81,7 @@ open bir_immTheory
 open intel_hexLib
 open bir_inst_liftingLibTypes
 open PPBackEnd Parse
-
+open bir_expSyntax
 open bir_inst_liftingHelpersLib;
 (* ================================================ *)
 
@@ -134,9 +134,14 @@ open bir_inst_liftingHelpersLib;
 		List.map (fn label => 
 			     let val block = Redblackmap.find (bl_dict, label)
 				 val (_, statements, _) = bir_programSyntax.dest_bir_block block
+				 val obs = find_terms is_BStmt_Observe statements
 			     in
-				 find_term is_BStmt_Observe statements
+				 filter (fn obs => (#3 o dest_BStmt_Observe) obs 
+						|> listSyntax.mk_hd 
+						|> (rhs o concl o EVAL) 
+						|> (not o is_BExp_Const)) obs
 			     end) (filter f labels)
+		 |> flatten
 
 	    val bn1::bn2::_ = List.map (fn t => fst (traverse_graph_branch g depth (t) [] [])) targets;
 	    val b1_nodes = List.filter (fn x => (List.all (fn y => not (identical x y)) bn1)) bn2;
@@ -147,28 +152,37 @@ open bir_inst_liftingHelpersLib;
 	    Obs_dict
 	end
 
+    fun nub_with eq [] = []
+      | nub_with eq (x::xs) = x::(nub_with eq (List.filter (fn y => not (eq (y, x))) xs))
+
     fun bir_free_vars exp =
-	let 
+	let
+	    open stringSyntax;
+	    fun var_to_str v =
+		let val (name,_) = dest_var v
+		in
+		    fromMLstring name
+		end
 	    val fvs =
-		if is_comb exp then
+	        if is_comb exp then
 		    let val (con,args) = strip_comb exp
 		    in
-			if identical con ``BExp_MemConst``
-			then [``"MEM"``]
-			else if identical con ``BExp_Den``
-			then
-			    let val v = case strip_comb (hd args) of
-					    (_,v::_) => v
-					  | _ => raise ERR "bir_free_vars" "not expected"
-			    in
-				[v]
-			    end
-			else
-			    List.concat (List.map bir_free_vars args)
+		        if identical con ``BExp_MemConst``
+		        then [var_to_str (List.nth(args, 2))]
+		        else if identical con ``BExp_Den``
+		        then
+		            let val v = case strip_comb (hd args) of
+				            (_,v::_) => v
+				          | _ => raise ERR "bir_free_vars" "not expected"
+		            in
+			        [v]
+		            end
+		        else
+		            List.concat (map bir_free_vars args)
 		    end
-		else []
+	        else []
 	in
-	    fvs
+	    nub_with (fn (x,y) => identical x y) fvs
 	end;
 
     fun Obs_prime xs = 
@@ -262,9 +276,7 @@ in
       val obs_hol_type = ``bir_val_t``;
       val pipeline_depth = 3;
       fun add_obs mb t =
-        (* TODO: we don't want to augment with the pc here, or am I wrong?
-                 this could be the reason for unsatisfiable... *)
-        branch_instrumentation_obs (bir_arm8_mem_addr_model.add_obs mb t) pipeline_depth;
+        branch_instrumentation_obs (bir_arm8_mem_addr_pc_model.add_obs mb t) pipeline_depth;
     end;
 
 end (* local *)
