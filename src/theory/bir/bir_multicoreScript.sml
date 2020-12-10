@@ -113,6 +113,34 @@ val next_is_atomic_def = Define`
    | SOME (i,blk) => blk.bb_atomic)
 `;
 
+val pstep_flush_defn = Hol_defn "pstep_flush" `
+pstep_flush p s =
+  if NULL s.bst_inflight
+  then s
+  else pstep_flush p (HD (bir_next_exec p s))
+`;
+
+val nonempty_pipeline_next_stmt = prove(
+``!s. ¬NULL s.bst_inflight ==> ¬(next_stmt s = NONE)``,
+GEN_TAC >> STRIP_TAC >>
+ASM_REWRITE_TAC[next_stmt_def] >>
+`s.bst_inflight = HD s.bst_inflight::TL s.bst_inflight` by (FIRST_ASSUM (fn th => fs [th]))
+>> FIRST_ASSUM (fn th => ONCE_REWRITE_TAC[th]) >>
+FULL_SIMP_TAC list_ss [] >> cheat); (* TODO *)
+
+val bir_next_exec_NONNULL_decreasing = prove(
+``!p s. ¬NULL s.bst_inflight
+     ==> LENGTH (HD (bir_next_exec p s)).bst_inflight < LENGTH s.bst_inflight``,
+FULL_SIMP_TAC list_ss [bir_next_exec_def]
+              >> cheat); (* TODO *)
+
+(* Defn.tgoal pstep_flush_defn *)
+val (pstep_def,pstep_ind) = Defn.tprove(pstep_flush_defn,
+WF_REL_TAC `measure (\arg.LENGTH ((SND arg).bst_inflight))`
+>> cheat); (* TODO prove ∀p s.
+       ¬NULL s.bst_inflight ⇒
+       LENGTH (HD (bir_next_exec p s)).bst_inflight < LENGTH s.bst_inflight *)
+
 val (parstep_rules, parstep_ind, parstep_cases) = Hol_reln`
 (!p s system m cid. (core cid p s) ∈ system
                  /\ (mem m) ∈ system
@@ -131,13 +159,22 @@ val (parstep_rules, parstep_ind, parstep_cases) = Hol_reln`
    ==> parstep system (system DIFF {core cid p s} UNION {core cid p s'}))
 /\ (!m m' system. memstep m m' /\ (mem m) ∈ system
    ==> parstep system (system DIFF {mem m} UNION {mem m'}))
+/\ (!p s s' stm cid m' system system'.
+       ((core cid p s) ∈ system /\ (mem m) ∈ system
+        /\ (next_stmt s = SOME (t0,stm))
+        /\ (stm = BStmtB BStmt_Fence)
+        /\ s' = pstep_flush p s
+        /\ m' = memflush cid m.bmst_inflight m
+        /\ system' = (system DIFF {core cid p s} UNION {core cid p s'})
+                             DIFF {mem m} UNION {mem m'})
+   ==> parstep system system')
 /\ (!p s m m' s' t0 v ex system.
     ((core cid p s) ∈ system /\ (mem m) ∈ system
      /\ (next_stmt s = SOME (t0, (BStmtB (BStmt_Assign v ex))))
      /\ (m.bmst_lock = SOME cid)
      /\ (?t. v = BVar "MEM" t)
      /\ (m' = m with <| bmst_inflight updated_by
-                (APPEND [BirInflight (memfresh m) (BStmtB (BStmt_Assign v ex))]);
+                (APPEND [(cid,BirInflight (memfresh m) (BStmtB (BStmt_Assign v ex)))]);
                        bmst_counter updated_by (\n:num.n+1) |>)
      /\ (s' = s with bst_inflight updated_by (remove_inflight t0))
    ) ==>
@@ -174,7 +211,7 @@ compute_next_store (core cid p s) (mem m) =
        | SOME (t0, BStmtB (BStmt_Assign v ex)) =>
          if is_mem v
          then (let m' = m with <| bmst_inflight updated_by
-                             (APPEND [BirInflight (memfresh m) (BStmtB (BStmt_Assign v ex))]);
+                             (APPEND [(cid,BirInflight (memfresh m) (BStmtB (BStmt_Assign v ex)))]);
                   bmst_counter updated_by (\n:num.n+1) |>;
                   
               in let s' = s with bst_inflight updated_by (remove_inflight t0)
