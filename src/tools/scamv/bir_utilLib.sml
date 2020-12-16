@@ -111,30 +111,42 @@ fun dest_mem_load size tm =
     else tm |> (#1 o dest_word_lsr o #1 o dest_w2w)
 	    |> (finite_mapSyntax.dest_fapply o (n_times size (#2 o dest_word_concat)));
 
+
+fun member x ys = exists (fn y => y = x) ys;
+
+fun intersection [] ys = []
+  | intersection (x::xs) ys =
+    if member x ys
+    then x::intersection xs ys
+    else intersection xs ys;
+
+(*
+This function not only converts the BIR relation into a words HOL term but
+also adds constraints that force the variables from different runs to be
+distinct.
+ *)
 fun make_word_relation relation =
     let
 	open boolSyntax;
 
         fun primed_subst exp =
-            map (fn v =>
+            List.map (fn v =>
                     let val vp = lift_string string_ty (fromHOLstring v ^ "'")
                     in ``BVar ^v`` |-> ``BVar ^vp`` end)
                 (bir_free_vars exp)
 
-        fun primed_vars exp = map (#residue) (primed_subst exp);
-        fun nub_with eq [] = []
-          | nub_with eq (x::xs) = x::nub_with eq (List.filter (fn y => not (eq(y,x))) xs);
+        fun primed_vars exp = List.map (#residue) (primed_subst exp);
         val vars =
             sort (curry String.<=)
                  (List.map fromHOLstring
                            (nub_with (fn (x,y) => identical x y) (bir_free_vars relation)));
-        val primed =
-            List.filter (String.isSuffix "'") vars
+        val (primed,unprimed) = List.partition (String.isSuffix "'") vars;
+        val primed_base = List.map (fn s => substring(s,0,size(s)-1)) primed;
+        val paired_vars = intersection primed_base unprimed;
 
-        val unprimed =
-            List.filter (not o String.isSuffix "'") vars
+        fun add_prime s = s^"'";
 
-        val pairs = zip unprimed primed;
+        val pairs = zip paired_vars (List.map add_prime paired_vars);
 	      val (mpair, rpair) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM")) pairs
 
         fun mk_distinct_reg (a,b) =
