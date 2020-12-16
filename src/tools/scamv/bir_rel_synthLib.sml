@@ -214,6 +214,25 @@ val example_bir_path_struct =
                      bden(bvarimm64 "A"))])
            ,path (3, bnot (blt (bden (bvarimm64 "A"), bconst64 0)), [])];
 
+val example_bir_path_struct2 =
+    [path (0, blt (bden (bvarimm64 "A"), bconst64 0),
+           [cobs (1, term_of_int 0, btrue, bden(bvarimm64 "A")),
+            cobs (2, term_of_int 0, btrue, bden(bvarimm64 "B")),
+            cobs (3, term_of_int 0, btrue, bden(bvarimm64 "C"))]),
+     path (4, bge (bden (bvarimm64 "A"), bconst64 0),
+           [cobs (5, term_of_int 0, btrue, bden(bvarimm64 "D")),
+            cobs (6, term_of_int 0, btrue, bden(bvarimm64 "E")),
+            cobs (7, term_of_int 0, btrue, bden(bvarimm64 "F"))])];
+
+val example_bir_path_struct3 =
+    [path (0, blt (bden (bvarimm64 "A"), bconst64 0),
+           [cobs (1, term_of_int 0, btrue, bden(bvarimm64 "A")),
+            cobs (2, term_of_int 0, btrue, bden(bvarimm64 "B"))]),
+     path (4, bge (bden (bvarimm64 "A"), bconst64 0),
+           [cobs (5, term_of_int 0, btrue, bden(bvarimm64 "D")),
+            cobs (6, term_of_int 0, btrue, bden(bvarimm64 "E")),
+            cobs (7, term_of_int 0, btrue, bden(bvarimm64 "F"))])];
+
 val example_bir_initial_ps =
     [(blt (bden (bvarimm64 "A"), bconst64 0),
       SOME [(btrue, bden(bvarimm64 "A")),(blt (bden (bvarimm64 "B"), bconst64 64),bden(bvarimm64 "A"))])

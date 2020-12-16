@@ -80,7 +80,7 @@ val (current_pathstruct :
 val (current_full_specs : path_spec list ref) = ref [];
 val (current_visited_map : visited_map ref) = ref (init_visited ());
 val (current_word_rel : term option ref) = ref NONE;
-val (next_iter_rel    : (path_spec * term) option ref) = ref NONE;
+(*val (next_iter_rel    : (path_spec * term) option ref) = ref NONE; *)
 
 fun reset () =
     (current_prog_id := "";
@@ -90,7 +90,6 @@ fun reset () =
      current_pathstruct := NONE;
      current_visited_map := init_visited ();
      current_full_specs := [];
-     current_obs_projection := 1;
      current_word_rel := NONE);
 
 fun printv n str =
@@ -180,7 +179,7 @@ fun scamv_phase_symb_exec () =
 	    val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths;
       val ps = initialise paths;
       val _ = current_pathstruct := SOME ps;
-      val _ = min_verb 4 (fn () => print_path_struct ps);
+      val _ = min_verb 4 (fn () => (print_path_struct ps; print (PolyML.makestring ps)));
     in
       ps
     end;
@@ -250,10 +249,11 @@ fun next_experiment all_exps next_relation  =
             else (fn _ => true);
 
         val (path_spec, rel) =
-	    case !next_iter_rel of
-		NONE        => valOf (next_relation guard_path_spec) 
-	      | SOME (p, r) => let val _ = next_iter_rel := NONE in (p, r) end
-		handle Option =>
+	  (*   case !next_iter_rel of *)
+		(* NONE        => valOf (next_relation guard_path_spec)  *)
+	  (*     | SOME (p, r) => let val _ = next_iter_rel := NONE in (p, r) end *)
+            valOf (next_relation guard_path_spec)
+		        handle Option =>
                        raise ERR "next_experiment" "next_relation returned a NONE";
         val _ = min_verb 1 (fn () =>
                                (print "Selected path: ";
@@ -365,7 +365,7 @@ fun scamv_test_main tests prog =
         val _ = reset();
         val (full_specs, validity, next_relation) = scamv_per_program_init prog;
         val _ = current_full_specs := full_specs;
-        fun do_tests 0 =  (next_iter_rel := NONE; current_word_rel := NONE; current_full_specs := []; current_visited_map := init_visited ())
+        fun do_tests 0 =  (current_word_rel := NONE; current_full_specs := []; current_visited_map := init_visited ())
           | do_tests n =
             let val _ = next_experiment [] next_relation
                         handle e => (
