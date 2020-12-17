@@ -4,6 +4,7 @@ open bir_programTheory;
 open bir_mem_coreTheory;
 open monadsyntax;
 open alistTheory;
+open listTheory;
 
 val _ = new_theory "bir_multicore";
 
@@ -13,7 +14,7 @@ val _ = new_theory "bir_multicore";
 
 val next_stmt_def = Define `next_stmt s =
   case s.bst_inflight of
-    | [] => NONE
+      [] => NONE
     | ((BirInflight t0 stm)::stms) => SOME (t0,stm)
 `;
 
@@ -79,77 +80,138 @@ val bir_next_states_def = Define `bir_next_states p s =
 
 val (is_trace_rules, is_trace_ind, is_trace_cases) = Hol_reln `
   (!p s. is_trace p [s]) /\
-  (!p s2 s1 t. ((is_trace p (APPEND t [s1])) /\ (pstep p s1 s2))
-    ==> (is_trace p (APPEND t [s1;s2])))
+  (!p s2 s1 t. ((is_trace p (APPEND t [s1])) /\ (pstep p s1 s2)) ==>
+               (is_trace p (APPEND t [s1;s2]))
+  )
 `;
 
-val bir_traces_def = Define`
-bir_traces p = { t | is_trace p t }
+val bir_traces_def = Define `bir_traces p =
+  { t | is_trace p t }
 `;
 
 val (is_gen_trace_rules, is_gen_trace_ind, is_gen_trace_cases)  = Hol_reln `
-(!R s. is_gen_trace R [s]) /\
-(!R s2 s1 t . ((is_gen_trace R (APPEND t [s1])) /\ (R s1 s2))
-    ==> (is_gen_trace R (APPEND t [s1;s2])))
+  (!R s. is_gen_trace R [s]) /\
+  (!R s2 s1 t . ((is_gen_trace R (APPEND t [s1])) /\ (R s1 s2)) ==>
+                (is_gen_trace R (APPEND t [s1;s2]))
+  )
 `;
 
-val bir_gen_traces_def = Define`
-gen_traces R = { t | is_gen_trace R t }
+val bir_gen_traces_def = Define `gen_traces R =
+  { t | is_gen_trace R t }
 `;
                    
 (* ------------------------------------------------------------------------- *)
 (*  Parallel evaluation                                                      *)
 (* ------------------------------------------------------------------------- *)
 
-val sys_st_def = Datatype`
-    sys_st = core num (string bir_program_t) bir_state_t
-           | mem mem_state_t 
+val sys_st_def = Datatype `sys_st =
+    core num (string bir_program_t) bir_state_t
+  | mem mem_state_t 
 `;
 
-val exp_is_load_def = Define`
-(exp_is_load (BExp_Load _ _ _ _) = T)
-/\ (exp_is_load _ = F)
+val exp_is_load_def = Define `
+  (exp_is_load (BExp_Load _ _ _ _) = T) /\
+  (exp_is_load _ = F)
 `;
 
-val is_mem_def = Define`
-(is_mem (BVar "MEM" _) = T)
-/\ (is_mem _ = F)
+val is_mem_def = Define `
+  (is_mem (BVar "MEM" _) = T) /\
+  (is_mem _ = F)
 `;
 
-val next_is_atomic_def = Define`
-(next_is_atomic p s =
- case (bir_get_program_block_info_by_label p (s.bst_pc.bpc_label)) of
-     NONE => F
-   | SOME (i,blk) => blk.bb_atomic)
+val next_is_atomic_def = Define `next_is_atomic p s =
+  case (bir_get_program_block_info_by_label p (s.bst_pc.bpc_label)) of
+      NONE => F
+    | SOME (i,blk) => blk.bb_atomic
 `;
 
-val pstep_flush_defn = Hol_defn "pstep_flush" `
-pstep_flush p s =
+val pstep_flush_defn = Hol_defn "pstep_flush" `pstep_flush p s =
   if NULL s.bst_inflight
   then s
   else pstep_flush p (HD (bir_next_exec p s))
 `;
 
+(* TODO: Move these to programScript *)
+val bir_inflight_ss = rewrites ((type_rws ``:'a bir_inflight_stmt_t``));
+
 val nonempty_pipeline_next_stmt = prove(
-``!s. ¬NULL s.bst_inflight ==> ¬(next_stmt s = NONE)``,
-GEN_TAC >> STRIP_TAC >>
-ASM_REWRITE_TAC[next_stmt_def] >>
-`s.bst_inflight = HD s.bst_inflight::TL s.bst_inflight` by (FIRST_ASSUM (fn th => fs [th]))
->> FIRST_ASSUM (fn th => ONCE_REWRITE_TAC[th]) >>
-FULL_SIMP_TAC list_ss [] >> cheat); (* TODO *)
+``!s. ~NULL s.bst_inflight ==> ~(next_stmt s = NONE)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [next_stmt_def] >>
+Cases_on `s.bst_inflight` >| [
+  FULL_SIMP_TAC std_ss [NULL_EQ],
+
+  Cases_on `h` >>
+  FULL_SIMP_TAC (list_ss++bir_inflight_ss) []
+]
+);
+
+val bir_state_ss = rewrites (type_rws ``:bir_state_t``);
+val bir_status_ss = rewrites (type_rws ``:bir_status_t``);
+
+val bir_exec_stmt_inflight_unchanged = store_thm("bir_exec_stmt_inflight_unchanged",
+``!p r s.
+  (bir_exec_stmt_state p r s).bst_inflight = s.bst_inflight``,
+
+REPEAT STRIP_TAC >>
+Cases_on `r` >> Cases_on `b` >> (
+  FULL_SIMP_TAC std_ss [bir_exec_stmt_state_REWRS, LET_DEF,
+                        bir_exec_stmtB_state_REWRS, bir_exec_stmt_assign_def,
+                        bir_exec_stmt_assert_def, bir_exec_stmt_assume_def,
+                        bir_exec_stmt_observe_state_def,
+                        bir_exec_stmt_fence_state_def,
+                        bir_exec_stmtE_def, bir_exec_stmt_jmp_def,
+                        bir_exec_stmt_jmp_to_label_def,
+                        bir_exec_stmt_cjmp_def, bir_exec_stmt_halt_def] >>
+  REPEAT CASE_TAC >> (
+    FULL_SIMP_TAC (std_ss++bir_state_ss) [bir_state_set_typeerror_def]
+  )
+)
+);
 
 val bir_next_exec_NONNULL_decreasing = prove(
-``!p s. ¬NULL s.bst_inflight
-     ==> LENGTH (HD (bir_next_exec p s)).bst_inflight < LENGTH s.bst_inflight``,
-FULL_SIMP_TAC list_ss [bir_next_exec_def]
-              >> cheat); (* TODO *)
+``!p s.
+  ~NULL s.bst_inflight ==>
+  LENGTH (HD (bir_next_exec p s)).bst_inflight < LENGTH s.bst_inflight``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC list_ss [bir_next_exec_def, nonempty_pipeline_next_stmt] >>
+IMP_RES_TAC nonempty_pipeline_next_stmt >>
+Cases_on `next_stmt s` >| [
+  FULL_SIMP_TAC std_ss [],
+
+  Cases_on `x` >>
+  FULL_SIMP_TAC std_ss [pairTheory.pair_case_thm] >>
+  Cases_on `bir_exec_stmt p r s` >>
+  Cases_on `q'` >> (
+    FULL_SIMP_TAC std_ss [] >>
+    rename1 `s' with bst_inflight updated_by remove_inflight q` >>
+    subgoal `s.bst_inflight = s'.bst_inflight` >- (
+      subgoal `bir_exec_stmt_state p r s = s'` >- (
+	FULL_SIMP_TAC std_ss [bir_exec_stmt_state_def]
+      ) >>
+      METIS_TAC [bir_exec_stmt_inflight_unchanged]
+    ) >>
+    FULL_SIMP_TAC (std_ss++bir_state_ss) [remove_inflight_def, listTheory.HD] >>
+    irule rich_listTheory.LENGTH_FILTER_LESS >>
+    FULL_SIMP_TAC std_ss [next_stmt_def] >>
+    Cases_on `s'.bst_inflight` >| [
+      FULL_SIMP_TAC std_ss [NULL_EQ],
+
+      Cases_on `h` >>
+      REV_FULL_SIMP_TAC (list_ss++bir_inflight_ss) []
+    ]
+  )
+]
+);
 
 (* Defn.tgoal pstep_flush_defn *)
-val (pstep_def,pstep_ind) = Defn.tprove(pstep_flush_defn,
-WF_REL_TAC `measure (\arg.LENGTH ((SND arg).bst_inflight))`
->> cheat); (* TODO prove ∀p s.
-       ¬NULL s.bst_inflight ⇒
-       LENGTH (HD (bir_next_exec p s)).bst_inflight < LENGTH s.bst_inflight *)
+val (pstep_flush_def, pstep_flush_ind) = Defn.tprove(pstep_flush_defn,
+
+WF_REL_TAC `measure (\arg. LENGTH ((SND arg).bst_inflight))` >>
+FULL_SIMP_TAC std_ss [bir_next_exec_NONNULL_decreasing]
+);
 
 val (parstep_rules, parstep_ind, parstep_cases) = Hol_reln`
 (!p s system m cid. (core cid p s) ∈ system
@@ -202,74 +264,69 @@ val (parstep_rules, parstep_ind, parstep_cases) = Hol_reln`
     parstep system (system DIFF {core cid p s} UNION {core cid p s'}))
     `;
 
-val par_traces_def = Define`
-par_traces system = gen_traces parstep
+val par_traces_def = Define `par_traces system =
+  gen_traces parstep
 `;
 
-val compute_next_par_single_def = Define`
-compute_next_par_single (core cid p s) m =
-    LIST_BIND (bir_compute_next p s) (\s'. [(core cid p s', m)])
+val compute_next_par_single_def = Define `compute_next_par_single (core cid p s) m =
+  LIST_BIND (bir_compute_next p s) (\s'. [(core cid p s', m)])
 `;
-val compute_next_par_mem_def = Define`
-compute_next_par_mem c (mem m) =
-    LIST_BIND (mem_compute_next m) (\m'. [(c, mem m')])
+val compute_next_par_mem_def = Define `compute_next_par_mem c (mem m) =
+  LIST_BIND (mem_compute_next m) (\m'. [(c, mem m')])
 `;
-val compute_next_store_def = Define`
-compute_next_store (core cid p s) (mem m) =
-    case next_stmt s of
-         NONE => []
-       | SOME (t0, BStmtB (BStmt_Assign v ex)) =>
-         if is_mem v
-         then (let m' = m with <| bmst_inflight updated_by
-                             (APPEND [(cid,BirInflight (memfresh m) (BStmtB (BStmt_Assign v ex)))]);
-                  bmst_counter updated_by (\n:num.n+1) |>;
-                  
-              in let s' = s with bst_inflight updated_by (remove_inflight t0)
- in [(core cid p s', mem m')])
-         else []
+val compute_next_store_def = Define `compute_next_store (core cid p s) (mem m) =
+  case next_stmt s of
+      NONE => []
+    | SOME (t0, BStmtB (BStmt_Assign v ex)) =>
+        if is_mem v
+        then (let m' = m with <| bmst_inflight updated_by
+			         (APPEND [(cid,BirInflight (memfresh m) (BStmtB (BStmt_Assign v ex)))]);
+		                 bmst_counter updated_by (\n:num.n+1) |>;
+	      in let s' = s with bst_inflight updated_by (remove_inflight t0)
+              in [(core cid p s', mem m')])
+        else []
 `;
-val compute_next_load_def = Define`
-compute_next_load (core cid p s) (mem m) =
-              case next_stmt s of
-                  NONE => []
-                | SOME (t0, BStmtB (BStmt_Assign v ex)) =>
-                  if exp_is_load ex
-                  then case bir_eval_exp ex m.bmst_environ of
-                       NONE => []
-                       | SOME value =>
-                       case bir_env_write v value s.bst_environ of
-                           NONE => []
-                           | SOME env' =>
-                           (let s' = s with <| bst_inflight updated_by (remove_inflight t0);
-                                bst_environ := env'  |>
-                            in [(core cid p s', mem m)])
-                  else []
+val compute_next_load_def = Define `compute_next_load (core cid p s) (mem m) =
+  case next_stmt s of
+      NONE => []
+    | SOME (t0, BStmtB (BStmt_Assign v ex)) =>
+	if exp_is_load ex
+	then case bir_eval_exp ex m.bmst_environ of
+	         NONE => []
+	       | SOME value =>
+	           case bir_env_write v value s.bst_environ of
+		       NONE => []
+		     | SOME env' =>
+		         (let s' = s with <| bst_inflight updated_by (remove_inflight t0);
+		                             bst_environ := env'  |>
+		          in [(core cid p s', mem m)])
+	else []
 `;
 
-val update_core_def = Define`
-    (update_core cid c [] = [(cid,c)]) 
-/\  (update_core cid c ((x,y)::cores) =
+val update_core_def = Define `
+  (update_core cid c [] = [(cid,c)]) /\
+  (update_core cid c ((x,y)::cores) =
      if cid = x
      then (x,c)::cores
      else (x,y)::update_core cid c cores)
 `;
 
 (* val _ = enable_monadsyntax(); *)
-val compute_next_par_def = Define`
-compute_next_par (cores:(num # sys_st) list, m) =
-   LIST_BIND cores (\ (cid,c).
-      LIST_BIND (APPEND (compute_next_par_single c m)
-                           (APPEND (compute_next_par_mem c m)
-                                   (APPEND (compute_next_load c m)
-                                           (compute_next_store c m))))
-                (\ (c',m') . [(update_core cid c' cores, m')]))
+val compute_next_par_def = Define `
+  compute_next_par (cores:(num # sys_st) list, m) =
+     LIST_BIND cores (\ (cid,c).
+	LIST_BIND (APPEND (compute_next_par_single c m)
+			     (APPEND (compute_next_par_mem c m)
+				     (APPEND (compute_next_load c m)
+					     (compute_next_store c m))))
+		  (\ (c',m') . [(update_core cid c' cores, m')]))
 `;
                                        
-val compute_next_par_steps_def = Define`
-compute_next_par_steps (n:num) (cores:(num # sys_st) list, m) =
-      if n = 0
-      then [(cores,m)]
-      else LIST_BIND (compute_next_par (cores,m)) (\s2. compute_next_par_steps (n-1) s2)
+val compute_next_par_steps_def = Define `
+  compute_next_par_steps (n:num) (cores:(num # sys_st) list, m) =
+    if n = 0
+    then [(cores,m)]
+    else LIST_BIND (compute_next_par (cores,m)) (\s2. compute_next_par_steps (n-1) s2)
 `;
 
 val _ = export_theory ();

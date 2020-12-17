@@ -1,4 +1,3 @@
-
 open HolKernel Parse boolLib bossLib;
 open wordsTheory bitstringTheory;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;

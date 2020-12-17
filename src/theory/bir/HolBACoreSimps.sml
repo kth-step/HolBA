@@ -33,6 +33,7 @@ val bir_list_of_types = [
    mk_thy_type {Tyop="bir_program_t",        Thy="bir_program", Args=[Type.alpha]},
    mk_thy_type {Tyop="bir_programcounter_t", Thy="bir_program", Args=[]},
    mk_thy_type {Tyop="bir_status_t",         Thy="bir_program", Args=[]},
+   mk_thy_type {Tyop="bir_inflight_stmt_t",  Thy="bir_program", Args=[Type.alpha]},
    mk_thy_type {Tyop="bir_state_t",          Thy="bir_program", Args=[]},
    mk_thy_type {Tyop="bir_execution_result_t", Thy="bir_program", Args=[Type.alpha]}
 ];
