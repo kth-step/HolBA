@@ -70,15 +70,16 @@ val bir_compute_steps_defn = Hol_defn "bir_compute_steps" `bir_compute_steps (n:
 
 (* Defn.tgoal bir_compute_steps_defn *)
 val (bir_compute_steps_def, bir_compute_steps_ind) = Defn.tprove (bir_compute_steps_defn,
-WF_REL_TAC `measure (\ (n,_,_). n)`);
+  WF_REL_TAC `measure (\ (n,_,_). n)`
+);
 
 val bir_next_states_def = Define `bir_next_states p s =
   { s2 | pstep p s s2 }
 `;
 
 val (is_trace_rules, is_trace_ind, is_trace_cases) = Hol_reln `
-(!p s. is_trace p [s]) /\
-(!p s2 s1 t . ((is_trace p (APPEND t [s1])) /\ (pstep p s1 s2))
+  (!p s. is_trace p [s]) /\
+  (!p s2 s1 t. ((is_trace p (APPEND t [s1])) /\ (pstep p s1 s2))
     ==> (is_trace p (APPEND t [s1;s2])))
 `;
 
