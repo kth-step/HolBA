@@ -11,63 +11,72 @@ val _ = new_theory "bir_multicore";
 (*  Nondeterministic step relation with pipelining                           *)
 (* ------------------------------------------------------------------------- *)
 
-val next_stmt_def = Define`
-next_stmt s = case s.bst_inflight of
-        [] => NONE
-      | ((BirInflight t0 stm)::stms) => SOME (t0,stm)
+val next_stmt_def = Define `next_stmt s =
+  case s.bst_inflight of
+    | [] => NONE
+    | ((BirInflight t0 stm)::stms) => SOME (t0,stm)
 `;
 
+(* Pipelined steps for a single core. *)
 val (bir_pstep_rules, bir_pstep_ind, bir_pstep_cases) = Hol_reln `
-   (!p s1 s2 stm oo. ((next_stmt s1 = SOME (t0,stm))
-                   /\ (bir_exec_stmt p stm s1 = (oo,s2)))
-    ==> pstep p s1 (s2 with bst_inflight updated_by (remove_inflight t0)))
-
-/\ (!p s1 stm istm.  ((bir_get_current_statement p s1.bst_pc = SOME stm)
-                             /\ (istm = BirInflight (fresh s1) stm))
-     ==> pstep p s1 (s1 with <| bst_inflight updated_by (APPEND [istm]);
-                     bst_pc updated_by bir_pc_next;
-                     bst_counter updated_by (\n:num.n+1) |>)
-   )
+  (* Execution of pending statement in pipeline *)
+  (!p s1 s2 stm oo.
+   ((next_stmt s1 = SOME (t0,stm)) /\
+    (bir_exec_stmt p stm s1 = (oo,s2))) ==>
+   pstep p s1 (s2 with bst_inflight updated_by (remove_inflight t0))
+  ) /\
+  (* Put current statement in pipeline, case within a BIR block *)
+  (!p s1 bstm istm.
+   ((bir_get_current_statement p s1.bst_pc = SOME (BStmtB bstm)) /\
+    (istm = BirInflight (fresh s1) (BStmtB bstm))) ==>
+   pstep p s1 (s1 with <| bst_inflight updated_by (APPEND [istm]);
+                          bst_pc updated_by bir_pc_next;
+                          bst_counter updated_by (\n:num.n+1) |>)
+  ) /\
+  (* Put current statement in pipeline, case unconditional jump *)
+  (!p s1 istm lbl.
+   ((bir_get_current_statement p s1.bst_pc = SOME (BStmtE (BStmt_Jmp (BLE_Label lbl)))) /\
+    (istm = BirInflight (fresh s1) (BStmtE (BStmt_Jmp (BLE_Label lbl))))) ==>
+   pstep p s1 (s1 with <| bst_inflight updated_by (APPEND [istm]);
+                          bst_pc := (bir_block_pc lbl);
+                          bst_counter updated_by (\n:num.n+1) |>)
+  )
 `;
 
-val bir_next_fetch_def = Define`
-    bir_next_fetch p s =
-       case bir_get_current_statement p s.bst_pc of
-           NONE => []
-           | SOME stm =>
-             [ s with <| bst_inflight updated_by (APPEND [BirInflight (fresh s) stm]);
-               bst_pc updated_by bir_pc_next; bst_counter updated_by (\n:num.n+1) |> ]
+val bir_next_fetch_def = Define `bir_next_fetch p s =
+  case bir_get_current_statement p s.bst_pc of
+    | NONE => []
+    | SOME stm =>
+      [s with <| bst_inflight updated_by (APPEND [BirInflight (fresh s) stm]);
+       bst_pc updated_by bir_pc_next; bst_counter updated_by (\n:num.n+1) |>]
 `;
 
-val bir_next_exec_def = Define`
-    bir_next_exec p s =
-       case next_stmt s of
-           NONE => []
-         | SOME (t0,stm) => [ SND (bir_exec_stmt p stm s) with
-                              <| bst_inflight updated_by (remove_inflight t0); |> ]
+val bir_next_exec_def = Define `bir_next_exec p s =
+  case next_stmt s of
+    | NONE => []
+    | SOME (t0,stm) => [SND (bir_exec_stmt p stm s) with
+                        <| bst_inflight updated_by (remove_inflight t0); |>]
 `;
 
-val bir_compute_next_def = Define`
-bir_compute_next p s =
-   bir_next_fetch p s ++ bir_next_exec p s
+val bir_compute_next_def = Define `bir_compute_next p s =
+  bir_next_fetch p s ++ bir_next_exec p s
 `;
 
-val bir_compute_steps_defn = Hol_defn "bir_compute_steps" `
-bir_compute_steps (n:num) p s = if n = 0
-                          then [s]
-                          else LIST_BIND (bir_compute_next p s) (\s2. bir_compute_steps (n-1) p s2)
+val bir_compute_steps_defn = Hol_defn "bir_compute_steps" `bir_compute_steps (n:num) p s =
+  if n = 0
+  then [s]
+  else LIST_BIND (bir_compute_next p s) (\s2. bir_compute_steps (n-1) p s2)
 `;
 
 (* Defn.tgoal bir_compute_steps_defn *)
 val (bir_compute_steps_def, bir_compute_steps_ind) = Defn.tprove (bir_compute_steps_defn,
 WF_REL_TAC `measure (\ (n,_,_). n)`);
 
-val bir_next_states_def = Define`
-bir_next_states p s =
+val bir_next_states_def = Define `bir_next_states p s =
   { s2 | pstep p s s2 }
 `;
 
-val (is_trace_rules, is_trace_ind, is_trace_cases)  = Hol_reln `
+val (is_trace_rules, is_trace_ind, is_trace_cases) = Hol_reln `
 (!p s. is_trace p [s]) /\
 (!p s2 s1 t . ((is_trace p (APPEND t [s1])) /\ (pstep p s1 s2))
     ==> (is_trace p (APPEND t [s1;s2])))
