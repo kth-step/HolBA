@@ -1,0 +1,19 @@
+Scam-V TODOs
+
+* Testing: Add more test-* files to exercise the api of each of the modules
+
+* DB / query language
+
+* Code cleanup in scamv_driver: there is still a bit of dead code
+
+* Scam-V state: The 'global state' of Scam-V should probably be abstracted into
+  a separate module and made easily available to other modules. More precisely,
+  this would include all the global refs in scamv_driverLib with names of the
+  form current_* such as
+
+  current_pathstruct, current_prog_id, current_prog, etc. 
+
+  Abstracting these away should help clean up interfaces of bir_trainingLib and
+  perhaps bir_rel_synthLib. The entry point and options handling could also be
+  moved away from scamv_driverLib.
+
