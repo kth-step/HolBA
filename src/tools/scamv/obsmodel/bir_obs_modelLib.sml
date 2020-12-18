@@ -195,7 +195,7 @@ open bir_inst_liftingHelpersLib;
 	    fun Obs_prime_single x =
 		      let val obs = x |> dest_BStmt_Observe |> #3
               val (id, a, b, c) = dest_BStmt_Observe x
-              val new_x = mk_BStmt_Observe (term_of_int 0, a, b, c)
+              val new_x = mk_BStmt_Observe (term_of_int 1, a, b, c)
 		in
 		    List.foldl (fn (record, tm) => subst[#redex record |-> #residue record] tm) new_x (primed_subst obs)
 		end
