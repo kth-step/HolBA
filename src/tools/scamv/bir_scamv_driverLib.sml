@@ -32,7 +32,6 @@ open scamv_trainingLib;
   val ERR      = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
-
 (* C like macros *)
 val endif__ = (fn id => id);
 fun ifdef__else__ x c c' e = (if x then c else c') |> e;
