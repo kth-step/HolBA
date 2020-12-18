@@ -243,7 +243,7 @@ open bir_inst_liftingHelpersLib;
 	    val obstm::_ = (#2 o strip_comb o #3 o dest_BStmt_Observe)  obs;
 	    val memcnst  = (rhs o concl o EVAL)``(constrain_mem (0x80100000w, 0x8013FE80w)  ^obstm): bir_val_t bir_stmt_basic_t``;
 	in
-	   memcnst::eq_assign
+	   rev(memcnst::eq_assign)
 	end
 
     fun add_obs_speculative_exec prog targets g depth dict = 
