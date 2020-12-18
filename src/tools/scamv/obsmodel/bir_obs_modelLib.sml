@@ -213,6 +213,14 @@ open bir_inst_liftingHelpersLib;
         let combLst = APPEND l2 l1 in (lbl, combLst)
         `;
 
+    val constrain_mem_def = Define`
+	constrain_mem (mem_min, mem_max) e =
+          BStmt_Assert
+	      (BExp_BinExp BIExp_And
+			   (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 mem_min)) (e))
+			   (BExp_BinPred BIExp_LessThan (e) (BExp_Const (Imm64 mem_max))))
+	      `;
+
     fun mk_eq_assert e =
 	let 
 	    open stringSyntax;
@@ -228,8 +236,14 @@ open bir_inst_liftingHelpersLib;
 	    val np_exp= map (fn x => subst[``"template"``|-> x]``(BExp_Den (BVar "template" (BType_Imm Bit64)))``) 
 			     np_fv;
 	    val comb_p_np = zip p_exp np_exp;
+	    val eq_assign =  map (fn (a,b) => (rhs o concl o EVAL)``constrain_spec_obs_vars (^a,^b)``) comb_p_np  
+
+
+	    val obs:: _  = (#2 o strip_comb o #2 o pairSyntax.dest_pair) e;
+	    val obstm::_ = (#2 o strip_comb o #3 o dest_BStmt_Observe)  obs;
+	    val memcnst  = (rhs o concl o EVAL)``(constrain_mem (0x80100000w, 0x8013FE80w)  ^obstm): bir_val_t bir_stmt_basic_t``;
 	in
-	    map (fn (a,b) => (rhs o concl o EVAL)``constrain_spec_obs_vars (^a,^b)``) comb_p_np  
+	   memcnst::eq_assign
 	end
 
     fun add_obs_speculative_exec prog targets g depth dict = 
