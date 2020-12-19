@@ -64,34 +64,18 @@ end (* local *)
 
 local
 
-(* these dependencies probably need cleanup *)
 (* ================================================ *)
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-open bir_inst_liftingTheory
-open bir_lifting_machinesTheory
-open bir_lifting_machinesLib bir_lifting_machinesLib_instances;
-open bir_interval_expTheory bir_update_blockTheory
-open bir_exp_liftingLib bir_typing_expSyntax
-open bir_typing_expTheory
-open bir_extra_expsTheory
-open bir_lifter_general_auxTheory
-open bir_programSyntax bir_interval_expSyntax
+open bir_programSyntax
 open bir_program_labelsTheory
-open bir_immTheory
-open intel_hexLib
-open bir_inst_liftingLibTypes
-open PPBackEnd Parse
 open bir_expSyntax
-open bir_inst_liftingHelpersLib;
+open bir_block_collectionLib;
+open bir_cfgLib;
 (* ================================================ *)
-
-    open bir_block_collectionLib;
-    open bir_cfgLib;
 
     val Obs_dict =  Redblackmap.insert (Redblackmap.mkDict Term.compare, ``dummy``, ([]:term list));
     fun mk_key_from_address64 i addr = (mk_BL_Address o bir_immSyntax.mk_Imm64 o wordsSyntax.mk_word) (addr, Arbnum.fromInt i);
 
-    (* traversal example, single entry recursion, stop at first revisit or exit *)
+    (* single entry recursion, stop at first revisit or exit *)
     fun traverse_graph (g:cfg_graph) entry visited acc =
 	let
 	    val n = lookup_block_dict_value (#CFGG_node_dict g) entry "traverse_graph" "n";
@@ -129,7 +113,9 @@ open bir_inst_liftingHelpersLib;
 
     fun extract_branch_obs targets g depth bl_dict =
 	let  
-	    val f =  (fn l => Redblackmap.find (bl_dict, l)|> bir_programSyntax.dest_bir_block|> not o listSyntax.is_nil o #2)
+	    val f =  (fn l => Redblackmap.find (bl_dict, l)
+                           |> bir_programSyntax.dest_bir_block
+			   |> not o listSyntax.is_nil o #2)
 	    fun extratc_obs labels = 
 		List.map (fn label => 
 			     let val block = Redblackmap.find (bl_dict, label)
@@ -146,8 +132,8 @@ open bir_inst_liftingHelpersLib;
 	    val bn1::bn2::_ = List.map (fn t => fst (traverse_graph_branch g depth (t) [] [])) targets;
 	    val b1_nodes = List.filter (fn x => (List.all (fn y => not (identical x y)) bn1)) bn2;
 	    val b2_nodes = List.filter (fn x => (List.all (fn y => not (identical x y)) bn2)) bn1;
-	    val Obs_dict = Redblackmap.insert(Obs_dict, hd targets (* hd b2_nodes *), extratc_obs b1_nodes);
-	    val Obs_dict = Redblackmap.insert(Obs_dict, last targets (* hd b1_nodes *), extratc_obs b2_nodes);
+	    val Obs_dict = Redblackmap.insert(Obs_dict, hd targets, extratc_obs b1_nodes);
+	    val Obs_dict = Redblackmap.insert(Obs_dict, last targets, extratc_obs b2_nodes);
 	in
 	    Obs_dict
 	end
@@ -213,17 +199,20 @@ open bir_inst_liftingHelpersLib;
         let combLst = APPEND l2 l1 in (lbl, combLst)
         `;
 
-    val constrain_mem_def = Define`
-	constrain_mem (mem_min, mem_max) e =
-          BStmt_Assert
-	      (BExp_BinExp BIExp_And
-			   (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 mem_min)) (e))
-			   (BExp_BinPred BIExp_LessThan (e) (BExp_Const (Imm64 mem_max))))
-	      `;
-
-    fun mk_eq_assert e =
+    fun mk_assign_mem_assert e =
 	let 
 	    open stringSyntax;
+	    val mem_bounds =
+		let
+		    open wordsSyntax
+		    fun bir_embexp_params_cacheable x = Arbnum.+ (Arbnum.fromInt 0x80000000, x);
+		    val (mem_base, mem_len) = (Arbnum.fromHexString "0x100000", Arbnum.fromHexString  "0x40000")
+		    val mem_end = (Arbnum.- (Arbnum.+ (mem_base, mem_len), Arbnum.fromInt 128));
+		in
+		    pairSyntax.mk_pair
+			(mk_wordi (bir_embexp_params_cacheable mem_base, 64),
+			 mk_wordi (bir_embexp_params_cacheable mem_end, 64))
+		end;
 	    fun remove_prime str =
 		if String.isSuffix "*" str then
 		    (String.extract(str, 0, SOME((String.size str) - 1)))
@@ -241,7 +230,7 @@ open bir_inst_liftingHelpersLib;
 
 	    val obs:: _  = (#2 o strip_comb o #2 o pairSyntax.dest_pair) e;
 	    val obstm::_ = (#2 o strip_comb o #3 o dest_BStmt_Observe)  obs;
-	    val memcnst  = (rhs o concl o EVAL)``(constrain_mem (0x80100000w, 0x8013FE80w)  ^obstm): bir_val_t bir_stmt_basic_t``;
+	    val memcnst  = (rhs o concl o EVAL)``(constrain_mem ^(mem_bounds) ^obstm): bir_val_t bir_stmt_basic_t``;
 	in
 	   rev(memcnst::eq_assign)
 	end
@@ -255,7 +244,7 @@ open bir_inst_liftingHelpersLib;
 	    val Obs_dict_primed = Redblackmap.map (fn (k,v) => Obs_prime v) Obs_dict;
 	    val Obs_lst_primed  = map (fn tm => mk_pair(fst tm, mk_list(snd tm, ``:bir_val_t bir_stmt_basic_t``))) 
 				      (Redblackmap.listItems Obs_dict_primed)
-	    val asserted_obs = map (fn e => mk_list((mk_eq_assert e), ``:bir_val_t bir_stmt_basic_t``)) 
+	    val asserted_obs = map (fn e => mk_list((mk_assign_mem_assert e), ``:bir_val_t bir_stmt_basic_t``)) 
 				      Obs_lst_primed;
 	    val zip_assertedObs_primed = zip Obs_lst_primed asserted_obs;
 	    val Obs_lst = map (fn (a, b) => (rhs o concl o EVAL)``append_list ^a ^b`` ) zip_assertedObs_primed;
