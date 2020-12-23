@@ -1,17 +1,12 @@
 # HolBA - Binary analysis in HOL 
 
+[![Build Status](https://travis-ci.com/kth-step/HolBA.svg?branch=master)](https://travis-ci.com/kth-step/HolBA)
+
 Be sure to check out the Wiki, which contains some useful general information about HolBA.
-
-## Software versions
-
-- HOL4 (`https://github.com/HOL-Theorem-Prover/HOL`)
-  - tag: kananaskis-13
-- Poly/ML (e.g. current Poly/ML version packaged for Ubuntu, 5.7.1)
-- Z3 v4.8.4
 
 ## How to setup and compile
 
-The directory scripts/setup contains a relatively flexible set of shell scripts to help with the initial setup. The most simple setup can be done with a few shell commands and requires no manual dealing with environment variables. More sophisticated setups allow convenient sharing of the required software packages and setup environment variables in a custom shell script.
+The directory scripts/setup contains a relatively flexible set of shell scripts to automate the setup. The most simple setup can be done with a few shell commands and does not require manually installing dependencies and dealing with environment variables. More sophisticated setups allow convenient sharing of the required software packages and setup environment variables in a custom shell script.
 
 ### Simple setup
 ```bash
@@ -62,6 +57,13 @@ ${HOLBA_HOLMAKE}
 
 * You can use `make --directory=${HOLBA_DIR} rulename`.
 
+### Software versions
+
+- HOL4 (`https://github.com/HOL-Theorem-Prover/HOL`)
+  - tag: kananaskis-13
+- Poly/ML 5.7.1 (version packaged for Ubuntu 20.04)
+- Z3 v4.8.4
+
 
 ### More advanced setup with shared dependencies and `~/.bashrc`
 
@@ -80,67 +82,76 @@ cd /path/to/{HOLBA_DIR}
 make main
 ```
 
-Notice that this sequence is exemplary and it is possible to selectively run the `install_*.sh` scripts for the components that are desired. The script `config.env.sh` is generated and contains all variables for components which can be found in `${HOLBA_OPT_DIR}` or are available in the shell when `./configure.sh` runs. Sourcing the script `./env.sh` in the respective copy of the HolBA repository will setup the currently running shell for development there.
+Notice that this sequence is just an example, and it is possible to selectively run the `install_*.sh` scripts for the components that are desired. The script `config.env.sh` is generated and contains all variables for components which can be found in `${HOLBA_OPT_DIR}` or are available in the shell when `./configure.sh` runs. Sourcing the script `./env.sh` in the respective copy of the HolBA repository will setup the currently running shell for development there.
 
 
 
 ## Folders and organization
 
 ```
-├─ doc
-├─ src
-│  ├─ theory
-│  │  ├─ bir: core BIR language
-│  │  ├─ bir-support: various supporting theories for bir
-│  │  ├─ models: various machine models
-│  │  └─ tools: theories used by the tool libraries in src/tools
-│  │     ├─ ...
-│  │     ...
-│  ├─ shared: general BIR libraries, used by libraries in tools
-│  └─ tools
-│     ├─ cfg: Control Flow Graph utilities
-│     ├─ exec: concrete execution
-│     ├─ lifter: proof-producing binary lifter
-│     ├─ pass: Passification utility
-│     ├─ wp: weakest precondition propagation
-│     └─ scamv: abstract side channel model validation framework
-└──── examples: to showcase HolBA
+├─ doc: Documentation material
+├─ examples: Showcasing HolBA
+│  ├─ aes: lifting + WP of AES on ARMv8 and for Cortex-M0
+│  ├─ bsl-wp-smt: Small BIR example programs to test simplified BIR generation, WP propagation and SMT interface
+│  ├─ nic: NIC formalization
+│  ├─ tutorial: End-to-end tutorial of simple ARMv8 examples
+├─ scripts: CI and installation scripts
+└─ src
+   ├─ aux: Non-HolBA-specific theories and libraries
+   ├─ shared: Libraries shared between tools
+   ├─ theory
+   │  ├─ abstract-hoare-logic: Abstract Hoare-style logic for unstructured code
+   │  ├─ bir: Core BIR language
+   │  ├─ bir-support: Extensions and supporting theories for BIR
+   │  ├─ models: Additional machine models
+   │  └─ tools: Theories for the tool libraries in src/tools
+   └─ tools
+      ├─ backlifter: Gets ISA-level contracts from BIR contracts
+      ├─ cfg: Control Flow Graph utilities
+      ├─ comp: Composition of contracts
+      ├─ exec: Concrete execution
+      ├─ lifter: Transpiler from binary to BIR
+      ├─ pass: Passification utility
+      ├─ scamv: Abstract side channel model validation framework
+      └─ wp: Weakest precondition propagation
 ```
 
 ### Tools status:
 
+- `tools/backlifter`:
+  * Proof-producing
+  * Clear interface
+  * Experimental implementation
 - `tools/cfg`:
-  * non-proof-producing
-  * no clear interface yet
+  * Non-proof-producing
+  * No clear interface yet
   * GraphViz exporter working
+- `tools/comp`:
+  * Proof-producing
+  * Decent interface
+  * Experimental implementation
+  * Requires documentation
 - `tools/exec`:
-  * proof-producing
-  * unstable BIR evaluation utilities (no clear interface yet)
-  * quite easy to use
+  * Proof-producing
+  * Unstable BIR evaluation utilities (no clear interface yet)
+  * Quite easy to use
 - `tools/lifter`:
-  * very stable
-  * proof-producing
-  * widely used in examples
-  * supports: RISC-V, ARMv8, Cortex-M0, Cortex-M0 with clock cycle counter
-- `tools/wp`:
-  * proof-producing
-  * experimental implementation
-    * includes prototype of substitution simplification
-  * interface in progress
+  * Proof-producing
+  * Very stable
+  * Widely used in examples
+  * Supports: ARMv8, Cortex-M0, Cortex-M0 with clock cycle counter, RISC-V
 - `tools/pass`:
-  * non-proof-producing
-  * experimental passification transformation to SSA
+  * Non-proof-producing
+  * Experimental passification transformation to SSA
 - `tools/scamv`:
-  * works for small programs
-  * cannot handle certain cases, like memory-dependent observations
-  * includes a selection of cache side channel models
-
-### Dependency graph
-
-![Dependency diagram](./doc/diagrams/dependencies.png?raw=true)
-
-Key:
- - Blue edges represent dependencies between HolBA modules.
+  * Works for small programs
+  * Cannot handle certain cases, like memory dependent observations
+  * Includes a selection of cache side channel models
+- `tools/wp`:
+  * Proof-producing
+  * Interface in progress
+  * Fairly stable
+  * Includes prototype of substitution simplification
 
 ### PolyML heaps
 
@@ -150,17 +161,12 @@ Key:
 - You can temporarily change the heap chain order if you don't need a dependency
   in order to reduce build times.
 
-
-
 ## References
+
+* D. Lundberg, R. Guanciale, A. Lindner and M. Dam, **"Hoare-Style Logic for Unstructured Programs"**, in Software Engineering and Formal Methods, p. 193-213, 2020. [Link](https://doi.org/10.1007/978-3-030-58768-0_11). _(program logic used for decomposition of verification)_
 
 * A. Lindner, R. Guanciale and R. Metere, **"TrABin : Trustworthy analyses of binaries"**, Science of Computer Programming, vol. 174, p. 72-89, 2019. [Link](https://doi.org/10.1016/j.scico.2019.01.001). _(the proof-producing binary analysis framework with weakest preconditions in HOL4)_
 
 * D. Lundberg, **"Provably Sound and Secure Automatic Proving and Generation of Verification Conditions"**, Master Thesis, 2018. [Link](http://urn.kb.se/resolve?urn=urn%3Anbn%3Ase%3Akth%3Adiva-239441).
 
 * R. Metere, A. Lindner and R. Guanciale, **"Sound Transpilation from Binary to Machine-Independent Code"**, in 20th Brazilian Symposium on Formal Methods, p. 197-214, 2017. [Link](https://doi.org/10.1007/978-3-319-70848-5_13). _(formalization of intermediate language and proof-producing lifter in HOL4)_
-
-* D. Lundberg, R. Guanciale, A. Lindner and M. Dam, **"Hoare-Style Logic for Unstructured Programs"**, in Software Engineering and Formal Methods, p. 193-213, 2020. [Link](https://doi.org/10.1007/978-3-030-58768-0_11). _(program logic used for decomposition of verification)_
-
-
-
