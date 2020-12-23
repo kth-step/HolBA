@@ -1,0 +1,91 @@
+open HolKernel Parse boolLib bossLib;
+
+val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
+val _ = Globals.show_types := true;
+
+(*
+(* trace that also controls whether temporary z3 input files are preserved *)
+val _ = Library.trace := 100;
+*)
+
+
+val test_cases = [
+  ("simple addition",
+   ``
+     (x:word32) + y = 10w
+   ``,
+   [("y", ``0w:word32``), ("x", ``10w:word32``)]),
+
+
+  ("addition and simple memory constraint",
+   ``
+     (FAPPLY (mem0 : 32 word |-> 8 word) x = 0x45w) /\
+     (x + y = 3w)
+   ``,
+   [("y", ``0w:word32``), ("x", ``3w:word32``),
+    ("mem0", ``FUN_FMAP (K (69w) :word32 -> word8) UNIV``)]),
+
+
+  ("addition and two simple memory constraints",
+   ``
+     (FAPPLY (mem0 : 32 word |-> 8 word) x = 0x45w) /\
+     (FAPPLY (mem0 : 32 word |-> 8 word) y = 0x28w) /\
+     (x + y = 188w)
+   ``,
+   [("mem0",``(FEMPTY :word32 |-> word8 )
+       |+ (0w,40w)   |+ (1w,40w)   |+ (2w,40w)   |+ (3w,40w)
+       |+ (4w,40w)   |+ (5w,40w)   |+ (6w,40w)   |+ (7w,40w)
+       |+ (184w,40w) |+ (185w,40w) |+ (186w,40w) |+ (187w,40w)
+       |+ (188w,69w) |+ (189w,40w) |+ (190w,40w) |+ (191w,40w)``),
+    ("y", ``0w:word32``), ("x", ``188w:word32``)]),
+
+
+  ("slightly more involving constraints (translated from original debug input)",
+   ``
+    (mem_ = (mem0 : 32 word |-> 8 word)
+             |+ (addr1  + 0w, (7 >< 0)  (42w:word32))
+             |+ (addr1  + 1w, (15 >< 8) (42w:word32))) /\
+
+    (FAPPLY mem_ (addr2  + 0w) = (7 >< 0)  (42w:word32)) /\
+    (FAPPLY mem_ (addr2  + 1w) = (15 >< 8) (42w:word32)) /\
+
+    (mem0 = FUN_FMAP (K (0w)) (UNIV)) /\
+
+    (addr1 = addr2)
+   ``,
+   [("mem_", ``(FUN_FMAP (K 0w) UNIV :word32 |-> word8)
+                |+ (0w,42w) |+ (1w,0w)``),
+    ("mem0", ``FUN_FMAP (K 0w) UNIV  :word32 |-> word8``),
+    ("addr2", “(0w :word32)”), ("addr1", “(0w :word32)”)])
+];
+
+
+
+(*
+val (name, query, expected) = hd test_cases;
+*)
+
+val _ = List.map (fn (name, query, expected) =>
+    let
+      val _ = print ("\n\n=============== >>> RUNNING TEST CASE '" ^ name ^ "'\n");
+
+      val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL query;
+
+      (* TODO: improve comparison to not be order sensitive *)
+      val eq_fun = Portable.list_eq (pair_eq (fn (a:string) => fn b => a = b) identical);
+
+      val _ = if eq_fun model expected then () else (
+            print "=============== >>> TEST CASE FAILED\n";
+            print ("have: \n");
+            PolyML.print model;
+            print ("expecting: \n");
+            PolyML.print expected;
+            raise Fail ("unexpected result: " ^ name));
+
+      val _ = print ("=============== >>> SUCCESS\n");
+    in () end
+  ) test_cases;
+
+
+
+(* TODO: add test of real input, comparison can be more rigid there *)
