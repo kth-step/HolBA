@@ -45,7 +45,7 @@ def debug_input(solver):
     # TODO: build test cases from input files
 
     # used for debugging: input1 and input2 are SAT
-    filename = "z3_wrapper_test/z3_wrapper_input2"
+    filename = "examples/z3_wrapper_test/z3_wrapper_input2"
 
     with open(filename) as f:
         input_str = f.read()
@@ -136,7 +136,7 @@ def z3_ast_to_HolTerm(exp):
 
                 sz_arg = exp.domain().size()
                 sz_vlu = child.size()
-                return "(FUN_MAP2 (K ({})) (UNIV) : {} word |-> {} word)".format(z3_ast_to_HolTerm(child), sz_arg, sz_vlu)
+                return "(FUN_FMAP (K ({})) (UNIV) : {} word |-> {} word)".format(z3_ast_to_HolTerm(child), sz_arg, sz_vlu)
 
     raise NotImplementedError("Not handled: {} as {}".format(type(exp), exp))
 
@@ -201,7 +201,7 @@ def z3_funcint_to_HolTerm(funcint):
     res = []
     for k in memory.keys():
         res.append("(0x{:X}w, 0x{:X}w)".format(k, memory[k]))
-    # TODO: this should really be done with FUN_MAP2 or something similar, like above
+    # TODO: this should really be done with FUN_FMAP or something similar, like above
     return ("(FEMPTY : {} word |-> {} word) |+ ".format(arg_size, vlu_size) + " |+ ".join(tm for tm in res ))
 
 
