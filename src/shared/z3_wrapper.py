@@ -194,60 +194,44 @@ def z3_funcint_to_HolTerm(funcint):
     return ("(FEMPTY : word64 |-> word8) |+ " + "|+".join(tm for tm in res ))
 
 
-# get set difference of two lists, returns list again
-def listdiff(li1, li2): 
-    return (list(set(li1) - set(li2)))
+def z3_assign_to_HolTerm(assign):
+        (stripped_name, mvalue) = assign
+
+        # process the assignment
+        if is_ast(mvalue):
+            term = z3_ast_to_HolTerm(mvalue)
+        elif isinstance(mvalue, z3.FuncInterp):
+            term = z3_funcint_to_HolTerm(mvalue)
+        else:
+            raise Exception("unknown assignment type. can only handle some of z3 AST expressions and function interpretations")
+
+        # append the result as pair again
+        return (stripped_name, term)
 
 # function to convert z3 variable names to hol names
-strip_name = lambda x: len(x.split('_', maxsplit=1)) > 1 and x.split('_', maxsplit=1)[1] or x.split('_', maxsplit=1)[0]
-
-# function to convert word-based z3 model assignments to hol assignments
-def model_to_word (mdl):
-    sml_list = []
-    for (name, mvalue) in mdl:
-        stripped_name = strip_name(name)
-        term = z3_ast_to_HolTerm(mvalue)
-
-        sml_list.append((stripped_name, term))
-
-    return sml_list
+def strip_z3_name(x):
+    return len(x.split('_', maxsplit=1)) > 1 and x.split('_', maxsplit=1)[1] or x.split('_', maxsplit=1)[0]
 
 # create list of string pairs from model: (varname, holterm)
-# - this function isolates memory assignments and handles those different from the rest
 def model_to_list(model):
-    sml_list = None
-    
-    # process the model
-    # Deconstruct the z3 model and create a list of pairs (model variables, variables value)
-    model_2_list = sorted(list(map(lambda x: (str(x.name()), model[x]), model)))
-    # filtering k!x maps
-    array_check = re.compile('!')
-    kmap = list( filter (lambda x: array_check.search(str(x.name)), model) )
+    # map to pair (model variables (stripped hol name), variables value) and filter auxiliary assignments
+    assigns_pre = filter (lambda x: not ("!" in x[0]), map(lambda x: (strip_z3_name(str(x.name())), model[x]), model))
 
-    # Get memory mappings from the model
-    # TODO: why sorted?
-    funcInterps = sorted([pair for pair in model_2_list if isinstance(pair[1], z3.FuncInterp)])
-    # TODO: this is a hard coded variable name right here, can we not distinguish them by type?!
-    # TODO: - we should ignore !, because they are auxiliary and introduced by z3, all the others should be converted, all references seem to be internally resolved and presented in the representation
-    mem_check   = re.compile('MEM')
-    funcInterps_mem = sorted([pair for pair in funcInterps if mem_check.search(pair[0])]) 
+    # partition, sort individually, put together again
+    assign_ast = []
+    assign_oth = []
+    for x in assigns_pre:
+        (assign_ast if is_ast(x[1]) else assign_oth).append(x)
+    assigns = sorted(assign_ast) + sorted(assign_oth)
 
-    if len(kmap) > 0:
-        # Find model register assignments
-        model_regs = listdiff(model_2_list, funcInterps)
-        # Convert register and memory assignments to HOL4 words 
-        sml_list = model_to_word(model_regs)
-        list(map(lambda x : (sml_list.append((strip_name(x[0]), z3_funcint_to_HolTerm(x[1])))), funcInterps_mem))
-        # TODO: raise Exception("when are we getting here?")
-    else:
-        # TODO: can we somehow bring these two together?! doesn't model_2_list have the same contents like model_regs at this point?
-        sml_list = model_to_word(model_2_list)
+    # finally, map to hol terms
+    sml_list = list(map(z3_assign_to_HolTerm, assigns))
 
     # check for duplicate names
     names = set()
     for (name,_) in sml_list:
         if name in names:
-            raise AssertionError("Duplicated stripped name: {}".format(stripped_name))
+            raise AssertionError("Duplicated stripped name: {}".format(name))
         names.add(name)
 
     # return the collected hol assignments
