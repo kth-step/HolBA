@@ -14,6 +14,7 @@ def model_compress_string():
         result = "model_compress"
     return result
 
+# turn z3 model compression/compacting off
 z3.set_param(model_compress_string(), False)
 
 """ Z3 wrapper for HOL4.
@@ -39,7 +40,7 @@ If the verdict is SAT, then the model will follow:
 If the script fails, check stderr for details.
 """
 
-
+# example input that can be used for debugging, should return a proper model if used as input
 def debug_input(solver):
     """ Used for debugging. This is SAT. """
     solver.from_string("""
@@ -71,6 +72,7 @@ def debug_input(solver):
         (get-model)
     """)
 
+# handling of z3 memory
 class z3_memory (object):
     def __init__(self, model):
         self.model    = model
@@ -118,9 +120,9 @@ class z3_memory (object):
         self.mk_memory_complete()
         for k in self.memory.keys():
             res.append( "(({}w: {} word),({}w: {} word))".format(k, self.arg_size, self.memory[k], self.vlu_size))
-        return ("(FEMPTY : word64 |-> word8) |+" + "|+".join(tm for tm in res ))
+        return ("(FEMPTY : word64 |-> word8) |+ " + "|+".join(tm for tm in res ))
 
-
+# convert a z3 model expression recursively to a hol term string
 def z3_to_HolTerm(exp):
     # assert(is_ast(exp))
     if is_expr(exp):
@@ -192,7 +194,7 @@ def z3_to_HolTerm(exp):
                 #params = " ".join(string.ascii_lowercase[:exp.num_args()])
                 expr = ", ".join(z3_to_HolTerm(p) for p in exp.children())
                 # return "(FUN_MAP2 (K ({})) (UNIV))".format(expr)
-                return "(FEMPTY : word64 |-> word8) |+" + "((BitVec: 64 word),({}: 8 word))".format(expr)
+                return "(FEMPTY : word64 |-> word8) |+ " + "((BitVec: 64 word),({}: 8 word))".format(expr)
 
     # Function interpretation: Used for memory
     # Example the input [3 -> 0, 5 -> 0, 7 -> 0, 2 -> 0, 0 -> 20, 4 -> 0, 1 -> 0, 6 -> 0, else -> 0]
@@ -208,66 +210,74 @@ def z3_to_HolTerm(exp):
 
     raise NotImplementedError("Not handled: {} as {}".format(type(exp), exp))
 
-# Python code t get difference of two lists 
-# Using set() 
-def Diff(li1, li2): 
+# get set difference of two lists, returns list again
+def listdiff(li1, li2): 
     return (list(set(li1) - set(li2)))
 
-def model_to_list(model):
-    mem_list = []
-    sml_list = []
-    names = set()
-    # search filters
-    mem_check   = re.compile('MEM')
-    array_check = re.compile('!')
-    strip_name = lambda x: len(x.split('_', maxsplit=1)) > 1 and x.split('_', maxsplit=1)[1] or x.split('_', maxsplit=1)[0]
-    def model_to_word (mdl):
-        try:
-            for (name, mvalue) in mdl:
-                term = z3_to_HolTerm(mvalue)
-            
-                stripped_name = strip_name(name)
-                if stripped_name in names:
-                    raise AssertionError("Duplicated stripped name: {}".format(stripped_name))
-                names.add(stripped_name)
-                sml_list.append(stripped_name)
-                sml_list.append(term)
-            return sml_list
-        except Exception as e:
-            sys.exit(str(e))  # Print the message to stderr and exit with status 1
+# function to convert z3 variable names to hol names
+strip_name = lambda x: len(x.split('_', maxsplit=1)) > 1 and x.split('_', maxsplit=1)[1] or x.split('_', maxsplit=1)[0]
 
+# function to convert word-based z3 model assignments to hol assignments
+def model_to_word (mdl):
+    sml_list = []
+    for (name, mvalue) in mdl:
+        stripped_name = strip_name(name)
+        term = z3_to_HolTerm(mvalue)
+
+        sml_list.append((stripped_name, term))
+
+    return sml_list
+
+# create list of string pairs from model: (varname, holterm)
+# - this function isolates memory assignments and handles those different from the rest
+def model_to_list(model):
+    sml_list = None
     
-    # processing the model
+    # process the model
     # Deconstruct the z3 model and create a list of pairs (model variables, variables value)
     model_2_list = sorted(list(map(lambda x: (str(x.name()), model[x]), model)))
     # filtering k!x maps
+    array_check = re.compile('!')
     kmap = list( filter (lambda x: array_check.search(str(x.name)), model) )
 
     # Get memory mappings from the model
     funcInterps = sorted([pair for pair in model_2_list if isinstance(pair[1], z3.FuncInterp)])
+    mem_check   = re.compile('MEM')
     funcInterps_mem = sorted([pair for pair in funcInterps if mem_check.search(pair[0])]) 
 
     if len(kmap) > 0:
         # Find model register assignments
-        model_regs = Diff(model_2_list, funcInterps)
+        model_regs = listdiff(model_2_list, funcInterps)
         # Convert register and memory assignments to HOL4 words 
         sml_list = model_to_word(model_regs)
-        list(map(lambda x : (sml_list.append(strip_name(x[0])), sml_list.append(z3_memory(x[1]).mem_to_word())), funcInterps_mem))     
+        list(map(lambda x : (sml_list.append((strip_name(x[0]), z3_memory(x[1]).mem_to_word()))), funcInterps_mem))     
     else:
         sml_list = model_to_word(model_2_list)
 
+    # check for duplicate names
+    names = set()
+    for (name,_) in sml_list:
+        if name in names:
+            raise AssertionError("Duplicated stripped name: {}".format(stripped_name))
+        names.add(name)
+
+    # return the collected hol assignments
     return sml_list
 
+# script entry point
 def main():
     use_files = len(sys.argv) > 1
-    
     s = Solver()
-    # debug_input(s)
-    if use_files:
+
+    do_debug = False
+    if do_debug:
+        debug_input(s)
+    elif use_files:
         s.from_file(sys.argv[1])
     else:
         stdin = "\n".join(sys.stdin.readlines())
         s.from_string(stdin)
+
     r = s.check()
     if r == unsat:
         print("unsat")
@@ -284,8 +294,9 @@ def main():
     model = s.model()
     hol_list = model_to_list(model)
 
-    for line in hol_list:
-        print(line)
+    for (varname, term) in hol_list:
+        print(varname)
+        print(term)
         #print("on stdout: {}".format(line), file=sys.stderr)
 
 
