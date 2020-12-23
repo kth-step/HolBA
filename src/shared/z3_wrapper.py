@@ -3,7 +3,6 @@
 import string
 import sys
 from z3 import *
-import re
 
 def model_compress_string():
     major,minor,build,rev = z3.get_version()
