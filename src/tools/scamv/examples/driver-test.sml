@@ -1,6 +1,11 @@
 open bir_scamv_driverLib;
 open bir_rel_synthLib;
 
+(*
+(* trace that also controls whether temporary z3 input files are preserved *)
+val _ = Library.trace := 100;
+*)
+
 (* scamv_test_main "asm/branch.s"; *)
 (*scamv_test_asmf "asm/branch.s"; *)
 (* scamv_run { max_iter = 10, prog_size = 3, max_tests = 4 }; *)
