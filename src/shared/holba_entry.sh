@@ -31,6 +31,7 @@ fi
 
 if [[ "${QUICK_RUN}" == "NO" ]]; then
   MAKETARGET=$(python3 -c "import os.path; print(os.path.relpath('${CURRENT_DIR}', '${HOLBA_DIR}'))")
+  make -C "${HOLBA_DIR}" main
   make -C "${HOLBA_DIR}" "${MAKETARGET}"
 fi
 
@@ -38,6 +39,8 @@ fi
 set --
 source "${HOLBA_DIR}/env.sh"
 
+# TODO: would need to find heap that corresponds to current dir, quickfix: make main a few
+#       lines up and require that the current dir heap is subsumed in the one defined here
 HEAPNAME=${HOLBA_DIR}/src/HolBA-heap
 BUILDHEAP=${HOLBA_HOL_DIR}/bin/buildheap
 
