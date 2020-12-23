@@ -52,56 +52,6 @@ def debug_input(solver):
 
     solver.from_string(input_str)
 
-# handling of z3 memory
-class z3_memory (object):
-    def __init__(self, model):
-        self.model    = model
-        self.memory   = {}
-        # This is equivalent to 0xFFFFFFF8 and it is used to find out the base address of a (8 bytes) memory address
-        self.adr_mask = 4294967288 
-        self.arg_size = 0
-
-    # Update dictionary d2 with values in d1    
-    def update(self, d1, d2):
-        for k in d1.keys():
-            d2[k] = d1[k]
-        return d2
-    
-    def mk_memory_complete(self):
-        # Deconstruct z3 model and convert it to a list
-        model_as_list = self.model.as_list()
-        # find out the value for the else statement for the memory in the z3 model
-        else_value = model_as_list.pop()
-        # This part relies on the result constructed by the "Function interpretation" in the z3_to_HolTerm function
-        (mem_to_string, self.arg_size, self.vlu_size) = (z3_to_HolTerm(self.model))
-
-        # Convert the result returned by z3_to_HolTerm into pairs of (address, value) where address and value are integers
-        mem_to_intList = map (lambda x : tuple(int(el) for el in x.split(' ')), mem_to_string)
-        # Convert the pairs of (address, value) into dictionary {address: value}
-        mem_to_dict = dict(mem_to_intList)
-        # Make complete the ranges of addresses in the returned model
-        base_addresses = set(map(lambda x : (x & self.adr_mask), mem_to_dict.keys()))
-    
-        mem_full = {}
-        for adr in base_addresses:
-            for i in range(0,8):
-                mem_full[adr + i] = else_value
-        # update main dictionary
-        self.memory = self.update(mem_to_dict, mem_full)
-
-    '''
-    The function is meant to convert memory in the model returned by  z3 to  HOL4 terms using words library.
-    Before this conversion the function compelets(be invking mk_memory_complete) the range of memory assignments in the model using the value of the "else" statement.
-    For exmaple [0 -> 23, 1-> 48, 4 -> 67, 6 -> 65, else -> 1] would be [0 -> 23, 1-> 48, 2 -> 1, 3 -> 1, 4 -> 67, 5 -> 1, 6 -> 65, 7 -> 1].
-    This is important to not export wrong values.
-    '''
-    def mem_to_word(self):
-        res = []
-        self.mk_memory_complete()
-        for k in self.memory.keys():
-            res.append( "(({}w: {} word),({}w: {} word))".format(k, self.arg_size, self.memory[k], self.vlu_size))
-        return ("(FEMPTY : word64 |-> word8) |+ " + "|+".join(tm for tm in res ))
-
 # convert a z3 model expression recursively to a hol term string
 def z3_to_HolTerm(exp):
     # TODO: can we take this back? (related to the TODO in the end of this function)
@@ -177,7 +127,7 @@ def z3_to_HolTerm(exp):
                 # return "(FUN_MAP2 (K ({})) (UNIV))".format(expr)
                 return "(FEMPTY : word64 |-> word8) |+ " + "((BitVec: 64 word),({}: 8 word))".format(expr)
 
-    # TODO: are we actually using this code?
+    # TODO: does this really need to be here? the result type is even different than this function is expected to produce
     # Function interpretation: Used for memory
     # Example the input [3 -> 0, 5 -> 0, 7 -> 0, 2 -> 0, 0 -> 20, 4 -> 0, 1 -> 0, 6 -> 0, else -> 0]
     # Will be turned into (['3 0', '5 0', '7 0', '2 0', '0 20', '4 0', '1 0', '6 0'], 64, 8)
@@ -191,6 +141,58 @@ def z3_to_HolTerm(exp):
         return (res, arg.size(),vlu.size())
 
     raise NotImplementedError("Not handled: {} as {}".format(type(exp), exp))
+
+# TODO: we should turn this into a function, I don't see why this is a class
+# handling of z3 memory on top of "z3_to_HolTerm"
+class z3_memory (object):
+    def __init__(self, model):
+        self.model    = model
+        self.memory   = {}
+        # This is equivalent to 0xFFFFFFF8 and it is used to find out the base address of a (8 bytes) memory address
+        self.adr_mask = 4294967288 
+        self.arg_size = 0
+
+    # Update dictionary d2 with values in d1    
+    def update(self, d1, d2):
+        for k in d1.keys():
+            d2[k] = d1[k]
+        return d2
+    
+    def mk_memory_complete(self):
+        # Deconstruct z3 model and convert it to a list
+        model_as_list = self.model.as_list()
+        # find out the value for the else statement for the memory in the z3 model
+        else_value = model_as_list.pop()
+        # This part relies on the result constructed by the "Function interpretation" in the z3_to_HolTerm function
+        (mem_to_string, self.arg_size, self.vlu_size) = (z3_to_HolTerm(self.model))
+
+        # Convert the result returned by z3_to_HolTerm into pairs of (address, value) where address and value are integers
+        mem_to_intList = map (lambda x : tuple(int(el) for el in x.split(' ')), mem_to_string)
+        # Convert the pairs of (address, value) into dictionary {address: value}
+        mem_to_dict = dict(mem_to_intList)
+        # Make complete the ranges of addresses in the returned model
+        base_addresses = set(map(lambda x : (x & self.adr_mask), mem_to_dict.keys()))
+    
+        mem_full = {}
+        for adr in base_addresses:
+            for i in range(0,8):
+                mem_full[adr + i] = else_value
+        # update main dictionary
+        self.memory = self.update(mem_to_dict, mem_full)
+
+    '''
+    The function is meant to convert memory in the model returned by  z3 to  HOL4 terms using words library.
+    Before this conversion the function compelets(be invking mk_memory_complete) the range of memory assignments in the model using the value of the "else" statement.
+    For exmaple [0 -> 23, 1-> 48, 4 -> 67, 6 -> 65, else -> 1] would be [0 -> 23, 1-> 48, 2 -> 1, 3 -> 1, 4 -> 67, 5 -> 1, 6 -> 65, 7 -> 1].
+    This is important to not export wrong values.
+    '''
+    def mem_to_word(self):
+        res = []
+        self.mk_memory_complete()
+        for k in self.memory.keys():
+            res.append( "(({}w: {} word),({}w: {} word))".format(k, self.arg_size, self.memory[k], self.vlu_size))
+        return ("(FEMPTY : word64 |-> word8) |+ " + "|+".join(tm for tm in res ))
+
 
 # get set difference of two lists, returns list again
 def listdiff(li1, li2): 
@@ -225,7 +227,8 @@ def model_to_list(model):
     # Get memory mappings from the model
     # TODO: why sorted?
     funcInterps = sorted([pair for pair in model_2_list if isinstance(pair[1], z3.FuncInterp)])
-    # TODO: this is a hard coded variable name right here
+    # TODO: this is a hard coded variable name right here, can we not distinguish them by type?!
+    # TODO: - we should ignore !, because they are auxiliary and introduced by z3, all the others should be converted, all references seem to be internally resolved and presented in the representation
     mem_check   = re.compile('MEM')
     funcInterps_mem = sorted([pair for pair in funcInterps if mem_check.search(pair[0])]) 
 
