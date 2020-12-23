@@ -43,7 +43,8 @@ If the script fails, check stderr for details.
 # example input that can be used for debugging, should return a proper model if used as input
 def debug_input(solver):
     """ Used for debugging. This is SAT. """
-    solver.from_string("""
+
+    input1 = """
         (declare-const mem0 (Array (_ BitVec 32) (_ BitVec 8)))
         (declare-const mem (Array (_ BitVec 32) (_ BitVec 8)))
         (declare-const addr1 (_ BitVec 32))
@@ -70,7 +71,23 @@ def debug_input(solver):
 
         (check-sat)
         (get-model)
-    """)
+    """
+
+    input2 = """
+(declare-const x (_ BitVec 8))
+(declare-const y (_ BitVec 8))
+(declare-const z (_ BitVec 8))
+(declare-const a1 (Array (_ BitVec 8) (_ BitVec 8)))
+(declare-const a2 (Array (_ BitVec 8) (_ BitVec 8)))
+(declare-const a3 (Array (_ BitVec 8) (_ BitVec 8)))
+(assert (= (select a1 x) x))
+(assert (= (store a1 x y) a1))
+
+(check-sat)
+(get-model)
+    """
+
+    solver.from_string(input2)
 
 # handling of z3 memory
 class z3_memory (object):
@@ -124,6 +141,7 @@ class z3_memory (object):
 
 # convert a z3 model expression recursively to a hol term string
 def z3_to_HolTerm(exp):
+    # TODO: can we take this back? (related to the TODO in the end of this function)
     # assert(is_ast(exp))
     if is_expr(exp):
         # Function declaration
@@ -196,6 +214,7 @@ def z3_to_HolTerm(exp):
                 # return "(FUN_MAP2 (K ({})) (UNIV))".format(expr)
                 return "(FEMPTY : word64 |-> word8) |+ " + "((BitVec: 64 word),({}: 8 word))".format(expr)
 
+    # TODO: are we actually using this code?
     # Function interpretation: Used for memory
     # Example the input [3 -> 0, 5 -> 0, 7 -> 0, 2 -> 0, 0 -> 20, 4 -> 0, 1 -> 0, 6 -> 0, else -> 0]
     # Will be turned into (['3 0', '5 0', '7 0', '2 0', '0 20', '4 0', '1 0', '6 0'], 64, 8)
@@ -241,7 +260,9 @@ def model_to_list(model):
     kmap = list( filter (lambda x: array_check.search(str(x.name)), model) )
 
     # Get memory mappings from the model
+    # TODO: why sorted?
     funcInterps = sorted([pair for pair in model_2_list if isinstance(pair[1], z3.FuncInterp)])
+    # TODO: this is a hard coded variable name right here
     mem_check   = re.compile('MEM')
     funcInterps_mem = sorted([pair for pair in funcInterps if mem_check.search(pair[0])]) 
 
@@ -250,8 +271,10 @@ def model_to_list(model):
         model_regs = listdiff(model_2_list, funcInterps)
         # Convert register and memory assignments to HOL4 words 
         sml_list = model_to_word(model_regs)
-        list(map(lambda x : (sml_list.append((strip_name(x[0]), z3_memory(x[1]).mem_to_word()))), funcInterps_mem))     
+        list(map(lambda x : (sml_list.append((strip_name(x[0]), z3_memory(x[1]).mem_to_word()))), funcInterps_mem))
+        # TODO: raise Exception("when are we getting here?")
     else:
+        # TODO: can we somehow bring these two together?! doesn't model_2_list have the same contents like model_regs at this point?
         sml_list = model_to_word(model_2_list)
 
     # check for duplicate names
