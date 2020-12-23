@@ -189,15 +189,11 @@ open bir_cfgLib;
 	    map Obs_prime_single xs
 	end
 
-    val constrain_spec_obs_vars_def = Define`
-        constrain_spec_obs_vars (e1, e2) =
-        BStmt_Assign  (e1) (e2) :bir_val_t bir_stmt_basic_t
-        `;
-
-    val append_list_def = Define`
-        append_list (lbl, (l1:  bir_val_t bir_stmt_basic_t list)) l2 =
-        let combLst = APPEND l2 l1 in (lbl, combLst)
-        `;
+(*
+  reside in bir_obs_modelScript.sml. cannot be here, otherwise this creates unfinished scratch theory
+  constrain_spec_obs_vars_def
+  append_list_def
+*)
 
     fun mk_assign_mem_assert e =
 	let 

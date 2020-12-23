@@ -250,4 +250,17 @@ add_obs_cache_line_subset_and_line_armv8 mem_bounds p = map_obs_prog (add_block_
 `;
 
 
+(* helper definitions for speculative branch augmentation (cache_speculation) *)
+(* ============================================================================== *)
+val constrain_spec_obs_vars_def = Define`
+    constrain_spec_obs_vars (e1, e2) =
+    BStmt_Assign  (e1) (e2) :bir_val_t bir_stmt_basic_t
+    `;
+
+val append_list_def = Define`
+    append_list (lbl, (l1:  bir_val_t bir_stmt_basic_t list)) l2 =
+    let combLst = APPEND l2 l1 in (lbl, combLst)
+    `;
+
+
 val _ = export_theory();
