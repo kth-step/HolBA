@@ -53,42 +53,42 @@ def debug_input(solver):
     solver.from_string(input_str)
 
 # convert a z3 model expression recursively to a hol term string
-def z3_to_HolTerm(exp):
+def z3_ast_to_HolTerm(exp):
     assert(is_ast(exp))
     if is_expr(exp):
         # Function declaration
         if is_func_decl(exp):
             return ("func_decl({} {})".format(
                 exp.name(),
-                " ".join(z3_to_HolTerm(p) for p in exp.params())))
+                " ".join(z3_ast_to_HolTerm(p) for p in exp.params())))
 
         # Predicates
         if is_and(exp):
-            return "(%s)" % " /\\ ".join(z3_to_HolTerm(p) for p in exp.children())
+            return "(%s)" % " /\\ ".join(z3_ast_to_HolTerm(p) for p in exp.children())
         if is_or(exp):
-            return "(%s)" % " \\/ ".join(z3_to_HolTerm(p) for p in exp.children())
+            return "(%s)" % " \\/ ".join(z3_ast_to_HolTerm(p) for p in exp.children())
         if is_implies(exp):
-            return "(%s)" % " ==> ".join(z3_to_HolTerm(p) for p in exp.children())
+            return "(%s)" % " ==> ".join(z3_ast_to_HolTerm(p) for p in exp.children())
         if is_not(exp):
-            return "(~(%s))" % z3_to_HolTerm(exp.arg(0))
+            return "(~(%s))" % z3_ast_to_HolTerm(exp.arg(0))
         if is_eq(exp):
-            return "(%s)" % " = ".join(z3_to_HolTerm(p) for p in exp.children())
+            return "(%s)" % " = ".join(z3_ast_to_HolTerm(p) for p in exp.children())
         if is_le(exp):
-            return "(%s)" % " <= ".join(z3_to_HolTerm(p) for p in exp.children())
+            return "(%s)" % " <= ".join(z3_ast_to_HolTerm(p) for p in exp.children())
         if is_lt(exp):
-            return "(%s)" % " < ".join(z3_to_HolTerm(p) for p in exp.children())
+            return "(%s)" % " < ".join(z3_ast_to_HolTerm(p) for p in exp.children())
         if is_ge(exp):
-            return "(%s)" % " >= ".join(z3_to_HolTerm(p) for p in exp.children())
+            return "(%s)" % " >= ".join(z3_ast_to_HolTerm(p) for p in exp.children())
         if is_gt(exp):
-            return "(%s)" % " > ".join(z3_to_HolTerm(p) for p in exp.children())
+            return "(%s)" % " > ".join(z3_ast_to_HolTerm(p) for p in exp.children())
 
         # Binary expressions
         if is_add(exp):
-            return "(%s)" % " + ".join(z3_to_HolTerm(p) for p in exp.children())
+            return "(%s)" % " + ".join(z3_ast_to_HolTerm(p) for p in exp.children())
         if is_mul(exp):
-            return "(%s)" % " * ".join(z3_to_HolTerm(p) for p in exp.children())
+            return "(%s)" % " * ".join(z3_ast_to_HolTerm(p) for p in exp.children())
         if is_sub(exp):
-            return "(%s)" % " - ".join(z3_to_HolTerm(p) for p in exp.children())
+            return "(%s)" % " - ".join(z3_ast_to_HolTerm(p) for p in exp.children())
         if is_div(exp):
             raise NotImplementedError("is_div")
         if is_idiv(exp):
@@ -115,43 +115,30 @@ def z3_to_HolTerm(exp):
         # Arrays
         if is_array(exp):
             if is_select(exp):
-                return "(select %s)" % " ".join(z3_to_HolTerm(p) for p in exp.children())
+                return "(select %s)" % " ".join(z3_ast_to_HolTerm(p) for p in exp.children())
             if is_store(exp):
-                return "(store %s)" % " ".join(z3_to_HolTerm(p) for p in exp.children())
+                return "(store %s)" % " ".join(z3_ast_to_HolTerm(p) for p in exp.children())
             if is_const_array(exp):
                 if exp.num_args() != 1 and len(exp.children()) != 1:
                     raise NotImplementedError("Not handled: special constant array: {}".format(exp))
                 #params = " ".join(string.ascii_lowercase[:exp.num_args()])
-                expr = ", ".join(z3_to_HolTerm(p) for p in exp.children())
+                expr = ", ".join(z3_ast_to_HolTerm(p) for p in exp.children())
                 # return "(FUN_MAP2 (K ({})) (UNIV))".format(expr)
                 return "(FEMPTY : word64 |-> word8) |+ " + "((BitVec: 64 word),({}: 8 word))".format(expr)
 
     raise NotImplementedError("Not handled: {} as {}".format(type(exp), exp))
 
-# handling of z3 memory as "function interpretation"
-def mem_to_word(model):
-    memory   = {}
-    # mask to find out the base address of a (4 bytes) memory address: note, this is not 8 bytes!
-    adr_mask = 0xFFFFFFF8
-    assert(4294967288 == adr_mask)
-    arg_size = 0
+# convert z3 "function interpretation" to finite_map
+def z3_funcint_to_HolTerm(funcint):
+    # convert memory in the model returned by  z3 to  HOL4 terms using words library.
+    # Before this conversion the function compelets(be invking mk_memory_complete) the range of
+    #   memory assignments in the model using the value of the "else" statement.
+    # For exmaple [0 -> 23, 1-> 48, 4 -> 67, 6 -> 65, else -> 1] would be [0 -> 23, 1-> 48, 2 -> 1, 3 -> 1, 4 -> 67, 5 -> 1, 6 -> 65, 7 -> 1].
+    # This is important to not export wrong values.
 
-    # Update dictionary d2 with values in d1    
-    def update(d1, d2):
-            for k in d1.keys():
-                d2[k] = d1[k]
-            return d2
-
-    '''
-    convert memory in the model returned by  z3 to  HOL4 terms using words library.
-    Before this conversion the function compelets(be invking mk_memory_complete) the range of memory assignments in the model using the value of the "else" statement.
-    For exmaple [0 -> 23, 1-> 48, 4 -> 67, 6 -> 65, else -> 1] would be [0 -> 23, 1-> 48, 2 -> 1, 3 -> 1, 4 -> 67, 5 -> 1, 6 -> 65, 7 -> 1].
-    This is important to not export wrong values.
-    '''
-    res = []
 
     # Deconstruct z3 model and convert it to a list
-    model_as_list = model.as_list()
+    model_as_list = funcint.as_list()
     # find out the value for the else statement for the memory in the z3 model
     else_value = model_as_list.pop()
 
@@ -162,27 +149,46 @@ def mem_to_word(model):
     def funcinterp_collect(exp):
         assert(isinstance(exp, z3.FuncInterp))
         res = []
+        sz_arg = None
+        sz_vlu = None
         for idx in range(0, exp.num_entries()):
             arg = (exp.entry(idx)).arg_value(0)
             vlu = (exp.entry(idx)).value()
-            res.append("{} {}".format(arg, vlu))
-        return (res, arg.size(),vlu.size())
-    (mem_to_string, arg_size, vlu_size) = (funcinterp_collect(model))
 
-    # Convert the result returned into pairs of (address, value) where address and value are integers
-    mem_to_intList = map (lambda x : tuple(int(el) for el in x.split(' ')), mem_to_string)
+            if sz_arg == None:
+                sz_arg = arg.size()
+                sz_vlu = vlu.size()
+            else:
+                assert(sz_arg == arg.size())
+                assert(sz_vlu == vlu.size())
+
+            # TODO: this probably doesn't need to be reparsed, but works for now
+            res.append((int(str(arg)), int(str(vlu))))
+        assert(sz_arg != None)
+        assert(sz_vlu != None)
+        return (res, sz_arg, sz_vlu)
+
     # Convert the pairs of (address, value) into dictionary {address: value}
+    (mem_to_intList, arg_size, vlu_size) = (funcinterp_collect(funcint))
     mem_to_dict = dict(mem_to_intList)
-    # Make complete the ranges of addresses in the returned model
+
+    # generate a map with the default value for all touched words in the memory (i.e., consider 8 byte aligned words)
+    # (mask to find out the base address of an 8 byte word aligned memory address
+    # - (note, this is not the mask for an 8 bytes address though!)
+    adr_mask = 0xFFFFFFF8
     base_addresses = set(map(lambda x : (x & adr_mask), mem_to_dict.keys()))
-    
     mem_full = {}
     for adr in base_addresses:
         for i in range(0,8):
             mem_full[adr + i] = else_value
-    # update main dictionary
-    memory = update(mem_to_dict, mem_full)
 
+    # overwrite with main dictionary mappings
+    for k in mem_to_dict.keys():
+        mem_full[k] = mem_to_dict[k]
+
+    # construct the hol term from the memory map
+    memory = mem_full
+    res = []
     for k in memory.keys():
         res.append( "(({}w: {} word),({}w: {} word))".format(k, arg_size, memory[k], vlu_size))
     return ("(FEMPTY : word64 |-> word8) |+ " + "|+".join(tm for tm in res ))
@@ -200,7 +206,7 @@ def model_to_word (mdl):
     sml_list = []
     for (name, mvalue) in mdl:
         stripped_name = strip_name(name)
-        term = z3_to_HolTerm(mvalue)
+        term = z3_ast_to_HolTerm(mvalue)
 
         sml_list.append((stripped_name, term))
 
@@ -231,7 +237,7 @@ def model_to_list(model):
         model_regs = listdiff(model_2_list, funcInterps)
         # Convert register and memory assignments to HOL4 words 
         sml_list = model_to_word(model_regs)
-        list(map(lambda x : (sml_list.append((strip_name(x[0]), mem_to_word(x[1])))), funcInterps_mem))
+        list(map(lambda x : (sml_list.append((strip_name(x[0]), z3_funcint_to_HolTerm(x[1])))), funcInterps_mem))
         # TODO: raise Exception("when are we getting here?")
     else:
         # TODO: can we somehow bring these two together?! doesn't model_2_list have the same contents like model_regs at this point?
