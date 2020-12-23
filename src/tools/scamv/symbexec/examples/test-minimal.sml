@@ -207,7 +207,7 @@ val prog5 = ``BirProgram
 fun check_with_wrong_suffix suffopt suff prog =
   case (SOME (leafs_of prog suffopt)
        handle _ => NONE) of
-     SOME _ => raise ERR "script" "this is not right"
+     SOME _ => raise Fail "script::this is not right"
    | NONE => leafs_of prog (SOME suff);
 
 val leafs_prog5_1 = check_with_wrong_suffix NONE "*" prog5;
