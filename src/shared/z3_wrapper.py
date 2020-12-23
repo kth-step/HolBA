@@ -42,52 +42,15 @@ If the script fails, check stderr for details.
 
 # example input that can be used for debugging, should return a proper model if used as input
 def debug_input(solver):
-    """ Used for debugging. This is SAT. """
+    # TODO: build test cases from input files
 
-    input1 = """
-        (declare-const mem0 (Array (_ BitVec 32) (_ BitVec 8)))
-        (declare-const mem (Array (_ BitVec 32) (_ BitVec 8)))
-        (declare-const addr1 (_ BitVec 32))
-        (declare-const addr2 (_ BitVec 32))
+    # used for debugging: input1 and input2 are SAT
+    filename = "z3_wrapper_test/z3_wrapper_input2"
 
-        (assert (= mem
-            (store
-                (store mem0
-                (bvadd addr1 (_ bv0 32)) ((_ extract 7 0) (_ bv42 32)))
-                (bvadd addr1 (_ bv1 32)) ((_ extract 15 8) (_ bv42 32)))
-            ))
+    with open(filename) as f:
+        input_str = f.read()
 
-        (assert
-            (and
-                (= (select mem (bvadd addr2 (_ bv0 32))) ((_ extract 7 0) (_ bv42 32)))
-                (= (select mem (bvadd addr2 (_ bv1 32))) ((_ extract 15 8) (_ bv42 32)))
-            ))
-
-        (assert (=
-            mem0
-            ((as const (Array (_ BitVec 32) (_ BitVec 8))) (_ bv0 8))))
-
-        (assert (= addr1 addr2))
-
-        (check-sat)
-        (get-model)
-    """
-
-    input2 = """
-(declare-const x (_ BitVec 8))
-(declare-const y (_ BitVec 8))
-(declare-const z (_ BitVec 8))
-(declare-const a1 (Array (_ BitVec 8) (_ BitVec 8)))
-(declare-const a2 (Array (_ BitVec 8) (_ BitVec 8)))
-(declare-const a3 (Array (_ BitVec 8) (_ BitVec 8)))
-(assert (= (select a1 x) x))
-(assert (= (store a1 x y) a1))
-
-(check-sat)
-(get-model)
-    """
-
-    solver.from_string(input2)
+    solver.from_string(input_str)
 
 # handling of z3 memory
 class z3_memory (object):
