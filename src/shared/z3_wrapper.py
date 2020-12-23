@@ -102,7 +102,8 @@ def z3_ast_to_HolTerm(exp):
         if is_false(exp):
             return "(F: bool)"
         if is_bv_value(exp):
-            return "({}w: {} word)".format(exp, exp.size())
+            # TODO: can we avoid string reparsing?
+            return "(0x{:X}w: {} word)".format(int(str(exp)), exp.size())
         if is_int_value(exp):
             return "({}: int)".format(exp)
         if is_rational_value(exp):
@@ -112,6 +113,7 @@ def z3_ast_to_HolTerm(exp):
         if is_string_value(exp):
             return "\"{}\"".format(exp)
 
+        # TODO: this implementation is stale and doesn't work, right?
         # Arrays
         if is_array(exp):
             if is_select(exp):
@@ -174,8 +176,7 @@ def z3_funcint_to_HolTerm(funcint):
 
     # generate a map with the default value for all touched words in the memory (i.e., consider 8 byte aligned words)
     # (mask to find out the base address of an 8 byte word aligned memory address
-    # - (note, this is not the mask for an 8 bytes address though!)
-    adr_mask = 0xFFFFFFF8
+    adr_mask = 0xFFFFFFFFFFFFFFF8
     base_addresses = set(map(lambda x : (x & adr_mask), mem_to_dict.keys()))
     mem_full = {}
     for adr in base_addresses:
@@ -190,8 +191,8 @@ def z3_funcint_to_HolTerm(funcint):
     memory = mem_full
     res = []
     for k in memory.keys():
-        res.append( "(({}w: {} word),({}w: {} word))".format(k, arg_size, memory[k], vlu_size))
-    return ("(FEMPTY : word64 |-> word8) |+ " + "|+".join(tm for tm in res ))
+        res.append( "((0x{:X}w: {} word),(0x{:X}w: {} word))".format(k, arg_size, memory[k], vlu_size))
+    return ("(FEMPTY : word64 |-> word8) |+ " + " |+ ".join(tm for tm in res ))
 
 
 def z3_assign_to_HolTerm(assign):
