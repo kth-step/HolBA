@@ -55,6 +55,7 @@ def debug_input(solver):
 # convert a z3 model expression recursively to a hol term string
 def z3_ast_to_HolTerm(exp):
     assert(is_ast(exp))
+
     if is_expr(exp):
         # Function declaration
         if is_func_decl(exp):
@@ -102,7 +103,7 @@ def z3_ast_to_HolTerm(exp):
         if is_false(exp):
             return "(F: bool)"
         if is_bv_value(exp):
-            # TODO: can we avoid string reparsing?
+            # TODO: can we avoid string reparsing? (this reparse pattern occurs in several other places in this script)
             return "(0x{:X}w: {} word)".format(int(str(exp)), exp.size())
         if is_int_value(exp):
             return "({}: int)".format(exp)
@@ -113,20 +114,29 @@ def z3_ast_to_HolTerm(exp):
         if is_string_value(exp):
             return "\"{}\"".format(exp)
 
-        # TODO: this implementation is stale and doesn't work, right?
         # Arrays
         if is_array(exp):
+            # "select (children[0-1])"
             if is_select(exp):
-                return "(select %s)" % " ".join(z3_ast_to_HolTerm(p) for p in exp.children())
+                args = [z3_ast_to_HolTerm(p) for p in exp.children()]
+                assert(len(args) == 2)
+                return "(FAPPLY ({}) ({}))".format(args[0], args[1])
+
+            # "store (children[0-2])"
             if is_store(exp):
-                return "(store %s)" % " ".join(z3_ast_to_HolTerm(p) for p in exp.children())
+                args = [z3_ast_to_HolTerm(p) for p in exp.children()]
+                assert(len(args) == 3)
+                return args[0] + " |+ " + "({}, {})".format(args[1], args[2])
+
+            # "K (domain, children[0])"
             if is_const_array(exp):
                 if exp.num_args() != 1 and len(exp.children()) != 1:
                     raise NotImplementedError("Not handled: special constant array: {}".format(exp))
-                #params = " ".join(string.ascii_lowercase[:exp.num_args()])
-                expr = ", ".join(z3_ast_to_HolTerm(p) for p in exp.children())
-                # return "(FUN_MAP2 (K ({})) (UNIV))".format(expr)
-                return "(FEMPTY : word64 |-> word8) |+ " + "((BitVec: 64 word),({}: 8 word))".format(expr)
+                child = exp.children()[0]
+
+                sz_arg = exp.domain().size()
+                sz_vlu = child.size()
+                return "(FUN_MAP2 (K ({})) (UNIV) : {} word |-> {} word)".format(z3_ast_to_HolTerm(child), sz_arg, sz_vlu)
 
     raise NotImplementedError("Not handled: {} as {}".format(type(exp), exp))
 
@@ -141,8 +151,8 @@ def z3_funcint_to_HolTerm(funcint):
 
     # Deconstruct z3 model and convert it to a list
     model_as_list = funcint.as_list()
-    # find out the value for the else statement for the memory in the z3 model
-    else_value = model_as_list.pop()
+    # find out the default value of the z3 function interpretation
+    default_value = int(str(model_as_list.pop()))
 
     # Function interpretation: Used for memory
     # Example the input [3 -> 0, 5 -> 0, 7 -> 0, 2 -> 0, 0 -> 20, 4 -> 0, 1 -> 0, 6 -> 0, else -> 0]
@@ -164,7 +174,6 @@ def z3_funcint_to_HolTerm(funcint):
                 assert(sz_arg == arg.size())
                 assert(sz_vlu == vlu.size())
 
-            # TODO: this probably doesn't need to be reparsed, but works for now
             res.append((int(str(arg)), int(str(vlu))))
         assert(sz_arg != None)
         assert(sz_vlu != None)
@@ -174,14 +183,14 @@ def z3_funcint_to_HolTerm(funcint):
     (mem_to_intList, arg_size, vlu_size) = (funcinterp_collect(funcint))
     mem_to_dict = dict(mem_to_intList)
 
-    # generate a map with the default value for all touched words in the memory (i.e., consider 8 byte aligned words)
+    # propagate a map with the default value for all touched words in the memory (i.e., consider 8 byte aligned words)
     # (mask to find out the base address of an 8 byte word aligned memory address
     adr_mask = 0xFFFFFFFFFFFFFFF8
     base_addresses = set(map(lambda x : (x & adr_mask), mem_to_dict.keys()))
     mem_full = {}
     for adr in base_addresses:
         for i in range(0,8):
-            mem_full[adr + i] = else_value
+            mem_full[adr + i] = default_value
 
     # overwrite with main dictionary mappings
     for k in mem_to_dict.keys():
@@ -191,8 +200,9 @@ def z3_funcint_to_HolTerm(funcint):
     memory = mem_full
     res = []
     for k in memory.keys():
-        res.append( "((0x{:X}w: {} word),(0x{:X}w: {} word))".format(k, arg_size, memory[k], vlu_size))
-    return ("(FEMPTY : word64 |-> word8) |+ " + " |+ ".join(tm for tm in res ))
+        res.append("(0x{:X}w, 0x{:X}w)".format(k, memory[k]))
+    # TODO: this should really be done with FUN_MAP2 or something similar, like above
+    return ("(FEMPTY : {} word |-> {} word) |+ ".format(arg_size, vlu_size) + " |+ ".join(tm for tm in res ))
 
 
 def z3_assign_to_HolTerm(assign):
