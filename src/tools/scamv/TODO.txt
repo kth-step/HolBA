@@ -17,3 +17,10 @@ Scam-V TODOs
   perhaps bir_rel_synthLib. The entry point and options handling could also be
   moved away from scamv_driverLib.
 
+* Support for observations with list of arbitrary length
+
+* Change observational model to encode in the observation list also the type of
+  observation (e.g. pc vs. load)
+
+- Comment: Do we need the observation channel, or can we encode this in the
+  observation list (see last TODO above)?

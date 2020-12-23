@@ -1112,6 +1112,34 @@ BirProgram
 :bir_val_t bir_program_t
 ``;
 
+(*
+=================================
+	ldr x26, [x14,x24]
+obs0 0x0
+obs0 x14+x24
+	ldr x15, [x17, #0]
+obs0 0x4
+obs0 x17
+	cmp x14, x15
+obs0 0x8
+	b.eq #0xC
+obs0 0xC
+	ldr x10, [x26, #76]
+obs1 x9*
+obs0 0x10
+obs0 x26+76
+	b #0x8
+obs0 0x14
+	ldr x14, [x9]
+obs1 x26*+76
+obs0 0x18
+obs0 x9
+	HALT
+obs0 0x1C
+
+=================================
+*)
+
 val prog_1_cache_speculation = ``
 BirProgram
       [<|bb_label := BL_Address (Imm64 0w);
