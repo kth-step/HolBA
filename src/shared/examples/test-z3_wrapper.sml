@@ -87,5 +87,18 @@ val _ = List.map (fn (name, query, expected) =>
   ) test_cases;
 
 
+(* test of real input, comparison. it is quite rigid in terms of output requirement *)
+open bir_fileLib;
 
-(* TODO: add test of real input, comparison can be more rigid there *)
+val filename = "z3_wrapper_test/z3_wrapper_input_z3_T5bnC5_sat";
+val _ = print ("\n\n=============== >>> RUNNING TEST CASE FILE '" ^ filename ^ "'\n");
+
+val expected_output = read_from_file (filename ^ "_expectedoutput");
+
+val output = bir_exec_wrapLib.get_exec_output ("../z3_wrapper.py " ^ filename);
+
+val _ = if output = expected_output then () else (
+            print "=============== >>> TEST CASE FAILED\n";
+            raise Fail ("unexpected result. check the test case"));
+val _ = print ("=============== >>> SUCCESS\n");
+        
