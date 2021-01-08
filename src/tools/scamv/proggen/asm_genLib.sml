@@ -294,7 +294,9 @@ local
 	val regs    = arb_regname_except ["x1", "x0"]
 	val zipped  = regs >>= (fn reg1 => offsets 
 			   >>= (fn off1 => arb_regname_except [reg1]
-                           >>= (fn reg2 => return ([(reg1, off1), (reg2, 0)], [reg1,reg2]))))
+                           >>= (fn reg2 => offsets
+		           >>= (fn off2 => return ([(reg1, off1), (reg2, off2)], [reg1,reg2])))))
+
 
 	val ext_src = zipped >>= (fn (p1::p2::_ , [reg1, reg2]) =>
                                          sequence ([arb_ld_reg_src (fst p1), arb_ld_offset_src (fst p2) (snd p2)])

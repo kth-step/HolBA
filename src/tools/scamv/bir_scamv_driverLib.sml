@@ -30,7 +30,7 @@ open scamv_trainingLib;
   (* error handling *)
   val libname  = "bir_scamv_driverLib"
   val ERR      = Feedback.mk_HOL_ERR libname
-  val wrap_exn = Feedback.wrap_exn libname
+  val wrap_exn = Feedback.wrap_exn libname 
 
 (*
  workflow:
@@ -234,6 +234,9 @@ fun next_experiment all_exps next_relation  =
     let
         open bir_expLib;
 
+	(* measuring time*)
+	val timer = (Time.now());
+
         (* ADHOC this constrains paths to only those where *)
 	(* none of the observations appear *)
         val guard_path_spec =
@@ -272,11 +275,11 @@ fun next_experiment all_exps next_relation  =
         val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
         val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model; print "\nSAT model finished.\n"));
 
-	      val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
-	      val (primed, nprimed) = List.partition (isPrimedRun o fst) model
-	      val rmprime = List.map (fn (r,v) => (remove_prime r,v)) primed
+	val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
+	val (primed, nprimed) = List.partition (isPrimedRun o fst) model
+	val rmprime = List.map (fn (r,v) => (remove_prime r,v)) primed
         val s1 = to_sml_Arbnums nprimed;
-	      val s2 = to_sml_Arbnums primed;
+	val s2 = to_sml_Arbnums primed;
         val prog_id = !current_prog_id;
 
         fun mk_var_mapping s =
@@ -291,8 +294,8 @@ fun next_experiment all_exps next_relation  =
             in list_mk_conj (map mk_eq s) end;
 
         val reg_constraint = ``~^(mk_var_mapping (regs))``;
-	      val mem_constraint = mem_constraint ml;
-	      val new_constraint = mk_conj (reg_constraint, mem_constraint);
+	val mem_constraint = mem_constraint ml;
+	val new_constraint = mk_conj (reg_constraint, mem_constraint);
 
         val _ =
             current_visited_map := add_visited (!current_visited_map) path_spec new_constraint;
@@ -332,6 +335,10 @@ fun next_experiment all_exps next_relation  =
         val _ = if #1 ce_obs_comp then () else
                   raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
 	val s1::s2::_ = #2 ce_obs_comp
+
+	(* show time *)
+	val d_s = Time.- (Time.now(), timer) |> Time.toString;
+	val _ = print ("Time to generate the experiment : "^d_s^"\n");
 
         (* create experiment files *)
         val exp_id  = bir_embexp_states2_create ("arm8", !hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2, SOME st);
