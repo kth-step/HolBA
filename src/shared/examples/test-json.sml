@@ -4,25 +4,52 @@ open HolKernel Parse boolLib bossLib;
 val _ = load "sml-simplejson/jsonparse";
 *)
 
-fun processFile filename =
-    let val input = String.concat (bir_fileLib.read_file_lines filename)
+fun readFile filename =
+  String.concat (bir_fileLib.read_file_lines filename);
+
+fun parseJson input =
+    let
     val serialise = Json.serialiseIndented
     in
         case Json.parse input of
             Json.ERROR e =>
-            (TextIO.output (TextIO.stdErr, "Error: " ^ e ^ "\n");
-             OS.Process.exit OS.Process.failure)
+            raise Fail ("Error: " ^ e ^ "\n")
           | Json.OK json =>
             (print (serialise json ^ "\n");
              json)
-    end
+    end;
+
+fun tryJsonParseSerialize jsonstr =
+  let
+    val parsed = parseJson jsonstr;
+    val jsonstr2 = Json.serialise parsed;
+    val _ = print (jsonstr2 ^ "\n");
+  in
+    if jsonstr = jsonstr2
+    then ()
+    else raise Fail ("Json str does not come out the same: " ^ jsonstr)
+  end;
 
 
-val path = "../sml-simplejson/testfiles/test_parsing/"
+val path = "../sml-simplejson/testfiles/test_parsing/";
 
 val filename = "y_object_duplicated_key_and_value.json";
 
-val json = processFile (path^filename)
+val _ =
+  case (parseJson o readFile) (path ^ filename) of
+     Json.OBJECT [("a", Json.STRING "b"), ("a", Json.STRING "b")] => ()
+   | _ => raise Fail "unexpected outcome 1";
+
+val _ =
+  case parseJson "[\"hello\", 21, null]" of
+     Json.ARRAY [Json.STRING "hello", Json.NUMBER a21, Json.NULL] =>
+        if Arbnum.compare(a21, Arbnum.fromInt 21) = EQUAL then () else
+        raise Fail "unexpected outcome 2_1"
+   | _ => raise Fail "unexpected outcome 2_2";
+
+val _ = tryJsonParseSerialize "[21]";
+val _ = tryJsonParseSerialize "[21,25]";
+val _ = tryJsonParseSerialize "{\"hallo\":21,\"o\":null,\"m\":[true,false]}";
 
 (* try a big hol term, through string and json, and bring it back *)
 val prog_1_cache_speculation = ``

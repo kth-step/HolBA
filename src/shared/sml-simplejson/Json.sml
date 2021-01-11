@@ -29,6 +29,7 @@
    * Converts all numbers to type "real". If that is a 64-bit IEEE
      float type (common but not guaranteed in SML) then we're pretty
      standard for a JSON parser
+     (A. Lindner: modified this locally to be Arbnum.num)
 
    * For simplicity this implementation returns object fields in the
      order in which they appear in the input, without checking for
@@ -67,7 +68,7 @@ signature JSON = sig
 
     datatype json = OBJECT of (string * json) list
                   | ARRAY of json list
-                  | NUMBER of real
+                  | NUMBER of Arbnum.num
                   | STRING of string
                   | BOOL of bool
                   | NULL
@@ -85,7 +86,7 @@ structure Json :> JSON = struct
 
     datatype json = OBJECT of (string * json) list
                   | ARRAY of json list
-                  | NUMBER of real
+                  | NUMBER of Arbnum.num
                   | STRING of string
                   | BOOL of bool
                   | NULL
@@ -199,7 +200,7 @@ structure Json :> JSON = struct
         end
 
     and lexNumber firstChar pos acc cc =
-        let val valid = explode ".+-e"
+        let val valid = explode "-"
             fun lexNumber' pos digits [] = (rev digits, [], pos)
               | lexNumber' pos digits (x :: xs) =
                 if x = #"E" then lexNumber' (pos + 1) (#"e" :: digits) xs
@@ -239,35 +240,12 @@ structure Json :> JSON = struct
     fun parseNumber digits =
         (* Note lexNumber already case-insensitised the E for us *)
         let open Char
-
-            fun okExpDigits [] = false
-              | okExpDigits (c :: []) = isDigit c
-              | okExpDigits (c :: cs) = isDigit c andalso okExpDigits cs
-
-            fun okExponent [] = false
-              | okExponent (#"+" :: cs) = okExpDigits cs
-              | okExponent (#"-" :: cs) = okExpDigits cs
-              | okExponent cc = okExpDigits cc
-
-            fun okFracTrailing [] = true
-              | okFracTrailing (c :: cs) =
-                (isDigit c andalso okFracTrailing cs) orelse
-                (c = #"e" andalso okExponent cs)
-
-            fun okFraction [] = false
-              | okFraction (c :: cs) =
-                isDigit c andalso okFracTrailing cs
-
             fun okPosTrailing [] = true
-              | okPosTrailing (#"." :: cs) = okFraction cs
-              | okPosTrailing (#"e" :: cs) = okExponent cs
               | okPosTrailing (c :: cs) =
                 isDigit c andalso okPosTrailing cs
                                                       
             fun okPositive [] = false
               | okPositive (#"0" :: []) = true
-              | okPositive (#"0" :: #"." :: cs) = okFraction cs
-              | okPositive (#"0" :: #"e" :: cs) = okExponent cs
               | okPositive (#"0" :: cs) = false
               | okPositive (c :: cs) = isDigit c andalso okPosTrailing cs
                     
@@ -275,9 +253,7 @@ structure Json :> JSON = struct
               | okNumber cc = okPositive cc
         in
             if okNumber digits
-            then case Real.fromString (implode digits) of
-                     NONE => ERROR "Number out of range"
-                   | SOME r => OK r
+            then OK (Arbnum.fromString (implode digits))
             else ERROR ("Invalid number \"" ^ (implode digits) ^ "\"")
         end
                                      
@@ -376,7 +352,7 @@ structure Json :> JSON = struct
                          "}"
           | ARRAY arr => "[" ^ String.concatWith "," (map serialise arr) ^ "]"
           | NUMBER n => implode (map (fn #"~" => #"-" | c => c) 
-                                     (explode (Real.toString n)))
+                                     (explode (Arbnum.toString n)))
           | STRING s => "\"" ^ stringEscape s ^ "\""
           | BOOL b => Bool.toString b
           | NULL => "null"
