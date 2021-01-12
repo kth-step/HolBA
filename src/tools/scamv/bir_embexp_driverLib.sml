@@ -244,8 +244,8 @@ struct
 
           val regname = "x" ^ (String.extract(k, 1, NONE));
         in
-        (* "\n\t\"" ^ regname ^ "\": \"0x" ^ (Arbnumcore.toHexString v) ^ "\"" *)
-	    "\n\t\"" ^ regname ^ "\": " ^ (Arbnumcore.toString v)
+         "\n\t\"" ^ regname ^ "\": \"0x" ^ (Arbnumcore.toHexString v) ^ "\"" 
+	    (* "\n\t\"" ^ regname ^ "\": " ^ (Arbnumcore.toString v) *)
         end;
 
       fun memConcat midstr l =
@@ -255,14 +255,14 @@ struct
       fun mkv_to_json m =
         let
           val mname = "mem";
-          (* fun mentry_to_json entr = *)
-          (*       "\t\t" ^ *)
-          (*       "\"0x"^(Arbnumcore.toHexString (fst entr)) ^ "\"" ^ *)
-	  (* 	" : \"0x" ^ (Arbnumcore.toHexString (snd entr)) ^ "\""; *)
-	  fun mentry_to_json entr =
-              "\t\t" ^
-              "\""   ^ (Arbnumcore.toString (fst entr)) ^ "\"" ^
-	      " : "  ^ (Arbnumcore.toString (snd entr));
+          fun mentry_to_json entr = 
+                "\t\t" ^ 
+                "\"0x"^(Arbnumcore.toHexString (fst entr)) ^ "\"" ^ 
+	  	" : \"0x" ^ (Arbnumcore.toHexString (snd entr)) ^ "\""; 
+	  (* fun mentry_to_json entr = *)
+          (*    "\t\t" ^ *)
+          (*    "\""   ^ (Arbnumcore.toString (fst entr)) ^ "\"" ^ *)
+          (*    " : "  ^ (Arbnumcore.toString (snd entr)); *)
 	  val mappings = List.map mentry_to_json (Redblackmap.listItems m);
 
           val m_tm = memConcat ",\n" mappings;
