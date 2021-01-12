@@ -68,10 +68,10 @@ fun fromJsonStr s =
 
 (* prepare python db interface infrastructure *)
 (* ======================================================================= *)
-val command = embexp_logs_dir ^ "/scripts/db-interface.py -t";
+val command = embexp_logs_dir ^ "/scripts/db-interface.py";
 
 fun run_db ops arg =
-  bir_json_execLib.call_json_exec command ops arg;
+  bir_json_execLib.call_json_exec (command, ["-t", ops], arg);
 
 val run_db_q = run_db "query";
 fun run_db_q_table t = run_db_q (

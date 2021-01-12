@@ -23,7 +23,7 @@ val embexp_logs_dir =
 val command = embexp_logs_dir ^ "/scripts/db-interface.py";
 
 fun run_db ops arg =
-  bir_json_execLib.call_json_exec (command ^ (if !is_testing then " -t" else "")) ops arg;
+  bir_json_execLib.call_json_exec (command, (if !is_testing then ["-t"] else [])@[ops], arg);
 
 val run_db_q = run_db "query";
 fun run_db_q_table t = run_db_q (

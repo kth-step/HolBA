@@ -258,9 +258,9 @@ in
 val _ = Feedback.set_trace "types" 1;
 val jsonarg = Json.STRING (term_to_string t);
 
-val command = "./try_deserialize_serialize_json.py -v";
+val command = "./try_deserialize_serialize_json.py";
 val operation = "test";
-val jsonback = bir_json_execLib.call_json_exec command operation jsonarg;
+val jsonback = bir_json_execLib.call_json_exec (command, ["-v", operation], jsonarg);
 
 val stringback = case jsonback of
                     Json.STRING s => s
@@ -273,10 +273,10 @@ val _ = print "printing an parsing did go well.\n";
 end
 
 (* what happens if we get an exception or similar? *)
-val command = "./try_deserialize_serialize_json.py -v";
+val command = "./try_deserialize_serialize_json.py";
 val operation = "wrong";
 val jsonarg = Json.STRING "";
-val r = (bir_json_execLib.call_json_exec command operation jsonarg; true)
+val r = (bir_json_execLib.call_json_exec (command, ["-v", operation], jsonarg); true)
         handle _ => false;
 
 val _ = if not r then () else
