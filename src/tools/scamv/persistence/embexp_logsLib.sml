@@ -8,8 +8,7 @@ local
   open Json;
 in
 
-(* TODO: change this to false *)
-val is_testing = ref true;
+val is_testing = ref false;
 
 fun set_testing () =
   is_testing := true;
@@ -44,7 +43,7 @@ fun get_db_q_a r =
    | _ => raise Fail "scanned result does not match a query response";
 
 val run_db_c = run_db "create";
-fun run_db_c_table id_only do_match t vs =
+fun run_db_c_map id_only do_match t vs =
       run_db_c (
          OBJECT
            [("table", STRING t),
@@ -52,14 +51,14 @@ fun run_db_c_table id_only do_match t vs =
             ("id_only", BOOL id_only),
             ("match_existing", BOOL do_match)]);
 
-fun run_db_c_table_to_id do_match t vs =
-  case run_db_c_table true do_match t vs of
+fun run_db_c_id do_match t vs =
+  case run_db_c_map true do_match t vs of
      OBJECT [(n, NUMBER i)] =>
        if n = "id" then i else
-       raise ERR "run_db_c_table_to_id" "unexpected output"
-   | _ => raise ERR "run_db_c_table_to_id" "unexpected output";
+       raise ERR "run_db_c_id" "unexpected output"
+   | _ => raise ERR "run_db_c_id" "unexpected output";
 
-fun run_db_c_table_irgnore do_match t vs =
+fun run_db_c_irgnore do_match t vs =
       (run_db_c (
          OBJECT
            [("table", STRING t),
@@ -67,6 +66,15 @@ fun run_db_c_table_irgnore do_match t vs =
             ("id_only", BOOL false),
             ("match_existing", BOOL do_match)]);
        ());
+
+val run_db_a = run_db "append";
+fun run_db_a_irgnore t vs =
+  case run_db_a (
+         OBJECT
+           [("table", STRING t),
+            ("values", OBJECT vs)]) of
+     BOOL true => ()
+   | _ => raise ERR "run_db_a_irgnore" "unexpected output";
 
 (* ==================================================== *)
 
@@ -86,7 +94,7 @@ fun run_db_c_table_irgnore do_match t vs =
 (*
 *)
   fun create__list t (LogsList (n,d_o)) =
-    run_db_c_table_to_id false
+    run_db_c_id false
       t
       [("name",        STRING n),
        ("description", Option.getOpt(Option.map STRING d_o, NULL))];
@@ -97,18 +105,18 @@ fun run_db_c_table_irgnore do_match t vs =
       create__list "exp_exps_lists" lld;
 
   fun create_run (LogsRun (time, prog_l_id, exp_l_id)) =
-    run_db_c_table_to_id false
+    run_db_c_id false
       "holba_runs"
       [("time", STRING time),
        ("exp_progs_lists_id", NUMBER prog_l_id),
        ("exp_exps_lists_id",  NUMBER exp_l_id)];
   fun create_prog (LogsProg (arch, code)) =
-    run_db_c_table_to_id true
+    run_db_c_id true
       "exp_progs"
       [("arch",               STRING arch),
        ("code",               STRING code)];
   fun create_exp (LogsExp (prog_id, exp_type, exp_params, input_data)) =
-    run_db_c_table_to_id true
+    run_db_c_id true
       "exp_exps"
       [("exp_progs_id",       NUMBER prog_id),
        ("type",               STRING exp_type),
@@ -119,7 +127,7 @@ fun run_db_c_table_irgnore do_match t vs =
 (*
 *)
   fun add_to__list (t, f1, f2) (l_id, x_id) =
-    run_db_c_table_irgnore true
+    run_db_c_irgnore true
       t
       [(f1, NUMBER l_id),
        (f2, NUMBER x_id)];
@@ -137,7 +145,14 @@ fun run_db_c_table_irgnore do_match t vs =
 (*
 *)
   fun init__metadata (t, f_id) x_id (LogsMeta (k_o, n, v_o)) =
-    run_db_c_table_irgnore false
+    run_db_c_irgnore false
+      t
+      [(f_id,    NUMBER x_id),
+       ("kind",  Option.getOpt(Option.map STRING k_o, NULL)),
+       ("name",  STRING n),
+       ("value", Option.getOpt(Option.map STRING v_o, NULL))];
+  fun append__metadata (t, f_id) x_id (LogsMeta (k_o, n, v_o)) =
+    run_db_a_irgnore
       t
       [(f_id,    NUMBER x_id),
        ("kind",  Option.getOpt(Option.map STRING k_o, NULL)),
@@ -160,9 +175,21 @@ fun run_db_c_table_irgnore do_match t vs =
       exp_id
       lmd;
 
-  fun append_run_metadata  run_id  lmd = ();
-  fun append_prog_metadata prog_id lmd = ();
-  fun append_exp_metadata  exp_id  lmd = ();
+  fun append_run_metadata  run_id  lmd =
+    append__metadata
+      ("holba_runs_meta", "holba_runs_id")
+      run_id
+      lmd;
+  fun append_prog_metadata prog_id lmd =
+    append__metadata
+      ("exp_progs_meta", "exp_progs_id")
+      prog_id
+      lmd;
+  fun append_exp_metadata  exp_id  lmd =
+    append__metadata
+      ("exp_exps_meta", "exp_exps_id")
+      exp_id
+      lmd;
 
 
   fun run_testing () =
@@ -226,7 +253,77 @@ val _ =
                add_to_exp_list (exp_list_2, exp_1);
                true));
 
+val run_m_1  = LogsMeta(SOME "all", "run meta 1",  SOME "very important\n");
+val prog_m_1 = LogsMeta(SOME "all", "prog meta 1", SOME "very important\n");
+val exp_m_1  = LogsMeta(SOME "all", "exp meta 1",  SOME "very important\n");
+
+val run_m_2  = LogsMeta(SOME "all", "run meta 1",  SOME "very important add\n");
+val prog_m_2 = LogsMeta(SOME "all", "prog meta 1", SOME "very important add\n");
+val exp_m_2  = LogsMeta(SOME "all", "exp meta 1",  SOME "very important add\n");
+
+val _ =
+  assert_w_descr
+    "append without init run metadata"
+    (fn () => (append_run_metadata holba_run_1 run_m_1; false)
+              handle _ => true);
+val _ =
+  assert_w_descr
+    "append without init prog metadata"
+    (fn () => (append_prog_metadata prog_1 prog_m_1; false)
+              handle _ => true);
+val _ =
+  assert_w_descr
+    "append without init exp metadata"
+    (fn () => (append_exp_metadata exp_1 exp_m_1; false)
+              handle _ => true);
+
+val _ = init_run_metadata  holba_run_1 run_m_1;
+val _ = init_prog_metadata prog_1      prog_m_1;
+val _ = init_exp_metadata  exp_1       exp_m_1;
+
+val _ =
+  assert_w_descr
+    "cannot init twice - run metadata"
+    (fn () => (init_run_metadata holba_run_1 run_m_1; false)
+              handle _ => true);
+val _ =
+  assert_w_descr
+    "cannot init twice - prog metadata"
+    (fn () => (init_prog_metadata prog_1 prog_m_1; false)
+              handle _ => true);
+val _ =
+  assert_w_descr
+    "cannot init twice - exp metadata"
+    (fn () => (init_exp_metadata exp_1 exp_m_1; false)
+              handle _ => true);
+
+val _ = append_run_metadata  holba_run_1 run_m_2;
+val _ = append_prog_metadata prog_1      prog_m_2;
+val _ = append_prog_metadata prog_1      prog_m_2;
+val _ = append_exp_metadata  exp_1       exp_m_2;
+
+val run_m_3  = LogsMeta(SOME "ahaa", "meta null 1",  NONE);
+val run_m_4  = LogsMeta(NONE, "meta list 1",  SOME "beta\n");
+val _ = init_run_metadata  holba_run_1 run_m_3;
+val _ = init_run_metadata  holba_run_1 run_m_4;
+
+val _ =
+  assert_w_descr
+    "cannot append metadata if value is set to NONE"
+    (fn () => (append_run_metadata  holba_run_1 run_m_3; false)
+              handle _ => true);
+
+val _ =
+  assert_w_descr
+    "appending metadata requires kind to be SOME"
+    (fn () => (append_run_metadata  holba_run_1 run_m_4; false)
+              handle _ => true);
+
+val _ = init_run_metadata  holba_run_1 run_m_4;
+val _ = init_run_metadata  holba_run_1 run_m_4;
+
     in () end;
+
 
 
 
