@@ -151,12 +151,12 @@ let
   val add_obs = #add_obs (get_obs_model (!current_obs_model_id));
   val mem_bounds =
       let
-        val (mem_base, mem_len) = bir_embexp_params_memory;
+        val (mem_base, mem_len) = embexp_params_memory;
         val mem_end = (Arbnum.- (Arbnum.+ (mem_base, mem_len), Arbnum.fromInt 128));
       in
         pairSyntax.mk_pair
-            (mk_wordi (bir_embexp_params_cacheable mem_base, 64),
-             mk_wordi (bir_embexp_params_cacheable mem_end, 64))
+            (mk_wordi (embexp_params_cacheable mem_base, 64),
+             mk_wordi (embexp_params_cacheable mem_end, 64))
       end;
   val lifted_prog_w_obs = add_obs mem_bounds (valOf (!current_prog));
   val _ = printv 1 "Obs added\n";

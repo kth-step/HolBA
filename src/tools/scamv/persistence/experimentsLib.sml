@@ -254,11 +254,11 @@ in
 
   (* embexp platform parameters *)
   (* ======================================== *)
-  val bir_embexp_params_code   = Arbnum.fromHexString    "0x2000";
-  val bir_embexp_params_memory = (Arbnum.fromHexString "0x100000",
+  val embexp_params_code   = Arbnum.fromHexString    "0x2000";
+  val embexp_params_memory = (Arbnum.fromHexString "0x100000",
                                   Arbnum.fromHexString  "0x40000");
 
-  fun bir_embexp_params_cacheable x = Arbnum.+ (Arbnum.fromInt 0x80000000, x);
+  fun embexp_params_cacheable x = Arbnum.+ (Arbnum.fromInt 0x80000000, x);
 
 
 end (* local *)
