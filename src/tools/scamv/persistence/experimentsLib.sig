@@ -11,6 +11,10 @@ signature experimentsLib = sig
   val machstate_add_reg : string * Arbnum.num -> machineState -> machineState
   val machstate_replace_mem : int * (Arbnum.num, Arbnum.num) Redblackmap.dict -> machineState -> machineState
 
+  (* conversions to and fro Json *)
+  val machstate_to_Json : machineState -> Json.json
+  val Json_to_machstate : Json.json -> machineState
+
 
   (* programs *)
   (* ======================================== *)

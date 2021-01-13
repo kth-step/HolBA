@@ -211,188 +211,20 @@ struct
     end;
 
   (* create json state *)
-  fun gen_json_state (MACHSTATE (regmap, (wsz, memmap))) =
-    let
-      val _ = if wsz = 8 then () else
-              raise ERR "gen_json_state" "word size has to be one byte";
+  fun gen_json_state mach =
+      Json.serialise (machstate_to_Json mach);
 
-      fun rkv_to_json (k,v) =
-        let
-          (* TODO: Stack pointer needs to be handled *)
-          (* TODO: maybe want to check that we indeed get R0-R29 or whatever *) 
-          val _ = if String.isPrefix "R" k then () else
-                    raise ERR "gen_json_state" "input not as exptected";
-
-          val regname = "x" ^ (String.extract(k, 1, NONE));
-        in
-         "\n\t\"" ^ regname ^ "\": \"0x" ^ (Arbnumcore.toHexString v) ^ "\"" 
-	    (* "\n\t\"" ^ regname ^ "\": " ^ (Arbnumcore.toString v) *)
-        end;
-
-      fun memConcat midstr l =
-             if List.null l then "" else
-             List.foldr (fn (a,b) => b^midstr^a) (hd l) (List.rev (tl l));
-
-      fun mkv_to_json m =
-        let
-          val mname = "mem";
-          fun mentry_to_json entr = 
-                "\t\t" ^ 
-                "\"0x"^(Arbnumcore.toHexString (fst entr)) ^ "\"" ^ 
-	  	" : \"0x" ^ (Arbnumcore.toHexString (snd entr)) ^ "\""; 
-	  (* fun mentry_to_json entr = *)
-          (*    "\t\t" ^ *)
-          (*    "\""   ^ (Arbnumcore.toString (fst entr)) ^ "\"" ^ *)
-          (*    " : "  ^ (Arbnumcore.toString (snd entr)); *)
-	  val mappings = List.map mentry_to_json (Redblackmap.listItems m);
-
-          val m_tm = memConcat ",\n" mappings;
-        in
-          "\n\t\"" ^ mname ^ "\": " ^ "{\n" ^ m_tm ^ "\n\t}"
-        end;
-
-      val s_jsonmappings_reg = List.map rkv_to_json (Redblackmap.listItems regmap);
-      val s_jsonmappings_mem = mkv_to_json memmap
-      val s_jsonmappings = s_jsonmappings_reg@[s_jsonmappings_mem]
-
-      val str = memConcat "," s_jsonmappings;
-    in
-      "{" ^  str ^ "\n}"
-    end;
-
-(* generate state from json file *)
-local
-  open wordsSyntax;
-in
+  (* generate state from json file *)
   fun parse_back_json_state filename =
     let
-      fun unpackOne c1 c2 s =
-        let
-          val s_ = strip_ws_off false s;
-
-          val s_l = String.explode s_;
-          val _ = if length s_l > 1 then () else
-                  raise ERR "parse_back_json_state::unpackOne" "string is too short";
-
-          val c_fst = hd   s_l;
-          val c_snd = last s_l;
-
-          val _ = if c1 = c_fst andalso c2 = c_snd then () else
-                  raise ERR "parse_back_json_state::unpackOne" "chars not matching";
-(*
-          val l = String.tokens (fn c => c = c1 orelse c = c2) s_;
-          val _ = if length l = 1 then () else
-                  raise ERR "parse_back_json_state::unpackOne" "cannot unpack simply";
-*)
-        in
-          String.implode (List.take (tl s_l, (length s_l) - 2))
-        end;
-
-      fun parseReg name vs =
-        let
-          val _ = if List.hd (String.explode name) = #"x" then () else
-                  raise ERR "parse_back_json_state" "splitandparse:: format error, expect register name";
-          val regnum_s = (String.implode o List.tl o String.explode) name;
-          val regnum = case Int.fromString regnum_s of
-                          SOME x => x
-                        | _ => raise ERR "parse_back_json_state" "cannot parse register number";
-          val v = Arbnum.fromHexString (unpackOne #"\"" #"\"" vs);
-          val reg_s = "R" ^ (Int.toString regnum);
-        in
-          (reg_s, v)
-        end;
-
-      fun parseMem name vs =
-        let
-          val _ = if name = "mem" then () else
-                  raise ERR "parse_back_json_state" "splitandparse:: format error, expect memory name";
-
-          val mapping_raw = String.tokens (fn c => c = #",") (unpackOne #"{" #"}" vs);
-          fun map_s_to_kv s =
-            let
-              val kvl = String.tokens (fn c => c = #":") s;
-              val _ = if length kvl = 2 then () else
-                      raise ERR "parse_back_json_state" "error parsing memory mapping";
-              val ks = unpackOne #"\"" #"\"" (strip_ws_off false (hd kvl));
-              val vs = unpackOne #"\"" #"\"" (strip_ws_off false (hd (tl kvl)));
-            in
-              (Arbnum.fromHexString ks, Arbnum.fromHexString vs)
-            end;
-          val kvmap = Redblackmap.fromList Arbnum.compare (List.map map_s_to_kv mapping_raw);
-        in
-          (8, kvmap)
-        end;
-
-      fun splitandparse ((ks,vs), (st_regmap, st_memmap_o)) =
-        let
-          val _ = if length (String.explode ks) > 2 andalso
-                     List.hd (String.explode ks) = #"\"" andalso
-                     List.last (String.explode ks) = #"\"" then () else
-                  raise ERR "parse_back_json_state" "splitandparse:: format error string quote";
-          val name = unpackOne #"\"" #"\"" ks;
-        in
-          if name = "mem" then
-            if not (isSome st_memmap_o) then
-              (st_regmap, SOME (parseMem name vs))
-            else
-              raise ERR "parse_back_json_state" "splitandparse:: can only handle one memory"
-          else
-            ((parseReg name vs)::st_regmap, st_memmap_o)
-        end;
-
       val content = read_from_file filename;
-
-      val toplevel = strip_ws_off false (unpackOne #"{" #"}" content);
-
-      val (p_s,p_acc,p_l) = List.foldl (fn (c, (s, acc, l)) =>
-        case s of
-           0 => (case c of
-                    #"," => (s, [], acc::l)
-                  | #"{" => (1, c::acc, l)
-                  | #"}" => raise ERR "parse_back_json_state::parseentries" "aaa 1"
-                  | _    => (s, c::acc, l))
-         | 1 => (case c of
-                    #"{" => raise ERR "parse_back_json_state::parseentries" "aaa 2"
-                  | #"}" => (0, c::acc, l)
-                  | _    => (s, c::acc, l))
-         | _ => raise ERR "parse_back_json_state::parseentries" "impossible state")
-       (0, [], [])
-       (String.explode toplevel);
-
-      val mapslist_ = if p_s = 0 andalso List.null p_acc then p_l else
-                      if p_s = 0 then p_acc::p_l else
-                      raise ERR "parse_back_json_state" "parser state is unexpected";
-
-      fun splitfirstchar c s =
-        let
-          val l = String.explode (strip_ws_off false s);
-          fun firstchar [] _ = raise ERR "parse_back_json_state" "mapsplit error"
-            | firstchar (c_::l_) acc =
-                if c_ = c then (List.rev acc, l_)
-                else firstchar l_ (c_::acc);
-
-          val (l1,l2) = firstchar l [];
-        in
-          ((strip_ws_off false o String.implode) l1, (strip_ws_off false o String.implode) l2)
-        end;
-
-      val mapslist = List.map ((splitfirstchar #":") o String.implode o List.rev)  mapslist_;
-
-(*
-      val (ks,vs) = hd mapslist;
-      val (ks,vs) = hd (tl mapslist);
-*)
-      val (st_regmap, st_memmap_o) = List.foldl splitandparse ([], NONE) mapslist
-
-      val regmap = Redblackmap.fromList String.compare (List.rev st_regmap);
-      val mem = if isSome st_memmap_o then
-                  valOf st_memmap_o
-                else
-                  (8, Redblackmap.mkDict Arbnum.compare);
+      val json_obj =
+        case Json.parse content of
+           Json.ERROR e => raise ERR "parse_back_json_state" ("error parsing the json string: " ^ e)
+         | Json.OK json => json;
     in
-      MACHSTATE (regmap, mem)
+      Json_to_machstate json_obj
     end;
-end;
 
 (* interface functions *)
 (* ========================================================================================= *)

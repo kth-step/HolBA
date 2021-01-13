@@ -34,6 +34,114 @@ in
   fun machstate_replace_mem newm (MACHSTATE (rm, m)) =
     (MACHSTATE (rm, newm));
 
+  (* convert to json state *)
+  fun machstate_to_Json (MACHSTATE (regmap, (wsz, memmap))) =
+    let
+      open Json;
+
+      val _ = if wsz = 8 then () else
+              raise ERR "gen_json_state" "word size has to be one byte";
+
+      fun rkv_to_json (k,v) =
+        let
+          (* TODO: Stack pointer needs to be handled *)
+          (* TODO: maybe want to check that we indeed get R0-R29 or whatever *) 
+          val _ = if String.isPrefix "R" k then () else
+                    raise ERR "gen_json_state" "input not as exptected";
+
+          val regname = "x" ^ (String.extract(k, 1, NONE));
+          val value   = "0x" ^ (Arbnumcore.toHexString v);
+        in
+          (regname, STRING value)
+        end;
+
+      fun mentry_to_json (k,v) =
+        let
+          val addr  = "0x" ^ (Arbnumcore.toHexString k);
+	  val value = "0x" ^ (Arbnumcore.toHexString v);
+        in
+          (addr, STRING value)
+        end;
+
+      val regmap_json = List.map rkv_to_json    (Redblackmap.listItems regmap);
+      val memmap_json = List.map mentry_to_json (Redblackmap.listItems memmap);
+
+      val json_obj = OBJECT (regmap_json@[("mem", OBJECT memmap_json)])
+    in
+      json_obj
+    end;
+
+  (* convert from json state *)
+  fun Json_to_machstate json_obj =
+    let
+      open Json;
+      open wordsSyntax;
+
+      val topl_objlist =
+        case json_obj of
+           OBJECT l => l
+         | _        => raise ERR "Json_to_machstate" "format error, top level is not an OBJECT";
+
+      val memname  = "mem";
+      fun is_memmap (n,_) = n = memname;
+
+      val mems_ = List.filter (is_memmap) topl_objlist;
+      val mems  = if List.length mems_ = 1 then
+                    mems_
+                  else
+                    [(memname, OBJECT [])]
+
+      val memmap =
+        case snd (List.hd mems) of
+           OBJECT l => l
+         | _        => raise ERR "Json_to_machstate" "format error, 'mem' is not an OBJECT";
+
+      val regmap = List.filter (not o is_memmap) topl_objlist;
+
+      fun parseReg (k_s, v) =
+        let
+          val v_s =
+            case v of
+               STRING s => s
+             | _        => raise ERR "Json_to_machstate" "format error, register value is not STRING";
+          val _ = if List.hd (String.explode k_s) = #"x" then () else
+                  raise ERR "Json_to_machstate" "format error, expect register name";
+          val regnum_s = (String.implode o List.tl o String.explode) k_s;
+          val regnum = case Int.fromString regnum_s of
+                          SOME x => x
+                        | _ => raise ERR "Json_to_machstate" "format error, cannot parse register number";
+
+          val value    = Arbnum.fromHexString v_s;
+          val regname  = "R" ^ (Int.toString regnum);
+        in
+          (regname, value)
+        end;
+
+      fun parseMementry (k_s, v) =
+        let
+          val v_s =
+            case v of
+               STRING s => s
+             | _        => raise ERR "Json_to_machstate" "format error, register value is not STRING";
+
+          val addr  = Arbnum.fromHexString k_s;
+          val value = Arbnum.fromHexString v_s;
+
+          val _ = if
+                    Arbnum.<= (Arbnum.fromInt 0, value) orelse
+                    Arbnum.<= (value, Arbnum.fromInt 255)
+                  then () else
+                    raise ERR "Json_to_machstate" "memory value out of range";
+        in
+          (addr, value)
+        end;
+
+      val regmap = Redblackmap.fromList String.compare (List.map parseReg regmap);
+      val mem    = (8, Redblackmap.fromList Arbnum.compare (List.map parseMementry memmap));
+    in
+      MACHSTATE (regmap, mem)
+    end;
+
 
   (* programs *)
   (* ======================================== *)
