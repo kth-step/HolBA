@@ -162,7 +162,7 @@ get_experiment_basedir
   (* ========================================================================================= *)
 
   (* TODO change architecture directly to function in experimentsLib *)
-  fun run_create_prog (ArchARM8, prog_gen_id) prog =
+  fun run_create_prog ArchARM8 prog run_metadata =
     let
       val arch_id = "arm8";
 
@@ -190,24 +190,20 @@ get_experiment_basedir
       val log_id = "gen." ^ run_name ^ "." ^ (get_datestring ()); (* TODO: does this name format look good and stay separable? *)
       val _ = create_log prog_log (mk_prog_meta_handle (prog_id, SOME log_id, "log"));
       (* log generator info *)
+(*
+   TODO: run_metadata
       val _ = write_log_line (prog_log, "run_prog_create", "no no no") prog_gen_id;
+*)
     in
       prog_id
     end;
 
-  fun run_create_states2 (exp_type_id, state_gen_id) prog_id (s1,s2,straino) =
+  fun run_create_exp prog_id ExperimentTypeStdTwo exp_params state_list run_metadata =
     let
       val RunReferences (_, run_name, _, exp_l_id) = holba_run_id();
 
-  (* TODO: generalize inputs somehow, for the whole function, so that it's not fixed to 2.5 states *)
-      val input_data = Json.OBJECT (
-        [("input_1", machstate_to_Json s1),
-         ("input_2", machstate_to_Json s2)]@(
-            if isSome straino then
-              [("input_train", machstate_to_Json (valOf straino))]
-            else
-              []));
-      val exp_v      = LogsExp (prog_id, "exps2", exp_type_id, input_data);
+      val input_data = Json.OBJECT (List.map (fn (n, s) => ("input_" ^ n, machstate_to_Json s)) state_list);
+      val exp_v      = LogsExp (prog_id, "exps2", exp_params, input_data);
       val exp_id     = create_exp exp_v;
       val _          = add_to_exp_list (exp_l_id, exp_id);
 
@@ -216,7 +212,7 @@ get_experiment_basedir
    TODO: add metadata
 
       val exp_datahash = hashstring (prog_id ^ input1 ^ input2);
-      val exp_id = "exps2/" ^ exp_type_id ^ "/" ^ exp_datahash;
+      val exp_id = "exps2/" ^ exp_params ^ "/" ^ exp_datahash;
       val exp_datapath = exp_basedir ^ "/" ^ exp_id;
       (* btw, it can also happen that the same test is produced multiple times *)
       (* create directory if it didn't exist yet *)
@@ -232,7 +228,10 @@ get_experiment_basedir
       val _ = create_log exp_log (mk_exp_meta_handle (exp_id, SOME log_id, "log"));
 
       (* log generator info *)
+(*
+  TODO: run_metadata
       val _ = write_log_line (exp_log, "run_states2_create", "no no no") state_gen_id;
+*)
     in
       exp_id
     end;
@@ -255,7 +254,7 @@ get_experiment_basedir
 
 (* TODO: implement *)
 
-  fun run_load_progs listname =
+  fun runlogs_load_progs listname =
     let
 (*
       val logs_dir = logfile_basedir();

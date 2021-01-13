@@ -344,7 +344,13 @@ fun next_experiment all_exps next_relation  =
 	val _ = print ("Time to generate the experiment : "^d_s^"\n");
 
         (* create experiment files *)
-        val exp_id  = run_create_states2 (!hw_obs_model_id, !current_obs_model_id) prog_id (s1, s2, SOME st);
+        val exp_id  =
+          run_create_exp
+            prog_id
+            ExperimentTypeStdTwo
+            (!hw_obs_model_id)
+            [("1", s1), ("2", s2), ("train", st)]
+            [("state_gen_id", !current_obs_model_id)];
         val exp_gen_message = "Generated experiment: " ^ (embexp_logsLib.exp_handle_toString exp_id);
         val _ = run_log_prog exp_gen_message;
 

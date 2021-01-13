@@ -14,31 +14,36 @@ signature persistenceLib = sig
   (* storing to logs *)
   (* ======================================== *)
   (* Inputs:
-       - (architecture_id, prog_gen_id)
+       - architecture
        - experiment program
+       - run metadata (e.g. prog_gen_id)
      Returns id of program entry (prog_id)
    *)
   val run_create_prog :
-    (experimentsLib.experiment_arch * string) ->
+    experimentsLib.experiment_arch ->
     experimentsLib.experiment_prog ->
+    (string * string) list ->
     embexp_logsLib.prog_handle;
 
   (* Inputs:
-       - (experiment_type_id/attacker_id, state_gen_id/obs_model_id)
        - prog_id (see above)
-       - (state1, state2, train_option)
+       - type of experiment (e.g. exps2)
+       - experiment run parameters (e.g. experiment_type_id/attacker_id)
+       - states (e.g. state1, state2, train)
+       - run metadata (e.g. state_gen_id/obs_model_id)
      Returns experiment id (exp_id)
    *)
-  val run_create_states2 : (string * string) ->
-                                  embexp_logsLib.prog_handle ->
-                                  (experimentsLib.machineState *
-                                   experimentsLib.machineState *
-                                   experimentsLib.machineState option) ->
-                                  embexp_logsLib.exp_handle;
+  val run_create_exp :
+    embexp_logsLib.prog_handle ->
+    experimentsLib.experiment_type ->
+    string ->
+    (string * experimentsLib.machineState) list ->
+    (string * string) list ->
+    embexp_logsLib.exp_handle;
 
 
   (* retrieving from logs *)
   (* ======================================== *)
-  val run_load_progs : string -> experimentsLib.experiment_prog list;
+  val runlogs_load_progs : string -> experimentsLib.experiment_prog list;
 
 end

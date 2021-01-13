@@ -250,7 +250,7 @@ in
   (* additional structured data *)
   (* ======================================== *)
   datatype experiment_arch = ArchARM8;
-  datatype experiment_type = ExperimentTypeExps2;
+  datatype experiment_type = ExperimentTypeStdTwo;
 
   (* embexp platform parameters *)
   (* ======================================== *)
