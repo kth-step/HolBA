@@ -15,6 +15,7 @@ open wordsLib;
 open stringSyntax;
 open listSyntax;
 open bir_embexp_driverLib;
+open experimentsLib;
 open bir_symb_execLib;
 open bir_symb_masterLib;
 open bir_typing_expTheory;

@@ -34,7 +34,7 @@ fun nub_with eq [] = []
 fun nub xs = nub_with (op=);
 
 fun to_sml_Arbnums model =
-    let open bir_embexp_driverLib wordsSyntax;
+    let open experimentsLib wordsSyntax;
     in
     List.foldl (fn ((name, tm), mst) => 
                    if finite_mapSyntax.is_fupdate tm

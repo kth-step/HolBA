@@ -6,7 +6,7 @@ struct
   open pairLib listSyntax stringSyntax wordsSyntax optionSyntax;
   open bir_symb_execLib;
   open bir_symb_masterLib;
-  open bir_embexp_driverLib;
+  open experimentsLib;
 (* HOL_Interactive.toggle_quietdec(); *)
 
   (* error handling *)
