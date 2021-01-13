@@ -87,16 +87,16 @@ struct
 
   fun lift_prog_preproc err_handler prog =
     let
-      val prog_len = length prog;
-      val asm_code = bir_embexp_prog_to_code prog;
+      val prog_len = prog_length prog;
+      val asm_code = prog_to_asm_code prog;
       val _ = print_asm_code asm_code;
       val compile_opt = SOME (process_asm_code asm_code)
 	     handle HOL_ERR x => err_handler x;
     in
-      Option.map (fn a => (prog_len, asm_code, a)) compile_opt
+      Option.map (fn a => (prog_len, prog, a)) compile_opt
     end;
 
-  fun lift_prog_lift err_handler (prog_len, asm_code, sections) =
+  fun lift_prog_lift err_handler (prog_len, prog, sections) =
     let
       (*
       val SOME sections = compile_opt;
@@ -108,7 +108,7 @@ struct
       val lift_worked = List.all lbl_exists (List.tabulate (prog_len, fn x => x));
     in
       if lift_worked
-      then (asm_code, lifted_prog, prog_len)
+      then (prog, lifted_prog, prog_len)
       else err_handler ()
     end;
 
@@ -143,11 +143,11 @@ struct
 
   fun prog_gen_store prog_gen_id retry_on_liftfail prog_gen_fun args () =
     let
-      val (asm_code, lifted_prog, len) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
+      val (prog, lifted_prog, len) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
 
       val prog_with_halt = add_halt_to_prog len lifted_prog;
 
-      val prog_id = run_create_prog (ArchARM8, prog_gen_id) asm_code;
+      val prog_id = run_create_prog (ArchARM8, prog_gen_id) prog;
     in
       (prog_id, prog_with_halt)
     end;
@@ -156,10 +156,10 @@ struct
 (* load file to asm_lines (assuming it is correct assembly code with only forward jumps and no use of labels) *)
 (* ========================================================================================= *)
   fun load_asm_lines filename =
-    bir_embexp_code_to_prog (read_from_file filename);
+    prog_from_asm_code (read_from_file filename);
 
 
-(* load from embexp progs listfile *)
+(* load from logs prog list *)
 (* ========================================================================================= *)
 local
   val last_filelist  = ref "";
@@ -189,12 +189,16 @@ end;
 
 (* instances of program generators *)
 (* ========================================================================================= *)
+fun lines_gen_fun f a =
+  mk_experiment_prog(f a);
+
 fun prog_gen_store_fromfile filename   = prog_gen_store "prog_gen_fromfile"          false load_asm_lines                 filename;
-fun prog_gen_store_fromlines asmlines  = prog_gen_store "prog_gen_fromlines"         false (fn x => x)                    asmlines;
+fun prog_gen_store_fromlines asmlines  = prog_gen_store "prog_gen_fromlines"         false mk_experiment_prog             asmlines;
 
 fun prog_gen_store_listfile filename   = prog_gen_store "prog_gen_listfile"          false load_next_fromlistfile         filename;
 
-fun prog_gen_store_rand param sz       = prog_gen_store ("prog_gen_rand::"^param)    true  (bir_prog_gen_arm8_rand param) sz;
+fun prog_gen_store_rand param sz       = prog_gen_store ("prog_gen_rand::"^param)    true
+  (lines_gen_fun (bir_prog_gen_arm8_rand param)) sz;
 
 fun pgen_qc_param param =
   case param of
@@ -207,10 +211,13 @@ fun pgen_qc_param param =
    | "spectre"  => prog_gen_a_la_qc_noresize arb_program_spectre
    | _          => raise ERR "prog_gen_store_a_la_qc" "unknown qc generator";
 
-fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^param) true  (pgen_qc_param param)          sz;
+fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^param) true
+  (lines_gen_fun (pgen_qc_param param))          sz;
     
-fun prog_gen_store_rand_slice sz       = prog_gen_store "prog_gen_rand_slice"        true  bir_prog_gen_arm8_slice        sz;
-fun prog_gen_store_prefetch_stride sz  = prog_gen_store "prog_gen_prefetch_stride"   true  prog_gen_prefetch_stride       sz;
+fun prog_gen_store_rand_slice sz       = prog_gen_store "prog_gen_rand_slice"        true
+  (lines_gen_fun bir_prog_gen_arm8_slice)        sz;
+fun prog_gen_store_prefetch_stride sz  = prog_gen_store "prog_gen_prefetch_stride"   true
+  (lines_gen_fun prog_gen_prefetch_stride)       sz;
 
 (*
 val filename = "examples/asm/branch.s";

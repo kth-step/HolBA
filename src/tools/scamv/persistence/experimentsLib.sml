@@ -145,6 +145,20 @@ in
 
   (* programs *)
   (* ======================================== *)
+
+(*
+  (* conversion from asm program (asm lines) to "normal program" *)
+  val bir_embexp_prog_to_code : string list -> string
+  (* and the other direction *)
+  val bir_embexp_code_to_prog : string -> string list
+
+(*
+  val bir_embexp_code_to_prog_raw : (string list -> string list) -> string -> string list
+  val bir_embexp_prog_std_preproc : string list -> string list
+*)
+*)
+
+  type experiment_prog = string list;
   fun bir_embexp_prog_to_code asm_lines =
     let
       fun is_colon x = x = #":";
@@ -205,6 +219,32 @@ in
   
   fun bir_embexp_code_to_prog code_asm =
     bir_embexp_code_to_prog_raw bir_embexp_prog_cleanup code_asm;
+
+  (* just input validation *)
+  fun mk_experiment_prog asm_lines =
+    let
+      fun is_colon x = x = #":";
+      fun is_ws x = x = #" " orelse x = #"\t" orelse x = #"\n";
+      fun is_asm_line l = let val ls = String.explode l in
+                            if List.exists is_colon ls then false else
+                            if length ls < 1 then false else
+                            not (is_ws (hd ls)) andalso not (is_ws (last ls))
+                          end;
+      val _ = if List.all is_asm_line asm_lines then () else
+                raise ERR "mk_experiment_prog" "some lines are not valid asm lines"
+    in
+      asm_lines
+    end;
+
+  (* check expectation and parse input *)
+  fun prog_from_asm_code asm_code =
+    bir_embexp_code_to_prog asm_code;
+
+  (* simple output functions *)
+  fun prog_length asm_lines = length asm_lines;
+  fun dest_experiment_prog asm_lines = asm_lines;
+  fun prog_to_asm_code asm_lines =
+    List.foldl (fn (l, s) => s ^ "\t" ^ l ^ "\n") "" asm_lines;
 
 
   (* additional structured data *)

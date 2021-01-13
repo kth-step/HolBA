@@ -162,14 +162,14 @@ get_experiment_basedir
   (* ========================================================================================= *)
 
   (* TODO change architecture directly to function in experimentsLib *)
-  fun run_create_prog (ArchARM8, prog_gen_id) code_asm =
+  fun run_create_prog (ArchARM8, prog_gen_id) prog =
     let
       val arch_id = "arm8";
 
       val RunReferences (_, run_name, prog_l_id, _) = holba_run_id();
 
-      val code_asm = code_asm; (* TODO: this should be a program value type, something new in experimentsLib *)
-      val prog_v   = LogsProg (arch_id, code_asm);
+      val asm_code = prog_to_asm_code prog;
+      val prog_v   = LogsProg (arch_id, asm_code);
       val prog_id  = create_prog prog_v;
       val _        = add_to_prog_list (prog_l_id, prog_id);
 
@@ -215,11 +215,6 @@ get_experiment_basedir
 (*
    TODO: add metadata
 
-      (* write out data *)
-      val input1 = gen_json_state s1;
-      val input2 = gen_json_state s2;
-      val traino = Option.map gen_json_state straino;
-
       val exp_datahash = hashstring (prog_id ^ input1 ^ input2);
       val exp_id = "exps2/" ^ exp_type_id ^ "/" ^ exp_datahash;
       val exp_datapath = exp_basedir ^ "/" ^ exp_id;
@@ -230,17 +225,6 @@ get_experiment_basedir
       (* write out reference to the code (hash of the code) *)
       val prog_id_file = exp_datapath ^ "/code.hash";
       val _ = write_to_file_or_compare_clash "run_states2_create" prog_id_file prog_id;
-
-      (* write the json files after reference to code per convention *)
-      (* - to indicate that experiment writing is complete *)
-      val input1_file = exp_datapath ^ "/input1.json";
-      val input2_file = exp_datapath ^ "/input2.json";
-      val train_file  = exp_datapath ^ "/train.json";
-
-      val _ = write_to_file_or_compare_clash "run_states2_create" input1_file input1;
-      val _ = write_to_file_or_compare_clash "run_states2_create" input2_file input2;
-      val _ = if not (isSome traino) then () else
-               write_to_file_or_compare_clash "run_states2_create" train_file (valOf traino);
 *)
 
       (* create exp log *)

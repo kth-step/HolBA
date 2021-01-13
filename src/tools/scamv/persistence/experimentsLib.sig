@@ -18,13 +18,14 @@ signature experimentsLib = sig
 
   (* programs *)
   (* ======================================== *)
-  (* conversion from asm program (asm lines) to "normal program" *)
-  val bir_embexp_prog_to_code : string list -> string
-  (* and the other direction *)
-  val bir_embexp_code_to_prog : string -> string list
+  type experiment_prog;
 
-  val bir_embexp_code_to_prog_raw : (string list -> string list) -> string -> string list
-  val bir_embexp_prog_std_preproc : string list -> string list
+  val mk_experiment_prog   : string list -> experiment_prog;
+  val prog_from_asm_code   : string      -> experiment_prog;
+
+  val prog_length          : experiment_prog -> int;
+  val dest_experiment_prog : experiment_prog -> string list;
+  val prog_to_asm_code     : experiment_prog -> string;
 
 
   (* additional structured data *)

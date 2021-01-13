@@ -15,12 +15,12 @@ signature persistenceLib = sig
   (* ======================================== *)
   (* Inputs:
        - (architecture_id, prog_gen_id)
-       - asm_code
+       - experiment program
      Returns id of program entry (prog_id)
    *)
   val run_create_prog :
     (experimentsLib.experiment_arch * string) ->
-    string ->
+    experimentsLib.experiment_prog ->
     embexp_logsLib.prog_handle;
 
   (* Inputs:
@@ -39,6 +39,6 @@ signature persistenceLib = sig
 
   (* retrieving from logs *)
   (* ======================================== *)
-  val run_load_progs : string -> string list list;
+  val run_load_progs : string -> experimentsLib.experiment_prog list;
 
 end
