@@ -14,8 +14,8 @@ open wordsSyntax;
 open wordsLib;
 open stringSyntax;
 open listSyntax;
-open bir_embexp_driverLib;
 open experimentsLib;
+open persistenceLib;
 open bir_symb_execLib;
 open bir_symb_masterLib;
 open bir_typing_expTheory;
@@ -151,7 +151,6 @@ let
   val add_obs = #add_obs (get_obs_model (!current_obs_model_id));
   val mem_bounds =
       let
-        open bir_embexp_driverLib;
         val (mem_base, mem_len) = bir_embexp_params_memory;
         val mem_end = (Arbnum.- (Arbnum.+ (mem_base, mem_len), Arbnum.fromInt 128));
       in

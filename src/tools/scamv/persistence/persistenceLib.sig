@@ -1,4 +1,4 @@
-signature bir_embexp_driverLib = sig
+signature persistenceLib = sig
 
   (* experiment creation and running *)
   (* ======================================== *)

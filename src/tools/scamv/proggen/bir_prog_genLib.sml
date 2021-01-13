@@ -7,8 +7,8 @@ struct
   open bir_gccLib;
   open bir_programSyntax;
 
-  open bir_embexp_driverLib;
   open experimentsLib;
+  open persistenceLib;
 
   open bir_inst_liftingLibTypes;
 

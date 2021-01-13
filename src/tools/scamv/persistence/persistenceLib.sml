@@ -1,4 +1,4 @@
-structure bir_embexp_driverLib :> bir_embexp_driverLib =
+structure persistenceLib :> persistenceLib =
 struct
 
   open HolKernel Parse boolLib bossLib;
