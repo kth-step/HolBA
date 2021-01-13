@@ -13,7 +13,7 @@ struct
   open experimentsLib;
 
   (* error handling *)
-  val libname = "bir_embexp_driverLib"
+  val libname = "persistenceLib"
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 

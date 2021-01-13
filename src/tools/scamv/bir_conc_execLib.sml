@@ -325,7 +325,7 @@ struct
 open bir_cfgVizLib;
 open bir_obs_modelLib;
 open bir_prog_genLib;
-open bir_embexp_driverLib;
+open persistenceLib;
 
 open optionSyntax;
 open bir_valuesSyntax;
