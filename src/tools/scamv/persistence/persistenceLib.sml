@@ -16,13 +16,9 @@ struct
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
-(*
-TODO: remove this
+  (* disable this for less outputs to the database *)
+  val enable_log_outputs = true;
 
-logfile_basedir
-get_progs_basedir
-get_experiment_basedir
-*)
 
   (* creation of a holba run with metadata and containers for programs and experiments *)
   (* ========================================================================================= *)
@@ -77,12 +73,14 @@ get_experiment_basedir
 
   fun close_log log         = log := NONE;
   fun create_log log log_id =
+    if not enable_log_outputs then () else
     let
       val _ = init_meta log_id (SOME "");
       val _ = log := SOME log_id;
     in () end;
 
   fun write_log_line log_t line =
+    if not enable_log_outputs then () else
     let
       val log_id = get_log_out log_t;
       val _ = append_meta log_id (line ^ "\n");
