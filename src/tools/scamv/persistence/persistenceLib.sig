@@ -39,21 +39,6 @@ signature persistenceLib = sig
 
   (* loading programs and experiment inputs from logs *)
   (* ======================================== *)
-  (* Inputs: - prog_id *)
-  (*         - arch_id *)
-  (* Output: asm_lines *)
-  val bir_embexp_load_prog : string -> string -> string list
-
-  (* Input: exp_id *)
-  (* Output: asm_lines, model pair *)
-  val bir_embexp_load_exp  : string -> string list * (experimentsLib.machineState *
-                                                      experimentsLib.machineState *
-                                                      experimentsLib.machineState option)
-
-  val bir_embexp_load_exp_ids : string -> string list
-
   val bir_embexp_load_progs : string -> string list list
-
-  val bir_embexp_create_list_open : string -> string -> TextIO.outstream
 
 end

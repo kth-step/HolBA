@@ -458,62 +458,6 @@ end;
       arch_id ^ "/" ^ exp_id
     end;
 
-  fun bir_embexp_run exp_id with_reset =
-    let
-      val cmdline = ("\"" ^ (logfile_basedir()) ^ "/scripts/run_experiment.py\" " ^
-                     (if with_reset then "--conn_mode reset " else "--conn_mode try ") ^
-                     exp_id);
-      val _ = print ("===>>> RUNNING EXPERIMENT: " ^ exp_id ^ "\n")
-      val lines = get_exec_output_list cmdline;
-      val lastline = List.nth(lines, (List.length lines) - 1);
-      val result = if lastline = "result = true\n" then
-                     (SOME true, "the result is based on the python experiment runner script output")
-                   else if lastline = "result = false\n" then
-                     (SOME false, "the result is based on the python experiment runner script output")
-                   else if String.isPrefix "result = " lastline then
-                     (NONE, "BOARD EXCEPTION /\\/\\/\\/\\/\\/ " ^ (strip_ws_off true lastline))
-                   else
-                     raise ERR "bir_embexp_run" ("the last line of the python experiment runner is unexpected: " ^ lastline)
-    in
-      result
-    end;
-
-
-  fun bir_embexp_load_prog_file code_file =
-    bir_embexp_code_to_prog (read_from_file code_file);
-
-
-  fun bir_embexp_load_prog arch_id prog_id =
-    let
-      val logs_dir = logfile_basedir();
-      val code_file = (logs_dir ^ "/" ^ arch_id ^ "/progs/" ^ prog_id ^ "/code.asm");
-    in
-      bir_embexp_load_prog_file code_file
-    end;
-
-
-  fun bir_embexp_load_exp exp_id =
-    let
-      val logs_dir = logfile_basedir();
-
-      val prog_id = read_from_file (logs_dir ^ "/" ^ exp_id ^ "/code.hash");
-      val code_file = (logs_dir ^ "/" ^ exp_id ^ "/../../../progs/" ^ prog_id ^ "/code.asm");
-      val asm_lines = bir_embexp_load_prog_file code_file;
-
-      val input1_file = (logs_dir ^ "/" ^ exp_id ^ "/input1.json");
-      val input2_file = (logs_dir ^ "/" ^ exp_id ^ "/input2.json");
-
-      val train_file = (logs_dir ^ "/" ^ exp_id ^ "/train.json");
-      val train_filename = (read_from_file train_file; SOME train_file)
-                           handle _ => NONE;
-
-      val s1 = parse_back_json_state input1_file;
-      val s2 = parse_back_json_state input2_file;
-
-      val traino = Option.map (fn filename => parse_back_json_state filename) train_filename;
-    in
-      (asm_lines, (s1, s2, traino))
-    end;
 
   fun bir_embexp_load_list listtype listname =
     let
@@ -524,14 +468,6 @@ end;
       val actual_entries = List.filter (not o (String.isPrefix "#")) nonempty;
     in
       actual_entries
-    end;
-
-  fun bir_embexp_create_list_open listtype listname =
-    let
-      val logs_dir = logfile_basedir();
-      val filename = logs_dir ^ "/lists/" ^ listtype ^ "_" ^ listname ^ ".txt";
-    in
-      TextIO.openOut filename
     end;
 
   fun bir_embexp_load_progs listname =
@@ -545,9 +481,6 @@ end;
     in
       progs
     end;
-
-  fun bir_embexp_load_exp_ids listname =
-    bir_embexp_load_list "exps" listname;
 
 end
 
