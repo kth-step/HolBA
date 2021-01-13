@@ -11,8 +11,23 @@ sig
   datatype logs_run  = LogsRun  of (string * prog_list_handle * exp_list_handle);
   datatype logs_prog = LogsProg of (string * string);
   datatype logs_exp  = LogsExp  of (prog_handle * string * string * Json.json);
-  datatype logs_meta = LogsMeta of (string option * string * string option);
 
+  type meta_handle;
+  datatype logs_meta = LogsMeta of (meta_handle * string option);
+
+  (* readable representation of handles *)
+  val prog_list_handle_toString : prog_list_handle -> string;
+  val exp_list_handle_toString  : exp_list_handle  -> string;
+  val run_handle_toString       : run_handle       -> string;
+  val prog_handle_toString      : prog_handle      -> string;
+  val exp_handle_toString       : exp_handle       -> string;
+  val meta_handle_toString      : meta_handle      -> string;
+
+
+  (* make metadata handles *)
+  val mk_run_meta_handle  : (run_handle  * string option * string) -> meta_handle;
+  val mk_prog_meta_handle : (prog_handle * string option * string) -> meta_handle;
+  val mk_exp_meta_handle  : (exp_handle  * string option * string) -> meta_handle;
 
   (* creation of entries *)
   val create_prog_list : logs_list -> prog_list_handle;
@@ -27,12 +42,8 @@ sig
   val add_to_exp_list  : (exp_list_handle  * exp_handle ) -> unit;
 
   (* adding metadata *)
-  val init_run_metadata    : run_handle  -> logs_meta -> unit;
-  val init_prog_metadata   : prog_handle -> logs_meta -> unit;
-  val init_exp_metadata    : exp_handle  -> logs_meta -> unit;
-  val append_run_metadata  : run_handle  -> logs_meta -> unit;
-  val append_prog_metadata : prog_handle -> logs_meta -> unit;
-  val append_exp_metadata  : exp_handle  -> logs_meta -> unit;
+  val init_meta    : meta_handle -> string option -> unit;
+  val append_meta  : meta_handle -> string -> unit;
 
 
 (*

@@ -27,6 +27,12 @@ signature experimentsLib = sig
   val bir_embexp_prog_std_preproc : string list -> string list
 
 
+  (* additional structured data *)
+  (* ======================================== *)
+  datatype experiment_arch = ArchARM8;
+  datatype experiment_type = ExperimentTypeExps2;
+
+
   (* embexp platform parameters *)
   (* ======================================== *)
   val bir_embexp_params_code   : Arbnum.num (* base address for placement *)

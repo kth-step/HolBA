@@ -147,7 +147,7 @@ struct
 
       val prog_with_halt = add_halt_to_prog len lifted_prog;
 
-      val prog_id = bir_embexp_prog_create ("arm8", prog_gen_id) asm_code;
+      val prog_id = run_create_prog (ArchARM8, prog_gen_id) asm_code;
     in
       (prog_id, prog_with_halt)
     end;
@@ -175,7 +175,7 @@ in
           (last_filelist  := filename;
            last_prog_list := [];
            last_cur_idx   := 0;
-           last_prog_list := bir_embexp_load_progs filename);
+           last_prog_list := run_load_progs filename);
 
       val (prog_list, cur_idx) = (!last_prog_list, !last_cur_idx);
     in

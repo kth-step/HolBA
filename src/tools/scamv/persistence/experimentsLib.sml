@@ -207,6 +207,11 @@ in
     bir_embexp_code_to_prog_raw bir_embexp_prog_cleanup code_asm;
 
 
+  (* additional structured data *)
+  (* ======================================== *)
+  datatype experiment_arch = ArchARM8;
+  datatype experiment_type = ExperimentTypeExps2;
+
   (* embexp platform parameters *)
   (* ======================================== *)
   val bir_embexp_params_code   = Arbnum.fromHexString    "0x2000";
