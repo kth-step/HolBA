@@ -131,10 +131,10 @@ fun run_db_a_irgnore t vs =
   fun create_exp_list lld =
       create__list "exp_exps_lists" lld;
 
-  fun create_run (LogsRun (time, prog_l_id, exp_l_id)) =
+  fun create_run (LogsRun (name, prog_l_id, exp_l_id)) =
     run_db_c_id false
       "holba_runs"
-      [("time", STRING time),
+      [("name", STRING name),
        ("exp_progs_lists_id", NUMBER prog_l_id),
        ("exp_exps_lists_id",  NUMBER exp_l_id)];
   fun create_prog (LogsProg (arch, code)) =

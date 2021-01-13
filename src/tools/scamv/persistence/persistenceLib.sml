@@ -29,13 +29,13 @@ get_experiment_basedir
   datatype holba_run_refs = RunReferences of (run_handle * string * prog_list_handle * exp_list_handle);
   fun holba_run_create () =
     let
-      val time      = get_datestring(); (* TODO: this should be changed and fixed *)
+      val name      = get_datestring(); (* TODO: this should be changed and fixed *)
 
-      val list_v  = LogsList ("HOLBA." ^ time, SOME "auto-generated");
+      val list_v  = LogsList ("HOLBA." ^ name, SOME "auto-generated");
       val prog_l_id = create_prog_list list_v;
       val exp_l_id  = create_exp_list  list_v;
 
-      val run_v     = LogsRun (time, prog_l_id, exp_l_id);
+      val run_v     = LogsRun (name, prog_l_id, exp_l_id);
       val run_id    = create_run run_v;
 
       (* TODO: add more metadata *)
@@ -62,7 +62,7 @@ get_experiment_basedir
 	    val _ = write_to_file_or_compare_clash "holba_run_id" holba_randseed_file holba_randseed;
       *)
     in
-      RunReferences (run_id, time, prog_l_id, exp_l_id)
+      RunReferences (run_id, name, prog_l_id, exp_l_id)
     end;
 
   (* logging of holba run data and run context management *)
@@ -115,7 +115,7 @@ get_experiment_basedir
       write_log_line (holbarun_log, "run_log", "no holbarun log registered currently (this should never happen)") line
     end;
 
-  (* embexp run identification (special time string) *)
+  (* embexp run references (database handles and special string) *)
   val holba_run_id_ref    = ref (NONE:holba_run_refs option);
   val holba_run_timer_ref = ref (NONE:Time.time option);
   fun holba_run_id () =
@@ -123,10 +123,10 @@ get_experiment_basedir
         NONE =>
           let
             val run_refs = holba_run_create ();
-            val RunReferences (run_id, run_time, _, _) = run_refs;
+            val RunReferences (run_id, run_name, _, _) = run_refs;
 
             val _ = create_log holbarun_log (mk_run_meta_handle (run_id, SOME "", "log"));
-            val _ = write_log_line (holbarun_log, "holba_run_id", "no no no") ("Starting log for: " ^ run_time);
+            val _ = write_log_line (holbarun_log, "holba_run_id", "no no no") ("Starting log for: " ^ run_name);
 
             val _ = holba_run_timer_ref := timer_start 1;
             val _ = holba_run_id_ref := SOME run_refs;
@@ -166,7 +166,7 @@ get_experiment_basedir
     let
       val arch_id = "arm8";
 
-      val RunReferences (_, run_time, prog_l_id, _) = holba_run_id();
+      val RunReferences (_, run_name, prog_l_id, _) = holba_run_id();
 
       val code_asm = code_asm; (* TODO: this should be a program value type, something new in experimentsLib *)
       val prog_v   = LogsProg (arch_id, code_asm);
@@ -187,7 +187,7 @@ get_experiment_basedir
 *)
 
       (* create prog log *)
-      val log_id = "gen." ^ run_time ^ "." ^ (get_datestring ()); (* TODO: does this name format look good and stay separable? *)
+      val log_id = "gen." ^ run_name ^ "." ^ (get_datestring ()); (* TODO: does this name format look good and stay separable? *)
       val _ = create_log prog_log (mk_prog_meta_handle (prog_id, SOME log_id, "log"));
       (* log generator info *)
       val _ = write_log_line (prog_log, "run_prog_create", "no no no") prog_gen_id;
@@ -197,7 +197,7 @@ get_experiment_basedir
 
   fun run_create_states2 (exp_type_id, state_gen_id) prog_id (s1,s2,straino) =
     let
-      val RunReferences (_, run_time, _, exp_l_id) = holba_run_id();
+      val RunReferences (_, run_name, _, exp_l_id) = holba_run_id();
 
   (* TODO: generalize inputs somehow, for the whole function, so that it's not fixed to 2.5 states *)
       val input_data = Json.OBJECT (
@@ -244,7 +244,7 @@ get_experiment_basedir
 *)
 
       (* create exp log *)
-      val log_id = "gen." ^ run_time ^ "." ^ (get_datestring ()); (* TODO: does this name format look good and stay separable? *)
+      val log_id = "gen." ^ run_name ^ "." ^ (get_datestring ()); (* TODO: does this name format look good and stay separable? *)
       val _ = create_log exp_log (mk_exp_meta_handle (exp_id, SOME log_id, "log"));
 
       (* log generator info *)
