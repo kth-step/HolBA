@@ -215,33 +215,22 @@ struct
 
   (* retrieving from logs *)
   (* ========================================================================================= *)
-(*
-  fun run_load_list listtype listname =
-    let
-      val logs_dir = logfile_basedir();
-      val contents = read_from_file (logs_dir ^ "/lists/" ^ listtype ^ "_" ^ listname ^ ".txt");
-      val list_lines = String.tokens (fn c => c = #"\n") contents;
-      val nonempty = List.filter (fn x => x <> "") list_lines;
-      val actual_entries = List.filter (not o (String.isPrefix "#")) nonempty;
-    in
-      actual_entries
-    end;
-*)
-
-(* TODO: implement *)
-
   fun runlogs_load_progs listname =
     let
-(*
-      val logs_dir = logfile_basedir();
-      val archprog_ids = run_load_list "progs" listname;
-      val progs = List.map (fn apid =>
-            (run_code_to_prog_raw run_prog_std_preproc)
-               (read_from_file (logs_dir ^ "/" ^ apid ^ "/code.asm"))
-          ) archprog_ids;
-*)
+      val prog_l_ids = query_all_prog_lists ();
+      val prog_ls = get_prog_lists prog_l_ids;
+
+      val (_, prog_ls_) = List.foldl (fn (x, (i, l)) => (i+1, ((i, x))::l)) (0, []) prog_ls;
+      val prog_ls_filt = List.filter (fn (_, LogsList (n, _)) => n = listname) prog_ls_;
+      val (i, _) = if List.length prog_ls_filt = 1 then hd prog_ls_filt else
+                    raise ERR "runlogs_load_progs" ("didn't find exactly one match for prog list " ^ listname);
+      val prog_l_id = List.nth (prog_l_ids, i);
+
+      val prog_ids = get_prog_list_entries prog_l_id;
+
+      val progs = List.map (fn (LogsProg (_,code)) => prog_from_asm_code code) (get_progs prog_ids);
     in
-      (*progs*)[]
+      progs
     end;
 
 end

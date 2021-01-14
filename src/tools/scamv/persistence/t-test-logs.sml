@@ -182,6 +182,12 @@ val _ =
                add_to_exp_list (exp_list_2, exp_1);
                true));
 
+(* add entries to lists *)
+val _ = add_to_prog_list (prog_list_2, prog_1);
+val _ = add_to_prog_list (prog_list_2, prog_1);
+val _ = add_to_exp_list  (exp_list_2,  exp_1);
+val _ = add_to_exp_list  (exp_list_2,  exp_1);
+
 
 val meta_val_1 = "very important\n";
 val meta_val_2 = "very important add\n";
@@ -249,6 +255,24 @@ val _ = init_meta meta_id_run_3 (SOME meta_val_3);
 val _ = init_meta meta_id_run_3 (SOME meta_val_3);
 
 
+(* tests for retrieval *)
+val prog_l_ids = query_all_prog_lists ();
+val prog_ls = get_prog_lists prog_l_ids;
+
+val listname = "hello progs 3";
+
+val (_, prog_ls_) = List.foldl (fn (x, (i, l)) => (i+1, ((i, x))::l)) (0, []) prog_ls;
+val prog_ls_filt = List.filter (fn (_, LogsList (n, _)) => n = listname) prog_ls_;
+val (i, _) = if List.length prog_ls_filt = 1 then hd prog_ls_filt else
+             raise Fail ("didn't find exactly one match for prog list " ^ listname);
+val prog_l_id = List.nth (prog_l_ids, i);
+
+val prog_ids = get_prog_list_entries prog_l_id;
+
+val progs = get_progs prog_ids;
+
+
+
 (* try persistenceLib directly *)
 open persistenceLib;
 open experimentsLib;
@@ -283,3 +307,11 @@ val _ = run_log_exp  "exp log 2";
 
 (* finalize the whole run *)
 val _ = run_finalize ();
+
+(* find some programs *)
+val prog_code_l = List.map (experimentsLib.prog_to_asm_code) (runlogs_load_progs "hello progs 3");
+
+val _ =
+  assert_w_descr
+    "find the program from before"
+    (fn () => (prog_code_l = ["\tpush all\n"]));

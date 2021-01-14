@@ -29,7 +29,7 @@ sig
   val mk_prog_meta_handle : (prog_handle * string option * string) -> meta_handle;
   val mk_exp_meta_handle  : (exp_handle  * string option * string) -> meta_handle;
 
-  (* creation of entries *)
+  (* creation of basic entries *)
   val create_prog_list : logs_list -> prog_list_handle;
   val create_exp_list  : logs_list -> exp_list_handle;
 
@@ -46,8 +46,7 @@ sig
   val append_meta  : meta_handle -> string -> unit;
 
 
-(*
-  (* retrieval of entries *)
+  (* retrieval of basic entries *)
   val get_prog_lists : prog_list_handle list -> logs_list list;
   val get_exp_lists  : exp_list_handle  list -> logs_list list;
 
@@ -59,16 +58,18 @@ sig
   val get_prog_list_entries : prog_list_handle -> prog_handle list;
   val get_exp_list_entries  : exp_list_handle  -> exp_handle  list;
 
+(*
   (* retrieval of metdata *)
   val get_run_metadata    : run_handle  -> logs_meta list;
   val get_prog_metadata   : prog_handle -> logs_meta list;
   val get_exp_metadata    : exp_handle  -> logs_meta list;
-
+*)
 
   (* queries *)
   val query_all_prog_lists : unit -> prog_list_handle list;
   val query_all_exp_lists  : unit -> exp_list_handle  list;
 
+(*
   val query_match_runs  : (string option *
                            prog_list_handle option *
                            exp_list_handle option) list

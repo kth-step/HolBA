@@ -26,20 +26,19 @@ fun run_db ops arg =
   bir_json_execLib.call_json_exec (command, (if !is_testing then ["-t"] else [])@[ops], arg);
 
 val run_db_q = run_db "query";
-fun run_db_q_table t = run_db_q (
+fun run_db_q_gen id_only t vs = run_db_q (
   OBJECT
     [("type", STRING "match_simple"),
      ("query",
       OBJECT
        [("table", STRING t),
-        ("values", OBJECT [])])]);
+        ("values", OBJECT vs),
+        ("id_only", BOOL id_only)])]);
+fun run_db_q_all id_only t =
+  run_db_q_gen id_only t [];
 fun get_db_q r =
   case r of
-     OBJECT [("fields", ARRAY _), ("rows", subjson)] => subjson
-   | _ => raise Fail "scanned result does not match a query response";
-fun get_db_q_a r =
-  case get_db_q r of
-     ARRAY xs => xs
+     OBJECT [("fields", ARRAY fs), ("rows", ARRAY xs)] => (fs, xs)
    | _ => raise Fail "scanned result does not match a query response";
 
 val run_db_c = run_db "create";
@@ -194,6 +193,124 @@ fun run_db_a_ignore t vs =
     fun init_meta   (metaty, lmd) = init__meta   (metaty_to_db metaty) lmd;
     fun append_meta (metaty, lmd) = append__meta (metaty_to_db metaty) lmd;
   end;
+
+
+(*
+*)
+  (* TODO: change to not ignore the fields in the result *)
+  fun get_from_id (t, f_id) unpack_fun id =
+    case get_db_q (run_db_q_gen false t [(f_id, NUMBER id)]) of
+       (_, [x]) => (case x of
+               ARRAY vals => unpack_fun vals
+             | _ => raise ERR "get_all_ids" "result not as expected")
+     | _ => raise ERR "get_all_ids" "result not as expected";
+  fun get_from_id_mult (t, f_id) unpack_fun id =
+    case get_db_q (run_db_q_gen false t [(f_id, NUMBER id)]) of
+       (_, xs) => List.map (fn x => case x of
+               ARRAY vals => unpack_fun vals
+             | _ => raise ERR "get_all_ids_mult" "result not as expected") xs;
+
+  fun get_from_ids (t, f_id) unpack_fun ids = List.map (fn id => get_from_id (t, f_id) unpack_fun id) ids;
+
+  fun unpack_json s =
+    case Json.parse s of
+       Json.ERROR e =>
+         raise ERR "unpack_json" ("result not as expected, json error: " ^ e)
+     | Json.OK json =>
+         json;
+
+  fun unpack_string_opt x =
+    case x of
+       STRING x => SOME x
+     | NULL => NONE
+     | _ => raise ERR "unpack_string_opt" "result not as expected";
+
+  fun unpack_logs_list x =
+    case x of
+       [NUMBER _, STRING n, json_d_o] => LogsList (n, unpack_string_opt json_d_o)
+     | _ => raise ERR "unpack_logs_list" "result not as expected";
+
+  fun unpack_logs_run x =
+    case x of
+       [NUMBER _, STRING n, NUMBER pl_id, NUMBER el_id] => LogsRun (n, pl_id, el_id)
+     | _ => raise ERR "unpack_logs_run" "result not as expected";
+
+  fun unpack_logs_prog x =
+    case x of
+       [NUMBER _, STRING a, STRING c] => LogsProg (a, c)
+     | _ => raise ERR "unpack_logs_prog" "result not as expected";
+
+  fun unpack_logs_exp x =
+    case x of
+       [NUMBER _, NUMBER p_id, STRING ty, STRING pa, STRING indat] =>
+          LogsExp (p_id, ty, pa, unpack_json indat)
+     | _ => raise ERR "unpack_logs_exp" "result not as expected";
+
+  fun unpack_list_entry x =
+    case x of
+       [NUMBER _, NUMBER mem_id] => mem_id
+     | _ => raise ERR "unpack_list_entry" "result not as expected";
+
+  fun get_prog_lists ids =
+    get_from_ids
+      ("exp_progs_lists", "id")
+      unpack_logs_list
+      ids;
+  fun get_exp_lists  ids =
+    get_from_ids
+      ("exp_exps_lists", "id")
+      unpack_logs_list
+      ids;
+
+  fun get_runs  ids =
+    get_from_ids
+      ("holba_runs", "id")
+      unpack_logs_run
+      ids;
+  fun get_progs ids =
+    get_from_ids
+      ("exp_progs", "id")
+      unpack_logs_prog
+      ids;
+  fun get_exps  ids =
+    get_from_ids
+      ("exp_exps", "id")
+      unpack_logs_exp
+      ids;
+
+  fun get_prog_list_entries id =
+    get_from_id_mult
+      ("exp_progs_lists_entries", "exp_progs_lists_id")
+      unpack_list_entry
+      id;
+  fun get_exp_list_entries  id =
+    get_from_id_mult
+      ("exp_exps_lists_entries", "exp_exps_lists_id")
+      unpack_list_entry
+      id;
+
+(*
+*)
+(*
+  (* retrieval of metdata *)
+  val get_run_metadata    : run_handle  -> logs_meta list;
+  val get_prog_metadata   : prog_handle -> logs_meta list;
+  val get_exp_metadata    : exp_handle  -> logs_meta list;
+*)
+
+
+(*
+*)
+  fun get_all_ids t =
+    case get_db_q (run_db_q_all true t) of
+       ([STRING s_id], jsonids)
+         => if s_id = "id" then List.map (fn x => case x of
+                ARRAY [NUMBER i] => i | _ => raise ERR "get_all_ids" "result not as expected") jsonids else
+            raise ERR "get_all_ids" "result not as expected"
+     | _ => raise ERR "get_all_ids" "result not as expected";
+
+  fun query_all_prog_lists () = get_all_ids "exp_progs_lists";
+  fun query_all_exp_lists  () = get_all_ids "exp_exps_lists";
 
 
 end (* local *)
