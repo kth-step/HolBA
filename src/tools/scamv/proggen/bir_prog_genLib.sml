@@ -147,7 +147,11 @@ struct
 
       val prog_with_halt = add_halt_to_prog len lifted_prog;
 
-      val prog_id = run_create_prog ArchARM8 prog [("prog_gen_id", prog_gen_id)];
+      val add_lifted_prog = true;
+      val extra_metadata = if not add_lifted_prog then [] else
+        [("lifted_prog", term_to_string lifted_prog)];
+
+      val prog_id = run_create_prog ArchARM8 prog ([("prog_gen_id", prog_gen_id)]@extra_metadata);
     in
       (prog_id, prog_with_halt)
     end;
