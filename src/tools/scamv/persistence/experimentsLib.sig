@@ -31,7 +31,10 @@ signature experimentsLib = sig
   (* additional structured data *)
   (* ======================================== *)
   datatype experiment_arch = ArchARM8;
+  val exp_arch_to_string : experiment_arch -> string;
+
   datatype experiment_type = ExperimentTypeStdTwo;
+  val exp_type_to_string : experiment_type -> string;
 
 
   (* embexp platform parameters *)

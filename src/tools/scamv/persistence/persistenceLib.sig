@@ -2,8 +2,6 @@ signature persistenceLib = sig
 
   (* logging of holba run data and run context management *)
   (* ======================================== *)
-  val run_log_prog_close : unit   -> unit;
-  val run_log_exp_close  : unit   -> unit;
   val run_log_prog       : string -> unit;
   val run_log_exp        : string -> unit;
   val run_log            : string -> unit;

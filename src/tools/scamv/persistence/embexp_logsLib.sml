@@ -58,7 +58,7 @@ fun run_db_c_id do_match t vs =
        raise ERR "run_db_c_id" "unexpected output"
    | _ => raise ERR "run_db_c_id" "unexpected output";
 
-fun run_db_c_irgnore do_match t vs =
+fun run_db_c_ignore do_match t vs =
       (run_db_c (
          OBJECT
            [("table", STRING t),
@@ -68,13 +68,13 @@ fun run_db_c_irgnore do_match t vs =
        ());
 
 val run_db_a = run_db "append";
-fun run_db_a_irgnore t vs =
+fun run_db_a_ignore t vs =
   case run_db_a (
          OBJECT
            [("table", STRING t),
             ("values", OBJECT vs)]) of
      BOOL true => ()
-   | _ => raise ERR "run_db_a_irgnore" "unexpected output";
+   | _ => raise ERR "run_db_a_ignore" "unexpected output";
 
 (* ==================================================== *)
 
@@ -101,9 +101,9 @@ fun run_db_a_irgnore t vs =
   fun prog_handle_toString      id = "(Prog, id="     ^ (Arbnum.toString id) ^ ")";
   fun exp_handle_toString       id = "(Exp, id="      ^ (Arbnum.toString id) ^ ")";
 
-  fun meta_type_toString MetaTypeRun = "MetaRun"
-    | meta_type_toString MetaTypeRun = "MetaRun"
-    | meta_type_toString MetaTypeRun = "MetaRun";
+  fun meta_type_toString MetaTypeRun  = "MetaRun"
+    | meta_type_toString MetaTypeProg = "MetaProg"
+    | meta_type_toString MetaTypeExp  = "MetaExp";
   fun meta_handle_toString      (metaty, (id, k_o, n)) =
     "("       ^ (meta_type_toString metaty) ^
     ", id="   ^ (Arbnum.toString id) ^
@@ -154,7 +154,7 @@ fun run_db_a_irgnore t vs =
 (*
 *)
   fun add_to__list (t, f1, f2) (l_id, x_id) =
-    run_db_c_irgnore true
+    run_db_c_ignore true
       t
       [(f1, NUMBER l_id),
        (f2, NUMBER x_id)];
@@ -172,14 +172,14 @@ fun run_db_a_irgnore t vs =
 (*
 *)
   fun init__meta (t, f_id) (x_id, k_o, n) v_o =
-    run_db_c_irgnore false
+    run_db_c_ignore false
       t
       [(f_id,    NUMBER x_id),
        ("kind",  Option.getOpt(Option.map STRING k_o, NULL)),
        ("name",  STRING n),
        ("value", Option.getOpt(Option.map STRING v_o, NULL))];
   fun append__meta (t, f_id) (x_id, k_o, n) v =
-    run_db_a_irgnore
+    run_db_a_ignore
       t
       [(f_id,    NUMBER x_id),
        ("kind",  Option.getOpt(Option.map STRING k_o, NULL)),
@@ -194,142 +194,6 @@ fun run_db_a_irgnore t vs =
     fun init_meta   (metaty, lmd) = init__meta   (metaty_to_db metaty) lmd;
     fun append_meta (metaty, lmd) = append__meta (metaty_to_db metaty) lmd;
   end;
-
-
-(*
-  testing function is placed here for now because retrieval functionality is not implemented in this module yet
-*)
-
-  fun run_testing () =
-    let
-      val _ = if !is_testing then () else
-              raise ERR "run_testing" "not in testing mode";
-
-fun assert_w_descr descr f = (
-  print ("asserting: \"" ^ descr ^ "\"\n");
-  if f () then print ("OK\n") else
-  raise ERR "run_testing" ("assert failed"));
-
-val lld_p_1 = LogsList ("progs__", NONE);
-val lld_p_2 = LogsList ("hello progs 3", NONE);
-val lld_p_3 = LogsList ("hello progs 4", SOME "amazing progs description 4");
-val lld_e_1 = LogsList ("hello", NONE);
-val lld_e_2 = LogsList ("hello 2", SOME "amazing description 2");
-
-val prog_list_1 = create_prog_list lld_p_1;
-val prog_list_2 = create_prog_list lld_p_2;
-val prog_list_3 = create_prog_list lld_p_3;
-val exp_list_1  = create_exp_list  lld_e_1;
-val exp_list_2  = create_exp_list  lld_e_2;
-
-val _ =
-  assert_w_descr
-    "no match for prog list"
-    (fn () => (create_prog_list lld_p_3; false)
-              handle _ => true);
-val _ =
-  assert_w_descr
-    "no match for exp list"
-    (fn () => (create_exp_list lld_e_1; false)
-              handle _ => true);
-
-val holba_run_d_1 = LogsRun ("a time long ago 1", prog_list_3, exp_list_2);
-val holba_run_1 = create_run holba_run_d_1;
-val _ =
-  assert_w_descr
-    "no match for holba run"
-    (fn () => (create_run holba_run_d_1; false)
-              handle _ => true);
-
-val prog_d_1 = LogsProg ("arm22", "\tpush all\n");
-val prog_1 = create_prog prog_d_1;
-val exp_d_1  = LogsExp (prog_1, "exps0", "no args", OBJECT [("inputs", NULL)]);
-val exp_1  = create_exp  exp_d_1;
-
-val _ =
-  assert_w_descr
-    "match for prog and exp result in the same handle again"
-    (fn () => (create_prog prog_d_1 = prog_1) andalso (create_exp  exp_d_1 = exp_1));
-
-val _ = add_to_prog_list (prog_list_3, prog_1);
-val _ = add_to_exp_list (exp_list_2, exp_1);
-
-val _ =
-  assert_w_descr
-    "match for prog and exp entries result in no unique constraint exception"
-    (fn () => (add_to_prog_list (prog_list_3, prog_1);
-               add_to_exp_list (exp_list_2, exp_1);
-               true));
-
-
-val meta_val_1 = "very important\n";
-val meta_val_2 = "very important add\n";
-
-val meta_id_run_1  = mk_run_meta_handle (holba_run_1, SOME "all", "run meta 1");
-val meta_id_prog_1 = mk_run_meta_handle (prog_1,      SOME "all", "prog meta 1");
-val meta_id_exp_1  = mk_run_meta_handle (exp_1,       SOME "all", "exp meta 1");
-
-val _ =
-  assert_w_descr
-    "append without init run metadata"
-    (fn () => (append_meta meta_id_run_1  (meta_val_1); false)
-              handle _ => true);
-val _ =
-  assert_w_descr
-    "append without init prog metadata"
-    (fn () => (append_meta meta_id_prog_1 (meta_val_1); false)
-              handle _ => true);
-val _ =
-  assert_w_descr
-    "append without init exp metadata"
-    (fn () => (append_meta meta_id_exp_1  (meta_val_1); false)
-              handle _ => true);
-
-val _ = init_meta meta_id_run_1  (SOME meta_val_1);
-val _ = init_meta meta_id_prog_1 (SOME meta_val_1);
-val _ = init_meta meta_id_exp_1  (SOME meta_val_1);
-
-val _ =
-  assert_w_descr
-    "cannot init twice - run metadata"
-    (fn () => (init_meta meta_id_run_1  (SOME meta_val_1); false)
-              handle _ => true);
-val _ =
-  assert_w_descr
-    "cannot init twice - prog metadata"
-    (fn () => (init_meta meta_id_prog_1 (SOME meta_val_1); false)
-              handle _ => true);
-val _ =
-  assert_w_descr
-    "cannot init twice - exp metadata"
-    (fn () => (init_meta meta_id_exp_1  (SOME meta_val_1); false)
-              handle _ => true);
-
-val _ = append_meta meta_id_run_1  meta_val_2;
-val _ = append_meta meta_id_prog_1 meta_val_2;
-val _ = append_meta meta_id_prog_1 meta_val_2;
-val _ = append_meta meta_id_exp_1  meta_val_2;
-
-val meta_val_3 = "beta\n";
-
-val meta_id_run_2  = mk_run_meta_handle (holba_run_1, SOME "ahaa", "meta null 1");
-val meta_id_run_3  = mk_run_meta_handle (holba_run_1, NONE, "meta list 1");
-
-val _ = init_meta meta_id_run_2 NONE;
-val _ = init_meta meta_id_run_3 (SOME meta_val_3)
-
-val _ =
-  assert_w_descr
-    "appending metadata requires kind to be SOME"
-    (fn () => (append_meta meta_id_run_3 meta_val_3; false)
-              handle _ => true);
-
-val _ = init_meta meta_id_run_3 (SOME meta_val_3);
-val _ = init_meta meta_id_run_3 (SOME meta_val_3);
-
-    in () end;
-
-
 
 
 end (* local *)

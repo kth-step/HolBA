@@ -250,7 +250,10 @@ in
   (* additional structured data *)
   (* ======================================== *)
   datatype experiment_arch = ArchARM8;
+  fun exp_arch_to_string ArchARM8 = "arm8";
+
   datatype experiment_type = ExperimentTypeStdTwo;
+  fun exp_type_to_string ExperimentTypeStdTwo = "exps2";
 
   (* embexp platform parameters *)
   (* ======================================== *)

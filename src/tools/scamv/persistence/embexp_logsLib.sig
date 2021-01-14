@@ -1,18 +1,18 @@
 signature embexp_logsLib =
 sig
 
-  type prog_list_handle;
-  type exp_list_handle;
-  type run_handle;
-  type prog_handle;
-  type exp_handle;
+  eqtype prog_list_handle;
+  eqtype exp_list_handle;
+  eqtype run_handle;
+  eqtype prog_handle;
+  eqtype exp_handle;
 
   datatype logs_list = LogsList of (string * string option);
   datatype logs_run  = LogsRun  of (string * prog_list_handle * exp_list_handle);
   datatype logs_prog = LogsProg of (string * string);
   datatype logs_exp  = LogsExp  of (prog_handle * string * string * Json.json);
 
-  type meta_handle;
+  eqtype meta_handle;
   datatype logs_meta = LogsMeta of (meta_handle * string option);
 
   (* readable representation of handles *)
@@ -83,8 +83,7 @@ sig
                           -> exp_handle  list;
 *)
 
+  (* function to enable the testing mode, i.e., uses the testing db *)
   val set_testing : unit -> unit;
-  (* temporary: *)
-  val run_testing : unit -> unit;
 
 end

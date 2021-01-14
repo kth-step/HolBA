@@ -23,9 +23,24 @@ struct
   (* creation of a holba run with metadata and containers for programs and experiments *)
   (* ========================================================================================= *)
   datatype holba_run_refs = RunReferences of (run_handle * string * prog_list_handle * exp_list_handle);
+  fun get_dotfree_time () =
+    let
+      val now      = Time.now ();
+      val now_ms   = LargeInt.mod (Time.toMilliseconds now, LargeInt.fromInt 1000)
+      val now_ms_str = StringCvt.padLeft #"0" 4 (LargeInt.fmt StringCvt.DEC now_ms);
+      val now_date = Date.fromTimeLocal now;
+      val now_str  = (Date.fmt "%Y-%m-%d_%H-%M-%S" now_date) ^ "_" ^ now_ms_str;
+
+     (* assert no dots in name *)
+      val _ = if not (List.exists (fn x => x = #".") (String.explode now_str)) then () else
+              raise ERR "get_dotfree_time" "should never happen, found a dot in the generated name";
+    in
+     (* time = time without dot *)
+      now_str
+    end;
   fun holba_run_create () =
     let
-      val name      = get_datestring(); (* TODO: this should be changed and fixed *)
+      val name      = get_dotfree_time ();
 
       val list_v  = LogsList ("HOLBA." ^ name, SOME "auto-generated");
       val prog_l_id = create_prog_list list_v;
@@ -34,29 +49,27 @@ struct
       val run_v     = LogsRun (name, prog_l_id, exp_l_id);
       val run_id    = create_run run_v;
 
-      (* TODO: add more metadata *)
-      (*
-            (* write out git commit and git diff of current directory. *)
-            (*    so this script needs to be executed from within the holbarepo! *)
-            val run_datestr    = get_datestring();
-	    val holba_diff     = get_exec_output "git diff";
-	    val holba_commit   = get_exec_output "git rev-parse HEAD";
-            val holba_args     = get_script_args ();
-            val rand_seed      = rand_seed_get ();
-            val holba_randseed = Real.toString rand_seed;
+      (* prepare metadata for run *)
+         (* write out git commit and git diff of current directory. *)
+         (*    so this code needs to be executed with the working directory in the holbarepo! *)
+      open bir_exec_wrapLib;
+      val run_datestr    = get_datestring();
+      val holba_diff     = get_exec_output "git diff";
+      val holba_commit   = get_exec_output "git rev-parse HEAD";
+      val holba_args     = get_script_args ();
+      val rand_seed      = rand_seed_get ();
+      val holba_randseed = Real.toString rand_seed;
 
-	    val run_datestr_file    = runitpath ^ "/holba.time";
-	    val holba_diff_file     = runitpath ^ "/holba.diff";
-	    val holba_commit_file   = runitpath ^ "/holba.commit";
-	    val holba_args_file     = runitpath ^ "/holba.args";
-	    val holba_randseed_file = runitpath ^ "/holba.randseed";
+      val run_metadata =
+        [("time",     run_datestr),
+         ("diff",     holba_diff),
+         ("commit",   holba_commit),
+         ("args",     holba_args),
+         ("randseed", holba_randseed)];
 
-	    val _ = write_to_file_or_compare_clash "holba_run_id" run_datestr_file    run_datestr;
-	    val _ = write_to_file_or_compare_clash "holba_run_id" holba_diff_file     holba_diff;
-	    val _ = write_to_file_or_compare_clash "holba_run_id" holba_commit_file   holba_commit;
-	    val _ = write_to_file_or_compare_clash "holba_run_id" holba_args_file     holba_args;
-	    val _ = write_to_file_or_compare_clash "holba_run_id" holba_randseed_file holba_randseed;
-      *)
+      (* add metadata *)
+      val _ = List.map (fn (m_n, m_v) => 
+        init_meta (mk_run_meta_handle (run_id, SOME m_n, "")) (SOME m_v)) run_metadata;
     in
       RunReferences (run_id, name, prog_l_id, exp_l_id)
     end;
@@ -86,12 +99,6 @@ struct
       val _ = append_meta log_id (line ^ "\n");
     in () end;
 
-  fun run_log_prog_close () =
-    close_log prog_log;
-
-  fun run_log_exp_close () =
-    close_log exp_log;
-
   fun run_log_prog message =
     let
       val line = message;
@@ -113,7 +120,7 @@ struct
       write_log_line (holbarun_log, "run_log", "no holbarun log registered currently (this should never happen)") line
     end;
 
-  (* embexp run references (database handles and special string) *)
+  (* embexp run references (database handles and special name string) *)
   val holba_run_id_ref    = ref (NONE:holba_run_refs option);
   val holba_run_timer_ref = ref (NONE:Time.time option);
   fun holba_run_id () =
@@ -123,7 +130,7 @@ struct
             val run_refs = holba_run_create ();
             val RunReferences (run_id, run_name, _, _) = run_refs;
 
-            val _ = create_log holbarun_log (mk_run_meta_handle (run_id, SOME "", "log"));
+            val _ = create_log holbarun_log (mk_run_meta_handle (run_id, SOME "log", ""));
             val _ = write_log_line (holbarun_log, "holba_run_id", "no no no") ("Starting log for: " ^ run_name);
 
             val _ = holba_run_timer_ref := timer_start 1;
@@ -158,11 +165,9 @@ struct
 
   (* storing to logs *)
   (* ========================================================================================= *)
-
-  (* TODO change architecture directly to function in experimentsLib *)
-  fun run_create_prog ArchARM8 prog run_metadata =
+  fun run_create_prog arch prog run_metadata =
     let
-      val arch_id = "arm8";
+      val arch_id = exp_arch_to_string arch;
 
       val RunReferences (_, run_name, prog_l_id, _) = holba_run_id();
 
@@ -171,65 +176,38 @@ struct
       val prog_id  = create_prog prog_v;
       val _        = add_to_prog_list (prog_l_id, prog_id);
 
-(* TODO: solve problem if program with same code already exists! same for experiment!! prog is already in the list and a gen log already exists, probably same for metadata! *)
-(*
-   TODO: add metadata
+      val meta_name = "run." ^ run_name ^ "." ^ (get_dotfree_time ());
 
-      (* write out code *)
-      val codehash = hashstring code_asm;
-      val codepath = progs_basedir ^ "/" ^ codehash;
-      (* this directory possibly already exists *)
-      val _ = makedir true codepath;
-      (* but the code should not differ if it exists already *)
-      val _ = write_to_file_or_compare_clash "run_prog_create" (codepath ^ "/code.asm") code_asm;
-*)
+      (* add metadata *)
+      val _ = List.map (fn (m_n, m_v) => 
+        init_meta (mk_prog_meta_handle (prog_id, SOME m_n, meta_name)) (SOME m_v)) run_metadata;
 
-      (* create prog log *)
-      val log_id = "gen." ^ run_name ^ "." ^ (get_datestring ()); (* TODO: does this name format look good and stay separable? *)
-      val _ = create_log prog_log (mk_prog_meta_handle (prog_id, SOME log_id, "log"));
-      (* log generator info *)
-(*
-   TODO: run_metadata
-      val _ = write_log_line (prog_log, "run_prog_create", "no no no") prog_gen_id;
-*)
+      (* create prog log, NOTICE: this is never closed (also not needed at the moment) *)
+      val _ = create_log prog_log (mk_prog_meta_handle (prog_id, SOME "log", meta_name));
     in
       prog_id
     end;
 
-  fun run_create_exp prog_id ExperimentTypeStdTwo exp_params state_list run_metadata =
+  fun run_create_exp prog_id exp_type exp_params state_list run_metadata =
     let
+      val exp_type_s = exp_type_to_string exp_type;
+
       val RunReferences (_, run_name, _, exp_l_id) = holba_run_id();
 
       val input_data = Json.OBJECT (List.map (fn (n, s) => ("input_" ^ n, machstate_to_Json s)) state_list);
-      val exp_v      = LogsExp (prog_id, "exps2", exp_params, input_data);
+      val exp_v      = LogsExp (prog_id, exp_type_s, exp_params, input_data);
       val exp_id     = create_exp exp_v;
       val _          = add_to_exp_list (exp_l_id, exp_id);
 
-(* TODO: solve problem if exp with same code already exists! same for prog!! prog is already in the list and a gen log already exists, probably same for metadata! *)
-(*
-   TODO: add metadata
+      val meta_name = "run." ^ run_name ^ "." ^ (get_dotfree_time ());
 
-      val exp_datahash = hashstring (prog_id ^ input1 ^ input2);
-      val exp_id = "exps2/" ^ exp_params ^ "/" ^ exp_datahash;
-      val exp_datapath = exp_basedir ^ "/" ^ exp_id;
-      (* btw, it can also happen that the same test is produced multiple times *)
-      (* create directory if it didn't exist yet *)
-      val _ = makedir true exp_datapath;
+      (* add metadata *)
+      val _ = List.map (fn (m_n, m_v) => 
+        init_meta (mk_exp_meta_handle (exp_id, SOME m_n, meta_name)) (SOME m_v)) run_metadata;
 
-      (* write out reference to the code (hash of the code) *)
-      val prog_id_file = exp_datapath ^ "/code.hash";
-      val _ = write_to_file_or_compare_clash "run_states2_create" prog_id_file prog_id;
-*)
+      (* create exp log, NOTICE: this is never closed (also not needed at the moment) *)
+      val _ = create_log exp_log (mk_exp_meta_handle (exp_id, SOME "log", meta_name));
 
-      (* create exp log *)
-      val log_id = "gen." ^ run_name ^ "." ^ (get_datestring ()); (* TODO: does this name format look good and stay separable? *)
-      val _ = create_log exp_log (mk_exp_meta_handle (exp_id, SOME log_id, "log"));
-
-      (* log generator info *)
-(*
-  TODO: run_metadata
-      val _ = write_log_line (exp_log, "run_states2_create", "no no no") state_gen_id;
-*)
     in
       exp_id
     end;
@@ -265,22 +243,6 @@ struct
     in
       (*progs*)[]
     end;
-
-(*
-  (* misc *)
-  (* ========================================================================================= *)
-  (* generate state from json file *)
-  fun parse_back_json_state filename =
-    let
-      val content = read_from_file filename;
-      val json_obj =
-        case Json.parse content of
-           Json.ERROR e => raise ERR "parse_back_json_state" ("error parsing the json string: " ^ e)
-         | Json.OK json => json;
-    in
-      Json_to_machstate json_obj
-    end;
-*)
 
 end
 
