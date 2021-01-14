@@ -27,7 +27,7 @@ struct
     let
       val now      = Time.now ();
       val now_ms   = LargeInt.mod (Time.toMilliseconds now, LargeInt.fromInt 1000)
-      val now_ms_str = StringCvt.padLeft #"0" 4 (LargeInt.fmt StringCvt.DEC now_ms);
+      val now_ms_str = StringCvt.padLeft #"0" 3 (LargeInt.fmt StringCvt.DEC now_ms);
       val now_date = Date.fromTimeLocal now;
       val now_str  = (Date.fmt "%Y-%m-%d_%H-%M-%S" now_date) ^ "_" ^ now_ms_str;
 
@@ -176,7 +176,7 @@ struct
       val prog_id  = create_prog prog_v;
       val _        = add_to_prog_list (prog_l_id, prog_id);
 
-      val meta_name = "run." ^ run_name ^ "." ^ (get_dotfree_time ());
+      val meta_name = "gen." ^ run_name ^ "." ^ (get_dotfree_time ());
 
       (* add metadata *)
       val _ = List.map (fn (m_n, m_v) => 
@@ -199,7 +199,7 @@ struct
       val exp_id     = create_exp exp_v;
       val _          = add_to_exp_list (exp_l_id, exp_id);
 
-      val meta_name = "run." ^ run_name ^ "." ^ (get_dotfree_time ());
+      val meta_name = "gen." ^ run_name ^ "." ^ (get_dotfree_time ());
 
       (* add metadata *)
       val _ = List.map (fn (m_n, m_v) => 
