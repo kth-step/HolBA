@@ -85,12 +85,13 @@ struct
       | SOME log_out => log_out;
 
   fun close_log log         = log := NONE;
-  fun create_log log log_id =
-    if not enable_log_outputs then () else
+  fun create_log log_id =
+    if not enable_log_outputs then NONE else
     let
       val _ = init_meta log_id (SOME "");
-      val _ = log := SOME log_id;
-    in () end;
+    in SOME log_id end;
+
+  fun set_log log log_id_o = log := log_id_o;
 
   fun write_log_line log_t line =
     if not enable_log_outputs then () else
@@ -121,8 +122,12 @@ struct
     end;
 
   (* embexp run references (database handles and special name string) *)
-  val holba_run_id_ref    = ref (NONE:holba_run_refs option);
-  val holba_run_timer_ref = ref (NONE:Time.time option);
+  val holba_run_id_ref     = ref (NONE:holba_run_refs option);
+  val holba_run_timer_ref  = ref (NONE:Time.time option);
+  val holba_run_prog_l_idx = ref 0;
+  val holba_run_exp_l_idx  = ref 0;
+  val holba_run_prog_map   = ref (Redblackmap.mkDict prog_handle_compare);
+  val holba_run_exp_map    = ref (Redblackmap.mkDict exp_handle_compare );
   fun holba_run_id () =
     case !holba_run_id_ref of
         NONE =>
@@ -130,11 +135,16 @@ struct
             val run_refs = holba_run_create ();
             val RunReferences (run_id, run_name, _, _) = run_refs;
 
-            val _ = create_log holbarun_log (mk_run_meta_handle (run_id, SOME "log", ""));
+            val _ = set_log holbarun_log (create_log (mk_run_meta_handle (run_id, SOME "log", "")));
             val _ = write_log_line (holbarun_log, "holba_run_id", "no no no") ("Starting log for: " ^ run_name);
 
             val _ = holba_run_timer_ref := timer_start 1;
             val _ = holba_run_id_ref := SOME run_refs;
+
+            val _ = holba_run_prog_l_idx := 0;
+            val _ = holba_run_exp_l_idx  := 0;
+            val _ = holba_run_prog_map   := Redblackmap.mkDict prog_handle_compare;
+            val _ = holba_run_exp_map    := Redblackmap.mkDict exp_handle_compare;
           in
             run_refs
           end
@@ -162,6 +172,22 @@ struct
       close_log holbarun_log
     end;
 
+  local
+    open Redblackmap;
+  in
+    fun refdict_ld_gen_upd refd k genf i =
+      let
+        val d = !refd;
+        val v =
+          case peek(d, k) of
+             SOME x => x
+           | NONE => (let val v_ = genf i in (refd := insert(d, k, v_)); v_ end);
+      in v end;
+
+    fun gen_progexp_st (idx_ref, log_id) =
+      (((idx_ref := !idx_ref + 1); !idx_ref),
+       (create_log log_id));
+  end;
 
   (* storing to logs *)
   (* ========================================================================================= *)
@@ -174,16 +200,25 @@ struct
       val asm_code = prog_to_asm_code prog;
       val prog_v   = LogsProg (arch_id, asm_code);
       val prog_id  = create_prog prog_v;
-      val _        = add_to_prog_list (prog_l_id, prog_id);
 
-      val meta_name = "gen." ^ run_name ^ "." ^ (get_dotfree_time ());
+      val meta_name_log = "gen." ^ run_name;
+      val (list_index, log) =
+        refdict_ld_gen_upd
+          holba_run_prog_map
+          prog_id
+          gen_progexp_st
+          (holba_run_prog_l_idx, mk_prog_meta_handle (prog_id, SOME "log", meta_name_log));
+
+      (* add entry to prog list *)
+      val _ = add_to_prog_list (prog_l_id, prog_id, list_index);
+      (* set prog log *)
+      val _ = set_log prog_log log;
 
       (* add metadata *)
+      val meta_name = meta_name_log ^ "." ^ (get_dotfree_time ());
       val _ = List.map (fn (m_n, m_v) => 
         init_meta (mk_prog_meta_handle (prog_id, SOME m_n, meta_name)) (SOME m_v)) run_metadata;
 
-      (* create prog log, NOTICE: this is never closed (also not needed at the moment) *)
-      val _ = create_log prog_log (mk_prog_meta_handle (prog_id, SOME "log", meta_name));
     in
       prog_id
     end;
@@ -197,17 +232,24 @@ struct
       val input_data = Json.OBJECT (List.map (fn (n, s) => ("input_" ^ n, machstate_to_Json s)) state_list);
       val exp_v      = LogsExp (prog_id, exp_type_s, exp_params, input_data);
       val exp_id     = create_exp exp_v;
-      val _          = add_to_exp_list (exp_l_id, exp_id);
 
-      val meta_name = "gen." ^ run_name ^ "." ^ (get_dotfree_time ());
+      val meta_name_log = "gen." ^ run_name;
+      val (list_index, log) =
+        refdict_ld_gen_upd
+          holba_run_exp_map
+          exp_id
+          gen_progexp_st
+          (holba_run_exp_l_idx, mk_exp_meta_handle (exp_id, SOME "log", meta_name_log));
+
+      (* add entry to exp list *)
+      val _ = add_to_exp_list (exp_l_id, exp_id, !holba_run_exp_l_idx);
+      (* set exp log *)
+      val _ = set_log exp_log log;
 
       (* add metadata *)
+      val meta_name = meta_name_log ^ "." ^ (get_dotfree_time ());
       val _ = List.map (fn (m_n, m_v) => 
         init_meta (mk_exp_meta_handle (exp_id, SOME m_n, meta_name)) (SOME m_v)) run_metadata;
-
-      (* create exp log, NOTICE: this is never closed (also not needed at the moment) *)
-      val _ = create_log exp_log (mk_exp_meta_handle (exp_id, SOME "log", meta_name));
-
     in
       exp_id
     end;
@@ -226,7 +268,7 @@ struct
                     raise ERR "runlogs_load_progs" ("didn't find exactly one match for prog list " ^ listname);
       val prog_l_id = List.nth (prog_l_ids, i);
 
-      val prog_ids = get_prog_list_entries prog_l_id;
+      val prog_ids = List.map snd (get_prog_list_entries prog_l_id);
 
       val progs = List.map (fn (LogsProg (_,code)) => prog_from_asm_code code) (get_progs prog_ids);
     in

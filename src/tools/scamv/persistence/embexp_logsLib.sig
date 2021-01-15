@@ -15,6 +15,10 @@ sig
   eqtype meta_handle;
   datatype logs_meta = LogsMeta of (meta_handle * string option);
 
+  (* operations on handles *)
+  val prog_handle_compare : (prog_handle * prog_handle) -> order;
+  val exp_handle_compare  : (exp_handle  * exp_handle ) -> order;
+
   (* readable representation of handles *)
   val prog_list_handle_toString : prog_list_handle -> string;
   val exp_list_handle_toString  : exp_list_handle  -> string;
@@ -38,8 +42,8 @@ sig
   val create_exp  : logs_exp  -> exp_handle;
 
   (* adding progs/exps to corresponding lists *)
-  val add_to_prog_list : (prog_list_handle * prog_handle) -> unit;
-  val add_to_exp_list  : (exp_list_handle  * exp_handle ) -> unit;
+  val add_to_prog_list : (prog_list_handle * prog_handle * int) -> unit;
+  val add_to_exp_list  : (exp_list_handle  * exp_handle  * int) -> unit;
 
   (* adding metadata *)
   val init_meta    : meta_handle -> string option -> unit;
@@ -55,8 +59,8 @@ sig
   val get_exps  : exp_handle  list -> logs_exp  list;
 
   (* retrieval of progs/exps from lists *)
-  val get_prog_list_entries : prog_list_handle -> prog_handle list;
-  val get_exp_list_entries  : exp_list_handle  -> exp_handle  list;
+  val get_prog_list_entries : prog_list_handle -> (int * prog_handle) list;
+  val get_exp_list_entries  : exp_list_handle  -> (int * exp_handle ) list;
 
 (*
   (* retrieval of metdata *)

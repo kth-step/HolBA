@@ -172,21 +172,21 @@ val _ =
     "match for prog and exp result in the same handle again"
     (fn () => (create_prog prog_d_1 = prog_1) andalso (create_exp  exp_d_1 = exp_1));
 
-val _ = add_to_prog_list (prog_list_3, prog_1);
-val _ = add_to_exp_list (exp_list_2, exp_1);
+val _ = add_to_prog_list (prog_list_3, prog_1, 3);
+val _ = add_to_exp_list (exp_list_2, exp_1, 5);
 
 val _ =
   assert_w_descr
     "match for prog and exp entries result in no unique constraint exception"
-    (fn () => (add_to_prog_list (prog_list_3, prog_1);
-               add_to_exp_list (exp_list_2, exp_1);
+    (fn () => (add_to_prog_list (prog_list_3, prog_1, 3);
+               add_to_exp_list (exp_list_2, exp_1, 5);
                true));
 
 (* add entries to lists *)
-val _ = add_to_prog_list (prog_list_2, prog_1);
-val _ = add_to_prog_list (prog_list_2, prog_1);
-val _ = add_to_exp_list  (exp_list_2,  exp_1);
-val _ = add_to_exp_list  (exp_list_2,  exp_1);
+val _ = add_to_prog_list (prog_list_2, prog_1, 1);
+val _ = add_to_prog_list (prog_list_2, prog_1, 1);
+val _ = add_to_exp_list  (exp_list_2,  exp_1, 5);
+val _ = add_to_exp_list  (exp_list_2,  exp_1, 5);
 
 
 val meta_val_1 = "very important\n";
@@ -267,7 +267,7 @@ val (i, _) = if List.length prog_ls_filt = 1 then hd prog_ls_filt else
              raise Fail ("didn't find exactly one match for prog list " ^ listname);
 val prog_l_id = List.nth (prog_l_ids, i);
 
-val prog_ids = get_prog_list_entries prog_l_id;
+val prog_ids = List.map snd (get_prog_list_entries prog_l_id);
 
 val progs = get_progs prog_ids;
 
@@ -289,7 +289,7 @@ val _ =
     (fn () => (gen_prog_10 () = prog_10));
 
 val exp_v_10_m = [("meta100", "20"), ("meta23", "abc")];;
-fun gen_exp_10 () = run_create_exp prog_10 ExperimentTypeStdTwo "exp_params" [] exp_v_10_m;
+fun gen_exp_10 () = run_create_exp prog_10 ExperimentTypeStdTwo "exp_params" [("input a", experimentsLib.machstate_empty)] exp_v_10_m;
 val exp_10 = gen_exp_10 ();
 
 val _ =

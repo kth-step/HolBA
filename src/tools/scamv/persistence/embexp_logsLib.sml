@@ -92,6 +92,9 @@ fun run_db_a_ignore t vs =
   type meta_handle   = meta_type * (Arbnum.num * string option * string);
   datatype logs_meta = LogsMeta of (meta_handle * string option);
 
+  val prog_handle_compare = Arbnum.compare;
+  val exp_handle_compare = Arbnum.compare;
+
 (*
 *)
   fun prog_list_handle_toString id = "(ProgList, id=" ^ (Arbnum.toString id) ^ ")";
@@ -152,11 +155,12 @@ fun run_db_a_ignore t vs =
 
 (*
 *)
-  fun add_to__list (t, f1, f2) (l_id, x_id) =
+  fun add_to__list (t, f1, f2) (l_id, x_id, idx) =
     run_db_c_ignore true
       t
-      [(f1, NUMBER l_id),
-       (f2, NUMBER x_id)];
+      [(f1, NUMBER    l_id),
+       (f2, NUMBER    x_id),
+       ("list_index", NUMBER (Arbnum.fromInt idx))];
 
   fun add_to_prog_list le_d =
     add_to__list 
@@ -248,7 +252,7 @@ fun run_db_a_ignore t vs =
 
   fun unpack_list_entry x =
     case x of
-       [NUMBER _, NUMBER mem_id] => mem_id
+       [NUMBER _, NUMBER mem_id, NUMBER idx] => (Arbnum.toInt idx, mem_id)
      | _ => raise ERR "unpack_list_entry" "result not as expected";
 
   fun get_prog_lists ids =
