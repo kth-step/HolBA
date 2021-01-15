@@ -35,18 +35,25 @@ jobs:
           key: os-${{ runner.os }}_polyml-${{ matrix.polyml }}
 
       - name: Static analysis
+        timeout-minutes: 5
         run: |
           ./scripts/ci/static-analysis.sh || echo "Static-analysis failed with status $?."
 
       - name: Prepare cached dependencies
+        timeout-minutes: 35
         run: |
           ./scripts/setup/install_base.sh
           ./scripts/setup/install_z3.sh
 
-      - name: Configure, compile and test
+      - name: Configure and compile
+        timeout-minutes: 35
         run: |
           ./configure.sh
           ./scripts/ci/run_make.sh main
+
+      - name: Run tests
+        timeout-minutes: 35
+        run: |
           ./scripts/ci/run_make.sh tests
 
 
