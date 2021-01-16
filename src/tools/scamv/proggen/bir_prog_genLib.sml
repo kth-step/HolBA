@@ -148,8 +148,16 @@ struct
       val prog_with_halt = add_halt_to_prog len lifted_prog;
 
       val add_lifted_prog = true;
+      fun term_to_string_wtypes t =
+        let
+          val trace_val = Feedback.get_tracefn "types" ();
+          val _ = Feedback.set_trace "types" 1;
+          val s = term_to_string t;
+          val _ = Feedback.set_trace "types" trace_val;
+        in s end;
+
       val extra_metadata = if not add_lifted_prog then [] else
-        [("lifted_prog", term_to_string lifted_prog)];
+        [("lifted_prog", term_to_string_wtypes lifted_prog)];
 
       val prog_id = run_create_prog ArchARM8 prog ([("prog_gen_id", prog_gen_id)]@extra_metadata);
     in

@@ -161,10 +161,14 @@ struct
   fun run_finalize () =
     let
       val _ = holba_run_id ();
+      val gen_run_final_msg = ref "";
       val _ = timer_stop (fn d_time =>
-               run_log_raw ("\n\n======================================\n" ^
-                                   "Experiment generation duration: " ^ d_time)
+               gen_run_final_msg := (
+                "\n\n======================================\n" ^
+                "HolBA run persistence context finalized. Duration: " ^ d_time)
               ) (!holba_run_timer_ref);
+      val _ = print ((!gen_run_final_msg) ^ "\n");
+      val _ = run_log_raw (!gen_run_final_msg);
 
       val _ = holba_run_id_ref := NONE;
       val _ = holba_run_timer_ref := NONE;
