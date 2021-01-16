@@ -1,0 +1,4 @@
+driver-test -t 40 -i 1000 --obs_model cache_speculation --hw_obs_model hw_cache_tag_index -T --generator qc --generator_param spectre
+
+driver-test -t 40 -i 1000 --obs_model mem_address_pc --hw_obs_model hw_cache_tag_index -T --generator list --generator_param ""
+
