@@ -14,12 +14,12 @@ local
   val ERR      = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
-fun do_symb_exec prog rso =
+fun do_symb_exec prog =
     let
         (* leaf list *)
         val maxdepth = 5 * length (fst (dest_list (dest_BirProgram prog))) (* (~1); *)
         val precond = ``bir_exp_true``
-        val leafs = symb_exec_process_to_leafs_nosmt maxdepth precond prog rso;
+        val leafs = symb_exec_process_to_leafs_nosmt maxdepth precond prog;
 
         val numobss = List.foldr (op+) 0 (List.map (fn s => 
 	  let
@@ -79,8 +79,8 @@ in
 (* Given a program, run symbolic execution and return the feasible paths
   TODO filter out infeasible paths
  *)
-fun scamv_run_symb_exec p rso =
-    do_symb_exec p rso;
+fun scamv_run_symb_exec p =
+    do_symb_exec p;
 
 end
 

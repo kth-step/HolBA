@@ -168,7 +168,7 @@ end;
 
 fun scamv_phase_symb_exec () =
     let
-      val (paths, all_exps) = scamv_run_symb_exec (valOf (!current_prog_w_obs)) (SOME "*");
+      val (paths, all_exps) = scamv_run_symb_exec (valOf (!current_prog_w_obs));
 	    val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths;
       val ps = initialise paths;
       val _ = current_pathstruct := SOME ps;

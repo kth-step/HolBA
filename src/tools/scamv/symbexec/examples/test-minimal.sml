@@ -192,7 +192,7 @@ fun leafs_of p = symb_exec_process_to_leafs_nosmt maxdepth precond p;
 ============================
 *)
 
-val leafs_prog4 = leafs_of prog4 NONE;
+val leafs_prog4 = leafs_of prog4;
 
 val prog5 = ``BirProgram
   [<|bb_label :=
@@ -204,12 +204,6 @@ val prog5 = ``BirProgram
                      (BExp_Const (Imm64 0w))) (BLE_Label (BL_Address (Imm64 8200w)))
        (BLE_Label (BL_Address (Imm64 8w)))|>]``;
 
-fun check_with_wrong_suffix suffopt suff prog =
-  case (SOME (leafs_of prog suffopt)
-       handle _ => NONE) of
-     SOME _ => raise Fail "script::this is not right"
-   | NONE => leafs_of prog (SOME suff);
 
-val leafs_prog5_1 = check_with_wrong_suffix NONE "*" prog5;
-val leafs_prog5_2 = check_with_wrong_suffix (SOME "?") "*" prog5;
+val leafs_prog4 = leafs_of prog5;
 

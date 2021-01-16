@@ -14,6 +14,6 @@ signature bir_symb_init_envLib = sig
   val generate_symbolic_register_64   : string -> term
   val generate_symbolic_register_8    : string -> term
 *)
-  val init_env                        : term -> string option -> term
+  val init_env                        : term -> term
 
 end
