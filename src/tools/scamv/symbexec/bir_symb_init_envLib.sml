@@ -70,7 +70,7 @@ fun genf_ultimate (name_hol, bty) =
   else
     raise ERR "genf_ultimate" "unexpected hol term";
 
-val env_empty = ``BEnv FEMPTY``;
+val env_empty = ``BSEnv FEMPTY``;
 
 fun init_env bir_program =
   let

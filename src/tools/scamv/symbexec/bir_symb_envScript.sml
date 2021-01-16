@@ -18,7 +18,7 @@ open listTheory;
 val _ = new_theory "bir_symb_env";
 
 val _ = Datatype `bir_symb_var_environment_t = 
-  BEnv (string |-> (bir_type_t # (bir_exp_t)))`;
+  BSEnv (string |-> (bir_type_t # (bir_exp_t)))`;
   
 
 (* -----------------------------------------------------*)
@@ -33,22 +33,22 @@ val fmap_update_replace_def = Define `
     | SOME v => FUPDATE (map \\  a ) (a, b)`;
 
 val bir_symb_env_read_def  = Define `
-    (bir_symb_env_read v (BEnv env) = 
+    (bir_symb_env_read v (BSEnv env) = 
         case (FLOOKUP  env (bir_var_name v)) of 
         | NONE => ARB (* this means we don't expect this case,
                          all variables of expressions should be in the environment *)
         | SOME (ty, e) => e)`;
 
 val bir_symb_env_lookup_def = Define `
-    (bir_symb_env_lookup name (BEnv env) = 
+    (bir_symb_env_lookup name (BSEnv env) = 
         FLOOKUP env name)`;
 
 val bir_symb_env_update_def = Define `
-    bir_symb_env_update varname vo ty (BEnv env) = 
-    BEnv (fmap_update_replace env (varname, (ty, vo)))`;
+    bir_symb_env_update varname vo ty (BSEnv env) = 
+    BSEnv (fmap_update_replace env (varname, (ty, vo)))`;
 
 val bir_symb_env_lookup_type_def = Define `
-    bir_symb_env_lookup_type var (BEnv env) = 
+    bir_symb_env_lookup_type var (BSEnv env) = 
         case (FLOOKUP env (bir_var_name var)) of 
         | NONE => NONE 
         | SOME (ty, e) => SOME ty`;
@@ -58,7 +58,7 @@ val bir_symb_check_type_def = Define `
         (bir_symb_env_lookup_type var env = SOME (bir_var_type var))`;
 
 val bir_symb_varname_is_bound_def = Define `
-    bir_symb_varname_is_bound var_name (BEnv env) = 
+    bir_symb_varname_is_bound var_name (BSEnv env) = 
     case (FLOOKUP env var_name) of 
     | NONE => F 
     | SOME (_) => T`;
