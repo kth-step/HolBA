@@ -174,27 +174,32 @@ struct
 (* load from logs prog list *)
 (* ========================================================================================= *)
 local
-  val last_filelist  = ref "";
+  val last_listname  = ref "";
   val last_prog_list = ref [];
   val last_cur_idx   = ref 0;
 in
-  fun load_next_fromlistfile filename =
+  fun load_next_fromlist listname =
     let
       val _ =
-        if !last_filelist = filename then
+        if !last_listname = listname then
           (last_cur_idx   := !last_cur_idx + 1)
         else
-          (last_filelist  := filename;
+          (last_listname  := listname;
            last_prog_list := [];
            last_cur_idx   := 0;
-           last_prog_list := runlogs_load_progs filename);
+           last_prog_list :=
+            let
+              val _ = print ("\nloading programs from the list \"" ^ listname ^ "\".\n");
+              val progs = runlogs_load_progs listname;
+              val _ = print ("finished loading " ^ (Int.toString (length progs)) ^ " programs.\n\n");
+            in progs end);
 
       val (prog_list, cur_idx) = (!last_prog_list, !last_cur_idx);
     in
       if cur_idx < List.length prog_list then
         List.nth (prog_list, cur_idx)
       else
-        raise ERR "load_next_fromlistfile" "end of progs listfile reached"
+        raise ERR "load_next_fromlist" "end of preloaded progs from list reached"
     end
 end;
 
@@ -207,7 +212,7 @@ fun lines_gen_fun f a =
 fun prog_gen_store_fromfile filename   = prog_gen_store "prog_gen_fromfile"          false load_asm_lines                 filename;
 fun prog_gen_store_fromlines asmlines  = prog_gen_store "prog_gen_fromlines"         false mk_experiment_prog             asmlines;
 
-fun prog_gen_store_listfile filename   = prog_gen_store "prog_gen_listfile"          false load_next_fromlistfile         filename;
+fun prog_gen_store_list     listname   = prog_gen_store "prog_gen_list"              false load_next_fromlist             listname;
 
 fun prog_gen_store_rand param sz       = prog_gen_store ("prog_gen_rand::"^param)    true
   (lines_gen_fun (bir_prog_gen_arm8_rand param)) sz;

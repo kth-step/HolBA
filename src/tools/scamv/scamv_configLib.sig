@@ -6,7 +6,7 @@ sig
                       | qc
                       | slice
                       | from_file
-                      | from_listfile
+                      | from_list
 
     datatype obs_model = mem_address_pc
                        | cache_tag_index

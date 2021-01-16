@@ -316,6 +316,34 @@ fun run_db_a_ignore t vs =
   fun query_all_prog_lists () = get_all_ids "exp_progs_lists";
   fun query_all_exp_lists  () = get_all_ids "exp_exps_lists";
 
+(*
+*)
+  fun get_all_ids t =
+    case get_db_q (run_db_q_all true t) of
+       ([STRING s_id], jsonids)
+         => if s_id = "id" then List.map (fn x => case x of
+                ARRAY [NUMBER i] => i | _ => raise ERR "get_all_ids" "result not as expected") jsonids else
+            raise ERR "get_all_ids" "result not as expected"
+     | _ => raise ERR "get_all_ids" "result not as expected";
+
+  fun query_all_prog_lists () = get_all_ids "exp_progs_lists";
+  fun query_all_exp_lists  () = get_all_ids "exp_exps_lists";
+
+(*
+*)
+val run_db_h = run_db "hack";
+fun run_db_h_gen tn = run_db_h (
+  STRING tn);
+
+  fun get_hack_from_id_mult unpack_fun tn =
+    case get_db_q (run_db_h_gen tn) of
+       (_, xs) => List.map (fn x => case x of
+               ARRAY vals => unpack_fun vals
+             | _ => raise ERR "get_all_ids_mult" "result not as expected") xs;
+
+fun hack_get_prog_list_by_listname listname =
+get_hack_from_id_mult unpack_logs_prog listname;
+
 
 end (* local *)
 end (* struct *)

@@ -87,6 +87,8 @@ sig
                            Json.json option) list
                           -> exp_handle  list;
 *)
+  (* TODO: generalize this ad-hoc query *)
+  val hack_get_prog_list_by_listname : string -> logs_prog list;
 
   (* function to enable the testing mode, i.e., uses the testing db *)
   val set_testing : unit -> unit;

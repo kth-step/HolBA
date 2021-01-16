@@ -398,9 +398,9 @@ fun match_prog_gen gen sz generator_param =
       | from_file => (case generator_param of
               SOME x => prog_gen_store_fromfile x
             | NONE   => raise ERR "match_prog_gen::from_file" "file needs to be specified as generator_param")
-      | from_listfile => (case generator_param of
-              SOME x => prog_gen_store_listfile x
-            | NONE   => raise ERR "match_prog_gen::from_file" "listfile needs to be specified as generator_param")
+      | from_list    => (case generator_param of
+              SOME x => prog_gen_store_list x
+            | NONE   => raise ERR "match_prog_gen::from_list" "list needs to be specified as generator_param")
       | prefetch_strides => prog_gen_store_prefetch_stride sz
       | _ => raise ERR "match_prog_gen" ("unknown generator type: " ^ (PolyML.makestring gen));
 

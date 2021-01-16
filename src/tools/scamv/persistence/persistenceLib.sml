@@ -263,6 +263,7 @@ struct
   (* ========================================================================================= *)
   fun runlogs_load_progs listname =
     let
+      (*
       val prog_l_ids = query_all_prog_lists ();
       val prog_ls = get_prog_lists prog_l_ids;
 
@@ -274,7 +275,11 @@ struct
 
       val prog_ids = List.map snd (get_prog_list_entries prog_l_id);
 
-      val progs = List.map (fn (LogsProg (_,code)) => prog_from_asm_code code) (get_progs prog_ids);
+      val progs_i = get_progs prog_ids;
+      *)
+      val progs_i = hack_get_prog_list_by_listname listname;
+
+      val progs = List.map (fn (LogsProg (_,code)) => prog_from_asm_code code) progs_i;
     in
       progs
     end;

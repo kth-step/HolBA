@@ -25,7 +25,7 @@ signature bir_prog_genLib = sig
 
   val prog_gen_store_fromfile        : string      -> unit -> embexp_logsLib.prog_handle * term
   val prog_gen_store_fromlines       : string list -> unit -> embexp_logsLib.prog_handle * term
-  val prog_gen_store_listfile        : string      -> unit -> embexp_logsLib.prog_handle * term
+  val prog_gen_store_list            : string      -> unit -> embexp_logsLib.prog_handle * term
 
   val prog_gen_store_rand            : string->int -> unit -> embexp_logsLib.prog_handle * term
   val prog_gen_store_a_la_qc         : string->int -> unit -> embexp_logsLib.prog_handle * term
