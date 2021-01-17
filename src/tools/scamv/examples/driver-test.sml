@@ -6,10 +6,32 @@ open bir_rel_synthLib;
 val _ = Library.trace := 100;
 *)
 
+
+(* enable handling of interrupt signals *)
+fun sigint_handler() =
+  let
+    open Signal
+  in
+    case signal(2, SIG_IGN) of
+        SIG_IGN => ()
+     |  SIG_DFL =>
+        (signal(2, SIG_HANDLE (fn _ => Thread.broadcastInterrupt())); ())
+     |  oldHandle => (signal(2, oldHandle); ())
+  end;
+
+
+
 (* scamv_test_main "asm/branch.s"; *)
 (*scamv_test_asmf "asm/branch.s"; *)
 (* scamv_run { max_iter = 10, prog_size = 3, max_tests = 4 }; *)
-scamv_run_with_opts ();
+fun main_holba () =
+  let
+    val _ = print("Starting Scam-V...\n\n");
+
+    val _ = sigint_handler();
+
+    val _ = scamv_run_with_opts ();
+  in () end;
 
 (*
 val (_,sections) = prog_gen_from_file "asm/branch.s";

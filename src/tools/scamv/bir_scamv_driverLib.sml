@@ -365,7 +365,11 @@ fun scamv_test_main tests prog =
         fun do_tests 0 =  (current_word_rel := NONE; current_full_specs := []; current_visited_map := init_visited ())
           | do_tests n =
             let val _ = next_experiment [] next_relation
-                        handle e => (
+                        handle Thread.Interrupt => (
+                            print        "Keyboard interrupt!\n";
+                            run_log_prog "Keyboard interrupt!\n";
+                            raise Thread.Interrupt)
+                            |  e => (
                                let
                                  val message = "Skipping test case due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n";
                                in
@@ -483,7 +487,11 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
                 scamv_test_main tests prog
                 handle e => (run_log_prog (skipProgExText e); raise e)
               end
-              handle e => print (skipProgExText e));
+              handle Thread.Interrupt => (
+                        print   "Keyboard interrupt!\n";
+                        run_log "Keyboard interrupt!\n";
+                        raise Thread.Interrupt)
+                   | e => print (skipProgExText e));
              main_loop (n-1))
     in
         (main_loop m
