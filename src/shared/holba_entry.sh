@@ -44,7 +44,12 @@ source "${HOLBA_DIR}/env.sh"
 HEAPNAME=${HOLBA_DIR}/src/HolBA-heap
 BUILDHEAP=${HOLBA_HOL_DIR}/bin/buildheap
 
-"${BUILDHEAP}" --gcthreads=1 --holstate="${HEAPNAME}" "${SCRIPT_NAME}" --extra="${FORWARD_ARGS}"
+echo
+#"${BUILDHEAP}" --gcthreads=1 --holstate="${HEAPNAME}" "${SCRIPT_NAME}" --extra="${FORWARD_ARGS}"
+echo "Building executable now."
+"${BUILDHEAP}" --holstate="${HEAPNAME}" "${SCRIPT_NAME}" -o main_holba.exe --exe main_holba --extra="${FORWARD_ARGS}"
+echo "Done building executable."
+./main_holba.exe --extra="${FORWARD_ARGS}"
 
 exit 0
 
