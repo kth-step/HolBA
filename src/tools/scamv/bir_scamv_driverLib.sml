@@ -33,6 +33,33 @@ open scamv_trainingLib;
   val ERR      = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname 
 
+fun print_exn_location_option printfun (lo: PolyML.location option) =
+  case lo of
+     NONE => printfun "NO EXCEPTION LOCATION\n\n"
+   | SOME (l:{file: string, startLine: int, endLine: int, startPosition: int, endPosition: int}) => (
+       let val s1 =
+         "EXCEPTION LOCATION:\n" ^
+         " - file:      " ^ (#file l) ^ "\n" ^
+         " - lines:     " ^ (Int.toString (#startLine l))     ^ "-" ^ (Int.toString (#endLine l))     ^ "\n" ^
+         " - positions: " ^ (Int.toString (#startPosition l)) ^ "-" ^ (Int.toString (#endPosition l)) ^ "\n" ^
+         "\n";
+       in printfun s1 end);
+
+fun handle_locinfo printfun f =
+  let
+    val r =
+      PolyML.Exception.traceException (f, (fn (l,e) => (
+        printfun ("\nTRACE\n==================\nEXCEPTION: " ^ (PolyML.makestring e) ^ "\n");
+        print "EXCEPTION TRACE:\n";
+        List.map print l ;
+        PolyML.Exception.reraise e)))
+      (* PolyML.Exception.exception_trace f *)
+      handle e => (
+        printfun ("\nEXCEPTION: " ^ (PolyML.makestring e) ^ "\n");
+        print_exn_location_option printfun (PolyML.Exception.exceptionLocation e);
+        PolyML.Exception.reraise e);
+  in r end;
+
 (*
  workflow:
  - (a) program generation
@@ -364,11 +391,10 @@ fun scamv_test_main tests prog =
         val _ = current_full_specs := full_specs;
         fun do_tests 0 =  (current_word_rel := NONE; current_full_specs := []; current_visited_map := init_visited ())
           | do_tests n =
-            let val _ = next_experiment [] next_relation
-                        handle Thread.Interrupt => (
-                            print        "Keyboard interrupt!\n";
+            let val _ = (handle_locinfo print (fn () => next_experiment [] next_relation))
+                        handle e as Thread.Interrupt => (
                             run_log_prog "Keyboard interrupt!\n";
-                            raise Thread.Interrupt)
+                            PolyML.Exception.reraise e)
                             |  e => (
                                let
                                  val message = "Skipping test case due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n";
@@ -485,16 +511,15 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
              (let val prog = prog_store_fun ()
               in
                 scamv_test_main tests prog
-                handle e => (run_log_prog (skipProgExText e); raise e)
+                handle e => (run_log_prog (skipProgExText e); PolyML.Exception.reraise e)
               end
-              handle Thread.Interrupt => (
-                        print   "Keyboard interrupt!\n";
+              handle e as Thread.Interrupt => (
                         run_log "Keyboard interrupt!\n";
-                        raise Thread.Interrupt)
+                        PolyML.Exception.reraise e)
                    | e => print (skipProgExText e));
              main_loop (n-1))
     in
-        (main_loop m
+        ((handle_locinfo print (fn () => main_loop m))
          handle _ => ()); run_finalize ()
     end;
 
