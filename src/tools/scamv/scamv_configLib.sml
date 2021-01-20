@@ -26,6 +26,7 @@ datatype obs_model = mem_address_pc
                    | cache_tag_index_part
                    | cache_tag_index_part_page
                    | cache_speculation
+                   | cache_speculation_first
 
 datatype hw_obs_model = hw_cache_tag_index
                       | hw_cache_index_numvalid
@@ -81,6 +82,7 @@ fun obs_model_fromString om =
       | "cache_tag_index_part"      => SOME cache_tag_index_part
       | "cache_tag_index_part_page" => SOME cache_tag_index_part_page
       | "cache_speculation"         => SOME cache_speculation
+      | "cache_speculation_first"   => SOME cache_speculation_first
       | _                           => NONE
 
 fun hw_obs_model_fromString hwom =

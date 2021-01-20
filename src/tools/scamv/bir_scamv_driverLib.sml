@@ -459,6 +459,8 @@ fun match_obs_model obs_model =
         "cache_tag_index_part"
       | cache_speculation =>
         "cache_speculation"
+      | cache_speculation_first =>
+        "cache_speculation_first"
       | cache_tag_index_part_page =>
         "cache_tag_index_part_page"
       | _ => raise ERR "match_obs_model" ("unknown obs_model " ^ PolyML.makestring obs_model);
