@@ -339,16 +339,17 @@ fun next_experiment all_exps next_relation  =
 
 	(* ------------------------- training start ------------------------- *)
         val paths = valOf (!current_pathstruct);
-        val st =
+        val st_o =
             if !do_training
             then
+              SOME (
               compute_training_state (!current_full_specs)
                                      (!current_obs_projection)
                                      (lookup_visited (!current_visited_map) path_spec)
                                      (fst (#a_run path_spec))
-                                     paths
+                                     paths)
             else
-              machstate_empty;
+              NONE;
 	(* ------------------------- training end ------------------------- *)
 	(* val _ = print_term (valOf (!current_word_rel)); *)
 
@@ -376,7 +377,7 @@ fun next_experiment all_exps next_relation  =
             prog_id
             ExperimentTypeStdTwo
             (!hw_obs_model_id)
-            [("1", s1), ("2", s2), ("train", st)]
+            ([("1", s1), ("2", s2)]@(case st_o of NONE => [] | SOME st => [("train", st)]))
             [("state_gen_id", !current_obs_model_id), ("time", d_s)];
         val exp_gen_message = "Generated experiment: " ^ (embexp_logsLib.exp_handle_toString exp_id);
         val _ = run_log_prog exp_gen_message;
@@ -389,22 +390,32 @@ fun scamv_test_main tests prog =
         val _ = reset();
         val (full_specs, validity, next_relation) = scamv_per_program_init prog;
         val _ = current_full_specs := full_specs;
-        fun do_tests 0 =  (current_word_rel := NONE; current_full_specs := []; current_visited_map := init_visited ())
-          | do_tests n =
-            let val _ = (handle_locinfo print (fn () => next_experiment [] next_relation))
-                        handle e as Thread.Interrupt => (
-                            run_log_prog "Keyboard interrupt!\n";
-                            PolyML.Exception.reraise e)
-                            |  e => (
-                               let
-                                 val message = "Skipping test case due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n";
-                               in
-                                 run_log_prog message;
-                                 print message
-                               end
-                        )
-            in do_tests (n-1) end
-    in do_tests tests
+        val exit_threshold = tests;
+        fun init_tests () = (current_word_rel := NONE; current_full_specs := []; current_visited_map := init_visited ());
+        fun do_tests _ 0 = init_tests ()
+          | do_tests 0 _ = (init_tests (); raise ERR "scamv_test_main" ("couldn't generate new test cases for " ^ (Int.toString exit_threshold) ^ " times"))
+          | do_tests r n =
+            let val success =
+              (handle_locinfo print (fn () => next_experiment [] next_relation); true)
+              handle e as Thread.Interrupt => (
+                  run_log_prog "Keyboard interrupt!\n";
+                  PolyML.Exception.reraise e)
+                  |  e => (
+                    let
+                      val message = "Skipping test case due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n";
+                    in
+                      run_log_prog message;
+                      print message;
+                      false
+                    end
+              )
+            in
+              if success then
+                do_tests exit_threshold (n-1)
+              else
+                do_tests (r-1) n
+            end
+    in do_tests exit_threshold tests
     end
 
 fun scamv_test_single_file filename =
