@@ -49,7 +49,7 @@ echo
 echo "Building executable now."
 "${BUILDHEAP}" --holstate="${HEAPNAME}" "${SCRIPT_NAME}" -o main_holba.exe --exe main_holba --extra="${FORWARD_ARGS}"
 echo "Done building executable."
-./main_holba.exe --extra="${FORWARD_ARGS}"
+./main_holba.exe --gcthreads=1 --extra="${FORWARD_ARGS}"
 
 exit 0
 
