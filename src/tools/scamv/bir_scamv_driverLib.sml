@@ -377,7 +377,7 @@ fun next_experiment all_exps next_relation  =
             prog_id
             ExperimentTypeStdTwo
             (!hw_obs_model_id)
-            ([("1", s1), ("2", s2)]@(case st_o of NONE => [] | SOME st => [("train", st)]))
+            ([("1", s1), ("2", s2)]@(Portable.the_list (Option.map (fn st => ("train", st)) st_o)))
             [("state_gen_id", !current_obs_model_id), ("time", d_s)];
         val exp_gen_message = "Generated experiment: " ^ (embexp_logsLib.exp_handle_toString exp_id);
         val _ = run_log_prog exp_gen_message;
