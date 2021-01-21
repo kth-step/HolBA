@@ -11,6 +11,7 @@ datatype BranchCond = EQ | NE | LT | GT | HS
 datatype Operand =
            Imm of int
          | Ld  of int option * string
+         | Ld2 of string * string
          | Reg of string
 datatype ArmInstruction =
            Load    of Operand * Operand
@@ -27,6 +28,8 @@ fun pp_operand (Imm n) = "#0x" ^ Int.fmt StringCvt.HEX n
   | pp_operand (Ld (NONE, src)) = "[" ^ src ^ "]"
   | pp_operand (Ld (SOME offset, src)) =
     "[" ^ src ^ ", #" ^ Int.toString offset ^ "]"
+  | pp_operand (Ld2(src2, src)) =
+    "[" ^ src ^ ", " ^ src2 ^ "]"
   | pp_operand (Reg str) = str
 
 fun pp_opcode (Load _)    = "ldr"
@@ -275,6 +278,66 @@ val arb_program_xld_br_yld =
       return (block1 @ block2)
     )))
   end;
+
+
+(* =============== spectre v1 ================= *)
+(*
+if (x < len(array1))
+  { y = array2[array1[x] * 4096]; }
+
+CMP x, la1
+B.HS #end
+LDR y, [a1, x]
+MUL y, y, 4k
+LDR z, [a2, y]
+*)
+local
+  val reg_x   = "x1";
+  val reg_la1 = "x2";
+  val reg_a1  = "x3";
+  val reg_y   = "x4";
+  val reg_a2  = "x5";
+  val reg_z   = "x6";
+
+  fun to_spe_v1_lsl i =
+    Lsl (Reg reg_y, Reg reg_y, Imm i);
+
+  val muls_ref =
+    ref (List.map (Option.map (to_spe_v1_lsl)) [
+      NONE,
+      SOME 0,  (* 1    *)
+      SOME 1,  (* 2    *)
+      SOME 6,  (* 64   *)
+      SOME 7,  (* 128  *)
+      SOME 9,  (* 512  *)
+      SOME 12, (* 4096 *)
+      SOME 13  (* 8192 *)
+    ]);
+
+  fun get_next_spectre_v1_mul () =
+    case !muls_ref of
+       [] => raise Fail "asm_genLib::get_next_spectre_v1_mul::no more options"
+     | (x::xs) => (muls_ref := xs; x);
+in
+  val arb_program_spectre_v1 =
+    let
+      fun skip_instrs bc_o bl = Branch (bc_o, Imm ((length(bl) + 1) * 4));
+      fun gen_arr_bnds_chck_acc arr_acc_gen = arr_acc_gen >>= (fn arr_acc => return (
+        [
+          Compare (Reg reg_x, Reg reg_la1),
+          skip_instrs (SOME HS) arr_acc
+        ]@
+        arr_acc
+        ));
+
+      val gen_arr_acc = arb_nop >>= (fn _ => return (
+        [Load (Reg reg_y, Ld2 (reg_x, reg_a1))]@
+        (Portable.the_list (get_next_spectre_v1_mul ()))@
+        [Load (Reg reg_z, Ld2 (reg_y, reg_a2))]));
+    in
+      gen_arr_bnds_chck_acc gen_arr_acc
+    end;
+end;
 
 
 (* ================================ *)

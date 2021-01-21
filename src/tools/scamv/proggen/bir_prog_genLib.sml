@@ -227,6 +227,7 @@ fun pgen_qc_param param =
    | "previct5"   => prog_gen_a_la_qc arb_program_previct5
    | "spectre"    => prog_gen_a_la_qc_noresize arb_program_spectre
    | "xld_br_yld" => prog_gen_a_la_qc arb_program_xld_br_yld
+   | "spectre_v1" => prog_gen_a_la_qc arb_program_spectre_v1
    | _            => raise ERR "prog_gen_store_a_la_qc" "unknown qc generator";
 
 fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^param) true
