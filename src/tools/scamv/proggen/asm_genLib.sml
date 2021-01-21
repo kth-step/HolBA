@@ -7,7 +7,7 @@ open qc_genLib;
 infix 5 <$>;
 infix 5 >>=;
 
-datatype BranchCond = EQ | NE | LT | GT
+datatype BranchCond = EQ | NE | LT | GT | HS
 datatype Operand =
            Imm of int
          | Ld  of int option * string
@@ -43,6 +43,7 @@ fun pp_cond bc =
       | NE => "ne"
       | LT => "lt"
       | GT => "gt"
+      | HS => "hs"
 
 fun pp_instr instr =
     case instr of
@@ -70,10 +71,11 @@ end
 
 (* arb instances *)
 local
-    val min_addr = 0x1000;
-    val max_addr = 0x2000;
+  val min_addr = 0x1000;
+  val max_addr = 0x2000;
 in
-val arb_addr = choose (min_addr, max_addr);
+  val arb_addr = choose (min_addr, max_addr);
+end
 
 val arb_armv8_regname =
     let
@@ -90,7 +92,7 @@ val arb_operand =
         ,(5, arb_reg)]
 
 val arb_branchcond =
-    let val arb_cond = elements [EQ, NE, LT, GT];
+    let val arb_cond = elements [EQ, NE, LT, GT, HS];
     in
         arb_option arb_cond
     end;
@@ -137,6 +139,18 @@ fun arb_program_cond arb_prog_left arb_prog_right =
     arb_prog
   end;
 
+fun arb_program_cond_sing bc_o arb_prog =
+  let
+    fun rel_jmp_after bl = Imm (((length bl) + 1) * 4);
+  in
+    arb_compare >>= (fn cmp =>
+    arb_prog    >>= (fn block =>
+      return ([cmp, Branch (bc_o, rel_jmp_after block)]@block)
+    ))
+  end;
+
+
+(* ================ Previction generator ================== *)
 val arb_program_previct1 =
   let
     val arb_pad = sized (fn n => choose (0, n)) >>=
@@ -237,14 +251,30 @@ val arb_program_previct5 =
                                  ,arb_pad
                                  ,return [ld2]
                                  ,return [ld3]
-                                 ]) in
+                                 ]);
+        in
           two (return [ld1, ld2, ld3]) arb_block_3ld
         end
       )));
   in
     arb_leftright >>= (fn (l,r) => arb_program_cond (return l) (return r))
   end;
-end
+
+
+(* =============== xld_br_yld ================= *)
+val arb_program_xld_br_yld =
+  let
+    val arb_load_instr = arb_load_indir;
+    val arb_upto_n_lds =
+      sized (fn n => choose (0, n)) >>= (fn n =>
+      resize n (arb_list_of arb_load_instr));
+  in
+    arb_upto_n_lds >>= (fn block1 =>
+    arb_branchcond >>= (fn bc_o =>
+    arb_program_cond_sing bc_o arb_upto_n_lds >>= (fn block2 =>
+      return (block1 @ block2)
+    )))
+  end;
 
 
 (* ================================ *)

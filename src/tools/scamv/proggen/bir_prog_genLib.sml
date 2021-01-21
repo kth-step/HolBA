@@ -219,14 +219,15 @@ fun prog_gen_store_rand param sz       = prog_gen_store ("prog_gen_rand::"^param
 
 fun pgen_qc_param param =
   case param of
-     "xld"      => prog_gen_a_la_qc arb_program_load
-   | "previct1" => prog_gen_a_la_qc arb_program_previct1
-   | "previct2" => prog_gen_a_la_qc arb_program_previct2
-   | "previct3" => prog_gen_a_la_qc arb_program_previct3
-   | "previct4" => prog_gen_a_la_qc arb_program_previct4
-   | "previct5" => prog_gen_a_la_qc arb_program_previct5
-   | "spectre"  => prog_gen_a_la_qc_noresize arb_program_spectre
-   | _          => raise ERR "prog_gen_store_a_la_qc" "unknown qc generator";
+     "xld"        => prog_gen_a_la_qc arb_program_load
+   | "previct1"   => prog_gen_a_la_qc arb_program_previct1
+   | "previct2"   => prog_gen_a_la_qc arb_program_previct2
+   | "previct3"   => prog_gen_a_la_qc arb_program_previct3
+   | "previct4"   => prog_gen_a_la_qc arb_program_previct4
+   | "previct5"   => prog_gen_a_la_qc arb_program_previct5
+   | "spectre"    => prog_gen_a_la_qc_noresize arb_program_spectre
+   | "xld_br_yld" => prog_gen_a_la_qc arb_program_xld_br_yld
+   | _            => raise ERR "prog_gen_store_a_la_qc" "unknown qc generator";
 
 fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^param) true
   (lines_gen_fun (pgen_qc_param param))          sz;

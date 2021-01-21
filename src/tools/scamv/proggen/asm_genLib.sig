@@ -2,7 +2,7 @@ signature asm_genLib =
 sig
     include qc_genLib;
 
-     datatype BranchCond = EQ | NE | LT | GT
+     datatype BranchCond = EQ | NE | LT | GT | HS
      datatype Operand =
               Imm of int
             | Ld  of int option * string
@@ -35,6 +35,8 @@ sig
     val arb_program_previct3 : ArmInstruction list Gen;
     val arb_program_previct4 : ArmInstruction list Gen;
     val arb_program_previct5 : ArmInstruction list Gen;
+
+    val arb_program_xld_br_yld : ArmInstruction list Gen;
 
     val prog_gen_a_la_qc : ArmInstruction list Gen -> int -> string list;
     val prog_gen_a_la_qc_noresize : ArmInstruction list Gen -> int -> string list;
