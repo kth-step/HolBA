@@ -1,4 +1,16 @@
-driver-test -t 40 -i 1000 --obs_model cache_speculation --hw_obs_model hw_cache_tag_index -T --generator qc --generator_param spectre
+-t 40 -i 1000 --obs_model cache_speculation --hw_obs_model hw_cache_tag_index -T --generator qc --generator_param spectre
+-t 40 -i 1000 --obs_model mem_address_pc --hw_obs_model hw_cache_tag_index -T --generator list --generator_param ""
 
-driver-test -t 40 -i 1000 --obs_model mem_address_pc --hw_obs_model hw_cache_tag_index -T --generator list --generator_param ""
+
+--max_iter 420 --prog_size 5 --max_tests 40 --enumerate --generator prefetch_strides --obs_model cache_tag_index_part --hw_obs_model hw_cache_tag_index_part
+--max_iter 420 --prog_size 5 --max_tests 40 --generator list --generator_param "" --obs_model cache_tag_index_part --hw_obs_model hw_cache_tag_index_part
+
+--max_iter 420 --prog_size 5 --max_tests 40 --enumerate --generator list --generator_param "" --obs_model cache_tag_index_part_page --hw_obs_model hw_cache_tag_index_part_page
+
+
+-t 40 -i 1000 --obs_model cache_speculation --hw_obs_model hw_cache_tag_index -T --generator qc --generator_param "xld_br_yld"
+-t 40 -i 1000 --obs_model mem_address_pc --hw_obs_model hw_cache_tag_index -T --generator list --generator_param ""
+
+
+-t 40 -i 1000 --obs_model cache_speculation_first --hw_obs_model hw_cache_tag_index -T --generator qc --generator_param "spectre_v1"
 
