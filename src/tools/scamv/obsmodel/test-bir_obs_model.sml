@@ -22,6 +22,7 @@ val mem_bounds =
 
 (*
 (bir_prog_genLib.prog_gen_store_a_la_qc "spectre" 100) ()
+(bir_prog_genLib.prog_gen_store_a_la_qc "spectre" 100) ()
 *)
 
 (* ========================= prog_1 - branch and merge (spectre) =========================== *)
@@ -1333,6 +1334,10 @@ BirProgram
 :bir_val_t bir_program_t
 ``;
 
+val prog_1_cache_speculation_first = ``
+F
+``;
+
 val prog_1_test =
   ("prog_1 - branch and merge", prog_1,
      (prog_1_mem_address_pc,
@@ -1341,7 +1346,8 @@ val prog_1_test =
       prog_1_cache_index_only,
       prog_1_cache_tag_index_part,
       prog_1_cache_tag_index_part_page,
-      prog_1_cache_speculation)
+      prog_1_cache_speculation,
+      prog_1_cache_speculation_first)
   );
 
 
@@ -1386,6 +1392,10 @@ val prog_2_cache_speculation = ``
 F
 ``;
 
+val prog_2_cache_speculation_first = ``
+F
+``;
+
 val prog_2_test =
   ("prog_2 - empty program", prog_2,
      (prog_2_mem_address_pc,
@@ -1394,7 +1404,8 @@ val prog_2_test =
       prog_2_cache_index_only,
       prog_2_cache_tag_index_part,
       prog_2_cache_tag_index_part_page,
-      prog_2_cache_speculation)
+      prog_2_cache_speculation,
+      prog_2_cache_speculation_first)
   );
 
 
@@ -1416,7 +1427,7 @@ fun run_test_case (name, prog, expected) =
     val _ = print ("running test case '" ^ name ^ "' ...\n");
 
     fun fold_obs_add ((m, p), l) =
-      if identical p ``F`` then (print ("!!! no expected output for '" ^ m ^ "' !!!"); l)
+      if identical p ``F`` then (print ("!!! no expected output for '" ^ m ^ "' !!!\n"); l)
       else (((#add_obs (get_obs_model m)) mem_bounds prog, p)::l);
 
     val (expected_mem_address_pc,
@@ -1425,7 +1436,8 @@ fun run_test_case (name, prog, expected) =
          expected_cache_index_only,
          expected_cache_tag_index_part,
          expected_cache_tag_index_part_page,
-         expected_cache_speculation) = expected;
+         expected_cache_speculation,
+         expected_cache_speculation_first) = expected;
 
     val progs_list_raw =
       [("mem_address_pc",            expected_mem_address_pc),
@@ -1434,7 +1446,8 @@ fun run_test_case (name, prog, expected) =
        ("cache_index_only",          expected_cache_index_only),
        ("cache_tag_index_part",      expected_cache_tag_index_part),
        ("cache_tag_index_part_page", expected_cache_tag_index_part_page),
-       ("cache_speculation",         expected_cache_speculation)];
+       ("cache_speculation",         expected_cache_speculation),
+       ("cache_speculation_first",   expected_cache_speculation_first)];
 
     val progs_list = List.foldr fold_obs_add [] progs_list_raw;
 
