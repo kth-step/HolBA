@@ -521,11 +521,12 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
         fun main_loop 0 = ()
          |  main_loop n =
             (printv 1 ("Iteration: " ^ PolyML.makestring (m - n) ^ "\n");
-             (let val prog = prog_store_fun ()
+             ((handle_locinfo print (fn () =>
+              let val prog = prog_store_fun ()
               in
                 scamv_test_main tests prog
                 handle e => (run_log_prog (skipProgExText e); PolyML.Exception.reraise e)
-              end
+              end))
               handle e as Thread.Interrupt => (
                         run_log "Keyboard interrupt!\n";
                         PolyML.Exception.reraise e)
