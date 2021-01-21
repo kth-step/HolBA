@@ -75,7 +75,7 @@ in
 
     call_json_exec (cmd, args, jsonarg)
   *)
-  fun call_json_exec (cmd, args, jsonarg) =
+  fun call_json_exec_2 (cmd, args, jsonarg) =
     let
       val str_in_o = SOME (serialize jsonarg);
 
@@ -91,6 +91,38 @@ in
           | Json.OK json =>
               json
     end;
+
+local
+  open bir_fileLib;
+  open bir_exec_wrapLib;
+
+  fun call_json_exec_old command jsonarg =
+    let
+      val argfile = get_tempfile "call_json_exec_jsonarg" ".txt";
+      val _ = write_to_file argfile (serialize jsonarg);
+
+      val s = get_exec_output ("cat \"" ^ argfile ^ "\" | " ^
+                               command);
+
+      val _ = OS.Process.system ("rm " ^ argfile);
+    in
+      case Json.parse s of
+            Json.ERROR e =>
+              raise ERR "call_json_exec" ("error parsing the json output: " ^ e)
+          | Json.OK json =>
+              json
+    end;
+in
+  fun call_json_exec_1 (cmd, args, jsonarg) =
+    let
+      val command = cmd ^ (List.foldl (fn (x,s) => s ^ " \"" ^ x ^ "\"") "" args);
+      val r = call_json_exec_old command jsonarg;
+    in
+      r
+    end;
+end
+
+  val call_json_exec = call_json_exec_1;
 
 end (* local *)
 end (* struct *)
