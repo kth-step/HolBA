@@ -45,7 +45,7 @@ val (paths, all_exps) = symb_exec_phase lifted_prog_w_obs;
 val relation = mkRel paths;
 (*print_term(relation);*)
 
-val word_relation = make_word_relation relation all_exps;
+val word_relation = make_word_relation relation all_exps true;
 print_term (word_relation);
 
 val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;

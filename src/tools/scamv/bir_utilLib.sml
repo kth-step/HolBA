@@ -105,48 +105,53 @@ fun intersection [] ys = []
 (*
 This function not only converts the BIR relation into a words HOL term but
 also adds constraints that force the variables from different runs to be
-distinct.
+distinct if the require_distinctness parameter is true.
  *)
-fun make_word_relation relation =
-    let
-	open boolSyntax;
-
-        fun primed_subst exp =
-            List.map (fn v =>
-                    let val vp = lift_string string_ty (fromHOLstring v ^ "'")
-                    in ``BVar ^v`` |-> ``BVar ^vp`` end)
-                (bir_free_vars exp)
-
-        fun primed_vars exp = List.map (#residue) (primed_subst exp);
-        val vars =
-            sort (curry String.<=)
-                 (List.map fromHOLstring
-                           (nub_with (fn (x,y) => identical x y) (bir_free_vars relation)));
-        val (primed,unprimed) = List.partition (String.isSuffix "'") vars;
-        val primed_base = List.map (fn s => substring(s,0,size(s)-1)) primed;
-        val paired_vars = intersection primed_base unprimed;
-
-        fun add_prime s = s^"'";
-
-        val pairs = zip paired_vars (List.map add_prime paired_vars);
-	      val (mpair, rpair) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM")) pairs
-
-        fun mk_distinct_reg (a,b) =
-            let val va = mk_var (a,``:word64``);
-                val vb = mk_var (b,``:word64``);
-            in
-		(``(^va <> ^vb)``)
-            end;
-	val rel2w = (bir2bool relation)
-
-        val distinct = if null pairs 
-		       then raise NoObsInPath 
-		       else list_mk_disj (map mk_distinct_reg rpair)
-
+fun make_word_relation relation require_distinctness =
+    let val rel2w = (bir2bool relation)
     in
-       ``^rel2w /\ ^distinct``
-    end
-
+      if require_distinctness
+      then 
+        let
+	        open boolSyntax;
+          
+          fun primed_subst exp =
+              List.map (fn v =>
+                           let val vp = lift_string string_ty (fromHOLstring v ^ "'")
+                           in ``BVar ^v`` |-> ``BVar ^vp`` end)
+                       (bir_free_vars exp)
+                       
+          fun primed_vars exp = List.map (#residue) (primed_subst exp);
+          val vars =
+              sort (curry String.<=)
+                   (List.map fromHOLstring
+                             (nub_with (fn (x,y) => identical x y) (bir_free_vars relation)));
+          val (primed,unprimed) = List.partition (String.isSuffix "'") vars;
+          val primed_base = List.map (fn s => substring(s,0,size(s)-1)) primed;
+          val paired_vars = intersection primed_base unprimed;
+          
+          fun add_prime s = s^"'";
+          
+          val pairs = zip paired_vars (List.map add_prime paired_vars);
+	        val (mpair, rpair) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM")) pairs
+                                              
+          fun mk_distinct_reg (a,b) =
+              let val va = mk_var (a,``:word64``);
+                  val vb = mk_var (b,``:word64``);
+              in
+		            (``(^va <> ^vb)``)
+              end;
+          
+          val distinct = if null pairs 
+		       then raise NoObsInPath 
+		                     else list_mk_disj (map mk_distinct_reg rpair)
+                                           
+        in
+``^rel2w /\ ^distinct``
+        end
+      else
+        rel2w
+    end;
 end
 
 end
