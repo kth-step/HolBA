@@ -38,7 +38,10 @@ sig
     val arb_program_previct5 : ArmInstruction list Gen;
 
     val arb_program_xld_br_yld : ArmInstruction list Gen;
+    val arb_program_xld_br_yld_mod1 : ArmInstruction list Gen;
+
     val arb_program_spectre_v1 : ArmInstruction list Gen;
+    val arb_program_spectre_v1_mod1 : ArmInstruction list Gen;
 
     val prog_gen_a_la_qc : ArmInstruction list Gen -> int -> string list;
     val prog_gen_a_la_qc_noresize : ArmInstruction list Gen -> int -> string list;

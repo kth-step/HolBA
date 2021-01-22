@@ -94,11 +94,12 @@ val arb_operand =
         [(1, arb_imm)
         ,(5, arb_reg)]
 
-val arb_branchcond =
-    let val arb_cond = elements [EQ, NE, LT, GT, HS];
-    in
-        arb_option arb_cond
-    end;
+local
+  val arb_cond = elements [EQ, NE, LT, GT, HS];
+in
+  val arb_branchcond = arb_option arb_cond;
+  val arb_branchcond_cond = (SOME) <$> arb_cond;
+end;
 
 val arb_ld = Ld <$> two (arb_option (elements [4,8,16])) arb_armv8_regname;
 
@@ -125,24 +126,28 @@ val arb_program_noload_nobranch = arb_list_of arb_instruction_noload_nobranch;
 
 val arb_program_load = arb_list_of arb_load_indir;
 
-fun arb_program_cond arb_prog_left arb_prog_right =
+fun arb_program_cond bc_o cmpops arb_prog_left arb_prog_right =
   let
     fun rel_jmp_after bl = Imm (((length bl) + 1) * 4);
 
     val arb_prog      = arb_prog_left  >>= (fn blockl =>
                         arb_prog_right >>= (fn blockr =>
-                        arb_compare    >>= (fn cmp    =>
                            let val blockl_wexit = blockl@[Branch (NONE, rel_jmp_after blockr)] in
-                             return ([cmp, Branch (SOME EQ, rel_jmp_after blockl_wexit)]
+                             return ([Compare cmpops,
+                                      Branch (bc_o, rel_jmp_after blockl_wexit)]
                                     @blockl_wexit
                                     @blockr)
                            end
-                        )));
+                        ));
   in
     arb_prog
   end;
 
-fun arb_program_cond_sing bc_o arb_prog =
+fun arb_program_cond_arb_cmp bc_o arb_prog_left arb_prog_right =
+  (two arb_reg arb_reg) >>= (fn cmpops =>
+  arb_program_cond bc_o cmpops arb_prog_left arb_prog_right);
+
+fun arb_program_cond_skip bc_o arb_prog =
   let
     fun rel_jmp_after bl = Imm (((length bl) + 1) * 4);
   in
@@ -167,7 +172,7 @@ val arb_program_previct1 =
                                  ,arb_pad, (fn x => [x]) <$> arb_load_instr
                                  ,arb_pad]);
   in
-    arb_program_cond arb_block_3ld arb_block_3ld
+    arb_program_cond_arb_cmp (SOME EQ) arb_block_3ld arb_block_3ld
   end;
 
 val arb_program_previct2 =
@@ -184,7 +189,7 @@ val arb_program_previct2 =
                                  ,(fn x => [x]) <$> arb_load_instr
                                  ]);
   in
-    arb_program_cond arb_block_3ld arb_block_3ld
+    arb_program_cond_arb_cmp (SOME EQ) arb_block_3ld arb_block_3ld
   end;
 
 val arb_program_previct3 =
@@ -209,7 +214,7 @@ val arb_program_previct3 =
         end
       )));
   in
-    arb_leftright >>= (fn (l,r) => arb_program_cond (return l) (return r))
+    arb_leftright >>= (fn (l,r) => arb_program_cond_arb_cmp (SOME EQ) (return l) (return r))
   end;
 
 val arb_program_previct4 =
@@ -234,7 +239,7 @@ val arb_program_previct4 =
         end
       )));
   in
-    arb_leftright >>= (fn (l,r) => arb_program_cond (return l) (return r))
+    arb_leftright >>= (fn (l,r) => arb_program_cond_arb_cmp (SOME EQ) (return l) (return r))
   end;
 
 val arb_program_previct5 =
@@ -260,7 +265,7 @@ val arb_program_previct5 =
         end
       )));
   in
-    arb_leftright >>= (fn (l,r) => arb_program_cond (return l) (return r))
+    arb_leftright >>= (fn (l,r) => arb_program_cond_arb_cmp (SOME EQ) (return l) (return r))
   end;
 
 
@@ -273,8 +278,21 @@ val arb_program_xld_br_yld =
       resize n (arb_list_of arb_load_instr));
   in
     arb_upto_n_lds >>= (fn block1 =>
-    arb_branchcond >>= (fn bc_o =>
-    arb_program_cond_sing bc_o arb_upto_n_lds >>= (fn block2 =>
+    arb_branchcond_cond >>= (fn bc_o =>
+    arb_program_cond_skip bc_o arb_upto_n_lds >>= (fn block2 =>
+      return (block1 @ block2)
+    )))
+  end;
+val arb_program_xld_br_yld_mod1 =
+  let
+    val arb_load_instr = arb_load_indir;
+    val arb_upto_n_lds =
+      sized (fn n => choose (0, n)) >>= (fn n =>
+      resize n (arb_list_of arb_load_instr));
+  in
+    arb_upto_n_lds >>= (fn block1 =>
+    arb_branchcond_cond >>= (fn bc_o =>
+    arb_program_cond_arb_cmp bc_o arb_upto_n_lds (return [Nop]) >>= (fn block2 =>
       return (block1 @ block2)
     )))
   end;
@@ -304,39 +322,51 @@ local
 
   val muls_ref =
     ref (List.map (Option.map (to_spe_v1_lsl)) [
-      NONE,
-      SOME 0,  (* 1    *)
-      SOME 1,  (* 2    *)
       SOME 6,  (* 64   *)
       SOME 7,  (* 128  *)
       SOME 9,  (* 512  *)
       SOME 12, (* 4096 *)
-      SOME 13  (* 8192 *)
+      SOME 13, (* 8192 *)
+      NONE,    (* no mul *)
+      SOME 0,  (* 1    *)
+      SOME 1   (* 2    *)
     ]);
 
   fun get_next_spectre_v1_mul () =
     case !muls_ref of
        [] => raise Fail "asm_genLib::get_next_spectre_v1_mul::no more options"
      | (x::xs) => (muls_ref := xs; x);
+
+  fun skip_instrs bc_o bl = Branch (bc_o, Imm ((length(bl) + 1) * 4));
+  fun gen_arr_bnds_chck_acc arr_acc_gen =
+    arr_acc_gen >>= (fn arr_acc => return (
+    [
+      Compare (Reg reg_x, Reg reg_la1),
+      skip_instrs (SOME HS) arr_acc
+    ]@
+    arr_acc
+    ));
+  fun gen_arr_bnds_chck_acc_mod arr_acc_gen other_gen =
+    other_gen >>= (fn other =>
+    arr_acc_gen >>= (fn arr_acc => return (
+    let val arr_acc_wexit = arr_acc@[skip_instrs NONE other]; in
+    [
+      Compare (Reg reg_x, Reg reg_la1),
+      skip_instrs (SOME HS) arr_acc_wexit
+    ]@
+    arr_acc_wexit@
+    other
+    end)));
+
+  val gen_arr_acc = arb_nop >>= (fn _ => return (
+    [Load (Reg reg_y, Ld2 (reg_x, reg_a1))]@
+    (Portable.the_list (get_next_spectre_v1_mul ()))@
+    [Load (Reg reg_z, Ld2 (reg_y, reg_a2))]));
 in
   val arb_program_spectre_v1 =
-    let
-      fun skip_instrs bc_o bl = Branch (bc_o, Imm ((length(bl) + 1) * 4));
-      fun gen_arr_bnds_chck_acc arr_acc_gen = arr_acc_gen >>= (fn arr_acc => return (
-        [
-          Compare (Reg reg_x, Reg reg_la1),
-          skip_instrs (SOME HS) arr_acc
-        ]@
-        arr_acc
-        ));
-
-      val gen_arr_acc = arb_nop >>= (fn _ => return (
-        [Load (Reg reg_y, Ld2 (reg_x, reg_a1))]@
-        (Portable.the_list (get_next_spectre_v1_mul ()))@
-        [Load (Reg reg_z, Ld2 (reg_y, reg_a2))]));
-    in
-      gen_arr_bnds_chck_acc gen_arr_acc
-    end;
+    gen_arr_bnds_chck_acc gen_arr_acc;
+  val arb_program_spectre_v1_mod1 =
+    gen_arr_bnds_chck_acc_mod gen_arr_acc (return [Nop]);
 end;
 
 
