@@ -8,9 +8,9 @@
 --max_iter "" --prog_size 5 --max_tests 40 --enumerate --generator list --generator_param "" --obs_model cache_tag_index_part_page --hw_obs_model hw_cache_tag_index_part_page
 
 
--t 40 -i 1000 --obs_model cache_speculation --hw_obs_model hw_cache_tag_index -T --generator qc --generator_param "xld_br_yld" -sz 2
+-t 40 -i 1000 --obs_model cache_speculation --hw_obs_model hw_cache_tag_index -T --generator qc --generator_param "xld_br_yld_mod1" -sz 2
 -t 40 -i "" --obs_model mem_address_pc --hw_obs_model hw_cache_tag_index -T --generator list --generator_param ""
 
 
--t 40 -i 10 --obs_model cache_speculation_first --hw_obs_model hw_cache_tag_index -T --generator qc --generator_param "spectre_v1"
+-t 40 -i 10 --obs_model cache_speculation_first --hw_obs_model hw_cache_tag_index -T --generator qc --generator_param "spectre_v1_mod1"
 
