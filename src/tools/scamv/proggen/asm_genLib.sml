@@ -270,32 +270,25 @@ val arb_program_previct5 =
 
 
 (* =============== xld_br_yld ================= *)
-val arb_program_xld_br_yld =
-  let
+local
     val arb_load_instr = arb_load_indir;
-    val arb_upto_n_lds =
-      sized (fn n => choose (0, n)) >>= (fn n =>
+    fun arb_upto_n_lds i =
+      sized (fn n => choose (i, n)) >>= (fn n =>
       resize n (arb_list_of arb_load_instr));
-  in
-    arb_upto_n_lds >>= (fn block1 =>
+in
+  val arb_program_xld_br_yld =
+    (arb_upto_n_lds 0) >>= (fn block1 =>
     arb_branchcond_cond >>= (fn bc_o =>
-    arb_program_cond_skip bc_o arb_upto_n_lds >>= (fn block2 =>
+    arb_program_cond_skip bc_o (arb_upto_n_lds 1) >>= (fn block2 =>
       return (block1 @ block2)
-    )))
-  end;
-val arb_program_xld_br_yld_mod1 =
-  let
-    val arb_load_instr = arb_load_indir;
-    val arb_upto_n_lds =
-      sized (fn n => choose (0, n)) >>= (fn n =>
-      resize n (arb_list_of arb_load_instr));
-  in
-    arb_upto_n_lds >>= (fn block1 =>
+    )));
+  val arb_program_xld_br_yld_mod1 =
+    (arb_upto_n_lds 0) >>= (fn block1 =>
     arb_branchcond_cond >>= (fn bc_o =>
-    arb_program_cond_arb_cmp bc_o arb_upto_n_lds (return [Nop]) >>= (fn block2 =>
+    arb_program_cond_arb_cmp bc_o (arb_upto_n_lds 1) (return [Nop]) >>= (fn block2 =>
       return (block1 @ block2)
-    )))
-  end;
+    )));
+end;
 
 
 (* =============== spectre v1 ================= *)
