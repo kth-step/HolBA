@@ -243,13 +243,31 @@ open bir_cfgLib;
 	    val comb_p_np = zip p_exp np_exp;
 	    val eq_assign =  map (fn (a,b) => (rhs o concl o EVAL)``constrain_spec_obs_vars (^a,^b)``) comb_p_np  
 
-
-	    val obs:: _  = (#2 o strip_comb o #2 o pairSyntax.dest_pair) e;
-	    val obstm::_ = (#2 o strip_comb o #3 o dest_BStmt_Observe)  obs;
-	    val memcnst  = (rhs o concl o EVAL)``(constrain_mem ^(mem_bounds) ^obstm): bir_val_t bir_stmt_basic_t``;
-	in
-	   rev(memcnst::eq_assign)
-	end
+      (* gets list of observation statements
+         NB. we assume e is of the form produced in add_obs_speculative_exec
+       *)
+	    val (obslist,_)  = (listSyntax.dest_list o #2 o pairSyntax.dest_pair) e
+                         handle _ => raise ERR "mk_assign_mem_assert"
+                                           ("ill-formed argument: " ^ term_to_string e ^ ", expected pair");
+  in
+    case obslist of
+        [] => []
+      | obs::_ =>
+        let
+          (* extract observed expression from first obs. stmt
+             NB. if add_obs code is well-behaved, this should never fail at dest_cons
+             because the list in a BStmt_Observe should always be nonempty
+           *)
+          val (obstm,_) = ((listSyntax.dest_cons o #3 o dest_BStmt_Observe) obs)
+                          handle _ => raise ERR "mk_assign_mem_assert"
+                                            ("ill-formed subexpression in arg: "
+                                             ^ term_to_string obs ^ ", expected obs. stmt"
+                                             ^ " with nonempty obs. list");
+	        val memcnst  = (rhs o concl o EVAL)``(constrain_mem ^(mem_bounds) ^obstm): bir_val_t bir_stmt_basic_t``;
+	      in
+	        rev(memcnst::eq_assign)
+	      end
+  end
 
     fun add_obs_speculative_exec obs_fun prog targets g depth dict = 
 	let
