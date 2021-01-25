@@ -36,6 +36,15 @@ fun nub xs = nub_with (op=);
 (*
 val tm = ``(FUN_FMAP (K ((0x0w: 8 word))) (UNIV) : 64 word |-> 8 word) |+ (0x80100000w, 0x0w) |+ (0x80100001w, 0x0w) |+ (0x80100002w, 0x10w) |+ (0x80100003w, 0x0w) |+ (0x80100004w, 0x0w) |+ (0x80100005w, 0x0w) |+ (0x80100006w, 0x0w) |+ (0x80100007w, 0x0w)``;
 
+val tm = ``(FUN_FMAP (K 0w) 𝕌(:word64) |+ (2148532224w,1w) |+ (2148532225w,0w) |+
+(2148532226w,0w) |+ (2148532227w,0w) |+ (2148532228w,0w) |+
+(2148532229w,0w) |+ (2148532230w,0w) |+ (2148532231w,0w)) : 64 word |-> 8 word``
+
+val tm = ``(FUN_FMAP (K 0w) 𝕌(:word64) |+ (2148532224w,0w) |+ (2148532225w,0w) |+
+(2148532226w,0w) |+ (2148532227w,0w) |+ (2148532228w,0w) |+
+(2148532229w,0w) |+ (2148532230w,0w) |+ (2148532231w,0w)) : 64 word |-> 8 word``
+
+
 val tm = fst (finite_mapSyntax.strip_fupdate tm)
 
 is_FUN_FMAP tm
@@ -130,7 +139,7 @@ fun to_sml_Arbnums model =
       if is_word_literal tm then
         fold_reg ((name, tm), mst)
       else if is_valid_to_sml_Arbnums_mem tm then
-        fold_reg ((name, tm), mst)
+        fold_mem ((name, tm), mst)
       else
         raise ERR "to_sml_Arbnums" "unknown syntax"
       ) machstate_empty model
