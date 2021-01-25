@@ -304,9 +304,10 @@ fun next_experiment all_exps next_relation  =
 
 	val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
 	val (primed, nprimed) = List.partition (isPrimedRun o fst) model
-	val rmprime = List.map (fn (r,v) => (remove_prime r,v)) primed
+        (* clean up s2 *)
+	val primed_rm = List.map (fn (r,v) => (remove_prime r,v)) primed
         val s1 = to_sml_Arbnums nprimed;
-	val s2 = to_sml_Arbnums primed;
+	val s2 = to_sml_Arbnums primed_rm;
         val prog_id =
           case !current_prog_id of
              NONE => raise ERR "next_experiment" "currently no prog_id loaded"
@@ -353,9 +354,6 @@ fun next_experiment all_exps next_relation  =
 	(* ------------------------- training end ------------------------- *)
 	(* val _ = print_term (valOf (!current_word_rel)); *)
 
-        (* clean up s2 *)
-	val s2 = to_sml_Arbnums rmprime
-
         (* check with concrete-symbolic execution whether the observations are actually equivalent *)
         val lifted_prog_w_obs = case !current_prog_w_obs of
 				    SOME x => x
@@ -364,8 +362,7 @@ fun next_experiment all_exps next_relation  =
 	(* remove meory for now from states*)
 	val ce_obs_comp = conc_exec_obs_compare (!current_obs_projection) lifted_prog_w_obs (s1, s2)
         val _ = if #1 ce_obs_comp then () else
-                  raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
-	val s1::s2::_ = #2 ce_obs_comp
+                raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
 
 	(* show time *)
 	val d_s = Time.- (Time.now(), timer) |> Time.toString;
