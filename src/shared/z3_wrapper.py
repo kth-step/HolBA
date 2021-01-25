@@ -148,8 +148,6 @@ def z3_funcint_to_HolTerm(funcint):
     # For exmaple [0 -> 23, 1-> 48, 4 -> 67, 6 -> 65, else -> 1] would be [0 -> 23, 1-> 48, 2 -> 1, 3 -> 1, 4 -> 67, 5 -> 1, 6 -> 65, 7 -> 1].
     # This is important to not export wrong values.
 
-    # TODO: this completely ignores that the else_value is meant for all other addresses!!!
-
     # Deconstruct z3 model and convert it to a list
     model_as_list = funcint.as_list()
     else_value = funcint.else_value()
@@ -203,8 +201,8 @@ def z3_funcint_to_HolTerm(funcint):
     res = []
     for k in memory.keys():
         res.append("(0x{:X}w, 0x{:X}w)".format(k, memory[k]))
-    # TODO: this should really be done with FUN_FMAP or something similar, like above
-    return ("(FEMPTY : {} word |-> {} word) |+ ".format(arg_size, vlu_size) + " |+ ".join(tm for tm in res ))
+    else_value_word_str = "(0x{:X}w: {} word)".format(int(str(default_value)), vlu_size)
+    return ("(FUN_FMAP (K ({})) (UNIV) : {} word |-> {} word) |+ ".format(else_value_word_str, arg_size, vlu_size) + " |+ ".join(tm for tm in res ))
 
 
 def z3_assign_to_HolTerm(assign):
