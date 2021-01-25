@@ -141,24 +141,27 @@ def z3_ast_to_HolTerm(exp):
 
 # convert z3 "function interpretation" to finite_map
 def z3_funcint_to_HolTerm(funcint):
+    assert(isinstance(funcint, z3.FuncInterp))
     # convert memory in the model returned by  z3 to  HOL4 terms using words library.
-    # Before this conversion the function compelets(be invking mk_memory_complete) the range of
+    # Before this conversion the function completes(be invking mk_memory_complete) the range of
     #   memory assignments in the model using the value of the "else" statement.
     # For exmaple [0 -> 23, 1-> 48, 4 -> 67, 6 -> 65, else -> 1] would be [0 -> 23, 1-> 48, 2 -> 1, 3 -> 1, 4 -> 67, 5 -> 1, 6 -> 65, 7 -> 1].
     # This is important to not export wrong values.
 
+    # TODO: this completely ignores that the else_value is meant for all other addresses!!!
 
     # Deconstruct z3 model and convert it to a list
     model_as_list = funcint.as_list()
+    else_value = funcint.else_value()
     # find out the default value of the z3 function interpretation
     default_value = int(str(model_as_list.pop()))
+    assert(else_value == default_value)
 
     # Function interpretation: Used for memory
     # Example the input [3 -> 0, 5 -> 0, 7 -> 0, 2 -> 0, 0 -> 20, 4 -> 0, 1 -> 0, 6 -> 0, else -> 0]
     # Will be turned into (['3 0', '5 0', '7 0', '2 0', '0 20', '4 0', '1 0', '6 0'], 64, 8)
     # Note that arg.size and vlu.size are in bits (I think)
     def funcinterp_collect(exp):
-        assert(isinstance(exp, z3.FuncInterp))
         res = []
         sz_arg = None
         sz_vlu = None
