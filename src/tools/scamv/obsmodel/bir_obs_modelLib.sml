@@ -132,7 +132,7 @@ open bir_cfgLib;
 	    val bn1::bn2::_ = List.map (fn t => fst (traverse_graph_branch g depth (t) [] [])) targets;
 	    val b1_nodes = List.filter (fn x => (List.all (fn y => not (identical x y)) bn1)) bn2;
 	    val b2_nodes = List.filter (fn x => (List.all (fn y => not (identical x y)) bn2)) bn1;
-      val _ = List.app print_term (extract_obs b1_nodes);
+      (* val _ = List.app print_term (extract_obs b1_nodes); *)
 	    val Obs_dict = Redblackmap.insert(Obs_dict, hd targets, extract_obs b1_nodes);
 	    val Obs_dict = Redblackmap.insert(Obs_dict, last targets, extract_obs b2_nodes);
 	in
