@@ -110,30 +110,31 @@ open bir_cfgLib;
 		       (entry::visited, acc_new) 
 		       targets_to_visit
 	end;
-
+    (* TODO ensure the lists of obs in the result are in program order *)
     fun extract_branch_obs targets g depth bl_dict =
 	let  
 	    val f =  (fn l => Redblackmap.find (bl_dict, l)
                            |> bir_programSyntax.dest_bir_block
 			   |> not o listSyntax.is_nil o #2)
-	    fun extratc_obs labels = 
+	    fun extract_obs labels = 
 		List.map (fn label => 
 			     let val block = Redblackmap.find (bl_dict, label)
 				 val (_, statements, _) = bir_programSyntax.dest_bir_block block
-				 val obs = find_terms is_BStmt_Observe statements
+				 val obs = find_terms is_BStmt_Observe statements (* TODO this should be manual traversal to ensure preservation of program order *)
 			     in
 				 filter (fn obs => (#3 o dest_BStmt_Observe) obs 
 						|> listSyntax.mk_hd 
 						|> (rhs o concl o EVAL) 
 						|> (not o is_BExp_Const)) obs
-			     end) (filter f labels)
+			     end) (rev (filter f labels)) (* TODO sort by program order *)
 		 |> flatten
 
 	    val bn1::bn2::_ = List.map (fn t => fst (traverse_graph_branch g depth (t) [] [])) targets;
 	    val b1_nodes = List.filter (fn x => (List.all (fn y => not (identical x y)) bn1)) bn2;
 	    val b2_nodes = List.filter (fn x => (List.all (fn y => not (identical x y)) bn2)) bn1;
-	    val Obs_dict = Redblackmap.insert(Obs_dict, hd targets, extratc_obs b1_nodes);
-	    val Obs_dict = Redblackmap.insert(Obs_dict, last targets, extratc_obs b2_nodes);
+      val _ = List.app print_term (extract_obs b1_nodes);
+	    val Obs_dict = Redblackmap.insert(Obs_dict, hd targets, extract_obs b1_nodes);
+	    val Obs_dict = Redblackmap.insert(Obs_dict, last targets, extract_obs b2_nodes);
 	in
 	    Obs_dict
 	end
@@ -265,7 +266,7 @@ open bir_cfgLib;
                                              ^ " with nonempty obs. list");
 	        val memcnst  = (rhs o concl o EVAL)``(constrain_mem ^(mem_bounds) ^obstm): bir_val_t bir_stmt_basic_t``;
 	      in
-	        rev(memcnst::eq_assign)
+	        rev(memcnst::eq_assign) (* eq_assign @ [memcnst] *)
 	      end
   end
 
