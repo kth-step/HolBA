@@ -92,9 +92,9 @@ fun run_test_case (name, prog, expected) =
     val _ = List.map (fn (t, t_) =>
             if identical t t_ then () else (
             print ("have: ");
-            PolyML.print t;
+            print_term t;
             print ("expecting: ");
-            PolyML.print t_;
+            print_term t_;
             raise Fail ("unexpected obs added program: " ^ "\n" ^ (term_to_string prog)))
       ) progs_list;
 
