@@ -38,7 +38,7 @@ val example_relation =
 
 (* simple test just to check that make_word_relation doesn't throw an exception
 for now *)
-fun test1 () = (make_word_relation example_relation; true);
+fun test1 () = (make_word_relation example_relation true; true);
 
 in
   run_tests [("test1",test1)]

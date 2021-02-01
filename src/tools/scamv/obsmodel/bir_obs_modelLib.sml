@@ -187,7 +187,27 @@ open bir_cfgLib;
 		end
 	in
 	    map Obs_prime_single xs
-	end
+	end;
+
+    fun Obs_prime_base xs = 
+	      let open stringSyntax numSyntax;
+	          fun primed_subst exp =
+		            List.map (fn v =>
+			                       let val vp = lift_string string_ty (fromHOLstring v ^ "*")
+			                       in ``^v`` |-> ``^vp`` end)
+			                   (bir_free_vars exp) 
+	          fun Obs_prime_single proj_id x =
+		            let val obs = x |> dest_BStmt_Observe |> #3
+                    val (id, a, b, c) = dest_BStmt_Observe x
+                    val new_x = mk_BStmt_Observe (term_of_int proj_id, a, b, c)
+		            in
+		              List.foldl (fn (record, tm) => subst[#redex record |-> #residue record] tm) new_x (primed_subst obs)
+		            end
+	      in
+          case xs of
+              [] => []
+	          | y::ys => Obs_prime_single 0 y :: map (Obs_prime_single 1) ys
+	      end
 
 (*
   reside in bir_obs_modelScript.sml. cannot be here, otherwise this creates unfinished scratch theory
@@ -223,21 +243,39 @@ open bir_cfgLib;
 	    val comb_p_np = zip p_exp np_exp;
 	    val eq_assign =  map (fn (a,b) => (rhs o concl o EVAL)``constrain_spec_obs_vars (^a,^b)``) comb_p_np  
 
+      (* gets list of observation statements
+         NB. we assume e is of the form produced in add_obs_speculative_exec
+       *)
+	    val (obslist,_)  = (listSyntax.dest_list o #2 o pairSyntax.dest_pair) e
+                         handle _ => raise ERR "mk_assign_mem_assert"
+                                           ("ill-formed argument: " ^ term_to_string e ^ ", expected pair");
+  in
+    case obslist of
+        [] => []
+      | obs::_ =>
+        let
+          (* extract observed expression from first obs. stmt
+             NB. if add_obs code is well-behaved, this should never fail at dest_cons
+             because the list in a BStmt_Observe should always be nonempty
+           *)
+          val (obstm,_) = ((listSyntax.dest_cons o #3 o dest_BStmt_Observe) obs)
+                          handle _ => raise ERR "mk_assign_mem_assert"
+                                            ("ill-formed subexpression in arg: "
+                                             ^ term_to_string obs ^ ", expected obs. stmt"
+                                             ^ " with nonempty obs. list");
+	        val memcnst  = (rhs o concl o EVAL)``(constrain_mem ^(mem_bounds) ^obstm): bir_val_t bir_stmt_basic_t``;
+	      in
+	        rev(memcnst::eq_assign)
+	      end
+  end
 
-	    val obs:: _  = (#2 o strip_comb o #2 o pairSyntax.dest_pair) e;
-	    val obstm::_ = (#2 o strip_comb o #3 o dest_BStmt_Observe)  obs;
-	    val memcnst  = (rhs o concl o EVAL)``(constrain_mem ^(mem_bounds) ^obstm): bir_val_t bir_stmt_basic_t``;
-	in
-	   rev(memcnst::eq_assign)
-	end
-
-    fun add_obs_speculative_exec prog targets g depth dict = 
+    fun add_obs_speculative_exec obs_fun prog targets g depth dict = 
 	let
 	    open listSyntax
 	    open pairSyntax
 	    val Obs_dict = extract_branch_obs targets g depth dict
 					      |> (fst o (fn d => Redblackmap.remove (d, ``dummy``)))
-	    val Obs_dict_primed = Redblackmap.map (fn (k,v) => Obs_prime v) Obs_dict;
+	    val Obs_dict_primed = Redblackmap.map (fn (k,v) => obs_fun v) Obs_dict;
 	    val Obs_lst_primed  = map (fn tm => mk_pair(fst tm, mk_list(snd tm, ``:bir_val_t bir_stmt_basic_t``))) 
 				      (Redblackmap.listItems Obs_dict_primed)
 	    val asserted_obs = map (fn e => mk_list((mk_assign_mem_assert e), ``:bir_val_t bir_stmt_basic_t``)) 
@@ -250,7 +288,7 @@ open bir_cfgLib;
 		  Obs_lst
 	end
 
- fun branch_instrumentation_obs prog depth = 	
+ fun branch_instrumentation_obs obs_fun prog depth = 	
     let (* build the dictionaries using the library under test *)
 	val bl_dict = gen_block_dict prog;
 	val lbl_tms = get_block_dict_keys bl_dict;
@@ -263,7 +301,7 @@ open bir_cfgLib;
 	val (visited_nodes,cjmp_nodes) = traverse_graph g1 (hd (#CFGG_entries g1)) [] [];
 	val targets = map (fn i => #CFGN_targets (lookup_block_dict_value (#CFGG_node_dict g1) i "_" "_")) cjmp_nodes;
     in
-	foldl (fn(ts, p) => add_obs_speculative_exec p ts g1 depth bl_dict) prog targets
+	foldl (fn(ts, p) => add_obs_speculative_exec obs_fun p ts g1 depth bl_dict) prog targets
     end
 in
 
@@ -275,8 +313,16 @@ in
       val obs_hol_type = ``bir_val_t``;
       val pipeline_depth = 3;
       fun add_obs mb t =
-        branch_instrumentation_obs (bir_arm8_mem_addr_pc_model.add_obs mb t) pipeline_depth;
+        branch_instrumentation_obs Obs_prime (bir_arm8_mem_addr_pc_model.add_obs mb t) pipeline_depth;
     end;
+
+  structure bir_arm8_cache_speculation_first_model : OBS_MODEL =
+  struct
+  val obs_hol_type = ``bir_val_t``;
+  val pipeline_depth = 3;
+  fun add_obs mb t =
+      branch_instrumentation_obs Obs_prime_base (bir_arm8_mem_addr_pc_model.add_obs mb t) pipeline_depth;
+  end;
 
 end (* local *)
 
@@ -297,7 +343,9 @@ fun get_obs_model id =
         else if id = "cache_tag_index_part_page" then
           bir_arm8_cache_line_subset_page_model.obs_hol_type
         else if id = "cache_speculation" then
-          bir_arm8_cache_speculation_model.obs_hol_type
+               bir_arm8_cache_speculation_model.obs_hol_type
+        else if id = "cache_speculation_first" then
+               bir_arm8_cache_speculation_first_model.obs_hol_type
         else
             raise ERR "get_obs_model" ("unknown obs_model selected: " ^ id);
 
@@ -315,7 +363,9 @@ fun get_obs_model id =
         else if id = "cache_tag_index_part_page" then
           bir_arm8_cache_line_subset_page_model.add_obs
         else if id = "cache_speculation" then
-          bir_arm8_cache_speculation_model.add_obs
+               bir_arm8_cache_speculation_model.add_obs
+        else if id = "cache_speculation_first" then
+               bir_arm8_cache_speculation_first_model.add_obs
         else
           raise ERR "get_obs_model" ("unknown obs_model selected: " ^ id);
   in

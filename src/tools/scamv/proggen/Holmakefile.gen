@@ -5,7 +5,7 @@ DEPENDENCIES   = $(HOLDIR)/examples/l3-machine-code/arm8/prog
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../symbexec/HolBATools_ScamV_symbexec-heap
+HOLHEAP        = ../persistence/HolBATools_ScamV_persistence-heap
 NEWHOLHEAP     = HolBATools_ScamV_proggen-heap
 
 HEAPINC_EXTRA  = $(HOLDIR)/examples/l3-machine-code/arm8/prog/arm8_progLib
