@@ -32,7 +32,7 @@ val test_cases = [
      (FAPPLY (mem0 : 32 word |-> 8 word) y = 0x28w) /\
      (x + y = 188w)
    ``,
-   [("mem0",``(FEMPTY :word32 |-> word8 )
+   [("mem0",``((FUN_FMAP (K (40w :word8)) UNIV)  :word32 |-> word8)
        |+ (0w,40w)   |+ (1w,40w)   |+ (2w,40w)   |+ (3w,40w)
        |+ (4w,40w)   |+ (5w,40w)   |+ (6w,40w)   |+ (7w,40w)
        |+ (184w,40w) |+ (185w,40w) |+ (186w,40w) |+ (187w,40w)

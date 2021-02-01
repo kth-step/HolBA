@@ -154,6 +154,7 @@ struct
     let
       val _ = holba_run_id ();
       val _ = run_log_raw message;
+      val _ = print message;
     in
       ()
     end;

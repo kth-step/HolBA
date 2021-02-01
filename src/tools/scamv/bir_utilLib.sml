@@ -33,27 +33,116 @@ fun nub_with eq [] = []
 
 fun nub xs = nub_with (op=);
 
+(*
+val tm = ``(FUN_FMAP (K ((0x0w: 8 word))) (UNIV) : 64 word |-> 8 word) |+ (0x80100000w, 0x0w) |+ (0x80100001w, 0x0w) |+ (0x80100002w, 0x10w) |+ (0x80100003w, 0x0w) |+ (0x80100004w, 0x0w) |+ (0x80100005w, 0x0w) |+ (0x80100006w, 0x0w) |+ (0x80100007w, 0x0w)``;
+
+val tm = ``(FUN_FMAP (K 0w) 𝕌(:word64) |+ (2148532224w,1w) |+ (2148532225w,0w) |+
+(2148532226w,0w) |+ (2148532227w,0w) |+ (2148532228w,0w) |+
+(2148532229w,0w) |+ (2148532230w,0w) |+ (2148532231w,0w)) : 64 word |-> 8 word``
+
+val tm = ``(FUN_FMAP (K 0w) 𝕌(:word64) |+ (2148532224w,0w) |+ (2148532225w,0w) |+
+(2148532226w,0w) |+ (2148532227w,0w) |+ (2148532228w,0w) |+
+(2148532229w,0w) |+ (2148532230w,0w) |+ (2148532231w,0w)) : 64 word |-> 8 word``
+
+
+val tm = fst (finite_mapSyntax.strip_fupdate tm)
+
+is_FUN_FMAP tm
+
+to_sml_Arbnums_mem8 tm
+*)
+
+local
+fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "finite_map";
+
+fun syntax_fns0 s = let val (tm, _, _, is_f) = syntax_fns 0
+   (fn tm1 => fn e => fn tm2 =>
+       if Term.same_const tm1 tm2 then () else raise e)
+   (fn tm => fn () => tm) s in (tm, is_f) end;
+
+val syntax_fns1 = syntax_fns 1 HolKernel.dest_monop HolKernel.mk_monop;
+val syntax_fns2 = syntax_fns 2 HolKernel.dest_binop HolKernel.mk_binop;
+val syntax_fns3 = syntax_fns 3 HolKernel.dest_triop HolKernel.mk_triop;
+
+val (FUN_FMAP_tm, mk_FUN_FMAP, dest_FUN_FMAP, is_FUN_FMAP)  = syntax_fns2 "FUN_FMAP";
+
+val expected_mem_type = ``:word64 |-> word8``;
+val expected_K_tm = ``K : 8 word -> 64 word -> 8 word``;
+val expected_U_tm = ``UNIV :word64->bool``;
+in
+  fun is_valid_to_sml_Arbnums_mem tm =
+    finite_mapSyntax.is_fupdate tm orelse
+    finite_mapSyntax.is_fempty tm orelse
+    is_FUN_FMAP tm;
+
+  fun to_sml_Arbnum_map tm =
+    if finite_mapSyntax.is_fupdate tm then
+      let
+        val (tm_base, vlsW) = finite_mapSyntax.strip_fupdate tm;
+
+        val (mem_dict, mem_default) = to_sml_Arbnum_map tm_base;
+        val mem_updates = List.map (fn p =>
+          let val (ad, vl) = pairSyntax.dest_pair p
+          in (dest_word_literal ad, dest_word_literal vl)
+          end) vlsW;
+      in
+        (Redblackmap.insertList (mem_dict, mem_updates), mem_default)
+      end
+    else if finite_mapSyntax.is_fempty tm then
+      (Redblackmap.fromList Arbnum.compare [], NONE)
+    else if is_FUN_FMAP tm then
+      let
+        val (map_f, map_P) = dest_FUN_FMAP tm;
+      in
+        if identical map_P expected_U_tm andalso
+           is_comb map_f andalso
+           identical ((fst o dest_comb) map_f) expected_K_tm then
+          let
+            val (_, default_val) = dest_comb map_f;
+          in
+            (Redblackmap.fromList Arbnum.compare [], SOME (dest_word_literal default_val))
+          end
+        else raise ERR "to_sml_Arbnum_map" "unexpected base map"
+      end
+    else
+      raise ERR "to_sml_Arbnum_map" "unexpected fmap";
+
+  fun to_sml_Arbnums_mem8 tm =
+    if (type_of tm) = expected_mem_type then
+      let
+        val (mem_dict, default_val) = to_sml_Arbnum_map tm;
+      in
+        (8, mem_dict, default_val)
+      end
+    else
+      raise ERR "to_sml_Arbnums_mem8" "unexpected memory type";
+end;
+
+
 fun to_sml_Arbnums model =
-    let open experimentsLib wordsSyntax;
-    in
-    List.foldl (fn ((name, tm), mst) => 
-                   if finite_mapSyntax.is_fupdate tm
-	           then let val bitvec = (can o find_term) (fn x => identical ``(BitVec: 64 word)`` x )
-		            val vlsW = (snd o finite_mapSyntax.strip_fupdate) tm
-		            val vlsN = map (fn p => let val (ad, vl) = pairSyntax.dest_pair p
-				                    in
-(* Sometime Z3 returns a function like K(BitVec(64), 0) instead of explicitly assigning values to memory *)
-(* To mark such cases I used an out of range address 0xFFFFFFFF.*) 
-(* This is also the magic number which showes up in bir_conc_execLib. *)					
-				                        if bitvec ad
-				                        then (Arbnum.fromInt 4294967295, dest_word_literal vl)
-				                        else (dest_word_literal ad, dest_word_literal vl)
-				                    end) vlsW
-	                in
-		            machstate_replace_mem (8, Redblackmap.fromList Arbnum.compare vlsN) mst
-	                end
-	           else
-	               machstate_add_reg (name, dest_word_literal tm) mst) machstate_empty model
+  let
+    open experimentsLib wordsSyntax;
+    fun fold_reg ((name, tm), mst) =
+      machstate_add_reg (name, dest_word_literal tm) mst;
+    fun fold_mem ((name, tm), mst) =
+      if name <> "MEM" then raise ERR "to_sml_Arbnums" "memory should be called MEM" else
+      let
+        val (wordsz, mem_dict, default_val) = to_sml_Arbnums_mem8 tm;
+        val _ = if not (isSome default_val) orelse
+                   valOf default_val = Arbnum.zero then () else
+                raise ERR "to_sml_Arbnums" "cannot handle default values other than 0";
+      in
+        machstate_replace_mem (wordsz, mem_dict) mst
+      end;
+  in
+    List.foldl (fn ((name, tm), mst) =>
+      if is_word_literal tm then
+        fold_reg ((name, tm), mst)
+      else if is_valid_to_sml_Arbnums_mem tm then
+        fold_mem ((name, tm), mst)
+      else
+        raise ERR "to_sml_Arbnums" "unknown syntax"
+      ) machstate_empty model
     end;
 
 fun remove_prime str =
