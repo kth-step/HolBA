@@ -2,23 +2,22 @@
 
 set -e
 
-ARCH_EXPTYPE_PARAM=$1
-BOARD_TYPE=$2
+BOARD_TYPE=$1
+LISTNAME_PARAM=$2
 
 # get scamv examples and holba directory path
 SCAMV_EXAMPLES_DIR=$(dirname "${BASH_SOURCE[0]}")
 SCAMV_EXAMPLES_DIR=$(readlink -f "${SCAMV_EXAMPLES_DIR}/..")
 HOLBA_DIR=$(readlink -f "${SCAMV_EXAMPLES_DIR}/../../../..")
 
-# check inputs
-if [[ -z "${ARCH_EXPTYPE_PARAM}" ]]; then
-  echo "ERROR: please provide experiment architecture and type as parameter (e.g. arm8/exps2)"
-  exit 1
+# prepare options listname and board_type
+if [[ ! -z "${LISTNAME_PARAM}" ]]; then
+  LISTNAME_OPTION="--listname ${LISTNAME_PARAM}"
+else
+  LISTNAME_OPTION=
 fi
-
-# prepare options board_type and branchname
 if [[ ! -z "${BOARD_TYPE}" ]]; then
-  BOARD_TYPE_OPTION=--board_type "${BOARD_TYPE}"
+  BOARD_TYPE_OPTION="--board_type ${BOARD_TYPE}"
 else
   BOARD_TYPE_OPTION=
 fi
@@ -37,15 +36,7 @@ git checkout $BRANCH
 
 # in the logs directory ...
 cd "${HOLBA_EMBEXP_LOGS}"
-# find the exp classes,
-EXPSDIR=${HOLBA_EMBEXP_LOGS}/${ARCH_EXPTYPE_PARAM}
-for dir in "${EXPSDIR}"/*/
-do
-  dir=${dir%*/}
-  dir=${dir##*/}
 
-  # and start the experiments
-  ./scripts/run_batch.py --exp_class "${ARCH_EXPTYPE_PARAM}/${dir}" ${BOARD_TYPE_OPTION}
-done
-
+# and start the experiments
+./scripts/run_batch.py ${LISTNAME_OPTION} ${BOARD_TYPE_OPTION}
 
