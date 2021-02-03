@@ -10,6 +10,12 @@ SCAMV_EXAMPLES_DIR=$(dirname "${BASH_SOURCE[0]}")
 SCAMV_EXAMPLES_DIR=$(readlink -f "${SCAMV_EXAMPLES_DIR}/..")
 HOLBA_DIR=$(readlink -f "${SCAMV_EXAMPLES_DIR}/../../../..")
 
+# check inputs
+if [[ -z "${EXPGENRUN_ID_PARAM}" ]]; then
+  echo "ERROR: please provide both, run description (simple string prefix) and expgenrun id (text file with scamv specification)"
+  exit 1
+fi
+
 # find the environment
 source "${HOLBA_DIR}/env.sh"
 echo "============================"
