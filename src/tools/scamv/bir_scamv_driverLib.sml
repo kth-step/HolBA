@@ -478,10 +478,13 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
               , generator = gen, generator_param = generator_param
               , obs_model = obs_model, hw_obs_model = hw_obs_model
               , refined_obs_model = refined_obs_model, obs_projection = proj
-              , verbosity = verb, seed_rand = seed_rand, do_training = train } =
+              , verbosity = verb, seed_rand = seed_rand, do_training = train
+              , run_description = descr_o } =
     let
 
         val _ = bir_randLib.rand_isfresh_set seed_rand;
+
+        val _ = run_init descr_o;
 
         val _ = do_enum := enumerate;
         val _ = do_training := train;
@@ -508,7 +511,8 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
           ("Projection model: " ^ PolyML.makestring proj ^ "\n") ^
           ("HW observation model : " ^ !hw_obs_model_id ^ "\n") ^
           ("Enumerate            : " ^ PolyML.makestring (!do_enum) ^ "\n") ^
-          ("Train branch pred.   : " ^ PolyML.makestring (!do_training) ^ "\n");
+          ("Train branch pred.   : " ^ PolyML.makestring (!do_training) ^ "\n") ^
+          ("Run description text : " ^ PolyML.makestring descr_o ^ "\n") ;
 
         val _ = run_log config_str;
         val _ = min_verb 1 (fn () => print config_str);

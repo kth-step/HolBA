@@ -7,6 +7,8 @@ signature persistenceLib = sig
   val run_log            : string -> unit;
   (* persistenceLib implicitly creates a run with first call, "finalize" completes the whole run and writes runtime *)
   val run_finalize       : unit   -> unit;
+  (* manually start a new run with an optional description text *)
+  val run_init           : string option -> unit;
 
 
   (* storing to logs *)

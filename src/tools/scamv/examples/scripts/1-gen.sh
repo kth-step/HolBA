@@ -33,10 +33,11 @@ if [[ ! -d "${HOLBA_EMBEXP_LOGS}" ]]; then
   exit 1
 fi
 
-# TODO: push "${EXPGENRUN_PREFIX_PARAM}_${EXPGENRUN_ID_PARAM}" into the description for holbarun
+# description for this holbarun
+SCAMV_HOLBA_RUN_DESCR="1-gen.sh_${EXPGENRUN_PREFIX_PARAM}_${EXPGENRUN_ID_PARAM}"
 
 # start experiment generation process
 cd "${SCAMV_EXAMPLES_DIR}"
-./scamv.sh ${SCAMV_EXPGENRUN_PARAMS}
+./scamv.sh --run_description "${SCAMV_HOLBA_RUN_DESCR}" ${SCAMV_EXPGENRUN_PARAMS}
 
 

@@ -38,11 +38,13 @@ struct
      (* time = time without dot *)
       now_str
     end;
-  fun holba_run_create () =
+  fun holba_run_create descr_o =
     let
       val name      = get_dotfree_time ();
 
-      val list_v  = LogsList ("HOLBA." ^ name, SOME "auto-generated");
+      val list_descr = Option.getOpt(Option.map (fn s => SOME ("HolBA run: " ^ s)) descr_o, SOME "auto-generated");
+
+      val list_v  = LogsList ("HOLBA." ^ name, list_descr);
       val prog_l_id = create_prog_list list_v;
       val exp_l_id  = create_exp_list  list_v;
 
@@ -53,19 +55,25 @@ struct
          (* write out git commit and git diff of current directory. *)
          (*    so this code needs to be executed with the working directory in the holbarepo! *)
       open bir_exec_wrapLib;
-      val run_datestr    = get_datestring();
-      val holba_diff     = get_exec_output "git diff";
-      val holba_commit   = get_exec_output "git rev-parse HEAD";
-      val holba_args     = get_script_args ();
-      val rand_seed      = rand_seed_get ();
-      val holba_randseed = Real.toString rand_seed;
+      val run_datestr     = get_datestring();
+      val holba_diff      = get_exec_output "git diff";
+      val holba_commit    = get_exec_output "git rev-parse HEAD";
+      val holba_args      = get_script_args ();
+      val rand_seed       = rand_seed_get ();
+      val holba_randseed  = Real.toString rand_seed;
+      val holba_run_descr =
+        if isSome descr_o then
+          ("SOME (" ^ (valOf descr_o) ^ ")")
+        else
+          "NONE";
 
       val run_metadata =
-        [("time",     run_datestr),
-         ("diff",     holba_diff),
-         ("commit",   holba_commit),
-         ("args",     holba_args),
-         ("randseed", holba_randseed)];
+        [("time",      run_datestr),
+         ("diff",      holba_diff),
+         ("commit",    holba_commit),
+         ("args",      holba_args),
+         ("randseed",  holba_randseed),
+         ("run_descr", holba_run_descr)];
 
       (* add metadata *)
       val _ = List.map (fn (m_n, m_v) => 
@@ -128,26 +136,28 @@ struct
   val holba_run_exp_l_idx  = ref 0;
   val holba_run_prog_map   = ref (Redblackmap.mkDict prog_handle_compare);
   val holba_run_exp_map    = ref (Redblackmap.mkDict exp_handle_compare );
+  fun holba_run_id_create descr_o =
+    let
+      val run_refs = holba_run_create descr_o;
+      val RunReferences (run_id, run_name, _, _) = run_refs;
+
+      val _ = set_log holbarun_log (create_log (mk_run_meta_handle (run_id, SOME "log", "")));
+      val _ = write_log_line (holbarun_log, "holba_run_id", "no no no") ("Starting log for: " ^ run_name);
+
+      val _ = holba_run_timer_ref := timer_start 1;
+      val _ = holba_run_id_ref := SOME run_refs;
+
+      val _ = holba_run_prog_l_idx := 0;
+      val _ = holba_run_exp_l_idx  := 0;
+      val _ = holba_run_prog_map   := Redblackmap.mkDict prog_handle_compare;
+      val _ = holba_run_exp_map    := Redblackmap.mkDict exp_handle_compare;
+    in
+      run_refs
+    end;
+
   fun holba_run_id () =
     case !holba_run_id_ref of
-        NONE =>
-          let
-            val run_refs = holba_run_create ();
-            val RunReferences (run_id, run_name, _, _) = run_refs;
-
-            val _ = set_log holbarun_log (create_log (mk_run_meta_handle (run_id, SOME "log", "")));
-            val _ = write_log_line (holbarun_log, "holba_run_id", "no no no") ("Starting log for: " ^ run_name);
-
-            val _ = holba_run_timer_ref := timer_start 1;
-            val _ = holba_run_id_ref := SOME run_refs;
-
-            val _ = holba_run_prog_l_idx := 0;
-            val _ = holba_run_exp_l_idx  := 0;
-            val _ = holba_run_prog_map   := Redblackmap.mkDict prog_handle_compare;
-            val _ = holba_run_exp_map    := Redblackmap.mkDict exp_handle_compare;
-          in
-            run_refs
-          end
+        NONE => holba_run_id_create NONE
       | SOME p => p;
 
   fun run_log message =
@@ -193,6 +203,11 @@ struct
       (((idx_ref := !idx_ref + 1); !idx_ref),
        (create_log log_id));
   end;
+
+  fun run_init descr_o =
+    ((if isSome (!holba_run_id_ref) then run_finalize () else ());
+     holba_run_id_create descr_o;
+     ());
 
   (* storing to logs *)
   (* ========================================================================================= *)
