@@ -181,26 +181,12 @@ def z3_funcint_to_HolTerm(funcint):
 
     # Convert the pairs of (address, value) into dictionary {address: value}
     (mem_to_intList, arg_size, vlu_size) = (funcinterp_collect(funcint))
-    mem_to_dict = dict(mem_to_intList)
-
-    # propagate a map with the default value for all touched words in the memory (i.e., consider 8 byte aligned words)
-    # (mask to find out the base address of an 8 byte word aligned memory address
-    adr_mask = 0xFFFFFFFFFFFFFFF8
-    base_addresses = set(map(lambda x : (x & adr_mask), mem_to_dict.keys()))
-    mem_full = {}
-    for adr in base_addresses:
-        for i in range(0,8):
-            mem_full[adr + i] = default_value
-
-    # overwrite with main dictionary mappings
-    for k in mem_to_dict.keys():
-        mem_full[k] = mem_to_dict[k]
+    #mem_to_dict = dict(mem_to_intList)
 
     # construct the hol term from the memory map
-    memory = mem_full
     res = []
-    for k in memory.keys():
-        res.append("(0x{:X}w, 0x{:X}w)".format(k, memory[k]))
+    for (addr,val) in mem_to_intList:
+        res.append("(0x{:X}w, 0x{:X}w)".format(addr, val))
     else_value_word_str = "(0x{:X}w: {} word)".format(int(str(default_value)), vlu_size)
     return ("(FUN_FMAP (K ({})) (UNIV) : {} word |-> {} word) |+ ".format(else_value_word_str, arg_size, vlu_size) + " |+ ".join(tm for tm in res ))
 
