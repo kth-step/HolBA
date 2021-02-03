@@ -1,4 +1,4 @@
-driver-test --max_iter 200 --prog_size 5 --max_tests 200 --enumerate --generator prefetch_strides --obs_model cache_tag_index_part_page --hw_obs_model hw_cache_tag_index_part_page
+--max_iter 200 --prog_size 5 --max_tests 200 --enumerate --generator prefetch_strides --obs_model cache_tag_index_part_page --hw_obs_model hw_cache_tag_index_part_page
 
 
 >>> cav_19_12_03_prefetch_enum_cpart_aligned

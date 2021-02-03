@@ -5,7 +5,7 @@ DEPENDENCIES   =
 
 # configuration
 # ----------------------------------
-HOLHEAP        = backlifter/HolBATools_Backlifter-heap
+HOLHEAP        = scamv/HolBATools_ScamV-heap
 NEWHOLHEAP     = HolBATools-heap
 
 HEAPINC_EXTRA  = 

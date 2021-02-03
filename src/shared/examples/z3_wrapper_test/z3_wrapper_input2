@@ -1,0 +1,11 @@
+(declare-const x (_ BitVec 8))
+(declare-const y (_ BitVec 8))
+(declare-const z (_ BitVec 8))
+(declare-const a1 (Array (_ BitVec 8) (_ BitVec 8)))
+(declare-const a2 (Array (_ BitVec 8) (_ BitVec 8)))
+(declare-const a3 (Array (_ BitVec 8) (_ BitVec 8)))
+(assert (= (select a1 x) x))
+(assert (= (store a1 x y) a1))
+
+(check-sat)
+(get-model)

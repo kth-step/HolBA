@@ -1,92 +1,68 @@
 structure bir_rel_synthLib : bir_rel_synthLib =
 struct
 
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+
+  (* error handling *)
+  val libname  = "bir_rel_synthLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
+
 local
 open HolKernel Parse boolLib bossLib;
 open stringSyntax;
 open bir_programTheory;
+open bir_utilLib;
+open scamv_path_structLib;
+open scamv_enumLib;
 
 open bslSyntax;
+open numSyntax;
 in
 
 type exp = term;
-type cobs = term * term;
+type cobs = term * term * term;
 
-datatype cobs_repr = cobs of int * term * term;
-datatype path_repr = path of int * term * (cobs_repr list);
-type path_struct = path_repr list;
-type path_spec = {a_run: int * (bool * int) list, b_run: int * (bool * int) list};
 datatype enum_strategy = enum_extensional of int list
                        | enum_range of int * int;
 type enum_env = (term * enum_strategy) list;
 
-fun mapPair f (c, oCobs) = (f c, f oCobs);
-
-fun path_id_of (path (id, _, _)) = id;
-fun path_cond_of (path (_,cond,_)) = cond;
-fun path_obs_of (path (_,_,obs)) = obs;
-fun cobs_id_of (cobs (id,_,_)) = id;
-
-fun path_domain (ps : path_struct) =
-    List.map path_id_of ps;
-
-fun obs_domain_path xs =
-    List.map cobs_id_of xs;
-
-fun obs_domain (ps : path_struct) =
-    List.concat (List.map (obs_domain_path o path_obs_of) ps);
-
-fun bir_free_vars exp =
-    if is_comb exp then
-        let val (con,args) = strip_comb exp
-        in if identical con ``BExp_Den`` then
-               let val v = case strip_comb (hd args) of
-                                     (_,v::_) => v
-                                   | _ => raise ERR "bir_free_vars" "not expected"
-               in [v]
-               end
-           else
-               List.concat (map bir_free_vars args)
-        end
-    else [];
-
 exception ListMkBir of string
 
 fun primed_subst exp =
-    map (fn v =>
-            let val vp = lift_string string_ty (fromHOLstring v ^ "'")
-            in
-            ``BVar ^v`` |-> ``BVar ^vp`` end)
-        (bir_free_vars exp);
-
-fun primed_vars exp = map (#residue) (primed_subst exp);
+    let 
+	val (mfvs, rfvs) = List.partition (fn el =>  Term.term_eq el ``"MEM"``)(bir_free_vars exp)
+	val regs =
+	    List.map (fn v =>
+		    let val vp = lift_string string_ty (fromHOLstring v ^ "'")
+		    in
+			``BVar ^v`` |-> ``BVar ^vp`` end) rfvs
+	val mem  = mk_var ("MEM" ,Type`:num |-> num`)
+	val mem' = mk_var ("MEM'",Type`:num |-> num`)
+    in
+	if List.null mfvs
+	then regs
+	else [mem |-> mem']@regs
+    end
+	
+fun primed_vars exp = List.map (#residue) (primed_subst exp);
 
 fun primed_term exp =
     let val psub = primed_subst exp
-    in subst psub exp
+    in
+	subst psub exp
     end;
 
 fun primed ys =
     map (fn (x,y) => (primed_term x,
-                      Option.map (map (mapPair primed_term)) y)) ys;
+                      Option.map (List.map (mapPair primed_term)) y)) ys;
 
 fun primed_obs (cos : cobs_repr list) =
-    let fun primed_cobs (cobs (id, c, t)) =
-            cobs (id, primed_term c, primed_term t);
+    let fun primed_cobs (cobs (id, oid, c, t)) =
+            cobs (id, oid, primed_term c, primed_term t);
     in List.map primed_cobs cos
     end;
-
-fun stateful_tabulate f =
-    let val current = ref 0;
-        fun next () =
-            let val result = f (!current);
-            in (current := !current + 1;
-                result)
-            end
-    in
-        next
-    end;
-
+(*
 val fresh_id =
     stateful_tabulate
         (fn n =>
@@ -102,28 +78,21 @@ val fresh_id =
 
 fun mk_fresh_gen () =
     stateful_tabulate (fn n => n);
-
+*)
 fun todo () = raise ERR "todo" "unimplemented";
 
-fun gen_obs_ids fresh ts =
-    List.map (fn (c,t) => cobs (fresh (), c, t)) ts;
-
-fun gen_path_ids fresh ps =
-    List.map (fn (pcond, cobslist) =>
-                 path (fresh (), pcond, gen_obs_ids fresh cobslist)) ps;
-
-fun lookup_path path_id path_struct =
-    List.find (fn p => path_id_of p = path_id) path_struct;
-
-fun lookup_obs obs_id obs_list =
-    List.find (fn obs => cobs_id_of obs = obs_id) obs_list;
+fun split_obs_list n xs =
+    let val (refs, base) = Portable.partition (fn (oid,_) => oid = n) xs;
+    in
+      (List.map snd refs, List.map snd base)
+    end
 
 fun triangleWith f xs ys =
 (*  full product: List.concat (map (fn a => map (fn b => f a b) xs) ys);*)
     let fun go g [] _ = []
           | go g _ [] = []
           | go g (x::xs) (y::ys) =
-            (map (fn p => g x p) (y::ys)) @
+            (List.map (fn p => g x p) (y::ys)) @
             go g xs ys
     in
         if length ys < length xs
@@ -137,8 +106,8 @@ fun buildLeavesIds [] = []
   | buildLeavesIds [oid] = [[(true, oid)], [(false,oid)]]
   | buildLeavesIds (oid::rest) =
     let val cobs' = buildLeavesIds rest;
-        val oHolds    = map (fn spec => (true, oid) :: spec) cobs';
-        val oNotHolds = map (fn spec => (false, oid) :: spec) cobs';
+        val oHolds    = List.map (fn spec => (true, oid) :: spec) cobs';
+        val oNotHolds = List.map (fn spec => (false, oid) :: spec) cobs';
     in oHolds @ oNotHolds
     end
 
@@ -158,24 +127,25 @@ fun enumerate_domain (a_term, strategy) =
             fun apply_pair v1 v2 =
                 band (beq (a_term, bconst64 v1), beq (b_term, bconst64 v2))
             val prod = triangleWith apply_pair xs xs;
-            val len = length prod;
+(*            val len = length prod;
             fun next_constraint n =
                 SOME (List.nth (prod, n mod len))
-                     handle _ => NONE;
-        in (prod, stateful_tabulate next_constraint)
+                     handle _ => NONE; *)
+        in (prod, roundrobin_list prod)
         end;
 
-fun enumerate_domains env =
-    let val (prods, funs) = unzip (List.map enumerate_domain env)
-        fun nexts () =
-            let fun go [] = []
-                  | go (NONE :: xs) = go xs
-                  | go (SOME x :: xs) = x :: (go xs)
-            in
-                bandl (go (List.map (fn f => f ()) funs))
-                handle _ => btrue
-            end;
-    in (prods, nexts)
+fun enumerate_domains [] = ([], constant btrue)
+  | enumerate_domains env =
+    let val (prods, enums) = unzip (List.map enumerate_domain env)
+        (* fun nexts () =
+             (*let fun go [] = [] *)
+            (*       | go (NONE :: xs) = go xs *)
+            (*       | go (SOME x :: xs) = x :: (go xs) *)
+            (* in
+            bandl (List.map next enums)
+            handle _ => btrue
+            end; *) *)
+    in (prods, list_reduce bandl enums)
     end;
 
 fun enumerate_relation path_dom static_obs_dom dynamic_obs_dom =
@@ -218,21 +188,21 @@ fun enumerate_relation path_dom static_obs_dom dynamic_obs_dom =
                         specs;
 
         (* iterator *)
-        val len = length full_specs;
+(*        val len = length full_specs;
         fun next_test_case n =
             SOME (List.nth (full_specs, n mod len))
-                     handle _ => NONE;
+                     handle _ => NONE; *)
     in
-        (full_specs, stateful_tabulate next_test_case)
+        (full_specs, roundrobin_list full_specs)
     end;
 
 fun trace_cobs_jit [] obs_list = ([],[])
   | trace_cobs_jit ((b,id) :: ids) obs_list  =
-    let val (SOME (cobs (_, cond, obs_term))) = lookup_obs id obs_list;
+    let val (SOME (cobs (_, oid, cond, obs_term))) = lookup_obs id obs_list;
         val (conds, obs) = trace_cobs_jit ids obs_list;
     in
         if b
-        then (cond :: conds, obs_term :: obs)
+        then (cond :: conds, (int_of_term oid,obs_term) :: obs)
         else (bnot cond :: conds, obs)
     end handle Bind =>
                raise ERR "trace_cobs_jit"
@@ -240,9 +210,28 @@ fun trace_cobs_jit [] obs_list = ([],[])
 
 val example_bir_path_struct =
     [path (1, blt (bden (bvarimm64 "A"), bconst64 0),
-           [cobs (2, blt (bden (bvarimm64 "B"), bconst64 64),
+           [cobs (2, term_of_int 0, blt (bden (bvarimm64 "B"), bconst64 64),
                      bden(bvarimm64 "A"))])
            ,path (3, bnot (blt (bden (bvarimm64 "A"), bconst64 0)), [])];
+
+val example_bir_path_struct2 =
+    [path (0, blt (bden (bvarimm64 "A"), bconst64 0),
+           [cobs (1, term_of_int 0, btrue, bden(bvarimm64 "A")),
+            cobs (2, term_of_int 0, btrue, bden(bvarimm64 "B")),
+            cobs (3, term_of_int 0, btrue, bden(bvarimm64 "C"))]),
+     path (4, bge (bden (bvarimm64 "A"), bconst64 0),
+           [cobs (5, term_of_int 0, btrue, bden(bvarimm64 "D")),
+            cobs (6, term_of_int 0, btrue, bden(bvarimm64 "E")),
+            cobs (7, term_of_int 0, btrue, bden(bvarimm64 "F"))])];
+
+val example_bir_path_struct3 =
+    [path (0, blt (bden (bvarimm64 "A"), bconst64 0),
+           [cobs (1, term_of_int 0, btrue, bden(bvarimm64 "A")),
+            cobs (2, term_of_int 0, btrue, bden(bvarimm64 "B"))]),
+     path (4, bge (bden (bvarimm64 "A"), bconst64 0),
+           [cobs (5, term_of_int 0, btrue, bden(bvarimm64 "D")),
+            cobs (6, term_of_int 0, btrue, bden(bvarimm64 "E")),
+            cobs (7, term_of_int 0, btrue, bden(bvarimm64 "F"))])];
 
 val example_bir_initial_ps =
     [(blt (bden (bvarimm64 "A"), bconst64 0),
@@ -265,12 +254,14 @@ fun mk_bir_list_eq l1 l2 =
          in list_eq l1 l2
          end
 
-fun op mem (x, xs) =
+fun op  mem (x, xs) =
     is_some (List.find (fn y => x = y) xs);
+
 infix 5 mem;
 
 fun rel_synth_jit
         (spec as {a_run = (a_path, a_obs_spec), b_run = (b_path, b_obs_spec)})
+        obs_projection
         path_struct =
     let val SOME (path (_,a_cond,a_obs)) = lookup_path a_path path_struct;
         val SOME (path (_,b_cond_unprimed,b_obs_unprimed)) =
@@ -285,6 +276,10 @@ fun rel_synth_jit
             trace_cobs_jit (project a_obs a_obs_spec) a_obs;
         val (b_obs_cond, b_obs_terms) =
             trace_cobs_jit (project b_obs b_obs_spec) b_obs;
+        val (a_obs_terms_refined, a_obs_terms_base) =
+            split_obs_list obs_projection a_obs_terms;
+        val (b_obs_terms_refined, b_obs_terms_base) =
+            split_obs_list obs_projection b_obs_terms;
         fun bandl' xs =
             case xs of
                 [] => btrue
@@ -293,29 +288,19 @@ fun rel_synth_jit
         band (a_cond,
               band (b_cond,
                     bandl' [bandl' a_obs_cond, bandl' b_obs_cond,
-                            mk_bir_list_eq a_obs_terms b_obs_terms]))
+                            band (mk_bir_list_eq a_obs_terms_base b_obs_terms_base
+                                 ,bnot (if null a_obs_terms_refined andalso null b_obs_terms_refined then bfalse else mk_bir_list_eq a_obs_terms_refined b_obs_terms_refined))]))
     end
     handle Bind =>
            raise ERR "rel_synth_jit"
                  ("invalid id in arg " ^
                   PolyML.makestring spec);
 
-val example_initial_ps = [(``A``, SOME [(``B``,``C``)]), (``D``,NONE)];
-
-(* input: (bir_exp * (cobs list) option) list *)
-fun preprocess_path_struct ps : (path_struct * term) =
-    let val (somes, nones) = partition (is_some o snd) ps;
-        val ps' = List.map (fn (p,ob) => (p, Option.getOpt (ob,[]))) somes;
-        fun smart_bandl xs = if null xs then btrue else bandl xs;
-        val negCond = smart_bandl o List.map (bnot o fst);
-        val validity = negCond nones;
-        val fresh = mk_fresh_gen ();
-    in (gen_path_ids fresh ps', band (validity, primed_term validity))
-    end;
+val example_initial_ps = [(``A``, SOME [(``0``,``B``,``C``)]), (``D``,NONE)];
 
 fun partition_domains (ps : path_struct) : int list * int list =
     let fun partition_obs_list xs =
-            List.partition (fn (cobs (id,cond,term)) => identical cond btrue) xs;
+            List.partition (fn (cobs (id,oid,cond,term)) => identical cond btrue) xs;
         fun go [] = ([],[])
           | go (path (_,_,xs)::ps) =
             let val (static, dyn) = partition_obs_list xs;
@@ -328,61 +313,46 @@ fun partition_domains (ps : path_struct) : int list * int list =
     end;
 
 val max_guard_tries = 10000;
-
-(* input: (bir_exp * (cobs list) option) list *)
-fun rel_synth_init initial_ps (env : enum_env) =
-    let val (ps : path_struct, validity) = preprocess_path_struct initial_ps;
-        val (static_obs_domain, dynamic_obs_domain) = partition_domains ps;
-        val (full_specs, next) =
-            enumerate_relation (path_domain ps)
-                               static_obs_domain dynamic_obs_domain;
-        val (full_enums, next_constraint) =
-            enumerate_domains env;
-        fun next_test guard_path_spec =
-            let open bir_expLib;
-                fun try_spec () =
-                    let fun go 0 = raise ERR "next_test" "guard_path_spec failed too many times in a row"
-                          | go n =
-                            let val SOME p = next ();
-                            in if guard_path_spec p
-                               then (print "\n"; p)
-                               else (print "~"; go (n-1))
-                            end;
-                    in go max_guard_tries
-                    end
-                    handle Bind => raise ERR "next_test" "no next relation found";
-                val spec = try_spec ();
-                val constraint = next_constraint ();
-                val _ = if not (identical constraint btrue)
-                        then (print ("Selected constraint: ");
-                              bir_exp_pretty_print constraint;
-                              print "\n")
-                        else ();
-            in SOME (spec, band (band (rel_synth_jit spec ps, constraint)
-                                 ,validity))
-               handle e => (print (PolyML.makestring e ^ "\n");
-                            print (PolyML.makestring spec ^ "\n");
-                            NONE)
-            end
-                handle Bind => NONE;
+(* input: path_struct *)
+fun rel_synth_init ps obs_projection (env : enum_env) =
+    let
+      val validity = btrue;
+      val (static_obs_domain, dynamic_obs_domain) = partition_domains ps;
+      val (full_specs, relation) =
+          enumerate_relation (path_domain ps)
+                             static_obs_domain dynamic_obs_domain;
+      val (full_enums, constraints) =
+          enumerate_domains env;
+      fun next_test guard_path_spec =
+          let open bir_expLib;
+              fun try_spec () =
+                  let fun go 0 = raise ERR "next_test" "guard_path_spec failed too many times in a row"
+                        | go n =
+                          let val p = next relation;
+                          in if guard_path_spec p
+                             then (print "\n"; p)
+                             else (print "~"; go (n-1))
+                          end;
+                  in go max_guard_tries
+                  end
+                  handle Bind => raise ERR "next_test" "no next relation found";
+              val spec = try_spec ();
+              val constraint = next constraints;
+              val _ = if not (identical constraint btrue)
+                      then (print ("Selected constraint: ");
+                            bir_exp_pretty_print constraint;
+                            print "\n")
+                      else ();
+          in SOME (spec, band (band (rel_synth_jit spec obs_projection ps, constraint)
+                              ,validity))
+             handle e => (print (PolyML.makestring e ^ "\n");
+                          print (PolyML.makestring spec ^ "\n");
+                          NONE)
+          end
+          handle Bind => NONE;
     in
-        (ps, validity, next_test)
+      (full_specs, validity, next_test)
     end
-
-fun print_path_struct path_struct =
-    let fun print_obs (cobs (id, obs_cond, obs_term)) =
-            (print ("Obs " ^ PolyML.makestring id ^ ": ");
-             print_term obs_cond;
-             print (" => ");
-             print_term obs_term;
-             print "\n");
-        fun print_path (path (id, path_cond, obs_list)) =
-            (print ("Path " ^ PolyML.makestring id ^ ": ");
-             print_term path_cond;
-             print (" =>\n");
-             List.app print_obs obs_list);
-    in List.app print_path path_struct
-    end;
 
 end
 
