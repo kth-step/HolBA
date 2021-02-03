@@ -2,8 +2,11 @@ signature bir_conc_execLib = sig
   include Abbrev;
 
 (*
-  val conc_exec_program :  int -> term -> (term -> term) option -> (Arbnum.num * Arbnum.num) list * term -> term
+(* these two functions remain broken at the interface,
+   internally: unmaintainable exploded spaghettis
+ *)
 
+  val conc_exec_program :  int -> term -> (term -> term) option -> (Arbnum.num * Arbnum.num) list * term -> term
   val conc_exec_obs_extract : int -> term -> (Arbnum.num * Arbnum.num) list * term -> (int * term) list
 *)
 
