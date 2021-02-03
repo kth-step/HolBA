@@ -289,7 +289,7 @@ val _ =
     (fn () => (gen_prog_10 () = prog_10));
 
 val exp_v_10_m = [("meta100", "20"), ("meta23", "abc")];;
-fun gen_exp_10 () = run_create_exp prog_10 ExperimentTypeStdTwo "exp_params" [("input a", experimentsLib.machstate_empty)] exp_v_10_m;
+fun gen_exp_10 () = run_create_exp prog_10 ExperimentTypeStdTwo "exp_params" [("input a", experimentsLib.machstate_empty (Arbnum.fromInt 125))] exp_v_10_m;
 val exp_10 = gen_exp_10 ();
 
 val _ =

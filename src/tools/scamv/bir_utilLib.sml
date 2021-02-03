@@ -89,7 +89,7 @@ in
         (Redblackmap.insertList (mem_dict, mem_updates), mem_default)
       end
     else if finite_mapSyntax.is_fempty tm then
-      (Redblackmap.fromList Arbnum.compare [], NONE)
+      (Redblackmap.fromList Arbnum.compare [], Arbnum.zero)
     else if is_FUN_FMAP tm then
       let
         val (map_f, map_P) = dest_FUN_FMAP tm;
@@ -100,7 +100,7 @@ in
           let
             val (_, default_val) = dest_comb map_f;
           in
-            (Redblackmap.fromList Arbnum.compare [], SOME (dest_word_literal default_val))
+            (Redblackmap.fromList Arbnum.compare [], (dest_word_literal default_val))
           end
         else raise ERR "to_sml_Arbnum_map" "unexpected base map"
       end
@@ -128,11 +128,8 @@ fun to_sml_Arbnums model =
       if name <> "MEM" then raise ERR "to_sml_Arbnums" "memory should be called MEM" else
       let
         val (wordsz, mem_dict, default_val) = to_sml_Arbnums_mem8 tm;
-        val _ = if not (isSome default_val) orelse
-                   valOf default_val = Arbnum.zero then () else
-                raise ERR "to_sml_Arbnums" "cannot handle default values other than 0";
       in
-        machstate_replace_mem (wordsz, mem_dict) mst
+        machstate_replace_mem (wordsz, default_val, mem_dict) mst
       end;
   in
     List.foldl (fn ((name, tm), mst) =>
@@ -142,7 +139,7 @@ fun to_sml_Arbnums model =
         fold_mem ((name, tm), mst)
       else
         raise ERR "to_sml_Arbnums" "unknown syntax"
-      ) machstate_empty model
+      ) (machstate_empty Arbnum.zero) model
     end;
 
 fun remove_prime str =

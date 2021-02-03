@@ -15,15 +15,15 @@ struct
   val wrap_exn = Feedback.wrap_exn libname
 
 
-  val (mem_state) = ref machstate_empty;
+  val (mem_state) = ref (machstate_empty Arbnum.zero);
 
   val toTerm = rhs o concl
   fun econcl exp = (toTerm o EVAL) exp
   fun fromTerm tm = Arbnum.fromString (Parse.term_to_string tm);
 
   fun t2n tm = tm |> strip_comb |> #2 |> (fn a::b::_ => (fromTerm a , fromTerm b));
-  fun mk_mem_state tms = (8, Redblackmap.fromList Arbnum.compare (map (fn p => t2n p) tms));
-  fun is_state_mem_emp (MACHSTATE (_, (_, m))) =
+  fun mk_mem_state defval tms = (8, defval, Redblackmap.fromList Arbnum.compare (map (fn p => t2n p) tms));
+  fun is_state_mem_emp (MACHSTATE (_, (_, _, m))) =
     (Redblackmap.numItems m = 0);
   val add_reg_state = machstate_add_reg;
   val replace_mem_state = machstate_replace_mem;
@@ -127,8 +127,9 @@ struct
       end
   (* ------------------------------------------------------------------------ *)
 
-  fun mem_init_conc_exec exp ([],v) =
+  fun mem_init_conc_exec exp ([],v_) =
       let 
+          val v = numSyntax.term_of_int(Arbnum.toInt(v_));
 	  open bir_expSyntax
 	  open bir_immSyntax
 	  open bir_valuesSyntax
@@ -161,12 +162,13 @@ struct
 	  val evalMemLocAddr = map (fn el => econcl el ) (flatten memLocInit);
 	  val memInit = foldl (fn (x,y) => ``^y |+ ^x``) ``(FEMPTY: num |-> num)`` evalMemLocAddr
 	  val memSubs = subst [mem |-> memInit] (econcl exp)
-	  val memAssignments = mk_mem_state evalMemLocAddr
+	  val memAssignments = mk_mem_state v_ evalMemLocAddr
       in
 	  (memSubs, memAssignments)
       end
-    | mem_init_conc_exec exp (xs,_) =
-      let open numSyntax
+    | mem_init_conc_exec exp (xs,v_) =
+      let
+          open numSyntax
 	  open Arbnum
 
 	  val val_pairt = map (fn (a,b) => ( mk_pair((term_of_int o toInt) a, (term_of_int o toInt) b))) xs
@@ -174,11 +176,12 @@ struct
 	  val memInit = foldl (fn (x,y) => ``^y |+ ^x``) ``(FEMPTY: num |-> num)`` val_pairt
 	  val memSubs = subst [mem |-> memInit] (econcl exp)
       in
-	  (memSubs,(mk_mem_state []))
+	  (memSubs,(mk_mem_state v_ []))
       end;
 
-  fun conc_exec_program depth prog envfo (mls,v) =
+  fun conc_exec_program depth prog envfo (mls,v_) =
       let 
+          val v = numSyntax.term_of_int(Arbnum.toInt(v_));
 	  val holba_ss = ((std_ss++HolBACoreSimps.holBACore_ss))
 	  val precond  = ``BExp_Const (Imm1 1w)``
 	  val states   = symb_exec_process_to_leafs_pdecide (fn x => true) envfo depth precond prog
@@ -187,7 +190,7 @@ struct
 	  fun eq_true t = identical t ``SOME (BVal_Imm (Imm1 1w))``
 	  fun pathcond_val s =
 	      let
-		  val (bsst_pred_init_mem, ms) = mem_init_conc_exec ``(^s).bsst_pred`` (mls,v)
+		  val (bsst_pred_init_mem, ms) = mem_init_conc_exec ``(^s).bsst_pred`` (mls,v_)
 		  val _ =  mem_state := replace_mem_state ms (!mem_state);
 		  val restr_eval_tm = (toTerm o computeLib.RESTR_EVAL_CONV [``bir_eval_load``, ``bir_eval_store``])
 					  ``bir_eval_exp (^bsst_pred_init_mem) (BEnv (K NONE))``;
@@ -217,8 +220,9 @@ struct
 	  final_state
       end;
 
-  fun conc_exec_obs_extract obs_projection symb_state (mls,v) =
+  fun conc_exec_obs_extract obs_projection symb_state (mls,v_) =
     let
+      val v = numSyntax.term_of_int(Arbnum.toInt(v_));
       open numSyntax;
       fun eval_exp t = (toTerm o EVAL) t;
       fun eval_exp_to_val t =
@@ -256,7 +260,7 @@ struct
       val _ = if symb_is_BST_Halted state_ then () else
               raise ERR "conc_exec_program" "the final state is not halted, something is off";
       val (_,_,_,_,observation) = dest_bir_symb_state state_;
-      val bsst_obs_init_mem = #1(mem_init_conc_exec observation (mls,v)) 
+      val bsst_obs_init_mem = #1(mem_init_conc_exec observation (mls,v_)) 
 
       val nonemp_obs = filter (fn ob => (not o List.null o snd o strip_comb) ob) [bsst_obs_init_mem];
       val obs_elem = map (fn ob => (fst o dest_list) ob)nonemp_obs;
@@ -274,9 +278,9 @@ struct
 
   fun conc_exec_obs_compute obs_projection prog s =
     let
-      val (MACHSTATE (regmap, (wsz, memmap))) = s;
+      val (MACHSTATE (regmap, (wsz, defval, memmap))) = s;
 
-      val _ =  mem_state := machstate_empty;
+      val _ =  mem_state := machstate_empty defval;
 
       val _ = if wsz = 8 then () else
               raise ERR "conc_exec_obs_compute" "can only handle byte addressed memory";
@@ -286,21 +290,10 @@ struct
 
       val envfo = SOME (gen_symb_updates regmap');
 
-      (* TODO: what is this magic thing here? care to comment? *)
-      (* Next two statements are to handle cases where Z3 returns K(BitVec(64), 0) instead of explicitly assigning values to memory addresses. *)
-      (* The magic number 4294967295 is an out of range address used to mark such cases.  *)
-      val elm = (filter (fn (a,b) => a = (Arbnum.fromInt 4294967295)) memmap');
+      val (m, v) = (memmap', defval);
 
-      (* TODO: what is this magic thing? *)
-      val (m, v) = if   not(List.null elm) 
-		   then (
-		          [],
-		          numSyntax.term_of_int(Arbnum.toInt((snd o hd) elm))
-		        )
-		   else (memmap', ``(0:num)``);
-
-      val state_ = conc_exec_program 200 prog envfo (m,``^v``)
-      val obs = conc_exec_obs_extract obs_projection state_ (m,``^v``)
+      val state_ = conc_exec_program 200 prog envfo (m,v)
+      val obs = conc_exec_obs_extract obs_projection state_ (m,v)
 
       val state_wregs = List.foldl (fn (r,s) => add_reg_state r s) (!mem_state) regmap';
       val new_state = if (is_state_mem_emp state_wregs) then s else state_wregs;

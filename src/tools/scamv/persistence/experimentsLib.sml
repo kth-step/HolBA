@@ -14,13 +14,13 @@ in
   (* machine states *)
   (* ======================================== *)
   (* machine state definition from the signature *)
-  datatype machineState = MACHSTATE of (((string, num) Redblackmap.dict) * (int * ((num, num) Redblackmap.dict)));
-  val machstate_empty = MACHSTATE ((Redblackmap.mkDict String.compare), (8, Redblackmap.mkDict Arbnum.compare));
+  datatype machineState = MACHSTATE of (((string, num) Redblackmap.dict) * (int * num * ((num, num) Redblackmap.dict)));
+  fun machstate_empty defval = MACHSTATE ((Redblackmap.mkDict String.compare), (8, defval, Redblackmap.mkDict Arbnum.compare));
 
-  fun machstate_print (MACHSTATE (regmap, (wsz, memmap))) =
+  fun machstate_print (MACHSTATE (regmap, (wsz, defval, memmap))) =
       let
 	  val _ = print ("MACHSTATE = (\n");
-	  val _ = print ("  mem := {\n");
+	  val _ = print ("  mem := " ^ (Arbnum.toString defval) ^ ", otherwise {\n");
 	  val _ = List.map (fn (a,v) =>  print ("\t(0x"^(Arbnum.toHexString(a))^"\t-> 0x"^(Arbnum.toHexString(v))^")\n"))
                            (Redblackmap.listItems memmap);
 	  val _ = print "  }\n  regs := {\n";
@@ -35,7 +35,7 @@ in
     (MACHSTATE (rm, newm));
 
   (* convert to json state *)
-  fun machstate_to_Json (MACHSTATE (regmap, (wsz, memmap))) =
+  fun machstate_to_Json (MACHSTATE (regmap, (wsz, defval, memmap))) =
     let
       open Json;
 
@@ -63,8 +63,9 @@ in
           (addr, STRING value)
         end;
 
-      val regmap_json = List.map rkv_to_json    (Redblackmap.listItems regmap);
-      val memmap_json = List.map mentry_to_json (Redblackmap.listItems memmap);
+      val regmap_json  = List.map rkv_to_json    (Redblackmap.listItems regmap);
+      val memmap_json_ = List.map mentry_to_json (Redblackmap.listItems memmap);
+      val memmap_json  = ("default", STRING ("0x" ^ (Arbnumcore.toHexString defval)))::memmap_json_;
 
       val json_obj = OBJECT (regmap_json@[("mem", OBJECT memmap_json)])
     in
@@ -117,14 +118,13 @@ in
           (regname, value)
         end;
 
-      fun parseMementry (k_s, v) =
+      fun parseMemVal v =
         let
           val v_s =
             case v of
                STRING s => s
-             | _        => raise ERR "Json_to_machstate" "format error, register value is not STRING";
+             | _        => raise ERR "Json_to_machstate" "format error, memory value is not STRING";
 
-          val addr  = Arbnum.fromHexString k_s;
           val value = Arbnum.fromHexString v_s;
 
           val _ = if
@@ -133,11 +133,23 @@ in
                   then () else
                     raise ERR "Json_to_machstate" "memory value out of range";
         in
-          (addr, value)
+          value
         end;
 
+      fun parseMementry (k_s, v) =
+          (Arbnum.fromHexString k_s, parseMemVal v);
+
       val regmap = Redblackmap.fromList String.compare (List.map parseReg regmap);
-      val mem    = (8, Redblackmap.fromList Arbnum.compare (List.map parseMementry memmap));
+
+      fun is_default (n, _) = n = "default";
+      val mem_default_o = List.find is_default memmap;
+      val mem_default =
+        case mem_default_o of
+           SOME (_, v) => parseMemVal v
+         | _ => raise ERR "Json_to_machstate" "couldn't find memory default value as expected";
+
+      val memmap_wo_default = List.filter (not o is_default) memmap;
+      val mem    = (8, mem_default, Redblackmap.fromList Arbnum.compare (List.map parseMementry memmap_wo_default));
     in
       MACHSTATE (regmap, mem)
     end;
