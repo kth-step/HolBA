@@ -359,9 +359,8 @@ fun next_experiment all_exps next_relation  =
 				    SOME x => x
 				  | NONE => raise ERR "next_test" "no program found";
 
-	(* remove meory for now from states*)
 	val ce_obs_comp = conc_exec_obs_compare (!current_obs_projection) lifted_prog_w_obs (s1, s2)
-        val _ = if #1 ce_obs_comp then () else
+        val _ = if ce_obs_comp then () else
                 raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
 
 	(* show time *)

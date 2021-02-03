@@ -295,21 +295,18 @@ struct
       val state_ = conc_exec_program 200 prog envfo (m,v)
       val obs = conc_exec_obs_extract obs_projection state_ (m,v)
 
-      val state_wregs = List.foldl (fn (r,s) => add_reg_state r s) (!mem_state) regmap';
-      val new_state = if (is_state_mem_emp state_wregs) then s else state_wregs;
-
-      val _ = map (fn (id,ob) => (print (PolyML.makestring id ^ " "); print_term ob)) obs
+      val _ = map (fn (id,ob) => (print (Int.toString id ^ " "); print_term ob)) obs
       val _ = print "\n";
     in
-      (obs, new_state)
+      (obs, state_)
     end;
 
   fun conc_exec_obs_compare obs_projection prog (s1, s2) =
       let
-	      val (obs1, state1) = conc_exec_obs_compute obs_projection prog s1;
-	      val (obs2, state2) = conc_exec_obs_compute obs_projection prog s2;
+	      val (obs1, _) = conc_exec_obs_compute obs_projection prog s1;
+	      val (obs2, _) = conc_exec_obs_compute obs_projection prog s2;
       in
-	  (list_eq (fn (i1,t1) => fn (i2,t2) => i1 = i2 andalso identical t1 t2) obs1 obs2, [state1, state2])
+	  (list_eq (fn (i1,t1) => fn (i2,t2) => i1 = i2 andalso identical t1 t2) obs1 obs2)
       end;
 
 
