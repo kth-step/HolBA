@@ -7,5 +7,5 @@ HOLBA_DIR=$(readlink -f "${SCAMVEX_DIR}/../../../..")
 
 FORWARD_ARGS=${@:1}
 
-"${HOLBA_DIR}/src/shared/holba_entry.sh" driver-test $FORWARD_ARGS
+"./holba_entry.sh" driver-test $FORWARD_ARGS
 

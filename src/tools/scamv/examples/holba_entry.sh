@@ -2,9 +2,10 @@
 set -e
 
 # get setup directory path
-SHARED_DIR=$(dirname "${BASH_SOURCE[0]}")
-HOLBA_DIR=$(readlink -f "${SHARED_DIR}/../..")
+SCAMV_EXAMPLES_DIR=$(dirname "${BASH_SOURCE[0]}")
+HOLBA_DIR=$(readlink -f "${SCAMV_EXAMPLES_DIR}/../../../..")
 
+cd "${SCAMV_EXAMPLES_DIR}"
 CURRENT_DIR=$(pwd)
 
 if [[ "$1" == "QUICK" ]]; then
@@ -31,17 +32,19 @@ fi
 
 if [[ "${QUICK_RUN}" == "NO" ]]; then
   MAKETARGET=$(python3 -c "import os.path; print(os.path.relpath('${CURRENT_DIR}', '${HOLBA_DIR}'))")
-  make -C "${HOLBA_DIR}" main
+  #make -C "${HOLBA_DIR}" main
   make -C "${HOLBA_DIR}" "${MAKETARGET}"
 fi
 
 # source the overall environment script
 set --
 source "${HOLBA_DIR}/env.sh"
+set -e
 
 # TODO: would need to find heap that corresponds to current dir, quickfix: make main a few
 #       lines up and require that the current dir heap is subsumed in the one defined here
-HEAPNAME=${HOLBA_DIR}/src/HolBA-heap
+#HEAPNAME=${HOLBA_DIR}/src/HolBA-heap
+HEAPNAME=${SCAMV_EXAMPLES_DIR}/../HolBATools_ScamV-heap
 BUILDHEAP=${HOLBA_HOL_DIR}/bin/buildheap
 
 echo
