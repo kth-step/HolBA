@@ -615,11 +615,10 @@ structure Yices = struct
                  it may not be needed at all: ensuring that the constant name
                  is identical to the field selector name may already be
                  sufficient. *)
-              val fix_fields = (fn fields => map (fn (str, fi) => (str, #ty fi)) fields)
-              val j = Lib.index (fn (field_name, field_ty) =>
+              val j = Lib.index (fn (field_name, {ty = field_ty, ...}) =>
                   select_name = record_name ^ "_" ^ field_name andalso
                     Lib.can (Type.match_type field_ty) rng_ty)
-                (fix_fields (TypeBase.fields_of record_ty))
+                (TypeBase.fields_of record_ty)
               (* translate argument *)
               val (acc, yices_x) = translate_term (acc, x)
               val (_, _, ty_dict, _, _) = acc
@@ -651,11 +650,10 @@ structure Yices = struct
                  it may not be needed at all: ensuring that the constant name
                  is identical to the field update function's name may already be
                  sufficient. *)
-              val fix_fields = (fn fields => map (fn (str, fi) => (str, #ty fi)) fields)
-              val j = Lib.index (fn (field_name, field_ty) =>
+              val j = Lib.index (fn (field_name, {ty = field_ty, ...}) =>
                   update_name = record_name ^ "_" ^ field_name ^ "_fupd" andalso
                     Lib.can (Type.match_type field_ty) val_ty)
-                (fix_fields (TypeBase.fields_of record_ty))
+                (TypeBase.fields_of record_ty)
               val (acc, yices_x) = translate_term (acc, x)
               val (acc, yices_val) = translate_term (acc, new_val)
               val (_, _, ty_dict, _, _) = acc
