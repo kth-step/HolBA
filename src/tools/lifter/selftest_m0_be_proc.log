@@ -1,6 +1,6 @@
 4608 (mov r0, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[70w; 8w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "mov r0, r1";
@@ -12,7 +12,7 @@
 
 0008 (movs r0, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[0w; 8w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "movs r0, r1";
@@ -30,7 +30,7 @@
 
 468F (mov pc, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[70w; 143w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "mov pc, r1";
@@ -43,7 +43,7 @@
 
 1C08 (adds r0, r1, #0) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[28w; 8w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "adds r0, r1, #0";
@@ -63,7 +63,7 @@
 
 1C88 (adds r0, r1, #2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[28w; 136w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "adds r0, r1, #2";
@@ -91,7 +91,7 @@
 
 1888 (adds r0, r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[24w; 136w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "adds r0, r1, r2";
@@ -119,7 +119,7 @@
 
 4408 (add r0, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[68w; 8w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "add r0, r1";
@@ -133,7 +133,7 @@
 
 448F (add pc, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[68w; 143w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "add pc, r1";
@@ -148,7 +148,7 @@
 
 3080 (adds r0, #128) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[48w; 128w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "adds r0, #128";
@@ -176,7 +176,7 @@
 
 4148 (adcs r0, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[65w; 72w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "adcs r0, r1";
@@ -215,7 +215,7 @@
 
 B020 (add sp, #128) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[176w; 32w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "add sp, #128";
@@ -230,7 +230,7 @@ B020 (add sp, #128) @ 0x130 - OK
 
 A820 (add r0, sp, #128) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[168w; 32w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "add r0, sp, #128";
@@ -244,7 +244,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
 
 1A88 (subs r0, r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[26w; 136w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "subs r0, r1, r2";
@@ -272,7 +272,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
 
 1EC8 (subs r0, r1, #3) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[30w; 200w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "subs r0, r1, #3";
@@ -300,7 +300,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
 
 1A48 (subs r0, r1, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[26w; 72w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "subs r0, r1, r1";
@@ -316,7 +316,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
 
 1E08 (subs r0, r1, #0) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[30w; 8w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "subs r0, r1, #0";
@@ -336,7 +336,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
 
 3880 (subs r0, #128) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[56w; 128w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "subs r0, #128";
@@ -364,7 +364,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
 
 1E00 (subs r0, #0) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[30w; 0w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "subs r0, #0";
@@ -382,7 +382,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
 
 4198 (sbcs r0, r3) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[65w; 152w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "sbcs r0, r3";
@@ -425,7 +425,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
 
 B082 (sub sp, #8) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[176w; 130w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "sub sp, #8";
@@ -440,7 +440,7 @@ B082 (sub sp, #8) @ 0x130 - OK
 
 B084 (sub sp, #16) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[176w; 132w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "sub sp, #16";
@@ -455,7 +455,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4251 (rsbs r1, r2, #0) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[66w; 81w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "rsbs r1, r2, #0";
@@ -483,7 +483,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4359 (muls r1, r3) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[67w; 89w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "muls r1, r3";
@@ -508,7 +508,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4299 (cmp r1, r3) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[66w; 153w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "cmp r1, r3";
@@ -532,7 +532,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4289 (cmp r1, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[66w; 137w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "cmp r1, r1";
@@ -546,7 +546,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 2900 (cmp r1, #0) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[41w; 0w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "cmp r1, #0";
@@ -564,7 +564,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 290C (cmp r1, #12) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[41w; 12w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "cmp r1, #12";
@@ -588,7 +588,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 42D9 (cmn r1, r3) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[66w; 217w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "cmn r1, r3";
@@ -612,7 +612,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 42C9 (cmn r1, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[66w; 201w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "cmn r1, r1";
@@ -636,7 +636,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4009 (ands r1, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[64w; 9w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ands r1, r1";
@@ -652,7 +652,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4011 (ands r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[64w; 17w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ands r1, r2";
@@ -677,7 +677,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4051 (eors r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[64w; 81w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "eors r1, r2";
@@ -702,7 +702,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4049 (eors r1, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[64w; 73w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "eors r1, r1";
@@ -716,7 +716,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4311 (orrs r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[67w; 17w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "orrs r1, r2";
@@ -741,7 +741,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4309 (orrs r1, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[67w; 9w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "orrs r1, r1";
@@ -757,7 +757,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4391 (bics r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[67w; 145w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "bics r1, r2";
@@ -785,7 +785,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4389 (bics r1, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[67w; 137w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "bics r1, r1";
@@ -799,7 +799,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 43D1 (mvns r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[67w; 209w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "mvns r1, r2";
@@ -821,7 +821,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 43C9 (mvns r1, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[67w; 201w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "mvns r1, r1";
@@ -843,7 +843,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4211 (tst r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[66w; 17w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "tst r1, r2";
@@ -864,7 +864,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4209 (tst r1, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[66w; 9w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "tst r1, r1";
@@ -880,7 +880,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4088 (lsls r0, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[64w; 136w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "lsls r0, r1";
@@ -926,7 +926,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 0080 (lsls r0, #2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[0w; 128w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "lsls r0, #2";
@@ -951,7 +951,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 0000 (lsls r0, #0) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[0w; 0w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "lsls r0, #0";
@@ -967,7 +967,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 40C8 (lsrs r0, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[64w; 200w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "lsrs r0, r1";
@@ -1018,7 +1018,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 0880 (lsrs r0, #2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[8w; 128w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "lsrs r0, #2";
@@ -1045,7 +1045,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4108 (asrs r0, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[65w; 8w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "asrs r0, r1";
@@ -1098,7 +1098,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 1080 (asrs r0, #2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[16w; 128w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "asrs r0, #2";
@@ -1125,7 +1125,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 41C8 (rors r0, r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[65w; 200w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "rors r0, r1";
@@ -1160,7 +1160,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 6801 (ldr r1, [r0]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[104w; 1w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldr r1, [r0]";
@@ -1177,7 +1177,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 6841 (ldr r1, [r0, #4]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[104w; 65w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldr r1, [r0, #4]";
@@ -1195,7 +1195,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 6881 (ldr r1, [r0, #8]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[104w; 129w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldr r1, [r0, #8]";
@@ -1213,7 +1213,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 8901 (ldrh r1, [r0, #8]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[137w; 1w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrh r1, [r0, #8]";
@@ -1232,7 +1232,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 8801 (ldrh r1, [r0, #0]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[136w; 1w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrh r1, [r0, #0]";
@@ -1250,7 +1250,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 8841 (ldrh r1, [r0, #2]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[136w; 65w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrh r1, [r0, #2]";
@@ -1269,7 +1269,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 7801 (ldrb r1, [r0]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[120w; 1w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrb r1, [r0]";
@@ -1284,7 +1284,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 7841 (ldrb r1, [r0, #1]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[120w; 65w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrb r1, [r0, #1]";
@@ -1300,7 +1300,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 7CC1 (ldrb r1, [r0, #19]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[124w; 193w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrb r1, [r0, #19]";
@@ -1316,7 +1316,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 5881 (ldr r1, [r0, r2]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[88w; 129w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldr r1, [r0, r2]";
@@ -1337,7 +1337,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 5A81 (ldrh r1, [r0, r2]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[90w; 129w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrh r1, [r0, r2]";
@@ -1359,7 +1359,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 5E81 (ldrsh r1, [r0, r2]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[94w; 129w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrsh r1, [r0, r2]";
@@ -1381,7 +1381,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 5C81 (ldrb r1, [r0, r2]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[92w; 129w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrb r1, [r0, r2]";
@@ -1398,7 +1398,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 5681 (ldrsb r1, [r0, r2]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[86w; 129w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrsb r1, [r0, r2]";
@@ -1415,7 +1415,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 4902 (ldr r1, [pc, #8]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[73w; 2w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldr r1, [pc, #8]";
@@ -1428,7 +1428,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 9902 (ldr r1, [sp, #8]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[153w; 2w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldr r1, [sp, #8]";
@@ -1446,7 +1446,7 @@ B084 (sub sp, #16) @ 0x130 - OK
 
 CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[203w; 14w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldm r3, {r1, r2, r3}";
@@ -1473,7 +1473,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 6001 (str r1, [r0]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[96w; 1w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "str r1, [r0]";
@@ -1493,7 +1493,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 6041 (str r1, [r0, #4]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[96w; 65w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "str r1, [r0, #4]";
@@ -1517,7 +1517,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 6081 (str r1, [r0, #8]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[96w; 129w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "str r1, [r0, #8]";
@@ -1541,7 +1541,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 8101 (strh r1, [r0, #8]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[129w; 1w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strh r1, [r0, #8]";
@@ -1566,7 +1566,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 8001 (strh r1, [r0, #0]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[128w; 1w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strh r1, [r0, #0]";
@@ -1587,7 +1587,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 8041 (strh r1, [r0, #2]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[128w; 65w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strh r1, [r0, #2]";
@@ -1612,7 +1612,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 7001 (strb r1, [r0]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[112w; 1w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strb r1, [r0]";
@@ -1630,7 +1630,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 7041 (strb r1, [r0, #1]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[112w; 65w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strb r1, [r0, #1]";
@@ -1652,7 +1652,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 74C1 (strb r1, [r0, #19]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[116w; 193w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strb r1, [r0, #19]";
@@ -1674,7 +1674,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 5081 (str r1, [r0, r2]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[80w; 129w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "str r1, [r0, r2]";
@@ -1700,7 +1700,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 5281 (strh r1, [r0, r2]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[82w; 129w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strh r1, [r0, r2]";
@@ -1728,7 +1728,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 5481 (strb r1, [r0, r2]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[84w; 129w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strb r1, [r0, r2]";
@@ -1751,7 +1751,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 9102 (str r1, [sp, #8]) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[145w; 2w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "str r1, [sp, #8]";
@@ -1775,7 +1775,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
 
 C10E (stm r1!, {r1, r2, r3}) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[193w; 14w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "stm r1!, {r1, r2, r3}";
@@ -1813,7 +1813,7 @@ C10E (stm r1!, {r1, r2, r3}) @ 0x130 - OK
 
 B40E (push {r1, r2, r3}) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[180w; 14w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "push {r1, r2, r3}";
@@ -1854,7 +1854,7 @@ B40E (push {r1, r2, r3}) @ 0x130 - OK
 
 BC0E (pop {r1, r2, r3}) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[188w; 14w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "pop {r1, r2, r3}";
@@ -1885,7 +1885,7 @@ BC0E (pop {r1, r2, r3}) @ 0x130 - OK
 
 B50E (push {r1, r2, r3, lr}) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[181w; 14w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "push {r1, r2, r3, lr}";
@@ -1932,7 +1932,7 @@ B50E (push {r1, r2, r3, lr}) @ 0x130 - OK
 
 BD0E (pop {r1, r2, r3, pc}) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[189w; 14w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "pop {r1, r2, r3, pc}";
@@ -1980,7 +1980,7 @@ BD0E (pop {r1, r2, r3, pc}) @ 0x130 - OK
 
 4708 (bx r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[71w; 8w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "bx r1";
@@ -1998,7 +1998,7 @@ BD0E (pop {r1, r2, r3, pc}) @ 0x130 - OK
 
 4788 (blx r1) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[71w; 136w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "blx r1";
@@ -2015,7 +2015,7 @@ BD0E (pop {r1, r2, r3, pc}) @ 0x130 - OK
 
 B211 (sxth r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[178w; 17w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "sxth r1, r2";
@@ -2029,7 +2029,7 @@ B211 (sxth r1, r2) @ 0x130 - OK
 
 B251 (sxtb r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[178w; 81w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "sxtb r1, r2";
@@ -2043,7 +2043,7 @@ B251 (sxtb r1, r2) @ 0x130 - OK
 
 B291 (uxth r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[178w; 145w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "uxth r1, r2";
@@ -2057,7 +2057,7 @@ B291 (uxth r1, r2) @ 0x130 - OK
 
 B2D1 (uxtb r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[178w; 209w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "uxtb r1, r2";
@@ -2071,7 +2071,7 @@ B2D1 (uxtb r1, r2) @ 0x130 - OK
 
 BA11 (rev r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[186w; 17w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "rev r1, r2";
@@ -2084,7 +2084,7 @@ BA11 (rev r1, r2) @ 0x130 - OK
 
 BA51 (rev16 r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[186w; 81w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "rev16 r1, r2";
@@ -2098,7 +2098,7 @@ BA51 (rev16 r1, r2) @ 0x130 - OK
 
 BAD1 (revsh r1, r2) @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[186w; 209w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "revsh r1, r2";
@@ -2114,7 +2114,7 @@ BAD1 (revsh r1, r2) @ 0x130 - OK
 
 3104 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[49w; 4w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "3104";
@@ -2142,7 +2142,7 @@ BAD1 (revsh r1, r2) @ 0x130 - OK
 
 B007 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[176w; 7w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "B007";
@@ -2157,7 +2157,7 @@ B007 @ 0x130 - OK
 
 4A15 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[74w; 21w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "4A15";
@@ -2170,7 +2170,7 @@ B007 @ 0x130 - OK
 
 4011 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[64w; 17w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "4011";
@@ -2195,7 +2195,7 @@ B007 @ 0x130 - OK
 
 B510 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[181w; 16w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "B510";
@@ -2230,7 +2230,7 @@ B510 @ 0x130 - OK
 
 BA18 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[186w; 24w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "BA18";
@@ -2243,7 +2243,7 @@ BA18 @ 0x130 - OK
 
 F000F858 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[240w; 0w; 248w; 88w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "F000F858";
@@ -2258,7 +2258,7 @@ F000F858 @ 0x130 - OK
 
 BDF7 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[189w; 247w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "BDF7";
@@ -2326,7 +2326,7 @@ BDF7 @ 0x130 - OK
 
 3202 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[50w; 2w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "3202";
@@ -2354,7 +2354,7 @@ BDF7 @ 0x130 - OK
 
 635C @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[99w; 92w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "635C";
@@ -2378,7 +2378,7 @@ BDF7 @ 0x130 - OK
 
 70E8 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[112w; 232w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "70E8";
@@ -2400,7 +2400,7 @@ BDF7 @ 0x130 - OK
 
 B285 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[178w; 133w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "B285";
@@ -2414,7 +2414,7 @@ B285 @ 0x130 - OK
 
 8028 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[128w; 40w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "8028";
@@ -2441,7 +2441,7 @@ A1BC @ 0x130 - FAILED
 
 4182 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[65w; 130w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "4182";
@@ -2484,7 +2484,7 @@ A1BC @ 0x130 - FAILED
 
 1000 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[16w; 0w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "1000";
@@ -2510,7 +2510,7 @@ A1BC @ 0x130 - FAILED
 
 4088 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[64w; 136w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "4088";
@@ -2556,7 +2556,7 @@ A1BC @ 0x130 - FAILED
 
 B5F7 @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[181w; 247w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "B5F7";
@@ -2633,7 +2633,7 @@ B5F7 @ 0x130 - OK
 
 C29C @ 0x130 - OK
  []
-|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 65536w)
+|- bir_is_lifted_inst_prog (m0_bmr (T,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[194w; 156w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "C29C";

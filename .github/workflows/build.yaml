@@ -17,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        polyml: ['v5.7.1', 'v5.8']
+        polyml: ['v5.7.1', 'v5.8.1']
 
     env:
       HOLBA_POLYML_VERSION: ${{ matrix.polyml }}
@@ -32,7 +32,7 @@ jobs:
         with:
           path: |
             ${{ env.HOLBA_OPT_DIR }}
-          key: os-${{ runner.os }}_polyml-${{ matrix.polyml }}
+          key: os-${{ runner.os }}_polyml-${{ matrix.polyml }}_hol4-k14
 
       - name: Static analysis
         timeout-minutes: 5

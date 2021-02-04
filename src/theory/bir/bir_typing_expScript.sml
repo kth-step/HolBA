@@ -475,7 +475,7 @@ val bir_type_of_bir_exp_NONE = store_thm("bir_type_of_bir_exp_NONE",
 REPEAT STRIP_TAC >>
 Induct_on `ex` >> (
   REPEAT STRIP_TAC >>
-  FULL_SIMP_TAC std_ss [type_of_bir_exp_EQ_NONE_REWRS, bir_eval_exp_def]
+  FULL_SIMP_TAC pure_ss [type_of_bir_exp_EQ_NONE_REWRS, bir_eval_exp_def]
 ) >| [
   (* Cast *)
   IMP_RES_TAC type_of_bir_exp_NOT_SOME_Imm >> (

@@ -259,7 +259,6 @@ Cases_on `stmts` >> (
     bir_exec_stmtsB_def, LET_DEF]
 ) >>
 REPEAT GEN_TAC >>
-DISJ2_TAC >>
 ONCE_REWRITE_TAC[bir_exec_stmtsB_RESET_COUNTER] >>
 SIMP_TAC (arith_ss++pairSimps.gen_beta_ss) [LET_DEF]);
 
