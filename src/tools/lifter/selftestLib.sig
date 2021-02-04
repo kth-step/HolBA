@@ -1,3 +1,10 @@
+(* Dummy so that we don't have to make separate Holmake stuff for test_bmr*)
+signature selftestLib = sig
+
+  include PPBackEnd;
+
+end;
+
 signature test_bmr = sig
   type lift_inst_cache;
 

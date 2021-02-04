@@ -2,6 +2,15 @@
 (* Testing infrastructure *)
 (**************************)
 
+(* Dummy so that we don't have to make separate Holmake stuff for test_bmr*)
+structure selftestLib :> selftestLib = struct
+
+  open PPBackEnd;
+
+  (* TODO: Put test instances here? *)
+
+end;
+
 (* Struct for lifter testing *)
 functor test_bmr (structure MD : bir_inst_lifting; structure log_name_str : sig val log_name: string end) = struct
 (* For debugging:

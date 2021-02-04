@@ -5,6 +5,7 @@ open bir_inst_liftingLibTypes;
 open bir_inst_liftingHelpersLib;
 open PPBackEnd;
 
+open selftest_styleLib;
 open selftestLib;
 
 (******************)
