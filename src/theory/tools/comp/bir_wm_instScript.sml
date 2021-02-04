@@ -421,14 +421,11 @@ CASE_TAC >| [
      * value of FUNPOW_OPT (bir_trs prog) would be NONE). *)
     FULL_SIMP_TAC std_ss [GSYM boolTheory.IMP_DISJ_THM] >>
     REPEAT STRIP_TAC >>
-    DISJ1_TAC >>
     rename1 `FUNPOW_OPT (bir_trs prog) n' st = SOME ms'` >>
     rename1 `FUNPOW_OPT (bir_trs prog) n' st = SOME st''` >>
     rename1
       `bir_exec_to_labels ls prog st = BER_Ended l n n0 st'` >>
-    DISCH_TAC >>
     rename1 `m' > 0` >>
-    DISCH_TAC >>
     rename1
       `bir_exec_to_labels ls prog st = BER_Ended l' n n0 st'` >>
     rename1
@@ -480,7 +477,6 @@ CASE_TAC >| [
     FULL_SIMP_TAC std_ss []
   ) >>
   rename1 `m > 0` >>
-  DISJ1_TAC >>
   REPEAT STRIP_TAC >>
   IMP_RES_TAC FUNPOW_OPT_bir_trs_to_bir_exec_block_n >>
   rename1 `bir_exec_block_n prog st m = (l',n,c_l',ms')` >>

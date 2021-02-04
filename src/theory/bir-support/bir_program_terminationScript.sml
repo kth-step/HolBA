@@ -1141,12 +1141,9 @@ subgoal `bir_exec_infinite_steps_fun prog st n = st'` >- (
   FULL_SIMP_TAC std_ss [bir_exec_block_n_EQ_THM]
 ) >>
 FULL_SIMP_TAC (std_ss++holBACore_ss)
-	      [bir_state_is_terminated_def] >| [
-  IMP_RES_TAC bir_exec_block_n_block_nz_final_running >>
-  REV_FULL_SIMP_TAC arith_ss [bir_state_is_terminated_def],
-
-  FULL_SIMP_TAC std_ss []
-]
+	      [bir_state_is_terminated_def] >>
+IMP_RES_TAC bir_exec_block_n_block_nz_final_running >>
+REV_FULL_SIMP_TAC arith_ss [bir_state_is_terminated_def]
 );
 
 

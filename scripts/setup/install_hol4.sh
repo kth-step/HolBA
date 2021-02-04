@@ -30,10 +30,10 @@ export LD_LIBRARY_PATH=${POLY_DIR}/lib:$LD_LIBRARY_PATH
 
 # HOL4 source and branch
 GIT_URL=https://github.com/HOL-Theorem-Prover/HOL.git
-GIT_BRANCH=kananaskis-13
+GIT_BRANCH=kananaskis-14
 GIT_IS_TAG=1
 
-HOL4_DIR=${HOLBA_OPT_DIR}/hol_k13
+HOL4_DIR=${HOLBA_OPT_DIR}/hol_k14
 
 
 ##################################################################

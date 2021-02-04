@@ -97,7 +97,7 @@ structure Yices = struct
          "(ite (< x y) y x)))"),
     (intSyntax.less_tm, "<", ""),
     (intSyntax.leq_tm, "<=", ""),
-    (intSyntax.great_tm, ">", ""),
+    (intSyntax.greater_tm, ">", ""),
     (intSyntax.geq_tm, ">=", ""),
     (realSyntax.negate_tm, "- 0", ""),
     (realSyntax.absval_tm, "hol_real_abs",
@@ -117,7 +117,7 @@ structure Yices = struct
          "(ite (< x y) y x)))"),
     (realSyntax.less_tm, "<", ""),
     (realSyntax.leq_tm, "<=", ""),
-    (realSyntax.great_tm, ">", ""),
+    (realSyntax.greater_tm, ">", ""),
     (realSyntax.geq_tm, ">=", ""),
     (pairSyntax.comma_tm, "mk-tuple", ""),
     (wordsSyntax.word_and_tm, "bv-and", ""),
@@ -615,10 +615,11 @@ structure Yices = struct
                  it may not be needed at all: ensuring that the constant name
                  is identical to the field selector name may already be
                  sufficient. *)
+              val fix_fields = (fn fields => map (fn (str, fi) => (str, #ty fi)) fields)
               val j = Lib.index (fn (field_name, field_ty) =>
                   select_name = record_name ^ "_" ^ field_name andalso
                     Lib.can (Type.match_type field_ty) rng_ty)
-                (TypeBase.fields_of record_ty)
+                (fix_fields (TypeBase.fields_of record_ty))
               (* translate argument *)
               val (acc, yices_x) = translate_term (acc, x)
               val (_, _, ty_dict, _, _) = acc
@@ -650,10 +651,11 @@ structure Yices = struct
                  it may not be needed at all: ensuring that the constant name
                  is identical to the field update function's name may already be
                  sufficient. *)
+              val fix_fields = (fn fields => map (fn (str, fi) => (str, #ty fi)) fields)
               val j = Lib.index (fn (field_name, field_ty) =>
                   update_name = record_name ^ "_" ^ field_name ^ "_fupd" andalso
                     Lib.can (Type.match_type field_ty) val_ty)
-                (TypeBase.fields_of record_ty)
+                (fix_fields (TypeBase.fields_of record_ty))
               val (acc, yices_x) = translate_term (acc, x)
               val (acc, yices_val) = translate_term (acc, new_val)
               val (_, _, ty_dict, _, _) = acc
