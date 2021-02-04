@@ -4085,12 +4085,8 @@ Instructions FAILED: 2/537
    "9B437C41" (* smulh x1, x2, x3; lifting of ``Imm64 ((127 >< 64) (sw2sw (ms.REG 3w) * sw2sw (ms.REG 2w)))`` failed *)
 ]
 
-Instructions FIXED: 4
+Instructions FIXED: 0
 
-   DAC01441
-   5AC01441
-   DAC01041
-   5AC01041
 
 
 Instructions BROKEN: 0

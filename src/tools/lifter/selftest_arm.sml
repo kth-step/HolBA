@@ -926,11 +926,7 @@ in () end;
 val arm8_expected_failed_hexcodes:string list =
 [
    "9BC37C41" (* umulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (w2w (ms.REG 3w) * w2w (ms.REG 2w)))`` failed *),
-   "9B437C41" (* smulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (sw2sw (ms.REG 3w) * sw2sw (ms.REG 2w)))`` failed *),
-   "DAC01441" (* clz x1, x2 lifting of ``Imm64 (n2w (CountLeadingZeroBits (ms.REG 2w)))`` failed *),
-   "5AC01441" (* clz w1, w2 lifting of ``Imm64 (n2w (BITS 31 0 (CountLeadingZeroBits (w2w (ms.REG 2w)))))`` failed *),
-   "DAC01041" (* cls x1, x2 lifting of ``Imm64 (n2w (CountLeadingSignBits (ms.REG 2w)))`` failed *),
-   "5AC01041" (* cls w1, w2 lifting of ``Imm64 (n2w (BITS 31 0 (CountLeadingSignBits (w2w (ms.REG 2w)))))`` failed *)
+   "9B437C41" (* smulh x1, x2, x3 lifting of ``Imm64 ((127 >< 64) (sw2sw (ms.REG 3w) * sw2sw (ms.REG 2w)))`` failed *)
 ];
 
 val _ = if (not test_arm8) then () else let
