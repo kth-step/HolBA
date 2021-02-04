@@ -17,7 +17,7 @@ source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 
 
 # make polyml binaries and libraries available
-POLY_VERSION="v5.7.1"
+POLY_VERSION="v5.8.1"
 
 # if poly version is specified in the environment, use this
 if [[ ! -z "${HOLBA_POLYML_VERSION}" ]]; then
