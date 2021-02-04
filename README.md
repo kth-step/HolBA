@@ -60,7 +60,7 @@ ${HOLBA_HOLMAKE}
 ### Software versions
 
 - HOL4 (`https://github.com/HOL-Theorem-Prover/HOL`)
-  - tag: kananaskis-13
+  - tag: kananaskis-14
 - Poly/ML 5.7.1 (version packaged for Ubuntu 20.04)
 - Z3 v4.8.4
 
