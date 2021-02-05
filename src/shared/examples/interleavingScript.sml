@@ -3,7 +3,7 @@ open HolKernel Parse boolLib bossLib;
 open bslSyntax;
 open bir_programTheory;
 
-val _ = new_theory "interleaving_example";
+val _ = new_theory "interleaving";
 
 fun bloadvar var n =
     bload64_le (bden (bvarmem64_8 "MEM"))

@@ -61,7 +61,7 @@ fun petersons core =
                   ,(blabel_str "end",
                     [bstorevar "flag" core bfalse],
                     (bhalt o bconst32) 0)];
-
+(* TODO: Expand upon the above with something like the below...
 fun mk_initial prog = bir_state_init prog;
 
 val peterson_init = Define`
@@ -75,7 +75,7 @@ Theorem peterson_mutual_exclusion:
 Proof.
 cheat
 QED
-
+*)
 
 
 
