@@ -62,6 +62,14 @@ sig
   val get_prog_list_entries : prog_list_handle -> (int * prog_handle) list;
   val get_exp_list_entries  : exp_list_handle  -> (int * exp_handle ) list;
 
+  (* retrieval of list of whole entries *)
+(*
+  val get_prog_list_entries_full : prog_list_handle -> (int * logs_prog) list;
+  val get_exp_list_entries_full  : exp_list_handle  -> (int * logs_exp ) list;
+*)
+  (* TODO: after implementing get_prog_list_entries_full, remove the following ad-hoc hack *)
+  val hack_get_prog_list_by_listname : string -> logs_prog list;
+
 (*
   (* retrieval of metdata *)
   val get_run_metadata    : run_handle  -> logs_meta list;
@@ -87,8 +95,15 @@ sig
                            Json.json option) list
                           -> exp_handle  list;
 *)
-  (* TODO: generalize this ad-hoc query *)
-  val hack_get_prog_list_by_listname : string -> logs_prog list;
+
+  (*
+    most general query with raw input and raw output.
+    - ! it deliberately doesn't return handles so that links in the db cannot be messed up !
+    - the returned json values are of one of the following types: NULL, NUMBER, STRING
+  *)
+(*
+  val query_sql : string -> (string list * json.Json list list);
+*)
 
   (* function to enable the testing mode, i.e., uses the testing db *)
   val set_testing : unit -> unit;

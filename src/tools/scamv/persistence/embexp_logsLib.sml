@@ -206,13 +206,13 @@ fun run_db_a_ignore t vs =
     case get_db_q (run_db_q_gen false t [(f_id, NUMBER id)]) of
        (_, [x]) => (case x of
                ARRAY vals => unpack_fun vals
-             | _ => raise ERR "get_all_ids" "result not as expected")
-     | _ => raise ERR "get_all_ids" "result not as expected";
+             | _ => raise ERR "get_from_id" "result not as expected")
+     | _ => raise ERR "get_from_id" "result not as expected";
   fun get_from_id_mult (t, f_id) unpack_fun id =
     case get_db_q (run_db_q_gen false t [(f_id, NUMBER id)]) of
        (_, xs) => List.map (fn x => case x of
                ARRAY vals => unpack_fun vals
-             | _ => raise ERR "get_all_ids_mult" "result not as expected") xs;
+             | _ => raise ERR "get_from_id_mult" "result not as expected") xs;
 
   fun get_from_ids (t, f_id) unpack_fun ids = List.map (fn id => get_from_id (t, f_id) unpack_fun id) ids;
 
@@ -293,41 +293,6 @@ fun run_db_a_ignore t vs =
       unpack_list_entry
       id;
 
-(*
-*)
-(*
-  (* retrieval of metdata *)
-  val get_run_metadata    : run_handle  -> logs_meta list;
-  val get_prog_metadata   : prog_handle -> logs_meta list;
-  val get_exp_metadata    : exp_handle  -> logs_meta list;
-*)
-
-
-(*
-*)
-  fun get_all_ids t =
-    case get_db_q (run_db_q_all true t) of
-       ([STRING s_id], jsonids)
-         => if s_id = "id" then List.map (fn x => case x of
-                ARRAY [NUMBER i] => i | _ => raise ERR "get_all_ids" "result not as expected") jsonids else
-            raise ERR "get_all_ids" "result not as expected"
-     | _ => raise ERR "get_all_ids" "result not as expected";
-
-  fun query_all_prog_lists () = get_all_ids "exp_progs_lists";
-  fun query_all_exp_lists  () = get_all_ids "exp_exps_lists";
-
-(*
-*)
-  fun get_all_ids t =
-    case get_db_q (run_db_q_all true t) of
-       ([STRING s_id], jsonids)
-         => if s_id = "id" then List.map (fn x => case x of
-                ARRAY [NUMBER i] => i | _ => raise ERR "get_all_ids" "result not as expected") jsonids else
-            raise ERR "get_all_ids" "result not as expected"
-     | _ => raise ERR "get_all_ids" "result not as expected";
-
-  fun query_all_prog_lists () = get_all_ids "exp_progs_lists";
-  fun query_all_exp_lists  () = get_all_ids "exp_exps_lists";
 
 (*
 *)
@@ -343,6 +308,52 @@ fun run_db_h_gen tn = run_db_h (
 
 fun hack_get_prog_list_by_listname listname =
 get_hack_from_id_mult unpack_logs_prog listname;
+
+
+(*
+*)
+(*
+  (* retrieval of metdata *)
+  val get_run_metadata    : run_handle  -> logs_meta list;
+  val get_prog_metadata   : prog_handle -> logs_meta list;
+  val get_exp_metadata    : exp_handle  -> logs_meta list;
+*)
+
+
+
+
+(*
+*)
+  fun get_all_ids t =
+    case get_db_q (run_db_q_all true t) of
+       ([STRING s_id], jsonids)
+         => if s_id = "id" then List.map (fn x => case x of
+                ARRAY [NUMBER i] => i | _ => raise ERR "get_all_ids" "result not as expected") jsonids else
+            raise ERR "get_all_ids" "result not as expected"
+     | _ => raise ERR "get_all_ids" "result not as expected";
+
+  fun query_all_prog_lists () = get_all_ids "exp_progs_lists";
+  fun query_all_exp_lists  () = get_all_ids "exp_exps_lists";
+
+(*
+*)
+(*
+  val query_match_runs  : (string option *
+                           prog_list_handle option *
+                           exp_list_handle option) list
+                          -> run_handle  list;
+  val query_match_progs : (string option *
+                           string option)
+                          -> prog_handle list;
+  val query_match_exps  : (prog_handle option *
+                           string option *
+                           string option *
+                           Json.json option) list
+                          -> exp_handle  list;
+*)
+
+(*
+*)
 
 
 end (* local *)
