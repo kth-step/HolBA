@@ -1,5 +1,12 @@
+(* Dummy so that we don't have to make separate Holmake stuff for test_bmr*)
+signature selftestLib = sig
+
+  include PPBackEnd;
+
+end;
+
 signature test_bmr = sig
-  type lift_inst_cache
+  type lift_inst_cache;
 
   include Arbnum;
   include Abbrev;
@@ -38,16 +45,4 @@ signature test_bmr = sig
 	     (thm option * bir_inst_liftingExn_data option * string) list
   (* Prints the final results *)
   val final_results : string -> string list -> unit
-end
-
-signature selftestLib = sig
-
-  include PPBackEnd;
-
-  (* TODO: Put test instances here? *)
-  val sty_OK     : pp_style list
-  val sty_CACHE  : pp_style list
-  val sty_FAIL   : pp_style list
-  val sty_HEADER : pp_style list
-
 end

@@ -4,6 +4,7 @@ open bir_inst_liftingLib;
 open PPBackEnd
 open riscv_assemblerLib;
 open selftestLib;
+open selftest_styleLib;
 
 (* Flags for determining type of output *)
 val unicode = false;

@@ -149,7 +149,7 @@ struct
      alphaList @ numList @ (regExLib.literalList "'_") @ specialChar @ [LITERAL #" ", LITERAL #"\t", LITERAL #"\n"]
  val alphabet_r = ALTERNATION (identifierList);
 
- val Any = STAR alphabet_r;
+ val Any_ = STAR alphabet_r;
  (* val PatConcat = stringLiteral "@@"; *)
  val Star = STAR;
  val OrRegx = ALTERNATION;
@@ -163,15 +163,15 @@ struct
 
 
  val pattern_xzrwzr1  =  ThenRegx([stringLiteral "ld",  Star(OrRegx(alphaList)), whitespace_r]
- 				 @[OrRegx[stringLiteral "xzr", stringLiteral "wzr"], Any, END]);
+ 				 @[OrRegx[stringLiteral "xzr", stringLiteral "wzr"], Any_, END]);
 
  val pattern_xzrwzr2  =  ThenRegx([stringLiteral "ld",  Star(OrRegx(alphaList)), whitespace_r]
  				 @[Star (OrRegx(alphaList@numList@specialChar)), whitespace_r]
- 				 @[OrRegx[stringLiteral "xzr", stringLiteral "wzr"], Any, END]);
+ 				 @[OrRegx[stringLiteral "xzr", stringLiteral "wzr"], Any_, END]);
 
  val pattern_xzrwzr = OrRegx[pattern_xzrwzr1, pattern_xzrwzr2];
 
- val pattern_cbnz  = ThenRegx[stringLiteral "cbnz", whitespace_r, Any, END];
+ val pattern_cbnz  = ThenRegx[stringLiteral "cbnz", whitespace_r, Any_, END];
 
  (*  val p = pattern_xzrwzr *)
  (*  val p = pattern_cbnz *)

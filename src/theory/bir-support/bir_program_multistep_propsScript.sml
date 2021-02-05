@@ -222,7 +222,6 @@ METIS_TAC[arithmeticTheory.LESS_EQ_SUC_REFL, arithmeticTheory.LESS_EQ_TRANS]);
 val bir_exec_infinite_steps_fun_COUNT_PCs_EQ = store_thm (
 "bir_exec_infinite_steps_fun_COUNT_PCs_EQ",
 ``!pc_cond p state i.
-
    (bir_exec_infinite_steps_fun_COUNT_PCs pc_cond p state i = i) <=> (
    !j. j < i ==> bir_state_COUNT_PC pc_cond (bir_exec_infinite_steps_fun p state (SUC j)))``,
 
@@ -233,9 +232,9 @@ Induct_on `i` >> (
     DISJ_IMP_THM, FORALL_AND_THM]
 ) >>
 GEN_TAC >>
-DISJ2_TAC >>
 `~(SUC i <= i)` by DECIDE_TAC >>
-METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_LESS_EQ]);
+METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_LESS_EQ]
+);
 
 
 val bir_state_COUNT_PC_ALL_STEPS = store_thm ("bir_state_COUNT_PC_ALL_STEPS",
@@ -1347,7 +1346,6 @@ Cases_on ` bir_exec_infinite_steps_fun_COUNT_PCs pc_count p state0 c_pc1 < n1` >
   FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [bir_exec_infinite_steps_fun_COUNT_PCs_def] >>
   Tactical.REVERSE CONJ_TAC >- (
     REPEAT STRIP_TAC >>
-    DISJ2_TAC >>
     `n1 <= n1 + n2` by DECIDE_TAC >>
     METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ,
       arithmeticTheory.LESS_EQ_LESS_TRANS]
@@ -1361,7 +1359,7 @@ Tactical.REVERSE CONJ_TAC >- (
   rename1 `(n:num) < c_pc1 + _` >>
   Cases_on `n < c_pc1` >- (
     ASM_SIMP_TAC std_ss [] >>
-    GEN_TAC >> DISJ2_TAC >>
+    GEN_TAC >> 
     rename1 `_ <> (n1:num) + n2` >>
     `n1 <= n1 + n2` by DECIDE_TAC >>
     METIS_TAC[bir_exec_infinite_steps_fun_COUNT_PCs_COMPLETE_LESS_EQ,
