@@ -44,6 +44,6 @@ SCAMV_HOLBA_RUN_DESCR="1-gen.sh_${EXPGENRUN_PREFIX_PARAM}_${EXPGENRUN_ID_PARAM}"
 
 # start experiment generation process
 cd "${SCAMV_EXAMPLES_DIR}"
-./scamv.sh --run_description "${SCAMV_HOLBA_RUN_DESCR}" ${SCAMV_EXPGENRUN_PARAMS}
+./scamv_buildheap.sh --run_description "${SCAMV_HOLBA_RUN_DESCR}" ${SCAMV_EXPGENRUN_PARAMS}
 
 
