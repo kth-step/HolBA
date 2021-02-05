@@ -272,6 +272,21 @@ val prog_ids = List.map snd (get_prog_list_entries prog_l_id);
 val progs = get_progs prog_ids;
 
 
+(* tests for raw sql query *)
+val _ =
+  assert_w_descr
+    "cannot write with raw sql query"
+    (fn () => (query_sql "insert into db_meta (id, name, kind, value) values (NULL, \"123newww\", \"valuewextremenew\", \"a test\")"; false)
+              handle _ => true);
+
+val rawquery_res = query_sql "select code, id from exp_progs where id = 1";
+val rawquery_expected = (["code", "id"], [[STRING "\tpush all\n", NUMBER (Arbnum.fromInt 1)]]);
+val _ =
+  assert_w_descr
+    "reading works as expected with raw sql query"
+    (fn () => (rawquery_res = rawquery_expected));
+
+
 
 (* try persistenceLib directly *)
 open persistenceLib;

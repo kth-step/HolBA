@@ -97,9 +97,7 @@ sig
     - ! it deliberately doesn't return handles so that links in the db cannot be messed up !
     - the returned json values are of one of the following types: NULL, NUMBER, STRING
   *)
-(*
-  val query_sql : string -> (string list * json.Json list list);
-*)
+  val query_sql : string -> (string list * Json.json list list);
 
   (* function to enable the testing mode, i.e., uses the testing db *)
   val set_testing : unit -> unit;

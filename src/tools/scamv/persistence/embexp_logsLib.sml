@@ -381,7 +381,19 @@ fun run_db_a_ignore t vs =
 
 (*
 *)
+  fun unpack_string x =
+    case x of
+       STRING x => x
+     | _ => raise ERR "unpack_string" "result not as expected";
 
+  fun query_sql sql_s =
+    let
+      val (j_fields, j_data) = get_db_q (run_db_q_sql sql_s);
+      val fields = List.map unpack_string j_fields;
+      val data = from_q_res_unpack_mult (fn x => x) (NONE, j_data);
+    in
+      (fields, data)
+    end;
 
 end (* local *)
 end (* struct *)
