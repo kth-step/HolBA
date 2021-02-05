@@ -63,12 +63,8 @@ sig
   val get_exp_list_entries  : exp_list_handle  -> (int * exp_handle ) list;
 
   (* retrieval of list of whole entries *)
-(*
   val get_prog_list_entries_full : prog_list_handle -> (int * logs_prog) list;
   val get_exp_list_entries_full  : exp_list_handle  -> (int * logs_exp ) list;
-*)
-  (* TODO: after implementing get_prog_list_entries_full, remove the following ad-hoc hack *)
-  val hack_get_prog_list_by_listname : string -> logs_prog list;
 
 (*
   (* retrieval of metdata *)
