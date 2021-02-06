@@ -88,6 +88,7 @@ fun print_model model =
 val hw_obs_model_id = ref "";
 val do_enum = ref false;
 val do_training = ref false;
+val do_conc_exec = ref false;
 
 val (current_prog_id : embexp_logsLib.prog_handle option ref) = ref NONE;
 val (current_prog : term option ref) = ref NONE;
@@ -359,9 +360,12 @@ fun next_experiment all_exps next_relation  =
 				    SOME x => x
 				  | NONE => raise ERR "next_test" "no program found";
 
-	val ce_obs_comp = conc_exec_obs_compare (!current_obs_projection) lifted_prog_w_obs (s1, s2)
-        val _ = if ce_obs_comp then () else
+        val _ = if not (!do_conc_exec) then () else (
+          let
+            val ce_obs_comp = conc_exec_obs_compare (!current_obs_projection) lifted_prog_w_obs (s1, s2);
+            val _ = if ce_obs_comp then () else
                 raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
+          in () end);
 
 	(* show time *)
 	val d_s = Time.- (Time.now(), timer) |> Time.toString;
@@ -478,7 +482,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
               , obs_model = obs_model, hw_obs_model = hw_obs_model
               , refined_obs_model = refined_obs_model, obs_projection = proj
               , verbosity = verb, seed_rand = seed_rand, do_training = train
-              , run_description = descr_o } =
+              , run_description = descr_o, exec_conc = doexecconc } =
     let
 
         val _ = bir_randLib.rand_isfresh_set seed_rand;
@@ -487,6 +491,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
 
         val _ = do_enum := enumerate;
         val _ = do_training := train;
+        val _ = do_conc_exec := doexecconc;
         val _ = current_obs_projection := proj;
         
         val prog_store_fun =
@@ -511,6 +516,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
           ("HW observation model : " ^ !hw_obs_model_id ^ "\n") ^
           ("Enumerate            : " ^ PolyML.makestring (!do_enum) ^ "\n") ^
           ("Train branch pred.   : " ^ PolyML.makestring (!do_training) ^ "\n") ^
+          ("Execute concretely   : " ^ PolyML.makestring (!do_conc_exec) ^ "\n") ^
           ("Run description text : " ^ PolyML.makestring descr_o ^ "\n") ;
 
         val _ = run_log config_str;

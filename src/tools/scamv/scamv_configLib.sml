@@ -46,7 +46,8 @@ type scamv_config = { max_iter  : int,
                       verbosity : int,
                       seed_rand : bool,
                       do_training : bool,
-                      run_description : string option
+                      run_description : string option,
+                      exec_conc : bool
                     }
 
 val default_cfg = { max_iter  = 10
@@ -63,6 +64,7 @@ val default_cfg = { max_iter  = 10
                   , seed_rand = true
                   , do_training = false
                   , run_description = NONE
+                  , exec_conc = false
                   }
 
 fun gen_type_fromString gt =
@@ -111,7 +113,8 @@ fun set_max_iter (cfg : scamv_config) n =
       verbosity = # verbosity cfg,
       seed_rand = # seed_rand cfg,
       do_training = # do_training cfg,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 fun set_prog_size (cfg : scamv_config) n =
     { max_iter = # max_iter cfg,
@@ -127,7 +130,8 @@ fun set_prog_size (cfg : scamv_config) n =
       verbosity = # verbosity cfg,
       seed_rand = # seed_rand cfg,
       do_training = # do_training cfg,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 fun set_max_tests (cfg : scamv_config) n =
     { max_iter = # max_iter cfg,
@@ -143,7 +147,8 @@ fun set_max_tests (cfg : scamv_config) n =
       verbosity = # verbosity cfg,
       seed_rand = # seed_rand cfg,
       do_training = # do_training cfg,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 fun set_enumerate (cfg : scamv_config) enum =
     { max_iter = # max_iter cfg,
@@ -159,7 +164,8 @@ fun set_enumerate (cfg : scamv_config) enum =
       verbosity = # verbosity cfg,
       seed_rand = # seed_rand cfg,
       do_training = # do_training cfg,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 fun set_generator (cfg : scamv_config) gen =
     { max_iter = # max_iter cfg,
@@ -175,7 +181,8 @@ fun set_generator (cfg : scamv_config) gen =
       verbosity = # verbosity cfg,
       seed_rand = # seed_rand cfg,
       do_training = # do_training cfg,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 fun set_generator_param (cfg : scamv_config) gen_param =
     { max_iter = # max_iter cfg,
@@ -191,7 +198,8 @@ fun set_generator_param (cfg : scamv_config) gen_param =
       verbosity = # verbosity cfg,
       seed_rand = # seed_rand cfg,
       do_training = # do_training cfg,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 fun set_obs_model (cfg : scamv_config) om =
     { max_iter = # max_iter cfg,
@@ -207,7 +215,8 @@ fun set_obs_model (cfg : scamv_config) om =
       verbosity = # verbosity cfg,
       seed_rand = # seed_rand cfg,
       do_training = # do_training cfg,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 fun set_refined_obs_model (cfg : scamv_config) om =
     { max_iter = # max_iter cfg,
@@ -223,7 +232,8 @@ fun set_refined_obs_model (cfg : scamv_config) om =
       verbosity = # verbosity cfg,
       seed_rand = # seed_rand cfg,
       do_training = # do_training cfg,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 
 fun set_obs_projection (cfg : scamv_config) obs_number =
@@ -240,7 +250,8 @@ fun set_obs_projection (cfg : scamv_config) obs_number =
       verbosity = # verbosity cfg,
       seed_rand = # seed_rand cfg,
       do_training = # do_training cfg,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 
 fun set_hw_obs_model (cfg : scamv_config) hwom =
@@ -257,7 +268,8 @@ fun set_hw_obs_model (cfg : scamv_config) hwom =
       verbosity = # verbosity cfg,
       seed_rand = # seed_rand cfg,
       do_training = # do_training cfg,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 fun set_verbosity (cfg : scamv_config) v =
     { max_iter = # max_iter cfg,
@@ -273,7 +285,8 @@ fun set_verbosity (cfg : scamv_config) v =
       verbosity = v,
       seed_rand = # seed_rand cfg,
       do_training = # do_training cfg,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 fun set_seed_rand (cfg : scamv_config) s =
     { max_iter = # max_iter cfg,
@@ -289,7 +302,8 @@ fun set_seed_rand (cfg : scamv_config) s =
       verbosity = # verbosity cfg,
       seed_rand = s,
       do_training = # do_training cfg,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 fun set_do_training (cfg : scamv_config) s =
     { max_iter = # max_iter cfg,
@@ -305,7 +319,8 @@ fun set_do_training (cfg : scamv_config) s =
       verbosity = # verbosity cfg,
       seed_rand = #seed_rand cfg,
       do_training = s,
-      run_description = # run_description cfg };
+      run_description = # run_description cfg,
+      exec_conc = # exec_conc cfg };
 
 fun set_run_description (cfg : scamv_config) s =
     { max_iter = # max_iter cfg,
@@ -321,7 +336,25 @@ fun set_run_description (cfg : scamv_config) s =
       verbosity = # verbosity cfg,
       seed_rand = #seed_rand cfg,
       do_training = # do_training cfg,
-      run_description = s };
+      run_description = s,
+      exec_conc = # exec_conc cfg };
+
+fun set_exec_conc (cfg : scamv_config) s =
+    { max_iter = # max_iter cfg,
+      prog_size = # prog_size cfg,
+      max_tests = # max_tests cfg,
+      enumerate = # enumerate cfg,
+      generator = # generator cfg,
+      generator_param = # generator_param cfg,
+      obs_model = # obs_model cfg,
+      refined_obs_model = # refined_obs_model cfg, 
+      obs_projection = # obs_projection cfg,
+      hw_obs_model = # hw_obs_model cfg,
+      verbosity = # verbosity cfg,
+      seed_rand = #seed_rand cfg,
+      do_training = # do_training cfg,
+      run_description = # run_description cfg,
+      exec_conc = s };
 
 (* end boilerplate *)
 
@@ -355,12 +388,14 @@ val opt_table =
               handle_conv_arg_with Int.fromString set_obs_projection)
     , Arity1 ("hwom", "hw_obs_model", "HW observation model",
               handle_conv_arg_with hw_obs_model_fromString set_hw_obs_model)
-    , Arity0 ("frs", "fix_rand_seed", "Fix the seed for the random number generators.",
+    , Arity0 ("frs", "fix_rand_seed", "Fix the seed for the random number generators (for debugging and testing).",
               fn cfg => fn b => set_seed_rand cfg (not b))
     , Arity0 ("T", "training", "Train branch predictor (only works if observing PC)",
               fn cfg => fn b => set_do_training cfg b)
     , Arity1 ("rundes", "run_description", "Run description text",
               handle_conv_arg_with (fn x => SOME (SOME x)) set_run_description)
+    , Arity0 ("ec", "exec_conc", "Execute generated states to validate obs eq",
+              fn cfg => fn b => set_exec_conc cfg b)
     ];
 end
 
