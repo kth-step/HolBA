@@ -32,6 +32,10 @@ sig
   val mk_run_meta_handle  : (run_handle  * string option * string) -> meta_handle;
   val mk_prog_meta_handle : (prog_handle * string option * string) -> meta_handle;
   val mk_exp_meta_handle  : (exp_handle  * string option * string) -> meta_handle;
+  (* decompose metadata handles *)
+  val dest_run_meta_handle  : meta_handle -> (run_handle  * string option * string);
+  val dest_prog_meta_handle : meta_handle -> (prog_handle * string option * string);
+  val dest_exp_meta_handle  : meta_handle -> (exp_handle  * string option * string);
 
   (* creation of basic entries *)
   val create_prog_list : logs_list -> prog_list_handle;
@@ -66,12 +70,11 @@ sig
   val get_prog_list_entries_full : prog_list_handle -> (int * logs_prog) list;
   val get_exp_list_entries_full  : exp_list_handle  -> (int * logs_exp ) list;
 
-(*
   (* retrieval of metdata *)
   val get_run_metadata    : run_handle  -> logs_meta list;
   val get_prog_metadata   : prog_handle -> logs_meta list;
   val get_exp_metadata    : exp_handle  -> logs_meta list;
-*)
+
 
   (* queries *)
   val query_all_prog_lists : unit -> prog_list_handle list;
@@ -98,6 +101,7 @@ sig
     - the returned json values are of one of the following types: NULL, NUMBER, STRING
   *)
   val query_sql : string -> (string list * Json.json list list);
+
 
   (* function to enable the testing mode, i.e., uses the testing db *)
   val set_testing : unit -> unit;

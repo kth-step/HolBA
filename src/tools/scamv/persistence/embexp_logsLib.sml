@@ -129,6 +129,12 @@ fun run_db_a_ignore t vs =
   fun mk_prog_meta_handle (prog_id, k_o, n) = (MetaTypeProg, (prog_id, k_o, n));
   fun mk_exp_meta_handle  (exp_id , k_o, n) = (MetaTypeExp,  (exp_id,  k_o, n));
 
+  fun dest_run_meta_handle  (MetaTypeRun,  (run_id,  k_o, n)) = (run_id , k_o, n)
+    | dest_run_meta_handle  _ = raise ERR "dest_run_meta_handle"  "wrong handle type";
+  fun dest_prog_meta_handle (MetaTypeProg, (prog_id, k_o, n)) = (prog_id, k_o, n)
+    | dest_prog_meta_handle _ = raise ERR "dest_prog_meta_handle" "wrong handle type";
+  fun dest_exp_meta_handle  (MetaTypeExp,  (exp_id,  k_o, n)) = (exp_id , k_o, n)
+    | dest_exp_meta_handle  _ = raise ERR "dest_exp_meta_handle"  "wrong handle type";
 
 (*
 *)
@@ -339,12 +345,28 @@ fun run_db_a_ignore t vs =
 
 (*
 *)
-(*
-  (* retrieval of metdata *)
-  val get_run_metadata    : run_handle  -> logs_meta list;
-  val get_prog_metadata   : prog_handle -> logs_meta list;
-  val get_exp_metadata    : exp_handle  -> logs_meta list;
-*)
+  fun unpack_logs_meta mt x =
+    case x of
+       [NUMBER id, j_kind, STRING name, j_value] =>
+          LogsMeta ((mt, (id, unpack_string_opt j_kind, name))
+                   ,unpack_string_opt j_value)
+     | _ => raise ERR "unpack_logs_meta" "result not as expected";
+
+  fun get_run_metadata  id =
+    get_from_id_mult
+      ("holba_runs_meta", "holba_runs_id")
+      (unpack_logs_meta MetaTypeRun)
+      id;
+  fun get_prog_metadata id =
+    get_from_id_mult
+      ("exp_progs_meta", "exp_progs_id")
+      (unpack_logs_meta MetaTypeProg)
+      id;
+  fun get_exp_metadata  id =
+    get_from_id_mult
+      ("exp_exps_meta", "exp_exps_id")
+      (unpack_logs_meta MetaTypeExp)
+      id;
 
 
 
