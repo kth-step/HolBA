@@ -14,3 +14,10 @@ HEAPINC_EXTRA  =
 # included lines follow
 # ----------------------------------
 include ../../../Holmakefile.inc
+
+
+# scamv executable
+# ----------------------------------
+#exescamv: $(TARGETS) $(HOLHEAP)
+#	$(protect $(HOLDIR)/bin/buildheap) $(if $(HOLHEAP),-b $(HOLHEAP),) -o $@ $(HEAPINC) testexception --exe main_scamv
+

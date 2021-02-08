@@ -56,7 +56,7 @@ val first_block_label_tm = ``BL_Address (Imm64 0x1cw)``;
 val ending_set =  ``{BL_Address (Imm64 0x40w); BL_Address (Imm64 0x48w)}``;
 ```
 
-Since this ending label set is a regular good old HOL4 set, we can use `strip_set` from `pred_setSyntax` to obtain an SML list of labels from it. This is mapped to `ending_set_to_sml_list` in `tutorial_wpSupportLib`.
+Since this ending label set is a regular good old HOL4 set, we can use `strip_set` from `pred_setSyntax` to obtain an SML list of labels from it. This is mapped to `ending_set_to_sml_list` in `bir_wp_interfaceLib`.
 
 We then assign as the postcondition the corresponding contract from `4-bir-to-arm`.
 
@@ -68,7 +68,7 @@ val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x40w))
 
 Note that this maps all labels apart from `0x40` onto `bir_exp_false`, meaning the the contract will ensure those are not reached. In other words, you could say they are blacklisted. Specifically, this is done for `0x48`.
 
-Just like `prog_tm`, this otherwise holds just an abbreviation for the postcondition, so we also need the definitions needed to see the concrete BIR expression. As for the function needed to obtain a BIR expression from the above, this is also given in `tutorial_wpSupportLib`:
+Just like `prog_tm`, this otherwise holds just an abbreviation for the postcondition, so we also need the definitions needed to see the concrete BIR expression. As for the function needed to obtain a BIR expression from the above, this is also given in `bir_wp_interfaceLib`:
 
 ```sml
 fun postcond_exp_from_label postcond label =

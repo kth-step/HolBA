@@ -1,4 +1,4 @@
-driver-test --max_iter 5000 --prog_size 5 --max_tests 20 --generator rand --generator_param wout_ldzr_cbnz --obs_model cache_index_only --hw_obs_model hw_cache_index_numvalid
+--max_iter 5000 --prog_size 5 --max_tests 20 --generator rand --generator_param wout_ldzr_cbnz --obs_model cache_index_only --hw_obs_model hw_cache_index_numvalid
 
 
 >>> cav_19_12_03_rand_wo_both_indexonly

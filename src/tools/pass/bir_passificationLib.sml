@@ -1,6 +1,8 @@
 structure bir_passificationLib :> bir_passificationLib =
 struct
 
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+
 open listSyntax;
 
 (* Unverified translation of loop-free programs to SSA, passified

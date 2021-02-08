@@ -14,7 +14,7 @@ fun print_and_check_thm name thm t_concl =
     val _ = print "===============================\n";
     val _ = (Hol_pp.print_thm thm; print "\n");
     val _ = if identical (concl thm) t_concl then () else
-            raise ERR "print_and_check_thm" "conclusion is not as expected"
+            raise Fail "print_and_check_thm::conclusion is not as expected"
     val _ = print "\n\n";
   in
     ()

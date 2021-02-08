@@ -1,4 +1,4 @@
-driver-test --max_iter 1000 --prog_size 5 --max_tests 40 --generator qc --generator_param xld --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
+--max_iter 1000 --prog_size 5 --max_tests 40 --generator qc --generator_param xld --obs_model cache_tag_index --hw_obs_model hw_cache_tag_index
 
 
 >>> cav_19_12_03_qc_xld

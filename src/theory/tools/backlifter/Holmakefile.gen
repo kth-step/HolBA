@@ -1,0 +1,16 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   = ../../bir ../../bir-support ../../abstract_hoare_logic
+
+
+# configuration
+# ----------------------------------
+HOLHEAP        = ../comp/HolBATheory_Tools_Comp-heap
+NEWHOLHEAP     = HolBATheory_Tools_Backlifter-heap
+
+HEAPINC_EXTRA  = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../../Holmakefile.inc

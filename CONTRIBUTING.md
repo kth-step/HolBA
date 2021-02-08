@@ -14,7 +14,7 @@
  - Can cheat, but has to be avoided (cheats are reported by the CI in Pull Requests)
    - You must explicitely say why you cheated if it's not too obvious
  - Code should not be be commented out
- - Our Travis CI must pass
+ - Our CI must pass
    - **Holmake must work** (i.e. must correctly compile)
    - All tests must succeed
  - Bug-fixing commits are ok

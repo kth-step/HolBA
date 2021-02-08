@@ -1,0 +1,16 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   = 
+
+
+# configuration
+# ----------------------------------
+HOLHEAP        = ../symbexec/HolBATools_ScamV_symbexec-heap
+NEWHOLHEAP     = HolBATools_ScamV_persistence-heap
+
+HEAPINC_EXTRA  = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../../Holmakefile.inc

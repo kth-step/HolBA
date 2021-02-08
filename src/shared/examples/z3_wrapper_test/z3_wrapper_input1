@@ -1,0 +1,26 @@
+(declare-const mem0 (Array (_ BitVec 32) (_ BitVec 8)))
+(declare-const mem (Array (_ BitVec 32) (_ BitVec 8)))
+(declare-const addr1 (_ BitVec 32))
+(declare-const addr2 (_ BitVec 32))
+
+(assert (= mem
+    (store
+        (store mem0
+        (bvadd addr1 (_ bv0 32)) ((_ extract 7 0) (_ bv42 32)))
+        (bvadd addr1 (_ bv1 32)) ((_ extract 15 8) (_ bv42 32)))
+    ))
+
+(assert
+    (and
+        (= (select mem (bvadd addr2 (_ bv0 32))) ((_ extract 7 0) (_ bv42 32)))
+        (= (select mem (bvadd addr2 (_ bv1 32))) ((_ extract 15 8) (_ bv42 32)))
+    ))
+
+(assert (=
+    mem0
+    ((as const (Array (_ BitVec 32) (_ BitVec 8))) (_ bv0 8))))
+
+(assert (= addr1 addr2))
+
+(check-sat)
+(get-model)

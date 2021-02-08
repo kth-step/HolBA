@@ -1,7 +1,7 @@
+signature bir_inst_liftingLibTypes = sig
+
 (* Type definitions used by bir_inst_liftingLib. For technical reasons
    they need to be in a separate file. *)
-
-signature bir_inst_liftingLibTypes = sig
 
   (******************)
   (* Error messages *)

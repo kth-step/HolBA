@@ -486,8 +486,22 @@ SIMP_TAC std_ss [nzcv_BIR_SUB_NZCV_REWRS,
 ] >>
 REPEAT CONJ_TAC >| [
   SIMP_TAC (std_ss++boolSimps.CONJ_ss) [WORD_LOWER_NOT_EQ],
+  
   SIMP_TAC (std_ss++boolSimps.CONJ_ss) [WORD_LOWER_NOT_EQ],
-  METIS_TAC[]
+  
+  METIS_TAC [],
+
+  REPEAT GEN_TAC >>
+  EQ_TAC >| [
+    CCONTR_TAC >>
+    FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [WORD_LOWER_NOT_EQ] >>
+    FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss) [WORD_LESS_CASES_IMP],
+
+    REPEAT STRIP_TAC >> (
+      FULL_SIMP_TAC (std_ss++boolSimps.CONJ_ss) []
+    ) >>
+    METIS_TAC [WORD_LESS_ANTISYM]
+  ]
 ]);
 
 

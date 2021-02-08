@@ -1,6 +1,6 @@
 # includes
 # ----------------------------------
-DEPENDENCIES   = ../theory/bir ../theory/bir-support ./HolSmt
+DEPENDENCIES   = ../theory/bir ../theory/bir-support ./HolSmt ./sml-simplejson
 
 
 # configuration
@@ -8,7 +8,7 @@ DEPENDENCIES   = ../theory/bir ../theory/bir-support ./HolSmt
 HOLHEAP        = ./HolSmt/HolBASharedHolSmt-heap
 NEWHOLHEAP     = HolBAShared-heap
 
-HEAPINC_EXTRA  = 
+HEAPINC_EXTRA  = ./sml-simplejson/Json
 
 
 # included lines follow

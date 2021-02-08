@@ -1,13 +1,19 @@
-open Abbrev
-open bir_inst_liftingLibTypes
-open PPBackEnd
-open bir_inst_liftingLib
+(* Dummy so that we don't have to make separate Holmake stuff for test_bmr*)
+signature selftestLib = sig
+
+  include PPBackEnd;
+
+end;
 
 signature test_bmr = sig
-  type lift_inst_cache
+  type lift_inst_cache;
+
+  include Arbnum;
+  include Abbrev;
+  include bir_inst_liftingLibTypes;
 
   (* For printing stylish comments to log *)
-  val print_log_with_style : pp_style list -> bool -> string -> unit
+  val print_log_with_style : PPBackEnd.pp_style list -> bool -> string -> unit
   (* For printing basic comments to log *)
   val print_log : bool -> string -> unit
   (* This lifts single instructions, but uses a cache to remedy duplication of computation *)
@@ -39,14 +45,4 @@ signature test_bmr = sig
 	     (thm option * bir_inst_liftingExn_data option * string) list
   (* Prints the final results *)
   val final_results : string -> string list -> unit
-end
-
-signature selftestLib = sig
-
-  (* TODO: Put test instances here? *)
-  val sty_OK : pp_style list
-  val sty_CACHE : pp_style list
-  val sty_FAIL : pp_style list
-  val sty_HEADER : pp_style list
-
 end

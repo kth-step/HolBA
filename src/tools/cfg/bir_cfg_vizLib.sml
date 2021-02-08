@@ -2,6 +2,9 @@ structure bir_cfg_vizLib =
 struct
 local
 
+open HolKernel boolLib liteLib simpLib Parse bossLib;
+open bir_programSyntax;
+
   open wordsSyntax;
   open bir_immSyntax;
 
@@ -9,6 +12,11 @@ local
 
   open bir_fileLib;
   open graphVizLib;
+
+  (* error handling *)
+  val libname  = "bir_cfg_vizLib"
+  val ERR      = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
   (*
   val i = 0x10000;

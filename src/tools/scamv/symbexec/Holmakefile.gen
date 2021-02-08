@@ -5,7 +5,7 @@ DEPENDENCIES   = ../../../theory/bir ../../../theory/bir-support ../../../shared
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../../wp/HolBATools_Wp-heap
+HOLHEAP        = ../../backlifter/HolBATools_Backlifter-heap
 NEWHOLHEAP     = HolBATools_ScamV_symbexec-heap
 
 HEAPINC_EXTRA  = 
