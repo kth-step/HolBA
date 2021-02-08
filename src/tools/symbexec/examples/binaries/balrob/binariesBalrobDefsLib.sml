@@ -53,7 +53,7 @@ val configs          = [("balrob",
 val symb_filter_lift = fn secname =>
   case secname of
       ".text" => (fn symbname => List.exists (fn x => x = symbname) symbs_sec_text)
-    | _       => (K false);
+    | _       => (Lib.K false);
 
 
 end (* struct *)

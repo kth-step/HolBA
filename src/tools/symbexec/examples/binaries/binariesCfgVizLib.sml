@@ -2,6 +2,8 @@ structure binariesCfgVizLib =
 struct
 local
 
+  open HolKernel Parse;
+
 open binariesDefsLib;
 open binariesLib;
 open binariesCfgLib;
@@ -10,6 +12,10 @@ open graphVizLib;
 
 open bir_cfg_vizLib;
 open bir_fileLib;
+
+  val libname = "binariesCfgVizLib";
+  val ERR = Feedback.mk_HOL_ERR libname;
+  val wrap_exn = Feedback.wrap_exn libname;
 
 in (* local *)
 

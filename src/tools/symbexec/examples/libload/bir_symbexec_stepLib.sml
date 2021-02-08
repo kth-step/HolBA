@@ -2,6 +2,11 @@ structure bir_symbexec_stepLib =
 struct
 
 local
+
+  open HolKernel Parse;
+
+  open bir_programSyntax;
+
   open bir_symbexec_stateLib;
   open bir_symbexec_coreLib;
 

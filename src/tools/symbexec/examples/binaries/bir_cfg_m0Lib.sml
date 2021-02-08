@@ -2,6 +2,8 @@ structure bir_cfg_m0Lib =
 struct
 local
 
+  open HolKernel Parse;
+
   open bir_programSyntax;
   open bir_valuesSyntax;
   open bir_immSyntax;
@@ -11,6 +13,10 @@ local
 
   open bir_block_collectionLib;
   open bir_cfgLib;
+
+  val libname = "bir_cfg_m0Lib";
+  val ERR = Feedback.mk_HOL_ERR libname;
+  val wrap_exn = Feedback.wrap_exn libname;
 
   (* simple helpers *)
   val BVarLR32_tm = ``BVar "LR" (BType_Imm Bit32)``;

@@ -2,6 +2,9 @@ structure bir_symbexec_sumLib =
 struct
 
 local
+
+  open HolKernel Parse;
+
   open bir_symbexec_stateLib;
 
   val ERR      = Feedback.mk_HOL_ERR "bir_symbexec_sumLib"

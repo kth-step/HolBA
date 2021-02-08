@@ -2,6 +2,8 @@ structure binariesCfgLib =
 struct
 local
 
+  open HolKernel Parse;
+
   open binariesLib;
   open binariesDefsLib;
 
@@ -9,6 +11,10 @@ local
   open bir_cfg_m0Lib;
 
   open bir_block_collectionLib;
+
+  val libname = "binariesCfgLib";
+  val ERR = Feedback.mk_HOL_ERR libname;
+  val wrap_exn = Feedback.wrap_exn libname;
 
 in (* local *)
 

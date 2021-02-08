@@ -10,6 +10,7 @@ open bir_block_collectionLib;
 open bir_programSyntax;
 open bir_valuesSyntax;
 open bir_immSyntax;
+open bir_inst_liftingHelpersLib;
 
 open bir_exec_typingLib;
 

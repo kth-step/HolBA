@@ -2,7 +2,14 @@ structure bir_symbexec_coreLib =
 struct
 
 local
+
+  open HolKernel Parse;
+
   open bir_symbexec_stateLib;
+
+  val libname = "bir_symbexec_coreLib";
+  val ERR = Feedback.mk_HOL_ERR libname;
+  val wrap_exn = Feedback.wrap_exn libname;
 
   val debugAssignments = false;
   val debugPaths = false;

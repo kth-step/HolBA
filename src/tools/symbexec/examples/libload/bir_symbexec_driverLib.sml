@@ -2,6 +2,9 @@ structure bir_symbexec_driverLib =
 struct
 
 local
+
+  open HolKernel Parse;
+
   open bir_miscLib;
 
   open binariesLib;

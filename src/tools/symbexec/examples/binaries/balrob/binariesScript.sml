@@ -1,6 +1,8 @@
 open HolKernel Parse
+open PPBackEnd;
 
 open bir_inst_liftingLib;
+open bir_inst_liftingHelpersLib;
 open gcc_supportLib;
 
 open binariesBalrobDefsLib;

@@ -2,6 +2,12 @@ structure bir_symbexec_compLib =
 struct
 
 local
+
+  open HolKernel Parse;
+  open bossLib;
+  open liteLib;
+  open boolSyntax;
+
   open bir_symbexec_stateLib;
 
   open bir_constpropLib;

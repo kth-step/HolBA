@@ -1,6 +1,11 @@
 structure bir_countw_simplificationLib =
 struct
 local
+
+  open HolKernel Parse;
+  open bossLib;
+  open boolSyntax;
+
   open bir_symbexec_stateLib;
 
   open bir_constpropLib;

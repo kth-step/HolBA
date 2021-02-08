@@ -2,6 +2,13 @@ structure bir_exp_helperLib =
 struct
 local
 
+  open HolKernel Parse;
+  open bossLib;
+  open boolSyntax;
+
+  open bir_typing_expTheory;
+  open bir_interval_expTheory;
+
   open pred_setTheory;
 
   val conv_to_varset = SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss)

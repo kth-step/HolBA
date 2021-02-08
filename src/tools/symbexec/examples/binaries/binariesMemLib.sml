@@ -3,11 +3,17 @@ struct
 
 local
 
+  open HolKernel Parse;
+
 open binariesDefsLib;
 
 open bir_auxiliaryLib;
 
 open bir_fileLib;
+
+  val libname = "binariesMemLib";
+  val ERR = Feedback.mk_HOL_ERR libname;
+  val wrap_exn = Feedback.wrap_exn libname;
 
 
 (* helpers *)

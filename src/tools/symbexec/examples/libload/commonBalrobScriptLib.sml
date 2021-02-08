@@ -52,7 +52,7 @@ in
   val mem_sz_globl = 0x1000;
   val mem_sz_stack = mem_ram_size - mem_sz_globl;
   val _ = if mem_sz_stack > 0 then () else
-          raise ERR "scriptLib" "mem_sz_stack should be greater than 0";
+          raise Fail "mem_sz_stack should be greater than 0";
 
 
   fun abpfun cfb systs =
