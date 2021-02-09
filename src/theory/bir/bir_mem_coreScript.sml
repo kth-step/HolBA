@@ -12,7 +12,6 @@ val _ = new_theory "bir_mem_core";
 val mem_state_def = Datatype`
 mem_state_t = <|
   bmst_environ  : bir_var_environment_t;
-(*  bmst_status   : bir_status_t; *)
   bmst_lock     : num option;
   bmst_counter  : num;
   bmst_inflight : (num # string bir_inflight_stmt_t) list

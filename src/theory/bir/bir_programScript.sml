@@ -78,10 +78,21 @@ val _ = Datatype `bir_status_t =
 
 val _ = Datatype `bir_inflight_stmt_t = BirInflight string ('a bir_stmt_t)`;
 
+(* forward buffer, part of the core-local state *)
+val fwdb_def = Datatype‘
+fwdb_t = <| time : num; view : num; xcl : num |>
+’;
+
 val _ = Datatype `bir_state_t = <|
   bst_pc       : bir_programcounter_t;
   bst_environ  : bir_var_environment_t;
   bst_status   : bir_status_t;
+  bst_viewenv  : bir_var_t |-> num;
+  bst_coh      : bir_val_t -> num;
+  bst_v_rOld   : num;
+  bst_v_CAP    : num;
+  bst_v_rNew   : num;
+  bst_fwdb     : bir_val_t -> fwdb_t;
   bst_inflight : (string bir_inflight_stmt_t) list;
   bst_counter  : num
 |>`;
