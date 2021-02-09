@@ -67,7 +67,11 @@ val exporting_exp_testcases = [
   (``BExp_Cast BIExp_HighCast (BExp_Const (Imm16 0x4480w)) Bit8``,
    ("((_ extract 15 8) (_ bv17536 16))", SMTTY_BV 8)),
   (``BExp_Cast BIExp_HighCast (BExp_Const (Imm8 0x80w)) Bit16``,
-   ("(concat #b00000000 (_ bv128 8))", SMTTY_BV 16))
+   ("(concat #b00000000 (_ bv128 8))", SMTTY_BV 16)),
+
+
+  (``BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm1 0x1w)) (BExp_Const (Imm1 0x0w))``,
+   ("(=> true false)", SMTTY_Bool))
 ];
 
 (*
