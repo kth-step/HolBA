@@ -1,0 +1,399 @@
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __lesf2
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 12
+countw max = 49w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __clzsi2
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 21w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_f2iz
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 27w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for timer_read
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 8
+countw max = 10w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fadd_c1
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 15w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fadd_c2
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 29w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fadd_c3
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 10w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_fadd
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 32
+countw max = 168w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fdiv_loop_body
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 9w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fdiv_loop
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 381w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fdiv_c1
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 15w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fdiv_c3
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 7w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fdiv_c4
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 6w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fdiv_c5
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 7w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fdiv_c6
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 8w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fdiv_c7
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 15w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_fdiv
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 40
+countw max = 581w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_i2f
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 16
+countw max = 89w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_fcmplt
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 2 states in summary.
+
+stack  max = 20
+countw max = 66w
+
+stack  max = 20
+countw max = 68w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for abs_own
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 36
+countw max = 101w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fmul_c1
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 11w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fmul_c2
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 5w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fmul_c4
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 7w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fmul_c5
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 7w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fmul_c6
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 16w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fmul_c7
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 8w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fmul_c8
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 16w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_fmul
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 44
+countw max = 244w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fsub_c1
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 13w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fsub_c2
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 22w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fsub_c3
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 11w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fsub_c4
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 9w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fsub_c5
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 11w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fsub_c6
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 6w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fsub_c7
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 3w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for sum___aeabi_fsub_c8
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 0
+countw max = 16w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for __aeabi_fsub
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 32
+countw max = 187w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for motor_prep_input
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 20
+countw max = 47w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for motor_set_l
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 44
+countw max = 113w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for motor_set_r
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 44
+countw max = 113w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for motor_set
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 60
+countw max = 264w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for motor_set_f
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 84
+countw max = 885w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for atan2f_own
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 92
+countw max = 2038w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Summary info for imu_handler_pid_entry
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Have 1 states in summary.
+
+stack  max = 204
+countw max = 8312w
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
