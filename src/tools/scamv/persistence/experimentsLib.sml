@@ -11,6 +11,15 @@ local
   val wrap_exn = Feedback.wrap_exn libname
 in
 
+  (* TODO: put this in a more general HolBA place... *)
+      fun term_to_string_wtypes t =
+        let
+          val trace_val = Feedback.get_tracefn "types" ();
+          val _ = Feedback.set_trace "types" 1;
+          val s = term_to_string t;
+          val _ = Feedback.set_trace "types" trace_val;
+        in s end;
+
   (* machine states *)
   (* ======================================== *)
   (* machine state definition from the signature *)

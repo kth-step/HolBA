@@ -1,5 +1,7 @@
 signature experimentsLib = sig
 
+  val term_to_string_wtypes : Abbrev.term -> string;
+
   (* machine states *)
   (* ======================================== *)
   (* a machine consists of register to value mappings and a memory mapping *)
