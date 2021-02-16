@@ -288,8 +288,10 @@ fun next_experiment all_exps next_relation  =
                                bir_exp_pretty_print rel);
         val _ = printv 4 ("Word relation\n");
         val new_word_relation = make_word_relation rel true;
+        val print_word_rel_wtypes = false;
+        val term_to_string_sel = if print_word_rel_wtypes then term_to_string_wtypes else term_to_string;
         val _ = min_verb 4 (fn () =>
-                               (print_term new_word_relation;
+                               (print (term_to_string_sel new_word_relation);
                                 print "\n"));
 (*        val word_relation =
             case !current_word_rel of
