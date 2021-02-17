@@ -356,6 +356,9 @@ fun set_exec_conc (cfg : scamv_config) s =
       run_description = # run_description cfg,
       exec_conc = s };
 
+fun set_h4ltl (cfg : scamv_config) s =
+    (Library.trace := s; cfg);
+
 (* end boilerplate *)
 
 local
@@ -396,6 +399,8 @@ val opt_table =
               handle_conv_arg_with (fn x => SOME (SOME x)) set_run_description)
     , Arity0 ("ec", "exec_conc", "Execute generated states to validate obs eq",
               fn cfg => fn b => set_exec_conc cfg b)
+    , Arity1 ("h4ltl", "hol4_library_trace_level", "Set hol4 library trace level (e.g., 5 to let HolSmt keep temporary files with z3)",
+              handle_conv_arg_with Int.fromString set_h4ltl)
     ];
 end
 
