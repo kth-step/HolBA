@@ -205,6 +205,52 @@ fun scamv_phase_symb_exec () =
       ps
     end;
 
+fun scamv_get_model word_relation =
+    let
+(*
+val mem1_var = mk_var ("MEM", “:word64 |-> word8”);
+val mem2_var = mk_var ("MEM'", “:word64 |-> word8”);
+
+val word_relation = “
+(w2w (w2w (^mem1_var ' R1) :word64):word1)
+=
+w2w (^mem2_var ' R2)”;
+
+to_new_name "MEM"
+to_new_name "MEM'"
+val t = hd vars
+*)
+      fun to_new_name n =
+        "sv_" ^ (if String.isSuffix "'" n then (String.substring(n, 0, (String.size n)-1) ^ "_p") else n);
+      fun to_final_name n =
+        if String.isSuffix "'" n then (String.substring(n, 0, (String.size n)-1) ^ "_") else n;
+      fun var_to_new t =
+        let
+          val (vn, vt) = dest_var t;
+        in
+          (t, mk_var (to_new_name vn, vt))
+        end;
+      fun rev_model_name rev_maplist (n_new, v) =
+        let
+          val m_o = List.find (fn (_, x) => x = n_new) rev_maplist;
+          val n = case m_o of
+             SOME (n,_) => n
+           | NONE => raise ERR "scamv_get_model" "unexpected error";
+        in
+          (to_final_name n, v)
+        end;
+
+      val vars = free_vars word_relation;
+      val vars_to_new = List.map var_to_new vars;
+      val varnames_to_new = List.map (fn (a,b) => ((fst o dest_var) a, (fst o dest_var) b)) vars_to_new;
+
+      val word_relation_newnames = subst (List.map (|->) vars_to_new) word_relation;
+      val model_newnames = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation_newnames;
+      val model = List.map (rev_model_name varnames_to_new) model_newnames;
+    in
+      model
+    end;
+
 fun scamv_phase_rel_synth_init () =
     let
       val paths = valOf (!current_pathstruct);
@@ -302,7 +348,7 @@ fun next_experiment all_exps next_relation  =
                             handle NotFound => new_word_relation;
 
         val _ = printv 2 ("Calling Z3\n");
-        val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
+        val model = scamv_get_model word_relation;
         val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model; print "\nSAT model finished.\n"));
 
 	val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
