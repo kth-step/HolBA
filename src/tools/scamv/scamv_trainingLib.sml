@@ -6,6 +6,9 @@ local
   val libname  = "scamv_trainingLib"
   val ERR      = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
+
+  fun isPrimedRun s = String.isSuffix "_" s;
+  fun remove_prime str = bir_utilLib.remove_suffix "_" str;
 in
 fun compute_training_state current_full_specs current_obs_projection
                            current_word_rel current_path_id path_struct =

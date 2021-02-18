@@ -222,8 +222,6 @@ val t = hd vars
 *)
       fun to_new_name n =
         "sv_" ^ (if String.isSuffix "'" n then (String.substring(n, 0, (String.size n)-1) ^ "_p") else n);
-      fun to_final_name n =
-        if String.isSuffix "'" n then (String.substring(n, 0, (String.size n)-1) ^ "_") else n;
       fun var_to_new t =
         let
           val (vn, vt) = dest_var t;
@@ -237,7 +235,7 @@ val t = hd vars
              SOME (n,_) => n
            | NONE => raise ERR "scamv_get_model" "unexpected error";
         in
-          (to_final_name n, v)
+          (n, v)
         end;
 
       val vars = free_vars word_relation;
@@ -247,8 +245,58 @@ val t = hd vars
       val word_relation_newnames = subst (List.map (|->) vars_to_new) word_relation;
       val model_newnames = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation_newnames;
       val model = List.map (rev_model_name varnames_to_new) model_newnames;
+      val _ = min_verb 4 (fn () => (print "SAT model:\n"; print_model model; print "\nSAT model finished.\n"));
+
     in
       model
+    end;
+
+(*
+val model = [
+ ("MEM", “FUN_FMAP ((K 0w) :word64->word8) 𝕌(:word64)”),
+ ("MEM'", “FUN_FMAP ((K 0w) :word64->word8) 𝕌(:word64)”),
+ ("R26", “0x80100020w:word64”),
+ ("R26'", “0x80100000w:word64”),
+ ("R28", “0x80100001w:word64”),
+ ("R28'", “0x80100000w:word64”)
+];
+*)
+
+fun scamv_process_model model =
+    let
+      val (s1, s2) =
+        let
+          val (primed, nprimed) = List.partition ((String.isSuffix "'") o fst) model;
+          val primed_rm = List.map (fn (r,v) => ((remove_suffix "'") r,v)) primed;
+        in
+          (to_sml_Arbnums nprimed, to_sml_Arbnums primed_rm)
+        end;
+
+(*
+      fun to_final_name n =
+        if String.isSuffix "'" n then (String.substring(n, 0, (String.size n)-1) ^ "_") else n;
+      fun adjust_prime s =
+        if String.isSuffix "_" s
+        then String.map (fn c => if c = #"_" then #"'" else c) s
+        else s;
+*)
+
+      fun mk_var_val_mapping m =
+        let
+          fun mk_var_val_eq (n,v) = mk_eq (mk_var (n, type_of v), v);
+        in list_mk_conj (List.map mk_var_val_eq m) end;
+
+(*
+      fun is_a_mem (n,_) = String.isSubstring n "MEM_" andalso String.isSubstring "MEM" n;
+      val (_, regs) = List.partition is_a_mem model;
+*)
+(*
+      val regs_eq = mk_reg_var_mapping (regs);
+      val mem_eq = T;
+*)
+      val constraint = mk_neg (mk_var_val_mapping model);
+    in
+      (s1, s2, constraint)
     end;
 
 fun scamv_phase_rel_synth_init () =
@@ -276,33 +324,6 @@ fun all_obs_not_present { a_run = (_,a_obs), b_run = (_,b_obs) } =
     let fun check xs = all (fn (b,_) => b = false) xs;
     in check a_obs andalso check b_obs
     end;
-
-(* This is used to build the next relation for path enumeration *)
-fun mem_constraint [] = ``T``
-  | mem_constraint mls =
-    let fun is_addr_numeral tm = tm |> pairSyntax.dest_pair |> fst |> (fn x => (rhs o concl o EVAL) ``w2n ^x``) |> is_numeral
-	fun adjust_prime s =
-            if String.isSuffix "_" s
-            then String.map (fn c => if c = #"_" then #"'" else c) s
-            else s
-	fun mk_cnst vname vls =
-	    let
-		val toIntls = (snd o finite_mapSyntax.strip_fupdate) vls
-		val mem = mk_var (adjust_prime vname ,Type`:word64 |-> word8`)
-		val memconstraint = map (fn p => let val (t1,t2) = pairSyntax.dest_pair p
-						 in
-						     ``^mem ' (^t1) = ^t2``
-						 end) toIntls;
-		val mc_conj = foldl (fn (a,b) => mk_conj (a,b)) (hd memconstraint) (tl memconstraint);
-	    in
-		(``~(^mc_conj)``, toIntls)
-	    end
-
-	val (hc, hv)::(tc, tv)::[] = (map (fn (vn, vl) =>  mk_cnst vn vl ) mls)
-	val mc_conj = mk_conj ((if is_addr_numeral (hd hv) then hc else ``T``), (if is_addr_numeral (hd tv) then tc else ``T``))
-    in
-	mc_conj
-    end
 
 fun next_experiment all_exps next_relation  =
     let
@@ -348,34 +369,24 @@ fun next_experiment all_exps next_relation  =
                             handle NotFound => new_word_relation;
 
         val _ = printv 2 ("Calling Z3\n");
-        val model = scamv_get_model word_relation;
-        val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model; print "\nSAT model finished.\n"));
+        val (s1, s2, new_constraint) = (scamv_process_model o scamv_get_model) word_relation;
+        val _ = min_verb 1 (fn () =>
+                               (print "s1:\n";
+                                machstate_print s1;
+                                print "\n"));
+        val _ = min_verb 1 (fn () =>
+                               (print "s2:\n";
+                                machstate_print s2;
+                                print "\n"));
+        val _ = min_verb 4 (fn () =>
+                               (print "new constraint:\n";
+                                print (term_to_string_sel new_constraint);
+                                print "\n"));
 
-	val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
-	val (primed, nprimed) = List.partition (isPrimedRun o fst) model
-        (* clean up s2 *)
-	val primed_rm = List.map (fn (r,v) => (remove_prime r,v)) primed
-        val s1 = to_sml_Arbnums nprimed;
-	val s2 = to_sml_Arbnums primed_rm;
         val prog_id =
           case !current_prog_id of
              NONE => raise ERR "next_experiment" "currently no prog_id loaded"
            | SOME x => x;
-
-        fun mk_var_mapping s =
-            let fun mk_eq (a,b) =
-                    let fun adjust_prime s =
-                            if String.isSuffix "_" s
-                            then String.map (fn c => if c = #"_" then #"'" else c) s
-                            else s;
-                        val va = mk_var (adjust_prime a,``:word64``);
-                    in ``^va = ^b``
-                    end;
-            in list_mk_conj (map mk_eq s) end;
-
-        val reg_constraint = ``~^(mk_var_mapping (regs))``;
-	val mem_constraint = mem_constraint ml;
-	val new_constraint = mk_conj (reg_constraint, mem_constraint);
 
         val _ =
             current_visited_map := add_visited (!current_visited_map) path_spec new_constraint;
