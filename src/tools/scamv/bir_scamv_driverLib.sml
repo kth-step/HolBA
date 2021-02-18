@@ -114,16 +114,6 @@ fun reset () =
      current_full_specs := [];
      current_word_rel := NONE);
 
-fun printv n str =
-    if (#verbosity (scamv_getopt_config ()) >= n)
-    then print str
-    else ();
-
-fun min_verb n f =
-    if (#verbosity (scamv_getopt_config ()) >= n)
-    then f ()
-    else ();
-
 fun observe_line e =
     brshift (band (e, blshift (bconst64 0x7f, bconst64 6)), bconst64 6);
 

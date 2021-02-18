@@ -15,6 +15,16 @@ local
 
 in
 
+fun printv n str =
+    if (#verbosity (scamv_configLib.scamv_getopt_config ()) >= n)
+    then print str
+    else ();
+
+fun min_verb n f =
+    if (#verbosity (scamv_configLib.scamv_getopt_config ()) >= n)
+    then f ()
+    else ();
+
 fun stateful_tabulate f =
     let val current = ref 0;
         fun next () =
