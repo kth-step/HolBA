@@ -284,6 +284,18 @@ in
 
   fun embexp_params_cacheable x = Arbnum.+ (Arbnum.fromInt 0x80000000, x);
 
+  fun embexp_params_checkmemrange (MACHSTATE (_, (_, _, m))) =
+    let
+      val addrs = List.map fst (Redblackmap.listItems m);
+      val addr_min = embexp_params_cacheable (fst embexp_params_memory);
+      val addr_max = Arbnum.+ (addr_min, snd embexp_params_memory);
+
+      fun addr_in_range a =
+        Arbnum.<= (addr_min, a) andalso
+        Arbnum.<  (a, addr_max);
+    in
+      List.all addr_in_range addrs
+    end;
 
 end (* local *)
 end (* struct *)

@@ -272,28 +272,11 @@ fun scamv_process_model model =
           (to_sml_Arbnums nprimed, to_sml_Arbnums primed_rm)
         end;
 
-(*
-      fun to_final_name n =
-        if String.isSuffix "'" n then (String.substring(n, 0, (String.size n)-1) ^ "_") else n;
-      fun adjust_prime s =
-        if String.isSuffix "_" s
-        then String.map (fn c => if c = #"_" then #"'" else c) s
-        else s;
-*)
-
       fun mk_var_val_mapping m =
         let
           fun mk_var_val_eq (n,v) = mk_eq (mk_var (n, type_of v), v);
         in list_mk_conj (List.map mk_var_val_eq m) end;
 
-(*
-      fun is_a_mem (n,_) = String.isSubstring n "MEM_" andalso String.isSubstring "MEM" n;
-      val (_, regs) = List.partition is_a_mem model;
-*)
-(*
-      val regs_eq = mk_reg_var_mapping (regs);
-      val mem_eq = T;
-*)
       val constraint = mk_neg (mk_var_val_mapping model);
     in
       (s1, s2, constraint)
