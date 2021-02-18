@@ -1,5 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 
+open wordsTheory;
+open finite_mapTheory;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = wordsLib.add_word_cast_printer ();
@@ -11,7 +13,7 @@ val _ = Library.trace := 5;
 *)
 
 val mem1_var = mk_var ("MEM", “:word64 |-> word8”);
-val mem2_var = mk_var ("MEM", “:word64 |-> word8”);
+val mem2_var = mk_var ("MEM'", “:word64 |-> word8”);
 
 val term = “
 (w2w (w2w (^mem1_var ' R1) :word64):word1)
@@ -105,6 +107,7 @@ val term = “
 ”;
 *)
 
+(*
       val goal = ([], term)
       val (simplified_goal, _) = SolverSpec.simplify (SmtLib.SIMP_TAC false) goal
 
@@ -113,14 +116,33 @@ val term = “
       val _ = print ((Int.toString (List.length sg_tl)) ^ "\n");
       val _ = print_term sg_t;
       val _ = List.map print_term sg_tl;
+*)
 
 (*
 type_of term
-
-      val goal = ([]:term list, “^term”)
-(Library.WORD_SIMP_TAC)
- goal
 *)
+
+val MEM_def = Define ‘MEM a b = T’;
+
+(*
+val goal = ([]:term list, “^term”);
+val (simplified_goals, _) = (Library.WORD_SIMP_TAC) goal;
+val [([], sg_t)] = simplified_goals;
+val _ = print_term sg_t;
+*)
+
+val term = “((((0 :num) >< (0 :num)) :word64 -> word1)
+      ((w2w :word8 -> word64 )
+        (((^mem1_var :word64 |-> word8) ' (R1 :word64)) :word8))) =
+    ((((0 :num) >< (0 :num)) :word8 -> word1)
+      (((^mem2_var :word64 |-> word8) ' (R2 :word64)) :word8))”;
+
+(*
+val goal = ([]:term list, “^term”);
+CONV_TAC (DEPTH_CONV wordsLib.EXTEND_EXTRACT_CONV) goal;
+*)
+
+(DEPTH_CONV wordsLib.EXTEND_EXTRACT_CONV) term;
 
 (*
 Z3_SAT_modelLib.Z3_GET_SAT_MODEL term
