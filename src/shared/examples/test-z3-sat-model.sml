@@ -41,6 +41,11 @@ fun produce_sat_thm term model =
     prove (imp_tm, SIMP_TAC std_ss [] >> EVAL_TAC)
   end;
 
+val model_eq = list_eq (pair_eq (fn (a:string) => fn (b:string) => a=b) identical);
+
+
+(* ============================================================= *)
+
 (* Get a SAT model using Z3 (this function assumes that the given term is SAT) *)
 val term = ``(z + y = 2 * x) /\ ((x * x + y - 25) = z:int)``;
 (* (FUN_MAP2 (K 0w) (UNIV)) *)
@@ -51,3 +56,28 @@ val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL term;
 val _ = (print "SAT model:\n"; print_model model(*; print "\n"*));
 val sat_thm = produce_sat_thm term model;
 val _ = (print "SAT thm:\n"; Hol_pp.print_thm sat_thm; print "\n");
+
+val model_expected = [("z", “19:int”), ("y", “(-5):int”), ("x", “7:int”)];
+
+val _ = if model_eq model model_expected then () else
+        raise Fail "model for simple int constraint not as expected.";
+
+
+(* ============================================================= *)
+
+val term = “mem123 <> (FUN_FMAP (K (144w :word8) :word64 -> word8) 𝕌(:word64))”;
+val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL term;
+val model_expected = [("mem123", “FUN_FMAP ((K 144w) :word64 -> word8) 𝕌(:word64) |+ (0w,111w)”)];
+
+val _ = if model_eq model model_expected then () else
+        raise Fail "model for memory inequality not as expected.";
+
+
+(* ============================================================= *)
+
+val term = “mem123 <> (FUN_FMAP ((K 144w) :word64 -> word8) 𝕌(:word64) |+ (0w,111w))”;
+val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL term;
+val model_expected = [("mem123", “FUN_FMAP ((K 144w) :word64 -> word8) 𝕌(:word64) |+ (0w,144w)”)];
+
+val _ = if model_eq model model_expected then () else
+        raise Fail "model for memory inequality not as expected.";
