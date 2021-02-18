@@ -17,6 +17,7 @@ fun compute_training_state current_full_specs current_obs_projection
       open scamv_path_structLib;
       open bir_rel_synthLib;
       open bir_utilLib;
+      open experimentsLib;
 	    fun training_input_mining  tries =
 		      if tries > 0
 		      then
@@ -45,6 +46,22 @@ fun compute_training_state current_full_specs current_obs_projection
       |> List.partition (isPrimedRun o fst)
       |> (List.map (fn (r,v) => (remove_prime r,v)) o #1)
       |> to_sml_Arbnums
+      |> (fn st =>
+            if embexp_params_checkmemrange st then st else
+            raise ERR "scamv_process_model"
+                   ("s_train" ^ " memory contains mapping out of experiment range." ^
+                    "is there a problem with the constraints?")
+         )
+
+      |> (fn st =>
+       let
+        val _ = min_verb 1 (fn () =>
+          (print "s_train:\n";
+           machstate_print st;
+           print "\n"));
+       in
+         st
+       end)
     end;
 
 end

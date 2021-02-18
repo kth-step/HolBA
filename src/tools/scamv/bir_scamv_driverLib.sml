@@ -262,6 +262,13 @@ fun scamv_process_model model =
           (to_sml_Arbnums nprimed, to_sml_Arbnums primed_rm)
         end;
 
+      val _ = List.app (fn (st_n, st) =>
+          if embexp_params_checkmemrange st then () else
+          raise ERR "scamv_process_model"
+                    (st_n ^ " memory contains mapping out of experiment range." ^
+                     "is there a problem with the constraints?")
+        ) [("s1", s1), ("s2", s2)];
+
       fun mk_var_val_mapping m =
         let
           fun mk_var_val_eq (n,v) = mk_eq (mk_var (n, type_of v), v);
