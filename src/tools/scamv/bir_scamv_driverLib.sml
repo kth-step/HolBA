@@ -274,7 +274,10 @@ fun scamv_process_model model =
           fun mk_var_val_eq (n,v) = mk_eq (mk_var (n, type_of v), v);
         in list_mk_conj (List.map mk_var_val_eq m) end;
 
-      val constraint = mk_neg (mk_var_val_mapping model);
+      (* filter the model for registers to create the constraint "different from this state pair" *)
+      fun is_a_mem (n,_) = List.exists (fn x => x = n) ["MEM'", "MEM"];
+      val regs = List.filter (not o is_a_mem) model;
+      val constraint = mk_neg (mk_var_val_mapping regs);
     in
       (s1, s2, constraint)
     end;
