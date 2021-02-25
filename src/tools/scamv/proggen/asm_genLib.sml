@@ -362,6 +362,54 @@ in
     gen_arr_bnds_chck_acc_mod gen_arr_acc (return [Nop]);
 end;
 
+(* =============== straightline speculation ================= *)
+val arb_instruction_nobranch_nocmp =
+    frequency
+        [(1, arb_load_indir)
+       ,(1, arb_nop)
+       ,(1, arb_add)]
+
+val arb_program_nobranch_nocmp = arb_list_of arb_instruction_nobranch_nocmp;
+      
+fun arb_program_straightline_cond arb_prog_left arb_prog_right =
+    let
+	fun rel_jmp_after bl = Imm (((length bl) + 1) * 4);
+	      
+	val arb_prog      = arb_prog_left  >>= (fn blockl =>
+                              arb_prog_right >>= (fn blockr =>
+                              let val blockl_wexit = blockl@[Branch (NONE, rel_jmp_after blockr)] in
+                               return (
+                                    blockl_wexit
+                                    @blockr)
+                              end
+                        ));
+    in
+	arb_prog
+    end;
+    
+val arb_program_straightline_branch =
+  let
+    val arb_pad = sized (fn n => choose (1, n)) >>=
+                  (fn n => resize n arb_program_nobranch_nocmp);	
+	
+
+    val arb_load_instr = arb_load_indir;
+
+    val arb_leftright =
+      arb_load_instr >>= (fn ld1 =>
+
+        let val arb_block_3ld =
+                        (List.foldr (op@) []) <$> (
+                        sequence [return [ld1]
+                                ,arb_pad
+                                ,arb_pad
+                                 ]) in
+          two (arb_pad) arb_block_3ld
+        end
+      );
+  in
+    arb_leftright >>= (fn (l,r) => arb_program_straightline_cond (return l) (return r))
+  end;
 
 (* ================================ *)
 fun prog_gen_a_la_qc_gen do_resize gen n =
