@@ -160,13 +160,13 @@ obs0 0x18
 obs0 0x1C
 =================================
 *)
-val prog_5_cache_speculation_first = ``
- BirProgram
+val prog_5_cache_speculation_first =
+    “
+BirProgram
   [<|bb_label := BL_Address (Imm64 (0w :word64));
      bb_statements :=
        [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
-          [BExp_Const (Imm64 (0w :word64))]
-          (HD :bir_val_t list -> bir_val_t );
+          [BExp_Const (Imm64 (0w :word64))] (HD :bir_val_t list -> bir_val_t);
         (BStmt_Assign (BVar "ProcState_C" (BType_Imm Bit1))
            (BExp_BinPred BIExp_LessOrEqual
               (BExp_Den (BVar "R2" (BType_Imm Bit64)))
@@ -198,8 +198,7 @@ val prog_5_cache_speculation_first = ``
    <|bb_label := BL_Address (Imm64 (4w :word64));
      bb_statements :=
        [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
-          [BExp_Const (Imm64 (4w :word64))]
-          (HD :bir_val_t list -> bir_val_t )];
+          [BExp_Const (Imm64 (4w :word64))] (HD :bir_val_t list -> bir_val_t)];
      bb_last_statement :=
        BStmt_CJmp (BExp_Den (BVar "ProcState_C" (BType_Imm Bit1)))
          (BLE_Label (BL_Address (Imm64 (24w :word64))))
@@ -207,8 +206,7 @@ val prog_5_cache_speculation_first = ``
    <|bb_label := BL_Address (Imm64 (8w :word64));
      bb_statements :=
        [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
-          [BExp_Const (Imm64 (8w :word64))]
-          (HD :bir_val_t list -> bir_val_t );
+          [BExp_Const (Imm64 (8w :word64))] (HD :bir_val_t list -> bir_val_t);
         (BStmt_Assert
            (BExp_BinPred BIExp_Equal
               (BExp_BinExp BIExp_And
@@ -220,7 +218,7 @@ val prog_5_cache_speculation_first = ``
         (BStmt_Assert
            (BExp_BinExp BIExp_And
               (BExp_BinPred BIExp_LessOrEqual
-                 (BExp_Const (Imm64 (4291559424w :word64)))
+                 (BExp_Const (Imm64 (0xFFCC0000w :word64)))
                  (BExp_BinExp BIExp_Plus
                     (BExp_Den (BVar "R1" (BType_Imm Bit64)))
                     (BExp_Den (BVar "R3" (BType_Imm Bit64)))))
@@ -228,12 +226,12 @@ val prog_5_cache_speculation_first = ``
                  (BExp_BinExp BIExp_Plus
                     (BExp_Den (BVar "R1" (BType_Imm Bit64)))
                     (BExp_Den (BVar "R3" (BType_Imm Bit64))))
-                 (BExp_Const (Imm64 (4291624832w :word64))))) :
+                 (BExp_Const (Imm64 (0xFFCCFF80w :word64))))) :
          bir_val_t bir_stmt_basic_t);
         BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_BinExp BIExp_Plus (BExp_Den (BVar "R1" (BType_Imm Bit64)))
              (BExp_Den (BVar "R3" (BType_Imm Bit64)))]
-          (HD :bir_val_t list -> bir_val_t );
+          (HD :bir_val_t list -> bir_val_t);
         (BStmt_Assign (BVar "R4" (BType_Imm Bit64))
            (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
               (BExp_BinExp BIExp_Plus
@@ -246,10 +244,10 @@ val prog_5_cache_speculation_first = ``
      bb_statements :=
        [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_Const (Imm64 (12w :word64))]
-          (HD :bir_val_t list -> bir_val_t );
+          (HD :bir_val_t list -> bir_val_t);
         (BStmt_Assign (BVar "R4" (BType_Imm Bit64))
            (BExp_BinExp BIExp_And
-              (BExp_Const (Imm64 (18446744073709551615w :word64)))
+              (BExp_Const (Imm64 (0xFFFFFFFFFFFFFFFFw :word64)))
               (BExp_BinExp BIExp_LeftShift
                  (BExp_Den (BVar "R4" (BType_Imm Bit64)))
                  (BExp_Const (Imm64 (6w :word64))))) :
@@ -260,7 +258,7 @@ val prog_5_cache_speculation_first = ``
      bb_statements :=
        [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_Const (Imm64 (16w :word64))]
-          (HD :bir_val_t list -> bir_val_t );
+          (HD :bir_val_t list -> bir_val_t);
         (BStmt_Assert
            (BExp_BinPred BIExp_Equal
               (BExp_BinExp BIExp_And
@@ -272,7 +270,7 @@ val prog_5_cache_speculation_first = ``
         (BStmt_Assert
            (BExp_BinExp BIExp_And
               (BExp_BinPred BIExp_LessOrEqual
-                 (BExp_Const (Imm64 (4291559424w :word64)))
+                 (BExp_Const (Imm64 (0xFFCC0000w :word64)))
                  (BExp_BinExp BIExp_Plus
                     (BExp_Den (BVar "R5" (BType_Imm Bit64)))
                     (BExp_Den (BVar "R4" (BType_Imm Bit64)))))
@@ -280,12 +278,12 @@ val prog_5_cache_speculation_first = ``
                  (BExp_BinExp BIExp_Plus
                     (BExp_Den (BVar "R5" (BType_Imm Bit64)))
                     (BExp_Den (BVar "R4" (BType_Imm Bit64))))
-                 (BExp_Const (Imm64 (4291624832w :word64))))) :
+                 (BExp_Const (Imm64 (0xFFCCFF80w :word64))))) :
          bir_val_t bir_stmt_basic_t);
         BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_BinExp BIExp_Plus (BExp_Den (BVar "R5" (BType_Imm Bit64)))
              (BExp_Den (BVar "R4" (BType_Imm Bit64)))]
-          (HD :bir_val_t list -> bir_val_t );
+          (HD :bir_val_t list -> bir_val_t);
         (BStmt_Assign (BVar "R6" (BType_Imm Bit64))
            (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
               (BExp_BinExp BIExp_Plus
@@ -298,27 +296,38 @@ val prog_5_cache_speculation_first = ``
      bb_statements :=
        [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_Const (Imm64 (20w :word64))]
-          (HD :bir_val_t list -> bir_val_t )];
+          (HD :bir_val_t list -> bir_val_t)];
      bb_last_statement :=
        BStmt_Jmp (BLE_Label (BL_Address (Imm64 (28w :word64))))|>;
    <|bb_label := BL_Address (Imm64 (24w :word64));
      bb_statements :=
-       [(BStmt_Assign (BVar "R4*" (BType_Imm Bit64))
+       [(BStmt_Assign (BVar "R1*" (BType_Imm Bit64))
+           (BExp_Den (BVar "R1" (BType_Imm Bit64))) :
+         bir_val_t bir_stmt_basic_t);
+        (BStmt_Assign (BVar "R3*" (BType_Imm Bit64))
+           (BExp_Den (BVar "R3" (BType_Imm Bit64))) :
+         bir_val_t bir_stmt_basic_t);
+        (BStmt_Assign (BVar "MEM*" (BType_Mem Bit64 Bit8))
+           (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8))) :
+         bir_val_t bir_stmt_basic_t);
+        (BStmt_Assign (BVar "R4*" (BType_Imm Bit64))
            (BExp_Den (BVar "R4" (BType_Imm Bit64))) :
          bir_val_t bir_stmt_basic_t);
         (BStmt_Assign (BVar "R5*" (BType_Imm Bit64))
            (BExp_Den (BVar "R5" (BType_Imm Bit64))) :
          bir_val_t bir_stmt_basic_t);
-        (BStmt_Assign (BVar "R3*" (BType_Imm Bit64))
-           (BExp_Den (BVar "R3" (BType_Imm Bit64))) :
-         bir_val_t bir_stmt_basic_t);
-        (BStmt_Assign (BVar "R1*" (BType_Imm Bit64))
-           (BExp_Den (BVar "R1" (BType_Imm Bit64))) :
-         bir_val_t bir_stmt_basic_t);
+        (BStmt_Assert
+           (BExp_BinPred BIExp_Equal
+              (BExp_BinExp BIExp_And
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R1*" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R3*" (BType_Imm Bit64))))
+                 (BExp_Const (Imm64 (7w :word64))))
+              (BExp_Const (Imm64 (0w :word64)))) :bir_val_t bir_stmt_basic_t);
         (BStmt_Assert
            (BExp_BinExp BIExp_And
               (BExp_BinPred BIExp_LessOrEqual
-                 (BExp_Const (Imm64 (2148532224w :word64)))
+                 (BExp_Const (Imm64 (0xFFCC0000w :word64)))
                  (BExp_BinExp BIExp_Plus
                     (BExp_Den (BVar "R1*" (BType_Imm Bit64)))
                     (BExp_Den (BVar "R3*" (BType_Imm Bit64)))))
@@ -326,29 +335,69 @@ val prog_5_cache_speculation_first = ``
                  (BExp_BinExp BIExp_Plus
                     (BExp_Den (BVar "R1*" (BType_Imm Bit64)))
                     (BExp_Den (BVar "R3*" (BType_Imm Bit64))))
-                 (BExp_Const (Imm64 (2148794240w :word64))))) :
+                 (BExp_Const (Imm64 (0xFFCCFF80w :word64))))) :
          bir_val_t bir_stmt_basic_t);
         BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_BinExp BIExp_Plus (BExp_Den (BVar "R1*" (BType_Imm Bit64)))
              (BExp_Den (BVar "R3*" (BType_Imm Bit64)))]
-          (HD :bir_val_t list -> bir_val_t );
+          (HD :bir_val_t list -> bir_val_t);
+        (BStmt_Assign (BVar "R4" (BType_Imm Bit64))
+           (BExp_Load (BExp_Den (BVar "MEM*" (BType_Mem Bit64 Bit8)))
+              (BExp_BinExp BIExp_Plus
+                 (BExp_Den (BVar "R1*" (BType_Imm Bit64)))
+                 (BExp_Den (BVar "R3*" (BType_Imm Bit64)))) BEnd_LittleEndian
+              Bit64) :bir_val_t bir_stmt_basic_t);
+        (BStmt_Assign (BVar "R4*" (BType_Imm Bit64))
+           (BExp_BinExp BIExp_And
+              (BExp_Const (Imm64 (0xFFFFFFFFFFFFFFFFw :word64)))
+              (BExp_BinExp BIExp_LeftShift
+                 (BExp_Den (BVar "R4*" (BType_Imm Bit64)))
+                 (BExp_Const (Imm64 (6w :word64))))) :
+         bir_val_t bir_stmt_basic_t);
+        (BStmt_Assert
+           (BExp_BinPred BIExp_Equal
+              (BExp_BinExp BIExp_And
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R5*" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R4*" (BType_Imm Bit64))))
+                 (BExp_Const (Imm64 (7w :word64))))
+              (BExp_Const (Imm64 (0w :word64)))) :bir_val_t bir_stmt_basic_t);
+        (BStmt_Assert
+           (BExp_BinExp BIExp_And
+              (BExp_BinPred BIExp_LessOrEqual
+                 (BExp_Const (Imm64 (0xFFCC0000w :word64)))
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R5*" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R4*" (BType_Imm Bit64)))))
+              (BExp_BinPred BIExp_LessThan
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R5*" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R4*" (BType_Imm Bit64))))
+                 (BExp_Const (Imm64 (0xFFCCFF80w :word64))))) :
+         bir_val_t bir_stmt_basic_t);
         BStmt_Observe (1 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_BinExp BIExp_Plus (BExp_Den (BVar "R5*" (BType_Imm Bit64)))
              (BExp_Den (BVar "R4*" (BType_Imm Bit64)))]
-          (HD :bir_val_t list -> bir_val_t );
+          (HD :bir_val_t list -> bir_val_t);
+        (BStmt_Assign (BVar "R6" (BType_Imm Bit64))
+           (BExp_Load (BExp_Den (BVar "MEM*" (BType_Mem Bit64 Bit8)))
+              (BExp_BinExp BIExp_Plus
+                 (BExp_Den (BVar "R5*" (BType_Imm Bit64)))
+                 (BExp_Den (BVar "R4*" (BType_Imm Bit64)))) BEnd_LittleEndian
+              Bit64) :bir_val_t bir_stmt_basic_t);
         BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_Const (Imm64 (24w :word64))]
-          (HD :bir_val_t list -> bir_val_t )];
+          (HD :bir_val_t list -> bir_val_t)];
      bb_last_statement :=
        BStmt_Jmp (BLE_Label (BL_Address (Imm64 (28w :word64))))|>;
    <|bb_label := BL_Address (Imm64 (28w :word64));
      bb_statements :=
        [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_Const (Imm64 (28w :word64))]
-          (HD :bir_val_t list -> bir_val_t )];
+          (HD :bir_val_t list -> bir_val_t)];
      bb_last_statement := BStmt_Halt (BExp_Const (Imm32 (0w :word32)))|>]
-:bir_val_t bir_program_t
-``;
+  :bir_val_t bir_program_t
+  ”;
 
 val prog_5_test =
   ("prog_5 - spectre_v1_mod1", prog_5,
