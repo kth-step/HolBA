@@ -80,9 +80,9 @@ val exp_is_load_def = Define `
 `;
 
 (* core steps that don't affect memory *)
-val (bir_cstep_rules, bir_cstep_ind, bir_cstep_cases) = Hol_reln‘
+val (bir_cstep_rules, bir_cstep_ind, bir_cstep_cases) = Hol_reln`
 (* read *)
-(!p s s' v a_e M l (t:num) v_pre v_post v_addr var (a:num) (rk:num) mem_e en ty. (*TODO fix type of a and rk *)
+(!p s s' v a_e M l (t:num) v_pre v_post v_addr var (a:num) (rk:num) mem_e en ty cid. (*TODO fix type of a and rk *)
    (bir_get_current_statement p s.bst_pc =
    SOME (BStmtB (BStmt_Assign var (BExp_Load mem_e a_e en ty)))
  ∧ (SOME l, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv
@@ -95,9 +95,48 @@ val (bir_cstep_rules, bir_cstep_ind, bir_cstep_cases) = Hol_reln‘
                                    then MAX (s.bst_coh l) v_post
                                    else s.bst_coh(lo));
                   bst_v_rOld := MAX s.bst_v_rOld v_post;
-                  bst_v_CAP := MAX s.bst_v_CAP v_addr |>)
+                  bst_v_CAP := MAX s.bst_v_CAP v_addr;
+                  bst_pc updated_by bir_pc_next |>)
  ==>
-  cstep p s M s')
-’;
+  cstep p cid s M [] s')
+/\ (* fulfil *)
+(!p s s' M v a_e l (t:num) v_pre v_post v_addr v_data var mem_e en v_e cid.
+    ((bir_get_current_statement p s.bst_pc =
+      SOME (BStmtB (BStmt_Assign var (BExp_Store mem_e a_e en v_e))))
+ /\ (SOME l, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv
+ /\ (SOME v, v_data) = bir_eval_exp_view v_e s.bst_environ s.bst_viewenv
+ /\ t ∈ s.bst_prom
+ /\ EL t M = <| loc := l; val := v; cid := cid  |>
+ /\ v_pre = MAX v_addr (MAX v_data (MAX s.bst_v_wNew s.bst_v_CAP))
+ /\ (MAX v_pre (s.bst_coh l) < t)
+ /\ v_post = t
+ /\ s' = s with <| bst_prom updated_by (\pr. pr DIFF {t});
+                   bst_coh := (\lo. if lo = l
+                                    then MAX (s.bst_coh l) v_post
+                                    else s.bst_coh(lo));
+                   bst_v_wOld := MAX s.bst_v_wOld v_post;
+                   bst_v_CAP := MAX s.bst_v_CAP v_addr;
+                   bst_fwdb := (\lo. if lo = l
+                                     then <| time := t;
+                                             view := MAX v_addr v_data;
+                                             xcl := false |>
+                                     else s.bst_fwdb(lo));
+                   bst_pc updated_by bir_pc_next |>)
+ ==>
+  cstep p cid s M [t] s')
+/\ (* fence *)
+(!p s s' M cid v.
+   (((bir_get_current_statement p s.bst_pc =
+     SOME (BStmtB BStmt_Fence)))
+   /\ v = MAX s.bst_v_rOld s.bst_v_wOld
+   /\ s' = s with <| bst_v_rNew := MAX s.bst_v_rNew v;
+                     bst_v_wNew := MAX s.bst_v_wNew v;
+                     bst_pc updated_by bir_pc_next |>)
+==>
+  cstep p cid s M [] s')
+
+(*/\ (* branch *)*)
+(*/\ (* BIR single step *)*)
+`;
 
 val _ = export_theory();
