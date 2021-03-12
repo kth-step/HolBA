@@ -79,8 +79,15 @@ val exp_is_load_def = Define `
 (exp_is_load _ = F)
 `;
 
-(* core steps that don't affect memory *)
-val (bir_cstep_rules, bir_cstep_ind, bir_cstep_cases) = Hol_reln`
+val stmt_generic_step_def = Define`
+   stmt_generic_step (BStmtB (BStmt_Assign _ _)) = F
+/\ stmt_generic_step (BStmtB BStmt_Fence) = F
+/\ stmt_generic_step (BStmtE (BStmt_CJmp _ _ _)) = F
+/\ stmt_generic_step _ = T
+`;
+
+(* core-local steps that don't affect memory *)
+val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
 (* read *)
 (!p s s' v a_e M l (t:num) v_pre v_post v_addr var (a:num) (rk:num) mem_e en ty cid. (*TODO fix type of a and rk *)
    (bir_get_current_statement p s.bst_pc =
@@ -98,7 +105,7 @@ val (bir_cstep_rules, bir_cstep_ind, bir_cstep_cases) = Hol_reln`
                   bst_v_CAP := MAX s.bst_v_CAP v_addr;
                   bst_pc updated_by bir_pc_next |>)
  ==>
-  cstep p cid s M [] s')
+  clstep p cid s M [] s')
 /\ (* fulfil *)
 (!p s s' M v a_e l (t:num) v_pre v_post v_addr v_data var mem_e en v_e cid.
     ((bir_get_current_statement p s.bst_pc =
@@ -123,7 +130,7 @@ val (bir_cstep_rules, bir_cstep_ind, bir_cstep_cases) = Hol_reln`
                                      else s.bst_fwdb(lo));
                    bst_pc updated_by bir_pc_next |>)
  ==>
-  cstep p cid s M [t] s')
+  clstep p cid s M [t] s')
 /\ (* fence *)
 (!p s s' M cid v.
    (((bir_get_current_statement p s.bst_pc =
@@ -133,10 +140,79 @@ val (bir_cstep_rules, bir_cstep_ind, bir_cstep_cases) = Hol_reln`
                      bst_v_wNew := MAX s.bst_v_wNew v;
                      bst_pc updated_by bir_pc_next |>)
 ==>
-  cstep p cid s M [] s')
+  clstep p cid s M [] s')
 
-(*/\ (* branch *)*)
-(*/\ (* BIR single step *)*)
+/\ (* branch *)
+(!p s s' M cid v oo s2 v_addr cond_e lbl1 lbl2 stm.
+   (bir_get_current_statement p s.bst_pc = SOME stm
+    /\ stm = BStmtE (BStmt_CJmp cond_e lbl1 lbl2)
+    /\ (SOME v, v_addr) = bir_eval_exp_view cond_e s.bst_environ s.bst_viewenv
+    /\ bir_exec_stmt p stm s = (oo,s2)
+    /\ s' = s2 with <| bst_v_CAP := MAX s.bst_v_CAP v_addr |>)
+==>
+  clstep p cid s M [] s')
+
+/\ (* Other BIR single steps *)
+(!p s s' M cid stm oo.
+   (bir_get_current_statement p s.bst_pc = SOME stm
+    /\ stmt_generic_step stm
+    /\ bir_exec_stmt p stm s = (oo,s'))
+==>
+  clstep p cid s M [] s')
+`;
+
+(* core steps *)
+val (bir_cstep_rules, bir_cstep_ind, bir_cstep_cases) = Hol_reln`
+(* execute *)
+(!p cid s M s'.
+  clstep p cid s M ([]:num list) s'
+==>
+  cstep p cid s M [] s' M)
+
+/\ (* promise *)
+(!p cid s M s' t msg.
+   (msg.cid = cid
+   /\ t = LENGTH M + 1
+   /\ s' = s with bst_prom updated_by (\pr. pr UNION {t}))
+==>
+  cstep p cid s M [t] s' (M ++ [msg]))
+`;
+
+(* core steps seq *)
+val (bir_cstep_seq_rules, bir_cstep_seq_ind, bir_cstep_seq_cases) = Hol_reln`
+(* seq *)
+(!p cid s M s'.
+  clstep p cid s M ([]:num list) s'
+==>
+  cstep_seq p cid (s, M) (s', M))
+
+/\ (* write *)
+(!p cid s M s' s'' M' t.
+  (cstep p cid s M [t] s' M'
+  /\ clstep p cid s' M' [t] s'')
+==>
+  cstep_seq p cid (s, M) (s'', M'))
+`;
+
+val cstep_seq_rtc_def = Define`cstep_seq_rtc p cid = (cstep_seq p cid)^*`
+val is_certified_def = Define`
+is_certified p cid s M = ?s' M'.
+  cstep_seq_rtc p cid (s, M) (s', M')
+  /\ s'.bst_prom = {}
+`;
+
+val core_t_def = Datatype `core_t =
+core num (string bir_program_t) bir_state_t
+`;
+
+(* system step *)
+val (bir_parstep_rules, bir_parstep_ind, bir_parstep_cases) = Hol_reln`
+(!p cid s s' M M' cores.
+   (core cid p s ∈ cores
+    /\ cstep p cid s M [] s' M'
+    /\ is_certified p cid s' M')
+==>
+   parstep cores M (cores DIFF {core cid p s} UNION {core cid p s'}) M')
 `;
 
 val _ = export_theory();
