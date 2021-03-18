@@ -24,8 +24,9 @@ val sum = merge_to_summary lbl_tm systs_after;
 
 val entry_label = "motor_set";
 val lbl_tm      = find_func_lbl_tm entry_label;
+val usage       = commonBalrobScriptLib.get_fun_usage entry_label;
 
-val syst_start  = init_summary lbl_tm;
+val syst_start  = init_summary lbl_tm usage;
 val systs_start = [syst_start];
 
 val stop_lbl_tms = find_func_ends n_dict entry_label;

@@ -186,7 +186,7 @@ val (count_min, count_max) =
   case syst_merged_countw of
      SymbValInterval ((min, max), _) =>
         (term_to_string min, term_to_string max)
-   | _ => raise ERR "balrob-test" "should be an interval";
+   | _ => raise Fail "balrob-test::should be an interval";
 
 val _ = print "\n\n\n";
 val _ = print ("min = " ^ count_min ^ "\n");
@@ -263,7 +263,7 @@ val _ = print "\n\n";
 
 (* now instanciation ... *)
 val syst = if length systs_noassertfailed = 1 then hd systs_noassertfailed else
-           raise ERR "script" "more than one symbolic state in current path/state";
+           raise Fail "script::more than one symbolic state in current path/state";
 
 val systs_inst = instantiate_summaries [syst_summary] [syst];
 
@@ -328,7 +328,7 @@ val (count_min, count_max) =
   case syst_merged_countw of
      SymbValInterval ((min, max), _) =>
         (term_to_string min, term_to_string max)
-   | _ => raise ERR "balrob-test" "should be an interval";
+   | _ => raise Fail "balrob-test::should be an interval";
 
 val _ = print "\n\n\n";
 val _ = print ("min = " ^ count_min ^ "\n");

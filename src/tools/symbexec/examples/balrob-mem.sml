@@ -11,12 +11,12 @@ fun bexp_of_stmt s =
     (snd o dest_BStmt_Assign) s
   else if is_BStmt_Assert s then
     dest_BStmt_Assert s
-  else raise ERR "bexps_of_stmt" "unknown statement type";
+  else raise Fail "bexps_of_stmt::unknown statement type";
 
 fun bexps_of_jtgt tgt =
   if is_BLE_Label tgt then []
   else if is_BLE_Exp tgt then [dest_BLE_Exp tgt]
-  else raise ERR "bexps_of_jtgt" "unknown jump target type";
+  else raise Fail "bexps_of_jtgt::unknown jump target type";
 
 fun bexps_of_estmt s =
   if is_BStmt_Jmp s then bexps_of_jtgt (dest_BStmt_Jmp s)
@@ -26,7 +26,7 @@ fun bexps_of_estmt s =
     in
       c::((bexps_of_jtgt t1)@(bexps_of_jtgt t2))
     end
-  else raise ERR "bexps_of_estmt" "unknown end statement type";
+  else raise Fail "bexps_of_estmt::unknown end statement type";
 
 fun gen_bexp_list bl_dict lbl_tm =
   let
@@ -95,7 +95,7 @@ fun collect_subterm is_tm_fun combine_fun acc tm =
 
 fun load_to_size_endi tm =
   if (not o is_BExp_Load) tm then
-    raise ERR "load_to_size" "not a load!"
+    raise Fail "load_to_size::not a load!"
   else
   let
     val (_,_,en,sz) = dest_BExp_Load tm;
@@ -130,7 +130,7 @@ BExp_Store
 
 fun store_to_size_endi tm =
   if (not o is_BExp_Store) tm then
-    raise ERR "store_to_size" "not a store!"
+    raise Fail "store_to_size::not a store!"
   else
   let
     val (_,_,en,tm_v) = dest_BExp_Store tm;
@@ -138,13 +138,13 @@ fun store_to_size_endi tm =
     val bty_v = if optionSyntax.is_some bty_v_o then
                   optionSyntax.dest_some bty_v_o
                 else
-                  raise ERR "store_to_size" "couldn't resolve expression type";
+                  raise Fail "store_to_size::couldn't resolve expression type";
 
     val sz =
       if bir_valuesSyntax.is_BType_Imm bty_v then
         bir_valuesSyntax.dest_BType_Imm bty_v
       else
-        raise ERR "store_to_size" "no bir imm";
+        raise Fail "store_to_size::no bir imm";
   in
     (sz,en)
   end;

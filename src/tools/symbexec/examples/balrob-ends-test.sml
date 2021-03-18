@@ -90,7 +90,7 @@ val _ = List.map (fn entry_label => let
     case syst_merged_countw of
        SymbValInterval ((min, max), _) =>
           (term_to_string min, term_to_string max)
-     | _ => raise ERR "balrob-test" "should be an interval";
+     | _ => raise Fail "balrob-test::should be an interval";
 
   (* -------------------------------------------------------------- *)
   val _ = print ("min = " ^ count_min ^ "\n");
