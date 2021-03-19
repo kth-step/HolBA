@@ -25,5 +25,18 @@ halt x0`;
 
 val expr = BExp`(x0:Bit8)+MEM[x0]`;
 
+val core1_prog =
+BIR
+`start:
+MEM=MEM{x0 := 1}
+x2=MEM[x1]
+halt x2`;
+
+val core2_prog =
+BIR
+‘start:
+MEM=MEM{x1 := 1}
+x2=MEM[x0]
+halt x2’;
 
 ``t = ^(BExp`x0*x1`)``

@@ -94,7 +94,7 @@ val _ = Datatype `bir_state_t = <|
   bst_v_rNew   : num;
   bst_v_wNew   : num;
   bst_v_wOld   : num;
-  bst_prom     : num -> bool;
+  bst_prom     : num list;
   bst_fwdb     : bir_val_t -> fwdb_t;
   bst_inflight : (string bir_inflight_stmt_t) list;
   bst_counter  : num
@@ -202,10 +202,17 @@ val bir_state_init_def = Define `bir_state_init p = <|
     bst_pc       := bir_pc_first p
   ; bst_environ  := bir_env_default (bir_envty_of_vs {}) (* TODO: add vars of program here *)
   ; bst_status := BST_Running
+  ; bst_viewenv := FEMPTY
+  ; bst_coh := \x.0
+  ; bst_v_rOld := 0
+  ; bst_v_CAP := 0
+  ; bst_v_rNew := 0
+  ; bst_v_wNew := 0
+  ; bst_v_wOld := 0
+  ; bst_prom := []
   ; bst_inflight := []
   ; bst_counter := 0
 |>`;
-
 
 (* ------------------------------------------------------------------------- *)
 (*  Semantics of statements                                                  *)
