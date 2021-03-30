@@ -1,0 +1,4 @@
+INCLUDES = $(HOLBADIR)/src/aux
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
