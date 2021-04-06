@@ -254,7 +254,7 @@ struct
       val exp_type_s = exp_type_to_string exp_type;
 
       val RunReferences (_, run_name, _, exp_l_id) = holba_run_id();
-      val run_metadata_ = ("time", time_since_run_str ())::run_metadata;
+      val run_metadata_ = ("creationtime", time_since_run_str ())::run_metadata;
 
       val input_data = Json.OBJECT (List.map (fn (n, s) => ("input_" ^ n, machstate_to_Json s)) state_list);
       val exp_v      = LogsExp (prog_id, exp_type_s, exp_params, input_data);
