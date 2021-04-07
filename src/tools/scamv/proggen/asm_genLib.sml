@@ -376,7 +376,7 @@ in
 
   fun arb_program_spectre_v1_mod2_gen w_dep =
     gen_preload w_dep >>= (fn preload_instr =>
-    gen_arr_bnds_chck_acc gen_arr_acc >>= (fn gadget_instrs =>
+    arb_program_spectre_v1_mod1 >>= (fn gadget_instrs =>
       return (preload_instr::gadget_instrs)
     ));
   val arb_program_spectre_v1_mod2     = arb_program_spectre_v1_mod2_gen false;
