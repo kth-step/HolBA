@@ -307,14 +307,17 @@ BirProgram
         (BStmt_Assign (BVar "R3*" (BType_Imm Bit64))
            (BExp_Den (BVar "R3" (BType_Imm Bit64))) :
          bir_val_t bir_stmt_basic_t);
-        (BStmt_Assign (BVar "MEM*" (BType_Mem Bit64 Bit8))
-           (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8))) :
-         bir_val_t bir_stmt_basic_t);
         (BStmt_Assign (BVar "R4*" (BType_Imm Bit64))
            (BExp_Den (BVar "R4" (BType_Imm Bit64))) :
          bir_val_t bir_stmt_basic_t);
+        (BStmt_Assign (BVar "MEM*" (BType_Mem Bit64 Bit8))
+           (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8))) :
+         bir_val_t bir_stmt_basic_t);
         (BStmt_Assign (BVar "R5*" (BType_Imm Bit64))
            (BExp_Den (BVar "R5" (BType_Imm Bit64))) :
+         bir_val_t bir_stmt_basic_t);
+        (BStmt_Assign (BVar "R6*" (BType_Imm Bit64))
+           (BExp_Den (BVar "R6" (BType_Imm Bit64))) :
          bir_val_t bir_stmt_basic_t);
         (BStmt_Assert
            (BExp_BinPred BIExp_Equal
@@ -341,7 +344,7 @@ BirProgram
           [BExp_BinExp BIExp_Plus (BExp_Den (BVar "R1*" (BType_Imm Bit64)))
              (BExp_Den (BVar "R3*" (BType_Imm Bit64)))]
           (HD :bir_val_t list -> bir_val_t);
-        (BStmt_Assign (BVar "R4" (BType_Imm Bit64))
+        (BStmt_Assign (BVar "R4*" (BType_Imm Bit64))
            (BExp_Load (BExp_Den (BVar "MEM*" (BType_Mem Bit64 Bit8)))
               (BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R1*" (BType_Imm Bit64)))
@@ -379,7 +382,7 @@ BirProgram
           [BExp_BinExp BIExp_Plus (BExp_Den (BVar "R5*" (BType_Imm Bit64)))
              (BExp_Den (BVar "R4*" (BType_Imm Bit64)))]
           (HD :bir_val_t list -> bir_val_t);
-        (BStmt_Assign (BVar "R6" (BType_Imm Bit64))
+        (BStmt_Assign (BVar "R6*" (BType_Imm Bit64))
            (BExp_Load (BExp_Den (BVar "MEM*" (BType_Mem Bit64 Bit8)))
               (BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R5*" (BType_Imm Bit64)))

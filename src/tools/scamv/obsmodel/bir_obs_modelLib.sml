@@ -162,13 +162,31 @@ open bir_cfgLib;
 	    nub_with (fn (x,y) => identical x y) fvs
 	end;
 
+    fun bir_free_vars_stmt_b stmt_b =
+	      let
+	        open stringSyntax;
+          open bir_envSyntax;
+          open bir_programSyntax;
+          val fvs =
+		          if is_BStmt_Assign stmt_b
+              then
+                let val (var,exp) = dest_BStmt_Assign stmt_b
+		            in
+                  (fst (dest_BVar var))::(bir_free_vars exp)
+                end
+              else
+                bir_free_vars stmt_b;
+        in
+          nub_with (fn (x,y) => identical x y) fvs
+        end;
+
     fun primed_term t =
 	      let open stringSyntax numSyntax;
-	          fun primed_subst exp =
+	          fun primed_subst tm =
 		            List.map (fn v =>
 			                       let val vp = lift_string string_ty (fromHOLstring v ^ "*")
 			                       in ``^v`` |-> ``^vp`` end)
-			                   (bir_free_vars exp)
+			                   (bir_free_vars_stmt_b tm)
         in
           List.foldl (fn (record, tm) => subst[#redex record |-> #residue record] tm) t (primed_subst t)
         end
@@ -186,7 +204,7 @@ open bir_cfgLib;
     fun mk_preamble stmts =
         let open stringSyntax;
             val free_vars = nub_with (uncurry identical)
-                                     (List.concat (map bir_free_vars stmts));
+                                     (List.concat (map bir_free_vars_stmt_b stmts));
             fun star_string str =
                   lift_string string_ty (fromHOLstring str ^ "*")
             fun mk_assignment var =
