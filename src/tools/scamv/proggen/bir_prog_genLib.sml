@@ -223,6 +223,8 @@ fun pgen_qc_param param =
    | "xld_br_yld_mod1" => prog_gen_a_la_qc arb_program_xld_br_yld_mod1
    | "spectre_v1" => prog_gen_a_la_qc arb_program_spectre_v1
    | "spectre_v1_mod1" => prog_gen_a_la_qc arb_program_spectre_v1_mod1
+   | "spectre_v1_mod2" => prog_gen_a_la_qc arb_program_spectre_v1_mod2
+   | "spectre_v1_mod2_dep" => prog_gen_a_la_qc arb_program_spectre_v1_mod2_dep
    | "straightline_branch" => prog_gen_a_la_qc arb_program_straightline_branch			  
    | _            => raise ERR "prog_gen_store_a_la_qc" "unknown qc generator";
 

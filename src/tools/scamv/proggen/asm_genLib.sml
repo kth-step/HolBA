@@ -355,11 +355,32 @@ local
     [Load (Reg reg_y, Ld2 (reg_x, reg_a1))]@
     (Portable.the_list (get_next_spectre_v1_mul ()))@
     [Load (Reg reg_z, Ld2 (reg_y, reg_a2))]));
+
+  val reg_t1  = "x10";
+  val reg_t2  = "x11";
+  fun gen_preload with_dep =
+    let
+      val (reg_t, reg_s) =
+        if with_dep then
+          (reg_la1, reg_t1)
+        else
+          (reg_t1, reg_t2);
+    in
+      return (Load (Reg reg_t, Ld (NONE, reg_s)))
+    end;
 in
   val arb_program_spectre_v1 =
     gen_arr_bnds_chck_acc gen_arr_acc;
   val arb_program_spectre_v1_mod1 =
     gen_arr_bnds_chck_acc_mod gen_arr_acc (return [Nop]);
+
+  fun arb_program_spectre_v1_mod2_gen w_dep =
+    gen_preload w_dep >>= (fn preload_instr =>
+    gen_arr_bnds_chck_acc gen_arr_acc >>= (fn gadget_instrs =>
+      return (preload_instr::gadget_instrs)
+    ));
+  val arb_program_spectre_v1_mod2     = arb_program_spectre_v1_mod2_gen false;
+  val arb_program_spectre_v1_mod2_dep = arb_program_spectre_v1_mod2_gen true;
 end;
 
 (* =============== straightline speculation ================= *)
