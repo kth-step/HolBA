@@ -299,6 +299,9 @@ open bir_cfgLib;
             prog
             targets
     end
+
+ fun jmp_to_cjmp t = (rand o concl) (EVAL “jmp_to_cjmp_prog ^t”);
+
 in
 
   (* Exmaple usage: inputs are lifted program with intial observation and depth of execution      *)
@@ -320,6 +323,18 @@ in
       branch_instrumentation obs_all_refined_but_first (bir_arm8_mem_addr_pc_model.add_obs mb t) pipeline_depth;
   end;
 
+  structure bir_arm8_cache_straight_line_model : OBS_MODEL =
+  struct
+  val obs_hol_type = ``bir_val_t``;
+  val pipeline_depth = 3;
+  fun add_obs mb t =
+      let val obs_term = bir_arm8_mem_addr_pc_model.add_obs mb t;
+          val jmp_to_cjmp_term = jmp_to_cjmp obs_term;
+      in
+        branch_instrumentation obs_all_refined jmp_to_cjmp_term pipeline_depth
+      end;
+  end;
+  
 end (* local *)
 
 
@@ -342,6 +357,8 @@ fun get_obs_model id =
                bir_arm8_cache_speculation_model.obs_hol_type
         else if id = "cache_speculation_first" then
                bir_arm8_cache_speculation_first_model.obs_hol_type
+        else if id = "cache_straightline" then
+               bir_arm8_cache_straight_line_model.obs_hol_type
         else
             raise ERR "get_obs_model" ("unknown obs_model selected: " ^ id);
 
@@ -362,6 +379,8 @@ fun get_obs_model id =
                bir_arm8_cache_speculation_model.add_obs
         else if id = "cache_speculation_first" then
                bir_arm8_cache_speculation_first_model.add_obs
+        else if id = "cache_straightline" then
+               bir_arm8_cache_straight_line_model.add_obs
         else
           raise ERR "get_obs_model" ("unknown obs_model selected: " ^ id);
   in
