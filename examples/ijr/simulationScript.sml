@@ -17,10 +17,11 @@ Definition exec_to_prog_def:
 End
 
 Definition simulated_def:
-  simulated p p' =
+  simulated (p: 'a bir_program_t) (p': 'a bir_program_t) =
   ∀s l s' o2 m2 n2.
     s.bst_pc = bir_block_pc l ⇒
     MEM l (bir_labels_of_program p) ⇒
+
     exec_to_prog p' s p = BER_Ended o2 m2 n2 s' ⇒
     ~(∃l'. s'.bst_status = BST_JumpOutside l') ⇒
     (∃o1 m1 n1.
