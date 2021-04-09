@@ -39,6 +39,22 @@ sig
    val mk_BLE_Exp   : term -> term
 
 
+   (***************)
+   (* bir_memop_t *)
+   (***************)
+
+   val bir_memop_t_ty : hol_type
+
+   val BM_Read_tm   : term
+   val is_BM_Read   : term -> bool
+
+   val BM_Write_tm   : term
+   val is_BM_Write   : term -> bool
+
+   val BM_ReadWrite_tm   : term
+   val is_BM_ReadWrite   : term -> bool
+
+
    (********************)
    (* bir_stmt_basic_t *)
    (********************)
@@ -66,6 +82,11 @@ sig
    val dest_BStmt_Observe : term -> term * term * term * term
    val is_BStmt_Observe   : term -> bool
    val mk_BStmt_Observe   : term * term * term * term -> term
+
+   val BStmt_Fence_tm   : term
+   val dest_BStmt_Fence : term -> term * term
+   val is_BStmt_Fence   : term -> bool
+   val mk_BStmt_Fence   : term * term -> term
 
 
    (******************)

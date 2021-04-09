@@ -25,6 +25,11 @@ val _ = Datatype `bir_label_exp_t =
   | BLE_Exp bir_exp_t
 `;
 
+val _ = Datatype `bir_memop_t =
+    BM_Read
+  | BM_Write
+  | BM_ReadWrite
+`;
 
 (*
   Assign variable expression
@@ -37,7 +42,7 @@ val _ = Datatype `bir_stmt_basic_t =
   | BStmt_Assert  bir_exp_t
   | BStmt_Assume  bir_exp_t
   | BStmt_Observe num bir_exp_t (bir_exp_t list) (bir_val_t list -> 'a)
-  | BStmt_Fence
+  | BStmt_Fence   bir_memop_t bir_memop_t
 `;
 
 val _ = Datatype `bir_stmt_end_t =
@@ -213,8 +218,8 @@ val bir_exec_stmt_assume_def = Define `bir_exec_stmt_assume ex (st : bir_state_t
     | NONE => bir_state_set_typeerror st`;
 
 (* In sequential semantics, the fence is a nop *)
-val bir_exec_stmt_fence_def = Define `bir_exec_stmt_fence (st : bir_state_t) = (NONE,st)`;
-val bir_exec_stmt_fence_state_def = Define `bir_exec_stmt_fence_state (st : bir_state_t) = st`;
+val bir_exec_stmt_fence_def = Define `bir_exec_stmt_fence mop mos (st : bir_state_t) = (NONE,st)`;
+val bir_exec_stmt_fence_state_def = Define `bir_exec_stmt_fence_state mop mos (st : bir_state_t) = st`;
 
 val bir_exec_stmt_observe_def = Define `bir_exec_stmt_observe oid ec el obf (st : bir_state_t) =
   let
@@ -258,7 +263,7 @@ val bir_exec_stmtB_def = Define `
   (bir_exec_stmtB (BStmt_Assume ex) st = (NONE, bir_exec_stmt_assume ex st)) /\
   (bir_exec_stmtB (BStmt_Assign v ex) st = (NONE, bir_exec_stmt_assign v ex st)) /\
   (bir_exec_stmtB (BStmt_Observe oid ec el obf) st = bir_exec_stmt_observe oid ec el obf st) /\
-  (bir_exec_stmtB BStmt_Fence st = bir_exec_stmt_fence st)`;
+  (bir_exec_stmtB (BStmt_Fence mop mos) st = bir_exec_stmt_fence mop mos st)`;
 
 val bir_exec_stmtB_state_def = Define `bir_exec_stmtB_state stmt st =
   SND (bir_exec_stmtB stmt st)`;
@@ -295,7 +300,7 @@ val bir_exec_stmtB_state_REWRS = store_thm ("bir_exec_stmtB_state_REWRS",
   (!ex st. (bir_exec_stmtB_state (BStmt_Assume ex) st = (bir_exec_stmt_assume ex st))) /\
   (!v ex st. (bir_exec_stmtB_state (BStmt_Assign v ex) st = (bir_exec_stmt_assign v ex st))) /\
   (!oid ec el obf st. (bir_exec_stmtB_state (BStmt_Observe oid ec el obf) st = bir_exec_stmt_observe_state ec el st)) /\
-  (!st. (bir_exec_stmtB_state BStmt_Fence st = bir_exec_stmt_fence_state st))``,
+  (!st. (bir_exec_stmtB_state (BStmt_Fence mos mop) st = bir_exec_stmt_fence_state mos mop st))``,
 
 SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def, bir_exec_stmt_observe_state_THM, bir_exec_stmt_fence_state_def, bir_exec_stmt_fence_def]);
 

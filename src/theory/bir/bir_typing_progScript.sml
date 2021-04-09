@@ -65,7 +65,8 @@ val bir_is_well_typed_stmtB_def = Define `
   (bir_is_well_typed_stmtB (BStmt_Assert e) = (type_of_bir_exp e = SOME BType_Bool)) /\
   (bir_is_well_typed_stmtB (BStmt_Assume e) = (type_of_bir_exp e = SOME BType_Bool)) /\
   (bir_is_well_typed_stmtB (BStmt_Observe _ e el _) = ((type_of_bir_exp e = SOME BType_Bool) /\
-                                                     (EVERY (IS_SOME o type_of_bir_exp) el)))`;
+                                                     (EVERY (IS_SOME o type_of_bir_exp) el))) /\
+  (bir_is_well_typed_stmtB (BStmt_Fence _ _) = T)`;
 
 val bir_is_well_typed_stmt_def = Define `
   (bir_is_well_typed_stmt (BStmtE s) = bir_is_well_typed_stmtE s) /\
@@ -115,7 +116,8 @@ val bir_vars_of_stmtB_def = Define `
   (bir_vars_of_stmtB (BStmt_Assume ex) = bir_vars_of_exp ex) /\
   (bir_vars_of_stmtB (BStmt_Assign v ex) = (v INSERT (bir_vars_of_exp ex))) /\
   (bir_vars_of_stmtB (BStmt_Observe _ ec el obf) =
-     BIGUNION (IMAGE bir_vars_of_exp (LIST_TO_SET (ec::el))))`;
+     BIGUNION (IMAGE bir_vars_of_exp (LIST_TO_SET (ec::el)))) /\
+  (bir_vars_of_stmtB (BStmt_Fence _ _) = {})`;
 
 val bir_vars_of_label_exp_def = Define `
   (bir_vars_of_label_exp (BLE_Label l) = {}) /\
@@ -187,7 +189,7 @@ val bir_changed_vars_of_stmtB_def = Define `
   (bir_changed_vars_of_stmtB (BStmt_Assume ex) = {}) /\
   (bir_changed_vars_of_stmtB (BStmt_Assign v ex) = {v}) /\
   (bir_changed_vars_of_stmtB (BStmt_Observe _ ec el obf) = {}) /\
-  (bir_changed_vars_of_stmtB BStmt_Fence = {})`;
+  (bir_changed_vars_of_stmtB (BStmt_Fence _ _) = {})`;
 
 val bir_changed_vars_of_stmt_def = Define `
   (bir_changed_vars_of_stmt (BStmtE s) = {}) /\
@@ -275,7 +277,7 @@ val bir_exps_of_stmtB_def = Define `
   (bir_exps_of_stmtB (BStmt_Assume ex) = {ex}) /\
   (bir_exps_of_stmtB (BStmt_Assign v ex) = {ex}) /\
   (bir_exps_of_stmtB (BStmt_Observe _ ec el obf) = set (ec::el)) /\
-  (bir_exps_of_stmtB BStmt_Fence = {})`;
+  (bir_exps_of_stmtB (BStmt_Fence _ _) = {})`;
 
 val bir_exps_of_label_exp_def = Define `
   (bir_exps_of_label_exp (BLE_Label l) = {}) /\

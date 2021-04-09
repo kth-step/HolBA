@@ -252,9 +252,9 @@ val bir_exec_stmtB_well_typed_env_observe = prove (
 METIS_TAC[bir_env_oldTheory.bir_is_well_typed_env_THM]);
 
 val bir_exec_stmtB_well_typed_env_fence = prove (
-``!st el ec.
+``!st mop mos.
       bir_is_well_typed_env st.bst_environ ==>
-      bir_is_well_typed_env (bir_exec_stmt_fence_state st).bst_environ``,
+      bir_is_well_typed_env (bir_exec_stmt_fence_state mop mos st).bst_environ``,
 METIS_TAC[bir_env_oldTheory.bir_is_well_typed_env_THM]);
 
 val bir_exec_stmtB_well_typed_env = store_thm ("bir_exec_stmtB_well_typed_env",

@@ -231,10 +231,11 @@ val (parstep_rules, parstep_ind, parstep_cases) = Hol_reln`
    ==> parstep system (system DIFF {core cid p s} UNION {core cid p s'}))
 /\ (!m m' system. memstep m m' /\ (mem m) ∈ system
    ==> parstep system (system DIFF {mem m} UNION {mem m'}))
-/\ (!p s s' stm cid m' system system'.
+(* TODO: Treat different fences differently *)
+/\ (!p s s' stm mop mos cid m' system system'.
        ((core cid p s) ∈ system /\ (mem m) ∈ system
         /\ (next_stmt s = SOME (t0,stm))
-        /\ (stm = BStmtB BStmt_Fence)
+        /\ (stm = BStmtB (BStmt_Fence mop mos))
         /\ s' = pstep_flush p s
         /\ m' = memflush cid m.bmst_inflight m
         /\ system' = (system DIFF {core cid p s} UNION {core cid p s'})

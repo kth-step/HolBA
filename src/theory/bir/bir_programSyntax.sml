@@ -39,6 +39,13 @@ val bir_label_exp_t_ty = mk_type ("bir_label_exp_t", []);
 val (BLE_Label_tm,  mk_BLE_Label, dest_BLE_Label, is_BLE_Label)  = syntax_fns1 "BLE_Label";
 val (BLE_Exp_tm,  mk_BLE_Exp, dest_BLE_Exp, is_BLE_Exp)  = syntax_fns1 "BLE_Exp";
 
+(* bir_memop_t *)
+
+val bir_memop_t_ty = mk_type ("bir_memop_t", []);
+
+val (BM_Read_tm,  is_BM_Read)  = syntax_fns0 "BM_Read";
+val (BM_Write_tm,  is_BM_Write)  = syntax_fns0 "BM_Write";
+val (BM_ReadWrite_tm,  is_BM_ReadWrite)  = syntax_fns0 "BM_ReadWrite";
 
 (* bir_stmt_basic_t *)
 
@@ -55,6 +62,7 @@ val (BStmt_Assign_tm,  mk_BStmt_Assign, dest_BStmt_Assign, is_BStmt_Assign)  = s
 val (BStmt_Assert_tm,  mk_BStmt_Assert, dest_BStmt_Assert, is_BStmt_Assert)  = syntax_fns1 "BStmt_Assert";
 val (BStmt_Assume_tm,  mk_BStmt_Assume, dest_BStmt_Assume, is_BStmt_Assume)  = syntax_fns1 "BStmt_Assume";
 val (BStmt_Observe_tm,  mk_BStmt_Observe, dest_BStmt_Observe, is_BStmt_Observe)  = syntax_fns4 "BStmt_Observe";
+val (BStmt_Fence_tm,  mk_BStmt_Fence, dest_BStmt_Fence, is_BStmt_Fence)  = syntax_fns2 "BStmt_Fence";
 
 
 
