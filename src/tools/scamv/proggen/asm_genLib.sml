@@ -395,15 +395,19 @@ val arb_program_nobranch_nocmp = arb_list_of arb_instruction_nobranch_nocmp;
 fun arb_program_straightline_cond arb_prog_left arb_prog_right =
     let
 	fun rel_jmp_after bl = Imm (((length bl) + 1) * 4);
-	      
+	val arb_load_instr = arb_load_indir;
+	    
 	val arb_prog      = arb_prog_left  >>= (fn blockl =>
-                              arb_prog_right >>= (fn blockr =>
+			    arb_prog_right >>= (fn blockr =>
+			    arb_load_instr >>= (fn fld =>
                               let val blockl_wexit = blockl@[Branch (NONE, rel_jmp_after blockr)] in
                                return (
                                     blockl_wexit
-                                    @blockr)
+                                    @blockr
+				    @[fld]
+			       )
                               end
-                        ));
+                        )));
     in
 	arb_prog
     end;
@@ -422,7 +426,6 @@ val arb_program_straightline_branch =
         let val arb_block_3ld =
                         (List.foldr (op@) []) <$> (
                         sequence [return [ld1]
-                                ,arb_pad
                                 ,arb_pad
                                  ]) in
           two (arb_pad) arb_block_3ld
