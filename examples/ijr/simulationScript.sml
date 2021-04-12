@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 
-open listTheory;
+open listTheory pred_setSimps;
 
 open bir_programTheory bir_expTheory bir_exp_immTheory bir_typing_expTheory;
 open bir_program_blocksTheory bir_program_multistep_propsTheory;
@@ -39,16 +39,18 @@ SIMP_TAC std_ss [bir_exec_stmt_jmp_to_label_def]
 QED
 
 Theorem bir_eval_label_exp_lem:
-  ∀p' p sl le s l.
+  ∀p' p sls le s l.
     (∀l'. MEM l' (bir_labels_of_program p') ⇔
-            MEM l' (bir_labels_of_program p) ∨ l' = (BL_Label sl)) ⇒
-    le ≠ BLE_Label (BL_Label sl) ⇒
+            MEM l' (bir_labels_of_program p) ∨
+            (∃sl. l' = BL_Label sl ∧ sl IN sls)) ⇒
+    ~(∃sl. sl IN sls ∧ le = BLE_Label (BL_Label sl)) ⇒
     bir_eval_label_exp le s.bst_environ = SOME l ⇒
     (MEM l (bir_labels_of_program p') ⇔ MEM l (bir_labels_of_program p))
 Proof
 REPEAT STRIP_TAC >>
 Cases_on ‘le’ >- (
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_label_exp_def]
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_eval_label_exp_def] >>
+  PROVE_TAC []
 ) >>
 rename1 ‘BLE_Exp e’ >>
 FULL_SIMP_TAC std_ss [bir_eval_label_exp_def] >>
@@ -64,10 +66,11 @@ FULL_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
 Theorem bir_exec_stmt_jmp_same:
-  ∀p' p sl le s s'.
-    (∀l. MEM l (bir_labels_of_program p') ⇔
-           MEM l (bir_labels_of_program p) ∨ l = (BL_Label sl)) ⇒
-    le ≠ BLE_Label (BL_Label sl) ⇒
+  ∀p' p sls le s s'.
+    (∀l'. MEM l' (bir_labels_of_program p') ⇔
+            MEM l' (bir_labels_of_program p) ∨
+            (∃sl. l' = BL_Label sl ∧ sl IN sls)) ⇒
+    ~(∃sl. sl IN sls ∧ le = BLE_Label (BL_Label sl)) ⇒
     bir_exec_stmt_jmp p' le s = s' ⇒
     bir_exec_stmt_jmp p le s = s'
 Proof
@@ -88,11 +91,12 @@ PROVE_TAC [bir_exec_stmt_jmp_to_label_same]
 QED
 
 Theorem bir_exec_stmt_cjmp_same:
-  ∀p' p sl le1 le2 c s s' .
-    (∀l. MEM l (bir_labels_of_program p') ⇔
-           MEM l (bir_labels_of_program p) ∨ l = (BL_Label sl)) ⇒
-    le1 ≠ BLE_Label (BL_Label sl) ⇒
-    le2 ≠ BLE_Label (BL_Label sl) ⇒
+  ∀p' p sls le1 le2 c s s' .
+    (∀l'. MEM l' (bir_labels_of_program p') ⇔
+            MEM l' (bir_labels_of_program p) ∨
+            (∃sl. l' = BL_Label sl ∧ sl IN sls)) ⇒
+    ~(∃sl. sl IN sls ∧ le1 = BLE_Label (BL_Label sl)) ⇒
+    ~(∃sl. sl IN sls ∧ le2 = BLE_Label (BL_Label sl)) ⇒
     bir_exec_stmt_cjmp p' c le1 le2 s = s' ⇒
     bir_exec_stmt_cjmp p c le1 le2 s = s'
 Proof
@@ -104,14 +108,17 @@ Cases_on ‘vobc’ >- (
 ) >> ASM_SIMP_TAC std_ss [] >>
 
 (*c well typed*)
-METIS_TAC [bir_exec_stmt_jmp_same]
+RW_TAC std_ss [] >>
+IMP_RES_TAC bir_exec_stmt_jmp_same >>
+PROVE_TAC []
 QED
 
 Theorem bir_exec_block_same:
-  ∀p' p sl bl s s' os m.
-    (∀l. MEM l (bir_labels_of_program p') ⇔
-           MEM l (bir_labels_of_program p) ∨ l = (BL_Label sl)) ⇒
-    ~(direct_jump_target_block (BL_Label sl) bl) ⇒
+  ∀p' p sls bl s s' os m.
+    (∀l'. MEM l' (bir_labels_of_program p') ⇔
+            MEM l' (bir_labels_of_program p) ∨
+            (∃sl. l' = BL_Label sl ∧ sl IN sls)) ⇒
+    (∀sl. sl IN sls ⇒ ~direct_jump_target_block (BL_Label sl) bl) ⇒
     bir_exec_block p' bl s = (os, m, s') ⇒
     bir_exec_block p bl s = (os, m, s')
 Proof
@@ -137,20 +144,23 @@ Cases_on ‘bir_state_is_terminated s'’ >- (
 Cases_on ‘bl.bb_last_statement’ >>
 FULL_SIMP_TAC std_ss [bir_exec_stmtE_def] >- (
   rename1 ‘_ = BStmt_Jmp le’ >>
-  ‘le ≠ BLE_Label (BL_Label sl)’ by (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [direct_jump_target_block_def]
+  subgoal ‘~(∃sl. sl IN sls ∧ le = BLE_Label (BL_Label sl))’ >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [direct_jump_target_block_def] >>
+    PROVE_TAC []
   ) >>
-  METIS_TAC [bir_exec_stmt_jmp_same]
+  IMP_RES_TAC bir_exec_stmt_jmp_same >>
+  PROVE_TAC []
 ) >>
 
 (*Last statement is CJmp*)
 rename1 ‘_ = BStmt_CJmp c le1 le2’ >>
-subgoal ‘le1 ≠ BLE_Label (BL_Label sl) ∧
-         le2 ≠ BLE_Label (BL_Label sl)’ >- (
+subgoal ‘~(∃sl. sl IN sls ∧ le1 = BLE_Label (BL_Label sl)) ∧
+         ~(∃sl. sl IN sls ∧ le2 = BLE_Label (BL_Label sl))’ >- (
   FULL_SIMP_TAC (std_ss++holBACore_ss) [direct_jump_target_block_def] >>
   PROVE_TAC []
 ) >>
-METIS_TAC [bir_exec_stmt_cjmp_same]
+IMP_RES_TAC bir_exec_stmt_cjmp_same >>
+PROVE_TAC []
 QED
 
 
@@ -415,8 +425,9 @@ REVERSE (Cases_on ‘l = l1’) >- (
 
   (*Programs execute block bl with same result*)
   Q.SUBGOAL_THEN ‘s2 = s1 ∧ os2 = os1 ∧ m2 = m1’ (fn thm => SIMP_TAC std_ss [thm]) >- (
-    MP_TAC (Q.SPECL [‘p'’, ‘p’, ‘sl’, ‘bl’, ‘s’, ‘s2’, ‘os2’, ‘m2’] bir_exec_block_same) >>
-    FULL_SIMP_TAC std_ss [resolved_def_cases, fresh_label_def, direct_jump_target_def]
+    MP_TAC (Q.SPECL [‘p'’, ‘p’, ‘{sl}’, ‘bl’, ‘s’, ‘s2’, ‘os2’, ‘m2’] bir_exec_block_same) >>
+    FULL_SIMP_TAC (std_ss++PRED_SET_ss)
+                  [resolved_def_cases, fresh_label_def, direct_jump_target_def]
   ) >>
 
   (*Programs fail*)

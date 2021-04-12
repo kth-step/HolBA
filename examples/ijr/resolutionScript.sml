@@ -63,5 +63,28 @@ Inductive resolved_def:
 End
 
 
+Inductive resolved_fail_block_def:
+  ∀l v bl1 bl2 e.
+    bl1 = bir_block_t l [] (BStmt_Jmp (BLE_Exp e)) ∧
+    bl2 = bir_block_t l [BStmt_Assert (BExp_Const (Imm1 0w))] (BStmt_Halt v) ⇒
+    resolved_fail_block l v bl1 bl2
+End
+
+Inductive resolved_fail_def:
+  ∀l1 v p p' bl1 bl2.
+    (∀l. MEM l (bir_labels_of_program p') ⇔ MEM l (bir_labels_of_program p)) ∧
+
+    bir_get_current_block p (bir_block_pc l1) = SOME bl1 ∧
+    bir_get_current_block p' (bir_block_pc l1) = SOME bl2 ∧
+    resolved_fail_block l1 v bl1 bl2 ∧
+
+    (∀l. MEM l (bir_labels_of_program p) ∧ l ≠ l1 ⇒
+         ∃bl. bir_get_current_block p (bir_block_pc l) = SOME bl ∧
+              bir_get_current_block p' (bir_block_pc l) = SOME bl) ⇒
+
+    resolved_fail l1 v p p'
+End
+
+
 val _ = export_theory();
 
