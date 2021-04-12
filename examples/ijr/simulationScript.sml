@@ -413,7 +413,7 @@ rename1 ‘_ = BER_Ended o2' m2' n2' s''’ >>
 REVERSE (Cases_on ‘l = l1’) >- (
   ‘∃bl. bir_get_current_block p s.bst_pc = SOME bl ∧
         bir_get_current_block p' s.bst_pc = SOME bl’ by (
-    PROVE_TAC [resolved_def_cases]
+    PROVE_TAC [resolved_cases]
   ) >>
 
   IMP_RES_TAC bir_exec_to_labels_block >>
@@ -427,7 +427,7 @@ REVERSE (Cases_on ‘l = l1’) >- (
   Q.SUBGOAL_THEN ‘s2 = s1 ∧ os2 = os1 ∧ m2 = m1’ (fn thm => SIMP_TAC std_ss [thm]) >- (
     MP_TAC (Q.SPECL [‘p'’, ‘p’, ‘{sl}’, ‘bl’, ‘s’, ‘s2’, ‘os2’, ‘m2’] bir_exec_block_same) >>
     FULL_SIMP_TAC (std_ss++PRED_SET_ss)
-                  [resolved_def_cases, fresh_label_def, direct_jump_target_def]
+                  [resolved_cases, fresh_label_def, direct_jump_target_def]
   ) >>
 
   (*Programs fail*)
@@ -450,9 +450,9 @@ POP_ASSUM SUBST_ALL_TAC >>
    bir_get_current_block p' s.bst_pc = SOME bl2 ∧
    bir_get_current_block p' (bir_block_pc (BL_Label sl)) = SOME bl3 ∧
    resolved_block l1 v sl bl1 bl2 bl3’ by (
-  FULL_SIMP_TAC std_ss [resolved_def_cases]
+  FULL_SIMP_TAC std_ss [resolved_cases]
 ) >>
-FULL_SIMP_TAC std_ss [resolved_block_def_cases] >>
+FULL_SIMP_TAC std_ss [resolved_block_cases] >>
 Q.ABBREV_TAC ‘c = BExp_BinPred BIExp_Equal e (BExp_Const v)’ >>
 
 IMP_RES_TAC bir_exec_to_labels_block >>
@@ -466,8 +466,8 @@ FULL_SIMP_TAC std_ss [LET_DEF] >>
 subgoal ‘(s1 = s2 ∧ os1 = os2 ∧ m1 = m2) ∨
          jump_fresh e (exec_stmtsB bss s) s2 sl s1 p’ >- (
     MP_TAC (Q.SPECL quantifiers bir_exec_block_cjmp_jmp) >>
-    FULL_SIMP_TAC std_ss [resolved_def_cases, fresh_label_def,
-                          direct_jump_target_def, resolved_block_def_cases]
+    FULL_SIMP_TAC std_ss [resolved_cases, fresh_label_def,
+                          direct_jump_target_def, resolved_block_cases]
 ) >- (
   (*Programs execute block labelled l1 with same result*)
   NTAC 3 (POP_ASSUM (fn thm => SIMP_TAC std_ss [GSYM thm])) >>
@@ -496,7 +496,7 @@ Q.SUBGOAL_THEN ‘~(bir_state_COUNT_PC pc_cond s2)’ (fn thm => SIMP_TAC std_ss
   Q.UNABBREV_TAC ‘pc_cond’ >>
   FULL_SIMP_TAC  (std_ss++holBACore_ss)
                  [bir_state_COUNT_PC_def, jump_fresh_def,
-                 bir_block_pc_def, resolved_def_cases, fresh_label_def]
+                 bir_block_pc_def, resolved_cases, fresh_label_def]
 ) >>
 
 (*Program p' executes block sl and tries to jump to e*)
@@ -505,7 +505,7 @@ subgoal ‘∃s2' n. bir_exec_to_labels (set ls) p' s2 = BER_Ended [] 1 n s2' �
                    s2' = s2 with bst_pc := bir_block_pc (BL_Address v')
                  else s2'.bst_status = BST_JumpOutside (BL_Address v')’ >- (
   MP_TAC (Q.SPECL [‘p'’, ‘p’, ‘sl’, ‘e’, ‘s2’, ‘v'’] bir_exec_to_labels_jmp) >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [resolved_def_cases]
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [resolved_cases]
 ) >>
 
 (*Evaluation of e in labels of p*)

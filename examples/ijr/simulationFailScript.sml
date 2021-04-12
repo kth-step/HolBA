@@ -72,7 +72,7 @@ rename1 ‘_ = BER_Ended o2' m2' n2' s''’ >>
 REVERSE (Cases_on ‘l = l1’) >- (
   ‘∃bl. bir_get_current_block p s.bst_pc = SOME bl ∧
         bir_get_current_block p' s.bst_pc = SOME bl’ by (
-    PROVE_TAC [resolved_fail_def_cases]
+    PROVE_TAC [resolved_fail_cases]
   ) >>
 
   IMP_RES_TAC bir_exec_to_labels_block >>
@@ -85,7 +85,7 @@ REVERSE (Cases_on ‘l = l1’) >- (
   (*Programs execute block bl with same result*)
   Q.SUBGOAL_THEN ‘s2 = s1 ∧ os2 = os1 ∧ m2 = m1’ (fn thm => SIMP_TAC std_ss [thm]) >- (
     MP_TAC (Q.SPECL [‘p'’, ‘p’, ‘{}’, ‘bl’, ‘s’, ‘s2’, ‘os2’, ‘m2’] bir_exec_block_same) >>
-    FULL_SIMP_TAC (std_ss++PRED_SET_ss) [resolved_fail_def_cases]
+    FULL_SIMP_TAC (std_ss++PRED_SET_ss) [resolved_fail_cases]
   ) >>
 
   (*Programs fail*)
@@ -107,9 +107,9 @@ POP_ASSUM SUBST_ALL_TAC >>
    bir_get_current_block p s.bst_pc = SOME bl1 ∧
    bir_get_current_block p' s.bst_pc = SOME bl2 ∧
    resolved_fail_block l1 v bl1 bl2’ by (
-  FULL_SIMP_TAC std_ss [resolved_fail_def_cases]
+  FULL_SIMP_TAC std_ss [resolved_fail_cases]
 ) >>
-FULL_SIMP_TAC std_ss [resolved_fail_block_def_cases] >>
+FULL_SIMP_TAC std_ss [resolved_fail_block_cases] >>
 
 Cases_on ‘bir_state_is_terminated s’ >- (
   FULL_SIMP_TAC (std_ss++bir_TYPES_ss)
