@@ -399,15 +399,15 @@ fun arb_program_straightline_cond arb_prog_left arb_prog_right =
 	    
 	val arb_prog      = arb_prog_left  >>= (fn blockl =>
 			    arb_prog_right >>= (fn blockr =>
-			    arb_load_instr >>= (fn fld =>
+			    (* arb_load_instr >>= (fn fld => *)
                               let val blockl_wexit = blockl@[Branch (NONE, rel_jmp_after blockr)] in
                                return (
                                     blockl_wexit
                                     @blockr
-				    @[fld]
+				    (* @[fld] *)
 			       )
                               end
-                        )));
+                        (* ) *)));
     in
 	arb_prog
     end;
