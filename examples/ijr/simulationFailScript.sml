@@ -24,35 +24,60 @@ Definition simulated_fail_def:
       exec_to_prog p s p = BER_Ended o1 m1 n1 s')
 End
 
-Theorem bir_exec_block_assert_block:
-  ∀p l v s bl.
-    ~(bir_state_is_terminated s) ⇒
-    bl = assert_block l v ⇒
-    (∃s'. bir_exec_block p bl s = ([], 1, s') ∧
-          s'.bst_status = BST_AssertionViolated)
+Theorem bir_exec_stmsB_assert_cjmp:
+  ∀bss os c s os2 m2 s2 os1 m1 s1.
+    bir_exec_stmtsB (bss ⧺ [BStmt_Assert (BExp_Const (Imm1 0w))]) (os, c, s) = (os2, m2, s2) ⇒
+    bir_exec_stmtsB bss (os, c, s) = (os1, m1, s1) ⇒
+    (s1 = s2 ∧ os1 = os2 ∧ m1 = m2 ∧ bir_state_is_terminated s2) ∨
+    (s2.bst_status = BST_AssertionViolated)
 Proof
+REPEAT GEN_TAC >>
+SIMP_TAC std_ss [bir_exec_stmtsB_APPEND] >>
+NTAC 2 STRIP_TAC >>
 FULL_SIMP_TAC (list_ss++wordsLib.WORD_ss++holBACore_ss)
-              [assert_block_def, bir_exec_block_def, bir_exec_stmtsB_def,
+              [LET_DEF, bir_exec_stmtsB_def,
                bir_exec_stmtB_def, bir_exec_stmt_assert_def,
-               bir_dest_bool_val_def, LET_DEF, OPT_CONS_REWRS]
+               bir_dest_bool_val_def, OPT_CONS_REWRS] >>
+Cases_on ‘bir_state_is_terminated s1’ >>
+FULL_SIMP_TAC std_ss [] >>
+Q.PAT_X_ASSUM ‘_ = s2’ (fn thm => ASM_SIMP_TAC (std_ss++holBACore_ss) [GSYM thm])
 QED
 
-Theorem bir_exec_to_labels_assert_block:
-  ∀l v ls p s bl.
-    ~(bir_state_is_terminated s) ⇒
-    bl = assert_block l v ⇒
-    bir_get_current_block p (s.bst_pc) = SOME bl ⇒
-    (∃s'. bir_exec_to_labels ls p s = BER_Ended [] 1 0 s' ∧
-            s'.bst_status = BST_AssertionViolated)
+Theorem bir_exec_block_assert_jmp:
+  ∀p' p l1 bss e s v s2 s1 os2 m2 os1 m1 bl1 bl2.
+    bl1 = bir_block_t l1 bss (BStmt_Jmp (BLE_Exp e)) ⇒
+    bl2 = assert_block l1 bss v ⇒
+
+    bir_exec_block p' bl2 s = (os2, m2, s2) ⇒
+    bir_exec_block p bl1 s = (os1, m1, s1) ⇒
+    ((s1 = s2 ∧ os1 = os2 ∧ m1 = m2 ∧ bir_state_is_terminated s2) ∨
+    (s2.bst_status = BST_AssertionViolated))
 Proof
-REPEAT STRIP_TAC >>
-IMP_RES_TAC bir_exec_to_labels_block >>
-Q.PAT_X_ASSUM `∀ls. _` (fn thm => SIMP_TAC std_ss [Q.SPEC `ls` thm]) >>
-IMP_RES_TAC bir_exec_block_assert_block >>
-Q.PAT_X_ASSUM `∀p. _` (fn thm => ASSUME_TAC (Q.SPECL [‘p’] thm)) >>
-FULL_SIMP_TAC  (list_ss++holBACore_ss) [LET_DEF, bir_state_COUNT_PC_def,
-                                        bir_exec_to_labels_def,
-                                        bir_exec_to_labels_n_REWR_TERMINATED]
+REPEAT GEN_TAC >> NTAC 2 STRIP_TAC >>
+rename1 ‘bir_exec_block p' _ _ = (os2', m2', s2'')’ >>
+rename1 ‘bir_exec_block p _ _ = (os1', m1', s1'')’ >>
+
+ASM_SIMP_TAC  (std_ss++holBACore_ss) [assert_block_def, bir_exec_block_def] >>
+‘∃os2 m2 s2. bir_exec_stmtsB (bss ⧺ [BStmt_Assert (BExp_Const (Imm1 0w))])
+                             ([],0,s) = (os2, m2, s2)’
+  by PROVE_TAC [pairTheory.PAIR] >>
+‘∃os1 m1 s1. bir_exec_stmtsB bss ([],0,s) = (os1, m1, s1)’
+  by PROVE_TAC [pairTheory.PAIR] >>
+Q.ABBREV_TAC ‘s2' = bir_exec_stmtE p' (BStmt_Halt v) s2’ >>
+Q.ABBREV_TAC ‘s1' = bir_exec_stmtE p (BStmt_Jmp (BLE_Exp e)) s1’ >>
+FULL_SIMP_TAC std_ss [LET_DEF] >>
+
+subgoal ‘(s1 = s2 ∧ os1 = os2 ∧ m1 = m2 ∧ bir_state_is_terminated s2) ∨
+         (s2.bst_status = BST_AssertionViolated)’ >- (
+  PROVE_TAC [bir_exec_stmsB_assert_cjmp]
+) >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+REPEAT STRIP_TAC >- (
+  NTAC 6 (POP_ASSUM (fn thm => SIMP_TAC std_ss [GSYM thm])) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def]
+) >>
+NTAC 4 (POP_ASSUM (fn thm => SIMP_TAC std_ss [GSYM thm])) >>
+FULL_SIMP_TAC  (std_ss++holBACore_ss) []
 QED
 
 Theorem resolved_fail_simulated_fail:
@@ -109,14 +134,26 @@ POP_ASSUM SUBST_ALL_TAC >>
 ) >>
 FULL_SIMP_TAC std_ss [resolved_fail_block_cases] >>
 
-Cases_on ‘bir_state_is_terminated s’ >- (
-  FULL_SIMP_TAC (std_ss++bir_TYPES_ss)
-                  [bir_exec_to_labels_def, bir_exec_to_labels_n_REWR_TERMINATED]
+IMP_RES_TAC bir_exec_to_labels_block >>
+NTAC 2 (Q.PAT_X_ASSUM `∀ls. _` (fn thm => SIMP_TAC std_ss [Q.SPEC `ls` thm])) >>
+Q.ABBREV_TAC ‘pc_cond = (F, (λpc. pc.bpc_index = 0 ∧ MEM pc.bpc_label ls))’ >>
+‘∃os2 m2 s2. bir_exec_block p' bl2 s = (os2, m2, s2)’ by PROVE_TAC [pairTheory.PAIR] >>
+‘∃os1 m1 s1. bir_exec_block p bl1 s = (os1, m1, s1)’ by PROVE_TAC [pairTheory.PAIR] >>
+FULL_SIMP_TAC std_ss [LET_DEF] >>
+
+subgoal ‘(s1 = s2 ∧ os1 = os2 ∧ m1 = m2 ∧ bir_state_is_terminated s2) ∨
+         (s2.bst_status = BST_AssertionViolated)’ >- (
+  PROVE_TAC [bir_exec_block_assert_jmp]
+) >- (
+  FULL_SIMP_TAC (list_ss++holBACore_ss) [bir_exec_to_labels_def,
+                                         bir_exec_to_labels_n_REWR_TERMINATED]
 ) >>
-IMP_RES_TAC bir_exec_to_labels_assert_block >>
-POP_ASSUM (fn thm => ASSUME_TAC (Q.SPEC ‘set ls’ thm)) >>
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC (std_ss++holBACore_ss) []
+Q.UNABBREV_TAC ‘pc_cond’ >>
+FULL_SIMP_TAC (list_ss++holBACore_ss) [Once bir_state_COUNT_PC_def,
+                                       bir_exec_to_labels_def,
+                                       bir_exec_to_labels_n_REWR_TERMINATED] >>
+
+PROVE_TAC []
 QED
 
 

@@ -72,14 +72,14 @@ Inductive resolved:
 End
 
 Definition assert_block_def:
-  assert_block l v =
-  bir_block_t l [BStmt_Assert (BExp_Const (Imm1 0w))] (BStmt_Halt v)
+  assert_block l bss v =
+  bir_block_t l (bss ++ [BStmt_Assert (BExp_Const (Imm1 0w))]) (BStmt_Halt v)
 End
 
 Inductive resolved_fail_block:
   ∀l v bl1 bl2 e.
-    bl1 = bir_block_t l [] (BStmt_Jmp (BLE_Exp e)) ∧
-    bl2 = assert_block l v ⇒
+    bl1 = bir_block_t l bss (BStmt_Jmp (BLE_Exp e)) ∧
+    bl2 = assert_block l bss v ⇒
     resolved_fail_block l v bl1 bl2
 End
 
