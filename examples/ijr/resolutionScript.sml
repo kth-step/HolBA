@@ -8,15 +8,24 @@ open HolBACoreSimps;
 
 val _ = new_theory "resolution";
 
+Definition cjmp_stmtE_def:
+  cjmp_stmtE e v sl =
+   BStmt_CJmp (BExp_BinPred BIExp_Equal e (BExp_Const v))
+              (BLE_Label (BL_Address v))
+              (BLE_Label (BL_Label sl))
+End
+
+Definition cjmp_block_def:
+  cjmp_block l1 bss e v sl =
+  bir_block_t l1 bss (cjmp_stmtE e v sl)
+End
 
 Inductive resolved_block:
-  ∀l1 v sl bl1 bl2 bl3 bss e c.
+  ∀l1 v sl bl1 bl2 bl3 bss e.
     type_of_bir_exp e = SOME (BType_Imm (type_of_bir_imm v)) ∧
 
     bl1 = bir_block_t l1 bss (BStmt_Jmp (BLE_Exp e)) ∧
-    c = BExp_BinPred BIExp_Equal e (BExp_Const v) ∧
-    bl2 = bir_block_t l1 bss
-      (BStmt_CJmp c (BLE_Label (BL_Address v)) (BLE_Label (BL_Label sl))) ∧
+    bl2 = cjmp_block l1 bss e v sl ∧
     bl3 = bir_block_t (BL_Label sl) [] (BStmt_Jmp (BLE_Exp e)) ⇒
     resolved_block l1 v sl bl1 bl2 bl3
 End
@@ -47,7 +56,7 @@ Inductive resolved:
   ∀l1 v sl p p' bl1 bl2 bl3.
     fresh_label (BL_Label sl) p ∧
     (∀l. MEM l (bir_labels_of_program p') ⇔
-           MEM l (bir_labels_of_program p) ∨ l = (BL_Label sl)) ∧
+           MEM l (bir_labels_of_program p) ∨ l = BL_Label sl) ∧
     (MEM (BL_Address v) (bir_labels_of_program p)) ∧
 
     bir_get_current_block p (bir_block_pc l1) = SOME bl1 ∧
@@ -62,11 +71,15 @@ Inductive resolved:
     resolved l1 v sl p p'
 End
 
+Definition assert_block_def:
+  assert_block l v =
+  bir_block_t l [BStmt_Assert (BExp_Const (Imm1 0w))] (BStmt_Halt v)
+End
 
 Inductive resolved_fail_block:
   ∀l v bl1 bl2 e.
     bl1 = bir_block_t l [] (BStmt_Jmp (BLE_Exp e)) ∧
-    bl2 = bir_block_t l [BStmt_Assert (BExp_Const (Imm1 0w))] (BStmt_Halt v) ⇒
+    bl2 = assert_block l v ⇒
     resolved_fail_block l v bl1 bl2
 End
 

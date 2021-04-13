@@ -24,24 +24,23 @@ Definition simulated_fail_def:
       exec_to_prog p s p = BER_Ended o1 m1 n1 s')
 End
 
-Theorem bir_exec_block_assert:
+Theorem bir_exec_block_assert_block:
   ∀p l v s bl.
     ~(bir_state_is_terminated s) ⇒
-    bl = bir_block_t l [BStmt_Assert (BExp_Const (Imm1 0w))] (BStmt_Halt v) ⇒
+    bl = assert_block l v ⇒
     (∃s'. bir_exec_block p bl s = ([], 1, s') ∧
           s'.bst_status = BST_AssertionViolated)
 Proof
-REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (list_ss++wordsLib.WORD_ss++holBACore_ss)
-              [bir_exec_block_def, bir_exec_stmtsB_def,
+              [assert_block_def, bir_exec_block_def, bir_exec_stmtsB_def,
                bir_exec_stmtB_def, bir_exec_stmt_assert_def,
                bir_dest_bool_val_def, LET_DEF, OPT_CONS_REWRS]
 QED
 
-Theorem bir_exec_to_labels_assert:
+Theorem bir_exec_to_labels_assert_block:
   ∀l v ls p s bl.
     ~(bir_state_is_terminated s) ⇒
-    bl = bir_block_t l [BStmt_Assert (BExp_Const (Imm1 0w))] (BStmt_Halt v) ⇒
+    bl = assert_block l v ⇒
     bir_get_current_block p (s.bst_pc) = SOME bl ⇒
     (∃s'. bir_exec_to_labels ls p s = BER_Ended [] 1 0 s' ∧
             s'.bst_status = BST_AssertionViolated)
@@ -49,9 +48,8 @@ Proof
 REPEAT STRIP_TAC >>
 IMP_RES_TAC bir_exec_to_labels_block >>
 Q.PAT_X_ASSUM `∀ls. _` (fn thm => SIMP_TAC std_ss [Q.SPEC `ls` thm]) >>
-IMP_RES_TAC bir_exec_block_assert >>
-Q.PAT_X_ASSUM `∀p. _` (fn thm => ASSUME_TAC (Q.SPEC `p` thm)) >>
-FULL_SIMP_TAC std_ss [LET_DEF] >>
+IMP_RES_TAC bir_exec_block_assert_block >>
+Q.PAT_X_ASSUM `∀p. _` (fn thm => ASSUME_TAC (Q.SPECL [‘p’] thm)) >>
 FULL_SIMP_TAC  (list_ss++holBACore_ss) [LET_DEF, bir_state_COUNT_PC_def,
                                         bir_exec_to_labels_def,
                                         bir_exec_to_labels_n_REWR_TERMINATED]
@@ -115,7 +113,7 @@ Cases_on ‘bir_state_is_terminated s’ >- (
   FULL_SIMP_TAC (std_ss++bir_TYPES_ss)
                   [bir_exec_to_labels_def, bir_exec_to_labels_n_REWR_TERMINATED]
 ) >>
-IMP_RES_TAC bir_exec_to_labels_assert >>
+IMP_RES_TAC bir_exec_to_labels_assert_block >>
 POP_ASSUM (fn thm => ASSUME_TAC (Q.SPEC ‘set ls’ thm)) >>
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (std_ss++holBACore_ss) []

@@ -196,8 +196,7 @@ Theorem bir_exec_stmtE_cjmp_jmp:
     type_of_bir_exp e = SOME (BType_Imm (type_of_bir_imm v)) ⇒
 
     es1 = BStmt_Jmp (BLE_Exp e) ⇒
-    c = BExp_BinPred BIExp_Equal e (BExp_Const v) ⇒
-    es2 = BStmt_CJmp c (BLE_Label (BL_Address v)) (BLE_Label (BL_Label sl)) ⇒
+    es2 = cjmp_stmtE e v sl ⇒
 
     s.bst_status = BST_Running ⇒
     bir_exec_stmtE p' es2 s = s2 ⇒
@@ -205,8 +204,9 @@ Theorem bir_exec_stmtE_cjmp_jmp:
     (s1 = s2 ∨ jump_fresh e s s2 sl s1 p)
 Proof
 REPEAT GEN_TAC >> NTAC 3 STRIP_TAC >>
-SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtE_def, bir_exec_stmt_cjmp_def, LET_DEF] >>
-NTAC 3 (DISCH_THEN (K ALL_TAC)) >>
+SIMP_TAC (std_ss++holBACore_ss) [cjmp_stmtE_def, bir_exec_stmtE_def,
+                                 bir_exec_stmt_cjmp_def, LET_DEF] >>
+NTAC 2 (DISCH_THEN (K ALL_TAC)) >>
 rename1 ‘MEM (BL_Address v') _’ >>
 
 (*e not well typed*)
@@ -250,7 +250,7 @@ Definition exec_stmtsB_def:
   s'
 End
 
-(*TODO: Last case in bir_exec_block_cjmp_jmp and resolved_simulated chaosy *)
+(*TODO: Last case in bir_exec_block_cjmp_jmp and resolved_simulated chaosy*)
 
 Theorem bir_exec_block_cjmp_jmp:
   ∀p' p sl  bl1 l1 bss e c v bl2 s s2 os2 m2 s1 os1 m1.
@@ -261,27 +261,24 @@ Theorem bir_exec_block_cjmp_jmp:
     type_of_bir_exp e = SOME (BType_Imm (type_of_bir_imm v)) ⇒
 
     bl1 = bir_block_t l1 bss (BStmt_Jmp (BLE_Exp e)) ⇒
-    c = BExp_BinPred BIExp_Equal e (BExp_Const v) ⇒
-    bl2 = bir_block_t l1 bss
-      (BStmt_CJmp c (BLE_Label (BL_Address v)) (BLE_Label (BL_Label sl))) ⇒
+    bl2 = cjmp_block l1 bss e v sl ⇒
 
     bir_exec_block p' bl2 s = (os2, m2, s2) ⇒
     bir_exec_block p bl1 s = (os1, m1, s1) ⇒
-    (s1 = s2 ∧ os1 = os2 ∧ m1 = m2) ∨ (jump_fresh e (exec_stmtsB bss s) s2 sl s1 p)
+    (s1 = s2 ∧ os1 = os2 ∧ m1 = m2) ∨
+    (jump_fresh e (exec_stmtsB bss s) s2 sl s1 p)
 Proof
 REPEAT GEN_TAC >> NTAC 4 STRIP_TAC >>
 rename1 ‘bir_exec_block p' _  _= (os2', m2', s2')’ >>
 rename1 ‘bir_exec_block p _ _ = (os1', m1', s1')’ >>
 
 (*Execution of basic statements has same result*)
-SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_block_def] >>
-NTAC 3 (DISCH_THEN (K ALL_TAC)) >>
+SIMP_TAC (std_ss++bir_TYPES_ss) [bir_exec_block_def, cjmp_block_def] >>
+NTAC 2 (DISCH_THEN (K ALL_TAC)) >>
 ‘∃os m s'. bir_exec_stmtsB bss ([], 0, s) = (os, m, s')’ by
   PROVE_TAC [pairTheory.PAIR] >>
-Q.ABBREV_TAC ‘c = BExp_BinPred BIExp_Equal e (BExp_Const v)’ >>
 
-Q.ABBREV_TAC ‘s2 = bir_exec_stmtE p'
-  (BStmt_CJmp c (BLE_Label (BL_Address v)) (BLE_Label (BL_Label sl))) s'’ >>
+Q.ABBREV_TAC ‘s2 = bir_exec_stmtE p' (cjmp_stmtE e v sl) s'’ >>
 Q.ABBREV_TAC ‘s1 = bir_exec_stmtE p (BStmt_Jmp (BLE_Exp e)) s'’ >>
 FULL_SIMP_TAC std_ss [LET_DEF] >>
 
@@ -393,10 +390,6 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
 QED
 
 
-val quantifiers = [‘p'’, ‘p’, ‘sl’, ‘bl1’, ‘l1’, ‘bss’, ‘e’, ‘c’, ‘v’,
-                   ‘bl2’, ‘s’, ‘s2’, ‘os2’, ‘m2’, ‘s1’, ‘os1’, ‘m1’]
-
-
 (*TODO: simplify repetitiveness in cases?*)
 Theorem resolved_simulated:
   ∀l1 v sl p p'.
@@ -453,7 +446,6 @@ POP_ASSUM SUBST_ALL_TAC >>
   FULL_SIMP_TAC std_ss [resolved_cases]
 ) >>
 FULL_SIMP_TAC std_ss [resolved_block_cases] >>
-Q.ABBREV_TAC ‘c = BExp_BinPred BIExp_Equal e (BExp_Const v)’ >>
 
 IMP_RES_TAC bir_exec_to_labels_block >>
 NTAC 2 (Q.PAT_X_ASSUM `∀ls. _` (fn thm => SIMP_TAC std_ss [Q.SPEC `ls` thm])) >>
@@ -465,7 +457,8 @@ FULL_SIMP_TAC std_ss [LET_DEF] >>
 (*e = v*)
 subgoal ‘(s1 = s2 ∧ os1 = os2 ∧ m1 = m2) ∨
          jump_fresh e (exec_stmtsB bss s) s2 sl s1 p’ >- (
-    MP_TAC (Q.SPECL quantifiers bir_exec_block_cjmp_jmp) >>
+    IRULE_TAC bir_exec_block_cjmp_jmp >>
+    Q.LIST_EXISTS_TAC [‘bl1’, ‘bl2’, ‘l1’, ‘p'’, ‘v’] >>
     FULL_SIMP_TAC std_ss [resolved_cases, fresh_label_def,
                           direct_jump_target_def, resolved_block_cases]
 ) >- (
@@ -504,7 +497,7 @@ subgoal ‘∃s2' n. bir_exec_to_labels (set ls) p' s2 = BER_Ended [] 1 n s2' �
                  if MEM (BL_Address v') (bir_labels_of_program p) then
                    s2' = s2 with bst_pc := bir_block_pc (BL_Address v')
                  else s2'.bst_status = BST_JumpOutside (BL_Address v')’ >- (
-  MP_TAC (Q.SPECL [‘p'’, ‘p’, ‘sl’, ‘e’, ‘s2’, ‘v'’] bir_exec_to_labels_jmp) >>
+  IRULE_TAC bir_exec_to_labels_jmp >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [resolved_cases]
 ) >>
 
