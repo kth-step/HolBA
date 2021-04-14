@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 
-open listTheory;
+open listTheory pred_setTheory pred_setSimps;
 
 open bir_programTheory bir_htTheory bir_program_multistep_propsTheory;
 open HolBACoreSimps;
@@ -136,6 +136,71 @@ Theorem bir_exec_to_labels_restrict_labels:
     (∃c2'. bir_exec_to_labels ls p s = BER_Ended os c1 c2' s')
 Proof
 cheat
+QED
+
+Theorem simulated_termination_transitive:
+  ∀p1 p2 p3.
+    set (bir_labels_of_program p1) SUBSET set (bir_labels_of_program p2) ⇒
+    simulated_termination p1 p2 ∧
+    simulated_termination p2 p3 ⇒
+    simulated_termination p1 p3
+Proof
+REPEAT STRIP_TAC >>
+SIMP_TAC std_ss [simulated_termination_def, exec_to_prog_def] >>
+Q.ABBREV_TAC ‘pls1 = set (bir_labels_of_program p1)’ >>
+Q.ABBREV_TAC ‘pls2 = set (bir_labels_of_program p2)’ >>
+
+(*Expand label set*)
+REPEAT STRIP_TAC >>
+MP_TAC (Q.SPECL [‘pls1’, ‘pls2’, ‘p3’, ‘s’, ‘s'’, ‘o2’, ‘m2’, ‘n2’]
+                bir_exec_to_labels_expand_labels) >>
+ASM_SIMP_TAC std_ss [] >> STRIP_TAC >>
+rename1 ‘_ = BER_Ended _ _ n2' _’ >>
+
+(*Use simulation hypothesis*)
+subgoal ‘∃os1 m1 n1. bir_exec_to_labels_n pls2 p2 s n =
+                     BER_Ended os1 m1 n1 s'’ >- (
+  Q.SUBGOAL_THEN ‘simulated_termination_n p2 p3’ MP_TAC >- (
+    PROVE_TAC [simulated_termination_simulated_termination_n]
+  ) >>
+  ASM_SIMP_TAC std_ss [simulated_termination_n_def, exec_to_prog_n_def] >>
+  PROVE_TAC [SUBSET_DEF]
+) >>
+
+(*Restrict label set*)
+subgoal ‘∃n1'.bir_exec_to_labels pls1 p2 s = BER_Ended os1 m1 n1' s'’ >- (
+  IRULE_TAC bir_exec_to_labels_restrict_labels >>
+  CONJ_TAC >- (
+    ‘(1:num) > 0’ by SIMP_TAC arith_ss [] >>
+    METIS_TAC [bir_exec_to_labels_def, bir_exec_to_labels_n_ended_running]
+  ) >>
+
+  Q.LIST_EXISTS_TAC [‘n1’, ‘pls2’, ‘n’] >> CONJ_TAC >- (
+    REPEAT STRIP_TAC >>
+    Q.PAT_X_ASSUM ‘∀n'. _’ (fn thm => ASSUME_TAC (Q.SPEC ‘n'’ thm)) >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    subgoal ‘~bir_state_is_terminated s''’ >- (
+      FULL_SIMP_TAC std_ss [bir_exec_to_labels_n_def] >>
+      IMP_RES_TAC bir_exec_steps_GEN_decrease_max_steps_Ended_terminated
+    ) >>
+
+    subgoal ‘∃os' c1' c2''. bir_exec_to_labels_n pls2 p2 s n' =
+                            BER_Ended os' c1' c2'' s''’ >- (
+      Q.SUBGOAL_THEN ‘simulated_termination_n p2 p3’ MP_TAC >- (
+        PROVE_TAC [simulated_termination_simulated_termination_n]
+      ) >>
+      ASM_SIMP_TAC std_ss [simulated_termination_n_def, exec_to_prog_n_def] >>
+      PROVE_TAC [SUBSET_DEF]
+    ) >>
+
+    PROVE_TAC []
+  ) >>
+
+  ASM_SIMP_TAC std_ss []
+) >>
+
+METIS_TAC [simulated_termination_def, exec_to_prog_def]
 QED
 
 Definition simulated_contract_def:
