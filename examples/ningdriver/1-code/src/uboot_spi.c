@@ -28,28 +28,23 @@ void spi_set_ch0ctrl_enable(int enable)
 /* McSPI Transmit Receive Mode */
 int spi_txrx(unsigned int len, const void *txp, void *rxp, uint32_t flags)
 {
-	int timeout = SPI_WAIT_TIMEOUT;
 	int chconf, i = 0;
 
 	chconf = spi_value_at_register(MCSPI_CH0CONF);
 
 	/*set TRANSMIT-RECEIVE Mode*/
-    chconf &= ~(CHXCONF_TRM_MASK | CHXCONF_WL_MASK);
-	chconf |= (8 - 1) << 7;
+        chconf &= ~CHXCONF_TRM_MASK;
 	chconf |= CHXCONF_FORCE;
-    spi_write_ch0conf(chconf);
+        spi_write_ch0conf(chconf);
 
-      /*Enable SPI channel*/
-    spi_set_ch0ctrl_enable(CHXCTRL_EN);
+        /*Enable SPI channel*/
+        spi_set_ch0ctrl_enable(CHXCTRL_EN);
 
 	/*Shift in and out 1 byte at one time*/
 	for (i = 0; i < len; i++){
 		/* Write: wait for TX empty (TXS == 1)*/
-        while (!(spi_value_at_register(MCSPI_CH0STAT) & CHXSTAT_TXS) && timeout--)
+        while (!(spi_value_at_register(MCSPI_CH0STAT) & CHXSTAT_TXS))
         {
-			if (timeout <= 0) {
-				return -1;
-			}
 		}
         
 		/* Write the data */
@@ -57,12 +52,8 @@ int spi_txrx(unsigned int len, const void *txp, void *rxp, uint32_t flags)
 		
 
 		/*Read: wait for RX containing data (RXS == 1)*/
-		timeout = SPI_WAIT_TIMEOUT;
-        while (!(spi_value_at_register(MCSPI_CH0STAT) & CHXSTAT_RXS) && timeout--)
+        while (!(spi_value_at_register(MCSPI_CH0STAT) & CHXSTAT_RXS))
         {
-			if (timeout <= 0) {
-				return -1;
-			}
 		}
 
 		/* Read the data */

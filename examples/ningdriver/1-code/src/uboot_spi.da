@@ -39,96 +39,70 @@ Disassembly of section .text:
   6c:	f90013e1 	str	x1, [sp, #32]
   70:	f9000fe2 	str	x2, [sp, #24]
   74:	b9002be3 	str	w3, [sp, #40]
-  78:	5280fa00 	mov	w0, #0x7d0                 	// #2000
-  7c:	b9003fe0 	str	w0, [sp, #60]
-  80:	b9003bff 	str	wzr, [sp, #56]
-  84:	d2802580 	mov	x0, #0x12c                 	// #300
-  88:	f2bf4060 	movk	x0, #0xfa03, lsl #16
-  8c:	b9400000 	ldr	w0, [x0]
-  90:	b90037e0 	str	w0, [sp, #52]
-  94:	b94037e0 	ldr	w0, [sp, #52]
-  98:	12126000 	and	w0, w0, #0xffffc07f
-  9c:	b90037e0 	str	w0, [sp, #52]
-  a0:	b94037e0 	ldr	w0, [sp, #52]
-  a4:	32190800 	orr	w0, w0, #0x380
-  a8:	b90037e0 	str	w0, [sp, #52]
-  ac:	b94037e0 	ldr	w0, [sp, #52]
-  b0:	320c0000 	orr	w0, w0, #0x100000
-  b4:	b90037e0 	str	w0, [sp, #52]
-  b8:	b94037e0 	ldr	w0, [sp, #52]
-  bc:	94000000 	bl	0 <spi_write_ch0conf>
-  c0:	52800020 	mov	w0, #0x1                   	// #1
-  c4:	94000000 	bl	30 <spi_set_ch0ctrl_enable>
-  c8:	b9003bff 	str	wzr, [sp, #56]
-  cc:	14000036 	b	1a4 <spi_txrx+0x144>
-  d0:	b9403fe0 	ldr	w0, [sp, #60]
-  d4:	7100001f 	cmp	w0, #0x0
-  d8:	5400006c 	b.gt	e4 <spi_txrx+0x84>
-  dc:	12800000 	mov	w0, #0xffffffff            	// #-1
-  e0:	14000041 	b	1e4 <spi_txrx+0x184>
-  e4:	d2802600 	mov	x0, #0x130                 	// #304
-  e8:	f2bf4060 	movk	x0, #0xfa03, lsl #16
-  ec:	b9400000 	ldr	w0, [x0]
-  f0:	121f0000 	and	w0, w0, #0x2
-  f4:	7100001f 	cmp	w0, #0x0
-  f8:	540000c1 	b.ne	110 <spi_txrx+0xb0>  // b.any
-  fc:	b9403fe0 	ldr	w0, [sp, #60]
- 100:	51000401 	sub	w1, w0, #0x1
- 104:	b9003fe1 	str	w1, [sp, #60]
+  78:	b9003fff 	str	wzr, [sp, #60]
+  7c:	d2802580 	mov	x0, #0x12c                 	// #300
+  80:	f2bf4060 	movk	x0, #0xfa03, lsl #16
+  84:	b9400000 	ldr	w0, [x0]
+  88:	b9003be0 	str	w0, [sp, #56]
+  8c:	b9403be0 	ldr	w0, [sp, #56]
+  90:	12127400 	and	w0, w0, #0xffffcfff
+  94:	b9003be0 	str	w0, [sp, #56]
+  98:	b9403be0 	ldr	w0, [sp, #56]
+  9c:	320c0000 	orr	w0, w0, #0x100000
+  a0:	b9003be0 	str	w0, [sp, #56]
+  a4:	b9403be0 	ldr	w0, [sp, #56]
+  a8:	94000000 	bl	0 <spi_write_ch0conf>
+  ac:	52800020 	mov	w0, #0x1                   	// #1
+  b0:	94000000 	bl	30 <spi_set_ch0ctrl_enable>
+  b4:	b9003fff 	str	wzr, [sp, #60]
+  b8:	14000021 	b	13c <spi_txrx+0xdc>
+  bc:	d503201f 	nop
+  c0:	d2802600 	mov	x0, #0x130                 	// #304
+  c4:	f2bf4060 	movk	x0, #0xfa03, lsl #16
+  c8:	b9400000 	ldr	w0, [x0]
+  cc:	121f0000 	and	w0, w0, #0x2
+  d0:	7100001f 	cmp	w0, #0x0
+  d4:	54ffff60 	b.eq	c0 <spi_txrx+0x60>  // b.none
+  d8:	b9803fe0 	ldrsw	x0, [sp, #60]
+  dc:	f94013e1 	ldr	x1, [sp, #32]
+  e0:	8b000020 	add	x0, x1, x0
+  e4:	39400001 	ldrb	w1, [x0]
+  e8:	d2802700 	mov	x0, #0x138                 	// #312
+  ec:	f2bf4060 	movk	x0, #0xfa03, lsl #16
+  f0:	b9000001 	str	w1, [x0]
+  f4:	d503201f 	nop
+  f8:	d2802600 	mov	x0, #0x130                 	// #304
+  fc:	f2bf4060 	movk	x0, #0xfa03, lsl #16
+ 100:	b9400000 	ldr	w0, [x0]
+ 104:	12000000 	and	w0, w0, #0x1
  108:	7100001f 	cmp	w0, #0x0
- 10c:	54fffe21 	b.ne	d0 <spi_txrx+0x70>  // b.any
- 110:	b9803be0 	ldrsw	x0, [sp, #56]
- 114:	f94013e1 	ldr	x1, [sp, #32]
- 118:	8b000020 	add	x0, x1, x0
- 11c:	39400001 	ldrb	w1, [x0]
- 120:	d2802700 	mov	x0, #0x138                 	// #312
- 124:	f2bf4060 	movk	x0, #0xfa03, lsl #16
- 128:	b9000001 	str	w1, [x0]
- 12c:	5280fa00 	mov	w0, #0x7d0                 	// #2000
- 130:	b9003fe0 	str	w0, [sp, #60]
- 134:	14000006 	b	14c <spi_txrx+0xec>
- 138:	b9403fe0 	ldr	w0, [sp, #60]
- 13c:	7100001f 	cmp	w0, #0x0
- 140:	5400006c 	b.gt	14c <spi_txrx+0xec>
- 144:	12800000 	mov	w0, #0xffffffff            	// #-1
- 148:	14000027 	b	1e4 <spi_txrx+0x184>
- 14c:	d2802600 	mov	x0, #0x130                 	// #304
- 150:	f2bf4060 	movk	x0, #0xfa03, lsl #16
- 154:	b9400000 	ldr	w0, [x0]
- 158:	12000000 	and	w0, w0, #0x1
+ 10c:	54ffff60 	b.eq	f8 <spi_txrx+0x98>  // b.none
+ 110:	d2802780 	mov	x0, #0x13c                 	// #316
+ 114:	f2bf4060 	movk	x0, #0xfa03, lsl #16
+ 118:	b9400002 	ldr	w2, [x0]
+ 11c:	b9803fe0 	ldrsw	x0, [sp, #60]
+ 120:	f9400fe1 	ldr	x1, [sp, #24]
+ 124:	8b000020 	add	x0, x1, x0
+ 128:	12001c41 	and	w1, w2, #0xff
+ 12c:	39000001 	strb	w1, [x0]
+ 130:	b9403fe0 	ldr	w0, [sp, #60]
+ 134:	11000400 	add	w0, w0, #0x1
+ 138:	b9003fe0 	str	w0, [sp, #60]
+ 13c:	b9403fe0 	ldr	w0, [sp, #60]
+ 140:	b9402fe1 	ldr	w1, [sp, #44]
+ 144:	6b00003f 	cmp	w1, w0
+ 148:	54fffba8 	b.hi	bc <spi_txrx+0x5c>  // b.pmore
+ 14c:	52800000 	mov	w0, #0x0                   	// #0
+ 150:	94000000 	bl	30 <spi_set_ch0ctrl_enable>
+ 154:	b9402be0 	ldr	w0, [sp, #40]
+ 158:	121f0000 	and	w0, w0, #0x2
  15c:	7100001f 	cmp	w0, #0x0
- 160:	540000c1 	b.ne	178 <spi_txrx+0x118>  // b.any
- 164:	b9403fe0 	ldr	w0, [sp, #60]
- 168:	51000401 	sub	w1, w0, #0x1
- 16c:	b9003fe1 	str	w1, [sp, #60]
- 170:	7100001f 	cmp	w0, #0x0
- 174:	54fffe21 	b.ne	138 <spi_txrx+0xd8>  // b.any
- 178:	d2802780 	mov	x0, #0x13c                 	// #316
- 17c:	f2bf4060 	movk	x0, #0xfa03, lsl #16
- 180:	b9400002 	ldr	w2, [x0]
- 184:	b9803be0 	ldrsw	x0, [sp, #56]
- 188:	f9400fe1 	ldr	x1, [sp, #24]
- 18c:	8b000020 	add	x0, x1, x0
- 190:	12001c41 	and	w1, w2, #0xff
- 194:	39000001 	strb	w1, [x0]
- 198:	b9403be0 	ldr	w0, [sp, #56]
- 19c:	11000400 	add	w0, w0, #0x1
- 1a0:	b9003be0 	str	w0, [sp, #56]
- 1a4:	b9403be0 	ldr	w0, [sp, #56]
- 1a8:	b9402fe1 	ldr	w1, [sp, #44]
- 1ac:	6b00003f 	cmp	w1, w0
- 1b0:	54fff9a8 	b.hi	e4 <spi_txrx+0x84>  // b.pmore
- 1b4:	52800000 	mov	w0, #0x0                   	// #0
- 1b8:	94000000 	bl	30 <spi_set_ch0ctrl_enable>
- 1bc:	b9402be0 	ldr	w0, [sp, #40]
- 1c0:	121f0000 	and	w0, w0, #0x2
- 1c4:	7100001f 	cmp	w0, #0x0
- 1c8:	540000c0 	b.eq	1e0 <spi_txrx+0x180>  // b.none
- 1cc:	b94037e0 	ldr	w0, [sp, #52]
- 1d0:	120b7800 	and	w0, w0, #0xffefffff
- 1d4:	b90037e0 	str	w0, [sp, #52]
- 1d8:	b94037e0 	ldr	w0, [sp, #52]
- 1dc:	94000000 	bl	0 <spi_write_ch0conf>
- 1e0:	52800000 	mov	w0, #0x0                   	// #0
- 1e4:	a8c47bfd 	ldp	x29, x30, [sp], #64
- 1e8:	d65f03c0 	ret
+ 160:	540000c0 	b.eq	178 <spi_txrx+0x118>  // b.none
+ 164:	b9403be0 	ldr	w0, [sp, #56]
+ 168:	120b7800 	and	w0, w0, #0xffefffff
+ 16c:	b9003be0 	str	w0, [sp, #56]
+ 170:	b9403be0 	ldr	w0, [sp, #56]
+ 174:	94000000 	bl	0 <spi_write_ch0conf>
+ 178:	52800000 	mov	w0, #0x0                   	// #0
+ 17c:	a8c47bfd 	ldp	x29, x30, [sp], #64
+ 180:	d65f03c0 	ret
