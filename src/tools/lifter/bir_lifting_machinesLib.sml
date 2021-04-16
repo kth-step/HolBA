@@ -116,6 +116,7 @@ type bmr_rec = {bmr_const                : term,
                 bmr_dest_mem             : term -> term * term,
                 bmr_lifted_thm           : thm,
                 bmr_step_hex             : term -> string -> thm list,
+                bmr_mc_lift_instr        : ((Arbnum.num * Arbnum.num) -> Arbnum.num -> string -> thm option) option,
                 bmr_mk_data_mm           : Arbnum.num -> string -> term,
                 bmr_hex_code_size        : string -> Arbnum.num,
                 bmr_ihex_param           : (int * bool) option};

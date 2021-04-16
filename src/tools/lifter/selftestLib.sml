@@ -79,7 +79,8 @@ open selftest_styleLib;
 	    | SOME d => (print_log log_f (" (" ^ d ^")"); d)
     val _ = print_log log_f (" @ 0x" ^ (Arbnum.toHexString pc));
     val timer = (Time.now())
-    val (res, ed) = (SOME (bir_lift_instr_mu mu_be mu_thms cache pc hex_code d'), NONE) handle
+    (* TODO: This is hard-coded with flag "is_multicore" set to false. *)
+    val (res, ed) = (SOME (bir_lift_instr_mu mu_be mu_thms cache pc hex_code d' false), NONE) handle
 		     bir_inst_liftingExn (_, d)  => (NONE, SOME d)
 		   | HOL_ERR _ => (NONE, NONE);
 

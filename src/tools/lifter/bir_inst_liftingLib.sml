@@ -3,7 +3,7 @@
 (* Main functor *)
 (****************)
 
-functor bir_inst_liftingFunctor (MD : sig val mr : bir_lifting_machinesLib.bmr_rec end) : bir_inst_lifting = struct
+functor bir_inst_liftingFunctor (MD : sig val mr : bir_lifting_machinesLib.bmr_rec end) = struct
 
 (* dependencies *)
 (* ================================================ *)
@@ -21,11 +21,10 @@ open bir_program_labelsTheory
 open bir_immTheory
 open intel_hexLib
 open bir_inst_liftingLibTypes
+open bir_inst_liftingHelpersLib;
 (* ================================================ *)
 
-  open bir_inst_liftingHelpersLib;
-
-  (* For debugging RISC-V:
+  (* For debugging RISC-V (first open all in bir_lifting_machinesLib_instances):
 
     val mr = riscv_bmr_rec;
 
@@ -1156,8 +1155,6 @@ fun get_patched_step_hex ms_v hex_code =
   (*-------------------------------*)
   (* Combine it all, main function *)
   (*-------------------------------*)
-  (* RISC-V TODO: All seemingly OK in lifting procedure up to here, except what has been
-   * commented. *)
   (* DEBUG
 
      val (lb, ms_case_cond_t, next_thm) = el 1 sub_block_work_list
@@ -1379,8 +1376,6 @@ fun get_patched_step_hex ms_v hex_code =
   fun bir_lift_instr_mu_gen_pc_compute (mu_thm:thm, mm_precond_thm : thm) hex_code hex_code_desc =
   let
      (* call step lib to generate step theorems, compute mm and label *)
-    (* TODO: Does this work correctly for RISC-V? Probably, but usage of "+=" as "assign" is funny.
-     * Also see if it is necessary to use a static procID. *)
      val (next_thms, mm_tm, label_tm) = mk_inst_lifting_theorems hex_code hex_code_desc
 
      (* instantiate inst theorem *)
@@ -1414,7 +1409,6 @@ fun get_patched_step_hex ms_v hex_code =
        handle HOL_ERR _ =>
          raise bir_inst_liftingAuxExn (BILED_msg ("preprocessing next theorems failed"));
 
-     (* TODO: Here, something fails... *)
      val sub_block_thms = map (lift_single_block inst_lift_thm0 bir_is_lifted_inst_block_COMPUTE_precond_tm0 mu_thm) sub_block_work_list
 
      val prog_thm = merge_block_thms sub_block_thms handle HOL_ERR _ =>
@@ -1459,14 +1453,23 @@ val cache = lift_inst_cache_empty;
   val hex_code_desc = hex_code;
 
 *)
-  fun bir_lift_instr_mu (mu_b, mu_e) (mu_thm:thm, mm_precond_thm : thm)  cache (pc : Arbnum.num) hex_code hex_code_desc = let
+  fun bir_lift_instr_mu (mu_b, mu_e) (mu_thm:thm, mm_precond_thm : thm)  cache (pc : Arbnum.num) hex_code hex_code_desc is_multicore = let
     val _ = if (Arbnum.< (pc, mu_e) andalso Arbnum.<= (mu_b, pc)) then () else
             raise (bir_inst_liftingExn (hex_code, BILED_msg "pc outside unchanged memory region"))
-(*
-  val (thm0, cache', cache_used) =  bir_lift_instr_mu_gen_pc (mu_thm, mm_precond_thm) cache hex_code hex_code_desc
-*)
-    (* TODO: This fails... *)
-    val (thm0, cache', cache_used) =  bir_lift_instr_mu_gen_pc (mu_thm, mm_precond_thm) cache hex_code hex_code_desc
+
+    val (thm0, cache', cache_used) =
+      if is_multicore
+      then if isSome (#bmr_mc_lift_instr mr)
+           then
+             let
+               val thm_opt = (valOf (#bmr_mc_lift_instr mr)) (mu_b, mu_e) pc hex_code
+             in
+               if isSome thm_opt
+               then (valOf thm_opt, cache, false)
+               else bir_lift_instr_mu_gen_pc (mu_thm, mm_precond_thm) cache hex_code hex_code_desc
+             end
+           else raise (bir_inst_liftingAuxExn (BILED_msg "trying to use multicore lifting without multicore functionality for current bmr_rec"))
+      else bir_lift_instr_mu_gen_pc (mu_thm, mm_precond_thm) cache hex_code hex_code_desc
 
     (* instantiate PC *)
     val thm1 = INST [pc_num_var |-> numSyntax.mk_numeral pc] thm0
@@ -1510,7 +1513,7 @@ val cache = lift_inst_cache_empty;
      val (mu_thm, mm_precond_thm) = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
   in
     fn pc => fn hex_code => fn hex_code_desc =>
-       #1 (bir_lift_instr_mu (mu_b, mu_e) (mu_thm, mm_precond_thm) lift_inst_cache_empty pc hex_code hex_code_desc)
+       #1 (bir_lift_instr_mu (mu_b, mu_e) (mu_thm, mm_precond_thm) lift_inst_cache_empty pc hex_code hex_code_desc false)
   end;
 
 
@@ -1593,7 +1596,7 @@ val cache = lift_inst_cache_empty;
        val d_time = Time.- (Time.now(), tm);
        in (Time.toString d_time) end;
 
-  fun bir_lift_prog_gen ((mu_b : Arbnum.num), (mu_e : Arbnum.num)) = let
+  fun bir_lift_prog_gen_gen is_multicore ((mu_b : Arbnum.num), (mu_e : Arbnum.num)) = let
      val (mu_thm, mm_precond_thm) = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
   in
     fn regions => let
@@ -1664,7 +1667,7 @@ val cache = lift_inst_cache_empty;
          raise (ERR "lift_data" ("lifting of hex-code '" ^ hex_code ^ "' failed, is the PC outside the protected memory region?"))
 
 
-      fun lift_inst (pc, hex_code, entry_ty) = let
+      fun lift_inst (pc, hex_code, entry_ty) is_multicore = let
         val hex_code = String.map Char.toUpper hex_code
         val human_hex_code = (case entry_ty of
              BILME_code (SOME m) => (hex_code ^ " (" ^m ^")")
@@ -1674,7 +1677,7 @@ val cache = lift_inst_cache_empty;
         val _ = if (!debug_trace > 1) then (
            print_current_instr_string (!inst_no_r) (!data_no_r) true pc human_hex_code) else (if (!debug_trace = 1) then print "." else ());
         val timer = timer_start 1;
-        val (res, ed) = (SOME (bir_lift_instr_mu (mu_b, mu_e) (mu_thm, mm_precond_thm) (!cache_r) pc hex_code human_hex_code), NONE) handle
+        val (res, ed) = (SOME (bir_lift_instr_mu (mu_b, mu_e) (mu_thm, mm_precond_thm) (!cache_r) pc hex_code human_hex_code is_multicore), NONE) handle
                        bir_inst_liftingExn (_, d)  => (NONE, SOME d)
                      | HOL_ERR _ => (NONE, NONE);
 
@@ -1704,7 +1707,7 @@ val cache = lift_inst_cache_empty;
 
       fun lift_ext_entry ((pc, hex_code, ty), thms) = let
           val thm = case ty of BILME_data => lift_data false (pc, hex_code)
-                             | _ => lift_inst (pc, hex_code, ty)
+                             | _ => lift_inst (pc, hex_code, ty) is_multicore
         in (thm::thms) end
 
       val _ = if (!debug_trace = 1) then print "bir_lift_prog " else ();
@@ -1815,6 +1818,9 @@ val cache = lift_inst_cache_empty;
       (prog_thm2, List.rev (!failing_inst_r))
     end
   end;
+
+  val bir_lift_prog_gen = bir_lift_prog_gen_gen false;
+  val bir_lift_prog_gen_mc = bir_lift_prog_gen_gen true;
 
   end;
 

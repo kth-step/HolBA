@@ -4,13 +4,15 @@ struct
 (* For compilation: *)
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 (* Local theories: *)
-open bir_exp_liftingLib bir_lifting_machinesTheory
+open bir_lifting_machinesTheory
      bir_nzcv_introsTheory bir_arm8_extrasTheory bir_m0_extrasTheory
-     bir_riscv_extrasTheory
+     bir_riscv_extrasTheory;
+open bir_program_labelsSyntax bir_programSyntax;
 (* Local function libraries: *)
-open bir_lifting_machinesLib;
+open bir_lifting_machinesLib bir_inst_liftingHelpersLib
+     bir_exp_liftingLib;
 (* Function libraries from examples/l3-machine-code: *)
-open arm8_stepLib m0_stepLib riscv_stepLib
+open arm8_stepLib m0_stepLib riscv_stepLib;
 
 (* Abbreviations used in this file:
  * BMR: BIR machine record. *)
@@ -214,6 +216,7 @@ val arm8_bmr_rec : bmr_rec = {
   bmr_dest_mem             = arm8_dest_mem,
   bmr_extra_ss             = arm8_extra_ss,
   bmr_step_hex             = arm8_step_hex',
+  bmr_mc_lift_instr           = NONE,
   bmr_mk_data_mm           = arm8_mk_data_mm,
   bmr_hex_code_size        = (fn hc => Arbnum.fromInt ((String.size hc) div 2)),
   bmr_ihex_param           = SOME (4, true)
@@ -423,6 +426,7 @@ in
   bmr_dest_mem             = m0_dest_mem,
   bmr_extra_ss             = m0_extra_ss,
   bmr_step_hex             = m0_step_hex' (endian_fl, sel_fl),
+  bmr_mc_lift_instr           = NONE,
   bmr_mk_data_mm           = m0_mk_data_mm endian_fl,
   bmr_hex_code_size        = (fn hc => Arbnum.fromInt ((String.size hc) div 2)),
   bmr_ihex_param           = NONE
@@ -592,6 +596,7 @@ in
   bmr_dest_mem             = m0_dest_mem,
   bmr_extra_ss             = m0_mod_extra_ss,
   bmr_step_hex             = m0_mod_step_hex' (endian_fl, sel_fl),
+  bmr_mc_lift_instr           = NONE,
   bmr_mk_data_mm           = m0_mod_mk_data_mm endian_fl,
   bmr_hex_code_size        = (fn hc => Arbnum.fromInt ((String.size hc) div 2)),
   bmr_ihex_param           = NONE
@@ -742,6 +747,135 @@ in
   end
 end;
 
+(* RISC-V Multicore wrapper *)
+local
+
+(* Auxiliary function to obtain a padded binary string from a hex instruction. *)
+local
+fun pad_zero' 0   str = str
+  | pad_zero' len str = pad_zero' (len-1) ("0"^str)
+in
+fun hex_to_bin_pad_zero len str =
+  let
+    val str' = (Arbnum.toBinString (Arbnum.fromHexString str))
+  in
+    pad_zero' (len - (size str')) str'
+  end
+end
+
+(* Takes a hex-format string instruction and returns a representation of it using
+ * a list with 4 bytes. *)
+val word8_tm = wordsSyntax.mk_word_type (fcpSyntax.mk_numeric_type (Arbnum.fromInt 8))
+
+fun get_byte_word_l hex =
+  let
+    val bin = hex_to_bin_pad_zero 32 hex
+    val byte1 = substring (bin, 0, 8)
+    val byte2 = substring (bin, 8, 8)
+    val byte3 = substring (bin, 16, 8)
+    val byte4 = substring (bin, 24, 8)
+    val byte_to_word8 = (fn byte => (wordsSyntax.mk_wordi (Arbnum.fromBinString byte, 8)))
+  in
+    listSyntax.mk_list ((map byte_to_word8 [byte1, byte2, byte3, byte4]), word8_tm)
+  end
+
+(* Parses the hex-format instruction into its fields. *)
+fun parse_fence hex_code =
+  let
+    val bin = hex_to_bin_pad_zero 32 hex_code
+    val fm = substring (bin, 0, 4)
+    val pi = substring (bin, 4, 1)
+    val po = substring (bin, 5, 1)
+    val pr = substring (bin, 6, 1)
+    val pw = substring (bin, 7, 1)
+    val si = substring (bin, 8, 1)
+    val so = substring (bin, 9, 1)
+    val sr = substring (bin, 10, 1)
+    val sw = substring (bin, 11, 1)
+    val rs1 = substring (bin, 12, 5)
+    val funct3 = substring (bin, 17, 3)
+    val rd = substring (bin, 20, 5)
+    val opcode = substring (bin, 25, 7)
+  in
+    (fm, pi, po, pr, pw, si, so, sr, sw, rs1, funct3, rd, opcode)
+  end
+
+(* Checks if hex-format instruction is a fence. *)
+fun is_fence hex_code =
+  let
+    val (fm, pi, po, pr, pw, si, so, sr, sw, rs1, funct3, rd, opcode) = parse_fence hex_code
+  in
+    if opcode = "0001111" (* opcode MISC-MEM *)
+    then
+      (* TODO: Well-formedness conditions here... *)
+      (* Only recognize fences which would have any effect on TSO semantics for now *)
+      (pw = "1") andalso (sr = "1")
+    else false
+  end
+
+(* Gets the arguments for mk_BStmt_Fence from hex-format instruction. *)
+fun get_fence_args hex_code =
+  let
+    val (fm, pi, po, pr, pw, si, so, sr, sw, rs1, funct3, rd, opcode) = parse_fence hex_code
+  in
+    (if pr = "1"
+     then if pw = "1"
+	  then BM_ReadWrite_tm
+	  else BM_Read_tm
+     else if pw = "1"
+	  then BM_Write_tm
+	  else raise ERR "get_fence_args" "Fence has no predecessor R/W bits",
+     if sr = "1"
+     then if sw = "1"
+	  then BM_ReadWrite_tm
+	  else BM_Read_tm
+     else if sw = "1"
+	  then BM_Write_tm
+	  else raise ERR "get_fence_args" "Fence has no successor R/W bits"
+       )
+  end
+
+(* Lifts a fence instruction by producing a cheat. *)
+fun lift_fence mu_b mu_e pc hex_code =
+  let
+    val riscv_bmr_tm = ``riscv_bmr``; (* TODO *)
+    val pc_word = wordsSyntax.mk_wordi (pc, 64)
+    val pc_imm = bir_immSyntax.gen_mk_Imm pc_word
+    val pc_next_imm = bir_immSyntax.gen_mk_Imm (wordsSyntax.mk_wordii ((Arbnum.toInt pc)+4, 64))
+    val wi_end =
+      bir_interval_expSyntax.mk_WI_end (wordsSyntax.mk_wordii (Arbnum.toInt mu_b, 64),
+                                        wordsSyntax.mk_wordii (Arbnum.toInt mu_e, 64))
+    val byte_instruction = get_byte_word_l hex_code
+    val prog =
+      mk_BirProgram_list (“:'a”, (* TODO *)
+	[mk_bir_block_list (“:'a”, (* TODO *)
+			    mk_BL_Address_HC (pc_imm, stringSyntax.fromMLstring hex_code),
+			    [mk_BStmt_Fence (get_fence_args hex_code)],
+			    mk_BStmt_Jmp (mk_BLE_Label (mk_BL_Address pc_next_imm))
+	)]
+      )
+    val lifted_tm =
+      mk_bir_is_lifted_inst_prog (riscv_bmr_tm,
+                                  pc_imm,
+                                  wi_end,
+                                  pairSyntax.mk_pair (pc_word, byte_instruction),
+                                  prog
+      )
+  in
+    prove(lifted_tm, cheat)
+  end
+
+in
+fun riscv_mc_lift_instr (mu_b, mu_e) pc hex_code =
+  if is_fence hex_code
+  then SOME (lift_fence mu_b mu_e pc hex_code)
+(* TODO
+  else if is_atomic hex_code
+  then lift_atomic hex_code
+*)
+  else NONE
+end
+;
 
 local
   (* M0 has address type 32, where this is 64. *)
@@ -786,6 +920,7 @@ val riscv_bmr_rec : bmr_rec = {
   bmr_dest_mem             = riscv_dest_mem,
   bmr_extra_ss             = riscv_extra_ss,
   bmr_step_hex             = riscv_step_hex',
+  bmr_mc_lift_instr        = SOME riscv_mc_lift_instr,
   bmr_mk_data_mm           = riscv_mk_data_mm,
   bmr_hex_code_size        =
     (fn hc => Arbnum.fromInt ((String.size hc) div 2)),

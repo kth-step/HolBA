@@ -47,7 +47,7 @@ val pc =   Arbnum.fromInt 0x10030; (* Program counter is at address 0x10030 *)
 
 (* TEST: opcode MISC-MEM *)
 (* RW/RW fence *)
-val hex = "0330000F"
+val hex_code = "0330000F"
 
 *)
 
@@ -211,10 +211,18 @@ fun lift_atomic mu_b mu_e pc hex =
 ;
 *)
 
+(*
+  bmil's "lift_instr" is replaced in the above.
+  bmil's "bir_lift_prog_gen" has a separate function named "lift_inst" defined internally, which also uses bir_lift_instr_mu, which uses bir_lift_instr_mu_gen_pc, which uses bir_lift_instr_mu_gen_pc_compute, which uses mk_inst_lifting_theorems.
+
+  TODO: mk_inst_lifting_theorems in bir_inst_liftingLib calls an auxiliary function get_patched_step_hex,
+        which uses bmr_step_hex. 
+
+*)
 fun riscv_multicore_test_hex mu_b mu_e pc hex =
   if is_fence hex
   then (SOME (lift_fence mu_b mu_e pc hex),
-        SOME (bir_inst_liftingLibTypes.BILED_msg "cheated with lifter theorem"),
+        SOME (bir_inst_liftingLibTypes.BILED_msg "used cheat for lifter theorem"),
         "Time not measured")
 (* TODO
   else if is_atomic hex

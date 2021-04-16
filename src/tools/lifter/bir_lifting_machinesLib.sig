@@ -151,6 +151,10 @@ sig
          contain e.g. information for deal with the machine state type. *)
       bmr_extra_ss           : simpLib.ssfrag,
 
+      (* Function evaluating a multicore instruction given as a hex string and returns
+         a step theorem. *)
+      bmr_mc_lift_instr           : ((Arbnum.num * Arbnum.num) -> Arbnum.num -> string -> (thm option)) option,
+
       (* Function evaluationg an instruction given as a hex string and returns
          a set of step theorems. *)
       bmr_step_hex           : term -> string -> thm list,
