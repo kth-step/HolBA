@@ -15,30 +15,34 @@ void spi_write_ch0conf(int val)
 {
 	spi_value_at_register(MCSPI_CH0CONF) = val;
 	/* Flash post writes to make immediate effect */
-	spi_value_at_register(MCSPI_CH0CONF);
+	//spi_value_at_register(MCSPI_CH0CONF);
 }
 
 void spi_set_ch0ctrl_enable(int enable)
 {
 	spi_value_at_register(MCSPI_CH0CTRL) = enable;
 	/* Flash post writes to make immediate effect */
-	spi_value_at_register(MCSPI_CH0CTRL);
+	//spi_value_at_register(MCSPI_CH0CTRL);
 }
 
 /* McSPI Transmit Receive Mode */
 int spi_txrx(unsigned int len, const void *txp, void *rxp, uint32_t flags)
 {
+        // entrypoint A, dr_xfer_idle
 	int chconf, i = 0;
 
 	chconf = spi_value_at_register(MCSPI_CH0CONF);
+        //point B, dr_xfer_fetch_conf
 
 	/*set TRANSMIT-RECEIVE Mode*/
-        chconf &= ~CHXCONF_TRM_MASK;
+        chconf &= CHXCONF_XFER_MASK;
 	chconf |= CHXCONF_FORCE;
         spi_write_ch0conf(chconf);
+        //point C, dr_xfer_conf_issued
 
         /*Enable SPI channel*/
         spi_set_ch0ctrl_enable(CHXCTRL_EN);
+        //point D, dr_xfer_read_txs
 
 	/*Shift in and out 1 byte at one time*/
 	for (i = 0; i < len; i++){
