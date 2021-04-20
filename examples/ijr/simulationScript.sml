@@ -318,7 +318,7 @@ Theorem bir_exec_block_jmp:
            MEM l (bir_labels_of_program p) ∨ l = (BL_Label sl)) ⇒
     ~(bir_state_is_terminated s) ⇒
     bir_eval_exp e s.bst_environ = SOME (BVal_Imm v) ⇒
-    bl = bir_block_t (BL_Label sl) [] (BStmt_Jmp (BLE_Exp e)) ⇒
+    bl = jmp_block sl e ⇒
     (∃s'. bir_exec_block p' bl s = ([], 1, s') ∧
           if MEM (BL_Address v) (bir_labels_of_program p) then
             s' = s with bst_pc := bir_block_pc (BL_Address v)
@@ -326,7 +326,7 @@ Theorem bir_exec_block_jmp:
 Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (list_ss++holBACore_ss)
-              [bir_exec_block_def, bir_exec_stmtsB_def, LET_DEF,
+              [jmp_block_def, bir_exec_block_def, bir_exec_stmtsB_def, LET_DEF,
                bir_exec_stmtE_def, bir_exec_stmt_jmp_def, bir_eval_label_exp_def,
                bir_exec_stmt_jmp_to_label_def, bir_state_is_terminated_def]
 QED
@@ -338,7 +338,7 @@ Theorem bir_exec_to_labels_jmp:
     ~(bir_state_is_terminated s) ⇒
     bir_eval_exp e s.bst_environ = SOME (BVal_Imm v) ⇒
 
-    bl = bir_block_t (BL_Label sl) [] (BStmt_Jmp (BLE_Exp e)) ⇒
+    bl = jmp_block sl e ⇒
     bir_get_current_block p' (s.bst_pc) = SOME bl ⇒
     ls = bir_labels_of_program p ⇒
     (∃s' n. bir_exec_to_labels (set ls) p' s = BER_Ended [] 1 n s' ∧
@@ -498,7 +498,8 @@ subgoal ‘∃s2' n. bir_exec_to_labels (set ls) p' s2 = BER_Ended [] 1 n s2' �
                    s2' = s2 with bst_pc := bir_block_pc (BL_Address v')
                  else s2'.bst_status = BST_JumpOutside (BL_Address v')’ >- (
   IRULE_TAC bir_exec_to_labels_jmp >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [resolved_cases]
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [resolved_cases] >>
+  METIS_TAC []
 ) >>
 
 (*Evaluation of e in labels of p*)

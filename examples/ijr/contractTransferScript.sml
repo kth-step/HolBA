@@ -272,7 +272,7 @@ QED
 Theorem contract_transfer:
   ∀ p p' l ls pre post.
     simulated_termination p p' ⇒
-    bir_vars_of_program p' = bir_vars_of_program p ⇒
+    (bir_vars_of_program p') SUBSET (bir_vars_of_program p) ⇒
 
     MEM l (bir_labels_of_program p) ⇒
     ls SUBSET (set (bir_labels_of_program p)) ⇒
@@ -282,11 +282,15 @@ Theorem contract_transfer:
 Proof
 SIMP_TAC std_ss [bir_exec_to_labels_triple_def] >>
 REPEAT STRIP_TAC >>
-
 Q.PAT_X_ASSUM ‘simulated_termination p p'’
-  (fn thm => ASSUME_TAC (MATCH_MP simulated_termination_simulated_contract thm)) >>
-Q.PAT_X_ASSUM ‘∀s'. _’ (fn thm => ASSUME_TAC (Q.SPEC ‘s’ thm)) >>
-REV_FULL_SIMP_TAC std_ss [] >>
+  (ASSUME_TAC o MATCH_MP simulated_termination_simulated_contract) >>
+
+Q.PAT_X_ASSUM ‘∀s'. _’ (MP_TAC o Q.SPEC ‘s’) >>
+subgoal ‘bir_env_vars_are_initialised s.bst_environ (bir_vars_of_program p')’ >- (
+  IRULE_TAC bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET >>
+  PROVE_TAC []
+) >>
+ASM_SIMP_TAC std_ss [] >> STRIP_TAC >>
 rename1 ‘_ = BER_Ended o2 m2 n2 s'’ >>
 
 subgoal ‘∃s1 o1 m1 n1. bir_exec_to_labels ls p s =
@@ -301,40 +305,6 @@ subgoal ‘∃s1 o1 m1 n1. bir_exec_to_labels ls p s =
 ) >>
 
 PROVE_TAC []
-QED
-
-(*Sanity checks*)
-
-Theorem resolved_contract_transfer:
-  ∀l1 v sl p p' l ls pre post.
-    resolved l1 v sl p p'  ⇒
-    bir_vars_of_program p' = bir_vars_of_program p ⇒
-
-    MEM l (bir_labels_of_program p) ⇒
-    ls SUBSET (set (bir_labels_of_program p)) ⇒
-
-    bir_exec_to_labels_triple p' l ls pre post ⇒
-    bir_exec_to_labels_triple p l ls pre post
-Proof
-PROVE_TAC [resolved_simulated,
-           contract_transfer,
-           simulated_simulated_termination]
-QED
-
-Theorem resolved_fail_contract_transfer:
-  ∀l1 v p p' l ls pre post.
-    resolved_fail l1 v p p' ⇒
-    bir_vars_of_program p' = bir_vars_of_program p ⇒
-
-    MEM l (bir_labels_of_program p) ⇒
-    ls SUBSET (set (bir_labels_of_program p)) ⇒
-
-    bir_exec_to_labels_triple p' l ls pre post ⇒
-    bir_exec_to_labels_triple p l ls pre post
-Proof
-PROVE_TAC [resolved_fail_simulated_fail,
-           simulated_fail_simulated_termination,
-           contract_transfer]
 QED
 
 

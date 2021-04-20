@@ -1,8 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
-open listTheory;
+open listTheory pred_setTheory pred_setSimps;
 
-open bir_programTheory bir_expTheory bir_exp_immTheory;
+open bir_programTheory bir_expTheory bir_exp_immTheory bir_typing_progTheory;
 open bir_program_blocksTheory bir_program_multistep_propsTheory;
 open HolBACoreSimps;
 
@@ -17,7 +17,16 @@ End
 
 Definition cjmp_block_def:
   cjmp_block l1 bss e v sl =
-  bir_block_t l1 bss (cjmp_stmtE e v sl)
+  <| bb_label :=  l1;
+     bb_statements := bss;
+     bb_last_statement := cjmp_stmtE e v sl |>
+End
+
+Definition jmp_block_def:
+  jmp_block sl e =
+  <| bb_label := BL_Label sl;
+     bb_statements := [];
+     bb_last_statement := BStmt_Jmp (BLE_Exp e) |>
 End
 
 Inductive resolved_block:
@@ -26,9 +35,32 @@ Inductive resolved_block:
 
     bl1 = bir_block_t l1 bss (BStmt_Jmp (BLE_Exp e)) ∧
     bl2 = cjmp_block l1 bss e v sl ∧
-    bl3 = bir_block_t (BL_Label sl) [] (BStmt_Jmp (BLE_Exp e)) ⇒
+    bl3 = jmp_block sl e ⇒
     resolved_block l1 v sl bl1 bl2 bl3
 End
+
+Theorem resolved_block_labels:
+  ∀l v sl bl1 bl2 bl3.
+    resolved_block l v sl bl1 bl2 bl3 ⇒
+    bl1.bb_label = l ∧ bl2.bb_label = l ∧ bl3.bb_label = BL_Label sl
+Proof
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (std_ss++holBACore_ss)
+              [resolved_block_cases, cjmp_block_def, jmp_block_def]
+QED
+
+Theorem resolved_block_vars:
+  ∀l1 v sl bl1 bl2 bl3.
+    resolved_block l1 v sl bl1 bl2 bl3 ⇒
+    (bir_vars_of_block bl2 UNION bir_vars_of_block bl3)
+    SUBSET bir_vars_of_block bl1
+Proof
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (list_ss++PRED_SET_ss++holBACore_ss)
+         [resolved_block_cases, cjmp_block_def, jmp_block_def,
+          cjmp_stmtE_def, bir_vars_of_block_def,
+          bir_vars_of_stmtE_def, bir_vars_of_label_exp_def]
+QED
 
 Definition direct_jump_target_block_def:
   direct_jump_target_block l bl =
@@ -39,6 +71,7 @@ Definition direct_jump_target_block_def:
      ∃c l1. es = BStmt_CJmp c l1 (BLE_Label l))
 End
 
+(*TODO: maybe these should be Inductive for consistency?*)
 Definition direct_jump_target_def:
   direct_jump_target l p =
   ∃l' bl.
@@ -71,9 +104,12 @@ Inductive resolved:
     resolved l1 v sl p p'
 End
 
+(*Any value besides 1w is fine*)
 Definition assert_block_def:
   assert_block l bss v =
-  bir_block_t l (bss ++ [BStmt_Assert (BExp_Const (Imm1 0w))]) (BStmt_Halt v)
+  <| bb_label := l;
+     bb_statements := bss ++ [BStmt_Assert (BExp_Const (Imm1 0w))];
+     bb_last_statement := BStmt_Halt v |>
 End
 
 Inductive resolved_fail_block:
@@ -82,6 +118,28 @@ Inductive resolved_fail_block:
     bl2 = assert_block l bss v ⇒
     resolved_fail_block l v bl1 bl2
 End
+
+Theorem resolved_fail_block_labels:
+  ∀l v bl1 bl2.
+    resolved_fail_block l v bl1 bl2 ⇒
+    bl1.bb_label = l ∧ bl2.bb_label = l
+Proof
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (std_ss++holBACore_ss)
+              [resolved_fail_block_cases, assert_block_def]
+QED
+
+Theorem resolved_fail_block_vars:
+  ∀l v bl1 bl2.
+    resolved_fail_block l (BExp_Const v) bl1 bl2 ⇒
+    bir_vars_of_block bl2 SUBSET bir_vars_of_block bl1
+Proof
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (list_ss++PRED_SET_ss++holBACore_ss)
+         [resolved_fail_block_cases, assert_block_def,
+          bir_vars_of_block_def, bir_vars_of_stmtE_def,
+          bir_vars_of_stmtB_def]
+QED
 
 Inductive resolved_fail:
   ∀l1 v p p' bl1 bl2.

@@ -26,7 +26,7 @@ End
 
 Theorem bir_exec_stmsB_assert_cjmp:
   ∀bss os c s os2 m2 s2 os1 m1 s1.
-    bir_exec_stmtsB (bss ⧺ [BStmt_Assert (BExp_Const (Imm1 0w))]) (os, c, s) = (os2, m2, s2) ⇒
+    bir_exec_stmtsB (bss ++ [BStmt_Assert (BExp_Const (Imm1 0w))]) (os, c, s) = (os2, m2, s2) ⇒
     bir_exec_stmtsB bss (os, c, s) = (os1, m1, s1) ⇒
     (s1 = s2 ∧ os1 = os2 ∧ m1 = m2 ∧ bir_state_is_terminated s2) ∨
     (s2.bst_status = BST_AssertionViolated)
