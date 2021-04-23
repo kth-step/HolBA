@@ -192,7 +192,6 @@ Theorem bir_exec_stmtE_cjmp_jmp:
   ∀p' p sl es1 e c v es2 s s2 s1.
     (∀l. MEM l (bir_labels_of_program p') ⇔
            MEM l (bir_labels_of_program p) ∨ l = (BL_Label sl)) ⇒
-    MEM (BL_Address v) (bir_labels_of_program p) ⇒
     type_of_bir_exp e = SOME (BType_Imm (type_of_bir_imm v)) ⇒
 
     es1 = BStmt_Jmp (BLE_Exp e) ⇒
@@ -203,11 +202,11 @@ Theorem bir_exec_stmtE_cjmp_jmp:
     bir_exec_stmtE p es1 s = s1 ⇒
     (s1 = s2 ∨ jump_fresh e s s2 sl s1 p)
 Proof
-REPEAT GEN_TAC >> NTAC 3 STRIP_TAC >>
+REPEAT GEN_TAC >> NTAC 2 STRIP_TAC >>
 SIMP_TAC (std_ss++holBACore_ss) [cjmp_stmtE_def, bir_exec_stmtE_def,
                                  bir_exec_stmt_cjmp_def, LET_DEF] >>
 NTAC 2 (DISCH_THEN (K ALL_TAC)) >>
-rename1 ‘MEM (BL_Address v') _’ >>
+rename1 ‘_ = SOME (BType_Imm (type_of_bir_imm v'))’ >>
 
 (*e not well typed*)
 Cases_on ‘bir_eval_exp e s.bst_environ’ >- (
@@ -234,6 +233,10 @@ ASM_SIMP_TAC std_ss [] >- (
   FULL_SIMP_TAC (std_ss++holBACore_ss)
     [bir_bin_pred_Equal_REWR, bir_exec_stmt_jmp_def,
      bir_eval_label_exp_def] >>
+  subgoal ‘MEM (BL_Address v') (bir_labels_of_program p') ⇔
+             MEM (BL_Address v') (bir_labels_of_program p)’ >- (
+    ASM_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
   PROVE_TAC [bir_exec_stmt_jmp_to_label_same]
 ) >>
 
@@ -257,7 +260,6 @@ Theorem bir_exec_block_cjmp_jmp:
     (∀l. MEM l (bir_labels_of_program p') ⇔
            MEM l (bir_labels_of_program p) ∨ l = (BL_Label sl)) ⇒
     ~(direct_jump_target_block (BL_Label sl) bl1) ⇒
-    MEM (BL_Address v) (bir_labels_of_program p) ⇒
     type_of_bir_exp e = SOME (BType_Imm (type_of_bir_imm v)) ⇒
 
     bl1 = bir_block_t l1 bss (BStmt_Jmp (BLE_Exp e)) ⇒
@@ -268,7 +270,7 @@ Theorem bir_exec_block_cjmp_jmp:
     (s1 = s2 ∧ os1 = os2 ∧ m1 = m2) ∨
     (jump_fresh e (exec_stmtsB bss s) s2 sl s1 p)
 Proof
-REPEAT GEN_TAC >> NTAC 4 STRIP_TAC >>
+REPEAT GEN_TAC >> NTAC 3 STRIP_TAC >>
 rename1 ‘bir_exec_block p' _  _= (os2', m2', s2')’ >>
 rename1 ‘bir_exec_block p _ _ = (os1', m1', s1')’ >>
 
@@ -420,7 +422,8 @@ REVERSE (Cases_on ‘l = l1’) >- (
   Q.SUBGOAL_THEN ‘s2 = s1 ∧ os2 = os1 ∧ m2 = m1’ (fn thm => SIMP_TAC std_ss [thm]) >- (
     MP_TAC (Q.SPECL [‘p'’, ‘p’, ‘{sl}’, ‘bl’, ‘s’, ‘s2’, ‘os2’, ‘m2’] bir_exec_block_same) >>
     FULL_SIMP_TAC (std_ss++PRED_SET_ss)
-                  [resolved_cases, fresh_label_def, direct_jump_target_def]
+                  [resolved_cases, fresh_label_def, direct_jump_target_def] >>
+    PROVE_TAC []
   ) >>
 
   (*Programs fail*)
@@ -460,7 +463,8 @@ subgoal ‘(s1 = s2 ∧ os1 = os2 ∧ m1 = m2) ∨
     IRULE_TAC bir_exec_block_cjmp_jmp >>
     Q.LIST_EXISTS_TAC [‘bl1’, ‘bl2’, ‘l1’, ‘p'’, ‘v’] >>
     FULL_SIMP_TAC std_ss [resolved_cases, fresh_label_def,
-                          direct_jump_target_def, resolved_block_cases]
+                          direct_jump_target_def, resolved_block_cases] >>
+  PROVE_TAC []
 ) >- (
   (*Programs execute block labelled l1 with same result*)
   NTAC 3 (POP_ASSUM (fn thm => SIMP_TAC std_ss [GSYM thm])) >>

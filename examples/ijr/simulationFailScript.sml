@@ -63,7 +63,7 @@ ASM_SIMP_TAC  (std_ss++holBACore_ss) [assert_block_def, bir_exec_block_def] >>
   by PROVE_TAC [pairTheory.PAIR] >>
 ‘∃os1 m1 s1. bir_exec_stmtsB bss ([],0,s) = (os1, m1, s1)’
   by PROVE_TAC [pairTheory.PAIR] >>
-Q.ABBREV_TAC ‘s2' = bir_exec_stmtE p' (BStmt_Halt v) s2’ >>
+Q.ABBREV_TAC ‘s2' = bir_exec_stmtE p' (BStmt_Jmp (BLE_Label (BL_Address v))) s2’ >>
 Q.ABBREV_TAC ‘s1' = bir_exec_stmtE p (BStmt_Jmp (BLE_Exp e)) s1’ >>
 FULL_SIMP_TAC std_ss [LET_DEF] >>
 

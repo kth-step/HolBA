@@ -2,8 +2,7 @@ open HolKernel Parse boolLib bossLib;
 
 open listTheory optionTheory pred_setTheory pred_setSimps;
 
-open bir_programTheory bir_expTheory bir_exp_immTheory bir_typing_progTheory;
-open bir_program_blocksTheory bir_program_multistep_propsTheory;
+open bir_programTheory bir_typing_progTheory bir_program_blocksTheory;
 open HolBACoreSimps;
 
 open resolutionTheory simulationTheory simulationFailTheory contractTransferTheory;
@@ -229,18 +228,18 @@ QED
 
 
 Definition resolve_fail_block_def:
-  (resolve_fail_block bl =
+  (resolve_fail_block bl v =
      case bl.bb_last_statement of
        BStmt_Jmp (BLE_Exp e) =>
-         SOME [assert_block bl.bb_label bl.bb_statements (BExp_Const (Imm1 0w))]
+         SOME [assert_block bl.bb_label bl.bb_statements v]
      | _ => NONE)
 End
 
 Theorem resolve_fail_block_sound:
-  ∀bl1 r.
-    resolve_fail_block bl1 = SOME r ⇒
+  ∀bl1 v r.
+    resolve_fail_block bl1 v = SOME r ⇒
     (∃bl2. r = [bl2] ∧
-           resolved_fail_block (bl1.bb_label) (BExp_Const (Imm1 0w)) bl1 bl2)
+           resolved_fail_block (bl1.bb_label) v bl1 bl2)
 Proof
 REPEAT GEN_TAC >>
 Cases_on ‘bl1’ >>
@@ -253,7 +252,7 @@ SIMP_TAC (std_ss++holBACore_ss) [resolved_fail_block_cases]
 QED
 
 Theorem resolve_fail_block_refines_vars:
-  refines_vars resolve_fail_block
+  ∀v. refines_vars (\bl. resolve_fail_block bl v)
 Proof
 SIMP_TAC std_ss [refines_vars_def] >>
 REPEAT GEN_TAC >>
@@ -263,7 +262,7 @@ PROVE_TAC [resolved_fail_block_vars]
 QED
 
 Definition resolve_fail_def:
-  resolve_fail p l = replace_block p l resolve_fail_block
+  resolve_fail p l v = replace_block p l (\bl. resolve_fail_block bl v)
 End
 
 Theorem EXISTS_MEM_labels:
@@ -276,16 +275,16 @@ PROVE_TAC []
 QED
 
 Theorem resolve_fail_sound:
-  ∀p l p'.
-    resolve_fail p l = SOME p' ⇒
-    resolved_fail l (BExp_Const (Imm1 0w)) p p'
+  ∀p l p' v.
+    resolve_fail p l v = SOME p' ⇒
+    resolved_fail l v p p'
 Proof
 REPEAT GEN_TAC >>
 Cases_on ‘p’ >> rename1 ‘BirProgram p’ >>
 Cases_on ‘p'’ >> rename1 ‘SOME (BirProgram p')’ >>
 SIMP_TAC std_ss [resolve_fail_def] >>
 DISCH_THEN (MP_TAC o MATCH_MP replace_block_SOME) >>
-STRIP_TAC >>
+BETA_TAC >> STRIP_TAC >>
 Q.PAT_X_ASSUM ‘_ = SOME _’
  (STRIP_ASSUME_TAC o MATCH_MP resolve_fail_block_sound) >>
 ‘bl2.bb_label = l’ by PROVE_TAC [resolved_fail_block_labels] >>
@@ -323,8 +322,8 @@ REPEAT STRIP_TAC >| [
 QED
 
 Theorem resolve_fail_simulated_termination:
- ∀p l p'.
-    resolve_fail p l = SOME p' ⇒
+ ∀p l v p'.
+    resolve_fail p l v = SOME p' ⇒
     simulated_termination p p'
 Proof
 PROVE_TAC [resolve_fail_sound,
@@ -333,27 +332,30 @@ PROVE_TAC [resolve_fail_sound,
 QED
 
 Theorem resolve_fail_vars:
-  ∀p l p'.
-    resolve_fail p l = SOME p' ⇒
+  ∀p l v p'.
+    resolve_fail p l v = SOME p' ⇒
     bir_vars_of_program p' SUBSET bir_vars_of_program p
 Proof
-PROVE_TAC [resolve_fail_def, replace_block_SOME_vars,
+METIS_TAC [resolve_fail_def, replace_block_SOME_vars,
            resolve_fail_block_refines_vars]
 QED
 
-(*Sanity check*)
-Theorem resolve_fail_contract_transfer:
-  ∀p l1 p' l ls pre post.
-    resolve_fail p l1 = SOME p' ⇒
-
-    MEM l (bir_labels_of_program p) ⇒
-    ls SUBSET (set (bir_labels_of_program p)) ⇒
-
-    bir_exec_to_labels_triple p' l ls pre post ⇒
-    bir_exec_to_labels_triple p l ls pre post
+Theorem resolve_fail_labels:
+  ∀p l v p'.
+    resolve_fail p l v = SOME p' ⇒
+    bir_labels_of_program p = bir_labels_of_program p'
 Proof
-PROVE_TAC [resolve_fail_simulated_termination,
-           resolve_fail_vars, contract_transfer]
+REPEAT GEN_TAC >>
+Cases_on ‘p’ >> rename1 ‘BirProgram p’ >>
+Cases_on ‘p'’ >> rename1 ‘SOME (BirProgram p')’ >>
+SIMP_TAC std_ss [resolve_fail_def] >>
+DISCH_THEN (MP_TAC o MATCH_MP replace_block_SOME) >>
+BETA_TAC >> STRIP_TAC >>
+
+IMP_RES_TAC resolve_fail_block_sound >>
+‘bl2.bb_label = l’ by PROVE_TAC [resolved_fail_block_labels] >>
+ASM_SIMP_TAC std_ss [Once (GSYM APPEND_ASSOC), APPEND] >>
+ASM_SIMP_TAC list_ss [bir_labels_of_program_def]
 QED
 
 
@@ -401,11 +403,10 @@ End
 Theorem resolve_sound:
   ∀p l v sl p'.
     fresh_label (BL_Label sl) p ⇒
-    MEM (BL_Address v) (bir_labels_of_program p) ⇒
     resolve p l v sl = SOME p' ⇒
     resolved l v sl p p'
 Proof
-REPEAT GEN_TAC >> NTAC 2 STRIP_TAC >>
+REPEAT GEN_TAC >> STRIP_TAC >>
 Cases_on ‘p’ >> rename1 ‘BirProgram p’ >>
 Cases_on ‘p'’ >> rename1 ‘SOME (BirProgram p')’ >>
 SIMP_TAC std_ss [resolve_def] >>
@@ -419,7 +420,6 @@ Q.PAT_X_ASSUM ‘_ = SOME _’
 SIMP_TAC std_ss [resolved_cases] >>
 Q.LIST_EXISTS_TAC [‘bl’, ‘bl2’, ‘bl3’] >>
 ASM_SIMP_TAC std_ss [GSYM APPEND_ASSOC, APPEND] >>
-Q.PAT_X_ASSUM ‘MEM _ _’ (K ALL_TAC) >> (*Removes assumption that interferes with FULL_SIMP_TAC*)
 REPEAT STRIP_TAC >| [
   (*labels*)
   ASM_SIMP_TAC list_ss [bir_labels_of_program_def] >>
@@ -466,7 +466,6 @@ QED
 Theorem resolve_simulated_termination:
   ∀p l v sl p'.
     fresh_label (BL_Label sl) p ⇒
-    MEM (BL_Address v) (bir_labels_of_program p) ⇒
     resolve p l v sl = SOME p' ⇒
     simulated_termination p p'
 Proof
@@ -484,23 +483,26 @@ METIS_TAC [resolve_def, replace_block_SOME_vars,
            resolve_block_refines_vars]
 QED
 
-(*Sanity check*)
-Theorem resolve_contract_transfer:
-  ∀sl p v l p' ls pre post.
-    fresh_label (BL_Label sl) p ⇒
-    MEM (BL_Address v) (bir_labels_of_program p) ⇒
+Theorem resolve_labels:
+  ∀p l v sl p'.
     resolve p l v sl = SOME p' ⇒
-
-    MEM l (bir_labels_of_program p) ⇒
-    ls SUBSET (set (bir_labels_of_program p)) ⇒
-
-    bir_exec_to_labels_triple p' l ls pre post ⇒
-    bir_exec_to_labels_triple p l ls pre post
+    set (bir_labels_of_program p) SUBSET set (bir_labels_of_program p')
 Proof
-PROVE_TAC [resolve_simulated_termination,
-           resolve_vars, contract_transfer]
+REPEAT GEN_TAC >>
+Cases_on ‘p’ >> rename1 ‘BirProgram p’ >>
+Cases_on ‘p'’ >> rename1 ‘SOME (BirProgram p')’ >>
+SIMP_TAC std_ss [resolve_def] >>
+DISCH_THEN (STRIP_ASSUME_TAC o MATCH_MP replace_block_SOME) >>
+ASM_SIMP_TAC (list_ss++PRED_SET_ss) [bir_labels_of_program_def] >>
+STRIP_TAC >- (
+  SIMP_TAC (std_ss++PRED_SET_ss) [SUBSET_DEF]
+) >>
+
+FULL_SIMP_TAC std_ss [] >>
+IMP_RES_TAC resolve_block_sound >>
+ASM_SIMP_TAC list_ss [] >>
+PROVE_TAC [resolved_block_labels]
 QED
 
 
 val _ = export_theory();
-

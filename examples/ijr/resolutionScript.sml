@@ -62,6 +62,8 @@ FULL_SIMP_TAC (list_ss++PRED_SET_ss++holBACore_ss)
           bir_vars_of_stmtE_def, bir_vars_of_label_exp_def]
 QED
 
+(*TODO: maybe these should be Inductive for consistency?*)
+
 Definition direct_jump_target_block_def:
   direct_jump_target_block l bl =
   ∀es.
@@ -71,11 +73,10 @@ Definition direct_jump_target_block_def:
      ∃c l1. es = BStmt_CJmp c l1 (BLE_Label l))
 End
 
-(*TODO: maybe these should be Inductive for consistency?*)
 Definition direct_jump_target_def:
   direct_jump_target l p =
   ∃l' bl.
-    bir_get_current_block p (bir_block_pc l') = SOME bl ⇒
+    bir_get_current_block p (bir_block_pc l') = SOME bl ∧
     direct_jump_target_block l bl
 End
 
@@ -90,7 +91,6 @@ Inductive resolved:
     fresh_label (BL_Label sl) p ∧
     (∀l. MEM l (bir_labels_of_program p') ⇔
            MEM l (bir_labels_of_program p) ∨ l = BL_Label sl) ∧
-    (MEM (BL_Address v) (bir_labels_of_program p)) ∧
 
     bir_get_current_block p (bir_block_pc l1) = SOME bl1 ∧
     bir_get_current_block p' (bir_block_pc l1) = SOME bl2 ∧
@@ -109,7 +109,7 @@ Definition assert_block_def:
   assert_block l bss v =
   <| bb_label := l;
      bb_statements := bss ++ [BStmt_Assert (BExp_Const (Imm1 0w))];
-     bb_last_statement := BStmt_Halt v |>
+     bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address v)) |>
 End
 
 Inductive resolved_fail_block:
@@ -131,14 +131,14 @@ QED
 
 Theorem resolved_fail_block_vars:
   ∀l v bl1 bl2.
-    resolved_fail_block l (BExp_Const v) bl1 bl2 ⇒
+    resolved_fail_block l v bl1 bl2 ⇒
     bir_vars_of_block bl2 SUBSET bir_vars_of_block bl1
 Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC (list_ss++PRED_SET_ss++holBACore_ss)
          [resolved_fail_block_cases, assert_block_def,
           bir_vars_of_block_def, bir_vars_of_stmtE_def,
-          bir_vars_of_stmtB_def]
+          bir_vars_of_stmtB_def,  bir_vars_of_label_exp_def]
 QED
 
 Inductive resolved_fail:

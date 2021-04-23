@@ -22,6 +22,12 @@ Definition simulated_termination_def:
       exec_to_prog p s p = BER_Ended o1 m1 n1 s')
 End
 
+Theorem simulated_termination_REFL:
+  ∀p. simulated_termination p p
+Proof
+SIMP_TAC (std_ss++holBACore_ss) [simulated_termination_def]
+QED
+
 Theorem simulated_simulated_termination:
   ∀p p'. simulated p p' ⇒ simulated_termination p p'
 Proof
