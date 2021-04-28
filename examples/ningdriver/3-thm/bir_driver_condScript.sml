@@ -17,18 +17,19 @@ val get_v2 = bconst ``0x100000w:word64``;
 val get_ad = bconst ``0xFA03012Cw:word64``;
 
 val bir_driver_segB_precond_def = Define `
-bir_driver_segB_procond v = ^(beq(get_ch0conf_v_pre,get_v))`
+bir_driver_segB_precond v = 
+^(band(beq(get_ch0conf_ad,get_ad),
+       beq(get_ch0conf_v_pre,get_v)))`
 
 val bir_driver_segB_postcond_def = Define `
 bir_driver_segB_postcond v = 
-^(band(beq(get_ch0conf_ad,get_ad),
-       beq(get_ch0conf_v_post, 
-           bor(band(get_v,get_v1),get_v2))))`
+^(beq(get_ch0conf_v_post, 
+       bor(band(get_v,get_v1),get_v2)))`
 
 val bir_driver_segB_post_def = Define `
 bir_driver_segB_post v =
-\l. if (l = BL_Address (Imm64 0x60w))
-                        then bir_driver_segB_postcond v
-                        else bir_exp_false`
+\l. if (l = BL_Address (Imm64 28w))
+    then bir_driver_segB_postcond v
+    else bir_exp_false`
 
 val _ = export_theory();

@@ -1,4 +1,4 @@
-open HolKernel bossLib boolLib Parse m0_stepLib;
+open HolKernel bossLib boolLib Parse;
 open examplesBinaryTheory bir_driver_condTheory;
 
 (* From theory/bir-support: *)
@@ -28,9 +28,9 @@ val prefix = "ningdriver_prog_B_";
 
 val prog_tm = (lhs o concl) bir_ningdriver_prog_def;
 
-val first_block_label_tm = ``BL_Address (Imm64 0x40w)``; (* 2c *)
+val first_block_label_tm = ``BL_Address (Imm64 12w)``; (* c *)
 
-val ending_set = ``{BL_Address (Imm64 0x60w)}``; (* 3c *) 
+val ending_set = ``{BL_Address (Imm64 28w)}``; (* 1c *) 
 
 val postcond_tm = ``bir_driver_segB_post v``;
 
@@ -43,5 +43,9 @@ val (bir_ningdriver_prog_B_ht, bir_ningdriver_prog_B_wp_tm) =
                    ending_set ending_set_to_sml_list
                    postcond_tm postcond_exp_from_label
                    prefix defs;
+
+val bir_ningdriver_prog_B_wp_def =
+  Define `bir_ningdriver_prog_B_wp v = ^(bir_ningdriver_prog_B_wp_tm)`;
+val _ = save_thm ("bir_ningdriver_prog_B_ht", bir_ningdriver_prog_B_ht);
 
 val _ = export_theory();
