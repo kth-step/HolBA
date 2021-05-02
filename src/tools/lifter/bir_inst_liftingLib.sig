@@ -22,7 +22,7 @@ signature bir_inst_lifting = sig
      explained the HEX-code (e.g. containing a readable representation).
   *)
   val bir_lift_instr : (Arbnum.num * Arbnum.num) -> Arbnum.num -> string -> string -> thm
-
+  val bir_lift_instr_mc : (Arbnum.num * Arbnum.num) -> Arbnum.num -> string -> string -> thm
 
   (* Sometimes we want to lift many instructions that all use the same
      unchanged memory region. For this, it is convenient to

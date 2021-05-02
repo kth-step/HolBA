@@ -44,13 +44,22 @@ fun fail_with_msg msg =
 ;
 
 fun riscv_test_hex hex = test_RISCV.lift_instr mu_b mu_e pc hex NONE
+fun riscv_test_hex_mc hex = test_RISCV.lift_instr_mc mu_b mu_e pc hex NONE
 
-fun riscv_test_hex_print_asm asm hex = 
+fun riscv_test_hex_print_asm_gen is_multicore asm hex = 
   let
     val _ = test_RISCV.print_log true (asm^(": "))
   in
-    test_RISCV.lift_instr mu_b mu_e pc hex NONE
+    if is_multicore
+    then riscv_test_hex_mc hex
+    else riscv_test_hex hex
   end
+;
+val riscv_test_hex_print_asm = 
+  riscv_test_hex_print_asm_gen false
+;
+val riscv_test_hex_print_asm_mc = 
+  riscv_test_hex_print_asm_gen true
 ;
 
 fun riscv_test_asm asm =
@@ -202,12 +211,16 @@ val _ = print_msg "\n";
   ];
 
 (* Memory ordering isntructions (opcode MISC-MEM) *)
-(*   0000  1000  1000   00010  000  00001  0001111
+(* NOTE: This uses the Multicore extension *)
+(* TODO: Model FENCE.TSO as two fences? R/RW and W/W *)
+(*   0000  0011  0011   00010  000  00001  0001111
 
-Not sure about asm formatting...
 val _ = fail_with_msg "FENCE not yet supported by stepLib";
+
+val _ = riscv_test_hex_mc "331008F";
+val fence_res = riscv_test_hex_mc "331008F";
 *)
-val _ = riscv_test_hex_print_asm "FENCE x1, x2, i, i" "0881008F";
+val _ = riscv_test_hex_print_asm_mc "FENCE x1, x2, rw, rw" "331008F";
 
 (* Environment Call and Breakpoints (opcode SYSTEM) *)
 (*
@@ -283,7 +296,7 @@ val _ = print_msg "\n";
 val _ = fail_with_msg "FENCE.I not yet supported by stepLib";
 *)
 
-val _ = riscv_test_hex_print_asm "FENCE.I x0, x0, 0" "0000100F";
+val _ = riscv_test_hex_print_asm_mc "FENCE.I x0, x0, 0" "0000100F";
 
 val _ = print_msg "\n";
 val _ = print_header "RV64 Zicsr Standard Extension\n";
@@ -377,11 +390,141 @@ val _ = print_msg "\n";
     "REMUW x5, x6, x7"
   ];
 
+val _ = print_msg "\n";
+val _ = print_header "RV32A Standard Extension\n";
+val _ = print_msg "\n";
+
+(* TODO: LR/SC *)
+(* TODO: Unsure about assembly representation *)
+(* Binary: 00010 0 0 00000 00010 010 00001 0101111 *)
+val _ = riscv_test_hex_print_asm_mc "LR.W x1, (x2)" "100120AF";
+(* Binary: 00011 0 0 00011 00010 010 00001 0101111 *)
+val _ = riscv_test_hex_print_asm_mc "SC.W x1, x3, (x2)" "180120AF";
+
+(* Binary: 00001 0 0 00011 00010 010 00001 0101111
+
+val _ = riscv_test_hex_mc "083120AF";
+val amo_res = riscv_test_hex_mc "083120AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOSWAP.W x1, x3, (x2)" "083120AF";
+(* Binary: 00000 0 0 00011 00010 010 00001 0101111
+
+val _ = riscv_test_hex_mc "003120AF";
+val amo_res = riscv_test_hex_mc "003120AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOADD.W x1, x3, (x2)" "003120AF";
+(* Binary: 00100 0 0 00011 00010 010 00001 0101111
+
+val _ = riscv_test_hex_mc "203120AF";
+val amo_res = riscv_test_hex_mc "203120AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOXOR.W x1, x3, (x2)" "203120AF";
+(* Binary: 01100 0 0 00011 00010 010 00001 0101111
+
+val _ = riscv_test_hex_mc "603120AF";
+val amo_res = riscv_test_hex_mc "603120AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOAND.W x1, x3, (x2)" "603120AF";
+(* Binary: 01000 0 0 00011 00010 010 00001 0101111
+
+val _ = riscv_test_hex_mc "403120AF";
+val amo_res = riscv_test_hex_mc "403120AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOOR.W x1, x3, (x2)" "403120AF";
+(* Binary: 10000 0 0 00011 00010 010 00001 0101111
+
+val _ = riscv_test_hex_mc "803120AF";
+val amo_res = riscv_test_hex_mc "803120AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOMIN.W x1, x3, (x2)" "803120AF";
+(* Binary: 10100 0 0 00011 00010 010 00001 0101111
+
+val _ = riscv_test_hex_mc "A03120AF";
+val amo_res = riscv_test_hex_mc "A03120AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOMAX.W x1, x3, (x2)" "A03120AF";
+(* Binary: 11000 0 0 00011 00010 010 00001 0101111
+
+val _ = riscv_test_hex_mc "C03120AF";
+val amo_res = riscv_test_hex_mc "C03120AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOMINU.W x1, x3, (x2)" "C03120AF";
+(* Binary: 11100 0 0 00011 00010 010 00001 0101111
+
+val _ = riscv_test_hex_mc "E03120AF";
+val amo_res = riscv_test_hex_mc "E03120AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOMAXU.W x1, x3, (x2)" "E03120AF";
+
+val _ = print_msg "\n";
+val _ = print_header "RV64A Standard Extension (instructions added to RV64A)\n";
+val _ = print_msg "\n";
+
+(* TODO: LR/SC *)
+(* TODO: Unsure about assembly representation *)
+(* Binary: 00010 0 0 00000 00010 011 00001 0101111 *)
+val _ = riscv_test_hex_print_asm_mc "LR.D x1, (x2)" "100130AF";
+(* Binary: 00011 0 0 00011 00010 011 00001 0101111 *)
+val _ = riscv_test_hex_print_asm_mc "SC.D x1, x3, (x2)" "180130AF";
+
+(* Binary: 00001 0 0 00011 00010 011 00001 0101111
+
+val _ = riscv_test_hex_mc "083130AF";
+val amo_res = riscv_test_hex_mc "083130AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOSWAP.D x1, x3, (x2)" "083130AF";
+(* Binary: 00000 0 0 00011 00010 011 00001 0101111
+
+val _ = riscv_test_hex_mc "003130AF";
+val amo_res = riscv_test_hex_mc "003130AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOADD.D x1, x3, (x2)" "003130AF";
+(* Binary: 00100 0 0 00011 00010 011 00001 0101111
+
+val _ = riscv_test_hex_mc "203130AF";
+val amo_res = riscv_test_hex_mc "203130AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOXOR.D x1, x3, (x2)" "203130AF";
+(* Binary: 01100 0 0 00011 00010 011 00001 0101111
+
+val _ = riscv_test_hex_mc "603130AF";
+val amo_res = riscv_test_hex_mc "603130AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOAND.D x1, x3, (x2)" "603130AF";
+(* Binary: 01000 0 0 00011 00010 011 00001 0101111
+
+val _ = riscv_test_hex_mc "403130AF";
+val amo_res = riscv_test_hex_mc "403130AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOOR.D x1, x3, (x2)" "403130AF";
+(* Binary: 10000 0 0 00011 00010 011 00001 0101111
+
+val _ = riscv_test_hex_mc "803130AF";
+val amo_res = riscv_test_hex_mc "803130AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOMIN.D x1, x3, (x2)" "803130AF";
+(* Binary: 10100 0 0 00011 00010 011 00001 0101111
+
+val _ = riscv_test_hex_mc "A03130AF";
+val amo_res = riscv_test_hex_mc "A03130AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOMAX.D x1, x3, (x2)" "A03130AF";
+(* Binary: 11000 0 0 00011 00010 011 00001 0101111
+
+val _ = riscv_test_hex_mc "C03130AF";
+val amo_res = riscv_test_hex_mc "C03130AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOMINU.D x1, x3, (x2)" "C03130AF";
+(* Binary: 11100 0 0 00011 00010 011 00001 0101111
+
+val _ = riscv_test_hex_mc "E03130AF";
+val amo_res = riscv_test_hex_mc "E03130AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOMAXU.D x1, x3, (x2)" "E03130AF";
 
 val riscv_expected_failed_hexcodes:string list =
 [
    (* Base *)
-   "0881008F" (* FENCE x1, x2, i, i *),
    "00000073" (* ECALL *),
    "00100073" (* EBREAK *),
    (* Zifencei *)
@@ -392,7 +535,13 @@ val riscv_expected_failed_hexcodes:string list =
    "340130F3" (* CSRRC x1, mscratch(0x340), x2 *),
    "3400D0F3" (* CSRRWI x1, mscratch(0x340), 0x1 *),
    "3400E0F3" (* CSRRWI x1, mscratch(0x340), 0x1 *),
-   "3400F0F3" (* CSRRCI x1, mscratch(0x340), 0x1 *)
+   "3400F0F3" (* CSRRCI x1, mscratch(0x340), 0x1 *),
+   (* RV32A *)
+   "100120AF" (* "LR.W x1, (x2)"  *),
+   "180120AF" (* "SC.W x1, x3, (x2)" *),
+   (* RV32A *)
+   "100130AF" (* "LR.D x1, (x2)"  *),
+   "180130AF" (* "SC.D x1, x3, (x2)" *)
 ];
 
 val _ = test_RISCV.final_results "RISC-V" riscv_expected_failed_hexcodes;

@@ -31,7 +31,7 @@ fun convert_inout_to_graphviz idxs_sel (blocks, in_idxs, out_idxs) =
   let
     fun block_to_node (i,block) =
       let
-        val (raw_BL_term,_,_) = dest_bir_block block;
+        val (raw_BL_term,_,_,_) = dest_bir_block block;
         val label = eval_label raw_BL_term;
         val label_str =
           if is_BL_Label label then

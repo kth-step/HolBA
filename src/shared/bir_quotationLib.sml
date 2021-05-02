@@ -165,20 +165,23 @@ val bir_stmte =
 fun end_by p sep =
     many (bind p (fn x => seq sep (return x)))
 
+(* TODO: Fix these with new bir_block syntax
 val bir_block =
     bind bir_label (fn lbl =>
     seq (seq (string ":") (many (char #"\n"))) (
     bind (end_by (try bir_stmtb) (char #"\n")) (fn stmts =>
     seq (many (char #"\n")) (
     bind bir_stmte (fn stmte =>
-    return (lbl, stmts, stmte)))))) <?> "BIR block";
+    return (lbl, is_atomic, stmts, stmte)))))) <?> "BIR block";
 
 val bir_prog =
     bind (sep_by1 bir_block (seq (string ";") (many1 (char #"\n")))) (fn blocks =>
     return (bprog_list (Type`:'a`) blocks)) <?> "BIR program";
 
+
 fun BIR [QUOTE str] = parse (seq junk bir_prog) str
                             handle e => raise (ERR "BIR" (make_string_parse_error e))
 fun BExp [QUOTE str] = parse (seq junk bir_exp) str
                        handle e => raise (ERR "BExp" (make_string_parse_error e))
+*)
 end

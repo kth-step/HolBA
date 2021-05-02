@@ -296,12 +296,12 @@ local
 fun passify_block_list_ssa []     = []
   | passify_block_list_ssa (h::t) =
       let
-        val (obs, label, bstmts, estmt) = dest_bir_block_list h
+        val (obs, label, is_atomic, bstmts, estmt) = dest_bir_block_list h
         val passified_bstmts =
           map (inst [(* TODO: make this "alpha" again *) (Type `:'a`) |-> obs]) (passify_bstmts_ssa bstmts)
         val passified_estmt = passify_estmt_ssa estmt
         val passified_block =
-          mk_bir_block_list (obs, label, passified_bstmts,
+          mk_bir_block_list (obs, label, is_atomic, passified_bstmts,
                              passified_estmt)
       in
         (passified_block::passify_block_list_ssa t)

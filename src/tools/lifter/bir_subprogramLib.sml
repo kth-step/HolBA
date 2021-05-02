@@ -39,7 +39,7 @@ struct
     local
       fun address_of_block h =
 	let
-	  val (label, _, _) = dest_bir_block h
+	  val (label, _,_, _) = dest_bir_block h
 	  val (curr_address, _) = dest_BL_Address_HC label
 	  val (_, word) = gen_dest_Imm curr_address
 	in

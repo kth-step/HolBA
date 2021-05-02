@@ -12,7 +12,7 @@ sig
      * TODO? bdefprog: string -> ('a bir_block_t) list term -> thm
      * bdefprog_list: hol_type (* overserved type *)
      *             -> string (* program name *)
-     *             -> (bir_label_t * ('a bir_stmt_basic_t) list * bir_stmt_end_t) list
+     *             -> (bir_label_t * bool * ('a bir_stmt_basic_t) list * bir_stmt_end_t) list
      *             -> thm
      *
      * Note: `val my_prog_def = bdefprog "my_prog" blocks;` is equivalent to:
@@ -23,7 +23,7 @@ sig
      * ```
      *)
     (*val bdefprog: string -> term -> thm*)
-    val bdefprog_list: hol_type -> string -> (term * term list * term) list -> thm
+    val bdefprog_list: hol_type -> string -> (term * term * term list * term) list -> thm
 
     (**************************************************************************)
     (* Environment                                                            *)
@@ -251,23 +251,23 @@ sig
     (* Blocks (:bir_block_t)
      *
      * bblock: hol_type (* the observed type *)
-     *      -> (bir_label_t * ('a bir_stmt_basic_t) list * bir_stmt_end_t)
+     *      -> (bir_label_t * bool * ('a bir_stmt_basic_t) list * bir_stmt_end_t)
      *      -> bir_block_t
      *
      * Note: If you don't use BStmt_Observe, use any hol_type, or just 'a.
      *)
-    val bblock:   hol_type -> (term * term list * term) -> term
-    val bblocks:  hol_type -> (term * term list * term) list -> term
+    val bblock:   hol_type -> (term * term * term list * term) -> term
+    val bblocks:  hol_type -> (term * term * term list * term) list -> term
 
     (* Programs (:bir_program_t)
      *
      * TODO? bprog: ('a bir_block_t) list term -> bir_program_t
      * bprog_list: hol_type
-     *          -> (bir_label_t * ('a bir_stmt_basic_t) list * bir_stmt_end_t) list
+     *          -> (bir_label_t * bool * ('a bir_stmt_basic_t) list * bir_stmt_end_t) list
      *          -> bir_program_t
      *)
     (*val bprog: term -> term*)
-    val bprog_list: hol_type -> (term * term list * term) list -> term
+    val bprog_list: hol_type -> (term * term * term list * term) list -> term
 
     (**************************************************************************)
     (* Expressions (Datatype `bir_exp_t`)                                     *)

@@ -115,11 +115,11 @@ open bir_cfgLib;
 	let  
 	    val f =  (fn l => Redblackmap.find (bl_dict, l)
                            |> bir_programSyntax.dest_bir_block
-			   |> not o listSyntax.is_nil o #2)
+			   |> not o listSyntax.is_nil o #3)
 	    fun extract_obs labels = 
 		List.map (fn label => 
 			     let val block = Redblackmap.find (bl_dict, label)
-				 val (_, statements, _) = bir_programSyntax.dest_bir_block block
+				 val (_, _, statements, _) = bir_programSyntax.dest_bir_block block
 				 val obs = find_terms is_BStmt_Observe statements (* TODO this should be manual traversal to ensure preservation of program order *)
 			     in
 				 filter (fn obs => (#3 o dest_BStmt_Observe) obs 

@@ -140,16 +140,16 @@ sig
    val is_bir_block_t_ty   : hol_type -> bool
 
 
-   val dest_bir_block : term -> term * term * term
+   val dest_bir_block : term -> term * term * term * term
    val is_bir_block   : term -> bool
-   val mk_bir_block   : term * term * term -> term
+   val mk_bir_block   : term * term * term * term -> term
 
    (* Often one is interested in the list of basic statements in a block.
       The following code splits the term containing a list of basic statements
       into an SML list of terms. In case the empty list is used, thereby the
       type ob observation is lost and therefore made explicit. *)
-   val dest_bir_block_list : term -> hol_type * term * term list * term
-   val mk_bir_block_list   : hol_type * term * term list * term -> term
+   val dest_bir_block_list : term -> hol_type * term  * term * term list * term
+   val mk_bir_block_list   : hol_type * term  * term * term list * term -> term
 
 
    (*****************)

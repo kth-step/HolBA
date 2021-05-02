@@ -30,12 +30,13 @@ open bir_inst_liftingHelpersLib;
 
   *)
 
-  (* For debugging
+  (* For debugging (choose your architecture from the below):
   structure MD = struct val mr = arm8_bmr_rec end;
   structure MD = struct val mr = m0_bmr_rec false true end;
   structure MD = struct val mr = m0_mod_bmr_rec false true end;
   structure MD = struct val mr = riscv_bmr_rec end;
 
+  (* debug value suggestions *)
   val pc = Arbnum.fromInt 0x10000
   val (mu_b, mu_e) = (Arbnum.fromInt 0x1000, Arbnum.fromInt 0x100000)
   val (_, mu_thm) = mk_WI_end_of_nums_WFE ``:64`` (Arbnum.fromInt 0x1000) (Arbnum.fromInt 0x100000)
@@ -1508,15 +1509,19 @@ val cache = lift_inst_cache_empty;
 
   end;
 
-  (* The main entry point for lifting an instruction. Details, please see above. *)
-  fun bir_lift_instr ((mu_b : Arbnum.num), (mu_e : Arbnum.num)) = let
+  (* The main entry points for lifting an instruction. Details, please see above. *)
+  fun bir_lift_instr_gen is_multicore ((mu_b : Arbnum.num), (mu_e : Arbnum.num)) = let
      val (mu_thm, mm_precond_thm) = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
   in
     fn pc => fn hex_code => fn hex_code_desc =>
-       #1 (bir_lift_instr_mu (mu_b, mu_e) (mu_thm, mm_precond_thm) lift_inst_cache_empty pc hex_code hex_code_desc false)
+       #1 (bir_lift_instr_mu (mu_b, mu_e) (mu_thm, mm_precond_thm) lift_inst_cache_empty pc hex_code hex_code_desc is_multicore)
   end;
 
+  val bir_lift_instr =
+    bir_lift_instr_gen false;
 
+  val bir_lift_instr_mc =
+    bir_lift_instr_gen true;
 
   (*****************************)
   (* Lifting the whole program *)

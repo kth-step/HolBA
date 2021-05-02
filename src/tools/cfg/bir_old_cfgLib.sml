@@ -35,7 +35,7 @@ fun find_idx P xs =
 
 val blocks_to_labels = List.map (fn block =>
     let
-      val (raw_BL_term, _, _) = dest_bir_block block;
+      val (raw_BL_term, _, _, _) = dest_bir_block block;
       val BL_term = eval_label raw_BL_term;
     in
       BL_term
@@ -44,7 +44,7 @@ val blocks_to_labels = List.map (fn block =>
 
 fun block_to_outidxs labels block =
   let
-    val (_, _, last_stmt) = dest_bir_block block;
+    val (_, _, _, last_stmt) = dest_bir_block block;
     val raw_targets =
       if is_BStmt_Jmp last_stmt then
         [dest_BStmt_Jmp last_stmt]
@@ -395,7 +395,7 @@ fun find_component conn_comp target_label = find_idx (fn (n,_,_) => List.exists 
     val block = List.nth(blocks,i);
 
     val eval_label = (snd o dest_eq o concl o EVAL);
-    val (raw_BL_term, _, _) = dest_bir_block block;
+    val (raw_BL_term, _, _, _) = dest_bir_block block;
     val BL_term = eval_label raw_BL_term;
 
   in

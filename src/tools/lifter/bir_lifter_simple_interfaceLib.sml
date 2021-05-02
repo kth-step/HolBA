@@ -333,7 +333,7 @@ fun lift_sections arch_str sections idx =
         val n_blocks = length blocks;
         val (n_blocks_a, n_blocks_l) = List.foldl (fn (b,(n_blocks_a, n_blocks_l)) =>
 (* val b = (hd blocks); *)
-                   let val l = ((snd o dest_eq o concl o EVAL o (fn (l,_,_) => l) o dest_bir_block) b); in
+                   let val l = ((snd o dest_eq o concl o EVAL o (fn (l,_,_,_) => l) o dest_bir_block) b); in
                      if is_BL_Address l then      (n_blocks_a+1, n_blocks_l  )
                      else if is_BL_Address l then (n_blocks_a  , n_blocks_l+1)
                      else raise ERR "lift_file" "unknown label type"
@@ -341,14 +341,14 @@ fun lift_sections arch_str sections idx =
                  ) (0,0) blocks;
 
         val (sum_stmts, max_stmts) = List.foldl (fn (b,(sum_stmts, max_stmts)) =>
-                   let val n_stmts = 1 + ((length o fst o dest_list o (fn (_,stmts,_) => stmts) o dest_bir_block) b); in
+                   let val n_stmts = 1 + ((length o fst o dest_list o (fn (_,_,stmts,_) => stmts) o dest_bir_block) b); in
                      (sum_stmts + n_stmts,
                       Int.max(max_stmts, n_stmts))
                    end
                  ) (0,0) blocks;
 
         val (n_jmp, n_cjmp, n_halt) = List.foldl (fn (b,(n_jmp, n_cjmp, n_halt)) =>
-                   let val es = ((fn (_,_,es) => es) o dest_bir_block) b; in
+                   let val es = ((fn (_,_,_,es) => es) o dest_bir_block) b; in
                      if is_BStmt_Jmp es then
                        (n_jmp+1, n_cjmp  , n_halt  )
                      else if is_BStmt_CJmp es then
@@ -377,8 +377,8 @@ fun lift_sections arch_str sections idx =
           let
             val (sum_exp_size, max_exp_size) = List.foldl (fn (b,(sum_exp_size, max_exp_size)) =>
                    let
-                     val stmts = (fst o dest_list o (fn (_,stmts,_) => stmts) o dest_bir_block) b;
-                     val es = ((fn (_,_,es) => es) o dest_bir_block) b;
+                     val stmts = (fst o dest_list o (fn (_,_,stmts,_) => stmts) o dest_bir_block) b;
+                     val es = ((fn (_,_,_,es) => es) o dest_bir_block) b;
 
 (* val s = hd stmts; *)
                      val s_exps = List.map (fn s =>

@@ -38,17 +38,17 @@ val wrap_exn = Feedback.wrap_exn "bir_lifter_interfaceLib"
   structure MD = bmil_riscv;
   open MD;
 
-  val da_name = "../../../examples/tutorial/1-code/src/add_reg.da"
-  val prog_name = "add_reg"
+  val da_name = "add_reg.da"
+  val prog_name = "add_reg_riscv"
   val prog_interval = ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
-  val is_multicore = false
-  val arch = "arm8"
+  val is_multicore = true
+  val arch = "riscv"
 *)
 fun lift_da_and_store_gen prog_name da_name prog_interval is_multicore arch =
   let
     val _ = print_with_style_ [Bold, Underline] ("Lifting "^da_name^"\n");
 
-    val (region_map, aes_sections) = read_disassembly_file_regions da_name
+    val (region_map, regions) = read_disassembly_file_regions da_name
 
     (* TODO: Use "let val bmil = if-then-else" for fewer cases *)
     val (thm_arch, errors) =
@@ -57,21 +57,25 @@ fun lift_da_and_store_gen prog_name da_name prog_interval is_multicore arch =
            then if isSome (#bmr_mc_lift_instr arm8_bmr_rec)
                 then bmil_arm8.bir_lift_prog_gen_mc
                        prog_interval
-                       aes_sections
+                       regions
                 else raise ERR "lift_da_and_store_gen" ("Multicore not supported for "^arch)
            else bmil_arm8.bir_lift_prog_gen
                   prog_interval
-                  aes_sections
+                  regions
       else if arch = "riscv"
       then if is_multicore
            then if isSome (#bmr_mc_lift_instr riscv_bmr_rec)
                 then bmil_riscv.bir_lift_prog_gen_mc
                        prog_interval
-                       aes_sections
+                       regions
+(*
+  val (mu_b, mu_e) = prog_interval
+
+*)
                 else raise ERR "lift_da_and_store_gen" ("Multicore not supported for "^arch)
            else bmil_riscv.bir_lift_prog_gen
              prog_interval
-             aes_sections
+             regions
       else raise ERR "lift_da_and_store_gen" ("Unsupported architecture: "^arch)
 
     val (lift_app_1_tm, bir_prog_tm) = (dest_comb o concl) thm_arch;
@@ -102,6 +106,11 @@ fun lift_da_and_store prog_name da_name prog_interval =
 fun lift_da_and_store_mc_riscv prog_name da_name prog_interval =
   lift_da_and_store_gen prog_name da_name prog_interval true "riscv"
 ;
+(* TEST
+
+val _ = lift_da_and_store_mc_riscv "add_reg_riscv" "add_reg.da" (Arbnum.fromInt 0, Arbnum.fromInt 999999999)
+
+*)
 
 end
 

@@ -135,7 +135,7 @@ struct
           val obs_ty = (hd o snd o dest_type) ty;
           val lbl = ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt (len*4), 64)))``;
           val new_last_block =  bir_programSyntax.mk_bir_block
-                    (lbl, mk_list ([], mk_type ("bir_stmt_basic_t", [obs_ty])),
+                    (lbl, F, mk_list ([], mk_type ("bir_stmt_basic_t", [obs_ty])),
                      ``BStmt_Halt (BExp_Const (Imm32 0x000000w))``);
         in
           (mk_BirProgram o mk_list) (blocks@[new_last_block],ty)

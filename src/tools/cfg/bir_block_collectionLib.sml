@@ -44,7 +44,7 @@ in
 	  val lbl_block_pairs =
 	    List.foldr (fn (bl, l) => (
 	      let
-		val (lbl, _, _) = dest_bir_block bl;
+		val (lbl, _, _, _) = dest_bir_block bl;
 		val lbl_tm      = (snd o dest_eq o concl o EVAL) lbl;
 	      in
 		(lbl_tm, bl)
@@ -96,7 +96,7 @@ in
 	       (if ((!debug_trace) > 0) then (print "!") else ());
 	       let
 		 val i_n = mk_numeral (Arbnum.fromInt i);
-		 val (lt,_,_)  = dest_bir_block bl;
+		 val (lt,_,_,_)  = dest_bir_block bl;
 		 val norm_lt = (snd o dest_eq o concl o (REWRITE_CONV [BL_Address_HC_def])) lt
 			       handle UNCHANGED => lt;
 
