@@ -1,123 +1,163 @@
 open HolKernel Parse boolLib bossLib;
 
-open bslSyntax bir_execLib bir_bool_expTheory bir_htSyntax;
-open bir_wp_interfaceLib;
-open tutorial_smtSupportLib;
-open bir_compositionLib;
+open bslSyntax listSyntax;
+open bir_execLib bir_bool_expTheory;
+open bir_lifter_interfaceLib;
 
-open resolveTheory resolveFullyTheory;
-open resolveFullyLib;
+open resolveFullyLib generationLib;
 
 val _ = new_theory "examples";
 
 
 val _ = bir_ppLib.install_bir_pretty_printers();
 
-val observe_type = Type `: 'a`
-val bdefprog_list = bdefprog_list observe_type
+val block1 = (blabel_addr64 0,
+              [bassign (bvarimm64 "y", bconst64 4)],
+              (bjmp o belabel_expr o bden o bvarimm64) "y")
 
-val block1 = (blabel_addr32 0,
-              [bassign (bvarimm32 "y", bconst32 4)],
-              (bjmp o belabel_expr o bden o bvarimm32) "y")
-
-val block2: term * term list * term  = (blabel_addr32 4,
+val block2: term * term list * term  = (blabel_addr64 4,
                                         [],
-                                        (bhalt o bconst32) 0)
+                                        (bhalt o bconst64) 0)
 
 
 (*Program definition*)
 val prog_def = bdefprog_list "prog" [block1, block2]
-val prog_tm = (rhs o concl) prog_def
-(*val _ = bir_exec_prog_print "prog" prog_tm 10 NONE NONE NONE;*)
-
-val prog_var = mk_var("prog", type_of prog_tm);
-val prog_def = Define `^prog_var = ^prog_tm`;
-val prog_tm' = (lhs o concl) prog_def
-
+val prog_tm = (lhs o concl) prog_def
 
 (*resolve_fail and resolve tests*)
-val prog'_thm = EVAL “resolve_fail ^prog_tm (BL_Address (Imm32 0w)) (Imm32 4w)”
-val prog'_tm = (dest_some o rhs o concl) prog'_thm
-(*val _ = bir_exec_prog_print "prog'" prog'_tm 10 NONE NONE NONE;*)
+val resolve_fail_prog'_thm = EVAL “resolve_fail ^prog_tm (BL_Address (Imm64 0w)) (Imm64 4w)”
+val resolve_fail_prog'_tm = (dest_some o rhs o concl) resolve_fail_prog'_thm
 
-val prog'_thm = EVAL “resolve ^prog_tm (BL_Address (Imm32 0w)) (Imm32 10w) "0w-1"”
-val prog'_tm = (dest_some o rhs o concl) prog'_thm
-(*val _ = bir_exec_prog_print "prog'" prog' n_max NONE NONE NONE;*)
+val resolve_prog'_thm = EVAL “resolve ^prog_tm (BL_Address (Imm64 0w)) (Imm64 10w) "0w-1"”
+val resolve_prog'_tm = (dest_some o rhs o concl) resolve_prog'_thm
 
 
 (*resolve_fully test*)
-val arg1 = “BL_Address (Imm32 0w)”
-val arg2 = “[(Imm32 10w, "0w-1"); (Imm32 4w, "0w-2")]”
-val arg3 = “Imm32 4w”
-val prog'_thm = EVAL “resolve_fully ^prog_tm ^arg1 ^arg2 ^arg3”
-val prog'_tm = (dest_some o rhs o concl) prog'_thm
+val arg1 = “BL_Address (Imm64 0w)”
+val arg2 = “[(Imm64 10w, "0w-1"); (Imm64 4w, "0w-2")]”
+val arg3 = “Imm64 4w”
+val resolve_fully_prog'_thm = EVAL “resolve_fully ^prog_tm ^arg1 ^arg2 ^arg3”
+val resolve_fully_prog'_tm = (dest_some o rhs o concl) resolve_fully_prog'_thm
 
 
 (*resolve_fully_n one indirect jump test many steps*)
-val args = “[(^arg1, ^arg2, ^arg3)]”
-val prog'_thm = EVAL “resolve_fully_n ^prog_tm ^args”
-val prog'_tm = (dest_some o rhs o concl) prog'_thm
+val resolve_fully_n_args = “[(^arg1, ^arg2, ^arg3)]”
+val resolve_fully_n_prog'_thm = EVAL “resolve_fully_n ^prog_tm ^resolve_fully_n_args”
+val resolve_fully_n_prog'_tm = (dest_some o rhs o concl) resolve_fully_n_prog'_thm
 
 
 (*resolve_fully_n many indirect jumps many steps test*)
-val block1' = (blabel_addr32 8,
-               [bassign (bvarimm32 "z", bconst32 4)],
-               (bjmp o belabel_expr o bden o bvarimm32) "z")
+val block1' = (blabel_addr64 8,
+               [bassign (bvarimm64 "z", bconst64 4)],
+               (bjmp o belabel_expr o bden o bvarimm64) "z")
 val prog2_def = bdefprog_list "prog2" [block1, block2, block1']
 val prog2_tm = (rhs o concl) prog2_def
 
-val args = “[(^arg1, ^arg2, ^arg3);
-             (BL_Address (Imm32 8w), [(Imm32 10w, "8w-1"); (Imm32 4w, "8w-2")], ^arg3)]”
-val prog2'_thm = EVAL “resolve_fully_n ^prog2_tm ^args”
+val prog2_args = “[(^arg1, ^arg2, ^arg3);
+             (BL_Address (Imm64 8w), [(Imm64 10w, "8w-1"); (Imm64 4w, "8w-2")], ^arg3)]”
+val prog2'_thm = EVAL “resolve_fully_n ^prog2_tm ^prog2_args”
 val prog2'_tm = (dest_some o rhs o concl) prog2'_thm
 
 
-(*contract transfer test*)
+(*resolve_indirect_jumps and transfer_contract test*)
 (*Transform program*)
-val args = “[(BL_Address (Imm32 0w), [(Imm32 4w, "0w-2")], ^arg3)]”
-val (prog'_tm, prog'_def, prog'_thm) = resolve_indirect_jumps(prog_tm', args)
+val small_args = “[(BL_Address (Imm64 0w), [(Imm64 4w, "0w-2")], ^arg3)]”
+val (small_prog'_tm, small_prog'_def, small_prog'_thm) = 
+  resolve_indirect_jumps("resolved_small_prog", prog_tm, small_args)
 
 (*Obtain WP contract*)
-val pre_def = Define ‘pre = bir_exp_true’;
-val post_def = Define ‘post = ^(beq((bden o bvarimm32) "y", bconst32 4))’;
-
-val prefix = "example_";
-val entry_label_tm = “BL_Address (Imm32 0w)”;
-val ending_labels_tm = “{BL_Address (Imm32 4w)}”;
-val post_tm = “\l. if (l = BL_Address (Imm32 4w))
+val pre_def = Define ‘pre = bir_exp_true’
+val post_def = Define ‘post = ^(beq((bden o bvarimm64) "y", bconst64 4))’
+val prefix = "example1_"
+val pre_tm = (lhs o concl) pre_def
+val entry_label_tm = “BL_Address (Imm64 0w)”
+val ending_labels_tm = “{BL_Address (Imm64 4w)}”
+val post_tm = “\l. if (l = BL_Address (Imm64 4w))
                    then post
-                   else bir_exp_false”;
-val defs = [prog'_def, post_def, bir_exp_false_def];
+                   else bir_exp_false”
+val defs = [small_prog'_def, post_def, bir_exp_false_def]
 
-val (ht_thm, wp_tm) =
-  bir_obtain_ht prog'_tm entry_label_tm
-                ending_labels_tm ending_set_to_sml_list
-                post_tm postcond_exp_from_label
-                prefix defs;
+val small_contract = prove_and_transfer_contract(prog_tm, small_prog'_tm, small_prog'_thm,
+                                                 prefix, pre_tm, entry_label_tm,
+                                                 ending_labels_tm, post_tm, defs)
 
-val wp_def = Define `wp = ^(wp_tm)`;
-val ht_thm' = REWRITE_RULE [GSYM wp_def] ht_thm;
 
-(*
-val defs = [prog_def, post_def, bir_exp_true_def, bir_exp_false_def];
-val (ht, wp_tm) =
-  bir_obtain_ht prog_tm entry_label_tm
-                ending_labels_tm ending_set_to_sml_list
-                post_tm postcond_exp_from_label
-                prefix defs;
+(*Larger resolve_indirect_jumps and transfer_contract test*)
+val middle_blocks_n = 10;
+val exit_addr = 10 * middle_blocks_n
+val large_prog_def = gen_program("prog", middle_blocks_n)
+val large_prog_tm = (lhs o concl) large_prog_def
+
+val large_prog_args = gen_args_program(middle_blocks_n, 1)
+val (large_prog'_tm, large_prog'_def, large_prog'_thm) = 
+  resolve_indirect_jumps("resolved_large_prog", large_prog_tm, large_prog_args)
+
+val pre_def = Define ‘pre = ^(blt((bden o bvarimm64) "x", (bconst64 middle_blocks_n)))’
+val post_def = Define ‘post = ^(beq((bden o bvarimm64) "y", bconst64 exit_addr))’
+val prefix = "example2_"
+val pre_tm = (lhs o concl) pre_def
+val entry_label_tm = “BL_Label "entry1"”
+val ending_labels_tm = “{^(blabel_addr64 exit_addr)}”
+val post_tm = “\l. if (l = ^(blabel_addr64 exit_addr))
+                   then post
+                   else bir_exp_false”
+val defs = [large_prog'_def, post_def, bir_exp_false_def, bir_exp_true_def]
+
+val large_contract = prove_and_transfer_contract(large_prog_tm, large_prog'_tm, large_prog'_thm,
+                                                 prefix, pre_tm, entry_label_tm,
+                                                 ending_labels_tm, post_tm, defs)
+(*c test*)
+val _ = lift_da_and_store "composition"
+                          "composition.da"
+                          ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000));
+
+fun eval tm = (snd o dest_eq o concl o EVAL) tm
+
+val blocks = (fst o dest_list o dest_BirProgram o eval) “bir_composition_prog”
+
+val wtf = el 33 blocks
+
+val endings = List.map (fn block_tm => eval “ ^block_tm.bb_last_statement”) blocks
+val add_one_ret = el 6 blocks
+val add_two_ret = el 12 blocks
+val call_add_one = el 20 blocks
+val call_add_two = el 22 blocks
+val comp_ret = el 24 blocks
+val add_two_three = el 35 blocks
+
+(*Transform program*)
+val add_one_ret_args = [(blabel_addr64 20, [80], ["20w-1"], 80)]
+val add_two_ret_args = [(blabel_addr64 44, [88], ["44w-1"], 88)]
+val call_add_one_args = [(blabel_addr64 76, [0], ["76w-1"], 0)]
+val call_add_two_args = [(blabel_addr64 84, [24], ["84w-1"], 24)]
+val comp_ret_args = [(blabel_addr64 92, [132], ["92w-1"], 132)]
+val composition_args = gen_args (add_one_ret_args @
+                                 add_two_ret_args @
+                                 call_add_one_args @
+                                 call_add_two_args @
+                                 comp_ret_args)
+val (cprog'_tm, cprog'_def, cprog'_thm) = 
+  resolve_indirect_jumps("resolved_composition_prog", “bir_composition_prog”, composition_args)
+
+val blocks' = (fst o dest_list o dest_BirProgram o eval) cprog'_tm
+val endings' = List.map (fn block_tm => eval “ ^block_tm.bb_last_statement”) blocks'
+
+(*Obtain WP contract*)
+(*val pre_def = Define ‘pre = bir_exp_true’
+val post_def = Define ‘post = bir_exp_true’
+val prefix = "example3_"
+val pre_tm = (lhs o concl) pre_def
+val entry_label_tm = “BL_Address (Imm64 96w)”
+val ending_labels_tm = “{BL_Address (Imm64 136w)}”
+val post_tm = “\l. if (l = BL_Address (Imm64 136w))
+                   then post
+                   else bir_exp_false”
+val defs = [cprog'_def, post_def, bir_exp_false_def, bir_exp_true_def]
+
+val ccontract = prove_and_transfer_contract(“bir_composition_prog”, cprog'_tm, cprog'_thm,
+                                            prefix, pre_tm, entry_label_tm,
+                                            ending_labels_tm, post_tm, defs)
 *)
-
-(*Transfer WP contract*)
-val ht'_thm = transfer_contract(prog_tm', prog'_thm, ht_thm')
-
-(*Obtain contract by proving implication*)
-val contract_pre = (lhs o concl) pre_def;
-val contract_wp = (lhs o concl) wp_def;
-val contract_imp = bimp (contract_pre, contract_wp);
-val contract_imp_taut_thm = prove_exp_is_taut contract_imp;
-val contract =
-  label_ct_to_simp_ct_predset ht'_thm contract_imp_taut_thm;
-
 
 val _ = export_theory();
 
