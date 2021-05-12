@@ -9,10 +9,11 @@ all:
 	# Count
 	wc -l resolveFullyLib.sml
 	wc -l resolveFullyScript.sml resolveScript.sml resolutionScript.sml simulationScript.sml simulationFailScript.sml contractTransferScript.sml
-	# Run
+	# Run synthetic evaluation
 	make --directory=../.. examples/ijr/evaluation.sml_run
 	# Plot
 	python3 plot.py
-	# Compile and disassemble c evaluation program
+	# Compile, link and disassemble c evaluation program
 	${CROSS}gcc -DBAREMETAL= ${CFLAGS_BAREMETAL} -c -o composition.o -fno-stack-protector composition.c
-	${CROSS}objdump -d composition.o > composition.da
+	${CROSS}ld -o composition.ld composition.o
+	${CROSS}objdump -d composition.ld > composition.da
