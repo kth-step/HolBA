@@ -9,6 +9,7 @@ open tutorial_smtSupportLib;
 open bir_compositionLib;
 
 open resolveFullyTheory;
+open timersLib;
 
 fun resolve_indirect_jumps(prog'_name, prog_tm, args) =
   let
@@ -41,21 +42,33 @@ fun transfer_contract(prog_tm, prog'_thm, ht_thm) =
 
 fun prove_and_transfer_contract(prog_tm, prog'_tm, prog'_thm, prefix, pre_tm, entry_label_tm, ending_labels_tm, post_tm, defs) =
   let
+    val wp_start = timer_start ()
+    (*Obtain WP contract*)
     val (ht_thm, wp_tm) =
       bir_obtain_ht 
         prog'_tm entry_label_tm
         ending_labels_tm ending_set_to_sml_list
         post_tm postcond_exp_from_label
-        prefix defs;
+        prefix defs
+    val _ = print ("WP time: " ^ timer_stop_str wp_start ^ "\n")
+    
     val wp_var = mk_var(prefix ^ "_wp", type_of wp_tm)
     val wp_def = Define `^(wp_var) = ^(wp_tm)`
     val ht_thm' = REWRITE_RULE [GSYM wp_def] ht_thm
+    
     (*Transfer WP contract*)
+    val transfer_start = timer_start ()
     val ht'_thm = transfer_contract(prog_tm, prog'_thm, ht_thm')
+    val _ = print ("Transfer time: " ^ timer_stop_str transfer_start ^ "\n")
+
+    (*Prove implication using SMT solvers*)
+    val smt_start = timer_start ()
     val contract_imp = bimp (pre_tm, (lhs o concl) wp_def)
     val contract_imp_taut_thm = prove_exp_is_taut contract_imp
+    val res = label_ct_to_simp_ct_predset ht'_thm contract_imp_taut_thm
+    val _ = print ("SMT time: " ^ timer_stop_str smt_start ^ "\n")
   in
-    label_ct_to_simp_ct_predset ht'_thm contract_imp_taut_thm
+    res
   end
 
 end

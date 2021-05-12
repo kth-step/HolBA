@@ -2,10 +2,7 @@ open HolKernel Parse boolLib bossLib;
 
 open resolveFullyLib;
 open generationLib;
-
-fun timer_start () = Time.now();
-fun timer_stop tm = (Time.- (Time.now(), tm));
-fun timer_stop_str tm = Time.toString (Time.- (Time.now(), tm));
+open timersLib;
 
 fun test_resolve_indirect_jumps(middle_blocks_n) =
     let
