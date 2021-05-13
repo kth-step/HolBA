@@ -7,6 +7,7 @@ MANUAL TESTS - M0
      (304w,[8w; 70w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "mov r0, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R0" (BType_Imm Bit32))
                 (BExp_Den (BVar "R1" (BType_Imm Bit32)))];
@@ -19,6 +20,7 @@ MANUAL TESTS - M0
      (304w,[8w; 0w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "movs r0, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32 (BExp_Den (BVar "R1" (BType_Imm Bit32))));
@@ -37,7 +39,7 @@ MANUAL TESTS - M0
      (304w,[143w; 70w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "mov pc, r1";
-           bb_statements := [];
+           bb_atomic := F; bb_statements := [];
            bb_last_statement :=
              BStmt_Jmp
                (BLE_Exp
@@ -50,6 +52,7 @@ MANUAL TESTS - M0
      (304w,[8w; 28w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "adds r0, r1, #0";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool) bir_exp_false;
               BStmt_Assign (BVar "PSR_N" BType_Bool)
@@ -70,6 +73,7 @@ MANUAL TESTS - M0
      (304w,[136w; 28w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "adds r0, r1, #2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_nzcv_ADD_C (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -98,6 +102,7 @@ MANUAL TESTS - M0
      (304w,[136w; 24w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "adds r0, r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_nzcv_ADD_C (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -126,6 +131,7 @@ MANUAL TESTS - M0
      (304w,[8w; 68w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "add r0, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R0" (BType_Imm Bit32))
                 (BExp_BinExp BIExp_Plus
@@ -140,7 +146,7 @@ MANUAL TESTS - M0
      (304w,[143w; 68w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "add pc, r1";
-           bb_statements := [];
+           bb_atomic := F; bb_statements := [];
            bb_last_statement :=
              BStmt_Jmp
                (BLE_Exp
@@ -155,6 +161,7 @@ MANUAL TESTS - M0
      (304w,[128w; 48w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "adds r0, #128";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_nzcv_ADD_C (BExp_Den (BVar "R0" (BType_Imm Bit32)))
@@ -183,6 +190,7 @@ MANUAL TESTS - M0
      (304w,[72w; 65w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "adcs r0, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "tmp_PSR_C" BType_Bool)
                 (BExp_ADD_WITH_CARRY_C
@@ -222,6 +230,7 @@ B020 (add sp, #128) @ 0x130 - OK
      (304w,[32w; 176w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "add sp, #128";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "SP_process" (BType_Imm Bit32))
                 (BExp_BinExp BIExp_Plus
@@ -237,6 +246,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
      (304w,[32w; 168w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "add r0, sp, #128";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R0" (BType_Imm Bit32))
                 (BExp_BinExp BIExp_Plus
@@ -251,6 +261,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
      (304w,[136w; 26w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "subs r0, r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_nzcv_SUB_C (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -279,6 +290,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
      (304w,[200w; 30w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "subs r0, r1, #3";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_nzcv_SUB_C (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -307,6 +319,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
      (304w,[72w; 26w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "subs r0, r1, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool) bir_exp_true;
               BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
@@ -323,6 +336,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
      (304w,[8w; 30w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "subs r0, r1, #0";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool) bir_exp_true;
               BStmt_Assign (BVar "PSR_N" BType_Bool)
@@ -343,6 +357,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
      (304w,[128w; 56w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "subs r0, #128";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_nzcv_SUB_C (BExp_Den (BVar "R0" (BType_Imm Bit32)))
@@ -371,6 +386,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
      (304w,[0w; 30w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "subs r0, #0";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool) bir_exp_true;
               BStmt_Assign (BVar "PSR_N" BType_Bool)
@@ -389,6 +405,7 @@ A820 (add r0, sp, #128) @ 0x130 - OK
      (304w,[152w; 65w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "sbcs r0, r3";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "tmp_PSR_C" BType_Bool)
                 (BExp_ADD_WITH_CARRY_C
@@ -432,6 +449,7 @@ B082 (sub sp, #8) @ 0x130 - OK
      (304w,[130w; 176w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "sub sp, #8";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "SP_process" (BType_Imm Bit32))
                 (BExp_BinExp BIExp_Minus
@@ -447,6 +465,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[132w; 176w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "sub sp, #16";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "SP_process" (BType_Imm Bit32))
                 (BExp_BinExp BIExp_Minus
@@ -462,6 +481,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[81w; 66w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "rsbs r1, r2, #0";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_BinPred BIExp_Equal
@@ -490,6 +510,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[89w; 67w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "muls r1, r3";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32
@@ -515,6 +536,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[153w; 66w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "cmp r1, r3";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_nzcv_SUB_C (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -539,6 +561,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[137w; 66w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "cmp r1, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool) bir_exp_true;
               BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
@@ -553,6 +576,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[0w; 41w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "cmp r1, #0";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool) bir_exp_true;
               BStmt_Assign (BVar "PSR_N" BType_Bool)
@@ -571,6 +595,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[12w; 41w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "cmp r1, #12";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_nzcv_SUB_C (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -595,6 +620,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[217w; 66w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "cmn r1, r3";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_nzcv_ADD_C (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -619,6 +645,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[201w; 66w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "cmn r1, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_nzcv_ADD_C (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -643,6 +670,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[9w; 64w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ands r1, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32 (BExp_Den (BVar "R1" (BType_Imm Bit32))));
@@ -659,6 +687,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[17w; 64w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ands r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32
@@ -684,6 +713,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[81w; 64w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "eors r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32
@@ -709,6 +739,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[73w; 64w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "eors r1, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
               BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_true;
@@ -723,6 +754,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[17w; 67w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "orrs r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32
@@ -748,6 +780,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[9w; 67w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "orrs r1, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32 (BExp_Den (BVar "R1" (BType_Imm Bit32))));
@@ -764,6 +797,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[145w; 67w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "bics r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32
@@ -792,6 +826,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[137w; 67w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "bics r1, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool) bir_exp_false;
               BStmt_Assign (BVar "PSR_Z" BType_Bool) bir_exp_true;
@@ -806,6 +841,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[209w; 67w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "mvns r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32
@@ -828,6 +864,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[201w; 67w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "mvns r1, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32
@@ -850,6 +887,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[17w; 66w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "tst r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32
@@ -871,6 +909,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[9w; 66w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "tst r1, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32 (BExp_Den (BVar "R1" (BType_Imm Bit32))));
@@ -887,6 +926,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[136w; 64w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "lsls r0, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_IfThenElse
@@ -933,6 +973,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[128w; 0w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "lsls r0, #2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_word_bit Bit32 (BExp_Den (BVar "R0" (BType_Imm Bit32)))
@@ -958,6 +999,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[0w; 0w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "lsls r0, #0";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32 (BExp_Den (BVar "R0" (BType_Imm Bit32))));
@@ -974,6 +1016,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[200w; 64w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "lsrs r0, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_IfThenElse
@@ -1025,6 +1068,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[128w; 8w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "lsrs r0, #2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_word_bit Bit32 (BExp_Den (BVar "R0" (BType_Imm Bit32)))
@@ -1052,6 +1096,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[8w; 65w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "asrs r0, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_IfThenElse
@@ -1105,6 +1150,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[128w; 16w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "asrs r0, #2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_word_bit Bit32 (BExp_Den (BVar "R0" (BType_Imm Bit32)))
@@ -1132,6 +1178,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[200w; 65w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "rors r0, r1";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_IfThenElse
@@ -1167,6 +1214,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[1w; 104w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldr r1, [r0]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1184,6 +1232,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[65w; 104w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldr r1, [r0, #4]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1202,6 +1251,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[129w; 104w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldr r1, [r0, #8]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1220,6 +1270,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[1w; 137w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrh r1, [r0, #8]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 1
@@ -1240,6 +1291,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[1w; 136w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrh r1, [r0, #0]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 1
@@ -1258,6 +1310,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[65w; 136w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrh r1, [r0, #2]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 1
@@ -1278,6 +1331,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[1w; 120w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrb r1, [r0]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_Cast BIExp_UnsignedCast
@@ -1293,6 +1347,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[65w; 120w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrb r1, [r0, #1]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_Cast BIExp_UnsignedCast
@@ -1310,6 +1365,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[193w; 124w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrb r1, [r0, #19]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_Cast BIExp_UnsignedCast
@@ -1327,6 +1383,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[129w; 88w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldr r1, [r0, r2]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1348,6 +1405,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[129w; 90w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrh r1, [r0, r2]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 1
@@ -1370,6 +1428,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[129w; 94w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrsh r1, [r0, r2]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 1
@@ -1392,6 +1451,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[129w; 92w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrb r1, [r0, r2]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_Cast BIExp_UnsignedCast
@@ -1409,6 +1469,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[129w; 86w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldrsb r1, [r0, r2]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_Cast BIExp_SignedCast
@@ -1426,6 +1487,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[2w; 73w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldr r1, [pc, #8]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
@@ -1439,6 +1501,7 @@ B084 (sub sp, #16) @ 0x130 - OK
      (304w,[2w; 153w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldr r1, [sp, #8]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1457,6 +1520,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[14w; 203w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "ldm r3, {r1, r2, r3}";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1484,6 +1548,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[1w; 96w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "str r1, [r0]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1504,6 +1569,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[65w; 96w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "str r1, [r0, #4]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1528,6 +1594,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[129w; 96w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "str r1, [r0, #8]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1552,6 +1619,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[1w; 129w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strh r1, [r0, #8]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 1
@@ -1577,6 +1645,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[1w; 128w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strh r1, [r0, #0]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 1
@@ -1598,6 +1667,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[65w; 128w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strh r1, [r0, #2]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 1
@@ -1623,6 +1693,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[1w; 112w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strb r1, [r0]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_unchanged_mem_interval_distinct Bit32 0 65536
@@ -1641,6 +1712,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[65w; 112w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strb r1, [r0, #1]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_unchanged_mem_interval_distinct Bit32 0 65536
@@ -1663,6 +1735,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[193w; 116w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strb r1, [r0, #19]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_unchanged_mem_interval_distinct Bit32 0 65536
@@ -1685,6 +1758,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[129w; 80w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "str r1, [r0, r2]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1711,6 +1785,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[129w; 82w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strh r1, [r0, r2]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 1
@@ -1739,6 +1814,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[129w; 84w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "strb r1, [r0, r2]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_unchanged_mem_interval_distinct Bit32 0 65536
@@ -1762,6 +1838,7 @@ CB0E (ldm r3, {r1, r2, r3}) @ 0x130 - OK
      (304w,[2w; 145w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "str r1, [sp, #8]";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1786,6 +1863,7 @@ C10E (stm r1!, {r1, r2, r3}) @ 0x130 - OK
      (304w,[14w; 193w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "stm r1!, {r1, r2, r3}";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1824,6 +1902,7 @@ B40E (push {r1, r2, r3}) @ 0x130 - OK
      (304w,[14w; 180w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "push {r1, r2, r3}";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1865,6 +1944,7 @@ BC0E (pop {r1, r2, r3}) @ 0x130 - OK
      (304w,[14w; 188w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "pop {r1, r2, r3}";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1896,6 +1976,7 @@ B50E (push {r1, r2, r3, lr}) @ 0x130 - OK
      (304w,[14w; 181w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "push {r1, r2, r3, lr}";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1943,6 +2024,7 @@ BD0E (pop {r1, r2, r3, pc}) @ 0x130 - OK
      (304w,[14w; 189w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "pop {r1, r2, r3, pc}";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -1990,7 +2072,7 @@ BD0E (pop {r1, r2, r3, pc}) @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[8w; 71w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "bx r1";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "bx r1"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_LSB (BExp_Den (BVar "R1" (BType_Imm Bit32))));
@@ -2008,7 +2090,7 @@ BD0E (pop {r1, r2, r3, pc}) @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[136w; 71w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "blx r1";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "blx r1"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_LSB (BExp_Den (BVar "R1" (BType_Imm Bit32))));
@@ -2026,6 +2108,7 @@ B211 (sxth r1, r2) @ 0x130 - OK
      (304w,[17w; 178w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "sxth r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_Cast BIExp_SignedCast
@@ -2040,6 +2123,7 @@ B251 (sxtb r1, r2) @ 0x130 - OK
      (304w,[81w; 178w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "sxtb r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_Cast BIExp_SignedCast
@@ -2054,6 +2138,7 @@ B291 (uxth r1, r2) @ 0x130 - OK
      (304w,[145w; 178w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "uxth r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_Cast BIExp_UnsignedCast
@@ -2068,6 +2153,7 @@ B2D1 (uxtb r1, r2) @ 0x130 - OK
      (304w,[209w; 178w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "uxtb r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_Cast BIExp_UnsignedCast
@@ -2082,6 +2168,7 @@ BA11 (rev r1, r2) @ 0x130 - OK
      (304w,[17w; 186w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "rev r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_word_reverse_8_32
@@ -2095,6 +2182,7 @@ BA51 (rev16 r1, r2) @ 0x130 - OK
      (304w,[81w; 186w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "rev16 r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_word_reverse_16_32
@@ -2109,6 +2197,7 @@ BAD1 (revsh r1, r2) @ 0x130 - OK
      (304w,[209w; 186w])
      (BirProgram
         [<|bb_label := BL_Address_HC (Imm32 304w) "revsh r1, r2";
+           bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R1" (BType_Imm Bit32))
                 (BExp_Cast BIExp_SignedCast
@@ -2124,7 +2213,7 @@ BAD1 (revsh r1, r2) @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[4w; 49w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "3104";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "3104"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_nzcv_ADD_C (BExp_Den (BVar "R1" (BType_Imm Bit32)))
@@ -2152,7 +2241,7 @@ B007 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[7w; 176w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "B007";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "B007"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "SP_process" (BType_Imm Bit32))
                 (BExp_BinExp BIExp_Plus
@@ -2167,7 +2256,7 @@ B007 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[21w; 74w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "4A15";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "4A15"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R2" (BType_Imm Bit32))
                 (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
@@ -2180,7 +2269,7 @@ B007 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[17w; 64w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "4011";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "4011"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_N" BType_Bool)
                 (BExp_MSB Bit32
@@ -2205,7 +2294,7 @@ B510 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[16w; 181w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "B510";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "B510"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -2240,7 +2329,7 @@ BA18 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[24w; 186w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "BA18";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "BA18"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R0" (BType_Imm Bit32))
                 (BExp_word_reverse_8_32
@@ -2253,7 +2342,7 @@ F000F858 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[0w; 240w; 88w; 248w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "F000F858";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "F000F858"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "LR" (BType_Imm Bit32))
                 (BExp_Const (Imm32 309w))];
@@ -2268,7 +2357,7 @@ BDF7 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[247w; 189w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "BDF7";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "BDF7"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -2336,7 +2425,7 @@ BDF7 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[2w; 50w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "3202";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "3202"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_nzcv_ADD_C (BExp_Den (BVar "R2" (BType_Imm Bit32)))
@@ -2364,7 +2453,7 @@ BDF7 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[92w; 99w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "635C";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "635C"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -2388,7 +2477,7 @@ BDF7 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[232w; 112w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "70E8";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "70E8"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_unchanged_mem_interval_distinct Bit32 0 65536
@@ -2410,7 +2499,7 @@ B285 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[133w; 178w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "B285";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "B285"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "R5" (BType_Imm Bit32))
                 (BExp_Cast BIExp_UnsignedCast
@@ -2424,7 +2513,7 @@ B285 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[40w; 128w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "8028";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "8028"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 1
@@ -2451,7 +2540,7 @@ A1BC @ 0x130 - FAILED
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[130w; 65w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "4182";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "4182"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "tmp_PSR_C" BType_Bool)
                 (BExp_ADD_WITH_CARRY_C
@@ -2494,7 +2583,7 @@ A1BC @ 0x130 - FAILED
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[0w; 16w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "1000";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "1000"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_MSB Bit32 (BExp_Den (BVar "R0" (BType_Imm Bit32))));
@@ -2520,7 +2609,7 @@ A1BC @ 0x130 - FAILED
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[136w; 64w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "4088";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "4088"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assign (BVar "PSR_C" BType_Bool)
                 (BExp_IfThenElse
@@ -2566,7 +2655,7 @@ B5F7 @ 0x130 - OK
 |- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
      (304w,[247w; 181w])
      (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "B5F7";
+        [<|bb_label := BL_Address_HC (Imm32 304w) "B5F7"; bb_atomic := F;
            bb_statements :=
              [BStmt_Assert
                 (BExp_Aligned Bit32 2
@@ -2638,67 +2727,3 @@ B5F7 @ 0x130 - OK
                 (BExp_Den (BVar "tmp_SP_process" (BType_Imm Bit32)))];
            bb_last_statement :=
              BStmt_Jmp (BLE_Label (BL_Address (Imm32 306w)))|>])
-
-C29C @ 0x130 - OK
- []
-|- bir_is_lifted_inst_prog (m0_bmr (F,T)) (Imm32 304w) (WI_end 0w 0x10000w)
-     (304w,[156w; 194w])
-     (BirProgram
-        [<|bb_label := BL_Address_HC (Imm32 304w) "C29C";
-           bb_statements :=
-             [BStmt_Assert
-                (BExp_Aligned Bit32 2
-                   (BExp_Den (BVar "R2" (BType_Imm Bit32))));
-              BStmt_Assert
-                (BExp_unchanged_mem_interval_distinct Bit32 0 65536
-                   (BExp_Den (BVar "R2" (BType_Imm Bit32))) 16);
-              BStmt_Assign (BVar "tmp_R2" (BType_Imm Bit32))
-                (BExp_BinExp BIExp_Plus
-                   (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                   (BExp_Const (Imm32 16w)));
-              BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
-                (BExp_Store
-                   (BExp_Store
-                      (BExp_Store
-                         (BExp_Store
-                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            BEnd_LittleEndian
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
-                         (BExp_BinExp BIExp_Plus
-                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                            (BExp_Const (Imm32 4w))) BEnd_LittleEndian
-                         (BExp_Den (BVar "R3" (BType_Imm Bit32))))
-                      (BExp_BinExp BIExp_Plus
-                         (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                         (BExp_Const (Imm32 8w))) BEnd_LittleEndian
-                      (BExp_Den (BVar "R4" (BType_Imm Bit32))))
-                   (BExp_BinExp BIExp_Plus
-                      (BExp_Den (BVar "R2" (BType_Imm Bit32)))
-                      (BExp_Const (Imm32 12w))) BEnd_LittleEndian
-                   (BExp_Den (BVar "R7" (BType_Imm Bit32))));
-              BStmt_Assign (BVar "R2" (BType_Imm Bit32))
-                (BExp_Den (BVar "tmp_R2" (BType_Imm Bit32)))];
-           bb_last_statement :=
-             BStmt_Jmp (BLE_Label (BL_Address (Imm32 306w)))|>])
-
-
-
-
-SUMMARY FAILING HEXCODES M0 LittleEnd, Process SP
-
-
-Instructions FAILED: 2/111
-
-   "A1BC" (* bmr_step_hex failed *),
-   "DFB8" (* bmr_step_hex failed *)
-]
-
-Instructions FIXED: 0
-
-
-
-Instructions BROKEN: 0
-
-
-

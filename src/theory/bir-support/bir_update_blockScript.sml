@@ -758,6 +758,7 @@ SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++holBACore_ss) []);
 val bir_update_block_def = Define `bir_update_block l eup updates =
   (<|
     bb_label          := l;
+    bb_atomic         := F;
     bb_statements     := bir_update_blockE_INIT eup ++ bir_update_blockB updates;
     bb_last_statement := bir_update_blockE_FINAL eup|>)`;
 
@@ -1121,6 +1122,7 @@ SIMP_TAC arith_ss []);
 val bir_update_assert_block_def = Define `bir_update_assert_block l al eup updates =
   (<|
     bb_label          := l;
+    bb_atomic         := F;
     bb_statements     := bir_assert_block al ++ bir_update_blockE_INIT eup ++ bir_update_blockB updates;
     bb_last_statement := bir_update_blockE_FINAL eup|>)`;
 

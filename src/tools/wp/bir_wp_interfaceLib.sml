@@ -105,7 +105,7 @@ fun init_wps_fmap label_list postcond postcond_exp_from_label =
   end
 ;
 
-(*
+(* DEBUG:
 val ending_lam_disj = ending_set;
 val ending_lam_disj_to_sml_list = ending_set_to_sml_list;
 *)
