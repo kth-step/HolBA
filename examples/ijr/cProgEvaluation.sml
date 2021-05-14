@@ -59,7 +59,7 @@ val composition_args = gen_args (add_two_ret_args @
 val transfer_start = timer_start ()
 val (cprog'_tm, cprog'_def, cprog'_thm) = 
   resolve_indirect_jumps("resolved_composition_prog", “bir_composition_prog”, composition_args)
-val _ = print ("Transfer time: " ^ timer_stop_str transfer_start ^ "\n")
+val _ = print ("Resolve time: " ^ timer_stop_str transfer_start ^ "\n")
 
 val blocks' = (fst o dest_list o dest_BirProgram o eval) cprog'_tm
 val endings' = List.map (fn block_tm => eval “ ^block_tm.bb_last_statement”) blocks'
