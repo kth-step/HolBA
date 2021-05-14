@@ -826,12 +826,15 @@ fun is_fence hex_code =
   in
     if opcode = "0001111" (* opcode MISC-MEM *)
     then
-      (* TODO: Check fm field *)
-      if (funct3 = "000")
+      if (fm = "0000") orelse ((fm = "1000") andalso
+                               (pr = "1") andalso
+                               (pw = "1") andalso
+                               (sr = "1") andalso
+                               (sw = "1"))
       then true
       else if (funct3 = "001")
       then raise ERR "is_fence" ("Fence instruction "^hex_code^" is unsupported FENCE.I")
-      else raise ERR "is_fence" ("Fence instruction "^hex_code^" is unknown fence type (check funct3 bits)")
+      else raise ERR "is_fence" ("Fence instruction "^hex_code^" is unknown fence type")
     else false
   end
 
@@ -850,26 +853,33 @@ fun is_atomic hex_code =
   end
 ;
 
-(* Gets the arguments for mk_BStmt_Fence from hex-format instruction. *)
-fun get_fence_args hex_code =
+(* Gets the Fence bstmts from hex-format instruction. *)
+fun get_fence_bstmts hex_code =
   let
-    val (_, pi, po, pr, pw, si, so, sr, sw, _, _, _, _) = parse_fence hex_code
+    val (fm, pi, po, pr, pw, si, so, sr, sw, _, _, _, _) = parse_fence hex_code
   in
-    (if pr = "1"
-     then if pw = "1"
-	  then BM_ReadWrite_tm
-	  else BM_Read_tm
-     else if pw = "1"
-	  then BM_Write_tm
-	  else raise ERR "get_fence_args" ("Fence instruction "^hex_code^" has no predecessor R/W bits set"),
-     if sr = "1"
-     then if sw = "1"
-	  then BM_ReadWrite_tm
-	  else BM_Read_tm
-     else if sw = "1"
-	  then BM_Write_tm
-	  else raise ERR "get_fence_args" ("Fence instruction "^hex_code^" has no successor R/W bits set")
-       )
+    if (fm = "0000")
+    then
+      [mk_BStmt_Fence
+	 (if pr = "1"
+	  then if pw = "1"
+	       then BM_ReadWrite_tm
+	       else BM_Read_tm
+	  else if pw = "1"
+	       then BM_Write_tm
+	       else raise ERR "get_fence_args" ("Fence instruction "^hex_code^" has no predecessor R/W bits set"),
+	  if sr = "1"
+	  then if sw = "1"
+	       then BM_ReadWrite_tm
+	       else BM_Read_tm
+	  else if sw = "1"
+	       then BM_Write_tm
+	       else raise ERR "get_fence_args" ("Fence instruction "^hex_code^" has no successor R/W bits set")
+	    )]
+    else if (fm = "1000")
+    then (* TSO fence *)
+      [mk_BStmt_Fence (BM_Read_tm, BM_ReadWrite_tm), mk_BStmt_Fence (BM_Write_tm, BM_Write_tm)]
+    else raise ERR "get_fence_args" ("Fence instruction "^hex_code^" has unknown fm bits: "^fm)
   end
 
 (* Construct the name of a RISC-V GPR (see bir_lifting_machinesLib_instances) *)
@@ -1070,6 +1080,7 @@ raise ERR "get_atomic_bstmts" ("Atomic instruction "^hex_code^" has unsupported 
     else raise ERR "get_atomic_bstmts" ("Atomic instruction "^hex_code^" has unsupported funct3 bits: "^funct3)
   end
 
+(* Generic function for lifting an instruction to custom BIR basic statement list using cheat *)
 fun lift_by_cheat mu_b mu_e pc hex_code is_atomic_tm bstmt_list =
   let
     val riscv_bmr_tm = ``riscv_bmr``; (* TODO: Obtain this in a smarter way *)
@@ -1103,7 +1114,11 @@ fun lift_by_cheat mu_b mu_e pc hex_code is_atomic_tm bstmt_list =
 
 (* Lifts a fence instruction by producing a cheat. *)
 fun lift_fence mu_b mu_e pc hex_code =
-  lift_by_cheat mu_b mu_e pc hex_code F [mk_BStmt_Fence (get_fence_args hex_code)]
+  let
+    val bstmt_list = get_fence_bstmts hex_code
+  in
+    lift_by_cheat mu_b mu_e pc hex_code T bstmt_list
+  end
 
 (* Lifts an atomic instruction by producing a cheat. *)
 fun lift_atomic mu_b mu_e pc hex_code =
