@@ -15,6 +15,7 @@ BirProgram
        [<|bb_label :=
             BL_Address_HC (Imm64 (0w :word64))
               "F9400611 (ldr x17, [x16, #8])";
+          bb_atomic := F;
           bb_statements :=
             [(BStmt_Assert
                 (BExp_Aligned Bit64 (3 :num)
@@ -31,6 +32,7 @@ BirProgram
         <|bb_label :=
             BL_Address_HC (Imm64 (4w :word64))
               "F9400899 (ldr x25, [x4, #16])";
+          bb_atomic := F;
           bb_statements :=
             [(BStmt_Assert
                 (BExp_Aligned Bit64 (3 :num)
@@ -46,6 +48,7 @@ BirProgram
             BStmt_Jmp (BLE_Label (BL_Address (Imm64 (8w :word64))))|>;
         <|bb_label :=
             BL_Address_HC (Imm64 (8w :word64)) "EB1C015F (cmp x10, x28)";
+          bb_atomic := F;
           bb_statements :=
             [(BStmt_Assign (BVar "ProcState_C" BType_Bool)
                 (BExp_nzcv_SUB_C (BExp_Den (BVar "R10" (BType_Imm Bit64)))
@@ -70,6 +73,7 @@ BirProgram
         <|bb_label :=
             BL_Address_HC (Imm64 (12w :word64))
               "54000042 (b.cs 14 <.text+0x14>  // b.hs, b.nlast)";
+          bb_atomic := F;
           bb_statements := ([] :bir_val_t bir_stmt_basic_t list );
           bb_last_statement :=
             BStmt_CJmp (BExp_Den (BVar "ProcState_C" BType_Bool))
@@ -78,6 +82,7 @@ BirProgram
         <|bb_label :=
             BL_Address_HC (Imm64 (16w :word64))
               "F940075B (ldr x27, [x26, #8])";
+          bb_atomic := F;
           bb_statements :=
             [(BStmt_Assert
                 (BExp_Aligned Bit64 (3 :num)
@@ -92,6 +97,7 @@ BirProgram
           bb_last_statement :=
             BStmt_Jmp (BLE_Label (BL_Address (Imm64 (20w :word64))))|>;
         <|bb_label := BL_Address (Imm64 (20w :word64));
+          bb_atomic := F;
           bb_statements := ([] :bir_val_t bir_stmt_basic_t list );
           bb_last_statement := BStmt_Halt (BExp_Const (Imm32 (0w :word32)))|>]
 :bir_val_t bir_program_t

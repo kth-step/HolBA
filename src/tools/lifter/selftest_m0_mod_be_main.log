@@ -3598,3 +3598,55 @@ B5F7 @ 0x130 - OK
                 (BExp_Den (BVar "tmp_SP_main" (BType_Imm Bit32)))];
            bb_last_statement :=
              BStmt_Jmp (BLE_Label (BL_Address (Imm32 306w)))|>])
+
+C29C @ 0x130 - OK
+ []
+|- bir_is_lifted_inst_prog (m0_mod_bmr (T,F)) (Imm32 304w)
+     (WI_end 0w 0x10000w) (304w,[194w; 156w])
+     (BirProgram
+        [<|bb_label := BL_Address_HC (Imm32 304w) "C29C"; bb_atomic := F;
+           bb_statements :=
+             [BStmt_Assert
+                (BExp_BinPred BIExp_LessOrEqual
+                   (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+                   (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFAw)));
+              BStmt_Assert
+                (BExp_Aligned Bit32 2
+                   (BExp_Den (BVar "R2" (BType_Imm Bit32))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit32 0 65536
+                   (BExp_Den (BVar "R2" (BType_Imm Bit32))) 16);
+              BStmt_Assign (BVar "tmp_R2" (BType_Imm Bit32))
+                (BExp_BinExp BIExp_Plus
+                   (BExp_Den (BVar "R2" (BType_Imm Bit32)))
+                   (BExp_Const (Imm32 16w)));
+              BStmt_Assign (BVar "countw" (BType_Imm Bit64))
+                (BExp_BinExp BIExp_Plus
+                   (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+                   (BExp_Const (Imm64 5w)));
+              BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
+                (BExp_Store
+                   (BExp_Store
+                      (BExp_Store
+                         (BExp_Store
+                            (BExp_Den (BVar "MEM" (BType_Mem Bit32 Bit8)))
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))
+                            BEnd_BigEndian
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32))))
+                         (BExp_BinExp BIExp_Plus
+                            (BExp_Den (BVar "R2" (BType_Imm Bit32)))
+                            (BExp_Const (Imm32 4w))) BEnd_BigEndian
+                         (BExp_Den (BVar "R3" (BType_Imm Bit32))))
+                      (BExp_BinExp BIExp_Plus
+                         (BExp_Den (BVar "R2" (BType_Imm Bit32)))
+                         (BExp_Const (Imm32 8w))) BEnd_BigEndian
+                      (BExp_Den (BVar "R4" (BType_Imm Bit32))))
+                   (BExp_BinExp BIExp_Plus
+                      (BExp_Den (BVar "R2" (BType_Imm Bit32)))
+                      (BExp_Const (Imm32 12w))) BEnd_BigEndian
+                   (BExp_Den (BVar "R7" (BType_Imm Bit32))));
+              BStmt_Assign (BVar "R2" (BType_Imm Bit32))
+                (BExp_Den (BVar "tmp_R2" (BType_Imm Bit32)))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm32 306w)))|>])
+

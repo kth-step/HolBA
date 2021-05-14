@@ -28,6 +28,7 @@ val bir_blocks = [
   (Arbnum.fromHexString "8166",
     ``<|bb_label :=
          BL_Address_HC (Imm32 (33126w :word32)) "E004 (b.n 8172 <main+0x6e>)";
+       bb_atomic := F;
        bb_statements := ([] :'observation_type bir_stmt_basic_t list);
        bb_last_statement :=
          BStmt_Jmp (BLE_Label (BL_Address (Imm32 (33138w :word32))))|>``)
