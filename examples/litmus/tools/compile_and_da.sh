@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source ../../config.env.sh
+DIR=$(dirname "${BASH_SOURCE[0]}")
+source $DIR/../../../config.env.sh
 AS=${HOLBA_GCC_RISCV64_CROSS}as
 OBJDUMP=${HOLBA_GCC_RISCV64_CROSS}objdump
 

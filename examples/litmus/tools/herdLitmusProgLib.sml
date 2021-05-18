@@ -13,10 +13,12 @@ open HolKernel Parse bossLib boolLib
 open bir_lifter_interfaceLib
 open UtilLib
 
+val SOURCE_DIR = valOf (Posix.ProcEnv.getenv ("PWD"))
+
 (* compile and disassemble the program, returns the filename of the .da file *)
 fun compile_and_disassemble prog =
     let
-	val proc = Unix.execute("./compile_and_da.sh", [])
+	val proc = Unix.execute(SOURCE_DIR ^ "/compile_and_da.sh", [])
 	val (inStream, outStream) = Unix.streamsOf proc
     in
 	TextIO.output(outStream, prog) before TextIO.closeOut outStream;

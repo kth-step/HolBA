@@ -31,8 +31,10 @@ type litmus = herdLitmusLib.litmus
 val lift_herd_litmus = herdLitmusLib.parse
 
 fun save_litmus (filename,l:litmus) =
-
     let
+	(* Set line width temporarily to avoid newlines in serialised terms *)
+	val tmp = !Globals.linewidth
+	val _ = Globals.linewidth := 99999999
 	val json = OBJECT [
 		("arch", STRING (#arch l)),
 		("name", STRING (#name l)),
@@ -40,8 +42,10 @@ fun save_litmus (filename,l:litmus) =
 		("inits", ARRAY (map (STRING o term_to_string) (op:: (#inits l)))),
 		("progs", ARRAY (map (STRING o term_to_string) (#progs l))),
 		("final", (STRING o term_to_string) (#final l))]
+	val _ = Globals.linewidth := tmp
+	val serialised = Json.serialise json
     in
-	bir_fileLib.write_to_file filename (Json.serialise json)
+	bir_fileLib.write_to_file filename (serialised)
     end
 
 fun load_litmus (filename: string) =
@@ -68,3 +72,8 @@ fun load_litmus (filename: string) =
 	} : litmus
     end
 end
+
+(*
+open litmusInterfaceLib
+val x = lift_herd_litmus "S.litmus"
+*) 
