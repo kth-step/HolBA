@@ -33,15 +33,17 @@ val tests = [
   (* No-op program *)
   ("noop_prog",
     [
-      (blabel_str "prologue", [], (bjmp o belabel_str) "epilogue"),
-      (blabel_str "epilogue", [], (bhalt o bconst32) 0)
+      (blabel_str "prologue", F, [], (bjmp o belabel_str) "epilogue"),
+      (blabel_str "epilogue", F, [], (bhalt o bconst32) 0)
     ],
     ``BirProgram [
         <|bb_label := BL_Label "prologue";
+          bb_atomic := F;
           bb_statements := [];
           bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "epilogue"))
         |>;
         <|bb_label := BL_Label "epilogue";
+          bb_atomic := F;
           bb_statements := [];
           bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0w))
         |>
@@ -49,8 +51,8 @@ val tests = [
   (* Program doing simple arithmetic *)
   ("simple_arith_prog",
     [
-      (blabel_str "prologue", [], (bjmp o belabel_str) "plus_mult"),
-      (blabel_str "plus_mult", [
+      (blabel_str "prologue", F, [], (bjmp o belabel_str) "plus_mult"),
+      (blabel_str "plus_mult", F, [
         bassign (bvarimm 32 "x", bplusl [
           bconstii 32 0,
           bconstii 32 1,
@@ -59,7 +61,7 @@ val tests = [
           bconstii 32 4
         ])
       ], (bjmp o belabel_str) "minus_div"),
-      (blabel_str "minus_div", [
+      (blabel_str "minus_div", F, [
         bassign (bvarimm 32 "y", bminusl [
           bden (bvarimm 32 "x"),
           bconstii 32 1,
@@ -68,14 +70,16 @@ val tests = [
           bconstii 32 4
         ])
       ], (bjmp o belabel_str) "epilogue"),
-      (blabel_str "epilogue", [], (bhalt o bconst32) 0)
+      (blabel_str "epilogue", F, [], (bhalt o bconst32) 0)
     ],
     ``BirProgram [
         <|bb_label := BL_Label "prologue";
+          bb_atomic := F;
           bb_statements := [];
           bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "plus_mult"))
         |>;
         <|bb_label := BL_Label "plus_mult";
+          bb_atomic := F;
           bb_statements := [
             BStmt_Assign (BVar "x" (BType_Imm Bit32))
              (BExp_BinExp BIExp_Plus (BExp_Const (Imm32 (0w :word32)))
@@ -91,6 +95,7 @@ val tests = [
           bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "minus_div"))
         |>;
         <|bb_label := BL_Label "minus_div";
+          bb_atomic := F;
           bb_statements := [
             BStmt_Assign (BVar "y" (BType_Imm Bit32))
              (BExp_BinExp BIExp_Minus (BExp_Den (BVar "x" (BType_Imm Bit32)))
@@ -108,6 +113,7 @@ val tests = [
           bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "epilogue"))
         |>;
         <|bb_label := BL_Label "epilogue";
+          bb_atomic := F;
           bb_statements := [];
           bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0w))
         |>

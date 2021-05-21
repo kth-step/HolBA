@@ -14,6 +14,7 @@ val prog_3 = ``
 BirProgram
        [<|bb_label :=
             BL_Address_HC (Imm64 (0w :word64)) "EB02003F (cmp x1, x2)";
+          bb_atomic := F;
           bb_statements :=
             [(BStmt_Assign (BVar "ProcState_C" BType_Bool)
                 (BExp_nzcv_SUB_C (BExp_Den (BVar "R1" (BType_Imm Bit64)))
@@ -38,6 +39,7 @@ BirProgram
         <|bb_label :=
             BL_Address_HC (Imm64 (4w :word64))
               "54000082 (b.cs 14 <.text+0x14>  // b.hs, b.nlast)";
+          bb_atomic := F;
           bb_statements := ([] :bir_val_t bir_stmt_basic_t list );
           bb_last_statement :=
             BStmt_CJmp (BExp_Den (BVar "ProcState_C" BType_Bool))
@@ -45,6 +47,7 @@ BirProgram
               (BLE_Label (BL_Address (Imm64 (8w :word64))))|>;
         <|bb_label :=
             BL_Address_HC (Imm64 (8w :word64)) "F8616864 (ldr x4, [x3, x1])";
+          bb_atomic := F;
           bb_statements :=
             [(BStmt_Assert
                 (BExp_Aligned Bit64 (3 :num)
@@ -62,6 +65,7 @@ BirProgram
             BStmt_Jmp (BLE_Label (BL_Address (Imm64 (12w :word64))))|>;
         <|bb_label :=
             BL_Address_HC (Imm64 (12w :word64)) "D37FF884 (lsl x4, x4, #1)";
+          bb_atomic := F;
           bb_statements :=
             [(BStmt_Assign (BVar "R4" (BType_Imm Bit64))
                 (BExp_BinExp BIExp_And
@@ -74,6 +78,7 @@ BirProgram
             BStmt_Jmp (BLE_Label (BL_Address (Imm64 (16w :word64))))|>;
         <|bb_label :=
             BL_Address_HC (Imm64 (16w :word64)) "F86468A6 (ldr x6, [x5, x4])";
+          bb_atomic := F;
           bb_statements :=
             [(BStmt_Assert
                 (BExp_Aligned Bit64 (3 :num)
@@ -90,6 +95,7 @@ BirProgram
           bb_last_statement :=
             BStmt_Jmp (BLE_Label (BL_Address (Imm64 (20w :word64))))|>;
         <|bb_label := BL_Address (Imm64 (20w :word64));
+          bb_atomic := F;
           bb_statements := ([] :bir_val_t bir_stmt_basic_t list );
           bb_last_statement := BStmt_Halt (BExp_Const (Imm32 (0w :word32)))|>]
 :bir_val_t bir_program_t

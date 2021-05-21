@@ -212,15 +212,21 @@ val _ = print_msg "\n";
 
 (* Memory ordering isntructions (opcode MISC-MEM) *)
 (* NOTE: This uses the Multicore extension *)
-(* TODO: Model FENCE.TSO as two fences? R/RW and W/W *)
 (*   0000  0011  0011   00010  000  00001  0001111
 
 val _ = fail_with_msg "FENCE not yet supported by stepLib";
 
-val _ = riscv_test_hex_mc "331008F";
-val fence_res = riscv_test_hex_mc "331008F";
+val _ = riscv_test_hex_mc "0331008F";
+val fence_res = riscv_test_hex_mc "0331008F";
 *)
-val _ = riscv_test_hex_print_asm_mc "FENCE x1, x2, rw, rw" "331008F";
+val _ = riscv_test_hex_print_asm_mc "FENCE x1, x2, rw, rw" "0331008F";
+
+(*   1000  0011  0011   00010  000  00001  0001111
+
+val _ = riscv_test_hex_mc "8331008F";
+val fence_res = riscv_test_hex_mc "8331008F";
+*)
+val _ = riscv_test_hex_print_asm_mc "FENCE.TSO" "8331008F";
 
 (* Environment Call and Breakpoints (opcode SYSTEM) *)
 (*

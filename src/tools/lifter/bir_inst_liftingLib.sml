@@ -1211,7 +1211,6 @@ fun get_patched_step_hex ms_v hex_code =
        handle HOL_ERR _ => raiseErr "computing al_step and ms' failed";
 
      (* next compute imm_ups *)
-     (* Gives lots of stuff... Is this correct? *)
      val (imm_ups_t, imm_ups_thm) = compute_imm_ups ms'_t
        handle HOL_ERR _ => raiseErr "computing imm_ups failed";
 
@@ -1229,7 +1228,6 @@ fun get_patched_step_hex ms_v hex_code =
 
      (* Now we need to compute the updates. This involves lifting of all computed immediates
         in imm_ups and checking whether the vars don't interfere with each other. *)
-     (* TODO: Here, something fails... *)
      val (updates_t, eup_temp_t, updates_THM) = compute_updates mem_up_t imm_ups_t eup_t
        handle HOL_ERR _ => raiseErr "computing updates failed";
 
@@ -1411,7 +1409,8 @@ fun get_patched_step_hex ms_v hex_code =
          raise bir_inst_liftingAuxExn (BILED_msg ("preprocessing next theorems failed"));
 
      val sub_block_thms = map (lift_single_block inst_lift_thm0 bir_is_lifted_inst_block_COMPUTE_precond_tm0 mu_thm) sub_block_work_list
-
+     (* TODO: For the case of multicore instructions which have sequential behaviour defined in L3 and step library,
+      *       we would like verified transformation of sub_block_thms to the desired multicore semantics here  *)
      val prog_thm = merge_block_thms sub_block_thms handle HOL_ERR _ =>
          raise (bir_inst_liftingAuxExn (BILED_msg "merging block theorems failed"));
   in

@@ -26,27 +26,27 @@ val _ = Feedback.set_trace "Define.storage_message" 1;
 (* BIR program *)
 val _ = print "Defining BIR program...\n";
 val cjmp_prog_def = bdefprog_list alpha "cjmp_prog" [
-  (blabel_str "entry", [], (bjmp o belabel_str) "assign_x_1"),
+  (blabel_str "entry", F, [], (bjmp o belabel_str) "assign_x_1"),
 
-  (blabel_str "assign_x_1", [
+  (blabel_str "assign_x_1", F, [
     bassign (bvarimm32 "x", bconst32 1)
   ], (bjmp o belabel_str) "cjmp"),
 
-  (blabel_str "cjmp", [],
+  (blabel_str "cjmp", F, [],
     bcjmp (beq ((bden o bvarimm32) "x", bconst32 1),
            belabel_str "assign_y_100",
            belabel_str "assign_y_200")),
 
-  (blabel_str "assign_y_100", [
+  (blabel_str "assign_y_100", F, [
     bassign (bvarimm32 "y", bconst32 100)
   ], (bjmp o belabel_str) "epilogue"),
 
-  (blabel_str "assign_y_200", [
+  (blabel_str "assign_y_200", F, [
     bassign (bvarimm32 "y", bconst32 200)
   ], (bjmp o belabel_str) "epilogue"),
 
-  (blabel_str "epilogue", [], (bjmp o belabel_str) "end"),
-  (blabel_str "end", [], bhalt (bconst32 0))
+  (blabel_str "epilogue", F, [], (bjmp o belabel_str) "end"),
+  (blabel_str "end", F, [], bhalt (bconst32 0))
 ];
 val _ = (Hol_pp.print_thm cjmp_prog_def; print "\n");
 val _ = print "Done!\n";

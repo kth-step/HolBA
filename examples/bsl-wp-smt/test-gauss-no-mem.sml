@@ -86,11 +86,11 @@ val s3_thm =
   let
     (* S3 *)
     val s3_prog_def = bdefprog_list alpha "s3_prog" [
-      (blabel_str "entry", [], (bjmp o belabel_str) "ret_eq_0"),
-      (blabel_str "ret_eq_0", [
+      (blabel_str "entry", F, [], (bjmp o belabel_str) "ret_eq_0"),
+      (blabel_str "ret_eq_0", F, [
         bassign (bvarimm16 "ret", bconst16 0)
       ], (bjmp o belabel_str) "end"),
-      (blabel_str "end", [], bhalt (bconst32 0))
+      (blabel_str "end", F, [], bhalt (bconst32 0))
     ];
 
     (* prog + P + Q => ``P ==> WP`` *)
@@ -125,14 +125,14 @@ val s2_thm =
   let
     (* S2 *)
     val s2_prog_def = bdefprog_list alpha "s2_prog" [
-      (blabel_str "entry", [], (bjmp o belabel_str) "ret_add_x"),
-      (blabel_str "ret_add_x", [
+      (blabel_str "entry", F, [], (bjmp o belabel_str) "ret_add_x"),
+      (blabel_str "ret_add_x", F, [
         bassign (bvarimm16 "ret", bplus ((bden o bvarimm16) "ret", (bden o bvarimm16) "x"))
       ], (bjmp o belabel_str) "x_dec"),
-      (blabel_str "x_dec", [
+      (blabel_str "x_dec", F, [
         bassign (bvarimm16 "x", bminus ((bden o bvarimm16) "x", bconst16 1))
       ], (bjmp o belabel_str) "end"),
-      (blabel_str "end", [], bhalt (bconst32 0))
+      (blabel_str "end", F, [], bhalt (bconst32 0))
     ];
     (* prog + P + Q => ``P ==> WP`` *)
     val p_imp_wp_bir_tm = easy_noproof_wpLib.compute_p_imp_wp_tm "S2"

@@ -8,6 +8,7 @@ val bprog_is_even_odd_def = Define `
 [
 (* is_even *)
     <|bb_label := BL_Address (Imm32 0x000w);
+      bb_atomic := F;
       bb_statements :=
         [];
       bb_last_statement := BStmt_CJmp (BExp_BinPred BIExp_Equal
@@ -16,6 +17,7 @@ val bprog_is_even_odd_def = Define `
                                       (BLE_Label (BL_Address (Imm32 0x200w)))
                                       (BLE_Label (BL_Address (Imm32 0x004w)))|>;
     <|bb_label := BL_Address (Imm32 0x004w);
+      bb_atomic := F;
       bb_statements :=
         [BStmt_Assign (BVar "n" (BType_Imm Bit64))
                       (BExp_BinExp BIExp_Minus (BExp_Den (BVar "n" (BType_Imm Bit64))) (BExp_Const (Imm64 1w)));
@@ -25,6 +27,7 @@ val bprog_is_even_odd_def = Define `
 
 (* is_odd *)
     <|bb_label := BL_Address (Imm32 0x100w);
+      bb_atomic := F;
       bb_statements :=
         [];
       bb_last_statement := BStmt_CJmp (BExp_BinPred BIExp_Equal
@@ -33,6 +36,7 @@ val bprog_is_even_odd_def = Define `
                                       (BLE_Label (BL_Address (Imm32 0x204w)))
                                       (BLE_Label (BL_Address (Imm32 0x104w)))|>;
     <|bb_label := BL_Address (Imm32 0x104w);
+      bb_atomic := F;
       bb_statements :=
         [BStmt_Assign (BVar "n" (BType_Imm Bit64))
                       (BExp_BinExp BIExp_Minus (BExp_Den (BVar "n" (BType_Imm Bit64))) (BExp_Const (Imm64 1w)));
@@ -42,6 +46,7 @@ val bprog_is_even_odd_def = Define `
 
 (* yes *)
     <|bb_label := BL_Address (Imm32 0x200w);
+      bb_atomic := F;
       bb_statements :=
         [BStmt_Assign (BVar "r" (BType_Imm Bit1))
                       (BExp_Const (Imm1 1w))
@@ -51,6 +56,7 @@ val bprog_is_even_odd_def = Define `
 
 (* no *)
     <|bb_label := BL_Address (Imm32 0x204w);
+      bb_atomic := F;
       bb_statements :=
         [BStmt_Assign (BVar "r" (BType_Imm Bit1))
                       (BExp_Const (Imm1 0w))

@@ -12,6 +12,7 @@ val _ = print "Loading program... ";
 val prog_ldld_w_obs = ("prog_ldld_w_obs", ``
      BirProgram
       [<|bb_label := BL_Address_HC (Imm64 0w) "F9400023 (ldr x3, [x1])";
+         bb_atomic := F;
          bb_statements :=
            [BStmt_Assert
               (BExp_Aligned Bit64 3 (BExp_Den (BVar "R1" (BType_Imm Bit64))));
@@ -27,6 +28,7 @@ val prog_ldld_w_obs = ("prog_ldld_w_obs", ``
                           (HD)];
          bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 4w)))|>;
        <|bb_label := BL_Address_HC (Imm64 4w) "F9400044 (ldr x4, [x2])";
+         bb_atomic := F;
          bb_statements :=
            [BStmt_Assert
               (BExp_Aligned Bit64 3 (BExp_Den (BVar "R2" (BType_Imm Bit64))));

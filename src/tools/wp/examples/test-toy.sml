@@ -17,6 +17,7 @@ val aes_program_def = Define `
               [<|bb_label :=
                    BL_Address_HC (Imm64 0x400570w)
                      "D101C3FF (sub sp, sp, #0x70)";
+                 bb_atomic := F;
                  bb_statements :=
                    [BStmt_Assign (BVar "SP_EL0" (BType_Imm Bit64))
                       (BExp_BinExp BIExp_Minus
@@ -27,6 +28,7 @@ val aes_program_def = Define `
                <|bb_label :=
                    BL_Address_HC (Imm64 0x400574w)
                      "F9000FE0 (str x0, [sp,#24])";
+                 bb_atomic := F;
                  bb_statements :=
                    [BStmt_Assert
                       (BExp_Aligned Bit64 3
@@ -49,6 +51,7 @@ val aes_program_def = Define `
                <|bb_label :=
                    BL_Address_HC (Imm64 0x400578w)
                      "B90017E1 (str w1, [sp,#20])";
+                 bb_atomic := F;
                  bb_statements :=
                    [BStmt_Assert
                       (BExp_Aligned Bit64 2

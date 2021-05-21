@@ -31,7 +31,7 @@ fun critical_section core =
 fun petersons core =
     bdefprog_list (Type`:'a`) ("p_"^PolyML.makestring core)
                   [(blabel_str ("P"^PolyML.makestring core),
-
+                   F,
                  [bstorevar "flag" core btrue
                  ,bstorevar "turn" 0 (bconst1 (other_core core))
                  ],
@@ -39,6 +39,7 @@ fun petersons core =
                  (bjmp o belabel_str) "loop")
 
                   ,(blabel_str "loop",
+                   F,
                     [bassign (bvarimm8 "f", bloadvar "flag" (other_core core))
                     ,bassign (bvarimm8 "t", bloadvar "turn" 0)
                     ,bassign (bvarimm 1 "cond",
@@ -55,10 +56,12 @@ fun petersons core =
                            belabel_str "critical"))
 
                   ,(blabel_str "critical",
+                    F,
                     [critical_section core],
                     (bjmp o belabel_str) "end")
 
                   ,(blabel_str "end",
+                    F,
                     [bstorevar "flag" core bfalse],
                     (bhalt o bconst32) 0)];
 (* TODO: Expand upon the above with something like the below...
