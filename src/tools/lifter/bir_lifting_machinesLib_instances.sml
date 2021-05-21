@@ -4,13 +4,18 @@ struct
 (* For compilation: *)
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 (* Local theories: *)
-open bir_exp_liftingLib bir_lifting_machinesTheory
+open bir_lifting_machinesTheory
      bir_nzcv_introsTheory bir_arm8_extrasTheory bir_m0_extrasTheory
-     bir_riscv_extrasTheory
+     bir_riscv_extrasTheory;
+open bslSyntax;
+open bir_program_labelsSyntax bir_programSyntax
+     bir_valuesSyntax bir_immSyntax bir_exp_immSyntax
+     bir_interval_expSyntax;
 (* Local function libraries: *)
-open bir_lifting_machinesLib;
+open bir_lifting_machinesLib bir_inst_liftingHelpersLib
+     bir_exp_liftingLib;
 (* Function libraries from examples/l3-machine-code: *)
-open arm8_stepLib m0_stepLib riscv_stepLib
+open arm8_stepLib m0_stepLib riscv_stepLib;
 
 (* Abbreviations used in this file:
  * BMR: BIR machine record. *)
@@ -214,6 +219,7 @@ val arm8_bmr_rec : bmr_rec = {
   bmr_dest_mem             = arm8_dest_mem,
   bmr_extra_ss             = arm8_extra_ss,
   bmr_step_hex             = arm8_step_hex',
+  bmr_mc_lift_instr           = NONE,
   bmr_mk_data_mm           = arm8_mk_data_mm,
   bmr_hex_code_size        = (fn hc => Arbnum.fromInt ((String.size hc) div 2)),
   bmr_ihex_param           = SOME (4, true)
@@ -423,6 +429,7 @@ in
   bmr_dest_mem             = m0_dest_mem,
   bmr_extra_ss             = m0_extra_ss,
   bmr_step_hex             = m0_step_hex' (endian_fl, sel_fl),
+  bmr_mc_lift_instr           = NONE,
   bmr_mk_data_mm           = m0_mk_data_mm endian_fl,
   bmr_hex_code_size        = (fn hc => Arbnum.fromInt ((String.size hc) div 2)),
   bmr_ihex_param           = NONE
@@ -592,6 +599,7 @@ in
   bmr_dest_mem             = m0_dest_mem,
   bmr_extra_ss             = m0_mod_extra_ss,
   bmr_step_hex             = m0_mod_step_hex' (endian_fl, sel_fl),
+  bmr_mc_lift_instr           = NONE,
   bmr_mk_data_mm           = m0_mod_mk_data_mm endian_fl,
   bmr_hex_code_size        = (fn hc => Arbnum.fromInt ((String.size hc) div 2)),
   bmr_ihex_param           = NONE
@@ -742,6 +750,393 @@ in
   end
 end;
 
+(* RISC-V Multicore wrapper *)
+local
+
+(* Auxiliary function to obtain a padded binary string from a hex instruction. *)
+local
+fun pad_zero' 0   str = str
+  | pad_zero' len str = pad_zero' (len-1) ("0"^str)
+in
+fun hex_to_bin_pad_zero len str =
+  let
+    val str' = (Arbnum.toBinString (Arbnum.fromHexString str))
+  in
+    pad_zero' (len - (size str')) str'
+  end
+end
+
+(* Takes a hex-format string instruction and returns a representation of it using
+ * a list with 4 bytes. *)
+val word8_tm = wordsSyntax.mk_word_type (fcpSyntax.mk_numeric_type (Arbnum.fromInt 8))
+
+fun get_byte_word_l hex =
+  let
+    val bin = hex_to_bin_pad_zero 32 hex
+    val byte1 = substring (bin, 0, 8)
+    val byte2 = substring (bin, 8, 8)
+    val byte3 = substring (bin, 16, 8)
+    val byte4 = substring (bin, 24, 8)
+    val byte_to_word8 = (fn byte => (wordsSyntax.mk_wordi (Arbnum.fromBinString byte, 8)))
+  in
+    listSyntax.mk_list ((map byte_to_word8 [byte1, byte2, byte3, byte4]), word8_tm)
+  end
+
+(* Parses the hex-format fence instruction into its fields. *)
+fun parse_fence hex_code =
+  let
+    val bin = hex_to_bin_pad_zero 32 hex_code
+    val fm = substring (bin, 0, 4)
+    val pi = substring (bin, 4, 1)
+    val po = substring (bin, 5, 1)
+    val pr = substring (bin, 6, 1)
+    val pw = substring (bin, 7, 1)
+    val si = substring (bin, 8, 1)
+    val so = substring (bin, 9, 1)
+    val sr = substring (bin, 10, 1)
+    val sw = substring (bin, 11, 1)
+    val rs1 = substring (bin, 12, 5)
+    val funct3 = substring (bin, 17, 3)
+    val rd = substring (bin, 20, 5)
+    val opcode = substring (bin, 25, 7)
+  in
+    (fm, pi, po, pr, pw, si, so, sr, sw, rs1, funct3, rd, opcode)
+  end
+
+(* Parses the hex-format atomic instruction into its fields. *)
+fun parse_atomic hex_code =
+  let
+    val bin = hex_to_bin_pad_zero 32 hex_code
+    val funct5 = substring (bin, 0, 5)
+    val aq = substring (bin, 5, 1)
+    val rl = substring (bin, 6, 1)
+    val rs2 = substring (bin, 7, 5)
+    val rs1 = substring (bin, 12, 5)
+    val funct3 = substring (bin, 17, 3)
+    val rd = substring (bin, 20, 5)
+    val opcode = substring (bin, 25, 7)
+  in
+    (funct5, aq, rl, rs2, rs1, funct3, rd, opcode)
+  end
+
+(* Checks if hex-format instruction is a fence. *)
+fun is_fence hex_code =
+  let
+    val (fm, pi, po, pr, pw, si, so, sr, sw, rs1, funct3, rd, opcode) = parse_fence hex_code
+  in
+    if opcode = "0001111" (* opcode MISC-MEM *)
+    then
+      if (fm = "0000") orelse ((fm = "1000") andalso
+                               (pr = "1") andalso
+                               (pw = "1") andalso
+                               (sr = "1") andalso
+                               (sw = "1"))
+      then true
+      else if (funct3 = "001")
+      then raise ERR "is_fence" ("Fence instruction "^hex_code^" is unsupported FENCE.I")
+      else raise ERR "is_fence" ("Fence instruction "^hex_code^" is unknown fence type")
+    else false
+  end
+
+(* Checks if hex-format instruction is an atomic instruction. *)
+fun is_atomic hex_code =
+  let
+    val (funct5, aq, rl, _, _, funct3, _, opcode) = parse_atomic hex_code
+  in
+    if opcode = "0101111" (* opcode AMO *)
+    then
+      (* Rule out LR and SC, for now... *)
+      if (funct5 <> "00010") andalso (funct5 <> "00011")
+      then true
+      else raise ERR "is_atomic" ("Atomic instruction "^hex_code^" is unsupported LR or SC")
+    else false
+  end
+;
+
+(* Gets the Fence bstmts from hex-format instruction. *)
+fun get_fence_bstmts hex_code =
+  let
+    val (fm, pi, po, pr, pw, si, so, sr, sw, _, _, _, _) = parse_fence hex_code
+  in
+    if (fm = "0000")
+    then
+      [mk_BStmt_Fence
+	 (if pr = "1"
+	  then if pw = "1"
+	       then BM_ReadWrite_tm
+	       else BM_Read_tm
+	  else if pw = "1"
+	       then BM_Write_tm
+	       else raise ERR "get_fence_args" ("Fence instruction "^hex_code^" has no predecessor R/W bits set"),
+	  if sr = "1"
+	  then if sw = "1"
+	       then BM_ReadWrite_tm
+	       else BM_Read_tm
+	  else if sw = "1"
+	       then BM_Write_tm
+	       else raise ERR "get_fence_args" ("Fence instruction "^hex_code^" has no successor R/W bits set")
+	    )]
+    else if (fm = "1000")
+    then (* TSO fence *)
+      [mk_BStmt_Fence (BM_Read_tm, BM_ReadWrite_tm), mk_BStmt_Fence (BM_Write_tm, BM_Write_tm)]
+    else raise ERR "get_fence_args" ("Fence instruction "^hex_code^" has unknown fm bits: "^fm)
+  end
+
+(* Construct the name of a RISC-V GPR (see bir_lifting_machinesLib_instances) *)
+fun mk_gpr_var_name bit_code =
+  ("x"^(Arbnum.toString (Arbnum.fromBinString bit_code)))
+
+(*
+val ity = Bit64_tm
+val rd = "00001"
+val rs1 = "00011"
+val rs2 = "00111"
+
+ 1. Load data value from address in rs1, place value into rd,
+ 2. apply binary operator to the loaded value and the original value in rs2,
+ 3. then store the result back to the address in rs1.
+
+open bslSyntax;
+
+val brd = mk_gpr_var_name rd
+val brs1 = mk_gpr_var_name rs1
+val brs2 = mk_gpr_var_name rs2
+
+val bvar_rd = bvarimm64 brd
+val bvar_rs1 = bvarimm64 brs1
+val bvar_rs2 = bvarimm64 brs2
+
+LOAD 32-BIT:
+
+  BStmt_Assert
+    (BExp_Aligned Bit64 2
+       (BExp_BinExp BIExp_Plus
+	  (BExp_Den (BVar "rs1" (BType_Imm Bit64)))
+	  (BExp_Const (Imm64 2w))));
+  BStmt_Assign (BVar "rd" (BType_Imm Bit64))
+    (BExp_Cast BIExp_SignedCast
+       (BExp_Load
+	  (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+	  (BExp_BinExp BIExp_Minus
+	     (BExp_Den (BVar "rs1" (BType_Imm Bit64)))
+	     (BExp_Const (Imm64 50w))) BEnd_LittleEndian
+	  Bit32) Bit64)
+
+  Abbreviate Load ops (32-bit):
+
+    bassert (baligned Bit64_tm (numSyntax.term_of_int 2, bplus (bden bvar_rs1, bconst64 2)))
+
+    bassign (bvarimm64 brd, bscast64 (bload32_le (bden (bvarmem64_8 "MEM8")) (bden (bvar_rs1))))
+
+    Done! (inspired by lifting of "LW x1,x2,-50")
+
+LOAD 64-BIT:
+
+  BStmt_Assert
+    (BExp_Aligned Bit64 3
+       (BExp_BinExp BIExp_Plus
+	  (BExp_Den (BVar "rs1" (BType_Imm Bit64)))
+	  (BExp_Const (Imm64 6w))));
+  BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+    (BExp_Load
+       (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+       (BExp_BinExp BIExp_Minus
+	  (BExp_Den (BVar "x2" (BType_Imm Bit64)))
+	  (BExp_Const (Imm64 50w))) BEnd_LittleEndian Bit64)
+
+  Abbreviate Load ops (64-bit):
+
+    bassert (baligned Bit64_tm (numSyntax.term_of_int 3, bplus (bden bvar_rs1, bconst64 6)))
+
+    bassign (bvarimm64 brd, bload64_le (bden (bvarmem64_8 "MEM8")) (bden (bvar_rs1)))
+
+    Done! (inspired by lifting of "LW x1,x2,-50")
+
+STORE 32-BIT:
+
+  BStmt_Assert
+    (BExp_Aligned Bit64 2
+       (BExp_Den (BVar "rs1" (BType_Imm Bit64))));
+
+  bassert (baligned Bit64_tm (numSyntax.term_of_int 2, bplus (bden bvar_rs1, bconst64 2)))
+
+  BStmt_Assert
+    (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+       (BExp_BinExp BIExp_Plus
+	  (BExp_Den (BVar "rs1" (BType_Imm Bit64)))
+	  (BExp_Const (Imm64 8w))) 4);
+
+  bassert (mk_BExp_unchanged_mem_interval_distinct (Bit64_tm, numSyntax.term_of_int 0, numSyntax.term_of_int 16777216, bden bvar_rs1, numSyntax.term_of_int 4))
+
+  BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+    (BExp_Store
+       (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+       (BExp_BinExp BIExp_Plus
+	  (BExp_Den (BVar "rs1" (BType_Imm Bit64)))
+	  (BExp_Const (Imm64 8w))) BEnd_LittleEndian
+       (BExp_Cast BIExp_LowCast
+	  (BExp_Den (BVar "result" (BType_Imm Bit64))) Bit32))
+
+val atomic_op_res = bplus (bden (bvarimm64 brd), bden (bvarimm64 brs2))
+
+    bassign (bvarmem64_8 "MEM8", bstore_le (bden (bvarmem64_8 "MEM8"))
+                                           (bden bvar_rs1)
+                                           (blowcast32 atomic_op_res))
+
+STORE 64-BIT:
+
+  BStmt_Assert
+    (BExp_Aligned Bit64 3
+       (BExp_Den (BVar "rs1" (BType_Imm Bit64))));
+
+  bassert (baligned Bit64_tm (numSyntax.term_of_int 3, bplus (bden bvar_rs1, bconst64 2)))
+
+  BStmt_Assert
+    (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+       (BExp_BinExp BIExp_Plus
+	  (BExp_Den (BVar "rs1" (BType_Imm Bit64)))
+	  (BExp_Const (Imm64 8w))) 8);
+
+  bassert (mk_BExp_unchanged_mem_interval_distinct (Bit64_tm, numSyntax.mk_numeral mu_b, numSyntax.mk_numeral mu_e, bden bvar_rs1, numSyntax.term_of_int 8))
+
+  BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+    (BExp_Store
+       (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+       (BExp_BinExp BIExp_Plus
+	  (BExp_Den (BVar "rs1" (BType_Imm Bit64)))
+	  (BExp_Const (Imm64 8w))) BEnd_LittleEndian
+       (BExp_Den (BVar "x14" (BType_Imm Bit64))))
+
+val atomic_op_res = bplus (bden (bvarimm64 brd), bden (bvarimm64 brs2))
+
+    bassign (bvarmem64_8 "MEM8", bstore_le (bden (bvarmem64_8 "MEM8"))
+                                           (bden bvar_rs1)
+                                           (blowcast32 atomic_op_res))
+
+*)
+
+fun mk_atomic_binop bvar_rd bvar_rs2 funct5 =
+  if funct5 = "00001"
+  then (bden bvar_rs2)
+  else if funct5 = "00000"
+  then bplus (bden bvar_rd, bden bvar_rs2)
+  else if funct5 = "00100"
+  then bxor (bden bvar_rd, bden bvar_rs2)
+  else if funct5 = "01100"
+  then band (bden bvar_rd, bden bvar_rs2)
+  else if funct5 = "01000"
+  then bor (bden bvar_rd, bden bvar_rs2)
+  else if funct5 = "10000"
+  then bite (bslt (bden bvar_rd, bden bvar_rs2), bden bvar_rd, bden bvar_rs2)
+  else if funct5 = "10100"
+  then bite (bslt (bden bvar_rd, bden bvar_rs2), bden bvar_rs2, bden bvar_rd)
+  else if funct5 = "11000"
+  then bite (blt (bden bvar_rd, bden bvar_rs2), bden bvar_rd, bden bvar_rs2)
+  else if funct5 = "11100"
+  then bite (blt (bden bvar_rd, bden bvar_rs2), bden bvar_rs2, bden bvar_rd)
+  else  raise ERR "mk_atomic_binop" ("Unsupported funct5 bits: "^funct5)
+
+fun get_atomic_bstmts mu_b mu_e hex_code =
+  let
+    val (funct5, _, _, rs2, rs1, funct3, rd, _) = parse_atomic hex_code
+    val bvar_rd = bvarimm64 (mk_gpr_var_name rd)
+    val bvar_rs1 = bvarimm64 (mk_gpr_var_name rs1)
+    val bvar_rs2 = bvarimm64 (mk_gpr_var_name rs2)
+    (* TODO: Try/catch *)
+    val atomic_op_res = mk_atomic_binop bvar_rd bvar_rs2 funct5
+(*
+raise ERR "get_atomic_bstmts" ("Atomic instruction "^hex_code^" has unsupported funct5 bits: "^funct5)
+*)
+  in
+    (* Check if atomic instruction is 32- or 64-bit (.W or .D) *)
+    if funct3 = "010" (* .W (RV32) *)
+    then
+      [(* 1. Load data value from address in rs1, place value into rd *)
+       bassert (baligned Bit64_tm (numSyntax.term_of_int 2, bplus (bden bvar_rs1, bconst64 2))),
+
+       bassign (bvar_rd, bscast64 (bload32_le (bden (bvarmem64_8 "MEM8")) (bden (bvar_rs1)))),
+       (* 2. Apply binary operation to the loaded value and the original value in rs2,
+	     then store the result back to the address in rs1 *)
+       bassert (baligned Bit64_tm (numSyntax.term_of_int 2, bplus (bden bvar_rs1, bconst64 2))),
+       bassert (mk_BExp_unchanged_mem_interval_distinct (Bit64_tm, numSyntax.mk_numeral mu_b, numSyntax.mk_numeral mu_e, bden bvar_rs1, numSyntax.term_of_int 4)),
+       bassign (bvarmem64_8 "MEM8", bstore_le (bden (bvarmem64_8 "MEM8"))
+					      (bden bvar_rs1)
+					      (blowcast32 atomic_op_res))
+      ]
+    else if funct3 = "011" (* .D (RV64) *)
+    then
+      [(* 1. Load data value from address in rs1, place value into rd *)
+       bassert (baligned Bit64_tm (numSyntax.term_of_int 3, bplus (bden bvar_rs1, bconst64 6))),
+
+       bassign (bvar_rd, bload64_le (bden (bvarmem64_8 "MEM8")) (bden (bvar_rs1))),
+       (* 2. Apply binary operation to the loaded value and the original value in rs2,
+	     then store the result back to the address in rs1 *)
+       bassert (baligned Bit64_tm (numSyntax.term_of_int 3, bplus (bden bvar_rs1, bconst64 2))),
+       bassert (mk_BExp_unchanged_mem_interval_distinct (Bit64_tm, numSyntax.mk_numeral mu_b, numSyntax.mk_numeral mu_e, bden bvar_rs1, numSyntax.term_of_int 8)),
+       bassign (bvarmem64_8 "MEM8", bstore_le (bden (bvarmem64_8 "MEM8"))
+					      (bden bvar_rs1)
+					      atomic_op_res)
+      ]
+    else raise ERR "get_atomic_bstmts" ("Atomic instruction "^hex_code^" has unsupported funct3 bits: "^funct3)
+  end
+
+(* Generic function for lifting an instruction to custom BIR basic statement list using cheat *)
+fun lift_by_cheat mu_b mu_e pc hex_code is_atomic_tm bstmt_list =
+  let
+    val riscv_bmr_tm = ``riscv_bmr``; (* TODO: Obtain this in a smarter way *)
+    val pc_word = wordsSyntax.mk_wordi (pc, 64)
+    val pc_imm = bir_immSyntax.gen_mk_Imm pc_word
+    val pc_next_imm = bir_immSyntax.gen_mk_Imm (wordsSyntax.mk_wordii ((Arbnum.toInt pc)+4, 64))
+    val wi_end =
+      bir_interval_expSyntax.mk_WI_end (wordsSyntax.mk_wordii (Arbnum.toInt mu_b, 64),
+                                        wordsSyntax.mk_wordii (Arbnum.toInt mu_e, 64))
+    val byte_instruction = get_byte_word_l hex_code
+    val prog =
+      mk_BirProgram_list (Type.alpha,
+	[mk_bir_block_list (Type.alpha,
+			    mk_BL_Address_HC (pc_imm, stringSyntax.fromMLstring hex_code),
+                            is_atomic_tm,
+			    bstmt_list,
+			    mk_BStmt_Jmp (mk_BLE_Label (mk_BL_Address pc_next_imm))
+	)]
+      )
+    val lifted_tm =
+      mk_bir_is_lifted_inst_prog (riscv_bmr_tm,
+                                  pc_imm,
+                                  wi_end,
+                                  pairSyntax.mk_pair (pc_word, byte_instruction),
+                                  prog
+      )
+    val lifted_thm = add_tag (Tag.read "multicore", prove(lifted_tm, cheat))
+  in
+    lifted_thm
+  end
+
+(* Lifts a fence instruction by producing a cheat. *)
+fun lift_fence mu_b mu_e pc hex_code =
+  let
+    val bstmt_list = get_fence_bstmts hex_code
+  in
+    lift_by_cheat mu_b mu_e pc hex_code T bstmt_list
+  end
+
+(* Lifts an atomic instruction by producing a cheat. *)
+fun lift_atomic mu_b mu_e pc hex_code =
+  let
+    val bstmt_list = get_atomic_bstmts mu_b mu_e hex_code
+  in
+    lift_by_cheat mu_b mu_e pc hex_code T bstmt_list
+  end
+
+in
+fun riscv_mc_lift_instr (mu_b, mu_e) pc hex_code =
+  if is_fence hex_code
+  then SOME (lift_fence mu_b mu_e pc hex_code)
+  else if is_atomic hex_code
+  then SOME (lift_atomic mu_b mu_e pc hex_code)
+  else NONE
+end
+;
 
 local
   (* M0 has address type 32, where this is 64. *)
@@ -786,6 +1181,7 @@ val riscv_bmr_rec : bmr_rec = {
   bmr_dest_mem             = riscv_dest_mem,
   bmr_extra_ss             = riscv_extra_ss,
   bmr_step_hex             = riscv_step_hex',
+  bmr_mc_lift_instr        = SOME riscv_mc_lift_instr,
   bmr_mk_data_mm           = riscv_mk_data_mm,
   bmr_hex_code_size        =
     (fn hc => Arbnum.fromInt ((String.size hc) div 2)),

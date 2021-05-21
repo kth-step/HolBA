@@ -169,7 +169,7 @@ val _ = List.foldl (fn (config,_) =>
 
 	    val eval_label = (snd o dest_eq o concl o EVAL);
 	    val last_block = List.nth(blocks,(List.last frag));
-	    val (raw_BL_term, _, _) = dest_bir_block last_block;
+	    val (raw_BL_term, _, _, _) = dest_bir_block last_block;
 	    val BL_term = eval_label raw_BL_term;
 
 	    val program = (mk_BirProgram o mk_list) (blocks_sel,ty);
@@ -185,7 +185,7 @@ val _ = List.foldl (fn (config,_) =>
             val block = List.nth(blocks,i);
 
 	    val eval_label = (snd o dest_eq o concl o EVAL);
-	    val (raw_BL_term, _, _) = dest_bir_block block;
+	    val (raw_BL_term, _, _, _) = dest_bir_block block;
 	    val BL_term = eval_label raw_BL_term;
           in
             BL_term

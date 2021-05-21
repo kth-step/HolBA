@@ -22,7 +22,7 @@ signature bir_inst_lifting = sig
      explained the HEX-code (e.g. containing a readable representation).
   *)
   val bir_lift_instr : (Arbnum.num * Arbnum.num) -> Arbnum.num -> string -> string -> thm
-
+  val bir_lift_instr_mc : (Arbnum.num * Arbnum.num) -> Arbnum.num -> string -> string -> thm
 
   (* Sometimes we want to lift many instructions that all use the same
      unchanged memory region. For this, it is convenient to
@@ -45,7 +45,7 @@ signature bir_inst_lifting = sig
   val mr : bir_lifting_machinesLib.bmr_rec
 
   val bir_lift_instr_prepare_mu_thms : (Arbnum.num * Arbnum.num) -> thm * thm;
-  val bir_lift_instr_mu : (Arbnum.num * Arbnum.num) -> (thm * thm) -> lift_inst_cache -> Arbnum.num -> string -> string ->
+  val bir_lift_instr_mu : (Arbnum.num * Arbnum.num) -> (thm * thm) -> lift_inst_cache -> Arbnum.num -> string -> string -> bool ->
     (thm * lift_inst_cache * bool);
 
 
@@ -87,6 +87,9 @@ signature bir_inst_lifting = sig
   val bir_lift_prog_gen : (Arbnum.num * Arbnum.num) (* memory unchanged begin, end *) ->
                           (bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list) (* list of regions *) ->
                           (thm * (bir_inst_liftingLibTypes.bir_inst_error list))
+  val bir_lift_prog_gen_mc : (Arbnum.num * Arbnum.num) (* memory unchanged begin, end *) ->
+                             (bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list) (* list of regions *) ->
+                             (thm * (bir_inst_liftingLibTypes.bir_inst_error list))
 
 
   (* Reading and Writing code to and from intel hex files. The HEX files unluckily

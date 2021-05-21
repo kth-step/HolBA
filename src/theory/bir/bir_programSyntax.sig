@@ -39,6 +39,22 @@ sig
    val mk_BLE_Exp   : term -> term
 
 
+   (***************)
+   (* bir_memop_t *)
+   (***************)
+
+   val bir_memop_t_ty : hol_type
+
+   val BM_Read_tm   : term
+   val is_BM_Read   : term -> bool
+
+   val BM_Write_tm   : term
+   val is_BM_Write   : term -> bool
+
+   val BM_ReadWrite_tm   : term
+   val is_BM_ReadWrite   : term -> bool
+
+
    (********************)
    (* bir_stmt_basic_t *)
    (********************)
@@ -66,6 +82,11 @@ sig
    val dest_BStmt_Observe : term -> term * term * term * term
    val is_BStmt_Observe   : term -> bool
    val mk_BStmt_Observe   : term * term * term * term -> term
+
+   val BStmt_Fence_tm   : term
+   val dest_BStmt_Fence : term -> term * term
+   val is_BStmt_Fence   : term -> bool
+   val mk_BStmt_Fence   : term * term -> term
 
 
    (******************)
@@ -119,16 +140,16 @@ sig
    val is_bir_block_t_ty   : hol_type -> bool
 
 
-   val dest_bir_block : term -> term * term * term
+   val dest_bir_block : term -> term * term * term * term
    val is_bir_block   : term -> bool
-   val mk_bir_block   : term * term * term -> term
+   val mk_bir_block   : term * term * term * term -> term
 
    (* Often one is interested in the list of basic statements in a block.
       The following code splits the term containing a list of basic statements
       into an SML list of terms. In case the empty list is used, thereby the
       type ob observation is lost and therefore made explicit. *)
-   val dest_bir_block_list : term -> hol_type * term * term list * term
-   val mk_bir_block_list   : hol_type * term * term list * term -> term
+   val dest_bir_block_list : term -> hol_type * term  * term * term list * term
+   val mk_bir_block_list   : hol_type * term  * term * term list * term -> term
 
 
    (*****************)

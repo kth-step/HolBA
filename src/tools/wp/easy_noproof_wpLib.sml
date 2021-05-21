@@ -89,7 +89,7 @@ open bir_inst_liftingHelpersLib;
       val trace = trace ("compute_wps_tm::'" ^ define_prefix ^ "'")
 
       (** labels **)
-      val (first_block_label_tm, _, _) = ((dest_bir_block o hd o fst o listSyntax.dest_list o dest_BirProgram o snd o dest_comb o concl) prog_def);
+      val (first_block_label_tm, _, _, _) = ((dest_bir_block o hd o fst o listSyntax.dest_list o dest_BirProgram o snd o dest_comb o concl) prog_def);
       val _ = if length postcond_lbls < 1 then raise ERR "aaaaaaaaaaaaaaa" "panic" else ();
 
       val wps_labels_lambda_tm = mk_lambda_matching_any_of postcond_lbls

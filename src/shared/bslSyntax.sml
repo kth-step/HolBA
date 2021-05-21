@@ -23,6 +23,7 @@ struct
   fun curry2 f = (fn a => fn b => f (a, b))
   fun curry3 f = (fn a => fn b => fn c => f (a, b, c))
   fun curry4 f = (fn a => fn b => fn c => fn d => f (a, b, c, d))
+  fun curry5 f = (fn a => fn b => fn c => fn d => fn e => f (a, b, c, d, e))
 
   fun curry_fst_of_3 f = (fn a => fn (b, c) => f (a, b, c))
   fun curry_fst_of_4 f = (fn a => fn (b, c, d) => f (a, b, c, d))
@@ -176,8 +177,8 @@ struct
     handle e => raise wrap_exn "bstmte" e
 
   (* Blocks (:bir_block_t) *)
-  fun bblock observe_ty (lbl_tm, stmts_list, end_stmt_tm) =
-    mk_bir_block_list (observe_ty, lbl_tm, stmts_list, end_stmt_tm)
+  fun bblock observe_ty (lbl_tm, is_atomic_tm, stmts_list, end_stmt_tm) =
+    mk_bir_block_list (observe_ty, lbl_tm, is_atomic_tm, stmts_list, end_stmt_tm)
     handle e => raise wrap_exn "bblock" e
   fun bblocks observe_ty blocks =
     mk_BirProgram_list (observe_ty, (List.map (bblock observe_ty) blocks))
@@ -190,12 +191,12 @@ struct
     let
       (* Instantiate the observation type for all statements *)
       val bl_list_obs_ty = List.map
-        (fn (a, l_stmts, b) => (a,
+        (fn (a, is_atomic, l_stmts, b) => (a, is_atomic,
           List.map (inst [mk_bir_program_t_ty alpha |-> mk_bir_program_t_ty obs_ty]) l_stmts, b))
         bl_list
       (* list of terms to term of list *)
       val list_tm = List.map
-        (uncurry3 ((curry4 mk_bir_block_list) obs_ty))
+        (uncurry4 ((curry5 mk_bir_block_list) obs_ty))
         bl_list_obs_ty
     in
       mk_BirProgram_list (obs_ty, list_tm)

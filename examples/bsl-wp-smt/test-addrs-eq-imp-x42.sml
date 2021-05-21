@@ -26,10 +26,12 @@ val _ = print "Defining BIR program...\n";
 val bir_mem_prog_def = Define `
   bir_mem_prog = BirProgram [
     <|bb_label := BL_Label "entry";
+      bb_atomic := F;
       bb_statements := [];
       bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "mem_store"))
     |>;
     <|bb_label := BL_Label "mem_store"; (* init *)
+      bb_atomic := F;
       bb_statements := [
         BStmt_Assign (BVar "MEM" (BType_Mem Bit32 Bit8))
           (BExp_Store
@@ -41,6 +43,7 @@ val bir_mem_prog_def = Define `
       bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "mem_load"))
     |>;
     <|bb_label := BL_Label "mem_load";
+      bb_atomic := F;
       bb_statements := [
         BStmt_Assign (BVar "x" (BType_Imm Bit16))
           (BExp_Load
@@ -52,6 +55,7 @@ val bir_mem_prog_def = Define `
       bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "end"))
     |>;
     <|bb_label := BL_Label "end";
+      bb_atomic := F;
       bb_statements := [];
       bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0w))
     |>

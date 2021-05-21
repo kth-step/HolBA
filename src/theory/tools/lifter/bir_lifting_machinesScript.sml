@@ -528,10 +528,29 @@ val arm8_lifted_pc_def = Define `
 
 (* Well defined state *)
 val arm8_state_is_OK_def = Define `arm8_state_is_OK (ms:arm8_state) <=> (
-   ~ms.SCTLR_EL1.E0E ∧ (ms.PSTATE.EL = 0w) ∧ (ms.exception = NoException) /\
-   ~ms.SCTLR_EL1.SA0 /\
-   ~ms.TCR_EL1.TBI0 /\
-   ~ms.TCR_EL1.TBI1)`
+    (* https://static.docs.arm.com/100878/0100/fundamentals_of_armv8_a_100878_0100_en.pdf
+     * tells us that
+     * ELn: Exception level n. EL0 is user, EL1 kernel, EL2 Hypervisor, EL3 firmware (p. 4 of PDF).
+     * SCTLR: System control register; for EL1, EL2 and EL3 (p. 24 of PDF). 
+     * PSTATE: Processor state flags, accessed through special-purpose registers. (p. 16 of PDF)
+     * TCR: Translation Control Register; for EL1, EL2 and EL3. Determines
+     *      Translation Table Base Register. *)
+
+    (* Explicit data accesses at EL0 MUST be little-endian. *)
+    ~ms.SCTLR_EL1.E0E /\
+    (* Exception level must be 0 (user) *)
+    (ms.PSTATE.EL = 0w) /\
+    (* Exception must be NoException (as opposed to ALIGNMENT_FAULT,
+     * UNDEFINED_FAULT and ASSERT).*)
+    (ms.exception = NoException) /\
+    (* Stack Alignment Check MUST NOT be enabled for EL0. *)
+    ~ms.SCTLR_EL1.SA0 /\
+    (* Translation control register for EL1 must not be TBI0 or TBI1,
+     * meaning it must be "tcr_el1'rst", which is a 62-bit field.
+     * TODO: What is TBI0 and TBI1? *)
+    ~ms.TCR_EL1.TBI0 /\
+    ~ms.TCR_EL1.TBI1
+  )`
 
 val arm8_bmr_def = Define `arm8_bmr = <|
   bmr_extra := \ms. arm8_state_is_OK ms;
@@ -760,20 +779,17 @@ SIMP_TAC (std_ss++bmr_ss++wordsLib.WORD_ss) [bmr_ms_mem_contains_def, m0_bmr_EVA
 (**********)
 (* RISC-V *)
 (**********)
-(* Hmmm.... Looking at riscv_state, it seems like everything except
+(* Looking at riscv_state, everything except
  * clock, memory, done (whatever that is?), exception, log and
  * totalCore is dependent upon a process ID. procID is a 8-bit
  * field, meaning you could have up to 256 hardware processes.
- *
- * This is just a complete guess as to what the things mean though.
  *
  * These processes are typically known as hardware threads or
  * "harts". See https://wiki.osdev.org/RISC-V#Hardware_Threads
  * and Section 2.7 of the RISC-V User-Level ISA.
  *
- * c_gpr and c_fpr are the candidates for general-purpose registers,
- * but c_fpr is probably the registers in the extended RV64I base
- * integer instruction set. *)
+ * c_gpr and c_fpr are general-purpose registers,
+ * and c_fpr are the floating-point registers. *)
 
 (* With starting point in bir_lifting_machinesLib_instances.riscv_bmr_rec, 
  * we try to prove all the fields, starting from the top:
@@ -839,42 +855,6 @@ val riscv_state_is_OK_def = Define `
      ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 0w) /\
      ((ms.c_MCSR ms.procID).mcpuid.ArchBase <> 1w)
   )
-(* For ARM8:
-    (* https://static.docs.arm.com/100878/0100/fundamentals_of_armv8_a_100878_0100_en.pdf
-     * tells us that
-     * ELn: Exception level n. EL0 is user, EL1 kernel, EL2 Hypervisor, EL3 firmware (p. 4 of PDF).
-     * SCTLR: System control register; for EL1, EL2 and EL3 (p. 24 of PDF). 
-     * PSTATE: Processor state flags, accessed through special-purpose registers. (p. 16 of PDF)
-     * TCR: Translation Control Register; for EL1, EL2 and EL3. Determines
-     *      Translation Table Base Register. *)
-
-    (* Explicit data accesses at EL0 MUST be little-endian. *)
-    ~ms.SCTLR_EL1.E0E /\
-    (* Exception level must be 0 (user) *)
-    (ms.PSTATE.EL = 0w) /\
-    (* Exception must be NoException (as opposed to ALIGNMENT_FAULT,
-     * UNDEFINED_FAULT and ASSERT).*)
-    (ms.exception = NoException) /\
-    (* Stack Alignment Check MUST NOT be enabled for EL0. *)
-    ~ms.SCTLR_EL1.SA0 /\
-    (* Translation control register for EL1 must not be TBI0 or TBI1,
-     * meaning it must be "tcr_el1'rst", which is a 62-bit field.
-     * TODO: What is TBI0 and TBI1? *)
-    ~ms.TCR_EL1.TBI0 /\
-    ~ms.TCR_EL1.TBI1
-  )
-*)
-(* For Cortex-M0:
-    (* AIRCR: Application Interrupt and Reset Control Register.
-     * CONTROL: Special register in Cortex-M processor. Can be accessed using MSR and MRS. *)
-
-    (* Endianness must match argument ef. *)
-    (s.AIRCR.ENDIANNESS = ef) /\
-    (* Stack pointer selection bit in the control register must match argument sel. *)
-    (s.CONTROL.SPSEL = sel) /\
-    (* Exception must be NoException. *)
-    (s.exception = NoException)
-*)
 `;
 
 (* Lifting RISC-V general-purpose registers. Note that while these are referred
@@ -927,11 +907,8 @@ val riscv_bmr_def = Define `
     (* Registers are the 32 general-purpose registers as well as the
      * 32 fprs (fpr = floating point register?). *)
     bmr_imms := (riscv_GPRS_lifted_imms_LIST++riscv_FPRS_lifted_imms_LIST);
-    (* Done! *)
     bmr_mem := riscv_lifted_mem;
-    (* Done! *)
     bmr_pc := riscv_lifted_pc;
-    (* Done! *)
     bmr_step_fun := NextRISCV
   |>
 `;

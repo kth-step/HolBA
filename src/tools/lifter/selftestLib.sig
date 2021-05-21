@@ -16,17 +16,6 @@ signature test_bmr = sig
   val print_log_with_style : PPBackEnd.pp_style list -> bool -> string -> unit
   (* For printing basic comments to log *)
   val print_log : bool -> string -> unit
-  (* This lifts single instructions, but uses a cache to remedy duplication of computation *)
-  val lift_instr_cached :
-     bool ->
-       num * num ->
-	 thm * thm ->
-	   lift_inst_cache ->
-	     num ->
-	       string ->
-		 string option ->
-		   thm option * bir_inst_liftingExn_data option * string *
-		   lift_inst_cache
   (* For lifting a single instruction *)
   val lift_instr :
      num ->

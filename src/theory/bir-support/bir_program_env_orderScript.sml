@@ -48,7 +48,7 @@ REPEAT CASE_TAC >> SIMP_TAC (std_ss++holBACore_ss) [
 );
 
 val bir_exec_stmt_fence_SAME_ENV = store_thm("bir_exec_stmt_fence_SAME_ENV",
-  ``!st. (SND (bir_exec_stmt_fence st)).bst_environ = st.bst_environ``,
+  ``!st mop mos. (SND (bir_exec_stmt_fence mop mos st)).bst_environ = st.bst_environ``,
 SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_fence_def]);
 
 (* ------------------------------------------------------------------------- *)

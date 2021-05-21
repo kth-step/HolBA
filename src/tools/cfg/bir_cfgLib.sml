@@ -97,7 +97,7 @@ in
 
   fun cfg_block_to_node bl =
     let
-      val (lbl, _, bbes) = dest_bir_block bl;
+      val (lbl, _, _, bbes) = dest_bir_block bl;
 
       val lbl_tm = (snd o dest_eq o concl o EVAL) lbl;
 

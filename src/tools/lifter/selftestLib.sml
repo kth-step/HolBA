@@ -71,7 +71,9 @@ open selftest_styleLib;
   (* The above with no style *)
   fun print_log s = print_log_with_style [] s;
 
-  fun lift_instr_cached log_f mu_be mu_thms cache pc hex_code desc = let
+  fun is_cheat thm = ((exists (fn tag_str => tag_str = "cheat")) o fst o Tag.dest_tag) (tag thm);
+
+  fun lift_instr_cached is_multicore log_f mu_be mu_thms cache pc hex_code desc = let
     val hex_code = String.map Char.toUpper hex_code
     val _ = print_log log_f hex_code;
     val d' = case desc of
@@ -79,7 +81,7 @@ open selftest_styleLib;
 	    | SOME d => (print_log log_f (" (" ^ d ^")"); d)
     val _ = print_log log_f (" @ 0x" ^ (Arbnum.toHexString pc));
     val timer = (Time.now())
-    val (res, ed) = (SOME (bir_lift_instr_mu mu_be mu_thms cache pc hex_code d'), NONE) handle
+    val (res, ed) = (SOME (bir_lift_instr_mu mu_be mu_thms cache pc hex_code d' is_multicore), NONE) handle
 		     bir_inst_liftingExn (_, d)  => (NONE, SOME d)
 		   | HOL_ERR _ => (NONE, NONE);
 
@@ -96,6 +98,7 @@ open selftest_styleLib;
 		   (success_hexcodes_list := (hex_code, desc, thm)::(!success_hexcodes_list);
 		   (print_log_with_style sty_OK log_f "OK");
 		   (if cache_used then (print_log log_f " - "; print_log_with_style sty_CACHE log_f "cached") else ());
+		   (if is_cheat thm then (print_log log_f " - "; print_log_with_style sty_CACHE log_f "cheat") else ());
 		   (print_log log_f "\n");
 		   (if log_f then ((TextIO.output (log, thm_to_string thm));
 				   (TextIO.output (log, "\n"))) else ()))
@@ -112,13 +115,14 @@ open selftest_styleLib;
     (res', ed, d_s, cache')
   end;
 
-  fun lift_instr mu_b mu_e pc hex_code desc = let
+  fun lift_instr_gen is_multicore mu_b mu_e pc hex_code desc = let
     val mu_thms = bir_lift_instr_prepare_mu_thms (mu_b, mu_e)
-    val (res, ed, d_s, _) = lift_instr_cached true (mu_b, mu_e) mu_thms lift_inst_cache_empty pc hex_code desc
+    val (res, ed, d_s, _) = lift_instr_cached is_multicore true (mu_b, mu_e) mu_thms lift_inst_cache_empty pc hex_code desc
   in
     (res, ed, d_s)
   end;
-
+  val lift_instr = lift_instr_gen false;
+  val lift_instr_mc = lift_instr_gen true;
 
   (* And a list version *)
 
@@ -133,7 +137,7 @@ open selftest_styleLib;
 
     fun run_inst (i, (c, pc, res, cache)) = let
       val _ = print ((Int.toString c) ^ "/" ^ (Int.toString (length hex_codes)) ^ ": ");
-      val (r', ed, d_s, cache') = lift_instr_cached false (mu_b, mu_e) mu_thms cache pc i NONE
+      val (r', ed, d_s, cache') = lift_instr_cached false false (mu_b, mu_e) mu_thms cache pc i NONE
       val c' = c+1;
       val pc' = Arbnum.+ (pc, (#bmr_hex_code_size mr) i);
       val r = (r', ed, d_s);
