@@ -10,7 +10,7 @@ end
 structure herdLitmusProgLib : herdLitmusProgLib =
 struct
 open HolKernel Parse bossLib boolLib
-open listSyntax bir_programSyntax;
+open listSyntax;
 open bir_lifter_interfaceLib
 open UtilLib
 
@@ -26,27 +26,20 @@ fun compile_and_disassemble prog =
 	TextIO.inputAll(inStream) before TextIO.closeIn inStream
     end
 
-(* Get the label of the bir_block *)
-fun get_label tm =
-    let
-	val (ty, l) = TypeBase.dest_record tm
-	val _ = if is_bir_block_t_ty ty then () else fail()
-    in Lib.assoc "bb_label" l end
-
 (* Replace the nop with Halt *)
 fun patch_halt prog =
   let
-    val prog_l = dest_BirProgram prog
+    val prog_l = bir_programSyntax.dest_BirProgram prog
     val (blocks,ty) = dest_list prog_l;
     val obs_ty = (hd o snd o dest_type) ty;
-    val lbl = get_label (List.last blocks);
+    val (lbl,_,_,_) = bir_programSyntax.dest_bir_block (List.last blocks);
     val new_last_block =  bir_programSyntax.mk_bir_block
               (lbl, “F”, mk_list ([], mk_type ("bir_stmt_basic_t", [obs_ty])),
                ``BStmt_Halt (BExp_Const (Imm32 0x000000w))``);
 
     val blocks' = (List.take (blocks, (List.length blocks) - 1))@[new_last_block];
   in
-    mk_BirProgram (mk_list (blocks',ty))
+    bir_programSyntax.mk_BirProgram (mk_list (blocks',ty))
   end;
 
 fun lift_prog prog =
