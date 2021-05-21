@@ -1906,4 +1906,56 @@ AMOMAXU.D x1, x3, (x2): E03130AF @ 0x10030 - OK - cheat
                       (BExp_Const (Imm64 6w))));
               BStmt_Assign (BVar "x1" (BType_Imm Bit64))
                 (BExp_Load (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
-                   (BExp_Den (BVar "x2" (BType_Imm Bit64))) BEnd_LittleE
+                   (BExp_Den (BVar "x2" (BType_Imm Bit64))) BEnd_LittleEndian
+                   Bit64);
+              BStmt_Assert
+                (BExp_Aligned Bit64 3
+                   (BExp_BinExp BIExp_Plus
+                      (BExp_Den (BVar "x2" (BType_Imm Bit64)))
+                      (BExp_Const (Imm64 2w))));
+              BStmt_Assert
+                (BExp_unchanged_mem_interval_distinct Bit64 0 16777216
+                   (BExp_Den (BVar "x2" (BType_Imm Bit64))) 8);
+              BStmt_Assign (BVar "MEM8" (BType_Mem Bit64 Bit8))
+                (BExp_Store (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x2" (BType_Imm Bit64))) BEnd_LittleEndian
+                   (BExp_IfThenElse
+                      (BExp_BinPred BIExp_LessThan
+                         (BExp_Den (BVar "x1" (BType_Imm Bit64)))
+                         (BExp_Den (BVar "x3" (BType_Imm Bit64))))
+                      (BExp_Den (BVar "x3" (BType_Imm Bit64)))
+                      (BExp_Den (BVar "x1" (BType_Imm Bit64)))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+
+
+
+SUMMARY FAILING HEXCODES RISC-V
+
+
+Instructions FAILED: 13/95
+
+   "180130AF",
+   "100130AF",
+   "180120AF",
+   "100120AF",
+   "3400F0F3" (* bmr_step_hex failed *),
+   "3400E0F3" (* bmr_step_hex failed *),
+   "3400D0F3" (* bmr_step_hex failed *),
+   "340130F3" (* bmr_step_hex failed *),
+   "340120F3" (* bmr_step_hex failed *),
+   "340110F3" (* bmr_step_hex failed *),
+   "0000100F",
+   "00100073" (* bmr_step_hex failed *),
+   "00000073" (* bmr_step_hex failed *)
+]
+
+Instructions FIXED: 0
+
+
+
+Instructions BROKEN: 0
+
+
+
