@@ -28,7 +28,7 @@ val ERR = Feedback.mk_HOL_ERR "litmusInterfaceLib"
 
 type litmus = herdLitmusLib.litmus
 
-val lift_herd_litmus = herdLitmusLib.parse
+val lift_herd_litmus = herdLitmusLib.parse o bir_fileLib.read_from_file
 
 fun save_litmus (filename,l:litmus) =
     let

@@ -79,10 +79,8 @@ fun regs_of_prog prog =
     in regs end
 
 
-fun parse filename =
+fun parse text =
     let
-	(* Read file *)
-	val text = bir_fileLib.read_from_file filename
 	(* Split text into sections *)
 	val (arch, name, info_sec, init_sec, prog_sec, final_sec)
 	    = split_to_sections text
