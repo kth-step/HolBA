@@ -770,6 +770,14 @@ end
  * a list with 4 bytes. *)
 val word8_tm = wordsSyntax.mk_word_type (fcpSyntax.mk_numeric_type (Arbnum.fromInt 8))
 
+(* Takes a SML "0" or "1" string and converts it into a HOL4 bool *)
+fun str_to_bool str =
+  if str = "1"
+  then true
+  else if str = "0"
+  then false
+  else raise ERR "str_to_bool" ("String "^str^" is not 0 or 1, and could not be converted to a bool term")
+
 fun get_byte_word_l hex =
   let
     val bin = hex_to_bin_pad_zero 32 hex
@@ -1036,48 +1044,70 @@ fun mk_atomic_binop bvar_rd bvar_rs2 funct5 =
   then bite (blt (bden bvar_rd, bden bvar_rs2), bden bvar_rs2, bden bvar_rd)
   else  raise ERR "mk_atomic_binop" ("Unsupported funct5 bits: "^funct5)
 
+(* Dummy assignment to shadow memory for .aq and .rl flags *)
+val mem_aqrl_bstmtl =
+  [bassign (bvarmem (1,1) "MEM_aqrl",
+           bstore_le (bden (bvarmem (1,1) "MEM_aqrl")) (bconst1 1) (bconst1 1))];
+
 fun get_atomic_bstmts mu_b mu_e hex_code =
   let
-    val (funct5, _, _, rs2, rs1, funct3, rd, _) = parse_atomic hex_code
+    val (funct5, aq, rl, rs2, rs1, funct3, rd, _) = parse_atomic hex_code
     val bvar_rd = bvarimm64 (mk_gpr_var_name rd)
     val bvar_rs1 = bvarimm64 (mk_gpr_var_name rs1)
     val bvar_rs2 = bvarimm64 (mk_gpr_var_name rs2)
-    (* TODO: Try/catch *)
+    val is_rl = str_to_bool rl
+    val is_aq = str_to_bool aq
     val atomic_op_res = mk_atomic_binop bvar_rd bvar_rs2 funct5
-(*
-raise ERR "get_atomic_bstmts" ("Atomic instruction "^hex_code^" has unsupported funct5 bits: "^funct5)
-*)
+    (* Stores the base functionality of the atomic instructions, sans effect of .aq and .rl flags *)
+    val bir_block_base =
+      (* Check if atomic instruction is 32- or 64-bit (.W or .D) *)
+      if funct3 = "010" (* .W (RV32) *)
+      then
+	[(* 1. Load data value from address in rs1, place value into rd *)
+	 bassert (baligned Bit64_tm (numSyntax.term_of_int 2, bplus (bden bvar_rs1, bconst64 2))),
+
+	 bassign (bvar_rd, bscast64 (bload32_le (bden (bvarmem64_8 "MEM8")) (bden (bvar_rs1)))),
+	 (* 2. Apply binary operation to the loaded value and the original value in rs2,
+	       then store the result back to the address in rs1 *)
+	 bassert (baligned Bit64_tm (numSyntax.term_of_int 2, bplus (bden bvar_rs1, bconst64 2))),
+	 bassert (mk_BExp_unchanged_mem_interval_distinct (Bit64_tm, numSyntax.mk_numeral mu_b, numSyntax.mk_numeral mu_e, bden bvar_rs1, numSyntax.term_of_int 4)),
+	 bassign (bvarmem64_8 "MEM8", bstore_le (bden (bvarmem64_8 "MEM8"))
+						(bden bvar_rs1)
+						(blowcast32 atomic_op_res))
+	]
+      else if funct3 = "011" (* .D (RV64) *)
+      then
+	[(* 1. Load data value from address in rs1, place value into rd *)
+	 bassert (baligned Bit64_tm (numSyntax.term_of_int 3, bplus (bden bvar_rs1, bconst64 6))),
+
+	 bassign (bvar_rd, bload64_le (bden (bvarmem64_8 "MEM8")) (bden (bvar_rs1))),
+	 (* 2. Apply binary operation to the loaded value and the original value in rs2,
+	       then store the result back to the address in rs1 *)
+	 bassert (baligned Bit64_tm (numSyntax.term_of_int 3, bplus (bden bvar_rs1, bconst64 2))),
+	 bassert (mk_BExp_unchanged_mem_interval_distinct (Bit64_tm, numSyntax.mk_numeral mu_b, numSyntax.mk_numeral mu_e, bden bvar_rs1, numSyntax.term_of_int 8)),
+	 bassign (bvarmem64_8 "MEM8", bstore_le (bden (bvarmem64_8 "MEM8"))
+						(bden bvar_rs1)
+						atomic_op_res)
+	]
+      else raise ERR "get_atomic_bstmts" ("Atomic instruction "^hex_code^" has unsupported funct3 bits: "^funct3)
+    val bir_block_base_aqrl =
+      (* Case 1: .aq.rl: instruction is sequentially consistent *)
+      if is_aq andalso is_rl
+      then ([mk_BStmt_Fence (BM_ReadWrite_tm, BM_ReadWrite_tm)]@
+            bir_block_base@mem_aqrl_bstmtl@
+            [mk_BStmt_Fence (BM_ReadWrite_tm, BM_ReadWrite_tm)])
+      (* Case 2: .rl: flush r/w before executing *)
+      else if is_rl
+      then ([mk_BStmt_Fence (BM_ReadWrite_tm, BM_Write_tm)]@
+            bir_block_base@mem_aqrl_bstmtl)
+      (* Case 3: .aq: prevent early r/w after *)
+      else if is_aq
+      then (bir_block_base@mem_aqrl_bstmtl@
+            [mk_BStmt_Fence (BM_Read_tm, BM_ReadWrite_tm)])
+      (* Case 3: No flags *)
+      else bir_block_base
   in
-    (* Check if atomic instruction is 32- or 64-bit (.W or .D) *)
-    if funct3 = "010" (* .W (RV32) *)
-    then
-      [(* 1. Load data value from address in rs1, place value into rd *)
-       bassert (baligned Bit64_tm (numSyntax.term_of_int 2, bplus (bden bvar_rs1, bconst64 2))),
-
-       bassign (bvar_rd, bscast64 (bload32_le (bden (bvarmem64_8 "MEM8")) (bden (bvar_rs1)))),
-       (* 2. Apply binary operation to the loaded value and the original value in rs2,
-	     then store the result back to the address in rs1 *)
-       bassert (baligned Bit64_tm (numSyntax.term_of_int 2, bplus (bden bvar_rs1, bconst64 2))),
-       bassert (mk_BExp_unchanged_mem_interval_distinct (Bit64_tm, numSyntax.mk_numeral mu_b, numSyntax.mk_numeral mu_e, bden bvar_rs1, numSyntax.term_of_int 4)),
-       bassign (bvarmem64_8 "MEM8", bstore_le (bden (bvarmem64_8 "MEM8"))
-					      (bden bvar_rs1)
-					      (blowcast32 atomic_op_res))
-      ]
-    else if funct3 = "011" (* .D (RV64) *)
-    then
-      [(* 1. Load data value from address in rs1, place value into rd *)
-       bassert (baligned Bit64_tm (numSyntax.term_of_int 3, bplus (bden bvar_rs1, bconst64 6))),
-
-       bassign (bvar_rd, bload64_le (bden (bvarmem64_8 "MEM8")) (bden (bvar_rs1))),
-       (* 2. Apply binary operation to the loaded value and the original value in rs2,
-	     then store the result back to the address in rs1 *)
-       bassert (baligned Bit64_tm (numSyntax.term_of_int 3, bplus (bden bvar_rs1, bconst64 2))),
-       bassert (mk_BExp_unchanged_mem_interval_distinct (Bit64_tm, numSyntax.mk_numeral mu_b, numSyntax.mk_numeral mu_e, bden bvar_rs1, numSyntax.term_of_int 8)),
-       bassign (bvarmem64_8 "MEM8", bstore_le (bden (bvarmem64_8 "MEM8"))
-					      (bden bvar_rs1)
-					      atomic_op_res)
-      ]
-    else raise ERR "get_atomic_bstmts" ("Atomic instruction "^hex_code^" has unsupported funct3 bits: "^funct3)
+    bir_block_base_aqrl
   end
 
 (* Generic function for lifting an instruction to custom BIR basic statement list using cheat *)

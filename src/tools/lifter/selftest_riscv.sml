@@ -408,59 +408,55 @@ val _ = riscv_test_hex_print_asm_mc "LR.W x1, (x2)" "100120AF";
 val _ = riscv_test_hex_print_asm_mc "SC.W x1, x3, (x2)" "180120AF";
 
 (* Binary: 00001 0 0 00011 00010 010 00001 0101111
-
-val _ = riscv_test_hex_mc "083120AF";
 val amo_res = riscv_test_hex_mc "083120AF";
 *)
 val _ = riscv_test_hex_print_asm_mc "AMOSWAP.W x1, x3, (x2)" "083120AF";
 (* Binary: 00000 0 0 00011 00010 010 00001 0101111
-
-val _ = riscv_test_hex_mc "003120AF";
 val amo_res = riscv_test_hex_mc "003120AF";
 *)
 val _ = riscv_test_hex_print_asm_mc "AMOADD.W x1, x3, (x2)" "003120AF";
 (* Binary: 00100 0 0 00011 00010 010 00001 0101111
-
-val _ = riscv_test_hex_mc "203120AF";
 val amo_res = riscv_test_hex_mc "203120AF";
 *)
 val _ = riscv_test_hex_print_asm_mc "AMOXOR.W x1, x3, (x2)" "203120AF";
 (* Binary: 01100 0 0 00011 00010 010 00001 0101111
-
-val _ = riscv_test_hex_mc "603120AF";
 val amo_res = riscv_test_hex_mc "603120AF";
 *)
 val _ = riscv_test_hex_print_asm_mc "AMOAND.W x1, x3, (x2)" "603120AF";
 (* Binary: 01000 0 0 00011 00010 010 00001 0101111
-
-val _ = riscv_test_hex_mc "403120AF";
 val amo_res = riscv_test_hex_mc "403120AF";
 *)
 val _ = riscv_test_hex_print_asm_mc "AMOOR.W x1, x3, (x2)" "403120AF";
 (* Binary: 10000 0 0 00011 00010 010 00001 0101111
-
-val _ = riscv_test_hex_mc "803120AF";
 val amo_res = riscv_test_hex_mc "803120AF";
 *)
 val _ = riscv_test_hex_print_asm_mc "AMOMIN.W x1, x3, (x2)" "803120AF";
 (* Binary: 10100 0 0 00011 00010 010 00001 0101111
-
-val _ = riscv_test_hex_mc "A03120AF";
 val amo_res = riscv_test_hex_mc "A03120AF";
 *)
 val _ = riscv_test_hex_print_asm_mc "AMOMAX.W x1, x3, (x2)" "A03120AF";
 (* Binary: 11000 0 0 00011 00010 010 00001 0101111
-
-val _ = riscv_test_hex_mc "C03120AF";
 val amo_res = riscv_test_hex_mc "C03120AF";
 *)
 val _ = riscv_test_hex_print_asm_mc "AMOMINU.W x1, x3, (x2)" "C03120AF";
 (* Binary: 11100 0 0 00011 00010 010 00001 0101111
-
-val _ = riscv_test_hex_mc "E03120AF";
 val amo_res = riscv_test_hex_mc "E03120AF";
 *)
 val _ = riscv_test_hex_print_asm_mc "AMOMAXU.W x1, x3, (x2)" "E03120AF";
+
+(* aq/rl flags *)
+(* Binary: 01000 1 0 00011 00010 010 00001 0101111
+val amo_res = riscv_test_hex_mc "443120AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOOR.W.aq x1, x3, (x2)" "443120AF";
+(* Binary: 00001 0 1 00011 00010 010 00001 0101111
+val amo_res = riscv_test_hex_mc "0A3120AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOSWAP.W.rl x1, x3, (x2)" "0A3120AF";
+(* Binary: 00001 1 1 00011 00010 010 00001 0101111
+val amo_res = riscv_test_hex_mc "0E3120AF";
+*)
+val _ = riscv_test_hex_print_asm_mc "AMOSWAP.W.aq.rl x1, x3, (x2)" "0E3120AF";
 
 val _ = print_msg "\n";
 val _ = print_header "RV64A Standard Extension (instructions added to RV64A)\n";
