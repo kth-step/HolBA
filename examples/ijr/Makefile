@@ -11,6 +11,9 @@ build:
 	# Count lines for proof-producing procedures and verified function
 	wc -l resolveFullyLib.sml
 	wc -l resolveFullyScript.sml resolveScript.sml resolutionScript.sml simulationScript.sml simulationFailScript.sml contractTransferScript.sml
+	wc -l cProgEvaluation.sml
+	wc -l generationLib.sml evaluation.sml
+	wc -l examplesScript.sml
 	# Compile, link and disassemble C evaluation program
 	${CROSS}gcc -DBAREMETAL= ${CFLAGS_BAREMETAL} -c -o composition.o -fno-stack-protector composition.c
 	${CROSS}ld -o composition.ld composition.o
