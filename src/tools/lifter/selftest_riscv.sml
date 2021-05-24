@@ -140,6 +140,13 @@ val _ = print_msg "\n";
     (* Load halfword *)
     "LH x1,x2,-50",
     (* Load word *)
+    (* For offset zero ("LW x1,x2,0"):
+       Hex : 00012083 
+       Bin : 000000000000 00010 010 00001  0000011
+
+       riscv_test_hex "00012083";
+
+     *)
     "LW x1,x2,-50",
     (* Load byte (unsigned) *)
     "LBU x1,x2,-50",
@@ -159,6 +166,13 @@ val _ = print_msg "\n";
 
   (* Store the word (32 least significant bits) in x14 to the
    * memory address in x2 with offset 8 *)
+  (* For offset zero ("SW x14,x2"):
+     Hex : 00E12023 
+     Bin : 0000000 01110 00010 010 00000 0100011
+
+     riscv_test_hex "00E12023";
+
+   *)
   val _ = riscv_test_hex_print_asm "SW x14, 8(x2)" "00E12423";
 
 (* I-format (opcode OP-IMM) *)
@@ -256,12 +270,26 @@ val _ = print_msg "\n";
     (* Load word (unsigned) *)
     "LWU x1,x2,-50",
     (* Load doubleword *)
+    (* For offset zero ("LD x1,x2,0"):
+       Hex : 00013083 
+       Bin : 000000000000 00010 011 00001  0000011
+
+       riscv_test_hex "00013083";
+
+     *)
     "LD x1,x2,-50"
   ];
 
 (* S-format variants *)
   (* Store the doubleword (64 bits, the entire 64-bit register)
    * in x14 to the memory address in x2 with offset 8 *)
+  (* For offset zero ("SD x14,x2"):
+     Hex : 00E13023 
+     Bin : 0000000 01110 00010 010 00000 0100011
+
+     riscv_test_hex "00E12023";
+
+   *)
   val _ = riscv_test_hex_print_asm "SD x14, 8(x2)" "00E13423";
 
 (* I-type variant (opcode OP-IMM-32) *)
@@ -401,10 +429,14 @@ val _ = print_header "RV32A Standard Extension\n";
 val _ = print_msg "\n";
 
 (* TODO: LR/SC *)
-(* TODO: Unsure about assembly representation *)
-(* Binary: 00010 0 0 00000 00010 010 00001 0101111 *)
+(* TODO: Unsure about ASM representation *)
+(* Binary: 00010 0 0 00000 00010 010 00001 0101111
+val amo_res = riscv_test_hex_mc "100120AF";
+*)
 val _ = riscv_test_hex_print_asm_mc "LR.W x1, (x2)" "100120AF";
-(* Binary: 00011 0 0 00011 00010 010 00001 0101111 *)
+(* Binary: 00011 0 0 00011 00010 010 00001 0101111
+val amo_res = riscv_test_hex_mc "180120AF";
+*)
 val _ = riscv_test_hex_print_asm_mc "SC.W x1, x3, (x2)" "180120AF";
 
 (* Binary: 00001 0 0 00011 00010 010 00001 0101111
@@ -463,7 +495,7 @@ val _ = print_header "RV64A Standard Extension (instructions added to RV64A)\n";
 val _ = print_msg "\n";
 
 (* TODO: LR/SC *)
-(* TODO: Unsure about assembly representation *)
+(* TODO: Unsure about ASM representation *)
 (* Binary: 00010 0 0 00000 00010 011 00001 0101111 *)
 val _ = riscv_test_hex_print_asm_mc "LR.D x1, (x2)" "100130AF";
 (* Binary: 00011 0 0 00011 00010 011 00001 0101111 *)
@@ -537,13 +569,7 @@ val riscv_expected_failed_hexcodes:string list =
    "340130F3" (* CSRRC x1, mscratch(0x340), x2 *),
    "3400D0F3" (* CSRRWI x1, mscratch(0x340), 0x1 *),
    "3400E0F3" (* CSRRWI x1, mscratch(0x340), 0x1 *),
-   "3400F0F3" (* CSRRCI x1, mscratch(0x340), 0x1 *),
-   (* RV32A *)
-   "100120AF" (* "LR.W x1, (x2)"  *),
-   "180120AF" (* "SC.W x1, x3, (x2)" *),
-   (* RV32A *)
-   "100130AF" (* "LR.D x1, (x2)"  *),
-   "180130AF" (* "SC.D x1, x3, (x2)" *)
+   "3400F0F3" (* CSRRCI x1, mscratch(0x340), 0x1 *)
 ];
 
 val _ = test_RISCV.final_results "RISC-V" riscv_expected_failed_hexcodes;
