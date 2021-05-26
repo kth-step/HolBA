@@ -57,11 +57,11 @@ val composition_args = gen_args (add_two_ret_args @
                                  comp_ret_args )
 
 val transfer_start = timer_start ()
-val (cprog'_tm, cprog'_def, cprog'_thm) = 
+val (cprog'_def, cprog'_thm) = 
   resolve_indirect_jumps("resolved_composition_prog", “bir_composition_prog”, composition_args)
 val _ = print ("Resolve time: " ^ timer_stop_str transfer_start ^ "\n")
 
-val blocks' = (fst o dest_list o dest_BirProgram o eval) cprog'_tm
+val blocks' = (fst o dest_list o dest_BirProgram o eval o lhs o concl) cprog'_def
 val endings' = List.map (fn block_tm => eval “ ^block_tm.bb_last_statement”) blocks'
 
 (*Obtain WP contract*)
@@ -77,6 +77,6 @@ val post_tm = “\l. if (l = BL_Address (Imm64 0x400084w))
                    else bir_exp_false”
 val defs = [cprog'_def, post_def, bir_exp_false_def, bir_exp_true_def]
 
-val ccontract = prove_and_transfer_contract(“bir_composition_prog”, cprog'_tm, cprog'_thm,
+val ccontract = prove_and_transfer_contract(cprog'_thm,
                                             prefix, pre_tm, entry_label_tm,
                                             ending_labels_tm, post_tm, defs)

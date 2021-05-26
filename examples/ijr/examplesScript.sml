@@ -61,7 +61,7 @@ val prog2'_tm = (dest_some o rhs o concl) prog2'_thm
 (*resolve_indirect_jumps and transfer_contract test*)
 (*Transform program*)
 val small_args = “[(BL_Address (Imm64 0w), [(Imm64 4w, "0w-2")], ^arg3)]”
-val (small_prog'_tm, small_prog'_def, small_prog'_thm) = 
+val (small_prog'_def, small_prog'_thm) = 
   resolve_indirect_jumps("resolved_small_prog", prog_tm, small_args)
 
 (*Obtain WP contract*)
@@ -76,7 +76,7 @@ val post_tm = “\l. if (l = BL_Address (Imm64 4w))
                    else bir_exp_false”
 val defs = [small_prog'_def, post_def, bir_exp_false_def]
 
-val small_contract = prove_and_transfer_contract(prog_tm, small_prog'_tm, small_prog'_thm,
+val small_contract = prove_and_transfer_contract(small_prog'_thm,
                                                  prefix, pre_tm, entry_label_tm,
                                                  ending_labels_tm, post_tm, defs)
 
@@ -88,7 +88,7 @@ val large_prog_def = gen_program("prog", middle_blocks_n)
 val large_prog_tm = (lhs o concl) large_prog_def
 
 val large_prog_args = gen_args_program(middle_blocks_n, 1)
-val (large_prog'_tm, large_prog'_def, large_prog'_thm) = 
+val (large_prog'_def, large_prog'_thm) = 
   resolve_indirect_jumps("resolved_large_prog", large_prog_tm, large_prog_args)
 
 val pre_def = Define ‘pre = ^(blt((bden o bvarimm64) "x", (bconst64 middle_blocks_n)))’
@@ -102,7 +102,7 @@ val post_tm = “\l. if (l = ^(blabel_addr64 exit_addr))
                    else bir_exp_false”
 val defs = [large_prog'_def, post_def, bir_exp_false_def, bir_exp_true_def]
 
-val large_contract = prove_and_transfer_contract(large_prog_tm, large_prog'_tm, large_prog'_thm,
+val large_contract = prove_and_transfer_contract(large_prog'_thm,
                                                  prefix, pre_tm, entry_label_tm,
                                                  ending_labels_tm, post_tm, defs)
 

@@ -11,7 +11,7 @@ fun test_resolve_indirect_jumps(middle_blocks_n) =
       val prog_tm = (lhs o concl) prog_def
       val args = gen_args_program(middle_blocks_n, 1)
       val start = timer_start()
-      val (prog'_tm, prog'_def, prog'_thm) = resolve_indirect_jumps("resolved_gen_prog", prog_tm, args)
+      val (prog'_def, prog'_thm) = resolve_indirect_jumps("resolved_gen_prog", prog_tm, args)
       val stop = timer_stop start
     in
       (middle_blocks_n, stop)
@@ -24,7 +24,7 @@ fun test_partial_resolve_indirect_jumps(middle_blocks_n) =
       val prog_tm = (lhs o concl) prog_def
       val args = gen_partial_args_program(middle_blocks_n, 100)
       val start = timer_start()
-      val (prog'_tm, prog'_def, prog'_thm) = resolve_indirect_jumps("resolved_gen_prog", prog_tm, args)
+      val (prog'_def, prog'_thm) = resolve_indirect_jumps("resolved_gen_prog", prog_tm, args)
       val stop = timer_stop start
     in
       (middle_blocks_n, stop)
@@ -48,7 +48,7 @@ fun test_transfer_contract (middle_blocks_n) =
         cheat)
 
       val start = timer_start()
-      val ht'_thm = transfer_contract(prog_tm, prog'_thm, ht_thm')
+      val ht'_thm = transfer_contract(prog'_thm, ht_thm')
       val stop = timer_stop start
     in
       (middle_blocks_n, stop)

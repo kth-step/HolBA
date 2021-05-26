@@ -20,11 +20,12 @@ fun resolve_indirect_jumps(prog'_name, prog_tm, args) =
     val prog'_tm' = (lhs o concl) prog'_def
     val prog'_thm' = REWRITE_RULE [GSYM prog'_def] prog'_thm
   in
-    (prog'_tm', prog'_def, prog'_thm')
+    (prog'_def, prog'_thm')
   end
 
-fun transfer_contract(prog_tm, prog'_thm, ht_thm) =
+fun transfer_contract(prog'_thm, ht_thm) =
   let
+    val prog_tm = (el 1 o snd o strip_comb o lhs o concl) prog'_thm
     val ht_tm = concl ht_thm
     val (_, entry_tm, exits_tm, _, _) = dest_bir_exec_to_labels_triple ht_tm
     val entry_thm = prove (
@@ -40,9 +41,10 @@ fun transfer_contract(prog_tm, prog'_thm, ht_thm) =
     MATCH_MP res_thm ht_thm
   end
 
-fun prove_and_transfer_contract(prog_tm, prog'_tm, prog'_thm, prefix, pre_tm, entry_label_tm, ending_labels_tm, post_tm, defs) =
+fun prove_and_transfer_contract(prog'_thm, prefix, pre_tm, entry_label_tm, ending_labels_tm, post_tm, defs) =
   let
     val wp_start = timer_start ()
+    val prog'_tm = (dest_some o rhs o concl) prog'_thm
     (*Obtain WP contract*)
     val (ht_thm, wp_tm) =
       bir_obtain_ht 
@@ -58,7 +60,7 @@ fun prove_and_transfer_contract(prog_tm, prog'_tm, prog'_thm, prefix, pre_tm, en
     
     (*Transfer WP contract*)
     val transfer_start = timer_start ()
-    val ht'_thm = transfer_contract(prog_tm, prog'_thm, ht_thm')
+    val ht'_thm = transfer_contract(prog'_thm, ht_thm')
     val _ = print ("Transfer time: " ^ timer_stop_str transfer_start ^ "\n")
 
     (*Prove implication using SMT solvers*)
