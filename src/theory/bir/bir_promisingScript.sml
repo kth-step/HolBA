@@ -23,19 +23,27 @@ mem_t = <|
 |>
 `;
 
-val mem_default_value_def = Define‘mem_default_value = BVal_Imm (Imm1 0w)’;
+val mem_default_value_def = Define‘mem_default_value = BVal_Imm (Imm64 0w)’;
+
+val mem_read_aux_def = Define‘
+   mem_read_aux l NONE = NONE
+/\ mem_read_aux l (SOME msg) = if msg.loc = l then SOME msg.val else NONE
+’;
 
 (*
   mem_read M l t returns the value at address l at time t, if it exists
   NB. at time 0 all addresses have a default value
  *)
 val mem_read_def = Define‘
-  mem_read M l 0 = SOME mem_default_value
-∧ mem_read M l t = case oEL t M of
-                     NONE => NONE
-                   | SOME msg => if msg.loc = l then SOME msg.val else NONE
+  mem_read M l (t:num) = if t = 0
+                         then SOME mem_default_value
+                         else mem_read_aux l (oEL (t-1) M)
 ’;
 
+val mem_timestamps_def = Define‘
+   mem_timestamps l M = MAP SND (FILTER (\x. (case x of (msg,_) => msg.loc = l)) (ZIP (M,[1 .. (LENGTH M)])))
+’;
+  
 val mem_read_view_def = Define‘
 mem_read_view a rk f t = if f.time = t then f.view else t
 ’;
@@ -218,8 +226,12 @@ val (bir_parstep_rules, bir_parstep_ind, bir_parstep_cases) = Hol_reln`
    parstep cores M (cores DIFF {core cid p s} UNION {core cid p s'}) M')
 `;
 
-(* execution *)
+val env_update_cast64_def = Define‘
+  env_update_cast64 varname (BVal_Imm v) vartype env =
+    bir_env_update varname (BVal_Imm (n2bs (b2n v) Bit64)) vartype env
+’;
 
+(* execution *)
 val eval_clstep_read_def = Define‘
   eval_clstep_read p cid s M var mem_e a_e en ty =
    let (sl, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv;
@@ -227,7 +239,7 @@ val eval_clstep_read_def = Define‘
    in case sl of
         SOME l =>
        let t_max = MAX v_pre (s.bst_coh l);
-           ts = FILTER (\t. EVERY (\t'. ((EL t' M).loc ≠ l)) [(t+1) .. t_max]) [0 .. (t_max-1)]
+           ts = FILTER (\t. EVERY (\t'. ((EL (t'-1) M).loc ≠ l)) [(t+1) .. t_max]) (0::mem_timestamps l M)
        in
          FLAT (MAP (\t.
                 let sv = mem_read M l t;
@@ -235,7 +247,7 @@ val eval_clstep_read_def = Define‘
                 in
                  case sv of
                   SOME v =>
-                    (case bir_env_update (bir_var_name var) v (bir_var_type var) (s.bst_environ) of
+                    (case env_update_cast64 (bir_var_name var) v (bir_var_type var) (s.bst_environ) of
                        SOME new_env =>
                          [s with <| bst_viewenv updated_by (λe. FUPDATE e (var,v_addr));
                                     bst_environ := new_env;
@@ -258,7 +270,7 @@ val eval_clstep_fulfil_def = Define‘
     in case (sl,sv) of
        (SOME l, SOME v) =>
        let v_pre =  MAX v_addr (MAX v_data (MAX s.bst_v_wNew s.bst_v_CAP));
-           ts = FILTER (\t. (EL t M = <| loc := l; val := v; cid := cid  |>)
+           ts = FILTER (\t. (EL (t-1) M = <| loc := l; val := v; cid := cid  |>)
                             /\ (MAX v_pre (s.bst_coh l) < t)) (s.bst_prom);
        in MAP (\v_post. s with <| bst_prom updated_by (FILTER (\t'. t' ≠ v_post));
                                   bst_coh := (\lo. if lo = l
@@ -319,7 +331,35 @@ val eval_clstep_def = Define‘
    | _ => []
 ’;
 
+val eval_clstep_core_def = Define‘
+  eval_clstep_core M (core cid p st) = MAP (core cid p) (eval_clstep p cid st M)
+’;
 
+  
+val eval_parstep_def = Define‘
+   eval_parstep cores M =
+      (MAP (eval_clstep_core M) cores)
+’;
+
+val update_core_def = Define‘
+   update_core new_c [] = []
+/\ update_core (core new_cid new_p new_st) (core cid p st::cs) =
+     if new_cid = cid
+     then core new_cid new_p new_st :: cs
+     else core cid p st :: update_core (core new_cid new_p new_st) cs
+’;
+
+val core_is_halted_def = Define‘
+   core_is_running (core cid p st) = (st.bst_status = BST_Running)
+’;
+
+val eval_parsteps_def = Define‘
+   eval_parsteps 0       cores M = [cores]
+/\ eval_parsteps (n:num) cores M =
+     LIST_BIND (FILTER core_is_running cores) (\c.
+       LIST_BIND (eval_clstep_core M c) (\c'. let cores' = update_core c' cores in
+                                                eval_parsteps (n-1) cores' M))
+’;
 
 (* examples *)
 val core1_prog =
@@ -353,14 +393,14 @@ val core2_prog =
     BStmt_Halt (BExp_Den (BVar "x2" (BType_Imm Bit64)))|>]: string bir_program_t”
 
 (* BIR quotations
-core1_prog =
+core0_prog =
 BIR
 `start:
 MEM=MEM{x0 := 1}
 x2=MEM[x1]
 halt x2`;
 
-core2_prog =
+core1_prog =
 BIR
 ‘start:
 MEM=MEM{x1 := 1}
@@ -368,17 +408,103 @@ x2=MEM[x0]
 halt x2’;
 *)
 
-val core1_st = (rand o concl) (EVAL “bir_state_init ^core1_prog”);
-val core2_st = (rand o concl) (EVAL “bir_state_init ^core2_prog”);
+val bir_eval_exp_store_msg_def = Define‘
+ bir_eval_exp_store_msg ex env cid =
+   case ex of
+     BExp_Store mem_e a_e en v_e =>
+      (let mem_v = bir_eval_exp mem_e env;
+           a_v = bir_eval_exp a_e env;
+           va = bir_eval_exp v_e env
+       in
+         case bir_eval_store mem_v a_v en va of
+           SOME mem' => SOME (<| loc := THE a_v; val := THE va; cid := cid |>, mem')
+           | _ => NONE)
+   | _ => NONE
+’;
+val bir_exec_step_msg_def = Define‘
+  bir_exec_step_msg p cid st M =
+    if (bir_state_is_terminated st) then (NONE, st)
+    else
+      case (bir_get_current_statement p st.bst_pc) of
+      | NONE => (NONE, bir_state_set_failed st)
+      | SOME (BStmtB (BStmt_Assign v ex)) =>
+          (case ex of
+            BExp_Store mem_e a_e en v_e =>
+              (case bir_eval_exp_store_msg ex st.bst_environ cid of
+                SOME (msg,va) =>
+                  (case bir_env_write v va st.bst_environ of
+                     SOME env => (SOME msg, st with <| bst_environ := env; bst_pc updated_by bir_pc_next |>)
+                    | NONE => (NONE, bir_state_set_typeerror st))
+                | NONE => (NONE, bir_state_set_typeerror st))
+           | _ =>
+               (case eval_clstep p cid st M of
+                 st'::_ => (NONE,st')
+                 | [] => (NONE, st)))
+      | SOME stm => case eval_clstep p cid st M of
+                      st'::_ => (NONE,st')
+                      | [] => (NONE, st)
+’;
 
-val cores = “{core 1 ^core1_prog ^core1_st,
-              core 2 ^core2_prog ^core2_st}”;
+val bir_exec_steps_msg_def = Define ‘
+                              bir_exec_steps_msg p cid 0 st M = ([],st)
+                              /\ bir_exec_steps_msg p cid (n:num) st M =
+                                 case bir_exec_step_msg p cid st M of
+                                   (msg_opt,st') =>
+                                     case bir_exec_steps_msg p cid (n-1) st' M of
+                                       (ms,st'') => ((case msg_opt of
+                                                        SOME msg => msg::ms
+                                                      | NONE => ms), st'')
+                             ’;
 
-val promise1 = “<| loc := BVal_Imm (Imm64 4w); val := BVal_Imm (Imm8 1w); cid := 1  |> ”
-val promise2 = “<| loc := BVal_Imm (Imm64 8w); val := BVal_Imm (Imm8 1w); cid := 2  |> ”
-val promising_rule = CONJUNCT2 bir_cstep_rules
-(* val s1 = SPECL [core1_prog,“1”,“[]”,
-                core1_st,“^core1_st with bst_prom updated_by (\pr. pr ++ [1])”,
-                “1”, promise1] promising_rule; *)
+
+val set_env_defaults_def = Define‘
+      set_env_defaults s =
+         let env = BEnv (\v. case v of
+                               "x0" => SOME (BVal_Imm (Imm64 0w))
+                             | "x1" => SOME (BVal_Imm (Imm64 4w))
+                             | "x2" => SOME (BVal_Imm (Imm64 8w))
+                             | "MEM" => SOME (BVal_Mem Bit64 Bit8 (FUN_FMAP (\x. 0) (\(x:num).T)))
+                             | _ => NONE)
+         in s with <| bst_environ := env; |>
+’;
+
+fun term_EVAL tm = (rand o concl) (EVAL tm);
+val core_promises_def = Define‘
+  core_promises n (core cid prog st) = FST (bir_exec_steps_msg prog cid n st [])
+’;
+
+val core1_st = term_EVAL “set_env_defaults (bir_state_init ^core1_prog)”;
+val core2_st = term_EVAL “set_env_defaults (bir_state_init ^core2_prog)”;
+
+(* core definitions *)
+val cores = “[(core 0 ^core1_prog ^core1_st);
+              (core 1 ^core2_prog ^core2_st)]”;
+
+(* 'promising'-mode per-core execution *)
+val promised_mem = term_EVAL “FLAT (MAP (core_promises 2) ^cores)”;
+val promised_mem2 = term_EVAL “case ^promised_mem of [a;b] => [b;a]”;
+
+fun core_st_promised n st promises = term_EVAL “^st with <| bst_prom := [(^n)] |>”;
+val core1_st_promised = core_st_promised “1:num” core1_st promised_mem;
+val core2_st_promised = core_st_promised “2:num” core2_st promised_mem;
+val core1_st_promised2 = core_st_promised “2:num” core1_st promised_mem2;
+val core2_st_promised2 = core_st_promised “1:num” core2_st promised_mem2;
+
+val cores_promised = “[(core 0 ^core1_prog ^core1_st_promised);
+                       (core 1 ^core2_prog ^core2_st_promised)]”;
+val cores_promised2 = “[(core 0 ^core1_prog ^core1_st_promised2);
+                        (core 1 ^core2_prog ^core2_st_promised2)]”;
+
+val inspect_trace_def = Define‘
+  inspect_trace cores =
+      MAP (\c. case c of core cid p st => (cid, bir_env_lookup "x2" st.bst_environ)) cores
+’;
+
+(* 'non-promising'-mode execution *)
+val traces = term_EVAL “MAP inspect_trace (eval_parsteps 3 ^cores_promised ^promised_mem)”;
+val traces2 = term_EVAL “eval_parsteps 3 ^cores_promised2 ^promised_mem2”;
+
+val core_step1 = term_EVAL “HD (eval_clstep_core ^promised_mem (HD ^cores_promised))”;
+val test2 = term_EVAL “LIST_BIND (eval_clstep_core ^promised_mem (HD ^cores_promised)) (\c. eval_clstep_core ^promised_mem c)”;
 
 val _ = export_theory();
