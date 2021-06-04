@@ -1726,7 +1726,8 @@ val cache = lift_inst_cache_empty;
             val (_, mu_tm, mms1_tm, p1_tm) = dest_bir_is_lifted_prog_LABELS_DISTINCT (concl thm1)
             val (_, mu_tm, mms2_tm, p2_tm) = dest_bir_is_lifted_prog_LABELS_DISTINCT (concl thm2)
 
-            val thma = SPECL [mu_tm, mms1_tm, mms2_tm, p1_tm, p2_tm] prog_dist_UNION_THM                        val thmb = MP thma thm1
+            val thma = SPECL [mu_tm, mms1_tm, mms2_tm, p1_tm, p2_tm] prog_dist_UNION_THM
+            val thmb = MP thma thm1
             val thmc = MP thmb thm2
             in thmc
             end)

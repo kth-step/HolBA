@@ -1196,11 +1196,11 @@ fun lift_by_cheat mu_b mu_e pc hex_code is_atomic_tm bstmt_list =
                                         wordsSyntax.mk_wordii (Arbnum.toInt mu_e, 64))
     val byte_instruction = get_byte_word_l hex_code
     val prog =
-      mk_BirProgram_list (Type.alpha,
-	[mk_bir_block_list (Type.alpha,
+      mk_BirProgram_list (block_observe_ty,
+	[mk_bir_block_list (block_observe_ty,
 			    mk_BL_Address_HC (pc_imm, stringSyntax.fromMLstring hex_code),
                             is_atomic_tm,
-			    bstmt_list,
+			    (map (inst [Type.alpha |-> block_observe_ty]) bstmt_list),
 			    mk_BStmt_Jmp (mk_BLE_Label (mk_BL_Address pc_next_imm))
 	)]
       )
