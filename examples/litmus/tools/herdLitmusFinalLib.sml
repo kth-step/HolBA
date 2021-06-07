@@ -102,6 +102,8 @@ fun !!ph xs = ph xs
 (* Symbol followed by some expression *)
 fun (a $-- ph) xs = ((sym a -- !!ph) >> snd) xs
 
+fun empty a xs = (a, xs)
+
 (* Scan the token stream ‘a’ with grammar ‘ph’ *)
 fun reader ph a =
     case ph (scan a)
@@ -121,8 +123,8 @@ fun mk_MEM (a, v) =
 	val hv = f v
 	val hm = mk_var("mem", bir_var_environment_t_ty)
     in
-	“!fmap. ((bir_env_lookup "MEM64" ^hm)
-		 = SOME (BVal_Mem Bit64 Bit64 fmap))
+	“!fmap. ((bir_env_lookup "MEM8" ^hm)
+		 = SOME (BVal_Mem Bit64 Bit8 fmap))
 	 ==> FLOOKUP fmap ^ha = SOME ^hv”
     end
 fun mk_REG (t,(r,v)) =
@@ -138,11 +140,9 @@ fun mk_REG (t,(r,v)) =
 fun quant xs = ("forall" $-- expr >> mk_FORALL
 			 || "exists" $-- expr >> mk_EXISTS) xs
 (* OR *)
-and expr xs = ((term -- "\\/" $-- expr) >> mk_OR
-					|| term) xs
+and expr xs = (term -- ("\\/" $-- expr || empty “F”) >> mk_OR) xs
 (* AND *)
-and term xs = ((factor -- "/\\" $-- term) >> mk_AND
-					  || factor) xs
+and term xs = (factor -- ("/\\" $-- term || empty “T”) >> mk_AND) xs
 (* NOT || () *)
 and factor xs = ("(" $-- expr -- (sym ")") >> fst
 		     || "not" $-- expr >> mk_neg
@@ -156,5 +156,11 @@ and var xs = (id || num >> Int.toString) xs
 (* Parse the final expression *)
 fun parse_final final_sec =
     let val t = reader quant final_sec
-    in “\ss. ^t” end
+    in (rhs o concl o EVAL) “\ss. ^t” end
 end
+
+(*
+val x = "exists (not (x=1 /\\ (2:x7=0 /\\ (2:x8=0 /\\ (1:x5=0 /\\ (1:x8=0 /\\ (2:x9=1 /\\ (1:x7=0 \\/ 1:x7=1 \\/ 1:x7=2) \\/ 2:x9=2 /\\ (1:x7=2 \\/ 1:x7=1 \\/ 1:x7=0)) \\/ 1:x8=1 /\\ (2:x9=1 /\\ (1:x7=2 \\/ 1:x7=1 \\/ 1:x7=0) \\/ 2:x9=2 /\\ (1:x7=0 \\/ 1:x7=1 \\/ 1:x7=2))) \\/ 1:x5=2 /\\ (1:x7=1 /\\ (1:x8=0 /\\ (2:x9=2 \\/ 2:x9=1) \\/ 1:x8=1 /\\ (2:x9=1 \\/ 2:x9=2)) \\/ 1:x7=2 /\\ (1:x8=0 /\\ (2:x9=1 \\/ 2:x9=2) \\/ 1:x8=1 /\\ (2:x9=2 \\/ 2:x9=1))) \\/ 1:x5=1 /\\ 1:x7=1 /\\ (1:x8=0 /\\ (2:x9=1 \\/ 2:x9=2) \\/ 1:x8=1 /\\ (2:x9=2 \\/ 2:x9=1))) \\/ 2:x8=1 /\\ (1:x5=0 /\\ (1:x7=0 /\\ (1:x8=0 /\\ (2:x9=1 \\/ 2:x9=0) \\/ 1:x8=1 /\\ (2:x9=0 \\/ 2:x9=1)) \\/ 1:x7=1 /\\ (1:x8=0 /\\ (2:x9=0 \\/ 2:x9=1) \\/ 1:x8=1 /\\ (2:x9=1 \\/ 2:x9=0))) \\/ 1:x5=1 /\\ 1:x7=1 /\\ (1:x8=0 /\\ (2:x9=0 \\/ 2:x9=1) \\/ 1:x8=1 /\\ (2:x9=1 \\/ 2:x9=0)))) \\/ 2:x7=1 /\\ 2:x8=1 /\\ 2:x9=1 /\\ (1:x5=0 /\\ (1:x7=0 /\\ (1:x8=1 \\/ 1:x8=0) \\/ 1:x7=1 /\\ (1:x8=0 \\/ 1:x8=1)) \\/ 1:x5=1 /\\ 1:x7=1 /\\ (1:x8=0 \\/ 1:x8=1))) \\/ 2:x7=1 /\\ 2:x8=0 /\\ 2:x9=2 /\\ x=2 /\\ (1:x5=0 /\\ (1:x8=0 /\\ (1:x7=2 \\/ 1:x7=1 \\/ 1:x7=0) \\/ 1:x8=1 /\\ (1:x7=0 \\/ 1:x7=1 \\/ 1:x7=2)) \\/ 1:x5=1 /\\ (1:x7=1 /\\ (1:x8=0 \\/ 1:x8=1) \\/ 1:x7=2 /\\ (1:x8=1 \\/ 1:x8=0)) \\/ 1:x5=2 /\\ 1:x7=2 /\\ (1:x8=1 \\/ 1:x8=0))))"
+
+val t = parse_final x
+*)
