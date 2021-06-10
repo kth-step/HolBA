@@ -90,7 +90,7 @@ val exp_is_load_def = Define `
 
 val stmt_generic_step_def = Define`
    stmt_generic_step (BStmtB (BStmt_Assign _ _)) = F
-/\ stmt_generic_step (BStmtB BStmt_Fence) = F
+/\ stmt_generic_step (BStmtB (BStmt_Fence _ _)) = F
 /\ stmt_generic_step (BStmtE (BStmt_CJmp _ _ _)) = F
 /\ stmt_generic_step _ = T
 `;
@@ -145,7 +145,7 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
 /\ (* fence *)
 (!p s s' M cid v.
    (((bir_get_current_statement p s.bst_pc =
-     SOME (BStmtB BStmt_Fence)))
+     SOME (BStmtB (BStmt_Fence BM_ReadWrite BM_ReadWrite))))
    /\ v = MAX s.bst_v_rOld s.bst_v_wOld
    /\ s' = s with <| bst_v_rNew := MAX s.bst_v_rNew v;
                      bst_v_wNew := MAX s.bst_v_wNew v;
@@ -322,7 +322,7 @@ val eval_clstep_def = Define‘
        eval_clstep_read p cid s M var mem_e a_e en ty
    | SOME (BStmtB (BStmt_Assign var (BExp_Store mem_e a_e en v_e))) =>
        eval_clstep_fulfil p cid s M var mem_e a_e en v_e 
-   | SOME (BStmtB BStmt_Fence) =>
+   | SOME (BStmtB (BStmt_Fence BM_ReadWrite BM_ReadWrite)) =>
        eval_clstep_fence p cid s M
    | SOME (BStmtE (BStmt_CJmp cond_e lbl1 lbl2)) =>
        eval_clstep_branch p cid s M (BStmtE (BStmt_CJmp cond_e lbl1 lbl2))
@@ -501,7 +501,7 @@ val inspect_trace_def = Define‘
 ’;
 
 (* 'non-promising'-mode execution *)
-val traces = term_EVAL “MAP inspect_trace (eval_parsteps 3 ^cores_promised ^promised_mem)”;
+val traces = term_EVAL “MAP inspect_trace (eval_parsteps 7 ^cores_promised ^promised_mem)”;
 val traces2 = term_EVAL “eval_parsteps 3 ^cores_promised2 ^promised_mem2”;
 
 val core_step1 = term_EVAL “HD (eval_clstep_core ^promised_mem (HD ^cores_promised))”;
