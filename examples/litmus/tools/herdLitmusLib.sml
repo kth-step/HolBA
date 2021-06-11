@@ -33,6 +33,17 @@ type litmus = {arch:string,
 
 (* Split the herd litmus test into sections *)
 local
+    fun remove_comments s =
+	let
+	    fun comment_start (x::y::r, acc) = 
+		(case (x,y) of (#"(", #"*") => comment_end (r, acc)
+			     | _ => comment_start (y::r, x::acc))
+	      | comment_start (xs, acc) = List.revAppend (acc, xs)
+	    and comment_end (x::y::r, acc) =
+		(case (x,y) of (#"*", #")") => comment_start (r, acc)
+			     | _ => comment_end (y::r, x::acc))
+	      | comment_end _ = raise Fail "Expected end of comment"
+	in String.implode (comment_start (String.explode s, [])) end
     fun names [] = raise Fail "Expected arch and testname"
       | names (x::lines) =
 	case String.tokens Char.isSpace x
@@ -59,9 +70,10 @@ local
 in
 fun split_to_sections text =
     let
-	val ls1 = String.tokens (eq #"\n") text
+	val ls1 = String.tokens (eq #"\n") (remove_comments text)
 	val ls1' = map (trim Char.isSpace) ls1
-	val ((arch, name), ls2) = names ls1'
+	val ls1'' = List.filter (fn s => not(s = "")) ls1'
+	val ((arch, name), ls2) = names ls1''
 	val (info_sec, ls3) = info ls2
 	val (init_sec, ls4) = init ls3
 	val (prog_sec, final_sec) = prog ls4

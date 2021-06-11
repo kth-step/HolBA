@@ -75,10 +75,10 @@ fun mk_mem_env mem =
 	val f = mk_w2n o word_of_string
 	val mem_num = map (fn (x,y) => mk_pair(f x, f y)) mem
 	val fmap = list_mk_fupdate (mk_fempty(num,num), mem_num)
-	val bval = mk_BVal_Mem (Bit64_tm,Bit64_tm,fmap)
+	val bval = mk_BVal_Mem (Bit64_tm,Bit8_tm,fmap)
 	val env_empty = “(K NONE) : string -> bir_val_t option”
-	val env = mk_comb(mk_update (“"MEM64"”, mk_some bval), env_empty)
-    in mk_BEnv env end
+	val env = mk_comb(mk_update (“"MEM8"”, mk_some bval), env_empty)
+    in (rhs o concl o EVAL o mk_BEnv) env end
 
 (* Make BIR environment for a thread *)
 fun mk_thd_env regs =
@@ -89,7 +89,7 @@ fun mk_thd_env regs =
 	val env_empty = “(K NONE) : string -> bir_val_t option”
 	val regs_hol = map str2term regs
 	val env = list_mk_update env_empty regs_hol
-    in mk_BEnv env end
+    in (rhs o concl o EVAL o mk_BEnv) env end
 
 fun parse_init init_sec prog_regs =
     let
