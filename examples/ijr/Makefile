@@ -9,6 +9,7 @@ all: build evalc evalbir
 
 build:
 	# Count lines for proof-producing procedures and verified function
+	Holmake
 	wc -l resolveFullyLib.sml
 	wc -l resolveFullyScript.sml resolveScript.sml resolutionScript.sml simulationScript.sml simulationFailScript.sml contractTransferScript.sml
 	wc -l cProgEvaluation.sml
