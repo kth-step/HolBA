@@ -14,6 +14,7 @@ struct
 
   open numSyntax;
   open HolBACoreSimps;
+  open bir_block_collectionLib;
 
 
   val log = ref (NONE : TextIO.outstream option);

@@ -5,22 +5,14 @@ local
 (* these dependencies probably need cleanup *)
 (* ================================================ *)
 open HolKernel boolLib liteLib simpLib Parse bossLib;
-open bir_inst_liftingTheory
-open bir_lifting_machinesTheory
-open bir_lifting_machinesLib bir_lifting_machinesLib_instances;
 open bir_interval_expTheory bir_update_blockTheory
-open bir_exp_liftingLib bir_typing_expSyntax
+open bir_typing_expSyntax
 open bir_typing_expTheory
 open bir_extra_expsTheory
-open bir_lifter_general_auxTheory
 open bir_programSyntax bir_interval_expSyntax
 open bir_program_labelsTheory
 open bir_immTheory
-open intel_hexLib
-open bir_inst_liftingLibTypes
 open PPBackEnd Parse
-
-open bir_inst_liftingHelpersLib;
 (* ================================================ *)
 
   open listSyntax;
@@ -32,6 +24,8 @@ open bir_inst_liftingHelpersLib;
   val libname  = "bir_block_collectionLib"
   val ERR      = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
+
+  val debug_trace = ref (1:int)
 
 in
 
@@ -122,29 +116,6 @@ in
 	     )) augm_block_lst;
       in
 	Redblackmap.insertList (Redblackmap.mkDict Term.compare, block_l_thm_list)
-      end;
-
-    fun gen_MEM_thm_block_dict_from_lift_thm prog_l_def lift_thm =
-      let
-	(* val (_, mem_wi_prog_tm, mem_tm, prog_tm) = (dest_bir_is_lifted_prog o concl) t; *)
-
-	val prog_tm = ((snd o dest_comb o concl) lift_thm);
-
-	val valid_labels_thm = prove(``
-	  bir_is_lifted_prog r mu mms p ==> bir_is_valid_labels p
-	``,
-	  METIS_TAC [bir_inst_liftingTheory.bir_is_lifted_prog_def]
-	);
-
-	val valid_prog_thm = prove(``bir_is_valid_program (^prog_tm)``,
-	  REWRITE_TAC [bir_program_valid_stateTheory.bir_is_valid_program_def] >>
-	  STRIP_TAC >- (
-	    METIS_TAC [valid_labels_thm, lift_thm]
-	  ) >>
-	  SIMP_TAC list_ss [bir_program_valid_stateTheory.bir_program_is_empty_def, prog_l_def]
-	);
-      in
-	gen_MEM_thm_block_dict prog_l_def valid_prog_thm
       end;
 
   end (* local *)
