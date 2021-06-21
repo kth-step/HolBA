@@ -1,0 +1,8 @@
+INCLUDES = $(HOLBADIR)/src/aux \
+ $(HOLBADIR)/src/theory/bir \
+ $(HOLBADIR)/src/theory/bir-support \
+ $(HOLBADIR)/src/shared \
+ $(HOLBADIR)/src/tools/cfg
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
