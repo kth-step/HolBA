@@ -292,7 +292,7 @@ open bir_inst_liftingHelpersLib;
 		     HO_MATCH_MP new_map_triple3 (SIMP_RULE std_ss [] elabel_post_is_false_thm)
                    (* Finalize with assumption and INSERT and DELETE simplification *)
 		   val new_map_triple5 =
-                     SIMP_RULE std_ss [ASSUME assmpt]
+                     SIMP_RULE (std_ss++stringSimps.STRING_ss++string_ss) [ASSUME assmpt]
 		     (simp_delete_set_repr_rule new_map_triple4)
 		   val new_map_triple6 =
 		     simp_insert_set_repr_rule new_map_triple5
