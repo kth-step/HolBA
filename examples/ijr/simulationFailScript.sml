@@ -44,9 +44,9 @@ Q.PAT_X_ASSUM ‘_ = s2’ (fn thm => ASM_SIMP_TAC (std_ss++holBACore_ss) [GSYM 
 QED
 
 Theorem bir_exec_block_assert_jmp:
-  ∀p' p l1 bss e s v s2 s1 os2 m2 os1 m1 bl1 bl2.
+  ∀p' p l1 bss es e s s2 s1 os2 m2 os1 m1 bl1 bl2.
     bl1 = bir_block_t l1 bss (BStmt_Jmp (BLE_Exp e)) ⇒
-    bl2 = assert_block l1 bss v ⇒
+    bl2 = assert_block l1 bss es ⇒
 
     bir_exec_block p' bl2 s = (os2, m2, s2) ⇒
     bir_exec_block p bl1 s = (os1, m1, s1) ⇒
@@ -63,7 +63,7 @@ ASM_SIMP_TAC  (std_ss++holBACore_ss) [assert_block_def, bir_exec_block_def] >>
   by PROVE_TAC [pairTheory.PAIR] >>
 ‘∃os1 m1 s1. bir_exec_stmtsB bss ([],0,s) = (os1, m1, s1)’
   by PROVE_TAC [pairTheory.PAIR] >>
-Q.ABBREV_TAC ‘s2' = bir_exec_stmtE p' (BStmt_Jmp (BLE_Label (BL_Address v))) s2’ >>
+Q.ABBREV_TAC ‘s2' = bir_exec_stmtE p' es s2’ >>
 Q.ABBREV_TAC ‘s1' = bir_exec_stmtE p (BStmt_Jmp (BLE_Exp e)) s1’ >>
 FULL_SIMP_TAC std_ss [LET_DEF] >>
 
@@ -81,8 +81,8 @@ FULL_SIMP_TAC  (std_ss++holBACore_ss) []
 QED
 
 Theorem resolved_fail_simulated_fail:
-  ∀l1 v p p'.
-    resolved_fail l1 v p p' ⇒
+  ∀l1 p p'.
+    resolved_fail l1 p p' ⇒
     simulated_fail p p'
 Proof
 REPEAT GEN_TAC >> STRIP_TAC >>
@@ -129,7 +129,7 @@ POP_ASSUM SUBST_ALL_TAC >>
 ‘∃bl1 bl2.
    bir_get_current_block p s.bst_pc = SOME bl1 ∧
    bir_get_current_block p' s.bst_pc = SOME bl2 ∧
-   resolved_fail_block l1 v bl1 bl2’ by (
+   resolved_fail_block l1 bl1 bl2’ by (
   FULL_SIMP_TAC std_ss [resolved_fail_cases]
 ) >>
 FULL_SIMP_TAC std_ss [resolved_fail_block_cases] >>

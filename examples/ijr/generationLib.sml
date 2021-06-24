@@ -57,12 +57,12 @@ fun gen_arg2(ns, ss) =
     mk_list(list, “:(bir_imm_t#string)”)
   end
 
-fun gen_arg(label, ns, ss, exit_addr) =
-  mk_pair(label, mk_pair(gen_arg2(ns, ss), mk_Imm_of_int 64 exit_addr))
+fun gen_arg(label, ns, ss) =
+  mk_pair(label, gen_arg2(ns, ss))
 
 fun gen_args(xs) =
   let
-    val ty = “:(bir_label_t  # ((bir_imm_t#string) list) # bir_imm_t)”
+    val ty = “:(bir_label_t  # (bir_imm_t#string) list)”
   in
     mk_list(List.map gen_arg xs, ty)
   end
@@ -72,7 +72,7 @@ fun gen_args_entry_block2(middle_blocks_n) =
     val targets = List.tabulate(middle_blocks_n, fn i => i);
     val fresh_labels = gen_label_strings("entry2", middle_blocks_n);
   in
-    [(blabel_str "entry2", targets, fresh_labels, middle_blocks_n - 1)]
+    [(blabel_str "entry2", targets, fresh_labels)]
   end
 
 fun gen_args_middle_block(addr, exit_addr, m) =
@@ -80,7 +80,7 @@ fun gen_args_middle_block(addr, exit_addr, m) =
     val targets = List.tabulate(m, fn _ => exit_addr);
     val fresh_labels = gen_label_strings(Int.toString(addr)^"w", m);
   in
-    [(blabel_addr64 addr, targets, fresh_labels, exit_addr)]
+    [(blabel_addr64 addr, targets, fresh_labels)]
   end
 
 fun gen_args_middle_blocks(addrs, exit_addr, m) =

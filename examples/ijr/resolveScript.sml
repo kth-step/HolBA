@@ -1,4 +1,4 @@
-open HolKernel Parse boolLib bossLib;
+open HolKernel Parse boolLib bossLib BasicProvers;
 
 open listTheory optionTheory pred_setTheory pred_setSimps;
 
@@ -228,41 +228,46 @@ QED
 
 
 Definition resolve_fail_block_def:
-  (resolve_fail_block bl v =
+  (resolve_fail_block bl =
      case bl.bb_last_statement of
        BStmt_Jmp (BLE_Exp e) =>
-         SOME [assert_block bl.bb_label bl.bb_statements v]
+         SOME [assert_block bl.bb_label bl.bb_statements (BStmt_Halt (BExp_Const (Imm1 0w)))]
      | _ => NONE)
 End
 
 Theorem resolve_fail_block_sound:
-  ∀bl1 v r.
-    resolve_fail_block bl1 v = SOME r ⇒
+  ∀bl1 r.
+    resolve_fail_block bl1 = SOME r ⇒
     (∃bl2. r = [bl2] ∧
-           resolved_fail_block (bl1.bb_label) v bl1 bl2)
+           resolved_fail_block (bl1.bb_label) bl1 bl2)
 Proof
 REPEAT GEN_TAC >>
 Cases_on ‘bl1’ >>
 rename1 ‘bir_block_t l1 bss es’ >>
-Cases_on ‘es’ >>
 SIMP_TAC (std_ss++holBACore_ss) [resolve_fail_block_def] >>
-rename1 ‘BStmt_Jmp e’ >>
-Cases_on ‘e’ >>
-SIMP_TAC (std_ss++holBACore_ss) [resolved_fail_block_cases]
+REPEAT CASE_TAC >>
+SIMP_TAC (std_ss++holBACore_ss) [resolved_fail_block_cases] >>
+PROVE_TAC []
 QED
 
 Theorem resolve_fail_block_refines_vars:
-  ∀v. refines_vars (\bl. resolve_fail_block bl v)
+  refines_vars resolve_fail_block
 Proof
 SIMP_TAC std_ss [refines_vars_def] >>
-REPEAT GEN_TAC >>
-DISCH_THEN (STRIP_ASSUME_TAC o MATCH_MP resolve_fail_block_sound) >>
+REPEAT STRIP_TAC >>
+IMP_RES_TAC resolve_fail_block_sound >>
 ASM_SIMP_TAC (list_ss++PRED_SET_ss) [] >>
+subgoal ‘bir_vars_of_stmtE bl2.bb_last_statement = ∅’ >- (
+  FULL_SIMP_TAC std_ss [resolve_fail_block_def] >>
+  EVERY_CASE_TAC >>
+  FULL_SIMP_TAC std_ss [assert_block_def] >>
+  RW_TAC (std_ss++holBACore_ss) [bir_vars_of_stmtE_def]
+) >>
 PROVE_TAC [resolved_fail_block_vars]
 QED
 
 Definition resolve_fail_def:
-  resolve_fail p l v = replace_block p l (\bl. resolve_fail_block bl v)
+  resolve_fail p l = replace_block p l resolve_fail_block
 End
 
 Theorem EXISTS_MEM_labels:
@@ -275,9 +280,9 @@ PROVE_TAC []
 QED
 
 Theorem resolve_fail_sound:
-  ∀p l p' v.
-    resolve_fail p l v = SOME p' ⇒
-    resolved_fail l v p p'
+  ∀p l p'.
+    resolve_fail p l = SOME p' ⇒
+    resolved_fail l p p'
 Proof
 REPEAT GEN_TAC >>
 Cases_on ‘p’ >> rename1 ‘BirProgram p’ >>
@@ -322,8 +327,8 @@ REPEAT STRIP_TAC >| [
 QED
 
 Theorem resolve_fail_simulated_termination:
- ∀p l v p'.
-    resolve_fail p l v = SOME p' ⇒
+ ∀p l p'.
+    resolve_fail p l = SOME p' ⇒
     simulated_termination p p'
 Proof
 PROVE_TAC [resolve_fail_sound,
@@ -332,8 +337,8 @@ PROVE_TAC [resolve_fail_sound,
 QED
 
 Theorem resolve_fail_vars:
-  ∀p l v p'.
-    resolve_fail p l v = SOME p' ⇒
+  ∀p l p'.
+    resolve_fail p l = SOME p' ⇒
     bir_vars_of_program p' SUBSET bir_vars_of_program p
 Proof
 METIS_TAC [resolve_fail_def, replace_block_SOME_vars,
@@ -341,8 +346,8 @@ METIS_TAC [resolve_fail_def, replace_block_SOME_vars,
 QED
 
 Theorem resolve_fail_labels:
-  ∀p l v p'.
-    resolve_fail p l v = SOME p' ⇒
+  ∀p l p'.
+    resolve_fail p l = SOME p' ⇒
     bir_labels_of_program p = bir_labels_of_program p'
 Proof
 REPEAT GEN_TAC >>

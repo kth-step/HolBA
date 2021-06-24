@@ -22,6 +22,19 @@ fun test_partial_resolve_indirect_jumps(middle_blocks_n) =
       val exit_addr = 10 * middle_blocks_n
       val prog_def = gen_program("prog", middle_blocks_n)
       val prog_tm = (lhs o concl) prog_def
+      val args = gen_partial_args_program(middle_blocks_n, middle_blocks_n div 20)
+      val start = timer_start()
+      val (prog'_def, prog'_thm) = resolve_indirect_jumps("resolved_gen_prog", prog_tm, args)
+      val stop = timer_stop start
+    in
+      (middle_blocks_n, stop)
+    end
+
+fun test_constant_resolve_indirect_jumps(middle_blocks_n) =
+    let
+      val exit_addr = 10 * middle_blocks_n
+      val prog_def = gen_program("prog", middle_blocks_n)
+      val prog_tm = (lhs o concl) prog_def
       val args = gen_partial_args_program(middle_blocks_n, 100)
       val start = timer_start()
       val (prog'_def, prog'_thm) = resolve_indirect_jumps("resolved_gen_prog", prog_tm, args)
@@ -44,7 +57,7 @@ fun test_transfer_contract (middle_blocks_n) =
                    then bir_exp_true
                    else bir_exp_false”
       val ht_thm' = prove(
-        “bir_exec_to_labels_triple prog' ^entry_label_tm ^ending_labels_tm bir_exp_true ^post_tm”, 
+        “bir_simp_jgmt prog' bir_exp_true ^entry_label_tm ^ending_labels_tm {} bir_exp_true ^post_tm”, 
         cheat)
 
       val start = timer_start()
@@ -80,22 +93,27 @@ fun linspace(start, n, stop) = range(start, (stop - start) div n, stop)
 
 
 (*200 64s*)
-val resolve_middle_blocks_ns = range(10, 10, 200)
+val resolve_middle_blocks_ns = range(10, 20, 210)
 val resolve_results = List.map (test_resolve_indirect_jumps) resolve_middle_blocks_ns
 val _ = List.map print_test_result resolve_results
 val _ = write_test_results("resolve", resolve_results)
 
 (*val _ = Posix.Process.sleep (Time.fromSeconds (Int.toLarge 60))*)
 
-val partial_resolve_middle_blocks_ns = range(100, 100, 2000)
+val partial_resolve_middle_blocks_ns = range(100, 200, 2100)
 val partial_resolve_results = List.map (test_partial_resolve_indirect_jumps) partial_resolve_middle_blocks_ns
 val _ = List.map print_test_result partial_resolve_results
 val _ = write_test_results("partial_resolve", partial_resolve_results)
 
+val constant_resolve_middle_blocks_ns = range(100, 200, 2100)
+val constant_resolve_results = List.map (test_constant_resolve_indirect_jumps) constant_resolve_middle_blocks_ns
+val _ = List.map print_test_result constant_resolve_results
+val _ = write_test_results("constant_resolve", constant_resolve_results)
+
 (*val _ = Posix.Process.sleep (Time.fromSeconds (Int.toLarge 60))*)
 
 (*80000 53s*)
-val transfer_middle_blocks_ns = range(1000, 2000, 38000)
+val transfer_middle_blocks_ns = range(1000, 4000, 38000)
 val transfer_results = List.map test_transfer_contract transfer_middle_blocks_ns
 val _ = List.map print_test_result transfer_results
 val _ = write_test_results("transfer", transfer_results)

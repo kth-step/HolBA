@@ -44,11 +44,11 @@ val call_comp_next_adress = (#1 o dest_bir_block o el 34) blocks
 
 
 (*Transform program*)
-val add_two_ret_args = [(add_two_ret_address, [0x400050], ["0x400014w-1"], 0x400084)]
-val add_one_ret_args = [(add_one_ret_address, [0x400058], ["0x40002Cw-1"], 0x400084)]
-val call_add_two_args = [(call_add_two_address, [0x400000], ["0x40004Cw-1"], 0x400084)]
-val call_add_one_args = [(call_add_one_address, [0x400018], ["0x400054w-1"], 0x400084)]
-val comp_ret_args = [(comp_ret_address, [0x400084], ["0x40005Cw-1"], 0x400084)]
+val add_two_ret_args = [(add_two_ret_address, [0x400050], ["0x400014w-1"])]
+val add_one_ret_args = [(add_one_ret_address, [0x400058], ["0x40002Cw-1"])]
+val call_add_two_args = [(call_add_two_address, [0x400000], ["0x40004Cw-1"])]
+val call_add_one_args = [(call_add_one_address, [0x400018], ["0x400054w-1"])]
+val comp_ret_args = [(comp_ret_address, [0x400084], ["0x40005Cw-1"])]
 
 val composition_args = gen_args (add_two_ret_args @
                                  add_one_ret_args @

@@ -106,22 +106,22 @@ End
 
 (*Any value besides 1w is fine*)
 Definition assert_block_def:
-  assert_block l bss v =
+  assert_block l bss es =
   <| bb_label := l;
      bb_statements := bss ++ [BStmt_Assert (BExp_Const (Imm1 0w))];
-     bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address v)) |>
+     bb_last_statement := es|>
 End
 
 Inductive resolved_fail_block:
-  ∀l v bl1 bl2 e.
+  ∀l bl1 bl2 e.
     bl1 = bir_block_t l bss (BStmt_Jmp (BLE_Exp e)) ∧
-    bl2 = assert_block l bss v ⇒
-    resolved_fail_block l v bl1 bl2
+    bl2 = assert_block l bss es ⇒
+    resolved_fail_block l bl1 bl2
 End
 
 Theorem resolved_fail_block_labels:
-  ∀l v bl1 bl2.
-    resolved_fail_block l v bl1 bl2 ⇒
+  ∀l bl1 bl2.
+    resolved_fail_block l bl1 bl2 ⇒
     bl1.bb_label = l ∧ bl2.bb_label = l
 Proof
 REPEAT STRIP_TAC >>
@@ -130,8 +130,9 @@ FULL_SIMP_TAC (std_ss++holBACore_ss)
 QED
 
 Theorem resolved_fail_block_vars:
-  ∀l v bl1 bl2.
-    resolved_fail_block l v bl1 bl2 ⇒
+  ∀l bl1 bl2.
+    bir_vars_of_stmtE bl2.bb_last_statement = {} ⇒
+    resolved_fail_block l bl1 bl2 ⇒
     bir_vars_of_block bl2 SUBSET bir_vars_of_block bl1
 Proof
 REPEAT STRIP_TAC >>
@@ -142,18 +143,18 @@ FULL_SIMP_TAC (list_ss++PRED_SET_ss++holBACore_ss)
 QED
 
 Inductive resolved_fail:
-  ∀l1 v p p' bl1 bl2.
+  ∀l1 p p' bl1 bl2.
     (∀l. MEM l (bir_labels_of_program p') ⇔ MEM l (bir_labels_of_program p)) ∧
 
     bir_get_current_block p (bir_block_pc l1) = SOME bl1 ∧
     bir_get_current_block p' (bir_block_pc l1) = SOME bl2 ∧
-    resolved_fail_block l1 v bl1 bl2 ∧
+    resolved_fail_block l1 bl1 bl2 ∧
 
     (∀l. MEM l (bir_labels_of_program p) ∧ l ≠ l1 ⇒
          ∃bl. bir_get_current_block p (bir_block_pc l) = SOME bl ∧
               bir_get_current_block p' (bir_block_pc l) = SOME bl) ⇒
 
-    resolved_fail l1 v p p'
+    resolved_fail l1 p p'
 End
 
 
