@@ -1,0 +1,16 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   =
+
+
+# configuration
+# ----------------------------------
+HOLHEAP        = ../HolBATools_Comp-heap
+NEWHOLHEAP     = 
+
+HEAPINC_EXTRA  = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../../Holmakefile.inc
