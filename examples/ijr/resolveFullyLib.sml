@@ -35,7 +35,7 @@ fun transfer_bir_exec_to_labels_triple(prog'_thm, ht_thm) =
     val ending_thm = prove (
       “^exits_tm SUBSET (set (bir_labels_of_program ^prog_tm))”,
       EVAL_TAC)
-    val res_thm = MATCH_MP resolve_fully_n_contract_transfer prog'_thm
+    val res_thm = MATCH_MP resolve_fully_n_bir_exec_to_labels_triple_transfer prog'_thm
     val res_thm = MATCH_MP res_thm entry_thm
     val res_thm = MATCH_MP res_thm ending_thm
   in
@@ -56,7 +56,7 @@ fun transfer_contract(prog'_thm, ht_thm) =
     val bl_thm = prove (
       “^bl_tm SUBSET (set (bir_labels_of_program ^prog_tm))”,
       EVAL_TAC)
-    val res_thm = MATCH_MP resolve_fully_n_bir_simp_jgmt_transfer prog'_thm
+    val res_thm = MATCH_MP resolve_fully_n_contract_transfer prog'_thm
     val res_thm = MATCH_MP res_thm entry_thm
     val res_thm = MATCH_MP res_thm wl_thm
     val res_thm = MATCH_MP res_thm bl_thm

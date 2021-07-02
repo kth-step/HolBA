@@ -165,7 +165,7 @@ SIMP_TAC std_ss [resolve_fully_n_def] >>
 PROVE_TAC [resolve_fully_vars, SUBSET_TRANS]
 QED
 
-Theorem resolve_fully_n_contract_transfer:
+Theorem resolve_fully_n_bir_exec_to_labels_triple_transfer:
   ∀p ys p' l ls pre post.
     resolve_fully_n p ys = SOME p' ⇒
 
@@ -176,10 +176,10 @@ Theorem resolve_fully_n_contract_transfer:
     bir_exec_to_labels_triple p l ls pre post
 Proof
 PROVE_TAC [resolve_fully_n_simulated_termination,
-           resolve_fully_n_vars, contract_transfer]
+           resolve_fully_n_vars, bir_exec_to_labels_triple_transfer]
 QED
 
-Theorem resolve_fully_n_bir_simp_jgmt_transfer:
+Theorem resolve_fully_n_contract_transfer:
   ∀p ys p' i l ls ls' pre post.
     resolve_fully_n p ys = SOME p' ⇒
 
@@ -191,7 +191,7 @@ Theorem resolve_fully_n_bir_simp_jgmt_transfer:
     bir_simp_jgmt p i l ls ls' pre post                         
 Proof
 PROVE_TAC [resolve_fully_n_simulated_termination,
-           resolve_fully_n_vars, bir_simp_jgmt_transfer]
+           resolve_fully_n_vars, contract_transfer]
 QED
 
 

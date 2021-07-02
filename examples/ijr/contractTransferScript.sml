@@ -444,7 +444,7 @@ subgoal ‘∃os1' m1' n1'. bir_exec_to_labels ls p s = BER_Ended os1' m1' n1' s
 PROVE_TAC []
 QED
 
-Theorem contract_transfer:
+Theorem bir_exec_to_labels_triple_transfer:
   ∀ p p' l ls pre post.
     simulated_termination p p' ⇒
     (bir_vars_of_program p') SUBSET (bir_vars_of_program p) ⇒
@@ -480,7 +480,7 @@ subgoal ‘∃s1 o1 m1 n1. bir_exec_to_labels ls p s =
 ASM_SIMP_TAC (std_ss++holBACore_ss) []
 QED
 
-Theorem bir_simp_jgmt_transfer:
+Theorem contract_transfer:
   ∀ p p' i l ls ls' pre post.
     simulated_termination p p' ⇒
     (bir_vars_of_program p') SUBSET (bir_vars_of_program p) ⇒
