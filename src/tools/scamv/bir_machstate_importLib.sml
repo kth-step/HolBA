@@ -21,12 +21,14 @@ local
         mk_BVal_Mem (Bit64_tm, value_ty, mf)
       end;
 
-  fun build_env regmap mem =
-      let open stringSyntax bir_envSyntax;
+  fun build_env st regmap mem =
+      let open stringSyntax bir_envSyntax bir_programSyntax;
+          val (_,base_env,_) = dest_bir_state st;
+          val base_envf = dest_BEnv base_env;
           fun go [] envf = envf
             | go ((regname,v)::rs) envf =
               go rs “\x. if x = ^(fromMLstring regname) then SOME (BVal_Imm (Imm64 ^(mk_wordi (v,64)))) else ^envf x”
-          val regenvf = go regmap “(\x.NONE): string -> bir_val_t option”;
+          val regenvf = go regmap base_envf;
           val envf = “\x. if x = ^mem_string then SOME ^mem else ^regenvf x”;
       in
         mk_BEnv envf
@@ -38,7 +40,7 @@ fun merge_machstate_into_bir_state st machstate =
     let val (MACHSTATE (regmap, (wsz, defval, memmap))) = machstate;
 
         val mem = build_mem wsz defval (Redblackmap.listItems memmap);
-        val env = build_env (Redblackmap.listItems regmap) mem;
+        val env = build_env st (Redblackmap.listItems regmap) mem;
     in
       (rhs o concl) (EVAL “^st with <| bst_environ := ^env |>”)
     end;
