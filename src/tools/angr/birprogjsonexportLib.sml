@@ -143,6 +143,40 @@ in
           Json.OBJECT [("exptype", Json.STRING "BExp_Store"), ("mem", expm_json), ("addr", expad_json), ("endi", Json.STRING endi_str), ("val", expv_json)]
         end
 
+      else if is_BLE_Label exp then
+        let
+          val exp = (dest_BLE_Label) exp;
+          val exp  = bexp_to_json exp;
+        in
+          Json.OBJECT [("exptype", Json.STRING "BLE_Label"), ("exp", exp)]
+        end
+
+      else if is_BLE_Exp exp then
+        let
+          val exp = (dest_BLE_Exp) exp;
+          val exp  = bexp_to_json exp;
+        in
+          Json.OBJECT [("exptype", Json.STRING "BLE_Exp"), ("exp", exp)]
+        end
+
+      else if is_BL_Label exp then
+        let
+          val str = (dest_BL_Label_string) exp;
+        in
+          Json.OBJECT [("exptype", Json.STRING "BL_Label"), ("str", Json.STRING str)]
+        end
+
+      else if is_BL_Address exp then
+        let
+	  val (sz, wv) = (gen_dest_Imm o dest_BL_Address) exp;
+	  val vstr =
+            if is_word_literal wv then
+              (Arbnum.toString o dest_word_literal) wv
+            else problem exp "can only handle word literals: ";
+        in
+          Json.OBJECT [("exptype", Json.STRING "BL_Address"), ("val", Json.STRING vstr), ("sz", Json.STRING (Int.toString sz))]
+        end
+
       else
         problem exp "don't know BIR expression: "
         (*Json.STRING (term_to_string exp)*)
@@ -154,7 +188,7 @@ in
     if is_BStmt_Halt estmt then
       Json.OBJECT [("estmttype", Json.STRING "BStmt_Halt"), ("exp", bexp_to_json (dest_BStmt_Halt estmt))]
     else if is_BStmt_Jmp estmt then
-      Json.OBJECT [("estmttype", Json.STRING "BStmt_Jmp"), ("lbl", Json.STRING (term_to_string (dest_BStmt_Jmp estmt)))]
+      Json.OBJECT [("estmttype", Json.STRING "BStmt_Jmp"), ("lbl", bexp_to_json (dest_BStmt_Jmp estmt))]
     else if is_BStmt_CJmp estmt then
       let
         val (cnd_tm, lblet_tm, lblef_tm) = dest_BStmt_CJmp estmt;
@@ -204,7 +238,7 @@ in
 
       val tm_stmt_list = (fst o dest_list) tm_stmts;
 
-      val lbl_json  = Json.STRING (term_to_string tm_lbl);
+      val lbl_json  = bexp_to_json tm_lbl;
       val stmts_json = Json.ARRAY (List.map stmttojson tm_stmt_list);
       val estmt_json = estmttojson tm_last_stmt;
     in
