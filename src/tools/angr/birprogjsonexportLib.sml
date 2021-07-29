@@ -55,14 +55,14 @@ in
               (Arbnum.toString o dest_word_literal) wv
             else problem exp "can only handle word literals: ";
         in
-          Json.OBJECT [("exptype", Json.STRING "const"), ("val", Json.STRING vstr), ("sz", Json.STRING (Int.toString sz))]
+          Json.OBJECT [("exptype", Json.STRING "BExp_Const"), ("val", Json.STRING vstr), ("sz", Json.STRING (Int.toString sz))]
         end
 
       else if is_BExp_Den exp then
         let
           val bv    = dest_BExp_Den exp;
         in
-          Json.OBJECT [("exptype", Json.STRING "var"), ("var", bvar_to_json bv)]
+          Json.OBJECT [("exptype", Json.STRING "BExp_Den"), ("var", bvar_to_json bv)]
         end
 
       else if is_BExp_Cast exp then
@@ -74,7 +74,7 @@ in
 
           val caststr = term_to_string castt;
         in
-          Json.OBJECT [("exptype", Json.STRING "cast"), ("type", Json.STRING caststr), ("exp", exp_json), ("sz", Json.STRING (Int.toString szi))]
+          Json.OBJECT [("exptype", Json.STRING "BExp_Cast"), ("type", Json.STRING caststr), ("exp", exp_json), ("sz", Json.STRING (Int.toString szi))]
         end
 
       else if is_BExp_UnaryExp exp then
@@ -83,7 +83,7 @@ in
           val exp_json = bexp_to_json exp;
           val uopstr = term_to_string uop;
         in
-          Json.OBJECT [("exptype", Json.STRING "uop"), ("type", Json.STRING uopstr), ("exp", exp_json)]
+          Json.OBJECT [("exptype", Json.STRING "BExp_UnaryExp"), ("type", Json.STRING uopstr), ("exp", exp_json)]
         end
 
       else if is_BExp_BinExp exp then
@@ -93,7 +93,7 @@ in
           val exp2_json = bexp_to_json exp2;
           val bopstr = term_to_string bop;
         in
-          Json.OBJECT [("exptype", Json.STRING "bop"), ("type", Json.STRING bopstr), ("exp1", exp1_json), ("exp2", exp2_json)]
+          Json.OBJECT [("exptype", Json.STRING "BExp_BinExp"), ("type", Json.STRING bopstr), ("exp1", exp1_json), ("exp2", exp2_json)]
         end
 
       else if is_BExp_BinPred exp then
@@ -103,7 +103,7 @@ in
           val exp2_json = bexp_to_json exp2;
           val bpredopstr = term_to_string bpredop;
         in
-          Json.OBJECT [("exptype", Json.STRING "bpredop"), ("type", Json.STRING bpredopstr), ("exp1", exp1_json), ("exp2", exp2_json)]
+          Json.OBJECT [("exptype", Json.STRING "BExp_BinPred"), ("type", Json.STRING bpredopstr), ("exp1", exp1_json), ("exp2", exp2_json)]
         end
 
       else if is_BExp_IfThenElse exp then
@@ -113,7 +113,7 @@ in
           val expt_json = bexp_to_json expt;
           val expf_json = bexp_to_json expf;
         in
-          Json.OBJECT [("exptype", Json.STRING "ite"), ("cond", expc_json), ("then", expt_json), ("else", expf_json)]
+          Json.OBJECT [("exptype", Json.STRING "BExp_IfThenElse"), ("cond", expc_json), ("then", expt_json), ("else", expf_json)]
         end
 
       else if is_BExp_Load exp then
@@ -126,7 +126,7 @@ in
           val endi_str = term_to_string endi;
           val sz_str = term_to_string sz;
         in
-          Json.OBJECT [("exptype", Json.STRING "load"), ("mem", expm_json), ("addr", expad_json), ("endi", Json.STRING endi_str), ("sz", Json.STRING sz_str)]
+          Json.OBJECT [("exptype", Json.STRING "BExp_Load"), ("mem", expm_json), ("addr", expad_json), ("endi", Json.STRING endi_str), ("sz", Json.STRING sz_str)]
         end
 
       else if is_BExp_Store exp then
@@ -140,7 +140,7 @@ in
 
           val expv_json  = bexp_to_json expv;
         in
-          Json.OBJECT [("exptype", Json.STRING "load"), ("mem", expm_json), ("addr", expad_json), ("endi", Json.STRING endi_str), ("val", expv_json)]
+          Json.OBJECT [("exptype", Json.STRING "BExp_Store"), ("mem", expm_json), ("addr", expad_json), ("endi", Json.STRING endi_str), ("val", expv_json)]
         end
 
       else
@@ -152,14 +152,14 @@ in
 
   fun estmttojson estmt =
     if is_BStmt_Halt estmt then
-      Json.OBJECT [("estmttype", Json.STRING "HALT"), ("exp", bexp_to_json (dest_BStmt_Halt estmt))]
+      Json.OBJECT [("estmttype", Json.STRING "BStmt_Halt"), ("exp", bexp_to_json (dest_BStmt_Halt estmt))]
     else if is_BStmt_Jmp estmt then
-      Json.OBJECT [("estmttype", Json.STRING "JMP"), ("lbl", Json.STRING (term_to_string (dest_BStmt_Jmp estmt)))]
+      Json.OBJECT [("estmttype", Json.STRING "BStmt_Jmp"), ("lbl", Json.STRING (term_to_string (dest_BStmt_Jmp estmt)))]
     else if is_BStmt_CJmp estmt then
       let
         val (cnd_tm, lblet_tm, lblef_tm) = dest_BStmt_CJmp estmt;
       in
-        Json.OBJECT [("estmttype", Json.STRING "CJMP"),
+        Json.OBJECT [("estmttype", Json.STRING "BStmt_CJmp"),
                      ("cnd", bexp_to_json cnd_tm),
                      ("lblt", Json.STRING (term_to_string lblet_tm)),
                      ("lblf", Json.STRING (term_to_string lblef_tm))]
@@ -173,14 +173,14 @@ in
       let
         val (var_tm, exp_tm) = dest_BStmt_Assign stmt;
       in
-        Json.OBJECT [("stmttype", Json.STRING "ASSIGN"),
+        Json.OBJECT [("stmttype", Json.STRING "BStmt_Assign"),
                      ("var", bvar_to_json var_tm),
                      ("exp", bexp_to_json exp_tm)]
       end
     else if is_BStmt_Assert stmt then
-      Json.OBJECT [("stmttype", Json.STRING "ASSERT"), ("exp", bexp_to_json (dest_BStmt_Assert stmt))]
+      Json.OBJECT [("stmttype", Json.STRING "BStmt_Assert"), ("exp", bexp_to_json (dest_BStmt_Assert stmt))]
     else if is_BStmt_Assume stmt then
-      Json.OBJECT [("stmttype", Json.STRING "ASSUME"), ("exp", bexp_to_json (dest_BStmt_Assume stmt))]
+      Json.OBJECT [("stmttype", Json.STRING "BStmt_Assume"), ("exp", bexp_to_json (dest_BStmt_Assume stmt))]
     else if is_BStmt_Observe stmt then
       let
         val (id_tm, cnd_tm, obss_tm, obsf_tm) = dest_BStmt_Observe stmt;
@@ -188,7 +188,7 @@ in
         val obs_tm_list = (fst o dest_list) obss_tm;
         val obs_json_list = List.map bexp_to_json obs_tm_list;
       in
-        Json.OBJECT [("stmttype", Json.STRING "OBSERVE"),
+        Json.OBJECT [("stmttype", Json.STRING "BStmt_Observe"),
                      ("id", Json.STRING (term_to_string id_tm)),
                      ("cnd", bexp_to_json cnd_tm),
                      ("obss", Json.ARRAY obs_json_list),
