@@ -8,6 +8,19 @@ fun cons_obs_tm ob_o (obs,st) =
     then (obs,st)
     else (dest_some ob_o :: obs, st)
 
+fun bir_eval_exec_n prog st n =
+    if n = 0 then ([],st) else
+    let
+      val (_,_,status) = dest_bir_state st
+    in
+      if not (is_BST_Running status) then ([],st) else
+      let
+        val (ob_tm,st') = (dest_pair o rhs o concl) (EVAL “bir_exec_step ^prog ^st”)
+      in
+        cons_obs_tm ob_tm (bir_eval_exec_n prog st' (n-1))
+      end
+    end
+
 fun bir_eval_exec prog st =
     let val (_,_,status) = dest_bir_state st;
     in
