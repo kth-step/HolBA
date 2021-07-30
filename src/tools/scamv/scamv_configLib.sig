@@ -16,6 +16,7 @@ sig
                        | cache_tag_index_part_page
                        | cache_speculation
                        | cache_speculation_first
+                       | cache_straightline
 
     datatype hw_obs_model = hw_cache_tag_index
                           | hw_cache_index_numvalid

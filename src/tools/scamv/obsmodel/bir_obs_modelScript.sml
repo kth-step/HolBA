@@ -51,6 +51,25 @@ val add_obs_constr_mem_block_def = Define`
 `;
 
 
+val map_end_prog_def = Define‘
+   map_end_prog f [] = []
+/\ map_end_prog f [b] = [b]
+/\ map_end_prog f (b::next_b::bs) =
+   (b with <| bb_last_statement updated_by (f (next_b.bb_label)) |>):: map_end_prog f (next_b::bs)
+’;
+
+val jmp_to_cjmp_def = Define‘
+    (jmp_to_cjmp next_lbl (BStmt_Jmp target) =
+     if target <> (BLE_Label next_lbl)
+     then BStmt_CJmp (BExp_Const (Imm1 1w)) target (BLE_Label next_lbl)
+     else BStmt_Jmp target)
+ /\ jmp_to_cjmp next_lbl stmt = stmt
+’;
+
+val jmp_to_cjmp_prog_def = Define‘
+   jmp_to_cjmp_prog (BirProgram xs) = BirProgram (map_end_prog jmp_to_cjmp xs)
+’;
+
 (* observe pc *)
 (* ============================================================================== *)
 val observe_label_def = Define `
@@ -70,7 +89,6 @@ val add_obs_pc_block_def = Define`
 val add_obs_pc_def = Define`
     add_obs_pc p = map_obs_prog add_obs_pc_block p
 `;
-
 
 (* observe whole memory address *)
 (* ============================================================================== *)

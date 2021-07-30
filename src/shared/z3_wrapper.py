@@ -259,7 +259,7 @@ def main():
         exit(0)
     else:
         print("sat")
-        print(s.model(), file=sys.stderr)
+        #print(s.model(), file=sys.stderr)
 
     model = s.model()
     hol_list = model_to_list(model)

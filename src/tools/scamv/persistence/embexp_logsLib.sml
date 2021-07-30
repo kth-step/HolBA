@@ -22,8 +22,11 @@ val embexp_logs_dir =
 
 val command = embexp_logs_dir ^ "/scripts/db-interface.py";
 
-fun run_db ops arg =
-  bir_json_execLib.call_json_exec (command, (if !is_testing then ["-t"] else [])@[ops], arg);
+fun run_db_gen extra ops arg =
+  bir_json_execLib.call_json_exec (command, (if !is_testing then ["-t"] else [])@extra@[ops], arg);
+
+fun run_db    ops arg = run_db_gen [] ops arg;
+fun run_db_ro ops arg = run_db_gen ["-ro"] ops arg;
 
 val run_db_q = run_db "query";
 fun run_db_q_gen id_only t vs = run_db_q (
@@ -40,6 +43,13 @@ fun get_db_q r =
   case r of
      OBJECT [("fields", ARRAY fs), ("rows", ARRAY xs)] => (fs, xs)
    | _ => raise Fail "scanned result does not match a query response";
+val run_db_q_ro = run_db_ro "query";
+fun run_db_q_sql sql_s = run_db_q_ro (
+  OBJECT
+    [("type", STRING "sql"),
+     ("query",
+      OBJECT
+       [("sql", STRING sql_s)])]);
 
 val run_db_c = run_db "create";
 fun run_db_c_map id_only do_match t vs =
@@ -119,6 +129,12 @@ fun run_db_a_ignore t vs =
   fun mk_prog_meta_handle (prog_id, k_o, n) = (MetaTypeProg, (prog_id, k_o, n));
   fun mk_exp_meta_handle  (exp_id , k_o, n) = (MetaTypeExp,  (exp_id,  k_o, n));
 
+  fun dest_run_meta_handle  (MetaTypeRun,  (run_id,  k_o, n)) = (run_id , k_o, n)
+    | dest_run_meta_handle  _ = raise ERR "dest_run_meta_handle"  "wrong handle type";
+  fun dest_prog_meta_handle (MetaTypeProg, (prog_id, k_o, n)) = (prog_id, k_o, n)
+    | dest_prog_meta_handle _ = raise ERR "dest_prog_meta_handle" "wrong handle type";
+  fun dest_exp_meta_handle  (MetaTypeExp,  (exp_id,  k_o, n)) = (exp_id , k_o, n)
+    | dest_exp_meta_handle  _ = raise ERR "dest_exp_meta_handle"  "wrong handle type";
 
 (*
 *)
@@ -202,17 +218,24 @@ fun run_db_a_ignore t vs =
 (*
 *)
   (* TODO: change to not ignore the fields in the result *)
-  fun get_from_id (t, f_id) unpack_fun id =
-    case get_db_q (run_db_q_gen false t [(f_id, NUMBER id)]) of
+  fun from_q_res_unpack_sing unpack_fun r =
+    case r of
        (_, [x]) => (case x of
                ARRAY vals => unpack_fun vals
-             | _ => raise ERR "get_all_ids" "result not as expected")
-     | _ => raise ERR "get_all_ids" "result not as expected";
-  fun get_from_id_mult (t, f_id) unpack_fun id =
-    case get_db_q (run_db_q_gen false t [(f_id, NUMBER id)]) of
+             | _ => raise ERR "from_q_res_unpack_sing" "result not as expected")
+     | _ => raise ERR "from_q_res_unpack_sing" "result not as expected";
+
+  fun from_q_res_unpack_mult unpack_fun r =
+    case r of
        (_, xs) => List.map (fn x => case x of
                ARRAY vals => unpack_fun vals
-             | _ => raise ERR "get_all_ids_mult" "result not as expected") xs;
+             | _ => raise ERR "from_q_res_unpack_mult" "result not as expected") xs;
+
+  fun get_from_id (t, f_id) unpack_fun id =
+    from_q_res_unpack_sing unpack_fun (get_db_q (run_db_q_gen false t [(f_id, NUMBER id)]));
+
+  fun get_from_id_mult (t, f_id) unpack_fun id =
+    from_q_res_unpack_mult unpack_fun (get_db_q (run_db_q_gen false t [(f_id, NUMBER id)]));
 
   fun get_from_ids (t, f_id) unpack_fun ids = List.map (fn id => get_from_id (t, f_id) unpack_fun id) ids;
 
@@ -293,14 +316,59 @@ fun run_db_a_ignore t vs =
       unpack_list_entry
       id;
 
+
 (*
 *)
+  fun unpack_logs_prog_widx x =
+    case x of
+       [NUMBER idx, NUMBER _, STRING a, STRING c] =>
+          (Arbnum.toInt idx, LogsProg (a, c))
+     | _ => raise ERR "unpack_logs_prog_widx" "result not as expected";
+
+  fun unpack_logs_exp_widx x =
+    case x of
+       [NUMBER idx, NUMBER _, NUMBER p_id, STRING ty, STRING pa, STRING indat] =>
+          (Arbnum.toInt idx, LogsExp (p_id, ty, pa, unpack_json indat))
+     | _ => raise ERR "unpack_logs_exp_widx" "result not as expected";
+
+  fun sql_wholefromlist lstty listid =
+    "select tbl_1.list_index, tbl_0.* \n" ^
+    "from exp_" ^ lstty ^ " as tbl_0 \n" ^
+    "inner join exp_" ^ lstty ^ "_lists_entries as tbl_1 on tbl_0.id = tbl_1.exp_" ^ lstty ^ "_id \n" ^
+    "where tbl_1.exp_" ^ lstty ^ "_lists_id = " ^ (Arbnum.toString listid);
+
+  fun get_prog_list_entries_full listid =
+    from_q_res_unpack_mult unpack_logs_prog_widx (get_db_q (run_db_q_sql (sql_wholefromlist "progs" listid)));
+
+  fun get_exp_list_entries_full listid =
+    from_q_res_unpack_mult unpack_logs_exp_widx  (get_db_q (run_db_q_sql (sql_wholefromlist "exps"  listid)));
+
 (*
-  (* retrieval of metdata *)
-  val get_run_metadata    : run_handle  -> logs_meta list;
-  val get_prog_metadata   : prog_handle -> logs_meta list;
-  val get_exp_metadata    : exp_handle  -> logs_meta list;
 *)
+  fun unpack_logs_meta mt x =
+    case x of
+       [NUMBER id, j_kind, STRING name, j_value] =>
+          LogsMeta ((mt, (id, unpack_string_opt j_kind, name))
+                   ,unpack_string_opt j_value)
+     | _ => raise ERR "unpack_logs_meta" "result not as expected";
+
+  fun get_run_metadata  id =
+    get_from_id_mult
+      ("holba_runs_meta", "holba_runs_id")
+      (unpack_logs_meta MetaTypeRun)
+      id;
+  fun get_prog_metadata id =
+    get_from_id_mult
+      ("exp_progs_meta", "exp_progs_id")
+      (unpack_logs_meta MetaTypeProg)
+      id;
+  fun get_exp_metadata  id =
+    get_from_id_mult
+      ("exp_exps_meta", "exp_exps_id")
+      (unpack_logs_meta MetaTypeExp)
+      id;
+
+
 
 
 (*
@@ -318,32 +386,36 @@ fun run_db_a_ignore t vs =
 
 (*
 *)
-  fun get_all_ids t =
-    case get_db_q (run_db_q_all true t) of
-       ([STRING s_id], jsonids)
-         => if s_id = "id" then List.map (fn x => case x of
-                ARRAY [NUMBER i] => i | _ => raise ERR "get_all_ids" "result not as expected") jsonids else
-            raise ERR "get_all_ids" "result not as expected"
-     | _ => raise ERR "get_all_ids" "result not as expected";
-
-  fun query_all_prog_lists () = get_all_ids "exp_progs_lists";
-  fun query_all_exp_lists  () = get_all_ids "exp_exps_lists";
+(*
+  val query_match_runs  : (string option *
+                           prog_list_handle option *
+                           exp_list_handle option) list
+                          -> run_handle  list;
+  val query_match_progs : (string option *
+                           string option)
+                          -> prog_handle list;
+  val query_match_exps  : (prog_handle option *
+                           string option *
+                           string option *
+                           Json.json option) list
+                          -> exp_handle  list;
+*)
 
 (*
 *)
-val run_db_h = run_db "hack";
-fun run_db_h_gen tn = run_db_h (
-  STRING tn);
+  fun unpack_string x =
+    case x of
+       STRING x => x
+     | _ => raise ERR "unpack_string" "result not as expected";
 
-  fun get_hack_from_id_mult unpack_fun tn =
-    case get_db_q (run_db_h_gen tn) of
-       (_, xs) => List.map (fn x => case x of
-               ARRAY vals => unpack_fun vals
-             | _ => raise ERR "get_all_ids_mult" "result not as expected") xs;
-
-fun hack_get_prog_list_by_listname listname =
-get_hack_from_id_mult unpack_logs_prog listname;
-
+  fun query_sql sql_s =
+    let
+      val (j_fields, j_data) = get_db_q (run_db_q_sql sql_s);
+      val fields = List.map unpack_string j_fields;
+      val data = from_q_res_unpack_mult (fn x => x) (NONE, j_data);
+    in
+      (fields, data)
+    end;
 
 end (* local *)
 end (* struct *)

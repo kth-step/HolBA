@@ -1,7 +1,11 @@
 open HolKernel Parse
 
 open bir_inst_liftingLib;
-open gcc_supportLib
+open gcc_supportLib;
+
+open PPBackEnd;
+open bir_inst_liftingHelpersLib;
+
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
@@ -11,7 +15,14 @@ val _ = print_with_style_ [Bold, Underline] "Lifting aes-aarch64.da\n";
 val (region_map, aes_sections) = read_disassembly_file_regions "aes-aarch64.da"
 
 val (thm_arm8, errors) = bmil_arm8.bir_lift_prog_gen ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
-  aes_sections
+  aes_sections;
+
+(*
+
+val prog_l = (snd o dest_comb o concl) thm_arm8;
+
+val prog_l_norm = (rhs o concl o EVAL) prog_l;
+*)
 
 
 val _ = print "\n\n\n";
