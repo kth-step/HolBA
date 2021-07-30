@@ -95,6 +95,18 @@ val stmt_generic_step_def = Define`
 /\ stmt_generic_step _ = T
 `;
 
+val is_read_def = Define`
+   is_read BM_Read = T
+/\ is_read BM_Write = F
+/\ is_read BM_ReadWrite = T
+`;
+
+val is_write_def = Define`
+   is_write BM_Read = F
+/\ is_write BM_Write = T
+/\ is_write BM_ReadWrite = T
+`;
+
 (* core-local steps that don't affect memory *)
 val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
 (* read *)
@@ -143,16 +155,15 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
  ==>
   clstep p cid s M [t] s')
 /\ (* fence *)
-(!p s s' M cid v.
+(!p s s' K1 K2 M cid v.
    (((bir_get_current_statement p s.bst_pc =
-     SOME (BStmtB (BStmt_Fence BM_ReadWrite BM_ReadWrite))))
-   /\ v = MAX s.bst_v_rOld s.bst_v_wOld
-   /\ s' = s with <| bst_v_rNew := MAX s.bst_v_rNew v;
-                     bst_v_wNew := MAX s.bst_v_wNew v;
+     SOME (BStmtB (BStmt_Fence K1 K2))))
+   /\ v = MAX (if is_read K1 then s.bst_v_rOld else 0) (if is_write K1 then s.bst_v_wOld else 0)
+   /\ s' = s with <| bst_v_rNew := MAX s.bst_v_rNew (if is_read K2 then v else 0);
+                     bst_v_wNew := MAX s.bst_v_wNew (if is_write K2 then v else 0);
                      bst_pc updated_by bir_pc_next |>)
 ==>
   clstep p cid s M [] s')
-
 /\ (* branch *)
 (!p s s' M cid v oo s2 v_addr cond_e lbl1 lbl2 stm.
    (bir_get_current_statement p s.bst_pc = SOME stm
