@@ -8,6 +8,8 @@ local
   open bir_expSyntax bir_immSyntax bir_envSyntax bir_exp_immSyntax bir_exp_memSyntax;
   open bir_valuesSyntax;
   open wordsSyntax;
+  open bir_extra_expsTheory bir_interval_expTheory;
+  open bir_extra_expsSyntax bir_interval_expSyntax;
 
   open listSyntax;
 
@@ -177,6 +179,14 @@ in
           Json.OBJECT [("exptype", Json.STRING "BL_Address"), ("val", Json.STRING vstr), ("sz", Json.STRING (Int.toString sz))]
         end
 
+      else if is_BExp_Aligned exp then
+        let
+          val (sz, p, subexp) = dest_BExp_Aligned exp
+          val exp  = bexp_to_json subexp;
+        in
+          Json.OBJECT [("exptype", Json.STRING "BExp_Aligned"), ("exp", exp), ("val", Json.STRING (term_to_string p)), ("sz", Json.STRING (term_to_string sz))]
+        end
+	
       else
         problem exp "don't know BIR expression: "
         (*Json.STRING (term_to_string exp)*)
@@ -195,8 +205,8 @@ in
       in
         Json.OBJECT [("estmttype", Json.STRING "BStmt_CJmp"),
                      ("cnd", bexp_to_json cnd_tm),
-                     ("lblt", Json.STRING (term_to_string lblet_tm)),
-                     ("lblf", Json.STRING (term_to_string lblef_tm))]
+                     ("lblt", bexp_to_json lblet_tm),
+                     ("lblf", bexp_to_json lblef_tm)]
       end
     else
       raise ERR "estmttojson" ("unknown end statement type: " ^ (term_to_string estmt));
