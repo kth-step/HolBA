@@ -36,7 +36,7 @@ The configuration and notes are in text files in `expgenruns`. The first line is
 Execute the following commands in order and in different shells and let them run in parallel to each other.
 1. `./scripts/1-gen.sh cav_19-12-03 qc_previct5`
 1. `./scripts/2-connect.sh rpi3`
-1. `./scripts/3-run.sh arm8/exps2`
+1. `./scripts/3-run.sh`
 
 See status of the run with `./scripts/4-status.sh`.
 
@@ -44,5 +44,5 @@ Update HolBA and EmbExp-Box with `./scripts/5-update.sh`.
 
 
 ## Finish
-After completing an experiment generation or run, don't forget to commit and push in `${HOLBA_DIR}/logs/EmbExp-Logs`.
+After completing an experiment generation or run, don't forget to backup the database file `${HOLBA_DIR}/logs/EmbExp-Logs/data/logs.db`.
 
