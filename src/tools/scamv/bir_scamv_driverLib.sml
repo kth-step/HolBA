@@ -493,6 +493,8 @@ fun match_obs_model obs_model =
     case obs_model of
         mem_address_pc =>
         "mem_address_pc"
+      | mem_address_pc_lspc =>
+        "mem_address_pc_lspc"
       | cache_tag_index  =>
         "cache_tag_index"
       | cache_tag_only =>
