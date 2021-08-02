@@ -23,9 +23,9 @@ BirProgram
                (BExp_Aligned Bit64 3
                   (BExp_Den (BVar "R17" (BType_Imm Bit64))));
              BStmt_Assign (BVar "R15" (BType_Imm Bit64))
-               (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+               (BExp_Store (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
                   (BExp_Den (BVar "R17" (BType_Imm Bit64))) BEnd_LittleEndian
-                  Bit64)];
+                  (BExp_Const (Imm32 (100w :word32))))];
           bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 8w)))|>;
         <|bb_label := BL_Address (Imm64 8w); bb_statements := [];
           bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0w))|>]
@@ -96,11 +96,11 @@ BirProgram
                  (BExp_Const (Imm64 (0xFFCCFF80w :word64))))) :
          load_store_pc_t bir_stmt_basic_t);
         BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
-          [BExp_Den (BVar "R17" (BType_Imm Bit64))] gen_LSPC_Load;
+          [BExp_Den (BVar "R17" (BType_Imm Bit64))] gen_LSPC_Store;
         (BStmt_Assign (BVar "R15" (BType_Imm Bit64))
-           (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+           (BExp_Store (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
               (BExp_Den (BVar "R17" (BType_Imm Bit64))) BEnd_LittleEndian
-              Bit64) :load_store_pc_t bir_stmt_basic_t)];
+              (BExp_Const (Imm32 (100w :word32)))) :load_store_pc_t bir_stmt_basic_t)];
      bb_last_statement :=
        BStmt_Jmp (BLE_Label (BL_Address (Imm64 (8w :word64))))|>;
    <|bb_label := BL_Address (Imm64 (8w :word64));
