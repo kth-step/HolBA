@@ -3,6 +3,6 @@ sig
   val scamv_run_symb_exec :
       Term.term
       -> (Term.term
-          * (Term.term * Term.term * Term.term) list option) list
+          * (Term.term * Term.term * Term.term list * Term.term) list option) list
          * Term.term list
 end

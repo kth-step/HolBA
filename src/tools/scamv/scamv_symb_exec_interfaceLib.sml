@@ -42,19 +42,12 @@ fun do_symb_exec prog =
 	    val obs_list = List.map (fn (oid,ec,eo, obsf) =>
 		   (oid,bir_exp_hvar_to_bvar ec, bir_exp_hvar_to_bvar eo, obsf)) obss;
 
-	    (* we require singleton lists for the observations at the moment *)
-	    (* check that we have HD as observation function, and apply it *)
+	    (* we forward the observations as list of expressions with observation function for handling their corresponding values, which is assumed to be reducable with EVAL to conjunctions of equality of word expressions *)
 	    val obs_list' = List.map (fn (oid,ec,eo,obsf) =>
 		     let
 		       val (otl,_) = dest_list eo;
-		       val _ = (if listSyntax.is_hd ``^obsf x`` then () else raise ERR "" "")
-			       handle _ =>
-				 raise ERR "extract_cond_obs" ("currently we only support HD as observation function, not \"" ^ (term_to_string obsf) ^ "\"");
 		     in
-		       if length otl <> 1 then
-		       	 raise ERR "extract_cond_obs" "currently we support only singleton observations"
-		       else
-			 (oid, ec, hd otl)
+                       (oid, ec, otl, obsf)
 		     end
 		   ) obs_list;
 	  in
@@ -63,9 +56,33 @@ fun do_symb_exec prog =
 
         val paths = List.map extract_cond_obs leafs;
 
+        fun print_symbobs NONE = print "ERROR STATE"
+	  | print_symbobs (SOME ol) = (
+                print "obss:";
+                List.map (fn (oid, ec, otl, obsf) => (
+                    print "- (";
+                    print_term oid;
+                    print ", ";
+                    print_term ec;
+                    print ", [";
+                    List.map (fn ot => (print_term ot; print "; ")) otl;
+                    print "], ";
+                    print_term obsf;
+                    print ")"
+                  )) ol; ()
+              );
+        val _ = if true then () else (
+            List.map (fn (cond, obsso) => (
+                print "path cond: ";
+                print_term cond;
+                print_symbobs obsso;
+                print "\n\n"
+              )) paths; ()
+          );
+
         (* we also need all generated expressions to collect the variables *)
         val path_conds = List.map fst paths;
-        val obs_exps = flatten (List.map (fn (_,x,y) => [x,y])
+        val obs_exps = flatten (List.map (fn (_,x,ys, _) => x::ys)
                           (flatten (List.map ((fn x =>
                              case x of NONE => [] 
                                      | SOME y => y) o snd) paths)));

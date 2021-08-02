@@ -189,7 +189,7 @@ end;
 fun scamv_phase_symb_exec () =
     let
       val (paths, all_exps) = scamv_run_symb_exec (valOf (!current_prog_w_obs));
-	    val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths;
+	    val _ = List.map (Option.map (List.map (fn (a,b,c,d) => print_term b)) o snd) paths;
       val ps = initialise paths;
       val _ = current_pathstruct := SOME ps;
       val _ = min_verb 4 (fn () => (print_path_struct ps; print (PolyML.makestring ps)));
