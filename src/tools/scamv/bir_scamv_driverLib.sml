@@ -166,7 +166,9 @@ fun scamv_set_prog_state prog =
 fun scamv_phase_add_obs () =
 let 
   val _ = printv 1 "Adding obs\n";
-  val add_obs = #add_obs (get_obs_model (!current_obs_model_id));
+  val obs_model = get_obs_model (!current_obs_model_id);
+  val add_obs = #add_obs obs_model;
+  val proginst_fun = proginst_fun_gen (#obs_hol_type obs_model);
   val mem_bounds =
       let
         val (mem_base, mem_len) = embexp_params_memory;
@@ -176,7 +178,7 @@ let
             (mk_wordi (embexp_params_cacheable mem_base, 64),
              mk_wordi (embexp_params_cacheable mem_end, 64))
       end;
-  val lifted_prog_w_obs = add_obs mem_bounds (valOf (!current_prog));
+  val lifted_prog_w_obs = add_obs mem_bounds (proginst_fun (valOf (!current_prog)));
   val _ = printv 1 "Obs added\n";
   val _ = current_prog_w_obs := SOME lifted_prog_w_obs;
   val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);

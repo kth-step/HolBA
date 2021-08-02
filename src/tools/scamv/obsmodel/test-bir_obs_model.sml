@@ -54,8 +54,7 @@ val test_cases =
 
 val _ = print "\n\n";
 
-fun prog_obs_inst prog obs_type =
-  inst [Type`:'obs_type` |-> obs_type] prog;
+fun prog_obs_inst prog obs_type = proginst_fun_gen obs_type prog;
 
 (*
 val (name, prog, expected) = hd test_cases;

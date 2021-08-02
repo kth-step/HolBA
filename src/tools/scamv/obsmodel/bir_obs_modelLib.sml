@@ -12,6 +12,11 @@ local
     open bir_obs_modelTheory;
 in
 
+
+fun proginst_fun_gen obs_type prog =
+  inst [Type`:'obs_type` |-> obs_type] prog;
+
+
 structure bir_pc_model : OBS_MODEL =
 struct
 val obs_hol_type = ``:bir_val_t``;

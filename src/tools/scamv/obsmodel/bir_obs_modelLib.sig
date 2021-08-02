@@ -2,6 +2,8 @@ signature bir_obs_modelLib =
     sig
         include Abbrev;
 
+        val proginst_fun_gen : hol_type -> term -> term
+
         val get_obs_model : string -> { id : string,
                                         obs_hol_type : hol_type,
                                         add_obs : term -> term -> term }
