@@ -5,6 +5,23 @@ open wordsSyntax;
 
 val _ = new_theory "bir_obs_model";
 
+val _ = Datatype `load_store_pc_t =
+   LSPC_Load bir_val_t
+ | LSPC_Store bir_val_t
+ | LSPC_PC bir_val_t`;
+
+val gen_LSPC_Load_def = Define `
+  gen_LSPC_Load [x] = LSPC_Load x
+`;
+
+val gen_LSPC_Store_def = Define `
+  gen_LSPC_Store [x] = LSPC_Store x
+`;
+
+val gen_LSPC_PC_def = Define `
+  gen_LSPC_PC [x] = LSPC_PC x
+`;
+
 val map_obs_prog_def = Define `
 map_obs_prog f (BirProgram xs) = BirProgram (MAP f xs)
 `;
@@ -79,11 +96,24 @@ val observe_label_def = Define `
                        [BExp_Const addr]
                        HD
 `;
+val observe_label_pc_def = Define `
+    observe_label_pc (BL_Address addr) =
+         BStmt_Observe 0
+                       (BExp_Const (Imm1 1w))
+                       [BExp_Const addr]
+                       gen_LSPC_PC
+`;
 
 val add_obs_pc_block_def = Define`
     add_obs_pc_block block =
       block with bb_statements :=
         observe_label (block.bb_label) :: block.bb_statements
+`;
+
+val add_obs_pc_block_pc_def = Define`
+    add_obs_pc_block_pc block =
+      block with bb_statements :=
+        observe_label_pc (block.bb_label) :: block.bb_statements
 `;
 
 val add_obs_pc_def = Define`
@@ -99,6 +129,13 @@ val observe_mem_addr_def = Define`
                     [e]
                     HD
 `;
+val observe_mem_addr_ls_def = Define`
+    observe_mem_addr_ls e = 
+      BStmt_Observe 0
+                    (BExp_Const (Imm1 1w))
+                    [e]
+                    gen_LSPC_Load
+`;
 
 val add_obs_mem_addr_armv8_def = Define`
     add_obs_mem_addr_armv8 mem_bounds p = 
@@ -111,6 +148,14 @@ val add_obs_mem_addr_armv8_def = Define`
 val add_obs_mem_addr_pc_armv8_def = Define`
     add_obs_mem_addr_pc_armv8 mem_bounds p = 
       map_obs_prog (add_obs_pc_block o (add_obs_constr_mem_block mem_bounds observe_mem_addr)) p
+`;
+
+
+(* observe whole memory address and pc (lspc type construction annototation) *)
+(* ============================================================================== *)
+val add_obs_mem_addr_pc_lspc_armv8_def = Define`
+    add_obs_mem_addr_pc_lspc_armv8 mem_bounds p = 
+      map_obs_prog (add_obs_pc_block_pc o (add_obs_constr_mem_block mem_bounds observe_mem_addr_ls)) p
 `;
 
 

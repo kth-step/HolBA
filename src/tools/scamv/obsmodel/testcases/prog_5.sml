@@ -405,6 +405,7 @@ BirProgram
 val prog_5_test =
   ("prog_5 - spectre_v1_mod1", prog_5,
      (prog_5_mem_address_pc,
+      ``F``,
       prog_5_cache_tag_index,
       prog_5_cache_tag_only,
       prog_5_cache_index_only,

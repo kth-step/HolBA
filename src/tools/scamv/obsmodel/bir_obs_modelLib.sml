@@ -14,49 +14,55 @@ in
 
 structure bir_pc_model : OBS_MODEL =
 struct
-val obs_hol_type = ``bir_val_t``;
+val obs_hol_type = ``:bir_val_t``;
 fun add_obs mb t = rand (concl (EVAL ``add_obs_pc ^mb ^t``));
 end
 
 structure bir_arm8_mem_addr_model : OBS_MODEL =
 struct
-val obs_hol_type = ``bir_val_t``;
+val obs_hol_type = ``:bir_val_t``;
 fun add_obs mb t = rand (concl (EVAL ``add_obs_mem_addr_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_mem_addr_pc_model : OBS_MODEL =
 struct
-val obs_hol_type = ``bir_val_t``;
+val obs_hol_type = ``:bir_val_t``;
 fun add_obs mb t = rand (concl (EVAL ``add_obs_mem_addr_pc_armv8 ^mb ^t``));
+end
+
+structure bir_arm8_mem_addr_pc_lspc_model : OBS_MODEL =
+struct
+val obs_hol_type = ``:load_store_pc_t``;
+fun add_obs mb t = rand (concl (EVAL ``add_obs_mem_addr_pc_lspc_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_model : OBS_MODEL =
 struct
-val obs_hol_type = ``bir_val_t``;
+val obs_hol_type = ``:bir_val_t``;
 fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_tag_index_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_tag_model : OBS_MODEL =
 struct
-val obs_hol_type = ``bir_val_t``;
+val obs_hol_type = ``:bir_val_t``;
 fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_tag_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_index_model : OBS_MODEL =
 struct
-val obs_hol_type = ``bir_val_t``;
+val obs_hol_type = ``:bir_val_t``;
 fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_index_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_subset_model : OBS_MODEL =
 struct
-val obs_hol_type = ``bir_val_t``;
+val obs_hol_type = ``:bir_val_t``;
 fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_subset_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_subset_page_model : OBS_MODEL =
 struct
-val obs_hol_type = ``bir_val_t``;
+val obs_hol_type = ``:bir_val_t``;
 fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_subset_page_armv8 ^mb ^t``));
 end
 
@@ -309,7 +315,7 @@ in
 
   structure bir_arm8_cache_speculation_model : OBS_MODEL =
     struct
-      val obs_hol_type = ``bir_val_t``;
+      val obs_hol_type = ``:bir_val_t``;
       val pipeline_depth = 3;
       fun add_obs mb t =
         branch_instrumentation obs_all_refined (bir_arm8_mem_addr_pc_model.add_obs mb t) pipeline_depth;
@@ -317,7 +323,7 @@ in
 
   structure bir_arm8_cache_speculation_first_model : OBS_MODEL =
   struct
-  val obs_hol_type = ``bir_val_t``;
+  val obs_hol_type = ``:bir_val_t``;
   val pipeline_depth = 3;
   fun add_obs mb t =
       branch_instrumentation obs_all_refined_but_first (bir_arm8_mem_addr_pc_model.add_obs mb t) pipeline_depth;
@@ -325,7 +331,7 @@ in
 
   structure bir_arm8_cache_straight_line_model : OBS_MODEL =
   struct
-  val obs_hol_type = ``bir_val_t``;
+  val obs_hol_type = ``:bir_val_t``;
   val pipeline_depth = 3;
   fun add_obs mb t =
       let val obs_term = bir_arm8_mem_addr_pc_model.add_obs mb t;
@@ -343,6 +349,8 @@ fun get_obs_model id =
     val obs_hol_type =
              if id = "mem_address_pc" then
 	  bir_arm8_mem_addr_pc_model.obs_hol_type
+        else if id = "mem_address_pc_lspc" then
+	  bir_arm8_mem_addr_pc_lspc_model.obs_hol_type
         else if id = "cache_tag_index" then
           bir_arm8_cache_line_model.obs_hol_type
         else if id = "cache_tag_only" then
@@ -365,6 +373,8 @@ fun get_obs_model id =
     val add_obs =
              if id = "mem_address_pc" then
           bir_arm8_mem_addr_pc_model.add_obs
+        else if id = "mem_address_pc_lspc" then
+          bir_arm8_mem_addr_pc_lspc_model.add_obs
         else if id = "cache_tag_index" then
           bir_arm8_cache_line_model.add_obs
         else if id = "cache_tag_only" then
