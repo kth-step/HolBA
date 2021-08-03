@@ -57,7 +57,7 @@ in
               (Arbnum.toString o dest_word_literal) wv
             else problem exp "can only handle word literals: ";
         in
-          Json.OBJECT [("exptype", Json.STRING "BExp_Const"), ("val", Json.STRING vstr), ("sz", Json.STRING (Int.toString sz))]
+          Json.OBJECT [("exptype", Json.STRING "BExp_Const"), ("val", Json.NUMBER (Arbnum.fromString vstr)), ("sz", Json.STRING (Int.toString sz))]
         end
 
       else if is_BExp_Den exp then
@@ -145,23 +145,24 @@ in
           Json.OBJECT [("exptype", Json.STRING "BExp_Store"), ("mem", expm_json), ("addr", expad_json), ("endi", Json.STRING endi_str), ("val", expv_json)]
         end
 
-      else if is_BLE_Label exp then
+      else if is_BExp_Aligned exp then
         let
-          val exp = (dest_BLE_Label) exp;
-          val exp  = bexp_to_json exp;
+          val (sz, p, subexp) = dest_BExp_Aligned exp
+          val exp  = bexp_to_json subexp;
         in
-          Json.OBJECT [("exptype", Json.STRING "BLE_Label"), ("exp", exp)]
+          Json.OBJECT [("exptype", Json.STRING "BExp_Aligned"), ("exp", exp), ("val", Json.STRING (term_to_string p)), ("sz", Json.STRING (term_to_string sz))]
         end
+	
+      else
+        problem exp "don't know BIR expression: "
+        (*Json.STRING (term_to_string exp)*)
+    end;
 
-      else if is_BLE_Exp exp then
-        let
-          val exp = (dest_BLE_Exp) exp;
-          val exp  = bexp_to_json exp;
-        in
-          Json.OBJECT [("exptype", Json.STRING "BLE_Exp"), ("exp", exp)]
-        end
-
-      else if is_BL_Label exp then
+  fun blabel_to_json exp =
+    let
+      fun problem exp msg = problem_gen "blabel_to_json" exp msg;
+    in
+      if is_BL_Label exp then
         let
           val str = (dest_BL_Label_string) exp;
         in
@@ -176,15 +177,30 @@ in
               (Arbnum.toString o dest_word_literal) wv
             else problem exp "can only handle word literals: ";
         in
-          Json.OBJECT [("exptype", Json.STRING "BL_Address"), ("val", Json.STRING vstr), ("sz", Json.STRING (Int.toString sz))]
+          Json.OBJECT [("exptype", Json.STRING "BL_Address"), ("val", Json.NUMBER (Arbnum.fromString vstr)), ("sz", Json.STRING (Int.toString sz))]
+        end
+	
+      else
+        problem exp "don't know BIR expression: "
+        (*Json.STRING (term_to_string exp)*)
+    end;
+
+  fun blabelexp_to_json exp =
+    let
+      fun problem exp msg = problem_gen "blabelexp_to_json" exp msg;
+    in
+      if is_BLE_Label exp then
+        let
+          val exp = (dest_BLE_Label) exp;
+        in
+          Json.OBJECT [("exptype", Json.STRING "BLE_Label"), ("exp", blabel_to_json exp)]
         end
 
-      else if is_BExp_Aligned exp then
+      else if is_BLE_Exp exp then
         let
-          val (sz, p, subexp) = dest_BExp_Aligned exp
-          val exp  = bexp_to_json subexp;
+          val exp = (dest_BLE_Exp) exp;
         in
-          Json.OBJECT [("exptype", Json.STRING "BExp_Aligned"), ("exp", exp), ("val", Json.STRING (term_to_string p)), ("sz", Json.STRING (term_to_string sz))]
+          Json.OBJECT [("exptype", Json.STRING "BLE_Exp"), ("exp", bexp_to_json exp)]
         end
 	
       else
@@ -193,20 +209,19 @@ in
     end;
 
 
-
   fun estmttojson estmt =
     if is_BStmt_Halt estmt then
       Json.OBJECT [("estmttype", Json.STRING "BStmt_Halt"), ("exp", bexp_to_json (dest_BStmt_Halt estmt))]
     else if is_BStmt_Jmp estmt then
-      Json.OBJECT [("estmttype", Json.STRING "BStmt_Jmp"), ("lbl", bexp_to_json (dest_BStmt_Jmp estmt))]
+      Json.OBJECT [("estmttype", Json.STRING "BStmt_Jmp"), ("lbl", blabelexp_to_json (dest_BStmt_Jmp estmt))]
     else if is_BStmt_CJmp estmt then
       let
         val (cnd_tm, lblet_tm, lblef_tm) = dest_BStmt_CJmp estmt;
       in
         Json.OBJECT [("estmttype", Json.STRING "BStmt_CJmp"),
                      ("cnd", bexp_to_json cnd_tm),
-                     ("lblt", bexp_to_json lblet_tm),
-                     ("lblf", bexp_to_json lblef_tm)]
+                     ("lblt", blabelexp_to_json lblet_tm),
+                     ("lblf", blabelexp_to_json lblef_tm)]
       end
     else
       raise ERR "estmttojson" ("unknown end statement type: " ^ (term_to_string estmt));
@@ -248,7 +263,7 @@ in
 
       val tm_stmt_list = (fst o dest_list) tm_stmts;
 
-      val lbl_json  = bexp_to_json tm_lbl;
+      val lbl_json  = blabel_to_json tm_lbl;
       val stmts_json = Json.ARRAY (List.map stmttojson tm_stmt_list);
       val estmt_json = estmttojson tm_last_stmt;
     in
