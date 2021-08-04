@@ -57,7 +57,7 @@ in
               (Arbnum.toString o dest_word_literal) wv
             else problem exp "can only handle word literals: ";
         in
-          Json.OBJECT [("exptype", Json.STRING "BExp_Const"), ("val", Json.NUMBER (Arbnum.fromString vstr)), ("sz", Json.STRING (Int.toString sz))]
+          Json.OBJECT [("exptype", Json.STRING "BExp_Const"), ("val", Json.NUMBER (Arbnum.fromString vstr)), ("sz", Json.NUMBER (Arbnum.fromInt sz))]
         end
 
       else if is_BExp_Den exp then
@@ -76,7 +76,7 @@ in
 
           val caststr = term_to_string castt;
         in
-          Json.OBJECT [("exptype", Json.STRING "BExp_Cast"), ("type", Json.STRING caststr), ("exp", exp_json), ("sz", Json.STRING (Int.toString szi))]
+          Json.OBJECT [("exptype", Json.STRING "BExp_Cast"), ("type", Json.STRING caststr), ("exp", exp_json), ("sz", Json.NUMBER (Arbnum.fromInt szi))]
         end
 
       else if is_BExp_UnaryExp exp then
@@ -144,14 +144,6 @@ in
         in
           Json.OBJECT [("exptype", Json.STRING "BExp_Store"), ("mem", expm_json), ("addr", expad_json), ("endi", Json.STRING endi_str), ("val", expv_json)]
         end
-
-      else if is_BExp_Aligned exp then
-        let
-          val (sz, p, subexp) = dest_BExp_Aligned exp
-          val exp  = bexp_to_json subexp;
-        in
-          Json.OBJECT [("exptype", Json.STRING "BExp_Aligned"), ("exp", exp), ("val", Json.STRING (term_to_string p)), ("sz", Json.STRING (term_to_string sz))]
-        end
 	
       else
         problem exp "don't know BIR expression: "
@@ -177,7 +169,7 @@ in
               (Arbnum.toString o dest_word_literal) wv
             else problem exp "can only handle word literals: ";
         in
-          Json.OBJECT [("exptype", Json.STRING "BL_Address"), ("val", Json.NUMBER (Arbnum.fromString vstr)), ("sz", Json.STRING (Int.toString sz))]
+          Json.OBJECT [("exptype", Json.STRING "BL_Address"), ("val", Json.NUMBER (Arbnum.fromString vstr)), ("sz", Json.NUMBER (Arbnum.fromInt sz))]
         end
 	
       else
