@@ -70,6 +70,8 @@ in
       val pythonscript = (get_pythondir()) ^ "/symbolic_execution_wrapper.py";
       val magicinputfilename = (get_pythondir()) ^ "/magicinput.bir";
 
+      val _ = bir_fileLib.makedir true (get_pythondir());
+
       val bprog_json_str = birprogjsonexportLib.birprogtojsonstr bprog_t;
       val _ = bir_fileLib.write_to_file magicinputfilename bprog_json_str;
 
