@@ -44,6 +44,7 @@ jobs:
         run: |
           ./scripts/setup/install_base.sh
           ./scripts/setup/install_z3.sh
+          ./scripts/setup/install_bir_angr.sh
 
       - name: Configure and compile
         timeout-minutes: 35

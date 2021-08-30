@@ -70,10 +70,25 @@ in
       val pythonscript = (get_pythondir()) ^ "/symbolic_execution_wrapper.py";
       val magicinputfilename = (get_pythondir()) ^ "/magicinput.bir";
 
+      val _ = bir_fileLib.makedir true (get_pythondir());
+
       val bprog_json_str = birprogjsonexportLib.birprogtojsonstr bprog_t;
       val _ = bir_fileLib.write_to_file magicinputfilename bprog_json_str;
 
-      val output = bir_exec_wrapLib.get_exec_output ("python3 -E \"" ^ pythonscript ^ "\" \"" ^ magicinputfilename ^ "\"");
+      val usePythonPackage = true;
+
+      val output =
+        if usePythonPackage then (
+          print "... using python package of bir_angr ...\n";
+          print "... metadata of package:\n";
+          if OS.Process.isSuccess (OS.Process.system "python3 -m pip show bir_angr") then () else
+            raise ERR "do_symb_exec" "python package bir_angr is not installed";
+          print "... metadata end.\n";
+          bir_exec_wrapLib.get_exec_output ("python3 -E -m bir_angr.symbolic_execution \"" ^ magicinputfilename ^ "\"")
+        ) else (
+          print "... using symbolic_execution_wrapper.py in python subdirectory ...\n";
+          bir_exec_wrapLib.get_exec_output ("python3 -E \"" ^ pythonscript ^ "\" \"" ^ magicinputfilename ^ "\"")
+        );
       val _ = print output;
     in
       ()
