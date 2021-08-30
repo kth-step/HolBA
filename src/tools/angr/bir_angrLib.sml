@@ -73,7 +73,7 @@ in
       val bprog_json_str = birprogjsonexportLib.birprogtojsonstr bprog_t;
       val _ = bir_fileLib.write_to_file magicinputfilename bprog_json_str;
 
-      val output = bir_exec_wrapLib.get_exec_output ("python3 \"" ^ pythonscript ^ "\" \"" ^ magicinputfilename ^ "\"");
+      val output = bir_exec_wrapLib.get_exec_output ("python3 -E \"" ^ pythonscript ^ "\" \"" ^ magicinputfilename ^ "\"");
       val _ = print output;
     in
       ()
