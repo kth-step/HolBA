@@ -67,7 +67,7 @@ in
 *)
   fun do_symb_exec bprog_t =
     let
-      val pythonscript = (get_pythondir()) ^ "/symbolic_execution.py";
+      val pythonscript = (get_pythondir()) ^ "/symbolic_execution_wrapper.py";
       val magicinputfilename = (get_pythondir()) ^ "/magicinput.bir";
 
       val bprog_json_str = birprogjsonexportLib.birprogtojsonstr bprog_t;
