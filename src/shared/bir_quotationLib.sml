@@ -47,10 +47,10 @@ val bir_type =
 
 val variable = fmap implode (many1 (sat Char.isAlphaNum)) <?> "variable"
 
-fun gen_bir_var sz =
-    annotated (token variable) bir_type (fn ty => fn s => mk_BVar_string (s,ty)) (gen_mk_BType_Imm sz)
+fun gen_bir_var variable_parser sz =
+    annotated (token variable_parser) bir_type (fn ty => fn s => mk_BVar_string (s,ty)) (gen_mk_BType_Imm sz)
 
-val bir_var = gen_bir_var default_size;
+val bir_var = gen_bir_var variable default_size;
 
 (* TODO complete with missing operators *)
 val unary_op =
@@ -87,7 +87,7 @@ fun binop p =
 val default_mem_var = bvarmem64_8 "MEM";
 val default_mem = bden default_mem_var;
 
-fun gen_bir_exp sz =
+fun gen_bir_exp var_parser sz =
     fix (fn bir_exp =>
             let val mem_load =
                     seq (string "MEM")
@@ -98,7 +98,7 @@ fun gen_bir_exp sz =
                                             (fn oper => fmap oper bir_exp)
                                       ,try mem_load
                                       ,fmap bconstimm (gen_bir_imm sz)
-                                      ,fmap bden bir_var]
+                                      ,fmap bden var_parser]
                                       <?> "logical expression"
                 val factor = chainr1 logical (binop binary_op_bitwise)
                                      <?> "factor"
@@ -115,7 +115,7 @@ fun gen_bir_exp sz =
             end
         ) <?> "BIR expression";
 
-val bir_exp = gen_bir_exp default_size;
+val bir_exp = gen_bir_exp bir_var default_size;
 
 val bir_assign =
     bind bir_var (fn v =>
@@ -125,7 +125,7 @@ val bir_assign =
 
 val bir_assign_mem_store =
     let
-      val bir_exp_byte = gen_bir_exp default_size_byte
+      val bir_exp_byte = gen_bir_exp bir_var default_size_byte
       val mapping = bind (try bir_exp) (fn addr =>
                     seq (token (string ":="))
                     (bind bir_exp_byte (fn v =>

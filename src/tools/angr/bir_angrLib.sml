@@ -4,12 +4,29 @@ struct
 datatype 'a exec_path =
          exec_path of {
            final_pc : string,
-           path : string list,
-           guards : string list,
+           jmp_history : string list,
+           guards : 'a list,
            observations : 'a list }
 
 local
-  open Json;
+  open Json bslSyntax bir_quotationLib;
+
+  infix 9 <?>;
+  infix 8 <|>;
+  fun init [x] = []
+    | init (x::y::ys) = let val zs = init (y::ys) in x::zs end;
+  fun intercalate x zs = foldr (fn (z,zs) => if null zs then z::zs else z::x::zs) [] zs;
+
+  val angr_variable =
+      fmap (concat o intercalate "_" o init o init)
+           (bind (sep_by1 (fmap implode (many1 (sat Char.isAlphaNum))) (char #"_"))
+                 (fn list => seq (many (sat (not o Char.isSpace))) (return list)))
+           <?> "angr variable";
+
+  val bir_angr_var = gen_bir_var angr_variable 64;
+  val bir_angr_bool_exp =  try (seq (token (string "True")) (return btrue))
+                               <|> try (seq (token (string "False")) (return bfalse))
+                               <|> gen_bir_exp bir_angr_var 64;
 
   (* error handling *)
   val libname = "bir_angrLib"
@@ -31,8 +48,11 @@ in
               then extract(s,size prefix,NONE)
               else raise ERR "result_from_json"
                          ("couldn't parse exact prefix '" ^ prefix ^ "' in string: " ^ s);
-          fun parse_guard str = match_prefix "Bool " (match_bracket #"<" #">" str);
-          fun parse_obs str = match_prefix "SAO " (match_bracket #"<" #">" str);
+          fun match_BExp str = parse (seq junk bir_angr_bool_exp) str
+                               handle e => raise ERR "match_BExp" (make_string_parse_error e);
+          fun parse_guard str = match_BExp (match_prefix "Bool " (match_bracket #"<" #">" str));
+          fun parse_obs str = match_BExp (match_prefix "BV64 " (match_bracket #"<" #">"
+                                         (match_prefix "SAO " (match_bracket #"<" #">" str))));
       in
         case json of
             OBJECT [("addr",STRING addr_str)
@@ -43,7 +63,7 @@ in
                    ,("observations",
                      ARRAY obs_list)] =>
             exec_path { final_pc = addr_str
-            , path = List.map fromJsonString path_list
+            , jmp_history = List.map fromJsonString path_list
             , guards = List.map (parse_guard o fromJsonString) guard_list
             , observations = List.map (parse_obs o fromJsonString) obs_list }
           | _ => raise ERR "result_from_json" "ill-formed result"
