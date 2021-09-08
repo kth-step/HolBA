@@ -437,7 +437,11 @@ val bprog = “BirProgram
                (BExp_BinPred BIExp_Equal
                   (BExp_Den (BVar "R0" (BType_Imm Bit64)))
                   (BExp_Const (Imm64 (0w :word64)))) :
-             'observation_type bir_stmt_basic_t)];
+             'observation_type bir_stmt_basic_t);
+BStmt_Observe 12 (BExp_Const (Imm1 (0w :word1))) [] d1;
+BStmt_Observe 15 (BExp_Const (Imm1 (0w :word1))) [] d5;
+BStmt_Observe 12 (BExp_Const (Imm1 (0w :word1))) [] d1
+];
          bb_last_statement :=
            BStmt_Jmp (BLE_Label (BL_Address (Imm64 (64w :word64))))|>
 ]”;

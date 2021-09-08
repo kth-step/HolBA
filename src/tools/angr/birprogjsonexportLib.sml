@@ -238,12 +238,27 @@ in
 
         val obs_tm_list = (fst o dest_list) obss_tm;
         val obs_json_list = List.map bexp_to_json obs_tm_list;
-      in
-        Json.OBJECT [("stmttype", Json.STRING "BStmt_Observe"),
+
+        val jsonval =
+          if is_var id_tm then
+            let
+              val idvarstr = (fst o dest_var) id_tm;
+              val parts = String.tokens (fn x => x = #"_") idvarstr;
+              val obsref_num = Arbnum.fromString (List.nth(parts, (List.length parts) - 1));
+            in
+            Json.OBJECT [("stmttype", Json.STRING "BStmt_ObserveRef"),
+                     ("obsref", Json.NUMBER obsref_num),
+                     ("cnd", bexp_to_json cnd_tm),
+                     ("obss", Json.ARRAY obs_json_list)] end
+          else
+            Json.OBJECT [("stmttype", Json.STRING "BStmt_Observe"),
                      ("id", Json.STRING (term_to_string id_tm)),
                      ("cnd", bexp_to_json cnd_tm),
                      ("obss", Json.ARRAY obs_json_list),
                      ("obsf", Json.STRING (term_to_string obsf_tm))]
+          ;
+      in
+        jsonval
       end
     else
       raise ERR "stmttojson" ("unknown basic statement type: " ^ (term_to_string stmt));

@@ -83,6 +83,62 @@ in
         | SOME p => (p ^ "/src/tools/angr/python");
 
 (*
+"_JSON_obs_ref_id/fun_12345"
+*)
+  fun obsrefmap_conv_stmt (stmt, (stmts, obsrefmap)) =
+    if not (bir_programSyntax.is_BStmt_Observe stmt) then (stmt::stmts, obsrefmap) else
+    let
+      open bir_programSyntax;
+
+      val (id_tm, cnd_tm, obss_tm, obsf_tm) = dest_BStmt_Observe stmt;
+
+      val ref_num_new = (Arbnum.fromInt o List.length o Redblackmap.listItems) obsrefmap;
+      val matchingobsrefnum_opt = List.find (fn (_, (x,y)) => identical x id_tm andalso identical y obsf_tm) (Redblackmap.listItems obsrefmap);
+      val (ref_num, obsrefmap_m) =
+        if isSome matchingobsrefnum_opt then
+          ((fst o valOf) matchingobsrefnum_opt, obsrefmap)
+        else
+          let
+            val obsrefmap_m = Redblackmap.insert (obsrefmap, ref_num_new, (id_tm, obsf_tm));
+          in (ref_num_new, obsrefmap_m) end;
+
+      val id_var_tm = mk_var ("_JSON_obs_ref_id_" ^ (Arbnum.toString ref_num), type_of id_tm);
+      val obsf_var_tm = mk_var ("_JSON_obs_ref_fun_" ^ (Arbnum.toString ref_num), type_of obsf_tm);
+      val stmt_m = mk_BStmt_Observe (id_var_tm, cnd_tm, obss_tm, obsf_var_tm);
+    in
+      (stmt_m::stmts, obsrefmap_m)
+    end;
+
+  fun obsrefmap_conv_block (block, (blocks, obsrefmap)) =
+    let
+      open bir_programSyntax;
+      open listSyntax;
+
+      val (tm_lbl, tm_stmts, tm_last_stmt) = dest_bir_block block;
+      val (tm_stmt_list, obs_ty) = (dest_list) tm_stmts;
+
+      val (tm_stmt_list_m, obsrefmap_m) = List.foldl obsrefmap_conv_stmt ([], obsrefmap) tm_stmt_list;
+
+      val tm_stmts_m = (mk_list) (List.rev tm_stmt_list_m, obs_ty);
+
+      val block_m = mk_bir_block (tm_lbl, tm_stmts_m, tm_last_stmt);
+    in
+      (block_m::blocks, obsrefmap_m)
+    end;
+
+  fun obsrefmap_conv_prog bprog_t =
+    let
+      open bir_programSyntax;
+      open listSyntax;
+
+      val (blocks, obs_ty) = (dest_list o dest_BirProgram) bprog_t;
+      val obsrefmap = Redblackmap.mkDict Arbnum.compare;
+      val (blocks_m, obsrefmap_m) = List.foldl obsrefmap_conv_block ([], obsrefmap) blocks;
+    in
+      ((mk_BirProgram o mk_list) (List.rev blocks_m, obs_ty), obsrefmap_m)
+    end;
+
+(*
   val bprog_t = bprog;
 *)
   fun do_symb_exec bprog_t =
@@ -92,7 +148,19 @@ in
 
       val _ = bir_fileLib.makedir true (get_pythondir());
 
-      val bprog_json_str = birprogjsonexportLib.birprogtojsonstr bprog_t;
+(*
+      val _ = print "DEBUG BEFORE\n\n\n";
+*)
+      val (bprog_t_m, obsrefmap) = obsrefmap_conv_prog bprog_t;
+(*
+      val _ = print_term bprog_t_m;
+      val _ = print (if identical bprog_t bprog_t_m then "EQUAL PROG\n\n" else "UNEQUAL PROG\n\n");
+      (* debug print obsrefmap *)
+      val _ = List.map (fn (k,(obsid,obsfun)) => print ((Arbnum.toString k) ^ " -> (" ^ (term_to_string obsid) ^ ", " ^ (term_to_string obsfun) ^ ")\n")) (Redblackmap.listItems obsrefmap);
+      val _ = print "DEBUG AFTER\n\n\n";
+*)
+
+      val bprog_json_str = birprogjsonexportLib.birprogtojsonstr bprog_t_m;
       val _ = bir_fileLib.write_to_file magicinputfilename bprog_json_str;
 
       val usePythonPackage = true;
