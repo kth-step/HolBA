@@ -42,18 +42,20 @@ fun bir_inst_lifting_me_to_asm (BILME_code asm_opt) =
 
 fun bir_inst_lifting_mr_to_asm (BILMR (addr, mementries)) =
   let
-    val mrlabel = "0x" ^ (encode_hex 8 addr) ^ ":";
+    val hexaddr = "0x" ^ (encode_hex 8 addr);
+    val mrlabellines = ".org " ^ hexaddr ^ "\n" ^
+                       "lbl_" ^ hexaddr ^ ":\n";
     fun foldfun ((_, me), str) =
       str ^ ("\t" ^ (bir_inst_lifting_me_to_asm me) ^ "\n");
     val codelines = List.foldl foldfun "" mementries;
-  in mrlabel ^ "\n" ^ codelines end;
+  in mrlabellines ^ codelines end;
 
 
 fun bir_inst_lifting_to_asm mrl =
   let
-    val _ = if (length mrl) = 1 then () else
-              raise Fail "SCRIPT: can only handle single memory region/c function";
-  in (bir_inst_lifting_mr_to_asm (hd mrl)) ^ "\n" end;
+    fun foldfun (mr, str) =
+      str ^ (bir_inst_lifting_mr_to_asm mr) ^ "\n";
+  in (List.foldl foldfun "" mrl) ^ "\n" end;
 
 
 val asmcode = bir_inst_lifting_to_asm aes_sections;
