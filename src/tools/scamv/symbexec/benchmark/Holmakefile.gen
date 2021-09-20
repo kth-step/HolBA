@@ -1,0 +1,17 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   =
+#../../../theory/bir ../../../theory/bir-support ../../../shared
+
+
+# configuration
+# ----------------------------------
+HOLHEAP        = ../HolBATools_ScamV_symbexec-heap
+NEWHOLHEAP     = 
+
+HEAPINC_EXTRA  = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../../../Holmakefile.inc
