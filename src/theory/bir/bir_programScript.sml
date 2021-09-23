@@ -109,6 +109,31 @@ val fresh_def = Define`
 fresh s = STRCAT "t" (n2s s.bst_counter)
 `;
 
+val bir_varset_of_basic_stmt_def = Define`
+   bir_varset_of_basic_stmt (BStmt_Assign var exp) = { var } UNION bir_varset_of_exp exp
+/\ bir_varset_of_basic_stmt (BStmt_Assert exp) = bir_varset_of_exp exp
+/\ bir_varset_of_basic_stmt (BStmt_Assume exp) = bir_varset_of_exp exp
+/\ bir_varset_of_basic_stmt (BStmt_Observe n exp1 expl fn) = bir_varset_of_exp exp1
+      UNION (FOLDR (\a b. a UNION b) {} (MAP bir_varset_of_exp expl))
+/\ bir_varset_of_basic_stmt (BStmt_Fence _ _) = {}
+`;
+
+val bir_varset_of_label_exp_def = Define`
+   bir_varset_of_label_exp (BLE_Label _) = {}
+/\ bir_varset_of_label_exp (BLE_Exp exp) = bir_varset_of_exp exp
+`;
+
+val bir_varset_of_end_stmt_def = Define`
+   bir_varset_of_end_stmt (BStmt_Jmp lexp) = bir_varset_of_label_exp lexp
+/\ bir_varset_of_end_stmt (BStmt_CJmp cond exp1 exp2) = bir_varset_of_exp cond UNION bir_varset_of_label_exp exp1 UNION bir_varset_of_label_exp exp2
+/\ bir_varset_of_end_stmt (BStmt_Halt exp) = bir_varset_of_exp exp
+`;
+
+val bir_varset_of_stmt_def = Define`
+   bir_varset_of_stmt (BStmtB bstmt) = bir_varset_of_basic_stmt bstmt
+/\ bir_varset_of_stmt (BStmtE estmt) = bir_varset_of_end_stmt estmt
+`;
+
 val bir_state_t_component_equality = DB.fetch "-" "bir_state_t_component_equality";
 val bir_programcounter_t_component_equality = DB.fetch "-" "bir_programcounter_t_component_equality";
 val bir_state_ss = rewrites (type_rws ``:bir_state_t``);
@@ -123,6 +148,14 @@ val bir_stmt_ss = rewrites ((type_rws ``:'a bir_stmt_t``) @ (type_rws ``:bir_stm
 
 val bir_labels_of_program_def = Define `bir_labels_of_program (BirProgram p) =
   MAP (\bl. bl.bb_label) p`;
+
+val bir_varset_of_program_def =  Define `bir_varset_of_program (BirProgram p) =
+FOLDR (\a b. a UNION b) {}
+  (MAP (\bl. FOLDR (\a b. a UNION b) {}
+        (MAP bir_varset_of_basic_stmt bl.bb_statements)
+        UNION bir_varset_of_end_stmt bl.bb_last_statement)
+        p)
+`;
 
 val bir_get_program_block_info_by_label_def = Define `bir_get_program_block_info_by_label
   (BirProgram p) l = INDEX_FIND 0 (\(x:'a bir_block_t). x.bb_label = l) p
@@ -200,7 +233,7 @@ val bir_state_set_failed_def = Define `bir_state_set_failed st =
 
 val bir_state_init_def = Define `bir_state_init p = <|
     bst_pc       := bir_pc_first p
-  ; bst_environ  := bir_env_default (bir_envty_of_vs {}) (* TODO: add vars of program here *)
+  ; bst_environ  := bir_env_default (bir_envty_of_vs (bir_varset_of_program p))
   ; bst_status := BST_Running
   ; bst_viewenv := FEMPTY
   ; bst_coh := \x.0
@@ -212,6 +245,7 @@ val bir_state_init_def = Define `bir_state_init p = <|
   ; bst_prom := []
   ; bst_inflight := []
   ; bst_counter := 0
+  ; bst_fwdb := (\l. <| time:= 0; view:=0; xcl:=F |>)
 |>`;
 
 (* ------------------------------------------------------------------------- *)

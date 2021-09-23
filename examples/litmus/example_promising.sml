@@ -2,8 +2,57 @@ open litmusInterfaceLib;
 open bir_promisingTheory;
 open wordsTheory;
 open computeLib;
+open bslSyntax;
 
 fun term_EVAL tm = (rand o concl) (EVAL tm);
+
+exception WrongType;
+
+fun bir_type exp =
+    let open bir_typing_expTheory optionSyntax;
+        val ty = term_EVAL “type_of_bir_exp ^exp”;
+    in
+      if is_some ty
+      then dest_some ty
+      else raise WrongType
+    end;
+
+local
+  val count = ref 0;
+in
+fun fresh_var ty =
+    let val v = bvar ("T"^(PolyML.makestring (!count))) ty;
+    in (count := !count + 1; v)
+    end;
+end
+
+fun canonicalise_prog prog =
+    let open bir_programSyntax listSyntax bir_expSyntax;
+        val (block_list,ty) = dest_list (dest_BirProgram prog);
+        fun fix_cast stmt =
+            if is_BStmt_Assign stmt
+            then let val (var,body) = dest_BStmt_Assign stmt;
+                 in
+                   if is_BExp_Cast body
+                   then let val (cast, exp, ty) = dest_BExp_Cast body;
+                            val tmp_ty = bir_type exp;
+                            val tmp_var = fresh_var tmp_ty;
+                        in
+                          [mk_BStmt_Assign (tmp_var,exp), mk_BStmt_Assign(var, mk_BExp_Cast (cast, bden tmp_var, ty))]
+                        end
+                   else [stmt]
+                 end
+            else [stmt];
+        fun fix_block block =
+            let val (lbl,is_atomic,stmts,last_stmt) = dest_bir_block block;
+                val (stmt_list,stmt_ty) = dest_list stmts;
+                val new_stmts = mk_list (List.concat (List.map fix_cast stmt_list), stmt_ty);
+            in
+              mk_bir_block (lbl,is_atomic,new_stmts,last_stmt)
+            end;
+    in
+      mk_BirProgram (mk_list (List.map fix_block block_list,ty))
+    end;
 
 fun assume_cheat tm = prove(tm,cheat);
 fun mk_assums var =
@@ -43,7 +92,7 @@ fun core_st_promised n st promises = term_EVAL “^st with <| bst_prom := [(^n)]
 (* val filename = "tests/non-mixed-size/BASIC_2_THREAD/R.litmus.json" *)
 fun run_litmus_2thread filename =
    let val test = load_litmus filename;
-       val (progs as [prog1,prog2]) = fix_types (#progs test);
+       val (progs as [prog1,prog2]) = List.map canonicalise_prog (fix_types (#progs test));
        val (mem,envs) = #inits test; (* mem is assumed to be empty for now *)
        val envs_with_mem = map (extend_env mem) envs
        val [st1,st2] = map (uncurry mk_st_from_env) (zip progs envs_with_mem);
