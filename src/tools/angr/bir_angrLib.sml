@@ -9,6 +9,8 @@ datatype 'a exec_path =
            observations : 'a list }
 
 local
+  open HolKernel Parse boolLib bossLib;
+
   open Json bslSyntax bir_quotationLib;
 
   infix 9 <?>;
@@ -36,7 +38,8 @@ local
 in
   fun result_from_json json =
       let open String;
-          fun fromJsonString (STRING str) = str;
+          fun fromJsonString (STRING str) = str
+	    | fromJsonString _ = raise ERR "result_from_json:fromJsonString" "not a string";
           fun match_bracket left right s =
               if not (size s = 0) andalso sub(s,0) = left andalso sub(s,size s - 1) = right
               then extract(s,1,SOME(size s - 2))
@@ -49,7 +52,8 @@ in
               else raise ERR "result_from_json"
                          ("couldn't parse exact prefix '" ^ prefix ^ "' in string: " ^ s);
           fun match_BExp str = parse (seq junk bir_angr_bool_exp) str
-                               handle e => raise ERR "match_BExp" (make_string_parse_error e);
+                               handle e => raise ERR "match_BExp" (make_string_parse_error e)
+                               handle Match => raise ERR "parser match error" ("cannot deal with: " ^ str);
           fun parse_guard str = match_BExp (match_prefix "Bool " (match_bracket #"<" #">" str));
           fun parse_obs str = match_BExp (match_prefix "BV64 " (match_bracket #"<" #">"
                                          (match_prefix "SAO " (match_bracket #"<" #">" str))));
@@ -160,6 +164,21 @@ in
       val _ = print "DEBUG AFTER\n\n\n";
 *)
 
+      local
+        open listSyntax;
+        open bir_programSyntax;
+        open bir_immSyntax;
+        open wordsSyntax;
+
+        val blocks = (fst o dest_list o dest_BirProgram) bprog_t_m;
+        val (lbl_tm, _, _) = dest_bir_block (List.nth (blocks, 0));
+        (* val _ = print_term lbl_tm; *)
+        val lbl_word_tm = (snd o gen_dest_Imm o dest_BL_Address o snd o dest_eq o concl o EVAL) lbl_tm;
+      in
+        val start_lbl_str = (Arbnum.toString o dest_word_literal) lbl_word_tm;
+      end
+      val _ = if false then print start_lbl_str else ();
+
       val bprog_json_str = birprogjsonexportLib.birprogtojsonstr bprog_t_m;
       val _ = bir_fileLib.write_to_file magicinputfilename bprog_json_str;
 
@@ -172,14 +191,29 @@ in
           if OS.Process.isSuccess (OS.Process.system "python3 -m pip show bir_angr") then () else
             raise ERR "do_symb_exec" "python package bir_angr is not installed";
           print "... metadata end.\n";
-          bir_exec_wrapLib.get_exec_output ("python3 -E -m bir_angr.symbolic_execution \"" ^ magicinputfilename ^ "\"")
+          bir_exec_wrapLib.get_exec_output ("python3 -E -m bir_angr.symbolic_execution \"" ^ magicinputfilename ^ "\" -ba " ^ start_lbl_str)
         ) else (
           print "... using symbolic_execution_wrapper.py in python subdirectory ...\n";
-          bir_exec_wrapLib.get_exec_output ("python3 -E \"" ^ pythonscript ^ "\" \"" ^ magicinputfilename ^ "\"")
+          bir_exec_wrapLib.get_exec_output ("python3 -E \"" ^ pythonscript ^ "\" \"" ^ magicinputfilename ^ "\" -ba " ^ start_lbl_str)
         );
-      val _ = print output;
+      val _ = if false then print output else ();
+
+      (* extract json structure from output *)
+      val lines = String.tokens (fn x => x = #"\n") output;
+      val marker_line = "========== JSON START =========="
+      val (json_str, _) =
+        List.foldl
+          (fn (line, (s, found)) =>
+             if found then
+               (s ^ line ^ "\n", found)
+             else
+               (s, line = marker_line))
+          ("", false)
+          lines;
+      val _ = if false then print json_str else ();
+      val result = parse_json_output json_str;
     in
-      ()
+      result
     end;
 
 
