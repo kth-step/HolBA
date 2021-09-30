@@ -1,0 +1,9 @@
+
+aes-aarch64.hex:     file format ihex
+
+
+Disassembly of section .sec1:
+
+0000000000400570 <.sec1>:
+  400570:	d101c3ff 	sub	sp, sp, #0x70
+  400574:	d65f03c0 	ret
