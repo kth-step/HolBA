@@ -1,0 +1,17 @@
+# includes
+# ----------------------------------
+DEPENDENCIES   = 
+#../../core ../../theories
+
+
+# configuration
+# ----------------------------------
+HOLHEAP        = ../cfg/HolBATools_Cfg-heap
+NEWHOLHEAP     = HolBATools_SymbExec-heap
+
+HEAPINC_EXTRA  = 
+
+
+# included lines follow
+# ----------------------------------
+include ../../Holmakefile.inc
