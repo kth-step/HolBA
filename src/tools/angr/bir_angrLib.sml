@@ -6,7 +6,7 @@ datatype 'a exec_path =
            final_pc : string,
            jmp_history : string list,
            guards : 'a list,
-           observations : 'a list }
+           observations : (Arbnum.num * 'a * 'a list * Abbrev.term) list }
 
 local
   open HolKernel Parse boolLib bossLib;
@@ -36,28 +36,49 @@ local
   val wrap_exn = Feedback.wrap_exn libname
 
 in
-  fun result_from_json json =
-      let open String;
-          fun fromJsonString (STRING str) = str
-	    | fromJsonString _ = raise ERR "result_from_json:fromJsonString" "not a string";
-          fun match_bracket left right s =
-              if not (size s = 0) andalso sub(s,0) = left andalso sub(s,size s - 1) = right
-              then extract(s,1,SOME(size s - 2))
-              else raise ERR "result_from_json"
-                         ("couldn't parse outer brackets " ^ Char.toString left ^ " and " ^ Char.toString right ^ " in string: " ^ s);
-          fun match_prefix prefix s =
+ local
+  open String;
+
+  fun fromJsonString (STRING str) = str
+    | fromJsonString _ = raise ERR "result_from_json:fromJsonString" "not a string";
+
+  fun match_bracket left right s =
+    if not (size s = 0) andalso sub(s,0) = left andalso sub(s,size s - 1) = right
+    then extract(s,1,SOME(size s - 2))
+    else raise ERR "result_from_json"
+      ("couldn't parse outer brackets " ^ Char.toString left ^ " and " ^ Char.toString right ^ " in string: " ^ s);
+
+  fun match_prefix prefix s =
               if not (size s = 0) andalso Int.<=(size prefix, size s)
                  andalso isPrefix prefix s
               then extract(s,size prefix,NONE)
               else raise ERR "result_from_json"
                          ("couldn't parse exact prefix '" ^ prefix ^ "' in string: " ^ s);
-          fun match_BExp str = parse (seq junk bir_angr_bool_exp) str
+
+  fun match_BExp str = parse (seq junk bir_angr_bool_exp) str
                                handle e => raise ERR "match_BExp" (make_string_parse_error e)
                                handle Match => raise ERR "parser match error" ("cannot deal with: " ^ str);
-          fun parse_guard str = match_BExp (match_prefix "Bool " (match_bracket #"<" #">" str));
-          fun parse_obs str = match_BExp (match_prefix "BV64 " (match_bracket #"<" #">"
-                                         (match_prefix "SAO " (match_bracket #"<" #">" str))));
-      in
+
+  fun parse_guard str = match_BExp (match_prefix "Bool " (match_bracket #"<" #">" str));
+
+  fun parse_obs_exp str =
+    match_BExp (match_prefix "BV64 " (match_bracket #"<" #">"
+                  (match_prefix "SAO " (match_bracket #"<" #">" str))));
+
+  fun parse_obs obsrefmap json =
+    case json of
+      ARRAY [NUMBER obs_ref,
+             ARRAY obs_exp_list] =>
+      let val (id_tm, obsf_tm) = Redblackmap.find(obsrefmap, obs_ref) in
+       (numSyntax.dest_numeral id_tm,
+        “BExp_Const (Imm1 1w)”,
+        List.map (parse_obs_exp o fromJsonString) obs_exp_list,
+        obsf_tm) (* TODO: fixme -add obscond exp *)
+      end
+     | _ => raise ERR "parse_obs" "ill-formed result";
+
+ in
+  fun result_from_json obsrefmap json =
         case json of
             OBJECT [("addr",STRING addr_str)
                    ,("path",
@@ -69,15 +90,15 @@ in
             exec_path { final_pc = addr_str
             , jmp_history = List.map fromJsonString path_list
             , guards = List.map (parse_guard o fromJsonString) guard_list
-            , observations = List.map (parse_obs o fromJsonString) obs_list }
-          | _ => raise ERR "result_from_json" "ill-formed result"
-      end;
+            , observations = List.map (parse_obs obsrefmap) obs_list }
+          | _ => raise ERR "result_from_json" "ill-formed result";
+ end;
 
-  fun parse_json_output output =
+  fun parse_json_output obsrefmap output =
       case Json.parse output of
           ERROR err_string => raise ERR "parse_json_output" err_string
-        | OK (ARRAY json_leaves) => List.map result_from_json json_leaves
-        | OK _ => raise ERR "parse_json_output" "result from python script is not a list"
+        | OK (ARRAY json_leaves) => List.map (result_from_json obsrefmap) json_leaves
+        | OK _ => raise ERR "parse_json_output" "result from python script is not a list";
 
 
   fun get_pythondir () =
@@ -211,7 +232,7 @@ in
           ("", false)
           lines;
       val _ = if false then print json_str else ();
-      val result = parse_json_output json_str;
+      val result = parse_json_output obsrefmap json_str;
     in
       result
     end;
