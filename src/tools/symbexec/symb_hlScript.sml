@@ -70,7 +70,7 @@ val symb_matchstate_def = Define `
 val symb_matchstate_ext_def = Define `
   symb_matchstate_ext sr sys H s =
     (?H'. sr.sr_interpr_ext H' H /\
-          symb_matchstate sr sys H s)
+          symb_matchstate sr sys H' s)
 `;
 
 (*
@@ -96,10 +96,16 @@ NOTATION: MULTISTEP WITH LABEL SET
 =======================================================
 *)
 
+(* maybe standardize with using POW *)
 val step_n_def = Define `
+  (step_n stepf s 0 s' = F) /\
   (step_n stepf s (SUC 0) s' = (stepf s = s')) /\
   (step_n stepf s (SUC n) s' = step_n stepf (stepf s) n s')
 `;
+
+(* proof step_n is deterministic step_n s n s' /\ step_n s n s'' ==> s
+ = s'' *)
+(* total: !s n > 0. ?s' *)
 
 val step_n_in_L_def = Define `
   step_n_in_L pcf stepf s n L s' =
@@ -108,6 +114,8 @@ val step_n_in_L_def = Define `
      (!n'. n' < n ==>
         ?s''. step_n stepf s n' s'' /\ pcf(s'') IN L))
 `;
+
+(* step_n_in_l ... ==> (() IN L /\ (!n' < n. !s''. step_n_in_l ==> pcf(s'') IN L)) *)
 
 val conc_step_n_in_L_def = Define `
   conc_step_n_in_L sr = step_n_in_L sr.sr_pc_conc sr.sr_step_conc
@@ -179,6 +187,7 @@ val Pi_overapprox_Q_def = Define `
      (Q s s'))
 `;
 
+(* TODO: see compatibility with (this should imply) Didrik's contracts *)
 val prop_holds_def = Define `
   prop_holds sr l L P Q =
     (!s.
