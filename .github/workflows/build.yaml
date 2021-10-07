@@ -18,9 +18,11 @@ jobs:
     strategy:
       matrix:
         polyml: ['v5.7.1', 'v5.8.1']
+        hol4: ['kananaskis-14']
 
     env:
       HOLBA_POLYML_VERSION: ${{ matrix.polyml }}
+      HOLBA_HOL4_VERSION: ${{ matrix.hol4 }}
 
     steps:
       - name: Checkout code
@@ -32,7 +34,7 @@ jobs:
         with:
           path: |
             ${{ env.HOLBA_OPT_DIR }}
-          key: os-${{ runner.os }}_polyml-${{ matrix.polyml }}_hol4-k14
+          key: os-${{ runner.os }}_polyml-${{ matrix.polyml }}_hol4-${{ matrix.hol4 }}
 
       - name: Static analysis
         timeout-minutes: 5
