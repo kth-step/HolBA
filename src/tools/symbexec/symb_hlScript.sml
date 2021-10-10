@@ -50,6 +50,14 @@ val symb_interpr_ext_def = Define `
     (!symb. (i2 symb <> NONE) ==> (i1 symb = i2 symb))
 `;
 
+val symb_interpr_ext_id_thm = store_thm("symb_interpr_ext_id_thm", ``
+!H. symb_interpr_ext H H
+``,
+  STRIP_TAC >>
+  Cases_on `H` >>
+  METIS_TAC [symb_interpr_ext_def]
+);
+
 val _ = Datatype `symb_rec_t =
    <|
       sr_val_true        : 'val;
@@ -76,16 +84,12 @@ val _ = Datatype `bir_conc_state_t = int`;
 val _ = Datatype `bir_symb_state_t = int`;
 
 val bir_symb_rec_sbir_def = Define `
-  bir_symb_rec_sbir a b c d e f g h =
+  bir_symb_rec_sbir a b c d =
     <|
-      sr_interpr_sypcond := a;
-      sr_interpr_systate := b;
-      sr_interpr_ext     := c;
-      sr_pc_conc         := d;
-      sr_pc_symb         := e;
-      sr_pcond_symb      := f;
-      sr_step_conc       := g;
-      sr_step_symb       := h;
+      sr_val_true        := a;
+      sr_interpret_f     := b;
+      sr_step_conc       := c;
+      sr_step_symb       := d;
    |>
 `;
 *)
@@ -138,7 +142,7 @@ val symb_step_sound_def = Define `
      (!s H s'.
        (symb_matchstate sr sys H s) ==>
        (sr.sr_step_conc s = s') ==>
-       (!sys'. sys' IN Pi /\ symb_matchstate sr sys' H s')
+       (?sys'. sys' IN Pi /\ symb_matchstate sr sys' H s')
      )
     )
 `;
@@ -150,16 +154,28 @@ NOTATION: MULTISTEP WITH LABEL SET
 =======================================================
 *)
 
-(* maybe standardize with using POW *)
+(* n steps deterministic transition relation with using FUNPOW *)
 val step_n_def = Define `
-  (step_n stepf s 0 s' = F) /\
-  (step_n stepf s (SUC 0) s' = (stepf s = s')) /\
-  (step_n stepf s (SUC n) s' = step_n stepf (stepf s) n s')
+  (step_n stepf s n s' = (FUNPOW stepf n s = s'))
 `;
 
-(* proof step_n is deterministic step_n s n s' /\ step_n s n s'' ==> s
- = s'' *)
-(* total: !s n > 0. ?s' *)
+val step_n_deterministic_thm = store_thm("step_n_deterministic_thm", ``
+!stepf.
+!s n s' s''.
+(step_n stepf s n s') ==>
+(step_n stepf s n s'') ==>
+(s' = s'')
+``,
+  SIMP_TAC std_ss [step_n_def]
+);
+val step_n_total_thm = store_thm("step_n_total_thm", ``
+!stepf.
+!s n.
+?s'.
+step_n stepf s n s'
+``,
+  SIMP_TAC std_ss [step_n_def]
+);
 
 val step_n_in_L_def = Define `
   step_n_in_L pcf stepf s n L s' =
@@ -169,7 +185,19 @@ val step_n_in_L_def = Define `
         ?s''. step_n stepf s n' s'' /\ pcf(s'') IN L))
 `;
 
-(* step_n_in_l ... ==> (() IN L /\ (!n' < n. !s''. step_n_in_l ==> pcf(s'') IN L)) *)
+val step_n_in_L_onlyL_thm = store_thm("step_n_in_L_onlyL_thm", ``
+!pcf stepf.
+!s n L s'.
+(step_n_in_L pcf stepf s n L s') ==>
+(
+  ((pcf s) IN L) /\
+  (!n' s''. n' < n ==> step_n stepf s n' s'' ==> pcf(s'') IN L)
+)
+``,
+  SIMP_TAC std_ss [step_n_in_L_def] >>
+  REPEAT STRIP_TAC >>
+  METIS_TAC [step_n_deterministic_thm]
+);
 
 val conc_step_n_in_L_def = Define `
   conc_step_n_in_L sr = step_n_in_L symb_concst_pc sr.sr_step_conc
@@ -181,11 +209,12 @@ val conc_step_n_in_L_def = Define `
 GOAL: MULTISTEP SOUNDNESS
 =======================================================
 *)
-val symb_hl_step_n_sound_def = Define `
+val symb_hl_step_in_L_sound_def = Define `
   symb_hl_step_in_L_sound sr (sys, L, Pi) =
     !s H. 
     (symb_matchstate sr sys H s) ==>
     (?n s'.
+      (n > 0) /\
       (conc_step_n_in_L sr s n L s') /\
       (?sys'. sys' IN Pi /\ symb_matchstate_ext sr sys' H s')
     )
@@ -204,7 +233,33 @@ val symb_rule_STEP_thm = store_thm("symb_rule_STEP_thm", ``
   ((symb_symbst_pc sys) IN L) ==>
   (symb_hl_step_in_L_sound sr (sys, L, Pi))
 ``,
-  cheat
+  REWRITE_TAC [symb_step_sound_def, symb_matchstate_ext_def, symb_hl_step_in_L_sound_def, conc_step_n_in_L_def, step_n_in_L_def] >>
+  REPEAT STRIP_TAC >>
+
+  `?sys'. sys' IN Pi /\ symb_matchstate sr sys' H (sr.sr_step_conc s)` by (
+    METIS_TAC []
+  ) >>
+  PAT_X_ASSUM ``!x y. z`` (K ALL_TAC) >>
+
+  Q.EXISTS_TAC `SUC 0` >>
+  Q.EXISTS_TAC `sr.sr_step_conc s` >>
+
+  SIMP_TAC arith_ss [step_n_def, arithmeticTheory.FUNPOW] >>
+
+  `symb_concst_pc s IN L` by (
+    METIS_TAC [symb_matchstate_def]
+  ) >>
+
+  REPEAT STRIP_TAC >| [
+    ASM_REWRITE_TAC []
+  ,
+    `n' = 0` by (
+      ASM_SIMP_TAC arith_ss []
+    ) >>
+    ASM_REWRITE_TAC [arithmeticTheory.FUNPOW]
+  ,
+    METIS_TAC [symb_interpr_ext_id_thm]
+  ]
 );
 
 val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
@@ -241,7 +296,7 @@ val Pi_overapprox_Q_def = Define `
      (Q s s'))
 `;
 
-(* TODO: see compatibility with (this should imply) Didrik's contracts *)
+(* TODO: proof compatibility with (this should imply) Didrik's contracts, see notes for that *)
 val prop_holds_def = Define `
   prop_holds sr l L P Q =
     (!s.
@@ -258,13 +313,15 @@ GOAL: PROPERTY TRANSFER THEOREM
 =======================================================
 *)
 val symb_prop_transfer_thm = store_thm("symb_prop_transfer_thm", ``
-!sr (sys, L, Pi) P Q.
+!sr sys L Pi P Q.
   (P_entails_an_interpret sr P sys) ==>
   (Pi_overapprox_Q sr P sys Pi Q) ==>
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   (prop_holds sr (symb_symbst_pc sys) L P Q)
 ``,
-  cheat
+  REWRITE_TAC [P_entails_an_interpret_def, Pi_overapprox_Q_def, prop_holds_def, symb_hl_step_in_L_sound_def] >>
+  REPEAT STRIP_TAC >>
+  METIS_TAC []
 );
 
 
