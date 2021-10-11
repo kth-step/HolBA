@@ -143,6 +143,8 @@ val symb_matchstate_ext_def = Define `
 GOAL: SINGLE STEP SOUNDNESS
 =======================================================
 *)
+(* this definition assumes that the concrete transition function is total,
+   if it wasn't we needed more here and also needed to take special care *)
 val symb_step_sound_def = Define `
   symb_step_sound sr =
     (!sys Pi.
@@ -311,6 +313,9 @@ val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
   cheat
 );
 
+(* add an example because it is two operations at once and an example makes it immediately clear *)
+(* (v) = (5) /\ (x > 10) *)
+(* e1 = v ... *)
 val symb_is_expr_conj_eq_def = Define `
   symb_is_expr_conj_eq sr expr_conj_eq =
     (!e1 e2 conj1. !H.
@@ -327,6 +332,9 @@ val symb_is_mk_symbexpr_symbol_def = Define `
        (sr.sr_interpret_f (SymbInterpret h) (mk_symbexpr symb) = SOME v))
 `;
 
+(* -forall needs to be exists
+   - negation and calling them the symbols is problematic
+   - solution: use independent symbols, that can be used like fresh symbols (intuition: variable extractor function) *)
 val symb_symbols_of_symbexp_def = Define `
   symb_symbols_of_symbexp sr symbexp =
     {symb |
@@ -355,7 +363,7 @@ val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   ((symb_symbst_store sys') var = SOME symbexp) ==>
   (sys'' = symb_symbst_pcond_update
-             (\pcond. expr_conj_eq (mk_symbexpr symb) symbexp pcond)
+             (expr_conj_eq (mk_symbexpr symb) symbexp)
              (symb_symbst_store_update var (mk_symbexpr symb) sys')
   ) ==>
   (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys'}) UNION {sys''}))
