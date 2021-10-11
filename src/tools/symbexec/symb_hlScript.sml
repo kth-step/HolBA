@@ -333,33 +333,32 @@ val symb_is_mk_symbexpr_symbol_def = Define `
        (sr.sr_interpret_f (SymbInterpret h) (mk_symbexpr symb) = SOME v))
 `;
 
-(* - fixed: forall needs to be exists, or negation outside
-   - negation and calling them the symbols is problematic
-   - solution: use independent symbols, that can be used like fresh symbols (intuition: variable extractor function) *)
-val symb_symbols_of_symbexp_def = Define `
-  symb_symbols_of_symbexp sr symbexp =
-    {symb |
-      ~(!h val_o.
-        sr.sr_interpret_f (SymbInterpret h) symbexp =
-        sr.sr_interpret_f (SymbInterpret ((symb =+ val_o) h)) symbexp) }
+val symb_is_independent_symbol_symbexp_def = Define `
+  symb_is_independent_symbol_symbexp sr symbexp symb =
+    (!h val_o.
+       sr.sr_interpret_f (SymbInterpret h) symbexp =
+       sr.sr_interpret_f (SymbInterpret ((symb =+ val_o) h)) symbexp)
 `;
-val symb_symbols_of_store_def = Define `
-  symb_symbols_of_store sr store = 
-    (BIGUNION {symb_symbols_of_symbexp sr symbexp | ?symb. store symb = SOME symbexp })
+val symb_is_independent_symbol_store_def = Define `
+  symb_is_independent_symbol_store sr store symb = 
+    (!var. store var <> NONE ==>
+        ?symbexp. store var = SOME symbexp /\
+                  symb_is_independent_symbol_symbexp sr symbexp symb)
 `;
-val symb_symbols_of_def = Define `
-  symb_symbols_of sr sys =
-    ((symb_symbols_of_store sr (symb_symbst_store sys)) UNION
-     (symb_symbols_of_symbexp sr (symb_symbst_pcond sys)))
+val symb_is_independent_symbol_def = Define `
+  symb_is_independent_symbol sr sys symb =
+    (symb_is_independent_symbol_store sr (symb_symbst_store sys) symb /\
+     symb_is_independent_symbol_symbexp sr (symb_symbst_pcond sys) symb)
 `;
 
 val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
 !sr expr_conj_eq mk_symbexpr.
-!sys L Pi sys' sys'' var symbexp symb.
-  (symb_is_expr_conj_eq sr expr_conj_eq) ==>
-  (symb_is_mk_symbexpr_symbol sr mk_symbexpr) ==>
+(symb_is_expr_conj_eq sr expr_conj_eq) ==>
+(symb_is_mk_symbexpr_symbol sr mk_symbexpr) ==>
 
-  (~(symb IN ((symb_symbols_of sr sys) UNION (symb_symbols_of sr sys')))) ==>
+(!sys L Pi sys' sys'' var symbexp symb.
+  (symb_is_independent_symbol sr sys symb) ==>
+  (symb_is_independent_symbol sr sys' symb) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   ((symb_symbst_store sys') var = SOME symbexp) ==>
@@ -368,6 +367,7 @@ val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
              (symb_symbst_store_update var (mk_symbexpr symb) sys')
   ) ==>
   (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys'}) UNION {sys''}))
+)
 ``,
   cheat
 );
