@@ -251,7 +251,6 @@ val symb_hl_step_in_L_sound_def = Define `
     !s H. 
     (symb_matchstate sr sys H s) ==>
     (?n s'.
-      (n > 0) /\
       (conc_step_n_in_L sr s n L s') /\
       (?sys'. sys' IN Pi /\ symb_matchstate_ext sr sys' H s')
     )
