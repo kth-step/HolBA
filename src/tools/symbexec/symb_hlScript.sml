@@ -294,8 +294,10 @@ val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
 
 val symb_pcondwiden_def = Define `
   symb_pcondwiden sr sys sys' = (
-    (symb_symbst_pc sys = symb_symbst_pc sys) /\
-    (symb_symbst_store sys = symb_symbst_store sys) /\
+    (symb_symbst_pc sys =
+     symb_symbst_pc sys') /\
+    (symb_symbst_store sys =
+     symb_symbst_store sys') /\
     (!H.
      (symb_interpr_symbpcond sr H sys) ==>
      (symb_interpr_symbpcond sr H sys'))
