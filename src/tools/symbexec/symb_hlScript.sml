@@ -187,31 +187,58 @@ step_n stepf s n s'
   SIMP_TAC std_ss [step_n_def]
 );
 
-val step_n_in_L_def = Define `
-  step_n_in_L pcf stepf s n L s' =
+val step_n_in_L_relaxed_def = Define `
+  step_n_in_L_relaxed pcf stepf s n L s' =
     (step_n stepf s n s' /\
-     (pcf s) IN L /\
-     (!n'. n' < n ==>
+     (n > 0) /\
+     (!n'. 0 < n' ==> n' < n ==>
         ?s''. step_n stepf s n' s'' /\ pcf(s'') IN L))
 `;
+
+val step_n_in_L_def = Define `
+  step_n_in_L pcf stepf s n L s' =
+    ((pcf s) IN L /\
+     (step_n_in_L_relaxed pcf stepf s n L s'))
+`;
+
+val step_n_in_L_thm = save_thm("step_n_in_L_thm",
+  REWRITE_RULE [step_n_in_L_relaxed_def] step_n_in_L_def
+);
 
 val step_n_in_L_onlyL_thm = store_thm("step_n_in_L_onlyL_thm", ``
 !pcf stepf.
 !s n L s'.
 (step_n_in_L pcf stepf s n L s') ==>
 (
-  ((pcf s) IN L) /\
+  (* ((pcf s) IN L) /\ *)
   (!n' s''. n' < n ==> step_n stepf s n' s'' ==> pcf(s'') IN L)
 )
 ``,
-  SIMP_TAC std_ss [step_n_in_L_def] >>
+  SIMP_TAC std_ss [step_n_in_L_thm] >>
   REPEAT STRIP_TAC >>
+  Cases_on `n'` >- (
+    FULL_SIMP_TAC std_ss [step_n_def, arithmeticTheory.FUNPOW]
+  ) >>
+  `0 < SUC n''` by (SIMP_TAC arith_ss []) >>
   METIS_TAC [step_n_deterministic_thm]
 );
+
+val conc_step_n_in_L_relaxed_def = Define `
+  conc_step_n_in_L_relaxed sr = step_n_in_L_relaxed symb_concst_pc sr.sr_step_conc
+`;
 
 val conc_step_n_in_L_def = Define `
   conc_step_n_in_L sr = step_n_in_L symb_concst_pc sr.sr_step_conc
 `;
+
+val conc_step_n_in_L_IMP_relaxed_thm = store_thm("conc_step_n_in_L_IMP_relaxed_thm", ``
+!sr.
+!s n L s'.
+(conc_step_n_in_L sr s n L s') ==>
+(conc_step_n_in_L_relaxed sr s n L s')
+``,
+  METIS_TAC [conc_step_n_in_L_def, conc_step_n_in_L_relaxed_def, step_n_in_L_def]
+);
 
 
 
@@ -266,7 +293,7 @@ val symb_rule_STEP_thm = store_thm("symb_rule_STEP_thm", ``
   ((symb_symbst_pc sys) IN L) ==>
   (symb_hl_step_in_L_sound sr (sys, L, Pi))
 ``,
-  REWRITE_TAC [symb_step_sound_def, symb_matchstate_ext_def, symb_hl_step_in_L_sound_def, conc_step_n_in_L_def, step_n_in_L_def] >>
+  REWRITE_TAC [symb_step_sound_def, symb_matchstate_ext_def, symb_hl_step_in_L_sound_def, conc_step_n_in_L_def, step_n_in_L_thm] >>
   REPEAT STRIP_TAC >>
 
   `?sys'. sys' IN Pi /\ symb_matchstate sr sys' H (sr.sr_step_conc s)` by (
@@ -285,11 +312,6 @@ val symb_rule_STEP_thm = store_thm("symb_rule_STEP_thm", ``
 
   REPEAT STRIP_TAC >| [
     ASM_REWRITE_TAC []
-  ,
-    `n' = 0` by (
-      ASM_SIMP_TAC arith_ss []
-    ) >>
-    ASM_REWRITE_TAC [arithmeticTheory.FUNPOW]
   ,
     METIS_TAC [symb_interpr_ext_id_thm]
   ]
@@ -440,7 +462,6 @@ val Pi_overapprox_Q_def = Define `
      (Q s s'))
 `;
 
-(* TODO: proof compatibility with (this should imply) Didrik's contracts, see notes for that *)
 val prop_holds_def = Define `
   prop_holds sr l L P Q =
     (!s.
@@ -467,6 +488,101 @@ val symb_prop_transfer_thm = store_thm("symb_prop_transfer_thm", ``
   REPEAT STRIP_TAC >>
   METIS_TAC []
 );
+
+
+(*
+GOAL: PROPERTY TRANSFER COMPATIBILITY (BINARY HOARE LOGIC)
+=======================================================
+*)
+local
+  open abstract_hoare_logicTheory;
+  open abstract_hoare_logicSimps;
+in
+
+val symb_hl_trs_def = Define `
+  symb_hl_trs sr st = SOME (sr.sr_step_conc st)
+`;
+
+val symb_hl_weak_def = Define `
+  symb_hl_weak sr st ls st' =
+    (?n. (conc_step_n_in_L_relaxed sr st n (COMPL ls) st' /\ (~((symb_concst_pc st') IN (COMPL ls)))))
+`;
+
+val symb_hl_etl_wm_def =
+  Define `symb_hl_etl_wm sr = <|
+    trs  := symb_hl_trs sr;
+    weak := symb_hl_weak sr;
+    pc   := symb_concst_pc
+  |>`;
+
+val symb_prop_transfer_binHoare_thm = store_thm("symb_prop_transfer_binHoare_thm", ``
+!sr.
+!Q' l L P Q.
+  (Q' = \s. \s'. Q s' /\ (~((symb_concst_pc s') IN (COMPL L)))) ==>
+  (prop_holds sr l (COMPL L) P Q') ==>
+  (abstract_jgmt (symb_hl_etl_wm sr) l L P Q)
+``,
+  REWRITE_TAC [prop_holds_def, abstract_jgmt_def] >>
+  REPEAT STRIP_TAC >>
+
+  PAT_X_ASSUM ``!x. y`` (ASSUME_TAC o (Q.SPEC `ms`)) >>
+
+  REV_FULL_SIMP_TAC (std_ss++bir_wm_SS) [symb_hl_etl_wm_def, symb_hl_weak_def] >>
+
+  METIS_TAC [conc_step_n_in_L_IMP_relaxed_thm]
+);
+
+(* should go to BIR auxTheory *)
+val FUNPOW_OPT_SOME_thm = store_thm("FUNPOW_OPT_SOME_thm", ``
+!f g.
+   (!y. f y = SOME (g y)) ==>
+   (!n x.
+      (FUNPOW_OPT f n x = SOME (FUNPOW g n x)))
+``,
+  GEN_TAC >> GEN_TAC >> STRIP_TAC >>
+  Induct_on `n` >- (
+    REWRITE_TAC [bir_auxiliaryTheory.FUNPOW_OPT_def, arithmeticTheory.FUNPOW]
+  ) >>
+  REWRITE_TAC [bir_auxiliaryTheory.FUNPOW_OPT_def, arithmeticTheory.FUNPOW] >>
+  ASM_SIMP_TAC std_ss [GSYM bir_auxiliaryTheory.FUNPOW_OPT_def]
+);
+
+
+val symb_hl_trs_thm = store_thm("symb_hl_trs_thm",
+  ``!sr. !x. (symb_hl_trs sr x) = SOME (sr.sr_step_conc x)``,
+  METIS_TAC [symb_hl_trs_def]
+);
+
+val FUNPOW_OPT_SOME_symb_hl_trs_thm = store_thm("FUNPOW_OPT_SOME_symb_hl_trs_thm",
+  ``!sr. !n x.
+      (FUNPOW_OPT (symb_hl_trs sr) n x = SOME (FUNPOW sr.sr_step_conc n x))``,
+  METIS_TAC [FUNPOW_OPT_SOME_thm, symb_hl_trs_thm]
+);
+
+
+val symb_hl_is_weak = store_thm("symb_hl_is_weak",
+  ``!sr.
+      weak_model (symb_hl_etl_wm sr)``,
+  SIMP_TAC (std_ss++bir_wm_SS) [weak_model_def, symb_hl_etl_wm_def, symb_hl_weak_def, symb_hl_trs_def] >>
+
+  REWRITE_TAC [conc_step_n_in_L_relaxed_def, step_n_in_L_relaxed_def, step_n_in_L_thm, step_n_def, FUNPOW_OPT_SOME_symb_hl_trs_thm] >>
+
+  REPEAT STRIP_TAC >>
+  EQ_TAC >- (
+    REPEAT STRIP_TAC >>
+    Q.EXISTS_TAC `n` >>
+
+    (*`n > 0` by (cheat) >>*)
+    FULL_SIMP_TAC std_ss [pred_setTheory.IN_COMPL, arithmeticTheory.GREATER_DEF]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+  Q.EXISTS_TAC `n` >>
+
+  FULL_SIMP_TAC std_ss [pred_setTheory.IN_COMPL, arithmeticTheory.GREATER_DEF]
+);
+
+end;
 
 
 val _ = export_theory();
