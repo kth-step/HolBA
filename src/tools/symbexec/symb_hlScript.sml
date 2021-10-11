@@ -38,8 +38,16 @@ val symb_symbst_pc_def = Define `
 val symb_symbst_store_def = Define `
   symb_symbst_store (SymbSymbSt _ store _) = store
 `;
+val symb_symbst_store_update_def = Define `
+  symb_symbst_store_update var symbexpr (SymbSymbSt lbl store pcond) =
+    SymbSymbSt lbl ((var =+ (SOME symbexpr)) store) pcond
+`;
 val symb_symbst_pcond_def = Define `
   symb_symbst_pcond (SymbSymbSt _ _ pcond) = pcond
+`;
+val symb_symbst_pcond_update_def = Define `
+  symb_symbst_pcond_update pcond_f (SymbSymbSt lbl store pcond) =
+    SymbSymbSt lbl store (pcond_f pcond)
 `;
 
 val _ = Datatype `symb_interpret_t =
@@ -64,7 +72,7 @@ val _ = Datatype `symb_rec_t =
 
       sr_interpret_f     : (('symbol, 'val) symb_interpret_t) ->
                            'symbexpr ->
-                           'val;
+                           'val; (* TODO: maybe this should be an option, but what are the implications? otherwise, can we force this to be a plain value at this level? *)
 
       sr_step_conc       : (('label, 'var, 'val) symb_concst_t) ->
                            (('label, 'var, 'val) symb_concst_t);
@@ -268,6 +276,107 @@ val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
   (symb_hl_step_in_L_sound sr (sys_A, L_A, Pi_A)) ==>
   (Pi_C = (Pi_A DIFF {sys_B}) UNION Pi_B) ==>
   (symb_hl_step_in_L_sound sr (sys_A, L_A UNION L_B, Pi_C))
+``,
+  cheat
+);
+
+val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
+!sr.
+!sys L Pi sys'.
+  (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
+  (!H. ~(symb_interpr_symbpcond sr H sys')) ==>
+  (symb_hl_step_in_L_sound sr (sys, L, Pi DIFF {sys'}))
+``,
+  cheat
+);
+
+val symb_pcondwiden_def = Define `
+  symb_pcondwiden sr sys sys' = (
+    (symb_symbst_pc sys = symb_symbst_pc sys) /\
+    (symb_symbst_store sys = symb_symbst_store sys) /\
+    (!H.
+     (symb_interpr_symbpcond sr H sys) ==>
+     (symb_interpr_symbpcond sr H sys'))
+  )
+`;
+
+val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
+!sr.
+!sys1' sys1 L Pi sys2 sys2'.
+  (symb_hl_step_in_L_sound sr (sys1', L, Pi)) ==>
+  (symb_pcondwiden sr sys1 sys1') ==>
+  (symb_pcondwiden sr sys2 sys2') ==>
+  (symb_hl_step_in_L_sound sr (sys1, L, (Pi DIFF {sys2}) UNION {sys2'}))
+``,
+  cheat
+);
+
+val symb_is_expr_conj_eq_def = Define `
+  symb_is_expr_conj_eq sr expr_conj_eq =
+    (!e1 e2 conj1. !H.
+       (sr.sr_interpret_f H (expr_conj_eq e1 e2 conj1) = sr.sr_val_true) =
+       ((sr.sr_interpret_f H conj1 = sr.sr_val_true) /\
+        (sr.sr_interpret_f H e1 = sr.sr_interpret_f H e2)))
+`;
+
+val symb_is_mk_symbexpr_symbol_def = Define `
+  symb_is_mk_symbexpr_symbol sr mk_symbexpr =
+    (!h symb v.
+       (h symb = SOME v) ==>
+       (sr.sr_interpret_f (SymbInterpret h) (mk_symbexpr symb) = v))
+`;
+
+val symb_symbols_of_symbexp_def = Define `
+  symb_symbols_of_symbexp sr symbexp =
+    {symb |
+      !h val_o.
+        sr.sr_interpret_f (SymbInterpret h) symbexp <>
+        sr.sr_interpret_f (SymbInterpret ((symb =+ val_o) h)) symbexp }
+`;
+val symb_symbols_of_store_def = Define `
+  symb_symbols_of_store sr store = 
+    (BIGUNION {symb_symbols_of_symbexp sr symbexp | ?symb. store symb = SOME symbexp })
+`;
+val symb_symbols_of_def = Define `
+  symb_symbols_of sr sys =
+    ((symb_symbols_of_store sr (symb_symbst_store sys)) UNION
+     (symb_symbols_of_symbexp sr (symb_symbst_pcond sys)))
+`;
+
+val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
+!sr expr_conj_eq mk_symbexpr.
+!sys L Pi sys' sys'' var symbexp symb.
+  (symb_is_expr_conj_eq sr expr_conj_eq) ==>
+  (symb_is_mk_symbexpr_symbol sr mk_symbexpr) ==>
+
+  (~(symb IN ((symb_symbols_of sr sys) UNION (symb_symbols_of sr sys')))) ==>
+
+  (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
+  ((symb_symbst_store sys') var = SOME symbexp) ==>
+  (sys'' = symb_symbst_pcond_update
+             (\pcond. expr_conj_eq (mk_symbexpr symb) symbexp pcond)
+             (symb_symbst_store_update var (mk_symbexpr symb) sys')
+  ) ==>
+  (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys'}) UNION {sys''}))
+``,
+  cheat
+);
+
+val symb_simplification_def = Define `
+  symb_simplification sr sys symbexp symbexp' =
+    (!H.
+     (symb_interpr_symbpcond sr H sys) ==>
+     (sr.sr_interpret_f H symbexp = sr.sr_interpret_f H symbexp'))
+`;
+
+val symb_rule_SUBST_thm = store_thm("symb_rule_SUBST_thm", ``
+!sr.
+!sys L Pi sys' sys'' var symbexp symbexp'.
+  (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
+  ((symb_symbst_store sys') var = SOME symbexp) ==>
+  (symb_simplification sr sys symbexp symbexp') ==>
+  (sys'' = symb_symbst_store_update var symbexp' sys') ==>
+  (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys'}) UNION {sys''}))
 ``,
   cheat
 );
