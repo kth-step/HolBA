@@ -499,6 +499,12 @@ local
   open abstract_hoare_logicSimps;
 in
 
+(*
+  it seems we can in principle produce contracts of all code fragments
+  - unless the start label is in the end label set, because in this case the transition system could not "start"
+  - unless it cannot be exhaustively symbolically executed, like if they contain unbound loops, or impractically largely bound loops
+*)
+
 val symb_hl_trs_def = Define `
   symb_hl_trs sr st = SOME (sr.sr_step_conc st)
 `;
@@ -568,18 +574,13 @@ val symb_hl_is_weak = store_thm("symb_hl_is_weak",
   REWRITE_TAC [conc_step_n_in_L_relaxed_def, step_n_in_L_relaxed_def, step_n_in_L_thm, step_n_def, FUNPOW_OPT_SOME_symb_hl_trs_thm] >>
 
   REPEAT STRIP_TAC >>
-  EQ_TAC >- (
+  EQ_TAC >> (
     REPEAT STRIP_TAC >>
     Q.EXISTS_TAC `n` >>
 
     (*`n > 0` by (cheat) >>*)
     FULL_SIMP_TAC std_ss [pred_setTheory.IN_COMPL, arithmeticTheory.GREATER_DEF]
-  ) >>
-
-  REPEAT STRIP_TAC >>
-  Q.EXISTS_TAC `n` >>
-
-  FULL_SIMP_TAC std_ss [pred_setTheory.IN_COMPL, arithmeticTheory.GREATER_DEF]
+  )
 );
 
 end;
