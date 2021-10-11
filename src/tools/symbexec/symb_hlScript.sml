@@ -313,9 +313,10 @@ val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
   cheat
 );
 
-(* add an example because it is two operations at once and an example makes it immediately clear *)
-(* (v) = (5) /\ (x > 10) *)
-(* e1 = v ... *)
+(* construct symbolic expression with semantics of
+     conjuncting an expression with an equality of two other expressions
+   e.g.: e1 = (v), e2 = (5), conj1 = (x > 10)
+     then: (v) = (5) /\ (x > 10) *)
 val symb_is_expr_conj_eq_def = Define `
   symb_is_expr_conj_eq sr expr_conj_eq =
     (!e1 e2 conj1. !H.
@@ -332,15 +333,15 @@ val symb_is_mk_symbexpr_symbol_def = Define `
        (sr.sr_interpret_f (SymbInterpret h) (mk_symbexpr symb) = SOME v))
 `;
 
-(* -forall needs to be exists
+(* - fixed: forall needs to be exists, or negation outside
    - negation and calling them the symbols is problematic
    - solution: use independent symbols, that can be used like fresh symbols (intuition: variable extractor function) *)
 val symb_symbols_of_symbexp_def = Define `
   symb_symbols_of_symbexp sr symbexp =
     {symb |
-      !h val_o.
-        sr.sr_interpret_f (SymbInterpret h) symbexp <>
-        sr.sr_interpret_f (SymbInterpret ((symb =+ val_o) h)) symbexp }
+      ~(!h val_o.
+        sr.sr_interpret_f (SymbInterpret h) symbexp =
+        sr.sr_interpret_f (SymbInterpret ((symb =+ val_o) h)) symbexp) }
 `;
 val symb_symbols_of_store_def = Define `
   symb_symbols_of_store sr store = 
