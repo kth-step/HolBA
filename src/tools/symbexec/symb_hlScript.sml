@@ -230,6 +230,29 @@ val symb_hl_step_in_L_sound_def = Define `
     )
 `;
 
+(*
+(*
+WIP: SANITY: MULTISTEP SOUNDNESS IMPLIES INCLUSION OF ALL STARTING STATES IN REACHABLE STATE PATH CONDITIONS
+=======================================================
+*)
+(* something similar could be proven for the transformations of Pi with the rules,
+   i.e. path conditions in the reachable states as a whole can only get less restrictive and never more restrictive *)
+(* no underapproximation *)
+val symb_hl_step_in_L_sound_IMP_overapprox_thm = store_thm(
+   "symb_hl_step_in_L_sound_IMP_overapprox_thm", ``
+!sr.
+!sys L Pi.
+  (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
+  (!s H.
+     (symb_interpr_symbpcond sr H sys) ==>
+     (?sys'. sys' IN Pi /\ )
+symb_interpr_ext H' H
+  )
+``,
+  cheat
+);
+*)
+
 
 (*
 GOAL: INFERENCE RULES
