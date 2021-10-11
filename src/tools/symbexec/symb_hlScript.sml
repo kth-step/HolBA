@@ -14,8 +14,6 @@ val _ = new_theory "symb_hl";
 RECORD FOR REPRESENTING GENERIC CONCRETE AND SYMBOLIC TRANSITION SYSTEM
 =======================================================
 *)
-(* TODO: better rename type variables to alpha, beta, etc.
-   because HOL4 seems to order them alphabetically for type parameters *)
 val _ = Datatype `symb_concst_t =
    SymbConcSt 'a_label ('b_var -> 'c_val option)
 `;
@@ -68,17 +66,17 @@ val symb_interpr_ext_id_thm = store_thm("symb_interpr_ext_id_thm", ``
 
 val _ = Datatype `symb_rec_t =
    <|
-      sr_val_true        : 'val;
+      sr_val_true        : 'c_val;
 
-      sr_interpret_f     : (('symbol, 'val) symb_interpret_t) ->
-                           'symbexpr ->
-                           'val; (* TODO: maybe this should be an option, but what are the implications? otherwise, can we force this to be a plain value at this level? *)
+      sr_interpret_f     : (('d_symbol, 'c_val) symb_interpret_t) ->
+                           'e_symbexpr ->
+                           'c_val option;
 
-      sr_step_conc       : (('label, 'var, 'val) symb_concst_t) ->
-                           (('label, 'var, 'val) symb_concst_t);
+      sr_step_conc       : (('a_label, 'b_var, 'c_val) symb_concst_t) ->
+                           (('a_label, 'b_var, 'c_val) symb_concst_t);
 
-      sr_step_symb       : (('label, 'var, 'symbexpr) symb_symbst_t) ->
-                           ((('label, 'var, 'symbexpr) symb_symbst_t) ->
+      sr_step_symb       : (('a_label, 'b_var, 'e_symbexpr) symb_symbst_t) ->
+                           ((('a_label, 'b_var, 'e_symbexpr) symb_symbst_t) ->
                            bool);
    |>`;
 
@@ -107,15 +105,17 @@ NOTATION: INTERPRETATION OF SYMBOLIC STATES AND SYMBOLIC PATH CONDITIONS
 =======================================================
 *)
 val symb_interpr_symbstore_def = Define `
-  symb_interpr_symbstore sr H sys =
-    (SymbConcSt
-       (symb_symbst_pc sys)
-       ((OPTION_MAP (sr.sr_interpret_f H)) o (symb_symbst_store sys)))
+  symb_interpr_symbstore sr H sys s =
+    (!var. (symb_symbst_store sys var <> NONE \/ symb_concst_store s var <> NONE) ==>
+         ?symbexp v.
+            symb_symbst_store sys var = SOME symbexp /\
+            symb_concst_store s var = SOME v /\
+            sr.sr_interpret_f H symbexp = SOME v)
 `;
 
 val symb_interpr_symbpcond_def = Define `
   symb_interpr_symbpcond sr H sys =
-    (sr.sr_interpret_f H (symb_symbst_pcond sys) = sr.sr_val_true)
+    (sr.sr_interpret_f H (symb_symbst_pcond sys) = SOME sr.sr_val_true)
 `;
 
 (*
@@ -129,7 +129,7 @@ NOTATION: STATE MATCHING
 val symb_matchstate_def = Define `
   symb_matchstate sr sys H s =
     (symb_symbst_pc sys = symb_concst_pc s /\
-     symb_interpr_symbstore sr H sys = s /\
+     symb_interpr_symbstore sr H sys s /\
      symb_interpr_symbpcond sr H sys)
 `;
 
@@ -314,16 +314,17 @@ val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
 val symb_is_expr_conj_eq_def = Define `
   symb_is_expr_conj_eq sr expr_conj_eq =
     (!e1 e2 conj1. !H.
-       (sr.sr_interpret_f H (expr_conj_eq e1 e2 conj1) = sr.sr_val_true) =
-       ((sr.sr_interpret_f H conj1 = sr.sr_val_true) /\
-        (sr.sr_interpret_f H e1 = sr.sr_interpret_f H e2)))
+       (sr.sr_interpret_f H (expr_conj_eq e1 e2 conj1) = SOME sr.sr_val_true) =
+       ((sr.sr_interpret_f H conj1 = SOME sr.sr_val_true) /\
+        (?v. sr.sr_interpret_f H e1 = SOME v /\
+             sr.sr_interpret_f H e2 = SOME v)))
 `;
 
 val symb_is_mk_symbexpr_symbol_def = Define `
   symb_is_mk_symbexpr_symbol sr mk_symbexpr =
     (!h symb v.
        (h symb = SOME v) ==>
-       (sr.sr_interpret_f (SymbInterpret h) (mk_symbexpr symb) = v))
+       (sr.sr_interpret_f (SymbInterpret h) (mk_symbexpr symb) = SOME v))
 `;
 
 val symb_symbols_of_symbexp_def = Define `
