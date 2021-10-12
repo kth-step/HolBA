@@ -2,6 +2,7 @@ open HolKernel Parse boolLib bossLib;
 
 open arithmeticTheory;
 open pred_setTheory;
+open combinTheory;
 
 val _ = new_theory "symb_hl";
 
@@ -78,6 +79,14 @@ val symb_interpr_ext_TRANS_thm = store_thm("symb_interpr_ext_TRANS_thm", ``
   METIS_TAC [symb_interpr_ext_def]
 );
 
+val symb_interpr_ext_symb_NONE_thm = store_thm(
+   "symb_interpr_ext_symb_NONE_thm", ``
+!h symb.
+symb_interpr_ext (SymbInterpret h) (SymbInterpret ((symb =+ NONE) h))
+``,
+  METIS_TAC [symb_interpr_ext_def, APPLY_UPDATE_THM]
+);
+
 val _ = Datatype `symb_rec_t =
    <|
       sr_val_true        : 'c_val;
@@ -152,6 +161,18 @@ val symb_matchstate_ext_def = Define `
     (?H'. symb_interpr_ext H' H /\
           symb_matchstate sr sys H' s)
 `;
+
+val symb_matchstate_ext_w_ext_thm = store_thm(
+   "symb_matchstate_ext_w_ext_thm", ``
+!sr.
+!H H' sys s.
+  (symb_interpr_ext H' H) ==>
+
+  (symb_matchstate_ext sr sys H' s) ==>
+  (symb_matchstate_ext sr sys H  s)
+``,
+  METIS_TAC [symb_matchstate_ext_def, symb_interpr_ext_TRANS_thm, symb_interpr_ext_symb_NONE_thm]
+);
 
 (*
 GOAL: SINGLE STEP SOUNDNESS
@@ -544,6 +565,38 @@ val symb_is_independent_symbol_def = Define `
 `;
 
 (*
+val symb_is_independent_symbol_IMP_symb_matchstate_thm = store_thm(
+   "symb_is_independent_symbol_IMP_symb_matchstate_thm", ``
+!sr.
+!sys s h symb.
+  (symb_is_independent_symbol sr sys symb) ==>
+
+  (symb_matchstate sr sys (SymbInterpret h) s =
+   symb_matchstate sr sys (SymbInterpret ((symb =+ NONE) h)) s)
+``,
+  cheat
+);
+
+val symb_is_independent_symbol_IMP_freshsymb_thm = store_thm(
+   "symb_is_independent_symbol_IMP_freshsymb_thm", ``
+!sr expr_conj_eq mk_symbexpr.
+(symb_is_expr_conj_eq sr expr_conj_eq) ==>
+(symb_is_mk_symbexpr_symbol sr mk_symbexpr) ==>
+
+(!sys sys' var symbexp symb H s.
+  (symb_is_independent_symbol sr sys symb) ==>
+  (symb_symbst_store sys var = SOME symbexp) ==>
+  (sys' = symb_symbst_pcond_update
+             (expr_conj_eq (mk_symbexpr symb) symbexp)
+             (symb_symbst_store_update var (mk_symbexpr symb) sys)
+  ) ==>
+  (symb_matchstate_ext sr sys  H s =
+   symb_matchstate_ext sr sys' H s)
+)
+``,
+  cheat
+);
+
 (* rule to introduce fresh symbols as values of store variables
      (as abbreviations or as first step of forgetting values) *)
 val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
@@ -551,20 +604,46 @@ val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
 (symb_is_expr_conj_eq sr expr_conj_eq) ==>
 (symb_is_mk_symbexpr_symbol sr mk_symbexpr) ==>
 
-(!sys L Pi sys' sys'' var symbexp symb.
+(!sys L Pi sys2 sys2' var symbexp symb.
   (symb_is_independent_symbol sr sys symb) ==>
-  (symb_is_independent_symbol sr sys' symb) ==>
+  (symb_is_independent_symbol sr sys2 symb) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
-  ((symb_symbst_store sys') var = SOME symbexp) ==>
-  (sys'' = symb_symbst_pcond_update
+  ((symb_symbst_store sys2) var = SOME symbexp) ==>
+  (sys2' = symb_symbst_pcond_update
              (expr_conj_eq (mk_symbexpr symb) symbexp)
-             (symb_symbst_store_update var (mk_symbexpr symb) sys')
+             (symb_symbst_store_update var (mk_symbexpr symb) sys2)
   ) ==>
-  (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys'}) UNION {sys''}))
+  (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2'}))
 )
 ``,
-  cheat
+  REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
+  REPEAT STRIP_TAC >>
+
+  (* select H where symbol is not mapped *)
+  Cases_on `H` >> Q.RENAME1_TAC `SymbInterpret h` >>
+  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`s`, `SymbInterpret ((symb =+ NONE) h)`])) >>
+
+  `symb_matchstate sr sys (SymbInterpret ((symb =+ NONE) h)) s` by (
+    METIS_TAC [symb_is_independent_symbol_IMP_symb_matchstate_thm]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  (* the case when we would execute to sys2 *)
+  Cases_on `sys' = sys2` >- (
+    Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `s'` >>
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+    METIS_TAC [symb_simplification_symb_matchstate_ext_thm]
+
+symb_is_independent_symbol_IMP_symb_matchstate_thm
+symb_is_independent_symbol_IMP_freshsymb_thm
+  ) >>
+
+  ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  METIS_TAC [symb_matchstate_ext_w_ext_thm, symb_interpr_ext_symb_NONE_thm]
+symb_matchstate_ext_w_ext_thm
+symb_interpr_ext_symb_NONE_thm
 );
 *)
 
@@ -575,7 +654,8 @@ val symb_simplification_def = Define `
      (sr.sr_interpret_f H symbexp = sr.sr_interpret_f H symbexp'))
 `;
 
-val symb_simplification_symb_matchstate_ext_thm = store_thm("symb_simplification_symb_matchstate_ext", ``
+val symb_simplification_symb_matchstate_ext_thm = store_thm(
+   "symb_simplification_symb_matchstate_ext_thm", ``
 !sr.
 !sys var symbexp symbexp' H s.
   ((symb_symbst_store sys) var = SOME symbexp) ==>
@@ -607,7 +687,7 @@ val symb_simplification_symb_matchstate_ext_thm = store_thm("symb_simplification
     (* still have to prove that the store matches *)
     FULL_SIMP_TAC std_ss
       [symb_interpr_symbstore_def, symb_concst_store_def,
-       symb_symbst_store_def, combinTheory.APPLY_UPDATE_THM] >>
+       symb_symbst_store_def, APPLY_UPDATE_THM] >>
     REPEAT STRIP_TAC
   ) >> (
     (* for the updated variable, and for all others *)
