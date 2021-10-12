@@ -516,6 +516,7 @@ val symb_is_expr_conj_eq_def = Define `
              sr.sr_interpret_f H e2 = SOME v)))
 `;
 
+(* predicate for functions that make expressions that represent exactly a symbol *)
 val symb_is_mk_symbexpr_symbol_def = Define `
   symb_is_mk_symbexpr_symbol sr mk_symbexpr =
     (!h symb v.
@@ -523,6 +524,7 @@ val symb_is_mk_symbexpr_symbol_def = Define `
        (sr.sr_interpret_f (SymbInterpret h) (mk_symbexpr symb) = SOME v))
 `;
 
+(* predicate for independent symbols in symbolic expressions and symbolic states *)
 val symb_is_independent_symbol_symbexp_def = Define `
   symb_is_independent_symbol_symbexp sr symbexp symb =
     (!h val_o.
@@ -541,6 +543,9 @@ val symb_is_independent_symbol_def = Define `
      symb_is_independent_symbol_symbexp sr (symb_symbst_pcond sys) symb)
 `;
 
+(*
+(* rule to introduce fresh symbols as values of store variables
+     (as abbreviations or as first step of forgetting values) *)
 val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
 !sr expr_conj_eq mk_symbexpr.
 (symb_is_expr_conj_eq sr expr_conj_eq) ==>
@@ -561,6 +566,7 @@ val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
 ``,
   cheat
 );
+*)
 
 val symb_simplification_def = Define `
   symb_simplification sr sys symbexp symbexp' =
@@ -569,16 +575,76 @@ val symb_simplification_def = Define `
      (sr.sr_interpret_f H symbexp = sr.sr_interpret_f H symbexp'))
 `;
 
+val symb_simplification_symb_matchstate_ext_thm = store_thm("symb_simplification_symb_matchstate_ext", ``
+!sr.
+!sys var symbexp symbexp' H s.
+  ((symb_symbst_store sys) var = SOME symbexp) ==>
+  (symb_simplification sr sys symbexp symbexp') ==>
+
+  (symb_matchstate_ext sr sys H s =
+   symb_matchstate_ext sr (symb_symbst_store_update var symbexp' sys) H s)
+``,
+  REPEAT STRIP_TAC >>
+(*
+  HO_MATCH_MP_TAC EQ_EXT >> STRIP_TAC >>
+  HO_MATCH_MP_TAC EQ_EXT >> STRIP_TAC >>
+*)
+
+  FULL_SIMP_TAC std_ss [symb_simplification_def, symb_matchstate_def, symb_matchstate_ext_def] >>
+
+  EQ_TAC >> (
+    REPEAT STRIP_TAC >>
+    Q.EXISTS_TAC `H'` >>
+    Cases_on `sys` >> Cases_on `s` >>
+
+    FULL_SIMP_TAC std_ss
+      [symb_concst_pc_def, symb_symbst_pc_def, symb_symbst_pcond_def,
+       symb_symbst_store_update_def, symb_interpr_symbpcond_def] >>
+
+    PAT_X_ASSUM ``!H. A`` (ASSUME_TAC o (Q.SPEC `H'`)) >>
+    REV_FULL_SIMP_TAC std_ss [symb_symbst_store_def]
+  ) >> (
+    (* still have to prove that the store matches *)
+    FULL_SIMP_TAC std_ss
+      [symb_interpr_symbstore_def, symb_concst_store_def,
+       symb_symbst_store_def, combinTheory.APPLY_UPDATE_THM] >>
+    REPEAT STRIP_TAC
+  ) >> (
+    (* for the updated variable, and for all others *)
+    Cases_on `var = var'` >> (
+      FULL_SIMP_TAC std_ss [symb_interpr_symbstore_def, symb_concst_store_def, symb_symbst_store_def] >>
+
+      PAT_X_ASSUM ``!H. A`` (ASSUME_TAC o (Q.SPEC `var'`)) >>
+      REV_FULL_SIMP_TAC std_ss []
+    )
+  )
+);
+
 val symb_rule_SUBST_thm = store_thm("symb_rule_SUBST_thm", ``
 !sr.
-!sys L Pi sys' sys'' var symbexp symbexp'.
+!sys L Pi sys2 sys2' var symbexp symbexp'.
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
-  ((symb_symbst_store sys') var = SOME symbexp) ==>
-  (symb_simplification sr sys symbexp symbexp') ==>
-  (sys'' = symb_symbst_store_update var symbexp' sys') ==>
-  (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys'}) UNION {sys''}))
+  ((symb_symbst_store sys2) var = SOME symbexp) ==>
+  (symb_simplification sr sys2 symbexp symbexp') ==>
+  (sys2' = symb_symbst_store_update var symbexp' sys2) ==>
+  (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2'}))
 ``,
-  cheat
+  REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
+  REPEAT STRIP_TAC >>
+
+  PAT_X_ASSUM ``!s H. symb_matchstate sr sys H s ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  (* the case when we would execute to sys2 *)
+  Cases_on `sys' = sys2` >- (
+    Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `s'` >>
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+    METIS_TAC [symb_simplification_symb_matchstate_ext_thm]
+  ) >>
+
+  ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  METIS_TAC []
 );
 
 
@@ -721,7 +787,7 @@ val symb_hl_is_weak = store_thm("symb_hl_is_weak",
     REPEAT STRIP_TAC >>
     Q.EXISTS_TAC `n` >>
 
-    (*`n > 0` by (cheat) >>*)
+    (*`n > 0` by () >>*)
     FULL_SIMP_TAC std_ss [IN_COMPL, GREATER_DEF]
   )
 );
