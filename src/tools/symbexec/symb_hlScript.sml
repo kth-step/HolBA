@@ -444,6 +444,54 @@ val symb_pcondwiden_def = Define `
   )
 `;
 
+val symb_rule_CONS_S_thm = store_thm("symb_rule_CONS_S_thm", ``
+!sr.
+!sys' sys L Pi.
+  (symb_hl_step_in_L_sound sr (sys', L, Pi)) ==>
+  (symb_pcondwiden sr sys sys') ==>
+  (symb_hl_step_in_L_sound sr (sys, L, Pi))
+``,
+  REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
+  REPEAT STRIP_TAC >>
+
+  `symb_matchstate sr sys' H s` by (
+    Cases_on `sys` >> Cases_on `sys'` >>
+    FULL_SIMP_TAC std_ss [symb_pcondwiden_def, symb_matchstate_def, symb_symbst_store_def, symb_interpr_symbstore_def] >>
+    METIS_TAC []
+  ) >>
+  METIS_TAC []
+);
+
+val symb_rule_CONS_E_thm = store_thm("symb_rule_CONS_E_thm", ``
+!sr.
+!sys L Pi sys2 sys2'.
+  (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
+  (symb_pcondwiden sr sys2 sys2') ==>
+  (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2'}))
+``,
+  REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
+  REPEAT STRIP_TAC >>
+
+  PAT_X_ASSUM ``!s H. symb_matchstate sr sys H s ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
+  REV_FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_matchstate_ext_def] >>
+
+  (* the case when we would execute to sys2 *)
+  Cases_on `sys' = sys2` >- (
+    Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `s'` >>
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+    Q.EXISTS_TAC `sys2'` >>
+    ASM_SIMP_TAC std_ss [] >>
+    Q.EXISTS_TAC `H'` >>
+
+    FULL_SIMP_TAC std_ss [symb_pcondwiden_def, symb_matchstate_def, symb_symbst_store_def, symb_interpr_symbstore_def] >>
+    METIS_TAC []
+  ) >>
+
+  ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  METIS_TAC []
+);
+
 val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
 !sr.
 !sys1' sys1 L Pi sys2 sys2'.
@@ -452,7 +500,7 @@ val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
   (symb_pcondwiden sr sys2 sys2') ==>
   (symb_hl_step_in_L_sound sr (sys1, L, (Pi DIFF {sys2}) UNION {sys2'}))
 ``,
-  cheat
+  METIS_TAC [symb_rule_CONS_S_thm, symb_rule_CONS_E_thm]
 );
 
 (* construct symbolic expression with semantics of
