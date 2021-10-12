@@ -1,5 +1,8 @@
 open HolKernel Parse boolLib bossLib;
 
+open arithmeticTheory;
+open pred_setTheory;
+
 val _ = new_theory "symb_hl";
 
 (*
@@ -228,7 +231,7 @@ val step_n_in_L_onlyL_thm = store_thm("step_n_in_L_onlyL_thm", ``
   SIMP_TAC std_ss [step_n_in_L_thm] >>
   REPEAT STRIP_TAC >>
   Cases_on `n'` >- (
-    FULL_SIMP_TAC std_ss [step_n_def, arithmeticTheory.FUNPOW]
+    FULL_SIMP_TAC std_ss [step_n_def, FUNPOW]
   ) >>
   `0 < SUC n''` by (SIMP_TAC arith_ss []) >>
   METIS_TAC [step_n_deterministic_thm]
@@ -241,7 +244,7 @@ val step_n_in_L_IMP_SUPER_thm = store_thm("step_n_in_L_IMP_SUPER_thm", ``
   (step_n_in_L pcf stepf s n L  s') ==>
   (step_n_in_L pcf stepf s n L' s')
 ``,
-  REWRITE_TAC [step_n_in_L_thm, pred_setTheory.SUBSET_DEF] >>
+  REWRITE_TAC [step_n_in_L_thm, SUBSET_DEF] >>
   METIS_TAC []
 );
 
@@ -256,8 +259,8 @@ val step_n_in_L_SEQ_thm = store_thm("step_n_in_L_SEQ_thm", ``
   REPEAT STRIP_TAC >> (
     ASM_SIMP_TAC (arith_ss++pred_setSimps.PRED_SET_ss) []
   ) >> (
-    REWRITE_TAC [Once arithmeticTheory.ADD_SYM] >>
-    ASM_SIMP_TAC (arith_ss++pred_setSimps.PRED_SET_ss) [step_n_def, arithmeticTheory.FUNPOW_ADD]
+    REWRITE_TAC [Once ADD_SYM] >>
+    ASM_SIMP_TAC (arith_ss++pred_setSimps.PRED_SET_ss) [step_n_def, FUNPOW_ADD]
   ) >>
 
   Cases_on `n' < n_A` >- (
@@ -266,7 +269,7 @@ val step_n_in_L_SEQ_thm = store_thm("step_n_in_L_SEQ_thm", ``
 
   (* n' = n_A + some difference *)
   `?diff. n' = diff + n_A` by (
-    METIS_TAC [arithmeticTheory.LESS_EQ_EXISTS, arithmeticTheory.NOT_LESS, arithmeticTheory.ADD_SYM]
+    METIS_TAC [LESS_EQ_EXISTS, NOT_LESS, ADD_SYM]
   ) >>
 
   (* that difference < n_B *)
@@ -276,7 +279,7 @@ val step_n_in_L_SEQ_thm = store_thm("step_n_in_L_SEQ_thm", ``
 
   (* with that, just solve with assumptions and FUNPOW_ADD *)
   Cases_on `diff = 0` >> (
-    FULL_SIMP_TAC (arith_ss) [arithmeticTheory.FUNPOW_ADD, arithmeticTheory.FUNPOW_0]
+    FULL_SIMP_TAC (arith_ss) [FUNPOW_ADD, FUNPOW_0]
   )
 );
 
@@ -360,7 +363,7 @@ val symb_rule_STEP_thm = store_thm("symb_rule_STEP_thm", ``
   Q.EXISTS_TAC `SUC 0` >>
   Q.EXISTS_TAC `sr.sr_step_conc s` >>
 
-  SIMP_TAC arith_ss [step_n_def, arithmeticTheory.FUNPOW] >>
+  SIMP_TAC arith_ss [step_n_def, FUNPOW] >>
 
   `symb_concst_pc s IN L` by (
     METIS_TAC [symb_matchstate_def]
@@ -407,7 +410,7 @@ val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
   ) >>
 
   ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  METIS_TAC [step_n_in_L_IMP_SUPER_thm, pred_setTheory.SUBSET_UNION]
+  METIS_TAC [step_n_in_L_IMP_SUPER_thm, SUBSET_UNION]
 );
 
 val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
@@ -630,9 +633,9 @@ val FUNPOW_OPT_SOME_thm = store_thm("FUNPOW_OPT_SOME_thm", ``
 ``,
   GEN_TAC >> GEN_TAC >> STRIP_TAC >>
   Induct_on `n` >- (
-    REWRITE_TAC [bir_auxiliaryTheory.FUNPOW_OPT_def, arithmeticTheory.FUNPOW]
+    REWRITE_TAC [bir_auxiliaryTheory.FUNPOW_OPT_def, FUNPOW]
   ) >>
-  REWRITE_TAC [bir_auxiliaryTheory.FUNPOW_OPT_def, arithmeticTheory.FUNPOW] >>
+  REWRITE_TAC [bir_auxiliaryTheory.FUNPOW_OPT_def, FUNPOW] >>
   ASM_SIMP_TAC std_ss [GSYM bir_auxiliaryTheory.FUNPOW_OPT_def]
 );
 
@@ -662,7 +665,7 @@ val symb_hl_is_weak = store_thm("symb_hl_is_weak",
     Q.EXISTS_TAC `n` >>
 
     (*`n > 0` by (cheat) >>*)
-    FULL_SIMP_TAC std_ss [pred_setTheory.IN_COMPL, arithmeticTheory.GREATER_DEF]
+    FULL_SIMP_TAC std_ss [IN_COMPL, GREATER_DEF]
   )
 );
 
