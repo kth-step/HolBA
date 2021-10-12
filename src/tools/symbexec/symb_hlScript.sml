@@ -420,7 +420,16 @@ val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
   (!H. ~(symb_interpr_symbpcond sr H sys')) ==>
   (symb_hl_step_in_L_sound sr (sys, L, Pi DIFF {sys'}))
 ``,
-  cheat
+  REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
+  REPEAT STRIP_TAC >>
+
+  PAT_X_ASSUM ``!s H. symb_matchstate sr sys H s ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
+  REV_FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_matchstate_ext_def] >>
+
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  Cases_on `sys' = sys''` >> (
+    METIS_TAC []
+  )
 );
 
 val symb_pcondwiden_def = Define `
