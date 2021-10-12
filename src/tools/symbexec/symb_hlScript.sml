@@ -64,6 +64,17 @@ val symb_interpr_ext_id_thm = store_thm("symb_interpr_ext_id_thm", ``
   METIS_TAC [symb_interpr_ext_def]
 );
 
+val symb_interpr_ext_TRANS_thm = store_thm("symb_interpr_ext_TRANS_thm", ``
+!H H' H''.
+  (symb_interpr_ext H  H' ) ==>
+  (symb_interpr_ext H' H'') ==>
+  (symb_interpr_ext H  H'' )
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `H` >> Cases_on `H'` >> Cases_on `H''` >>
+  METIS_TAC [symb_interpr_ext_def]
+);
+
 val _ = Datatype `symb_rec_t =
    <|
       sr_val_true        : 'c_val;
@@ -223,6 +234,52 @@ val step_n_in_L_onlyL_thm = store_thm("step_n_in_L_onlyL_thm", ``
   METIS_TAC [step_n_deterministic_thm]
 );
 
+val step_n_in_L_IMP_SUPER_thm = store_thm("step_n_in_L_IMP_SUPER_thm", ``
+!pcf stepf.
+!s n L L' s'.
+  (L SUBSET L') ==>
+  (step_n_in_L pcf stepf s n L  s') ==>
+  (step_n_in_L pcf stepf s n L' s')
+``,
+  REWRITE_TAC [step_n_in_L_thm, pred_setTheory.SUBSET_DEF] >>
+  METIS_TAC []
+);
+
+val step_n_in_L_SEQ_thm = store_thm("step_n_in_L_SEQ_thm", ``
+!pcf stepf.
+!s n_A L_A s' n_B L_B s''.
+  (step_n_in_L pcf stepf s  n_A L_A s') ==>
+  (step_n_in_L pcf stepf s' n_B L_B s'') ==>
+  (step_n_in_L pcf stepf s (n_A + n_B) (L_A UNION L_B) s'')
+``,
+  REWRITE_TAC [step_n_in_L_thm, step_n_def] >>
+  REPEAT STRIP_TAC >> (
+    ASM_SIMP_TAC (arith_ss++pred_setSimps.PRED_SET_ss) []
+  ) >> (
+    REWRITE_TAC [Once arithmeticTheory.ADD_SYM] >>
+    ASM_SIMP_TAC (arith_ss++pred_setSimps.PRED_SET_ss) [step_n_def, arithmeticTheory.FUNPOW_ADD]
+  ) >>
+
+  Cases_on `n' < n_A` >- (
+    METIS_TAC []
+  ) >>
+
+  (* n' = n_A + some difference *)
+  `?diff. n' = diff + n_A` by (
+    METIS_TAC [arithmeticTheory.LESS_EQ_EXISTS, arithmeticTheory.NOT_LESS, arithmeticTheory.ADD_SYM]
+  ) >>
+
+  (* that difference < n_B *)
+  `diff < n_B` by (
+    ASM_SIMP_TAC (arith_ss) []
+  ) >>
+
+  (* with that, just solve with assumptions and FUNPOW_ADD *)
+  Cases_on `diff = 0` >> (
+    FULL_SIMP_TAC (arith_ss) [arithmeticTheory.FUNPOW_ADD, arithmeticTheory.FUNPOW_0]
+  )
+);
+
 val conc_step_n_in_L_relaxed_def = Define `
   conc_step_n_in_L_relaxed sr = step_n_in_L_relaxed symb_concst_pc sr.sr_step_conc
 `;
@@ -318,12 +375,39 @@ val symb_rule_STEP_thm = store_thm("symb_rule_STEP_thm", ``
 
 val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
 !sr.
-!sys_A L_A Pi_A sys_B L_B Pi_B Pi_C.
+!sys_A L_A Pi_A sys_B L_B Pi_B.
   (symb_hl_step_in_L_sound sr (sys_A, L_A, Pi_A)) ==>
-  (Pi_C = (Pi_A DIFF {sys_B}) UNION Pi_B) ==>
-  (symb_hl_step_in_L_sound sr (sys_A, L_A UNION L_B, Pi_C))
+  (symb_hl_step_in_L_sound sr (sys_B, L_B, Pi_B)) ==>
+  (symb_hl_step_in_L_sound sr (sys_A, L_A UNION L_B, (Pi_A DIFF {sys_B}) UNION Pi_B))
 ``,
-  cheat
+  REWRITE_TAC [symb_hl_step_in_L_sound_def, conc_step_n_in_L_def] >>
+  REPEAT STRIP_TAC >>
+
+  PAT_X_ASSUM ``!s H. symb_matchstate sr sys_A H s ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
+  REV_FULL_SIMP_TAC std_ss [symb_matchstate_ext_def] >>
+
+  (* the case when after A we actually execute through sys_B *)
+  Cases_on `sys' = sys_B` >- (
+    (* execute from s' (sys') with fragment B *)
+    PAT_X_ASSUM ``!s H. symb_matchstate sr sys_B H s ==> A`` (ASSUME_TAC o (Q.SPECL [`s'`, `H'`])) >>
+    FULL_SIMP_TAC std_ss [] >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    (* the sequential complete composition to the state after executing in B *)
+    Q.EXISTS_TAC `n+n'` >> Q.EXISTS_TAC `s''` >>
+    STRIP_TAC >- (
+      METIS_TAC [step_n_in_L_SEQ_thm]
+    ) >>
+
+    (* establish the properties for the reached state *)
+    Q.EXISTS_TAC `sys''` >>
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+    METIS_TAC [symb_interpr_ext_TRANS_thm]
+  ) >>
+
+  ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  METIS_TAC [step_n_in_L_IMP_SUPER_thm, pred_setTheory.SUBSET_UNION]
 );
 
 val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
