@@ -1,6 +1,3 @@
-# Fix hexcodes
-# Fix memory address a
-
 # x5: temporary register 0 (lock occupancy register)
 # x6: temporary register 1 (store success register)
 # x7: temporary register 2 (register with shared memory address 0x2a)
