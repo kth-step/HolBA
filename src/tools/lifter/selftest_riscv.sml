@@ -432,10 +432,21 @@ val _ = print_msg "\n";
 (* TODO: Unsure about ASM representation *)
 (* Binary: 00010 0 0 00000 00010 010 00001 0101111
 val amo_res = riscv_test_hex_mc "100120AF";
+
+   x1 is "dest" (in rd position): the register which the loaded
+     value is stored to.
+   (x2) is "addr" (in rs1 position): register with address to load
+     from.
 *)
 val _ = riscv_test_hex_print_asm_mc "LR.W x1, (x2)" "100120AF";
 (* Binary: 00011 0 0 00011 00010 010 00001 0101111
 val amo_res = riscv_test_hex_mc "180120AF";
+
+   x1 is "dest": upon success, a non-zero code is written
+   to this register, upon failure, zero.
+   (x2) is "addr" (in rs1 position): register with address to store
+     to.
+   x3 is "src" (in rs2 position): register with value to store.
 *)
 val _ = riscv_test_hex_print_asm_mc "SC.W x1, x3, (x2)" "180120AF";
 
