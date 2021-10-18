@@ -132,6 +132,43 @@ val bir_symb_rec_sbir_def = Define `
 `;
 *)
 
+
+(*
+NOTION: SYMBOL INDEPENDENCE
+=======================================================
+*)
+
+(*
+(* predicate for independent symbols in symbolic expressions and symbolic states *)
+val symb_is_independent_symbol_symbexp_def = Define `
+  symb_is_independent_symbol_symbexp sr symbexp symb =
+    (!h val_o.
+       sr.sr_interpret_f (SymbInterpret h) symbexp =
+       sr.sr_interpret_f (SymbInterpret ((symb =+ val_o) h)) symbexp)
+`;
+val symb_is_independent_symbol_store_def = Define `
+  symb_is_independent_symbol_store sr store symb = 
+    (!var. store var <> NONE ==>
+        ?symbexp. store var = SOME symbexp /\
+                  symb_is_independent_symbol_symbexp sr symbexp symb)
+`;
+val symb_is_independent_symbol_def = Define `
+  symb_is_independent_symbol sr sys symb =
+    (symb_is_independent_symbol_store sr (symb_symbst_store sys) symb /\
+     symb_is_independent_symbol_symbexp sr (symb_symbst_pcond sys) symb)
+`;
+
+(* a suitable interpretation must have all undefined symbols being independent from the symbolic state *)
+val symb_interpret_defs_dependent_def = Define `
+    symb_interpret_defs_dependent sr (SymbInterpret h) sys =
+    (!symb.
+       (h symb = NONE) ==>
+       (symb_is_independent_symbol sr sys symb)
+    )
+`;
+*)
+
+
 (*
 NOTATION: INTERPRETATION OF SYMBOLIC STATES AND SYMBOLIC PATH CONDITIONS
 =======================================================
@@ -603,25 +640,6 @@ val symb_is_mk_symbexpr_symbol_def = Define `
     (!h symb v.
        (h symb = SOME v) ==>
        (sr.sr_interpret_f (SymbInterpret h) (mk_symbexpr symb) = SOME v))
-`;
-
-(* predicate for independent symbols in symbolic expressions and symbolic states *)
-val symb_is_independent_symbol_symbexp_def = Define `
-  symb_is_independent_symbol_symbexp sr symbexp symb =
-    (!h val_o.
-       sr.sr_interpret_f (SymbInterpret h) symbexp =
-       sr.sr_interpret_f (SymbInterpret ((symb =+ val_o) h)) symbexp)
-`;
-val symb_is_independent_symbol_store_def = Define `
-  symb_is_independent_symbol_store sr store symb = 
-    (!var. store var <> NONE ==>
-        ?symbexp. store var = SOME symbexp /\
-                  symb_is_independent_symbol_symbexp sr symbexp symb)
-`;
-val symb_is_independent_symbol_def = Define `
-  symb_is_independent_symbol sr sys symb =
-    (symb_is_independent_symbol_store sr (symb_symbst_store sys) symb /\
-     symb_is_independent_symbol_symbexp sr (symb_symbst_pcond sys) symb)
 `;
 
 (*
