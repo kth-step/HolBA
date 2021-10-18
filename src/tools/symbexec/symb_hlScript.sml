@@ -142,15 +142,16 @@ NOTION: SYMBOL INDEPENDENCE
 (* predicate for independent symbols in symbolic expressions and symbolic states *)
 val symb_is_independent_symbol_symbexp_def = Define `
   symb_is_independent_symbol_symbexp sr symbexp symb =
-    (!h val_o.
-       sr.sr_interpret_f (SymbInterpret h) symbexp =
-       sr.sr_interpret_f (SymbInterpret ((symb =+ val_o) h)) symbexp)
+    (!h h'.
+       (!symb'. (symb <> symb') ==> (h symb' = h' symb')) ==>
+       sr.sr_interpret_f (SymbInterpret h ) symbexp =
+       sr.sr_interpret_f (SymbInterpret h') symbexp)
 `;
 val symb_is_independent_symbol_store_def = Define `
   symb_is_independent_symbol_store sr store symb = 
-    (!var. store var <> NONE ==>
-        ?symbexp. store var = SOME symbexp /\
-                  symb_is_independent_symbol_symbexp sr symbexp symb)
+    (!var symbexp.
+        (store var = SOME symbexp) ==>
+        (symb_is_independent_symbol_symbexp sr symbexp symb))
 `;
 val symb_is_independent_symbol_def = Define `
   symb_is_independent_symbol sr sys symb =
@@ -166,6 +167,21 @@ val symb_interpret_defs_dependent_def = Define `
        (symb_is_independent_symbol sr sys symb)
     )
 `;
+
+(* CONTRAPOS predicate for independent symbols in symbolic expressions *)
+val symb_is_independent_symbol_symbexp_CONTRAPOS_thm = store_thm(
+   "symb_is_independent_symbol_symbexp_CONTRAPOS_thm", ``
+!sr.
+!symbexp symb.
+  symb_is_independent_symbol_symbexp sr symbexp symb =
+    (!h h'.
+       (~(sr.sr_interpret_f (SymbInterpret h ) symbexp =
+          sr.sr_interpret_f (SymbInterpret h') symbexp)) ==>
+       (?symb'. (symb <> symb') /\ (~(h symb' = h' symb')))
+)
+ ``,
+  METIS_TAC [symb_is_independent_symbol_symbexp_def]
+);
 *)
 
 
