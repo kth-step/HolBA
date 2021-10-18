@@ -104,6 +104,15 @@ val _ = Datatype `symb_rec_t =
    |>`;
 
 
+val symb_list_of_types = [
+  (*mk_thy_type {Tyop="symb_concst_t",   Thy="scratch", Args=[Type.alpha, Type.beta, Type.gamma]}*)
+  mk_type ("symb_concst_t", [Type.alpha, Type.beta, Type.gamma])
+];
+
+val symb_TYPES_thms = (flatten (map type_rws symb_list_of_types));
+val symb_TYPES_ss = rewrites symb_TYPES_thms;
+
+
 (*
 DEFINITIONS: INSTANTIATION FOR BIR/SBIR
 =======================================================
@@ -156,6 +165,57 @@ val symb_matchstate_def = Define `
      symb_interpr_symbpcond sr H sys)
 `;
 
+(* matching gives a UNIQUE store *)
+val symb_matchstate_UNIQUE_store_thm = store_thm(
+   "symb_matchstate_UNIQUE_store_thm", ``
+!sr.
+!sys H s s'.
+  (symb_matchstate sr sys H s) ==>
+  (symb_matchstate sr sys H s') ==>
+
+  (symb_concst_store s = symb_concst_store s')
+``,
+  REPEAT GEN_TAC >>
+  Cases_on `sys` >> Cases_on `s` >> Cases_on `s'` >>
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss)
+    [symb_matchstate_def,
+     symb_interpr_symbstore_def, symb_concst_store_def, symb_symbst_store_def] >>
+  REPEAT STRIP_TAC >>
+
+  HO_MATCH_MP_TAC EQ_EXT >> STRIP_TAC >>
+  (* show that the concrete store functions are equivalent for all x *)
+
+  REPEAT (PAT_X_ASSUM ``!var. A`` (ASSUME_TAC o (Q.SPEC `x`))) >>
+
+  Cases_on `f x` >> Cases_on `f' x` >> Cases_on `f'' x` >> (
+    FULL_SIMP_TAC std_ss []
+  )
+);
+
+(* matching is unique *)
+val symb_matchstate_UNIQUE_thm = store_thm(
+   "symb_matchstate_UNIQUE_thm", ``
+!sr.
+!sys H s s'.
+  (symb_matchstate sr sys H s) ==>
+  (symb_matchstate sr sys H s') ==>
+
+  (s = s')
+``,
+  REPEAT GEN_TAC >>
+  Cases_on `s` >> Cases_on `s'` >>
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss) [] >>
+
+  REPEAT STRIP_TAC >- (
+    (* first take care of the pc *)
+    FULL_SIMP_TAC (std_ss++symb_TYPES_ss)
+      [symb_matchstate_def, symb_concst_pc_def, symb_symbst_pc_def]
+  ) >>
+
+  (* and now the concrete store *)
+  METIS_TAC [symb_concst_store_def, symb_matchstate_UNIQUE_store_thm]
+);
+
 val symb_matchstate_ext_def = Define `
   symb_matchstate_ext sr sys H s =
     (?H'. symb_interpr_ext H' H /\
@@ -171,7 +231,7 @@ val symb_matchstate_ext_w_ext_thm = store_thm(
   (symb_matchstate_ext sr sys H' s) ==>
   (symb_matchstate_ext sr sys H  s)
 ``,
-  METIS_TAC [symb_matchstate_ext_def, symb_interpr_ext_TRANS_thm, symb_interpr_ext_symb_NONE_thm]
+  METIS_TAC [symb_matchstate_ext_def, symb_interpr_ext_TRANS_thm]
 );
 
 (*
