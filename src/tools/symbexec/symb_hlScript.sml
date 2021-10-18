@@ -91,6 +91,9 @@ val _ = Datatype `symb_rec_t =
    <|
       sr_val_true        : 'c_val;
 
+      sr_symbols_f       : 'e_symbexpr ->
+                           ('d_symbol -> bool);
+
       sr_interpret_f     : (('d_symbol, 'c_val) symb_interpret_t) ->
                            'e_symbexpr ->
                            'c_val option;
@@ -134,55 +137,65 @@ val bir_symb_rec_sbir_def = Define `
 
 
 (*
-NOTION: SYMBOL INDEPENDENCE
+ASSUMPTION: sr_symbols_f
+=======================================================
+*)
+(* the symbols of a symbolic expression are sound if, for any symbolic expression,
+   equal valuation of those in two interpretations implies the same value for the interpretation of the symbolic expression *)
+val symb_symbols_f_sound_def = Define `
+    symb_symbols_f_sound sr =
+    (!h h' symbexp.
+       (!symb. (symb IN (sr.sr_symbols_f symbexp)) ==> (h symb = h' symb)) ==>
+       (sr.sr_interpret_f (SymbInterpret h ) symbexp =
+        sr.sr_interpret_f (SymbInterpret h') symbexp))
+`;
+
+(*
+NOTION: SYMBOL DEPENDENCE
 =======================================================
 *)
 
+val symb_dependent_symbols_store_def = Define `
+    symb_dependent_symbols_store sr store =
+      BIGUNION ({sr.sr_symbols_f symbexp | ?var. store var = SOME symbexp})
+`;
+val symb_dependent_symbols_def = Define `
+    symb_dependent_symbols sr sys =
+      (symb_dependent_symbols_store sr (symb_symbst_store sys) UNION
+       sr.sr_symbols_f (symb_symbst_pcond sys))
+`;
+
+
 (*
-(* predicate for independent symbols in symbolic expressions and symbolic states *)
-val symb_is_independent_symbol_symbexp_def = Define `
-  symb_is_independent_symbol_symbexp sr symbexp symb =
-    (!h h'.
-       (!symb'. (symb <> symb') ==> (h symb' = h' symb')) ==>
-       sr.sr_interpret_f (SymbInterpret h ) symbexp =
-       sr.sr_interpret_f (SymbInterpret h') symbexp)
-`;
-val symb_is_independent_symbol_store_def = Define `
-  symb_is_independent_symbol_store sr store symb = 
-    (!var symbexp.
-        (store var = SOME symbexp) ==>
-        (symb_is_independent_symbol_symbexp sr symbexp symb))
-`;
-val symb_is_independent_symbol_def = Define `
-  symb_is_independent_symbol sr sys symb =
-    (symb_is_independent_symbol_store sr (symb_symbst_store sys) symb /\
-     symb_is_independent_symbol_symbexp sr (symb_symbst_pcond sys) symb)
-`;
-
-(* a suitable interpretation must have all undefined symbols being independent from the symbolic state *)
-val symb_interpret_defs_dependent_def = Define `
-    symb_interpret_defs_dependent sr (SymbInterpret h) sys =
-    (!symb.
-       (h symb = NONE) ==>
-       (symb_is_independent_symbol sr sys symb)
-    )
-`;
-
-(* CONTRAPOS predicate for independent symbols in symbolic expressions *)
-val symb_is_independent_symbol_symbexp_CONTRAPOS_thm = store_thm(
-   "symb_is_independent_symbol_symbexp_CONTRAPOS_thm", ``
-!sr.
-!symbexp symb.
-  symb_is_independent_symbol_symbexp sr symbexp symb =
-    (!h h'.
-       (~(sr.sr_interpret_f (SymbInterpret h ) symbexp =
-          sr.sr_interpret_f (SymbInterpret h') symbexp)) ==>
-       (?symb'. (symb <> symb') /\ (~(h symb' = h' symb')))
-)
- ``,
-  METIS_TAC [symb_is_independent_symbol_symbexp_def]
-);
+NOTATION: MINIMAL INTERPRETATION
+=======================================================
 *)
+(* a minimal interpretation does not give values for independent symbols *)
+val symb_minimal_interpretation_def = Define `
+    symb_minimal_interpretation sr sys (SymbInterpret h) =
+    (!symb. (symb IN (symb_dependent_symbols sr sys)) = (h symb <> NONE))
+`;
+
+(* can't remove any symbol from a minimal interpretation *)
+val symb_minimal_interpretation_REMOVE_NOT_minimal_thm = store_thm(
+   "symb_minimal_interpretation_REMOVE_NOT_minimal_thm", ``
+!sr.
+!H H' h symb sys s.
+  (h symb <> NONE) ==>
+  (H = SymbInterpret h) ==>
+  (H' = SymbInterpret ((symb =+ NONE) h)) ==>
+
+  (symb_minimal_interpretation sr sys H) ==>
+  (~(symb_minimal_interpretation sr sys H'))
+``,
+  REPEAT GEN_TAC >>
+  FULL_SIMP_TAC std_ss
+    [symb_minimal_interpretation_def] >>
+  REPEAT STRIP_TAC >>
+
+  Q.EXISTS_TAC `symb` >>
+  METIS_TAC [APPLY_UPDATE_THM]
+);
 
 
 (*
@@ -442,7 +455,8 @@ GOAL: MULTISTEP SOUNDNESS
 *)
 val symb_hl_step_in_L_sound_def = Define `
   symb_hl_step_in_L_sound sr (sys, L, Pi) =
-    !s H. 
+    !s H.
+    (symb_minimal_interpretation sr sys H) ==>
     (symb_matchstate sr sys H s) ==>
     (?n s'.
       (conc_step_n_in_L sr s n L s') /\
