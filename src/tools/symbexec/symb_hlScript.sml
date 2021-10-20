@@ -109,7 +109,8 @@ val _ = Datatype `symb_rec_t =
 
 val symb_list_of_types = [
   (*mk_thy_type {Tyop="symb_concst_t",   Thy="scratch", Args=[Type.alpha, Type.beta, Type.gamma]}*)
-  mk_type ("symb_concst_t", [Type.alpha, Type.beta, Type.gamma])
+  mk_type ("symb_concst_t", [Type.alpha, Type.beta, Type.gamma]),
+  mk_type ("symb_interpret_t", [Type.alpha, Type.beta])
 ];
 
 val symb_TYPES_thms = (flatten (map type_rws symb_list_of_types));
@@ -144,14 +145,14 @@ ASSUMPTION: sr_symbols_f
    equal valuation of those in two interpretations implies the same value for the interpretation of the symbolic expression *)
 val symb_symbols_f_sound_def = Define `
     symb_symbols_f_sound sr =
-    (!h h' symbexp.
+    (!symbexp h h'.
        (!symb. (symb IN (sr.sr_symbols_f symbexp)) ==> (h symb = h' symb)) ==>
        (sr.sr_interpret_f (SymbInterpret h ) symbexp =
         sr.sr_interpret_f (SymbInterpret h') symbexp))
 `;
 
 (*
-NOTION: SYMBOL DEPENDENCE
+NOTION: SYMBOL DEPENDENCE FOR STORE AND STATE
 =======================================================
 *)
 
@@ -165,16 +166,119 @@ val symb_dependent_symbols_def = Define `
        sr.sr_symbols_f (symb_symbst_pcond sys))
 `;
 
+val symb_dependent_symbols_SUBSET_pcond_thm = store_thm(
+   "symb_dependent_symbols_SUBSET_pcond_thm", ``
+!sr.
+!sys.
+  (sr.sr_symbols_f (symb_symbst_pcond sys))
+  SUBSET
+  (symb_dependent_symbols sr sys)
+``,
+  METIS_TAC [symb_dependent_symbols_def, SUBSET_UNION]
+);
+
+val symb_dependent_symbols_SUBSET_store_exps_thm = store_thm(
+   "symb_dependent_symbols_SUBSET_store_exps_thm", ``
+!sr.
+!sys var symbexp.
+  (((symb_symbst_store sys) var) = SOME symbexp) ==>
+  ((sr.sr_symbols_f symbexp)
+   SUBSET
+   (symb_dependent_symbols sr sys))
+``,
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_dependent_symbols_def, symb_dependent_symbols_store_def, SUBSET_DEF] >>
+  METIS_TAC []
+);
+
 
 (*
-NOTATION: MINIMAL INTERPRETATION
+NOTATION: SUITABLE INTERPRETATIONS (ALSO MINIMAL INTERPRETATIONS)
 =======================================================
 *)
-(* a minimal interpretation does not give values for independent symbols *)
+(* a suitable interpretation gives values to all dependent symbols *)
+val symb_suitable_interpretation_def = Define `
+    symb_suitable_interpretation sr sys (SymbInterpret h) =
+    (!symb. (symb IN (symb_dependent_symbols sr sys)) ==> (h symb <> NONE))
+`;
+
+(* a minimal interpretation is a suitable interpretation that does not give a value to any independent symbol *)
 val symb_minimal_interpretation_def = Define `
     symb_minimal_interpretation sr sys (SymbInterpret h) =
-    (!symb. (symb IN (symb_dependent_symbols sr sys)) = (h symb <> NONE))
+    ((symb_suitable_interpretation sr sys (SymbInterpret h)) /\
+     (!symb. (h symb <> NONE) ==> (symb IN (symb_dependent_symbols sr sys))))
 `;
+
+val symb_minimal_interpretation_thm = store_thm(
+   "symb_minimal_interpretation_thm", ``
+!sr.
+!sys h.
+  (symb_minimal_interpretation sr sys (SymbInterpret h)) =
+  (!symb. (symb IN (symb_dependent_symbols sr sys)) = (h symb <> NONE))
+``,
+  METIS_TAC [symb_suitable_interpretation_def, symb_minimal_interpretation_def]
+);
+
+val symb_restricted_interpretation_def = Define `
+    symb_restricted_interpretation sr sys (SymbInterpret h) =
+    (SymbInterpret (\symb. if symb IN (symb_dependent_symbols sr sys) then h symb else NONE))
+`;
+
+val symb_suitable_interpretation_IMP_restricted_thm = store_thm(
+   "symb_suitable_interpretation_IMP_restricted_thm", ``
+!sr.
+!H sys.
+  (symb_suitable_interpretation sr sys H) ==>
+  (symb_suitable_interpretation sr sys (symb_restricted_interpretation sr sys H))
+``,
+  Cases_on `H` >>
+  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def, symb_restricted_interpretation_def]
+);
+
+val symb_suitable_interpretation_TO_minimal_thm = store_thm(
+   "symb_suitable_interpretation_TO_minimal_thm", ``
+!sr.
+!H H' sys.
+  (H' = symb_restricted_interpretation sr sys H) ==>
+
+  (symb_suitable_interpretation sr sys H) ==>
+
+  ((symb_minimal_interpretation sr sys H') /\
+   (symb_interpr_ext H H'))
+``,
+  Cases_on `H` >>
+  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def, symb_interpr_ext_def, symb_minimal_interpretation_def, symb_restricted_interpretation_def]
+);
+
+val symb_restricted_interpretation_thm = store_thm(
+   "symb_restricted_interpretation_thm", ``
+!sr.
+!h h' sys symbols.
+  ((SymbInterpret h') = symb_restricted_interpretation sr sys (SymbInterpret h)) ==>
+  (symbols SUBSET (symb_dependent_symbols sr sys)) ==>
+
+  (!symb. (symb IN symbols) ==> (h symb = h' symb))
+``,
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss) [symb_restricted_interpretation_def, pred_setTheory.SUBSET_DEF]
+);
+
+val symb_restricted_interpretation_interpret_EQ_thm = store_thm(
+   "symb_restricted_interpretation_interpret_EQ_thm", ``
+!sr.
+!H sys symbexp.
+  (symb_symbols_f_sound sr) ==>
+
+  ((sr.sr_symbols_f symbexp) SUBSET (symb_dependent_symbols sr sys)) ==>
+
+  (sr.sr_interpret_f H symbexp = sr.sr_interpret_f (symb_restricted_interpretation sr sys H) symbexp)
+``,
+  Cases_on `H` >>
+  FULL_SIMP_TAC std_ss [symb_symbols_f_sound_def] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `symb_restricted_interpretation sr sys (SymbInterpret f)` >>
+
+  METIS_TAC [symb_restricted_interpretation_thm]
+);
 
 (* can't remove any symbol from a minimal interpretation *)
 val symb_minimal_interpretation_REMOVE_NOT_minimal_thm = store_thm(
@@ -190,7 +294,7 @@ val symb_minimal_interpretation_REMOVE_NOT_minimal_thm = store_thm(
 ``,
   REPEAT GEN_TAC >>
   FULL_SIMP_TAC std_ss
-    [symb_minimal_interpretation_def] >>
+    [symb_minimal_interpretation_thm] >>
   REPEAT STRIP_TAC >>
 
   Q.EXISTS_TAC `symb` >>
@@ -226,7 +330,8 @@ NOTATION: STATE MATCHING
 *)
 val symb_matchstate_def = Define `
   symb_matchstate sr sys H s =
-    (symb_symbst_pc sys = symb_concst_pc s /\
+    ((*symb_suitable_interpretation sr sys H /\*)
+     symb_symbst_pc sys = symb_concst_pc s /\
      symb_interpr_symbstore sr H sys s /\
      symb_interpr_symbpcond sr H sys)
 `;
@@ -281,6 +386,48 @@ val symb_matchstate_UNIQUE_thm = store_thm(
   (* and now the concrete store *)
   METIS_TAC [symb_concst_store_def, symb_matchstate_UNIQUE_store_thm]
 );
+
+(* matching implies matching the restricted interpretation *)
+val symb_matchstate_TO_minimal_RESTR_thm = store_thm(
+   "symb_matchstate_TO_minimal_RESTR_thm", ``
+!sr.
+!H sys s.
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_matchstate sr sys H  s) ==>
+
+  (symb_matchstate sr sys (symb_restricted_interpretation sr sys H) s)
+``,
+  FULL_SIMP_TAC std_ss [symb_restricted_interpretation_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_suitable_interpretation_IMP_restricted_thm] >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC std_ss [symb_interpr_symbstore_def, symb_interpr_symbpcond_def] >>
+    METIS_TAC [symb_dependent_symbols_SUBSET_store_exps_thm, symb_dependent_symbols_SUBSET_pcond_thm, symb_restricted_interpretation_interpret_EQ_thm]
+  )
+);
+
+(*
+(* matching implies matching a minimal interpretation *)
+val symb_matchstate_TO_minimal_thm = store_thm(
+   "symb_matchstate_TO_minimal_thm", ``
+!sr.
+!sys H s.
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_matchstate sr sys H s) ==>
+
+  (?H'. (symb_interpr_ext H H')/\
+        (symb_minimal_interpretation sr sys H') /\
+        (symb_matchstate sr sys H' s)
+  )
+``,
+  METIS_TAC [symb_matchstate_TO_minimal_RESTR_thm,
+    symb_suitable_interpretation_TO_minimal_thm, symb_matchstate_def]
+);
+*)
+
 
 val symb_matchstate_ext_def = Define `
   symb_matchstate_ext sr sys H s =
@@ -456,7 +603,7 @@ GOAL: MULTISTEP SOUNDNESS
 val symb_hl_step_in_L_sound_def = Define `
   symb_hl_step_in_L_sound sr (sys, L, Pi) =
     !s H.
-    (symb_minimal_interpretation sr sys H) ==>
+(*    (symb_minimal_interpretation sr sys H) ==> *)
     (symb_matchstate sr sys H s) ==>
     (?n s'.
       (conc_step_n_in_L sr s n L s') /\
