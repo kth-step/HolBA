@@ -106,6 +106,8 @@ val _ = Datatype `symb_rec_t =
                            bool);
    |>`;
 
+val symb_rec_t_tm = ``: ('a, 'b, 'c, 'd, 'e) symb_rec_t``;
+val symb_concst_t_tm = ``: ('a, 'b, 'c) symb_concst_t``;
 
 val symb_list_of_types = [
   (*mk_thy_type {Tyop="symb_concst_t",   Thy="scratch", Args=[Type.alpha, Type.beta, Type.gamma]}*)
@@ -329,8 +331,8 @@ NOTATION: STATE MATCHING
 (l, st)
 *)
 val symb_matchstate_def = Define `
-  symb_matchstate sr sys H s =
-    ((*symb_suitable_interpretation sr sys H /\*)
+  symb_matchstate ^(mk_var("sr", symb_rec_t_tm)) sys H ^(mk_var("s", symb_concst_t_tm)) =
+    (symb_suitable_interpretation sr sys H /\
      symb_symbst_pc sys = symb_concst_pc s /\
      symb_interpr_symbstore sr H sys s /\
      symb_interpr_symbpcond sr H sys)
@@ -408,7 +410,6 @@ val symb_matchstate_TO_minimal_RESTR_thm = store_thm(
   )
 );
 
-(*
 (* matching implies matching a minimal interpretation *)
 val symb_matchstate_TO_minimal_thm = store_thm(
    "symb_matchstate_TO_minimal_thm", ``
@@ -426,7 +427,6 @@ val symb_matchstate_TO_minimal_thm = store_thm(
   METIS_TAC [symb_matchstate_TO_minimal_RESTR_thm,
     symb_suitable_interpretation_TO_minimal_thm, symb_matchstate_def]
 );
-*)
 
 
 val symb_matchstate_ext_def = Define `
@@ -603,7 +603,7 @@ GOAL: MULTISTEP SOUNDNESS
 val symb_hl_step_in_L_sound_def = Define `
   symb_hl_step_in_L_sound sr (sys, L, Pi) =
     !s H.
-(*    (symb_minimal_interpretation sr sys H) ==> *)
+    (symb_minimal_interpretation sr sys H) ==>
     (symb_matchstate sr sys H s) ==>
     (?n s'.
       (conc_step_n_in_L sr s n L s') /\
@@ -674,6 +674,8 @@ val symb_rule_STEP_thm = store_thm("symb_rule_STEP_thm", ``
 val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
 !sr.
 !sys_A L_A Pi_A sys_B L_B Pi_B.
+  (symb_symbols_f_sound sr) ==>
+
   (symb_hl_step_in_L_sound sr (sys_A, L_A, Pi_A)) ==>
   (symb_hl_step_in_L_sound sr (sys_B, L_B, Pi_B)) ==>
   (symb_hl_step_in_L_sound sr (sys_A, L_A UNION L_B, (Pi_A DIFF {sys_B}) UNION Pi_B))
@@ -681,13 +683,17 @@ val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
   REWRITE_TAC [symb_hl_step_in_L_sound_def, conc_step_n_in_L_def] >>
   REPEAT STRIP_TAC >>
 
-  PAT_X_ASSUM ``!s H. symb_matchstate sr sys_A H s ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
+  PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys_A H ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
   REV_FULL_SIMP_TAC std_ss [symb_matchstate_ext_def] >>
 
   (* the case when after A we actually execute through sys_B *)
   Cases_on `sys' = sys_B` >- (
+    ASSUME_TAC (Q.SPECL [`sr`, `sys_B`, `H'`, `s'`] symb_matchstate_TO_minimal_thm) >>
+    FULL_SIMP_TAC std_ss [] >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
     (* execute from s' (sys') with fragment B *)
-    PAT_X_ASSUM ``!s H. symb_matchstate sr sys_B H s ==> A`` (ASSUME_TAC o (Q.SPECL [`s'`, `H'`])) >>
+    PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys_B H ==> A`` (ASSUME_TAC o (Q.SPECL [`s'`, `H''`])) >>
     FULL_SIMP_TAC std_ss [] >>
     REV_FULL_SIMP_TAC std_ss [] >>
 
