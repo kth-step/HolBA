@@ -198,6 +198,10 @@ NOTATION: SUITABLE INTERPRETATIONS (ALSO MINIMAL INTERPRETATIONS)
 =======================================================
 *)
 (* a suitable interpretation gives values to all dependent symbols *)
+val symb_suitable_interpretation_symbexp_def = Define `
+    symb_suitable_interpretation_symbexp sr symbexp (SymbInterpret h) =
+    (!symb. (symb IN (sr.sr_symbols_f symbexp)) ==> (h symb <> NONE))
+`;
 val symb_suitable_interpretation_def = Define `
     symb_suitable_interpretation sr sys (SymbInterpret h) =
     (!symb. (symb IN (symb_dependent_symbols sr sys)) ==> (h symb <> NONE))
@@ -676,6 +680,9 @@ val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
 !sys_A L_A Pi_A sys_B L_B Pi_B.
   (symb_symbols_f_sound sr) ==>
 
+  (((symb_dependent_symbols sr sys_A) DIFF (symb_dependent_symbols sr sys_B))
+   INTER (BIGUNION {(symb_dependent_symbols sr Pi_B_sys) DIFF (symb_dependent_symbols sr sys_B) | Pi_B_sys IN Pi_B}) = EMPTY) ==>
+
   (symb_hl_step_in_L_sound sr (sys_A, L_A, Pi_A)) ==>
   (symb_hl_step_in_L_sound sr (sys_B, L_B, Pi_B)) ==>
   (symb_hl_step_in_L_sound sr (sys_A, L_A UNION L_B, (Pi_A DIFF {sys_B}) UNION Pi_B))
@@ -724,7 +731,7 @@ val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
   REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
   REPEAT STRIP_TAC >>
 
-  PAT_X_ASSUM ``!s H. symb_matchstate sr sys H s ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
+  PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys H ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
   REV_FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_matchstate_ext_def] >>
 
   SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
@@ -740,8 +747,10 @@ val symb_pcondwiden_def = Define `
     (symb_symbst_store sys =
      symb_symbst_store sys') /\
     (!H.
-     (symb_interpr_symbpcond sr H sys) ==>
-     (symb_interpr_symbpcond sr H sys'))
+     (symb_suitable_interpretation_symbexp sr (symb_symbst_pcond sys ) H) ==>
+     (symb_suitable_interpretation_symbexp sr (symb_symbst_pcond sys') H /\
+      (symb_interpr_symbpcond sr H sys) ==>
+      (symb_interpr_symbpcond sr H sys')))
   )
 `;
 
@@ -750,6 +759,10 @@ val symb_rule_CONS_S_thm = store_thm("symb_rule_CONS_S_thm", ``
 !sys' sys L Pi.
   (symb_hl_step_in_L_sound sr (sys', L, Pi)) ==>
   (symb_pcondwiden sr sys sys') ==>
+
+  (((symb_dependent_symbols sr sys) DIFF (symb_dependent_symbols sr sys'))
+   INTER (BIGUNION {(symb_dependent_symbols sr Pi_sys) DIFF (symb_dependent_symbols sr sys') | Pi_sys IN Pi}) = EMPTY) ==>
+
   (symb_hl_step_in_L_sound sr (sys, L, Pi))
 ``,
   REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
@@ -773,7 +786,7 @@ val symb_rule_CONS_E_thm = store_thm("symb_rule_CONS_E_thm", ``
   REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
   REPEAT STRIP_TAC >>
 
-  PAT_X_ASSUM ``!s H. symb_matchstate sr sys H s ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
+  PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys H ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
   REV_FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_matchstate_ext_def] >>
 
   (* the case when we would execute to sys2 *)
@@ -911,8 +924,13 @@ symb_interpr_ext_symb_NONE_thm
 val symb_simplification_def = Define `
   symb_simplification sr sys symbexp symbexp' =
     (!H.
-     (symb_interpr_symbpcond sr H sys) ==>
-     (sr.sr_interpret_f H symbexp = sr.sr_interpret_f H symbexp'))
+     (symb_suitable_interpretation_symbexp sr (symb_symbst_pcond sys) H) ==>
+     (symb_suitable_interpretation_symbexp sr symbexp H) ==>
+     ((symb_suitable_interpretation_symbexp sr symbexp' H) /\
+
+      ((symb_interpr_symbpcond sr H sys) ==>
+       (sr.sr_interpret_f H symbexp = sr.sr_interpret_f H symbexp'))
+     ))
 `;
 
 val symb_simplification_symb_matchstate_ext_thm = store_thm(
@@ -922,9 +940,13 @@ val symb_simplification_symb_matchstate_ext_thm = store_thm(
   ((symb_symbst_store sys) var = SOME symbexp) ==>
   (symb_simplification sr sys symbexp symbexp') ==>
 
-  (symb_matchstate_ext sr sys H s =
+  (symb_matchstate_ext sr sys H s ==>
+  (* TODO: does this work with equality here????
+           I think so, but I think then we have to additionally assume "symb_suitable_interpretation sr sys H" *)
    symb_matchstate_ext sr (symb_symbst_store_update var symbexp' sys) H s)
 ``,
+  cheat
+(*
   REPEAT STRIP_TAC >>
 (*
   HO_MATCH_MP_TAC EQ_EXT >> STRIP_TAC >>
@@ -959,6 +981,7 @@ val symb_simplification_symb_matchstate_ext_thm = store_thm(
       REV_FULL_SIMP_TAC std_ss []
     )
   )
+*)
 );
 
 val symb_rule_SUBST_thm = store_thm("symb_rule_SUBST_thm", ``
@@ -973,7 +996,7 @@ val symb_rule_SUBST_thm = store_thm("symb_rule_SUBST_thm", ``
   REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
   REPEAT STRIP_TAC >>
 
-  PAT_X_ASSUM ``!s H. symb_matchstate sr sys H s ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
+  PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys H ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
   REV_FULL_SIMP_TAC std_ss [] >>
 
   (* the case when we would execute to sys2 *)
