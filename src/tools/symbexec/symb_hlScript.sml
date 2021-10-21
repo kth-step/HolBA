@@ -747,10 +747,8 @@ val symb_pcondwiden_def = Define `
     (symb_symbst_store sys =
      symb_symbst_store sys') /\
     (!H.
-     (symb_suitable_interpretation_symbexp sr (symb_symbst_pcond sys ) H) ==>
-     (symb_suitable_interpretation_symbexp sr (symb_symbst_pcond sys') H /\
       (symb_interpr_symbpcond sr H sys) ==>
-      (symb_interpr_symbpcond sr H sys')))
+      (symb_interpr_symbpcond sr H sys'))
   )
 `;
 
@@ -796,6 +794,8 @@ val symb_rule_CONS_E_thm = store_thm("symb_rule_CONS_E_thm", ``
 
     Q.EXISTS_TAC `sys2'` >>
     ASM_SIMP_TAC std_ss [] >>
+
+    (* TODO: have to choose an interpretation that is a modification of H', where we assign arbitrary values to the extra symbols in sys2' (w.r.t sys2) *)
     Q.EXISTS_TAC `H'` >>
 
     FULL_SIMP_TAC std_ss [symb_pcondwiden_def, symb_matchstate_def, symb_symbst_store_def, symb_interpr_symbstore_def] >>
@@ -803,6 +803,9 @@ val symb_rule_CONS_E_thm = store_thm("symb_rule_CONS_E_thm", ``
   ) >>
 
   ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  REPEAT STRIP_TAC >- (
+    (* we have a suitable interpretation *)
+  ) >>
   METIS_TAC []
 );
 
