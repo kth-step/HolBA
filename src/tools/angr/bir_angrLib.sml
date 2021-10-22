@@ -61,19 +61,25 @@ in
 
   fun parse_guard str = match_BExp (match_prefix "Bool " (match_bracket #"<" #">" str));
 
+  (* NOTE: this function restricts the observation expressions to 64-bit Imm expressions *)
   fun parse_obs_exp str =
     match_BExp (match_prefix "BV64 " (match_bracket #"<" #">"
+                  (match_prefix "SAO " (match_bracket #"<" #">" str))));
+
+  fun parse_obscond_exp str =
+    match_BExp (match_prefix "BV1 " (match_bracket #"<" #">"
                   (match_prefix "SAO " (match_bracket #"<" #">" str))));
 
   fun parse_obs obsrefmap json =
     case json of
       ARRAY [NUMBER obs_ref,
-             ARRAY obs_exp_list] =>
+	     obs_cnd,
+	     ARRAY obs_exp_list] =>
       let val (id_tm, obsf_tm) = Redblackmap.find(obsrefmap, obs_ref) in
        (numSyntax.dest_numeral id_tm,
-        “BExp_Const (Imm1 1w)”,
+        (parse_obscond_exp o fromJsonString) obs_cnd,
         List.map (parse_obs_exp o fromJsonString) obs_exp_list,
-        obsf_tm) (* TODO: fixme -add obscond exp *)
+        obsf_tm)
       end
      | _ => raise ERR "parse_obs" "ill-formed result";
 
@@ -83,7 +89,7 @@ in
             OBJECT [("addr",STRING addr_str)
                    ,("path",
                      ARRAY path_list)
-                   ,("guards",
+                   ,("constraints",
                      ARRAY guard_list)
                    ,("observations",
                      ARRAY obs_list)] =>
