@@ -1054,7 +1054,9 @@ GOAL: PROPERTY TRANSFER THEOREM
 =======================================================
 *)
 val symb_prop_transfer_thm = store_thm("symb_prop_transfer_thm", ``
-!sr sys L Pi P Q.
+!sr.
+!sys L Pi P Q.
+  (symb_symbols_f_sound sr) ==>
   (P_entails_an_interpret sr P sys) ==>
   (Pi_overapprox_Q sr P sys Pi Q) ==>
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
@@ -1062,7 +1064,7 @@ val symb_prop_transfer_thm = store_thm("symb_prop_transfer_thm", ``
 ``,
   REWRITE_TAC [P_entails_an_interpret_def, Pi_overapprox_Q_def, prop_holds_def, symb_hl_step_in_L_sound_def] >>
   REPEAT STRIP_TAC >>
-  METIS_TAC []
+  METIS_TAC [symb_matchstate_TO_minimal_thm]
 );
 
 
