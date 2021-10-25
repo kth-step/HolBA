@@ -28,14 +28,15 @@ local
                 val range = bind digit (fn lower => seq (char #":")
                            (bind digit (fn upper => return (lower, upper)))
                 val masked_var = bind (fmap bden var_parser) (fn var =>
-                                 bind (try bracket (char #"[") range (char #"]")) (fn (l,u) =>
+                                 bind (bracket (char #"[") range (char #"]")) (fn (l,u) =>
                                  return var)
                 val logical = choicel [bracket (char #"(") bir_exp (char #")")
                                       ,bind unary_op
                                             (fn oper => fmap oper bir_exp)
                                       ,try mem_load
                                       ,fmap bconstimm (gen_bir_imm sz)
-                                      ,masked_var]
+                                      ,try masked_var
+                                      ,fmap bden var_parser]
                                       <?> "logical expression"
                 val factor = chainr1 logical (binop binary_op_bitwise)
                                      <?> "factor"
