@@ -480,4 +480,69 @@ Definition eval_promising:
             (eval_clsteps fuel)
 End
 
+(* Example *)
+
+val core1_prog =
+“BirProgram
+ [<|bb_label := BL_Label "start";
+    bb_statements :=
+    [BStmt_Assign (BVar "MEM" (BType_Mem Bit64 Bit8))
+     (BExp_Store (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+      (BExp_Den (BVar "x0" (BType_Imm Bit64))) BEnd_LittleEndian
+      (BExp_Const (Imm64 1w)));
+     BStmt_Assign (BVar "MEM" (BType_Mem Bit64 Bit8))
+                  (BExp_Store (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x0" (BType_Imm Bit64))) BEnd_LittleEndian
+                   (BExp_Const (Imm64 2w))) ]
+    ;
+    bb_last_statement :=
+    BStmt_Halt (BExp_Den (BVar "x2" (BType_Imm Bit64)))|>]: string bir_program_t”
+
+val core2_prog =
+“BirProgram
+ [<|bb_label := BL_Label "start";
+    bb_statements :=
+    [BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+                  (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x0" (BType_Imm Bit64))) BEnd_LittleEndian
+                   Bit8);
+     BStmt_Assign (BVar "MEM" (BType_Mem Bit64 Bit8))
+                  (BExp_Store (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                   (BExp_Den (BVar "x2" (BType_Imm Bit64))) BEnd_LittleEndian
+                   (BExp_Den (BVar "x1" (BType_Imm Bit64))));
+                   ];
+    bb_last_statement :=
+    BStmt_Halt (BExp_Den (BVar "x2" (BType_Imm Bit64)))|>]: string bir_program_t”
+
+val set_env1_def = Define‘
+      set_env1 s =
+      let env = BEnv ((K NONE) (|
+                      "x0" |-> SOME $ BVal_Imm $ Imm64 0w;
+                      "x1" |-> SOME $ BVal_Imm $ Imm64 4w;
+                      "x2" |-> SOME $ BVal_Imm $ Imm64 8w
+                      |))
+         in s with <| bst_environ := env; bst_prom := []|>
+’;
+val set_env2_def = Define‘
+      set_env2 s =
+      let env = BEnv ((K NONE) (|
+                      "x0" |-> SOME $ BVal_Imm $ Imm64 0w;
+                      "x1" |-> SOME $ BVal_Imm $ Imm64 4w;
+                      "x2" |-> SOME $ BVal_Imm $ Imm64 8w
+                      |))
+         in s with <| bst_environ := env |>
+’;
+
+
+val core1_st = “set_env1 (bir_state_init ^core1_prog)”;
+val core2_st = “set_env2 (bir_state_init ^core2_prog)”;
+
+(* core definitions *)
+val cores = “[(Core 0 ^core1_prog ^core1_st);
+              (Core 1 ^core2_prog ^core2_st)]”;
+
+val term_EVAL = rand o concl o EVAL ;
+
+val final_states = term_EVAL “eval_promising 4 (^cores, [])”;
+
 val _ = export_theory();
