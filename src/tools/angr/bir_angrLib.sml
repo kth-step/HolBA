@@ -19,6 +19,12 @@ local
     | init (x::y::ys) = let val zs = init (y::ys) in x::zs end;
   fun intercalate x zs = foldr (fn (z,zs) => if null zs then z::zs else z::x::zs) [] zs;
 
+  val angr_var = gen_bir_var (
+        let fun strip_var ss = concat (intercalate "_" (init (init (List.map implode ss))))
+        in
+          fmap strip_var (sep_by1 (many1 (sat Char.isAlphaNum)) (char #"_"))
+        end) 64;
+
   fun gen_bir_exp_angr var_parser sz =
     fix (fn bir_exp =>
             let open Word;
@@ -28,10 +34,10 @@ local
                         (return (bload8_le default_mem addr))))
                 val range = bind dec (fn lower => seq (char #":")
                            (bind dec (fn upper => return (lower, upper))))
-                val masked_var = bind (fmap bden var_parser) (fn var =>
+                val masked_var = bind (fmap bden angr_var) (fn var =>
                                  bind (bracket (char #"[") range (char #"]")) (fn (l,u) =>
                                  return (band (brshift (var,bconst64 l),
-                                         bconst64 (toInt ((op<<(fromInt 1,fromInt u)-fromInt 1)))))))
+                                         bconst64 (toInt ((op<<(fromInt 1,(fromInt u - fromInt l))-fromInt 1)))))))
                 val logical = choicel [bracket (char #"(") bir_exp (char #")")
                                       ,bind unary_op
                                             (fn oper => fmap oper bir_exp)
