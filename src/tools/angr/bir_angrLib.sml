@@ -19,6 +19,38 @@ local
     | init (x::y::ys) = let val zs = init (y::ys) in x::zs end;
   fun intercalate x zs = foldr (fn (z,zs) => if null zs then z::zs else z::x::zs) [] zs;
 
+  fun gen_bir_exp var_parser sz =
+    fix (fn bir_exp =>
+            let val mem_load =
+                    seq (string "MEM")
+                        (bind (bracket (char #"[") bir_exp (char #"]")) (fn addr =>
+                        (return (bload8_le default_mem addr))))
+                val range = bind digit (fn lower => seq (char #":")
+                           (bind digit (fn upper => return (lower, upper)))
+                val masked_var = bin (fmap bden var_parser)
+                                 (fn var => try bracket (char #"[") range (char #"]")
+                val logical = choicel [bracket (char #"(") bir_exp (char #")")
+                                      ,bind unary_op
+                                            (fn oper => fmap oper bir_exp)
+                                      ,try mem_load
+                                      ,fmap bconstimm (gen_bir_imm sz)
+                                      ,masked_var]
+                                      <?> "logical expression"
+                val factor = chainr1 logical (binop binary_op_bitwise)
+                                     <?> "factor"
+                val term = chainr1 factor (binop binary_op_factor) <?> "term"
+                val binexp = chainl1 term (binop binary_op_term)
+                                     <?> "BIR binary expression"
+                val binpred = bind (token binexp) (fn e1 =>
+                              bind (binop binary_pred) (fn oper =>
+                              bind (token binexp) (fn e2 =>
+                              return (oper e1 e2))))
+                                   <?> "BIR binary predicate"
+            in
+             try binpred <|> binexp
+            end
+        ) <?> "BIR expression";
+
   val angr_variable =
       fmap (concat o intercalate "_" o init o init)
            (bind (sep_by1 (fmap implode (many1 (sat Char.isAlphaNum))) (char #"_"))
