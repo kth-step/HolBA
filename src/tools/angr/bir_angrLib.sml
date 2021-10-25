@@ -27,8 +27,9 @@ local
                         (return (bload8_le default_mem addr))))
                 val range = bind digit (fn lower => seq (char #":")
                            (bind digit (fn upper => return (lower, upper)))
-                val masked_var = bind (fmap bden var_parser)
-                                 (fn var => try bracket (char #"[") range (char #"]"))
+                val masked_var = bind (fmap bden var_parser) (fn var =>
+                                 bind (try bracket (char #"[") range (char #"]")) (fn (l,u) =>
+                                 return var)
                 val logical = choicel [bracket (char #"(") bir_exp (char #")")
                                       ,bind unary_op
                                             (fn oper => fmap oper bir_exp)
