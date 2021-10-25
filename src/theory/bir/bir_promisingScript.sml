@@ -224,7 +224,7 @@ is_certified p cid s M = ?s' M'.
 `;
 
 val core_t_def = Datatype `core_t =
-core num (string bir_program_t) bir_state_t
+Core num (string bir_program_t) bir_state_t
 `;
 
 (* system step *)
@@ -234,7 +234,7 @@ val (bir_parstep_rules, bir_parstep_ind, bir_parstep_cases) = Hol_reln`
     /\ cstep p cid s M prom s' M'
     /\ is_certified p cid s' M')
 ==>
-   parstep cores M (cores DIFF {core cid p s} UNION {core cid p s'}) M')
+   parstep cores M (cores DIFF {core cid p s} UNION {Core cid p s'}) M')
 `;
 
 val env_update_cast64_def = Define‘
@@ -371,13 +371,47 @@ Definition eval_certify_def:
   )
 End
 
+(*** Non-promising-mode execution ***)
+Definition eval_clstep_core:
+  eval_clstep_core M (Core cid p s) =
+  MAP (Core cid p) (eval_clstep p cid s M)
+End
+
+Definition eval_clsteps_aux_def:
+  (
+  eval_clsteps_aux 0 M core = [core]
+  ) /\ (
+  eval_clsteps_aux (SUC f) M core = 
+  LIST_BIND (eval_clstep_core M core)
+            (eval_clsteps_aux f M)
+  )
+End
+
+(* Cartesian product for list *)
+Definition CART_PROD_LIST_def:
+  (
+  CART_PROD_LIST [] = [[]]
+  ) /\ (
+  CART_PROD_LIST (l::ll) =
+    LIST_BIND l (\h. MAP (\l'. h::l') (CART_PROD_LIST ll))
+  )
+End
+
+Definition eval_clsteps_def:
+eval_clsteps f (cores, M) =
+let
+  cores_list = CART_PROD_LIST $ MAP (eval_clsteps_aux f M) cores
+in
+  MAP (\cores. (cores, M)) cores_list
+End
+
 (*** Promsing-mode execution ***)
 Definition eval_find_promises_def:
   (
   eval_find_promises p cid s M promises t 0 =
   if NULL s.bst_prom then promises else []
   ) ∧ (
-  eval_find_promises cid p s M promises t (SUC f) =
+  eval_find_promises p cid s M promises t (SUC f) =
   (case bir_get_current_statement p s.bst_pc of
      SOME (BStmtB (BStmt_Assign _ (BExp_Store _ a_e _ v_e))) =>
        (let
@@ -391,7 +425,7 @@ Definition eval_find_promises_def:
           promises' = if (MAX v_pre coh) < t then msg::promises else promises;
         in
           LIST_BIND (eval_clstep p cid s' M')
-                    (λs'. eval_find_promises cid p s' M' promises' t f))
+                    (λs'. eval_find_promises p cid s' M' promises' t f))
    | _ => [])
   ++
   LIST_BIND (eval_clstep p cid s M)
@@ -400,10 +434,10 @@ Definition eval_find_promises_def:
 End
 
 Definition eval_pstep:
-  eval_pstep cid p s M ff =
+  eval_pstep p cid s M ff =
   let
     t = LENGTH M + 1;
-    promises = nub $ bir_find_promises p cid s M [] t ff;
+    promises = nub $ eval_find_promises p cid s M [] t ff;
     s' = s with <| bst_prom updated_by (CONS t) |> 
   in
     MAP (λp. (s', SNOC p M)) promises
@@ -412,7 +446,7 @@ End
 Definition eval_pstep_core:
   eval_pstep_core ff M (Core cid p s) =
   MAP (λsM. (Core cid p (FST sM), SND sM))
-      (eval_pstep cid p s M ff)
+      (eval_pstep p cid s M ff)
 End
 
 Definition update_core_def:
