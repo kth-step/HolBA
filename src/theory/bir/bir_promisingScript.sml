@@ -242,7 +242,7 @@ val env_update_cast64_def = Define‘
     bir_env_update varname (BVal_Imm (n2bs (b2n v) Bit64)) vartype env
 ’;
 
-(* execution *)
+(* Core-local execution *)
 val eval_clstep_read_def = Define‘
   eval_clstep_read p cid s M var mem_e a_e en ty =
    let (sl, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv;
@@ -356,5 +356,87 @@ val eval_clstep_def = Define‘
        eval_clstep_bir_step p cid s M stm
    | _ => []
 ’;
+
+
+(*** Certify execution execution ***)
+Definition eval_certify_def:
+  (
+  eval_certify p cid s M 0 =
+  NULL s.bst_prom
+  ) /\ (
+  eval_certify p cid s M (SUC fuel) =
+  (NULL s.bst_prom \/
+   EXISTS (\s'. eval_certify p cid s' M fuel)
+          (eval_clstep p cid s M))
+  )
+End
+
+(*** Promsing-mode execution ***)
+Definition eval_find_promises_def:
+  (
+  eval_find_promises p cid s M promises t 0 =
+  if NULL s.bst_prom then promises else []
+  ) ∧ (
+  eval_find_promises cid p s M promises t (SUC f) =
+  (case bir_get_current_statement p s.bst_pc of
+     SOME (BStmtB (BStmt_Assign _ (BExp_Store _ a_e _ v_e))) =>
+       (let
+          (sl, v_loc) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv;
+          (sv, v_data) = bir_eval_exp_view v_e s.bst_environ s.bst_viewenv;
+          msg = <| loc := THE sl; val := THE sv; cid := cid |>;
+          v_pre = MAX v_loc $ MAX v_data $ MAX s.bst_v_CAP s.bst_v_wNew;
+          coh = s.bst_coh (THE sl);
+          M' = SNOC msg M;
+          s' = s with <| bst_prom updated_by (CONS (LENGTH M')) |>;
+          promises' = if (MAX v_pre coh) < t then msg::promises else promises;
+        in
+          LIST_BIND (eval_clstep p cid s' M')
+                    (λs'. eval_find_promises cid p s' M' promises' t f))
+   | _ => [])
+  ++
+  LIST_BIND (eval_clstep p cid s M)
+            (λs'. eval_find_promises p cid s' M promises t f)
+  )
+End
+
+Definition eval_pstep:
+  eval_pstep cid p s M ff =
+  let
+    t = LENGTH M + 1;
+    promises = nub $ bir_find_promises p cid s M [] t ff;
+    s' = s with <| bst_prom updated_by (CONS t) |> 
+  in
+    MAP (λp. (s', SNOC p M)) promises
+End
+
+Definition eval_pstep_core:
+  eval_pstep_core ff M (Core cid p s) =
+  MAP (λsM. (Core cid p (FST sM), SND sM))
+      (eval_pstep cid p s M ff)
+End
+
+Definition update_core_def:
+  (
+  update_core new_c [] = []
+  ) ∧ (
+  update_core (Core new_cid new_p new_st) (Core cid p st::cs) =
+  if new_cid = cid then
+    Core new_cid new_p new_st :: cs
+  else
+    Core cid p st :: update_core (Core new_cid new_p new_st) cs
+  )
+End
+
+Definition eval_psteps_def:
+  (
+  eval_psteps ff 0 (cores, M) = [(cores, M)]
+  ) ∧ (
+  eval_psteps ff (SUC f) (cores, M) =
+  case LIST_BIND cores (eval_pstep_core ff M) of
+    [] => [(cores,M)]
+  | cMs => LIST_BIND (MAP (\cM. (update_core (FST cM) cores, SND cM)) cMs)
+                     (eval_psteps ff f)
+  )
+End
 
 val _ = export_theory();
