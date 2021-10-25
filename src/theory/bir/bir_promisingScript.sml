@@ -473,4 +473,11 @@ Definition eval_psteps_def:
   )
 End
 
+(*** Combined Promising and Non-Promising executions. ***)
+Definition eval_promising:
+  eval_promising fuel (cores, M) =
+  LIST_BIND (eval_psteps fuel fuel (cores, M))
+            (eval_clsteps fuel)
+End
+
 val _ = export_theory();
