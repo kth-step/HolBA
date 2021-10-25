@@ -19,17 +19,19 @@ local
     | init (x::y::ys) = let val zs = init (y::ys) in x::zs end;
   fun intercalate x zs = foldr (fn (z,zs) => if null zs then z::zs else z::x::zs) [] zs;
 
-  fun gen_bir_exp var_parser sz =
+  fun gen_bir_exp_angr var_parser sz =
     fix (fn bir_exp =>
-            let val mem_load =
+            let open Word;
+                val mem_load =
                     seq (string "MEM")
                         (bind (bracket (char #"[") bir_exp (char #"]")) (fn addr =>
                         (return (bload8_le default_mem addr))))
-                val range = bind digit (fn lower => seq (char #":")
-                           (bind digit (fn upper => return (lower, upper)))
+                val range = bind dec (fn lower => seq (char #":")
+                           (bind dec (fn upper => return (lower, upper))))
                 val masked_var = bind (fmap bden var_parser) (fn var =>
                                  bind (bracket (char #"[") range (char #"]")) (fn (l,u) =>
-                                 return var)
+                                 return (band (brshift (var,bconst64 l),
+                                         bconst64 (toInt ((op<<(fromInt 1,fromInt u)-fromInt 1)))))))
                 val logical = choicel [bracket (char #"(") bir_exp (char #")")
                                       ,bind unary_op
                                             (fn oper => fmap oper bir_exp)
@@ -62,7 +64,7 @@ local
   val bir_angr_var = gen_bir_var angr_variable 64;
   val bir_angr_bool_exp =  try (seq (token (string "True")) (return btrue))
                                <|> try (seq (token (string "False")) (return bfalse))
-                               <|> gen_bir_exp bir_angr_var 64;
+                               <|> gen_bir_exp_angr bir_angr_var 64;
 
   (* error handling *)
   val libname = "bir_angrLib"
