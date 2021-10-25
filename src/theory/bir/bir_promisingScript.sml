@@ -320,6 +320,19 @@ val eval_clstep_branch_def = Define‘
             in [s2 with <| bst_v_CAP := MAX s.bst_v_CAP v_addr |>]
 ’;
 
+val eval_clstep_exp_def = Define‘
+  eval_clstep_exp p cid s M var ex =
+  case bir_eval_exp_view ex s.bst_environ s.bst_viewenv
+  of (SOME val, v_val) =>
+       (case env_update_cast64 (bir_var_name var) val (bir_var_type var) (s.bst_environ) of
+          SOME new_env =>
+            [s with <| bst_viewenv updated_by (λe. FUPDATE e (var,v_val));
+                       bst_environ := new_env;
+                       bst_pc updated_by bir_pc_next |>]
+        | _ => [])
+  | _ => []
+’;
+
 val eval_clstep_bir_step_def = Define‘
   eval_clstep_bir_step p cid s M stm =
    let (oo,s') = bir_exec_stmt p stm s
@@ -337,6 +350,8 @@ val eval_clstep_def = Define‘
        eval_clstep_fence p cid s M
    | SOME (BStmtE (BStmt_CJmp cond_e lbl1 lbl2)) =>
        eval_clstep_branch p cid s M (BStmtE (BStmt_CJmp cond_e lbl1 lbl2))
+   | SOME (BStmtB (BStmt_Assign var ex)) =>
+       eval_clstep_exp p cid s M var ex
    | SOME stm =>
        eval_clstep_bir_step p cid s M stm
    | _ => []
