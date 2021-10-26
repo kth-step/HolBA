@@ -684,14 +684,15 @@ val symb_rule_STEP_thm = store_thm("symb_rule_STEP_thm", ``
   ]
 );
 
-(*
 val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
 !sr.
 !sys_A L_A Pi_A sys_B L_B Pi_B.
   (symb_symbols_f_sound sr) ==>
 
-  (((symb_dependent_symbols sr sys_A) DIFF (symb_dependent_symbols sr sys_B))
-   INTER (BIGUNION {(symb_dependent_symbols sr Pi_B_sys) DIFF (symb_dependent_symbols sr sys_B) | Pi_B_sys IN Pi_B}) = EMPTY) ==>
+  (* can't reintroduce symbols in fragment B that have been lost in A *)
+  (((symb_symbols sr sys_A) DIFF (symb_symbols sr sys_B))
+       INTER ((symb_symbols_set sr Pi_B) DIFF (symb_symbols sr sys_B))
+   = EMPTY) ==>
 
   (symb_hl_step_in_L_sound sr (sys_A, L_A, Pi_A)) ==>
   (symb_hl_step_in_L_sound sr (sys_B, L_B, Pi_B)) ==>
@@ -730,7 +731,6 @@ val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
   ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
   METIS_TAC [step_n_in_L_IMP_SUPER_thm, SUBSET_UNION]
 );
-*)
 
 val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
 !sr.
