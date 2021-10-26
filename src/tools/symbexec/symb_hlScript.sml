@@ -704,32 +704,40 @@ val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
   PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys_A H ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
   REV_FULL_SIMP_TAC std_ss [symb_matchstate_ext_def] >>
 
-  (* the case when after A we actually execute through sys_B *)
-  Cases_on `sys' = sys_B` >- (
-    ASSUME_TAC (Q.SPECL [`sr`, `sys_B`, `H'`, `s'`] symb_matchstate_TO_minimal_thm) >>
-    FULL_SIMP_TAC std_ss [] >>
-    REV_FULL_SIMP_TAC std_ss [] >>
-
-    (* execute from s' (sys') with fragment B *)
-    PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys_B H ==> A`` (ASSUME_TAC o (Q.SPECL [`s'`, `H''`])) >>
-    FULL_SIMP_TAC std_ss [] >>
-    REV_FULL_SIMP_TAC std_ss [] >>
-
-    (* the sequential complete composition to the state after executing in B *)
-    Q.EXISTS_TAC `n+n'` >> Q.EXISTS_TAC `s''` >>
-    STRIP_TAC >- (
-      METIS_TAC [step_n_in_L_SEQ_thm]
-    ) >>
-
-    (* establish the properties for the reached state *)
-    Q.EXISTS_TAC `sys''` >>
+  (* the case when after A we don't execute through sys_B *)
+  Cases_on `sys' = sys_B` >| [
+    ALL_TAC
+  ,
     ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+    METIS_TAC [step_n_in_L_IMP_SUPER_thm, SUBSET_UNION]
+  ] >>
 
-    METIS_TAC [symb_interpr_ext_TRANS_thm]
+  (* the case when after A we actually execute through sys_B *)
+  ASSUME_TAC (Q.SPECL [`sr`, `sys_B`, `H'`, `s'`] symb_matchstate_TO_minimal_thm) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  (* execute from s' (sys') with fragment B *)
+  PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys_B H ==> A`` (ASSUME_TAC o (Q.SPECL [`s'`, `H''`])) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  (* the sequential complete composition to the state after executing in B *)
+  Q.EXISTS_TAC `n+n'` >> Q.EXISTS_TAC `s''` >>
+  STRIP_TAC >- (
+    METIS_TAC [step_n_in_L_SEQ_thm]
   ) >>
 
+  (* establish the properties for the reached state *)
+  Q.EXISTS_TAC `sys''` >>
   ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  METIS_TAC [step_n_in_L_IMP_SUPER_thm, SUBSET_UNION]
+
+  (* construct the interpretation where all lost symbols in A are
+     mapped as initially and prove it to extend the initial interpretation *)
+  rename1 `symb_matchstate sr sys'' H_f s''` >>
+  Q.EXISTS_TAC `H_f'` >>
+
+  METIS_TAC [symb_interpr_ext_TRANS_thm]
 );
 
 val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
