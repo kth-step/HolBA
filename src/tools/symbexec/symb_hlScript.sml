@@ -193,6 +193,8 @@ val symb_interpr_for_symbs_min_thm = store_thm(
   METIS_TAC [symb_interpr_for_symbs_thm, symb_interpr_for_symbs_min_thm0]
 );
 
+(* a restricting interpretation *)
+(* ----------------------------------- *)
 val symb_interpr_restr_def = Define `
     symb_interpr_restr symbs H =
     (SymbInterpret (\symb. if symb IN symbs then symb_interpr_get H symb else NONE))
@@ -244,6 +246,75 @@ val symb_interpr_for_symbs_min_REMOVE_NOT_min_thm = store_thm(
 ``,
   FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_min_thm, symb_interpr_dom_thm] >>
   METIS_TAC [symb_interpr_get_update_id_thm]
+);
+
+
+(* domain intersection equality *)
+(* ----------------------------------- *)
+val symb_interprs_eq_for_INTER_def = Define `
+    symb_interprs_eq_for_INTER H1 H2 =
+      (symb_interprs_eq_for H1 H2 ((symb_interpr_dom H1) INTER (symb_interpr_dom H2)))
+`;
+
+val symb_interprs_eq_for_INTER_SYM_thm = store_thm(
+   "symb_interprs_eq_for_INTER_SYM_thm", ``
+!H1 H2.
+  (symb_interprs_eq_for_INTER H1 H2) =
+  (symb_interprs_eq_for_INTER H2 H1)
+``,
+  cheat
+);
+
+val symb_interprs_eq_for_INTER_TRANS_thm = store_thm(
+   "symb_interprs_eq_for_INTER_TRANS_thm", ``
+!H1 H2 H3.
+  (symb_interprs_eq_for_INTER H1 H2) ==>
+  (symb_interprs_eq_for_INTER H2 H3) ==>
+  ((symb_interpr_dom H1) INTER ((symb_interpr_dom H3) DIFF (symb_interpr_dom H2)) = EMPTY) ==>
+  (symb_interprs_eq_for_INTER H1 H3)
+``,
+  cheat
+);
+
+val symb_interpr_ext_IMP_interprs_eq_for_INTER_thm = store_thm(
+   "symb_interpr_ext_IMP_interprs_eq_for_INTER_thm", ``
+!H1 H2 H3.
+  (symb_interpr_ext H2 H1) ==>
+  (symb_interpr_ext H2 H3) ==>
+  (symb_interprs_eq_for_INTER H1 H3)
+``,
+  cheat
+);
+
+
+(* an extended interpretation *)
+(* ----------------------------------- *)
+val symb_interpr_extend_def = Define `
+    symb_interpr_extend H_extra H_base =
+    (SymbInterpret (\symb.
+      if symb IN (symb_interpr_dom H_base) then
+        symb_interpr_get H_base symb
+      else
+        symb_interpr_get H_extra symb))
+`;
+
+val symb_interpr_extend_IMP_ext_thm = store_thm(
+   "symb_interpr_extend_IMP_ext_thm", ``
+!H_extra H_base.
+  (symb_interpr_ext (symb_interpr_extend H_extra H_base) H_base)
+``,
+(*  FULL_SIMP_TAC std_ss [symb_interpr_extend_def, symb_interpr_ext_thm] *)
+  cheat
+);
+
+val symb_interpr_extend_IMP_ext_thm2 = store_thm(
+   "symb_interpr_extend_IMP_ext_thm2", ``
+!H_extra H_base.
+  (symb_interprs_eq_for_INTER H_extra H_base) ==>
+  (symb_interpr_ext (symb_interpr_extend H_extra H_base) H_extra)
+``,
+(*  FULL_SIMP_TAC std_ss [symb_interpr_extend_def, symb_interpr_ext_thm] *)
+  cheat
 );
 
 
@@ -357,10 +428,6 @@ val symb_symbols_def = Define `
       (symb_symbols_store sr (symb_symbst_store sys) UNION
        sr.sr_symbols_f (symb_symbst_pcond sys))
 `;
-val symb_symbols_set_def = Define `
-    symb_symbols_set sr Pi =
-      BIGUNION ({symb_symbols sr sys | sys IN Pi})
-`;
 
 val symb_symbols_SUBSET_pcond_thm = store_thm(
    "symb_symbols_SUBSET_pcond_thm", ``
@@ -384,6 +451,31 @@ val symb_symbols_SUBSET_store_exps_thm = store_thm(
 ``,
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_symbols_def, symb_symbols_store_def, SUBSET_DEF] >>
   METIS_TAC []
+);
+
+val symb_symbols_set_def = Define `
+    symb_symbols_set sr Pi =
+      BIGUNION ({symb_symbols sr sys | sys IN Pi})
+`;
+
+val symb_symbols_set_SUBSET_thm = store_thm(
+   "symb_symbols_set_SUBSET_thm", ``
+!sr.
+!sys Pi.
+  (sys IN Pi) ==>
+  ((symb_symbols sr sys) SUBSET (symb_symbols_set sr Pi))
+``,
+  cheat
+);
+
+val symb_minimal_interpretation_IMP_symb_symbols_EQ_dom_thm = store_thm(
+   "symb_minimal_interpretation_IMP_symb_symbols_EQ_dom_thm", ``
+!sr.
+!sys H.
+  (symb_minimal_interpretation sr sys H) ==>
+  (symb_symbols sr sys = symb_interpr_dom H)
+``,
+  cheat
 );
 
 
@@ -518,6 +610,16 @@ val symb_matchstate_TO_minimal_thm = store_thm(
 ``,
   METIS_TAC [symb_minimal_interpretation_def, symb_matchstate_TO_min_RESTR_thm,
     symb_interpr_for_symbs_TO_min_thm, symb_matchstate_def, symb_suitable_interpretation_def]
+);
+
+val symb_interpr_extend_IMP_symb_matchstate_thm = store_thm(
+   "symb_interpr_extend_IMP_symb_matchstate_thm", ``
+!sr.
+!sys H_extra H_base s.
+  (symb_matchstate sr sys H_base s) ==>
+  (symb_matchstate sr sys (symb_interpr_extend H_extra H_base) s)
+``,
+  cheat
 );
 
 
@@ -763,7 +865,15 @@ val symb_rule_STEP_thm = store_thm("symb_rule_STEP_thm", ``
   ]
 );
 
-(*
+(* TODO: this should go to auxTheory *)
+val SUBSET_of_DIFF_thm = store_thm("SUBSET_of_DIFF_thm",
+  ``!s t v.
+    s SUBSET t ==>
+    ((s DIFF v) SUBSET (t DIFF v))
+``,
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.SUBSET_DEF]
+);
+
 val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
 !sr.
 !sys_A L_A Pi_A sys_B L_B Pi_B.
@@ -815,11 +925,26 @@ val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
   (* construct the interpretation where all lost symbols in A are
      mapped as initially and prove it to extend the initial interpretation *)
   rename1 `symb_matchstate sr sys'' H_f s''` >>
-  Q.EXISTS_TAC `H_f'` >>
 
-  METIS_TAC [symb_interpr_ext_TRANS_thm]
+  (* first, make H_f minimal w.r.t. sys'' *)
+  ASSUME_TAC (Q.SPECL [`sr`, `sys''`, `H_f`, `s''`] symb_matchstate_TO_minimal_thm) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  rename1 `symb_minimal_interpretation sr sys_B H_i` >>
+  rename1 `symb_minimal_interpretation sr sys'' H_e` >>
+
+  (* then, the intersection of H and H_m is equally mapped in both interpretations *)
+  `(symb_interpr_dom H) INTER ((symb_interpr_dom H_e) DIFF (symb_interpr_dom H_i)) = EMPTY` by (
+    METIS_TAC [symb_minimal_interpretation_IMP_symb_symbols_EQ_dom_thm,
+               symb_symbols_set_SUBSET_thm, bir_auxiliaryTheory.INTER_SUBSET_EMPTY_thm, SUBSET_of_DIFF_thm]
+  ) >>
+
+  `symb_interprs_eq_for_INTER H H_e` by (
+    METIS_TAC [symb_interpr_ext_IMP_interprs_eq_for_INTER_thm, symb_interprs_eq_for_INTER_TRANS_thm]
+  ) >>
+
+  METIS_TAC [symb_interpr_extend_IMP_ext_thm2, symb_interpr_extend_IMP_symb_matchstate_thm]
 );
-*)
 
 val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
 !sr.
