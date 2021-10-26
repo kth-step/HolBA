@@ -684,6 +684,7 @@ val symb_rule_STEP_thm = store_thm("symb_rule_STEP_thm", ``
   ]
 );
 
+(*
 val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
 !sr.
 !sys_A L_A Pi_A sys_B L_B Pi_B.
@@ -729,6 +730,7 @@ val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
   ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
   METIS_TAC [step_n_in_L_IMP_SUPER_thm, SUBSET_UNION]
 );
+*)
 
 val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
 !sr.
@@ -749,6 +751,7 @@ val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
   )
 );
 
+(*
 val symb_pcondwiden_def = Define `
   symb_pcondwiden sr sys sys' = (
     (symb_symbst_pc sys =
@@ -828,7 +831,9 @@ val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
 ``,
   METIS_TAC [symb_rule_CONS_S_thm, symb_rule_CONS_E_thm]
 );
+*)
 
+(*
 (* construct symbolic expression with semantics of
      conjuncting an expression with an equality of two other expressions
    e.g.: e1 = (v), e2 = (5), conj1 = (x > 10)
@@ -882,6 +887,7 @@ val symb_is_independent_symbol_IMP_freshsymb_thm = store_thm(
 ``,
   cheat
 );
+*)
 
 (* rule to introduce fresh symbols as values of store variables
      (as abbreviations or as first step of forgetting values) *)
@@ -933,6 +939,7 @@ symb_interpr_ext_symb_NONE_thm
 );
 *)
 
+(*
 val symb_simplification_def = Define `
   symb_simplification sr sys symbexp symbexp' =
     (((sr.sr_symbols_f symbexp') SUBSET (sr.sr_symbols_f symbexp)) /\
@@ -1020,7 +1027,9 @@ val symb_rule_SUBST_thm = store_thm("symb_rule_SUBST_thm", ``
   ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
   METIS_TAC []
 );
+*)
 
+(*
 val symb_sound_subst_def = Define `
     symb_sound_subst sr substfun =
     (!symb symb_inst symbexp symbexp_r.
@@ -1043,6 +1052,7 @@ val symb_rule_INST_thm = store_thm("symb_rule_INST_thm", ``
 ``,
   cheat
 );
+*)
 
 
 
