@@ -52,6 +52,11 @@ val symb_symbst_pcond_update_def = Define `
     SymbSymbSt lbl store (pcond_f pcond)
 `;
 
+(*
+NOTATION: ALL ABOUT INTERPRETATIONS
+=======================================================
+*)
+
 val _ = Datatype `symb_interpret_t =
    SymbInterpret ('a_symbol -> 'b_val option)
 `;
@@ -139,130 +144,10 @@ val symb_interpr_ext_symb_NONE_thm = store_thm(
   METIS_TAC [symb_interpr_ext_thm, APPLY_UPDATE_THM, symb_interpr_update_def, symb_interpr_get_def]
 );
 
-val _ = Datatype `symb_rec_t =
-   <|
-      sr_val_true        : 'c_val;
-
-      sr_symbols_f       : 'e_symbexpr ->
-                           ('d_symbol -> bool);
-
-      sr_interpret_f     : (('d_symbol, 'c_val) symb_interpret_t) ->
-                           'e_symbexpr ->
-                           'c_val option;
-
-      sr_step_conc       : (('a_label, 'b_var, 'c_val) symb_concst_t) ->
-                           (('a_label, 'b_var, 'c_val) symb_concst_t);
-
-      sr_step_symb       : (('a_label, 'b_var, 'e_symbexpr) symb_symbst_t) ->
-                           ((('a_label, 'b_var, 'e_symbexpr) symb_symbst_t) ->
-                           bool);
-   |>`;
-
-val symb_rec_t_tm = ``: ('a, 'b, 'c, 'd, 'e) symb_rec_t``;
-val symb_concst_t_tm = ``: ('a, 'b, 'c) symb_concst_t``;
-
-val symb_list_of_types = [
-  (*mk_thy_type {Tyop="symb_concst_t",   Thy="scratch", Args=[Type.alpha, Type.beta, Type.gamma]}*)
-  mk_type ("symb_concst_t", [Type.alpha, Type.beta, Type.gamma]),
-  mk_type ("symb_interpret_t", [Type.alpha, Type.beta])
-];
-
-val symb_TYPES_thms = (flatten (map type_rws symb_list_of_types));
-val symb_TYPES_ss = rewrites symb_TYPES_thms;
 
 
 (*
-DEFINITIONS: INSTANTIATION FOR BIR/SBIR
-=======================================================
-*)
-(*
-val _ = Datatype `bir_conc_state_t = int`;
-val _ = Datatype `bir_symb_state_t = int`;
-
-val bir_symb_rec_sbir_def = Define `
-  bir_symb_rec_sbir a b c d =
-    <|
-      sr_val_true        := a;
-      sr_interpret_f     := b;
-      sr_step_conc       := c;
-      sr_step_symb       := d;
-   |>
-`;
-*)
-
-
-(*
-ASSUMPTION: sr_symbols_f
-=======================================================
-*)
-(* the symbols of a symbolic expression are sound if, for any symbolic expression,
-   equal valuation of those in two interpretations implies the same value for the interpretation of the symbolic expression *)
-val symb_symbols_f_sound_def = Define `
-    symb_symbols_f_sound sr =
-    (!symbexp H H'.
-       (symb_interprs_eq_for H H' (sr.sr_symbols_f symbexp)) ==>
-       (sr.sr_interpret_f H  symbexp =
-        sr.sr_interpret_f H' symbexp))
-`;
-
-val symb_symbols_f_sound_thm = store_thm(
-   "symb_symbols_f_sound_thm", ``
-!sr.
-    symb_symbols_f_sound sr =
-    (!symbexp H H'.
-       (!symb. (symb IN (sr.sr_symbols_f symbexp)) ==> (symb_interpr_get H symb = symb_interpr_get H' symb)) ==>
-       (sr.sr_interpret_f H  symbexp =
-        sr.sr_interpret_f H' symbexp))
-``,
-  REWRITE_TAC [symb_symbols_f_sound_def, symb_interprs_eq_for_def]
-);
-
-(*
-NOTION: SYMBOL DEPENDENCE FOR STORE AND STATE AND SET OF STATES
-=======================================================
-*)
-
-val symb_symbols_store_def = Define `
-    symb_symbols_store sr store =
-      BIGUNION ({sr.sr_symbols_f symbexp | ?var. store var = SOME symbexp})
-`;
-val symb_symbols_def = Define `
-    symb_symbols sr sys =
-      (symb_symbols_store sr (symb_symbst_store sys) UNION
-       sr.sr_symbols_f (symb_symbst_pcond sys))
-`;
-val symb_symbols_set_def = Define `
-    symb_symbols_set sr Pi =
-      BIGUNION ({symb_symbols sr sys | sys IN Pi})
-`;
-
-val symb_symbols_SUBSET_pcond_thm = store_thm(
-   "symb_symbols_SUBSET_pcond_thm", ``
-!sr.
-!sys.
-  (sr.sr_symbols_f (symb_symbst_pcond sys))
-  SUBSET
-  (symb_symbols sr sys)
-``,
-  METIS_TAC [symb_symbols_def, SUBSET_UNION]
-);
-
-val symb_symbols_SUBSET_store_exps_thm = store_thm(
-   "symb_symbols_SUBSET_store_exps_thm", ``
-!sr.
-!sys var symbexp.
-  (((symb_symbst_store sys) var) = SOME symbexp) ==>
-  ((sr.sr_symbols_f symbexp)
-   SUBSET
-   (symb_symbols sr sys))
-``,
-  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_symbols_def, symb_symbols_store_def, SUBSET_DEF] >>
-  METIS_TAC []
-);
-
-
-(*
-NOTATION: SUITABLE INTERPRETATIONS (ALSO MINIMAL INTERPRETATIONS)
+NOTATION: INCLUSIVE AND MINIMAL INTERPRETATIONS
 =======================================================
 *)
 (* a suitable interpretation gives values to all symbols of a set *)
@@ -344,7 +229,104 @@ val symb_interpr_restr_thm = store_thm(
 
   (!symb. (symb IN symbs) ==> (symb_interpr_get H symb = symb_interpr_get H' symb))
 ``,
-  FULL_SIMP_TAC (std_ss++symb_TYPES_ss) [symb_interpr_restr_def, pred_setTheory.SUBSET_DEF, symb_interpr_get_def]
+  FULL_SIMP_TAC std_ss [symb_interpr_restr_def, pred_setTheory.SUBSET_DEF, symb_interpr_get_def]
+);
+
+(* can't remove any symbol from a minimal interpretation *)
+val symb_interpr_for_symbs_min_REMOVE_NOT_min_thm = store_thm(
+   "symb_interpr_for_symbs_min_REMOVE_NOT_min_thm", ``
+!H H' symb symbs s.
+  (symb IN (symb_interpr_dom H)) ==>
+  (H' = symb_interpr_update H (symb, NONE)) ==>
+
+  (symb_interpr_for_symbs_min symbs H) ==>
+  (~(symb_interpr_for_symbs_min symbs H'))
+``,
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_min_thm, symb_interpr_dom_thm] >>
+  METIS_TAC [symb_interpr_get_update_id_thm]
+);
+
+
+(*
+NOTION: INSTANTIATION DATATYPE
+=======================================================
+*)
+val _ = Datatype `symb_rec_t =
+   <|
+      sr_val_true        : 'c_val;
+
+      sr_symbols_f       : 'e_symbexpr ->
+                           ('d_symbol -> bool);
+
+      sr_interpret_f     : (('d_symbol, 'c_val) symb_interpret_t) ->
+                           'e_symbexpr ->
+                           'c_val option;
+
+      sr_step_conc       : (('a_label, 'b_var, 'c_val) symb_concst_t) ->
+                           (('a_label, 'b_var, 'c_val) symb_concst_t);
+
+      sr_step_symb       : (('a_label, 'b_var, 'e_symbexpr) symb_symbst_t) ->
+                           ((('a_label, 'b_var, 'e_symbexpr) symb_symbst_t) ->
+                           bool);
+   |>`;
+
+val symb_rec_t_tm = ``: ('a, 'b, 'c, 'd, 'e) symb_rec_t``;
+val symb_concst_t_tm = ``: ('a, 'b, 'c) symb_concst_t``;
+
+val symb_list_of_types = [
+  (*mk_thy_type {Tyop="symb_concst_t",   Thy="scratch", Args=[Type.alpha, Type.beta, Type.gamma]}*)
+  mk_type ("symb_concst_t", [Type.alpha, Type.beta, Type.gamma]),
+  mk_type ("symb_interpret_t", [Type.alpha, Type.beta])
+];
+
+val symb_TYPES_thms = (flatten (map type_rws symb_list_of_types));
+val symb_TYPES_ss = rewrites symb_TYPES_thms;
+
+
+(*
+DEFINITIONS: INSTANTIATION FOR BIR/SBIR
+=======================================================
+*)
+(*
+val _ = Datatype `bir_conc_state_t = int`;
+val _ = Datatype `bir_symb_state_t = int`;
+
+val bir_symb_rec_sbir_def = Define `
+  bir_symb_rec_sbir a b c d =
+    <|
+      sr_val_true        := a;
+      sr_interpret_f     := b;
+      sr_step_conc       := c;
+      sr_step_symb       := d;
+   |>
+`;
+*)
+
+
+(*
+ASSUMPTION: sr_symbols_f
+=======================================================
+*)
+(* the symbols of a symbolic expression are sound if, for any symbolic expression,
+   equal valuation of those in two interpretations implies the same value for the interpretation of the symbolic expression *)
+val symb_symbols_f_sound_def = Define `
+    symb_symbols_f_sound sr =
+    (!symbexp H H'.
+       (symb_interprs_eq_for H H' (sr.sr_symbols_f symbexp)) ==>
+       (sr.sr_interpret_f H  symbexp =
+        sr.sr_interpret_f H' symbexp))
+`;
+
+val symb_symbols_f_sound_thm = store_thm(
+   "symb_symbols_f_sound_thm", ``
+!sr.
+    symb_symbols_f_sound sr =
+    (!symbexp H H'.
+       (!symb. (symb IN (sr.sr_symbols_f symbexp)) ==> (symb_interpr_get H symb = symb_interpr_get H' symb)) ==>
+       (sr.sr_interpret_f H  symbexp =
+        sr.sr_interpret_f H' symbexp))
+``,
+  REWRITE_TAC [symb_symbols_f_sound_def, symb_interprs_eq_for_def]
 );
 
 val symb_interpr_restr_interpret_EQ_thm = store_thm(
@@ -361,19 +343,51 @@ val symb_interpr_restr_interpret_EQ_thm = store_thm(
   METIS_TAC [symb_interpr_restr_thm]
 );
 
-(* can't remove any symbol from a minimal interpretation *)
-val symb_interpr_for_symbs_min_REMOVE_NOT_min_thm = store_thm(
-   "symb_interpr_for_symbs_min_REMOVE_NOT_min_thm", ``
-!H H' symb symbs s.
-  (symb IN (symb_interpr_dom H)) ==>
-  (H' = symb_interpr_update H (symb, NONE)) ==>
+(*
+NOTION: SYMBOL DEPENDENCE FOR STORE AND STATE AND SET OF STATES
+=======================================================
+*)
 
-  (symb_interpr_for_symbs_min symbs H) ==>
-  (~(symb_interpr_for_symbs_min symbs H'))
+val symb_symbols_store_def = Define `
+    symb_symbols_store sr store =
+      BIGUNION ({sr.sr_symbols_f symbexp | ?var. store var = SOME symbexp})
+`;
+val symb_symbols_def = Define `
+    symb_symbols sr sys =
+      (symb_symbols_store sr (symb_symbst_store sys) UNION
+       sr.sr_symbols_f (symb_symbst_pcond sys))
+`;
+val symb_symbols_set_def = Define `
+    symb_symbols_set sr Pi =
+      BIGUNION ({symb_symbols sr sys | sys IN Pi})
+`;
+
+val symb_symbols_SUBSET_pcond_thm = store_thm(
+   "symb_symbols_SUBSET_pcond_thm", ``
+!sr.
+!sys.
+  (sr.sr_symbols_f (symb_symbst_pcond sys))
+  SUBSET
+  (symb_symbols sr sys)
 ``,
-  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_min_thm, symb_interpr_dom_thm] >>
-  METIS_TAC [symb_interpr_get_update_id_thm]
+  METIS_TAC [symb_symbols_def, SUBSET_UNION]
 );
+
+val symb_symbols_SUBSET_store_exps_thm = store_thm(
+   "symb_symbols_SUBSET_store_exps_thm", ``
+!sr.
+!sys var symbexp.
+  (((symb_symbst_store sys) var) = SOME symbexp) ==>
+  ((sr.sr_symbols_f symbexp)
+   SUBSET
+   (symb_symbols sr sys))
+``,
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_symbols_def, symb_symbols_store_def, SUBSET_DEF] >>
+  METIS_TAC []
+);
+
+
+
 
 
 (*
