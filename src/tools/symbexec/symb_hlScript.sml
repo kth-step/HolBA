@@ -882,8 +882,8 @@ val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
 (symb_is_mk_symbexpr_symbol sr mk_symbexpr) ==>
 
 (!sys L Pi sys2 sys2' var symbexp symb.
-  (symb_is_independent_symbol sr sys symb) ==>
-  (symb_is_independent_symbol sr sys2 symb) ==>
+  (~(symb IN symb_dependent_symbols sr sys )) ==>
+  (~(symb IN symb_dependent_symbols sr sys2)) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   ((symb_symbst_store sys2) var = SOME symbexp) ==>
@@ -926,14 +926,14 @@ symb_interpr_ext_symb_NONE_thm
 
 val symb_simplification_def = Define `
   symb_simplification sr sys symbexp symbexp' =
+    (((sr.sr_symbols_f symbexp') SUBSET (sr.sr_symbols_f symbexp)) /\
     (!H.
      (symb_suitable_interpretation_symbexp sr (symb_symbst_pcond sys) H) ==>
      (symb_suitable_interpretation_symbexp sr symbexp H) ==>
-     ((symb_suitable_interpretation_symbexp sr symbexp' H) /\
 
-      ((symb_interpr_symbpcond sr H sys) ==>
-       (sr.sr_interpret_f H symbexp = sr.sr_interpret_f H symbexp'))
-     ))
+     (symb_interpr_symbpcond sr H sys) ==>
+     (sr.sr_interpret_f H symbexp = sr.sr_interpret_f H symbexp')
+    ))
 `;
 
 val symb_simplification_symb_matchstate_ext_thm = store_thm(
@@ -943,10 +943,8 @@ val symb_simplification_symb_matchstate_ext_thm = store_thm(
   ((symb_symbst_store sys) var = SOME symbexp) ==>
   (symb_simplification sr sys symbexp symbexp') ==>
 
-  (symb_matchstate_ext sr sys H s ==>
-  (* TODO: does this work with equality here????
-           I think so, but I think then we have to additionally assume "symb_suitable_interpretation sr sys H" *)
-   symb_matchstate_ext sr (symb_symbst_store_update var symbexp' sys) H s)
+  (symb_matchstate_ext sr sys H s) ==>
+  (symb_matchstate_ext sr (symb_symbst_store_update var symbexp' sys) H s)
 ``,
   cheat
 (*
@@ -1012,6 +1010,29 @@ val symb_rule_SUBST_thm = store_thm("symb_rule_SUBST_thm", ``
 
   ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
   METIS_TAC []
+);
+
+val symb_sound_subst_def = Define `
+    symb_sound_subst sr substfun =
+    (!symb symb_inst symbexp symbexp_r.
+     substfun symb symb_inst symbexp = symbexp_r
+     ==>
+     ((!H. sr.sr_interpret_f (update_interpret H symb (sr.sr_interpret_f H symb_inst)) symbexp
+          = sr.sr_interpret_f H symbexp_r) /\
+      (sr.sr_symbols_f symbexp_r = ((sr.sr_symbols_f symbexp) DIFF {symb}) UNION (sr.sr_symbols_f symb_inst))
+     )
+    )
+`;
+
+val symb_rule_INST_thm = store_thm("symb_rule_INST_thm", ``
+!sr substfun.
+  (symb_sound_subst sr substfun) ==>
+
+!sys L Pi symb symb_inst.
+  (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
+  (symb_hl_step_in_L_sound sr (substfun_st symb symb_inst sys, L, substfun_sts symb symb_inst Pi))
+``,
+  cheat
 );
 
 
