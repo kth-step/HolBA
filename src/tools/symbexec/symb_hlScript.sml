@@ -1140,6 +1140,78 @@ val SUBSET_of_DIFF_thm = store_thm("SUBSET_of_DIFF_thm",
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.SUBSET_DEF]
 );
 
+
+
+val symb_interprs_eq_for_INTER_doms_thm = store_thm(
+   "symb_interprs_eq_for_INTER_doms_thm", ``
+!sr.
+!H1 H12 H2 H23 H3.
+  (symb_symbols_f_sound sr) ==>
+
+  ((symb_interpr_dom H1) INTER ((symb_interpr_dom H3) DIFF (symb_interpr_dom H2)) = EMPTY) ==>
+
+  (symb_interpr_ext H12 H1) ==>
+  (symb_interpr_ext H12 H2) ==>
+
+  (symb_interpr_ext H23 H2) ==>
+  (symb_interpr_ext H23 H3) ==>
+
+  (symb_interprs_eq_for_INTER H1 H3)
+``,
+  METIS_TAC [symb_interpr_ext_IMP_interprs_eq_for_INTER_thm, symb_interprs_eq_for_INTER_TRANS_thm]
+);
+
+val symb_matchstate_interpr_ext_EXISTS_thm = store_thm(
+   "symb_matchstate_interpr_ext_EXISTS_thm", ``
+!sr.
+!H1 H12 H2 H23 H3 sys s.
+  (symb_symbols_f_sound sr) ==>
+
+  ((symb_interpr_dom H1) INTER ((symb_interpr_dom H3) DIFF (symb_interpr_dom H2)) = EMPTY) ==>
+
+  (symb_interpr_ext H12 H1) ==>
+  (symb_interpr_ext H12 H2) ==>
+
+  (symb_interpr_ext H23 H2) ==>
+  (symb_interpr_ext H23 H3) ==>
+
+  (symb_matchstate sr sys H3 s) ==>
+
+  (?H4. symb_interpr_ext H4 H1 /\ symb_matchstate sr sys H4 s)
+``,
+  REPEAT STRIP_TAC >>
+
+  (* the intersection of H1 and H3 is equally mapped in both interpretations *)
+  `symb_interprs_eq_for_INTER H1 H3` by (
+    METIS_TAC [symb_interprs_eq_for_INTER_doms_thm]
+  ) >>
+
+  METIS_TAC [symb_interpr_extend_IMP_ext_thm2, symb_interpr_extend_IMP_symb_matchstate_thm]
+);
+
+val symb_SEQ_interpr_dom_INTER_thm = store_thm(
+   "symb_SEQ_interpr_dom_INTER_thm", ``
+!sr.
+!sys_A sys_B Pi_B sys_Pi_B H1 H2 H3 sys s.
+  (symb_symbols_f_sound sr) ==>
+
+  ((symb_symbols sr sys_A)
+   INTER
+   ((symb_symbols_set sr Pi_B) DIFF (symb_symbols sr sys_B))
+   = EMPTY) ==>
+
+  (sys_Pi_B IN Pi_B) ==>
+
+  (symb_minimal_interpretation sr sys_A H1) ==>
+  (symb_minimal_interpretation sr sys_B H2) ==>
+  (symb_minimal_interpretation sr sys_Pi_B H3) ==>
+
+  ((symb_interpr_dom H1) INTER ((symb_interpr_dom H3) DIFF (symb_interpr_dom H2)) = EMPTY)
+``,
+  METIS_TAC [symb_minimal_interpretation_EQ_dom_thm,
+             symb_symbols_set_SUBSET_thm, bir_auxiliaryTheory.INTER_SUBSET_EMPTY_thm, SUBSET_of_DIFF_thm]
+);
+
 val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
 !sr.
 !sys_A L_A Pi_A sys_B L_B Pi_B.
@@ -1199,17 +1271,14 @@ val symb_rule_SEQ_thm = store_thm("symb_rule_SEQ_thm", ``
   rename1 `symb_minimal_interpretation sr sys_B H_i` >>
   rename1 `symb_minimal_interpretation sr sys'' H_e` >>
 
-  (* then, the intersection of H and H_m is equally mapped in both interpretations *)
+  (* we can conlude that this intersection is empty *)
   `(symb_interpr_dom H) INTER ((symb_interpr_dom H_e) DIFF (symb_interpr_dom H_i)) = EMPTY` by (
-    METIS_TAC [symb_minimal_interpretation_EQ_dom_thm,
-               symb_symbols_set_SUBSET_thm, bir_auxiliaryTheory.INTER_SUBSET_EMPTY_thm, SUBSET_of_DIFF_thm]
+    METIS_TAC [symb_SEQ_interpr_dom_INTER_thm]
   ) >>
 
-  `symb_interprs_eq_for_INTER H H_e` by (
-    METIS_TAC [symb_interpr_ext_IMP_interprs_eq_for_INTER_thm, symb_interprs_eq_for_INTER_TRANS_thm]
-  ) >>
-
-  METIS_TAC [symb_interpr_extend_IMP_ext_thm2, symb_interpr_extend_IMP_symb_matchstate_thm]
+  (* we can construct an interpretation that both matches this symbolic state
+     with the concrete final state and is an extension of the initial interpretation *)
+  METIS_TAC [symb_matchstate_interpr_ext_EXISTS_thm]
 );
 
 val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
@@ -1289,16 +1358,37 @@ val symb_pcondwiden_matchstate_IMP_matchstate_thm = store_thm(
 val symb_rule_CONS_S_thm = store_thm("symb_rule_CONS_S_thm", ``
 !sr.
 !sys' sys L Pi.
+  (symb_symbols_f_sound sr) ==>
+
+  (* can't reintroduce symbols in fragment that have been lost in the path condition widening *)
+  (((symb_symbols sr sys) (*  DIFF (symb_symbols sr sys') *))
+   INTER ((symb_symbols_set sr Pi) DIFF (symb_symbols sr sys')) = EMPTY) ==>
+
   (symb_hl_step_in_L_sound sr (sys', L, Pi)) ==>
   (symb_pcondwiden sr sys sys') ==>
-
-  (((symb_dependent_symbols sr sys) DIFF (symb_dependent_symbols sr sys'))
-   INTER (BIGUNION {(symb_dependent_symbols sr Pi_sys) DIFF (symb_dependent_symbols sr sys') | Pi_sys IN Pi}) = EMPTY) ==>
-
   (symb_hl_step_in_L_sound sr (sys, L, Pi))
 ``,
   REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
   REPEAT STRIP_TAC >>
+
+  (* extend H to include arbitrary mappings for everything missing w.r.t. sys',
+       this is like the other rule CONS_E *)
+  Q.ABBREV_TAC `H_a = symb_interpr_extend_symbs (symb_symbols sr sys') H` >>
+
+  (* this can now match sys' with s *)
+
+  (* then get a minimal interpretation for sys' *)
+  ASSUME_TAC (Q.SPECL [`sr`, `sys'`, `H'`, `s'`] symb_matchstate_TO_minimal_thm) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  (* then execute *)
+
+  (* extend the interpretation with mappings from the original H
+       to get an extension from H that can match the state,
+       this is like in the seqiential composition proof *)
+
+  (* finally relate the final interpretation back to the initial state *)
 
   `symb_matchstate sr sys' H s` by (
     Cases_on `sys` >> Cases_on `sys'` >>
