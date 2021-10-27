@@ -321,7 +321,7 @@ val symb_interpr_ext_IMP_interprs_eq_for_INTER_thm = store_thm(
 );
 
 
-(* an extended interpretation *)
+(* an extended interpretation (combination) *)
 (* ----------------------------------- *)
 val symb_interpr_extend_def = Define `
     symb_interpr_extend H_extra H_base =
@@ -360,6 +360,45 @@ val symb_interpr_extend_IMP_ext_thm2 = store_thm(
     symb_interpr_get_def, symb_interpr_dom_def] >>
 
   METIS_TAC []
+);
+
+
+(* an interpretation extended with arbitrary values *)
+(* ----------------------------------- *)
+val symb_interpr_extend_symbs_def = Define `
+    symb_interpr_extend_symbs symbs H =
+    (SymbInterpret (\symb.
+      if symb IN (symb_interpr_dom H) then
+        symb_interpr_get H symb
+      else if symb IN symbs then
+        SOME ARB (* TODO: need to become correctly typed values later *)
+      else
+        NONE))
+`;
+
+val symb_interpr_extend_symbs_IMP_ext_thm = store_thm(
+   "symb_interpr_extend_symbs_IMP_ext_thm", ``
+!symbs H.
+  (symb_interpr_ext (symb_interpr_extend_symbs symbs H) H)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `H` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interpr_extend_symbs_def, symb_interpr_ext_thm, symb_interpr_dom_def, symb_interpr_get_def]
+);
+
+val symb_interpr_extend_symbs_IMP_for_symbs_thm = store_thm(
+   "symb_interpr_extend_symbs_IMP_for_symbs_thm", ``
+!symbs H.
+  (symb_interpr_for_symbs ((symb_interpr_dom H) UNION symbs) (symb_interpr_extend_symbs symbs H))
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `H` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interpr_extend_symbs_def, symb_interpr_for_symbs_def, symb_interpr_dom_def, symb_interpr_get_def, SUBSET_DEF] >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on `f x` >> (
+    FULL_SIMP_TAC std_ss []
+  )
 );
 
 
@@ -1061,7 +1100,6 @@ val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
   )
 );
 
-(*
 val symb_pcondwiden_def = Define `
   symb_pcondwiden sr sys sys' = (
     (symb_symbst_pc sys =
@@ -1069,11 +1107,13 @@ val symb_pcondwiden_def = Define `
     (symb_symbst_store sys =
      symb_symbst_store sys') /\
     (!H.
+      (symb_interpr_for_symbs ((sr.sr_symbols_f (symb_symbst_pcond sys)) UNION (sr.sr_symbols_f (symb_symbst_pcond sys'))) H) ==>
       (symb_interpr_symbpcond sr H sys) ==>
       (symb_interpr_symbpcond sr H sys'))
   )
 `;
 
+(*
 val symb_rule_CONS_S_thm = store_thm("symb_rule_CONS_S_thm", ``
 !sr.
 !sys' sys L Pi.
@@ -1095,10 +1135,17 @@ val symb_rule_CONS_S_thm = store_thm("symb_rule_CONS_S_thm", ``
   ) >>
   METIS_TAC []
 );
+*)
 
 val symb_rule_CONS_E_thm = store_thm("symb_rule_CONS_E_thm", ``
 !sr.
 !sys L Pi sys2 sys2'.
+  (symb_symbols_f_sound sr) ==>
+
+  ((symb_symbols sr sys)
+       INTER ((symb_symbols sr sys2') DIFF (symb_symbols sr sys2))
+   = EMPTY) ==>
+
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   (symb_pcondwiden sr sys2 sys2') ==>
   (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2'}))
@@ -1107,30 +1154,75 @@ val symb_rule_CONS_E_thm = store_thm("symb_rule_CONS_E_thm", ``
   REPEAT STRIP_TAC >>
 
   PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys H ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
-  REV_FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_matchstate_ext_def] >>
+  REV_FULL_SIMP_TAC std_ss [symb_matchstate_ext_def] >>
+
+  Cases_on `sys' = sys2` >| [
+    ALL_TAC
+  ,
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+    METIS_TAC []
+  ] >>
 
   (* the case when we would execute to sys2 *)
-  Cases_on `sys' = sys2` >- (
-    Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `s'` >>
-    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-
-    Q.EXISTS_TAC `sys2'` >>
-    ASM_SIMP_TAC std_ss [] >>
-
-    (* TODO: have to choose an interpretation that is a modification of H', where we assign arbitrary values to the extra symbols in sys2' (w.r.t sys2) *)
-    Q.EXISTS_TAC `H'` >>
-
-    FULL_SIMP_TAC std_ss [symb_pcondwiden_def, symb_matchstate_def, symb_symbst_store_def, symb_interpr_symbstore_def] >>
-    METIS_TAC []
-  ) >>
-
+  Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `s'` >>
   ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  REPEAT STRIP_TAC >- (
-    (* we have a suitable interpretation *)
+
+  Q.EXISTS_TAC `sys2'` >>
+  ASM_SIMP_TAC std_ss [] >>
+  (* have to proof that we can match with an extension of H for sys' *)
+
+  (* first, make H' minimal w.r.t. sys'' *)
+  ASSUME_TAC (Q.SPECL [`sr`, `sys'`, `H'`, `s'`] symb_matchstate_TO_minimal_thm) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  rename1 `symb_minimal_interpretation sr sys2 H_m` >>
+
+  (* have to choose an interpretation that is a modification of H_m, where we assign arbitrary values to the extra symbols in sys2' (w.r.t sys2) *)
+  Q.ABBREV_TAC `H_e = symb_interpr_extend_symbs ((symb_symbols sr sys2') DIFF (symb_symbols sr sys2)) H_m` >>
+  Q.EXISTS_TAC `H_e` >>
+
+  `symb_interpr_ext H_e H` by (
+    METIS_TAC [symb_interpr_extend_symbs_IMP_ext_thm, symb_interpr_ext_TRANS_thm]
+  )
+
+  REPEAT STRIP_TAC >| [
+    METIS_TAC [symb_interpr_extend_symbs_IMP_ext_thm, symb_interpr_ext_TRANS_thm]
+  ,
+    (* we have all symbols *)
+(*
+symb_interpr_extend_symbs_IMP_for_symbs_thm
+*)
+    cheat
+  ,
+    METIS_TAC [symb_pcondwiden_def]
+  ,
+    (* the store is untouched *)
+(* split up the proof of matchstate of extensions from before *)
+    cheat
+  ,
+    ALL_TAC
+  ] >>
+
+
+  Q.ABBREV_TAC `symbs_e = ((sr.sr_symbols_f (symb_symbst_pcond sys)) UNION (sr.sr_symbols_f (symb_symbst_pcond sys')))` >>
+  `symb_interpr_for_symbs symbs_e H_e` by (
+    symb_interpr_extend_symbs_IMP_for_symbs_thm
   ) >>
+
+
+
+(*
+
+  REV_FULL_SIMP_TAC std_ss [symb_matchstate_def, ] >>
+
+
+
+  FULL_SIMP_TAC std_ss [symb_pcondwiden_def, symb_matchstate_def, symb_symbst_store_def, symb_interpr_symbstore_def] >>
   METIS_TAC []
+*)
 );
 
+(*
 val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
 !sr.
 !sys1' sys1 L Pi sys2 sys2'.
