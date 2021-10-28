@@ -1072,6 +1072,8 @@ val symb_hl_step_in_L_sound_def = Define `
     )
 `;
 
+(* TODO: for rules use DELETE (..) instead of DIFF {..} *)
+
 (*
 (*
 WIP: SANITY: MULTISTEP SOUNDNESS IMPLIES INCLUSION OF ALL STARTING STATES IN REACHABLE STATE PATH CONDITIONS
@@ -1495,7 +1497,6 @@ val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
   METIS_TAC [symb_rule_CONS_S_thm, symb_rule_CONS_E_thm]
 );
 
-(*
 (* construct symbolic expression with semantics of
      conjuncting an expression with an equality of two other expressions
    e.g.: e1 = (v), e2 = (5), conj1 = (x > 10)
@@ -1505,16 +1506,17 @@ val symb_is_expr_conj_eq_def = Define `
     (!e1 e2 conj1. !H.
        (sr.sr_interpret_f H (expr_conj_eq e1 e2 conj1) = SOME sr.sr_val_true) =
        ((sr.sr_interpret_f H conj1 = SOME sr.sr_val_true) /\
-        (?v. sr.sr_interpret_f H e1 = SOME v /\
-             sr.sr_interpret_f H e2 = SOME v)))
+        (sr.sr_interpret_f H e1 <> NONE) /\
+        (sr.sr_interpret_f H e1 =
+         sr.sr_interpret_f H e2)))
 `;
 
 (* predicate for functions that make expressions that represent exactly a symbol *)
 val symb_is_mk_symbexpr_symbol_def = Define `
   symb_is_mk_symbexpr_symbol sr mk_symbexpr =
-    (!h symb v.
-       (h symb = SOME v) ==>
-       (sr.sr_interpret_f (SymbInterpret h) (mk_symbexpr symb) = SOME v))
+    (!H symb v.
+       (symb_interpr_get H symb = SOME v) ==>
+       (sr.sr_interpret_f H (mk_symbexpr symb) = SOME v))
 `;
 
 (*
@@ -1555,12 +1557,13 @@ val symb_is_independent_symbol_IMP_freshsymb_thm = store_thm(
      (as abbreviations or as first step of forgetting values) *)
 val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
 !sr expr_conj_eq mk_symbexpr.
+(symb_symbols_f_sound sr) ==>
 (symb_is_expr_conj_eq sr expr_conj_eq) ==>
 (symb_is_mk_symbexpr_symbol sr mk_symbexpr) ==>
 
 (!sys L Pi sys2 sys2' var symbexp symb.
-  (~(symb IN symb_dependent_symbols sr sys )) ==>
-  (~(symb IN symb_dependent_symbols sr sys2)) ==>
+  (~(symb IN symb_symbols sr sys )) ==>
+  (~(symb IN symb_symbols sr sys2)) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   ((symb_symbst_store sys2) var = SOME symbexp) ==>
@@ -1599,7 +1602,7 @@ symb_is_independent_symbol_IMP_freshsymb_thm
 symb_matchstate_ext_w_ext_thm
 symb_interpr_ext_symb_NONE_thm
 );
-*)
+
 
 val symb_simplification_def = Define `
   symb_simplification sr sys symbexp symbexp' =
