@@ -553,9 +553,7 @@ val _ = Datatype `symb_rec_t =
       sr_val_true        : 'c_val;
 
       sr_mk_exp_symb_f   : 'd_symbol -> 'e_symbexpr;
-
       sr_mk_exp_conj_f   : 'e_symbexpr -> 'e_symbexpr -> 'e_symbexpr;
-
       sr_mk_exp_eq_f     : 'e_symbexpr -> 'e_symbexpr -> 'e_symbexpr;
 
       sr_subst_f         : ('d_symbol # 'e_symbexpr) -> 'e_symbexpr -> 'e_symbexpr;
@@ -564,7 +562,22 @@ val _ = Datatype `symb_rec_t =
       sr_symbols_f       : 'e_symbexpr ->
                            ('d_symbol -> bool);
 
-      (* interpretation business, type error returns NONE value *)
+      (* type business *)
+      (* this is needed to enable more nuanced/useful simplifications as well the INST rule *)
+      (* probably don't need types for variables, do we need types of expressions? maybe not *)
+      (* val and symb types allow us to have
+         - a notion of well typed-interpretations (use in state matching)
+         - require interpret_f to return SOME in case the interpretation contains all symbols_f symbols with correspondingly typed values (needed for INST rule to use semantically defined substitution)
+         - may also require interpret_f to return NONE when symbols are missing or are assigned wrongly typed values (possibly not needed)
+      *)
+      sr_typeof_val      : 'c_val -> 'f_type;
+      sr_typeof_symb     : 'd_symbol -> 'f_type;
+      (* sr_typeof_exp      : 'e_symbexpr -> 'f_type; *)
+      (* need a default value function to be able to assign arbitrary values in CONS and SUBST rule *)
+      (* - either do this, or restrict widening and simplifications to subsets of symbols, but not good for widening probably *)
+      sr_ARB_val         : 'f_type -> 'c_val;
+
+      (* interpretation business, type error produces NONE value *)
       sr_interpret_f     : (('d_symbol, 'c_val) symb_interpret_t) ->
                            'e_symbexpr ->
                            'c_val option;
@@ -578,7 +591,7 @@ val _ = Datatype `symb_rec_t =
                            bool);
    |>`;
 
-val symb_rec_t_tm = ``: ('a, 'b, 'c, 'd, 'e) symb_rec_t``;
+val symb_rec_t_tm = ``: ('a, 'b, 'c, 'd, 'e, 'f) symb_rec_t``;
 val symb_concst_t_tm = ``: ('a, 'b, 'c) symb_concst_t``;
 
 val symb_list_of_types = [
