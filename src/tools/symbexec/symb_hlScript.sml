@@ -168,6 +168,16 @@ val symb_interprs_eq_for_INTER_symbs_thm = store_thm(
   METIS_TAC []
 );
 
+val symb_interprs_eq_for_TRANS_thm = store_thm(
+   "symb_interprs_eq_for_TRANS_thm", ``
+!H1 H2 H3 symbs.
+  (symb_interprs_eq_for H1 H2 symbs) ==>
+  (symb_interprs_eq_for H2 H3 symbs) ==>
+  (symb_interprs_eq_for H1 H3 symbs)
+``,
+  METIS_TAC [symb_interprs_eq_for_INTER_symbs_thm, INTER_IDEMPOT, symb_interprs_eq_for_COMM_thm]
+);
+
 val symb_interprs_eq_for_IMP_dom_thm = store_thm(
    "symb_interprs_eq_for_IMP_dom_thm", ``
 !H1 H2 symbs.
@@ -177,6 +187,19 @@ val symb_interprs_eq_for_IMP_dom_thm = store_thm(
 ``,
   Cases_on `H1` >> Cases_on `H2` >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interprs_eq_for_def, SUBSET_DEF, symb_interpr_dom_def, symb_interpr_get_def]
+);
+
+val symb_interpr_eq_for_UPDATE_dom_thm = store_thm(
+   "symb_interpr_eq_for_UPDATE_dom_thm", ``
+!H symb vo.
+  symb_interprs_eq_for (symb_interpr_update H (symb, vo)) H ((symb_interpr_dom H) DELETE symb)
+``,
+  Cases_on `H` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [symb_interprs_eq_for_def, symb_interpr_update_def, symb_interpr_get_def,
+     symb_interpr_dom_def] >>
+
+  METIS_TAC [APPLY_UPDATE_THM]
 );
 
 val symb_interpr_ext_def = Define `
@@ -229,6 +252,19 @@ val symb_interpr_ext_symb_NONE_thm = store_thm(
 ``,
   Cases_on `H` >>
   METIS_TAC [symb_interpr_ext_thm, APPLY_UPDATE_THM, symb_interpr_update_def, symb_interpr_get_def]
+);
+
+val symb_interpr_dom_UPDATE_NONE_thm = store_thm(
+   "symb_interpr_dom_UPDATE_NONE_thm", ``
+!H symb.
+  symb_interpr_dom (symb_interpr_update H (symb, NONE))
+  = (symb_interpr_dom H) DELETE symb
+``,
+  Cases_on `H` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [symb_interpr_update_def, symb_interpr_dom_def, DELETE_DEF, DIFF_DEF, EXTENSION] >>
+
+  METIS_TAC [APPLY_UPDATE_THM]
 );
 
 val symb_interpr_ext_IMP_eq_for_thm = store_thm(
@@ -1781,83 +1817,123 @@ val symb_is_mk_symbexpr_symbol_def = Define `
        (sr.sr_interpret_f H (mk_symbexpr symb) = SOME v))
 `;
 
-(*
-val _thm = store_thm(
-   "_thm", ``
-!sr.
-!.
-  (symb_symbols_f_sound sr) ==>
-
-  (symb_matchstate sr sys1 H1 s) ==>
-  (symb_interprs_eq_for H1 H2 (symb_symbols sr sys1)) ==>
-
-  ((symb_symbst_store sys1) var = SOME symbexpr) ==>
-  (sr.sr_interpret_f H1 symbexp =
-   sr.sr_interpret_f H2 symbexp') ==>
-  (sys2 = symb_symbst_store_update var symbexpr' sys1) ==>
-
-  ((symb_interpr_ext H2 H1) /\
-   (symb_matchstate sr sys2 H2 s))
-``,
-  cheat
-);
-
-val _thm = store_thm(
-   "_thm", ``
-!sr.
-!.
-  (symb_symbols_f_sound sr) ==>
-
-  (symb_matchstate sr sys1 H1 s) ==>
-  (symb_interprs_eq_for H1 H2 (symb_symbols sr sys1)) ==>
-
-  ((symb_symbst_store sys1) var = SOME symbexpr) ==>
-  (sr.sr_interpret_f H1 symbexp =
-   sr.sr_interpret_f H2 symbexp') ==>
-  (sys2 = symb_symbst_store_update var symbexpr' sys1) ==>
-
-  ((symb_interpr_ext H2 H1) /\
-   (symb_matchstate sr sys2 H2 s))
-``,
-  cheat
-);
-*)
-
-(*
-val symb_is_independent_symbol_IMP_symb_matchstate_thm = store_thm(
-   "symb_is_independent_symbol_IMP_symb_matchstate_thm", ``
-!sr.
-!sys s h symb.
-  (symb_is_independent_symbol sr sys symb) ==>
-
-  (symb_matchstate sr sys (SymbInterpret h) s =
-   symb_matchstate sr sys (SymbInterpret ((symb =+ NONE) h)) s)
-``,
-  cheat
-);
-
-val symb_is_independent_symbol_IMP_freshsymb_thm = store_thm(
-   "symb_is_independent_symbol_IMP_freshsymb_thm", ``
+val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
+   "symb_FRESH_matchstate_IMP_matchstate_ext_thm", ``
 !sr expr_conj_eq mk_symbexpr.
+(symb_symbols_f_sound sr) ==>
 (symb_is_expr_conj_eq sr expr_conj_eq) ==>
 (symb_is_mk_symbexpr_symbol sr mk_symbexpr) ==>
 
-(!sys sys' var symbexp symb H s.
-  (symb_is_independent_symbol sr sys symb) ==>
-  (symb_symbst_store sys var = SOME symbexp) ==>
-  (sys' = symb_symbst_pcond_update
-             (expr_conj_eq (mk_symbexpr symb) symbexp)
-             (symb_symbst_store_update var (mk_symbexpr symb) sys)
+(!var symbexp symb sys sys' H s.
+  (~(symb IN symb_symbols sr sys)) ==>
+  (~(symb IN symb_interpr_dom H)) ==>
+
+  ((symb_symbst_store sys) var = SOME symbexp) ==>
+  (symb_symbst_pcond_update
+     (expr_conj_eq (mk_symbexpr symb) symbexp)
+     (symb_symbst_store_update var (mk_symbexpr symb) sys)
+   = sys'
   ) ==>
-  (symb_matchstate_ext sr sys  H s =
-   symb_matchstate_ext sr sys' H s)
+
+  (symb_matchstate sr sys  H  s) ==>
+  (symb_matchstate_ext sr sys' H s)
 )
 ``,
+  REPEAT STRIP_TAC >>
+
+
   cheat
+);
+(*
+nothing(
+  `symb_matchstate sr sys H' s` by (
+    METIS_TAC [symb_interpr_ext_matchstate_IMP_matchstate_thm, symb_interpr_extend_symbs_IMP_ext_thm]
+  ) >>
+
+  `symb_interpr_for_symbs
+     ((symb_symbols sr sys ) UNION
+      (symb_symbols sr sys')) H'` by (
+    METIS_TAC
+      ( [symb_interpr_extend_symbs_IMP_for_symbs_thm,
+         symb_suitable_interpretation_SUBSET_dom_thm, symb_matchstate_def]
+       @[symb_interpr_for_symbs_def, SUBSET_TRANS, UNION_SUBSET, SUBSET_UNION])
+  ) >>
+
+  `symb_interpr_for_symbs
+              (sr.sr_symbols_f (symb_symbst_pcond sys) UNION
+               sr.sr_symbols_f symbexp UNION sr.sr_symbols_f symbexp') H'` by (
+    METIS_TAC
+      [symb_interpr_for_symbs_def, UNION_SUBSET, SUBSET_TRANS,
+       symb_symbols_SUBSET_store_exps_thm2,
+       symb_symbols_of_symb_symbst_store_update_SUBSET_store_exps_thm2,
+       symb_symbols_SUBSET_pcond_thm]
+  ) >>
+
+  `sr.sr_symbols_f symbexp UNION sr.sr_symbols_f symbexp' SUBSET
+       symb_interpr_dom H'` by (
+    METIS_TAC [symb_interpr_for_symbs_def, SUBSET_UNION, SUBSET_TRANS, UNION_ASSOC]
+  ) >>
+
+  `symb_interpr_symbpcond sr H' sys` by (
+    METIS_TAC
+      [symb_matchstate_def]
+  ) >>
+
+  METIS_TAC [symb_symbst_store_update_IMP_matchstate_EQ_thm, symb_simplification_def]
 );
 *)
 
-(*
+
+val symb_matchstate_ext_WITHOUT_thm = store_thm(
+   "symb_matchstate_ext_WITHOUT_thm", ``
+!sr.
+!sys H s symb.
+  (symb_symbols_f_sound sr) ==>
+
+  (~(symb IN symb_interpr_dom H)) ==>
+  (~(symb IN symb_symbols sr sys)) ==>
+
+  (symb_matchstate_ext sr sys H s) ==>
+
+  (?H'. (symb_interpr_ext H' H) /\
+        (symb_matchstate sr sys H' s) /\
+        (~(symb IN symb_interpr_dom H')))
+``,
+  REWRITE_TAC [symb_matchstate_ext_def] >>
+  REPEAT STRIP_TAC >>
+
+  Q.ABBREV_TAC `H1 = symb_interpr_update H' (symb, NONE)` >>
+  Q.EXISTS_TAC `H1` >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [symb_interpr_update_def, symb_interpr_dom_def, APPLY_UPDATE_THM] >>
+
+  `symb_interprs_eq_for H1 H' (symb_interpr_dom H)` by (
+    `symb_interpr_dom H SUBSET (symb_interpr_dom H' DELETE symb)` by (
+      METIS_TAC
+        [symb_interpr_ext_IMP_dom_thm, SUBSET_DELETE]
+    ) >>
+    METIS_TAC [symb_interpr_eq_for_UPDATE_dom_thm, symb_interprs_eq_for_SUBSET_thm]
+  ) >>
+
+  `symb_interprs_eq_for H' H1 (symb_symbols sr sys)` by (
+    `symb_symbols sr sys SUBSET (symb_interpr_dom H' DELETE symb)` by (
+      METIS_TAC
+        [symb_matchstate_def, symb_suitable_interpretation_def,
+         symb_interpr_for_symbs_def, SUBSET_DELETE]
+    ) >>
+
+  METIS_TAC
+    [symb_interpr_eq_for_UPDATE_dom_thm,
+     symb_interprs_eq_for_SUBSET_thm, symb_interprs_eq_for_COMM_thm]
+  ) >>
+
+  METIS_TAC
+    ( [symb_interpr_ext_def, symb_interprs_eq_for_TRANS_thm]
+     @[symb_interprs_eq_for_matchstate_IMP_matchstate_thm]
+     @[symb_interpr_dom_UPDATE_NONE_thm, ELT_IN_DELETE])
+);
+
 (* rule to introduce fresh symbols as values of store variables
      (as abbreviations or as first step of forgetting values) *)
 val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
@@ -1872,9 +1948,10 @@ val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   ((symb_symbst_store sys2) var = SOME symbexp) ==>
-  (sys2' = symb_symbst_pcond_update
-             (expr_conj_eq (mk_symbexpr symb) symbexp)
-             (symb_symbst_store_update var (mk_symbexpr symb) sys2)
+  (symb_symbst_pcond_update
+     (expr_conj_eq (mk_symbexpr symb) symbexp)
+     (symb_symbst_store_update var (mk_symbexpr symb) sys2)
+   = sys2'
   ) ==>
   (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2'}))
 )
@@ -1882,32 +1959,40 @@ val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
   REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
   REPEAT STRIP_TAC >>
 
-  (* select H where symbol is not mapped *)
-  Cases_on `H` >> Q.RENAME1_TAC `SymbInterpret h` >>
-  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`s`, `SymbInterpret ((symb =+ NONE) h)`])) >>
+  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
 
-  `symb_matchstate sr sys (SymbInterpret ((symb =+ NONE) h)) s` by (
-    METIS_TAC [symb_is_independent_symbol_IMP_symb_matchstate_thm]
-  ) >>
-  FULL_SIMP_TAC std_ss [] >>
+  REWRITE_TAC [symb_matchstate_ext_def] >>
+
+  Cases_on `sys' = sys2` >| [
+    ALL_TAC
+  ,
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+    METIS_TAC [symb_matchstate_ext_def]
+  ] >>
 
   (* the case when we would execute to sys2 *)
-  Cases_on `sys' = sys2` >- (
-    Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `s'` >>
-    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-
-    METIS_TAC [symb_simplification_symb_matchstate_ext_thm]
-
-symb_is_independent_symbol_IMP_symb_matchstate_thm
-symb_is_independent_symbol_IMP_freshsymb_thm
-  ) >>
-
+  Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `s'` >>
   ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  METIS_TAC [symb_matchstate_ext_w_ext_thm, symb_interpr_ext_symb_NONE_thm]
-symb_matchstate_ext_w_ext_thm
-symb_interpr_ext_symb_NONE_thm
+
+  Q.EXISTS_TAC `sys2'` >>
+  ASM_SIMP_TAC std_ss [] >>
+
+  ASSUME_TAC (Q.SPECL [`sr`, `sys2`, `H`, `s'`, `symb`] symb_matchstate_ext_WITHOUT_thm) >>
+  FULL_SIMP_TAC std_ss [symb_minimal_interpretation_def, symb_interpr_for_symbs_min_def] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  ASSUME_TAC (Q.SPECL [`sr`, `expr_conj_eq`, `mk_symbexpr`] symb_FRESH_matchstate_IMP_matchstate_ext_thm) >>
+  FULL_SIMP_TAC std_ss [symb_matchstate_ext_def] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`var`, `symbexp`, `symb`, `sys2`, `H'`, `s'`])) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  METIS_TAC
+   [symb_FRESH_matchstate_IMP_matchstate_ext_thm,
+    symb_matchstate_ext_def, symb_interpr_ext_TRANS_thm]
 );
-*)
 
 
 val symb_simplification_def = Define `
