@@ -230,11 +230,11 @@ Core num (string bir_program_t) bir_state_t
 (* system step *)
 val (bir_parstep_rules, bir_parstep_ind, bir_parstep_cases) = Hol_reln`
 (!p cid s s' M M' cores prom.
-   (core cid p s ∈ cores
+   (Core cid p s ∈ cores
     /\ cstep p cid s M prom s' M'
     /\ is_certified p cid s' M')
 ==>
-   parstep cores M (cores DIFF {core cid p s} UNION {Core cid p s'}) M')
+   parstep cores M (cores DIFF {Core cid p s} UNION {Core cid p s'}) M')
 `;
 
 val env_update_cast64_def = Define‘
