@@ -1,10 +1,9 @@
-open HolKernel Parse;
+open HolKernel Parse boolLib bossLib;
 
 open bir_lifter_interfaceLib;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
-
 
 val _ = new_theory "spinlock";
 
@@ -18,8 +17,8 @@ open bir_promisingTheory;
 Definition is_fulfil_def:
   is_fulfil cid t system1 system2 =
   ?st st' p p'.
-    core cid p st IN system1
-    /\ core cid p' st' IN system2
+    Core cid p st IN system1
+    /\ Core cid p' st' IN system2
     /\ FILTER (λt'. t' <> t) st.bst_prom = st'.bst_prom
     /\ MEM t st.bst_prom
 End
@@ -27,8 +26,8 @@ End
 Definition is_promise_def:
   is_promise cid t M M' system1 system2 =
   ?st st' p p' v l.
-    core cid p st IN system1
-    /\ core cid p' st' IN system2
+    Core cid p st IN system1
+    /\ Core cid p' st' IN system2
     /\ t = LENGTH M + 1
     /\ M' = M ++ [<| loc := l; val := v; cid := cid  |>]
     /\ st'.bst_prom = st.bst_prom ++ [t]
@@ -39,9 +38,9 @@ Definition parstep_nice_def:
 End
 
 (* set of all traces using bir_multicore$gen_traces *)
-val par_traces_def = Define `par_traces =
-  gen_traces parstep_nice
-`;
+Definition par_traces_def:
+  par_traces = gen_traces parstep_nice
+End
 
 Theorem par_trace_promise_preceeds_fulfil:
   !i tr cid t.
@@ -54,7 +53,7 @@ Theorem par_trace_promise_preceeds_fulfil:
 Proof
   rpt strip_tac
   >> CCONTR_TAC
-  >> `?p st. core cid p st IN FST $ EL i tr  /\ MEM t st.bst_prom` by (
+  >> `?p st. Core cid p st IN FST $ EL i tr  /\ MEM t st.bst_prom` by (
     fs[is_fulfil_def] >> metis_tac[]
   )
   >> fs[DISJ_EQ_IMP]
