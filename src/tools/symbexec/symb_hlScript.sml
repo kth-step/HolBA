@@ -1823,12 +1823,6 @@ val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
 );
 
 (*
-      sr_mk_exp_symb_f   : 'd_symbol -> 'e_symbexpr;
-
-      sr_mk_exp_conj_f   : 'e_symbexpr -> 'e_symbexpr -> 'e_symbexpr;
-
-      sr_mk_exp_eq_f     : 'e_symbexpr -> 'e_symbexpr -> 'e_symbexpr;
-
       sr_subst_f         : ('d_symbol # 'e_symbexpr) -> 'e_symbexpr -> 'e_symbexpr;
 *)
 
@@ -1836,27 +1830,55 @@ val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
      conjuncting an expression with an equality of two other expressions
    e.g.: e1 = (v), e2 = (5), conj1 = (x > 10)
      then: (v) = (5) /\ (x > 10) *)
-val symb_is_expr_conj_eq_def = Define `
-  symb_is_expr_conj_eq sr expr_conj_eq =
+val symb_mk_exp_eq_f_sound_def = Define `
+    symb_mk_exp_eq_f_sound sr =
+      ((!e1 e2. !H.
+         (sr.sr_interpret_f H (sr.sr_mk_exp_eq_f e1 e2) = SOME sr.sr_val_true) =
+         ((sr.sr_interpret_f H e1 <> NONE) /\
+          (sr.sr_interpret_f H e1 =
+           sr.sr_interpret_f H e2))) /\
+       (!e1 e2. sr.sr_symbols_f (sr.sr_mk_exp_eq_f e1 e2) =
+         sr.sr_symbols_f e1 UNION sr.sr_symbols_f e2))
+`;
+val symb_mk_exp_conj_f_sound_def = Define `
+    symb_mk_exp_conj_f_sound sr =
+      ((!e1 e2. !H.
+         (sr.sr_interpret_f H (sr.sr_mk_exp_conj_f e1 e2) = SOME sr.sr_val_true) =
+         ((sr.sr_interpret_f H e1 = SOME sr.sr_val_true) /\
+          (sr.sr_interpret_f H e2 = SOME sr.sr_val_true))) /\
+       (!e1 e2. sr.sr_symbols_f (sr.sr_mk_exp_conj_f e1 e2) =
+         sr.sr_symbols_f e1 UNION sr.sr_symbols_f e2))
+`;
+val symb_expr_conj_eq_def = Define `
+    symb_expr_conj_eq sr e1 e2 conj1 =
+      sr.sr_mk_exp_conj_f (sr.sr_mk_exp_eq_f e1 e2) conj1
+`;
+val symb_expr_conj_eq_thm = store_thm(
+   "symb_expr_conj_eq_thm", ``
+!sr.
+  (symb_mk_exp_eq_f_sound sr) ==>
+  (symb_mk_exp_conj_f_sound sr) ==>
     ((!e1 e2 conj1. !H.
-       (sr.sr_interpret_f H (expr_conj_eq e1 e2 conj1) = SOME sr.sr_val_true) =
+       (sr.sr_interpret_f H (symb_expr_conj_eq sr e1 e2 conj1) = SOME sr.sr_val_true) =
        ((sr.sr_interpret_f H conj1 = SOME sr.sr_val_true) /\
         (sr.sr_interpret_f H e1 <> NONE) /\
         (sr.sr_interpret_f H e1 =
          sr.sr_interpret_f H e2))) /\
-     (!e1 e2 conj1. sr.sr_symbols_f (expr_conj_eq e1 e2 conj1) =
+     (!e1 e2 conj1.sr.sr_symbols_f (symb_expr_conj_eq sr e1 e2 conj1) =
          sr.sr_symbols_f e1 UNION
          sr.sr_symbols_f e2 UNION
          sr.sr_symbols_f conj1))
-`;
+``,
+  METIS_TAC [symb_expr_conj_eq_def, symb_mk_exp_eq_f_sound_def, symb_mk_exp_conj_f_sound_def]
+);
 
 (* predicate for functions that make expressions that represent exactly a symbol *)
-val symb_is_mk_symbexpr_symbol_def = Define `
-  symb_is_mk_symbexpr_symbol sr mk_symbexpr =
-    ((!H symb v.
-       (symb_interpr_get H symb = SOME v) ==>
-       (sr.sr_interpret_f H (mk_symbexpr symb) = SOME v)) /\
-     (!symb. sr.sr_symbols_f (mk_symbexpr symb) = {symb}))
+val symb_mk_exp_symb_f_sound_def = Define `
+    symb_mk_exp_symb_f_sound sr =
+      ((!H symb v.
+         (symb_interpr_get H symb = SOME v) ==>
+         (sr.sr_interpret_f H (sr.sr_mk_exp_symb_f symb) = SOME v)) /\
+       (!symb. sr.sr_symbols_f (sr.sr_mk_exp_symb_f symb) = {symb}))
 `;
 
 val symb_matchstate_IMP_interpret_exp_SOME_thm = store_thm(
@@ -1904,10 +1926,11 @@ val symb_matchstate_ext_IMP_SAME_interpret_exp_thm = store_thm(
 
 val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
    "symb_FRESH_matchstate_IMP_matchstate_ext_thm", ``
-!sr expr_conj_eq mk_symbexpr.
+!sr.
 (symb_symbols_f_sound sr) ==>
-(symb_is_expr_conj_eq sr expr_conj_eq) ==>
-(symb_is_mk_symbexpr_symbol sr mk_symbexpr) ==>
+(symb_mk_exp_conj_f_sound sr) ==>
+(symb_mk_exp_eq_f_sound sr) ==>
+(symb_mk_exp_symb_f_sound sr) ==>
 
 (!var symbexp symb sys sys' H s.
   (~(symb IN symb_interpr_dom H)) ==>
@@ -1915,8 +1938,8 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
 
   ((symb_symbst_store sys) var = SOME symbexp) ==>
   (symb_symbst_pcond_update
-     (expr_conj_eq (mk_symbexpr symb) symbexp)
-     (symb_symbst_store_update var (mk_symbexpr symb) sys)
+     (symb_expr_conj_eq sr (sr.sr_mk_exp_symb_f symb) symbexp)
+     (symb_symbst_store_update var (sr.sr_mk_exp_symb_f symb) sys)
    = sys'
   ) ==>
 
@@ -1947,7 +1970,7 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
   FULL_SIMP_TAC std_ss [] >>
 
   (* now the prerequisites for the store update *)
-  Q.ABBREV_TAC `symbexp' = (mk_symbexpr symb)` >>
+  Q.ABBREV_TAC `symbexp' = (sr.sr_mk_exp_symb_f symb)` >>
   `sr.sr_symbols_f symbexp SUBSET symb_interpr_dom H1` by (
     METIS_TAC
       [symb_matchstate_def, symb_suitable_interpretation_def, symb_interpr_for_symbs_def,
@@ -1955,28 +1978,28 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
   ) >>
   `sr.sr_symbols_f symbexp' SUBSET symb_interpr_dom H1` by (
     METIS_TAC
-      [symb_is_mk_symbexpr_symbol_def, symb_interpr_dom_UPDATE_SOME_thm,
+      [symb_mk_exp_symb_f_sound_def, symb_interpr_dom_UPDATE_SOME_thm,
        INSERT_SING_UNION, SUBSET_UNION]
   ) >>
 
-  `sr.sr_symbols_f symbexp UNION sr.sr_symbols_f (mk_symbexpr symb) SUBSET
+  `sr.sr_symbols_f symbexp UNION sr.sr_symbols_f (sr.sr_mk_exp_symb_f symb) SUBSET
        symb_interpr_dom H1` by (
     METIS_TAC [UNION_SUBSET]
   ) >>
 
   `sr.sr_interpret_f H1 symbexp = sr.sr_interpret_f H1 symbexp'` by (
     METIS_TAC
-      [symb_is_mk_symbexpr_symbol_def, symb_interpr_get_update_id_thm]
+      [symb_mk_exp_symb_f_sound_def, symb_interpr_get_update_id_thm]
   ) >>
 
   (* now the store update *)
-  Q.ABBREV_TAC `sys_i = (symb_symbst_store_update var (mk_symbexpr symb) sys)` >>
+  Q.ABBREV_TAC `sys_i = (symb_symbst_store_update var (sr.sr_mk_exp_symb_f symb) sys)` >>
   `symb_matchstate sr sys_i H1 s` by (
     METIS_TAC [symb_symbst_store_update_IMP_matchstate_EQ_thm]
   ) >>
 
   (* now the prerequisites for the pcond update *)
-  Q.ABBREV_TAC `pcond_f = (expr_conj_eq symbexp' symbexp)` >>
+  Q.ABBREV_TAC `pcond_f = (symb_expr_conj_eq sr symbexp' symbexp)` >>
   Q.ABBREV_TAC `pcond = symb_symbst_pcond sys_i` >>
   `sr.sr_symbols_f pcond SUBSET symb_interpr_dom H1` by (
     METIS_TAC
@@ -1986,7 +2009,7 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
 
   `sr.sr_symbols_f pcond UNION sr.sr_symbols_f (pcond_f pcond) SUBSET
        symb_interpr_dom H1` by (
-    METIS_TAC [UNION_SUBSET, symb_is_expr_conj_eq_def]
+    METIS_TAC [UNION_SUBSET, symb_expr_conj_eq_thm]
   ) >>
 
   `sr.sr_interpret_f H1 pcond = sr.sr_interpret_f H1 (pcond_f pcond)` by (
@@ -1995,10 +2018,10 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
     ) >>
 
     `sr.sr_interpret_f H1 symbexp <> NONE` by (
-      FULL_SIMP_TAC std_ss [symb_is_expr_conj_eq_def]
+      FULL_SIMP_TAC std_ss [symb_expr_conj_eq_thm]
     ) >>
 
-    METIS_TAC [symb_is_expr_conj_eq_def]
+    METIS_TAC [symb_expr_conj_eq_thm]
   ) >>
 
   (* now the the final pcond update *)
@@ -2059,10 +2082,11 @@ val symb_matchstate_ext_WITHOUT_thm = store_thm(
 (* rule to introduce fresh symbols as values of store variables
      (as abbreviations or as first step of forgetting values) *)
 val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
-!sr expr_conj_eq mk_symbexpr.
+!sr.
 (symb_symbols_f_sound sr) ==>
-(symb_is_expr_conj_eq sr expr_conj_eq) ==>
-(symb_is_mk_symbexpr_symbol sr mk_symbexpr) ==>
+(symb_mk_exp_eq_f_sound sr) ==>
+(symb_mk_exp_conj_f_sound sr) ==>
+(symb_mk_exp_symb_f_sound sr) ==>
 
 (!sys L Pi sys2 sys2' var symbexp symb.
   (~(symb IN symb_symbols sr sys )) ==>
@@ -2071,8 +2095,8 @@ val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   ((symb_symbst_store sys2) var = SOME symbexp) ==>
   (symb_symbst_pcond_update
-     (expr_conj_eq (mk_symbexpr symb) symbexp)
-     (symb_symbst_store_update var (mk_symbexpr symb) sys2)
+     (symb_expr_conj_eq sr (sr.sr_mk_exp_symb_f symb) symbexp)
+     (symb_symbst_store_update var (sr.sr_mk_exp_symb_f symb) sys2)
    = sys2'
   ) ==>
   (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2'}))
@@ -2104,16 +2128,11 @@ val symb_rule_FRESH_thm = store_thm("symb_rule_FRESH_thm", ``
   FULL_SIMP_TAC std_ss [symb_minimal_interpretation_def, symb_interpr_for_symbs_min_def] >>
   REV_FULL_SIMP_TAC std_ss [] >>
 
-  ASSUME_TAC (Q.SPECL [`sr`, `expr_conj_eq`, `mk_symbexpr`] symb_FRESH_matchstate_IMP_matchstate_ext_thm) >>
-  FULL_SIMP_TAC std_ss [symb_matchstate_ext_def] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`var`, `symbexp`, `symb`, `sys2`, `H'`, `s'`])) >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
   METIS_TAC
    [symb_FRESH_matchstate_IMP_matchstate_ext_thm,
-    symb_matchstate_ext_def, symb_interpr_ext_TRANS_thm]
+    symb_matchstate_ext_def, symb_interpr_ext_TRANS_thm,
+    symb_FRESH_matchstate_IMP_matchstate_ext_thm,
+    symb_matchstate_ext_def]
 );
 
 
