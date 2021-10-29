@@ -298,6 +298,7 @@ val env_update_cast64_def = Define‘
 ’;
 
 (* Core-local execution *)
+(* TODO: Does this have redundant parameters? *)
 val eval_clstep_read_def = Define‘
   eval_clstep_read p cid s M var mem_e a_e en ty =
    let (sl, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv;
@@ -329,7 +330,7 @@ val eval_clstep_read_def = Define‘
          | _ => []
 ’;
 
-(* TODO: Does this have redundant paramenters? *)
+(* TODO: Does this have redundant parameters? *)
 val eval_clstep_fulfil_def = Define‘
   eval_clstep_fulfil p cid s M var mem_e a_e en v_e =
     let (sl, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv;

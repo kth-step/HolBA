@@ -7,7 +7,7 @@ val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
 val _ = new_theory "spinlock";
 
-val _ = lift_da_and_store_mc_riscv
+val (bir_spinlock_progbin_def, bir_spinlock_prog_def, bir_is_lifted_prog_spinlock) = lift_da_and_store_mc_riscv
           "spinlock"
           "spinlock.da"
           ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000));
