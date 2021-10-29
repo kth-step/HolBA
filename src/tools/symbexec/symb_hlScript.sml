@@ -279,6 +279,22 @@ val symb_interpr_dom_UPDATE_NONE_thm = store_thm(
   METIS_TAC [APPLY_UPDATE_THM]
 );
 
+val symb_interpr_dom_UPDATE_SOME_thm = store_thm(
+   "symb_interpr_dom_UPDATE_SOME_thm", ``
+!H symb vo.
+  symb_interpr_dom (symb_interpr_update H (symb, SOME vo))
+  = symb INSERT (symb_interpr_dom H)
+``,
+  Cases_on `H` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [symb_interpr_update_def, symb_interpr_dom_def, EXTENSION] >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on `x = symb` >> (
+    FULL_SIMP_TAC std_ss [APPLY_UPDATE_THM]
+  )
+);
+
 val symb_interpr_ext_IMP_eq_for_thm = store_thm(
    "symb_interpr_ext_IMP_eq_for_thm", ``
 !H1 H2 symbs.
@@ -1423,26 +1439,13 @@ val symb_rule_STEP_thm = store_thm("symb_rule_STEP_thm", ``
   REWRITE_TAC [symb_step_sound_def, symb_matchstate_ext_def, symb_hl_step_in_L_sound_def, conc_step_n_in_L_def, step_n_in_L_thm] >>
   REPEAT STRIP_TAC >>
 
-  `?sys'. sys' IN Pi /\ symb_matchstate sr sys' H (sr.sr_step_conc s)` by (
-    METIS_TAC []
-  ) >>
-  PAT_X_ASSUM ``!x y. z`` (K ALL_TAC) >>
-
   Q.EXISTS_TAC `SUC 0` >>
   Q.EXISTS_TAC `sr.sr_step_conc s` >>
 
   SIMP_TAC arith_ss [step_n_def, FUNPOW] >>
-
-  `symb_concst_pc s IN L` by (
-    METIS_TAC [symb_matchstate_def]
-  ) >>
-
-  REPEAT STRIP_TAC >| [
-    ASM_REWRITE_TAC []
-  ,
-    METIS_TAC [symb_interpr_ext_id_thm]
-  ]
+  METIS_TAC [symb_interpr_ext_id_thm, symb_matchstate_def]
 );
+
 
 (* TODO: this should go to auxTheory *)
 val SUBSET_of_DIFF_thm = store_thm("SUBSET_of_DIFF_thm",
@@ -1813,12 +1816,16 @@ val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
      then: (v) = (5) /\ (x > 10) *)
 val symb_is_expr_conj_eq_def = Define `
   symb_is_expr_conj_eq sr expr_conj_eq =
-    (!e1 e2 conj1. !H.
+    ((!e1 e2 conj1. !H.
        (sr.sr_interpret_f H (expr_conj_eq e1 e2 conj1) = SOME sr.sr_val_true) =
        ((sr.sr_interpret_f H conj1 = SOME sr.sr_val_true) /\
         (sr.sr_interpret_f H e1 <> NONE) /\
         (sr.sr_interpret_f H e1 =
-         sr.sr_interpret_f H e2)))
+         sr.sr_interpret_f H e2))) /\
+     (!e1 e2 conj1. sr.sr_symbols_f (expr_conj_eq e1 e2 conj1) =
+         sr.sr_symbols_f e1 UNION
+         sr.sr_symbols_f e2 UNION
+         sr.sr_symbols_f conj1))
 `;
 
 (* predicate for functions that make expressions that represent exactly a symbol *)
@@ -1829,6 +1836,49 @@ val symb_is_mk_symbexpr_symbol_def = Define `
        (sr.sr_interpret_f H (mk_symbexpr symb) = SOME v)) /\
      (!symb. sr.sr_symbols_f (mk_symbexpr symb) = {symb}))
 `;
+
+val symb_matchstate_IMP_interpret_exp_SOME_thm = store_thm(
+   "symb_matchstate_IMP_interpret_exp_SOME_thm", ``
+!sr.
+!sys var symbexp H s.
+  (symb_symbst_store sys var = SOME symbexp) ==>
+
+  (symb_matchstate sr sys H s) ==>
+
+  (?v. sr.sr_interpret_f H symbexp = SOME v)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `sys` >>
+  FULL_SIMP_TAC std_ss [symb_symbst_store_def, symb_matchstate_def, symb_interpr_symbstore_def] >>
+
+  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`var`])) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REV_FULL_SIMP_TAC std_ss []
+);
+
+val symb_matchstate_ext_IMP_SAME_interpret_exp_thm = store_thm(
+   "symb_matchstate_ext_IMP_SAME_interpret_exp_thm", ``
+!sr.
+!sys var symbexp H H' s v.
+  (symb_symbst_store sys var = SOME symbexp) ==>
+
+  (symb_interpr_ext H' H) ==>
+  (symb_matchstate sr sys H  s) ==>
+  (symb_matchstate sr sys H' s) ==>
+
+  (sr.sr_interpret_f H  symbexp =
+   sr.sr_interpret_f H' symbexp)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `sys` >>
+  FULL_SIMP_TAC std_ss [symb_symbst_store_def, symb_matchstate_def, symb_interpr_symbstore_def] >>
+
+  REPEAT (PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`var`]))) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss []
+);
 
 val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
    "symb_FRESH_matchstate_IMP_matchstate_ext_thm", ``
@@ -1866,78 +1916,72 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
     METIS_TAC [symb_interpr_ext_matchstate_IMP_matchstate_thm]
   ) >>
 
+  `?var_v. sr.sr_interpret_f H symbexp = SOME var_v` by (
+    METIS_TAC [symb_matchstate_IMP_interpret_exp_SOME_thm]
+  ) >>
+  `sr.sr_interpret_f H1 symbexp = SOME var_v` by (
+    METIS_TAC [symb_matchstate_ext_IMP_SAME_interpret_exp_thm]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  (* now the prerequisites for the store update *)
+  Q.ABBREV_TAC `symbexp' = (mk_symbexpr symb)` >>
+  `sr.sr_symbols_f symbexp SUBSET symb_interpr_dom H1` by (
+    METIS_TAC
+      [symb_matchstate_def, symb_suitable_interpretation_def, symb_interpr_for_symbs_def,
+       symb_symbols_SUBSET_store_exps_thm2, SUBSET_TRANS]
+  ) >>
+  `sr.sr_symbols_f symbexp' SUBSET symb_interpr_dom H1` by (
+    METIS_TAC
+      [symb_is_mk_symbexpr_symbol_def, symb_interpr_dom_UPDATE_SOME_thm,
+       INSERT_SING_UNION, SUBSET_UNION]
+  ) >>
+
   `sr.sr_symbols_f symbexp UNION sr.sr_symbols_f (mk_symbexpr symb) SUBSET
        symb_interpr_dom H1` by (
-    METIS_TAC [mk_symbexpr_def]
+    METIS_TAC [UNION_SUBSET]
   ) >>
 
-  `sr.sr_interpret_f H1 symbexp = sr.sr_interpret_f H1 (mk_symbexpr symb)` by (
-    cheat
+  `sr.sr_interpret_f H1 symbexp = sr.sr_interpret_f H1 symbexp'` by (
+    METIS_TAC
+      [symb_is_mk_symbexpr_symbol_def, symb_interpr_get_update_id_thm]
   ) >>
 
+  (* now the store update *)
   Q.ABBREV_TAC `sys_i = (symb_symbst_store_update var (mk_symbexpr symb) sys)` >>
   `symb_matchstate sr sys_i H1 s` by (
     METIS_TAC [symb_symbst_store_update_IMP_matchstate_EQ_thm]
   ) >>
-(*
-  ASSUME_TAC (Q.SPECL [`sr`, `H1`, `sys`, `sys_i`, `var`, `symbexp`] symb_symbst_store_update_IMP_matchstate_EQ_thm) >>
-  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (SPECL [``(mk_symbexpr (symb:'d)):'e``])) >>
-  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`s`])) >>
-  FULL_SIMP_TAC std_ss [] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-*)
 
-  Q.ABBREV_TAC `pcond_f = (expr_conj_eq (mk_symbexpr symb) symbexp)` >>
+  (* now the prerequisites for the pcond update *)
+  Q.ABBREV_TAC `pcond_f = (expr_conj_eq symbexp' symbexp)` >>
   Q.ABBREV_TAC `pcond = symb_symbst_pcond sys_i` >>
+  `sr.sr_symbols_f pcond SUBSET symb_interpr_dom H1` by (
+    METIS_TAC
+      [symb_matchstate_def, symb_suitable_interpretation_def, symb_interpr_for_symbs_def,
+       symb_symbols_SUBSET_pcond_thm, SUBSET_TRANS]
+  ) >>
+
   `sr.sr_symbols_f pcond UNION sr.sr_symbols_f (pcond_f pcond) SUBSET
        symb_interpr_dom H1` by (
-    cheat
+    METIS_TAC [UNION_SUBSET, symb_is_expr_conj_eq_def]
   ) >>
 
   `sr.sr_interpret_f H1 pcond = sr.sr_interpret_f H1 (pcond_f pcond)` by (
-    cheat
+    `(sr.sr_interpret_f H1 pcond = SOME sr.sr_val_true)` by (
+      METIS_TAC [symb_matchstate_def, symb_interpr_symbpcond_def]
+    ) >>
+
+    `sr.sr_interpret_f H1 symbexp <> NONE` by (
+      FULL_SIMP_TAC std_ss [symb_is_expr_conj_eq_def]
+    ) >>
+
+    METIS_TAC [symb_is_expr_conj_eq_def]
   ) >>
 
+  (* now the the final pcond update *)
   METIS_TAC [symb_symbst_pcond_update_IMP_matchstate_EQ_thm]
 );
-(*
-nothing(
-  `symb_matchstate sr sys H' s` by (
-    METIS_TAC [symb_interpr_ext_matchstate_IMP_matchstate_thm, symb_interpr_extend_symbs_IMP_ext_thm]
-  ) >>
-
-  `symb_interpr_for_symbs
-     ((symb_symbols sr sys ) UNION
-      (symb_symbols sr sys')) H'` by (
-    METIS_TAC
-      ( [symb_interpr_extend_symbs_IMP_for_symbs_thm,
-         symb_suitable_interpretation_SUBSET_dom_thm, symb_matchstate_def]
-       @[symb_interpr_for_symbs_def, SUBSET_TRANS, UNION_SUBSET, SUBSET_UNION])
-  ) >>
-
-  `symb_interpr_for_symbs
-              (sr.sr_symbols_f (symb_symbst_pcond sys) UNION
-               sr.sr_symbols_f symbexp UNION sr.sr_symbols_f symbexp') H'` by (
-    METIS_TAC
-      [symb_interpr_for_symbs_def, UNION_SUBSET, SUBSET_TRANS,
-       symb_symbols_SUBSET_store_exps_thm2,
-       symb_symbols_of_symb_symbst_store_update_SUBSET_store_exps_thm2,
-       symb_symbols_SUBSET_pcond_thm]
-  ) >>
-
-  `sr.sr_symbols_f symbexp UNION sr.sr_symbols_f symbexp' SUBSET
-       symb_interpr_dom H'` by (
-    METIS_TAC [symb_interpr_for_symbs_def, SUBSET_UNION, SUBSET_TRANS, UNION_ASSOC]
-  ) >>
-
-  `symb_interpr_symbpcond sr H' sys` by (
-    METIS_TAC
-      [symb_matchstate_def]
-  ) >>
-
-  METIS_TAC [symb_symbst_store_update_IMP_matchstate_EQ_thm, symb_simplification_def]
-);
-*)
 
 
 val symb_matchstate_ext_WITHOUT_thm = store_thm(
