@@ -45,7 +45,7 @@ val mem_timestamps_def = Define‘
 ’;
   
 val mem_read_view_def = Define‘
-mem_read_view a rk f t = if f.time = t then f.view else t
+mem_read_view a rk (f:fwdb_t) t = if f.time = t then f.view else t
 ’;
 
 (* bir_eval_exp_view behaves like bir_eval_exp except it also computes
@@ -158,7 +158,7 @@ val get_fulfil_args_def = Define`
 (* core-local steps that don't affect memory *)
 val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
 (* read *)
-(!p s s' v a_e cast_opt M l (t:num) v_pre v_post v_addr var (a:num) (rk:num) mem_e en new_env ty cid. (*TODO fix type of a and rk *)
+(!p s s' v e a_e cast_opt M l (t:num) v_pre v_post v_addr var (a:num) (rk:num) new_env cid. (*TODO fix type of a and rk *)
    (bir_get_current_statement p s.bst_pc =
    SOME (BStmtB (BStmt_Assign var e))
  /\ get_read_args e = SOME (a_e, cast_opt)
@@ -183,7 +183,7 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
  ==>
   clstep p cid s M [] s')
 /\ (* fulfil *)
-(!p s s' M v a_e l (t:num) v_pre v_post v_addr v_data var mem_e en v_e cid.
+(!p s s' M v e a_e cast_opt l (t:num) v_pre v_post v_addr v_data var v_e cid.
     ((bir_get_current_statement p s.bst_pc =
       SOME (BStmtB (BStmt_Assign var e)))
  /\ get_fulfil_args e = SOME (a_e, v_e, cast_opt)
