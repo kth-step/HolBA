@@ -19,37 +19,43 @@ RECORD FOR REPRESENTING GENERIC CONCRETE AND SYMBOLIC TRANSITION SYSTEM
 =======================================================
 *)
 val _ = Datatype `symb_concst_t =
-   SymbConcSt 'a_label ('b_var -> 'c_val option)
+   SymbConcSt 'a_label ('b_var -> 'c_val option) 'd_extra
 `;
 val symb_concst_pc_def = Define `
-  symb_concst_pc (SymbConcSt lbl _) = lbl
+  symb_concst_pc (SymbConcSt lbl _ _) = lbl
 `;
 val symb_concst_store_def = Define `
-  symb_concst_store (SymbConcSt _ store) = store
+  symb_concst_store (SymbConcSt _ store _) = store
+`;
+val symb_concst_extra_def = Define `
+  symb_concst_extra (SymbConcSt _ _ extra) = extra
 `;
 (*
 ``SymbConcSt (0w:word64) (K (SOME "hallo"))``
 *)
 
 val _ = Datatype `symb_symbst_t =
-   SymbSymbSt 'a_label ('b_var -> 'c_symbexpr option) 'c_symbexpr
+   SymbSymbSt 'a_label ('b_var -> 'c_symbexpr option) 'c_symbexpr 'd_extra
 `;
 val symb_symbst_pc_def = Define `
-  symb_symbst_pc (SymbSymbSt lbl _ _) = lbl
+  symb_symbst_pc (SymbSymbSt lbl _ _ _) = lbl
 `;
 val symb_symbst_store_def = Define `
-  symb_symbst_store (SymbSymbSt _ store _) = store
+  symb_symbst_store (SymbSymbSt _ store _ _) = store
 `;
 val symb_symbst_store_update_def = Define `
-  symb_symbst_store_update var symbexpr (SymbSymbSt lbl store pcond) =
-    SymbSymbSt lbl ((var =+ (SOME symbexpr)) store) pcond
+  symb_symbst_store_update var symbexpr (SymbSymbSt lbl store pcond extra) =
+    SymbSymbSt lbl ((var =+ (SOME symbexpr)) store) pcond extra
 `;
 val symb_symbst_pcond_def = Define `
-  symb_symbst_pcond (SymbSymbSt _ _ pcond) = pcond
+  symb_symbst_pcond (SymbSymbSt _ _ pcond _) = pcond
 `;
 val symb_symbst_pcond_update_def = Define `
-  symb_symbst_pcond_update pcond_f (SymbSymbSt lbl store pcond) =
-    SymbSymbSt lbl store (pcond_f pcond)
+  symb_symbst_pcond_update pcond_f (SymbSymbSt lbl store pcond extra) =
+    SymbSymbSt lbl store (pcond_f pcond) extra
+`;
+val symb_symbst_extra_def = Define `
+  symb_symbst_extra (SymbSymbSt _ _ _ extra) = extra
 `;
 
 
@@ -66,10 +72,11 @@ val symb_symbst_store_update_UNCHANGED_thm = store_thm(
    "symb_symbst_store_update_UNCHANGED_thm", ``
 !var symbexp sys.
   (symb_symbst_pc (symb_symbst_store_update var symbexp sys) = symb_symbst_pc sys) /\
-  (symb_symbst_pcond (symb_symbst_store_update var symbexp sys) = symb_symbst_pcond sys)
+  (symb_symbst_pcond (symb_symbst_store_update var symbexp sys) = symb_symbst_pcond sys) /\
+  (symb_symbst_extra (symb_symbst_store_update var symbexp sys) = symb_symbst_extra sys)
 ``,
   Cases_on `sys` >>
-  FULL_SIMP_TAC std_ss [symb_symbst_store_update_def, symb_symbst_pc_def, symb_symbst_pcond_def]
+  FULL_SIMP_TAC std_ss [symb_symbst_store_update_def, symb_symbst_pc_def, symb_symbst_pcond_def, symb_symbst_extra_def]
 );
 
 val symb_symbst_pcond_update_READ_thm = store_thm(
@@ -85,10 +92,11 @@ val symb_symbst_pcond_update_UNCHANGED_thm = store_thm(
    "symb_symbst_pcond_update_UNCHANGED_thm", ``
 !pcond_f sys.
   (symb_symbst_pc (symb_symbst_pcond_update pcond_f sys) = symb_symbst_pc sys) /\
-  (symb_symbst_store (symb_symbst_pcond_update pcond_f sys) = symb_symbst_store sys)
+  (symb_symbst_store (symb_symbst_pcond_update pcond_f sys) = symb_symbst_store sys) /\
+  (symb_symbst_extra (symb_symbst_pcond_update pcond_f sys) = symb_symbst_extra sys)
 ``,
   Cases_on `sys` >>
-  FULL_SIMP_TAC std_ss [symb_symbst_pcond_update_def, symb_symbst_pc_def, symb_symbst_store_def]
+  FULL_SIMP_TAC std_ss [symb_symbst_pcond_update_def, symb_symbst_pc_def, symb_symbst_store_def, symb_symbst_extra_def]
 );
 
 
@@ -552,15 +560,15 @@ val _ = Datatype `symb_rec_t =
       (* required symbolic expression building blocks *)
       sr_val_true        : 'c_val;
 
-      sr_mk_exp_symb_f   : 'd_symbol -> 'e_symbexpr;
-      sr_mk_exp_conj_f   : 'e_symbexpr -> 'e_symbexpr -> 'e_symbexpr;
-      sr_mk_exp_eq_f     : 'e_symbexpr -> 'e_symbexpr -> 'e_symbexpr;
+      sr_mk_exp_symb_f   : 'e_symbol -> 'f_symbexpr;
+      sr_mk_exp_conj_f   : 'f_symbexpr -> 'f_symbexpr -> 'f_symbexpr;
+      sr_mk_exp_eq_f     : 'f_symbexpr -> 'f_symbexpr -> 'f_symbexpr;
 
-      sr_subst_f         : ('d_symbol # 'e_symbexpr) -> 'e_symbexpr -> 'e_symbexpr;
+      sr_subst_f         : ('e_symbol # 'f_symbexpr) -> 'f_symbexpr -> 'f_symbexpr;
 
       (* symbols of symbolic exepressions *)
-      sr_symbols_f       : 'e_symbexpr ->
-                           ('d_symbol -> bool);
+      sr_symbols_f       : 'f_symbexpr ->
+                           ('e_symbol -> bool);
 
       (* type business *)
       (* this is needed to enable more nuanced/useful simplifications as well the INST rule *)
@@ -570,34 +578,36 @@ val _ = Datatype `symb_rec_t =
          - require interpret_f to return SOME in case the interpretation contains all symbols_f symbols with correspondingly typed values (needed for INST rule to use semantically defined substitution)
          - may also require interpret_f to return NONE when symbols are missing or are assigned wrongly typed values (possibly not needed)
       *)
-      sr_typeof_val      : 'c_val -> 'f_type;
-      sr_typeof_symb     : 'd_symbol -> 'f_type;
-      (* sr_typeof_exp      : 'e_symbexpr -> 'f_type; *)
+      sr_typeof_val      : 'c_val -> 'g_type;
+      sr_typeof_symb     : 'e_symbol -> 'g_type;
+      (* sr_typeof_exp      : 'f_symbexpr -> 'g_type; *)
       (* need a default value function to be able to assign arbitrary values in CONS and SUBST rule *)
       (* - either do this, or restrict widening and simplifications to subsets of symbols, but not good for widening probably *)
-      sr_ARB_val         : 'f_type -> 'c_val;
+      sr_ARB_val         : 'g_type -> 'c_val;
 
       (* interpretation business, type error produces NONE value *)
-      sr_interpret_f     : (('d_symbol, 'c_val) symb_interpret_t) ->
-                           'e_symbexpr ->
+      sr_interpret_f     : (('e_symbol, 'c_val) symb_interpret_t) ->
+                           'f_symbexpr ->
                            'c_val option;
 
       (* finally, concrete and symbolic executions *)
-      sr_step_conc       : (('a_label, 'b_var, 'c_val) symb_concst_t) ->
-                           (('a_label, 'b_var, 'c_val) symb_concst_t);
+      sr_step_conc       : (('a_label, 'b_var, 'c_val, 'd_extra) symb_concst_t) ->
+                           (('a_label, 'b_var, 'c_val, 'd_extra) symb_concst_t);
 
-      sr_step_symb       : (('a_label, 'b_var, 'e_symbexpr) symb_symbst_t) ->
-                           ((('a_label, 'b_var, 'e_symbexpr) symb_symbst_t) ->
+      sr_step_symb       : (('a_label, 'b_var, 'f_symbexpr, 'd_extra) symb_symbst_t) ->
+                           ((('a_label, 'b_var, 'f_symbexpr, 'd_extra) symb_symbst_t) ->
                            bool);
    |>`;
 
-val symb_rec_t_tm = ``: ('a, 'b, 'c, 'd, 'e, 'f) symb_rec_t``;
-val symb_concst_t_tm = ``: ('a, 'b, 'c) symb_concst_t``;
+val symb_rec_t_tm       = ``: ('a, 'b, 'c, 'd, 'e, 'f, 'g) symb_rec_t``;
+val symb_symbst_t_tm    = ``: ('a, 'b, 'f, 'd) symb_symbst_t``;
+val symb_interpret_t_tm = ``: ('e, 'c) symb_interpret_t``;
+val symb_concst_t_tm    = ``: ('a, 'b, 'c, 'd) symb_concst_t``;
 
 val symb_list_of_types = [
   (*mk_thy_type {Tyop="symb_concst_t",   Thy="scratch", Args=[Type.alpha, Type.beta, Type.gamma]}*)
-  mk_type ("symb_concst_t", [Type.alpha, Type.beta, Type.gamma]),
-  mk_type ("symb_symbst_t", [Type.alpha, Type.beta, Type.gamma]),
+  mk_type ("symb_concst_t", [Type.alpha, Type.beta, Type.gamma, Type.delta]),
+  mk_type ("symb_symbst_t", [Type.alpha, Type.beta, Type.gamma, Type.delta]),
   mk_type ("symb_interpret_t", [Type.alpha, Type.beta])
 ];
 
@@ -1029,11 +1039,15 @@ val symb_minimal_interpretation_EQ_dom_thm = store_thm(
 (l, st)
 *)
 val symb_matchstate_def = Define `
-  symb_matchstate ^(mk_var("sr", symb_rec_t_tm)) sys H ^(mk_var("s", symb_concst_t_tm)) =
+  symb_matchstate ^(mk_var("sr", symb_rec_t_tm))
+                  sys
+                  H
+                  ^(mk_var("s", symb_concst_t_tm)) =
     (symb_suitable_interpretation sr sys H /\
      symb_symbst_pc sys = symb_concst_pc s /\
      symb_interpr_symbstore sr H sys s /\
-     symb_interpr_symbpcond sr H sys)
+     symb_interpr_symbpcond sr H sys /\
+     symb_symbst_extra sys = symb_concst_extra s)
 `;
 
 val symb_interprs_eq_for_matchstate_IMP_matchstate_thm = store_thm(
@@ -1169,10 +1183,13 @@ val symb_matchstate_UNIQUE_thm = store_thm(
     (* first take care of the pc *)
     FULL_SIMP_TAC (std_ss++symb_TYPES_ss)
       [symb_matchstate_def, symb_concst_pc_def, symb_symbst_pc_def]
+  ) >- (
+    (* now the concrete store *)
+    METIS_TAC [symb_concst_store_def, symb_matchstate_UNIQUE_store_thm]
   ) >>
-
-  (* and now the concrete store *)
-  METIS_TAC [symb_concst_store_def, symb_matchstate_UNIQUE_store_thm]
+  (* and now the extra *)
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss)
+    [symb_matchstate_def, symb_concst_extra_def, symb_symbst_extra_def]
 );
 
 (* matching implies matching the restricted interpretation *)
@@ -1641,6 +1658,8 @@ val symb_rule_INF_thm = store_thm("symb_rule_INF_thm", ``
 
 val symb_pcondwiden_def = Define `
   symb_pcondwiden sr sys sys' = (
+    (symb_symbst_extra sys =
+     symb_symbst_extra sys') /\
     (symb_symbst_pc sys =
      symb_symbst_pc sys') /\
     (symb_symbst_store sys =
@@ -1835,9 +1854,6 @@ val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
   METIS_TAC [symb_rule_CONS_S_thm, symb_rule_CONS_E_thm]
 );
 
-(*
-      sr_subst_f         : ('d_symbol # 'e_symbexpr) -> 'e_symbexpr -> 'e_symbexpr;
-*)
 
 (* construct symbolic expression with semantics of
      conjuncting an expression with an equality of two other expressions
