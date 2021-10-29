@@ -107,13 +107,66 @@ val is_write_def = Define`
 /\ is_write BM_ReadWrite = T
 `;
 
+(* Checks if the memory expressions from lifted loads and stores
+ * refers to regular memory or dummy memory. May look inside casts *)
+val contains_dummy_mem_def = Define`
+  (contains_dummy_mem (BExp_Den (BVar mem_name mem_ty)) =
+     if mem_name = "MEM8" (* RISC-V regular memory *)
+     then T
+     else F) /\
+  (contains_dummy_mem (BExp_Load mem_e a_e en ty) =
+     contains_dummy_mem mem_e) /\
+  (contains_dummy_mem (BExp_Store mem_e a_e en v_e) =
+     contains_dummy_mem mem_e) /\
+  (contains_dummy_mem (BExp_Cast cast_ty e imm_ty) =
+     contains_dummy_mem e) /\
+  (contains_dummy_mem _ = F)
+`;
+
+(* Obtains an option type that contains the load arguments
+ * needed to apply the read rule (can look inside one cast) *)
+val get_read_args_def = Define`
+  (get_read_args (BExp_Load mem_e a_e en ty) =
+     SOME (a_e, NONE)) /\
+  (get_read_args (BExp_Cast cast_ty load_e imm_ty) =
+   case get_read_args load_e of
+   | SOME (a_e, NONE) => SOME (a_e, SOME (cast_ty, imm_ty))
+   | _ => NONE) /\
+  (get_read_args _ = NONE)
+`;
+
+(* Obtains an option type that contains the store arguments
+ * needed to apply the fulfil rule (can look inside one cast) *)
+val get_fulfil_args_v_def = Define`
+  (get_fulfil_args_v (BExp_Cast cast_ty v_e imm_ty) =
+   case get_fulfil_args_v v_e of
+   | SOME (v_e', NONE) => SOME (v_e', SOME (cast_ty, imm_ty))
+   | _ => NONE) /\
+  (get_fulfil_args_v (BExp_Den v) = SOME (BExp_Den v, NONE)) /\
+  (get_fulfil_args_v _ = NONE)
+`;
+val get_fulfil_args_def = Define`
+  (get_fulfil_args (BExp_Store mem_e a_e en v_e) =
+   case get_fulfil_args_v v_e of
+   | SOME (v_e, NONE) => SOME (a_e, v_e, NONE)
+   | SOME (v_e', SOME (cast_ty, imm_ty)) => SOME (a_e, v_e', SOME (cast_ty, imm_ty))
+   | _ => NONE) /\
+  (get_fulfil_args _ = NONE)
+`;
+
+(* TODO: "Generalising variable "ν_pre" in clause #0 (113:1-131:23)"? *)
 (* core-local steps that don't affect memory *)
 val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
 (* read *)
-(!p s s' v a_e M l (t:num) v_pre v_post v_addr var (a:num) (rk:num) mem_e en new_env ty cid. (*TODO fix type of a and rk *)
+(!p s s' v a_e cast_opt M l (t:num) v_pre v_post v_addr var (a:num) (rk:num) mem_e en new_env ty cid. (*TODO fix type of a and rk *)
    (bir_get_current_statement p s.bst_pc =
-   SOME (BStmtB (BStmt_Assign var (BExp_Load mem_e a_e en ty)))
+   SOME (BStmtB (BStmt_Assign var e))
+ /\ get_read_args e = SOME (a_e, cast_opt)
+ ∧ ~(contains_dummy_mem e)
  ∧ (SOME l, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv
+(* TODO: Not working, since the read value needs to be cast
+ * (consider the typical case of signed casts from 32 to 64 bits).
+ * Also, endianness? (should be OK for RISC-V) *)
  ∧ mem_read M l t = SOME v
  ∧ v_pre = MAX v_addr s.bst_v_rNew
  ∧ (∀t'. ((t:num) < t' ∧ t' ≤ (MAX ν_pre (s.bst_coh l))) ⇒ (EL t' M).loc ≠ l)
@@ -132,7 +185,9 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
 /\ (* fulfil *)
 (!p s s' M v a_e l (t:num) v_pre v_post v_addr v_data var mem_e en v_e cid.
     ((bir_get_current_statement p s.bst_pc =
-      SOME (BStmtB (BStmt_Assign var (BExp_Store mem_e a_e en v_e))))
+      SOME (BStmtB (BStmt_Assign var e)))
+ /\ get_fulfil_args e = SOME (a_e, v_e, cast_opt)
+ /\ ~(contains_dummy_mem e)
  /\ (SOME l, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv
  /\ (SOME v, v_data) = bir_eval_exp_view v_e s.bst_environ s.bst_viewenv
  /\ MEM t s.bst_prom
@@ -274,6 +329,7 @@ val eval_clstep_read_def = Define‘
          | _ => []
 ’;
 
+(* TODO: Does this have redundant paramenters? *)
 val eval_clstep_fulfil_def = Define‘
   eval_clstep_fulfil p cid s M var mem_e a_e en v_e =
     let (sl, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv;
@@ -299,6 +355,7 @@ val eval_clstep_fulfil_def = Define‘
           | _ => []
 ’;
 
+(* TODO: Redundant parameters *)
 val eval_clstep_fence_def = Define‘
   eval_clstep_fence p cid s M =
   let v = MAX s.bst_v_rOld s.bst_v_wOld
@@ -308,6 +365,7 @@ val eval_clstep_fence_def = Define‘
                bst_pc updated_by bir_pc_next |>]
 ’;
 
+(* TODO: Redundant parameters *)
 val eval_clstep_branch_def = Define‘
   eval_clstep_branch p cid s M stm =
   case stm of
@@ -333,6 +391,7 @@ val eval_clstep_exp_def = Define‘
   | _ => []
 ’;
 
+(* TODO: Redundant parameters *)
 val eval_clstep_bir_step_def = Define‘
   eval_clstep_bir_step p cid s M stm =
    let (oo,s') = bir_exec_stmt p stm s

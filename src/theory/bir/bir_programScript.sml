@@ -80,7 +80,12 @@ val _ = Datatype `bir_inflight_stmt_t = BirInflight string ('a bir_stmt_t)`;
 
 (* forward buffer, part of the core-local state *)
 val fwdb_def = Datatype`
-fwdb_t = <| time : num; view : num; xcl : bool |>
+  fwdb_t = <| time : num; view : num; xcl : bool |>
+`;
+
+(* exclusives bank, part of the core-local state *)
+val xclb_def = Datatype`
+  xclb_t = <| time : num; view : num |>
 `;
 
 val _ = Datatype `bir_state_t = <|
@@ -90,12 +95,18 @@ val _ = Datatype `bir_state_t = <|
   bst_viewenv  : bir_var_t |-> num;
   bst_coh      : bir_val_t -> num;
   bst_v_rOld   : num;
-  bst_v_CAP    : num;
+  bst_v_wOld   : num;
   bst_v_rNew   : num;
   bst_v_wNew   : num;
-  bst_v_wOld   : num;
+  bst_v_CAP    : num;
+  bst_v_Rel    : num;
   bst_prom     : num list;
   bst_fwdb     : bir_val_t -> fwdb_t;
+  (* Exclusivity flag: used when this is not clear from a single
+   * statement (e.g. exclusive loads). Set to false upon every
+   * block transition. *)
+  bst_xcl      : bool;
+  bst_xclb     : xclb_t option;
   bst_inflight : (string bir_inflight_stmt_t) list;
   bst_counter  : num
 |>`;
