@@ -549,15 +549,27 @@ NOTION: INSTANTIATION DATATYPE
 *)
 val _ = Datatype `symb_rec_t =
    <|
+      (* required symbolic expression building blocks *)
       sr_val_true        : 'c_val;
 
+      sr_mk_exp_symb_f   : 'd_symbol -> 'e_symbexpr;
+
+      sr_mk_exp_conj_f   : 'e_symbexpr -> 'e_symbexpr -> 'e_symbexpr;
+
+      sr_mk_exp_eq_f     : 'e_symbexpr -> 'e_symbexpr -> 'e_symbexpr;
+
+      sr_subst_f         : ('d_symbol # 'e_symbexpr) -> 'e_symbexpr -> 'e_symbexpr;
+
+      (* symbols of symbolic exepressions *)
       sr_symbols_f       : 'e_symbexpr ->
                            ('d_symbol -> bool);
 
+      (* interpretation business, type error returns NONE value *)
       sr_interpret_f     : (('d_symbol, 'c_val) symb_interpret_t) ->
                            'e_symbexpr ->
                            'c_val option;
 
+      (* finally, concrete and symbolic executions *)
       sr_step_conc       : (('a_label, 'b_var, 'c_val) symb_concst_t) ->
                            (('a_label, 'b_var, 'c_val) symb_concst_t);
 
@@ -1810,6 +1822,16 @@ val symb_rule_CONS_thm = store_thm("symb_rule_CONS_thm", ``
   METIS_TAC [symb_rule_CONS_S_thm, symb_rule_CONS_E_thm]
 );
 
+(*
+      sr_mk_exp_symb_f   : 'd_symbol -> 'e_symbexpr;
+
+      sr_mk_exp_conj_f   : 'e_symbexpr -> 'e_symbexpr -> 'e_symbexpr;
+
+      sr_mk_exp_eq_f     : 'e_symbexpr -> 'e_symbexpr -> 'e_symbexpr;
+
+      sr_subst_f         : ('d_symbol # 'e_symbexpr) -> 'e_symbexpr -> 'e_symbexpr;
+*)
+
 (* construct symbolic expression with semantics of
      conjuncting an expression with an equality of two other expressions
    e.g.: e1 = (v), e2 = (5), conj1 = (x > 10)
@@ -2213,14 +2235,14 @@ val symb_sound_subst_def = Define `
     symb_sound_subst sr substfun =
     (!symb symb_inst symbexp symbexp_r.
      (!H H' vo.
-        (substfun symb symb_inst symbexp = symbexp_r) ==>
+        (substfun (symb, symb_inst) symbexp = symbexp_r) ==>
         (* NOTICE: this also captures failing interpretation, i.e. type errors *)
         (sr.sr_interpret_f H symb_inst = vo) ==>
         (* just a thought: we may want/need to require vo = SOME v, but I think it's not needed *)
         ((symb_interpr_update H (symb, vo)) = H') ==>
         (sr.sr_interpret_f H' symbexp =
          sr.sr_interpret_f H  symbexp_r)) /\
-     ((substfun symb symb_inst symbexp = symbexp_r) ==>
+     ((substfun (symb, symb_inst) symbexp = symbexp_r) ==>
       (sr.sr_symbols_f symbexp_r = ((sr.sr_symbols_f symbexp) DIFF {symb}) UNION (sr.sr_symbols_f symb_inst)))
     )
 `;
