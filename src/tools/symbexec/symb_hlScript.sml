@@ -2209,19 +2209,23 @@ val symb_rule_SUBST_thm = store_thm("symb_rule_SUBST_thm", ``
 );
 
 
-(*
 val symb_sound_subst_def = Define `
     symb_sound_subst sr substfun =
     (!symb symb_inst symbexp symbexp_r.
-     substfun symb symb_inst symbexp = symbexp_r
-     ==>
-     ((!H. sr.sr_interpret_f (symb_interpr_update H (symb, (sr.sr_interpret_f H symb_inst))) symbexp
-          = sr.sr_interpret_f H symbexp_r) /\
-      (sr.sr_symbols_f symbexp_r = ((sr.sr_symbols_f symbexp) DIFF {symb}) UNION (sr.sr_symbols_f symb_inst))
-     )
+     (!H H' vo.
+        (substfun symb symb_inst symbexp = symbexp_r) ==>
+        (* NOTICE: this also captures failing interpretation, i.e. type errors *)
+        (sr.sr_interpret_f H symb_inst = vo) ==>
+        (* just a thought: we may want/need to require vo = SOME v, but I think it's not needed *)
+        ((symb_interpr_update H (symb, vo)) = H') ==>
+        (sr.sr_interpret_f H' symbexp =
+         sr.sr_interpret_f H  symbexp_r)) /\
+     ((substfun symb symb_inst symbexp = symbexp_r) ==>
+      (sr.sr_symbols_f symbexp_r = ((sr.sr_symbols_f symbexp) DIFF {symb}) UNION (sr.sr_symbols_f symb_inst)))
     )
 `;
 
+(*
 val symb_rule_INST_thm = store_thm("symb_rule_INST_thm", ``
 !sr substfun.
   (symb_sound_subst sr substfun) ==>
