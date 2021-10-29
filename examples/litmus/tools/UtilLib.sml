@@ -46,8 +46,16 @@ fun intersectBy eq _ [] = []
   | intersectBy eq [] _ = []
   | intersectBy eq xs ys = List.filter (fn x => List.exists (fn y => eq(x,y)) ys) xs 
 
-fun transpose xs = map hd xs :: transpose (map tl xs)
-		   handle Empty => []
+fun transpose xs def = 
+    let 
+	fun hd' [] = def
+	  | hd' (x::xs) = x
+	fun tl' [] = []
+	  | tl' (x::xs) = xs
+    in 
+	if List.all null xs then []
+	else map hd' xs :: transpose (map tl' xs) def
+    end
 
 fun trim p s =
     let

@@ -87,8 +87,7 @@ end; (* local *)
 fun regs_of_prog prog =
     let val bvars = gen_vars_of_prog prog
 	val names = map (fst o dest_BVar_string) bvars
-	val regs = List.filter (String.isPrefix "x") names
-    in regs end
+    in List.filter (not o (String.isPrefix "MEM")) names end;
 
 
 fun parse text =
@@ -112,5 +111,11 @@ fun parse text =
 	 progs=progs,
 	 final=final}
     end
+(*
+val filename = "../tests/non-mixed-size/BASIC_2_THREAD/MP+po+addr.litmus"
+val text = bir_fileLib.read_from_file filename;
+val (arch, name, info_sec, init_sec, prog_sec, final_sec) = split_to_sections text
+val progs = parse_prog prog_sec
+*)
 
 end (* herdLitmusLib *)
