@@ -16,7 +16,7 @@ val SUBSET_of_DIFF_thm = store_thm(
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [SUBSET_DEF]
 );
 
-(* should go to BIR auxTheory *)
+(* TODO: should go to BIR auxTheory *)
 val FUNPOW_OPT_SOME_thm = store_thm(
    "FUNPOW_OPT_SOME_thm", ``
 !f g.
@@ -493,6 +493,22 @@ val symb_interpr_ext_IMP_interprs_eq_for_INTER_thm = store_thm(
 ``,
   REWRITE_TAC [symb_interpr_ext_def, symb_interprs_eq_for_INTER_def,
                symb_interprs_eq_for_INTER_symbs_thm]
+);
+
+val symb_interprs_eq_for_INTER_doms_thm = store_thm(
+   "symb_interprs_eq_for_INTER_doms_thm", ``
+!H1 H12 H2 H23 H3.
+  ((symb_interpr_dom H1) INTER ((symb_interpr_dom H3) DIFF (symb_interpr_dom H2)) = EMPTY) ==>
+
+  (symb_interpr_ext H12 H1) ==>
+  (symb_interpr_ext H12 H2) ==>
+
+  (symb_interpr_ext H23 H2) ==>
+  (symb_interpr_ext H23 H3) ==>
+
+  (symb_interprs_eq_for_INTER H1 H3)
+``,
+  METIS_TAC [symb_interpr_ext_IMP_interprs_eq_for_INTER_thm, symb_interprs_eq_for_INTER_TRANS_thm]
 );
 
 
@@ -1080,6 +1096,7 @@ val symb_interprs_eq_for_matchstate_IMP_matchstate_thm = store_thm(
    "symb_interprs_eq_for_matchstate_IMP_matchstate_thm", ``
 !sr.
 !sys H1 H2 s.
+(* TODO: this should work without symb_symbols_f_sound *)
   (symb_symbols_f_sound sr) ==>
 
   (symb_interprs_eq_for H1 H2 (symb_symbols sr sys)) ==>
@@ -1254,6 +1271,7 @@ val symb_interpr_ext_matchstate_IMP_matchstate_thm = store_thm(
    "symb_interpr_ext_matchstate_IMP_matchstate_thm", ``
 !sr.
 !sys H1 H2 s.
+(* TODO: this should work without symb_symbols_f_sound *)
   (symb_symbols_f_sound sr) ==>
 
   (symb_interpr_ext H2 H1) ==>
@@ -1283,6 +1301,51 @@ val symb_interpr_extend_IMP_symb_matchstate_thm = store_thm(
   METIS_TAC [symb_interpr_extend_IMP_ext_thm, symb_interpr_ext_matchstate_IMP_matchstate_thm]
 );
 
+val symb_matchstate_IMP_interpret_exp_SOME_thm = store_thm(
+   "symb_matchstate_IMP_interpret_exp_SOME_thm", ``
+!sr.
+!sys var symbexp H s.
+  (symb_symbst_store sys var = SOME symbexp) ==>
+
+  (symb_matchstate sr sys H s) ==>
+
+  (?v. sr.sr_interpret_f H symbexp = SOME v)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `sys` >>
+  FULL_SIMP_TAC std_ss [symb_symbst_store_def, symb_matchstate_def, symb_interpr_symbstore_def] >>
+
+  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`var`])) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REV_FULL_SIMP_TAC std_ss []
+);
+
+val symb_matchstate_ext_IMP_SAME_interpret_exp_thm = store_thm(
+   "symb_matchstate_ext_IMP_SAME_interpret_exp_thm", ``
+!sr.
+!sys var symbexp H H' s v.
+  (symb_symbst_store sys var = SOME symbexp) ==>
+
+  (symb_interpr_ext H' H) ==>
+  (symb_matchstate sr sys H  s) ==>
+(* TODO: get rid of this second matchstate, alternatively get rid of interpr_ext *)
+  (symb_matchstate sr sys H' s) ==>
+
+  (sr.sr_interpret_f H  symbexp =
+   sr.sr_interpret_f H' symbexp)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `sys` >>
+  FULL_SIMP_TAC std_ss [symb_symbst_store_def, symb_matchstate_def, symb_interpr_symbstore_def] >>
+
+  REPEAT (PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`var`]))) >>
+  FULL_SIMP_TAC std_ss [] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss []
+);
+
+
 
 val symb_matchstate_ext_def = Define `
   symb_matchstate_ext sr sys H s =
@@ -1300,6 +1363,85 @@ val symb_matchstate_ext_w_ext_thm = store_thm(
   (symb_matchstate_ext sr sys H  s)
 ``,
   METIS_TAC [symb_matchstate_ext_def, symb_interpr_ext_TRANS_thm]
+);
+
+val symb_matchstate_interpr_ext_EXISTS_thm = store_thm(
+   "symb_matchstate_interpr_ext_EXISTS_thm", ``
+!sr.
+!H1 H12 H2 H23 H3 sys s.
+  (symb_symbols_f_sound sr) ==>
+
+  ((symb_interpr_dom H1) INTER ((symb_interpr_dom H3) DIFF (symb_interpr_dom H2)) = EMPTY) ==>
+
+  (symb_interpr_ext H12 H1) ==>
+  (symb_interpr_ext H12 H2) ==>
+
+  (symb_interpr_ext H23 H2) ==>
+  (symb_interpr_ext H23 H3) ==>
+
+  (symb_matchstate sr sys H3 s) ==>
+
+  (symb_matchstate_ext sr sys H1 s)
+(* ?H4. symb_interpr_ext H4 H1 /\ symb_matchstate sr sys H4 s) *)
+``,
+  REPEAT STRIP_TAC >>
+
+  (* the intersection of H1 and H3 is equally mapped in both interpretations *)
+  `symb_interprs_eq_for_INTER H1 H3` by (
+    METIS_TAC [symb_interprs_eq_for_INTER_doms_thm]
+  ) >>
+
+  METIS_TAC [symb_interpr_extend_IMP_ext_thm2, symb_interpr_extend_IMP_symb_matchstate_thm, symb_matchstate_ext_def]
+);
+
+val symb_matchstate_ext_WITHOUT_thm = store_thm(
+   "symb_matchstate_ext_WITHOUT_thm", ``
+!sr.
+!sys H s symb.
+  (symb_symbols_f_sound sr) ==>
+
+  (~(symb IN symb_interpr_dom H)) ==>
+  (~(symb IN symb_symbols sr sys)) ==>
+
+  (symb_matchstate_ext sr sys H s) ==>
+
+  (?H'. (symb_interpr_ext H' H) /\
+        (symb_matchstate sr sys H' s) /\
+        (~(symb IN symb_interpr_dom H')))
+``,
+  REWRITE_TAC [symb_matchstate_ext_def] >>
+  REPEAT STRIP_TAC >>
+
+  Q.ABBREV_TAC `H1 = symb_interpr_update H' (symb, NONE)` >>
+  Q.EXISTS_TAC `H1` >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [symb_interpr_update_def, symb_interpr_dom_def, APPLY_UPDATE_THM] >>
+
+  `symb_interprs_eq_for H1 H' (symb_interpr_dom H)` by (
+    `symb_interpr_dom H SUBSET (symb_interpr_dom H' DELETE symb)` by (
+      METIS_TAC
+        [symb_interpr_ext_IMP_dom_thm, SUBSET_DELETE]
+    ) >>
+    METIS_TAC [symb_interpr_eq_for_UPDATE_dom_thm, symb_interprs_eq_for_SUBSET_thm]
+  ) >>
+
+  `symb_interprs_eq_for H' H1 (symb_symbols sr sys)` by (
+    `symb_symbols sr sys SUBSET (symb_interpr_dom H' DELETE symb)` by (
+      METIS_TAC
+        [symb_matchstate_def, symb_suitable_interpretation_def,
+         symb_interpr_for_symbs_def, SUBSET_DELETE]
+    ) >>
+
+  METIS_TAC
+    [symb_interpr_eq_for_UPDATE_dom_thm,
+     symb_interprs_eq_for_SUBSET_thm, symb_interprs_eq_for_COMM_thm]
+  ) >>
+
+  METIS_TAC
+    ( [symb_interpr_ext_def, symb_interprs_eq_for_TRANS_thm]
+     @[symb_interprs_eq_for_matchstate_IMP_matchstate_thm]
+     @[symb_interpr_dom_UPDATE_NONE_thm, ELT_IN_DELETE])
 );
 
 (*
@@ -1504,6 +1646,52 @@ GOAL: INFERENCE RULES
 *)
 
 (* ************************* *)
+(*        RULE AUX           *)
+(* ************************* *)
+
+(* this is a generic theorem for rules that replace a symbolic state in Pi *)
+val symb_rule_TRANSF_GEN_thm = store_thm(
+   "symb_rule_TRANSF_GEN_thm", ``
+!sr.
+!sys L Pi sys2 sys2'.
+  (!H s s'.
+     (symb_minimal_interpretation sr sys H) ==>
+     (symb_matchstate sr sys H s) ==>
+(*
+     (symb_interpr_ext H' H) ==>
+     (symb_matchstate sr sys2 H' s') ==>
+*)
+     (symb_matchstate_ext sr sys2 H s') ==>
+     (symb_matchstate_ext sr sys2' H s')
+  ) ==>
+  (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
+  (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2'}))
+``,
+  REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
+  REPEAT STRIP_TAC >>
+
+  PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys H ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+(* symb_matchstate_ext_def *)
+
+  Cases_on `sys' = sys2` >| [
+    ALL_TAC
+  ,
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+    METIS_TAC []
+  ] >>
+
+  (* the case when we would execute to sys2 *)
+  Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `s'` >>
+  ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+  Q.EXISTS_TAC `sys2'` >>
+  ASM_SIMP_TAC std_ss [] >>
+
+  METIS_TAC []
+);
+
+(* ************************* *)
 (*        RULE STEP          *)
 (* ************************* *)
 val symb_rule_STEP_thm = store_thm(
@@ -1529,53 +1717,6 @@ val symb_rule_STEP_thm = store_thm(
 (* ************************* *)
 (*         RULE SEQ          *)
 (* ************************* *)
-(* TODO: move this up *)
-val symb_interprs_eq_for_INTER_doms_thm = store_thm(
-   "symb_interprs_eq_for_INTER_doms_thm", ``
-!H1 H12 H2 H23 H3.
-  ((symb_interpr_dom H1) INTER ((symb_interpr_dom H3) DIFF (symb_interpr_dom H2)) = EMPTY) ==>
-
-  (symb_interpr_ext H12 H1) ==>
-  (symb_interpr_ext H12 H2) ==>
-
-  (symb_interpr_ext H23 H2) ==>
-  (symb_interpr_ext H23 H3) ==>
-
-  (symb_interprs_eq_for_INTER H1 H3)
-``,
-  METIS_TAC [symb_interpr_ext_IMP_interprs_eq_for_INTER_thm, symb_interprs_eq_for_INTER_TRANS_thm]
-);
-
-(* TODO: move this up *)
-val symb_matchstate_interpr_ext_EXISTS_thm = store_thm(
-   "symb_matchstate_interpr_ext_EXISTS_thm", ``
-!sr.
-!H1 H12 H2 H23 H3 sys s.
-  (symb_symbols_f_sound sr) ==>
-
-  ((symb_interpr_dom H1) INTER ((symb_interpr_dom H3) DIFF (symb_interpr_dom H2)) = EMPTY) ==>
-
-  (symb_interpr_ext H12 H1) ==>
-  (symb_interpr_ext H12 H2) ==>
-
-  (symb_interpr_ext H23 H2) ==>
-  (symb_interpr_ext H23 H3) ==>
-
-  (symb_matchstate sr sys H3 s) ==>
-
-  (symb_matchstate_ext sr sys H1 s)
-(* ?H4. symb_interpr_ext H4 H1 /\ symb_matchstate sr sys H4 s) *)
-``,
-  REPEAT STRIP_TAC >>
-
-  (* the intersection of H1 and H3 is equally mapped in both interpretations *)
-  `symb_interprs_eq_for_INTER H1 H3` by (
-    METIS_TAC [symb_interprs_eq_for_INTER_doms_thm]
-  ) >>
-
-  METIS_TAC [symb_interpr_extend_IMP_ext_thm2, symb_interpr_extend_IMP_symb_matchstate_thm, symb_matchstate_ext_def]
-);
-
 val symb_SEQ_interpr_dom_INTER_thm = store_thm(
    "symb_SEQ_interpr_dom_INTER_thm", ``
 !sr.
@@ -1835,50 +1976,6 @@ val symb_rule_CONS_S_thm = store_thm(
   METIS_TAC [symb_matchstate_interpr_ext_EXISTS_thm, symb_matchstate_ext_def]
 );
 
-(* TODO: move this up *)
-(* this is a generic theorem for rules that replace a symbolic state in Pi *)
-val symb_rule_TRANSF_GEN_thm = store_thm(
-   "symb_rule_TRANSF_GEN_thm", ``
-!sr.
-!sys L Pi sys2 sys2'.
-  (!H s s'.
-     (symb_minimal_interpretation sr sys H) ==>
-     (symb_matchstate sr sys H s) ==>
-(*
-     (symb_interpr_ext H' H) ==>
-     (symb_matchstate sr sys2 H' s') ==>
-*)
-     (symb_matchstate_ext sr sys2 H s') ==>
-     (symb_matchstate_ext sr sys2' H s')
-  ) ==>
-  (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
-  (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2'}))
-``,
-  REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
-  REPEAT STRIP_TAC >>
-
-  PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys H ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H`])) >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-(* symb_matchstate_ext_def *)
-
-  Cases_on `sys' = sys2` >| [
-    ALL_TAC
-  ,
-    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-    METIS_TAC []
-  ] >>
-
-  (* the case when we would execute to sys2 *)
-  Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `s'` >>
-  ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-
-  Q.EXISTS_TAC `sys2'` >>
-  ASM_SIMP_TAC std_ss [] >>
-
-  METIS_TAC []
-);
-
-
 val symb_pcondwiden_TRANSF_matchstate_ext_thm = store_thm(
    "symb_pcondwiden_TRANSF_matchstate_ext_thm", ``
 !sr.
@@ -2002,52 +2099,6 @@ val symb_mk_exp_symb_f_sound_def = Define `
        (!symb. sr.sr_symbols_f (sr.sr_mk_exp_symb_f symb) = {symb}))
 `;
 
-(* TODO: move this up *)
-val symb_matchstate_IMP_interpret_exp_SOME_thm = store_thm(
-   "symb_matchstate_IMP_interpret_exp_SOME_thm", ``
-!sr.
-!sys var symbexp H s.
-  (symb_symbst_store sys var = SOME symbexp) ==>
-
-  (symb_matchstate sr sys H s) ==>
-
-  (?v. sr.sr_interpret_f H symbexp = SOME v)
-``,
-  REPEAT STRIP_TAC >>
-  Cases_on `sys` >>
-  FULL_SIMP_TAC std_ss [symb_symbst_store_def, symb_matchstate_def, symb_interpr_symbstore_def] >>
-
-  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`var`])) >>
-  FULL_SIMP_TAC std_ss [] >>
-  REV_FULL_SIMP_TAC std_ss []
-);
-
-(* TODO: move this up *)
-val symb_matchstate_ext_IMP_SAME_interpret_exp_thm = store_thm(
-   "symb_matchstate_ext_IMP_SAME_interpret_exp_thm", ``
-!sr.
-!sys var symbexp H H' s v.
-  (symb_symbst_store sys var = SOME symbexp) ==>
-
-  (symb_interpr_ext H' H) ==>
-  (symb_matchstate sr sys H  s) ==>
-(* TODO: get rid of this second matchstate, alternatively get rid of interpr_ext *)
-  (symb_matchstate sr sys H' s) ==>
-
-  (sr.sr_interpret_f H  symbexp =
-   sr.sr_interpret_f H' symbexp)
-``,
-  REPEAT STRIP_TAC >>
-  Cases_on `sys` >>
-  FULL_SIMP_TAC std_ss [symb_symbst_store_def, symb_matchstate_def, symb_interpr_symbstore_def] >>
-
-  REPEAT (PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o (Q.SPECL [`var`]))) >>
-  FULL_SIMP_TAC std_ss [] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-
-  FULL_SIMP_TAC std_ss []
-);
-
 (* TODO: split this into two *)
 val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
    "symb_FRESH_matchstate_IMP_matchstate_ext_thm", ``
@@ -2151,58 +2202,6 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
 
   (* now the the final pcond update *)
   METIS_TAC [symb_symbst_pcond_update_IMP_matchstate_EQ_thm]
-);
-
-
-(* TODO: move this up *)
-val symb_matchstate_ext_WITHOUT_thm = store_thm(
-   "symb_matchstate_ext_WITHOUT_thm", ``
-!sr.
-!sys H s symb.
-  (symb_symbols_f_sound sr) ==>
-
-  (~(symb IN symb_interpr_dom H)) ==>
-  (~(symb IN symb_symbols sr sys)) ==>
-
-  (symb_matchstate_ext sr sys H s) ==>
-
-  (?H'. (symb_interpr_ext H' H) /\
-        (symb_matchstate sr sys H' s) /\
-        (~(symb IN symb_interpr_dom H')))
-``,
-  REWRITE_TAC [symb_matchstate_ext_def] >>
-  REPEAT STRIP_TAC >>
-
-  Q.ABBREV_TAC `H1 = symb_interpr_update H' (symb, NONE)` >>
-  Q.EXISTS_TAC `H1` >>
-
-  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
-    [symb_interpr_update_def, symb_interpr_dom_def, APPLY_UPDATE_THM] >>
-
-  `symb_interprs_eq_for H1 H' (symb_interpr_dom H)` by (
-    `symb_interpr_dom H SUBSET (symb_interpr_dom H' DELETE symb)` by (
-      METIS_TAC
-        [symb_interpr_ext_IMP_dom_thm, SUBSET_DELETE]
-    ) >>
-    METIS_TAC [symb_interpr_eq_for_UPDATE_dom_thm, symb_interprs_eq_for_SUBSET_thm]
-  ) >>
-
-  `symb_interprs_eq_for H' H1 (symb_symbols sr sys)` by (
-    `symb_symbols sr sys SUBSET (symb_interpr_dom H' DELETE symb)` by (
-      METIS_TAC
-        [symb_matchstate_def, symb_suitable_interpretation_def,
-         symb_interpr_for_symbs_def, SUBSET_DELETE]
-    ) >>
-
-  METIS_TAC
-    [symb_interpr_eq_for_UPDATE_dom_thm,
-     symb_interprs_eq_for_SUBSET_thm, symb_interprs_eq_for_COMM_thm]
-  ) >>
-
-  METIS_TAC
-    ( [symb_interpr_ext_def, symb_interprs_eq_for_TRANS_thm]
-     @[symb_interprs_eq_for_matchstate_IMP_matchstate_thm]
-     @[symb_interpr_dom_UPDATE_NONE_thm, ELT_IN_DELETE])
 );
 
 val symb_FRESH_TRANSF_matchstate_ext_thm = store_thm(
