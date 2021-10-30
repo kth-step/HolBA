@@ -459,33 +459,22 @@ val symb_minimal_interpretation_EQ_dom_thm = store_thm(
   REWRITE_TAC [symb_minimal_interpretation_def, symb_interpr_for_symbs_min_def]
 );
 
-(* TODO: where to put this? *)
+local
   val symb_rec_t_tm       = ``: ('a, 'b, 'c, 'd, 'e, 'f, 'g) symb_rec_t``;
-  val symb_symbst_t_tm    = ``: ('a, 'b, 'f, 'd) symb_symbst_t``;
-  val symb_interpret_t_tm = ``: ('e, 'c) symb_interpret_t``;
   val symb_concst_t_tm    = ``: ('a, 'b, 'c, 'd) symb_concst_t``;
-(* TODO: this is a copy from symb_typesLib *)
-  val symb_list_of_types = [
-    (*mk_thy_type {Tyop="symb_concst_t",   Thy="scratch", Args=[Type.alpha, Type.beta, Type.gamma]}*)
-    mk_type ("symb_concst_t", [Type.alpha, Type.beta, Type.gamma, Type.delta]),
-    mk_type ("symb_symbst_t", [Type.alpha, Type.beta, Type.gamma, Type.delta]),
-    mk_type ("symb_interpret_t", [Type.alpha, Type.beta])
-  ];
-
-  val symb_TYPES_thms = (flatten (map type_rws symb_list_of_types));
-  val symb_TYPES_ss = rewrites symb_TYPES_thms;
-
-val symb_matchstate_def = Define `
-  symb_matchstate ^(mk_var("sr", symb_rec_t_tm))
-                  sys
-                  H
-                  ^(mk_var("s", symb_concst_t_tm)) =
+in
+  val symb_matchstate_def = Define `
+      symb_matchstate ^(mk_var("sr", symb_rec_t_tm))
+                      sys
+                      H
+                      ^(mk_var("s", symb_concst_t_tm)) =
     (symb_suitable_interpretation sr sys H /\
      symb_symbst_pc sys = symb_concst_pc s /\
      symb_interpr_symbstore sr H sys s /\
      symb_interpr_symbpcond sr H sys /\
      symb_symbst_extra sys = symb_concst_extra s)
 `;
+end;
 
 val symb_symbst_store_update_IMP_matchstate_EQ_thm = store_thm(
    "symb_symbst_store_update_IMP_matchstate_EQ_thm", ``
@@ -563,7 +552,7 @@ val symb_matchstate_UNIQUE_store_thm = store_thm(
 ``,
   REPEAT GEN_TAC >>
   Cases_on `sys` >> Cases_on `s` >> Cases_on `s'` >>
-  FULL_SIMP_TAC (std_ss++symb_TYPES_ss)
+  FULL_SIMP_TAC (std_ss)
     [symb_matchstate_def,
      symb_interpr_symbstore_def, symb_concst_store_def, symb_symbst_store_def] >>
   REPEAT STRIP_TAC >>
@@ -590,18 +579,18 @@ val symb_matchstate_UNIQUE_thm = store_thm(
 ``,
   REPEAT GEN_TAC >>
   Cases_on `s` >> Cases_on `s'` >>
-  FULL_SIMP_TAC (std_ss++symb_TYPES_ss) [] >>
+  FULL_SIMP_TAC (std_ss) (type_rws ``:('a, 'b, 'c, 'd) symb_concst_t``) >>
 
   REPEAT STRIP_TAC >- (
     (* first take care of the pc *)
-    FULL_SIMP_TAC (std_ss++symb_TYPES_ss)
+    FULL_SIMP_TAC (std_ss)
       [symb_matchstate_def, symb_concst_pc_def, symb_symbst_pc_def]
   ) >- (
     (* now the concrete store *)
     METIS_TAC [symb_concst_store_def, symb_matchstate_UNIQUE_store_thm]
   ) >>
   (* and now the extra *)
-  FULL_SIMP_TAC (std_ss++symb_TYPES_ss)
+  FULL_SIMP_TAC (std_ss)
     [symb_matchstate_def, symb_concst_extra_def, symb_symbst_extra_def]
 );
 
