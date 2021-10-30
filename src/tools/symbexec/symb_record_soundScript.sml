@@ -1,0 +1,300 @@
+open HolKernel Parse boolLib bossLib;
+
+open symb_interpretTheory;
+open symb_recordTheory;
+
+open pred_setTheory;
+open combinTheory;
+
+val _ = new_theory "symb_record_sound";
+
+
+(*
+ASSUMPTION: sr_symbols_f
+=======================================================
+*)
+(* the symbols of a symbolic expression are sound if, for any symbolic expression,
+   equal valuation of those in two interpretations implies the same value for the interpretation of the symbolic expression *)
+val symb_symbols_f_sound_def = Define `
+    symb_symbols_f_sound sr =
+    (!symbexp H H'.
+       (symb_interprs_eq_for H H' (sr.sr_symbols_f symbexp)) ==>
+       (sr.sr_interpret_f H  symbexp =
+        sr.sr_interpret_f H' symbexp))
+`;
+
+val symb_symbols_f_sound_thm = store_thm(
+   "symb_symbols_f_sound_thm", ``
+!sr.
+    symb_symbols_f_sound sr =
+    (!symbexp H H'.
+       (!symb. (symb IN (sr.sr_symbols_f symbexp)) ==> (symb_interpr_get H symb = symb_interpr_get H' symb)) ==>
+       (sr.sr_interpret_f H  symbexp =
+        sr.sr_interpret_f H' symbexp))
+``,
+  REWRITE_TAC [symb_symbols_f_sound_def, symb_interprs_eq_for_def]
+);
+
+val symb_interpr_restr_interpret_EQ_thm = store_thm(
+   "symb_interpr_restr_interpret_EQ_thm", ``
+!sr.
+!H symbs symbexp.
+  (symb_symbols_f_sound sr) ==>
+
+  ((sr.sr_symbols_f symbexp) SUBSET symbs) ==>
+
+  (sr.sr_interpret_f H symbexp = sr.sr_interpret_f (symb_interpr_restr symbs H) symbexp)
+``,
+  FULL_SIMP_TAC std_ss [symb_symbols_f_sound_thm] >>
+  METIS_TAC [symb_interpr_restr_thm]
+);
+
+
+(*
+NOTATION: INTERPRETATION OF SYMBOLIC STATES AND SYMBOLIC PATH CONDITIONS
+=======================================================
+*)
+val symb_interprs_eq_for_store_IMP_EQ_thm = store_thm(
+   "symb_interprs_eq_for_store_IMP_EQ_thm", ``
+!sr.
+!H1 H2 sys s.
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_interprs_eq_for H1 H2 (symb_symbols_store sr (symb_symbst_store sys))) ==>
+  ((symb_interpr_symbstore sr H1 sys s) =
+   (symb_interpr_symbstore sr H2 sys s))
+``,
+  FULL_SIMP_TAC std_ss [symb_interpr_symbstore_def] >>
+  REPEAT STRIP_TAC >>
+
+  EQ_TAC >> (
+    REPEAT STRIP_TAC >>
+    PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o (Q.SPEC `var`)) >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    METIS_TAC [symb_symbols_SUBSET_store_exps_thm,
+               symb_symbols_f_sound_def, symb_interprs_eq_for_SUBSET_thm, SUBSET_TRANS]
+  )
+);
+
+val symb_interprs_eq_for_pcond_IMP_EQ_thm = store_thm(
+   "symb_interprs_eq_for_pcond_IMP_EQ_thm", ``
+!sr.
+!H1 H2 sys.
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_interprs_eq_for H1 H2 (sr.sr_symbols_f (symb_symbst_pcond sys))) ==>
+  ((symb_interpr_symbpcond sr H1 sys) =
+   (symb_interpr_symbpcond sr H2 sys))
+``,
+  FULL_SIMP_TAC std_ss [symb_interpr_symbpcond_def] >>
+  METIS_TAC [symb_symbols_SUBSET_pcond_thm,
+             symb_symbols_f_sound_def, symb_interprs_eq_for_SUBSET_thm, SUBSET_TRANS]
+);
+
+
+
+
+(*
+NOTATION: STATE MATCHING UNDER SOUND SYMBOL SETS
+=======================================================
+*)
+
+val symb_interprs_eq_for_matchstate_IMP_matchstate_thm = store_thm(
+   "symb_interprs_eq_for_matchstate_IMP_matchstate_thm", ``
+!sr.
+!sys H1 H2 s.
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_interprs_eq_for H1 H2 (symb_symbols sr sys)) ==>
+  ((symb_matchstate sr sys H1 s) =
+   (symb_matchstate sr sys H2 s))
+``,
+  FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_suitable_interpretation_SUBSET_dom_thm] >>
+  REPEAT STRIP_TAC >>
+
+  EQ_TAC >> (
+    FULL_SIMP_TAC std_ss [] >>
+    REPEAT STRIP_TAC >> (
+      METIS_TAC ( [symb_interprs_eq_for_IMP_dom_thm, symb_interprs_eq_for_COMM_thm]
+                 @[SUBSET_TRANS, symb_interprs_eq_for_SUBSET_thm]
+                 @[symb_symbols_SUBSET_store_thm, symb_interprs_eq_for_store_IMP_EQ_thm]
+                 @[symb_symbols_SUBSET_pcond_thm, symb_interprs_eq_for_pcond_IMP_EQ_thm])
+    )
+  )
+);
+
+(* matching implies matching the restricted interpretation *)
+val symb_matchstate_TO_min_RESTR_thm = store_thm(
+   "symb_matchstate_TO_min_RESTR_thm", ``
+!sr.
+!H sys s.
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_matchstate sr sys H  s) ==>
+
+  (symb_matchstate sr sys (symb_interpr_restr (symb_symbols sr sys) H) s)
+``,
+  METIS_TAC [symb_interpr_restr_IS_eq_for_thm, symb_interprs_eq_for_matchstate_IMP_matchstate_thm]
+);
+
+(* matching implies matching a minimal interpretation *)
+val symb_matchstate_TO_minimal_thm = store_thm(
+   "symb_matchstate_TO_minimal_thm", ``
+!sr.
+!sys H s.
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_matchstate sr sys H s) ==>
+
+  (?H'. (symb_interpr_ext H H')/\
+        (symb_minimal_interpretation sr sys H') /\
+        (symb_matchstate sr sys H' s)
+  )
+``,
+  METIS_TAC [symb_minimal_interpretation_def, symb_matchstate_TO_min_RESTR_thm,
+    symb_interpr_for_symbs_TO_min_thm, symb_matchstate_def, symb_suitable_interpretation_def]
+);
+
+val symb_interpr_ext_matchstate_IMP_matchstate_thm = store_thm(
+   "symb_interpr_ext_matchstate_IMP_matchstate_thm", ``
+!sr.
+!sys H1 H2 s.
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_interpr_ext H2 H1) ==>
+  (symb_matchstate sr sys H1 s) ==>
+  (symb_matchstate sr sys H2 s)
+``,
+  REPEAT STRIP_TAC >>
+
+  `symb_interprs_eq_for H1 H2 (symb_symbols sr sys)` by (
+    FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_suitable_interpretation_SUBSET_dom_thm] >>
+    METIS_TAC [symb_interpr_ext_IMP_eq_for_thm]
+  ) >>
+
+  METIS_TAC [symb_interprs_eq_for_matchstate_IMP_matchstate_thm]
+);
+
+
+val symb_interpr_extend_IMP_symb_matchstate_thm = store_thm(
+   "symb_interpr_extend_IMP_symb_matchstate_thm", ``
+!sr.
+!sys H_extra H_base s.
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_matchstate sr sys H_base s) ==>
+  (symb_matchstate sr sys (symb_interpr_extend H_extra H_base) s)
+``,
+  METIS_TAC [symb_interpr_extend_IMP_ext_thm, symb_interpr_ext_matchstate_IMP_matchstate_thm]
+);
+
+
+
+
+val symb_matchstate_interpr_ext_EXISTS_thm = store_thm(
+   "symb_matchstate_interpr_ext_EXISTS_thm", ``
+!sr.
+!H1 H12 H2 H23 H3 sys s.
+  (symb_symbols_f_sound sr) ==>
+
+  ((symb_interpr_dom H1) INTER ((symb_interpr_dom H3) DIFF (symb_interpr_dom H2)) = EMPTY) ==>
+
+  (symb_interpr_ext H12 H1) ==>
+  (symb_interpr_ext H12 H2) ==>
+
+  (symb_interpr_ext H23 H2) ==>
+  (symb_interpr_ext H23 H3) ==>
+
+  (symb_matchstate sr sys H3 s) ==>
+
+  (symb_matchstate_ext sr sys H1 s)
+(* ?H4. symb_interpr_ext H4 H1 /\ symb_matchstate sr sys H4 s) *)
+``,
+  REPEAT STRIP_TAC >>
+
+  (* the intersection of H1 and H3 is equally mapped in both interpretations *)
+  `symb_interprs_eq_for_INTER H1 H3` by (
+    METIS_TAC [symb_interprs_eq_for_INTER_doms_thm]
+  ) >>
+
+  METIS_TAC [symb_interpr_extend_IMP_ext_thm2, symb_interpr_extend_IMP_symb_matchstate_thm, symb_matchstate_ext_def]
+);
+
+val symb_matchstate_ext_WITHOUT_thm = store_thm(
+   "symb_matchstate_ext_WITHOUT_thm", ``
+!sr.
+!sys H s symb.
+  (symb_symbols_f_sound sr) ==>
+
+  (~(symb IN symb_interpr_dom H)) ==>
+  (~(symb IN symb_symbols sr sys)) ==>
+
+  (symb_matchstate_ext sr sys H s) ==>
+
+  (?H'. (symb_interpr_ext H' H) /\
+        (symb_matchstate sr sys H' s) /\
+        (~(symb IN symb_interpr_dom H')))
+``,
+  REWRITE_TAC [symb_matchstate_ext_def] >>
+  REPEAT STRIP_TAC >>
+
+  Q.ABBREV_TAC `H1 = symb_interpr_update H' (symb, NONE)` >>
+  Q.EXISTS_TAC `H1` >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [symb_interpr_update_def, symb_interpr_dom_def, APPLY_UPDATE_THM] >>
+
+  `symb_interprs_eq_for H1 H' (symb_interpr_dom H)` by (
+    `symb_interpr_dom H SUBSET (symb_interpr_dom H' DELETE symb)` by (
+      METIS_TAC
+        [symb_interpr_ext_IMP_dom_thm, SUBSET_DELETE]
+    ) >>
+    METIS_TAC [symb_interpr_eq_for_UPDATE_dom_thm, symb_interprs_eq_for_SUBSET_thm]
+  ) >>
+
+  `symb_interprs_eq_for H' H1 (symb_symbols sr sys)` by (
+    `symb_symbols sr sys SUBSET (symb_interpr_dom H' DELETE symb)` by (
+      METIS_TAC
+        [symb_matchstate_def, symb_suitable_interpretation_def,
+         symb_interpr_for_symbs_def, SUBSET_DELETE]
+    ) >>
+
+  METIS_TAC
+    [symb_interpr_eq_for_UPDATE_dom_thm,
+     symb_interprs_eq_for_SUBSET_thm, symb_interprs_eq_for_COMM_thm]
+  ) >>
+
+  METIS_TAC
+    ( [symb_interpr_ext_def, symb_interprs_eq_for_TRANS_thm]
+     @[symb_interprs_eq_for_matchstate_IMP_matchstate_thm]
+     @[symb_interpr_dom_UPDATE_NONE_thm, ELT_IN_DELETE])
+);
+
+
+
+
+
+
+
+
+
+(*
+GOAL: SINGLE STEP SOUNDNESS
+=======================================================
+*)
+(* this definition assumes that the concrete transition function is total,
+   if it wasn't we needed more here and also needed to take special care *)
+val symb_step_sound_def = Define `
+  symb_step_sound sr =
+    (!sys Pi.
+     (sr.sr_step_symb sys = Pi) ==>
+     (!s H s'.
+       (symb_matchstate sr sys H s) ==>
+       (sr.sr_step_conc s = s') ==>
+       (?sys'. sys' IN Pi /\ symb_matchstate sr sys' H s')
+     )
+    )
+`;
+
+val _ = export_theory();
