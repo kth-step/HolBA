@@ -415,60 +415,6 @@ val symb_rule_CONS_thm = store_thm(
 (* ************************* *)
 (*        RULE FRESH         *)
 (* ************************* *)
-(* construct symbolic expression with semantics of
-     conjuncting an expression with an equality of two other expressions
-   e.g.: e1 = (v), e2 = (5), conj1 = (x > 10)
-     then: (v) = (5) /\ (x > 10) *)
-val symb_mk_exp_eq_f_sound_def = Define `
-    symb_mk_exp_eq_f_sound sr =
-      ((!e1 e2. !H.
-         (sr.sr_interpret_f H (sr.sr_mk_exp_eq_f e1 e2) = SOME sr.sr_val_true) =
-         ((sr.sr_interpret_f H e1 <> NONE) /\
-          (sr.sr_interpret_f H e1 =
-           sr.sr_interpret_f H e2))) /\
-       (!e1 e2. sr.sr_symbols_f (sr.sr_mk_exp_eq_f e1 e2) =
-         sr.sr_symbols_f e1 UNION sr.sr_symbols_f e2))
-`;
-val symb_mk_exp_conj_f_sound_def = Define `
-    symb_mk_exp_conj_f_sound sr =
-      ((!e1 e2. !H.
-         (sr.sr_interpret_f H (sr.sr_mk_exp_conj_f e1 e2) = SOME sr.sr_val_true) =
-         ((sr.sr_interpret_f H e1 = SOME sr.sr_val_true) /\
-          (sr.sr_interpret_f H e2 = SOME sr.sr_val_true))) /\
-       (!e1 e2. sr.sr_symbols_f (sr.sr_mk_exp_conj_f e1 e2) =
-         sr.sr_symbols_f e1 UNION sr.sr_symbols_f e2))
-`;
-val symb_expr_conj_eq_def = Define `
-    symb_expr_conj_eq sr e1 e2 conj1 =
-      sr.sr_mk_exp_conj_f (sr.sr_mk_exp_eq_f e1 e2) conj1
-`;
-val symb_expr_conj_eq_thm = store_thm(
-   "symb_expr_conj_eq_thm", ``
-!sr.
-  (symb_mk_exp_eq_f_sound sr) ==>
-  (symb_mk_exp_conj_f_sound sr) ==>
-    ((!e1 e2 conj1. !H.
-       (sr.sr_interpret_f H (symb_expr_conj_eq sr e1 e2 conj1) = SOME sr.sr_val_true) =
-       ((sr.sr_interpret_f H conj1 = SOME sr.sr_val_true) /\
-        (sr.sr_interpret_f H e1 <> NONE) /\
-        (sr.sr_interpret_f H e1 =
-         sr.sr_interpret_f H e2))) /\
-     (!e1 e2 conj1.sr.sr_symbols_f (symb_expr_conj_eq sr e1 e2 conj1) =
-         sr.sr_symbols_f e1 UNION
-         sr.sr_symbols_f e2 UNION
-         sr.sr_symbols_f conj1))
-``,
-  METIS_TAC [symb_expr_conj_eq_def, symb_mk_exp_eq_f_sound_def, symb_mk_exp_conj_f_sound_def]
-);
-
-(* predicate for functions that make expressions that represent exactly a symbol *)
-val symb_mk_exp_symb_f_sound_def = Define `
-    symb_mk_exp_symb_f_sound sr =
-      ((!H symb v.
-         (symb_interpr_get H symb = SOME v) ==>
-         (sr.sr_interpret_f H (sr.sr_mk_exp_symb_f symb) = SOME v)) /\
-       (!symb. sr.sr_symbols_f (sr.sr_mk_exp_symb_f symb) = {symb}))
-`;
 
 (* TODO: split this into two *)
 val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
@@ -766,22 +712,6 @@ val symb_rule_SUBST_thm = store_thm(
 (* ************************* *)
 (*        RULE INST          *)
 (* ************************* *)
-val symb_subst_f_sound_def = Define `
-    symb_subst_f_sound sr =
-      (!symb symb_inst symbexp symbexp_r.
-       (!H H' vo.
-          (sr.sr_subst_f (symb, symb_inst) symbexp = symbexp_r) ==>
-          (* NOTICE: this also captures failing interpretation, i.e. type errors *)
-          (sr.sr_interpret_f H symb_inst = vo) ==>
-          (* just a thought: we may want/need to require vo = SOME v, but I think it's not needed *)
-          ((symb_interpr_update H (symb, vo)) = H') ==>
-          (sr.sr_interpret_f H' symbexp =
-           sr.sr_interpret_f H  symbexp_r)) /\
-       ((sr.sr_subst_f (symb, symb_inst) symbexp = symbexp_r) ==>
-        (sr.sr_symbols_f symbexp_r = ((sr.sr_symbols_f symbexp) DIFF {symb}) UNION (sr.sr_symbols_f symb_inst)))
-      )
-`;
-
 (*
 val symb_rule_INST_thm = store_thm(
    "symb_rule_INST_thm", ``
