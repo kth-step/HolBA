@@ -1096,7 +1096,6 @@ val symb_interprs_eq_for_matchstate_IMP_matchstate_thm = store_thm(
    "symb_interprs_eq_for_matchstate_IMP_matchstate_thm", ``
 !sr.
 !sys H1 H2 s.
-(* TODO: this should work without symb_symbols_f_sound *)
   (symb_symbols_f_sound sr) ==>
 
   (symb_interprs_eq_for H1 H2 (symb_symbols sr sys)) ==>
@@ -1271,7 +1270,6 @@ val symb_interpr_ext_matchstate_IMP_matchstate_thm = store_thm(
    "symb_interpr_ext_matchstate_IMP_matchstate_thm", ``
 !sr.
 !sys H1 H2 s.
-(* TODO: this should work without symb_symbols_f_sound *)
   (symb_symbols_f_sound sr) ==>
 
   (symb_interpr_ext H2 H1) ==>
@@ -1326,9 +1324,7 @@ val symb_matchstate_ext_IMP_SAME_interpret_exp_thm = store_thm(
 !sys var symbexp H H' s v.
   (symb_symbst_store sys var = SOME symbexp) ==>
 
-  (symb_interpr_ext H' H) ==>
   (symb_matchstate sr sys H  s) ==>
-(* TODO: get rid of this second matchstate, alternatively get rid of interpr_ext *)
   (symb_matchstate sr sys H' s) ==>
 
   (sr.sr_interpret_f H  symbexp =
