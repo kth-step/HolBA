@@ -106,8 +106,8 @@ val symb_interprs_eq_for_IMP_dom_thm = store_thm(
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interprs_eq_for_def, SUBSET_DEF, symb_interpr_dom_def, symb_interpr_get_def]
 );
 
-val symb_interpr_eq_for_UPDATE_dom_thm = store_thm(
-   "symb_interpr_eq_for_UPDATE_dom_thm", ``
+val symb_interprs_eq_for_UPDATE_dom_thm = store_thm(
+   "symb_interprs_eq_for_UPDATE_dom_thm", ``
 !H symb vo.
   symb_interprs_eq_for (symb_interpr_update H (symb, vo)) H ((symb_interpr_dom H) DELETE symb)
 ``,
