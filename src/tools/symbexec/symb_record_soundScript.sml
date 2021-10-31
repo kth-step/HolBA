@@ -250,7 +250,7 @@ val symb_matchstate_ext_WITHOUT_thm = store_thm(
       METIS_TAC
         [symb_interpr_ext_IMP_dom_thm, SUBSET_DELETE]
     ) >>
-    METIS_TAC [symb_interpr_eq_for_UPDATE_dom_thm, symb_interprs_eq_for_SUBSET_thm]
+    METIS_TAC [symb_interprs_eq_for_UPDATE_dom_thm, symb_interprs_eq_for_SUBSET_thm]
   ) >>
 
   `symb_interprs_eq_for H' H1 (symb_symbols sr sys)` by (
@@ -261,7 +261,7 @@ val symb_matchstate_ext_WITHOUT_thm = store_thm(
     ) >>
 
   METIS_TAC
-    [symb_interpr_eq_for_UPDATE_dom_thm,
+    [symb_interprs_eq_for_UPDATE_dom_thm,
      symb_interprs_eq_for_SUBSET_thm, symb_interprs_eq_for_COMM_thm]
   ) >>
 
