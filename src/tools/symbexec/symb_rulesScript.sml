@@ -441,6 +441,7 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
    "symb_FRESH_matchstate_IMP_matchstate_ext_thm", ``
 !sr.
 (symb_symbols_f_sound sr) ==>
+(symb_typeof_exp_sound sr) ==>
 (symb_mk_exp_conj_f_sound sr) ==>
 (symb_mk_exp_eq_f_sound sr) ==>
 (symb_mk_exp_symb_f_sound sr) ==>
@@ -448,6 +449,8 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
 (!var symbexp symb sys sys' H s.
   (~(symb IN symb_interpr_dom H)) ==>
   (~(symb IN symb_symbols sr sys)) ==>
+
+  (sr.sr_typeof_exp symbexp = SOME (sr.sr_typeof_symb symb)) ==>
 
   ((symb_symbst_store sys) var = SOME symbexp) ==>
   (symb_symbst_pcond_update
@@ -471,7 +474,13 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
   ) >>
   FULL_SIMP_TAC std_ss [] >>
   `symb_interpr_welltyped sr H1` by (
-    cheat
+    `symb_interpr_welltyped sr H` by METIS_TAC [symb_matchstate_def] >>
+    `sr.sr_symbols_f symbexp SUBSET symb_interpr_dom H` by (
+      METIS_TAC
+        [symb_matchstate_def, symb_suitable_interpretation_def,
+         symb_interpr_for_symbs_def, symb_symbols_SUBSET_store_exps_thm2, SUBSET_TRANS]
+    ) >>
+    METIS_TAC [symb_interpr_update_interpret_f_IMP_welltyped_thm]
   ) >>
   `symb_matchstate sr sys H1 s` by (
     METIS_TAC [symb_interpr_ext_matchstate_IMP_matchstate_thm]
@@ -548,6 +557,7 @@ val symb_FRESH_TRANSF_matchstate_ext_thm = store_thm(
    "symb_FRESH_TRANSF_matchstate_ext_thm", ``
 !sr.
 (symb_symbols_f_sound sr) ==>
+(symb_typeof_exp_sound sr) ==>
 (symb_mk_exp_eq_f_sound sr) ==>
 (symb_mk_exp_conj_f_sound sr) ==>
 (symb_mk_exp_symb_f_sound sr) ==>
@@ -555,6 +565,8 @@ val symb_FRESH_TRANSF_matchstate_ext_thm = store_thm(
 (!sys sys2 sys2' var symbexp symb.
   (~(symb IN symb_symbols sr sys )) ==>
   (~(symb IN symb_symbols sr sys2)) ==>
+
+  (sr.sr_typeof_exp symbexp = SOME (sr.sr_typeof_symb symb)) ==>
 
   ((symb_symbst_store sys2) var = SOME symbexp) ==>
   (symb_symbst_pcond_update
@@ -590,6 +602,7 @@ val symb_rule_FRESH_thm = store_thm(
    "symb_rule_FRESH_thm", ``
 !sr.
 (symb_symbols_f_sound sr) ==>
+(symb_typeof_exp_sound sr) ==>
 (symb_mk_exp_eq_f_sound sr) ==>
 (symb_mk_exp_conj_f_sound sr) ==>
 (symb_mk_exp_symb_f_sound sr) ==>
@@ -597,6 +610,8 @@ val symb_rule_FRESH_thm = store_thm(
 (!sys L Pi sys2 sys2' var symbexp symb.
   (~(symb IN symb_symbols sr sys )) ==>
   (~(symb IN symb_symbols sr sys2)) ==>
+
+  (sr.sr_typeof_exp symbexp = SOME (sr.sr_typeof_symb symb)) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   ((symb_symbst_store sys2) var = SOME symbexp) ==>
