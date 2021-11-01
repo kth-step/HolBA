@@ -16,6 +16,21 @@ val _ = Datatype `symb_interpret_t =
 val symb_interpr_get_def = Define `
     symb_interpr_get (SymbInterpret h) symb = h symb
 `;
+
+val symb_interpr_get_CASES_thm = store_thm(
+   "symb_interpr_get_CASES_thm", ``
+!H symb.
+  (?v. symb_interpr_get H symb = SOME v) \/
+  (symb_interpr_get H symb = NONE)
+``,
+  Cases_on `H` >>
+  FULL_SIMP_TAC std_ss [symb_interpr_get_def] >>
+  REPEAT STRIP_TAC >>
+  Cases_on `f symb` >> (
+    METIS_TAC []
+  )
+);
+
 val symb_interpr_update_def = Define `
     symb_interpr_update (SymbInterpret h) (symb, vo) = SymbInterpret ((symb =+ vo) h)
 `;
@@ -26,10 +41,35 @@ val symb_interpr_get_update_id_thm = store_thm(
   Cases_on `H` >>
   METIS_TAC [symb_interpr_get_def, symb_interpr_update_def, APPLY_UPDATE_THM]
 );
+val symb_interpr_get_update_thm = store_thm(
+   "symb_interpr_get_update_thm", ``
+!H symb symb' vo. symb_interpr_get (symb_interpr_update H (symb', vo)) symb =
+if symb = symb' then vo else symb_interpr_get H symb
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `H` >>
+  Cases_on `symb = symb'` >> (
+    METIS_TAC [symb_interpr_get_def, symb_interpr_update_def, APPLY_UPDATE_THM]
+  )
+);
 
 val symb_interpr_dom_def = Define `
     symb_interpr_dom (SymbInterpret h) = {symb | h symb <> NONE}
 `;
+
+val symb_interpr_dom_IMP_get_CASES_thm = store_thm(
+   "symb_interpr_dom_IMP_get_CASES_thm", ``
+!H symb.
+  (symb IN symb_interpr_dom H ==> ?v. symb_interpr_get H symb = SOME v) /\
+  ((~(symb IN symb_interpr_dom H)) ==> symb_interpr_get H symb = NONE)
+``,
+  Cases_on `H` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interpr_get_def, symb_interpr_dom_def] >>
+  REPEAT STRIP_TAC >>
+  Cases_on `f symb` >> (
+    METIS_TAC []
+  )
+);
 
 val symb_interpr_dom_thm = store_thm(
    "symb_interpr_dom_thm", ``
@@ -291,6 +331,30 @@ val symb_interpr_restr_IS_eq_for_thm = store_thm(
   FULL_SIMP_TAC std_ss [symb_interprs_eq_for_def, symb_interpr_restr_def, symb_interpr_get_def]
 );
 
+val symb_interpr_restr_dom_thm = store_thm(
+   "symb_interpr_restr_dom_thm", ``
+!H symbs.
+  (symb_interpr_dom (symb_interpr_restr symbs H) = symb_interpr_dom H INTER symbs)
+``,
+  Cases_on `H` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [symb_interpr_ext_def, symb_interprs_eq_for_def,
+     symb_interpr_restr_def, symb_interpr_get_def, symb_interpr_dom_def,
+     EXTENSION] >>
+  METIS_TAC[]
+);
+
+val symb_interpr_restr_ext_thm = store_thm(
+   "symb_interpr_restr_ext_thm", ``
+!H symbs.
+  (symb_interpr_ext H (symb_interpr_restr symbs H))
+``,
+  Cases_on `H` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [symb_interpr_ext_def, symb_interprs_eq_for_def,
+     symb_interpr_restr_def, symb_interpr_get_def, symb_interpr_dom_def]
+);
+
 val symb_interpr_for_symbs_IMP_restr_thm = store_thm(
    "symb_interpr_for_symbs_IMP_restr_thm", ``
 !H symbs.
@@ -322,7 +386,7 @@ val symb_interpr_restr_thm = store_thm(
 
   (!symb. (symb IN symbs) ==> (symb_interpr_get H symb = symb_interpr_get H' symb))
 ``,
-  FULL_SIMP_TAC std_ss [symb_interpr_restr_def, pred_setTheory.SUBSET_DEF, symb_interpr_get_def]
+  FULL_SIMP_TAC std_ss [symb_interpr_restr_def, SUBSET_DEF, symb_interpr_get_def]
 );
 
 (* can't remove any symbol from a minimal interpretation *)

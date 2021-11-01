@@ -106,6 +106,9 @@ val symb_interprs_eq_for_matchstate_IMP_matchstate_thm = store_thm(
 !sys H1 H2 s.
   (symb_symbols_f_sound sr) ==>
 
+  (symb_interpr_welltyped sr H1) ==>
+  (symb_interpr_welltyped sr H2) ==>
+
   (symb_interprs_eq_for H1 H2 (symb_symbols sr sys)) ==>
   ((symb_matchstate sr sys H1 s) =
    (symb_matchstate sr sys H2 s))
@@ -135,7 +138,8 @@ val symb_matchstate_TO_min_RESTR_thm = store_thm(
 
   (symb_matchstate sr sys (symb_interpr_restr (symb_symbols sr sys) H) s)
 ``,
-  METIS_TAC [symb_interpr_restr_IS_eq_for_thm, symb_interprs_eq_for_matchstate_IMP_matchstate_thm]
+  METIS_TAC [symb_interpr_restr_IS_eq_for_thm, symb_interprs_eq_for_matchstate_IMP_matchstate_thm,
+             symb_interpr_ext_welltyped_IMP_thm, symb_matchstate_def, symb_interpr_restr_ext_thm]
 );
 
 (* matching implies matching a minimal interpretation *)
@@ -164,6 +168,8 @@ val symb_interpr_ext_matchstate_IMP_matchstate_thm = store_thm(
 
   (symb_interpr_ext H2 H1) ==>
   (symb_matchstate sr sys H1 s) ==>
+
+  (symb_interpr_welltyped sr H2) ==>
   (symb_matchstate sr sys H2 s)
 ``,
   REPEAT STRIP_TAC >>
@@ -173,7 +179,7 @@ val symb_interpr_ext_matchstate_IMP_matchstate_thm = store_thm(
     METIS_TAC [symb_interpr_ext_IMP_eq_for_thm]
   ) >>
 
-  METIS_TAC [symb_interprs_eq_for_matchstate_IMP_matchstate_thm]
+  METIS_TAC [symb_interprs_eq_for_matchstate_IMP_matchstate_thm, symb_matchstate_def]
 );
 
 
@@ -183,10 +189,13 @@ val symb_interpr_extend_IMP_symb_matchstate_thm = store_thm(
 !sys H_extra H_base s.
   (symb_symbols_f_sound sr) ==>
 
+  (symb_interpr_welltyped sr H_extra) ==>
+
   (symb_matchstate sr sys H_base s) ==>
   (symb_matchstate sr sys (symb_interpr_extend H_extra H_base) s)
 ``,
-  METIS_TAC [symb_interpr_extend_IMP_ext_thm, symb_interpr_ext_matchstate_IMP_matchstate_thm]
+  METIS_TAC [symb_interpr_extend_IMP_ext_thm, symb_interpr_ext_matchstate_IMP_matchstate_thm,
+             symb_matchstate_def, symb_interpr_extend_welltyped_IMP_thm]
 );
 
 
@@ -197,6 +206,8 @@ val symb_matchstate_interpr_ext_EXISTS_thm = store_thm(
 !sr.
 !H1 H12 H2 H23 H3 sys s.
   (symb_symbols_f_sound sr) ==>
+
+  (symb_interpr_welltyped sr H1) ==>
 
   ((symb_interpr_dom H1) INTER ((symb_interpr_dom H3) DIFF (symb_interpr_dom H2)) = EMPTY) ==>
 
@@ -218,7 +229,8 @@ val symb_matchstate_interpr_ext_EXISTS_thm = store_thm(
     METIS_TAC [symb_interprs_eq_for_INTER_doms_thm]
   ) >>
 
-  METIS_TAC [symb_interpr_extend_IMP_ext_thm2, symb_interpr_extend_IMP_symb_matchstate_thm, symb_matchstate_ext_def]
+  METIS_TAC [symb_interpr_extend_IMP_ext_thm2, symb_interpr_extend_IMP_symb_matchstate_thm,
+             symb_matchstate_def, symb_interpr_extend_welltyped_IMP_thm, symb_matchstate_ext_def]
 );
 
 val symb_matchstate_ext_WITHOUT_thm = store_thm(
@@ -263,6 +275,12 @@ val symb_matchstate_ext_WITHOUT_thm = store_thm(
   METIS_TAC
     [symb_interprs_eq_for_UPDATE_dom_thm,
      symb_interprs_eq_for_SUBSET_thm, symb_interprs_eq_for_COMM_thm]
+  ) >>
+
+  `symb_interpr_welltyped sr H' /\
+   symb_interpr_welltyped sr H1` by (
+    METIS_TAC [symb_matchstate_def,
+      symb_interpr_update_NONE_IMP_welltyped_thm]
   ) >>
 
   METIS_TAC

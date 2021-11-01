@@ -115,18 +115,15 @@ val _ = Datatype `symb_rec_t =
                            ('e_symbol -> bool);
 
       (* type business *)
-      (* this is needed to enable more nuanced/useful simplifications as well the INST rule *)
-      (* probably don't need types for variables, do we need types of expressions? maybe not *)
+      (* this is needed to enable more nuanced/useful simplifications (PART I) as well the INST rule (PART II) *)
       (* val and symb types allow us to have
-         - a notion of well typed-interpretations (use in state matching)
-         - require interpret_f to return SOME in case the interpretation contains all symbols_f symbols with correspondingly typed values (needed for INST rule to use semantically defined substitution)
-         - may also require interpret_f to return NONE when symbols are missing or are assigned wrongly typed values (possibly not needed)
+         - a notion of well typed-interpretations (use in state matching) (PART I)
+         - (PART II) require interpret_f to return SOME in case the interpretation contains all symbols_f symbols with correspondingly typed values (needed for INST rule to use semantically defined substitution) (works only under the assumption that the expression has a type, then the value that is interprets to is of that type)
       *)
       sr_typeof_val      : 'c_val -> 'g_type;
       sr_typeof_symb     : 'e_symbol -> 'g_type;
-      (* sr_typeof_exp      : 'f_symbexpr -> 'g_type; *)
+      sr_typeof_exp      : 'f_symbexpr -> ('g_type option);
       (* need a default value function to be able to assign arbitrary values in CONS and SUBST rule *)
-      (* - either do this, or restrict widening and simplifications to subsets of symbols, but not good for widening probably *)
       sr_ARB_val         : 'g_type -> 'c_val;
 
       (* interpretation business, type error produces NONE value *)
@@ -340,6 +337,99 @@ val symb_symbols_of_symb_symbst_pcond_update_SUBSET2_thm = store_thm(
 );
 
 (*
+NOTATION: WELL-TYPED INTERPRETATION
+=======================================================
+*)
+val symb_interpr_welltyped_def = Define `
+    symb_interpr_welltyped sr H =
+      (!symb.
+         (symb IN symb_interpr_dom H) ==>
+         (?v. symb_interpr_get H symb = SOME v /\
+              sr.sr_typeof_symb symb = sr.sr_typeof_val v))
+`;
+
+val symb_interpr_welltyped_thm = store_thm(
+   "symb_interpr_welltyped_thm", ``
+!sr.
+!H.
+  (symb_interpr_welltyped sr H) =
+  (!symb v.
+    (symb_interpr_get H symb = SOME v) ==>
+    (sr.sr_typeof_symb symb = sr.sr_typeof_val v))
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, symb_interpr_dom_thm] >>
+
+  EQ_TAC >> (
+    REPEAT STRIP_TAC >>
+    Cases_on `symb_interpr_get H symb` >> (
+      FULL_SIMP_TAC std_ss [optionTheory.NOT_NONE_SOME] >>
+      METIS_TAC [optionTheory.option_CLAUSES]
+    )
+  )
+);
+
+val symb_interpr_ext_welltyped_IMP_thm = store_thm(
+   "symb_interpr_ext_welltyped_IMP_thm", ``
+!sr.
+!H1 H2.
+  (symb_interpr_ext H2 H1) ==>
+  (symb_interpr_welltyped sr H2) ==>
+  (symb_interpr_welltyped sr H1)
+``,
+  FULL_SIMP_TAC std_ss [symb_interpr_ext_def, symb_interprs_eq_for_def, symb_interpr_welltyped_def] >>
+  METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm, symb_interpr_dom_thm]
+);
+
+val symb_interpr_extend_welltyped_IMP_thm = store_thm(
+   "symb_interpr_extend_welltyped_IMP_thm", ``
+!sr.
+!H_base H_extra.
+  (symb_interpr_welltyped sr H_base) ==>
+  (symb_interpr_welltyped sr H_extra) ==>
+  (symb_interpr_welltyped sr (symb_interpr_extend H_extra H_base))
+``,
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [symb_interpr_ext_def, symb_interprs_eq_for_def,
+     symb_interpr_welltyped_def, symb_interpr_extend_def,
+     symb_interpr_dom_def, symb_interpr_get_def] >>
+
+  Cases_on `symb IN symb_interpr_dom H_base` >> (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+      [symb_interpr_ext_def, symb_interprs_eq_for_def,
+       symb_interpr_welltyped_def, symb_interpr_extend_def,
+       symb_interpr_dom_def, symb_interpr_get_def]
+  ) >>
+
+  METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm]
+);
+
+val symb_interpr_update_NONE_IMP_welltyped_thm = store_thm(
+   "symb_interpr_update_NONE_IMP_welltyped_thm", ``
+!sr.
+!H symb.
+  (symb_interpr_welltyped sr H) ==>
+  (symb_interpr_welltyped sr (symb_interpr_update H (symb,NONE)))
+``,
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [symb_interpr_welltyped_def, symb_interpr_get_update_thm,
+               symb_interpr_dom_UPDATE_NONE_thm] >>
+  REPEAT STRIP_TAC >>
+  `symb <> symb'` by (
+    METIS_TAC [ELT_IN_DELETE]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def] >>
+  METIS_TAC [DELETE_SUBSET, SUBSET_DEF]
+);
+
+
+
+
+
+(*
 NOTATION: INTERPRETATION OF SYMBOLIC STATES AND SYMBOLIC PATH CONDITIONS
 =======================================================
 *)
@@ -469,6 +559,7 @@ in
                       H
                       ^(mk_var("s", symb_concst_t_tm)) =
     (symb_suitable_interpretation sr sys H /\
+     symb_interpr_welltyped sr H /\
      symb_symbst_pc sys = symb_concst_pc s /\
      symb_interpr_symbstore sr H sys s /\
      symb_interpr_symbpcond sr H sys /\
