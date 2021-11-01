@@ -425,6 +425,23 @@ val symb_interpr_update_NONE_IMP_welltyped_thm = store_thm(
   METIS_TAC [DELETE_SUBSET, SUBSET_DEF]
 );
 
+val symb_interpr_update_SOME_IMP_welltyped_thm = store_thm(
+   "symb_interpr_update_SOME_IMP_welltyped_thm", ``
+!sr.
+!H symb v.
+  (symb_interpr_welltyped sr H) ==>
+  (sr.sr_typeof_symb symb = sr.sr_typeof_val v) ==>
+  (symb_interpr_welltyped sr (symb_interpr_update H (symb, SOME v)))
+``,
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [symb_interpr_welltyped_def, symb_interpr_get_update_thm,
+               symb_interpr_dom_UPDATE_SOME_thm] >>
+  REPEAT STRIP_TAC >>
+  Cases_on `symb = symb'` >> (
+    FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, IN_INSERT]
+  )
+);
+
 
 
 
