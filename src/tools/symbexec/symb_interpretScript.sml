@@ -508,20 +508,20 @@ val symb_interpr_extend_IMP_ext_thm2 = store_thm(
 (* an interpretation extended with arbitrary values *)
 (* ----------------------------------- *)
 val symb_interpr_extend_symbs_def = Define `
-    symb_interpr_extend_symbs symbs H =
+    symb_interpr_extend_symbs valfun symbs H =
     (SymbInterpret (\symb.
       if symb IN (symb_interpr_dom H) then
         symb_interpr_get H symb
       else if symb IN symbs then
-        SOME ARB (* TODO: need to become correctly typed values later *)
+        SOME (valfun symb)
       else
         NONE))
 `;
 
 val symb_interpr_extend_symbs_IMP_ext_thm = store_thm(
    "symb_interpr_extend_symbs_IMP_ext_thm", ``
-!symbs H.
-  (symb_interpr_ext (symb_interpr_extend_symbs symbs H) H)
+!valfun symbs H.
+  (symb_interpr_ext (symb_interpr_extend_symbs valfun symbs H) H)
 ``,
   REPEAT STRIP_TAC >>
   Cases_on `H` >>
@@ -530,8 +530,8 @@ val symb_interpr_extend_symbs_IMP_ext_thm = store_thm(
 
 val symb_interpr_extend_symbs_IMP_for_symbs_thm = store_thm(
    "symb_interpr_extend_symbs_IMP_for_symbs_thm", ``
-!symbs H.
-  (symb_interpr_for_symbs ((symb_interpr_dom H) UNION symbs) (symb_interpr_extend_symbs symbs H))
+!valfun symbs H.
+  (symb_interpr_for_symbs ((symb_interpr_dom H) UNION symbs) (symb_interpr_extend_symbs valfun symbs H))
 ``,
   REPEAT STRIP_TAC >>
   Cases_on `H` >>
