@@ -298,7 +298,7 @@ SOUND VALUE TYPES
 *)
 val symb_ARB_val_sound_def = Define `
     symb_ARB_val_sound sr =
-      (!t. sr. sr_typeof_val (sr.sr_ARB_val t) = t)
+      (!t. sr.sr_typeof_val (sr.sr_ARB_val t) = t)
 `;
 
 val symb_interpr_extend_symbs_sr_def = Define `
@@ -326,6 +326,39 @@ val symb_interpr_extend_symbs_sr_IMP_welltyped_thm = store_thm(
   Cases_on `symb IN symb_interpr_dom H` >> (
     FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, symb_ARB_val_sound_def]
   )
+);
+
+(*
+SOUND EXPRESSION TYPES
+=======================================================
+*)
+val symb_typeof_exp_sound_def = Define `
+    symb_typeof_exp_sound sr =
+      (!e t.
+       (!H.
+          (sr.sr_typeof_exp e = SOME t) ==>
+
+          (symb_interpr_welltyped sr H) ==>
+          (sr.sr_symbols_f e SUBSET symb_interpr_dom H) ==>
+
+          (?v. (sr.sr_interpret_f H e = SOME v) /\
+               (sr.sr_typeof_val v = t))
+       ))
+`;
+
+val symb_interpr_update_interpret_f_IMP_welltyped_thm = store_thm(
+   "symb_interpr_update_interpret_f_IMP_welltyped_thm", ``
+!sr.
+!H symb e.
+  (symb_typeof_exp_sound sr) ==>
+
+  (symb_interpr_welltyped sr H) ==>
+  (sr.sr_symbols_f e SUBSET symb_interpr_dom H) ==>
+  (sr.sr_typeof_exp e = SOME (sr.sr_typeof_symb symb)) ==>
+
+  (symb_interpr_welltyped sr (symb_interpr_update H (symb, sr.sr_interpret_f H e)))
+``,
+  METIS_TAC [symb_interpr_update_SOME_IMP_welltyped_thm, symb_typeof_exp_sound_def]
 );
 
 (*
