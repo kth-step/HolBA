@@ -293,6 +293,42 @@ val symb_matchstate_ext_WITHOUT_thm = store_thm(
 
 
 (*
+SOUND VALUE TYPES
+=======================================================
+*)
+val symb_ARB_val_sound_def = Define `
+    symb_ARB_val_sound sr =
+      (!t. sr. sr_typeof_val (sr.sr_ARB_val t) = t)
+`;
+
+val symb_interpr_extend_symbs_sr_def = Define `
+    symb_interpr_extend_symbs_sr sr =
+      symb_interpr_extend_symbs (\s. sr.sr_ARB_val (sr.sr_typeof_symb s))
+`;
+
+val symb_interpr_extend_symbs_sr_IMP_welltyped_thm = store_thm(
+   "symb_interpr_extend_symbs_sr_IMP_welltyped_thm", ``
+!sr.
+!H symbs.
+  (symb_ARB_val_sound sr) ==>
+
+  (symb_interpr_welltyped sr H) ==>
+  (symb_interpr_welltyped sr (symb_interpr_extend_symbs_sr sr symbs H))
+``,
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [symb_interpr_welltyped_def, symb_interpr_get_update_thm] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [symb_interpr_extend_symbs_sr_def, symb_interpr_extend_symbs_def,
+     symb_interpr_dom_def, symb_interpr_get_def] >>
+
+  Cases_on `symb IN symb_interpr_dom H` >> (
+    FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, symb_ARB_val_sound_def]
+  )
+);
+
+(*
 ASBTRACT EXPRESSION CONSTRUCTION
 =======================================================
 *)
