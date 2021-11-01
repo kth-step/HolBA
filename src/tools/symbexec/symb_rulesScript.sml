@@ -175,6 +175,11 @@ val symb_rule_SEQ_thm = store_thm(
     METIS_TAC [symb_SEQ_interpr_dom_INTER_thm]
   ) >>
 
+  (* don't forget about carrying along well-typedness *)
+  `symb_interpr_welltyped sr H` by (
+    METIS_TAC [symb_matchstate_def]
+  ) >>
+
   (* we can construct an interpretation that both matches this symbolic state
      with the concrete final state and is an extension of the initial interpretation *)
   METIS_TAC [symb_matchstate_interpr_ext_EXISTS_thm, symb_matchstate_ext_def]
@@ -236,6 +241,10 @@ val symb_pcondwiden_matchstate_IMP_matchstate_thm = store_thm(
 ``,
   REPEAT STRIP_TAC >>
   Q.ABBREV_TAC `H' = (symb_interpr_extend_symbs (symb_symbols sr sys') H)` >>
+
+  `symb_interpr_welltyped sr H'` by (
+    cheat
+  ) >>
 
   `symb_matchstate sr sys H' s` by (
     METIS_TAC [symb_interpr_ext_matchstate_IMP_matchstate_thm, symb_interpr_extend_symbs_IMP_ext_thm]
@@ -344,6 +353,9 @@ val symb_rule_CONS_S_thm = store_thm(
   `(symb_interpr_dom H1) INTER ((symb_interpr_dom H3) DIFF (symb_interpr_dom H2)) = EMPTY` by (
     METIS_TAC [symb_SEQ_interpr_dom_INTER_thm]
   ) >>
+  `symb_interpr_welltyped sr H1` by (
+    cheat
+  ) >>
   METIS_TAC [symb_matchstate_interpr_ext_EXISTS_thm, symb_matchstate_ext_def]
 );
 
@@ -450,6 +462,9 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
     METIS_TAC [symb_interpr_ext_UPDATE_thm]
   ) >>
   FULL_SIMP_TAC std_ss [] >>
+  `symb_interpr_welltyped sr H1` by (
+    cheat
+  ) >>
   `symb_matchstate sr sys H1 s` by (
     METIS_TAC [symb_interpr_ext_matchstate_IMP_matchstate_thm]
   ) >>
@@ -622,6 +637,10 @@ val symb_simplification_matchstate_IMP_matchstate_thm = store_thm(
   (symb_matchstate sr sys' H' s)
 ``,
   REPEAT STRIP_TAC >>
+
+  `symb_interpr_welltyped sr H'` by (
+    cheat
+  ) >>
 
   `symb_matchstate sr sys H' s` by (
     METIS_TAC [symb_interpr_ext_matchstate_IMP_matchstate_thm, symb_interpr_extend_symbs_IMP_ext_thm]
