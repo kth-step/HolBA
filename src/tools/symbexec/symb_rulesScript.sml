@@ -763,11 +763,15 @@ val symb_rule_SUBST_thm = store_thm(
 val symb_rule_INST_thm = store_thm(
    "symb_rule_INST_thm", ``
 !sr.
+!sys L Pi symb symb_inst.
+  (symb_typeof_exp_sound sr) ==>
   (symb_subst_f_sound sr) ==>
 
-!sys L Pi symb symb_inst.
+  (symb IN symb_symbols sr sys) ==>
+  (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
+
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
-  (symb_hl_step_in_L_sound sr (substfun_st symb symb_inst sys, L, substfun_sts symb symb_inst Pi))
+  (symb_hl_step_in_L_sound sr (symb_subst sr (symb, symb_inst) sys, L, symb_subst_set sr (symb, symb_inst) Pi))
 ``,
   cheat
 );
