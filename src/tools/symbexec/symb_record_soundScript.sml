@@ -57,12 +57,12 @@ NOTATION: INTERPRETATION OF SYMBOLIC STATES AND SYMBOLIC PATH CONDITIONS
 val symb_interprs_eq_for_store_IMP_EQ_thm = store_thm(
    "symb_interprs_eq_for_store_IMP_EQ_thm", ``
 !sr.
-!H1 H2 sys s.
+!H1 H2 store cstore.
   (symb_symbols_f_sound sr) ==>
 
-  (symb_interprs_eq_for H1 H2 (symb_symbols_store sr (symb_symbst_store sys))) ==>
-  ((symb_interpr_symbstore sr H1 sys s) =
-   (symb_interpr_symbstore sr H2 sys s))
+  (symb_interprs_eq_for H1 H2 (symb_symbols_store sr store)) ==>
+  ((symb_interpr_symbstore sr H1 store cstore) =
+   (symb_interpr_symbstore sr H2 store cstore))
 ``,
   FULL_SIMP_TAC std_ss [symb_interpr_symbstore_def] >>
   REPEAT STRIP_TAC >>
@@ -430,21 +430,175 @@ ASBTRACT SUBSTITUTION OF SYMBOLS FOR EXPRESSIONS IN EXPRESSIONS
 val symb_subst_f_sound_def = Define `
     symb_subst_f_sound sr =
       (!symb symb_inst symbexp symbexp_r.
-       (!H H' vo.
+       (!H H' v.
+          (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
           (sr.sr_subst_f (symb, symb_inst) symbexp = symbexp_r) ==>
-          (* NOTICE: this also captures failing interpretation, i.e. type errors *)
-          (sr.sr_interpret_f H symb_inst = vo) ==>
-          (* just a thought: we may want/need to require vo = SOME v, but I think it's not needed *)
-          ((symb_interpr_update H (symb, vo)) = H') ==>
-          (sr.sr_interpret_f H' symbexp =
-           sr.sr_interpret_f H  symbexp_r)) /\
+          (* btw., this means that: "sr.sr_typeof_exp symbexp = sr.sr_typeof_exp symbexp_r" *)
+
+          (sr.sr_interpret_f H symb_inst = SOME v) ==>
+          ((symb_interpr_update H (symb, SOME v)) = H') ==>
+
+          (sr.sr_interpret_f H  symbexp_r =
+           sr.sr_interpret_f H' symbexp)) /\
        ((sr.sr_subst_f (symb, symb_inst) symbexp = symbexp_r) ==>
         (sr.sr_symbols_f symbexp_r = ((sr.sr_symbols_f symbexp) DIFF {symb}) UNION (sr.sr_symbols_f symb_inst)))
       )
 `;
 
+val symb_subst_store_sound_thm = store_thm(
+   "symb_subst_store_sound_thm", ``
+!sr.
+!H H' symb symb_inst store store_r cstore v.
+  (symb_subst_f_sound sr) ==>
+
+  (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
+  (symb_subst_store sr (symb, symb_inst) store = store_r) ==>
+
+  (sr.sr_interpret_f H symb_inst = SOME v) ==>
+  ((symb_interpr_update H (symb, SOME v)) = H') ==>
+
+  (symb_interpr_symbstore sr H  store_r cstore =
+   symb_interpr_symbstore sr H' store   cstore)
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [symb_subst_store_thm, symb_interpr_symbstore_def] >>
+
+  EQ_TAC >> (
+    REPEAT STRIP_TAC >>
+    Cases_on `store' var` >- (
+      METIS_TAC [symb_subst_store_thm, optionTheory.option_CLAUSES]
+    ) >>
+
+    `store_r var = SOME (sr.sr_subst_f (symb,symb_inst) x)` by (
+      METIS_TAC [symb_subst_store_thm]
+    ) >>
+    FULL_SIMP_TAC std_ss [symb_subst_store_thm, symb_interpr_symbstore_def] >>
+
+    `sr.sr_interpret_f H (sr.sr_subst_f (symb,symb_inst) x) = sr.sr_interpret_f H' x` by (
+      METIS_TAC [symb_subst_f_sound_def]
+    ) >>
+
+    METIS_TAC [optionTheory.option_CLAUSES]
+  )
+);
+
+val symb_subst_suitable_interpretation_thm = store_thm(
+   "symb_subst_suitable_interpretation_thm", ``
+!sr.
+!sys H symb symb_inst.
+  (symb_subst_f_sound sr) ==>
+
+  (sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H) ==>
+  (symb_suitable_interpretation sr sys H) ==>
+  (symb_suitable_interpretation sr (symb_subst sr (symb,symb_inst) sys) H)
+``,
+  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def,
+     symb_interpr_for_symbs_def, symb_symbols_def] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `sys` >>
+  FULL_SIMP_TAC std_ss [symb_subst_def, symb_symbst_pcond_def, symb_symbst_store_def] >>
+
+  `symb_symbols_store sr (symb_subst_store sr (symb,symb_inst) f) SUBSET
+        symb_interpr_dom H` by (
+    cheat
+  ) >>
+
+  `sr.sr_symbols_f (sr.sr_subst_f (symb,symb_inst) c) SUBSET
+        symb_interpr_dom H` by (
+    `(sr.sr_symbols_f c DIFF {symb} UNION sr.sr_symbols_f symb_inst) SUBSET symb_interpr_dom H` by (
+      METIS_TAC [UNION_SUBSET, DIFF_SUBSET, SUBSET_TRANS]
+    ) >>
+    METIS_TAC [symb_subst_f_sound_def]
+  ) >>
+
+  METIS_TAC [UNION_SUBSET]
+);
+
+val symb_subst_suitable_interpretation_thm2 = store_thm(
+   "symb_subst_suitable_interpretation_thm2", ``
+!sr.
+!sys H symb symb_inst.
+  (symb_subst_f_sound sr) ==>
+
+  (symb IN symb_interpr_dom H) ==>
+  (symb_suitable_interpretation sr (symb_subst sr (symb,symb_inst) sys) H) ==>
+  (symb_suitable_interpretation sr sys H)
+``,
+  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def,
+     symb_interpr_for_symbs_def, symb_symbols_def] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `sys` >>
+  FULL_SIMP_TAC std_ss [symb_subst_def, symb_symbst_pcond_def, symb_symbst_store_def, UNION_SUBSET] >>
+
+  STRIP_TAC >- (
+    cheat
+  ) >>
+
+  `(sr.sr_symbols_f c DIFF {symb} UNION sr.sr_symbols_f symb_inst) SUBSET symb_interpr_dom H` by (
+    METIS_TAC [symb_subst_f_sound_def]
+  ) >>
+  FULL_SIMP_TAC std_ss [UNION_SUBSET, GSYM DELETE_DEF, GSYM SUBSET_INSERT_DELETE] >>
+  METIS_TAC [SUBSET_REFL, SUBSET_TRANS, INSERT_SUBSET]
+);
 
 
+val symb_subst_sound_thm = store_thm(
+   "symb_subst_sound_thm", ``
+!sr.
+!H H' symb symb_inst sys sys_r s v v'.
+  (symb_typeof_exp_sound sr) ==>
+  (symb_subst_f_sound sr) ==>
+
+  (sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H) ==>
+  (symb_interpr_get H symb = SOME v') ==>
+  (sr.sr_typeof_symb symb = sr.sr_typeof_val v') ==>
+
+  (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
+  (symb_subst sr (symb, symb_inst) sys = sys_r) ==>
+
+  (sr.sr_interpret_f H symb_inst = SOME v) ==>
+  ((symb_interpr_update H (symb, SOME v)) = H') ==>
+
+  (symb_matchstate sr sys_r H  s =
+   symb_matchstate sr sys   H' s)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `sys_r` >>
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_subst_def, symb_matchstate_def] >>
+
+  `symb IN symb_interpr_dom H` by (
+    METIS_TAC [symb_interpr_dom_thm, optionTheory.option_CLAUSES]
+  ) >>
+
+  EQ_TAC >> (
+    FULL_SIMP_TAC std_ss [symb_symbst_pc_def, symb_symbst_extra_def,
+        symb_symbst_store_def] >>
+    STRIP_TAC >>
+    REPEAT STRIP_TAC >| [
+      ALL_TAC
+    ,
+      METIS_TAC [symb_interpr_update_interpret_f_IMP_welltyped_thm,
+                 symb_interpr_update_SOME_IMP_welltyped_thm2]
+    ,
+      METIS_TAC [symb_subst_store_sound_thm]
+    ,
+      METIS_TAC [symb_interpr_symbpcond_def, symb_subst_f_sound_def, symb_symbst_pcond_def]
+    ]
+  ) >- (
+    `symb_suitable_interpretation sr sys H` by (
+      METIS_TAC [symb_subst_def, symb_subst_suitable_interpretation_thm2]
+    ) >>
+    METIS_TAC [symb_suitable_interpretation_UPDATE_SOME_thm]
+  ) >>
+
+  `symb_suitable_interpretation sr sys H` by (
+    METIS_TAC [symb_suitable_interpretation_UPDATE_SOME_thm2]
+  ) >>
+
+  METIS_TAC [symb_subst_def, symb_subst_suitable_interpretation_thm]
+);
 
 
 
