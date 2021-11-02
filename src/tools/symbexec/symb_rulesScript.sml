@@ -189,12 +189,25 @@ val symb_rule_SEQ_thm = store_thm(
 (* ************************* *)
 (*         RULE INF          *)
 (* ************************* *)
+val symb_pcondinf_def = Define `
+    symb_pcondinf sr sys =
+  (!H.
+    (symb_interpr_welltyped sr H) ==>
+    (symb_interpr_for_symbs (sr.sr_symbols_f (symb_symbst_pcond sys)) H) ==>
+    ~(symb_interpr_symbpcond sr H sys)
+  )
+`;
+
+
+
 val symb_rule_INF_thm = store_thm(
    "symb_rule_INF_thm", ``
 !sr.
 !sys L Pi sys'.
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
-  (!H. ~(symb_interpr_symbpcond sr H sys')) ==>
+
+  (symb_pcondinf sr sys') ==>
+
   (symb_hl_step_in_L_sound sr (sys, L, Pi DIFF {sys'}))
 ``,
   REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
@@ -204,9 +217,16 @@ val symb_rule_INF_thm = store_thm(
   REV_FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_matchstate_ext_def] >>
 
   SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-  Cases_on `sys' = sys''` >> (
-    METIS_TAC []
-  )
+  Cases_on `sys' = sys''` >- (
+    `(symb_interpr_for_symbs (sr.sr_symbols_f (symb_symbst_pcond sys')) H')` by (
+      METIS_TAC [symb_suitable_interpretation_def, SUBSET_TRANS,
+        symb_interpr_for_symbs_def, symb_symbols_SUBSET_pcond_thm]
+    ) >>
+
+    METIS_TAC [symb_pcondinf_def]
+  ) >>
+
+  METIS_TAC []
 );
 
 
@@ -214,7 +234,7 @@ val symb_rule_INF_thm = store_thm(
 (*        RULE CONS          *)
 (* ************************* *)
 val symb_pcondwiden_def = Define `
-  symb_pcondwiden sr sys sys' = (
+    symb_pcondwiden sr sys sys' = (
     (symb_symbst_extra sys =
      symb_symbst_extra sys') /\
     (symb_symbst_pc sys =
