@@ -242,6 +242,7 @@ val symb_pcondwiden_def = Define `
     (symb_symbst_store sys =
      symb_symbst_store sys') /\
     (!H.
+      (symb_interpr_welltyped sr H) ==>
       (symb_interpr_for_symbs ((sr.sr_symbols_f (symb_symbst_pcond sys)) UNION (sr.sr_symbols_f (symb_symbst_pcond sys'))) H) ==>
       (symb_interpr_symbpcond sr H sys) ==>
       (symb_interpr_symbpcond sr H sys'))
@@ -628,12 +629,15 @@ val symb_rule_FRESH_thm = store_thm(
 (symb_mk_exp_symb_f_sound sr) ==>
 
 (!sys L Pi sys2 sys2' var symbexp symb.
+  (* the symbol has to be fresh where it matters *)
   (~(symb IN symb_symbols sr sys )) ==>
   (~(symb IN symb_symbols sr sys2)) ==>
 
+  (* the symbol we choose has to be associated with the right type *)
   (sr.sr_typeof_exp symbexp = SOME (sr.sr_typeof_symb symb)) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
+
   ((symb_symbst_store sys2) var = SOME symbexp) ==>
   (symb_symbst_pcond_update
      (symb_expr_conj_eq sr (sr.sr_mk_exp_symb_f symb) symbexp)
@@ -652,14 +656,15 @@ val symb_rule_FRESH_thm = store_thm(
 (* ************************* *)
 val symb_simplification_def = Define `
   symb_simplification sr sys symbexp symbexp' =
-    (* (((sr.sr_symbols_f symbexp') SUBSET (sr.sr_symbols_f symbexp)) /\ *)
     (!H.
-     (symb_interpr_for_symbs ((sr.sr_symbols_f (symb_symbst_pcond sys)) UNION
-                              (sr.sr_symbols_f symbexp) UNION
-                              (sr.sr_symbols_f symbexp')) H) ==>
+       (symb_interpr_welltyped sr H) ==>
+       (symb_interpr_for_symbs
+            ((sr.sr_symbols_f (symb_symbst_pcond sys)) UNION
+             (sr.sr_symbols_f symbexp) UNION
+             (sr.sr_symbols_f symbexp')) H) ==>
 
-     (symb_interpr_symbpcond sr H sys) ==>
-     (sr.sr_interpret_f H symbexp = sr.sr_interpret_f H symbexp')
+       (symb_interpr_symbpcond sr H sys) ==>
+       (sr.sr_interpret_f H symbexp = sr.sr_interpret_f H symbexp')
     )
 `;
 
@@ -767,9 +772,11 @@ val symb_rule_SUBST_thm = store_thm(
   (symb_ARB_val_sound sr) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
+
   ((symb_symbst_store sys2) var = SOME symbexp) ==>
   (symb_simplification sr sys2 symbexp symbexp') ==>
   (sys2' = symb_symbst_store_update var symbexp' sys2) ==>
+
   (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2'}))
 ``,
   METIS_TAC [symb_rule_TRANSF_GEN_thm, symb_simplification_TRANSF_matchstate_ext_thm]
