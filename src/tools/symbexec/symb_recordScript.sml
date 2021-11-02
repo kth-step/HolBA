@@ -442,6 +442,30 @@ val symb_interpr_update_SOME_IMP_welltyped_thm = store_thm(
   )
 );
 
+val symb_interpr_update_SOME_IMP_welltyped_thm2 = store_thm(
+   "symb_interpr_update_SOME_IMP_welltyped_thm2", ``
+!sr.
+!H symb vo v.
+  (symb_interpr_get H symb = SOME v) ==>
+  (symb_interpr_welltyped sr (symb_interpr_update H (symb, vo))) ==>
+  (sr.sr_typeof_symb symb = sr.sr_typeof_val v) ==>
+  (symb_interpr_welltyped sr H)
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, symb_interpr_get_update_thm] >>
+  REPEAT STRIP_TAC >>
+  Cases_on `symb = symb'` >> (
+    FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, IN_INSERT]
+  ) >>
+
+  Cases_on `vo` >> (
+    FULL_SIMP_TAC std_ss [symb_interpr_dom_UPDATE_NONE_thm,
+       symb_interpr_dom_UPDATE_SOME_thm, IN_DELETE, IN_INSERT]
+  ) >>
+
+  METIS_TAC []
+);
+
 
 
 
@@ -451,37 +475,26 @@ NOTATION: INTERPRETATION OF SYMBOLIC STATES AND SYMBOLIC PATH CONDITIONS
 =======================================================
 *)
 val symb_interpr_symbstore_def = Define `
-  symb_interpr_symbstore sr H sys s =
-    (!var. (symb_symbst_store sys var <> NONE \/ symb_concst_store s var <> NONE) ==>
+  symb_interpr_symbstore sr H store cstore =
+    (!var. (store var <> NONE \/ cstore var <> NONE) ==>
          ?symbexp v.
-            symb_symbst_store sys var = SOME symbexp /\
-            symb_concst_store s var = SOME v /\
+            store  var = SOME symbexp /\
+            cstore var = SOME v /\
             sr.sr_interpret_f H symbexp = SOME v)
 `;
-
-val symb_symbst_store_IMP_EQ_thm = store_thm(
-   "symb_symbst_store_IMP_EQ_thm", ``
-!sr.
-!H sys1 sys2 s.
-  (symb_symbst_store sys1 = symb_symbst_store sys2) ==>
-  ((symb_interpr_symbstore sr H sys1 s) =
-   (symb_interpr_symbstore sr H sys2 s))
-``,
-  FULL_SIMP_TAC std_ss [symb_interpr_symbstore_def]
-);
 
 val symb_symbst_store_update_IMP_EQ_thm = store_thm(
    "symb_symbst_store_update_IMP_EQ_thm", ``
 !sr.
-!H sys1 sys2 var symbexp symbexp' s.
+!H sys1 sys2 var symbexp symbexp' cstore.
   ((symb_symbst_store sys1) var = SOME symbexp) ==>
   (sys2 = symb_symbst_store_update var symbexp' sys1) ==>
 
   (sr.sr_interpret_f H symbexp =
    sr.sr_interpret_f H symbexp') ==>
 
-  ((symb_interpr_symbstore sr H sys1 s) =
-   (symb_interpr_symbstore sr H sys2 s))
+  ((symb_interpr_symbstore sr H (symb_symbst_store sys1) cstore) =
+   (symb_interpr_symbstore sr H (symb_symbst_store sys2) cstore))
 ``,
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [symb_interpr_symbstore_def] >>
@@ -551,6 +564,31 @@ val symb_suitable_interpretation_SUBSET_dom_thm = store_thm(
   REWRITE_TAC [symb_suitable_interpretation_def, symb_interpr_for_symbs_def]
 );
 
+val symb_suitable_interpretation_UPDATE_SOME_thm = store_thm(
+   "symb_suitable_interpretation_UPDATE_SOME_thm", ``
+!sr.
+!sys H symb v.
+  (symb_suitable_interpretation sr sys H) ==>
+  (symb_suitable_interpretation sr sys (symb_interpr_update H (symb,SOME v)))
+``,
+  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def,
+     symb_interpr_for_symbs_def, symb_interpr_dom_UPDATE_SOME_thm] >>
+  METIS_TAC [SUBSET_TRANS, SUBSET_INSERT_RIGHT, SUBSET_REFL]
+);
+
+val symb_suitable_interpretation_UPDATE_SOME_thm2 = store_thm(
+   "symb_suitable_interpretation_UPDATE_SOME_thm2", ``
+!sr.
+!sys H symb v.
+  (symb IN symb_interpr_dom H) ==>
+  (symb_suitable_interpretation sr sys (symb_interpr_update H (symb,SOME v))) ==>
+  (symb_suitable_interpretation sr sys H)
+``,
+  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def,
+     symb_interpr_for_symbs_def, symb_interpr_dom_UPDATE_SOME_thm] >>
+  METIS_TAC [SUBSET_TRANS, INSERT_SUBSET, SUBSET_REFL]
+);
+
 val symb_minimal_interpretation_def = Define `
     symb_minimal_interpretation sr sys H =
       symb_interpr_for_symbs_min (symb_symbols sr sys) H
@@ -578,7 +616,7 @@ in
     (symb_suitable_interpretation sr sys H /\
      symb_interpr_welltyped sr H /\
      symb_symbst_pc sys = symb_concst_pc s /\
-     symb_interpr_symbstore sr H sys s /\
+     symb_interpr_symbstore sr H (symb_symbst_store sys) (symb_concst_store s) /\
      symb_interpr_symbpcond sr H sys /\
      symb_symbst_extra sys = symb_concst_extra s)
 `;
@@ -642,7 +680,7 @@ val symb_symbst_pcond_update_IMP_matchstate_EQ_thm = store_thm(
        [symb_symbst_pcond_update_IMP_EQ_thm, SUBSET_TRANS, UNION_SUBSET,
         symb_symbols_of_symb_symbst_pcond_update_SUBSET1_thm,
         symb_symbols_of_symb_symbst_pcond_update_SUBSET2_thm,
-        symb_symbst_store_IMP_EQ_thm, symb_symbst_pcond_update_UNCHANGED_thm]
+        symb_symbst_pcond_update_UNCHANGED_thm]
     )
   )
 );
@@ -939,6 +977,40 @@ symb_interpr_ext H' H
   cheat
 );
 *)
+
+
+
+
+(*
+SUBSTITUTION OF SYMBOLIC EXPRESSIONS
+=======================================================
+*)
+val symb_subst_store_def = Define `
+    symb_subst_store sr subst store =
+      (\var. OPTION_MAP (sr.sr_subst_f subst) (store var))
+`;
+val symb_subst_def = Define `
+    symb_subst sr subst sys =
+      (SymbSymbSt
+        (symb_symbst_pc sys)
+        (symb_subst_store sr subst (symb_symbst_store sys))
+        (sr.sr_subst_f subst (symb_symbst_pcond sys))
+        (symb_symbst_extra sys))
+`;
+val symb_subst_set_def = Define `
+    symb_subst_set sr subst Pi =
+      (IMAGE (symb_subst sr subst) Pi)
+`;
+
+val symb_subst_store_thm = store_thm(
+   "symb_subst_store_thm", ``
+!sr.
+!subst store var.
+  ((store var = NONE) ==> ((symb_subst_store sr subst store) var = NONE)) /\
+  (!e. (store var = SOME e) ==> ((symb_subst_store sr subst store) var = SOME (sr.sr_subst_f subst e)))
+``,
+  METIS_TAC [symb_subst_store_def, optionTheory.OPTION_MAP_DEF]
+);
 
 
 
