@@ -482,6 +482,55 @@ val symb_subst_store_sound_thm = store_thm(
   )
 );
 
+val symb_subst_store_symbols_thm = store_thm(
+   "symb_subst_store_symbols_thm", ``
+!sr.
+!H symb symb_inst store.
+  (symb_subst_f_sound sr) ==>
+
+  (sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H) ==>
+  (symb_symbols_store sr store SUBSET symb_interpr_dom H) ==>
+  (symb_symbols_store sr (symb_subst_store sr (symb,symb_inst) store) SUBSET symb_interpr_dom H)
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_subst_store_def, symb_symbols_store_def, BIGUNION_SUBSET] >>
+  REPEAT STRIP_TAC >>
+
+  `(sr.sr_symbols_f symbexp = sr.sr_symbols_f z DIFF {symb} UNION sr.sr_symbols_f symb_inst)` by (
+    METIS_TAC [symb_subst_f_sound_def]
+  ) >>
+
+  `sr.sr_symbols_f z SUBSET
+        symb_interpr_dom H` by (
+    METIS_TAC []
+  ) >>
+  FULL_SIMP_TAC std_ss [UNION_SUBSET, GSYM DELETE_DEF, GSYM SUBSET_INSERT_DELETE] >>
+  METIS_TAC [SUBSET_REFL, SUBSET_TRANS, INSERT_SUBSET]
+);
+
+val symb_subst_store_symbols_thm2 = store_thm(
+   "symb_subst_store_symbols_thm2", ``
+!sr.
+!H symb symb_inst store.
+  (symb_subst_f_sound sr) ==>
+
+  (symb IN symb_interpr_dom H) ==>
+  (symb_symbols_store sr (symb_subst_store sr (symb,symb_inst) store) SUBSET symb_interpr_dom H) ==>
+  (symb_symbols_store sr store SUBSET symb_interpr_dom H)
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_subst_store_def, symb_symbols_store_def, BIGUNION_SUBSET] >>
+  REPEAT STRIP_TAC >>
+
+  `(sr.sr_symbols_f symbexp DIFF {symb} UNION sr.sr_symbols_f symb_inst)SUBSET
+        symb_interpr_dom H` by (
+    METIS_TAC [symb_subst_f_sound_def]
+  ) >>
+  FULL_SIMP_TAC std_ss [UNION_SUBSET, GSYM DELETE_DEF, GSYM SUBSET_INSERT_DELETE] >>
+  METIS_TAC [SUBSET_REFL, SUBSET_TRANS, INSERT_SUBSET]
+);
+
+
 val symb_subst_suitable_interpretation_thm = store_thm(
    "symb_subst_suitable_interpretation_thm", ``
 !sr.
@@ -501,7 +550,7 @@ val symb_subst_suitable_interpretation_thm = store_thm(
 
   `symb_symbols_store sr (symb_subst_store sr (symb,symb_inst) f) SUBSET
         symb_interpr_dom H` by (
-    cheat
+    METIS_TAC [symb_subst_store_symbols_thm, UNION_SUBSET]
   ) >>
 
   `sr.sr_symbols_f (sr.sr_subst_f (symb,symb_inst) c) SUBSET
@@ -533,7 +582,7 @@ val symb_subst_suitable_interpretation_thm2 = store_thm(
   FULL_SIMP_TAC std_ss [symb_subst_def, symb_symbst_pcond_def, symb_symbst_store_def, UNION_SUBSET] >>
 
   STRIP_TAC >- (
-    cheat
+    METIS_TAC [symb_subst_store_symbols_thm2]
   ) >>
 
   `(sr.sr_symbols_f c DIFF {symb} UNION sr.sr_symbols_f symb_inst) SUBSET symb_interpr_dom H` by (
