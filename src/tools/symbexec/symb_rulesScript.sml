@@ -272,7 +272,7 @@ val symb_pcondwiden_matchstate_IMP_matchstate_thm = store_thm(
 
   FULL_SIMP_TAC std_ss [symb_pcondwiden_def, symb_matchstate_def] >>
 
-  METIS_TAC [symb_symbst_store_IMP_EQ_thm]
+  METIS_TAC []
 );
 
 val symb_pcondwiden_matchstate_IMP_matchstate_EXISTS_thm = store_thm(
@@ -772,7 +772,6 @@ val symb_rule_INST_thm = store_thm(
   cheat
 );
 *)
-
 
 
 
