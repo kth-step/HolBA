@@ -288,14 +288,29 @@ is_certified p cid s M = ?s' M'.
   /\ s'.bst_prom = []
 `;
 
-val core_t_def = Datatype `core_t =
-Core num (string bir_program_t) bir_state_t
+val _ = Datatype `core_t =
+  Core num (string bir_program_t) bir_state_t
+`;
+
+val cores_pc_not_atomic_def = Define`
+  cores_pc_not_atomic cores =
+    ~?cid p s i bl.
+     (Core cid p s) IN cores
+     /\ s.bst_pc.bpc_index <> 0
+     /\ bir_get_program_block_info_by_label p s.bst_pc.bpc_label = SOME (i, bl)
+     /\ bl.bb_atomic = T
+`;
+
+val atomicity_ok = Define`
+  atomicity_ok core cores =
+    cores_pc_not_atomic (cores DELETE core)
 `;
 
 (* system step *)
 val (bir_parstep_rules, bir_parstep_ind, bir_parstep_cases) = Hol_reln`
 (!p cid s s' M M' cores prom.
-   (Core cid p s ∈ cores
+   (Core cid p s IN cores
+    /\ atomicity_ok core cores
     /\ cstep p cid s M prom s' M'
     /\ is_certified p cid s' M')
 ==>
