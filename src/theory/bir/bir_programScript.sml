@@ -57,7 +57,7 @@ val _ = Datatype `bir_stmt_t =
 `;
 
 val _ = Datatype `bir_block_t = <|
-  bb_label          : bir_label_t ;
+  bb_label          : bir_label_t;
   bb_atomic         : bool;
   bb_statements     : ('a bir_stmt_basic_t) list;
   bb_last_statement : bir_stmt_end_t |>`;

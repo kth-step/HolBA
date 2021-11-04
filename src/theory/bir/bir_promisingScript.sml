@@ -17,8 +17,8 @@ mem_msg_t = <| loc : bir_val_t; val : bir_val_t; cid : num  |>
 
 val mem_def = Datatype`
 mem_t = <|
-  bmst_lock     : num option;
-  bmst_counter  : num;
+  bmst_lock        : num option;
+  bmst_counter     : num;
   bmst_storebuffer : mem_msg_t list;
 |>
 `;
@@ -111,7 +111,7 @@ val is_write_def = Define`
  * refers to regular memory or dummy memory. May look inside casts *)
 val contains_dummy_mem_def = Define`
   (contains_dummy_mem (BExp_Den (BVar mem_name mem_ty)) =
-     if mem_name = "MEM8" (* RISC-V regular memory *)
+     if mem_name <> "MEM8" (* RISC-V regular memory *)
      then T
      else F) /\
   (contains_dummy_mem (BExp_Load mem_e a_e en ty) =
@@ -219,13 +219,23 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
                      bst_pc updated_by bir_pc_next |>)
 ==>
   clstep p cid s M [] s')
-/\ (* branch *)
+/\ (* branch (conditional jump) *)
 (!p s s' M cid v oo s2 v_addr cond_e lbl1 lbl2 stm.
    (bir_get_current_statement p s.bst_pc = SOME stm
     /\ stm = BStmtE (BStmt_CJmp cond_e lbl1 lbl2)
     /\ (SOME v, v_addr) = bir_eval_exp_view cond_e s.bst_environ s.bst_viewenv
     /\ bir_exec_stmt p stm s = (oo,s2)
-    /\ s' = s2 with <| bst_v_CAP := MAX s.bst_v_CAP v_addr |>)
+    /\ s' = s2 with <| bst_v_CAP := MAX s.bst_v_CAP v_addr;
+                       bst_xcl := false |>)
+(* Use bir_get_program_block_info_by_label *)
+==>
+  clstep p cid s M [] s')
+/\ (* branch (jump) *)
+(!p s s' M cid oo s2 lbl stm.
+   (bir_get_current_statement p s.bst_pc = SOME stm
+    /\ stm = BStmtE (BStmt_Jmp lbl)
+    /\ bir_exec_stmt p stm s = (oo,s2)
+    /\ s' = s2 with <| bst_xcl := false |>)
 ==>
   clstep p cid s M [] s')
 
