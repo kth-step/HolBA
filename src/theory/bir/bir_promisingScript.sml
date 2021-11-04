@@ -12,7 +12,7 @@ val _ = new_theory "bir_promising";
 
 (* message type, represents a store of the form ⟨loc ≔ val⟩_tid *)
 val mem_msg_def = Datatype‘
-mem_msg_t = <| loc : bir_val_t; val : bir_val_t; cid : num  |>
+  mem_msg_t = <| loc : bir_val_t; val : bir_val_t; cid : num  |>
 ’;
 
 val mem_def = Datatype`
@@ -41,11 +41,11 @@ val mem_read_def = Define‘
 ’;
 
 val mem_timestamps_def = Define‘
-   mem_timestamps l M = MAP SND (FILTER (\x. (case x of (msg,_) => msg.loc = l)) (ZIP (M,[1 .. (LENGTH M)])))
+  mem_timestamps l M = MAP SND (FILTER (\x. (case x of (msg,_) => msg.loc = l)) (ZIP (M,[1 .. (LENGTH M)])))
 ’;
   
 val mem_read_view_def = Define‘
-mem_read_view a rk (f:fwdb_t) t = if f.time = t then f.view else t
+  mem_read_view a rk (f:fwdb_t) t = if f.fwdb_time = t then f.fwdb_view else t
 ’;
 
 (* bir_eval_exp_view behaves like bir_eval_exp except it also computes
@@ -84,8 +84,8 @@ Proof
 QED
 
 val exp_is_load_def = Define `
-(exp_is_load (BExp_Load _ _ _ _) = T) /\
-(exp_is_load _ = F)
+  (exp_is_load (BExp_Load _ _ _ _) = T) /\
+  (exp_is_load _ = F)
 `;
 
 val stmt_generic_step_def = Define`
@@ -107,8 +107,10 @@ val is_write_def = Define`
 /\ is_write BM_ReadWrite = T
 `;
 
+(*
 (* Checks if the memory expressions from lifted loads and stores
  * refers to regular memory or dummy memory. May look inside casts *)
+(* TODO: Clarify *)
 val contains_dummy_mem_def = Define`
   (contains_dummy_mem (BExp_Den (BVar mem_name mem_ty)) =
      if mem_name <> "MEM8" (* RISC-V regular memory *)
@@ -122,7 +124,8 @@ val contains_dummy_mem_def = Define`
      contains_dummy_mem e) /\
   (contains_dummy_mem _ = F)
 `;
-
+*)
+        
 (* Obtains an option type that contains the load arguments
  * needed to apply the read rule (can look inside one cast) *)
 val get_read_args_def = Define`
@@ -146,6 +149,7 @@ val get_fulfil_args_v_def = Define`
   (get_fulfil_args_v _ = NONE)
 `;
 val get_fulfil_args_def = Define`
+  (get_fulfil_args (BExp_IfThenElse cond_e e1 e2) = get_fulfil_args e1) /\
   (get_fulfil_args (BExp_Store mem_e a_e en v_e) =
    case get_fulfil_args_v v_e of
    | SOME (v_e, NONE) => SOME (a_e, v_e, NONE)
@@ -154,15 +158,42 @@ val get_fulfil_args_def = Define`
   (get_fulfil_args _ = NONE)
 `;
 
+val get_xclb_view_def = Define`
+  (get_xclb_view xclb_opt =
+   case xclb_opt of
+   | SOME xclb => xclb.xclb_view
+   | NONE => 0)
+`;
+
+val fulfil_atomic_ok_def = Define`
+  (fulfil_atomic_ok M l cid s tw =
+   case s.bst_xclb of
+   | SOME xclb =>
+     ((EL xclb.xclb_time M).loc = l) ==>
+       (!t'. (xclb.xclb_time < t'
+             /\ t' < tw
+             /\ (EL t' M).loc = l) ==> (EL t' M).cid = cid)
+   | NONE => F)
+`;
+
+
 (* TODO: "Generalising variable "ν_pre" in clause #0 (113:1-131:23)"? *)
 (* core-local steps that don't affect memory *)
 val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
 (* read *)
-(!p s s' v e a_e cast_opt M l (t:num) v_pre v_post v_addr var (a:num) (rk:num) new_env cid. (*TODO fix type of a and rk *)
+(!p s s' v e a_e cast_opt xcl M l (t:num) v_pre v_post v_addr var (a:num) (rk:num) new_env cid. (*TODO fix type of a and rk *)
    (bir_get_current_statement p s.bst_pc =
-   SOME (BStmtB (BStmt_Assign var e))
+   SOME (BStmtB (BStmt_Assign var e)))
+ (* NOTE: The fact that get_read_args is not NONE means also
+  *       that the expression e constitutes a load operation *)
  /\ get_read_args e = SOME (a_e, cast_opt)
- ∧ ~(contains_dummy_mem e)
+ (* If next statement is the dummy exclusive-load statement,
+  * we are dealing with an exclusive load *)
+ /\ xcl = (bir_get_current_statement p (bir_pc_next s.bst_pc) =
+            SOME (BStmtB (BStmt_Assign (BVar "MEM8_R" (BType_Mem Bit64 Bit8))
+                           (BExp_Store (BExp_Den (BVar "MEM8_Z" (BType_Mem Bit64 Bit8)))
+                           (BExp_Den (BVar "x7" (BType_Imm Bit64))) BEnd_LittleEndian
+                           (BExp_Const (Imm32 0x1010101w))))))
  ∧ (SOME l, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv
 (* TODO: Not working, since the read value needs to be cast
  * (consider the typical case of signed casts from 32 to 64 bits).
@@ -179,20 +210,34 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
                                    else s.bst_coh(lo));
                   bst_v_rOld := MAX s.bst_v_rOld v_post;
                   bst_v_CAP := MAX s.bst_v_CAP v_addr;
-                  bst_pc updated_by bir_pc_next |>)
+                  bst_xclb := if xcl
+                              then SOME <| xclb_time := t; xclb_view := v_post |>
+                              else s.bst_xclb;
+                  bst_pc := if xcl
+                            then (bir_pc_next o bir_pc_next) s.bst_pc
+                            else bir_pc_next s.bst_pc |>
  ==>
   clstep p cid s M [] s')
 /\ (* fulfil *)
-(!p s s' M v e a_e cast_opt l (t:num) v_pre v_post v_addr v_data var v_e cid.
+(!p s s' M v e a_e cast_opt xcl l (t:num) v_pre v_post v_addr v_data var v_e cid.
     ((bir_get_current_statement p s.bst_pc =
       SOME (BStmtB (BStmt_Assign var e)))
  /\ get_fulfil_args e = SOME (a_e, v_e, cast_opt)
- /\ ~(contains_dummy_mem e)
+  (* If next statement is the dummy exclusive-store statement,
+  * we are dealing with an exclusive store *)
+ /\ xcl = (bir_get_current_statement p (bir_pc_next s.bst_pc) =
+            SOME (BStmtB (BStmt_Assign (BVar "MEM8_R" (BType_Mem Bit64 Bit8))
+                           (BExp_Den (BVar "MEM8_Z" (BType_Mem Bit64 Bit8))))))
  /\ (SOME l, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv
  /\ (SOME v, v_data) = bir_eval_exp_view v_e s.bst_environ s.bst_viewenv
+ /\ (xcl ==> fulfil_atomic_ok M l cid s t)
  /\ MEM t s.bst_prom
  /\ EL t M = <| loc := l; val := v; cid := cid  |>
- /\ v_pre = MAX v_addr (MAX v_data (MAX s.bst_v_wNew s.bst_v_CAP))
+ (* TODO: Use get_xclb_view or separate conjunct to extract option type? *)
+ /\ v_pre = MAX (MAX v_addr (MAX v_data (MAX s.bst_v_wNew s.bst_v_CAP)))
+                (if xcl
+                 then get_xclb_view s.bst_xclb
+                 else 0)
  /\ (MAX v_pre (s.bst_coh l) < t)
  /\ v_post = t
  /\ s' = s with <| bst_prom updated_by (FILTER (\t'. t' ≠ t));
@@ -202,11 +247,16 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
                    bst_v_wOld := MAX s.bst_v_wOld v_post;
                    bst_v_CAP := MAX s.bst_v_CAP v_addr;
                    bst_fwdb := (\lo. if lo = l
-                                     then <| time := t;
-                                             view := MAX v_addr v_data;
-                                             xcl := F |>
+                                     then <| fwdb_time := t;
+                                             fwdb_view := MAX v_addr v_data;
+                                             fwdb_xcl := xcl |>
                                      else s.bst_fwdb(lo));
-                   bst_pc updated_by bir_pc_next |>)
+                   bst_xclb := if xcl
+                               then NONE
+                               else s.bst_xclb;
+                   bst_pc := if xcl
+                             then (bir_pc_next o bir_pc_next) s.bst_pc
+                             else bir_pc_next s.bst_pc |>)
  ==>
   clstep p cid s M [t] s')
 /\ (* fence *)
@@ -226,7 +276,7 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
     /\ (SOME v, v_addr) = bir_eval_exp_view cond_e s.bst_environ s.bst_viewenv
     /\ bir_exec_stmt p stm s = (oo,s2)
     /\ s' = s2 with <| bst_v_CAP := MAX s.bst_v_CAP v_addr;
-                       bst_xcl := false |>)
+                       bst_xcl := F |>)
 (* Use bir_get_program_block_info_by_label *)
 ==>
   clstep p cid s M [] s')
@@ -235,7 +285,7 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
    (bir_get_current_statement p s.bst_pc = SOME stm
     /\ stm = BStmtE (BStmt_Jmp lbl)
     /\ bir_exec_stmt p stm s = (oo,s2)
-    /\ s' = s2 with <| bst_xcl := false |>)
+    /\ s' = s2 with <| bst_xcl := F |>)
 ==>
   clstep p cid s M [] s')
 
@@ -372,9 +422,9 @@ val eval_clstep_fulfil_def = Define‘
                                   bst_v_wOld := MAX s.bst_v_wOld v_post;
                                   bst_v_CAP := MAX s.bst_v_CAP v_addr;
                                   bst_fwdb := (\lo. if lo = l
-                                                    then <| time := v_post;
-                                                            view := MAX v_addr v_data;
-                                                            xcl := F |>
+                                                    then <| fwdb_time := v_post;
+                                                            fwdb_view := MAX v_addr v_data;
+                                                            fwdb_xcl := F |>
                                                     else s.bst_fwdb(lo));
                                   bst_pc updated_by bir_pc_next |>)
               ts

@@ -80,12 +80,12 @@ val _ = Datatype `bir_inflight_stmt_t = BirInflight string ('a bir_stmt_t)`;
 
 (* forward buffer, part of the core-local state *)
 val fwdb_def = Datatype`
-  fwdb_t = <| time : num; view : num; xcl : bool |>
+  fwdb_t = <| fwdb_time : num; fwdb_view : num; fwdb_xcl : bool |>
 `;
 
 (* exclusives bank, part of the core-local state *)
 val xclb_def = Datatype`
-  xclb_t = <| time : num; view : num |>
+  xclb_t = <| xclb_time : num; xclb_view : num |>
 `;
 
 val _ = Datatype `bir_state_t = <|
@@ -256,7 +256,7 @@ val bir_state_init_def = Define `bir_state_init p = <|
   ; bst_prom := []
   ; bst_inflight := []
   ; bst_counter := 0
-  ; bst_fwdb := (\l. <| time:= 0; view:=0; xcl:=F |>)
+  ; bst_fwdb := (\l. <| fwdb_time:= 0; fwdb_view:=0; fwdb_xcl:=F |>)
 |>`;
 
 (* ------------------------------------------------------------------------- *)
