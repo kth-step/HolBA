@@ -176,6 +176,30 @@ val fulfil_atomic_ok_def = Define`
    | NONE => F)
 `;
 
+val fulfil_update_env_def = Define`
+  fulfil_update_env p s mem_var mem_v xcl =
+  case bir_env_update (bir_var_name mem_var) mem_v (bir_var_type mem_var) (s.bst_environ) of
+  | SOME new_env =>
+    if xcl
+    then
+      case bir_get_current_statement p (bir_pc_next s.bst_pc) of
+      | SOME (BStmtB (BStmt_Assign var_succ _)) =>
+        bir_env_update (bir_var_name var_succ) (BVal_Imm (Imm64 0w)) (bir_var_type var_succ) new_env
+      | _ => NONE
+    else SOME new_env
+  | NONE => NONE
+`;
+
+val fulfil_update_viewenv_def = Define`
+  fulfil_update_viewenv p s xcl v_post =
+    if xcl
+    then
+      case bir_get_current_statement p (bir_pc_next s.bst_pc) of
+      | SOME (BStmtB (BStmt_Assign var_succ _)) => SOME (s.bst_viewenv |+ (var_succ, v_post))
+      | _ => NONE
+    else SOME s.bst_viewenv
+`;
+
 
 (* TODO: "Generalising variable "ν_pre" in clause #0 (113:1-131:23)"? *)
 (* core-local steps that don't affect memory *)
@@ -203,7 +227,8 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
  ∧ (∀t'. ((t:num) < t' ∧ t' ≤ (MAX ν_pre (s.bst_coh l))) ⇒ (EL t' M).loc ≠ l)
  ∧ v_post = MAX v_pre (mem_read_view a rk (s.bst_fwdb(l)) t)
  /\ SOME new_env = bir_env_update (bir_var_name var) v (bir_var_type var) (s.bst_environ)
- ∧ s' = s with <| bst_viewenv updated_by (λe. FUPDATE e (var,v_addr));
+ (* TODO: Update viewenv by v_addr or v_post? *)
+ ∧ s' = s with <| bst_viewenv updated_by (\env. FUPDATE env (var, v_post));
                   bst_environ := new_env;
                   bst_coh := (λlo. if lo = l
                                    then MAX (s.bst_coh l) v_post
@@ -223,9 +248,9 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
     ((bir_get_current_statement p s.bst_pc =
       SOME (BStmtB (BStmt_Assign var e)))
  /\ get_fulfil_args e = SOME (a_e, v_e, cast_opt)
-  (* If next statement is the dummy exclusive-store statement,
+  (* If next to next statement is the dummy exclusive-store statement,
   * we are dealing with an exclusive store *)
- /\ xcl = (bir_get_current_statement p (bir_pc_next s.bst_pc) =
+ /\ xcl = (bir_get_current_statement p (bir_pc_next (bir_pc_next s.bst_pc)) =
             SOME (BStmtB (BStmt_Assign (BVar "MEM8_R" (BType_Mem Bit64 Bit8))
                            (BExp_Den (BVar "MEM8_Z" (BType_Mem Bit64 Bit8))))))
  /\ (SOME l, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv
@@ -240,7 +265,12 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
                  else 0)
  /\ (MAX v_pre (s.bst_coh l) < t)
  /\ v_post = t
- /\ s' = s with <| bst_prom updated_by (FILTER (\t'. t' ≠ t));
+ /\ SOME new_env = fulfil_update_env p s var v xcl
+ (* TODO: Update viewenv by v_post or something else? *)
+ /\ SOME new_viewenv = fulfil_update_viewenv p s xcl v_post
+ /\ s' = s with <| bst_viewenv := new_viewenv;
+                   bst_prom updated_by (FILTER (\t'. t' <> t));
+                   bst_environ := new_env;
                    bst_coh := (\lo. if lo = l
                                     then MAX (s.bst_coh l) v_post
                                     else s.bst_coh(lo));

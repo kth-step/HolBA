@@ -1175,7 +1175,9 @@ fun get_lrsc_bstmts mu_b mu_e hex_code =
 			  bden (bvarmem64_8 "MEM8")
 			 )
 	   ),
-	   (* 2. Reset reservation of memory *)
+	   (* 2. Assign code (zero on success, non-zero on failure) to success register *)
+	   bassign (bvar_rd, bite (beq (res_load_exp mem_reserved (bden (bvar_rs1)), ones), bconst64 0, ones_64)),
+	   (* 3. Reset reservation of memory *)
 	   bassign (bvarmem64_8 "MEM8_R", mem_zero)
 	  ]
       else raise ERR "get_lrsc_bstmts" ("LR/SC instruction "^hex_code^" has unsupported funct5 bits: "^funct5)
