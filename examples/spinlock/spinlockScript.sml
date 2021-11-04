@@ -492,10 +492,31 @@ Proof
   rpt strip_tac
   >> CCONTR_TAC
   >> fs[DISJ_EQ_IMP]
-  >> `!j p st. i < j /\ Core cid p st IN FST $ EL j tr ==> MEM t st.bst_prom` by (
-    (* TODO reverse induction analogue to is_fulfil_is_promise *)
-    cheat
-    (* NOT_is_fulfil_MEM_bst_prom *)
+  >> `!j p st. i <= j /\ SUC j < LENGTH tr
+    /\ Core cid p st IN FST $ EL (SUC j) tr ==> MEM t st.bst_prom` by (
+    Induct_on `j - i`
+    >- (
+      rw[] >> gvs[LESS_OR_EQ,is_promise_def]
+      >> drule_then (dxrule_then drule) wf_trace_wf_sys
+      >> rw[]
+    )
+    >> rw[SUB_LEFT_EQ] >> fs[]
+    >> first_x_assum $ qspecl_then [`i + v`,`i`] mp_tac
+    >> fs[]
+    >> `?p st. Core cid p st IN FST $ EL (SUC $ i + v) tr` by (
+      irule wf_trace_cid_backward1
+      >> `SUC $ i + SUC v = SUC $ SUC $ i + v` by fs[]
+      >> pop_assum $ fs o single
+      >> goal_assum drule
+    )
+    >> disch_then $ drule_then assume_tac
+    >> drule NOT_is_fulfil_MEM_bst_prom
+    >> rpt $ disch_then $ drule_at Any
+    >> disch_then irule
+    >> fs[]
+    >> `SUC $ i + SUC v = SUC $ SUC $ i + v` by fs[]
+    >> pop_assum $ fs o single
+    >> goal_assum drule
   )
   >> `?p st. Core cid p st IN FST $ LAST tr` by (
     fs[is_promise_def,GSYM LENGTH_NOT_NULL,GSYM NULL_EQ,LAST_EL]
@@ -506,7 +527,18 @@ Proof
   )
   >> drule_all wf_trace_LAST_NULL_bst_prom
   >> gs[GSYM LENGTH_NOT_NULL,GSYM NULL_EQ,LAST_EL]
-  >> first_x_assum $ drule_at Any
+  >> Cases_on `SUC i = PRE $ LENGTH tr`
+  >- (
+    fs[is_promise_def]
+    >> drule_then (dxrule_then drule) wf_trace_wf_sys
+    >> rw[]
+  )
+  >> gs[NOT_NUM_EQ]
+  >> `i <= PRE $ PRE $ LENGTH tr` by fs[]
+  >> first_x_assum dxrule
+  >> `0 < PRE $ LENGTH tr` by fs[]
+  >> fs[iffLR SUC_PRE]
+  >> disch_then drule
   >> rw[LENGTH_NOT_NULL,MEM_SPLIT,NOT_NULL_MEM]
   >> goal_assum drule
 QED
