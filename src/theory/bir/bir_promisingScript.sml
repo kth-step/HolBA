@@ -497,11 +497,11 @@ val eval_clstep_fulfil_def = Define‘
 ’;
 
 val eval_clstep_fence_def = Define‘
-  eval_clstep_fence s =
-  let v = MAX s.bst_v_rOld s.bst_v_wOld
+  eval_clstep_fence s K1 K2 =
+  let v = MAX (if is_read K1 then s.bst_v_rOld else 0) (if is_write K1 then s.bst_v_wOld else 0)
   in
-    [s with <| bst_v_rNew := MAX s.bst_v_rNew v;
-               bst_v_wNew := MAX s.bst_v_wNew v;
+    [s with <| bst_v_rNew := MAX s.bst_v_rNew (if is_read K2 then v else 0);
+               bst_v_wNew := MAX s.bst_v_wNew (if is_write K2 then v else 0);
                bst_pc updated_by bir_pc_next |>]
 ’;
 
@@ -548,8 +548,8 @@ val eval_clstep_def = Define‘
             SOME (a_e, v_e) =>
             eval_clstep_fulfil p cid s M a_e v_e (is_xcl_write p s)
           | NONE => eval_clstep_exp s var e))
-    | SOME (BStmtB (BStmt_Fence BM_ReadWrite BM_ReadWrite)) =>
-      eval_clstep_fence s
+    | SOME (BStmtB (BStmt_Fence K1 K2)) =>
+      eval_clstep_fence s K1 K2
     | SOME (BStmtE (BStmt_CJmp cond_e lbl1 lbl2)) =>
       eval_clstep_branch p s (BStmtE (BStmt_CJmp cond_e lbl1 lbl2))
     | SOME stm =>
