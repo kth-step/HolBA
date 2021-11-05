@@ -61,26 +61,40 @@ val bir_eval_exp_view_def = Define‘
    in let (val2,v2) = bir_eval_exp_view e2 env viewenv
    in let  result = bir_eval_bin_exp et val1 val2
    in (result, MAX v1 v2))
-∧ (bir_eval_exp_view (BExp_Den v) env viewenv =
+/\ (bir_eval_exp_view (BExp_Cast cty e ity) env viewenv =
+     let
+       (val,v) = bir_eval_exp_view e env viewenv;
+       result = bir_eval_cast cty val ity
+     in
+       (result, v))
+/\ (bir_eval_exp_view (BExp_Den v) env viewenv =
    let res = bir_eval_exp (BExp_Den v) env
     in case FLOOKUP viewenv v of
        NONE => (res, 0)
      | SOME view => (res, view))
-∧ bir_eval_exp_view exp env viewenv = (bir_eval_exp exp env, 0)
+/\ bir_eval_exp_view exp env viewenv = (bir_eval_exp exp env, 0)
 ’;
 
 Theorem bir_eval_exp_view_sound:
-  ∀ exp env viewenv .
-  ∃ y. (bir_eval_exp_view exp env viewenv) = (bir_eval_exp exp env,y)
+  !exp env viewenv.
+  ?y. (bir_eval_exp_view exp env viewenv) = (bir_eval_exp exp env, y)
 Proof
- Induct
- >> fs [bir_eval_exp_view_def]
- >> REPEAT STRIP_TAC
- >| [Cases_on ‘FLOOKUP viewenv b’
-     >| [EXISTS_TAC “0:num”,Q.EXISTS_TAC ‘x’]
-    ,RULE_ASSUM_TAC SPEC_ALL
-     >> fs []]
- >> EVAL_TAC
+ Induct >> (
+  fs [bir_eval_exp_view_def] >>
+  REPEAT STRIP_TAC
+ ) >| [
+  Cases_on ‘FLOOKUP viewenv b’ >| [
+   EXISTS_TAC “0:num”,
+
+   Q.EXISTS_TAC ‘x’],
+
+  RULE_ASSUM_TAC SPEC_ALL >>
+  fs [],
+
+  RULE_ASSUM_TAC SPEC_ALL >>
+  fs []
+ ] >>
+ EVAL_TAC
 QED
 
 val exp_is_load_def = Define `
@@ -139,22 +153,11 @@ val get_read_args_def = Define`
 `;
 
 (* Obtains an option type that contains the store arguments
- * needed to apply the fulfil rule (can look inside one cast) *)
-val get_fulfil_args_v_def = Define`
-  (get_fulfil_args_v (BExp_Cast cast_ty v_e imm_ty) =
-   case get_fulfil_args_v v_e of
-   | SOME (v_e', NONE) => SOME (v_e', SOME (cast_ty, imm_ty))
-   | _ => NONE) /\
-  (get_fulfil_args_v (BExp_Den v) = SOME (BExp_Den v, NONE)) /\
-  (get_fulfil_args_v _ = NONE)
-`;
+ * needed to apply the fulfil rule *)
 val get_fulfil_args_def = Define`
   (get_fulfil_args (BExp_IfThenElse cond_e e1 e2) = get_fulfil_args e1) /\
   (get_fulfil_args (BExp_Store mem_e a_e en v_e) =
-   case get_fulfil_args_v v_e of
-   | SOME (v_e, NONE) => SOME (a_e, v_e, NONE)
-   | SOME (v_e', SOME (cast_ty, imm_ty)) => SOME (a_e, v_e', SOME (cast_ty, imm_ty))
-   | _ => NONE) /\
+   SOME (a_e, v_e)) /\
   (get_fulfil_args _ = NONE)
 `;
 
@@ -176,18 +179,20 @@ val fulfil_atomic_ok_def = Define`
    | NONE => F)
 `;
 
+val env_update_cast64_def = Define‘
+  env_update_cast64 varname (BVal_Imm v) vartype env =
+    bir_env_update varname (BVal_Imm (n2bs (b2n v) Bit64)) vartype env
+’;
+
 val fulfil_update_env_def = Define`
-  fulfil_update_env p s mem_var mem_v xcl =
-  case bir_env_update (bir_var_name mem_var) mem_v (bir_var_type mem_var) (s.bst_environ) of
-  | SOME new_env =>
+  fulfil_update_env p s xcl =
     if xcl
     then
       case bir_get_current_statement p (bir_pc_next s.bst_pc) of
       | SOME (BStmtB (BStmt_Assign var_succ _)) =>
-        bir_env_update (bir_var_name var_succ) (BVal_Imm (Imm64 0w)) (bir_var_type var_succ) new_env
+        bir_env_update (bir_var_name var_succ) (BVal_Imm (Imm64 0w)) (bir_var_type var_succ) s.bst_environ
       | _ => NONE
-    else SOME new_env
-  | NONE => NONE
+    else SOME s.bst_environ
 `;
 
 val fulfil_update_viewenv_def = Define`
@@ -199,6 +204,30 @@ val fulfil_update_viewenv_def = Define`
       | _ => NONE
     else SOME s.bst_viewenv
 `;
+
+(* Upon the loading statement that is the first Assign in a lifted
+ * Load-type instruction, checks if the block is trying to model
+ * an exclusive-load *)
+val is_xcl_read_def = Define‘
+  is_xcl_read p s =
+    case bir_get_current_statement p (bir_pc_next s.bst_pc) of
+      SOME (BStmtB (BStmt_Assign (BVar "MEM8_R" (BType_Mem Bit64 Bit8))
+		     (BExp_Store (BExp_Den (BVar "MEM8_Z" (BType_Mem Bit64 Bit8)))
+                       (BExp_Den (BVar varname (BType_Imm Bit64))) BEnd_LittleEndian
+		       (BExp_Const (Imm32 0x1010101w))))) => T
+     | _ => F
+’;
+
+(* Upon the storing statement that is the first Assign in a lifted
+ * Strore-type instruction, checks if the block is trying to model
+ * an exclusive-store *)
+val is_xcl_write_def = Define‘
+  is_xcl_write p s =
+    case bir_get_current_statement p (bir_pc_next (bir_pc_next s.bst_pc)) of
+      SOME (BStmtB (BStmt_Assign (BVar "MEM8_R" (BType_Mem Bit64 Bit8))
+                     (BExp_Den (BVar "MEM8_Z" (BType_Mem Bit64 Bit8))))) => T
+     | _ => F
+’;
 
 
 (* TODO: "Generalising variable "ν_pre" in clause #0 (113:1-131:23)"? *)
@@ -213,20 +242,13 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
  /\ get_read_args e = SOME (a_e, cast_opt)
  (* If next statement is the dummy exclusive-load statement,
   * we are dealing with an exclusive load *)
- /\ xcl = (bir_get_current_statement p (bir_pc_next s.bst_pc) =
-            SOME (BStmtB (BStmt_Assign (BVar "MEM8_R" (BType_Mem Bit64 Bit8))
-                           (BExp_Store (BExp_Den (BVar "MEM8_Z" (BType_Mem Bit64 Bit8)))
-                           (BExp_Den (BVar "x7" (BType_Imm Bit64))) BEnd_LittleEndian
-                           (BExp_Const (Imm32 0x1010101w))))))
- ∧ (SOME l, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv
-(* TODO: Not working, since the read value needs to be cast
- * (consider the typical case of signed casts from 32 to 64 bits).
- * Also, endianness? (should be OK for RISC-V) *)
+ /\ xcl = is_xcl_read p s
+ /\ (SOME l, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv
  ∧ mem_read M l t = SOME v
  ∧ v_pre = MAX v_addr s.bst_v_rNew
  ∧ (∀t'. ((t:num) < t' ∧ t' ≤ (MAX ν_pre (s.bst_coh l))) ⇒ (EL t' M).loc ≠ l)
  ∧ v_post = MAX v_pre (mem_read_view a rk (s.bst_fwdb(l)) t)
- /\ SOME new_env = bir_env_update (bir_var_name var) v (bir_var_type var) (s.bst_environ)
+ /\ SOME new_env = env_update_cast64 (bir_var_name var) v (bir_var_type var) (s.bst_environ)
  (* TODO: Update viewenv by v_addr or v_post? *)
  ∧ s' = s with <| bst_viewenv updated_by (\env. FUPDATE env (var, v_post));
                   bst_environ := new_env;
@@ -244,15 +266,13 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
  ==>
   clstep p cid s M [] s')
 /\ (* fulfil *)
-(!p s s' M v e a_e cast_opt xcl l (t:num) v_pre v_post v_addr v_data var v_e cid.
+(!p s s' M v e a_e xcl l (t:num) v_pre v_post v_addr v_data var v_e cid new_env new_viewenv.
     ((bir_get_current_statement p s.bst_pc =
       SOME (BStmtB (BStmt_Assign var e)))
- /\ get_fulfil_args e = SOME (a_e, v_e, cast_opt)
+ /\ get_fulfil_args e = SOME (a_e, v_e)
   (* If next to next statement is the dummy exclusive-store statement,
   * we are dealing with an exclusive store *)
- /\ xcl = (bir_get_current_statement p (bir_pc_next (bir_pc_next s.bst_pc)) =
-            SOME (BStmtB (BStmt_Assign (BVar "MEM8_R" (BType_Mem Bit64 Bit8))
-                           (BExp_Den (BVar "MEM8_Z" (BType_Mem Bit64 Bit8))))))
+ /\ xcl = is_xcl_write p s
  /\ (SOME l, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv
  /\ (SOME v, v_data) = bir_eval_exp_view v_e s.bst_environ s.bst_viewenv
  /\ (xcl ==> fulfil_atomic_ok M l cid s t)
@@ -265,7 +285,7 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
                  else 0)
  /\ (MAX v_pre (s.bst_coh l) < t)
  /\ v_post = t
- /\ SOME new_env = fulfil_update_env p s var v xcl
+ /\ SOME new_env = fulfil_update_env p s xcl
  (* TODO: Update viewenv by v_post or something else? *)
  /\ SOME new_viewenv = fulfil_update_viewenv p s xcl v_post
  /\ s' = s with <| bst_viewenv := new_viewenv;
@@ -371,14 +391,14 @@ val cores_pc_not_atomic_def = Define`
      /\ bl.bb_atomic = T
 `;
 
-val atomicity_ok = Define`
+val atomicity_ok_def = Define`
   atomicity_ok core cores =
     cores_pc_not_atomic (cores DELETE core)
 `;
 
 (* system step *)
 val (bir_parstep_rules, bir_parstep_ind, bir_parstep_cases) = Hol_reln`
-(!p cid s s' M M' cores prom.
+(!p cid s s' M M' core cores prom.
    (Core cid p s IN cores
     /\ atomicity_ok core cores
     /\ cstep p cid s M prom s' M'
@@ -387,47 +407,49 @@ val (bir_parstep_rules, bir_parstep_ind, bir_parstep_cases) = Hol_reln`
    parstep cores M (cores DIFF {Core cid p s} UNION {Core cid p s'}) M')
 `;
 
-val env_update_cast64_def = Define‘
-  env_update_cast64 varname (BVal_Imm v) vartype env =
-    bir_env_update varname (BVal_Imm (n2bs (b2n v) Bit64)) vartype env
-’;
-
 (* Core-local execution *)
-(* TODO: Does this have redundant parameters? *)
 val eval_clstep_read_def = Define‘
-  eval_clstep_read p cid s M var mem_e a_e en ty =
-   let (sl, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv;
-       v_pre = MAX v_addr s.bst_v_rNew;
-   in case sl of
-        SOME l =>
-       let t_max = MAX v_pre (s.bst_coh l);
-           ts = FILTER (\t. EVERY (\t'. ((EL (t'-1) M).loc ≠ l)) [(t+1) .. t_max]) (0::mem_timestamps l M)
-       in
-         FLAT (MAP (\t.
-                let sv = mem_read M l t;
-                    v_post = MAX v_pre (mem_read_view 0 0 (s.bst_fwdb(l)) t);
-                in
-                 case sv of
-                  SOME v =>
-                    (case env_update_cast64 (bir_var_name var) v (bir_var_type var) (s.bst_environ) of
-                       SOME new_env =>
-                         [s with <| bst_viewenv updated_by (λe. FUPDATE e (var,v_addr));
-                                    bst_environ := new_env;
-                                    bst_coh := (λlo. if lo = l
-                                                     then MAX (s.bst_coh l) v_post
-                                                     else s.bst_coh(lo));
-                                    bst_v_rOld := MAX s.bst_v_rOld v_post;
-                                    bst_v_CAP := MAX s.bst_v_CAP v_addr;
-                                    bst_pc updated_by bir_pc_next |>]
-                     | _ => [])
-                 | _ => [])
-             ts)
-         | _ => []
+  eval_clstep_read s M var a_e xcl =
+    let
+      (l_opt, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv;
+      v_pre = MAX v_addr s.bst_v_rNew;
+    in
+      case l_opt of
+	SOME l =>
+	let
+          t_max = MAX v_pre (s.bst_coh l);
+	  ts = FILTER (\t. EVERY (\t'. ((EL (t'-1) M).loc ≠ l)) [(t+1) .. t_max]) (0::mem_timestamps l M)
+	in
+	  FLAT (MAP (\t.
+		 let
+                   v_opt = mem_read M l t;
+		   v_post = MAX v_pre (mem_read_view 0 0 (s.bst_fwdb(l)) t);
+		 in
+		   case v_opt of
+		     SOME v =>
+		       (case env_update_cast64 (bir_var_name var) v (bir_var_type var) (s.bst_environ) of
+			 SOME new_env =>
+			   [s with <| bst_viewenv updated_by (λenv. FUPDATE env (var, v_post));
+				      bst_environ := new_env;
+				      bst_coh := (λlo. if lo = l
+						       then MAX (s.bst_coh l) v_post
+						       else s.bst_coh(lo));
+				      bst_v_rOld := MAX s.bst_v_rOld v_post;
+				      bst_v_CAP := MAX s.bst_v_CAP v_addr;
+				      bst_xclb := if xcl
+						  then SOME <| xclb_time := t; xclb_view := v_post |>
+						  else s.bst_xclb;
+				      bst_pc := if xcl
+                                                then (bir_pc_next o bir_pc_next) s.bst_pc
+                                                else bir_pc_next s.bst_pc |>]
+		        | _ => [])
+		   | _ => [])
+	      ts)
+      | _ => []
 ’;
 
-(* TODO: Does this have redundant parameters? *)
 val eval_clstep_fulfil_def = Define‘
-  eval_clstep_fulfil p cid s M var mem_e a_e en v_e =
+  eval_clstep_fulfil cid s M a_e v_e xcl =
     let (sl, v_addr) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv;
         (sv, v_data) = bir_eval_exp_view v_e s.bst_environ s.bst_viewenv
     in case (sl,sv) of
@@ -451,9 +473,8 @@ val eval_clstep_fulfil_def = Define‘
           | _ => []
 ’;
 
-(* TODO: Redundant parameters *)
 val eval_clstep_fence_def = Define‘
-  eval_clstep_fence p cid s M =
+  eval_clstep_fence s =
   let v = MAX s.bst_v_rOld s.bst_v_wOld
   in
     [s with <| bst_v_rNew := MAX s.bst_v_rNew v;
@@ -461,9 +482,8 @@ val eval_clstep_fence_def = Define‘
                bst_pc updated_by bir_pc_next |>]
 ’;
 
-(* TODO: Redundant parameters *)
 val eval_clstep_branch_def = Define‘
-  eval_clstep_branch p cid s M stm =
+  eval_clstep_branch p s stm =
   case stm of
     BStmtE (BStmt_CJmp cond_e lbl1 lbl2) =>
       let (sv, v_addr) = bir_eval_exp_view cond_e s.bst_environ s.bst_viewenv
@@ -475,7 +495,7 @@ val eval_clstep_branch_def = Define‘
 ’;
 
 val eval_clstep_exp_def = Define‘
-  eval_clstep_exp p cid s M var ex =
+  eval_clstep_exp s var ex =
   case bir_eval_exp_view ex s.bst_environ s.bst_viewenv
   of (SOME val, v_val) =>
        (case env_update_cast64 (bir_var_name var) val (bir_var_type var) (s.bst_environ) of
@@ -487,29 +507,31 @@ val eval_clstep_exp_def = Define‘
   | _ => []
 ’;
 
-(* TODO: Redundant parameters *)
 val eval_clstep_bir_step_def = Define‘
-  eval_clstep_bir_step p cid s M stm =
+  eval_clstep_bir_step p s stm =
    let (oo,s') = bir_exec_stmt p stm s
    in [s']
 ’;
 
 val eval_clstep_def = Define‘
-   eval_clstep p cid s M =
-   case bir_get_current_statement p s.bst_pc of
-     SOME (BStmtB (BStmt_Assign var (BExp_Load mem_e a_e en ty))) =>
-       eval_clstep_read p cid s M var mem_e a_e en ty
-   | SOME (BStmtB (BStmt_Assign var (BExp_Store mem_e a_e en v_e))) =>
-       eval_clstep_fulfil p cid s M var mem_e a_e en v_e 
-   | SOME (BStmtB (BStmt_Fence BM_ReadWrite BM_ReadWrite)) =>
-       eval_clstep_fence p cid s M
-   | SOME (BStmtE (BStmt_CJmp cond_e lbl1 lbl2)) =>
-       eval_clstep_branch p cid s M (BStmtE (BStmt_CJmp cond_e lbl1 lbl2))
-   | SOME (BStmtB (BStmt_Assign var ex)) =>
-       eval_clstep_exp p cid s M var ex
-   | SOME stm =>
-       eval_clstep_bir_step p cid s M stm
-   | _ => []
+  eval_clstep p cid s M =
+    case bir_get_current_statement p s.bst_pc of
+      SOME (BStmtB (BStmt_Assign var e)) =>
+      (case get_read_args e of
+         SOME (a_e, cast_opt) =>
+         eval_clstep_read s M var a_e (is_xcl_read p s)
+       | NONE =>
+         (case get_fulfil_args e of
+            SOME (a_e, v_e) =>
+            eval_clstep_fulfil cid s M a_e v_e (is_xcl_write p s)
+          | NONE => eval_clstep_exp s var e))
+    | SOME (BStmtB (BStmt_Fence BM_ReadWrite BM_ReadWrite)) =>
+      eval_clstep_fence s
+    | SOME (BStmtE (BStmt_CJmp cond_e lbl1 lbl2)) =>
+      eval_clstep_branch p s (BStmtE (BStmt_CJmp cond_e lbl1 lbl2))
+    | SOME stm =>
+      eval_clstep_bir_step p s stm
+    | _ => []
 ’;
 
 
