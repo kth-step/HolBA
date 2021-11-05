@@ -305,17 +305,7 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
     /\ stm = BStmtE (BStmt_CJmp cond_e lbl1 lbl2)
     /\ (SOME v, v_addr) = bir_eval_exp_view cond_e s.bst_environ s.bst_viewenv
     /\ bir_exec_stmt p stm s = (oo,s2)
-    /\ s' = s2 with <| bst_v_CAP := MAX s.bst_v_CAP v_addr;
-                       bst_xcl := F |>)
-(* Use bir_get_program_block_info_by_label *)
-==>
-  clstep p cid s M [] s')
-/\ (* branch (jump) *)
-(!p s s' M cid oo s2 lbl stm.
-   (bir_get_current_statement p s.bst_pc = SOME stm
-    /\ stm = BStmtE (BStmt_Jmp lbl)
-    /\ bir_exec_stmt p stm s = (oo,s2)
-    /\ s' = s2 with <| bst_xcl := F |>)
+    /\ s' = s2 with <| bst_v_CAP := MAX s.bst_v_CAP v_addr |>)
 ==>
   clstep p cid s M [] s')
 

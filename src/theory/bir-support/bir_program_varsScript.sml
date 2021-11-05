@@ -203,7 +203,7 @@ val bir_state_EQ_FOR_VARS_ALT_DEF = store_thm ("bir_state_EQ_FOR_VARS_ALT_DEF",
   (st1.bst_v_CAP = st2.bst_v_CAP) /\ (st1.bst_v_Rel = st2.bst_v_Rel) /\
   (st1.bst_v_rNew = st2.bst_v_rNew) /\ (st1.bst_v_wNew = st2.bst_v_wNew) /\
   (st1.bst_v_wOld = st2.bst_v_wOld) /\ (st1.bst_prom = st2.bst_prom) /\
-  (st1.bst_fwdb = st2.bst_fwdb) /\ (st1.bst_xcl = st2.bst_xcl) /\
+  (st1.bst_fwdb = st2.bst_fwdb) /\
   (st1.bst_xclb = st2.bst_xclb) /\(st1.bst_coh = st2.bst_coh) /\
   bir_env_EQ_FOR_VARS vs st1.bst_environ st2.bst_environ``,
 

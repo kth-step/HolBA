@@ -102,10 +102,6 @@ val _ = Datatype `bir_state_t = <|
   bst_v_Rel    : num;
   bst_prom     : num list;
   bst_fwdb     : bir_val_t -> fwdb_t;
-  (* Exclusivity flag: used when this is not clear from a single
-   * statement (e.g. exclusive loads). Set to false upon every
-   * block transition. *)
-  bst_xcl      : bool;
   bst_xclb     : xclb_t option;
   bst_inflight : (string bir_inflight_stmt_t) list;
   bst_counter  : num
