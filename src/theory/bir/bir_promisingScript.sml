@@ -250,7 +250,6 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
  ∧ (∀t'. ((t:num) < t' ∧ t' ≤ (MAX ν_pre (s.bst_coh l))) ⇒ (EL t' M).loc ≠ l)
  ∧ v_post = MAX v_pre (mem_read_view a rk (s.bst_fwdb(l)) t)
  /\ SOME new_env = env_update_cast64 (bir_var_name var) v (bir_var_type var) (s.bst_environ)
- (* TODO: Update viewenv by v_addr or v_post? *)
  ∧ s' = s with <| bst_viewenv updated_by (\env. FUPDATE env (var, v_post));
                   bst_environ := new_env;
                   bst_coh := (λlo. if lo = l
@@ -762,7 +761,7 @@ End
 (*** Combined Promising and Non-Promising executions. ***)
 Definition eval_promising:
   eval_promising fuel (cores, M) =
-  LIST_BIND (eval_psteps fuel fuel (cores, M))
+  LIST_BIND (eval_psteps fuel (fuel * LENGTH cores) (cores, M))
             (eval_clsteps fuel)
 End
 
