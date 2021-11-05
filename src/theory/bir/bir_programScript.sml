@@ -57,7 +57,7 @@ val _ = Datatype `bir_stmt_t =
 `;
 
 val _ = Datatype `bir_block_t = <|
-  bb_label          : bir_label_t ;
+  bb_label          : bir_label_t;
   bb_atomic         : bool;
   bb_statements     : ('a bir_stmt_basic_t) list;
   bb_last_statement : bir_stmt_end_t |>`;
@@ -80,7 +80,12 @@ val _ = Datatype `bir_inflight_stmt_t = BirInflight string ('a bir_stmt_t)`;
 
 (* forward buffer, part of the core-local state *)
 val fwdb_def = Datatype`
-fwdb_t = <| time : num; view : num; xcl : bool |>
+  fwdb_t = <| fwdb_time : num; fwdb_view : num; fwdb_xcl : bool |>
+`;
+
+(* exclusives bank, part of the core-local state *)
+val xclb_def = Datatype`
+  xclb_t = <| xclb_time : num; xclb_view : num |>
 `;
 
 val _ = Datatype `bir_state_t = <|
@@ -90,12 +95,14 @@ val _ = Datatype `bir_state_t = <|
   bst_viewenv  : bir_var_t |-> num;
   bst_coh      : bir_val_t -> num;
   bst_v_rOld   : num;
-  bst_v_CAP    : num;
+  bst_v_wOld   : num;
   bst_v_rNew   : num;
   bst_v_wNew   : num;
-  bst_v_wOld   : num;
+  bst_v_CAP    : num;
+  bst_v_Rel    : num;
   bst_prom     : num list;
   bst_fwdb     : bir_val_t -> fwdb_t;
+  bst_xclb     : xclb_t option;
   bst_inflight : (string bir_inflight_stmt_t) list;
   bst_counter  : num
 |>`;
@@ -245,7 +252,7 @@ val bir_state_init_def = Define `bir_state_init p = <|
   ; bst_prom := []
   ; bst_inflight := []
   ; bst_counter := 0
-  ; bst_fwdb := (\l. <| time:= 0; view:=0; xcl:=F |>)
+  ; bst_fwdb := (\l. <| fwdb_time:= 0; fwdb_view:=0; fwdb_xcl:=F |>)
 |>`;
 
 (* ------------------------------------------------------------------------- *)
