@@ -17,8 +17,10 @@ datatype status = OK of string | ERROR of string * string
 fun lift_test_and_save filename =
     (save_litmus (filename ^ ".json", lift_herd_litmus filename); print ("OK " ^filename ^ "\n"); OK filename)
     handle e => (print ("\nERROR " ^filename^"\n"); print (exnMessage e ^"\n"); ERROR (filename, exnMessage e))
+		    
+val basic = List.filter (String.isSubstring "size/BASIC") filenames
 
-val s = map lift_test_and_save filenames
+val s = map lift_test_and_save basic
 
 fun get_errors [] = []
   | get_errors (x::xs) = 
@@ -32,3 +34,10 @@ open bir_fileLib;
 
 val _ = write_to_file "errors.txt" errors
 
+
+(*
+open litmusInterfaceLib
+load_litmus "tests/non-mixed-size/BASIC_2_THREAD/MP.litmus.json"
+lift_test_and_save "tests/non-mixed-size/BASIC_2_THREAD/MP.litmus"
+*)
+ 

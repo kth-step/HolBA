@@ -3,6 +3,7 @@ open bir_promisingTheory;
 open wordsTheory;
 open computeLib;
 open bslSyntax;
+open herdLitmusRegLib;
 
 fun term_EVAL tm = (rand o concl) (EVAL tm);
 
@@ -17,42 +18,8 @@ fun bir_type exp =
       else raise WrongType
     end;
 
-local
-  val count = ref 0;
-in
-fun fresh_var ty =
-    let val v = bvar ("T"^(PolyML.makestring (!count))) ty;
-    in (count := !count + 1; v)
-    end;
-end
-
-fun canonicalise_prog prog =
-    let open bir_programSyntax listSyntax bir_expSyntax;
-        val (block_list,ty) = dest_list (dest_BirProgram prog);
-        fun fix_cast stmt =
-            if is_BStmt_Assign stmt
-            then let val (var,body) = dest_BStmt_Assign stmt;
-                 in
-                   if is_BExp_Cast body
-                   then let val (cast, exp, ty) = dest_BExp_Cast body;
-                            val tmp_ty = bir_type exp;
-                            val tmp_var = fresh_var tmp_ty;
-                        in
-                          [mk_BStmt_Assign (tmp_var,exp), mk_BStmt_Assign(var, mk_BExp_Cast (cast, bden tmp_var, ty))]
-                        end
-                   else [stmt]
-                 end
-            else [stmt];
-        fun fix_block block =
-            let val (lbl,is_atomic,stmts,last_stmt) = dest_bir_block block;
-                val (stmt_list,stmt_ty) = dest_list stmts;
-                val new_stmts = mk_list (List.concat (List.map fix_cast stmt_list), stmt_ty);
-            in
-              mk_bir_block (lbl,is_atomic,new_stmts,last_stmt)
-            end;
-    in
-      mk_BirProgram (mk_list (List.map fix_block block_list,ty))
-    end;
+fun combin [] = []
+  | combin (x::xs) = List.map (fn y => (x,y)) xs @ combin xs 
 
 fun assume_cheat tm = prove(tm,cheat);
 fun mk_assums var =
@@ -65,11 +32,18 @@ fun mk_assums var =
       “4w + ^var ≤₊ 0w”,
       “1000w ≤₊ ^var”,
       (* other *)
-      “~(^var <₊ 0w)”
+      “~(^var <₊ 0w)”,
+      “0w + ^var = ^var”,
+      “^var + 0w = ^var”
     ];
 
 fun extend_compset () =
-    add_thms (flatten (map mk_assums [“x:word64”,“y:word64”])) the_compset;
+    let 
+	val var = [“x:word64”,“y:word64”]
+    in
+	add_thms (flatten (map mk_assums var)) the_compset;
+	add_thms (CONJUNCTS LITMUS_CONSTANT_THM) the_compset
+    end
 
 fun process_transform to_compset (clauses.RRules thms) = add_thms thms to_compset
   | process_transform to_compset (clauses.Conversion f) = add_conv (“T”,1,fn tm => fst (f tm)) to_compset;
@@ -85,27 +59,62 @@ fun term_LITMUS_CONV tm = term_EVAL ((rand o concl) (LITMUS_CONV tm));
 fun typed_prog p = inst [alpha |-> Type`:string`] p;
 fun fix_types ps = map typed_prog ps;
 
-fun mk_st_from_env prog env = term_EVAL “bir_state_init ^prog with <| bst_environ := ^env |>”;
+fun mk_st_from_env prog env = term_EVAL “bir_state_init ^prog with <| bst_environ := BEnv ^env |>”;
 fun extend_env mem env = term_EVAL “case ^env of BEnv f => BEnv (\s . (if s = "MEM8" then bir_env_lookup "MEM8" ^mem else f s))”;
 fun core_st_promised n st promises = term_EVAL “^st with <| bst_prom := [(^n)] |>”;
 
-(* val filename = "tests/non-mixed-size/BASIC_2_THREAD/R.litmus.json" *)
-fun run_litmus_2thread filename =
-   let val test = load_litmus filename;
-       val (progs as [prog1,prog2]) = List.map canonicalise_prog (fix_types (#progs test));
-       val (mem,envs) = #inits test; (* mem is assumed to be empty for now *)
-       val envs_with_mem = map (extend_env mem) envs
-       val [st1,st2] = map (uncurry mk_st_from_env) (zip progs envs_with_mem);
-       val cores = “[(core 0 ^prog1 ^st1);
-                     (core 1 ^prog2 ^st2)]”;
-       (* val _ = extend_compset (); *)
-       val promised_mem = term_EVAL “core_promises 7 (core 0 ^prog1 ^st1)”;
-       val core1_st_promised = core_st_promised “1:num” st1 promised_mem;
-       val core2_st_promised = core_st_promised “2:num” st1 promised_mem;
-       val cores_promised = “[(core 0 ^prog1 ^core1_st_promised);
-                              (core 1 ^prog2 ^core2_st_promised)]”;
-       (*val final_states = term_EVAL “eval_parsteps 8 ^cores_promised ^promised_mem”; *)
-       (*val _ = restore_compset (); *)
-   in promised_mem end;
+exception WrongType;
+val term_EVAL = rhs o concl o EVAL
 
-fun test () = run_litmus_2thread "tests/non-mixed-size/BASIC_2_THREAD/R.litmus.json";
+fun bir_type exp =
+    let open bir_typing_expTheory optionSyntax;
+        val ty = term_EVAL “type_of_bir_exp ^exp”;
+    in
+      if is_some ty
+      then dest_some ty
+      else raise WrongType
+    end;
+
+open bir_programSyntax listSyntax;
+
+val get_TS = “\ts.
+	      MAP (\t. case t of (Core cid p s) => 
+				 case s.bst_environ of BEnv f => f) ts
+	      ”;
+val get_M = “\m.
+	     FOLDR (\m t. t (|m.loc |-> SOME m.val|)) (K NONE) m
+	     ”;
+fun run_litmus_2thread filename =
+   let 
+       val _ = print filename
+       val test = load_litmus filename;
+       val (progs as [prog1,prog2]) = fix_types (#progs test);
+       val (mem,envs) = #inits test; (* mem is assumed to be empty for now *)
+       val [st1,st2] = map (uncurry mk_st_from_env) (zip progs envs);
+       val cores = “[(Core 0 ^prog1 ^st1);
+                     (Core 1 ^prog2 ^st2)]”;
+       val _ = extend_compset ();
+       val final_states = term_EVAL “eval_promising 16 (^cores, [])”;
+       val TS = term_EVAL “MAP (^get_TS o FST) ^final_states”
+       val M = term_EVAL “MAP (^get_M o SND) ^final_states”
+       val final = #final test
+       val finals = term_EVAL “ZIP (^M, ^TS)”
+       val res = term_EVAL “^final ^finals”
+   in res end;
+
+(* 
+fun find_tests () =
+    let
+	val proc = Unix.execute("/usr/bin/find", ["-iname", "*.litmus.json"])
+	val inStream = Unix.textInstreamOf proc
+    in
+	String.tokens Char.isSpace (TextIO.inputAll inStream) before TextIO.closeIn inStream
+    end
+
+val filenames = find_tests ()
+val basic = List.filter (String.isSubstring "size/BASIC") filenames
+val res = map run_litmus_2thread basic;
+
+val filename = "./tests/non-mixed-size/BASIC_2_THREAD/S+fence.rw.rws.litmus.json"
+run_litmus_2thread filename
+*)
