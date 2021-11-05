@@ -8,11 +8,13 @@ end
 
 structure herdLitmusFinalLib : herdLitmusFinalLib =
 struct
-open HolKernel Parse boolLib bossLib
-open stringSyntax numSyntax wordsSyntax
-open bir_immSyntax bir_envSyntax
+open HolKernel Parse boolLib bossLib;
 
-open UtilLib herdLitmusRegLib
+open stringSyntax numSyntax wordsSyntax listSyntax;
+
+open bir_immSyntax bir_envSyntax bir_valuesSyntax;
+
+open UtilLib herdLitmusValuesLib;
 
 (* The tokenizer and parser is based on the functional parser
    from 'ML for the Working Programmer, Chapter 9'. *)
@@ -113,28 +115,27 @@ fun reader ph a =
 (* Make terms *)
 val mk_AND = mk_conj
 val mk_OR = mk_disj
-fun mk_FORALL x = “!(mem, thds). (mem, thds) IN ss ==> ^x”
-fun mk_EXISTS x = “?(mem, thds). (mem, thds) IN ss ==> ^x”
+fun mk_FORALL x = 
+	“EVERY  (\ (M:bir_val_t -> bir_val_t option, 
+		    TS:(string -> bir_val_t option) list). ^x)”
+fun mk_EXISTS x = 
+	“EXISTS (\ (M:bir_val_t -> bir_val_t option, 
+	            TS:(string -> bir_val_t option) list). ^x)”
 fun mk_MEM (a, v) =
     let
 	(* vars are word type by default, memory has num type *)
-	val f = mk_w2n o word_of_string
-	val ha = f a
-	val hv = f v
-	val hm = mk_var("mem", bir_var_environment_t_ty)
+	fun f v n = mk_BVal_Imm $ gen_mk_Imm $ word_of_string v n
+	val ha = f a 64
+	val hv = f v 32
     in
-	“!fmap. ((bir_env_lookup "MEM8" ^hm)
-		 = SOME (BVal_Mem Bit64 Bit8 fmap))
-	 ==> FLOOKUP fmap ^ha = SOME ^hv”
+	“M ^ha = SOME ^hv”
     end
 fun mk_REG (t,(r,v)) =
     let val ht = term_of_int t
-	(* riscv_cannonize converts abi register to standard register.
-	   E.g., a1 => x11 *)
-	val hr = fromMLstring (riscv_cannonize r)
-	val hv = mk_Imm64 (word_of_string v)
+	val hr = fromMLstring r
+	val hv = mk_Imm64 (word_of_string v 64)
     in
-	“bir_env_lookup ^hr (EL ^ht thds) = SOME (BVal_Imm ^hv)”
+	“(EL ^ht TS) ^hr = SOME (BVal_Imm ^hv)”
     end
 (* FORALL || EXISTS *)
 fun quant xs = ("forall" $-- expr >> mk_FORALL
@@ -156,11 +157,11 @@ and var xs = (id || num >> Int.toString) xs
 (* Parse the final expression *)
 fun parse_final final_sec =
     let val t = reader quant final_sec
-    in (rhs o concl o EVAL) “\ss. ^t” end
+    in (rhs o concl o EVAL) t end
 end
 
 (*
 val x = "exists (not (x=1 /\\ (2:x7=0 /\\ (2:x8=0 /\\ (1:x5=0 /\\ (1:x8=0 /\\ (2:x9=1 /\\ (1:x7=0 \\/ 1:x7=1 \\/ 1:x7=2) \\/ 2:x9=2 /\\ (1:x7=2 \\/ 1:x7=1 \\/ 1:x7=0)) \\/ 1:x8=1 /\\ (2:x9=1 /\\ (1:x7=2 \\/ 1:x7=1 \\/ 1:x7=0) \\/ 2:x9=2 /\\ (1:x7=0 \\/ 1:x7=1 \\/ 1:x7=2))) \\/ 1:x5=2 /\\ (1:x7=1 /\\ (1:x8=0 /\\ (2:x9=2 \\/ 2:x9=1) \\/ 1:x8=1 /\\ (2:x9=1 \\/ 2:x9=2)) \\/ 1:x7=2 /\\ (1:x8=0 /\\ (2:x9=1 \\/ 2:x9=2) \\/ 1:x8=1 /\\ (2:x9=2 \\/ 2:x9=1))) \\/ 1:x5=1 /\\ 1:x7=1 /\\ (1:x8=0 /\\ (2:x9=1 \\/ 2:x9=2) \\/ 1:x8=1 /\\ (2:x9=2 \\/ 2:x9=1))) \\/ 2:x8=1 /\\ (1:x5=0 /\\ (1:x7=0 /\\ (1:x8=0 /\\ (2:x9=1 \\/ 2:x9=0) \\/ 1:x8=1 /\\ (2:x9=0 \\/ 2:x9=1)) \\/ 1:x7=1 /\\ (1:x8=0 /\\ (2:x9=0 \\/ 2:x9=1) \\/ 1:x8=1 /\\ (2:x9=1 \\/ 2:x9=0))) \\/ 1:x5=1 /\\ 1:x7=1 /\\ (1:x8=0 /\\ (2:x9=0 \\/ 2:x9=1) \\/ 1:x8=1 /\\ (2:x9=1 \\/ 2:x9=0)))) \\/ 2:x7=1 /\\ 2:x8=1 /\\ 2:x9=1 /\\ (1:x5=0 /\\ (1:x7=0 /\\ (1:x8=1 \\/ 1:x8=0) \\/ 1:x7=1 /\\ (1:x8=0 \\/ 1:x8=1)) \\/ 1:x5=1 /\\ 1:x7=1 /\\ (1:x8=0 \\/ 1:x8=1))) \\/ 2:x7=1 /\\ 2:x8=0 /\\ 2:x9=2 /\\ x=2 /\\ (1:x5=0 /\\ (1:x8=0 /\\ (1:x7=2 \\/ 1:x7=1 \\/ 1:x7=0) \\/ 1:x8=1 /\\ (1:x7=0 \\/ 1:x7=1 \\/ 1:x7=2)) \\/ 1:x5=1 /\\ (1:x7=1 /\\ (1:x8=0 \\/ 1:x8=1) \\/ 1:x7=2 /\\ (1:x8=1 \\/ 1:x8=0)) \\/ 1:x5=2 /\\ 1:x7=2 /\\ (1:x8=1 \\/ 1:x8=0))))"
 
-val t = parse_final x
+val t = parse_final "exists (1:x1=3)"
 *)

@@ -83,16 +83,5 @@ fun split p s =
 fun fst (x,_) = x
 fun member (x,l) = List.exists (fn y => x = y) l
 
-local
-    open HolKernel wordsSyntax numSyntax bir_immSyntax
-in
-
-fun word_of_string s =
-    case Int.fromString s
-     of SOME n => mk_word(Arbnum.fromInt n,Arbnum.fromInt 64)
-      | NONE => mk_var(s, mk_int_word_type 64)
-    
-end
-
 fun eq a b = (a = b)
 end

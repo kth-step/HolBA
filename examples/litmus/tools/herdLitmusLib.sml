@@ -1,4 +1,4 @@
-signature herdLitmusLib =
+    signature herdLitmusLib =
 sig
     include Abbrev
     type litmus = {arch:string,
@@ -17,8 +17,9 @@ end
 
 structure herdLitmusLib : herdLitmusLib =
 struct
-open HolKernel Parse boolLib bossLib
-open bir_execLib
+open HolKernel Parse boolLib bossLib;
+open stringSyntax;
+open bir_execLib bir_valuesSyntax bir_immSyntax;
 
 open UtilLib
 
@@ -83,12 +84,15 @@ fun split_to_sections text =
 end; (* local *)
 
 
-(* Gets the registers used by the program *)
-fun regs_of_prog prog =
-    let val bvars = gen_vars_of_prog prog
-	val names = map (fst o dest_BVar_string) bvars
-    in List.filter (not o (String.isPrefix "MEM")) names end;
+val term_EVAL = rhs o concl o EVAL
 
+
+fun regs_of_prog prog =
+    let
+	val bvars = strip_set $ term_EVAL “bir_varset_of_program ^prog”
+	val regs = filter (is_BType_Imm o snd)$ map dest_BVar bvars
+	fun f (x,y) = (fromHOLstring x, size_of_bir_immtype_t $ dest_BType_Imm y)
+    in map f regs end
 
 fun parse text =
     let
@@ -113,6 +117,7 @@ fun parse text =
     end
 (*
 val filename = "../tests/non-mixed-size/BASIC_2_THREAD/MP+po+addr.litmus"
+val prog = hd $ tl progs
 val text = bir_fileLib.read_from_file filename;
 val (arch, name, info_sec, init_sec, prog_sec, final_sec) = split_to_sections text
 val progs = parse_prog prog_sec

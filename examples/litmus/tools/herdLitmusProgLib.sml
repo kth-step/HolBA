@@ -13,9 +13,9 @@ struct
 open HolKernel Parse bossLib boolLib
 open listSyntax;
 open bir_lifter_interfaceLib
-open UtilLib
 open bir_programSyntax bir_expSyntax;
 open bslSyntax;
+open UtilLib;
 
 val SOURCE_DIR = valOf (Posix.ProcEnv.getenv ("PWD"))
 
@@ -100,14 +100,17 @@ fun canonicalise_prog prog =
 		 in
 		     if is_BExp_Cast body
 		     then let val (cast, exp, ty) = dest_BExp_Cast body;
-			      val tmp_ty = bir_type exp;
-			      val tmp_var = fresh_var tmp_ty;
+			      val tmp_var = fresh_var “BType_Imm Bit64”;
 			  in
-			      [mk_BStmt_Assign (tmp_var,exp), mk_BStmt_Assign(var, mk_BExp_Cast (cast, bden tmp_var, ty))]
+			      [mk_BStmt_Assign (var, exp)]
+			      (*
+			      [mk_BStmt_Assign (tmp_var,exp), 
+			       mk_BStmt_Assign(var, mk_BExp_Cast (cast, bden tmp_var, ty))] *)
 			  end
 		     else [stmt]
 		 end
-	    else [stmt];
+	    else if is_BStmt_Assert stmt
+	    then [] else [stmt];
 	fun fix_block block =
 	    let val (lbl,is_atomic,stmts,last_stmt) = dest_bir_block block;
 		val (stmt_list,stmt_ty) = dest_list stmts;
@@ -132,11 +135,11 @@ fun parse_prog prog_sec =
 end
 
 (*
-
-
 open listSyntax bir_programSyntax;
-val example = "P0 | P1; sw x1,0(x3)| lw x3,0(x4);"
-val [prog1, prog2] = parse_prog example
-
+val example = 
+ "P0          | P1          ;"^
+ "sw x5,0(x6) | sw x5,0(x6) ;"^
+ "sw x5,0(x7) | lw x7,0(x8) ;"
+val prog2 = tl $ parse_prog example
 
 *)

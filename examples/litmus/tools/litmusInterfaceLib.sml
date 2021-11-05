@@ -51,6 +51,8 @@ fun save_litmus (filename,l:litmus) =
 fun load_litmus (filename: string) =
     let
 	fun term_of_string s = Term [QUOTE s]
+	fun final_of_string s = Term [QUOTE s,
+				     QUOTE ":((bir_val_t -> bir_val_t option) # ((string -> bir_val_t option) list)) list -> bool"]
 	val json = case Json.parse (bir_fileLib.read_from_file filename)
 		    of OK json => json
 		     | ERROR e => raise ERR "load_litmus" e
@@ -60,7 +62,7 @@ fun load_litmus (filename: string) =
 	val info = arrayMap asString (lookup "info")
 	val inits = arrayMap (term_of_string o asString) (lookup "inits")
 	val progs = arrayMap (term_of_string o asString) (lookup "progs")
-	val final = (term_of_string o asString) (lookup "final")
+	val final = (final_of_string o asString) (lookup "final")
     in
 	{
 	  arch=arch,

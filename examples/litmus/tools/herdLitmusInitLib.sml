@@ -3,7 +3,7 @@ sig
     include Abbrev
     (* Arguments: Init section, registers used by each program
        Returns: BIR environments for memory and threads *)
-    val parse_init : string -> (string list list) -> term * term list
+    val parse_init : string -> (string * int) list list -> term * term list
 end
 
 
@@ -11,12 +11,15 @@ structure herdLitmusInitLib : herdLitmusInitLib =
 struct
 (* Parse the init section *)
 open HolKernel Parse boolLib bossLib
-open stringSyntax numSyntax wordsSyntax combinSyntax
-open pairSyntax optionSyntax finite_mapSyntax
-open bir_immSyntax bir_envSyntax bir_valuesSyntax
-open UtilLib herdLitmusRegLib
-open Listsort
 
+open stringSyntax numSyntax wordsSyntax combinSyntax
+open pairSyntax optionSyntax listSyntax
+
+open bir_immSyntax bir_envSyntax bir_valuesSyntax
+
+open UtilLib herdLitmusValuesLib
+open Listsort
+	 
 fun fst2 ((x,_),(y,_)) = (x,y)
 
 fun snd2 ((_,x),(_,y)) = (x,y)
@@ -31,10 +34,7 @@ fun tokenize init_sec =
 (* Split initial assignments of memory and thread *)
 fun partition assigns =
     let
-	(* riscv_cannonize converts ABI register to standard register names,
-	   e.g., a1 -> x11. *)
-	fun mk_reg (t,r,v) = (valOf (Int.fromString t),
-			      (riscv_cannonize r, v))
+	fun mk_reg (t,r,v) = (valOf $ Int.fromString t,(r,v))
 	fun loop [] = ([], [])
 	  | loop (x::xs) =
 	    let val (mem, thds) = loop xs
@@ -42,21 +42,12 @@ fun partition assigns =
 		 of SOME(l, v) =>
 		    (case split (eq #":") l
 		      of SOME (t, r) =>
-			 (mem,mk_reg(t,r,v)::thds)
+			 (mem,mk_reg (t,r,v)::thds)
 		       | NONE => ((l,v)::mem, thds))
 		  | NONE => raise Fail "Expected assignment")
 	    end
     in loop assigns end
 
-(* Group register initial values by their threads *)
-fun group_regs regs =
-    let
-	val sorted = sort (Int.compare o fst2) regs
-	val grouped = groupBy (op= o fst2) sorted
-    in map (map snd) grouped end
-
-(* Default value of a register used by a program is 0.
-   If init state does not set a value to the register, we set it to 0*)
 fun padd_regs regs prog_regs =
     let
 	fun mk_defaults ([],_) = []
@@ -69,35 +60,45 @@ fun padd_regs regs prog_regs =
 	nubBy eq_tid_reg (regs @ defaults)
     end
 
+(* Group register initial values by their threads *)
+fun group_regs regs =
+    let
+	val sorted = sort (Int.compare o fst2) regs
+	val grouped = groupBy (op= o fst2) sorted
+    in map (map snd) grouped end
+
 (* Make BIR environment for memory *)
 fun mk_mem_env mem =
     let
-	val f = mk_w2n o word_of_string
-	val mem_num = map (fn (x,y) => mk_pair(f x, f y)) mem
-	val fmap = list_mk_fupdate (mk_fempty(num,num), mem_num)
-	val bval = mk_BVal_Mem (Bit64_tm,Bit8_tm,fmap)
-	val env_empty = “(K NONE) : string -> bir_val_t option”
-	val env = mk_comb(mk_update (“"MEM8"”, mk_some bval), env_empty)
-    in (rhs o concl o EVAL o mk_BEnv) env end
+	fun f s = mk_BVal_Imm (mk_Imm64 (word_of_string s 64))
+	val mem' = map (fn (x,y) => (f x, f y)) mem
+	val mem'' = map (fn (x,y) => “<| cid:=0; loc := ^x; val := ^y |>”) mem'
+    in mk_list(mem'', “:mem_msg_t”) end
 
 (* Make BIR environment for a thread *)
-fun mk_thd_env regs =
+fun mk_thd_env (regs, prog_regs) =
     let
-	val f = mk_Imm64 o word_of_string
-	fun str2term (r,v) = (fromMLstring r, mk_some (mk_BVal_Imm(f v)))
+	fun f r v = 
+	    let 
+		val sz = snd $ valOf $ List.find (fn x => fst x = r) prog_regs
+	    in 
+		gen_mk_Imm $ word_of_string v sz
+	    end
+	fun str2term (r,v) = (fromMLstring r, mk_some (mk_BVal_Imm(f r v)))
 	val list_mk_update = foldl (fn(r,e) => mk_comb(mk_update r, e))
-	val env_empty = “(K NONE) : string -> bir_val_t option”
+	val empty = “(K NONE) : string -> bir_val_t option”
 	val regs_hol = map str2term regs
-	val env = list_mk_update env_empty regs_hol
-    in (rhs o concl o EVAL o mk_BEnv) env end
-
-fun parse_init init_sec prog_regs =
+	val env = list_mk_update empty regs_hol
+    in env end
+	
+fun parse_init init_sec progs_regs =
     let
 	val assigns = tokenize init_sec
 	val (mem, regs) = partition assigns
-	val grouped_regs = group_regs (padd_regs regs prog_regs)
+	val progs_regs_names = map (map fst) progs_regs
+	val grouped_regs = group_regs (padd_regs regs progs_regs_names)
 	val mem_env = mk_mem_env mem
-	val thd_envs = map mk_thd_env grouped_regs
+	val thd_envs = map mk_thd_env (zip grouped_regs progs_regs)
     in
 	(mem_env, thd_envs)
     end
