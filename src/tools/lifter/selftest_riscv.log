@@ -1319,6 +1319,16 @@ SC.W x1, x3, (x2): 180120AF @ 0x10030 - OK - cheat
                       (BExp_Cast BIExp_LowCast
                          (BExp_Den (BVar "x0" (BType_Imm Bit64))) Bit32))
                    (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8))));
+              BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+                (BExp_IfThenElse
+                   (BExp_BinPred BIExp_Equal
+                      (BExp_Load
+                         (BExp_Den (BVar "MEM8_R" (BType_Mem Bit64 Bit8)))
+                         (BExp_Den (BVar "x2" (BType_Imm Bit64)))
+                         BEnd_LittleEndian Bit64)
+                      (BExp_Const (Imm32 0x1010101w)))
+                   (BExp_Const (Imm64 0w))
+                   (BExp_Const (Imm64 0x101010101010101w)));
               BStmt_Assign (BVar "MEM8_R" (BType_Mem Bit64 Bit8))
                 (BExp_Den (BVar "MEM8_Z" (BType_Mem Bit64 Bit8)))];
            bb_last_statement :=
@@ -1749,6 +1759,16 @@ SC.D x1, x3, (x2): 180130AF @ 0x10030 - OK - cheat
                       BEnd_LittleEndian
                       (BExp_Den (BVar "x0" (BType_Imm Bit64))))
                    (BExp_Den (BVar "MEM8" (BType_Mem Bit64 Bit8))));
+              BStmt_Assign (BVar "x1" (BType_Imm Bit64))
+                (BExp_IfThenElse
+                   (BExp_BinPred BIExp_Equal
+                      (BExp_Load
+                         (BExp_Den (BVar "MEM8_R" (BType_Mem Bit64 Bit8)))
+                         (BExp_Den (BVar "x2" (BType_Imm Bit64)))
+                         BEnd_LittleEndian Bit32)
+                      (BExp_Const (Imm64 0x101010101010101w)))
+                   (BExp_Const (Imm64 0w))
+                   (BExp_Const (Imm64 0x101010101010101w)));
               BStmt_Assign (BVar "MEM8_R" (BType_Mem Bit64 Bit8))
                 (BExp_Den (BVar "MEM8_Z" (BType_Mem Bit64 Bit8)))];
            bb_last_statement :=
