@@ -372,6 +372,91 @@ val (bir_cstep_seq_rules, bir_cstep_seq_ind, bir_cstep_seq_cases) = Hol_reln`
 `;
 
 val cstep_seq_rtc_def = Define`cstep_seq_rtc p cid = (cstep_seq p cid)^*`
+
+(* cstep_seq invariant *)
+
+Theorem bir_exec_stmt_jmp_bst_prom:
+  !st p lbl st. st.bst_prom = (bir_exec_stmt_jmp p lbl st).bst_prom
+Proof
+  rw[bir_exec_stmt_jmp_def]
+  >> CASE_TAC
+  >> fs[bir_state_set_typeerror_def,bir_exec_stmt_jmp_to_label_def]
+  >> CASE_TAC
+  >> fs[]
+QED
+
+Theorem clstep_bst_prom_EQ:
+  clstep p cid st M [] st' ==> st.bst_prom = st'.bst_prom
+Proof
+  rw[bir_clstep_cases]
+  >> gvs[bir_state_t_accfupds,bir_exec_stmt_def,bir_exec_stmtE_def,bir_exec_stmt_cjmp_def,AllCaseEqs(),bir_state_set_typeerror_def,stmt_generic_step_def,bir_exec_stmt_jmp_bst_prom]
+  >> qmatch_assum_rename_tac `stmt_generic_step stm`
+  >> Cases_on `stm`
+  (* 4 subgoals *)
+  >~ [`stmt_generic_step $ BStmtB _`]
+  >-  (
+    qmatch_assum_rename_tac `stmt_generic_step $ BStmtB b`
+    >> Cases_on `b`
+    >> fs[AllCaseEqs(),stmt_generic_step_def,bir_exec_stmt_def,pairTheory.ELIM_UNCURRY]
+    >> BasicProvers.every_case_tac
+    >> fs[bir_exec_stmtB_def,bir_exec_stmt_assert_def,bir_exec_stmt_assume_def,bir_exec_stmt_observe_def]
+    >> BasicProvers.every_case_tac
+    >> gvs[bir_state_set_typeerror_def,CaseEq"option"]
+  )
+  >~ [`stmt_generic_step $ BStmtB _`]
+  >-  (
+    qmatch_assum_rename_tac `stmt_generic_step $ BStmtB b`
+    >> Cases_on `b`
+    >> fs[AllCaseEqs(),stmt_generic_step_def,bir_exec_stmt_def,pairTheory.ELIM_UNCURRY]
+    >> BasicProvers.every_case_tac
+    >> fs[bir_exec_stmtB_def,bir_exec_stmt_assert_def,bir_exec_stmt_assume_def,bir_exec_stmt_observe_def]
+    >> BasicProvers.every_case_tac
+    >> gvs[bir_state_set_typeerror_def,CaseEq"option"]
+  )
+  >> qmatch_assum_rename_tac `stmt_generic_step $ BStmtE b`
+  >> Cases_on `b`
+  >> fs[stmt_generic_step_def,bir_exec_stmtE_def,bir_exec_stmt_jmp_def,bir_exec_stmt_def,bir_exec_stmt_halt_def]
+  >> BasicProvers.every_case_tac
+  >> gvs[bir_state_set_typeerror_def,bir_exec_stmt_jmp_to_label_def]
+  >> BasicProvers.every_case_tac
+  >> gvs[bir_state_set_typeerror_def,CaseEq"option"]
+QED
+
+Theorem cstep_seq_bst_prom_EQ:
+  !p cid sM sM'. cstep_seq p cid sM sM' /\ EVERY (λx. x <= LENGTH $ SND sM) (FST sM).bst_prom
+  ==> EVERY (λx. x <= LENGTH $ SND sM') (FST sM').bst_prom /\ (FST sM).bst_prom = (FST sM').bst_prom
+Proof
+  fs[GSYM AND_IMP_INTRO]
+  >> ho_match_mp_tac bir_cstep_seq_ind
+  >> conj_tac >> rpt gen_tac >> strip_tac
+  >- (imp_res_tac clstep_bst_prom_EQ >> fs[])
+  >> strip_tac >> conj_asm1_tac
+  >- (
+    pop_assum mp_tac
+    >> gvs[bir_cstep_cases,bir_clstep_cases,rich_listTheory.FILTER_APPEND,EVERY_FILTER]
+    >> match_mp_tac EVERY_MONOTONIC
+    >> fs[]
+  )
+  >> gvs[bir_clstep_cases,bir_cstep_cases,bir_state_t_accfupds,bir_exec_stmt_def,bir_exec_stmtE_def,bir_exec_stmt_cjmp_def,bir_state_set_typeerror_def,stmt_generic_step_def,bir_exec_stmt_jmp_bst_prom,rich_listTheory.FILTER_APPEND]
+  >> fs[Once EQ_SYM_EQ,FILTER_EQ_ID]
+  >> qpat_x_assum `EVERY _ _.bst_prom` mp_tac
+  >> match_mp_tac EVERY_MONOTONIC
+  >> fs[]
+QED
+
+Theorem cstep_seq_rtc_bst_prom_EQ:
+  !p cid sM sM'. cstep_seq_rtc p cid sM sM' /\ EVERY (λx. x <= LENGTH $ SND sM) (FST sM).bst_prom
+  ==> EVERY (λx. x <= LENGTH $ SND sM') (FST sM').bst_prom /\ (FST sM).bst_prom = (FST sM').bst_prom
+Proof
+  fs[GSYM AND_IMP_INTRO,cstep_seq_rtc_def]
+  >> ntac 2 gen_tac
+  >> ho_match_mp_tac relationTheory.RTC_INDUCT
+  >> fs[AND_IMP_INTRO]
+  >> rpt gen_tac >> strip_tac
+  >> drule_all cstep_seq_bst_prom_EQ
+  >> fs[]
+QED
+
 val is_certified_def = Define`
 is_certified p cid s M = ?s' M'.
   cstep_seq_rtc p cid (s, M) (s', M')
