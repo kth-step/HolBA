@@ -15,11 +15,13 @@ local
           (* alignment *)
           “^var && 3w = 0w”,
           (* range *)
-          “^var ≤₊ 0xFFFFFFFFFFFFFFFBw”,
-          “0w <₊ ^var”,
-          “1000w ≤₊ ^var”,
-          (* other *)
-          “~(^var <₊ 0w)”];
+          “(if ^var ≤₊ 0xFFFFFFFFFFFFFFFBw then (1w:word1)
+          else 0w) &&
+          ((if 0w <₊ ^var then 1w else 0w) ‖
+            if 4w + ^var ≤₊ 0w then 1w else 0w) &&
+          ((if ^var <₊ 0w then 1w else 0w) ‖
+          if 1000w ≤₊ ^var then 1w else 0w) 
+          = 1w”];
         val terms = mk_distinct vars @ List.concat (map mk_addr_constraint vars);
         val final_term = list_mk_exists (vars, list_mk_conj terms);
         fun mk_exists i = EXISTS_TAC (mk_wordii(1000+4*i, 64));

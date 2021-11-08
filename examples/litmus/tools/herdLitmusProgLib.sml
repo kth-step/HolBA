@@ -109,8 +109,7 @@ fun canonicalise_prog prog =
 			  end
 		     else [stmt]
 		 end
-	    else if is_BStmt_Assert stmt
-	    then [] else [stmt];
+	    else  [stmt];
 	fun fix_block block =
 	    let val (lbl,is_atomic,stmts,last_stmt) = dest_bir_block block;
 		val (stmt_list,stmt_ty) = dest_list stmts;
