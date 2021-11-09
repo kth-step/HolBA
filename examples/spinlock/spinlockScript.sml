@@ -35,12 +35,12 @@ Proof
 QED
 
 Definition is_promise_def:
-  is_promise cid t M M' system1 system2 =
+  is_promise cid t sys1 sys2 =
   ?st st' p p' v l.
-    Core cid p st IN system1
-    /\ Core cid p' st' IN system2
-    /\ t = LENGTH M + 1
-    /\ M' = M ++ [<| loc := l; val := v; cid := cid  |>]
+    Core cid p st IN FST sys1
+    /\ Core cid p' st' IN FST sys2
+    /\ t = LENGTH (SND sys1) + 1
+    /\ (SND sys2) = (SND sys1) ++ [<| loc := l; val := v; cid := cid  |>]
     /\ st'.bst_prom = st.bst_prom ++ [t]
 End
 
@@ -66,8 +66,7 @@ QED
 
 Theorem is_promise_state_changed:
   !tr cid t p p' st st' i. wf_trace tr /\ SUC i < LENGTH tr
-  /\ is_promise cid t (SND $ EL i tr) (SND $ EL (SUC i) tr)
-    (FST $ EL i tr) (FST $ EL (SUC i) tr)
+  /\ is_promise cid t (EL i tr) (EL (SUC i) tr)
   /\ Core cid p st IN (FST $ EL i tr)
   /\ Core cid p' st' IN (FST $ EL (SUC i) tr)
   ==> st <> st'
@@ -128,8 +127,7 @@ QED
 Theorem is_promise_inv:
   !tr cid cid' t p p' p2 p2' st st' st2 st2' i.
   wf_trace tr /\ SUC i < LENGTH tr
-  /\ is_promise cid t (SND $ EL i tr) (SND $ EL (SUC i) tr)
-    (FST $ EL i tr) (FST $ EL (SUC i) tr)
+  /\ is_promise cid t (EL i tr) (EL (SUC i) tr)
   /\ Core cid p st IN (FST $ EL i tr)
   /\ Core cid p' st' IN (FST $ EL (SUC i) tr)
   /\ Core cid' p2 st2 IN FST (EL i tr)
@@ -151,8 +149,7 @@ QED
 
 Theorem is_promise_LENGTH_SND_EL:
   !i j tr cid t. wf_trace tr
-  /\ is_promise cid t (SND $ EL i tr) (SND $ EL (SUC i) tr)
-    (FST $ EL i tr) (FST $ EL (SUC i) tr)
+  /\ is_promise cid t (EL i tr) (EL (SUC i) tr)
   /\ SUC i <= j /\ j < LENGTH tr
   ==> t <= LENGTH (SND $ EL j tr)
 Proof
@@ -175,11 +172,9 @@ QED
 
 Theorem is_promise_once:
   !i j tr cid cid' t. wf_trace tr
-  /\ is_promise cid t (SND $ EL i tr) (SND $ EL (SUC i) tr)
-    (FST $ EL i tr) (FST $ EL (SUC i) tr)
+  /\ is_promise cid t (EL i tr) (EL (SUC i) tr)
   /\ i < j /\ SUC j < LENGTH tr
-  ==> ~is_promise cid' t (SND $ EL j tr) (SND $ EL (SUC j) tr)
-    (FST $ EL j tr) (FST $ EL (SUC j) tr)
+  ==> ~is_promise cid' t (EL j tr) (EL (SUC j) tr)
 Proof
   rpt strip_tac
   >> rev_drule_at Any is_promise_LENGTH_SND_EL
@@ -194,8 +189,7 @@ QED
 
 Theorem NOT_is_promise_NOT_MEM_bst_prom:
   !i tr cid p st p' st' t. wf_trace tr
-  /\ ~is_promise cid t (SND $ EL i tr) (SND $ EL (SUC i) tr)
-    (FST $ EL i tr) (FST $ EL (SUC i) tr)
+  /\ ~is_promise cid t (EL i tr) (EL (SUC i) tr)
   /\ SUC i < LENGTH tr
   /\ Core cid p st IN FST $ EL i tr
   /\ ~MEM t st.bst_prom
@@ -227,9 +221,7 @@ QED
 Theorem is_fulfil_is_promise:
   !i tr cid t. wf_trace tr /\ SUC i < LENGTH tr
   /\ is_fulfil cid t (FST $ EL i tr) (FST $ EL (SUC i) tr)
-  ==> ?j. j < i
-    /\ is_promise cid t (SND $ EL j tr) (SND $ EL (SUC j) tr)
-      (FST $ EL j tr) (FST $ EL (SUC j) tr)
+  ==> ?j. j < i /\ is_promise cid t (EL j tr) (EL (SUC j) tr)
 Proof
   rpt strip_tac
   >> CCONTR_TAC
@@ -287,8 +279,7 @@ QED
 
 Theorem is_promise_is_fulfil:
   !i j tr cid t. wf_trace tr /\ SUC i < LENGTH tr
-  /\ is_promise cid t (SND $ EL i tr) (SND $ EL (SUC i) tr)
-    (FST $ EL i tr) (FST $ EL (SUC i) tr)
+  /\ is_promise cid t (EL i tr) (EL (SUC i) tr)
   ==> ?j. i < j
     /\ is_fulfil cid t (FST $ EL j tr) (FST $ EL (SUC j) tr)
 Proof
@@ -386,10 +377,8 @@ QED
 
 Theorem is_promise_same:
   !tr cid cid' t t' i. wf_trace tr
-  /\ is_promise cid t (SND $ EL i tr) (SND $ EL (SUC i) tr)
-    (FST $ EL i tr) (FST $ EL (SUC i) tr)
-  /\ is_promise cid' t' (SND $ EL i tr) (SND $ EL (SUC i) tr)
-    (FST $ EL i tr) (FST $ EL (SUC i) tr)
+  /\ is_promise cid t (EL i tr) (EL (SUC i) tr)
+  /\ is_promise cid' t' (EL i tr) (EL (SUC i) tr)
   /\ SUC i < LENGTH tr
   ==> cid = cid' /\ t = t'
 Proof
@@ -518,12 +507,10 @@ Theorem core_runs_spinlock_is_fulfil_xcl_timestamp_order:
   !tr cid cid' t t' i j i' j' t t'. wf_trace tr
   /\ core_runs_spinlock cid (FST $ HD tr)
   /\ core_runs_spinlock cid' (FST $ HD tr)
-  /\ is_fulfil_xcl cid t (FST (EL i tr)) (FST (EL (SUC i) tr))
-  /\ is_fulfil_xcl cid' t' (FST (EL i' tr)) (FST (EL (SUC i') tr))
-  /\ is_promise cid t (SND (EL j tr)) (SND (EL (SUC j) tr))
-    (FST (EL j tr)) (FST (EL (SUC j) tr))
-  /\ is_promise cid' t' (SND (EL j' tr)) (SND (EL (SUC j') tr))
-    (FST (EL j' tr)) (FST (EL (SUC j') tr))
+  /\ is_fulfil_xcl cid t (FST $ EL i tr) (FST $ EL (SUC i) tr)
+  /\ is_fulfil_xcl cid' t' (FST $ EL i' tr) (FST $ EL (SUC i') tr)
+  /\ is_promise cid t (EL j tr) (EL (SUC j) tr)
+  /\ is_promise cid' t' (EL j' tr) (EL (SUC j') tr)
   /\ i <> i' /\ j < i /\ j' < i' /\ SUC i' < LENGTH tr
   ==> ~(t < t')
 Proof
