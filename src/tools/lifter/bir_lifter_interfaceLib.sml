@@ -94,7 +94,7 @@ fun lift_da_and_store_gen prog_name da_name prog_interval is_multicore arch =
 	   REWRITE_RULE [GSYM bir_x_prog_def,
 			 GSYM bir_x_progbin_def] thm_arch);
   in
-    ()
+    (bir_x_progbin_def, bir_x_prog_def, bir_x_arch_lift_THM)
   end
 ;
 
