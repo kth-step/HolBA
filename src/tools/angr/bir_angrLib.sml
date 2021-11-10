@@ -28,8 +28,9 @@ local
   fun gen_bir_exp_angr var_parser sz =
     fix (fn bir_exp =>
             let open Word;
+                val mem_string = string "MEM"
                 val mem_load =
-                    seq (string "MEM")
+                    seq mem_string
                         (bind (bracket (char #"[") bir_exp (char #"]")) (fn addr =>
                         (return (bload8_le default_mem addr))))
                 val range = bind dec (fn lower => seq (char #":")
@@ -61,16 +62,16 @@ local
             end
         ) <?> "BIR expression";
 
-  val angr_variable =
+(*  val angr_variable =
       fmap (concat o intercalate "_" o init o init)
            (bind (sep_by1 (fmap implode (many1 (sat Char.isAlphaNum))) (char #"_"))
                  (fn list => seq (many (sat (not o Char.isSpace))) (return list)))
            <?> "angr variable";
 
-  val bir_angr_var = gen_bir_var angr_variable 64;
+  val bir_angr_var = gen_bir_var angr_variable 64; *)
   val bir_angr_bool_exp =  try (seq (token (string "True")) (return btrue))
                                <|> try (seq (token (string "False")) (return bfalse))
-                               <|> gen_bir_exp_angr bir_angr_var 64;
+                               <|> gen_bir_exp_angr angr_var 64;
 
   (* error handling *)
   val libname = "bir_angrLib"
