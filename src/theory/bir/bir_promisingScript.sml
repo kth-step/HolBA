@@ -5,6 +5,7 @@ open monadsyntax;
 open alistTheory;
 open listTheory;
 open listRangeTheory;
+open finite_mapTheory;
 open bir_auxiliaryTheory bir_immTheory bir_valuesTheory;
 open bir_exp_immTheory bir_exp_memTheory bir_envTheory;
 
@@ -341,10 +342,10 @@ val (bir_clstep_rules, bir_clstep_ind, bir_clstep_cases) = Hol_reln`
 (* core steps *)
 val (bir_cstep_rules, bir_cstep_ind, bir_cstep_cases) = Hol_reln`
 (* execute *)
-(!p cid s M s'.
-  clstep p cid s M ([]:num list) s'
+(!p cid s M s' prom.
+  clstep p cid s M prom s'
 ==>
-  cstep p cid s M [] s' M)
+  cstep p cid s M prom s' M)
 
 /\ (* promise *)
 (!p cid s M s' t msg.
@@ -470,26 +471,26 @@ val _ = Datatype `core_t =
 val cores_pc_not_atomic_def = Define`
   cores_pc_not_atomic cores =
     ~?cid p s i bl.
-     (Core cid p s) IN cores
+     FLOOKUP cores cid = SOME (Core cid p s)
      /\ s.bst_pc.bpc_index <> 0
      /\ bir_get_program_block_info_by_label p s.bst_pc.bpc_label = SOME (i, bl)
      /\ bl.bb_atomic = T
 `;
 
 val atomicity_ok_def = Define`
-  atomicity_ok core cores =
-    cores_pc_not_atomic (cores DELETE core)
+  atomicity_ok cid cores =
+    cores_pc_not_atomic (cores \\ cid)
 `;
 
 (* system step *)
 val (bir_parstep_rules, bir_parstep_ind, bir_parstep_cases) = Hol_reln`
 (!p cid s s' M M' cores prom.
-   (Core cid p s IN cores
-    /\ atomicity_ok (Core cid p s) cores
+   (FLOOKUP cores cid = SOME (Core cid p s)
+    /\ atomicity_ok cid cores
     /\ cstep p cid s M prom s' M'
     /\ is_certified p cid s' M')
 ==>
-   parstep cid cores M (cores DIFF {Core cid p s} UNION {Core cid p s'}) M')
+   parstep cid cores M (FUPDATE cores (cid, core cid p s')) M')
 `;
 
 (* Core-local execution *)
