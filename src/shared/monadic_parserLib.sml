@@ -154,6 +154,9 @@ fun sep_by1 p sep =
     bind (many (seq sep p)) (fn xs =>
     return (x::xs)));
 
+fun option p x f =
+    try (bind p f) <|> return x;
+
 fun chainl1 p oper =
     let fun rest x = (bind oper (fn f =>
                       bind p (fn y =>
@@ -165,6 +168,14 @@ fun chainr1 p oper =
                (bind oper (fn f =>
                 bind (chainr1 p oper) (fn y =>
                 return (f x y)))) <|> (return x));
+
+fun pairp p1 p2 =
+    let val commasep = bind (token p1) (fn x =>
+                       seq (char #",")
+                       (bind (token p2) (fn y =>
+                       return (x,y))));
+    in bracket (char #"(") commasep (char #")")
+    end;
 
 fun parse p s =
     case unConsume (unParse p ((0,0),s)) of

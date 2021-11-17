@@ -11,7 +11,24 @@ datatype 'a exec_path =
 local
   open HolKernel Parse boolLib bossLib;
 
-  open Json bslSyntax bir_quotationLib;
+  open Json bslSyntax bir_quotationLib listSyntax;
+  open bir_exp_memTheory bir_exp_memSyntax;
+  open bir_valuesTheory bir_valuesSyntax;
+  open bir_expTheory bir_expSyntax;
+  open bir_immTheory bir_immSyntax;
+  open bir_interval_expTheory;
+  open bir_typing_expTheory;
+  open bir_bool_expSyntax;
+  open bir_envSyntax;
+  open numSyntax;
+
+  open bir_exp_immTheory;
+  open bir_exp_memTheory;
+
+  (* error handling *)
+  val libname = "bir_angrLib"
+  val ERR = Feedback.mk_HOL_ERR libname
+  val wrap_exn = Feedback.wrap_exn libname
 
   infix 9 <?>;
   infix 8 <|>;
@@ -19,15 +36,173 @@ local
     | init (x::y::ys) = let val zs = init (y::ys) in x::zs end;
   fun intercalate x zs = foldr (fn (z,zs) => if null zs then z::zs else z::x::zs) [] zs;
 
-  val angr_var = gen_bir_var (
-        let fun strip_var ss = concat (intercalate "_" (init (init (List.map implode ss))))
-        in
-          fmap strip_var (sep_by1 (many1 (sat Char.isAlphaNum)) (char #"_"))
-        end) 64;
+  (* placeholder *)
+  val _ = if type_of “BirMask” = Type‘:bir_exp_t -> num -> num -> bir_exp_t’
+          then ()
+          else new_constant ("BirMask",Type‘:bir_exp_t -> num -> num -> bir_exp_t’);
+  val _ = if type_of “BirAppendMask” = Type‘:(bir_exp_t # num # num) list -> bir_exp_t’
+          then ()
+          else new_constant ("BirAppendMask",Type‘:(bir_exp_t # num # num) list -> bir_exp_t’);
+  
+  val BirMask_type_of = store_thm ("BirMask_type_of",
+ ``!e u l. type_of_bir_exp (BirMask e u l) =
+    type_of_bir_exp e``,
+                    cheat);
+ val BirAppendMask_type_of = store_thm ("BirAppendMask_type_of",
+ ``!es. type_of_bir_exp (BirAppendMask es) =
+ if LENGTH es > 0
+ then case bir_immtype_of_size (FOLDR $+ (0:num) (MAP (\ (_,u,l). u-l+1) es)) of
+          NONE => NONE
+         | SOME ty => SOME (BType_Imm ty)
+ else NONE``,
+        cheat);
+ 
+ fun type_of_bir_exp_CONV term =
+    (* Manual test
+    val term = ``
+      BExp_BinExp BIExp_Plus
+        (BExp_Const (Imm32 20w))
+        (BExp_Const (Imm32 22w))
+    ``;
+    val thm = type_of_bir_exp_CONV ``type_of_bir_exp ^term``;
+    *)
+    let
+      open bir_immTheory
+      open bir_valuesTheory
+      open bir_envTheory
+      open bir_exp_memTheory
+      open bir_bool_expTheory
+      open bir_extra_expsTheory
+      open bir_nzcv_expTheory
+      val type_of_bir_exp_thms = [
+        type_of_bir_exp_def,
+        bir_var_type_def,
+        bir_type_is_Imm_def,
+        type_of_bir_imm_def,
+        BExp_Aligned_type_of,
+        BExp_unchanged_mem_interval_distinct_type_of,
+        bir_number_of_mem_splits_REWRS,
+        BType_Bool_def,
+        bir_exp_true_def,
+        bir_exp_false_def,
+        BExp_MSB_type_of,
+        BExp_nzcv_ADD_DEFS,
+        BExp_nzcv_SUB_DEFS,
+        n2bs_def,
+        BExp_word_bit_def,
+        BExp_Align_type_of,
+        BExp_ror_type_of,
+        BExp_LSB_type_of,
+        BExp_word_bit_exp_type_of,
+        BExp_ADD_WITH_CARRY_type_of,
+        BExp_word_reverse_type_of,
+        BExp_ror_exp_type_of,
+        BirMask_type_of,
+        BirAppendMask_type_of,
+        bir_immtype_of_size_def
+      ]
+      val conv = SIMP_CONV (srw_ss()) type_of_bir_exp_thms
+    in
+      conv term
+    end
+      handle e => raise wrap_exn "type_of_bir_exp_CONV" e;
 
-  fun gen_bir_exp_angr var_parser sz =
+  fun bir_type_of term =
+    let
+      open optionSyntax;
+      val type_o_thm = type_of_bir_exp_CONV ``type_of_bir_exp ^term``
+      val type_o_tm = (snd o dest_eq o concl) type_o_thm
+    in
+      dest_some type_o_tm
+    end
+    handle e => raise ERR "bir_type_of" ("ill-typed term: " ^ Parse.term_to_string term);
+  
+  val angr_var =
+      token (let fun strip_var ss =
+              let val sz_str::_::name = rev (List.map implode ss);
+                  val sz = case Int.fromString sz_str of
+                               NONE => 64
+                             | SOME n => n;
+                  val ty = gen_mk_BType_Imm sz;
+              in
+                mk_BVar_string (concat (intercalate "_" (rev name)),ty)
+              end
+      in
+        fmap strip_var (sep_by1 (many1 (sat Char.isAlphaNum)) (char #"_"))
+      end);
+  
+  val binary_op_term =
+      choicel [seq (char #"+") (return bplus)
+              ,seq (char #"-") (return bminus)] <?> "term operator";
+  fun consappend (t1,t2) = t1@t2;
+
+  fun is_BirAppendMask expr =
+      if is_comb expr
+      then let open boolSyntax;
+               val (func, [list]) = strip_comb expr;
+           in
+             identical func “BirAppendMask” andalso
+             type_of list = Type‘:(bir_exp_t # num # num) list’
+           end handle _ => false
+      else false;
+  fun is_BirMask expr =
+      if is_comb expr
+      then let open boolSyntax;
+               val (func, [var,u,l]) = strip_comb expr;
+           in
+             identical func “BirMask” andalso
+             type_of var = Type‘:bir_exp_t’ andalso
+             type_of u = Type‘:num’ andalso
+             type_of l = Type‘:num’
+           end handle _ => false
+      else false;
+  fun dest_BirMask expr =
+      if is_BirMask expr
+      then let open boolSyntax;
+               val (func, [var,u,l]) = strip_comb expr;
+           in
+             (var,u,l)
+           end
+      else raise ERR "dest_BirMask" "not a BirMask";
+  fun fill_mask expr =
+      let open bir_expSyntax bir_envSyntax bir_immSyntax numSyntax;
+      in
+        if is_BirMask expr
+        then let val (var,u,l) = dest_BirMask expr
+             in
+               “(^var, ^u, ^l)”
+             end
+        else
+          let val sz = size_of_bir_immtype_t (dest_BType_Imm (bir_type_of expr))
+          in
+            “(^expr, ^(term_of_int (Int.- (sz,1))), 0:num)”
+          end
+      end;
+  fun list_bappend_mask [y] = y
+    | list_bappend_mask ys =
+      let fun flatten_appmask [] = []
+            | flatten_appmask (t::ts) =
+              if is_BirAppendMask t
+              then let val (_,inner) = dest_comb t
+                       val (es,_) = dest_list inner
+                   in
+                     es @ flatten_appmask ts
+                   end
+              else
+                fill_mask t :: flatten_appmask ts
+          val es = mk_list (flatten_appmask ys, Type‘:bir_exp_t # num # num’)
+      in “BirAppendMask ^es”
+      end;
+
+  fun bmask exp (u,l) = return “BirMask ^exp ^(term_of_int u) ^(term_of_int l)”;
+  
+  fun gen_bir_exp_angr sz =
     fix (fn bir_exp =>
             let open Word;
+                val annotated_imm = bind dec (fn n =>
+                                    seq (char #"#")
+                                    (bind dec (fn sz =>
+                                    return (mk_Imm_of_int sz n))));
                 val mem_string = string "MEM"
                 val mem_load =
                     seq mem_string
@@ -35,32 +210,48 @@ local
                         (return (bload8_le default_mem addr))))
                 val range = bind dec (fn lower => seq (char #":")
                            (bind dec (fn upper => return (lower, upper))))
-                val masked_var = bind (fmap bden angr_var) (fn var =>
-                                 bind (bracket (char #"[") range (char #"]")) (fn (l,u) =>
-                                 return (band (brshift (var,bconst64 l),
-                                         bconst64 (toInt ((op<<(fromInt 1,(fromInt u - fromInt l))-fromInt 1)))))))
-                val logical = choicel [bracket (char #"(") bir_exp (char #")")
+                val ifthenelse = seq (token (string "if"))
+                                 (bind bir_exp (fn cond =>
+                                 (seq (token (string "then"))
+                                 (bind bir_exp (fn e1 =>
+                                 (seq (token (string "else"))
+                                 (bind bir_exp (fn e2 =>
+                                 return (bite (cond,e1,e2))))))))))
+                                 <?> "if-then-else";
+                val shift_expr = seq (string "LShR")
+                                 (bind (token (pairp bir_exp dec)) (fn (exp,n) =>
+                                 return (blshift (exp,bconst64 n))))
+                                    <?> "LShR expression";
+                val logical = bind (choicel [bracket (char #"(") bir_exp (char #")")
                                       ,bind unary_op
                                             (fn oper => fmap oper bir_exp)
                                       ,try mem_load
+                                      ,try ifthenelse
+                                      ,try shift_expr
+                                      ,try (fmap bconstimm annotated_imm)
                                       ,fmap bconstimm (gen_bir_imm sz)
-                                      ,try masked_var
-                                      ,fmap bden var_parser]
+                                      ,fmap bden angr_var
+                                   ]) (fn exp =>
+                              option (bracket (char #"[") range (char #"]")) exp (bmask exp))
                                       <?> "logical expression"
                 val factor = chainr1 logical (binop binary_op_bitwise)
                                      <?> "factor"
                 val term = chainr1 factor (binop binary_op_factor) <?> "term"
-                val binexp = chainl1 term (binop binary_op_term)
-                                     <?> "BIR binary expression"
+                val appterm = chainl1 term (binop binary_op_term)
+                                      <?> "binary expression"
+                val binexp = fmap list_bappend_mask
+                                  (chainr1 (bind (token appterm) (fn v => return [v]))
+                                  (binop (seq (token (string "..")) (return consappend))))
+                                     <?> "angr appendmask expression"
                 val binpred = bind (token binexp) (fn e1 =>
                               bind (binop binary_pred) (fn oper =>
                               bind (token binexp) (fn e2 =>
                               return (oper e1 e2))))
-                                   <?> "BIR binary predicate"
+                                   <?> "binary predicate"
             in
              try binpred <|> binexp
             end
-        ) <?> "BIR expression";
+        ) <?> "angr expression";
 
 (*  val angr_variable =
       fmap (concat o intercalate "_" o init o init)
@@ -71,12 +262,7 @@ local
   val bir_angr_var = gen_bir_var angr_variable 64; *)
   val bir_angr_bool_exp =  try (seq (token (string "True")) (return btrue))
                                <|> try (seq (token (string "False")) (return bfalse))
-                               <|> gen_bir_exp_angr angr_var 64;
-
-  (* error handling *)
-  val libname = "bir_angrLib"
-  val ERR = Feedback.mk_HOL_ERR libname
-  val wrap_exn = Feedback.wrap_exn libname
+                               <|> token (gen_bir_exp_angr 64);
 
 in
  local
