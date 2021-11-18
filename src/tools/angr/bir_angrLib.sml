@@ -195,6 +195,18 @@ local
       end;
 
   fun bmask exp (u,l) = return “BirMask ^exp ^(term_of_int u) ^(term_of_int l)”;
+
+  fun bitvalue p =
+      let val bv = seq (string "BV") (bind (token dec) (token o p))
+      in
+        bracket (char #"<") bv (char #">")
+      end;
+
+  fun boolvalue p =
+      let val bv = seq (token (string "Bool")) (token p)
+      in
+        bracket (char #"<") bv (char #">")
+      end;
   
   fun gen_bir_exp_angr sz =
     fix (fn bir_exp =>
@@ -206,7 +218,7 @@ local
                 val mem_string = string "MEM"
                 val mem_load =
                     seq mem_string
-                        (bind (bracket (char #"[") bir_exp (char #"]")) (fn addr =>
+                        (bind (bracket (char #"[") (bitvalue (fn _ => bir_exp)) (char #"]")) (fn addr =>
                         (return (bload8_le default_mem addr))))
                 val range = bind dec (fn lower => seq (char #":")
                            (bind dec (fn upper => return (lower, upper))))
@@ -260,9 +272,9 @@ local
            <?> "angr variable";
 
   val bir_angr_var = gen_bir_var angr_variable 64; *)
-  val bir_angr_bool_exp =  try (seq (token (string "True")) (return btrue))
+  fun bir_angr_bool_exp sz =  try (seq (token (string "True")) (return btrue))
                                <|> try (seq (token (string "False")) (return bfalse))
-                               <|> token (gen_bir_exp_angr 64);
+                               <|> token (gen_bir_exp_angr sz);
 
 in
  local
@@ -284,21 +296,19 @@ in
               else raise ERR "result_from_json"
                          ("couldn't parse exact prefix '" ^ prefix ^ "' in string: " ^ s);
 
-  fun match_BExp str = parse (seq junk bir_angr_bool_exp) str
-                               handle e => raise ERR "match_BExp" (make_string_parse_error e)
-                               handle Match => raise ERR "parser match error" ("cannot deal with: " ^ str);
+  fun match p str = parse (seq junk p) str
+                    handle e => raise ERR "match" (make_string_parse_error e)
+                    handle Match => raise ERR "parser match error" ("cannot deal with: " ^ str);
 
-  fun parse_guard str = match_BExp (match_prefix "Bool " (match_bracket #"<" #">" str));
+  fun parse_guard str = match (boolvalue (bir_angr_bool_exp 1)) str
 
-  (* NOTE: this function restricts the observation expressions to 64-bit Imm expressions *)
+  (* Should parse_obs_exp and parse_obscond_exp restrict input bitsize? *)
   fun parse_obs_exp str =
-    match_BExp (match_prefix "BV64 " (match_bracket #"<" #">"
-                  (match_prefix "SAO " (match_bracket #"<" #">" str))));
-
+      match (bitvalue bir_angr_bool_exp) str;
+  
   fun parse_obscond_exp str =
-    match_BExp (match_prefix "BV1 " (match_bracket #"<" #">"
-                  (match_prefix "SAO " (match_bracket #"<" #">" str))));
-
+      match (bitvalue bir_angr_bool_exp) str;
+  
   fun parse_obs obsrefmap json =
     case json of
       ARRAY [NUMBER obs_ref,
