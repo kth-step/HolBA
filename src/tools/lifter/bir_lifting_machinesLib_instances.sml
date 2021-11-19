@@ -17,6 +17,8 @@ open bir_lifting_machinesLib bir_inst_liftingHelpersLib
 (* Function libraries from examples/l3-machine-code: *)
 open arm8_stepLib m0_stepLib riscv_stepLib;
 
+open riscv_step_wrapperLib;
+
 (* Abbreviations used in this file:
  * BMR: BIR machine record. *)
 
@@ -641,8 +643,7 @@ local
   val simp_conv = SIMP_CONV std_ss [riscv_extra_FOLDS]
 
   val simp_conv2 =
-    (SIMP_CONV (arith_ss++wordsLib.WORD_ARITH_ss++
-                wordsLib.WORD_LOGIC_ss) []
+    (SIMP_CONV arith_ss []
     ) THENC
     (SIMP_CONV std_ss
                [bir_riscv_extrasTheory.word_add_to_sub_TYPES,
@@ -736,13 +737,15 @@ in
   val vn = mk_var ("ms", ms_ty);
   val hex_code = "FCE14083" (* "lbu x1,x2,-50" *)
 
+  val hex_code = "0052C3B3" (* "xor x7,x5,x5" *)
+
   val hex_code = "340090F3" (* "csrrw x1,mscratch, x1" *)
 
 *)
   fun riscv_step_hex' vn hex_code = let
     val pc_mem_thms = prepare_mem_contains_thms vn hex_code
 
-    val step_thms0 = [riscv_step_hex hex_code]
+    val step_thms0 = [(riscv_step_rem_ss_hex ["word arith", "word ground", "word logic", "word shift", "word subtract"]) hex_code]
     val step_thms1 =
       List.map (process_riscv_thm vn pc_mem_thms) step_thms0
   in
