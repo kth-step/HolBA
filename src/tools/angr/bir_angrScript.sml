@@ -55,11 +55,18 @@ val masklist_size_def = Define `
       bir_immtype_of_size (SUM (MAP (\(u,l,_). u-l+1) l))
 `;
 
+val masklist_exp_def = Define `
+    masklist_exp sz (u,l,e) orbits =
+      (BExp_BinExp BIExp_LeftShift
+         (BExp_Mask sz u l (BExp_Cast BIExp_LowCast e sz))
+         (BExp_Const (n2bs orbits sz)))
+`;
+
 val masklist_fold_def = Define `
     masklist_fold sz (u,l,e) (orbits, ore) =
       (orbits + u-l+1,
        BExp_BinExp BIExp_Or
-         (BExp_BinExp BIExp_LeftShift (BExp_Mask sz u l (BExp_Cast BIExp_LowCast e sz)) (BExp_Const (n2bs orbits sz)))
+         (masklist_exp sz (u,l,e) orbits)
          ore)
 `;
 
@@ -102,6 +109,34 @@ val masklist_size_EMPTY_thm = store_thm
 );
 
 
+val type_of_masklist_exp_thm = store_thm
+  ("type_of_masklist_exp_thm", ``
+!sz u l e orbits sz'.
+  (type_of_bir_exp e = SOME (BType_Imm sz')) ==>
+  (type_of_bir_exp (masklist_exp sz (u,l,e) orbits) = SOME (BType_Imm sz))
+``,
+  REWRITE_TAC [masklist_exp_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss)
+    [type_of_bir_exp_def, BExp_Mask_type_of, bir_type_is_Imm_def] >>
+
+  REPEAT STRIP_TAC >>
+  CASE_TAC >>
+  POP_ASSUM (ASSUME_TAC o GSYM) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+);
+
+val type_of_SND_masklist_fold_thm = store_thm
+  ("type_of_SND_masklist_fold_thm", ``
+!sz u l e orbits ore.
+  (type_of_bir_exp ore = SOME (BType_Imm sz)) ==>
+  (type_of_bir_exp (masklist_exp sz (u,l,e) orbits) = SOME (BType_Imm sz)) ==>
+  (type_of_bir_exp (SND (masklist_fold sz (u,l,e) (orbits, ore))) = SOME (BType_Imm sz))
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [masklist_fold_def]
+);
+
+
 val BExp_AppendMask_type_of = store_thm
   ("BExp_AppendMask_type_of", ``
 !l. (EVERY (\(_,_,e). ?sz. type_of_bir_exp e = SOME (BType_Imm sz)) l) ==>
@@ -120,7 +155,50 @@ val BExp_AppendMask_type_of = store_thm
   ) >>
 
   ASM_SIMP_TAC std_ss [BExp_AppendMask_def] >>
-  cheat
+
+  `EVERY (\(_,_,e).
+    !sz u l orbits.
+      type_of_bir_exp (masklist_exp sz (u,l,e) orbits) = SOME (BType_Imm sz)) l` by (
+
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [EVERY_MEM] >>
+    REPEAT STRIP_TAC >>
+
+    PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `e`) >>
+    rename1 `MEM ule l` >>
+    Cases_on `ule` >>
+    rename1 `MEM (u,le) l` >>
+    Cases_on `le` >>
+    rename1 `MEM (u,l_,e) l` >>
+
+    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_masklist_exp_thm]
+  ) >>
+
+  POP_ASSUM (fn thm => (POP_ASSUM_LIST (K ALL_TAC) >> ASSUME_TAC thm)) >>
+
+  Induct_on `l` >- (
+    SIMP_TAC (std_ss++listSimps.LIST_ss)
+      [type_of_bir_exp_def, bir_immTheory.type_of_n2bs]
+  ) >>
+
+  SIMP_TAC (std_ss++listSimps.LIST_ss) [] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  Cases_on `h` >>
+  rename1 `masklist_fold x (hu,hle)` >>
+  Cases_on `hle` >>
+  rename1 `masklist_fold x (hu,hl,he)` >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  Q.ABBREV_TAC `orbitsore = FOLDR (masklist_fold x) (0,BExp_Const (n2bs 0 x)) l` >>
+  POP_ASSUM (K ALL_TAC) >> POP_ASSUM (K ALL_TAC) >>
+
+  Cases_on `orbitsore` >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  METIS_TAC [type_of_SND_masklist_fold_thm]
 );
 
 
