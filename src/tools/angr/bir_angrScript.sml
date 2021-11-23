@@ -5,6 +5,8 @@ open bir_expTheory bir_exp_immTheory bir_valuesTheory
 open bir_typing_expTheory bir_envTheory wordsTheory
 open bir_exp_immSyntax
 
+open listTheory;
+
 val _ = new_theory "bir_angr";
 
 val BExp_Mask_def = Define `
@@ -57,7 +59,7 @@ val masklist_fold_def = Define `
     masklist_fold sz (u,l,e) (orbits, ore) =
       (orbits + u-l+1,
        BExp_BinExp BIExp_Or
-         (BExp_BinExp BIExp_LeftShift (BExp_Mask sz u l e) (BExp_Const (n2bs orbits sz)))
+         (BExp_BinExp BIExp_LeftShift (BExp_Mask sz u l (BExp_Cast BIExp_LowCast e sz)) (BExp_Const (n2bs orbits sz)))
          ore)
 `;
 
@@ -76,25 +78,50 @@ type_of ``masklist_fold``
 type_of ``Bit1``
 
 val test_exp = ``BExp_AppendMask [
-  (10, 3, BExp_Const (n2bs 0xBEEF Bit16));
-  (6, 3, BExp_Const (n2bs 0xBEEF Bit16));
-  (6, 3, BExp_Const (n2bs 0xBEEF Bit16))]``;
-EVAL ``^test_exp``;
+  (10, 3, BExp_Const (n2bs 0xBEEF Bit32));
+  (6, 3, BExp_Const (n2bs 0xBEEF Bit32));
+  (6, 3, BExp_Const (n2bs 0xBEEF Bit32))]``;
+val test_exp_expanded = (snd o dest_eq o concl o EVAL) ``^test_exp``;
+bir_type_of test_exp_expanded;
 
 EVAL ``bir_eval_exp ^test_exp bir_env_empty``
 ``0xDDDD``
 *)
 
+val masklist_size_EMPTY_thm = store_thm
+  ("masklist_size_EMPTY_thm", ``
+!l. (NULL l) ==>
+    (masklist_size l = NONE)
+``,
+  Cases_on `l` >> (
+    REWRITE_TAC [NULL_DEF, masklist_size_def]
+  ) >>
+
+  REWRITE_TAC [MAP, SUM, bir_immTheory.bir_immtype_of_size_def] >>
+  SIMP_TAC std_ss []
+);
+
+
 val BExp_AppendMask_type_of = store_thm
   ("BExp_AppendMask_type_of", ``
-!l. type_of_bir_exp (BExp_AppendMask l) =
- if LENGTH l > 0
- then case masklist_size l of
+!l. (EVERY (\(_,_,e). ?sz. type_of_bir_exp e = SOME (BType_Imm sz)) l) ==>
+    type_of_bir_exp (BExp_AppendMask l) =
+    case masklist_size l of
          NONE => NONE
        | SOME ty => SOME (BType_Imm ty)
- else NONE
 ``,
+  REPEAT STRIP_TAC >>
+  Cases_on `masklist_size l` >- (
+    ASM_SIMP_TAC std_ss [BExp_AppendMask_def] >>
+    SIMP_TAC (std_ss) [type_of_bir_exp_def, optionLib.option_rws] >>
+    CASE_TAC >>
+    POP_ASSUM (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  ASM_SIMP_TAC std_ss [BExp_AppendMask_def] >>
   cheat
 );
+
 
 val _ = export_theory();
