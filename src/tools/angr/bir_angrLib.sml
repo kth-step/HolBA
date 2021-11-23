@@ -79,8 +79,8 @@ local
         BExp_ADD_WITH_CARRY_type_of,
         BExp_word_reverse_type_of,
         BExp_ror_exp_type_of,
-        BirMask_type_of,
-        BirAppendMask_type_of,
+        BExp_Mask_type_of,
+        BExp_AppendMask_type_of,
         bir_immtype_of_size_def
       ]
       val conv = SIMP_CONV (srw_ss()) type_of_bir_exp_thms
@@ -118,53 +118,54 @@ local
               ,seq (char #"-") (return bminus)] <?> "term operator";
   fun consappend (t1,t2) = t1@t2;
 
-  fun is_BirAppendMask expr =
+  fun is_BExp_AppendMask expr =
       if is_comb expr
       then let open boolSyntax;
                val (func, [list]) = strip_comb expr;
            in
-             identical func “BirAppendMask” andalso
-             type_of list = Type‘:(bir_exp_t # num # num) list’
+             identical func “BExp_AppendMask” andalso
+             type_of list = Type‘:(num # num # bir_exp_t) list’
            end handle _ => false
       else false;
-  fun is_BirMask expr =
+  fun is_BExp_Mask expr =
       if is_comb expr
       then let open boolSyntax;
-               val (func, [var,u,l]) = strip_comb expr;
+               val (func, [sz,u,l,var]) = strip_comb expr;
            in
-             identical func “BirMask” andalso
-             type_of var = Type‘:bir_exp_t’ andalso
+             identical func “BExp_Mask” andalso
+             type_of sz = Type‘:bir_immtype_t’ andalso
              type_of u = Type‘:num’ andalso
-             type_of l = Type‘:num’
+             type_of l = Type‘:num’ andalso
+             type_of var = Type‘:bir_exp_t’
            end handle _ => false
       else false;
-  fun dest_BirMask expr =
-      if is_BirMask expr
+  fun dest_BExp_Mask expr =
+      if is_BExp_Mask expr
       then let open boolSyntax;
-               val (func, [var,u,l]) = strip_comb expr;
+               val (func, [sz,u,l,var]) = strip_comb expr;
            in
-             (var,u,l)
+             (sz,u,l,var)
            end
-      else raise ERR "dest_BirMask" "not a BirMask";
+      else raise ERR "dest_BExp_Mask" "not a BExp_Mask";
   fun fill_mask expr =
       let open bir_expSyntax bir_envSyntax bir_immSyntax numSyntax;
       in
-        if is_BirMask expr
-        then let val (var,u,l) = dest_BirMask expr
+        if is_BExp_Mask expr
+        then let val (sz,u,l,var) = dest_BExp_Mask expr
              in
-               “(^var, ^u, ^l)”
+               “(^u, ^l, ^var)”
              end
         else
           let val sz = size_of_bir_immtype_t (dest_BType_Imm (bir_type_of expr))
           in
-            “(^expr, ^(term_of_int (Int.- (sz,1))), 0:num)”
+            “(^(term_of_int (Int.- (sz,1))), 0:num, ^expr)”
           end
       end;
   fun list_bappend_mask [y] = y
     | list_bappend_mask ys =
       let fun flatten_appmask [] = []
             | flatten_appmask (t::ts) =
-              if is_BirAppendMask t
+              if is_BExp_AppendMask t
               then let val (_,inner) = dest_comb t
                        val (es,_) = dest_list inner
                    in
@@ -172,11 +173,15 @@ local
                    end
               else
                 fill_mask t :: flatten_appmask ts
-          val es = mk_list (flatten_appmask ys, Type‘:bir_exp_t # num # num’)
-      in “BirAppendMask ^es”
+          val es = mk_list (flatten_appmask ys, Type‘: num # num # bir_exp_t’)
+      in “BExp_AppendMask ^es”
       end;
 
-  fun bmask exp (u,l) = return “BirMask ^exp ^(term_of_int u) ^(term_of_int l)”;
+  fun bmask exp (u,l) =
+    let
+      val sz = (bir_valuesSyntax.dest_BType_Imm o optionSyntax.dest_some o snd o dest_eq o concl o EVAL) ``type_of_bir_exp ^exp``
+               handle _ => raise ERR "bmask" "can't properly typecheck that";
+    in return “BExp_Mask ^sz ^(term_of_int u) ^(term_of_int l) ^exp” end;
 
   fun bitvalue p =
       let val bv = seq (string "BV") (bind (token dec) (token o p))
