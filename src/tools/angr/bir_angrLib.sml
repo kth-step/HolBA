@@ -308,6 +308,13 @@ in
       end
      | _ => raise ERR "parse_obs" "ill-formed result";
 
+(*
+val obsrefmap = Redblackmap.insert (Redblackmap.mkDict Arbnum.compare,
+                  Arbnum.fromInt 0, (``0:num``, ``HD``));
+val json = ARRAY [NUMBER (Arbnum.fromInt 0), STRING "<BV1 1#1>", ARRAY [STRING "<BV64 0x16#64>"]];
+parse_obs obsrefmap json;
+*)
+
  in
   fun result_from_json obsrefmap json =
         case json of
