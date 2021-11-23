@@ -179,8 +179,7 @@ local
 
   fun bmask exp (u,l) =
     let
-      val sz = (bir_valuesSyntax.dest_BType_Imm o optionSyntax.dest_some o snd o dest_eq o concl o EVAL) ``type_of_bir_exp ^exp``
-               handle _ => raise ERR "bmask" "can't properly typecheck that";
+      val sz = (dest_BType_Imm o bir_type_of) exp;
     in return “BExp_Mask ^sz ^(term_of_int u) ^(term_of_int l) ^exp” end;
 
   fun bitvalue p =
