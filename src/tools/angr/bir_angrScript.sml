@@ -129,11 +129,11 @@ val type_of_SND_masklist_fold_thm = store_thm
   ("type_of_SND_masklist_fold_thm", ``
 !sz u l e orbits ore.
   (type_of_bir_exp ore = SOME (BType_Imm sz)) ==>
-  (type_of_bir_exp (masklist_exp sz (u,l,e) orbits) = SOME (BType_Imm sz)) ==>
+  (?sz'. type_of_bir_exp e = SOME (BType_Imm sz')) ==>
   (type_of_bir_exp (SND (masklist_fold sz (u,l,e) (orbits, ore))) = SOME (BType_Imm sz))
 ``,
   REPEAT STRIP_TAC >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [masklist_fold_def]
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [masklist_fold_def, type_of_masklist_exp_thm]
 );
 
 
@@ -155,25 +155,7 @@ val BExp_AppendMask_type_of = store_thm
   ) >>
 
   ASM_SIMP_TAC std_ss [BExp_AppendMask_def] >>
-
-  `EVERY (\(_,_,e).
-    !sz u l orbits.
-      type_of_bir_exp (masklist_exp sz (u,l,e) orbits) = SOME (BType_Imm sz)) l` by (
-
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [EVERY_MEM] >>
-    REPEAT STRIP_TAC >>
-
-    PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `e`) >>
-    rename1 `MEM ule l` >>
-    Cases_on `ule` >>
-    rename1 `MEM (u,le) l` >>
-    Cases_on `le` >>
-    rename1 `MEM (u,l_,e) l` >>
-
-    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_masklist_exp_thm]
-  ) >>
-
-  POP_ASSUM (fn thm => (POP_ASSUM_LIST (K ALL_TAC) >> ASSUME_TAC thm)) >>
+  POP_ASSUM (K ALL_TAC) >>
 
   Induct_on `l` >- (
     SIMP_TAC (std_ss++listSimps.LIST_ss)
@@ -182,23 +164,20 @@ val BExp_AppendMask_type_of = store_thm
 
   SIMP_TAC (std_ss++listSimps.LIST_ss) [] >>
   REPEAT STRIP_TAC >>
-
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  POP_ASSUM (K ALL_TAC) >>
 
   Cases_on `h` >>
   rename1 `masklist_fold x (hu,hle)` >>
   Cases_on `hle` >>
   rename1 `masklist_fold x (hu,hl,he)` >>
-
   FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
   Q.ABBREV_TAC `orbitsore = FOLDR (masklist_fold x) (0,BExp_Const (n2bs 0 x)) l` >>
-  POP_ASSUM (K ALL_TAC) >> POP_ASSUM (K ALL_TAC) >>
+  POP_ASSUM (K ALL_TAC) >>
 
   Cases_on `orbitsore` >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-
-  METIS_TAC [type_of_SND_masklist_fold_thm]
+  METIS_TAC [type_of_SND_masklist_fold_thm, pairTheory.SND]
 );
 
 
