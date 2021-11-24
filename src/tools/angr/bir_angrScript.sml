@@ -48,6 +48,24 @@ val BExp_Mask_type_of = store_thm
   )
 );
 
+val BExp_CastMask_def = Define `
+    BExp_CastMask sz u l e csz =
+      BExp_Cast BIExp_LowCast (BExp_Mask sz u l e) csz
+`;
+
+val BExp_CastMask_type_of = store_thm
+  ("BExp_CastMask_type_of", ``
+!sz u l e csz. type_of_bir_exp (BExp_CastMask sz u l e csz) =
+           if (type_of_bir_exp e = SOME (BType_Imm sz)) then
+               SOME (BType_Imm csz) else NONE
+``,
+  REPEAT GEN_TAC >>
+  SIMP_TAC (std_ss++holBACore_ss) [BExp_CastMask_def, type_of_bir_exp_def] >>
+  REPEAT CASE_TAC >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_type_checker_DEFS, BExp_Mask_type_of]
+  )
+);
+
 
 
 val masklist_size_def = Define `

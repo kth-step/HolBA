@@ -79,7 +79,7 @@ local
         BExp_ADD_WITH_CARRY_type_of,
         BExp_word_reverse_type_of,
         BExp_ror_exp_type_of,
-        BExp_Mask_type_of,
+        BExp_CastMask_type_of,
         BExp_AppendMask_type_of,
         bir_immtype_of_size_def
       ]
@@ -135,31 +135,32 @@ local
              type_of list = Type‘:(num # num # bir_exp_t) list’
            end handle _ => false
       else false;
-  fun is_BExp_Mask expr =
+  fun is_BExp_CastMask expr =
       if is_comb expr
       then let open boolSyntax;
-               val (func, [sz,u,l,var]) = strip_comb expr;
+               val (func, [sz,u,l,var,csz]) = strip_comb expr;
            in
-             identical func “BExp_Mask” andalso
+             identical func “BExp_CastMask” andalso
              type_of sz = Type‘:bir_immtype_t’ andalso
              type_of u = Type‘:num’ andalso
              type_of l = Type‘:num’ andalso
-             type_of var = Type‘:bir_exp_t’
+             type_of var = Type‘:bir_exp_t’ andalso
+             type_of csz = Type‘:bir_immtype_t’
            end handle _ => false
       else false;
-  fun dest_BExp_Mask expr =
-      if is_BExp_Mask expr
+  fun dest_BExp_CastMask expr =
+      if is_BExp_CastMask expr
       then let open boolSyntax;
-               val (func, [sz,u,l,var]) = strip_comb expr;
+               val (func, [sz,u,l,var,csz]) = strip_comb expr;
            in
-             (sz,u,l,var)
+             (sz,u,l,var,csz)
            end
-      else raise ERR "dest_BExp_Mask" "not a BExp_Mask";
+      else raise ERR "dest_BExp_CastMask" "not a BExp_CastMask";
   fun fill_mask expr =
       let open bir_expSyntax bir_envSyntax bir_immSyntax numSyntax;
       in
-        if is_BExp_Mask expr
-        then let val (sz,u,l,var) = dest_BExp_Mask expr
+        if is_BExp_CastMask expr
+        then let val (sz,u,l,var,csz) = dest_BExp_CastMask expr
              in
                “(^u, ^l, ^var)”
              end
@@ -188,7 +189,11 @@ local
   fun bmask exp (u,l) =
     let
       val sz = (dest_BType_Imm o bir_type_of) exp;
-    in return “BExp_Mask ^sz ^(term_of_int u) ^(term_of_int l) ^exp” end;
+      val csz = “THE (bir_immtype_of_size ^(term_of_int ((u - l) + 1)))”;
+      val maskexp = “BExp_CastMask ^sz ^(term_of_int u) ^(term_of_int l) ^exp ^csz”;
+    in
+      return maskexp
+    end;
 
   fun bitvalue p =
       let val bv = seq (string "BV") (bind (token dec) (token o p))
@@ -318,6 +323,9 @@ in
      | _ => raise ERR "parse_obs" "ill-formed result";
 
 (*
+val json = STRING "<Bool (R27_3_64[7:0] & 7#8) == 0#8>";
+(parse_guard o fromJsonString) json;
+
 val obsrefmap = Redblackmap.insert (Redblackmap.mkDict Arbnum.compare,
                   Arbnum.fromInt 0, (``0:num``, ``HD``));
 val json = ARRAY [NUMBER (Arbnum.fromInt 0), STRING "<BV1 1#1>", ARRAY [STRING "<BV64 0x16#64>"]];

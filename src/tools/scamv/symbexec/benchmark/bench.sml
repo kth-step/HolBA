@@ -182,7 +182,8 @@ compare_angr_guards guards_l guards_r2;
 *)
 fun birexp_semantics_eq be1 be2 =
   let
-    val eq_bexp = beq (be1, be2);
+    val _ = Library.trace := 1;
+    val eq_bexp = beq ((snd o dest_eq o concl o EVAL) be1, (snd o dest_eq o concl o EVAL) be2);
     val eq_wtm = bir_exp_to_wordsLib.bir2bool eq_bexp;
   in
     z3_is_taut eq_wtm
