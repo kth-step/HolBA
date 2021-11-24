@@ -120,7 +120,7 @@ local
 
   val binary_pred =
       choicel [seq (string "==") (return beq)
-              ,seq (string "/=") (return bneq)
+              ,seq (string "!=") (return bneq)
               ,seq (string "<=") (return ble)
               ,seq (char #"<") (return blt)
               ,seq (string ">=") (return bge)
