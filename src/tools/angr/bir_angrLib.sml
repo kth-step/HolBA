@@ -197,11 +197,12 @@ local
   fun gen_bir_exp_angr sz =
     fix (fn bir_exp =>
             let open Word;
-                val annotated_imm = bind dec (fn n =>
+                val angr_num = try hex <|> dec <?> "angr numeric literal";
+                val annotated_imm = bind angr_num (fn n =>
                                     seq (char #"#")
                                     (bind dec (fn sz =>
                                     return (mk_Imm_of_int sz n))));
-                val mem_string = string "MEM"
+                val mem_string = string "MEM";
                 val mem_load =
                     seq mem_string
                         (bind (bracket (char #"[") (bitvalue (fn _ => bir_exp)) (char #"]")) (fn addr =>
@@ -217,7 +218,7 @@ local
                                  return (bite (cond,e1,e2))))))))))
                                  <?> "if-then-else";
                 val shift_expr = seq (string "LShR")
-                                 (bind (token (pairp bir_exp dec)) (fn (exp,n) =>
+                                 (bind (token (pairp bir_exp angr_num)) (fn (exp,n) =>
                                  return (blshift (exp,bconst64 n))))
                                     <?> "LShR expression";
                 val logical = bind (choicel [bracket (char #"(") bir_exp (char #")")
@@ -235,7 +236,7 @@ local
                 val factor = chainr1 logical (binop binary_op_bitwise)
                                      <?> "factor"
                 val term = chainr1 factor (binop binary_op_factor) <?> "term"
-                val appterm = chainl1 term (binop binary_op_term)
+                val appterm = chainl1 (token term) (binop binary_op_term)
                                       <?> "binary expression"
                 val binexp = fmap list_bappend_mask
                                   (chainr1 (bind (token appterm) (fn v => return [v]))
