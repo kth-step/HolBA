@@ -118,6 +118,14 @@ local
               ,seq (char #"-") (return bminus)] <?> "term operator";
   fun consappend (t1,t2) = t1@t2;
 
+  val binary_pred =
+      choicel [seq (string "==") (return beq)
+              ,seq (string "/=") (return bneq)
+              ,seq (string "<=") (return ble)
+              ,seq (char #"<") (return blt)
+              ,seq (string ">=") (return bge)
+              ,seq (char #">") (return bgt)] <?> "binary predicate operator";
+  
   fun is_BExp_AppendMask expr =
       if is_comb expr
       then let open boolSyntax;
@@ -233,9 +241,9 @@ local
                                    ]) (fn exp =>
                               option (bracket (char #"[") range (char #"]")) exp (bmask exp))
                                       <?> "logical expression"
-                val factor = chainr1 logical (binop binary_op_bitwise)
+                val factor = chainr1 (token logical) (binop binary_op_bitwise)
                                      <?> "factor"
-                val term = chainr1 factor (binop binary_op_factor) <?> "term"
+                val term = chainr1 (token factor) (binop binary_op_factor) <?> "term"
                 val appterm = chainl1 (token term) (binop binary_op_term)
                                       <?> "binary expression"
                 val binexp = fmap list_bappend_mask
