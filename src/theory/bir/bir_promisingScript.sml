@@ -490,7 +490,7 @@ val (bir_parstep_rules, bir_parstep_ind, bir_parstep_cases) = Hol_reln`
     /\ cstep p cid s M prom s' M'
     /\ is_certified p cid s' M')
 ==>
-   parstep cid cores M (FUPDATE cores (cid, core cid p s')) M')
+   parstep cid cores M (FUPDATE cores (cid, Core cid p s')) M')
 `;
 
 (* Core-local execution *)
