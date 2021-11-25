@@ -55,6 +55,12 @@ val mem_read_view_def = Define‘
   mem_read_view a rk (f:fwdb_t) t = if f.fwdb_time = t then f.fwdb_view else t
 ’;
 
+val bir_eval_view_aux_def = Define‘
+  (bir_eval_view_aux NONE = (0:num))
+  /\
+  (bir_eval_view_aux (SOME view) = view)
+’;
+
 (* bir_eval_exp_view behaves like bir_eval_exp except it also computes
    the view of the expression
    Analogue of ⟦-⟧_m in the paper, except instead of a combined environment m
@@ -548,7 +554,10 @@ val eval_clstep_fulfil_def = Define‘
       case (l_opt,v_opt) of
         (SOME l, SOME v) =>
           let
-            v_pre =  MAX v_addr (MAX v_data (MAX s.bst_v_wNew s.bst_v_CAP));
+            v_pre = MAX (MAX v_addr (MAX v_data (MAX s.bst_v_wNew s.bst_v_CAP)))
+                        (if xcl
+                         then get_xclb_view s.bst_xclb
+                         else 0);
             ts = FILTER (\t. (EL (t-1) M = <| loc := l; val := v; cid := cid  |>)
                              /\ (MAX v_pre (s.bst_coh l) < t)) (s.bst_prom);
           in
@@ -707,7 +716,10 @@ val eval_find_promises_def = Define‘
           (sl, v_loc) = bir_eval_exp_view a_e s.bst_environ s.bst_viewenv;
           (sv, v_data) = bir_eval_exp_view v_e s.bst_environ s.bst_viewenv;
           msg = <| loc := THE sl; val := THE sv; cid := cid |>;
-          v_pre = MAX v_loc $ MAX v_data $ MAX s.bst_v_CAP s.bst_v_wNew;
+          v_pre = MAX v_loc $ MAX v_data $ MAX s.bst_v_CAP $ MAX s.bst_v_wNew
+                        (if (is_xcl_write p s)
+                         then get_xclb_view s.bst_xclb
+                         else 0);
           coh = s.bst_coh (THE sl);
           M' = SNOC msg M;
           s' = s with <| bst_prom updated_by (CONS (LENGTH M')) |>;
