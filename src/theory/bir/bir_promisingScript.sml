@@ -382,7 +382,7 @@ val cstep_seq_rtc_def = Define`cstep_seq_rtc p cid = (cstep_seq p cid)^*`
 (* cstep_seq invariant *)
 
 Theorem bir_exec_stmt_jmp_bst_prom:
-  !st p lbl st. st.bst_prom = (bir_exec_stmt_jmp p lbl st).bst_prom
+  !st p lbl. st.bst_prom = (bir_exec_stmt_jmp p lbl st).bst_prom
 Proof
   rw[bir_exec_stmt_jmp_def]
   >> CASE_TAC
@@ -392,6 +392,7 @@ Proof
 QED
 
 Theorem clstep_bst_prom_EQ:
+!p cid st M st'. 
   clstep p cid st M [] st' ==> st.bst_prom = st'.bst_prom
 Proof
   rw[bir_clstep_cases]
