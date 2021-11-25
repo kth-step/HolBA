@@ -12,19 +12,25 @@ open bir_exp_immTheory bir_exp_memTheory bir_envTheory;
 val _ = new_theory "bir_promising";
 
 (* message type, represents a store of the form ⟨loc ≔ val⟩_tid *)
-val mem_msg_def = Datatype‘
-  mem_msg_t = <| loc : bir_val_t; val : bir_val_t; cid : num  |>
+val _ = Datatype‘
+  mem_msg_t = <|
+    loc : bir_val_t;
+    val : bir_val_t;
+    cid : num
+    |>
 ’;
 
-val mem_def = Datatype`
-mem_t = <|
-  bmst_lock        : num option;
-  bmst_counter     : num;
-  bmst_storebuffer : mem_msg_t list;
-|>
-`;
+val _ = Datatype‘
+  mem_t = <|
+    bmst_lock        : num option;
+    bmst_counter     : num;
+    bmst_storebuffer : mem_msg_t list;
+    |>
+’;
 
-val mem_default_value_def = Define‘mem_default_value = BVal_Imm (Imm64 0w)’;
+val mem_default_value_def = Define ‘
+  mem_default_value = BVal_Imm (Imm64 0w)
+’;
 
 val mem_read_aux_def = Define‘
    mem_read_aux l NONE = NONE
@@ -644,7 +650,7 @@ val eval_clstep_def = Define‘
 
 
 (*** Certify execution execution ***)
-Definition eval_certify_def:
+val eval_certify_def = Define‘
   (
   eval_certify p cid s M 0 =
   NULL s.bst_prom
@@ -654,15 +660,15 @@ Definition eval_certify_def:
    EXISTS (\s'. eval_certify p cid s' M fuel)
           (eval_clstep p cid s M))
   )
-End
+’;
 
 (*** Non-promising-mode execution ***)
-Definition eval_clstep_core:
+val eval_clstep_core = Define‘
   eval_clstep_core M (Core cid p s) =
   MAP (Core cid p) (eval_clstep p cid s M)
-End
+’;
 
-Definition eval_clsteps_aux_def:
+val eval_clsteps_aux_def = Define‘
   (
   eval_clsteps_aux 0 M core = [core]
   ) /\ (
@@ -670,28 +676,29 @@ Definition eval_clsteps_aux_def:
   LIST_BIND (eval_clstep_core M core)
             (eval_clsteps_aux f M)
   )
-End
+’;
 
 (* Cartesian product for list *)
-Definition CART_PROD_LIST_def:
+(* TODO: Move this to some place else *)
+val CART_PROD_LIST_def = Define‘
   (
   CART_PROD_LIST [] = [[]]
   ) /\ (
   CART_PROD_LIST (l::ll) =
     LIST_BIND l (\h. MAP (\l'. h::l') (CART_PROD_LIST ll))
   )
-End
+’;
 
-Definition eval_clsteps_def:
+val eval_clsteps_def = Define‘
 eval_clsteps f (cores, M) =
 let
   cores_list = CART_PROD_LIST $ MAP (eval_clsteps_aux f M) cores
 in
   MAP (\cores. (cores, M)) cores_list
-End
+’;
 
 (*** Promsing-mode execution ***)
-Definition eval_find_promises_def:
+val eval_find_promises_def = Define‘
   (
   eval_find_promises p cid s M promises t 0 =
   if NULL s.bst_prom then promises else []
@@ -716,9 +723,9 @@ Definition eval_find_promises_def:
   LIST_BIND (eval_clstep p cid s M)
             (λs'. eval_find_promises p cid s' M promises t f)
   )
-End
+’;
 
-Definition eval_pstep:
+val eval_pstep_def = Define ‘
   eval_pstep p cid s M ff =
   let
     t = LENGTH M + 1;
@@ -726,15 +733,15 @@ Definition eval_pstep:
     s' = s with <| bst_prom updated_by (CONS t) |> 
   in
     MAP (λp. (s', SNOC p M)) promises
-End
+’;
 
-Definition eval_pstep_core:
+val eval_pstep_core_def = Define ‘
   eval_pstep_core ff M (Core cid p s) =
   MAP (λsM. (Core cid p (FST sM), SND sM))
       (eval_pstep p cid s M ff)
-End
+’;
 
-Definition update_core_def:
+val update_core_def = Define ‘
   (
   update_core new_c [] = []
   ) ∧ (
@@ -744,9 +751,9 @@ Definition update_core_def:
   else
     Core cid p st :: update_core (Core new_cid new_p new_st) cs
   )
-End
+’;
 
-Definition eval_psteps_def:
+val eval_psteps_def = Define ‘
   (
   eval_psteps ff 0 (cores, M) = [(cores, M)]
   ) ∧ (
@@ -756,14 +763,14 @@ Definition eval_psteps_def:
   | cMs => LIST_BIND (MAP (\cM. (update_core (FST cM) cores, SND cM)) cMs)
                      (eval_psteps ff f)
   )
-End
+’;
 
 (*** Combined Promising and Non-Promising executions. ***)
-Definition eval_promising:
+val eval_promising_def = Define‘
   eval_promising fuel (cores, M) =
   LIST_BIND (eval_psteps fuel (fuel * LENGTH cores) (cores, M))
             (eval_clsteps fuel)
-End
+’;
 
 (* Example *)
 
