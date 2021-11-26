@@ -98,20 +98,19 @@ local
       dest_some type_o_tm
     end
     handle e => raise ERR "bir_type_of" ("ill-typed term: " ^ Parse.term_to_string term);
+
+  fun strip_var ss =
+      let val sz_str::_::name = rev (List.map implode ss);
+          val sz = case Int.fromString sz_str of
+                       NONE => 64
+                     | SOME n => n;
+          val ty = gen_mk_BType_Imm sz;
+      in
+        mk_BVar_string (concat (intercalate "_" (rev name)),ty)
+      end;
   
   val angr_var =
-      token (let fun strip_var ss =
-              let val sz_str::_::name = rev (List.map implode ss);
-                  val sz = case Int.fromString sz_str of
-                               NONE => 64
-                             | SOME n => n;
-                  val ty = gen_mk_BType_Imm sz;
-              in
-                mk_BVar_string (concat (intercalate "_" (rev name)),ty)
-              end
-      in
-        fmap strip_var (sep_by1 (many1 (sat Char.isAlphaNum)) (char #"_"))
-      end);
+      token (fmap strip_var (sep_by1 (many1 (sat Char.isAlphaNum)) (char #"_")));
   
   val binary_op_term =
       choicel [seq (char #"+") (return bplus)
@@ -216,10 +215,13 @@ local
                                     (bind dec (fn sz =>
                                     return (mk_Imm_of_int sz n))));
                 val mem_string = string "MEM";
+                val load_type = seq (char #"_")
+                                (seq (many1 (sat Char.isAlphaNum))
+                                     (seq (char #"_") dec))
                 val mem_load =
                     seq mem_string
-                        (bind (bracket (char #"[") (bitvalue (fn _ => bir_exp)) (char #"]")) (fn addr =>
-                        (return (bload8_le default_mem addr))))
+                    (bind (bracket (char #"[") (bitvalue (fn _ => bir_exp)) (char #"]"))  (fn addr =>
+                     option load_type  (bload8_le default_mem addr) (return o bloadi_le default_mem addr)));
                 val range = bind dec (fn lower => seq (char #":")
                            (bind dec (fn upper => return (lower, upper))))
                 val ifthenelse = seq (token (string "if"))
