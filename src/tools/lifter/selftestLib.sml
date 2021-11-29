@@ -8,6 +8,10 @@ structure selftestLib :> selftestLib = struct
   open PPBackEnd;
 
   (* TODO: Put test instances here? *)
+  val sty_OK     = [FG Green];
+  val sty_CACHE  = [FG Yellow];
+  val sty_FAIL   = [FG OrangeRed];
+  val sty_HEADER = [Bold, Underline];
 
 end;
 
@@ -24,33 +28,11 @@ end;
 *)
   local
 
-(* these dependencies probably need cleanup *)
-(* ================================================ *)
-open HolKernel boolLib liteLib simpLib Parse bossLib;
-open bir_inst_liftingTheory
-open bir_lifting_machinesTheory
-open bir_lifting_machinesLib bir_lifting_machinesLib_instances;
-open bir_interval_expTheory bir_update_blockTheory
-open bir_exp_liftingLib bir_typing_expSyntax
-open bir_typing_expTheory
-open bir_extra_expsTheory
-open bir_lifter_general_auxTheory
-open bir_programSyntax bir_interval_expSyntax
-open bir_program_labelsTheory
-open bir_immTheory
-open intel_hexLib
-open bir_inst_liftingLibTypes
-open PPBackEnd Parse
+  open HolKernel boolLib liteLib simpLib Parse bossLib;
+  open PPBackEnd;
+  open bir_inst_liftingLibTypes bir_inst_liftingHelpersLib;
 
-open bir_inst_liftingHelpersLib;
-
-(* ================================================ *)
-
-    open HolKernel Parse;
-    open testutils;
-    open PPBackEnd;
-    open bir_inst_liftingLib;
-
+  (* TODO: Ideally, these should not be defined twice *)
   val sty_OK     = [FG Green];
   val sty_CACHE  = [FG Yellow];
   val sty_FAIL   = [FG OrangeRed];
