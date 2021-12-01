@@ -213,7 +213,11 @@ local
                 val annotated_imm = bind angr_num (fn n =>
                                     seq (char #"#")
                                     (bind dec (fn sz =>
-                                    return (mk_Imm_of_int sz n))));
+                                                  return (mk_Imm_of_int sz n))));
+                val annotated_imm_ignore = try (bind angr_num (fn n =>
+                                    seq (char #"#")
+                                    (bind dec (fn sz =>
+                                    return n)))) <|> angr_num;
                 val mem_string = string "MEM";
                 val load_type = seq (char #"_")
                                 (seq (many1 (sat Char.isAlphaNum))
@@ -233,8 +237,8 @@ local
                                  return (bite (cond,e1,e2))))))))))
                                  <?> "if-then-else";
                 val shift_expr = seq (string "LShR")
-                                 (bind (token (pairp bir_exp angr_num)) (fn (exp,n) =>
-                                 return (blshift (exp,bconst64 n))))
+                                 (bind (token (pairp bir_exp annotated_imm_ignore)) (fn (exp,n) =>
+                                 return (brshift (exp,bconst64 n))))
                                     <?> "LShR expression";
                 val logical = bind (choicel [bracket (char #"(") bir_exp (char #")")
                                       ,bind unary_op

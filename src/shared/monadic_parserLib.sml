@@ -171,7 +171,7 @@ fun chainr1 p oper =
 
 fun pairp p1 p2 =
     let val commasep = bind (token p1) (fn x =>
-                       seq (char #",")
+                       seq (token (char #","))
                        (bind (token p2) (fn y =>
                        return (x,y))));
     in bracket (char #"(") commasep (char #")")
