@@ -94,6 +94,38 @@ val birs_interpret_fun_def = Define `
       bir_eval_exp (bir_exp_subst (FUN_FMAP (\x. bir_val_to_constexp (THE (symb_interpr_get i x))) (bir_vars_of_exp e)) e) bir_env_empty
 `;
 
+(*
+bir_type_of_bir_exp_NONE
+    (type_of_bir_exp ex = NONE) ==>
+    (bir_eval_exp ex env = NONE)
+
+type_of_bir_exp_THM_with_envty
+    (type_of_bir_exp e = SOME ty) ==>
+    (bir_envty_includes_vs envty (bir_vars_of_exp e)) ==>
+    (bir_env_satisfies_envty env envty) ==>
+    (?v. ((bir_eval_exp e env) = SOME v) /\ (type_of_bir_val v = ty))``,
+
+
+(* TODO: here we miss one implication direction (no evaluation implies wrong typing of expression or unavailable/wrongly typed variable in environment) *)
+(bir_env_satisfies_envty env envty) ==>
+(
+  (type_of_bir_exp e = NONE) \/
+  (~bir_envty_includes_vs envty (bir_vars_of_exp e))
+  <=>
+  (bir_eval_exp e env = NONE)
+)
+
+(* TODO: here we also miss the implication in the backward direction *)
+(bir_env_satisfies_envty env envty) ==>
+(
+  (type_of_bir_exp e = SOME ty) /\
+  (bir_envty_includes_vs envty (bir_vars_of_exp e))
+  <=>
+  (?v. ((bir_eval_exp e env) = SOME v) /\ (type_of_bir_val v = ty))
+)
+
+*)
+
 
 (* now a symbolic state *)
 val _ = Datatype `birs_state_t = <|
@@ -306,7 +338,13 @@ val bir_symb_rec_sbir_def = Define `
    |>
 `;
 
+(* TODO: single step example (with "prototypical" property transfer) *)
+
 (* TODO: prove soundness of this instance here (several soundness properties) *)
+
+(* TODO: multiple step example (and also propert property transfer), best to use the simple motor set function from the beginning. or something equally simple *)
+
+(* TODO: want to have another simple instance language? *)
 
 (* TODO: have to think how to add memory structure expressions on top of BIR expressions, possibly make another instance! *)
 
