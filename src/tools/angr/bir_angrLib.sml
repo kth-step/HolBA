@@ -195,7 +195,7 @@ local
     end;
 
   fun bitvalue p =
-      let val bv = seq (string "BV") (bind (token dec) (token o p))
+      let val bv = seq (string "BV") (bind (token (fmap Arbnum.toInt dec)) (token o p))
       in
         bracket (char #"<") bv (char #">")
       end;
@@ -213,7 +213,7 @@ local
                 val annotated_imm = bind angr_num (fn n =>
                                     seq (char #"#")
                                     (bind dec (fn sz =>
-                                                  return (mk_Imm_of_int sz n))));
+                                                  return (mk_Imm_of_num (Arbnum.toInt sz) n))));
                 val annotated_imm_ignore = try (bind angr_num (fn n =>
                                     seq (char #"#")
                                     (bind dec (fn sz =>
@@ -221,13 +221,13 @@ local
                 val mem_string = string "MEM";
                 val load_type = seq (char #"_")
                                 (seq (many1 (sat Char.isAlphaNum))
-                                     (seq (char #"_") dec))
+                                     (seq (char #"_") (fmap Arbnum.toInt dec)))
                 val mem_load =
                     seq mem_string
                     (bind (bracket (char #"[") (bitvalue (fn _ => bir_exp)) (char #"]"))  (fn addr =>
                      option load_type  (bload8_le default_mem addr) (return o bloadi_le default_mem addr)));
                 val range = bind dec (fn lower => seq (char #":")
-                           (bind dec (fn upper => return (lower, upper))))
+                           (bind dec (fn upper => return (Arbnum.toInt lower, Arbnum.toInt upper))))
                 val ifthenelse = seq (token (string "if"))
                                  (bind bir_exp (fn cond =>
                                  (seq (token (string "then"))
@@ -238,7 +238,7 @@ local
                                  <?> "if-then-else";
                 val shift_expr = seq (string "LShR")
                                  (bind (token (pairp bir_exp annotated_imm_ignore)) (fn (exp,n) =>
-                                 return (brshift (exp,bconst64 n))))
+                                 return (brshift (exp,bconst64 (Arbnum.toInt n)))))
                                     <?> "LShR expression";
                 val logical = bind (choicel [bracket (char #"(") bir_exp (char #")")
                                       ,bind unary_op

@@ -185,16 +185,15 @@ fun parse p s =
       | ok (_,(l,rest),message (_,exp)) =>
         raise (ParseError (l, "unparsed input", exp));
 
-val dec = chainl1 (bind digit (fn d => return (Char.ord d - Char.ord #"0")))
-                         (return (fn m => fn n => 10*m + n)) <?> "decimal number"
+val dec = bind (many1 digit) (fn n =>
+          return (Arbnum.fromString (String.implode n))) <?> "decimal number";
 val hex = seq (string "0x")
               (bind (many1 hexdigit) (fn n =>
-                                case StringCvt.scanString (Int.scan StringCvt.HEX) (String.implode n) of
-                                    NONE => zero
-                                  | SOME n => return n))
+              return (Arbnum.fromHexString (String.implode n))))
+                   <?> "hexadecimal number";
 val number = (hex <|> dec) <?> "number";
-val addop = seq (char #"+") (return (fn n => fn m => n+m)) <?> "operator";
-val multop = seq (char #"*") (return (fn n => fn m => n*m))<?> "operator";
+val addop = seq (char #"+") (return (fn n => fn m => Arbnum.+(n,m))) <?> "operator";
+val multop = seq (char #"*") (return (fn n => fn m => Arbnum.*(n,m)))<?> "operator";
 
 val expr_fix =
     fix (fn expr =>

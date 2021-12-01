@@ -19,12 +19,12 @@ val libname = "bir_quotationLib"
 val ERR = Feedback.mk_HOL_ERR libname
 val wrap_exn = Feedback.wrap_exn libname
 
-val default_size = 64;
-val default_size_byte = 8;
+val default_size = Arbnum.fromInt 64;
+val default_size_byte = Arbnum.fromInt 8;
 
 val imm_type =
     seq (string "Bit")
-    (token dec) <?> "BIR imm type"
+    (token (fmap Arbnum.toInt dec)) <?> "BIR imm type"
 
 fun annotated p typ constr default_ty =
     let val ann =
@@ -37,10 +37,10 @@ fun annotated p typ constr default_ty =
     end
 
 fun gen_bir_imm sz =
-    annotated (token number) imm_type mk_Imm_of_int sz;
+    annotated (token number) imm_type mk_Imm_of_num sz;
 
-val bir_imm = gen_bir_imm default_size;
-val bir_imm_byte = gen_bir_imm default_size_byte;
+val bir_imm = gen_bir_imm (Arbnum.toInt default_size);
+val bir_imm_byte = gen_bir_imm (Arbnum.toInt default_size_byte);
 
 val bir_type =
     fmap gen_mk_BType_Imm imm_type <?> "BIR type"
@@ -48,7 +48,7 @@ val bir_type =
 val variable = fmap implode (many1 (sat Char.isAlphaNum)) <?> "variable"
 
 fun gen_bir_var variable_parser sz =
-    annotated (token variable_parser) bir_type (fn ty => fn s => mk_BVar_string (s,ty)) (gen_mk_BType_Imm sz)
+    annotated (token variable_parser) bir_type (fn ty => fn s => mk_BVar_string (s,ty)) (gen_mk_BType_Imm (Arbnum.toInt sz))
 
 val bir_var = gen_bir_var variable default_size;
 
@@ -97,7 +97,7 @@ fun gen_bir_exp var_parser sz =
                                       ,bind unary_op
                                             (fn oper => fmap oper bir_exp)
                                       ,try mem_load
-                                      ,fmap bconstimm (gen_bir_imm sz)
+                                      ,fmap bconstimm (gen_bir_imm (Arbnum.toInt sz))
                                       ,fmap bden var_parser]
                                       <?> "logical expression"
                 val factor = chainr1 logical (binop binary_op_bitwise)
