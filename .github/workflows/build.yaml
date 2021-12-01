@@ -17,11 +17,14 @@ jobs:
 
     strategy:
       matrix:
-        polyml: ['v5.8.1', 'v5.9']
+        polyml: ['v5.7.1', 'v5.9']
+        z3: ['4.8.4']
         hol4: ['kananaskis-14']
 
     env:
       HOLBA_POLYML_VERSION: ${{ matrix.polyml }}
+      HOLBA_Z3_VERSION: ${{ matrix.z3 }}
+      HOLBA_Z3_ASSET_SUFFIX: '.d6df51951f4c-x64-debian-8.11.zip'
       HOLBA_HOL4_VERSION: ${{ matrix.hol4 }}
 
     steps:
@@ -34,7 +37,7 @@ jobs:
         with:
           path: |
             ${{ env.HOLBA_OPT_DIR }}
-          key: os-${{ runner.os }}_polyml-${{ matrix.polyml }}_hol4-${{ matrix.hol4 }}
+          key: os-${{ runner.os }}_polyml-${{ matrix.polyml }}_z3-${{ matrix.z3 }}_hol4-${{ matrix.hol4 }}
 
       - name: Static analysis
         timeout-minutes: 5
