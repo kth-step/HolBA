@@ -17,8 +17,8 @@ source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 
 # use a default z3 version if it is not specified in the environment
 Z3_VERSION="4.8.4"
-if [[ ! -z "${HOLBA_POLYML_VERSION}" ]]; then
-  Z3_VERSION=${HOLBA_POLYML_VERSION}
+if [[ ! -z "${HOLBA_Z3_VERSION}" ]]; then
+  Z3_VERSION=${HOLBA_Z3_VERSION}
 fi
 
 # download package
