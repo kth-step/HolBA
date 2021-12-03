@@ -4,8 +4,8 @@ struct
 local
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;
+open PPBackEnd
 open bir_inst_liftingLibTypes
-open PPBackEnd Parse
 
 in
 

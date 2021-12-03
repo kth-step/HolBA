@@ -15,15 +15,13 @@ source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 
 ##################################################################
 
-
-# make polyml binaries and libraries available
-POLY_VERSION="v5.8.1"
-
-# if poly version is specified in the environment, use this
+# use a default polyml version if it is not specified in the environment
+POLY_VERSION="v5.9"
 if [[ ! -z "${HOLBA_POLYML_VERSION}" ]]; then
   POLY_VERSION=${HOLBA_POLYML_VERSION}
 fi
 
+# make polyml binaries and libraries available
 POLY_DIR=${HOLBA_OPT_DIR}/polyml_${POLY_VERSION}
 export PATH=${POLY_DIR}/bin:$PATH
 export LD_LIBRARY_PATH=${POLY_DIR}/lib:$LD_LIBRARY_PATH

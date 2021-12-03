@@ -3,6 +3,11 @@ signature selftestLib = sig
 
   include PPBackEnd;
 
+  val sty_OK : pp_style list
+  val sty_CACHE : pp_style list
+  val sty_FAIL : pp_style list
+  val sty_HEADER : pp_style list
+
 end;
 
 signature test_bmr = sig
