@@ -1,0 +1,182 @@
+
+output/balrob.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00000b08 <motor_prep_input>:
+     b08:	b580      	push	{r7, lr}
+     b0a:	b084      	sub	sp, #16
+     b0c:	af00      	add	r7, sp, #0
+     b0e:	6078      	str	r0, [r7, #4]
+     b10:	687b      	ldr	r3, [r7, #4]
+     b12:	0fdb      	lsrs	r3, r3, #31
+     b14:	b2da      	uxtb	r2, r3
+     b16:	210f      	movs	r1, #15
+     b18:	187b      	adds	r3, r7, r1
+     b1a:	701a      	strb	r2, [r3, #0]
+     b1c:	187b      	adds	r3, r7, r1
+     b1e:	781b      	ldrb	r3, [r3, #0]
+     b20:	2b00      	cmp	r3, #0
+     b22:	d002      	beq.n	b2a <motor_prep_input+0x22>
+     b24:	687b      	ldr	r3, [r7, #4]
+     b26:	425b      	negs	r3, r3
+     b28:	607b      	str	r3, [r7, #4]
+     b2a:	687b      	ldr	r3, [r7, #4]
+     b2c:	4a06      	ldr	r2, [pc, #24]	; (b48 <motor_prep_input+0x40>)
+     b2e:	4293      	cmp	r3, r2
+     b30:	dd00      	ble.n	b34 <motor_prep_input+0x2c>
+     b32:	4b05      	ldr	r3, [pc, #20]	; (b48 <motor_prep_input+0x40>)
+     b34:	607b      	str	r3, [r7, #4]
+     b36:	687b      	ldr	r3, [r7, #4]
+     b38:	4a03      	ldr	r2, [pc, #12]	; (b48 <motor_prep_input+0x40>)
+     b3a:	1ad3      	subs	r3, r2, r3
+     b3c:	607b      	str	r3, [r7, #4]
+     b3e:	687b      	ldr	r3, [r7, #4]
+     b40:	0018      	movs	r0, r3
+     b42:	46bd      	mov	sp, r7
+     b44:	b004      	add	sp, #16
+     b46:	bd80      	pop	{r7, pc}
+     b48:	00001770 	.word	0x00001770
+
+00000c04 <motor_set_l>:
+     c04:	b580      	push	{r7, lr}
+     c06:	b084      	sub	sp, #16
+     c08:	af00      	add	r7, sp, #0
+     c0a:	6078      	str	r0, [r7, #4]
+     c0c:	687b      	ldr	r3, [r7, #4]
+     c0e:	0fdb      	lsrs	r3, r3, #31
+     c10:	b2da      	uxtb	r2, r3
+     c12:	230f      	movs	r3, #15
+     c14:	18fb      	adds	r3, r7, r3
+     c16:	701a      	strb	r2, [r3, #0]
+     c18:	687b      	ldr	r3, [r7, #4]
+     c1a:	0018      	movs	r0, r3
+     c1c:	f7ff ff74 	bl	b08 <motor_prep_input>
+     c20:	0003      	movs	r3, r0
+     c22:	607b      	str	r3, [r7, #4]
+     c24:	687b      	ldr	r3, [r7, #4]
+     c26:	4a14      	ldr	r2, [pc, #80]	; (c78 <motor_set_l+0x74>)
+     c28:	4293      	cmp	r3, r2
+     c2a:	d10a      	bne.n	c42 <motor_set_l+0x3e>
+     c2c:	4b13      	ldr	r3, [pc, #76]	; (c7c <motor_set_l+0x78>)
+     c2e:	6a5a      	ldr	r2, [r3, #36]	; 0x24
+     c30:	4b12      	ldr	r3, [pc, #72]	; (c7c <motor_set_l+0x78>)
+     c32:	3201      	adds	r2, #1
+     c34:	619a      	str	r2, [r3, #24]
+     c36:	4b11      	ldr	r3, [pc, #68]	; (c7c <motor_set_l+0x78>)
+     c38:	6a5a      	ldr	r2, [r3, #36]	; 0x24
+     c3a:	4b10      	ldr	r3, [pc, #64]	; (c7c <motor_set_l+0x78>)
+     c3c:	3201      	adds	r2, #1
+     c3e:	61da      	str	r2, [r3, #28]
+     c40:	e015      	b.n	c6e <motor_set_l+0x6a>
+     c42:	230f      	movs	r3, #15
+     c44:	18fb      	adds	r3, r7, r3
+     c46:	781b      	ldrb	r3, [r3, #0]
+     c48:	2b00      	cmp	r3, #0
+     c4a:	d008      	beq.n	c5e <motor_set_l+0x5a>
+     c4c:	4b0b      	ldr	r3, [pc, #44]	; (c7c <motor_set_l+0x78>)
+     c4e:	6a5a      	ldr	r2, [r3, #36]	; 0x24
+     c50:	4b0a      	ldr	r3, [pc, #40]	; (c7c <motor_set_l+0x78>)
+     c52:	3201      	adds	r2, #1
+     c54:	619a      	str	r2, [r3, #24]
+     c56:	4b09      	ldr	r3, [pc, #36]	; (c7c <motor_set_l+0x78>)
+     c58:	687a      	ldr	r2, [r7, #4]
+     c5a:	61da      	str	r2, [r3, #28]
+     c5c:	e007      	b.n	c6e <motor_set_l+0x6a>
+     c5e:	4b07      	ldr	r3, [pc, #28]	; (c7c <motor_set_l+0x78>)
+     c60:	687a      	ldr	r2, [r7, #4]
+     c62:	619a      	str	r2, [r3, #24]
+     c64:	4b05      	ldr	r3, [pc, #20]	; (c7c <motor_set_l+0x78>)
+     c66:	6a5a      	ldr	r2, [r3, #36]	; 0x24
+     c68:	4b04      	ldr	r3, [pc, #16]	; (c7c <motor_set_l+0x78>)
+     c6a:	3201      	adds	r2, #1
+     c6c:	61da      	str	r2, [r3, #28]
+     c6e:	46c0      	nop			; (mov r8, r8)
+     c70:	46bd      	mov	sp, r7
+     c72:	b004      	add	sp, #16
+     c74:	bd80      	pop	{r7, pc}
+     c76:	46c0      	nop			; (mov r8, r8)
+     c78:	00001770 	.word	0x00001770
+     c7c:	4000c000 	.word	0x4000c000
+
+00000c80 <motor_set_r>:
+     c80:	b580      	push	{r7, lr}
+     c82:	b084      	sub	sp, #16
+     c84:	af00      	add	r7, sp, #0
+     c86:	6078      	str	r0, [r7, #4]
+     c88:	687b      	ldr	r3, [r7, #4]
+     c8a:	0fdb      	lsrs	r3, r3, #31
+     c8c:	b2da      	uxtb	r2, r3
+     c8e:	230f      	movs	r3, #15
+     c90:	18fb      	adds	r3, r7, r3
+     c92:	701a      	strb	r2, [r3, #0]
+     c94:	687b      	ldr	r3, [r7, #4]
+     c96:	0018      	movs	r0, r3
+     c98:	f7ff ff36 	bl	b08 <motor_prep_input>
+     c9c:	0003      	movs	r3, r0
+     c9e:	607b      	str	r3, [r7, #4]
+     ca0:	687b      	ldr	r3, [r7, #4]
+     ca2:	4a14      	ldr	r2, [pc, #80]	; (cf4 <motor_set_r+0x74>)
+     ca4:	4293      	cmp	r3, r2
+     ca6:	d10a      	bne.n	cbe <motor_set_r+0x3e>
+     ca8:	4b13      	ldr	r3, [pc, #76]	; (cf8 <motor_set_r+0x78>)
+     caa:	6a5a      	ldr	r2, [r3, #36]	; 0x24
+     cac:	4b12      	ldr	r3, [pc, #72]	; (cf8 <motor_set_r+0x78>)
+     cae:	3201      	adds	r2, #1
+     cb0:	619a      	str	r2, [r3, #24]
+     cb2:	4b11      	ldr	r3, [pc, #68]	; (cf8 <motor_set_r+0x78>)
+     cb4:	6a5a      	ldr	r2, [r3, #36]	; 0x24
+     cb6:	4b10      	ldr	r3, [pc, #64]	; (cf8 <motor_set_r+0x78>)
+     cb8:	3201      	adds	r2, #1
+     cba:	61da      	str	r2, [r3, #28]
+     cbc:	e015      	b.n	cea <motor_set_r+0x6a>
+     cbe:	230f      	movs	r3, #15
+     cc0:	18fb      	adds	r3, r7, r3
+     cc2:	781b      	ldrb	r3, [r3, #0]
+     cc4:	2b00      	cmp	r3, #0
+     cc6:	d008      	beq.n	cda <motor_set_r+0x5a>
+     cc8:	4b0b      	ldr	r3, [pc, #44]	; (cf8 <motor_set_r+0x78>)
+     cca:	687a      	ldr	r2, [r7, #4]
+     ccc:	619a      	str	r2, [r3, #24]
+     cce:	4b0a      	ldr	r3, [pc, #40]	; (cf8 <motor_set_r+0x78>)
+     cd0:	6a5a      	ldr	r2, [r3, #36]	; 0x24
+     cd2:	4b09      	ldr	r3, [pc, #36]	; (cf8 <motor_set_r+0x78>)
+     cd4:	3201      	adds	r2, #1
+     cd6:	61da      	str	r2, [r3, #28]
+     cd8:	e007      	b.n	cea <motor_set_r+0x6a>
+     cda:	4b07      	ldr	r3, [pc, #28]	; (cf8 <motor_set_r+0x78>)
+     cdc:	6a5a      	ldr	r2, [r3, #36]	; 0x24
+     cde:	4b06      	ldr	r3, [pc, #24]	; (cf8 <motor_set_r+0x78>)
+     ce0:	3201      	adds	r2, #1
+     ce2:	619a      	str	r2, [r3, #24]
+     ce4:	4b04      	ldr	r3, [pc, #16]	; (cf8 <motor_set_r+0x78>)
+     ce6:	687a      	ldr	r2, [r7, #4]
+     ce8:	61da      	str	r2, [r3, #28]
+     cea:	46c0      	nop			; (mov r8, r8)
+     cec:	46bd      	mov	sp, r7
+     cee:	b004      	add	sp, #16
+     cf0:	bd80      	pop	{r7, pc}
+     cf2:	46c0      	nop			; (mov r8, r8)
+     cf4:	00001770 	.word	0x00001770
+     cf8:	40018000 	.word	0x40018000
+
+00000cfc <motor_set>:
+     cfc:	b580      	push	{r7, lr}
+     cfe:	b082      	sub	sp, #8
+     d00:	af00      	add	r7, sp, #0
+     d02:	6078      	str	r0, [r7, #4]
+     d04:	6039      	str	r1, [r7, #0]
+     d06:	687b      	ldr	r3, [r7, #4]
+     d08:	0018      	movs	r0, r3
+     d0a:	f7ff ff7b 	bl	c04 <motor_set_l>
+     d0e:	683b      	ldr	r3, [r7, #0]
+     d10:	0018      	movs	r0, r3
+     d12:	f7ff ffb5 	bl	c80 <motor_set_r>
+     d16:	46c0      	nop			; (mov r8, r8)
+     d18:	46bd      	mov	sp, r7
+     d1a:	b002      	add	sp, #8
+     d1c:	bd80      	pop	{r7, pc}
+     d1e:	Address 0x0000000000000d1e is out of bounds.
+
+
