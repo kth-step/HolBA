@@ -65,19 +65,61 @@ val birs_symb_from_concst_def = Define `
 val bir_exp_typeerror_def = Define `
     bir_exp_typeerror = BExp_BinExp BIExp_And (BExp_Const (Imm1 0w)) (BExp_Const (Imm8 0w))
 `;
-val birs_eval_exp_subst_def = Define `
-    birs_eval_exp_subst e senv =
-      bir_exp_subst
-        (FUN_FMAP
-          (\x. case senv (bir_var_name x) of
+val birs_eval_exp_subst_var_def = Define `
+    birs_eval_exp_subst_var x senv =
+      case senv (bir_var_name x) of
                 | SOME x_ex =>
                     if type_of_bir_exp (x_ex) = SOME (bir_var_type x) then
                       x_ex
                     else
                       bir_exp_typeerror
-                | NONE => bir_exp_typeerror)
+                | NONE => bir_exp_typeerror
+`;
+val birs_eval_exp_subst_def = Define `
+    birs_eval_exp_subst e senv =
+      bir_exp_subst
+        (FUN_FMAP
+          (\x. birs_eval_exp_subst_var x senv)
           (bir_vars_of_exp e))
         e
+`;
+val birs_eval_exp_subst_ALT_def = Define `
+   (birs_eval_exp_subst_ALT (BExp_Const n) senv = (BExp_Const n)) /\
+   (birs_eval_exp_subst_ALT (BExp_MemConst aty vty mmap) senv = (BExp_MemConst aty vty mmap)) /\
+   (birs_eval_exp_subst_ALT (BExp_Den v) senv = birs_eval_exp_subst_var v senv) /\
+   (birs_eval_exp_subst_ALT (BExp_Cast ct e ty) senv =
+      BExp_Cast ct (birs_eval_exp_subst_ALT e senv) ty) /\
+   (birs_eval_exp_subst_ALT (BExp_UnaryExp et e) senv =
+      BExp_UnaryExp et (birs_eval_exp_subst_ALT e senv)) /\
+   (birs_eval_exp_subst_ALT (BExp_BinExp et e1 e2) senv =
+      BExp_BinExp et
+        (birs_eval_exp_subst_ALT e1 senv)
+        (birs_eval_exp_subst_ALT e2 senv)) /\
+   (birs_eval_exp_subst_ALT (BExp_BinPred pt e1 e2) senv =
+      BExp_BinPred pt
+        (birs_eval_exp_subst_ALT e1 senv)
+        (birs_eval_exp_subst_ALT e2 senv)) /\
+   (birs_eval_exp_subst_ALT (BExp_MemEq me1 me2) senv =
+      BExp_MemEq
+        (birs_eval_exp_subst_ALT me1 senv)
+        (birs_eval_exp_subst_ALT me2 senv)) /\
+   (birs_eval_exp_subst_ALT (BExp_IfThenElse c et ef) senv =
+      BExp_IfThenElse
+        (birs_eval_exp_subst_ALT c senv)
+        (birs_eval_exp_subst_ALT et senv)
+        (birs_eval_exp_subst_ALT ef senv)) /\
+   (birs_eval_exp_subst_ALT (BExp_Load mem_e a_e en ty) senv =
+      BExp_Load
+        (birs_eval_exp_subst_ALT mem_e senv)
+        (birs_eval_exp_subst_ALT a_e senv)
+        en
+        ty) /\
+   (birs_eval_exp_subst_ALT (BExp_Store mem_e a_e en v_e) senv =
+      BExp_Store
+        (birs_eval_exp_subst_ALT mem_e senv)
+        (birs_eval_exp_subst_ALT a_e senv)
+        en
+        (birs_eval_exp_subst_ALT v_e senv))
 `;
 val birs_eval_exp_def = Define `
     birs_eval_exp e senv =
