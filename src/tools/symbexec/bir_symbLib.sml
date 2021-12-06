@@ -1,89 +1,6 @@
 structure bir_symbLib =
 struct
 
-(* testing *)
-(*
-open bir_symbTheory;
-
-val bprog = ``
-BirProgram [
-           <|bb_label := BL_Address_HC (Imm32 2826w) "B084 (sub sp, #16)";
-             bb_statements :=
-               [BStmt_Assert
-                  (BExp_BinPred BIExp_LessOrEqual
-                     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
-                     (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)));
-                BStmt_Assign (BVar "SP_process" (BType_Imm Bit32))
-                  (BExp_BinExp BIExp_Minus
-                     (BExp_Align Bit32 2
-                        (BExp_Den (BVar "SP_process" (BType_Imm Bit32))))
-                     (BExp_Const (Imm32 16w)));
-                BStmt_Assign (BVar "countw" (BType_Imm Bit64))
-                  (BExp_BinExp BIExp_Plus
-                     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
-                     (BExp_Const (Imm64 1w)))];
-             bb_last_statement :=
-               BStmt_Jmp (BLE_Label (BL_Address (Imm32 2828w)))|>;
-           <|bb_label := BL_Address_HC (Imm32 2828w) "AF00 (add r7, sp, #0)";
-             bb_statements :=
-               [BStmt_Assert
-                  (BExp_BinPred BIExp_LessOrEqual
-                     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
-                     (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)));
-                BStmt_Assign (BVar "R7" (BType_Imm Bit32))
-                  (BExp_Den (BVar "SP_process" (BType_Imm Bit32)));
-                BStmt_Assign (BVar "countw" (BType_Imm Bit64))
-                  (BExp_BinExp BIExp_Plus
-                     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
-                     (BExp_Const (Imm64 1w)))];
-             bb_last_statement :=
-               BStmt_Jmp (BLE_Label (BL_Address (Imm32 2830w)))|>
-] : 'obs_type bir_program_t
-``;
-
-val birs_state_init = ``<|
-  bsst_pc       := bir_block_pc (BL_Address (Imm32 2826w));
-  bsst_environ  := ("R7"         =+ (SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))))
-                   (("SP_process" =+ (SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))))
-                      (("countw"     =+ (SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))))
-                       (K NONE)
-                   ));
-  bsst_status   := BST_Running;
-  bsst_pcond    := BExp_Const (Imm1 1w)
-|>``;
-
-val test_term = ``birs_exec_step ^bprog ^birs_state_init``;
-
-val test_term_birs_eval_exp = ``
-          birs_eval_exp
-            (BExp_BinPred BIExp_LessOrEqual
-               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
-               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
-            (K NONE)⦇
-              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
-              "SP_process" ↦
-                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
-              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-            ⦈
-``;
-
-
-val test_term_birs_eval_exp_subst = ``
-          birs_eval_exp_subst
-            (BExp_BinPred BIExp_LessOrEqual
-               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
-               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
-            (K NONE)⦇
-              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
-              "SP_process" ↦
-                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
-              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-            ⦈
-``;
-
-
-*)
-
 local
 
 open HolKernel Parse boolLib bossLib;
@@ -191,6 +108,16 @@ type_of_bir_exp_DIRECT_CONV bexp_term
 
 in
 
+(*
+birs_senv_typecheck_CONV test_term_birs_senv_typecheck
+*)
+val is_birs_senv_typecheck =
+  ((fn x => (identical ``birs_senv_typecheck`` o fst) x andalso ((fn l => l = 2) o length o snd) x) o strip_comb);
+val birs_senv_typecheck_CONV = (
+  RESTR_EVAL_CONV [``type_of_bir_exp``] THENC
+  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
+  EVAL
+);
 
 (*
 CBV_CONV (new_compset [
@@ -205,12 +132,10 @@ CBV_CONV (new_compset [
 (*
 birs_eval_exp_CONV test_term_birs_eval_exp
 *)
-val test_EQ_thm = prove(``!e senv. birs_eval_exp_subst e senv = birs_eval_exp_subst_ALT e senv``, cheat);
 val birs_eval_exp_CONV = (
-  CBV_CONV (new_compset [birs_eval_exp_def, test_EQ_thm]) THENC
-  RESTR_EVAL_CONV [``LET``] THENC
-  CBV_CONV (new_compset [LET_DEF])THENC
-  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV)THENC
+  CBV_CONV (new_compset [birs_eval_exp_def]) THENC
+  GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
+  GEN_match_conv (is_birs_senv_typecheck) (birs_senv_typecheck_CONV) THENC
   EVAL
 );
 
@@ -230,6 +155,104 @@ val birs_exec_step_CONV = (
 );
 
 
+(* testing *)
+val bprog = ``
+BirProgram [
+           <|bb_label := BL_Address_HC (Imm32 2826w) "B084 (sub sp, #16)";
+             bb_statements :=
+               [BStmt_Assert
+                  (BExp_BinPred BIExp_LessOrEqual
+                     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)));
+                BStmt_Assign (BVar "SP_process" (BType_Imm Bit32))
+                  (BExp_BinExp BIExp_Minus
+                     (BExp_Align Bit32 2
+                        (BExp_Den (BVar "SP_process" (BType_Imm Bit32))))
+                     (BExp_Const (Imm32 16w)));
+                BStmt_Assign (BVar "countw" (BType_Imm Bit64))
+                  (BExp_BinExp BIExp_Plus
+                     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 1w)))];
+             bb_last_statement :=
+               BStmt_Jmp (BLE_Label (BL_Address (Imm32 2828w)))|>;
+           <|bb_label := BL_Address_HC (Imm32 2828w) "AF00 (add r7, sp, #0)";
+             bb_statements :=
+               [BStmt_Assert
+                  (BExp_BinPred BIExp_LessOrEqual
+                     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)));
+                BStmt_Assign (BVar "R7" (BType_Imm Bit32))
+                  (BExp_Den (BVar "SP_process" (BType_Imm Bit32)));
+                BStmt_Assign (BVar "countw" (BType_Imm Bit64))
+                  (BExp_BinExp BIExp_Plus
+                     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 1w)))];
+             bb_last_statement :=
+               BStmt_Jmp (BLE_Label (BL_Address (Imm32 2830w)))|>
+] : 'obs_type bir_program_t
+``;
+
+val birs_state_init = ``<|
+  bsst_pc       := bir_block_pc (BL_Address (Imm32 2826w));
+  bsst_environ  := ("R7"         =+ (SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))))
+                   (("SP_process" =+ (SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))))
+                      (("countw"     =+ (SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))))
+                       (K NONE)
+                   ));
+  bsst_status   := BST_Running;
+  bsst_pcond    := BExp_Const (Imm1 1w)
+|>``;
+
+val test_term = ``birs_exec_step ^bprog ^birs_state_init``;
+
+val _ = (print_term o concl) (birs_exec_step_CONV test_term);
+
 end (* local *)
+
+(*
+
+val test_term_birs_eval_exp = ``
+          birs_eval_exp
+            (BExp_BinPred BIExp_LessOrEqual
+               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
+            (K NONE)⦇
+              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+              "SP_process" ↦
+                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            ⦈
+``;
+
+
+val test_term_birs_eval_exp_subst = ``
+          birs_eval_exp_subst
+            (BExp_BinPred BIExp_LessOrEqual
+               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
+            (K NONE)⦇
+              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+              "SP_process" ↦
+                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            ⦈
+``;
+
+
+val test_term_birs_senv_typecheck = ``
+          birs_senv_typecheck
+            (BExp_BinPred BIExp_LessOrEqual
+               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
+            (K NONE)⦇
+              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+              "SP_process" ↦
+                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            ⦈
+``;
+
+
+*)
 
 end (* struct *)
