@@ -56,6 +56,43 @@ val birs_symb_from_concst_def = Define `
       |>
 `;
 
+val birs_symb_from_to_concst_thm = store_thm(
+   "birs_symb_from_to_concst_thm", ``
+!s. birs_symb_to_concst (birs_symb_from_concst s) = s
+``,
+  cheat
+);
+
+val birs_symb_to_from_concst_thm = store_thm(
+   "birs_symb_to_from_concst_thm", ``
+!s. birs_symb_from_concst (birs_symb_to_concst s) = s
+``,
+  cheat
+);
+
+val birs_symb_to_concst_EXISTS_thm = store_thm(
+   "birs_symb_to_concst_EXISTS_thm", ``
+!s. ?st. birs_symb_to_concst st = s
+``,
+  cheat
+);
+
+val birs_symb_from_concst_EXISTS_thm = store_thm(
+   "birs_symb_from_concst_EXISTS_thm", ``
+!s. ?st. birs_symb_from_concst st = s
+``,
+  cheat
+);
+
+val birs_symb_from_concst_BIJ_thm = store_thm(
+   "birs_symb_from_concst_BIJ_thm", ``
+!s1 s2.
+  (birs_symb_to_concst s1 = birs_symb_to_concst s2) ==>
+  (s1 = s2)
+``,
+  cheat
+);
+
 (* sr_step_conc is in principle "bir_exec_step" *)
 
 
@@ -227,6 +264,55 @@ val birs_symb_from_symbst_def = Define `
       |>
 `;
 
+val birs_symb_from_to_symbst_thm = store_thm(
+   "birs_symb_from_to_symbst_thm", ``
+!s. birs_symb_to_symbst (birs_symb_from_symbst s) = s
+``,
+  cheat
+);
+
+val birs_symb_to_from_symbst_thm = store_thm(
+   "birs_symb_to_from_symbst_thm", ``
+!s. birs_symb_from_symbst (birs_symb_to_symbst s) = s
+``,
+  cheat
+);
+
+val birs_symb_to_symbst_EXISTS_thm = store_thm(
+   "birs_symb_to_symbst_EXISTS_thm", ``
+!s. ?st. birs_symb_to_symbst st = s
+``,
+  cheat
+);
+
+val birs_symb_to_symbst_SET_EXISTS_thm = store_thm(
+   "birs_symb_to_symbst_SET_EXISTS_thm", ``
+!Pi. ?Pi_t. IMAGE birs_symb_to_symbst Pi_t = Pi
+``,
+  REPEAT STRIP_TAC >>
+
+  Q.EXISTS_TAC `IMAGE birs_symb_from_symbst Pi` >>
+
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [pred_setTheory.IMAGE_IMAGE, birs_symb_from_to_symbst_thm, combinTheory.o_DEF]
+);
+
+val birs_symb_from_symbst_EXISTS_thm = store_thm(
+   "birs_symb_from_symbst_EXISTS_thm", ``
+!s. ?st. birs_symb_from_symbst st = s
+``,
+  cheat
+);
+
+val birs_symb_from_symbst_BIJ_thm = store_thm(
+   "birs_symb_from_symbst_BIJ_thm", ``
+!s1 s2.
+  (birs_symb_to_symbst s1 = birs_symb_to_symbst s2) ==>
+  (s1 = s2)
+``,
+  cheat
+);
+
 val birs_state_is_terminated_def = Define `
     birs_state_is_terminated st =
       (st.bsst_status <> BST_Running)
@@ -397,9 +483,125 @@ val bir_symb_rec_sbir_def = Define `
    |>
 `;
 
+
 (* TODO: single step example (with "prototypical" property transfer) *)
 
 (* TODO: prove soundness of this instance here (several soundness properties) *)
+(*
+symb_symbols_f_sound sr
+symb_ARB_val_sound sr
+symb_typeof_exp_sound sr
+symb_mk_exp_eq_f_sound sr
+symb_mk_exp_conj_f_sound sr
+symb_mk_exp_symb_f_sound sr
+symb_subst_f_sound sr
+symb_step_sound sr
+*)
+
+val birs_symb_symbols_def = Define `
+    birs_symb_symbols sys =
+      (BIGUNION {bir_vars_of_exp e | ?vn. sys.bsst_environ vn = SOME e}) UNION (bir_vars_of_exp sys.bsst_pcond)
+`;
+
+val birs_symb_symbols_EQ_thm = store_thm(
+   "birs_symb_symbols_EQ_thm", ``
+!prog sys. symb_symbols (bir_symb_rec_sbir prog) (birs_symb_to_symbst sys) = birs_symb_symbols sys
+``,
+  cheat
+);
+
+val birs_interpr_welltyped_def = Define `
+    birs_interpr_welltyped H =
+      !sy. sy IN (symb_interpr_dom H) ==> type_of_bir_val (THE (symb_interpr_get H sy)) = bir_var_type sy
+`;
+
+val birs_matchenv_def = Define `
+    birs_matchenv H senv env =
+      (!var. (bir_env_lookup var env <> NONE \/ senv var <> NONE) ==>
+         ?e v.
+            senv   var = SOME e /\
+            bir_env_lookup var env = SOME v /\
+            birs_interpret_fun H e = SOME v)
+`;
+
+val birs_symb_matchstate_def = Define `
+    birs_symb_matchstate sys H s = (
+      (symb_interpr_for_symbs (birs_symb_symbols sys) H) /\
+      (birs_interpr_welltyped H) /\
+      (sys.bsst_pc = s.bst_pc) /\
+      (birs_matchenv H sys.bsst_environ s.bst_environ) /\
+      (birs_interpret_fun H sys.bsst_pcond = SOME bir_val_true) /\
+      (sys.bsst_status = s.bst_status))
+`;
+
+val birs_symb_matchstate_EQ_thm = store_thm(
+   "birs_symb_matchstate_EQ_thm", ``
+!prog sys H s.
+symb_matchstate (bir_symb_rec_sbir prog) (birs_symb_to_symbst sys) H (birs_symb_to_concst s) =
+  birs_symb_matchstate sys H s
+``,
+  cheat
+  (* symb_matchstate_def *)
+);
+
+val birs_exec_stmt_assign_sound_thm = store_thm(
+   "birs_exec_stmt_assign_sound_thm", ``
+!v ex s s' sys Pi H.
+(bir_exec_stmt_assign v ex s = s') ==>
+(birs_exec_stmt_assign v ex sys = Pi) ==>
+(birs_symb_matchstate sys H s) ==>
+(?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  cheat
+(*
+  bir_exec_stmt_assign_def
+  birs_exec_stmt_assign_def
+*)
+);
+
+val birs_exec_step_sound_thm = store_thm(
+   "birs_exec_step_sound_thm", ``
+!prog s s' sys Pi H.
+((SND o bir_exec_step prog) s = s') ==>
+(birs_exec_step prog sys = Pi) ==>
+(birs_symb_matchstate sys H s) ==>
+(?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  cheat
+);
+
+val birs_symb_step_sound_thm = store_thm(
+   "birs_symb_step_sound_thm", ``
+!prog. symb_step_sound (bir_symb_rec_sbir prog)
+``,
+  REWRITE_TAC [symb_step_sound_def] >>
+  REPEAT STRIP_TAC >>
+
+  ASSUME_TAC ((GSYM o Q.SPEC `sys`) birs_symb_to_symbst_EXISTS_thm) >>
+  ASSUME_TAC ((GSYM o Q.SPEC `Pi`) birs_symb_to_symbst_SET_EXISTS_thm) >>
+  ASSUME_TAC ((GSYM o Q.SPEC `s`) birs_symb_to_concst_EXISTS_thm) >>
+  ASSUME_TAC ((GSYM o Q.SPEC `s'`) birs_symb_to_concst_EXISTS_thm) >>
+  FULL_SIMP_TAC std_ss [] >>
+  FULL_SIMP_TAC std_ss [birs_symb_matchstate_EQ_thm] >>
+
+  POP_ASSUM_LIST (ASSUME_TAC o LIST_CONJ o map (SIMP_RULE (std_ss++symb_typesLib.symb_TYPES_ss)
+    [bir_symb_rec_sbir_def, birs_symb_to_from_symbst_thm, birs_symb_to_from_concst_thm])) >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  `(SND o bir_exec_step prog) st' = st''` by (
+    METIS_TAC [birs_symb_from_concst_BIJ_thm, combinTheory.o_DEF]
+  ) >>
+  `(birs_exec_step prog st) = Pi_t` by (
+    METIS_TAC [birs_symb_from_symbst_BIJ_thm, pred_setTheory.IMAGE_11]
+  ) >>
+
+  IMP_RES_TAC birs_exec_step_sound_thm >>
+  Q.EXISTS_TAC `birs_symb_to_symbst sys'` >>
+  FULL_SIMP_TAC std_ss [birs_symb_matchstate_EQ_thm] >>
+
+  METIS_TAC [pred_setTheory.IMAGE_IN]
+);
+
 
 (* TODO: multiple step example (and also propert property transfer), best to use the simple motor set function from the beginning. or something equally simple *)
 
