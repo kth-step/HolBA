@@ -132,8 +132,8 @@ val NOT_bir_envty_includes_vs_IMP_bir_eval_exp_thm = store_thm(
   METIS_TAC [bir_eval_exp_with_var_not_in_env_thm]
 );
 
-val bir_eval_exp_NONE_EQ_bir_type_of_bir_exp_thm = store_thm(
-   "bir_eval_exp_NONE_EQ_bir_type_of_bir_exp_thm", ``
+val bir_eval_exp_NONE_EQ_bir_exp_env_type_thm = store_thm(
+   "bir_eval_exp_NONE_EQ_bir_exp_env_type_thm", ``
 !env envty e.
 (bir_envty_of_env env = envty) ==>
 (
@@ -552,8 +552,8 @@ val bir_eval_exp_SOME_IMP_type_of_bir_exp_envty_incl_thm = store_thm(
   METIS_TAC [NOT_bir_envty_includes_vs_IMP_bir_eval_exp_thm, NOT_NONE_SOME]
 );
 
-val type_of_bir_exp_SOME_IMP_bir_eval_exp_thm = store_thm(
-   "type_of_bir_exp_SOME_IMP_bir_eval_exp_thm", ``
+val bir_eval_exp_SOME_EQ_bir_exp_env_type_thm = store_thm(
+   "bir_eval_exp_SOME_EQ_bir_exp_env_type_thm", ``
 !env envty e ty.
 (bir_envty_of_env env = envty) ==>
 (
