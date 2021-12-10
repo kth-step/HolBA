@@ -56,41 +56,95 @@ val birs_symb_from_concst_def = Define `
       |>
 `;
 
+
+val bir_env_lookup_I_thm = store_thm(
+   "bir_env_lookup_I_thm", ``
+!env. (\bvn. bir_env_lookup bvn (BEnv env)) = env
+``,
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
+    [bir_env_lookup_def] >>
+  METIS_TAC []
+);
+
+val bir_env_lookup_BEnv_thm = store_thm(
+   "bir_env_lookup_BEnv_thm", ``
+!env. BEnv (\bvn. bir_env_lookup bvn env) = env
+``,
+  Cases_on `env` >>
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
+    [bir_env_lookup_I_thm]
+);
+
+val bir_env_lookup_BIJ_thm = store_thm(
+   "bir_env_lookup_BIJ_thm", ``
+!env1 env2.
+  ((\bvn. bir_env_lookup bvn env1) = (\bvn. bir_env_lookup bvn env2)) ==>
+  (env1 = env2)
+``,
+  Cases_on `env1` >> Cases_on `env2` >>
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
+      [bir_env_lookup_I_thm]
+);
+
 val birs_symb_from_to_concst_thm = store_thm(
    "birs_symb_from_to_concst_thm", ``
 !s. birs_symb_to_concst (birs_symb_from_concst s) = s
 ``,
-  cheat
+  GEN_TAC >>
+  Cases_on `s` >>
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss++HolBACoreSimps.holBACore_ss)
+    [birs_symb_to_concst_def, birs_symb_from_concst_def, bir_env_lookup_def] >>
+
+  METIS_TAC []
 );
 
 val birs_symb_to_from_concst_thm = store_thm(
    "birs_symb_to_from_concst_thm", ``
 !s. birs_symb_from_concst (birs_symb_to_concst s) = s
 ``,
-  cheat
+  GEN_TAC >>
+  Cases_on `s` >>
+
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss++HolBACoreSimps.holBACore_ss)
+    [birs_symb_to_concst_def, birs_symb_from_concst_def, bir_env_lookup_BEnv_thm] >>
+
+  Q.ABBREV_TAC `s = <|bst_pc := b; bst_environ := b0; bst_status := b1|>` >>
+  `s.bst_pc = b /\
+   s.bst_environ = b0 /\
+   s.bst_status = b1` by (
+    Q.UNABBREV_TAC `s` >>
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
+  ) >>
+
+  Cases_on `s` >>
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
 );
 
 val birs_symb_to_concst_EXISTS_thm = store_thm(
    "birs_symb_to_concst_EXISTS_thm", ``
 !s. ?st. birs_symb_to_concst st = s
 ``,
-  cheat
+  METIS_TAC [birs_symb_from_to_concst_thm]
 );
 
 val birs_symb_from_concst_EXISTS_thm = store_thm(
    "birs_symb_from_concst_EXISTS_thm", ``
 !s. ?st. birs_symb_from_concst st = s
 ``,
-  cheat
+  METIS_TAC [birs_symb_to_from_concst_thm]
 );
 
-val birs_symb_from_concst_BIJ_thm = store_thm(
-   "birs_symb_from_concst_BIJ_thm", ``
+val birs_symb_to_concst_BIJ_thm = store_thm(
+   "birs_symb_to_concst_BIJ_thm", ``
 !s1 s2.
   (birs_symb_to_concst s1 = birs_symb_to_concst s2) ==>
   (s1 = s2)
 ``,
-  cheat
+  REPEAT GEN_TAC >>
+  Cases_on `s1` >> Cases_on `s2` >>
+
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss++HolBACoreSimps.holBACore_ss)
+    [birs_symb_to_concst_def, bir_env_lookup_BIJ_thm]
 );
 
 (* sr_step_conc is in principle "bir_exec_step" *)
@@ -264,25 +318,48 @@ val birs_symb_from_symbst_def = Define `
       |>
 `;
 
+val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
+
 val birs_symb_from_to_symbst_thm = store_thm(
    "birs_symb_from_to_symbst_thm", ``
 !s. birs_symb_to_symbst (birs_symb_from_symbst s) = s
 ``,
-  cheat
+  GEN_TAC >>
+  Cases_on `s` >>
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss)
+    [birs_symb_to_symbst_def, birs_symb_from_symbst_def] >>
+
+  METIS_TAC []
 );
 
 val birs_symb_to_from_symbst_thm = store_thm(
    "birs_symb_to_from_symbst_thm", ``
 !s. birs_symb_from_symbst (birs_symb_to_symbst s) = s
 ``,
-  cheat
+  GEN_TAC >>
+  Cases_on `s` >>
+
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss)
+    [birs_symb_to_symbst_def, birs_symb_from_symbst_def] >>
+
+  Q.ABBREV_TAC `s = <|bsst_pc := b; bsst_environ := f; bsst_status := b0; bsst_pcond := b1|>` >>
+  `s.bsst_pc = b /\
+   s.bsst_environ = f /\
+   s.bsst_status = b0 /\
+   s.bsst_pcond = b1` by (
+    Q.UNABBREV_TAC `s` >>
+    FULL_SIMP_TAC (std_ss++birs_state_ss) []
+  ) >>
+
+  Cases_on `s` >>
+  FULL_SIMP_TAC (std_ss++birs_state_ss) []
 );
 
 val birs_symb_to_symbst_EXISTS_thm = store_thm(
    "birs_symb_to_symbst_EXISTS_thm", ``
 !s. ?st. birs_symb_to_symbst st = s
 ``,
-  cheat
+  METIS_TAC [birs_symb_from_to_symbst_thm]
 );
 
 val birs_symb_to_symbst_SET_EXISTS_thm = store_thm(
@@ -301,16 +378,20 @@ val birs_symb_from_symbst_EXISTS_thm = store_thm(
    "birs_symb_from_symbst_EXISTS_thm", ``
 !s. ?st. birs_symb_from_symbst st = s
 ``,
-  cheat
+  METIS_TAC [birs_symb_to_from_symbst_thm]
 );
 
-val birs_symb_from_symbst_BIJ_thm = store_thm(
-   "birs_symb_from_symbst_BIJ_thm", ``
+val birs_symb_to_symbst_BIJ_thm = store_thm(
+   "birs_symb_to_symbst_BIJ_thm", ``
 !s1 s2.
   (birs_symb_to_symbst s1 = birs_symb_to_symbst s2) ==>
   (s1 = s2)
 ``,
-  cheat
+  REPEAT GEN_TAC >>
+  Cases_on `s1` >> Cases_on `s2` >>
+
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss)
+    [birs_symb_to_symbst_def]
 );
 
 val birs_state_is_terminated_def = Define `
@@ -507,13 +588,42 @@ val birs_symb_symbols_EQ_thm = store_thm(
    "birs_symb_symbols_EQ_thm", ``
 !prog sys. symb_symbols (bir_symb_rec_sbir prog) (birs_symb_to_symbst sys) = birs_symb_symbols sys
 ``,
-  cheat
+  Cases_on `sys` >>
+  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss)
+    [symb_symbols_def, bir_symb_rec_sbir_def, symb_symbols_store_def,
+     symb_symbst_pcond_def, birs_symb_symbols_def] >>
+
+  SIMP_TAC (std_ss++birs_state_ss) [birs_symb_to_symbst_def, symb_symbst_pcond_def, symb_symbst_store_def]
 );
 
 val birs_interpr_welltyped_def = Define `
     birs_interpr_welltyped H =
       !sy. sy IN (symb_interpr_dom H) ==> type_of_bir_val (THE (symb_interpr_get H sy)) = bir_var_type sy
 `;
+
+val birs_interpr_welltyped_EQ_thm = store_thm(
+   "birs_interpr_welltyped_EQ_thm", ``
+!prog H.
+symb_interpr_welltyped (bir_symb_rec_sbir prog) H = birs_interpr_welltyped H
+``,
+  SIMP_TAC (std_ss)
+    [symb_interpr_welltyped_def, birs_interpr_welltyped_def] >>
+  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss)
+    [bir_symb_rec_sbir_def] >>
+
+  METIS_TAC [symb_interpretTheory.symb_interpr_dom_IMP_get_CASES_thm, optionTheory.option_CLAUSES]
+);
+
+val birs_interpret_fun_EQ_thm = store_thm(
+   "birs_interpret_fun_EQ_thm", ``
+!prog H e vo.
+((bir_symb_rec_sbir prog).sr_interpret_f H e = vo)
+<=>
+(birs_interpret_fun H e = vo)
+``,
+  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss)
+    [bir_symb_rec_sbir_def]
+);
 
 val birs_matchenv_def = Define `
     birs_matchenv H senv env =
@@ -523,6 +633,22 @@ val birs_matchenv_def = Define `
             bir_env_lookup var env = SOME v /\
             birs_interpret_fun H e = SOME v)
 `;
+
+val birs_matchenv_EQ_thm = store_thm(
+   "birs_matchenv_EQ_thm", ``
+!prog H f s.
+symb_interpr_symbstore (bir_symb_rec_sbir prog) H f
+       (symb_concst_store (birs_symb_to_concst s)) =
+  birs_matchenv H f s.bst_environ
+``,
+  Cases_on `s` >>
+  SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
+    [symb_interpr_symbstore_def, birs_matchenv_def, symb_concst_store_def, birs_symb_to_concst_def] >>
+  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss)
+    [bir_symb_rec_sbir_def] >>
+
+  METIS_TAC []
+);
 
 val birs_symb_matchstate_def = Define `
     birs_symb_matchstate sys H s = (
@@ -540,8 +666,23 @@ val birs_symb_matchstate_EQ_thm = store_thm(
 symb_matchstate (bir_symb_rec_sbir prog) (birs_symb_to_symbst sys) H (birs_symb_to_concst s) =
   birs_symb_matchstate sys H s
 ``,
-  cheat
-  (* symb_matchstate_def *)
+  Cases_on `sys` >>
+
+  SIMP_TAC (std_ss)
+    [symb_matchstate_def, symb_suitable_interpretation_def, birs_symb_symbols_EQ_thm, birs_matchenv_EQ_thm, birs_interpr_welltyped_EQ_thm] >>
+
+  SIMP_TAC (std_ss++birs_state_ss)
+    [birs_symb_to_symbst_def, birs_symb_matchstate_def] >>
+
+  SIMP_TAC (std_ss)
+    [symb_symbst_pc_def, symb_symbst_extra_def, symb_symbst_store_def, symb_interpr_symbpcond_def, symb_symbst_pcond_def, birs_interpret_fun_EQ_thm] >>
+
+  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss)
+    [bir_symb_rec_sbir_def] >>
+
+  Cases_on `s` >>
+  SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
+    [symb_concst_pc_def, birs_symb_to_concst_def, symb_concst_store_def, symb_concst_extra_def]
 );
 
 val birs_exec_stmt_assign_sound_thm = store_thm(
@@ -589,10 +730,10 @@ val birs_symb_step_sound_thm = store_thm(
   FULL_SIMP_TAC std_ss [] >>
 
   `(SND o bir_exec_step prog) st' = st''` by (
-    METIS_TAC [birs_symb_from_concst_BIJ_thm, combinTheory.o_DEF]
+    METIS_TAC [birs_symb_to_concst_BIJ_thm, combinTheory.o_DEF]
   ) >>
   `(birs_exec_step prog st) = Pi_t` by (
-    METIS_TAC [birs_symb_from_symbst_BIJ_thm, pred_setTheory.IMAGE_11]
+    METIS_TAC [birs_symb_to_symbst_BIJ_thm, pred_setTheory.IMAGE_11]
   ) >>
 
   IMP_RES_TAC birs_exec_step_sound_thm >>
