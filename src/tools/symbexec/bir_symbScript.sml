@@ -211,18 +211,94 @@ val birs_eval_exp_subst_ALT_def = Define `
         e
 `;
 
+val bir_exp_subst_FUN_FMAP_bir_vars_of_exp_thm = store_thm(
+   "bir_exp_subst_FUN_FMAP_bir_vars_of_exp_thm", ``
+!e X Y.
+  (FINITE Y) ==>
+  (bir_exp_subst
+    (FUN_FMAP X (bir_vars_of_exp e UNION Y))
+    e
+   =
+   bir_exp_subst
+    (FUN_FMAP X (bir_vars_of_exp e))
+    e)
+``,
+  Induct_on `e` >> (
+    SIMP_TAC (std_ss)
+      ([birs_eval_exp_subst_def, birs_eval_exp_subst_ALT_def, bir_exp_subst_def]@
+       [bir_vars_of_exp_def, bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_FUN_FMAP,
+        pred_setTheory.IN_SING, pred_setTheory.FINITE_SING, pred_setTheory.IN_UNION, pred_setTheory.FINITE_UNION])
+  ) >> (
+    REPEAT STRIP_TAC >>
+    `FINITE (bir_vars_of_exp e' ∪ Y) /\
+     FINITE (bir_vars_of_exp e ∪ Y) /\
+     FINITE (bir_vars_of_exp e) /\
+     FINITE (bir_vars_of_exp e') /\
+
+     FINITE (bir_vars_of_exp e' ∪ bir_vars_of_exp e'' ∪ Y) /\
+     FINITE (bir_vars_of_exp e' ∪ bir_vars_of_exp e'') /\
+     FINITE (bir_vars_of_exp e ∪ bir_vars_of_exp e'' ∪ Y) /\
+     FINITE (bir_vars_of_exp e ∪ bir_vars_of_exp e'') /\
+     FINITE (bir_vars_of_exp e ∪ bir_vars_of_exp e' ∪ Y) /\
+     FINITE (bir_vars_of_exp e ∪ bir_vars_of_exp e')` by (
+      METIS_TAC
+        [bir_typing_expTheory.bir_vars_of_exp_FINITE, pred_setTheory.FINITE_UNION]
+    ) >>
+    METIS_TAC
+      [birs_eval_exp_subst_ALT_def, pred_setTheory.UNION_COMM,
+       pred_setTheory.UNION_ASSOC, bir_typing_expTheory.bir_vars_of_exp_FINITE]
+  )
+);
+
 val birs_eval_exp_subst_ALT_thm = store_thm(
    "birs_eval_exp_subst_ALT_thm", ``
 !e senv.
   birs_eval_exp_subst e senv = birs_eval_exp_subst_ALT e senv
 ``,
-  cheat
+  Induct_on `e` >> (
+    SIMP_TAC (std_ss)
+      ([birs_eval_exp_subst_def, birs_eval_exp_subst_ALT_def, bir_exp_subst_def]@
+       [bir_vars_of_exp_def, bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_FUN_FMAP,
+        pred_setTheory.IN_SING, pred_setTheory.FINITE_SING])
+  ) >> (
+    ASM_SIMP_TAC (std_ss) [birs_eval_exp_subst_def, birs_eval_exp_subst_ALT_def, bir_exp_subst_def, bir_vars_of_exp_def] >>
+    `FINITE (bir_vars_of_exp e ∪ bir_vars_of_exp e') /\
+     FINITE (bir_vars_of_exp e' ∪ bir_vars_of_exp e'') /\
+     FINITE (bir_vars_of_exp e ∪ bir_vars_of_exp e'')` by (
+      METIS_TAC
+        [bir_typing_expTheory.bir_vars_of_exp_FINITE, pred_setTheory.FINITE_UNION]
+    ) >>
+    METIS_TAC
+      [birs_eval_exp_subst_ALT_def, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_thm, pred_setTheory.UNION_COMM,
+       pred_setTheory.UNION_ASSOC, bir_typing_expTheory.bir_vars_of_exp_FINITE]
+  )
 );
 
 val APPEND_distinct_def = Define `
     APPEND_distinct l1 l2 =
       FOLDR (\x l. if MEM x l then l else x::l) l2 l1
 `;
+val APPEND_distinct_thm = store_thm(
+   "APPEND_distinct_thm", ``
+!x l1 l2.
+  (MEM x (APPEND_distinct l1 l2))
+  <=>
+  (MEM x l1 \/ MEM x l2)
+  
+``,
+  Induct_on `l1` >- (
+    SIMP_TAC (std_ss++listSimps.LIST_ss) [APPEND_distinct_def]
+  ) >>
+
+  REWRITE_TAC [APPEND_distinct_def] >>
+  REPEAT GEN_TAC >>
+
+  SIMP_TAC (std_ss++listSimps.LIST_ss) [] >>
+  Cases_on `MEM h (FOLDR (\x l. if MEM x l then l else x::l) l2 l1)` >> (
+    METIS_TAC [APPEND_distinct_def, listTheory.MEM]
+  )
+);
+
 val bir_vars_of_exp_LIST_def = Define `
   (bir_vars_of_exp_LIST (BExp_Const _) =
      []) /\
@@ -264,6 +340,17 @@ val bir_vars_of_exp_LIST_def = Define `
        (bir_vars_of_exp_LIST ve)))
 `;
 
+val bir_vars_of_exp_LIST_thm = store_thm(
+   "bir_vars_of_exp_LIST_thm", ``
+!e x.
+  MEM x (bir_vars_of_exp_LIST e) <=> x IN (bir_vars_of_exp e)
+``,
+  Induct_on `e` >> (
+    FULL_SIMP_TAC (std_ss++listSimps.LIST_ss++pred_setSimps.PRED_SET_ss)
+      [bir_vars_of_exp_def, bir_vars_of_exp_LIST_def, APPEND_distinct_thm]
+  )
+);
+
 val birs_envty_of_senv_def = Define `
     birs_envty_of_senv senv =
   BEnvTy ((\x. OPTION_BIND x type_of_bir_exp) o senv)
@@ -278,7 +365,32 @@ val birs_senv_typecheck_thm = store_thm(
 !e senv.
   birs_senv_typecheck e senv <=> bir_envty_includes_vs (birs_envty_of_senv senv) (bir_vars_of_exp e)
 ``,
-  cheat
+  REWRITE_TAC
+    [birs_senv_typecheck_def, bir_envty_includes_vs_def,
+     birs_envty_of_senv_def, bir_envty_includes_v_def, listTheory.EVERY_MEM, bir_vars_of_exp_LIST_thm] >>
+  METIS_TAC []
+);
+
+val birs_senv_typecheck_IMP_birs_eval_exp_subst_type_thm = store_thm(
+   "birs_senv_typecheck_IMP_birs_eval_exp_subst_type_thm", ``
+!e senv.
+  (birs_senv_typecheck e senv) ==>
+  (type_of_bir_exp (birs_eval_exp_subst e senv) = type_of_bir_exp e)
+``,
+  SIMP_TAC std_ss [birs_eval_exp_subst_ALT_thm, birs_eval_exp_subst_ALT_def] >>
+
+  REPEAT STRIP_TAC >>
+  `FEVERY
+     (\(v,e). type_of_bir_exp e = SOME (bir_var_type v))
+     (FUN_FMAP (\x. birs_eval_exp_subst_var x senv) (bir_vars_of_exp e))` by (
+    SIMP_TAC std_ss [finite_mapTheory.FEVERY_DEF, finite_mapTheory.FUN_FMAP_DEF, bir_typing_expTheory.bir_vars_of_exp_FINITE] >>
+
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [birs_senv_typecheck_thm, bir_envty_includes_vs_def, birs_envty_of_senv_def, bir_envty_includes_v_def, birs_eval_exp_subst_var_def] >>
+    METIS_TAC [optionTheory.option_CLAUSES, combinTheory.I_THM]
+  ) >>
+
+  METIS_TAC [bir_exp_substitutionsTheory.bir_exp_subst_TYPE_EQ]
 );
 
 val birs_eval_exp_def = Define `
@@ -294,6 +406,7 @@ val birs_eval_exp_def = Define `
         NONE
 `;
 
+
 val birs_eval_exp_NONE_EQ_bir_exp_env_type_thm = store_thm(
    "birs_eval_exp_NONE_EQ_bir_exp_env_type_thm", ``
 !senv e.
@@ -302,16 +415,8 @@ val birs_eval_exp_NONE_EQ_bir_exp_env_type_thm = store_thm(
   <=>
   (birs_eval_exp e senv = NONE)
 ``,
-  cheat
-);
-
-val birs_eval_exp_IMP_type_thm = store_thm(
-   "birs_eval_exp_IMP_type_thm", ``
-!e senv sv ty.
-  (birs_eval_exp e senv = SOME (sv, ty)) ==>
-  (type_of_bir_exp sv = SOME ty)
-``,
-  cheat
+  SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, birs_senv_typecheck_thm] >>
+  METIS_TAC []
 );
 
 val birs_eval_exp_SOME_EQ_bir_exp_env_type_thm = store_thm(
@@ -322,8 +427,21 @@ val birs_eval_exp_SOME_EQ_bir_exp_env_type_thm = store_thm(
   <=>
   (?sv. birs_eval_exp e senv = SOME (sv, ty))
 ``,
-  cheat
+  SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, birs_senv_typecheck_thm] >>
+  METIS_TAC [optionTheory.option_CLAUSES]
 );
+
+val birs_eval_exp_IMP_type_thm = store_thm(
+   "birs_eval_exp_IMP_type_thm", ``
+!e senv sv ty.
+  (birs_eval_exp e senv = SOME (sv, ty)) ==>
+  (type_of_bir_exp sv = SOME ty)
+``,
+  SIMP_TAC std_ss
+    [birs_eval_exp_def, LET_DEF, optionTheory.option_CLAUSES,
+     birs_senv_typecheck_IMP_birs_eval_exp_subst_type_thm]
+);
+
 
 
 val bir_val_to_constexp_def = Define `
