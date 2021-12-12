@@ -900,6 +900,15 @@ symb_matchstate (bir_symb_rec_sbir prog) (birs_symb_to_symbst sys) H (birs_symb_
     [symb_concst_pc_def, birs_symb_to_concst_def, symb_concst_store_def, symb_concst_extra_def]
 );
 
+val birs_interpret_fun_PRESERVES_type_thm = store_thm(
+   "birs_interpret_fun_PRESERVES_type_thm", ``
+!sv ty H v.
+  (birs_interpret_fun H sv = SOME v) ==>
+  (type_of_bir_exp sv = SOME (type_of_bir_val v))
+``,
+  cheat
+);
+
 
 val birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm = store_thm(
    "birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm", ``
@@ -909,27 +918,70 @@ val birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm = store_thm(
    <=>
    bir_envty_includes_vs (bir_envty_of_env env) vs)
 ``,
-  cheat
+  Cases_on `env` >>
+  SIMP_TAC std_ss [bir_envty_includes_vs_def, bir_envty_includes_v_def, birs_envty_of_senv_def, bir_envty_of_env_def, birs_matchenv_def, bir_env_lookup_def] >>
+  REPEAT STRIP_TAC >>
+
+  EQ_TAC >> (
+    REPEAT STRIP_TAC >>
+    (PAT_X_ASSUM ``!x. v IN vs ==> B`` (ASSUME_TAC o Q.SPEC `v`)) >>
+    (PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `(bir_var_name v)`)) >>
+
+    METIS_TAC [birs_interpret_fun_PRESERVES_type_thm, optionTheory.option_CLAUSES]
+  )
 );
 
-val birs_eval_exp_sound_thm = store_thm(
-   "birs_eval_exp_sound_thm", ``
-!H senv env e.
-(*  (birs_interpr_welltyped H) ==> (* this is technically implied by birs_matchenv *) *)
+val birs_interpret_fun_sound_thm = store_thm(
+   "birs_interpret_fun_sound_thm", ``
+!H senv env e sv ty v.
   (birs_matchenv H senv env) ==>
-  ((birs_eval_exp e senv = NONE /\ bir_eval_exp e env = NONE) \/
-   (?sv ty v.
-      birs_eval_exp e senv = SOME (sv, ty) /\ bir_eval_exp e env = SOME v /\
-      type_of_bir_exp sv = SOME ty /\ type_of_bir_val v = ty /\ (* type_of_bir_exp e = SOME ty /\ *)
-      birs_interpret_fun H sv = SOME v))
+  (birs_eval_exp e senv = SOME (sv, ty)) ==>
+  (bir_eval_exp e env = SOME v) ==>
+  (birs_interpret_fun H sv = SOME v)
 ``,
+  cheat
 (*
 birs_symb_matchstate_def
 birs_matchenv_def
 bir_eval_exp_NONE_EQ_bir_exp_env_type_thm
 bir_eval_exp_SOME_EQ_bir_exp_env_type_thm
+
+birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm
+
+birs_eval_exp_NONE_EQ_bir_exp_env_type_thm
+birs_eval_exp_SOME_EQ_bir_exp_env_type_thm
+birs_eval_exp_IMP_type_thm
 *)
-  cheat
+);
+
+val birs_eval_exp_sound_thm = store_thm(
+   "birs_eval_exp_sound_thm", ``
+!H senv env e.
+  (birs_matchenv H senv env) ==>
+  ((birs_eval_exp e senv = NONE /\ bir_eval_exp e env = NONE) \/
+   (?sv ty v.
+      birs_eval_exp e senv = SOME (sv, ty) /\ bir_eval_exp e env = SOME v /\
+      birs_interpret_fun H sv = SOME v))
+``,
+  REPEAT STRIP_TAC >>
+
+  Cases_on `birs_eval_exp e senv = NONE` >- (
+    METIS_TAC [bir_eval_exp_NONE_EQ_bir_exp_env_type_thm, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, birs_eval_exp_NONE_EQ_bir_exp_env_type_thm]
+  ) >>
+
+  `IS_SOME (birs_eval_exp e senv)` by (
+    METIS_TAC [optionTheory.NOT_IS_SOME_EQ_NONE]
+  ) >>
+  FULL_SIMP_TAC std_ss [optionTheory.IS_SOME_EXISTS] >>
+  Cases_on `x` >>
+  FULL_SIMP_TAC std_ss [] >>
+  IMP_RES_TAC (GSYM birs_eval_exp_SOME_EQ_bir_exp_env_type_thm) >>
+
+  `?v. bir_eval_exp e env = SOME v` by (
+    METIS_TAC [bir_eval_exp_SOME_EQ_bir_exp_env_type_thm, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm]
+  ) >>
+
+  METIS_TAC [birs_interpret_fun_sound_thm]
 );
 
 val birs_exec_stmt_assign_sound_thm = store_thm(
