@@ -448,10 +448,61 @@ val bir_val_to_constexp_def = Define `
    (bir_val_to_constexp (BVal_Imm i) = BExp_Const i) /\
    (bir_val_to_constexp (BVal_Mem aty vty mmap) = BExp_MemConst aty vty mmap)
 `;
+val birs_interpret_subst_def = Define `
+    birs_interpret_subst i e =
+      bir_exp_subst
+        (FUN_FMAP (\x. if x IN symb_interpr_dom i then
+                        bir_val_to_constexp (THE (symb_interpr_get i x))
+                       else
+                        BExp_Den x) (bir_vars_of_exp e))
+        e
+`;
 val birs_interpret_fun_def = Define `
     birs_interpret_fun i e =
-      bir_eval_exp (bir_exp_subst (FUN_FMAP (\x. bir_val_to_constexp (THE (symb_interpr_get i x))) (bir_vars_of_exp e)) e) bir_env_empty
+      bir_eval_exp
+       (birs_interpret_subst i e)
+       bir_env_empty
 `;
+
+(*
+(* this is not true, only true if the interpretation i is well-typed *)
+val type_of_bir_exp_birs_interpret_subst_thm = store_thm(
+   "type_of_bir_exp_birs_interpret_subst_thm", ``
+!i e.
+  type_of_bir_exp (birs_interpret_subst i e) = type_of_bir_exp e
+``,
+  cheat
+(*
+bir_exp_substitutionsTheory.bir_exp_subst_NO_TYPE
+*)
+);
+
+(* SBIR sanity check theorem *)
+val birs_interpret_fun_NONE_thm = store_thm(
+   "birs_interpret_fun_NONE_thm", ``
+!sv H.
+  (type_of_bir_exp sv = NONE) ==>
+  (birs_interpret_fun H sv = NONE)
+``,
+  METIS_TAC [birs_interpret_fun_def, bir_typing_expTheory.bir_type_of_bir_exp_NONE, type_of_bir_exp_birs_interpret_subst_thm]
+);
+
+(* SBIR sanity check theorem *)
+val birs_interpret_fun_SOME_thm = store_thm(
+   "birs_interpret_fun_SOME_thm", ``
+!sv H ty.
+  (birs_interpr_welltyped H) ==>
+  (type_of_bir_exp sv = SOME ty) ==>
+  (bir_vars_of_exp sv SUBSET symb_interpr_dom H) ==>
+  (?v. birs_interpret_fun H sv = SOME v /\ type_of_bir_val v = ty)
+``,
+(*
+  METIS_TAC [birs_interpret_fun_def, bir_typing_expTheory.bir_type_of_bir_exp_NONE]
+type_of_bir_exp_THM_with_envty
+*)
+  cheat
+);
+*)
 
 
 
@@ -847,39 +898,6 @@ symb_matchstate (bir_symb_rec_sbir prog) (birs_symb_to_symbst sys) H (birs_symb_
   Cases_on `s` >>
   SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
     [symb_concst_pc_def, birs_symb_to_concst_def, symb_concst_store_def, symb_concst_extra_def]
-);
-
-(* SBIR sanity check theorem *)
-val birs_matchenv_IMP_birs_interpr_welltyped_thm = store_thm(
-   "birs_matchenv_IMP_birs_interpr_welltyped_thm", ``
-!H senv env.
-  (birs_matchenv H senv env) ==>
-  (birs_interpr_welltyped H)
-``,
-  cheat
-);
-
-
-(* SBIR sanity check theorem *)
-val birs_interpret_fun_NONE_thm = store_thm(
-   "birs_interpret_fun_NONE_thm", ``
-!sv H.
-  (type_of_bir_exp sv = NONE) ==>
-  (birs_interpret_fun H sv = NONE)
-``,
-  cheat
-);
-
-(* SBIR sanity check theorem *)
-val birs_interpret_fun_SOME_thm = store_thm(
-   "birs_interpret_fun_SOME_thm", ``
-!sv H ty.
-  (birs_interpr_welltyped H) ==>
-  (type_of_bir_exp sv = SOME ty) ==>
-  (bir_vars_of_exp sv SUBSET symb_interpr_dom H) ==>
-  (?v. birs_interpret_fun H sv = SOME v /\ type_of_bir_val v = ty)
-``,
-  cheat
 );
 
 
