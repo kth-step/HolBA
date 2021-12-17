@@ -721,7 +721,7 @@ val symb_interpr_for_symbs_EQ_set_typeerror_thm = store_thm(
   (symb_interpr_for_symbs (birs_symb_symbols (birs_state_set_typeerror sys)) H) =
   (symb_interpr_for_symbs (birs_symb_symbols sys) H)
 ``,
-  cheat
+  SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def, birs_symb_symbols_def]
 );
 
 
