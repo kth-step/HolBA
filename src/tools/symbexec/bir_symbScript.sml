@@ -900,19 +900,51 @@ symb_matchstate (bir_symb_rec_sbir prog) (birs_symb_to_symbst sys) H (birs_symb_
     [symb_concst_pc_def, birs_symb_to_concst_def, symb_concst_store_def, symb_concst_extra_def]
 );
 
+val birs_interpret_subst_PRESERVES_type_thm = store_thm(
+   "birs_interpret_subst_PRESERVES_type_thm", ``
+!sv H.
+  (birs_interpr_welltyped H) ==>
+  (type_of_bir_exp (birs_interpret_subst H sv) = type_of_bir_exp sv)
+``,
+  REWRITE_TAC [birs_interpret_subst_def] >>
+  REPEAT STRIP_TAC >>
+
+  MATCH_MP_TAC bir_exp_substitutionsTheory.bir_exp_subst_TYPE_EQ >>
+
+  FULL_SIMP_TAC std_ss [finite_mapTheory.FEVERY_DEF, finite_mapTheory.FUN_FMAP_DEF, bir_typing_expTheory.bir_vars_of_exp_FINITE] >>
+  REPEAT STRIP_TAC >>
+  CASE_TAC >> (
+    FULL_SIMP_TAC std_ss [type_of_bir_exp_def]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [birs_interpr_welltyped_def] >>
+  Cases_on `THE (symb_interpr_get H x)` >> (
+    FULL_SIMP_TAC std_ss [bir_val_to_constexp_def, type_of_bir_exp_def] >>
+    METIS_TAC [type_of_bir_val_def]
+  )
+);
+
 val birs_interpret_fun_PRESERVES_type_thm = store_thm(
    "birs_interpret_fun_PRESERVES_type_thm", ``
-!sv ty H v.
+!sv H v.
+  (birs_interpr_welltyped H) ==>
   (birs_interpret_fun H sv = SOME v) ==>
   (type_of_bir_exp sv = SOME (type_of_bir_val v))
 ``,
-  cheat
-);
+  REWRITE_TAC [birs_interpret_fun_def] >>
+  REPEAT STRIP_TAC >>
 
+  `type_of_bir_exp (birs_interpret_subst H sv) = type_of_bir_exp sv` by (
+    METIS_TAC [birs_interpret_subst_PRESERVES_type_thm]
+  ) >>
+
+  METIS_TAC [bir_typing_expTheory.bir_eval_exp_IS_SOME_IMPLIES_TYPE]
+);
 
 val birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm = store_thm(
    "birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm", ``
 !H senv env vs.
+  (birs_interpr_welltyped H) ==>
   (birs_matchenv H senv env) ==>
   (bir_envty_includes_vs (birs_envty_of_senv senv) vs
    <=>
@@ -931,32 +963,504 @@ val birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm = store_thm(
   )
 );
 
+val birs_interpret_fun_sound_NONE_thm = store_thm(
+   "birs_interpret_fun_sound_NONE_thm", ``
+!H senv env e.
+  (birs_interpr_welltyped H) ==>
+  (birs_matchenv H senv env) ==>
+  (birs_eval_exp e senv = NONE) ==>
+  (bir_eval_exp e env = NONE)
+``,
+  METIS_TAC
+    [birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm,
+     bir_eval_exp_NONE_EQ_bir_exp_env_type_thm,
+     birs_eval_exp_NONE_EQ_bir_exp_env_type_thm]
+);
+
+val bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm = store_thm(
+   "bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm", ``
+!vs f e.
+  (FINITE vs) ==>
+  (bir_exp_subst (FUN_FMAP f (vs UNION bir_vars_of_exp e)) e) =
+  (bir_exp_subst (FUN_FMAP f (bir_vars_of_exp e)) e)
+``,
+  Induct_on `e` >> (
+    SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_exp_subst_def, bir_vars_of_exp_def, bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_FUN_FMAP]
+  ) >> (
+    ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_expTheory.bir_exp_t_11, pred_setTheory.UNION_ASSOC]
+  ) >> (
+    REPEAT STRIP_TAC >> (
+    `FINITE (vs UNION (bir_vars_of_exp e')) /\ FINITE (bir_vars_of_exp e') /\
+     FINITE (vs UNION (bir_vars_of_exp e)) /\ FINITE (bir_vars_of_exp e) /\
+
+     FINITE (vs UNION (bir_vars_of_exp e) UNION (bir_vars_of_exp e')) /\ FINITE ((bir_vars_of_exp e) UNION (bir_vars_of_exp e')) /\
+     FINITE (vs UNION (bir_vars_of_exp e') UNION (bir_vars_of_exp e'')) /\ FINITE ((bir_vars_of_exp e') UNION (bir_vars_of_exp e'')) /\
+     FINITE (vs UNION (bir_vars_of_exp e) UNION (bir_vars_of_exp e'')) /\ FINITE ((bir_vars_of_exp e) UNION (bir_vars_of_exp e''))` by (
+      METIS_TAC [pred_setTheory.FINITE_UNION, bir_typing_expTheory.bir_vars_of_exp_FINITE]
+    )) >> (
+     METIS_TAC [pred_setTheory.UNION_COMM, pred_setTheory.UNION_ASSOC]
+    )
+  )
+);
+
+(* TODO: put this in "support" *)
+val bir_load_from_mem_IS_SOME_thm = store_thm(
+   "bir_load_from_mem_IS_SOME_thm", ``
+!b0 b1 b mmap b2 a.
+  (if b2 = BEnd_NoEndian then b0 = b1
+        else bir_number_of_mem_splits b0 b1 b ≠ NONE) ==>
+  (?v. bir_load_from_mem b0 b1 b mmap b2 a = SOME v)
+``,
+  REPEAT STRIP_TAC >>
+  `?abc. bir_number_of_mem_splits b0 b1 b = SOME abc` by (
+    Cases_on `b2 = BEnd_NoEndian` >> (
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_exp_memTheory.bir_number_of_mem_splits_def]
+    ) >>
+
+    Q.ABBREV_TAC `abc = size_of_bir_immtype b1` >>
+    `0 < abc` by (
+      Q.UNABBREV_TAC `abc` >>
+      Cases_on `b1` >> (
+        FULL_SIMP_TAC (arith_ss++HolBACoreSimps.holBACore_ss) []
+      )
+    ) >>
+    Cases_on `b` >> (
+      FULL_SIMP_TAC (arith_ss++HolBACoreSimps.holBACore_ss) []
+    )
+  ) >>
+
+  Cases_on `b2` >> (
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
+  ) >> (
+    METIS_TAC [bir_exp_memTheory.bir_load_from_mem_EQ_SOME, bir_exp_memTheory.bir_number_of_mem_splits_ID]
+  )
+);
+val bir_store_in_mem_IS_SOME_thm = store_thm(
+   "bir_store_in_mem_IS_SOME_thm", ``
+!b1t b0 b b1 mmap b2 a.
+  (type_of_bir_imm b1 = b1t) ==>
+  (if b2 = BEnd_NoEndian then b0 = b1t
+        else bir_number_of_mem_splits b0 b1t b ≠ NONE) ==>
+  (?v. bir_store_in_mem b0 b b1 mmap b2 a = SOME v)
+``,
+  REPEAT STRIP_TAC >>
+  `?abc. bir_number_of_mem_splits b0 b1t b = SOME abc` by (
+    Cases_on `b2 = BEnd_NoEndian` >> (
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_exp_memTheory.bir_number_of_mem_splits_def]
+    ) >>
+
+    Q.ABBREV_TAC `abc = size_of_bir_immtype b1t` >>
+    `0 < abc` by (
+      Q.UNABBREV_TAC `abc` >>
+      Cases_on `b1t` >> (
+        FULL_SIMP_TAC (arith_ss++HolBACoreSimps.holBACore_ss) []
+      )
+    ) >>
+    Cases_on `b` >> (
+      FULL_SIMP_TAC (arith_ss++HolBACoreSimps.holBACore_ss) []
+    )
+  ) >>
+
+  Cases_on `b2` >> (
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
+  ) >> (
+    METIS_TAC [bir_exp_memTheory.bir_store_in_mem_EQ_SOME, bir_exp_memTheory.bir_number_of_mem_splits_ID]
+  )
+);
+
+
 val birs_interpret_fun_sound_thm = store_thm(
    "birs_interpret_fun_sound_thm", ``
 !H senv env e sv ty v.
+  (birs_interpr_welltyped H) ==>
   (birs_matchenv H senv env) ==>
   (birs_eval_exp e senv = SOME (sv, ty)) ==>
-  (bir_eval_exp e env = SOME v) ==>
-  (birs_interpret_fun H sv = SOME v)
+  (?v. birs_interpret_fun H sv = SOME v /\ bir_eval_exp e env = SOME v)
 ``,
-  cheat
-(*
-birs_symb_matchstate_def
-birs_matchenv_def
-bir_eval_exp_NONE_EQ_bir_exp_env_type_thm
-bir_eval_exp_SOME_EQ_bir_exp_env_type_thm
+  Induct_on `e` >- (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def, birs_interpret_fun_def, birs_interpret_subst_def] >>
+    METIS_TAC [bir_exp_subst_def, bir_eval_exp_def]
+  ) >- (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def, birs_interpret_fun_def, birs_interpret_subst_def] >>
+    METIS_TAC [bir_exp_subst_def, bir_eval_exp_def]
+  ) >- (
+    REPEAT STRIP_TAC >>
+    IMP_RES_TAC birs_eval_exp_IMP_type_thm >>
 
-birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm
+    FULL_SIMP_TAC std_ss
+      [birs_eval_exp_def, LET_DEF, birs_senv_typecheck_thm, bir_vars_of_exp_def, bir_envty_includes_vs_def, pred_setTheory.IN_SING] >>
 
-birs_eval_exp_NONE_EQ_bir_exp_env_type_thm
-birs_eval_exp_SOME_EQ_bir_exp_env_type_thm
-birs_eval_exp_IMP_type_thm
-*)
+    Cases_on `birs_envty_of_senv senv` >>
+    FULL_SIMP_TAC std_ss
+      [bir_envty_includes_v_def, birs_eval_exp_subst_def, birs_eval_exp_subst_var_def] >>
+    Cases_on `senv (bir_var_name b)` >- (
+      FULL_SIMP_TAC std_ss [birs_envty_of_senv_def, bir_envTheory.bir_var_environment_typing_t_11] >>
+
+      `f (bir_var_name b) = NONE` by (
+        PAT_X_ASSUM ``A o B = C`` (fn thm => REWRITE_TAC [GSYM thm]) >>
+        ASM_SIMP_TAC std_ss []
+      ) >>
+      FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES]
+    ) >>
+
+    Cases_on `env` >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES, type_of_bir_exp_def, bir_eval_exp_def, bir_env_read_def, bir_env_check_type_def, bir_env_lookup_type_def] >>
+
+    FULL_SIMP_TAC std_ss [birs_matchenv_def] >>
+    PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPEC `bir_var_name b`) >>
+    REV_FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES] >>
+
+    METIS_TAC [optionTheory.option_CLAUSES, birs_interpret_fun_PRESERVES_type_thm]
+  ) >- (
+    SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    REPEAT STRIP_TAC >>
+
+    FULL_SIMP_TAC std_ss [birs_senv_typecheck_thm, bir_vars_of_exp_def] >>
+    FULL_SIMP_TAC std_ss [type_of_bir_exp_def] >>
+    Cases_on `type_of_bir_exp e` >> (
+      FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES]
+    ) >>
+
+    IMP_RES_TAC birs_eval_exp_SOME_EQ_bir_exp_env_type_thm >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES] >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+
+    `type_of_bir_val v = x` by (
+      METIS_TAC [optionTheory.option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
+    ) >>
+
+    Cases_on `v` >> (
+      FULL_SIMP_TAC std_ss [optionTheory.IS_SOME_EXISTS, type_of_bir_val_def, bir_type_is_Imm_def] >>
+      METIS_TAC [bir_valuesTheory.bir_type_t_distinct, bir_eval_cast_def]
+    )
+  ) >- (
+    SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    REPEAT STRIP_TAC >>
+
+    FULL_SIMP_TAC std_ss [birs_senv_typecheck_thm, bir_vars_of_exp_def] >>
+    FULL_SIMP_TAC std_ss [type_of_bir_exp_def] >>
+    Cases_on `type_of_bir_exp e` >> (
+      FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES]
+    ) >>
+
+    IMP_RES_TAC birs_eval_exp_SOME_EQ_bir_exp_env_type_thm >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES] >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+
+    `type_of_bir_val v = x` by (
+      METIS_TAC [optionTheory.option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
+    ) >>
+
+    Cases_on `v` >> (
+      FULL_SIMP_TAC std_ss [optionTheory.IS_SOME_EXISTS, type_of_bir_val_def, bir_type_is_Imm_def] >>
+      METIS_TAC [bir_valuesTheory.bir_type_t_distinct, bir_eval_unary_exp_def]
+    )
+  ) >- (
+    SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    REPEAT STRIP_TAC >>
+
+    FULL_SIMP_TAC std_ss [birs_senv_typecheck_thm, bir_vars_of_exp_def] >>
+    FULL_SIMP_TAC std_ss [type_of_bir_exp_def] >>
+    FULL_SIMP_TAC std_ss [pairTheory.pair_CASE_def] >>
+    Cases_on `type_of_bir_exp e` >> Cases_on `type_of_bir_exp e'` >> (
+      REV_FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES]
+    ) >>
+
+    FULL_SIMP_TAC std_ss [bir_envTheory.bir_envty_includes_vs_UNION] >>
+    IMP_RES_TAC birs_eval_exp_SOME_EQ_bir_exp_env_type_thm >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES] >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+
+    SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    SIMP_TAC std_ss [Once pred_setTheory.UNION_COMM, bir_typing_expTheory.bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    ASM_SIMP_TAC std_ss [] >>
+
+    `type_of_bir_val v = x'` by (
+      METIS_TAC [optionTheory.option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
+    ) >>
+    `type_of_bir_val v' = x` by (
+      METIS_TAC [optionTheory.option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
+    ) >>
+
+    Cases_on `v` >> Cases_on `v'` >> (
+      FULL_SIMP_TAC std_ss [optionTheory.IS_SOME_EXISTS, type_of_bir_val_def, bir_type_is_Imm_def, bir_eval_bin_exp_def] >>
+      METIS_TAC [bir_valuesTheory.bir_type_t_distinct, bir_valuesTheory.bir_type_t_11, bir_eval_bin_exp_def]
+    )
+  ) >- (
+    SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    REPEAT STRIP_TAC >>
+
+    FULL_SIMP_TAC std_ss [birs_senv_typecheck_thm, bir_vars_of_exp_def] >>
+    FULL_SIMP_TAC std_ss [type_of_bir_exp_def] >>
+    FULL_SIMP_TAC std_ss [pairTheory.pair_CASE_def] >>
+    Cases_on `type_of_bir_exp e` >> Cases_on `type_of_bir_exp e'` >> (
+      REV_FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES]
+    ) >>
+
+    FULL_SIMP_TAC std_ss [bir_envTheory.bir_envty_includes_vs_UNION] >>
+    IMP_RES_TAC birs_eval_exp_SOME_EQ_bir_exp_env_type_thm >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES] >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+
+    SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    SIMP_TAC std_ss [Once pred_setTheory.UNION_COMM, bir_typing_expTheory.bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    ASM_SIMP_TAC std_ss [] >>
+
+    `type_of_bir_val v = x'` by (
+      METIS_TAC [optionTheory.option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
+    ) >>
+    `type_of_bir_val v' = x` by (
+      METIS_TAC [optionTheory.option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
+    ) >>
+
+    Cases_on `v` >> Cases_on `v'` >> (
+      FULL_SIMP_TAC std_ss [optionTheory.IS_SOME_EXISTS, type_of_bir_val_def, bir_type_is_Imm_def, bir_eval_bin_exp_def] >>
+      METIS_TAC [bir_valuesTheory.bir_type_t_distinct, bir_valuesTheory.bir_type_t_11, bir_eval_bin_pred_def]
+    )
+  ) >- (
+    SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    REPEAT STRIP_TAC >>
+
+    FULL_SIMP_TAC std_ss [birs_senv_typecheck_thm, bir_vars_of_exp_def] >>
+    FULL_SIMP_TAC std_ss [type_of_bir_exp_def] >>
+    FULL_SIMP_TAC std_ss [pairTheory.pair_CASE_def] >>
+    Cases_on `type_of_bir_exp e` >> Cases_on `type_of_bir_exp e'` >> (
+      REV_FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES]
+    ) >> (
+      Cases_on `x` >> (
+        REV_FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_type_t_case_def]
+      )
+    ) >>
+    Cases_on `x'` >> (
+      REV_FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_type_t_case_def]
+    ) >>
+
+    FULL_SIMP_TAC std_ss [bir_envTheory.bir_envty_includes_vs_UNION] >>
+    IMP_RES_TAC birs_eval_exp_SOME_EQ_bir_exp_env_type_thm >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES] >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+
+    SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    SIMP_TAC std_ss [Once pred_setTheory.UNION_COMM, bir_typing_expTheory.bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    ASM_SIMP_TAC std_ss [] >>
+
+    `type_of_bir_val v = BType_Mem b' b0'` by (
+      METIS_TAC [optionTheory.option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
+    ) >>
+    `type_of_bir_val v' = BType_Mem b b0` by (
+      METIS_TAC [optionTheory.option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
+    ) >>
+
+    Cases_on `v` >> Cases_on `v'` >> (
+      FULL_SIMP_TAC std_ss [optionTheory.IS_SOME_EXISTS, type_of_bir_val_def, bir_type_is_Imm_def, bir_eval_bin_exp_def] >>
+      METIS_TAC [bir_valuesTheory.bir_type_t_distinct, bir_valuesTheory.bir_type_t_11, bir_eval_memeq_def]
+    )
+  ) >- (
+    SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    REPEAT STRIP_TAC >>
+
+    FULL_SIMP_TAC std_ss [birs_senv_typecheck_thm, bir_vars_of_exp_def] >>
+    FULL_SIMP_TAC std_ss [type_of_bir_exp_def] >>
+    FULL_SIMP_TAC std_ss [pairTheory.pair_CASE_def] >>
+    Cases_on `type_of_bir_exp e` >> Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e''` >> (
+      REV_FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES]
+    ) >>
+
+    FULL_SIMP_TAC std_ss [bir_envTheory.bir_envty_includes_vs_UNION] >>
+    IMP_RES_TAC birs_eval_exp_SOME_EQ_bir_exp_env_type_thm >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES] >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+
+    SIMP_TAC std_ss [prove(
+      ``FINITE(bir_vars_of_exp sv'' UNION bir_vars_of_exp sv')``, METIS_TAC [bir_typing_expTheory.bir_vars_of_exp_FINITE, pred_setTheory.FINITE_UNION]),
+      bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    SIMP_TAC std_ss [prove(
+      ``bir_vars_of_exp sv'' UNION bir_vars_of_exp sv' UNION bir_vars_of_exp sv
+        = bir_vars_of_exp sv UNION bir_vars_of_exp sv'' UNION bir_vars_of_exp sv'``, METIS_TAC [pred_setTheory.UNION_COMM, pred_setTheory.UNION_ASSOC]),
+      prove(
+      ``FINITE(bir_vars_of_exp sv UNION bir_vars_of_exp sv'')``, METIS_TAC [bir_typing_expTheory.bir_vars_of_exp_FINITE, pred_setTheory.FINITE_UNION]),
+      bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    SIMP_TAC std_ss [prove(
+      ``bir_vars_of_exp sv UNION bir_vars_of_exp sv'' UNION bir_vars_of_exp sv'
+        = bir_vars_of_exp sv UNION bir_vars_of_exp sv' UNION bir_vars_of_exp sv''``, METIS_TAC [pred_setTheory.UNION_COMM, pred_setTheory.UNION_ASSOC]),       prove(
+      ``FINITE(bir_vars_of_exp sv UNION bir_vars_of_exp sv')``, METIS_TAC [bir_typing_expTheory.bir_vars_of_exp_FINITE, pred_setTheory.FINITE_UNION]),
+      bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    ASM_SIMP_TAC std_ss [] >>
+
+    `type_of_bir_val v = x'' /\ type_of_bir_val v' = x' /\ type_of_bir_val v'' = x` by (
+      METIS_TAC [optionTheory.option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
+    ) >>
+
+    FULL_SIMP_TAC std_ss [optionTheory.IS_SOME_EXISTS, type_of_bir_val_def, bir_type_is_Imm_def, bir_eval_bin_exp_def, BType_Bool_def, bir_valuesTheory.bir_type_t_11] >>
+    `type_of_bir_val v = type_of_bir_val v'` by ASM_REWRITE_TAC [] >>
+    PAT_X_ASSUM ``A = BType_Imm Bit1`` (ASSUME_TAC) >>
+    FULL_SIMP_TAC std_ss [] >>
+
+    Cases_on `v''` >> (
+      FULL_SIMP_TAC std_ss [type_of_bir_val_def, bir_valuesTheory.bir_type_t_distinct]
+    ) >>
+    Cases_on `b` >> (
+      FULL_SIMP_TAC std_ss [bir_immTheory.type_of_bir_imm_def, bir_valuesTheory.bir_type_t_11, bir_immTheory.bir_immtype_t_distinct]
+    ) >>
+
+    SIMP_TAC std_ss [bir_eval_ifthenelse_def] >>
+    METIS_TAC []
+  ) >- (
+    SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    REPEAT STRIP_TAC >>
+
+    FULL_SIMP_TAC std_ss [birs_senv_typecheck_thm, bir_vars_of_exp_def] >>
+    FULL_SIMP_TAC std_ss [type_of_bir_exp_def] >>
+    FULL_SIMP_TAC std_ss [pairTheory.pair_CASE_def] >>
+    Cases_on `type_of_bir_exp e` >> Cases_on `type_of_bir_exp e'` >> (
+      REV_FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES]
+    ) >> (
+      Cases_on `x` >> (
+        REV_FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_type_t_case_def]
+      )
+    ) >>
+    Cases_on `x'` >> (
+      REV_FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_type_t_case_def]
+    ) >>
+
+    FULL_SIMP_TAC std_ss [bir_envTheory.bir_envty_includes_vs_UNION] >>
+    IMP_RES_TAC birs_eval_exp_SOME_EQ_bir_exp_env_type_thm >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES] >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+
+    SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    SIMP_TAC std_ss [prove(
+      ``bir_vars_of_exp sv' UNION bir_vars_of_exp sv
+        = bir_vars_of_exp sv UNION bir_vars_of_exp sv'``, METIS_TAC [pred_setTheory.UNION_COMM, pred_setTheory.UNION_ASSOC]),
+      bir_typing_expTheory.bir_vars_of_exp_FINITE,
+      bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    ASM_SIMP_TAC std_ss [] >>
+
+    `type_of_bir_val v = BType_Imm b' /\ type_of_bir_val v' = BType_Mem b b0` by (
+      METIS_TAC [optionTheory.option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
+    ) >>
+
+    FULL_SIMP_TAC std_ss [optionTheory.IS_SOME_EXISTS, type_of_bir_val_def, bir_type_is_Imm_def, bir_eval_bin_exp_def, BType_Bool_def, bir_valuesTheory.bir_type_t_11] >>
+
+    Cases_on `v` >> Cases_on `v'` >> (
+      FULL_SIMP_TAC std_ss [type_of_bir_val_def, bir_valuesTheory.bir_type_t_distinct]
+    ) >>
+
+    SIMP_TAC std_ss [bir_eval_load_def] >>
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
+
+    IMP_RES_TAC bir_load_from_mem_IS_SOME_thm >>
+    CASE_TAC >>
+    METIS_TAC [optionTheory.option_CLAUSES]
+  ) >> (
+    SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    REPEAT STRIP_TAC >>
+
+    FULL_SIMP_TAC std_ss [birs_senv_typecheck_thm, bir_vars_of_exp_def] >>
+    FULL_SIMP_TAC std_ss [type_of_bir_exp_def] >>
+    FULL_SIMP_TAC std_ss [pairTheory.pair_CASE_def] >>
+    Cases_on `type_of_bir_exp e` >> Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e''` >> (
+      REV_FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES]
+    ) >> (
+      Cases_on `x` >> (
+        REV_FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_type_t_case_def]
+      )
+    ) >> (
+      Cases_on `x'` >> (
+        REV_FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_type_t_case_def]
+      )
+    ) >>
+    Cases_on `x''` >> (
+      REV_FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_type_t_case_def]
+    ) >>
+    REV_FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_valuesTheory.bir_type_t_case_def, optionTheory.IS_SOME_EXISTS] >>
+
+    FULL_SIMP_TAC std_ss [bir_envTheory.bir_envty_includes_vs_UNION] >>
+    IMP_RES_TAC birs_eval_exp_SOME_EQ_bir_exp_env_type_thm >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES] >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
+    FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+
+    SIMP_TAC std_ss [prove(
+      ``FINITE(bir_vars_of_exp sv'' UNION bir_vars_of_exp sv')``, METIS_TAC [bir_typing_expTheory.bir_vars_of_exp_FINITE, pred_setTheory.FINITE_UNION]),
+      bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    SIMP_TAC std_ss [prove(
+      ``bir_vars_of_exp sv'' UNION bir_vars_of_exp sv' UNION bir_vars_of_exp sv
+        = bir_vars_of_exp sv UNION bir_vars_of_exp sv'' UNION bir_vars_of_exp sv'``, METIS_TAC [pred_setTheory.UNION_COMM, pred_setTheory.UNION_ASSOC]),
+      prove(
+      ``FINITE(bir_vars_of_exp sv UNION bir_vars_of_exp sv'')``, METIS_TAC [bir_typing_expTheory.bir_vars_of_exp_FINITE, pred_setTheory.FINITE_UNION]),
+      bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    SIMP_TAC std_ss [prove(
+      ``bir_vars_of_exp sv UNION bir_vars_of_exp sv'' UNION bir_vars_of_exp sv'
+        = bir_vars_of_exp sv UNION bir_vars_of_exp sv' UNION bir_vars_of_exp sv''``, METIS_TAC [pred_setTheory.UNION_COMM, pred_setTheory.UNION_ASSOC]),       prove(
+      ``FINITE(bir_vars_of_exp sv UNION bir_vars_of_exp sv')``, METIS_TAC [bir_typing_expTheory.bir_vars_of_exp_FINITE, pred_setTheory.FINITE_UNION]),
+      bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
+    ASM_SIMP_TAC std_ss [] >>
+
+    `type_of_bir_val v = BType_Imm b'' /\ type_of_bir_val v' = BType_Imm b' /\ type_of_bir_val v'' = BType_Mem b' b0` by (
+      METIS_TAC [optionTheory.option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
+    ) >>
+
+    FULL_SIMP_TAC std_ss [optionTheory.IS_SOME_EXISTS, type_of_bir_val_def, bir_type_is_Imm_def, bir_eval_bin_exp_def, BType_Bool_def, bir_valuesTheory.bir_type_t_11] >>
+
+    Cases_on `v` >> Cases_on `v'` >> Cases_on `v''` >> (
+      FULL_SIMP_TAC std_ss [type_of_bir_val_def, bir_valuesTheory.bir_type_t_distinct]
+    ) >>
+
+    SIMP_TAC std_ss [bir_eval_store_def] >>
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [] >>
+
+    IMP_RES_TAC bir_store_in_mem_IS_SOME_thm >>
+    CASE_TAC >>
+    METIS_TAC [optionTheory.option_CLAUSES]
+  )
 );
 
 val birs_eval_exp_sound_thm = store_thm(
    "birs_eval_exp_sound_thm", ``
 !H senv env e.
+  (birs_interpr_welltyped H) ==>
   (birs_matchenv H senv env) ==>
   ((birs_eval_exp e senv = NONE /\ bir_eval_exp e env = NONE) \/
    (?sv ty v.
@@ -984,6 +1488,7 @@ val birs_eval_exp_sound_thm = store_thm(
   METIS_TAC [birs_interpret_fun_sound_thm]
 );
 
+(*
 val birs_exec_stmt_assign_sound_thm = store_thm(
    "birs_exec_stmt_assign_sound_thm", ``
 !v ex s s' sys Pi H.
@@ -1026,7 +1531,9 @@ birs_eval_exp_def
   
 *)
 );
+*)
 
+(*
 val birs_exec_step_sound_thm = store_thm(
    "birs_exec_step_sound_thm", ``
 !prog s s' sys Pi H.
@@ -1037,7 +1544,9 @@ val birs_exec_step_sound_thm = store_thm(
 ``,
   cheat
 );
+*)
 
+(*
 val birs_symb_step_sound_thm = store_thm(
    "birs_symb_step_sound_thm", ``
 !prog. symb_step_sound (bir_symb_rec_sbir prog)
@@ -1069,6 +1578,7 @@ val birs_symb_step_sound_thm = store_thm(
 
   METIS_TAC [pred_setTheory.IMAGE_IN]
 );
+*)
 
 
 (* TODO: multiple step example (and also propert property transfer), best to use the simple motor set function from the beginning. or something equally simple *)
