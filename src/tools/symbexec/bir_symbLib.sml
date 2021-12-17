@@ -192,6 +192,32 @@ BirProgram [
 ] : 'obs_type bir_program_t
 ``;
 
+val bprog1 = ``
+BirProgram [
+           <|bb_label := BL_Address_HC (Imm32 2826w) "B084 (sub sp, #16)";
+             bb_statements :=
+               [BStmt_Assert
+                  (BExp_BinPred BIExp_LessOrEqual
+                     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))];
+             bb_last_statement :=
+               BStmt_Jmp (BLE_Label (BL_Address (Imm32 2828w)))|>
+] : 'obs_type bir_program_t
+``;
+
+val bprog2 = ``
+BirProgram [
+           <|bb_label := BL_Address_HC (Imm32 2826w) "B084 (sub sp, #16)";
+             bb_statements :=
+               [BStmt_Assign (BVar "countw" (BType_Imm Bit64))
+                  (BExp_BinExp BIExp_Plus
+                     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 1w)))];
+             bb_last_statement :=
+               BStmt_Jmp (BLE_Label (BL_Address (Imm32 2828w)))|>
+] : 'obs_type bir_program_t
+``;
+
 val birs_state_init = ``<|
   bsst_pc       := bir_block_pc (BL_Address (Imm32 2826w));
   bsst_environ  := ("R7"         =+ (SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))))
@@ -203,9 +229,11 @@ val birs_state_init = ``<|
   bsst_pcond    := BExp_Const (Imm1 1w)
 |>``;
 
-val test_term = ``birs_exec_step ^bprog ^birs_state_init``;
+val test_term_1 = ``birs_exec_step ^bprog1 ^birs_state_init``;
+val test_term_2 = ``birs_exec_step ^bprog2 ^birs_state_init``;
 
-val _ = (print_term o concl) (birs_exec_step_CONV test_term);
+val _ = (print_term o concl) (birs_exec_step_CONV test_term_1);
+val _ = (print_term o concl) (birs_exec_step_CONV test_term_2);
 
 end (* local *)
 
