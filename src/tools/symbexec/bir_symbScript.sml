@@ -631,7 +631,7 @@ val birs_exec_stmt_assign_def = Define `
     birs_exec_stmt_assign v ex (st : birs_state_t) =
       case birs_eval_exp ex st.bsst_environ of
      | SOME (vaex, vaty) =>
-         if vaty = bir_var_type v then
+         if vaty = bir_var_type v /\ (OPTION_BIND (st.bsst_environ (bir_var_name v)) type_of_bir_exp = SOME vaty) then
            {st with bsst_environ := ((bir_var_name v =+ (SOME vaex)) st.bsst_environ)}
          else
            {birs_state_set_typeerror st}
@@ -1529,9 +1529,11 @@ val birs_exec_stmt_assign_sound_thm = store_thm(
     METIS_TAC [birs_interpret_fun_PRESERVES_type_thm, birs_eval_exp_IMP_type_thm, optionTheory.option_CLAUSES]
   ) >>
 
-  Cases_on `ty = bir_var_type v` >> (
-    FULL_SIMP_TAC (std_ss) [pairTheory.pair_CASE_def]
-  ) >- (
+  FULL_SIMP_TAC (std_ss) [pairTheory.pair_CASE_def] >>
+  Cases_on `ty = bir_var_type v /\ ?x. sys.bsst_environ (bir_var_name v) = SOME x /\ type_of_bir_exp x = SOME ty` >- (
+    FULL_SIMP_TAC (std_ss) [pairTheory.pair_CASE_def] >>
+
+    (* TODO: from matchenv *)
     `bir_env_check_type v s.bst_environ` by cheat >>
     Cases_on `s.bst_environ` >>
     `f (bir_var_name v) ≠ NONE` by cheat >>
@@ -1542,13 +1544,17 @@ val birs_exec_stmt_assign_sound_thm = store_thm(
     FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
 
     FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss) [birs_state_set_typeerror_def, bir_state_set_typeerror_def] >>
+    (* TODO: fix *)
     CONJ_TAC >- cheat >>
     cheat
   ) >>
 
-  `bir_env_check_type v s.bst_environ` by cheat >>
-  Cases_on `s.bst_environ` >>
-  FULL_SIMP_TAC std_ss [bir_env_write_def, bir_env_update_def] >>
+  POP_ASSUM (fn thm => (FULL_SIMP_TAC std_ss [thm] >> ASSUME_TAC thm)) >>
+  `bir_env_write v v' s.bst_environ = NONE` by (
+    (* TODO: from matchenv *)
+    cheat
+  ) >>
+  FULL_SIMP_TAC (std_ss) [] >>
 
   PAT_X_ASSUM ``A = (Pi:birs_state_t -> bool)`` (ASSUME_TAC o GSYM) >>
   PAT_X_ASSUM ``A = (s':bir_state_t)`` (ASSUME_TAC o GSYM) >>
