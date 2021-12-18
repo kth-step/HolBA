@@ -12,9 +12,20 @@ open bir_typing_expTheory;
 
 open bir_bool_expTheory;
 open bir_exp_substitutionsTheory;
+open bir_envTheory;
 
 open bir_symbTheory;
 open bir_symb_sound_coreTheory;
+
+open pred_setTheory;
+open combinTheory;
+open optionTheory;
+open pairTheory;
+
+open HolBACoreSimps;
+open symb_typesLib;
+
+open pred_setSimps;
 
 val _ = new_theory "bir_symb_sound";
 
@@ -32,13 +43,13 @@ val birs_symb_symbols_f_sound_thm = store_thm(
 !prog.
   symb_symbols_f_sound (bir_symb_rec_sbir prog)
 ``,
-  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_symbols_f_sound_def, bir_symb_rec_sbir_def] >>
+  SIMP_TAC (std_ss++symb_TYPES_ss) [symb_symbols_f_sound_def, bir_symb_rec_sbir_def] >>
 
 (*
-  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [symb_interprs_eq_for_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [symb_interprs_eq_for_def] >>
 *)
 
-  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [birs_interpret_fun_def, birs_interpret_subst_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_def, birs_interpret_subst_def] >>
   REPEAT STRIP_TAC >>
   cheat
 );
@@ -55,10 +66,10 @@ val birs_symb_ARB_val_sound_thm = store_thm(
 !prog.
   symb_ARB_val_sound (bir_symb_rec_sbir prog)
 ``,
-  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_ARB_val_sound_def, bir_symb_rec_sbir_def] >>
+  SIMP_TAC (std_ss++symb_TYPES_ss) [symb_ARB_val_sound_def, bir_symb_rec_sbir_def] >>
   Cases_on `t` >> (
     Cases_on `b` >> (
-      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_val_default_def, type_of_bir_val_def]
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_default_def, type_of_bir_val_def]
     )
   )
 );
@@ -76,7 +87,7 @@ val birs_symb_typeof_exp_sound_thm = store_thm(
   symb_typeof_exp_sound (bir_symb_rec_sbir prog)
 ``,
   SIMP_TAC (std_ss) [symb_typeof_exp_sound_def, birs_interpr_welltyped_EQ_thm] >>
-  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_typeof_exp_sound_def, bir_symb_rec_sbir_def] >>
+  SIMP_TAC (std_ss++symb_TYPES_ss) [symb_typeof_exp_sound_def, bir_symb_rec_sbir_def] >>
 
   cheat
 (*
@@ -101,7 +112,7 @@ val birs_symb_mk_exp_eq_f_sound_thm = store_thm(
 !prog.
   symb_mk_exp_eq_f_sound (bir_symb_rec_sbir prog)
 ``,
-  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_mk_exp_eq_f_sound_def, bir_symb_rec_sbir_def] >>
+  SIMP_TAC (std_ss++symb_TYPES_ss) [symb_mk_exp_eq_f_sound_def, bir_symb_rec_sbir_def] >>
   cheat
 );
 
@@ -117,7 +128,7 @@ val birs_symb_mk_exp_conj_f_sound_thm = store_thm(
 !prog.
   symb_mk_exp_conj_f_sound (bir_symb_rec_sbir prog)
 ``,
-  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_mk_exp_conj_f_sound_def, bir_symb_rec_sbir_def] >>
+  SIMP_TAC (std_ss++symb_TYPES_ss) [symb_mk_exp_conj_f_sound_def, bir_symb_rec_sbir_def] >>
   cheat
 );
 
@@ -133,7 +144,7 @@ val birs_symb_mk_exp_symb_f_sound_thm = store_thm(
 !prog.
   symb_mk_exp_symb_f_sound (bir_symb_rec_sbir prog)
 ``,
-  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_mk_exp_symb_f_sound_def, bir_symb_rec_sbir_def] >>
+  SIMP_TAC (std_ss++symb_TYPES_ss) [symb_mk_exp_symb_f_sound_def, bir_symb_rec_sbir_def] >>
   cheat
 );
 
@@ -149,7 +160,7 @@ val birs_symb_subst_f_sound_thm = store_thm(
 !prog.
   symb_subst_f_sound (bir_symb_rec_sbir prog)
 ``,
-  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_subst_f_sound_def, bir_symb_rec_sbir_def] >>
+  SIMP_TAC (std_ss++symb_TYPES_ss) [symb_subst_f_sound_def, bir_symb_rec_sbir_def] >>
 
   REPEAT STRIP_TAC >>
   cheat
@@ -172,7 +183,7 @@ val birs_symb_matchstate_IMP_birs_state_set_failed_thm = store_thm(
   SIMP_TAC (std_ss++birs_state_ss) [bir_state_set_failed_def, birs_state_set_failed_def, birs_symb_matchstate_def] >>
 
   REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++birs_state_ss) [birs_symb_symbols_def]
+    FULL_SIMP_TAC (std_ss++holBACore_ss++birs_state_ss) [birs_symb_symbols_def]
   )
 );
 
@@ -189,7 +200,7 @@ val birs_symb_matchstate_IMP_same_pc_update_thm = store_thm(
   SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
 
   REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++birs_state_ss) [birs_symb_symbols_def]
+    FULL_SIMP_TAC (std_ss++holBACore_ss++birs_state_ss) [birs_symb_symbols_def]
   )
 );
 
@@ -204,15 +215,15 @@ val symb_interpr_for_symbs_IMP_UPDATE_ENV_thm = store_thm(
   REPEAT STRIP_TAC >>
 
   `bir_vars_of_exp sv SUBSET symb_interpr_dom H` by (
-    METIS_TAC [pred_setTheory.SUBSET_TRANS]
+    METIS_TAC [SUBSET_TRANS]
   ) >>
 
-  FULL_SIMP_TAC (std_ss++birs_state_ss) [pred_setTheory.UNION_SUBSET, pred_setTheory.BIGUNION_SUBSET] >>
+  FULL_SIMP_TAC (std_ss++birs_state_ss) [UNION_SUBSET, BIGUNION_SUBSET] >>
   REPEAT STRIP_TAC >>
 
-  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  FULL_SIMP_TAC (std_ss++PRED_SET_ss) [] >>
   Cases_on `vn' = vn` >> (
-    FULL_SIMP_TAC (std_ss) [combinTheory.UPDATE_APPLY, optionTheory.option_CLAUSES]
+    FULL_SIMP_TAC (std_ss) [UPDATE_APPLY, option_CLAUSES]
   ) >>
   METIS_TAC []
 );
@@ -228,7 +239,7 @@ val birs_interpret_fun_IMP_birs_matchenv_thm = store_thm(
   REPEAT STRIP_TAC >>
 
   Cases_on `vn = var` >> (
-    FULL_SIMP_TAC (std_ss) [combinTheory.UPDATE_APPLY, optionTheory.option_CLAUSES, bir_env_lookup_def]
+    FULL_SIMP_TAC (std_ss) [UPDATE_APPLY, option_CLAUSES, bir_env_lookup_def]
   )
 );
 
@@ -239,30 +250,30 @@ val birs_eval_exp_IMP_varset_thm = store_thm(
   (bir_vars_of_exp sv SUBSET (BIGUNION {bir_vars_of_exp e | (?vn. senv vn = SOME e)}))
 ``,
   Induct_on `ex` >> (
-    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [birs_eval_exp_def, LET_DEF, birs_eval_exp_subst_def, bir_vars_of_exp_def]
+    FULL_SIMP_TAC (std_ss++PRED_SET_ss) [birs_eval_exp_def, LET_DEF, birs_eval_exp_subst_def, bir_vars_of_exp_def]
   ) >- (
     REPEAT STRIP_TAC >>
-    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    FULL_SIMP_TAC (std_ss++PRED_SET_ss)
       [birs_senv_typecheck_thm, bir_envty_includes_vs_def, birs_envty_of_senv_def, birs_eval_exp_subst_var_def,
-       bir_envty_includes_v_def, bir_vars_of_exp_def, pred_setTheory.BIGUNION, pred_setTheory.SUBSET_DEF] >>
+       bir_envty_includes_v_def, bir_vars_of_exp_def, BIGUNION, SUBSET_DEF] >>
     METIS_TAC []
   ) >> (
     REPEAT STRIP_TAC >> (
       REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPEC `senv`)) >>
       FULL_SIMP_TAC (std_ss)
-        [birs_senv_typecheck_thm, bir_vars_of_exp_def, type_of_bir_exp_def, bir_envTheory.bir_envty_includes_vs_UNION] >>
+        [birs_senv_typecheck_thm, bir_vars_of_exp_def, type_of_bir_exp_def, bir_envty_includes_vs_UNION] >>
       Cases_on `type_of_bir_exp ex` >> Cases_on `type_of_bir_exp ex'` >> Cases_on `type_of_bir_exp ex''` >> (
-        FULL_SIMP_TAC (std_ss) [pairTheory.pair_CASE_def]
+        FULL_SIMP_TAC (std_ss) [pair_CASE_def]
       )
     )
   ) >> (
     Cases_on `x` >> (
-      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [optionTheory.IS_SOME_EXISTS]
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [IS_SOME_EXISTS]
     )
   ) >>
 
   Cases_on `x'` >> (
-    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [optionTheory.IS_SOME_EXISTS]
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [IS_SOME_EXISTS]
   )
 );
 
@@ -290,22 +301,22 @@ val birs_exec_stmt_assign_sound_thm = store_thm(
     FULL_SIMP_TAC (std_ss) [] >>
     PAT_X_ASSUM ``A = (Pi:birs_state_t -> bool)`` (ASSUME_TAC o GSYM) >>
     PAT_X_ASSUM ``A = (s':bir_state_t)`` (ASSUME_TAC o GSYM) >>
-    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+    FULL_SIMP_TAC (std_ss++PRED_SET_ss) [] >>
 
-    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss) [birs_state_set_typeerror_def, bir_state_set_typeerror_def] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss++symb_TYPES_ss++birs_state_ss) [birs_state_set_typeerror_def, bir_state_set_typeerror_def] >>
 
     METIS_TAC [symb_interpr_for_symbs_EQ_set_typeerror_thm, birs_state_set_typeerror_def]
   ) >>
 
   FULL_SIMP_TAC (std_ss) [] >>
   `type_of_bir_val v' = ty` by (
-    METIS_TAC [birs_interpret_fun_PRESERVES_type_thm, birs_eval_exp_IMP_type_thm, optionTheory.option_CLAUSES]
+    METIS_TAC [birs_interpret_fun_PRESERVES_type_thm, birs_eval_exp_IMP_type_thm, option_CLAUSES]
   ) >>
 
   PAT_X_ASSUM ``birs_matchenv A B C`` (fn thm => (ASSUME_TAC ((Q.SPEC `bir_var_name v` o REWRITE_RULE [birs_matchenv_def]) thm) >> ASSUME_TAC thm)) >>
 
   (* does the environment have a value, and is it a value of the right type (and is the new value also of the right type)? *)
-  FULL_SIMP_TAC (std_ss) [pairTheory.pair_CASE_def] >>
+  FULL_SIMP_TAC (std_ss) [pair_CASE_def] >>
   Cases_on `(bir_env_lookup (bir_var_name v) s.bst_environ = NONE) \/
             (?r. bir_env_lookup (bir_var_name v) s.bst_environ = SOME r /\ ~(type_of_bir_val r = bir_var_type v /\ bir_var_type v = ty))` >- (
     `bir_env_write v v' s.bst_environ = NONE` by (
@@ -334,7 +345,7 @@ val birs_exec_stmt_assign_sound_thm = store_thm(
       Cases_on `ty = bir_var_type v` >> (
         FULL_SIMP_TAC std_ss []
       ) >>
-      METIS_TAC [birs_interpret_fun_PRESERVES_type_thm, optionTheory.option_CLAUSES]
+      METIS_TAC [birs_interpret_fun_PRESERVES_type_thm, option_CLAUSES]
     ) >>
 
     PAT_X_ASSUM ``A \/ (?B. C /\ D)`` (K ALL_TAC) >>
@@ -342,9 +353,9 @@ val birs_exec_stmt_assign_sound_thm = store_thm(
 
     PAT_X_ASSUM ``A = (Pi:birs_state_t -> bool)`` (ASSUME_TAC o GSYM) >>
     PAT_X_ASSUM ``A = (s':bir_state_t)`` (ASSUME_TAC o GSYM) >>
-    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+    FULL_SIMP_TAC (std_ss++PRED_SET_ss) [] >>
 
-    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss) [birs_state_set_typeerror_def, bir_state_set_typeerror_def] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss++symb_TYPES_ss++birs_state_ss) [birs_state_set_typeerror_def, bir_state_set_typeerror_def] >>
     METIS_TAC [symb_interpr_for_symbs_EQ_set_typeerror_thm, birs_state_set_typeerror_def]
   ) >> (
     FULL_SIMP_TAC (std_ss) [] >>
@@ -362,7 +373,7 @@ val birs_exec_stmt_assign_sound_thm = store_thm(
       FULL_SIMP_TAC (std_ss) [] >>
       REV_FULL_SIMP_TAC (std_ss) [] >>
 
-      METIS_TAC [birs_interpret_fun_PRESERVES_type_thm, optionTheory.option_CLAUSES]
+      METIS_TAC [birs_interpret_fun_PRESERVES_type_thm, option_CLAUSES]
     ) >>
 
     REV_FULL_SIMP_TAC std_ss [] >>
@@ -370,21 +381,21 @@ val birs_exec_stmt_assign_sound_thm = store_thm(
 
     PAT_X_ASSUM ``A = (Pi:birs_state_t -> bool)`` (ASSUME_TAC o GSYM) >>
     PAT_X_ASSUM ``A = (s':bir_state_t)`` (ASSUME_TAC o GSYM) >>
-    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+    FULL_SIMP_TAC (std_ss++PRED_SET_ss) [] >>
 
-    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss) [birs_state_set_typeerror_def, bir_state_set_typeerror_def] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss++symb_TYPES_ss++birs_state_ss) [birs_state_set_typeerror_def, bir_state_set_typeerror_def] >>
 
     CONJ_TAC >- (
       `bir_vars_of_exp sv SUBSET birs_symb_symbols sys` by (
         FULL_SIMP_TAC (std_ss) [birs_symb_symbols_def] >>
         IMP_RES_TAC birs_eval_exp_IMP_varset_thm >>
-        METIS_TAC [pred_setTheory.SUBSET_DEF, pred_setTheory.IN_UNION]
+        METIS_TAC [SUBSET_DEF, IN_UNION]
       ) >>
       METIS_TAC [symb_interpr_for_symbs_IMP_UPDATE_ENV_thm]
     ) >>
 
     Cases_on `s.bst_environ` >>
-    FULL_SIMP_TAC (std_ss) [optionTheory.option_CLAUSES, bir_env_write_def, bir_env_update_def] >>
+    FULL_SIMP_TAC (std_ss) [option_CLAUSES, bir_env_write_def, bir_env_update_def] >>
     METIS_TAC [birs_interpret_fun_IMP_birs_matchenv_thm]
   )
 );
@@ -419,7 +430,7 @@ val birs_exec_stmt_observe_sound_thm = store_thm(
   (birs_symb_matchstate sys H s) ==>
   (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
 ``,
-  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+  SIMP_TAC (std_ss++PRED_SET_ss)
     [bir_exec_stmt_observe_def, birs_exec_stmt_observe_def, LET_DEF] >>
   cheat
   (* TODO: this is wrong! *)
@@ -501,7 +512,7 @@ val birs_exec_stmt_sound_thm = store_thm(
     REWRITE_TAC [bir_exec_stmt_def, birs_exec_stmt_def, birs_exec_stmtE_sound_thm]
   ) >>
 
-  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [LET_DEF] >>
+  FULL_SIMP_TAC (std_ss++PRED_SET_ss) [LET_DEF] >>
   REPEAT STRIP_TAC >>
 
   Cases_on `bir_exec_stmtB b s` >>
@@ -540,7 +551,7 @@ val birs_exec_step_sound_thm = store_thm(
   (birs_symb_matchstate sys H s) ==>
   (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
 ``,
-  REWRITE_TAC [bir_exec_step_def, birs_exec_step_def, combinTheory.o_THM] >>
+  REWRITE_TAC [bir_exec_step_def, birs_exec_step_def, o_THM] >>
   REPEAT STRIP_TAC >>
 
   `bir_state_is_terminated s = birs_state_is_terminated sys` by (
@@ -549,7 +560,7 @@ val birs_exec_step_sound_thm = store_thm(
 
   Cases_on `bir_state_is_terminated s` >- (
     FULL_SIMP_TAC (std_ss) [] >>
-    METIS_TAC [pred_setTheory.IN_SING]
+    METIS_TAC [IN_SING]
   ) >>
 
   `s.bst_pc = sys.bsst_pc` by (
@@ -559,7 +570,7 @@ val birs_exec_step_sound_thm = store_thm(
   FULL_SIMP_TAC (std_ss) [] >>
   Cases_on `bir_get_current_statement prog sys.bsst_pc` >- (
     FULL_SIMP_TAC (std_ss) [] >>
-    METIS_TAC [pred_setTheory.IN_SING, birs_symb_matchstate_IMP_birs_state_set_failed_thm]
+    METIS_TAC [IN_SING, birs_symb_matchstate_IMP_birs_state_set_failed_thm]
   ) >>
 
   FULL_SIMP_TAC (std_ss) [] >>
@@ -583,22 +594,22 @@ val birs_symb_step_sound_thm = store_thm(
   FULL_SIMP_TAC std_ss [] >>
   FULL_SIMP_TAC std_ss [birs_symb_matchstate_EQ_thm] >>
 
-  POP_ASSUM_LIST (ASSUME_TAC o LIST_CONJ o map (SIMP_RULE (std_ss++symb_typesLib.symb_TYPES_ss)
+  POP_ASSUM_LIST (ASSUME_TAC o LIST_CONJ o map (SIMP_RULE (std_ss++symb_TYPES_ss)
     [bir_symb_rec_sbir_def, birs_symb_to_from_symbst_thm, birs_symb_to_from_concst_thm])) >>
   FULL_SIMP_TAC std_ss [] >>
 
   `(SND o bir_exec_step prog) st' = st''` by (
-    METIS_TAC [birs_symb_to_concst_BIJ_thm, combinTheory.o_DEF]
+    METIS_TAC [birs_symb_to_concst_BIJ_thm, o_DEF]
   ) >>
   `(birs_exec_step prog st) = Pi_t` by (
-    METIS_TAC [birs_symb_to_symbst_BIJ_thm, pred_setTheory.IMAGE_11]
+    METIS_TAC [birs_symb_to_symbst_BIJ_thm, IMAGE_11]
   ) >>
 
   IMP_RES_TAC birs_exec_step_sound_thm >>
   Q.EXISTS_TAC `birs_symb_to_symbst sys'` >>
   FULL_SIMP_TAC std_ss [birs_symb_matchstate_EQ_thm] >>
 
-  METIS_TAC [pred_setTheory.IMAGE_IN]
+  METIS_TAC [IMAGE_IN]
 );
 
 
