@@ -58,7 +58,7 @@ val bir_is_well_typed_stmtE_def = Define `
        ((type_of_bir_exp c = SOME BType_Bool) /\
        (bir_is_well_typed_label_exp le1) /\
        (bir_is_well_typed_label_exp le2))) /\
-  (bir_is_well_typed_stmtE (BStmt_Halt e) = (type_of_bir_exp e <> NONE))`
+  (bir_is_well_typed_stmtE (BStmt_Halt) = T)`
 
 val bir_is_well_typed_stmtB_def = Define `
   (bir_is_well_typed_stmtB (BStmt_Assign v e) = (type_of_bir_exp e = SOME (bir_var_type v))) /\
@@ -125,7 +125,7 @@ val bir_vars_of_stmtE_def = Define `
   (bir_vars_of_stmtE (BStmt_Jmp l) = bir_vars_of_label_exp l) /\
   (bir_vars_of_stmtE (BStmt_CJmp e l1 l2) =
     (bir_vars_of_exp e UNION (bir_vars_of_label_exp l1) UNION (bir_vars_of_label_exp l2))) /\
-  (bir_vars_of_stmtE (BStmt_Halt ex) = bir_vars_of_exp ex)`;
+  (bir_vars_of_stmtE (BStmt_Halt) = {})`;
 
 val bir_vars_of_stmt_def = Define `
   (bir_vars_of_stmt (BStmtE s) = bir_vars_of_stmtE s) /\
@@ -283,7 +283,7 @@ val bir_exps_of_stmtE_def = Define `
   (bir_exps_of_stmtE (BStmt_Jmp l) = bir_exps_of_label_exp l) /\
   (bir_exps_of_stmtE (BStmt_CJmp e l1 l2) =
     ({e} UNION (bir_exps_of_label_exp l1) UNION (bir_exps_of_label_exp l2))) /\
-  (bir_exps_of_stmtE (BStmt_Halt ex) = {ex})`;
+  (bir_exps_of_stmtE (BStmt_Halt) = {})`;
 
 val bir_exps_of_stmt_def = Define `
   (bir_exps_of_stmt (BStmtE s) = bir_exps_of_stmtE s) /\

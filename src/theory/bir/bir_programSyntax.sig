@@ -86,9 +86,7 @@ sig
    val mk_BStmt_CJmp   : term * term * term -> term
 
    val BStmt_Halt_tm   : term
-   val dest_BStmt_Halt : term -> term
    val is_BStmt_Halt   : term -> bool
-   val mk_BStmt_Halt   : term -> term
 
 
    (**************)
@@ -184,9 +182,7 @@ sig
    val is_BST_AssumptionViolated : term -> bool
 
    val BST_Halted_tm   : term
-   val dest_BST_Halted : term -> term
    val is_BST_Halted   : term -> bool
-   val mk_BST_Halted   : term -> term
 
    val BST_JumpOutside_tm   : term
    val dest_BST_JumpOutside : term -> term

@@ -40,7 +40,7 @@ val _ = Datatype `bir_stmt_basic_t =
 val _ = Datatype `bir_stmt_end_t =
   | BStmt_Jmp     bir_label_exp_t
   | BStmt_CJmp    bir_exp_t bir_label_exp_t bir_label_exp_t
-  | BStmt_Halt    bir_exp_t
+  | BStmt_Halt
 `;
 
 val _ = Datatype `bir_stmt_t =
@@ -64,7 +64,7 @@ val _ = Datatype `bir_status_t =
   | BST_Failed                   (* BIR program execution failed, should not happen when starting in a state where pc is available in the program to execute *)
   | BST_AssumptionViolated       (* BIR program execution aborted, because assumption was violated *)
   | BST_AssertionViolated       (* BIR program execution failed, because assertion was violated *)
-  | BST_Halted bir_val_t        (* Halt called *)
+  | BST_Halted                  (* Halt called *)
   | BST_JumpOutside bir_label_t (* Jump to unknown label *)`;
 
 val _ = Datatype `bir_state_t = <|
@@ -275,10 +275,8 @@ val bir_exec_stmtB_state_REWRS = store_thm ("bir_exec_stmtB_state_REWRS",
 SIMP_TAC std_ss [bir_exec_stmtB_state_def, bir_exec_stmtB_def, bir_exec_stmt_observe_state_THM]);
 
 
-val bir_exec_stmt_halt_def = Define `bir_exec_stmt_halt ex (st : bir_state_t) =
-  case bir_eval_exp ex st.bst_environ of
-    | NONE => bir_state_set_typeerror st
-    | SOME v => st with bst_status := BST_Halted v`;
+val bir_exec_stmt_halt_def = Define `bir_exec_stmt_halt (st : bir_state_t) =
+  st with bst_status := BST_Halted`;
 
 val bir_exec_stmt_jmp_to_label_def = Define `bir_exec_stmt_jmp_to_label p
    (l : bir_label_t) (st : bir_state_t) =
@@ -311,7 +309,7 @@ val bir_exec_stmt_cjmp_def = Define `bir_exec_stmt_cjmp p ec l1 l2 (st : bir_sta
 val bir_exec_stmtE_def = Define `
   (bir_exec_stmtE p (BStmt_Jmp l) st = bir_exec_stmt_jmp p l st) /\
   (bir_exec_stmtE p (BStmt_CJmp e l1 l2) st = bir_exec_stmt_cjmp p e l1 l2 st) /\
-  (bir_exec_stmtE p (BStmt_Halt ex) st = bir_exec_stmt_halt ex st)`;
+  (bir_exec_stmtE p (BStmt_Halt) st = bir_exec_stmt_halt st)`;
 
 
 val bir_exec_stmt_def = Define `

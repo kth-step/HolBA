@@ -64,7 +64,7 @@ val bir_stmt_end_t_ty = mk_type ("bir_stmt_end_t", []);
 
 val (BStmt_Jmp_tm,  mk_BStmt_Jmp, dest_BStmt_Jmp, is_BStmt_Jmp)  = syntax_fns1 "BStmt_Jmp";
 val (BStmt_CJmp_tm,  mk_BStmt_CJmp, dest_BStmt_CJmp, is_BStmt_CJmp)  = syntax_fns3 "BStmt_CJmp";
-val (BStmt_Halt_tm,  mk_BStmt_Halt, dest_BStmt_Halt, is_BStmt_Halt)  = syntax_fns1 "BStmt_Halt";
+val (BStmt_Halt_tm,  is_BStmt_Halt)  = syntax_fns0 "BStmt_Halt";
 
 
 
@@ -200,7 +200,7 @@ val bir_status_t_ty = mk_type ("bir_status_t", []);
 val (BST_Running_tm,  is_BST_Running)  = syntax_fns0 "BST_Running";
 val (BST_Failed_tm,  is_BST_Failed)  = syntax_fns0 "BST_Failed";
 val (BST_AssumptionViolated_tm,  is_BST_AssumptionViolated)  = syntax_fns0 "BST_AssumptionViolated";
-val (BST_Halted_tm,  mk_BST_Halted, dest_BST_Halted, is_BST_Halted)  = syntax_fns1 "BST_Halted";
+val (BST_Halted_tm,  is_BST_Halted)  = syntax_fns0 "BST_Halted";
 val (BST_JumpOutside_tm,  mk_BST_JumpOutside, dest_BST_JumpOutside, is_BST_JumpOutside)  = syntax_fns1 "BST_JumpOutside";
 
 
