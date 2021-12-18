@@ -360,12 +360,7 @@ Cases_on `stmt` >> (
 
 
   (* Halt *)
-  rename1 `bir_exec_stmt_halt e` >>
-  `bir_eval_exp e st1.bst_environ = bir_eval_exp e st2.bst_environ` by
-    METIS_TAC[bir_vars_of_exp_THM_EQ_FOR_VARS] >>
-  Cases_on `bir_eval_exp e st2.bst_environ` >> (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_halt_def, bir_state_set_typeerror_def]
-  )
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmt_halt_def, bir_state_set_typeerror_def]
 ]);
 
 

@@ -172,7 +172,7 @@ FULL_SIMP_TAC list_ss [OPT_CONS_REWRS]);
 (*****************)
 
 val bir_exec_stmtB_status_not_halted = store_thm ("bir_exec_stmtB_status_not_halted",
-``!st stmt v. (st.bst_status <> BST_Halted v) ==> (((bir_exec_stmtB_state stmt st).bst_status <> BST_Halted v))``,
+``!st stmt. (st.bst_status <> BST_Halted) ==> (((bir_exec_stmtB_state stmt st).bst_status <> BST_Halted))``,
 
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtB_state_REWRS, LET_DEF,
@@ -186,7 +186,7 @@ Cases_on `stmt` >> (
 
 
 val bir_exec_stmtE_status_halted = store_thm ("bir_exec_stmtE_status_halted",
-``!st p stmt v. (st.bst_status <> BST_Halted v) ==> (((bir_exec_stmtE p stmt st).bst_status = BST_Halted v)) ==> (?e. (stmt = BStmt_Halt e) /\ (SOME v = bir_eval_exp e st.bst_environ))``,
+``!st p stmt. (st.bst_status <> BST_Halted) ==> (((bir_exec_stmtE p stmt st).bst_status = BST_Halted)) ==> (stmt = BStmt_Halt)``,
 
 Cases_on `stmt` >> (
   ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtE_def,
@@ -211,7 +211,7 @@ Cases_on `stmt` >> (
 
 
 val bir_exec_stmt_status_halted = store_thm ("bir_exec_stmt_status_halted",
-``!st p stmt v. (st.bst_status <> BST_Halted v) ==> (((bir_exec_stmt_state p stmt st).bst_status = BST_Halted v)) ==> (?e. (stmt = BStmtE (BStmt_Halt e)) /\ (SOME v = bir_eval_exp e st.bst_environ))``,
+``!st p stmt. (st.bst_status <> BST_Halted) ==> (((bir_exec_stmt_state p stmt st).bst_status = BST_Halted)) ==> ((stmt = BStmtE (BStmt_Halt)))``,
 
 Cases_on `stmt` >| [
   SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++holBACore_ss) [bir_exec_stmt_state_REWRS, LET_DEF] >>
@@ -223,7 +223,7 @@ Cases_on `stmt` >| [
 
 
 val bir_exec_step_status_halted = store_thm ("bir_exec_step_status_halted",
-``!st p v. (st.bst_status <> BST_Halted v) ==> (((bir_exec_step_state p st).bst_status = BST_Halted v)) ==> (?e. ((bir_get_current_statement p st.bst_pc = SOME (BStmtE (BStmt_Halt e)))) /\ (SOME v = bir_eval_exp e st.bst_environ))``,
+``!st p. (st.bst_status <> BST_Halted) ==> (((bir_exec_step_state p st).bst_status = BST_Halted)) ==> (((bir_get_current_statement p st.bst_pc = SOME (BStmtE (BStmt_Halt)))))``,
 
 REPEAT GEN_TAC >>
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_exec_step_state_def, bir_exec_step_def] >>
@@ -273,7 +273,7 @@ val bir_stmtE_is_jmp_to_label_REWRS = store_thm ("bir_stmtE_is_jmp_to_label_REWR
 		| SOME F => (bir_eval_label_exp le2 env = SOME l)
            )
     )) /\
-    (!l env e. (bir_stmtE_is_jmp_to_label env l (BStmt_Halt e) <=> F))``,
+    (!l env. (bir_stmtE_is_jmp_to_label env l (BStmt_Halt) <=> F))``,
 
 SIMP_TAC (std_ss++holBACore_ss) [bir_stmtE_is_jmp_to_label_def] >>
 REPEAT GEN_TAC >> EQ_TAC >- (
@@ -572,12 +572,10 @@ REPEAT CASE_TAC >> (
 )
 );
 
-
 val bir_exec_stmtE_status_typeerror_Halt = store_thm ("bir_exec_stmtE_status_typeerror_Halt",
-``!st stmt p e.
+``!st stmt p.
   (st.bst_status <> BST_TypeError) ==>
-  (((bir_exec_stmtE p (BStmt_Halt e) st).bst_status = BST_TypeError) <=>
-    (bir_eval_exp e st.bst_environ = NONE)
+  (((bir_exec_stmtE p (BStmt_Halt) st).bst_status <> BST_TypeError)
   )``,
 
 REPEAT GEN_TAC >>

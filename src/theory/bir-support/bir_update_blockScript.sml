@@ -577,7 +577,7 @@ val _ = Datatype `bir_updateE_desc_t =
 (* We also need to define the expected behaviour, if run in a certain environment *)
 val _ = Datatype `bir_updateE_val_t =
    BUpdateValE_Jmp  bir_label_t (* we jump to some label *)
- | BUpdateValE_Halt bir_imm_t   (* we halt with some value *)`;
+ | BUpdateValE_Halt             (* we halt with some value *)`;
 
 
 val bir_updateE_SEM_def = Define `
@@ -587,7 +587,7 @@ val bir_updateE_SEM_def = Define `
    (bir_updateE_SEM (BUpdateDescE_XJmp _ _ i) =
       BUpdateValE_Jmp (BL_Address i)) /\
    (bir_updateE_SEM (BUpdateDescE_Halt _ _ v) =
-      BUpdateValE_Halt v)`
+      BUpdateValE_Halt)`
 
 
 val bir_state_pc_is_at_label_def = Define `
@@ -600,14 +600,14 @@ val bir_state_pc_is_at_label_def = Define `
 
 
 val BUpdateValE_SEM_def = Define `
-  (BUpdateValE_SEM st p (BUpdateValE_Halt v) =
-     (st.bst_status = BST_Halted (BVal_Imm v))) /\
+  (BUpdateValE_SEM st p (BUpdateValE_Halt) =
+     (st.bst_status = BST_Halted)) /\
   (BUpdateValE_SEM st p (BUpdateValE_Jmp l_new) =
     (bir_state_pc_is_at_label p l_new st))`
 
 val BUpdateValE_EXEC_def = Define `
-  (BUpdateValE_EXEC p (BUpdateValE_Halt v) =
-    bir_exec_stmt_halt (BExp_Const v)) /\
+  (BUpdateValE_EXEC p (BUpdateValE_Halt) =
+    bir_exec_stmt_halt) /\
   (BUpdateValE_EXEC p (BUpdateValE_Jmp l_new) =
     bir_exec_stmt_jmp_to_label p l_new)`;
 
@@ -616,21 +616,21 @@ val bir_updateE_desc_var_def = Define `
   (bir_updateE_desc_var (BUpdateDescE_Jmp l) = NONE) /\
   (bir_updateE_desc_var (BUpdateDescE_CJmp vo _ _ _ _) = vo) /\
   (bir_updateE_desc_var (BUpdateDescE_XJmp vo _ _) = vo) /\
-  (bir_updateE_desc_var (BUpdateDescE_Halt vo _ _) = vo)`;
+  (bir_updateE_desc_var (BUpdateDescE_Halt vo _ _) = NONE)`;
 
 
 val bir_updateE_desc_exp_def = Define `
   (bir_updateE_desc_exp (BUpdateDescE_Jmp l) = NONE) /\
   (bir_updateE_desc_exp (BUpdateDescE_CJmp _ c _ _ _) = SOME c) /\
   (bir_updateE_desc_exp (BUpdateDescE_XJmp _ e _) = (SOME e)) /\
-  (bir_updateE_desc_exp (BUpdateDescE_Halt _ e _) = SOME e)`;
+  (bir_updateE_desc_exp (BUpdateDescE_Halt _ e _) = NONE)`;
 
 
 val bir_updateE_desc_value_def = Define `
   (bir_updateE_desc_value (BUpdateDescE_Jmp _) = NONE) /\
   (bir_updateE_desc_value (BUpdateDescE_CJmp _ _ b _ _) = SOME (bool2b b)) /\
   (bir_updateE_desc_value (BUpdateDescE_XJmp _ _ v) = (SOME v)) /\
-  (bir_updateE_desc_value (BUpdateDescE_Halt _ _ v) = SOME v)`;
+  (bir_updateE_desc_value (BUpdateDescE_Halt _ _ v) = NONE)`;
 
 
 val bir_updateE_desc_final_exp_def = Define `
@@ -732,7 +732,7 @@ val bir_update_blockE_FINAL_def = Define `
     (option_CASE vo e (\v. BExp_Den v)) (BLE_Label l1) (BLE_Label l2)) /\
   (bir_update_blockE_FINAL (BUpdateDescE_XJmp vo e i) = BStmt_Jmp (BLE_Exp
     (option_CASE vo e (\v. BExp_Den v)))) /\
-  (bir_update_blockE_FINAL (BUpdateDescE_Halt vo e _) = BStmt_Halt (option_CASE vo e (\v. BExp_Den v)))`
+  (bir_update_blockE_FINAL (BUpdateDescE_Halt vo e _) = BStmt_Halt)`
 
 
 val bir_update_blockE_FINAL_THM = store_thm ("bir_update_blockE_FINAL_THM",

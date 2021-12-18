@@ -335,7 +335,7 @@ Cases_on `c` >> (
 
 val bir_exec_stmtE_valid_pc_halt = prove (
   ``!p st ex.  bir_is_valid_pc p st.bst_pc ==>
-               bir_is_valid_pc p (bir_exec_stmtE p (BStmt_Halt ex) st).bst_pc
+               bir_is_valid_pc p (bir_exec_stmtE p (BStmt_Halt) st).bst_pc
 ``,
   SIMP_TAC (std_ss++holBACore_ss) [bir_exec_stmtE_def, bir_exec_stmt_halt_def] >>
   REPEAT STRIP_TAC >>
