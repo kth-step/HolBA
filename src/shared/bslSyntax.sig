@@ -232,11 +232,11 @@ sig
      *
      * bjmp:  bir_label_exp_t -> bir_stmt_end_t
      * bcjmp: (bir_exp_t * bir_label_exp_t * bir_label_exp_t) -> bir_stmt_end_t
-     * bhalt: bir_exp_t -> bir_stmt_end_t
+     * bhalt: bir_stmt_end_t
      *)
     val bjmp: term -> term
     val bcjmp: (term * term * term) -> term
-    val bhalt: term -> term
+    val bhalt: term
 
     (* Statements (:bir_stmt_t)
      * | BStmtB         => bstmtb

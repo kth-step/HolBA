@@ -166,8 +166,7 @@ struct
     handle e => raise wrap_exn "bjmp" e
   val bcjmp = mk_BStmt_CJmp
     handle e => raise wrap_exn "bcjmp" e
-  val bhalt = mk_BStmt_Halt
-    handle e => raise wrap_exn "bhalt" e
+  val bhalt = BStmt_Halt_tm
 
   (* Statements (:bir_stmt_t) *)
   val bstmtb = mk_BStmtB
