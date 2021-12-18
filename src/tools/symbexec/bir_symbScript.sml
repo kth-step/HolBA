@@ -12,8 +12,21 @@ open bir_typing_expTheory;
 
 open bir_bool_expTheory;
 open bir_exp_substitutionsTheory;
+open bir_typing_expTheory;
 
 open bir_symb_supportTheory;
+
+open finite_mapTheory;
+open pred_setTheory;
+open listTheory;
+open combinTheory;
+open optionTheory;
+
+open HolBACoreSimps;
+open symb_typesLib;
+
+open pred_setSimps;
+open listSimps;
 
 val _ = new_theory "bir_symb";
 
@@ -61,7 +74,7 @@ val bir_env_lookup_I_thm = store_thm(
    "bir_env_lookup_I_thm", ``
 !env. (\bvn. bir_env_lookup bvn (BEnv env)) = env
 ``,
-  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
+  FULL_SIMP_TAC (std_ss++holBACore_ss)
     [bir_env_lookup_def] >>
   METIS_TAC []
 );
@@ -71,7 +84,7 @@ val bir_env_lookup_BEnv_thm = store_thm(
 !env. BEnv (\bvn. bir_env_lookup bvn env) = env
 ``,
   Cases_on `env` >>
-  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
+  FULL_SIMP_TAC (std_ss++holBACore_ss)
     [bir_env_lookup_I_thm]
 );
 
@@ -82,7 +95,7 @@ val bir_env_lookup_BIJ_thm = store_thm(
   (env1 = env2)
 ``,
   Cases_on `env1` >> Cases_on `env2` >>
-  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss)
+  FULL_SIMP_TAC (std_ss++holBACore_ss)
       [bir_env_lookup_I_thm]
 );
 
@@ -92,7 +105,7 @@ val birs_symb_from_to_concst_thm = store_thm(
 ``,
   GEN_TAC >>
   Cases_on `s` >>
-  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss++HolBACoreSimps.holBACore_ss)
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss++holBACore_ss)
     [birs_symb_to_concst_def, birs_symb_from_concst_def, bir_env_lookup_def] >>
 
   METIS_TAC []
@@ -105,7 +118,7 @@ val birs_symb_to_from_concst_thm = store_thm(
   GEN_TAC >>
   Cases_on `s` >>
 
-  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss++HolBACoreSimps.holBACore_ss)
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss++holBACore_ss)
     [birs_symb_to_concst_def, birs_symb_from_concst_def, bir_env_lookup_BEnv_thm] >>
 
   Q.ABBREV_TAC `s = <|bst_pc := b; bst_environ := b0; bst_status := b1|>` >>
@@ -113,11 +126,11 @@ val birs_symb_to_from_concst_thm = store_thm(
    s.bst_environ = b0 /\
    s.bst_status = b1` by (
     Q.UNABBREV_TAC `s` >>
-    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
   ) >>
 
   Cases_on `s` >>
-  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) []
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
 val birs_symb_to_concst_EXISTS_thm = store_thm(
@@ -143,7 +156,7 @@ val birs_symb_to_concst_BIJ_thm = store_thm(
   REPEAT GEN_TAC >>
   Cases_on `s1` >> Cases_on `s2` >>
 
-  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss++HolBACoreSimps.holBACore_ss)
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss++holBACore_ss)
     [birs_symb_to_concst_def, bir_env_lookup_BIJ_thm]
 );
 
@@ -226,8 +239,8 @@ val bir_exp_subst_FUN_FMAP_bir_vars_of_exp_thm = store_thm(
   Induct_on `e` >> (
     SIMP_TAC (std_ss)
       ([birs_eval_exp_subst_def, birs_eval_exp_subst_ALT_def, bir_exp_subst_def]@
-       [bir_vars_of_exp_def, bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_FUN_FMAP,
-        pred_setTheory.IN_SING, pred_setTheory.FINITE_SING, pred_setTheory.IN_UNION, pred_setTheory.FINITE_UNION])
+       [bir_vars_of_exp_def, bir_exp_subst_var_def, FLOOKUP_FUN_FMAP,
+        IN_SING, FINITE_SING, IN_UNION, FINITE_UNION])
   ) >> (
     REPEAT STRIP_TAC >>
     `FINITE (bir_vars_of_exp e' ∪ Y) /\
@@ -242,11 +255,11 @@ val bir_exp_subst_FUN_FMAP_bir_vars_of_exp_thm = store_thm(
      FINITE (bir_vars_of_exp e ∪ bir_vars_of_exp e' ∪ Y) /\
      FINITE (bir_vars_of_exp e ∪ bir_vars_of_exp e')` by (
       METIS_TAC
-        [bir_typing_expTheory.bir_vars_of_exp_FINITE, pred_setTheory.FINITE_UNION]
+        [bir_vars_of_exp_FINITE, FINITE_UNION]
     ) >>
     METIS_TAC
-      [birs_eval_exp_subst_ALT_def, pred_setTheory.UNION_COMM,
-       pred_setTheory.UNION_ASSOC, bir_typing_expTheory.bir_vars_of_exp_FINITE]
+      [birs_eval_exp_subst_ALT_def, UNION_COMM,
+       UNION_ASSOC, bir_vars_of_exp_FINITE]
   )
 );
 
@@ -258,19 +271,19 @@ val birs_eval_exp_subst_ALT_thm = store_thm(
   Induct_on `e` >> (
     SIMP_TAC (std_ss)
       ([birs_eval_exp_subst_def, birs_eval_exp_subst_ALT_def, bir_exp_subst_def]@
-       [bir_vars_of_exp_def, bir_exp_subst_var_def, finite_mapTheory.FLOOKUP_FUN_FMAP,
-        pred_setTheory.IN_SING, pred_setTheory.FINITE_SING])
+       [bir_vars_of_exp_def, bir_exp_subst_var_def, FLOOKUP_FUN_FMAP,
+        IN_SING, FINITE_SING])
   ) >> (
     ASM_SIMP_TAC (std_ss) [birs_eval_exp_subst_def, birs_eval_exp_subst_ALT_def, bir_exp_subst_def, bir_vars_of_exp_def] >>
     `FINITE (bir_vars_of_exp e ∪ bir_vars_of_exp e') /\
      FINITE (bir_vars_of_exp e' ∪ bir_vars_of_exp e'') /\
      FINITE (bir_vars_of_exp e ∪ bir_vars_of_exp e'')` by (
       METIS_TAC
-        [bir_typing_expTheory.bir_vars_of_exp_FINITE, pred_setTheory.FINITE_UNION]
+        [bir_vars_of_exp_FINITE, FINITE_UNION]
     ) >>
     METIS_TAC
-      [birs_eval_exp_subst_ALT_def, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_thm, pred_setTheory.UNION_COMM,
-       pred_setTheory.UNION_ASSOC, bir_typing_expTheory.bir_vars_of_exp_FINITE]
+      [birs_eval_exp_subst_ALT_def, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_thm, UNION_COMM,
+       UNION_ASSOC, bir_vars_of_exp_FINITE]
   )
 );
 
@@ -287,15 +300,15 @@ val APPEND_distinct_thm = store_thm(
   
 ``,
   Induct_on `l1` >- (
-    SIMP_TAC (std_ss++listSimps.LIST_ss) [APPEND_distinct_def]
+    SIMP_TAC (std_ss++LIST_ss) [APPEND_distinct_def]
   ) >>
 
   REWRITE_TAC [APPEND_distinct_def] >>
   REPEAT GEN_TAC >>
 
-  SIMP_TAC (std_ss++listSimps.LIST_ss) [] >>
+  SIMP_TAC (std_ss++LIST_ss) [] >>
   Cases_on `MEM h (FOLDR (\x l. if MEM x l then l else x::l) l2 l1)` >> (
-    METIS_TAC [APPEND_distinct_def, listTheory.MEM]
+    METIS_TAC [APPEND_distinct_def, MEM]
   )
 );
 
@@ -346,7 +359,7 @@ val bir_vars_of_exp_LIST_thm = store_thm(
   MEM x (bir_vars_of_exp_LIST e) <=> x IN (bir_vars_of_exp e)
 ``,
   Induct_on `e` >> (
-    FULL_SIMP_TAC (std_ss++listSimps.LIST_ss++pred_setSimps.PRED_SET_ss)
+    FULL_SIMP_TAC (std_ss++LIST_ss++PRED_SET_ss)
       [bir_vars_of_exp_def, bir_vars_of_exp_LIST_def, APPEND_distinct_thm]
   )
 );
@@ -367,7 +380,7 @@ val birs_senv_typecheck_thm = store_thm(
 ``,
   REWRITE_TAC
     [birs_senv_typecheck_def, bir_envty_includes_vs_def,
-     birs_envty_of_senv_def, bir_envty_includes_v_def, listTheory.EVERY_MEM, bir_vars_of_exp_LIST_thm] >>
+     birs_envty_of_senv_def, bir_envty_includes_v_def, EVERY_MEM, bir_vars_of_exp_LIST_thm] >>
   METIS_TAC []
 );
 
@@ -383,14 +396,14 @@ val birs_senv_typecheck_IMP_birs_eval_exp_subst_type_thm = store_thm(
   `FEVERY
      (\(v,e). type_of_bir_exp e = SOME (bir_var_type v))
      (FUN_FMAP (\x. birs_eval_exp_subst_var x senv) (bir_vars_of_exp e))` by (
-    SIMP_TAC std_ss [finite_mapTheory.FEVERY_DEF, finite_mapTheory.FUN_FMAP_DEF, bir_typing_expTheory.bir_vars_of_exp_FINITE] >>
+    SIMP_TAC std_ss [FEVERY_DEF, FUN_FMAP_DEF, bir_vars_of_exp_FINITE] >>
 
     REPEAT STRIP_TAC >>
     FULL_SIMP_TAC std_ss [birs_senv_typecheck_thm, bir_envty_includes_vs_def, birs_envty_of_senv_def, bir_envty_includes_v_def, birs_eval_exp_subst_var_def] >>
-    METIS_TAC [optionTheory.option_CLAUSES, combinTheory.I_THM]
+    METIS_TAC [option_CLAUSES, I_THM]
   ) >>
 
-  METIS_TAC [bir_exp_substitutionsTheory.bir_exp_subst_TYPE_EQ]
+  METIS_TAC [bir_exp_subst_TYPE_EQ]
 );
 
 val birs_eval_exp_def = Define `
@@ -428,7 +441,7 @@ val birs_eval_exp_SOME_EQ_bir_exp_env_type_thm = store_thm(
   (?sv. birs_eval_exp e senv = SOME (sv, ty))
 ``,
   SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, birs_senv_typecheck_thm] >>
-  METIS_TAC [optionTheory.option_CLAUSES]
+  METIS_TAC [option_CLAUSES]
 );
 
 val birs_eval_exp_IMP_type_thm = store_thm(
@@ -438,7 +451,7 @@ val birs_eval_exp_IMP_type_thm = store_thm(
   (type_of_bir_exp sv = SOME ty)
 ``,
   SIMP_TAC std_ss
-    [birs_eval_exp_def, LET_DEF, optionTheory.option_CLAUSES,
+    [birs_eval_exp_def, LET_DEF, option_CLAUSES,
      birs_senv_typecheck_IMP_birs_eval_exp_subst_type_thm]
 );
 
@@ -473,7 +486,7 @@ val type_of_bir_exp_birs_interpret_subst_thm = store_thm(
 ``,
   cheat
 (*
-bir_exp_substitutionsTheory.bir_exp_subst_NO_TYPE
+bir_exp_subst_NO_TYPE
 *)
 );
 
@@ -484,7 +497,7 @@ val birs_interpret_fun_NONE_thm = store_thm(
   (type_of_bir_exp sv = NONE) ==>
   (birs_interpret_fun H sv = NONE)
 ``,
-  METIS_TAC [birs_interpret_fun_def, bir_typing_expTheory.bir_type_of_bir_exp_NONE, type_of_bir_exp_birs_interpret_subst_thm]
+  METIS_TAC [birs_interpret_fun_def, bir_type_of_bir_exp_NONE, type_of_bir_exp_birs_interpret_subst_thm]
 );
 
 (* SBIR sanity check theorem *)
@@ -497,7 +510,7 @@ val birs_interpret_fun_SOME_thm = store_thm(
   (?v. birs_interpret_fun H sv = SOME v /\ type_of_bir_val v = ty)
 ``,
 (*
-  METIS_TAC [birs_interpret_fun_def, bir_typing_expTheory.bir_type_of_bir_exp_NONE]
+  METIS_TAC [birs_interpret_fun_def, bir_type_of_bir_exp_NONE]
 type_of_bir_exp_THM_with_envty
 *)
   cheat
@@ -541,7 +554,7 @@ val birs_symb_from_to_symbst_thm = store_thm(
 ``,
   GEN_TAC >>
   Cases_on `s` >>
-  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss)
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss++birs_state_ss)
     [birs_symb_to_symbst_def, birs_symb_from_symbst_def] >>
 
   METIS_TAC []
@@ -554,7 +567,7 @@ val birs_symb_to_from_symbst_thm = store_thm(
   GEN_TAC >>
   Cases_on `s` >>
 
-  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss)
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss++birs_state_ss)
     [birs_symb_to_symbst_def, birs_symb_from_symbst_def] >>
 
   Q.ABBREV_TAC `s = <|bsst_pc := b; bsst_environ := f; bsst_status := b0; bsst_pcond := b1|>` >>
@@ -585,8 +598,8 @@ val birs_symb_to_symbst_SET_EXISTS_thm = store_thm(
 
   Q.EXISTS_TAC `IMAGE birs_symb_from_symbst Pi` >>
 
-  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
-    [pred_setTheory.IMAGE_IMAGE, birs_symb_from_to_symbst_thm, combinTheory.o_DEF]
+  SIMP_TAC (std_ss++PRED_SET_ss)
+    [IMAGE_IMAGE, birs_symb_from_to_symbst_thm, o_DEF]
 );
 
 val birs_symb_from_symbst_EXISTS_thm = store_thm(
@@ -605,7 +618,7 @@ val birs_symb_to_symbst_BIJ_thm = store_thm(
   REPEAT GEN_TAC >>
   Cases_on `s1` >> Cases_on `s2` >>
 
-  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss)
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss++birs_state_ss)
     [birs_symb_to_symbst_def]
 );
 
