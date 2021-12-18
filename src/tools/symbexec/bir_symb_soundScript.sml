@@ -33,6 +33,37 @@ symb_step_sound sr
 *)
 
 
+
+val birs_symb_matchstate_IMP_birs_state_set_failed_thm = store_thm(
+   "birs_symb_matchstate_IMP_birs_state_set_failed_thm", ``
+!sys H s.
+  (birs_symb_matchstate sys H s) ==>
+  (birs_symb_matchstate (birs_state_set_failed sys) H (bir_state_set_failed s))
+``,
+  SIMP_TAC (std_ss++birs_state_ss) [bir_state_set_failed_def, birs_state_set_failed_def, birs_symb_matchstate_def] >>
+
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++birs_state_ss) [birs_symb_symbols_def]
+  )
+);
+
+
+val birs_symb_matchstate_IMP_same_pc_update_thm = store_thm(
+   "birs_symb_matchstate_IMP_same_pc_update_thm", ``
+!sys H s pc_upd.
+  (birs_symb_matchstate sys H s) ==>
+  (birs_symb_matchstate
+     (sys with bsst_pc updated_by pc_upd)
+     H
+     (s with bst_pc updated_by pc_upd))
+``,
+  SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
+
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++birs_state_ss) [birs_symb_symbols_def]
+  )
+);
+
 val symb_interpr_for_symbs_IMP_UPDATE_ENV_thm = store_thm(
    "symb_interpr_for_symbs_IMP_UPDATE_ENV_thm", ``
 !sys H vn sv.
@@ -107,13 +138,15 @@ val birs_eval_exp_IMP_varset_thm = store_thm(
 );
 
 
+(* ... *)
+
 val birs_exec_stmt_assign_sound_thm = store_thm(
    "birs_exec_stmt_assign_sound_thm", ``
 !v ex s s' sys Pi H.
-(bir_exec_stmt_assign v ex s = s') ==>
-(birs_exec_stmt_assign v ex sys = Pi) ==>
-(birs_symb_matchstate sys H s) ==>
-(?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+  (bir_exec_stmt_assign v ex s = s') ==>
+  (birs_exec_stmt_assign v ex sys = Pi) ==>
+  (birs_symb_matchstate sys H s) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
 ``,
   REPEAT STRIP_TAC >>
 
@@ -227,23 +260,189 @@ val birs_exec_stmt_assign_sound_thm = store_thm(
   )
 );
 
-(*
-val birs_exec_step_sound_thm = store_thm(
-   "birs_exec_step_sound_thm", ``
-!prog s s' sys Pi H.
-((SND o bir_exec_step prog) s = s') ==>
-(birs_exec_step prog sys = Pi) ==>
-(birs_symb_matchstate sys H s) ==>
-(?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+val birs_exec_stmt_assert_sound_thm = store_thm(
+   "birs_exec_stmt_assert_sound_thm", ``
+!ex s s' sys Pi H.
+  (bir_exec_stmt_assert ex s = s') ==>
+  (birs_exec_stmt_assert ex sys = Pi) ==>
+  (birs_symb_matchstate sys H s) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
 ``,
   cheat
 );
-*)
 
-(*
+val birs_exec_stmt_assume_sound_thm = store_thm(
+   "birs_exec_stmt_assume_sound_thm", ``
+!ex s s' sys Pi H.
+  (bir_exec_stmt_assume ex s = s') ==>
+  (birs_exec_stmt_assume ex sys = Pi) ==>
+  (birs_symb_matchstate sys H s) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  cheat
+);
+
+val birs_exec_stmt_observe_sound_thm = store_thm(
+   "birs_exec_stmt_observe_sound_thm", ``
+!oid ec el obf s s' sys Pi H.
+  (SND (bir_exec_stmt_observe oid ec el obf s) = s') ==>
+  (birs_exec_stmt_observe oid ec el obf sys = Pi) ==>
+  (birs_symb_matchstate sys H s) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [bir_exec_stmt_observe_def, birs_exec_stmt_observe_def, LET_DEF] >>
+  cheat
+  (* TODO: this is wrong! *)
+);
+
+val birs_exec_stmtB_sound_thm = store_thm(
+   "birs_exec_stmtB_sound_thm", ``
+!stmt s s' sys Pi H.
+  (SND (bir_exec_stmtB stmt s) = s') ==>
+  (birs_exec_stmtB stmt sys = Pi) ==>
+  (birs_symb_matchstate sys H s) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  Cases_on `stmt` >> (
+    REWRITE_TAC [bir_exec_stmtB_def, birs_exec_stmtB_def, birs_exec_stmt_assign_sound_thm, birs_exec_stmt_assert_sound_thm, birs_exec_stmt_assume_sound_thm, birs_exec_stmt_observe_sound_thm]
+  )
+);
+
+(* ... *)
+
+val birs_exec_stmt_halt_sound_thm = store_thm(
+   "birs_exec_stmt_halt_sound_thm", ``
+!ex s s' sys Pi H.
+  (bir_exec_stmt_halt ex s = s') ==>
+  (birs_exec_stmt_halt ex sys = Pi) ==>
+  (birs_symb_matchstate sys H s) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  cheat
+  (* TODO: this is wrong! *)
+);
+
+val birs_exec_stmt_jmp_sound_thm = store_thm(
+   "birs_exec_stmt_jmp_sound_thm", ``
+!p le s s' sys Pi H.
+  (bir_exec_stmt_jmp p le s = s') ==>
+  (birs_exec_stmt_jmp p le sys = Pi) ==>
+  (birs_symb_matchstate sys H s) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  cheat
+);
+
+val birs_exec_stmt_cjmp_sound_thm = store_thm(
+   "birs_exec_stmt_cjmp_sound_thm", ``
+!p ex le1 le2 s s' sys Pi H.
+  (bir_exec_stmt_cjmp p ex le1 le2 s = s') ==>
+  (birs_exec_stmt_cjmp p ex le1 le2 sys = Pi) ==>
+  (birs_symb_matchstate sys H s) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  cheat
+);
+
+val birs_exec_stmtE_sound_thm = store_thm(
+   "birs_exec_stmtE_sound_thm", ``
+!p estmt s s' sys Pi H.
+  (bir_exec_stmtE p estmt s = s') ==>
+  (birs_exec_stmtE p estmt sys = Pi) ==>
+  (birs_symb_matchstate sys H s) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  Cases_on `estmt` >> (
+    REWRITE_TAC [bir_exec_stmtE_def, birs_exec_stmtE_def, birs_exec_stmt_halt_sound_thm, birs_exec_stmt_jmp_sound_thm, birs_exec_stmt_cjmp_sound_thm]
+  )
+);
+
+(* ... *)
+
+val birs_exec_stmt_sound_thm = store_thm(
+   "birs_exec_stmt_sound_thm", ``
+!p stmt s s' sys Pi H.
+  (SND (bir_exec_stmt p stmt s) = s') ==>
+  (birs_exec_stmt p stmt sys = Pi) ==>
+  (birs_symb_matchstate sys H s) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  Cases_on `stmt` >> (
+    REWRITE_TAC [bir_exec_stmt_def, birs_exec_stmt_def, birs_exec_stmtE_sound_thm]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [LET_DEF] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `bir_exec_stmtB b s` >>
+  rename1 `bir_exec_stmtB b s = (obs, s')` >>
+
+  `SND (bir_exec_stmtB b s) = s'` by (
+    FULL_SIMP_TAC (std_ss) []
+  ) >>
+  IMP_RES_TAC birs_exec_stmtB_sound_thm >>
+  FULL_SIMP_TAC (std_ss) [] >>
+  PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPECL [`sys`, `H`]) >>
+  REV_FULL_SIMP_TAC (std_ss) [] >>
+
+  Ho_Rewrite.REWRITE_TAC [GSYM boolTheory.LEFT_EXISTS_AND_THM] >>
+  Ho_Rewrite.ONCE_REWRITE_TAC [boolTheory.SWAP_EXISTS_THM] >>
+
+  Q.EXISTS_TAC `sys'` >>
+  FULL_SIMP_TAC (std_ss) [] >>
+
+  `bir_state_is_terminated s' = birs_state_is_terminated sys'` by (
+    METIS_TAC [birs_state_is_terminated_def, bir_state_is_terminated_def, birs_symb_matchstate_def]
+  ) >>
+
+  Cases_on `bir_state_is_terminated s'` >> (
+    FULL_SIMP_TAC (std_ss) []
+  ) >>
+
+  METIS_TAC [birs_symb_matchstate_IMP_same_pc_update_thm]
+);
+
+val birs_exec_step_sound_thm = store_thm(
+   "birs_exec_step_sound_thm", ``
+!prog s s' sys Pi H.
+  ((SND o bir_exec_step prog) s = s') ==>
+  (birs_exec_step prog sys = Pi) ==>
+  (birs_symb_matchstate sys H s) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  REWRITE_TAC [bir_exec_step_def, birs_exec_step_def, combinTheory.o_THM] >>
+  REPEAT STRIP_TAC >>
+
+  `bir_state_is_terminated s = birs_state_is_terminated sys` by (
+    METIS_TAC [birs_state_is_terminated_def, bir_state_is_terminated_def, birs_symb_matchstate_def]
+  ) >>
+
+  Cases_on `bir_state_is_terminated s` >- (
+    FULL_SIMP_TAC (std_ss) [] >>
+    METIS_TAC [pred_setTheory.IN_SING]
+  ) >>
+
+  `s.bst_pc = sys.bsst_pc` by (
+    METIS_TAC [birs_symb_matchstate_def]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss) [] >>
+  Cases_on `bir_get_current_statement prog sys.bsst_pc` >- (
+    FULL_SIMP_TAC (std_ss) [] >>
+    METIS_TAC [pred_setTheory.IN_SING, birs_symb_matchstate_IMP_birs_state_set_failed_thm]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss) [] >>
+  METIS_TAC [birs_exec_stmt_sound_thm]
+);
+
+(* ... *)
+
 val birs_symb_step_sound_thm = store_thm(
    "birs_symb_step_sound_thm", ``
-!prog. symb_step_sound (bir_symb_rec_sbir prog)
+!prog.
+  symb_step_sound (bir_symb_rec_sbir prog)
 ``,
   REWRITE_TAC [symb_step_sound_def] >>
   REPEAT STRIP_TAC >>
@@ -272,7 +471,6 @@ val birs_symb_step_sound_thm = store_thm(
 
   METIS_TAC [pred_setTheory.IMAGE_IN]
 );
-*)
 
 
 val _ = export_theory();
