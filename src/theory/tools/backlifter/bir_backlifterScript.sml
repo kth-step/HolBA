@@ -332,25 +332,52 @@ val default_arm8_bir_state_def = Define `default_arm8_bir_state ms =
 `;
 
 
+val default_arm8_bir_state_read_env_thms =
+  let
+    val varset = (snd o dest_eq o concl) arm8_vars_def;
+    val vars = pred_setSyntax.strip_set varset;
+    val varnames = List.map (fn tm => (snd o dest_eq o concl o EVAL) ``bir_var_name ^tm``) vars;
+
+    val terms1 = List.map (fn tm => ``bir_env_read ^tm (default_arm8_bir_state ms).bst_environ``) vars;
+    val terms2 = List.map (fn tm => ``bir_env_lookup_type ^tm (default_arm8_bir_state ms).bst_environ``) varnames;
+    val terms3 = List.map (fn tm => ``bir_env_lookup ^tm (default_arm8_bir_state ms).bst_environ``) varnames;
+
+(*
+    val term = List.nth(terms,4);
+(EVAL THENC REWRITE_CONV [GSYM bool2b_def, GSYM bool2w_def]) term
+conv term
+*)
+
+    val conv = SIMP_CONV (std_ss++holBACore_ss++stringSimps.STRING_ss) [default_arm8_bir_state_def,
+              bir_envTheory.bir_env_read_UPDATE,
+              bir_envTheory.bir_var_name_def,
+              bir_envTheory.bir_env_lookup_UPDATE,
+              bir_envTheory.bir_var_type_def,
+              bir_envTheory.bir_env_lookup_type_def];
+    val conv1 = EVAL THENC REWRITE_CONV [GSYM bool2b_def, GSYM bool2w_def, GSYM bir_exp_liftingTheory.bir_mmap_w_w2n_def, GSYM bir_exp_liftingTheory.bir_mf2mm_def];
+    val conv2 = EVAL;
+
+    val env_read_thms = List.map conv1 terms1;
+    val env_type_thms = List.map conv2 terms2;
+    val env_lookup_thms = List.map conv1 terms3;
+  in
+    env_read_thms @ env_type_thms @ env_lookup_thms
+  end;
+
+
 val default_arm8_bir_state_satisfies_rel_thm = prove(
   ``!ms.
     arm8_bmr.bmr_extra ms ==>
     bmr_rel arm8_bmr (default_arm8_bir_state ms) ms``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [default_arm8_bir_state_def,
+FULL_SIMP_TAC std_ss ([
   bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
   bir_env_oldTheory.bir_env_var_is_declared_def,
-  bir_envTheory.bir_var_name_def] >>
-FULL_SIMP_TAC (srw_ss()) [
-              bir_envTheory.bir_env_read_UPDATE,
-              bir_envTheory.bir_var_name_def,
-              bir_envTheory.bir_env_lookup_UPDATE,
-              bir_envTheory.bir_var_type_def,
-              bir_envTheory.bir_env_lookup_type_def] >>
-FULL_SIMP_TAC std_ss [bir_valuesTheory.type_of_bir_val_def,
-                      type_of_bir_imm_def,
-                      bir_immTheory.type_of_bool2b] >>
+  bir_envTheory.bir_var_name_def]@default_arm8_bir_state_read_env_thms) >>
+
+FULL_SIMP_TAC (std_ss++holBACore_ss) [default_arm8_bir_state_def] >>
+
 FULL_SIMP_TAC std_ss [bir_lifting_machinesTheory.bmr_extra_ARM8] >>
 FULL_SIMP_TAC (srw_ss()) [bir_exp_liftingTheory.bir_load_w2n_mf_simp_thm] >>
 METIS_TAC []
@@ -376,17 +403,15 @@ irule bir_env_oldTheory.bir_env_vars_are_initialised_SUBSET >>
 Q.EXISTS_TAC `arm8_vars` >>
 FULL_SIMP_TAC std_ss [arm8_wf_varset_def] >>
 SIMP_TAC std_ss [arm8_vars_def] >>
-(* TODO: This proof is sloooow... *)
+
 FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_INSERT] >>
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_var_is_initialised_def] >>
-FULL_SIMP_TAC std_ss [bir_envTheory.bir_var_name_def, default_arm8_bir_state_def,
-                        bir_envTheory.bir_env_lookup_UPDATE] >>
-EVAL_TAC  >>
-FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_val_t_11,
-                      bir_immTheory.type_of_bir_imm_def,
-                      bir_valuesTheory.type_of_bir_val_EQ_ELIMS]
+FULL_SIMP_TAC std_ss ([bir_envTheory.bir_var_name_def, bir_env_oldTheory.bir_env_var_is_initialised_def]@default_arm8_bir_state_read_env_thms) >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+(* This proof is not sloooow anymore... *)
+FULL_SIMP_TAC (std_ss) [bir_env_oldTheory.bir_env_vars_are_initialised_def, pred_setTheory.NOT_IN_EMPTY]
 );
+
 
 
 val set_of_address_in_all_address_labels_thm = prove (
