@@ -186,10 +186,8 @@ val bir_symb_exec_stmt_jmp_def = Define `
 
 (* End of execution *)
 val bir_symb_exec_stmt_halt_def = Define `
-    bir_symb_exec_stmt_halt ex (st: 'a bir_symb_state_t) = 
-      case bir_symb_eval_exp_empty (bir_symb_eval_exp ex st.bsst_environ) of
-	| NONE => bir_symb_state_set_typeerror st
-	| SOME v => st with bsst_status := BST_Halted v
+    bir_symb_exec_stmt_halt (st: 'a bir_symb_state_t) = 
+      st with bsst_status := BST_Halted
     `;
 
 (* Conditional jump:
@@ -214,7 +212,7 @@ val bir_symb_stmt_cjmp_def = Define `
 val bir_symb_exec_stmtE_def = Define `
     (bir_symb_exec_stmtE p (BStmt_Jmp l)          st = [bir_symb_exec_stmt_jmp p l st]) /\ 
     (bir_symb_exec_stmtE p (BStmt_CJmp ex l1 l2 ) st =  bir_symb_exec_stmt_cjmp p ex l1 l2 st ) /\
-    (bir_symb_exec_stmtE p (BStmt_Halt ex)        st = [bir_symb_exec_stmt_halt ex st])`;
+    (bir_symb_exec_stmtE p (BStmt_Halt)        st = [bir_symb_exec_stmt_halt st])`;
 
 
 (********************)
