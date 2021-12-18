@@ -67,7 +67,7 @@ val bir_is_valid_status_def = Define `
     ((state.bst_status <> BST_Failed) /\
     (state.bst_status <> BST_TypeError) /\
     (!l. state.bst_status <> BST_JumpOutside l) /\
-    (!v. state.bst_status <> BST_Halted v) /\
+    (state.bst_status <> BST_Halted) /\
     (state.bst_status <> BST_AssertionViolated))`;
 
 (* The pre- and postcondition of the Hoare triple. *)
@@ -1933,7 +1933,7 @@ val bir_targets_in_prog_exec_def = Define `
         case bl1.bb_last_statement of
           BStmt_Jmp (BLE_Label l2) => [l2]
         | BStmt_CJmp e (BLE_Label l2) (BLE_Label l3) => [l2;l3]
-        | BStmt_Halt e => []
+        | BStmt_Halt => []
         | _ => []`;
 
 val bir_edges_blocks_in_prog_exec_def = Define `
