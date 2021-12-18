@@ -272,21 +272,13 @@ local
       mk_BStmt_CJmp (renamed_exp, l1, l2)
     end
 
-  fun rename_vars_halt stmt =
-    let
-      val exp = dest_BStmt_Halt stmt
-      val renamed_exp = rename_vars_in_exp exp
-    in
-      mk_BStmt_Halt renamed_exp
-    end
-
   fun passify_estmt_ssa stmt =
     if is_BStmt_Jmp stmt
     then stmt
     else if is_BStmt_CJmp stmt
     then rename_vars_cjmp stmt
     else if is_BStmt_Halt stmt
-    then rename_vars_halt stmt
+    then stmt
     else raise (ERR "passify_estmt_ssa"
                     ("The statement "^(Parse.term_to_string
                                          stmt)^
