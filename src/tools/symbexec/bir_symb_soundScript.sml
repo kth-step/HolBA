@@ -20,18 +20,147 @@ val _ = new_theory "bir_symb_sound";
 
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
-(* TODO: prove soundness of this instance here (several soundness properties) *)
+
 (*
+=========================================================================
 symb_symbols_f_sound sr
-symb_ARB_val_sound sr
-symb_typeof_exp_sound sr
-symb_mk_exp_eq_f_sound sr
-symb_mk_exp_conj_f_sound sr
-symb_mk_exp_symb_f_sound sr
-symb_subst_f_sound sr
-symb_step_sound sr
+=========================================================================
+ *)
+
+val birs_symb_symbols_f_sound_thm = store_thm(
+   "birs_symb_symbols_f_sound_thm", ``
+!prog.
+  symb_symbols_f_sound (bir_symb_rec_sbir prog)
+``,
+  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_symbols_f_sound_def, bir_symb_rec_sbir_def] >>
+
+(*
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [symb_interprs_eq_for_def] >>
 *)
 
+  FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [birs_interpret_fun_def, birs_interpret_subst_def] >>
+  REPEAT STRIP_TAC >>
+  cheat
+);
+
+
+(*
+=========================================================================
+symb_ARB_val_sound sr
+=========================================================================
+ *)
+
+val birs_symb_ARB_val_sound_thm = store_thm(
+   "birs_symb_ARB_val_sound_thm", ``
+!prog.
+  symb_ARB_val_sound (bir_symb_rec_sbir prog)
+``,
+  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_ARB_val_sound_def, bir_symb_rec_sbir_def] >>
+  Cases_on `t` >> (
+    Cases_on `b` >> (
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_val_default_def, type_of_bir_val_def]
+    )
+  )
+);
+
+
+(*
+=========================================================================
+symb_typeof_exp_sound sr
+=========================================================================
+ *)
+
+val birs_symb_typeof_exp_sound_thm = store_thm(
+   "birs_symb_typeof_exp_sound_thm", ``
+!prog.
+  symb_typeof_exp_sound (bir_symb_rec_sbir prog)
+``,
+  SIMP_TAC (std_ss) [symb_typeof_exp_sound_def, birs_interpr_welltyped_EQ_thm] >>
+  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_typeof_exp_sound_def, bir_symb_rec_sbir_def] >>
+
+  cheat
+(*
+  REPEAT STRIP_TAC >>
+
+ASSUME_TAC [] birs_interpret_fun_PRESERVES_type_thm
+
+  METIS_TAC [birs_interpret_fun_PRESERVES_type_thm]
+birs_interpret_fun_PRESERVES_type_thm
+*)
+);
+
+
+(*
+=========================================================================
+symb_mk_exp_eq_f_sound sr
+=========================================================================
+ *)
+
+val birs_symb_mk_exp_eq_f_sound_thm = store_thm(
+   "birs_symb_mk_exp_eq_f_sound_thm", ``
+!prog.
+  symb_mk_exp_eq_f_sound (bir_symb_rec_sbir prog)
+``,
+  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_mk_exp_eq_f_sound_def, bir_symb_rec_sbir_def] >>
+  cheat
+);
+
+
+(*
+=========================================================================
+symb_mk_exp_conj_f_sound sr
+=========================================================================
+ *)
+
+val birs_symb_mk_exp_conj_f_sound_thm = store_thm(
+   "birs_symb_mk_exp_conj_f_sound_thm", ``
+!prog.
+  symb_mk_exp_conj_f_sound (bir_symb_rec_sbir prog)
+``,
+  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_mk_exp_conj_f_sound_def, bir_symb_rec_sbir_def] >>
+  cheat
+);
+
+
+(*
+=========================================================================
+symb_mk_exp_symb_f_sound sr
+=========================================================================
+ *)
+
+val birs_symb_mk_exp_symb_f_sound_thm = store_thm(
+   "birs_symb_mk_exp_symb_f_sound_thm", ``
+!prog.
+  symb_mk_exp_symb_f_sound (bir_symb_rec_sbir prog)
+``,
+  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_mk_exp_symb_f_sound_def, bir_symb_rec_sbir_def] >>
+  cheat
+);
+
+
+(*
+=========================================================================
+symb_subst_f_sound sr
+=========================================================================
+ *)
+
+val birs_symb_subst_f_sound_thm = store_thm(
+   "birs_symb_subst_f_sound_thm", ``
+!prog.
+  symb_subst_f_sound (bir_symb_rec_sbir prog)
+``,
+  SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_subst_f_sound_def, bir_symb_rec_sbir_def] >>
+
+  REPEAT STRIP_TAC >>
+  cheat
+);
+
+
+(*
+=========================================================================
+symb_step_sound sr
+=========================================================================
+ *)
 
 
 val birs_symb_matchstate_IMP_birs_state_set_failed_thm = store_thm(
