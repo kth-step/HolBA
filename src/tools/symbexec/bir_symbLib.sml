@@ -148,6 +148,7 @@ RESTR_EVAL_CONV restr_consts test_term
 (*
 birs_exec_step_CONV test_term
 *)
+(* TODO: add purging of stale environment mappings *)
 val birs_exec_step_CONV = (
   RESTR_EVAL_CONV [``birs_eval_exp``] THENC
   GEN_match_conv (identical ``birs_eval_exp`` o fst o strip_comb) (birs_eval_exp_CONV) THENC
