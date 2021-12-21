@@ -21,6 +21,7 @@ open pred_setTheory;
 open combinTheory;
 open optionTheory;
 open pairTheory;
+open finite_mapTheory;
 
 open HolBACoreSimps;
 open symb_typesLib;
@@ -38,6 +39,32 @@ symb_symbols_f_sound sr
 =========================================================================
  *)
 
+
+val symb_interprs_eq_for_IMP_EQ_birs_interpret_subst_fmap_thm = store_thm(
+   "symb_interprs_eq_for_IMP_EQ_birs_interpret_subst_fmap_thm", ``
+!H H' e.
+  (symb_interprs_eq_for H H' (bir_vars_of_exp e)) ==>
+  (birs_interpret_subst_fmap H e = birs_interpret_subst_fmap H' e)
+``,
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [symb_interprs_eq_for_def] >>
+  REPEAT STRIP_TAC >>
+
+(*
+  (fn g as (_, tm) => MP_TAC (SPECL [(fst o dest_eq) tm, (snd o dest_eq) tm] (INST_TYPE [Type.alpha |-> ``:bir_var_t``, Type.beta |-> ``:bir_exp_t``] fmap_EQ_THM)) g) >>
+*)
+  REWRITE_TAC [GSYM fmap_EQ_THM] >>
+
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC std_ss [birs_interpret_subst_fmap_def, FUN_FMAP_DEF, bir_vars_of_exp_FINITE]
+  ) >>
+
+  
+  `(x IN symb_interpr_dom H) = (x IN symb_interpr_dom H')` by (
+    METIS_TAC [symb_interpr_dom_thm]
+  ) >>
+  ASM_REWRITE_TAC []
+);
+
 val birs_symb_symbols_f_sound_thm = store_thm(
    "birs_symb_symbols_f_sound_thm", ``
 !prog.
@@ -45,13 +72,9 @@ val birs_symb_symbols_f_sound_thm = store_thm(
 ``,
   SIMP_TAC (std_ss++symb_TYPES_ss) [symb_symbols_f_sound_def, bir_symb_rec_sbir_def] >>
 
-(*
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [symb_interprs_eq_for_def] >>
-*)
-
   FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_def, birs_interpret_subst_def] >>
-  REPEAT STRIP_TAC >>
-  cheat
+
+  METIS_TAC [symb_interprs_eq_for_IMP_EQ_birs_interpret_subst_fmap_thm]
 );
 
 
