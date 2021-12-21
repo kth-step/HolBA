@@ -150,7 +150,7 @@ val birs_interpret_subst_PRESERVES_type_thm = store_thm(
   (birs_interpr_welltyped H) ==>
   (type_of_bir_exp (birs_interpret_subst H sv) = type_of_bir_exp sv)
 ``,
-  REWRITE_TAC [birs_interpret_subst_def] >>
+  REWRITE_TAC [birs_interpret_subst_def, birs_interpret_subst_fmap_def] >>
   REPEAT STRIP_TAC >>
 
   MATCH_MP_TAC bir_exp_subst_TYPE_EQ >>
@@ -322,14 +322,17 @@ val birs_interpret_fun_sound_thm = store_thm(
   (?v. birs_interpret_fun H sv = SOME v /\ bir_eval_exp e env = SOME v)
 ``,
   Induct_on `e` >- (
+    (* BExp_Const *)
     REPEAT STRIP_TAC >>
     FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def, birs_interpret_fun_def, birs_interpret_subst_def] >>
     METIS_TAC [bir_exp_subst_def, bir_eval_exp_def]
   ) >- (
+    (* BExp_MemConst *)
     REPEAT STRIP_TAC >>
     FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def, birs_interpret_fun_def, birs_interpret_subst_def] >>
     METIS_TAC [bir_exp_subst_def, bir_eval_exp_def]
   ) >- (
+    (* BExp_Den *)
     REPEAT STRIP_TAC >>
     IMP_RES_TAC birs_eval_exp_IMP_type_thm >>
 
@@ -358,6 +361,7 @@ val birs_interpret_fun_sound_thm = store_thm(
 
     METIS_TAC [option_CLAUSES, birs_interpret_fun_PRESERVES_type_thm]
   ) >- (
+    (* BExp_Cast *)
     SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
     REPEAT STRIP_TAC >>
 
@@ -373,7 +377,7 @@ val birs_interpret_fun_sound_thm = store_thm(
 
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
-    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, birs_interpret_subst_fmap_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
 
     `type_of_bir_val v = x` by (
       METIS_TAC [option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
@@ -384,6 +388,7 @@ val birs_interpret_fun_sound_thm = store_thm(
       METIS_TAC [bir_type_t_distinct, bir_eval_cast_def]
     )
   ) >- (
+    (* BExp_UnaryExp *)
     SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
     REPEAT STRIP_TAC >>
 
@@ -399,7 +404,7 @@ val birs_interpret_fun_sound_thm = store_thm(
 
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
-    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, birs_interpret_subst_fmap_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
 
     `type_of_bir_val v = x` by (
       METIS_TAC [option_CLAUSES, birs_matchenv_IMP_EQ_bir_envty_includes_vs_thm, bir_eval_exp_SOME_EQ_bir_exp_env_type_thm]
@@ -410,6 +415,7 @@ val birs_interpret_fun_sound_thm = store_thm(
       METIS_TAC [bir_type_t_distinct, bir_eval_unary_exp_def]
     )
   ) >- (
+    (* BExp_BinExp *)
     SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
     REPEAT STRIP_TAC >>
 
@@ -428,7 +434,7 @@ val birs_interpret_fun_sound_thm = store_thm(
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
-    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, birs_interpret_subst_fmap_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
 
     SIMP_TAC std_ss [bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
     SIMP_TAC std_ss [Once UNION_COMM, bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
@@ -446,6 +452,7 @@ val birs_interpret_fun_sound_thm = store_thm(
       METIS_TAC [bir_type_t_distinct, bir_type_t_11, bir_eval_bin_exp_def]
     )
   ) >- (
+    (* BExp_BinPred *)
     SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
     REPEAT STRIP_TAC >>
 
@@ -464,7 +471,7 @@ val birs_interpret_fun_sound_thm = store_thm(
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
-    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, birs_interpret_subst_fmap_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
 
     SIMP_TAC std_ss [bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
     SIMP_TAC std_ss [Once UNION_COMM, bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
@@ -482,6 +489,7 @@ val birs_interpret_fun_sound_thm = store_thm(
       METIS_TAC [bir_type_t_distinct, bir_type_t_11, bir_eval_bin_pred_def]
     )
   ) >- (
+    (* BExp_MemEq *)
     SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
     REPEAT STRIP_TAC >>
 
@@ -507,7 +515,7 @@ val birs_interpret_fun_sound_thm = store_thm(
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
-    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, birs_interpret_subst_fmap_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
 
     SIMP_TAC std_ss [bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
     SIMP_TAC std_ss [Once UNION_COMM, bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
@@ -525,6 +533,7 @@ val birs_interpret_fun_sound_thm = store_thm(
       METIS_TAC [bir_type_t_distinct, bir_type_t_11, bir_eval_memeq_def]
     )
   ) >- (
+    (* BExp_IfThenElse *)
     SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
     REPEAT STRIP_TAC >>
 
@@ -544,7 +553,7 @@ val birs_interpret_fun_sound_thm = store_thm(
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
-    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, birs_interpret_subst_fmap_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
 
     SIMP_TAC std_ss [prove(
       ``FINITE(bir_vars_of_exp sv'' UNION bir_vars_of_exp sv')``, METIS_TAC [bir_vars_of_exp_FINITE, FINITE_UNION]),
@@ -581,6 +590,7 @@ val birs_interpret_fun_sound_thm = store_thm(
     SIMP_TAC std_ss [bir_eval_ifthenelse_def] >>
     METIS_TAC []
   ) >- (
+    (* BExp_Load *)
     SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
     REPEAT STRIP_TAC >>
 
@@ -606,7 +616,7 @@ val birs_interpret_fun_sound_thm = store_thm(
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
-    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, birs_interpret_subst_fmap_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
 
     SIMP_TAC std_ss [bir_vars_of_exp_FINITE, bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm] >>
     SIMP_TAC std_ss [prove(
@@ -633,6 +643,7 @@ val birs_interpret_fun_sound_thm = store_thm(
     CASE_TAC >>
     METIS_TAC [option_CLAUSES]
   ) >> (
+    (* BExp_Store *)
     SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
     REPEAT STRIP_TAC >>
 
@@ -664,7 +675,7 @@ val birs_interpret_fun_sound_thm = store_thm(
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC) >>
     FULL_SIMP_TAC std_ss [birs_eval_exp_def, LET_DEF, bir_eval_exp_def, birs_eval_exp_subst_def] >>
-    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_def, birs_interpret_subst_def, birs_interpret_subst_fmap_def, bir_eval_exp_def, bir_vars_of_exp_def, bir_exp_subst_def] >>
 
     SIMP_TAC std_ss [prove(
       ``FINITE(bir_vars_of_exp sv'' UNION bir_vars_of_exp sv')``, METIS_TAC [bir_vars_of_exp_FINITE, FINITE_UNION]),
