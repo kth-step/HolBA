@@ -461,13 +461,17 @@ val bir_val_to_constexp_def = Define `
    (bir_val_to_constexp (BVal_Imm i) = BExp_Const i) /\
    (bir_val_to_constexp (BVal_Mem aty vty mmap) = BExp_MemConst aty vty mmap)
 `;
+val birs_interpret_subst_fmap_def = Define `
+    birs_interpret_subst_fmap i e =
+      FUN_FMAP (\x. if x IN symb_interpr_dom i then
+                      bir_val_to_constexp (THE (symb_interpr_get i x))
+                    else
+                      BExp_Den x) (bir_vars_of_exp e)
+`;
 val birs_interpret_subst_def = Define `
     birs_interpret_subst i e =
       bir_exp_subst
-        (FUN_FMAP (\x. if x IN symb_interpr_dom i then
-                        bir_val_to_constexp (THE (symb_interpr_get i x))
-                       else
-                        BExp_Den x) (bir_vars_of_exp e))
+        (birs_interpret_subst_fmap i e)
         e
 `;
 val birs_interpret_fun_def = Define `
