@@ -282,7 +282,7 @@ local
                                <|> try (seq (token (string "False")) (return bfalse))
                                <|> token (gen_bir_exp_angr sz);
 
-in
+in  (* local *)
  local
   open String;
 
@@ -339,6 +339,9 @@ parse_obs obsrefmap json;
 *)
 
  in
+  (* make this function available for mechanized testing (test scripts) *)
+  val parse_guard = parse_guard;
+
   fun result_from_json obsrefmap json =
         case json of
             OBJECT [("addr",STRING addr_str)
