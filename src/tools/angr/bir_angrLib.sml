@@ -464,7 +464,7 @@ parse_obs obsrefmap json;
       val bprog_json_str = birprogjsonexportLib.birprogtojsonstr bprog_t_m;
       val _ = bir_fileLib.write_to_file magicinputfilename bprog_json_str;
 
-      val usePythonPackage = true;
+      val usePythonPackage = not (Option.getOpt(OS.Process.getEnv("HOLBA_ANGR_USE_PYTHONDIR"), "") = "1");
 
       val output =
         if usePythonPackage then (
