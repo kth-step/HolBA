@@ -14,6 +14,10 @@ val angr_exp_testcases = [
          (BExp_CastMask Bit64 7 0 (BExp_Den (BVar "R27" (BType_Imm Bit64)))
             (THE (bir_immtype_of_size 8))) (BExp_Const (Imm8 7w)))
       (BExp_Const (Imm8 0w))``)
+(*
+  ,("<...>",
+    ``T``)
+*)
 ];
 
 val _ = print "Running and checking test cases\n";
