@@ -568,6 +568,22 @@ val bir_eval_exp_SOME_EQ_bir_exp_env_type_thm = store_thm(
              bir_env_satisfies_envty_of_env]
 );
 
+val bir_eval_exp_SOME_EQ_bir_exp_env_type_EMPTY_thm = store_thm(
+   "bir_eval_exp_SOME_EQ_bir_exp_env_type_EMPTY_thm", ``
+!env e ty.
+(bir_vars_of_exp e = EMPTY) ==>
+(
+  (type_of_bir_exp e = SOME ty)
+  <=>
+  (?v. ((bir_eval_exp e env) = SOME v) /\ (type_of_bir_val v = ty))
+)
+``,
+  METIS_TAC
+    [bir_eval_exp_SOME_EQ_bir_exp_env_type_thm,
+     bir_envty_includes_vs_def,
+     NOT_IN_EMPTY]
+);
+
 
 
 val _ = export_theory();
