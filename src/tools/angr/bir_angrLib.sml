@@ -295,7 +295,7 @@ local
                                <|> try (seq (token (string "False")) (return bfalse))
                                <|> token (gen_bir_exp_angr sz);
 
-in
+in  (* local *)
  local
   open String;
 
@@ -352,6 +352,9 @@ parse_obs obsrefmap json;
 *)
 
  in
+  (* make this function available for mechanized testing (test scripts) *)
+  val parse_guard = parse_guard;
+
   fun result_from_json obsrefmap json =
         case json of
             OBJECT [("addr",STRING addr_str)
@@ -477,7 +480,7 @@ parse_obs obsrefmap json;
       val bprog_json_str = birprogjsonexportLib.birprogtojsonstr bprog_t_m;
       val _ = bir_fileLib.write_to_file magicinputfilename bprog_json_str;
 
-      val usePythonPackage = true;
+      val usePythonPackage = not (Option.getOpt(OS.Process.getEnv("HOLBA_ANGR_USE_PYTHONDIR"), "") = "1");
 
       val output =
         if usePythonPackage then (
