@@ -111,6 +111,13 @@ local
   
   val angr_var =
       token (fmap strip_var (sep_by1 (many1 (sat Char.isAlphaNum)) (char #"_")));
+
+  (* TODO complete with missing operators *)
+  val binary_op_factor =
+      choicel [seq (char #"*") (return bmult)
+	      ,seq (string "/s") (return bsdiv)
+              ,seq (char #"/") (return bdiv)
+              ,seq (char #"%") (return bmod)] <?> "multiplication or division operator";
   
   val binary_op_term =
       choicel [seq (char #"+") (return bplus)
@@ -120,7 +127,9 @@ local
   val binary_pred =
       choicel [seq (string "==") (return beq)
               ,seq (string "!=") (return bneq)
-              ,seq (string "<=") (return ble)
+              ,seq (string "<=s") (return bsle)
+	      ,seq (string "<=") (return ble)
+	      ,seq (string "<s") (return bslt)
               ,seq (char #"<") (return blt)
               ,seq (string ">=") (return bge)
               ,seq (char #">") (return bgt)] <?> "binary predicate operator";
@@ -240,28 +249,32 @@ local
                                  (bind (token (pairp bir_exp annotated_imm_ignore)) (fn (exp,n) =>
                                  return (brshift (exp,bconst64 (Arbnum.toInt n)))))
                                     <?> "LShR expression";
-                val logical = bind (choicel [bracket (char #"(") bir_exp (char #")")
+                val signext_expr = seq (string "SignExt")
+                                 (bind (token (pairp angr_num bir_exp)) (fn (n,exp) =>
+                                 return (list_bappend_mask [bconstii (Arbnum.toInt n) 0, exp])))
+                                    <?> "SignExt expression";
+		val logical =  choicel [bracket (char #"(") bir_exp (char #")")
                                       ,bind unary_op
                                             (fn oper => fmap oper bir_exp)
                                       ,try mem_load
                                       ,try ifthenelse
                                       ,try shift_expr
+				      ,try signext_expr
                                       ,try (fmap bconstimm annotated_imm)
                                       ,fmap bconstimm (gen_bir_imm sz)
                                       ,fmap bden angr_var
-                                   ]) (fn exp =>
-                              option (bracket (char #"[") range (char #"]")) exp (bmask exp))
-                                      <?> "logical expression"
-                val factor = chainr1 (token logical) (binop binary_op_bitwise)
+                                   ] <?> "logical expression"
+                val term = chainr1 (token logical) (binop binary_op_factor) <?> "term"
+                val appterm = bind (chainl1 (token term) (binop binary_op_term))
+				   (fn exp => option (bracket (char #"[") range (char #"]")) exp (bmask exp))
+				     <?> "binary expression"
+		val factor = chainr1 (token appterm) (binop binary_op_bitwise)
                                      <?> "factor"
-                val term = chainr1 (token factor) (binop binary_op_factor) <?> "term"
-                val appterm = chainl1 (token term) (binop binary_op_term)
-                                      <?> "binary expression"
                 val binexp = fmap list_bappend_mask
-                                  (chainr1 (bind (token appterm) (fn v => return [v]))
+                                  (chainr1 (bind (token factor) (fn v => return [v]))
                                   (binop (seq (token (string "..")) (return consappend))))
                                      <?> "angr appendmask expression"
-                val binpred = bind (token binexp) (fn e1 =>
+	        val binpred = bind (token binexp) (fn e1 =>
                               bind (binop binary_pred) (fn oper =>
                               bind (token binexp) (fn e2 =>
                               return (oper e1 e2))))
