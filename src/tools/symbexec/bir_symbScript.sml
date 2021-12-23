@@ -461,12 +461,16 @@ val bir_val_to_constexp_def = Define `
    (bir_val_to_constexp (BVal_Imm i) = BExp_Const i) /\
    (bir_val_to_constexp (BVal_Mem aty vty mmap) = BExp_MemConst aty vty mmap)
 `;
+val birs_interpret_subst_fmap_get_def = Define `
+    birs_interpret_subst_fmap_get i x =
+      if x IN symb_interpr_dom i then
+        bir_val_to_constexp (THE (symb_interpr_get i x))
+      else
+        BExp_Den x
+`;
 val birs_interpret_subst_fmap_def = Define `
     birs_interpret_subst_fmap i e =
-      FUN_FMAP (\x. if x IN symb_interpr_dom i then
-                      bir_val_to_constexp (THE (symb_interpr_get i x))
-                    else
-                      BExp_Den x) (bir_vars_of_exp e)
+      FUN_FMAP (birs_interpret_subst_fmap_get i) (bir_vars_of_exp e)
 `;
 val birs_interpret_subst_def = Define `
     birs_interpret_subst i e =
@@ -480,6 +484,99 @@ val birs_interpret_fun_def = Define `
        (birs_interpret_subst i e)
        bir_env_empty
 `;
+
+val birs_interpret_get_var_def = Define `
+    birs_interpret_get_var i x =
+      if x IN symb_interpr_dom i then
+        symb_interpr_get i x
+      else
+        NONE
+`;
+val birs_interpret_fun_ALT_def = Define `
+   (birs_interpret_fun_ALT i (BExp_Const n) = SOME (BVal_Imm n)) /\
+   (birs_interpret_fun_ALT i (BExp_MemConst aty vty mmap) = SOME (BVal_Mem aty vty mmap)) /\
+   (birs_interpret_fun_ALT i (BExp_Den v) = birs_interpret_get_var i v) /\
+   (birs_interpret_fun_ALT i (BExp_Cast ct e ty) =
+      bir_eval_cast ct (birs_interpret_fun_ALT i e) ty) /\
+   (birs_interpret_fun_ALT i (BExp_UnaryExp et e) =
+      bir_eval_unary_exp et (birs_interpret_fun_ALT i e)) /\
+   (birs_interpret_fun_ALT i (BExp_BinExp et e1 e2) =
+      bir_eval_bin_exp et
+        (birs_interpret_fun_ALT i e1)
+        (birs_interpret_fun_ALT i e2)) /\
+   (birs_interpret_fun_ALT i (BExp_BinPred pt e1 e2) =
+      bir_eval_bin_pred pt
+        (birs_interpret_fun_ALT i e1)
+        (birs_interpret_fun_ALT i e2)) /\
+   (birs_interpret_fun_ALT i (BExp_MemEq me1 me2) =
+      bir_eval_memeq
+        (birs_interpret_fun_ALT i me1)
+        (birs_interpret_fun_ALT i me2)) /\
+   (birs_interpret_fun_ALT i (BExp_IfThenElse c et ef) =
+      bir_eval_ifthenelse
+        (birs_interpret_fun_ALT i c)
+        (birs_interpret_fun_ALT i et)
+        (birs_interpret_fun_ALT i ef)) /\
+   (birs_interpret_fun_ALT i (BExp_Load mem_e a_e en ty) =
+      bir_eval_load
+        (birs_interpret_fun_ALT i mem_e)
+        (birs_interpret_fun_ALT i a_e)
+        en
+        ty) /\
+   (birs_interpret_fun_ALT i (BExp_Store mem_e a_e en v_e) =
+      bir_eval_store
+        (birs_interpret_fun_ALT i mem_e)
+        (birs_interpret_fun_ALT i a_e)
+        en
+        (birs_interpret_fun_ALT i v_e))
+`;
+
+val birs_interpret_fun_thm = store_thm(
+   "birs_interpret_fun_thm", ``
+!i e.
+  birs_interpret_fun i e = birs_interpret_fun_ALT i e
+``,
+  REPEAT STRIP_TAC >>
+  Induct_on `e` >- (
+    (* BExp_Const *)
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_def, birs_interpret_fun_ALT_def, birs_interpret_subst_def, bir_exp_subst_def]
+  ) >- (
+    (* BExp_MemConst *)
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_def, birs_interpret_fun_ALT_def, birs_interpret_subst_def, bir_exp_subst_def]
+  ) >- (
+    (* BExp_Den *)
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_def, birs_interpret_fun_ALT_def, birs_interpret_subst_def, bir_exp_subst_def] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_subst_fmap_def, bir_exp_subst_var_def, FLOOKUP_FUN_FMAP, FINITE_SING, IN_SING, birs_interpret_subst_fmap_get_def] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_get_var_def] >>
+    REPEAT STRIP_TAC >>
+    Cases_on `b IN symb_interpr_dom i` >- (
+      Cases_on `symb_interpr_get i b` >- (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+        METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm, option_CLAUSES]
+      ) >>
+      Cases_on `x` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_to_constexp_def, bir_eval_exp_def]
+      )
+    ) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_env_read_def, bir_env_empty_def, bir_env_map_empty_def, bir_env_check_type_def, bir_env_lookup_def]
+  )(* >- (
+    SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_def, birs_interpret_fun_ALT_def, birs_interpret_subst_def, bir_exp_subst_def, birs_interpret_subst_fmap_def] >>
+    METIS_TAC [birs_interpret_fun_def, birs_interpret_subst_def, birs_interpret_subst_fmap_def]
+  )*) >> (
+    (* BExp_* *)
+    SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_def, birs_interpret_fun_ALT_def, birs_interpret_subst_def, bir_exp_subst_def, birs_interpret_subst_fmap_def] >>
+    `FINITE (bir_vars_of_exp e ) /\
+     FINITE (bir_vars_of_exp e') /\
+     FINITE (bir_vars_of_exp e' UNION bir_vars_of_exp e'') /\
+     FINITE (bir_vars_of_exp e  UNION bir_vars_of_exp e' ) /\
+     FINITE (bir_vars_of_exp e  UNION bir_vars_of_exp e'')` by (
+      METIS_TAC [bir_vars_of_exp_FINITE, FINITE_UNION, UNION_COMM, UNION_ASSOC]
+    ) >>
+    METIS_TAC
+      [birs_interpret_fun_def, birs_interpret_subst_def, birs_interpret_subst_fmap_def,
+       bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm, UNION_COMM, UNION_ASSOC]
+  )
+);
 
 (*
 (* this is not true, only true if the interpretation i is well-typed *)
