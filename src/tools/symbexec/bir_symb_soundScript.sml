@@ -659,6 +659,7 @@ val symb_interpr_for_symbs_COND_UPD_status_thm = store_thm(
                   BExp_BinExp BIExp_And sys.bsst_pcond
                     (BExp_UnaryExp BIExp_Not sv)|>)) H))
 ``,
+  (* see proof of symb_interpr_for_symbs_IMP_UPDATE_ENV_thm *)
   cheat
 );
 
@@ -798,10 +799,13 @@ val birs_exec_stmt_observe_sound_thm = store_thm(
   (birs_symb_matchstate sys H s) ==>
   (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
 ``,
-  SIMP_TAC (std_ss++PRED_SET_ss)
-    [bir_exec_stmt_observe_def, birs_exec_stmt_observe_def, LET_DEF] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss)
+    [bir_exec_stmt_observe_def, birs_exec_stmt_observe_def] >>
+
+  SIMP_TAC (std_ss++PRED_SET_ss) [LET_DEF] >>
   cheat
-  (* TODO: this is wrong! *)
 );
 
 val birs_exec_stmtB_sound_thm = store_thm(
@@ -827,8 +831,18 @@ val birs_exec_stmt_halt_sound_thm = store_thm(
   (birs_symb_matchstate sys H s) ==>
   (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
 ``,
-  cheat
-  (* TODO: this is wrong! *)
+  REPEAT STRIP_TAC >>
+
+  (* TODO: there is a branch where this is justified *)
+  FULL_SIMP_TAC (std_ss)
+    [prove(``!ex st. bir_exec_stmt_halt ex st =
+       st with bst_status := BST_Halted (BVal_Imm (Imm1 0w))``, cheat),
+     birs_exec_stmt_halt_def] >>
+
+  PAT_X_ASSUM ``A = (Pi:birs_state_t -> bool)`` (ASSUME_TAC o GSYM) >>
+  PAT_X_ASSUM ``A = (s':bir_state_t)`` (ASSUME_TAC o GSYM) >>
+  FULL_SIMP_TAC (std_ss++PRED_SET_ss) [birs_symb_matchstate_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss++symb_TYPES_ss++birs_state_ss) [birs_symb_symbols_def]
 );
 
 val birs_exec_stmt_jmp_sound_thm = store_thm(
