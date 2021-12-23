@@ -371,7 +371,8 @@ ASBTRACT EXPRESSION CONSTRUCTION
      then: (v) = (5) /\ (x > 10) *)
 val symb_mk_exp_eq_f_sound_def = Define `
     symb_mk_exp_eq_f_sound sr =
-      ((!e1 e2. !H.
+      ((!e1 e2 H.
+         (symb_interpr_welltyped sr H) ==>
          (sr.sr_interpret_f H (sr.sr_mk_exp_eq_f e1 e2) = SOME sr.sr_val_true) =
          ((sr.sr_interpret_f H e1 <> NONE) /\
           (sr.sr_interpret_f H e1 =
@@ -381,7 +382,8 @@ val symb_mk_exp_eq_f_sound_def = Define `
 `;
 val symb_mk_exp_conj_f_sound_def = Define `
     symb_mk_exp_conj_f_sound sr =
-      ((!e1 e2. !H.
+      ((!e1 e2 H.
+         (symb_interpr_welltyped sr H) ==>
          (sr.sr_interpret_f H (sr.sr_mk_exp_conj_f e1 e2) = SOME sr.sr_val_true) =
          ((sr.sr_interpret_f H e1 = SOME sr.sr_val_true) /\
           (sr.sr_interpret_f H e2 = SOME sr.sr_val_true))) /\
@@ -397,7 +399,8 @@ val symb_expr_conj_eq_thm = store_thm(
 !sr.
   (symb_mk_exp_eq_f_sound sr) ==>
   (symb_mk_exp_conj_f_sound sr) ==>
-    ((!e1 e2 conj1. !H.
+    ((!e1 e2 conj1 H.
+       (symb_interpr_welltyped sr H) ==>
        (sr.sr_interpret_f H (symb_expr_conj_eq sr e1 e2 conj1) = SOME sr.sr_val_true) =
        ((sr.sr_interpret_f H conj1 = SOME sr.sr_val_true) /\
         (sr.sr_interpret_f H e1 <> NONE) /\
