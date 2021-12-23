@@ -609,6 +609,155 @@ val birs_exec_stmt_assign_sound_thm = store_thm(
   )
 );
 
+val birs_state_set_typeerror_SING_symb_matchstate_thm = store_thm(
+   "birs_state_set_typeerror_SING_symb_matchstate_thm", ``
+!s sys s' Pi H.
+  (bir_state_set_typeerror s = s') ==>
+  ({birs_state_set_typeerror sys} = Pi) ==>
+  (birs_symb_matchstate sys H s) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  REPEAT STRIP_TAC >>
+  PAT_X_ASSUM ``A = (Pi:birs_state_t -> bool)`` (ASSUME_TAC o GSYM) >>
+  PAT_X_ASSUM ``A = (s':bir_state_t)`` (ASSUME_TAC o GSYM) >>
+  FULL_SIMP_TAC (std_ss++PRED_SET_ss) [birs_symb_matchstate_def] >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss++symb_TYPES_ss++birs_state_ss) [birs_state_set_typeerror_def, bir_state_set_typeerror_def] >>
+  METIS_TAC [symb_interpr_for_symbs_EQ_set_typeerror_thm, birs_state_set_typeerror_def]
+);
+
+val birs_symb_matchstate_IMP_bir_symb_eval_exp_thm = store_thm(
+   "birs_symb_matchstate_IMP_bir_symb_eval_exp_thm", ``
+!s sys H e.
+  (birs_symb_matchstate sys H s) ==>
+  ((birs_eval_exp e sys.bsst_environ = NONE /\
+    bir_eval_exp e s.bst_environ = NONE)
+   \/
+   (?sv ty v.
+         birs_eval_exp e sys.bsst_environ = SOME (sv,ty) /\
+         bir_eval_exp e s.bst_environ = SOME v /\
+         birs_interpret_fun H sv = SOME v))
+``,
+  METIS_TAC [birs_symb_matchstate_def, birs_eval_exp_sound_thm]
+);
+
+val symb_interpr_for_symbs_COND_UPD_status_thm = store_thm(
+   "symb_interpr_for_symbs_COND_UPD_status_thm", ``
+!sys H e sv ty status.
+  (birs_eval_exp e sys.bsst_environ = SOME (sv, ty)) ==>
+  (symb_interpr_for_symbs (birs_symb_symbols sys) H) ==>
+  ((symb_interpr_for_symbs
+          (birs_symb_symbols
+             (sys with bsst_pcond := BExp_BinExp BIExp_And sys.bsst_pcond sv))
+          H)
+   /\
+   (symb_interpr_for_symbs
+          (birs_symb_symbols
+             (sys with
+              <|bsst_status := status;
+                bsst_pcond :=
+                  BExp_BinExp BIExp_And sys.bsst_pcond
+                    (BExp_UnaryExp BIExp_Not sv)|>)) H))
+``,
+  cheat
+);
+
+val birs_symb_matchstate_COND_UPD_status_thm = store_thm(
+   "birs_symb_matchstate_COND_UPD_status_thm", ``
+!s sys H e sv v s' Pi status.
+  (birs_symb_matchstate sys H s) ==>
+  (birs_eval_exp e sys.bsst_environ = SOME (sv,BType_Imm Bit1)) ==>
+  (bir_eval_exp e s.bst_environ = SOME (BVal_Imm (Imm1 v))) ==>
+  (birs_interpret_fun H sv = bir_eval_exp e s.bst_environ) ==>
+  ((if v = 1w then s else s with bst_status := status) = s') ==>
+  ({sys with bsst_pcond := BExp_BinExp BIExp_And sys.bsst_pcond sv;
+         sys with
+         <|bsst_status := status;
+           bsst_pcond :=
+             BExp_BinExp BIExp_And sys.bsst_pcond
+               (BExp_UnaryExp BIExp_Not sv)|>} =
+        Pi) ==>
+  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+``,
+  REPEAT STRIP_TAC >>
+  `(0w <> (1w:word1))` by (
+    wordsLib.WORD_DECIDE_TAC
+  ) >>
+  wordsLib.Cases_on_word_value `v:word1` >> (
+    FULL_SIMP_TAC (std_ss) []
+  ) >| [
+    PAT_X_ASSUM ``A = (Pi:birs_state_t -> bool)`` (fn thm => (ASSUME_TAC thm >> ((EXISTS_TAC o hd o pred_setSyntax.strip_set o fst o dest_eq o concl) thm)))
+    ,
+    PAT_X_ASSUM ``A = (Pi:birs_state_t -> bool)`` (fn thm => (ASSUME_TAC thm >> ((EXISTS_TAC o hd o tl o pred_setSyntax.strip_set o fst o dest_eq o concl) thm)))
+  ] >> (
+    PAT_X_ASSUM ``A = (Pi:birs_state_t -> bool)`` (ASSUME_TAC o GSYM) >>
+    PAT_X_ASSUM ``A = (s':bir_state_t)`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss++PRED_SET_ss) [birs_symb_matchstate_def] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss++symb_TYPES_ss++birs_state_ss) [] >>
+
+    CONJ_TAC >- (
+      METIS_TAC [symb_interpr_for_symbs_COND_UPD_status_thm]
+    )
+  ) >> (
+    REV_FULL_SIMP_TAC (std_ss) [GSYM bir_val_true_def] >>
+
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
+    SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def] >>
+
+    wordsLib.WORD_DECIDE_TAC
+  )
+);
+
+val birs_exec_stmt_assert_assume_sound_TAC = (
+  IMP_RES_TAC birs_symb_matchstate_IMP_bir_symb_eval_exp_thm >>
+  PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPEC `ex`) >>
+
+  (* either both evaluation error, or both a value *)
+  FULL_SIMP_TAC (std_ss) [] >- (
+    FULL_SIMP_TAC (std_ss) [] >>
+    IMP_RES_TAC (Q.SPECL [`s`, `sys`] birs_state_set_typeerror_SING_symb_matchstate_thm) >>
+    TRY HINT_EXISTS_TAC >>
+    FULL_SIMP_TAC (std_ss) []
+  ) >>
+
+  FULL_SIMP_TAC (std_ss) [] >>
+  `type_of_bir_val v = ty` by (
+    METIS_TAC [birs_symb_matchstate_def, birs_interpret_fun_PRESERVES_type_thm, birs_eval_exp_IMP_type_thm, option_CLAUSES]
+  ) >>
+
+  (* get rid of all the wrong types (Mem first) *)
+  Cases_on `bir_val_is_Mem v` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_is_Mem_def] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_dest_bool_val_def] >>
+    PAT_X_ASSUM ``BType_Mem A B = C`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [pair_CASE_def] >>
+
+    (* finish the error cases as usual/above *)
+    FULL_SIMP_TAC (std_ss) [] >>
+    IMP_RES_TAC (Q.SPECL [`s`, `sys`] birs_state_set_typeerror_SING_symb_matchstate_thm) >>
+    TRY HINT_EXISTS_TAC >>
+    FULL_SIMP_TAC (std_ss) []
+  ) >>
+  Cases_on `ty` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_checker_TO_type_of]
+  ) >>
+  (* same for wrong Imm sizes *)
+  Cases_on `b` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [pair_CASE_def] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [GSYM bir_val_checker_TO_type_of, bir_val_is_Imm_s_def] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_dest_bool_val_def] >>
+
+    (* finish the error cases as usual/above *)
+    FULL_SIMP_TAC (std_ss) [] >>
+    IMP_RES_TAC (Q.SPECL [`s`, `sys`] birs_state_set_typeerror_SING_symb_matchstate_thm) >>
+    TRY HINT_EXISTS_TAC >>
+    FULL_SIMP_TAC (std_ss) []
+  ) >>
+
+  (* and finally both cases, assertion passed and violated *)
+  METIS_TAC [birs_symb_matchstate_COND_UPD_status_thm]
+);
+
 val birs_exec_stmt_assert_sound_thm = store_thm(
    "birs_exec_stmt_assert_sound_thm", ``
 !ex s s' sys Pi H.
@@ -617,7 +766,12 @@ val birs_exec_stmt_assert_sound_thm = store_thm(
   (birs_symb_matchstate sys H s) ==>
   (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
 ``,
-  cheat
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss)
+    [bir_exec_stmt_assert_def, birs_exec_stmt_assert_def] >>
+
+  birs_exec_stmt_assert_assume_sound_TAC
 );
 
 val birs_exec_stmt_assume_sound_thm = store_thm(
@@ -628,7 +782,12 @@ val birs_exec_stmt_assume_sound_thm = store_thm(
   (birs_symb_matchstate sys H s) ==>
   (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
 ``,
-  cheat
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss)
+    [bir_exec_stmt_assume_def, birs_exec_stmt_assume_def] >>
+
+  birs_exec_stmt_assert_assume_sound_TAC
 );
 
 val birs_exec_stmt_observe_sound_thm = store_thm(
