@@ -15,6 +15,7 @@ open bir_exp_substitutionsTheory;
 open bir_envTheory;
 
 open bir_symbTheory;
+open bir_symb_supportTheory;
 open bir_symb_sound_coreTheory;
 
 open pred_setTheory;
@@ -57,8 +58,8 @@ val symb_interprs_eq_for_IMP_EQ_birs_interpret_subst_fmap_thm = store_thm(
   REPEAT STRIP_TAC >> (
     FULL_SIMP_TAC std_ss [birs_interpret_subst_fmap_def, FUN_FMAP_DEF, bir_vars_of_exp_FINITE]
   ) >>
+  FULL_SIMP_TAC std_ss [birs_interpret_subst_fmap_get_def] >>
 
-  
   `(x IN symb_interpr_dom H) = (x IN symb_interpr_dom H')` by (
     METIS_TAC [symb_interpr_dom_thm]
   ) >>
@@ -112,7 +113,8 @@ val birs_interpret_subst_fmap_type_sound_thm = store_thm(
 ``,
   FULL_SIMP_TAC std_ss
     [birs_interpr_welltyped_def, birs_interpret_subst_fmap_def,
-     FUN_FMAP_DEF, bir_vars_of_exp_FINITE, FEVERY_DEF] >>
+     FUN_FMAP_DEF, bir_vars_of_exp_FINITE, FEVERY_DEF,
+     birs_interpret_subst_fmap_get_def] >>
   REPEAT STRIP_TAC >>
   CASE_TAC >> (REWRITE_TAC [type_of_bir_exp_def]) >>
 
@@ -139,14 +141,17 @@ val birs_interpret_subst_EMPTY_vars_thm = store_thm(
     FULL_SIMP_TAC std_ss
       [birs_interpret_subst_fmap_def, bir_exp_subst_var_def,
        bir_vars_of_exp_def, FINITE_SING, FLOOKUP_FUN_FMAP,
-       SUBSET_DEF, IN_SING] >>
+       SUBSET_DEF, IN_SING, birs_interpret_subst_fmap_get_def] >>
 
     REPEAT STRIP_TAC >>
     Cases_on `THE (symb_interpr_get H b)` >> (
       METIS_TAC [bir_val_to_constexp_def, bir_vars_of_exp_def]
     )
   ) >> (
-    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, birs_interpret_subst_def, bir_exp_subst_def, birs_interpret_subst_fmap_def, UNION_SUBSET, EMPTY_UNION] >>
+    FULL_SIMP_TAC std_ss
+      [bir_vars_of_exp_def, birs_interpret_subst_def, bir_exp_subst_def,
+       birs_interpret_subst_fmap_def, UNION_SUBSET, EMPTY_UNION,
+       birs_interpret_subst_fmap_get_def] >>
     `FINITE (bir_vars_of_exp e ) /\
      FINITE (bir_vars_of_exp e') /\
      FINITE (bir_vars_of_exp e' UNION bir_vars_of_exp e'') /\
@@ -200,6 +205,40 @@ val birs_symb_mk_exp_eq_f_sound_thm = store_thm(
   symb_mk_exp_eq_f_sound (bir_symb_rec_sbir prog)
 ``,
   SIMP_TAC (std_ss++symb_TYPES_ss) [symb_mk_exp_eq_f_sound_def, bir_symb_rec_sbir_def] >>
+  CONJ_TAC >- (
+    (* interpretation *)
+    REPEAT STRIP_TAC >>
+(*
+    Cases_on `type_of_bir_exp e1` >- (
+      FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
+
+      Cases_on `birs_interpret_fun_ALT H e1` >- (
+        FULL_SIMP_TAC std_ss [option_CLAUSES, bir_eval_bin_pred_def]
+      ) >>
+
+
+
+Cases_on `birs_interpret_fun_ALT H e2` >> (
+        FULL_SIMP_TAC std_ss [option_CLAUSES, bir_eval_bin_pred_def]
+      ) >- (
+        Cases_on `x` >> (
+          FULL_SIMP_TAC std_ss [option_CLAUSES, bir_eval_bin_pred_def]
+        )
+      ) >>
+        Cases_on `x` >> Cases_on `x'` >> (
+          FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, bir_eval_bin_pred_def]
+        )
+      )
+
+
+bir_type_of_bir_exp_NONE
+      METIS_TAC [birs_interpret_fun_def]
+    ) >>
+*)
+    cheat
+  ) >>
+
+  (* variable set *)
   cheat
 );
 
@@ -231,8 +270,11 @@ val birs_symb_mk_exp_symb_f_sound_thm = store_thm(
 !prog.
   symb_mk_exp_symb_f_sound (bir_symb_rec_sbir prog)
 ``,
-  SIMP_TAC (std_ss++symb_TYPES_ss) [symb_mk_exp_symb_f_sound_def, bir_symb_rec_sbir_def] >>
-  cheat
+  SIMP_TAC (std_ss++symb_TYPES_ss) [symb_mk_exp_symb_f_sound_def, bir_symb_rec_sbir_def, bir_vars_of_exp_def] >>
+  REPEAT STRIP_TAC >>
+
+  SIMP_TAC (std_ss) [birs_interpret_fun_thm, birs_interpret_fun_ALT_def, birs_interpret_get_var_def] >>
+  METIS_TAC [symb_interpr_dom_thm, option_CLAUSES]
 );
 
 

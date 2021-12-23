@@ -4,10 +4,16 @@ open bir_valuesTheory;
 open bir_expTheory;
 open bir_envTheory;
 open bir_typing_expTheory;
+open bir_exp_memTheory;
+open bir_exp_substitutionsTheory;
 
 open optionTheory;
 open pred_setTheory;
+open finite_mapTheory;
 
+open pred_setSimps;
+
+open HolBACoreSimps;
 
 val _ = new_theory "bir_symb_support";
 
@@ -582,6 +588,101 @@ val bir_eval_exp_SOME_EQ_bir_exp_env_type_EMPTY_thm = store_thm(
     [bir_eval_exp_SOME_EQ_bir_exp_env_type_thm,
      bir_envty_includes_vs_def,
      NOT_IN_EMPTY]
+);
+
+
+
+
+
+val bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm = store_thm(
+   "bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm", ``
+!vs f e.
+  (FINITE vs) ==>
+  (bir_exp_subst (FUN_FMAP f (vs UNION bir_vars_of_exp e)) e) =
+  (bir_exp_subst (FUN_FMAP f (bir_vars_of_exp e)) e)
+``,
+  Induct_on `e` >> (
+    SIMP_TAC (std_ss++PRED_SET_ss) [bir_exp_subst_def, bir_vars_of_exp_def, bir_exp_subst_var_def, FLOOKUP_FUN_FMAP]
+  ) >> (
+    ASM_SIMP_TAC (std_ss++PRED_SET_ss) [bir_exp_t_11, UNION_ASSOC]
+  ) >> (
+    REPEAT STRIP_TAC >> (
+    `FINITE (vs UNION (bir_vars_of_exp e')) /\ FINITE (bir_vars_of_exp e') /\
+     FINITE (vs UNION (bir_vars_of_exp e)) /\ FINITE (bir_vars_of_exp e) /\
+
+     FINITE (vs UNION (bir_vars_of_exp e) UNION (bir_vars_of_exp e')) /\ FINITE ((bir_vars_of_exp e) UNION (bir_vars_of_exp e')) /\
+     FINITE (vs UNION (bir_vars_of_exp e') UNION (bir_vars_of_exp e'')) /\ FINITE ((bir_vars_of_exp e') UNION (bir_vars_of_exp e'')) /\
+     FINITE (vs UNION (bir_vars_of_exp e) UNION (bir_vars_of_exp e'')) /\ FINITE ((bir_vars_of_exp e) UNION (bir_vars_of_exp e''))` by (
+      METIS_TAC [FINITE_UNION, bir_vars_of_exp_FINITE]
+    )) >> (
+     METIS_TAC [UNION_COMM, UNION_ASSOC]
+    )
+  )
+);
+
+val bir_load_from_mem_IS_SOME_thm = store_thm(
+   "bir_load_from_mem_IS_SOME_thm", ``
+!b0 b1 b mmap b2 a.
+  (if b2 = BEnd_NoEndian then b0 = b1
+        else bir_number_of_mem_splits b0 b1 b ≠ NONE) ==>
+  (?v. bir_load_from_mem b0 b1 b mmap b2 a = SOME v)
+``,
+  REPEAT STRIP_TAC >>
+  `?abc. bir_number_of_mem_splits b0 b1 b = SOME abc` by (
+    Cases_on `b2 = BEnd_NoEndian` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_number_of_mem_splits_def]
+    ) >>
+
+    Q.ABBREV_TAC `abc = size_of_bir_immtype b1` >>
+    `0 < abc` by (
+      Q.UNABBREV_TAC `abc` >>
+      Cases_on `b1` >> (
+        FULL_SIMP_TAC (arith_ss++holBACore_ss) []
+      )
+    ) >>
+    Cases_on `b` >> (
+      FULL_SIMP_TAC (arith_ss++holBACore_ss) []
+    )
+  ) >>
+
+  Cases_on `b2` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    METIS_TAC [bir_load_from_mem_EQ_SOME, bir_number_of_mem_splits_ID]
+  )
+);
+
+val bir_store_in_mem_IS_SOME_thm = store_thm(
+   "bir_store_in_mem_IS_SOME_thm", ``
+!b1t b0 b b1 mmap b2 a.
+  (type_of_bir_imm b1 = b1t) ==>
+  (if b2 = BEnd_NoEndian then b0 = b1t
+        else bir_number_of_mem_splits b0 b1t b ≠ NONE) ==>
+  (?v. bir_store_in_mem b0 b b1 mmap b2 a = SOME v)
+``,
+  REPEAT STRIP_TAC >>
+  `?abc. bir_number_of_mem_splits b0 b1t b = SOME abc` by (
+    Cases_on `b2 = BEnd_NoEndian` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_number_of_mem_splits_def]
+    ) >>
+
+    Q.ABBREV_TAC `abc = size_of_bir_immtype b1t` >>
+    `0 < abc` by (
+      Q.UNABBREV_TAC `abc` >>
+      Cases_on `b1t` >> (
+        FULL_SIMP_TAC (arith_ss++holBACore_ss) []
+      )
+    ) >>
+    Cases_on `b` >> (
+      FULL_SIMP_TAC (arith_ss++holBACore_ss) []
+    )
+  ) >>
+
+  Cases_on `b2` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    METIS_TAC [bir_store_in_mem_EQ_SOME, bir_number_of_mem_splits_ID]
+  )
 );
 
 
