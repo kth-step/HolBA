@@ -578,47 +578,6 @@ val birs_interpret_fun_thm = store_thm(
   )
 );
 
-(*
-(* this is not true, only true if the interpretation i is well-typed *)
-val type_of_bir_exp_birs_interpret_subst_thm = store_thm(
-   "type_of_bir_exp_birs_interpret_subst_thm", ``
-!i e.
-  type_of_bir_exp (birs_interpret_subst i e) = type_of_bir_exp e
-``,
-  cheat
-(*
-bir_exp_subst_NO_TYPE
-*)
-);
-
-(* SBIR sanity check theorem *)
-val birs_interpret_fun_NONE_thm = store_thm(
-   "birs_interpret_fun_NONE_thm", ``
-!sv H.
-  (type_of_bir_exp sv = NONE) ==>
-  (birs_interpret_fun H sv = NONE)
-``,
-  METIS_TAC [birs_interpret_fun_def, bir_type_of_bir_exp_NONE, type_of_bir_exp_birs_interpret_subst_thm]
-);
-
-(* SBIR sanity check theorem *)
-val birs_interpret_fun_SOME_thm = store_thm(
-   "birs_interpret_fun_SOME_thm", ``
-!sv H ty.
-  (birs_interpr_welltyped H) ==>
-  (type_of_bir_exp sv = SOME ty) ==>
-  (bir_vars_of_exp sv SUBSET symb_interpr_dom H) ==>
-  (?v. birs_interpret_fun H sv = SOME v /\ type_of_bir_val v = ty)
-``,
-(*
-  METIS_TAC [birs_interpret_fun_def, bir_type_of_bir_exp_NONE]
-type_of_bir_exp_THM_with_envty
-*)
-  cheat
-);
-*)
-
-
 
 (* now a symbolic state *)
 val _ = Datatype `birs_state_t = <|
