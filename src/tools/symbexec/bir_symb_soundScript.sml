@@ -204,7 +204,8 @@ val birs_symb_mk_exp_eq_f_sound_thm = store_thm(
 !prog.
   symb_mk_exp_eq_f_sound (bir_symb_rec_sbir prog)
 ``,
-  SIMP_TAC (std_ss++symb_TYPES_ss) [symb_mk_exp_eq_f_sound_def, bir_symb_rec_sbir_def] >>
+  SIMP_TAC (std_ss) [symb_mk_exp_eq_f_sound_def, birs_interpr_welltyped_EQ_thm] >>
+  SIMP_TAC (std_ss++symb_TYPES_ss) [bir_symb_rec_sbir_def] >>
   CONJ_TAC >- (
     (* interpretation *)
     REPEAT STRIP_TAC >>
