@@ -444,7 +444,8 @@ val symb_subst_f_sound_def = Define `
           (sr.sr_interpret_f H  symbexp_r =
            sr.sr_interpret_f H' symbexp)) /\
        ((sr.sr_subst_f (symb, symb_inst) symbexp = symbexp_r) ==>
-        (sr.sr_symbols_f symbexp_r = ((sr.sr_symbols_f symbexp) DIFF {symb}) UNION (sr.sr_symbols_f symb_inst)))
+        (sr.sr_symbols_f symbexp_r = ((sr.sr_symbols_f symbexp) DIFF {symb}) UNION
+           (if symb IN (sr.sr_symbols_f symbexp) then sr.sr_symbols_f symb_inst else EMPTY)))
       )
 `;
 
@@ -499,7 +500,7 @@ val symb_subst_store_symbols_thm = store_thm(
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_subst_store_def, symb_symbols_store_def, BIGUNION_SUBSET] >>
   REPEAT STRIP_TAC >>
 
-  `(sr.sr_symbols_f symbexp = sr.sr_symbols_f z DIFF {symb} UNION sr.sr_symbols_f symb_inst)` by (
+  `(sr.sr_symbols_f symbexp = sr.sr_symbols_f z DIFF {symb} UNION (if symb IN sr.sr_symbols_f z then sr.sr_symbols_f symb_inst else EMPTY))` by (
     METIS_TAC [symb_subst_f_sound_def]
   ) >>
 
@@ -507,8 +508,9 @@ val symb_subst_store_symbols_thm = store_thm(
         symb_interpr_dom H` by (
     METIS_TAC []
   ) >>
+
   FULL_SIMP_TAC std_ss [UNION_SUBSET, GSYM DELETE_DEF, GSYM SUBSET_INSERT_DELETE] >>
-  METIS_TAC [SUBSET_REFL, SUBSET_TRANS, INSERT_SUBSET]
+  METIS_TAC [SUBSET_REFL, SUBSET_TRANS, INSERT_SUBSET, EMPTY_SUBSET]
 );
 
 val symb_subst_store_symbols_thm2 = store_thm(
@@ -525,7 +527,7 @@ val symb_subst_store_symbols_thm2 = store_thm(
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_subst_store_def, symb_symbols_store_def, BIGUNION_SUBSET] >>
   REPEAT STRIP_TAC >>
 
-  `(sr.sr_symbols_f symbexp DIFF {symb} UNION sr.sr_symbols_f symb_inst)SUBSET
+  `(sr.sr_symbols_f symbexp DIFF {symb} UNION (if symb IN sr.sr_symbols_f symbexp then sr.sr_symbols_f symb_inst else EMPTY))SUBSET
         symb_interpr_dom H` by (
     METIS_TAC [symb_subst_f_sound_def]
   ) >>
@@ -558,10 +560,15 @@ val symb_subst_suitable_interpretation_thm = store_thm(
 
   `sr.sr_symbols_f (sr.sr_subst_f (symb,symb_inst) c) SUBSET
         symb_interpr_dom H` by (
-    `(sr.sr_symbols_f c DIFF {symb} UNION sr.sr_symbols_f symb_inst) SUBSET symb_interpr_dom H` by (
+    `(sr.sr_symbols_f c DIFF {symb} UNION (sr.sr_symbols_f symb_inst)) SUBSET symb_interpr_dom H` by (
       METIS_TAC [UNION_SUBSET, DIFF_SUBSET, SUBSET_TRANS]
     ) >>
-    METIS_TAC [symb_subst_f_sound_def]
+    `(sr.sr_symbols_f c DIFF {symb}) SUBSET symb_interpr_dom H` by (
+      METIS_TAC [UNION_SUBSET, DIFF_SUBSET, SUBSET_TRANS]
+    ) >>
+    Cases_on `symb IN sr.sr_symbols_f c` >> (
+      METIS_TAC [symb_subst_f_sound_def, UNION_EMPTY]
+    )
   ) >>
 
   METIS_TAC [UNION_SUBSET]
@@ -588,7 +595,7 @@ val symb_subst_suitable_interpretation_thm2 = store_thm(
     METIS_TAC [symb_subst_store_symbols_thm2]
   ) >>
 
-  `(sr.sr_symbols_f c DIFF {symb} UNION sr.sr_symbols_f symb_inst) SUBSET symb_interpr_dom H` by (
+  `(sr.sr_symbols_f c DIFF {symb} UNION (if symb IN sr.sr_symbols_f c then sr.sr_symbols_f symb_inst else EMPTY)) SUBSET symb_interpr_dom H` by (
     METIS_TAC [symb_subst_f_sound_def]
   ) >>
   FULL_SIMP_TAC std_ss [UNION_SUBSET, GSYM DELETE_DEF, GSYM SUBSET_INSERT_DELETE] >>
