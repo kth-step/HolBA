@@ -330,15 +330,49 @@ symb_subst_f_sound sr
 =========================================================================
  *)
 
+val birs_interpret_fun_bir_exp_subst1_interpr_update_sound_thm = store_thm(
+   "birs_interpret_fun_bir_exp_subst1_interpr_update_sound_thm", ``
+!H v symb symb_inst e.
+  (type_of_bir_exp symb_inst = SOME (bir_var_type symb)) ==>
+  (birs_interpret_fun H symb_inst = SOME v) ==>
+  (birs_interpret_fun H (bir_exp_subst1 symb symb_inst e) =
+   birs_interpret_fun (symb_interpr_update H (symb,SOME v)) e)
+``,
+  Induct_on `e` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_thm, birs_interpret_fun_ALT_def, bir_exp_subst1_def, bir_exp_subst_def]
+  ) >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_thm, birs_interpret_fun_ALT_def, bir_exp_subst1_def, bir_exp_subst_def]
+  ) >- (
+    (* BExp_Den *)
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_thm, birs_interpret_fun_ALT_def, bir_exp_subst1_def, bir_exp_subst_def, bir_exp_subst_var_def, FLOOKUP_UPDATE, FLOOKUP_EMPTY] >>
+    REPEAT STRIP_TAC >>
+
+    Cases_on `symb = b` >> Cases_on `b IN symb_interpr_dom H` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_thm, birs_interpret_fun_ALT_def, bir_exp_subst1_def, bir_exp_subst_def, bir_exp_subst_var_def, FLOOKUP_UPDATE, FLOOKUP_EMPTY] >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_get_var_def, symb_interpr_dom_UPDATE_SOME_thm, IN_INSERT, symb_interpr_get_update_thm]
+    )
+  ) >> (
+    REPEAT STRIP_TAC >>
+    SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_thm, birs_interpret_fun_ALT_def, bir_exp_subst1_def, bir_exp_subst_def] >>
+    REWRITE_TAC [GSYM birs_interpret_fun_thm, GSYM bir_exp_subst1_def] >>
+    REPEAT (PAT_X_ASSUM ``!A.B`` (IMP_RES_TAC)) >>
+    METIS_TAC []
+  )
+);
+
 val birs_symb_subst_f_sound_thm = store_thm(
    "birs_symb_subst_f_sound_thm", ``
 !prog.
   symb_subst_f_sound (bir_symb_rec_sbir prog)
 ``,
   SIMP_TAC (std_ss++symb_TYPES_ss) [symb_subst_f_sound_def, bir_symb_rec_sbir_def] >>
+  REPEAT STRIP_TAC >- (
+    (* interpretation *)
+    METIS_TAC [birs_interpret_fun_bir_exp_subst1_interpr_update_sound_thm]
+  ) >>
 
-  REPEAT STRIP_TAC >>
-  cheat
+  (* variable set *)
+  METIS_TAC [bir_exp_subst1_USED_VARS]
 );
 
 

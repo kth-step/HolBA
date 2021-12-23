@@ -872,7 +872,7 @@ val bir_symb_rec_sbir_def = Define `
       sr_mk_exp_conj_f   := BExp_BinExp BIExp_And;
       sr_mk_exp_eq_f     := \e1. if option_CASE (type_of_bir_exp e1) F bir_type_is_Mem then BExp_MemEq e1 else BExp_BinPred BIExp_Equal e1;
 
-      sr_subst_f         := \(s,e). bir_exp_subst (FUPDATE FEMPTY (s,e));
+      sr_subst_f         := \(s,e). bir_exp_subst1 s e;
 
       (* symbols of symbolic exepressions *)
       sr_symbols_f       := bir_vars_of_exp;
