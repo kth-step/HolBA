@@ -845,6 +845,49 @@ val birs_exec_stmt_halt_sound_thm = store_thm(
   FULL_SIMP_TAC (std_ss++holBACore_ss++symb_TYPES_ss++birs_state_ss) [birs_symb_symbols_def]
 );
 
+val birs_eval_label_exp_SOME_sound_thm = store_thm(
+   "birs_eval_label_exp_SOME_sound_thm", ``
+!sys s H le ls l.
+  (birs_symb_matchstate sys H s) ==>
+  (birs_eval_label_exp le sys.bsst_environ sys.bsst_pcond = SOME ls) ==>
+  (?l. l IN ls /\ bir_eval_label_exp le s.bst_environ = SOME l)
+``,
+(*
+birs_eval_label_exp_def
+bir_eval_label_exp_def
+*)
+  cheat
+);
+
+val birs_eval_label_exp_NONE_sound_thm = store_thm(
+   "birs_eval_label_exp_NONE_sound_thm", ``
+!sys s H le.
+  (birs_symb_matchstate sys H s) ==>
+  (birs_eval_label_exp le sys.bsst_environ sys.bsst_pcond = NONE) ==>
+  (bir_eval_label_exp le s.bst_environ = NONE)
+``,
+(*
+birs_eval_label_exp_def
+bir_eval_label_exp_def
+*)
+  cheat
+);
+
+val birs_exec_stmt_jmp_to_label_sound_thm = store_thm(
+   "birs_exec_stmt_jmp_to_label_sound_thm", ``
+!sys s H p l sys' s'.
+  (birs_symb_matchstate sys H s) ==>
+  (birs_exec_stmt_jmp_to_label p sys l = sys') ==>
+  (bir_exec_stmt_jmp_to_label p l s = s') ==>
+  (birs_symb_matchstate sys' H s')
+``,
+(*
+birs_exec_stmt_jmp_to_label_def
+bir_exec_stmt_jmp_to_label_def
+*)
+  cheat
+);
+
 val birs_exec_stmt_jmp_sound_thm = store_thm(
    "birs_exec_stmt_jmp_sound_thm", ``
 !p le s s' sys Pi H.
@@ -853,7 +896,27 @@ val birs_exec_stmt_jmp_sound_thm = store_thm(
   (birs_symb_matchstate sys H s) ==>
   (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
 ``,
-  cheat
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss)
+    [bir_exec_stmt_jmp_def, birs_exec_stmt_jmp_def] >>
+
+  Cases_on `birs_eval_label_exp le sys.bsst_environ sys.bsst_pcond` >- (
+    (* type error: NONE case *)
+    IMP_RES_TAC birs_eval_label_exp_NONE_sound_thm >>
+
+    (* finish the error cases as usual/above *)
+    FULL_SIMP_TAC (std_ss) [] >>
+    IMP_RES_TAC (Q.SPECL [`s`, `sys`] birs_state_set_typeerror_SING_symb_matchstate_thm) >>
+    TRY HINT_EXISTS_TAC >>
+    FULL_SIMP_TAC (std_ss) []
+  ) >>
+
+  (* when we compute a label set: SOME case *)
+  IMP_RES_TAC birs_eval_label_exp_SOME_sound_thm >>
+  FULL_SIMP_TAC (std_ss) [] >>
+
+  METIS_TAC [birs_exec_stmt_jmp_to_label_sound_thm, IN_IMAGE]
 );
 
 val birs_exec_stmt_cjmp_sound_thm = store_thm(
@@ -864,6 +927,11 @@ val birs_exec_stmt_cjmp_sound_thm = store_thm(
   (birs_symb_matchstate sys H s) ==>
   (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
 ``,
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss)
+    [bir_exec_stmt_cjmp_def, birs_exec_stmt_cjmp_def] >>
+
   cheat
 );
 
