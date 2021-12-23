@@ -734,7 +734,16 @@ val birs_exec_stmt_assume_def = Define `
 `;
 
 val birs_exec_stmt_observe_def = Define `
-    birs_exec_stmt_observe oid ec el obf st = {st}
+    birs_exec_stmt_observe oid ec el obf st =
+  let
+    svol = MAP (\e. birs_eval_exp e st.bsst_environ) el;
+  in
+   if EXISTS IS_NONE svol then
+     ({birs_state_set_typeerror st})
+   else
+  case birs_eval_exp ec st.bsst_environ of
+    | SOME (svob, BType_Imm Bit1) => {st}
+    | _ => ({birs_state_set_typeerror st})
 `;
 
 val birs_exec_stmtB_def = Define `
@@ -750,14 +759,10 @@ val birs_exec_stmtB_def = Define `
 
 (* ... *)
 
-(* TODO: OHHHHHHHHHHHHHH NOOOOOOOOOOOOOOOOOOO *)
+(* TODO: we have a branch with BIR that does not contain an error code in BST_Halted *)
 val birs_exec_stmt_halt_def = Define `
-    birs_exec_stmt_halt ex (st : birs_state_t) = {st}
-(*
-      case birs_eval_exp ex st.bsst_environ of
-     | SOME (vaex, _) => {st with bsst_status := BST_Halted ex}
-     | NONE => {birs_state_set_typeerror st}
-*)
+    birs_exec_stmt_halt ex (st : birs_state_t) =
+      {st with bsst_status := BST_Halted (BVal_Imm (Imm1 0w))}
 `;
 
 val birs_exec_stmt_jmp_to_label_def = Define `
