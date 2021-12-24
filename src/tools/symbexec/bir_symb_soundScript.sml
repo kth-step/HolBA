@@ -678,6 +678,14 @@ val symb_interpr_for_symbs_UPD_status_thm = store_thm(
   FULL_SIMP_TAC (std_ss++birs_state_ss) [symb_interpr_for_symbs_def, birs_symb_symbols_def]
 );
 
+val birs_branch_def = Define `
+   (birs_branch T sv sys =
+      sys with bsst_pcond := BExp_BinExp BIExp_And sys.bsst_pcond sv) /\
+   (birs_branch F sv sys =
+      sys with bsst_pcond := BExp_BinExp BIExp_And sys.bsst_pcond (BExp_UnaryExp BIExp_Not sv))
+`;
+
+(* TODO: want to introduce definition for a triple (eval, seval, interpr)? *)
 val birs_symb_matchstate_COND_UNION_thm = store_thm(
    "birs_symb_matchstate_COND_UNION_thm", ``
 !s sys H e sv bv stfun sffun systfun sysffun s' Pi.
@@ -685,48 +693,37 @@ val birs_symb_matchstate_COND_UNION_thm = store_thm(
   (birs_eval_exp e sys.bsst_environ = SOME (sv,BType_Imm Bit1)) ==>
   (bir_eval_exp e s.bst_environ = SOME (BVal_Imm (Imm1 (bool2w bv)))) ==>
   (birs_interpret_fun H sv = bir_eval_exp e s.bst_environ) ==>
-(*
-  (?sys'. sys' IN systfun (sys with bsst_pcond := BExp_BinExp BIExp_And sys.bsst_pcond sv) /\
-          birs_symb_matchstate sys' H (stfun s)) ==>
-  (?sys'. sys' IN sysffun (sys with bsst_pcond := BExp_BinExp BIExp_And sys.bsst_pcond (BExp_UnaryExp BIExp_Not sv)) /\
-          birs_symb_matchstate sys' H (sffun s)) ==>
-*)
 
-  (birs_symb_matchonestate (systfun sys) H (stfun s)) ==>
-  (birs_symb_matchonestate (sysffun sys) H (sffun s)) ==>
-
-(*
-  (syst IN systfun sys) ==>
-  (birs_symb_matchstate syst H (stfun s)) ==>
-  (sysf IN sysffun sys) ==>
-  (birs_symb_matchstate sysf H (sffun s)) ==>
-*)
+  (if bv then
+     birs_symb_matchonestate (systfun (birs_branch T sv sys)) H (stfun s)
+   else
+     birs_symb_matchonestate (sysffun (birs_branch F sv sys)) H (sffun s)) ==>
 
   ((if bv then stfun s else sffun s) = s') ==>
-  ((IMAGE (\x. x with bsst_pcond := BExp_BinExp BIExp_And sys.bsst_pcond sv) (systfun sys)) UNION
-   (IMAGE (\x. x with bsst_pcond := BExp_BinExp BIExp_And sys.bsst_pcond (BExp_UnaryExp BIExp_Not sv)) (sysffun sys))
+  ((systfun (birs_branch T sv sys)) UNION
+   (sysffun (birs_branch F sv sys))
    = Pi) ==>
-  (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
+
+  (birs_symb_matchonestate Pi H s')
 ``,
   REWRITE_TAC [birs_symb_matchonestate_def] >>
   REPEAT STRIP_TAC >>
 
-  rename1 `syst ∈ systfun sys` >>
-  rename1 `sysf ∈ sysffun sys` >>
   Cases_on `bv` >> (
-    FULL_SIMP_TAC (std_ss) []
-  ) >| [
-    Q.EXISTS_TAC `syst with bsst_pcond := BExp_BinExp BIExp_And sys.bsst_pcond sv`
-    ,
-    Q.EXISTS_TAC `sysf with bsst_pcond := BExp_BinExp BIExp_And sys.bsst_pcond (BExp_UnaryExp BIExp_Not sv)`
-  ] >> (
+    FULL_SIMP_TAC (std_ss) [] >>
+    rename1 `sysx ∈ sysxfun (birs_branch bv sv sys)` >>
+    Q.EXISTS_TAC `sysx` >>
+
     CONJ_TAC >- (
       METIS_TAC [IN_UNION, IN_IMAGE, IN_DEF]
     ) >>
 
     FULL_SIMP_TAC (std_ss++PRED_SET_ss) [birs_symb_matchstate_def] >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss++symb_TYPES_ss++birs_state_ss) [] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss++symb_TYPES_ss++birs_state_ss) []
+  )
+);
 
+(*
     CONJ_TAC >- (
       METIS_TAC [symb_interpr_for_symbs_COND_thm]
     )
@@ -738,6 +735,7 @@ val birs_symb_matchstate_COND_UNION_thm = store_thm(
     wordsLib.WORD_DECIDE_TAC
   )
 );
+*)
 
 
 val birs_symb_matchstate_COND_thm = store_thm(
@@ -1071,6 +1069,31 @@ val birs_exec_stmt_jmp_sound_thm = store_thm(
   METIS_TAC [birs_exec_stmt_jmp_to_label_sound_thm, IN_IMAGE]
 );
 
+val birs_symb_matchstate_BRANCH_thm = store_thm(
+   "birs_symb_matchstate_BRANCH_thm", ``
+!sys H s e sv bv.
+  (birs_symb_matchstate sys H s) ==>
+  (birs_eval_exp e sys.bsst_environ = SOME (sv,BType_Imm Bit1)) ==>
+  (bir_eval_exp e s.bst_environ = SOME (BVal_Imm (Imm1 (bool2w bv)))) ==>
+  (birs_interpret_fun H sv = bir_eval_exp e s.bst_environ) ==>
+  (birs_symb_matchstate (birs_branch bv sv sys) H s)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `bv` >> (
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def, birs_branch_def] >>
+
+    CONJ_TAC >- (
+      METIS_TAC [symb_interpr_for_symbs_COND_thm]
+    )
+  ) >> (
+    REV_FULL_SIMP_TAC (std_ss) [GSYM bir_val_true_def] >>
+
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
+    SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def, bir_immTheory.bool2w_def] >>
+    wordsLib.WORD_DECIDE_TAC
+  )
+);
+
 val birs_exec_stmt_cjmp_sound_thm = store_thm(
    "birs_exec_stmt_cjmp_sound_thm", ``
 !p ex le1 le2 s s' sys Pi H.
@@ -1102,8 +1125,42 @@ val birs_exec_stmt_cjmp_sound_thm = store_thm(
 birs_symb_matchonestate_def
 *)
 
-  IMP_RES_TAC (REWRITE_RULE [GSYM birs_symb_matchonestate_def] (SIMP_RULE std_ss [] birs_exec_stmt_jmp_sound_thm)) >>
-  POP_ASSUM (fn thm => (ASSUME_TAC (Q.SPECL [`p`, `le1`] thm) >> ASSUME_TAC (Q.SPECL [`p`, `le2`] thm))) >>
+  FULL_SIMP_TAC std_ss [GSYM birs_branch_def, GSYM birs_symb_matchonestate_def] >>
+  IMP_RES_TAC birs_symb_matchstate_BRANCH_thm >>
+
+  `if x then
+          birs_symb_matchonestate (birs_exec_stmt_jmp p le1 (birs_branch T sv sys)) H
+            (bir_exec_stmt_jmp p le1 s)
+        else
+          birs_symb_matchonestate (birs_exec_stmt_jmp p le2 (birs_branch F sv sys)) H
+            (bir_exec_stmt_jmp p le2 s)` by (
+    
+    Cases_on `x` >> (
+(*
+      FULL_SIMP_TAC std_ss [] >>
+
+      IMP_RES_TAC (REWRITE_RULE [GSYM birs_symb_matchonestate_def] (SIMP_RULE std_ss [] birs_exec_stmt_jmp_sound_thm)) >>
+  POP_ASSUM (K ALL_TAC) >>
+  REPEAT (PAT_X_ASSUM ``!A.B`` (fn thm => (ASSUME_TAC (Q.SPECL [`p`, `le1`] thm)(* >> ASSUME_TAC (Q.SPECL [`p`, `le2`] thm)*)))) >>
+*)
+ METIS_TAC[REWRITE_RULE [GSYM birs_symb_matchonestate_def] (SIMP_RULE std_ss [] birs_exec_stmt_jmp_sound_thm)]
+
+    (*METIS_TAC [birs_exec_stmt_jmp_sound_thm]*)
+    )
+  ) >>
+
+IMP_RES_TAC birs_symb_matchstate_COND_UNION_thm
+);
+
+(*
+  Cases_on `x` >> (
+    FULL_SIMP_TAC std_ss [] >>
+
+
+  METIS_TAC [birs_symb_matchstate_COND_UNION_thm]
+
+
+
 
 (*
   ASSUME_TAC (Q.SPECL [`p`, `le1`] (SIMP_RULE std_ss [] birs_exec_stmt_jmp_sound_thm)) >>
@@ -1113,6 +1170,10 @@ birs_symb_matchonestate_def
 *)
 
   REWRITE_TAC [GSYM birs_symb_matchonestate_def] >>
+
+
+METIS_TAC [birs_symb_matchstate_COND_UNION_thm]
+
 
 FULL_SIMP_TAC std_ss [(GSYM (prove(
 ``
@@ -1125,6 +1186,9 @@ FULL_SIMP_TAC std_ss [(GSYM (prove(
 
 
   IMP_RES_TAC (REWRITE_RULE [GSYM birs_symb_matchonestate_def] birs_symb_matchstate_COND_UNION_thm)
+
+  IMP_RES_TAC
+((REWRITE_RULE [GSYM birs_symb_matchonestate_def] birs_symb_matchstate_COND_UNION_thm))
 
 (*
   METIS_TAC []
@@ -1187,6 +1251,7 @@ birs_exec_stmt_jmp_sound_thm
   *)
 *)
 );
+*)
 *)
 
 val birs_exec_stmtE_sound_thm = store_thm(
