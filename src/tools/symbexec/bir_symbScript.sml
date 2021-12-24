@@ -455,6 +455,15 @@ val birs_eval_exp_IMP_type_thm = store_thm(
      birs_senv_typecheck_IMP_birs_eval_exp_subst_type_thm]
 );
 
+val bir_vars_of_exp_IMP_symbs_SUBSET_senv_thm = store_thm(
+   "bir_vars_of_exp_IMP_symbs_SUBSET_senv_thm", ``
+!e senv sv ty.
+  (birs_eval_exp e senv = SOME (sv,ty)) ==>
+  (bir_vars_of_exp sv SUBSET (BIGUNION {bir_vars_of_exp e | (?vn. senv vn = SOME e)}))
+``,
+  cheat
+);
+
 
 
 val bir_val_to_constexp_def = Define `
