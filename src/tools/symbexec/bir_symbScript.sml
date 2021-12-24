@@ -419,6 +419,122 @@ val birs_eval_exp_def = Define `
         NONE
 `;
 
+val birs_eval_exp_subst_var_ALT_def = Define `
+    birs_eval_exp_subst_var_ALT x senv =
+      OPTION_BIND
+        (senv (bir_var_name x))
+        (\x_ex. if type_of_bir_exp (x_ex) = SOME (bir_var_type x) then
+                  SOME x_ex
+                else NONE) 
+`;
+val birs_eval_cast_def = Define `
+  (birs_eval_cast ct (SOME e) ty =
+     if ~(option_CASE (type_of_bir_exp e) F bir_type_is_Imm) then NONE else
+     SOME (BExp_Cast ct e ty)) /\
+  (birs_eval_cast _ _ _ = NONE)`;
+
+val birs_eval_unary_exp_def = Define `
+  (birs_eval_unary_exp et (SOME e) =
+     if ~(option_CASE (type_of_bir_exp e) F bir_type_is_Imm) then NONE else
+     SOME (BExp_UnaryExp et e)) /\
+  (birs_eval_unary_exp _ _ = NONE)`;
+
+val birs_eval_bin_exp_def = Define `
+  (birs_eval_bin_exp et (SOME e1) (SOME e2) =
+     if ~(option_CASE (type_of_bir_exp e1) F bir_type_is_Imm) \/ (type_of_bir_exp e1 <> type_of_bir_exp e2) then NONE else
+     SOME (BExp_BinExp et e1 e2)) /\
+  (birs_eval_bin_exp _ _ _ = NONE)`;
+
+val birs_eval_bin_pred_def = Define `
+  (birs_eval_bin_pred pt (SOME e1) (SOME e2) =
+     if ~(option_CASE (type_of_bir_exp e1) F bir_type_is_Imm) \/ (type_of_bir_exp e1 <> type_of_bir_exp e2) then NONE else
+     SOME (BExp_BinPred pt e1 e2)) /\
+  (birs_eval_bin_pred _ _ _ = NONE)`;
+
+val birs_eval_memeq_def = Define `
+  (birs_eval_memeq (SOME e1) (SOME e2) =
+     if ~(option_CASE (type_of_bir_exp e1) F bir_type_is_Mem) \/ (type_of_bir_exp e1 <> type_of_bir_exp e2) then NONE else
+     SOME (BExp_MemEq e1 e2)) /\
+  (birs_eval_memeq _ _ = NONE)`;
+
+val birs_eval_ifthenelse_def = Define `
+  (birs_eval_ifthenelse (SOME ec) (SOME et) (SOME ef) =
+     if ~(option_CASE (type_of_bir_exp ec) F (bir_type_is_Imm_s Bit1)) \/ IS_NONE (type_of_bir_exp et) \/ (type_of_bir_exp et <> type_of_bir_exp ef) then NONE else
+       SOME (BExp_IfThenElse ec et ef)) /\
+  (birs_eval_ifthenelse _ _ _ = NONE)`;
+
+val birs_eval_load_def = Define `
+  (birs_eval_load (SOME em) (SOME ea) en sz =
+     case type_of_bir_exp em of
+      | SOME (BType_Mem aty vty) =>
+         case type_of_bir_exp ea of
+          | SOME (BType_Imm avty) =>
+             if aty <> avty \/ (en = BEnd_NoEndian /\ vty <> sz) \/ (en <> BEnd_NoEndian /\ IS_NONE (bir_number_of_mem_splits vty sz aty)) then NONE else
+             SOME (BExp_Load em ea en sz)
+          | _ => NONE
+      | _ => NONE) /\
+  (birs_eval_load _ _ _ _ = NONE)`;
+
+val birs_eval_store_def = Define `
+  (birs_eval_store (SOME em) (SOME ea) en (SOME ev) =
+     case type_of_bir_exp em of
+      | SOME (BType_Mem aty vty) =>
+         case type_of_bir_exp ea of
+          | SOME (BType_Imm avty) =>
+             case type_of_bir_exp ev of
+              | SOME (BType_Imm sz) =>
+                 if aty <> avty \/ (en = BEnd_NoEndian /\ vty <> sz) \/ (en <> BEnd_NoEndian /\ IS_NONE (bir_number_of_mem_splits vty sz aty)) then NONE else
+                 SOME (BExp_Store em ea en ev)
+              | _ => NONE
+          | _ => NONE
+      | _ => NONE) /\
+  (birs_eval_store _ _ _ _ = NONE)`;
+
+val birs_eval_exp_ALT2_def = Define `
+   (birs_eval_exp_ALT2 (BExp_Const n) senv = SOME (BExp_Const n)) /\
+   (birs_eval_exp_ALT2 (BExp_MemConst aty vty mmap) senv = SOME (BExp_MemConst aty vty mmap)) /\
+   (birs_eval_exp_ALT2 (BExp_Den v) senv = birs_eval_exp_subst_var_ALT v senv) /\
+   (birs_eval_exp_ALT2 (BExp_Cast ct e ty) senv =
+      birs_eval_cast ct
+        (birs_eval_exp_ALT2 e senv) ty) /\
+   (birs_eval_exp_ALT2 (BExp_UnaryExp et e) senv =
+      birs_eval_unary_exp et
+        (birs_eval_exp_ALT2 e senv)) /\
+   (birs_eval_exp_ALT2 (BExp_BinExp et e1 e2) senv =
+      birs_eval_bin_exp et
+        (birs_eval_exp_ALT2 e1 senv)
+        (birs_eval_exp_ALT2 e2 senv)) /\
+   (birs_eval_exp_ALT2 (BExp_BinPred pt e1 e2) senv =
+      birs_eval_bin_pred pt
+        (birs_eval_exp_ALT2 e1 senv)
+        (birs_eval_exp_ALT2 e2 senv)) /\
+   (birs_eval_exp_ALT2 (BExp_MemEq me1 me2) senv =
+      birs_eval_memeq
+        (birs_eval_exp_ALT2 me1 senv)
+        (birs_eval_exp_ALT2 me2 senv)) /\
+   (birs_eval_exp_ALT2 (BExp_IfThenElse c et ef) senv =
+      birs_eval_ifthenelse
+        (birs_eval_exp_ALT2 c senv)
+        (birs_eval_exp_ALT2 et senv)
+        (birs_eval_exp_ALT2 ef senv)) /\
+   (birs_eval_exp_ALT2 (BExp_Load mem_e a_e en ty) senv =
+      birs_eval_load
+        (birs_eval_exp_ALT2 mem_e senv)
+        (birs_eval_exp_ALT2 a_e senv)
+        en
+        ty) /\
+   (birs_eval_exp_ALT2 (BExp_Store mem_e a_e en v_e) senv =
+      birs_eval_store
+        (birs_eval_exp_ALT2 mem_e senv)
+        (birs_eval_exp_ALT2 a_e senv)
+        en
+        (birs_eval_exp_ALT2 v_e senv))
+`;
+val birs_eval_exp_ALT_def = Define `
+    birs_eval_exp_ALT e senv =
+      OPTION_MAP (\se. (se, THE (type_of_bir_exp se))) (birs_eval_exp_ALT2 e senv)
+`;
+
 
 val birs_eval_exp_NONE_EQ_bir_exp_env_type_thm = store_thm(
    "birs_eval_exp_NONE_EQ_bir_exp_env_type_thm", ``
