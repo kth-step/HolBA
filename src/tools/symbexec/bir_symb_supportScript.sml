@@ -622,30 +622,30 @@ val bir_exp_subst_FUN_FMAP_bir_vars_of_exp_UNION_thm = store_thm(
 
 val bir_load_from_mem_IS_SOME_thm = store_thm(
    "bir_load_from_mem_IS_SOME_thm", ``
-!b0 b1 b mmap b2 a.
-  (if b2 = BEnd_NoEndian then b0 = b1
-        else bir_number_of_mem_splits b0 b1 b ≠ NONE) ==>
-  (?v. bir_load_from_mem b0 b1 b mmap b2 a = SOME v)
+!vty sz aty mmap en anum.
+  (if en = BEnd_NoEndian then vty = sz
+        else bir_number_of_mem_splits vty sz aty ≠ NONE) ==>
+  (?v. bir_load_from_mem vty sz aty mmap en anum = SOME v)
 ``,
   REPEAT STRIP_TAC >>
-  `?abc. bir_number_of_mem_splits b0 b1 b = SOME abc` by (
-    Cases_on `b2 = BEnd_NoEndian` >> (
+  `?abc. bir_number_of_mem_splits vty sz aty = SOME abc` by (
+    Cases_on `en = BEnd_NoEndian` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_number_of_mem_splits_def]
     ) >>
 
-    Q.ABBREV_TAC `abc = size_of_bir_immtype b1` >>
+    Q.ABBREV_TAC `abc = size_of_bir_immtype sz` >>
     `0 < abc` by (
       Q.UNABBREV_TAC `abc` >>
-      Cases_on `b1` >> (
+      Cases_on `sz` >> (
         FULL_SIMP_TAC (arith_ss++holBACore_ss) []
       )
     ) >>
-    Cases_on `b` >> (
+    Cases_on `aty` >> (
       FULL_SIMP_TAC (arith_ss++holBACore_ss) []
     )
   ) >>
 
-  Cases_on `b2` >> (
+  Cases_on `en` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
   ) >> (
     METIS_TAC [bir_load_from_mem_EQ_SOME, bir_number_of_mem_splits_ID]
@@ -654,31 +654,31 @@ val bir_load_from_mem_IS_SOME_thm = store_thm(
 
 val bir_store_in_mem_IS_SOME_thm = store_thm(
    "bir_store_in_mem_IS_SOME_thm", ``
-!b1t b0 b b1 mmap b2 a.
-  (type_of_bir_imm b1 = b1t) ==>
-  (if b2 = BEnd_NoEndian then b0 = b1t
-        else bir_number_of_mem_splits b0 b1t b ≠ NONE) ==>
-  (?v. bir_store_in_mem b0 b b1 mmap b2 a = SOME v)
+!sz vty aty v mmap en anum.
+  (type_of_bir_imm v = sz) ==>
+  (if en = BEnd_NoEndian then vty = sz
+        else bir_number_of_mem_splits vty sz aty ≠ NONE) ==>
+  (?vm. bir_store_in_mem vty aty v mmap en anum = SOME vm)
 ``,
   REPEAT STRIP_TAC >>
-  `?abc. bir_number_of_mem_splits b0 b1t b = SOME abc` by (
-    Cases_on `b2 = BEnd_NoEndian` >> (
+  `?abc. bir_number_of_mem_splits vty sz aty = SOME abc` by (
+    Cases_on `en = BEnd_NoEndian` >> (
       FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_number_of_mem_splits_def]
     ) >>
 
-    Q.ABBREV_TAC `abc = size_of_bir_immtype b1t` >>
+    Q.ABBREV_TAC `abc = size_of_bir_immtype sz` >>
     `0 < abc` by (
       Q.UNABBREV_TAC `abc` >>
-      Cases_on `b1t` >> (
+      Cases_on `sz` >> (
         FULL_SIMP_TAC (arith_ss++holBACore_ss) []
       )
     ) >>
-    Cases_on `b` >> (
+    Cases_on `aty` >> (
       FULL_SIMP_TAC (arith_ss++holBACore_ss) []
     )
   ) >>
 
-  Cases_on `b2` >> (
+  Cases_on `en` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
   ) >> (
     METIS_TAC [bir_store_in_mem_EQ_SOME, bir_number_of_mem_splits_ID]
