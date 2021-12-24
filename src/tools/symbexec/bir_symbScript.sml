@@ -224,6 +224,7 @@ val birs_eval_exp_subst_ALT_def = Define `
         e
 `;
 
+(* TODO: this should go to bir_symb_support *)
 val bir_exp_subst_FUN_FMAP_bir_vars_of_exp_thm = store_thm(
    "bir_exp_subst_FUN_FMAP_bir_vars_of_exp_thm", ``
 !e X Y.
@@ -530,10 +531,98 @@ val birs_eval_exp_ALT2_def = Define `
         en
         (birs_eval_exp_ALT2 v_e senv))
 `;
+
+val birs_eval_exp_ALT2_typeerr_thm = store_thm(
+   "birs_eval_exp_ALT2_typeerr_thm", ``
+!e senv.
+  ((~(bir_envty_includes_vs (birs_envty_of_senv senv) (bir_vars_of_exp e))) \/
+   (type_of_bir_exp e = NONE)) ==>
+  (birs_eval_exp_ALT2 e senv = NONE)
+``,
+  cheat
+);
+
+val birs_eval_exp_ALT2_typeok_thm = store_thm(
+   "birs_eval_exp_ALT2_typeok_thm", ``
+!e senv ty sv.
+  (bir_envty_includes_vs (birs_envty_of_senv senv) (bir_vars_of_exp e)) ==>
+  (type_of_bir_exp e = SOME ty) ==>
+  (birs_eval_exp_ALT2 e senv = SOME sv) ==>
+  (type_of_bir_exp sv = SOME ty)
+``,
+  cheat
+);
+
+val birs_eval_exp_ALT2_thm = store_thm(
+   "birs_eval_exp_ALT2_thm", ``
+!e senv.
+  (bir_envty_includes_vs (birs_envty_of_senv senv) (bir_vars_of_exp e)) ==>
+  (IS_SOME (type_of_bir_exp e)) ==>
+  (SOME (birs_eval_exp_subst e senv) = birs_eval_exp_ALT2 e senv)
+``,
+  Induct_on `e` >- (
+    FULL_SIMP_TAC (std_ss)
+      ([birs_eval_exp_subst_def, birs_eval_exp_ALT2_def, LET_DEF, birs_senv_typecheck_thm]@
+       [type_of_bir_exp_def, bir_vars_of_exp_def, bir_envty_includes_vs_def, NOT_IN_EMPTY])
+  ) >- (
+    FULL_SIMP_TAC (std_ss)
+      ([birs_eval_exp_subst_def, birs_eval_exp_ALT2_def, LET_DEF, birs_senv_typecheck_thm]@
+       [type_of_bir_exp_def, bir_vars_of_exp_def, bir_envty_includes_vs_def, NOT_IN_EMPTY])
+  ) >- (
+    FULL_SIMP_TAC (std_ss)
+      ([birs_eval_exp_subst_def, birs_eval_exp_ALT2_def, LET_DEF, birs_senv_typecheck_thm]@
+       [type_of_bir_exp_def, bir_vars_of_exp_def, bir_envty_includes_vs_def, NOT_IN_EMPTY]) >>
+    SIMP_TAC (std_ss)
+      [birs_eval_exp_subst_var_ALT_def, IN_SING, bir_envty_includes_v_def, birs_eval_exp_subst_var_def, birs_envty_of_senv_def] >>
+    REPEAT STRIP_TAC >> (
+      FULL_SIMP_TAC (std_ss) [option_CLAUSES]
+    )
+  ) >- (
+    REPEAT STRIP_TAC >>
+    REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPEC `senv`)) >>
+
+    FULL_SIMP_TAC (std_ss)
+      ([birs_eval_exp_subst_def, birs_eval_exp_ALT2_def]@
+       [type_of_bir_exp_def, bir_vars_of_exp_def]) >>
+
+    Cases_on `type_of_bir_exp e` >> (
+      FULL_SIMP_TAC (std_ss) [IS_SOME_EXISTS]
+    ) >>
+
+    Cases_on `birs_eval_exp_ALT2 e senv` >> (
+      FULL_SIMP_TAC (std_ss) [birs_eval_cast_def]
+    ) >>
+    REV_FULL_SIMP_TAC (std_ss) [] >>
+
+    IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
+    FULL_SIMP_TAC (std_ss) []
+  ) >> (
+    cheat
+  )
+);
+
 val birs_eval_exp_ALT_def = Define `
     birs_eval_exp_ALT e senv =
       OPTION_MAP (\se. (se, THE (type_of_bir_exp se))) (birs_eval_exp_ALT2 e senv)
 `;
+
+val birs_eval_exp_ALT_thm = store_thm(
+   "birs_eval_exp_ALT_thm", ``
+!e senv.
+  birs_eval_exp e senv = birs_eval_exp_ALT e senv
+``,
+  FULL_SIMP_TAC (std_ss)
+      [birs_eval_exp_def, birs_eval_exp_ALT_def, LET_DEF, birs_senv_typecheck_thm] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `bir_envty_includes_vs (birs_envty_of_senv senv)
+            (bir_vars_of_exp e) /\ IS_SOME (type_of_bir_exp e)` >> (
+      FULL_SIMP_TAC (std_ss) [IS_SOME_EXISTS, option_CLAUSES, birs_eval_exp_ALT2_thm, birs_senv_typecheck_IMP_birs_eval_exp_subst_type_thm, birs_senv_typecheck_thm]
+  ) >> (
+    METIS_TAC [birs_eval_exp_ALT2_typeerr_thm]
+  )
+);
+(* TODO: rename the other theorem to birs_interpr_fun_ALT_thm *)
 
 
 val birs_eval_exp_NONE_EQ_bir_exp_env_type_thm = store_thm(
