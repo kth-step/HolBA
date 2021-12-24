@@ -118,6 +118,11 @@ val birs_symb_matchstate_def = Define `
       (sys.bsst_status = s.bst_status))
 `;
 
+val birs_symb_matchonestate_def = Define `
+    birs_symb_matchonestate Pi H s =
+      ?sys. sys IN Pi /\ birs_symb_matchstate sys H s
+`;
+
 val birs_symb_matchstate_EQ_thm = store_thm(
    "birs_symb_matchstate_EQ_thm", ``
 !prog sys H s.
