@@ -777,13 +777,76 @@ val birs_eval_exp_IMP_type_thm = store_thm(
      birs_senv_typecheck_IMP_birs_eval_exp_subst_type_thm]
 );
 
+(* TODO: define predicate for symbols of birs store? *)
 val bir_vars_of_exp_IMP_symbs_SUBSET_senv_thm = store_thm(
    "bir_vars_of_exp_IMP_symbs_SUBSET_senv_thm", ``
 !e senv sv ty.
   (birs_eval_exp e senv = SOME (sv,ty)) ==>
   (bir_vars_of_exp sv SUBSET (BIGUNION {bir_vars_of_exp e | (?vn. senv vn = SOME e)}))
 ``,
-  cheat
+  REWRITE_TAC [birs_eval_exp_ALT_thm, birs_eval_exp_ALT_def] >>
+  Induct_on `e` >> (
+    SIMP_TAC std_ss [birs_eval_exp_ALT_def, birs_eval_exp_ALT2_def, bir_vars_of_exp_def, EMPTY_SUBSET]
+  ) >- (
+    SIMP_TAC std_ss [birs_eval_exp_subst_var_ALT_def] >>
+    SIMP_TAC (std_ss++PRED_SET_ss) [SUBSET_DEF] >>
+    REPEAT STRIP_TAC >>
+    METIS_TAC []
+  ) >> (
+    TRY (
+      REPEAT STRIP_TAC >>
+      Cases_on `birs_eval_exp_ALT2 e senv` >> (
+        FULL_SIMP_TAC std_ss [birs_eval_cast_def, birs_eval_unary_exp_def]
+      ) >>
+
+      Cases_on `type_of_bir_exp x` >> (
+        FULL_SIMP_TAC std_ss []
+      ) >>
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def] >>
+
+      PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pairTheory.pair_CASE_def] >>
+      FAIL_TAC "oh no"
+    ) >>
+
+    TRY (
+      REPEAT STRIP_TAC >>
+      Cases_on `birs_eval_exp_ALT2 e senv` >> Cases_on `birs_eval_exp_ALT2 e' senv` >> (
+        FULL_SIMP_TAC std_ss [birs_eval_bin_exp_def, birs_eval_bin_pred_def]
+      ) >>
+
+      rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
+      rename1 `birs_eval_exp_ALT2 e' senv = SOME sv_e'` >>
+      Cases_on `type_of_bir_exp sv_e` >> Cases_on `type_of_bir_exp sv_e'` >> (
+        FULL_SIMP_TAC std_ss []
+      ) >>
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def] >>
+
+      PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pairTheory.pair_CASE_def, UNION_SUBSET] >>
+      FAIL_TAC "oh no"
+    ) >>
+
+    TRY (
+      REPEAT STRIP_TAC >>
+      Cases_on `birs_eval_exp_ALT2 e senv` >> Cases_on `birs_eval_exp_ALT2 e' senv` >> (
+        FULL_SIMP_TAC std_ss [birs_eval_memeq_def]
+      ) >>
+
+      rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
+      rename1 `birs_eval_exp_ALT2 e' senv = SOME sv_e'` >>
+      Cases_on `type_of_bir_exp sv_e` >> Cases_on `type_of_bir_exp sv_e'` >> (
+        FULL_SIMP_TAC std_ss []
+      ) >>
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def] >>
+
+      PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pairTheory.pair_CASE_def, UNION_SUBSET] >>
+      FAIL_TAC "oh no"
+    )
+  ) >> (
+    cheat
+  )
 );
 
 
