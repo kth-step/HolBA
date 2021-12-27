@@ -907,27 +907,98 @@ val birs_eval_exp_ALT2_thm = store_thm(
     REPEAT STRIP_TAC >> (
       FULL_SIMP_TAC (std_ss) [option_CLAUSES]
     )
+  ) >> (
+    TRY (
+      REPEAT STRIP_TAC >>
+      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPEC `senv`)) >>
+
+      FULL_SIMP_TAC (std_ss)
+        ([birs_eval_exp_subst_def, birs_eval_exp_ALT2_def]@
+         [IS_SOME_EXISTS, type_of_bir_exp_EQ_SOME_REWRS, bir_vars_of_exp_def]) >>
+
+      Cases_on `birs_eval_exp_ALT2 e senv` >> (
+        FULL_SIMP_TAC (std_ss) [birs_eval_cast_def, birs_eval_unary_exp_def]
+      ) >>
+      REV_FULL_SIMP_TAC (std_ss) [] >>
+
+      IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+      FAIL_TAC "not there yet"
+    )
+  ) >> (
+    TRY (
+      REPEAT STRIP_TAC >>
+      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPEC `senv`)) >>
+
+      FULL_SIMP_TAC (std_ss)
+        ([birs_eval_exp_subst_def, birs_eval_exp_ALT2_def]@
+         [IS_SOME_EXISTS, type_of_bir_exp_EQ_SOME_REWRS, bir_vars_of_exp_def, bir_envty_includes_vs_UNION]) >>
+
+      Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+        FULL_SIMP_TAC (std_ss) [birs_eval_bin_exp_def, birs_eval_bin_pred_def, birs_eval_memeq_def]
+      ) >>
+      REV_FULL_SIMP_TAC (std_ss) [] >>
+
+      IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+      FAIL_TAC "not there yet"
+    )
+  ) >> (
+    TRY (
+      REPEAT STRIP_TAC >>
+      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPEC `senv`)) >>
+
+      FULL_SIMP_TAC (std_ss)
+        ([birs_eval_exp_subst_def, birs_eval_exp_ALT2_def]@
+         [IS_SOME_EXISTS, type_of_bir_exp_EQ_SOME_REWRS, bir_vars_of_exp_def, bir_envty_includes_vs_UNION]) >>
+
+      Cases_on `birs_eval_exp_ALT2 e'' senv` >> Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+        FULL_SIMP_TAC (std_ss) [birs_eval_ifthenelse_def]
+      ) >>
+      REV_FULL_SIMP_TAC (std_ss) [] >>
+
+      IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [BType_Bool_def] >>
+      FAIL_TAC "not there yet"
+    )
   ) >- (
+    (* load *)
     REPEAT STRIP_TAC >>
     REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPEC `senv`)) >>
 
     FULL_SIMP_TAC (std_ss)
       ([birs_eval_exp_subst_def, birs_eval_exp_ALT2_def]@
-       [type_of_bir_exp_def, bir_vars_of_exp_def]) >>
+       [IS_SOME_EXISTS, type_of_bir_exp_EQ_SOME_REWRS, bir_vars_of_exp_def, bir_envty_includes_vs_UNION]) >>
 
-    Cases_on `type_of_bir_exp e` >> (
-      FULL_SIMP_TAC (std_ss) [IS_SOME_EXISTS]
-    ) >>
-
-    Cases_on `birs_eval_exp_ALT2 e senv` >> (
-      FULL_SIMP_TAC (std_ss) [birs_eval_cast_def]
+    Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+      FULL_SIMP_TAC (std_ss) [birs_eval_load_def]
     ) >>
     REV_FULL_SIMP_TAC (std_ss) [] >>
 
     IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
-    FULL_SIMP_TAC (std_ss) []
+    Cases_on `b2 = BEnd_NoEndian` >>  (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    FAIL_TAC "not there yet"
   ) >> (
-    cheat
+    (* store *)
+    REPEAT STRIP_TAC >>
+    REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPEC `senv`)) >>
+
+    FULL_SIMP_TAC (std_ss)
+      ([birs_eval_exp_subst_def, birs_eval_exp_ALT2_def]@
+       [IS_SOME_EXISTS, type_of_bir_exp_EQ_SOME_REWRS, bir_vars_of_exp_def, bir_envty_includes_vs_UNION]) >>
+
+    Cases_on `birs_eval_exp_ALT2 e'' senv` >> Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+      FULL_SIMP_TAC (std_ss) [birs_eval_store_def]
+    ) >>
+    REV_FULL_SIMP_TAC (std_ss) [] >>
+
+    IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
+    Cases_on `b2 = BEnd_NoEndian` >>  (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    FAIL_TAC "not there yet"
   )
 );
 
