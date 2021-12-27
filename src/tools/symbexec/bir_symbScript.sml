@@ -468,11 +468,11 @@ val birs_eval_load_def = Define `
   (birs_eval_load (SOME em) (SOME ea) en sz =
      case type_of_bir_exp em of
       | SOME (BType_Mem aty vty) =>
-         case type_of_bir_exp ea of
+         (case type_of_bir_exp ea of
           | SOME (BType_Imm avty) =>
              if aty <> avty \/ (en = BEnd_NoEndian /\ vty <> sz) \/ (en <> BEnd_NoEndian /\ IS_NONE (bir_number_of_mem_splits vty sz aty)) then NONE else
              SOME (BExp_Load em ea en sz)
-          | _ => NONE
+          | _ => NONE)
       | _ => NONE) /\
   (birs_eval_load _ _ _ _ = NONE)`;
 
@@ -480,14 +480,14 @@ val birs_eval_store_def = Define `
   (birs_eval_store (SOME em) (SOME ea) en (SOME ev) =
      case type_of_bir_exp em of
       | SOME (BType_Mem aty vty) =>
-         case type_of_bir_exp ea of
+         (case type_of_bir_exp ea of
           | SOME (BType_Imm avty) =>
-             case type_of_bir_exp ev of
+             (case type_of_bir_exp ev of
               | SOME (BType_Imm sz) =>
                  if aty <> avty \/ (en = BEnd_NoEndian /\ vty <> sz) \/ (en <> BEnd_NoEndian /\ IS_NONE (bir_number_of_mem_splits vty sz aty)) then NONE else
                  SOME (BExp_Store em ea en ev)
-              | _ => NONE
-          | _ => NONE
+              | _ => NONE)
+          | _ => NONE)
       | _ => NONE) /\
   (birs_eval_store _ _ _ _ = NONE)`;
 
@@ -549,76 +549,154 @@ val birs_eval_exp_ALT2_typeok_thm = store_thm(
     SIMP_TAC std_ss [birs_eval_exp_ALT2_def, type_of_bir_exp_def, bir_vars_of_exp_def, bir_envty_includes_vs_def, NOT_IN_EMPTY, IN_SING, bir_envty_includes_v_def, birs_envty_of_senv_def] >>
     REPEAT STRIP_TAC >>
     FULL_SIMP_TAC std_ss [birs_eval_exp_subst_var_ALT_def]
-  ) >- (
-    REPEAT STRIP_TAC >>
-    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def] >>
-    REPEAT (PAT_X_ASSUM ``!senv A B. bir_envty_includes_vs (birs_envty_of_senv senv) C ==> D`` (ASSUME_TAC o Q.SPEC `senv`)) >>
+  ) >> (
+    TRY (
+      REPEAT STRIP_TAC >>
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def] >>
+      REPEAT (PAT_X_ASSUM ``!senv A B. bir_envty_includes_vs (birs_envty_of_senv senv) C ==> D`` (ASSUME_TAC o Q.SPEC `senv`)) >>
 
-    Cases_on `birs_eval_exp_ALT2 e senv` >> (
-      FULL_SIMP_TAC std_ss [birs_eval_cast_def, birs_eval_unary_exp_def]
-    ) >>
-
-    rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
-    Cases_on `type_of_bir_exp e` >> (
-      FULL_SIMP_TAC std_ss [option_CLAUSES]
-    ) >>
-
-    PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
-    FULL_SIMP_TAC std_ss [type_of_bir_exp_def]
-  ) >- (
-    REPEAT STRIP_TAC >>
-    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def] >>
-    REPEAT (PAT_X_ASSUM ``!senv A B. bir_envty_includes_vs (birs_envty_of_senv senv) C ==> D`` (ASSUME_TAC o Q.SPEC `senv`)) >>
-
-    Cases_on `birs_eval_exp_ALT2 e senv` >> (
-      FULL_SIMP_TAC std_ss [birs_eval_cast_def, birs_eval_unary_exp_def]
-    ) >>
-
-    rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
-    Cases_on `type_of_bir_exp e` >> (
-      FULL_SIMP_TAC std_ss [option_CLAUSES]
-    ) >>
-
-    PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
-    FULL_SIMP_TAC std_ss [type_of_bir_exp_def]
-  ) >- (
-    REPEAT STRIP_TAC >>
-    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def, bir_envty_includes_vs_UNION] >>
-    REPEAT (PAT_X_ASSUM ``!senv A B. bir_envty_includes_vs (birs_envty_of_senv senv) C ==> D`` (ASSUME_TAC o Q.SPEC `senv`)) >>
-
-    Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
-      FULL_SIMP_TAC std_ss [birs_eval_bin_exp_def, birs_eval_bin_pred_def]
-    ) >> (
+      Cases_on `birs_eval_exp_ALT2 e senv` >> (
+        FULL_SIMP_TAC std_ss [birs_eval_cast_def, birs_eval_unary_exp_def]
+      ) >>
 
       rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
-      rename1 `birs_eval_exp_ALT2 e' senv = SOME sv_e'` >>
-      Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e` >> (
-        FULL_SIMP_TAC std_ss [option_CLAUSES, pairTheory.pair_CASE_def]
+      Cases_on `type_of_bir_exp e` >> (
+        FULL_SIMP_TAC std_ss [option_CLAUSES]
       ) >>
 
       PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
-      FULL_SIMP_TAC std_ss [type_of_bir_exp_def, pairTheory.pair_CASE_def]
-    )
-  ) >- (
-    REPEAT STRIP_TAC >>
-    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def, bir_envty_includes_vs_UNION] >>
-    REPEAT (PAT_X_ASSUM ``!senv A B. bir_envty_includes_vs (birs_envty_of_senv senv) C ==> D`` (ASSUME_TAC o Q.SPEC `senv`)) >>
-
-    Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
-      FULL_SIMP_TAC std_ss [birs_eval_bin_exp_def, birs_eval_bin_pred_def]
-    ) >> (
-
-      rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
-      rename1 `birs_eval_exp_ALT2 e' senv = SOME sv_e'` >>
-      Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e` >> (
-        FULL_SIMP_TAC std_ss [option_CLAUSES, pairTheory.pair_CASE_def]
-      ) >>
-
-      PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
-      FULL_SIMP_TAC std_ss [type_of_bir_exp_def, pairTheory.pair_CASE_def]
+      FULL_SIMP_TAC std_ss [type_of_bir_exp_def] >>
+      FAIL_TAC "not finished here"
     )
   ) >> (
-    cheat
+    TRY (
+      REPEAT STRIP_TAC >>
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def, bir_envty_includes_vs_UNION] >>
+      REPEAT (PAT_X_ASSUM ``!senv A B. bir_envty_includes_vs (birs_envty_of_senv senv) C ==> D`` (ASSUME_TAC o Q.SPEC `senv`)) >>
+
+      Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+        FULL_SIMP_TAC std_ss [birs_eval_bin_exp_def, birs_eval_bin_pred_def]
+      ) >> (
+
+        rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
+        rename1 `birs_eval_exp_ALT2 e' senv = SOME sv_e'` >>
+        Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e` >> (
+          FULL_SIMP_TAC std_ss [option_CLAUSES, pairTheory.pair_CASE_def]
+        ) >>
+
+        PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
+        FULL_SIMP_TAC std_ss [type_of_bir_exp_def, pairTheory.pair_CASE_def]
+      ) >>
+      FAIL_TAC "not finished here"
+    )
+  ) >- (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def, bir_envty_includes_vs_UNION] >>
+    REPEAT (PAT_X_ASSUM ``!senv A B. bir_envty_includes_vs (birs_envty_of_senv senv) C ==> D`` (ASSUME_TAC o Q.SPEC `senv`)) >>
+
+    Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+      FULL_SIMP_TAC std_ss [birs_eval_memeq_def]
+    ) >>
+
+    rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
+    rename1 `birs_eval_exp_ALT2 e' senv = SOME sv_e'` >>
+    Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e` >> (
+      FULL_SIMP_TAC std_ss [option_CLAUSES, pairTheory.pair_CASE_def]
+    ) >> (
+      Cases_on `x` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def]
+      )
+    ) >> (
+      Cases_on `x'` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def]
+      )
+    ) >>
+
+    PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_exp_def, pairTheory.pair_CASE_def]
+  ) >- (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def, bir_envty_includes_vs_UNION] >>
+    REPEAT (PAT_X_ASSUM ``!senv A B. bir_envty_includes_vs (birs_envty_of_senv senv) C ==> D`` (ASSUME_TAC o Q.SPEC `senv`)) >>
+
+    Cases_on `birs_eval_exp_ALT2 e'' senv` >> Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+      FULL_SIMP_TAC std_ss [birs_eval_ifthenelse_def]
+    ) >>
+
+    rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
+    rename1 `birs_eval_exp_ALT2 e' senv = SOME sv_e'` >>
+    rename1 `birs_eval_exp_ALT2 e'' senv = SOME sv_e''` >>
+    Cases_on `type_of_bir_exp e''` >> Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e` >> (
+      FULL_SIMP_TAC std_ss [option_CLAUSES, pairTheory.pair_CASE_def]
+    ) >>
+
+    PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_exp_def, pairTheory.pair_CASE_def]
+  ) >- (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def, bir_envty_includes_vs_UNION] >>
+    REPEAT (PAT_X_ASSUM ``!senv A B. bir_envty_includes_vs (birs_envty_of_senv senv) C ==> D`` (ASSUME_TAC o Q.SPEC `senv`)) >>
+
+    Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+      FULL_SIMP_TAC std_ss [birs_eval_load_def]
+    ) >>
+
+    rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
+    rename1 `birs_eval_exp_ALT2 e' senv = SOME sv_e'` >>
+    Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e` >> (
+      FULL_SIMP_TAC std_ss [option_CLAUSES, pairTheory.pair_CASE_def]
+    ) >> (
+      Cases_on `x` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def]
+      )
+    ) >> (
+      Cases_on `x'` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def]
+      )
+    ) >>
+
+    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_exp_def, pairTheory.pair_CASE_def] >>
+
+    PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_exp_def, pairTheory.pair_CASE_def]
+  ) >> (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def, bir_envty_includes_vs_UNION] >>
+    REPEAT (PAT_X_ASSUM ``!senv A B. bir_envty_includes_vs (birs_envty_of_senv senv) C ==> D`` (ASSUME_TAC o Q.SPEC `senv`)) >>
+
+    Cases_on `birs_eval_exp_ALT2 e'' senv` >> Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+      FULL_SIMP_TAC std_ss [birs_eval_store_def]
+    ) >>
+
+    rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
+    rename1 `birs_eval_exp_ALT2 e' senv = SOME sv_e'` >>
+    rename1 `birs_eval_exp_ALT2 e'' senv = SOME sv_e''` >>
+    Cases_on `type_of_bir_exp e''` >> Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e` >> (
+      FULL_SIMP_TAC std_ss [option_CLAUSES, pairTheory.pair_CASE_def]
+    ) >> (
+      Cases_on `x` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def]
+      )
+    ) >> (
+      Cases_on `x'` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def]
+      )
+    ) >> (
+      Cases_on `x''` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def]
+      )
+    ) >>
+
+    Cases_on `ty` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def]
+    ) >>
+
+    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_exp_def, pairTheory.pair_CASE_def] >>
+
+    PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [type_of_bir_exp_def, pairTheory.pair_CASE_def]
   )
 );
 
@@ -642,30 +720,165 @@ val birs_eval_exp_ALT2_typeerr_thm = store_thm(
     Cases_on `senv (bir_var_name b)` >> (
       FULL_SIMP_TAC std_ss [option_CLAUSES]
     )
+  ) >> (
+    TRY (
+      (* 2x *)
+      REPEAT GEN_TAC >>
+      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o SIMP_RULE std_ss [boolTheory.DISJ_IMP_THM] o Q.SPEC `senv`)) >>
+
+      REPEAT STRIP_TAC >> (
+        FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def] >>
+        REV_FULL_SIMP_TAC std_ss [] >>
+        REWRITE_TAC [birs_eval_cast_def, birs_eval_unary_exp_def]
+      ) >>
+
+      Cases_on `type_of_bir_exp e` >> (
+        FULL_SIMP_TAC std_ss [option_CLAUSES] >>
+        REWRITE_TAC [birs_eval_cast_def, birs_eval_unary_exp_def]
+      ) >>
+
+      Cases_on `birs_eval_exp_ALT2 e senv` >> (
+        FULL_SIMP_TAC std_ss [birs_eval_cast_def, birs_eval_unary_exp_def] >>
+        REWRITE_TAC []
+      ) >>
+
+      IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
+      FULL_SIMP_TAC std_ss [] >>
+      FAIL_TAC "not done yet"
+    )
+  ) >> (
+    TRY (
+      (* 2x *)
+      REPEAT GEN_TAC >>
+      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o SIMP_RULE std_ss [boolTheory.DISJ_IMP_THM] o Q.SPEC `senv`)) >>
+
+      REPEAT STRIP_TAC >> (
+        FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def, bir_envty_includes_vs_UNION] >>
+        REV_FULL_SIMP_TAC std_ss [] >>
+        FULL_SIMP_TAC std_ss [birs_eval_bin_pred_def, birs_eval_bin_exp_def]
+      ) >> (
+        Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+          FULL_SIMP_TAC std_ss [option_CLAUSES] >>
+          REWRITE_TAC [birs_eval_bin_pred_def, birs_eval_bin_exp_def]
+        ) >>
+
+        Cases_on `birs_eval_exp_ALT2 e' senv` >> (
+          FULL_SIMP_TAC std_ss [birs_eval_bin_pred_def, birs_eval_bin_exp_def] >>
+          REWRITE_TAC []
+        ) >>
+
+        IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
+        Cases_on `x = x'` >> (
+          FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def]
+        )
+      ) >>
+      FAIL_TAC "not done yet"
+    )
   ) >- (
+    (* 1x MemEq *)
     REPEAT GEN_TAC >>
     REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o SIMP_RULE std_ss [boolTheory.DISJ_IMP_THM] o Q.SPEC `senv`)) >>
 
     REPEAT STRIP_TAC >> (
-      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def] >>
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def, bir_envty_includes_vs_UNION] >>
       REV_FULL_SIMP_TAC std_ss [] >>
-      REWRITE_TAC [birs_eval_cast_def]
-    ) >>
+      FULL_SIMP_TAC std_ss [birs_eval_memeq_def]
+    ) >> (
+      Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+        FULL_SIMP_TAC std_ss [option_CLAUSES] >>
+        REWRITE_TAC [birs_eval_memeq_def]
+      ) >>
 
-    Cases_on `type_of_bir_exp e` >> (
-      FULL_SIMP_TAC std_ss [option_CLAUSES] >>
-      REWRITE_TAC [birs_eval_cast_def]
-    ) >>
+      Cases_on `birs_eval_exp_ALT2 e' senv` >> (
+        FULL_SIMP_TAC std_ss [birs_eval_memeq_def] >>
+        REWRITE_TAC []
+      ) >>
 
-    Cases_on `birs_eval_exp_ALT2 e senv` >> (
-      FULL_SIMP_TAC std_ss [birs_eval_cast_def] >>
-      REWRITE_TAC []
-    ) >>
+      IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
+      Cases_on `x` >> Cases_on `x'` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def]
+      )
+    )
+  ) >- (
+    (* 1x ifthenelse *)
+    REPEAT GEN_TAC >>
+    REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o SIMP_RULE std_ss [boolTheory.DISJ_IMP_THM] o Q.SPEC `senv`)) >>
 
-    IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
-    FULL_SIMP_TAC std_ss []
+    REPEAT STRIP_TAC >> (
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def, bir_envty_includes_vs_UNION] >>
+      REV_FULL_SIMP_TAC std_ss [] >>
+      FULL_SIMP_TAC std_ss [birs_eval_ifthenelse_def]
+    ) >> (
+      Cases_on `type_of_bir_exp e''` >> Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+        FULL_SIMP_TAC std_ss [option_CLAUSES] >>
+        REWRITE_TAC [birs_eval_ifthenelse_def]
+      ) >>
+
+      Cases_on `birs_eval_exp_ALT2 e' senv` >> (
+        FULL_SIMP_TAC std_ss [birs_eval_ifthenelse_def] >>
+        REWRITE_TAC []
+      ) >>
+
+      Cases_on `birs_eval_exp_ALT2 e'' senv` >> (
+        FULL_SIMP_TAC std_ss [birs_eval_ifthenelse_def] >>
+        REWRITE_TAC []
+      ) >>
+
+      IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
+      Cases_on `x` >> Cases_on `x'` >> Cases_on `x''` >> Cases_on `b = b'` >> Cases_on `b0 = b0'` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def, BType_Bool_def]
+      )
+    )
+  ) >- (
+    (* 1x memload *)
+    REPEAT GEN_TAC >>
+    REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o SIMP_RULE std_ss [boolTheory.DISJ_IMP_THM] o Q.SPEC `senv`)) >>
+
+    REPEAT STRIP_TAC >> (
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def, bir_envty_includes_vs_UNION] >>
+      REV_FULL_SIMP_TAC std_ss [] >>
+      FULL_SIMP_TAC std_ss [birs_eval_load_def]
+    ) >> (
+      Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e` >> Cases_on `birs_eval_exp_ALT2 e senv` >> (
+        FULL_SIMP_TAC std_ss [option_CLAUSES] >>
+        REWRITE_TAC [birs_eval_load_def]
+      ) >>
+
+      Cases_on `birs_eval_exp_ALT2 e' senv` >> (
+        FULL_SIMP_TAC std_ss [birs_eval_load_def] >>
+        REWRITE_TAC []
+      ) >>
+
+      IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
+      Cases_on `x` >> Cases_on `x'` >> Cases_on `b' = b` >> Cases_on `b2 = BEnd_NoEndian` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def, BType_Bool_def]
+      )
+    )
   ) >> (
-    cheat
+    (* 1x memstore *)
+    REPEAT GEN_TAC >>
+    REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o SIMP_RULE std_ss [boolTheory.DISJ_IMP_THM] o Q.SPEC `senv`)) >>
+
+    REPEAT STRIP_TAC >> (
+      FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, type_of_bir_exp_def, birs_eval_exp_ALT2_def, bir_envty_includes_vs_UNION] >>
+      REV_FULL_SIMP_TAC std_ss [] >>
+      FULL_SIMP_TAC std_ss [birs_eval_store_def]
+    ) >> (
+      Cases_on `type_of_bir_exp e''` >> Cases_on `type_of_bir_exp e'` >> Cases_on `type_of_bir_exp e` >> Cases_on `birs_eval_exp_ALT2 e senv` >> Cases_on `birs_eval_exp_ALT2 e' senv` >> (
+        FULL_SIMP_TAC std_ss [option_CLAUSES] >>
+        REWRITE_TAC [birs_eval_store_def]
+      ) >>
+
+      Cases_on `birs_eval_exp_ALT2 e'' senv` >> (
+        FULL_SIMP_TAC std_ss [birs_eval_store_def] >>
+        REWRITE_TAC []
+      ) >>
+
+      IMP_RES_TAC birs_eval_exp_ALT2_typeok_thm >>
+      Cases_on `x` >> Cases_on `x'` >> Cases_on `x''` >> Cases_on `b'' = b'` >> Cases_on `b0 = b0'` >> Cases_on `b2 = BEnd_NoEndian` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pairTheory.pair_CASE_def, BType_Bool_def]
+      )
+    )
   )
 );
 
