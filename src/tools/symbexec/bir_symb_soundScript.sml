@@ -887,6 +887,24 @@ val bir_eval_exp_BOOL_SOME_sound_thm = store_thm(
   REWRITE_TAC [bir_immTheory.bool2b_def]
 );
 
+val bir_eval_exp_EXISTS_IS_NONE_sound_thm = store_thm(
+   "bir_eval_exp_EXISTS_IS_NONE_sound_thm", ``
+!s sys H el.
+  (birs_symb_matchstate sys H s) ==>
+  (EXISTS IS_NONE (MAP (\e. bir_eval_exp e s.bst_environ) el)
+   =
+   EXISTS IS_NONE (MAP (\e. birs_eval_exp e sys.bsst_environ) el))
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [listTheory.EXISTS_MEM] >>
+
+  Induct_on `el` >> (
+    FULL_SIMP_TAC std_ss [listTheory.MEM, listTheory.MAP]
+  ) >>
+
+  METIS_TAC [birs_symb_matchstate_IMP_bir_symb_eval_exp_thm, option_CLAUSES]
+);
+
 fun birs_exec_stmt_assert_assume_sound_TAC qstatus =
   (*
   val qstatus = `BST_AssertionViolated`;
@@ -954,8 +972,57 @@ val birs_exec_stmt_observe_sound_thm = store_thm(
   FULL_SIMP_TAC (std_ss)
     [bir_exec_stmt_observe_def, birs_exec_stmt_observe_def] >>
 
-  SIMP_TAC (std_ss++PRED_SET_ss) [LET_DEF] >>
-  cheat
+  FULL_SIMP_TAC (std_ss++PRED_SET_ss) [LET_DEF] >>
+
+  (* obs condition does not give a bool *)
+  Cases_on `option_CASE (bir_eval_exp ec s.bst_environ) NONE bir_dest_bool_val` >> (
+    FULL_SIMP_TAC (std_ss) []
+  ) >- (
+    IMP_RES_TAC bir_eval_exp_BOOL_NONE_sound_thm >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [pair_CASE_def]
+    ) >> (
+      Cases_on `EXISTS IS_NONE (MAP (\e. birs_eval_exp e sys.bsst_environ) el)` >> (
+        FULL_SIMP_TAC (std_ss) [listTheory.EXISTS_DEF]
+      )
+    ) >> (
+      (* finish the error cases as usual/above *)
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [pair_CASE_def] >>
+      IMP_RES_TAC (Q.SPECL [`s`, `sys`] birs_state_set_typeerror_SING_symb_matchstate_thm) >>
+      TRY HINT_EXISTS_TAC >>
+      FULL_SIMP_TAC (std_ss) []
+    )
+  ) >>
+
+  (* the condition evaluates correctly, but type error in the obs expression *)
+  IMP_RES_TAC bir_eval_exp_BOOL_SOME_sound_thm >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [pair_CASE_def] >>
+  Cases_on `x` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [pair_CASE_def] >>
+
+    Cases_on `EXISTS IS_NONE (MAP (\e. bir_eval_exp e s.bst_environ) el)` >> (
+      Cases_on `EXISTS IS_NONE (MAP (\e. birs_eval_exp e sys.bsst_environ) el)` >> (
+        FULL_SIMP_TAC (std_ss) [listTheory.EXISTS_DEF, bir_eval_exp_EXISTS_IS_NONE_sound_thm]
+      )
+    ) >> (
+      TRY (
+        (* finish the error cases as usual/above *)
+        FULL_SIMP_TAC (std_ss++holBACore_ss) [pair_CASE_def] >>
+        IMP_RES_TAC (Q.SPECL [`s`, `sys`] birs_state_set_typeerror_SING_symb_matchstate_thm) >>
+        TRY HINT_EXISTS_TAC >>
+        FULL_SIMP_TAC (std_ss) [] >>
+        FAIL_TAC "not there yet"
+      )
+    ) >> (
+      TRY (
+        PAT_X_ASSUM ``A = (Pi:birs_state_t -> bool)`` (ASSUME_TAC o GSYM) >>
+        PAT_X_ASSUM ``A = (s':bir_state_t)`` (ASSUME_TAC o GSYM) >>
+        FULL_SIMP_TAC (std_ss) [IN_SING] >>
+        FAIL_TAC "not there yet"
+      )
+    ) >>
+
+    METIS_TAC [bir_eval_exp_EXISTS_IS_NONE_sound_thm]
+  )
 );
 
 val birs_exec_stmtB_sound_thm = store_thm(
@@ -1120,11 +1187,6 @@ val birs_exec_stmt_cjmp_sound_thm = store_thm(
   IMP_RES_TAC bir_eval_exp_BOOL_SOME_sound_thm >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) [pair_CASE_def, LET_DEF] >>
 
-(* *)
-(*
-birs_symb_matchonestate_def
-*)
-
   FULL_SIMP_TAC std_ss [GSYM birs_branch_def, GSYM birs_symb_matchonestate_def] >>
   IMP_RES_TAC birs_symb_matchstate_BRANCH_thm >>
 
@@ -1136,123 +1198,12 @@ birs_symb_matchonestate_def
             (bir_exec_stmt_jmp p le2 s)` by (
     
     Cases_on `x` >> (
-(*
-      FULL_SIMP_TAC std_ss [] >>
-
-      IMP_RES_TAC (REWRITE_RULE [GSYM birs_symb_matchonestate_def] (SIMP_RULE std_ss [] birs_exec_stmt_jmp_sound_thm)) >>
-  POP_ASSUM (K ALL_TAC) >>
-  REPEAT (PAT_X_ASSUM ``!A.B`` (fn thm => (ASSUME_TAC (Q.SPECL [`p`, `le1`] thm)(* >> ASSUME_TAC (Q.SPECL [`p`, `le2`] thm)*)))) >>
-*)
- METIS_TAC[REWRITE_RULE [GSYM birs_symb_matchonestate_def] (SIMP_RULE std_ss [] birs_exec_stmt_jmp_sound_thm)]
-
-    (*METIS_TAC [birs_exec_stmt_jmp_sound_thm]*)
+      METIS_TAC[REWRITE_RULE [GSYM birs_symb_matchonestate_def] (SIMP_RULE std_ss [] birs_exec_stmt_jmp_sound_thm)]
     )
   ) >>
 
-IMP_RES_TAC birs_symb_matchstate_COND_UNION_thm
+  IMP_RES_TAC birs_symb_matchstate_COND_UNION_thm
 );
-
-(*
-  Cases_on `x` >> (
-    FULL_SIMP_TAC std_ss [] >>
-
-
-  METIS_TAC [birs_symb_matchstate_COND_UNION_thm]
-
-
-
-
-(*
-  ASSUME_TAC (Q.SPECL [`p`, `le1`] (SIMP_RULE std_ss [] birs_exec_stmt_jmp_sound_thm)) >>
-  ASSUME_TAC (Q.SPECL [`p`, `le2`] (SIMP_RULE std_ss [] birs_exec_stmt_jmp_sound_thm)) >>
-  REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o Q.SPECL [`s`, `sys`, `H`])) >>
-  REV_FULL_SIMP_TAC (std_ss) [] >>
-*)
-
-  REWRITE_TAC [GSYM birs_symb_matchonestate_def] >>
-
-
-METIS_TAC [birs_symb_matchstate_COND_UNION_thm]
-
-
-FULL_SIMP_TAC std_ss [(GSYM (prove(
-``
-!f p le sys.
-  IMAGE (\x. x with bsst_pcond := f sys.bsst_pcond) (birs_exec_stmt_jmp p le sys)
-  =
-  birs_exec_stmt_jmp p le (sys with bsst_pcond := f sys.bsst_pcond)
-``,
- cheat(* TODO: this is wrong!!!*))))] >>
-
-
-  IMP_RES_TAC (REWRITE_RULE [GSYM birs_symb_matchonestate_def] birs_symb_matchstate_COND_UNION_thm)
-
-  IMP_RES_TAC
-((REWRITE_RULE [GSYM birs_symb_matchonestate_def] birs_symb_matchstate_COND_UNION_thm))
-
-(*
-  METIS_TAC []
-FULL_SIMP_TAC std_ss [(Q.SPEC `\x. BExp_BinExp BIExp_And x sv` (prove(
-FULL_SIMP_TAC std_ss [SIMP_RULE std_ss [] (Q.SPEC `\x. BExp_BinExp BIExp_And x sv` (prove(
-*)
-);
-(*
-  METIS_TAC []
-
-  IMP_RES_TAC (SIMP_RULE std_ss [IN_SING] (Q.SPEC qstatus birs_symb_matchstate_UPD_status_thm)) >>
-  IMP_RES_TAC birs_symb_matchstate_COND_UNION_thm >>
-  METIS_TAC [birs_state_t_fupdcanon]
-
-
-(*
-  PAT_X_ASSUM ``A = (Pi:birs_state_t -> bool)`` (ASSUME_TAC o GSYM) >>
-  PAT_X_ASSUM ``A = (s':bir_state_t)`` (ASSUME_TAC o GSYM) >>
-*)
-
-  cheat
-
-(*
-
-
-
-
-birs_exec_stmt_jmp_sound_thm
-
-  Cases_on `x` >- (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-
-  `birs_exec_stmt_jmp p le1
-     (sys with bsst_pcond := BExp_BinExp BIExp_And sys.bsst_pcond sv) SUBSET Pi` by (
-    METIS_TAC [SUBSET_DEF, SUBSET_UNION]
-  ) >>
-
-METIS_TAC []
-birs_exec_stmt_jmp_sound_thm
-
-  )
-
-  (*
-  Cases_on `birs_eval_label_exp le sys.bsst_environ sys.bsst_pcond` >- (
-    (* type error: NONE case *)
-    IMP_RES_TAC birs_eval_label_exp_NONE_sound_thm >>
-
-    (* finish the error cases as usual/above *)
-    FULL_SIMP_TAC (std_ss) [] >>
-    IMP_RES_TAC (Q.SPECL [`s`, `sys`] birs_state_set_typeerror_SING_symb_matchstate_thm) >>
-    TRY HINT_EXISTS_TAC >>
-    FULL_SIMP_TAC (std_ss) []
-  ) >>
-
-  (* when we compute a label set: SOME case *)
-  IMP_RES_TAC birs_eval_label_exp_SOME_sound_thm >>
-  FULL_SIMP_TAC (std_ss) [] >>
-
-  METIS_TAC [birs_exec_stmt_jmp_to_label_sound_thm, IN_IMAGE]
-  *)
-*)
-);
-*)
-*)
 
 val birs_exec_stmtE_sound_thm = store_thm(
    "birs_exec_stmtE_sound_thm", ``
