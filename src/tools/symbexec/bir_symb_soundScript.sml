@@ -1100,11 +1100,33 @@ val birs_eval_label_exp_SOME_sound_thm = store_thm(
   (birs_eval_label_exp le sys.bsst_environ sys.bsst_pcond = SOME ls) ==>
   (?l. l IN ls /\ bir_eval_label_exp le s.bst_environ = SOME l)
 ``,
-(*
-birs_eval_label_exp_def
-bir_eval_label_exp_def
-*)
-  cheat
+  REPEAT STRIP_TAC >>
+
+  Cases_on `le` >> (
+    FULL_SIMP_TAC std_ss [birs_eval_label_exp_def, bir_eval_label_exp_def]
+  ) >- (
+    METIS_TAC [IN_SING]
+  ) >>
+
+  Cases_on `birs_eval_exp b sys.bsst_environ` >- (
+    IMP_RES_TAC birs_symb_matchstate_IMP_bir_symb_eval_exp_NONE_thm >>
+
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES]
+  ) >>
+
+  Cases_on `x` >>
+  IMP_RES_TAC birs_symb_matchstate_IMP_bir_symb_eval_exp_SOME_thm >>
+
+  Cases_on `v` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pair_CASE_def]
+  ) >> Cases_on `r` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, pair_CASE_def]
+  ) >>
+
+  PAT_X_ASSUM ``{B C | D C} = A`` (ASSUME_TAC o GSYM) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss++PRED_SET_ss) [option_CLAUSES] >>
+
+  METIS_TAC [birs_symb_matchstate_def]
 );
 
 val birs_eval_label_exp_NONE_sound_thm = store_thm(
@@ -1147,11 +1169,16 @@ val birs_exec_stmt_jmp_to_label_sound_thm = store_thm(
   (bir_exec_stmt_jmp_to_label p l s = s') ==>
   (birs_symb_matchstate sys' H s')
 ``,
-(*
-birs_exec_stmt_jmp_to_label_def
-bir_exec_stmt_jmp_to_label_def
-*)
-  cheat
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [birs_exec_stmt_jmp_to_label_def, bir_exec_stmt_jmp_to_label_def] >>
+
+  Cases_on `MEM l (bir_labels_of_program p)` >> (
+    FULL_SIMP_TAC std_ss [] >>
+    PAT_X_ASSUM ``A = (sys':birs_state_t)`` (ASSUME_TAC o GSYM) >>
+    PAT_X_ASSUM ``A = (s':bir_state_t)`` (ASSUME_TAC o GSYM) >>
+
+    FULL_SIMP_TAC (std_ss++birs_state_ss++holBACore_ss) [birs_symb_matchstate_def, birs_symb_symbols_def]
+  )
 );
 
 val birs_exec_stmt_jmp_sound_thm = store_thm(
