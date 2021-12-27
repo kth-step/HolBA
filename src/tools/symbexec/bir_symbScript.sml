@@ -1128,8 +1128,66 @@ val bir_vars_of_exp_IMP_symbs_SUBSET_senv_thm = store_thm(
       FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pairTheory.pair_CASE_def, UNION_SUBSET] >>
       FAIL_TAC "oh no"
     )
+  ) >- (
+    (* ifthenelse *)
+    REPEAT STRIP_TAC >>
+    Cases_on `birs_eval_exp_ALT2 e senv` >> Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e'' senv` >> (
+      FULL_SIMP_TAC std_ss [birs_eval_ifthenelse_def]
+    ) >>
+
+    rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
+    rename1 `birs_eval_exp_ALT2 e' senv = SOME sv_e'` >>
+    rename1 `birs_eval_exp_ALT2 e'' senv = SOME sv_e''` >>
+    Cases_on `type_of_bir_exp sv_e` >> Cases_on `type_of_bir_exp sv_e'` >> Cases_on `type_of_bir_exp sv_e''` >> (
+      FULL_SIMP_TAC std_ss []
+    ) >>
+    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def] >>
+
+    PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pairTheory.pair_CASE_def, UNION_SUBSET]
+  ) >- (
+    (* load *)
+    REPEAT STRIP_TAC >>
+    Cases_on `birs_eval_exp_ALT2 e senv` >> Cases_on `birs_eval_exp_ALT2 e' senv` >> (
+      FULL_SIMP_TAC std_ss [birs_eval_load_def]
+    ) >>
+
+    rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
+    rename1 `birs_eval_exp_ALT2 e' senv = SOME sv_e'` >>
+    Cases_on `type_of_bir_exp sv_e` >> Cases_on `type_of_bir_exp sv_e'` >> (
+      FULL_SIMP_TAC std_ss []
+    ) >> Cases_on `x` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >> Cases_on `x'` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def] >>
+
+    PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pairTheory.pair_CASE_def, UNION_SUBSET]
   ) >> (
-    cheat
+    (* store *)
+    REPEAT STRIP_TAC >>
+    Cases_on `birs_eval_exp_ALT2 e senv` >> Cases_on `birs_eval_exp_ALT2 e' senv` >> Cases_on `birs_eval_exp_ALT2 e'' senv` >> (
+      FULL_SIMP_TAC std_ss [birs_eval_store_def]
+    ) >>
+
+    rename1 `birs_eval_exp_ALT2 e senv = SOME sv_e` >>
+    rename1 `birs_eval_exp_ALT2 e' senv = SOME sv_e'` >>
+    rename1 `birs_eval_exp_ALT2 e'' senv = SOME sv_e''` >>
+    Cases_on `type_of_bir_exp sv_e` >> Cases_on `type_of_bir_exp sv_e'` >> Cases_on `type_of_bir_exp sv_e''` >> (
+      FULL_SIMP_TAC std_ss []
+    ) >> Cases_on `x` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >> Cases_on `x'` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >> Cases_on `x''` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def] >>
+
+    PAT_X_ASSUM ``A = sv:bir_exp_t`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC std_ss [bir_vars_of_exp_def, pairTheory.pair_CASE_def, UNION_SUBSET]
   )
 );
 
