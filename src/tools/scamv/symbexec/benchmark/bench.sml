@@ -265,7 +265,37 @@ compare_angr_symb_exec paths_conv paths_conv;
 compare_angr_symb_exec paths_conv res;
 *)
 
+(*
+=============================================================================
+*)
 
+val num_success = ref 0;
+val filename = TextIO.openOut "test_exceptions.txt";
+
+fun save_obs (oid, ocond, obsl, obsf) =
+  let
+    val _ = TextIO.output (filename, "\n Obs Condition:\n");
+    val _ = TextIO.output (filename, " - " ^ term_to_string ocond ^ "\n");
+    val _ = TextIO.flushOut filename;
+    val _ = TextIO.output (filename, "\n Observations: \n");
+    val _ = List.map (fn ol => (TextIO.output (filename, " - " ^ term_to_string ol ^ "\n"))) obsl;
+    val _ = TextIO.flushOut filename;
+  in () end;
+fun save_guard guard =
+  let
+    val _ = TextIO.output (filename, " - " ^ term_to_string guard ^ "\n");
+    val _ = TextIO.flushOut filename;
+  in () end;
+fun save_guard_and_obs paths =
+  let
+    val (bir_angrLib.exec_path {guards = gd, observations = obs, ...}) = paths;
+    val _ = TextIO.output (filename, "\n Guards: \n");
+    val _ = TextIO.flushOut filename;
+    val _ = List.map save_guard gd;
+    val _ = List.map save_obs obs;
+  in () end;
+fun save_exception paths =
+  List.map save_guard_and_obs paths;
 
 (*
 =============================================================================
@@ -289,7 +319,7 @@ fun main_loop 0 = ()
 		    else
 			(* Spectre *)	
 		     let		 
-			 (* val (prog_id, lifted_prog) = prog_gen_store_rand "" 2 (); *)
+			 (* val (prog_id, lifted_prog) = prog_gen_store_rand "" 5 (); *)
 			 val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre_v1" 5 ();
 			 val prog = lifted_prog;
 		     in
@@ -327,12 +357,27 @@ fun main_loop 0 = ()
          val paths_conv = List.map scamv_to_angr paths;
          val eq_result = compare_angr_symb_exec paths_conv res;
          val _ =
-           if eq_result then
-             print "yippie!!!\n"
-           else
-             print "oh noo!!!\n";
+	   if eq_result then (
+            num_success := (!num_success + 1);
+	    print "yippie!!!\n")
+           else (
+            print "oh noo!!!\n";
+	    TextIO.output (filename,"\n+++++++++++ Exception +++++++++++\n");
+            TextIO.output (filename,"--------------------------------------\n");
+	    TextIO.output (filename, term_to_string prog ^ "\n");
+            TextIO.output (filename,"\n--------------------------------------\n");
+	    TextIO.output (filename,"Scam-V result");
+	    TextIO.output (filename,"\n--------------------------------------\n");
+	    save_exception paths_conv;
+	    TextIO.output (filename,"\n--------------------------------------\n");
+	    TextIO.output (filename,"Angr result");
+	    TextIO.output (filename,"\n--------------------------------------\n");
+            save_exception res;
+	    TextIO.output (filename,"\n--------------------------------------\n");
+            TextIO.output (filename,"\n\n");
+	    TextIO.flushOut filename);
 
-	 val _ = print "\nDone symbexecing.\n\n";
+	 val _ = print "\nDone symbexecing.\n";
      in
 	 main_loop (n-1)
      end;
@@ -341,4 +386,10 @@ fun main_loop 0 = ()
 =============================================================================
 *)
 
-val _ = main_loop 2;
+val _ =
+  let
+    val _ = main_loop 2;
+    val _ = TextIO.closeOut filename;
+    val _ = print ("Number of successful test cases: " ^ (Int.toString (!num_success)) ^ "\n\n");
+  in () end;
+
