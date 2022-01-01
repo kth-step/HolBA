@@ -117,7 +117,8 @@ local
       choicel [seq (char #"*") (return bmult)
 	      ,seq (string "/s") (return bsdiv)
               ,seq (char #"/") (return bdiv)
-              ,seq (char #"%") (return bmod)] <?> "multiplication or division operator";
+              ,seq (char #"%") (return bmod)
+	      ,seq (char #"^") (return bxor)] <?> "multiplication or division operator";
   
   val binary_op_term =
       choicel [seq (char #"+") (return bplus)
