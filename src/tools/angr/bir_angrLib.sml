@@ -247,12 +247,13 @@ local
                                  return (bite (cond,e1,e2))))))))))
                                  <?> "if-then-else";
                 val shift_expr = seq (string "LShR")
-                                 (bind (token (pairp bir_exp annotated_imm_ignore)) (fn (exp,n) =>
-                                 return (brshift (exp,bconst64 (Arbnum.toInt n)))))
+                                 (bind (token (pairp bir_exp bir_exp)) (fn (exp1,exp2) =>
+                                 return (brshift (exp1,exp2))))
                                     <?> "LShR expression";
                 val signext_expr = seq (string "SignExt")
-                                 (bind (token (pairp angr_num bir_exp)) (fn (n,exp) =>
-                                 return (list_bappend_mask [bconstii (Arbnum.toInt n) 0, exp])))
+                                 (bind (token (pairp (bind dec (fn len => return (Arbnum.toInt len))) bir_exp)) (fn (n,exp) =>
+				 return (list_bappend_mask
+				 [“BExp_AppendMask [(^(term_of_int (Int.- (n,1))), 0, ^(bconstii 128 0))]”, exp])))
                                     <?> "SignExt expression";
 		val logical =  choicel [bracket (char #"(") bir_exp (char #")")
                                       ,bind unary_op

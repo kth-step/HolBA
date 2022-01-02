@@ -39,6 +39,13 @@ val angr_exp_testcases = [
    ``BExp_BinPred BIExp_NotEqual
   (BExp_BinExp BIExp_RightShift (BExp_Den (BVar "R27" (BType_Imm Bit32)))
      (BExp_Const (Imm32 61w))) (BExp_Const (Imm32 0w))``)
+  ,("<Bool LShR(R27_3_32, R3_2_64 ^ R31_0_64[63:32]) != 0#32>",
+   ``BExp_BinPred BIExp_NotEqual
+  (BExp_BinExp BIExp_RightShift (BExp_Den (BVar "R27" (BType_Imm Bit32)))
+     (BExp_CastMask Bit64 63 32
+        (BExp_BinExp BIExp_Xor (BExp_Den (BVar "R3" (BType_Imm Bit64)))
+           (BExp_Den (BVar "R31" (BType_Imm Bit64))))
+        (THE (bir_immtype_of_size 32)))) (BExp_Const (Imm32 0w))``)
   ,("<Bool LShR(R27_3_16 + 3#16 | R5_6_16, 0x3d#16) != 0#16>",
    ``BExp_BinPred BIExp_NotEqual
   (BExp_BinExp BIExp_RightShift
@@ -62,16 +69,18 @@ val angr_exp_testcases = [
      (BExp_UnaryExp BIExp_Not (BExp_Den (BVar "R0" (BType_Imm Bit8))))
      (BExp_UnaryExp BIExp_Not (BExp_Den (BVar "R2" (BType_Imm Bit8)))))
            (BExp_Const (Imm8 0w))``)
-  ,("<Bool SignExt(32, R2_3_32) != 1#32>",
+  ,("<Bool SignExt(32, R2_3_32) != 1#64>",
    ``T``)
-  (* ,("<Bool SignExt(24, R2_3_32) != 1#32>", *)
-  (*  ``T``) *)
-  ,("<Bool 0#32 .. R2_3_32 != 1#32>",
+  ,("<Bool SignExt(24, R2_3_8) != 1#32>",
+   ``T``)
+  ,("<Bool 0#32 .. R2_3_32 != 1#64>",
    ``BExp_BinPred BIExp_NotEqual
   (BExp_AppendMask
      [(31,0,BExp_Const (Imm32 0w));
-      (31,0,BExp_Den (BVar "R2" (BType_Imm Bit32)))]) (BExp_Const (Imm32 1w))``)
-  ,("<Bool R2_3_32 + 0xa#32 .. 0x8#32 ^ R3_4_32 != 1#32>",
+      (31,0,BExp_Den (BVar "R2" (BType_Imm Bit32)))]) (BExp_Const (Imm64 1w))``)
+  (* ,("<Bool 0#24 .. R2_3_8 != 1#32>", *)
+  (*  ``FIX``) *)
+  ,("<Bool R2_3_32 + 0xa#32 .. 0x8#32 ^ R3_4_32 != 1#64>",
    ``BExp_BinPred BIExp_NotEqual
   (BExp_AppendMask
      [(31,0,
@@ -79,11 +88,11 @@ val angr_exp_testcases = [
          (BExp_Const (Imm32 10w)));
       (31,0,
        BExp_BinExp BIExp_Xor (BExp_Const (Imm32 8w))
-         (BExp_Den (BVar "R3" (BType_Imm Bit32))))]) (BExp_Const (Imm32 1w))``)
-  ,("<Bool R2_3_64[63:16] .. 0x8#32 .. R7_1_16 != 0#64>",
+         (BExp_Den (BVar "R3" (BType_Imm Bit32))))]) (BExp_Const (Imm64 1w))``)
+  ,("<Bool R2_3_64[15:0] .. 0x8#32 .. R7_1_16 != 0#64>",
    ``BExp_BinPred BIExp_NotEqual
   (BExp_AppendMask
-     [(63,16,BExp_Den (BVar "R2" (BType_Imm Bit64)));
+     [(15,0,BExp_Den (BVar "R2" (BType_Imm Bit64)));
       (31,0,BExp_Const (Imm32 8w));
       (15,0,BExp_Den (BVar "R7" (BType_Imm Bit16)))]) (BExp_Const (Imm64 0w))``)
   ,("<Bool R2_3_64[7:0] .. R7_1_64 - 0xf#64[7:0] != 0#16>",
@@ -93,6 +102,13 @@ val angr_exp_testcases = [
       (7,0,
        BExp_BinExp BIExp_Minus (BExp_Den (BVar "R7" (BType_Imm Bit64)))
          (BExp_Const (Imm64 15w)))]) (BExp_Const (Imm16 0w))``)
+  ,("<Bool (((x_47_32) ^ ((y_48_32) & (z_49_32))) | (x_47_32)) == (0#32)>",
+   ``BExp_BinPred BIExp_Equal
+  (BExp_BinExp BIExp_Or
+     (BExp_BinExp BIExp_Xor (BExp_Den (BVar "x" (BType_Imm Bit32)))
+        (BExp_BinExp BIExp_And (BExp_Den (BVar "y" (BType_Imm Bit32)))
+           (BExp_Den (BVar "z" (BType_Imm Bit32)))))
+     (BExp_Den (BVar "x" (BType_Imm Bit32)))) (BExp_Const (Imm32 0w))``)
   ,("<Bool ((((R5_8_64) + (MEM[<BV64 (R1_4_64) + (R3_6_64)>]_13_64))[7:0]) & (0x7#8)) == (0x0#8)>",
    ``BExp_BinPred BIExp_Equal
   (BExp_BinExp BIExp_And
@@ -213,6 +229,7 @@ val angr_exp_testcases = [
               (BExp_Const (Imm1 1w)) (BExp_Const (Imm1 0w))))))
   (BExp_Const (Imm1 0w))``)
   ,("<Bool ((if 0x80100000#64 <= SP_EL0_8_64 + (~(LShR(0xffffe00000000003#64 & R20_6_64, 0x6#64) | (0xffffe00000000003#64 & R20_6_64) << 0x3a#64) & R0_4_64) + LShR(R0_4_64, 0x1a#64) then 1#1 else 0#1) & (if SP_EL0_8_64 + (~(LShR(0xffffe00000000003#64 & R20_6_64, 0x6#64) | (0xffffe00000000003#64 & R20_6_64) << 0x3a#64) & R0_4_64) + LShR(R0_4_64, 0x1a#64) < 0x8013ff80#64 then 1#1 else 0#1)) != 0#1>",
+   (* FIX: precedence of Not (~) *)
    ``BExp_BinPred BIExp_NotEqual
   (BExp_BinExp BIExp_And
      (BExp_IfThenElse
