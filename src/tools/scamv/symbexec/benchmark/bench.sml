@@ -32,8 +32,23 @@ fun run_naive_hol4_symbexec prog_ =
     val _ = timer_stop (fn timestr => (timestrref := timestr; print ("naive hol4 symbolic execution took " ^ timestr ^ "\n"))) timer;
 
     val paths = List.filter (isSome o snd) paths_raw;
+
+    (* unify variable representation in the expressions *)
+    val mem_fmap_var = mk_var ("MEM", ``:num|->num``);
+    val mem_const = ``BExp_MemConst Bit64 Bit8 ^mem_fmap_var``;
+    val mem_denvar = ``BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8))``;
+    val mem_var_subst = subst [mem_const |-> mem_denvar];
+
+    fun unify_obs (t1, t2, t3) =
+      (mem_var_subst t1, mem_var_subst t2, mem_var_subst t3);
+
+    fun unify_path (pcond, obslo) =
+      (mem_var_subst pcond, Option.map (List.map unify_obs) obslo);
+
+    val paths_unified = List.map unify_path paths;
+
   in
-    (paths, !timestrref)
+    (paths_unified, !timestrref)
   end;
 
 
@@ -152,9 +167,22 @@ val paths_conv = List.map scamv_to_angr paths;
 compare_angr_symb_exec_path (hd paths_conv) (hd paths_conv);
 compare_angr_symb_exec_path (hd paths_conv) (hd res);
 *)
+val debug_z3_taut_on = false;
 fun z3_is_taut wtm =
-  ((HolSmtLib.Z3_ORACLE_PROVE wtm; true)
-  handle HOL_ERR e => false);
+  let val wtm_fixed = subst [mk_var ("MEM", ``:word64|->word8``) |-> Term`MEMV:word64|->word8`] wtm; in
+    ((HolSmtLib.Z3_ORACLE_PROVE wtm_fixed; true)
+    handle HOL_ERR e => (
+      if not debug_z3_taut_on then () else
+      let
+        val _ = print "--- not a tautology:\n";
+        val _ = print_term wtm_fixed;
+        val _ = print ">>> generating a model\n";
+        val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL (mk_neg wtm_fixed);
+        (*val _ = PolyML.print model;*)
+        val _ = print "<<< done generating a model\n";
+      in () end;
+        false))
+  end;
 
 (*
 val wtm1 = “(a:word64) + (b:word64) + 3w + 2w = (b:word64) + 5w + (a:word64)”;
@@ -180,11 +208,22 @@ val guards_r2 = [beq (bexp_r2, bconst64 42)];
 compare_angr_guards guards_l guards_r1;
 compare_angr_guards guards_l guards_r2;
 *)
+val testref = ref T;
+val debug_wtm_on = false;
 fun birexp_semantics_eq be1 be2 =
   let
+    (* little amounts of output *)
     val _ = Library.trace := 1;
+    val _ = if not (debug_wtm_on) then () else (
+      (* more outputs *)
+      Library.trace := 2;
+      (* also keep the temporary files *)
+      Library.trace := 4);
     val eq_bexp = beq ((snd o dest_eq o concl o EVAL) be1, (snd o dest_eq o concl o EVAL) be2);
     val eq_wtm = bir_exp_to_wordsLib.bir2bool eq_bexp;
+    val _ = if not (debug_wtm_on) then () else (
+      print_term eq_wtm;
+      testref := eq_wtm);
   in
     z3_is_taut eq_wtm
   end;
@@ -301,13 +340,127 @@ fun save_exception paths =
 =============================================================================
 *)
 
+(*
+val scamv_guard_prog1 =
+[“BExp_BinPred BIExp_Equal
+        (BExp_BinExp BIExp_And
+           (BExp_BinExp BIExp_Plus (BExp_Den (BVar "R5" (BType_Imm Bit64)))
+              (BExp_Load (BExp_MemConst Bit64 Bit8 MEM)
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R3" (BType_Imm Bit64))))
+                 BEnd_LittleEndian Bit64)) (BExp_Const (Imm64 7w)))
+        (BExp_Const (Imm64 0w))”];
+
+val angr_guard_prog1 =
+[“BExp_BinPred BIExp_Equal
+  (BExp_BinExp BIExp_And
+     (BExp_CastMask Bit64 7 0
+        (BExp_BinExp BIExp_Plus (BExp_Den (BVar "R5" (BType_Imm Bit64)))
+           (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+              (BExp_BinExp BIExp_Plus
+                 (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                 (BExp_Den (BVar "R3" (BType_Imm Bit64)))) BEnd_LittleEndian
+              Bit64)) (THE (bir_immtype_of_size 8))) (BExp_Const (Imm8 7w)))
+  (BExp_Const (Imm8 0w))”];
+
+val scamv_guard_prog1 =
+[“BExp_BinPred BIExp_Equal
+        (BExp_BinExp BIExp_And
+           (BExp_BinExp BIExp_Plus (BExp_Den (BVar "R5" (BType_Imm Bit64)))
+              (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R3" (BType_Imm Bit64))))
+                 BEnd_LittleEndian Bit64)) (BExp_Const (Imm64 7w)))
+        (BExp_Const (Imm64 0w))”];
+
+birexp_semantics_eq (hd angr_guard_prog1) (hd scamv_guard_prog1);
+
+compare_angr_guards scamv_guard_prog1 angr_guard_prog1;
+
+val testval = !testref;
+(HolSmtLib.Z3_ORACLE_PROVE testval)
+val testval2 = subst [mk_var ("MEM", ``:word64|->word8``) |-> Term`MEMV:word64|->word8`] testval;
+(HolSmtLib.Z3_ORACLE_PROVE testval2)
+
+val benv = ``BEnv (
+   ("R3" =+ SOME (BVal_Imm (Imm64 0w)))
+    (("R1" =+ SOME (BVal_Imm (Imm64 0w)))
+      (("R5" =+ SOME (BVal_Imm (Imm64 0w)))
+        (("MEM" =+ SOME (BVal_Mem Imm64 (K 0w)))
+         (K NONE))
+   )))``
+
+EVAL ``bir_eval_exp (^(hd angr_guard_prog1)) (^benv)``
+
+
+identical
+``(BExp_BinExp BIExp_Plus
+                      (BExp_Den (BVar "R5" (BType_Imm Bit64)))
+                      (BExp_Load
+                         (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                         (BExp_BinExp BIExp_Plus
+                            (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                            (BExp_Den (BVar "R3" (BType_Imm Bit64))))
+                         BEnd_LittleEndian Bit64))``
+``(BExp_BinExp BIExp_Plus (BExp_Den (BVar "R5" (BType_Imm Bit64)))
+              (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R3" (BType_Imm Bit64))))
+                 BEnd_LittleEndian Bit64))``
+
+val angr_guard_prog1 =
+[“BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+          (BExp_Cast BIExp_LowCast
+             (BExp_BinExp BIExp_And
+                (BExp_BinExp BIExp_RightShift
+                   (BExp_Den (BVar "MEM" (BType_Imm Bit64)))
+                   (BExp_Const (Imm64 0w)))
+                (BExp_Const (Imm64 255w))) Bit8) (BExp_Const (Imm8 7w)))
+       (BExp_Const (Imm8 0w))”];
+
+val scamv_guard_prog1 =
+[“BExp_BinPred BIExp_Equal
+        (BExp_BinExp BIExp_And
+           (BExp_Den (BVar "MEM" (BType_Imm Bit64)))
+           (BExp_Const (Imm64 7w)))
+        (BExp_Const (Imm64 0w))”];
+compare_angr_guards scamv_guard_prog1 angr_guard_prog1;
+birexp_semantics_eq (hd scamv_guard_prog1) (hd angr_guard_prog1);
+
+
+val test1 =
+    (snd o dest_eq o concl o EVAL)
+    “(BExp_CastMask Bit64 7 0
+     (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R3" (BType_Imm Bit64))))
+                 BEnd_LittleEndian Bit64) Bit8)”;
+
+val test2 =
+ “BExp_Cast BIExp_LowCast
+      (
+    (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R3" (BType_Imm Bit64))))
+                 BEnd_LittleEndian Bit64))
+      Bit8”;
+
+birexp_semantics_eq test1 test2;
+*)
+
 
 fun main_loop 0 = ()
   |  main_loop n =
      let
 	 open bir_prog_genLib;
 
-	 val prog = if true then
+	 val prog = if false then
 			(* Prefetching *)
 		     let	 
 			 val gen_prefetch = prog_gen_store_prefetch_stride 3;
