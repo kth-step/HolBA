@@ -13,6 +13,16 @@ local
 
   open bir_symbLib;
 
+open symb_recordTheory;
+open symb_prop_transferTheory;
+open bir_symbTheory;
+
+open bir_symb_sound_coreTheory;
+open HolBACoreSimps;
+open symb_interpretTheory;
+open pred_setTheory;
+
+
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 in
@@ -120,7 +130,7 @@ val symb_symbols_set_ALT_thm = store_thm(
 !sr Pi.
   symb_symbols_set sr Pi = (BIGUNION (IMAGE (symb_symbols sr) Pi))
 ``,
-  cheat
+  FULL_SIMP_TAC (std_ss) [symb_symbols_set_def, IMAGE_DEF]
 );
 
 val birs_symb_symbols_set_EQ_thm = store_thm(
@@ -128,10 +138,16 @@ val birs_symb_symbols_set_EQ_thm = store_thm(
 !prog Pi.
   symb_symbols_set (bir_symb_rec_sbir prog) (IMAGE birs_symb_to_symbst Pi) = BIGUNION (IMAGE birs_symb_symbols Pi)
 ``,
-  cheat
-(* 
-bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm
-*)
+  FULL_SIMP_TAC (std_ss) [symb_symbols_set_ALT_thm, EXTENSION] >>
+  FULL_SIMP_TAC (std_ss) [IN_BIGUNION_IMAGE] >>
+  FULL_SIMP_TAC (std_ss) [IN_IMAGE] >>
+
+  REPEAT STRIP_TAC >>
+  EQ_TAC >> (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC (std_ss) [] >>
+    METIS_TAC [bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm]
+  )
 );
 
 val birs_exps_of_senv_def = Define `
@@ -139,14 +155,43 @@ val birs_exps_of_senv_def = Define `
       {e | (?vn. senv vn = SOME e)}
 `;
 
+val birs_exps_of_senv_COMP_def = Define `
+    birs_exps_of_senv_COMP excset senv =
+      {e | (?vn. (~(vn IN excset)) /\ senv vn = SOME e)}
+`;
+
 val birs_exps_of_senv_thm = store_thm(
    "birs_exps_of_senv_thm", ``
-!sr Pi.
-  (birs_exps_of_senv (K NONE) = EMPTY) /\
-  (!senv vn sv. birs_exps_of_senv ((vn =+ (SOME sv)) senv) = sv INSERT (birs_exps_of_senv senv)) /\
-  (!senv vn. birs_exps_of_senv ((vn =+ NONE) senv) = (birs_exps_of_senv senv))
+!senv.
+  birs_exps_of_senv senv
+  =
+  birs_exps_of_senv_COMP EMPTY senv
 ``,
-  cheat
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [birs_exps_of_senv_COMP_def, birs_exps_of_senv_def]
+);
+
+val birs_exps_of_senv_COMP_thm = store_thm(
+   "birs_exps_of_senv_COMP_thm", ``
+!sr Pi.
+  (!excset. birs_exps_of_senv_COMP excset (K NONE) = EMPTY) /\
+  (!excset senv vn sv. birs_exps_of_senv_COMP excset ((vn =+ (SOME sv)) senv) =
+    if vn IN excset then
+      birs_exps_of_senv_COMP (vn INSERT excset) senv
+    else
+      sv INSERT (birs_exps_of_senv_COMP (vn INSERT excset) senv)) /\
+  (!excset senv vn. birs_exps_of_senv_COMP excset ((vn =+ NONE) senv) = (birs_exps_of_senv_COMP (vn INSERT excset) senv))
+``,
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [birs_exps_of_senv_COMP_def]
+  ) >>
+
+  Cases_on `vn IN excset` >> (
+    FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [EXTENSION] >>
+    REPEAT STRIP_TAC >> EQ_TAC >> (
+      REPEAT STRIP_TAC >>
+      METIS_TAC [combinTheory.APPLY_UPDATE_THM, optionTheory.option_CLAUSES]
+    )
+  )
 );
 
 val birs_symb_symbols_thm = store_thm(
@@ -154,10 +199,7 @@ val birs_symb_symbols_thm = store_thm(
 !sys.
   birs_symb_symbols sys = (BIGUNION (IMAGE bir_vars_of_exp (birs_exps_of_senv sys.bsst_environ))) UNION (bir_vars_of_exp sys.bsst_pcond)
 ``,
-  cheat
-(*
-bir_symb_sound_coreTheory.birs_symb_symbols_def
-*)
+  FULL_SIMP_TAC (std_ss) [birs_symb_symbols_def, IMAGE_DEF, birs_exps_of_senv_def, IN_GSPEC_IFF]
 );
 
 val freesymbols_thm = store_thm(
@@ -171,7 +213,7 @@ symb_symbols (bir_symb_rec_sbir ^bprog) ^A_sys_tm INTER
   FULL_SIMP_TAC (std_ss) [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY] >>
   FULL_SIMP_TAC (std_ss) [birs_symb_symbols_thm] >>
 
-  FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_exps_of_senv_thm] >>
+  FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_exps_of_senv_thm, birs_exps_of_senv_COMP_thm] >>
 
   EVAL_TAC
 (*
@@ -179,14 +221,16 @@ symb_symbols (bir_symb_rec_sbir ^bprog) ^A_sys_tm INTER
 *)
 );
 
-val bprog_composed_thm =
+val bprog_composed_thm = save_thm(
+   "bprog_composed_thm",
   MATCH_MP
     (MATCH_MP
        (MATCH_MP
           birs_rule_SEQ_thm
           freesymbols_thm)
     A_single_step_prog_thm)
-    B_single_step_prog_thm;
+    B_single_step_prog_thm
+);
 
 (* TODO: tidy up set operations *)
 
