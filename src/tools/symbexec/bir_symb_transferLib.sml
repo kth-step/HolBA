@@ -13,6 +13,17 @@ local
 
   open bir_symbLib;
 
+open symb_recordTheory;
+open symb_prop_transferTheory;
+open bir_symbTheory;
+
+open bir_symb_sound_coreTheory;
+open HolBACoreSimps;
+open symb_interpretTheory;
+open pred_setTheory;
+
+
+
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 in
@@ -91,27 +102,92 @@ val bprog_P_def = Define `
       T
 `;
 
-(* TODO: add the relevant property about the cycle counter *)
+(* this is the relevant property about the cycle counter *)
 val bprog_Q_def = Define `
     bprog_Q
-     (s1:(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t)
-     (s2:(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t)
+     ((SymbConcSt pc1 st1 status1):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t)
+     ((SymbConcSt pc2 st2 status2):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t)
     =
-     T
+     (?v. st1 "countw" = SOME (BVal_Imm (Imm64 v)) /\ st2 "countw" = SOME (BVal_Imm (Imm64 (v + 1w))))
 `;
+val bprog_Q_thm = store_thm(
+   "bprog_Q_thm", ``
+!bs1 bs2.
+  bprog_Q (birs_symb_to_concst bs1) (birs_symb_to_concst bs2) =
+    (?v. bir_env_lookup "countw" bs1.bst_environ = SOME (BVal_Imm (Imm64 v)) /\
+         bir_env_lookup "countw" bs2.bst_environ = SOME (BVal_Imm (Imm64 (v + 1w))))
+``,
+  cheat
+);
 
 val bprog_P_entails_thm = store_thm(
    "bprog_P_entails_thm", ``
 P_entails_an_interpret (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm
 ``,
+  FULL_SIMP_TAC (std_ss++birs_state_ss) [P_entails_an_interpret_def, birs_symb_to_symbst_def, symb_symbst_pc_def] >>
+
+  REPEAT STRIP_TAC >>
+  REPEAT (POP_ASSUM (K ALL_TAC)) >>
+
   cheat
+(*
+  Q.EXISTS_TAC `SymbInterpret ()` >>
+
+  FULL_SIMP_TAC (std_ss) [symb_matchstate_def]
+*)
 );
 
 val bprog_Pi_overapprox_Q_thm = store_thm(
    "bprog_Pi_overapprox_Q_thm", ``
 Pi_overapprox_Q (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm ^Pi_tm bprog_Q
 ``,
-  cheat
+  FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
+
+  FULL_SIMP_TAC (std_ss) [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT] >>
+
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss) [pred_setTheory.NOT_IN_EMPTY] >>
+    PAT_X_ASSUM ``A = birs_symb_to_symbst B`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
+
+    `?bs. s = birs_symb_to_concst bs /\ ?bs'. s' = birs_symb_to_concst bs'` by (
+      METIS_TAC [birs_symb_to_concst_EXISTS_thm]
+    ) >>
+
+    FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
+    FULL_SIMP_TAC (std_ss) [bprog_Q_thm] >>
+
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
+
+(*
+    REPEAT (PAT_X_ASSUM ``symb_interpr_for_symbs (birs_symb_symbols A) B``
+      (fn thm =>
+         let
+           val tm = (hd o snd o strip_comb o concl) thm;
+(*           val _ = print_term tm; *)
+           val conv = SIMP_CONV std_ss [bir_symb_composeLib.birs_symb_symbols_thm] THENC SIMP_CONV (std_ss++birs_state_ss) [bir_symb_composeLib.birs_exps_of_senv_thm] THENC EVAL;
+           val thm_res = conv tm;
+(*           val _ = print_term (concl thm_res); *)
+         in
+           ASSUME_TAC (REWRITE_RULE [Once thm_res] thm)
+         end)) >>
+
+    `BVar "sy_countw" (BType_Imm Bit64) IN symb_interpr_dom H` by (
+      FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET] >>
+    )
+*)
+
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def] >>
+    REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"countw"`)) >>
+    FULL_SIMP_TAC (std_ss) [] >>
+
+    `birs_interpret_subst_fmap_get H' = birs_interpret_subst_fmap_get H` by (
+      cheat
+      (* this isn't true, is it? *)
+    ) >>
+    FULL_SIMP_TAC (std_ss) [bir_typing_expTheory.bir_vars_of_exp_def] >>
+
+    cheat
+  )
 );
 
 val bprog_prop_holds_thm =

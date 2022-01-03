@@ -114,6 +114,52 @@ val birs_rule_SEQ_thm =
   (MATCH_MP symb_rulesTheory.symb_rule_SEQ_thm birs_symb_symbols_f_sound_prog_thm);
 
 
+
+val symb_symbols_set_ALT_thm = store_thm(
+   "symb_symbols_set_ALT_thm", ``
+!sr Pi.
+  symb_symbols_set sr Pi = (BIGUNION (IMAGE (symb_symbols sr) Pi))
+``,
+  cheat
+);
+
+val birs_symb_symbols_set_EQ_thm = store_thm(
+   "birs_symb_symbols_set_EQ_thm", ``
+!prog Pi.
+  symb_symbols_set (bir_symb_rec_sbir prog) (IMAGE birs_symb_to_symbst Pi) = BIGUNION (IMAGE birs_symb_symbols Pi)
+``,
+  cheat
+(* 
+bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm
+*)
+);
+
+val birs_exps_of_senv_def = Define `
+    birs_exps_of_senv senv =
+      {e | (?vn. senv vn = SOME e)}
+`;
+
+val birs_exps_of_senv_thm = store_thm(
+   "birs_exps_of_senv_thm", ``
+!sr Pi.
+  (birs_exps_of_senv (K NONE) = EMPTY) /\
+  (!senv vn sv. birs_exps_of_senv ((vn =+ (SOME sv)) senv) = sv INSERT (birs_exps_of_senv senv)) /\
+  (!senv vn. birs_exps_of_senv ((vn =+ NONE) senv) = (birs_exps_of_senv senv))
+``,
+  cheat
+);
+
+val birs_symb_symbols_thm = store_thm(
+   "birs_symb_symbols_thm", ``
+!sys.
+  birs_symb_symbols sys = (BIGUNION (IMAGE bir_vars_of_exp (birs_exps_of_senv sys.bsst_environ))) UNION (bir_vars_of_exp sys.bsst_pcond)
+``,
+  cheat
+(*
+bir_symb_sound_coreTheory.birs_symb_symbols_def
+*)
+);
+
 val freesymbols_thm = store_thm(
    "freesymbols_thm", ``
 symb_symbols (bir_symb_rec_sbir ^bprog) ^A_sys_tm INTER
@@ -121,7 +167,16 @@ symb_symbols (bir_symb_rec_sbir ^bprog) ^A_sys_tm INTER
      symb_symbols (bir_symb_rec_sbir ^bprog) ^B_sys_tm)
 = EMPTY
 ``,
-  cheat
+  FULL_SIMP_TAC (std_ss) [bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm, birs_symb_symbols_set_EQ_thm] >>
+  FULL_SIMP_TAC (std_ss) [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY] >>
+  FULL_SIMP_TAC (std_ss) [birs_symb_symbols_thm] >>
+
+  FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_exps_of_senv_thm] >>
+
+  EVAL_TAC
+(*
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.GSPECIFICATION]
+*)
 );
 
 val bprog_composed_thm =
