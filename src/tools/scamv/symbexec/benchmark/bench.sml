@@ -308,6 +308,22 @@ compare_angr_symb_exec paths_conv res;
 =============================================================================
 *)
 
+fun check_path_satisfiability path =
+  let
+    val (bir_angrLib.exec_path {guards = guards, ...}) = path;
+    (* little amounts of output *)
+    val _ = Library.trace := 1;
+    val pcond_bexp = bandl guards;
+    val wtm = bir_exp_to_wordsLib.bir2bool pcond_bexp;
+  in
+    z3_is_taut (mk_neg wtm)
+  end;
+fun remove_infeasible_paths paths =
+  List.filter (not o (fn p => check_path_satisfiability p)) paths;
+(*
+=============================================================================
+*)
+
 val num_success = ref 0;
 val filename = TextIO.openOut "test_exceptions.txt";
 
@@ -474,6 +490,7 @@ fun main_loop 0 = ()
 		     let		 
 			 (* val (prog_id, lifted_prog) = prog_gen_store_rand "" 5 (); *)
 			 val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre_v1" 5 ();
+			 val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre" 5 ();
 			 val prog = lifted_prog;
 		     in
 			 prog
@@ -511,24 +528,37 @@ fun main_loop 0 = ()
          val eq_result = compare_angr_symb_exec paths_conv res;
          val _ =
 	   if eq_result then (
-            num_success := (!num_success + 1);
+	    num_success := (!num_success + 1);
 	    print "yippie!!!\n")
            else (
-            print "oh noo!!!\n";
-	    TextIO.output (filename,"\n+++++++++++ Exception +++++++++++\n");
-            TextIO.output (filename,"--------------------------------------\n");
-	    TextIO.output (filename, term_to_string prog ^ "\n");
-            TextIO.output (filename,"\n--------------------------------------\n");
-	    TextIO.output (filename,"Scam-V result");
-	    TextIO.output (filename,"\n--------------------------------------\n");
-	    save_exception paths_conv;
-	    TextIO.output (filename,"\n--------------------------------------\n");
-	    TextIO.output (filename,"Angr result");
-	    TextIO.output (filename,"\n--------------------------------------\n");
-            save_exception res;
-	    TextIO.output (filename,"\n--------------------------------------\n");
-            TextIO.output (filename,"\n\n");
-	    TextIO.flushOut filename);
+	       print "oh noo!!!\n";
+	       let
+	         (* second check to exclude infeasible paths *)
+	         val paths_feasible = remove_infeasible_paths paths_conv;
+	         val eq_result2 = compare_angr_symb_exec paths_feasible res;
+                 val _ =
+                   if eq_result2 then (
+	             num_success := (!num_success + 1);
+		     TextIO.output (filename,"\n+++++++++++ Prog with infeasible paths +++++++++++\n");
+	             TextIO.output (filename, term_to_string prog ^ "\n");
+                     print "ok second check\n")
+		   else (
+                     print "error second check\n";
+                     TextIO.output (filename,"\n+++++++++++ Exception +++++++++++\n");
+                     TextIO.output (filename,"--------------------------------------\n");
+	             TextIO.output (filename, term_to_string prog ^ "\n");
+                     TextIO.output (filename,"\n--------------------------------------\n");
+	             TextIO.output (filename,"Scam-V result");
+	             TextIO.output (filename,"\n--------------------------------------\n");
+	             save_exception paths_conv;
+	             TextIO.output (filename,"\n--------------------------------------\n");
+	             TextIO.output (filename,"Angr result");
+	             TextIO.output (filename,"\n--------------------------------------\n");
+                     save_exception res;
+	             TextIO.output (filename,"\n--------------------------------------\n");
+                     TextIO.output (filename,"\n\n");
+	             TextIO.flushOut filename);
+	       in () end);
 
 	 val _ = print "\nDone symbexecing.\n";
      in
@@ -545,4 +575,3 @@ val _ =
     val _ = TextIO.closeOut filename;
     val _ = print ("Number of successful test cases: " ^ (Int.toString (!num_success)) ^ "\n\n");
   in () end;
-
