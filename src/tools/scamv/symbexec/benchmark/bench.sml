@@ -476,6 +476,7 @@ fun main_loop 0 = ()
      let
 	 open bir_prog_genLib;
 
+	 val _ = bir_randLib.rand_isfresh_set true;
 	 val prog = if false then
 			(* Prefetching *)
 		     let	 
@@ -489,7 +490,7 @@ fun main_loop 0 = ()
 			(* Spectre *)	
 		     let		 
 			 (* val (prog_id, lifted_prog) = prog_gen_store_rand "" 5 (); *)
-			 val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre_v1" 5 ();
+			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre_v1" 5 (); *)
 			 val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre" 5 ();
 			 val prog = lifted_prog;
 		     in
@@ -499,7 +500,8 @@ fun main_loop 0 = ()
 	 val prog = (snd o dest_eq o concl o EVAL) prog;
 	 val _ = print "\nInput prog prepared.\n\n";
 
-         val obsmodel_id = "mem_address_pc";
+	 (* val obsmodel_id = "mem_address_pc"; *)
+         val obsmodel_id = "cache_tag_index";
          local
            val mem_bounds =
              let
