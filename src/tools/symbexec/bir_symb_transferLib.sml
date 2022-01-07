@@ -117,6 +117,15 @@ val bprog_Q_thm = store_thm(
     (?v. bir_env_lookup "countw" bs1.bst_environ = SOME (BVal_Imm (Imm64 v)) /\
          bir_env_lookup "countw" bs2.bst_environ = SOME (BVal_Imm (Imm64 (v + 1w))))
 ``,
+  FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_Q_def]
+);
+
+val P_entails_an_interpret_GEN_thm = store_thm(
+   "P_entails_an_interpret_GEN_thm", ``
+!sr P sys.
+  (prop (symb_store sys)) ==>
+  (P_entails_an_interpret sr P sys)
+``,
   cheat
 );
 
@@ -124,10 +133,15 @@ val bprog_P_entails_thm = store_thm(
    "bprog_P_entails_thm", ``
 P_entails_an_interpret (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm
 ``,
-  FULL_SIMP_TAC (std_ss++birs_state_ss) [P_entails_an_interpret_def, birs_symb_to_symbst_def, symb_symbst_pc_def] >>
+  FULL_SIMP_TAC (std_ss++birs_state_ss) [P_entails_an_interpret_def] >>
+  FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_to_symbst_def, symb_symbst_pc_def] >>
 
   REPEAT STRIP_TAC >>
   REPEAT (POP_ASSUM (K ALL_TAC)) >>
+
+(*
+  Q.EXISTS_TAC `SymbInterpret ()` >>
+*)
 
   cheat
 (*
