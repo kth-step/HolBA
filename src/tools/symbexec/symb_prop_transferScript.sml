@@ -13,18 +13,32 @@ val _ = new_theory "symb_prop_transfer";
 NOTATION: DEFINE PROPERTY TRANSFER ASSUMPTIONS AND GOAL
 =======================================================
 *)
+val symb_concst_store_ty_sat_def = Define `
+    symb_concst_store_ty_sat sr sty s =
+    (!vn ty v.
+       (sty vn = SOME ty) ==>
+       ((symb_concst_store s) vn = SOME v) ==>
+       (sr.sr_typeof_val v = ty))
+`;
+val symb_symbst_store_ty_def = Define `
+    symb_symbst_store_ty sr sys =
+    (\vn. OPTION_BIND ((symb_symbst_store sys) vn) (sr.sr_typeof_exp))
+`;
+
 val P_entails_an_interpret_def = Define `
-  P_entails_an_interpret sr P sys =
+    P_entails_an_interpret sr P sys =
     (!s.
      (symb_concst_pc s = symb_symbst_pc sys) ==>
+     (symb_concst_store_ty_sat sr (symb_symbst_store_ty sr sys) s) ==>
      (P s) ==>
      (?H. symb_matchstate sr sys H s))
 `;
 
 val Pi_overapprox_Q_def = Define `
-  Pi_overapprox_Q sr P sys Pi Q =
+    Pi_overapprox_Q sr P sys Pi Q =
     (!sys' s s' H.
      (sys' IN Pi) ==>
+     (symb_concst_store_ty_sat sr (symb_symbst_store_ty sr sys) s) ==>
      (P s) ==>
      (symb_matchstate sr sys H s) ==>
      (symb_matchstate_ext sr sys' H s') ==>
@@ -32,7 +46,18 @@ val Pi_overapprox_Q_def = Define `
 `;
 
 val prop_holds_def = Define `
-  prop_holds sr l L P Q =
+    prop_holds sr l L sty P Q =
+    (!s.
+     (symb_concst_pc s = l) ==>
+     (symb_concst_store_ty_sat sr sty s) ==>
+     (P s) ==>
+     (?n s'.
+       conc_step_n_in_L sr s n L s' /\
+       Q s s'))
+`;
+
+val prop_holds_spec_def = Define `
+    prop_holds_spec sr l L P Q =
     (!s.
      (symb_concst_pc s = l) ==>
      (P s) ==>
@@ -54,11 +79,22 @@ val symb_prop_transfer_thm = store_thm(
   (P_entails_an_interpret sr P sys) ==>
   (Pi_overapprox_Q sr P sys Pi Q) ==>
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
-  (prop_holds sr (symb_symbst_pc sys) L P Q)
+  (prop_holds sr (symb_symbst_pc sys) L (symb_symbst_store_ty sr sys) P Q)
 ``,
   REWRITE_TAC [P_entails_an_interpret_def, Pi_overapprox_Q_def, prop_holds_def, symb_hl_step_in_L_sound_def] >>
   REPEAT STRIP_TAC >>
   METIS_TAC [symb_matchstate_TO_minimal_thm]
+);
+
+val symb_prop_spec_thm = store_thm(
+   "symb_prop_spec_thm", ``
+!sr l L sty P Q.
+  (!s. P s ==> symb_concst_store_ty_sat sr sty s) ==>
+  (prop_holds sr l L sty P Q) ==>
+  (prop_holds_spec sr l L P Q)
+``,
+  REWRITE_TAC [prop_holds_def, prop_holds_spec_def] >>
+  METIS_TAC []
 );
 
 
@@ -98,10 +134,10 @@ val symb_prop_transfer_binHoare_thm = store_thm(
 !sr.
 !Q' l L P Q.
   (Q' = \s. \s'. Q s' /\ (~((symb_concst_pc s') IN (COMPL L)))) ==>
-  (prop_holds sr l (COMPL L) P Q') ==>
+  (prop_holds_spec sr l (COMPL L) P Q') ==>
   (abstract_jgmt (symb_hl_etl_wm sr) l L P Q)
 ``,
-  REWRITE_TAC [prop_holds_def, abstract_jgmt_def] >>
+  REWRITE_TAC [prop_holds_spec_def, abstract_jgmt_def] >>
   REPEAT STRIP_TAC >>
 
   PAT_X_ASSUM ``!x. y`` (ASSUME_TAC o (Q.SPEC `ms`)) >>
