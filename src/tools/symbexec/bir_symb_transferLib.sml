@@ -22,7 +22,8 @@ open HolBACoreSimps;
 open symb_interpretTheory;
 open pred_setTheory;
 
-
+open bir_exp_substitutionsTheory;
+open bir_symb_composeLib;
 
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
@@ -98,8 +99,12 @@ val birs_prop_transfer_thm =
   (MATCH_MP symb_prop_transferTheory.symb_prop_transfer_thm birs_symb_symbols_f_sound_prog_thm);
 
 val bprog_P_def = Define `
-    bprog_P (s:(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
-      T
+    bprog_P ((SymbConcSt pc st status):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
+      (status = BST_Running /\
+       (?v_R7. st "R7" = SOME v_R7 /\ type_of_bir_val v_R7 = BType_Imm Bit32) /\
+       (?v_SP_process. st "SP_process" = SOME v_SP_process /\ type_of_bir_val v_SP_process = BType_Imm Bit32) /\
+       (?v_countw. st "countw" = SOME v_countw /\ type_of_bir_val v_countw = BType_Imm Bit64) /\
+       (!vn. vn <> "R7" ==> vn <> "SP_process" ==> vn <> "countw" ==> st vn = NONE))
 `;
 
 (* this is the relevant property about the cycle counter *)
@@ -120,35 +125,62 @@ val bprog_Q_thm = store_thm(
   FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_Q_def]
 );
 
-val P_entails_an_interpret_GEN_thm = store_thm(
-   "P_entails_an_interpret_GEN_thm", ``
-!sr P sys.
-  (prop (symb_store sys)) ==>
-  (P_entails_an_interpret sr P sys)
-``,
-  cheat
-);
-
+val string_ss = rewrites (type_rws ``:string``);
 val bprog_P_entails_thm = store_thm(
    "bprog_P_entails_thm", ``
 P_entails_an_interpret (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm
 ``,
   FULL_SIMP_TAC (std_ss++birs_state_ss) [P_entails_an_interpret_def] >>
+  REPEAT STRIP_TAC >>
+
+  ASSUME_TAC ((GSYM o Q.SPEC `s`) birs_symb_to_concst_EXISTS_thm) >>
+  FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_EQ_thm] >>
+
   FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_to_symbst_def, symb_symbst_pc_def] >>
 
-  REPEAT STRIP_TAC >>
-  REPEAT (POP_ASSUM (K ALL_TAC)) >>
+  Cases_on `s` >> Cases_on `st` >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss++symb_typesLib.symb_TYPES_ss) [bprog_P_def, birs_symb_to_concst_def, symb_concst_pc_def] >>
 
-(*
-  Q.EXISTS_TAC `SymbInterpret ()` >>
-*)
+  Q.EXISTS_TAC `SymbInterpret
+    ((BVar "sy_R7" (BType_Imm Bit32) =+ SOME v_R7)
+    ((BVar "sy_SP_process" (BType_Imm Bit32) =+ SOME v_SP_process)
+    ((BVar "sy_countw" (BType_Imm Bit64) =+ SOME v_countw) (K NONE))))` >>
 
-  cheat
-(*
-  Q.EXISTS_TAC `SymbInterpret ()` >>
+  FULL_SIMP_TAC (std_ss) [birs_symb_matchstate_def] >>
 
-  FULL_SIMP_TAC (std_ss) [symb_matchstate_def]
-*)
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss++birs_state_ss++holBACore_ss) []
+  ) >- (
+    FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def] >>
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [symb_interpr_dom_def, birs_symb_symbols_def, bir_typing_expTheory.bir_vars_of_exp_def] >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.SUBSET_DEF] >>
+    REPEAT STRIP_TAC >>
+    Cases_on `vn = "countw"` >> Cases_on `vn = "SP_process"` >> Cases_on `vn = "R7"` >> (
+      FULL_SIMP_TAC (std_ss++stringSimps.STRING_ss++string_ss) [combinTheory.APPLY_UPDATE_THM] >>
+      PAT_X_ASSUM ``BExp_Den A = B`` (ASSUME_TAC o GSYM) >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [IN_SING] >>
+      REV_FULL_SIMP_TAC (std_ss++holBACore_ss++string_ss) []
+    )
+  ) >- (
+    FULL_SIMP_TAC (std_ss) [birs_interpr_welltyped_def] >>
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [symb_interpr_dom_def] >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+    REPEAT STRIP_TAC >>
+    Cases_on `sy = BVar "sy_countw" (BType_Imm Bit64)` >> Cases_on `sy = BVar "sy_SP_process" (BType_Imm Bit32)` >> Cases_on `sy = BVar "sy_R7" (BType_Imm Bit32)` >> (
+      FULL_SIMP_TAC (std_ss++stringSimps.STRING_ss++string_ss++holBACore_ss) [symb_interpr_get_def, combinTheory.APPLY_UPDATE_THM]
+    )
+  ) >- (
+    FULL_SIMP_TAC (std_ss) [birs_matchenv_def] >>
+    REPEAT STRIP_TAC >>
+    Cases_on `var = "countw"` >> Cases_on `var = "SP_process"` >> Cases_on `var = "R7"` >> (
+      FULL_SIMP_TAC (std_ss++stringSimps.STRING_ss++string_ss) [combinTheory.APPLY_UPDATE_THM] >>
+      REWRITE_TAC [birs_interpret_fun_thm] >>
+      EVAL_TAC
+    ) >>
+    METIS_TAC []
+  ) >>
+
+  EVAL_TAC
 );
 
 val bprog_Pi_overapprox_Q_thm = store_thm(
@@ -156,29 +188,29 @@ val bprog_Pi_overapprox_Q_thm = store_thm(
 Pi_overapprox_Q (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm ^Pi_tm bprog_Q
 ``,
   FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
+  REPEAT STRIP_TAC >>
 
-  FULL_SIMP_TAC (std_ss) [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT] >>
+  ASSUME_TAC ((GSYM o Q.SPEC `s`) birs_symb_to_concst_EXISTS_thm) >>
+  FULL_SIMP_TAC (std_ss) [] >>
+  ASSUME_TAC ((GSYM o Q.SPEC `s'`) birs_symb_to_concst_EXISTS_thm) >>
+  FULL_SIMP_TAC (std_ss) [] >>
 
-  REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC (std_ss) [pred_setTheory.NOT_IN_EMPTY] >>
+  FULL_SIMP_TAC (std_ss) [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT] >> REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss) [pred_setTheory.NOT_IN_EMPTY]
+  ) >> (
     PAT_X_ASSUM ``A = birs_symb_to_symbst B`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
 
-    `?bs. s = birs_symb_to_concst bs /\ ?bs'. s' = birs_symb_to_concst bs'` by (
-      METIS_TAC [birs_symb_to_concst_EXISTS_thm]
-    ) >>
-
-    FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
     FULL_SIMP_TAC (std_ss) [bprog_Q_thm] >>
+    FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
 
     FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
 
-(*
     REPEAT (PAT_X_ASSUM ``symb_interpr_for_symbs (birs_symb_symbols A) B``
       (fn thm =>
          let
            val tm = (hd o snd o strip_comb o concl) thm;
 (*           val _ = print_term tm; *)
-           val conv = SIMP_CONV std_ss [bir_symb_composeLib.birs_symb_symbols_thm] THENC SIMP_CONV (std_ss++birs_state_ss) [bir_symb_composeLib.birs_exps_of_senv_thm] THENC EVAL;
+           val conv = SIMP_CONV std_ss [birs_symb_symbols_thm] THENC SIMP_CONV (std_ss++birs_state_ss) [birs_exps_of_senv_thm, birs_exps_of_senv_COMP_thm] THENC EVAL;
            val thm_res = conv tm;
 (*           val _ = print_term (concl thm_res); *)
          in
@@ -186,21 +218,41 @@ Pi_overapprox_Q (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm ^Pi_tm bprog_Q
          end)) >>
 
     `BVar "sy_countw" (BType_Imm Bit64) IN symb_interpr_dom H` by (
-      FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET] >>
-    )
-*)
+      FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
+    ) >>
+    `BVar "sy_countw" (BType_Imm Bit64) IN symb_interpr_dom H'` by (
+      FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
+    ) >>
 
     FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def] >>
     REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"countw"`)) >>
     FULL_SIMP_TAC (std_ss) [] >>
 
-    `birs_interpret_subst_fmap_get H' = birs_interpret_subst_fmap_get H` by (
-      cheat
-      (* this isn't true, is it? *)
+    `symb_interpr_get H' (BVar "sy_countw" (BType_Imm Bit64)) = symb_interpr_get H (BVar "sy_countw" (BType_Imm Bit64))` by (
+      FULL_SIMP_TAC std_ss [symb_interpr_ext_def, symb_interprs_eq_for_def]
     ) >>
-    FULL_SIMP_TAC (std_ss) [bir_typing_expTheory.bir_vars_of_exp_def] >>
 
-    cheat
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_interpr_welltyped_def] >>
+    REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `BVar "sy_countw" (BType_Imm Bit64)`)) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+    Cases_on `symb_interpr_get H (BVar "sy_countw" (BType_Imm Bit64))` >- (
+      METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm, optionTheory.option_CLAUSES]
+    ) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [optionTheory.option_CLAUSES] >>
+
+    FULL_SIMP_TAC (std_ss) [bir_typing_expTheory.bir_vars_of_exp_def, UNION_EMPTY, bir_exp_subst_def, bir_exp_subst_var_def, FINITE_SING, finite_mapTheory.FLOOKUP_FUN_FMAP, IN_SING, birs_interpret_subst_fmap_get_def] >>
+    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+    `bir_val_is_Imm_s Bit64 x` by (
+      METIS_TAC [bir_valuesTheory.bir_val_checker_TO_type_of]
+    ) >>
+    FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_val_is_Imm_s_def, bir_immTheory.n2bs_def] >>
+
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_to_constexp_def] >>
+    REPEAT (PAT_X_ASSUM ``BVal_Imm (Imm64 (n2w B)) = A`` (ASSUME_TAC o GSYM)) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_to_constexp_def]
   )
 );
 
