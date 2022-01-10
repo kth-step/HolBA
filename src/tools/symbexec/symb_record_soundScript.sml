@@ -361,6 +361,20 @@ val symb_interpr_update_interpret_f_IMP_welltyped_thm = store_thm(
   METIS_TAC [symb_interpr_update_SOME_IMP_welltyped_thm, symb_typeof_exp_sound_def]
 );
 
+
+
+(*
+SOUND VALUE EQUALITY RELATION
+=======================================================
+*)
+val symb_val_eq_sound_def = Define `
+    symb_val_eq_sound sr =
+      ((!v. sr.sr_val_eq v v)(* /\
+       (!v1 v2. sr.sr_val_eq v1 v2 <=> sr.sr_val_eq v2 v1) /\
+       (!v1 v2 v3. sr.sr_val_eq v1 v2 ==> sr.sr_val_eq v2 v3 ==> sr.sr_val_eq v1 v3)*)
+      )
+`;
+
 (*
 ASBTRACT EXPRESSION CONSTRUCTION
 =======================================================
@@ -375,8 +389,7 @@ val symb_mk_exp_eq_f_sound_def = Define `
          (symb_interpr_welltyped sr H) ==>
          (sr.sr_interpret_f H (sr.sr_mk_exp_eq_f e1 e2) = SOME sr.sr_val_true) =
          ((sr.sr_interpret_f H e1 <> NONE) /\
-          (sr.sr_interpret_f H e1 =
-           sr.sr_interpret_f H e2))) /\
+          (OPTREL sr.sr_val_eq (sr.sr_interpret_f H e1) (sr.sr_interpret_f H e2)))) /\
        (!e1 e2. sr.sr_symbols_f (sr.sr_mk_exp_eq_f e1 e2) =
          sr.sr_symbols_f e1 UNION sr.sr_symbols_f e2))
 `;
@@ -404,8 +417,7 @@ val symb_expr_conj_eq_thm = store_thm(
        (sr.sr_interpret_f H (symb_expr_conj_eq sr e1 e2 conj1) = SOME sr.sr_val_true) =
        ((sr.sr_interpret_f H conj1 = SOME sr.sr_val_true) /\
         (sr.sr_interpret_f H e1 <> NONE) /\
-        (sr.sr_interpret_f H e1 =
-         sr.sr_interpret_f H e2))) /\
+        (OPTREL sr.sr_val_eq (sr.sr_interpret_f H e1) (sr.sr_interpret_f H e2)))) /\
      (!e1 e2 conj1.sr.sr_symbols_f (symb_expr_conj_eq sr e1 e2 conj1) =
          sr.sr_symbols_f e1 UNION
          sr.sr_symbols_f e2 UNION
@@ -658,6 +670,7 @@ val symb_subst_sound_thm = store_thm(
 
   METIS_TAC [symb_subst_def, symb_subst_suitable_interpretation_thm]
 );
+
 
 
 

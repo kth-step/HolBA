@@ -131,6 +131,8 @@ val _ = Datatype `symb_rec_t =
                            'f_symbexpr ->
                            'c_val option;
 
+      sr_val_eq          : 'c_val -> 'c_val -> bool;
+
       (* finally, concrete and symbolic executions *)
       sr_step_conc       : (('a_label, 'b_var, 'c_val, 'd_extra) symb_concst_t) ->
                            (('a_label, 'b_var, 'c_val, 'd_extra) symb_concst_t);

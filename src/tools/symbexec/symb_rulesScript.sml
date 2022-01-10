@@ -463,6 +463,7 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
 !sr.
 (symb_symbols_f_sound sr) ==>
 (symb_typeof_exp_sound sr) ==>
+(symb_val_eq_sound sr) ==>
 (symb_mk_exp_conj_f_sound sr) ==>
 (symb_mk_exp_eq_f_sound sr) ==>
 (symb_mk_exp_symb_f_sound sr) ==>
@@ -567,6 +568,12 @@ val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
       FULL_SIMP_TAC std_ss [symb_expr_conj_eq_thm]
     ) >>
 
+    `OPTREL sr.sr_val_eq (sr.sr_interpret_f H1 symbexp) (sr.sr_interpret_f H1 symbexp')` by (
+      Cases_on `sr.sr_interpret_f H1 symbexp` >> Cases_on `sr.sr_interpret_f H1 symbexp'` >> (
+        FULL_SIMP_TAC std_ss [symb_val_eq_sound_def]
+      )
+    ) >>
+
     METIS_TAC [symb_expr_conj_eq_thm]
   ) >>
 
@@ -579,6 +586,7 @@ val symb_FRESH_TRANSF_matchstate_ext_thm = store_thm(
 !sr.
 (symb_symbols_f_sound sr) ==>
 (symb_typeof_exp_sound sr) ==>
+(symb_val_eq_sound sr) ==>
 (symb_mk_exp_eq_f_sound sr) ==>
 (symb_mk_exp_conj_f_sound sr) ==>
 (symb_mk_exp_symb_f_sound sr) ==>
@@ -624,6 +632,7 @@ val symb_rule_FRESH_thm = store_thm(
 !sr.
 (symb_symbols_f_sound sr) ==>
 (symb_typeof_exp_sound sr) ==>
+(symb_val_eq_sound sr) ==>
 (symb_mk_exp_eq_f_sound sr) ==>
 (symb_mk_exp_conj_f_sound sr) ==>
 (symb_mk_exp_symb_f_sound sr) ==>
