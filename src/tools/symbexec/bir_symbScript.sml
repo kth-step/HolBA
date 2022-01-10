@@ -1563,6 +1563,14 @@ val birs_exec_step_def = Define `
     | SOME stm => (birs_exec_stmt p stm state)
 `;
 
+val birs_val_eq_def = Define `
+   (birs_val_eq (BVal_Imm bi1) (BVal_Imm bi2) =
+      (bir_eval_bin_pred BIExp_Equal (SOME (BVal_Imm bi1)) (SOME (BVal_Imm bi2)) = SOME bir_val_true)) /\
+   (birs_val_eq (BVal_Mem at1 vt1 mmap1) (BVal_Mem at2 vt2 mmap2) =
+      (bir_eval_memeq (SOME (BVal_Mem at1 vt1 mmap1)) (SOME (BVal_Mem at2 vt2 mmap2)) = SOME bir_val_true)) /\
+   (birs_val_eq _ _ = F)
+`;
+
 (* now the symbolic execution record *)
 val bir_symb_rec_sbir_def = Define `
   bir_symb_rec_sbir prog =
@@ -1585,6 +1593,8 @@ val bir_symb_rec_sbir_def = Define `
 
       (* interpretation business, type error produces NONE value *)
       sr_interpret_f     := birs_interpret_fun;
+
+      sr_val_eq          := birs_val_eq;
 
       (* finally, concrete and symbolic executions *)
       sr_step_conc       := birs_symb_to_concst o SND o (bir_exec_step prog) o birs_symb_from_concst;
