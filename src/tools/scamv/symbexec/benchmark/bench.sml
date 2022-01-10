@@ -308,18 +308,19 @@ compare_angr_symb_exec paths_conv res;
 =============================================================================
 *)
 
-fun check_path_satisfiability path =
+fun check_path_infeasability path =
   let
     val (bir_angrLib.exec_path {guards = guards, ...}) = path;
     (* little amounts of output *)
     val _ = Library.trace := 1;
-    val pcond_bexp = bandl guards;
+    val guards_evald = List.map (snd o dest_eq o concl o EVAL) guards;
+    val pcond_bexp = bandl guards_evald;
     val wtm = bir_exp_to_wordsLib.bir2bool pcond_bexp;
   in
     z3_is_taut (mk_neg wtm)
   end;
-fun remove_infeasible_paths paths =
-  List.filter (not o (fn p => check_path_satisfiability p)) paths;
+fun filter_feasible_paths paths =
+  List.filter (not o (fn p => check_path_infeasability p)) paths;
 (*
 =============================================================================
 *)
@@ -491,7 +492,9 @@ fun main_loop 0 = ()
 		     let		 
 			 (* val (prog_id, lifted_prog) = prog_gen_store_rand "" 5 (); *)
 			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre_v1" 5 (); *)
-			 val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre" 5 ();
+			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre" 5 (); *)
+                         (* prog_gen_store_fromfile filename *)
+                         val (prog_id, lifted_prog) = prog_gen_store_fromlines ["ldr x12, [x22, #130]", "ldr x28, [x22, #16]"] ();
 			 val prog = lifted_prog;
 		     in
 			 prog
@@ -536,8 +539,9 @@ fun main_loop 0 = ()
 	       print "oh noo!!!\n";
 	       let
 	         (* second check to exclude infeasible paths *)
-	         val paths_feasible = remove_infeasible_paths paths_conv;
-	         val eq_result2 = compare_angr_symb_exec paths_feasible res;
+	         val paths_feasible = filter_feasible_paths paths_conv;
+	         val res_feasible = filter_feasible_paths res;
+	         val eq_result2 = compare_angr_symb_exec paths_feasible res_feasible;
                  val _ =
                    if eq_result2 then (
 	             num_success := (!num_success + 1);
