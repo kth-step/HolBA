@@ -69,8 +69,16 @@ val _ = (print_term o concl) (birs_exec_step_CONV test_term_mid);
 
 val birs_state_mid_lbl = (snd o dest_eq o concl o EVAL) ``(^birs_state_mid).bsst_pc``;
 
+val bir_prog_has_no_halt_prog_thm = store_thm(
+   "bir_prog_has_no_halt_prog_thm", ``
+bir_prog_has_no_halt bprog_test
+``,
+  EVAL_TAC
+);
 val birs_symb_step_sound_prog_thm =
-  (SPEC (inst [Type`:'obs_type` |-> Type.alpha] bprog) bir_symb_soundTheory.birs_symb_step_sound_thm);
+  MP
+    (SPEC (inst [Type`:'obs_type` |-> Type.alpha] bprog) bir_symb_soundTheory.birs_symb_step_sound_thm)
+    bir_prog_has_no_halt_prog_thm;
 
 val birs_rule_STEP_thm =
   SIMP_RULE (std_ss++symb_typesLib.symb_TYPES_ss) []
