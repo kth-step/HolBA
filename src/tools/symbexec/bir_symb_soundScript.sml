@@ -195,6 +195,30 @@ val birs_symb_typeof_exp_sound_thm = store_thm(
 
 (*
 =========================================================================
+symb_val_eq_sound sr
+=========================================================================
+ *)
+
+val birs_symb_val_eq_sound_thm = store_thm(
+   "birs_symb_val_eq_sound_thm", ``
+!prog.
+  symb_val_eq_sound (bir_symb_rec_sbir prog)
+``,
+  SIMP_TAC (std_ss) [symb_val_eq_sound_def] >>
+  SIMP_TAC (std_ss++symb_TYPES_ss) [bir_symb_rec_sbir_def] >>
+
+  GEN_TAC >>
+  Cases_on `v` >> (
+    SIMP_TAC (std_ss++holBACore_ss)
+      [birs_val_eq_def, bir_eval_bin_pred_def, bir_val_true_def, bir_exp_immTheory.bir_bin_pred_Equal_REWR]
+  ) >>
+
+  SIMP_TAC (std_ss) [bir_exp_memTheory.bir_memeq_def]
+);
+
+
+(*
+=========================================================================
 symb_mk_exp_eq_f_sound sr
 =========================================================================
  *)
@@ -206,8 +230,6 @@ val birs_symb_mk_exp_eq_f_sound_thm = store_thm(
 ``,
   SIMP_TAC (std_ss) [symb_mk_exp_eq_f_sound_def, birs_interpr_welltyped_EQ_thm] >>
   SIMP_TAC (std_ss++symb_TYPES_ss) [bir_symb_rec_sbir_def] >>
-    cheat
-(* >>
   CONJ_TAC >- (
     (* interpretation *)
     REPEAT STRIP_TAC >>
@@ -234,11 +256,8 @@ val birs_symb_mk_exp_eq_f_sound_thm = store_thm(
         )
       ) >- (
         Cases_on `x'` >> (
-          FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, bir_eval_bin_pred_def]
-        ) >>
-
-        FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def, bir_exp_immTheory.bir_bin_pred_Equal_REWR] >>
-        METIS_TAC []
+          FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, bir_eval_bin_pred_def, birs_val_eq_def]
+        )
       ) >>
       (* type error (compare Imm and Mem) *)
       METIS_TAC
@@ -247,8 +266,24 @@ val birs_symb_mk_exp_eq_f_sound_thm = store_thm(
     ) >>
 
     (* compare Mem *)
-    (* TODO: needs normalized memory values somehow, because the internal representation of memories relies on natural numbers *)
-    cheat
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
+
+    Cases_on `birs_interpret_fun_ALT H e1` >> Cases_on `birs_interpret_fun_ALT H e2` >> (
+      FULL_SIMP_TAC std_ss [option_CLAUSES, bir_eval_bin_pred_def, bir_eval_memeq_def]
+    ) >> (
+      Cases_on `x` >> (
+        FULL_SIMP_TAC std_ss [option_CLAUSES, bir_eval_bin_pred_def, bir_eval_memeq_def]
+      )
+    ) >- (
+      (* type error (compare Imm and Mem) *)
+      METIS_TAC
+        [birs_interpret_fun_PRESERVES_type_thm, type_of_bir_val_def,
+         birs_interpret_fun_thm, bir_valuesTheory.bir_type_t_distinct, option_CLAUSES]
+    ) >>
+
+    Cases_on `x'` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES, bir_eval_bin_pred_def, birs_val_eq_def]
+    )
   ) >>
 
   (* variable set *)
@@ -260,7 +295,6 @@ val birs_symb_mk_exp_eq_f_sound_thm = store_thm(
   Cases_on `x` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) [option_CLAUSES]
   )
-*)
 );
 
 
