@@ -1108,6 +1108,7 @@ val birs_exec_stmtB_sound_thm = store_thm(
 
 (* ... *)
 
+(*
 val birs_exec_stmt_halt_sound_thm = store_thm(
    "birs_exec_stmt_halt_sound_thm", ``
 !ex s s' sys Pi H.
@@ -1129,6 +1130,7 @@ val birs_exec_stmt_halt_sound_thm = store_thm(
   FULL_SIMP_TAC (std_ss++PRED_SET_ss) [birs_symb_matchstate_def] >>
   FULL_SIMP_TAC (std_ss++holBACore_ss++symb_TYPES_ss++birs_state_ss) [birs_symb_symbols_def]
 );
+*)
 
 val birs_eval_label_exp_SOME_sound_thm = store_thm(
    "birs_eval_label_exp_SOME_sound_thm", ``
@@ -1318,16 +1320,100 @@ val birs_exec_stmt_cjmp_sound_thm = store_thm(
   IMP_RES_TAC birs_symb_matchstate_COND_UNION_thm
 );
 
+(* ... *)
+
+
+val bir_stmtE_is_not_halt_def = Define `
+   (bir_stmtE_is_not_halt (BStmt_Halt ex) = F) /\
+   (bir_stmtE_is_not_halt _ = T)
+`;
+val bir_block_has_no_halt_def = Define `
+    bir_block_has_no_halt block =
+    bir_stmtE_is_not_halt block.bb_last_statement
+`;
+val bir_prog_has_no_halt_def = Define `
+   (bir_prog_has_no_halt (BirProgram []) = T) /\
+   (bir_prog_has_no_halt (BirProgram (h::t)) =
+    ((bir_block_has_no_halt h) /\
+    (bir_prog_has_no_halt (BirProgram t)))
+  )
+`;
+val bir_prog_has_no_halt_thm = store_thm(
+   "bir_prog_has_no_halt_thm", ``
+!blocks block.
+  (bir_prog_has_no_halt (BirProgram blocks)) ==>
+  (MEM block blocks) ==>
+  (bir_block_has_no_halt block)
+``,
+  Induct_on `blocks` >> (
+    SIMP_TAC std_ss [listTheory.MEM]
+  ) >>
+
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC std_ss [bir_prog_has_no_halt_def]
+  )
+);
+val INDEX_FIND_IMP_MEM_thm = store_thm(
+   "INDEX_FIND_IMP_MEM_thm", ``
+!i P l j x.
+  (INDEX_FIND i P l = SOME (j, x)) ==>
+  (MEM x l)
+``,
+  Induct_on `l` >> (
+    SIMP_TAC std_ss [listTheory.INDEX_FIND_def]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on `P h` >> (
+    FULL_SIMP_TAC std_ss [listTheory.MEM]
+  ) >>
+
+  METIS_TAC []
+);
+val bir_prog_has_no_halt_thm = store_thm(
+   "bir_prog_has_no_halt_thm", ``
+!prog l stmt.
+  (bir_prog_has_no_halt prog) ==>
+  (bir_get_current_statement prog l = SOME stmt) ==>
+  (!estmt. stmt = BStmtE estmt ==> bir_stmtE_is_not_halt estmt)
+``,
+  REPEAT STRIP_TAC >>
+  (* IMP_RES_TAC bir_typing_progTheory.bir_get_current_statement_stmts_of_prog >> *)
+  (* bir_typing_progTheory.bir_stmts_of_prog_def *)
+
+  Cases_on `prog` >>
+  rename1 `bir_prog_has_no_halt (BirProgram blocks)` >>
+
+  FULL_SIMP_TAC std_ss [bir_get_current_statement_def] >>
+  Cases_on `bir_get_program_block_info_by_label (BirProgram blocks) l.bpc_label` >> (
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  Cases_on `x` >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  Cases_on `l.bpc_index < LENGTH r.bb_statements` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  `MEM r blocks` by (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_get_program_block_info_by_label_def] >>
+    METIS_TAC [INDEX_FIND_IMP_MEM_thm]
+  ) >>
+
+  METIS_TAC [bir_prog_has_no_halt_thm, bir_block_has_no_halt_def]
+);
+
 val birs_exec_stmtE_sound_thm = store_thm(
    "birs_exec_stmtE_sound_thm", ``
 !p estmt s s' sys Pi H.
+  (bir_stmtE_is_not_halt estmt) ==>
   (bir_exec_stmtE p estmt s = s') ==>
   (birs_exec_stmtE p estmt sys = Pi) ==>
   (birs_symb_matchstate sys H s) ==>
   (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
 ``,
   Cases_on `estmt` >> (
-    REWRITE_TAC [bir_exec_stmtE_def, birs_exec_stmtE_def, birs_exec_stmt_halt_sound_thm, birs_exec_stmt_jmp_sound_thm, birs_exec_stmt_cjmp_sound_thm]
+    REWRITE_TAC [bir_exec_stmtE_def, birs_exec_stmtE_def, (*birs_exec_stmt_halt_sound_thm*)bir_stmtE_is_not_halt_def, birs_exec_stmt_jmp_sound_thm, birs_exec_stmt_cjmp_sound_thm]
   )
 );
 
@@ -1336,14 +1422,19 @@ val birs_exec_stmtE_sound_thm = store_thm(
 val birs_exec_stmt_sound_thm = store_thm(
    "birs_exec_stmt_sound_thm", ``
 !p stmt s s' sys Pi H.
+  (!estmt. stmt = BStmtE estmt ==> bir_stmtE_is_not_halt estmt) ==>
   (SND (bir_exec_stmt p stmt s) = s') ==>
   (birs_exec_stmt p stmt sys = Pi) ==>
   (birs_symb_matchstate sys H s) ==>
   (?sys'. sys' IN Pi /\ birs_symb_matchstate sys' H s')
 ``,
   Cases_on `stmt` >> (
-    REWRITE_TAC [bir_exec_stmt_def, birs_exec_stmt_def, birs_exec_stmtE_sound_thm]
-  ) >>
+    REWRITE_TAC [bir_exec_stmt_def, birs_exec_stmt_def, birs_exec_stmtE_sound_thm, bir_stmt_t_11]
+  ) >| [
+    ALL_TAC
+  ,
+    METIS_TAC [birs_exec_stmtE_sound_thm]
+  ] >>
 
   FULL_SIMP_TAC (std_ss++PRED_SET_ss) [LET_DEF] >>
   REPEAT STRIP_TAC >>
@@ -1379,6 +1470,7 @@ val birs_exec_stmt_sound_thm = store_thm(
 val birs_exec_step_sound_thm = store_thm(
    "birs_exec_step_sound_thm", ``
 !prog s s' sys Pi H.
+  (bir_prog_has_no_halt prog) ==>
   ((SND o bir_exec_step prog) s = s') ==>
   (birs_exec_step prog sys = Pi) ==>
   (birs_symb_matchstate sys H s) ==>
@@ -1407,6 +1499,10 @@ val birs_exec_step_sound_thm = store_thm(
   ) >>
 
   FULL_SIMP_TAC (std_ss) [] >>
+  `(!estmt. x = BStmtE estmt ==> bir_stmtE_is_not_halt estmt)` by (
+    METIS_TAC [bir_prog_has_no_halt_thm]
+  ) >>
+
   METIS_TAC [birs_exec_stmt_sound_thm]
 );
 
@@ -1415,7 +1511,8 @@ val birs_exec_step_sound_thm = store_thm(
 val birs_symb_step_sound_thm = store_thm(
    "birs_symb_step_sound_thm", ``
 !prog.
-  symb_step_sound (bir_symb_rec_sbir prog)
+  (bir_prog_has_no_halt prog) ==>
+  (symb_step_sound (bir_symb_rec_sbir prog))
 ``,
   REWRITE_TAC [symb_step_sound_def] >>
   REPEAT STRIP_TAC >>
