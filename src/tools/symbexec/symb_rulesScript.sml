@@ -795,7 +795,6 @@ val symb_rule_SUBST_thm = store_thm(
 (* ************************* *)
 (*        RULE INST          *)
 (* ************************* *)
-(*
 val symb_rule_INST_thm = store_thm(
    "symb_rule_INST_thm", ``
 !sr.
@@ -806,12 +805,102 @@ val symb_rule_INST_thm = store_thm(
   (symb IN symb_symbols sr sys) ==>
   (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
 
+(* TODO: we need this, or not? noooo, can't include this!!!  (sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H) ==> *)
+
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   (symb_hl_step_in_L_sound sr (symb_subst sr (symb, symb_inst) sys, L, symb_subst_set sr (symb, symb_inst) Pi))
 ``,
-  cheat
+  REWRITE_TAC [symb_hl_step_in_L_sound_def, conc_step_n_in_L_def] >>
+  REPEAT STRIP_TAC >>
+
+  Q.ABBREV_TAC `sys_s = symb_subst sr (symb,symb_inst) sys` >>
+  Q.ABBREV_TAC `Pi_s = symb_subst_set sr (symb,symb_inst) Pi` >>
+
+  `symb_symbols sr sys_s = ((symb_symbols sr sys) DIFF {symb}) UNION sr.sr_symbols_f symb_inst` by (
+    cheat (* TODO: because "symb IN symb_symbols sr sys" and "symb_subst_f_sound sr" *)
+  ) >>
+  `?v. sr.sr_interpret_f H symb_inst = SOME v (*/\ *sr.sr_typeof_val v = sr.sr_typeof_symb symb*)` by (
+    cheat (* TODO: expression has type, H is well typed, H has all symbols of symb_inst (because symb is in sys and thus sys_s has symb_inst inside, and all symbols of sys_s are in H) *)
+  ) >>
+
+  Q.ABBREV_TAC `H_2 = symb_interpr_update H (symb,SOME v)` >>
+  (* TODO: is it better to distinguish the two cases that symb was mapped before and not mapped before? *)
+
+  `symb_matchstate sr sys H_2 s` by (
+    cheat (* TODO: symb_subst_sound_thm, symb_subst_sound_NONE_thm, etc. *)
+  ) >>
+
+  `?H_2_m. symb_minimal_interpretation sr sys H_2_m /\ symb_matchstate sr sys H_2_m s` by (
+    cheat (* TODO: minimize H_2 wrt sys *)
+  ) >>
+  `symb_interprs_eq_for H H_2_m (symb_symbols sr sys DELETE symb)` by (
+    cheat (* TODO: ??? *)
+  ) >>
+
+  (* now execute without substitution *)
+  PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys_A H ==> A`` (ASSUME_TAC o (Q.SPECL [`s`, `H_2_m`])) >>
+  REV_FULL_SIMP_TAC std_ss [symb_matchstate_ext_def] >>
+  Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `s'` >>
+  ASM_SIMP_TAC (std_ss) [] >>
+
+  (* now have to go from sys' in Pi to Pi_s *)
+
+  Q.ABBREV_TAC `sys_s' = symb_subst sr (symb,symb_inst) sys'` >>
+  `sys_s' IN Pi_s` by (
+    cheat (* TODO: symb_subst_set_def *)
+  ) >>
+
+  Q.EXISTS_TAC `sys_s'` >>
+  ASM_SIMP_TAC (std_ss) [] >>
+
+  (* now have to establish an interpretation that can match and is an extension of the initial H *)
+
+  (* we may miss some symbols in H' now (or have some additional symbols) *)
+  `symb_interprs_eq_for H H' (symb_symbols sr sys DELETE symb)` by (
+    cheat (* TODO: ??? *)
+  ) >>
+
+  `?H_3_m. symb_minimal_interpretation sr sys' H_3_m /\ symb_matchstate sr sys' H_3_m s'` by (
+    cheat (* TODO: minimize H' wrt sys' *)
+  ) >>
+  (* ... *)
+
+  Q.ABBREV_TAC `H_4 = symb_interpr_extend H_2_m H_3_m` >>
+  `symb_matchstate sr sys' H_4 s'` by (
+    cheat (* TODO: ... *)
+  ) >>
+  `symb_interprs_eq_for H H_4 (symb_symbols sr sys DELETE symb)` by (
+    cheat (* TODO: ??? *)
+  ) >>
+  (* ... *)
+
+  Q.ABBREV_TAC `H_5 = symb_interpr_extend H H_4` >>
+  `symb_matchstate sr sys' H_5 s'` by (
+    cheat (* TODO: ... *)
+  ) >>
+  `symb_interprs_eq_for H H_5 (symb_symbols sr sys DELETE symb)` by (
+    cheat (* TODO: ??? *)
+  ) >>
+  (* ... *)
+
+  Q.ABBREV_TAC `H_6 = symb_interpr_update H_5 (symb,symb_interpr_get H symb)` >>
+  `symb_interpr_ext H_6 H` by (
+    cheat (* TODO:  *)
+  ) >>
+  `sr.sr_interpret_f H symb_inst = sr.sr_interpret_f H_6 symb_inst` by (
+    cheat (* TODO:  *)
+  ) >>
+  `H5 = symb_interpr_update H_6 (symb,sr.sr_interpret_f H_6 symb_inst)` by (
+    cheat (* TODO:  *)
+  ) >>
+  `symb_matchstate sr sys_s' H_6 s'` by (
+    cheat (* TODO:  *)
+  ) >>
+
+  Q.EXISTS_TAC `H_6` >>
+  ASM_REWRITE_TAC []
+(*  METIS_TAC [] *)
 );
-*)
 
 
 
