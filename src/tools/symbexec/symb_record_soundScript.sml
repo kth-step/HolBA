@@ -812,7 +812,7 @@ val symb_subst_suitable_interpretation_thm4 = store_thm(
 val symb_subst_sound_thm1 = store_thm(
    "symb_subst_sound_thm1", ``
 !sr.
-!H H' symb symb_inst sys sys_r s v v'.
+!H H' symb symb_inst sys sys_r s v.
   (symb_typeof_exp_sound sr) ==>
   (symb_subst_f_sound sr) ==>
 
@@ -878,7 +878,7 @@ val symb_subst_sound_thm1 = store_thm(
 val symb_subst_sound_thm2 = store_thm(
    "symb_subst_sound_thm2", ``
 !sr.
-!H H' symb symb_inst sys sys_r s v v'.
+!H H' symb symb_inst sys sys_r s v.
   (symb_typeof_exp_sound sr) ==>
   (symb_subst_f_sound sr) ==>
 
