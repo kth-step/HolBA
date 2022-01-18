@@ -441,6 +441,7 @@ val symb_mk_exp_symb_f_sound_def = Define `
 (*
 ASBTRACT SUBSTITUTION OF SYMBOLS FOR EXPRESSIONS IN EXPRESSIONS
 =======================================================
+[x*3/a] a + 4 = x*3 + 4
 *)
 val symb_subst_f_sound_def = Define `
     symb_subst_f_sound sr =
