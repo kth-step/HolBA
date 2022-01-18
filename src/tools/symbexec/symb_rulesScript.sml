@@ -801,6 +801,7 @@ val symb_rule_INST_thm = store_thm(
 !sys L Pi symb symb_inst.
   (symb_typeof_exp_sound sr) ==>
   (symb_subst_f_sound sr) ==>
+  (symb_symbols_f_sound sr) ==>
 
   (symb IN symb_symbols sr sys) ==>
   (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
@@ -834,8 +835,14 @@ val symb_rule_INST_thm = store_thm(
     METIS_TAC [symb_subst_sound_thm1]
   ) >>
 
-  `?H_2_m. symb_minimal_interpretation sr sys H_2_m /\ symb_matchstate sr sys H_2_m s` by (
-    cheat (* TODO: minimize H_2 wrt sys *)
+  `?H_2_m. symb_minimal_interpretation sr sys H_2_m /\ symb_matchstate sr sys H_2_m s /\ symb_interpr_ext H_2 H_2_m` by (
+    (* minimize H_2 wrt sys *)
+    METIS_TAC [symb_matchstate_TO_minimal_thm]
+(*
+    ASSUME_TAC (Q.SPECL [`sr`, `sys`, `H_2`, `s`] symb_matchstate_TO_minimal_thm) >>
+    FULL_SIMP_TAC std_ss [] >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+*)
   ) >>
   `symb_interprs_eq_for H H_2_m (symb_symbols sr sys DELETE symb)` by (
     cheat (* TODO: ??? *)
@@ -851,7 +858,7 @@ val symb_rule_INST_thm = store_thm(
 
   Q.ABBREV_TAC `sys_s' = symb_subst sr (symb,symb_inst) sys'` >>
   `sys_s' IN Pi_s` by (
-    cheat (* TODO: symb_subst_set_def *)
+    METIS_TAC [symb_subst_set_def, IN_IMAGE]
   ) >>
 
   Q.EXISTS_TAC `sys_s'` >>
@@ -864,14 +871,21 @@ val symb_rule_INST_thm = store_thm(
     cheat (* TODO: ??? *)
   ) >>
 
-  `?H_3_m. symb_minimal_interpretation sr sys' H_3_m /\ symb_matchstate sr sys' H_3_m s'` by (
-    cheat (* TODO: minimize H' wrt sys' *)
+  `?H_3_m. symb_minimal_interpretation sr sys' H_3_m /\ symb_matchstate sr sys' H_3_m s' /\ symb_interpr_ext H' H_3_m` by (
+    (* minimize H' wrt sys' *)
+    METIS_TAC [symb_matchstate_TO_minimal_thm]
   ) >>
   (* ... *)
 
   Q.ABBREV_TAC `H_4 = symb_interpr_extend H_2_m H_3_m` >>
   `symb_matchstate sr sys' H_4 s'` by (
+    METIS_TAC [symb_interpr_extend_IMP_symb_matchstate_thm, symb_matchstate_def]
+(*
+symb_interpr_extend_welltyped_IMP_thm
+    METIS_TAC [symb_interpr_ext_matchstate_IMP_matchstate_thm, symb_interpr_extend_symbs_IMP_ext_thm,
+        symb_interpr_extend_symbs_sr_def]
     cheat (* TODO: ... *)
+*)
   ) >>
   `symb_interprs_eq_for H H_4 (symb_symbols sr sys DELETE symb)` by (
     cheat (* TODO: ??? *)
@@ -880,7 +894,7 @@ val symb_rule_INST_thm = store_thm(
 
   Q.ABBREV_TAC `H_5 = symb_interpr_extend H H_4` >>
   `symb_matchstate sr sys' H_5 s'` by (
-    cheat (* TODO: ... *)
+    METIS_TAC [symb_interpr_extend_IMP_symb_matchstate_thm, symb_matchstate_def]
   ) >>
   `symb_interprs_eq_for H H_5 (symb_symbols sr sys DELETE symb)` by (
     cheat (* TODO: ??? *)
@@ -894,11 +908,27 @@ val symb_rule_INST_thm = store_thm(
   `sr.sr_interpret_f H symb_inst = sr.sr_interpret_f H_6 symb_inst` by (
     cheat (* TODO:  *)
   ) >>
-  `H5 = symb_interpr_update H_6 (symb,sr.sr_interpret_f H_6 symb_inst)` by (
+  `H_5 = symb_interpr_update H_6 (symb,sr.sr_interpret_f H_6 symb_inst)` by (
+    cheat (* TODO:  *)
+  ) >>
+  `sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H_6` by (
     cheat (* TODO:  *)
   ) >>
   `symb_matchstate sr sys_s' H_6 s'` by (
+    ASSUME_TAC ((Q.SPECL [`sr`, `H_6`, `H_5`, `symb`, `symb_inst`, `sys'`, `sys_s'`, `s'`, `v`]) symb_subst_sound_thm2) >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+    Cases_on `symb_interpr_get H_6 symb` >> (
+      FULL_SIMP_TAC std_ss []
+    ) >>
+
+    `sr.sr_typeof_symb symb = sr.sr_typeof_val x` by (
+      cheat (* TODO: might need to fix some extra  conditional interpretation update to ensure this *)
+    ) >>
+    FULL_SIMP_TAC std_ss []
+(*
+    METIS_TAC [symb_subst_sound_thm2]
     cheat (* TODO:  *)
+*)
   ) >>
 
   Q.EXISTS_TAC `H_6` >>
