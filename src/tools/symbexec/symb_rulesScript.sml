@@ -805,8 +805,6 @@ val symb_rule_INST_thm = store_thm(
   (symb IN symb_symbols sr sys) ==>
   (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
 
-(* TODO: we need this, or not? noooo, can't include this!!!  (sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H) ==> *)
-
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
   (symb_hl_step_in_L_sound sr (symb_subst sr (symb, symb_inst) sys, L, symb_subst_set sr (symb, symb_inst) Pi))
 ``,
@@ -817,17 +815,23 @@ val symb_rule_INST_thm = store_thm(
   Q.ABBREV_TAC `Pi_s = symb_subst_set sr (symb,symb_inst) Pi` >>
 
   `symb_symbols sr sys_s = ((symb_symbols sr sys) DIFF {symb}) UNION sr.sr_symbols_f symb_inst` by (
-    cheat (* TODO: because "symb IN symb_symbols sr sys" and "symb_subst_f_sound sr" *)
+    Q.UNABBREV_TAC `sys_s` >>
+    FULL_SIMP_TAC std_ss [symb_subst_symbols_thm]
   ) >>
-  `?v. sr.sr_interpret_f H symb_inst = SOME v (*/\ *sr.sr_typeof_val v = sr.sr_typeof_symb symb*)` by (
-    cheat (* TODO: expression has type, H is well typed, H has all symbols of symb_inst (because symb is in sys and thus sys_s has symb_inst inside, and all symbols of sys_s are in H) *)
+
+  `sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H` by (
+    FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_suitable_interpretation_def, symb_interpr_for_symbs_def, UNION_SUBSET]
+  ) >>
+  `?v. sr.sr_interpret_f H symb_inst = SOME v /\ sr.sr_typeof_val v = sr.sr_typeof_symb symb` by (
+    METIS_TAC [symb_matchstate_def, symb_typeof_exp_sound_def]
+    (* TODO: expression has type, H is well typed, H has all symbols of symb_inst (because symb is in sys and thus sys_s has symb_inst inside, and all symbols of sys_s are in H) *)
   ) >>
 
   Q.ABBREV_TAC `H_2 = symb_interpr_update H (symb,SOME v)` >>
   (* TODO: is it better to distinguish the two cases that symb was mapped before and not mapped before? *)
 
   `symb_matchstate sr sys H_2 s` by (
-    cheat (* TODO: symb_subst_sound_thm, symb_subst_sound_NONE_thm, etc. *)
+    METIS_TAC [symb_subst_sound_thm1]
   ) >>
 
   `?H_2_m. symb_minimal_interpretation sr sys H_2_m /\ symb_matchstate sr sys H_2_m s` by (
