@@ -468,6 +468,32 @@ val symb_interpr_update_SOME_IMP_welltyped_thm2 = store_thm(
   METIS_TAC []
 );
 
+val symb_interpr_update_SOME_IMP_welltyped_thm3 = store_thm(
+   "symb_interpr_update_SOME_IMP_welltyped_thm3", ``
+!sr.
+!H symb vo v.
+  (symb_interpr_get H symb = NONE) ==>
+  (symb_interpr_welltyped sr (symb_interpr_update H (symb, vo))) ==>
+  (symb_interpr_welltyped sr H)
+``,
+  REPEAT STRIP_TAC >>
+  `~(symb IN symb_interpr_dom H)` by FULL_SIMP_TAC std_ss [symb_interpr_dom_thm] >>
+
+  FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, symb_interpr_get_update_thm] >>
+
+  Cases_on `vo` >> (
+    FULL_SIMP_TAC std_ss [symb_interpr_dom_UPDATE_NONE_thm,
+       symb_interpr_dom_UPDATE_SOME_thm, IN_DELETE, IN_INSERT] >>
+
+    REPEAT STRIP_TAC >>
+    Cases_on `symb = symb'` >> (
+      FULL_SIMP_TAC std_ss [symb_interpr_welltyped_def, IN_INSERT]
+    )
+  ) >>
+
+  METIS_TAC []
+);
+
 
 
 

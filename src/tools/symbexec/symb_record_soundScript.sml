@@ -547,6 +547,144 @@ val symb_subst_store_symbols_thm2 = store_thm(
   METIS_TAC [SUBSET_REFL, SUBSET_TRANS, INSERT_SUBSET]
 );
 
+val symb_subst_store_symbols_thm3 = store_thm(
+   "symb_subst_store_symbols_thm3", ``
+!sr.
+!H symb symb_inst store.
+  (symb_subst_f_sound sr) ==>
+
+  (symb_symbols_store sr (symb_subst_store sr (symb,symb_inst) store) =
+   (symb_symbols_store sr store DIFF {symb}) UNION (if symb IN symb_symbols_store sr store then sr.sr_symbols_f symb_inst else EMPTY))
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC (std_ss) [symb_subst_store_def, symb_symbols_store_def] >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [EXTENSION] >>
+  REPEAT STRIP_TAC >>
+
+  EQ_TAC >- (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [GSYM EXTENSION] >>
+    REPEAT STRIP_TAC >>
+
+    POP_ASSUM (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss) [] >>
+
+    `sr.sr_symbols_f symbexp = (sr.sr_symbols_f z DIFF {symb}) UNION (if symb IN sr.sr_symbols_f z then sr.sr_symbols_f symb_inst else EMPTY)` by (
+      METIS_TAC [symb_subst_f_sound_def]
+    ) >>
+
+    CASE_TAC >> (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >- (
+        METIS_TAC []
+      ) >>
+      Cases_on `symb IN sr.sr_symbols_f z` >> (
+        FULL_SIMP_TAC (std_ss) [NOT_IN_EMPTY]
+      )
+    ) >>
+    METIS_TAC []
+  ) >>
+
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [GSYM EXTENSION] >>
+  STRIP_TAC >- (
+    `sr.sr_symbols_f (sr.sr_subst_f (symb,symb_inst) symbexp) =
+       (sr.sr_symbols_f symbexp DIFF {symb}) UNION (if symb IN sr.sr_symbols_f symbexp then sr.sr_symbols_f symb_inst else EMPTY)` by (
+      METIS_TAC [symb_subst_f_sound_def]
+    ) >>
+    Q.EXISTS_TAC `(sr.sr_symbols_f symbexp DIFF {symb}) UNION (if symb IN sr.sr_symbols_f symbexp then sr.sr_symbols_f symb_inst else EMPTY)` >>
+    FULL_SIMP_TAC (std_ss) [] >>
+
+    CASE_TAC >> (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+      Q.EXISTS_TAC `sr.sr_subst_f (symb,symb_inst) symbexp` >>
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+      METIS_TAC []
+    )
+  ) >>
+
+  Cases_on `?s. symb IN s ∧
+              ?symbexp.
+                s = sr.sr_symbols_f symbexp /\ ?var. store' var = SOME symbexp` >- (
+    FULL_SIMP_TAC std_ss [] >>
+    `sr.sr_symbols_f (sr.sr_subst_f (symb,symb_inst) symbexp) =
+       (sr.sr_symbols_f symbexp DIFF {symb}) UNION (if symb IN sr.sr_symbols_f symbexp then sr.sr_symbols_f symb_inst else EMPTY)` by (
+      METIS_TAC [symb_subst_f_sound_def]
+    ) >>
+    Q.EXISTS_TAC `(sr.sr_symbols_f symbexp DIFF {symb}) UNION (if symb IN sr.sr_symbols_f symbexp then sr.sr_symbols_f symb_inst else EMPTY)` >>
+    FULL_SIMP_TAC (std_ss) [] >>
+
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+    Q.EXISTS_TAC `sr.sr_subst_f (symb,symb_inst) symbexp` >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+    METIS_TAC []
+  ) >>
+  METIS_TAC [NOT_IN_EMPTY]
+);
+
+
+
+val symb_subst_symbols_thm = store_thm(
+   "symb_subst_symbols_thm", ``
+!sr.
+!H symb symb_inst sys.
+  (symb_subst_f_sound sr) ==>
+
+  (symb_symbols sr (symb_subst sr (symb, symb_inst) sys) =
+   (symb_symbols sr sys DIFF {symb}) UNION (if symb IN symb_symbols sr sys then sr.sr_symbols_f symb_inst else EMPTY))
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC (std_ss) [symb_subst_def, symb_symbols_def] >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [EXTENSION, symb_symbst_store_def, symb_symbst_pcond_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss) [symb_subst_store_symbols_thm3] >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  EQ_TAC >- (
+    REPEAT STRIP_TAC >> (
+      FULL_SIMP_TAC (std_ss) []
+    ) >- (
+      Cases_on `symb IN symb_symbols_store sr (symb_symbst_store sys)` >> (
+        FULL_SIMP_TAC (std_ss) [NOT_IN_EMPTY]
+      )
+    ) >>
+
+    `sr.sr_symbols_f (sr.sr_subst_f (symb,symb_inst) (symb_symbst_pcond sys)) =
+       (sr.sr_symbols_f (symb_symbst_pcond sys) DIFF {symb}) UNION (if symb IN sr.sr_symbols_f (symb_symbst_pcond sys) then sr.sr_symbols_f symb_inst else EMPTY)` by (
+      METIS_TAC [symb_subst_f_sound_def]
+    ) >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+    Cases_on `symb IN sr.sr_symbols_f (symb_symbst_pcond sys)` >> (
+      FULL_SIMP_TAC (std_ss) [NOT_IN_EMPTY]
+    )
+  ) >>
+
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [GSYM EXTENSION] >>
+  STRIP_TAC >> (
+      FULL_SIMP_TAC (std_ss) []
+  ) >- (
+    `sr.sr_symbols_f (sr.sr_subst_f (symb,symb_inst) (symb_symbst_pcond sys)) =
+       (sr.sr_symbols_f (symb_symbst_pcond sys) DIFF {symb}) UNION (if symb IN sr.sr_symbols_f (symb_symbst_pcond sys) then sr.sr_symbols_f symb_inst else EMPTY)` by (
+      METIS_TAC [symb_subst_f_sound_def]
+    ) >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+  ) >>
+
+  Cases_on `symb IN symb_symbols_store sr (symb_symbst_store sys) \/
+            symb IN sr.sr_symbols_f (symb_symbst_pcond sys)` >> (
+      FULL_SIMP_TAC (std_ss) [NOT_IN_EMPTY]
+  ) >>
+
+  `sr.sr_symbols_f (sr.sr_subst_f (symb,symb_inst) (symb_symbst_pcond sys)) =
+     (sr.sr_symbols_f (symb_symbst_pcond sys) DIFF {symb}) UNION (if symb IN sr.sr_symbols_f (symb_symbst_pcond sys) then sr.sr_symbols_f symb_inst else EMPTY)` by (
+    METIS_TAC [symb_subst_f_sound_def]
+  ) >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+);
+
+
 
 val symb_subst_suitable_interpretation_thm = store_thm(
    "symb_subst_suitable_interpretation_thm", ``
@@ -614,17 +752,75 @@ val symb_subst_suitable_interpretation_thm2 = store_thm(
   METIS_TAC [SUBSET_REFL, SUBSET_TRANS, INSERT_SUBSET]
 );
 
+val symb_subst_suitable_interpretation_thm3 = store_thm(
+   "symb_subst_suitable_interpretation_thm3", ``
+!sr.
+!sys H symb symb_inst vo.
+  (symb_subst_f_sound sr) ==>
 
-val symb_subst_sound_thm = store_thm(
-   "symb_subst_sound_thm", ``
+  (sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H) ==>
+
+  (symb_suitable_interpretation sr sys  (symb_interpr_update H (symb, vo))) ==>
+  (symb_suitable_interpretation sr (symb_subst sr (symb, symb_inst) sys) H)
+``,
+  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def, symb_subst_symbols_thm] >>
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+  CONJ_TAC >- (
+    Cases_on `vo` >> (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interpr_dom_UPDATE_NONE_thm, symb_interpr_dom_UPDATE_SOME_thm]
+    ) >- (
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [SUBSET_DELETE, GSYM DELETE_DEF] >>
+      METIS_TAC [DELETE_NON_ELEMENT]
+    ) >>
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [DELETE_SUBSET_INSERT, GSYM DELETE_DEF]
+  ) >>
+
+  Cases_on `symb IN symb_symbols sr sys` >> (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+  )
+);
+
+val symb_subst_suitable_interpretation_thm4 = store_thm(
+   "symb_subst_suitable_interpretation_thm4", ``
+!sr.
+!sys H symb symb_inst vo.
+  (symb_subst_f_sound sr) ==>
+
+  (symb_suitable_interpretation sr (symb_subst sr (symb, symb_inst) sys) H) ==>
+  (symb_suitable_interpretation sr sys  (symb_interpr_update H (symb, SOME v)))
+``,
+  FULL_SIMP_TAC std_ss [symb_suitable_interpretation_def, symb_subst_symbols_thm] >>
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+
+  Cases_on `symb IN symb_symbols sr sys` >> (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interpr_dom_UPDATE_NONE_thm, symb_interpr_dom_UPDATE_SOME_thm]
+  ) >- (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [DELETE_SUBSET_INSERT, GSYM DELETE_DEF]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [SUBSET_DELETE, GSYM DELETE_DEF] >>
+  METIS_TAC [DELETE_NON_ELEMENT]
+);
+
+
+val symb_subst_sound_thm1 = store_thm(
+   "symb_subst_sound_thm1", ``
 !sr.
 !H H' symb symb_inst sys sys_r s v v'.
   (symb_typeof_exp_sound sr) ==>
   (symb_subst_f_sound sr) ==>
 
+  (* can remove this assumption with case analysis on "~(symb IN symb_symbols sr sys)" and symbol set argument *)
   (sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H) ==>
-  (symb_interpr_get H symb = SOME v') ==>
-  (sr.sr_typeof_symb symb = sr.sr_typeof_val v') ==>
+  (*(symb_interpr_get H symb = SOME v') ==>
+    (sr.sr_typeof_symb symb = sr.sr_typeof_val v') ==>*)
 
   (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
   (symb_subst sr (symb, symb_inst) sys = sys_r) ==>
@@ -632,18 +828,18 @@ val symb_subst_sound_thm = store_thm(
   (sr.sr_interpret_f H symb_inst = SOME v) ==>
   ((symb_interpr_update H (symb, SOME v)) = H') ==>
 
-  (symb_matchstate sr sys_r H  s =
-   symb_matchstate sr sys   H' s)
+  (symb_matchstate sr sys_r H  s) ==>
+  (symb_matchstate sr sys   H' s)
 ``,
   REPEAT STRIP_TAC >>
   Cases_on `sys_r` >>
   FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_subst_def, symb_matchstate_def] >>
 
-  `symb IN symb_interpr_dom H` by (
-    METIS_TAC [symb_interpr_dom_thm, optionTheory.option_CLAUSES]
-  ) >>
 
-  EQ_TAC >> (
+  (* can remove this assumption with case analysis on "~(symb IN symb_symbols sr sys)" and symbol set argument *)
+(*  `(sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H)` by cheat >>*)
+
+  (
     FULL_SIMP_TAC std_ss [symb_symbst_pc_def, symb_symbst_extra_def,
         symb_symbst_store_def] >>
     STRIP_TAC >>
@@ -657,20 +853,54 @@ val symb_subst_sound_thm = store_thm(
     ,
       METIS_TAC [symb_interpr_symbpcond_def, symb_subst_f_sound_def, symb_symbst_pcond_def]
     ]
-  ) >- (
-    `symb_suitable_interpretation sr sys H` by (
-      METIS_TAC [symb_subst_def, symb_subst_suitable_interpretation_thm2]
-    ) >>
-    METIS_TAC [symb_suitable_interpretation_UPDATE_SOME_thm]
   ) >>
-
-  `symb_suitable_interpretation sr sys H` by (
-    METIS_TAC [symb_suitable_interpretation_UPDATE_SOME_thm2]
-  ) >>
-
-  METIS_TAC [symb_subst_def, symb_subst_suitable_interpretation_thm]
+  METIS_TAC [symb_subst_suitable_interpretation_thm4, symb_subst_def]
 );
 
+val symb_subst_sound_thm2 = store_thm(
+   "symb_subst_sound_thm2", ``
+!sr.
+!H H' symb symb_inst sys sys_r s v v'.
+  (symb_typeof_exp_sound sr) ==>
+  (symb_subst_f_sound sr) ==>
+
+  (sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H) ==> (* need this for symb_suitable_interpretation *)
+  (*(symb_interpr_get H symb = SOME v') ==>
+    (sr.sr_typeof_symb symb = sr.sr_typeof_val v') ==>*)
+  (!v'. symb_interpr_get H symb = SOME v' ==> sr.sr_typeof_symb symb = sr.sr_typeof_val v') ==> (* need this for symb_interpr_welltyped *)
+
+  (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
+  (symb_subst sr (symb, symb_inst) sys = sys_r) ==>
+
+  (sr.sr_interpret_f H symb_inst = SOME v) ==>
+  ((symb_interpr_update H (symb, SOME v)) = H') ==>
+
+  (symb_matchstate sr sys   H' s) ==>
+  (symb_matchstate sr sys_r H  s)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `sys_r` >>
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_subst_def, symb_matchstate_def] >>
+
+  (
+    FULL_SIMP_TAC std_ss [symb_symbst_pc_def, symb_symbst_extra_def,
+        symb_symbst_store_def] >>
+    STRIP_TAC >>
+    REPEAT STRIP_TAC >| [
+      ALL_TAC
+    ,
+      Cases_on `symb_interpr_get H symb` >> (
+        METIS_TAC [symb_interpr_update_interpret_f_IMP_welltyped_thm,
+                   symb_interpr_update_SOME_IMP_welltyped_thm2,
+                   symb_interpr_update_SOME_IMP_welltyped_thm3])
+    ,
+      METIS_TAC [symb_subst_store_sound_thm]
+    ,
+      METIS_TAC [symb_interpr_symbpcond_def, symb_subst_f_sound_def, symb_symbst_pcond_def]
+    ]
+  ) >>
+  METIS_TAC [symb_subst_suitable_interpretation_thm3, symb_subst_def]
+);
 
 
 
