@@ -809,7 +809,6 @@ val symb_subst_suitable_interpretation_thm4 = store_thm(
   METIS_TAC [DELETE_NON_ELEMENT]
 );
 
-
 val symb_subst_sound_thm1 = store_thm(
    "symb_subst_sound_thm1", ``
 !sr.
@@ -832,12 +831,30 @@ val symb_subst_sound_thm1 = store_thm(
   (symb_matchstate sr sys   H' s)
 ``,
   REPEAT STRIP_TAC >>
+
+(*
+  (* can remove this assumption with case analysis on "~(symb IN symb_symbols sr sys)" and symbol set argument *)
+  Cases_on `~(symb IN symb_symbols sr sys)` >- (
+    `sys_r = sys` by (
+      cheat
+    ) >>
+    FULL_SIMP_TAC (std_ss) [] >>
+    cheat
+  ) >>
+
+  `(sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H)` by (
+    `sr.sr_symbols_f symb_inst SUBSET symb_symbols sr sys_r` by (
+      PAT_X_ASSUM ``symb_subst sr (symb,symb_inst) sys = sys_r`` (ASSUME_TAC o GSYM) >>
+      FULL_SIMP_TAC (std_ss) [symb_subst_symbols_thm] >>
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+    ) >>
+    FULL_SIMP_TAC (std_ss) [symb_matchstate_def, symb_suitable_interpretation_def, symb_interpr_for_symbs_def] >>
+    METIS_TAC [SUBSET_TRANS]
+  ) >>
+*)
+
   Cases_on `sys_r` >>
   FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [symb_subst_def, symb_matchstate_def] >>
-
-
-  (* can remove this assumption with case analysis on "~(symb IN symb_symbols sr sys)" and symbol set argument *)
-(*  `(sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H)` by cheat >>*)
 
   (
     FULL_SIMP_TAC std_ss [symb_symbst_pc_def, symb_symbst_extra_def,
@@ -846,6 +863,7 @@ val symb_subst_sound_thm1 = store_thm(
     REPEAT STRIP_TAC >| [
       ALL_TAC
     ,
+      (*  `(sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H)` by cheat >>*)
       METIS_TAC [symb_interpr_update_interpret_f_IMP_welltyped_thm,
                  symb_interpr_update_SOME_IMP_welltyped_thm2]
     ,
