@@ -86,6 +86,28 @@ val symb_interprs_eq_for_def = Define `
       (!symb. (symb IN symbs) ==> (symb_interpr_get H1 symb = symb_interpr_get H2 symb))
 `;
 
+val symb_interpret_ss = rewrites (type_rws (mk_type ("symb_interpret_t", [Type.alpha, Type.beta])));
+val symb_interprs_eq_for_EQ_thm = store_thm(
+   "symb_interprs_eq_for_EQ_thm", ``
+!H1 H2.
+  (symb_interprs_eq_for H1 H2 (UNIV)) <=>
+  (H1 = H2)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `H1` >> Cases_on `H2` >>
+  SIMP_TAC (std_ss++symb_interpret_ss) [symb_interprs_eq_for_def, symb_interpr_get_def, IN_UNIV(*, symb_interpret_t_11*)] >>
+  METIS_TAC []
+);
+
+val symb_interpr_EQ_thm = store_thm(
+   "symb_interpr_EQ_thm", ``
+!H1 H2.
+  (H1 = H2) <=>
+  (!symb. symb_interpr_get H1 symb = symb_interpr_get H2 symb)
+``,
+  SIMP_TAC std_ss [GSYM symb_interprs_eq_for_EQ_thm, symb_interprs_eq_for_def, IN_UNIV]
+);
+
 val symb_interprs_eq_for_ID_thm = store_thm(
    "symb_interprs_eq_for_ID_thm", ``
 !H symbs.
@@ -114,6 +136,17 @@ val symb_interprs_eq_for_SUBSET_thm = store_thm(
   METIS_TAC [SUBSET_DEF]
 );
 
+val symb_interprs_eq_for_UNION_thm = store_thm(
+   "symb_interprs_eq_for_UNION_thm", ``
+!H1 H2 symbs1 symbs2.
+  (symb_interprs_eq_for H1 H2 (symbs1 UNION symbs2)) <=>
+  ((symb_interprs_eq_for H1 H2 symbs1) /\
+   (symb_interprs_eq_for H1 H2 symbs2))
+``,
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interprs_eq_for_def] >>
+  METIS_TAC []
+);
+
 val symb_interprs_eq_for_INTER_symbs_thm = store_thm(
    "symb_interprs_eq_for_INTER_symbs_thm", ``
 !H1 H2 H3 symbs1 symbs3.
@@ -123,6 +156,15 @@ val symb_interprs_eq_for_INTER_symbs_thm = store_thm(
 ``,
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interprs_eq_for_def] >>
   METIS_TAC []
+);
+
+val symb_interprs_eq_for_INTER_symbs_thm2 = store_thm(
+   "symb_interprs_eq_for_INTER_symbs_thm2", ``
+!H1 H2 symbs1 symbs2.
+  (symb_interprs_eq_for H1 H2 symbs1) ==>
+  (symb_interprs_eq_for H1 H2 (symbs1 INTER symbs2))
+``,
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interprs_eq_for_def]
 );
 
 val symb_interprs_eq_for_TRANS_thm = store_thm(
@@ -157,6 +199,19 @@ val symb_interprs_eq_for_UPDATE_dom_thm = store_thm(
      symb_interpr_dom_def] >>
 
   METIS_TAC [APPLY_UPDATE_THM]
+);
+
+val symb_interprs_eq_for_update_thm = store_thm(
+   "symb_interprs_eq_for_update_thm", ``
+!H1 H2 symb vo symbs.
+  (symb_interprs_eq_for (symb_interpr_update H1 (symb, vo)) H2 (symbs DELETE symb)) =
+  (symb_interprs_eq_for H1 H2 (symbs DELETE symb))
+``,
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+    [symb_interprs_eq_for_def, symb_interpr_update_def, symb_interpr_get_def,
+     symb_interpr_dom_def] >>
+
+  METIS_TAC [symb_interpr_get_update_thm]
 );
 
 val symb_interpr_ext_def = Define `
@@ -264,6 +319,26 @@ val symb_interpr_ext_IMP_eq_for_thm = store_thm(
   (symb_interprs_eq_for H1 H2 symbs)
 ``,
   METIS_TAC [symb_interpr_ext_def, symb_interprs_eq_for_SUBSET_thm, SUBSET_TRANS, symb_interprs_eq_for_COMM_thm]
+);
+
+val symb_interpr_ext_IMP_eq_for_SING_thm = store_thm(
+   "symb_interpr_ext_IMP_eq_for_SING_thm", ``
+!H1 H2 symb.
+  (symb_interpr_ext H2 H1) ==>
+  (symb IN (symb_interpr_dom H1)) ==>
+  (symb_interpr_get H1 symb = symb_interpr_get H2 symb)
+``,
+  METIS_TAC [symb_interpr_ext_IMP_eq_for_thm, symb_interprs_eq_for_def, SUBSET_DEF]
+);
+
+val symb_interpr_ext_IMP_eq_for_SING_thm2 = store_thm(
+   "symb_interpr_ext_IMP_eq_for_SING_thm2", ``
+!H1 H2 symb v.
+  (symb_interpr_ext H2 H1) ==>
+  (symb_interpr_get H1 symb = SOME v) ==>
+  (symb_interpr_get H1 symb = symb_interpr_get H2 symb)
+``,
+  METIS_TAC [symb_interpr_ext_IMP_eq_for_SING_thm, symb_interpr_dom_thm, optionTheory.option_CLAUSES]
 );
 
 
@@ -473,6 +548,60 @@ val symb_interpr_extend_def = Define `
       else
         symb_interpr_get H_extra symb))
 `;
+
+val symb_interpr_get_extend_thm = store_thm(
+   "symb_interpr_get_extend_thm", ``
+!H_extra H_base symb v.
+  (symb_interpr_get H_base symb = SOME v) ==>
+  (symb_interpr_get (symb_interpr_extend H_extra H_base) symb = SOME v)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `H_base` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interpr_extend_def, symb_interpr_ext_thm, symb_interpr_dom_def, symb_interpr_get_def]
+);
+
+val symb_interpr_get_extend_dom_thm = store_thm(
+   "symb_interpr_get_extend_dom_thm", ``
+!H_extra H_base symb.
+  (symb IN symb_interpr_dom H_base) ==>
+  (symb_interpr_get (symb_interpr_extend H_extra H_base) symb = symb_interpr_get H_base symb)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `H_base` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interpr_extend_def, symb_interpr_ext_thm, symb_interpr_dom_def, symb_interpr_get_def]
+);
+
+val symb_interpr_get_extend_dom_thm2 = store_thm(
+   "symb_interpr_get_extend_dom_thm2", ``
+!H_extra H_base symb.
+  (symb_interpr_get (symb_interpr_extend H_extra H_base) symb =
+   if symb IN symb_interpr_dom H_base then
+     symb_interpr_get H_base symb
+   else
+     symb_interpr_get H_extra symb)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `H_base` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interpr_extend_def, symb_interpr_ext_thm, symb_interpr_dom_def, symb_interpr_get_def]
+);
+
+val symb_interpr_dom_extend_thm = store_thm(
+   "symb_interpr_dom_extend_thm", ``
+!H_extra H_base.
+  (symb_interpr_dom (symb_interpr_extend H_extra H_base)) =
+  ((symb_interpr_dom H_extra) UNION (symb_interpr_dom H_base))
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `H_base` >> Cases_on `H_extra` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss)
+   [symb_interpr_extend_def, symb_interpr_ext_thm,
+    symb_interpr_dom_def, symb_interpr_get_def, EXTENSION] >>
+
+  GEN_TAC >>
+  Cases_on `f x <> NONE` >> (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
+  )
+);
 
 val symb_interpr_extend_IMP_ext_thm = store_thm(
    "symb_interpr_extend_IMP_ext_thm", ``
