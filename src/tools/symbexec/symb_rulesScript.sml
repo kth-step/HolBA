@@ -844,8 +844,28 @@ val symb_rule_INST_thm = store_thm(
     REV_FULL_SIMP_TAC std_ss [] >>
 *)
   ) >>
+
+  `(symb_symbols sr sys DELETE symb) SUBSET (symb_interpr_dom H)` by (
+    FULL_SIMP_TAC std_ss [symb_minimal_interpretation_def, symb_interpr_for_symbs_min_def, GSYM DELETE_DEF] >>
+    METIS_TAC [SUBSET_REFL, UNION_SUBSET, SUBSET_DELETE_BOTH, DELETE_DELETE]
+  ) >>
+  `(symb_symbols sr sys DELETE symb) SUBSET (symb_interpr_dom H_2_m)` by (
+    FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_suitable_interpretation_def, symb_interpr_for_symbs_def] >>
+    METIS_TAC [DELETE_SUBSET, SUBSET_TRANS]
+  ) >>
   `symb_interprs_eq_for H H_2_m (symb_symbols sr sys DELETE symb)` by (
-    cheat (* TODO: ??? *)
+    `(symb_symbols sr sys DELETE symb) SUBSET (symb_interpr_dom H DELETE symb)` by (
+      FULL_SIMP_TAC std_ss [symb_minimal_interpretation_def, symb_interpr_for_symbs_min_def, GSYM DELETE_DEF] >>
+      METIS_TAC [SUBSET_REFL, UNION_SUBSET, SUBSET_DELETE_BOTH, DELETE_DELETE]
+    ) >>
+    `symb_interprs_eq_for H H_2 (symb_symbols sr sys DELETE symb)` by (
+      METIS_TAC [symb_interprs_eq_for_UPDATE_dom_thm, symb_interprs_eq_for_COMM_thm, symb_interprs_eq_for_SUBSET_thm]
+    ) >>
+    `symb_interprs_eq_for H_2 H_2_m (symb_symbols sr sys DELETE symb)` by (
+      FULL_SIMP_TAC std_ss [symb_interpr_ext_def] >>
+      METIS_TAC [symb_interprs_eq_for_COMM_thm, symb_interprs_eq_for_SUBSET_thm]
+    ) >>
+    METIS_TAC [symb_interprs_eq_for_TRANS_thm]
   ) >>
 
   (* now execute without substitution *)
@@ -867,8 +887,15 @@ val symb_rule_INST_thm = store_thm(
   (* now have to establish an interpretation that can match and is an extension of the initial H *)
 
   (* we may miss some symbols in H' now (or have some additional symbols) *)
+  `(symb_symbols sr sys DELETE symb) SUBSET (symb_interpr_dom H')` by (
+    METIS_TAC [symb_interpr_ext_IMP_dom_thm, SUBSET_TRANS]
+  ) >>
   `symb_interprs_eq_for H H' (symb_symbols sr sys DELETE symb)` by (
-    cheat (* TODO: ??? *)
+    `symb_interprs_eq_for H_2_m H' (symb_symbols sr sys DELETE symb)` by (
+      FULL_SIMP_TAC std_ss [symb_interpr_ext_def] >>
+      METIS_TAC [symb_interprs_eq_for_COMM_thm, symb_interprs_eq_for_SUBSET_thm]
+    ) >>
+    METIS_TAC [symb_interprs_eq_for_TRANS_thm]
   ) >>
 
   `?H_3_m. symb_minimal_interpretation sr sys' H_3_m /\ symb_matchstate sr sys' H_3_m s' /\ symb_interpr_ext H' H_3_m` by (
@@ -887,8 +914,21 @@ symb_interpr_extend_welltyped_IMP_thm
     cheat (* TODO: ... *)
 *)
   ) >>
+
   `symb_interprs_eq_for H H_4 (symb_symbols sr sys DELETE symb)` by (
-    cheat (* TODO: ??? *)
+    `symb_interpr_ext H_4 H_2_m` by (
+      METIS_TAC
+        [symb_interpr_ext_IMP_interprs_eq_for_INTER_thm,
+         symb_interpr_extend_IMP_ext_thm2]
+    ) >>
+    `symb_interprs_eq_for H' H_4 (symb_symbols sr sys DELETE symb)` by (
+      FULL_SIMP_TAC std_ss [symb_interpr_ext_def] >>
+      METIS_TAC [symb_interprs_eq_for_COMM_thm, symb_interprs_eq_for_SUBSET_thm, symb_interprs_eq_for_TRANS_thm]
+    ) >>
+    METIS_TAC [symb_interprs_eq_for_TRANS_thm]
+  ) >>
+  `(symb_symbols sr sys DELETE symb) SUBSET (symb_interpr_dom H_4)` by (
+    METIS_TAC [symb_interprs_eq_for_IMP_dom_thm]
   ) >>
   (* ... *)
 
@@ -897,7 +937,17 @@ symb_interpr_extend_welltyped_IMP_thm
     METIS_TAC [symb_interpr_extend_IMP_symb_matchstate_thm, symb_matchstate_def]
   ) >>
   `symb_interprs_eq_for H H_5 (symb_symbols sr sys DELETE symb)` by (
-    cheat (* TODO: ??? *)
+    `symb_interpr_ext H_5 H_4` by (
+      METIS_TAC [symb_interpr_extend_IMP_ext_thm]
+    ) >>
+    `symb_interprs_eq_for H_4 H_5 (symb_symbols sr sys DELETE symb)` by (
+      FULL_SIMP_TAC std_ss [symb_interpr_ext_def] >>
+      METIS_TAC [symb_interprs_eq_for_COMM_thm, symb_interprs_eq_for_SUBSET_thm]
+    ) >>
+    METIS_TAC [symb_interprs_eq_for_TRANS_thm]
+  ) >>
+  `(symb_symbols sr sys DELETE symb) SUBSET (symb_interpr_dom H_5)` by (
+    METIS_TAC [symb_interprs_eq_for_IMP_dom_thm]
   ) >>
   (* ... *)
 
