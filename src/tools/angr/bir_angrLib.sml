@@ -197,7 +197,7 @@ local
 
   fun bmask exp (u,l) =
     let
-      val sz = (dest_BType_Imm o bir_type_of) exp;
+      val sz = (dest_BType_Imm o bir_type_of o (snd o dest_eq o concl o EVAL)) exp;
       val csz = “THE (bir_immtype_of_size ^(term_of_int ((u - l) + 1)))”;
       val maskexp = “BExp_CastMask ^sz ^(term_of_int u) ^(term_of_int l) ^exp ^csz”;
     in
@@ -253,7 +253,7 @@ local
                 val signext_expr = seq (string "SignExt")
                                  (bind (token (pairp (bind dec (fn len => return (Arbnum.toInt len))) bir_exp)) (fn (n,exp) =>
 				 return (list_bappend_mask
-				 [“BExp_AppendMask [(^(term_of_int (Int.- (n,1))), 0, ^(bconstii 128 0))]”, exp])))
+				 [“BExp_AppendMask [(^(term_of_int (Int.- (n,1))), 0, ^(bite (bhighcast1 exp, ``BExp_Const (Imm128 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFw)``, bconst128 0)))]”, exp])))
                                     <?> "SignExt expression";
 		val logical =  choicel [bracket (char #"(") bir_exp (char #")")
                                       ,bind unary_op
