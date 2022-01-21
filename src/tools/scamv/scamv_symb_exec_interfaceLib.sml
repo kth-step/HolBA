@@ -2,7 +2,7 @@ structure scamv_symb_exec_interfaceLib :> scamv_symb_exec_interfaceLib =
 struct
 
 local
-  open HolKernel boolLib Parse;
+  open HolKernel boolLib Parse bossLib;
   open bir_symb_execLib;
   open bir_symb_masterLib;
   open listSyntax;
@@ -74,13 +74,41 @@ fun do_symb_exec prog =
         (paths, all_exps)
     end
 
+
+      fun angr_run_symb_exec prog =
+        let
+          (* open listSyntax; *)
+          val angr_paths = bir_angrLib.do_symb_exec prog;
+
+            fun extract_angr_cond_obs angr_path =
+              let
+		val (bir_angrLib.exec_path {guards = guards, observations = obs, ...}) = angr_path;
+                val guards_evald = List.map (snd o dest_eq o concl o EVAL) guards;
+                val pcond_bexp = bandl guards_evald;
+                val obs_list = List.map (fn (oid,ec,eo,obsf) =>
+					    ((numSyntax.term_of_int o Arbnum.toInt) oid, ec, (hd eo))) obs;
+              in
+                (pcond_bexp, SOME obs_list)
+              end;
+          val paths = List.map extract_angr_cond_obs angr_paths;
+
+          val path_conds = List.map fst paths;
+          val obs_exps = flatten (List.map (fn (_,x,y) => [x,y])
+                          (flatten (List.map ((fn x =>
+                             case x of NONE => []
+                                     | SOME y => y) o snd) paths)));
+          val all_exps = (path_conds @ obs_exps);
+        in
+          (paths, all_exps)
+        end;
+
 in
 
 (* Given a program, run symbolic execution and return the feasible paths
   TODO filter out infeasible paths
  *)
 fun scamv_run_symb_exec p =
-    do_symb_exec p;
+    angr_run_symb_exec p;
 
 end
 
