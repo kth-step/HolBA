@@ -826,21 +826,10 @@ val symb_interprs_eq_for_INST_thm = store_thm(
    "symb_interprs_eq_for_INST_thm", ``
 !sr.
 !symb symbs sys1mbs sys2mbs H H_2 H_4 H_5.
-(*
-  (symbs = (sr.sr_symbols_f symb_inst DELETE symb)) ==>
-  (sys1mbs = symb_symbols sr sys) ==>
-  (sys2mbs = symb_symbols sr sys') ==>
-*)
-
-(*  (symb_interprs_eq_for H_2 H_2_m (symbs INTER sys1mbs)) ==>*)
-(*  (symb_interpr_dom H_2_m = sys1mbs) ==>*)
-
   (symb_interprs_eq_for H H_2 (symbs DELETE symb)) ==>
   (symb_interprs_eq_for H_2 H_4 ((symbs DELETE symb) INTER sys1mbs)) ==>
-(*  (sys2mbs' = sys2mbs \/ sys2mbs' = sys2mbs UNION {symb}) ==>*)
   (symb_interpr_dom H_4 = sys1mbs UNION sys2mbs UNION {symb}) ==>
 
-(* ? *)
   ((symbs DELETE symb) INTER (sys2mbs DIFF sys1mbs) = EMPTY) ==>
 
   (H_5 = symb_interpr_extend H H_4) ==> (* means that H_5 is like H for all (sys1mbs UNION sys2mbs) *)
@@ -873,62 +862,6 @@ val symb_interprs_eq_for_INST_thm = store_thm(
     ) >>
     METIS_TAC [symb_interpr_get_extend_dom_thm2]
 );
-(*
-  REPEAT STRIP_TAC >> (
-    REWRITE_TAC [symb_interprs_eq_for_def] >>
-    REPEAT STRIP_TAC >>
-
-    rename1 `x IN symbs DELETE symb` >>
-    Cases_on `x IN sys1mbs` >- (
-      FULL_SIMP_TAC std_ss [symb_interprs_eq_for_def] >>
-      `x IN (symbs DELETE symb) INTER sys1mbs` by (
-        METIS_TAC [IN_INTER]
-      ) >>
-      `x IN symb_interpr_dom H_4` by (
-        METIS_TAC [IN_UNION]
-      ) >>
-      METIS_TAC [symb_interpr_get_extend_dom_thm2]
-    ) >>
-
-    `~(x IN symb_interpr_dom H_4)` by (
-      `~(x IN sys2mbs)` by (
-        CCONTR_TAC >>
-        FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [EXTENSION] >>
-        (*REPEAT (PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `x`)) >>*)
-        METIS_TAC []
-      ) >>
-      METIS_TAC [IN_UNION]
-    ) >>
-    METIS_TAC [symb_interpr_get_extend_dom_thm2]
-  ) >> (
-    REWRITE_TAC [symb_interprs_eq_for_def] >>
-    REPEAT STRIP_TAC >>
-
-    rename1 `x IN symbs DELETE symb` >>
-    Cases_on `x IN sys1mbs` >- (
-      FULL_SIMP_TAC std_ss [symb_interprs_eq_for_def] >>
-      `x IN (symbs DELETE symb) INTER sys1mbs` by (
-        METIS_TAC [IN_INTER]
-      ) >>
-      `x IN symb_interpr_dom H_4` by (
-        METIS_TAC [IN_UNION]
-      ) >>
-      METIS_TAC [symb_interpr_get_extend_dom_thm2]
-    ) >>
-
-    `~(x IN symb_interpr_dom H_4)` by (
-      `~(x IN sys2mbs UNION {symb})` by (
-        CCONTR_TAC >>
-        FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [EXTENSION] >>
-        (*REPEAT (PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `x`)) >>*)
-        METIS_TAC []
-      ) >>
-      METIS_TAC [IN_UNION]
-    ) >>
-    METIS_TAC [symb_interpr_get_extend_dom_thm2]
-  )
-);
-*)
 
 val symb_symbols_set_INTER_EMPTY_INST_thm = store_thm(
    "symb_symbols_set_INTER_EMPTY_INST_thm", ``
@@ -958,6 +891,8 @@ val symb_rule_INST_thm = store_thm(
   (symb_subst_f_sound sr) ==>
   (symb_symbols_f_sound sr) ==>
 
+  (* can we not prove that this rule also works if symb is not IN sys?
+     or do we need to add an assumption on substitution that expressions stay unchanged in this case? *)
   (symb IN symb_symbols sr sys) ==>
   (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
 
@@ -983,11 +918,10 @@ val symb_rule_INST_thm = store_thm(
   ) >>
   `?v. sr.sr_interpret_f H symb_inst = SOME v /\ sr.sr_typeof_val v = sr.sr_typeof_symb symb` by (
     METIS_TAC [symb_matchstate_def, symb_typeof_exp_sound_def]
-    (* TODO: expression has type, H is well typed, H has all symbols of symb_inst (because symb is in sys and thus sys_s has symb_inst inside, and all symbols of sys_s are in H) *)
+    (* expression has type, H is well typed, H has all symbols of symb_inst (because symb is in sys and thus sys_s has symb_inst inside, and all symbols of sys_s are in H) *)
   ) >>
 
   Q.ABBREV_TAC `H_2 = symb_interpr_update H (symb,SOME v)` >>
-  (* TODO: is it better to distinguish the two cases that symb was mapped before and not mapped before? *)
 
   `symb_matchstate sr sys H_2 s` by (
     METIS_TAC [symb_subst_sound_thm1]
@@ -996,11 +930,6 @@ val symb_rule_INST_thm = store_thm(
   `?H_2_m. symb_minimal_interpretation sr sys H_2_m /\ symb_matchstate sr sys H_2_m s /\ symb_interpr_ext H_2 H_2_m` by (
     (* minimize H_2 wrt sys *)
     METIS_TAC [symb_matchstate_TO_minimal_thm]
-(*
-    ASSUME_TAC (Q.SPECL [`sr`, `sys`, `H_2`, `s`] symb_matchstate_TO_minimal_thm) >>
-    FULL_SIMP_TAC std_ss [] >>
-    REV_FULL_SIMP_TAC std_ss [] >>
-*)
   ) >>
 
   `(symb_symbols sr sys DELETE symb) SUBSET (symb_interpr_dom H)` by (
@@ -1031,13 +960,6 @@ val symb_rule_INST_thm = store_thm(
   REV_FULL_SIMP_TAC std_ss [symb_matchstate_ext_def] >>
   Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `s'` >>
   ASM_SIMP_TAC (std_ss) [] >>
-
-(*
-  (* the case where sys' does not contain symb *)
-  Cases_on `~(symb IN symb_symbols sr sys') ` >- (
-    (* needs an additional assumption on substitution... *)
-  ) >>
-*)
 
   (* now have to go from sys' in Pi to Pi_s ... that is, all that follows *)
   Q.ABBREV_TAC `sys_s' = symb_subst sr (symb,symb_inst) sys'` >>
@@ -1112,34 +1034,10 @@ val symb_rule_INST_thm = store_thm(
 
     METIS_TAC []
   ) >>
-(*
-  `symb_interprs_eq_for H H_4v (symb_symbols sr sys DELETE symb)` by (
-    `(symb_symbols sr sys DELETE symb) SUBSET (symb_interpr_dom H_3_m DELETE symb)` by (
-      FULL_SIMP_TAC std_ss [symb_minimal_interpretation_def, symb_interpr_for_symbs_min_def, GSYM DELETE_DEF] >>
-      METIS_TAC [SUBSET_REFL, UNION_SUBSET, SUBSET_DELETE_BOTH, DELETE_DELETE]
-    ) >>
-    `symb_interprs_eq_for H_3_m H_4v (symb_symbols sr sys DELETE symb)` by (
-      METIS_TAC [symb_interprs_eq_for_UPDATE_dom_thm, symb_interprs_eq_for_COMM_thm, symb_interprs_eq_for_SUBSET_thm]
-    ) >>
-    cheat (* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! *)
-  ) >>
-  `(symb_symbols sr sys DELETE symb) SUBSET (symb_interpr_dom H_4v)` by (
-    METIS_TAC [symb_interprs_eq_for_IMP_dom_thm]
-  ) >>
-*)
-
-
-
 
   Q.ABBREV_TAC `H_4 = symb_interpr_extend H_2_m H_4v` >>
   `symb_matchstate sr sys' H_4 s'` by (
     METIS_TAC [symb_interpr_extend_IMP_symb_matchstate_thm, symb_matchstate_def]
-(*
-symb_interpr_extend_welltyped_IMP_thm
-    METIS_TAC [symb_interpr_ext_matchstate_IMP_matchstate_thm, symb_interpr_extend_symbs_IMP_ext_thm,
-        symb_interpr_extend_symbs_sr_def]
-    cheat (* TODO: ... *)
-*)
   ) >>
 
   Q.ABBREV_TAC `H_4w = symb_interpr_extend H_2_m H_3_m` >>
@@ -1210,11 +1108,6 @@ symb_interpr_extend_welltyped_IMP_thm
     ) >>
     METIS_TAC [symb_interprs_eq_for_TRANS_thm]
   ) >>
-(*
-  `(symb_symbols sr sys DELETE symb) SUBSET (symb_interpr_dom H_6)` by (
-    METIS_TAC [symb_interprs_eq_for_IMP_dom_thm]
-  ) >>
-*)
 
   `symb_interprs_eq_for H H_6 (sr.sr_symbols_f symb_inst DELETE symb)` by (
     `symb_interprs_eq_for H H_2 (sr.sr_symbols_f symb_inst DELETE symb)` by (
@@ -1231,31 +1124,6 @@ symb_interpr_extend_welltyped_IMP_thm
 
       METIS_TAC [symb_interprs_eq_for_INTER_symbs_thm2, INTER_COMM]
     ) >>
-(*
-    `symb_interprs_eq_for H_2_m H_3_m ((sr.sr_symbols_f symb_inst DELETE symb) INTER symb_symbols sr sys INTER symb_symbols sr sys')` by (
-      `symb_interprs_eq_for H_2_m H_3_m (symb_symbols sr sys INTER symb_symbols sr sys')` by (
-        METIS_TAC [
-          symb_interpr_ext_IMP_interprs_eq_for_INTER_thm,
-          symb_interprs_eq_for_INTER_def,
-          symb_minimal_interpretation_def,
-          symb_interpr_for_symbs_min_def]
-      ) >>
-
-      `symb_interprs_eq_for H_2_m H_3_m ((sr.sr_symbols_f symb_inst DELETE symb) INTER (symb_symbols sr sys INTER symb_symbols sr sys'))` by (
-        METIS_TAC [symb_interprs_eq_for_INTER_symbs_thm2, INTER_COMM]
-      ) >>
-
-      METIS_TAC [INTER_ASSOC]
-    ) >>
-    `symb_interprs_eq_for H_2_m H_4v ((sr.sr_symbols_f symb_inst DELETE symb) INTER symb_symbols sr sys INTER symb_symbols sr sys')` by (
-      METIS_TAC [
-        symb_interprs_eq_for_update_thm,
-        DELETE_INTER,
-        symb_interprs_eq_for_ID_thm,
-        symb_interprs_eq_for_TRANS_thm]
-    ) >>
-*)
-
 
     `symb_interprs_eq_for H_2_m H_4 ((sr.sr_symbols_f symb_inst DELETE symb) INTER symb_symbols sr sys)` by (
       `symb_interprs_eq_for H_4w H_2_m (symb_interpr_dom H_2_m)` by (
@@ -1271,58 +1139,19 @@ symb_interpr_extend_welltyped_IMP_thm
       `symb_interprs_eq_for H_2_m H_4w ((sr.sr_symbols_f symb_inst DELETE symb) INTER symb_symbols sr sys)` by (
         METIS_TAC [INTER_COMM, symb_interprs_eq_for_INTER_symbs_thm2, symb_interprs_eq_for_COMM_thm]
       ) >>
-(*
-      `symb_symbols sr sys SUBSET symb_interpr_dom H_4w` by (
-        METIS_TAC [
-          symb_interpr_dom_extend_thm,
-          SUBSET_UNION]
-      ) >>
-*)
 
       `symb_interprs_eq_for H_4 H_4w
           ((sr.sr_symbols_f symb_inst DELETE symb) ∩ symb_symbols sr sys)` by (
         METIS_TAC [symb_interprs_eq_for_update_thm, symb_interprs_eq_for_ID_thm, DELETE_INTER, DELETE_DELETE]
       ) >>
       METIS_TAC [symb_interprs_eq_for_TRANS_thm, symb_interprs_eq_for_COMM_thm]
-(*
-      METIS_TAC [symb_interprs_eq_for_update_thm, symb_interprs_eq_for_COMM_thm, symb_interprs_eq_for_TRANS_thm, DELETE_INTER, DELETE_DELETE]
-
-
-      METIS_TAC [symb_interprs_eq_for_update_thm, symb_interprs_eq_for_COMM_thm, symb_interprs_eq_for_TRANS_thm, DELETE_INTER, DELETE_DELETE]
-      cheat (* !!!!!!!!!!!!!! *)
-*)
     ) >>
 
-(*
-    `symb_interprs_eq_for H_3_m H_4 ((sr.sr_symbols_f symb_inst DELETE symb) INTER symb_symbols sr sys)` by (
-      `symb_interprs_eq_for (symb_interpr_extend H_2_m H_3_m) H_2_m (symb_interpr_dom H_2_m)` by (
-        METIS_TAC [
-          symb_interpr_ext_IMP_interprs_eq_for_INTER_thm,
-          symb_interpr_extend_IMP_ext_thm2, symb_interpr_ext_def]
-      ) >>
-      `(symb_interpr_dom H_2_m) = (symb_symbols sr sys)` by (
-        METIS_TAC [
-          symb_minimal_interpretation_def,
-          symb_interpr_for_symbs_min_def]
-      ) >>
-      Q.UNABBREV_TAC `H_4w` >>
-      `symb_interprs_eq_for H_3_m H_4w ((sr.sr_symbols_f symb_inst DELETE symb) INTER symb_symbols sr sys)` by (
-        METIS_TAC [INTER_COMM, symb_interprs_eq_for_INTER_symbs_thm2, symb_interprs_eq_for_COMM_thm]
-      ) >>
-      cheat (* !!!!!!!!!!!!!! *)
-    ) >>
-*)
     `symb_interprs_eq_for H H_5 (sr.sr_symbols_f symb_inst DELETE symb)` by (
       Q.ABBREV_TAC `symbs = sr.sr_symbols_f symb_inst` >>
       Q.ABBREV_TAC `sys1mbs = symb_symbols sr sys` >>
       Q.ABBREV_TAC `sys2mbs = symb_symbols sr sys'` >>
 
-(*
-      `symb_interpr_dom H_4 = sys1mbs UNION sys2mbs \/
-       symb_interpr_dom H_4 = sys1mbs UNION sys2mbs UNION {symb}` by (
-        cheat
-      ) >>
-*)
       `symb_interpr_dom H_4 = sys1mbs UNION sys2mbs UNION {symb}` by (
         ASM_REWRITE_TAC [] >>
         Q.UNABBREV_TAC `sys1mbs` >>
@@ -1333,14 +1162,6 @@ symb_interpr_extend_welltyped_IMP_thm
       ) >>
       `(symbs DELETE symb) INTER (sys2mbs DIFF sys1mbs) = EMPTY` by (
         METIS_TAC [symb_symbols_set_INTER_EMPTY_INST_thm]
-(*
-        `sys2mbs SUBSET symb_symbols_set sr Pi` by (
-          cheat
-        ) >>
-symbs ∩ (symb_symbols_set sr Pi DIFF sys1mbs) = ∅
-
-        cheat
-*)
       ) >>
 
       METIS_TAC [
@@ -1426,15 +1247,10 @@ symbs ∩ (symb_symbols_set sr Pi DIFF sys1mbs) = ∅
       METIS_TAC [symb_interpr_welltyped_def, symb_interpr_dom_thm, optionTheory.option_CLAUSES]
     ) >>
     FULL_SIMP_TAC std_ss []
-(*
-    METIS_TAC [symb_subst_sound_thm2]
-    cheat (* TODO:  *)
-*)
   ) >>
 
   Q.EXISTS_TAC `H_6` >>
   ASM_REWRITE_TAC []
-(*  METIS_TAC [] *)
 );
 
 
