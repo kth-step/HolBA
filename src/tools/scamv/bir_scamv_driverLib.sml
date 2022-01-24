@@ -231,7 +231,10 @@ fun all_obs_not_present { a_run = (_,a_obs), b_run = (_,b_obs) } =
     end;
 
 (* This is used to build the next relation for path enumeration *)
-fun mem_constraint [] = ``T``
+(* NOTICE: default memory assignments not in constraint *)
+(* NOTICE: overwriting updates would cause problem *)
+(* NOTICE: only works for exactly two memories (for example, MEM and MEM_) *)
+fun mem_constraint [] = T
   | mem_constraint mls =
     let fun is_addr_numeral tm = tm |> pairSyntax.dest_pair |> fst |> (fn x => (rhs o concl o EVAL) ``w2n ^x``) |> is_numeral
 	fun adjust_prime s =
@@ -246,16 +249,17 @@ fun mem_constraint [] = ``T``
 						 in
 						     ``^mem ' (^t1) = ^t2``
 						 end) toIntls;
-		val mc_conj = foldl (fn (a,b) => mk_conj (a,b)) (hd memconstraint) (tl memconstraint);
+		val mc_conj = if List.null memconstraint then F else foldl (fn (a,b) => mk_conj (a,b)) (hd memconstraint) (tl memconstraint);
 	    in
 		(``~(^mc_conj)``, toIntls)
 	    end
 
-	val (hc, hv)::(tc, tv)::[] = (map (fn (vn, vl) =>  mk_cnst vn vl ) mls)
-	val mc_conj = mk_conj ((if is_addr_numeral (hd hv) then hc else ``T``), (if is_addr_numeral (hd tv) then tc else ``T``))
+	val _ = if List.length mls = 2 then () else raise ERR "mem_constraint" "currently can only deal with two memories";
+	val (hc, hv)::(tc, tv)::[] = (map (fn (vn, vl) =>  mk_cnst vn vl ) mls);
+	val mc_conj = mk_conj ((if (not (List.null hv)) andalso is_addr_numeral (hd hv) then hc else T),  (if(not (List.null tv)) andalso is_addr_numeral (hd tv) then tc else T));
     in
 	mc_conj
-    end
+    end;
 
 fun next_experiment all_exps next_relation  =
     let
@@ -299,7 +303,10 @@ fun next_experiment all_exps next_relation  =
                             handle NotFound => new_word_relation;
 
         val _ = printv 2 ("Calling Z3\n");
-        val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation;
+        (* quickfix for smt library interface (MEM variable problem) *)
+	val word_relation_fixed = subst [mk_var ("MEM", ``:word64|->word8``) |-> Term`MEMV:word64|->word8`, mk_var ("MEM_", ``:word64|->word8``) |-> Term`MEMV_:word64|->word8`] word_relation;
+	val model_fixed = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation_fixed;
+        val model = List.map (fn (k,v) => (if k = "MEMV" then "MEM" else if k = "MEMV_" then "MEM_" else k,v)) model_fixed;
         val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model; print "\nSAT model finished.\n"));
 
 	val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
