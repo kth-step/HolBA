@@ -1,17 +1,16 @@
-structure bir_symb_transferLib =
-struct
 
-local
+open HolKernel Parse boolLib bossLib;
 
-  open HolKernel Parse boolLib bossLib;
+open bir_symbTheory;
+
+open birs_stepLib;
+open birs_composeLib;
+
+open birs_auxTheory;
 
 
-  (* error handling *)
-  val libname = "bir_symb_transferLib"
-  val ERR = Feedback.mk_HOL_ERR libname
-  val wrap_exn = Feedback.wrap_exn libname
 
-  open bir_symbLib;
+  open birs_stepLib;
 
 open symb_recordTheory;
 open symb_prop_transferTheory;
@@ -23,11 +22,10 @@ open symb_interpretTheory;
 open pred_setTheory;
 
 open bir_exp_substitutionsTheory;
-open bir_symb_composeLib;
+open birs_composeLib;
+open birs_auxTheory;
 
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
-
-in
 
 (* testing *)
 val bprog_test_def = Define `
@@ -280,8 +278,3 @@ val bprog_concst_prop_thm =
       bprog_prop_holds_thm);
 
 (* TODO: translate to pure BIR property *)
-
-
-end (* local *)
-
-end (* struct *)
