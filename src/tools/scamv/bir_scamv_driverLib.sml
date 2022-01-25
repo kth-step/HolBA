@@ -368,7 +368,6 @@ fun next_experiment all_exps next_relation  =
                                 print (term_to_string_sel new_constraint);
                                 print "\n"));
 
->>>>>>> dev_angrpure
         val prog_id =
           case !current_prog_id of
              NONE => raise ERR "next_experiment" "currently no prog_id loaded"
