@@ -34,6 +34,6 @@ cd /home/holba/data/HolBA_scamv/src/tools/scamv/examples
 # open multiple shells in this directory and execute the following in order in each shell
 ./scripts/1-gen.sh test123 qc_xld
 ./scripts/2-connect.sh rpi3
-./scripts/3-run.sh arm8/exps2
+./scripts/3-run.sh
 ./scripts/4-status.sh
 

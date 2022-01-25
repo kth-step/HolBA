@@ -146,7 +146,6 @@ Notice that this sequence is just an example, and it is possible to selectively 
   * Experimental passification transformation to SSA
 - `tools/scamv`:
   * Works for small programs
-  * Cannot handle certain cases, like memory dependent observations
   * Includes a selection of cache side channel models
 - `tools/wp`:
   * Proof-producing

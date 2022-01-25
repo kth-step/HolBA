@@ -209,6 +209,12 @@ struct
      holba_run_id_create descr_o;
      ());
 
+  fun timer_stop_gen f NONE = raise ERR "timer_stop_gen" "this should not happen"
+    | timer_stop_gen f (SOME tm) = let
+       val d_time = Time.- (Time.now(), tm);
+       in f ((Time.toString d_time) ^ "s") end;
+  fun time_since_run_str () = timer_stop_gen (fn x => x) (!holba_run_timer_ref);
+
   (* storing to logs *)
   (* ========================================================================================= *)
   fun run_create_prog arch prog run_metadata =
@@ -248,6 +254,7 @@ struct
       val exp_type_s = exp_type_to_string exp_type;
 
       val RunReferences (_, run_name, _, exp_l_id) = holba_run_id();
+      val run_metadata_ = ("creationtime", time_since_run_str ())::run_metadata;
 
       val input_data = Json.OBJECT (List.map (fn (n, s) => ("input_" ^ n, machstate_to_Json s)) state_list);
       val exp_v      = LogsExp (prog_id, exp_type_s, exp_params, input_data);
@@ -269,7 +276,7 @@ struct
       (* add metadata *)
       val meta_name = meta_name_log ^ "." ^ (get_dotfree_time ());
       val _ = List.map (fn (m_n, m_v) => 
-        init_meta (mk_exp_meta_handle (exp_id, SOME m_n, meta_name)) (SOME m_v)) run_metadata;
+        init_meta (mk_exp_meta_handle (exp_id, SOME m_n, meta_name)) (SOME m_v)) run_metadata_;
     in
       exp_id
     end;
@@ -279,7 +286,6 @@ struct
   (* ========================================================================================= *)
   fun runlogs_load_progs listname =
     let
-      (*
       val prog_l_ids = query_all_prog_lists ();
       val prog_ls = get_prog_lists prog_l_ids;
 
@@ -289,11 +295,7 @@ struct
                     raise ERR "runlogs_load_progs" ("didn't find exactly one match for prog list " ^ listname);
       val prog_l_id = List.nth (prog_l_ids, i);
 
-      val prog_ids = List.map snd (get_prog_list_entries prog_l_id);
-
-      val progs_i = get_progs prog_ids;
-      *)
-      val progs_i = hack_get_prog_list_by_listname listname;
+      val progs_i = List.map snd (get_prog_list_entries_full prog_l_id);
 
       val progs = List.map (fn (LogsProg (_,code)) => prog_from_asm_code code) progs_i;
     in

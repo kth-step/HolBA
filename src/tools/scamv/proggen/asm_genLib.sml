@@ -355,13 +355,85 @@ local
     [Load (Reg reg_y, Ld2 (reg_x, reg_a1))]@
     (Portable.the_list (get_next_spectre_v1_mul ()))@
     [Load (Reg reg_z, Ld2 (reg_y, reg_a2))]));
+
+  val reg_t1  = "x10";
+  val reg_t2  = "x11";
+  fun gen_preload with_dep =
+    let
+      val (reg_t, reg_s) =
+        if with_dep then
+          (reg_la1, reg_t1)
+        else
+          (reg_t1, reg_t2);
+    in
+      return (Load (Reg reg_t, Ld (NONE, reg_s)))
+    end;
 in
   val arb_program_spectre_v1 =
     gen_arr_bnds_chck_acc gen_arr_acc;
   val arb_program_spectre_v1_mod1 =
     gen_arr_bnds_chck_acc_mod gen_arr_acc (return [Nop]);
+
+  fun arb_program_spectre_v1_mod2_gen w_dep =
+    gen_preload w_dep >>= (fn preload_instr =>
+    arb_program_spectre_v1_mod1 >>= (fn gadget_instrs =>
+      return (preload_instr::gadget_instrs)
+    ));
+  val arb_program_spectre_v1_mod2     = arb_program_spectre_v1_mod2_gen false;
+  val arb_program_spectre_v1_mod2_dep = arb_program_spectre_v1_mod2_gen true;
 end;
 
+(* =============== straightline speculation ================= *)
+val arb_instruction_nobranch_nocmp =
+    frequency
+        [(1, arb_load_indir)
+       ,(1, arb_nop)
+       ,(1, arb_add)]
+
+val arb_program_nobranch_nocmp = arb_list_of arb_instruction_nobranch_nocmp;
+      
+fun arb_program_straightline_cond arb_prog_left arb_prog_right =
+    let
+	fun rel_jmp_after bl = Imm (((length bl) + 1) * 4);
+	val arb_load_instr = arb_load_indir;
+	    
+	val arb_prog      = arb_prog_left  >>= (fn blockl =>
+			    arb_prog_right >>= (fn blockr =>
+			    (* arb_load_instr >>= (fn fld => *)
+                              let val blockl_wexit = blockl@[Branch (NONE, rel_jmp_after blockr)] in
+                               return (
+                                    blockl_wexit
+                                    @blockr
+				    (* @[fld] *)
+			       )
+                              end
+                        (* ) *)));
+    in
+	arb_prog
+    end;
+    
+val arb_program_straightline_branch =
+  let
+    val arb_pad = sized (fn n => choose (1, n)) >>=
+                  (fn n => resize n arb_program_nobranch_nocmp);	
+	
+
+    val arb_load_instr = arb_load_indir;
+
+    val arb_leftright =
+      arb_load_instr >>= (fn ld1 =>
+
+        let val arb_block_3ld =
+                        (List.foldr (op@) []) <$> (
+                        sequence [return [ld1]
+                                ,arb_pad
+                                 ]) in
+          two (arb_pad) arb_block_3ld
+        end
+      );
+  in
+    arb_leftright >>= (fn (l,r) => arb_program_straightline_cond (return l) (return r))
+  end;
 
 (* ================================ *)
 fun prog_gen_a_la_qc_gen do_resize gen n =

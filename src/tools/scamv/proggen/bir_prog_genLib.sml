@@ -63,7 +63,7 @@ struct
         val (thm_prog, errors) = bmil_bir_lift_prog_gen prog_range sections;
         val lifted_prog = (snd o dest_comb o concl) thm_prog;
         val lifted_prog_typed =
-            inst [Type`:'observation_type` |-> Type`:bir_val_t`]
+            inst [Type`:'observation_type` |-> Type`:'obs_type`]
                  lifted_prog;
     in
         lifted_prog_typed
@@ -148,13 +148,6 @@ struct
       val prog_with_halt = add_halt_to_prog len lifted_prog;
 
       val add_lifted_prog = true;
-      fun term_to_string_wtypes t =
-        let
-          val trace_val = Feedback.get_tracefn "types" ();
-          val _ = Feedback.set_trace "types" 1;
-          val s = term_to_string t;
-          val _ = Feedback.set_trace "types" trace_val;
-        in s end;
 
       val extra_metadata = if not add_lifted_prog then [] else
         [("lifted_prog", term_to_string_wtypes lifted_prog)];
@@ -230,6 +223,9 @@ fun pgen_qc_param param =
    | "xld_br_yld_mod1" => prog_gen_a_la_qc arb_program_xld_br_yld_mod1
    | "spectre_v1" => prog_gen_a_la_qc arb_program_spectre_v1
    | "spectre_v1_mod1" => prog_gen_a_la_qc arb_program_spectre_v1_mod1
+   | "spectre_v1_mod2" => prog_gen_a_la_qc arb_program_spectre_v1_mod2
+   | "spectre_v1_mod2_dep" => prog_gen_a_la_qc arb_program_spectre_v1_mod2_dep
+   | "straightline_branch" => prog_gen_a_la_qc arb_program_straightline_branch			  
    | _            => raise ERR "prog_gen_store_a_la_qc" "unknown qc generator";
 
 fun prog_gen_store_a_la_qc param sz    = prog_gen_store ("prog_gen_a_la_qc::"^param) true
