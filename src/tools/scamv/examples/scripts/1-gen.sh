@@ -10,6 +10,12 @@ SCAMV_EXAMPLES_DIR=$(dirname "${BASH_SOURCE[0]}")
 SCAMV_EXAMPLES_DIR=$(readlink -f "${SCAMV_EXAMPLES_DIR}/..")
 HOLBA_DIR=$(readlink -f "${SCAMV_EXAMPLES_DIR}/../../../..")
 
+# check inputs
+if [[ -z "${EXPGENRUN_ID_PARAM}" ]]; then
+  echo "ERROR: please provide both, run description (simple string prefix) and expgenrun id (text file with scamv specification)"
+  exit 1
+fi
+
 # find the environment
 source "${HOLBA_DIR}/env.sh"
 echo "============================"
@@ -38,6 +44,6 @@ SCAMV_HOLBA_RUN_DESCR="1-gen.sh_${EXPGENRUN_PREFIX_PARAM}_${EXPGENRUN_ID_PARAM}"
 
 # start experiment generation process
 cd "${SCAMV_EXAMPLES_DIR}"
-./scamv.sh --run_description "${SCAMV_HOLBA_RUN_DESCR}" ${SCAMV_EXPGENRUN_PARAMS}
+./scamv_buildheap.sh --run_description "${SCAMV_HOLBA_RUN_DESCR}" ${SCAMV_EXPGENRUN_PARAMS}
 
 

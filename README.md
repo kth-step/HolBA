@@ -61,7 +61,7 @@ ${HOLBA_HOLMAKE}
 
 - HOL4 (`https://github.com/HOL-Theorem-Prover/HOL`)
   - tag: kananaskis-14
-- Poly/ML 5.8.1
+- Poly/ML 5.9
   - alternatively, Poly/ML 5.7.1 (version packaged for Ubuntu 20.04)
 - Z3 v4.8.4
 
@@ -146,7 +146,6 @@ Notice that this sequence is just an example, and it is possible to selectively 
   * Experimental passification transformation to SSA
 - `tools/scamv`:
   * Works for small programs
-  * Cannot handle certain cases, like memory dependent observations
   * Includes a selection of cache side channel models
 - `tools/wp`:
   * Proof-producing

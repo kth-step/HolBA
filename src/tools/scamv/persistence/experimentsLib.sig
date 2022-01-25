@@ -1,5 +1,7 @@
 signature experimentsLib = sig
 
+  val term_to_string_wtypes : Abbrev.term -> string;
+
   (* machine states *)
   (* ======================================== *)
   (* a machine consists of register to value mappings and a memory mapping *)
@@ -43,9 +45,11 @@ signature experimentsLib = sig
 
   (* embexp platform parameters *)
   (* ======================================== *)
-  val embexp_params_code   : Arbnum.num (* base address for placement *)
-  val embexp_params_memory : Arbnum.num * Arbnum.num (* base, length *)
+  val embexp_params_code   : Arbnum.num; (* base address for placement *)
+  val embexp_params_memory : Arbnum.num * Arbnum.num; (* base, length *)
 
-  val embexp_params_cacheable : Arbnum.num -> Arbnum.num
+  val embexp_params_cacheable : Arbnum.num -> Arbnum.num;
+
+  val embexp_params_checkmemrange : machineState -> bool;
 
 end
