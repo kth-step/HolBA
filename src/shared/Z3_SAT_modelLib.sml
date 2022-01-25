@@ -167,6 +167,19 @@ struct
       val ERR = ERR "Z3_GET_SAT_MODEL"
       val goal = ([], term)
       val (simplified_goal, _) = SolverSpec.simplify (SmtLib.SIMP_TAC false) goal
+
+      val _ =
+        if !Library.trace > 4 then
+        let
+          val _ = print "simplified goal >>>\n";
+          open HolKernel boolLib liteLib simpLib Parse bossLib;
+          val (sg_tl, sg_t) = simplified_goal;
+          val _ = print ((Int.toString (List.length sg_tl)) ^ "\n");
+          val _ = print_term sg_t;
+          val _ = List.map print_term sg_tl;
+          val _ = print "<<< simplified goal done\n";
+        in () end else ();
+
       val result = Z3_ORACLE_SOLVE_GOAL simplified_goal
     in
       case result of

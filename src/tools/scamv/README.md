@@ -10,10 +10,10 @@ The possible options range from sizes for the desired experiment set, over gener
 The simple interface function `scamv_run_with_opts` of the same library may be used to create a configuration structure from command line arguments and initiate a SCAM-V run.
 This function uses the infrastructure from `scamv_configLib.sml` to parse the command line arguments from the environment.
 
-Currently, a user of SCAM-V may simply run the script `examples/scamv.sh` from the command line with appropriate arguments.
+Currently, a user of SCAM-V may simply run the script `examples/scamv.sh` (or `examples/scamv_buildheap.sh`) from the command line with appropriate arguments.
 There is the even more convenient option of using the SCAM-V process scripts in `examples/scripts`, which also provide support for parallelizing the test case generation and experiment running on real hardware.
-These scripts introduce configuration files in `examples/expgenruns`.
-See the documentation in [examples](https://github.com/kth-step/HolBA/tree/dev_scamv/src/tools/scamv/examples) for understanding these scripts and the process around this.
+These scripts make use of configuration files in `examples/expgenruns`.
+Please see the documentation in [examples](https://github.com/kth-step/HolBA/tree/dev_scamv/src/tools/scamv/examples) for understanding these scripts and the process around this.
 
 
 ## Components
@@ -21,25 +21,27 @@ The main components of SCAM-V are the various program generators and observation
 See the following sections for more details on the program generators and observation models.
 
 The components of SCAM-V are:
-- Program generators - `bir_prog_genLib`, `bir_gccLib`
+- Program generators - directory `proggen`
+  - General core libraries - `proggen/bir_prog_genLib`, `proggen/bir_gccLib`
   - Random generators
-    - ARMv8 ISA syntax based - `bir_prog_gen_randLib` (`regExLib`)
-    - ARMv8 program slicing - `bir_prog_gen_sliceLib`
+    - ARMv8 ISA syntax based - `proggen/bir_prog_gen_randLib` (`proggen/regExLib`)
+    - ARMv8 program slicing - `proggen/bir_prog_gen_sliceLib`
   - Monadic generators
-    - Quickcheck - `qc_genLib`
-    - ARMv8 generator collection - `asm_genLib`
-    - ARMv8 generator "prefetch" - `armv8_prefetch_genLib`
-- Observation modelling
-  - ARMv8 observation model collection - `bir_obs_modelTheory`, `bir_obs_modelLib`
+    - Quickcheck - `proggen/qc_genLib`
+    - ARMv8 generator collection - `proggen/asm_genLib`
+    - ARMv8 generator "prefetch" - `proggen/armv8_prefetch_genLib`
+- Observation modelling - directory `obsmodel`
+  - ARMv8 observation model collection (`obsmodel/bir_obs_modelTheory`, `obsmodel/bir_obs_modelLib`)
 - SCAM-V main process chain and core libraries
   - SCAM-V driver - `bir_scamv_driverLib`
   - Symbolic execution engine - directory `symbexec`, `bir_conc_execLib`
   - Relation synthesis - `bir_rel_synthLib`
+- Representation and persistence of experiments - directory `persistence`
+  - Experiment storage and loading - `persistenceLib`
 - Misc
   - SCAM-V shell scripts - directory `examples`
   - Configuration parser - `scamv_configLib`
-  - Experiment storage - `persistenceLib`
-  - Helper functions - `bir_scamv_helpersLib`
+  - Other libraries in this directory
 
 
 ## Program generators

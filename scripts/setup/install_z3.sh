@@ -15,11 +15,21 @@ source "${SETUP_DIR}/env_config_gen.sh" "${OPT_DIR_PARAM}"
 
 ##################################################################
 
+# use a default z3 version if it is not specified in the environment
+Z3_VERSION="4.8.4"
+if [[ ! -z "${HOLBA_Z3_VERSION}" ]]; then
+  Z3_VERSION=${HOLBA_Z3_VERSION}
+fi
+
+Z3_ASSET_SUFFIX=".d6df51951f4c-x64-debian-8.11.zip"
+if [[ ! -z "${HOLBA_Z3_ASSET_SUFFIX}" ]]; then
+  Z3_ASSET_SUFFIX=${HOLBA_Z3_ASSET_SUFFIX}
+fi
 
 # download package
-Z3_URL="https://github.com/Z3Prover/z3/releases/download/z3-4.8.4/z3-4.8.4.d6df51951f4c-x64-debian-8.11.zip"
+Z3_URL="https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VERSION}/z3-${Z3_VERSION}${Z3_ASSET_SUFFIX}"
 
-Z3_DIR=${HOLBA_OPT_DIR}/z3-4.8.4.d6df51951f4c
+Z3_DIR=${HOLBA_OPT_DIR}/z3-${Z3_VERSION}
 
 
 

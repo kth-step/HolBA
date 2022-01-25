@@ -130,6 +130,7 @@ F
 val prog_3_test =
   ("prog_3 - spectre_v1", prog_3,
      (prog_3_mem_address_pc,
+      ``F``,
       prog_3_cache_tag_index,
       prog_3_cache_tag_only,
       prog_3_cache_index_only,

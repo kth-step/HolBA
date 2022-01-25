@@ -11,6 +11,15 @@ local
   val wrap_exn = Feedback.wrap_exn libname
 in
 
+  (* TODO: put this in a more general HolBA place... *)
+      fun term_to_string_wtypes t =
+        let
+          val trace_val = Feedback.get_tracefn "types" ();
+          val _ = Feedback.set_trace "types" 1;
+          val s = term_to_string t;
+          val _ = Feedback.set_trace "types" trace_val;
+        in s end;
+
   (* machine states *)
   (* ======================================== *)
   (* machine state definition from the signature *)
@@ -275,6 +284,18 @@ in
 
   fun embexp_params_cacheable x = Arbnum.+ (Arbnum.fromInt 0x80000000, x);
 
+  fun embexp_params_checkmemrange (MACHSTATE (_, (_, _, m))) =
+    let
+      val addrs = List.map fst (Redblackmap.listItems m);
+      val addr_min = embexp_params_cacheable (fst embexp_params_memory);
+      val addr_max = Arbnum.+ (addr_min, snd embexp_params_memory);
+
+      fun addr_in_range a =
+        Arbnum.<= (addr_min, a) andalso
+        Arbnum.<  (a, addr_max);
+    in
+      List.all addr_in_range addrs
+    end;
 
 end (* local *)
 end (* struct *)

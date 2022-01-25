@@ -33,8 +33,8 @@ function stop_watcher {
 
 function test_failed_trap {
     declare END_TIME=$(date +%s.%N)
-    declare DURATION=$(python3 -c "print($END_TIME - $START_TIME)")
-    enclose "Test failed: $TEST_PATH" "$(printf 'Elapsed time: %3g sec.\n' "$DURATION")"
+    declare DURATION=$(python3 -c "print(round($END_TIME - $START_TIME, 2))")
+    enclose "Test failed: $TEST_PATH" "$(printf 'Elapsed time: %s sec.\n' "$DURATION")"
     stop_watcher
 }
 
@@ -52,9 +52,9 @@ function test_script_file {
     #if (($RANDOM < 20000)); then exit 1; fi
 
     declare END_TIME=$(date +%s.%N)
-    declare DURATION=$(python3 -c "print($END_TIME - $START_TIME)")
+    declare DURATION=$(python3 -c "print(round($END_TIME - $START_TIME, 2))")
 
-    enclose "Test successful: $1" "$(printf "Elapsed time: %3g sec.\n" "$DURATION")"
+    enclose "Test successful: $1" "$(printf "Elapsed time: %s sec.\n" "$DURATION")"
 
     trap - EXIT # Remove the trap
 }

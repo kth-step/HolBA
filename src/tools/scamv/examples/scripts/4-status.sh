@@ -15,5 +15,8 @@ echo "============================"
 
 # in the logs directory, call the status script
 cd "${HOLBA_EMBEXP_LOGS}"
-./scripts/status.py -ps ${EXTRA_OPTIONS}
+
+./scripts/db-eval.py
+
+./scripts/status.py ${EXTRA_OPTIONS}
 

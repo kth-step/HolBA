@@ -1,0 +1,2 @@
+-t 100 -i 252 --generator qc --generator_param straightline_branch --obs_model cache_straightline --hw_obs_model hw_cache_tag_index
+

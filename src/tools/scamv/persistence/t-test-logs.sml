@@ -272,6 +272,64 @@ val prog_ids = List.map snd (get_prog_list_entries prog_l_id);
 val progs = get_progs prog_ids;
 
 
+(* tests for raw sql query *)
+val _ =
+  assert_w_descr
+    "cannot write with raw sql query"
+    (fn () => (query_sql "insert into db_meta (id, name, kind, value) values (NULL, \"123newww\", \"valuewextremenew\", \"a test\")"; false)
+              handle _ => true);
+
+val rawquery_res = query_sql "select code, id from exp_progs where id = 1";
+val rawquery_expected = (["code", "id"], [[STRING "\tpush all\n", NUMBER (Arbnum.fromInt 1)]]);
+val _ =
+  assert_w_descr
+    "reading works as expected with raw sql query"
+    (fn () => (rawquery_res = rawquery_expected));
+
+
+(* tests for metadata retrieval *)
+val meta_ret_entry_1 =
+  let
+    val LogsMeta (mh, vo) = List.nth(get_run_metadata holba_run_1, 3);
+    val (a,b,c) = dest_run_meta_handle mh;
+  in
+    (a,b,c,vo)
+  end;
+val meta_ret_entry_1_expected = (holba_run_1, SOME "ahaa", "meta null 1", NONE);
+val _ =
+  assert_w_descr
+    "retrieving metadata - run"
+    (fn () => (meta_ret_entry_1 = meta_ret_entry_1_expected));
+
+val meta_ret_entry_2 =
+  let
+    val LogsMeta (mh, vo) = List.nth(get_prog_metadata prog_1, 0);
+    val (a,b,c) = dest_prog_meta_handle mh;
+  in
+    (a,b,c,vo)
+  end;
+val meta_ret_entry_2_expected = (prog_1, SOME "all", "prog meta 1",
+    SOME "very important\nvery important add\nvery important add\n");
+val _ =
+  assert_w_descr
+    "retrieving metadata - prog"
+    (fn () => (meta_ret_entry_2 = meta_ret_entry_2_expected));
+
+val meta_ret_entry_3 =
+  let
+    val LogsMeta (mh, vo) = List.nth(get_exp_metadata exp_1, 0);
+    val (a,b,c) = dest_exp_meta_handle mh;
+  in
+    (a,b,c,vo)
+  end;
+val meta_ret_entry_3_expected = (exp_1, SOME "all", "exp meta 1",
+    SOME "very important\nvery important add\n");
+val _ =
+  assert_w_descr
+    "retrieving metadata - exp"
+    (fn () => (meta_ret_entry_3 = meta_ret_entry_3_expected));
+
+
 
 (* try persistenceLib directly *)
 open persistenceLib;

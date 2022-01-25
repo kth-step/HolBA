@@ -88,6 +88,7 @@ fun print_model model =
 val hw_obs_model_id = ref "";
 val do_enum = ref false;
 val do_training = ref false;
+val do_conc_exec = ref false;
 
 val (current_prog_id : embexp_logsLib.prog_handle option ref) = ref NONE;
 val (current_prog : term option ref) = ref NONE;
@@ -112,16 +113,6 @@ fun reset () =
      current_visited_map := init_visited ();
      current_full_specs := [];
      current_word_rel := NONE);
-
-fun printv n str =
-    if (#verbosity (scamv_getopt_config ()) >= n)
-    then print str
-    else ();
-
-fun min_verb n f =
-    if (#verbosity (scamv_getopt_config ()) >= n)
-    then f ()
-    else ();
 
 fun observe_line e =
     brshift (band (e, blshift (bconst64 0x7f, bconst64 6)), bconst64 6);
@@ -175,7 +166,9 @@ fun scamv_set_prog_state prog =
 fun scamv_phase_add_obs () =
 let 
   val _ = printv 1 "Adding obs\n";
-  val add_obs = #add_obs (get_obs_model (!current_obs_model_id));
+  val obs_model = get_obs_model (!current_obs_model_id);
+  val add_obs = #add_obs obs_model;
+  val proginst_fun = proginst_fun_gen (#obs_hol_type obs_model);
   val mem_bounds =
       let
         val (mem_base, mem_len) = embexp_params_memory;
@@ -185,7 +178,7 @@ let
             (mk_wordi (embexp_params_cacheable mem_base, 64),
              mk_wordi (embexp_params_cacheable mem_end, 64))
       end;
-  val lifted_prog_w_obs = add_obs mem_bounds (valOf (!current_prog));
+  val lifted_prog_w_obs = add_obs mem_bounds (proginst_fun (valOf (!current_prog)));
   val _ = printv 1 "Obs added\n";
   val _ = current_prog_w_obs := SOME lifted_prog_w_obs;
   val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
@@ -202,6 +195,93 @@ fun scamv_phase_symb_exec () =
       val _ = min_verb 4 (fn () => (print_path_struct ps; print (PolyML.makestring ps)));
     in
       ps
+    end;
+
+fun scamv_get_model word_relation =
+    let
+(*
+val mem1_var = mk_var ("MEM", “:word64 |-> word8”);
+val mem2_var = mk_var ("MEM'", “:word64 |-> word8”);
+
+val word_relation = “
+(w2w (w2w (^mem1_var ' R1) :word64):word1)
+=
+w2w (^mem2_var ' R2)”;
+
+to_new_name "MEM"
+to_new_name "MEM'"
+val t = hd vars
+*)
+      fun to_new_name n =
+        "sv_" ^ (if String.isSuffix "'" n then (String.substring(n, 0, (String.size n)-1) ^ "_p") else n);
+      fun var_to_new t =
+        let
+          val (vn, vt) = dest_var t;
+        in
+          (t, mk_var (to_new_name vn, vt))
+        end;
+      fun rev_model_name rev_maplist (n_new, v) =
+        let
+          val m_o = List.find (fn (_, x) => x = n_new) rev_maplist;
+          val n = case m_o of
+             SOME (n,_) => n
+           | NONE => raise ERR "scamv_get_model" "unexpected error";
+        in
+          (n, v)
+        end;
+
+      val vars = free_vars word_relation;
+      val vars_to_new = List.map var_to_new vars;
+      val varnames_to_new = List.map (fn (a,b) => ((fst o dest_var) a, (fst o dest_var) b)) vars_to_new;
+
+      val word_relation_newnames = subst (List.map (|->) vars_to_new) word_relation;
+      val model_newnames = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation_newnames;
+      val model = List.map (rev_model_name varnames_to_new) model_newnames;
+      val _ = min_verb 4 (fn () => (print "SAT model:\n"; print_model model; print "\nSAT model finished.\n"));
+
+    in
+      model
+    end;
+
+(*
+val model = [
+ ("MEM", “FUN_FMAP ((K 0w) :word64->word8) 𝕌(:word64)”),
+ ("MEM'", “FUN_FMAP ((K 0w) :word64->word8) 𝕌(:word64)”),
+ ("R26", “0x80100020w:word64”),
+ ("R26'", “0x80100000w:word64”),
+ ("R28", “0x80100001w:word64”),
+ ("R28'", “0x80100000w:word64”)
+];
+*)
+
+fun scamv_process_model model =
+    let
+      val (s1, s2) =
+        let
+          val (primed, nprimed) = List.partition ((String.isSuffix "'") o fst) model;
+          val primed_rm = List.map (fn (r,v) => ((remove_suffix "'") r,v)) primed;
+        in
+          (to_sml_Arbnums nprimed, to_sml_Arbnums primed_rm)
+        end;
+
+      val _ = List.app (fn (st_n, st) =>
+          if embexp_params_checkmemrange st then () else
+          raise ERR "scamv_process_model"
+                    (st_n ^ " memory contains mapping out of experiment range." ^
+                     "is there a problem with the constraints?")
+        ) [("s1", s1), ("s2", s2)];
+
+      fun mk_var_val_mapping m =
+        let
+          fun mk_var_val_eq (n,v) = mk_eq (mk_var (n, type_of v), v);
+        in list_mk_conj (List.map mk_var_val_eq m) end;
+
+      (* filter the model for registers to create the constraint "different from this state pair" *)
+      fun is_a_mem (n,_) = List.exists (fn x => x = n) ["MEM'", "MEM"];
+      val regs = List.filter (not o is_a_mem) model;
+      val constraint = mk_neg (mk_var_val_mapping regs);
+    in
+      (s1, s2, constraint)
     end;
 
 fun scamv_phase_rel_synth_init () =
@@ -228,37 +308,6 @@ fun scamv_per_program_init prog =
 fun all_obs_not_present { a_run = (_,a_obs), b_run = (_,b_obs) } =
     let fun check xs = all (fn (b,_) => b = false) xs;
     in check a_obs andalso check b_obs
-    end;
-
-(* This is used to build the next relation for path enumeration *)
-(* NOTICE: default memory assignments not in constraint *)
-(* NOTICE: overwriting updates would cause problem *)
-(* NOTICE: only works for exactly two memories (for example, MEM and MEM_) *)
-fun mem_constraint [] = T
-  | mem_constraint mls =
-    let fun is_addr_numeral tm = tm |> pairSyntax.dest_pair |> fst |> (fn x => (rhs o concl o EVAL) ``w2n ^x``) |> is_numeral
-	fun adjust_prime s =
-            if String.isSuffix "_" s
-            then String.map (fn c => if c = #"_" then #"'" else c) s
-            else s
-	fun mk_cnst vname vls =
-	    let
-		val toIntls = (snd o finite_mapSyntax.strip_fupdate) vls
-		val mem = mk_var (adjust_prime vname ,Type`:word64 |-> word8`)
-		val memconstraint = map (fn p => let val (t1,t2) = pairSyntax.dest_pair p
-						 in
-						     ``^mem ' (^t1) = ^t2``
-						 end) toIntls;
-		val mc_conj = if List.null memconstraint then F else foldl (fn (a,b) => mk_conj (a,b)) (hd memconstraint) (tl memconstraint);
-	    in
-		(``~(^mc_conj)``, toIntls)
-	    end
-
-	val _ = if List.length mls = 2 then () else raise ERR "mem_constraint" "currently can only deal with two memories";
-	val (hc, hv)::(tc, tv)::[] = (map (fn (vn, vl) =>  mk_cnst vn vl ) mls);
-	val mc_conj = mk_conj ((if (not (List.null hv)) andalso is_addr_numeral (hd hv) then hc else T),  (if(not (List.null tv)) andalso is_addr_numeral (hd tv) then tc else T));
-    in
-	mc_conj
     end;
 
 fun next_experiment all_exps next_relation  =
@@ -291,8 +340,10 @@ fun next_experiment all_exps next_relation  =
                                bir_exp_pretty_print rel);
         val _ = printv 4 ("Word relation\n");
         val new_word_relation = make_word_relation rel true;
+        val print_word_rel_wtypes = false;
+        val term_to_string_sel = if print_word_rel_wtypes then term_to_string_wtypes else term_to_string;
         val _ = min_verb 4 (fn () =>
-                               (print_term new_word_relation;
+                               (print (term_to_string_sel new_word_relation);
                                 print "\n"));
 (*        val word_relation =
             case !current_word_rel of
@@ -303,37 +354,25 @@ fun next_experiment all_exps next_relation  =
                             handle NotFound => new_word_relation;
 
         val _ = printv 2 ("Calling Z3\n");
-        (* quickfix for smt library interface (MEM variable problem) *)
-	val word_relation_fixed = subst [mk_var ("MEM", ``:word64|->word8``) |-> Term`MEMV:word64|->word8`, mk_var ("MEM_", ``:word64|->word8``) |-> Term`MEMV_:word64|->word8`] word_relation;
-	val model_fixed = Z3_SAT_modelLib.Z3_GET_SAT_MODEL word_relation_fixed;
-        val model = List.map (fn (k,v) => (if k = "MEMV" then "MEM" else if k = "MEMV_" then "MEM_" else k,v)) model_fixed;
-        val _ = min_verb 1 (fn () => (print "SAT model:\n"; print_model model; print "\nSAT model finished.\n"));
+        val (s1, s2, new_constraint) = (scamv_process_model o scamv_get_model) word_relation;
+        val _ = min_verb 1 (fn () =>
+                               (print "s1:\n";
+                                machstate_print s1;
+                                print "\n"));
+        val _ = min_verb 1 (fn () =>
+                               (print "s2:\n";
+                                machstate_print s2;
+                                print "\n"));
+        val _ = min_verb 4 (fn () =>
+                               (print "new constraint:\n";
+                                print (term_to_string_sel new_constraint);
+                                print "\n"));
 
-	val (ml, regs) = List.partition (fn el =>  (String.isSubstring (#1 el) "MEM_")) model
-	val (primed, nprimed) = List.partition (isPrimedRun o fst) model
-        (* clean up s2 *)
-	val primed_rm = List.map (fn (r,v) => (remove_prime r,v)) primed
-        val s1 = to_sml_Arbnums nprimed;
-	val s2 = to_sml_Arbnums primed_rm;
+>>>>>>> dev_angrpure
         val prog_id =
           case !current_prog_id of
              NONE => raise ERR "next_experiment" "currently no prog_id loaded"
            | SOME x => x;
-
-        fun mk_var_mapping s =
-            let fun mk_eq (a,b) =
-                    let fun adjust_prime s =
-                            if String.isSuffix "_" s
-                            then String.map (fn c => if c = #"_" then #"'" else c) s
-                            else s;
-                        val va = mk_var (adjust_prime a,``:word64``);
-                    in ``^va = ^b``
-                    end;
-            in list_mk_conj (map mk_eq s) end;
-
-        val reg_constraint = ``~^(mk_var_mapping (regs))``;
-	val mem_constraint = mem_constraint ml;
-	val new_constraint = mk_conj (reg_constraint, mem_constraint);
 
         val _ =
             current_visited_map := add_visited (!current_visited_map) path_spec new_constraint;
@@ -366,9 +405,12 @@ fun next_experiment all_exps next_relation  =
 				    SOME x => x
 				  | NONE => raise ERR "next_test" "no program found";
 
-	val ce_obs_comp = conc_exec_obs_compare (!current_obs_projection) lifted_prog_w_obs (s1, s2)
-        val _ = if ce_obs_comp then () else
+        val _ = if not (!do_conc_exec) then () else (
+          let
+            val ce_obs_comp = conc_exec_obs_compare (!current_obs_projection) lifted_prog_w_obs (s1, s2);
+            val _ = if ce_obs_comp then () else
                 raise ERR "next_experiment" "Experiment does not yield equal observations, won't generate an experiment.";
+          in () end);
 
 	(* show time *)
 	val d_s = Time.- (Time.now(), timer) |> Time.toString;
@@ -452,6 +494,8 @@ fun match_obs_model obs_model =
     case obs_model of
         mem_address_pc =>
         "mem_address_pc"
+      | mem_address_pc_lspc =>
+        "mem_address_pc_lspc"
       | cache_tag_index  =>
         "cache_tag_index"
       | cache_tag_only =>
@@ -464,6 +508,8 @@ fun match_obs_model obs_model =
         "cache_speculation"
       | cache_speculation_first =>
         "cache_speculation_first"
+      | cache_straightline =>
+        "cache_straightline"
       | cache_tag_index_part_page =>
         "cache_tag_index_part_page"
       | _ => raise ERR "match_obs_model" ("unknown obs_model " ^ PolyML.makestring obs_model);
@@ -485,7 +531,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
               , obs_model = obs_model, hw_obs_model = hw_obs_model
               , refined_obs_model = refined_obs_model, obs_projection = proj
               , verbosity = verb, seed_rand = seed_rand, do_training = train
-              , run_description = descr_o } =
+              , run_description = descr_o, exec_conc = doexecconc } =
     let
 
         val _ = bir_randLib.rand_isfresh_set seed_rand;
@@ -494,6 +540,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
 
         val _ = do_enum := enumerate;
         val _ = do_training := train;
+        val _ = do_conc_exec := doexecconc;
         val _ = current_obs_projection := proj;
         
         val prog_store_fun =
@@ -518,6 +565,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
           ("HW observation model : " ^ !hw_obs_model_id ^ "\n") ^
           ("Enumerate            : " ^ PolyML.makestring (!do_enum) ^ "\n") ^
           ("Train branch pred.   : " ^ PolyML.makestring (!do_training) ^ "\n") ^
+          ("Execute concretely   : " ^ PolyML.makestring (!do_conc_exec) ^ "\n") ^
           ("Run description text : " ^ PolyML.makestring descr_o ^ "\n") ;
 
         val _ = run_log config_str;
