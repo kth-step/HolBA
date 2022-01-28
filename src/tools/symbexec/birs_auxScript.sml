@@ -16,6 +16,14 @@ val birs_symb_symbst_pc_thm = store_thm(
   REWRITE_TAC [symb_recordTheory.symb_symbst_pc_def, bir_symbTheory.birs_symb_to_symbst_def]
 );
 
+val birs_symb_concst_pc_thm = store_thm(
+   "birs_symb_concst_pc_thm", ``
+!s.
+  symb_concst_pc (birs_symb_to_concst s) = s.bst_pc
+``,
+  REWRITE_TAC [symb_recordTheory.symb_concst_pc_def, bir_symbTheory.birs_symb_to_concst_def]
+);
+
 val symb_symbols_set_ALT_thm = store_thm(
    "symb_symbols_set_ALT_thm", ``
 !sr Pi.

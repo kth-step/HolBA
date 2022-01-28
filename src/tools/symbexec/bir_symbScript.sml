@@ -140,6 +140,13 @@ val birs_symb_to_concst_EXISTS_thm = store_thm(
   METIS_TAC [birs_symb_from_to_concst_thm]
 );
 
+val birs_symb_to_concst_PROP_thm = store_thm(
+   "birs_symb_to_concst_PROP_thm", ``
+!P. (!s. P s) ==> (!st. P (birs_symb_to_concst st))
+``,
+  METIS_TAC [birs_symb_to_concst_EXISTS_thm]
+);
+
 val birs_symb_from_concst_EXISTS_thm = store_thm(
    "birs_symb_from_concst_EXISTS_thm", ``
 !s. ?st. birs_symb_from_concst st = s
@@ -1228,6 +1235,21 @@ val birs_interpret_get_var_def = Define `
       else
         NONE
 `;
+val birs_interpret_get_var_thm = store_thm(
+   "birs_interpret_get_var_thm", ``
+!H bv.
+  birs_interpret_get_var
+    (SymbInterpret H)
+    (bv)
+  =
+  H (bv)
+``,
+  FULL_SIMP_TAC std_ss [birs_interpret_get_var_def, symb_interpr_dom_thm, symb_interpr_get_def] >>
+  REPEAT STRIP_TAC >>
+  Cases_on `H bv` >> (
+    FULL_SIMP_TAC std_ss []
+  )
+);
 val birs_interpret_fun_ALT_def = Define `
    (birs_interpret_fun_ALT i (BExp_Const n) = SOME (BVal_Imm n)) /\
    (birs_interpret_fun_ALT i (BExp_MemConst aty vty mmap) = SOME (BVal_Mem aty vty mmap)) /\
