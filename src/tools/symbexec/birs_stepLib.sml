@@ -106,7 +106,6 @@ type_of_bir_exp_DIRECT_CONV bexp_term
       raise UNCHANGED
     ;
 
-in
 
 (*
 birs_senv_typecheck_CONV test_term_birs_senv_typecheck
@@ -155,6 +154,166 @@ val birs_exec_step_CONV = (
   EVAL
 );
 
+
+(*
+
+val test_term_birs_eval_exp = ``
+          birs_eval_exp
+            (BExp_BinPred BIExp_LessOrEqual
+               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
+            (K NONE)⦇
+              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+              "SP_process" ↦
+                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            ⦈
+``;
+
+
+val test_term_birs_eval_exp_subst = ``
+          birs_eval_exp_subst
+            (BExp_BinPred BIExp_LessOrEqual
+               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
+            (K NONE)⦇
+              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+              "SP_process" ↦
+                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            ⦈
+``;
+
+
+val test_term_birs_senv_typecheck = ``
+          birs_senv_typecheck
+            (BExp_BinPred BIExp_LessOrEqual
+               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))
+            (K NONE)⦇
+              "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+              "SP_process" ↦
+                SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+              "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            ⦈
+``;
+
+
+*)
+
+in
+
+(* bir symbolic execution steps *)
+(* ----------------------------------------------- *)
+(*
+val bstate_tm = birs_state_init;
+*)
+fun birs_exec_step_fun bprog_tm bstate_tm =
+  let
+    (* execution of steps *)
+    val test_term = ``birs_exec_step ^bprog_tm ^bstate_tm``;
+    (*
+    val _ = (print_term o concl) (birs_exec_step_CONV test_term);
+    *)
+    val birs_exec_thm = birs_exec_step_CONV test_term;
+  in
+    birs_exec_thm
+  end;
+
+
+(* halt free programs *)
+(* ----------------------------------------------- *)
+(*
+val bprog_tm = bprog;
+*)
+fun bir_prog_has_no_halt_fun bprog_tm =
+  let
+    (* prep step rule to be used *)
+    (*
+    val bir_prog_has_no_halt_prog_thm = store_thm(
+       "bir_prog_has_no_halt_prog_thm", *)
+    val bir_prog_has_no_halt_prog_thm = prove(``
+      bir_prog_has_no_halt ^bprog_tm
+    ``,
+      EVAL_TAC
+    );
+  in
+    bir_prog_has_no_halt_prog_thm
+  end;
+
+(*
+val bprog_tm = bprog;
+val no_halt_thm = (bir_prog_has_no_halt_fun bprog_tm)
+*)
+fun birs_rule_STEP_prog_fun bprog_tm no_halt_thm =
+  let
+    val prog_type = (hd o snd o dest_type o type_of) bprog_tm;
+    val step_sound_thm = INST_TYPE [Type.alpha |-> prog_type] bir_symb_soundTheory.birs_symb_step_sound_thm;
+    val birs_symb_step_sound_prog_thm =
+      MP
+        (SPEC (bprog_tm) (step_sound_thm))
+        no_halt_thm;
+    val birs_rule_STEP_thm =
+      SIMP_RULE (std_ss++symb_typesLib.symb_TYPES_ss) []
+      (REWRITE_RULE [Once bir_symbTheory.bir_symb_rec_sbir_def]
+         (MATCH_MP symb_rulesTheory.symb_rule_STEP_thm birs_symb_step_sound_prog_thm));
+  in
+    birs_rule_STEP_thm
+  end;
+
+
+(* plugging in the execution of steps to obtain sound structure *)
+(* ----------------------------------------------- *)
+local
+  val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
+  open birs_auxTheory;
+in
+fun birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm =
+  let
+
+    val birs_exec_thm = birs_exec_step_fun bprog_tm bstate_tm;
+    val symb_state = ``birs_symb_to_symbst ^bstate_tm``;
+    val lbl = (snd o dest_eq o concl o EVAL) ``(^bstate_tm).bsst_pc``;
+    val lbls = ``{^lbl}``;
+
+    val single_step_prog_thm =
+      SIMP_RULE (std_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss++HolBACoreSimps.holBACore_ss)
+        [birs_symb_symbst_pc_thm, pred_setTheory.IN_SING]
+        (REWRITE_RULE [bir_symbTheory.birs_symb_to_from_symbst_thm, birs_exec_thm]
+           (SPECL [symb_state, lbls] birs_rule_STEP_thm));
+  in
+    single_step_prog_thm
+  end;
+end;
+
+
+(* extract information from a sound structure *)
+(* ----------------------------------------------- *)
+fun symb_sound_struct_get_sysLPi_fun tm =
+  let
+    val sysLPi_tm =
+      case (strip_comb) tm of
+         (_,[_,tm]) => tm
+       | _ => raise Fail "symb_sound_struct_get_sysLPi_fun::unexpected term1";
+    val res =
+      case pairSyntax.strip_pair sysLPi_tm of
+         [sys_tm, L_tm, Pi_tm] => (sys_tm, L_tm, Pi_tm)
+       | _ => raise Fail "symb_sound_struct_get_sysLPi_fun::unexpected term2";
+  in
+    res
+  end;
+
+(*
+val Pi_tm = Pi_A_tm;
+*)
+fun symb_sound_struct_Pi_to_birstatelist_fun Pi_tm =
+  (pred_setSyntax.strip_set o snd o dest_comb) Pi_tm;
+
+
+(* TODO: justify the second branch of assert is infeasible (need precondition for this) *)
+(* TODO: simplify path condition in poststate to get rid of the implied and not accumulate it *)
+(* TODO: clean up environment after assignment to not accumulate useless mappings *)
+(* TODO: maybe have a specialized assert/assignment step function? (optimization to detect this situation directly, maybe better as separate function?) *)
 
 end (* local *)
 
