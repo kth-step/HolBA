@@ -33,7 +33,11 @@ val bprog_test_def = Define `
 BirProgram [
            <|bb_label := BL_Address (Imm32 2826w);
              bb_statements :=
-               [BStmt_Assign (BVar "countw" (BType_Imm Bit64))
+               [BStmt_Assert
+                  (BExp_BinPred BIExp_LessOrEqual
+                     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)));
+                BStmt_Assign (BVar "countw" (BType_Imm Bit64))
                   (BExp_BinExp BIExp_Plus
                      (BExp_Den (BVar "countw" (BType_Imm Bit64)))
                      (BExp_Const (Imm64 1w)))];
@@ -43,7 +47,7 @@ BirProgram [
 `;
 val bprog = (fst o dest_eq o concl) bprog_test_def;
 
-val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 2826w))``;
+val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_pc_next (bir_block_pc (BL_Address (Imm32 2826w)))``;
 val birs_state_init = ``<|
   bsst_pc       := ^birs_state_init_lbl;
   bsst_environ  := ("R7"         =+ (SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))))
@@ -54,56 +58,32 @@ val birs_state_init = ``<|
   bsst_status   := BST_Running;
   bsst_pcond    := BExp_Const (Imm1 1w)
 |>``;
+(* ........................... *)
 
-val test_term = ``birs_exec_step ^bprog ^birs_state_init``;
-val _ = (print_term o concl) (birs_exec_step_CONV test_term);
+val bprog_tm = bprog;
+val birs_rule_STEP_thm = birs_rule_STEP_prog_fun bprog_tm (bir_prog_has_no_halt_fun bprog_tm);
+val birs_rule_STEP_fun_spec = birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm;
+(* ........................... *)
 
-val bir_prog_has_no_halt_prog_thm = store_thm(
-   "bir_prog_has_no_halt_prog_thm", ``
-bir_prog_has_no_halt bprog_test
-``,
-  EVAL_TAC
-);
-val birs_symb_step_sound_prog_thm =
-  MP
-    (SPEC (inst [Type`:'obs_type` |-> Type.alpha] bprog) bir_symb_soundTheory.birs_symb_step_sound_thm)
-    bir_prog_has_no_halt_prog_thm;
+(* first step *)
+val single_step_thm = birs_rule_STEP_fun_spec birs_state_init;
 
-val birs_rule_STEP_thm =
-  SIMP_RULE (std_ss++symb_typesLib.symb_TYPES_ss) []
-  (REWRITE_RULE [Once bir_symbTheory.bir_symb_rec_sbir_def]
-     (MATCH_MP symb_rulesTheory.symb_rule_STEP_thm birs_symb_step_sound_prog_thm));
-
-val symb_state = ``birs_symb_to_symbst ^birs_state_init``;
-val lbls = ``{^birs_state_init_lbl}``;
-
-
-val birs_symb_symbst_pc_thm = store_thm(
-   "birs_symb_symbst_pc_thm", ``
-!s.
-  symb_symbst_pc (birs_symb_to_symbst s) = s.bsst_pc
-``,
-  REWRITE_TAC [symb_recordTheory.symb_symbst_pc_def, bir_symbTheory.birs_symb_to_symbst_def]
-);
-
-val single_step_prog_thm =
-  SIMP_RULE (std_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss++HolBACoreSimps.holBACore_ss)
-    [birs_symb_symbst_pc_thm, pred_setTheory.IN_SING]
-    (REWRITE_RULE [bir_symbTheory.birs_symb_to_from_symbst_thm, birs_exec_step_CONV test_term]
-       (SPECL [symb_state, lbls] birs_rule_STEP_thm));
-val (_,[_,sysLPi_tm]) = 
-  (strip_comb o concl) single_step_prog_thm;
-val [sys_tm, L_tm, Pi_tm] =
-  pairSyntax.strip_pair sysLPi_tm;
+val exec_thm = single_step_thm;
+val (sys_tm, L_tm, Pi_tm) = (symb_sound_struct_get_sysLPi_fun o concl) exec_thm;
+(* ........................... *)
 
 (* now the transfer *)
+(* ........................... *)
 
+(* prepare property transfer theorem *)
 val birs_symb_symbols_f_sound_prog_thm =
   (SPEC (inst [Type`:'obs_type` |-> Type.alpha] bprog) bir_symb_soundTheory.birs_symb_symbols_f_sound_thm);
 
 val birs_prop_transfer_thm =
   (MATCH_MP symb_prop_transferTheory.symb_prop_transfer_thm birs_symb_symbols_f_sound_prog_thm);
+(* ........................... *)
 
+(* basic definitions for the property we want to prove (countw) *)
 val bprog_P_def = Define `
     bprog_P ((SymbConcSt pc st status):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
       (status = BST_Running /\
@@ -112,6 +92,8 @@ val bprog_P_def = Define `
        (?v_countw. st "countw" = SOME v_countw /\ type_of_bir_val v_countw = BType_Imm Bit64) /\
        (!vn. vn <> "R7" ==> vn <> "SP_process" ==> vn <> "countw" ==> st vn = NONE))
 `;
+(* TODO: replace last bit with env/store typing expression *)
+(* TODO: translate the property to pure BIR state property *)
 
 (* this is the relevant property about the cycle counter *)
 val bprog_Q_def = Define `
@@ -130,7 +112,10 @@ val bprog_Q_thm = store_thm(
 ``,
   FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_Q_def]
 );
+(* ........................... *)
 
+(* TODO: need to simplify this!!!!! *)
+(* P is generic enough *)
 val string_ss = rewrites (type_rws ``:string``);
 val bprog_P_entails_thm = store_thm(
    "bprog_P_entails_thm", ``
@@ -188,7 +173,10 @@ P_entails_an_interpret (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm
 
   EVAL_TAC
 );
+(* ........................... *)
 
+(* TODO: need to simplify this!!!! *)
+(* Q is implied by sys and Pi *)
 val bprog_Pi_overapprox_Q_thm = store_thm(
    "bprog_Pi_overapprox_Q_thm", ``
 Pi_overapprox_Q (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm ^Pi_tm bprog_Q
@@ -261,7 +249,9 @@ Pi_overapprox_Q (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm ^Pi_tm bprog_Q
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_to_constexp_def]
   )
 );
+(* ........................... *)
 
+(* apply the theorem for property transfer *)
 val bprog_prop_holds_thm =
   MATCH_MP
     (MATCH_MP
@@ -269,7 +259,9 @@ val bprog_prop_holds_thm =
          birs_prop_transfer_thm
          bprog_P_entails_thm)
       bprog_Pi_overapprox_Q_thm)
-    single_step_prog_thm;
+    single_step_thm;
+
+(* lift to concrete state property *)
 val bprog_concst_prop_thm =
   SIMP_RULE (std_ss++birs_state_ss)
     [birs_symb_symbst_pc_thm]
@@ -277,4 +269,8 @@ val bprog_concst_prop_thm =
       [symb_prop_transferTheory.prop_holds_def]
       bprog_prop_holds_thm);
 
+
 (* TODO: translate to pure BIR property *)
+(* lift to concrete bir property *)
+(* ........................... *)
+
