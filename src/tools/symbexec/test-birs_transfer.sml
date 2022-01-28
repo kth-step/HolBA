@@ -48,13 +48,31 @@ BirProgram [
 val bprog = (fst o dest_eq o concl) bprog_test_def;
 
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_pc_next (bir_block_pc (BL_Address (Imm32 2826w)))``;
-val birs_state_init = ``<|
-  bsst_pc       := ^birs_state_init_lbl;
-  bsst_environ  := ("R7"         =+ (SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))))
+
+
+
+
+
+
+val bir_senv_GEN_list_def = Define `
+    bir_senv_GEN_list l = FOLDL (\f. \(vn,ty). (vn =+ SOME (BExp_Den (BVar (CONCAT["sy_";vn]) ty))) f) (K NONE) l
+`;
+val birenvtyl_def = Define `
+    birenvtyl = [("R7", BType_Imm Bit32); ("SP_process", BType_Imm Bit32); ("countw", BType_Imm Bit64)]
+`;
+(*
+("R7"         =+ (SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))))
                    (("SP_process" =+ (SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))))
                       (("countw"     =+ (SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))))
                        (K NONE)
-                   ));
+                   ))
+*)
+
+
+
+val birs_state_init = ``<|
+  bsst_pc       := ^birs_state_init_lbl;
+  bsst_environ  := bir_senv_GEN_list birenvtyl;
   bsst_status   := BST_Running;
   bsst_pcond    := BExp_Const (Imm1 1w)
 |>``;
@@ -83,17 +101,66 @@ val birs_prop_transfer_thm =
   (MATCH_MP symb_prop_transferTheory.symb_prop_transfer_thm birs_symb_symbols_f_sound_prog_thm);
 (* ........................... *)
 
+
+
+
+val bir_envty_list_inclusive_def = Define `
+    bir_envty_list_inclusive l env = EVERY (\(vn,ty). ?v. env vn = SOME v /\ type_of_bir_val v = ty) l
+`;
+val bir_envty_list_exclusive_def = Define `
+    bir_envty_list_exclusive l env = (!vn. (~(EXISTS (\(vni,ty). vni = vn) l)) ==> (env vn = NONE))
+`;
+val bir_envty_list_def = Define `
+    bir_envty_list l env = (bir_envty_list_inclusive l env /\ bir_envty_list_exclusive l env)
+`;
+val bir_envty_list_b_def = Define `
+    bir_envty_list_b l (BEnv env) = bir_envty_list l env
+`;
+val bir_envty_list_b_thm = store_thm(
+   "bir_envty_list_b_thm", ``
+!l env.
+  bir_envty_list_b l env = bir_envty_list l (λbvn. bir_env_lookup bvn env)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `env` >>
+  FULL_SIMP_TAC (std_ss) [bir_envty_list_b_def, bir_envTheory.bir_env_lookup_def] >>
+  METIS_TAC []
+);
+
 (* basic definitions for the property we want to prove (countw) *)
 val bprog_P_def = Define `
+    bprog_P ((SymbConcSt pc st status):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
+      (status = BST_Running /\
+       bir_envty_list birenvtyl st)
+`;
+(* TODO: replace last bit with env/store typing expression *)
+(*
+(* bir_inst_liftingTheory.bir_is_lifted_prog_def *)
+(* bir_lifting_machinesTheory.bmr_rel_def *)
+val bprog_P_thm_before = store_thm(
+   "bprog_P_thm_before", ``
+!pc st status.
     bprog_P ((SymbConcSt pc st status):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
       (status = BST_Running /\
        (?v_R7. st "R7" = SOME v_R7 /\ type_of_bir_val v_R7 = BType_Imm Bit32) /\
        (?v_SP_process. st "SP_process" = SOME v_SP_process /\ type_of_bir_val v_SP_process = BType_Imm Bit32) /\
        (?v_countw. st "countw" = SOME v_countw /\ type_of_bir_val v_countw = BType_Imm Bit64) /\
        (!vn. vn <> "R7" ==> vn <> "SP_process" ==> vn <> "countw" ==> st vn = NONE))
-`;
-(* TODO: replace last bit with env/store typing expression *)
-(* TODO: translate the property to pure BIR state property *)
+``,
+  REWRITE_TAC [bprog_P_def]
+);
+*)
+(* translate the property to pure BIR state property *)
+val bprog_P_thm = store_thm(
+   "bprog_P_thm", ``
+!bs.
+  bprog_P (birs_symb_to_concst bs) =
+      (bs.bst_status = BST_Running /\
+       bir_envty_list_b birenvtyl bs.bst_environ)
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_P_def, bir_envty_list_b_thm]
+);
 
 (* this is the relevant property about the cycle counter *)
 val bprog_Q_def = Define `
@@ -114,8 +181,26 @@ val bprog_Q_thm = store_thm(
 );
 (* ........................... *)
 
-(* TODO: need to simplify this!!!!! *)
 (* P is generic enough *)
+val bprog_P_entails_gen_thm = store_thm(
+   "bprog_P_entails_gen_thm", ``
+!lbl status l f.
+  (bir_envty_list l f) ==>
+  (?H. birs_symb_matchstate
+              <|bsst_pc := lbl;
+                bsst_environ := bir_senv_GEN_list l;
+                bsst_status := status;
+                bsst_pcond := BExp_Const (Imm1 1w)|> H
+              (bir_state_t
+                 lbl
+                 (BEnv f)
+                 status)
+  )
+``,
+  cheat
+);
+
+(* TODO: need to simplify this!!!!! *)
 val string_ss = rewrites (type_rws ``:string``);
 val bprog_P_entails_thm = store_thm(
    "bprog_P_entails_thm", ``
@@ -132,6 +217,15 @@ P_entails_an_interpret (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm
   Cases_on `s` >> Cases_on `st` >>
   FULL_SIMP_TAC (std_ss++holBACore_ss++symb_typesLib.symb_TYPES_ss) [bprog_P_def, birs_symb_to_concst_def, symb_concst_pc_def] >>
 
+  Cases_on `b0` >>
+  FULL_SIMP_TAC (std_ss) [bir_envTheory.bir_env_lookup_def] >>
+  PAT_X_ASSUM ``A = (\B. C)`` (ASSUME_TAC o GSYM) >>
+  FULL_SIMP_TAC (std_ss) [boolTheory.ETA_THM] >>
+
+  METIS_TAC [bprog_P_entails_gen_thm]
+);
+
+(*
   Q.EXISTS_TAC `SymbInterpret
     ((BVar "sy_R7" (BType_Imm Bit32) =+ SOME v_R7)
     ((BVar "sy_SP_process" (BType_Imm Bit32) =+ SOME v_SP_process)
@@ -173,9 +267,9 @@ P_entails_an_interpret (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm
 
   EVAL_TAC
 );
+*)
 (* ........................... *)
 
-(* TODO: need to simplify this!!!! *)
 (* Q is implied by sys and Pi *)
 val bprog_Pi_overapprox_Q_thm = store_thm(
    "bprog_Pi_overapprox_Q_thm", ``
@@ -205,7 +299,7 @@ Pi_overapprox_Q (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm ^Pi_tm bprog_Q
            val tm = (hd o snd o strip_comb o concl) thm;
 (*           val _ = print_term tm; *)
            val conv = SIMP_CONV std_ss [birs_symb_symbols_thm] THENC SIMP_CONV (std_ss++birs_state_ss) [birs_exps_of_senv_thm, birs_exps_of_senv_COMP_thm] THENC EVAL;
-           val thm_res = conv tm;
+           val thm_res = (computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC conv) tm;
 (*           val _ = print_term (concl thm_res); *)
          in
            ASSUME_TAC (REWRITE_RULE [Once thm_res] thm)
