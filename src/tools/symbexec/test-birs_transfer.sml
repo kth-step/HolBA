@@ -133,24 +133,7 @@ val bprog_P_def = Define `
       (status = BST_Running /\
        bir_envty_list birenvtyl st)
 `;
-(* TODO: replace last bit with env/store typing expression *)
-(*
-(* bir_inst_liftingTheory.bir_is_lifted_prog_def *)
-(* bir_lifting_machinesTheory.bmr_rel_def *)
-val bprog_P_thm_before = store_thm(
-   "bprog_P_thm_before", ``
-!pc st status.
-    bprog_P ((SymbConcSt pc st status):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
-      (status = BST_Running /\
-       (?v_R7. st "R7" = SOME v_R7 /\ type_of_bir_val v_R7 = BType_Imm Bit32) /\
-       (?v_SP_process. st "SP_process" = SOME v_SP_process /\ type_of_bir_val v_SP_process = BType_Imm Bit32) /\
-       (?v_countw. st "countw" = SOME v_countw /\ type_of_bir_val v_countw = BType_Imm Bit64) /\
-       (!vn. vn <> "R7" ==> vn <> "SP_process" ==> vn <> "countw" ==> st vn = NONE))
-``,
-  REWRITE_TAC [bprog_P_def]
-);
-*)
-(* translate the property to pure BIR state property *)
+(* translate the property to BIR state property *)
 val bprog_P_thm = store_thm(
    "bprog_P_thm", ``
 !bs.
