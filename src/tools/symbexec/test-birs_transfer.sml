@@ -67,6 +67,15 @@ val birenvtyl_def = Define `
                        (K NONE)
                    ))
 *)
+val bir_interpr_GEN_list_def = Define `
+    bir_interpr_GEN_list l envf = FOLDL (\f. \(vn,ty). ((BVar (CONCAT["sy_";vn]) ty) =+ envf vn) f) (K NONE) l
+`;
+(*
+  Q.EXISTS_TAC `SymbInterpret
+    ((BVar "sy_R7" (BType_Imm Bit32) =+ SOME v_R7)
+    ((BVar "sy_SP_process" (BType_Imm Bit32) =+ SOME v_SP_process)
+    ((BVar "sy_countw" (BType_Imm Bit64) =+ SOME v_countw) (K NONE))))` >>
+*)
 
 
 
@@ -169,6 +178,7 @@ val bprog_P_entails_gen_thm = store_thm(
    "bprog_P_entails_gen_thm", ``
 !lbl status l f.
   (bir_envty_list l f) ==>
+  (ALL_DISTINCT (MAP FST l)) ==>
   (?H. birs_symb_matchstate
               <|bsst_pc := lbl;
                 bsst_environ := bir_senv_GEN_list l;
@@ -180,10 +190,11 @@ val bprog_P_entails_gen_thm = store_thm(
                  status)
   )
 ``,
+  REPEAT STRIP_TAC >>
+  Q.EXISTS_TAC `SymbInterpret (bir_interpr_GEN_list l f)` >>
   cheat
 );
 
-(* TODO: need to simplify this!!!!! *)
 val string_ss = rewrites (type_rws ``:string``);
 val bprog_P_entails_thm = store_thm(
    "bprog_P_entails_thm", ``
@@ -204,6 +215,8 @@ P_entails_an_interpret (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm
   FULL_SIMP_TAC (std_ss) [bir_envTheory.bir_env_lookup_def] >>
   PAT_X_ASSUM ``A = (\B. C)`` (ASSUME_TAC o GSYM) >>
   FULL_SIMP_TAC (std_ss) [boolTheory.ETA_THM] >>
+
+  `(ALL_DISTINCT (MAP FST birenvtyl))` by EVAL_TAC >>
 
   METIS_TAC [bprog_P_entails_gen_thm]
 );
