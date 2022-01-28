@@ -93,5 +93,14 @@ val birs_symb_symbols_thm = store_thm(
   FULL_SIMP_TAC (std_ss) [birs_symb_symbols_def, IMAGE_DEF, birs_exps_of_senv_def, IN_GSPEC_IFF]
 );
 
+val birs_symb_symbst_pc_thm = store_thm(
+   "birs_symb_symbst_pc_thm", ``
+!s.
+  symb_symbst_pc (birs_symb_to_symbst s) = s.bsst_pc
+``,
+  REWRITE_TAC [symb_recordTheory.symb_symbst_pc_def, bir_symbTheory.birs_symb_to_symbst_def]
+);
+
+
 
 val _ = export_theory();
