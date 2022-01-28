@@ -54,8 +54,12 @@ val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_pc_next (bir_bloc
 
 
 
+val bir_senv_GEN_bvar_def = Define `
+    bir_senv_GEN_bvar (vn,ty) = BVar (CONCAT["sy_";vn]) ty
+`;
+
 val bir_senv_GEN_list_def = Define `
-    bir_senv_GEN_list l = FOLDL (\f. \(vn,ty). (vn =+ SOME (BExp_Den (BVar (CONCAT["sy_";vn]) ty))) f) (K NONE) l
+    bir_senv_GEN_list l = FOLDL (\f. \(vn,ty). (vn =+ SOME (BExp_Den (bir_senv_GEN_bvar (vn,ty)))) f) (K NONE) l
 `;
 val birenvtyl_def = Define `
     birenvtyl = [("R7", BType_Imm Bit32); ("SP_process", BType_Imm Bit32); ("countw", BType_Imm Bit64)]
@@ -68,7 +72,7 @@ val birenvtyl_def = Define `
                    ))
 *)
 val bir_interpr_GEN_list_def = Define `
-    bir_interpr_GEN_list l envf = FOLDL (\f. \(vn,ty). ((BVar (CONCAT["sy_";vn]) ty) =+ envf vn) f) (K NONE) l
+    bir_interpr_GEN_list l envf = FOLDL (\f. \(vn,ty). ((bir_senv_GEN_bvar (vn,ty)) =+ envf vn) f) (K NONE) l
 `;
 (*
   Q.EXISTS_TAC `SymbInterpret
@@ -174,6 +178,91 @@ val bprog_Q_thm = store_thm(
 (* ........................... *)
 
 (* P is generic enough *)
+
+val birs_matchenv_bir_senv_GEN_thm = store_thm(
+   "birs_matchenv_bir_senv_GEN_thm", ``
+!l f.
+  birs_matchenv (SymbInterpret (bir_interpr_GEN_list l f))
+          (bir_senv_GEN_list l) (BEnv f)
+``,
+  SIMP_TAC std_ss [birs_matchenv_def] >>
+  REPEAT STRIP_TAC >>
+  cheat
+);
+
+
+val symb_interpr_dom_bir_interpr_GEN_list_thm = store_thm(
+   "symb_interpr_dom_bir_interpr_GEN_list_thm", ``
+!l f.
+  symb_interpr_dom (SymbInterpret (bir_interpr_GEN_list l f))
+  =
+  set (MAP bir_senv_GEN_bvar l)
+``,
+  cheat
+);
+
+val bir_interpr_GEN_list_bvar_thm = store_thm(
+   "bir_interpr_GEN_list_bvar_thm", ``
+!vn ty l f.
+  (MEM (vn,ty) l) ==>
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (bir_interpr_GEN_list l f (bir_senv_GEN_bvar (vn,ty)) = f vn)
+``,
+  cheat
+);
+
+val bir_envty_list_APPLY_thm = store_thm(
+   "bir_envty_list_APPLY_thm", ``
+!vn ty l f.
+  (MEM (vn,ty) l) ==>
+  (bir_envty_list l f) ==>
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (?v. f vn = SOME v /\ type_of_bir_val v = ty)
+``,
+  cheat
+);
+
+val birs_interpr_welltyped_bir_interpr_GEN_list_thm = store_thm(
+   "birs_interpr_welltyped_bir_interpr_GEN_list_thm", ``
+!l f.
+  (bir_envty_list l f) ==>
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (birs_interpr_welltyped (SymbInterpret (bir_interpr_GEN_list l f)))
+``,
+  SIMP_TAC std_ss [birs_interpr_welltyped_def, symb_interpr_dom_bir_interpr_GEN_list_thm, symb_interpr_get_def] >>
+  FULL_SIMP_TAC (std_ss) [listTheory.MEM_MAP] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `y` >>
+  FULL_SIMP_TAC (std_ss) [bir_interpr_GEN_list_bvar_thm] >>
+
+  IMP_RES_TAC bir_envty_list_APPLY_thm >>
+  FULL_SIMP_TAC (std_ss) [bir_envTheory.bir_var_type_def, bir_senv_GEN_bvar_def]
+);
+
+val symb_interpr_for_symbs_bir_interpr_GEN_list_thm = store_thm(
+   "symb_interpr_for_symbs_bir_interpr_GEN_list_thm", ``
+!l f lbl status.
+  symb_interpr_for_symbs
+          (birs_symb_symbols
+             <|bsst_pc := lbl; bsst_environ := bir_senv_GEN_list l;
+               bsst_status := status; bsst_pcond := BExp_Const (Imm1 1w)|>)
+          (SymbInterpret (bir_interpr_GEN_list l f))
+``,
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, symb_interpr_dom_bir_interpr_GEN_list_thm] >>
+  FULL_SIMP_TAC (std_ss++birs_state_ss++holBACore_ss) [birs_symb_symbols_def, UNION_EMPTY] >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.SUBSET_DEF] >>
+  Induct_on `l` >> (
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC (std_ss) [listTheory.MEM_MAP, bir_senv_GEN_list_def, listTheory.FOLDL]
+  ) >>
+
+  cheat
+  (* probably need (bir_envty_list l f)  *)
+);
+
+
 val bprog_P_entails_gen_thm = store_thm(
    "bprog_P_entails_gen_thm", ``
 !lbl status l f.
@@ -192,7 +281,23 @@ val bprog_P_entails_gen_thm = store_thm(
 ``,
   REPEAT STRIP_TAC >>
   Q.EXISTS_TAC `SymbInterpret (bir_interpr_GEN_list l f)` >>
-  cheat
+
+  `!H. birs_interpret_fun H (BExp_Const (Imm1 1w)) = SOME bir_val_true` by (
+    EVAL_TAC >>
+    REWRITE_TAC []
+  ) >>
+
+  FULL_SIMP_TAC (std_ss) [birs_symb_matchstate_def] >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss++birs_state_ss++holBACore_ss) []
+  ) >> (
+    ASM_REWRITE_TAC []
+  ) >> (
+    FULL_SIMP_TAC std_ss [
+      birs_matchenv_bir_senv_GEN_thm,
+      birs_interpr_welltyped_bir_interpr_GEN_list_thm,
+      symb_interpr_for_symbs_bir_interpr_GEN_list_thm]
+  )
 );
 
 val string_ss = rewrites (type_rws ``:string``);
