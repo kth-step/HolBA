@@ -184,6 +184,33 @@ val bir_interpr_GEN_list_APPLY_thm = store_thm(
   SIMP_TAC std_ss [GSYM bir_interpr_GEN_list_def] >>
   METIS_TAC []
 );
+val bir_interpr_GEN_list_APPLY2_thm = store_thm(
+   "bir_interpr_GEN_list_APPLY2_thm", ``
+!vn l f.
+  (MEM vn (MAP FST l)) ==>
+  (?ty. bir_interpr_GEN_list l f (bir_senv_GEN_bvar (vn,ty)) = f vn)
+``,
+  Induct_on `l` >> (
+    SIMP_TAC std_ss [listTheory.MEM]
+  ) >>
+
+  REPEAT STRIP_TAC >- (
+    SIMP_TAC std_ss [bir_interpr_GEN_list_def, listTheory.FOLDR] >>
+    Cases_on `h` >>
+    FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [listTheory.MAP, listTheory.ALL_DISTINCT] >>
+  SIMP_TAC std_ss [bir_interpr_GEN_list_def, listTheory.FOLDR] >>
+  Cases_on `h` >>
+
+  `q <> vn` by (
+    METIS_TAC [listTheory.MEM_MAP_f, pairTheory.FST]
+  ) >>
+  FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM, bir_senv_GEN_bvar_EQ_thm] >>
+  SIMP_TAC std_ss [GSYM bir_interpr_GEN_list_def] >>
+  METIS_TAC []
+);
 
 
 
@@ -292,11 +319,13 @@ val bprog_Q_thm = store_thm(
 val birs_matchenv_bir_senv_GEN_thm = store_thm(
    "birs_matchenv_bir_senv_GEN_thm", ``
 !l f.
-  birs_matchenv (SymbInterpret (bir_interpr_GEN_list l f))
-          (bir_senv_GEN_list l) (BEnv f)
+  (bir_envty_list l f) ==>
+  (birs_matchenv (SymbInterpret (bir_interpr_GEN_list l f))
+          (bir_senv_GEN_list l) (BEnv f))
 ``,
   SIMP_TAC std_ss [birs_matchenv_def] >>
   REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_lookup_def] >>
   cheat
 );
 
@@ -304,13 +333,18 @@ val birs_matchenv_bir_senv_GEN_thm = store_thm(
 val symb_interpr_dom_bir_interpr_GEN_list_thm = store_thm(
    "symb_interpr_dom_bir_interpr_GEN_list_thm", ``
 !l f.
-  symb_interpr_dom (SymbInterpret (bir_interpr_GEN_list l f))
-  =
-  set (MAP bir_senv_GEN_bvar l)
+  (bir_envty_list l f) ==>
+  (symb_interpr_dom (SymbInterpret (bir_interpr_GEN_list l f))
+   =
+   set (MAP bir_senv_GEN_bvar l))
 ``,
   SIMP_TAC std_ss [symb_interpr_dom_def] >>
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [EXTENSION] >>
   FULL_SIMP_TAC (std_ss) [listTheory.MEM_MAP] >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on `x` >>
+  (MEM vn (MAP FST l))
 
   Induct_on `l` >> (
     FULL_SIMP_TAC (std_ss) [bir_interpr_GEN_list_def, listTheory.MEM, listTheory.FOLDL]
