@@ -59,11 +59,54 @@ val bir_senv_GEN_bvar_def = Define `
 `;
 
 val bir_senv_GEN_list_def = Define `
-    bir_senv_GEN_list l = FOLDL (\f. \(vn,ty). (vn =+ SOME (BExp_Den (bir_senv_GEN_bvar (vn,ty)))) f) (K NONE) l
+    bir_senv_GEN_list l = FOLDR (\(vn,ty). \f. (vn =+ SOME (BExp_Den (bir_senv_GEN_bvar (vn,ty)))) f) (K NONE) l
 `;
-val birenvtyl_def = Define `
-    birenvtyl = [("R7", BType_Imm Bit32); ("SP_process", BType_Imm Bit32); ("countw", BType_Imm Bit64)]
-`;
+val bir_senv_GEN_list_NOT_MEM_thm = store_thm(
+   "bir_senv_GEN_list_NOT_MEM_thm", ``
+!vn l.
+  (~(MEM vn (MAP FST l))) ==>
+  (bir_senv_GEN_list l vn = NONE)
+``,
+  Induct_on `l` >- (
+    SIMP_TAC std_ss [listTheory.MEM, bir_senv_GEN_list_def, listTheory.FOLDR]
+  ) >>
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [listTheory.MAP, listTheory.MEM] >>
+  SIMP_TAC std_ss [bir_senv_GEN_list_def] >>
+  FULL_SIMP_TAC std_ss [listTheory.FOLDR] >>
+  SIMP_TAC std_ss [GSYM bir_senv_GEN_list_def] >>
+
+  Cases_on `h` >>
+  FULL_SIMP_TAC std_ss [pairTheory.FST, combinTheory.APPLY_UPDATE_THM]
+);
+val bir_senv_GEN_list_APPLY_thm = store_thm(
+   "bir_senv_GEN_list_APPLY_thm", ``
+!vn ty l.
+  (MEM (vn,ty) l) ==>
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (bir_senv_GEN_list l vn = SOME (BExp_Den (bir_senv_GEN_bvar (vn,ty))))
+``,
+  Induct_on `l` >> (
+    SIMP_TAC std_ss [listTheory.MEM]
+  ) >>
+
+  REPEAT STRIP_TAC >- (
+    SIMP_TAC std_ss [bir_senv_GEN_list_def, listTheory.FOLDR] >>
+    Cases_on `h` >>
+    FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [listTheory.MAP, listTheory.ALL_DISTINCT] >>
+  SIMP_TAC std_ss [bir_senv_GEN_list_def, listTheory.FOLDR] >>
+  Cases_on `h` >>
+
+  `q <> vn` by (
+    METIS_TAC [listTheory.MEM_MAP_f, pairTheory.FST]
+  ) >>
+  FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM] >>
+  SIMP_TAC std_ss [GSYM bir_senv_GEN_list_def] >>
+  METIS_TAC []
+);
 (*
 ("R7"         =+ (SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))))
                    (("SP_process" =+ (SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))))
@@ -80,6 +123,9 @@ val bir_interpr_GEN_list_def = Define `
     ((BVar "sy_SP_process" (BType_Imm Bit32) =+ SOME v_SP_process)
     ((BVar "sy_countw" (BType_Imm Bit64) =+ SOME v_countw) (K NONE))))` >>
 *)
+val birenvtyl_def = Define `
+    birenvtyl = [("R7", BType_Imm Bit32); ("SP_process", BType_Imm Bit32); ("countw", BType_Imm Bit64)]
+`;
 
 
 
@@ -198,7 +244,15 @@ val symb_interpr_dom_bir_interpr_GEN_list_thm = store_thm(
   =
   set (MAP bir_senv_GEN_bvar l)
 ``,
-  cheat
+  SIMP_TAC std_ss [symb_interpr_dom_def] >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [EXTENSION] >>
+  FULL_SIMP_TAC (std_ss) [listTheory.MEM_MAP] >>
+
+  Induct_on `l` >> (
+    FULL_SIMP_TAC (std_ss) [bir_interpr_GEN_list_def, listTheory.MEM, listTheory.FOLDL]
+  ) >>
+
+  
 );
 
 val bir_interpr_GEN_list_bvar_thm = store_thm(
