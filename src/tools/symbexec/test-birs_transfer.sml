@@ -234,9 +234,6 @@ val bir_interpr_GEN_list_IS_SOME_IMP_EXISTS_thm = store_thm(
 !l f bv.
   (IS_SOME (bir_interpr_GEN_list l f bv)) ==>
   (?vn ty. bv = bir_senv_GEN_bvar (vn, ty) /\ (MEM (vn,ty) l))
-(*
-  (?vn ty. bv = bir_senv_GEN_bvar (vn, ty) /\ (MEM vn (MAP FST l) ==> MEM (vn,ty) l))
-*)
 ``,
   Induct_on `l` >> (
     SIMP_TAC std_ss [bir_interpr_GEN_list_def, listTheory.FOLDR]
@@ -349,18 +346,6 @@ val bir_envty_list_NOT_MEM_IMP_thm = store_thm(
   FULL_SIMP_TAC std_ss [boolTheory.NOT_EXISTS_THM, NOT_MEM_FST_IMP_thm]
 );
 
-(*
-val bir_envty_list_IS_SOME_IMP_thm = store_thm(
-   "bir_envty_list_IS_SOME_IMP_thm", ``
-!l f vn.
-  (bir_envty_list l f) ==>
-  (ALL_DISTINCT (MAP FST l)) ==>
-  (IS_SOME (f vn)) ==>
-  (MEM vn (MAP FST l))
-``,
-  cheat
-);
-*)
 
 
 val bir_envty_list_b_def = Define `
@@ -443,24 +428,6 @@ val birs_matchenv_bir_senv_GEN_thm = store_thm(
   FULL_SIMP_TAC std_ss []
 );
 
-(*
-val bir_interpr_GEN_list_IS_SOME_IMP_thm = store_thm(
-   "bir_interpr_GEN_list_IS_SOME_IMP_thm", ``
-!l f bv.
-  (bir_envty_list l f) ==>
-  (ALL_DISTINCT (MAP FST l)) ==>
-  (IS_SOME (bir_interpr_GEN_list l f bv)) ==>
-  (?vn ty. bv = bir_senv_GEN_bvar (vn, ty) /\ MEM (vn, ty) l)
-``,
-  REPEAT STRIP_TAC >>
-
-
-  IMP_RES_TAC bir_interpr_GEN_list_IS_SOME_IMP_EXISTS_thm >>
-  FULL_SIMP_TAC (std_ss) [bir_interpr_GEN_list_APPLY_thm]
-bir_envty_list_IS_SOME_IMP_thm
-
-);
-*)
 
 val symb_interpr_dom_bir_interpr_GEN_list_thm = store_thm(
    "symb_interpr_dom_bir_interpr_GEN_list_thm", ``
@@ -479,20 +446,10 @@ val symb_interpr_dom_bir_interpr_GEN_list_thm = store_thm(
   EQ_TAC >- (
     REPEAT STRIP_TAC >>
 
-(*
-    Cases_on `x` >>
-    rename1 `BVar vn ty` >>
-*)
     FULL_SIMP_TAC (pure_ss) [GSYM optionTheory.NOT_IS_SOME_EQ_NONE] >>
     FULL_SIMP_TAC (std_ss) [] >>
-(*
-    FULL_SIMP_TAC (std_ss) [optionTheory.IS_SOME_EXISTS] >>
-*)
 
     METIS_TAC [bir_interpr_GEN_list_IS_SOME_IMP_EXISTS_thm]
-(*
-    METIS_TAC [bir_interpr_GEN_list_SOME_IMP_EXISTS_thm]
-*)
   ) >>
 
   REPEAT STRIP_TAC >>
@@ -622,49 +579,6 @@ P_entails_an_interpret (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm
   METIS_TAC [bprog_P_entails_gen_thm]
 );
 
-(*
-  Q.EXISTS_TAC `SymbInterpret
-    ((BVar "sy_R7" (BType_Imm Bit32) =+ SOME v_R7)
-    ((BVar "sy_SP_process" (BType_Imm Bit32) =+ SOME v_SP_process)
-    ((BVar "sy_countw" (BType_Imm Bit64) =+ SOME v_countw) (K NONE))))` >>
-
-  FULL_SIMP_TAC (std_ss) [birs_symb_matchstate_def] >>
-
-  REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC (std_ss++birs_state_ss++holBACore_ss) []
-  ) >- (
-    FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def] >>
-    FULL_SIMP_TAC (std_ss++birs_state_ss) [symb_interpr_dom_def, birs_symb_symbols_def, bir_typing_expTheory.bir_vars_of_exp_def] >>
-    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.SUBSET_DEF] >>
-    REPEAT STRIP_TAC >>
-    Cases_on `vn = "countw"` >> Cases_on `vn = "SP_process"` >> Cases_on `vn = "R7"` >> (
-      FULL_SIMP_TAC (std_ss++stringSimps.STRING_ss++string_ss) [combinTheory.APPLY_UPDATE_THM] >>
-      PAT_X_ASSUM ``BExp_Den A = B`` (ASSUME_TAC o GSYM) >>
-      FULL_SIMP_TAC (std_ss++holBACore_ss) [IN_SING] >>
-      REV_FULL_SIMP_TAC (std_ss++holBACore_ss++string_ss) []
-    )
-  ) >- (
-    FULL_SIMP_TAC (std_ss) [birs_interpr_welltyped_def] >>
-    FULL_SIMP_TAC (std_ss++birs_state_ss) [symb_interpr_dom_def] >>
-    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
-    REPEAT STRIP_TAC >>
-    Cases_on `sy = BVar "sy_countw" (BType_Imm Bit64)` >> Cases_on `sy = BVar "sy_SP_process" (BType_Imm Bit32)` >> Cases_on `sy = BVar "sy_R7" (BType_Imm Bit32)` >> (
-      FULL_SIMP_TAC (std_ss++stringSimps.STRING_ss++string_ss++holBACore_ss) [symb_interpr_get_def, combinTheory.APPLY_UPDATE_THM]
-    )
-  ) >- (
-    FULL_SIMP_TAC (std_ss) [birs_matchenv_def] >>
-    REPEAT STRIP_TAC >>
-    Cases_on `var = "countw"` >> Cases_on `var = "SP_process"` >> Cases_on `var = "R7"` >> (
-      FULL_SIMP_TAC (std_ss++stringSimps.STRING_ss++string_ss) [combinTheory.APPLY_UPDATE_THM] >>
-      REWRITE_TAC [birs_interpret_fun_thm] >>
-      EVAL_TAC
-    ) >>
-    METIS_TAC []
-  ) >>
-
-  EVAL_TAC
-);
-*)
 (* ........................... *)
 
 (* Q is implied by sys and Pi *)
