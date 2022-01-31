@@ -91,6 +91,7 @@ val bprog_P_def = Define `
        bir_envty_list birenvtyl st)
 `;
 (* translate the property to BIR state property *)
+(* TODO: enable the use of generic preconditions (BIR expression that has to evaluate to true in the environment) *)
 val bprog_P_thm = store_thm(
    "bprog_P_thm", ``
 !bs.
@@ -247,9 +248,12 @@ val bprog_concst_prop_thm =
 (* lift to concrete bir property *)
 val bprog_bir_prop_thm = save_thm(
    "bprog_bir_prop_thm",
+  (* TODO: we probably need a better way to "summarize/overapproximate" the labels of the program, check that this is possible and none of the rules break this *)
   (* TODO: finish translation to pure BIR property *)
   REWRITE_RULE [birs_symb_to_concst_EXISTS_thm, bprog_P_thm, bprog_Q_thm, birs_symb_concst_pc_thm]
     (HO_MATCH_MP birs_symb_to_concst_PROP_thm bprog_concst_prop_thm)
 );
 (* ........................... *)
 
+
+(* TODO: translate to pure Cortex-M0 property *)
