@@ -343,9 +343,8 @@ val bir_envty_list_inclusive_def = Define `
 val bir_envty_list_exclusive_def = Define `
     bir_envty_list_exclusive l env = (!vn. (~(EXISTS (\(vni,ty). vni = vn) l)) ==> (env vn = NONE))
 `;
-(* TODO: should add "(ALL_DISTINCT (MAP FST l)) /\" and simplify the story below... *)
 val bir_envty_list_def = Define `
-    bir_envty_list l env = (bir_envty_list_inclusive l env /\ bir_envty_list_exclusive l env)
+    bir_envty_list l env = (ALL_DISTINCT (MAP FST l) /\ bir_envty_list_inclusive l env /\ bir_envty_list_exclusive l env)
 `;
 val bir_envty_list_MEM_IMP_thm = store_thm(
    "bir_envty_list_MEM_IMP_thm", ``
@@ -392,12 +391,12 @@ val birs_matchenv_bir_senv_GEN_thm = store_thm(
    "birs_matchenv_bir_senv_GEN_thm", ``
 !l f.
   (bir_envty_list l f) ==>
-  (ALL_DISTINCT (MAP FST l)) ==>
   (birs_matchenv (SymbInterpret (bir_interpr_GEN_list l f))
           (bir_senv_GEN_list l) (BEnv f))
 ``,
   SIMP_TAC std_ss [birs_matchenv_def] >>
   REPEAT STRIP_TAC >>
+  `ALL_DISTINCT (MAP FST l)` by FULL_SIMP_TAC std_ss [bir_envty_list_def] >>
   FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_lookup_def] >>
 
   Cases_on `MEM var (MAP FST l)` >- (
@@ -420,7 +419,6 @@ val symb_interpr_dom_bir_interpr_GEN_list_thm = store_thm(
    "symb_interpr_dom_bir_interpr_GEN_list_thm", ``
 !l f.
   (bir_envty_list l f) ==>
-  (ALL_DISTINCT (MAP FST l)) ==>
   (symb_interpr_dom (SymbInterpret (bir_interpr_GEN_list l f))
    =
    set (MAP bir_senv_GEN_bvar l))
@@ -430,6 +428,7 @@ val symb_interpr_dom_bir_interpr_GEN_list_thm = store_thm(
   FULL_SIMP_TAC (std_ss) [listTheory.MEM_MAP] >>
 
   REPEAT STRIP_TAC >>
+  `ALL_DISTINCT (MAP FST l)` by FULL_SIMP_TAC std_ss [bir_envty_list_def] >>
   EQ_TAC >- (
     REPEAT STRIP_TAC >>
 
@@ -453,12 +452,12 @@ val birs_interpr_welltyped_bir_interpr_GEN_list_thm = store_thm(
    "birs_interpr_welltyped_bir_interpr_GEN_list_thm", ``
 !l f.
   (bir_envty_list l f) ==>
-  (ALL_DISTINCT (MAP FST l)) ==>
   (birs_interpr_welltyped (SymbInterpret (bir_interpr_GEN_list l f)))
 ``,
   SIMP_TAC std_ss [birs_interpr_welltyped_def, symb_interpr_dom_bir_interpr_GEN_list_thm, symb_interpr_get_def] >>
   FULL_SIMP_TAC (std_ss) [listTheory.MEM_MAP] >>
   REPEAT STRIP_TAC >>
+  `ALL_DISTINCT (MAP FST l)` by FULL_SIMP_TAC std_ss [bir_envty_list_def] >>
 
   Cases_on `y` >>
   FULL_SIMP_TAC (std_ss) [bir_interpr_GEN_list_APPLY_thm] >>
@@ -471,7 +470,6 @@ val symb_interpr_for_symbs_bir_interpr_GEN_list_thm = store_thm(
    "symb_interpr_for_symbs_bir_interpr_GEN_list_thm", ``
 !l f lbl status.
   (bir_envty_list l f) ==>
-  (ALL_DISTINCT (MAP FST l)) ==>
   (symb_interpr_for_symbs
           (birs_symb_symbols
              <|bsst_pc := lbl; bsst_environ := bir_senv_GEN_list l;
@@ -484,6 +482,7 @@ val symb_interpr_for_symbs_bir_interpr_GEN_list_thm = store_thm(
   FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.SUBSET_DEF] >>
 
   REPEAT STRIP_TAC >>
+  `ALL_DISTINCT (MAP FST l)` by FULL_SIMP_TAC std_ss [bir_envty_list_def] >>
   `MEM vn (MAP FST l)` by (
     CCONTR_TAC >>
     IMP_RES_TAC bir_senv_GEN_list_NOT_MEM_thm >>
@@ -508,7 +507,6 @@ val bprog_P_entails_gen_thm = store_thm(
    "bprog_P_entails_gen_thm", ``
 !lbl status l f.
   (bir_envty_list l f) ==>
-  (ALL_DISTINCT (MAP FST l)) ==>
   (?H. birs_symb_matchstate
               <|bsst_pc := lbl;
                 bsst_environ := bir_senv_GEN_list l;
