@@ -2,9 +2,15 @@ open HolKernel Parse boolLib bossLib;
 
 open pred_setTheory;
 
+open symb_interpretTheory;
 open symb_recordTheory;
 
+open bir_symbTheory;
 open bir_symb_sound_coreTheory;
+
+open HolBACoreSimps;
+
+val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val _ = new_theory "birs_aux";
 
@@ -23,6 +29,7 @@ val birs_symb_concst_pc_thm = store_thm(
 ``,
   REWRITE_TAC [symb_recordTheory.symb_concst_pc_def, bir_symbTheory.birs_symb_to_concst_def]
 );
+(* ........................... *)
 
 val symb_symbols_set_ALT_thm = store_thm(
    "symb_symbols_set_ALT_thm", ``
@@ -48,6 +55,7 @@ val birs_symb_symbols_set_EQ_thm = store_thm(
     METIS_TAC [bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm]
   )
 );
+(* ........................... *)
 
 val birs_exps_of_senv_def = Define `
     birs_exps_of_senv senv =
@@ -92,6 +100,7 @@ val birs_exps_of_senv_COMP_thm = store_thm(
     )
   )
 );
+(* ........................... *)
 
 val birs_symb_symbols_thm = store_thm(
    "birs_symb_symbols_thm", ``
@@ -100,14 +109,439 @@ val birs_symb_symbols_thm = store_thm(
 ``,
   FULL_SIMP_TAC (std_ss) [birs_symb_symbols_def, IMAGE_DEF, birs_exps_of_senv_def, IN_GSPEC_IFF]
 );
+(* ........................... *)
 
-val birs_symb_symbst_pc_thm = store_thm(
-   "birs_symb_symbst_pc_thm", ``
-!s.
-  symb_symbst_pc (birs_symb_to_symbst s) = s.bsst_pc
+
+val bir_senv_GEN_bvar_def = Define `
+    bir_senv_GEN_bvar (vn,ty) = BVar (CONCAT["sy_";vn]) ty
+`;
+val bir_senv_GEN_bvar_EQ_thm = store_thm(
+   "bir_senv_GEN_bvar_EQ_thm", ``
+!x y.
+  bir_senv_GEN_bvar x = bir_senv_GEN_bvar y <=> x = y
 ``,
-  REWRITE_TAC [symb_recordTheory.symb_symbst_pc_def, bir_symbTheory.birs_symb_to_symbst_def]
+  Cases_on `x` >> Cases_on `y` >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_senv_GEN_bvar_def] >>
+
+  ASSUME_TAC (INST_TYPE [Type.alpha |-> Type`:char`] (prove(
+    ``!A B C. FLAT [A;B] = FLAT [A;C] <=> B = C``,
+      SIMP_TAC (std_ss++listSimps.LIST_ss) [listTheory.FLAT_compute, listTheory.FLAT]
+  ))) >>
+
+  METIS_TAC []
 );
+(* ........................... *)
+
+
+val MEM_FST_IMP_MEM_thm = store_thm(
+   "MEM_FST_IMP_MEM_thm", ``
+!vn l.
+  (MEM vn (MAP FST l)) ==>
+  (?ty. MEM (vn,ty) l)
+``,
+  REPEAT STRIP_TAC >>
+  CCONTR_TAC >>
+  FULL_SIMP_TAC (std_ss++listSimps.LIST_ss) [listTheory.MEM_MAP] >>
+  Cases_on `y` >>
+  FULL_SIMP_TAC (std_ss++listSimps.LIST_ss) [] >>
+  METIS_TAC []
+);
+val NOT_MEM_FST_IMP_thm = store_thm(
+   "NOT_MEM_FST_IMP_thm", ``
+!vn l.
+  (~(MEM vn (MAP FST l))) ==>
+  (!e. ~(MEM e l) \/ ~((\(vni,ty). vni = vn) e))
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `e` >>
+  Cases_on `q = vn` >- (
+    METIS_TAC [listTheory.MEM_MAP_f, pairTheory.FST]
+  ) >>
+  FULL_SIMP_TAC std_ss []
+);
+(* ........................... *)
+
+
+val bir_senv_GEN_list_def = Define `
+    bir_senv_GEN_list l = FOLDR (\(vn,ty). \f. (vn =+ SOME (BExp_Den (bir_senv_GEN_bvar (vn,ty)))) f) (K NONE) l
+`;
+(*
+("R7"         =+ (SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)))))
+                   (("SP_process" =+ (SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))))
+                      (("countw"     =+ (SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))))
+                       (K NONE)
+                   ))
+*)
+val bir_senv_GEN_list_NOT_MEM_thm = store_thm(
+   "bir_senv_GEN_list_NOT_MEM_thm", ``
+!vn l.
+  (~(MEM vn (MAP FST l))) ==>
+  (bir_senv_GEN_list l vn = NONE)
+``,
+  Induct_on `l` >- (
+    SIMP_TAC std_ss [listTheory.MEM, bir_senv_GEN_list_def, listTheory.FOLDR]
+  ) >>
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [listTheory.MAP, listTheory.MEM] >>
+  SIMP_TAC std_ss [bir_senv_GEN_list_def] >>
+  FULL_SIMP_TAC std_ss [listTheory.FOLDR] >>
+  SIMP_TAC std_ss [GSYM bir_senv_GEN_list_def] >>
+
+  Cases_on `h` >>
+  FULL_SIMP_TAC std_ss [pairTheory.FST, combinTheory.APPLY_UPDATE_THM]
+);
+val bir_senv_GEN_list_APPLY_thm = store_thm(
+   "bir_senv_GEN_list_APPLY_thm", ``
+!vn ty l.
+  (MEM (vn,ty) l) ==>
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (bir_senv_GEN_list l vn = SOME (BExp_Den (bir_senv_GEN_bvar (vn,ty))))
+``,
+  Induct_on `l` >> (
+    SIMP_TAC std_ss [listTheory.MEM]
+  ) >>
+
+  REPEAT STRIP_TAC >- (
+    SIMP_TAC std_ss [bir_senv_GEN_list_def, listTheory.FOLDR] >>
+    Cases_on `h` >>
+    FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [listTheory.MAP, listTheory.ALL_DISTINCT] >>
+  SIMP_TAC std_ss [bir_senv_GEN_list_def, listTheory.FOLDR] >>
+  Cases_on `h` >>
+
+  `q <> vn` by (
+    METIS_TAC [listTheory.MEM_MAP_f, pairTheory.FST]
+  ) >>
+  FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM] >>
+  SIMP_TAC std_ss [GSYM bir_senv_GEN_list_def] >>
+  METIS_TAC []
+);
+(* ........................... *)
+
+
+val bir_interpr_GEN_list_def = Define `
+    bir_interpr_GEN_list l envf = FOLDR (\(vn,ty). \f. ((bir_senv_GEN_bvar (vn,ty)) =+ envf vn) f) (K NONE) l
+`;
+(*
+  Q.EXISTS_TAC `SymbInterpret
+    ((BVar "sy_R7" (BType_Imm Bit32) =+ SOME v_R7)
+    ((BVar "sy_SP_process" (BType_Imm Bit32) =+ SOME v_SP_process)
+    ((BVar "sy_countw" (BType_Imm Bit64) =+ SOME v_countw) (K NONE))))` >>
+*)
+val bir_interpr_GEN_list_NOT_MEM_thm = store_thm(
+   "bir_interpr_GEN_list_NOT_MEM_thm", ``
+!vn ty l f.
+  (~(MEM vn (MAP FST l))) ==>
+  (bir_interpr_GEN_list l f (bir_senv_GEN_bvar (vn,ty)) = NONE)
+``,
+  Induct_on `l` >- (
+    SIMP_TAC std_ss [listTheory.MEM, bir_interpr_GEN_list_def, listTheory.FOLDR]
+  ) >>
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [listTheory.MAP, listTheory.MEM] >>
+  SIMP_TAC std_ss [bir_interpr_GEN_list_def] >>
+  FULL_SIMP_TAC std_ss [listTheory.FOLDR] >>
+  SIMP_TAC std_ss [GSYM bir_interpr_GEN_list_def] >>
+
+  Cases_on `h` >>
+  FULL_SIMP_TAC std_ss [pairTheory.FST, combinTheory.APPLY_UPDATE_THM, bir_senv_GEN_bvar_EQ_thm]
+);
+val bir_interpr_GEN_list_APPLY_thm = store_thm(
+   "bir_interpr_GEN_list_APPLY_thm", ``
+!vn ty l f.
+  (MEM (vn,ty) l) ==>
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (bir_interpr_GEN_list l f (bir_senv_GEN_bvar (vn,ty)) = f vn)
+``,
+  Induct_on `l` >> (
+    SIMP_TAC std_ss [listTheory.MEM]
+  ) >>
+
+  REPEAT STRIP_TAC >- (
+    SIMP_TAC std_ss [bir_interpr_GEN_list_def, listTheory.FOLDR] >>
+    Cases_on `h` >>
+    FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [listTheory.MAP, listTheory.ALL_DISTINCT] >>
+  SIMP_TAC std_ss [bir_interpr_GEN_list_def, listTheory.FOLDR] >>
+  Cases_on `h` >>
+
+  `q <> vn` by (
+    METIS_TAC [listTheory.MEM_MAP_f, pairTheory.FST]
+  ) >>
+  FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM, bir_senv_GEN_bvar_EQ_thm] >>
+  SIMP_TAC std_ss [GSYM bir_interpr_GEN_list_def] >>
+  METIS_TAC []
+);
+val bir_interpr_GEN_list_APPLY2_thm = store_thm(
+   "bir_interpr_GEN_list_APPLY2_thm", ``
+!vn l f.
+  (MEM vn (MAP FST l)) ==>
+  (?ty. bir_interpr_GEN_list l f (bir_senv_GEN_bvar (vn,ty)) = f vn)
+``,
+  Induct_on `l` >> (
+    SIMP_TAC std_ss [listTheory.MEM, listTheory.MAP]
+  ) >>
+
+  REPEAT STRIP_TAC >- (
+    SIMP_TAC std_ss [bir_interpr_GEN_list_def, listTheory.FOLDR] >>
+    Cases_on `h` >>
+    FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM] >>
+    METIS_TAC []
+  ) >>
+
+  FULL_SIMP_TAC std_ss [listTheory.MAP, listTheory.ALL_DISTINCT] >>
+  SIMP_TAC std_ss [bir_interpr_GEN_list_def, listTheory.FOLDR] >>
+  Cases_on `h` >>
+
+  FULL_SIMP_TAC std_ss [] >>
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPECL [`vn`, `f`]) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  Q.EXISTS_TAC `ty` >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM, bir_senv_GEN_bvar_EQ_thm] >>
+  SIMP_TAC std_ss [GSYM bir_interpr_GEN_list_def] >>
+  METIS_TAC []
+);
+
+val bir_interpr_GEN_list_IS_SOME_IMP_EXISTS_thm = store_thm(
+   "bir_interpr_GEN_list_IS_SOME_IMP_EXISTS_thm", ``
+!l f bv.
+  (IS_SOME (bir_interpr_GEN_list l f bv)) ==>
+  (?vn ty. bv = bir_senv_GEN_bvar (vn, ty) /\ (MEM (vn,ty) l))
+``,
+  Induct_on `l` >> (
+    SIMP_TAC std_ss [bir_interpr_GEN_list_def, listTheory.FOLDR]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on `h` >>
+  FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM] >>
+
+  CCONTR_TAC >>
+  FULL_SIMP_TAC std_ss [GSYM bir_interpr_GEN_list_def] >>
+
+  Cases_on `bir_senv_GEN_bvar (q,r) = bv` >- (
+    FULL_SIMP_TAC std_ss [listTheory.MEM] >>
+    METIS_TAC [bir_senv_GEN_bvar_EQ_thm]
+  ) >>
+
+
+  FULL_SIMP_TAC std_ss [] >>
+  METIS_TAC [listTheory.MEM]
+);
+(* ........................... *)
+
+
+val bir_envty_list_inclusive_def = Define `
+    bir_envty_list_inclusive l env = EVERY (\(vn,ty). ?v. env vn = SOME v /\ type_of_bir_val v = ty) l
+`;
+val bir_envty_list_exclusive_def = Define `
+    bir_envty_list_exclusive l env = (!vn. (~(EXISTS (\(vni,ty). vni = vn) l)) ==> (env vn = NONE))
+`;
+(* TODO: should add "(ALL_DISTINCT (MAP FST l)) /\" and simplify the story below... *)
+val bir_envty_list_def = Define `
+    bir_envty_list l env = (bir_envty_list_inclusive l env /\ bir_envty_list_exclusive l env)
+`;
+val bir_envty_list_MEM_IMP_thm = store_thm(
+   "bir_envty_list_MEM_IMP_thm", ``
+!vn ty l f.
+  (MEM (vn,ty) l) ==>
+  (bir_envty_list l f) ==>
+  (?v. f vn = SOME v /\ type_of_bir_val v = ty)
+``,
+  REWRITE_TAC [bir_envty_list_def, bir_envty_list_inclusive_def, listTheory.EVERY_MEM] >>
+  REPEAT STRIP_TAC >>
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `(vn,ty)`) >>
+  FULL_SIMP_TAC std_ss []
+);
+val bir_envty_list_NOT_MEM_IMP_thm = store_thm(
+   "bir_envty_list_NOT_MEM_IMP_thm", ``
+!vn l f.
+  (~(MEM vn (MAP FST l))) ==>
+  (bir_envty_list l f) ==>
+  (f vn = NONE)
+``,
+  REWRITE_TAC [bir_envty_list_def, bir_envty_list_exclusive_def, listTheory.EXISTS_MEM] >>
+  REPEAT STRIP_TAC >>
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `vn`) >>
+  FULL_SIMP_TAC std_ss [boolTheory.NOT_EXISTS_THM, NOT_MEM_FST_IMP_thm]
+);
+
+val bir_envty_list_b_def = Define `
+    bir_envty_list_b l (BEnv env) = bir_envty_list l env
+`;
+val bir_envty_list_b_thm = store_thm(
+   "bir_envty_list_b_thm", ``
+!l env.
+  bir_envty_list_b l env = bir_envty_list l (λbvn. bir_env_lookup bvn env)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `env` >>
+  FULL_SIMP_TAC (std_ss) [bir_envty_list_b_def, bir_envTheory.bir_env_lookup_def] >>
+  METIS_TAC []
+);
+(* ........................... *)
+
+
+val birs_matchenv_bir_senv_GEN_thm = store_thm(
+   "birs_matchenv_bir_senv_GEN_thm", ``
+!l f.
+  (bir_envty_list l f) ==>
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (birs_matchenv (SymbInterpret (bir_interpr_GEN_list l f))
+          (bir_senv_GEN_list l) (BEnv f))
+``,
+  SIMP_TAC std_ss [birs_matchenv_def] >>
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_lookup_def] >>
+
+  Cases_on `MEM var (MAP FST l)` >- (
+    IMP_RES_TAC MEM_FST_IMP_MEM_thm >>
+    IMP_RES_TAC bir_envty_list_MEM_IMP_thm >>
+    IMP_RES_TAC bir_senv_GEN_list_APPLY_thm >>
+    FULL_SIMP_TAC std_ss [] >>
+
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
+    FULL_SIMP_TAC std_ss [birs_interpret_get_var_thm, bir_interpr_GEN_list_APPLY_thm]
+  ) >>
+
+  IMP_RES_TAC bir_envty_list_NOT_MEM_IMP_thm >>
+  IMP_RES_TAC bir_senv_GEN_list_NOT_MEM_thm >>
+  FULL_SIMP_TAC std_ss []
+);
+
+
+val symb_interpr_dom_bir_interpr_GEN_list_thm = store_thm(
+   "symb_interpr_dom_bir_interpr_GEN_list_thm", ``
+!l f.
+  (bir_envty_list l f) ==>
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (symb_interpr_dom (SymbInterpret (bir_interpr_GEN_list l f))
+   =
+   set (MAP bir_senv_GEN_bvar l))
+``,
+  SIMP_TAC std_ss [symb_interpr_dom_def] >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [EXTENSION] >>
+  FULL_SIMP_TAC (std_ss) [listTheory.MEM_MAP] >>
+
+  REPEAT STRIP_TAC >>
+  EQ_TAC >- (
+    REPEAT STRIP_TAC >>
+
+    FULL_SIMP_TAC (pure_ss) [GSYM optionTheory.NOT_IS_SOME_EQ_NONE] >>
+    FULL_SIMP_TAC (std_ss) [] >>
+
+    METIS_TAC [bir_interpr_GEN_list_IS_SOME_IMP_EXISTS_thm]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on `y` >>
+
+  REV_FULL_SIMP_TAC (std_ss) [bir_interpr_GEN_list_APPLY_thm] >>
+
+
+  IMP_RES_TAC bir_envty_list_MEM_IMP_thm >>
+  FULL_SIMP_TAC (std_ss) []
+);
+
+val birs_interpr_welltyped_bir_interpr_GEN_list_thm = store_thm(
+   "birs_interpr_welltyped_bir_interpr_GEN_list_thm", ``
+!l f.
+  (bir_envty_list l f) ==>
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (birs_interpr_welltyped (SymbInterpret (bir_interpr_GEN_list l f)))
+``,
+  SIMP_TAC std_ss [birs_interpr_welltyped_def, symb_interpr_dom_bir_interpr_GEN_list_thm, symb_interpr_get_def] >>
+  FULL_SIMP_TAC (std_ss) [listTheory.MEM_MAP] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `y` >>
+  FULL_SIMP_TAC (std_ss) [bir_interpr_GEN_list_APPLY_thm] >>
+
+  IMP_RES_TAC bir_envty_list_MEM_IMP_thm >>
+  FULL_SIMP_TAC (std_ss) [bir_envTheory.bir_var_type_def, bir_senv_GEN_bvar_def]
+);
+
+val symb_interpr_for_symbs_bir_interpr_GEN_list_thm = store_thm(
+   "symb_interpr_for_symbs_bir_interpr_GEN_list_thm", ``
+!l f lbl status.
+  (bir_envty_list l f) ==>
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (symb_interpr_for_symbs
+          (birs_symb_symbols
+             <|bsst_pc := lbl; bsst_environ := bir_senv_GEN_list l;
+               bsst_status := status; bsst_pcond := BExp_Const (Imm1 1w)|>)
+          (SymbInterpret (bir_interpr_GEN_list l f)))
+``,
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, symb_interpr_dom_bir_interpr_GEN_list_thm] >>
+  FULL_SIMP_TAC (std_ss++birs_state_ss++holBACore_ss) [birs_symb_symbols_def, UNION_EMPTY] >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [pred_setTheory.SUBSET_DEF] >>
+
+  REPEAT STRIP_TAC >>
+  `MEM vn (MAP FST l)` by (
+    CCONTR_TAC >>
+    IMP_RES_TAC bir_senv_GEN_list_NOT_MEM_thm >>
+    FULL_SIMP_TAC (std_ss) []
+  ) >>
+
+  IMP_RES_TAC MEM_FST_IMP_MEM_thm >>
+  IMP_RES_TAC bir_senv_GEN_list_APPLY_thm >>
+  FULL_SIMP_TAC (std_ss) [] >>
+
+  `x = bir_senv_GEN_bvar (vn,ty)` by (
+    PAT_X_ASSUM ``BExp_Den A = B`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss) [IN_SING, bir_typing_expTheory.bir_vars_of_exp_def]
+  ) >>
+
+  METIS_TAC [listTheory.MEM_MAP_f]
+);
+(* ........................... *)
+
+
+val bprog_P_entails_gen_thm = store_thm(
+   "bprog_P_entails_gen_thm", ``
+!lbl status l f.
+  (bir_envty_list l f) ==>
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (?H. birs_symb_matchstate
+              <|bsst_pc := lbl;
+                bsst_environ := bir_senv_GEN_list l;
+                bsst_status := status;
+                bsst_pcond := BExp_Const (Imm1 1w)|> H
+              (bir_state_t
+                 lbl
+                 (BEnv f)
+                 status)
+  )
+``,
+  REPEAT STRIP_TAC >>
+  Q.EXISTS_TAC `SymbInterpret (bir_interpr_GEN_list l f)` >>
+
+  `!H. birs_interpret_fun H (BExp_Const (Imm1 1w)) = SOME bir_val_true` by (
+    EVAL_TAC >>
+    REWRITE_TAC []
+  ) >>
+
+  FULL_SIMP_TAC (std_ss) [birs_symb_matchstate_def] >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss++birs_state_ss++holBACore_ss) []
+  ) >> (
+    ASM_REWRITE_TAC []
+  ) >> (
+    FULL_SIMP_TAC std_ss [
+      birs_matchenv_bir_senv_GEN_thm,
+      birs_interpr_welltyped_bir_interpr_GEN_list_thm,
+      symb_interpr_for_symbs_bir_interpr_GEN_list_thm]
+  )
+);
+(* ........................... *)
+
 
 
 
