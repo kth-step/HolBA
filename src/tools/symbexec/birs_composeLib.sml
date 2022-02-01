@@ -97,11 +97,16 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
         step_A_thm)
         step_B_thm;
 
-    (* TODO: tidy up set operations to not accumulate (in both, post state set and label set) - see trials above *)
+    (* TODO: tidy up set operations to not accumulate (in both, post state set and label set) - does this simplification work well enough? *)
     (* val bprog_composed_thm_ = SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss) [] bprog_composed_thm; *)
     (* val bprog_composed_thm_ = SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss) [pred_setTheory.INSERT_UNION] bprog_composed_thm; *)
+    val bprog_composed_thm_ =
+      SIMP_RULE
+        (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss++birs_state_ss)
+        [bir_symbTheory.birs_symb_to_symbst_EQ_thm, pred_setTheory.INSERT_UNION]
+        bprog_composed_thm;
   in
-    bprog_composed_thm
+    bprog_composed_thm_
   end;
 
 
