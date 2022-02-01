@@ -37,6 +37,9 @@ val birs_state_init = ``<|
 
 val birs_rule_STEP_thm = birs_rule_STEP_prog_fun bprog_tm (bir_prog_has_no_halt_fun bprog_tm);
 val birs_rule_STEP_fun_spec = birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm;
+(* now the composition *)
+val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
+val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
 (* ........................... *)
 
 
@@ -44,33 +47,45 @@ val single_step_A_thm = birs_rule_STEP_fun_spec birs_state_init;
 (* ........................... *)
 
 (*
-val step_A_thm = single_step_A_thm;
+val tm = ``<|bsst_pc := a;
+             bsst_environ :=b;
+             bsst_status := BST_AssertionViolated;
+             bsst_pcond := c|>``;
+val tm = ``<|bsst_pc := a;
+             bsst_environ :=b;
+             bsst_status := BST_Running;
+             bsst_pcond := c|>``;
+*)
+fun birs_is_running tm =
+  identical ((snd o dest_eq o concl o EVAL) ``(^tm).bsst_status``) ``BST_Running``;
+
+(*
+val symbex_A_thm = single_step_A_thm;
 val STEP_fun_spec = birs_rule_STEP_fun_spec;
 val stop_lbl = birs_stop_lbl;
 *)
-fun exec_until step_A_thm STEP_fun_spec stop_lbl =
-  (* TODO: stop condition check *)
+fun exec_until symbex_A_thm STEP_fun_spec stop_lbl =
+  (* TODO: stop condition check (create a function for this) *)
   let
-    val (_, _, Pi_A_tm) = (symb_sound_struct_get_sysLPi_fun o concl) step_A_thm;
+    val (_, _, Pi_A_tm) = (symb_sound_struct_get_sysLPi_fun o concl) symbex_A_thm;
 
     (* continue with a second step *)
     val birs_states_mid = symb_sound_struct_Pi_to_birstatelist_fun Pi_A_tm;
-    val birs_state_mid = List.nth(birs_states_mid,0);
-    (* ........................... *)
+    val birs_states_mid_running = List.filter birs_is_running birs_states_mid;
 
     (* TODO: *)
-    (*
-    (* now the composition *)
-    val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
-    (* ........................... *)
+    val _ = if List.length birs_states_mid_running = 1 then () else
+            raise Fail "exec_until::currently can't handle more than one running state";
+
+    (*  *)
+    val birs_state_mid = List.nth(birs_states_mid,0);
+    val single_step_B_thm = birs_rule_STEP_fun_spec birs_state_mid;
 
     (* compose together *)
-    val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
-    val bprog_composed_thm = birs_rule_SEQ_fun_spec single_step_A_thm single_step_B_thm;
-    *)
+    val bprog_composed_thm = birs_rule_SEQ_fun_spec symbex_A_thm single_step_B_thm;
   in
     (* TODO: recursion *)
-    step_A_thm
+    bprog_composed_thm
   end;
 (* ........................... *)
 
