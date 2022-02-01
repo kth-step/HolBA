@@ -26,6 +26,7 @@ val birs_stop_lbl = ``<|bpc_label := BL_Address (Imm32 0xb08w); bpc_index := 1|>
 val birenvtyl_def = Define `
     birenvtyl = [("R7", BType_Imm Bit32); ("SP_process", BType_Imm Bit32); ("countw", BType_Imm Bit64)]
 `;
+(* TODO: add a sanity check here that all the variables of the program are included in birenvtyl! *)
 
 val birs_state_init = ``<|
   bsst_pc       := ^birs_state_init_lbl;
