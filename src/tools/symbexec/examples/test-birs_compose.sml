@@ -98,3 +98,11 @@ val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
 val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
 val bprog_composed_thm = birs_rule_SEQ_fun_spec single_step_A_thm single_step_B_thm;
 
+(*
+val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
+val tm = (concl) bprog_composed_thm;
+
+val bprog_composed_thm_ = (snd o dest_eq o concl o (SIMP_CONV (std_ss++pred_setLib.PRED_SET_ss) [])) tm;
+
+val bprog_composed_thm_ = (snd o dest_eq o concl o (SIMP_CONV (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss++birs_state_ss) [bir_symbTheory.birs_symb_to_symbst_EQ_thm, pred_setTheory.INSERT_UNION])) tm;
+*)
