@@ -1440,6 +1440,20 @@ val birs_symb_to_symbst_BIJ_thm = store_thm(
     [birs_symb_to_symbst_def]
 );
 
+val birs_symb_to_symbst_EQ_thm = store_thm(
+   "birs_symb_to_symbst_EQ_thm", ``
+!s1 s2.
+  (birs_symb_to_symbst s1 = birs_symb_to_symbst s2) <=>
+  (s1 = s2)
+``,
+  REPEAT GEN_TAC >>
+  Cases_on `s1` >> Cases_on `s2` >>
+
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss++birs_state_ss)
+    [birs_symb_to_symbst_def] >>
+  METIS_TAC []
+);
+
 val birs_state_is_terminated_def = Define `
     birs_state_is_terminated st =
       (st.bsst_status <> BST_Running)
