@@ -99,6 +99,17 @@ val bir_env_lookup_BIJ_thm = store_thm(
       [bir_env_lookup_I_thm]
 );
 
+val bir_env_lookup_EQ_thm = store_thm(
+   "bir_env_lookup_EQ_thm", ``
+!env1 env2.
+  ((\bvn. bir_env_lookup bvn env1) = (\bvn. bir_env_lookup bvn env2)) <=>
+  (env1 = env2)
+``,
+  Cases_on `env1` >> Cases_on `env2` >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss)
+      [bir_env_lookup_I_thm]
+);
+
 val birs_symb_from_to_concst_thm = store_thm(
    "birs_symb_from_to_concst_thm", ``
 !s. birs_symb_to_concst (birs_symb_from_concst s) = s
@@ -140,8 +151,8 @@ val birs_symb_to_concst_EXISTS_thm = store_thm(
   METIS_TAC [birs_symb_from_to_concst_thm]
 );
 
-val birs_symb_to_concst_PROP_thm = store_thm(
-   "birs_symb_to_concst_PROP_thm", ``
+val birs_symb_to_concst_PROP_FORALL_thm = store_thm(
+   "birs_symb_to_concst_PROP_FORALL_thm", ``
 !P. (!s. P s) ==> (!st. P (birs_symb_to_concst st))
 ``,
   METIS_TAC [birs_symb_to_concst_EXISTS_thm]
@@ -165,6 +176,19 @@ val birs_symb_to_concst_BIJ_thm = store_thm(
 
   FULL_SIMP_TAC (std_ss++symb_TYPES_ss++holBACore_ss)
     [birs_symb_to_concst_def, bir_env_lookup_BIJ_thm]
+);
+
+val birs_symb_to_concst_EQ_thm = store_thm(
+   "birs_symb_to_concst_EQ_thm", ``
+!s1 s2.
+  (birs_symb_to_concst s1 = birs_symb_to_concst s2) <=>
+  (s1 = s2)
+``,
+  REPEAT GEN_TAC >>
+  Cases_on `s1` >> Cases_on `s2` >>
+
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss++holBACore_ss)
+    [birs_symb_to_concst_def, bir_env_lookup_EQ_thm]
 );
 
 (* sr_step_conc is in principle "bir_exec_step" *)
