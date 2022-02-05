@@ -61,9 +61,6 @@ val m0_mod_vars_thm = store_thm(
   METIS_TAC [m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL]
 );
 
-val BVarToPair_def = Define `
-    BVarToPair (BVar bvn bty) = (bvn, bty)
-`;
 val birenvtyl_def = Define `
     birenvtyl = MAP BVarToPair m0_mod_vars
 `;
@@ -79,12 +76,20 @@ val birenvtyl_EVAL_thm = save_thm(
   (REWRITE_CONV [birenvtyl_def, m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL] THENC EVAL) ``birenvtyl``
 );
 
+(*
+    ``bprecond = BExp_BinPred BIExp_Equal (BExp_Den (BVar "R0" (BType_Imm Bit32))) (BExp_Den (BVar "R1" (BType_Imm Bit32)))``
+*)
+val bprecond_def = Define `
+    bprecond = BExp_Const (Imm1 1w)
+`;
+val bprecond = (fst o dest_eq o concl) bprecond_def;
+
 
 val birs_state_init_pre = ``<|
   bsst_pc       := ^birs_state_init_lbl;
   bsst_environ  := bir_senv_GEN_list birenvtyl;
   bsst_status   := BST_Running;
-  bsst_pcond    := BExp_Const (Imm1 1w)
+  bsst_pcond    := ^bprecond
 |>``;
 val birs_state_thm = REWRITE_CONV [birenvtyl_EVAL_thm] birs_state_init_pre;
 val birs_state_init = (snd o dest_eq o concl) birs_state_thm;
@@ -118,7 +123,8 @@ val birs_prop_transfer_thm =
 val bprog_P_def = Define `
     bprog_P ((SymbConcSt pc st status):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
       (status = BST_Running /\
-       bir_envty_list birenvtyl st)
+       bir_envty_list birenvtyl st /\
+       bir_eval_exp ^bprecond (BEnv st) = SOME bir_val_true)
 `;
 (* translate the property to BIR state property *)
 (* TODO: enable the use of generic preconditions (BIR expression that has to evaluate to true in the environment) *)
@@ -127,10 +133,11 @@ val bprog_P_thm = store_thm(
 !bs.
   bprog_P (birs_symb_to_concst bs) =
       (bs.bst_status = BST_Running /\
-       bir_envty_list_b birenvtyl bs.bst_environ)
+       bir_envty_list_b birenvtyl bs.bst_environ /\
+       bir_eval_exp ^bprecond bs.bst_environ = SOME bir_val_true)
 ``,
   REPEAT STRIP_TAC >>
-  FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_P_def, bir_envty_list_b_thm]
+  FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_P_def, bir_envty_list_b_thm, bir_BEnv_lookup_EQ_thm]
 );
 
 (* this is the relevant property about the cycle counter *)
@@ -183,6 +190,8 @@ P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm
   FULL_SIMP_TAC (std_ss) [boolTheory.ETA_THM] >>
 
   `(ALL_DISTINCT (MAP FST birenvtyl))` by EVAL_TAC >>
+
+  `bir_vars_of_exp bprecond SUBSET set (MAP PairToBVar birenvtyl)` by cheat >>
 
   METIS_TAC [bprog_P_entails_gen_thm, birenvtyl_EVAL_thm]
 );

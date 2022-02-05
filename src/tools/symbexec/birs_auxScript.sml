@@ -112,6 +112,13 @@ val birs_symb_symbols_thm = store_thm(
 (* ........................... *)
 
 
+
+val BVarToPair_def = Define `
+    BVarToPair (BVar bvn bty) = (bvn, bty)
+`;
+val PairToBVar_def = Define `
+    PairToBVar (bvn, bty) = (BVar bvn bty)
+`;
 val bir_senv_GEN_bvar_def = Define `
     bir_senv_GEN_bvar (vn,ty) = BVar (CONCAT["sy_";vn]) ty
 `;
@@ -377,7 +384,7 @@ val bir_envty_list_b_def = Define `
 val bir_envty_list_b_thm = store_thm(
    "bir_envty_list_b_thm", ``
 !l env.
-  bir_envty_list_b l env = bir_envty_list l (λbvn. bir_env_lookup bvn env)
+  bir_envty_list_b l env = bir_envty_list l (\bvn. bir_env_lookup bvn env)
 ``,
   REPEAT STRIP_TAC >>
   Cases_on `env` >>
@@ -468,14 +475,16 @@ val birs_interpr_welltyped_bir_interpr_GEN_list_thm = store_thm(
 
 val symb_interpr_for_symbs_bir_interpr_GEN_list_thm = store_thm(
    "symb_interpr_for_symbs_bir_interpr_GEN_list_thm", ``
-!l f lbl status.
+!l f lbl status bpre.
   (bir_envty_list l f) ==>
+  (bir_vars_of_exp bpre SUBSET (set (MAP PairToBVar l))) ==>
   (symb_interpr_for_symbs
           (birs_symb_symbols
              <|bsst_pc := lbl; bsst_environ := bir_senv_GEN_list l;
-               bsst_status := status; bsst_pcond := BExp_Const (Imm1 1w)|>)
+               bsst_status := status; bsst_pcond := bpre|>)
           (SymbInterpret (bir_interpr_GEN_list l f)))
 ``,
+  cheat >>
   FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, symb_interpr_dom_bir_interpr_GEN_list_thm] >>
   FULL_SIMP_TAC (std_ss++birs_state_ss++holBACore_ss) [birs_symb_symbols_def, UNION_EMPTY] >>
 
@@ -505,13 +514,16 @@ val symb_interpr_for_symbs_bir_interpr_GEN_list_thm = store_thm(
 
 val bprog_P_entails_gen_thm = store_thm(
    "bprog_P_entails_gen_thm", ``
-!lbl status l f.
+!lbl status l f bpre.
   (bir_envty_list l f) ==>
+  (bir_vars_of_exp bpre SUBSET (set (MAP PairToBVar l))) ==>
+  (bir_eval_exp bpre (BEnv f) = SOME bir_val_true) ==>
   (?H. birs_symb_matchstate
               <|bsst_pc := lbl;
                 bsst_environ := bir_senv_GEN_list l;
                 bsst_status := status;
-                bsst_pcond := BExp_Const (Imm1 1w)|> H
+                bsst_pcond := bpre |>
+              H
               (bir_state_t
                  lbl
                  (BEnv f)
@@ -521,7 +533,8 @@ val bprog_P_entails_gen_thm = store_thm(
   REPEAT STRIP_TAC >>
   Q.EXISTS_TAC `SymbInterpret (bir_interpr_GEN_list l f)` >>
 
-  `!H. birs_interpret_fun H (BExp_Const (Imm1 1w)) = SOME bir_val_true` by (
+  `birs_interpret_fun (SymbInterpret (bir_interpr_GEN_list l f)) bpre = SOME bir_val_true` by (
+    cheat >>
     EVAL_TAC >>
     REWRITE_TAC []
   ) >>
@@ -541,6 +554,16 @@ val bprog_P_entails_gen_thm = store_thm(
 (* ........................... *)
 
 
+val bir_BEnv_lookup_EQ_thm = store_thm(
+   "bir_BEnv_lookup_EQ_thm", ``
+!env.
+  BEnv (λbvn. bir_env_lookup bvn env) = env
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `env` >>
+  FULL_SIMP_TAC (std_ss) [bir_envty_list_b_def, bir_envTheory.bir_env_lookup_def] >>
+  METIS_TAC []
+);
 
 
 val _ = export_theory();
