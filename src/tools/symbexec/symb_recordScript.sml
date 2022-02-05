@@ -946,6 +946,62 @@ val step_n_in_L_SEQ_thm = store_thm(
   )
 );
 
+val FUNPOW_ABS_thm = store_thm(
+   "FUNPOW_ABS_thm", ``
+!f g.
+  (!x. g (f x) = x) ==>
+  !stepf.
+  !s n s'.
+    FUNPOW (f o stepf o g) n (f s)
+    =
+    f (FUNPOW stepf n s)
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [step_n_def] >>
+  Induct_on `n` >> (
+    FULL_SIMP_TAC std_ss [arithmeticTheory.FUNPOW_0, arithmeticTheory.FUNPOW_SUC]
+  )
+);
+
+val step_n_ABS_thm = store_thm(
+   "step_n_ABS_thm", ``
+!f g.
+  (!x y. (f x = f y) <=> (x = y)) ==>
+  (!x. g (f x) = x) ==>
+  !stepf.
+  !s n s'.
+    step_n (f o stepf o g) (f s) n (f s')
+    =
+    step_n stepf s n s'
+``,
+  FULL_SIMP_TAC std_ss [step_n_def, FUNPOW_ABS_thm]
+);
+
+val step_n_in_L_ABS_thm = store_thm(
+   "step_n_in_L_ABS_thm", ``
+!f g.
+  (!x y. (f x = f y) <=> (x = y)) ==>
+  (!x. g (f x) = x) ==>
+  (!x. ?y. (f y) = x) ==>
+  !pcf stepf.
+  !s n L s'.
+    step_n_in_L pcf (f o stepf o g) (f s) n L (f s')
+    =
+    step_n_in_L (pcf o f) stepf s n L s'
+``,
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [step_n_in_L_def, step_n_in_L_relaxed_def] >>
+
+  EQ_TAC >> (
+    FULL_SIMP_TAC std_ss [step_n_ABS_thm] >>
+    REPEAT STRIP_TAC >>
+    PAT_X_ASSUM ``!x. A ==> B`` (ASSUME_TAC o Q.SPEC `n'`) >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+    METIS_TAC [step_n_ABS_thm]
+  )
+);
+
+
 val conc_step_n_in_L_relaxed_def = Define `
   conc_step_n_in_L_relaxed sr = step_n_in_L_relaxed symb_concst_pc sr.sr_step_conc
 `;

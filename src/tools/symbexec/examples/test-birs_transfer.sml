@@ -126,7 +126,7 @@ val bprog_Q_thm = store_thm(
 
 val bprog_P_entails_thm = store_thm(
    "bprog_P_entails_thm", ``
-P_entails_an_interpret (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm
+P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm
 ``,
   FULL_SIMP_TAC (std_ss++birs_state_ss) [P_entails_an_interpret_def] >>
   REPEAT STRIP_TAC >>
@@ -154,7 +154,7 @@ P_entails_an_interpret (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm
 (* Q is implied by sys and Pi *)
 val bprog_Pi_overapprox_Q_thm = store_thm(
    "bprog_Pi_overapprox_Q_thm", ``
-Pi_overapprox_Q (bir_symb_rec_sbir bprog_test) bprog_P ^sys_tm ^Pi_tm bprog_Q
+Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm ^Pi_tm bprog_Q
 ``,
   FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
   REPEAT STRIP_TAC >>
@@ -243,17 +243,67 @@ val bprog_concst_prop_thm =
     (REWRITE_RULE
       [symb_prop_transferTheory.prop_holds_def]
       bprog_prop_holds_thm);
+(* ........................... *)
 
 
 (* lift to concrete bir property *)
+val st_init_lbl = (snd o dest_eq o hd o fst o strip_imp o snd o strip_forall o concl) bprog_concst_prop_thm;
+(* TODO: we probably need a better way to "summarize/overapproximate" the labels of the program, check that this is possible and none of the rules break this *)
+val bprog_lbls  = List.nth ((snd o strip_comb o fst o dest_conj o snd o strip_exists o snd o strip_imp o snd o strip_forall o concl) bprog_concst_prop_thm, 3);
+val bprog_to_concst_prop_thm = store_thm(
+   "bprog_to_concst_prop_thm", ``
+!st.
+  (symb_concst_pc (birs_symb_to_concst st) = (^st_init_lbl)) ==>
+  (bprog_P (birs_symb_to_concst st)) ==>
+  (?n st'.
+     (step_n_in_L
+       (symb_concst_pc o birs_symb_to_concst)
+       (SND o bir_exec_step (^bprog))
+       st
+       n
+       (^bprog_lbls)
+       st')
+     /\
+     (bprog_Q (birs_symb_to_concst st) (birs_symb_to_concst st')))
+``,
+  REPEAT STRIP_TAC >>
+  IMP_RES_TAC (HO_MATCH_MP birs_symb_to_concst_PROP_FORALL_thm bprog_concst_prop_thm) >>
+
+  FULL_SIMP_TAC (std_ss++symb_typesLib.symb_TYPES_ss) [conc_step_n_in_L_def, bir_symb_rec_sbir_def] >>
+
+  ASSUME_TAC ((GSYM o Q.SPEC `s'`) birs_symb_to_concst_EXISTS_thm) >>
+  FULL_SIMP_TAC std_ss [] >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  `birs_symb_to_concst o SND o bir_exec_step ^bprog o
+             birs_symb_from_concst =
+   birs_symb_to_concst o (SND o bir_exec_step ^bprog) o
+             birs_symb_from_concst` by (
+    FULL_SIMP_TAC (std_ss) []
+  ) >>
+  FULL_SIMP_TAC (pure_ss) [] >>
+
+  FULL_SIMP_TAC (pure_ss) [
+    SIMP_RULE std_ss [birs_symb_to_from_concst_thm, birs_symb_to_concst_EXISTS_thm, birs_symb_to_concst_EQ_thm] (
+      SPECL [``birs_symb_to_concst``, ``birs_symb_from_concst``] (
+        INST_TYPE [beta |-> Type`:(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t`, alpha |-> Type`:bir_state_t`] step_n_in_L_ABS_thm)
+  )] >>
+
+  METIS_TAC []
+);
+
+(* finish translation to pure BIR property *)
 val bprog_bir_prop_thm = save_thm(
    "bprog_bir_prop_thm",
-  (* TODO: we probably need a better way to "summarize/overapproximate" the labels of the program, check that this is possible and none of the rules break this *)
-  (* TODO: finish translation to pure BIR property *)
-  REWRITE_RULE [birs_symb_to_concst_EXISTS_thm, bprog_P_thm, bprog_Q_thm, birs_symb_concst_pc_thm]
-    (HO_MATCH_MP birs_symb_to_concst_PROP_thm bprog_concst_prop_thm)
+  REWRITE_RULE
+    [bprog_P_thm, bprog_Q_thm, birs_symb_concst_pc_thm, combinTheory.o_DEF, GSYM bir_programTheory.bir_exec_step_state_def]
+    (REWRITE_RULE
+      []
+      bprog_to_concst_prop_thm)
 );
 (* ........................... *)
+
+
 
 
 (* TODO: translate to pure Cortex-M0 property *)
