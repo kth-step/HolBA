@@ -48,16 +48,45 @@ val bprog = (fst o dest_eq o concl) bprog_test_def;
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_pc_next (bir_block_pc (BL_Address (Imm32 2826w)))``;
 
 
-val birenvtyl_def = Define `
-    birenvtyl = [("R7", BType_Imm Bit32); ("SP_process", BType_Imm Bit32); ("countw", BType_Imm Bit64)]
+val m0_mod_vars_def = Define `
+    m0_mod_vars = bmr_vars (m0_mod_bmr (T,T))
 `;
 
-val birs_state_init = ``<|
+val m0_mod_vars_thm = store_thm(
+   "m0_mod_vars_thm", ``
+!ef sel.
+  m0_mod_vars = bmr_vars (m0_mod_bmr (ef,sel))
+``,
+  METIS_TAC [m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL]
+);
+
+val BVarToPair_def = Define `
+    BVarToPair (BVar bvn bty) = (bvn, bty)
+`;
+val birenvtyl_def = Define `
+    birenvtyl = MAP BVarToPair m0_mod_vars
+`;
+(*    birenvtyl = [("R7", BType_Imm Bit32); ("SP_process", BType_Imm Bit32); ("countw", BType_Imm Bit64)]*)
+(*
+bir_lifting_machinesTheory.m0_mod_REGS_lifted_imms_LIST_def
+m0_mod_REGS_lifted_imms_LIST
+m0_mod_lifted_mem
+bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL
+*)
+val birenvtyl_EVAL_thm = save_thm(
+   "birenvtyl_EVAL_thm",
+  (REWRITE_CONV [birenvtyl_def, m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL] THENC EVAL) ``birenvtyl``
+);
+
+
+val birs_state_init_pre = ``<|
   bsst_pc       := ^birs_state_init_lbl;
   bsst_environ  := bir_senv_GEN_list birenvtyl;
   bsst_status   := BST_Running;
   bsst_pcond    := BExp_Const (Imm1 1w)
 |>``;
+val birs_state_thm = REWRITE_CONV [birenvtyl_EVAL_thm] birs_state_init_pre;
+val birs_state_init = (snd o dest_eq o concl) birs_state_thm;
 (* ........................... *)
 
 val bprog_tm = bprog;
@@ -146,7 +175,7 @@ P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm
 
   `(ALL_DISTINCT (MAP FST birenvtyl))` by EVAL_TAC >>
 
-  METIS_TAC [bprog_P_entails_gen_thm]
+  METIS_TAC [bprog_P_entails_gen_thm, birenvtyl_EVAL_thm]
 );
 
 (* ........................... *)
@@ -178,10 +207,188 @@ Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm ^Pi_tm bprog_Q
       (fn thm =>
          let
            val tm = (hd o snd o strip_comb o concl) thm;
-(*           val _ = print_term tm; *)
-           val conv = SIMP_CONV std_ss [birs_symb_symbols_thm] THENC SIMP_CONV (std_ss++birs_state_ss) [birs_exps_of_senv_thm, birs_exps_of_senv_COMP_thm] THENC EVAL;
+           val birs_exps_of_senv_CONV = (
+    REPEATC (CHANGED_CONV (
+      (fn x => REWRITE_CONV [Once birs_exps_of_senv_COMP_thm] x) THENC
+      (SIMP_CONV (std_ss) []) THENC
+      (ONCE_DEPTH_CONV ( (PAT_CONV ``\A. if A then B else (C)`` (EVAL)))) THENC
+      SIMP_CONV (std_ss) []
+    ))
+  );
+           val birs_symb_symbols_CONV = (
+    SIMP_CONV std_ss [birs_symb_symbols_thm] THENC
+    SIMP_CONV (std_ss++birs_state_ss) [] THENC
+    SIMP_CONV (std_ss) [birs_exps_of_senv_thm] THENC
+    DEPTH_CONV (PAT_CONV ``\A. IMAGE bir_vars_of_exp A`` birs_exps_of_senv_CONV)
+  );
+(*
+birenvtyl_EVAL_thm
+val tm = ``
+  birs_symb_symbols
+  <|bsst_pc := <|bpc_label := BL_Address (Imm32 2826w); bpc_index := 2|>;
+    bsst_environ :=
+      (K NONE)⦇
+        "countw" ↦
+          SOME
+            (BExp_BinExp BIExp_Plus
+               (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 1w)));
+        "MEM" ↦ SOME (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)));
+        "PSR_C" ↦ SOME (BExp_Den (BVar "sy_PSR_C" (BType_Imm Bit1)));
+        "PSR_N" ↦ SOME (BExp_Den (BVar "sy_PSR_N" (BType_Imm Bit1)));
+        "PSR_V" ↦ SOME (BExp_Den (BVar "sy_PSR_V" (BType_Imm Bit1)));
+        "PSR_Z" ↦ SOME (BExp_Den (BVar "sy_PSR_Z" (BType_Imm Bit1)));
+        "R0" ↦ SOME (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)));
+        "R1" ↦ SOME (BExp_Den (BVar "sy_R1" (BType_Imm Bit32)));
+        "R2" ↦ SOME (BExp_Den (BVar "sy_R2" (BType_Imm Bit32)));
+        "R3" ↦ SOME (BExp_Den (BVar "sy_R3" (BType_Imm Bit32)));
+        "R4" ↦ SOME (BExp_Den (BVar "sy_R4" (BType_Imm Bit32)));
+        "R5" ↦ SOME (BExp_Den (BVar "sy_R5" (BType_Imm Bit32)));
+        "R6" ↦ SOME (BExp_Den (BVar "sy_R6" (BType_Imm Bit32)));
+        "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+        "R8" ↦ SOME (BExp_Den (BVar "sy_R8" (BType_Imm Bit32)));
+        "R9" ↦ SOME (BExp_Den (BVar "sy_R9" (BType_Imm Bit32)));
+        "R10" ↦ SOME (BExp_Den (BVar "sy_R10" (BType_Imm Bit32)));
+        "R11" ↦ SOME (BExp_Den (BVar "sy_R11" (BType_Imm Bit32)));
+        "R12" ↦ SOME (BExp_Den (BVar "sy_R12" (BType_Imm Bit32)));
+        "LR" ↦ SOME (BExp_Den (BVar "sy_LR" (BType_Imm Bit32)));
+        "SP_main" ↦ SOME (BExp_Den (BVar "sy_SP_main" (BType_Imm Bit32)));
+        "SP_process" ↦
+          SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+        "ModeHandler" ↦
+          SOME (BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1)));
+        "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+      ⦈; bsst_status := BST_Running; bsst_pcond := BExp_Const (Imm1 1w)|>``;
+
+(
+  SIMP_CONV std_ss [birs_symb_symbols_thm] THENC
+  SIMP_CONV (std_ss++birs_state_ss) [] THENC
+  SIMP_CONV (std_ss) [birs_exps_of_senv_thm] THENC
+  DEPTH_CONV (PAT_CONV ``\A. IMAGE bir_vars_of_exp A`` birs_exps_of_senv_CONV)
+) tm
+
+DEPTH_CONV (PAT_CONV ``\A. IMAGE bir_vars_of_exp A`` birs_exps_of_senv_CONV) tm1
+
+val tm1 = ``
+BIGUNION
+       (IMAGE bir_vars_of_exp
+          (birs_exps_of_senv_COMP ∅
+             (K NONE)⦇
+               "countw" ↦
+                 SOME
+                   (BExp_BinExp BIExp_Plus
+                      (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                      (BExp_Const (Imm64 1w)));
+               "MEM" ↦ SOME (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)));
+               "PSR_C" ↦ SOME (BExp_Den (BVar "sy_PSR_C" (BType_Imm Bit1)));
+               "PSR_N" ↦ SOME (BExp_Den (BVar "sy_PSR_N" (BType_Imm Bit1)));
+               "PSR_V" ↦ SOME (BExp_Den (BVar "sy_PSR_V" (BType_Imm Bit1)));
+               "PSR_Z" ↦ SOME (BExp_Den (BVar "sy_PSR_Z" (BType_Imm Bit1)));
+               "R0" ↦ SOME (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)));
+               "R1" ↦ SOME (BExp_Den (BVar "sy_R1" (BType_Imm Bit32)));
+               "R2" ↦ SOME (BExp_Den (BVar "sy_R2" (BType_Imm Bit32)));
+               "R3" ↦ SOME (BExp_Den (BVar "sy_R3" (BType_Imm Bit32)));
+               "R4" ↦ SOME (BExp_Den (BVar "sy_R4" (BType_Imm Bit32)));
+               "R5" ↦ SOME (BExp_Den (BVar "sy_R5" (BType_Imm Bit32)));
+               "R6" ↦ SOME (BExp_Den (BVar "sy_R6" (BType_Imm Bit32)));
+               "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+               "R8" ↦ SOME (BExp_Den (BVar "sy_R8" (BType_Imm Bit32)));
+               "R9" ↦ SOME (BExp_Den (BVar "sy_R9" (BType_Imm Bit32)));
+               "R10" ↦ SOME (BExp_Den (BVar "sy_R10" (BType_Imm Bit32)));
+               "R11" ↦ SOME (BExp_Den (BVar "sy_R11" (BType_Imm Bit32)));
+               "R12" ↦ SOME (BExp_Den (BVar "sy_R12" (BType_Imm Bit32)));
+               "LR" ↦ SOME (BExp_Den (BVar "sy_LR" (BType_Imm Bit32)));
+               "SP_main" ↦
+                 SOME (BExp_Den (BVar "sy_SP_main" (BType_Imm Bit32)));
+               "SP_process" ↦
+                 SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+               "ModeHandler" ↦
+                 SOME (BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1)));
+               "countw" ↦
+                 SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+             ⦈))
+ ∪ bir_vars_of_exp (BExp_Const (Imm1 1w))``;
+
+birs_exps_of_senv_CONV tm2
+
+val tm2 = ``birs_exps_of_senv_COMP ∅
+             (K NONE)⦇
+               "countw" ↦
+                 SOME
+                   (BExp_BinExp BIExp_Plus
+                      (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                      (BExp_Const (Imm64 1w)));
+               "MEM" ↦ SOME (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)));
+               "PSR_C" ↦ SOME (BExp_Den (BVar "sy_PSR_C" (BType_Imm Bit1)));
+               "PSR_N" ↦ SOME (BExp_Den (BVar "sy_PSR_N" (BType_Imm Bit1)));
+               "PSR_V" ↦ SOME (BExp_Den (BVar "sy_PSR_V" (BType_Imm Bit1)));
+               "PSR_Z" ↦ SOME (BExp_Den (BVar "sy_PSR_Z" (BType_Imm Bit1)));
+               "R0" ↦ SOME (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)));
+               "R1" ↦ SOME (BExp_Den (BVar "sy_R1" (BType_Imm Bit32)));
+               "R2" ↦ SOME (BExp_Den (BVar "sy_R2" (BType_Imm Bit32)));
+               "R3" ↦ SOME (BExp_Den (BVar "sy_R3" (BType_Imm Bit32)));
+               "R4" ↦ SOME (BExp_Den (BVar "sy_R4" (BType_Imm Bit32)));
+               "R5" ↦ SOME (BExp_Den (BVar "sy_R5" (BType_Imm Bit32)));
+               "R6" ↦ SOME (BExp_Den (BVar "sy_R6" (BType_Imm Bit32)));
+               "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+               "R8" ↦ SOME (BExp_Den (BVar "sy_R8" (BType_Imm Bit32)));
+               "R9" ↦ SOME (BExp_Den (BVar "sy_R9" (BType_Imm Bit32)));
+               "R10" ↦ SOME (BExp_Den (BVar "sy_R10" (BType_Imm Bit32)));
+               "R11" ↦ SOME (BExp_Den (BVar "sy_R11" (BType_Imm Bit32)));
+               "R12" ↦ SOME (BExp_Den (BVar "sy_R12" (BType_Imm Bit32)));
+               "LR" ↦ SOME (BExp_Den (BVar "sy_LR" (BType_Imm Bit32)));
+               "SP_main" ↦
+                 SOME (BExp_Den (BVar "sy_SP_main" (BType_Imm Bit32)));
+               "SP_process" ↦
+                 SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+               "ModeHandler" ↦
+                 SOME (BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1)));
+               "countw" ↦
+                 SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+             ⦈``;
+val tm2 = ``birs_exps_of_senv_COMP ∅
+             (K NONE)⦇
+               "countw" ↦
+                 SOME
+                   (BExp_BinExp BIExp_Plus
+                      (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                      (BExp_Const (Imm64 1w)));
+               "MEM" ↦ SOME (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
+             ⦈``;
+(
+  REPEATC (CHANGED_CONV (
+    (fn x => REWRITE_CONV [Once birs_exps_of_senv_COMP_thm] x) THENC
+    (SIMP_CONV (std_ss) []) THENC
+    (ONCE_DEPTH_CONV ( (PAT_CONV ``\A. if A then B else (C)`` (EVAL)))) THENC
+    SIMP_CONV (std_ss) []
+  ))
+) tm2
+
+
+
+fun SUB_SUB_CONV c = TRY_CONV (COMB_CONV c ORELSEC ABS_CONV c ORELSE )
+fun TRY_SUB_SUB_CONV c = TRY_CONV c ORELSEC SUB_CONV c
+
+  fun TRY_sub_conv conv tm =
+    TRY_CONV conv tm
+    handle UNCHANGED =
+      conv tm
+    else if is_comb tm then
+        ((RAND_CONV  (GEN_match_conv is_tm_fun conv)) THENC
+         (RATOR_CONV (GEN_match_conv is_tm_fun conv))) tm
+    else if is_abs tm then
+        TRY_CONV (ABS_CONV (TRY_sub_conv conv)) tm
+    else
+      raise UNCHANGED
+    ;
+
+RATOR_CONV (LAND_CONV EVAL)
+(ONCE_DEPTH_CONV ( (PAT_CONV ``\A. if A then B else (C)`` (EVAL)))) ``( ((5 + 3):num) + if 1:num = 2 then 4 + 5 else 9 + 2):num``
+*)
+           val _ = print_term tm; 
+           val conv = birs_symb_symbols_CONV THENC EVAL;
            val thm_res = (computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC conv) tm;
-(*           val _ = print_term (concl thm_res); *)
+           val _ = print_term (concl thm_res);
          in
            ASSUME_TAC (REWRITE_RULE [Once thm_res] thm)
          end)) >>
