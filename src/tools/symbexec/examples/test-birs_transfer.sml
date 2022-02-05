@@ -46,6 +46,7 @@ BirProgram [
 val bprog = (fst o dest_eq o concl) bprog_test_def;
 
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_pc_next (bir_block_pc (BL_Address (Imm32 2826w)))``;
+val birs_state_end_lbl = (snd o dest_eq o concl o EVAL) ``bir_pc_next (^birs_state_init_lbl)``;
 
 
 val m0_mod_vars_def = Define `
@@ -138,14 +139,22 @@ val bprog_Q_def = Define `
      ((SymbConcSt pc1 st1 status1):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t)
      ((SymbConcSt pc2 st2 status2):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t)
     =
-     (?v. st1 "countw" = SOME (BVal_Imm (Imm64 v)) /\ st2 "countw" = SOME (BVal_Imm (Imm64 (v + 1w))))
+     (
+       (pc2 = ^birs_state_end_lbl)
+       /\
+       (?v. st1 "countw" = SOME (BVal_Imm (Imm64 v)) /\ st2 "countw" = SOME (BVal_Imm (Imm64 (v + 1w))))
+     )
 `;
 val bprog_Q_thm = store_thm(
    "bprog_Q_thm", ``
 !bs1 bs2.
   bprog_Q (birs_symb_to_concst bs1) (birs_symb_to_concst bs2) =
-    (?v. bir_env_lookup "countw" bs1.bst_environ = SOME (BVal_Imm (Imm64 v)) /\
-         bir_env_lookup "countw" bs2.bst_environ = SOME (BVal_Imm (Imm64 (v + 1w))))
+    (
+      (bs2.bst_pc = ^birs_state_end_lbl)
+      /\
+      (?v. bir_env_lookup "countw" bs1.bst_environ = SOME (BVal_Imm (Imm64 v)) /\
+           bir_env_lookup "countw" bs2.bst_environ = SOME (BVal_Imm (Imm64 (v + 1w))))
+    )
 ``,
   FULL_SIMP_TAC (std_ss) [birs_symb_to_concst_def, bprog_Q_def]
 );
