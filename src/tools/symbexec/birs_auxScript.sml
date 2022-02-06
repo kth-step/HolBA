@@ -225,6 +225,67 @@ val bir_senv_GEN_list_APPLY_thm = store_thm(
   SIMP_TAC std_ss [GSYM bir_senv_GEN_list_def] >>
   METIS_TAC []
 );
+
+val bir_senv_GEN_list_vars_thm = store_thm(
+   "bir_senv_GEN_list_vars_thm", ``
+!l.
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (BIGUNION {bir_vars_of_exp e | (?vn. (bir_senv_GEN_list l) vn = SOME e)} = set (MAP bir_senv_GEN_bvar l))
+``,
+  Induct_on `l` >- (
+    SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [listTheory.MAP, bir_senv_GEN_list_def, listTheory.FOLDR, EXTENSION, listTheory.MEM]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_senv_GEN_list_def, listTheory.MAP, listTheory.FOLDR] >>
+
+  SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [EXTENSION, listTheory.LIST_TO_SET_DEF, listTheory.MEM] >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on `h` >>
+  FULL_SIMP_TAC std_ss [GSYM bir_senv_GEN_list_def, listTheory.ALL_DISTINCT, listTheory.MAP] >>
+
+  EQ_TAC >- (
+    FULL_SIMP_TAC std_ss [GSYM EXTENSION] >>
+    REPEAT STRIP_TAC >>
+    Cases_on `q = vn` >- (
+      FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM] >>
+      METIS_TAC [bir_typing_expTheory.bir_vars_of_exp_def, IN_SING]
+    ) >>
+
+    FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM] >>
+    `x IN (BIGUNION {bir_vars_of_exp e | (?vn. bir_senv_GEN_list l vn = SOME e)})` by (
+      SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+      METIS_TAC []
+    ) >>
+
+    FULL_SIMP_TAC std_ss [EXTENSION] >>
+    METIS_TAC []
+  ) >>
+
+  FULL_SIMP_TAC std_ss [GSYM EXTENSION] >>
+  REPEAT STRIP_TAC >- (
+    Q.EXISTS_TAC `bir_vars_of_exp (BExp_Den (x))` >>
+    FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def, IN_SING] >>
+    Q.EXISTS_TAC `BExp_Den (x)` >>
+    FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def, IN_SING] >>
+    FULL_SIMP_TAC std_ss [] >>
+    Q.EXISTS_TAC `q` >>
+    FULL_SIMP_TAC std_ss [combinTheory.APPLY_UPDATE_THM]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [EXTENSION] >>
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `x`) >>
+  REV_FULL_SIMP_TAC std_ss [GSYM EXTENSION] >>
+
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  `q <> vn` by (
+    METIS_TAC [bir_senv_GEN_list_NOT_MEM_thm, optionTheory.option_CLAUSES]
+  ) >>
+
+  METIS_TAC [combinTheory.APPLY_UPDATE_THM]
+);
 (* ........................... *)
 
 
@@ -475,16 +536,15 @@ val birs_interpr_welltyped_bir_interpr_GEN_list_thm = store_thm(
 
 val symb_interpr_for_symbs_bir_interpr_GEN_list_thm = store_thm(
    "symb_interpr_for_symbs_bir_interpr_GEN_list_thm", ``
-!l f lbl status bpre.
+!l f lbl status bpre_sv.
   (bir_envty_list l f) ==>
-  (bir_vars_of_exp bpre SUBSET (set (MAP PairToBVar l))) ==>
+  (bir_vars_of_exp bpre_sv SUBSET (set (MAP bir_senv_GEN_bvar l))) ==>
   (symb_interpr_for_symbs
           (birs_symb_symbols
              <|bsst_pc := lbl; bsst_environ := bir_senv_GEN_list l;
-               bsst_status := status; bsst_pcond := bpre|>)
+               bsst_status := status; bsst_pcond := bpre_sv|>)
           (SymbInterpret (bir_interpr_GEN_list l f)))
 ``,
-  cheat >>
   FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, symb_interpr_dom_bir_interpr_GEN_list_thm] >>
   FULL_SIMP_TAC (std_ss++birs_state_ss++holBACore_ss) [birs_symb_symbols_def, UNION_EMPTY] >>
 
@@ -509,20 +569,58 @@ val symb_interpr_for_symbs_bir_interpr_GEN_list_thm = store_thm(
 
   METIS_TAC [listTheory.MEM_MAP_f]
 );
+
+val bir_envty_list_IMP_birs_eval_exp_vars_thm = store_thm(
+   "bir_envty_list_IMP_birs_eval_exp_vars_thm", ``
+!l bpre bpre_sv ty.
+  (ALL_DISTINCT (MAP FST l)) ==>
+  (birs_eval_exp bpre (bir_senv_GEN_list l) = SOME (bpre_sv,ty)) ==>
+  (bir_vars_of_exp bpre_sv SUBSET set (MAP bir_senv_GEN_bvar l))
+``,
+  METIS_TAC [bir_symb_soundTheory.birs_eval_exp_IMP_varset_thm, bir_senv_GEN_list_vars_thm]
+);
+
+val bir_envty_list_IMP_birs_eval_exp_interpret_thm = store_thm(
+   "bir_envty_list_IMP_birs_eval_exp_interpret_thm", ``
+!l f e v sv ty.
+  (bir_envty_list l f) ==>
+  (bir_eval_exp e (BEnv f) = SOME v (*bir_val_true*)) ==>
+  (birs_eval_exp e (bir_senv_GEN_list l) = SOME (sv,ty)) ==>
+  (birs_interpret_fun (SymbInterpret (bir_interpr_GEN_list l f)) sv = SOME v (*bir_val_true*))
+``,
+  REPEAT STRIP_TAC >>
+  Q.ABBREV_TAC `env = BEnv f` >>
+  Q.ABBREV_TAC `senv = bir_senv_GEN_list l` >>
+  Q.ABBREV_TAC `H = SymbInterpret (bir_interpr_GEN_list l f)` >>
+
+  `birs_interpr_welltyped H` by (
+    METIS_TAC [birs_interpr_welltyped_bir_interpr_GEN_list_thm]
+  ) >>
+  `birs_matchenv H senv env` by (
+    METIS_TAC [birs_matchenv_bir_senv_GEN_thm]
+  ) >>
+
+  IMP_RES_TAC bir_symb_sound_coreTheory.birs_eval_exp_sound_thm >>
+  POP_ASSUM (ASSUME_TAC o Q.SPEC `e`) >>
+  FULL_SIMP_TAC std_ss [] >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  METIS_TAC [optionTheory.option_CLAUSES]
+);
 (* ........................... *)
 
 
 val bprog_P_entails_gen_thm = store_thm(
    "bprog_P_entails_gen_thm", ``
-!lbl status l f bpre.
+!lbl status l f bpre bpre_sv ty.
   (bir_envty_list l f) ==>
-  (bir_vars_of_exp bpre SUBSET (set (MAP PairToBVar l))) ==>
   (bir_eval_exp bpre (BEnv f) = SOME bir_val_true) ==>
+  (birs_eval_exp bpre (bir_senv_GEN_list l) = SOME (bpre_sv,ty)) ==>
   (?H. birs_symb_matchstate
               <|bsst_pc := lbl;
                 bsst_environ := bir_senv_GEN_list l;
                 bsst_status := status;
-                bsst_pcond := bpre |>
+                bsst_pcond := bpre_sv |>
               H
               (bir_state_t
                  lbl
@@ -533,10 +631,8 @@ val bprog_P_entails_gen_thm = store_thm(
   REPEAT STRIP_TAC >>
   Q.EXISTS_TAC `SymbInterpret (bir_interpr_GEN_list l f)` >>
 
-  `birs_interpret_fun (SymbInterpret (bir_interpr_GEN_list l f)) bpre = SOME bir_val_true` by (
-    cheat >>
-    EVAL_TAC >>
-    REWRITE_TAC []
+  `bir_vars_of_exp bpre_sv SUBSET set (MAP bir_senv_GEN_bvar l)` by (
+    METIS_TAC [bir_envty_list_IMP_birs_eval_exp_vars_thm, bir_envty_list_def]
   ) >>
 
   FULL_SIMP_TAC (std_ss) [birs_symb_matchstate_def] >>
@@ -549,7 +645,9 @@ val bprog_P_entails_gen_thm = store_thm(
       birs_matchenv_bir_senv_GEN_thm,
       birs_interpr_welltyped_bir_interpr_GEN_list_thm,
       symb_interpr_for_symbs_bir_interpr_GEN_list_thm]
-  )
+  ) >>
+
+  METIS_TAC [bir_envty_list_IMP_birs_eval_exp_interpret_thm]
 );
 (* ........................... *)
 
