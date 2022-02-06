@@ -203,6 +203,8 @@ val test_term_birs_senv_typecheck = ``
 
 in
 
+val birs_eval_exp_CONV = birs_eval_exp_CONV;
+
 (* bir symbolic execution steps *)
 (* ----------------------------------------------- *)
 (*
