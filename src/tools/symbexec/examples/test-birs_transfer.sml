@@ -84,12 +84,29 @@ val bprecond_def = Define `
 `;
 val bprecond = (fst o dest_eq o concl) bprecond_def;
 
+(* need to translate the precondition to a symbolic pathcondition, it means taking from the environment the corresponding mappings and substitute (that's symbolic evaluation) (then we know that states with matching environments also satisfy the original precondition because it is constructed by symbolic evaluation) *)
+val bsysprecond_def = Define `
+    bsysprecond = FST (THE (birs_eval_exp ^bprecond (bir_senv_GEN_list birenvtyl)))
+`;
+val bprecond_birs_eval_exp_thm = save_thm(
+   "bprecond_birs_eval_exp_thm",
+  EVAL ``birs_eval_exp bprecond (bir_senv_GEN_list birenvtyl)``
+);
+val bsysprecond_thm = save_thm(
+   "bsysprecond_thm",
+  (REWRITE_CONV [bsysprecond_def, birs_eval_exp_ALT_thm, bprecond_birs_eval_exp_thm] THENC EVAL) ``bsysprecond``
+);
+val bprecond_birs_eval_exp_thm2 = save_thm(
+   "bprecond_birs_eval_exp_thm2",
+  REWRITE_CONV [bprecond_birs_eval_exp_thm, GSYM bsysprecond_thm] ``birs_eval_exp bprecond (bir_senv_GEN_list birenvtyl)``
+);
+val bsysprecond = (fst o dest_eq o concl) bsysprecond_def;
 
 val birs_state_init_pre = ``<|
   bsst_pc       := ^birs_state_init_lbl;
   bsst_environ  := bir_senv_GEN_list birenvtyl;
   bsst_status   := BST_Running;
-  bsst_pcond    := ^bprecond
+  bsst_pcond    := ^bsysprecond
 |>``;
 val birs_state_thm = REWRITE_CONV [birenvtyl_EVAL_thm] birs_state_init_pre;
 val birs_state_init = (snd o dest_eq o concl) birs_state_thm;
@@ -127,7 +144,6 @@ val bprog_P_def = Define `
        bir_eval_exp ^bprecond (BEnv st) = SOME bir_val_true)
 `;
 (* translate the property to BIR state property *)
-(* TODO: enable the use of generic preconditions (BIR expression that has to evaluate to true in the environment) *)
 val bprog_P_thm = store_thm(
    "bprog_P_thm", ``
 !bs.
@@ -191,9 +207,7 @@ P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P ^sys_tm
 
   `(ALL_DISTINCT (MAP FST birenvtyl))` by EVAL_TAC >>
 
-  `bir_vars_of_exp bprecond SUBSET set (MAP PairToBVar birenvtyl)` by cheat >>
-
-  METIS_TAC [bprog_P_entails_gen_thm, birenvtyl_EVAL_thm]
+  METIS_TAC [bprog_P_entails_gen_thm, birenvtyl_EVAL_thm, bprecond_birs_eval_exp_thm2]
 );
 
 (* ........................... *)
