@@ -100,13 +100,24 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
     (* TODO: tidy up set operations to not accumulate (in both, post state set and label set) - does this simplification work well enough? *)
     (* val bprog_composed_thm_ = SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss) [] bprog_composed_thm; *)
     (* val bprog_composed_thm_ = SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss) [pred_setTheory.INSERT_UNION] bprog_composed_thm; *)
-    val bprog_composed_thm_ =
-      SIMP_RULE
-        (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss++birs_state_ss)
+    val bprog_composed_thm_1 =
+      (SIMP_RULE
+        (std_ss++HolBACoreSimps.holBACore_ss++birs_state_ss++pred_setLib.PRED_SET_ss)
         [bir_symbTheory.birs_symb_to_symbst_EQ_thm, pred_setTheory.INSERT_UNION]
-        bprog_composed_thm;
+        bprog_composed_thm);
+
+    (* reconstruct IMAGE in the post state set *)
+    val IMAGE_EMPTY_thm =
+      Q.SPEC `birs_symb_to_symbst` (
+        INST_TYPE [beta |-> Type`:(bir_programcounter_t, string, bir_exp_t, bir_status_t) symb_symbst_t`, alpha |-> Type`:birs_state_t`] 
+        pred_setTheory.IMAGE_EMPTY
+      );
+    val bprog_composed_thm_2 =
+      CONV_RULE
+        (PAT_CONV ``\A. symb_hl_step_in_L_sound B (C, D, A)`` (REWRITE_CONV [GSYM IMAGE_EMPTY_thm, GSYM pred_setTheory.IMAGE_INSERT]))
+        bprog_composed_thm_1
   in
-    bprog_composed_thm_
+    bprog_composed_thm_2
   end;
 
 
