@@ -11,6 +11,9 @@ val _ = print_term (concl bin_motor_func_thm);
 *)
 
 val bprog = List.nth((snd o strip_comb o concl) bin_motor_func_thm, 3);
+(*
+(hd o fst o listSyntax.dest_list o snd o dest_comb) bprog
+*)
 val bprog_def = Define `
     bprog = ^(bprog)
 `;
@@ -20,21 +23,21 @@ val bprog_tm = (fst o dest_eq o concl) bprog_def;
 (* motor_prep_input *)
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb08w))``;
 val birs_stop_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb46w))``;
-val birs_stop_lbl = ``<|bpc_label := BL_Address (Imm32 0xb08w); bpc_index := 2|>``;
+val birs_stop_lbl = ``<|bpc_label := BL_Address (Imm32 0xb08w); bpc_index := 7|>``;
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* TODO: the following is copied from transfer-test script *)
+(* TODO: the following is copied from transfer-test script (MODIFIED FOR TEMP VARS) *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 val m0_mod_vars_def = Define `
-    m0_mod_vars = bmr_vars (m0_mod_bmr (T,T))
+    m0_mod_vars = APPEND (bmr_vars (m0_mod_bmr (T,T))) (bmr_temp_vars (m0_mod_bmr (T,T)))
 `;
 
 val m0_mod_vars_thm = store_thm(
    "m0_mod_vars_thm", ``
 !ef sel.
-  m0_mod_vars = bmr_vars (m0_mod_bmr (ef,sel))
+  m0_mod_vars = APPEND (bmr_vars (m0_mod_bmr (ef,sel))) (bmr_temp_vars (m0_mod_bmr (ef,sel)))
 ``,
-  METIS_TAC [m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL]
+  METIS_TAC [m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL, bir_lifting_machinesTheory.m0_mod_bmr_temp_vars_EVAL]
 );
 
 val birenvtyl_def = Define `
@@ -49,7 +52,7 @@ bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL
 *)
 val birenvtyl_EVAL_thm = save_thm(
    "birenvtyl_EVAL_thm",
-  (REWRITE_CONV [birenvtyl_def, m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL] THENC EVAL) ``birenvtyl``
+  (REWRITE_CONV [birenvtyl_def, m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL, bir_lifting_machinesTheory.m0_mod_bmr_temp_vars_EVAL] THENC EVAL) ``birenvtyl``
 );
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
@@ -130,13 +133,12 @@ fun exec_until (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbl =
         val bprog_composed_thm = SEQ_fun_spec symbex_A_thm single_step_B_thm;
       in
         (* recursion *)
-(*
-        exec_until (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbl (* TODO: fix *)
-*)
-        bprog_composed_thm
+        exec_until (STEP_fun_spec, SEQ_fun_spec) bprog_composed_thm stop_lbl
       end
   end;
 (* ........................... *)
 
 
 val result = exec_until (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec) single_step_A_thm birs_stop_lbl;
+
+val _ = (print_term o concl) result;
