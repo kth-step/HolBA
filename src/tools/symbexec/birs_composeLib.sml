@@ -45,6 +45,46 @@ fun birs_rule_SEQ_free_symbols_fun bprog_tm (sys_A_tm, sys_B_tm, Pi_B_tm) =
     val freesymbols_thm = store_thm(
        "freesymbols_thm", ``
     *)
+
+(* ------------------------------------------------------------------------ *)
+(* COPIED FROM TRANSFER-TEST (and modified) *)
+(* ------------------------------------------------------------------------ *)
+val debug_conv2 = (fn tm => (if true then print ".\n" else print_term tm; REFL tm));
+           val birs_exps_of_senv_CONV = (
+    debug_conv2 THENC
+    REPEATC (CHANGED_CONV (
+      (fn x => REWRITE_CONV [Once birs_exps_of_senv_COMP_thm] x) THENC
+      (SIMP_CONV (std_ss) []) THENC
+      (ONCE_DEPTH_CONV ( (PAT_CONV ``\A. if A then B else (C)`` (EVAL)))) THENC
+      SIMP_CONV (std_ss) []
+    ))
+  );
+
+           val birs_symb_symbols_CONV = (
+    SIMP_CONV std_ss [birs_symb_symbols_thm] THENC
+    SIMP_CONV (std_ss++birs_state_ss) [] THENC
+    SIMP_CONV (std_ss) [birs_exps_of_senv_thm]
+    (*(PAT_CONV ``\A. IMAGE bir_vars_of_exp A`` birs_exps_of_senv_CONV)*)
+  );
+           val conv = birs_symb_symbols_CONV (*THENC EVAL*);
+           val conv_ = computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC conv;
+
+val debug_conv = (fn tm => (print_term tm; raise Fail "abcdE!!!"));
+  fun GEN_match_conv is_tm_fun conv tm =
+    if is_tm_fun tm then
+      conv tm
+    else if is_comb tm then
+        ((RAND_CONV  (GEN_match_conv is_tm_fun conv)) THENC
+         (RATOR_CONV (GEN_match_conv is_tm_fun conv))) tm
+    else if is_abs tm then
+        TRY_CONV (ABS_CONV (GEN_match_conv is_tm_fun conv)) tm
+    else
+      raise UNCHANGED
+    ;
+
+(* ------------------------------------------------------------------------ *)
+(* ------------------------------------------------------------------------ *)
+
     val freesymbols_thm = prove(``
     symb_symbols (bir_symb_rec_sbir ^bprog_tm) ^sys_A_tm INTER
       (symb_symbols_set (bir_symb_rec_sbir ^bprog_tm) ^Pi_B_tm DIFF
@@ -52,8 +92,47 @@ fun birs_rule_SEQ_free_symbols_fun bprog_tm (sys_A_tm, sys_B_tm, Pi_B_tm) =
     = EMPTY
     ``,
       FULL_SIMP_TAC (std_ss) [bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm, birs_symb_symbols_set_EQ_thm] >>
+
+      (* TODO *)
+      CONV_TAC (computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``, ``$BIGUNION``, ``$IMAGE``]) >>
       FULL_SIMP_TAC (std_ss) [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY] >>
-      FULL_SIMP_TAC (std_ss) [birs_symb_symbols_thm] >>
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_thm] >>
+
+      CONV_TAC (conv) >>
+      REPEAT (
+        CHANGED_TAC ( fn xyz =>
+            REWRITE_TAC [Once (prove(``!x. (IMAGE bir_vars_of_exp x) = I (IMAGE bir_vars_of_exp x)``, REWRITE_TAC [combinTheory.I_THM]))]
+            xyz
+        ) >>
+        CONV_TAC (GEN_match_conv combinSyntax.is_I (birs_exps_of_senv_CONV THENC EVAL))
+      ) >>
+
+      EVAL_TAC
+
+(*
+      CONV_TAC (conv)
+      CONV_TAC (fn tm => (print_term tm; REFL tm))
+      CONV_TAC (DEPTH_CONV (PAT_CONV ``\A. (I:((bir_var_t->bool)->bool)->((bir_var_t->bool)->bool)) A`` (fn tm => (print_term tm; raise Fail "abcdE!!!"))))
+
+
+
+(combinSyntax.is_I o snd o dest_comb) tm
+
+
+
+
+
+      CONV_TAC (ONCE_DEPTH_CONV (PAT_CONV ``\A. IMAGE bir_vars_of_exp A`` (birs_exps_of_senv_CONV)))
+
+
+FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
+      EVAL_TAC
+
+      CONV_TAC (PAT_CONV ``\A. (A DIFF C)`` (conv))
+
+
+
+
 
       FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_exps_of_senv_thm, birs_exps_of_senv_COMP_thm] >>
 
@@ -61,6 +140,7 @@ fun birs_rule_SEQ_free_symbols_fun bprog_tm (sys_A_tm, sys_B_tm, Pi_B_tm) =
     (*
       FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.GSPECIFICATION]
     *)
+*)
     );
   in
     freesymbols_thm
