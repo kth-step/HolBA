@@ -606,6 +606,14 @@ val tm = ``
 ``;
 
 val tm = (snd o dest_comb o fst o dest_comb o snd o dest_eq o concl o REWRITE_CONV [REWRITE_RULE [Once pred_setTheory.INTER_COMM] pred_setTheory.DIFF_INTER]) tm;
+val tm = (snd o dest_comb o snd o dest_eq o concl o REWRITE_CONV [Once (prove(``
+!s t g.
+g INTER (s DIFF t) =
+s INTER (g DIFF t)
+``,
+(*REWRITE_RULE [Once pred_setTheory.INTER_COMM] pred_setTheory.DIFF_INTER*)
+METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
+))]) tm;
 
 ++pred_setSimps.PRED_SET_ss
 val char_ss = rewrites (type_rws ``:char``);
@@ -722,6 +730,32 @@ fun INTER_INSERT_CONV el_EQ_CONV tm =
 ) tm;
 
 
+fun INTER_INSERT_CONV_cheat tm =
+  let
+    val (s1, s2) = pred_setSyntax.dest_inter tm
+    val s1_l = pred_setSyntax.strip_set s1;
+    val s2_l = pred_setSyntax.strip_set s2;
+    fun eq_fun x y = identical x y;
+    fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
+    val l = List.foldr (fn (x, l) => if in_f s2_l x then x::l else l) [] s1_l;
+    val tm_l_set = if List.null l then pred_setSyntax.mk_empty(pred_setSyntax.eltype  tm) else pred_setSyntax.mk_set l;
+  in
+    mk_oracle_thm "FISHY_BIRS_FREEVARSET" ([], mk_eq (tm, tm_l_set))
+  end;
+
+fun DIFF_INSERT_CONV_cheat tm =
+  let
+    val (s1, s2) = pred_setSyntax.dest_diff tm
+    val s1_l = pred_setSyntax.strip_set s1;
+    val s2_l = pred_setSyntax.strip_set s2;
+    fun eq_fun x y = identical x y;
+    fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
+    val l = List.foldr (fn (x, l) => if not (in_f s2_l x) then x::l else l) [] s1_l;
+    val tm_l_set = if List.null l then pred_setSyntax.mk_empty(pred_setSyntax.eltype  tm) else pred_setSyntax.mk_set l;
+  in
+    mk_oracle_thm "FISHY_BIRS_FREEVARSET" ([], mk_eq (tm, tm_l_set))
+  end;
+
 fun freevarset_CONV tm =
 (
   REWRITE_CONV [Once (prove(``
@@ -739,7 +773,10 @@ METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
 *)
  (* RATOR_CONV (RAND_CONV (INTER_INSERT_CONV el_EQ_CONV)) THENC*)
   (RAND_CONV (
-(fn tm => prove (``^tm = EMPTY``, cheat))
+(*
+   (fn tm => prove (``^tm = EMPTY``, cheat))
+*)
+   DIFF_INSERT_CONV_cheat
 )) THENC
 (*
 (fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm)) THENC
@@ -748,12 +785,13 @@ METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
   
 
   (* then INTER *)
+(*
   INTER_INSERT_CONV el_EQ_CONV
+*)
+  INTER_INSERT_CONV_cheat
 ) tm;
 
 (* EVAL tm *)
-
-
 
 (* ------------------------------------------------------------------------ *)
 (* ------------------------------------------------------------------------ *)
