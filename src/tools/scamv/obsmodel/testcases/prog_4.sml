@@ -132,6 +132,7 @@ F
 val prog_4_test =
   ("prog_4 - xld_br_yld", prog_4,
      (prog_4_mem_address_pc,
+      ``F``,
       prog_4_cache_tag_index,
       prog_4_cache_tag_only,
       prog_4_cache_index_only,

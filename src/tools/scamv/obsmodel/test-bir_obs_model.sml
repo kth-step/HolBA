@@ -34,6 +34,7 @@ val _ = QUse.use "testcases/prog_3.sml";
 val _ = QUse.use "testcases/prog_4.sml";
 val _ = QUse.use "testcases/prog_5.sml";
 val _ = QUse.use "testcases/prog_6.sml";
+val _ = QUse.use "testcases/prog_7.sml";
 
 
 
@@ -45,20 +46,26 @@ val test_cases =
    prog_3_test,
    prog_4_test,
    prog_5_test,
-   prog_6_test]
+   prog_6_test,
+   prog_7_test]
 
 
 (* =========================== run and compare test cases ============================ *)
 
 val _ = print "\n\n";
 
+fun prog_obs_inst prog obs_type = proginst_fun_gen obs_type prog;
+
 (*
 val (name, prog, expected) = hd test_cases;
+
+val (name, prog, expected) = prog_2_test;
 
 val (name, prog, expected) = prog_5_test;
 
 val m = "cache_speculation_first";
-(#add_obs (get_obs_model m)) mem_bounds prog
+val m = "mem_address_pc_lspc";
+(#add_obs (get_obs_model m)) mem_bounds (prog_obs_inst prog (#obs_hol_type (get_obs_model m)))
 *)
 fun run_test_case (name, prog, expected) =
   let
@@ -66,9 +73,10 @@ fun run_test_case (name, prog, expected) =
 
     fun fold_obs_add ((m, p), l) =
       if identical p ``F`` then (print ("!!! no expected output for '" ^ m ^ "' !!!\n"); l)
-      else (((#add_obs (get_obs_model m)) mem_bounds prog, p)::l);
+      else (((#add_obs (get_obs_model m)) mem_bounds (prog_obs_inst prog (#obs_hol_type (get_obs_model m))), p)::l);
 
     val (expected_mem_address_pc,
+         expected_mem_address_pc_lspc,
          expected_cache_tag_index,
          expected_cache_tag_only,
          expected_cache_index_only,
@@ -79,6 +87,7 @@ fun run_test_case (name, prog, expected) =
 
     val progs_list_raw =
       [("mem_address_pc",            expected_mem_address_pc),
+       ("mem_address_pc_lspc",       expected_mem_address_pc_lspc),
        ("cache_tag_index",           expected_cache_tag_index),
        ("cache_tag_only",            expected_cache_tag_only),
        ("cache_index_only",          expected_cache_index_only),

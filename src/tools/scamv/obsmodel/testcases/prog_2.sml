@@ -93,7 +93,7 @@ BirProgram
           bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 28w)))|>;
         <|bb_label := BL_Address (Imm64 28w); bb_statements := [];
           bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0w))|>]
-:bir_val_t bir_program_t
+:'obs_type bir_program_t
 ``;
 
 val prog_2_mem_address_pc = ``
@@ -257,6 +257,196 @@ BirProgram
            [BStmt_Observe 0 (BExp_Const (Imm1 1w)) [BExp_Const (Imm64 28w)]
               HD]; bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0w))|>]
 :bir_val_t bir_program_t
+``;
+
+val prog_2_mem_address_pc_lspc = ``
+BirProgram
+      [<|bb_label := BL_Address (Imm64 (0w :word64));
+         bb_statements :=
+           [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
+              [BExp_Const (Imm64 (0w :word64))] gen_LSPC_PC;
+            (BStmt_Assert
+               (BExp_BinPred BIExp_Equal
+                  (BExp_BinExp BIExp_And
+                     (BExp_BinExp BIExp_Plus
+                        (BExp_Den (BVar "R24" (BType_Imm Bit64)))
+                        (BExp_Den (BVar "R14" (BType_Imm Bit64))))
+                     (BExp_Const (Imm64 (7w :word64))))
+                  (BExp_Const (Imm64 (0w :word64)))) :
+             load_store_pc_t bir_stmt_basic_t);
+            (BStmt_Assert
+               (BExp_BinExp BIExp_And
+                  (BExp_BinPred BIExp_LessOrEqual
+                     (BExp_Const (Imm64 (0xFFCC0000w :word64)))
+                     (BExp_BinExp BIExp_Plus
+                        (BExp_Den (BVar "R24" (BType_Imm Bit64)))
+                        (BExp_Den (BVar "R14" (BType_Imm Bit64)))))
+                  (BExp_BinPred BIExp_LessThan
+                     (BExp_BinExp BIExp_Plus
+                        (BExp_Den (BVar "R24" (BType_Imm Bit64)))
+                        (BExp_Den (BVar "R14" (BType_Imm Bit64))))
+                     (BExp_Const (Imm64 (0xFFCCFF80w :word64))))) :
+             load_store_pc_t bir_stmt_basic_t);
+            BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
+              [BExp_BinExp BIExp_Plus
+                 (BExp_Den (BVar "R24" (BType_Imm Bit64)))
+                 (BExp_Den (BVar "R14" (BType_Imm Bit64)))] gen_LSPC_Load;
+            (BStmt_Assign (BVar "R26" (BType_Imm Bit64))
+               (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                  (BExp_BinExp BIExp_Plus
+                     (BExp_Den (BVar "R24" (BType_Imm Bit64)))
+                     (BExp_Den (BVar "R14" (BType_Imm Bit64))))
+                  BEnd_LittleEndian Bit64) :load_store_pc_t bir_stmt_basic_t)];
+         bb_last_statement :=
+           BStmt_Jmp (BLE_Label (BL_Address (Imm64 (4w :word64))))|>;
+       <|bb_label := BL_Address (Imm64 (4w :word64));
+         bb_statements :=
+           [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
+              [BExp_Const (Imm64 (4w :word64))] gen_LSPC_PC;
+            (BStmt_Assert
+               (BExp_BinPred BIExp_Equal
+                  (BExp_BinExp BIExp_And
+                     (BExp_Den (BVar "R17" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 (7w :word64))))
+                  (BExp_Const (Imm64 (0w :word64)))) :
+             load_store_pc_t bir_stmt_basic_t);
+            (BStmt_Assert
+               (BExp_BinExp BIExp_And
+                  (BExp_BinPred BIExp_LessOrEqual
+                     (BExp_Const (Imm64 (0xFFCC0000w :word64)))
+                     (BExp_Den (BVar "R17" (BType_Imm Bit64))))
+                  (BExp_BinPred BIExp_LessThan
+                     (BExp_Den (BVar "R17" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 (0xFFCCFF80w :word64))))) :
+             load_store_pc_t bir_stmt_basic_t);
+            BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
+              [BExp_Den (BVar "R17" (BType_Imm Bit64))] gen_LSPC_Load;
+            (BStmt_Assign (BVar "R15" (BType_Imm Bit64))
+               (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                  (BExp_Den (BVar "R17" (BType_Imm Bit64))) BEnd_LittleEndian
+                  Bit64) :load_store_pc_t bir_stmt_basic_t)];
+         bb_last_statement :=
+           BStmt_Jmp (BLE_Label (BL_Address (Imm64 (8w :word64))))|>;
+       <|bb_label := BL_Address (Imm64 (8w :word64));
+         bb_statements :=
+           [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
+              [BExp_Const (Imm64 (8w :word64))] gen_LSPC_PC;
+            (BStmt_Assign (BVar "ProcState_C" (BType_Imm Bit1))
+               (BExp_BinPred BIExp_LessOrEqual
+                  (BExp_Den (BVar "R15" (BType_Imm Bit64)))
+                  (BExp_Den (BVar "R14" (BType_Imm Bit64)))) :
+             load_store_pc_t bir_stmt_basic_t);
+            (BStmt_Assign (BVar "ProcState_N" (BType_Imm Bit1))
+               (BExp_BinPred BIExp_SignedLessThan
+                  (BExp_BinExp BIExp_Minus
+                     (BExp_Den (BVar "R14" (BType_Imm Bit64)))
+                     (BExp_Den (BVar "R15" (BType_Imm Bit64))))
+                  (BExp_Const (Imm64 (0w :word64)))) :
+             load_store_pc_t bir_stmt_basic_t);
+            (BStmt_Assign (BVar "ProcState_V" (BType_Imm Bit1))
+               (BExp_BinPred BIExp_Equal
+                  (BExp_BinPred BIExp_SignedLessThan
+                     (BExp_BinExp BIExp_Minus
+                        (BExp_Den (BVar "R14" (BType_Imm Bit64)))
+                        (BExp_Den (BVar "R15" (BType_Imm Bit64))))
+                     (BExp_Const (Imm64 (0w :word64))))
+                  (BExp_BinPred BIExp_SignedLessOrEqual
+                     (BExp_Den (BVar "R15" (BType_Imm Bit64)))
+                     (BExp_Den (BVar "R14" (BType_Imm Bit64))))) :
+             load_store_pc_t bir_stmt_basic_t);
+            (BStmt_Assign (BVar "ProcState_Z" (BType_Imm Bit1))
+               (BExp_BinPred BIExp_Equal
+                  (BExp_Den (BVar "R14" (BType_Imm Bit64)))
+                  (BExp_Den (BVar "R15" (BType_Imm Bit64)))) :
+             load_store_pc_t bir_stmt_basic_t)];
+         bb_last_statement :=
+           BStmt_Jmp (BLE_Label (BL_Address (Imm64 (12w :word64))))|>;
+       <|bb_label := BL_Address (Imm64 (12w :word64));
+         bb_statements :=
+           [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
+              [BExp_Const (Imm64 (12w :word64))] gen_LSPC_PC];
+         bb_last_statement :=
+           BStmt_CJmp (BExp_Den (BVar "ProcState_Z" (BType_Imm Bit1)))
+             (BLE_Label (BL_Address (Imm64 (24w :word64))))
+             (BLE_Label (BL_Address (Imm64 (16w :word64))))|>;
+       <|bb_label := BL_Address (Imm64 (16w :word64));
+         bb_statements :=
+           [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
+              [BExp_Const (Imm64 (16w :word64))] gen_LSPC_PC;
+            (BStmt_Assert
+               (BExp_BinPred BIExp_Equal
+                  (BExp_BinExp BIExp_And
+                     (BExp_BinExp BIExp_Plus
+                        (BExp_Den (BVar "R26" (BType_Imm Bit64)))
+                        (BExp_Const (Imm64 (4w :word64))))
+                     (BExp_Const (Imm64 (7w :word64))))
+                  (BExp_Const (Imm64 (0w :word64)))) :
+             load_store_pc_t bir_stmt_basic_t);
+            (BStmt_Assert
+               (BExp_BinExp BIExp_And
+                  (BExp_BinPred BIExp_LessOrEqual
+                     (BExp_Const (Imm64 (0xFFCC0000w :word64)))
+                     (BExp_BinExp BIExp_Plus
+                        (BExp_Den (BVar "R26" (BType_Imm Bit64)))
+                        (BExp_Const (Imm64 (76w :word64)))))
+                  (BExp_BinPred BIExp_LessThan
+                     (BExp_BinExp BIExp_Plus
+                        (BExp_Den (BVar "R26" (BType_Imm Bit64)))
+                        (BExp_Const (Imm64 (76w :word64))))
+                     (BExp_Const (Imm64 (0xFFCCFF80w :word64))))) :
+             load_store_pc_t bir_stmt_basic_t);
+            BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
+              [BExp_BinExp BIExp_Plus
+                 (BExp_Den (BVar "R26" (BType_Imm Bit64)))
+                 (BExp_Const (Imm64 (76w :word64)))] gen_LSPC_Load;
+            (BStmt_Assign (BVar "R10" (BType_Imm Bit64))
+               (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                  (BExp_BinExp BIExp_Plus
+                     (BExp_Den (BVar "R26" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 (76w :word64)))) BEnd_LittleEndian
+                  Bit64) :load_store_pc_t bir_stmt_basic_t)];
+         bb_last_statement :=
+           BStmt_Jmp (BLE_Label (BL_Address (Imm64 (20w :word64))))|>;
+       <|bb_label := BL_Address (Imm64 (20w :word64));
+         bb_statements :=
+           [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
+              [BExp_Const (Imm64 (20w :word64))] gen_LSPC_PC];
+         bb_last_statement :=
+           BStmt_Jmp (BLE_Label (BL_Address (Imm64 (28w :word64))))|>;
+       <|bb_label := BL_Address (Imm64 (24w :word64));
+         bb_statements :=
+           [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
+              [BExp_Const (Imm64 (24w :word64))] gen_LSPC_PC;
+            (BStmt_Assert
+               (BExp_BinPred BIExp_Equal
+                  (BExp_BinExp BIExp_And
+                     (BExp_Den (BVar "R9" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 (7w :word64))))
+                  (BExp_Const (Imm64 (0w :word64)))) :
+             load_store_pc_t bir_stmt_basic_t);
+            (BStmt_Assert
+               (BExp_BinExp BIExp_And
+                  (BExp_BinPred BIExp_LessOrEqual
+                     (BExp_Const (Imm64 (0xFFCC0000w :word64)))
+                     (BExp_Den (BVar "R9" (BType_Imm Bit64))))
+                  (BExp_BinPred BIExp_LessThan
+                     (BExp_Den (BVar "R9" (BType_Imm Bit64)))
+                     (BExp_Const (Imm64 (0xFFCCFF80w :word64))))) :
+             load_store_pc_t bir_stmt_basic_t);
+            BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
+              [BExp_Den (BVar "R9" (BType_Imm Bit64))] gen_LSPC_Load;
+            (BStmt_Assign (BVar "R14" (BType_Imm Bit64))
+               (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                  (BExp_Den (BVar "R9" (BType_Imm Bit64))) BEnd_LittleEndian
+                  Bit64) :load_store_pc_t bir_stmt_basic_t)];
+         bb_last_statement :=
+           BStmt_Jmp (BLE_Label (BL_Address (Imm64 (28w :word64))))|>;
+       <|bb_label := BL_Address (Imm64 (28w :word64));
+         bb_statements :=
+           [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
+              [BExp_Const (Imm64 (28w :word64))] gen_LSPC_PC];
+         bb_last_statement := BStmt_Halt (BExp_Const (Imm32 (0w :word32)))|>]
+:load_store_pc_t bir_program_t
 ``;
 
 val prog_2_cache_tag_index = ``
@@ -1382,6 +1572,7 @@ F
 val prog_2_test =
   ("prog_2 - branch and merge", prog_2,
      (prog_2_mem_address_pc,
+      prog_2_mem_address_pc_lspc,
       prog_2_cache_tag_index,
       prog_2_cache_tag_only,
       prog_2_cache_index_only,

@@ -63,7 +63,7 @@ struct
         val (thm_prog, errors) = bmil_bir_lift_prog_gen prog_range sections;
         val lifted_prog = (snd o dest_comb o concl) thm_prog;
         val lifted_prog_typed =
-            inst [Type`:'observation_type` |-> Type`:bir_val_t`]
+            inst [Type`:'observation_type` |-> Type`:'obs_type`]
                  lifted_prog;
     in
         lifted_prog_typed

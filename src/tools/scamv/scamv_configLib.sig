@@ -9,6 +9,7 @@ sig
                       | from_list
 
     datatype obs_model = mem_address_pc
+                       | mem_address_pc_lspc
                        | cache_tag_index
                        | cache_tag_only
                        | cache_index_only

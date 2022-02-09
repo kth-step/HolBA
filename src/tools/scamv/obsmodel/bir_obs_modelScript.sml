@@ -5,10 +5,32 @@ open wordsSyntax;
 
 val _ = new_theory "bir_obs_model";
 
+val _ = Datatype `load_store_pc_t =
+   LSPC_Load bir_val_t
+ | LSPC_Store bir_val_t
+ | LSPC_PC bir_val_t`;
+
+val gen_LSPC_Load_def = Define `
+  gen_LSPC_Load [x] = LSPC_Load x
+`;
+
+val gen_LSPC_Store_def = Define `
+  gen_LSPC_Store [x] = LSPC_Store x
+`;
+
+val gen_LSPC_PC_def = Define `
+  gen_LSPC_PC [x] = LSPC_PC x
+`;
+
 val map_obs_prog_def = Define `
 map_obs_prog f (BirProgram xs) = BirProgram (MAP f xs)
 `;
 
+
+val _ = Datatype `select_mem_t =
+   select_mem_LD bir_exp_t
+ | select_mem_ST bir_exp_t`;
+ 
 val select_mem_def = Define`
 select_mem exp =
 (case exp of
@@ -18,11 +40,15 @@ select_mem exp =
   | BExp_BinPred bp e1 e2 => select_mem e1 ++ select_mem e2
   | BExp_MemEq e1 e2 => select_mem e1 ++ select_mem e2
   | BExp_IfThenElse e1 e2 e3 => select_mem e1 ++ select_mem e2 ++ select_mem e3
-  | BExp_Load e1 e2 a b =>   e2 :: (select_mem e1 ++ select_mem e2) 
-  | BExp_Store e1 e2 a e3 => e2 :: (select_mem e1 ++ select_mem e2 ++ select_mem e3)
+  | BExp_Load e1 e2 a b =>   (select_mem_LD e2) :: (select_mem e1 ++ select_mem e2) 
+  | BExp_Store e1 e2 a e3 => (select_mem_ST e2) :: (select_mem e1 ++ select_mem e2 ++ select_mem e3)
   | _ => [])
-
 `;
+
+val select_mem_flatten_def = Define`
+select_mem_flatten x = case x of select_mem_LD e => e | select_mem_ST e => e
+`;
+
 
 val constrain_mem_def = Define`
 constrain_mem (mem_min, mem_max) e =
@@ -32,22 +58,31 @@ constrain_mem (mem_min, mem_max) e =
        (BExp_BinPred BIExp_LessThan (e) (BExp_Const (Imm64 mem_max))))
 `;
 
-val add_obs_constr_mem_stmts_def = Define `
-(add_obs_constr_mem_stmts mem_bounds obs_fun [] = []) /\
-(add_obs_constr_mem_stmts mem_bounds obs_fun (x :: xs) =
+val add_obs_constr_mem_stmts_ls_def = Define `
+(add_obs_constr_mem_stmts_ls mem_bounds obs_fun_ld obs_fun_st [] = []) /\
+(add_obs_constr_mem_stmts_ls mem_bounds obs_fun_ld obs_fun_st (x :: xs) =
  case x of
      BStmt_Assign v e =>
      (case select_mem e of
-          [] => x :: add_obs_constr_mem_stmts mem_bounds obs_fun xs
-        | lds => (APPEND (MAP (constrain_mem mem_bounds) lds)
+          [] => x :: add_obs_constr_mem_stmts_ls mem_bounds obs_fun_ld obs_fun_st xs
+        | lds => (APPEND (MAP (constrain_mem mem_bounds) (MAP select_mem_flatten lds))
                       (* TODO: (Andreas:) Can it be that there is a bug here with the order, first xs, and then x? *)
-                      (APPEND (APPEND (MAP obs_fun lds) (add_obs_constr_mem_stmts mem_bounds obs_fun xs)) [x])))
-   | _ => x :: add_obs_constr_mem_stmts mem_bounds obs_fun xs)
+                      (APPEND (APPEND (MAP (\x. case x of select_mem_LD e => obs_fun_ld e | select_mem_ST e => obs_fun_st e) lds) (add_obs_constr_mem_stmts_ls mem_bounds obs_fun_ld obs_fun_st xs)) [x])))
+   | _ => x :: add_obs_constr_mem_stmts_ls mem_bounds obs_fun_ld obs_fun_st xs)
+`;
+
+val add_obs_constr_mem_stmts_def = Define `
+    add_obs_constr_mem_stmts mem_bounds obs_fun = add_obs_constr_mem_stmts_ls mem_bounds obs_fun obs_fun
 `;
 
 val add_obs_constr_mem_block_def = Define`
     add_obs_constr_mem_block mem_bounds obs_fun block =
       block with bb_statements := add_obs_constr_mem_stmts mem_bounds obs_fun block.bb_statements
+`;
+
+val add_obs_constr_mem_block_ls_def = Define`
+    add_obs_constr_mem_block_ls mem_bounds obs_fun_ld obs_fun_st block =
+      block with bb_statements := add_obs_constr_mem_stmts_ls mem_bounds obs_fun_ld obs_fun_st block.bb_statements
 `;
 
 
@@ -79,11 +114,24 @@ val observe_label_def = Define `
                        [BExp_Const addr]
                        HD
 `;
+val observe_label_pc_def = Define `
+    observe_label_pc (BL_Address addr) =
+         BStmt_Observe 0
+                       (BExp_Const (Imm1 1w))
+                       [BExp_Const addr]
+                       gen_LSPC_PC
+`;
 
 val add_obs_pc_block_def = Define`
     add_obs_pc_block block =
       block with bb_statements :=
         observe_label (block.bb_label) :: block.bb_statements
+`;
+
+val add_obs_pc_block_pc_def = Define`
+    add_obs_pc_block_pc block =
+      block with bb_statements :=
+        observe_label_pc (block.bb_label) :: block.bb_statements
 `;
 
 val add_obs_pc_def = Define`
@@ -99,6 +147,13 @@ val observe_mem_addr_def = Define`
                     [e]
                     HD
 `;
+val observe_gen_def = Define`
+    observe_gen gen_fun e = 
+      BStmt_Observe 0
+                    (BExp_Const (Imm1 1w))
+                    [e]
+                    gen_fun
+`;
 
 val add_obs_mem_addr_armv8_def = Define`
     add_obs_mem_addr_armv8 mem_bounds p = 
@@ -111,6 +166,14 @@ val add_obs_mem_addr_armv8_def = Define`
 val add_obs_mem_addr_pc_armv8_def = Define`
     add_obs_mem_addr_pc_armv8 mem_bounds p = 
       map_obs_prog (add_obs_pc_block o (add_obs_constr_mem_block mem_bounds observe_mem_addr)) p
+`;
+
+
+(* observe whole memory address and pc (lspc type construction annototation) *)
+(* ============================================================================== *)
+val add_obs_mem_addr_pc_lspc_armv8_def = Define`
+    add_obs_mem_addr_pc_lspc_armv8 mem_bounds p = 
+      map_obs_prog (add_obs_pc_block_pc o (add_obs_constr_mem_block_ls mem_bounds (observe_gen gen_LSPC_Load) (observe_gen gen_LSPC_Store))) p
 `;
 
 
@@ -249,7 +312,7 @@ val add_obs_stmts_subset_and_line_def = Define `
 (add_obs_constr_mem_stmts_subset_and_line mem_bounds (x :: xs) =
  case x of
      BStmt_Assign v e =>
-     (case select_mem e of
+     (case MAP select_mem_flatten (select_mem e) of
           [] => x :: add_obs_stmts_subset mem_bounds xs
         | lds => (APPEND (MAP (constrain_mem mem_bounds) lds)
                          (x :: (APPEND (MAP observe_mem_subset lds)
