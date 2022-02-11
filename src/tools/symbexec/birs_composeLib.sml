@@ -383,6 +383,50 @@ fun birs_exps_of_senv_COMP_ONCE_CONV tm =
     (REFL)
 ) tm;
 
+(* TODO: add proper exceptions/exception messages if the unexpected happens... *)
+fun birs_exps_of_senv_COMP_CONV_cheat tm =
+  let
+    val (s1, s2_l) = strip_comb tm;
+    val _ = if ((fst o dest_const) s1) = "birs_exps_of_senv_COMP" then () else
+            raise ERR "birs_exps_of_senv_COMP_CONV_cheat" "constant not found";
+    val _ = if length s2_l = 2 then () else
+            raise ERR "birs_exps_of_senv_COMP_CONV_cheat" "application not right";
+    val initvarset = List.nth(s2_l, 0);
+    val _ = if pred_setSyntax.is_empty initvarset then () else
+            raise ERR "birs_exps_of_senv_COMP_CONV_cheat" "must start with empty set";
+
+    val tm_map = List.nth(s2_l, 1);
+
+    fun eq_fun tm1 tm2 = tm1 = tm2;
+    fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
+
+    val base_term = ``(K NONE):string -> bir_exp_t option``;
+    fun collectfun excl acc tm_map =
+      if identical tm_map base_term then acc else
+      if not (combinSyntax.is_update_comb tm_map) then raise ERR "birs_exps_of_senv_COMP_CONV_cheat" "should not happen" else
+      let
+        val ((mem_upd_k, mem_upd_v), tm_map_sub) = combinSyntax.dest_update_comb tm_map;
+        val mem_upd_v_v = optionSyntax.dest_some mem_upd_v;
+        val mem_upd_k_s = stringSyntax.fromHOLstring mem_upd_k;
+        val k_s_is_excl = in_f excl mem_upd_k_s;
+        val new_acc  = if k_s_is_excl then (acc)  else ([mem_upd_v_v]@acc);
+        val new_excl = if k_s_is_excl then (excl) else ([mem_upd_k_s]@excl);
+      in
+        collectfun new_excl new_acc tm_map_sub
+      end;
+
+(*
+    val s1_l = pred_setSyntax.strip_set s1;
+    val s2_l = pred_setSyntax.strip_set s2;
+List.foldr (fn (x, l) => if not (in_f s2_l x) then x::l else l) [] s1_l;
+*)
+
+    val l = collectfun [] [] tm_map;
+    val tm_l_set = if List.null l then pred_setSyntax.mk_empty(``:bir_exp_t``) else pred_setSyntax.mk_set l;
+  in
+    mk_oracle_thm "FISHY_BIRS_BIR_SENV_VARSET" ([], mk_eq (tm, tm_l_set))
+  end;
+
 fun birs_exps_of_senv_COMP_CONV tm =
 (
 (*(fn tm => (if false then print ".\n" else print_term tm; REFL tm)) THENC*)
@@ -411,7 +455,7 @@ fun birs_exps_of_senv_CONV tm =
 (fn tm => (if false then print ".\n" else print_term tm; REFL tm)) THENC
 *)
   REWRITE_CONV [birs_exps_of_senv_thm] THENC
-  ((*TRY_CONV*) birs_exps_of_senv_COMP_CONV)
+  ((*TRY_CONV*) birs_exps_of_senv_COMP_CONV_cheat)
 ) tm;
 
 fun is_birs_exps_of_senv tm = is_comb tm andalso
@@ -730,12 +774,15 @@ fun INTER_INSERT_CONV el_EQ_CONV tm =
 ) tm;
 
 
+(* TODO: fix this *)
+fun bvar_eq_fun_cheat tm1 tm2 = identical tm1 tm2;
+
 fun INTER_INSERT_CONV_cheat tm =
   let
     val (s1, s2) = pred_setSyntax.dest_inter tm
     val s1_l = pred_setSyntax.strip_set s1;
     val s2_l = pred_setSyntax.strip_set s2;
-    fun eq_fun x y = identical x y;
+    val eq_fun = bvar_eq_fun_cheat;
     fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
     val l = List.foldr (fn (x, l) => if in_f s2_l x then x::l else l) [] s1_l;
     val tm_l_set = if List.null l then pred_setSyntax.mk_empty(pred_setSyntax.eltype  tm) else pred_setSyntax.mk_set l;
@@ -748,7 +795,7 @@ fun DIFF_INSERT_CONV_cheat tm =
     val (s1, s2) = pred_setSyntax.dest_diff tm
     val s1_l = pred_setSyntax.strip_set s1;
     val s2_l = pred_setSyntax.strip_set s2;
-    fun eq_fun x y = identical x y;
+    val eq_fun = bvar_eq_fun_cheat;
     fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
     val l = List.foldr (fn (x, l) => if not (in_f s2_l x) then x::l else l) [] s1_l;
     val tm_l_set = if List.null l then pred_setSyntax.mk_empty(pred_setSyntax.eltype  tm) else pred_setSyntax.mk_set l;
@@ -831,9 +878,116 @@ METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
 
       REWRITE_TAC [pred_setTheory.BIGUNION_INSERT, pred_setTheory.BIGUNION_EMPTY] >>
       REWRITE_TAC [pred_setTheory.UNION_ASSOC, pred_setTheory.INSERT_UNION_EQ, pred_setTheory.UNION_EMPTY] >>
+
+(*
+      (fn (al,g) => (print_term g; ([(al,g)], fn ([t]) => t))) >>
+*)
+      (fn (al,g) => (print "starting to proof free symbols\n"; ([(al,g)], fn ([t]) => t))) >>
+
+(*
+prove(``{BVar "sy_tmp_countw" (BType_Imm Bit64);
+ BVar "sy_tmp_ModeHandler" (BType_Imm Bit1);
+ BVar "sy_tmp_SP_process" (BType_Imm Bit32);
+ BVar "sy_tmp_SP_main" (BType_Imm Bit32); BVar "sy_tmp_LR" (BType_Imm Bit32);
+ BVar "sy_tmp_R12" (BType_Imm Bit32); BVar "sy_tmp_R11" (BType_Imm Bit32);
+ BVar "sy_tmp_R10" (BType_Imm Bit32); BVar "sy_tmp_R9" (BType_Imm Bit32);
+ BVar "sy_tmp_R8" (BType_Imm Bit32); BVar "sy_tmp_R7" (BType_Imm Bit32);
+ BVar "sy_tmp_R6" (BType_Imm Bit32); BVar "sy_tmp_R5" (BType_Imm Bit32);
+ BVar "sy_tmp_R4" (BType_Imm Bit32); BVar "sy_tmp_R3" (BType_Imm Bit32);
+ BVar "sy_tmp_R2" (BType_Imm Bit32); BVar "sy_tmp_R1" (BType_Imm Bit32);
+ BVar "sy_tmp_R0" (BType_Imm Bit32); BVar "sy_tmp_PSR_Z" (BType_Imm Bit1);
+ BVar "sy_tmp_PSR_V" (BType_Imm Bit1); BVar "sy_tmp_PSR_N" (BType_Imm Bit1);
+ BVar "sy_tmp_PSR_C" (BType_Imm Bit1);
+ BVar "sy_tmp_MEM" (BType_Mem Bit32 Bit8);
+ BVar "sy_tmp_COND" (BType_Imm Bit1); BVar "sy_tmp_PC" (BType_Imm Bit32);
+ BVar "sy_countw" (BType_Imm Bit64); BVar "sy_ModeHandler" (BType_Imm Bit1);
+ BVar "sy_SP_process" (BType_Imm Bit32); BVar "sy_SP_main" (BType_Imm Bit32);
+ BVar "sy_LR" (BType_Imm Bit32); BVar "sy_R12" (BType_Imm Bit32);
+ BVar "sy_R11" (BType_Imm Bit32); BVar "sy_R10" (BType_Imm Bit32);
+ BVar "sy_R9" (BType_Imm Bit32); BVar "sy_R8" (BType_Imm Bit32);
+ BVar "sy_R7" (BType_Imm Bit32); BVar "sy_R6" (BType_Imm Bit32);
+ BVar "sy_R5" (BType_Imm Bit32); BVar "sy_R4" (BType_Imm Bit32);
+ BVar "sy_R3" (BType_Imm Bit32); BVar "sy_R2" (BType_Imm Bit32);
+ BVar "sy_R1" (BType_Imm Bit32); BVar "sy_R0" (BType_Imm Bit32);
+ BVar "sy_PSR_Z" (BType_Imm Bit1); BVar "sy_PSR_V" (BType_Imm Bit1);
+ BVar "sy_PSR_N" (BType_Imm Bit1); BVar "sy_PSR_C" (BType_Imm Bit1);
+ BVar "sy_MEM" (BType_Mem Bit32 Bit8)} ∩
+({BVar "sy_countw" (BType_Imm Bit64); BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_tmp_countw" (BType_Imm Bit64);
+  BVar "sy_tmp_ModeHandler" (BType_Imm Bit1);
+  BVar "sy_tmp_SP_main" (BType_Imm Bit32);
+  BVar "sy_tmp_LR" (BType_Imm Bit32); BVar "sy_tmp_R12" (BType_Imm Bit32);
+  BVar "sy_tmp_R11" (BType_Imm Bit32); BVar "sy_tmp_R10" (BType_Imm Bit32);
+  BVar "sy_tmp_R9" (BType_Imm Bit32); BVar "sy_tmp_R8" (BType_Imm Bit32);
+  BVar "sy_tmp_R7" (BType_Imm Bit32); BVar "sy_tmp_R6" (BType_Imm Bit32);
+  BVar "sy_tmp_R5" (BType_Imm Bit32); BVar "sy_tmp_R4" (BType_Imm Bit32);
+  BVar "sy_tmp_R3" (BType_Imm Bit32); BVar "sy_tmp_R2" (BType_Imm Bit32);
+  BVar "sy_tmp_R1" (BType_Imm Bit32); BVar "sy_tmp_R0" (BType_Imm Bit32);
+  BVar "sy_tmp_PSR_Z" (BType_Imm Bit1); BVar "sy_tmp_PSR_V" (BType_Imm Bit1);
+  BVar "sy_tmp_PSR_N" (BType_Imm Bit1); BVar "sy_tmp_PSR_C" (BType_Imm Bit1);
+  BVar "sy_tmp_MEM" (BType_Mem Bit32 Bit8);
+  BVar "sy_tmp_COND" (BType_Imm Bit1); BVar "sy_tmp_PC" (BType_Imm Bit32);
+  BVar "sy_ModeHandler" (BType_Imm Bit1);
+  BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_SP_main" (BType_Imm Bit32); BVar "sy_LR" (BType_Imm Bit32);
+  BVar "sy_R12" (BType_Imm Bit32); BVar "sy_R11" (BType_Imm Bit32);
+  BVar "sy_R10" (BType_Imm Bit32); BVar "sy_R9" (BType_Imm Bit32);
+  BVar "sy_R8" (BType_Imm Bit32); BVar "sy_R7" (BType_Imm Bit32);
+  BVar "sy_R6" (BType_Imm Bit32); BVar "sy_R5" (BType_Imm Bit32);
+  BVar "sy_R4" (BType_Imm Bit32); BVar "sy_R3" (BType_Imm Bit32);
+  BVar "sy_R2" (BType_Imm Bit32); BVar "sy_R1" (BType_Imm Bit32);
+  BVar "sy_R0" (BType_Imm Bit32); BVar "sy_PSR_Z" (BType_Imm Bit1);
+  BVar "sy_PSR_V" (BType_Imm Bit1); BVar "sy_PSR_N" (BType_Imm Bit1);
+  BVar "sy_PSR_C" (BType_Imm Bit1); BVar "sy_MEM" (BType_Mem Bit32 Bit8);
+  BVar "sy_SP_process" (BType_Imm Bit32); BVar "sy_countw" (BType_Imm Bit64)} DIFF
+ {BVar "sy_countw" (BType_Imm Bit64); BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_tmp_countw" (BType_Imm Bit64);
+  BVar "sy_tmp_ModeHandler" (BType_Imm Bit1);
+  BVar "sy_tmp_SP_main" (BType_Imm Bit32);
+  BVar "sy_tmp_LR" (BType_Imm Bit32); BVar "sy_tmp_R12" (BType_Imm Bit32);
+  BVar "sy_tmp_R11" (BType_Imm Bit32); BVar "sy_tmp_R10" (BType_Imm Bit32);
+  BVar "sy_tmp_R9" (BType_Imm Bit32); BVar "sy_tmp_R8" (BType_Imm Bit32);
+  BVar "sy_tmp_R7" (BType_Imm Bit32); BVar "sy_tmp_R6" (BType_Imm Bit32);
+  BVar "sy_tmp_R5" (BType_Imm Bit32); BVar "sy_tmp_R4" (BType_Imm Bit32);
+  BVar "sy_tmp_R3" (BType_Imm Bit32); BVar "sy_tmp_R2" (BType_Imm Bit32);
+  BVar "sy_tmp_R1" (BType_Imm Bit32); BVar "sy_tmp_R0" (BType_Imm Bit32);
+  BVar "sy_tmp_PSR_Z" (BType_Imm Bit1); BVar "sy_tmp_PSR_V" (BType_Imm Bit1);
+  BVar "sy_tmp_PSR_N" (BType_Imm Bit1); BVar "sy_tmp_PSR_C" (BType_Imm Bit1);
+  BVar "sy_tmp_MEM" (BType_Mem Bit32 Bit8);
+  BVar "sy_tmp_COND" (BType_Imm Bit1); BVar "sy_tmp_PC" (BType_Imm Bit32);
+  BVar "sy_countw" (BType_Imm Bit64); BVar "sy_ModeHandler" (BType_Imm Bit1);
+  BVar "sy_SP_process" (BType_Imm Bit32);
+  BVar "sy_SP_main" (BType_Imm Bit32); BVar "sy_LR" (BType_Imm Bit32);
+  BVar "sy_R12" (BType_Imm Bit32); BVar "sy_R11" (BType_Imm Bit32);
+  BVar "sy_R10" (BType_Imm Bit32); BVar "sy_R9" (BType_Imm Bit32);
+  BVar "sy_R8" (BType_Imm Bit32); BVar "sy_R7" (BType_Imm Bit32);
+  BVar "sy_R6" (BType_Imm Bit32); BVar "sy_R5" (BType_Imm Bit32);
+  BVar "sy_R4" (BType_Imm Bit32); BVar "sy_R3" (BType_Imm Bit32);
+  BVar "sy_R2" (BType_Imm Bit32); BVar "sy_R1" (BType_Imm Bit32);
+  BVar "sy_R0" (BType_Imm Bit32); BVar "sy_PSR_Z" (BType_Imm Bit1);
+  BVar "sy_PSR_V" (BType_Imm Bit1); BVar "sy_PSR_N" (BType_Imm Bit1);
+  BVar "sy_PSR_C" (BType_Imm Bit1); BVar "sy_MEM" (BType_Mem Bit32 Bit8);
+  BVar "sy_SP_process" (BType_Imm Bit32)}) ⊆ ∅
+``,
+);
+*)
+
+
       CONV_TAC (RATOR_CONV (RAND_CONV (freevarset_CONV))) >>
+      (fn (al,g) => (print "finished to proof free symbols operation\n"; ([(al,g)], fn ([t]) => t))) >>
 
       REWRITE_TAC [pred_setTheory.EMPTY_SUBSET]
+      >> (fn (al,g) => (print "finished to proof free symbols\n"; ([(al,g)], fn ([t]) => t)))
 
 (*
       EVAL_TAC (* TODO: speed this up... *)
@@ -909,6 +1063,7 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
     val (sys_B_tm, _, Pi_B_tm) = (symb_sound_struct_get_sysLPi_fun o concl) step_B_thm;
 
     val freesymbols_thm = birs_rule_SEQ_free_symbols_fun bprog_tm (sys_A_tm, sys_B_tm, Pi_B_tm);
+    val _ = print "finished to proof free symbols altogether\n";
     (*
     val bprog_composed_thm = save_thm(
        "bprog_composed_thm",
@@ -921,6 +1076,7 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
               freesymbols_thm)
         step_A_thm)
         step_B_thm;
+    val _ = print "composed\n";
 
     (* TODO: tidy up set operations to not accumulate (in both, post state set and label set) - does this simplification work well enough? *)
     (* val bprog_composed_thm_ = SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss) [] bprog_composed_thm; *)
@@ -930,6 +1086,7 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
         (std_ss++HolBACoreSimps.holBACore_ss++birs_state_ss++pred_setLib.PRED_SET_ss)
         [bir_symbTheory.birs_symb_to_symbst_EQ_thm, pred_setTheory.INSERT_UNION]
         bprog_composed_thm);
+    val _ = print "UNION\n";
 
     (* reconstruct IMAGE in the post state set *)
     val IMAGE_EMPTY_thm =
@@ -937,10 +1094,12 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
         INST_TYPE [beta |-> Type`:(bir_programcounter_t, string, bir_exp_t, bir_status_t) symb_symbst_t`, alpha |-> Type`:birs_state_t`] 
         pred_setTheory.IMAGE_EMPTY
       );
+    val _ = print "FIX\n";
     val bprog_composed_thm_2 =
       CONV_RULE
         (PAT_CONV ``\A. symb_hl_step_in_L_sound B (C, D, A)`` (REWRITE_CONV [GSYM IMAGE_EMPTY_thm, GSYM pred_setTheory.IMAGE_INSERT]))
         bprog_composed_thm_1
+    val _ = print "IMAGE_INSERT\n";
   in
     bprog_composed_thm_2
   end;
