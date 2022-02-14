@@ -1495,13 +1495,16 @@ val birs_state_set_failed_def = Define `
 
 
 (* ... *)
+val birs_update_env_def = Define `
+    birs_update_env (n, v) env = (n =+ (SOME v)) env
+`;
 
 val birs_exec_stmt_assign_def = Define `
     birs_exec_stmt_assign v ex (st : birs_state_t) =
       case birs_eval_exp ex st.bsst_environ of
      | SOME (vaex, vaty) =>
          if vaty = bir_var_type v /\ (OPTION_BIND (st.bsst_environ (bir_var_name v)) type_of_bir_exp = SOME vaty) then
-           {st with bsst_environ := ((bir_var_name v =+ (SOME vaex)) st.bsst_environ)}
+           {st with bsst_environ := (birs_update_env (bir_var_name v, vaex) st.bsst_environ)}
          else
            {birs_state_set_typeerror st}
      | NONE => {birs_state_set_typeerror st}
