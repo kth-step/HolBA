@@ -1081,6 +1081,53 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
     (* TODO: tidy up set operations to not accumulate (in both, post state set and label set) - does this simplification work well enough? *)
     (* val bprog_composed_thm_ = SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss) [] bprog_composed_thm; *)
     (* val bprog_composed_thm_ = SIMP_RULE (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss) [pred_setTheory.INSERT_UNION] bprog_composed_thm; *)
+
+(*
+val tm = (snd o dest_comb o snd o dest_comb o snd o dest_comb o concl) bprog_composed_thm;
+*)
+
+    fun DIFF_UNION_CONV tm =
+      let
+        val pat_tm = ``(IMAGE (birs_symb_to_symbst) Pi_a) DIFF {birs_symb_to_symbst sys_b} UNION (IMAGE birs_symb_to_symbst Pi_b)``;
+        val (tm_match, ty_match) = match_term pat_tm tm;
+
+        val Pi_a  = pred_setSyntax.strip_set(subst tm_match (inst ty_match ``Pi_a:birs_state_t->bool``));
+        val sys_b = subst tm_match (inst ty_match ``sys_b:birs_state_t``);
+        val Pi_b  = pred_setSyntax.strip_set(subst tm_match (inst ty_match ``Pi_b:birs_state_t->bool``));
+
+        fun eq_fun sys1 sys2 = identical sys1 sys2; (* TODO: birs_state_eq_fun*)
+        fun in_f l x = List.foldr (fn (y, b) => b orelse eq_fun x y) false l;
+        val Pi_a_minus_b = List.filter (not o eq_fun sys_b) Pi_a;
+        fun UNION_foldfun (sys,Pi) = if in_f Pi sys then Pi else (sys::Pi);
+        val Pi_c = List.foldr UNION_foldfun Pi_a_minus_b Pi_b;
+        val tm_l_set = if List.null Pi_c then pred_setSyntax.mk_empty (``:birs_state_t``) else pred_setSyntax.mk_set Pi_c;
+(*
+length Pi_a
+length Pi_a_minus_b
+length Pi_c
+*)
+      in
+        prove(``^tm = IMAGE birs_symb_to_symbst ^tm_l_set``, cheat)
+      end;
+
+(*
+    val conv = DIFF_UNION_CONV;
+*)
+
+    fun Pi_CONV conv tm =
+      RAND_CONV (RAND_CONV (conv)) tm;
+
+    fun L_CONV conv tm =
+      RAND_CONV (LAND_CONV (conv)) tm;
+
+    val bprog_Pi_fixed_thm = CONV_RULE (RAND_CONV (Pi_CONV DIFF_UNION_CONV)) bprog_composed_thm;
+
+    val bprog_L_fixed_thm  = CONV_RULE (RAND_CONV (L_CONV (
+      SIMP_CONV
+        (std_ss++HolBACoreSimps.holBACore_ss++birs_state_ss++pred_setLib.PRED_SET_ss)
+        [bir_symbTheory.birs_symb_to_symbst_EQ_thm, pred_setTheory.INSERT_UNION]))) bprog_Pi_fixed_thm;
+
+(*
     val bprog_composed_thm_1 =
       (SIMP_RULE
         (std_ss++HolBACoreSimps.holBACore_ss++birs_state_ss++pred_setLib.PRED_SET_ss)
@@ -1100,8 +1147,9 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
         (PAT_CONV ``\A. symb_hl_step_in_L_sound B (C, D, A)`` (REWRITE_CONV [GSYM IMAGE_EMPTY_thm, GSYM pred_setTheory.IMAGE_INSERT]))
         bprog_composed_thm_1
     val _ = print "IMAGE_INSERT\n";
+*)
   in
-    bprog_composed_thm_2
+    bprog_L_fixed_thm
   end;
 
 
