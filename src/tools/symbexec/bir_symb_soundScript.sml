@@ -637,11 +637,11 @@ val birs_exec_stmt_assign_sound_thm = store_thm(
         IMP_RES_TAC birs_eval_exp_IMP_varset_thm >>
         METIS_TAC [SUBSET_DEF, IN_UNION]
       ) >>
-      METIS_TAC [symb_interpr_for_symbs_IMP_UPDATE_ENV_thm]
+      METIS_TAC [symb_interpr_for_symbs_IMP_UPDATE_ENV_thm, birs_update_env_def]
     ) >>
 
     Cases_on `s.bst_environ` >>
-    FULL_SIMP_TAC (std_ss) [option_CLAUSES, bir_env_write_def, bir_env_update_def] >>
+    FULL_SIMP_TAC (std_ss) [option_CLAUSES, bir_env_write_def, bir_env_update_def, birs_update_env_def] >>
     METIS_TAC [birs_interpret_fun_IMP_birs_matchenv_thm]
   )
 );
