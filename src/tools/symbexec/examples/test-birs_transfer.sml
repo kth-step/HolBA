@@ -486,3 +486,5 @@ get_arm8_contract_sing
 
 examples/tutorial/7-composition/tutorial_backliftingScript.sml
 *)
+
+val _ = print_term (concl bprog_bir_prop_thm);
