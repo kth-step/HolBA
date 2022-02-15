@@ -106,3 +106,6 @@ val bprog_composed_thm_ = (snd o dest_eq o concl o (SIMP_CONV (std_ss++pred_setL
 
 val bprog_composed_thm_ = (snd o dest_eq o concl o (SIMP_CONV (std_ss++pred_setLib.PRED_SET_ss++HolBACoreSimps.holBACore_ss++birs_state_ss) [bir_symbTheory.birs_symb_to_symbst_EQ_thm, pred_setTheory.INSERT_UNION])) tm;
 *)
+
+
+val _ = print_term (concl bprog_composed_thm);
