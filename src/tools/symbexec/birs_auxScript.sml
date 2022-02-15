@@ -664,4 +664,66 @@ val bir_BEnv_lookup_EQ_thm = store_thm(
 );
 
 
+
+
+val birs_gen_env_fun_def = Define `
+    birs_gen_env_fun (n, sv) env = (n =+ (SOME sv)) env
+`;
+val birs_gen_env_def = Define `
+    birs_gen_env l = FOLDR birs_gen_env_fun (K NONE) l
+`;
+
+val birs_gen_env_NULL_thm = store_thm(
+   "birs_gen_env_NULL_thm", ``
+!n sv l.
+    birs_gen_env ([]) = (K NONE)
+``,
+  cheat
+);
+val birs_gen_env_thm = store_thm(
+   "birs_gen_env_thm", ``
+!n sv l.
+    birs_gen_env ((n, sv)::l) = (n =+ (SOME sv)) (birs_gen_env l)
+``,
+  cheat
+);
+
+(*
+EVAL ``birs_gen_env [("R0",BExp_Den (BVar "sy_R0" (BType_Imm Bit32))); ("R1",BExp_Den (BVar "sy_R1" (BType_Imm Bit32)))]``
+(REWRITE_CONV [birs_gen_env_thm, birs_gen_env_NULL_thm]) ``birs_gen_env [("R0",BExp_Den (BVar "sy_R0" (BType_Imm Bit32))); ("R1",BExp_Den (BVar "sy_R1" (BType_Imm Bit32)))]``
+*)
+
+val birs_update_env_thm = store_thm(
+   "birs_update_env_thm", ``
+!n sv l.
+    birs_update_env (n, sv) (birs_gen_env l) = birs_gen_env((n, sv)::(FILTER (\x. (FST x) <> n) l))
+``,
+  cheat
+);
+
+(*
+(REWRITE_CONV [birs_update_env_thm] THENC RESTR_EVAL_CONV [``birs_gen_env``])
+  ``birs_update_env ("R0", BExp_Const (Imm32 0w)) (birs_gen_env [("R2",BExp_Den (BVar "sy_R0" (BType_Imm Bit32))); ("R1",BExp_Den (BVar "sy_R1" (BType_Imm Bit32)))])``
+*)
+
+val birs_gen_env_GET_NULL_thm = store_thm(
+   "birs_gen_env_GET_NULL_thm", ``
+!m.
+    birs_gen_env [] m = NONE
+``,
+  cheat
+);
+val birs_gen_env_GET_thm = store_thm(
+   "birs_gen_env_GET_thm", ``
+!n sv l m.
+    birs_gen_env ((n, sv)::l) m = if n = m then SOME sv else birs_gen_env l m
+``,
+  cheat
+);
+
+(*
+(REWRITE_CONV [birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm] THENC EVAL) ``birs_gen_env [("R0",BExp_Den (BVar "sy_R0" (BType_Imm Bit32))); ("R1",BExp_Den (BVar "sy_R1" (BType_Imm Bit32)))] "R0"``
+*)
+
+
 val _ = export_theory();
