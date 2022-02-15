@@ -45,6 +45,11 @@ BirProgram [
 `;
 val bprog = (fst o dest_eq o concl) bprog_test_def;
 
+(* TODO: integrate environment builder function from the beginning *)
+(* TODO: execute with justification of asserts (include proper precondition) *)
+(* TODO: execute two steps using composition *)
+(* TODO: execute until end of block using sequential composition function *)
+(* TODO: add cheat flag to sequential composition? one block should execute quickly through sequential code *)
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_pc_next (bir_block_pc (BL_Address (Imm32 2826w)))``;
 val birs_state_end_lbl = (snd o dest_eq o concl o EVAL) ``bir_pc_next (^birs_state_init_lbl)``;
 
