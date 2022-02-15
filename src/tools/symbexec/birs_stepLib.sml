@@ -10,6 +10,7 @@ open bir_exp_substitutionsTheory;
 open bir_expTheory;
 
 open bir_symbTheory;
+open birs_auxTheory;
 
   (* error handling *)
   val libname = "bir_symbLib"
@@ -129,29 +130,59 @@ CBV_CONV (new_compset [
 *)
 
 (*
+val test_term_birs_eval_exp = ``
+birs_eval_exp
+            (BExp_BinExp BIExp_Plus
+               (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 1w)))
+            (birs_gen_env
+               [("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+                ("SP_process",
+                 BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+                ("countw",BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))])
+``;
+
 birs_eval_exp_CONV test_term_birs_eval_exp
 *)
 val birs_eval_exp_CONV = (
-  CBV_CONV (new_compset [birs_eval_exp_def]) THENC
+  CBV_CONV (new_compset [birs_eval_exp_def, birs_gen_env_thm, birs_gen_env_NULL_thm]) THENC
   GEN_match_conv (bir_typing_expSyntax.is_type_of_bir_exp) (type_of_bir_exp_DIRECT_CONV) THENC
   GEN_match_conv (is_birs_senv_typecheck) (birs_senv_typecheck_CONV) THENC
   EVAL
 );
 
 (*
-val restr_consts = [``birs_eval_exp``, ``LET``];
-RESTR_EVAL_CONV restr_consts test_term
-*)
+val test_term = ``
+birs_exec_step bprog_test
+      <|bsst_pc := <|bpc_label := BL_Address (Imm32 2826w); bpc_index := 1|>;
+        bsst_environ :=
+          birs_gen_env
+            [("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+             ("SP_process",BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+             ("countw",BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))];
+        bsst_status := BST_Running;
+        bsst_pcond :=
+          BExp_BinExp BIExp_And (BExp_Const (Imm1 1w))
+            (BExp_BinPred BIExp_LessOrEqual
+               (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+               (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))|>
+``;
 
-
-(*
 birs_exec_step_CONV test_term
 *)
-(* TODO: add purging of stale environment mappings *)
 val birs_exec_step_CONV = (
-  RESTR_EVAL_CONV [``birs_eval_exp``] THENC
+  RESTR_EVAL_CONV [``birs_eval_exp``, ``birs_update_env``, ``birs_gen_env``] THENC
+
+  (* TODO: remove this patch later *)
+  REWRITE_CONV [GSYM birs_gen_env_thm, GSYM birs_gen_env_NULL_thm] THENC
+
   GEN_match_conv (identical ``birs_eval_exp`` o fst o strip_comb) (birs_eval_exp_CONV) THENC
-  EVAL
+  REWRITE_CONV [birs_gen_env_GET_thm, birs_gen_env_GET_NULL_thm] THENC
+  RESTR_EVAL_CONV [``birs_update_env``, ``birs_gen_env``] THENC
+
+  (* TODO: here better only convert the subexpression birs_update_env *)
+  REWRITE_CONV [birs_update_env_thm] THENC
+  RESTR_EVAL_CONV [``birs_gen_env``]
 );
 
 
@@ -209,6 +240,7 @@ val birs_eval_exp_CONV = birs_eval_exp_CONV;
 (* ----------------------------------------------- *)
 (*
 val bstate_tm = birs_state_init;
+val bstate_tm = birs_state_mid;
 *)
 fun birs_exec_step_fun bprog_tm bstate_tm =
   let
