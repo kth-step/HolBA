@@ -349,6 +349,81 @@ fun symb_sound_struct_Pi_to_birstatelist_fun Pi_tm =
 (* TODO: clean up environment after assignment to not accumulate useless mappings *)
 (* TODO: maybe have a specialized assert/assignment step function? (optimization to detect this situation directly, maybe better as separate function?) *)
 
+(*
+val pcond_tm = ``
+               BExp_BinExp BIExp_And
+                 (BExp_BinPred BIExp_LessOrEqual
+                    (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+                    (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))
+                 (BExp_UnaryExp BIExp_Not
+                    (BExp_BinPred BIExp_LessOrEqual
+                       (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                       (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw))))
+``;
+*)
+
+(* stepping a sound structure, try to justify assert *)
+(* ----------------------------------------------- *)
+(*
+val bstate_tm = birs_state_init_tm;
+*)
+local
+  val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
+  open birs_auxTheory;
+
+  val assert_spec_thm = prove(``
+!bprog sys L lbl1 env1 status pre cond lbl2 env2.
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
+    (sys, L, IMAGE birs_symb_to_symbst {
+      <|bsst_pc := lbl1;
+        bsst_environ := env1;
+        bsst_status := status;
+        bsst_pcond := BExp_BinExp BIExp_And pre cond|>;
+      <|bsst_pc := lbl2;
+        bsst_environ := env2;
+        bsst_status := BST_AssertionViolated;
+        bsst_pcond := BExp_BinExp BIExp_And pre
+                 (BExp_UnaryExp BIExp_Not cond)|>})) ==>
+  (IS_BIR_CONTRADICTION (BExp_BinExp BIExp_And pre
+                 (BExp_UnaryExp BIExp_Not cond))) ==>
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
+    (sys, L, IMAGE birs_symb_to_symbst {
+      <|bsst_pc := lbl1;
+        bsst_environ := env1;
+        bsst_status := status;
+        bsst_pcond := pre|>}))
+``, cheat);
+
+
+in
+fun birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm bstate_tm =
+  let
+    val single_step_prog_thm = birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm;
+    val continue_thm_o =
+      SOME (MATCH_MP assert_spec_thm single_step_prog_thm)
+      handle _ => NONE;
+  in
+    (* val SOME continue_thm = continue_thm_o; *)
+    case continue_thm_o of
+       SOME continue_thm =>
+        let
+          val pcond_tm = (snd o dest_comb o snd o dest_comb o fst o dest_comb o concl) continue_thm;
+          val pcond_is_contr = true; (* TODO: *)
+          val pcond_thm_o =
+            if pcond_is_contr then
+              SOME (prove(``(IS_BIR_CONTRADICTION ^pcond_tm):bool``, cheat))
+            else
+              NONE;
+        in
+          (* val SOME pcond_thm = pcond_thm_o; *)
+          case pcond_thm_o of
+             SOME pcond_thm => MP continue_thm pcond_thm
+           | _ => single_step_prog_thm
+        end
+     | _ => single_step_prog_thm
+  end;
+end;
+
 end (* local *)
 
 end (* struct *)
