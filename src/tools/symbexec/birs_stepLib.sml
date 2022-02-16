@@ -395,6 +395,63 @@ local
 ``, cheat);
 
 
+(* ======================================= *)
+val debug_z3_taut_on = false;
+fun holsmt_is_taut wtm =
+  let val wtm_fixed = subst [mk_var ("MEM", ``:word64|->word8``) |-> Term`MEMV:word64|->word8`] wtm; in
+    ((HolSmtLib.Z3_ORACLE_PROVE wtm_fixed; true)
+    handle HOL_ERR e => (
+      if not debug_z3_taut_on then () else
+      let
+        val _ = print "--- not a tautology:\n";
+        val _ = print_term wtm_fixed;
+        val _ = print ">>> generating a model\n";
+        val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL (mk_neg wtm_fixed);
+        (*val _ = PolyML.print model;*)
+        val _ = print "<<< done generating a model\n";
+      in () end;
+        false))
+  end;
+
+fun holsmt_bir_check_unsat bexp =
+  let
+    (* little amounts of output *)
+    val _ = Library.trace := 1;
+    val pcond_bexp = (snd o dest_eq o concl o EVAL) bexp;
+    val wtm = bir_exp_to_wordsLib.bir2bool pcond_bexp;
+  in
+    holsmt_is_taut (mk_neg wtm)
+  end;
+
+open bir_smtLib;
+
+fun birsmt_check_unsat bexp =
+  let
+    val vars_empty = Redblackset.empty smtlib_vars_compare;
+    val (_, vars, query) = bexp_to_smtlib [] vars_empty bexp;
+
+    (* little amounts of output *)
+(*
+    val _ = (print o fst) query;
+*)
+    val result = querysmt bir_smtLib_z3_prelude vars [query];
+
+    val _ = if result = BirSmtSat orelse result = BirSmtUnsat then () else
+            raise ERR "bir_smt_check_unsat" "smt solver couldn't determine satisfiability"
+  in
+    result = BirSmtUnsat
+  end;
+
+val vars_empty = Redblackset.empty smtlib_vars_compare;
+
+(* ======================================= *)
+
+fun bir_check_unsat use_holsmt =
+  if use_holsmt then
+    holsmt_bir_check_unsat
+  else
+    birsmt_check_unsat;
+
 in
 fun birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm bstate_tm =
   let
@@ -408,7 +465,8 @@ fun birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm bstate_tm =
        SOME continue_thm =>
         let
           val pcond_tm = (snd o dest_comb o snd o dest_comb o fst o dest_comb o concl) continue_thm;
-          val pcond_is_contr = true; (* TODO: *)
+          (*val _ = print_term pcond_tm;*)
+          val pcond_is_contr = bir_check_unsat false pcond_tm;
           val pcond_thm_o =
             if pcond_is_contr then
               SOME (prove(``(IS_BIR_CONTRADICTION ^pcond_tm):bool``, cheat))
