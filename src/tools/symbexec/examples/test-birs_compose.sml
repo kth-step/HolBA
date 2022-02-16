@@ -80,7 +80,7 @@ val birs_state_init_2 = ``<|
                    ));
   bsst_status   := BST_Running;
   bsst_pcond    := BExp_BinPred BIExp_LessOrEqual
-                     (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+                     (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
                      (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w))
 |>``;
 (* ........................... *)

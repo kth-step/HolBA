@@ -65,12 +65,20 @@ val birs_state_init = ``<|
   bsst_pc       := ^birs_state_init_lbl;
   bsst_environ  := bir_senv_GEN_list birenvtyl;
   bsst_status   := BST_Running;
-  bsst_pcond    := BExp_Const (Imm1 1w)
+  bsst_pcond    := BExp_BinExp BIExp_And
+                     (BExp_BinExp BIExp_And
+                       (BExp_BinPred BIExp_LessOrEqual
+                         (BExp_Const (Imm32 0xFFFFFFw))
+                         (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32))))
+                       (BExp_Aligned Bit32 2 (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))))
+                     (BExp_BinPred BIExp_LessOrEqual
+                       (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+                       (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))
 |>``;
 (* ........................... *)
 
 val birs_rule_STEP_thm = birs_rule_STEP_prog_fun bprog_tm (bir_prog_has_no_halt_fun bprog_tm);
-val birs_rule_STEP_fun_spec = birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm;
+val birs_rule_STEP_fun_spec = birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm;
 (* now the composition *)
 val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
 val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
