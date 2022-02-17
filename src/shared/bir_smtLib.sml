@@ -256,16 +256,22 @@ in
       val sty = get_smtlib_type_args probfun args;
       fun gen_exp opstr = gen_smtlib_expr opstr args SMTTY_Bool;
     in
+    (* simple equality *)
     (* TODO: BinPred cannot be applied to memories! *)
     if is_BIExp_Equal bpredop then gen_exp "="
     else if is_BIExp_NotEqual bpredop then apply_smtlib_op (fn s => "(not " ^ s ^ ")")
                                                            (gen_exp "=")
-    (* TODO: BinPred can be applied to Imm1! *)
+    (* bitvectors *)
     else if smt_type_is_bv sty then
       if is_BIExp_LessThan bpredop then gen_exp "bvult"
       else if is_BIExp_SignedLessThan bpredop then gen_exp "bvslt"
       else if is_BIExp_LessOrEqual bpredop then gen_exp "bvule"
       else if is_BIExp_SignedLessOrEqual bpredop then gen_exp "bvsle"
+      else problem_gen_sty "bpredop_to_smtlib" bpredop sty
+    (* bools *)
+    (* TODO: BinPred can be applied to Imm1, handle remaining cases here! *)
+    else if smt_type_is_bool sty then
+      if is_BIExp_LessOrEqual bpredop then gen_exp "=>"
       else problem_gen_sty "bpredop_to_smtlib" bpredop sty
     else problem_gen_sty "bpredop_to_smtlib" bpredop sty
     end;
@@ -560,6 +566,8 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
             problem exp "don't know BIR expression: "
         end
     end;
+
+(* TODO: add a model importer *)
 
 end (* local *)
 
