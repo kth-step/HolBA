@@ -1078,8 +1078,10 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm freesymbols_B_thm_
     val _ = if identical bprog_tm bprog_A_tm andalso identical bprog_tm bprog_B_tm then () else
             raise Fail "birs_rule_SEQ_fun:: the programs have to match";
 
+    (*
     val (sys_A_tm, _, _)       = (symb_sound_struct_get_sysLPi_fun o concl) step_A_thm;
     val (sys_B_tm, _, Pi_B_tm) = (symb_sound_struct_get_sysLPi_fun o concl) step_B_thm;
+    *)
 
     val prep_thm =
       MATCH_MP (MATCH_MP birs_rule_SEQ_thm step_A_thm) step_B_thm;
