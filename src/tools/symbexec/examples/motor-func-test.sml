@@ -22,8 +22,11 @@ val bprog_tm = (fst o dest_eq o concl) bprog_def;
 
 (* motor_prep_input *)
 val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb08w))``;
-val birs_stop_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb46w))``;
-val birs_stop_lbl = ``<|bpc_label := BL_Address (Imm32 0xb08w); bpc_index := 7|>``;
+val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb46w))``];
+(*
+val birs_stop_lbls = [``<|bpc_label := BL_Address (Imm32 0xb08w); bpc_index := 7|>``];
+*)
+
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* TODO: the following is copied from transfer-test script (MODIFIED FOR TEMP VARS) *)
@@ -108,15 +111,15 @@ val STEP_fun_spec = birs_rule_STEP_fun_spec;
 val SEQ_fun_spec = birs_rule_SEQ_fun_spec;
 
 val symbex_A_thm = single_step_A_thm;
-val stop_lbl = birs_stop_lbl;
+val stop_lbls = birs_stop_lbls;
 *)
-fun exec_until (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbl =
+fun exec_until (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbls =
   let
     val _ = print ("\n");
     val (_, _, Pi_A_tm) = (symb_sound_struct_get_sysLPi_fun o concl) symbex_A_thm;
 
     fun is_executable st =
-      birs_is_running st andalso (not (identical (birs_get_pc st) stop_lbl));
+      birs_is_running st andalso (not (List.exists (identical (birs_get_pc st)) stop_lbls));
 
     val birs_states_mid = symb_sound_struct_Pi_to_birstatelist_fun Pi_A_tm;
     val birs_states_mid_running = List.filter birs_is_running birs_states_mid;
@@ -125,7 +128,7 @@ fun exec_until (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbl =
     val _ = print ("    (" ^ (Int.toString (length birs_states_mid_running)) ^ " running)\n");
     val _ = print ("    (" ^ (Int.toString (length birs_states_mid_executable)) ^ " executable)\n");
   in
-    (* stop condition (no more running states, or reached the stop_lbl) *)
+    (* stop condition (no more running states, or reached the stop_lbls) *)
     if List.length birs_states_mid_executable = 0 then
       (print "no executable states left, terminating";
        symbex_A_thm)
@@ -141,12 +144,12 @@ fun exec_until (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbl =
         val bprog_composed_thm = SEQ_fun_spec symbex_A_thm single_step_B_thm;
       in
         (* recursion *)
-        exec_until (STEP_fun_spec, SEQ_fun_spec) bprog_composed_thm stop_lbl
+        exec_until (STEP_fun_spec, SEQ_fun_spec) bprog_composed_thm stop_lbls
       end
   end;
 (* ........................... *)
 
 
-val result = exec_until (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec) single_step_A_thm birs_stop_lbl;
+val result = exec_until (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec) single_step_A_thm birs_stop_lbls;
 
 val _ = (print_term o concl) result;
