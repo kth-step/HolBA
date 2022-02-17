@@ -27,6 +27,25 @@ open pred_setTheory;
 
 in
 
+(* TODO: *)
+val betterTheorem = prove(``
+!sr.
+!sys_A L_A Pi_A sys_B L_B Pi_B.
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_hl_step_in_L_sound sr (sys_A, L_A, Pi_A)) ==>
+  (symb_hl_step_in_L_sound sr (sys_B, L_B, Pi_B)) ==>
+
+  (* can't reintroduce symbols in fragment B that have been lost in A *)
+  (((symb_symbols sr sys_A) (* DIFF (symb_symbols sr sys_B) *))
+       INTER ((symb_symbols_set sr Pi_B) DIFF (symb_symbols sr sys_B))
+   = EMPTY) ==>
+
+  (symb_hl_step_in_L_sound sr (sys_A, L_A UNION L_B, (Pi_A DIFF {sys_B}) UNION Pi_B))
+``,
+  METIS_TAC[symb_rulesTheory.symb_rule_SEQ_thm]
+);
+
 (* first prepare the SEQ rule for prog *)
 fun birs_rule_SEQ_prog_fun bprog_tm =
   let
@@ -35,11 +54,11 @@ fun birs_rule_SEQ_prog_fun bprog_tm =
     val birs_symb_symbols_f_sound_prog_thm =
       (SPEC (bprog_tm) symbols_f_sound_thm);
   in
-    (MATCH_MP symb_rulesTheory.symb_rule_SEQ_thm birs_symb_symbols_f_sound_prog_thm)
+    (MATCH_MP betterTheorem birs_symb_symbols_f_sound_prog_thm)
   end;
 
 (* symbol freedom helper function *)
-fun birs_rule_SEQ_free_symbols_fun bprog_tm (sys_A_tm, sys_B_tm, Pi_B_tm) freesymbols_B_thm_o =
+fun birs_rule_SEQ_free_symbols_fun freesymbols_tm freesymbols_B_thm_o =
   let
     (*
     val freesymbols_thm = store_thm(
@@ -843,15 +862,10 @@ METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
 (* ------------------------------------------------------------------------ *)
 (* ------------------------------------------------------------------------ *)
 
-    val freesymbols_thm = prove(``
-    symb_symbols (bir_symb_rec_sbir ^bprog_tm) ^sys_A_tm INTER
-      (symb_symbols_set (bir_symb_rec_sbir ^bprog_tm) ^Pi_B_tm DIFF
-         symb_symbols (bir_symb_rec_sbir ^bprog_tm) ^sys_B_tm)
-    = EMPTY
-    ``,
+    val freesymbols_thm = prove(freesymbols_tm,
       (case freesymbols_B_thm_o of
           NONE => ALL_TAC
-        | SOME freesymbols_B_thm => REWRITE_TAC [freesymbols_B_thm, pred_setTheory.INTER_EMPTY]) >>
+        | SOME freesymbols_B_thm => cheat >> REWRITE_TAC [freesymbols_B_thm, pred_setTheory.INTER_EMPTY]) >>
 
       FULL_SIMP_TAC (std_ss) [bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm, birs_symb_symbols_set_EQ_thm] >>
 
@@ -1052,6 +1066,7 @@ FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
 (*
 val step_A_thm = single_step_A_thm;
 val step_B_thm = single_step_B_thm;
+val freesymbols_B_thm_o = SOME (prove(T, cheat));
 *)
 fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm freesymbols_B_thm_o =
   let
@@ -1066,20 +1081,21 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm freesymbols_B_thm_
     val (sys_A_tm, _, _)       = (symb_sound_struct_get_sysLPi_fun o concl) step_A_thm;
     val (sys_B_tm, _, Pi_B_tm) = (symb_sound_struct_get_sysLPi_fun o concl) step_B_thm;
 
-    val freesymbols_thm = birs_rule_SEQ_free_symbols_fun bprog_tm (sys_A_tm, sys_B_tm, Pi_B_tm) freesymbols_B_thm_o;
+    val prep_thm =
+      MATCH_MP (MATCH_MP birs_rule_SEQ_thm step_A_thm) step_B_thm;
+    val freesymbols_tm = (hd o fst o strip_imp o concl) prep_thm;
+
+    val freesymbols_thm = birs_rule_SEQ_free_symbols_fun freesymbols_tm freesymbols_B_thm_o;
     val _ = print "finished to proof free symbols altogether\n";
     (*
     val bprog_composed_thm = save_thm(
        "bprog_composed_thm",
     *)
+
     val bprog_composed_thm =
-      MATCH_MP
-        (MATCH_MP
            (MATCH_MP
-              birs_rule_SEQ_thm
-              freesymbols_thm)
-        step_A_thm)
-        step_B_thm;
+              prep_thm
+              freesymbols_thm);
     val _ = print "composed\n";
 
     (* TODO: tidy up set operations to not accumulate (in both, post state set and label set) - does this simplification work well enough? *)
