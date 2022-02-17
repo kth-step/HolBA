@@ -115,7 +115,7 @@ fun execute_two_steps bprog_tm birs_state_init_tm =
 
   (* compose together *)
   val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
-  val bprog_composed_thm = birs_rule_SEQ_fun_spec single_step_A_thm single_step_B_thm;
+  val bprog_composed_thm = birs_rule_SEQ_fun_spec single_step_A_thm single_step_B_thm NONE;
 
   (*
   val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
