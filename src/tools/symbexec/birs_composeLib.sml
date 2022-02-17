@@ -39,7 +39,7 @@ fun birs_rule_SEQ_prog_fun bprog_tm =
   end;
 
 (* symbol freedom helper function *)
-fun birs_rule_SEQ_free_symbols_fun bprog_tm (sys_A_tm, sys_B_tm, Pi_B_tm) =
+fun birs_rule_SEQ_free_symbols_fun bprog_tm (sys_A_tm, sys_B_tm, Pi_B_tm) freesymbols_B_thm_o =
   let
     (*
     val freesymbols_thm = store_thm(
@@ -849,6 +849,10 @@ METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
          symb_symbols (bir_symb_rec_sbir ^bprog_tm) ^sys_B_tm)
     = EMPTY
     ``,
+      (case freesymbols_B_thm_o of
+          NONE => ALL_TAC
+        | SOME freesymbols_B_thm => REWRITE_TAC [freesymbols_B_thm, pred_setTheory.INTER_EMPTY]) >>
+
       FULL_SIMP_TAC (std_ss) [bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm, birs_symb_symbols_set_EQ_thm] >>
 
       (* TODO *)
@@ -1049,7 +1053,7 @@ FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
 val step_A_thm = single_step_A_thm;
 val step_B_thm = single_step_B_thm;
 *)
-fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
+fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm freesymbols_B_thm_o =
   let
     val get_SEQ_thm_concl_symb_struct_fun = snd o strip_imp o snd o strip_binder (SOME boolSyntax.universal) o concl;
     val symb_struct_get_bprog_fun = snd o dest_comb o hd o snd o strip_comb;
@@ -1062,7 +1066,7 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm =
     val (sys_A_tm, _, _)       = (symb_sound_struct_get_sysLPi_fun o concl) step_A_thm;
     val (sys_B_tm, _, Pi_B_tm) = (symb_sound_struct_get_sysLPi_fun o concl) step_B_thm;
 
-    val freesymbols_thm = birs_rule_SEQ_free_symbols_fun bprog_tm (sys_A_tm, sys_B_tm, Pi_B_tm);
+    val freesymbols_thm = birs_rule_SEQ_free_symbols_fun bprog_tm (sys_A_tm, sys_B_tm, Pi_B_tm) freesymbols_B_thm_o;
     val _ = print "finished to proof free symbols altogether\n";
     (*
     val bprog_composed_thm = save_thm(
