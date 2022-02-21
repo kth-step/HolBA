@@ -301,7 +301,11 @@ BirProgram
        BStmt_Jmp (BLE_Label (BL_Address (Imm64 (28w :word64))))|>;
    <|bb_label := BL_Address (Imm64 (24w :word64));
      bb_statements :=
-       [(BStmt_Assign (BVar "R1*" (BType_Imm Bit64))
+     [
+       (BStmt_Assert
+            (BExp_BinPred BIExp_Equal (BExp_Const (Imm64 (41w :word64)))
+                          (BExp_Const (Imm64 (41w :word64)))) :bir_val_t bir_stmt_basic_t);
+       (BStmt_Assign (BVar "R1*" (BType_Imm Bit64))
            (BExp_Den (BVar "R1" (BType_Imm Bit64))) :
          bir_val_t bir_stmt_basic_t);
         (BStmt_Assign (BVar "R3*" (BType_Imm Bit64))
@@ -388,6 +392,9 @@ BirProgram
                  (BExp_Den (BVar "R5*" (BType_Imm Bit64)))
                  (BExp_Den (BVar "R4*" (BType_Imm Bit64)))) BEnd_LittleEndian
               Bit64) :bir_val_t bir_stmt_basic_t);
+        (BStmt_Assert
+           (BExp_BinPred BIExp_Equal (BExp_Const (Imm64 (42w :word64)))
+              (BExp_Const (Imm64 (42w :word64)))) :bir_val_t bir_stmt_basic_t);
         BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_Const (Imm64 (24w :word64))]
           (HD :bir_val_t list -> bir_val_t)];
@@ -399,7 +406,7 @@ BirProgram
           [BExp_Const (Imm64 (28w :word64))]
           (HD :bir_val_t list -> bir_val_t)];
      bb_last_statement := BStmt_Halt (BExp_Const (Imm32 (0w :word32)))|>]
-  :bir_val_t bir_program_t
+    :bir_val_t bir_program_t
   ”;
 
 val prog_5_test =

@@ -1,17 +1,19 @@
 structure bir_obs_modelLib :> bir_obs_modelLib =
 struct
 
-open HolKernel boolLib liteLib simpLib Parse bossLib;
+open HolKernel boolLib liteLib simpLib Parse bossLib bslSyntax;
 
   (* error handling *)
   val libname  = "bir_obs_modelLib"
   val ERR      = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
 
+val shadow_begin_fencepost = beq (bconst64 41, bconst64 41);
+val shadow_end_fencepost = beq (bconst64 42, bconst64 42);
+
 local
     open bir_obs_modelTheory;
 in
-
 
 fun proginst_fun_gen obs_type prog =
   inst [Type`:'obs_type` |-> obs_type] prog;
@@ -227,15 +229,20 @@ open bir_cfgLib;
                 in inst [Type.alpha |-> Type`:bir_val_t`]
                         (mk_BStmt_Assign (var_star_tm, “BExp_Den (BVar ^var ^var_type)”))
                 end;
+            val fencepost_begin = if null free_vars
+                                  then []
+                                  else [inst [Type.alpha |-> Type‘:bir_val_t’]
+                                             (bassert shadow_begin_fencepost)];
         in
-          List.map mk_assignment free_vars
+          fencepost_begin @ List.map mk_assignment free_vars
         end;
 
     (* generate shadow branch for a given branch (to be inserted in the other) *)
     fun gen_shadow_branch obs_fun g depth dict branch =
         let
-          open listSyntax
-          open pairSyntax
+          open listSyntax;
+          open pairSyntax;
+          open bir_valuesSyntax; 
           val stmts = extract_branch_stmts g depth branch dict;
           val preamble = mk_preamble stmts;
           (* add stars to every free variable *)
@@ -245,9 +252,12 @@ open bir_cfgLib;
           (* tag observations as refinements, as per obs_fun
              NB. Refinement will not work unless obs_fun tags
                  some observations with 1 *)
-          val stmts_obs_tagged = obs_fun stmts_without_pc
+          val stmts_obs_tagged = obs_fun stmts_without_pc;
+          val fencepost_assertion = if null stmts_obs_tagged
+                                    then []
+                                    else [inst [Type.alpha |-> bir_val_t_ty] (bassert shadow_end_fencepost)];
         in
-          preamble @ stmts_obs_tagged
+          preamble @ stmts_obs_tagged @ fencepost_assertion
         end
 
     (* generate shadow branches for a given cjmp *)

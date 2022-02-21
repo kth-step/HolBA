@@ -1305,8 +1305,9 @@ obs0 0x1C
 *)
 
 val prog_2_cache_speculation =
-    ``BirProgram
-      [<|bb_label := BL_Address (Imm64 (0w :word64));
+    “
+BirProgram
+  [<|bb_label := BL_Address (Imm64 (0w :word64));
      bb_statements :=
        [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_Const (Imm64 (0w :word64))] (HD :bir_val_t list -> bir_val_t);
@@ -1415,7 +1416,11 @@ val prog_2_cache_speculation =
          (BLE_Label (BL_Address (Imm64 (16w :word64))))|>;
    <|bb_label := BL_Address (Imm64 (16w :word64));
      bb_statements :=
-       [(BStmt_Assign (BVar "R9*" (BType_Imm Bit64))
+     [
+       (BStmt_Assert
+            (BExp_BinPred BIExp_Equal (BExp_Const (Imm64 (41w :word64)))
+                          (BExp_Const (Imm64 (41w :word64)))) :bir_val_t bir_stmt_basic_t);
+       (BStmt_Assign (BVar "R9*" (BType_Imm Bit64))
            (BExp_Den (BVar "R9" (BType_Imm Bit64))) :
          bir_val_t bir_stmt_basic_t);
         (BStmt_Assign (BVar "R14*" (BType_Imm Bit64))
@@ -1446,6 +1451,9 @@ val prog_2_cache_speculation =
            (BExp_Load (BExp_Den (BVar "MEM*" (BType_Mem Bit64 Bit8)))
               (BExp_Den (BVar "R9*" (BType_Imm Bit64))) BEnd_LittleEndian
               Bit64) :bir_val_t bir_stmt_basic_t);
+        (BStmt_Assert
+           (BExp_BinPred BIExp_Equal (BExp_Const (Imm64 (42w :word64)))
+              (BExp_Const (Imm64 (42w :word64)))) :bir_val_t bir_stmt_basic_t);
         BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_Const (Imm64 (16w :word64))]
           (HD :bir_val_t list -> bir_val_t);
@@ -1491,7 +1499,11 @@ val prog_2_cache_speculation =
        BStmt_Jmp (BLE_Label (BL_Address (Imm64 (28w :word64))))|>;
    <|bb_label := BL_Address (Imm64 (24w :word64));
      bb_statements :=
-       [(BStmt_Assign (BVar "R26*" (BType_Imm Bit64))
+     [
+       (BStmt_Assert
+            (BExp_BinPred BIExp_Equal (BExp_Const (Imm64 (41w :word64)))
+                          (BExp_Const (Imm64 (41w :word64)))) :bir_val_t bir_stmt_basic_t);
+       (BStmt_Assign (BVar "R26*" (BType_Imm Bit64))
            (BExp_Den (BVar "R26" (BType_Imm Bit64))) :
          bir_val_t bir_stmt_basic_t);
         (BStmt_Assign (BVar "R10*" (BType_Imm Bit64))
@@ -1531,6 +1543,9 @@ val prog_2_cache_speculation =
                  (BExp_Den (BVar "R26*" (BType_Imm Bit64)))
                  (BExp_Const (Imm64 (76w :word64)))) BEnd_LittleEndian Bit64) :
          bir_val_t bir_stmt_basic_t);
+        (BStmt_Assert
+           (BExp_BinPred BIExp_Equal (BExp_Const (Imm64 (42w :word64)))
+              (BExp_Const (Imm64 (42w :word64)))) :bir_val_t bir_stmt_basic_t);
         BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_Const (Imm64 (24w :word64))]
           (HD :bir_val_t list -> bir_val_t);
@@ -1562,8 +1577,8 @@ val prog_2_cache_speculation =
        [BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_Const (Imm64 (28w :word64))]
           (HD :bir_val_t list -> bir_val_t)];
-     bb_last_statement := BStmt_Halt (BExp_Const (Imm32 (0w :word32)))|>]
-:bir_val_t bir_program_t``;
+     bb_last_statement := BStmt_Halt (BExp_Const (Imm32 (0w :word32)))|>]:bir_val_t bir_program_t
+”;
 
 val prog_2_cache_speculation_first = ``
 F
