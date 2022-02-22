@@ -1145,9 +1145,11 @@ length Pi_c
     val bprog_Pi_fixed_thm = CONV_RULE (RAND_CONV (Pi_CONV DIFF_UNION_CONV)) bprog_composed_thm;
 
     val bprog_L_fixed_thm  = CONV_RULE (RAND_CONV (L_CONV (
-      SIMP_CONV
-        (std_ss++HolBACoreSimps.holBACore_ss++birs_state_ss++pred_setLib.PRED_SET_ss)
-        [bir_symbTheory.birs_symb_to_symbst_EQ_thm, pred_setTheory.INSERT_UNION]))) bprog_Pi_fixed_thm;
+      EVAL (* TODO: this has to be fixed as list of address spaces that can be merged and so on... (can we make this only involve the block label part, not the block index?) *)
+      (*SIMP_CONV
+        (std_ss++HolBACoreSimps.holBACore_ss++birs_state_ss++pred_setLib.PRED_SET_ss++wordsLib.WORD_ss)
+        [bir_symbTheory.birs_symb_to_symbst_EQ_thm, pred_setTheory.INSERT_UNION]*)
+        ))) bprog_Pi_fixed_thm;
 
 (*
     val bprog_composed_thm_1 =
@@ -1170,6 +1172,10 @@ length Pi_c
         bprog_composed_thm_1
     val _ = print "IMAGE_INSERT\n";
 *)
+
+    val _ = if symb_sound_struct_is_normform (concl bprog_L_fixed_thm) then () else
+            (print_term (concl bprog_L_fixed_thm);
+             raise ERR "birs_rule_SEQ_fun" "something is not right, the produced theorem is not evaluated enough");
   in
     bprog_L_fixed_thm
   end;
