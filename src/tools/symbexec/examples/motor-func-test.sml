@@ -26,6 +26,7 @@ val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address 
 (*
 val birs_stop_lbls = [``<|bpc_label := BL_Address (Imm32 0xb08w); bpc_index := 7|>``];
 *)
+val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb12w))``];
 
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
@@ -211,8 +212,6 @@ val tree = build_tree (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec) single_s
 val _ = print "done building the tree\n";
 
 val _ = print "now reducing it to one sound structure\n";
-(*
 val result = exec_until (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec) single_step_A_thm birs_stop_lbls;
 
 val _ = (print_term o concl) result;
-*)
