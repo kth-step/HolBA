@@ -663,6 +663,185 @@ fun birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm bstate_tm =
   end;
 end;
 
+
+(* stepping a sound structure, try to simplify after assignment *)
+(* ----------------------------------------------- *)
+val symb_rule_SUBST_SING_thm = prove(``
+!sr.
+!sys L sys2 var symbexp symbexp'.
+  (symb_symbols_f_sound sr) ==>
+  (symb_ARB_val_sound sr) ==>
+
+  (symb_hl_step_in_L_sound sr (sys, L, {sys2})) ==>
+  ((symb_symbst_store sys2) var = SOME symbexp) ==>
+
+  (symb_simplification sr sys2 symbexp symbexp') ==>
+
+  (symb_hl_step_in_L_sound sr (sys, L, {symb_symbst_store_update var symbexp' sys2}))
+``,
+  REPEAT STRIP_TAC >>
+
+  `({sys2} DIFF {sys2}) UNION {symb_symbst_store_update var symbexp' sys2} = {symb_symbst_store_update var symbexp' sys2}` by (
+    METIS_TAC [pred_setTheory.DIFF_EQ_EMPTY, pred_setTheory.UNION_EMPTY]
+  ) >>
+
+  METIS_TAC [symb_rulesTheory.symb_rule_SUBST_thm]
+);
+
+(*
+val birs_symb_rule_SUBST_SING_thm = prove(``
+``,
+);
+*)
+
+
+(* first prepare the SUBST rule for prog *)
+fun birs_rule_SUBST_prog_fun bprog_tm =
+  let
+    val prog_type = (hd o snd o dest_type o type_of) bprog_tm;
+    val symbols_f_sound_thm = INST_TYPE [Type.alpha |-> prog_type] bir_symb_soundTheory.birs_symb_symbols_f_sound_thm;
+    val birs_symb_symbols_f_sound_prog_thm =
+      (SPEC (bprog_tm) symbols_f_sound_thm);
+    val ARB_val_sound_thm = INST_TYPE [Type.alpha |-> prog_type] bir_symb_soundTheory.birs_symb_ARB_val_sound_thm;
+    val birs_symb_ARB_val_sound_prog_thm =
+      (SPEC (bprog_tm) ARB_val_sound_thm);
+
+    val prep_thm =
+      MATCH_MP
+        (MATCH_MP symb_rule_SUBST_SING_thm birs_symb_symbols_f_sound_prog_thm)
+        birs_symb_ARB_val_sound_prog_thm;
+
+    val inst_thm = prove(``
+         !sys L lbl envl status pcond vn symbexp symbexp'.
+           symb_hl_step_in_L_sound (bir_symb_rec_sbir ^bprog_tm) (sys,L,IMAGE birs_symb_to_symbst {
+             <|bsst_pc := lbl;
+               bsst_environ := birs_gen_env ((vn, symbexp)::envl);
+               bsst_status := status;
+               bsst_pcond := pcond|>}) ==>
+           symb_simplification (bir_symb_rec_sbir ^bprog_tm) (birs_symb_to_symbst 
+             <|bsst_pc := lbl;
+               bsst_environ := birs_gen_env ((vn, symbexp)::envl);
+               bsst_status := status;
+               bsst_pcond := pcond|>) symbexp symbexp' ==>
+           symb_hl_step_in_L_sound (bir_symb_rec_sbir ^bprog_tm) (sys,L,IMAGE birs_symb_to_symbst {
+             <|bsst_pc := lbl;
+               bsst_environ := birs_gen_env ((vn, symbexp')::envl);
+               bsst_status := status;
+               bsst_pcond := pcond|>})
+      ``,
+        cheat (* TODO: connect this with prep_thm from above *)
+      );
+  in
+    inst_thm
+  end;
+
+val const_add_subst_thms = [
+
+  prove(``!bprog sys be w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
+    (BExp_BinExp BIExp_Plus
+      (BExp_BinExp BIExp_Plus
+        be
+        (BExp_Const (Imm64 w1)))
+      (BExp_Const (Imm64 w2)))
+    (BExp_BinExp BIExp_Plus
+      be
+      (BExp_Const (Imm64 (w1 + w2))))``, cheat),
+
+  prove(``!bprog sys bvar w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
+    (BExp_BinExp BIExp_Plus
+      (BExp_BinExp BIExp_Plus
+        (BExp_Den bvar)
+        (BExp_Const (Imm64 w1)))
+      (BExp_Const (Imm64 w2)))
+    (BExp_BinExp BIExp_Plus
+      (BExp_Den bvar)
+      (BExp_Const (Imm64 (w1 + w2))))``, cheat),
+  prove(``!bprog sys bvar w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
+    (BExp_BinExp BIExp_Minus
+      (BExp_BinExp BIExp_Plus
+        (BExp_Den bvar)
+        (BExp_Const (Imm64 w1)))
+      (BExp_Const (Imm64 w2)))
+    (BExp_BinExp BIExp_Plus
+      (BExp_Den bvar)
+      (BExp_Const (Imm64 (w1 - w2))))``, cheat),
+
+  prove(``!bprog sys bvar w1. symb_simplification (bir_symb_rec_sbir bprog) sys
+    (BExp_BinExp BIExp_And
+      (BExp_BinExp BIExp_Minus
+        (BExp_Den bvar)
+        (BExp_Const (Imm32 w1)))
+      (BExp_Const (Imm32 0xFFFFFFFCw)))
+    (BExp_BinExp BIExp_Minus
+      (BExp_Den bvar)
+      (BExp_Const (Imm32 w1)))``, cheat (* TODO: but this has to do with how the path condition constrains bvar (in this case by alignment) and the value of w1, needs to be taken into account *)),
+
+  prove(``!bprog sys bvar w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
+    (BExp_BinExp BIExp_Minus
+      (BExp_BinExp BIExp_Minus
+        (BExp_Den bvar)
+        (BExp_Const (Imm64 w1)))
+      (BExp_Const (Imm64 w2)))
+    (BExp_BinExp BIExp_Minus
+      (BExp_Den bvar)
+      (BExp_Const (Imm64 (w1 + w2))))``, cheat),
+  prove(``!bprog sys bvar w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
+    (BExp_BinExp BIExp_Plus
+      (BExp_BinExp BIExp_Minus
+        (BExp_Den bvar)
+        (BExp_Const (Imm64 w1)))
+      (BExp_Const (Imm64 w2)))
+    (BExp_BinExp BIExp_Minus
+      (BExp_Den bvar)
+      (BExp_Const (Imm64 (w1 - w2))))``, cheat)
+];
+(*symb_rulesTheory.symb_simplification_def*)
+
+(*
+val single_step_prog_thm = result;
+*)
+fun birs_rule_SUBST_trysimp_const_add_subst_fun birs_rule_SUBST_thm single_step_prog_thm =
+  let
+    (*
+    val t = hd const_add_subst_thms;
+    val simp_thm = MATCH_MP birs_rule_SUBST_thm single_step_prog_thm;
+    *)
+    fun try_inst t simp_thm =
+      let
+        val t_ = SPEC_ALL t;
+        val bir_simp_tm = (fst o dest_comb o (*snd o strip_binder (SOME boolSyntax.universal) o*) concl) t_;
+        val bir_simp_inst_tm = (fst o dest_comb o fst o dest_imp o (*snd o strip_binder (SOME boolSyntax.universal) o*) concl o Q.SPEC `symbexp'`) simp_thm;
+
+        val tm_subst = match_term bir_simp_tm bir_simp_inst_tm;
+        val final_thm = INST_TY_TERM tm_subst t_;
+      in
+        CONV_RULE (TRY_CONV (RAND_CONV EVAL) THENC REFL) final_thm
+      end;
+
+
+    fun try_fold_match simp_thm (t, thm_o) =
+      if isSome thm_o then
+        thm_o
+      else
+        SOME (MATCH_MP simp_thm (try_inst t simp_thm))
+        handle _ => NONE;
+
+    fun repeat_fold step_thm =
+      let
+        val assignment_thm = MATCH_MP birs_rule_SUBST_thm step_thm;
+        val thm_o = List.foldr (try_fold_match assignment_thm) NONE const_add_subst_thms;
+      in
+        if isSome thm_o then
+          repeat_fold (valOf thm_o)
+        else
+          step_thm
+      end;
+
+  in
+    repeat_fold single_step_prog_thm
+  end;
+
+
 end (* local *)
 
 end (* struct *)
