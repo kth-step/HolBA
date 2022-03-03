@@ -746,54 +746,78 @@ val const_add_subst_thms = [
     (BExp_BinExp BIExp_Plus
       be
       (BExp_Const (Imm64 (w1 + w2))))``, cheat),
-
-  prove(``!bprog sys bvar w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
-    (BExp_BinExp BIExp_Plus
-      (BExp_BinExp BIExp_Plus
-        (BExp_Den bvar)
-        (BExp_Const (Imm64 w1)))
-      (BExp_Const (Imm64 w2)))
-    (BExp_BinExp BIExp_Plus
-      (BExp_Den bvar)
-      (BExp_Const (Imm64 (w1 + w2))))``, cheat),
-  prove(``!bprog sys bvar w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
+  prove(``!bprog sys be w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
     (BExp_BinExp BIExp_Minus
       (BExp_BinExp BIExp_Plus
-        (BExp_Den bvar)
+        be
         (BExp_Const (Imm64 w1)))
       (BExp_Const (Imm64 w2)))
     (BExp_BinExp BIExp_Plus
-      (BExp_Den bvar)
+      be
       (BExp_Const (Imm64 (w1 - w2))))``, cheat),
 
-  prove(``!bprog sys bvar w1. symb_simplification (bir_symb_rec_sbir bprog) sys
+(*
+  prove(``!bprog sys be w1. symb_simplification (bir_symb_rec_sbir bprog) sys
     (BExp_BinExp BIExp_And
       (BExp_BinExp BIExp_Minus
-        (BExp_Den bvar)
+        be
         (BExp_Const (Imm32 w1)))
       (BExp_Const (Imm32 0xFFFFFFFCw)))
     (BExp_BinExp BIExp_Minus
-      (BExp_Den bvar)
+      be
       (BExp_Const (Imm32 w1)))``, cheat (* TODO: but this has to do with how the path condition constrains bvar (in this case by alignment) and the value of w1, needs to be taken into account *)),
+*)
 
-  prove(``!bprog sys bvar w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
+  prove(``!bprog sys be w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
+    (BExp_BinExp BIExp_Minus
+      (BExp_BinExp BIExp_And
+        (BExp_BinExp BIExp_Minus
+          be
+          (BExp_Const (Imm32 w1)))
+        (BExp_Const (Imm32 0xFFFFFFFCw)))
+      (BExp_Const (Imm32 w2)))
+    (BExp_BinExp BIExp_Minus
+      be
+      (BExp_Const (Imm32 (w1 + w2))))``, cheat (* TODO: but this has to do with how the path condition constrains bvar (in this case by alignment) and the value of w1, needs to be taken into account *)
+     (* TODO: this is just a bad fix, need to make this better *)),
+
+  prove(``!bprog sys be w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
     (BExp_BinExp BIExp_Minus
       (BExp_BinExp BIExp_Minus
-        (BExp_Den bvar)
+        be
         (BExp_Const (Imm64 w1)))
       (BExp_Const (Imm64 w2)))
     (BExp_BinExp BIExp_Minus
-      (BExp_Den bvar)
+      be
       (BExp_Const (Imm64 (w1 + w2))))``, cheat),
-  prove(``!bprog sys bvar w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
+  prove(``!bprog sys be w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
     (BExp_BinExp BIExp_Plus
       (BExp_BinExp BIExp_Minus
-        (BExp_Den bvar)
+        be
         (BExp_Const (Imm64 w1)))
       (BExp_Const (Imm64 w2)))
     (BExp_BinExp BIExp_Minus
-      (BExp_Den bvar)
-      (BExp_Const (Imm64 (w1 - w2))))``, cheat)
+      be
+      (BExp_Const (Imm64 (w1 - w2))))``, cheat),
+
+  prove(``!bprog sys be_m be_sa be_v be_la. symb_simplification (bir_symb_rec_sbir bprog) sys
+    (BExp_Load
+      (BExp_Store
+        be_m
+        be_sa
+        BEnd_LittleEndian
+        be_v)
+      be_la
+      BEnd_LittleEndian
+      Bit32)
+    (if be_sa = be_la then
+       be_v
+     else
+       (BExp_Load
+         be_m
+         be_la
+         BEnd_LittleEndian
+         Bit32))``, cheat (* TODO: this is not quite right, it's just an experiment *))
 ];
 (*symb_rulesTheory.symb_simplification_def*)
 
@@ -839,6 +863,7 @@ fun birs_rule_SUBST_trysimp_const_add_subst_fun birs_rule_SUBST_thm single_step_
 
   in
     repeat_fold single_step_prog_thm
+    handle _ => single_step_prog_thm
   end;
 
 

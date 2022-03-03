@@ -13,6 +13,7 @@ val _ = print_term (concl bin_motor_func_thm);
 val bprog = List.nth((snd o strip_comb o concl) bin_motor_func_thm, 3);
 (*
 (hd o fst o listSyntax.dest_list o snd o dest_comb) bprog
+(hd o tl o fst o listSyntax.dest_list o snd o dest_comb) bprog
 *)
 val bprog_def = Define `
     bprog = ^(bprog)
@@ -27,6 +28,7 @@ val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address 
 val birs_stop_lbls = [``<|bpc_label := BL_Address (Imm32 0xb08w); bpc_index := 7|>``];
 *)
 val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb12w))``];
+val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb2ew))``];
 
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
