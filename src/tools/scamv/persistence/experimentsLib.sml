@@ -52,17 +52,25 @@ in
               raise ERR "gen_json_state" "word size has to be one byte";
 
       fun rkv_to_json (k,v) =
+        let val value = "0x" ^ (Arbnumcore.toHexString v); in
+        if k = "SP_EL0" then ("sp", STRING value) else
         let
-          (* TODO: Stack pointer needs to be handled *)
-          (* TODO: maybe want to check that we indeed get R0-R29 or whatever *) 
+        (* for ARMv8, we can handle R0-R30 & SP_EL0 *)
           val _ = if String.isPrefix "R" k then () else
-                    raise ERR "gen_json_state" "input not as exptected";
+                    raise ERR "rkv_to_json" "input not as exptected, not a general purpose register";
 
-          val regname = "x" ^ (String.extract(k, 1, NONE));
-          val value   = "0x" ^ (Arbnumcore.toHexString v);
+          val regnum_s = String.extract(k, 1, NONE);
+          val regnum = case Int.fromString regnum_s of
+                          SOME x => x
+                        | _ => raise ERR "rkv_to_json" "can't parse register number";
+
+          val _ = if 0 <= regnum andalso regnum <= 30 then () else
+                  raise ERR "rkv_to_json" "invalid register number";
+
+          val regname = "x" ^ regnum_s;
         in
           (regname, STRING value)
-        end;
+        end end;
 
       fun mentry_to_json (k,v) =
         let
@@ -113,18 +121,25 @@ in
           val v_s =
             case v of
                STRING s => s
-             | _        => raise ERR "Json_to_machstate" "format error, register value is not STRING";
-          val _ = if List.hd (String.explode k_s) = #"x" then () else
-                  raise ERR "Json_to_machstate" "format error, expect register name";
-          val regnum_s = (String.implode o List.tl o String.explode) k_s;
-          val regnum = case Int.fromString regnum_s of
-                          SOME x => x
-                        | _ => raise ERR "Json_to_machstate" "format error, cannot parse register number";
-
+             | _        => raise ERR "Json_to_machstate::parseReg" "format error, register value is not STRING";
           val value    = Arbnum.fromHexString v_s;
-          val regname  = "R" ^ (Int.toString regnum);
         in
-          (regname, value)
+          if k_s = "sp" then ("SP_EL0", value) else
+          let
+            val _ = if List.hd (String.explode k_s) = #"x" then () else
+                    raise ERR "Json_to_machstate::parseReg" "format error, expect register name";
+            val regnum_s = (String.implode o List.tl o String.explode) k_s;
+            val regnum = case Int.fromString regnum_s of
+                            SOME x => x
+                          | _ => raise ERR "Json_to_machstate::parseReg" "format error, cannot parse register number";
+
+            val _ = if 0 <= regnum andalso regnum <= 30 then () else
+                    raise ERR "Json_to_machstate::parseReg" "invalid register number";
+
+            val regname  = "R" ^ (Int.toString regnum);
+          in
+            (regname, value)
+          end
         end;
 
       fun parseMemVal v =
