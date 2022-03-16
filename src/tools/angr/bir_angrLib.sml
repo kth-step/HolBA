@@ -117,7 +117,8 @@ local
       choicel [seq (char #"*") (return bmult)
 	      ,seq (string "/s") (return bsdiv)
               ,seq (char #"/") (return bdiv)
-              ,seq (char #"%") (return bmod)
+              ,seq (string "%s") (return bsmod)
+	      ,seq (char #"%") (return bmod)
 	      ,seq (char #"^") (return bxor)] <?> "multiplication or division operator";
   
   val binary_op_term =
@@ -132,8 +133,10 @@ local
 	      ,seq (string "<=") (return ble)
 	      ,seq (string "<s") (return bslt)
               ,seq (char #"<") (return blt)
-              ,seq (string ">=") (return bge)
-              ,seq (char #">") (return bgt)] <?> "binary predicate operator";
+              ,seq (string ">=s") (return bsge)
+	      ,seq (string ">=") (return bge)
+              ,seq (string ">s") (return bsgt)
+	      ,seq (char #">") (return bgt)] <?> "binary predicate operator";
   
   fun is_BExp_AppendMask expr =
       if is_comb expr
