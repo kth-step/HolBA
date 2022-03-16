@@ -477,7 +477,6 @@ fun main_loop 0 = ()
      let
 	 open bir_prog_genLib;
 
-	 val _ = bir_randLib.rand_isfresh_set true;
 	 val prog = if false then
 			(* Prefetching *)
 		     let	 
@@ -492,9 +491,15 @@ fun main_loop 0 = ()
 		     let		 
 			 (* val (prog_id, lifted_prog) = prog_gen_store_rand "" 5 (); *)
 			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre_v1" 5 (); *)
-			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre" 5 (); *)
-                         (* prog_gen_store_fromfile filename *)
-                         val (prog_id, lifted_prog) = prog_gen_store_fromlines ["ldr x12, [x22, #130]", "ldr x28, [x22, #16]"] ();
+			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre_v1_mod2" 5 (); *)
+			 val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre" 5 ();
+			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "xld" 5 (); *)
+			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "xld_br_yld_mod1" 2 (); *)
+			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "straightline_branch" 50 (); *)
+			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "previct1" 100 (); *)
+                         (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "previct5" 20 (); *)
+                         (* val (prog_id, lifted_prog) = prog_gen_store_fromlines ["ldr x12, [x22, #130]", "ldr x28, [x22, #16]","cmp x24, x24"] (); *)
+			 (* val (prog_id, lifted_prog) = prog_gen_store_rand_slice 10 (); *)
 			 val prog = lifted_prog;
 		     in
 			 prog
@@ -504,7 +509,16 @@ fun main_loop 0 = ()
 	 val _ = print "\nInput prog prepared.\n\n";
 
 	 (* val obsmodel_id = "mem_address_pc"; *)
-         val obsmodel_id = "cache_tag_index";
+         (* val obsmodel_id = "mem_address_pc_lspc"; *)
+         (* val obsmodel_id = "cache_tag_index"; *)
+	 (* val obsmodel_id = "cache_tag_only" *)
+	 (* val obsmodel_id = "cache_index_only" *)
+	 (* val obsmodel_id = "cache_tag_index_part" *)
+	 val obsmodel_id = "cache_speculation"
+	 (* val obsmodel_id = "cache_speculation_first" *)
+	 (* val obsmodel_id = "cache_tag_index_part_page" *)
+         (* val obsmodel_id = "cache_straightline" *)
+         (* val obsmodel_id = "cache_speculation_first" *)
          local
            val mem_bounds =
              let
@@ -517,9 +531,11 @@ fun main_loop 0 = ()
                    (mk_wordi (embexp_params_cacheable mem_base, 64),
                     mk_wordi (embexp_params_cacheable mem_end, 64))
              end;
-           val add_obs = #add_obs (bir_obs_modelLib.get_obs_model obsmodel_id);
+	   val obs_model = bir_obs_modelLib.get_obs_model obsmodel_id;
+           val add_obs = #add_obs obs_model;
+	   val proginst_fun = bir_obs_modelLib.proginst_fun_gen (#obs_hol_type obs_model);
          in
-           val prog = add_obs mem_bounds prog;
+           val prog = add_obs mem_bounds (proginst_fun prog);
          end;
 	 val _ = print ("\nObsmodel applied \"" ^ obsmodel_id ^ "\".\n\n");
 	     
@@ -577,6 +593,7 @@ fun main_loop 0 = ()
 
 val _ =
   let
+    val _ = bir_randLib.rand_isfresh_set true;
     val _ = main_loop 2;
     val _ = TextIO.closeOut filename;
     val _ = print ("Number of successful test cases: " ^ (Int.toString (!num_success)) ^ "\n\n");
