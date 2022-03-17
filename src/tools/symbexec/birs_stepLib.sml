@@ -817,7 +817,68 @@ val const_add_subst_thms = [
          be_m
          be_la
          BEnd_LittleEndian
-         Bit32))``, cheat (* TODO: this is not quite right, it's just an experiment *))
+         Bit32))``, cheat (* TODO: this is not quite right, it's just an experiment *)),
+
+  prove(``!bprog sys be_m be_sa be_v be_la sz. symb_simplification (bir_symb_rec_sbir bprog) sys
+    (BExp_Load
+      (BExp_Store
+        be_m
+        be_sa
+        BEnd_LittleEndian
+        be_v)
+      be_la
+      BEnd_LittleEndian
+      sz)
+    (if be_sa = be_la then
+       be_v
+     else
+       (BExp_Load
+         be_m
+         be_la
+         BEnd_LittleEndian
+         sz))``, cheat (* TODO: this is not quite right, it's just an experiment *)),
+
+  prove(``!bprog sys be_m be_sa be_v be_la sz. symb_simplification (bir_symb_rec_sbir bprog) sys
+    (BExp_Cast BIExp_UnsignedCast (BExp_Load
+      (BExp_Store
+        be_m
+        be_sa
+        BEnd_LittleEndian
+        be_v)
+      be_la
+      BEnd_LittleEndian
+      sz) Bit32)
+    (BExp_Cast BIExp_UnsignedCast (if be_sa = be_la then
+       be_v
+     else
+       (BExp_Load
+         be_m
+         be_la
+         BEnd_LittleEndian
+         sz)) Bit32)``, cheat (* TODO: this is not quite right, it's just an experiment *)),
+
+  prove(``!bprog sys be. symb_simplification (bir_symb_rec_sbir bprog) sys
+    (BExp_Cast BIExp_UnsignedCast
+      (BExp_Cast BIExp_LowCast
+        (BExp_Cast BIExp_UnsignedCast
+          (BExp_Cast BIExp_LowCast be Bit8) Bit32) Bit8) Bit32)
+    (BExp_Cast BIExp_UnsignedCast
+      (BExp_Cast BIExp_LowCast be Bit8) Bit32)``, cheat),
+
+  prove(``!bprog sys be be_v. symb_simplification (bir_symb_rec_sbir bprog) sys
+    (BExp_IfThenElse be
+              (BExp_BinExp BIExp_Plus
+                 (BExp_BinExp BIExp_Plus (BExp_Den (BVar "countw" (BType_Imm Bit64))) be_v)
+                 (BExp_Const (Imm64 3w)))
+              (BExp_BinExp BIExp_Plus
+                 (BExp_BinExp BIExp_Plus (BExp_Den (BVar "countw" (BType_Imm Bit64))) be_v)
+                 (BExp_Const (Imm64 1w))))
+    (
+              (BExp_BinExp BIExp_Plus
+                 (BExp_BinExp BIExp_Plus (BExp_Den (BVar "countw" (BType_Imm Bit64))) be_v)
+                 (BExp_Const (Imm64 3w)))
+    )``, cheat (* TODO: this is not quite right, it's just an experiment *))
+
 ];
 (*symb_rulesTheory.symb_simplification_def*)
 
