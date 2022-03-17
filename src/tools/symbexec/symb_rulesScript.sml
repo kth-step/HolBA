@@ -1392,6 +1392,37 @@ val symb_rule_INST_thm = store_thm(
 );
 
 
+(* ************************* *)
+(*        RULE SPLIT         *)
+(* ************************* *)
+val symb_rule_SPLIT_thm = store_thm(
+   "symb_rule_SPLIT_thm", ``
+!sr.
+(* TODO: do we need the following here, and some more? ( symb_symbols_f_sound sr) ==>*)
+(symb_mk_exp_conj_f_sound sr) ==>
+
+!sys L Pi sys2 symbexp sys2t sys2f.
+  (* TODO: do we need to require something about the symbols in symbexp? *)
+
+  (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
+
+  (symb_symbst_pcond_update
+     (sr.sr_mk_exp_conj_f symbexp)
+     (sys2)
+   = sys2t
+  ) ==>
+  (symb_symbst_pcond_update
+     (sr.sr_mk_exp_conj_f (BExp_UnaryExp BIExp_Not symbexp))
+     (sys2)
+   = sys2f
+  ) ==>
+
+  (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2t; sys2f}))
+``,
+  cheat
+);
+
+
 
 
 val _ = export_theory();
