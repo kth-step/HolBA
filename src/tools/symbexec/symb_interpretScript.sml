@@ -672,6 +672,21 @@ val symb_interpr_extend_symbs_IMP_for_symbs_thm = store_thm(
   )
 );
 
+val symb_interpr_extend_symbs_IMP_dom_thm = store_thm(
+   "symb_interpr_extend_symbs_IMP_dom_thm", ``
+!valfun symbs H.
+  (symb_interpr_dom (symb_interpr_extend_symbs valfun symbs H) = ((symb_interpr_dom H) UNION symbs))
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `H` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interpr_extend_symbs_def, symb_interpr_for_symbs_def, symb_interpr_dom_def, symb_interpr_get_def, SUBSET_DEF, EXTENSION] >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on `f x` >> (
+    FULL_SIMP_TAC std_ss []
+  )
+);
+
 
 
 val _ = export_theory();

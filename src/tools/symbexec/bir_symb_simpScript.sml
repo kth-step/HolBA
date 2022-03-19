@@ -9,6 +9,7 @@ open symb_rulesTheory;
 
 open bir_symbTheory;
 open bir_symb_sound_coreTheory;
+open bir_symb_soundTheory;
 
 open arithmeticTheory;
 open pred_setTheory;
@@ -45,18 +46,16 @@ val symb_simplification_thm = store_thm(
   REWRITE_TAC [symb_simplification_def, symb_simplification_e_def, symb_interpr_symbpcond_def]
 );
 
-(* TODO: this is too strict with the requirement for symbols in pcond' to be also in pcond, we need to relax this or some of the theorems below are not usable *)
 val symb_exp_imp_def = Define `
     symb_exp_imp sr pcond pcond' =
-    ((sr.sr_symbols_f pcond' SUBSET sr.sr_symbols_f pcond) /\
-     (!H.
+    (!H.
        (symb_interpr_welltyped sr H) ==>
        (symb_interpr_for_symbs
-            (sr.sr_symbols_f pcond) H) ==>
+            (sr.sr_symbols_f pcond UNION
+             sr.sr_symbols_f pcond') H) ==>
 
        (sr.sr_interpret_f H pcond  = SOME sr.sr_val_true) ==>
        (sr.sr_interpret_f H pcond' = SOME sr.sr_val_true)
-     )
     )
 `;
 
@@ -67,6 +66,9 @@ val symb_exp_imp_def = Define `
 val symb_simplification_IMP_thm = store_thm(
    "symb_simplification_IMP_thm", ``
 !sr.
+(symb_symbols_f_sound sr) ==>
+(symb_ARB_val_sound sr) ==>
+
 !pcond pcond' symbexp symbexp'.
   (symb_exp_imp sr pcond pcond') ==>
   (symb_simplification_e sr pcond' symbexp symbexp') ==>
@@ -75,18 +77,43 @@ val symb_simplification_IMP_thm = store_thm(
   REWRITE_TAC [symb_exp_imp_def, symb_simplification_e_def] >>
   REPEAT STRIP_TAC >>
 
-  `symb_interpr_for_symbs (sr.sr_symbols_f pcond) H` by (
-    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET]
+  Q.ABBREV_TAC `H' = symb_interpr_extend_symbs_sr sr (sr.sr_symbols_f pcond') H` >>
+
+  `symb_interpr_welltyped sr H'` by (
+    METIS_TAC [symb_interpr_extend_symbs_sr_IMP_welltyped_thm]
   ) >>
 
   `symb_interpr_for_symbs
-          (sr.sr_symbols_f pcond' UNION sr.sr_symbols_f symbexp UNION
-           sr.sr_symbols_f symbexp') H` by (
-    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
-    METIS_TAC [SUBSET_TRANS]
+     (sr.sr_symbols_f pcond UNION
+      sr.sr_symbols_f pcond' UNION
+      sr.sr_symbols_f symbexp UNION
+      sr.sr_symbols_f symbexp') H'` by (
+    Q.UNABBREV_TAC `H'` >>
+    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET, symb_interpr_extend_symbs_sr_def, symb_interpr_extend_symbs_IMP_dom_thm] >>
+
+    METIS_TAC [SUBSET_UNION, SUBSET_TRANS]
   ) >>
 
-  METIS_TAC []
+
+  `symb_interprs_eq_for H H'
+     (sr.sr_symbols_f pcond UNION
+      sr.sr_symbols_f symbexp UNION
+      sr.sr_symbols_f symbexp')` by (
+    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, symb_interpr_extend_symbs_sr_def, symb_interpr_extend_symbs_IMP_dom_thm] >>
+    METIS_TAC [symb_interpr_extend_symbs_IMP_ext_thm, symb_interpr_ext_def, symb_interprs_eq_for_SUBSET_thm, symb_interprs_eq_for_COMM_thm]
+  ) >>
+
+  `sr.sr_interpret_f H pcond = sr.sr_interpret_f H' pcond /\
+   sr.sr_interpret_f H symbexp = sr.sr_interpret_f H' symbexp /\
+   sr.sr_interpret_f H symbexp' = sr.sr_interpret_f H' symbexp'` by (
+    METIS_TAC [symb_interprs_eq_for_UNION_thm, symb_interprs_eq_for_COMM_thm, symb_symbols_f_sound_def]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
+
+  REPEAT (PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H'`)) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  FULL_SIMP_TAC std_ss []
 );
 
 
@@ -118,15 +145,14 @@ val birs_simplification_e_thm = store_thm(
 
 val birs_exp_imp_def = Define `
     birs_exp_imp pcond pcond' =
-    ((bir_vars_of_exp pcond' SUBSET bir_vars_of_exp pcond) /\
-     (!H.
+    (!H.
        (birs_interpr_welltyped H) ==>
        (symb_interpr_for_symbs
-            (bir_vars_of_exp pcond) H) ==>
+            (bir_vars_of_exp pcond UNION
+             bir_vars_of_exp pcond') H) ==>
 
        (birs_interpret_fun H pcond  = SOME bir_val_true) ==>
        (birs_interpret_fun H pcond' = SOME bir_val_true)
-     )
     )
 `;
 
@@ -149,7 +175,8 @@ val birs_simplification_IMP_thm = store_thm(
   (birs_simplification_e pcond' symbexp symbexp') ==>
   (birs_simplification_e pcond  symbexp symbexp')
 ``,
-  METIS_TAC [symb_simplification_IMP_thm, birs_simplification_e_thm, birs_exp_imp_thm]
+  METIS_TAC [symb_simplification_IMP_thm, birs_simplification_e_thm, birs_exp_imp_thm,
+             birs_symb_ARB_val_sound_thm, birs_symb_symbols_f_sound_thm]
 );
 
 
