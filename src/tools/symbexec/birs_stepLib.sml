@@ -718,11 +718,7 @@ fun birs_rule_SUBST_prog_fun bprog_tm =
                bsst_environ := birs_gen_env ((vn, symbexp)::envl);
                bsst_status := status;
                bsst_pcond := pcond|>}) ==>
-           symb_simplification (bir_symb_rec_sbir ^bprog_tm) (birs_symb_to_symbst 
-             <|bsst_pc := lbl;
-               bsst_environ := birs_gen_env ((vn, symbexp)::envl);
-               bsst_status := status;
-               bsst_pcond := pcond|>) symbexp symbexp' ==>
+           birs_simplification_e pcond symbexp symbexp' ==>
            symb_hl_step_in_L_sound (bir_symb_rec_sbir ^bprog_tm) (sys,L,IMAGE birs_symb_to_symbst {
              <|bsst_pc := lbl;
                bsst_environ := birs_gen_env ((vn, symbexp')::envl);
@@ -735,196 +731,24 @@ fun birs_rule_SUBST_prog_fun bprog_tm =
     inst_thm
   end;
 
-val const_add_subst_thms = [
-
-  prove(``!bprog sys be w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
-    (BExp_BinExp BIExp_Plus
-      (BExp_BinExp BIExp_Plus
-        be
-        (BExp_Const (Imm64 w1)))
-      (BExp_Const (Imm64 w2)))
-    (BExp_BinExp BIExp_Plus
-      be
-      (BExp_Const (Imm64 (w1 + w2))))``, cheat),
-  prove(``!bprog sys be w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
-    (BExp_BinExp BIExp_Minus
-      (BExp_BinExp BIExp_Plus
-        be
-        (BExp_Const (Imm64 w1)))
-      (BExp_Const (Imm64 w2)))
-    (BExp_BinExp BIExp_Plus
-      be
-      (BExp_Const (Imm64 (w1 - w2))))``, cheat),
-
-(*
-  prove(``!bprog sys be w1. symb_simplification (bir_symb_rec_sbir bprog) sys
-    (BExp_BinExp BIExp_And
-      (BExp_BinExp BIExp_Minus
-        be
-        (BExp_Const (Imm32 w1)))
-      (BExp_Const (Imm32 0xFFFFFFFCw)))
-    (BExp_BinExp BIExp_Minus
-      be
-      (BExp_Const (Imm32 w1)))``, cheat (* TODO: but this has to do with how the path condition constrains bvar (in this case by alignment) and the value of w1, needs to be taken into account *)),
-*)
-
-  prove(``!bprog sys be w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
-    (BExp_BinExp BIExp_Minus
-      (BExp_BinExp BIExp_And
-        (BExp_BinExp BIExp_Minus
-          be
-          (BExp_Const (Imm32 w1)))
-        (BExp_Const (Imm32 0xFFFFFFFCw)))
-      (BExp_Const (Imm32 w2)))
-    (BExp_BinExp BIExp_Minus
-      be
-      (BExp_Const (Imm32 (w1 + w2))))``, cheat (* TODO: but this has to do with how the path condition constrains bvar (in this case by alignment) and the value of w1, needs to be taken into account *)
-     (* TODO: this is just a bad fix, need to make this better *)),
-
-  prove(``!bprog sys be w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
-    (BExp_BinExp BIExp_Minus
-      (BExp_BinExp BIExp_Minus
-        be
-        (BExp_Const (Imm64 w1)))
-      (BExp_Const (Imm64 w2)))
-    (BExp_BinExp BIExp_Minus
-      be
-      (BExp_Const (Imm64 (w1 + w2))))``, cheat),
-  prove(``!bprog sys be w1 w2. symb_simplification (bir_symb_rec_sbir bprog) sys
-    (BExp_BinExp BIExp_Plus
-      (BExp_BinExp BIExp_Minus
-        be
-        (BExp_Const (Imm64 w1)))
-      (BExp_Const (Imm64 w2)))
-    (BExp_BinExp BIExp_Minus
-      be
-      (BExp_Const (Imm64 (w1 - w2))))``, cheat),
-
-  prove(``!bprog sys be_m be_sa be_v be_la. symb_simplification (bir_symb_rec_sbir bprog) sys
-    (BExp_Load
-      (BExp_Store
-        be_m
-        be_sa
-        BEnd_LittleEndian
-        be_v)
-      be_la
-      BEnd_LittleEndian
-      Bit32)
-    (if be_sa = be_la then
-       be_v
-     else
-       (BExp_Load
-         be_m
-         be_la
-         BEnd_LittleEndian
-         Bit32))``, cheat (* TODO: this is not quite right, it's just an experiment *)),
-
-  prove(``!bprog sys be_m be_sa be_v be_la sz. symb_simplification (bir_symb_rec_sbir bprog) sys
-    (BExp_Load
-      (BExp_Store
-        be_m
-        be_sa
-        BEnd_LittleEndian
-        be_v)
-      be_la
-      BEnd_LittleEndian
-      sz)
-    (if be_sa = be_la then
-       be_v
-     else
-       (BExp_Load
-         be_m
-         be_la
-         BEnd_LittleEndian
-         sz))``, cheat (* TODO: this is not quite right, it's just an experiment *)),
-
-  prove(``!bprog sys be_m be_sa be_v be_la sz. symb_simplification (bir_symb_rec_sbir bprog) sys
-    (BExp_Cast BIExp_UnsignedCast (BExp_Load
-      (BExp_Store
-        be_m
-        be_sa
-        BEnd_LittleEndian
-        be_v)
-      be_la
-      BEnd_LittleEndian
-      sz) Bit32)
-    (BExp_Cast BIExp_UnsignedCast (if be_sa = be_la then
-       be_v
-     else
-       (BExp_Load
-         be_m
-         be_la
-         BEnd_LittleEndian
-         sz)) Bit32)``, cheat (* TODO: this is not quite right, it's just an experiment *)),
-
-  prove(``!bprog sys be. symb_simplification (bir_symb_rec_sbir bprog) sys
-    (BExp_Cast BIExp_UnsignedCast
-      (BExp_Cast BIExp_LowCast
-        (BExp_Cast BIExp_UnsignedCast
-          (BExp_Cast BIExp_LowCast be Bit8) Bit32) Bit8) Bit32)
-    (BExp_Cast BIExp_UnsignedCast
-      (BExp_Cast BIExp_LowCast be Bit8) Bit32)``, cheat),
-
-  prove(``!bprog sys be be_v. symb_simplification (bir_symb_rec_sbir bprog) sys
-    (BExp_IfThenElse be
-              (BExp_BinExp BIExp_Plus
-                 (BExp_BinExp BIExp_Plus (BExp_Den (BVar "countw" (BType_Imm Bit64))) be_v)
-                 (BExp_Const (Imm64 3w)))
-              (BExp_BinExp BIExp_Plus
-                 (BExp_BinExp BIExp_Plus (BExp_Den (BVar "countw" (BType_Imm Bit64))) be_v)
-                 (BExp_Const (Imm64 1w))))
-    (
-              (BExp_BinExp BIExp_Plus
-                 (BExp_BinExp BIExp_Plus (BExp_Den (BVar "countw" (BType_Imm Bit64))) be_v)
-                 (BExp_Const (Imm64 3w)))
-    )``, cheat (* TODO: this is not quite right, it's just an experiment *))
-
-];
-(*symb_rulesTheory.symb_simplification_def*)
 
 (*
 val single_step_prog_thm = result;
 *)
 fun birs_rule_SUBST_trysimp_const_add_subst_fun birs_rule_SUBST_thm single_step_prog_thm =
   let
-    (*
-    val t = hd const_add_subst_thms;
-    val simp_thm = MATCH_MP birs_rule_SUBST_thm single_step_prog_thm;
-    *)
-    fun try_inst t simp_thm =
-      let
-        val t_ = SPEC_ALL t;
-        val bir_simp_tm = (fst o dest_comb o (*snd o strip_binder (SOME boolSyntax.universal) o*) concl) t_;
-        val bir_simp_inst_tm = (fst o dest_comb o fst o dest_imp o (*snd o strip_binder (SOME boolSyntax.universal) o*) concl o Q.SPEC `symbexp'`) simp_thm;
+    val assignment_thm = MATCH_MP birs_rule_SUBST_thm single_step_prog_thm;
 
-        val tm_subst = match_term bir_simp_tm bir_simp_inst_tm;
-        val final_thm = INST_TY_TERM tm_subst t_;
-      in
-        CONV_RULE (TRY_CONV (RAND_CONV EVAL) THENC REFL) final_thm
-      end;
+    val simp_tm = (fst o dest_comb o fst o dest_imp o (*snd o strip_binder (SOME boolSyntax.universal) o*) concl o Q.SPEC `symbexp'`) assignment_thm;
 
-
-    fun try_fold_match simp_thm (t, thm_o) =
-      if isSome thm_o then
-        thm_o
-      else
-        SOME (MATCH_MP simp_thm (try_inst t simp_thm))
-        handle _ => NONE;
-
-    fun repeat_fold step_thm =
-      let
-        val assignment_thm = MATCH_MP birs_rule_SUBST_thm step_thm;
-        val thm_o = List.foldr (try_fold_match assignment_thm) NONE const_add_subst_thms;
-      in
-        if isSome thm_o then
-          repeat_fold (valOf thm_o)
-        else
-          step_thm
-      end;
+    (*val simp_t_o = birs_simpLib.birs_trysimp simp_tm;*)
+    (* TODO: need to remove the following line later and enable the simp function above *)
+    val simp_t_o = NONE;
 
   in
-    repeat_fold single_step_prog_thm
-    handle _ => single_step_prog_thm
+    case simp_t_o of
+       SOME simp_t => MATCH_MP assignment_thm simp_t
+     | NONE => single_step_prog_thm
   end;
 
 
