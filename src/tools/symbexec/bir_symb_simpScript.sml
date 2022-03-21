@@ -22,6 +22,7 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val _ = new_theory "bir_symb_simp";
 
+(* TODO: need to reorganize this a bit to better embed this in the symb_rulesTheory *)
 val symb_simplification_e_def = Define `
     symb_simplification_e sr pcond symbexp symbexp' =
     (!H.
