@@ -12,86 +12,12 @@ open bir_expTheory;
 open bir_symbTheory;
 open birs_auxTheory;
 
+open bir_exp_typecheckLib;
+
   (* error handling *)
   val libname = "bir_symbLib"
   val ERR = Feedback.mk_HOL_ERR libname
   val wrap_exn = Feedback.wrap_exn libname
-
-(* TODO: we really have to put this in a central place... *)
- fun type_of_bir_exp_CONV term =
-    (* Manual test
-    val term = ``
-      BExp_BinExp BIExp_Plus
-        (BExp_Const (Imm32 20w))
-        (BExp_Const (Imm32 22w))
-    ``;
-    val thm = type_of_bir_exp_CONV ``type_of_bir_exp ^term``;
-    *)
-    let
-      open bir_immTheory
-      open bir_valuesTheory
-      open bir_envTheory
-      open bir_exp_memTheory
-      open bir_bool_expTheory
-      open bir_extra_expsTheory
-      open bir_nzcv_expTheory
-      open bir_interval_expTheory;
-      open bir_typing_expTheory;
-      val type_of_bir_exp_thms = [
-        type_of_bir_exp_def,
-        bir_var_type_def,
-        bir_type_is_Imm_def,
-        type_of_bir_imm_def,
-        BExp_Aligned_type_of,
-        BExp_unchanged_mem_interval_distinct_type_of,
-        bir_number_of_mem_splits_REWRS,
-        BType_Bool_def,
-        bir_exp_true_def,
-        bir_exp_false_def,
-        BExp_MSB_type_of,
-        BExp_nzcv_ADD_DEFS,
-        BExp_nzcv_SUB_DEFS,
-        n2bs_def,
-        BExp_word_bit_def,
-        BExp_Align_type_of,
-        BExp_ror_type_of,
-        BExp_LSB_type_of,
-        BExp_word_bit_exp_type_of,
-        BExp_ADD_WITH_CARRY_type_of,
-        BExp_word_reverse_type_of,
-        BExp_ror_exp_type_of,
-        bir_immtype_of_size_def
-      ]
-      val conv = SIMP_CONV (srw_ss()) type_of_bir_exp_thms
-    in
-      conv term
-    end
-      handle _ => raise ERR "type_of_bir_exp_CONV" "conversion failed";
-
-(*
-val bexp_term = ``type_of_bir_exp (BExp_BinPred BIExp_LessOrEqual
-          (BExp_Den (BVar "countw" (BType_Imm Bit64)))
-          (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFEw)))``;
-type_of_bir_exp_DIRECT_CONV bexp_term
-*)
- fun type_of_bir_exp_DIRECT_CONV term =
-   let
-     open optionSyntax;
-     open bir_valuesSyntax;
-     open bir_typing_expSyntax;
-
-     val _ = if is_type_of_bir_exp term then () else
-               raise ERR "type_of_bir_exp_DIRECT_CONV" "cannot handle term";
-
-     val thm = type_of_bir_exp_CONV term;
-
-     val result = (snd o dest_eq o concl) thm;
-     val _ = if is_none result orelse
-                (is_some result andalso
-                 ((fn x => is_BType_Imm x orelse is_BType_Mem x) o dest_some) result) then () else
-               raise ERR "type_of_bir_exp_DIRECT_CONV" "didn't reach the result";
-   in thm end
-   handle _ => raise ERR "type_of_bir_exp_DIRECT_CONV" ("ill-typed term: " ^ Parse.term_to_string term);
 
 
 (* TODO: this is stolen from exec tool *)
@@ -575,63 +501,7 @@ local
         bsst_pcond := pre|>}))
 ``, cheat);
 
-
-(* ======================================= *)
-val debug_z3_taut_on = false;
-fun holsmt_is_taut wtm =
-  let val wtm_fixed = subst [mk_var ("MEM", ``:word64|->word8``) |-> Term`MEMV:word64|->word8`] wtm; in
-    ((HolSmtLib.Z3_ORACLE_PROVE wtm_fixed; true)
-    handle HOL_ERR e => (
-      if not debug_z3_taut_on then () else
-      let
-        val _ = print "--- not a tautology:\n";
-        val _ = print_term wtm_fixed;
-        val _ = print ">>> generating a model\n";
-        val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL (mk_neg wtm_fixed);
-        (*val _ = PolyML.print model;*)
-        val _ = print "<<< done generating a model\n";
-      in () end;
-        false))
-  end;
-
-fun holsmt_bir_check_unsat bexp =
-  let
-    (* little amounts of output *)
-    val _ = Library.trace := 1;
-    val pcond_bexp = (snd o dest_eq o concl o EVAL) bexp;
-    val wtm = bir_exp_to_wordsLib.bir2bool pcond_bexp;
-  in
-    holsmt_is_taut (mk_neg wtm)
-  end;
-
-open bir_smtLib;
-
-fun birsmt_check_unsat bexp =
-  let
-    val vars_empty = Redblackset.empty smtlib_vars_compare;
-    val (_, vars, query) = bexp_to_smtlib [] vars_empty bexp;
-
-    (* little amounts of output *)
-(*
-    val _ = (print o fst) query;
-*)
-    val result = querysmt bir_smtLib_z3_prelude vars [query];
-
-    val _ = if result = BirSmtSat orelse result = BirSmtUnsat then () else
-            raise ERR "bir_smt_check_unsat" "smt solver couldn't determine satisfiability"
-  in
-    result = BirSmtUnsat
-  end;
-
-val vars_empty = Redblackset.empty smtlib_vars_compare;
-
-(* ======================================= *)
-
-fun bir_check_unsat use_holsmt =
-  if use_holsmt then
-    holsmt_bir_check_unsat
-  else
-    birsmt_check_unsat;
+  open birs_smtLib;
 
 in
 fun birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm bstate_tm =
