@@ -394,8 +394,8 @@ val birs_simplification_And_Minus_thm = store_thm(
 (* ******************************************************* *)
 (*      arithmetics with constants                         *)
 (* ******************************************************* *)
-val birs_simplification_Plus_Plus_Const_thm = store_thm(
-   "birs_simplification_Plus_Plus_Const_thm", ``
+val birs_simplification_Plus_Plus_Const64_thm = store_thm(
+   "birs_simplification_Plus_Plus_Const64_thm", ``
 !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit64)) ==>
   (birs_simplification_e pcond
@@ -419,8 +419,8 @@ val birs_simplification_Plus_Plus_Const_thm = store_thm(
 );
 
 (* TODO: need to add the proofs below, should work exactly like the one above *)
-val birs_simplification_Minus_Plus_Const_thm = store_thm(
-   "birs_simplification_Minus_Plus_Const_thm", ``
+val birs_simplification_Minus_Plus_Const64_thm = store_thm(
+   "birs_simplification_Minus_Plus_Const64_thm", ``
 !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit64)) ==>
   (birs_simplification_e pcond
@@ -436,8 +436,8 @@ val birs_simplification_Minus_Plus_Const_thm = store_thm(
   cheat
 );
 
-val birs_simplification_Minus_Minus_Const_thm = store_thm(
-   "birs_simplification_Minus_Minus_Const_thm", ``
+val birs_simplification_Minus_Minus_Const64_thm = store_thm(
+   "birs_simplification_Minus_Minus_Const64_thm", ``
 !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit64)) ==>
   (birs_simplification_e pcond
@@ -453,8 +453,8 @@ val birs_simplification_Minus_Minus_Const_thm = store_thm(
   cheat
 );
 
-val birs_simplification_Plus_Minus_Const_thm = store_thm(
-   "birs_simplification_Plus_Minus_Const_thm", ``
+val birs_simplification_Plus_Minus_Const64_thm = store_thm(
+   "birs_simplification_Plus_Minus_Const64_thm", ``
 !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit64)) ==>
   (birs_simplification_e pcond
@@ -466,6 +466,73 @@ val birs_simplification_Plus_Minus_Const_thm = store_thm(
     (BExp_BinExp BIExp_Minus
       be
       (BExp_Const (Imm64 (w1 - w2)))))
+``,
+  cheat
+);
+
+val birs_simplification_Plus_Plus_Const32_thm = store_thm(
+   "birs_simplification_Plus_Plus_Const32_thm", ``
+!pcond be w1 w2.
+  (type_of_bir_exp be = SOME (BType_Imm Bit32)) ==>
+  (birs_simplification_e pcond
+    (BExp_BinExp BIExp_Plus
+      (BExp_BinExp BIExp_Plus
+        be
+        (BExp_Const (Imm32 w1)))
+      (BExp_Const (Imm32 w2)))
+    (BExp_BinExp BIExp_Plus
+      be
+      (BExp_Const (Imm32 (w1 + w2)))))
+``,
+  cheat
+);
+val birs_simplification_Minus_Plus_Const32_thm = store_thm(
+   "birs_simplification_Minus_Plus_Const32_thm", ``
+!pcond be w1 w2.
+  (type_of_bir_exp be = SOME (BType_Imm Bit32)) ==>
+  (birs_simplification_e pcond
+    (BExp_BinExp BIExp_Minus
+      (BExp_BinExp BIExp_Plus
+        be
+        (BExp_Const (Imm32 w1)))
+      (BExp_Const (Imm32 w2)))
+    (BExp_BinExp BIExp_Plus
+      be
+      (BExp_Const (Imm32 (w1 - w2)))))
+``,
+  cheat
+);
+
+val birs_simplification_Minus_Minus_Const32_thm = store_thm(
+   "birs_simplification_Minus_Minus_Const32_thm", ``
+!pcond be w1 w2.
+  (type_of_bir_exp be = SOME (BType_Imm Bit32)) ==>
+  (birs_simplification_e pcond
+    (BExp_BinExp BIExp_Minus
+      (BExp_BinExp BIExp_Minus
+        be
+        (BExp_Const (Imm32 w1)))
+      (BExp_Const (Imm32 w2)))
+    (BExp_BinExp BIExp_Minus
+      be
+      (BExp_Const (Imm32 (w1 + w2)))))
+``,
+  cheat
+);
+
+val birs_simplification_Plus_Minus_Const32_thm = store_thm(
+   "birs_simplification_Plus_Minus_Const32_thm", ``
+!pcond be w1 w2.
+  (type_of_bir_exp be = SOME (BType_Imm Bit32)) ==>
+  (birs_simplification_e pcond
+    (BExp_BinExp BIExp_Plus
+      (BExp_BinExp BIExp_Minus
+        be
+        (BExp_Const (Imm32 w1)))
+      (BExp_Const (Imm32 w2)))
+    (BExp_BinExp BIExp_Minus
+      be
+      (BExp_Const (Imm32 (w1 - w2)))))
 ``,
   cheat
 );
