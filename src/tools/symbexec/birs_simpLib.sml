@@ -55,36 +55,101 @@ fun birs_trysimp
     birs_simplification_e ^pcond ^bexp symbexp'
   ``;
 
+(*
 val t = instd_thm;
+*)
 
-  (* TODO: need to handle imp case and recursion case, recursion needs to be handled correctly one function "above" *)
-  fun birs_simp_justify_assumptions t =
+  (* TODO: need to handle typecheck, IS_SOME typecheck *)
+  fun birs_simp_try_justify_assumptions t =
     if (not o is_imp o concl) t then
       t
     else
+      (* TODO: raise exception when we couldn't resolve the assumption *)
       birs_simp_justify_assumptions
         (REWRITE_RULE [] (CONV_RULE (TRY_CONV (RATOR_CONV (RAND_CONV EVAL)) THENC REFL) t));
 
+
+(*
 val simp_t = birs_simplification_Plus_Plus_Const_thm;
 val simp_inst_tm = birs_simp_gen_term pcond bexp;
-
+*)
+  (* for the plain cases (not subexpression, not pcond implication) *)
   fun birs_simp_try_inst simp_t simp_inst_tm =
       let
         val simp_t_ = SPEC_ALL simp_t;
         val simp_tm = ((fn tm => (if is_imp tm then (snd o strip_imp) else (I)) tm) o concl) simp_t_;
 
-        val tm_subst = match_term ((fst o dest_comb) simp_tm) ((fst o dest_comb) simp_inst_tm);
-        val instd_thm = INST_TY_TERM tm_subst simp_t_;
-
-        (* now try to check the assumptions *)
-        val final_thm = birs_simp_justify_assumptions instd_thm;
+        (* see if the simplification instance fits the simplification theorem conclusion (i.e. simplification term part) *)
+        val tm_subst_o =
+          SOME (match_term ((fst o dest_comb) simp_tm) ((fst o dest_comb) simp_inst_tm))
+          handle _ => NONE;
       in
-        CONV_RULE (TRY_CONV (RAND_CONV EVAL) THENC REFL) final_thm
+        case tm_subst_o of
+           NONE => NONE
+         | SOME tm_subst => 
+            (*
+            val SOME tm_subst = tm_subst_o;
+            *)
+            let
+              val instd_thm = INST_TY_TERM tm_subst simp_t_;
+
+              (* now try to check the assumptions *)
+              val final_thm_o =
+                SOME (birs_simp_try_justify_assumptions instd_thm)
+                handle _ => NONE;
+            in
+              case final_thm_o of
+                 NONE => NONE
+               | SOME final_thm => 
+                    SOME (CONV_RULE (TRY_CONV (RAND_CONV EVAL) THENC REFL) final_thm)
+            end
       end;
 
+  val birs_simp_exp_plain_t_l =
+    [birs_simplification_UnsignedCast_LowCast_Twice_thm,
 
-(* TODO: need to repeat simplifying until there is nothing more to simplify *)
+     birs_simplification_Plus_Plus_Const_thm,
+     birs_simplification_Minus_Plus_Const_thm,
+     birs_simplification_Minus_Minus_Const_thm,
+     birs_simplification_Plus_Minus_Const_thm];
 
+  (* TODO: use foldfun from above to try simplifying with the theorems of the list in order and return NONE or SOME simplification theorem *)
+
+
+
+(* TODO: function/code to remove imp assumption, with smt solver *)
+
+birs_simplification_IMP_thm
+birs_exp_imp_def
+
+
+  val birs_simp_exp_pcond_t_l =
+    [birs_simplification_And_Minus_thm,
+
+     birs_simplification_IfThenElse_T_thm,
+     birs_simplification_IfThenElse_F_thm,
+
+     birs_simplification_Mem_Match_thm,
+     birs_simplification_Mem_Bypass_32_8_thm,
+     birs_simplification_Mem_Bypass_32_32_thm,
+     birs_simplification_Mem_Bypass_8_8_thm,
+     birs_simplification_Mem_Bypass_8_32_thm];
+
+
+  (* TODO: combination function of the two kinds above (direct simplification) *)
+  (* - try plain simplification *)
+  (* - try implied simplification *)
+
+
+
+  (* TODO: "recursion" into certain subexpressions *)
+  val birs_simp_subexp_t_l =
+    [birs_simplification_UnsignedCast_thm,
+     birs_simplification_Minus_thm];
+  (* TODO: need to keep simplifying using the three functions above repeatedly until not possible to simplify anymore *)
+  (* - try direct simplification *)
+  (* - try direct simplification in subexpressions *)
+  (* - repeat the above until can't find anything to simplify *)
 
 
 (*
