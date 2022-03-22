@@ -431,6 +431,7 @@ val birs_simplification_IfThenElse_F_thm = store_thm(
 (* ******************************************************* *)
 (*      memory match and bypass                            *)
 (* ******************************************************* *)
+(* TODO: can simplify condition for store bypassing with alignment requirement (if it holds) *)
 
 val birs_simplification_Mem_Match_thm1 = store_thm(
    "birs_simplification_Mem_Match_thm1", ``
