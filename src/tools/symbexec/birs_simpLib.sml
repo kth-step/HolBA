@@ -148,10 +148,15 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
   val birs_simp_exp_plain_thms =
     [birs_simplification_UnsignedCast_LowCast_Twice_thm,
 
-     birs_simplification_Plus_Plus_Const_thm,
-     birs_simplification_Minus_Plus_Const_thm,
-     birs_simplification_Minus_Minus_Const_thm,
-     birs_simplification_Plus_Minus_Const_thm];
+     birs_simplification_Plus_Plus_Const64_thm,
+     birs_simplification_Minus_Plus_Const64_thm,
+     birs_simplification_Minus_Minus_Const64_thm,
+     birs_simplification_Plus_Minus_Const64_thm,
+
+     birs_simplification_Plus_Plus_Const32_thm,
+     birs_simplification_Minus_Plus_Const32_thm,
+     birs_simplification_Minus_Minus_Const32_thm,
+     birs_simplification_Plus_Minus_Const32_thm];
 
   (* try simplifying with the theorems of the list in order and return NONE or SOME simplification theorem *)
   fun simp_try_fold_fun_gen simp_try_fun (t, thm_o) =
