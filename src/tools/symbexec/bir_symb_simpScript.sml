@@ -37,6 +37,82 @@ val symb_simplification_e_def = Define `
     )
 `;
 
+val symb_simplification_e_ID_thm = store_thm(
+   "symb_simplification_e_ID_thm", ``
+!sr.
+!pcond symbexp.
+  (symb_simplification_e sr pcond symbexp symbexp)
+``,
+  REWRITE_TAC [symb_simplification_e_def]
+);
+
+val symb_simplification_e_COMM_thm = store_thm(
+   "symb_simplification_e_COMM_thm", ``
+!sr.
+!pcond symbexp1 symbexp2.
+  (symb_simplification_e sr pcond symbexp1 symbexp2) ==>
+  (symb_simplification_e sr pcond symbexp2 symbexp1)
+``,
+  REWRITE_TAC [symb_simplification_e_def] >>
+  REPEAT STRIP_TAC >>
+
+  `sr.sr_symbols_f pcond UNION sr.sr_symbols_f symbexp1 UNION sr.sr_symbols_f symbexp2 =
+   sr.sr_symbols_f pcond UNION sr.sr_symbols_f symbexp2 UNION sr.sr_symbols_f symbexp1` by (
+    METIS_TAC [UNION_COMM, UNION_ASSOC]
+  ) >>
+
+  METIS_TAC []
+);
+
+val symb_simplification_e_TRANS_thm = store_thm(
+   "symb_simplification_e_TRANS_thm", ``
+!sr.
+(symb_symbols_f_sound sr) ==>
+(symb_ARB_val_sound sr) ==>
+
+!pcond symbexp1 symbexp2 symbexp3.
+  (symb_simplification_e sr pcond symbexp1 symbexp2) ==>
+  (symb_simplification_e sr pcond symbexp2 symbexp3) ==>
+  (symb_simplification_e sr pcond symbexp1 symbexp3)
+``,
+  REWRITE_TAC [symb_simplification_e_def] >>
+  REPEAT STRIP_TAC >>
+
+  Q.ABBREV_TAC `H' = symb_interpr_extend_symbs_sr sr (sr.sr_symbols_f symbexp2) H` >>
+
+  `symb_interpr_welltyped sr H'` by (
+    METIS_TAC [symb_interpr_extend_symbs_sr_IMP_welltyped_thm]
+  ) >>
+
+  `symb_interpr_for_symbs
+     (sr.sr_symbols_f pcond UNION
+      sr.sr_symbols_f symbexp1 UNION
+      sr.sr_symbols_f symbexp2 UNION
+      sr.sr_symbols_f symbexp3) H'` by (
+    Q.UNABBREV_TAC `H'` >>
+    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET, symb_interpr_extend_symbs_sr_def, symb_interpr_extend_symbs_IMP_dom_thm] >>
+
+    METIS_TAC [SUBSET_UNION, SUBSET_TRANS]
+  ) >>
+
+
+  `symb_interprs_eq_for H H'
+     (sr.sr_symbols_f pcond UNION
+      sr.sr_symbols_f symbexp1 UNION
+      sr.sr_symbols_f symbexp3)` by (
+    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, symb_interpr_extend_symbs_sr_def, symb_interpr_extend_symbs_IMP_dom_thm] >>
+    METIS_TAC [symb_interpr_extend_symbs_IMP_ext_thm, symb_interpr_ext_def, symb_interprs_eq_for_SUBSET_thm, symb_interprs_eq_for_COMM_thm]
+  ) >>
+
+  `sr.sr_interpret_f H pcond = sr.sr_interpret_f H' pcond /\
+   sr.sr_interpret_f H symbexp1 = sr.sr_interpret_f H' symbexp1 /\
+   sr.sr_interpret_f H symbexp3 = sr.sr_interpret_f H' symbexp3` by (
+    METIS_TAC [symb_interprs_eq_for_UNION_thm, symb_interprs_eq_for_COMM_thm, symb_symbols_f_sound_def]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET]
+);
+
 val symb_simplification_thm = store_thm(
    "symb_simplification_thm", ``
 !sr.
@@ -180,6 +256,33 @@ val birs_simplification_IMP_thm = store_thm(
              birs_symb_ARB_val_sound_thm, birs_symb_symbols_f_sound_thm]
 );
 
+val birs_simplification_e_ID_thm = store_thm(
+   "birs_simplification_e_ID_thm", ``
+!pcond symbexp.
+  (birs_simplification_e pcond symbexp symbexp)
+``,
+  METIS_TAC [symb_simplification_e_ID_thm, birs_simplification_e_thm]
+);
+
+val birs_simplification_e_COMM_thm = store_thm(
+   "birs_simplification_e_COMM_thm", ``
+!pcond symbexp1 symbexp2.
+  (birs_simplification_e pcond symbexp1 symbexp2) ==>
+  (birs_simplification_e pcond symbexp2 symbexp1)
+``,
+  METIS_TAC [symb_simplification_e_COMM_thm, birs_simplification_e_thm]
+);
+
+val birs_simplification_TRANS_thm = store_thm(
+   "birs_simplification_TRANS_thm", ``
+!pcond symbexp1 symbexp2 symbexp3.
+  (birs_simplification_e pcond symbexp1 symbexp2) ==>
+  (birs_simplification_e pcond symbexp2 symbexp3) ==>
+  (birs_simplification_e pcond symbexp1 symbexp3)
+``,
+  METIS_TAC [symb_simplification_e_TRANS_thm, birs_simplification_e_thm,
+             birs_symb_ARB_val_sound_thm, birs_symb_symbols_f_sound_thm]
+);
 
 
 
