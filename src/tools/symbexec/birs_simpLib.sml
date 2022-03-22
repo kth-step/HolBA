@@ -265,26 +265,72 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
     end;
 
 
+  (* "recursion" into certain subexpressions *)
 (*
-  (* TODO: "recursion" into certain subexpressions *)
-  val birs_simp_subexp_thms =
+val simp_t = birs_simplification_Minus_thm;
+val simp_inst_tm = birs_simp_gen_term pcond bexp;
+*)
+  fun birs_simp_try_subexp_simp simp_inst_tm simp_t =
+    let
+      val SOME birs_simp_IMP_inst_t = birs_simp_try_inst simp_inst_tm simp_t;
+      val simp_inst_tm__ = (fst o dest_imp o concl) birs_simp_IMP_inst_t;
+
+      val SOME simp_thm = birs_simp_try_direct_simp simp_inst_tm__;
+    in
+      SOME (MATCH_MP birs_simp_IMP_inst_t simp_thm)
+    end
+    handle _ => NONE;
+
+  val birs_simp_exp_subexp_thms =
     [birs_simplification_UnsignedCast_thm,
      birs_simplification_Minus_thm];
+
+(*
+  val simp_inst_tm = birs_simp_gen_term pcond bexp;
+  val abc = simp_try_fold_gen birs_simp_try_subexp_simp simp_inst_tm birs_simp_exp_subexp_thms NONE;
+*)
+
+
   (* TODO: need to keep simplifying using the three functions above repeatedly until not possible to simplify anymore *)
   (* - try direct simplification *)
   (* - try direct simplification in subexpressions *)
   (* - repeat the above until can't find anything to simplify *)
-  fun repeat_fold simp_try_fun simp_inst_tm =
-      let
-        val assignment_thm = MATCH_MP birs_rule_SUBST_thm step_thm;
-        val thm_o = List.foldr (try_fold_match assignment_thm) NONE const_add_subst_thms;
-      in
-        if isSome thm_o then
-          repeat_fold (valOf thm_o)
-        else
-          step_thm
-      end;
+
+
+  fun birs_simp_ID_fun simp_inst_tm =
+    let
+      val simp_t_ = SPEC_ALL birs_simplification_e_ID_thm;
+      val simp_tm_ = (concl) simp_t_;
+      val tm_subst_o =
+        SOME (match_term ((fst o dest_comb) simp_tm_) ((fst o dest_comb) simp_inst_tm))
+        handle _ => NONE;
+      val SOME instd_thm = Option.map (fn tm_subst => INST_TY_TERM tm_subst simp_t_) tm_subst_o;
+    in
+      instd_thm
+    end
+    handle _ => raise ERR "birs_simp_ID_thm" ("this shouldn't happen :: " ^ (term_to_string simp_inst_tm));
+
+(*
+  val simp_inst_tm = birs_simp_gen_term pcond bexp;
+  val start_simp_thm = birs_simp_ID_fun simp_inst_tm;
 *)
+  fun birs_simp_repeat_ start_simp_thm =
+      let
+        val pcond_tm = (snd o dest_comb o fst o dest_comb o fst o dest_comb o concl) start_simp_thm;
+        val bexp_tm = (snd o dest_comb o concl) start_simp_thm;
+        val simp_inst_tm__ = birs_simp_gen_term pcond_tm bexp_tm;
+
+        val direct_o = birs_simp_try_direct_simp simp_inst_tm__;
+        val subexp_o = simp_try_fold_gen birs_simp_try_subexp_simp simp_inst_tm__ birs_simp_exp_subexp_thms direct_o;
+      in
+        if isSome subexp_o then
+          birs_simp_repeat_ (MATCH_MP (MATCH_MP birs_simplification_TRANS_thm start_simp_thm) (valOf subexp_o))
+        else
+          start_simp_thm
+      end;
+
+  fun birs_simp_repeat simp_inst_tm =
+    birs_simp_repeat_ (birs_simp_ID_fun simp_inst_tm);
 
 (*
 
