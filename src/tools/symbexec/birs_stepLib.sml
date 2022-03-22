@@ -607,17 +607,23 @@ val single_step_prog_thm = result;
 *)
 fun birs_rule_SUBST_trysimp_const_add_subst_fun birs_rule_SUBST_thm single_step_prog_thm =
   let
-    val assignment_thm = MATCH_MP birs_rule_SUBST_thm single_step_prog_thm;
+    val assignment_thm_o =
+      SOME (MATCH_MP birs_rule_SUBST_thm single_step_prog_thm)
+      handle _ => NONE;
 
-    val simp_tm = (fst o dest_imp o (*snd o strip_binder (SOME boolSyntax.universal) o*) concl o Q.SPEC `symbexp'`) assignment_thm;
+    val simp_t_o = Option.mapPartial (fn assignment_thm =>
+      let
+        val simp_tm = (fst o dest_imp o (*snd o strip_binder (SOME boolSyntax.universal) o*) concl o Q.SPEC `symbexp'`) assignment_thm;
 
-    val simp_t_o = SOME (birs_simpLib.birs_simp_repeat simp_tm);
-    (* TODO: need to remove the following line later and enable the simp function above *)
-    (*val simp_t_o = NONE;*)
-
+        val simp_t = birs_simpLib.birs_simp_repeat simp_tm;
+        (* TODO: need to remove the following line later and enable the simp function above *)
+        (*val simp_t_o = NONE;*)
+      in
+        SOME (simp_t, assignment_thm)
+      end) assignment_thm_o;
   in
     case simp_t_o of
-       SOME simp_t => MATCH_MP assignment_thm simp_t
+       SOME (simp_t, assignment_thm) => MATCH_MP assignment_thm simp_t
      | NONE => single_step_prog_thm
   end;
 
