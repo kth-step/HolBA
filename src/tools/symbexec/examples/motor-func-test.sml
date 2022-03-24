@@ -173,8 +173,12 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbls =
         let
 
           val _ = print ("sequential composition with singleton mid_state set\n");
+
           val birs_state_mid = hd birs_states_mid;
+    val timer_exec_step_P1 = bir_miscLib.timer_start 0;
           val single_step_B_thm = take_step birs_state_mid;
+    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>> executed a whole step in " ^ delta_s ^ "\n")) timer_exec_step_P1;
+    val timer_exec_step_P2 = bir_miscLib.timer_start 0;
           (* TODO: derive freesymbols EMPTY from birs *)
           val (sys_B_tm, _, Pi_B_tm) = (symb_sound_struct_get_sysLPi_fun o concl) single_step_B_thm;
           val freesymbols_B_thm = prove (T, cheat);
@@ -185,6 +189,8 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbls =
             ``, cheat);*)
           (* compose together *)
           val bprog_composed_thm = SEQ_fun_spec symbex_A_thm single_step_B_thm (SOME freesymbols_B_thm);
+    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>> sequentially composed a step in " ^ delta_s ^ "\n")) timer_exec_step_P2;
+
         in
           build_tree (STEP_fun_spec, SEQ_fun_spec) bprog_composed_thm stop_lbls
         end
