@@ -323,6 +323,23 @@ val birs_simplification_Minus_thm = store_thm(
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
 );
 
+val birs_simplification_Plus_thm = store_thm(
+   "birs_simplification_Plus_thm", ``
+!pcond symbexp1 symbexp1' symbexp2.
+  (birs_simplification_e pcond symbexp1 symbexp1') ==>
+  (birs_simplification_e pcond (BExp_BinExp BIExp_Plus symbexp1 symbexp2) (BExp_BinExp BIExp_Plus symbexp1' symbexp2))
+``,
+  REWRITE_TAC [birs_simplification_e_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `H`) >>
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def]
+);
+
 
 
 
