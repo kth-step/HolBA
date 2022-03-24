@@ -359,11 +359,14 @@ fun birs_exec_step_fun bprog_tm bstate_tm =
              raise ERR "birs_exec_step_fun" "something is not right, the input state is not as expected");
 
     (* execution of steps *)
+    val timer_exec_step = bir_miscLib.timer_start 0;
     val test_term = ``birs_exec_step ^bprog_tm ^bstate_tm``;
     (*
     val _ = (print_term o concl) (birs_exec_step_CONV test_term);
     *)
+    (* TODO: optimize *)
     val birs_exec_thm = birs_exec_step_CONV test_term;
+    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> executed step in " ^ delta_s ^ "\n")) timer_exec_step;
 
     val _ = if (birs_states_are_normform o snd o dest_eq o concl) birs_exec_thm then () else
             (print_term (concl birs_exec_thm);
@@ -428,11 +431,14 @@ fun birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm =
     val lbl = (snd o dest_eq o concl o EVAL) ``(^bstate_tm).bsst_pc``;
     val lbls = ``{^lbl}``;
 
+    val timer_exec_step_p3 = bir_miscLib.timer_start 0;
+    (* TODO: optimize *)
     val single_step_prog_thm =
       SIMP_RULE (std_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss++HolBACoreSimps.holBACore_ss)
         [birs_symb_symbst_pc_thm, pred_setTheory.IN_SING]
         (REWRITE_RULE [bir_symbTheory.birs_symb_to_from_symbst_thm, birs_exec_thm]
            (SPECL [symb_state, lbls] birs_rule_STEP_thm));
+    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP in " ^ delta_s ^ "\n")) timer_exec_step_p3;
 
     val _ = if symb_sound_struct_is_normform (concl single_step_prog_thm) then () else
             (print_term (concl single_step_prog_thm);
@@ -515,6 +521,7 @@ fun birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm bstate_tm =
     case continue_thm_o of
        SOME continue_thm =>
         let
+    val timer_exec_step_p3 = bir_miscLib.timer_start 0;
           val pcond_tm = (snd o dest_comb o snd o dest_comb o fst o dest_comb o concl) continue_thm;
           (*val _ = print_term pcond_tm;*)
           val pcond_is_contr = bir_check_unsat false pcond_tm;
@@ -523,6 +530,7 @@ fun birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm bstate_tm =
               SOME (prove(``(IS_BIR_CONTRADICTION ^pcond_tm):bool``, cheat))
             else
               NONE;
+    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> tryassert in " ^ delta_s ^ "\n")) timer_exec_step_p3;
         in
           (* val SOME pcond_thm = pcond_thm_o; *)
           case pcond_thm_o of
@@ -615,9 +623,11 @@ fun birs_rule_SUBST_trysimp_const_add_subst_fun birs_rule_SUBST_thm single_step_
       let
         val simp_tm = (fst o dest_imp o (*snd o strip_binder (SOME boolSyntax.universal) o*) concl o Q.SPEC `symbexp'`) assignment_thm;
 
+    val timer_exec_step_p3 = bir_miscLib.timer_start 0;
         val simp_t = birs_simpLib.birs_simp_repeat simp_tm;
         (* TODO: need to remove the following line later and enable the simp function above *)
         (*val simp_t_o = NONE;*)
+    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> SUBST in " ^ delta_s ^ "\n")) timer_exec_step_p3;
       in
         SOME (simp_t, assignment_thm)
       end) assignment_thm_o;
