@@ -288,7 +288,8 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
 
   val birs_simp_exp_subexp_thms =
     [birs_simplification_UnsignedCast_thm,
-     birs_simplification_Minus_thm];
+     birs_simplification_Minus_thm,
+     birs_simplification_Plus_thm];
 
 (*
   val simp_inst_tm = birs_simp_gen_term pcond bexp;
