@@ -446,7 +446,7 @@ List.foldr (fn (x, l) => if not (in_f s2_l x) then x::l else l) [] s1_l;
     mk_oracle_thm "FISHY_BIRS_BIR_SENV_VARSET" ([], mk_eq (tm, tm_l_set))
   end;
 
-fun birs_exps_of_senv_COMP_CONV tm =
+fun birs_exps_of_senv_COMP_CONV_norm tm =
 (
 (*(fn tm => (if false then print ".\n" else print_term tm; REFL tm)) THENC*)
 (* (fn tm => (if true then print ".\n" else print_term tm; REFL tm)) THENC *)
@@ -461,12 +461,20 @@ fun birs_exps_of_senv_COMP_CONV tm =
       if pred_setSyntax.is_empty tm then
         REFL
       else if pred_setSyntax.is_insert tm then
-        RAND_CONV birs_exps_of_senv_COMP_CONV
+        RAND_CONV birs_exps_of_senv_COMP_CONV_norm
       else
-        birs_exps_of_senv_COMP_CONV
+        birs_exps_of_senv_COMP_CONV_norm
     ) tm))
     (fn tm => (print_term tm; raise Fail "unexpected here"))
 ) tm;
+
+val turn_speedcheat_on = false;
+val birs_exps_of_senv_COMP_CONV =
+  if turn_speedcheat_on then
+    birs_exps_of_senv_COMP_CONV_cheat
+  else
+    birs_exps_of_senv_COMP_CONV_norm;
+
 
 fun birs_exps_of_senv_CONV tm =
 (
@@ -474,7 +482,7 @@ fun birs_exps_of_senv_CONV tm =
 (fn tm => (if false then print ".\n" else print_term tm; REFL tm)) THENC
 *)
   REWRITE_CONV [birs_exps_of_senv_thm] THENC
-  ((*TRY_CONV*) birs_exps_of_senv_COMP_CONV_cheat)
+  ((*TRY_CONV*) birs_exps_of_senv_COMP_CONV)
 ) tm;
 
 fun is_birs_exps_of_senv tm = is_comb tm andalso
@@ -765,7 +773,7 @@ IN_INSERT_CONV el_EQ_CONV
     (REFL)
 ) tm;
 
-fun INTER_INSERT_CONV el_EQ_CONV tm =
+fun INTER_INSERT_CONV_norm el_EQ_CONV tm =
 (
   if pred_setSyntax.is_empty tm then
     REFL
@@ -783,9 +791,9 @@ fun INTER_INSERT_CONV el_EQ_CONV tm =
       (if pred_setSyntax.is_empty tm then
        (REFL)
       else if pred_setSyntax.is_inter tm then
-       (INTER_INSERT_CONV el_EQ_CONV)
+       (INTER_INSERT_CONV_norm el_EQ_CONV)
       else if pred_setSyntax.is_insert tm then
-       (RAND_CONV (INTER_INSERT_CONV el_EQ_CONV))
+       (RAND_CONV (INTER_INSERT_CONV_norm el_EQ_CONV))
       else
        (REFL))) tm))
 (* the following causes trouble as "normal exit" if there is nothing to be done at the first call *)
@@ -822,6 +830,21 @@ fun DIFF_INSERT_CONV_cheat tm =
     mk_oracle_thm "FISHY_BIRS_FREEVARSET" ([], mk_eq (tm, tm_l_set))
   end;
 
+
+val INTER_INSERT_CONV =
+  if turn_speedcheat_on then
+    INTER_INSERT_CONV_cheat
+  else
+    INTER_INSERT_CONV_norm el_EQ_CONV;
+
+
+val DIFF_INSERT_CONV =
+  if turn_speedcheat_on then
+    DIFF_INSERT_CONV_cheat
+  else
+    (*SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++string_ss) [pred_setTheory.INSERT_INTER, pred_setTheory.INTER_EMPTY, pred_setTheory.IN_DIFF, pred_setTheory.IN_INSERT]*)
+    EVAL;
+
 fun freevarset_CONV tm =
 (
   REWRITE_CONV [Once (prove(``
@@ -837,12 +860,12 @@ METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
 (*
   RATOR_CONV (RAND_CONV (SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++string_ss) [pred_setTheory.INSERT_INTER, pred_setTheory.INTER_EMPTY])) THENC
 *)
- (* RATOR_CONV (RAND_CONV (INTER_INSERT_CONV el_EQ_CONV)) THENC*)
+ (* RATOR_CONV (RAND_CONV (INTER_INSERT_CONV)) THENC*)
   (RAND_CONV (
 (*
    (fn tm => prove (``^tm = EMPTY``, cheat))
 *)
-   DIFF_INSERT_CONV_cheat
+   DIFF_INSERT_CONV
 )) THENC
 (*
 (fn tm => (if false then print ".\n" else print_term tm; print "aa\n\n"; REFL tm)) THENC
@@ -851,10 +874,7 @@ METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
   
 
   (* then INTER *)
-(*
-  INTER_INSERT_CONV el_EQ_CONV
-*)
-  INTER_INSERT_CONV_cheat
+  INTER_INSERT_CONV
 ) tm;
 
 (* EVAL tm *)
@@ -862,10 +882,13 @@ METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
 (* ------------------------------------------------------------------------ *)
 (* ------------------------------------------------------------------------ *)
 
+    val superspeedcheat = false;
+
     val freesymbols_thm = prove(freesymbols_tm,
+      (if superspeedcheat then cheat else ALL_TAC) >> 
       (case freesymbols_B_thm_o of
           NONE => ALL_TAC
-        | SOME freesymbols_B_thm => cheat >> REWRITE_TAC [freesymbols_B_thm, pred_setTheory.INTER_EMPTY]) >>
+        | SOME freesymbols_B_thm => REWRITE_TAC [freesymbols_B_thm, pred_setTheory.INTER_EMPTY]) >>
 
       FULL_SIMP_TAC (std_ss) [bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm, birs_symb_symbols_set_EQ_thm] >>
 
@@ -1108,7 +1131,7 @@ fun birs_rule_SEQ_fun birs_rule_SEQ_thm step_A_thm step_B_thm freesymbols_B_thm_
 val tm = (snd o dest_comb o snd o dest_comb o snd o dest_comb o concl) bprog_composed_thm;
 *)
 
-    fun DIFF_UNION_CONV tm =
+    fun DIFF_UNION_CONV_cheat tm =
       let
         val pat_tm = ``(IMAGE (birs_symb_to_symbst) Pi_a) DIFF {birs_symb_to_symbst sys_b} UNION (IMAGE birs_symb_to_symbst Pi_b)``;
         val (tm_match, ty_match) = match_term pat_tm tm;
@@ -1135,6 +1158,241 @@ length Pi_c
 (*
     val conv = DIFF_UNION_CONV;
 *)
+
+
+(*
+val tm = ``
+IMAGE birs_symb_to_symbst
+  {<|bsst_pc := <|bpc_label := BL_Address (Imm32 2824w); bpc_index := 1|>;
+     bsst_environ :=
+       birs_gen_env
+         [("MEM",BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)));
+          ("PSR_C",BExp_Den (BVar "sy_PSR_C" (BType_Imm Bit1)));
+          ("PSR_N",BExp_Den (BVar "sy_PSR_N" (BType_Imm Bit1)));
+          ("PSR_V",BExp_Den (BVar "sy_PSR_V" (BType_Imm Bit1)));
+          ("PSR_Z",BExp_Den (BVar "sy_PSR_Z" (BType_Imm Bit1)));
+          ("R0",BExp_Den (BVar "sy_R0" (BType_Imm Bit32)));
+          ("R1",BExp_Den (BVar "sy_R1" (BType_Imm Bit32)));
+          ("R2",BExp_Den (BVar "sy_R2" (BType_Imm Bit32)));
+          ("R3",BExp_Den (BVar "sy_R3" (BType_Imm Bit32)));
+          ("R4",BExp_Den (BVar "sy_R4" (BType_Imm Bit32)));
+          ("R5",BExp_Den (BVar "sy_R5" (BType_Imm Bit32)));
+          ("R6",BExp_Den (BVar "sy_R6" (BType_Imm Bit32)));
+          ("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+          ("R8",BExp_Den (BVar "sy_R8" (BType_Imm Bit32)));
+          ("R9",BExp_Den (BVar "sy_R9" (BType_Imm Bit32)));
+          ("R10",BExp_Den (BVar "sy_R10" (BType_Imm Bit32)));
+          ("R11",BExp_Den (BVar "sy_R11" (BType_Imm Bit32)));
+          ("R12",BExp_Den (BVar "sy_R12" (BType_Imm Bit32)));
+          ("LR",BExp_Den (BVar "sy_LR" (BType_Imm Bit32)));
+          ("SP_main",BExp_Den (BVar "sy_SP_main" (BType_Imm Bit32)));
+          ("SP_process",BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+          ("ModeHandler",BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1)));
+          ("countw",BExp_Den (BVar "sy_countw" (BType_Imm Bit64)));
+          ("tmp_PC",BExp_Den (BVar "sy_tmp_PC" (BType_Imm Bit32)));
+          ("tmp_COND",BExp_Den (BVar "sy_tmp_COND" (BType_Imm Bit1)));
+          ("tmp_MEM",BExp_Den (BVar "sy_tmp_MEM" (BType_Mem Bit32 Bit8)));
+          ("tmp_PSR_C",BExp_Den (BVar "sy_tmp_PSR_C" (BType_Imm Bit1)));
+          ("tmp_PSR_N",BExp_Den (BVar "sy_tmp_PSR_N" (BType_Imm Bit1)));
+          ("tmp_PSR_V",BExp_Den (BVar "sy_tmp_PSR_V" (BType_Imm Bit1)));
+          ("tmp_PSR_Z",BExp_Den (BVar "sy_tmp_PSR_Z" (BType_Imm Bit1)));
+          ("tmp_R0",BExp_Den (BVar "sy_tmp_R0" (BType_Imm Bit32)));
+          ("tmp_R1",BExp_Den (BVar "sy_tmp_R1" (BType_Imm Bit32)));
+          ("tmp_R2",BExp_Den (BVar "sy_tmp_R2" (BType_Imm Bit32)));
+          ("tmp_R3",BExp_Den (BVar "sy_tmp_R3" (BType_Imm Bit32)));
+          ("tmp_R4",BExp_Den (BVar "sy_tmp_R4" (BType_Imm Bit32)));
+          ("tmp_R5",BExp_Den (BVar "sy_tmp_R5" (BType_Imm Bit32)));
+          ("tmp_R6",BExp_Den (BVar "sy_tmp_R6" (BType_Imm Bit32)));
+          ("tmp_R7",BExp_Den (BVar "sy_tmp_R7" (BType_Imm Bit32)));
+          ("tmp_R8",BExp_Den (BVar "sy_tmp_R8" (BType_Imm Bit32)));
+          ("tmp_R9",BExp_Den (BVar "sy_tmp_R9" (BType_Imm Bit32)));
+          ("tmp_R10",BExp_Den (BVar "sy_tmp_R10" (BType_Imm Bit32)));
+          ("tmp_R11",BExp_Den (BVar "sy_tmp_R11" (BType_Imm Bit32)));
+          ("tmp_R12",BExp_Den (BVar "sy_tmp_R12" (BType_Imm Bit32)));
+          ("tmp_LR",BExp_Den (BVar "sy_tmp_LR" (BType_Imm Bit32)));
+          ("tmp_SP_main",BExp_Den (BVar "sy_tmp_SP_main" (BType_Imm Bit32)));
+          ("tmp_SP_process",
+           BExp_Den (BVar "sy_tmp_SP_process" (BType_Imm Bit32)));
+          ("tmp_ModeHandler",
+           BExp_Den (BVar "sy_tmp_ModeHandler" (BType_Imm Bit1)));
+          ("tmp_countw",BExp_Den (BVar "sy_tmp_countw" (BType_Imm Bit64)))];
+     bsst_status := BST_Running;
+     bsst_pcond :=
+       BExp_BinExp BIExp_And
+         (BExp_BinExp BIExp_And
+            (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm32 0xFFFFFFw))
+               (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32))))
+            (BExp_BinPred BIExp_Equal
+               (BExp_BinExp BIExp_And
+                  (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+                  (BExp_Const (Imm32 3w))) (BExp_Const (Imm32 0w))))
+         (BExp_BinPred BIExp_LessOrEqual
+            (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))|>} DIFF
+{birs_symb_to_symbst
+   <|bsst_pc := <|bpc_label := BL_Address (Imm32 2824w); bpc_index := 1|>;
+     bsst_environ :=
+       birs_gen_env
+         [("MEM",BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)));
+          ("PSR_C",BExp_Den (BVar "sy_PSR_C" (BType_Imm Bit1)));
+          ("PSR_N",BExp_Den (BVar "sy_PSR_N" (BType_Imm Bit1)));
+          ("PSR_V",BExp_Den (BVar "sy_PSR_V" (BType_Imm Bit1)));
+          ("PSR_Z",BExp_Den (BVar "sy_PSR_Z" (BType_Imm Bit1)));
+          ("R0",BExp_Den (BVar "sy_R0" (BType_Imm Bit32)));
+          ("R1",BExp_Den (BVar "sy_R1" (BType_Imm Bit32)));
+          ("R2",BExp_Den (BVar "sy_R2" (BType_Imm Bit32)));
+          ("R3",BExp_Den (BVar "sy_R3" (BType_Imm Bit32)));
+          ("R4",BExp_Den (BVar "sy_R4" (BType_Imm Bit32)));
+          ("R5",BExp_Den (BVar "sy_R5" (BType_Imm Bit32)));
+          ("R6",BExp_Den (BVar "sy_R6" (BType_Imm Bit32)));
+          ("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+          ("R8",BExp_Den (BVar "sy_R8" (BType_Imm Bit32)));
+          ("R9",BExp_Den (BVar "sy_R9" (BType_Imm Bit32)));
+          ("R10",BExp_Den (BVar "sy_R10" (BType_Imm Bit32)));
+          ("R11",BExp_Den (BVar "sy_R11" (BType_Imm Bit32)));
+          ("R12",BExp_Den (BVar "sy_R12" (BType_Imm Bit32)));
+          ("LR",BExp_Den (BVar "sy_LR" (BType_Imm Bit32)));
+          ("SP_main",BExp_Den (BVar "sy_SP_main" (BType_Imm Bit32)));
+          ("SP_process",BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+          ("ModeHandler",BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1)));
+          ("countw",BExp_Den (BVar "sy_countw" (BType_Imm Bit64)));
+          ("tmp_PC",BExp_Den (BVar "sy_tmp_PC" (BType_Imm Bit32)));
+          ("tmp_COND",BExp_Den (BVar "sy_tmp_COND" (BType_Imm Bit1)));
+          ("tmp_MEM",BExp_Den (BVar "sy_tmp_MEM" (BType_Mem Bit32 Bit8)));
+          ("tmp_PSR_C",BExp_Den (BVar "sy_tmp_PSR_C" (BType_Imm Bit1)));
+          ("tmp_PSR_N",BExp_Den (BVar "sy_tmp_PSR_N" (BType_Imm Bit1)));
+          ("tmp_PSR_V",BExp_Den (BVar "sy_tmp_PSR_V" (BType_Imm Bit1)));
+          ("tmp_PSR_Z",BExp_Den (BVar "sy_tmp_PSR_Z" (BType_Imm Bit1)));
+          ("tmp_R0",BExp_Den (BVar "sy_tmp_R0" (BType_Imm Bit32)));
+          ("tmp_R1",BExp_Den (BVar "sy_tmp_R1" (BType_Imm Bit32)));
+          ("tmp_R2",BExp_Den (BVar "sy_tmp_R2" (BType_Imm Bit32)));
+          ("tmp_R3",BExp_Den (BVar "sy_tmp_R3" (BType_Imm Bit32)));
+          ("tmp_R4",BExp_Den (BVar "sy_tmp_R4" (BType_Imm Bit32)));
+          ("tmp_R5",BExp_Den (BVar "sy_tmp_R5" (BType_Imm Bit32)));
+          ("tmp_R6",BExp_Den (BVar "sy_tmp_R6" (BType_Imm Bit32)));
+          ("tmp_R7",BExp_Den (BVar "sy_tmp_R7" (BType_Imm Bit32)));
+          ("tmp_R8",BExp_Den (BVar "sy_tmp_R8" (BType_Imm Bit32)));
+          ("tmp_R9",BExp_Den (BVar "sy_tmp_R9" (BType_Imm Bit32)));
+          ("tmp_R10",BExp_Den (BVar "sy_tmp_R10" (BType_Imm Bit32)));
+          ("tmp_R11",BExp_Den (BVar "sy_tmp_R11" (BType_Imm Bit32)));
+          ("tmp_R12",BExp_Den (BVar "sy_tmp_R12" (BType_Imm Bit32)));
+          ("tmp_LR",BExp_Den (BVar "sy_tmp_LR" (BType_Imm Bit32)));
+          ("tmp_SP_main",BExp_Den (BVar "sy_tmp_SP_main" (BType_Imm Bit32)));
+          ("tmp_SP_process",
+           BExp_Den (BVar "sy_tmp_SP_process" (BType_Imm Bit32)));
+          ("tmp_ModeHandler",
+           BExp_Den (BVar "sy_tmp_ModeHandler" (BType_Imm Bit1)));
+          ("tmp_countw",BExp_Den (BVar "sy_tmp_countw" (BType_Imm Bit64)))];
+     bsst_status := BST_Running;
+     bsst_pcond :=
+       BExp_BinExp BIExp_And
+         (BExp_BinExp BIExp_And
+            (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm32 0xFFFFFFw))
+               (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32))))
+            (BExp_BinPred BIExp_Equal
+               (BExp_BinExp BIExp_And
+                  (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+                  (BExp_Const (Imm32 3w))) (BExp_Const (Imm32 0w))))
+         (BExp_BinPred BIExp_LessOrEqual
+            (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))|>} ∪
+IMAGE birs_symb_to_symbst
+  {<|bsst_pc := <|bpc_label := BL_Address (Imm32 2824w); bpc_index := 2|>;
+     bsst_environ :=
+       birs_gen_env
+         [("MEM",BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)));
+          ("PSR_C",BExp_Den (BVar "sy_PSR_C" (BType_Imm Bit1)));
+          ("PSR_N",BExp_Den (BVar "sy_PSR_N" (BType_Imm Bit1)));
+          ("PSR_V",BExp_Den (BVar "sy_PSR_V" (BType_Imm Bit1)));
+          ("PSR_Z",BExp_Den (BVar "sy_PSR_Z" (BType_Imm Bit1)));
+          ("R0",BExp_Den (BVar "sy_R0" (BType_Imm Bit32)));
+          ("R1",BExp_Den (BVar "sy_R1" (BType_Imm Bit32)));
+          ("R2",BExp_Den (BVar "sy_R2" (BType_Imm Bit32)));
+          ("R3",BExp_Den (BVar "sy_R3" (BType_Imm Bit32)));
+          ("R4",BExp_Den (BVar "sy_R4" (BType_Imm Bit32)));
+          ("R5",BExp_Den (BVar "sy_R5" (BType_Imm Bit32)));
+          ("R6",BExp_Den (BVar "sy_R6" (BType_Imm Bit32)));
+          ("R7",BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
+          ("R8",BExp_Den (BVar "sy_R8" (BType_Imm Bit32)));
+          ("R9",BExp_Den (BVar "sy_R9" (BType_Imm Bit32)));
+          ("R10",BExp_Den (BVar "sy_R10" (BType_Imm Bit32)));
+          ("R11",BExp_Den (BVar "sy_R11" (BType_Imm Bit32)));
+          ("R12",BExp_Den (BVar "sy_R12" (BType_Imm Bit32)));
+          ("LR",BExp_Den (BVar "sy_LR" (BType_Imm Bit32)));
+          ("SP_main",BExp_Den (BVar "sy_SP_main" (BType_Imm Bit32)));
+          ("SP_process",BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
+          ("ModeHandler",BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1)));
+          ("countw",BExp_Den (BVar "sy_countw" (BType_Imm Bit64)));
+          ("tmp_PC",BExp_Den (BVar "sy_tmp_PC" (BType_Imm Bit32)));
+          ("tmp_COND",BExp_Den (BVar "sy_tmp_COND" (BType_Imm Bit1)));
+          ("tmp_MEM",BExp_Den (BVar "sy_tmp_MEM" (BType_Mem Bit32 Bit8)));
+          ("tmp_PSR_C",BExp_Den (BVar "sy_tmp_PSR_C" (BType_Imm Bit1)));
+          ("tmp_PSR_N",BExp_Den (BVar "sy_tmp_PSR_N" (BType_Imm Bit1)));
+          ("tmp_PSR_V",BExp_Den (BVar "sy_tmp_PSR_V" (BType_Imm Bit1)));
+          ("tmp_PSR_Z",BExp_Den (BVar "sy_tmp_PSR_Z" (BType_Imm Bit1)));
+          ("tmp_R0",BExp_Den (BVar "sy_tmp_R0" (BType_Imm Bit32)));
+          ("tmp_R1",BExp_Den (BVar "sy_tmp_R1" (BType_Imm Bit32)));
+          ("tmp_R2",BExp_Den (BVar "sy_tmp_R2" (BType_Imm Bit32)));
+          ("tmp_R3",BExp_Den (BVar "sy_tmp_R3" (BType_Imm Bit32)));
+          ("tmp_R4",BExp_Den (BVar "sy_tmp_R4" (BType_Imm Bit32)));
+          ("tmp_R5",BExp_Den (BVar "sy_tmp_R5" (BType_Imm Bit32)));
+          ("tmp_R6",BExp_Den (BVar "sy_tmp_R6" (BType_Imm Bit32)));
+          ("tmp_R7",BExp_Den (BVar "sy_tmp_R7" (BType_Imm Bit32)));
+          ("tmp_R8",BExp_Den (BVar "sy_tmp_R8" (BType_Imm Bit32)));
+          ("tmp_R9",BExp_Den (BVar "sy_tmp_R9" (BType_Imm Bit32)));
+          ("tmp_R10",BExp_Den (BVar "sy_tmp_R10" (BType_Imm Bit32)));
+          ("tmp_R11",BExp_Den (BVar "sy_tmp_R11" (BType_Imm Bit32)));
+          ("tmp_R12",BExp_Den (BVar "sy_tmp_R12" (BType_Imm Bit32)));
+          ("tmp_LR",BExp_Den (BVar "sy_tmp_LR" (BType_Imm Bit32)));
+          ("tmp_SP_main",BExp_Den (BVar "sy_tmp_SP_main" (BType_Imm Bit32)));
+          ("tmp_SP_process",
+           BExp_Den (BVar "sy_tmp_SP_process" (BType_Imm Bit32)));
+          ("tmp_ModeHandler",
+           BExp_Den (BVar "sy_tmp_ModeHandler" (BType_Imm Bit1)));
+          ("tmp_countw",BExp_Den (BVar "sy_tmp_countw" (BType_Imm Bit64)))];
+     bsst_status := BST_Running;
+     bsst_pcond :=
+       BExp_BinExp BIExp_And
+         (BExp_BinExp BIExp_And
+            (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm32 0xFFFFFFw))
+               (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32))))
+            (BExp_BinPred BIExp_Equal
+               (BExp_BinExp BIExp_And
+                  (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)))
+                  (BExp_Const (Imm32 3w))) (BExp_Const (Imm32 0w))))
+         (BExp_BinPred BIExp_LessOrEqual
+            (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+            (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))|>}``;
+*)
+
+    val diffunioncheat_on = true;
+    val DIFF_UNION_CONV =
+      if diffunioncheat_on then
+        DIFF_UNION_CONV_cheat
+      else
+        fn tm =>
+          let
+            val bprog_composed_thm_1 = computeLib.RESTR_EVAL_CONV [(*``birs_gen_env``, ``IMAGE``,*) ``birs_symb_to_symbst``] tm;
+(*            val _ = print_term (concl bprog_composed_thm_1);*)
+(*
+birs_auxTheory.birs_gen_env_NULL_thm
+birs_gen_env_thm
+*)
+            val IMAGE_EMPTY_thm =
+              Q.SPEC `birs_symb_to_symbst` (
+                INST_TYPE [beta |-> Type`:(bir_programcounter_t, string, bir_exp_t, bir_status_t) symb_symbst_t`, alpha |-> Type`:birs_state_t`] 
+                pred_setTheory.IMAGE_EMPTY
+              );
+            val bprog_composed_thm_2 =
+              CONV_RULE
+                (REWRITE_CONV [GSYM IMAGE_EMPTY_thm, GSYM pred_setTheory.IMAGE_INSERT])
+                bprog_composed_thm_1;
+(*
+            val _ = print_term (concl bprog_composed_thm_2);
+*)
+          in
+            bprog_composed_thm_2
+          end;
 
     fun Pi_CONV conv tm =
       RAND_CONV (RAND_CONV (conv)) tm;
