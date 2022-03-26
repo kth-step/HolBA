@@ -468,7 +468,7 @@ fun birs_exps_of_senv_COMP_CONV_norm tm =
     (fn tm => (print_term tm; raise Fail "unexpected here"))
 ) tm;
 
-val turn_speedcheat_on = false;
+val turn_speedcheat_on = true;
 val birs_exps_of_senv_COMP_CONV =
   if turn_speedcheat_on then
     birs_exps_of_senv_COMP_CONV_cheat
@@ -882,7 +882,7 @@ METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
 (* ------------------------------------------------------------------------ *)
 (* ------------------------------------------------------------------------ *)
 
-    val superspeedcheat = false;
+    val superspeedcheat = true;
 
     val freesymbols_thm = prove(freesymbols_tm,
       (if superspeedcheat then cheat else ALL_TAC) >> 
