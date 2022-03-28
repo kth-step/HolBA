@@ -1,6 +1,31 @@
 structure bir_symbexec_stepLib =
 struct
 
+val bir_symbexec_step_execstepnum = ref 0;
+val bir_symbexec_step_execbranchnum = ref 0;
+val bir_symbexec_step_execassignmentsnum = ref 0;
+val bir_symbexec_step_execcallsnum = ref 0;
+
+fun bir_symbexec_step_reset_counters () =
+  let
+    val _ = bir_symbexec_step_execstepnum := 0;
+    val _ = bir_symbexec_step_execbranchnum := 0;
+    val _ = bir_symbexec_step_execassignmentsnum := 0;
+    val _ = bir_symbexec_step_execcallsnum := 0;
+  in
+    ()
+  end;
+
+fun bir_symbexec_step_print_counters () =
+  let
+    val _ = print (">>> number of steps taken: " ^ (Int.toString (!bir_symbexec_step_execstepnum)) ^ "\n");
+    val _ = print (">>> number of branches taken: " ^ (Int.toString (!bir_symbexec_step_execbranchnum)) ^ "\n");
+    val _ = print (">>> number of branches taken: " ^ (Int.toString (!bir_symbexec_step_execassignmentsnum)) ^ "\n");
+    val _ = print (">>> number of branches taken: " ^ (Int.toString (!bir_symbexec_step_execcallsnum)) ^ "\n");
+  in
+    ()
+  end;
+
 local
 
   open HolKernel Parse;
@@ -95,7 +120,9 @@ in (* local *)
       [syst]
     (* assignment *)
     else if is_BStmt_Assign s then
+      let val _ = bir_symbexec_step_execassignmentsnum := (!bir_symbexec_step_execassignmentsnum)+1; in
       state_exec_assign (dest_BStmt_Assign s) syst
+      end
     (* assert and assume *)
     else if is_BStmt_Assert s then
       state_exec_assert (dest_BStmt_Assert s) syst
@@ -265,6 +292,9 @@ in (* local *)
       (* generate list of states from end statement *)
       val systs = List.concat(List.map (symb_exec_endstmt n_dict lbl_tm est) systs2);
       val systs_processed = abpfun systs;
+
+      val _ = bir_symbexec_step_execstepnum := (!bir_symbexec_step_execstepnum)+(List.length s_tms)+1;
+      val _ = bir_symbexec_step_execbranchnum := (!bir_symbexec_step_execbranchnum)+((List.length systs)-(List.length systs2));
     in
       systs_processed
     end

@@ -266,6 +266,7 @@ in (* outermost local *)
           systs_noassertfailed;
 
       (* instantiation and recursion with what is not yet in end_lbl_tms *)
+      val _ = bir_symbexec_step_execcallsnum := (!bir_symbexec_step_execcallsnum)+(List.length systs_continue);
       val systs_new = instantiate_summaries sums systs_continue;
 
       (* append ended states *)
@@ -295,9 +296,11 @@ in (* outermost local *)
       val _ = timer_stop (fn s => print("time to collect traversal info: " ^ s ^ "\n")) timer_meas;
       *)
 
+      val _ = bir_symbexec_step_reset_counters ();
       val timer_meas = timer_start 1;
       val systs_after = drive_through_summaries n_dict bl_dict sums systs end_lbl_tms [];
       val _ = timer_stop (fn s => print("time to drive symbolic execution: " ^ s ^ "\n")) timer_meas;
+      val _ = bir_symbexec_step_print_counters ();
 
       val sum = merge_to_summary lbl_tm systs_after;
     in
