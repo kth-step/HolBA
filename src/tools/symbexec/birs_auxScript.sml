@@ -678,14 +678,14 @@ val birs_gen_env_NULL_thm = store_thm(
 !n sv l.
     birs_gen_env ([]) = (K NONE)
 ``,
-  cheat
+  SIMP_TAC std_ss [birs_gen_env_def, listTheory.FOLDR]
 );
 val birs_gen_env_thm = store_thm(
    "birs_gen_env_thm", ``
 !n sv l.
     birs_gen_env ((n, sv)::l) = (n =+ (SOME sv)) (birs_gen_env l)
 ``,
-  cheat
+  SIMP_TAC std_ss [birs_gen_env_def, listTheory.FOLDR, birs_gen_env_fun_def]
 );
 
 (*
@@ -698,7 +698,27 @@ val birs_update_env_thm = store_thm(
 !n sv l.
     birs_update_env (n, sv) (birs_gen_env l) = birs_gen_env((n, sv)::(FILTER (\x. (FST x) <> n) l))
 ``,
-  cheat
+  SIMP_TAC std_ss [birs_update_env_def, birs_gen_env_thm] >>
+  REWRITE_TAC [boolTheory.FUN_EQ_THM] >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on `x = n` >> (
+    ASM_SIMP_TAC std_ss [combinTheory.UPDATE_APPLY]
+  ) >>
+
+  Induct_on `l` >> (
+    SIMP_TAC std_ss [listTheory.FILTER]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+  Cases_on `h` >>
+  Cases_on `q = n` >> (
+    ASM_SIMP_TAC std_ss [birs_gen_env_thm, combinTheory.UPDATE_APPLY]
+  ) >>
+
+  Cases_on `x = q` >> (
+    ASM_SIMP_TAC std_ss [combinTheory.UPDATE_APPLY]
+  )
 );
 
 (*
@@ -711,14 +731,14 @@ val birs_gen_env_GET_NULL_thm = store_thm(
 !m.
     birs_gen_env [] m = NONE
 ``,
-  cheat
+  SIMP_TAC std_ss [birs_gen_env_NULL_thm]
 );
 val birs_gen_env_GET_thm = store_thm(
    "birs_gen_env_GET_thm", ``
 !n sv l m.
     birs_gen_env ((n, sv)::l) m = if n = m then SOME sv else birs_gen_env l m
 ``,
-  cheat
+  SIMP_TAC std_ss [birs_gen_env_thm, combinTheory.APPLY_UPDATE_THM]
 );
 
 (*
