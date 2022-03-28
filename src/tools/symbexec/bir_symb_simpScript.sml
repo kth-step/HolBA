@@ -117,7 +117,7 @@ val symb_simplification_thm = store_thm(
    "symb_simplification_thm", ``
 !sr.
 !sys symbexp symbexp'.
-  (symb_simplification sr sys symbexp symbexp') ==>
+  (symb_simplification sr sys symbexp symbexp') <=>
   (symb_simplification_e sr (symb_symbst_pcond sys) symbexp symbexp')
 ``,
   REWRITE_TAC [symb_simplification_def, symb_simplification_e_def, symb_interpr_symbpcond_def]

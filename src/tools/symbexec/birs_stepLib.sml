@@ -484,28 +484,7 @@ local
   val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
   open birs_auxTheory;
 
-  val assert_spec_thm = prove(``
-!bprog sys L lbl1 env1 status pre cond lbl2 env2.
-  (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
-    (sys, L, IMAGE birs_symb_to_symbst {
-      <|bsst_pc := lbl1;
-        bsst_environ := env1;
-        bsst_status := status;
-        bsst_pcond := BExp_BinExp BIExp_And pre cond|>;
-      <|bsst_pc := lbl2;
-        bsst_environ := env2;
-        bsst_status := BST_AssertionViolated;
-        bsst_pcond := BExp_BinExp BIExp_And pre
-                 (BExp_UnaryExp BIExp_Not cond)|>})) ==>
-  (IS_BIR_CONTRADICTION (BExp_BinExp BIExp_And pre
-                 (BExp_UnaryExp BIExp_Not cond))) ==>
-  (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
-    (sys, L, IMAGE birs_symb_to_symbst {
-      <|bsst_pc := lbl1;
-        bsst_environ := env1;
-        bsst_status := status;
-        bsst_pcond := pre|>}))
-``, cheat);
+  open birs_rulesTheory;
 
   open birs_smtLib;
 
@@ -544,39 +523,12 @@ end;
 
 (* stepping a sound structure, try to simplify after assignment *)
 (* ----------------------------------------------- *)
-val symb_rule_SUBST_SING_thm = prove(``
-!sr.
-!sys L sys2 var symbexp symbexp'.
-  (symb_symbols_f_sound sr) ==>
-  (symb_ARB_val_sound sr) ==>
-
-  (symb_hl_step_in_L_sound sr (sys, L, {sys2})) ==>
-  ((symb_symbst_store sys2) var = SOME symbexp) ==>
-
-  (symb_simplification sr sys2 symbexp symbexp') ==>
-
-  (symb_hl_step_in_L_sound sr (sys, L, {symb_symbst_store_update var symbexp' sys2}))
-``,
-  REPEAT STRIP_TAC >>
-
-  `({sys2} DIFF {sys2}) UNION {symb_symbst_store_update var symbexp' sys2} = {symb_symbst_store_update var symbexp' sys2}` by (
-    METIS_TAC [pred_setTheory.DIFF_EQ_EMPTY, pred_setTheory.UNION_EMPTY]
-  ) >>
-
-  METIS_TAC [symb_rulesTheory.symb_rule_SUBST_thm]
-);
-
-(*
-val birs_symb_rule_SUBST_SING_thm = prove(``
-``,
-);
-*)
-
-
 (* first prepare the SUBST rule for prog *)
 fun birs_rule_SUBST_prog_fun bprog_tm =
   let
+    open birs_rulesTheory;
     val prog_type = (hd o snd o dest_type o type_of) bprog_tm;
+    (*
     val symbols_f_sound_thm = INST_TYPE [Type.alpha |-> prog_type] bir_symb_soundTheory.birs_symb_symbols_f_sound_thm;
     val birs_symb_symbols_f_sound_prog_thm =
       (SPEC (bprog_tm) symbols_f_sound_thm);
@@ -604,9 +556,10 @@ fun birs_rule_SUBST_prog_fun bprog_tm =
                bsst_pcond := pcond|>})
       ``,
         cheat (* TODO: connect this with prep_thm from above *)
-      );
+      );*)
   in
-    inst_thm
+    (SPEC bprog_tm o INST_TYPE [Type.alpha |-> prog_type]) birs_rule_SUBST_spec_thm
+    (*inst_thm*)
   end;
 
 
