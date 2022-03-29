@@ -234,29 +234,34 @@ val symb_rule_INF_thm = store_thm(
 (*        RULE CONS          *)
 (* ************************* *)
 val symb_pcondwiden_def = Define `
-    symb_pcondwiden sr sys sys' = (
+    symb_pcondwiden sr pcond pcond' =
+    (!H.
+      (symb_interpr_welltyped sr H) ==>
+      (symb_interpr_for_symbs ((sr.sr_symbols_f pcond) UNION (sr.sr_symbols_f pcond')) H) ==>
+      (sr.sr_interpret_f H pcond = SOME sr.sr_val_true) ==>
+      (sr.sr_interpret_f H pcond' = SOME sr.sr_val_true))
+`;
+
+val symb_pcondwiden_sys_def = Define `
+    symb_pcondwiden_sys sr sys sys' = (
     (symb_symbst_extra sys =
      symb_symbst_extra sys') /\
     (symb_symbst_pc sys =
      symb_symbst_pc sys') /\
     (symb_symbst_store sys =
      symb_symbst_store sys') /\
-    (!H.
-      (symb_interpr_welltyped sr H) ==>
-      (symb_interpr_for_symbs ((sr.sr_symbols_f (symb_symbst_pcond sys)) UNION (sr.sr_symbols_f (symb_symbst_pcond sys'))) H) ==>
-      (symb_interpr_symbpcond sr H sys) ==>
-      (symb_interpr_symbpcond sr H sys'))
+    (symb_pcondwiden sr (symb_symbst_pcond sys) (symb_symbst_pcond sys'))
   )
 `;
 
-val symb_pcondwiden_matchstate_IMP_matchstate_thm = store_thm(
-   "symb_pcondwiden_matchstate_IMP_matchstate_thm", ``
+val symb_pcondwiden_sys_matchstate_IMP_matchstate_thm = store_thm(
+   "symb_pcondwiden_sys_matchstate_IMP_matchstate_thm", ``
 !sr.
 !sys sys' H s.
   (symb_symbols_f_sound sr) ==>
   (symb_ARB_val_sound sr) ==>
 
-  (symb_pcondwiden sr sys sys') ==>
+  (symb_pcondwiden_sys sr sys sys') ==>
   (symb_matchstate sr sys H s) ==>
 
   (symb_matchstate sr sys' (symb_interpr_extend_symbs_sr sr (symb_symbols sr sys') H) s)
@@ -291,19 +296,19 @@ val symb_pcondwiden_matchstate_IMP_matchstate_thm = store_thm(
     METIS_TAC [symb_suitable_interpretation_def, symb_interpr_for_symbs_def, SUBSET_TRANS, SUBSET_UNION]
   ) >>
 
-  FULL_SIMP_TAC std_ss [symb_pcondwiden_def, symb_matchstate_def] >>
+  FULL_SIMP_TAC std_ss [symb_pcondwiden_sys_def, symb_pcondwiden_def, symb_matchstate_def] >>
 
-  METIS_TAC []
+  METIS_TAC [symb_interpr_symbpcond_def]
 );
 
-val symb_pcondwiden_matchstate_IMP_matchstate_EXISTS_thm = store_thm(
-   "symb_pcondwiden_matchstate_IMP_matchstate_EXISTS_thm", ``
+val symb_pcondwiden_sys_matchstate_IMP_matchstate_EXISTS_thm = store_thm(
+   "symb_pcondwiden_sys_matchstate_IMP_matchstate_EXISTS_thm", ``
 !sr.
 !sys1 sys2 s H1 H2.
   (symb_symbols_f_sound sr) ==>
   (symb_ARB_val_sound sr) ==>
 
-  (symb_pcondwiden sr sys1 sys2) ==>
+  (symb_pcondwiden_sys sr sys1 sys2) ==>
 
   (symb_matchstate sr sys1 H1 s) ==>
   (?H2.
@@ -315,7 +320,7 @@ val symb_pcondwiden_matchstate_IMP_matchstate_EXISTS_thm = store_thm(
 
   FULL_SIMP_TAC std_ss [symb_interpr_extend_symbs_sr_def, symb_interpr_extend_symbs_IMP_ext_thm] >>
 
-  METIS_TAC [symb_interpr_extend_symbs_sr_def, symb_pcondwiden_matchstate_IMP_matchstate_thm]
+  METIS_TAC [symb_interpr_extend_symbs_sr_def, symb_pcondwiden_sys_matchstate_IMP_matchstate_thm]
 );
 
 (* TODO: split this into two *)
@@ -331,7 +336,7 @@ val symb_rule_CONS_S_thm = store_thm(
    INTER ((symb_symbols_set sr Pi) DIFF (symb_symbols sr sys')) = EMPTY) ==>
 
   (symb_hl_step_in_L_sound sr (sys', L, Pi)) ==>
-  (symb_pcondwiden sr sys sys') ==>
+  (symb_pcondwiden_sys sr sys sys') ==>
   (symb_hl_step_in_L_sound sr (sys, L, Pi))
 ``,
   REWRITE_TAC [symb_hl_step_in_L_sound_def] >>
@@ -342,7 +347,7 @@ val symb_rule_CONS_S_thm = store_thm(
        this is like the other rule CONS_E *)
   (* Q.ABBREV_TAC `H_a = symb_interpr_extend_symbs (symb_symbols sr sys') H1` >> *)
   (* this can now match sys' with s *)
-  IMP_RES_TAC symb_pcondwiden_matchstate_IMP_matchstate_EXISTS_thm >>
+  IMP_RES_TAC symb_pcondwiden_sys_matchstate_IMP_matchstate_EXISTS_thm >>
   rename1 `symb_matchstate sr sys' H_a s` >>
 
   (* then get a minimal interpretation for sys' *)
@@ -384,14 +389,14 @@ val symb_rule_CONS_S_thm = store_thm(
   METIS_TAC [symb_matchstate_interpr_ext_EXISTS_thm, symb_matchstate_ext_def]
 );
 
-val symb_pcondwiden_TRANSF_matchstate_ext_thm = store_thm(
-   "symb_pcondwiden_TRANSF_matchstate_ext_thm", ``
+val symb_pcondwiden_sys_TRANSF_matchstate_ext_thm = store_thm(
+   "symb_pcondwiden_sys_TRANSF_matchstate_ext_thm", ``
 !sr.
 !sys sys2 sys2'.
   (symb_symbols_f_sound sr) ==>
   (symb_ARB_val_sound sr) ==>
 
-  (symb_pcondwiden sr sys2 sys2') ==>
+  (symb_pcondwiden_sys sr sys2 sys2') ==>
 
 !H s s'.
   (symb_minimal_interpretation sr sys H) ==>
@@ -415,7 +420,7 @@ val symb_pcondwiden_TRANSF_matchstate_ext_thm = store_thm(
   ) >>
   FULL_SIMP_TAC std_ss [] >>
 
-  METIS_TAC [symb_pcondwiden_matchstate_IMP_matchstate_thm]
+  METIS_TAC [symb_pcondwiden_sys_matchstate_IMP_matchstate_thm]
 );
 
 
@@ -427,10 +432,10 @@ val symb_rule_CONS_E_thm = store_thm(
   (symb_ARB_val_sound sr) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
-  (symb_pcondwiden sr sys2 sys2') ==>
+  (symb_pcondwiden_sys sr sys2 sys2') ==>
   (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2'}))
 ``,
-  METIS_TAC [symb_rule_TRANSF_GEN_thm, symb_pcondwiden_TRANSF_matchstate_ext_thm]
+  METIS_TAC [symb_rule_TRANSF_GEN_thm, symb_pcondwiden_sys_TRANSF_matchstate_ext_thm]
 );
 
 val symb_rule_CONS_thm = store_thm(
@@ -445,8 +450,8 @@ val symb_rule_CONS_thm = store_thm(
    INTER ((symb_symbols_set sr ((Pi DIFF {sys2}) UNION {sys2'})) DIFF (symb_symbols sr sys1')) = EMPTY) ==>
 
   (symb_hl_step_in_L_sound sr (sys1', L, Pi)) ==>
-  (symb_pcondwiden sr sys1 sys1') ==>
-  (symb_pcondwiden sr sys2 sys2') ==>
+  (symb_pcondwiden_sys sr sys1 sys1') ==>
+  (symb_pcondwiden_sys sr sys2 sys2') ==>
   (symb_hl_step_in_L_sound sr (sys1, L, (Pi DIFF {sys2}) UNION {sys2'}))
 ``,
   METIS_TAC [symb_rule_CONS_S_thm, symb_rule_CONS_E_thm]
