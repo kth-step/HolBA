@@ -26,21 +26,6 @@ val birs_pcondinf_def = Define `
   )
 `;
 
-(*
-val birs_interpret_fun_NOT_true_thm = store_thm(
-   "birs_interpret_fun_NOT_true_thm", ``
-!H bexp.
-  (birs_interpr_welltyped H) ==>
-  (symb_interpr_for_symbs (bir_vars_of_exp bexp) H) ==>
-
-  (birs_interpret_fun H bexp <> SOME bir_val_true) ==>
-  (birs_interpret_fun H bexp = SOME bir_val_false)
-``,
-  cheat
-);
-*)
-
-
 val birs_pcondinf_thm = store_thm(
    "birs_pcondinf_thm", ``
 !bprog pcond.
@@ -52,24 +37,78 @@ val birs_pcondinf_thm = store_thm(
   SIMP_TAC (std_ss++symb_TYPES_ss) [bir_symb_rec_sbir_def, symb_interpr_symbpcond_def, bir_bool_expTheory.bir_val_TF_dist]
 );
 
-(* TODO: unify pcondinf and and integrate similarly in symb_pcondwiden *)
-(*
-val birs_interpret_fun_AND_IMP_true_thm = store_thm(
-   "birs_interpret_fun_NOT_true_thm", ``
-!H bexp.
-  (birs_interpr_welltyped H) ==>
-  (symb_interpr_for_symbs (bir_vars_of_exp bexp) H) ==>
+val birs_pcondwiden_def = Define `
+    birs_pcondwiden pcond pcond' =
+    (!H.
+      (birs_interpr_welltyped H) ==>
+      (symb_interpr_for_symbs ((bir_vars_of_exp pcond) UNION (bir_vars_of_exp pcond')) H) ==>
+      (birs_interpret_fun H pcond = SOME bir_val_true) ==>
+      (birs_interpret_fun H pcond' = SOME bir_val_true))
+`;
 
-  (birs_interpret_fun H bexp <> SOME bir_val_true) ==>
-  (birs_interpret_fun H bexp = SOME bir_val_false)
+val birs_pcondwiden_thm = store_thm(
+   "birs_pcondwiden_thm", ``
+!bprog pcond pcond'.
+  symb_pcondwiden (bir_symb_rec_sbir bprog) pcond pcond' <=>
+  birs_pcondwiden pcond pcond'
 ``,
-  cheat
+  REWRITE_TAC [symb_rulesTheory.symb_pcondwiden_def, birs_pcondwiden_def] >>
+  REWRITE_TAC [birs_interpr_welltyped_EQ_thm] >>
+  SIMP_TAC (std_ss++symb_TYPES_ss) [bir_symb_rec_sbir_def, symb_interpr_symbpcond_def, bir_bool_expTheory.bir_val_TF_dist]
 );
-*)
+
+(* this is an adjusted copy of "bir_disj1_false" from "bir_exp_equivTheory" *)
+local
+  open bir_bool_expTheory
+in
+val bir_conj_true = store_thm(
+   "bir_conj_true",
+  ``!A B.
+      (bir_eval_bin_exp BIExp_And (A) (B) = SOME bir_val_true) ==>
+      (A = SOME bir_val_true /\
+       B = SOME bir_val_true)``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_true_def,
+                                      bir_val_false_def] >> (
+  Cases_on `A` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `B` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `x` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `x'` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `b` >> Cases_on `b'` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_immTheory.bir_bin_exp_def]
+  ) >>
+  blastLib.FULL_BBLAST_TAC
+)
+);
+end;
+
+val birs_pcondwiden_AND_thm = store_thm(
+   "birs_pcondwiden_AND_thm", ``
+!pre cond.
+  birs_pcondwiden (BExp_BinExp BIExp_And pre cond) pre
+``,
+  REWRITE_TAC [birs_pcondwiden_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
+
+  METIS_TAC [bir_conj_true]
+);
+
 
 val assert_spec_thm = store_thm(
    "assert_spec_thm", ``
 !bprog sys L lbl1 env1 status pre cond lbl2 env2.
+  (lbl1 <> lbl2) ==>
   (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
     (sys, L, IMAGE birs_symb_to_symbst {
       <|bsst_pc := lbl1;
@@ -91,7 +130,7 @@ val assert_spec_thm = store_thm(
         bsst_pcond := pre|>}))
 ``,
   REPEAT STRIP_TAC >>
-  IMP_RES_TAC  symb_rulesTheory.symb_rule_INF_thm >>
+  IMP_RES_TAC symb_rulesTheory.symb_rule_INF_thm >>
   PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o SPEC ``birs_symb_to_symbst <|bsst_pc := lbl2; bsst_environ := env2;
                   bsst_status := BST_AssertionViolated;
                   bsst_pcond :=
@@ -104,15 +143,29 @@ val assert_spec_thm = store_thm(
     METIS_TAC [birs_pcondinf_thm, symb_symbst_pcond_def]
   ) >>
 
-  `BExp_BinExp BIExp_And pre cond' <>
-   BExp_BinExp BIExp_And pre (BExp_UnaryExp BIExp_Not cond')` by (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-    cheat
+  FULL_SIMP_TAC (std_ss++symb_TYPES_ss) [symb_symbst_pcond_def, DIFF_INSERT, DIFF_EMPTY, DELETE_INSERT, EMPTY_DELETE] >>
+  REV_FULL_SIMP_TAC (std_ss) [] >>
+
+  Q.ABBREV_TAC `sys2 = SymbSymbSt lbl1 env1 (BExp_BinExp BIExp_And pre cond') status` >>
+  Q.ABBREV_TAC `sys2' = SymbSymbSt lbl1 env1 pre status` >>
+
+  ASSUME_TAC (
+    (Q.SPECL [`sys`, `L`, `{sys2}`, `sys2`, `sys2'`] o
+     SIMP_RULE std_ss [bir_symb_soundTheory.birs_symb_ARB_val_sound_thm] o
+     MATCH_MP symb_rulesTheory.symb_rule_CONS_E_thm o
+     Q.SPEC `bprog`)
+       bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
+
+  `symb_pcondwiden_sys (bir_symb_rec_sbir bprog) sys2 sys2'` by (
+    Q.UNABBREV_TAC `sys2` >>
+    Q.UNABBREV_TAC `sys2'` >>
+
+    SIMP_TAC (std_ss++symb_TYPES_ss) [symb_rulesTheory.symb_pcondwiden_sys_def, symb_symbst_extra_def, symb_symbst_pc_def, symb_symbst_store_def, symb_symbst_pcond_def] >>
+    REWRITE_TAC [birs_pcondwiden_thm, birs_pcondwiden_AND_thm]
   ) >>
 
-  FULL_SIMP_TAC (std_ss++symb_TYPES_ss) [DIFF_INSERT, DIFF_EMPTY, DELETE_INSERT, EMPTY_DELETE] >>
-
-  cheat (* TODO: use rule of consequence to drop BIR pcond conjunct *)
+  FULL_SIMP_TAC (std_ss) [] >>
+  REV_FULL_SIMP_TAC (std_ss) [DIFF_INSERT, SING_DELETE, DIFF_EMPTY, UNION_EMPTY]
 );
 
 val symb_rule_SUBST_SING_thm = prove(``
