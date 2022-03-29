@@ -213,19 +213,22 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
 
       val SOME instd_thm =   Option.map (fn tm_subst => INST_TY_TERM tm_subst birs_simp_IMP_inst_t) tm_subst_o;
 
+
       val imp_tm = (fst o dest_imp o concl) instd_thm;
+      (* ================================================= *)
       (* TODO: function/code to remove imp assumption, with smt solver *)
       val pred1_tm = (snd o dest_comb o fst o dest_comb) imp_tm;
       val pred2_tm = (snd o dest_comb) imp_tm;
       val imp_bexp_tm = ``BExp_BinExp BIExp_Or (BExp_UnaryExp BIExp_Not (^pred1_tm)) (^pred2_tm)``;
-
       val imp_is_taut = bir_check_taut false imp_bexp_tm;
-
       val imp_thm_o =
             if imp_is_taut then
-              SOME (prove(imp_tm, cheat))
+              (* SOME (prove(imp_tm, cheat)) *)
+              SOME (mk_oracle_thm "BIRS_SIMP_LIB_Z3" ([], imp_tm))
             else
               NONE;
+      (* ================================================= *)
+
 
       val SOME imp_t = imp_thm_o;
 
