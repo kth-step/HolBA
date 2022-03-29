@@ -595,6 +595,19 @@ val birs_simplification_Plus_Minus_Const32_thm = store_thm(
 (* ******************************************************* *)
 (*      if then else expressions                           *)
 (* ******************************************************* *)
+val birs_interpret_fun_welltyped_IMP_thm = store_thm(
+   "birs_interpret_fun_welltyped_IMP_thm", ``
+!H be ty.
+  (birs_interpr_welltyped H) ==>
+  (symb_interpr_for_symbs (bir_vars_of_exp be) H) ==>
+  (type_of_bir_exp be = SOME ty) ==>
+  (?v. birs_interpret_fun H be = SOME v /\
+       type_of_bir_val v = ty)
+``,
+  cheat
+);
+
+
 val birs_simplification_IfThenElse_T_thm = store_thm(
    "birs_simplification_IfThenElse_T_thm", ``
 !pcond ec et ef.
@@ -611,10 +624,31 @@ val birs_simplification_IfThenElse_T_thm = store_thm(
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
 
   FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_val_true_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
-  (* bir_expTheory.bir_eval_ifthenelse_REWRS *)
+(*
+  Cases_on `birs_interpret_fun_ALT H et` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+*)
 
-  cheat (* TODO: same needs to be proven in the F theorem *)
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def] >>
+  Cases_on `type_of_bir_exp ec` >> Cases_on `type_of_bir_exp et` >> Cases_on `type_of_bir_exp ef` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [quantHeuristicsTheory.IS_SOME_EQ_NOT_NONE] >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES, pairTheory.pair_CASE_def]
+  ) >>
+  rename1 `type_of_bir_exp ec = SOME ecty` >>
+  rename1 `type_of_bir_exp et = SOME etty` >>
+  rename1 `type_of_bir_exp ef = SOME efty` >>
+
+  `symb_interpr_for_symbs (bir_vars_of_exp et) H /\
+   symb_interpr_for_symbs (bir_vars_of_exp ef) H` by (
+    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, SUBSET_TRANS, UNION_SUBSET]
+  ) >>
+  REV_FULL_SIMP_TAC (std_ss) [] >>
+  IMP_RES_TAC (REWRITE_RULE [birs_interpret_fun_thm] birs_interpret_fun_welltyped_IMP_thm) >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
 val birs_simplification_IfThenElse_F_thm = store_thm(
@@ -633,14 +667,46 @@ val birs_simplification_IfThenElse_F_thm = store_thm(
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
 
   FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_val_true_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+(*
+  Cases_on `birs_interpret_fun_ALT H et` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+*)
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_typing_expTheory.type_of_bir_exp_def] >>
+  Cases_on `type_of_bir_exp ec` >> Cases_on `type_of_bir_exp et` >> Cases_on `type_of_bir_exp ef` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [quantHeuristicsTheory.IS_SOME_EQ_NOT_NONE] >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES, pairTheory.pair_CASE_def]
+  ) >>
+  rename1 `type_of_bir_exp ec = SOME ecty` >>
+  rename1 `type_of_bir_exp et = SOME etty` >>
+  rename1 `type_of_bir_exp ef = SOME efty` >>
+
+  `symb_interpr_for_symbs (bir_vars_of_exp et) H /\
+   symb_interpr_for_symbs (bir_vars_of_exp ef) H /\
+   symb_interpr_for_symbs (bir_vars_of_exp ec) H` by (
+    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, SUBSET_TRANS, UNION_SUBSET]
+  ) >>
+  REV_FULL_SIMP_TAC (std_ss) [] >>
+  IMP_RES_TAC (REWRITE_RULE [birs_interpret_fun_thm] birs_interpret_fun_welltyped_IMP_thm) >>
 
   `birs_interpret_fun_ALT H ec = SOME (BVal_Imm (Imm1 0w))` by (
-    cheat
+    Cases_on `v` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    Cases_on `b` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    blastLib.FULL_BBLAST_TAC
   ) >>
 
-  (* bir_expTheory.bir_eval_ifthenelse_REWRS *)
+  `0w:word1 <> 1w` by (
+    blastLib.FULL_BBLAST_TAC
+  ) >>
 
-  cheat (* TODO: same needs to be proven in the T theorem *)
+  ASM_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
 
