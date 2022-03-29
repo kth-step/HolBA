@@ -10,10 +10,12 @@ open symb_rulesTheory;
 open bir_symbTheory;
 open bir_symb_sound_coreTheory;
 open bir_symb_soundTheory;
+open bir_bool_expTheory
 
 open arithmeticTheory;
 open pred_setTheory;
 
+open HolBACoreSimps;
 open symb_typesLib;
 
 (*
@@ -333,7 +335,29 @@ val birs_simplification_UnsignedCast_LowCast_Twice_thm = store_thm(
     (BExp_Cast BIExp_UnsignedCast
       (BExp_Cast BIExp_LowCast be Bit8) Bit32)
 ``,
-  cheat (* TODO: this should work like this *)
+  REWRITE_TAC [birs_simplification_def] >>
+  REPEAT STRIP_TAC >>
+
+(*
+  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
+  `symb_interpr_for_symbs (bir_vars_of_exp be) H` by (
+    cheat
+  ) >>
+*)
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
+
+  Cases_on `birs_interpret_fun_ALT H be` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  Cases_on `x` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  Cases_on `b` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+    blastLib.FULL_BBLAST_TAC
+  )
 );
 
 
@@ -347,7 +371,28 @@ val birs_simplification_Pcond_Imm_Gen_thm = store_thm(
      exp1
      exp2)
 ``,
-  cheat (* TODO: this should work because Imm typing is implied from the "path condition true" assumption, then the contained values are just equal *)
+  REWRITE_TAC [birs_simplification_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
+
+  Cases_on `birs_interpret_fun_ALT H exp1` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `birs_interpret_fun_ALT H exp2` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  Cases_on `x` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `x'` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  Cases_on `b` >> Cases_on `b'` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exp_immTheory.bir_bin_pred_def, bir_val_true_def]
+  )
 );
 
 (* TODO: can probably generalize this much more and still use it *)
@@ -386,6 +431,28 @@ val birs_simplification_And_Minus_thm = store_thm(
 (* ******************************************************* *)
 (*      arithmetics with constants                         *)
 (* ******************************************************* *)
+val birs_simp_const_TAC =
+  REWRITE_TAC [birs_simplification_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
+
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
+
+  Cases_on `birs_interpret_fun_ALT H be` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  Cases_on `x` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  Cases_on `b` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+    blastLib.FULL_BBLAST_TAC
+  );
+
 val birs_simplification_Plus_Plus_Const64_thm = store_thm(
    "birs_simplification_Plus_Plus_Const64_thm", ``
 !pcond be w1 w2.
@@ -400,17 +467,9 @@ val birs_simplification_Plus_Plus_Const64_thm = store_thm(
       be
       (BExp_Const (Imm64 (w1 + w2)))))
 ``,
-  REWRITE_TAC [birs_simplification_def] >>
-  REPEAT STRIP_TAC >>
-
-  FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
-  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
-
-  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
-  cheat (* TODO: this should just work *)
+  birs_simp_const_TAC
 );
 
-(* TODO: need to add the proofs below, should work exactly like the one above *)
 val birs_simplification_Minus_Plus_Const64_thm = store_thm(
    "birs_simplification_Minus_Plus_Const64_thm", ``
 !pcond be w1 w2.
@@ -425,7 +484,7 @@ val birs_simplification_Minus_Plus_Const64_thm = store_thm(
       be
       (BExp_Const (Imm64 (w1 - w2)))))
 ``,
-  cheat
+  birs_simp_const_TAC
 );
 
 val birs_simplification_Minus_Minus_Const64_thm = store_thm(
@@ -442,7 +501,7 @@ val birs_simplification_Minus_Minus_Const64_thm = store_thm(
       be
       (BExp_Const (Imm64 (w1 + w2)))))
 ``,
-  cheat
+  birs_simp_const_TAC
 );
 
 val birs_simplification_Plus_Minus_Const64_thm = store_thm(
@@ -459,7 +518,7 @@ val birs_simplification_Plus_Minus_Const64_thm = store_thm(
       be
       (BExp_Const (Imm64 (w1 - w2)))))
 ``,
-  cheat
+  birs_simp_const_TAC
 );
 
 val birs_simplification_Plus_Plus_Const32_thm = store_thm(
@@ -476,7 +535,7 @@ val birs_simplification_Plus_Plus_Const32_thm = store_thm(
       be
       (BExp_Const (Imm32 (w1 + w2)))))
 ``,
-  cheat
+  birs_simp_const_TAC
 );
 val birs_simplification_Minus_Plus_Const32_thm = store_thm(
    "birs_simplification_Minus_Plus_Const32_thm", ``
@@ -492,7 +551,7 @@ val birs_simplification_Minus_Plus_Const32_thm = store_thm(
       be
       (BExp_Const (Imm32 (w1 - w2)))))
 ``,
-  cheat
+  birs_simp_const_TAC
 );
 
 val birs_simplification_Minus_Minus_Const32_thm = store_thm(
@@ -509,7 +568,7 @@ val birs_simplification_Minus_Minus_Const32_thm = store_thm(
       be
       (BExp_Const (Imm32 (w1 + w2)))))
 ``,
-  cheat
+  birs_simp_const_TAC
 );
 
 val birs_simplification_Plus_Minus_Const32_thm = store_thm(
@@ -526,7 +585,7 @@ val birs_simplification_Plus_Minus_Const32_thm = store_thm(
       be
       (BExp_Const (Imm32 (w1 - w2)))))
 ``,
-  cheat
+  birs_simp_const_TAC
 );
 
 
