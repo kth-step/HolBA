@@ -22,38 +22,23 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 
 val _ = new_theory "bir_symb_simp";
 
-(* TODO: need to reorganize this a bit to better embed this in the symb_rulesTheory *)
-val symb_simplification_e_def = Define `
-    symb_simplification_e sr pcond symbexp symbexp' =
-    (!H.
-       (symb_interpr_welltyped sr H) ==>
-       (symb_interpr_for_symbs
-            ((sr.sr_symbols_f pcond) UNION
-             (sr.sr_symbols_f symbexp) UNION
-             (sr.sr_symbols_f symbexp')) H) ==>
-
-       (sr.sr_interpret_f H pcond = SOME sr.sr_val_true) ==>
-       (sr.sr_interpret_f H symbexp = sr.sr_interpret_f H symbexp')
-    )
-`;
-
-val symb_simplification_e_ID_thm = store_thm(
-   "symb_simplification_e_ID_thm", ``
+val symb_simplification_ID_thm = store_thm(
+   "symb_simplification_ID_thm", ``
 !sr.
 !pcond symbexp.
-  (symb_simplification_e sr pcond symbexp symbexp)
+  (symb_simplification sr pcond symbexp symbexp)
 ``,
-  REWRITE_TAC [symb_simplification_e_def]
+  REWRITE_TAC [symb_simplification_def]
 );
 
-val symb_simplification_e_COMM_thm = store_thm(
-   "symb_simplification_e_COMM_thm", ``
+val symb_simplification_COMM_thm = store_thm(
+   "symb_simplification_COMM_thm", ``
 !sr.
 !pcond symbexp1 symbexp2.
-  (symb_simplification_e sr pcond symbexp1 symbexp2) ==>
-  (symb_simplification_e sr pcond symbexp2 symbexp1)
+  (symb_simplification sr pcond symbexp1 symbexp2) ==>
+  (symb_simplification sr pcond symbexp2 symbexp1)
 ``,
-  REWRITE_TAC [symb_simplification_e_def] >>
+  REWRITE_TAC [symb_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   `sr.sr_symbols_f pcond UNION sr.sr_symbols_f symbexp1 UNION sr.sr_symbols_f symbexp2 =
@@ -64,18 +49,18 @@ val symb_simplification_e_COMM_thm = store_thm(
   METIS_TAC []
 );
 
-val symb_simplification_e_TRANS_thm = store_thm(
-   "symb_simplification_e_TRANS_thm", ``
+val symb_simplification_TRANS_thm = store_thm(
+   "symb_simplification_TRANS_thm", ``
 !sr.
 (symb_symbols_f_sound sr) ==>
 (symb_ARB_val_sound sr) ==>
 
 !pcond symbexp1 symbexp2 symbexp3.
-  (symb_simplification_e sr pcond symbexp1 symbexp2) ==>
-  (symb_simplification_e sr pcond symbexp2 symbexp3) ==>
-  (symb_simplification_e sr pcond symbexp1 symbexp3)
+  (symb_simplification sr pcond symbexp1 symbexp2) ==>
+  (symb_simplification sr pcond symbexp2 symbexp3) ==>
+  (symb_simplification sr pcond symbexp1 symbexp3)
 ``,
-  REWRITE_TAC [symb_simplification_e_def] >>
+  REWRITE_TAC [symb_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   Q.ABBREV_TAC `H' = symb_interpr_extend_symbs_sr sr (sr.sr_symbols_f symbexp2) H` >>
@@ -113,16 +98,6 @@ val symb_simplification_e_TRANS_thm = store_thm(
   FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET]
 );
 
-val symb_simplification_thm = store_thm(
-   "symb_simplification_thm", ``
-!sr.
-!sys symbexp symbexp'.
-  (symb_simplification sr sys symbexp symbexp') <=>
-  (symb_simplification_e sr (symb_symbst_pcond sys) symbexp symbexp')
-``,
-  REWRITE_TAC [symb_simplification_def, symb_simplification_e_def, symb_interpr_symbpcond_def]
-);
-
 val symb_exp_imp_def = Define `
     symb_exp_imp sr pcond pcond' =
     (!H.
@@ -148,10 +123,10 @@ val symb_simplification_IMP_thm = store_thm(
 
 !pcond pcond' symbexp symbexp'.
   (symb_exp_imp sr pcond pcond') ==>
-  (symb_simplification_e sr pcond' symbexp symbexp') ==>
-  (symb_simplification_e sr pcond  symbexp symbexp')
+  (symb_simplification sr pcond' symbexp symbexp') ==>
+  (symb_simplification sr pcond  symbexp symbexp')
 ``,
-  REWRITE_TAC [symb_exp_imp_def, symb_simplification_e_def] >>
+  REWRITE_TAC [symb_exp_imp_def, symb_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   Q.ABBREV_TAC `H' = symb_interpr_extend_symbs_sr sr (sr.sr_symbols_f pcond') H` >>
@@ -194,8 +169,8 @@ val symb_simplification_IMP_thm = store_thm(
 );
 
 
-val birs_simplification_e_def = Define `
-    birs_simplification_e pcond symbexp symbexp' =
+val birs_simplification_def = Define `
+    birs_simplification pcond symbexp symbexp' =
     (!H.
        (birs_interpr_welltyped H) ==>
        (symb_interpr_for_symbs
@@ -208,14 +183,14 @@ val birs_simplification_e_def = Define `
     )
 `;
 
-val birs_simplification_e_thm = store_thm(
-   "birs_simplification_e_thm", ``
+val birs_simplification_thm = store_thm(
+   "birs_simplification_thm", ``
 !prog.
 !pcond symbexp symbexp'.
-  (symb_simplification_e (bir_symb_rec_sbir prog) pcond symbexp symbexp') <=>
-  (birs_simplification_e pcond symbexp symbexp')
+  (symb_simplification (bir_symb_rec_sbir prog) pcond symbexp symbexp') <=>
+  (birs_simplification pcond symbexp symbexp')
 ``,
-  REWRITE_TAC [symb_simplification_e_def, birs_simplification_e_def] >>
+  REWRITE_TAC [symb_simplification_def, birs_simplification_def] >>
   REWRITE_TAC [birs_interpr_welltyped_EQ_thm] >>
   SIMP_TAC (std_ss++symb_TYPES_ss) [bir_symb_rec_sbir_def]
 );
@@ -249,38 +224,38 @@ val birs_simplification_IMP_thm = store_thm(
    "birs_simplification_IMP_thm", ``
 !pcond pcond' symbexp symbexp'.
   (birs_exp_imp pcond pcond') ==>
-  (birs_simplification_e pcond' symbexp symbexp') ==>
-  (birs_simplification_e pcond  symbexp symbexp')
+  (birs_simplification pcond' symbexp symbexp') ==>
+  (birs_simplification pcond  symbexp symbexp')
 ``,
-  METIS_TAC [symb_simplification_IMP_thm, birs_simplification_e_thm, birs_exp_imp_thm,
+  METIS_TAC [symb_simplification_IMP_thm, birs_simplification_thm, birs_exp_imp_thm,
              birs_symb_ARB_val_sound_thm, birs_symb_symbols_f_sound_thm]
 );
 
-val birs_simplification_e_ID_thm = store_thm(
-   "birs_simplification_e_ID_thm", ``
+val birs_simplification_ID_thm = store_thm(
+   "birs_simplification_ID_thm", ``
 !pcond symbexp.
-  (birs_simplification_e pcond symbexp symbexp)
+  (birs_simplification pcond symbexp symbexp)
 ``,
-  METIS_TAC [symb_simplification_e_ID_thm, birs_simplification_e_thm]
+  METIS_TAC [symb_simplification_ID_thm, birs_simplification_thm]
 );
 
-val birs_simplification_e_COMM_thm = store_thm(
-   "birs_simplification_e_COMM_thm", ``
+val birs_simplification_COMM_thm = store_thm(
+   "birs_simplification_COMM_thm", ``
 !pcond symbexp1 symbexp2.
-  (birs_simplification_e pcond symbexp1 symbexp2) ==>
-  (birs_simplification_e pcond symbexp2 symbexp1)
+  (birs_simplification pcond symbexp1 symbexp2) ==>
+  (birs_simplification pcond symbexp2 symbexp1)
 ``,
-  METIS_TAC [symb_simplification_e_COMM_thm, birs_simplification_e_thm]
+  METIS_TAC [symb_simplification_COMM_thm, birs_simplification_thm]
 );
 
 val birs_simplification_TRANS_thm = store_thm(
    "birs_simplification_TRANS_thm", ``
 !pcond symbexp1 symbexp2 symbexp3.
-  (birs_simplification_e pcond symbexp1 symbexp2) ==>
-  (birs_simplification_e pcond symbexp2 symbexp3) ==>
-  (birs_simplification_e pcond symbexp1 symbexp3)
+  (birs_simplification pcond symbexp1 symbexp2) ==>
+  (birs_simplification pcond symbexp2 symbexp3) ==>
+  (birs_simplification pcond symbexp1 symbexp3)
 ``,
-  METIS_TAC [symb_simplification_e_TRANS_thm, birs_simplification_e_thm,
+  METIS_TAC [symb_simplification_TRANS_thm, birs_simplification_thm,
              birs_symb_ARB_val_sound_thm, birs_symb_symbols_f_sound_thm]
 );
 
@@ -293,10 +268,10 @@ val birs_simplification_TRANS_thm = store_thm(
 val birs_simplification_UnsignedCast_thm = store_thm(
    "birs_simplification_UnsignedCast_thm", ``
 !pcond symbexp symbexp' sz.
-  (birs_simplification_e pcond symbexp symbexp') ==>
-  (birs_simplification_e pcond (BExp_Cast BIExp_UnsignedCast symbexp sz) (BExp_Cast BIExp_UnsignedCast symbexp' sz))
+  (birs_simplification pcond symbexp symbexp') ==>
+  (birs_simplification pcond (BExp_Cast BIExp_UnsignedCast symbexp sz) (BExp_Cast BIExp_UnsignedCast symbexp' sz))
 ``,
-  REWRITE_TAC [birs_simplification_e_def] >>
+  REWRITE_TAC [birs_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
@@ -309,10 +284,10 @@ val birs_simplification_UnsignedCast_thm = store_thm(
 val birs_simplification_Minus_thm = store_thm(
    "birs_simplification_Minus_thm", ``
 !pcond symbexp1 symbexp1' symbexp2.
-  (birs_simplification_e pcond symbexp1 symbexp1') ==>
-  (birs_simplification_e pcond (BExp_BinExp BIExp_Minus symbexp1 symbexp2) (BExp_BinExp BIExp_Minus symbexp1' symbexp2))
+  (birs_simplification pcond symbexp1 symbexp1') ==>
+  (birs_simplification pcond (BExp_BinExp BIExp_Minus symbexp1 symbexp2) (BExp_BinExp BIExp_Minus symbexp1' symbexp2))
 ``,
-  REWRITE_TAC [birs_simplification_e_def] >>
+  REWRITE_TAC [birs_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
@@ -326,10 +301,10 @@ val birs_simplification_Minus_thm = store_thm(
 val birs_simplification_Plus_thm = store_thm(
    "birs_simplification_Plus_thm", ``
 !pcond symbexp1 symbexp1' symbexp2.
-  (birs_simplification_e pcond symbexp1 symbexp1') ==>
-  (birs_simplification_e pcond (BExp_BinExp BIExp_Plus symbexp1 symbexp2) (BExp_BinExp BIExp_Plus symbexp1' symbexp2))
+  (birs_simplification pcond symbexp1 symbexp1') ==>
+  (birs_simplification pcond (BExp_BinExp BIExp_Plus symbexp1 symbexp2) (BExp_BinExp BIExp_Plus symbexp1' symbexp2))
 ``,
-  REWRITE_TAC [birs_simplification_e_def] >>
+  REWRITE_TAC [birs_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
@@ -350,7 +325,7 @@ val birs_simplification_Plus_thm = store_thm(
 val birs_simplification_UnsignedCast_LowCast_Twice_thm = store_thm(
    "birs_simplification_UnsignedCast_LowCast_Twice_thm", ``
 !pcond be.
-  birs_simplification_e pcond
+  birs_simplification pcond
     (BExp_Cast BIExp_UnsignedCast
       (BExp_Cast BIExp_LowCast
         (BExp_Cast BIExp_UnsignedCast
@@ -365,7 +340,7 @@ val birs_simplification_UnsignedCast_LowCast_Twice_thm = store_thm(
 val birs_simplification_Pcond_Imm_Gen_thm = store_thm(
    "birs_simplification_Pcond_Imm_Gen_thm", ``
 !exp1 exp2.
-  (birs_simplification_e
+  (birs_simplification
      (BExp_BinPred BIExp_Equal
        exp1
        exp2)
@@ -379,7 +354,7 @@ val birs_simplification_Pcond_Imm_Gen_thm = store_thm(
 val birs_simplification_And_Minus_thm = store_thm(
    "birs_simplification_And_Minus_thm", ``
 !be w1.
-  birs_simplification_e
+  birs_simplification
     (BExp_BinPred BIExp_Equal
       (BExp_BinExp BIExp_And
         (BExp_BinExp BIExp_Minus
@@ -415,7 +390,7 @@ val birs_simplification_Plus_Plus_Const64_thm = store_thm(
    "birs_simplification_Plus_Plus_Const64_thm", ``
 !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit64)) ==>
-  (birs_simplification_e pcond
+  (birs_simplification pcond
     (BExp_BinExp BIExp_Plus
       (BExp_BinExp BIExp_Plus
         be
@@ -425,7 +400,7 @@ val birs_simplification_Plus_Plus_Const64_thm = store_thm(
       be
       (BExp_Const (Imm64 (w1 + w2)))))
 ``,
-  REWRITE_TAC [birs_simplification_e_def] >>
+  REWRITE_TAC [birs_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [bir_typing_expTheory.bir_vars_of_exp_def] >>
@@ -440,7 +415,7 @@ val birs_simplification_Minus_Plus_Const64_thm = store_thm(
    "birs_simplification_Minus_Plus_Const64_thm", ``
 !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit64)) ==>
-  (birs_simplification_e pcond
+  (birs_simplification pcond
     (BExp_BinExp BIExp_Minus
       (BExp_BinExp BIExp_Plus
         be
@@ -457,7 +432,7 @@ val birs_simplification_Minus_Minus_Const64_thm = store_thm(
    "birs_simplification_Minus_Minus_Const64_thm", ``
 !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit64)) ==>
-  (birs_simplification_e pcond
+  (birs_simplification pcond
     (BExp_BinExp BIExp_Minus
       (BExp_BinExp BIExp_Minus
         be
@@ -474,7 +449,7 @@ val birs_simplification_Plus_Minus_Const64_thm = store_thm(
    "birs_simplification_Plus_Minus_Const64_thm", ``
 !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit64)) ==>
-  (birs_simplification_e pcond
+  (birs_simplification pcond
     (BExp_BinExp BIExp_Plus
       (BExp_BinExp BIExp_Minus
         be
@@ -491,7 +466,7 @@ val birs_simplification_Plus_Plus_Const32_thm = store_thm(
    "birs_simplification_Plus_Plus_Const32_thm", ``
 !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit32)) ==>
-  (birs_simplification_e pcond
+  (birs_simplification pcond
     (BExp_BinExp BIExp_Plus
       (BExp_BinExp BIExp_Plus
         be
@@ -507,7 +482,7 @@ val birs_simplification_Minus_Plus_Const32_thm = store_thm(
    "birs_simplification_Minus_Plus_Const32_thm", ``
 !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit32)) ==>
-  (birs_simplification_e pcond
+  (birs_simplification pcond
     (BExp_BinExp BIExp_Minus
       (BExp_BinExp BIExp_Plus
         be
@@ -524,7 +499,7 @@ val birs_simplification_Minus_Minus_Const32_thm = store_thm(
    "birs_simplification_Minus_Minus_Const32_thm", ``
 !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit32)) ==>
-  (birs_simplification_e pcond
+  (birs_simplification pcond
     (BExp_BinExp BIExp_Minus
       (BExp_BinExp BIExp_Minus
         be
@@ -541,7 +516,7 @@ val birs_simplification_Plus_Minus_Const32_thm = store_thm(
    "birs_simplification_Plus_Minus_Const32_thm", ``
 !pcond be w1 w2.
   (type_of_bir_exp be = SOME (BType_Imm Bit32)) ==>
-  (birs_simplification_e pcond
+  (birs_simplification pcond
     (BExp_BinExp BIExp_Plus
       (BExp_BinExp BIExp_Minus
         be
@@ -569,9 +544,9 @@ val birs_simplification_IfThenElse_T_thm = store_thm(
   (type_of_bir_exp et = type_of_bir_exp ef) ==>
 *)
   (IS_SOME (type_of_bir_exp (BExp_IfThenElse ec et ef))) ==>
-  (birs_simplification_e ec (BExp_IfThenElse ec et ef) et)
+  (birs_simplification ec (BExp_IfThenElse ec et ef) et)
 ``,
-  REWRITE_TAC [birs_simplification_e_def] >>
+  REWRITE_TAC [birs_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
@@ -591,9 +566,9 @@ val birs_simplification_IfThenElse_F_thm = store_thm(
   (type_of_bir_exp et = type_of_bir_exp ef) ==>
 *)
   (IS_SOME (type_of_bir_exp (BExp_IfThenElse ec et ef))) ==>
-  (birs_simplification_e (BExp_UnaryExp BIExp_Not ec) (BExp_IfThenElse ec et ef) ef)
+  (birs_simplification (BExp_UnaryExp BIExp_Not ec) (BExp_IfThenElse ec et ef) ef)
 ``,
-  REWRITE_TAC [birs_simplification_e_def] >>
+  REWRITE_TAC [birs_simplification_def] >>
   REPEAT STRIP_TAC >>
 
   FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
@@ -635,7 +610,7 @@ val birs_simplification_Mem_Match_thm1 = store_thm(
       sz)) ==>
   (IS_SOME (type_of_bir_exp be_ld)) ==>
   (type_of_bir_exp be_v = SOME (BType_Imm sz)) ==>
-  (birs_simplification_e
+  (birs_simplification
     (BExp_BinPred BIExp_Equal be_la be_sa)
     be_ld
     (be_v)
@@ -669,7 +644,7 @@ val birs_simplification_Mem_Bypass_32_8_thm1 = store_thm(
   (type_of_bir_exp be_st = SOME (BType_Mem Bit32 Bit8)) ==>
   (type_of_bir_exp be_v = SOME (BType_Imm Bit8)) ==>
   (IS_SOME (type_of_bir_exp be_ld)) ==>
-  (birs_simplification_e
+  (birs_simplification
     (BExp_BinExp BIExp_Or
       (BExp_BinExp BIExp_And
          (BExp_BinPred BIExp_LessOrEqual
@@ -727,7 +702,7 @@ val birs_simplification_Mem_Bypass_32_32_thm1 = store_thm(
   (type_of_bir_exp be_st = SOME (BType_Mem Bit32 Bit8)) ==>
   (type_of_bir_exp be_v = SOME (BType_Imm Bit32)) ==>
   (IS_SOME (type_of_bir_exp be_ld)) ==>
-  (birs_simplification_e
+  (birs_simplification
     (BExp_BinExp BIExp_Or
       (BExp_BinExp BIExp_And
          (BExp_BinPred BIExp_LessOrEqual
@@ -785,7 +760,7 @@ val birs_simplification_Mem_Bypass_8_8_thm1 = store_thm(
   (type_of_bir_exp be_st = SOME (BType_Mem Bit32 Bit8)) ==>
   (type_of_bir_exp be_v = SOME (BType_Imm Bit8)) ==>
   (IS_SOME (type_of_bir_exp be_ld)) ==>
-  (birs_simplification_e
+  (birs_simplification
     (BExp_BinExp BIExp_Or
       (BExp_BinExp BIExp_And
          (BExp_BinPred BIExp_LessOrEqual
@@ -843,7 +818,7 @@ val birs_simplification_Mem_Bypass_8_32_thm1 = store_thm(
   (type_of_bir_exp be_st = SOME (BType_Mem Bit32 Bit8)) ==>
   (type_of_bir_exp be_v = SOME (BType_Imm Bit32)) ==>
   (IS_SOME (type_of_bir_exp be_ld)) ==>
-  (birs_simplification_e
+  (birs_simplification
     (BExp_BinExp BIExp_Or
       (BExp_BinExp BIExp_And
          (BExp_BinPred BIExp_LessOrEqual
