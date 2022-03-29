@@ -557,9 +557,10 @@ fun birs_rule_SUBST_prog_fun bprog_tm =
       ``,
         cheat (* TODO: connect this with prep_thm from above *)
       );*)
+    val inst_thm = SIMP_RULE std_ss [] ((SPEC bprog_tm o INST_TYPE [Type.alpha |-> prog_type]) birs_rule_SUBST_spec_thm);
+    (*val _ = (print_term o concl) inst_thm;*)
   in
-    (SPEC bprog_tm o INST_TYPE [Type.alpha |-> prog_type]) birs_rule_SUBST_spec_thm
-    (*inst_thm*)
+    inst_thm
   end;
 
 
