@@ -488,6 +488,7 @@ local
 
   open birs_smtLib;
 
+  val birs_pcondinf_tm = ``birs_pcondinf``;
 in
 fun birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm bstate_tm =
   let
@@ -506,7 +507,7 @@ fun birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm bstate_tm =
           val pcond_is_contr = bir_check_unsat false pcond_tm;
           val pcond_thm_o =
             if pcond_is_contr then
-              SOME (prove(``(IS_BIR_CONTRADICTION ^pcond_tm):bool``, cheat))
+              SOME (mk_oracle_thm "BIRS_CONTR_Z3" ([], mk_comb (birs_pcondinf_tm, pcond_tm)))
             else
               NONE;
     val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> tryassert in " ^ delta_s ^ "\n")) timer_exec_step_p3;
