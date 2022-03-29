@@ -549,7 +549,7 @@ fun birs_rule_SUBST_prog_fun bprog_tm =
                bsst_environ := birs_gen_env ((vn, symbexp)::envl);
                bsst_status := status;
                bsst_pcond := pcond|>}) ==>
-           birs_simplification_e pcond symbexp symbexp' ==>
+           birs_simplification pcond symbexp symbexp' ==>
            symb_hl_step_in_L_sound (bir_symb_rec_sbir ^bprog_tm) (sys,L,IMAGE birs_symb_to_symbst {
              <|bsst_pc := lbl;
                bsst_environ := birs_gen_env ((vn, symbexp')::envl);

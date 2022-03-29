@@ -55,7 +55,7 @@ fun birs_trysimp
 *)
 
   fun birs_simp_gen_term pcond bexp = ``
-    birs_simplification_e ^pcond ^bexp symbexp'
+    birs_simplification ^pcond ^bexp symbexp'
   ``;
 
 
@@ -308,7 +308,7 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
 
   fun birs_simp_ID_fun simp_inst_tm =
     let
-      val simp_t_ = SPEC_ALL birs_simplification_e_ID_thm;
+      val simp_t_ = SPEC_ALL birs_simplification_ID_thm;
       val simp_tm_ = (concl) simp_t_;
       val tm_subst_o =
         SOME (match_term ((fst o dest_comb) simp_tm_) ((fst o dest_comb) simp_inst_tm))
