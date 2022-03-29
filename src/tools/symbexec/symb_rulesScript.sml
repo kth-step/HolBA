@@ -190,11 +190,11 @@ val symb_rule_SEQ_thm = store_thm(
 (*         RULE INF          *)
 (* ************************* *)
 val symb_pcondinf_def = Define `
-    symb_pcondinf sr sys =
+    symb_pcondinf sr pcond =
   (!H.
     (symb_interpr_welltyped sr H) ==>
-    (symb_interpr_for_symbs (sr.sr_symbols_f (symb_symbst_pcond sys)) H) ==>
-    ~(symb_interpr_symbpcond sr H sys)
+    (symb_interpr_for_symbs (sr.sr_symbols_f pcond) H) ==>
+    (sr.sr_interpret_f H pcond <> SOME sr.sr_val_true)
   )
 `;
 
@@ -206,7 +206,7 @@ val symb_rule_INF_thm = store_thm(
 !sys L Pi sys'.
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
 
-  (symb_pcondinf sr sys') ==>
+  (symb_pcondinf sr (symb_symbst_pcond sys')) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi DIFF {sys'}))
 ``,
@@ -223,7 +223,7 @@ val symb_rule_INF_thm = store_thm(
         symb_interpr_for_symbs_def, symb_symbols_SUBSET_pcond_thm]
     ) >>
 
-    METIS_TAC [symb_pcondinf_def]
+    METIS_TAC [symb_pcondinf_def, symb_interpr_symbpcond_def]
   ) >>
 
   METIS_TAC []

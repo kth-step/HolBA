@@ -43,16 +43,16 @@ val birs_interpret_fun_NOT_true_thm = store_thm(
 
 val birs_pcondinf_thm = store_thm(
    "birs_pcondinf_thm", ``
-!bprog sys.
-  birs_pcondinf (symb_symbst_pcond sys) ==>
-  symb_pcondinf (bir_symb_rec_sbir bprog) sys
+!bprog pcond.
+  birs_pcondinf pcond ==>
+  symb_pcondinf (bir_symb_rec_sbir bprog) pcond
 ``,
   REWRITE_TAC [symb_rulesTheory.symb_pcondinf_def, birs_pcondinf_def] >>
   REWRITE_TAC [birs_interpr_welltyped_EQ_thm] >>
   SIMP_TAC (std_ss++symb_TYPES_ss) [bir_symb_rec_sbir_def, symb_interpr_symbpcond_def, bir_bool_expTheory.bir_val_TF_dist]
 );
 
-(* TODO: unify pcondinf and simplification_e and integrate similarly in symb_pcondwiden *)
+(* TODO: unify pcondinf and and integrate similarly in symb_pcondwiden *)
 (*
 val birs_interpret_fun_AND_IMP_true_thm = store_thm(
    "birs_interpret_fun_NOT_true_thm", ``
@@ -100,9 +100,7 @@ val assert_spec_thm = store_thm(
   FULL_SIMP_TAC (std_ss++birs_state_ss) [IMAGE_INSERT, IMAGE_EMPTY, birs_symb_to_symbst_def] >>
 
   `symb_pcondinf (bir_symb_rec_sbir bprog)
-          (SymbSymbSt lbl2 env2
-             (BExp_BinExp BIExp_And pre (BExp_UnaryExp BIExp_Not cond'))
-             BST_AssertionViolated)` by (
+          (BExp_BinExp BIExp_And pre (BExp_UnaryExp BIExp_Not cond'))` by (
     METIS_TAC [birs_pcondinf_thm, symb_symbst_pcond_def]
   ) >>
 
