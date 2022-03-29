@@ -85,6 +85,9 @@ val birs_state_init = ``<|
                        (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))
 |>``;
+(* TODO: probably need this later in the path condition: 
+  ``BExp_UnaryExp BIExp_Not (BExp_Den (BVar "ModeHandler" BType_Bool))``;
+ *)
 (* ........................... *)
 
 val birs_rule_STEP_thm = birs_rule_STEP_prog_fun bprog_tm (bir_prog_has_no_halt_fun bprog_tm);
