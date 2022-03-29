@@ -126,7 +126,7 @@ val symb_rule_SUBST_SING_thm = prove(``
   (symb_hl_step_in_L_sound sr (sys, L, {sys2})) ==>
   ((symb_symbst_store sys2) var = SOME symbexp) ==>
 
-  (symb_simplification sr sys2 symbexp symbexp') ==>
+  (symb_simplification sr (symb_symbst_pcond sys2) symbexp symbexp') ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, {symb_symbst_store_update var symbexp' sys2}))
 ``,
@@ -153,7 +153,7 @@ val birs_rule_SUBST_spec_thm = store_thm(
                bsst_status := status;
                bsst_pcond := pcond|>) ==>
            symb_hl_step_in_L_sound (bir_symb_rec_sbir prog) (sys,L,IMAGE birs_symb_to_symbst {sys2}) ==>
-           birs_simplification_e pcond symbexp symbexp' ==>
+           birs_simplification pcond symbexp symbexp' ==>
            symb_hl_step_in_L_sound (bir_symb_rec_sbir prog) (sys,L,IMAGE birs_symb_to_symbst {sys2'})
 ``,
   REPEAT STRIP_TAC >>
@@ -166,7 +166,7 @@ val birs_rule_SUBST_spec_thm = store_thm(
 
   REV_FULL_SIMP_TAC (std_ss++birs_state_ss)
     [IMAGE_SING, birs_symb_to_symbst_def, symb_symbst_store_def, symb_symbst_pcond_def,
-     bir_symb_simpTheory.symb_simplification_thm, bir_symb_simpTheory.birs_simplification_e_thm,
+     bir_symb_simpTheory.birs_simplification_thm,
      symb_symbst_store_update_def, birs_auxTheory.birs_gen_env_thm,
      combinTheory.UPDATE_APPLY]
 );
