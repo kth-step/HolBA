@@ -262,6 +262,36 @@ val birs_rule_STEP_gen2_thm = store_thm(
   FULL_SIMP_TAC std_ss [bir_symbTheory.birs_symb_to_from_symbst_thm, birs_auxTheory.birs_symb_symbst_pc_thm]
 );
 
+val birs_exec_step_NO_FRESH_SYMBS = prove(``
+!prog bsys.
+  ((BIGUNION (IMAGE birs_symb_symbols (birs_exec_step prog bsys)))
+     DIFF (birs_symb_symbols bsys)
+   = EMPTY)
+``,
+  cheat
+);
+
+val birs_rule_STEP_SEQ_gen_thm = store_thm(
+   "birs_rule_STEP_SEQ_gen_thm", ``
+!prog bsys1 L bsys2.
+  (bir_prog_has_no_halt prog) ==>
+
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir prog)
+    (birs_symb_to_symbst bsys1,
+     L,
+     IMAGE birs_symb_to_symbst {bsys2}
+  )) ==>
+
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir prog)
+    (birs_symb_to_symbst bsys1,
+     L UNION {bsys2.bsst_pc},
+     IMAGE birs_symb_to_symbst (birs_exec_step prog bsys2)
+  ))
+``,
+  (* symb_rule_SEQ_thm *)
+  cheat
+);
+
 (*
 bir_symbTheory.birs_state_t_bsst_pc
 bir_symbTheory.birs_state_t_accfupds
