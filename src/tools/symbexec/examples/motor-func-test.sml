@@ -161,7 +161,8 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbls =
         val single_step_B_thm = STEP_fun_spec birs_state_mid;
       in
         single_step_B_thm
-      end;
+      end
+      handle ex => (print_term birs_state_mid; raise ex);
   in
     (* stop condition (no more running states, or reached the stop_lbls) *)
     if List.length birs_states_mid_executable = 0 then
