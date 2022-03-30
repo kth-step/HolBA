@@ -245,7 +245,8 @@ val simp_inst_tm = birs_simp_gen_term pcond bexp;
      birs_simplification_IfThenElse_T_thm,
      birs_simplification_IfThenElse_F_thm,
 
-     birs_simplification_Mem_Match_thm,
+     birs_simplification_Mem_Match_32_8_8_thm,
+     birs_simplification_Mem_Match_32_8_32_thm,
      birs_simplification_Mem_Bypass_32_8_thm,
      birs_simplification_Mem_Bypass_32_32_thm,
      birs_simplification_Mem_Bypass_8_8_thm,
