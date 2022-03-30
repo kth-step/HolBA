@@ -223,4 +223,55 @@ val birs_rule_SUBST_spec_thm = store_thm(
 );
 
 
+
+val birs_rule_STEP_gen1_thm = store_thm(
+   "birs_rule_STEP_gen1_thm", ``
+!prog sys.
+  (bir_prog_has_no_halt prog) ==>
+
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir prog)
+    (sys,
+     {symb_symbst_pc sys},
+     IMAGE birs_symb_to_symbst
+       (birs_exec_step prog (birs_symb_from_symbst sys))))
+``,
+  REPEAT STRIP_TAC >>
+  IMP_RES_TAC bir_symb_soundTheory.birs_symb_step_sound_thm >>
+
+  IMP_RES_TAC symb_rulesTheory.symb_rule_STEP_thm >>
+  POP_ASSUM (ASSUME_TAC o SIMP_RULE (std_ss++symb_typesLib.symb_TYPES_ss) [] o REWRITE_RULE [Once bir_symbTheory.bir_symb_rec_sbir_def]) >>
+
+  METIS_TAC [IN_SING]
+);
+
+val birs_rule_STEP_gen2_thm = store_thm(
+   "birs_rule_STEP_gen2_thm", ``
+!prog bsys.
+  (bir_prog_has_no_halt prog) ==>
+
+  (symb_hl_step_in_L_sound (bir_symb_rec_sbir prog)
+    (birs_symb_to_symbst bsys,
+     {bsys.bsst_pc},
+     IMAGE birs_symb_to_symbst
+       (birs_exec_step prog bsys)))
+``,
+  REPEAT STRIP_TAC >>
+  IMP_RES_TAC birs_rule_STEP_gen1_thm >>
+  POP_ASSUM (ASSUME_TAC o Q.SPEC `birs_symb_to_symbst bsys`) >>
+
+  FULL_SIMP_TAC std_ss [bir_symbTheory.birs_symb_to_from_symbst_thm, birs_auxTheory.birs_symb_symbst_pc_thm]
+);
+
+(*
+bir_symbTheory.birs_state_t_bsst_pc
+bir_symbTheory.birs_state_t_accfupds
+*)
+
+(*
+val bprog_tm = ``
+BirProgram [] : 'obs_type bir_program_t
+``;
+val no_halt_thm = prove(``bir_prog_has_no_halt (^bprog_tm)``, cheat);
+*)
+
 val _ = export_theory();
