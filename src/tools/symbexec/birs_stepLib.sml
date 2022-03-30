@@ -488,23 +488,51 @@ local
 
   open birs_smtLib;
 
+  fun justify_assumption_EVAL t =
+    if (not o is_imp o concl) t then
+      raise ERR "justify_assumption_EVAL" "not an implication"
+    else
+      let
+        val assmpt = (fst o dest_imp o concl) t;
+        val assmpt_thm = (EVAL) assmpt;
+
+        val assmpt_new = (snd o dest_eq o concl) assmpt_thm;
+
+        (* raise exception when the assumption turns out to be false *)
+        val _ = if not (identical assmpt_new F) then () else
+                raise ERR "justify_assumption_EVAL" "assumption does not hold";
+
+        val _ = if identical assmpt_new T then () else
+                raise ERR "justify_assumption_EVAL" ("failed to fix the assumption: " ^ (term_to_string assmpt));
+      in
+        (REWRITE_RULE [assmpt_thm] t)
+      end;
+
   val birs_pcondinf_tm = ``birs_pcondinf``;
 in
 fun birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm bstate_tm =
   let
     val single_step_prog_thm = birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm;
-    val continue_thm_o =
+    val continue_thm_o_1 =
       SOME (MATCH_MP assert_spec_thm single_step_prog_thm)
+      handle _ => NONE;
+    val continue_thm_o_2 =
+      Option.map (justify_assumption_EVAL) continue_thm_o_1
       handle _ => NONE;
   in
     (* val SOME continue_thm = continue_thm_o; *)
-    case continue_thm_o of
+    case continue_thm_o_2 of
        SOME continue_thm =>
         let
     val timer_exec_step_p3 = bir_miscLib.timer_start 0;
           val pcond_tm = (snd o dest_comb o snd o dest_comb o fst o dest_comb o concl) continue_thm;
           (*val _ = print_term pcond_tm;*)
           val pcond_is_contr = bir_check_unsat false pcond_tm;
+          val _ = if pcond_is_contr then () else
+            (print "\n\n\n<<<<<<<<<<<< ASSERTION MAY FAIL <<<<<<<<<<<< \n";
+             print_term (concl single_step_prog_thm);
+             print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n";
+             raise ERR "birs_rule_STEP_tryassert_fun" "can't prove assertion to hold");
           val pcond_thm_o =
             if pcond_is_contr then
               SOME (mk_oracle_thm "BIRS_CONTR_Z3" ([], mk_comb (birs_pcondinf_tm, pcond_tm)))

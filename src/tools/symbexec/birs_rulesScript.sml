@@ -108,7 +108,6 @@ val birs_pcondwiden_AND_thm = store_thm(
 val assert_spec_thm = store_thm(
    "assert_spec_thm", ``
 !bprog sys L lbl1 env1 status pre cond lbl2 env2.
-  (lbl1 <> lbl2) ==>
   (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
     (sys, L, IMAGE birs_symb_to_symbst {
       <|bsst_pc := lbl1;
@@ -120,6 +119,7 @@ val assert_spec_thm = store_thm(
         bsst_status := BST_AssertionViolated;
         bsst_pcond := BExp_BinExp BIExp_And pre
                  (BExp_UnaryExp BIExp_Not cond)|>})) ==>
+  (lbl1 <> lbl2) ==>
   (birs_pcondinf (BExp_BinExp BIExp_And pre
                  (BExp_UnaryExp BIExp_Not cond))) ==>
   (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
