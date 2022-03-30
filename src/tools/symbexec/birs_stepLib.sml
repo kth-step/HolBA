@@ -402,18 +402,25 @@ val no_halt_thm = (bir_prog_has_no_halt_fun bprog_tm)
 *)
 fun birs_rule_STEP_prog_fun bprog_tm no_halt_thm =
   let
+(*
     val prog_type = (hd o snd o dest_type o type_of) bprog_tm;
     val step_sound_thm = INST_TYPE [Type.alpha |-> prog_type] bir_symb_soundTheory.birs_symb_step_sound_thm;
     val birs_symb_step_sound_prog_thm =
       MP
         (SPEC (bprog_tm) (step_sound_thm))
-        no_halt_thm;
+        ;
     val birs_rule_STEP_thm =
       SIMP_RULE (std_ss++symb_typesLib.symb_TYPES_ss) []
       (REWRITE_RULE [Once bir_symbTheory.bir_symb_rec_sbir_def]
          (MATCH_MP symb_rulesTheory.symb_rule_STEP_thm birs_symb_step_sound_prog_thm));
+*)
+    val prep_thm = 
+      MATCH_MP birs_rulesTheory.birs_rule_STEP_gen2_thm no_halt_thm;
+(*
+    val _ = (print_term o concl) prep_thm;
+*)
   in
-    birs_rule_STEP_thm
+    prep_thm
   end;
 
 
@@ -427,17 +434,25 @@ fun birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm =
   let
 
     val birs_exec_thm = birs_exec_step_fun bprog_tm bstate_tm;
+(*
     val symb_state = ``birs_symb_to_symbst ^bstate_tm``;
     val lbl = (snd o dest_eq o concl o EVAL) ``(^bstate_tm).bsst_pc``;
     val lbls = ``{^lbl}``;
+*)
 
     val timer_exec_step_p3 = bir_miscLib.timer_start 0;
     (* TODO: optimize *)
+(*
     val single_step_prog_thm =
       SIMP_RULE (std_ss++symb_typesLib.symb_TYPES_ss++birs_state_ss++HolBACoreSimps.holBACore_ss)
         [birs_symb_symbst_pc_thm, pred_setTheory.IN_SING]
         (REWRITE_RULE [bir_symbTheory.birs_symb_to_from_symbst_thm, birs_exec_thm]
            (SPECL [symb_state, lbls] birs_rule_STEP_thm));
+*)
+    val single_step_prog_thm =
+      SIMP_RULE std_ss [bir_symbTheory.birs_state_t_bsst_pc, bir_symbTheory.birs_state_t_accfupds]
+        (REWRITE_RULE [birs_exec_thm] (SPEC bstate_tm birs_rule_STEP_thm));
+
     val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP in " ^ delta_s ^ "\n")) timer_exec_step_p3;
 
     val _ = if symb_sound_struct_is_normform (concl single_step_prog_thm) then () else
