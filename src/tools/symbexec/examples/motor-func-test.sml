@@ -232,3 +232,6 @@ val _ = print "now reducing it to one sound structure\n";
 val result = exec_until (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec) single_step_A_thm birs_stop_lbls;
 
 val _ = (print_term o concl) result;
+
+val _ = show_tags := true;
+val _ = Portable.pprint Tag.pp_tag (tag result);
