@@ -266,10 +266,20 @@ val birs_rule_STEP_gen2_thm = store_thm(
 
 val birs_exec_step_NO_FRESH_SYMBS = prove(``
 !prog bsys.
+  (* this assumption is only needed because of the proof with the soundness of steps *)
+  (bir_prog_has_no_halt prog) ==>
+
   ((BIGUNION (IMAGE birs_symb_symbols (birs_exec_step prog bsys)))
      DIFF (birs_symb_symbols bsys)
    = EMPTY)
 ``,
+  REPEAT STRIP_TAC >>
+  IMP_RES_TAC bir_symb_soundTheory.birs_symb_step_sound_thm >>
+
+  FULL_SIMP_TAC std_ss [symb_record_soundTheory.symb_step_sound_def] >>
+
+  (* TODO: this seems to not work because because we would have to show that there is always a matching concrete state, which isn't true if the path condition is a contradiction for example, and so we can remove the no_halt assumption again and move on to proof this through the whole definition instead *)
+
   cheat
 );
 
@@ -299,7 +309,8 @@ val birs_rule_STEP_SEQ_gen_thm = store_thm(
   ASSUME_TAC (Q.SPEC `prog` bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
   IMP_RES_TAC symb_rulesTheory.symb_rule_SEQ_thm >>
   POP_ASSUM (ASSUME_TAC o Q.SPECL [`birs_symb_to_symbst bsys2`, `birs_symb_to_symbst bsys1`, `IMAGE birs_symb_to_symbst (birs_exec_step prog bsys2)`]) >>
-  FULL_SIMP_TAC std_ss [INTER_EMPTY, birs_exec_step_NO_FRESH_SYMBS,
+  IMP_RES_TAC birs_exec_step_NO_FRESH_SYMBS >>
+  FULL_SIMP_TAC std_ss [INTER_EMPTY,
     birs_auxTheory.birs_symb_symbols_set_EQ_thm, bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm] >>
 
   `L UNION {bsys2.bsst_pc} = bsys2.bsst_pc INSERT L` by (
