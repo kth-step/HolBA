@@ -1001,14 +1001,19 @@ val birs_simplification_Mem_Bypass_8_8_thm1 = store_thm(
   (type_of_bir_exp be_v = SOME (BType_Imm Bit8)) ==>
   (IS_SOME (type_of_bir_exp be_ld)) ==>
   (birs_simplification
+    (*
     (BExp_BinExp BIExp_Or
       (BExp_BinExp BIExp_And
-         (BExp_BinPred BIExp_LessOrEqual
-           (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm32 1w)))
-           be_sa)
-         (BExp_BinPred BIExp_LessOrEqual
+         (BExp_BinPred BIExp_LessThan
            (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 1w)))
-           be_la))
+           be_sa)
+         (BExp_BinExp BIExp_And
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm32 1w)))
+             be_sa)
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 1w)))
+             be_la)))*)
       (BExp_BinExp BIExp_And
         (BExp_BinPred BIExp_LessThan
           be_sa
@@ -1020,7 +1025,7 @@ val birs_simplification_Mem_Bypass_8_8_thm1 = store_thm(
            (BExp_BinPred BIExp_LessOrEqual
              (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 1w)))
              be_la))
-      )
+      (*)*)
     )
     be_ld
     (BExp_Load
@@ -1130,7 +1135,86 @@ bir_exp_memTheory.bir_store_load_mem_THM
 
   `DISJOINT (bir_store_in_mem_used_addrs Bit8 b'' Bit32 BEnd_LittleEndian (b2n b))
          (bir_load_from_mem_used_addrs Bit8 Bit8 Bit32 BEnd_LittleEndian (b2n bi_la))` by (
-    cheat
+    (*
+    bir_exp_memTheory.bir_load_from_mem_used_addrs_def
+    bir_exp_memTheory.bir_load_from_mem_used_addrs_REWRS
+    bir_exp_memTheory.bir_store_in_mem_used_addrs_def
+    bir_exp_memTheory.bir_store_in_mem_used_addrs_REWRS
+    *)
+    Cases_on `b''` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+
+    FULL_SIMP_TAC std_ss [DISJOINT_DEF, INSERT_INTER, INTER_EMPTY, IN_SING] >>
+
+    Cases_on `bi_la` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    Cases_on `b` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
+
+    `(!A B. (bool2w A) || (bool2w B) = bool2w (A \/ B)) /\
+     (!A B. (bool2w A) && (bool2w B) = bool2w (A /\ B))` by (
+      REPEAT STRIP_TAC >> (
+        SIMP_TAC std_ss [bir_immTheory.bool2w_def] >>
+        Cases_on `A` >> Cases_on `B` >> (
+          EVAL_TAC
+        )
+      )
+    ) >>
+(*
+val bool2w_binop_thm = prove(``(!A B. ((bool2w A) || (bool2w B)) = bool2w (A \/ B)) /\ (!A B. (bool2w A) && (bool2w B) = bool2w (A /\ B))``,
+      REPEAT STRIP_TAC >>
+      SIMP_TAC std_ss [bir_immTheory.bool2w_def] >>
+      Cases_on `A` >> Cases_on `B` >> (
+        EVAL_TAC
+      ));
+
+
+REWRITE_CONV
+  [CONJUNCT1 bool2w_binop_thm, CONJUNCT2 bool2w_binop_thm, bir_immTheory.bool2w_EQ_ELIMS]
+  ``(bool2w A) && (bool2w B) || (bool2w C) = 1w``
+
+*)
+
+    rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm (Imm32 w_la))` >>
+    rename1 `birs_interpret_fun_ALT H be_sa = SOME (BVal_Imm (Imm32 w_sa))` >>
+    FULL_SIMP_TAC (std_ss) [] >>
+
+    Cases_on `bir_mem_addr Bit32 (w2n w_sa) <> bir_mem_addr Bit32 (w2n w_la)` >> (
+      FULL_SIMP_TAC (std_ss) [NOT_SING_EMPTY]
+    ) >>
+
+    (*
+    bir_exp_memTheory.bir_mem_addr_def
+    bir_exp_memTheory.bir_mem_addr_w2n_SIZES
+    bir_exp_memTheory.bir_mem_addr_w2n_add
+    bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES
+    *)
+    FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, wordsTheory.w2n_11] >>
+
+    FULL_SIMP_TAC (std_ss) [bir_immTheory.bool2w_EQ_ELIMS] >> (
+      METIS_TAC [
+        prove(``!w. ~(w <+ w + 1w /\ w + (1w:word32) <=+ w)``,
+          REWRITE_TAC
+            [REWRITE_RULE [Once wordsTheory.WORD_ADD_COMM] wordsTheory.WORD_ADD_LEFT_LS2,
+             REWRITE_RULE [Once wordsTheory.WORD_ADD_COMM] wordsTheory.WORD_ADD_RIGHT_LO2] >>
+
+          SIMP_TAC std_ss [] >>
+          REPEAT GEN_TAC >>
+
+          REWRITE_TAC [prove(``(1w:word32) = 0w <=> F``, EVAL_TAC)] >>
+          Cases_on `w = 0w` >> (
+            ASM_SIMP_TAC std_ss []
+          ) >>
+          
+          REPEAT STRIP_TAC >>
+          blastLib.FULL_BBLAST_TAC
+        )
+      ]
+    )
   ) >>
 
   IMP_RES_TAC bir_exp_memTheory.bir_store_load_mem_disjoint_THM >>
