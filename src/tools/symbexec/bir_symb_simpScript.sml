@@ -885,14 +885,19 @@ val birs_simplification_Mem_Bypass_32_8_thm1 = store_thm(
   (type_of_bir_exp be_v = SOME (BType_Imm Bit8)) ==>
   (IS_SOME (type_of_bir_exp be_ld)) ==>
   (birs_simplification
+    (*
     (BExp_BinExp BIExp_Or
       (BExp_BinExp BIExp_And
-         (BExp_BinPred BIExp_LessOrEqual
-           (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm32 4w)))
-           be_sa)
-         (BExp_BinPred BIExp_LessOrEqual
+         (BExp_BinPred BIExp_LessThan
            (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 1w)))
-           be_la))
+           be_sa)
+         (BExp_BinExp BIExp_And
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm32 4w)))
+             be_sa)
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 1w)))
+             be_la)))*)
       (BExp_BinExp BIExp_And
         (BExp_BinPred BIExp_LessThan
           be_sa
@@ -905,7 +910,7 @@ val birs_simplification_Mem_Bypass_32_8_thm1 = store_thm(
              (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 1w)))
              be_la))
       )
-    )
+    (*)*)
     be_ld
     (BExp_Load
       be_m
@@ -943,14 +948,19 @@ val birs_simplification_Mem_Bypass_32_32_thm1 = store_thm(
   (type_of_bir_exp be_v = SOME (BType_Imm Bit32)) ==>
   (IS_SOME (type_of_bir_exp be_ld)) ==>
   (birs_simplification
+    (*
     (BExp_BinExp BIExp_Or
       (BExp_BinExp BIExp_And
-         (BExp_BinPred BIExp_LessOrEqual
-           (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm32 4w)))
-           be_sa)
-         (BExp_BinPred BIExp_LessOrEqual
+         (BExp_BinPred BIExp_LessThan
            (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 4w)))
-           be_la))
+           be_sa)
+         (BExp_BinExp BIExp_And
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm32 4w)))
+             be_sa)
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 4w)))
+             be_la)))*)
       (BExp_BinExp BIExp_And
         (BExp_BinPred BIExp_LessThan
           be_sa
@@ -963,7 +973,7 @@ val birs_simplification_Mem_Bypass_32_32_thm1 = store_thm(
              (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 4w)))
              be_la))
       )
-    )
+    (*)*)
     be_ld
     (BExp_Load
       be_m
@@ -1025,8 +1035,8 @@ val birs_simplification_Mem_Bypass_8_8_thm1 = store_thm(
            (BExp_BinPred BIExp_LessOrEqual
              (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 1w)))
              be_la))
-      (*)*)
-    )
+      )
+    (*)*)
     be_ld
     (BExp_Load
       be_m
@@ -1248,14 +1258,19 @@ val birs_simplification_Mem_Bypass_8_32_thm1 = store_thm(
   (type_of_bir_exp be_v = SOME (BType_Imm Bit32)) ==>
   (IS_SOME (type_of_bir_exp be_ld)) ==>
   (birs_simplification
+    (*
     (BExp_BinExp BIExp_Or
       (BExp_BinExp BIExp_And
-         (BExp_BinPred BIExp_LessOrEqual
-           (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm32 1w)))
-           be_sa)
-         (BExp_BinPred BIExp_LessOrEqual
+         (BExp_BinPred BIExp_LessThan
            (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 4w)))
-           be_la))
+           be_sa)
+         (BExp_BinExp BIExp_And
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm32 1w)))
+             be_sa)
+           (BExp_BinPred BIExp_LessOrEqual
+             (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 4w)))
+             be_la)))*)
       (BExp_BinExp BIExp_And
         (BExp_BinPred BIExp_LessThan
           be_sa
@@ -1268,7 +1283,7 @@ val birs_simplification_Mem_Bypass_8_32_thm1 = store_thm(
              (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 4w)))
              be_la))
       )
-    )
+    (*)*)
     be_ld
     (BExp_Load
       be_m
