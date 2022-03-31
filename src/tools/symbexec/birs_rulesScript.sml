@@ -119,7 +119,8 @@ val assert_spec_thm = store_thm(
         bsst_status := BST_AssertionViolated;
         bsst_pcond := BExp_BinExp BIExp_And pre
                  (BExp_UnaryExp BIExp_Not cond)|>})) ==>
-  (lbl1 <> lbl2) ==>
+  (lbl1 <> lbl2 \/
+   status <> BST_AssertionViolated) ==>
   (birs_pcondinf (BExp_BinExp BIExp_And pre
                  (BExp_UnaryExp BIExp_Not cond))) ==>
   (symb_hl_step_in_L_sound (bir_symb_rec_sbir bprog)
@@ -129,43 +130,44 @@ val assert_spec_thm = store_thm(
         bsst_status := status;
         bsst_pcond := pre|>}))
 ``,
-  REPEAT STRIP_TAC >>
-  IMP_RES_TAC symb_rulesTheory.symb_rule_INF_thm >>
-  PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o SPEC ``birs_symb_to_symbst <|bsst_pc := lbl2; bsst_environ := env2;
+  REPEAT STRIP_TAC >> (
+    IMP_RES_TAC symb_rulesTheory.symb_rule_INF_thm >>
+    PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o SPEC ``birs_symb_to_symbst <|bsst_pc := lbl2; bsst_environ := env2;
                   bsst_status := BST_AssertionViolated;
                   bsst_pcond :=
                     BExp_BinExp BIExp_And pre (BExp_UnaryExp BIExp_Not cond')|>``) >>
 
-  FULL_SIMP_TAC (std_ss++birs_state_ss) [IMAGE_INSERT, IMAGE_EMPTY, birs_symb_to_symbst_def] >>
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [IMAGE_INSERT, IMAGE_EMPTY, birs_symb_to_symbst_def] >>
 
-  `symb_pcondinf (bir_symb_rec_sbir bprog)
+    `symb_pcondinf (bir_symb_rec_sbir bprog)
           (BExp_BinExp BIExp_And pre (BExp_UnaryExp BIExp_Not cond'))` by (
-    METIS_TAC [birs_pcondinf_thm, symb_symbst_pcond_def]
-  ) >>
+      METIS_TAC [birs_pcondinf_thm, symb_symbst_pcond_def]
+    ) >>
 
-  FULL_SIMP_TAC (std_ss++symb_TYPES_ss) [symb_symbst_pcond_def, DIFF_INSERT, DIFF_EMPTY, DELETE_INSERT, EMPTY_DELETE] >>
-  REV_FULL_SIMP_TAC (std_ss) [] >>
+    FULL_SIMP_TAC (std_ss++symb_TYPES_ss) [symb_symbst_pcond_def, DIFF_INSERT, DIFF_EMPTY, DELETE_INSERT, EMPTY_DELETE] >>
+    REV_FULL_SIMP_TAC (std_ss) [] >>
 
-  Q.ABBREV_TAC `sys2 = SymbSymbSt lbl1 env1 (BExp_BinExp BIExp_And pre cond') status` >>
-  Q.ABBREV_TAC `sys2' = SymbSymbSt lbl1 env1 pre status` >>
+    Q.ABBREV_TAC `sys2 = SymbSymbSt lbl1 env1 (BExp_BinExp BIExp_And pre cond') status` >>
+    Q.ABBREV_TAC `sys2' = SymbSymbSt lbl1 env1 pre status` >>
 
-  ASSUME_TAC (
-    (Q.SPECL [`sys`, `L`, `{sys2}`, `sys2`, `sys2'`] o
-     SIMP_RULE std_ss [bir_symb_soundTheory.birs_symb_ARB_val_sound_thm] o
-     MATCH_MP symb_rulesTheory.symb_rule_CONS_E_thm o
-     Q.SPEC `bprog`)
-       bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
+    ASSUME_TAC (
+      (Q.SPECL [`sys`, `L`, `{sys2}`, `sys2`, `sys2'`] o
+       SIMP_RULE std_ss [bir_symb_soundTheory.birs_symb_ARB_val_sound_thm] o
+       MATCH_MP symb_rulesTheory.symb_rule_CONS_E_thm o
+       Q.SPEC `bprog`)
+         bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
 
-  `symb_pcondwiden_sys (bir_symb_rec_sbir bprog) sys2 sys2'` by (
-    Q.UNABBREV_TAC `sys2` >>
-    Q.UNABBREV_TAC `sys2'` >>
+    `symb_pcondwiden_sys (bir_symb_rec_sbir bprog) sys2 sys2'` by (
+      Q.UNABBREV_TAC `sys2` >>
+      Q.UNABBREV_TAC `sys2'` >>
 
-    SIMP_TAC (std_ss++symb_TYPES_ss) [symb_rulesTheory.symb_pcondwiden_sys_def, symb_symbst_extra_def, symb_symbst_pc_def, symb_symbst_store_def, symb_symbst_pcond_def] >>
-    REWRITE_TAC [birs_pcondwiden_thm, birs_pcondwiden_AND_thm]
-  ) >>
+      SIMP_TAC (std_ss++symb_TYPES_ss) [symb_rulesTheory.symb_pcondwiden_sys_def, symb_symbst_extra_def, symb_symbst_pc_def, symb_symbst_store_def, symb_symbst_pcond_def] >>
+      REWRITE_TAC [birs_pcondwiden_thm, birs_pcondwiden_AND_thm]
+    ) >>
 
-  FULL_SIMP_TAC (std_ss) [] >>
-  REV_FULL_SIMP_TAC (std_ss) [DIFF_INSERT, SING_DELETE, DIFF_EMPTY, UNION_EMPTY]
+    FULL_SIMP_TAC (std_ss) [] >>
+    REV_FULL_SIMP_TAC (std_ss) [DIFF_INSERT, SING_DELETE, DIFF_EMPTY, UNION_EMPTY]
+  )
 );
 
 val symb_rule_SUBST_SING_thm = prove(``
