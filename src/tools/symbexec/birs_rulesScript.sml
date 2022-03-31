@@ -286,12 +286,33 @@ val birs_rule_STEP_SEQ_gen_thm = store_thm(
 
   (symb_hl_step_in_L_sound (bir_symb_rec_sbir prog)
     (birs_symb_to_symbst bsys1,
-     L UNION {bsys2.bsst_pc},
+     (bsys2.bsst_pc) INSERT L,
      IMAGE birs_symb_to_symbst (birs_exec_step prog bsys2)
   ))
 ``,
-  (* symb_rule_SEQ_thm *)
-  cheat
+  REPEAT STRIP_TAC >>
+
+  ASSUME_TAC (Q.SPECL [`prog`, `bsys2`] birs_rule_STEP_gen2_thm) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+
+  ASSUME_TAC (Q.SPEC `prog` bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
+  IMP_RES_TAC symb_rulesTheory.symb_rule_SEQ_thm >>
+  POP_ASSUM (ASSUME_TAC o Q.SPECL [`birs_symb_to_symbst bsys2`, `birs_symb_to_symbst bsys1`, `IMAGE birs_symb_to_symbst (birs_exec_step prog bsys2)`]) >>
+  FULL_SIMP_TAC std_ss [INTER_EMPTY, birs_exec_step_NO_FRESH_SYMBS,
+    birs_auxTheory.birs_symb_symbols_set_EQ_thm, bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm] >>
+
+  `L UNION {bsys2.bsst_pc} = bsys2.bsst_pc INSERT L` by (
+    METIS_TAC [INSERT_UNION_EQ, UNION_EMPTY, UNION_COMM]
+  ) >>
+
+  `(IMAGE birs_symb_to_symbst {bsys2} DIFF {birs_symb_to_symbst bsys2}) UNION
+               IMAGE birs_symb_to_symbst (birs_exec_step prog bsys2)
+   = IMAGE birs_symb_to_symbst (birs_exec_step prog bsys2)` by (
+    SIMP_TAC std_ss [IMAGE_INSERT, IMAGE_EMPTY, DIFF_EQ_EMPTY, UNION_EMPTY]
+  ) >>
+
+  METIS_TAC []
 );
 
 (*
