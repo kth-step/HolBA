@@ -866,6 +866,24 @@ val bool2w_OR_AND_REWRS_thm = store_thm(
       )
 );
 
+val bir_mem_acc_disjoint_32_8_thm = store_thm(
+   "bir_mem_acc_disjoint_32_8_thm", ``
+!(w_sa:word32) (w_la:word32).
+  ((w_sa <+ w_sa + 1w /\ w_la <+ w_la + 4w) /\ (w_la + 4w <=+ w_sa \/ w_sa + 1w <=+ w_la)) ==>
+  (DISJOINT
+     {bir_mem_addr Bit32 (w2n w_sa)}
+     {bir_mem_addr Bit32 (w2n w_la);
+      bir_mem_addr Bit32 (w2n w_la + 1);
+      bir_mem_addr Bit32 (w2n w_la + 2);
+      bir_mem_addr Bit32 (w2n w_la + 3)})
+``,
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
+    HolSmtLib.Z3_ORACLE_TAC
+  )
+);
+
 val birs_simplification_Mem_Bypass_32_8_thm1 = store_thm(
    "birs_simplification_Mem_Bypass_32_8_thm1", ``
 !be_st be_ld be_m be_sa be_v be_la.
@@ -901,9 +919,13 @@ val birs_simplification_Mem_Bypass_32_8_thm1 = store_thm(
              (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 1w)))
              be_la)))*)
       (BExp_BinExp BIExp_And
-        (BExp_BinPred BIExp_LessThan
-          be_sa
-          (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 1w))))
+        (BExp_BinExp BIExp_And
+          (BExp_BinPred BIExp_LessThan
+            be_sa
+            (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 1w))))
+          (BExp_BinPred BIExp_LessThan
+            be_la
+            (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm32 4w)))))
         (BExp_BinExp BIExp_Or
            (BExp_BinPred BIExp_LessOrEqual
              (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm32 4w)))
@@ -921,7 +943,117 @@ val birs_simplification_Mem_Bypass_32_8_thm1 = store_thm(
       Bit32)
   )
 ``,
-  cheat
+  REWRITE_TAC [birs_simplification_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
+
+  FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_val_true_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  Cases_on `type_of_bir_exp be_la` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [quantHeuristicsTheory.IS_SOME_EQ_NOT_NONE] >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES, pairTheory.pair_CASE_def]
+  ) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  rename1 `type_of_bir_exp be_la = SOME laty` >>
+
+  `symb_interpr_for_symbs (bir_vars_of_exp be_m) H /\
+   symb_interpr_for_symbs (bir_vars_of_exp be_sa) H /\
+   symb_interpr_for_symbs (bir_vars_of_exp be_v) H /\
+   symb_interpr_for_symbs (bir_vars_of_exp be_la) H` by (
+    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, SUBSET_TRANS, UNION_SUBSET]
+  ) >>
+  REV_FULL_SIMP_TAC (std_ss) [] >>
+  IMP_RES_TAC (REWRITE_RULE [birs_interpret_fun_thm] birs_interpret_fun_welltyped_IMP_thm) >>
+  rename1 `birs_interpret_fun_ALT H be_m = SOME v_m` >>
+  rename1 `birs_interpret_fun_ALT H be_sa = SOME v_sa` >>
+  rename1 `birs_interpret_fun_ALT H be_v = SOME v_v` >>
+  rename1 `birs_interpret_fun_ALT H be_la = SOME v_la` >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  Cases_on `v_sa` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `v_m` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `v_v` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  REPEAT (PAT_X_ASSUM T (K ALL_TAC)) >>
+  PAT_X_ASSUM ``Bit8 = rty`` (ASSUME_TAC o GSYM) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_store_def] >>
+
+(*
+bir_exp_memTheory.bir_store_load_mem_disjoint_THM
+bir_exp_memTheory.bir_store_load_mem_THM
+*)
+
+  `?mmap'. bir_store_in_mem Bit8 Bit32 b'' f BEnd_LittleEndian (b2n b) = SOME mmap'` by (
+    `bir_number_of_mem_splits Bit8 Bit8 Bit32 <> NONE` by (
+      ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
+      EVAL_TAC
+    ) >>
+    IMP_RES_TAC bir_symb_supportTheory.bir_store_in_mem_IS_SOME_thm >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  Cases_on `v_la` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm bi_la)` >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_load_def] >>
+
+  `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 mmap' BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
+    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm >>
+    ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
+    EVAL_TAC
+  ) >>
+  `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 f BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
+    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm >>
+    ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
+    EVAL_TAC
+  ) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  `DISJOINT (bir_store_in_mem_used_addrs Bit8 b'' Bit32 BEnd_LittleEndian (b2n b))
+         (bir_load_from_mem_used_addrs Bit8 Bit32 Bit32 BEnd_LittleEndian (b2n bi_la))` by (
+    (*
+    bir_exp_memTheory.bir_load_from_mem_used_addrs_def
+    bir_exp_memTheory.bir_load_from_mem_used_addrs_REWRS
+    bir_exp_memTheory.bir_store_in_mem_used_addrs_def
+    bir_exp_memTheory.bir_store_in_mem_used_addrs_REWRS
+    *)
+    Cases_on `b''` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+
+    Cases_on `bi_la` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    Cases_on `b` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+
+    rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm (Imm32 w_la))` >>
+    rename1 `birs_interpret_fun_ALT H be_sa = SOME (BVal_Imm (Imm32 w_sa))` >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
+
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_OR_AND_REWRS_thm] >>
+
+    MATCH_MP_TAC bir_mem_acc_disjoint_32_8_thm >>
+    FULL_SIMP_TAC std_ss [bir_immTheory.bool2w_EQ_ELIMS]
+  ) >>
+
+  IMP_RES_TAC bir_exp_memTheory.bir_store_load_mem_disjoint_THM >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
 val birs_simplification_Mem_Bypass_32_8_thm = save_thm(
@@ -1371,6 +1503,24 @@ val birs_simplification_Mem_Bypass_8_8_thm = save_thm(
    SIMP_RULE std_ss [] birs_simplification_Mem_Bypass_8_8_thm1
 );
 
+val bir_mem_acc_disjoint_8_32_thm = store_thm(
+   "bir_mem_acc_disjoint_8_32_thm", ``
+!(w_sa:word32) (w_la:word32).
+  ((w_sa <+ w_sa + 4w /\ w_la <+ w_la + 1w) /\ (w_la + 1w <=+ w_sa \/ w_sa + 4w <=+ w_la)) ==>
+  (DISJOINT
+     {bir_mem_addr Bit32 (w2n w_sa);
+      bir_mem_addr Bit32 (w2n w_sa + 1);
+      bir_mem_addr Bit32 (w2n w_sa + 2);
+      bir_mem_addr Bit32 (w2n w_sa + 3)}
+     {bir_mem_addr Bit32 (w2n w_la)})
+``,
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [] >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss) [bir_exp_memTheory.bir_mem_addr_w2n_SIZES, bir_exp_memTheory.bir_mem_addr_w2n_add_SIZES, wordsTheory.w2n_11] >>
+    HolSmtLib.Z3_ORACLE_TAC
+  )
+);
+
 val birs_simplification_Mem_Bypass_8_32_thm1 = store_thm(
    "birs_simplification_Mem_Bypass_8_32_thm1", ``
 !be_st be_ld be_m be_sa be_v be_la.
@@ -1406,9 +1556,13 @@ val birs_simplification_Mem_Bypass_8_32_thm1 = store_thm(
              (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 4w)))
              be_la)))*)
       (BExp_BinExp BIExp_And
-        (BExp_BinPred BIExp_LessThan
-          be_sa
-          (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 4w))))
+        (BExp_BinExp BIExp_And
+          (BExp_BinPred BIExp_LessThan
+            be_sa
+            (BExp_BinExp BIExp_Plus be_sa (BExp_Const (Imm32 4w))))
+          (BExp_BinPred BIExp_LessThan
+            be_la
+            (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm32 1w)))))
         (BExp_BinExp BIExp_Or
            (BExp_BinPred BIExp_LessOrEqual
              (BExp_BinExp BIExp_Plus be_la (BExp_Const (Imm32 1w)))
@@ -1426,7 +1580,117 @@ val birs_simplification_Mem_Bypass_8_32_thm1 = store_thm(
       Bit8)
   )
 ``,
-  cheat
+  REWRITE_TAC [birs_simplification_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm, birs_interpret_fun_ALT_def] >>
+
+  FULL_SIMP_TAC std_ss [bir_bool_expTheory.bir_val_true_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  Cases_on `type_of_bir_exp be_la` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [quantHeuristicsTheory.IS_SOME_EQ_NOT_NONE] >>
+    FULL_SIMP_TAC std_ss [optionTheory.option_CLAUSES, pairTheory.pair_CASE_def]
+  ) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+  rename1 `type_of_bir_exp be_la = SOME laty` >>
+
+  `symb_interpr_for_symbs (bir_vars_of_exp be_m) H /\
+   symb_interpr_for_symbs (bir_vars_of_exp be_sa) H /\
+   symb_interpr_for_symbs (bir_vars_of_exp be_v) H /\
+   symb_interpr_for_symbs (bir_vars_of_exp be_la) H` by (
+    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, SUBSET_TRANS, UNION_SUBSET]
+  ) >>
+  REV_FULL_SIMP_TAC (std_ss) [] >>
+  IMP_RES_TAC (REWRITE_RULE [birs_interpret_fun_thm] birs_interpret_fun_welltyped_IMP_thm) >>
+  rename1 `birs_interpret_fun_ALT H be_m = SOME v_m` >>
+  rename1 `birs_interpret_fun_ALT H be_sa = SOME v_sa` >>
+  rename1 `birs_interpret_fun_ALT H be_v = SOME v_v` >>
+  rename1 `birs_interpret_fun_ALT H be_la = SOME v_la` >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  Cases_on `v_sa` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `v_m` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  Cases_on `v_v` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  REPEAT (PAT_X_ASSUM T (K ALL_TAC)) >>
+  PAT_X_ASSUM ``Bit32 = rty`` (ASSUME_TAC o GSYM) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_store_def] >>
+
+(*
+bir_exp_memTheory.bir_store_load_mem_disjoint_THM
+bir_exp_memTheory.bir_store_load_mem_THM
+*)
+
+  `?mmap'. bir_store_in_mem Bit8 Bit32 b'' f BEnd_LittleEndian (b2n b) = SOME mmap'` by (
+    `bir_number_of_mem_splits Bit8 Bit32 Bit32 <> NONE` by (
+      ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
+      EVAL_TAC
+    ) >>
+    IMP_RES_TAC bir_symb_supportTheory.bir_store_in_mem_IS_SOME_thm >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  Cases_on `v_la` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+  rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm bi_la)` >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_load_def] >>
+
+  `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 mmap' BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
+    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm >>
+    ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
+    EVAL_TAC
+  ) >>
+  `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 f BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
+    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm >>
+    ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
+    EVAL_TAC
+  ) >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  `DISJOINT (bir_store_in_mem_used_addrs Bit8 b'' Bit32 BEnd_LittleEndian (b2n b))
+         (bir_load_from_mem_used_addrs Bit8 Bit8 Bit32 BEnd_LittleEndian (b2n bi_la))` by (
+    (*
+    bir_exp_memTheory.bir_load_from_mem_used_addrs_def
+    bir_exp_memTheory.bir_load_from_mem_used_addrs_REWRS
+    bir_exp_memTheory.bir_store_in_mem_used_addrs_def
+    bir_exp_memTheory.bir_store_in_mem_used_addrs_REWRS
+    *)
+    Cases_on `b''` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+
+    Cases_on `bi_la` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    Cases_on `b` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+
+    rename1 `birs_interpret_fun_ALT H be_la = SOME (BVal_Imm (Imm32 w_la))` >>
+    rename1 `birs_interpret_fun_ALT H be_sa = SOME (BVal_Imm (Imm32 w_sa))` >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_immTheory.bool2b_def] >>
+
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bool2w_OR_AND_REWRS_thm] >>
+
+    MATCH_MP_TAC bir_mem_acc_disjoint_8_32_thm >>
+    FULL_SIMP_TAC std_ss [bir_immTheory.bool2w_EQ_ELIMS]
+  ) >>
+
+  IMP_RES_TAC bir_exp_memTheory.bir_store_load_mem_disjoint_THM >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
 val birs_simplification_Mem_Bypass_8_32_thm = save_thm(
