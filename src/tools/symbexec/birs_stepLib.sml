@@ -501,7 +501,7 @@ local
 
   val birs_pcondinf_tm = ``birs_pcondinf``;
 in
-fun birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm bstate_tm =
+fun birs_rule_STEP_tryassert_fun force_assert_justify birs_rule_STEP_thm bprog_tm bstate_tm =
   let
     val single_step_prog_thm = birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm;
     val continue_thm_o_1 =
@@ -519,7 +519,7 @@ fun birs_rule_STEP_tryassert_fun birs_rule_STEP_thm bprog_tm bstate_tm =
           val pcond_tm = (snd o dest_comb o snd o dest_comb o fst o dest_comb o concl) continue_thm;
           (*val _ = print_term pcond_tm;*)
           val pcond_is_contr = bir_check_unsat false pcond_tm;
-          val _ = if pcond_is_contr then () else
+          val _ = if (not force_assert_justify) orelse pcond_is_contr then () else
             (print "\n\n\n<<<<<<<<<<<< ASSERTION MAY FAIL <<<<<<<<<<<< \n";
              print_term (concl single_step_prog_thm);
              print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n";
