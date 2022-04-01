@@ -587,7 +587,7 @@ val birs_simplification_Plus_Minus_Const32_thm = store_thm(
 
 
 (* ******************************************************* *)
-(*      if then else expressions                           *)
+(*      type correct expression evaluation                 *)
 (* ******************************************************* *)
 val birs_interpret_fun_welltyped_IMP_thm = store_thm(
    "birs_interpret_fun_welltyped_IMP_thm", ``
@@ -598,10 +598,55 @@ val birs_interpret_fun_welltyped_IMP_thm = store_thm(
   (?v. birs_interpret_fun H be = SOME v /\
        type_of_bir_val v = ty)
 ``,
-  cheat
+  FULL_SIMP_TAC std_ss [birs_interpret_fun_thm] >>
+  Induct_on `be` >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_interpret_fun_ALT_def, bir_valuesTheory.bir_type_is_Imm_def]
+  ) >- (
+    (* variables *)
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, INSERT_SUBSET, EMPTY_SUBSET, birs_interpr_welltyped_def] >>
+
+    METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm, optionTheory.THE_DEF, bir_symbTheory.birs_interpret_get_var_def]
+  ) >> (
+    (* after fixing constants and variables *)
+    REPEAT STRIP_TAC >>
+    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
+
+    REPEAT (PAT_X_ASSUM ``!x.A`` (IMP_RES_TAC)) >>
+
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_valuesTheory.type_of_bir_val_EQ_ELIMS, bir_valuesTheory.BType_Bool_def]
+  ) >- (
+    (* if-then-else *)
+    CASE_TAC >> (
+      ASM_REWRITE_TAC []
+    )
+  ) >- (
+    (* load *)
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_load_def] >>
+
+    ASSUME_TAC (Q.SPECL [`vt`, `b1`, `at`, `f`, `b2`, `(b2n i)`] bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm) >>
+    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    (*
+    bir_exp_memTheory.bir_load_from_mem_def
+    bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm
+    bir_symb_supportTheory.bir_store_in_mem_IS_SOME_thm
+    *)
+  ) >> (
+    (* and finally, store *)
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_store_def] >>
+
+    ASSUME_TAC (Q.SPECL [`rty`, `vt`, `at`, `i`, `f`, `b2`, `(b2n i')`] bir_symb_supportTheory.bir_store_in_mem_IS_SOME_thm) >>
+    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  )
 );
 
 
+
+
+(* ******************************************************* *)
+(*      if then else expressions                           *)
+(* ******************************************************* *)
 val birs_simplification_IfThenElse_T_thm = store_thm(
    "birs_simplification_IfThenElse_T_thm", ``
 !pcond ec et ef.
@@ -712,7 +757,7 @@ val birs_simplification_IfThenElse_F_thm = store_thm(
 (* ******************************************************* *)
 (*      memory match and bypass                            *)
 (* ******************************************************* *)
-(* TODO: can simplify condition for store bypassing with alignment requirement (if it holds) *)
+(* TODO: could simplify condition for store bypassing with alignment requirement (if it holds in the target code, which should be the case) *)
 
 val birs_simplification_Mem_Match_thm1 = store_thm(
    "birs_simplification_Mem_Match_thm1", ``
@@ -1011,12 +1056,12 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_load_def] >>
 
   `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 mmap' BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm >>
+    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
     ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
     EVAL_TAC
   ) >>
   `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 f BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm >>
+    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
     ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
     EVAL_TAC
   ) >>
@@ -1243,12 +1288,12 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_load_def] >>
 
   `?bv_res. bir_load_from_mem Bit8 Bit32 Bit32 mmap' BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm >>
+    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
     ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
     EVAL_TAC
   ) >>
   `?bv_res. bir_load_from_mem Bit8 Bit32 Bit32 f BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm >>
+    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
     ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
     EVAL_TAC
   ) >>
@@ -1453,12 +1498,12 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_load_def] >>
 
   `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 mmap' BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm >>
+    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
     ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
     EVAL_TAC
   ) >>
   `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 f BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm >>
+    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
     ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
     EVAL_TAC
   ) >>
@@ -1648,12 +1693,12 @@ bir_exp_memTheory.bir_store_load_mem_THM
   FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_expTheory.bir_eval_load_def] >>
 
   `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 mmap' BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm >>
+    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
     ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
     EVAL_TAC
   ) >>
   `?bv_res. bir_load_from_mem Bit8 Bit8 Bit32 f BEnd_LittleEndian (b2n bi_la) = SOME bv_res` by (
-    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm >>
+    MATCH_MP_TAC bir_symb_supportTheory.bir_load_from_mem_IS_SOME_thm1 >>
     ASM_SIMP_TAC std_ss [bir_exp_memTheory.bir_number_of_mem_splits_def] >>
     EVAL_TAC
   ) >>
