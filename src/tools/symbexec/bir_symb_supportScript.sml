@@ -624,8 +624,8 @@ val bir_load_from_mem_IS_SOME_thm = store_thm(
    "bir_load_from_mem_IS_SOME_thm", ``
 !vty sz aty mmap en anum.
   (if en = BEnd_NoEndian then vty = sz
-        else bir_number_of_mem_splits vty sz aty ≠ NONE) ==>
-  (?v. bir_load_from_mem vty sz aty mmap en anum = SOME v)
+        else bir_number_of_mem_splits vty sz aty <> NONE) ==>
+  (?v. bir_load_from_mem vty sz aty mmap en anum = SOME v /\ type_of_bir_imm v = sz)
 ``,
   REPEAT STRIP_TAC >>
   `?abc. bir_number_of_mem_splits vty sz aty = SOME abc` by (
@@ -648,8 +648,18 @@ val bir_load_from_mem_IS_SOME_thm = store_thm(
   Cases_on `en` >> (
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
   ) >> (
-    METIS_TAC [bir_load_from_mem_EQ_SOME, bir_number_of_mem_splits_ID]
+    METIS_TAC [bir_load_from_mem_EQ_SOME, bir_number_of_mem_splits_ID, type_of_bir_mem_concat]
   )
+);
+
+val bir_load_from_mem_IS_SOME_thm1 = store_thm(
+   "bir_load_from_mem_IS_SOME_thm1", ``
+!vty sz aty mmap en anum.
+  (if en = BEnd_NoEndian then vty = sz
+        else bir_number_of_mem_splits vty sz aty <> NONE) ==>
+  (?v. bir_load_from_mem vty sz aty mmap en anum = SOME v)
+``,
+  METIS_TAC [bir_load_from_mem_IS_SOME_thm]
 );
 
 val bir_store_in_mem_IS_SOME_thm = store_thm(
@@ -657,7 +667,7 @@ val bir_store_in_mem_IS_SOME_thm = store_thm(
 !sz vty aty v mmap en anum.
   (type_of_bir_imm v = sz) ==>
   (if en = BEnd_NoEndian then vty = sz
-        else bir_number_of_mem_splits vty sz aty ≠ NONE) ==>
+        else bir_number_of_mem_splits vty sz aty <> NONE) ==>
   (?vm. bir_store_in_mem vty aty v mmap en anum = SOME vm)
 ``,
   REPEAT STRIP_TAC >>
