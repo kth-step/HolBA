@@ -27,8 +27,8 @@ val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
 in (* local *)
 
 (*
-fun stx_tm index_tm symbname_tm = ``
-  <|bsst_pc := <|bpc_label := BL_Address (Imm32 2824w); bpc_index := (^index_tm)|>;
+fun stx_tm addr_tm index_tm symbname_tm = ``
+  <|bsst_pc := <|bpc_label := BL_Address (Imm32 (^addr_tm)); bpc_index := (^index_tm)|>;
      bsst_environ :=
        birs_gen_env
          [("MEM",BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)));
@@ -42,10 +42,10 @@ fun stx_tm index_tm symbname_tm = ``
             (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
             (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))|>
 ``;
-val st1_tm = stx_tm ``1:num`` ``"sy_PSR_Z"``;
-val st2_tm = stx_tm ``2:num`` ``"sy_PSR_Z"``;
-val st3_tm = stx_tm ``1:num`` ``"sy_PSR_A"``;
-val st4_tm = stx_tm ``3:num`` ``"sy_PSR_Z"``;
+val st1_tm = stx_tm ``2824w:word32`` ``1:num`` ``"sy_PSR_Z"``;
+val st2_tm = stx_tm ``2824w:word32`` ``2:num`` ``"sy_PSR_Z"``;
+val st3_tm = stx_tm ``2825w:word32`` ``1:num`` ``"sy_PSR_A"``;
+val st4_tm = stx_tm ``2824w:word32`` ``3:num`` ``"sy_PSR_Z"``;
 
 val st_eq_1_tm = ``^st1_tm = ^st1_tm``;
 val st_eq_2_tm = ``^st1_tm = ^st2_tm``;
@@ -53,6 +53,7 @@ val st_eq_3_tm = ``^st1_tm = ^st3_tm``;
 val st_eq_4_tm = ``^st2_tm = ^st3_tm``;
 
 val tm = st_eq_2_tm;
+val tm = st_eq_3_tm;
 val tm = st_eq_4_tm;
 
 birs_state_EQ_CONV st_eq_1_tm
@@ -90,7 +91,7 @@ val birs_state_NEQ_status_thm = prove(``
     else
       let
         val assmpt = (fst o dest_imp o concl) t;
-        val assmpt_thm = (SIMP_CONV (std_ss++holBACore_ss++birs_state_ss) []) assmpt;
+        val assmpt_thm = (SIMP_CONV (std_ss++holBACore_ss++birs_state_ss) [] THENC EVAL) assmpt;
 
         val assmpt_new = (snd o dest_eq o concl) assmpt_thm;
 
@@ -121,7 +122,8 @@ fun try_prove_birs_state_NEQ bsys1_tm bsys2_tm =
     if isSome neq_t_o then
       valOf neq_t_o
     else
-      raise ERR "try_prove_birs_state_NEQ" "could not show inequality of the states, would need to check the environments"
+      (print "\ncould not show inequality of the states, would need to check the environments\n";
+       raise ERR "try_prove_birs_state_NEQ" "could not show inequality of the states, would need to check the environments")
   end;
 
 fun birs_state_EQ_CONV tm =
@@ -423,7 +425,21 @@ length Pi_c
       else
         fn tm =>
           (REWRITE_CONV [IMAGE_DIFF_SING_thm, MATCH_MP IMAGE_DIFF_ASSOC_thm bir_symbTheory.birs_symb_to_symbst_EQ_thm, GSYM DELETE_DEF] THENC
-           RATOR_CONV (RAND_CONV (RAND_CONV (pred_setLib.DELETE_CONV birs_state_EQ_CONV))) THENC
+           RATOR_CONV (RAND_CONV (RAND_CONV (
+
+fn tm =>
+(
+pred_setLib.DELETE_CONV birs_state_EQ_CONV tm
+handle ex =>
+  (print "\n\n\n";
+   print_term tm;
+   print "\n\n\n";
+   raise ex
+  )
+)
+
+
+))) THENC
            REWRITE_CONV [MATCH_MP IMAGE_UNION_ASSOC_thm bir_symbTheory.birs_symb_to_symbst_EQ_thm] THENC
            RAND_CONV (pred_setLib.UNION_CONV birs_state_EQ_CONV))
 
