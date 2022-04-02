@@ -199,6 +199,19 @@ val birs_eval_exp_CONV = birs_eval_exp_CONV;
       is_a_normform_set tm andalso
       (List.all birs_state_is_normform o pred_setSyntax.strip_set) tm;
 
+
+    fun birs_state_is_normform_CONV sfun bstate_tm =
+      (if (birs_state_is_normform) bstate_tm then () else
+            (print_term bstate_tm;
+             raise ERR (sfun^"::birs_state_is_normform_CONV") "something is not right, the input state is not as expected");
+       REFL bstate_tm);
+
+    fun birs_states_are_normform_CONV sfun bstates_tm =
+      (if (birs_states_are_normform) bstates_tm then () else
+            (print_term bstates_tm;
+             raise ERR (sfun^"::birs_states_are_normform_CONV") "something is not right, the produced theorem is not evaluated enough");
+       REFL bstates_tm);
+
   end;
 
 (* extract information from a sound structure *)
@@ -351,29 +364,37 @@ val bstate_tm = ``
 (*
 val bstate_tm = birs_state_init;
 val bstate_tm = birs_state_mid;
+
+val bstate_tm = birs_state_init_tm;
+val bprog_tm = bprog_tm;
+
+val tm = ``ABCD (birs_exec_step ^bprog_tm ^bstate_tm)``;
+val tm = ``birs_exec_step ^bprog_tm ^bstate_tm``;
 *)
-fun birs_exec_step_fun bprog_tm bstate_tm =
-  let
-    val _ = if (birs_state_is_normform) bstate_tm then () else
-            (print_term bstate_tm;
-             raise ERR "birs_exec_step_fun" "something is not right, the input state is not as expected");
+val birs_exec_step_tm = ``birs_exec_step``;
+fun is_birs_exec_step tm =
+  is_comb tm andalso
+  (is_comb o fst o dest_comb) tm andalso
+  (same_const birs_exec_step_tm o fst o dest_comb o fst o dest_comb) tm;
+fun birs_exec_step_CONV_fun tm =
+  GEN_match_conv
+(is_birs_exec_step)
+(
+  RAND_CONV (birs_state_is_normform_CONV "birs_exec_step_CONV_fun") THENC
 
-    (* execution of steps *)
-    val timer_exec_step = bir_miscLib.timer_start 0;
-    val test_term = ``birs_exec_step ^bprog_tm ^bstate_tm``;
-    (*
-    val _ = (print_term o concl) (birs_exec_step_CONV test_term);
-    *)
-    (* TODO: optimize *)
-    val birs_exec_thm = birs_exec_step_CONV test_term;
-    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> executed step in " ^ delta_s ^ "\n")) timer_exec_step;
+  (fn tm =>
+    let
+      val timer_exec_step = bir_miscLib.timer_start 0;
+      (* TODO: optimize *)
+      val birs_exec_thm = birs_exec_step_CONV tm;
+      val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> executed step in " ^ delta_s ^ "\n")) timer_exec_step;
+    in
+      birs_exec_thm
+    end) THENC
 
-    val _ = if (birs_states_are_normform o snd o dest_eq o concl) birs_exec_thm then () else
-            (print_term (concl birs_exec_thm);
-             raise ERR "birs_exec_step_fun" "something is not right, the produced theorem is not evaluated enough");
-  in
-    birs_exec_thm
-  end;
+  birs_states_are_normform_CONV "birs_exec_step_CONV_fun"
+)
+tm;
 
 
 (* halt free programs *)
@@ -421,13 +442,14 @@ in
 fun birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm =
   let
 
-    val birs_exec_thm = birs_exec_step_fun bprog_tm bstate_tm;
+    val birs_exec_thm = CONV_RULE birs_exec_step_CONV_fun (SPEC bstate_tm birs_rule_STEP_thm);
 
     val timer_exec_step_p3 = bir_miscLib.timer_start 0;
     (* TODO: optimize *)
     val single_step_prog_thm =
-      SIMP_RULE std_ss [bir_symbTheory.birs_state_t_bsst_pc, bir_symbTheory.birs_state_t_accfupds]
-        (REWRITE_RULE [birs_exec_thm] (SPEC bstate_tm birs_rule_STEP_thm));
+      REWRITE_RULE
+        [bir_symbTheory.birs_state_t_bsst_pc, bir_symbTheory.birs_state_t_accfupds]
+        birs_exec_thm;
 
     val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP in " ^ delta_s ^ "\n")) timer_exec_step_p3;
 
