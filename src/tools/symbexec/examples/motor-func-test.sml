@@ -28,6 +28,7 @@ val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Addr
 (*
 val birs_stop_lbls = [``<|bpc_label := BL_Address (Imm32 0xb08w); bpc_index := 7|>``];
 *)
+val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb0aw))``];
 val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb12w))``];
 val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb20w))``];
 val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb22w))``];
@@ -92,7 +93,7 @@ val birs_state_init = ``<|
 
 val birs_rule_STEP_thm = birs_rule_STEP_prog_fun (bir_prog_has_no_halt_fun bprog_tm);
 val birs_rule_SUBST_thm = birs_rule_SUBST_prog_fun bprog_tm;
-val birs_rule_STEP_fun_spec = (birs_rule_SUBST_trysimp_const_add_subst_fun birs_rule_SUBST_thm o birs_rule_STEP_tryassert_fun true birs_rule_STEP_thm bprog_tm);
+val birs_rule_STEP_fun_spec = (birs_rule_SUBST_trysimp_const_add_subst_fun birs_rule_SUBST_thm o birs_rule_tryjustassert_fun true o birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm);
 (* now the composition *)
 val birs_rule_SEQ_thm = birs_rule_SEQ_prog_fun bprog_tm;
 val birs_rule_SEQ_fun_spec = birs_rule_SEQ_fun birs_rule_SEQ_thm;
@@ -124,19 +125,55 @@ fun reduce_tree SEQ_fun_spec (Symb_Node (symbex_A_thm, [])) = symbex_A_thm
   | reduce_tree SEQ_fun_spec (Symb_Node (symbex_A_thm, (symbex_B_subtree::symbex_B_subtrees))) =
       let
         val symbex_B_thm = reduce_tree SEQ_fun_spec symbex_B_subtree;
-        val symbex_A_thm_new = SEQ_fun_spec symbex_A_thm symbex_B_thm NONE;
+        val symbex_A_thm_new = SEQ_fun_spec symbex_A_thm symbex_B_thm NONE
+            handle ex =>
+              (print "\n=========================\n\n";
+               (print_term o concl) symbex_A_thm;
+               print "\n\n";
+               (print_term o concl) symbex_B_thm;
+               print "\n\n=========================\n";
+               raise ex);
       in
         reduce_tree SEQ_fun_spec (Symb_Node (symbex_A_thm_new, symbex_B_subtrees))
       end;
 
+
+(* and also the sequential composition *)
+val birs_rule_STEP_SEQ_thm = MATCH_MP birs_rulesTheory.birs_rule_STEP_SEQ_gen_thm (bir_prog_has_no_halt_fun bprog_tm);
+(*
+val STEP_SEQ_thm = birs_rule_STEP_SEQ_thm;
+val symbex_A_thm = single_step_A_thm;
+*)
+fun birs_rule_STEP_SEQ_fun STEP_SEQ_thm symbex_A_thm =
+  let
+    val step1_thm = MATCH_MP STEP_SEQ_thm symbex_A_thm;
+    val step2_thm = REWRITE_RULE [bir_symbTheory.birs_state_t_accessors, bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM] step1_thm;
+
+    (*
+    val timer_exec_step_p3 = bir_miscLib.timer_start 0;
+    *)
+
+    val step3_thm = CONV_RULE birs_exec_step_CONV_fun step2_thm;
+
+    (*
+    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP in " ^ delta_s ^ "\n")) timer_exec_step_p3;
+    *)
+    val step4_thm = (birs_rule_SUBST_trysimp_const_add_subst_fun birs_rule_SUBST_thm o birs_rule_tryjustassert_fun true) step3_thm;
+  in
+    step4_thm
+  end;
+val birs_rule_STEP_SEQ_fun_spec = birs_rule_STEP_SEQ_fun birs_rule_STEP_SEQ_thm;
+
+
 (*
 val STEP_fun_spec = birs_rule_STEP_fun_spec;
 val SEQ_fun_spec = birs_rule_SEQ_fun_spec;
+val STEP_SEQ_fun_spec = birs_rule_STEP_SEQ_fun_spec;
 
 val symbex_A_thm = single_step_A_thm;
 val stop_lbls = birs_stop_lbls;
 *)
-fun build_tree (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbls =
+fun build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm stop_lbls =
   let
     val _ = print ("\n");
     val (_, _, Pi_A_tm) = (symb_sound_struct_get_sysLPi_fun o concl) symbex_A_thm;
@@ -178,11 +215,14 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbls =
 
           val _ = print ("sequential composition with singleton mid_state set\n");
 
+(*
           val birs_state_mid = hd birs_states_mid;
     val timer_exec_step_P1 = bir_miscLib.timer_start 0;
           val single_step_B_thm = take_step birs_state_mid;
     val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>> executed a whole step in " ^ delta_s ^ "\n")) timer_exec_step_P1;
+*)
     val timer_exec_step_P2 = bir_miscLib.timer_start 0;
+(*
           (* TODO: derive freesymbols EMPTY from birs *)
           val (sys_B_tm, _, Pi_B_tm) = (symb_sound_struct_get_sysLPi_fun o concl) single_step_B_thm;
           val freesymbols_B_thm = prove (T, cheat);
@@ -193,10 +233,12 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbls =
             ``, cheat);*)
           (* compose together *)
           val bprog_composed_thm = SEQ_fun_spec symbex_A_thm single_step_B_thm (SOME freesymbols_B_thm);
-    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>> sequentially composed a step in " ^ delta_s ^ "\n")) timer_exec_step_P2;
+*)
+          val bprog_composed_thm = STEP_SEQ_fun_spec symbex_A_thm;
+    val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>> took and sequentially composed a step in " ^ delta_s ^ "\n")) timer_exec_step_P2;
 
         in
-          build_tree (STEP_fun_spec, SEQ_fun_spec) bprog_composed_thm stop_lbls
+          build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) bprog_composed_thm stop_lbls
         end
       (* continue with executing one step on each branch point... *)
       else
@@ -210,26 +252,28 @@ fun build_tree (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbls =
               val _ = print ("starting a branch\n");
               val single_step_B_thm = take_step birs_state_mid;
             in
-              build_tree (STEP_fun_spec, SEQ_fun_spec) single_step_B_thm stop_lbls
+              build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) single_step_B_thm stop_lbls
             end
         in
           Symb_Node (symbex_A_thm, List.map buildsubtree birs_states_mid_executable)
         end
   end;
 
-fun exec_until (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbls =
+fun exec_until (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm stop_lbls =
   let
-    val tree = build_tree (STEP_fun_spec, SEQ_fun_spec) symbex_A_thm stop_lbls;
+    val tree = build_tree (STEP_fun_spec, SEQ_fun_spec, STEP_SEQ_fun_spec) symbex_A_thm stop_lbls;
   in
     reduce_tree SEQ_fun_spec tree
   end;
 (* ........................... *)
 
-val tree = build_tree (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec) single_step_A_thm birs_stop_lbls;
+(*
+val tree = build_tree (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec, birs_rule_STEP_SEQ_fun_spec) single_step_A_thm birs_stop_lbls;
 val _ = print "done building the tree\n";
+*)
 
 val _ = print "now reducing it to one sound structure\n";
-val result = exec_until (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec) single_step_A_thm birs_stop_lbls;
+val result = exec_until (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec, birs_rule_STEP_SEQ_fun_spec) single_step_A_thm birs_stop_lbls;
 
 val _ = (print_term o concl) result;
 
