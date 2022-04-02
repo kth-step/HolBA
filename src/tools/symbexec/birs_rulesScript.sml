@@ -57,6 +57,10 @@ val birs_pcondwiden_thm = store_thm(
   SIMP_TAC (std_ss++symb_TYPES_ss) [bir_symb_rec_sbir_def, symb_interpr_symbpcond_def, bir_bool_expTheory.bir_val_TF_dist]
 );
 
+
+(* ******************************************************* *)
+(*      ASSERT statement justification                     *)
+(* ******************************************************* *)
 (* this is an adjusted copy of "bir_disj1_false" from "bir_exp_equivTheory" *)
 local
   open bir_bool_expTheory
@@ -170,6 +174,10 @@ val assert_spec_thm = store_thm(
   )
 );
 
+
+(* ******************************************************* *)
+(*      SUBST rule                                         *)
+(* ******************************************************* *)
 val symb_rule_SUBST_SING_thm = prove(``
 !sr.
 !sys L sys2 var symbexp symbexp'.
@@ -226,6 +234,10 @@ val birs_rule_SUBST_spec_thm = store_thm(
 
 
 
+
+(* ******************************************************* *)
+(*      STEP rule                                          *)
+(* ******************************************************* *)
 val birs_rule_STEP_gen1_thm = store_thm(
    "birs_rule_STEP_gen1_thm", ``
 !prog sys.
@@ -264,25 +276,191 @@ val birs_rule_STEP_gen2_thm = store_thm(
   FULL_SIMP_TAC std_ss [bir_symbTheory.birs_symb_to_from_symbst_thm, birs_auxTheory.birs_symb_symbst_pc_thm]
 );
 
-val birs_exec_step_NO_FRESH_SYMBS = prove(``
-!prog bsys.
-  (* this assumption is only needed because of the proof with the soundness of steps *)
-  (bir_prog_has_no_halt prog) ==>
 
-  ((BIGUNION (IMAGE birs_symb_symbols (birs_exec_step prog bsys)))
-     DIFF (birs_symb_symbols bsys)
-   = EMPTY)
+(* ******************************************************* *)
+(*      NO FRESH SYMBS                                     *)
+(* ******************************************************* *)
+val birs_fresh_symbs_def = Define `
+    birs_fresh_symbs bs1 bs2 =
+      ((birs_symb_symbols bs2) DIFF (birs_symb_symbols bs1))
+`;
+
+val birs_NO_fresh_symbs_def = Define `
+    birs_NO_fresh_symbs bs1 bs2 =
+      (birs_fresh_symbs bs1 bs2 = EMPTY)
+`;
+
+val birs_set_fresh_symbs_def = Define `
+    birs_set_fresh_symbs bs sbs =
+      ((BIGUNION (IMAGE birs_symb_symbols sbs)) DIFF (birs_symb_symbols bs))
+`;
+
+val birs_set_NO_fresh_symbs_def = Define `
+    birs_set_NO_fresh_symbs bs sbs =
+      (birs_set_fresh_symbs bs sbs = EMPTY)
+`;
+
+val birs_NO_fresh_symbs_SUFFICIENT_thm = store_thm(
+   "birs_NO_fresh_symbs_SUFFICIENT_thm", ``
+!bs1 bs2.
+  (bs1.bsst_environ = bs2.bsst_environ /\
+   bs1.bsst_pcond   = bs2.bsst_pcond) ==>
+  (birs_NO_fresh_symbs bs1 bs2)
+``,
+  SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def, birs_symb_symbols_def, DIFF_EQ_EMPTY]
+);
+
+val birs_NO_fresh_symbs_SUFFICIENT2_thm = store_thm(
+   "birs_NO_fresh_symbs_SUFFICIENT2_thm", ``
+!bs1 bs2 bs2'.
+  (birs_NO_fresh_symbs bs1 bs2 /\
+   bs2.bsst_environ = bs2'.bsst_environ /\
+   bs2.bsst_pcond   = bs2'.bsst_pcond) ==>
+  (birs_NO_fresh_symbs bs1 bs2')
+``,
+  SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def, birs_symb_symbols_def, DIFF_EQ_EMPTY] >>
+  REPEAT STRIP_TAC >>
+  METIS_TAC []
+);
+
+val BIGUNION_IMAGE_DIFF_EQ_thm = store_thm(
+   "BIGUNION_IMAGE_DIFF_EQ_thm", ``
+!f s1 s2s.
+  ((BIGUNION (IMAGE f s2s)) DIFF s1 = BIGUNION (IMAGE (\s2. (f s2) DIFF s1) s2s))
+``,
+  SIMP_TAC (std_ss) [EXTENSION, IN_BIGUNION_IMAGE, IN_DIFF] >>
+  METIS_TAC []
+);
+
+val birs_set_fresh_symbs_thm = store_thm(
+   "birs_set_fresh_symbs_thm", ``
+!bs sbs.
+  (birs_set_fresh_symbs bs sbs = BIGUNION (IMAGE (\bs2. birs_fresh_symbs bs bs2) sbs))
+``,
+  SIMP_TAC std_ss [birs_set_fresh_symbs_def, birs_fresh_symbs_def, BIGUNION_IMAGE_DIFF_EQ_thm]
+);
+
+val birs_set_NO_fresh_symbs_thm = store_thm(
+   "birs_set_NO_fresh_symbs_thm", ``
+!bs sbs.
+  (birs_set_NO_fresh_symbs bs sbs = !bs2. bs2 IN sbs ==> (birs_NO_fresh_symbs bs bs2))
+``,
+  SIMP_TAC std_ss [birs_set_NO_fresh_symbs_def, birs_set_fresh_symbs_thm, birs_NO_fresh_symbs_def] >>
+  SIMP_TAC (std_ss) [EXTENSION, IN_BIGUNION_IMAGE, NOT_IN_EMPTY] >>
+  METIS_TAC []
+);
+
+
+val birs_exec_stmtE_NO_FRESH_SYMBS = store_thm(
+   "birs_exec_stmtE_NO_FRESH_SYMBS", ``
+!prog bsys estmt.
+  birs_set_NO_fresh_symbs bsys (birs_exec_stmtE prog estmt bsys)
 ``,
   REPEAT STRIP_TAC >>
-  IMP_RES_TAC bir_symb_soundTheory.birs_symb_step_sound_thm >>
+  Cases_on `estmt` >- (
+    SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_jmp_def] >>
+    CASE_TAC >> (
+      SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, FORALL_IN_IMAGE] >>
+      REPEAT STRIP_TAC >>
 
-  FULL_SIMP_TAC std_ss [symb_record_soundTheory.symb_step_sound_def] >>
+      MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm >>
+      SIMP_TAC (std_ss++birs_state_ss) [birs_exec_stmt_jmp_to_label_def] >>
+      TRY CASE_TAC >> (
+        SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
+      )
+    )
+  ) >- (
+    cheat (* >>
+    SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_cjmp_def] >>
+    CASE_TAC >- (
+      SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+      TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+      SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
+    ) >>
 
-  (* TODO: this seems to not work because because we would have to show that there is always a matching concrete state, which isn't true if the path condition is a contradiction for example, and so we can remove the no_halt assumption again and move on to proof this through the whole definition instead *)
+    Cases_on `x` >>
+    Cases_on `r` >> (
+      SIMP_TAC (std_ss++holBACore_ss) [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
+      TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+      SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
+    ) >>
 
+    Cases_on `b'` >> (
+      SIMP_TAC (std_ss++holBACore_ss) [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
+      TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+      SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
+    ) >> (
+      SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, FORALL_IN_IMAGE] >>
+      REPEAT STRIP_TAC >>
+
+      MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm >>
+      SIMP_TAC (std_ss++birs_state_ss) [birs_exec_stmt_jmp_to_label_def] >>
+      TRY CASE_TAC >> (
+        SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
+      )
+    )*)
+  ) >> (
+    SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_halt_def] >>
+    SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, FORALL_IN_IMAGE] >>
+    MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm >>
+    SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
+  )
+);
+
+val birs_exec_stmtB_NO_FRESH_SYMBS = store_thm(
+   "birs_exec_stmtB_NO_FRESH_SYMBS", ``
+!bsys stmt.
+  birs_set_NO_fresh_symbs bsys (birs_exec_stmtB stmt bsys)
+``,
   cheat
 );
 
+val birs_exec_step_NO_FRESH_SYMBS = prove(``
+!prog bsys.
+(*
+  (* this assumption is only needed because of the proof with the soundness of steps *)
+  (bir_prog_has_no_halt prog) ==>
+*)
+  birs_set_NO_fresh_symbs bsys (birs_exec_step prog bsys)
+``,
+  SIMP_TAC std_ss [birs_exec_step_def] >>
+  REPEAT STRIP_TAC >>
+  Cases_on `birs_state_is_terminated bsys` >- (
+    ASM_SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+    METIS_TAC [birs_NO_fresh_symbs_SUFFICIENT_thm]
+  ) >>
+
+  ASM_SIMP_TAC std_ss [] >>
+  Cases_on `bir_get_current_statement prog bsys.bsst_pc` >- (
+    ASM_SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+    MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm >>
+    SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_failed_def]
+  ) >>
+
+  ASM_SIMP_TAC std_ss [] >>
+  REPEAT (POP_ASSUM (K ALL_TAC)) >>
+  Cases_on `x` >> (
+    ASM_SIMP_TAC std_ss [birs_exec_stmt_def, LET_DEF, birs_exec_stmtE_NO_FRESH_SYMBS]
+  ) >>
+
+  SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_IMAGE] >>
+  REPEAT STRIP_TAC >>
+  ASSUME_TAC (Q.SPECL [`bsys`, `b`] birs_exec_stmtB_NO_FRESH_SYMBS) >>
+  IMP_RES_TAC birs_set_NO_fresh_symbs_thm >>
+
+  Cases_on `birs_state_is_terminated st'` >> (
+    ASM_SIMP_TAC std_ss []
+  ) >>
+
+  MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT2_thm >>
+  SIMP_TAC (std_ss++birs_state_ss) [] >>
+  METIS_TAC []
+);
+
+
+(* ******************************************************* *)
+(*      STEP SEQ rule                                      *)
+(* ******************************************************* *)
 val birs_rule_STEP_SEQ_gen_thm = store_thm(
    "birs_rule_STEP_SEQ_gen_thm", ``
 !prog bsys1 L bsys2.
@@ -309,7 +487,7 @@ val birs_rule_STEP_SEQ_gen_thm = store_thm(
   ASSUME_TAC (Q.SPEC `prog` bir_symb_soundTheory.birs_symb_symbols_f_sound_thm) >>
   IMP_RES_TAC symb_rulesTheory.symb_rule_SEQ_thm >>
   POP_ASSUM (ASSUME_TAC o Q.SPECL [`birs_symb_to_symbst bsys2`, `birs_symb_to_symbst bsys1`, `IMAGE birs_symb_to_symbst (birs_exec_step prog bsys2)`]) >>
-  IMP_RES_TAC birs_exec_step_NO_FRESH_SYMBS >>
+  ASSUME_TAC (REWRITE_RULE [birs_set_NO_fresh_symbs_def, birs_set_fresh_symbs_def] birs_exec_step_NO_FRESH_SYMBS) >>
   FULL_SIMP_TAC std_ss [INTER_EMPTY,
     birs_auxTheory.birs_symb_symbols_set_EQ_thm, bir_symb_sound_coreTheory.birs_symb_symbols_EQ_thm] >>
 
