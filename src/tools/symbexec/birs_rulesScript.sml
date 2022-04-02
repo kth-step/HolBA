@@ -323,6 +323,30 @@ val birs_NO_fresh_symbs_SUFFICIENT2_thm = store_thm(
   METIS_TAC []
 );
 
+(* TODO: this should go to auxTheory *)
+val SUBSET_of_DIFF_2_thm = store_thm(
+   "SUBSET_of_DIFF_2_thm",
+  ``!s t v.
+    s SUBSET t ==>
+    ((v DIFF t) SUBSET (v DIFF s))
+``,
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [SUBSET_DEF] >>
+  METIS_TAC []
+);
+
+val birs_NO_fresh_symbs_SUFFICIENT3_thm = store_thm(
+   "birs_NO_fresh_symbs_SUFFICIENT3_thm", ``
+!bs1 bs1' bs2.
+  (birs_NO_fresh_symbs bs1 bs2 /\
+   (birs_symb_symbols bs1) SUBSET (birs_symb_symbols bs1')) ==>
+  (birs_NO_fresh_symbs bs1' bs2)
+``,
+  SIMP_TAC std_ss [birs_NO_fresh_symbs_def, birs_fresh_symbs_def, DIFF_EQ_EMPTY] >>
+  REPEAT STRIP_TAC >>
+
+  METIS_TAC [SUBSET_of_DIFF_2_thm, SUBSET_EMPTY]
+);
+
 val BIGUNION_IMAGE_DIFF_EQ_thm = store_thm(
    "BIGUNION_IMAGE_DIFF_EQ_thm", ``
 !f s1 s2s.
@@ -343,22 +367,45 @@ val birs_set_fresh_symbs_thm = store_thm(
 val birs_set_NO_fresh_symbs_thm = store_thm(
    "birs_set_NO_fresh_symbs_thm", ``
 !bs sbs.
-  (birs_set_NO_fresh_symbs bs sbs = !bs2. bs2 IN sbs ==> (birs_NO_fresh_symbs bs bs2))
+  (birs_set_NO_fresh_symbs bs sbs =
+   !bs2. bs2 IN sbs ==> (birs_NO_fresh_symbs bs bs2))
 ``,
   SIMP_TAC std_ss [birs_set_NO_fresh_symbs_def, birs_set_fresh_symbs_thm, birs_NO_fresh_symbs_def] >>
   SIMP_TAC (std_ss) [EXTENSION, IN_BIGUNION_IMAGE, NOT_IN_EMPTY] >>
   METIS_TAC []
 );
 
-
-val birs_exec_stmtE_NO_FRESH_SYMBS = store_thm(
-   "birs_exec_stmtE_NO_FRESH_SYMBS", ``
-!prog bsys estmt.
-  birs_set_NO_fresh_symbs bsys (birs_exec_stmtE prog estmt bsys)
+val birs_eval_exp_IMP_symb_symbols_EQ_pcond_thm = store_thm(
+   "birs_eval_exp_IMP_symb_symbols_EQ_pcond_thm", ``
+!bsys be sv ty pcond'.
+  (birs_eval_exp be bsys.bsst_environ = SOME (sv,ty) /\
+   bir_vars_of_exp pcond' = bir_vars_of_exp bsys.bsst_pcond UNION bir_vars_of_exp sv) ==>
+  (birs_symb_symbols bsys =
+   birs_symb_symbols (bsys with bsst_pcond := pcond'))
 ``,
   REPEAT STRIP_TAC >>
-  Cases_on `estmt` >- (
-    SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_jmp_def] >>
+  IMP_RES_TAC bir_symbTheory.bir_vars_of_exp_IMP_symbs_SUBSET_senv_thm >>
+
+  ASM_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_symbols_def] >>
+  IMP_RES_TAC SUBSET_UNION_ABSORPTION >>
+
+  METIS_TAC [UNION_COMM, UNION_ASSOC]
+(*
+TODO: these two theorems are the same, did I prove them twice? (bir_symbTheory should be "before")
+bir_symbTheory.bir_vars_of_exp_IMP_symbs_SUBSET_senv_thm
+bir_symb_soundTheory.birs_eval_exp_IMP_varset_thm
+*)
+);
+
+
+val birs_exec_stmt_jmp_NO_FRESH_SYMBS = store_thm(
+   "birs_exec_stmt_jmp_NO_FRESH_SYMBS", ``
+!prog bsys l.
+  birs_set_NO_fresh_symbs bsys (birs_exec_stmt_jmp prog l bsys)
+``,
+    SIMP_TAC std_ss [birs_exec_stmt_jmp_def] >>
+    REPEAT STRIP_TAC >>
+
     CASE_TAC >> (
       SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, FORALL_IN_IMAGE] >>
       REPEAT STRIP_TAC >>
@@ -369,36 +416,62 @@ val birs_exec_stmtE_NO_FRESH_SYMBS = store_thm(
         SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
       )
     )
+);
+
+val birs_exec_stmt_cjmp_NO_FRESH_SYMBS = store_thm(
+   "birs_exec_stmt_cjmp_NO_FRESH_SYMBS", ``
+!prog bsys e l1 l2.
+  birs_set_NO_fresh_symbs bsys (birs_exec_stmt_cjmp prog e l1 l2 bsys)
+``,
+  SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_cjmp_def] >>
+  REPEAT STRIP_TAC >>
+  CASE_TAC >- (
+    SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
+    TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+    SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
+  ) >>
+
+  Cases_on `x` >>
+  Cases_on `r` >> (
+    SIMP_TAC (std_ss++holBACore_ss) [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
+    TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+    SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
+  ) >>
+
+  Cases_on `b` >> (
+    SIMP_TAC (std_ss++holBACore_ss) [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
+    TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
+    SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
+  ) >>
+
+  SIMP_TAC std_ss [IN_UNION] >>
+
+  `birs_symb_symbols bsys = birs_symb_symbols (bsys with bsst_pcond := BExp_BinExp BIExp_And bsys.bsst_pcond q) /\
+   birs_symb_symbols bsys = birs_symb_symbols (bsys with bsst_pcond := BExp_BinExp BIExp_And bsys.bsst_pcond (BExp_UnaryExp BIExp_Not q))` by (
+    REPEAT STRIP_TAC >> (
+      MATCH_MP_TAC birs_eval_exp_IMP_symb_symbols_EQ_pcond_thm >>
+      ASM_SIMP_TAC (std_ss++holBACore_ss) [] >>
+      METIS_TAC []
+    )
+  ) >>
+
+  REPEAT STRIP_TAC >> (
+    IMP_RES_TAC (REWRITE_RULE [birs_set_NO_fresh_symbs_thm] birs_exec_stmt_jmp_NO_FRESH_SYMBS) >>
+    METIS_TAC [birs_NO_fresh_symbs_SUFFICIENT3_thm, SUBSET_REFL]
+  )
+);
+  
+
+val birs_exec_stmtE_NO_FRESH_SYMBS = store_thm(
+   "birs_exec_stmtE_NO_FRESH_SYMBS", ``
+!prog bsys estmt.
+  birs_set_NO_fresh_symbs bsys (birs_exec_stmtE prog estmt bsys)
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `estmt` >- (
+    SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_jmp_NO_FRESH_SYMBS]
   ) >- (
-    cheat (* >>
-    SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_cjmp_def] >>
-    CASE_TAC >- (
-      SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY] >>
-      TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
-      SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
-    ) >>
-
-    Cases_on `x` >>
-    Cases_on `r` >> (
-      SIMP_TAC (std_ss++holBACore_ss) [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
-      TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
-      SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
-    ) >>
-
-    Cases_on `b'` >> (
-      SIMP_TAC (std_ss++holBACore_ss) [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, pairTheory.pair_CASE_def] >>
-      TRY (MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm) >>
-      SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
-    ) >> (
-      SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, FORALL_IN_IMAGE] >>
-      REPEAT STRIP_TAC >>
-
-      MATCH_MP_TAC birs_NO_fresh_symbs_SUFFICIENT_thm >>
-      SIMP_TAC (std_ss++birs_state_ss) [birs_exec_stmt_jmp_to_label_def] >>
-      TRY CASE_TAC >> (
-        SIMP_TAC (std_ss++birs_state_ss) [birs_state_set_typeerror_def]
-      )
-    )*)
+    SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_cjmp_NO_FRESH_SYMBS]
   ) >> (
     SIMP_TAC std_ss [birs_exec_stmtE_def, birs_exec_stmt_halt_def] >>
     SIMP_TAC std_ss [birs_set_NO_fresh_symbs_thm, FORALL_IN_INSERT, NOT_IN_EMPTY, FORALL_IN_IMAGE] >>
