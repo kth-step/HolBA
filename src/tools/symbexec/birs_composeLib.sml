@@ -98,7 +98,7 @@ METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
 (* ------------------------------------------------------------------------ *)
 (* ------------------------------------------------------------------------ *)
 
-    val superspeedcheat = true;
+    val superspeedcheat = false;
 
     val freesymbols_thm = prove(freesymbols_tm,
       (if superspeedcheat then cheat else ALL_TAC) >> 
@@ -240,7 +240,7 @@ prove(``{BVar "sy_tmp_countw" (BType_Imm Bit64);
 *)
 
 
-      CONV_TAC (RATOR_CONV (RAND_CONV (freevarset_CONV))) >>
+      CONV_TAC (RATOR_CONV (RAND_CONV (aux_setLib.freevarset_CONV))) >>
       (fn (al,g) => (print "finished to proof free symbols operation\n"; ([(al,g)], fn ([t]) => t))) >>
 
       REWRITE_TAC [pred_setTheory.EMPTY_SUBSET]

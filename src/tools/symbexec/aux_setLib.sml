@@ -834,7 +834,7 @@ fun birs_exps_of_senv_COMP_CONV_norm tm =
     (fn tm => (print_term tm; raise Fail "unexpected here"))
 ) tm;
 
-val turn_speedcheat_on = true;
+val turn_speedcheat_on = false;
 val birs_exps_of_senv_COMP_CONV =
   if turn_speedcheat_on then
     birs_exps_of_senv_COMP_CONV_cheat
@@ -1211,6 +1211,118 @@ val DIFF_INSERT_CONV =
     (*SIMP_CONV (std_ss++HolBACoreSimps.holBACore_ss++string_ss) [pred_setTheory.INSERT_INTER, pred_setTheory.INTER_EMPTY, pred_setTheory.IN_DIFF, pred_setTheory.IN_INSERT]*)
     EVAL;
 
+
+
+
+
+
+
+(*
+val tm = ``
+  EMPTY DIFF
+     {
+        BVar "sy_tmp_R0" (BType_Imm Bit32);
+        BVar "sy_tmp_R1" (BType_Imm Bit32);
+        BVar "sy_tmp_R2" (BType_Imm Bit32)
+     }
+``;
+
+val tm = ``
+  {
+        BVar "sy_tmp_R0" (BType_Imm Bit32);
+        BVar "sy_tmp_R1" (BType_Imm Bit32);
+        BVar "sy_tmp_R2" (BType_Imm Bit32);
+        BVar "sy_tmp_R3" (BType_Imm Bit32);
+        BVar "sy_tmp_R4" (BType_Imm Bit32);
+        BVar "sy_tmp_R5" (BType_Imm Bit32)
+  } DIFF
+     EMPTY
+``;
+
+val tm = ``
+  {
+        BVar "sy_tmp_R0" (BType_Imm Bit32);
+        BVar "sy_tmp_R1" (BType_Imm Bit32);
+        BVar "sy_tmp_R2" (BType_Imm Bit32);
+        BVar "sy_tmp_R3" (BType_Imm Bit32);
+        BVar "sy_tmp_R4" (BType_Imm Bit32);
+        BVar "sy_tmp_R5" (BType_Imm Bit32)
+  } DIFF
+     {
+        BVar "sy_tmp_R0" (BType_Imm Bit32);
+        BVar "sy_tmp_R1" (BType_Imm Bit32);
+        BVar "sy_tmp_R2" (BType_Imm Bit32)
+     }
+``;
+
+val tm = ``
+{
+        BVar "sy_tmp_R0" (BType_Imm Bit32);
+        BVar "sy_tmp_R1" (BType_Imm Bit32);
+        BVar "sy_tmp_R4" (BType_Imm Bit32);
+        BVar "sy_tmp_R5" (BType_Imm Bit32);
+        BVar "sy_tmp_R8" (BType_Imm Bit32)
+} INTER (^tm)
+``; (* R4 and R5 *)
+*)
+
+
+fun DIFF_CONV_Once el_EQ_CONV tm =
+  (
+    IFC
+      (CHANGED_CONV (fn tm => REWRITE_CONV [Once INSERT_DIFF] tm))
+      (RATOR_CONV (RATOR_CONV (RAND_CONV (pred_setLib.IN_CONV el_EQ_CONV))) THENC
+       REWRITE_CONV [])
+      (REFL)
+  )
+  tm;
+
+fun DIFF_CONV el_EQ_CONV tm =
+  if pred_setSyntax.is_empty tm then
+    REFL tm
+  else if pred_setSyntax.is_diff tm then
+    if (pred_setSyntax.is_empty o fst o pred_setSyntax.dest_diff) tm then
+       (print_term tm;
+        REWRITE_CONV [EMPTY_DIFF] tm)
+    else if (pred_setSyntax.is_insert o fst o pred_setSyntax.dest_diff) tm then
+       (DIFF_CONV_Once el_EQ_CONV THENC
+        DIFF_CONV el_EQ_CONV) tm
+    else
+      raise ERR "DIFF_CONV" "unexpected1"
+  else if pred_setSyntax.is_insert tm then
+    RAND_CONV
+      (DIFF_CONV el_EQ_CONV)
+      tm
+  else
+    (print_term tm;
+     raise ERR "DIFF_CONV" "unexpected2");
+
+(*
+val el_EQ_CONV = EVAL;
+DIFF_CONV el_EQ_CONV tm
+*)
+
+val simplerewrite_thm = prove(``
+!s t g.
+g INTER (s DIFF t) =
+s INTER (g DIFF t)
+``,
+(*REWRITE_RULE [Once pred_setTheory.INTER_COMM] pred_setTheory.DIFF_INTER*)
+METIS_TAC [pred_setTheory.INTER_COMM, pred_setTheory.DIFF_INTER]
+);
+
+
+fun freevarset_CONV tm =
+(
+  REWRITE_CONV [Once (simplerewrite_thm)] THENC
+
+  (RAND_CONV (
+   DIFF_CONV EVAL
+  )) THENC
+
+  (* then INTER *)
+  INTER_INSERT_CONV
+) tm;
 
 
 end (* local *)
