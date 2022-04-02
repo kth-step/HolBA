@@ -448,7 +448,7 @@ fun birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm =
     (* TODO: optimize *)
     val single_step_prog_thm =
       REWRITE_RULE
-        [bir_symbTheory.birs_state_t_bsst_pc, bir_symbTheory.birs_state_t_accfupds]
+        [bir_symbTheory.birs_state_t_bsst_pc, bir_symbTheory.birs_state_t_accfupds, combinTheory.K_THM]
         birs_exec_thm;
 
     val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n>>>>>> STEP in " ^ delta_s ^ "\n")) timer_exec_step_p3;
@@ -523,9 +523,11 @@ local
 
   val birs_pcondinf_tm = ``birs_pcondinf``;
 in
-fun birs_rule_STEP_tryassert_fun force_assert_justify birs_rule_STEP_thm bprog_tm bstate_tm =
+fun birs_rule_tryjustassert_fun force_assert_justify single_step_prog_thm =
   let
+    (*
     val single_step_prog_thm = birs_rule_STEP_fun birs_rule_STEP_thm bprog_tm bstate_tm;
+    *)
     val continue_thm_o_1 =
       SOME (MATCH_MP assert_spec_thm single_step_prog_thm)
       handle _ => NONE;
@@ -545,7 +547,7 @@ fun birs_rule_STEP_tryassert_fun force_assert_justify birs_rule_STEP_thm bprog_t
             (print "\n\n\n<<<<<<<<<<<< ASSERTION MAY FAIL <<<<<<<<<<<< \n";
              print_term (concl single_step_prog_thm);
              print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n";
-             raise ERR "birs_rule_STEP_tryassert_fun" "can't prove assertion to hold");
+             raise ERR "birs_rule_tryjustassert_fun" "can't prove assertion to hold");
           val pcond_thm_o =
             if pcond_is_contr then
               SOME (mk_oracle_thm "BIRS_CONTR_Z3" ([], mk_comb (birs_pcondinf_tm, pcond_tm)))
