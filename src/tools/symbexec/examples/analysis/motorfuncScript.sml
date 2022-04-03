@@ -7,6 +7,9 @@ open birs_auxTheory;
 
 open bin_motor_funcTheory;
 
+
+val _ = new_theory "motorfunc";
+
 (*
 val _ = print_term (concl bin_motor_func_thm);
 *)
@@ -117,9 +120,18 @@ val _ = print "done building the tree\n";
 *)
 
 val _ = print "now reducing it to one sound structure\n";
+
+val timer = bir_miscLib.timer_start 0;
 val result = exec_until (birs_rule_STEP_fun_spec, birs_rule_SEQ_fun_spec, birs_rule_STEP_SEQ_fun_spec) single_step_A_thm birs_stop_lbls;
+val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
 
 val _ = (print_term o concl) result;
 
 val _ = show_tags := true;
 val _ = Portable.pprint Tag.pp_tag (tag result);
+
+
+
+val _ = save_thm ("bin_motor_func_analysis_thm", result);
+
+val _ = export_theory();
