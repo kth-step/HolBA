@@ -500,4 +500,86 @@ get_arm8_contract_sing
 examples/tutorial/7-composition/tutorial_backliftingScript.sml
 *)
 
+(* TODO: stolen and adjusted/generalized from "bir_backlifterTheory.bir_is_lifted_prog_MULTI_STEP_EXEC_compute" *)
+(* =================================================================================== *)
+val bir_is_lifted_prog_MULTI_STEP_EXEC_compute_GEN_thm =
+  prove(
+  ``!mu bs bs' ms mla (p:'a bir_program_t) (r:('c, 'd, 'b) bir_lifting_machine_rec_t)
+      mms n' lo c_st c_addr_labels.
+    bir_is_lifted_prog r mu mms p ==>
+    bmr_rel r bs ms ==>
+    MEM (BL_Address mla) (bir_labels_of_program p) ==>
+    (bs.bst_pc = bir_block_pc (BL_Address mla)) ==>
+    EVERY (bmr_ms_mem_contains r ms) mms ==>
+    (bir_exec_to_addr_label_n p bs n' =
+         BER_Ended lo c_st c_addr_labels bs') ==>
+    ~bir_state_is_terminated bs ==>
+    ~bir_state_is_terminated bs' ==>
+    ?ms' li.
+    (FUNPOW_OPT r.bmr_step_fun c_addr_labels ms = SOME ms') /\
+    bmr_ms_mem_unchanged r ms ms' mu /\
+    EVERY (bmr_ms_mem_contains r ms') mms /\
+    (bs'.bst_pc = bir_block_pc (BL_Address li)) /\
+    MEM (BL_Address li) (bir_labels_of_program p) /\
+    bmr_rel r bs' ms'
+``,
+
+REPEAT STRIP_TAC >>
+ASSUME_TAC (ISPECL [``r:('c, 'd, 'b) bir_lifting_machine_rec_t``, ``mu:'c word_interval_t``,
+                    ``mms:(('c word)# ('d word) list) list``,
+                    ``p:'a bir_program_t``] bir_inst_liftingTheory.bir_is_lifted_prog_MULTI_STEP_EXEC) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+bir_auxiliaryLib.QSPECL_X_ASSUM ``!n ms bs. _`` [`n'`, `ms`, `bs`] >>
+REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_programTheory.bir_state_is_terminated_def]
+);
+
+val bir_is_lifted_prog_MULTI_STEP_EXEC_compute_32_8_thm =
+  INST_TYPE
+    [Type.gamma |-> ``:32``, Type.delta |-> ``:8``]
+    bir_is_lifted_prog_MULTI_STEP_EXEC_compute_GEN_thm;
+(* =================================================================================== *)
+
+
+(*
+!ms.
+?bs.
+  bmr_rel (r) bs ms
+arm8_bmr
+m0_mod_bmr
+
+
+
+!bprog bs n L bs'.
+(step_n_in_L (\x. x.bst_pc) (bir_exec_step_state bprog) bs n L bs') ==>
+  ?n' lo.
+  (bir_exec_to_addr_label_n bprog bs n' = BER_Ended lo n n' bs')
+
+
+
+
+!bprog bs n L bs'.
+(step_n_in_L (\x. x.bst_pc) (bir_exec_step_state bprog) bs n L bs') ==>
+((bs'.bst_pc) NOTIN L) ==>
+(bs'.bst_pc.bpc_index = 0) ==>
+  ?lo.
+  (bir_exec_to_labels {bs'.bst_pc.bpc_label} bprog bs = BER_Ended lo n 1 bs')
+
+
+
+(bir_exec_to_labels L bprog bs = BER_Ended lo n n' bs') ==>
+  ?n''.
+  (bir_exec_to_addr_label_n bprog bs n' = BER_Ended lo n n'' bs')
+
+
+
+TODO: go to didrik style m0_mod weak transition relation
+
+TODO: transfer to relational postcondition
+
+TODO: transfer to m0 model (unmodified)
+
+*)
+
+
+
 val _ = print_term (concl bprog_bir_prop_thm);
