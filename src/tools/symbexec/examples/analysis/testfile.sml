@@ -34,3 +34,17 @@ bir_program_terminationTheory???
 
 
 
+
+
+
+bir_backlifterTheory.arm8_triple_def
+
+abstract_hoare_logicTheory.abstract_jgmt_def
+abstract_simp_hoare_logicTheory.abstract_simp_jgmt_def
+
+bir_backlifterTheory.arm_weak_model_def
+bir_backlifterTheory.arm_weak_trs_def
+
+bir_wm_instTheory.bir_simp_jgmt_def
+bir_wm_instTheory.bir_etl_wm_def
+bir_wm_instTheory.bir_weak_trs_def
