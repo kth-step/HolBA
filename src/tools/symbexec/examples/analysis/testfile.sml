@@ -48,3 +48,4 @@ bir_backlifterTheory.arm_weak_trs_def
 bir_wm_instTheory.bir_simp_jgmt_def
 bir_wm_instTheory.bir_etl_wm_def
 bir_wm_instTheory.bir_weak_trs_def
+bir_wm_instTheory.bir_exec_to_labels_triple_precond_def
