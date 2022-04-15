@@ -959,4 +959,306 @@ val bir_step_n_in_L_IMP_exec_to_labels_SING_thm = store_thm(
 
 end;
 
+(* ........................... *)
+
+val bir_step_n_in_L_jgmt_def = Define `
+    bir_step_n_in_L_jgmt bprog l L pre post =
+ !st.
+   (st.bst_pc = l) ==>
+   (pre st) ==>
+   (?n st'.
+     (step_n_in_L (\x. x.bst_pc) (bir_exec_step_state bprog) st n L st') /\
+     (post st st'))
+`;
+
+val abstract_jgmt_rel_def = Define `
+    abstract_jgmt_rel m (l:'a) (ls:'a->bool) pre post =
+  !ms .
+   ((m.pc ms) = l) ==> (pre ms) ==>
+   ?ms'. ((m.weak ms ls ms') /\
+    (post ms ms'))
+`;
+
+
+val bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_thm = prove (``
+!bprog l L ls pre post.
+(bir_step_n_in_L_jgmt
+  bprog
+  (bir_block_pc l)
+  L
+  pre
+  post) ==>
+
+(!st. pre st ==> st.bst_pc.bpc_index = 0) ==>
+(L INTER (IMAGE bir_block_pc ls) = EMPTY) ==>
+(!st st'. post st st' ==> st'.bst_pc IN (IMAGE bir_block_pc ls)) ==>
+(!st st'. post st st' ==> (~bir_state_is_terminated st')) ==>
+
+(abstract_jgmt_rel
+  (bir_etl_wm bprog)
+  l
+  ls
+  pre
+  post)
+``,
+
+  REWRITE_TAC [bir_step_n_in_L_jgmt_def] >>
+  REPEAT STRIP_TAC >>
+
+  REWRITE_TAC [abstract_jgmt_rel_def] >>
+  SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS) [bir_wm_instTheory.bir_etl_wm_def] >>
+  SIMP_TAC std_ss [bir_wm_instTheory.bir_weak_trs_def] >>
+
+  REPEAT STRIP_TAC >>
+  PAT_X_ASSUM ``!x. A ==> B ==> C`` (ASSUME_TAC o Q.SPEC `ms`) >>
+  PAT_X_ASSUM ``!x. A ==> B = C`` (ASSUME_TAC o Q.SPEC `ms`) >>
+  PAT_X_ASSUM ``!x y. A ==> B`` (ASSUME_TAC o Q.SPEC `ms`) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  `ms.bst_pc = bir_block_pc l` by (
+    Cases_on `ms.bst_pc` >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_programTheory.bir_block_pc_def] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_programTheory.bir_programcounter_t_component_equality]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  `st'.bst_pc IN (IMAGE bir_block_pc ls)` by (
+    METIS_TAC []
+  ) >>
+
+  `!pcl. pcl IN (IMAGE bir_block_pc ls) ==> pcl.bpc_index = 0` by (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [IN_IMAGE, bir_programTheory.bir_block_pc_def] >>
+    REPEAT STRIP_TAC >>
+    Cases_on `pcl` >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_programTheory.bir_programcounter_t_component_equality]
+  ) >>
+
+  IMP_RES_TAC bir_step_n_in_L_IMP_exec_to_labels_thm >>
+
+  `IMAGE (\x. x.bpc_label) (IMAGE bir_block_pc ls) = ls` by (
+    REWRITE_TAC [EXTENSION] >>
+    REPEAT STRIP_TAC >>
+    EQ_TAC >- (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [IN_IMAGE, bir_programTheory.bir_block_pc_def] >>
+      REPEAT STRIP_TAC >>
+      Cases_on `x''` >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_programTheory.bir_programcounter_t_component_equality]
+    ) >>
+
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [IN_IMAGE, bir_programTheory.bir_block_pc_def] >>
+    REPEAT STRIP_TAC >>
+    Q.EXISTS_TAC `<|bpc_label := x; bpc_index := 0|>` >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [IN_IMAGE, bir_programTheory.bir_block_pc_def]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+);
+
+
+
+
+(*
+TODO: go to didrik style m0_mod weak transition relation
+*)
+
+val m_weak_trs_def = Define `
+    m_weak_trs pcf stepf ms ls ms' = 
+        ?n.
+          ((n > 0) /\
+           (FUNPOW_OPT stepf n ms = SOME ms') /\
+           ((pcf ms') IN ls)
+          ) /\
+          !n'.
+            (((n' < n) /\ (n' > 0)) ==>
+            ?ms''.
+              (FUNPOW_OPT stepf n' ms = SOME ms'') /\
+              ((pcf ms'') NOTIN ls)
+            )`;
+val m_weak_model_def = Define `
+    m_weak_model pcf bmr  = <|
+    trs  := bmr.bmr_step_fun;
+    weak := m_weak_trs pcf bmr.bmr_step_fun;
+    pc   := pcf
+  |>`;
+val m0_mod_weak_trs_def = Define `
+    m0_mod_weak_trs = m_weak_trs (\x. x.base.REG RName_PC) (m0_mod_bmr (T,T)).bmr_step_fun
+`;
+val m0_mod_weak_model_def = Define `
+    m0_mod_weak_model = m_weak_model (\x. x.base.REG RName_PC) (m0_mod_bmr (T,T))
+`;
+
+val m_triple_rel_def = Define `
+    m_triple_rel wm bmr mms l ls pre post =
+    abstract_jgmt_rel wm l ls
+      (\ms. (bmr.bmr_extra ms)  /\
+            (EVERY (bmr_ms_mem_contains bmr ms) mms) /\
+            (pre ms))         
+      (\ms ms'. (bmr.bmr_extra ms')  /\
+            (EVERY (bmr_ms_mem_contains bmr ms') mms) /\
+            (post ms ms'))
+`;
+val m0_mod_triple_rel_def = Define `
+    m0_mod_triple_rel = m_triple_rel m0_mod_weak_model (m0_mod_bmr (T,T))
+`;
+
+(* TODO: translate to pure Cortex-M0 property *)
+(* =================================================================================== *)
+(*
+bir_backlifterTheory.bir_post_bir_to_arm8_def
+lift_contract_thm
+src/tools/backlifter/bir_backlifterLib.sml
+
+get_arm8_contract_sing
+
+examples/tutorial/7-composition/tutorial_backliftingScript.sml
+*)
+(* =================================================================================== *)
+
+(* TODO: stolen and adjusted/generalized from "bir_backlifterTheory.bir_is_lifted_prog_MULTI_STEP_EXEC_compute" *)
+(* =================================================================================== *)
+val bir_is_lifted_prog_MULTI_STEP_EXEC_compute_GEN_thm =
+  prove(
+  ``!mu bs bs' ms mla (p:'a bir_program_t) (r:('c, 'd, 'b) bir_lifting_machine_rec_t)
+      mms n' lo c_st c_addr_labels.
+    bir_is_lifted_prog r mu mms p ==>
+    bmr_rel r bs ms ==>
+    MEM (BL_Address mla) (bir_labels_of_program p) ==>
+    (bs.bst_pc = bir_block_pc (BL_Address mla)) ==>
+    EVERY (bmr_ms_mem_contains r ms) mms ==>
+    (bir_exec_to_addr_label_n p bs n' =
+         BER_Ended lo c_st c_addr_labels bs') ==>
+    ~bir_state_is_terminated bs ==>
+    ~bir_state_is_terminated bs' ==>
+    ?ms' li.
+    (FUNPOW_OPT r.bmr_step_fun c_addr_labels ms = SOME ms') /\
+    bmr_ms_mem_unchanged r ms ms' mu /\
+    EVERY (bmr_ms_mem_contains r ms') mms /\
+    (bs'.bst_pc = bir_block_pc (BL_Address li)) /\
+    MEM (BL_Address li) (bir_labels_of_program p) /\
+    bmr_rel r bs' ms'
+``,
+
+REPEAT STRIP_TAC >>
+ASSUME_TAC (ISPECL [``r:('c, 'd, 'b) bir_lifting_machine_rec_t``, ``mu:'c word_interval_t``,
+                    ``mms:(('c word)# ('d word) list) list``,
+                    ``p:'a bir_program_t``] bir_inst_liftingTheory.bir_is_lifted_prog_MULTI_STEP_EXEC) >>
+REV_FULL_SIMP_TAC std_ss [] >>
+bir_auxiliaryLib.QSPECL_X_ASSUM ``!n ms bs. _`` [`n'`, `ms`, `bs`] >>
+REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_programTheory.bir_state_is_terminated_def]
+);
+
+val bir_is_lifted_prog_MULTI_STEP_EXEC_compute_32_8_thm =
+  INST_TYPE
+    [Type.gamma |-> ``:32``, Type.delta |-> ``:8``]
+    bir_is_lifted_prog_MULTI_STEP_EXEC_compute_GEN_thm;
+(* =================================================================================== *)
+
+
+(*
+
+TODO: this is probably in precondition lifting
+"bir_backlifterTheory.exist_bir_of_arm8_thm"
+bir_backlifterTheory.bir_pre_arm8_to_bir_def
+bir_backlifterTheory.bir_post_bir_to_arm8_def
+((
+!ms.
+?bs.
+  (bir_envty_list_b birenvtyl st.bst_environ) /\
+  bmr_rel (m0_mod_bmr (T,T)) bs ms
+))
+bir_lifting_machinesTheory.m0_mod_bmr_def
+
+
+
+((
+``
+!bprog bs n L bs'.
+(step_n_in_L (\x. x.bst_pc) (bir_exec_step_state bprog) bs n L bs') ==>
+  ?n' lo.
+  (bir_exec_to_addr_label_n bprog bs n' = BER_Ended lo n n' bs')
+``
+))
+*)
+
+val backlift_contract_GEN_thm = store_thm(
+   "backlift_contract_GEN_thm", ``
+  (!ms. ?ms_a. R_a ms ms_a) ==>
+  (!ms ms_a. R_a ms ms_a ==> wm_a.pc ms_a = pcaf (wm.pc ms)) ==>
+  (!ms ms_a. R_a ms ms_a ==> pre ms ==> pre_a ms_a) ==>
+
+  (!ms ms_a ms_a' ls. R_a ms ms_a ==> wm_a.weak ms_a (IMAGE pcaf ls) ms_a' ==> ?ms'. ((wm.weak ms ls ms') /\ (R_a ms' ms_a'))) ==>
+  (!ms ms_a ms' ms_a'. R_a ms ms_a ==> R_a ms' ms_a' ==> post_a ms_a ms_a' ==> post ms ms') ==>
+
+  (abstract_jgmt_rel
+    wm_a
+    (pcaf l)
+    (IMAGE pcaf ls)
+    (pre_a)
+    (post_a)) ==>
+
+  (abstract_jgmt_rel
+    wm
+    l
+    ls
+    (pre)
+    (post))
+``,
+  REWRITE_TAC [abstract_jgmt_rel_def] >>
+(*
+  REPEAT STRIP_TAC >>
+*)
+  DISCH_TAC >>
+  DISCH_TAC >>
+  DISCH_TAC >>
+  DISCH_TAC >>
+
+  DISCH_TAC >>
+(*
+  POP_ASSUM (K ALL_TAC)
+*)
+  POP_ASSUM (fn thm =>
+    REPEAT STRIP_TAC >>
+    PAT_X_ASSUM ``!x. ?y. A`` (ASSUME_TAC o Q.SPEC `ms`) >>
+    FULL_SIMP_TAC std_ss [] >>
+    REPEAT (PAT_X_ASSUM ``!x y. A ==> B`` (IMP_RES_TAC)) >>
+    PAT_X_ASSUM ``!x. A ==> B`` (ASSUME_TAC o Q.SPEC `ms_a`) >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+    REPEAT (PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o Q.SPECL [`ms`, `ms_a`, `ms'`, `ls`])) >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+    ASSUME_TAC thm) >>
+
+  rename1 `post_a ms_a ms_a'` >>
+
+  POP_ASSUM (IMP_RES_TAC) >>
+  METIS_TAC []
+);
+
+
+(*
+val lift_contract_thm = store_thm(
+   "lift_contract_thm", ``
+!mla.
+  bir_is_lifted_prog (m0_mod_bmr (T,T)) mu mms p ==>
+  (MEM (BL_Address mla) (bir_labels_of_program bprog)) ==>
+
+  (abstract_jgmt_rel
+    (bir_etl_wm bprog)
+    (BL_Address (Imm32 l))
+    (IMAGE (\x. (BL_Address (Imm32 x))) ls)
+    (bpre)
+    (bpost)) ==>
+
+  (abstract_jgmt_rel
+    m0_mod_weak_model
+    l
+    ls
+    (m0_mod_pre)
+    (m0_mod_post))
+``,
+  cheat
+);
+*)
+
+
 val _ = export_theory();
