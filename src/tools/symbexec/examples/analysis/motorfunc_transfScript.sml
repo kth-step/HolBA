@@ -23,7 +23,11 @@ open bir_exp_substitutionsTheory;
 open birs_composeLib;
 open birs_auxTheory;
 
+open bir_program_transfTheory;
 val birs_state_ss = rewrites (type_rws ``:birs_state_t``);
+
+
+
 
 val _ = new_theory "motorfunc_transf";
 
