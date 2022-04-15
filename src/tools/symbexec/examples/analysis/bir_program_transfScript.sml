@@ -629,14 +629,15 @@ val bir_exec_infinite_steps_fun_PC_DIFF_IMP_Running_thm = store_thm(
 
 val bir_exec_infinite_steps_fun_IMP_fun_COUNT_PCs_thm = store_thm(
    "bir_exec_infinite_steps_fun_IMP_fun_COUNT_PCs_thm", ``
-!bprog bs n L bs'.
+!bprog bs n L bs' Lf.
   (bir_exec_infinite_steps_fun bprog bs n = bs') ==>
   (n > 0) ==>
-  (bs'.bst_pc NOTIN L) ==>
+  (bs'.bst_pc IN Lf) ==>
+  (L INTER Lf = EMPTY) ==>
   (!n'.
     (n' < n) ==>
     ((bir_exec_infinite_steps_fun bprog bs n').bst_pc IN L)) ==>
-  (bir_exec_infinite_steps_fun_COUNT_PCs (F, {bs'.bst_pc}) bprog bs n = 1)
+  (bir_exec_infinite_steps_fun_COUNT_PCs (F, Lf) bprog bs n = 1)
 ``,
   Cases_on `n` >- (
     FULL_SIMP_TAC arith_ss []
@@ -661,15 +662,15 @@ val bir_exec_infinite_steps_fun_IMP_fun_COUNT_PCs_thm = store_thm(
      bs'.bst_status = BST_Running` by (
       `bs.bst_pc <> bs'.bst_pc` by (
         REPEAT STRIP_TAC >>
-        FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [IN_APP]
+        FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [GSYM DISJOINT_DEF, IN_DISJOINT] >>
+        METIS_TAC []
       ) >>
       IMP_RES_TAC bir_exec_step_state_PC_DIFF_IMP_Running_thm >>
       ASM_SIMP_TAC std_ss []
     ) >>
 
     FULL_SIMP_TAC pure_ss [arithmeticTheory.ONE, bir_exec_infinite_steps_fun_COUNT_PCs_def] >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF, bir_state_COUNT_PC_def] >>
-    FULL_SIMP_TAC std_ss [REWRITE_RULE [pred_setTheory.IN_APP] pred_setTheory.IN_SING]
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF, bir_state_COUNT_PC_def, pred_setTheory.IN_APP]
   ) >>
 
   REPEAT STRIP_TAC >>
@@ -704,7 +705,8 @@ val bir_exec_infinite_steps_fun_IMP_fun_COUNT_PCs_thm = store_thm(
 
   `bs''.bst_pc <> bs'.bst_pc` by (
     REPEAT STRIP_TAC >>
-    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [IN_APP]
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [GSYM DISJOINT_DEF, IN_DISJOINT] >>
+    METIS_TAC []
   ) >>
 
   `k > 0` by (
@@ -714,20 +716,29 @@ val bir_exec_infinite_steps_fun_IMP_fun_COUNT_PCs_thm = store_thm(
     ) >>
     FULL_SIMP_TAC arith_ss []
   ) >>
+
+  `bs'.bst_pc NOTIN L /\
+   bs''.bst_pc NOTIN Lf` by (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [GSYM DISJOINT_DEF, IN_DISJOINT] >>
+    METIS_TAC []
+  ) >>
+
   IMP_RES_TAC bir_exec_infinite_steps_fun_PC_DIFF_IMP_Running_thm >>
 
   FULL_SIMP_TAC pure_ss [arithmeticTheory.ONE, bir_exec_infinite_steps_fun_COUNT_PCs_def] >>
-  FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF, bir_state_COUNT_PC_def] >>
-  FULL_SIMP_TAC std_ss [REWRITE_RULE [pred_setTheory.IN_APP] pred_setTheory.IN_SING]
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF, bir_state_COUNT_PC_def, pred_setTheory.IN_APP]
 );
 
 val bir_exec_infinite_steps_fun_IMP_COUNT_STEPS_thm = store_thm(
    "bir_exec_infinite_steps_fun_IMP_COUNT_STEPS_thm", ``
-!bprog bs n L bs'.
+!bprog bs n L bs' Lf.
 
   (bir_exec_infinite_steps_fun bprog bs n = bs') ==>
   (n > 0) ==>
-  (bs'.bst_pc NOTIN L) ==>
+
+  (bs'.bst_pc IN Lf) ==>
+  (L INTER Lf = EMPTY) ==>
+
   (!n'.
     (n' < n) ==>
     ((bir_exec_infinite_steps_fun bprog bs n').bst_pc IN L)) ==>
@@ -737,7 +748,7 @@ val bir_exec_infinite_steps_fun_IMP_COUNT_STEPS_thm = store_thm(
 (* TODO: need to add some more assumptions about ls in order to generalize this a bit *)
 *)
 
-  (bir_exec_infinite_steps_COUNT_STEPS (F, {bs'.bst_pc}) (SOME 1) bprog bs = SOME n)
+  (bir_exec_infinite_steps_COUNT_STEPS (F, Lf) (SOME 1) bprog bs = SOME n)
 ``,
   REPEAT STRIP_TAC >>
   IMP_RES_TAC bir_exec_infinite_steps_fun_IMP_fun_COUNT_PCs_thm >>
@@ -746,6 +757,10 @@ val bir_exec_infinite_steps_fun_IMP_COUNT_STEPS_thm = store_thm(
   REWRITE_TAC [whileTheory.OLEAST_EQ_SOME] >>
   ASM_SIMP_TAC std_ss [] >>
 
+  `bs'.bst_pc NOTIN L` by (
+    FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [GSYM DISJOINT_DEF, IN_DISJOINT] >>
+    METIS_TAC []
+  ) >>
   IMP_RES_TAC bir_exec_infinite_steps_fun_PC_DIFF_IMP_Running_thm >>
 
   REPEAT STRIP_TAC >- (
@@ -755,8 +770,8 @@ val bir_exec_infinite_steps_fun_IMP_COUNT_STEPS_thm = store_thm(
     METIS_TAC [bir_exec_infinite_steps_fun_NOT_terminated_thm]
   ) >>
 
-  `bir_state_COUNT_PC (F, {bs'.bst_pc}) (bir_exec_infinite_steps_fun bprog bs n)` by (
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF, bir_state_COUNT_PC_def, IN_SING, SING_applied]
+  `bir_state_COUNT_PC (F, Lf) (bir_exec_infinite_steps_fun bprog bs n)` by (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [LET_DEF, bir_state_COUNT_PC_def, IN_SING, SING_applied, IN_APP]
   ) >>
 
   IMP_RES_TAC bir_exec_infinite_steps_fun_COUNT_PCs_LESS_STEPS_IMP_thm >>
@@ -766,34 +781,44 @@ val bir_exec_infinite_steps_fun_IMP_COUNT_STEPS_thm = store_thm(
 
 val bir_exec_infinite_steps_fun_IMP_exec_to_labels_thm = store_thm(
    "bir_exec_infinite_steps_fun_IMP_exec_to_labels_thm", ``
-!bprog bs n L bs'.
+!bprog bs n L bs' Lf.
 
   (bir_exec_infinite_steps_fun bprog bs n = bs') ==>
   (n > 0) ==>
-  (bs'.bst_pc NOTIN L) ==>
+
+  (bs'.bst_pc IN Lf) ==>
+  (L INTER Lf = EMPTY) ==>
+
   (!n'.
     (n' < n) ==>
     ((bir_exec_infinite_steps_fun bprog bs n').bst_pc IN L)) ==>
 
-  (bs'.bst_pc.bpc_index = 0) ==>
+  (!pcl. pcl IN Lf ==> pcl.bpc_index = 0) ==>
 
   ?lo.
-  (bir_exec_to_labels {bs'.bst_pc.bpc_label} bprog bs = BER_Ended lo n 1 bs')
+  (bir_exec_to_labels (IMAGE (\x. x.bpc_label) Lf) bprog bs = BER_Ended lo n 1 bs')
 ``,
   REWRITE_TAC
     [bir_exec_to_labels_n_def, bir_exec_to_labels_def, bir_exec_steps_GEN_def] >>
   REPEAT STRIP_TAC >>
 
-  `(\pc. pc.bpc_index = 0 /\ pc.bpc_label IN {bs'.bst_pc.bpc_label}) = {bs'.bst_pc}` by (
+  `(\pc. pc.bpc_index = 0 /\ pc.bpc_label IN (IMAGE (\x. x.bpc_label) Lf)) = Lf` by (
     FULL_SIMP_TAC std_ss [EXTENSION, IN_SING, IN_APP] >>
     REPEAT STRIP_TAC >>
-    EQ_TAC >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    EQ_TAC >- (
+      REPEAT STRIP_TAC >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss++pred_setSimps.PRED_SET_ss) [] >>
+      `x = x'` by (
+        Cases_on `x` >> Cases_on `x'` >>
+        FULL_SIMP_TAC (std_ss++holBACore_ss++pred_setSimps.PRED_SET_ss) [IN_APP] >>
+        METIS_TAC [bir_programcounter_t_bpc_index]
+      ) >>
+      METIS_TAC [IN_APP]
     ) >>
+    REPEAT STRIP_TAC >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss++pred_setSimps.PRED_SET_ss) [] >>
 
-    Cases_on `x` >>
-    Cases_on `bs'.bst_pc` >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    METIS_TAC [IN_APP]
   ) >>
   ASM_SIMP_TAC std_ss [] >>
 
@@ -876,6 +901,31 @@ val bir_step_n_in_L_IMP_exec_infinite_steps_fun_thm2 = store_thm(
 
 val bir_step_n_in_L_IMP_exec_to_labels_thm = store_thm(
    "bir_step_n_in_L_IMP_exec_to_labels_thm", ``
+!bprog bs n L bs' Lf.
+
+(step_n_in_L (\x. x.bst_pc) (bir_exec_step_state bprog) bs n L bs') ==>
+
+(bs'.bst_pc IN Lf) ==>
+(L INTER Lf = EMPTY) ==>
+
+(!pcl. pcl IN Lf ==> pcl.bpc_index = 0) ==>
+
+  ?lo.
+  (bir_exec_to_labels (IMAGE (\x. x.bpc_label) Lf) bprog bs = BER_Ended lo n 1 bs')
+``,
+  REPEAT STRIP_TAC >>
+
+  IMP_RES_TAC bir_step_n_in_L_IMP_exec_infinite_steps_fun_thm0 >>
+  IMP_RES_TAC bir_step_n_in_L_IMP_exec_infinite_steps_fun_thm1 >>
+  IMP_RES_TAC bir_step_n_in_L_IMP_exec_infinite_steps_fun_thm2 >>
+
+  IMP_RES_TAC bir_exec_infinite_steps_fun_IMP_exec_to_labels_thm >>
+
+  METIS_TAC []
+);
+
+val bir_step_n_in_L_IMP_exec_to_labels_SING_thm = store_thm(
+   "bir_step_n_in_L_IMP_exec_to_labels_SING_thm", ``
 !bprog bs n L bs'.
 
 (step_n_in_L (\x. x.bst_pc) (bir_exec_step_state bprog) bs n L bs') ==>
@@ -887,13 +937,22 @@ val bir_step_n_in_L_IMP_exec_to_labels_thm = store_thm(
   (bir_exec_to_labels {bs'.bst_pc.bpc_label} bprog bs = BER_Ended lo n 1 bs')
 ``,
   REPEAT STRIP_TAC >>
+  ASSUME_TAC ((GSYM o EVAL) ``(IMAGE (\x. x.bpc_label) {bs'.bst_pc})``) >>
+  REV_FULL_SIMP_TAC pure_ss [] >>
+  POP_ASSUM (K ALL_TAC) >>
+  Q.ABBREV_TAC `Lf = {bs'.bst_pc}` >>
 
-  IMP_RES_TAC bir_step_n_in_L_IMP_exec_infinite_steps_fun_thm0 >>
-  IMP_RES_TAC bir_step_n_in_L_IMP_exec_infinite_steps_fun_thm1 >>
-  IMP_RES_TAC bir_step_n_in_L_IMP_exec_infinite_steps_fun_thm2 >>
+  `bs'.bst_pc IN Lf` by (
+    METIS_TAC [IN_SING]
+  ) >>
+  `L INTER Lf = EMPTY` by (
+    METIS_TAC [GSYM DISJOINT_DEF, IN_DISJOINT, IN_SING]
+  ) >>
+  `!pcl. pcl IN Lf ==> pcl.bpc_index = 0` by (
+    METIS_TAC [IN_SING]
+  ) >>
 
-  IMP_RES_TAC bir_exec_infinite_steps_fun_IMP_exec_to_labels_thm >>
-
+  IMP_RES_TAC bir_step_n_in_L_IMP_exec_to_labels_thm >>
   METIS_TAC []
 );
 
