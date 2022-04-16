@@ -1183,6 +1183,8 @@ bir_lifting_machinesTheory.m0_mod_bmr_def
 
 val backlift_contract_GEN_thm = store_thm(
    "backlift_contract_GEN_thm", ``
+!wm_a wm R_a pcaf pre pre_a post_a post l ls.
+
   (!ms. ?ms_a. R_a ms ms_a) ==>
   (!ms ms_a. R_a ms ms_a ==> wm_a.pc ms_a = pcaf (wm.pc ms)) ==>
   (!ms ms_a. R_a ms ms_a ==> pre ms ==> pre_a ms_a) ==>
@@ -1204,6 +1206,8 @@ val backlift_contract_GEN_thm = store_thm(
     (pre)
     (post))
 ``,
+  REPEAT GEN_TAC >>
+
   REWRITE_TAC [abstract_jgmt_rel_def] >>
 (*
   REPEAT STRIP_TAC >>
@@ -1235,30 +1239,109 @@ val backlift_contract_GEN_thm = store_thm(
 );
 
 
+
+val backlift_bir_m0_mod_EXISTS_thm = store_thm(
+   "backlift_bir_m0_mod_EXISTS_thm", ``
+!ms.
+?bs.
+  (\ms. \bs. (bmr_rel (m0_mod_bmr (T,T)) bs ms)) ms bs
+``,
+  cheat
+);
+
+
+val backlift_bir_m0_mod_pc_rel_thm = store_thm(
+   "backlift_bir_m0_mod_pc_rel_thm", ``
+!p ms bs.
+  (bmr_rel (m0_mod_bmr (T,T)) bs ms) ==>
+  ((bir_etl_wm p).pc bs = (\l. BL_Address (Imm32 (l))) (m0_mod_weak_model.pc ms))
+``,
+  cheat
+);
+
+
+val backlift_bir_m0_mod_pre_abstr_def = Define `
+    backlift_bir_m0_mod_pre_abstr pre pre_bir =
+      !ms bs.
+        (bmr_rel (m0_mod_bmr (T,T)) bs ms) ==>
+        (pre ms) ==>
+        (pre_bir bs)
+`;
+
+val backlift_bir_m0_mod_SIM_thm = store_thm(
+   "backlift_bir_m0_mod_SIM_thm", ``
+!p ms bs bs' ls.
+  (bmr_rel (m0_mod_bmr (T,T)) bs ms) ==>
+  ((bir_etl_wm p).weak bs (IMAGE (\l. BL_Address (Imm32 l)) ls) bs') ==>
+  ?ms'. ((m0_mod_weak_model.weak ms ls ms') /\
+         (bmr_rel (m0_mod_bmr (T,T)) bs' ms'))
+``,
+  cheat
+);
+
+
+val backlift_bir_m0_mod_post_concr_def = Define `
+    backlift_bir_m0_mod_post_concr post_bir post =
+      !ms bs ms' bs'.
+        (bmr_rel (m0_mod_bmr (T,T)) bs ms) ==>
+        (bmr_rel (m0_mod_bmr (T,T)) bs' ms') ==>
+        (post_bir bs bs') ==>
+        (post ms ms')
+`;
+
+
+
+val backlift_bir_m0_mod_contract_thm = store_thm(
+   "backlift_bir_m0_mod_contract_thm", ``
 (*
-val lift_contract_thm = store_thm(
-   "lift_contract_thm", ``
 !mla.
   bir_is_lifted_prog (m0_mod_bmr (T,T)) mu mms p ==>
   (MEM (BL_Address mla) (bir_labels_of_program bprog)) ==>
+*)
+
+!pre pre_bir post_bir post p l ls.
+  (backlift_bir_m0_mod_pre_abstr pre pre_bir) ==>
+  (backlift_bir_m0_mod_post_concr post_bir post) ==>
 
   (abstract_jgmt_rel
-    (bir_etl_wm bprog)
+    (bir_etl_wm p)
     (BL_Address (Imm32 l))
     (IMAGE (\x. (BL_Address (Imm32 x))) ls)
-    (bpre)
-    (bpost)) ==>
+    (pre_bir)
+    (post_bir)) ==>
 
   (abstract_jgmt_rel
     m0_mod_weak_model
     l
     ls
-    (m0_mod_pre)
-    (m0_mod_post))
+    (pre)
+    (post))
 ``,
-  cheat
+  REPEAT STRIP_TAC >>
+  FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_pre_abstr_def, backlift_bir_m0_mod_post_concr_def] >>
+
+  ASSUME_TAC
+    (MATCH_MP
+      (INST_TYPE
+        [beta |-> Type`:bir_label_t`, delta |-> Type`:word32`]
+        (SIMP_RULE std_ss []
+          (MATCH_MP
+            backlift_contract_GEN_thm
+            backlift_bir_m0_mod_EXISTS_thm)))
+      (SPEC ``p:'a bir_program_t`` backlift_bir_m0_mod_pc_rel_thm)) >>
+
+  POP_ASSUM (IMP_RES_TAC) >>
+
+  POP_ASSUM (fn thm =>
+      ASSUME_TAC
+        (MATCH_MP
+           thm
+           (SPEC ``p:'a bir_program_t`` backlift_bir_m0_mod_SIM_thm))
+    ) >>
+
+  POP_ASSUM (IMP_RES_TAC) >>
+  FULL_SIMP_TAC std_ss []
 );
-*)
 
 
 val _ = export_theory();
