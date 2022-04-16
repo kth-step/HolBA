@@ -1190,7 +1190,7 @@ val backlift_contract_GEN_thm = store_thm(
   (!ms ms_a. R_a_impl ms ms_a ==> R_a ms ms_a ==> wm_a.pc ms_a = pcaf (wm.pc ms)) ==>
   (!ms ms_a. R_a ms ms_a ==> pre ms ==> pre_a ms_a) ==>
 
-  (!ms ms_a ms_a' ls. R_a ms ms_a ==> wm_a.weak ms_a (IMAGE pcaf ls) ms_a' ==> ?ms'. ((wm.weak ms ls ms') /\ (R_a ms' ms_a'))) ==>
+  (!ms ms_a ms_a' ls. pre ms ==> pre_a ms_a ==> post_a ms_a ms_a' ==> R_a ms ms_a ==> wm_a.weak ms_a (IMAGE pcaf ls) ms_a' ==> ?ms'. ((wm.weak ms ls ms') /\ (R_a ms' ms_a'))) ==>
   (!ms ms_a ms' ms_a'. R_a ms ms_a ==> R_a ms' ms_a' ==> post_a ms_a ms_a' ==> post ms ms') ==>
 
   (abstract_jgmt_rel
@@ -1420,8 +1420,21 @@ val backlift_bir_m0_mod_contract_thm = store_thm(
   (MEM (BL_Address mla) (bir_labels_of_program bprog)) ==>
 *)
 
-!pre pre_bir post_bir post p l ls.
+!pre pre_bir post_bir post p l ls mms mu.
+  (bir_is_lifted_prog (m0_mod_bmr (T,T)) mu mms p) ==>
+
+  (!ms. pre ms ==>
+    (EVERY (bmr_ms_mem_contains (m0_mod_bmr (T,T)) ms) mms)) ==>
   (!ms. pre ms ==> (m0_mod_bmr (T,T)).bmr_extra ms) ==>
+
+  (!bs. pre_bir bs ==> (
+    (~(bir_state_is_terminated bs)) /\
+    (?mla.
+      (bs.bst_pc = bir_block_pc (BL_Address mla)) /\
+      (MEM (BL_Address mla) (bir_labels_of_program p))))) ==>
+
+  (!bs bs'. post_bir bs bs' ==>
+    (~(bir_state_is_terminated bs'))) ==>
 
   (backlift_bir_m0_mod_pre_abstr pre pre_bir) ==>
   (backlift_bir_m0_mod_post_concr post_bir post) ==>
@@ -1443,6 +1456,47 @@ val backlift_bir_m0_mod_contract_thm = store_thm(
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_pre_abstr_def, backlift_bir_m0_mod_post_concr_def] >>
 
+  IMP_RES_TAC
+    (INST_TYPE
+      [alpha  |-> Type`:bir_state_t`, beta |-> Type`:bir_label_t`, delta |-> Type`:word32`]
+      backlift_contract_GEN_thm) >>
+
+  POP_ASSUM (ASSUME_TAC o Q.SPECL [`\ms bs. bs.bst_status = BST_Running`, `(\ms. \bs. (bmr_rel (m0_mod_bmr (T,T)) bs ms))`]) >>
+  FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_EXISTS_thm] >>
+
+  POP_ASSUM (fn thm => ASSUME_TAC (MATCH_MP thm (SPEC ``p:'a bir_program_t`` backlift_bir_m0_mod_pc_rel_thm))) >>
+
+  POP_ASSUM (IMP_RES_TAC) >>
+
+(*
+*)
+  `!ms bs bs' ls.
+     pre ms ==> pre_bir bs ==> post_bir bs bs' ==> bmr_rel (m0_mod_bmr (T,T)) bs ms ==>
+     (bir_etl_wm p).weak bs (IMAGE (λl. BL_Address (Imm32 l)) ls) bs' ==>
+     ?ms'. ((m0_mod_weak_model.weak ms ls ms') /\ (bmr_rel (m0_mod_bmr (T,T)) bs' ms'))` by (
+    REPEAT STRIP_TAC >>
+    IMP_RES_TAC backlift_bir_m0_mod_SIM_thm >>
+    PAT_X_ASSUM ``!x. pre x ==> A /\ B`` (IMP_RES_TAC) >>
+    FULL_SIMP_TAC std_ss [] >>
+    PAT_X_ASSUM ``!x. A`` (IMP_RES_TAC) >>
+    METIS_TAC []
+  ) >>
+
+  POP_ASSUM (fn thm2 => POP_ASSUM (fn thm => ASSUME_TAC (MATCH_MP thm thm2))) >>
+
+(*
+  POP_ASSUM (fn thm =>
+      ASSUME_TAC
+        (MATCH_MP
+           thm
+           (SPEC ``p:'a bir_program_t`` backlift_bir_m0_mod_SIM_thm))
+    ) >>
+*)
+
+  POP_ASSUM (IMP_RES_TAC) >>
+  FULL_SIMP_TAC std_ss []
+);
+
 (*
   `!ms.
        (m0_mod_bmr (T,T)).bmr_extra ms ==>
@@ -1453,18 +1507,6 @@ val backlift_bir_m0_mod_contract_thm = store_thm(
   ASSUME_TAC backlift_bir_m0_mod_EXISTS_thm >>
 
 *)
-
-
-
-  IMP_RES_TAC
-    (INST_TYPE
-      [alpha  |-> Type`:bir_state_t`, beta |-> Type`:bir_label_t`, delta |-> Type`:word32`]
-      backlift_contract_GEN_thm) >>
-
-  POP_ASSUM (ASSUME_TAC o Q.SPECL [`\ms bs. bs.bst_status = BST_Running`, `(\ms. \bs. (bmr_rel (m0_mod_bmr (T,T)) bs ms))`]) >>
-  FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_EXISTS_thm] >>
-
-  POP_ASSUM (fn thm => ASSUME_TAC (MATCH_MP thm (SPEC ``p:'a bir_program_t`` backlift_bir_m0_mod_pc_rel_thm))) >>
 
 
 
@@ -1489,18 +1531,6 @@ val backlift_bir_m0_mod_contract_thm = store_thm(
       ) >>
 *)
 
-  POP_ASSUM (IMP_RES_TAC) >>
-
-  POP_ASSUM (fn thm =>
-      ASSUME_TAC
-        (MATCH_MP
-           thm
-           (SPEC ``p:'a bir_program_t`` backlift_bir_m0_mod_SIM_thm))
-    ) >>
-
-  POP_ASSUM (IMP_RES_TAC) >>
-  FULL_SIMP_TAC std_ss []
-);
 
 
 val _ = export_theory();
