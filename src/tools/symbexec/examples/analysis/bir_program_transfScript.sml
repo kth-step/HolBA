@@ -1243,10 +1243,95 @@ val backlift_contract_GEN_thm = store_thm(
 val backlift_bir_m0_mod_EXISTS_thm = store_thm(
    "backlift_bir_m0_mod_EXISTS_thm", ``
 !ms.
-?bs.
-  (\ms. \bs. (bmr_rel (m0_mod_bmr (T,T)) bs ms)) ms bs
+  ((m0_mod_bmr (T,T)).bmr_extra ms) ==>
+?bs. (
+  (\ms. \bs. (bmr_rel (m0_mod_bmr (T,T)) bs ms)) ms bs /\
+  (bs.bst_status = BST_Running)
+)
 ``,
-  cheat
+  REPEAT STRIP_TAC >>
+  SIMP_TAC std_ss [] >>
+  ASM_REWRITE_TAC [bir_lifting_machinesTheory.bmr_rel_def] >>
+
+  Q.ABBREV_TAC `bs = 
+      <|
+        bst_pc       := bir_block_pc (BL_Address (Imm32 (ms.base.REG RName_PC)));
+        bst_environ  := BEnv (
+
+ ("PSR_C" =+ SOME (BVal_Imm (bool2b ms.base.PSR.C)))
+(("PSR_N" =+ SOME (BVal_Imm (bool2b ms.base.PSR.N)))
+(("PSR_V" =+ SOME (BVal_Imm (bool2b ms.base.PSR.V)))
+(("PSR_Z" =+ SOME (BVal_Imm (bool2b ms.base.PSR.Z)))
+
+(("R0" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_0))))
+(("R1" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_1))))
+(("R2" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_2))))
+(("R3" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_3))))
+(("R4" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_4))))
+(("R5" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_5))))
+(("R6" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_6))))
+(("R7" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_7))))
+(("R8" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_8))))
+(("R9" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_9))))
+(("R10" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_10))))
+(("R11" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_11))))
+(("R12" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_12))))
+(("LR" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_LR))))
+(("SP_main" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_SP_main))))
+(("SP_process" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_SP_process))))
+(("ModeHandler" =+ SOME (BVal_Imm (bool2b (ms.base.CurrentMode = Mode_Handler))))
+(("countw" =+ SOME (BVal_Imm (Imm64 (ms.countw))))
+(*
+(("MEM" =+ SOME (BVal_Mem Bit32 Bit8 ms.base.MEM))
+*)
+(("tmp_PSR_C" =+ SOME (BVal_Imm (Imm1 0w)))
+(("tmp_PSR_N" =+ SOME (BVal_Imm (bool2b ms.base.PSR.N)))
+(("tmp_PSR_V" =+ SOME (BVal_Imm (bool2b ms.base.PSR.V)))
+(("tmp_PSR_Z" =+ SOME (BVal_Imm (bool2b ms.base.PSR.Z)))
+
+(("tmp_R0" =+ SOME (BVal_Imm (Imm32 0w)))
+(("tmp_R1" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_1))))
+(("tmp_R2" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_2))))
+(("tmp_R3" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_3))))
+(("tmp_R4" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_4))))
+(("tmp_R5" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_5))))
+(("tmp_R6" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_6))))
+(("tmp_R7" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_7))))
+(("tmp_R8" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_8))))
+(("tmp_R9" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_9))))
+(("tmp_R10" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_10))))
+(("tmp_R11" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_11))))
+(("tmp_R12" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_12))))
+(("tmp_LR" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_LR))))
+(("tmp_SP_main" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_SP_main))))
+(("tmp_SP_process" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_SP_process))))
+(("tmp_ModeHandler" =+ SOME (BVal_Imm (bool2b (ms.base.CurrentMode = Mode_Handler))))
+(("tmp_countw" =+ SOME (BVal_Imm (Imm64 (ms.countw))))
+(("tmp_PC" =+ SOME (BVal_Imm (Imm32 0w)))
+(("tmp_COND" =+ SOME (BVal_Imm (Imm1 0w)))
+  (K NONE)
+))))))))))))))))))))))
+)))))))))))))))))))))))
+(*)*)
+
+);
+        bst_status   := BST_Running
+      |>` >>
+  Q.EXISTS_TAC `bs` >>
+
+  REPEAT STRIP_TAC >- (
+    Q.UNABBREV_TAC `bs` >>
+    EVAL_TAC
+  ) >- (
+    EVAL_TAC >>
+    cheat
+  ) >- (
+    Q.UNABBREV_TAC `bs` >>
+    EVAL_TAC
+  ) >>
+
+  Q.UNABBREV_TAC `bs` >>
+  EVAL_TAC
 );
 
 
@@ -1254,9 +1339,21 @@ val backlift_bir_m0_mod_pc_rel_thm = store_thm(
    "backlift_bir_m0_mod_pc_rel_thm", ``
 !p ms bs.
   (bmr_rel (m0_mod_bmr (T,T)) bs ms) ==>
+  (bs.bst_status = BST_Running) ==>
   ((bir_etl_wm p).pc bs = (\l. BL_Address (Imm32 (l))) (m0_mod_weak_model.pc ms))
 ``,
-  cheat
+  REPEAT STRIP_TAC >>
+  POP_ASSUM (MP_TAC) >>
+  `bir_machine_lifted_pc (m0_mod_bmr (T,T)).bmr_pc bs ms` by (
+    FULL_SIMP_TAC std_ss [bir_lifting_machinesTheory.bmr_rel_def]
+  ) >>
+  POP_ASSUM (MP_TAC) >>
+  POP_ASSUM (K ALL_TAC) >>
+
+  EVAL_TAC >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  )
 );
 
 
