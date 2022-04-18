@@ -1637,9 +1637,46 @@ val backlift_bir_m0_mod_SIM_thm = store_thm(
     IMP_RES_TAC bir_m0_mod_exec_in_end_label_set
   ) >>
 
-bir_inter_exec_notin_end_label_set_m0
+  REPEAT STRIP_TAC >>
+  (* TODO: this should be already taken care of in the theorems above... *)
+  `c_addr_labels = n'` by (
+    cheat
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  `?lo2 n2 n2' bs''. bir_exec_to_addr_label_n p bs n'' = BER_Ended lo2 n2 n2' bs''` by (
+    FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
+    METIS_TAC [bir_program_multistep_propsTheory.bir_exec_steps_GEN_decrease_max_steps_Ended_SOME]
+  ) >>
 
+  `~bir_state_is_terminated bs''` by (
+    FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
+    METIS_TAC [bir_program_multistep_propsTheory.bir_exec_steps_GEN_decrease_max_steps_Ended_terminated]
+  ) >>
 
+  PAT_X_ASSUM ``!x.A`` IMP_RES_TAC >>
+
+  `n2' = n''` by (
+    cheat
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  `n2 < n` by (
+    METIS_TAC [bir_exec_to_labels_def, bir_exec_to_addr_label_n_def,
+	       bir_exec_to_labels_n_def,
+	       bir_program_multistep_propsTheory.bir_exec_steps_GEN_decrease_max_steps_Ended_steps_taken]
+  ) >>
+
+  IMP_RES_TAC bir_inter_exec_notin_end_label_set_m0 >>
+
+  `bs''.bst_pc.bpc_label = (\l. BL_Address (Imm32 l)) (ms''.base.REG RName_PC)` by (
+    `(bir_etl_wm p).pc bs'' = (\l. BL_Address (Imm32 l)) (m0_mod_weak_model.pc ms'')` by (
+      FULL_SIMP_TAC std_ss [bir_state_is_terminated_def] >>
+      METIS_TAC [backlift_bir_m0_mod_pc_rel_thm]
+    ) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss++abstract_hoare_logicSimps.bir_wm_SS) [bir_block_pc_def, bir_wm_instTheory.bir_etl_wm_def, m0_mod_weak_model_def, m_weak_model_def, m_weak_trs_def, bir_wm_instTheory.bir_weak_trs_def]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
 );
 
 
