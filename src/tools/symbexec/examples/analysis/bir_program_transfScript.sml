@@ -1416,24 +1416,21 @@ val bir_exec_to_labels_TO_exec_to_addr_label_n_GEN =
   store_thm("bir_exec_to_labels_TO_exec_to_addr_label_n_GEN",
   ``!bs' ls p bs lo0 n n0.
 
-    (*
     (* TODO: should remove this assumption *)
     (bs'.bst_pc.bpc_label IN (IMAGE BL_Address ls)) ==>
-    *)
 
-    (bir_exec_to_labels (IMAGE BL_Address ls) p bs =
-         BER_Ended lo0 n n0 bs') ==>
-    ?n' lo c_st c_addr_labels.
+    (bir_exec_to_labels (IMAGE BL_Address ls) p bs = BER_Ended lo0 n n0 bs') ==>
+    ?n' lo c_addr_labels.
          (n' > 0) /\
-         (c_st = n) /\
-         (bir_exec_to_addr_label_n p bs n' =
-           BER_Ended lo c_st c_addr_labels bs')``,
+         (bir_exec_to_addr_label_n p bs n' = BER_Ended lo n c_addr_labels bs')``,
 
 REPEAT STRIP_TAC >>
 
+(*
 `bs'.bst_pc.bpc_label IN (IMAGE BL_Address ls)` by (
   cheat
 ) >>
+*)
 
 subgoal `bs'.bst_pc.bpc_label IN {l | IS_BL_Address l}` >- (
   METIS_TAC [set_of_address_in_all_address_labels_thm]
@@ -1457,12 +1454,13 @@ METIS_TAC []
 val bir_exec_to_labels_TO_exec_to_addr_label_n_32 = store_thm(
    "bir_exec_to_labels_TO_exec_to_addr_label_n_32", ``
 !bs' ls p bs lo0 n n0.
-    (bir_exec_to_labels (IMAGE (\l. BL_Address (Imm32 l)) ls) p bs =
-         BER_Ended lo0 n n0 bs') ==>
-    ?n' lo c_st c_addr_labels.
+    (bir_exec_to_labels (IMAGE (\l. BL_Address (Imm32 l)) ls) p bs = BER_Ended lo0 n n0 bs') ==>
+    (~(bir_state_is_terminated bs')) ==>
+    (bs'.bst_pc.bpc_label IN (IMAGE (\l. BL_Address (Imm32 l)) ls)) ==>
+
+    ?n' lo.
          (n' > 0) /\
-         (bir_exec_to_addr_label_n p bs n' =
-           BER_Ended lo n c_addr_labels bs')
+         (bir_exec_to_addr_label_n p bs n' = BER_Ended lo n n' bs')
 ``,
   REPEAT STRIP_TAC >>
 
@@ -1471,11 +1469,15 @@ val bir_exec_to_labels_TO_exec_to_addr_label_n_32 = store_thm(
     METIS_TAC []
   ) >>
   FULL_SIMP_TAC std_ss [] >>
-  METIS_TAC [bir_exec_to_labels_TO_exec_to_addr_label_n_GEN]
+
+  IMP_RES_TAC bir_exec_to_labels_TO_exec_to_addr_label_n_GEN >>
+  FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
+
+  METIS_TAC [bir_exec_steps_GEN_SOME_EQ_Ended_pc_counts]
 );
 
 val bir_exec_addr_label_n_NONZERO_labels = prove(
-  ``!c_addr_labels ms' bs bs' mls p n n' lo li.
+  ``!c_addr_labels ms' bs bs' mls (p:'a bir_program_t) n n' lo li.
     (* Execution from BIR HT *)
     (bir_exec_to_addr_label_n p bs n' = BER_Ended lo n c_addr_labels bs') ==>
     ~bir_state_is_terminated bs' ==>
@@ -1611,37 +1613,37 @@ val backlift_bir_m0_mod_SIM_thm = store_thm(
   REPEAT STRIP_TAC >>
 
   POP_ASSUM MP_TAC >>
-  SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS) [bir_wm_instTheory.bir_etl_wm_def, m0_mod_weak_model_def, m_weak_model_def, m_weak_trs_def, bir_wm_instTheory.bir_weak_trs_def] >>
-  CASE_TAC >>
-  CASE_TAC >>
+
+  SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS) [bir_wm_instTheory.bir_etl_wm_def, m0_mod_weak_model_def, m_weak_model_def, m_weak_trs_def, bir_wm_instTheory.bir_weak_trs_EQ] >>
   REPEAT STRIP_TAC >>
+(*
+bir_weak_trs_EQ
+  CASE_TAC >>
+  CASE_TAC >>
   FULL_SIMP_TAC (std_ss) [] >>
+*)
 
   IMP_RES_TAC bir_is_lifted_prog_MULTI_STEP_EXEC_compute_32_8_thm >>
   Q.ABBREV_TAC `stepf = (m0_mod_bmr (T,T)).bmr_step_fun` >>
+(*
   REV_FULL_SIMP_TAC (std_ss) [] >>
+*)
 
   IMP_RES_TAC bir_exec_to_labels_TO_exec_to_addr_label_n_32 >>
   PAT_X_ASSUM ``!x.A`` (fn thm => (IMP_RES_TAC thm >> ASSUME_TAC thm)) >>
   Q.EXISTS_TAC `ms'` >>
   ASM_REWRITE_TAC [] >>
-  Q.EXISTS_TAC `c_addr_labels` >>
+  Q.EXISTS_TAC `n'` >>
   ASM_REWRITE_TAC [] >>
 
   CONJ_TAC >- (
-    IMP_RES_TAC bir_exec_addr_label_n_NONZERO_labels >>
-    ASM_REWRITE_TAC [] >>
     `bs'.bst_pc.bpc_label IN IMAGE (\l. BL_Address (Imm32 l)) ls` by (
-      cheat (* TODO: from bir_exec_to_addr_label_n *)
+      ASM_REWRITE_TAC []
     ) >>
     IMP_RES_TAC bir_m0_mod_exec_in_end_label_set
   ) >>
 
   REPEAT STRIP_TAC >>
-  (* TODO: this should be already taken care of in the theorems above... *)
-  `c_addr_labels = n'` by (
-    cheat
-  ) >>
   FULL_SIMP_TAC std_ss [] >>
   `?lo2 n2 n2' bs''. bir_exec_to_addr_label_n p bs n'' = BER_Ended lo2 n2 n2' bs''` by (
     FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
@@ -1656,7 +1658,8 @@ val backlift_bir_m0_mod_SIM_thm = store_thm(
   PAT_X_ASSUM ``!x.A`` IMP_RES_TAC >>
 
   `n2' = n''` by (
-    cheat
+    FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def] >>
+    METIS_TAC [bir_program_multistep_propsTheory.bir_exec_steps_GEN_SOME_EQ_Ended_pc_counts]
   ) >>
   FULL_SIMP_TAC std_ss [] >>
 
