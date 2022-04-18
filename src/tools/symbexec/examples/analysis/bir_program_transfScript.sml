@@ -1284,9 +1284,8 @@ val backlift_bir_m0_mod_EXISTS_thm = store_thm(
 (("SP_process" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_SP_process))))
 (("ModeHandler" =+ SOME (BVal_Imm (bool2b (ms.base.CurrentMode = Mode_Handler))))
 (("countw" =+ SOME (BVal_Imm (Imm64 (ms.countw))))
-(*
-(("MEM" =+ SOME (BVal_Mem Bit32 Bit8 ms.base.MEM))
-*)
+(("MEM" =+ SOME (BVal_Mem Bit32 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.base.MEM))))
+
 (("tmp_PSR_C" =+ SOME (BVal_Imm (Imm1 0w)))
 (("tmp_PSR_N" =+ SOME (BVal_Imm (bool2b ms.base.PSR.N)))
 (("tmp_PSR_V" =+ SOME (BVal_Imm (bool2b ms.base.PSR.V)))
@@ -1310,12 +1309,14 @@ val backlift_bir_m0_mod_EXISTS_thm = store_thm(
 (("tmp_SP_process" =+ SOME (BVal_Imm (Imm32 (ms.base.REG RName_SP_process))))
 (("tmp_ModeHandler" =+ SOME (BVal_Imm (bool2b (ms.base.CurrentMode = Mode_Handler))))
 (("tmp_countw" =+ SOME (BVal_Imm (Imm64 (ms.countw))))
+(("tmp_MEM" =+ SOME (BVal_Mem Bit32 Bit8 (bir_mmap_w_w2n (bir_mf2mm (K 0w)))))
+
 (("tmp_PC" =+ SOME (BVal_Imm (Imm32 0w)))
 (("tmp_COND" =+ SOME (BVal_Imm (Imm1 0w)))
   (K NONE)
-))))))))))))))))))))))
 )))))))))))))))))))))))
-(*)*)
+))))))))))))))))))))))))
+
 
 );
         bst_status   := BST_Running
@@ -1326,8 +1327,16 @@ val backlift_bir_m0_mod_EXISTS_thm = store_thm(
     Q.UNABBREV_TAC `bs` >>
     EVAL_TAC
   ) >- (
+    Q.UNABBREV_TAC `bs` >>
     EVAL_TAC >>
-    cheat
+    SIMP_TAC std_ss [] >>
+    REWRITE_TAC [GSYM bir_exp_liftingTheory.bir_mf2mm_def] >>
+    REWRITE_TAC [GSYM bir_exp_liftingTheory.bir_mmap_w_w2n_def] >>
+    REWRITE_TAC [GSYM bir_exp_memTheory.bir_load_mmap_def] >>
+
+    REWRITE_TAC [bir_exp_liftingTheory.bir_load_w2n_mf_simp_thm, wordsTheory.n2w_w2n] >>
+    MATCH_MP_TAC EQ_EXT >>
+    SIMP_TAC std_ss []
   ) >- (
     Q.UNABBREV_TAC `bs` >>
     EVAL_TAC
