@@ -1474,18 +1474,61 @@ val bir_exec_to_labels_TO_exec_to_addr_label_n_32 = store_thm(
   METIS_TAC [bir_exec_to_labels_TO_exec_to_addr_label_n_GEN]
 );
 
+val bir_exec_addr_label_n_NONZERO_labels = prove(
+  ``!c_addr_labels ms' bs bs' mls p n n' lo li.
+    (* Execution from BIR HT *)
+    (bir_exec_to_addr_label_n p bs n' = BER_Ended lo n c_addr_labels bs') ==>
+    ~bir_state_is_terminated bs' ==>
+    (n' > 0) ==>
+    c_addr_labels > 0``,
+
+REPEAT GEN_TAC >>
+REPEAT DISCH_TAC >>
+
+
+  Cases_on `c_addr_labels = 0` >- (
+    FULL_SIMP_TAC std_ss [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def,
+                          bir_exec_steps_GEN_SOME_EQ_Ended] >>
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  FULL_SIMP_TAC arith_ss []
+);
+
+val bir_m0_mod_exec_in_end_label_set = prove(
+  ``!ms' bs' mls li.
+    (bs'.bst_pc = bir_block_pc (BL_Address li)) ==>
+    (bs'.bst_pc.bpc_label IN (IMAGE (\l. BL_Address (Imm32 l)) mls)) ==>
+
+    (* BMR relation between the final states *)
+    ~bir_state_is_terminated bs' ==>
+    bmr_rel (m0_mod_bmr (T,T)) bs' ms' ==>
+
+    ms'.base.REG RName_PC IN mls``,
+
+REPEAT GEN_TAC >>
+REPEAT DISCH_TAC >>
+
+  subgoal `bs'.bst_pc = bir_block_pc (BL_Address (Imm32 (ms'.base.REG RName_PC)))` >- (
+    FULL_SIMP_TAC (std_ss++holBACore_ss)
+      [bir_state_is_terminated_def] >>
+    POP_ASSUM MP_TAC >>
+    EVAL_TAC >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_block_pc_def]
+  ) >>
+  REV_FULL_SIMP_TAC (std_ss++holBACore_ss++pred_setLib.PRED_SET_ss)
+    [bir_programTheory.bir_block_pc_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
+);
+
 (* TODO: this is copied "bir_backlifterTheory.bir_arm8_inter_exec_notin_end_label_set" and adapted *)
-val bir_inter_exec_notin_end_label_set = prove(
-  ``!ls p bs l n0 n' n'' lo lo' c_st c_st' bs' bs''.
-    (bir_exec_to_labels (IMAGE BL_Address ls) p bs = BER_Ended l c_st n0 bs') ==>
+val bir_inter_exec_notin_end_label_set_GEN = prove(
+  ``!mls p bs l n0 n' n'' lo lo' c_st c_st' bs' bs''.
+    (bir_exec_to_labels (IMAGE (\l. BL_Address l) mls) p bs = BER_Ended l c_st n0 bs') ==>
     (bir_exec_to_addr_label_n p bs n'' = BER_Ended lo' c_st' n'' bs'') ==>
     c_st' < c_st ==>
-
-    (* TODO: should be able to get rid of these two assumptions *)
     n'' > 0 ==>
     ~bir_state_is_terminated bs'' ==>
-
-    bs''.bst_pc.bpc_label NOTIN (IMAGE BL_Address ls)``,
+    bs''.bst_pc.bpc_label NOTIN (IMAGE (\l. BL_Address l) mls)``,
 
 REPEAT STRIP_TAC >>
 (* NOTE: The number of taken statement steps is c_st for both the to-label execution
@@ -1494,7 +1537,7 @@ REPEAT STRIP_TAC >>
 subgoal `~bir_state_COUNT_PC (F,
 	  (\pc.
 	       (pc.bpc_index = 0) /\
-	       pc.bpc_label IN (IMAGE BL_Address ls)))
+	       pc.bpc_label IN (IMAGE (\l. BL_Address l) mls)))
 	      (bir_exec_infinite_steps_fun p bs c_st')` >- (
   FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_labels_n_def,
 			bir_exec_steps_GEN_SOME_EQ_Ended] >>
@@ -1525,6 +1568,26 @@ FULL_SIMP_TAC std_ss [bir_state_COUNT_PC_def, bir_exec_to_addr_label_n_def,
 		      bir_exec_steps_GEN_SOME_EQ_Ended] >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def]
 );
+
+val bir_inter_exec_notin_end_label_set_m0 = prove(
+  ``!mls p bs l n0 n' n'' lo lo' c_st c_st' bs' bs''.
+    (bir_exec_to_labels (IMAGE (\l. BL_Address (Imm32 l)) mls) p bs = BER_Ended l c_st n0 bs') ==>
+    (bir_exec_to_addr_label_n p bs n'' = BER_Ended lo' c_st' n'' bs'') ==>
+    c_st' < c_st ==>
+    n'' > 0 ==>
+    ~bir_state_is_terminated bs'' ==>
+    bs''.bst_pc.bpc_label NOTIN (IMAGE (\l. BL_Address (Imm32 l)) mls)``,
+
+  REPEAT STRIP_TAC >>
+
+  `IMAGE (\l. BL_Address (Imm32 l)) mls = IMAGE BL_Address (IMAGE Imm32 mls)` by (
+    FULL_SIMP_TAC std_ss [EXTENSION, IN_IMAGE] >>
+    METIS_TAC []
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  METIS_TAC [bir_inter_exec_notin_end_label_set_GEN]
+);
+
 end;
 (* ================================================================================= *)
 
@@ -1565,7 +1628,17 @@ val backlift_bir_m0_mod_SIM_thm = store_thm(
   Q.EXISTS_TAC `c_addr_labels` >>
   ASM_REWRITE_TAC [] >>
 
-bir_inter_exec_notin_end_label_set
+  CONJ_TAC >- (
+    IMP_RES_TAC bir_exec_addr_label_n_NONZERO_labels >>
+    ASM_REWRITE_TAC [] >>
+    `bs'.bst_pc.bpc_label IN IMAGE (\l. BL_Address (Imm32 l)) ls` by (
+      cheat (* TODO: from bir_exec_to_addr_label_n *)
+    ) >>
+    IMP_RES_TAC bir_m0_mod_exec_in_end_label_set
+  ) >>
+
+bir_inter_exec_notin_end_label_set_m0
+
 
 );
 
