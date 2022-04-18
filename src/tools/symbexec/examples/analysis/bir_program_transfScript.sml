@@ -1376,6 +1376,158 @@ val backlift_bir_m0_mod_pre_abstr_def = Define `
         (pre_bir bs)
 `;
 
+(* =============================================================================== *)
+local
+open HolKernel Parse boolLib bossLib;
+
+open bir_immTheory;
+open bir_programTheory;
+open bir_wm_instTheory;
+open bir_program_multistep_propsTheory;
+open bir_auxiliaryTheory;
+
+(* From lifter: *)
+open bir_inst_liftingTheory;
+open bir_lifting_machinesTheory;
+
+(* From comp: *)
+open abstract_hoare_logicTheory;
+open abstract_simp_hoare_logicTheory;
+
+open HolBASimps;
+open HolBACoreSimps;
+open abstract_hoare_logicSimps;
+
+open bir_auxiliaryLib;
+in
+
+(* TODO: copied and adjusted *)
+val set_of_address_in_all_address_labels_thm = prove (
+  ``!l adds.
+    l IN (IMAGE BL_Address adds) ==>
+    l IN {l | IS_BL_Address l}``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [pred_setTheory.GSPECIFICATION, bir_program_labelsTheory.IS_BL_Address_def, IMAGE_DEF]
+);
+
+(* TODO: copied and adjusted "bir_backlifterTheory.bir_exec_to_labels_TO_exec_to_addr_label_n" *)
+val bir_exec_to_labels_TO_exec_to_addr_label_n_GEN =
+  store_thm("bir_exec_to_labels_TO_exec_to_addr_label_n_GEN",
+  ``!bs' ls p bs lo0 n n0.
+
+    (*
+    (* TODO: should remove this assumption *)
+    (bs'.bst_pc.bpc_label IN (IMAGE BL_Address ls)) ==>
+    *)
+
+    (bir_exec_to_labels (IMAGE BL_Address ls) p bs =
+         BER_Ended lo0 n n0 bs') ==>
+    ?n' lo c_st c_addr_labels.
+         (n' > 0) /\
+         (c_st = n) /\
+         (bir_exec_to_addr_label_n p bs n' =
+           BER_Ended lo c_st c_addr_labels bs')``,
+
+REPEAT STRIP_TAC >>
+
+`bs'.bst_pc.bpc_label IN (IMAGE BL_Address ls)` by (
+  cheat
+) >>
+
+subgoal `bs'.bst_pc.bpc_label IN {l | IS_BL_Address l}` >- (
+  METIS_TAC [set_of_address_in_all_address_labels_thm]
+) >>
+FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_def, bir_exec_to_addr_label_n_def,
+				      bir_exec_to_labels_n_def] >>
+subgoal `bir_pc_cond_impl (F,
+	   (\pc.
+	     (pc.bpc_index = 0) /\
+	     pc.bpc_label IN (IMAGE BL_Address ls))) (F, (\pc. (pc.bpc_index = 0) /\ pc.bpc_label IN {l | IS_BL_Address l}))` >- (
+  FULL_SIMP_TAC std_ss [bir_pc_cond_impl_def] >>
+  REPEAT STRIP_TAC >>
+  METIS_TAC [set_of_address_in_all_address_labels_thm]
+) >>
+IMP_RES_TAC bir_exec_steps_GEN_change_cond_Ended_SOME >>
+Q.EXISTS_TAC `n2` >>
+FULL_SIMP_TAC arith_ss [] >>
+METIS_TAC []
+);
+
+val bir_exec_to_labels_TO_exec_to_addr_label_n_32 = store_thm(
+   "bir_exec_to_labels_TO_exec_to_addr_label_n_32", ``
+!bs' ls p bs lo0 n n0.
+    (bir_exec_to_labels (IMAGE (\l. BL_Address (Imm32 l)) ls) p bs =
+         BER_Ended lo0 n n0 bs') ==>
+    ?n' lo c_st c_addr_labels.
+         (n' > 0) /\
+         (bir_exec_to_addr_label_n p bs n' =
+           BER_Ended lo n c_addr_labels bs')
+``,
+  REPEAT STRIP_TAC >>
+
+  `IMAGE (\l. BL_Address (Imm32 l)) ls = IMAGE BL_Address (IMAGE Imm32 ls)` by (
+    FULL_SIMP_TAC std_ss [EXTENSION, IN_IMAGE] >>
+    METIS_TAC []
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+  METIS_TAC [bir_exec_to_labels_TO_exec_to_addr_label_n_GEN]
+);
+
+(* TODO: this is copied "bir_backlifterTheory.bir_arm8_inter_exec_notin_end_label_set" and adapted *)
+val bir_inter_exec_notin_end_label_set = prove(
+  ``!ls p bs l n0 n' n'' lo lo' c_st c_st' bs' bs''.
+    (bir_exec_to_labels (IMAGE BL_Address ls) p bs = BER_Ended l c_st n0 bs') ==>
+    (bir_exec_to_addr_label_n p bs n'' = BER_Ended lo' c_st' n'' bs'') ==>
+    c_st' < c_st ==>
+
+    (* TODO: should be able to get rid of these two assumptions *)
+    n'' > 0 ==>
+    ~bir_state_is_terminated bs'' ==>
+
+    bs''.bst_pc.bpc_label NOTIN (IMAGE BL_Address ls)``,
+
+REPEAT STRIP_TAC >>
+(* NOTE: The number of taken statement steps is c_st for both the to-label execution
+ * and the to-addr-label-execution. *)
+(* The number of PCs counted (= in mls) at c_st' statement steps must be 0. *)
+subgoal `~bir_state_COUNT_PC (F,
+	  (\pc.
+	       (pc.bpc_index = 0) /\
+	       pc.bpc_label IN (IMAGE BL_Address ls)))
+	      (bir_exec_infinite_steps_fun p bs c_st')` >- (
+  FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_labels_n_def,
+			bir_exec_steps_GEN_SOME_EQ_Ended] >>
+  (* Ergo, at c_st' statement steps, the PC label is not in mls, which follows after
+   * some arithmetic. *)
+  QSPECL_X_ASSUM ``!(n:num). (n < c_st) ==> _`` [`c_st'`] >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+  subgoal `c_st' > 0` >- (
+    METIS_TAC [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def,
+	       bir_exec_steps_GEN_SOME_EQ_Ended_Running_steps,
+	       bir_state_is_terminated_def]
+  ) >>
+  FULL_SIMP_TAC std_ss [NUM_LSONE_EQZ, bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
+  QSPECL_X_ASSUM ``!j. _`` [`PRE c_st'`] >>
+  SUBGOAL_THEN ``SUC (PRE (c_st':num)) = c_st'`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
+    FULL_SIMP_TAC arith_ss []
+  ) >>
+  METIS_TAC [NUM_PRE_LT]
+) >>
+(* So either PC at c_st' statement steps has index 0, or it is not in mls.
+ * But PC has index 0... *)
+subgoal `bs''.bst_pc.bpc_index = 0` >- (
+  METIS_TAC [bir_exec_to_addr_label_n_ended_running, bir_state_is_terminated_def]
+) >>
+(* ... which proves the goal, after some identification of states. *)
+FULL_SIMP_TAC std_ss [bir_state_COUNT_PC_def, bir_exec_to_addr_label_n_def,
+		      bir_exec_to_labels_n_def,
+		      bir_exec_steps_GEN_SOME_EQ_Ended] >>
+REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def]
+);
+end;
+(* ================================================================================= *)
+
 val backlift_bir_m0_mod_SIM_thm = store_thm(
    "backlift_bir_m0_mod_SIM_thm", ``
 !mu mms p mla ms bs bs' ls.
@@ -1406,7 +1558,15 @@ val backlift_bir_m0_mod_SIM_thm = store_thm(
   Q.ABBREV_TAC `stepf = (m0_mod_bmr (T,T)).bmr_step_fun` >>
   REV_FULL_SIMP_TAC (std_ss) [] >>
 
-  cheat
+  IMP_RES_TAC bir_exec_to_labels_TO_exec_to_addr_label_n_32 >>
+  PAT_X_ASSUM ``!x.A`` (fn thm => (IMP_RES_TAC thm >> ASSUME_TAC thm)) >>
+  Q.EXISTS_TAC `ms'` >>
+  ASM_REWRITE_TAC [] >>
+  Q.EXISTS_TAC `c_addr_labels` >>
+  ASM_REWRITE_TAC [] >>
+
+bir_inter_exec_notin_end_label_set
+
 );
 
 
