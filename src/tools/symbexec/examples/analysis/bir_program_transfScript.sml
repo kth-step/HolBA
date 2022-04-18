@@ -1087,6 +1087,9 @@ val m0_mod_weak_trs_def = Define `
 val m0_mod_weak_model_def = Define `
     m0_mod_weak_model = m_weak_model (\x. x.base.REG RName_PC) (m0_mod_bmr (T,T))
 `;
+val m0_weak_model_def = Define `
+    m0_weak_model = m_weak_model (\x. x.REG RName_PC) (m0_bmr (T,T))
+`;
 
 val m_triple_rel_def = Define `
     m_triple_rel wm bmr mms l ls pre post =
@@ -1813,6 +1816,125 @@ val backlift_bir_m0_mod_contract_thm = store_thm(
       ) >>
 *)
 
+
+val m0_mod_R_def = Define `
+  m0_mod_R ms mms = (ms = m0_mod_inv mms)
+`;
+
+val backlift_m0_mod_m0_EXISTS_thm = store_thm(
+   "backlift_m0_mod_m0_EXISTS_thm", ``
+!ms.
+(ms.count < (2 ** 64)) ==>
+?mms.
+  m0_mod_R ms mms
+``,
+  SIMP_TAC std_ss [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
+  cheat
+);
+
+
+val backlift_m0_mod_m0_pc_rel_thm = store_thm(
+   "backlift_m0_mod_m0_pc_rel_thm", ``
+!ms mms.
+  (m0_mod_R ms mms) ==>
+  (m0_mod_weak_model.pc mms = m0_weak_model.pc ms)
+``,
+  cheat
+);
+
+val backlift_m0_mod_m0_pre_abstr_def = Define `
+    backlift_m0_mod_m0_pre_abstr pre pre_mod =
+      !ms mms.
+        (m0_mod_R ms mms) ==>
+        (pre ms) ==>
+        (pre_mod mms)
+`;
+
+val backlift_m0_mod_m0_SIM_thm = store_thm(
+   "backlift_m0_mod_m0_SIM_thm", ``
+!ms mms mms' ls.
+  (m0_mod_R ms mms) ==>
+  (m0_mod_weak_model.weak mms ls mms') ==>
+  (?ms'. m0_weak_model.weak ms ls ms' /\ m0_mod_R ms' mms')
+``,
+  REPEAT STRIP_TAC >>
+
+  POP_ASSUM MP_TAC >>
+
+  SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS) [m0_mod_weak_model_def, m0_weak_model_def, m_weak_model_def, m_weak_trs_def] >>
+  SIMP_TAC (std_ss++(rewrites (type_rws ``:('a,'b,'c) bir_lifting_machine_rec_t``))) [bir_lifting_machinesTheory.m0_mod_bmr_def, bir_lifting_machinesTheory.m0_bmr_def] >>
+  REPEAT STRIP_TAC >>
+
+  cheat
+);
+
+val backlift_m0_mod_m0_post_concr_def = Define `
+    backlift_m0_mod_m0_post_concr post_mod post =
+      !ms mms ms' mms'.
+        (m0_mod_R ms mms) ==>
+        (m0_mod_R ms' mms') ==>
+        (post_mod mms mms') ==>
+        (post ms ms')
+`;
+
+val backlift_m0_mod_m0_contract_thm = store_thm(
+   "backlift_m0_mod_m0_contract_thm", ``
+
+!pre pre_mod post_mod post l ls.
+  (!ms. pre ms ==> (\ms. ms.count < (2 ** 64)) ms) ==>
+
+  (backlift_m0_mod_m0_pre_abstr pre pre_mod) ==>
+  (backlift_m0_mod_m0_post_concr post_mod post) ==>
+
+  (abstract_jgmt_rel
+    m0_mod_weak_model
+    l
+    ls
+    (pre_mod)
+    (post_mod)) ==>
+
+  (abstract_jgmt_rel
+    m0_weak_model
+    l
+    ls
+    (pre)
+    (post))
+``,
+  REPEAT STRIP_TAC >>
+
+  ASSUME_TAC
+    (INST_TYPE
+      [alpha  |-> Type`:m0_mod_state`, beta |-> Type`:word32`, gamma |-> Type`:m0_state`, delta |-> Type`:word32`]
+      backlift_contract_GEN_thm) >>
+
+  POP_ASSUM (ASSUME_TAC o Q.SPECL [`m0_mod_weak_model`, `m0_weak_model`]) >>
+  POP_ASSUM IMP_RES_TAC >>
+  POP_ASSUM (ASSUME_TAC o Q.SPECL [`(\ms mms. T)`, `m0_mod_R`]) >>
+  FULL_SIMP_TAC std_ss [backlift_m0_mod_m0_EXISTS_thm] >>
+
+  POP_ASSUM (ASSUME_TAC o Q.SPECL [`I`]) >>
+  FULL_SIMP_TAC std_ss [backlift_m0_mod_m0_pc_rel_thm] >>
+
+  FULL_SIMP_TAC std_ss [backlift_m0_mod_m0_pre_abstr_def] >>
+  POP_ASSUM IMP_RES_TAC >>
+
+  POP_ASSUM (ASSUME_TAC o Q.SPECL [`post_mod`]) >>
+  FULL_SIMP_TAC std_ss [IMAGE_I] >>
+  `!ms mms mms' ls.
+           pre ms ==>
+           pre_mod mms ==>
+           post_mod mms mms' ==>
+           m0_mod_R ms mms ==>
+           m0_mod_weak_model.weak mms ls mms' ==>
+           ?ms'. m0_weak_model.weak ms ls ms' /\ m0_mod_R ms' mms'` by (
+    REPEAT STRIP_TAC >>
+    METIS_TAC [backlift_m0_mod_m0_SIM_thm]
+  ) >>
+  PAT_X_ASSUM ``A ==> B`` IMP_RES_TAC >>
+  POP_ASSUM (ASSUME_TAC o Q.SPECL [`post`]) >>
+  FULL_SIMP_TAC std_ss [backlift_m0_mod_m0_post_concr_def] >>
+  POP_ASSUM IMP_RES_TAC
+);
 
 
 val _ = export_theory();
