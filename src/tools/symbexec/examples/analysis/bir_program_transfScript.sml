@@ -1821,8 +1821,8 @@ val m0_mod_R_def = Define `
   m0_mod_R ms mms = (ms = m0_mod_inv mms)
 `;
 
-val m0_mod_SIM_m0_NONE_step_thm = store_thm(
-   "m0_mod_SIM_m0_NONE_step_thm", ``
+val m0_SIM_m0_mod_NONE_step_thm = store_thm(
+   "m0_SIM_m0_mod_NONE_step_thm", ``
 !ms mms.
   (m0_mod_R ms mms) ==>
   (NextStateM0 ms = NONE) ==>
@@ -1831,14 +1831,35 @@ val m0_mod_SIM_m0_NONE_step_thm = store_thm(
   SIMP_TAC std_ss [m0_mod_R_def, m0_mod_stepTheory.NextStateM0_mod_def]
 );
 
-val m0_mod_SIM_m0_SOME_step_thm = store_thm(
-   "m0_mod_SIM_m0_SOME_step_thm", ``
+val m0_mod_SIM_m0_NONE_step_thm = store_thm(
+   "m0_mod_SIM_m0_NONE_step_thm", ``
+!ms mms.
+  (*
+  (OPTION_ALL (\ms'. ms'.count < (2 ** 64)) (NextStateM0 (m0_mod_inv mms))) ==>
+  *)
+  (!ms'. NextStateM0 (m0_mod_inv mms) = SOME ms' ==> ms'.count < (2 ** 64)) ==>
+
+  (m0_mod_R ms mms) ==>
+  (NextStateM0_mod mms = NONE) ==>
+  (NextStateM0 ms = NONE)
+``,
+  SIMP_TAC std_ss [m0_mod_R_def, m0_mod_stepTheory.NextStateM0_mod_def] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `NextStateM0 (m0_mod_inv mms)` >> (
+    FULL_SIMP_TAC std_ss [m0_mod_stepTheory.m0_mod_def]
+  )
+);
+
+val m0_SIM_m0_mod_SOME_step_thm = store_thm(
+   "m0_SIM_m0_mod_SOME_step_thm", ``
 !ms mms ms'.
   (ms'.count < (2 ** 64)) ==>
+
   (m0_mod_R ms mms) ==>
   (NextStateM0 ms = SOME ms') ==>
   (?mms'.
-    (NextStateM0_mod mms = SOME mms') ==>
+    (NextStateM0_mod mms = SOME mms') /\
     (m0_mod_R ms' mms'))
 ``,
   SIMP_TAC std_ss [m0_mod_R_def, m0_mod_stepTheory.NextStateM0_mod_def] >>
@@ -1847,7 +1868,6 @@ val m0_mod_SIM_m0_SOME_step_thm = store_thm(
   REPEAT STRIP_TAC >>
 
   SIMP_TAC std_ss [m0_mod_stepTheory.m0_mod_inv_def] >>
-  Q.EXISTS_TAC `<|base := ms'; countw := n2w ms'.count|>` >>
 
   SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_mod_state``))) [] >>
 
@@ -1856,6 +1876,74 @@ val m0_mod_SIM_m0_SOME_step_thm = store_thm(
     ASM_SIMP_TAC arith_ss [arithmeticTheory.LESS_MOD, wordsTheory.dimword_64]
   ) >>
   ASM_SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) [m0Theory.m0_state_component_equality]
+);
+
+val m0_mod_SIM_m0_SOME_step_thm = store_thm(
+   "m0_mod_SIM_m0_SOME_step_thm", ``
+!ms mms mms'.
+  (!ms'. NextStateM0 (m0_mod_inv mms) = SOME ms' ==> ms'.count < (2 ** 64)) ==>
+
+  (m0_mod_R ms mms) ==>
+  (NextStateM0_mod mms = SOME mms') ==>
+  (?ms'.
+    (NextStateM0 ms = SOME ms') /\
+    (m0_mod_R ms' mms'))
+``,
+  SIMP_TAC std_ss [m0_mod_R_def, m0_mod_stepTheory.NextStateM0_mod_def] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `NextStateM0 (m0_mod_inv mms)` >> (
+    FULL_SIMP_TAC std_ss []
+  ) >>
+
+  PAT_X_ASSUM ``m0_mod x = A`` (ASSUME_TAC o GSYM) >>
+  FULL_SIMP_TAC std_ss [m0_mod_stepTheory.m0_mod_def] >>
+  POP_ASSUM (ASSUME_TAC o GSYM) >>
+  ASM_SIMP_TAC std_ss [] >>
+
+  SIMP_TAC std_ss [m0_mod_stepTheory.m0_mod_inv_def] >>
+  SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_mod_state``))) [] >>
+
+  `w2n ((n2w x.count):word64) = x.count` by (
+    SIMP_TAC std_ss [wordsTheory.w2n_n2w] >>
+    ASM_SIMP_TAC arith_ss [arithmeticTheory.LESS_MOD, wordsTheory.dimword_64]
+  ) >>
+  ASM_SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) [m0Theory.m0_state_component_equality]
+);
+
+val m0_mod_SIM_m0_thm = store_thm(
+   "m0_mod_SIM_m0_thm", ``
+!ms mms n mms'.
+(*
+  (ms'.count < (2 ** 64)) ==>
+*)
+  (m0_mod_R ms mms) ==>
+  (FUNPOW_OPT NextStateM0_mod n mms = SOME mms') ==>
+  (?ms'.
+    (FUNPOW_OPT NextStateM0 n ms = SOME ms') /\
+    (m0_mod_R ms' mms'))
+``,
+  Induct_on `n` >- (
+    FULL_SIMP_TAC std_ss [bir_auxiliaryTheory.FUNPOW_OPT_REWRS] >>
+    METIS_TAC []
+  ) >>
+
+  FULL_SIMP_TAC std_ss [bir_auxiliaryTheory.FUNPOW_OPT_REWRS] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `NextStateM0_mod mms` >> (
+    FULL_SIMP_TAC std_ss []
+  ) >>
+  rename1 `NextStateM0_mod mms = SOME mms''` >>
+
+  `(!ms'. NextStateM0 (m0_mod_inv mms) = SOME ms' ==> ms'.count < (2 ** 64))` by (
+    cheat
+  ) >>
+  IMP_RES_TAC m0_mod_SIM_m0_SOME_step_thm >>
+  PAT_X_ASSUM ``!x y. A`` IMP_RES_TAC >>
+
+  Q.EXISTS_TAC `ms''` >>
+  ASM_SIMP_TAC std_ss []
 );
 
 val backlift_m0_mod_m0_EXISTS_thm = store_thm(
