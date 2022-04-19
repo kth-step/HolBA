@@ -1881,8 +1881,6 @@ val m0_SIM_m0_mod_SOME_step_thm = store_thm(
 val m0_mod_SIM_m0_SOME_step_thm = store_thm(
    "m0_mod_SIM_m0_SOME_step_thm", ``
 !ms mms mms'.
-  (!ms'. NextStateM0 (m0_mod_inv mms) = SOME ms' ==> ms'.count < (2 ** 64)) ==>
-
   (m0_mod_R ms mms) ==>
   (NextStateM0_mod mms = SOME mms') ==>
   (?ms'.
@@ -1914,9 +1912,6 @@ val m0_mod_SIM_m0_SOME_step_thm = store_thm(
 val m0_mod_SIM_m0_thm = store_thm(
    "m0_mod_SIM_m0_thm", ``
 !ms mms n mms'.
-(*
-  (ms'.count < (2 ** 64)) ==>
-*)
   (m0_mod_R ms mms) ==>
   (FUNPOW_OPT NextStateM0_mod n mms = SOME mms') ==>
   (?ms'.
@@ -1936,9 +1931,6 @@ val m0_mod_SIM_m0_thm = store_thm(
   ) >>
   rename1 `NextStateM0_mod mms = SOME mms''` >>
 
-  `(!ms'. NextStateM0 (m0_mod_inv mms) = SOME ms' ==> ms'.count < (2 ** 64))` by (
-    cheat
-  ) >>
   IMP_RES_TAC m0_mod_SIM_m0_SOME_step_thm >>
   PAT_X_ASSUM ``!x y. A`` IMP_RES_TAC >>
 
@@ -1984,6 +1976,18 @@ val backlift_m0_mod_m0_pc_rel_thm = store_thm(
   SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) []
 );
 
+val backlift_m0_mod_m0_pc_rel_EVAL_thm = store_thm(
+   "backlift_m0_mod_m0_pc_rel_EVAL_thm", ``
+!ms mms.
+  (m0_mod_R ms mms) ==>
+  (mms.base.REG RName_PC = ms.REG RName_PC)
+``,
+  REPEAT STRIP_TAC >>
+  IMP_RES_TAC backlift_m0_mod_m0_pc_rel_thm >>
+
+  FULL_SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS) [m0_mod_weak_model_def, m0_weak_model_def, m_weak_model_def, m_weak_trs_def]
+);
+
 val backlift_m0_mod_m0_pre_abstr_def = Define `
     backlift_m0_mod_m0_pre_abstr pre pre_mod =
       !ms mms.
@@ -2007,7 +2011,22 @@ val backlift_m0_mod_m0_SIM_thm = store_thm(
   SIMP_TAC (std_ss++(rewrites (type_rws ``:('a,'b,'c) bir_lifting_machine_rec_t``))) [bir_lifting_machinesTheory.m0_mod_bmr_def, bir_lifting_machinesTheory.m0_bmr_def] >>
   REPEAT STRIP_TAC >>
 
-  cheat
+  IMP_RES_TAC m0_mod_SIM_m0_thm >>
+  Q.EXISTS_TAC `ms'` >>
+  ASM_REWRITE_TAC [] >>
+  Q.EXISTS_TAC `n` >>
+  ASM_REWRITE_TAC [] >>
+
+  CONJ_TAC >- (
+    METIS_TAC [backlift_m0_mod_m0_pc_rel_EVAL_thm]
+  ) >>
+
+  REPEAT STRIP_TAC >>
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPEC `n'`) >>
+  REV_FULL_SIMP_TAC (std_ss) [] >>
+
+  IMP_RES_TAC m0_mod_SIM_m0_thm >>
+  METIS_TAC [backlift_m0_mod_m0_pc_rel_EVAL_thm]
 );
 
 val backlift_m0_mod_m0_post_concr_def = Define `
