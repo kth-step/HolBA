@@ -1821,6 +1821,43 @@ val m0_mod_R_def = Define `
   m0_mod_R ms mms = (ms = m0_mod_inv mms)
 `;
 
+val m0_mod_SIM_m0_NONE_step_thm = store_thm(
+   "m0_mod_SIM_m0_NONE_step_thm", ``
+!ms mms.
+  (m0_mod_R ms mms) ==>
+  (NextStateM0 ms = NONE) ==>
+  (NextStateM0_mod mms = NONE)
+``,
+  SIMP_TAC std_ss [m0_mod_R_def, m0_mod_stepTheory.NextStateM0_mod_def]
+);
+
+val m0_mod_SIM_m0_SOME_step_thm = store_thm(
+   "m0_mod_SIM_m0_SOME_step_thm", ``
+!ms mms ms'.
+  (ms'.count < (2 ** 64)) ==>
+  (m0_mod_R ms mms) ==>
+  (NextStateM0 ms = SOME ms') ==>
+  (?mms'.
+    (NextStateM0_mod mms = SOME mms') ==>
+    (m0_mod_R ms' mms'))
+``,
+  SIMP_TAC std_ss [m0_mod_R_def, m0_mod_stepTheory.NextStateM0_mod_def] >>
+
+  SIMP_TAC std_ss [m0_mod_stepTheory.m0_mod_def] >>
+  REPEAT STRIP_TAC >>
+
+  SIMP_TAC std_ss [m0_mod_stepTheory.m0_mod_inv_def] >>
+  Q.EXISTS_TAC `<|base := ms'; countw := n2w ms'.count|>` >>
+
+  SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_mod_state``))) [] >>
+
+  `w2n ((n2w ms'.count):word64) = ms'.count` by (
+    SIMP_TAC std_ss [wordsTheory.w2n_n2w] >>
+    ASM_SIMP_TAC arith_ss [arithmeticTheory.LESS_MOD, wordsTheory.dimword_64]
+  ) >>
+  ASM_SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) [m0Theory.m0_state_component_equality]
+);
+
 val backlift_m0_mod_m0_EXISTS_thm = store_thm(
    "backlift_m0_mod_m0_EXISTS_thm", ``
 !ms.
@@ -1829,7 +1866,22 @@ val backlift_m0_mod_m0_EXISTS_thm = store_thm(
   m0_mod_R ms mms
 ``,
   SIMP_TAC std_ss [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
-  cheat
+  REPEAT STRIP_TAC >>
+
+  `w2n ((n2w ms.count):word64) = ms.count` by (
+    SIMP_TAC std_ss [wordsTheory.w2n_n2w] >>
+    ASM_SIMP_TAC arith_ss [arithmeticTheory.LESS_MOD, wordsTheory.dimword_64]
+  ) >>
+
+  Q.EXISTS_TAC `
+      <|
+        base   := ms;
+        countw := n2w ms.count
+       |>
+    ` >>
+
+  SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_mod_state``))) [] >>
+  ASM_SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) [m0Theory.m0_state_component_equality]
 );
 
 
@@ -1839,7 +1891,9 @@ val backlift_m0_mod_m0_pc_rel_thm = store_thm(
   (m0_mod_R ms mms) ==>
   (m0_mod_weak_model.pc mms = m0_weak_model.pc ms)
 ``,
-  cheat
+  SIMP_TAC std_ss [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
+  SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS) [m0_mod_weak_model_def, m0_weak_model_def, m_weak_model_def, m_weak_trs_def] >>
+  SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) []
 );
 
 val backlift_m0_mod_m0_pre_abstr_def = Define `
