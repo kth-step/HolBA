@@ -980,7 +980,8 @@ val abstract_jgmt_rel_def = Define `
 `;
 
 
-val bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_thm = prove (``
+val bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_thm = store_thm(
+   "bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_thm", ``
 !bprog l L ls pre post.
 (bir_step_n_in_L_jgmt
   bprog
