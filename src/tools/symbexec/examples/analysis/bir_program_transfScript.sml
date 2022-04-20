@@ -1192,7 +1192,7 @@ val backlift_contract_GEN_thm = store_thm(
 
   (!ms. extra_ms ms ==> ?ms_a. (R_a ms ms_a /\ R_a_impl ms ms_a)) ==>
   (!ms ms_a. R_a_impl ms ms_a ==> R_a ms ms_a ==> wm_a.pc ms_a = pcaf (wm.pc ms)) ==>
-  (!ms ms_a. R_a ms ms_a ==> pre ms ==> pre_a ms_a) ==>
+  (!ms ms_a. R_a ms ms_a ==> pre ms ==> R_a_impl ms ms_a ==> pre_a ms_a) ==>
 
   (!ms ms_a ms_a' ls. pre ms ==> pre_a ms_a ==> post_a ms_a ms_a' ==> R_a ms ms_a ==> wm_a.weak ms_a (IMAGE pcaf ls) ms_a' ==> ?ms'. ((wm.weak ms ls ms') /\ (R_a ms' ms_a'))) ==>
   (!ms ms_a ms' ms_a'. R_a ms ms_a ==> R_a ms' ms_a' ==> post_a ms_a ms_a' ==> post ms ms') ==>
@@ -1377,6 +1377,7 @@ val backlift_bir_m0_mod_pre_abstr_def = Define `
       !ms bs.
         (bmr_rel (m0_mod_bmr (T,T)) bs ms) ==>
         (pre ms) ==>
+        (bs.bst_status = BST_Running) ==>
         (pre_bir bs)
 `;
 
