@@ -44,7 +44,7 @@ val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address 
 (* TODO: the following is copied from transfer-test script (MODIFIED FOR TEMP VARS) *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 val m0_mod_vars_def = Define `
-    m0_mod_vars = APPEND (bmr_vars (m0_mod_bmr (T,T))) (bmr_temp_vars (m0_mod_bmr (T,T)))
+    m0_mod_vars = APPEND (bmr_vars (m0_mod_bmr (F,T))) (bmr_temp_vars (m0_mod_bmr (F,T)))
 `;
 
 val m0_mod_vars_thm = store_thm(
