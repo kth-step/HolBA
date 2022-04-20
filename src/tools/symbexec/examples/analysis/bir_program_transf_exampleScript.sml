@@ -85,7 +85,7 @@ val post_bir_nL_def = Define `
          (* TODO: this was added *)
          st'.bst_status = BST_Running /\
 
-         bir_eval_exp (BExp_Den (BVar "SP_process" (BType_Imm Bit32))) st.bst_environ = SOME (BVal_Imm (Imm32 0x11w))
+         bir_eval_exp (BExp_Den (BVar "SP_process" (BType_Imm Bit32))) st'.bst_environ = SOME (BVal_Imm (Imm32 0x11w))
       )
 `;
 
@@ -146,22 +146,18 @@ abstract_jgmt_rel
 );
 
 val pre_m0_mod_def = Define `
-    pre_m0_mod mms ms =
+    pre_m0_mod memms ms =
       (
-        (EVERY (bmr_ms_mem_contains (m0_mod_bmr (T,T)) ms) mms) /\
+        (EVERY (bmr_ms_mem_contains (m0_mod_bmr (T,T)) ms) memms) /\
         ((m0_mod_bmr (T,T)).bmr_extra ms) /\
 
-        (0xFFFFFFw <=+ ms.base.REG RName_SP_process) /\
-        (ms.base.REG RName_SP_process && 0x3w = 0w) /\
-        (ms.countw <=+ 0xFFFFFFFFFFFFFF00w)
+        (ms.base.REG RName_SP_process = 0x10w)
       )
 `;
 val post_m0_mod_def = Define `
     post_m0_mod ms ms' =
       (
-        ms.countw <+ ms'.countw /\
-        ms.countw + 44w <=+ ms'.countw /\
-        ms'.countw <=+ ms.countw + 47w
+        (ms'.base.REG RName_SP_process = 0x11w)
       )
 `;
 
@@ -170,7 +166,7 @@ abstract_jgmt_rel
   m0_mod_weak_model
   (2824w)
   {2886w}
-  (pre_m0_mod mms)
+  (pre_m0_mod memms)
   (post_m0_mod)
 ``,
 
@@ -178,6 +174,79 @@ abstract_jgmt_rel
 (*
 bir_program_transfTheory.backlift_bir_m0_mod_contract_thm
 *)
+);
+
+
+val m0_mod_R_IMP_bmr_ms_mem_contains_thm = prove(``
+!mms ms memms.
+  (m0_mod_R ms mms) ==>
+  ((EVERY (bmr_ms_mem_contains (m0_mod_bmr (T,T)) mms) memms) =
+   (EVERY (bmr_ms_mem_contains (m0_bmr (T,T)) ms) memms))
+``,
+  cheat
+);
+val m0_mod_R_IMP_REG_EQ_thm = prove(``
+!mms ms regn.
+  (m0_mod_R ms mms) ==>
+  (mms.base.REG regn = ms.REG regn)
+``,
+  cheat
+);
+val m0_mod_R_IMP_bmr_extra_thm = prove(``
+!mms ms.
+  (m0_mod_R ms mms) ==>
+  ((m0_mod_bmr (T,T)).bmr_extra mms = (m0_bmr (T,T)).bmr_extra ms)
+``,
+  cheat
+);
+
+val pre_m0_def = Define `
+    pre_m0 memms ms =
+      (
+        (EVERY (bmr_ms_mem_contains (m0_bmr (T,T)) ms) memms) /\
+        ((m0_bmr (T,T)).bmr_extra ms) /\
+
+        (ms.count < 2 ** 64) /\
+
+        (ms.REG RName_SP_process = 0x10w)
+      )
+`;
+val post_m0_def = Define `
+    post_m0 ms ms' =
+      (
+        (ms'.REG RName_SP_process = 0x11w)
+      )
+`;
+
+val m0_thm = prove(``
+abstract_jgmt_rel
+  m0_weak_model
+  (2824w)
+  {2886w}
+  (pre_m0 memms)
+  (post_m0)
+``,
+
+  ASSUME_TAC
+    (Q.SPECL
+      [`pre_m0 memms`, `pre_m0_mod memms`, `post_m0_mod`, `post_m0`, `(2824w)`, `{2886w}`]
+      bir_program_transfTheory.backlift_m0_mod_m0_contract_thm) >>
+
+  `!ms. pre_m0 memms ms ⇒ (\ms. ms.count < 2 ** 64) ms` by (
+    FULL_SIMP_TAC std_ss [pre_m0_def]
+  ) >>
+
+  `backlift_m0_mod_m0_pre_abstr (pre_m0 memms) (pre_m0_mod memms)` by (
+    FULL_SIMP_TAC std_ss [pre_m0_def, pre_m0_mod_def, backlift_m0_mod_m0_pre_abstr_def, backlift_m0_mod_m0_post_concr_def] >>
+    METIS_TAC [m0_mod_R_IMP_bmr_ms_mem_contains_thm, m0_mod_R_IMP_bmr_extra_thm, m0_mod_R_IMP_REG_EQ_thm]
+  ) >>
+
+  `backlift_m0_mod_m0_post_concr post_m0_mod post_m0` by (
+    FULL_SIMP_TAC std_ss [post_m0_mod_def, post_m0_def, backlift_m0_mod_m0_pre_abstr_def, backlift_m0_mod_m0_post_concr_def] >>
+    METIS_TAC [m0_mod_R_IMP_bmr_ms_mem_contains_thm, m0_mod_R_IMP_bmr_extra_thm, m0_mod_R_IMP_REG_EQ_thm]
+  ) >>
+
+  FULL_SIMP_TAC std_ss [m0_mod_thm]
 );
 
 
