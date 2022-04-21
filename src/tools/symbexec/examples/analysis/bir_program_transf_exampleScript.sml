@@ -154,9 +154,13 @@ abstract_jgmt_rel
 val bmr_rel_m0_mod_bmr_IMP_index_thm = prove(``
 !ms bs.
   (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
+  (bs.bst_status = BST_Running) ==>
   (bs.bst_pc.bpc_index = 0)
 ``,
-  cheat
+  EVAL_TAC >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  )
 );
 
 val bmr_rel_m0_mod_bmr_IMP_envty_list_b_birenvtyl_thm = prove(``
@@ -165,6 +169,38 @@ val bmr_rel_m0_mod_bmr_IMP_envty_list_b_birenvtyl_thm = prove(``
   (bir_envty_list_b birenvtyl bs.bst_environ)
 ``,
   cheat (* TODO: I think this is not entirely correct... *)
+);
+
+val bmr_rel_m0_mod_bmr_IMP_SP_process_eval_thm = prove(``
+!bs ms v.
+  (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
+  (ms.base.REG RName_SP_process = v) ==>
+  (bir_eval_exp (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+          bs.bst_environ =
+        SOME (BVal_Imm (Imm32 v)))
+``,
+  EVAL_TAC >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    METIS_TAC []
+  )
+);
+
+val bmr_rel_m0_mod_bmr_IMP_SP_process_eval_REV_thm = prove(``
+!bs ms v.
+  (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
+  (bir_eval_exp (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
+          bs.bst_environ =
+        SOME (BVal_Imm (Imm32 v))) ==>
+  (ms.base.REG RName_SP_process = v)
+``,
+  EVAL_TAC >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    METIS_TAC []
+  )
 );
 
 
@@ -236,14 +272,14 @@ abstract_jgmt_rel
     IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_envty_list_b_birenvtyl_thm >>
     FULL_SIMP_TAC std_ss [] >>
 
-    cheat
+    IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_SP_process_eval_thm
   ) >>
 
   `backlift_bir_m0_mod_post_concr post_bir_nL post_m0_mod` by (
     FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_post_concr_def, post_bir_nL_def, post_m0_mod_def] >>
     REPEAT STRIP_TAC >>
 
-    cheat
+    IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_SP_process_eval_REV_thm
   ) >>
 
   FULL_SIMP_TAC std_ss [IMAGE_SING, IN_SING] >>
@@ -253,26 +289,66 @@ abstract_jgmt_rel
 
 
 val m0_mod_R_IMP_bmr_ms_mem_contains_thm = prove(``
-!mms ms memms.
+!mms ms.
   (m0_mod_R ms mms) ==>
-  ((EVERY (bmr_ms_mem_contains (m0_mod_bmr (F,T)) mms) memms) =
-   (EVERY (bmr_ms_mem_contains (m0_bmr (F,T)) ms) memms))
+  (bmr_ms_mem_contains (m0_mod_bmr (F,T)) mms =
+   bmr_ms_mem_contains (m0_bmr (F,T)) ms)
 ``,
-  cheat
+  REWRITE_TAC [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
+  REPEAT STRIP_TAC >>
+
+  MATCH_MP_TAC boolTheory.EQ_EXT >>
+  Cases_on `x` >>
+
+  `(mms.base with count := w2n mms.countw).MEM = mms.base.MEM` by (
+    SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) []
+  ) >>
+
+  Q.SPEC_TAC (`q`, `b`) >>
+  Q.SPEC_TAC (`r`, `l`) >>
+
+  Induct_on `l` >- (
+    GEN_TAC >>
+    EVAL_TAC
+  ) >>
+
+  REWRITE_TAC [bir_lifting_machinesTheory.bmr_ms_mem_contains_def] >>
+  REPEAT STRIP_TAC >>
+  POP_ASSUM (fn thm => SIMP_TAC std_ss [thm]) >>
+
+  SIMP_TAC std_ss [bir_lifting_machinesTheory.bmr_mem_lf_def] >>
+
+  SIMP_TAC (std_ss++(rewrites (type_rws ``:('a,'b,'c) bir_lifting_machine_rec_t``))) [bir_lifting_machinesTheory.m0_mod_bmr_def, bir_lifting_machinesTheory.m0_bmr_def] >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_lifting_machinesTheory.m0_mod_lifted_mem_def, bir_lifting_machinesTheory.m0_lifted_mem_def] >>
+  CASE_TAC >>
+
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_lifting_machinesTheory.bir_machine_lifted_mem_t_11] >>
+  POP_ASSUM (ASSUME_TAC o GSYM) >>
+  ASM_SIMP_TAC (std_ss++holBACore_ss) []
 );
 val m0_mod_R_IMP_REG_EQ_thm = prove(``
-!mms ms regn.
+!mms ms.
   (m0_mod_R ms mms) ==>
-  (mms.base.REG regn = ms.REG regn)
+  (mms.base.REG = ms.REG)
 ``,
-  cheat
+  REWRITE_TAC [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
+  REPEAT STRIP_TAC >>
+
+  ASM_SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) []
 );
 val m0_mod_R_IMP_bmr_extra_thm = prove(``
 !mms ms.
   (m0_mod_R ms mms) ==>
   ((m0_mod_bmr (F,T)).bmr_extra mms = (m0_bmr (F,T)).bmr_extra ms)
 ``,
-  cheat
+  REWRITE_TAC [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
+  REPEAT STRIP_TAC >>
+
+  SIMP_TAC (std_ss++(rewrites (type_rws ``:('a,'b,'c) bir_lifting_machine_rec_t``))) [bir_lifting_machinesTheory.m0_mod_bmr_def, bir_lifting_machinesTheory.m0_bmr_def] >>
+  ASM_SIMP_TAC (std_ss++holBACore_ss) [bir_lifting_machinesTheory.m0_mod_state_is_OK_def, bir_lifting_machinesTheory.m0_state_is_OK_def] >>
+
+  ASM_SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) []
 );
 
 val pre_m0_def = Define `
