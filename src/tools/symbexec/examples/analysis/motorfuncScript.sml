@@ -7,6 +7,7 @@ open birs_auxTheory;
 
 open bin_motor_funcTheory;
 
+open bir_program_transfTheory;
 
 val _ = new_theory "motorfunc";
 
@@ -40,37 +41,6 @@ val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address 
 val birs_stop_lbls = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0xb46w))``];
 
 
-(* ---------------------------------------------------------------------------------------------------------------- *)
-(* TODO: the following is copied from transfer-test script (MODIFIED FOR TEMP VARS) *)
-(* ---------------------------------------------------------------------------------------------------------------- *)
-val m0_mod_vars_def = Define `
-    m0_mod_vars = APPEND (bmr_vars (m0_mod_bmr (F,T))) (bmr_temp_vars (m0_mod_bmr (F,T)))
-`;
-
-val m0_mod_vars_thm = store_thm(
-   "m0_mod_vars_thm", ``
-!ef sel.
-  m0_mod_vars = APPEND (bmr_vars (m0_mod_bmr (ef,sel))) (bmr_temp_vars (m0_mod_bmr (ef,sel)))
-``,
-  METIS_TAC [m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL, bir_lifting_machinesTheory.m0_mod_bmr_temp_vars_EVAL]
-);
-
-val birenvtyl_def = Define `
-    birenvtyl = MAP BVarToPair m0_mod_vars
-`;
-(*    birenvtyl = [("R7", BType_Imm Bit32); ("SP_process", BType_Imm Bit32); ("countw", BType_Imm Bit64)]*)
-(*
-bir_lifting_machinesTheory.m0_mod_REGS_lifted_imms_LIST_def
-m0_mod_REGS_lifted_imms_LIST
-m0_mod_lifted_mem
-bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL
-*)
-val birenvtyl_EVAL_thm = save_thm(
-   "birenvtyl_EVAL_thm",
-  (REWRITE_CONV [birenvtyl_def, m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL, bir_lifting_machinesTheory.m0_mod_bmr_temp_vars_EVAL] THENC EVAL) ``birenvtyl``
-);
-(* ---------------------------------------------------------------------------------------------------------------- *)
-(* ---------------------------------------------------------------------------------------------------------------- *)
 
 
 (* TODO: add a sanity check here that all the variables of the program are included in birenvtyl! *)
