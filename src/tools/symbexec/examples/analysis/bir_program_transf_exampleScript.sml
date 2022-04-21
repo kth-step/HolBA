@@ -27,7 +27,7 @@ open bir_program_transfTheory;
 
 val _ = new_theory "bir_program_transf_example";
 
-val birenvtyl_def = motorfuncTheory.birenvtyl_def;
+val birenvtyl_def = bir_program_transfTheory.birenvtyl_def;
 
 val bmemms_t = List.nth((snd o strip_comb o concl) bin_motor_funcTheory.bin_motor_func_thm, 2);
 val bmemms_def = Define `
@@ -163,14 +163,6 @@ val bmr_rel_m0_mod_bmr_IMP_index_thm = prove(``
   )
 );
 
-val bmr_rel_m0_mod_bmr_IMP_envty_list_b_birenvtyl_thm = prove(``
-!ms bs.
-  (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
-  (bir_envty_list_b birenvtyl bs.bst_environ)
-``,
-  cheat (* TODO: I think this is not entirely correct... *)
-);
-
 val bmr_rel_m0_mod_bmr_IMP_SP_process_eval_thm = prove(``
 !bs ms v.
   (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
@@ -247,15 +239,12 @@ abstract_jgmt_rel
   ) >>
 
   `!bs.    pre_bir_nL bs ==>
-           ~bir_state_is_terminated bs /\
-           ?mla.
-             bs.bst_pc = bir_block_pc (BL_Address mla) /\
-             MEM (BL_Address mla) (bir_labels_of_program (bprog:'observation_type bir_program_t))` by (
-    REPEAT GEN_TAC >>
-    REPEAT DISCH_TAC >>
-    FULL_SIMP_TAC std_ss [pre_bir_nL_def, bir_programTheory.bir_state_is_terminated_def] >>
+           ~bir_state_is_terminated bs` by (
+    FULL_SIMP_TAC std_ss [pre_bir_nL_def, bir_programTheory.bir_state_is_terminated_def]
+  ) >>
 
-    cheat (* TODO: need to add the initial PC context into the theorem... *)
+  `MEM (BL_Address (Imm32 2824w)) (bir_labels_of_program (bprog:'observation_type bir_program_t))` by (
+    EVAL_TAC
   ) >>
   FULL_SIMP_TAC std_ss [] >>
 
@@ -269,7 +258,6 @@ abstract_jgmt_rel
     REPEAT DISCH_TAC >>
 
     IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_index_thm >>
-    IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_envty_list_b_birenvtyl_thm >>
     FULL_SIMP_TAC std_ss [] >>
 
     IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_SP_process_eval_thm
