@@ -1196,7 +1196,7 @@ val backlift_contract_GEN_thm = store_thm(
 
   (!ms. extra_ms ms ==> ?ms_a. (R_a ms ms_a /\ R_a_impl ms ms_a)) ==>
   (!ms ms_a. R_a_impl ms ms_a ==> R_a ms ms_a ==> wm_a.pc ms_a = pcaf (wm.pc ms)) ==>
-  (!ms ms_a. R_a ms ms_a ==> pre ms ==> R_a_impl ms ms_a ==> pre_a ms_a) ==>
+  (!ms ms_a. R_a ms ms_a ==> pre ms ==> R_a_impl ms ms_a ==> ((wm_a.pc ms_a) = pcaf l) ==> pre_a ms_a) ==>
 
   (!ms ms_a ms_a' ls. pre ms ==> pre_a ms_a ==> post_a ms_a ms_a' ==> R_a ms ms_a ==> wm_a.weak ms_a (IMAGE pcaf ls) ms_a' ==> ?ms'. ((wm.weak ms ls ms') /\ (R_a ms' ms_a'))) ==>
   (!ms ms_a ms' ms_a'. R_a ms ms_a ==> R_a ms' ms_a' ==> post_a ms_a ms_a' ==> post ms ms') ==>
@@ -1249,6 +1249,37 @@ val backlift_contract_GEN_thm = store_thm(
   METIS_TAC []
 );
 
+(* ---------------------------------------------------------------------------------------------------------------- *)
+(* TODO: the following is copied from transfer-test script (MODIFIED FOR TEMP VARS) *)
+(* ---------------------------------------------------------------------------------------------------------------- *)
+val m0_mod_vars_def = Define `
+    m0_mod_vars = APPEND (bmr_vars (m0_mod_bmr (F,T))) (bmr_temp_vars (m0_mod_bmr (F,T)))
+`;
+
+val m0_mod_vars_thm = store_thm(
+   "m0_mod_vars_thm", ``
+!ef sel.
+  m0_mod_vars = APPEND (bmr_vars (m0_mod_bmr (ef,sel))) (bmr_temp_vars (m0_mod_bmr (ef,sel)))
+``,
+  METIS_TAC [m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL, bir_lifting_machinesTheory.m0_mod_bmr_temp_vars_EVAL]
+);
+
+val birenvtyl_def = Define `
+    birenvtyl = MAP BVarToPair m0_mod_vars
+`;
+(*    birenvtyl = [("R7", BType_Imm Bit32); ("SP_process", BType_Imm Bit32); ("countw", BType_Imm Bit64)]*)
+(*
+bir_lifting_machinesTheory.m0_mod_REGS_lifted_imms_LIST_def
+m0_mod_REGS_lifted_imms_LIST
+m0_mod_lifted_mem
+bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL
+*)
+val birenvtyl_EVAL_thm = save_thm(
+   "birenvtyl_EVAL_thm",
+  (REWRITE_CONV [birenvtyl_def, m0_mod_vars_def, bir_lifting_machinesTheory.m0_mod_bmr_vars_EVAL, bir_lifting_machinesTheory.m0_mod_bmr_temp_vars_EVAL] THENC EVAL) ``birenvtyl``
+);
+(* ---------------------------------------------------------------------------------------------------------------- *)
+(* ---------------------------------------------------------------------------------------------------------------- *)
 
 
 val backlift_bir_m0_mod_EXISTS_thm = store_thm(
@@ -1257,7 +1288,8 @@ val backlift_bir_m0_mod_EXISTS_thm = store_thm(
   ((m0_mod_bmr bmropt).bmr_extra ms) ==>
 ?bs. (
   (bmr_rel (m0_mod_bmr bmropt) bs ms) /\
-  (bs.bst_status = BST_Running)
+  (bs.bst_status = BST_Running) /\
+  (bir_envty_list_b birenvtyl bs.bst_environ)
 )
 ``,
   REPEAT STRIP_TAC >>
@@ -1349,10 +1381,35 @@ val backlift_bir_m0_mod_EXISTS_thm = store_thm(
   ) >- (
     Q.UNABBREV_TAC `bs` >>
     EVAL_TAC
+  ) >- (
+    Q.UNABBREV_TAC `bs` >>
+    EVAL_TAC
   ) >>
 
   Q.UNABBREV_TAC `bs` >>
-  EVAL_TAC
+  FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+  FULL_SIMP_TAC (std_ss) [birenvtyl_EVAL_thm, birs_auxTheory.bir_envty_list_b_thm] >>
+
+  FULL_SIMP_TAC (std_ss) [birs_auxTheory.bir_envty_list_def] >>
+
+  REPEAT STRIP_TAC >- (
+    EVAL_TAC
+  ) >- (
+    EVAL_TAC >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+
+(* >>
+    FULL_SIMP_TAC (std_ss) [] >>
+      prove(``!x. (?v. BVal_Imm (Imm1 (x)) = v /\ type_of_bir_val v = BType_Imm Bit1)``, cheat),
+      prove(``!x. (?v. BVal_Imm (Imm32 (x)) = v /\ type_of_bir_val v = BType_Imm Bit32)``, cheat)
+    ]
+    FULL_SIMP_TAC (std_ss) [birs_auxTheory.bir_envty_list_inclusive_def, listTheory.EVERY_DEF, bir_envTheory.bir_env_lookup_def] 
+*)
+  ) >>
+
+  EVAL_TAC >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
 
@@ -1383,6 +1440,7 @@ val backlift_bir_m0_mod_pre_abstr_def = Define `
         (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
         (pre ms) ==>
         (bs.bst_status = BST_Running) ==>
+        (bir_envty_list_b birenvtyl bs.bst_environ) ==>
         (pre_bir bs)
 `;
 
@@ -1753,12 +1811,29 @@ val backlift_bir_m0_mod_contract_thm = store_thm(
       [alpha  |-> Type`:bir_state_t`, beta |-> Type`:bir_label_t`, delta |-> Type`:word32`]
       backlift_contract_GEN_thm) >>
 
-  POP_ASSUM (ASSUME_TAC o Q.SPECL [`\ms bs. bs.bst_status = BST_Running`, `(\ms. \bs. (bmr_rel (m0_mod_bmr (F,T)) bs ms))`]) >>
+  POP_ASSUM (ASSUME_TAC o Q.SPECL [`\ms bs. bs.bst_status = BST_Running /\ (bir_envty_list_b birenvtyl bs.bst_environ)`, `(\ms. \bs. (bmr_rel (m0_mod_bmr (F,T)) bs ms))`]) >>
   FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_EXISTS_thm] >>
 
-  POP_ASSUM (fn thm => ASSUME_TAC (MATCH_MP thm (SPEC ``p:'a bir_program_t`` backlift_bir_m0_mod_pc_rel_thm))) >>
+  `!ms bs.
+       (bs.bst_status = BST_Running /\ bir_envty_list_b birenvtyl bs.bst_environ) ==>
+       bmr_rel (m0_mod_bmr (F,T)) bs ms ==>
+       (bir_etl_wm p).pc bs =
+       (\l. BL_Address (Imm32 l)) (m0_mod_weak_model.pc ms)` by (
+    METIS_TAC [backlift_bir_m0_mod_pc_rel_thm]
+  ) >>
+  POP_ASSUM (fn thm0 => POP_ASSUM (fn thm => ASSUME_TAC (MATCH_MP thm thm0))) >>
 
-  POP_ASSUM (IMP_RES_TAC) >>
+  `!ms bs.
+             bmr_rel (m0_mod_bmr (F,T)) bs ms ==>
+             pre ms ==>
+             bs.bst_status = BST_Running /\
+             bir_envty_list_b birenvtyl bs.bst_environ ==>
+             (bir_etl_wm p).pc bs = (\l. BL_Address (Imm32 l)) l ==>
+             pre_bir bs` by (
+    METIS_TAC []
+  ) >>
+  POP_ASSUM (fn thm0 => POP_ASSUM (fn thm => ASSUME_TAC (MATCH_MP thm thm0))) >>
+
 
 (*
 *)
