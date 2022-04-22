@@ -18,7 +18,7 @@ val _ = Datatype `abstract_model_t =
     pc : 'a -> 'b
    |>`;
 
-(* An abstract model is a weak model, if this property is fulfilled.
+(* An abstract model is a weak model if this property is fulfilled.
  * This is how the weak transition is forced to be related to
  * the single transition.  *)
 val weak_model_def = Define `
