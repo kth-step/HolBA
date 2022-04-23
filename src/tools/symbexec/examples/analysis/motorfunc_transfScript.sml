@@ -911,10 +911,80 @@ val backlift_m0_mod_m0_post_concr_ex_thm = prove(``
   IMP_RES_TAC m0_mod_R_IMP_count_EQ_countw_thm >>
   ASM_REWRITE_TAC [] >>
 
-  cheat
-(*
-  METIS_TAC [m0_mod_R_IMP_bmr_ms_mem_contains_thm, m0_mod_R_IMP_bmr_extra_thm, m0_mod_R_IMP_REG_EQ_thm]
-*)
+  POP_ASSUM (K ALL_TAC) >>
+  POP_ASSUM (K ALL_TAC) >>
+  REPEAT (PAT_X_ASSUM ``m0_mod_R A B`` (K ALL_TAC)) >>
+  Q.ABBREV_TAC `x = mms.countw` >>
+  Q.ABBREV_TAC `y = mms'.countw` >>
+  POP_ASSUM (K ALL_TAC) >>
+  POP_ASSUM (K ALL_TAC) >>
+
+  `w2n x + 44 = w2n (x + 44w)` by (
+    `w2n (x + 44w) = (w2n x + 44) MOD dimword (:64)` by (
+      REWRITE_TAC [GSYM wordsTheory.w2n_n2w] >>
+      REWRITE_TAC [GSYM wordsTheory.word_add_n2w] >>
+      REWRITE_TAC [wordsTheory.n2w_w2n]
+    ) >>
+    ASM_REWRITE_TAC [] >>
+
+    `(w2n x + 44) < dimword (:64)` by (
+      POP_ASSUM (K ALL_TAC) >>
+      POP_ASSUM (K ALL_TAC) >>
+      POP_ASSUM (K ALL_TAC) >>
+
+      FULL_SIMP_TAC std_ss [wordsTheory.WORD_LS] >>
+      POP_ASSUM MP_TAC >>
+      EVAL_TAC >>
+      STRIP_TAC >>
+
+      REWRITE_TAC [GSYM (EVAL ``^((snd o dest_eq o concl o EVAL) ``(18446744073709551616 - 44:num)``) + 44``)] >>
+      REWRITE_TAC [arithmeticTheory.LT_ADD_RCANCEL] >>
+
+      MATCH_MP_TAC arithmeticTheory.LESS_EQ_LESS_TRANS >>
+      HINT_EXISTS_TAC >>
+
+      ASM_REWRITE_TAC [] >>
+      EVAL_TAC
+    ) >>
+
+    METIS_TAC [arithmeticTheory.LESS_MOD]
+  ) >>
+  `w2n x + 47 = w2n (x + 47w)` by (
+    `w2n (x + 47w) = (w2n x + 47) MOD dimword (:64)` by (
+      REWRITE_TAC [GSYM wordsTheory.w2n_n2w] >>
+      REWRITE_TAC [GSYM wordsTheory.word_add_n2w] >>
+      REWRITE_TAC [wordsTheory.n2w_w2n]
+    ) >>
+    ASM_REWRITE_TAC [] >>
+
+    `(w2n x + 47) < dimword (:64)` by (
+      POP_ASSUM (K ALL_TAC) >>
+      POP_ASSUM (K ALL_TAC) >>
+      POP_ASSUM (K ALL_TAC) >>
+      POP_ASSUM (K ALL_TAC) >>
+
+      FULL_SIMP_TAC std_ss [wordsTheory.WORD_LS] >>
+      POP_ASSUM MP_TAC >>
+      EVAL_TAC >>
+      STRIP_TAC >>
+
+      REWRITE_TAC [GSYM (EVAL ``^((snd o dest_eq o concl o EVAL) ``(18446744073709551616 - 47:num)``) + 47``)] >>
+      REWRITE_TAC [arithmeticTheory.LT_ADD_RCANCEL] >>
+
+      MATCH_MP_TAC arithmeticTheory.LESS_EQ_LESS_TRANS >>
+      HINT_EXISTS_TAC >>
+
+      ASM_REWRITE_TAC [] >>
+      EVAL_TAC
+    ) >>
+
+    METIS_TAC [arithmeticTheory.LESS_MOD]
+  ) >>
+  ASM_SIMP_TAC std_ss [] >>
+  POP_ASSUM (K ALL_TAC) >>
+  POP_ASSUM (K ALL_TAC) >>
+
+  FULL_SIMP_TAC std_ss [wordsTheory.WORD_LS]
 );
 
 val m0_thm = store_thm(
