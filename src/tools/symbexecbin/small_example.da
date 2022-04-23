@@ -1,0 +1,11 @@
+
+output/filedoesntexist.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00000b08 <examplefun>:
+     b08:	210f      	movs	r1, #15
+     b0a:	187b      	adds	r3, r7, r1
+     b0c:	bd80      	pop	{r7, pc}
+
