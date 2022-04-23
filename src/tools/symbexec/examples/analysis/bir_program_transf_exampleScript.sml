@@ -175,13 +175,10 @@ val bmr_rel_m0_mod_bmr_IMP_index_thm = prove(``
   )
 );
 
-val bmr_rel_m0_mod_bmr_IMP_SP_process_eval_thm = prove(``
-!bs ms v.
+val bmr_rel_m0_mod_bmr_IMP_countw_lookup_thm = prove(``
+!bs ms.
   (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
-  (ms.base.REG RName_SP_process = v) ==>
-  (bir_eval_exp (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
-          bs.bst_environ =
-        SOME (BVal_Imm (Imm32 v)))
+  (bir_env_lookup "countw" bs.bst_environ = SOME (BVal_Imm (Imm64 ms.countw)))
 ``,
   EVAL_TAC >>
   REPEAT STRIP_TAC >> (
@@ -191,13 +188,36 @@ val bmr_rel_m0_mod_bmr_IMP_SP_process_eval_thm = prove(``
   )
 );
 
-val bmr_rel_m0_mod_bmr_IMP_SP_process_eval_REV_thm = prove(``
-!bs ms v.
+val bmr_rel_m0_mod_bmr_IMP_SP_process_lookup_thm = prove(``
+!bs ms.
   (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
-  (bir_eval_exp (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))
-          bs.bst_environ =
-        SOME (BVal_Imm (Imm32 v))) ==>
-  (ms.base.REG RName_SP_process = v)
+  (bir_env_lookup "SP_process" bs.bst_environ = SOME (BVal_Imm (Imm32 (ms.base.REG RName_SP_process))))
+``,
+  EVAL_TAC >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    METIS_TAC []
+  )
+);
+
+val bmr_rel_m0_mod_bmr_IMP_R3_lookup_thm = prove(``
+!bs ms.
+  (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
+  (bir_env_lookup "R3" bs.bst_environ = SOME (BVal_Imm (Imm32 (ms.base.REG RName_3))))
+``,
+  EVAL_TAC >>
+  REPEAT STRIP_TAC >> (
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >> (
+    METIS_TAC []
+  )
+);
+
+val bmr_rel_m0_mod_bmr_IMP_R7_lookup_thm = prove(``
+!bs ms.
+  (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
+  (bir_env_lookup "R7" bs.bst_environ = SOME (BVal_Imm (Imm32 (ms.base.REG RName_7))))
 ``,
   EVAL_TAC >>
   REPEAT STRIP_TAC >> (
@@ -238,10 +258,14 @@ val backlift_bir_m0_mod_pre_abstr_ex_thm = prove(``
   FULL_SIMP_TAC std_ss [] >>
 
   REWRITE_TAC [bprecond_def] >>
-  cheat
-(*
-  IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_SP_process_eval_thm
-*)
+  EVAL_TAC >>
+
+  IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_countw_lookup_thm >>
+  IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_SP_process_lookup_thm >>
+  ASM_REWRITE_TAC [] >>
+  EVAL_TAC >>
+  ASM_REWRITE_TAC [] >>
+  EVAL_TAC
 );
 
 val backlift_bir_m0_mod_post_concr_ex_thm = prove(``
@@ -250,10 +274,13 @@ val backlift_bir_m0_mod_post_concr_ex_thm = prove(``
   FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_post_concr_def, post_bir_nL_def, post_m0_mod_def, post_bir_def] >>
   REPEAT STRIP_TAC >>
 
-  cheat
-(*
-  IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_SP_process_eval_REV_thm
-*)
+  `v1 = ms.base.REG RName_7` by (
+    IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_R7_lookup_thm >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) []
+  ) >>
+
+  IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_R3_lookup_thm >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
 
@@ -389,6 +416,17 @@ val post_m0_def = Define `
       )
 `;
 
+val m0_mod_R_IMP_count_EQ_countw_thm = prove(``
+!mms ms.
+  (m0_mod_R ms mms) ==>
+  (ms.count = w2n mms.countw)
+``,
+  REWRITE_TAC [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
+  REPEAT STRIP_TAC >>
+
+  ASM_SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) []
+);
+
 val backlift_m0_mod_m0_pre_abstr_ex_thm = prove(``
   backlift_m0_mod_m0_pre_abstr (pre_m0) (pre_m0_mod)
 ``,
@@ -414,7 +452,12 @@ val backlift_m0_mod_m0_pre_abstr_ex_thm = prove(``
          ms.count <= 0xFFFFFFFFFFFFFF00:num ==>
          ms.countw <=+ 0xFFFFFFFFFFFFFF00w
 *)
-  cheat
+  REWRITE_TAC [wordsTheory.WORD_LS] >>
+
+  IMP_RES_TAC m0_mod_R_IMP_count_EQ_countw_thm >>
+  POP_ASSUM (fn thm => REWRITE_TAC [GSYM thm]) >>
+  EVAL_TAC >>
+  ASM_REWRITE_TAC []
 );
 
 val backlift_m0_mod_m0_post_concr_ex_thm = prove(``
