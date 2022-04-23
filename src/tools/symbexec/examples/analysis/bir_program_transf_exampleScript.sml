@@ -55,14 +55,28 @@ val bir_frag_L_def = Define `
 val bir_frag_l_exit_ml_tm = ``2828w:word32``;
 val bir_frag_l_exit_tm = ``<|bpc_label := BL_Address (Imm32 ^bir_frag_l_exit_ml_tm); bpc_index := 0|>``;
 
+val bprecond_def = Define `
+    bprecond = BExp_BinExp BIExp_And
+                     (BExp_BinExp BIExp_And
+                       (BExp_BinPred BIExp_LessOrEqual
+                         (BExp_Const (Imm32 0xFFFFFFw))
+                         (BExp_Den (BVar "SP_process" (BType_Imm Bit32))))
+                       (BExp_Aligned Bit32 2 (BExp_Den (BVar "SP_process" (BType_Imm Bit32)))))
+                     (BExp_BinPred BIExp_LessOrEqual
+                       (BExp_Den (BVar "countw" (BType_Imm Bit64)))
+                       (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))
+`;
+
 val pre_bir_def = Define `
-    pre_bir st =
-       (bir_eval_exp (BExp_Den (BVar "SP_process" (BType_Imm Bit32))) st.bst_environ = SOME (BVal_Imm (Imm32 0x10w)))
+    pre_bir bs =
+       (bir_eval_exp bprecond bs.bst_environ = SOME bir_val_true)
 `;
 
 val post_bir_def = Define `
-    post_bir st st' =
-       (bir_eval_exp (BExp_Den (BVar "SP_process" (BType_Imm Bit32))) st'.bst_environ = SOME (BVal_Imm (Imm32 0x11w)))
+    post_bir bs1 bs2 =
+      (?v1 v2. bir_env_lookup "R7" bs1.bst_environ = SOME (BVal_Imm (Imm32 v1)) /\
+               bir_env_lookup "R3" bs2.bst_environ = SOME (BVal_Imm (Imm32 v2)) /\
+               (v2 = v1 + 15w))
 `;
 
 val pre_bir_nL_def = Define `
@@ -201,15 +215,47 @@ val pre_m0_mod_def = Define `
         (EVERY (bmr_ms_mem_contains (m0_mod_bmr (F,T)) ms) bmemms) /\
         ((m0_mod_bmr (F,T)).bmr_extra ms) /\
 
-        (ms.base.REG RName_SP_process = 0x10w)
+        (0xFFFFFFw <=+ ms.base.REG RName_SP_process /\
+         ms.base.REG RName_SP_process && 0x3w = 0w /\
+         ms.countw <=+ 0xFFFFFFFFFFFFFF00w)
       )
 `;
 val post_m0_mod_def = Define `
     post_m0_mod ms ms' =
       (
-        (ms'.base.REG RName_SP_process = 0x11w)
+        (ms'.base.REG RName_3 = ms.base.REG RName_7 + 15w)
       )
 `;
+
+val backlift_bir_m0_mod_pre_abstr_ex_thm = prove(``
+  backlift_bir_m0_mod_pre_abstr pre_m0_mod pre_bir_nL
+``,
+  FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_pre_abstr_def, pre_m0_mod_def, pre_bir_nL_def, pre_bir_def] >>
+  REPEAT GEN_TAC >>
+  REPEAT DISCH_TAC >>
+
+  IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_index_thm >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  REWRITE_TAC [bprecond_def] >>
+  cheat
+(*
+  IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_SP_process_eval_thm
+*)
+);
+
+val backlift_bir_m0_mod_post_concr_ex_thm = prove(``
+  backlift_bir_m0_mod_post_concr post_bir_nL post_m0_mod
+``,
+  FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_post_concr_def, post_bir_nL_def, post_m0_mod_def, post_bir_def] >>
+  REPEAT STRIP_TAC >>
+
+  cheat
+(*
+  IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_SP_process_eval_REV_thm
+*)
+);
+
 
 val m0_mod_thm = prove(``
 abstract_jgmt_rel
@@ -250,23 +296,8 @@ abstract_jgmt_rel
     FULL_SIMP_TAC std_ss [post_bir_nL_def, bir_programTheory.bir_state_is_terminated_def]
   ) >>
 
-  `backlift_bir_m0_mod_pre_abstr pre_m0_mod pre_bir_nL` by (
-    FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_pre_abstr_def, pre_m0_mod_def, pre_bir_nL_def, pre_bir_def] >>
-    REPEAT GEN_TAC >>
-    REPEAT DISCH_TAC >>
-
-    IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_index_thm >>
-    FULL_SIMP_TAC std_ss [] >>
-
-    IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_SP_process_eval_thm
-  ) >>
-
-  `backlift_bir_m0_mod_post_concr post_bir_nL post_m0_mod` by (
-    FULL_SIMP_TAC std_ss [backlift_bir_m0_mod_post_concr_def, post_bir_nL_def, post_m0_mod_def, post_bir_def] >>
-    REPEAT STRIP_TAC >>
-
-    IMP_RES_TAC bmr_rel_m0_mod_bmr_IMP_SP_process_eval_REV_thm
-  ) >>
+  ASSUME_TAC backlift_bir_m0_mod_pre_abstr_ex_thm >>
+  ASSUME_TAC backlift_bir_m0_mod_post_concr_ex_thm >>
 
   FULL_SIMP_TAC std_ss [IMAGE_SING, IN_SING] >>
   FULL_SIMP_TAC std_ss [bir_abstract_jgmt_rel_example_thm] >>
@@ -343,17 +374,55 @@ val pre_m0_def = Define `
         (EVERY (bmr_ms_mem_contains (m0_bmr (F,T)) ms) bmemms) /\
         ((m0_bmr (F,T)).bmr_extra ms) /\
 
+        (* TODO: this is in fact redundant *)
         (ms.count < 2 ** 64) /\
 
-        (ms.REG RName_SP_process = 0x10w)
+        (0xFFFFFFw <=+ ms.REG RName_SP_process /\
+         ms.REG RName_SP_process && 0x3w = 0w /\
+         ms.count <= 0xFFFFFFFFFFFFFF00:num)
       )
 `;
 val post_m0_def = Define `
     post_m0 ms ms' =
       (
-        (ms'.REG RName_SP_process = 0x11w)
+        (ms'.REG RName_3 = ms.REG RName_7 + 15w)
       )
 `;
+
+val backlift_m0_mod_m0_pre_abstr_ex_thm = prove(``
+  backlift_m0_mod_m0_pre_abstr (pre_m0) (pre_m0_mod)
+``,
+  FULL_SIMP_TAC std_ss [pre_m0_def, pre_m0_mod_def, backlift_m0_mod_m0_pre_abstr_def, backlift_m0_mod_m0_post_concr_def] >>
+
+  REPEAT GEN_TAC >>
+  REPEAT DISCH_TAC >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  `(EVERY (bmr_ms_mem_contains (m0_mod_bmr (F,T)) mms) bmemms) /\
+        ((m0_mod_bmr (F,T)).bmr_extra mms)` by (
+    METIS_TAC [m0_mod_R_IMP_bmr_ms_mem_contains_thm, m0_mod_R_IMP_bmr_extra_thm]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  `0xFFFFFFw <=+ mms.base.REG RName_SP_process /\
+   mms.base.REG RName_SP_process && 0x3w = 0w` by (
+    METIS_TAC [m0_mod_R_IMP_REG_EQ_thm]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+
+(*
+         ms.count <= 0xFFFFFFFFFFFFFF00:num ==>
+         ms.countw <=+ 0xFFFFFFFFFFFFFF00w
+*)
+  cheat
+);
+
+val backlift_m0_mod_m0_post_concr_ex_thm = prove(``
+  backlift_m0_mod_m0_post_concr post_m0_mod post_m0
+``,
+  FULL_SIMP_TAC std_ss [post_m0_mod_def, post_m0_def, backlift_m0_mod_m0_pre_abstr_def, backlift_m0_mod_m0_post_concr_def] >>
+  METIS_TAC [m0_mod_R_IMP_bmr_ms_mem_contains_thm, m0_mod_R_IMP_bmr_extra_thm, m0_mod_R_IMP_REG_EQ_thm]
+);
 
 val m0_thm = store_thm(
    "m0_thm", ``
@@ -374,15 +443,8 @@ abstract_jgmt_rel
     FULL_SIMP_TAC std_ss [pre_m0_def]
   ) >>
 
-  `backlift_m0_mod_m0_pre_abstr (pre_m0) (pre_m0_mod)` by (
-    FULL_SIMP_TAC std_ss [pre_m0_def, pre_m0_mod_def, backlift_m0_mod_m0_pre_abstr_def, backlift_m0_mod_m0_post_concr_def] >>
-    METIS_TAC [m0_mod_R_IMP_bmr_ms_mem_contains_thm, m0_mod_R_IMP_bmr_extra_thm, m0_mod_R_IMP_REG_EQ_thm]
-  ) >>
-
-  `backlift_m0_mod_m0_post_concr post_m0_mod post_m0` by (
-    FULL_SIMP_TAC std_ss [post_m0_mod_def, post_m0_def, backlift_m0_mod_m0_pre_abstr_def, backlift_m0_mod_m0_post_concr_def] >>
-    METIS_TAC [m0_mod_R_IMP_bmr_ms_mem_contains_thm, m0_mod_R_IMP_bmr_extra_thm, m0_mod_R_IMP_REG_EQ_thm]
-  ) >>
+  ASSUME_TAC backlift_m0_mod_m0_pre_abstr_ex_thm >>
+  ASSUME_TAC backlift_m0_mod_m0_post_concr_ex_thm >>
 
   FULL_SIMP_TAC std_ss [m0_mod_thm]
 );
