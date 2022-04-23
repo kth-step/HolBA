@@ -83,10 +83,7 @@ val pre_bir_nL_def = Define `
     pre_bir_nL st =
       (
        st.bst_status = BST_Running /\
-
-       (* TODO: this was added *)
        st.bst_pc.bpc_index = 0 /\
-
        bir_envty_list_b birenvtyl st.bst_environ /\
 
        pre_bir st
@@ -96,8 +93,6 @@ val post_bir_nL_def = Define `
     post_bir_nL (st:bir_state_t) st' =
       (
          (st'.bst_pc = ^bir_frag_l_exit_tm) /\
-
-         (* TODO: this was added *)
          st'.bst_status = BST_Running /\
 
          post_bir st st'
@@ -401,9 +396,6 @@ val pre_m0_def = Define `
         (EVERY (bmr_ms_mem_contains (m0_bmr (F,T)) ms) bmemms) /\
         ((m0_bmr (F,T)).bmr_extra ms) /\
 
-        (* TODO: this is in fact redundant *)
-        (ms.count < 2 ** 64) /\
-
         (0xFFFFFFw <=+ ms.REG RName_SP_process /\
          ms.REG RName_SP_process && 0x3w = 0w /\
          ms.count <= 0xFFFFFFFFFFFFFF00:num)
@@ -483,7 +475,16 @@ abstract_jgmt_rel
       bir_program_transfTheory.backlift_m0_mod_m0_contract_thm) >>
 
   `!ms. pre_m0 ms ==> (\ms. ms.count < 2 ** 64) ms` by (
-    FULL_SIMP_TAC std_ss [pre_m0_def]
+    FULL_SIMP_TAC std_ss [pre_m0_def] >>
+    REPEAT STRIP_TAC >>
+
+(*
+    IMP_RES_TAC arithmeticTheory.LESS_EQ_IMP_LESS_SUC >>
+    POP_ASSUM (ASSUME_TAC o CONV_RULE EVAL) >>
+*)
+    IMP_RES_TAC arithmeticTheory.LESS_EQ_LESS_TRANS >>
+    POP_ASSUM MATCH_MP_TAC >>
+    EVAL_TAC
   ) >>
 
   ASSUME_TAC backlift_m0_mod_m0_pre_abstr_ex_thm >>
