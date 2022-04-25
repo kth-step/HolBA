@@ -141,6 +141,7 @@ val birs_prop_transfer_thm =
 val bprog_P_def = Define `
     bprog_P ((SymbConcSt pc st status):(bir_programcounter_t, string, bir_val_t, bir_status_t) symb_concst_t) =
       (status = BST_Running /\
+       pc.bpc_index = 0 /\
        bir_envty_list birenvtyl st /\
        bir_eval_exp ^bprecond (BEnv st) = SOME bir_val_true)
 `;
@@ -150,6 +151,7 @@ val bprog_P_thm = store_thm(
 !bs.
   bprog_P (birs_symb_to_concst bs) =
       (bs.bst_status = BST_Running /\
+       bs.bst_pc.bpc_index = 0 /\
        bir_envty_list_b birenvtyl bs.bst_environ /\
        bir_eval_exp ^bprecond bs.bst_environ = SOME bir_val_true)
 ``,
@@ -166,9 +168,10 @@ val bprog_Q_def = Define `
      (
        (pc2 = ^birs_state_end_lbl)
        /\
-       (?v1 v2. (st1 "countw" = SOME (BVal_Imm (Imm64 v1))) /\
+       (status2 = BST_Running /\
+        ?v1 v2. (st1 "countw" = SOME (BVal_Imm (Imm64 v1))) /\
                 (st2 "countw" = SOME (BVal_Imm (Imm64 v2))) /\
-                (v1 <+ v2) /\
+                (v1 <=+ 0xFFFFFFFFFFFFFF00w) /\
                 (v1 + 44w <=+ v2) /\
                 (v2 <=+ v1 + 47w))
      )
@@ -180,9 +183,10 @@ val bprog_Q_thm = store_thm(
     (
       (bs2.bst_pc = ^birs_state_end_lbl)
       /\
-      (?v1 v2. bir_env_lookup "countw" bs1.bst_environ = SOME (BVal_Imm (Imm64 v1)) /\
+      (bs2.bst_status = BST_Running /\
+       ?v1 v2. bir_env_lookup "countw" bs1.bst_environ = SOME (BVal_Imm (Imm64 v1)) /\
                bir_env_lookup "countw" bs2.bst_environ = SOME (BVal_Imm (Imm64 v2)) /\
-               (v1 <+ v2) /\
+               (v1 <=+ 0xFFFFFFFFFFFFFF00w) /\
                (v1 + 44w <=+ v2) /\
                (v2 <=+ v1 + 47w))
     )
@@ -555,7 +559,20 @@ bir_step_n_in_L_jgmt
   pre_bir_nL
   post_bir_nL
 ``,
-  cheat
+  REWRITE_TAC [bir_step_n_in_L_jgmt_def] >>
+  REWRITE_TAC [pre_bir_nL_def, pre_bir_def, bprecond_def] >>
+  REPEAT STRIP_TAC >>
+
+  ASSUME_TAC (Q.SPEC `st` bprog_bir_prop_thm) >>
+  REV_FULL_SIMP_TAC std_ss [] >>
+
+  FULL_SIMP_TAC std_ss [prove(``(\x. bir_exec_step_state ^(bprog_tm) x) = bir_exec_step_state ^(bprog_tm)``, cheat)] >>
+  Q.EXISTS_TAC `n` >>
+  Q.EXISTS_TAC `st'` >>
+  ASM_SIMP_TAC std_ss [] >>
+
+  REWRITE_TAC [post_bir_nL_def, post_bir_def] >>
+  ASM_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
 
