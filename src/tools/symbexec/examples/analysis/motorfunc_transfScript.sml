@@ -232,8 +232,8 @@ val bir_Pi_overapprox_Q_thm = store_thm(
   <=>
   (!sys2 bs bs' H.
      sys2 IN Pi ==>
-     (\bs. P (birs_symb_to_concst bs)) bs ==>
      birs_symb_matchstate sys H bs ==>
+     (\bs. P (birs_symb_to_concst bs)) bs ==>
      (?H'. symb_interpr_ext H' H /\ birs_symb_matchstate sys2 H' bs') ==>
      (\bs bs'. Q (birs_symb_to_concst bs) (birs_symb_to_concst bs')) bs bs')
 ``,
@@ -278,175 +278,198 @@ val bir_Pi_overapprox_Q_thm = store_thm(
   METIS_TAC []
 );
 
+
+
+val symb_interpr_get_countw_lookup_thm = store_thm(
+   "symb_interpr_get_countw_lookup_thm", ``
+!H v.
+  (symb_interpr_get H (BVar "sy_countw" (BType_Imm Bit64)) =
+        SOME (BVal_Imm (Imm64 v))) ==>
+  (bir_exp_subst
+             (FUN_FMAP (birs_interpret_subst_fmap_get H)
+                {BVar "sy_countw" (BType_Imm Bit64)})
+             (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
+  = BExp_Const (Imm64 v))
+``,
+  cheat
+);
+
+
 (* Q is implied by sys and Pi *)
 val bprog_Pi_overapprox_Q_thm = store_thm(
    "bprog_Pi_overapprox_Q_thm", ``
-Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f bprog_Q
+Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f(*(IMAGE birs_symb_to_symbst {a;b;c;d})*) bprog_Q
 ``,
   REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
-  REPEAT STRIP_TAC >>
+  REPEAT GEN_TAC >>
 
-  FULL_SIMP_TAC (std_ss) [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY] >> (
-    PAT_X_ASSUM ``A = B`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
+  REWRITE_TAC [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY] >>
+  STRIP_TAC >> (
+    POP_ASSUM (fn thm => (ASSUME_TAC thm >> Q.ABBREV_TAC `sys3 = ^((snd o dest_eq o concl) thm)`)) >>
+    ASM_SIMP_TAC std_ss [] >>
+    rename1 `sys4 = sys3` >>
+    rename1 `sys4 = sys2` >>
+    PAT_X_ASSUM ``A = B`` (K ALL_TAC) >>
+
+    DISCH_TAC >>
+    POP_ASSUM (fn thm => (ASSUME_TAC thm >> Q.ABBREV_TAC `sys1 = ^((snd o dest_comb o fst o dest_comb o fst o dest_comb o concl) thm)`)) >>
+    POP_ASSUM (fn thm0 => POP_ASSUM (fn thm1 => (ASSUME_TAC thm0 >> ASSUME_TAC thm1))) >>
+    REPEAT STRIP_TAC >>
+
+    (* now the proof state is somewhat clean*)
 
     FULL_SIMP_TAC (std_ss) [bprog_Q_thm] >>
-
-    FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
-
-
-(*
-*)
-
-
-    REPEAT (PAT_X_ASSUM ``symb_interpr_for_symbs (birs_symb_symbols A) B``
-      (fn thm =>
-         let
-           val tm = (hd o snd o strip_comb o concl) thm;
-           val birs_exps_of_senv_CONV = (
-    REPEATC (CHANGED_CONV (
-      (fn x => REWRITE_CONV [Once birs_exps_of_senv_COMP_thm] x) THENC
-      (SIMP_CONV (std_ss) []) THENC
-      (ONCE_DEPTH_CONV ( (PAT_CONV ``\A. if A then B else (C)`` (EVAL)))) THENC
-      SIMP_CONV (std_ss) []
-    ))
-  );
-
-           val birs_symb_symbols_CONV = (
-    SIMP_CONV std_ss [birs_symb_symbols_thm] THENC
-    SIMP_CONV (std_ss++birs_state_ss) [] THENC
-    SIMP_CONV (std_ss) [birs_exps_of_senv_thm] THENC
-    DEPTH_CONV (PAT_CONV ``\A. IMAGE bir_vars_of_exp A`` birs_exps_of_senv_CONV)
-  );
-(*
-birenvtyl_EVAL_thm
-val tm = ``
-  birs_symb_symbols
-  <|bsst_pc := <|bpc_label := BL_Address (Imm32 2826w); bpc_index := 2|>;
-    bsst_environ :=
-      (K NONE)⦇
-        "countw" ↦
-          SOME
-            (BExp_BinExp BIExp_Plus
-               (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-               (BExp_Const (Imm64 1w)));
-        "MEM" ↦ SOME (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)));
-        "PSR_C" ↦ SOME (BExp_Den (BVar "sy_PSR_C" (BType_Imm Bit1)));
-        "PSR_N" ↦ SOME (BExp_Den (BVar "sy_PSR_N" (BType_Imm Bit1)));
-        "PSR_V" ↦ SOME (BExp_Den (BVar "sy_PSR_V" (BType_Imm Bit1)));
-        "PSR_Z" ↦ SOME (BExp_Den (BVar "sy_PSR_Z" (BType_Imm Bit1)));
-        "R0" ↦ SOME (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)));
-        "R1" ↦ SOME (BExp_Den (BVar "sy_R1" (BType_Imm Bit32)));
-        "R2" ↦ SOME (BExp_Den (BVar "sy_R2" (BType_Imm Bit32)));
-        "R3" ↦ SOME (BExp_Den (BVar "sy_R3" (BType_Imm Bit32)));
-        "R4" ↦ SOME (BExp_Den (BVar "sy_R4" (BType_Imm Bit32)));
-        "R5" ↦ SOME (BExp_Den (BVar "sy_R5" (BType_Imm Bit32)));
-        "R6" ↦ SOME (BExp_Den (BVar "sy_R6" (BType_Imm Bit32)));
-        "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
-        "R8" ↦ SOME (BExp_Den (BVar "sy_R8" (BType_Imm Bit32)));
-        "R9" ↦ SOME (BExp_Den (BVar "sy_R9" (BType_Imm Bit32)));
-        "R10" ↦ SOME (BExp_Den (BVar "sy_R10" (BType_Imm Bit32)));
-        "R11" ↦ SOME (BExp_Den (BVar "sy_R11" (BType_Imm Bit32)));
-        "R12" ↦ SOME (BExp_Den (BVar "sy_R12" (BType_Imm Bit32)));
-        "LR" ↦ SOME (BExp_Den (BVar "sy_LR" (BType_Imm Bit32)));
-        "SP_main" ↦ SOME (BExp_Den (BVar "sy_SP_main" (BType_Imm Bit32)));
-        "SP_process" ↦
-          SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
-        "ModeHandler" ↦
-          SOME (BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1)));
-        "countw" ↦ SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-      ⦈; bsst_status := BST_Running; bsst_pcond := (BExp_BinPred BIExp_Equal
-                   (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)))
-                   (BExp_Den (BVar "sy_R1" (BType_Imm Bit32))))|>``;
-
-birs_symb_symbols_CONV tm
-
-val tm2 = ``birs_exps_of_senv_COMP {} 
-             (K NONE)⦇
-               "countw" ↦
-                 SOME
-                   (BExp_BinExp BIExp_Plus
-                      (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-                      (BExp_Const (Imm64 1w)));
-               "MEM" ↦ SOME (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)));
-               "PSR_C" ↦ SOME (BExp_Den (BVar "sy_PSR_C" (BType_Imm Bit1)));
-               "PSR_N" ↦ SOME (BExp_Den (BVar "sy_PSR_N" (BType_Imm Bit1)));
-               "PSR_V" ↦ SOME (BExp_Den (BVar "sy_PSR_V" (BType_Imm Bit1)));
-               "PSR_Z" ↦ SOME (BExp_Den (BVar "sy_PSR_Z" (BType_Imm Bit1)));
-               "R0" ↦ SOME (BExp_Den (BVar "sy_R0" (BType_Imm Bit32)));
-               "R1" ↦ SOME (BExp_Den (BVar "sy_R1" (BType_Imm Bit32)));
-               "R2" ↦ SOME (BExp_Den (BVar "sy_R2" (BType_Imm Bit32)));
-               "R3" ↦ SOME (BExp_Den (BVar "sy_R3" (BType_Imm Bit32)));
-               "R4" ↦ SOME (BExp_Den (BVar "sy_R4" (BType_Imm Bit32)));
-               "R5" ↦ SOME (BExp_Den (BVar "sy_R5" (BType_Imm Bit32)));
-               "R6" ↦ SOME (BExp_Den (BVar "sy_R6" (BType_Imm Bit32)));
-               "R7" ↦ SOME (BExp_Den (BVar "sy_R7" (BType_Imm Bit32)));
-               "R8" ↦ SOME (BExp_Den (BVar "sy_R8" (BType_Imm Bit32)));
-               "R9" ↦ SOME (BExp_Den (BVar "sy_R9" (BType_Imm Bit32)));
-               "R10" ↦ SOME (BExp_Den (BVar "sy_R10" (BType_Imm Bit32)));
-               "R11" ↦ SOME (BExp_Den (BVar "sy_R11" (BType_Imm Bit32)));
-               "R12" ↦ SOME (BExp_Den (BVar "sy_R12" (BType_Imm Bit32)));
-               "LR" ↦ SOME (BExp_Den (BVar "sy_LR" (BType_Imm Bit32)));
-               "SP_main" ↦
-                 SOME (BExp_Den (BVar "sy_SP_main" (BType_Imm Bit32)));
-               "SP_process" ↦
-                 SOME (BExp_Den (BVar "sy_SP_process" (BType_Imm Bit32)));
-               "ModeHandler" ↦
-                 SOME (BExp_Den (BVar "sy_ModeHandler" (BType_Imm Bit1)));
-               "countw" ↦
-                 SOME (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-             ⦈``;
-val tm2 = ``birs_exps_of_senv_COMP {} 
-             (K NONE)⦇
-               "countw" ↦
-                 SOME
-                   (BExp_BinExp BIExp_Plus
-                      (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-                      (BExp_Const (Imm64 1w)));
-               "MEM" ↦ SOME (BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)))
-             ⦈``;
-
-birs_exps_of_senv_CONV tm2
-
-*)
-           val _ = print_term tm; 
-           val conv = birs_symb_symbols_CONV THENC EVAL;
-           val thm_res = (computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC conv) tm;
-           val _ = print_term (concl thm_res);
-         in
-           ASSUME_TAC (REWRITE_RULE [Once thm_res] thm)
-         end)) >>
+    (* pc *)
+    CONJ_TAC >- (
+      Q.UNABBREV_TAC `sys2` >>
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
+    ) >>
+    (* status Running *)
+    CONJ_TAC >- (
+      Q.UNABBREV_TAC `sys2` >>
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
+    ) >>
+    (* countw property *)
 
     `BVar "sy_countw" (BType_Imm Bit64) IN symb_interpr_dom H` by (
+      `symb_interpr_for_symbs (birs_symb_symbols sys1) H` by (
+        FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
+      ) >>
+
+      Q.UNABBREV_TAC `sys1` >>
+      POP_ASSUM (ASSUME_TAC o CONV_RULE (
+          REWRITE_CONV [bsysprecond_thm, birenvtyl_EVAL_thm] THENC
+          computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC
+          aux_setLib.birs_symb_symbols_MATCH_CONV)
+        ) >>
+
       FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
     ) >>
     `BVar "sy_countw" (BType_Imm Bit64) IN symb_interpr_dom H'` by (
+      `symb_interpr_for_symbs (birs_symb_symbols sys2) H'` by (
+        FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def]
+      ) >>
+
+      Q.UNABBREV_TAC `sys2` >>
+      POP_ASSUM (ASSUME_TAC o CONV_RULE (
+          REWRITE_CONV [bsysprecond_thm, birenvtyl_EVAL_thm] THENC
+          computeLib.RESTR_EVAL_CONV [``birs_symb_symbols``] THENC
+          aux_setLib.birs_symb_symbols_MATCH_CONV)
+        ) >>
+
       FULL_SIMP_TAC (std_ss) [symb_interpr_for_symbs_def, INSERT_SUBSET]
     ) >>
-
-    FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def] >>
-    REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"countw"`)) >>
-    FULL_SIMP_TAC (std_ss) [] >>
 
     `symb_interpr_get H' (BVar "sy_countw" (BType_Imm Bit64)) = symb_interpr_get H (BVar "sy_countw" (BType_Imm Bit64))` by (
       FULL_SIMP_TAC std_ss [symb_interpr_ext_def, symb_interprs_eq_for_def]
     ) >>
 
-    FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_interpr_welltyped_def] >>
-    REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `BVar "sy_countw" (BType_Imm Bit64)`)) >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+    (* *)
 
-    Cases_on `symb_interpr_get H (BVar "sy_countw" (BType_Imm Bit64))` >- (
-      METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm, optionTheory.option_CLAUSES]
+(*
+    `!v'.
+       bir_env_lookup "countw" bs'.bst_environ = SOME v' /\
+       birs_interpret_fun H' (THE (sys2.bsst_environ "countw")) = SOME v'` by (
     ) >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [optionTheory.option_CLAUSES] >>
 
+symb_interpr_get_countw_lookup_thm
+*)
+
+    `?v1. symb_interpr_get H (BVar "sy_countw" (BType_Imm Bit64)) = SOME (BVal_Imm (Imm64 v1))` by (
+      Q.UNABBREV_TAC `sys1` >>
+      Q.UNABBREV_TAC `sys2` >>
+
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
+
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def] >>
+      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"countw"`)) >>
+      FULL_SIMP_TAC (std_ss) [] >>
+
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_interpr_welltyped_def] >>
+      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `BVar "sy_countw" (BType_Imm Bit64)`)) >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+      REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+      Cases_on `symb_interpr_get H (BVar "sy_countw" (BType_Imm Bit64))` >- (
+        METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm, optionTheory.option_CLAUSES]
+      ) >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [optionTheory.option_CLAUSES] >>
+
+      `bir_val_is_Imm_s Bit64 x` by (
+        METIS_TAC [bir_valuesTheory.bir_val_checker_TO_type_of]
+      ) >>
+      FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_val_is_Imm_s_def, bir_immTheory.n2bs_def] >>
+(*
+      Cases_on `x` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) []
+      ) >>
+      Cases_on `b` >> (
+        FULL_SIMP_TAC (std_ss++holBACore_ss) []
+      ) >>
+*)
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+
+    `(?v.
+       bir_env_lookup "countw" bs.bst_environ = SOME v /\
+       birs_interpret_fun H (THE (sys1.bsst_environ "countw")) = SOME v) /\
+     (?v'.
+       bir_env_lookup "countw" bs'.bst_environ = SOME v' /\
+       birs_interpret_fun H' (THE (sys2.bsst_environ "countw")) = SOME v')` by (
+      Q.UNABBREV_TAC `sys1` >>
+      Q.UNABBREV_TAC `sys2` >>
+
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
+
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_matchenv_def] >>
+      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `"countw"`)) >>
+      FULL_SIMP_TAC (std_ss) [] >>
+
+      FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_interpr_welltyped_def] >>
+      REPEAT (PAT_X_ASSUM ``!A.B`` (ASSUME_TAC o EVAL_RULE o Q.SPEC `BVar "sy_countw" (BType_Imm Bit64)`)) >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+      REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+      Cases_on `symb_interpr_get H (BVar "sy_countw" (BType_Imm Bit64))` >- (
+        METIS_TAC [symb_interpr_dom_IMP_get_CASES_thm, optionTheory.option_CLAUSES]
+      ) >>
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [optionTheory.option_CLAUSES] >>
+
+      FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_auxTheory.birs_gen_env_GET_thm, birs_auxTheory.birs_gen_env_GET_NULL_thm] >>
+      ASM_REWRITE_TAC [birs_interpret_fun_def, birs_interpret_subst_def, birs_interpret_subst_fmap_def, bir_typing_expTheory.bir_vars_of_exp_def, bir_envTheory.bir_env_empty_def, bir_envTheory.bir_env_map_empty_def] >>
+
+      computeLib.RESTR_EVAL_TAC [``bir_exp_subst``] >>
+      ASM_REWRITE_TAC []
+    ) >>
+
+(*
     FULL_SIMP_TAC (std_ss) [bir_typing_expTheory.bir_vars_of_exp_def, UNION_EMPTY, bir_exp_subst_def, bir_exp_subst_var_def, FINITE_SING, finite_mapTheory.FLOOKUP_FUN_FMAP, IN_SING, birs_interpret_subst_fmap_get_def] >>
     REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+*)
 
-    `bir_val_is_Imm_s Bit64 x` by (
-      METIS_TAC [bir_valuesTheory.bir_val_checker_TO_type_of]
-    ) >>
+    REPEAT (PAT_X_ASSUM ``birs_symb_matchstate A B C`` (K ALL_TAC)) >>
+    Q.UNABBREV_TAC `sys1` >>
+    Q.UNABBREV_TAC `sys2` >>
+    FULL_SIMP_TAC (std_ss++birs_state_ss) [] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [birs_auxTheory.birs_gen_env_GET_thm, birs_auxTheory.birs_gen_env_GET_NULL_thm] >>
+    (* now the proof state is pretty much cleaned up *)
+
+    FULL_SIMP_TAC std_ss [birs_interpret_fun_thm] >>
+    REPEAT (PAT_X_ASSUM ``birs_interpret_fun_ALT A B = SOME C`` (ASSUME_TAC o computeLib.RESTR_EVAL_RULE [])) >>
+    FULL_SIMP_TAC std_ss [] >>
+    REV_FULL_SIMP_TAC std_ss [] >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+    PAT_X_ASSUM ``BVal_Imm (Imm64 A) = B`` (ASSUME_TAC o GSYM) >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+(*
+    now we are only left with the word relation
+*)
+
+    cheat
+
+(*
     FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_val_is_Imm_s_def, bir_immTheory.n2bs_def] >>
 
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_to_constexp_def] >>
@@ -467,6 +490,7 @@ birs_exps_of_senv_CONV tm2
 Q.EXISTS_TAC `n2w n + 44w`
     FULL_SIMP_TAC (std_ss++holBACore_ss) []
 
+*)
 *)
 
   )
