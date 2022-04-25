@@ -283,26 +283,20 @@ val bprog_Pi_overapprox_Q_thm = store_thm(
    "bprog_Pi_overapprox_Q_thm", ``
 Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f bprog_Q
 ``,
-  cheat >>
-  SIMP_TAC std_ss [(REWRITE_RULE [EVAL ``birenvtyl``] o EVAL) ``bir_senv_GEN_list birenvtyl``, bsysprecond_thm] >>
-  FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
+  REWRITE_TAC [bir_Pi_overapprox_Q_thm] >>
   REPEAT STRIP_TAC >>
 
-  ASSUME_TAC ((GSYM o Q.SPEC `s`) birs_symb_to_concst_EXISTS_thm) >>
-  FULL_SIMP_TAC (std_ss) [] >>
-  ASSUME_TAC ((GSYM o Q.SPEC `s'`) birs_symb_to_concst_EXISTS_thm) >>
-  FULL_SIMP_TAC (std_ss) [] >>
-
-  FULL_SIMP_TAC (std_ss) [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT] >> REPEAT STRIP_TAC >> (
-    FULL_SIMP_TAC (std_ss) [pred_setTheory.NOT_IN_EMPTY]
-  ) >> (
-    cheat >>
-    PAT_X_ASSUM ``A = birs_symb_to_symbst B`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
+  FULL_SIMP_TAC (std_ss) [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT, pred_setTheory.NOT_IN_EMPTY] >> (
+    PAT_X_ASSUM ``A = B`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
 
     FULL_SIMP_TAC (std_ss) [bprog_Q_thm] >>
-    FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
 
     FULL_SIMP_TAC (std_ss++birs_state_ss) [birs_symb_matchstate_def] >>
+
+
+(*
+*)
+
 
     REPEAT (PAT_X_ASSUM ``symb_interpr_for_symbs (birs_symb_symbols A) B``
       (fn thm =>
