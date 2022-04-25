@@ -224,13 +224,66 @@ P_entails_an_interpret (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^
 
 (* ........................... *)
 
+
+val bir_Pi_overapprox_Q_thm = store_thm(
+   "bir_Pi_overapprox_Q_thm", ``
+!p P sys Pi Q.
+  (Pi_overapprox_Q (bir_symb_rec_sbir p) P (birs_symb_to_symbst sys) (IMAGE birs_symb_to_symbst Pi) Q)
+  <=>
+  (!sys2 bs bs' H.
+     sys2 IN Pi ==>
+     (\bs. P (birs_symb_to_concst bs)) bs ==>
+     birs_symb_matchstate sys H bs ==>
+     (?H'. symb_interpr_ext H' H /\ birs_symb_matchstate sys2 H' bs') ==>
+     (\bs bs'. Q (birs_symb_to_concst bs) (birs_symb_to_concst bs')) bs bs')
+``,
+  FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
+
+  EQ_TAC >- (
+    REPEAT STRIP_TAC >>
+    PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPECL [`birs_symb_to_symbst sys2`, `birs_symb_to_concst bs`, `birs_symb_to_concst bs'`, `H`]) >>
+
+    REV_FULL_SIMP_TAC (std_ss) [IMAGE_IN, symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
+    METIS_TAC []
+  ) >>
+
+  REPEAT STRIP_TAC >>
+
+  `?bsys. sys' = birs_symb_to_symbst bsys` by (
+    METIS_TAC [birs_symb_to_symbst_EXISTS_thm]
+  ) >>
+  `?bs.  s  = birs_symb_to_concst bs /\
+   ?bs'. s' = birs_symb_to_concst bs'` by (
+    METIS_TAC [birs_symb_to_concst_EXISTS_thm]
+  ) >>
+
+  PAT_X_ASSUM ``!x.A`` (ASSUME_TAC o Q.SPECL [`bsys`, `bs`, `bs'`, `H`]) >>
+
+  `bsys IN Pi` by (
+    FULL_SIMP_TAC std_ss [] >>
+
+    `birs_symb_from_symbst o birs_symb_to_symbst = I` by (
+      SIMP_TAC std_ss [combinTheory.o_DEF, bir_symbTheory.birs_symb_to_from_symbst_thm] >>
+      MATCH_MP_TAC boolTheory.EQ_EXT >>
+      SIMP_TAC std_ss [combinTheory.I_THM]
+    ) >>
+    METIS_TAC [IMAGE_IN, IMAGE_IMAGE, bir_symbTheory.birs_symb_to_from_symbst_thm, IMAGE_I]
+  ) >>
+
+  FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
+  REV_FULL_SIMP_TAC (std_ss) [symb_matchstate_ext_def, birs_symb_matchstate_EQ_thm] >>
+  METIS_TAC []
+);
+
 (* Q is implied by sys and Pi *)
 val bprog_Pi_overapprox_Q_thm = store_thm(
    "bprog_Pi_overapprox_Q_thm", ``
 Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_state_init_pre) ^Pi_f bprog_Q
 ``,
   cheat >>
-
   SIMP_TAC std_ss [(REWRITE_RULE [EVAL ``birenvtyl``] o EVAL) ``bir_senv_GEN_list birenvtyl``, bsysprecond_thm] >>
   FULL_SIMP_TAC (std_ss++birs_state_ss) [Pi_overapprox_Q_def] >>
   REPEAT STRIP_TAC >>
@@ -243,6 +296,7 @@ Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_st
   FULL_SIMP_TAC (std_ss) [pred_setTheory.IMAGE_INSERT, pred_setTheory.IMAGE_EMPTY, pred_setTheory.IN_INSERT] >> REPEAT STRIP_TAC >> (
     FULL_SIMP_TAC (std_ss) [pred_setTheory.NOT_IN_EMPTY]
   ) >> (
+    cheat >>
     PAT_X_ASSUM ``A = birs_symb_to_symbst B`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >>
 
     FULL_SIMP_TAC (std_ss) [bprog_Q_thm] >>
@@ -403,8 +457,17 @@ birs_exps_of_senv_CONV tm2
 
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_to_constexp_def] >>
     REPEAT (PAT_X_ASSUM ``BVal_Imm (Imm64 (n2w B)) = A`` (ASSUME_TAC o GSYM)) >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_to_constexp_def]
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_to_constexp_def] >>
 
+    Cases_on `v` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+    Cases_on `b` >> (
+      FULL_SIMP_TAC (std_ss++holBACore_ss) []
+    ) >>
+
+    Q.ABBREV_TAC `d = (n2w n):word64` >>
+    cheat
 
 (*
 Q.EXISTS_TAC `n2w n + 44w`
@@ -566,7 +629,9 @@ bir_step_n_in_L_jgmt
   ASSUME_TAC (Q.SPEC `st` bprog_bir_prop_thm) >>
   REV_FULL_SIMP_TAC std_ss [] >>
 
-  FULL_SIMP_TAC std_ss [prove(``(\x. bir_exec_step_state ^(bprog_tm) x) = bir_exec_step_state ^(bprog_tm)``, cheat)] >>
+  FULL_SIMP_TAC std_ss [
+     prove(``(\x. bir_exec_step_state ^(bprog_tm) x) = bir_exec_step_state ^(bprog_tm)``, MATCH_MP_TAC boolTheory.EQ_EXT >> SIMP_TAC std_ss [])
+    ] >>
   Q.EXISTS_TAC `n` >>
   Q.EXISTS_TAC `st'` >>
   ASM_SIMP_TAC std_ss [] >>
