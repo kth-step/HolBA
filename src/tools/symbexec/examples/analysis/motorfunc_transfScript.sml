@@ -279,19 +279,16 @@ val bir_Pi_overapprox_Q_thm = store_thm(
 );
 
 
-
-val symb_interpr_get_countw_lookup_thm = store_thm(
-   "symb_interpr_get_countw_lookup_thm", ``
-!H v.
-  (symb_interpr_get H (BVar "sy_countw" (BType_Imm Bit64)) =
-        SOME (BVal_Imm (Imm64 v))) ==>
-  (bir_exp_subst
-             (FUN_FMAP (birs_interpret_subst_fmap_get H)
-                {BVar "sy_countw" (BType_Imm Bit64)})
-             (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-  = BExp_Const (Imm64 v))
+val bir_env_read_countw_lookup_thm = store_thm(
+   "bir_env_read_countw_lookup_thm", ``
+!env v.
+  (bir_env_lookup "countw" env = SOME (BVal_Imm (Imm64 v))) ==>
+  (bir_env_read (BVar "countw" (BType_Imm Bit64)) env = SOME (BVal_Imm (Imm64 v)))
 ``,
-  cheat
+  Cases_on `env` >>
+
+  FULL_SIMP_TAC std_ss [bir_envTheory.bir_env_read_def, bir_envTheory.bir_env_check_type_def, bir_envTheory.bir_env_lookup_type_def, bir_envTheory.bir_env_lookup_def] >>
+  FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
 
@@ -362,6 +359,11 @@ Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_st
 
     `symb_interpr_get H' (BVar "sy_countw" (BType_Imm Bit64)) = symb_interpr_get H (BVar "sy_countw" (BType_Imm Bit64))` by (
       FULL_SIMP_TAC std_ss [symb_interpr_ext_def, symb_interprs_eq_for_def]
+    ) >>
+
+    `bir_eval_exp bprecond bs.bst_environ = SOME bir_val_true` by (
+      Q.UNABBREV_TAC `sys1` >>
+      FULL_SIMP_TAC (std_ss) [bprog_P_thm]
     ) >>
 
     (* *)
@@ -463,11 +465,19 @@ symb_interpr_get_countw_lookup_thm
     PAT_X_ASSUM ``BVal_Imm (Imm64 A) = B`` (ASSUME_TAC o GSYM) >>
     FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
+    (* still have to unpack the precondition for the space fact about countw *)
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bprecond_def] >>
+    REPEAT (PAT_X_ASSUM ``bir_eval_bin_exp BIExp_And A B = SOME bir_val_true`` (ASSUME_TAC o MATCH_MP birs_rulesTheory.bir_conj_true) >> FULL_SIMP_TAC std_ss []) >>
+    IMP_RES_TAC bir_env_read_countw_lookup_thm >>
+    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_bool_expTheory.bir_val_TF_bool2b_DEF] >>
+    PAT_X_ASSUM ``v1 <=+ A`` (MP_TAC) >>
+    REPEAT (POP_ASSUM (K ALL_TAC)) >>
+
 (*
     now we are only left with the word relation
 *)
 
-    cheat
+    HolSmtLib.Z3_ORACLE_TAC
 
 (*
     FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_val_is_Imm_s_def, bir_immTheory.n2bs_def] >>
