@@ -313,7 +313,7 @@ Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_st
     POP_ASSUM (fn thm0 => POP_ASSUM (fn thm1 => (ASSUME_TAC thm0 >> ASSUME_TAC thm1))) >>
     REPEAT STRIP_TAC >>
 
-    (* now the proof state is somewhat clean*)
+    (* now the proof state is somewhat clean *)
 
     FULL_SIMP_TAC (std_ss) [bprog_Q_thm] >>
     (* pc *)
@@ -368,15 +368,6 @@ Pi_overapprox_Q (bir_symb_rec_sbir ^bprog) bprog_P (birs_symb_to_symbst ^birs_st
 
     (* *)
 
-(*
-    `!v'.
-       bir_env_lookup "countw" bs'.bst_environ = SOME v' /\
-       birs_interpret_fun H' (THE (sys2.bsst_environ "countw")) = SOME v'` by (
-    ) >>
-
-symb_interpr_get_countw_lookup_thm
-*)
-
     `?v1. symb_interpr_get H (BVar "sy_countw" (BType_Imm Bit64)) = SOME (BVal_Imm (Imm64 v1))` by (
       Q.UNABBREV_TAC `sys1` >>
       Q.UNABBREV_TAC `sys2` >>
@@ -401,14 +392,7 @@ symb_interpr_get_countw_lookup_thm
         METIS_TAC [bir_valuesTheory.bir_val_checker_TO_type_of]
       ) >>
       FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_val_is_Imm_s_def, bir_immTheory.n2bs_def] >>
-(*
-      Cases_on `x` >> (
-        FULL_SIMP_TAC (std_ss++holBACore_ss) []
-      ) >>
-      Cases_on `b` >> (
-        FULL_SIMP_TAC (std_ss++holBACore_ss) []
-      ) >>
-*)
+
       FULL_SIMP_TAC (std_ss++holBACore_ss) []
     ) >>
 
@@ -444,11 +428,6 @@ symb_interpr_get_countw_lookup_thm
       ASM_REWRITE_TAC []
     ) >>
 
-(*
-    FULL_SIMP_TAC (std_ss) [bir_typing_expTheory.bir_vars_of_exp_def, UNION_EMPTY, bir_exp_subst_def, bir_exp_subst_var_def, FINITE_SING, finite_mapTheory.FLOOKUP_FUN_FMAP, IN_SING, birs_interpret_subst_fmap_get_def] >>
-    REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
-*)
-
     REPEAT (PAT_X_ASSUM ``birs_symb_matchstate A B C`` (K ALL_TAC)) >>
     Q.UNABBREV_TAC `sys1` >>
     Q.UNABBREV_TAC `sys2` >>
@@ -478,31 +457,6 @@ symb_interpr_get_countw_lookup_thm
 *)
 
     HolSmtLib.Z3_ORACLE_TAC
-
-(*
-    FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_val_is_Imm_s_def, bir_immTheory.n2bs_def] >>
-
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_to_constexp_def] >>
-    REPEAT (PAT_X_ASSUM ``BVal_Imm (Imm64 (n2w B)) = A`` (ASSUME_TAC o GSYM)) >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_val_to_constexp_def] >>
-
-    Cases_on `v` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) >>
-    Cases_on `b` >> (
-      FULL_SIMP_TAC (std_ss++holBACore_ss) []
-    ) >>
-
-    Q.ABBREV_TAC `d = (n2w n):word64` >>
-    cheat
-
-(*
-Q.EXISTS_TAC `n2w n + 44w`
-    FULL_SIMP_TAC (std_ss++holBACore_ss) []
-
-*)
-*)
-
   )
 );
 (* ........................... *)
