@@ -285,7 +285,12 @@ val weak_rel_steps_intermediate_labels3 = prove(``
   m.pc ms'' IN ls2
   ``,
 
-cheat
+REPEAT STRIP_TAC >>
+fs [weak_rel_steps_def] >>
+QSPECL_X_ASSUM ``!n'.
+                 n' < n /\ n' > 0 ==>
+                 ?ms''. FUNPOW_OPT m.trs n' ms = SOME ms'' /\ m.pc ms'' NOTIN ls1`` [`n'`] >>
+rfs []
 );
 
 val weak_intermediate_labels2 = prove(``
@@ -396,19 +401,6 @@ REPEAT STRIP_TAC >>
 METIS_TAC [weak_unique_thm]
 );
 
-(* TODO: This is introduced since negating m.weak gets weird *)
-(* TODO: Still needed? *)
-val trs_in_lblset_def = Define `
-  trs_in_lblset m ms n ls =
-    let
-      ms'_opt = FUNPOW_OPT m.trs n ms
-    in
-    if IS_NONE ms'_opt
-    then F
-    else if m.pc (THE ms'_opt) IN ls
-         then T
-         else F
-`;
 
 val weak_partial_seq_rule_thm = store_thm("weak_partial_seq_rule_thm",
   ``!m l ls1 ls2 pre post.
@@ -452,35 +444,20 @@ val weak_rel_steps_list_states = prove(``
  weak_model m ==>
  weak_rel_steps m ms ls ms' n ==>
  ?ms_list.
+  (!i. m.pc (EL i ms_list) = l) /\
   (LENGTH ms_list = 0 ==> weak_rel_steps m ms ({l} UNION ls) ms' n) /\
   (LENGTH ms_list > 0 ==>
-  !i. (?n'. weak_rel_steps m ms ({l} UNION ls) (HD ms_list) n' /\ n' < n /\ n' > 0) /\
-      (i < ((LENGTH ms_list) - 1) ==> ?n'.
-       weak_rel_steps m (EL i ms_list) ({l} UNION ls) (EL (i+1) ms_list) n' /\ n' < n /\ n' > 0) /\
-      ?n''. weak_rel_steps m (EL ((LENGTH ms_list) - 1) ms_list) ({l} UNION ls) ms' n'' /\ n'' > 0)
+   (?n'. weak_rel_steps m ms ({l} UNION ls) (HD ms_list) n' /\
+         weak_rel_steps m (HD ms_list) ls ms' (n - n') /\ n' < n /\ n' > 0) /\
+   (?n''. weak_rel_steps m (EL ((LENGTH ms_list) - 1) ms_list) ({l} UNION ls) ms' n'' /\ n'' > 0) /\
+    !i. (i < ((LENGTH ms_list) - 1) ==> ?n' n''.
+         weak_rel_steps m (EL i ms_list) ({l} UNION ls) (EL (i+1) ms_list) n' /\
+         weak_rel_steps m (EL (i+1) ms_list) ls ms' n'' /\ n' < n /\ n' > 0 /\ n'' < n /\ n'' > 0))
+
 ``,
 
 cheat
 );
-
-(* OLD
-val weak_list_states = prove(``
-!m ms l ls ms'.
- weak_model m ==>
- weak ms ls ms' ==>
- ?ms_list.
-  (LENGTH ms_list = 0 ==> m.weak ms ({l} UNION ls) ms') /\
-  (LENGTH ms_list > 0 ==>
-  !i. (i = 0 ==> m.weak ms ({l} UNION ls) (EL i ms_list) /\
-                 m.weak (EL i ms_list) ({l} UNION ls) ms') /\
-      (i > 0 /\ i < ((LENGTH ms_list) - 1) ==>
-       m.weak (EL i ms_list) ({l} UNION ls) (EL (i+1) ms_list)) /\
-      m.weak (EL ((LENGTH ms_list) - 1) ms_list) ({l} UNION ls) ms')
-``,
-
-cheat
-);
-*)
 
 val weak_partial_loop_contract_def = Define `
   weak_partial_loop_contract m l le invariant C1 =
@@ -520,40 +497,78 @@ subgoal `LENGTH ms_list > 0` >- (
 ) >>
 fs [] >>
 Cases_on `~C1 ms` >- (
- cheat
+ METIS_TAC []
 ) >>
 fs [] >>
-(* TODO: Fill this out *)
-subgoal `!i. i < LENGTH ms_list ==> m.pc (EL i ms_list) = l /\ invariant (EL i ms_list)` >- (
+subgoal `m.pc ms' <> l` >- (
+  METIS_TAC [weak_pc_in_thm, weak_rel_steps_imp]
+) >>
+subgoal `!i. i < LENGTH ms_list ==> 
+             (invariant (EL i ms_list) \/ post ms') /\
+             (C1 (EL i ms_list) \/ (~C1 (EL i ms_list) /\ post ms'))` >- (
  Induct_on `i` >- (
-  REPEAT STRIP_TAC >> (
-   fs [] >>
-   QSPECL_X_ASSUM  ``!i. _`` [`0`] >>
+  fs [] >>
+  QSPECL_X_ASSUM  ``!i. _`` [`0`] >>
+  subgoal `invariant (EL 0 ms_list)` >- (
    fs [] >>
    METIS_TAC [weak_rel_steps_intermediate_labels3, pred_setTheory.IN_SING]
-  )
+  ) >>
+  fs [] >>
+  Cases_on `C1 (HD ms_list)` >> (
+   fs []
+  ) >>
+  PAT_X_ASSUM  ``!ms ms'. _`` (fn thm => irule thm) >>
+  Q.EXISTS_TAC `HD ms_list` >>
+  fs [] >>
+  METIS_TAC []
  ) >>
  REPEAT STRIP_TAC >> (
   fs []
- ) >> (
-  QSPECL_X_ASSUM  ``!i. _`` [`i`] >>
+ ) >| [
+  QSPECL_X_ASSUM  ``!ms'' ms'3'.
+          m.pc ms'' = l ==>
+          invariant ms'' /\ C1 ms'' ==>
+          (?n. weak_rel_steps m ms'' ({l} UNION le) ms'3' n) ==>
+          m.pc ms'3' = l /\ invariant ms'3'`` [`EL i ms_list`, `EL (SUC i) ms_list`] >>
+  QSPECL_X_ASSUM  ``!i. m.pc (EL i ms_list) = l`` [`i`] >>
   fs [] >>
   rfs [] >>
-  QSPECL_X_ASSUM  ``!ms ms'. _`` [`EL i ms_list`, `EL (SUC i) ms_list`] >>
-  QSPECL_X_ASSUM  ``!ms ms'. _`` [`EL i ms_list`, `EL (SUC i) ms_list`] >>
-  rfs [] >>
-  subgoal `!i. i < LENGTH ms_list - 1 ==> C1 (EL i ms_list)` >- (
-   cheat
-  ) >>
   QSPECL_X_ASSUM  ``!i. _`` [`i`] >>
   rfs [] >>
-  fs [] >>
   `?n. weak_rel_steps m (EL i ms_list) ({l} UNION le) (EL (SUC i) ms_list) n` suffices_by (
    fs []
   ) >>
   Q.EXISTS_TAC `n'3'` >>
-  fs [arithmeticTheory.SUC_ONE_ADD]
- )
+  fs [arithmeticTheory.SUC_ONE_ADD],
+
+  Cases_on `C1 (EL (SUC i) ms_list)` >> (
+   fs []
+  ) >>
+  subgoal `invariant (EL (SUC i) ms_list)` >- (
+   QSPECL_X_ASSUM  ``!i. _`` [`i`] >>
+   QSPECL_X_ASSUM  ``!i. _`` [`i`] >>
+   rfs [arithmeticTheory.SUC_ONE_ADD] >>
+   METIS_TAC []
+  ) >>
+  PAT_X_ASSUM  ``!ms ms'. _`` (fn thm => irule thm) >>
+  QSPECL_X_ASSUM  ``!i. _`` [`i`] >>
+  Cases_on `SUC i = LENGTH ms_list - 1` >- (
+   (* SUC i is last in ms_list *)
+   QSPECL_X_ASSUM  ``!i. _`` [`SUC i`] >>
+   Q.EXISTS_TAC `EL (SUC i) ms_list` >>
+   fs [] >>
+   rfs [] >>
+   PAT_ASSUM ``weak_model m`` (fn thm => fs [GSYM (HO_MATCH_MP weak_rel_steps_equiv thm)]) >>
+   METIS_TAC [weak_union_thm, pred_setTheory.IN_SING, weak_rel_steps_equiv]
+  ) >>
+  subgoal `SUC i < LENGTH ms_list - 1` >- (
+   fs []
+  ) >>
+  fs [] >>
+  Q.EXISTS_TAC `EL (SUC i) ms_list` >>
+  fs [arithmeticTheory.SUC_ONE_ADD] >>
+  METIS_TAC []
+ ]
 ) >>
 QSPECL_X_ASSUM  ``!ms ms'. _`` [`EL (LENGTH ms_list − 1) ms_list`, `ms'`] >>
 QSPECL_X_ASSUM  ``!ms ms'. _`` [`EL (LENGTH ms_list − 1) ms_list`, `ms'`] >>
@@ -564,30 +579,14 @@ subgoal `MEM (EL (LENGTH ms_list − 1) ms_list) ms_list` >- (
  METIS_TAC [rich_listTheory.EL_MEM]
 ) >>
 rfs [] >>
-Cases_on `C1 (EL (LENGTH ms_list − 1) ms_list)` >| [
+Cases_on `C1 (EL (LENGTH ms_list − 1) ms_list)` >> (
  fs [] >>
  QSPECL_X_ASSUM  ``!i. _`` [`LENGTH ms_list − 1`] >>
+ QSPECL_X_ASSUM  ``!i. _`` [`LENGTH ms_list − 1`] >>
  fs [] >>
- METIS_TAC [weak_pc_in_thm, weak_rel_steps_imp],
-
- subgoal `m.pc ms' <> l` >- (
-   METIS_TAC [weak_pc_in_thm, weak_rel_steps_imp]
- ) >>
- fs [] >>
- QSPECL_X_ASSUM  ``!i. A /\ B`` [`LENGTH ms_list − 1`] >>
- fs [] >>
- `?n. weak_rel_steps m (EL (LENGTH ms_list − 1) ms_list) le ms' n` suffices_by (
-  fs []
- ) >>
- subgoal `m.weak (EL (LENGTH ms_list − 1) ms_list) ({l} UNION le) ms'` >- (
-  METIS_TAC [weak_rel_steps_imp]
- ) >>
- PAT_ASSUM ``weak_model m`` (fn thm => fs [GSYM (HO_MATCH_MP weak_rel_steps_equiv thm)]) >>
- irule weak_union_pc_not_in_thm >>
- fs [] >>
- Q.EXISTS_TAC `{l}` >>
- fs [pred_setTheory.UNION_COMM]
-]
+ rfs [] >>
+ fs []
+)
 );
 
 val _ = export_theory();

@@ -88,7 +88,7 @@ Cases_on `n > n'` >- (
 FULL_SIMP_TAC arith_ss [] 
 );
 
-val weak_union_thm = prove(``
+val weak_union_thm = store_thm("weak_union_thm",``
   !m.
   weak_model m ==>
   !ms ls1 ls2 ms'.
