@@ -291,9 +291,9 @@ METIS_TAC [weak_unique_thm]
 val loop_step_def = Define `
   loop_step m ms var l le invariant C1 =
     let x:num = var ms in
-    (\ms'. (m.weak ms ({l} UNION le) ms') /\
-	   ((invariant ms) /\ (C1 ms)) /\
-	   (((m.pc ms')=l) /\ (invariant ms') /\ ((var ms') < x) /\ ((var ms') >= 0))
+    (\ms'. m.weak ms ({l} UNION le) ms' /\
+	   (invariant ms /\ C1 ms) /\
+	   ((m.pc ms' = l) /\ invariant ms' /\ (var ms' < x) /\ (var ms' >= 0))
     )
 `;
 
