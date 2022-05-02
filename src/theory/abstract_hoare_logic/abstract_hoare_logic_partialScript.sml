@@ -67,6 +67,102 @@ val weak_rel_steps_label = prove(``
 fs [weak_rel_steps_def]
 );
 
+(* Returns a list of n successive applications of f on s *)
+val FUNPOW_OPT_LIST_def = Define `
+ (FUNPOW_OPT_LIST f 0 s = SOME []) /\
+ (FUNPOW_OPT_LIST f (SUC n) s =
+  case f s of
+  | SOME res_hd =>
+   (case FUNPOW_OPT_LIST f n res_hd of
+    | SOME res_tl => SOME (res_hd::res_tl)
+    | NONE => NONE)
+  | NONE => NONE)`;
+
+val FUNPOW_OPT_LIST_0 = prove(``
+!f res x l.
+FUNPOW_OPT_LIST f 1 x = SOME l ==>
+f x = SOME res ==>
+l = [res]
+``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC pure_ss [arithmeticTheory.ONE, FUNPOW_OPT_LIST_def] >>
+fs []
+);
+
+val FUNPOW_OPT_LIST_EL_SOME = prove(``
+!f n n' x l.
+FUNPOW_OPT_LIST f n x = SOME l ==>
+n' < n ==>
+n' > 0 ==>
+?x'. FUNPOW_OPT f n' x = SOME x'
+``,
+
+cheat
+);
+
+val FUNPOW_OPT_LIST_EXISTS = prove(``
+!f n n' x x'.
+FUNPOW_OPT f n x = SOME x' ==>
+n' <= n ==>
+n' > 0 ==>
+?l. FUNPOW_OPT_LIST f n x = SOME l
+``,
+
+cheat
+);
+
+val FUNPOW_OPT_LIST_INDEX_FIND = prove(``
+!f P n x l i x'.
+FUNPOW_OPT_LIST f n x = SOME l ==>
+INDEX_FIND 0 P l = SOME (i, x') ==>
+FUNPOW_OPT f (SUC i) x = SOME x'
+``,
+
+cheat
+);
+
+val FUNPOW_OPT_LIST_EL = prove(``
+!f n n' x x' l.
+FUNPOW_OPT_LIST f n x = SOME l ==>
+n' <= n ==>
+n' > 0 ==>
+FUNPOW_OPT f n' x = SOME x' ==>
+(EL (PRE n') l) = x'
+``,
+
+cheat
+);
+
+val FUNPOW_OPT_LIST_LENGTH = prove(``
+!f n x l.
+FUNPOW_OPT_LIST f n x = SOME l ==>
+LENGTH l = n
+``,
+
+cheat
+);
+
+val INDEX_FIND_MEM = prove(``
+!P l x.
+P x ==>
+MEM x l ==>
+?i x'. INDEX_FIND 0 P l = SOME (i, x')
+``,
+
+cheat
+);
+
+val FILTER_MEM = prove(``
+!P l l' x.
+FILTER P l = l' ==>
+MEM x l' ==>
+P x
+``,
+
+cheat
+);
+
 (* If ms and ms' are not related by weak transition to ls for n transitions,
  * but if taking n transitions from ms takes you to ms' with a label in ls,
  * then there has to exist an ms'' and a *smallest* n' such that the label of
@@ -75,12 +171,10 @@ val weak_rel_steps_smallest_exists = prove(``
   !m.
   weak_model m ==>
   !ms ls ms' n.
-   (* TODO: Only needed for strict inequality *)
    ~(weak_rel_steps m ms ls ms' n) ==>
    n > 0 ==>
    FUNPOW_OPT m.trs n ms = SOME ms' ==>
    m.pc ms' IN ls ==>
-   (* TODO: Can be phrased better *)
    ?n' ms''.
     n' < n /\ n' > 0 /\
     FUNPOW_OPT m.trs n' ms = SOME ms'' /\
@@ -91,7 +185,74 @@ val weak_rel_steps_smallest_exists = prove(``
       ~(m.pc ms''' IN ls)))
   ``,
 
-cheat
+REPEAT STRIP_TAC >>
+fs [weak_rel_steps_def] >>
+subgoal `?ms_list. FUNPOW_OPT_LIST m.trs n ms = SOME ms_list` >- (
+ irule FUNPOW_OPT_LIST_EXISTS >>
+ fs [] >>
+ Q.EXISTS_TAC `n'` >>
+ fs []
+) >>
+subgoal `?i ms''. INDEX_FIND 0 (\ms. m.pc ms IN ls) ms_list = SOME (i, ms'')` >- (
+ (* OK: There is at least ms', possibly some earlier encounter of ls *)
+ irule INDEX_FIND_MEM >>
+ Q.EXISTS_TAC `ms'` >>
+ fs [listTheory.MEM_EL] >>
+ Q.EXISTS_TAC `PRE n` >>
+ CONJ_TAC >| [
+  IMP_RES_TAC FUNPOW_OPT_LIST_LENGTH >>
+  fs [],
+
+  REWRITE_TAC [Once EQ_SYM_EQ] >>
+  irule FUNPOW_OPT_LIST_EL >>
+  fs [] >>
+  Q.EXISTS_TAC `m.trs` >>
+  Q.EXISTS_TAC `n` >>
+  Q.EXISTS_TAC `ms` >>
+  fs []
+ ]
+) >>
+Q.EXISTS_TAC `SUC i` >>
+Q.EXISTS_TAC `ms''` >>
+fs [] >>
+subgoal `?ms'''. FUNPOW_OPT m.trs n' ms = SOME ms'''` >- (
+ METIS_TAC [FUNPOW_OPT_prev_EXISTS]
+) >>
+REPEAT STRIP_TAC >| [
+ (* SUC i < n since i must be at least n' - 1, since INDEX_FIND at least must have found ms''',
+  * if not any earlier encounter *)
+ fs [INDEX_FIND_EQ_SOME_0] >>
+ Cases_on `(PRE n') < i` >| [
+  (* Contradiction: ms''' occurs earlier than the first encounter of ls found by INDEX_FIND *)
+  subgoal `m.pc (EL (PRE n') ms_list) NOTIN ls` >- (
+   fs []
+  ) >>
+  subgoal `(EL (PRE n') ms_list) = ms'''` >- (
+   METIS_TAC [FUNPOW_OPT_LIST_EL, arithmeticTheory.LESS_IMP_LESS_OR_EQ]
+  ) >>
+  fs [],
+
+  fs []
+ ],
+
+ METIS_TAC [FUNPOW_OPT_LIST_INDEX_FIND],
+
+ fs [INDEX_FIND_EQ_SOME],
+
+ subgoal `n'' < n` >- (
+  fs [INDEX_FIND_EQ_SOME_0] >>
+  IMP_RES_TAC FUNPOW_OPT_LIST_LENGTH >>
+  fs []
+ ) >>
+ subgoal `?ms''''. FUNPOW_OPT m.trs n'' ms = SOME ms''''` >- (
+  METIS_TAC [FUNPOW_OPT_LIST_EL_SOME]
+ ) >>
+ subgoal `(EL (PRE n'') ms_list) = ms''''` >- (
+  METIS_TAC [FUNPOW_OPT_LIST_EL, arithmeticTheory.LESS_IMP_LESS_OR_EQ]
+ ) >>
+ fs [INDEX_FIND_EQ_SOME_0] >>
+ rw []
+]
 );
 
 val weak_rel_steps_intermediate_labels = prove(``
@@ -443,8 +604,9 @@ val weak_rel_steps_list_states = prove(``
 !m ms l ls ms' n.
  weak_model m ==>
  weak_rel_steps m ms ls ms' n ==>
+ l NOTIN ls ==>
  ?ms_list.
-  (!i. m.pc (EL i ms_list) = l) /\
+  (!i. i < LENGTH ms_list ==> m.pc (EL i ms_list) = l) /\
   (LENGTH ms_list = 0 ==> weak_rel_steps m ms ({l} UNION ls) ms' n) /\
   (LENGTH ms_list > 0 ==>
    (?n'. weak_rel_steps m ms ({l} UNION ls) (HD ms_list) n' /\
@@ -456,7 +618,70 @@ val weak_rel_steps_list_states = prove(``
 
 ``,
 
-cheat
+REPEAT STRIP_TAC >>
+subgoal `?ms_list. FUNPOW_OPT_LIST m.trs n ms = SOME ms_list` >- (
+ (* OK: Contradicts weak_rel_steps m ms ls ms' n otherwise *)
+ fs [weak_rel_steps_def] >>
+ irule FUNPOW_OPT_LIST_EXISTS >>
+ fs [] >>
+ Q.EXISTS_TAC `n` >>
+ fs []
+) >>
+Q.EXISTS_TAC `FILTER (\ms. m.pc ms = l) ms_list` >>
+REPEAT STRIP_TAC >| [
+ (* OK: Element in filtered list obeys filter property *)
+ subgoal `(\ms. m.pc ms = l) (EL i (FILTER (\ms. m.pc ms = l) ms_list))` >- (
+  irule FILTER_MEM >>
+  Q.EXISTS_TAC `ms_list` >>
+  Q.EXISTS_TAC `FILTER (\ms. m.pc ms = l) ms_list` >>
+  METIS_TAC [listTheory.MEM_EL]
+ ) >>
+ fs [],
+
+ (* OK: If filtered list is empty, l can be inserted in ending label set *)
+ fs [weak_rel_steps_def] >>
+ REPEAT STRIP_TAC >>
+ subgoal `?ms''. FUNPOW_OPT m.trs n' ms = SOME ms''` >- (
+  METIS_TAC [FUNPOW_OPT_LIST_EL_SOME]
+ ) >>
+ fs [listTheory.FILTER_EQ_NIL] >>
+ subgoal `EL (PRE n') ms_list = ms''` >- (
+  METIS_TAC [FUNPOW_OPT_LIST_EL, arithmeticTheory.LESS_IMP_LESS_OR_EQ]
+ ) >>
+ fs [listTheory.EVERY_EL] >>
+ QSPECL_X_ASSUM ``!n. _`` [`PRE n'`] >>
+ QSPECL_X_ASSUM ``!n'. _`` [`n'`] >>
+ fs [] >>
+ IMP_RES_TAC FUNPOW_OPT_LIST_LENGTH >>
+ rfs [],
+
+ (* OK: First encounter of l is reached when filtered list is non-empty,
+  * also weak transition can proceed from there directly to ending label set *)
+ subgoal `?ms''. ms'' = EL 0 (FILTER (\ms. m.pc ms = l) ms_list)` >- (
+  cheat
+ ) >>
+ (* Note: last state in ms_list can't be at label l *)
+ subgoal `?i. ms'' = EL i ms_list /\ i < (PRE n)` >- (
+  cheat
+ ) >>
+ Q.EXISTS_TAC `SUC i` >>
+ fs [] >>
+ REPEAT STRIP_TAC >| [
+  (* OK *)
+  cheat,
+
+  (* OK *)
+  cheat
+ ],
+
+ (* OK: Last element in filtered list can perform weak transition with ending
+  * label set ({l} UNION ls) and reach ms' *)
+ cheat,
+
+ (* Inductive case for weak transition with ending label set ({l} UNION ls)
+  * between elements of the list. Should also be OK *)
+ cheat
+]
 );
 
 val weak_partial_loop_contract_def = Define `
@@ -479,7 +704,7 @@ fs [abstract_partial_jgmt_def, weak_partial_loop_contract_def] >>
 REPEAT STRIP_TAC >>
 PAT_ASSUM ``weak_model m`` (fn thm => fs [HO_MATCH_MP weak_rel_steps_equiv thm]) >>
 IMP_RES_TAC weak_rel_steps_list_states >>
-QSPECL_X_ASSUM  ``!l. ?ms_list. _`` [`l`] >>
+(* QSPECL_X_ASSUM  ``!l. ?ms_list. _`` [`l`] >> *)
 fs [] >>
 Cases_on `ms_list = []` >- (
  fs [] >>
@@ -530,7 +755,7 @@ subgoal `!i. i < LENGTH ms_list ==>
           invariant ms'' /\ C1 ms'' ==>
           (?n. weak_rel_steps m ms'' ({l} UNION le) ms'3' n) ==>
           m.pc ms'3' = l /\ invariant ms'3'`` [`EL i ms_list`, `EL (SUC i) ms_list`] >>
-  QSPECL_X_ASSUM  ``!i. m.pc (EL i ms_list) = l`` [`i`] >>
+  QSPECL_X_ASSUM  ``!i. i < LENGTH ms_list ==> m.pc (EL i ms_list) = l`` [`i`] >>
   fs [] >>
   rfs [] >>
   QSPECL_X_ASSUM  ``!i. _`` [`i`] >>
