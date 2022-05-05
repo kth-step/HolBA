@@ -1,0 +1,48 @@
+
+composition.ld:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000400000 <addOne>:
+  400000:	d10043ff 	sub	sp, sp, #0x10
+  400004:	b9000fe0 	str	w0, [sp, #12]
+  400008:	b9400fe0 	ldr	w0, [sp, #12]
+  40000c:	11000400 	add	w0, w0, #0x1
+  400010:	910043ff 	add	sp, sp, #0x10
+  400014:	d65f03c0 	ret
+
+0000000000400018 <addTwo>:
+  400018:	d10043ff 	sub	sp, sp, #0x10
+  40001c:	b9000fe0 	str	w0, [sp, #12]
+  400020:	b9400fe0 	ldr	w0, [sp, #12]
+  400024:	11000800 	add	w0, w0, #0x2
+  400028:	910043ff 	add	sp, sp, #0x10
+  40002c:	d65f03c0 	ret
+
+0000000000400030 <comp>:
+  400030:	a9bd7bfd 	stp	x29, x30, [sp, #-48]!
+  400034:	910003fd 	mov	x29, sp
+  400038:	f90017e0 	str	x0, [sp, #40]
+  40003c:	f90013e1 	str	x1, [sp, #32]
+  400040:	b9001fe2 	str	w2, [sp, #28]
+  400044:	f94013e1 	ldr	x1, [sp, #32]
+  400048:	b9401fe0 	ldr	w0, [sp, #28]
+  40004c:	d63f0020 	blr	x1
+  400050:	f94017e1 	ldr	x1, [sp, #40]
+  400054:	d63f0020 	blr	x1
+  400058:	a8c37bfd 	ldp	x29, x30, [sp], #48
+  40005c:	d65f03c0 	ret
+
+0000000000400060 <addThree>:
+  400060:	a9be7bfd 	stp	x29, x30, [sp, #-32]!
+  400064:	910003fd 	mov	x29, sp
+  400068:	b9001fe0 	str	w0, [sp, #28]
+  40006c:	b9401fe2 	ldr	w2, [sp, #28]
+  400070:	90000000 	adrp	x0, 400000 <addOne>
+  400074:	91006001 	add	x1, x0, #0x18
+  400078:	90000000 	adrp	x0, 400000 <addOne>
+  40007c:	91000000 	add	x0, x0, #0x0
+  400080:	97ffffec 	bl	400030 <comp>
+  400084:	a8c27bfd 	ldp	x29, x30, [sp], #32
+  400088:	d65f03c0 	ret
