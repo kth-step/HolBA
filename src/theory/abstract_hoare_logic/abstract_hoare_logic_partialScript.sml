@@ -800,6 +800,17 @@ rw [] >>
 fs [listTheory.MEM_FILTER]
 );
 
+val FUNPOW_OPT_LIST_FIRST = prove(``
+!f n x x' x_list.
+n > 0 ==>
+FUNPOW_OPT_LIST f n x = SOME (x::x_list) ==>
+f x = SOME x' ==>
+FUNPOW_OPT_LIST f (PRE n) x' = SOME x_list
+``,
+
+cheat
+);
+
 (* If ms and ms' are not related by weak transition to ls for n transitions,
  * but if taking n transitions from ms takes you to ms' with a label in ls,
  * then there has to exist an ms'' and a *smallest* n' such that the label of
@@ -824,12 +835,22 @@ val weak_rel_steps_smallest_exists = prove(``
 
 REPEAT STRIP_TAC >>
 fs [weak_rel_steps_def] >>
-subgoal `?ms_list. FUNPOW_OPT_LIST m.trs n ms = SOME ms_list` >- (
+subgoal `?ms_list. FUNPOW_OPT_LIST m.trs n ms = SOME (ms::ms_list)` >- (
+ IMP_RES_TAC FUNPOW_OPT_LIST_EXISTS >>
+ QSPECL_X_ASSUM ``!n'. n' <= n ==> ?l. FUNPOW_OPT_LIST m.trs n' ms = SOME l`` [`n`] >>
+ fs [] >>
+ Cases_on `n` >- (
+  fs [FUNPOW_OPT_LIST_def]
+ ) >>
+ (* TODO: Should be OK... *)
+ cheat
+(* OLD
  irule FUNPOW_OPT_LIST_EXISTS >>
  Q.EXISTS_TAC `n` >>
  fs []
+*)
 ) >>
-subgoal `?i ms''. INDEX_FIND 1 (\ms. m.pc ms IN ls) ms_list = SOME (i, ms'')` >- (
+subgoal `?i ms''. INDEX_FIND 0 (\ms. m.pc ms IN ls) ms_list = SOME (i, ms'')` >- (
  (* OK: There is at least ms', possibly some earlier encounter of ls *)
  irule INDEX_FIND_MEM >>
  Q.EXISTS_TAC `ms'` >>
@@ -844,13 +865,22 @@ subgoal `?i ms''. INDEX_FIND 1 (\ms. m.pc ms IN ls) ms_list = SOME (i, ms'')` >-
   REWRITE_TAC [Once EQ_SYM_EQ] >>
   irule FUNPOW_OPT_LIST_EL >>
   fs [] >>
+  subgoal `?ms''. m.trs ms = SOME ms''` >- (
+   (* TODO: Should be OK... *)
+   cheat
+  ) >>
   Q.EXISTS_TAC `m.trs` >>
-  Q.EXISTS_TAC `n` >>
-  Q.EXISTS_TAC `ms` >>
-  fs []
+  Q.EXISTS_TAC `PRE n` >>
+  Q.EXISTS_TAC `ms''` >>
+  fs [] >>
+  CONJ_TAC >| [
+   cheat,
+
+   METIS_TAC [FUNPOW_OPT_LIST_FIRST]
+  ]
  ]
 ) >>
-Q.EXISTS_TAC `i` >>
+Q.EXISTS_TAC `SUC i` >>
 Q.EXISTS_TAC `ms''` >>
 fs [] >>
 subgoal `?ms'''. FUNPOW_OPT m.trs n' ms = SOME ms'''` >- (
@@ -860,26 +890,23 @@ REPEAT STRIP_TAC >| [
  (* i < n since i must be at least n', since INDEX_FIND at least must have found ms''',
   * if not any earlier encounter *)
  fs [INDEX_FIND_EQ_SOME_0] >>
- Cases_on `(SUC n') < i` >| [
+ Cases_on `n' < (SUC i)` >| [
   (* Contradiction: ms''' occurs earlier than the first encounter of ls found by INDEX_FIND *)
-  subgoal `m.pc (EL n' ms_list) NOTIN ls` >- ( (* Note: Indexing change *)
+  subgoal `m.pc (EL (PRE n') ms_list) NOTIN ls` >- ( (* Note: Indexing change *)
    fs []
   ) >>
-  subgoal `(EL n' ms_list) = ms'''` >- ( (* Note: Indexing change *)
-   METIS_TAC [FUNPOW_OPT_LIST_EL, arithmeticTheory.LESS_IMP_LESS_OR_EQ]
+  subgoal `(EL (PRE n') ms_list) = ms'''` >- ( (* Note: Indexing change *)
+   subgoal `(EL n' (ms::ms_list)) = ms'''` >- (
+    METIS_TAC [FUNPOW_OPT_LIST_EL, arithmeticTheory.LESS_IMP_LESS_OR_EQ]
+   ) >>
+   METIS_TAC [rich_listTheory.EL_CONS, arithmeticTheory.GREATER_DEF]
   ) >>
   fs [],
 
-  fs [FUNPOW_OPT_LIST_EQ_SOME] >>
-  subgoal `i <= SUC n'` >- (
-   fs []
-  ) >>
-  Cases_on `i = SUC n'` >- (
-   fs []
-  ) >>
+  fs []
  ],
 
- METIS_TAC [FUNPOW_OPT_LIST_INDEX_FIND],
+ fs [INDEX_FIND_EQ_SOME_0, FUNPOW_OPT_LIST_EQ_SOME],
 
  fs [INDEX_FIND_EQ_SOME],
 
@@ -889,10 +916,20 @@ REPEAT STRIP_TAC >| [
   fs []
  ) >>
  subgoal `?ms''''. FUNPOW_OPT m.trs n'' ms = SOME ms''''` >- (
-  METIS_TAC [FUNPOW_OPT_LIST_EL_SOME]
+  METIS_TAC [FUNPOW_OPT_LIST_EL_SOME, arithmeticTheory.LESS_IMP_LESS_OR_EQ]
  ) >>
  subgoal `(EL (PRE n'') ms_list) = ms''''` >- (
-  METIS_TAC [FUNPOW_OPT_LIST_EL, arithmeticTheory.LESS_IMP_LESS_OR_EQ]
+  irule FUNPOW_OPT_LIST_EL >>
+  subgoal `?ms'''''. m.trs ms = SOME ms'''''` >- (
+   (* TODO: Should be OK... *)
+   cheat
+  ) >>
+  Q.EXISTS_TAC `m.trs` >>
+  Q.EXISTS_TAC `PRE n` >>
+  Q.EXISTS_TAC `ms'''''` >>
+  fs [] >>
+  (* TODO: Should be OK... *)
+  cheat
  ) >>
  fs [INDEX_FIND_EQ_SOME_0] >>
  rw []
@@ -1263,6 +1300,24 @@ val weak_rel_steps_list_states = prove(``
 ``,
 
 REPEAT STRIP_TAC >>
+subgoal `?ms_list. FUNPOW_OPT_LIST m.trs n ms = SOME (ms::ms_list)` >- (
+ fs [weak_rel_steps_def] >>
+ IMP_RES_TAC FUNPOW_OPT_LIST_EXISTS >>
+ QSPECL_X_ASSUM ``!n'. n' <= n ==> ?l. FUNPOW_OPT_LIST m.trs n' ms = SOME l`` [`n`] >>
+ fs [] >>
+ Cases_on `n` >- (
+  fs [FUNPOW_OPT_LIST_def]
+ ) >>
+ (* TODO: Should be OK... Need tail-recursive rewrite *)
+ cheat
+(* OLD
+ irule FUNPOW_OPT_LIST_EXISTS >>
+ Q.EXISTS_TAC `n` >>
+ fs []
+*)
+) >>
+(*
+REPEAT STRIP_TAC >>
 subgoal `?ms_list. FUNPOW_OPT_LIST m.trs n ms = SOME ms_list` >- (
  (* OK: Contradicts weak_rel_steps m ms ls ms' n otherwise *)
  fs [weak_rel_steps_def] >>
@@ -1271,6 +1326,7 @@ subgoal `?ms_list. FUNPOW_OPT_LIST m.trs n ms = SOME ms_list` >- (
  Q.EXISTS_TAC `n` >>
  fs []
 ) >>
+*)
 Q.EXISTS_TAC `FILTER (\ms. m.pc ms = l) ms_list` >>
 REPEAT STRIP_TAC >| [
  (* OK: Element in filtered list obeys filter property *)
@@ -1290,7 +1346,10 @@ REPEAT STRIP_TAC >| [
  ) >>
  fs [listTheory.FILTER_EQ_NIL] >>
  subgoal `EL (PRE n') ms_list = ms''` >- (
-  METIS_TAC [FUNPOW_OPT_LIST_EL, arithmeticTheory.LESS_IMP_LESS_OR_EQ]
+  subgoal `(EL n' (ms::ms_list)) = ms''` >- (
+   METIS_TAC [FUNPOW_OPT_LIST_EL, arithmeticTheory.LESS_IMP_LESS_OR_EQ]
+  ) >>
+  METIS_TAC [rich_listTheory.EL_CONS, arithmeticTheory.GREATER_DEF]
  ) >>
  fs [listTheory.EVERY_EL] >>
  QSPECL_X_ASSUM ``!n. _`` [`PRE n'`] >>
