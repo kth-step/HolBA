@@ -316,6 +316,26 @@ rw [listTheory.FRONT_DEF] >>
 fs [rich_listTheory.FRONT_APPEND]
 );
 
+val FUNPOW_OPT_LIST_BACK_PRE = prove(``
+!f x x' n l.
+FUNPOW_OPT_LIST f (SUC n) x = SOME l ==>
+f x = SOME x' ==>
+FUNPOW_OPT_LIST f n x' = SOME (TL l)
+``,
+
+cheat
+);
+
+val FUNPOW_OPT_LIST_BACK_INCR = prove(``
+!f x x' n t.
+FUNPOW_OPT_LIST f n x' = SOME t ==>
+f x = SOME x' ==>
+FUNPOW_OPT_LIST f (SUC n) x = SOME (x::t)
+``,
+
+cheat
+);
+
 val FUNPOW_OPT_LIST_INCR2 = prove(``
 !f x n h t.
 FUNPOW_OPT_LIST f n x = SOME t ==>
@@ -789,15 +809,85 @@ REPEAT STRIP_TAC >| [
 ]
 );
 
+val MEM_HD = prove(``
+!l.
+MEM (HD l) l
+``,
+
+cheat
+);
+
 val FILTER_MEM = prove(``
 !P l l' x.
 FILTER P l = l' ==>
 MEM x l' ==>
-P x
+P x /\ MEM x l
 ``,
 
 rw [] >>
 fs [listTheory.MEM_FILTER]
+);
+
+(*
+val FILTER_LAST = prove(``
+!P l l' x.
+LENGTH (FILTER P l) > 0 ==>
+?i. EL (PRE (LENGTH (FILTER P l))) (FILTER P l) = EL i l
+``,
+
+cheat
+);
+*)
+
+val MEM_EL_CONS = prove(``
+!n e l.
+n > 0 ==>
+n < SUC (LENGTH l) ==>
+MEM (EL n (e::l)) l
+``,
+
+cheat
+);
+
+val FILTER_NOT_MEM = prove(``
+!P l l' x.
+FILTER P l = l' ==>
+MEM x l ==>
+~MEM x l' ==>
+~P x
+``,
+
+cheat
+);
+
+val FILTER_BEFORE = prove(``
+!P l l' i.
+FILTER P l = l' ==>
+EL i l = HD l' ==>
+(!i'. i' < i ==> ~P (EL i l) /\ ~MEM (EL i' l) l')
+``,
+
+cheat
+);
+
+val FILTER_AFTER = prove(``
+!P l l' i.
+FILTER P l = l' ==>
+EL i l = LAST l' ==>
+(!i'. i' > i ==> ~P (EL i' l) /\ ~MEM (EL i' l) l')
+``,
+
+cheat
+);
+
+val FILTER_ORDER = prove(``
+!P l i i' i''.
+EL i' l = EL i (FILTER P l) ==>
+EL i'' l = EL (SUC i) (FILTER P l) ==>
+i' < i''
+``,
+
+cheat
 );
 
 val FUNPOW_OPT_LIST_FIRST = prove(``
@@ -1050,6 +1140,78 @@ REPEAT STRIP_TAC >>
 METIS_TAC [FUNPOW_SUB, FUNPOW_OPT_def, arithmeticTheory.FUNPOW_ADD]
 );
 
+val FUNPOW_OPT_split3 = prove(``
+!f n' n s s'' s'.
+FUNPOW_OPT f n s = SOME s' ==>
+FUNPOW_OPT f (n + n') s = SOME s'' ==>
+FUNPOW_OPT f n' s' = SOME s''``,
+
+cheat
+);
+
+val FUNPOW_OPT_todoname = prove(``
+!f n n' n'' P ms ms_list.
+FUNPOW_OPT_LIST f n ms = SOME (ms::ms_list) ==>
+FUNPOW_OPT f n'' ms =
+        SOME
+          (EL (LENGTH (FILTER P ms_list) - 1)
+             (FILTER P ms_list)) ==>
+n' < n - n'' ==>
+FUNPOW_OPT f (n' + n'') ms = SOME (EL (PRE (n' + n'')) ms_list)``,
+
+REPEAT STRIP_TAC >>
+fs [FUNPOW_OPT_LIST_EQ_SOME] >>
+irule rich_listTheory.EL_CONS >>
+fs [weak_rel_steps_def] >>
+cheat
+);
+
+val weak_rel_steps_FILTER_inter = prove(``
+  !m.
+  weak_model m ==>
+  !ms ls ms' i i' i'' l ms_list ms_list'.
+  weak_rel_steps m ms ls ms' (LENGTH ms_list) ==>
+  FILTER (\ms. m.pc ms = l) ms_list = ms_list' ==>
+  EL i' ms_list = EL i (FILTER (\ms. m.pc ms = l) ms_list) ==>
+  EL i'' ms_list = EL (i+1) (FILTER (\ms. m.pc ms = l) ms_list) ==>
+  i < LENGTH ms_list' - 1 ==>
+  FUNPOW_OPT_LIST m.trs (LENGTH ms_list) ms = SOME (ms::ms_list) ==>
+  weak_rel_steps m (EL i ms_list') ({l} UNION ls) (EL (i + 1) ms_list') (i'' - i')
+  ``,
+
+cheat
+);
+
+val weak_rel_steps_FILTER_end = prove(``
+  !m.
+  weak_model m ==>
+  !ms ls ms' i i'' l ms_list ms_list'.
+  weak_rel_steps m ms ls ms' (LENGTH ms_list) ==>
+  FUNPOW_OPT_LIST m.trs (LENGTH ms_list) ms = SOME (ms::ms_list) ==>
+  FILTER (\ms. m.pc ms = l) ms_list = ms_list' ==>
+  i < LENGTH ms_list' - 1 ==>
+  EL i'' ms_list = EL (i+1) (FILTER (\ms. m.pc ms = l) ms_list) ==>
+  weak_rel_steps m (EL (i + 1) ms_list') ls ms' (LENGTH ms_list - SUC i'')
+  ``,
+
+cheat
+);
+
+val weak_rel_steps_FILTER_NOTIN_end = prove(``
+  !m.
+  weak_model m ==>
+  !ms ls ms' n n' l ms_list ms_list'.
+  weak_rel_steps m ms ls ms' n ==>
+  l NOTIN ls ==>
+  FUNPOW_OPT_LIST m.trs n ms = SOME (ms::ms_list) ==>
+  FILTER (\ms. m.pc ms = l) ms_list = ms_list' ==>
+  EL (PRE (LENGTH (FILTER (\ms. m.pc ms = l) ms_list))) (FILTER (\ms. m.pc ms = l) ms_list) = EL n' ms_list ==>
+  SUC n' < n
+  ``,
+
+cheat
+);
+
 val weak_rel_steps_unique = prove(``
   !m.
   weak_model m ==>
@@ -1073,6 +1235,33 @@ REPEAT STRIP_TAC >| [
                   ?ms''. FUNPOW_OPT m.trs n' ms = SOME ms'' /\ m.pc ms'' NOTIN ls`` [`n'`] >>
  rfs []
 ]
+);
+
+val weak_rel_steps_intermediate_start = prove(``
+  !m.
+  weak_model m ==>
+  !ms ls ms' ms'' n n'.
+  n' < n ==>
+  weak_rel_steps m ms ls ms' n ==>
+  FUNPOW_OPT m.trs n' ms = SOME ms'' ==>
+  weak_rel_steps m ms'' ls ms' (n - n')
+  ``,
+
+cheat
+);
+
+val weak_rel_steps_superset_after = prove(``
+  !m.
+  weak_model m ==>
+  !ms ls ls' ms' ms'' n n'.
+  n' < n ==>
+  weak_rel_steps m ms ls ms' n ==>
+  weak_rel_steps m ms'' ls ms' (n - n') ==>
+  (!n''. n'' < (n-n') ==> (?ms'''. FUNPOW_OPT m.trs n'' ms'' = SOME ms''' /\ m.pc ms''' NOTIN ls')) ==>
+  weak_rel_steps m ms'' (ls' UNION ls) ms' (n - n')
+  ``,
+
+cheat
 );
 
 val weak_rel_steps_intermediate_labels2 = prove(``
@@ -1280,7 +1469,8 @@ subgoal `post ms''` >- (
 METIS_TAC [pred_setTheory.UNION_COMM, weak_intermediate_labels2]
 );
 
-
+(* This describes the necessary characteristics of the list ms_list, which consists of
+ * all states where l is encountered between ms and ms'. *)
 val weak_rel_steps_list_states = prove(``
 !m ms l ls ms' n.
  weak_model m ==>
@@ -1296,7 +1486,6 @@ val weak_rel_steps_list_states = prove(``
     !i. (i < ((LENGTH ms_list) - 1) ==> ?n' n''.
          weak_rel_steps m (EL i ms_list) ({l} UNION ls) (EL (i+1) ms_list) n' /\
          weak_rel_steps m (EL (i+1) ms_list) ls ms' n'' /\ n' < n /\ n' > 0 /\ n'' < n /\ n'' > 0))
-
 ``,
 
 REPEAT STRIP_TAC >>
@@ -1308,8 +1497,22 @@ subgoal `?ms_list. FUNPOW_OPT_LIST m.trs n ms = SOME (ms::ms_list)` >- (
  Cases_on `n` >- (
   fs [FUNPOW_OPT_LIST_def]
  ) >>
- (* TODO: Should be OK... Need tail-recursive rewrite *)
- cheat
+ subgoal `?ms''. m.trs ms = SOME ms''` >- (
+  fs [FUNPOW_OPT_LIST_EQ_SOME] >>
+  QSPECL_X_ASSUM ``!n''. n'' <= SUC n' ==> FUNPOW_OPT m.trs n'' ms = SOME (EL n'' l')`` [`1`] >>
+  fs [FUNPOW_OPT_compute] >>
+  Cases_on `m.trs ms` >> (
+   fs []
+  )
+ ) >>
+ subgoal `?ms_list. FUNPOW_OPT_LIST m.trs n' ms'' = SOME ms_list` >- (
+  METIS_TAC [FUNPOW_OPT_LIST_BACK_PRE]
+ ) >>
+ Q.EXISTS_TAC `ms_list` >>
+ (* TODO: Should be OK...
+  * (see also first subgoal in weak_rel_steps_smallest_exists, reuse this?) *)
+ IMP_RES_TAC FUNPOW_OPT_LIST_BACK_INCR >>
+ fs []
 (* OLD
  irule FUNPOW_OPT_LIST_EXISTS >>
  Q.EXISTS_TAC `n` >>
@@ -1331,8 +1534,11 @@ Q.EXISTS_TAC `FILTER (\ms. m.pc ms = l) ms_list` >>
 REPEAT STRIP_TAC >| [
  (* OK: Element in filtered list obeys filter property *)
  subgoal `(\ms. m.pc ms = l) (EL i (FILTER (\ms. m.pc ms = l) ms_list))` >- (
+  (* TODO: Silly, but it works... *)
+  `(\ms. m.pc ms = l) (EL i (FILTER (\ms. m.pc ms = l) ms_list)) /\ MEM (EL i (FILTER (\ms. m.pc ms = l) ms_list)) ms_list` suffices_by (
+   fs []
+  ) >>
   irule FILTER_MEM >>
-  Q.EXISTS_TAC `ms_list` >>
   Q.EXISTS_TAC `FILTER (\ms. m.pc ms = l) ms_list` >>
   METIS_TAC [listTheory.MEM_EL]
  ) >>
@@ -1361,29 +1567,217 @@ REPEAT STRIP_TAC >| [
  (* OK: First encounter of l is reached when filtered list is non-empty,
   * also weak transition can proceed from there directly to ending label set *)
  subgoal `?ms''. ms'' = EL 0 (FILTER (\ms. m.pc ms = l) ms_list)` >- (
-  cheat
+  METIS_TAC []
+ ) >>
+ (* TODO: The below is used in multiple subgoals... *)
+ subgoal `?ms_list'. FILTER (\ms. m.pc ms = l) ms_list = ms_list'` >- (
+  fs []
  ) >>
  (* Note: last state in ms_list can't be at label l *)
  subgoal `?i. ms'' = EL i ms_list /\ i < (PRE n)` >- (
-  cheat
+  subgoal `?i. SOME ms'' = oEL i ms_list` >- (
+   fs [FUNPOW_OPT_LIST_EQ_SOME] >>
+   IMP_RES_TAC FILTER_MEM >>
+   QSPECL_X_ASSUM ``!x. MEM x ms_list' ==> MEM x ms_list`` [`ms''`] >>
+   rfs [MEM_HD] >>
+   fs [listTheory.MEM_EL] >>
+   Q.EXISTS_TAC `n'` >>
+   fs [listTheory.oEL_THM]
+  ) >>
+  Q.EXISTS_TAC `i` >>
+  fs [listTheory.oEL_EQ_EL, FUNPOW_OPT_LIST_EQ_SOME] >>
+  Cases_on `i = PRE n` >- (
+   subgoal `m.pc ms'' = l` >- (
+    IMP_RES_TAC FILTER_MEM >>
+    QSPECL_X_ASSUM ``!x. MEM x ms_list' ==> (\ms. m.pc ms = l) x`` [`ms''`] >>
+    rfs [MEM_HD]
+   ) >>
+   fs [weak_rel_steps_def] >>
+   subgoal `ms'' = ms'` >- (
+    `LAST (ms::ms_list) = EL (PRE n) ms_list` suffices_by (
+     fs []
+    ) >>
+    subgoal `LAST (ms::ms_list) = EL (PRE (LENGTH (ms::ms_list))) (ms::ms_list)` >- (
+     irule listTheory.LAST_EL >>
+     fs []
+    ) >>
+    subgoal `PRE (LENGTH (ms::ms_list)) = n` >- (
+     SIMP_TAC list_ss [] >>
+     METIS_TAC []
+    ) >>
+    fs [rich_listTheory.EL_CONS, listTheory.NOT_NIL_EQ_LENGTH_NOT_0]
+   ) >>
+   fs []
+  ) >>
+  fs []
  ) >>
  Q.EXISTS_TAC `SUC i` >>
  fs [] >>
  REPEAT STRIP_TAC >| [
-  (* OK *)
-  cheat,
+  (* OK: SUC i steps taken until first encounter of l
+   * EL i ms_list = HD ms_list' is among assumptions *)
+  fs [weak_rel_steps_def] >>
+  REPEAT STRIP_TAC >| [
+   (* HD ms_list' reached in SUC i steps from ms *)
+   fs [FUNPOW_OPT_LIST_EQ_SOME],
 
-  (* OK *)
-  cheat
+   (* HD ms_list' is either l or in ls *)
+   IMP_RES_TAC FILTER_MEM >>
+   QSPECL_X_ASSUM ``!x. MEM x ms_list' ==> (\ms. m.pc ms = l) x`` [`HD ms_list'`] >>
+   rfs [MEM_HD],
+
+   (* At n' < SUC i steps, we are neither at l nor in ls *)
+   QSPECL_X_ASSUM ``!n'.
+          n' < n /\ n' > 0 ==>
+          ?ms''. FUNPOW_OPT m.trs n' ms = SOME ms'' /\ m.pc ms'' NOTIN ls`` [`n'`] >>
+   rfs [] >>
+   ONCE_REWRITE_TAC [EQ_SYM_EQ] >>
+   `~(\ms. m.pc ms = l) ms'3'` suffices_by (
+    fs []
+   ) >>
+   irule FILTER_NOT_MEM >>
+   Q.EXISTS_TAC `ms_list` >>
+   Q.EXISTS_TAC `ms_list'` >>
+   fs [FUNPOW_OPT_LIST_EQ_SOME] >>
+   (* OK: ms'3' is in ms_list (since n' < n) but not in ms_list' (since n' < SUC i, so before first encounter) *)
+   CONJ_TAC >| [
+    IMP_RES_TAC FILTER_BEFORE >>
+    QSPECL_X_ASSUM ``!i'. i' < i ==> ~MEM (EL i' ms_list) ms_list'`` [`PRE n'`] >>
+    rfs [] >>
+    `EL (PRE n') ms_list = ms'3'` suffices_by (
+     METIS_TAC []
+    ) >>
+    METIS_TAC [rich_listTheory.EL_CONS, arithmeticTheory.GREATER_DEF],
+
+    QSPECL_X_ASSUM ``!n'. n' <= n ==> FUNPOW_OPT m.trs n' ms = SOME (EL n' (ms::ms_list))`` [`n'`] >>
+    rfs [] >>
+    irule MEM_EL_CONS >>
+    fs []
+   ]
+  ],
+
+  (* OK: (n - SUC i) steps taken from first encounter of l will get you to ms' *)
+  irule weak_rel_steps_intermediate_start >>
+  fs [] >>
+  Q.EXISTS_TAC `ms` >>
+  fs [FUNPOW_OPT_LIST_EQ_SOME]
  ],
 
  (* OK: Last element in filtered list can perform weak transition with ending
   * label set ({l} UNION ls) and reach ms' *)
- cheat,
+ subgoal `?ms_list'. FILTER (\ms. m.pc ms = l) ms_list = ms_list'` >- (
+  fs []
+ ) >>
+ subgoal `MEM (EL (PRE (LENGTH (FILTER (\ms. m.pc ms = l) ms_list))) (FILTER (\ms. m.pc ms = l) ms_list)) ms_list` >- (
+  subgoal `MEM (EL (PRE (LENGTH (FILTER (\ms. m.pc ms = l) ms_list))) (FILTER (\ms. m.pc ms = l) ms_list)) (FILTER (\ms. m.pc ms = l) ms_list)` >- (
+   fs [listTheory.MEM_EL] >>
+   Q.EXISTS_TAC `PRE (LENGTH ms_list')` >>
+   fs []
+  ) >>
+  METIS_TAC [FILTER_MEM]
+ ) >>
+ subgoal `?n'''. FUNPOW_OPT m.trs n''' ms = SOME (EL (LENGTH (FILTER (\ms. m.pc ms = l) ms_list) - 1) (FILTER (\ms. m.pc ms = l) ms_list)) /\ n''' < n` >- (
+  fs [listTheory.MEM_EL] >>
+  Q.EXISTS_TAC `SUC n'` >>
+  CONJ_TAC >| [
+   fs [FUNPOW_OPT_LIST_EQ_SOME, arithmeticTheory.PRE_SUB1] >>
+   rw [],
+   
+   (* TODO: Last element of ms_list' not being in l contradiction *)
+   METIS_TAC [weak_rel_steps_FILTER_NOTIN_end]
+  ]
+ ) >>
+ IMP_RES_TAC weak_rel_steps_intermediate_start >>
+ Q.EXISTS_TAC `n - n'3'` >>
+ fs [] >>
+ irule weak_rel_steps_superset_after >>
+ REPEAT STRIP_TAC >> (
+  fs []
+ ) >| [
+  (* Find appropriate index in ms_list and use it, also lemma that indices after FILTER LAST do
+   * not have label l *)
+  Q.EXISTS_TAC `EL (PRE (n'' + n'3')) ms_list` >>
+  CONJ_TAC >| [
+   (* TODO: Lemma for this situation *)
+   irule FUNPOW_OPT_split3 >>
+   Q.EXISTS_TAC `n'3'` >>
+   Q.EXISTS_TAC `ms` >>
+   fs [] >>
+   METIS_TAC [FUNPOW_OPT_todoname],
+
+   subgoal `EL (PRE n'3') ms_list = LAST ms_list'` >- (
+    cheat
+   ) >>
+   IMP_RES_TAC FILTER_AFTER >>
+   QSPECL_X_ASSUM ``!i'. i' > PRE n'3' ==> ~(\ms. m.pc ms = l) (EL i' ms_list)`` [`(PRE (n'' + n'3'))`] >>
+   (* TODO: n'' must be proven nonzero from earlier *)
+   subgoal `n'' > 0` >- (
+    cheat
+   ) >>
+   `PRE (n'' + n'3') > PRE n'3'` suffices_by (
+    fs []
+   ) >>
+   (* Something is still not 100% done here. Think n'3' also has to be proven nonzero *)
+   Cases_on `n''` >- (
+    fs []
+   ) >>
+   Cases_on `n'3'` >- (
+    cheat
+   ) >>
+   fs []
+  ],
+
+  METIS_TAC [],
+
+  METIS_TAC []
+ ],
 
  (* Inductive case for weak transition with ending label set ({l} UNION ls)
-  * between elements of the list. Should also be OK *)
- cheat
+  * between elements of the list (where the latter point goes to ms' with ending label set ls).
+  * Should also be OK *)
+ subgoal `?ms_list'. FILTER (\ms. m.pc ms = l) ms_list = ms_list'` >- (
+  fs []
+ ) >>
+ subgoal `?i'. EL i' ms_list = EL i (FILTER (\ms. m.pc ms = l) ms_list) /\ i' < LENGTH ms_list` >- (
+  subgoal `MEM (EL i (FILTER (\ms. m.pc ms = l) ms_list)) (FILTER (\ms. m.pc ms = l) ms_list)` >- (
+   fs [rich_listTheory.EL_MEM]
+  ) >>
+  fs [listTheory.MEM_FILTER, listTheory.MEM_EL] >>
+  Q.EXISTS_TAC `n'` >>
+  rw []
+ ) >>
+ subgoal `?i'. EL i' ms_list = EL (i + 1) (FILTER (\ms. m.pc ms = l) ms_list) /\ i' < LENGTH ms_list` >- (
+  subgoal `MEM (EL (i + 1) (FILTER (\ms. m.pc ms = l) ms_list)) (FILTER (\ms. m.pc ms = l) ms_list)` >- (
+   fs [rich_listTheory.EL_MEM]
+  ) >>
+  fs [listTheory.MEM_FILTER, listTheory.MEM_EL] >>
+  Q.EXISTS_TAC `n'` >>
+  rw []
+ ) >>
+ subgoal `i' < i''` >- (
+  irule FILTER_ORDER >>
+  Q.EXISTS_TAC `(\ms. m.pc ms = l)` >>
+  Q.EXISTS_TAC `i` >>
+  Q.EXISTS_TAC `ms_list` >>
+  fs [arithmeticTheory.ADD1]
+ ) >>
+ subgoal `n = LENGTH ms_list` >- (
+  fs [FUNPOW_OPT_LIST_EQ_SOME]
+ ) >>
+ Q.EXISTS_TAC `SUC i'' - SUC i'` >>
+ Q.EXISTS_TAC `n - (SUC i'')` >>
+ fs [] >>
+ REPEAT STRIP_TAC >| [
+  (* Weak transtion to ({l} UNION ls) between element i and element i+1 in ms_list' *)
+  METIS_TAC [weak_rel_steps_FILTER_inter],
+
+  (* Weak transtion to ls between element i+1 and LAST of ms_list' *)
+  METIS_TAC [weak_rel_steps_FILTER_end],
+
+  (* Phrased differently: "Why can't a member of ms_list' be the last element in ms_list?" *)
+  (* TODO: Last element of ms_list' not being in l contradiction *)
+  cheat
+ ]
 ]
 );
 
