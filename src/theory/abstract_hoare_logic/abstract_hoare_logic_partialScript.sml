@@ -1257,7 +1257,7 @@ val weak_rel_steps_superset_after = prove(``
   n' < n ==>
   weak_rel_steps m ms ls ms' n ==>
   weak_rel_steps m ms'' ls ms' (n - n') ==>
-  (!n''. n'' < (n-n') ==> (?ms'''. FUNPOW_OPT m.trs n'' ms'' = SOME ms''' /\ m.pc ms''' NOTIN ls')) ==>
+  (!n''. n'' < (n-n') ==> n'' > 0 ==> (?ms'''. FUNPOW_OPT m.trs n'' ms'' = SOME ms''' /\ m.pc ms''' NOTIN ls')) ==>
   weak_rel_steps m ms'' (ls' UNION ls) ms' (n - n')
   ``,
 
@@ -1532,7 +1532,7 @@ subgoal `?ms_list. FUNPOW_OPT_LIST m.trs n ms = SOME ms_list` >- (
 *)
 Q.EXISTS_TAC `FILTER (\ms. m.pc ms = l) ms_list` >>
 REPEAT STRIP_TAC >| [
- (* OK: Element in filtered list obeys filter property *)
+ (* subgoal 1. OK: Element in filtered list obeys filter property *)
  subgoal `(\ms. m.pc ms = l) (EL i (FILTER (\ms. m.pc ms = l) ms_list))` >- (
   (* TODO: Silly, but it works... *)
   `(\ms. m.pc ms = l) (EL i (FILTER (\ms. m.pc ms = l) ms_list)) /\ MEM (EL i (FILTER (\ms. m.pc ms = l) ms_list)) ms_list` suffices_by (
@@ -1544,7 +1544,7 @@ REPEAT STRIP_TAC >| [
  ) >>
  fs [],
 
- (* OK: If filtered list is empty, l can be inserted in ending label set *)
+ (* subgoal 2. OK: If filtered list is empty, l can be inserted in ending label set *)
  fs [weak_rel_steps_def] >>
  REPEAT STRIP_TAC >>
  subgoal `?ms''. FUNPOW_OPT m.trs n' ms = SOME ms''` >- (
@@ -1564,7 +1564,7 @@ REPEAT STRIP_TAC >| [
  IMP_RES_TAC FUNPOW_OPT_LIST_LENGTH >>
  rfs [],
 
- (* OK: First encounter of l is reached when filtered list is non-empty,
+ (* subgoal 3. OK: First encounter of l is reached when filtered list is non-empty,
   * also weak transition can proceed from there directly to ending label set *)
  subgoal `?ms''. ms'' = EL 0 (FILTER (\ms. m.pc ms = l) ms_list)` >- (
   METIS_TAC []
@@ -1614,7 +1614,7 @@ REPEAT STRIP_TAC >| [
  Q.EXISTS_TAC `SUC i` >>
  fs [] >>
  REPEAT STRIP_TAC >| [
-  (* OK: SUC i steps taken until first encounter of l
+  (* subgoal 3a. OK: SUC i steps taken until first encounter of l
    * EL i ms_list = HD ms_list' is among assumptions *)
   fs [weak_rel_steps_def] >>
   REPEAT STRIP_TAC >| [
@@ -1656,14 +1656,14 @@ REPEAT STRIP_TAC >| [
    ]
   ],
 
-  (* OK: (n - SUC i) steps taken from first encounter of l will get you to ms' *)
+  (* subgoal 3b. OK: (n - SUC i) steps taken from first encounter of l will get you to ms' *)
   irule weak_rel_steps_intermediate_start >>
   fs [] >>
   Q.EXISTS_TAC `ms` >>
   fs [FUNPOW_OPT_LIST_EQ_SOME]
  ],
 
- (* OK: Last element in filtered list can perform weak transition with ending
+ (* subgoal 4. OK: Last element in filtered list can perform weak transition with ending
   * label set ({l} UNION ls) and reach ms' *)
  subgoal `?ms_list'. FILTER (\ms. m.pc ms = l) ms_list = ms_list'` >- (
   fs []
@@ -1676,15 +1676,18 @@ REPEAT STRIP_TAC >| [
   ) >>
   METIS_TAC [FILTER_MEM]
  ) >>
- subgoal `?n'''. FUNPOW_OPT m.trs n''' ms = SOME (EL (LENGTH (FILTER (\ms. m.pc ms = l) ms_list) - 1) (FILTER (\ms. m.pc ms = l) ms_list)) /\ n''' < n` >- (
+ (* Note : this introduces n'3', the number of transitions to last encounter of l. *)
+ subgoal `?n'''. FUNPOW_OPT m.trs n''' ms = SOME (EL (LENGTH (FILTER (\ms. m.pc ms = l) ms_list) - 1) (FILTER (\ms. m.pc ms = l) ms_list)) /\ n''' < n /\ n''' > 0` >- (
   fs [listTheory.MEM_EL] >>
   Q.EXISTS_TAC `SUC n'` >>
-  CONJ_TAC >| [
+  REPEAT CONJ_TAC >| [
    fs [FUNPOW_OPT_LIST_EQ_SOME, arithmeticTheory.PRE_SUB1] >>
    rw [],
    
    (* TODO: Last element of ms_list' not being in l contradiction *)
-   METIS_TAC [weak_rel_steps_FILTER_NOTIN_end]
+   METIS_TAC [weak_rel_steps_FILTER_NOTIN_end],
+
+   fs []
   ]
  ) >>
  IMP_RES_TAC weak_rel_steps_intermediate_start >>
@@ -1705,26 +1708,38 @@ REPEAT STRIP_TAC >| [
    fs [] >>
    METIS_TAC [FUNPOW_OPT_todoname],
 
+(*
+   subgoal `n'3' < n` >- (
+    fs []
+   ) >>
+*)
    subgoal `EL (PRE n'3') ms_list = LAST ms_list'` >- (
-    cheat
+    subgoal `FUNPOW_OPT m.trs n'3' ms = SOME (EL (PRE n'3') ms_list)` >- (
+     fs [FUNPOW_OPT_LIST_EQ_SOME] >>
+     QSPECL_X_ASSUM ``!n'. n' <= n ==> FUNPOW_OPT m.trs n' ms = SOME (EL n' (ms::ms_list))`` [`n'3'`] >>
+     rfs [rich_listTheory.EL_CONS]
+    ) >>
+    subgoal `EL (PRE n'3') ms_list = EL (LENGTH (FILTER (\ms. m.pc ms = l) ms_list) - 1)
+             (FILTER (\ms. m.pc ms = l) ms_list)` >- (
+     fs []
+    ) >>
+    fs [] >>
+    ONCE_REWRITE_TAC [EQ_SYM_EQ] >>
+    ONCE_REWRITE_TAC [GSYM arithmeticTheory.PRE_SUB1] >>
+    irule listTheory.LAST_EL >>
+    fs [listTheory.NOT_NIL_EQ_LENGTH_NOT_0]
    ) >>
    IMP_RES_TAC FILTER_AFTER >>
    QSPECL_X_ASSUM ``!i'. i' > PRE n'3' ==> ~(\ms. m.pc ms = l) (EL i' ms_list)`` [`(PRE (n'' + n'3'))`] >>
-   (* TODO: n'' must be proven nonzero from earlier *)
-   subgoal `n'' > 0` >- (
-    cheat
-   ) >>
    `PRE (n'' + n'3') > PRE n'3'` suffices_by (
     fs []
    ) >>
-   (* Something is still not 100% done here. Think n'3' also has to be proven nonzero *)
    Cases_on `n''` >- (
     fs []
    ) >>
-   Cases_on `n'3'` >- (
-    cheat
-   ) >>
-   fs []
+   Cases_on `n'3'` >> (
+    fs []
+   )
   ],
 
   METIS_TAC [],
@@ -1732,7 +1747,7 @@ REPEAT STRIP_TAC >| [
   METIS_TAC []
  ],
 
- (* Inductive case for weak transition with ending label set ({l} UNION ls)
+ (* subgoal 5. Inductive case for weak transition with ending label set ({l} UNION ls)
   * between elements of the list (where the latter point goes to ms' with ending label set ls).
   * Should also be OK *)
  subgoal `?ms_list'. FILTER (\ms. m.pc ms = l) ms_list = ms_list'` >- (
@@ -1776,7 +1791,24 @@ REPEAT STRIP_TAC >| [
 
   (* Phrased differently: "Why can't a member of ms_list' be the last element in ms_list?" *)
   (* TODO: Last element of ms_list' not being in l contradiction *)
-  cheat
+  Cases_on `SUC i'' = LENGTH ms_list` >- (
+   fs [weak_rel_steps_def] >>
+   subgoal `m.pc (EL i'' ms_list) = l` >- (
+    subgoal `MEM (EL i'' ms_list) (FILTER (\ms. m.pc ms = l) ms_list)` >- (
+     fs [listTheory.MEM_EL] >>
+     Q.EXISTS_TAC `i + 1` >>
+     fs []
+    ) >>
+    fs [listTheory.MEM_FILTER]
+   ) >>
+
+   subgoal `ms' = EL i'' ms_list` >- (
+    fs [FUNPOW_OPT_LIST_EQ_SOME, listTheory.LAST_EL] >>
+    METIS_TAC [listTheory.EL_restricted]
+   ) >>
+   METIS_TAC []
+  ) >>
+  fs []
  ]
 ]
 );
