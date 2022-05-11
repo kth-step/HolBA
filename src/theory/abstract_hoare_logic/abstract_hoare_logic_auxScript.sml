@@ -844,15 +844,54 @@ Theorem FUNPOW_OPT_LIST_EXISTS_nicer:
  n' <= n ==>
  ?l. FUNPOW_OPT_LIST f n' x = SOME (x::l)
 Proof
-cheat
+rpt strip_tac >>
+IMP_RES_TAC FUNPOW_OPT_LIST_EXISTS >>
+Cases_on `n'` >> Cases_on `l` >| [
+ fs [FUNPOW_OPT_LIST_def],
+
+ fs [FUNPOW_OPT_LIST_def],
+
+ fs [FUNPOW_OPT_LIST_tail] >>
+ Cases_on `f x` >> (
+  fs []
+ ) >>
+ Cases_on `FUNPOW_OPT_LIST f n'' x''` >> (
+  fs []
+ ),
+
+ qexists_tac `t` >>
+ fs [FUNPOW_OPT_LIST_tail] >>
+ Cases_on `f x` >> (
+  fs []
+ ) >>
+ Cases_on `FUNPOW_OPT_LIST f n'' x''` >> (
+  fs []
+ )
+]
 QED
 
 Theorem FUNPOW_OPT_LIST_EXISTS_exact:
  !f n x x'.
  FUNPOW_OPT f n x = SOME x' ==>
+ n > 0 ==>
  ?l. FUNPOW_OPT_LIST f n x = SOME (x::(SNOC x' l))
 Proof
-cheat
+rpt strip_tac >>
+IMP_RES_TAC FUNPOW_OPT_LIST_EXISTS_nicer >>
+QSPECL_X_ASSUM ``!n'. n' <= n ==> ?l. FUNPOW_OPT_LIST f n' x = SOME (x::l)`` [`n`] >>
+fs [] >>
+IMP_RES_TAC FUNPOW_OPT_LIST_LAST >>
+fs [listTheory.LAST_DEF] >>
+Cases_on `l = []` >> (
+ fs []
+) >| [
+ (* TODO: Lemma *)
+ cheat,
+
+ qexists_tac `FRONT l` >>
+ rw [] >>
+ metis_tac [listTheory.APPEND_FRONT_LAST]
+]
 QED
 
 Theorem FUNPOW_OPT_LIST_EL:
