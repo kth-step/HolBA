@@ -118,19 +118,22 @@ fs [listTheory.MEM_FILTER]
 QED
 *)
 
-(* TODO: Since l can have duplicate elements, we need to make sure
+Theorem FILTER_OLEAST_HD:
+ !P l l'.
+ FILTER P l = l' ==>
+ LENGTH l' > 0 ==>
+ ?i. (OLEAST i. oEL i l = SOME (HD l')) = SOME i
+Proof
+cheat
+QED
+
+(* Note: Since l can have duplicate elements, we need to make sure
  * EL i l is the FIRST encounter of HD l' in l. *)
-(* TODO: Might require list nonempty or OLEAST... *)
 Theorem FILTER_BEFORE:
-(*
-!P l l' i.
-FILTER P l = l' ==>
-EL i l = HD l' ==>
-(!i'. i' < i ==> ~P (EL i l) /\ ~MEM (EL i' l) l')
-*)
  !P l l' i.
  FILTER P l = l' ==>
- (LEAST i. EL i l = HD l') = i ==>
+ LENGTH l' > 0 ==>
+ (OLEAST i. oEL i l = SOME (HD l')) = SOME i ==>
  (!i'. i' < i ==> ~P (EL i' l) /\ ~MEM (EL i' l) l')
 Proof
 cheat
@@ -839,7 +842,15 @@ Theorem FUNPOW_OPT_LIST_EXISTS_nicer:
  !f n n' x x'.
  FUNPOW_OPT f n x = SOME x' ==>
  n' <= n ==>
- ?l. FUNPOW_OPT_LIST f n' x = SOME (x::(SNOC x' l))
+ ?l. FUNPOW_OPT_LIST f n' x = SOME (x::l)
+Proof
+cheat
+QED
+
+Theorem FUNPOW_OPT_LIST_EXISTS_exact:
+ !f n x x'.
+ FUNPOW_OPT f n x = SOME x' ==>
+ ?l. FUNPOW_OPT_LIST f n x = SOME (x::(SNOC x' l))
 Proof
 cheat
 QED
@@ -1060,41 +1071,39 @@ subgoal `?x_list'. FILTER P' x_list = x_list'` >- (
  fs []
 ) >>
 subgoal `LENGTH x_list > 0` >- (
- cheat
+ fs [INDEX_FIND_EQ_SOME_0]
 ) >>
-subgoal `?i. x'' = EL i x_list /\ i < (PRE n)` >- (
- subgoal `?i. SOME x'' = oEL i x_list` >- (
-  fs [FUNPOW_OPT_LIST_EQ_SOME] >>
-  IMP_RES_TAC FILTER_MEM >>
-  QSPECL_X_ASSUM ``!x. MEM x x_list' ==> MEM x ms_list`` [`x''`] >>
-  Q.SUBGOAL_THEN `MEM (HD x_list') x_list'` (fn thm => rfs [thm]) >- (
-   rfs [MEM_HD, listTheory.NOT_NIL_EQ_LENGTH_NOT_0]
-  ) >>
-  fs [listTheory.MEM_EL] >>
-  qexists_tac `n'` >>
-  fs [listTheory.oEL_THM]
- ) >>
- qexists_tac `i` >>
- fs [listTheory.oEL_EQ_EL, FUNPOW_OPT_LIST_EQ_SOME] >>
- (* Left to prove: Why can't x'' be the last element in x_list? *)
+subgoal `?i. (OLEAST i. oEL i x_list = SOME x'') = SOME i /\ i < (PRE n)` >- (
+ IMP_RES_TAC FILTER_OLEAST_HD >>
+ gs [] >>
+ fs [whileTheory.OLEAST_EQ_SOME] >>
+
  Cases_on `i = PRE n` >- (
   subgoal `P' x''` >- (
    IMP_RES_TAC FILTER_MEM >>
    QSPECL_X_ASSUM ``!x. MEM x x_list' ==> P' x`` [`x''`] >>
+   PAT_ASSUM ``x'' = HD x_list'`` (fn thm => fs [thm]) >>
    Q.SUBGOAL_THEN `MEM (HD x_list') x_list'` (fn thm => rfs [thm]) >- (
     rfs [MEM_HD, listTheory.NOT_NIL_EQ_LENGTH_NOT_0]
    )
   ) >>
   subgoal `LAST x_list = x'` >- (
-   cheat
+   fs [INDEX_FIND_EQ_SOME_0] >>
+   fs [FUNPOW_OPT_LIST_EQ_SOME] >>
+   subgoal `x_list <> []` >- (
+    Cases_on `x_list` >> (
+     fs []
+    )
+   ) >>
+   metis_tac [listTheory.LAST_EL]
   ) >>
   subgoal `x'' = x'` >- (
-   fs [INDEX_FIND_EQ_SOME_0]
+   fs [listTheory.oEL_THM, INDEX_FIND_EQ_SOME_0]
   ) >>
   rw [] >>
   fs []
  ) >>
- fs []
+ fs [FUNPOW_OPT_LIST_EQ_SOME, listTheory.oEL_THM]
 ) >>
 qexists_tac `SUC i` >>
 fs [] >>
@@ -1102,7 +1111,23 @@ rpt strip_tac >| [
  (* subgoal 3a. OK: SUC i steps taken until first encounter of l
   * EL i ms_list = HD ms_list' is among assumptions *)
  subgoal `?x_list''. FUNPOW_OPT_LIST f (SUC i) x = SOME (x::x_list'')` >- (
-  cheat
+  subgoal `SUC i <= n` >- (
+   fs []
+  ) >>
+  IMP_RES_TAC FUNPOW_OPT_LIST_APPEND >>
+  fs [] >>
+  qexists_tac `TL l'` >>
+  subgoal `x = HD l'` >- (
+   Cases_on `l'` >> (
+    fs [FUNPOW_OPT_LIST_EQ_SOME]
+   )
+  ) >>
+  subgoal `~NULL l'` >- (
+   Cases_on `l'` >> (
+    fs [FUNPOW_OPT_LIST_EQ_SOME]
+   )
+  ) >>
+  metis_tac [listTheory.CONS]
  ) >>
  qexists_tac `x_list''` >>
  fs [] >>
@@ -1110,13 +1135,25 @@ rpt strip_tac >| [
  rpt strip_tac >| [
   fs [FUNPOW_OPT_LIST_EQ_SOME],
 
+  fs [whileTheory.OLEAST_EQ_SOME] >>
   subgoal `EL i x_list'' = EL i x_list` >- (
-   cheat
+   irule EL_PRE_CONS_EQ >>
+   qexists_tac `x` >>
+   irule FUNPOW_OPT_LIST_EL_EQ >>
+   qexists_tac `f` >>
+   qexists_tac `n` >>
+   qexists_tac `SUC i` >>
+   qexists_tac `x` >>
+   fs []
   ) >>
-  fs [],
+  fs [listTheory.oEL_THM],
 
-  subgoal `MEM (HD x_list') (FILTER P' x_list')` >- (
-   cheat
+  subgoal `MEM (HD x_list') (FILTER P' x_list)` >- (
+   rw [] >>
+   irule MEM_HD >>
+   Cases_on `FILTER P' x_list` >> (
+    fs []
+   )
   ) >>
   fs [listTheory.MEM_FILTER],
 
@@ -1124,10 +1161,11 @@ rpt strip_tac >| [
   (* P': by FILTER_BEFORE *)
   (* P: by INDEX_FIND 0 P x_list = SOME (PRE n,x') *)
   fs [] >| [
-   subgoal `(LEAST i. EL i x_list = HD x_list') = i` >- (
-    cheat
-   ) >>
    IMP_RES_TAC FILTER_BEFORE >>
+   QSPECL_X_ASSUM ``!i. (OLEAST i. oEL i x_list = SOME (HD x_list')) = SOME i ==> !i'. i' < i ==> ~P' (EL i' x_list)`` [`i`] >>
+   gs [] >>
+   QSPECL_X_ASSUM ``!i'. i' < i ==> ~P' (EL i' x_list)`` [`j'`] >>
+   rfs [] >>
    `EL j' x_list'' = EL j' x_list` suffices_by (
     metis_tac []
    ) >>
@@ -1158,6 +1196,7 @@ rpt strip_tac >| [
  ],
 
  (* subgoal 3b. OK: (n - SUC i) steps taken from first encounter of l will get you to ms' *)
+ fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM] >>
  qexists_tac `DROP (SUC i) x_list` >>
  rpt strip_tac >| [
   metis_tac [FUNPOW_OPT_LIST_SUFFIX],

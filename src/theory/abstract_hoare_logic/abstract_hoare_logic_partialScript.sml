@@ -75,8 +75,7 @@ EQ_TAC >> (
  fs [weak_rel_steps_def],
 
  fs [weak_rel_steps_def] >>
- IMP_RES_TAC FUNPOW_OPT_LIST_EXISTS_nicer >>
- QSPECL_X_ASSUM ``!n'. n' <= n ==> ?l. FUNPOW_OPT_LIST m.trs n' ms = SOME (ms::SNOC ms' l)`` [`n`] >>
+ IMP_RES_TAC FUNPOW_OPT_LIST_EXISTS_exact >>
  fs [] >>
  fs [INDEX_FIND_EQ_SOME_0, FUNPOW_OPT_LIST_EQ_SOME] >>
  rpt strip_tac >| [
@@ -872,110 +871,6 @@ rpt strip_tac >| [
   * See FUNPOW_OPT_LIST_FILTER_FIRST *)
  PAT_ASSUM ``weak_model m`` (fn thm => fs [HO_MATCH_MP weak_rel_steps_to_FUNPOW_OPT_LIST thm]) >>
  metis_tac [weak_rel_steps_list_states_subgoal_3_lemma],
-(* OLD:
- subgoal `?ms''. ms'' = EL 0 (FILTER (\ms. m.pc ms = l) ms_list)` >- (
-  metis_tac []
- ) >>
- (* TODO: The below is used in multiple subgoals... *)
- subgoal `?ms_list'. FILTER (\ms. m.pc ms = l) ms_list = ms_list'` >- (
-  fs []
- ) >>
- (* Note: last state in ms_list can't be at label l *)
- subgoal `?i. ms'' = EL i ms_list /\ i < (PRE n)` >- (
-  subgoal `?i. SOME ms'' = oEL i ms_list` >- (
-   fs [FUNPOW_OPT_LIST_EQ_SOME] >>
-   IMP_RES_TAC FILTER_MEM >>
-   QSPECL_X_ASSUM ``!x. MEM x ms_list' ==> MEM x ms_list`` [`ms''`] >>
-   Q.SUBGOAL_THEN `MEM (HD ms_list') ms_list'` (fn thm => rfs [thm]) >- (
-    rfs [MEM_HD, listTheory.NOT_NIL_EQ_LENGTH_NOT_0]
-   ) >>
-   fs [listTheory.MEM_EL] >>
-   qexists_tac `n'` >>
-   fs [listTheory.oEL_THM]
-  ) >>
-  qexists_tac `i` >>
-  fs [listTheory.oEL_EQ_EL, FUNPOW_OPT_LIST_EQ_SOME] >>
-  Cases_on `i = PRE n` >- (
-   subgoal `m.pc ms'' = l` >- (
-    IMP_RES_TAC FILTER_MEM >>
-    QSPECL_X_ASSUM ``!x. MEM x ms_list' ==> (\ms. m.pc ms = l) x`` [`ms''`] >>
-    Q.SUBGOAL_THEN `MEM (HD ms_list') ms_list'` (fn thm => rfs [thm]) >- (
-     rfs [MEM_HD, listTheory.NOT_NIL_EQ_LENGTH_NOT_0]
-    )
-   ) >>
-   fs [weak_rel_steps_def] >>
-   subgoal `ms'' = ms'` >- (
-    `LAST (ms::ms_list) = EL (PRE n) ms_list` suffices_by (
-     fs []
-    ) >>
-    subgoal `LAST (ms::ms_list) = EL (PRE (LENGTH (ms::ms_list))) (ms::ms_list)` >- (
-     irule listTheory.LAST_EL >>
-     fs []
-    ) >>
-    subgoal `PRE (LENGTH (ms::ms_list)) = n` >- (
-     SIMP_TAC list_ss [] >>
-     metis_tac []
-    ) >>
-    fs [rich_listTheory.EL_CONS, listTheory.NOT_NIL_EQ_LENGTH_NOT_0]
-   ) >>
-   fs []
-  ) >>
-  fs []
- ) >>
- qexists_tac `SUC i` >>
- fs [] >>
- rpt strip_tac >| [
-  (* subgoal 3a. OK: SUC i steps taken until first encounter of l
-   * EL i ms_list = HD ms_list' is among assumptions *)
-  fs [weak_rel_steps_def] >>
-  rpt strip_tac >| [
-   (* HD ms_list' reached in SUC i steps from ms *)
-   fs [FUNPOW_OPT_LIST_EQ_SOME],
-
-   (* HD ms_list' is either l or in ls *)
-   IMP_RES_TAC FILTER_MEM >>
-   QSPECL_X_ASSUM ``!x. MEM x ms_list' ==> (\ms. m.pc ms = l) x`` [`HD ms_list'`] >>
-   Q.SUBGOAL_THEN `MEM (HD ms_list') ms_list'` (fn thm => rfs [thm]) >- (
-    rfs [MEM_HD, listTheory.NOT_NIL_EQ_LENGTH_NOT_0]
-   ),
-
-   (* At n' < SUC i steps, we are neither at l nor in ls *)
-   QSPECL_X_ASSUM ``!n'.
-          n' < n /\ n' > 0 ==>
-          ?ms''. FUNPOW_OPT m.trs n' ms = SOME ms'' /\ m.pc ms'' NOTIN ls`` [`n'`] >>
-   rfs [] >>
-   ONCE_REWRITE_TAC [EQ_SYM_EQ] >>
-   `~(\ms. m.pc ms = l) ms'3'` suffices_by (
-    fs []
-   ) >>
-   irule FILTER_NOT_MEM >>
-   qexists_tac `ms_list` >>
-   qexists_tac `ms_list'` >>
-   fs [FUNPOW_OPT_LIST_EQ_SOME] >>
-   (* OK: ms'3' is in ms_list (since n' < n) but not in ms_list' (since n' < SUC i, so before first encounter) *)
-   CONJ_TAC >| [
-    IMP_RES_TAC FILTER_BEFORE >>
-    QSPECL_X_ASSUM ``!i'. i' < i ==> ~MEM (EL i' ms_list) ms_list'`` [`PRE n'`] >>
-    rfs [] >>
-    `EL (PRE n') ms_list = ms'3'` suffices_by (
-     metis_tac []
-    ) >>
-    metis_tac [rich_listTheory.EL_CONS, arithmeticTheory.GREATER_DEF],
-
-    QSPECL_X_ASSUM ``!n'. n' <= n ==> FUNPOW_OPT m.trs n' ms = SOME (EL n' (ms::ms_list))`` [`n'`] >>
-    rfs [] >>
-    irule MEM_EL_CONS >>
-    fs []
-   ]
-  ],
-
-  (* subgoal 3b. OK: (n - SUC i) steps taken from first encounter of l will get you to ms' *)
-  irule weak_rel_steps_intermediate_start >>
-  fs [] >>
-  qexists_tac `ms` >>
-  fs [FUNPOW_OPT_LIST_EQ_SOME]
- ],
-*)
 
  (* subgoal 4. OK: Last element in filtered list can perform weak transition with ending
   * label set ({l} UNION ls) and reach ms' *)
