@@ -32,6 +32,34 @@ fun lift_prog dafilename =
 	(prog, region_map, sections)
     end;
 
+fun get_cfg prog_tm entries =
+    let
+	(* build the dictionaries using the library under test *)
+	val _ = print "Building dictionaries.\n";
+	open bir_block_collectionLib;
+	val bl_dict = gen_block_dict prog_tm;
+	val lbl_tms = get_block_dict_keys bl_dict;
+
+	(* build the cfg and update the basic blocks *)
+	val _ = print "Building node dict.\n";
+	open bir_cfgLib;
+	val n_dict = cfg_build_node_dict bl_dict lbl_tms;
+	val _ = print "Building cfg.\n";
+	val g1 = cfg_create "aes" entries n_dict bl_dict;
+	(*
+	 val _ = print "Updating cfg.\n";
+	 val n_dict = cfg_update_nodes_basic lbl_tms n_dict;
+	 val g2 = cfg_update g1 n_dict;
+	 *)
+
+	(* display the cfg *)
+	val g_display = g1;
+	val _ = print "Display cfg.\n";
+	open bir_cfg_vizLib;
+	val ns = List.map (valOf o (lookup_block_dict (#CFGG_node_dict g_display))) (#CFGG_nodes g_display);
+	val _ = cfg_display_graph_ns ns;
+    in () end;
+
 fun unpack_code x =
     case x of
 	(str: string, BILME_code s) => (str, s)
@@ -103,40 +131,73 @@ fun run_angr_symbexecc entryjsonfilename =
 		bir_exec_wrapLib.get_exec_output ("python3 -E -m bir_angr.symbolic_execution \"" ^ entryjsonfilename)
 		) else (
             print "... using symbolic_execution_wrapper.py in python subdirectory ...\n";
-            bir_exec_wrapLib.get_exec_output ("python3 -E " ^ pythonscript ^ " " ^ entryjsonfilename)
+            bir_exec_wrapLib.get_exec_output ("python3 -E " ^ pythonscript ^ " " ^ entryjsonfilename ^ " -es")
             );
 	val _ = if false then print output else ();
     in output end;
 
 
+ 
 
-val dafilename = "aes.da";
+val dafilename = "aes_test.da";
 val (prog, region_map, sections) = lift_prog dafilename;
 val unpack_sections = List.map unpack_sections sections;
 val list_entries_and_exits = List.map define_entry_and_exits unpack_sections;
 
+(* CFG *)
+(* val entries = [``BL_Address (Imm64 (0x406460w))``] *)
+(* val _ = get_cfg prog entries; *)
 
-val binfilename = (bir_angrLib.get_pythondir()) ^ "/aes.out";
+
+val binfilename = (bir_angrLib.get_pythondir()) ^ "/binprogs/aes.out";
 val magicinputfilename = set_birprogjson prog;
-val dir_name = "result" ^ "-" ^ (String.extract(dafilename, 0, SOME (String.size dafilename-3)));
-val make_dir = bir_fileLib.makedir true dir_name;
- 
+val dir_name = "result-concratization-tests" ^ "/" ^ (String.extract(dafilename, 0, SOME (String.size dafilename-3)));
+val _ = bir_fileLib.makedir true "result-concratization-tests";
+val _ = bir_fileLib.makedir true dir_name;
+val _ = bir_fileLib.makedir true (dir_name ^ "/" ^ "successful");
+val _ = bir_fileLib.makedir true (dir_name ^ "/" ^ "successful_with_exception");
+val _ = bir_fileLib.makedir true (dir_name ^ "/" ^ "failed");
 
+
+val num_tests = ref 0;
+val num_fails_with_end = ref 0;
+val num_fails_no_end = ref 0;
 fun run_tests region_map entries_and_exits =
     ListPair.map (fn ((region_map_section, region_map_name, region_map_addr),(entry,exits)) =>
 		     if region_map_section = ".text" andalso region_map_addr = entry
+			andalso not
+			    (OS.FileSys.access ((dir_name ^ "/" ^ "successful" ^ "/" ^ region_map_name ^ ".log"), [])
+			     orelse
+			     OS.FileSys.access ((dir_name ^ "/" ^ "successful_with_exception" ^ "/" ^ region_map_name ^ ".log"), [])
+			     orelse
+			     OS.FileSys.access ((dir_name ^ "/" ^ "failed" ^ "/" ^ region_map_name ^ ".log"), []))
 		     then (   
 			 let
+			     val _ = print("\n\nTEST: " ^ region_map_name ^ "\n");
 			     val entryjsonfilename = (bir_angrLib.get_pythondir()) ^ "/entry.json";
 			     val exits = List.map Arbnum.fromInt exits;
 			     val entry_json_str = entry_json binfilename magicinputfilename entry exits;
 			     val _ = bir_fileLib.write_to_file entryjsonfilename entry_json_str;
 			     val out_symbexec = run_angr_symbexecc entryjsonfilename;
-			     val to_save = String.isSubstring "ConcretizationException" out_symbexec;
-			     val _ = if to_save then bir_fileLib.write_to_file (dir_name ^ "/" ^ region_map_name ^ ".log") out_symbexec else ();
+			     val to_save = String.isSubstring "Inconclusive Concretization" out_symbexec;
+			     val _ = if to_save then (
+					 num_fails_no_end := (!num_fails_no_end + 1);
+					 bir_fileLib.write_to_file (dir_name ^ "/" ^ "failed" ^ "/" ^ region_map_name ^ ".log") out_symbexec)
+				     else (
+					 if (String.isSubstring "ConcretizationException" out_symbexec)
+					 then (
+					     num_fails_with_end := (!num_fails_with_end + 1);
+					     bir_fileLib.write_to_file (dir_name ^ "/" ^ "successful_with_exception" ^ "/" ^ region_map_name ^ ".log") out_symbexec)
+					 else (bir_fileLib.write_to_file (dir_name ^ "/" ^ "successful" ^ "/" ^ region_map_name ^ ".log") out_symbexec));
+			     val _ = num_tests := (!num_tests + 1);
 			 in () end)
 		     else ()) (region_map, entries_and_exits);
 
 
 val _ = run_tests region_map list_entries_and_exits;
-    
+
+
+val _ = print("number of total tests: " ^ (Int.toString (!num_tests)) ^ "\n");
+val _ = print("number of successful tests: " ^ (Int.toString ((!num_tests)-(!num_fails_with_end)-(!num_fails_no_end))) ^ "/" ^ (Int.toString (!num_tests)) ^ "\n");
+val _ = print("number of successful tests with some concretization failures: " ^ (Int.toString (!num_fails_with_end)) ^ "/" ^ (Int.toString (!num_tests)) ^ "\n");
+val _ = print("number of failed tests: " ^ (Int.toString (!num_fails_no_end)) ^ "/" ^ (Int.toString (!num_tests)) ^ "\n");
