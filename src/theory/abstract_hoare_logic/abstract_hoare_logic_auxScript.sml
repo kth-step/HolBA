@@ -118,13 +118,111 @@ fs [listTheory.MEM_FILTER]
 QED
 *)
 
-Theorem FILTER_OLEAST_HD:
+Theorem MEM_OLEAST:
+!l x.
+MEM x l ==>
+?i. (OLEAST i. oEL i l = SOME x) = SOME i
+Proof
+Induct >> (
+ fs [listTheory.MEM, listTheory.LENGTH]
+) >>
+rpt strip_tac >| [
+ qexists_tac `0` >>
+ fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM],
+
+ qpat_assum `!x. _` (fn thm => imp_res_tac thm) >>
+ Cases_on `h = x` >- (
+  qexists_tac `0` >>
+  fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM]
+ ) >>
+ qexists_tac `SUC i` >>
+ fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM] >>
+ rpt strip_tac >>
+ Cases_on `i'` >- (
+  fs []
+ ) >>
+ QSPECL_X_ASSUM ``!i'. _`` [`n`] >>
+ gs []
+]
+QED
+
+(* TODO: Lemma stating no member of a filtered list has an index in the original list less than head of filtered list *)
+Theorem FILTER_HD_OLEAST:
+ !P l l' x i i'.
+ FILTER P l = l' ==>
+ (OLEAST i. oEL i l = SOME (HD l')) = SOME i ==>
+ MEM x l' ==>
+ (OLEAST i. oEL i l = SOME x) = SOME i' ==>
+ i <= i'
+Proof
+cheat
+(*
+rpt strip_tac >>
+CCONTR_TAC >>
+subgoal `MEM (EL i' l) l'` >- (
+ cheat
+) >>
+subgoal `HD l' <> x` >- (
+ cheat
+) >>
+subgoal `0 < i'` >- (
+ cheat
+) >>
+QSPECL_X_ASSUM ``!i''. i'' < i' ==> EL i'' l = x ==> ~(i'' < LENGTH l)`` [`0`] >>
+gs [] >>
+QSPECL_X_ASSUM ``!i''. i'' < i ==> EL i'' l <> HD l'`` [`0`] >>
+gs [] >>
+Cases_on `i = 0` >- (
+ fs []
+) >>
+gs [] >>
+*)
+
+
+(*
+rpt strip_tac >>
+fs [listTheory.MEM_EL] >>
+qpat_x_assum `x = EL n l'` (fn thm => fs [thm]) >>
+Cases_on `n` >- (
+ cheat
+) >>
+fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM] >>
+Cases_on `i = 0` >- (
+ fs []
+) >>
+Cases_on `i' = 0` >- (
+ fs [] >>
+ QSPECL_X_ASSUM ``!i''. i'' < i ==> EL i'' l = HD l' ==> ~(i'' < LENGTH l)`` [`i'`] >>
+ gs [] >>
+ cheat
+) >>
+Cases_on `i' < i` >- (
+ fs [] >>
+ QSPECL_X_ASSUM ``!i''. i'' < i ==> EL i'' l = HD l' ==> ~(i'' < LENGTH l)`` [`i'`] >>
+ rfs [] >>
+ QSPECL_X_ASSUM ``!i''. i'' < i' ==> EL i'' l <> EL (SUC n') l'`` [`0`] >>
+ fs []
+)
+*)
+QED
+
+Theorem FILTER_HD_OLEAST_EXISTS:
  !P l l'.
  FILTER P l = l' ==>
  LENGTH l' > 0 ==>
  ?i. (OLEAST i. oEL i l = SOME (HD l')) = SOME i
 Proof
-cheat
+rpt strip_tac >>
+subgoal `MEM (HD l') l'` >- (
+ irule MEM_HD >>
+ fs [listTheory.NOT_NIL_EQ_LENGTH_NOT_0]
+) >>
+subgoal `MEM (HD l') l` >- (
+ metis_tac [listTheory.MEM_FILTER]
+) >>
+imp_res_tac MEM_OLEAST >>
+qexists_tac `i` >>
+fs []
 QED
 
 (* Note: Since l can have duplicate elements, we need to make sure
@@ -136,12 +234,61 @@ Theorem FILTER_BEFORE:
  (OLEAST i. oEL i l = SOME (HD l')) = SOME i ==>
  (!i'. i' < i ==> ~P (EL i' l) /\ ~MEM (EL i' l) l')
 Proof
-cheat
+rpt strip_tac >| [
+ subgoal `MEM (EL i' l) l` >- (
+  irule rich_listTheory.EL_MEM >>
+  fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM]
+ ) >>
+ subgoal `MEM (EL i' l) l'` >- (
+  metis_tac [listTheory.MEM_FILTER]
+ ) >>
+ subgoal `?i''. (OLEAST i. oEL i l = SOME (EL i' l)) = SOME i''` >- (
+  metis_tac [MEM_OLEAST]
+ ) >>
+ (* Contradictions after case analysis of i'' vs. i' and i *)
+ imp_res_tac FILTER_HD_OLEAST >>
+ Cases_on `i'' = i'` >- (
+  fs []
+ ) >>
+ Cases_on `i'' < i'` >- (
+  fs []
+ ) >>
+ Cases_on `i'' > i'` >- (
+  fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM] >>
+  QSPECL_X_ASSUM ``!i'3'. i'3' < i'' ==> EL i'3' l = EL i' l ==> ~(i'3' < LENGTH l)`` [`i'`] >>
+  fs [arithmeticTheory.GREATER_DEF]
+ ) >>
+ fs [],
+
+ (* Very similar to other case *)
+ subgoal `MEM (EL i' l) l` >- (
+  irule rich_listTheory.EL_MEM >>
+  fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM]
+ ) >>
+ subgoal `?i''. (OLEAST i. oEL i l = SOME (EL i' l)) = SOME i''` >- (
+  metis_tac [MEM_OLEAST]
+ ) >>
+ (* Contradictions after case analysis of i'' vs. i' and i *)
+ imp_res_tac FILTER_HD_OLEAST >>
+ Cases_on `i'' = i'` >- (
+  fs []
+ ) >>
+ Cases_on `i'' < i'` >- (
+  fs []
+ ) >>
+ Cases_on `i'' > i'` >- (
+  fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM] >>
+  QSPECL_X_ASSUM ``!i'3'. i'3' < i'' ==> EL i'3' l = EL i' l ==> ~(i'3' < LENGTH l)`` [`i'`] >>
+  fs [arithmeticTheory.GREATER_DEF]
+ ) >>
+ fs []
+]
 QED
 
 (* TODO: Since l can have duplicate elements, we need to make sure
  * EL i l is the LAST encounter of LAST l' in l. *)
 (* TODO: Might require list nonempty or OLEAST... *)
+(* TODO: Use bir_auxiliaryTheory.LAST_FILTER_EL *)
 Theorem FILTER_AFTER:
  !P l l' i.
  FILTER P l = l' ==>
@@ -167,7 +314,30 @@ i < n ==>
 INDEX_FIND 0 P x_list = SOME (PRE n, x) ==>
 INDEX_FIND 0 P (DROP i x_list) = SOME (PRE (n - i), x)
 Proof
-cheat
+rpt strip_tac >>
+fs [INDEX_FIND_EQ_SOME_0] >>
+rpt strip_tac >| [
+ subgoal `EL (PRE (n - i)) (DROP i x_list) = EL ((PRE (n - i)) + i) x_list` >- (
+  irule listTheory.EL_DROP >>
+  fs []
+ ) >>
+ fs [] >>
+ `i + PRE (n - i) = PRE n` suffices_by (
+  rpt strip_tac >>
+  fs []
+ ) >>
+ fs [],
+
+ subgoal `j' + i < PRE n` >- (
+  fs [arithmeticTheory.LESS_MONO_ADD_EQ]
+ ) >>
+ Q.SUBGOAL_THEN `EL j' (DROP i x_list) = EL (j' + i) x_list` (fn thm => fs [thm]) >- (
+  irule listTheory.EL_DROP >>
+  fs []
+ ) >>
+ QSPECL_X_ASSUM ``!j'. j' < PRE n ==> ~P (EL j' x_list)`` [`i + j'`] >>
+ fs []
+]
 QED
 
 Theorem EL_PRE_CONS_EQ:
@@ -284,12 +454,26 @@ Definition FUNPOW_OPT_LIST_def:
    | NONE => NONE)
 End
 
+Theorem FUNPOW_OPT_LIST_HD:
+ !f n s l.
+ FUNPOW_OPT_LIST f n s = SOME l ==>
+ ?l'. FUNPOW_OPT_LIST f n s = SOME (s::l')
+Proof
+cheat
+QED
+
 Theorem FUNPOW_OPT_LIST_SUC_NONE:
  !f n s l.
  FUNPOW_OPT_LIST f n s = SOME l ==>
  f (LAST l) = NONE ==>
  FUNPOW_OPT f (SUC n) s = NONE
 Proof
+rpt strip_tac >>
+fs [arithmeticTheory.ADD1] >>
+ONCE_REWRITE_TAC [arithmeticTheory.ADD_SYM] >>
+irule FUNPOW_OPT_ADD_NONE >>
+qexists_tac `LAST l` >>
+fs [FUNPOW_OPT_compute] >>
 cheat
 QED
 
@@ -320,8 +504,22 @@ Theorem FUNPOW_OPT_LIST_EQ_SOME:
  !i. (SUC i) < LENGTH l ==>
  f (EL i l) = SOME (EL (SUC i) l)
 Proof
-cheat
-(* TODO: Use FUNPOW_OPT_LIST_NEQ_NONE_PREV *)
+rpt strip_tac >>
+EQ_TAC >| [
+ (* TODO: Lemmatize *)
+ rpt strip_tac >| [
+  cheat,
+
+  cheat,
+
+  (* TODO: Use FUNPOW_OPT_LIST_NEQ_NONE_PREV *)
+  cheat,
+
+  cheat
+ ],
+
+ cheat
+]
 QED
 
 Theorem FUNPOW_OPT_LIST_EQ_NONE:
@@ -885,8 +1083,8 @@ fs [listTheory.LAST_DEF] >>
 Cases_on `l = []` >> (
  fs []
 ) >| [
- (* TODO: Lemma *)
- cheat,
+ imp_res_tac FUNPOW_OPT_LIST_LENGTH >>
+ fs [],
 
  qexists_tac `FRONT l` >>
  rw [] >>
@@ -988,12 +1186,42 @@ Cases_on `FUNPOW_OPT_LIST f n' x'` >> (
 )
 QED
 
+(* TODO: Rename to FUNPOW_OPT_LIST_DROP? *)
 Theorem FUNPOW_OPT_LIST_SUFFIX:
 !f n i x x_list.
+SUC i <= n ==>
 FUNPOW_OPT_LIST f n x = SOME (x::x_list) ==>
 FUNPOW_OPT_LIST f (n - SUC i) (EL i x_list) = SOME (EL i x_list::DROP (SUC i) x_list)
 Proof
-cheat
+rpt strip_tac >>
+imp_res_tac FUNPOW_OPT_LIST_APPEND >>
+subgoal `EL i x_list = LAST l'` >- (
+ fs [FUNPOW_OPT_LIST_EQ_SOME] >>
+ gs []
+) >>
+fs [FUNPOW_OPT_LIST_tail] >>
+Cases_on `f x` >> (
+ fs []
+) >>
+Cases_on `FUNPOW_OPT_LIST f i x'` >> (
+ fs []
+) >>
+qpat_x_assum `x::x'' = l'` (fn thm => fs [GSYM thm]) >>
+qpat_x_assum `x'' ++ DROP 1 l'' = x_list` (fn thm => fs [GSYM thm]) >>
+subgoal `LENGTH x'' = SUC i` >- (
+ fs [FUNPOW_OPT_LIST_EQ_SOME]
+) >>
+Q.SUBGOAL_THEN `DROP (SUC i) (x'' ++ DROP 1 l'') = (DROP (SUC i) x'') ++ DROP 1 l''`
+ (fn thm => fs [thm]) >- (
+ irule rich_listTheory.DROP_APPEND1 >>
+ fs []
+) >>
+fs [listTheory.DROP_LENGTH_TOO_LONG] >>
+Cases_on `l''` >- (
+ fs [FUNPOW_OPT_LIST_EQ_SOME]
+) >>
+imp_res_tac FUNPOW_OPT_LIST_HD >>
+gs []
 QED
 
 (*
@@ -1113,7 +1341,7 @@ subgoal `LENGTH x_list > 0` >- (
  fs [INDEX_FIND_EQ_SOME_0]
 ) >>
 subgoal `?i. (OLEAST i. oEL i x_list = SOME x'') = SOME i /\ i < (PRE n)` >- (
- IMP_RES_TAC FILTER_OLEAST_HD >>
+ IMP_RES_TAC FILTER_HD_OLEAST_EXISTS >>
  gs [] >>
  fs [whileTheory.OLEAST_EQ_SOME] >>
 
@@ -1238,6 +1466,9 @@ rpt strip_tac >| [
  fs [whileTheory.OLEAST_EQ_SOME, listTheory.oEL_THM] >>
  qexists_tac `DROP (SUC i) x_list` >>
  rpt strip_tac >| [
+  subgoal `SUC i <= n` >- (
+   fs []
+  ) >>
   metis_tac [FUNPOW_OPT_LIST_SUFFIX],
 
   irule INDEX_FIND_SUFFIX >>
