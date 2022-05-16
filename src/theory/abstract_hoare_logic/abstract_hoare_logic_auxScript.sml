@@ -288,6 +288,7 @@ QED
 (* TODO: Since l can have duplicate elements, we need to make sure
  * EL i l is the LAST encounter of LAST l' in l. *)
 (* TODO: Might require list nonempty or OLEAST... *)
+(* TODO: Use EXISTENTIAL quantification for i *)
 (* TODO: Use bir_auxiliaryTheory.LAST_FILTER_EL *)
 Theorem FILTER_AFTER:
  !P l l' i.
@@ -299,11 +300,22 @@ cheat
 QED
 
 (* TODO: This is just plain wrong... *)
+(* TODO: Would it suffice with
+ * "there exists i', i'' such that i' < i'', EL i' l = EL i (FILTER P l) and
+ * EL i'' l = EL (SUC i) (FILTER P l)"? *)
 Theorem FILTER_ORDER:
  !P l i i' i''.
  EL i' l = EL i (FILTER P l) ==>
  EL i'' l = EL (SUC i) (FILTER P l) ==>
  i' < i''
+Proof
+cheat
+QED
+Theorem FILTER_ORDER_alt:
+ !P l i x x'.
+ SOME x = oEL i (FILTER P l) ==>
+ SOME x' = oEL (SUC i) (FILTER P l) ==>
+ (?i' i''. i' < i'' /\ x = EL i' l /\ x' = EL i'' l /\ (!i'''. i''' > i' /\ i''' < i'' ==> ~P (EL i''' l)))
 Proof
 cheat
 QED

@@ -38,8 +38,8 @@ val weak_model_def = Define `
             )`;
 
 
-val weak_comp_thm = prove(``
-  !m.
+val weak_comp_thm = store_thm("weak_comp_thm",
+``!m.
   weak_model m ==>
   !ms ls1 ls2 ms' ms''.
   (m.weak ms (ls1 UNION ls2) ms') ==> (~((m.pc ms') IN ls2)) ==>
