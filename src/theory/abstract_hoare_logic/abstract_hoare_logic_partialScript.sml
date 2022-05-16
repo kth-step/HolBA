@@ -861,17 +861,18 @@ End
  * reached, counting the number of times ls has been encountered
  * in the process *)
 Definition trs_to_s_count_ls_def:
- (trs_to_s_count_ls mod ms ls s 0 n_ls = SOME n_ls) /\
- (trs_to_s_count_ls mod ms ls s (SUC n) n_ls =
-  if ms = s
-  then SOME n_ls
-  else 
-   (case mod.trs ms of
-      NONE => NONE
-    | SOME ms' =>
-     if mod.pc ms' IN ls
-     then trs_to_s_count_ls mod ms' ls s n (SUC n_ls)
-     else trs_to_s_count_ls mod ms' ls s n n_ls))
+ (trs_to_s_count_ls m ms ls ms' 0 (n_ls:num) = NONE) /\
+ (trs_to_s_count_ls m ms ls ms' (SUC n) n_ls =
+  (case m.trs ms of
+     NONE => NONE
+   | SOME ms'' =>
+    if m.pc ms'' IN ls
+    then if ms'' = ms'
+         then SOME (SUC n_ls)
+         else trs_to_s_count_ls m ms'' ls ms' n (SUC n_ls)
+    else if ms'' = ms'
+         then SOME n_ls
+         else trs_to_s_count_ls m ms'' ls ms' n n_ls))
 End
 
 (* TODO: Overkill? *)
@@ -891,14 +892,15 @@ Proof
 cheat
 QED
 
+(* TODO: You will likely need a lemma stating that all states reached with n or fewer transitions
+ * from ms are distinct. *)
+
 Theorem loop_lemma_1:
  !m.
  weak_model m ==>
- !ms s ms' l le n n_l.
- m.weak ms le ms' ==>
- s <> ms' ==>
- trs_to_s_count_ls m ms ({l} UNION le) s n 0 = SOME n_l ==>
- ?s'. m.weak s ({l} UNION le) s'
+ !ms ms' ls n n_l.
+ trs_to_s_count_ls m ms ls ms' n 0 = SOME n_l ==>
+ m.weak ms ls ms'
 Proof
 cheat
 QED
@@ -960,14 +962,67 @@ Proof
 cheat
 QED
 
+(* Maybe these are needed:
+Theorem loop_lemma_7a:
+ !m.
+ weak_model m ==>
+ !ms ls ms' n n' n_l n_l'.
+ trs_to_s_count_ls m ms ls ms' n 0 = SOME n_l ==>
+ trs_to_s_count_ls m ms ls ms' n' 0 = SOME n_l' ==>
+ n' >= n ==>
+ n_l' >= n_l
+Proof
+cheat
+QED
+
+Theorem loop_lemma_7b:
+ !m.
+ weak_model m ==>
+ !ms ls ms' n_l.
+ m.pc ms' IN ls ==> 
+ trs_to_s_count_ls m ms ls ms' 1 0 = SOME n_l ==>
+ n_l = 1
+Proof
+cheat
+QED
+
+Theorem loop_lemma_7c:
+ !m.
+ weak_model m ==>
+ !ms ls ms' n n_l.
+ trs_to_s_count_ls m ms ls ms' n 0 = SOME n_l ==>
+ n' <= n ==>
+ ?n_l'. trs_to_s_count_ls m ms ls ms' n' 0 = SOME n_l
+Proof
+cheat
+QED
+*)
+
 Theorem loop_lemma_7:
  !m.
  weak_model m ==>
  !ms ls ms' n n_l.
  trs_to_s_count_ls m ms ls ms' n 0 = SOME n_l ==>
- m.pc ms' IN ls ==>
+ ms <> ms' ==>
+ m.pc ms' IN ls ==> 
  n_l > 0
 Proof
+(*
+rpt strip_tac >>
+completeInduct_on `n` >|
+ rpt strip_tac >>
+ QSPECL_X_ASSUM ``!m'. _`` [`PRE n`] >>
+ Cases_on `n` >> (
+  fs [trs_to_s_count_ls_def]
+ ) >>
+ Cases_on `m.trs ms` >> (
+  fs []
+ ) >>
+ Cases_on `m.trs ms` >> (
+  fs []
+ ) >>
+ fs [] >>
+*)
 cheat
 QED
 
@@ -1026,11 +1081,27 @@ subgoal `abstract_loop_jgmt m l le (\s. oadd (trs_to_s_count_ls m ms ({l} UNION 
    fs [oadd_def]
   )
  ) >>
+ subgoal `?n_l''. trs_to_s_count_ls m s ({l} UNION le) ms' n 0 = SOME n_l''` >- (
+  Cases_on `trs_to_s_count_ls m s ({l} UNION le) ms' n 0` >> (
+   fs [oadd_def]
+  )
+ ) >>
  subgoal `?ms'''. m.weak s ({l} UNION le) ms'''` >- (
-  (* Since "?n_l. trs_to_s_count_ls m ms ({l} UNION le) s n 0 = SOME n" (i.e. s is somewhere between ms and ms')
+  (* Since "?n_l. trs_to_s_count_ls m ms ({l} UNION le) s n 0 = SOME n_l" (i.e. s is somewhere between ms and ms')
    * and s <> ms', weak transition from s to
    * ({l} UNION le) will encounter ms' or some earlier state with pc l *)
-  metis_tac [loop_lemma_1]
+  ONCE_REWRITE_TAC [pred_setTheory.UNION_COMM] >>
+  irule weak_superset_thm >>
+  fs [] >>
+  qexists_tac `ms'` >>
+  irule weak_union2_thm >>
+  fs [] >>
+  conj_tac >| [
+   metis_tac [weak_pc_in_thm, IN_NOT_IN_NEQ_thm],
+
+   qexists_tac `{l}` >>
+   metis_tac [loop_lemma_1]
+  ]
  ) >>
  subgoal `m.pc ms''' = l` >- (
   fs [abstract_partial_jgmt_def] >>
@@ -1038,11 +1109,6 @@ subgoal `abstract_loop_jgmt m l le (\s. oadd (trs_to_s_count_ls m ms ({l} UNION 
  ) >>
  qexists_tac `ms'''` >>
  fs [] >>
- subgoal `?n_l''. trs_to_s_count_ls m s ({l} UNION le) ms' n 0 = SOME n_l''` >- (
-  Cases_on `trs_to_s_count_ls m s ({l} UNION le) ms' n 0` >> (
-   fs [oadd_def]
-  )
- ) >>
  subgoal `n_l'' > 0` >- (
   (* n_l'' must be at least one, since at the very least ms' is encountered *)
   irule loop_lemma_7 >>
@@ -1089,7 +1155,7 @@ subgoal `abstract_jgmt m l le (\s'. (\s. oadd (trs_to_s_count_ls m ms ({l} UNION
   metis_tac [loop_lemma_4]
  ) >>
  fs [abstract_partial_jgmt_def] >>
- QSPECL_X_ASSUM  ``!ms ms'. m.pc ms = l ==> invariant ms /\ ~C1 ms ==> m.weak ms le ms' ==> post ms'`` [`s'`, `ms'`] >>
+ QSPECL_X_ASSUM ``!ms ms'. m.pc ms = l ==> invariant ms /\ ~C1 ms ==> m.weak ms le ms' ==> post ms'`` [`s'`, `ms'`] >>
  gs [] >>
  qexists_tac `ms'` >>
  metis_tac []
