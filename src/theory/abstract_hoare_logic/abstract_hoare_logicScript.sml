@@ -314,7 +314,7 @@ Defn.tgoal loop_fun_defn
 *)
 val (loop_fun_eqns, loop_fun_ind) = Defn.tprove(loop_fun_defn,
   FULL_SIMP_TAC std_ss [loop_step_def] >>
-  WF_REL_TAC `measure (\(m, ms,var,l,le,invariant,C1). var ms)` >>
+  WF_REL_TAC `measure (\(m,ms,var,l,le,invariant,C1). var ms)` >>
   REPEAT STRIP_TAC >>
   REV_FULL_SIMP_TAC std_ss [LET_DEF] >>
   Q.ABBREV_TAC `MS' =  (\ms'.
@@ -333,13 +333,15 @@ val abstract_loop_jgmt_def = Define `
           (\ms. m.pc ms = l /\ invariant ms /\ var ms < x /\ var ms >= 0))
 `;
 
-(* TODO: Try removing C1 from the last conjunct, see what happens? *)
+(* Note that due to loop_fun_ind relating states ms and ms' at loop points,
+ * ms needs to be exposed also here. Either this can be explicitly specified
+ * in the precondition of the conclusion, or the definition can be unfolded, like here *)
 val loop_fun_ind_spec =
   Q.SPEC `\m ms var l le invariant C1.
 	   weak_model m ==>
 	   abstract_loop_jgmt m l le invariant C1 var ==>
 	   abstract_jgmt m l le (\ms. invariant ms /\ ~C1 ms) post ==>
-	   (invariant ms /\ m.pc ms = l /\ C1 ms) ==>
+	   (invariant ms /\ m.pc ms = l) ==>
 	   (?ms'. m.weak ms le ms' /\ post ms')` loop_fun_ind;
 
 
@@ -353,6 +355,9 @@ val inductive_invariant = prove(``
 rpt strip_tac >>
 fs [] >>
 rpt strip_tac >>
+Cases_on `~C1 ms` >- (
+  fs [abstract_jgmt_def]
+) >>
 (* We first prove that one iteration works (first antecedent of induction hypothesis):
  * OK since C1 holds in ms, then use loop judgment to obtain
  * witness *)
@@ -418,15 +423,7 @@ val abstract_loop_rule_thm = store_thm("abstract_loop_rule_thm",
     abstract_jgmt m l le (\ms. invariant ms /\ ~C1 ms) post ==>
     abstract_jgmt m l le invariant post``,
 
-rpt strip_tac >>
-simp [abstract_jgmt_def] >>
-rpt strip_tac >>
-ASSUME_TAC (Q.SPECL [`m`, `ms`, `var`, `l`, `le`, `invariant`, `C1`] abstract_loop_rule_tmp_thm) >>
-rfs [] >>
-Cases_on `C1 ms` >- (
-  metis_tac []
-) >>
-fs [abstract_jgmt_def]
+metis_tac [abstract_jgmt_def, abstract_loop_rule_tmp_thm]
 );
 
 val _ = export_theory();
