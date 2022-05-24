@@ -875,6 +875,17 @@ Definition trs_to_s_count_ls_def:
          else trs_to_s_count_ls m ms'' ls ms' n n_ls))
 End
 
+Definition trs_n_count_ls_def:
+ (trs_n_count_ls m ms ls 0 (n_ls:num) = SOME n_ls) /\
+ (trs_n_count_ls m ms ls (SUC n) n_ls =
+  (case m.trs ms of
+     NONE => NONE
+   | SOME ms' =>
+    if m.pc ms' IN ls
+    then trs_n_count_ls m ms' ls n (SUC n_ls)
+    else trs_n_count_ls m ms' ls n n_ls))
+End
+
 (* TODO: Overkill? *)
 Definition oadd_def:
  (oadd NONE _ = NONE) /\
@@ -952,12 +963,27 @@ Proof
 cheat
 QED
 
+(* TODO: Generalize ({l} UNION ls) to ls' *)
 Theorem loop_lemma_6:
  !m.
  weak_model m ==>
  !ms ls l ms' n.
  weak_rel_steps m ms ls ms' n ==>
  ?n_l. trs_to_s_count_ls m ms ({l} UNION ls) ms' n 0 = SOME n_l
+Proof
+(* This requires that:
+ * ms' is reached with no more than n steps
+ * for all n' < n, ?ms''. FUNPOW_OPT m.trs n' ms = SOME ms'' *)
+rpt strip_tac >>
+cheat
+QED
+
+Theorem loop_n_lemma_6:
+ !m.
+ weak_model m ==>
+ !ms ls l ms' n.
+ weak_rel_steps m ms ls ms' n ==>
+ ?n_l. trs_n_count_ls m ms ({l} UNION ls) n 0 = SOME n_l
 Proof
 cheat
 QED
@@ -1026,6 +1052,30 @@ completeInduct_on `n` >|
 cheat
 QED
 
+(* TODO: For run-oriented proof: *)
+
+Definition run_to_ls_def:
+ (run_to_ls m ls ms =
+  if ?n. n > 0 /\ (?ms'. FUNPOW_OPT m.trs n ms = SOME ms' /\ m.pc ms' IN ls /\ !n'. n' < n ==> (?ms''. FUNPOW_OPT m.trs n' ms = SOME ms'' /\ m.pc ms'' NOTIN ls ))
+  then FUNPOW_OPT m.trs (@n. n > 0 /\ (?ms'. FUNPOW_OPT m.trs n ms = SOME ms' /\ m.pc ms' IN ls /\ !n'. n' < n ==> (?ms''. FUNPOW_OPT m.trs n' ms = SOME ms'' /\ m.pc ms'' NOTIN ls ))) ms
+  else NONE)
+End
+
+Definition run_to_ls_n_def:
+ (run_to_ls_m m ls ms n = FUNPOW_OPT (run_to_ls m ls) n ms)
+End
+
+(* Invariant: *)
+(*
+``\s. (@n. run_to_ls_m m ({l} UNION le) ms n = SOME s) +
+           (@n. run_to_ls_m m ({l} UNION le) s n = SOME ms') = n_l``
+*)
+
+(* Variant: *)
+(*
+``\s. (@n. run_to_ls_m m ({l} UNION le) s n = SOME ms')``
+*)
+
 Theorem weak_partial_loop_rule_thm:
  !m.
  weak_model m ==>
@@ -1034,6 +1084,45 @@ Theorem weak_partial_loop_rule_thm:
  abstract_partial_jgmt m l le (\ms. invariant ms /\ ~(C1 ms)) post ==>
  abstract_partial_jgmt m l le invariant post
 Proof
+(* Version with trs_n invariant:
+rpt strip_tac >>
+SIMP_TAC std_ss [abstract_partial_jgmt_def] >>
+rpt strip_tac >>
+fs [weak_partial_loop_contract_def] >>
+subgoal `?ms''. m.weak ms ({l} UNION le) ms''` >- (
+ (* There is at least ms', possibly another state if l is encountered before *)
+ metis_tac [weak_superset_thm, pred_setTheory.UNION_COMM]
+) >>
+Cases_on `m.pc ms'' IN le` >- (
+ (* If le was reached without encountering l, we win immediately *)
+ fs [abstract_partial_jgmt_def] >>
+ res_tac >>
+ Cases_on `~C1 ms` >> (
+  metis_tac []
+ )
+) >>
+subgoal `m.pc ms'' = l` >- (
+ imp_res_tac weak_pc_in_thm >>
+ gs [pred_setTheory.IN_UNION]
+) >>
+(* Needed to establish n *)
+subgoal `?n. weak_rel_steps m ms le ms' n /\ n > 0` >- (
+ (* Since m.weak to le connects ms and ms' by some non-zero number of transitions *)
+ PAT_ASSUM ``weak_model m`` (fn thm => fs [HO_MATCH_MP weak_rel_steps_equiv thm]) >>
+ qexists_tac `n` >>
+ fs [weak_rel_steps_def]
+) >>
+(* Needed to establish n_l *)
+subgoal `?n_l. trs_n_count_ls m ms ({l} UNION le) n 0 = SOME n_l` >- (
+ metis_tac [loop_n_lemma_6]
+) >>
+subgoal `abstract_loop_jgmt m l le (\s. ?n'. FUNPOW_OPT m.trs n' ms = SOME s /\ oadd (trs_n_count_ls m ms ({l} UNION le) n' 0) (trs_n_count_ls m s ({l} UNION le) (n-n') 0) = SOME n_l) C1
+                                             (\s. THE (trs_to_s_count_ls m s ({l} UNION le) ms' n 0))` >- (
+ cheat
+) >>
+cheat
+*)
+
 rpt strip_tac >>
 SIMP_TAC std_ss [abstract_partial_jgmt_def] >>
 rpt strip_tac >>
