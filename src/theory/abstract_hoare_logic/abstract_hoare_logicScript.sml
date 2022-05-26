@@ -389,26 +389,16 @@ subgoal `invariant ms' /\ (m.pc ms') = l` >- (
   fs [loop_step_def, LET_DEF]
 ) >>
 fs [] >>
-(* C1 holding in ms' remains to prove for the induction hypothesis.
- * However, if C1 does not hold in ms', the loop exit contract can be used to
- * complete the proof directly, so a case split is done.
- * For both cases, weak_comp_thm is used to connect ms to ms'' via ms'. *)
-Cases_on `~C1 ms'` >| [
-  fs [loop_step_def, LET_DEF, abstract_jgmt_def] >>
-  QSPECL_X_ASSUM  ``!ms. _`` [`ms'`] >>
-  rfs [],
-
-  fs [loop_step_def, LET_DEF]
-] >> (
-  `m.weak ms le ms''` suffices_by (
-    metis_tac []
-  ) >>
-  irule weak_comp_thm >>
-  fs [] >>
-  qexistsl_tac [`{l}`, `ms'`] >>
-  Q.SUBGOAL_THEN `l NOTIN le` (fn thm => fs [thm]) >- (
-    fs [abstract_loop_jgmt_def, pred_setTheory.IN_SING]
-  )
+(* For both cases, weak_comp_thm is used to connect ms to ms'' via ms'. *)
+fs [loop_step_def, LET_DEF] >>
+`m.weak ms le ms''` suffices_by (
+  metis_tac []
+) >>
+irule weak_comp_thm >>
+fs [] >>
+qexistsl_tac [`{l}`, `ms'`] >>
+Q.SUBGOAL_THEN `l NOTIN le` (fn thm => fs [thm]) >- (
+  fs [abstract_loop_jgmt_def, pred_setTheory.IN_SING]
 )
 );
 

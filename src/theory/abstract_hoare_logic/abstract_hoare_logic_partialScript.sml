@@ -640,60 +640,6 @@ Proof
 fs [abstract_jgmt_imp_partial_triple]
 QED
 
-(* Discussion version:
- !m l ls pre post.
- weak_model m ==>
- (!ms. m.pc ms = l /\ pre ms ==> (?ms'. m.weak ms ls ms') ==>
- abstract_partial_jgmt m l ls pre post ==>
- abstract_jgmt m l ls pre post)
-*)
-Theorem partial_to_total:
- !m l ls pre post.
- weak_model m ==>
- (!ms. m.pc ms = l /\ pre ms ==> ?ms'. m.weak ms ls ms') ==>
- abstract_partial_jgmt m l ls pre post ==>
- abstract_jgmt m l ls pre post
-Proof
-cheat
-QED
-
-(* !!!!!!!!!!!!!!!!!!!!! *)
-(* Suggested lemma to factor out from total correctness version of seq rule: *)
-Theorem seq_lemma:
-!m ls1 ls2 post.
-weak_model m ==>
-!ms.
-?ms'. m.weak ms (ls1 UNION ls2) ms' /\ post ms' /\
-(m.pc ms' NOTIN ls2 ==> ?ms''. m.weak ms' ls2 ms'' /\ post ms'') ==>
-?ms'''. m.weak ms ls2 ms''' /\ post ms'''
-Proof
-cheat
-QED
-
-(* Suggested lemmata to use:
-
-     m.weak ms ls ms' ==> ?ms''. m.weak ms (ls1 UNION ls2) ms''
-
-     (* Same as seq_lemma? *)
-     ?ms''. m.weak ms ls' ms'' /\ (!ms'''. m.weak ms ls' ms''' => post ms''') ==> ?ms''''. m.weak ms ls' ms'''' /\ post ms''''
-
-*)
-
-(* If we know that ms terminates, then we maybe could prove the premises of the
- * total-correctnesss seq rule in the following format:
-
-     [pre a /\ a = ms]l->(ls1 U ls2)[post a]
-     !l1 in ls1. [post a /\ weak ms ls1 a /\ a in l1]l1->ls2[post a]
-
- * No, second premise must have identical pre-and postcondition... 
- *)
-
-(* Another lemma suggestion: identical to intermediate label lemma?
-
-     m.weak ms ls ms' /\ m.weak ms ls U ls' ms'' /\ ms''<>ms' [ms'' not in ls'] ==>
-     m.weak ms'' ls ms'
-*)
-
 Theorem weak_partial_seq_rule_thm:
  !m l ls1 ls2 pre post.
  weak_model m ==>
@@ -702,25 +648,6 @@ Theorem weak_partial_seq_rule_thm:
  (abstract_partial_jgmt m l1 ls2 post post)) ==>
  abstract_partial_jgmt m l ls2 pre post
 Proof
-(* Trying to use seq_lemma:
-rpt strip_tac >>
-FULL_SIMP_TAC std_ss [abstract_partial_jgmt_def] >>
-rpt strip_tac >>
-imp_res_tac seq_lemma >>
-QSPECL_X_ASSUM ``!post ms ls2 ls1. _`` [`post`, `ms`, `ls2`, `ls1`] >>
-fs [] >>
-subgoal `?ms'. m.weak ms (ls1 UNION ls2) ms'` >- (
-  cheat
-) >>
-subgoal `post ms'3'` >- (
-  cheat
-) >>
-Cases_on `m.pc ms'3' IN ls2` >- (
-  cheat
-) >>
-(* TODO: Probably does not work *)
-*)
-
 rpt strip_tac >>
 SIMP_TAC std_ss [abstract_partial_jgmt_def] >>
 rpt strip_tac >>
@@ -776,48 +703,6 @@ subgoal `m.pc ms' IN ls2` >- (
 ) >>
 metis_tac []
 
-(* Straight-up reuse of total-correctness rule: *)
-(*
-rpt strip_tac >>
-(* Experiment with trying to case split on termination:
-Cases_on ‘(!ms. m.pc ms = l /\ pre ms ==> ~(?ms'. m.weak ms ls2 ms'))’ >- (
- fs [abstract_partial_jgmt_def]
-) >>
-*)
-(* Experiment with trying to case split on termination:
-subgoal ‘(!ms. m.pc ms = l /\ pre ms ==> (?ms'. m.weak ms ls2 ms'))’ >- (
- cheat
-) >>
-*)
-fs [] >>
-irule total_to_partial >>
-fs [] >>
-irule abstract_seq_rule_thm >>
-fs [] >>
-qexists_tac ‘ls1’ >>
-conj_tac >| [
- rpt strip_tac >>
- irule partial_to_total >>
- fs [] >>
- rpt strip_tac >>
- QSPECL_X_ASSUM ``!l1. l1 IN ls1 ==> _`` [`l1`] >>
- rfs [abstract_partial_jgmt_def] >>
- res_tac >>
- (* What to do here: Existence of ms' such that m.weak ms ls2 ms' unclear *)
- QSPECL_X_ASSUM `` !ms. m.pc ms = l /\ pre ms ==> ?ms'. m.weak ms ls2 ms'`` [`ms`] >>
- fs [] >>
- metis_tac []
- cheat,
-
- irule partial_to_total >>
- fs [] >>
- rpt strip_tac >>
- fs [abstract_partial_jgmt_def] >>
- res_tac >>
- (* What to do here: Same problem as above *)
- cheat
-]
-*)
 
 (* OLD, working proof: *)
 (*
@@ -857,42 +742,6 @@ Definition weak_partial_loop_contract_def:
        (\ms. m.pc ms = l /\ invariant ms))
 End
 
-(* Applies trs a maximum of n_max times until state s has been
- * reached, counting the number of times ls has been encountered
- * in the process *)
-Definition trs_to_s_count_ls_def:
- (trs_to_s_count_ls m ms ls ms' 0 (n_ls:num) = NONE) /\
- (trs_to_s_count_ls m ms ls ms' (SUC n) n_ls =
-  (case m.trs ms of
-     NONE => NONE
-   | SOME ms'' =>
-    if m.pc ms'' IN ls
-    then if ms'' = ms'
-         then SOME (SUC n_ls)
-         else trs_to_s_count_ls m ms'' ls ms' n (SUC n_ls)
-    else if ms'' = ms'
-         then SOME n_ls
-         else trs_to_s_count_ls m ms'' ls ms' n n_ls))
-End
-
-Definition trs_n_count_ls_def:
- (trs_n_count_ls m ms ls 0 (n_ls:num) = SOME n_ls) /\
- (trs_n_count_ls m ms ls (SUC n) n_ls =
-  (case m.trs ms of
-     NONE => NONE
-   | SOME ms' =>
-    if m.pc ms' IN ls
-    then trs_n_count_ls m ms' ls n (SUC n_ls)
-    else trs_n_count_ls m ms' ls n n_ls))
-End
-
-(* TODO: Overkill? *)
-Definition oadd_def:
- (oadd NONE _ = NONE) /\
- (oadd _ NONE = NONE) /\
- (oadd (SOME (n:num)) (SOME n') = SOME (n + n'))
-End
-
 Theorem weak_superset_thm:
  !m.
  weak_model m ==>
@@ -903,178 +752,229 @@ Proof
 cheat
 QED
 
-(* TODO: You will likely need a lemma stating that all states reached with n or fewer transitions
- * from ms are distinct. *)
+Definition ominus_def:
+ (ominus NONE _ = NONE) /\
+ (ominus _ NONE = NONE) /\
+ (ominus (SOME (n:num)) (SOME n') = SOME (n - n'))
+End
 
-Theorem loop_lemma_1:
- !m.
- weak_model m ==>
- !ms ms' ls n n_l.
- trs_to_s_count_ls m ms ls ms' n 0 = SOME n_l ==>
- m.weak ms ls ms'
-Proof
-cheat
-QED
+Definition weak_exec_def:
+ (weak_exec m ls ms =
+  let
+   MS' = m.weak ms ls
+  in
+   if MS' = {}
+   then NONE
+   else SOME (CHOICE MS'))
+End
 
-(* TODO: Add all necessary antecedents... *)
-Theorem loop_lemma_2:
- !m.
- weak_model m ==>
- !ms s ms''' l le n n_l.
- l NOTIN le ==>
- trs_to_s_count_ls m ms ({l} UNION le) s n 0 = SOME n_l ==>
- m.weak s ({l} UNION le) ms'3' ==>
- m.pc ms'3' = l ==>
- trs_to_s_count_ls m ms ({l} UNION le) ms'3' n 0 = SOME (SUC n_l)
-Proof
-cheat
-QED
-Theorem loop_lemma_3:
- !m.
- weak_model m ==>
- !ms s ms''' ms' l le n n_l.
- l NOTIN le ==>
- m.weak ms le ms' ==>
- trs_to_s_count_ls m s ({l} UNION le) ms' n 0 = SOME n_l ==>
- m.weak s ({l} UNION le) ms'3' ==>
- m.pc ms'3' = l ==>
- trs_to_s_count_ls m ms''' ({l} UNION le) ms' n 0 = SOME (PRE n_l)
-Proof
-cheat
-QED
-(* TODO: Needs to take into account number of transitions used *)
-Theorem loop_lemma_4:
- !m.
- weak_model m ==>
- !ms s' ms' l le n n_l.
- l NOTIN le ==>
- m.weak ms le ms' ==>
- trs_to_s_count_ls m ms ({l} UNION le) s' n 0 = SOME n_l ==>
- m.weak s' le ms'
-Proof
-cheat
-QED
-Theorem loop_lemma_5:
- !m.
- weak_model m ==>
- !ms ls n.
- trs_to_s_count_ls m ms ls ms n 0 = SOME 0
-Proof
-cheat
-QED
+Definition weak_exec_n_def:
+ (weak_exec_n m ms ls n = FUNPOW_OPT (weak_exec m ls) n ms)
+End
 
-(* TODO: Generalize ({l} UNION ls) to ls' *)
-Theorem loop_lemma_6:
+(* TODO: Can prove equivalence here? *)
+Theorem weak_exec_exists:
  !m.
  weak_model m ==>
- !ms ls l ms' n.
- weak_rel_steps m ms ls ms' n ==>
- ?n_l. trs_to_s_count_ls m ms ({l} UNION ls) ms' n 0 = SOME n_l
+ !ms ls ms'. 
+ m.weak ms ls ms' ==>
+ weak_exec m ls ms = SOME ms'
 Proof
-(* This requires that:
- * ms' is reached with no more than n steps
- * for all n' < n, ?ms''. FUNPOW_OPT m.trs n' ms = SOME ms'' *)
 rpt strip_tac >>
-cheat
+fs [weak_exec_def] >>
+subgoal `m.weak ms ls = {ms'}` >- (
+ fs [GSYM pred_setTheory.UNIQUE_MEMBER_SING, pred_setTheory.IN_APP] >>
+ metis_tac [weak_unique_thm]
+) >>
+fs []
 QED
 
-Theorem loop_n_lemma_6:
+(* TODO: Strengthen conclusion to state either ms'' is ms', or pc is in ls2? *)
+Theorem weak_exec_exists_superset:
  !m.
  weak_model m ==>
- !ms ls l ms' n.
- weak_rel_steps m ms ls ms' n ==>
- ?n_l. trs_n_count_ls m ms ({l} UNION ls) n 0 = SOME n_l
+ !ms ls1 ls2 ms'. 
+ m.weak ms ls1 ms' ==>
+ ?ms''. weak_exec m (ls1 UNION ls2) ms = SOME ms''
 Proof
+rpt strip_tac >>
+fs [weak_exec_def] >>
+(* OK: Either ms' is the result, or some other state with pc in ls2 was encountered before that *)
 cheat
 QED
 
-(* Maybe these are needed:
-Theorem loop_lemma_7a:
+Theorem weak_exec_n_exists_superset:
  !m.
  weak_model m ==>
- !ms ls ms' n n' n_l n_l'.
- trs_to_s_count_ls m ms ls ms' n 0 = SOME n_l ==>
- trs_to_s_count_ls m ms ls ms' n' 0 = SOME n_l' ==>
- n' >= n ==>
- n_l' >= n_l
+ !ms ls1 ls2 ms'. 
+ m.weak ms ls1 ms' ==>
+ ?n. (OLEAST n. weak_exec_n m ms (ls1 UNION ls2) n = SOME ms') = SOME n
 Proof
+rpt strip_tac >>
+(* OK: weak_exec_n is repeated applications of weak_exec. For every such application,
+ * either ms' was encountered, or ls2, in which case some further number of steps
+ * will encounter ms'. *)
 cheat
 QED
 
-Theorem loop_lemma_7b:
+Theorem weak_exec_least_nonzero:
  !m.
  weak_model m ==>
  !ms ls ms' n_l.
- m.pc ms' IN ls ==> 
- trs_to_s_count_ls m ms ls ms' 1 0 = SOME n_l ==>
- n_l = 1
-Proof
-cheat
-QED
-
-Theorem loop_lemma_7c:
- !m.
- weak_model m ==>
- !ms ls ms' n n_l.
- trs_to_s_count_ls m ms ls ms' n 0 = SOME n_l ==>
- n' <= n ==>
- ?n_l'. trs_to_s_count_ls m ms ls ms' n' 0 = SOME n_l
-Proof
-cheat
-QED
-*)
-
-Theorem loop_lemma_7:
- !m.
- weak_model m ==>
- !ms ls ms' n n_l.
- trs_to_s_count_ls m ms ls ms' n 0 = SOME n_l ==>
+ (OLEAST n. weak_exec_n m ms ls n = SOME ms') = SOME n_l ==>
  ms <> ms' ==>
- m.pc ms' IN ls ==> 
  n_l > 0
 Proof
-(*
 rpt strip_tac >>
-completeInduct_on `n` >|
- rpt strip_tac >>
- QSPECL_X_ASSUM ``!m'. _`` [`PRE n`] >>
- Cases_on `n` >> (
-  fs [trs_to_s_count_ls_def]
- ) >>
- Cases_on `m.trs ms` >> (
-  fs []
- ) >>
- Cases_on `m.trs ms` >> (
-  fs []
- ) >>
- fs [] >>
-*)
+Cases_on `weak_exec_n m ms ls 0 = SOME ms'` >- (
+ fs [weak_exec_n_def, FUNPOW_OPT_def]
+) >>
+(* TODO: Should be trivial: P 0 = F ==> (OLEAST n. P n) = SOME n_l ==> n_l > 0 *)
 cheat
 QED
 
-(* TODO: For run-oriented proof: *)
+Theorem weak_exec_sing_least_less:
+ !m.
+ weak_model m ==>
+ !ms ls ms' n_l.
+ SING (\n. n < n_l /\ weak_exec_n m ms ls n = SOME ms') ==>
+ ?n_l'. (OLEAST n. weak_exec_n m ms ls n = SOME ms') = SOME n_l' /\ n_l' < n_l
+Proof
+rpt strip_tac >>
+(* OK: If ms' is uniquely encountered before n_l loop iterations, then
+ * there must be a least number of loop iterations such that ms' is
+ * encountered, and this number is less than n_l *)
+cheat
+QED
 
-Definition run_to_ls_def:
- (run_to_ls m ls ms =
-  if ?n. n > 0 /\ (?ms'. FUNPOW_OPT m.trs n ms = SOME ms' /\ m.pc ms' IN ls /\ !n'. n' < n ==> (?ms''. FUNPOW_OPT m.trs n' ms = SOME ms'' /\ m.pc ms'' NOTIN ls ))
-  then FUNPOW_OPT m.trs (@n. n > 0 /\ (?ms'. FUNPOW_OPT m.trs n ms = SOME ms' /\ m.pc ms' IN ls /\ !n'. n' < n ==> (?ms''. FUNPOW_OPT m.trs n' ms = SOME ms'' /\ m.pc ms'' NOTIN ls ))) ms
-  else NONE)
-End
+Theorem weak_inter_exec:
+ !m.
+ weak_model m ==>
+ !ms le l n_l ms' s'. 
+ m.weak ms le ms' ==>
+ (OLEAST n. weak_exec_n m ms ({l} UNION le) n = SOME ms') = SOME n_l ==>
+ SING (\n. n < n_l /\ weak_exec_n m ms ({l} UNION le) n = SOME s') ==>
+ m.weak s' le ms'
+Proof
+rpt strip_tac >>
+(* OK: s' is a uniquely encountered (before n_l loop iterations) state,
+ * where n_l is the least amount of applications of weak_exec to ({l} UNION le)
+ * needed to exit the loop,
+ * therefore weak transition can continue from s' to the loop exit *)
+cheat
+QED
 
-Definition run_to_ls_n_def:
- (run_to_ls_m m ls ms n = FUNPOW_OPT (run_to_ls m ls) n ms)
-End
+(* TODO: Technically, this doesn't need OLEAST for the encounter of ms' *)
+Theorem weak_exec_incr:
+ !m.
+ weak_model m ==>
+ !ms ls ms' n_l ms''.
+ (OLEAST n. weak_exec_n m ms ls n = SOME ms') = SOME n_l ==>
+ m.weak ms' ls ms'' ==>
+ weak_exec_n m ms ls (SUC n_l) = SOME ms''
+Proof
+rpt strip_tac >>
+(* OK: ms'' reached by taking an additional weak transition from ms',
+ * itself reached in n_l weak transitions, can also be reached by taking
+ * n_l + 1 weak transitions *)
+cheat
+QED
+
+(* TODO: Technically, this doesn't need OLEAST for the encounter of ms' *)
+Theorem weak_exec_incr_least:
+ !m.
+ weak_model m ==>
+ !ms ls ms' n_l n_l' ms''.
+ (OLEAST n. weak_exec_n m ms ls n = SOME ms') = SOME n_l' ==>
+ m.weak ms' ls ms'' ==>
+ SING (\n. n < n_l /\ weak_exec_n m ms ls n = SOME ms'') ==>
+ n_l' < n_l ==>
+ (OLEAST n. weak_exec_n m ms ls n = SOME ms'') = SOME (SUC n_l')
+Proof
+rpt strip_tac >>
+(* OK: If ms' was first encountered at n_l' weak iterations to ls, and
+ * if one additional weak transition to ls goes to ms'', then if
+ * ms'' is uniquely encountered before n_l weak transitions to ls and n_l
+ * is greater than n_l', then SUC n_l' must be the least number of weak transitions
+ * needed to reach ms'' *)
+cheat
+QED
+
+(* TODO: m.weak ms ls2 ms' redundant? *)
+Theorem weak_exec_uniqueness:
+ !m.
+ weak_model m ==>
+ !ms ls1 ls2 ms' n_l. 
+ m.weak ms ls2 ms' ==>
+ (OLEAST n. weak_exec_n m ms (ls1 UNION ls2) n = SOME ms') = SOME n_l ==>
+ !n_l' ms''. n_l' < n_l ==>
+ weak_exec_n m ms (ls1 UNION ls2) n_l' = SOME ms'' ==>
+ SING (\n. n < n_l /\ weak_exec_n m ms (ls1 UNION ls2) n = SOME ms'')
+Proof
+rpt strip_tac >>
+(* OK: ms'' is a state encountered before n_l loop iterations,
+ * where n_l is the least amount of applications of weak_exec to ({l} UNION le)
+ * needed to exit the loop,
+ * therefore ms'' must have been uniquely encountered before n_l loop iterations,
+ * or there must have been a loop before ms' could ever be reached *)
+cheat
+QED
+
+(* Uses the fact that exit labels are disjoint from loop point to know that
+ * we have not yet exited the loop after another weak transition, i.e. the
+ * number of loops is still less than n_l *)
+Theorem weak_exec_less_incr_superset:
+ !m.
+ weak_model m ==>
+ !ms ls1 ls2 ms' ms'' ms''' n_l n_l'.
+ DISJOINT ls1 ls2 ==>
+ (OLEAST n. weak_exec_n m ms (ls1 UNION ls2) n = SOME ms') = SOME n_l ==>
+ m.pc ms' IN ls2 ==>
+ (OLEAST n. weak_exec_n m ms (ls1 UNION ls2) n = SOME ms'') = SOME n_l' ==>
+ n_l' < n_l ==>
+ m.weak ms'' (ls1 UNION ls2) ms''' ==>
+ m.pc ms''' NOTIN ls2 ==>
+ SUC n_l' < n_l
+Proof
+cheat
+QED
+
+(*
+Theorem weak_exec_less:
+ !m.
+ weak_model m ==>
+ !ms ls ms' n_l n_l'.
+ SING (\n. n < n_l /\ weak_exec_n m ms ls n = SOME ms') ==>
+ (OLEAST n. weak_exec_n m ms ls n = SOME ms') = SOME n_l' ==>
+ n_l' < n_l
+Proof
+cheat
+QED
+*)
+
+(*
+Theorem weak_exec_comp1:
+ !m.
+ weak_model m ==>
+ !ms ls ms' n n' ms''.
+ weak_exec_n m ms ls n = SOME ms' ==>
+ weak_exec_n m ms ls n' = SOME ms'' ==>
+ n < n' ==>
+ weak_exec_n m ms ls (n - n') = SOME ms''
+Proof
+cheat
+QED
+*)
+
 
 (* Invariant: *)
-(*
-``\s. (@n. run_to_ls_m m ({l} UNION le) ms n = SOME s) +
-           (@n. run_to_ls_m m ({l} UNION le) s n = SOME ms') = n_l``
-*)
+(* TODO: Is SING useful enough or do we need LEAST? *)
+val invariant = ``\s. (SING (\n. n < n_l /\ weak_exec_n m ms ({l} UNION le) n = SOME s)) /\ invariant s``;
+
 
 (* Variant: *)
-(*
-``\s. (@n. run_to_ls_m m ({l} UNION le) s n = SOME ms')``
-*)
+(* TODO: Make different solution so that THE can be removed... *)
+val variant = ``\s. THE (ominus (SOME n_l) ($OLEAST (\n. weak_exec_n m ms ({l} UNION le) n = SOME s)))``;
 
 Theorem weak_partial_loop_rule_thm:
  !m.
@@ -1084,148 +984,19 @@ Theorem weak_partial_loop_rule_thm:
  abstract_partial_jgmt m l le (\ms. invariant ms /\ ~(C1 ms)) post ==>
  abstract_partial_jgmt m l le invariant post
 Proof
-(* Version with trs_n invariant:
 rpt strip_tac >>
-SIMP_TAC std_ss [abstract_partial_jgmt_def] >>
-rpt strip_tac >>
-fs [weak_partial_loop_contract_def] >>
-subgoal `?ms''. m.weak ms ({l} UNION le) ms''` >- (
- (* There is at least ms', possibly another state if l is encountered before *)
- metis_tac [weak_superset_thm, pred_setTheory.UNION_COMM]
-) >>
-Cases_on `m.pc ms'' IN le` >- (
- (* If le was reached without encountering l, we win immediately *)
- fs [abstract_partial_jgmt_def] >>
- res_tac >>
- Cases_on `~C1 ms` >> (
-  metis_tac []
- )
-) >>
-subgoal `m.pc ms'' = l` >- (
- imp_res_tac weak_pc_in_thm >>
- gs [pred_setTheory.IN_UNION]
-) >>
-(* Needed to establish n *)
-subgoal `?n. weak_rel_steps m ms le ms' n /\ n > 0` >- (
- (* Since m.weak to le connects ms and ms' by some non-zero number of transitions *)
- PAT_ASSUM ``weak_model m`` (fn thm => fs [HO_MATCH_MP weak_rel_steps_equiv thm]) >>
- qexists_tac `n` >>
- fs [weak_rel_steps_def]
-) >>
-(* Needed to establish n_l *)
-subgoal `?n_l. trs_n_count_ls m ms ({l} UNION le) n 0 = SOME n_l` >- (
- metis_tac [loop_n_lemma_6]
-) >>
-subgoal `abstract_loop_jgmt m l le (\s. ?n'. FUNPOW_OPT m.trs n' ms = SOME s /\ oadd (trs_n_count_ls m ms ({l} UNION le) n' 0) (trs_n_count_ls m s ({l} UNION le) (n-n') 0) = SOME n_l) C1
-                                             (\s. THE (trs_to_s_count_ls m s ({l} UNION le) ms' n 0))` >- (
- cheat
-) >>
-cheat
-*)
-
-rpt strip_tac >>
-SIMP_TAC std_ss [abstract_partial_jgmt_def] >>
+simp [abstract_partial_jgmt_def] >>
 rpt strip_tac >>
 fs [weak_partial_loop_contract_def] >>
-subgoal `?ms''. m.weak ms ({l} UNION le) ms''` >- (
- (* There is at least ms', possibly another state if l is encountered before *)
- metis_tac [weak_superset_thm, pred_setTheory.UNION_COMM]
+(* 0. Establish n_l *)
+subgoal `?n_l. (OLEAST n. weak_exec_n m ms ({l} UNION le) n = SOME ms') = SOME n_l` >- (
+ ONCE_REWRITE_TAC [pred_setTheory.UNION_COMM] >>
+ irule weak_exec_n_exists_superset >>
+ fs []
 ) >>
-Cases_on `m.pc ms'' IN le` >- (
- (* If le was reached without encountering l, we win immediately *)
- fs [abstract_partial_jgmt_def] >>
- res_tac >>
- Cases_on `~C1 ms` >> (
-  metis_tac []
- )
-) >>
-subgoal `m.pc ms'' = l` >- (
- imp_res_tac weak_pc_in_thm >>
- gs [pred_setTheory.IN_UNION]
-) >>
-(* Needed to establish n *)
-subgoal `?n. weak_rel_steps m ms le ms' n /\ n > 0` >- (
- (* Since m.weak to le connects ms and ms' by some non-zero number of transitions *)
- PAT_ASSUM ``weak_model m`` (fn thm => fs [HO_MATCH_MP weak_rel_steps_equiv thm]) >>
- qexists_tac `n` >>
- fs [weak_rel_steps_def]
-) >>
-(* Needed to establish n_l *)
-subgoal `?n_l. trs_to_s_count_ls m ms ({l} UNION le) ms' n 0 = SOME n_l` >- (
- metis_tac [loop_lemma_6]
-) >>
-(* Invariant: number of l-encounters from ms to current + number of l-encounters from current to ms'
- * equals n_l.
- * Variant: number of encounters of l until ms' is reached *)
-subgoal `abstract_loop_jgmt m l le (\s. oadd (trs_to_s_count_ls m ms ({l} UNION le) s n 0)
-                                             (trs_to_s_count_ls m s ({l} UNION le) ms' n 0) = SOME n_l  /\ invariant s) C1 (\s. THE (trs_to_s_count_ls m s ({l} UNION le) ms' n 0))` >- (
- fs [abstract_loop_jgmt_def, abstract_jgmt_def] >>
- rpt strip_tac >>
- subgoal `s <> ms'` >- (
-  (* Since pc of s is l, m.weak ms le ms' and l NOTIN le *)
-  metis_tac [weak_pc_in_thm, IN_NOT_IN_NEQ_thm]
- ) >>
- subgoal `?n_l'. trs_to_s_count_ls m ms ({l} UNION le) s n 0 = SOME n_l'` >- (
-  Cases_on `trs_to_s_count_ls m ms ({l} UNION le) s n 0` >> (
-   fs [oadd_def]
-  )
- ) >>
- subgoal `?n_l''. trs_to_s_count_ls m s ({l} UNION le) ms' n 0 = SOME n_l''` >- (
-  Cases_on `trs_to_s_count_ls m s ({l} UNION le) ms' n 0` >> (
-   fs [oadd_def]
-  )
- ) >>
- subgoal `?ms'''. m.weak s ({l} UNION le) ms'''` >- (
-  (* Since "?n_l. trs_to_s_count_ls m ms ({l} UNION le) s n 0 = SOME n_l" (i.e. s is somewhere between ms and ms')
-   * and s <> ms', weak transition from s to
-   * ({l} UNION le) will encounter ms' or some earlier state with pc l *)
-  ONCE_REWRITE_TAC [pred_setTheory.UNION_COMM] >>
-  irule weak_superset_thm >>
-  fs [] >>
-  qexists_tac `ms'` >>
-  irule weak_union2_thm >>
-  fs [] >>
-  conj_tac >| [
-   metis_tac [weak_pc_in_thm, IN_NOT_IN_NEQ_thm],
 
-   qexists_tac `{l}` >>
-   metis_tac [loop_lemma_1]
-  ]
- ) >>
- subgoal `m.pc ms''' = l` >- (
-  fs [abstract_partial_jgmt_def] >>
-  metis_tac []
- ) >>
- qexists_tac `ms'''` >>
- fs [] >>
- subgoal `n_l'' > 0` >- (
-  (* n_l'' must be at least one, since at the very least ms' is encountered *)
-  irule loop_lemma_7 >>
-  qexists_tac `({l} UNION le)` >>
-  qexists_tac `m` >>
-  qexists_tac `s` >>
-  qexists_tac `ms'` >>
-  qexists_tac `n` >>
-  fs [] >>
-  metis_tac [weak_pc_in_thm, IN_NOT_IN_NEQ_thm]
- ) >>
- rpt strip_tac >| [
-  (* The calls to trs_to_s_count_ls must return one greater and one lesser, respectively, preserving the equality. *)
-  imp_res_tac loop_lemma_2 >>
-  imp_res_tac loop_lemma_3 >>
-  fs [oadd_def],
-
-  (* By the contract for the looping case *)
-  fs [abstract_partial_jgmt_def] >>
-  metis_tac [],
-
-  (* Encounters of l until le will be one lesser from ms'' compared to s *)
-  imp_res_tac loop_lemma_3 >>
-  fs []
- ]
-) >>
-subgoal `abstract_jgmt m l le (\s'. (\s. oadd (trs_to_s_count_ls m ms ({l} UNION le) s n 0)
-                                             (trs_to_s_count_ls m s ({l} UNION le) ms' n 0) = SOME n_l  /\ invariant s) s' /\ ~(C1 s')) post` >- (
+(* 1. Prove loop exit contract *)
+subgoal `abstract_jgmt m l le (\s'. (^invariant) s' /\ ~(C1 s')) post` >- (
  fs [abstract_jgmt_def] >>
  rpt strip_tac >>
  subgoal `s' <> ms'` >- (
@@ -1233,15 +1004,7 @@ subgoal `abstract_jgmt m l le (\s'. (\s. oadd (trs_to_s_count_ls m ms ({l} UNION
   metis_tac [weak_pc_in_thm, IN_NOT_IN_NEQ_thm]
  ) >>
  subgoal `m.weak s' le ms'` >- (
-  (* s' is reached from ms by between zero and n (exclusive) transitions:
-   * this means that we must be able to continue transitions until ms', without encountering
-   * le before *)
-  subgoal `?n_l'. trs_to_s_count_ls m ms ({l} UNION le) s' n 0 = SOME n_l'` >- (
-   Cases_on `trs_to_s_count_ls m ms ({l} UNION le) s' n 0` >> (
-    fs [oadd_def]
-   )
-  ) >>
-  metis_tac [loop_lemma_4]
+  metis_tac [weak_inter_exec]
  ) >>
  fs [abstract_partial_jgmt_def] >>
  QSPECL_X_ASSUM ``!ms ms'. m.pc ms = l ==> invariant ms /\ ~C1 ms ==> m.weak ms le ms' ==> post ms'`` [`s'`, `ms'`] >>
@@ -1249,14 +1012,93 @@ subgoal `abstract_jgmt m l le (\s'. (\s. oadd (trs_to_s_count_ls m ms ({l} UNION
  qexists_tac `ms'` >>
  metis_tac []
 ) >>
+
+(* 2. Prove loop iteration contract *)
+subgoal `abstract_loop_jgmt m l le (^invariant) C1 (^variant)` >- (
+ fs [abstract_loop_jgmt_def, abstract_jgmt_def] >>
+ rpt strip_tac >>
+ subgoal `s <> ms'` >- (
+  (* Since pc of s is l, m.weak ms le ms' and l NOTIN le *)
+  metis_tac [weak_pc_in_thm, IN_NOT_IN_NEQ_thm]
+ ) >>
+ (* n_l': the number of encounters of l up to s *)
+ subgoal `?n_l'. (OLEAST n. weak_exec_n m ms ({l} UNION le) n = SOME s) = SOME n_l' /\ n_l' < n_l` >- (
+  metis_tac [weak_exec_sing_least_less]
+ ) >>
+ (* ms''': next loop point *)
+ subgoal `?ms'''. m.weak s ({l} UNION le) ms'''` >- (
+  ONCE_REWRITE_TAC [pred_setTheory.UNION_COMM] >>
+  irule weak_superset_thm >>
+  fs [] >>
+  qexists_tac `ms'` >>
+  metis_tac [weak_inter_exec]
+ ) >>
+ subgoal `m.pc ms''' = l` >- (
+  fs [abstract_partial_jgmt_def] >>
+  metis_tac []
+ ) >>
+ qexists_tac `ms'''` >>
+ subgoal `SING (\n. n < n_l /\ weak_exec_n m ms ({l} UNION le) n = SOME ms'3')` >- (
+  (* Invariant is kept *)
+  (* By uniqueness theorem (stating no duplicate states before ms' is reached) *)
+  irule weak_exec_uniqueness >>
+  fs [] >>
+  conj_tac >| [
+   qexists_tac `SUC n_l'` >>
+   conj_tac >| [
+    (* Since ms''' <> ms' *)
+    irule weak_exec_less_incr_superset >>
+    fs [] >>
+    qexistsl_tac [`{l}`, `le`, `m`, `ms`, `ms'`, `s`, `ms'''`] >>
+    fs [] >>
+    metis_tac [weak_pc_in_thm, IN_NOT_IN_NEQ_thm],
+
+    metis_tac [weak_exec_incr]
+   ],
+
+   metis_tac []
+  ]
+ ) >>
+ fs [] >>
+ rpt strip_tac >| [
+  (* By the contract for the looping case *)
+  fs [abstract_partial_jgmt_def] >>
+  metis_tac [],
+
+  (* By arithmetic *)
+  subgoal `(OLEAST n. weak_exec_n m ms ({l} UNION le) n = SOME ms'3') = SOME (SUC n_l')` >- (
+   metis_tac [weak_exec_incr_least]
+  ) >>
+  fs [ominus_def]
+ ]
+) >>
+
 imp_res_tac abstract_loop_rule_thm >>
 fs [abstract_jgmt_def] >>
 (* TODO: Should be provable using trs_to_ls m ({l} UNION le) ms n (SUC n_l) = SOME ms' *)
 QSPECL_X_ASSUM  ``!s. m.pc s = l ==> _`` [`ms`] >>
-subgoal `trs_to_s_count_ls m ms ({l} UNION le) ms n 0 = SOME 0` >- (
- fs [loop_lemma_5]
+subgoal `SING (\n. n < n_l /\ weak_exec_n m ms ({l} UNION le) n = SOME ms)` >- (
+ subgoal `weak_exec_n m ms ({l} UNION le) 0 = SOME ms` >- (
+  fs [weak_exec_n_def, FUNPOW_OPT_def]
+ ) >>
+ subgoal `n_l > 0` >- (
+  subgoal `ms <> ms'` >- (
+   (* Since pc of ms is l, m.weak ms le ms' and l NOTIN le *)
+   metis_tac [weak_pc_in_thm, IN_NOT_IN_NEQ_thm]
+  ) >>
+  metis_tac [weak_exec_least_nonzero]
+ ) >>
+ (* By uniqueness theorem (stating no duplicate states before ms' is reached) *)
+ irule weak_exec_uniqueness >>
+ fs [] >>
+ conj_tac >| [
+  qexists_tac `0` >>
+  fs [],
+
+  metis_tac []
+ ]
 ) >>
-gs [oadd_def] >>
+gs [] >>
 metis_tac [weak_unique_thm]
 QED
 
