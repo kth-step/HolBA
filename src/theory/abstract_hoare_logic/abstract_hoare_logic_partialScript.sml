@@ -928,7 +928,7 @@ subgoal `?ms'. FUNPOW_OPT m.trs n ms = SOME ms'` >- (
  qexists_tac `ms'` >>
  fs []
 ) >>
-fs []
+fs [] >>
 (* Should be OK *)
 cheat
 QED
