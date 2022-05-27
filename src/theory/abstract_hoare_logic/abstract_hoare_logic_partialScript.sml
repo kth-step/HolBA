@@ -21,6 +21,37 @@ Definition weak_rel_steps_def:
      ))
 End
 
+Definition ominus_def:
+ (ominus NONE _ = NONE) /\
+ (ominus _ NONE = NONE) /\
+ (ominus (SOME (n:num)) (SOME n') = SOME (n - n'))
+End
+
+Definition weak_exec_def:
+ (weak_exec m ls ms =
+  let
+   MS' = m.weak ms ls
+  in
+   if MS' = {}
+   then NONE
+   else SOME (CHOICE MS'))
+End
+
+Definition weak_exec_n_def:
+ (weak_exec_n m ms ls n = FUNPOW_OPT (weak_exec m ls) n ms)
+End
+
+Definition count_ls_def:
+ (count_ls m ms ls 0 n_l = SOME n_l) /\
+ (count_ls m ms ls (SUC n) n_l =
+  case m.trs ms of
+  | SOME ms' =>
+   if m.pc ms' IN ls
+   then count_ls m ms ls n (SUC n_l)
+   else count_ls m ms ls n n_l
+  | NONE => NONE)
+End
+
 Theorem weak_rel_steps_imp:
  !m ms ls ms' n.
  weak_model m ==>
@@ -675,17 +706,108 @@ QSPECL_X_ASSUM  ``!n'.
 gs []
 QED
 
+Theorem weak_nonempty:
+ !m.
+ weak_model m ==>
+ !ms ls. 
+ m.weak ms ls <> {} <=> (?ms'. m.weak ms ls ms')
+Proof
+rpt strip_tac >>
+fs [GSYM pred_setTheory.MEMBER_NOT_EMPTY] >>
+eq_tac >> (rpt strip_tac) >| [
+ qexists_tac `x` >>
+ fs [pred_setTheory.IN_APP],
+
+ qexists_tac `ms'` >>
+ fs [pred_setTheory.IN_APP]
+]
+QED
+
+Theorem weak_exec_exists:
+ !m.
+ weak_model m ==>
+ !ms ls ms'. 
+ m.weak ms ls ms' <=>
+ weak_exec m ls ms = SOME ms'
+Proof
+rpt strip_tac >>
+fs [weak_exec_def] >>
+eq_tac >> (
+ strip_tac
+) >| [
+ subgoal `m.weak ms ls = {ms'}` >- (
+  fs [GSYM pred_setTheory.UNIQUE_MEMBER_SING, pred_setTheory.IN_APP] >>
+  metis_tac [weak_unique_thm]
+ ) >>
+ fs [],
+
+ metis_tac [pred_setTheory.CHOICE_DEF, pred_setTheory.IN_APP]
+]
+QED
+
+Theorem weak_exec_to_n:
+ !m.
+ weak_model m ==>
+ !ms ls ms'. 
+ weak_exec m ls ms = SOME ms' <=>
+ weak_exec_n m ms ls 1 = SOME ms'
+Proof
+rpt strip_tac >>
+fs [weak_exec_n_def, FUNPOW_OPT_def]
+QED
+
 Theorem weak_inter:
  !m.
  weak_model m ==>
  !ms ms' ms'' ls1 ls2.
- m.weak ms (ls1 UNION ls2) ms'' ==>
+ DISJOINT ls1 ls2 ==>
  m.weak ms ls2 ms' ==>
+ m.weak ms (ls1 UNION ls2) ms'' ==>
  m.pc ms'' IN ls1 ==>
  m.weak ms'' ls2 ms'
 Proof
-(* TODO *)
-cheat
+rpt strip_tac >>
+(* ms goes to ms' in n steps. ms goes to ms'' in n' steps, for which:
+ * n'>n: impossible, by the first-encounter property
+ * n=n': impossible, since ms' is in ls2 and ms'' is in ls1 (disjoint sets)
+ * n'<n: then ms' can be reached by taking n'-n steps, with no ls2-encounters
+ * in-between *)
+PAT_ASSUM ``weak_model m`` (fn thm => fs [HO_MATCH_MP (fst $ EQ_IMP_RULE (Q.SPEC `m` weak_model_def)) thm]) >>
+subgoal `~(n'>n)` >- (
+ QSPECL_X_ASSUM ``!n''.
+          n'' < n' /\ n'' > 0 ==>
+          ?ms'3'.
+            FUNPOW_OPT m.trs n'' ms = SOME ms'3' /\ m.pc ms'3' NOTIN ls1 /\
+            m.pc ms'3' NOTIN ls2`` [`n`] >>
+ gs []
+) >>
+subgoal `~(n'=n)` >- (
+ strip_tac >>
+ gs [] >>
+ metis_tac [pred_setTheory.IN_DISJOINT]
+) >>
+subgoal `n'<n` >- (
+ fs []
+) >>
+qexists_tac `n-n'` >>
+rpt strip_tac >| [
+ fs [],
+
+ (* by combining execution *)
+ irule FUNPOW_OPT_split2 >>
+ fs [] >>
+ qexists_tac `ms` >>
+ fs [],
+
+ (* non-encounter in earlier steps *)
+ QSPECL_X_ASSUM ``!n'.
+          n' < n /\ n' > 0 ==>
+          ?ms''. FUNPOW_OPT m.trs n' ms = SOME ms'' /\ m.pc ms'' NOTIN ls2`` [`n' + n''`] >>
+ gs [] >>
+ qexists_tac `ms'''` >>
+ fs [] >>
+ metis_tac [FUNPOW_OPT_INTER, arithmeticTheory.ADD_COMM]
+]
 QED
 
 Theorem weak_partial_seq_rule_thm:
@@ -758,37 +880,6 @@ subgoal `m.pc ms' IN ls2` >- (
   metis_tac [weak_pc_in_thm]
 ) >>
 metis_tac []
-
-
-(* OLD, working proof: *)
-(*
-rpt strip_tac >>
-FULL_SIMP_TAC std_ss [abstract_partial_jgmt_def] >>
-rpt strip_tac >>
-QSPECL_X_ASSUM ``!ms ms'.
-		 (m.pc ms = l) ==>
-		 pre ms ==>
-		 m.weak ms (ls1 UNION ls2) ms' ==>
-		 post ms'`` [`ms`] >>
-rfs [] >>
-subgoal `(m.pc ms') IN ls2` >- (
-  metis_tac [weak_pc_in_thm]
-) >>
-Cases_on `m.weak ms (ls1 UNION ls2) ms'` >- (
-  metis_tac []
-) >>
-subgoal `?ms''. m.pc ms'' IN ls1 /\ m.weak ms (ls2 UNION ls1) ms''` >- (
-  metis_tac [weak_intermediate_labels, pred_setTheory.UNION_COMM]
-) >>
-QSPECL_X_ASSUM  ``!l1. l1 IN ls1 ==> _`` [`m.pc ms''`] >>
-rfs [] >>
-QSPECL_X_ASSUM  ``!ms ms'. _`` [`ms''`, `ms'`] >>
-rfs [] >>
-subgoal `post ms''` >- (
-  metis_tac [pred_setTheory.UNION_COMM]
-) >>
-metis_tac [pred_setTheory.UNION_COMM, weak_intermediate_labels2]
-*)
 QED
 
 Definition weak_partial_loop_contract_def:
@@ -797,87 +888,6 @@ Definition weak_partial_loop_contract_def:
      abstract_partial_jgmt m l ({l} UNION le) (\ms. invariant ms /\ C1 ms)
        (\ms. m.pc ms = l /\ invariant ms))
 End
-
-Theorem weak_nonempty:
- !m.
- weak_model m ==>
- !ms ls. 
- m.weak ms ls <> {} <=> (?ms'. m.weak ms ls ms')
-Proof
-rpt strip_tac >>
-fs [GSYM pred_setTheory.MEMBER_NOT_EMPTY] >>
-eq_tac >> (rpt strip_tac) >| [
- qexists_tac `x` >>
- fs [pred_setTheory.IN_APP],
-
- qexists_tac `ms'` >>
- fs [pred_setTheory.IN_APP]
-]
-QED
-
-Definition ominus_def:
- (ominus NONE _ = NONE) /\
- (ominus _ NONE = NONE) /\
- (ominus (SOME (n:num)) (SOME n') = SOME (n - n'))
-End
-
-Definition weak_exec_def:
- (weak_exec m ls ms =
-  let
-   MS' = m.weak ms ls
-  in
-   if MS' = {}
-   then NONE
-   else SOME (CHOICE MS'))
-End
-
-Definition weak_exec_n_def:
- (weak_exec_n m ms ls n = FUNPOW_OPT (weak_exec m ls) n ms)
-End
-
-Definition count_ls_def:
- (count_ls m ms ls 0 n_l = SOME n_l) /\
- (count_ls m ms ls (SUC n) n_l =
-  case m.trs ms of
-  | SOME ms' =>
-   if m.pc ms' IN ls
-   then count_ls m ms ls n (SUC n_l)
-   else count_ls m ms ls n n_l
-  | NONE => NONE)
-End
-
-Theorem weak_exec_exists:
- !m.
- weak_model m ==>
- !ms ls ms'. 
- m.weak ms ls ms' <=>
- weak_exec m ls ms = SOME ms'
-Proof
-rpt strip_tac >>
-fs [weak_exec_def] >>
-eq_tac >> (
- strip_tac
-) >| [
- subgoal `m.weak ms ls = {ms'}` >- (
-  fs [GSYM pred_setTheory.UNIQUE_MEMBER_SING, pred_setTheory.IN_APP] >>
-  metis_tac [weak_unique_thm]
- ) >>
- fs [],
-
- metis_tac [pred_setTheory.CHOICE_DEF, pred_setTheory.IN_APP]
-]
-QED
-
-Theorem weak_exec_to_n:
- !m.
- weak_model m ==>
- !ms ls ms'. 
- weak_exec m ls ms = SOME ms' <=>
- weak_exec_n m ms ls 1 = SOME ms'
-Proof
-rpt strip_tac >>
-fs [weak_exec_n_def, FUNPOW_OPT_def]
-QED
 
 (*
 Theorem count_ls_step:
