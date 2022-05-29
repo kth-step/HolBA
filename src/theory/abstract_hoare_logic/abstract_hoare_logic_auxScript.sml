@@ -426,18 +426,6 @@ Proof
 fs [GSYM arithmeticTheory.FUNPOW_ADD]
 QED
 
-(*
-(* TODO: Same as FUNPOW_OPT_INTER with commutativity of addition *)
-val FUNPOW_OPT_split = prove(``
-!f n n' s s' s''.
-FUNPOW_OPT f n s = SOME s' ==>
-FUNPOW_OPT f (n + n') s = SOME s'' ==>
-FUNPOW_OPT f n' s' = SOME s''``,
-
-metis_tac [FUNPOW_ASSOC, FUNPOW_OPT_def, arithmeticTheory.FUNPOW_ADD]
-);
-*)
-
 Theorem FUNPOW_OPT_split2:
 !f n' n s s'' s'.
 n > n' ==>
