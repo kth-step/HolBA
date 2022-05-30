@@ -913,6 +913,242 @@ rw [] >>
 gs [FUNPOW_OPT_compute]
 QED
 
+Theorem weak_exec_n_prev:
+ !m.
+ weak_model m ==>
+ !ms ls ms' n_l.
+ weak_exec_n m ms ls (SUC n_l) = SOME ms' ==>
+ ?ms''. weak_exec_n m ms ls n_l = SOME ms'' /\ weak_exec_n m ms'' ls 1 = SOME ms'
+Proof
+rpt strip_tac >>
+fs [weak_exec_n_def] >>
+subgoal `SUC n_l > 0` >- (
+ fs []
+) >>
+imp_res_tac FUNPOW_OPT_prev_EXISTS >>
+QSPECL_X_ASSUM ``!n'. _`` [`n_l`] >>
+fs [] >>
+Cases_on `n_l = 0` >- (
+ gs [FUNPOW_OPT_compute]
+) >>
+irule FUNPOW_OPT_split >>
+qexistsl_tac [`SUC n_l`, `ms`] >>
+fs [arithmeticTheory.ADD1]
+QED
+
+Theorem weak_exec_n_least_trs_ind:
+ !m.
+ weak_model m ==>
+ !n_l n_l' s ls s'.
+ n_l <= n_l' /\ n_l > 0 ==>
+ weak_exec_n m s ls n_l = SOME s' ==>
+ ?n. n > 0 /\ (OLEAST n. FUNPOW_OPT m.trs n s = SOME s') = SOME n
+Proof
+ntac 2 strip_tac >>
+Induct_on `n_l'` >- (
+ rpt strip_tac >>
+ gvs []
+) >>
+rpt strip_tac >>
+(* We know there is one encounter at n_l, but there must also be some FIRST encounter of s' *)
+(* TODO: This might require a lemma of its own... *)
+subgoal `?n_l''. n_l'' <= n_l /\ n_l'' > 0 /\ (OLEAST n_l''. weak_exec_n m s ls n_l'' = SOME s') = SOME n_l''` >- (
+ cheat
+) >>
+Cases_on `n_l'' = 1` >- (
+ irule weak_least_trs >>
+ fs [whileTheory.OLEAST_EQ_SOME] >>
+ PAT_ASSUM ``weak_model m`` (fn thm => fs [GSYM (HO_MATCH_MP weak_exec_to_n thm)]) >>
+ PAT_ASSUM ``weak_model m`` (fn thm => fs [GSYM (HO_MATCH_MP weak_exec_exists thm)]) >>
+ conj_tac >| [
+  QSPECL_X_ASSUM ``!n_l'3'. n_l'3' < 1 ==> weak_exec_n m s ls n_l'3' <> SOME s'`` [`0`] >>
+  fs [weak_exec_n_def, FUNPOW_OPT_compute],
+
+  metis_tac []
+ ]
+) >>
+subgoal `?s''. weak_exec_n m s ls (n_l'' - 1) = SOME s'' /\ weak_exec_n m s'' ls 1 = SOME s'` >- (
+ irule weak_exec_n_prev >>
+ Cases_on `n_l''` >- (
+  fs []
+ ) >>
+ fs [whileTheory.OLEAST_EQ_SOME]
+) >>
+subgoal `?n'. n' > 0 /\ (OLEAST n'. FUNPOW_OPT m.trs n' s = SOME s'') = SOME n'` >- (
+ QSPECL_X_ASSUM ``!n_l. _`` [`n_l'' - 1`, `s`, `ls`, `s''`] >>
+ gs []
+) >>
+subgoal `?n''. n'' > 0 /\ (OLEAST n''. FUNPOW_OPT m.trs n'' s'' = SOME s') = SOME n''` >- (
+ irule weak_least_trs >>
+ fs [] >>
+ conj_tac >| [
+  fs [whileTheory.OLEAST_EQ_SOME] >>
+  QSPECL_X_ASSUM ``!n_l'3'. n_l'3' < n_l'' ==> weak_exec_n m s ls n_l'3' <> SOME s'`` [`n_l'' - 1`] >>
+  gs [],
+
+  PAT_ASSUM ``weak_model m`` (fn thm => fs [GSYM (HO_MATCH_MP weak_exec_to_n thm)]) >>
+  PAT_ASSUM ``weak_model m`` (fn thm => fs [GSYM (HO_MATCH_MP weak_exec_exists thm)]) >>
+  metis_tac []
+ ]
+) >>
+qexists_tac `n' + n''` >>
+fs [] >>
+simp [whileTheory.OLEAST_EQ_SOME] >>
+conj_tac >| [
+ ONCE_REWRITE_TAC [arithmeticTheory.ADD_COMM] >>
+ irule FUNPOW_OPT_ADD_thm >>
+ qexists_tac `s''` >>
+ fs [whileTheory.OLEAST_EQ_SOME],
+
+ (* TODO: This might require a lemma of its own... *)
+ subgoal `!n. n < n' ==> FUNPOW_OPT m.trs n s <> SOME s'` >- (
+  cheat
+ ) >>
+ rpt strip_tac >>
+ fs [whileTheory.OLEAST_EQ_SOME] >>
+ Cases_on `n < n'` >- (
+  metis_tac []
+ ) >>
+ subgoal `?n'4'. n'4' < n'' /\ (FUNPOW_OPT m.trs n s = SOME s' <=> FUNPOW_OPT m.trs (n' + n'4') s = SOME s')` >- (
+  qexists_tac `n - n'` >>
+  fs []
+ ) >>
+ fs [] >>
+ subgoal `FUNPOW_OPT m.trs n'4' s'' = SOME s'` >- (
+  irule FUNPOW_OPT_INTER >>
+  qexistsl_tac [`s`, `n'`] >>
+  fs []
+ ) >>
+ metis_tac []
+]
+QED
+
+(*
+Theorem weak_exec_n_least_trs:
+ !m.
+ weak_model m ==>
+ !s ls s' n_l.
+ weak_exec_n m s ls n_l = SOME s' ==>
+ ?n. n > 0 /\ (OLEAST n. FUNPOW_OPT m.trs n s = SOME s') = SOME n
+Proof
+rpt strip_tac >>
+irule weak_exec_n_least_trs_ind >>
+fs [] >>
+qexistsl_tac [`ls`, `n_l`, `n_l`] >>
+fs []
+QED
+
+Theorem weak_exec_n_less_least_trs:
+ !m s ls s' s'' n_l n_l' n.
+ weak_model m ==>
+ weak_exec_n m s ls n_l = SOME s' ==>
+ weak_exec_n m s ls n_l' = SOME s'' ==>
+ n_l' < n_l ==>
+ (OLEAST n. FUNPOW_OPT m.trs n s = SOME s') = SOME n ==>
+ ?n'. n' > 0 /\ n' < n /\ (OLEAST n'. FUNPOW_OPT m.trs n' s = SOME s'') = SOME n'
+Proof
+cheat
+QED
+*)
+
+Theorem FUNPOW_OPT_cycle:
+ !f s s' n n'.
+ (OLEAST n. n > 0 /\ FUNPOW_OPT f n s = SOME s) = SOME n ==>
+ s <> s' ==>
+ (OLEAST n'. FUNPOW_OPT f n' s = SOME s') = SOME n' ==>
+ n' < n
+Proof
+rpt strip_tac >>
+CCONTR_TAC >>
+Cases_on `n' = n` >- (
+ fs [whileTheory.OLEAST_EQ_SOME]
+) >>
+subgoal `n' > n` >- (
+ gs []
+) >>
+subgoal `FUNPOW_OPT f (n' - n) s = SOME s'` >- (
+ irule FUNPOW_OPT_split2 >>
+ fs [whileTheory.OLEAST_EQ_SOME] >>
+ qexists_tac `s` >>
+ fs []
+) >>
+fs [whileTheory.OLEAST_EQ_SOME] >>
+QSPECL_X_ASSUM ``!n''. n'' < n' ==> FUNPOW_OPT f n'' s <> SOME s'`` [`n' - n`] >>
+gs []
+QED
+
+Theorem weak_exec_n_cycle:
+ !m s s' ls n_l n_l'.
+ weak_model m ==>
+ (OLEAST n_l. n_l > 0 /\ weak_exec_n m s ls n_l = SOME s) = SOME n_l ==>
+ s <> s' ==>
+ (OLEAST n_l'. weak_exec_n m s ls n_l' = SOME s') = SOME n_l' ==>
+ n_l' < n_l
+Proof
+rpt strip_tac >>
+fs [weak_exec_n_def] >>
+metis_tac [FUNPOW_OPT_cycle]
+QED
+
+
+Theorem weak_exec_n_split:
+!m. weak_model m ==>
+!s s' s'' ls n n'.
+n > n' ==>
+weak_exec_n m s ls n = SOME s' ==>
+weak_exec_n m s ls (n - n') = SOME s'' ==>
+weak_exec_n m s'' ls n' = SOME s'
+Proof
+cheat
+QED
+
+Theorem weak_exec_n_split2:
+!m. weak_model m ==>
+!s s' s'' ls n n'.
+n >= n' ==>
+weak_exec_n m s ls n' = SOME s'' ==>
+weak_exec_n m s ls n = SOME s' ==>
+weak_exec_n m s'' ls (n - n') = SOME s'
+Proof
+rpt strip_tac >>
+fs [weak_exec_n_def] >>
+Cases_on `n = n'` >- (
+ fs [FUNPOW_OPT_compute]
+) >>
+subgoal `n > n'` >- (
+ fs []
+) >>
+metis_tac [FUNPOW_SUB, FUNPOW_OPT_def, arithmeticTheory.FUNPOW_ADD]
+QED
+
+
+Theorem weak_exec_n_cycle_alt:
+ !m s s' ls n_l n_l'.
+ weak_model m ==>
+ n_l > 0 /\ weak_exec_n m s ls n_l = SOME s ==>
+ s <> s' ==>
+ (OLEAST n_l'. weak_exec_n m s ls n_l' = SOME s') = SOME n_l' ==>
+ n_l' < n_l
+Proof
+rpt strip_tac >>
+CCONTR_TAC >>
+Cases_on `n_l' = n_l` >- (
+ fs [whileTheory.OLEAST_EQ_SOME]
+) >>
+subgoal `n_l' > n_l` >- (
+ gs []
+) >>
+subgoal `weak_exec_n m s ls (n_l' - n_l) = SOME s'` >- (
+ irule weak_exec_n_split2 >>
+ fs [whileTheory.OLEAST_EQ_SOME] >>
+ qexists_tac `s` >>
+ fs []
+) >>
+fs [whileTheory.OLEAST_EQ_SOME] >>
+QSPECL_X_ASSUM ``!n_l''. n_l'' < n_l' ==> weak_exec_n m s ls n_l'' <> SOME s'`` [`n_l' - n_l`] >>
+gs []
+QED
+
 (* TODO: Technically, this doesn't need OLEAST for the encounter of ms'
  * Let this rely on sub-lemma for incrementing weak_exec_n instead
  * of reasoning on FUNPOW_OPT *)
@@ -949,29 +1185,6 @@ qexists_tac `ms'` >>
 fs [whileTheory.OLEAST_EQ_SOME, weak_exec_n_def] >>
 simp [FUNPOW_OPT_def] >>
 metis_tac [weak_exec_exists]
-QED
-
-Theorem weak_exec_n_prev:
- !m.
- weak_model m ==>
- !ms ls ms' n_l.
- weak_exec_n m ms ls (SUC n_l) = SOME ms' ==>
- ?ms''. weak_exec_n m ms ls n_l = SOME ms'' /\ weak_exec_n m ms'' ls 1 = SOME ms'
-Proof
-rpt strip_tac >>
-fs [weak_exec_n_def] >>
-subgoal `SUC n_l > 0` >- (
- fs []
-) >>
-imp_res_tac FUNPOW_OPT_prev_EXISTS >>
-QSPECL_X_ASSUM ``!n'. _`` [`n_l`] >>
-fs [] >>
-Cases_on `n_l = 0` >- (
- gs [FUNPOW_OPT_compute]
-) >>
-irule FUNPOW_OPT_split >>
-qexistsl_tac [`SUC n_l`, `ms`] >>
-fs [arithmeticTheory.ADD1]
 QED
 
 Theorem weak_union_pc:
@@ -1012,36 +1225,6 @@ Proof
 rpt strip_tac >>
 fs [weak_exec_n_def] >>
 metis_tac [FUNPOW_OPT_ADD_thm, arithmeticTheory.ADD_COMM]
-QED
-
-Theorem weak_exec_n_split:
-!m. weak_model m ==>
-!s s' s'' ls n n'.
-n > n' ==>
-weak_exec_n m s ls n = SOME s' ==>
-weak_exec_n m s ls (n - n') = SOME s'' ==>
-weak_exec_n m s'' ls n' = SOME s'
-Proof
-cheat
-QED
-
-Theorem weak_exec_n_split2:
-!m. weak_model m ==>
-!s s' s'' ls n n'.
-n >= n' ==>
-weak_exec_n m s ls n' = SOME s'' ==>
-weak_exec_n m s ls n = SOME s' ==>
-weak_exec_n m s'' ls (n - n') = SOME s'
-Proof
-rpt strip_tac >>
-fs [weak_exec_n_def] >>
-Cases_on `n = n'` >- (
- fs [FUNPOW_OPT_compute]
-) >>
-subgoal `n > n'` >- (
- fs []
-) >>
-metis_tac [FUNPOW_SUB, FUNPOW_OPT_def, arithmeticTheory.FUNPOW_ADD]
 QED
 
 Theorem weak_exec_n_inter:
@@ -1596,6 +1779,7 @@ gs []
  * needed to reach ms'' *)
 QED
 
+(*
 (* TODO: m.weak ms ls2 ms' redundant? *)
 Theorem weak_exec_uniqueness:
  !m.
@@ -1608,26 +1792,195 @@ Theorem weak_exec_uniqueness:
  SING (\n. n < n_l /\ weak_exec_n m ms (ls1 UNION ls2) n = SOME ms'')
 Proof
 rpt strip_tac >>
-fs [pred_setTheory.SING_DEF, whileTheory.OLEAST_EQ_SOME] >>
-(* s'' - - n - > s'' ==>
- * min k . s - - k - > s' <> s'' ==>
- * k < n
- * Use lemma, then proof by contradiction on encountering earlier ms'
- * Lemma for loop periodicity?
+fs [pred_setTheory.SING_DEF] >>
+subgoal `weak_exec_n m ms'' (ls1 UNION ls2) (n_l - n_l') = SOME ms'` >- (
+ irule weak_exec_n_split2 >>
+ fs [whileTheory.OLEAST_EQ_SOME] >>
+ qexists_tac `ms` >>
+ fs []
+) >>
+subgoal `?n. (OLEAST n. FUNPOW_OPT m.trs n ms = SOME ms'') = SOME n` >- (
+ metis_tac [weak_exec_n_least_trs]
+) >>
+subgoal `?n'. (OLEAST n'. FUNPOW_OPT m.trs n' ms'' = SOME ms') = SOME n'` >- (
+ metis_tac [weak_exec_n_least_trs]
+) >>
+qexists_tac `n_l'` >>
+(* Suppose there is some other number of weak which can be applied to reach
+ * ms'' from ms *)
+Cases_on `?n_l''. n_l'' <> n_l' /\ n_l'' IN (\n. n < n_l /\ weak_exec_n m ms (ls1 UNION ls2) n = SOME ms'')` >- (
+ fs [] >>
+ (* Then there is some other number of trs which can be applied to reach
+  * ms'' from ms *)
+ Cases_on `n_l'' < n_l'` >- (
+  subgoal `?n''. n'' > 0 /\ n'' < n /\ (OLEAST n''. FUNPOW_OPT m.trs n'' ms = SOME ms'') = SOME n''` >- (
+   metis_tac [weak_exec_n_less_least_trs]
+  ) >>
+  fs [whileTheory.OLEAST_EQ_SOME] >>
+  metis_tac []
+ ) >>
+ Cases_on `n_l'' > n_l'` >- (
+  (* There is a cycle between ms'' and ms'' *)
+  subgoal `weak_exec_n m ms'' (ls1 UNION ls2) (n_l'' - n_l') = SOME ms''` >- (
+   irule weak_exec_n_split2 >>
+   fs [] >>
+   qexists_tac `ms` >>
+   fs []
+  ) >>
+  subgoal `?n''. (OLEAST n''. n'' > 0 /\ FUNPOW_OPT m.trs n'' ms'' = SOME ms'') = SOME n''` >- (
+   imp_res_tac weak_exec_n_least_trs >>
+   qexists_tac `n''` >>
+   fs [whileTheory.OLEAST_EQ_SOME]
+  ) >>
+  subgoal `ms'' <> ms'` >- (
+   fs [whileTheory.OLEAST_EQ_SOME] >>
+   metis_tac []
+  ) >>
+  imp_res_tac weak_exec_n_cycle >>
+  (* Second encounter of ms'' is now after ms' in terms of trs (n'' vs. n', counting from ms),
+   * but this countradicts their order in terms of applications of weak (n_l'' vs. n_l) *)
+  subgoal `?n'''.
+          n''' > 0 /\ n''' < n /\
+          (OLEAST n'''. FUNPOW_OPT m.trs n''' ms = SOME ms'') = SOME n'''` >- (
+   (* weak_exec_n_less_least_trs *)
+   irule weak_exec_n_less_least_trs >>
+   fs [] >>
+   qexistsl_tac [`(ls1 UNION ls2)`, `n_l''`, `n_l'`, `ms''`] >>
+   fs [arithmeticTheory.GREATER_DEF]
+  ) >>
+  gs []
+ ) >>
+ fs []
+) >>
+gs [GSYM pred_setTheory.UNIQUE_MEMBER_SING] >>
+rpt strip_tac >>
+metis_tac []
+QED
 *)
 
-(* Say there were another encounter of ms'' other than that at n_l' before
- * n_l. Then there could be no states other than those found in between
- * after them (due to cycle). But ms' was first encountered at n_l,
- * which is not in the cycle between the two ms'', so there could be
- * no such cycle, and thus not two ms'' before ms'. *)
+Theorem weak_exec_uniqueness_alt:
+ !m.
+ weak_model m ==>
+ !ms ls ms' ms'' ms''' n_l n_l'. 
+ (OLEAST n. weak_exec_n m ms ls n = SOME ms') = SOME n_l ==>
+ (OLEAST n. weak_exec_n m ms ls n = SOME ms'') = SOME n_l' ==>
+ n_l' < n_l ==>
+ m.weak ms'' ls ms''' ==>
+ ms''' <> ms' ==>
+ SING (\n_l''. n_l'' < n_l /\ weak_exec_n m ms ls n_l'' = SOME ms''')
+Proof
+rpt strip_tac >>
+subgoal `weak_exec_n m ms ls (n_l' + 1) = SOME ms'3'` >- (
+ irule weak_exec_n_add >>
+ fs [whileTheory.OLEAST_EQ_SOME] >>
+ metis_tac [weak_exec_exists, weak_exec_to_n]
+) >>
+(* Suppose there exists some earlier encounter of ms''' *)
+Cases_on `?n_l''. n_l'' < (n_l' + 1) /\ weak_exec_n m ms ls n_l'' = SOME ms'''` >- (
+ fs [whileTheory.OLEAST_EQ_SOME] >>
+ subgoal `weak_exec_n m ms''' ls (n_l - (n_l' + 1)) = SOME ms'` >- (
+  irule weak_exec_n_split2 >>
+  fs [] >>
+  qexists_tac `ms` >>
+  fs []
+ ) >>
+ subgoal `weak_exec_n m ms ls (n_l'' + (n_l - (n_l' + 1))) = SOME ms'` >- (
+  irule weak_exec_n_add >>
+  fs [] >>
+  qexists_tac `ms'3'` >>
+  fs []
+ ) >>
+ QSPECL_ASSUM ``!n. n < n_l ==> weak_exec_n m ms ls n <> SOME ms'`` [`(n_l'' + (n_l - (n_l' + 1)))`] >>
+ gs []
+) >>
+fs [] >>
+(* If there were no earlier encounter of ms''', then the first encounter was at n_l' + 1 *)
+subgoal `(OLEAST n_l. weak_exec_n m ms ls n_l = SOME ms''') = SOME (n_l' + 1)` >- (
+ fs [whileTheory.OLEAST_EQ_SOME] >>
+ metis_tac []
+) >>
 
-(* OK: ms'' is a state encountered before n_l loop iterations,
- * where n_l is the least amount of applications of weak_exec to ({l} UNION le)
- * needed to exit the loop,
- * therefore ms'' must have been uniquely encountered before n_l loop iterations,
- * or there must have been a loop before ms' could ever be reached *)
-cheat
+(* Suppose there exists some later encounter of ms''' *)
+Cases_on `?n_l''. n_l'' > (n_l' + 1) /\ n_l'' < n_l /\ weak_exec_n m ms ls n_l'' = SOME ms'''` >- (
+ fs [] >>
+ subgoal `(OLEAST n_l. weak_exec_n m ms''' ls n_l = SOME ms') = SOME (n_l - (n_l' + 1))` >- (
+  fs [whileTheory.OLEAST_EQ_SOME] >>
+  rpt strip_tac >| [
+   irule weak_exec_n_split2 >>
+   fs [] >>
+   qexists_tac `ms` >>
+   fs [],
+
+   (* TODO: Prove the OLEAST part... *)
+   subgoal `weak_exec_n m ms ls ((n_l' + 1) + n_l'3') <> SOME ms'` >- (
+    QSPECL_ASSUM ``!n. n < n_l ==> weak_exec_n m ms ls n <> SOME ms'`` [`(n_l' + 1) + n_l'3'`] >>
+    gs []
+   ) >>
+   subgoal `weak_exec_n m ms ls ((n_l' + 1) + n_l'3') = SOME ms'` >- (
+    irule weak_exec_n_add >>
+    fs []
+   )
+  ]
+ ) >>
+ subgoal `weak_exec_n m ms''' ls (n_l'' - (n_l' + 1)) = SOME ms'''` >- (
+  irule weak_exec_n_split2 >>
+  fs [] >>
+  qexists_tac `ms` >>
+  fs []
+ ) >>
+ (* By weak_exec_n_cycle *)
+ subgoal `(n_l - (n_l' + 1)) < (n_l'' - (n_l' + 1))` >- (
+  irule weak_exec_n_cycle_alt >>
+  fs [] >>
+  qexistsl_tac [`ls`, `m`, `ms'''`, `ms'`] >>
+  gs [whileTheory.OLEAST_EQ_SOME]
+ ) >>
+ gs []
+) >>
+fs [] >>
+gs [pred_setTheory.SING_DEF, GSYM pred_setTheory.UNIQUE_MEMBER_SING] >>
+qexists_tac `n_l' + 1` >>
+rpt strip_tac >| [
+ Cases_on `n_l' + 1 = n_l` >- (
+  gvs [whileTheory.OLEAST_EQ_SOME]
+ ) >>
+ gs [],
+
+ irule weak_exec_n_add >>
+ fs [] >>
+ qexists_tac `ms''` >>
+ fs [whileTheory.OLEAST_EQ_SOME] >>
+ metis_tac [weak_exec_exists, weak_exec_to_n],
+
+ res_tac >>
+ gs [arithmeticTheory.EQ_LESS_EQ, arithmeticTheory.NOT_LESS]
+]
+QED
+
+Theorem weak_exec_unique_start:
+ !m.
+ weak_model m ==>
+ !ms ls ms' n_l. 
+ (OLEAST n. weak_exec_n m ms ls n = SOME ms') = SOME n_l ==>
+ ms <> ms' ==>
+ SING (\n_l'. n_l' < n_l /\ weak_exec_n m ms ls n_l' = SOME ms)
+Proof
+rpt strip_tac >>
+gs [pred_setTheory.SING_DEF, GSYM pred_setTheory.UNIQUE_MEMBER_SING] >>
+qexists_tac `0` >>
+rpt strip_tac >| [
+ Cases_on `n_l = 0` >> (
+  fs [weak_exec_n_def, FUNPOW_OPT_compute, whileTheory.OLEAST_EQ_SOME]
+ ),
+
+ fs [weak_exec_n_def, FUNPOW_OPT_compute],
+
+ Cases_on `y > 0` >- (
+  imp_res_tac weak_exec_n_cycle_alt >>
+  fs []
+ ) >>
+ fs []
+]
 QED
 
 (* Uses the fact that exit labels are disjoint from loop point to know that
@@ -1770,20 +2123,11 @@ subgoal `abstract_loop_jgmt m l le (^invariant) C1 (^variant)` >- (
  subgoal `SING (\n. n < n_l /\ weak_exec_n m ms ({l} UNION le) n = SOME ms'3')` >- (
   (* Invariant is kept *)
   (* By uniqueness theorem (stating no duplicate states before ms' is reached) *)
-  irule weak_exec_uniqueness >>
+  irule weak_exec_uniqueness_alt >>
   fs [] >>
   conj_tac >| [
-   qexists_tac `SUC n_l'` >>
-   conj_tac >| [
-    (* Since ms''' <> ms' *)
-    irule weak_exec_less_incr_superset >>
-    fs [] >>
-    qexistsl_tac [`{l}`, `le`, `m`, `ms`, `ms'`, `s`, `ms'''`] >>
-    fs [] >>
-    metis_tac [weak_pc_in_thm, IN_NOT_IN_NEQ_thm],
-
-    metis_tac [weak_exec_incr_last]
-   ],
+   qexists_tac `ms'` >>
+   metis_tac [weak_pc_in_thm, IN_NOT_IN_NEQ_thm],
 
    metis_tac []
   ]
@@ -1821,14 +2165,10 @@ subgoal `SING (\n. n < n_l /\ weak_exec_n m ms ({l} UNION le) n = SOME ms)` >- (
   metis_tac [weak_exec_least_nonzero]
  ) >>
  (* By uniqueness theorem (stating no duplicate states before ms' is reached) *)
- irule weak_exec_uniqueness >>
+ irule weak_exec_unique_start >>
  fs [] >>
- conj_tac >| [
-  qexists_tac `0` >>
-  fs [],
-
-  metis_tac []
- ]
+ qexists_tac `ms'` >>
+ metis_tac [weak_pc_in_thm, IN_NOT_IN_NEQ_thm]
 ) >>
 gs [] >>
 metis_tac [weak_unique_thm]
