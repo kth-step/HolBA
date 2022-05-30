@@ -25,13 +25,16 @@ val lines = "";
 
       val path_asm_s  = get_simple_tempfile "asm.s";
       val path_asm_o  = get_simple_tempfile "asm.o";
+      val path_asm_bin = get_simple_tempfile "asm";
       val path_asm_da = get_simple_tempfile "asm.da";
 
       val _ = write_to_file path_asm_s input_code;
 
       val commandline = (gcc_prefix ^ "gcc -o " ^ path_asm_o ^ " -c " ^ path_asm_s ^
                          " && " ^
-                         gcc_prefix ^ "objdump -d " ^ path_asm_o ^ " > " ^ path_asm_da);
+			 gcc_prefix ^ "gcc -Wl,--entry=0x400000 -nostartfiles " ^ path_asm_o ^ " -o " ^ path_asm_bin ^
+                         " && " ^
+                         gcc_prefix ^ "objdump -d " ^ path_asm_bin ^ " > " ^ path_asm_da);
       val _ = if OS.Process.isSuccess (OS.Process.system commandline) then ()
               else raise ERR "bir_gcc_assembe_disassemble" "compilation failed somehow";
     in

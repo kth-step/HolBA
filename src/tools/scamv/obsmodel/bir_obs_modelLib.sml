@@ -302,8 +302,22 @@ open bir_cfgLib;
 	val lbl_tms = get_block_dict_keys bl_dict;
 	(* build the cfg and update the basic blocks *)
 	val n_dict = cfg_build_node_dict bl_dict lbl_tms;
-	    
-	val entries = [mk_key_from_address64 64 (Arbnum.fromHexString "0")];
+
+	local
+	    open listSyntax;
+	    open bir_programSyntax;
+	    open bir_immSyntax;
+	    open wordsSyntax;
+
+	    val blocks = (fst o dest_list o dest_BirProgram) prog;
+            val (lbl_tm, _, _) = dest_bir_block (List.nth (blocks, 0));
+	    (* val _ = print_term lbl_tm; *)
+	    val lbl_word_tm = (snd o gen_dest_Imm o dest_BL_Address o snd o dest_eq o concl o EVAL) lbl_tm;
+	in
+	    val start_lbl_str = (dest_word_literal) lbl_word_tm;
+	end
+
+	val entries = [mk_key_from_address64 64 (start_lbl_str)];
 	val g1 = cfg_create "specExec" entries n_dict bl_dict;
 	    
 	val (visited_nodes,cjmp_nodes) = traverse_graph g1 (hd (#CFGG_entries g1)) [] [];
