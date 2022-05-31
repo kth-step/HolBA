@@ -54,34 +54,19 @@ rpt strip_tac >>
 metis_tac [weak_pc_in_thm]
 QED
 
-(* TODO Fix this...
 Theorem weak_partial_subset_rule_thm:
  !m. !l ls1 ls2 pre post.
  weak_model m ==>
- (!ms. post ms ==> (~(m.pc ms IN ls2))) ==>
+ (!ms. post ms ==> ~(m.pc ms IN ls2)) ==>
  abstract_partial_jgmt m l (ls1 UNION ls2) pre post ==>
  abstract_partial_jgmt m l ls1 pre post
 Proof
 rpt strip_tac >>
-rfs [abstract_partial_jgmt_def] >>
+fs [abstract_partial_jgmt_def] >>
 rpt strip_tac >>
-QSPECL_ASSUM ``!ms ms'. _`` [`ms`, `ms'`] >>
-rfs [] >>
-Cases_on `m.weak ms (ls1 UNION ls2) ms'` >- (
- fs []
-) >>
-subgoal `?n. FUNPOW_OPT m.trs n ms = SOME ms'` >- (
- metis_tac [weak_model_def]
-) >>
-(* TODO: Fix this
-IMP_RES_TAC weak_intermediate_labels >>
-QSPECL_X_ASSUM ``!ms ms'. _`` [`ms`, `ms''`] >>
-rfs [] >>
-metis_tac []
-*)
-cheat
+imp_res_tac weak_superset_thm >>
+metis_tac [pred_setTheory.UNION_COMM, weak_union_thm, weak_unique_thm]
 QED
-*)
 
 Theorem weak_partial_conj_rule_thm:
   !m.
