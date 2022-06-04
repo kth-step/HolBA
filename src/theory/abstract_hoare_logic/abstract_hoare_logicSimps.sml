@@ -2,10 +2,10 @@ structure abstract_hoare_logicSimps :> abstract_hoare_logicSimps =
 struct
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;
-open abstract_hoare_logicTheory;
+open abstract_hoare_logic_auxTheory;
 
 val wm_type = mk_thy_type {Tyop="abstract_model_t",
-                           Thy="abstract_hoare_logic",
+                           Thy="abstract_hoare_logic_aux",
                            Args=[``:bir_state_t``,
                                  ``:bir_label_t``]
                           };

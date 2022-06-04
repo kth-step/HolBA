@@ -17,6 +17,7 @@ open bir_typing_progTheory;
 open bir_exp_tautologiesTheory;
 open bir_htTheory;
 
+open abstract_hoare_logic_auxTheory;
 open abstract_hoare_logicTheory;
 open abstract_simp_hoare_logicTheory;
 
