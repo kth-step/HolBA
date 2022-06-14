@@ -13,7 +13,7 @@ DEPENDENCIES   = ../../bir ../../bir-support \
 
 # configuration
 # ----------------------------------
-HOLHEAP        = ../../abstract_hoare_logic/HolBAAbstractHoareLogic-heap
+HOLHEAP        = ../../program_logic/HolBAProgramLogic-heap
 NEWHOLHEAP     = HolBATheory_Tools_Lifter-heap
 
 HEAPINC_EXTRA  = 
