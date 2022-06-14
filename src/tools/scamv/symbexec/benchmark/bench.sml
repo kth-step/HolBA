@@ -227,10 +227,14 @@ fun birexp_semantics_eq be1 be2 =
   in
     z3_is_taut eq_wtm
   end;
+fun fix_empty_guards guards =
+    case guards of
+	[] => “BExp_Const (Imm1 1w)”
+      | guards => bandl guards;
 fun compare_angr_guards guards1 guards2 =
   let
-    val pcond1_bexp = bandl guards1;
-    val pcond2_bexp = bandl guards2;
+    val pcond1_bexp = fix_empty_guards guards1;
+    val pcond2_bexp = fix_empty_guards guards2;
   in
     birexp_semantics_eq pcond1_bexp pcond2_bexp
   end;
@@ -314,7 +318,7 @@ fun check_path_infeasability path =
     (* little amounts of output *)
     val _ = Library.trace := 1;
     val guards_evald = List.map (snd o dest_eq o concl o EVAL) guards;
-    val pcond_bexp = bandl guards_evald;
+    val pcond_bexp = fix_empty_guards guards_evald;
     val wtm = bir_exp_to_wordsLib.bir2bool pcond_bexp;
   in
     z3_is_taut (mk_neg wtm)
