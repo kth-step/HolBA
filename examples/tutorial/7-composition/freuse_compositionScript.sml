@@ -221,7 +221,7 @@ METIS_TAC [pred_setTheory.NOT_EQUAL_SETS]
   val assmpt = ct_assmpt;
 *)
   val bir_att_sec_add_ct =
-    bir_compose_seq_assmpt_predset simp_ct1 simp_ct2 [bprog_add_times_two_def, bir_att_sec_add_2_post_def, bir_att_sec_add_1_post_def] ct_assmpt;
+    bir_compose_seq_assmpt_predset simp_ct1 simp_ct2 [freuse_def, bir_att_sec_add_2_post_def, bir_att_sec_add_1_post_def] ct_assmpt;
 
 
 (* ====================================== *)
