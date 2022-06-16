@@ -21,8 +21,8 @@ open bir_inst_liftingHelpersLib;
 
 open bir_wm_instTheory;
 
-open birExamplesBinaryTheory;
-open tutorialExtra_wpTheory tutorialExtra_smtTheory;
+open bir_prog_freuseTheory;
+open freuse_wpTheory freuse_smtTheory;
 
 open bir_wp_interfaceLib;
 
@@ -30,7 +30,7 @@ open bir_compositionLib;
 
 open HolBACoreSimps;
 
-val _ = new_theory "tutorialExtra_composition";
+val _ = new_theory "freuse_composition";
 
 val bir_att_sec_add_1_comp_ct =
 (* TODO: Why not use

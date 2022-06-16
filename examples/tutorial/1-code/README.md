@@ -60,14 +60,13 @@ The produced binary consists of four blocks
 # Some notes on the examples
 The `add_reg` function has some properties that make our analysis
 simpler:
-* there are no indirect jumps. We cannot currently automatically
-  analyse code with indirect jumps, since the weakest precondition
-  algorithm requires a static control flow graph.
+* there are no indirect jumps. See `examples/tutorial/ijr` for an example
+  of indirect jump resolution.
 * there are no multiplications among variables: non-linear arithmetic
   is an hard problem for SMT solvers, therefore analysing the
   algorithm would require to verify some support theorems that can be
   used as axioms in Z3
-* memory is not updated. This dramatically reduce the problem size in
-  Z3. A more detailed discussion regarding problems to handle memory
+* memory is not updated. This dramatically reduces the problem size in
+  Z3. A more detailed discussion regarding problems of handling memory
   accesses is in section 5 and 6.
   

@@ -5,9 +5,9 @@ open bir_wm_instTheory;
 open bir_compositionLib;
 open bir_wp_interfaceLib;
 
-open birExamples2BinaryTheory;
-open tutorialExtra2_wpTheory;
-open tutorialExtra2_smtTheory;
+open bir_prog_mutrecTheory;
+open mutrec_wpTheory;
+open mutrec_smtTheory;
 
 open bir_auxiliaryLib;
 
@@ -15,7 +15,7 @@ open HolBACoreSimps;
 open HolBASimps;
 open abstract_hoare_logicSimps;
 
-val _ = new_theory "tutorialExtra2_composition";
+val _ = new_theory "mutrec_composition";
 
 (* =============================================================== *)
 

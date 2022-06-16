@@ -1,10 +1,14 @@
-# The HolBA tutorial with `add_reg`
+# The HolBA tutorial
 
 ## Overview
 
-A diagram of the tutorial flow with theorem connections/relations goes here.
+The tutorial features verification of three examples:
 
-A diagram of the binary control flow goes here.
+* `add_reg`, a program that incrementally adds one register to another. This demonstrates the full HolBA workflow: from transpilation of an ARMv8 binary to BIR, to transfer of the BIR contract to ARMv8.
+* `mutrec`, a program using mutually recursive functions to compute the parity of an integer.
+* `freuse`, a program calling a function twice.
+
+The different directories contain the different stages of verification (with `3-exec` and `8-symbexec` added in as bonus experiments). `7-composition` contains the theorems stating the final contracts.
 
 ## Build system
 

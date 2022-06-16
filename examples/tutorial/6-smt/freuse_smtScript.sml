@@ -8,11 +8,11 @@ open bir_exp_to_wordsLib bslSyntax;
 open pretty_exnLib;
 
 (* From examples: *)
-open tutorialExtra_wpTheory;
+open freuse_wpTheory;
 open tutorial_smtSupportLib;
 
 
-val _ = new_theory "tutorialExtra_smt";
+val _ = new_theory "freuse_smt";
 
 
 

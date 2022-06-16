@@ -19,7 +19,7 @@ open PPBackEnd Parse
 open bir_inst_liftingHelpersLib;
 (* ================================================ *)
 
-open examplesBinaryTheory;
+open bir_prog_add_regTheory;
 
 val _ = new_theory "tutorial_lift";
 

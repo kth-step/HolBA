@@ -1,6 +1,6 @@
 open HolKernel Parse;
 
-open examplesBinaryTheory;
+open bir_prog_add_regTheory;
 
 open bir_exec_envLib;
 open bir_execLib;

@@ -15,7 +15,7 @@ The parameters of this functions are:
 
 Transpilation of the example is executed using the command `make
 examples/tutorial/2-lift`, which transpiles the program and generates
-the corresponding `examplesBinaryTheory`.
+the corresponding `bir_prog_add_regTheory`.
 
 File `tutorial_liftScript.sml` demonstrates the theorems obtained by
 the transpiler.
