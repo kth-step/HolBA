@@ -3,10 +3,10 @@ open HolKernel Parse boolLib bossLib;
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = Globals.show_tags := true;
 
-open tutorial_compositionTheory;
+open add_reg_compositionTheory;
 open tutorial_backliftingTheory;
-open tutorialExtra_compositionTheory;
-open tutorialExtra2_compositionTheory;
+open freuse_compositionTheory;
+open mutrec_compositionTheory;
 
 fun print_and_check_thm name thm t_concl =
   let
@@ -51,7 +51,7 @@ val _ = print_and_check_thm
   bir_att_ct
   ``
   bir_simp_jgmt
-    bprog_add_times_two
+    freuse
     bir_exp_true
     (BL_Address (Imm32 (0w :word32)))
     {BL_Address (Imm32 (8w :word32))}
@@ -76,7 +76,7 @@ val _ = print_and_check_thm
   bir_ieo_is_even_ht
   ``
   bir_simp_jgmt
-    bprog_is_even_odd
+    mutrec
     bir_exp_true
     (BL_Address (Imm32 (0w :word32)))
     {BL_Address (Imm32 (516w :word32)); BL_Address (Imm32 (512w :word32))}
@@ -89,7 +89,7 @@ val _ = print_and_check_thm
   bir_ieo_is_odd_ht
   ``
   bir_simp_jgmt
-    bprog_is_even_odd
+    mutrec
     bir_exp_true
     (BL_Address (Imm32 (256w :word32)))
     {BL_Address (Imm32 (516w :word32)); BL_Address (Imm32 (512w :word32))}

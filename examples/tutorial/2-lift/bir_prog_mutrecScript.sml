@@ -1,10 +1,10 @@
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 
-val _ = new_theory "birExamples2Binary";
+val _ = new_theory "bir_prog_mutrec";
 
 
-val bprog_is_even_odd_def = Define `
-  bprog_is_even_odd = (BirProgram
+val mutrec_def = Define `
+  mutrec = (BirProgram
 [
 (* is_even *)
     <|bb_label := BL_Address (Imm32 0x000w);

@@ -21,8 +21,8 @@ open bir_inst_liftingHelpersLib;
 
 open bir_wm_instTheory;
 
-open birExamplesBinaryTheory;
-open tutorialExtra_wpTheory tutorialExtra_smtTheory;
+open bir_prog_freuseTheory;
+open freuse_wpTheory freuse_smtTheory;
 
 open bir_wp_interfaceLib;
 
@@ -30,7 +30,7 @@ open bir_compositionLib;
 
 open HolBACoreSimps;
 
-val _ = new_theory "tutorialExtra_composition";
+val _ = new_theory "freuse_composition";
 
 val bir_att_sec_add_1_comp_ct =
 (* TODO: Why not use
@@ -221,7 +221,7 @@ METIS_TAC [pred_setTheory.NOT_EQUAL_SETS]
   val assmpt = ct_assmpt;
 *)
   val bir_att_sec_add_ct =
-    bir_compose_seq_assmpt_predset simp_ct1 simp_ct2 [bprog_add_times_two_def, bir_att_sec_add_2_post_def, bir_att_sec_add_1_post_def] ct_assmpt;
+    bir_compose_seq_assmpt_predset simp_ct1 simp_ct2 [freuse_def, bir_att_sec_add_2_post_def, bir_att_sec_add_1_post_def] ct_assmpt;
 
 
 (* ====================================== *)

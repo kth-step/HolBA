@@ -674,8 +674,8 @@ open bir_inst_liftingHelpersLib;
 	      FULL_SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS)
 		[bir_bool_expTheory.bir_is_bool_exp_env_def, bir_wm_instTheory.bir_etl_wm_def, bir_wm_instTheory.bir_weak_trs_def] >>
               Cases_on `bir_exec_to_labels
-              (^(pred_setSyntax.mk_set [start_label]) UNION (^wlist))
-              (bprog_is_even_odd:'a bir_program_t) s` >> (
+                (^(pred_setSyntax.mk_set [start_label]) UNION (^wlist))
+                ((^prog):'a bir_program_t) s` >> (
                 FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss) [bir_programTheory.bir_exec_to_labels_def]
               ) >>
               IMP_RES_TAC bir_program_env_orderTheory.bir_exec_to_labels_n_ENV_ORDER >>

@@ -19,9 +19,9 @@ open PPBackEnd Parse
 open bir_inst_liftingHelpersLib;
 (* ================================================ *)
 
-open examplesBinaryTheory;
-open tutorial_bir_to_armTheory tutorial_wpTheory
-     tutorial_smtTheory;
+open bir_prog_add_regTheory;
+open tutorial_bir_to_armTheory add_reg_wpTheory
+     add_reg_smtTheory;
 
 open bir_wp_interfaceLib;
 
@@ -29,7 +29,7 @@ open bir_compositionLib;
 
 open bslSyntax;
 
-val _ = new_theory "tutorial_composition";
+val _ = new_theory "add_reg_composition";
 
 (****************************************************************)
 (* Step 0: *)

@@ -20,14 +20,14 @@ open HolBACoreSimps;
 open bir_exp_to_wordsLib bslSyntax;
 
 (* From examples: *)
-open birExamplesBinaryTheory;
+open bir_prog_freuseTheory;
 
 (* From HOL4: *)
 open finite_mapSyntax pairSyntax pred_setSyntax;
 
-val _ = new_theory "tutorialExtra_wp";
+val _ = new_theory "freuse_wp";
 
-val prog_tm = (lhs o concl) bprog_add_times_two_def;
+val prog_tm = (lhs o concl) freuse_def;
 
 (*
 Sections and hoare triples:
@@ -131,7 +131,7 @@ val postcond_tm = ``\l. if (l = BL_Address (Imm32 0x104w))
                         then bir_att_sec_add_1_post v1 v2 v3
                         else bir_exp_false``;
 
-val defs = [bprog_add_times_two_def, bir_att_sec_add_1_post_def,
+val defs = [freuse_def, bir_att_sec_add_1_post_def,
             bir_exp_false_def, BType_Bool_def];
 
 val (bir_att_sec_add_1_ht, bir_att_sec_add_1_wp_tm) =
@@ -152,7 +152,7 @@ val postcond_tm = ``\l. if (l = BL_Address (Imm32 0x100w))
                         then bir_att_sec_call_1_post v1 v2
                         else bir_exp_false``;
 
-val defs = [bprog_add_times_two_def, bir_att_sec_call_1_post_def,
+val defs = [freuse_def, bir_att_sec_call_1_post_def,
             bir_exp_false_def, BType_Bool_def];
 
 val (bir_att_sec_call_1_ht, bir_att_sec_call_1_wp_tm) =
@@ -173,7 +173,7 @@ val postcond_tm = ``\l. if (l = BL_Address (Imm32 0x100w))
                         then bir_att_sec_call_2_post v1
                         else bir_exp_false``;
 
-val defs = [bprog_add_times_two_def, bir_att_sec_call_2_post_def,
+val defs = [freuse_def, bir_att_sec_call_2_post_def,
             bir_exp_false_def, BType_Bool_def];
 
 val (bir_att_sec_call_2_ht, bir_att_sec_call_2_wp_tm) =
@@ -208,7 +208,7 @@ val postcond_tm = ``\l. if (l = BL_Address (Imm32 v3))
                         else bir_exp_false``;
 
 val prog_block_addr = ``(Imm32 0x104w)``;
-val prog_tm = ``bprog_add_times_two``;
+val prog_tm = ``freuse``;
 val prog_block = (snd o dest_eq o concl o EVAL) ``(SND (THE (bir_get_program_block_info_by_label ^prog_tm (BL_Address ^prog_block_addr))))``;
 val ret_block_specl = [prog_tm, prog_block, ``BL_Address ^prog_block_addr``, ``Imm32 v3``, ``v4s:bir_label_t->bool``, ``(BVar "t" (BType_Imm Bit32))``, ``bir_att_sec_add_2_post v1 v2``];
 val ret_block_thm =

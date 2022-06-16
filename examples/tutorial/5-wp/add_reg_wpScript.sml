@@ -20,13 +20,13 @@ open HolBACoreSimps;
 open bir_exp_to_wordsLib bslSyntax;
 
 (* From examples: *)
-open examplesBinaryTheory;
+open bir_prog_add_regTheory;
 open tutorial_bir_to_armTheory;
 
 (* From HOL4: *)
 open finite_mapSyntax pairSyntax pred_setSyntax;
 
-val _ = new_theory "tutorial_wp";
+val _ = new_theory "add_reg_wp";
 
 (* You may install the BIR pretty printers to get syntax
  * highlighting for matching pairs of parantheses:

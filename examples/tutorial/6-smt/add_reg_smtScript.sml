@@ -17,7 +17,7 @@ in () end else ();
 
 (* From examples: *)
 open tutorial_bir_to_armTheory;
-open tutorial_wpTheory;
+open add_reg_wpTheory;
 open tutorial_smtSupportLib;
 
 if !Globals.interactive then let
@@ -35,7 +35,7 @@ if !Globals.interactive then let
   *)
 in () end else ();
 
-val _ = new_theory "tutorial_smt";
+val _ = new_theory "add_reg_smt";
 
 (*****************************************************************************)
 (* 1.1. Prove Hoare triples                                                  *)

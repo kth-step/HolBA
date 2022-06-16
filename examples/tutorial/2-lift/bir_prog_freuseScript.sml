@@ -1,10 +1,10 @@
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 
-val _ = new_theory "birExamplesBinary";
+val _ = new_theory "bir_prog_freuse";
 
 
-val bprog_add_times_two_def = Define `
-  bprog_add_times_two = (BirProgram
+val freuse_def = Define `
+  freuse = (BirProgram
 [
 (* add times two *)
     <|bb_label := BL_Address (Imm32 0x000w);

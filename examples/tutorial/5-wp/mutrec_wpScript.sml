@@ -20,14 +20,14 @@ open HolBACoreSimps;
 open bir_exp_to_wordsLib bslSyntax;
 
 (* From examples: *)
-open birExamples2BinaryTheory;
+open bir_prog_mutrecTheory;
 
 (* From HOL4: *)
 open finite_mapSyntax pairSyntax pred_setSyntax;
 
-val _ = new_theory "tutorialExtra2_wp";
+val _ = new_theory "mutrec_wp";
 
-val prog_tm = (lhs o concl) bprog_is_even_odd_def;
+val prog_tm = (lhs o concl) mutrec_def;
 
 (*
 Sections and hoare triples:
@@ -158,7 +158,7 @@ val first_block_label_tm = ``BL_Address (Imm32 0x000w)``;
 val ending_set =  ``{BL_Address (Imm32 0x000w); BL_Address (Imm32 0x200w); BL_Address (Imm32 0x204w)}``;
 val postcond_tm = ``bir_ieo_sec_iseven_loop_post v1 v``;
 
-val defs = [bprog_is_even_odd_def, bir_ieo_sec_iseven_loop_post_def,
+val defs = [mutrec_def, bir_ieo_sec_iseven_loop_post_def,
             bir_ieo_post_odd_def, bir_ieo_post_even_def,
             bir_ieo_invariant_def, bir_ieo_condition_def, bir_ieo_variant_def,
             bir_exp_false_def, BType_Bool_def];
@@ -180,7 +180,7 @@ val first_block_label_tm = ``BL_Address (Imm32 0x000w)``;
 val ending_set =  ``{BL_Address (Imm32 0x000w); BL_Address (Imm32 0x200w); BL_Address (Imm32 0x204w)}``;
 val postcond_tm = ``bir_ieo_sec_iseven_exit_post v1``;
 
-val defs = [bprog_is_even_odd_def, bir_ieo_sec_iseven_exit_post_def,
+val defs = [mutrec_def, bir_ieo_sec_iseven_exit_post_def,
             bir_ieo_post_odd_def, bir_ieo_post_even_def, bir_ieo_invariant_def,
             bir_exp_false_def, BType_Bool_def];
 
@@ -201,7 +201,7 @@ val first_block_label_tm = ``BL_Address (Imm32 0x100w)``;
 val ending_set =  ``{BL_Address (Imm32 0x100w); BL_Address (Imm32 0x200w); BL_Address (Imm32 0x204w)}``;
 val postcond_tm = ``bir_ieo_sec_isodd_loop_post v1 v``;
 
-val defs = [bprog_is_even_odd_def, bir_ieo_sec_isodd_loop_post_def,
+val defs = [mutrec_def, bir_ieo_sec_isodd_loop_post_def,
             bir_ieo_post_odd_def, bir_ieo_post_even_def,
             bir_ieo_invariant_def, bir_ieo_condition_def, bir_ieo_variant_def,
             bir_exp_false_def, BType_Bool_def];
@@ -223,7 +223,7 @@ val first_block_label_tm = ``BL_Address (Imm32 0x100w)``;
 val ending_set =  ``{BL_Address (Imm32 0x100w); BL_Address (Imm32 0x200w); BL_Address (Imm32 0x204w)}``;
 val postcond_tm = ``bir_ieo_sec_isodd_exit_post v1``;
 
-val defs = [bprog_is_even_odd_def, bir_ieo_sec_isodd_exit_post_def,
+val defs = [mutrec_def, bir_ieo_sec_isodd_exit_post_def,
             bir_ieo_post_odd_def, bir_ieo_post_even_def, bir_ieo_invariant_def,
             bir_exp_false_def, BType_Bool_def];
 
