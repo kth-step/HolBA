@@ -19,7 +19,7 @@ open PPBackEnd Parse
 open bir_inst_liftingHelpersLib;
 (* ================================================ *)
 
-open bir_wm_instTheory;
+open bir_tsTheory;
 
 open bir_prog_freuseTheory;
 open freuse_wpTheory freuse_smtTheory;
@@ -86,12 +86,12 @@ val bir_att_sec_add_2_comp_ct =
 *)
 
 val bir_att_sec_call_1_comp_ct =
-  label_ct_to_simp_ct_predset
+  bir_exec_to_labels_triple_to_bir_cont_predset
     bir_att_sec_call_1_ct
     contract_2_imp_taut_thm;
 
 val bir_att_sec_call_2_comp_ct =
-  label_ct_to_simp_ct_predset
+  bir_exec_to_labels_triple_to_bir_cont_predset
     bir_att_sec_call_2_ct
     contract_3_imp_taut_thm;
 
@@ -126,7 +126,7 @@ subgoal `el IN (el INSERT set')` >- (
 ) >>
 METIS_TAC [pred_setTheory.NOT_EQUAL_SETS]
 );
-  val fix3_thm = (UNDISCH_ALL o prove) (``
+val fix3_thm = (UNDISCH_ALL o prove) (``
 ^ct_assmpt ==>
 (!l.
           l IN BL_Address (Imm32 v3) INSERT v4s ==>
@@ -173,11 +173,11 @@ METIS_TAC [pred_setTheory.NOT_EQUAL_SETS]
     REWRITE_RULE [(SIMP_CONV std_ss [fix3_thm, fix3_2_thm] o
                   fst o dest_imp o concl) ct] ct;
 
-  fun populate_blacklist_set_hack elabels simp_ct =
+  fun populate_elist_set_hack elabels simp_ct =
     let
       val simp_ct1 =
 	((SPEC elabels) o
-	 (HO_MATCH_MP bir_simp_wl_to_bl_set_rule_thm))
+	 (HO_MATCH_MP bir_il_to_el_set_rule_thm))
 	simp_ct;
       val simp_ct1_1 = fix_assmt simp_ct1;
       val simp_ct1_2 = fix_assmt2 simp_ct1_1;
@@ -199,7 +199,7 @@ METIS_TAC [pred_setTheory.NOT_EQUAL_SETS]
   val elabels = ``(BL_Address (Imm32 v3)) INSERT v4s``;
   val simp_ct = bir_att_sec_add_1_comp_ct;
 *)
-  val simp_ct1 = populate_blacklist_set_hack ``(BL_Address (Imm32 v3)) INSERT v4s`` bir_att_sec_add_1_comp_ct;
+  val simp_ct1 = populate_elist_set_hack ``(BL_Address (Imm32 v3)) INSERT v4s`` bir_att_sec_add_1_comp_ct;
 
   val ct2_undisch = ((UNDISCH o UNDISCH o (Q.SPECL [`v1`, `v2`, `v3`, `v4s`])) bir_att_sec_add_2_ht);
   val simp_ct2_ = 
@@ -211,7 +211,7 @@ METIS_TAC [pred_setTheory.NOT_EQUAL_SETS]
   val elabels = ``v4s:bir_label_t->bool``;
   val simp_ct = simp_ct2_;
 *)
-  val simp_ct2 = populate_blacklist_set_hack ``v4s:bir_label_t->bool`` simp_ct2_;
+  val simp_ct2 = populate_elist_set_hack ``v4s:bir_label_t->bool`` simp_ct2_;
 
 
 (* For debugging:

@@ -405,7 +405,7 @@ local
 	SOME block => let
                         (* Get labels from block estmt *)
                         val estmt_labels = map dest_BLE_Label (get_block_estmt_labels block)
-                        (* Add labels to blstodo if not already there or in blacklist *)
+                        (* Add labels to blstodo if not already there or in exclude list *)
                         val estmt_labels1 =
                           List.filter (fn l =>
                                         (not (List.exists (fn l' => (cmp_label l l')) ending_label_list))
