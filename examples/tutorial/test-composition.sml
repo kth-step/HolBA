@@ -25,7 +25,7 @@ val _ = print_and_check_thm
   "HolBA tutorial example (BIR only)"
   bir_add_reg_ct
   ``
-  bir_simp_jgmt
+  bir_cont
     (bir_add_reg_prog:'observation_type bir_program_t)
     bir_exp_true
     (BL_Address (Imm64 28w))
@@ -38,7 +38,7 @@ val _ = print_and_check_thm
 val _ = print_and_check_thm
   "HolBA tutorial example (back to ARMv8)"
   arm_add_reg_contract_thm
-  ``arm8_triple
+  ``arm8_cont
       bir_add_reg_progbin
       (28w:word64)
       {(72w:word64)}
@@ -50,7 +50,7 @@ val _ = print_and_check_thm
   "Example \"BIR function reuse\""
   bir_att_ct
   ``
-  bir_simp_jgmt
+  bir_cont
     freuse
     bir_exp_true
     (BL_Address (Imm32 (0w :word32)))
@@ -75,7 +75,7 @@ val _ = print_and_check_thm
   "Example \"BIR optimized mutual recursion\" - is_even"
   bir_ieo_is_even_ht
   ``
-  bir_simp_jgmt
+  bir_cont
     mutrec
     bir_exp_true
     (BL_Address (Imm32 (0w :word32)))
@@ -88,7 +88,7 @@ val _ = print_and_check_thm
   "Example \"BIR optimized mutual recursion\" - is_odd"
   bir_ieo_is_odd_ht
   ``
-  bir_simp_jgmt
+  bir_cont
     mutrec
     bir_exp_true
     (BL_Address (Imm32 (256w :word32)))
