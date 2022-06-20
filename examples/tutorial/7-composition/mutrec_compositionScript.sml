@@ -49,10 +49,10 @@ val bir_ieo_sec_isodd_exit_comp_ct =
 
   val loop_simp_ct_ = REWRITE_RULE [Once abs_ev_intro] bir_ieo_sec_iseven_loop_comp_ct;
 
-  val new_wlist = ``{BL_Address (Imm32 0x204w); BL_Address (Imm32 0x200w)}``;
+  val new_ilist = ``{BL_Address (Imm32 0x204w); BL_Address (Imm32 0x200w)}``;
   val ht = REWRITE_RULE [Once abs_ev_intro] bir_ieo_sec_iseven_exit_comp_ct;
 
-  val loop_exit_simp_ht = bir_remove_labels_from_ilist_predset ht new_wlist;
+  val loop_exit_simp_ht = bir_remove_labels_from_ilist_predset ht new_ilist;
 
   val loop_exit_simp1_ht =
     REWRITE_RULE [Once abs_ev_intro2] loop_exit_simp_ht;
@@ -72,10 +72,10 @@ val bir_ieo_sec_isodd_exit_comp_ct =
 
   val loop_simp_ct_ = REWRITE_RULE [Once abs_od_intro] bir_ieo_sec_isodd_loop_comp_ct;
 
-  val new_wlist = ``{BL_Address (Imm32 0x204w); BL_Address (Imm32 0x200w)}``;
+  val new_ilist = ``{BL_Address (Imm32 0x204w); BL_Address (Imm32 0x200w)}``;
   val ht = REWRITE_RULE [Once abs_od_intro] bir_ieo_sec_isodd_exit_comp_ct;
 
-  val loop_exit_simp_ht = bir_remove_labels_from_ilist_predset ht new_wlist;
+  val loop_exit_simp_ht = bir_remove_labels_from_ilist_predset ht new_ilist;
 
   val loop_exit_simp1_ht = REWRITE_RULE [Once abs_od_intro2] loop_exit_simp_ht;
   val loop_exit_simp2_ht =

@@ -71,10 +71,10 @@ val loop_bir_cont =
 
 (****************************************************************)
 (* Step 2: *)
-(* Ditch the loop re-entry label from the loop exit contract blacklist *)
+(* Ditch the loop re-entry label from the loop exit contract exclude list *)
 
 (* For debugging:
-  val to_remove_from_blist = ``{BL_Address (Imm64 32w)}``;
+  val to_remove_from_elist = ``{BL_Address (Imm64 32w)}``;
   val bir_cont = bir_add_reg_loop_exit_comp_ct;
 *)
 

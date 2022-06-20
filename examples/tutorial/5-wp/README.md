@@ -66,7 +66,7 @@ val postcond_tm = ``\l. if (l = BL_Address (Imm64 0x40w))
                         else bir_exp_false``;
 ```
 
-Note that this maps all labels apart from `0x40` onto `bir_exp_false`, meaning the the contract will ensure those are not reached. In other words, you could say they are blacklisted. Specifically, this is done for `0x48`.
+Note that this maps all labels apart from `0x40` onto `bir_exp_false`, meaning the the contract will ensure those are not reached. In other words, you could say they are in an exclude list. Specifically, this is done for `0x48`.
 
 Just like `prog_tm`, this otherwise holds just an abbreviation for the postcondition, so we also need the definitions needed to see the concrete BIR expression. As for the function needed to obtain a BIR expression from the above, this is also given in `bir_wp_interfaceLib`:
 
