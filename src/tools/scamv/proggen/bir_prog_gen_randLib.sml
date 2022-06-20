@@ -246,9 +246,9 @@ struct
          val gen = rand_gen_get();
 	 val ic = (snd(weighted_select arm8_names_weighted gen));
 	 val ib = random ic;
-	 val wl = filter (fn c => String.isSubstring "WORD" c) (decomp ib);
+	 val il = filter (fn c => String.isSubstring "WORD" c) (decomp ib);
      in
-	 if (not(null wl) orelse (filter_inspected_instr ((hd o splitter o hd o decomp) ib))) then instGen () else (ic, ib)
+	 if (not(null il) orelse (filter_inspected_instr ((hd o splitter o hd o decomp) ib))) then instGen () else (ic, ib)
      end 
  (*
   val inst = "15c984de"

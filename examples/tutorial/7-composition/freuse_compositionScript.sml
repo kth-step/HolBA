@@ -47,7 +47,7 @@ val bir_att_sec_call_1_ct = bir_att_sec_call_1_ht;
 val bir_att_sec_call_2_ct = bir_att_sec_call_2_ht;
 
 (* TODO: in composition function, make conditional "return" jump work *)
-(* TODO: enable usage of variable blacklist set with assumptions -> bigger compositional reasoning *)
+(* TODO: enable usage of variable exclude list set with assumptions -> bigger compositional reasoning *)
 
 
 fun try_disch_all_assump_w_EVAL t =
