@@ -492,7 +492,7 @@ parse_obs obsrefmap json;
           print "... using python package of bir_angr ...\n";
           print "... metadata of package:\n";
           if OS.Process.isSuccess (OS.Process.system "python3 -m pip show bir_angr") then () else
-            raise ERR "do_symb_exec" "python package bir_angr is not installed";
+            raise ERR "do_symb_exec" "python package bir_angr is not installed. Disable angr to use the naive symbolic execution or install the package.";
           print "... metadata end.\n";
           bir_exec_wrapLib.get_exec_output ("python3 -E -m bir_angr.symbolic_execution \"" ^ magicinputfilename ^ "\" -ba " ^ start_lbl_str)
         ) else (

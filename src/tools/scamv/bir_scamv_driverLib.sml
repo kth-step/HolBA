@@ -89,6 +89,8 @@ val hw_obs_model_id = ref "";
 val do_enum = ref false;
 val do_training = ref false;
 val do_conc_exec = ref false;
+val angr_symbexec = ref true;
+
 
 val (current_prog_id : embexp_logsLib.prog_handle option ref) = ref NONE;
 val (current_prog : term option ref) = ref NONE;
@@ -188,7 +190,7 @@ end;
 
 fun scamv_phase_symb_exec () =
     let
-      val (paths, all_exps) = scamv_run_symb_exec (valOf (!current_prog_w_obs));
+      val (paths, all_exps) = scamv_run_symb_exec (valOf (!current_prog_w_obs)) (!angr_symbexec);
 	    val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths;
       val ps = initialise paths;
       val _ = current_pathstruct := SOME ps;
@@ -530,7 +532,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
               , obs_model = obs_model, hw_obs_model = hw_obs_model
               , refined_obs_model = refined_obs_model, obs_projection = proj
               , verbosity = verb, seed_rand = seed_rand, do_training = train
-              , run_description = descr_o, exec_conc = doexecconc } =
+              , run_description = descr_o, exec_conc = doexecconc, angr_symbexec = angr_se } =
     let
 
         val _ = bir_randLib.rand_isfresh_set seed_rand;
@@ -541,6 +543,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
         val _ = do_training := train;
         val _ = do_conc_exec := doexecconc;
         val _ = current_obs_projection := proj;
+	val _ = angr_symbexec := angr_se;
         
         val prog_store_fun =
             match_prog_gen gen sz generator_param;
@@ -565,7 +568,8 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
           ("Enumerate            : " ^ PolyML.makestring (!do_enum) ^ "\n") ^
           ("Train branch pred.   : " ^ PolyML.makestring (!do_training) ^ "\n") ^
           ("Execute concretely   : " ^ PolyML.makestring (!do_conc_exec) ^ "\n") ^
-          ("Run description text : " ^ PolyML.makestring descr_o ^ "\n") ;
+          ("Run description text : " ^ PolyML.makestring descr_o ^ "\n") ^
+	  ("Use angr symbolic execution : " ^ PolyML.makestring (!angr_symbexec) ^ "\n");
 
         val _ = run_log config_str;
         val _ = min_verb 1 (fn () => print config_str);

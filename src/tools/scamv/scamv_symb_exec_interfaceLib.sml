@@ -107,8 +107,9 @@ in
 (* Given a program, run symbolic execution and return the feasible paths
   TODO filter out infeasible paths
  *)
-fun scamv_run_symb_exec p =
-    angr_run_symb_exec p;
+fun scamv_run_symb_exec p angr_se =
+    (* angr symbolic execution is on by default *)
+    if angr_se then (angr_run_symb_exec p) else (do_symb_exec p);
 
 end
 
