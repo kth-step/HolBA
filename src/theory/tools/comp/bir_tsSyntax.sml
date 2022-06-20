@@ -1,13 +1,13 @@
-structure bir_wm_instSyntax :> bir_wm_instSyntax =
+structure bir_tsSyntax :> bir_tsSyntax =
 struct
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;
-open bir_wm_instTheory;
+open bir_tsTheory;
 
 
-val ERR = mk_HOL_ERR "bir_wm_instSyntax"
-val wrap_exn = Feedback.wrap_exn "bir_wm_instSyntax"
-fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_wm_inst"
+val ERR = mk_HOL_ERR "bir_tsSyntax"
+val wrap_exn = Feedback.wrap_exn "bir_tsSyntax"
+fun syntax_fns n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} "bir_ts"
 
 fun dest_septop c e tm =
    case with_exn strip_comb tm e of
@@ -19,7 +19,7 @@ fun mk_septop tm = HolKernel.list_mk_icomb tm o list_of_septuple
 
 val syntax_fns7 = syntax_fns 7 dest_septop mk_septop;
 
-(* bir_simp_jgmt *)
-val (bir_simp_jgmt_tm, mk_bir_simp_jgmt, dest_bir_simp_jgmt, is_bir_simp_jgmt) = syntax_fns7 "bir_simp_jgmt";
+(* bir_cont *)
+val (bir_cont_tm, mk_bir_cont, dest_bir_cont, is_bir_cont) = syntax_fns7 "bir_cont";
 
 end

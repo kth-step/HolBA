@@ -2,7 +2,7 @@ open HolKernel Parse boolLib bossLib;
 
 open bir_immTheory;
 open bir_programTheory;
-open bir_wm_instTheory;
+open bir_tsTheory;
 open bir_program_multistep_propsTheory;
 open bir_auxiliaryTheory;
 
@@ -11,12 +11,12 @@ open bir_inst_liftingTheory;
 open bir_lifting_machinesTheory;
 
 (* From comp: *)
-open abstract_hoare_logicTheory;
-open abstract_simp_hoare_logicTheory;
+open total_program_logicTheory;
+open total_ext_program_logicTheory;
 
 open HolBASimps;
 open HolBACoreSimps;
-open abstract_hoare_logicSimps;
+open program_logicSimps;
 
 open bir_auxiliaryLib;
 
@@ -24,8 +24,8 @@ val _ = new_theory "bir_backlifter";
 
 (* This part should be generalized *)
 (*
-val arm8_triple_def = Define `
-  arm8_triple mms l ls pre post =
+val arm8_cont_def = Define `
+  arm8_cont mms l ls pre post =
   !ms.
    (arm8_bmr.bmr_extra ms) ==>
    (EVERY (bmr_ms_mem_contains arm8_bmr ms) mms) ==>
@@ -38,7 +38,7 @@ val arm8_triple_def = Define `
 `;
 *)
 val arm_weak_trs_def = Define `
-  arm_weak_trs ms ls ms' = 
+  arm_weak_trs ls ms ms' = 
         ?n.
           ((n > 0) /\
            (FUNPOW_OPT arm8_bmr.bmr_step_fun n ms = SOME ms') /\
@@ -52,18 +52,18 @@ val arm_weak_trs_def = Define `
             )`;
 
 
-val arm_weak_model_def =
-  Define `arm_weak_model  = <|
+val arm_ts_def =
+  Define `arm_ts  = <|
     trs  := arm8_bmr.bmr_step_fun;
     weak := arm_weak_trs;
-    pc   := (\st. st.PC)
+    ctrl   := (\st. st.PC)
   |>`;
 
 
-(* The main triple to be used for ARM composition *)
-val arm8_triple_def = Define `
-  arm8_triple mms l ls pre post =
-    abstract_jgmt arm_weak_model l ls
+(* The main contract to be used for ARM composition *)
+val arm8_cont_def = Define `
+  arm8_cont mms l ls pre post =
+    t_jgmt arm_ts l ls
       (\ms. (arm8_bmr.bmr_extra ms)  /\
             (EVERY (bmr_ms_mem_contains arm8_bmr ms) mms) /\
             (pre ms))         
@@ -468,20 +468,20 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def]
 val bir_arm8_block_pc = prove(
   ``!bs ms ml.
     bmr_rel arm8_bmr bs ms ==>
-    (arm_weak_model.pc ms = ml) ==>
+    (arm_ts.ctrl ms = ml) ==>
     (bs.bst_status = BST_Running) ==>
     (bs.bst_pc = bir_block_pc (BL_Address (Imm64 ml)))``,
 
 REPEAT GEN_TAC >>
 REPEAT DISCH_TAC >>
 FULL_SIMP_TAC (std_ss++holBACore_ss++bir_wm_SS)
-  [arm8_bmr_rel_EVAL, bir_block_pc_def, arm_weak_model_def]
+  [arm8_bmr_rel_EVAL, bir_block_pc_def, arm_ts_def]
 );
 
 
 val bir_get_ht_conseq_from_m_ante = prove(
   ``!bs p bpre bpost mpre ms ml mls.
-    bir_simp_jgmt p bir_exp_true (BL_Address (Imm64 ml))
+    bir_cont p bir_exp_true (BL_Address (Imm64 ml))
       {BL_Address (Imm64 ml') | ml' IN mls} {} bpre bpost ==>
     bir_pre_arm8_to_bir mpre bpre ==>
     mpre ms ==>
@@ -500,9 +500,9 @@ val bir_get_ht_conseq_from_m_ante = prove(
 REPEAT GEN_TAC >>
 REPEAT DISCH_TAC >>
 FULL_SIMP_TAC (std_ss++bir_wm_SS)
-  [bir_simp_jgmt_def, abstract_simp_jgmt_def, abstract_jgmt_def,
+  [bir_cont_def, t_ext_jgmt_def, t_jgmt_def,
    bir_exec_to_labels_triple_precond_def,
-   bir_exec_to_labels_triple_postcond_def, bir_etl_wm_def] >>
+   bir_exec_to_labels_triple_postcond_def, bir_ts_def] >>
 PAT_X_ASSUM ``!s. _``
             (fn thm => ASSUME_TAC (SPEC ``bs:bir_state_t`` thm)) >>
 FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
@@ -611,7 +611,7 @@ val bir_arm8_inter_exec = prove(
   ``!n' c_addr_labels n0 ms ml mls bs bs' p lo l c_st n mu mms.
     bir_is_lifted_prog arm8_bmr mu mms p ==>
     EVERY (bmr_ms_mem_contains arm8_bmr ms) mms ==>
-    (arm_weak_model.pc ms = ml) ==>
+    (arm_ts.ctrl ms = ml) ==>
     (MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p)) ==>
     bmr_rel arm8_bmr bs ms ==>
     ~bir_state_is_terminated bs ==>
@@ -692,16 +692,16 @@ FULL_SIMP_TAC (std_ss++holBACore_ss++bir_wm_SS++pred_setLib.PRED_SET_ss)
 val lift_contract_thm = store_thm("lift_contract_thm",
   ``!p mms ml mls mu mpre mpost bpre bpost.
       MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p) ==>
-      bir_simp_jgmt p bir_exp_true (BL_Address (Imm64 ml))
+      bir_cont p bir_exp_true (BL_Address (Imm64 ml))
 	{BL_Address (Imm64 ml') | ml' IN mls} {} bpre bpost ==>
       bir_is_lifted_prog arm8_bmr mu mms p ==>
       arm8_wf_varset (bir_vars_of_program p UNION bir_vars_of_exp bpre) ==>
       bir_pre_arm8_to_bir mpre bpre ==>
       bir_post_bir_to_arm8 mpost bpost {BL_Address (Imm64 ml') | ml' IN mls} ==>
-      arm8_triple mms ml mls mpre mpost``,
+      arm8_cont mms ml mls mpre mpost``,
 
 REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [arm8_triple_def, abstract_jgmt_def] >>
+FULL_SIMP_TAC std_ss [arm8_cont_def, t_jgmt_def] >>
 REPEAT STRIP_TAC >>
 (* 1. Among the assumptions we now also have the antecedents of the arm8
  *    HT. Combining these, exist_bir_of_arm8_thm gives that there is a
@@ -730,7 +730,7 @@ IMP_RES_TAC bir_is_lifted_prog_MULTI_STEP_EXEC_compute >>
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
 
 (* 4. Give ms' as witness to goal and prove the easy goal conjuncts -
- *    all but arm_weak_model.weak ms mls ms', which is a statement on how ms
+ *    all but arm_ts.weak ms mls ms', which is a statement on how ms
  *    and ms' are related through a weak transition *)
 Q.EXISTS_TAC `ms'` >>
 subgoal `arm8_bmr.bmr_extra ms'` >- (
@@ -745,7 +745,7 @@ subgoal `mpost ms'` >- (
 FULL_SIMP_TAC std_ss [] >>
 
 (* 5. Show that the weak transition in the goal exists *)
-SIMP_TAC (std_ss++bir_wm_SS) [arm_weak_model_def,
+SIMP_TAC (std_ss++bir_wm_SS) [arm_ts_def,
                               arm_weak_trs_def] >>
 Q.EXISTS_TAC `c_addr_labels` >>
 (* 5a. Weak transition from initial state ms ends in final state ms':

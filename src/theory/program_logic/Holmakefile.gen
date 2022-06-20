@@ -6,7 +6,7 @@ DEPENDENCIES   =
 # configuration
 # ----------------------------------
 HOLHEAP        = ../models/HolBAModels-heap
-NEWHOLHEAP     = HolBAAbstractHoareLogic-heap
+NEWHOLHEAP     = HolBAProgramLogic-heap
 
 HEAPINC_EXTRA  = 
 
