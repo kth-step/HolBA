@@ -64,7 +64,7 @@ fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_p
 
     (* Prove the ARM triple by supplying the antecedents of lift_contract_thm *)
     val arm8_contract_thm = prove(
-      ``arm8_triple ^prog_bin ^l ^ls ^arm8_pre
+      ``arm8_cont ^prog_bin ^l ^ls ^arm8_pre
 		^arm8_post``,
 
     irule add_lift_thm >>

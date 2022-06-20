@@ -1,6 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open bslSyntax;
-open bir_wm_instTheory;
+open bir_tsTheory;
 
 open bir_compositionLib;
 open bir_wp_interfaceLib;
@@ -13,7 +13,7 @@ open bir_auxiliaryLib;
 
 open HolBACoreSimps;
 open HolBASimps;
-open abstract_hoare_logicSimps;
+open program_logicSimps;
 
 val _ = new_theory "mutrec_composition";
 
@@ -52,7 +52,7 @@ val bir_ieo_sec_isodd_exit_comp_ct =
   val new_wlist = ``{BL_Address (Imm32 0x204w); BL_Address (Imm32 0x200w)}``;
   val ht = REWRITE_RULE [Once abs_ev_intro] bir_ieo_sec_iseven_exit_comp_ct;
 
-  val loop_exit_simp_ht = bir_remove_labels_from_wlist_predset ht new_wlist;
+  val loop_exit_simp_ht = bir_remove_labels_from_ilist_predset ht new_wlist;
 
   val loop_exit_simp1_ht =
     REWRITE_RULE [Once abs_ev_intro2] loop_exit_simp_ht;
@@ -75,7 +75,7 @@ val bir_ieo_sec_isodd_exit_comp_ct =
   val new_wlist = ``{BL_Address (Imm32 0x204w); BL_Address (Imm32 0x200w)}``;
   val ht = REWRITE_RULE [Once abs_od_intro] bir_ieo_sec_isodd_exit_comp_ct;
 
-  val loop_exit_simp_ht = bir_remove_labels_from_wlist_predset ht new_wlist;
+  val loop_exit_simp_ht = bir_remove_labels_from_ilist_predset ht new_wlist;
 
   val loop_exit_simp1_ht = REWRITE_RULE [Once abs_od_intro2] loop_exit_simp_ht;
   val loop_exit_simp2_ht =
@@ -91,7 +91,7 @@ val bir_ieo_sec_isodd_exit_comp_ct =
 (* =============================================================== *)
 
   val loop_simp_ct    = REWRITE_RULE [GSYM bir_ieo_sec_iseven_loop_post_def, Once abs_ev_intro]
-          (bir_populate_blacklist_predset
+          (bir_populate_elist_predset
            (REWRITE_RULE [GSYM abs_ev_intro, bir_ieo_sec_iseven_loop_post_def] loop_ev_simp_ct_2));
 (* For debugging:
   val loop_map_ct   = loop_simp_ct;
@@ -119,7 +119,7 @@ val loop_and_exit_ev_ht =
 
 (* For debugging: *)
   val loop_simp_ct    = REWRITE_RULE [GSYM bir_ieo_sec_isodd_loop_post_def, Once abs_od_intro]
-          (bir_populate_blacklist_predset
+          (bir_populate_elist_predset
            (REWRITE_RULE [GSYM abs_od_intro, bir_ieo_sec_isodd_loop_post_def] loop_od_simp_ct_2));
 (*
   val loop_exit_simp_ct   = loop_od_exit_ht;
@@ -155,7 +155,7 @@ val thm1 = ((Q.SPECL [`mutrec`, `bir_exp_true`,
             if l = BL_Address (Imm32 0w) then bir_ieo_invariant v1
             else bir_ieo_sec_iseven_exit_post v1 l`,
           `bir_ieo_sec_iseven_exit_post v1`])
-	      bir_wm_instTheory.bir_simp_post_weak_rule_thm);
+	      bir_tsTheory.bir_post_weak_rule_thm);
 val thm2 = REWRITE_RULE [is_even_1_ht] thm1;
 val is_even_2_ht = REWRITE_RULE [prove(``^((fst o dest_imp o concl) thm2)``,
   SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>
@@ -183,7 +183,7 @@ val thm1 = ((Q.SPECL [`mutrec`, `bir_exp_true`,
             if l = BL_Address (Imm32 0w) then bir_ieo_invariant v1
             else bir_ieo_sec_isodd_exit_post v1 l`,
           `bir_ieo_sec_isodd_exit_post v1`])
-	      bir_wm_instTheory.bir_simp_post_weak_rule_thm);
+	      bir_tsTheory.bir_post_weak_rule_thm);
 val thm2 = REWRITE_RULE [is_odd_1_ht] thm1;
 val is_odd_2_ht = REWRITE_RULE [prove(``^((fst o dest_imp o concl) thm2)``,
   SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [] >>

@@ -13,8 +13,8 @@ val p_def = bdefprog_list "p" [(blabel_str "entry", [], (bjmp o belabel_str) "0w
 
 val post = ``(\l. if (l = BL_Address (Imm64 2w)) then bir_exp_true else bir_exp_false)``
 val c = prove(
-  ``bir_simp_jgmt p bir_exp_true (BL_Label "entry") {BL_Address (Imm64 2w) ; BL_Label "0w" ; BL_Label "1w"} {} bir_exp_true ^post``,
+  ``bir_cont p bir_exp_true (BL_Label "entry") {BL_Address (Imm64 2w) ; BL_Label "0w" ; BL_Label "1w"} {} bir_exp_true ^post``,
     cheat)
 
-(*Check that string labels are handled correctly*)
-val c' = bir_populate_blacklist_predset c
+(* Check that string labels are handled correctly *)
+val c' = bir_populate_elist_predset c

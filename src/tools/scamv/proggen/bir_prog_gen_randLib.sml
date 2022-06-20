@@ -216,19 +216,19 @@ struct
  (* filter_inspected_instr "ldr xzr, x19, [x21, #0xC8]"; *)
 
 
- val filter_blacklist = ref (NONE: string list option);
+ val filter_elist = ref (NONE: string list option);
 
- fun get_filter_blacklist () =
-   case !filter_blacklist of
+ fun get_filter_elist () =
+   case !filter_elist of
       SOME x => x
-    | NONE   => ((filter_blacklist := SOME (
+    | NONE   => ((filter_elist := SOME (
        case !local_param of
           ""               => [] (* default *)
         | "wout_ldzr"      => ["xzr","wzr"]
         | "wout_cbnz"      => ["cbnz"]
         | "wout_ldzr_cbnz" => ["cbnz","xzr","wzr"]
-        | _                => raise ERR "prog_gen_rand::get_filter_blacklist" "unknown parameter"
-       )); get_filter_blacklist ());
+        | _                => raise ERR "prog_gen_rand::get_filter_elist" "unknown parameter"
+       )); get_filter_elist ());
 
 (*
  List.exists (fn sub => String.isSubstring sub "ld x4, x5, [x30]") ["cbnz","xzr","wzr"];
@@ -238,7 +238,7 @@ struct
  List.exists (fn sub => String.isSubstring sub "cbnz x4, x8, [x30]") ["cbnz","xzr","wzr"];
 *)
  fun filter_inspected_instr_notprecise str =
-   List.exists (fn sub => String.isSubstring sub str) (get_filter_blacklist ());
+   List.exists (fn sub => String.isSubstring sub str) (get_filter_elist ());
 
 
  fun instGen () =

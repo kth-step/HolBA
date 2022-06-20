@@ -48,14 +48,14 @@ local
 
   (* This helper function takes a list of BIR program labels and
    * makes a finite map mapping these onto BIR False. *)
-  fun make_blacklist_fmap blacklist =
+  fun make_elist_fmap elist =
     List.foldl (fn (label, map) =>
 		  mk_fupdate (map,
                               mk_pair (label, bir_exp_false_tm)
                              )
 	       )
 	       (mk_fempty (bir_label_t_ty, bir_exp_t_ty))
-	       blacklist
+	       elist
   ;
 
 in
@@ -81,7 +81,7 @@ fun dest_until_var tm =
 fun ending_set_to_sml_list tm =
   pred_setSyntax.strip_set tm
   handle HOL_ERR _ => (
-    print ("\nnotice that the variable set has to be a blacklist: " ^
+    print ("\nnotice that the variable set has to be a exclude list: " ^
            (term_to_string tm) ^ "\n");
     dest_until_var tm
   );

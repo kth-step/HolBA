@@ -22,7 +22,7 @@ val _ = new_theory "tutorial_backlifting";
   val arm8_pre_imp_bir_pre_thm = arm8_pre_imp_bir_pre_thm;
   val bir_post_defs = [bir_add_reg_contract_4_post_def];
   val arm8_post_imp_bir_post_thm = arm8_post_imp_bir_post_thm;
-  val bir_is_lifted_prog_thm = examplesBinaryTheory.bir_add_reg_arm8_lift_THM;
+  val bir_is_lifted_prog_thm = bir_prog_add_regTheory.bir_add_reg_arm8_lift_THM;
 *)
 
 val arm_add_reg_contract_thm =
