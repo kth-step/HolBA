@@ -10,10 +10,12 @@ sig
   datatype logs_list = LogsList of (string * string option);
   datatype logs_run  = LogsRun  of (string * prog_list_handle * exp_list_handle);
   datatype logs_prog = LogsProg of (string * string);
-  datatype logs_exp  = LogsExp  of (prog_handle * string * string * Json.json);
+  datatype logs_exp  = LogsExp  of (prog_handle * string * string * Json.json * Arbnum.num * Json.json);
 
   eqtype meta_handle;
   datatype logs_meta = LogsMeta of (meta_handle * string option);
+
+  val embexp_logs_dir : unit -> string;
 
   (* operations on handles *)
   val prog_handle_compare : (prog_handle * prog_handle) -> order;

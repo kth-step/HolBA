@@ -22,6 +22,7 @@ signature persistenceLib = sig
   val run_create_prog :
     experimentsLib.experiment_arch ->
     experimentsLib.experiment_prog ->
+    string ->
     (string * string) list ->
     embexp_logsLib.prog_handle;
 
@@ -30,6 +31,8 @@ signature persistenceLib = sig
        - type of experiment (e.g. exps2)
        - experiment run parameters (e.g. experiment_type_id/attacker_id)
        - states (e.g. state1, state2, train)
+       - entry point
+       - exit pints
        - run metadata (e.g. state_gen_id/obs_model_id)
      Returns experiment id (exp_id)
    *)
@@ -38,6 +41,8 @@ signature persistenceLib = sig
     experimentsLib.experiment_type ->
     string ->
     (string * experimentsLib.machineState) list ->
+    Arbnum.num ->
+    Arbnum.num list ->
     (string * string) list ->
     embexp_logsLib.exp_handle;
 

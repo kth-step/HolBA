@@ -15,12 +15,12 @@ fun set_testing () =
 
 (* ==================================================== *)
 
-val embexp_logs_dir =
+fun embexp_logs_dir () =
   case OS.Process.getEnv ("HOLBA_EMBEXP_LOGS") of
      SOME x => x
    | NONE   => raise Fail "cannot find holba embexp logs directory variable";
 
-val command = embexp_logs_dir ^ "/scripts/db-interface.py";
+val command = embexp_logs_dir() ^ "/scripts/db-interface.py";
 
 fun run_db_gen extra ops arg =
   bir_json_execLib.call_json_exec (command, (if !is_testing then ["-t"] else [])@extra@[ops], arg);
@@ -96,7 +96,7 @@ fun run_db_a_ignore t vs =
   datatype logs_list = LogsList of (string * string option);
   datatype logs_run  = LogsRun  of (string * prog_list_handle * exp_list_handle);
   datatype logs_prog = LogsProg of (string * string);
-  datatype logs_exp  = LogsExp  of (prog_handle * string * string * Json.json);
+  datatype logs_exp  = LogsExp  of (prog_handle * string * string * Json.json * Arbnum.num * Json.json);
 
   datatype meta_type = MetaTypeRun | MetaTypeProg | MetaTypeExp;
   type meta_handle   = meta_type * (Arbnum.num * string option * string);
@@ -155,18 +155,20 @@ fun run_db_a_ignore t vs =
       [("name", STRING name),
        ("exp_progs_lists_id", NUMBER prog_l_id),
        ("exp_exps_lists_id",  NUMBER exp_l_id)];
-  fun create_prog (LogsProg (arch, code)) =
+  fun create_prog (LogsProg (arch, binary)) =
     run_db_c_id true
       "exp_progs"
       [("arch",               STRING arch),
-       ("code",               STRING code)];
-  fun create_exp (LogsExp (prog_id, exp_type, exp_params, input_data)) =
+       ("binary",             STRING binary)];
+  fun create_exp (LogsExp (prog_id, exp_type, exp_params, input_data, entry, exits)) =
     run_db_c_id true
       "exp_exps"
       [("exp_progs_id",       NUMBER prog_id),
        ("type",               STRING exp_type),
        ("params",             STRING exp_params),
-       ("input_data",         STRING (Json.serialise input_data))];
+       ("input_data",         STRING (Json.serialise input_data)),
+       ("entry",              NUMBER entry),
+       ("exits",              STRING (Json.serialise exits))];
 
 
 (*
@@ -269,8 +271,8 @@ fun run_db_a_ignore t vs =
 
   fun unpack_logs_exp x =
     case x of
-       [NUMBER _, NUMBER p_id, STRING ty, STRING pa, STRING indat] =>
-          LogsExp (p_id, ty, pa, unpack_json indat)
+       [NUMBER _, NUMBER p_id, STRING ty, STRING pa, STRING indat, NUMBER entry, STRING exits] =>
+          LogsExp (p_id, ty, pa, unpack_json indat, entry, unpack_json exits)
      | _ => raise ERR "unpack_logs_exp" "result not as expected";
 
   fun unpack_list_entry x =
@@ -327,8 +329,8 @@ fun run_db_a_ignore t vs =
 
   fun unpack_logs_exp_widx x =
     case x of
-       [NUMBER idx, NUMBER _, NUMBER p_id, STRING ty, STRING pa, STRING indat] =>
-          (Arbnum.toInt idx, LogsExp (p_id, ty, pa, unpack_json indat))
+       [NUMBER idx, NUMBER _, NUMBER p_id, STRING ty, STRING pa, STRING indat, NUMBER entry, STRING exits] =>
+          (Arbnum.toInt idx, LogsExp (p_id, ty, pa, unpack_json indat, entry, unpack_json exits))
      | _ => raise ERR "unpack_logs_exp_widx" "result not as expected";
 
   fun sql_wholefromlist lstty listid =

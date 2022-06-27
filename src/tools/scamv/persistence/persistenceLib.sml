@@ -217,14 +217,14 @@ struct
 
   (* storing to logs *)
   (* ========================================================================================= *)
-  fun run_create_prog arch prog run_metadata =
+  fun run_create_prog arch prog binfilename run_metadata =
     let
       val arch_id = exp_arch_to_string arch;
 
       val RunReferences (_, run_name, prog_l_id, _) = holba_run_id();
 
-      val asm_code = prog_to_asm_code prog;
-      val prog_v   = LogsProg (arch_id, asm_code);
+      val binary_str = bir_exec_wrapLib.get_exec_output ("python3 " ^ (embexp_logs_dir() ^ "/scripts/read_file_as_base64.py") ^ " " ^ binfilename);
+      val prog_v   = LogsProg (arch_id, binary_str);
       val prog_id  = create_prog prog_v;
 
       val meta_name_log = "gen." ^ run_name;
@@ -249,7 +249,7 @@ struct
       prog_id
     end;
 
-  fun run_create_exp prog_id exp_type exp_params state_list run_metadata =
+  fun run_create_exp prog_id exp_type exp_params state_list entry exits run_metadata =
     let
       val exp_type_s = exp_type_to_string exp_type;
 
@@ -257,7 +257,8 @@ struct
       val run_metadata_ = ("creationtime", time_since_run_str ())::run_metadata;
 
       val input_data = Json.OBJECT (List.map (fn (n, s) => ("input_" ^ n, machstate_to_Json s)) state_list);
-      val exp_v      = LogsExp (prog_id, exp_type_s, exp_params, input_data);
+      val exits      = Json.ARRAY (List.map Json.NUMBER exits);
+      val exp_v      = LogsExp (prog_id, exp_type_s, exp_params, input_data, entry, exits);
       val exp_id     = create_exp exp_v;
 
       val meta_name_log = "gen." ^ run_name;

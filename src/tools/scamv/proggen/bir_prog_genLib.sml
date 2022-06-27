@@ -106,10 +106,10 @@ struct
 
       val (lbl_tm, _, _) = dest_bir_block (List.nth (blocks, 0));
       val lbl_word_tm = (snd o bir_immSyntax.gen_dest_Imm o dest_BL_Address o snd o dest_eq o concl o EVAL) lbl_tm;
-      val start_lbl_str = dest_word_literal lbl_word_tm;
+      val start_lbl = dest_word_literal lbl_word_tm;
 
       val labels = List.map (fn t => (snd o dest_eq o concl o EVAL) ``(^t).bb_label``) blocks;
-      fun lbl_exists idx = List.exists (fn x => identical x ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt ((Arbnum.toInt start_lbl_str)+(idx*4)), 64)))``) labels;
+      fun lbl_exists idx = List.exists (fn x => identical x ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt ((Arbnum.toInt start_lbl)+(idx*4)), 64)))``) labels;
       val lift_worked = List.all lbl_exists (List.tabulate (prog_len, fn x => x));
     in
       if lift_worked
@@ -141,32 +141,87 @@ struct
 
 	  val (lbl_tm, _, _) = dest_bir_block (List.nth (blocks, 0));
 	  val lbl_word_tm = (snd o bir_immSyntax.gen_dest_Imm o dest_BL_Address o snd o dest_eq o concl o EVAL) lbl_tm;
-	  val start_lbl_str = dest_word_literal lbl_word_tm;
+	  val start_lbl = dest_word_literal lbl_word_tm;
 
-          val lbl = ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt ((Arbnum.toInt start_lbl_str)+(len*4)), 64)))``;
+          val lbl = ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt ((Arbnum.toInt start_lbl)+(len*4)), 64)))``;
           val new_last_block =  bir_programSyntax.mk_bir_block
                     (lbl, mk_list ([], mk_type ("bir_stmt_basic_t", [obs_ty])),
-                     ``BStmt_Halt (BExp_Const (Imm32 ^(mk_wordi (Arbnum.fromInt (Arbnum.toInt start_lbl_str), 32))))``);
+                     ``BStmt_Halt (BExp_Const (Imm32 ^(mk_wordi (Arbnum.fromInt (Arbnum.toInt start_lbl), 32))))``);
         in
-          (mk_BirProgram o mk_list) (blocks@[new_last_block],ty)
+          ((mk_BirProgram o mk_list) (blocks@[new_last_block],ty), start_lbl)
         end;
 
   fun prog_gen_store prog_gen_id retry_on_liftfail prog_gen_fun args () =
     let
       val (prog, lifted_prog, len) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
 
-      val prog_with_halt = add_halt_to_prog len lifted_prog;
+      val (prog_with_halt, start_lbl) = add_halt_to_prog len lifted_prog;
+
+      val add_lifted_prog = true;
+
+      val binfilename = (get_simple_tempfile "asm");
+      val extra_metadata = if not add_lifted_prog then [] else
+        [("lifted_prog", term_to_string_wtypes lifted_prog), ("code", prog_to_asm_code prog)];
+
+      val prog_id = run_create_prog ArchARM8 prog binfilename ([("prog_gen_id", prog_gen_id)]@extra_metadata);
+
+      val list_entries_and_exits = [(start_lbl, [])];
+    in
+      (prog_id, prog_with_halt, binfilename, list_entries_and_exits)
+    end;
+
+(* ========================================================================================= *)
+(* working with a binary program *)
+  fun process_binary binfilename =
+      let
+	val da_file = bir_gcc_disassemble binfilename
+
+	val (region_map, sections) = read_disassembly_file_regions da_file;
+      in
+	  sections
+      end
+      
+  fun prog_lifting_frombinary prog_gen_id args () =
+    let
+      val sections = process_binary args;
+      val lifted_prog = lift_program_from_sections sections;
 
       val add_lifted_prog = true;
 
       val extra_metadata = if not add_lifted_prog then [] else
         [("lifted_prog", term_to_string_wtypes lifted_prog)];
 
-      val prog_id = run_create_prog ArchARM8 prog ([("prog_gen_id", prog_gen_id)]@extra_metadata);
-    in
-      (prog_id, prog_with_halt)
-    end;
+      val prog = mk_experiment_prog [];
+      val prog_id = run_create_prog ArchARM8 prog args ([("prog_gen_id", prog_gen_id)]@extra_metadata);
 
+      fun unpack_code x =
+	case x of
+	  (str: string, BILME_code s) => (str, s)
+	| (str: string, BILME_data) => (str, NONE)  
+	| (str: string, BILME_unknown) => (str, NONE)
+      fun unpack_section x =
+	case x of
+	  (BILMR (addr, l)) => (addr, (List.map unpack_code l))
+      fun define_entry_and_exits section =
+	let
+	  val (addr, code) = unpack_section section;
+	  val instructions = List.map (fn (hex_code, str_inst) =>
+					if isSome str_inst then valOf str_inst else "") code;
+
+	  fun find_ret_addrs ([], count, rets) = rets
+	    | find_ret_addrs (i::is, count, rets) =
+	      (count := (!count + 4);
+	      if i = "ret"
+	      then find_ret_addrs (is, count, rets@[Arbnum.fromInt ((Arbnum.toInt addr)+(!count-4))])
+	      else find_ret_addrs (is, count, rets))
+	in
+	  (addr, find_ret_addrs (instructions, ref 0, []))
+	end;
+
+      val list_entries_and_exits = List.map define_entry_and_exits sections;
+    in
+      (prog_id, lifted_prog, args, list_entries_and_exits)
+    end;
 
 (* load file to asm_lines (assuming it is correct assembly code with only forward jumps and no use of labels) *)
 (* ========================================================================================= *)
@@ -246,14 +301,16 @@ fun prog_gen_store_rand_slice sz       = prog_gen_store "prog_gen_rand_slice"   
 fun prog_gen_store_prefetch_stride sz  = prog_gen_store "prog_gen_prefetch_stride"   true
   (lines_gen_fun prog_gen_prefetch_stride)       sz;
 
+fun prog_gen_store_frombinary binfilename = prog_lifting_frombinary "prog_gen_frombinary" binfilename;
+
 (*
 val filename = "examples/asm/branch.s";
 val retry_on_liftfail = false
 val prog_gen_fun = load_asm_lines
 val args = filename
-val (prog_id, lifted_prog) = prog_gen_store_fromfile filename ();
+val (prog_id, lifted_prog, list_entries_and_exits) = prog_gen_store_fromfile filename ();
 
-val (prog_id, lifted_prog) = prog_gen_store_rand "" 6 ();
+val (prog_id, lifted_prog, list_entries_and_exits) = prog_gen_store_rand "" 6 ();
 
 val prog = lifted_prog;
 *)

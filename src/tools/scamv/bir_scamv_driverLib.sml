@@ -91,9 +91,10 @@ val do_training = ref false;
 val do_conc_exec = ref false;
 val angr_symbexec = ref true;
 
-
 val (current_prog_id : embexp_logsLib.prog_handle option ref) = ref NONE;
 val (current_prog : term option ref) = ref NONE;
+val (current_prog_entries_and_exits : (Arbnum.num * Arbnum.num list) list option ref) = ref NONE;
+val (current_prog_binary_pathname : string option ref) = ref NONE;
 val (current_prog_w_obs : term option ref) = ref NONE;
 val (current_prog_w_refined_obs : term option ref) = ref NONE;
 val (current_obs_model_id : string ref) = ref "";
@@ -109,6 +110,8 @@ val (current_word_rel : term option ref) = ref NONE;
 fun reset () =
     (current_prog_id := NONE;
      current_prog := NONE;
+     current_prog_entries_and_exits := NONE;
+     current_prog_binary_pathname := NONE;
      current_prog_w_obs := NONE;
      current_prog_w_refined_obs := NONE;
      current_pathstruct := NONE;
@@ -157,9 +160,11 @@ fun default_enumeration_targets paths =
     else [];
 
 fun scamv_set_prog_state prog =
-    let val (prog_id, lifted_prog) = prog;
+    let val (prog_id, lifted_prog, binfilename, list_entries_and_exits) = prog;
         val _ = current_prog_id := SOME prog_id;
         val _ = current_prog := SOME lifted_prog;
+	val _ = current_prog_entries_and_exits := SOME list_entries_and_exits;
+	val _ = current_prog_binary_pathname := SOME binfilename;
         val _ = min_verb 2 (fn () => print_term lifted_prog);
     in
       (prog_id, lifted_prog)
@@ -190,8 +195,15 @@ end;
 
 fun scamv_phase_symb_exec () =
     let
-      val (paths, all_exps) = scamv_run_symb_exec (valOf (!current_prog_w_obs)) (!angr_symbexec);
-	    val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths;
+      val entry_and_exits::ls = (valOf (!current_prog_entries_and_exits));
+      val _ = if null ls then () else (current_prog_entries_and_exits := SOME ls);
+      val (paths, all_exps) =
+        scamv_run_symb_exec
+	  (valOf (!current_prog_w_obs))
+	  (valOf (!current_prog_binary_pathname))
+	  entry_and_exits
+	  (!angr_symbexec);
+      val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths;
       val ps = initialise paths;
       val _ = current_pathstruct := SOME ps;
       val _ = min_verb 4 (fn () => (print_path_struct ps; print (PolyML.makestring ps)));
@@ -312,7 +324,7 @@ fun all_obs_not_present { a_run = (_,a_obs), b_run = (_,b_obs) } =
     in check a_obs andalso check b_obs
     end;
 
-fun next_experiment all_exps next_relation  =
+fun next_experiment all_exps next_relation (entry,exits) =
     let
         open bir_expLib;
 
@@ -424,6 +436,8 @@ fun next_experiment all_exps next_relation  =
             ExperimentTypeStdTwo
             (!hw_obs_model_id)
             ([("1", s1), ("2", s2)]@(Portable.the_list (Option.map (fn st => ("train", st)) st_o)))
+            entry
+	    exits
             [("state_gen_id", !current_obs_model_id), ("time", d_s)];
         val exp_gen_message = "Generated experiment: " ^ (embexp_logsLib.exp_handle_toString exp_id);
         val _ = run_log_prog exp_gen_message;
@@ -438,11 +452,11 @@ fun scamv_test_main tests prog =
         val _ = current_full_specs := full_specs;
         val exit_threshold = tests;
         fun init_tests () = (current_word_rel := NONE; current_full_specs := []; current_visited_map := init_visited ());
-        fun do_tests _ 0 = init_tests ()
-          | do_tests 0 _ = (init_tests (); raise ERR "scamv_test_main" ("couldn't generate new test cases for " ^ (Int.toString exit_threshold) ^ " times"))
-          | do_tests r n =
+        fun do_tests _ 0 entry_and_exits = init_tests ()
+          | do_tests 0 _ entry_and_exits = (init_tests (); raise ERR "scamv_test_main" ("couldn't generate new test cases for " ^ (Int.toString exit_threshold) ^ " times"))
+          | do_tests r n entry_and_exits =
             let val success =
-              (handle_locinfo print (fn () => next_experiment [] next_relation); true)
+              (handle_locinfo print (fn () => next_experiment [] next_relation entry_and_exits); true)
               handle e as Thread.Interrupt => (
                   run_log_prog "Keyboard interrupt!\n";
                   PolyML.Exception.reraise e)
@@ -457,11 +471,20 @@ fun scamv_test_main tests prog =
               )
             in
               if success then
-                do_tests exit_threshold (n-1)
+                do_tests exit_threshold (n-1) entry_and_exits
               else
-                do_tests (r-1) n
+                do_tests (r-1) n entry_and_exits
             end
-    in do_tests exit_threshold tests
+	fun do_tests_with_entries_and_exits [] = ()
+	  | do_tests_with_entries_and_exits (x::xs) =
+	    let
+	      val _ = do_tests exit_threshold tests x
+	    in
+	      do_tests_with_entries_and_exits xs
+	    end
+    in
+	(* outer loop *)
+	do_tests_with_entries_and_exits (valOf (!current_prog_entries_and_exits))
     end
 
 fun scamv_test_single_file filename =
@@ -488,6 +511,9 @@ fun match_prog_gen gen sz generator_param =
       | from_list    => (case generator_param of
               SOME x => prog_gen_store_list x
             | NONE   => raise ERR "match_prog_gen::from_list" "list needs to be specified as generator_param")
+      | from_binary  => (case generator_param of
+              SOME x => prog_gen_store_frombinary x
+            | NONE   => raise ERR "match_prog_gen::from_binary" "binary needs to be specified as generator_param")
       | prefetch_strides => prog_gen_store_prefetch_stride sz
       | _ => raise ERR "match_prog_gen" ("unknown generator type: " ^ (PolyML.makestring gen));
 

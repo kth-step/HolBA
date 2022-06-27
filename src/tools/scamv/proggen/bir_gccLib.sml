@@ -41,6 +41,18 @@ val lines = "";
       path_asm_da
     end;
 
+  fun bir_gcc_disassemble binfilename =
+    let
+      val gcc_prefix = gcc_prefix ();
+      val path_asm_da = (binfilename ^ ".da");
+
+      val commandline = (gcc_prefix ^ "objdump -d " ^ binfilename ^ " > " ^ path_asm_da);
+      val _ = if OS.Process.isSuccess (OS.Process.system commandline) then ()
+              else raise ERR "bir_gcc_disassemble" "disassembly failed somehow";
+    in
+      path_asm_da
+    end;
+
 end (* local *)
 
 end (* struct *)

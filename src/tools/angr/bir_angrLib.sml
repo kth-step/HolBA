@@ -448,7 +448,7 @@ parse_obs obsrefmap json;
 (*
   val bprog_t = bprog;
 *)
-  fun do_symb_exec bprog_t =
+  fun do_symb_exec bprog_t binary (entry, exits) =
     let
       val pythonscript = (get_pythondir()) ^ "/symbolic_execution_wrapper.py";
       val magicinputfilename = (get_pythondir()) ^ "/magicinput.bir";
@@ -467,24 +467,19 @@ parse_obs obsrefmap json;
       val _ = print "DEBUG AFTER\n\n\n";
 *)
 
-      local
-        open listSyntax;
-        open bir_programSyntax;
-        open bir_immSyntax;
-        open wordsSyntax;
-
-        val blocks = (fst o dest_list o dest_BirProgram) bprog_t_m;
-        val (lbl_tm, _, _) = dest_bir_block (List.nth (blocks, 0));
-        (* val _ = print_term lbl_tm; *)
-        val lbl_word_tm = (snd o gen_dest_Imm o dest_BL_Address o snd o dest_eq o concl o EVAL) lbl_tm;
-      in
-        val start_lbl_str = (Arbnum.toString o dest_word_literal) lbl_word_tm;
-      end
-      val _ = if false then print start_lbl_str else ();
-
       val bprog_json_str = birprogjsonexportLib.birprogtojsonstr bprog_t_m;
       val _ = bir_fileLib.write_to_file magicinputfilename bprog_json_str;
 
+      val addIndents = true;
+      val serialize = if addIndents then Json.serialiseIndented else Json.serialise;
+      val entryjsonfilename = (get_pythondir()) ^ "/entry.json";
+      val entry_json_str =serialize (Json.OBJECT
+			[("bin", Json.STRING binary),
+			 ("birprogram", Json.STRING magicinputfilename),
+			 ("entry", Json.NUMBER entry),
+			 ("exits", Json.ARRAY (List.map Json.NUMBER exits))]);
+      val _ = bir_fileLib.write_to_file entryjsonfilename entry_json_str;
+      
       val usePythonPackage = not (Option.getOpt(OS.Process.getEnv("HOLBA_ANGR_USE_PYTHONDIR"), "") = "1");
 
       val output =
@@ -494,10 +489,10 @@ parse_obs obsrefmap json;
           if OS.Process.isSuccess (OS.Process.system "python3 -m pip show bir_angr") then () else
             raise ERR "do_symb_exec" "python package bir_angr is not installed. Disable angr to use the naive symbolic execution or install the package.";
           print "... metadata end.\n";
-          bir_exec_wrapLib.get_exec_output ("python3 -E -m bir_angr.symbolic_execution \"" ^ magicinputfilename ^ "\" -ba " ^ start_lbl_str)
+          bir_exec_wrapLib.get_exec_output ("python3 -E -m bir_angr.symbolic_execution " ^ entryjsonfilename)
         ) else (
           print "... using symbolic_execution_wrapper.py in python subdirectory ...\n";
-          bir_exec_wrapLib.get_exec_output ("python3 -E \"" ^ pythonscript ^ "\" \"" ^ magicinputfilename ^ "\" -ba " ^ start_lbl_str)
+          bir_exec_wrapLib.get_exec_output ("python3 -E " ^ pythonscript ^ " " ^ entryjsonfilename)
         );
       val _ = if false then print output else ();
 

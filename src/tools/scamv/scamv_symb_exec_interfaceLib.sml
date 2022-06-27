@@ -75,16 +75,18 @@ fun do_symb_exec prog =
     end
 
 
-      fun angr_run_symb_exec prog =
+      fun angr_run_symb_exec prog binfilename entry_and_exits =
         let
-          (* open listSyntax; *)
-          val angr_paths = bir_angrLib.do_symb_exec prog;
+	  open bir_fileLib;
+          val angr_paths = bir_angrLib.do_symb_exec prog binfilename entry_and_exits;
 
             fun extract_angr_cond_obs angr_path =
               let
 		val (bir_angrLib.exec_path {guards = guards, observations = obs, ...}) = angr_path;
                 val guards_evald = List.map (snd o dest_eq o concl o EVAL) guards;
-                val pcond_bexp = bandl guards_evald;
+                val pcond_bexp = case guards_evald of
+				     [] => “BExp_Const (Imm1 1w)”
+				     | ge => bandl ge;
                 val obs_list = List.map (fn (oid,ec,eo,obsf) =>
 					    ((numSyntax.term_of_int o Arbnum.toInt) oid, ec, (hd eo))) obs;
               in
@@ -107,9 +109,9 @@ in
 (* Given a program, run symbolic execution and return the feasible paths
   TODO filter out infeasible paths
  *)
-fun scamv_run_symb_exec p angr_se =
+fun scamv_run_symb_exec p binfilename entry_and_exits angr_se =
     (* angr symbolic execution is on by default *)
-    if angr_se then (angr_run_symb_exec p) else (do_symb_exec p);
+    if angr_se then (angr_run_symb_exec p binfilename entry_and_exits) else (do_symb_exec p);
 
 end
 
