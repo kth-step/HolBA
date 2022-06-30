@@ -308,9 +308,9 @@ val filename = "examples/asm/branch.s";
 val retry_on_liftfail = false
 val prog_gen_fun = load_asm_lines
 val args = filename
-val (prog_id, lifted_prog, list_entries_and_exits) = prog_gen_store_fromfile filename ();
+val (prog_id, lifted_prog, binfilename, list_entries_and_exits) = prog_gen_store_fromfile filename ();
 
-val (prog_id, lifted_prog, list_entries_and_exits) = prog_gen_store_rand "" 6 ();
+val (prog_id, lifted_prog, binfilename, list_entries_and_exits) = prog_gen_store_rand "" 6 ();
 
 val prog = lifted_prog;
 *)
