@@ -49,6 +49,44 @@ val select_mem_flatten_def = Define`
 select_mem_flatten x = case x of select_mem_LD e => e | select_mem_ST e => e
 `;
 
+(* ======================= *)
+(* Stack pointer alignment *)
+(* ======================= *)
+
+open bir_exp_recursionTheory;
+
+val check_sp_def = Define`
+check_sp exp =
+((BVar "SP_EL0" (BType_Imm Bit64)) IN (bir_varset_of_exp exp))
+`;
+
+val sp_align_constrain_def = Define`
+sp_align_constrain =
+    BStmt_Assert
+     (BExp_BinPred BIExp_Equal
+       (BExp_BinExp BIExp_And
+         (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
+         (BExp_Const (Imm64 15w))) (BExp_Const (Imm64 0w)))
+`;
+
+val add_obs_constr_sp_stmts_def = Define `
+(add_obs_constr_sp_stmts [] = []) /\
+(add_obs_constr_sp_stmts (x :: xs) =
+ case x of
+     BStmt_Assign v e =>
+       (case check_sp e of
+          F => x :: add_obs_constr_sp_stmts xs
+        | T => sp_align_constrain :: x :: add_obs_constr_sp_stmts xs)
+ | _ => x :: add_obs_constr_sp_stmts xs)
+`;
+
+val add_obs_constr_sp_block_def = Define`
+    add_obs_constr_sp_block block =
+      block with bb_statements := add_obs_constr_sp_stmts block.bb_statements
+`;
+
+(* ======================= *)
+(* ======================= *)
 
 val constrain_mem_def = Define`
 constrain_mem (mem_min, mem_max) e =
@@ -157,7 +195,7 @@ val observe_gen_def = Define`
 
 val add_obs_mem_addr_armv8_def = Define`
     add_obs_mem_addr_armv8 mem_bounds p = 
-      map_obs_prog (add_obs_constr_mem_block mem_bounds observe_mem_addr) p
+map_obs_prog (add_obs_constr_sp_block o (add_obs_constr_mem_block mem_bounds observe_mem_addr)) p
 `;
 
 
@@ -165,7 +203,7 @@ val add_obs_mem_addr_armv8_def = Define`
 (* ============================================================================== *)
 val add_obs_mem_addr_pc_armv8_def = Define`
     add_obs_mem_addr_pc_armv8 mem_bounds p = 
-      map_obs_prog (add_obs_pc_block o (add_obs_constr_mem_block mem_bounds observe_mem_addr)) p
+      map_obs_prog (add_obs_pc_block o (add_obs_constr_sp_block o (add_obs_constr_mem_block mem_bounds observe_mem_addr))) p
 `;
 
 
@@ -173,7 +211,7 @@ val add_obs_mem_addr_pc_armv8_def = Define`
 (* ============================================================================== *)
 val add_obs_mem_addr_pc_lspc_armv8_def = Define`
     add_obs_mem_addr_pc_lspc_armv8 mem_bounds p = 
-      map_obs_prog (add_obs_pc_block_pc o (add_obs_constr_mem_block_ls mem_bounds (observe_gen gen_LSPC_Load) (observe_gen gen_LSPC_Store))) p
+      map_obs_prog (add_obs_pc_block_pc o (add_obs_constr_sp_block o (add_obs_constr_mem_block_ls mem_bounds (observe_gen gen_LSPC_Load) (observe_gen gen_LSPC_Store)))) p
 `;
 
 
@@ -205,7 +243,7 @@ val observe_mem_tag_index_def = Define`
 `;
 
 val add_obs_cache_line_tag_index_armv8_def = Define`
-    add_obs_cache_line_tag_index_armv8 mem_bounds p = map_obs_prog (add_obs_constr_mem_block mem_bounds observe_mem_tag_index) p
+    add_obs_cache_line_tag_index_armv8 mem_bounds p = map_obs_prog (add_obs_constr_sp_block o (add_obs_constr_mem_block mem_bounds observe_mem_tag_index)) p
 `;
 
 
@@ -220,7 +258,7 @@ val observe_mem_tag_def = Define`
 `;
 
 val add_obs_cache_line_tag_armv8_def = Define`
-    add_obs_cache_line_tag_armv8 mem_bounds p = map_obs_prog (add_obs_constr_mem_block mem_bounds observe_mem_tag) p
+    add_obs_cache_line_tag_armv8 mem_bounds p = map_obs_prog (add_obs_constr_sp_block o (add_obs_constr_mem_block mem_bounds observe_mem_tag)) p
 `;
 
 
@@ -238,7 +276,7 @@ val observe_mem_index_def = Define`
 `;
 
 val add_obs_cache_line_index_armv8_def = Define`
-add_obs_cache_line_index_armv8 mem_bounds p = map_obs_prog (add_obs_constr_mem_block mem_bounds observe_mem_index) p
+add_obs_cache_line_index_armv8 mem_bounds p = map_obs_prog (add_obs_constr_sp_block o (add_obs_constr_mem_block mem_bounds observe_mem_index)) p
 `;
 
 
@@ -261,7 +299,7 @@ val observe_mem_subset_def = Define`
 `;
 
 val add_obs_cache_line_subset_armv8_def = Define`
-    add_obs_cache_line_subset_armv8 mem_bounds p = map_obs_prog (add_obs_constr_mem_block mem_bounds observe_mem_subset) p
+    add_obs_cache_line_subset_armv8 mem_bounds p = map_obs_prog (add_obs_constr_sp_block o (add_obs_constr_mem_block mem_bounds observe_mem_subset)) p
 `;
 
 
@@ -284,7 +322,7 @@ val observe_mem_subset_page_def = Define`
 `;
 
 val add_obs_cache_line_subset_page_armv8_def = Define`
-add_obs_cache_line_subset_page_armv8 mem_bounds p = map_obs_prog (add_obs_constr_mem_block mem_bounds observe_mem_subset_page) p
+add_obs_cache_line_subset_page_armv8 mem_bounds p = map_obs_prog (add_obs_constr_sp_block o (add_obs_constr_mem_block mem_bounds observe_mem_subset_page)) p
 `;
 
 
