@@ -22,55 +22,55 @@ fun proginst_fun_gen obs_type prog =
 structure bir_pc_model : OBS_MODEL =
 struct
 val obs_hol_type = ``:bir_val_t``;
-fun add_obs mb t = rand (concl (EVAL ``add_obs_pc ^mb ^t``));
+fun add_obs mb t en = rand (concl (EVAL ``add_obs_pc ^mb ^t``));
 end
 
 structure bir_arm8_mem_addr_model : OBS_MODEL =
 struct
 val obs_hol_type = ``:bir_val_t``;
-fun add_obs mb t = rand (concl (EVAL ``add_obs_mem_addr_armv8 ^mb ^t``));
+fun add_obs mb t en = rand (concl (EVAL ``add_obs_mem_addr_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_mem_addr_pc_model : OBS_MODEL =
 struct
 val obs_hol_type = ``:bir_val_t``;
-fun add_obs mb t = rand (concl (EVAL ``add_obs_mem_addr_pc_armv8 ^mb ^t``));
+fun add_obs mb t en = rand (concl (EVAL ``add_obs_mem_addr_pc_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_mem_addr_pc_lspc_model : OBS_MODEL =
 struct
 val obs_hol_type = ``:load_store_pc_t``;
-fun add_obs mb t = rand (concl (EVAL ``add_obs_mem_addr_pc_lspc_armv8 ^mb ^t``));
+fun add_obs mb t en = rand (concl (EVAL ``add_obs_mem_addr_pc_lspc_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_model : OBS_MODEL =
 struct
 val obs_hol_type = ``:bir_val_t``;
-fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_tag_index_armv8 ^mb ^t``));
+fun add_obs mb t en = rand (concl (EVAL ``add_obs_cache_line_tag_index_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_tag_model : OBS_MODEL =
 struct
 val obs_hol_type = ``:bir_val_t``;
-fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_tag_armv8 ^mb ^t``));
+fun add_obs mb t en = rand (concl (EVAL ``add_obs_cache_line_tag_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_index_model : OBS_MODEL =
 struct
 val obs_hol_type = ``:bir_val_t``;
-fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_index_armv8 ^mb ^t``));
+fun add_obs mb t en = rand (concl (EVAL ``add_obs_cache_line_index_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_subset_model : OBS_MODEL =
 struct
 val obs_hol_type = ``:bir_val_t``;
-fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_subset_armv8 ^mb ^t``));
+fun add_obs mb t en = rand (concl (EVAL ``add_obs_cache_line_subset_armv8 ^mb ^t``));
 end
 
 structure bir_arm8_cache_line_subset_page_model : OBS_MODEL =
 struct
 val obs_hol_type = ``:bir_val_t``;
-fun add_obs mb t = rand (concl (EVAL ``add_obs_cache_line_subset_page_armv8 ^mb ^t``));
+fun add_obs mb t en = rand (concl (EVAL ``add_obs_cache_line_subset_page_armv8 ^mb ^t``));
 end
 
 end (* local *)
@@ -296,28 +296,14 @@ open bir_cfgLib;
           go stmts
         end
 
- fun branch_instrumentation obs_fun prog depth = 	
+ fun branch_instrumentation obs_fun prog entry depth =
     let (* build the dictionaries using the library under test *)
 	val bl_dict = gen_block_dict prog;
 	val lbl_tms = get_block_dict_keys bl_dict;
 	(* build the cfg and update the basic blocks *)
 	val n_dict = cfg_build_node_dict bl_dict lbl_tms;
 
-	local
-	    open listSyntax;
-	    open bir_programSyntax;
-	    open bir_immSyntax;
-	    open wordsSyntax;
-
-	    val blocks = (fst o dest_list o dest_BirProgram) prog;
-            val (lbl_tm, _, _) = dest_bir_block (List.nth (blocks, 0));
-	    (* val _ = print_term lbl_tm; *)
-	    val lbl_word_tm = (snd o gen_dest_Imm o dest_BL_Address o snd o dest_eq o concl o EVAL) lbl_tm;
-	in
-	    val start_lbl_str = (dest_word_literal) lbl_word_tm;
-	end
-
-	val entries = [mk_key_from_address64 64 (start_lbl_str)];
+	val entries = [mk_key_from_address64 64 (entry)];
 	val g1 = cfg_create "specExec" entries n_dict bl_dict;
 	    
 	val (visited_nodes,cjmp_nodes) = traverse_graph g1 (hd (#CFGG_entries g1)) [] [];
@@ -346,27 +332,27 @@ in
     struct
       val obs_hol_type = ``:bir_val_t``;
       val pipeline_depth = 3;
-      fun add_obs mb t =
-        branch_instrumentation obs_all_refined (bir_arm8_mem_addr_pc_model.add_obs mb t) pipeline_depth;
+      fun add_obs mb t en =
+        branch_instrumentation obs_all_refined (bir_arm8_mem_addr_pc_model.add_obs mb t en) en pipeline_depth;
     end;
 
   structure bir_arm8_cache_speculation_first_model : OBS_MODEL =
   struct
   val obs_hol_type = ``:bir_val_t``;
   val pipeline_depth = 3;
-  fun add_obs mb t =
-      branch_instrumentation obs_all_refined_but_first (bir_arm8_mem_addr_pc_model.add_obs mb t) pipeline_depth;
+  fun add_obs mb t en =
+      branch_instrumentation obs_all_refined_but_first (bir_arm8_mem_addr_pc_model.add_obs mb t en) en pipeline_depth;
   end;
 
   structure bir_arm8_cache_straight_line_model : OBS_MODEL =
   struct
   val obs_hol_type = ``:bir_val_t``;
   val pipeline_depth = 3;
-  fun add_obs mb t =
-      let val obs_term = bir_arm8_mem_addr_pc_model.add_obs mb t;
+  fun add_obs mb t en =
+      let val obs_term = bir_arm8_mem_addr_pc_model.add_obs mb t en;
           val jmp_to_cjmp_term = jmp_to_cjmp obs_term;
       in
-        branch_instrumentation obs_all_refined jmp_to_cjmp_term pipeline_depth
+        branch_instrumentation obs_all_refined jmp_to_cjmp_term en pipeline_depth
       end;
   end;
   

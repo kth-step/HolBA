@@ -6,7 +6,7 @@ signature bir_obs_modelLib =
 
         val get_obs_model : string -> { id : string,
                                         obs_hol_type : hol_type,
-                                        add_obs : term -> term -> term }
+                                        add_obs : term -> term -> Arbnum.num -> term }
     end
 
 signature OBS_MODEL =
@@ -15,5 +15,5 @@ signature OBS_MODEL =
 
         (* takes boundary for mremory load and store addresses (min and max) *)
         (* In HOL: (word64 # word64) -> 'a bir_program_t -> obs_hol_type bir_program_t *)
-        val add_obs : Abbrev.term -> Abbrev.term -> Abbrev.term
+        val add_obs : Abbrev.term -> Abbrev.term -> Arbnum.num -> Abbrev.term
     end

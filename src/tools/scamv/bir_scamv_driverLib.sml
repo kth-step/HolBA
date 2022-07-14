@@ -176,6 +176,7 @@ let
   val obs_model = get_obs_model (!current_obs_model_id);
   val add_obs = #add_obs obs_model;
   val proginst_fun = proginst_fun_gen (#obs_hol_type obs_model);
+  val entry = fst (valOf (!current_prog_entry_and_exits));
   val mem_bounds =
       let
         val (mem_base, mem_len) = embexp_params_memory;
@@ -185,7 +186,7 @@ let
             (mk_wordi (embexp_params_cacheable mem_base, 64),
              mk_wordi (embexp_params_cacheable mem_end, 64))
       end;
-  val lifted_prog_w_obs = add_obs mem_bounds (proginst_fun (valOf (!current_prog)));
+  val lifted_prog_w_obs = add_obs mem_bounds (proginst_fun (valOf (!current_prog))) entry;
   val _ = printv 1 "Obs added\n";
   val _ = current_prog_w_obs := SOME lifted_prog_w_obs;
   val _ = min_verb 3 (fn () => print_term lifted_prog_w_obs);
@@ -309,6 +310,8 @@ fun scamv_phase_rel_synth_init () =
 fun scamv_per_program_init prog =
     let
         val _ = reset ();
+
+	val _ = (fn (_,_,_,(entry,_))=> print ("\nEntry: " ^ "0x" ^ (Arbnum.toHexString entry) ^ "\n")) prog;
 
         val _ = scamv_set_prog_state prog;
         val _ = scamv_phase_add_obs ();
