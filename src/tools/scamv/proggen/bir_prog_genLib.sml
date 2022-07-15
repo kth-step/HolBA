@@ -143,19 +143,20 @@ struct
 	  val lbl_word_tm = (snd o bir_immSyntax.gen_dest_Imm o dest_BL_Address o snd o dest_eq o concl o EVAL) lbl_tm;
 	  val start_lbl = dest_word_literal lbl_word_tm;
 
-          val lbl = ``BL_Address (Imm64 ^(mk_wordi (Arbnum.fromInt ((Arbnum.toInt start_lbl)+(len*4)), 64)))``;
+	  val halt_lbl = Arbnum.fromInt ((Arbnum.toInt start_lbl)+(len*4))
+          val lbl = ``BL_Address (Imm64 ^(mk_wordi (halt_lbl, 64)))``;
           val new_last_block =  bir_programSyntax.mk_bir_block
                     (lbl, mk_list ([], mk_type ("bir_stmt_basic_t", [obs_ty])),
                      ``BStmt_Halt (BExp_Const (Imm32 ^(mk_wordi (Arbnum.fromInt (Arbnum.toInt start_lbl), 32))))``);
         in
-          ((mk_BirProgram o mk_list) (blocks@[new_last_block],ty), start_lbl)
+          ((mk_BirProgram o mk_list) (blocks@[new_last_block],ty), start_lbl, halt_lbl)
         end;
 
   fun prog_gen_store prog_gen_id retry_on_liftfail prog_gen_fun args () =
     let
       val (prog, lifted_prog, len) = gen_until_liftable retry_on_liftfail prog_gen_fun args;
 
-      val (prog_with_halt, start_lbl) = add_halt_to_prog len lifted_prog;
+      val (prog_with_halt, start_lbl, halt_lbl) = add_halt_to_prog len lifted_prog;
 
       val add_lifted_prog = true;
 
@@ -165,7 +166,7 @@ struct
 
       val prog_id = run_create_prog ArchARM8 prog binfilename ([("prog_gen_id", prog_gen_id)]@extra_metadata);
 
-      val list_entries_and_exits = [(start_lbl, [])];
+      val list_entries_and_exits = [(start_lbl, [halt_lbl])];
     in
       (prog_id, prog_with_halt, binfilename, list_entries_and_exits)
     end;
@@ -219,6 +220,11 @@ struct
 	end;
 
       val list_entries_and_exits = List.map define_entry_and_exits sections;
+
+      (* sets exits as all possible ret instructions - change after *)
+      fun flat xs = List.foldr (fn ((_,x), acc) => x @ acc) [] xs;
+      val list_exits = flat list_entries_and_exits;
+      val list_entries_and_exits = List.map (fn (en,_)=> (en,list_exits)) list_entries_and_exits;
     in
       (prog_id, lifted_prog, args, list_entries_and_exits)
     end;

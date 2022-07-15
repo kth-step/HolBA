@@ -12,6 +12,8 @@ open bir_programSyntax;
 open bir_miscLib;
 
 open bslSyntax;
+open listSyntax;
+
 
 
 (*
@@ -19,15 +21,15 @@ open bslSyntax;
 *)
 
 
-fun run_naive_hol4_symbexec prog_ =
+fun run_naive_hol4_symbexec prog_ bin entry_and_exits=
   let
-    open listSyntax;
     open scamv_symb_exec_interfaceLib;
 
     val timestrref = ref "";
     val timer = timer_start 1;
 
-    val (paths_raw, _) = scamv_run_symb_exec prog_;
+    val use_angr_symbexec = false;
+    val (paths_raw, _) = scamv_run_symb_exec prog_ bin entry_and_exits use_angr_symbexec;
 
     val _ = timer_stop (fn timestr => (timestrref := timestr; print ("naive hol4 symbolic execution took " ^ timestr ^ "\n"))) timer;
 
@@ -54,11 +56,11 @@ fun run_naive_hol4_symbexec prog_ =
 
  
 
-fun run_angr_symbexec prog_ =
+fun run_angr_symbexec prog_ bin entry_and_exits =
   let
     val timer = timer_start 1;
 
-    val res = bir_angrLib.do_symb_exec prog_;
+    val res = bir_angrLib.do_symb_exec prog_ bin entry_and_exits;
 
     val timestrref = ref "";
     val _ = timer_stop (fn timestr => (timestrref := timestr; print ("angr symbolic execution took " ^ timestr ^ "\n"))) timer;
@@ -481,14 +483,14 @@ fun main_loop 0 = ()
      let
 	 open bir_prog_genLib;
 
-	 val prog = if false then
+	 val (prog, bin, entry_and_exits) = if false then
 			(* Prefetching *)
 		     let	 
 			 val gen_prefetch = prog_gen_store_prefetch_stride 3;
 			 val prog = gen_prefetch ();
-			 val (prog_id, lifted_prog) = prog;
+			 val (prog_id, lifted_prog, bin, l_en_and_exs) = prog;
 		     in
-			 lifted_prog
+			 (lifted_prog, bin, hd l_en_and_exs)
 		     end
 		    else
 			(* Spectre *)	
@@ -496,9 +498,9 @@ fun main_loop 0 = ()
 			 (* val (prog_id, lifted_prog) = prog_gen_store_rand "" 5 (); *)
 			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre_v1" 5 (); *)
 			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre_v1_mod2" 5 (); *)
-			 val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "spectre" 5 ();
+			 val (prog_id, lifted_prog, bin, l_en_and_exs) = prog_gen_store_a_la_qc  "spectre" 5 ();
 			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "xld" 5 (); *)
-			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "xld_br_yld_mod1" 2 (); *)
+			 (* val (prog_id, lifted_prog, bin, l_en_and_exs) = prog_gen_store_a_la_qc  "xld_br_yld_mod1" 2 (); *)
 			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "straightline_branch" 50 (); *)
 			 (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "previct1" 100 (); *)
                          (* val (prog_id, lifted_prog) = prog_gen_store_a_la_qc  "previct5" 20 (); *)
@@ -506,7 +508,7 @@ fun main_loop 0 = ()
 			 (* val (prog_id, lifted_prog) = prog_gen_store_rand_slice 10 (); *)
 			 val prog = lifted_prog;
 		     in
-			 prog
+			 (prog, bin, hd l_en_and_exs)
 		     end;
 	     
 	 val prog = (snd o dest_eq o concl o EVAL) prog;
@@ -539,15 +541,15 @@ fun main_loop 0 = ()
            val add_obs = #add_obs obs_model;
 	   val proginst_fun = bir_obs_modelLib.proginst_fun_gen (#obs_hol_type obs_model);
          in
-           val prog = add_obs mem_bounds (proginst_fun prog);
+           val prog = add_obs mem_bounds (proginst_fun prog) (fst entry_and_exits);
          end;
 	 val _ = print ("\nObsmodel applied \"" ^ obsmodel_id ^ "\".\n\n");
 	     
 	 val _ = print "\nNow symbexecing.\n\n";
 
-	 val (paths, _) = run_naive_hol4_symbexec prog;
+	 val (paths, _) = run_naive_hol4_symbexec prog bin entry_and_exits;
 
-	 val (res, _) = run_angr_symbexec prog;
+	 val (res, _) = run_angr_symbexec prog bin entry_and_exits;
 
          val paths_conv = List.map scamv_to_angr paths;
          val eq_result = compare_angr_symb_exec paths_conv res;

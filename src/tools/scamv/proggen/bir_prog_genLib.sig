@@ -14,7 +14,7 @@ signature bir_prog_genLib = sig
    (unit -> 'a * term * int) ->
    int * 'a * bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list ->
    'a * term * int
-  val add_halt_to_prog : int -> term -> (term * Arbnum.num)
+  val add_halt_to_prog : int -> term -> (term * Arbnum.num * Arbnum.num)
 
   val process_asm_code : string -> bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list
   val lift_program_from_sections : bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list -> term
