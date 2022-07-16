@@ -1298,6 +1298,30 @@ val symb_rule_SPLIT_thm = store_thm(
 );
 
 
+(* ************************* *)
+(*        RULE SRENAME       *)
+(* ************************* *)
+val symb_rule_SRENAME_thm = store_thm(
+   "symb_rule_SRENAME_thm", ``
+!sr.
+!sys L Pi symb symb_new.
+  (* TODO: maybe need more or less of these assumptions *)
+  (symb_typeof_exp_sound sr) ==>
+  (symb_subst_f_sound sr) ==>
+  (symb_symbols_f_sound sr) ==>
+
+  (sr.sr_typeof_symb symb_new = sr.sr_typeof_symb symb) ==>
+
+  (* exclude the freshly introduced symbols between sys and Pi in the expression symb_inst *)
+  (symb_new NOTIN ((symb_symbols sr sys) UNION (symb_symbols_set sr Pi))) ==>
+
+  (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
+  (symb_hl_step_in_L_sound sr (symb_subst sr (symb, sr.sr_mk_exp_symb_f symb_new) sys, L, symb_subst_set sr (symb, sr.sr_mk_exp_symb_f symb_new) Pi))
+``,
+  cheat
+);
+
+
 
 
 val _ = export_theory();
