@@ -447,7 +447,7 @@ val symb_rule_CONS_thm = store_thm(
 
   (* can't reintroduce symbols in fragment that have been lost in the path condition widening *)
   (((symb_symbols sr sys1) (*  DIFF (symb_symbols sr sys') *))
-   INTER ((symb_symbols_set sr ((Pi DIFF {sys2}) UNION {sys2'})) DIFF (symb_symbols sr sys1')) = EMPTY) ==>
+   INTER ((symb_symbols_set sr Pi) DIFF (symb_symbols sr sys1')) = EMPTY) ==>
 
   (symb_hl_step_in_L_sound sr (sys1', L, Pi)) ==>
   (symb_pcondwiden_sys sr sys1 sys1') ==>
