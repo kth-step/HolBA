@@ -113,7 +113,10 @@ val angr_exp_testcases = [
       (31,0,BExp_Den (BVar "R2" (BType_Imm Bit32)))]) (BExp_Const (Imm64 1w))``, false)
 
 (* ,("<Bool 0#24 .. R2_3_8 != 1#32>", *)
-  (*  ``FIX``, false) *)
+  (* ``FIX``, false) *)
+
+(* ,("<Bool ((0#56 .. (MEM[<BV64 (R1_5_64) + (0x40#64)>]_0_8)) + (0x40#64)) == (0x0#64)>", *)
+   (* ``FIX``, false) *)
 
 ,("<Bool R2_3_32 + 0xa#32 .. 0x8#32 ^ R3_4_32 != 1#64>",
    ``BExp_BinPred BIExp_NotEqual
