@@ -93,6 +93,34 @@ open bir_cfgLib;
 
     fun mk_key_from_address64 i addr = (mk_BL_Address o bir_immSyntax.mk_Imm64 o wordsSyntax.mk_word) (addr, Arbnum.fromInt i);
 
+    fun get_bir_successors bb =
+	let
+	    (* val blocks = (fst o dest_list o dest_BirProgram) prog; *)
+	    (* val bb = (hd blocks); *)
+	    (* val bb = List.nth (blocks, (List.length blocks)-1); *)
+	    (* val bbes = “BStmt_CJmp
+           (BExp_BinPred BIExp_LessOrEqual
+              (BExp_BinPred BIExp_Equal
+                 (BExp_Den (BVar "ProcState_N" BType_Bool))
+                 (BExp_Den (BVar "ProcState_V" BType_Bool)))
+              (BExp_Den (BVar "ProcState_Z" BType_Bool)))
+           (BLE_Label (BL_Address (Imm64 0x40022Cw)))
+           (BLE_Exp (BExp_Den (BVar "R30" (BType_Imm Bit64))))”  *)
+	    
+	    val (_, _, bbes) = dest_bir_block bb;
+	    val jump_targets = if is_BStmt_Jmp bbes then
+				 [dest_BStmt_Jmp bbes]
+			     else if is_BStmt_CJmp bbes then
+				 ((fn (_, a, b) => [a, b]) (dest_BStmt_CJmp bbes))
+			     else if is_BStmt_Halt bbes then
+				 []
+			     else
+				 raise ERR "get_bir_successors" ("unknown end statement type: " ^ (term_to_string bbes))
+	    val successors = List.map (fn s=> if is_BLE_Label s
+					      then SOME (dest_BLE_Label s)
+					      else NONE) jump_targets;
+	in successors end;
+
     (* single entry recursion, stop at first revisit or exit *)
     fun traverse_graph (g:cfg_graph) entry visited acc callstack =
 	let
