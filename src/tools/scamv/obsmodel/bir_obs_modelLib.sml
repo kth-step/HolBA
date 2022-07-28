@@ -94,33 +94,19 @@ open bir_cfgLib;
     fun mk_key_from_address64 i addr = (mk_BL_Address o bir_immSyntax.mk_Imm64 o wordsSyntax.mk_word) (addr, Arbnum.fromInt i);
 
     fun get_bir_successors bb =
-	let
-	    (* val blocks = (fst o dest_list o dest_BirProgram) prog; *)
-	    (* val bb = (hd blocks); *)
-	    (* val bb = List.nth (blocks, (List.length blocks)-1); *)
-	    (* val bbes = “BStmt_CJmp
-           (BExp_BinPred BIExp_LessOrEqual
-              (BExp_BinPred BIExp_Equal
-                 (BExp_Den (BVar "ProcState_N" BType_Bool))
-                 (BExp_Den (BVar "ProcState_V" BType_Bool)))
-              (BExp_Den (BVar "ProcState_Z" BType_Bool)))
-           (BLE_Label (BL_Address (Imm64 0x40022Cw)))
-           (BLE_Exp (BExp_Den (BVar "R30" (BType_Imm Bit64))))”  *)
-	    
-	    val (_, _, bbes) = dest_bir_block bb;
-	    val jump_targets = if is_BStmt_Jmp bbes then
-				 [dest_BStmt_Jmp bbes]
-			     else if is_BStmt_CJmp bbes then
-				 ((fn (_, a, b) => [a, b]) (dest_BStmt_CJmp bbes))
-			     else if is_BStmt_Halt bbes then
-				 []
-			     else
-				 raise ERR "get_bir_successors" ("unknown end statement type: " ^ (term_to_string bbes))
-	    val successors = List.map (fn s=> if is_BLE_Label s
-					      then SOME (dest_BLE_Label s)
-					      else NONE) jump_targets;
-	in successors end;
-
+	      let
+          val (_, _, bbes) = dest_bir_block bb;
+	        val successor =
+              if is_BStmt_Jmp bbes then
+                let val s = dest_BStmt_Jmp bbes
+                in if is_BLE_Label s then
+                     SOME (dest_BLE_Label s)
+                   else NONE
+                end
+			        else 
+                NONE
+	      in successor end;
+    
     (* single entry recursion, stop at first revisit or exit *)
     fun traverse_graph (g:cfg_graph) entry visited acc callstack =
 	let
@@ -172,7 +158,7 @@ open bir_cfgLib;
 	end;
 
     (* given a branch, extract the statements of that branch as a list *)
-    fun extract_branch_stmts g depth branch bl_dict =
+    fun extract_branch_stmts depth branch bl_dict =
         let
           open listSyntax
           val dest_list_ignore_type = fst o dest_list;
@@ -183,8 +169,23 @@ open bir_cfgLib;
                   (* statements is a HOL list of BIR statements *)
               in statements end;
 
-          val (branch_labels,_) = traverse_graph_branch g depth branch [] [];
-          (* stmts is a (SML) list of BIR statements (HOL terms) *)
+          val first_block = Redblackmap.find (bl_dict, branch)
+
+          fun collect_blocks 0 block = [block]
+            | collect_blocks n block =
+              case get_bir_successors block of
+                  NONE => [block]
+                | SOME lbl =>
+                  let val b = Redblackmap.find (bl_dict, lbl)
+                  in
+                    block :: collect_blocks (n-1) b
+                  end;
+          fun get_block_label block =
+              let val (lbl,_,_) = dest_bir_block block
+              in (rand o concl) (EVAL lbl) end;
+
+          val blocks = collect_blocks (depth-1) first_block;
+          val branch_labels = List.map get_block_label blocks;
           val stmts = List.map (dest_list_ignore_type o extract_stmts_from_lbl) (rev branch_labels);
         in
           List.concat stmts
@@ -338,12 +339,12 @@ open bir_cfgLib;
         end;
 
     (* generate shadow branch for a given branch (to be inserted in the other) *)
-    fun gen_shadow_branch obs_fun g depth dict branch =
+    fun gen_shadow_branch obs_fun depth dict branch =
         let
           open listSyntax;
           open pairSyntax;
           open bir_valuesSyntax; 
-          val stmts = extract_branch_stmts g depth branch dict;
+          val stmts = extract_branch_stmts depth branch dict;
           val preamble = mk_preamble stmts;
           (* add stars to every free variable *)
           val stmts_starred = map primed_term stmts;
@@ -361,12 +362,12 @@ open bir_cfgLib;
         end
 
     (* generate shadow branches for a given cjmp *)
-    fun add_shadow_branches obs_fun g depth dict (left_branch, right_branch) prog =
+    fun add_shadow_branches obs_fun depth dict (left_branch, right_branch) prog =
 	let
 	    open listSyntax
 	    open pairSyntax
       fun to_stmt_list xs = mk_list(xs, “:bir_val_t bir_stmt_basic_t”);
-      val gen_shadow = gen_shadow_branch obs_fun g depth dict;
+      val gen_shadow = gen_shadow_branch obs_fun depth dict;
       val left_shadow =  to_stmt_list (gen_shadow left_branch)
       val right_shadow = to_stmt_list (gen_shadow right_branch);
       fun prepend_block (itm, p) =
@@ -397,33 +398,38 @@ open bir_cfgLib;
         end
 
  fun branch_instrumentation obs_fun prog entry depth =
-    let (* build the dictionaries using the library under test *)
-	val bl_dict = gen_block_dict prog;
-	val lbl_tms = get_block_dict_keys bl_dict;
-	(* build the cfg and update the basic blocks *)
-	val n_dict = cfg_build_node_dict bl_dict lbl_tms;
+     let (* build the dictionaries using the library under test *)
+       open bir_programSyntax listSyntax;
+	     val bl_dict = gen_block_dict prog;
+       val blocks = fst (dest_list (dest_BirProgram prog));
 
-	val updated_n_dict = cfg_update_nodes_gen "updated_n_dict" (update_node_guess_type_call bl_dict lbl_tms) lbl_tms n_dict;
+       fun map_pair f (x,y) = (f x, f y);
 
-	val entries = [mk_key_from_address64 64 (entry)];
-	val g1 = cfg_create "specExec" entries updated_n_dict bl_dict;
-
-        val callstack: term stack = empty;
-	val (visited_nodes,cjmp_nodes) = traverse_graph g1 (hd (#CFGG_entries g1)) [] [] callstack;
-  (* targets: each element in this list is a two-element list of branch targets
-     there is one such element for each cjmp in the program *)
-	val targets = map (fn i => #CFGN_targets (lookup_block_dict_value (#CFGG_node_dict g1) i "_" "_")) cjmp_nodes;
-  fun unpack_targets ts =
-      case ts of
-          left::right::_ => (left,right)
-        | _ => raise ERR "branch_instrumentation" "CJMP node without two targets"
-    in
-	    foldl (fn (ts, p) =>
-                add_shadow_branches obs_fun g1 depth bl_dict (unpack_targets ts) p)
-            prog
-            targets
-    end
-
+       fun get_targets block =
+           let val (_, _, bbes) = dest_bir_block block
+           in if is_BStmt_CJmp bbes
+              then let val (_,left,right) = dest_BStmt_CJmp bbes
+                   in SOME (left,right)
+                   end
+              else NONE
+           end;
+       fun block_filter block =
+           case get_targets block of
+                   SOME (left,right) =>
+                   is_BLE_Label left
+                   andalso is_BLE_Label right
+                   andalso not (identical left right)
+                 | NONE => false;
+       val targets = List.map (map_pair dest_BLE_Label
+                               o valOf o get_targets)
+                              (List.filter block_filter blocks)
+     in
+	     foldl (fn (t, p) =>
+                 add_shadow_branches obs_fun depth bl_dict t p)
+             prog
+             targets
+     end
+         
  fun jmp_to_cjmp t = (rand o concl) (EVAL “jmp_to_cjmp_prog ^t”);
 
 in
