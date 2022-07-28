@@ -85,21 +85,41 @@ open bir_block_collectionLib;
 open bir_cfgLib;
 (* ================================================ *)
 
+    type 'a stack = 'a list;
+    val empty = [];
+    val is_empty = null;
+    fun push x s = x :: s;
+    fun pop (x :: s) = (x,s);
+
     fun mk_key_from_address64 i addr = (mk_BL_Address o bir_immSyntax.mk_Imm64 o wordsSyntax.mk_word) (addr, Arbnum.fromInt i);
 
     (* single entry recursion, stop at first revisit or exit *)
-    fun traverse_graph (g:cfg_graph) entry visited acc =
+    fun traverse_graph (g:cfg_graph) entry visited acc callstack =
 	let
 	    val n = lookup_block_dict_value (#CFGG_node_dict g) entry "traverse_graph" "n";
 	    val targets = #CFGN_targets n;
 	    val descr_o = #CFGN_hc_descr n;
 	    val n_type  = #CFGN_type n;
-		
+
+	    val callstack = if cfg_nodetype_is_call n_type
+			    then case n_type of
+				     CFGNT_Call [e] => push (mk_BL_Address e) callstack
+				   | _ => raise ERR "callstack" "more than one call address"
+			    else callstack;
+
 	    val acc_new = (if cfg_node_type_eq (n_type, CFGNT_CondJump) then [entry] else [])@acc;
 	    val targets_to_visit = List.filter (fn x => List.all (fn y => not (identical x y)) visited) targets;
-	    
 	in
-	    List.foldr (fn (entry',(visited',acc')) => traverse_graph g entry' visited' acc') 
+	    if List.null targets andalso ((not o is_empty) callstack)
+	    then
+		let val (addr, rest) = pop callstack
+		in
+		List.foldr (fn (entry',(visited',acc')) => traverse_graph g entry' visited' acc' rest) 
+		       (entry::visited, acc_new) 
+		       ([addr]@targets_to_visit)
+		end
+	    else 
+		List.foldr (fn (entry',(visited',acc')) => traverse_graph g entry' visited' acc' callstack) 
 		       (entry::visited, acc_new) 
 		       targets_to_visit
 	end;
@@ -141,6 +161,58 @@ open bir_cfgLib;
         in
           List.concat stmts
         end;
+
+  fun update_node_guess_type_call bl_dict fun_entry_lbl_tms (n:cfg_node) =
+      if not (cfg_node_type_eq (#CFGN_type n, CFGNT_Jump))
+      then NONE else
+      let
+	  val lbl_tm = #CFGN_lbl_tm n;
+	  val targets = #CFGN_targets n;
+	  val descr_o = #CFGN_hc_descr n;
+
+      in case targets of
+	 [target] =>
+	 let
+	  val bl =
+		    case lookup_block_dict bl_dict lbl_tm of
+		       SOME x => x
+		     | NONE => raise ERR "update_node_guess_type_call"
+					 ("cannot find label " ^ (term_to_string lbl_tm));
+
+
+	  val isCall_to_entry = (List.exists (fn x => identical x target) fun_entry_lbl_tms);
+	  val _ = if isCall_to_entry then ()
+	      else raise ERR "update_node_guess_type_call"
+			     ("something in call detection is unexpected: " ^ (term_to_string lbl_tm));
+
+	  val (_, bbs, _) = dest_bir_block bl;
+	  val stmts = (fst o listSyntax.dest_list) bbs;
+
+          val new_type =
+	      (* change the type if it is an assignment to the link register *)
+	      if List.exists is_BStmt_Assign stmts then
+		  let
+		    val assign = List.filter is_BStmt_Assign stmts;
+		    val (var, exp) = dest_BStmt_Assign (hd assign);
+		    val name = (fst o bir_envSyntax.dest_BVar_string) var;
+		  in
+		    if (name = "R30" andalso is_BExp_Const exp)
+		    then CFGNT_Call [dest_BExp_Const exp]
+		    else #CFGN_type n
+		  end
+	      else #CFGN_type n
+
+
+	  val new_n =
+	      { CFGN_lbl_tm   = #CFGN_lbl_tm n,
+		CFGN_hc_descr = #CFGN_hc_descr n,
+		CFGN_targets  = #CFGN_targets n,
+		CFGN_type     = new_type
+	      } : cfg_node;
+	 in
+	   SOME new_n
+	 end
+      | _ => NONE end;
 
     fun nub_with eq [] = []
       | nub_with eq (x::xs) = x::(nub_with eq (List.filter (fn y => not (eq (y, x))) xs))
@@ -303,10 +375,13 @@ open bir_cfgLib;
 	(* build the cfg and update the basic blocks *)
 	val n_dict = cfg_build_node_dict bl_dict lbl_tms;
 
+	val updated_n_dict = cfg_update_nodes_gen "updated_n_dict" (update_node_guess_type_call bl_dict lbl_tms) lbl_tms n_dict;
+
 	val entries = [mk_key_from_address64 64 (entry)];
-	val g1 = cfg_create "specExec" entries n_dict bl_dict;
-	    
-	val (visited_nodes,cjmp_nodes) = traverse_graph g1 (hd (#CFGG_entries g1)) [] [];
+	val g1 = cfg_create "specExec" entries updated_n_dict bl_dict;
+
+        val callstack: term stack = empty;
+	val (visited_nodes,cjmp_nodes) = traverse_graph g1 (hd (#CFGG_entries g1)) [] [] callstack;
   (* targets: each element in this list is a two-element list of branch targets
      there is one such element for each cjmp in the program *)
 	val targets = map (fn i => #CFGN_targets (lookup_block_dict_value (#CFGG_node_dict g1) i "_" "_")) cjmp_nodes;
