@@ -35,6 +35,9 @@ val _ = QUse.use "testcases/prog_4.sml";
 val _ = QUse.use "testcases/prog_5.sml";
 val _ = QUse.use "testcases/prog_6.sml";
 val _ = QUse.use "testcases/prog_7.sml";
+val _ = QUse.use "testcases/prog_8.sml";
+val _ = QUse.use "testcases/prog_9.sml";
+
 
 
 
@@ -47,7 +50,9 @@ val test_cases =
    prog_4_test,
    prog_5_test,
    prog_6_test,
-   prog_7_test]
+   prog_7_test,
+   prog_8_test,
+   prog_9_test]
 
 
 (* =========================== run and compare test cases ============================ *)
