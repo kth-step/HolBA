@@ -186,7 +186,7 @@ open bir_cfgLib;
 
           val blocks = collect_blocks (depth-1) first_block;
           val branch_labels = List.map get_block_label blocks;
-          val stmts = List.map (dest_list_ignore_type o extract_stmts_from_lbl) (rev branch_labels);
+          val stmts = List.map (dest_list_ignore_type o extract_stmts_from_lbl) branch_labels;
         in
           List.concat stmts
         end;
@@ -424,6 +424,10 @@ open bir_cfgLib;
                                o valOf o get_targets)
                               (List.filter block_filter blocks)
      in
+	 if depth < 1
+	 then
+	     raise ERR "branch_instrumentation" "the depth cannot be less than 1"
+	 else
 	     foldl (fn (t, p) =>
                  add_shadow_branches obs_fun depth bl_dict t p)
              prog
@@ -440,7 +444,7 @@ in
   structure bir_arm8_cache_speculation_model : OBS_MODEL =
     struct
       val obs_hol_type = ``:bir_val_t``;
-      val pipeline_depth = 3;
+      val pipeline_depth = 10;
       fun add_obs mb t en =
         branch_instrumentation obs_all_refined (bir_arm8_mem_addr_pc_model.add_obs mb t en) en pipeline_depth;
     end;
@@ -448,7 +452,7 @@ in
   structure bir_arm8_cache_speculation_first_model : OBS_MODEL =
   struct
   val obs_hol_type = ``:bir_val_t``;
-  val pipeline_depth = 3;
+  val pipeline_depth = 10;
   fun add_obs mb t en =
       branch_instrumentation obs_all_refined_but_first (bir_arm8_mem_addr_pc_model.add_obs mb t en) en pipeline_depth;
   end;
@@ -456,7 +460,7 @@ in
   structure bir_arm8_cache_straight_line_model : OBS_MODEL =
   struct
   val obs_hol_type = ``:bir_val_t``;
-  val pipeline_depth = 3;
+  val pipeline_depth = 10;
   fun add_obs mb t en =
       let val obs_term = bir_arm8_mem_addr_pc_model.add_obs mb t en;
           val jmp_to_cjmp_term = jmp_to_cjmp obs_term;

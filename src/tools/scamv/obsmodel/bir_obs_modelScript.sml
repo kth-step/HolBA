@@ -104,8 +104,9 @@ val add_obs_constr_mem_stmts_ls_def = Define `
      (case select_mem e of
           [] => x :: add_obs_constr_mem_stmts_ls mem_bounds obs_fun_ld obs_fun_st xs
         | lds => (APPEND (MAP (constrain_mem mem_bounds) (MAP select_mem_flatten lds))
-                      (* TODO: (Andreas:) Can it be that there is a bug here with the order, first xs, and then x? *)
-                      (APPEND (APPEND (MAP (\x. case x of select_mem_LD e => obs_fun_ld e | select_mem_ST e => obs_fun_st e) lds) (add_obs_constr_mem_stmts_ls mem_bounds obs_fun_ld obs_fun_st xs)) [x])))
+                      (* TODO: (Andreas:) Can it be that there is a bug here with the order, first xs, and then x?
+                               (Tiziano:) Maybe fixed.*)
+                      (APPEND (APPEND (MAP (\x. case x of select_mem_LD e => obs_fun_ld e | select_mem_ST e => obs_fun_st e) lds) [x]) (add_obs_constr_mem_stmts_ls mem_bounds obs_fun_ld obs_fun_st xs))))
    | _ => x :: add_obs_constr_mem_stmts_ls mem_bounds obs_fun_ld obs_fun_st xs)
 `;
 
