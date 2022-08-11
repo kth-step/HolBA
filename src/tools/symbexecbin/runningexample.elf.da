@@ -1,0 +1,52 @@
+
+output/runningexample.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00008000 <_start>:
+    8000:	f000 f801 	bl	8006 <_f>
+
+00008004 <loop>:
+    8004:	e7fe      	b.n	8004 <loop>
+
+00008006 <_f>:
+    8006:	4673      	mov	r3, lr
+    8008:	9300      	str	r3, [sp, #0]
+    800a:	b081      	sub	sp, #4
+    800c:	2601      	movs	r6, #1
+    800e:	9600      	str	r6, [sp, #0]
+    8010:	2308      	movs	r3, #8
+
+00008012 <l6>:
+    8012:	2600      	movs	r6, #0
+    8014:	42b3      	cmp	r3, r6
+    8016:	d012      	beq.n	803e <l12>
+    8018:	3b01      	subs	r3, #1
+    801a:	1c06      	adds	r6, r0, #0
+    801c:	40de      	lsrs	r6, r3
+    801e:	2701      	movs	r7, #1
+    8020:	403e      	ands	r6, r7
+    8022:	2700      	movs	r7, #0
+    8024:	42be      	cmp	r6, r7
+    8026:	d004      	beq.n	8032 <l10>
+    8028:	9e00      	ldr	r6, [sp, #0]
+    802a:	434e      	muls	r6, r1
+    802c:	1e57      	subs	r7, r2, #1
+    802e:	403e      	ands	r6, r7
+    8030:	9600      	str	r6, [sp, #0]
+
+00008032 <l10>:
+    8032:	1c0e      	adds	r6, r1, #0
+    8034:	4376      	muls	r6, r6
+    8036:	1e57      	subs	r7, r2, #1
+    8038:	403e      	ands	r6, r7
+    803a:	1c31      	adds	r1, r6, #0
+    803c:	e7e9      	b.n	8012 <l6>
+
+0000803e <l12>:
+    803e:	9800      	ldr	r0, [sp, #0]
+    8040:	b001      	add	sp, #4
+    8042:	9b00      	ldr	r3, [sp, #0]
+    8044:	469e      	mov	lr, r3
+    8046:	4770      	bx	lr
