@@ -71,7 +71,12 @@ val exporting_exp_testcases = [
 
 
   (``BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm1 0x1w)) (BExp_Const (Imm1 0x0w))``,
-   ("(=> true false)", SMTTY_Bool))
+   ("(=> true false)", SMTTY_Bool)),
+
+  (``BExp_UnaryExp BIExp_Not (BExp_Cast BIExp_LowCast
+        (BExp_Den (BVar "xyz" (BType_Imm Bit32)))
+        Bit1)``,
+   ("(not (= ((_ extract 0 0) birv_xyz) (_ bv1 1)))", SMTTY_Bool))
 ];
 
 (*
