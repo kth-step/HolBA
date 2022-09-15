@@ -33,6 +33,8 @@ signature bir_prog_genLib = sig
   val prog_gen_store_rand_slice      : int         -> unit -> embexp_logsLib.prog_handle * term * string * (Arbnum.num * Arbnum.num list) list
   val prog_gen_store_prefetch_stride : int         -> unit -> embexp_logsLib.prog_handle * term * string * (Arbnum.num * Arbnum.num list) list
 
-  val prog_gen_store_frombinary      : string      -> unit -> embexp_logsLib.prog_handle * term * string * (Arbnum.num * Arbnum.num list) list
+  val prog_gen_store_frombinary      : string->(string * string) option       -> unit -> embexp_logsLib.prog_handle * term * string * (Arbnum.num * Arbnum.num list) list
+
+  val prog_gen_store_fromllvm        : string      -> unit -> embexp_logsLib.prog_handle * term * string * (Arbnum.num * Arbnum.num list) list
 
 end

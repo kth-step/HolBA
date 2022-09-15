@@ -8,6 +8,7 @@ sig
                       | from_file
                       | from_list
 		      | from_binary
+		      | from_llvm
 
     datatype obs_model = mem_address_pc
                        | mem_address_pc_lspc

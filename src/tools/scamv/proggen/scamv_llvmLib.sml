@@ -1,0 +1,291 @@
+structure scamv_llvmLib =
+struct
+
+local
+    open HolKernel boolLib liteLib simpLib Parse bossLib;
+    open bir_fileLib;
+
+    (* error handling *)
+    val libname  = "scamv_llvmLib"
+    val ERR      = Feedback.mk_HOL_ERR libname
+    val wrap_exn = Feedback.wrap_exn libname
+in
+
+fun llvm_prefix () =
+      case Option.mapPartial (fn p => if p <> "" then SOME p else NONE)
+                             (OS.Process.getEnv("HOLBA_LLVM_DIR")) of
+          NONE => raise ERR "llvm_prefix" "the environment variable HOLBA_LLVM_DIR is not set"
+        | SOME p => (p ^ "/build/bin/");
+
+fun llvm_scamv_lib () =
+      case Option.mapPartial (fn p => if p <> "" then SOME p else NONE)
+                             (OS.Process.getEnv("HOLBA_LLVMSCAMV_DIR")) of
+          NONE => raise ERR "scamv_llvm_lib" "the environment variable HOLBA_LLVMSCAMV_DIR is not set"
+        | SOME p => (p ^ "/build/src/LLVMScamv.so");
+
+fun get_exec_output_redirect do_print exec_cmd =
+    let
+      val outputfile = get_tempfile "exec_output" ".txt";
+
+      val r = OS.Process.system (exec_cmd ^ " > " ^ outputfile ^ " 2>&1");
+      val _ = if not do_print then () else
+                print (read_from_file outputfile);
+      val _ = if not (OS.Process.isSuccess r) then
+                raise ERR "get_exec_output_redirect" ("the following command did not execute successfully: " ^ exec_cmd)
+              else
+                ();
+
+      val s = read_from_file outputfile;
+
+      val _ = OS.Process.system ("rm " ^ outputfile);
+    in
+      s
+    end;
+
+fun compile_and_link_armv8_llvm_bc binfilename bcfile =
+    let
+      val cmd_static_link = ("/home/tiziano/llvm-project/llvm/build/bin/" ^
+			     "clang -target aarch64-linux-gnu -march=armv8-a -mcpu=cortex-a53 -Wall -g -mgeneral-regs-only -static -nostartfiles " ^ bcfile ^ " -o " ^ binfilename);
+    in
+      if OS.Process.isSuccess (OS.Process.system cmd_static_link)
+      then binfilename
+      else raise ERR "compile_and_link_armv8_llvm_bc" "cmd_static_link"
+    end;
+
+fun compile_llvm_bc binfilename bcfile =
+    let
+      val bcfile_o = binfilename ^ ".o";
+      val cmd_bc_compile = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "llc -filetype=obj " ^ bcfile ^ " -o " ^ bcfile_o);
+    in
+      if OS.Process.isSuccess (OS.Process.system cmd_bc_compile)
+      then bcfile_o
+      else raise ERR "compile_llvm_bc" "cmd_bc_compile"
+    end;
+
+fun link_llvm_bcs filename bcfiles =
+    let
+      val bcfilename = get_simple_tempfile (filename ^ ".bc");
+      val bcfiles_to_link = List.foldl (fn (f1,f2)=> (f2 ^ f1 ^ " ")) "" bcfiles;
+      val cmd_llvm_link = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "llvm-link " ^
+			   bcfiles_to_link ^ " -o " ^ bcfilename);
+    in
+      (if OS.Process.isSuccess (OS.Process.system cmd_llvm_link)
+       then bcfilename
+       else raise ERR "link_llvm_bcs" "cmd_llvm_link")
+    end
+
+fun link_missing_funs filename slicedfunbc beforeslicefilebc =
+    let
+      val bcfilename = filename ^ "linked.bc";
+      val cmd_link_miss_funs = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "llvm-link" ^
+				" -only-needed " ^ slicedfunbc ^ " " ^ beforeslicefilebc ^ " -o " ^ bcfilename);
+    in
+      (if OS.Process.isSuccess (OS.Process.system cmd_link_miss_funs)
+       then bcfilename
+       else raise ERR "link_missing_funs" "cmd_link_miss_funs")
+    end
+
+fun link_missing_globs filename slicedfunbc beforeslicefilebc glob_names =
+    let
+      val bcglobs = filename ^ "-globs.bc";
+      val bcfilename = filename ^ "-final.bc";
+      val globs = List.foldl (fn (g1,g2)=> (g2 ^ " -glob " ^ g1)) "" glob_names;
+      val cmd_extract_globs = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "llvm-extract " ^
+			       globs ^ " " ^ beforeslicefilebc ^ " -o " ^ bcglobs);
+      val cmd_link_miss_globs = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "llvm-link" ^
+				" -only-needed " ^ slicedfunbc ^ " " ^ bcglobs ^ " -o " ^ bcfilename);
+    in
+      (if OS.Process.isSuccess (OS.Process.system cmd_extract_globs)
+       then
+         if OS.Process.isSuccess (OS.Process.system cmd_link_miss_globs)
+	 then bcfilename
+	 else raise ERR "link_missing_globs" "cmd_link_miss_globs"
+       else raise ERR "link_missing_globs" "cmd_extract_globs")
+    end
+
+fun get_fun_names prog_bc =
+    let
+      val cmd_print_funcs = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt -enable-new-pm=0 -load " ^
+			     "/home/tiziano/llvm-project/llvm/build/lib/LLVMScamv.so" ^ " -print-functions " ^
+			     prog_bc ^ " -o " ^ (get_simple_tempfile "delete.bc"));
+      val output = get_exec_output_redirect false cmd_print_funcs;
+      val _ = OS.Process.system ("rm " ^ (get_simple_tempfile "delete.bc"));
+    in
+      String.tokens (fn x => x = #"\n") output
+    end
+
+fun get_glob_names prog_bc =
+    let
+      val cmd_print_funcs = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt -enable-new-pm=0 -load " ^
+			     "/home/tiziano/llvm-project/llvm/build/lib/LLVMScamv.so" ^ " -print-globals " ^
+			     prog_bc ^ " -o " ^ (get_simple_tempfile "delete.bc"));
+      val output = get_exec_output_redirect false cmd_print_funcs;
+      val _ = OS.Process.system ("rm " ^ (get_simple_tempfile "delete.bc"));
+    in
+      String.tokens (fn x => x = #"\n") output
+    end
+
+fun metarenamer_fun (fun_name, fun_bc) =
+    let
+      val fun_ll = get_simple_tempfile (fun_name ^ ".ll");
+      val cmd_metarenamer_fun = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt" ^
+			    " -S -metarenamer " ^ fun_bc ^ " -o " ^ fun_ll);
+    in
+      (if OS.Process.isSuccess (OS.Process.system cmd_metarenamer_fun)
+       then (fun_name, fun_ll)
+       else raise ERR "metarenamer_fun" "cmd_metarenamer_fun")
+    end
+
+fun metarenamer_bbs (fun_name, fun_bc) =
+    let
+      (* val fun_renamed = get_simple_tempfile (fun_name ^ "-renamed.bc"); *)
+      val cmd_metarenamer_bbs = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt -enable-new-pm=0 -load " ^
+			     "/home/tiziano/llvm-project/llvm/build/lib/LLVMScamv.so" ^ " -rename-blocks " ^
+			     fun_bc ^ " -o " ^ fun_bc);
+    in
+      (if OS.Process.isSuccess (OS.Process.system cmd_metarenamer_bbs)
+       then (fun_name, fun_bc)
+       else raise ERR "metarenamer_bbs" "cmd_metarenamer_bbs")
+    end
+
+fun extract_fun_with_recursive prog_bc fun_name =
+    let
+      val fun_bc = get_simple_tempfile (fun_name ^ ".bc");
+      val cmd_extract_fun = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "llvm-extract" ^
+			     " -func " ^ fun_name ^ " -recursive < " ^ prog_bc ^ " > " ^ fun_bc);
+    in
+      (if OS.Process.isSuccess (OS.Process.system cmd_extract_fun)
+       then (fun_name, fun_bc)
+       else raise ERR "extract_fun_with_recursive" "cmd_extract_fun")
+    end
+
+fun extract_multi_funs prog_bc fun_names =
+    let
+      val filebc = "extracted-" ^ prog_bc;
+      val funs_to_extr = List.foldl (fn (f1,f2)=> (f2 ^ " -func " ^ f1)) "" fun_names;
+      val cmd_extract_multi_funs = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "llvm-extract" ^
+				    funs_to_extr ^ " < " ^ prog_bc ^ " > " ^ filebc);
+    in
+      (if OS.Process.isSuccess (OS.Process.system cmd_extract_multi_funs)
+       then (fun_names, filebc)
+       else raise ERR "extract_multi_funs" "cmd_extract_multi_funs")
+    end 
+
+fun analyze_func (fun_name, fun_bc) threshold_ninst =
+    let
+      val cmd_analyze_func = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt " ^ fun_bc ^
+			      " -enable-new-pm=0 -load " ^ "/home/tiziano/llvm-project/llvm/build/lib/LLVMScamv.so" ^
+			      " -analyze-function " ^ fun_name ^ " -o " ^ (get_simple_tempfile "delete.bc"));
+      val appx_inst_count = Int.fromString (get_exec_output_redirect false cmd_analyze_func);
+      val _ = OS.Process.system ("rm " ^ (get_simple_tempfile "delete.bc"));
+    in
+      if isSome appx_inst_count then
+	if ((valOf appx_inst_count) >= threshold_ninst) then true else false
+      else raise ERR "analyze_func" "Instruction counting doesn't work"
+    end
+
+fun get_extract_options (fun_name, fun_bc) threshold =
+    let
+      val cmd_slicing = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt -enable-new-pm=0 -load " ^
+			 "/home/tiziano/llvm-project/llvm/build/lib/LLVMScamv.so" ^
+			 " -automatic-block-specifier -func " ^ fun_name ^ " -t " ^ (Int.toString threshold) ^ " " ^
+			 fun_bc ^ " -o " ^ (get_simple_tempfile "delete.bc"));
+      val output = get_exec_output_redirect false cmd_slicing;
+      val list_ext_opts = String.tokens (fn x => x = #"\n") output;
+      val _ = OS.Process.system ("rm " ^ (get_simple_tempfile "delete.bc"));
+    in
+      list_ext_opts
+    end
+
+fun extract_bbs_from_fun (fun_name, fun_bc) ext_option =
+    let
+      val opt_str = String.implode (List.map
+				   (fn c=> if (c=(#";")) then (#"-") else c)
+				   (String.explode ext_option));
+      val sliced_fun_bc = get_simple_tempfile (opt_str ^ ".bc");
+      val cmd_extract_bbs = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "llvm-extract" ^
+			     " -bb \"" ^ ext_option ^ "\" -recursive " ^
+			     fun_bc ^ " -o " ^ sliced_fun_bc);
+    in
+      (if OS.Process.isSuccess (OS.Process.system cmd_extract_bbs)
+       then (fun_name, sliced_fun_bc)
+       else raise ERR "extract_bbs_from_fun" "cmd_extract_bbs")
+    end
+    
+fun slice_func (fun_name, fun_bc) size =
+    let
+      val to_slice = analyze_func (fun_name, fun_bc) size;
+    in
+      if to_slice
+      then
+	let
+	  val ext_opts = get_extract_options (fun_name, fun_bc) size;
+	in
+	  if null ext_opts
+	  then [(fun_name, fun_bc)]
+	  else List.map (fn opt=> extract_bbs_from_fun (fun_name, fun_bc) opt) ext_opts
+	end
+      else [(fun_name, fun_bc)]
+    end
+
+
+fun llvm_initial_phase filebc llvm_option =
+    let
+      val _ = print "LLVM phase...\n";
+      val func_names = get_fun_names filebc;
+      val extracted_fun_bcs = List.map (fn f => extract_fun_with_recursive filebc f) func_names;
+      val fun_renamed_bcs = List.map (fn f => metarenamer_bbs f) extracted_fun_bcs;
+
+      val sliced_fun_bcs = let val manually = isSome llvm_option;
+			in
+			  if manually
+			  then
+			    let val fun_specified = hd (String.tokens (fn c => c = #":") (valOf llvm_option));
+				val f = List.find (fn (fnm,fbc) => fnm = fun_specified) fun_renamed_bcs;
+			    in (if isSome f
+				then
+				  [extract_bbs_from_fun (valOf f) (valOf llvm_option)]
+				else
+				  raise ERR "llvm_initial_phase" "the specified function was not found")
+			    end
+			  else (List.concat (List.map (fn f => slice_func f 50) fun_renamed_bcs))
+			end;
+
+      val binfiles = List.map (fn (f,fbc) =>
+				  let
+				    val name = String.extract (fbc, ((List.length o String.explode) tempdir)+1, NONE);  
+				    val fname = (String.extract(fbc, 0, SOME (String.size fbc-3)));
+				    val linkedfilebc = link_missing_funs fname fbc filebc;
+				    (* val globs = get_glob_names filebc; *)
+				    (* val finalfilebc = link_missing_globs fname linkedfilebc filebc globs; *)
+				  in
+				    ((f, name, SOME (compile_and_link_armv8_llvm_bc fname linkedfilebc))
+				     handle HOL_ERR e => (print ("Compilation error:" ^ name ^ " \n");
+							  (f, name, NONE)))
+				  end) sliced_fun_bcs;
+      val _ = print "LLVM phase finished.\n";
+    in
+      SOME (List.map (fn (f,nm,b)=> ((f,nm),valOf b)) (List.filter (fn (_,_,b)=> isSome b) binfiles))
+    end;
+
+(* val binfilename = "/home/tiziano/llvm-project/llvm/build/tiziano-tests/tea/tea-arm.bc"; *)
+(* val filebc = binfilename; *)
+
+
+fun llvm_insert_fence fun_name filebc =
+    let
+      val _ = print "Adding fence...\n";
+      val fenced_prog_bc = get_simple_tempfile ("fenced_" ^ filebc);
+      val cmd_insert_fence = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt" ^
+			      " -fence-insertion -func_to_fence " ^ fun_name ^ " " ^  filebc ^ " -o " ^ fenced_prog_bc);
+    in
+      (if OS.Process.isSuccess (OS.Process.system cmd_insert_fence)
+       then fenced_prog_bc
+       else raise ERR "llvm_insert_fence" "cmd_insert_fence")
+    end
+
+
+end
+
+
+end

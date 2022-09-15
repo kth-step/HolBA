@@ -23,6 +23,8 @@ struct
   open bir_fileLib;
   open bir_randLib;
 
+  open scamv_llvmLib;
+
   (* error handling *)
   val libname  = "bir_prog_genLib"
   val ERR      = Feedback.mk_HOL_ERR libname
@@ -173,18 +175,56 @@ struct
 
 (* ========================================================================================= *)
 (* working with a binary program *)
+
+  val (current_llvm_progs : ((string * string) * string) list option ref) = ref NONE;
+
   fun process_binary binfilename =
       let
 	val da_file = bir_gcc_disassemble binfilename
 
 	val (region_map, sections) = read_disassembly_file_regions da_file;
       in
-	  sections
+	  (region_map, sections)
       end
-      
-  fun prog_lifting_frombinary prog_gen_id args () =
+
+  fun define_entry_and_exits section =
+      let
+	fun unpack_code x =
+	  case x of
+	    (str: string, BILME_code s) => (str, s)
+	  | (str: string, BILME_data) => (str, NONE)
+	  | (str: string, BILME_unknown) => (str, NONE)
+	fun unpack_section x =
+	  case x of
+	    (BILMR (addr, l)) => (addr, (List.map unpack_code l))
+
+	val (addr, code) = unpack_section section;
+	val instructions = List.map (fn (hex_code, str_inst) =>
+					if isSome str_inst then valOf str_inst else "") code;
+
+	fun find_ret_addrs ([], count, rets) = rets
+	  | find_ret_addrs (i::is, count, rets) =
+	    (count := (!count + 4);
+	     if i = "ret"
+	     then find_ret_addrs (is, count, rets@[Arbnum.fromInt ((Arbnum.toInt addr)+(!count-4))])
+	     else find_ret_addrs (is, count, rets))
+      in
+	(addr, find_ret_addrs (instructions, ref 0, []))
+      end;
+
+  fun get_addr_by_section section region_map =
+      let
+	val a = List.find (fn (_,s,_)=> String.isSubstring section s) region_map;
+      in
+	case a of
+	  SOME (_,_,addr) => addr
+	| NONE => raise ERR "get_addr_for_section" "section address not found"
+      end
+
+  fun prog_lifting_frombinary prog_gen_id args fundata () =
     let
-      val sections = process_binary args;
+      val _ = print ("Prog: " ^ args ^ "\n");
+      val (region_map, sections) = process_binary args;
       val lifted_prog = lift_program_from_sections sections;
 
       val add_lifted_prog = true;
@@ -192,42 +232,44 @@ struct
       val extra_metadata = if not add_lifted_prog then [] else
         [("lifted_prog", term_to_string_wtypes lifted_prog)];
 
+      val (fun_addr, func_metadata) =
+	case fundata of
+	  SOME (fname,desc) => (SOME (get_addr_by_section fname region_map), [("origin_source", desc)])
+	| NONE => (NONE, [("origin_source", args)]);
+
       val prog = mk_experiment_prog [];
-      val prog_id = run_create_prog ArchARM8 prog args ([("prog_gen_id", prog_gen_id)]@extra_metadata);
+      val prog_id = run_create_prog ArchARM8 prog args ([("prog_gen_id", prog_gen_id)]@extra_metadata@func_metadata);
 
-      fun unpack_code x =
-	case x of
-	  (str: string, BILME_code s) => (str, s)
-	| (str: string, BILME_data) => (str, NONE)  
-	| (str: string, BILME_unknown) => (str, NONE)
-      fun unpack_section x =
-	case x of
-	  (BILMR (addr, l)) => (addr, (List.map unpack_code l))
-      fun define_entry_and_exits section =
-	let
-	  val (addr, code) = unpack_section section;
-	  val instructions = List.map (fn (hex_code, str_inst) =>
-					if isSome str_inst then valOf str_inst else "") code;
+      val list_entries_and_exits = case fun_addr of
+				     SOME a =>  List.map define_entry_and_exits
+							 [valOf (List.find (fn BILMR (a,l) => a=(valOf fun_addr)) (sections))]
+				   | NONE => List.map define_entry_and_exits sections;
 
-	  fun find_ret_addrs ([], count, rets) = rets
-	    | find_ret_addrs (i::is, count, rets) =
-	      (count := (!count + 4);
-	      if i = "ret"
-	      then find_ret_addrs (is, count, rets@[Arbnum.fromInt ((Arbnum.toInt addr)+(!count-4))])
-	      else find_ret_addrs (is, count, rets))
-	in
-	  (addr, find_ret_addrs (instructions, ref 0, []))
-	end;
-
-      val list_entries_and_exits = List.map define_entry_and_exits sections;
-
-      (* sets exits as all possible ret instructions - change after *)
-      fun flat xs = List.foldr (fn ((_,x), acc) => x @ acc) [] xs;
-      val list_exits = flat list_entries_and_exits;
-      val list_entries_and_exits = List.map (fn (en,_)=> (en,list_exits)) list_entries_and_exits;
     in
       (prog_id, lifted_prog, args, list_entries_and_exits)
     end;
+
+  fun prog_lifting_fromllvm prog_gen_id args () =
+    let
+      fun parse_args [filename] = (filename, NONE)
+	| parse_args [filename, option] = (filename, SOME option)
+	| parse_args _ =  raise ERR "parse_bin_gen_param" "binary generator parameter not well-defined!";
+
+      fun llvm_phase args =
+	case (!current_llvm_progs) of
+	  NONE => let
+                    val (filebc, llvm_option) = parse_args (String.tokens (fn c => c = #"|") args);
+		    val _ = current_llvm_progs := llvm_initial_phase filebc llvm_option;
+	          in llvm_phase args end
+	| SOME [] => NONE
+	| SOME (x::xs) => let val _= current_llvm_progs := SOME xs in SOME x end
+
+      val llvm_out = llvm_phase args;
+    in
+      case llvm_out of
+	  SOME (fundata, binfile) => prog_lifting_frombinary prog_gen_id binfile (SOME fundata) ()
+	| NONE => raise ERR "prog_lifting_fromllvm" "no other llvm program available"
+    end
 
 (* load file to asm_lines (assuming it is correct assembly code with only forward jumps and no use of labels) *)
 (* ========================================================================================= *)
@@ -307,7 +349,8 @@ fun prog_gen_store_rand_slice sz       = prog_gen_store "prog_gen_rand_slice"   
 fun prog_gen_store_prefetch_stride sz  = prog_gen_store "prog_gen_prefetch_stride"   true
   (lines_gen_fun prog_gen_prefetch_stride)       sz;
 
-fun prog_gen_store_frombinary binfilename = prog_lifting_frombinary "prog_gen_frombinary" binfilename;
+fun prog_gen_store_frombinary binfilename fundata = prog_lifting_frombinary "prog_gen_frombinary" binfilename fundata;
+fun prog_gen_store_fromllvm args = prog_lifting_fromllvm "prog_gen_fromllvm" args;
 
 (*
 val filename = "examples/asm/branch.s";

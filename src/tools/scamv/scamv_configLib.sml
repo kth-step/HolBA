@@ -19,6 +19,7 @@ datatype gen_type = gen_rand
                   | from_file
                   | from_list
 		  | from_binary
+		  | from_llvm
 
 datatype obs_model = mem_address_pc
                    | mem_address_pc_lspc
@@ -81,6 +82,7 @@ fun gen_type_fromString gt =
       | "file"             => SOME from_file
       | "list"             => SOME from_list
       | "binary"           => SOME from_binary
+      | "llvm"             => SOME from_llvm
       | _                  => NONE
 
 fun obs_model_fromString om =
@@ -478,7 +480,7 @@ fun print_scamv_opt_usage () =
     in
         print "Scam-V Usage:\n\n";
         List.map print_entry opt_table;
-        print ("\ngenerator arg should be one of: rand, prefetch_strides, qc, slice, file, list, binary\n");
+        print ("\ngenerator arg should be one of: rand, prefetch_strides, qc, slice, file, list, binary, llvm\n");
         print ("\nobs_model arg should be one of: mem_address_pc, mem_address_pc_lspc, cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page, cache_speculation, cache_speculation_first, cache_straightline\n");
         print ("\nrefined_obs_model arg is like obs_model\n");
         print ("\nobs_projection is an observation id as a number\n");

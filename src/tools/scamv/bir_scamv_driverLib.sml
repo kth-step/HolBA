@@ -453,6 +453,8 @@ fun scamv_test_main tests (prog_id, prog_lifted, binfilename, list_entries_and_e
 
 	fun test_prog entry_and_exits =
 	    let
+              val _ = (fn (en,exs) => if List.null exs then raise ERR "" "no exit point defined" else ())
+ entry_and_exits;
 	      val prog = (prog_id, prog_lifted, binfilename, entry_and_exits);
 
               val (full_specs, validity, next_relation) = scamv_per_program_init prog;
@@ -533,8 +535,11 @@ fun match_prog_gen gen sz generator_param =
               SOME x => prog_gen_store_list x
             | NONE   => raise ERR "match_prog_gen::from_list" "list needs to be specified as generator_param")
       | from_binary  => (case generator_param of
-              SOME x => prog_gen_store_frombinary x
+              SOME x => prog_gen_store_frombinary x NONE
             | NONE   => raise ERR "match_prog_gen::from_binary" "binary needs to be specified as generator_param")
+      | from_llvm    => (case generator_param of
+              SOME x => prog_gen_store_fromllvm x
+            | NONE   => raise ERR "match_prog_gen::from_llvm" "llvm needs to be specified as generator_param")
       | prefetch_strides => prog_gen_store_prefetch_stride sz
       | _ => raise ERR "match_prog_gen" ("unknown generator type: " ^ (PolyML.makestring gen));
 
