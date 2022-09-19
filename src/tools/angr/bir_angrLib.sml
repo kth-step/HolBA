@@ -235,7 +235,8 @@ local
                 val load_type = seq (char #"_")
                                 (seq (many1 (sat Char.isAlphaNum))
                                      (seq (char #"_") (fmap Arbnum.toInt dec)))
-                val mem_load =
+		val default_mem = mk_BExp_MemConst (“Bit64”, “Bit8”,  mk_var ("MEM",Type`:num |-> num`));
+		val mem_load =
                     seq mem_string
                     (bind (bracket (char #"[") (bitvalue (fn _ => bir_exp)) (char #"]"))  (fn addr =>
                      option load_type  (bload8_le default_mem addr) (return o bloadi_le default_mem addr)));
