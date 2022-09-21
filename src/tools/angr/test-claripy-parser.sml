@@ -7,6 +7,8 @@ val _ = Globals.show_types := false;
 
 val _ = print "Parsing test cases\n";
 
+val default_mem = bir_expSyntax.mk_BExp_MemConst (“Bit64”, “Bit8”,  mk_var ("MEM",Type`:num |-> num`));
+
 val angr_exp_testcases = [
   ("<Bool R3_1_16 / 7#16 == 0#16>",
    ``BExp_BinPred BIExp_Equal
@@ -156,7 +158,7 @@ val angr_exp_testcases = [
   (BExp_BinExp BIExp_And
      (BExp_CastMask Bit64 7 0
         (BExp_BinExp BIExp_Plus (BExp_Den (BVar "R5" (BType_Imm Bit64)))
-           (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+           (BExp_Load ^default_mem
               (BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R1" (BType_Imm Bit64)))
                  (BExp_Den (BVar "R3" (BType_Imm Bit64)))) BEnd_LittleEndian
@@ -169,7 +171,7 @@ val angr_exp_testcases = [
      (BExp_CastMask Bit64 7 0
         (BExp_BinExp BIExp_Plus (BExp_Den (BVar "R5" (BType_Imm Bit64)))
            (BExp_BinExp BIExp_LeftShift
-              (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+              (BExp_Load ^default_mem
                  (BExp_BinExp BIExp_Plus
                     (BExp_Den (BVar "R1" (BType_Imm Bit64)))
                     (BExp_Den (BVar "R3" (BType_Imm Bit64))))
@@ -395,12 +397,12 @@ val angr_exp_testcases = [
         (BExp_BinExp BIExp_Plus
            (BExp_AppendMask
               [(31,0,
-                BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                BExp_Load ^default_mem
                   (BExp_BinExp BIExp_Plus
                      (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
                      (BExp_Const (Imm64 108w))) BEnd_LittleEndian Bit32);
                (31,0,
-                BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                BExp_Load ^default_mem
                   (BExp_Den (BVar "R0" (BType_Imm Bit64))) BEnd_LittleEndian
                   Bit32)]) (BExp_Const (Imm64 4w)))
         (THE (bir_immtype_of_size 8))) (BExp_Const (Imm8 3w)))
