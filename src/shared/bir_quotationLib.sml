@@ -1,3 +1,38 @@
+(*
+BIR quotation parser for HolBA
+==============================
+
+Based on mlibTerm in HOL4's metis implementation by Joe Hurd.
+
+This library is released under the standard BSD-3-Clause license.
+
+Copyright 2022 Pablo Buiras
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*)
 structure bir_quotationLib =
 struct
 
@@ -60,11 +95,12 @@ val lexer =
     (fn ((_, (toks, _)), _) => toks) o
     (many (some space) ++
           (many
-               ((((atleastone (some alphanum) ||
-                              (some (fn c => symbol c andalso c <> #"~") ++ many (some symbol)) >>
-                              op ::) >> implode
-                                     || some (fn c => c = #"~" orelse punct c) >> str) ++
-                                                                                       many (some space)) >> fst)) ++
+            ((((atleastone (some alphanum) ||
+                           (some (fn c => symbol c andalso c <> #"~") ++
+                            many (some symbol)) >>
+                           op ::) >> implode
+                                  || some (fn c => c = #"~" orelse punct c) >> str) ++
+                                     many (some space)) >> fst)) ++
           finished);
 
 
@@ -540,7 +576,7 @@ fun term_to_string tm = term_to_string' (!expr_infixes) (!LINE_LENGTH) tm;
 fun expr_to_string expr = expr_to_string' (!expr_infixes) (!LINE_LENGTH) expr;
 
 local
-  open PP listSyntax;
+  open PP listSyntax bir_programSyntax;
 in
 fun pp_bracket pp tm =
     if is_BLE_Label tm orelse is_BExp_Den tm orelse is_BExp_Const tm
