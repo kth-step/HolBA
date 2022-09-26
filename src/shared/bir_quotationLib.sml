@@ -1,8 +1,38 @@
 (*
-BIR quotation parser for HolBA
-==============================
+BIR quotation library for HolBA
+===============================
 
 Based on mlibTerm in HOL4's metis implementation by Joe Hurd.
+
+The reference expr_infixes contains infix operator precedence and associativity.
+Should be easy to change to suit your needs.
+
+Known issues and limitations:
+
+- Antiquoting is not supported. Unfortunately this hinders usability in proofs.
+  It could be implemented but it's a lot more work and requires a complete
+  pretty printer.
+
+- When a jump target is a string, it is interpreted as a static string label.
+  This means the following program may not parse as one expects:
+
+val not_indirect_jump = BIR‘
+a:
+  X1 = 0x8000004
+  jmp X1
+’
+
+  The jump becomes a direct jump to a non-existing label X1. In order to express
+  an indirect jump properly we need to force the parser to interpret the jump
+  target as an expression, as follows:
+
+val indirect_jump = BIR‘
+a:
+  X1 = 0x8000004
+  jmp (X1+0)
+’
+
+- Error reporting is very limited.
 
 This library is released under the standard BSD-3-Clause license.
 
@@ -33,7 +63,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *)
-structure bir_quotationLib =
+structure bir_quotationLib :> bir_quotationLib =
 struct
 
 open HolKernel Parse boolLib;
@@ -55,8 +85,9 @@ val libname = "bir_quotationLib"
 val ERR = Feedback.mk_HOL_ERR libname
 val wrap_exn = Feedback.wrap_exn libname
 
-val default_size = 64;
-val default_size_byte = 8;
+val quotation_default_size = ref 64;
+val quotation_default_size_byte = ref 8;
+val quotation_memory_prefixes = ref ["MEM", "_MEM"];
 
 val expr_infixes : infixities ref = ref
   [{tok = " / ",   prec = 7,  left_assoc = true},
@@ -81,9 +112,11 @@ val expr_infixes : infixities ref = ref
 val reserved = ["(", ")", ".", "~", "assert", "assume",
                 "observe", "halt", "jmp", "cjmp",
                 "if", "then", "else"];
-val keywords = ["ld", "st", "chsign", "clz", "cls",
+val keywords = ["ld", "ld8", "ld16", "ld32", "ld64",
+                "st", "st8", "st16", "st32", "st64",
+                "chsign", "clz", "cls",
                 "ucast",  "scast", "hcast", "lcast",
-                "sdiv", "smod"];
+                "sdiv", "smod", "srsh", "slt", "sle", "memeq"];
 
 local
   val initials = explode "_rxw";
@@ -110,6 +143,10 @@ datatype fo_term =
          Var of string
          | Imm of string
          | Fn  of string * fo_term list;
+
+fun is_memory_var s =
+    List.exists (fn prefix => String.isPrefix prefix s)
+                (!quotation_memory_prefixes);
 
 fun dest_imm (Imm n) = n
   | dest_imm _ = raise Error "dest_imm: not an Imm"
@@ -146,7 +183,8 @@ fun dest_binop f (Fn (x, [a, b])) =
 fun is_binop f = can (dest_binop f);
 
 val vname_parser = some (fn tok => not (mem tok reserved)
-                        andalso not (digit (hd (explode tok))));
+                                   andalso not (digit (hd (explode tok)))
+                                   andalso not (mem tok (optoks (!expr_infixes))));
 
 val imm_parser =
     some (fn tok =>
@@ -184,9 +222,9 @@ fun term_parser ops =
       val iparser = parse_infixes ops
       val itoks = optoks ops
       val avoid = itoks @ reserved
-      fun fname tok = mem tok keywords
+      fun fname tok = mem tok keywords andalso not (mem tok avoid)
       val fname_parser = some fname
-           || (exact "(" ++ any ++ exact ")") >> (fst o snd)
+          || (exact "(" ++ any ++ exact ")") >> (fst o snd)
       fun basic inp =
           ((exact "if" ++ tm_parser ++ exact "then" ++ tm_parser ++ exact "else" ++ tm_parser) >> (fn (_,(cond,(_,(left,(_,right))))) =>
                Fn ("__ite", [cond,left,right])) ||
@@ -238,28 +276,68 @@ local
           bmod (lift n a, lift n b)
         | Fn ("smod", [a,b]) =>
           bsmod (lift n a, lift n b)
+        | Fn ("srsh", [a,b]) =>
+          bsrshift (lift n a, lift n b)
         | Fn ("<<", [a,b]) =>
           blshift (lift n a, lift n b)
         | Fn (">>", [a,b]) =>
           brshift (lift n a, lift n b)
         | Fn ("ld", [a,b]) =>
-          bloadi_le (lift_mem default_size default_size_byte a)
-                    (lift default_size b)
-                    default_size_byte
+          bloadi_le (lift n a)
+                    (lift (!quotation_default_size) b)
+                    n
+        | Fn ("ld8", [a,b]) =>
+          bloadi_le (lift n a)
+                    (lift (!quotation_default_size) b)
+                    8
+        | Fn ("ld16", [a,b]) =>
+          bloadi_le (lift n a)
+                    (lift (!quotation_default_size) b)
+                    16
+        | Fn ("ld32", [a,b]) =>
+          bloadi_le (lift n a)
+                    (lift (!quotation_default_size) b)
+                    32
+        | Fn ("ld64", [a,b]) =>
+          bloadi_le (lift n a)
+                    (lift (!quotation_default_size) b)
+                    64
         | Fn ("st", [a,b,c]) =>
-          bstore_le (lift_mem default_size default_size_byte a)
-                    (lift default_size b)
+          bstore_le (lift n a)
+                    (lift (!quotation_default_size) b)
                     (lift n c)
+        | Fn ("st8", [a,b,c]) =>
+          bstore_le (lift n a)
+                    (lift (!quotation_default_size) b)
+                    (lift 8 c)
+        | Fn ("st16", [a,b,c]) =>
+          bstore_le (lift n a)
+                    (lift (!quotation_default_size) b)
+                    (lift 16 c)
+        | Fn ("st32", [a,b,c]) =>
+          bstore_le (lift n a)
+                    (lift (!quotation_default_size) b)
+                    (lift 32 c)
+        | Fn ("st64", [a,b,c]) =>
+          bstore_le (lift n a)
+                    (lift (!quotation_default_size) b)
+                    (lift 64 c)
         | Fn ("==", [a,b]) =>
           beq (lift n a, lift n b)
+        | Fn ("memeq", [a,b]) =>
+          bmemeq (lift n a, lift n b)
         | Fn ("<>", [a,b]) =>
           bneq (lift n a, lift n b)
         | Fn ("<", [a,b]) =>
           blt (lift n a, lift n b)
+        | Fn ("slt", [a,b]) =>
+          bslt (lift n a, lift n b)
         | Fn (">", [a,b]) =>
           bgt (lift n a, lift n b)
         | Fn ("<=", [a,b]) =>
           ble (lift n a, lift n b)
+        | Fn ("sle", [a,b]) =>
+          bsle (lift n a, lift n b)
         | Fn (">=", [a,b]) =>
           bge (lift n a, lift n b)
         | Fn ("&", [a, b]) =>
@@ -280,12 +358,19 @@ local
           bite (lift n cond, lift n left, lift n right)
         | Fn (":", [a, Var ty]) =>
           lift (ty_to_int ty) a
-        | Var s => bden (bvarimm n s)
+        | Fn (fname, args) =>
+          raise ERR "lift"
+                ("parse error in function application: "
+                     ^ fname ^ ", arguments: " ^ PolyML.makestring args)
+        | Var s =>
+          if is_memory_var s
+          then
+            bden (bvarmem ((!quotation_default_size)
+                          ,(!quotation_default_size_byte)) s)
+          else bden (bvarimm n s)
         | Imm s => bconstii n (literal_from_string s)
                    handle Overflow =>
                           raise (ERR "lift" "integer overflow")
-  and lift_mem n m (Var s) = bden (bvarmem (n,m) s)
-    | lift_mem n m t = lift n t
 in
 val bir_expr_parser = term_parser (!expr_infixes) >> lift 64;
 end;
@@ -315,8 +400,8 @@ fun basic_stmt_parser obs_ty =
           >> (fn (var,(_,exp)) =>
                  let val lvalue =
                          if String.isPrefix "MEM" var
-                         then bvarmem (default_size,default_size_byte) var
-                         else bvarimm default_size var
+                         then bvarmem (!quotation_default_size,!quotation_default_size_byte) var
+                         else bvarimm (!quotation_default_size) var
                  in
                    bassign (lvalue,exp)
                  end
@@ -495,6 +580,16 @@ fun pp_term' ops =
 local
   open bir_expSyntax bir_immSyntax bir_valuesSyntax wordsSyntax;
   open bir_exp_immSyntax;
+  fun ty_to_string imm_type =
+      if is_Bit64 imm_type
+      then "64"
+      else if is_Bit32 imm_type
+      then "32"
+      else if is_Bit16 imm_type
+      then "16"
+      else if is_Bit8 imm_type
+      then "8"
+      else raise (ERR "immtype_to_string" "invalid imm type")
   fun immtype_to_string imm_type =
       if is_Bit64 imm_type
       then "Bit64"
@@ -517,6 +612,24 @@ local
       else if is_BIExp_Mult oper then "*"
       else if is_BIExp_Div oper then "/"
       else if is_BIExp_SignedDiv oper then "sdiv"
+      else if is_BIExp_And oper then "&"
+      else if is_BIExp_Or oper then "|"
+      else if is_BIExp_Xor oper then "^"
+      else if is_BIExp_Mod oper then "%"
+      else if is_BIExp_SignedMod oper then "smod"
+      else if is_BIExp_LeftShift oper then "<<"
+      else if is_BIExp_RightShift oper then ">>"
+      else if is_BIExp_SignedRightShift oper then "srsh"
+      else if is_BIExp_Equal oper then "=="
+      else if is_BIExp_NotEqual oper then "<>"
+      else if is_BIExp_LessThan oper then "<"
+      else if is_BIExp_LessOrEqual oper then "<="
+      else if is_BIExp_SignedLessThan oper then "slt"
+      else if is_BIExp_SignedLessOrEqual oper then "sle"
+      else if is_BIExp_UnsignedCast oper then "ucast"
+      else if is_BIExp_SignedCast oper then "scast"
+      else if is_BIExp_HighCast oper then "hcast"
+      else if is_BIExp_LowCast oper then "lcast"
       else raise (ERR "binop_to_string" "invalid binop")
   fun unlift_expr expr =
       if is_BExp_Const expr
@@ -558,6 +671,26 @@ local
       then let val (cond,left,right) = dest_BExp_IfThenElse expr
            in
              Fn ("__ite", [unlift_expr cond, unlift_expr left, unlift_expr right])
+           end
+      else if is_BExp_MemEq expr
+      then let val (a,b) = dest_BExp_MemEq expr
+           in
+             Fn ("memeq", [unlift_expr a, unlift_expr b])
+           end
+      else if is_BExp_Load expr
+      then let val (mem,addr,_,sz) = dest_BExp_Load expr
+           in
+             Fn ("ld" ^ (ty_to_string sz), [unlift_expr mem, unlift_expr addr])
+           end
+      else if is_BExp_Store expr
+      then let val (mem,addr,_,value) = dest_BExp_Store expr
+           in
+             Fn ("st", [unlift_expr mem, unlift_expr addr, unlift_expr value])
+           end
+      else if is_BExp_Cast expr
+      then let val (a,b,c) = dest_BExp_Cast expr
+           in
+             Fn (binop_to_string a, [unlift_expr b, Var (immtype_to_string c)])
            end
       else
         raise ERR "unlift_expr" "cannot pp this BExp"
@@ -673,14 +806,17 @@ fun pp_prog prog =
     end
 end
 
+fun prog_to_string' len fm = PP.pp_to_string len pp_prog fm;
+fun prog_to_string prog = prog_to_string' (!LINE_LENGTH) prog;
 
+(* Some examples *)
 val exp = BExp‘ucast (1 : Bit32) Bit8’
 
 val prog =
 BIR‘
 a:
-assert (X1 + 0)
-X1 = X2 + X4
+assert (X1 > 0)
+X1 = sdiv X2 4 + ld MEM X4 + 3
 jmp b
 b:
 halt X1
