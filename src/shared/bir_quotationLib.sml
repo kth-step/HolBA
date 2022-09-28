@@ -139,6 +139,10 @@ val lexer =
 
 val lex_str = lexer o mlibStream.from_list o explode;
 
+fun filter_comment [] = []
+  | filter_comment (";" :: ts) = []
+  | filter_comment (tok :: ts) =  tok :: filter_comment ts
+
 datatype fo_term =
          Var of string
          | Imm of string
@@ -486,7 +490,7 @@ val line_tokenise = String.tokens (fn x => x = #"\n");
 val default_obs_ty = (Type`:bir_val_t`);
 val parse_program =
     fst o ((bir_program_parser default_obs_ty ++ finished) >> fst)
-    o (mlibStream.map (mlibStream.from_list o lex_str))
+    o (mlibStream.map (mlibStream.from_list o filter_comment o lex_str))
     o mlibStream.from_list o line_tokenise;
 
 val loc_parser =
@@ -815,7 +819,7 @@ val exp = BExp‘ucast (1 : Bit32) Bit8’
 val prog =
 BIR‘
 a:
-assert (X1 > 0)
+assert (X1 > 0) ; this is a comment
 X1 = sdiv X2 4 + ld MEM X4 + 3
 jmp b
 b:
