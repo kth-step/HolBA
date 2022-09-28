@@ -10,8 +10,7 @@ Should be easy to change to suit your needs.
 Known issues and limitations:
 
 - Antiquoting is not supported. Unfortunately this hinders usability in proofs.
-  It could be implemented but it's a lot more work and requires a complete
-  pretty printer.
+  It could be implemented but it's a lot more work.
 
 - When a jump target is a string, it is interpreted as a static string label.
   This means the following program may not parse as one expects:
@@ -485,12 +484,19 @@ fun bir_program_parser obs_ty =
       prog_parser
     end;
 
-
 val line_tokenise = String.tokens (fn x => x = #"\n");
 val default_obs_ty = (Type`:bir_val_t`);
 val parse_program =
     fst o ((bir_program_parser default_obs_ty ++ finished) >> fst)
-    o (mlibStream.map (mlibStream.from_list o filter_comment o lex_str))
+    o (mlibStream.partial_map
+           (fn line =>
+               let val tokens = filter_comment (lex_str line)
+               in
+                 if null tokens
+                 then NONE
+                 else SOME (mlibStream.from_list tokens)
+               end)
+      )
     o mlibStream.from_list o line_tokenise;
 
 val loc_parser =
