@@ -88,7 +88,7 @@ fun do_symb_exec prog =
 				     [] => “BExp_Const (Imm1 1w)”
 				     | ge => bandl ge;
                 val obs_list = List.map (fn (oid,ec,eo,obsf) =>
-					    ((numSyntax.term_of_int o Arbnum.toInt) oid, ec, (hd eo))) obs;
+					    ((numSyntax.term_of_int o Arbnum.toInt) oid, ec, ((snd o dest_eq o concl o EVAL o hd) eo))) obs;
               in
                 (pcond_bexp, SOME obs_list)
               end;
