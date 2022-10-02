@@ -419,5 +419,49 @@ fun run_db_a_ignore t vs =
       (fields, data)
     end;
 
+
+  fun get_cexamples explistname =
+    let
+      val print_cexamples = ((embexp_logs_dir() ^ "/scripts/status.py") ^ " -ln " ^  explistname ^ " -pc");
+      val output = bir_exec_wrapLib.get_exec_output print_cexamples;
+      val lines = String.tokens (fn x => x = #"\n") output;
+      val marker_line = "========================================"
+      val cexamples = (List.foldl
+			   (fn (line, (l, active)) =>
+			       if active then (l@[line], active) else (l, line=marker_line))
+			   ([], false) lines);
+      val list_cexamples = (fn (l,_) => l) cexamples;
+    in
+      if List.null list_cexamples then NONE else SOME list_cexamples
+    end
+
+  fun get_exp_result exp_id exp_list_id =
+    let
+      fun find_exp_in_list exp_id =
+        let
+	  val e = List.find (fn (_,id) => (Arbnum.fromString exp_id) = id)
+			      (get_exp_list_entries exp_list_id)
+	in
+	  case e of
+            SOME (_, eh) => eh
+	  | NONE => raise ERR "find_exp_in_list" ""
+	end
+
+      val exp_hndl: exp_handle = find_exp_in_list exp_id;
+      val exp_metadata: logs_meta list = get_exp_metadata exp_hndl;
+      val lm: logs_meta option = List.find
+				   (fn LogsMeta (mt,v)=>
+				       case (dest_exp_meta_handle mt) of
+					 (_, SOME r, _) => r="result"
+				       | _ => false
+				   )
+				   exp_metadata;
+      val res = case lm of
+		  SOME meta => (fn LogsMeta (_,r) => r) meta
+		| NONE => raise ERR "get_exp_result" "";
+    in
+      res
+    end
+
 end (* local *)
 end (* struct *)

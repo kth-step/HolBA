@@ -50,5 +50,7 @@ signature persistenceLib = sig
   (* retrieving from logs *)
   (* ======================================== *)
   val runlogs_load_progs : string -> experimentsLib.experiment_prog list;
+  val get_last_exp_list_name : unit -> string;
+  val run_exp_list : string -> bool;
 
 end

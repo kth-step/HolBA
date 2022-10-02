@@ -90,6 +90,8 @@ val do_enum = ref false;
 val do_training = ref false;
 val do_conc_exec = ref false;
 val angr_symbexec = ref true;
+val do_patching = ref false;
+val patch_count = ref 0;
 
 val (current_prog_id : embexp_logsLib.prog_handle option ref) = ref NONE;
 val (current_prog : term option ref) = ref NONE;
@@ -446,6 +448,49 @@ fun next_experiment all_exps next_relation (entry,exits) =
     in ()
     end;
 
+fun patch_current_prog () =
+    let
+      open scamv_llvmLib;
+
+      fun update_llvm_progs patched_llvm_prog =
+	  current_llvm_progs := SOME (patched_llvm_prog::(valOf (!current_llvm_progs)));
+
+      (* val _ = patching_prog current_prog_id; *)
+      val patched_llvm_prog =
+	case (!current_llvm_prog) of
+	  SOME ((fname,fdesc,llvm_prog_bc), binprog) =>
+	    let
+	      val _ = print ("\nFunction: " ^ fname ^ "\n" ^ "File: " ^ llvm_prog_bc ^ "\n");
+	      val patched_llvm_prog_bc = llvm_insert_fence fname llvm_prog_bc;
+	      val patched_bin_prog = case patched_llvm_prog_bc of
+				       SOME patch_llvm_bc =>
+					 (patch_count := (!patch_count) + 1;
+					  SOME (compile_and_link_armv8_llvm_bc (binprog ^ (Int.toString (!patch_count))) patch_llvm_bc))
+				     | NONE => NONE;
+	    in
+	      ((fname, fdesc, patched_llvm_prog_bc), patched_bin_prog)
+	    end
+	| NONE => raise ERR "patch_current_prog" "there is no llvm program under analysis, llvm patching cannot happen"
+    in
+	case patched_llvm_prog of
+	    ((f,fd,SOME p), SOME b) => update_llvm_progs ((f,fd,p),b)
+	  | _ => patch_count := 0
+    end;
+
+fun run_last_exps () =
+    let
+      val exp_list_name = get_last_exp_list_name ();
+      val _ = run_exp_list exp_list_name;
+    in
+      if (!do_patching) then
+        let
+	  val cexamples = embexp_logsLib.get_cexamples exp_list_name
+	in
+	  if isSome cexamples then patch_current_prog () else ()
+	end
+      else ()
+    end;
+
 fun scamv_test_main tests (prog_id, prog_lifted, binfilename, list_entries_and_exits) =
     let
         val _ = reset();
@@ -488,7 +533,7 @@ fun scamv_test_main tests (prog_id, prog_lifted, binfilename, list_entries_and_e
               do_tests exit_threshold tests entry_and_exits
 	    end;
 
-	fun do_tests_with_entries_and_exits [] = ()
+	fun do_tests_with_entries_and_exits [] = if true then run_last_exps () else ()
 	  | do_tests_with_entries_and_exits (x::xs) =
 	    let
               val excep_handler =
@@ -584,7 +629,8 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
               , obs_model = obs_model, hw_obs_model = hw_obs_model
               , refined_obs_model = refined_obs_model, obs_projection = proj
               , verbosity = verb, seed_rand = seed_rand, do_training = train
-              , run_description = descr_o, exec_conc = doexecconc, angr_symbexec = angr_se } =
+              , run_description = descr_o, exec_conc = doexecconc, angr_symbexec = angr_se
+	      , do_patching = patching } =
     let
 
         val _ = bir_randLib.rand_isfresh_set seed_rand;
@@ -596,6 +642,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
         val _ = do_conc_exec := doexecconc;
         val _ = current_obs_projection := proj;
 	val _ = angr_symbexec := angr_se;
+	val _ = do_patching := patching;
         
         val prog_store_fun =
             match_prog_gen gen sz generator_param;
@@ -621,7 +668,8 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
           ("Train branch pred.   : " ^ PolyML.makestring (!do_training) ^ "\n") ^
           ("Execute concretely   : " ^ PolyML.makestring (!do_conc_exec) ^ "\n") ^
           ("Run description text : " ^ PolyML.makestring descr_o ^ "\n") ^
-	  ("Use angr symbolic execution : " ^ PolyML.makestring (!angr_symbexec) ^ "\n");
+	  ("Use angr symbolic execution : " ^ PolyML.makestring (!angr_symbexec) ^ "\n") ^
+	  ("Patching : " ^ PolyML.makestring (!do_patching) ^ "\n");
 
         val _ = run_log config_str;
         val _ = min_verb 1 (fn () => print config_str);

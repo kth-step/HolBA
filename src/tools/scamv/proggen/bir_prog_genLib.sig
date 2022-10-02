@@ -20,6 +20,16 @@ signature bir_prog_genLib = sig
   val lift_program_from_sections : bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list -> term
 
   (* ---------------------- *)
+  (* list of programs resulting from the LLVM phase *)
+  (* for each program: 
+      - function name
+      - function description (slicing)
+      - path filename of LLVM bitcode
+      - path filename of binary *)
+  val current_llvm_progs : ((string * string * string) * string) list option ref
+  val current_llvm_prog : ((string * string * string) * string) option ref
+												
+  (* ---------------------- *)
   (* program slingers       *)
   (* ---------------------- *)
 
@@ -33,7 +43,7 @@ signature bir_prog_genLib = sig
   val prog_gen_store_rand_slice      : int         -> unit -> embexp_logsLib.prog_handle * term * string * (Arbnum.num * Arbnum.num list) list
   val prog_gen_store_prefetch_stride : int         -> unit -> embexp_logsLib.prog_handle * term * string * (Arbnum.num * Arbnum.num list) list
 
-  val prog_gen_store_frombinary      : string->(string * string) option       -> unit -> embexp_logsLib.prog_handle * term * string * (Arbnum.num * Arbnum.num list) list
+  val prog_gen_store_frombinary      : string->(string * string * string) option       -> unit -> embexp_logsLib.prog_handle * term * string * (Arbnum.num * Arbnum.num list) list
 
   val prog_gen_store_fromllvm        : string      -> unit -> embexp_logsLib.prog_handle * term * string * (Arbnum.num * Arbnum.num list) list
 

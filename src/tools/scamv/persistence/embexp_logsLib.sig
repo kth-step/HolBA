@@ -77,6 +77,8 @@ sig
   val get_prog_metadata   : prog_handle -> logs_meta list;
   val get_exp_metadata    : exp_handle  -> logs_meta list;
 
+  (* retrieval of some data *)
+  val get_cexamples : string -> string list option
 
   (* queries *)
   val query_all_prog_lists : unit -> prog_list_handle list;

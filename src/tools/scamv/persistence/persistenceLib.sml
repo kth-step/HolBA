@@ -303,5 +303,34 @@ struct
       progs
     end;
 
+  fun get_last_exp_list_name () =
+    let
+      fun get_last_exp_list () =
+        case (query_all_exp_lists ()) of
+          [] => raise ERR "get_last_exp_list" "no list of experiments in the database"
+        | (x::nil) => x
+        | (x::xs) => List.last xs
+
+      val exp_list_id: exp_list_handle = get_last_exp_list ();
+      val exp_list_name = (fn (LogsList (n,d)) => n) ((hd o get_exp_lists) [exp_list_id]);
+    in
+      exp_list_name
+    end;
+
+  fun run_exp_list listname =
+    let
+      val cmd_run_exp_list = ((embexp_logs_dir() ^ "/scripts/run_batch.py") ^ " -bt rpi3" ^ " -ln " ^  listname)
+    in
+      OS.Process.isSuccess (OS.Process.system cmd_run_exp_list)
+    end;
+
+  fun run_single_exp exp_id =
+    let
+      val run_exp = ((embexp_logs_dir() ^ "/scripts/run_experiment.py") ^ " -br scamv_rpi3_progload " ^  exp_id);
+      val output = bir_exec_wrapLib.get_exec_output run_exp;
+    in
+      (output)
+    end;
+
 end
 

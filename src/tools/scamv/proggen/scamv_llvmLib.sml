@@ -161,7 +161,7 @@ fun extract_fun_with_recursive prog_bc fun_name =
 
 fun extract_multi_funs prog_bc fun_names =
     let
-      val filebc = "extracted-" ^ prog_bc;
+      val filebc = get_simple_tempfile ("extracted-" ^ prog_bc);
       val funs_to_extr = List.foldl (fn (f1,f2)=> (f2 ^ " -func " ^ f1)) "" fun_names;
       val cmd_extract_multi_funs = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "llvm-extract" ^
 				    funs_to_extr ^ " < " ^ prog_bc ^ " > " ^ filebc);
@@ -208,7 +208,7 @@ fun extract_bbs_from_fun (fun_name, fun_bc) ext_option =
 			     fun_bc ^ " -o " ^ sliced_fun_bc);
     in
       (if OS.Process.isSuccess (OS.Process.system cmd_extract_bbs)
-       then (fun_name, sliced_fun_bc)
+       then ((fun_name, SOME opt_str), sliced_fun_bc)
        else raise ERR "extract_bbs_from_fun" "cmd_extract_bbs")
     end
     
@@ -222,10 +222,10 @@ fun slice_func (fun_name, fun_bc) size =
 	  val ext_opts = get_extract_options (fun_name, fun_bc) size;
 	in
 	  if null ext_opts
-	  then [(fun_name, fun_bc)]
+	  then [((fun_name, NONE), fun_bc)] (* Note: maybe skip this *)
 	  else List.map (fn opt=> extract_bbs_from_fun (fun_name, fun_bc) opt) ext_opts
 	end
-      else [(fun_name, fun_bc)]
+      else [((fun_name, NONE), fun_bc)]
     end
 
 
@@ -251,21 +251,24 @@ fun llvm_initial_phase filebc llvm_option =
 			  else (List.concat (List.map (fn f => slice_func f 50) fun_renamed_bcs))
 			end;
 
-      val binfiles = List.map (fn (f,fbc) =>
+      val binfiles = List.map (fn ((f,fd), fbc) =>
 				  let
-				    val name = String.extract (fbc, ((List.length o String.explode) tempdir)+1, NONE);  
+				    val fd = if isSome fd then (valOf fd) else f;
+				    (* val name = String.extract (fbc, ((List.length o String.explode) tempdir)+1, NONE); *)
 				    val fname = (String.extract(fbc, 0, SOME (String.size fbc-3)));
 				    val linkedfilebc = link_missing_funs fname fbc filebc;
 				    (* val globs = get_glob_names filebc; *)
 				    (* val finalfilebc = link_missing_globs fname linkedfilebc filebc globs; *)
 				  in
-				    ((f, name, SOME (compile_and_link_armv8_llvm_bc fname linkedfilebc))
-				     handle HOL_ERR e => (print ("Compilation error:" ^ name ^ " \n");
-							  (f, name, NONE)))
+				    ((f, fd,
+				      fbc,
+				      SOME (compile_and_link_armv8_llvm_bc fname linkedfilebc))
+				     handle HOL_ERR e => (print ("Compilation error:" ^ fd ^ " \n");
+							  (f, fd, fbc, NONE)))
 				  end) sliced_fun_bcs;
       val _ = print "LLVM phase finished.\n";
     in
-      SOME (List.map (fn (f,nm,b)=> ((f,nm),valOf b)) (List.filter (fn (_,_,b)=> isSome b) binfiles))
+      SOME (List.map (fn (f,fd,fbc,b)=> ((f,fd,fbc),valOf b)) (List.filter (fn (_,_,_,b)=> isSome b) binfiles))
     end;
 
 (* val binfilename = "/home/tiziano/llvm-project/llvm/build/tiziano-tests/tea/tea-arm.bc"; *)
@@ -275,13 +278,19 @@ fun llvm_initial_phase filebc llvm_option =
 fun llvm_insert_fence fun_name filebc =
     let
       val _ = print "Adding fence...\n";
-      val fenced_prog_bc = get_simple_tempfile ("fenced_" ^ filebc);
-      val cmd_insert_fence = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt" ^
-			      " -fence-insertion -func_to_fence " ^ fun_name ^ " " ^  filebc ^ " -o " ^ fenced_prog_bc);
+      (* val fenced_prog_bc = get_simple_tempfile ("fenced_" ^ filebc); *)
+      val cmd_insert_fence = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt -enable-new-pm=0 -load " ^
+			      "/home/tiziano/llvm-project/llvm/build/lib/LLVMScamv.so" ^ " -fence-insertion -func_to_fence " ^
+			      fun_name ^ " " ^  filebc ^ " -o " ^ filebc);
+      val res = Int.fromString (get_exec_output_redirect false cmd_insert_fence);
     in
-      (if OS.Process.isSuccess (OS.Process.system cmd_insert_fence)
-       then fenced_prog_bc
-       else raise ERR "llvm_insert_fence" "cmd_insert_fence")
+      if isSome res
+      then
+	case (valOf res) of
+	    1 => (print "fence added\n"; SOME filebc)
+	  | 0 => (print "no fence added (you may have reached the maximum fencing)\n"; NONE)
+	  | _ => raise ERR "llvm_insert_fence" "result unknown"
+       else raise ERR "llvm_insert_fence" "cmd_insert_fence"
     end
 
 

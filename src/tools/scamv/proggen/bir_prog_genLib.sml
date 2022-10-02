@@ -174,9 +174,11 @@ struct
     end;
 
 (* ========================================================================================= *)
-(* working with a binary program *)
+(* working with LLVM and binary program *)
+(* ========================================================================================= *)
 
-  val (current_llvm_progs : ((string * string) * string) list option ref) = ref NONE;
+  val (current_llvm_progs : ((string * string * string) * string) list option ref) = ref NONE;
+  val (current_llvm_prog : ((string * string * string) * string) option ref) = ref NONE;
 
   fun process_binary binfilename =
       let
@@ -221,10 +223,10 @@ struct
 	| NONE => raise ERR "get_addr_for_section" "section address not found"
       end
 
-  fun prog_lifting_frombinary prog_gen_id args fundata () =
+  fun prog_lifting_frombinary prog_gen_id binfilename fundata () =
     let
-      val _ = print ("Prog: " ^ args ^ "\n");
-      val (region_map, sections) = process_binary args;
+      val _ = print ("Prog: " ^ binfilename ^ "\n");
+      val (region_map, sections) = process_binary binfilename;
       val lifted_prog = lift_program_from_sections sections;
 
       val add_lifted_prog = true;
@@ -234,23 +236,26 @@ struct
 
       val (fun_addr, func_metadata) =
 	case fundata of
-	  SOME (fname,desc) => (SOME (get_addr_by_section fname region_map), [("origin_source", desc)])
-	| NONE => (NONE, [("origin_source", args)]);
+	  SOME (fname,fdesc,llvm_prog_bc) => (SOME (get_addr_by_section fname region_map),
+					      [("pathfilename", llvm_prog_bc), ("function_description", fdesc)])
+	| NONE => (NONE, [("pathfilename", binfilename)]);
 
       val prog = mk_experiment_prog [];
-      val prog_id = run_create_prog ArchARM8 prog args ([("prog_gen_id", prog_gen_id)]@extra_metadata@func_metadata);
+      val prog_id = run_create_prog ArchARM8 prog binfilename ([("prog_gen_id", prog_gen_id)]@extra_metadata@func_metadata);
 
       val list_entries_and_exits = case fun_addr of
 				     SOME a =>  List.map define_entry_and_exits
 							 [valOf (List.find (fn BILMR (a,l) => a=(valOf fun_addr)) (sections))]
 				   | NONE => List.map define_entry_and_exits sections;
-
+      (* val list_entries_and_exits = [(Arbnum.fromInt 4194544, [Arbnum.fromInt 4195928, Arbnum.fromInt 4196072])]; *)
     in
-      (prog_id, lifted_prog, args, list_entries_and_exits)
+      (prog_id, lifted_prog, binfilename, list_entries_and_exits)
     end;
 
   fun prog_lifting_fromllvm prog_gen_id args () =
     let
+      val _ = current_llvm_prog := NONE;
+
       fun parse_args [filename] = (filename, NONE)
 	| parse_args [filename, option] = (filename, SOME option)
 	| parse_args _ =  raise ERR "parse_bin_gen_param" "binary generator parameter not well-defined!";
@@ -264,12 +269,14 @@ struct
 	| SOME [] => NONE
 	| SOME (x::xs) => let val _= current_llvm_progs := SOME xs in SOME x end
 
-      val llvm_out = llvm_phase args;
+      val _ = current_llvm_prog := llvm_phase args;
     in
-      case llvm_out of
+      case (!current_llvm_prog) of
 	  SOME (fundata, binfile) => prog_lifting_frombinary prog_gen_id binfile (SOME fundata) ()
 	| NONE => raise ERR "prog_lifting_fromllvm" "no other llvm program available"
     end
+
+(* ========================================================================================= *)
 
 (* load file to asm_lines (assuming it is correct assembly code with only forward jumps and no use of labels) *)
 (* ========================================================================================= *)
