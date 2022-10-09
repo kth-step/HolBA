@@ -463,5 +463,9 @@ fun run_db_a_ignore t vs =
       res
     end
 
+  fun get_exps_outside exp_ids =
+      get_exps exp_ids;
+
+
 end (* local *)
 end (* struct *)

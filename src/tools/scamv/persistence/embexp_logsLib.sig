@@ -79,6 +79,7 @@ sig
 
   (* retrieval of some data *)
   val get_cexamples : string -> string list option
+  val get_exps_outside : Arbnum.num list -> logs_exp list
 
   (* queries *)
   val query_all_prog_lists : unit -> prog_list_handle list;

@@ -92,6 +92,7 @@ val do_conc_exec = ref false;
 val angr_symbexec = ref true;
 val do_patching = ref false;
 val patch_count = ref 0;
+val do_run_exps = ref false;
 
 val (current_prog_id : embexp_logsLib.prog_handle option ref) = ref NONE;
 val (current_prog : term option ref) = ref NONE;
@@ -448,47 +449,114 @@ fun next_experiment all_exps next_relation (entry,exits) =
     in ()
     end;
 
-fun patch_current_prog () =
+fun patch_current_llvm_prog () =
     let
       open scamv_llvmLib;
 
-      fun update_llvm_progs patched_llvm_prog =
-	  current_llvm_progs := SOME (patched_llvm_prog::(valOf (!current_llvm_progs)));
-
-      (* val _ = patching_prog current_prog_id; *)
       val patched_llvm_prog =
 	case (!current_llvm_prog) of
 	  SOME ((fname,fdesc,llvm_prog_bc), binprog) =>
 	    let
-	      val _ = print ("\nFunction: " ^ fname ^ "\n" ^ "File: " ^ llvm_prog_bc ^ "\n");
+	      (* val _ = print ("\nFunction: " ^ fname ^ "\n" ^ "File: " ^ llvm_prog_bc ^ "\n"); *)
 	      val patched_llvm_prog_bc = llvm_insert_fence fname llvm_prog_bc;
 	      val patched_bin_prog = case patched_llvm_prog_bc of
 				       SOME patch_llvm_bc =>
 					 (patch_count := (!patch_count) + 1;
-					  SOME (compile_and_link_armv8_llvm_bc (binprog ^ (Int.toString (!patch_count))) patch_llvm_bc))
+					  SOME (compile_and_link_armv8_llvm_bc (binprog ^ (Int.toString (!patch_count))) patch_llvm_bc)
+					  handle HOL_ERR e => raise ERR "patch_current_llvm_prog" "error in compiling the patched LLVM program")
 				     | NONE => NONE;
 	    in
 	      ((fname, fdesc, patched_llvm_prog_bc), patched_bin_prog)
 	    end
 	| NONE => raise ERR "patch_current_prog" "there is no llvm program under analysis, llvm patching cannot happen"
     in
-	case patched_llvm_prog of
-	    ((f,fd,SOME p), SOME b) => update_llvm_progs ((f,fd,p),b)
-	  | _ => patch_count := 0
+      case patched_llvm_prog of
+	  ((f,fd,SOME p), SOME b) => SOME ((f,fd,p),b)
+	| _ => (patch_count := 0; NONE)
+    end;
+
+fun patch_current_prog_on_cexamples cexamples =
+    let
+      open embexp_logsLib;
+      open Json;
+
+      fun update_llvm_progs patched_llvm_prog =
+	  current_llvm_progs := SOME (patched_llvm_prog::(valOf (!current_llvm_progs)));
+
+      val stop = case patch_current_llvm_prog () of
+				SOME p => let
+      (* add to the list to be a new program to test *)
+      val _ = if false then update_llvm_progs p else ();
+      (* initialise a new run for the patched program *)
+      val _ = run_init (SOME "patch");
+
+      val ((_,fdesc,llvm_prog_bc), binfilename) = p;
+      val prog = mk_experiment_prog []; (* this is useless *)
+      val patched_prog_id =
+	run_create_prog
+	  ArchARM8
+	  prog
+	  binfilename
+	  ([("prog_gen_id", "prog_gen_frombinary")]@
+	   [("pathfilename", llvm_prog_bc), ("function_description", fdesc)]);
+
+      val exps = get_exps_outside (List.map (fn eid=> Arbnum.fromString eid) cexamples);
+
+      val exp_ids = List.map (fn LogsExp (_,_,params,OBJECT inputs,entry,ARRAY exits) =>
+				 let
+				   val exp_id =
+				     run_create_exp
+				       patched_prog_id
+				       ExperimentTypeStdTwo
+				       params
+				       (List.map (fn (s,j)=> (List.nth (String.tokens (fn x => x = #"_") s, 1), Json_to_machstate j)) inputs)
+				       entry
+				       (List.map (fn NUMBER (e) => e) exits)
+				       [("state_gen_id", !current_obs_model_id)];
+				   val exp_gen_message = "Generated experiment: " ^ (embexp_logsLib.exp_handle_toString exp_id);
+				   val _ = run_log_prog exp_gen_message;
+				 in exp_id end) exps;
+	  in false end
+	  | NONE => true (* raise ERR "patch_current_prog_on_cexamples" "no LLVM program to test" *)
+    in
+      stop
     end;
 
 fun run_last_exps () =
+    (* NOTE: A new run - (holba_run_refs (and exp_list_handle)) - for each program *)
     let
+      open embexp_logsLib;
       val exp_list_name = get_last_exp_list_name ();
+      (* val RunReferences (_,_,_,exp_list) = holba_run_id (); *)
+      (* val exp_list_name = (fn (LogsList (n,d)) => n) ((hd o get_exp_lists) [exp_list]); *)
+      val _ = print ("List exp: " ^ exp_list_name ^ "\n");
       val _ = run_exp_list exp_list_name;
     in
-      if (!do_patching) then
+     (if (!do_patching) then
         let
-	  val cexamples = embexp_logsLib.get_cexamples exp_list_name
+	  fun init_run_for_nex_prog () =
+	    (* Start a new run for the next program *)
+	    case (!current_llvm_progs) of
+		NONE => raise ERR "run_last_exps" "should never happen"
+	      | SOME [] => ()
+	      (* | SOME (l::nil) => () *)
+	      | SOME (l::ls) => run_init NONE;
+
+	  val cexamples = embexp_logsLib.get_cexamples exp_list_name;
 	in
-	  if isSome cexamples then patch_current_prog () else ()
+	  case cexamples of
+	    SOME cexps =>
+	    let
+	      val _ = print ("\n" ^ ((Int.toString o List.length) cexps)  ^ " counterexamples found\n");
+	      val continue = patch_current_prog_on_cexamples cexps
+	    in
+		if continue then
+		    init_run_for_nex_prog ()
+		else run_last_exps ()
+	    end
+	  | NONE => init_run_for_nex_prog ()
 	end
-      else ()
+      else ())
     end;
 
 fun scamv_test_main tests (prog_id, prog_lifted, binfilename, list_entries_and_exits) =
@@ -533,7 +601,7 @@ fun scamv_test_main tests (prog_id, prog_lifted, binfilename, list_entries_and_e
               do_tests exit_threshold tests entry_and_exits
 	    end;
 
-	fun do_tests_with_entries_and_exits [] = if true then run_last_exps () else ()
+	fun do_tests_with_entries_and_exits [] = if (!do_run_exps) then run_last_exps () else ()
 	  | do_tests_with_entries_and_exits (x::xs) =
 	    let
               val excep_handler =
@@ -643,6 +711,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
         val _ = current_obs_projection := proj;
 	val _ = angr_symbexec := angr_se;
 	val _ = do_patching := patching;
+	val _ = if (!do_patching) then do_run_exps := true else ();
         
         val prog_store_fun =
             match_prog_gen gen sz generator_param;
