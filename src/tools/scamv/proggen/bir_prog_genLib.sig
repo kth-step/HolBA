@@ -19,6 +19,10 @@ signature bir_prog_genLib = sig
   val process_asm_code : string -> bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list
   val lift_program_from_sections : bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list -> term
 
+  val process_binary : string -> (string * string * Arbnum.num) list * bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list
+  val define_entry_and_exits : bir_inst_liftingLibTypes.bir_inst_lifting_mem_region -> Arbnum.num * Arbnum.num list
+  val get_section_by_name : string -> (string * string * Arbnum.num) list * bir_inst_liftingLibTypes.bir_inst_lifting_mem_region list -> bir_inst_liftingLibTypes.bir_inst_lifting_mem_region option
+
   (* ---------------------- *)
   (* list of programs resulting from the LLVM phase *)
   (* for each program: 
@@ -28,7 +32,7 @@ signature bir_prog_genLib = sig
       - path filename of binary *)
   val current_llvm_progs : ((string * string * string) * string) list option ref
   val current_llvm_prog : ((string * string * string) * string) option ref
-												
+
   (* ---------------------- *)
   (* program slingers       *)
   (* ---------------------- *)

@@ -460,11 +460,15 @@ fun patch_current_llvm_prog () =
 	      (* val _ = print ("\nFunction: " ^ fname ^ "\n" ^ "File: " ^ llvm_prog_bc ^ "\n"); *)
 	      val patched_llvm_prog_bc = llvm_insert_fence fname llvm_prog_bc;
 	      val patched_bin_prog = case patched_llvm_prog_bc of
-				       SOME patch_llvm_bc =>
-					 (patch_count := (!patch_count) + 1;
-					  SOME (compile_and_link_armv8_llvm_bc (binprog ^ (Int.toString (!patch_count))) patch_llvm_bc)
-					  handle HOL_ERR e => raise ERR "patch_current_llvm_prog" "error in compiling the patched LLVM program")
-				     | NONE => NONE;
+					 SOME patch_llvm_bc =>
+					   let
+					     val _ = patch_count := (!patch_count) + 1;
+					     val bname = (binprog ^ (Int.toString (!patch_count)))
+					   in
+					     (SOME (compile_and_link_armv8_llvm_bc bname patch_llvm_bc)
+					      handle HOL_ERR e => raise ERR "patch_current_llvm_prog" "error in compiling the patched LLVM program")
+					   end
+				       | NONE => NONE;
 	    in
 	      ((fname, fdesc, patched_llvm_prog_bc), patched_bin_prog)
 	    end
@@ -483,6 +487,8 @@ fun patch_current_prog_on_cexamples cexamples =
       fun update_llvm_progs patched_llvm_prog =
 	  current_llvm_progs := SOME (patched_llvm_prog::(valOf (!current_llvm_progs)));
 
+      (* Note: always the same LLVM bitcode file will be modified,
+         there is no need to update the current_llvm_prog*)
       val stop = case patch_current_llvm_prog () of
 				SOME p => let
       (* add to the list to be a new program to test *)
@@ -490,19 +496,29 @@ fun patch_current_prog_on_cexamples cexamples =
       (* initialise a new run for the patched program *)
       val _ = run_init (SOME "patch");
 
-      val ((_,fdesc,llvm_prog_bc), binfilename) = p;
+      val ((fname,fdesc,llvm_prog_bc), binfilename) = p;
       val prog = mk_experiment_prog []; (* this is useless *)
       val patched_prog_id =
 	run_create_prog
 	  ArchARM8
 	  prog
 	  binfilename
-	  ([("prog_gen_id", "prog_gen_frombinary")]@
+	  ([("patchbinfile", binfilename)]@
 	   [("pathfilename", llvm_prog_bc), ("function_description", fdesc)]);
+
+      val (entry, exits) = let
+	                     val disassembly = process_binary binfilename;
+			     val section = get_section_by_name fname disassembly;
+			     val listEntryExits = List.map define_entry_and_exits [valOf section]
+                           in
+			     (case listEntryExits of
+				[(en: Arbnum.num, ex: Arbnum.num list)] => (en, ex)
+			      | _ => raise ERR "patch_current_prog_on_cexamples" "error in defining entry and exit points")
+			   end;
 
       val exps = get_exps_outside (List.map (fn eid=> Arbnum.fromString eid) cexamples);
 
-      val exp_ids = List.map (fn LogsExp (_,_,params,OBJECT inputs,entry,ARRAY exits) =>
+      val exp_ids = List.map (fn LogsExp (_,_,params,OBJECT inputs,_,_) =>
 				 let
 				   val exp_id =
 				     run_create_exp
@@ -511,7 +527,7 @@ fun patch_current_prog_on_cexamples cexamples =
 				       params
 				       (List.map (fn (s,j)=> (List.nth (String.tokens (fn x => x = #"_") s, 1), Json_to_machstate j)) inputs)
 				       entry
-				       (List.map (fn NUMBER (e) => e) exits)
+				       exits
 				       [("state_gen_id", !current_obs_model_id)];
 				   val exp_gen_message = "Generated experiment: " ^ (embexp_logsLib.exp_handle_toString exp_id);
 				   val _ = run_log_prog exp_gen_message;
@@ -527,8 +543,6 @@ fun run_last_exps () =
     let
       open embexp_logsLib;
       val exp_list_name = get_last_exp_list_name ();
-      (* val RunReferences (_,_,_,exp_list) = holba_run_id (); *)
-      (* val exp_list_name = (fn (LogsList (n,d)) => n) ((hd o get_exp_lists) [exp_list]); *)
       val _ = print ("List exp: " ^ exp_list_name ^ "\n");
       val _ = run_exp_list exp_list_name;
     in
@@ -548,9 +562,9 @@ fun run_last_exps () =
 	    SOME cexps =>
 	    let
 	      val _ = print ("\n" ^ ((Int.toString o List.length) cexps)  ^ " counterexamples found\n");
-	      val continue = patch_current_prog_on_cexamples cexps
+	      val skip = patch_current_prog_on_cexamples cexps
 	    in
-		if continue then
+		if skip then
 		    init_run_for_nex_prog ()
 		else run_last_exps ()
 	    end

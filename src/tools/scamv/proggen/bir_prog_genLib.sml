@@ -214,13 +214,13 @@ struct
 	(addr, find_ret_addrs (instructions, ref 0, []))
       end;
 
-  fun get_addr_by_section section region_map =
+  fun get_section_by_name name (region_map, sections) =
       let
-	val a = List.find (fn (_,s,_)=> String.isSubstring section s) region_map;
+	val out = List.find (fn (_,s,_)=> String.isSubstring name s) region_map;
       in
-	case a of
-	  SOME (_,_,addr) => addr
-	| NONE => raise ERR "get_addr_for_section" "section address not found"
+	case out of
+	  SOME (_,_,addr) => (List.find (fn BILMR (a,l) => a=addr) sections)
+	| NONE => raise ERR "get_section_by_name" "section not found"
       end
 
   fun prog_lifting_frombinary prog_gen_id binfilename fundata () =
@@ -234,18 +234,17 @@ struct
       val extra_metadata = if not add_lifted_prog then [] else
         [("lifted_prog", term_to_string_wtypes lifted_prog)];
 
-      val (fun_addr, func_metadata) =
+      val (fun_section, func_metadata) =
 	case fundata of
-	  SOME (fname,fdesc,llvm_prog_bc) => (SOME (get_addr_by_section fname region_map),
+	  SOME (fname,fdesc,llvm_prog_bc) => (get_section_by_name fname (region_map, sections),
 					      [("pathfilename", llvm_prog_bc), ("function_description", fdesc)])
 	| NONE => (NONE, [("pathfilename", binfilename)]);
 
       val prog = mk_experiment_prog [];
       val prog_id = run_create_prog ArchARM8 prog binfilename ([("prog_gen_id", prog_gen_id)]@extra_metadata@func_metadata);
 
-      val list_entries_and_exits = case fun_addr of
-				     SOME a =>  List.map define_entry_and_exits
-							 [valOf (List.find (fn BILMR (a,l) => a=(valOf fun_addr)) (sections))]
+      val list_entries_and_exits = case fun_section of
+				     SOME section =>  List.map define_entry_and_exits [section]
 				   | NONE => List.map define_entry_and_exits sections;
       (* val list_entries_and_exits = [(Arbnum.fromInt 4194544, [Arbnum.fromInt 4195928, Arbnum.fromInt 4196072])]; *)
     in
