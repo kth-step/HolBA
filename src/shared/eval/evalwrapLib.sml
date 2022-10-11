@@ -13,26 +13,21 @@ open computeLib;
  *)
 
 (*
- * evaluate a term  tm  in a context  ctxt : term list
+ * evaluate a term  tm  in a non-empty context  ctxt : term list
  * given list of constants   stop_consts1  and  stop_consts2
  * whose definition should not be unfolded in the first and second evaluation
  * step, respectively.
  *)
 fun eval_ctxt_gen stop_consts1 stop_consts2 ctxt tm =
   let
-    val assl = List.map ASSUME ctxt;
-    val depth = length assl;
+    val assl = map ASSUME ctxt;
   in
     RESTR_EVAL_CONV stop_consts1 tm
-    |> CONJ $ LIST_CONJ assl
-    |> CONV_RULE $ RAND_CONV $ RAND_CONV $ REWRITE_CONV assl
+    |> CONJ (PROVE_HYP (LIST_CONJ assl) TRUTH)
+    |> CONJUNCT2
+    |> CONV_RULE $ RAND_CONV $ REWRITE_CONV assl
+    |> CONV_RULE $ RAND_CONV $ RESTR_EVAL_CONV stop_consts2
     |> DISCH_ALL
-    |> REWRITE_RULE[IMP_CONJ_THM]
-    (* evaluated term comes last in above CONJ *)
-    |> CONJUNCTS |> last
-    (* eval the rightmost path (depth-many implications plus one for
-       right-hand side of EVAL equality) *)
-    |> CONV_RULE $ PATH_CONV (funpow depth (fn x => x ^ "r") "r") $ RESTR_EVAL_CONV stop_consts2
     |> GEN_ALL
   end;
 
