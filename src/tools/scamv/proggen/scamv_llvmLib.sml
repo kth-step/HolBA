@@ -184,6 +184,23 @@ fun analyze_func (fun_name, fun_bc) threshold_ninst =
       else raise ERR "analyze_func" "Instruction counting doesn't work"
     end
 
+ fun peel_and_delete_loops (fun_name, filebc) =
+    let
+      val cmd_unroll_loops = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt" ^
+			      " -mem2reg -simplifycfg -loops -loop-simplify -loop-unroll -unroll-peel-count=2 -unroll-allow-partial -simplifycfg " ^
+			      filebc ^ " -o " ^ filebc);
+      val cmd_delete_loops = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt -reg2mem -enable-new-pm=0 -load " ^
+			      "/home/tiziano/llvm-project/llvm/build/lib/LLVMScamv.so" ^ " -extend-loop-deletion " ^
+			      filebc ^ " -o " ^ filebc);
+    in
+      (if OS.Process.isSuccess (OS.Process.system cmd_unroll_loops)
+       then
+         if OS.Process.isSuccess (OS.Process.system cmd_delete_loops)
+	 then (fun_name, filebc)
+	 else raise ERR "link_missing_globs" "cmd_delete_loops"
+       else raise ERR "peel_and_delete_loops" "cmd_unroll_loops")
+    end
+
 fun get_extract_options (fun_name, fun_bc) threshold =
     let
       val cmd_slicing = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt -enable-new-pm=0 -load " ^
@@ -234,7 +251,8 @@ fun llvm_initial_phase filebc llvm_option =
       val _ = print "LLVM phase...\n";
       val func_names = get_fun_names filebc;
       val extracted_fun_bcs = List.map (fn f => extract_fun_with_recursive filebc f) func_names;
-      val fun_renamed_bcs = List.map (fn f => metarenamer_bbs f) extracted_fun_bcs;
+      val fun_w_loops_del_bcs = List.map (fn f => peel_and_delete_loops f) extracted_fun_bcs;
+      val fun_renamed_bcs = List.map (fn f => metarenamer_bbs f) fun_w_loops_del_bcs;
 
       val sliced_fun_bcs = let val manually = isSome llvm_option;
 			in
@@ -248,7 +266,7 @@ fun llvm_initial_phase filebc llvm_option =
 				else
 				  raise ERR "llvm_initial_phase" "the specified function was not found")
 			    end
-			  else (List.concat (List.map (fn f => slice_func f 50) fun_renamed_bcs))
+			  else (List.concat (List.map (fn f => slice_func f 3000) fun_renamed_bcs))
 			end;
 
       val binfiles = List.map (fn ((f,fd), fbc) =>
@@ -272,6 +290,7 @@ fun llvm_initial_phase filebc llvm_option =
     end;
 
 (* val binfilename = "/home/tiziano/llvm-project/llvm/build/tiziano-tests/tea/tea-arm.bc"; *)
+(* val binfilename = "/home/tiziano/llvm-project/llvm/build/tiziano-tests/libsodium-aarch64/crypto_onetimeauth_poly1305_donna/poly1305-donna/poly1305_update-O1.bc"; *)
 (* val filebc = binfilename; *)
 
 
