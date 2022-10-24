@@ -2,7 +2,7 @@ structure evalwrapLib :> evalwrapLib =
 struct
 
 open HolKernel Parse boolLib bossLib;
-open computeLib;
+open computeLib hurdUtils;
 
 (*
  * This file offers functionality to evaluate a term given preconditions.
@@ -28,32 +28,18 @@ fun unify_same_free_vars ctxt tm =
   end;
 
 (*
- * evaluate a term  tm  in a non-empty context  ctxt : term list
+ * evaluate a term  tm  in a non-empty context  ctxt : thm
  * given list of constants   stop_consts1  and  stop_consts2
  * whose definition should not be unfolded in the first and second evaluation
  * step, respectively.
  *)
 fun eval_ctxt_gen stop_consts1 stop_consts2 ctxt tm =
-  let
-    val assl = map ASSUME ctxt;
-  in
-    RESTR_EVAL_CONV stop_consts1 tm
-    |> PROVE_HYP (LIST_CONJ assl)
-    |> CONV_RULE $ RAND_CONV
-      (REWRITE_CONV assl THENC RESTR_EVAL_CONV stop_consts2)
-    |> DISCH_ALL
-    |> GEN_ALL
-  end;
-
-(* dest_conj_list : term -> term list *)
-(* like CONJUNCTS but for a term *)
-fun dest_conj_list tm =
-  if can dest_conj tm
-  then
-    let val (x,y) = dest_conj tm
-    in dest_conj_list x @ dest_conj_list y
-    end
-  else [tm]
+  RESTR_EVAL_CONV stop_consts1 tm
+  |> PROVE_HYP ctxt
+  |> CONV_RULE $ RAND_CONV
+    (REWRITE_CONV [ctxt] THENC RESTR_EVAL_CONV stop_consts2)
+  |> DISCH_CONJUNCTS_ALL
+;
 
 (*
  * same as eval_ctxt_gen but unifies free variables in  ctxt_tm  and  tm ,
@@ -71,7 +57,7 @@ fun eval_ctxt_unify stop_consts1 stop_consts2 ctxt_tm tm =
   let
     val (ctxt_tm,tm) = unify_same_free_vars ctxt_tm tm
   in
-    eval_ctxt_gen stop_consts1 stop_consts2 (dest_conj_list ctxt_tm) tm
+    eval_ctxt_gen stop_consts1 stop_consts2 (ASSUME ctxt_tm) tm
   end
 
 (*
@@ -82,6 +68,6 @@ fun eval_ctxt_unify stop_consts1 stop_consts2 ctxt_tm tm =
  *   ⊢ ∀g f. f 3 = 24 ⇒ (g ∘ f) (1 + 2) = g 24: thm
  *)
 fun qeval_ctxt ctxt tm =
-  eval_ctxt_gen [] [] (map Term ctxt) $ Term tm
+  eval_ctxt_gen [] [] (ASSUME $ list_mk_conj $ map Term ctxt) (Term tm)
 
 end
