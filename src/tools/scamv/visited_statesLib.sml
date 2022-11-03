@@ -49,8 +49,9 @@ fun add_visited vmap pspec t =
 
 fun lookup_visited vmap pspec =
     let val x = find (vmap,pspec);
-        val _ = print "Visited lookup: ";
-        val _ = print_term x;
+        val _ = min_verb 2 (fn () =>
+	  (print "Visited lookup: ";
+	   print_term x));
     in
       x
     end;

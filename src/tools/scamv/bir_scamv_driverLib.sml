@@ -349,7 +349,7 @@ fun next_experiment all_exps next_relation (entry,exits) =
             valOf (next_relation guard_path_spec)
 		        handle Option =>
                        raise ERR "next_experiment" "next_relation returned a NONE";
-        val _ = min_verb 1 (fn () =>
+        val _ = min_verb 2 (fn () =>
                                (print "Selected path: ";
                                 print (PolyML.makestring path_spec);
                                 print "\n"));
