@@ -33,7 +33,7 @@ fun compute_training_state current_full_specs current_obs_projection
                                                  ("no path spec found that exercises path "
                                                   ^ PolyML.makestring (path_id_of new_path))
 					 | SOME s => s
-			val new_word_relation =  make_word_relation (rel_synth_jit new_spec current_obs_projection path_struct) false;
+			val new_word_relation =  make_word_relation (rel_synth_jit new_spec current_obs_projection path_struct true) false;
 			    
 			val _ =  min_verb 4 (fn () =>
 						(print ("Training path: " ^ PolyML.makestring new_path))

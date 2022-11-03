@@ -15,7 +15,7 @@ sig
 
     val rel_synth_jit :
         scamv_path_structLib.path_spec ->
-        int -> scamv_path_structLib.path_struct -> exp
+        int -> scamv_path_structLib.path_struct -> bool -> exp
 
     val rel_synth_init :
         scamv_path_structLib.path_struct ->

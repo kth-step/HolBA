@@ -262,7 +262,8 @@ infix 5 mem;
 fun rel_synth_jit
         (spec as {a_run = (a_path, a_obs_spec), b_run = (b_path, b_obs_spec)})
         obs_projection
-        path_struct =
+        path_struct
+	is_traning =
     let val SOME (path (_,a_cond,a_obs)) = lookup_path a_path path_struct;
         val SOME (path (_,b_cond_unprimed,b_obs_unprimed)) =
             lookup_path b_path path_struct;
@@ -285,11 +286,15 @@ fun rel_synth_jit
                 [] => btrue
               | xs => bandl xs;
     in
+      if not is_traning then
         band (a_cond,
               band (b_cond,
                     bandl' [bandl' a_obs_cond, bandl' b_obs_cond,
                             band (mk_bir_list_eq a_obs_terms_base b_obs_terms_base
                                  ,bnot (if null a_obs_terms_refined andalso null b_obs_terms_refined then bfalse else mk_bir_list_eq a_obs_terms_refined b_obs_terms_refined))]))
+      else
+	(* Note: the path condition of the other branch is enough for the training state *)
+	band (a_cond, b_cond)
     end
     handle Bind =>
            raise ERR "rel_synth_jit"
@@ -343,7 +348,7 @@ fun rel_synth_init ps obs_projection (env : enum_env) =
                             bir_exp_pretty_print constraint;
                             print "\n")
                       else ();
-          in SOME (spec, band (band (rel_synth_jit spec obs_projection ps, constraint)
+          in SOME (spec, band (band (rel_synth_jit spec obs_projection ps false, constraint)
                               ,validity))
              handle e => (print (PolyML.makestring e ^ "\n");
                           print (PolyML.makestring spec ^ "\n");
