@@ -177,7 +177,7 @@ local
                “(^u, ^l, ^var)”
              end
         else
-          let val sz = size_of_bir_immtype_t (dest_BType_Imm (bir_type_of expr))
+          let val sz = size_of_bir_immtype_t (dest_BType_Imm (bir_type_of ((snd o dest_eq o concl o EVAL) expr)))
           in
             “(^(term_of_int (Int.- (sz,1))), 0:num, ^expr)”
           end

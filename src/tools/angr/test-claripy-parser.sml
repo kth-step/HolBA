@@ -120,6 +120,59 @@ val angr_exp_testcases = [
 (* ,("<Bool ((0#56 .. (MEM[<BV64 (R1_5_64) + (0x40#64)>]_0_8)) + (0x40#64)) == (0x0#64)>", *)
    (* ``FIX``, false) *)
 
+,("<Bool (0#32 .. ((0#16 .. (MEM[<BV64 (R0_4_64) + (0x80100008#64)>]_0_16)) << (0x9#32))) != (0x0#64)>",
+   ``BExp_BinPred BIExp_NotEqual
+  (BExp_AppendMask
+     [(31,0,BExp_Const (Imm32 0w));
+      (31,0,
+       BExp_BinExp BIExp_LeftShift
+         (BExp_AppendMask
+            [(15,0,BExp_Const (Imm16 0w));
+             (15,0,
+              BExp_Load ^default_mem
+                (BExp_BinExp BIExp_Plus
+                   (BExp_Den (BVar "R0" (BType_Imm Bit64)))
+                   (BExp_Const (Imm64 0x80100008w))) BEnd_LittleEndian Bit16)])
+         (BExp_Const (Imm32 9w)))]) (BExp_Const (Imm64 0w))``, true)
+
+,("<Bool (((0xffffffff#64) & (0#32 .. ((0#16 .. (0#8 .. (MEM[<BV64 (R0_4_64) + (0x80100008#64)>]_0_8))) << (0x9#32)))) | ((0xffffffff00000000#64) & (if (((0#16 .. (0#8 .. (MEM[<BV64 (R0_4_64) + (0x80100008#64)>]_0_8))) << (0x9#32)) & (0x80000000#32)) != (0x0#32) then 0xffffffffffffffff#64 else 0x0#64))) + (0x80100018#64) != (0x0#64)>",          (* Note: EVAL the size is slow *)
+   ``BExp_BinPred BIExp_NotEqual
+  (BExp_BinExp BIExp_Plus
+     (BExp_BinExp BIExp_Or
+        (BExp_BinExp BIExp_And (BExp_Const (Imm64 0xFFFFFFFFw))
+           (BExp_AppendMask
+              [(31,0,BExp_Const (Imm32 0w));
+               (31,0,
+                BExp_BinExp BIExp_LeftShift
+                  (BExp_AppendMask
+                     [(15,0,BExp_Const (Imm16 0w));
+                      (7,0,BExp_Const (Imm8 0w));
+                      (7,0,
+                       BExp_Load ^default_mem
+                         (BExp_BinExp BIExp_Plus
+                            (BExp_Den (BVar "R0" (BType_Imm Bit64)))
+                            (BExp_Const (Imm64 0x80100008w)))
+                         BEnd_LittleEndian Bit8)]) (BExp_Const (Imm32 9w)))]))
+        (BExp_BinExp BIExp_And (BExp_Const (Imm64 0xFFFFFFFF00000000w))
+           (BExp_IfThenElse
+              (BExp_BinPred BIExp_NotEqual
+                 (BExp_BinExp BIExp_And
+                    (BExp_BinExp BIExp_LeftShift
+                       (BExp_AppendMask
+                          [(15,0,BExp_Const (Imm16 0w));
+                           (7,0,BExp_Const (Imm8 0w));
+                           (7,0,
+                            BExp_Load ^default_mem
+                              (BExp_BinExp BIExp_Plus
+                                 (BExp_Den (BVar "R0" (BType_Imm Bit64)))
+                                 (BExp_Const (Imm64 0x80100008w)))
+                              BEnd_LittleEndian Bit8)])
+                       (BExp_Const (Imm32 9w)))
+                    (BExp_Const (Imm32 0x80000000w))) (BExp_Const (Imm32 0w)))
+              (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFFw))
+              (BExp_Const (Imm64 0w))))) (BExp_Const (Imm64 0x80100018w)))
+  (BExp_Const (Imm64 0w))``, true)
+
 ,("<Bool R2_3_32 + 0xa#32 .. 0x8#32 ^ R3_4_32 != 1#64>",
    ``BExp_BinPred BIExp_NotEqual
   (BExp_AppendMask
