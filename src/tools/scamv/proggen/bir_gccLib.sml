@@ -53,6 +53,18 @@ val lines = "";
       path_asm_da
     end;
 
+  fun bir_gcc_remove_data_section binfilename =
+    let
+      val gcc_prefix = gcc_prefix ();
+      val path_bin_strip = get_simple_tempfile "asm-strip";
+
+      val commandline = (gcc_prefix ^ "strip --remove-section=.data " ^ binfilename ^ " -o " ^ path_bin_strip);
+      val _ = if OS.Process.isSuccess (OS.Process.system commandline) then ()
+              else raise ERR "bir_gcc_disassemble" "disassembly failed somehow";
+    in
+      path_bin_strip
+    end;
+
 end (* local *)
 
 end (* struct *)

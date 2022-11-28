@@ -420,9 +420,10 @@ fun run_db_a_ignore t vs =
     end;
 
 
-  fun get_cexamples explistname =
+  fun get_cexamples explistname bt =
     let
-      val print_cexamples = ((embexp_logs_dir() ^ "/scripts/status.py") ^ " -ln " ^  explistname ^ " -pc");
+      val print_cexamples = ((embexp_logs_dir() ^ "/scripts/status.py") ^
+			     " -bt " ^ bt ^ " -ln " ^  explistname ^ " -pc");
       val output = bir_exec_wrapLib.get_exec_output print_cexamples;
       val lines = String.tokens (fn x => x = #"\n") output;
       val marker_line = "========================================"

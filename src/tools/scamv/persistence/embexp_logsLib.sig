@@ -78,7 +78,7 @@ sig
   val get_exp_metadata    : exp_handle  -> logs_meta list;
 
   (* retrieval of some data *)
-  val get_cexamples : string -> string list option
+  val get_cexamples : string -> string -> string list option
   val get_exps_outside : Arbnum.num list -> logs_exp list
 
   (* queries *)

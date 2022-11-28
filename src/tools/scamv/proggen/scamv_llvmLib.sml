@@ -23,6 +23,12 @@ fun llvm_scamv_lib () =
           NONE => raise ERR "scamv_llvm_lib" "the environment variable HOLBA_LLVMSCAMV_DIR is not set"
         | SOME p => (p ^ "/build/src/LLVMScamv.so");
 
+fun linker_path () =
+      case Option.mapPartial (fn p => if p <> "" then SOME p else NONE)
+                             (OS.Process.getEnv("HOLBA_LLVMSCAMV_DIR")) of
+          NONE => raise ERR "scamv_llvm_lib" "the environment variable HOLBA_LLVMSCAMV_DIR is not set"
+        | SOME p => (p ^ "/linker.ld");
+
 fun get_exec_output_redirect do_print exec_cmd =
     let
       val outputfile = get_tempfile "exec_output" ".txt";
@@ -42,10 +48,16 @@ fun get_exec_output_redirect do_print exec_cmd =
       s
     end;
 
-fun compile_and_link_armv8_llvm_bc binfilename bcfile =
+fun compile_and_link_armv8_llvm_bc binfilename bcfile bt =
     let
+      val bt_opt = if bt = "rpi3" then "-target aarch64-linux-gnu -march=armv8-a -mcpu=cortex-a53"
+		   else if bt = "rpi4" then "-target aarch64-linux-gnu -march=armv8-a -mcpu=cortex-a72"
+		   else raise ERR "compile_and_link_armv8_llvm_bc" "unknown board type"
+      val linker_opt = "-Xlinker -T " ^ "/home/tiziano/llvm-project/llvm/build/tiziano-tests" ^ "/linker.ld ";
       val cmd_static_link = ("/home/tiziano/llvm-project/llvm/build/bin/" ^
-			     "clang -target aarch64-linux-gnu -march=armv8-a -mcpu=cortex-a53 -Wall -g -mgeneral-regs-only -static -nostartfiles " ^ bcfile ^ " -o " ^ binfilename);
+			     "clang " ^ bt_opt ^
+			     " -Wall -g -mgeneral-regs-only -static -nostartfiles " ^ linker_opt ^
+			     bcfile ^ " -o " ^ binfilename);
     in
       if OS.Process.isSuccess (OS.Process.system cmd_static_link)
       then binfilename
@@ -197,7 +209,7 @@ fun analyze_func (fun_name, fun_bc) threshold_ninst =
        then
          if OS.Process.isSuccess (OS.Process.system cmd_delete_loops)
 	 then (fun_name, filebc)
-	 else raise ERR "link_missing_globs" "cmd_delete_loops"
+	 else raise ERR "peel_and_delete_loops" "cmd_delete_loops"
        else raise ERR "peel_and_delete_loops" "cmd_unroll_loops")
     end
 
@@ -280,7 +292,7 @@ fun llvm_initial_phase filebc llvm_option =
 				  in
 				    ((f, fd,
 				      fbc,
-				      SOME (compile_and_link_armv8_llvm_bc fname linkedfilebc))
+				      SOME (compile_and_link_armv8_llvm_bc fname finalfilebc "rpi4"))
 				     handle HOL_ERR e => (print ("Compilation error:" ^ fd ^ " \n");
 							  (f, fd, fbc, NONE)))
 				  end) sliced_fun_bcs;

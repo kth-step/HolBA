@@ -241,12 +241,12 @@ struct
 	| NONE => (NONE, [("pathfilename", binfilename)]);
 
       val prog = mk_experiment_prog [];
-      val prog_id = run_create_prog ArchARM8 prog binfilename ([("prog_gen_id", prog_gen_id)]@extra_metadata@func_metadata);
+      val binstripped = bir_gcc_remove_data_section binfilename;
+      val prog_id = run_create_prog ArchARM8 prog binstripped ([("prog_gen_id", prog_gen_id)]@extra_metadata@func_metadata);
 
       val list_entries_and_exits = case fun_section of
 				     SOME section =>  List.map define_entry_and_exits [section]
 				   | NONE => List.map define_entry_and_exits sections;
-      (* val list_entries_and_exits = [(Arbnum.fromInt 4194544, [Arbnum.fromInt 4195928, Arbnum.fromInt 4196072])]; *)
     in
       (prog_id, lifted_prog, binfilename, list_entries_and_exits)
     end;

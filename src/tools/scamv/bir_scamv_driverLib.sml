@@ -93,6 +93,7 @@ val angr_symbexec = ref true;
 val do_patching = ref false;
 val patch_count = ref 0;
 val do_run_exps = ref false;
+val board_type = ref "";
 
 val (current_prog_id : embexp_logsLib.prog_handle option ref) = ref NONE;
 val (current_prog : term option ref) = ref NONE;
@@ -463,9 +464,9 @@ fun patch_current_llvm_prog () =
 					 SOME patch_llvm_bc =>
 					   let
 					     val _ = patch_count := (!patch_count) + 1;
-					     val bname = (binprog ^ (Int.toString (!patch_count)))
+					     val bname = (binprog ^ "_" ^ (Int.toString (!patch_count)))
 					   in
-					     (SOME (compile_and_link_armv8_llvm_bc bname patch_llvm_bc)
+					     (SOME (compile_and_link_armv8_llvm_bc bname patch_llvm_bc (!board_type))
 					      handle HOL_ERR e => raise ERR "patch_current_llvm_prog" "error in compiling the patched LLVM program")
 					   end
 				       | NONE => NONE;
@@ -498,11 +499,12 @@ fun patch_current_prog_on_cexamples cexamples =
 
       val ((fname,fdesc,llvm_prog_bc), binfilename) = p;
       val prog = mk_experiment_prog []; (* this is useless *)
+      val binstripped = bir_gccLib.bir_gcc_remove_data_section binfilename;
       val patched_prog_id =
 	run_create_prog
 	  ArchARM8
 	  prog
-	  binfilename
+	  binstripped
 	  ([("patchbinfile", binfilename)]@
 	   [("pathfilename", llvm_prog_bc), ("function_description", fdesc)]);
 
@@ -544,19 +546,19 @@ fun run_last_exps () =
       open embexp_logsLib;
       val exp_list_name = get_last_exp_list_name ();
       val _ = print ("List exp: " ^ exp_list_name ^ "\n");
-      val _ = run_exp_list exp_list_name;
+      val _ = run_exp_list exp_list_name (!board_type);
     in
      (if (!do_patching) then
         let
 	  fun init_run_for_nex_prog () =
 	    (* Start a new run for the next program *)
 	    case (!current_llvm_progs) of
-		NONE => raise ERR "run_last_exps" "should never happen"
+		NONE => raise ERR "run_last_exps::init_run_for_nex_prog" "should never happen"
 	      | SOME [] => ()
 	      (* | SOME (l::nil) => () *)
 	      | SOME (l::ls) => run_init NONE;
 
-	  val cexamples = embexp_logsLib.get_cexamples exp_list_name;
+	  val cexamples = embexp_logsLib.get_cexamples exp_list_name (!board_type);
 	in
 	  case cexamples of
 	    SOME cexps =>
@@ -726,6 +728,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
 	val _ = angr_symbexec := angr_se;
 	val _ = do_patching := patching;
 	val _ = if (!do_patching) then do_run_exps := true else ();
+	val _ = board_type := "rpi4";
         
         val prog_store_fun =
             match_prog_gen gen sz generator_param;

@@ -317,9 +317,10 @@ struct
       exp_list_name
     end;
 
-  fun run_exp_list listname =
+  fun run_exp_list listname bt =
     let
-      val cmd_run_exp_list = ((embexp_logs_dir() ^ "/scripts/run_batch.py") ^ " -bt rpi3" ^ " -ln " ^  listname)
+      val cmd_run_exp_list = ((embexp_logs_dir() ^ "/scripts/run_batch.py") ^
+			      " -bt " ^ bt ^ " -ln " ^  listname)
     in
       OS.Process.isSuccess (OS.Process.system cmd_run_exp_list)
     end;
