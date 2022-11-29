@@ -166,7 +166,7 @@ val n_dict_2 = cfg_update_nodes_gen "update_node_guess_type_call"
 
 
     val hack_map_3
-             = [(0x10000bb0, "469F (mov pc, r3)", CFGNT_Jump, [
+             = [(0x10000bb0, "469F (mov pc, r3)", CFGNT_Jump, [ (* mov pc, r3 <0x10000be2, 0x10000be6, 0x10000c3c, 0x10000d0a, 0x10000d14, 0x10000d18, 0x10000d20> *)
                          "10000c3c",
                          "10000be6",
                          "10000be6",
@@ -184,7 +184,7 @@ val n_dict_2 = cfg_update_nodes_gen "update_node_guess_type_call"
                          "10000d18",
                          "10000d20"
                        ]),
-                    (0x1000060c, "4697 (mov pc, r2)", CFGNT_Jump, [
+                    (0x1000060c, "4697 (mov pc, r2)", CFGNT_Jump, [ (* mov pc, r2 <0x10000620, 0x1000065e, 0x10000682, 0x100006fe, 0x1000070a, 0x10000722, 0x10000754> *)
                          "10000722",
                          "1000065e",
                          "10000682",
@@ -202,7 +202,7 @@ val n_dict_2 = cfg_update_nodes_gen "update_node_guess_type_call"
                          "10000754",
                          "1000070a"
                        ]),
-                    (0x100006b2, "4697 (mov pc, r2)", CFGNT_Jump, [
+                    (0x100006b2, "4697 (mov pc, r2)", CFGNT_Jump, [ (* mov pc, r2 <0x1000061e, 0x1000065e, 0x10000682, 0x100006fe, 0x10000708, 0x10000754> *)
                          "1000065e",
                          "1000065e",
                          "10000682",
