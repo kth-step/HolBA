@@ -65,10 +65,10 @@ val sums        = [(*sum_timer_read,*)
                    sum___aeabi_fdiv];
 
 val entry_label     = "imu_handler_pid_entry";
-val entry_label_sub = "pid_msg_write"; (* don't go into pid_msg_write *)
+(*val entry_label_sub = "pid_msg_write"; (* don't go into pid_msg_write *)*)
 
 val lbl_tm      = find_func_lbl_tm entry_label;
-val end_lbl_tms = (find_func_lbl_tm entry_label_sub)::(find_func_ends n_dict entry_label);
+val end_lbl_tms = (*(find_func_lbl_tm entry_label_sub)::*)(find_func_ends n_dict entry_label);
 
 val usage = commonBalrobScriptLib.get_fun_usage entry_label;
 
