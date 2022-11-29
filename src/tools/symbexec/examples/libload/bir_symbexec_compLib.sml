@@ -467,7 +467,12 @@ val exp = ``BExp_Const (Imm32 3105w)``;
         (print "!!! loading from device memory!\n";
          get_symbv_bexp_free_sz "devload" sz)
       else if Arbnum.<= (Arbnum.+ (mem_const_size, mem_globl_size), ldaddr) then
-        raise ERR "mem_load_const" "const/global load out of corresponding memory range"
+        (print (Arbnum.toHexString mem_const_size);
+         print ("\n");
+         print (Arbnum.toHexString mem_globl_size);
+         print ("\n");
+         print (Arbnum.toHexString ldaddr);
+         raise ERR "mem_load_const" "const/global load out of corresponding memory range")
       else if Arbnum.<= (mem_const_size, ldaddr) then
         (* global load *)
         (

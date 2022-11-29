@@ -216,6 +216,8 @@ in (* outermost local *)
       val use_mem_symbolic = true;
 
       val syst = init_state lbl_tm prog_vars;
+      val _ = print "initial state at: ";
+      val _ = print_term lbl_tm;
 
       val syst =
         if use_countw_const_only then
@@ -236,6 +238,9 @@ in (* outermost local *)
                    "init_pred"
                    (pred_conjs usage)
                    syst;
+
+      val _ = if check_feasible syst then () else
+              raise ERR "init_summary" "initial state infeasible, check path condition";
 
       val _ = print "initial state created.\n\n";
     in

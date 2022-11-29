@@ -286,6 +286,7 @@ in (* local *)
       val debugOn = false;
       val _ = if not debugOn then () else
               (print_term bl; print "\n ==================== \n\n");
+      (*val _ = print_term lbl_tm;*)
 
       val systs2 = List.foldl (fn (s, systs) => List.concat(List.map (fn x => symb_exec_stmt (s,x)) systs)) [syst] s_tms;
 
