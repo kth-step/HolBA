@@ -9,9 +9,17 @@ in
   val mem_ram_start = 0x10000000;
   val mem_ram_size  = 0x2000;
 
+val (mem_region_const_start, mem_region_const_sz) = binariesDefsLib.mem_region_const;
+val (mem_region_data_start,  mem_region_data_sz)  = binariesDefsLib.mem_region_data;
+val (mem_region_stack_start, mem_region_stack_sz) = binariesDefsLib.mem_region_stack;
+
+(*
   val stack_size  = 0x100;
   val stack_start = mem_ram_start + mem_ram_size -16;
   val stack_end   = stack_start - stack_size;
+*)
+  val stack_start = mem_ram_start + mem_ram_size - 16;
+  val stack_end   = mem_ram_start + mem_ram_size - (Arbnum.toInt mem_region_stack_sz);
 
 (*
   val stack_space_req = 0x80;
@@ -48,9 +56,21 @@ in
      pred_sp_space_req stack_space_req,
      pred_countw_space_req countw_space_req];
 
+  val _ = if Arbnum.fromInt 0 = mem_region_const_start then () else raise Fail "memory layout error";
+  val _ = if mem_region_data_start = Arbnum.+ (mem_region_const_start, mem_region_const_sz) then () else raise Fail "memory layout error";
+  val _ = if mem_region_stack_start = Arbnum.+ (mem_region_data_start, mem_region_data_sz) then () else raise Fail "memory layout error";
+  val _ = if Arbnum.+ (mem_region_stack_start, mem_region_stack_sz) = Arbnum.fromInt (mem_ram_start + mem_ram_size) then () else raise Fail "memory layout error";
+
+
+(*
   val mem_sz_const = mem_ram_start;
-  val mem_sz_globl = 0x1000;
+  val mem_sz_globl = mem_region_data_sz;
   val mem_sz_stack = mem_ram_size - mem_sz_globl;
+*)
+  val mem_sz_const = Arbnum.toInt mem_region_const_sz;
+  val mem_sz_globl = Arbnum.toInt mem_region_data_sz;
+  val mem_sz_stack = Arbnum.toInt mem_region_stack_sz;
+
   val _ = if mem_sz_stack > 0 then () else
           raise Fail "mem_sz_stack should be greater than 0";
 
