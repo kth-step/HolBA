@@ -10,7 +10,7 @@ local
 
   open bir_symbexec_driverLib;
 
-
+(*
 (* motor_prep_input *)
 
 val sums        = [];
@@ -43,11 +43,14 @@ val lbl_tm      = find_func_lbl_tm entry_label;
 val sum_motor_set =
       create_func_summary n_dict bl_dict_ sums entry_label;
 
+*)
 
 in (* outermost local *)
 
+(*
   val sum_motor_set = sum_motor_set;
-
+*)
 end (* outermost local *)
+
 
 end (* struct *)

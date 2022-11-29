@@ -13,11 +13,17 @@ local
 open balrob_pends_Lib;
 
 
-(* __aeabi_fadd_c1 *)
+val fadd_offset = 0x1000030e - 0x257A;
+fun int_to_numterm i = numSyntax.mk_numeral(Arbnum.fromInt i);
+val _ = print "fadd offset is: 0x";
+val _ = print (Arbnum.toHexString (Arbnum.fromInt fadd_offset));
+val _ = print "\n";
 
+
+(* __aeabi_fadd_c1 *)
 val sums        = [];
-val lbl_tm      =  ``BL_Address (Imm32 0x257Aw)``;
-val end_lbl_tms = [``BL_Address (Imm32 0x2598w)``];
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (fadd_offset + 0x257A))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (fadd_offset + 0x2598))))``];
 val usage = (0, 15);
 
 val sum___aeabi_fadd_c1 =
@@ -28,9 +34,9 @@ val _ = print_summary_info sum___aeabi_fadd_c1 "sum___aeabi_fadd_c1";
 (* __aeabi_fadd_c2 *)
 
 val sums        = [];
-val lbl_tm      =  ``BL_Address (Imm32 0x25A0w)``;
-val end_lbl_tms = [``BL_Address (Imm32 0x25AEw)``];
-val end_lbl_tms = [``BL_Address (Imm32 0x24C2w)``];
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (fadd_offset + 0x25A0))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (fadd_offset + 0x25AE))))``];
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (fadd_offset + 0x24C2))))``];
 val usage = (0, 29);
 
 val sum___aeabi_fadd_c2 =
@@ -41,8 +47,8 @@ val _ = print_summary_info sum___aeabi_fadd_c2 "sum___aeabi_fadd_c2";
 (* __aeabi_fadd_c3 *)
 
 val sums        = [];
-val lbl_tm      =  ``BL_Address (Imm32 0x25D0w)``;
-val end_lbl_tms = [``BL_Address (Imm32 0x24C2w)``];
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (fadd_offset + 0x25D0))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (fadd_offset + 0x24C2))))``];
 val usage = (0, 10);
 
 val sum___aeabi_fadd_c3 =

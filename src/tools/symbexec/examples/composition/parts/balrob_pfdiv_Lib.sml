@@ -12,6 +12,18 @@ local
 
 open balrob_pends_Lib;
 
+val ffun_offset = 0x10000734 - 0x293C (* fadd: 0xFFFDD94 *);
+fun int_to_numterm i = numSyntax.mk_numeral(Arbnum.fromInt i);
+val _ = print "fdiv offset is: 0x";
+val _ = print (Arbnum.toHexString (Arbnum.fromInt ffun_offset));
+val _ = print "\n";
+
+(*
+(n2w ^(int_to_numterm (ffun_offset + 
+)))
+*)
+
+
 
 (*
     
@@ -45,8 +57,8 @@ open balrob_pends_Lib;
 
 (* sum___aeabi_fdiv_loop_body *)
 val sums        = [];
-val lbl_tm      =  ``BL_Address (Imm32 0x293Cw)``;
-val end_lbl_tms = [``BL_Address (Imm32 0x294Ew)``];
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x293C))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x294E))))``];
 val usage = (0, 9);
 
 val sum___aeabi_fdiv_loop_body =
@@ -56,8 +68,8 @@ val _ = print_summary_info sum___aeabi_fdiv_loop_body "sum___aeabi_fdiv_loop_bod
 
 (* sum___aeabi_fdiv_loop *)
 val sums        = [sum___aeabi_fdiv_loop_body];
-val lbl_tm      =  ``BL_Address (Imm32 0x2930w)``;
-val end_lbl_tms = [``BL_Address (Imm32 0x2952w)``];
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x2930))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x2952))))``];
 val usage = (0, 381);
 
 val sum___aeabi_fdiv_loop =
@@ -70,8 +82,8 @@ val _ = print_summary_info sum___aeabi_fdiv_loop "sum___aeabi_fdiv_loop";
 
 (* sum___aeabi_fdiv_c1 *)
 val sums        = [];
-val lbl_tm      =  ``BL_Address (Imm32 0x27CAw)``;
-val end_lbl_tms = [``BL_Address (Imm32 0x27DCw)``];
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x27CA))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x27DC))))``];
 val usage = (0, 15);
 
 val sum___aeabi_fdiv_c1 =
@@ -93,8 +105,8 @@ val _ = print_summary_info sum___aeabi_fdiv_c2 "sum___aeabi_fdiv_c2";
 
 (* sum___aeabi_fdiv_c3 *)
 val sums        = [];
-val lbl_tm      =  ``BL_Address (Imm32 0x2842w)``;
-val end_lbl_tms = [``BL_Address (Imm32 0x284Ew)``];
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x2842))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x284E))))``];
 val usage = (0, 7);
 
 val sum___aeabi_fdiv_c3 =
@@ -104,8 +116,8 @@ val _ = print_summary_info sum___aeabi_fdiv_c3 "sum___aeabi_fdiv_c3";
 
 (* sum___aeabi_fdiv_c4 *)
 val sums        = [];
-val lbl_tm      =  ``BL_Address (Imm32 0x2850w)``;
-val end_lbl_tms = [``BL_Address (Imm32 0x285Aw)``];
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x2850))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x285A))))``];
 val usage = (0, 6);
 
 val sum___aeabi_fdiv_c4 =
@@ -115,8 +127,8 @@ val _ = print_summary_info sum___aeabi_fdiv_c4 "sum___aeabi_fdiv_c4";
 
 (* sum___aeabi_fdiv_c5 *)
 val sums        = [];
-val lbl_tm      =  ``BL_Address (Imm32 0x2996w)``;
-val end_lbl_tms = [``BL_Address (Imm32 0x29A2w)``];
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x2996))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x29A2))))``];
 val usage = (0, 7);
 
 val sum___aeabi_fdiv_c5 =
@@ -126,8 +138,8 @@ val _ = print_summary_info sum___aeabi_fdiv_c5 "sum___aeabi_fdiv_c5";
 
 (* sum___aeabi_fdiv_c6 *)
 val sums        = [];
-val lbl_tm      =  ``BL_Address (Imm32 0x29A4w)``;
-val end_lbl_tms = [``BL_Address (Imm32 0x286Aw)``];
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x29A4))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x286A))))``];
 val usage = (0, 8);
 
 val sum___aeabi_fdiv_c6 =
@@ -137,8 +149,8 @@ val _ = print_summary_info sum___aeabi_fdiv_c6 "sum___aeabi_fdiv_c6";
 
 (* sum___aeabi_fdiv_c7 *)
 val sums        = [];
-val lbl_tm      =  ``BL_Address (Imm32 0x2918w)``;
-val end_lbl_tms = [``BL_Address (Imm32 0x286Aw)``];
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x2918))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (ffun_offset + 0x286A))))``];
 val usage = (0, 15);
 
 val sum___aeabi_fdiv_c7 =
