@@ -4,6 +4,8 @@ struct
 local
   open HolKernel Parse
 
+  open bir_miscLib;
+
   open binariesLib;
   open binariesCfgLib;
   open binariesMemLib;
@@ -11,6 +13,8 @@ local
   open bir_symbexec_driverLib;
 
 open balrob_pends_Lib;
+
+      val timer_meas = timer_start 1;
 
 val ffun_offset = 0x10000734 - 0x293C (* fadd: 0xFFFDD94 *);
 fun int_to_numterm i = numSyntax.mk_numeral(Arbnum.fromInt i);
@@ -172,6 +176,8 @@ val entry_label = "__aeabi_fdiv";
 
 val sum___aeabi_fdiv =
       create_func_summary n_dict bl_dict_ sums entry_label;
+
+      val _ = timer_stop (fn s => print("time for fdiv: " ^ s ^ "\n")) timer_meas;
 
 (*
 2mins including building supporting summaries

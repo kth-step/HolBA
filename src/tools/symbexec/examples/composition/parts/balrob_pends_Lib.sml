@@ -4,6 +4,8 @@ struct
 local
   open HolKernel Parse
 
+  open bir_miscLib;
+
   open binariesLib;
   open binariesCfgLib;
   open binariesMemLib;
@@ -31,11 +33,14 @@ val sum___lesf2 =
 
 (* __clzsi2 *)
 
+      val timer_meas = timer_start 1;
+
 val sums        = [];
 val entry_label = "__clzsi2";
 val sum___clzsi2 =
       create_func_summary n_dict bl_dict_ sums entry_label;
 
+      val _ = timer_stop (fn s => print("time for __clzsi2: " ^ s ^ "\n")) timer_meas;
 
 (* __aeabi_f2iz *)
 

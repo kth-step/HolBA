@@ -4,6 +4,8 @@ struct
 local
   open HolKernel Parse
 
+  open bir_miscLib;
+
   open binariesLib;
   open binariesCfgLib;
   open binariesMemLib;
@@ -12,6 +14,7 @@ local
 
 open balrob_pends_Lib;
 
+      val timer_meas = timer_start 1;
 
 val fadd_offset = 0x1000030e - 0x257A;
 fun int_to_numterm i = numSyntax.mk_numeral(Arbnum.fromInt i);
@@ -67,6 +70,7 @@ val entry_label = "__aeabi_fadd";
 val sum___aeabi_fadd =
       create_func_summary n_dict bl_dict_ sums entry_label;
 
+      val _ = timer_stop (fn s => print("time for fadd: " ^ s ^ "\n")) timer_meas;
 
 in (* outermost local *)
 
