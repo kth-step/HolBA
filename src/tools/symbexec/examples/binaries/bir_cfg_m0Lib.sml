@@ -138,6 +138,7 @@ in (* local *)
       val indirJumpUpdate = Option.map (fn (_, _, nt, tl) =>
 	  let
 	    val tl_unique = List.foldr (fn (x,l) => if List.exists (fn y => x=y) l then l else (x::l)) [] tl;
+(*
 	    fun split_string_byte s =
 	      let
 		val _ = if (String.size s) mod 2 = 0 then () else
@@ -155,8 +156,12 @@ in (* local *)
 		  in
 		    rev_hs_to_num n (snd sp)
 		  end;
+*)
 	  in
+(*
 	    (nt, List.map (rev_hs_to_num (Arbnum.fromInt 0)) tl_unique)
+*)
+	    (nt, List.map (Arbnum.fromHexString) tl_unique)
 	  end
 	) hackMatch;
   (*
