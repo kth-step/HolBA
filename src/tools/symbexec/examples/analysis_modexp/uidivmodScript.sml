@@ -132,13 +132,13 @@ val birs_state_final_ = ``<|
                   ("R2",BExp_Den (BVar "sy_R2_0" (BType_Imm Bit32)));
                   ("R3",BExp_Den (BVar "sy_R3_0" (BType_Imm Bit32)));
                   ("PSR_Z",
-                   BExp_Den (BVar "sy_PSR_Z_0" (BType_Imm Bit32)));
+                   BExp_Den (BVar "sy_PSR_Z_0" (BType_Imm Bit1)));
                   ("PSR_V",
-                   BExp_Den (BVar "sy_PSR_V_0" (BType_Imm Bit32)));
+                   BExp_Den (BVar "sy_PSR_V_0" (BType_Imm Bit1)));
                   ("PSR_N",
-                   BExp_Den (BVar "sy_PSR_N_0" (BType_Imm Bit32)));
+                   BExp_Den (BVar "sy_PSR_N_0" (BType_Imm Bit1)));
                   ("PSR_C",
-                   BExp_Den (BVar "sy_PSR_C_0" (BType_Imm Bit32)));
+                   BExp_Den (BVar "sy_PSR_C_0" (BType_Imm Bit1)));
                   ("MEM",BExp_Den (BVar "sy_MEM" (BType_Mem Bit32 Bit8)));
                   ("R4",BExp_Den (BVar "sy_R4" (BType_Imm Bit32)));
                   ("R5",BExp_Den (BVar "sy_R5" (BType_Imm Bit32)));
