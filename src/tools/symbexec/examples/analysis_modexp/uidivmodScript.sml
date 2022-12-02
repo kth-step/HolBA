@@ -5,6 +5,8 @@ open birs_composeLib;
 open birs_driveLib;
 open birs_auxTheory;
 
+open bslSyntax;
+
 open bin_balrob_smallprogsTheory;
 
 open bir_program_transfTheory;
@@ -34,20 +36,35 @@ val birs_state_init_lbl = (snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Addr
 
 val birs_stop_lbls_ = [(snd o dest_eq o concl o EVAL) ``bir_block_pc (BL_Address (Imm32 0x1000010ew))``];
 
+
+val birs_state_init_pcond = bandl [
+  ble (bconst32 0x10001A00, bden (bvarimm32 "sy_SP_process")),
+  ble (bden (bvarimm32 "sy_SP_process"), bconst32 0x10001FF0),
+  balignedi 32 (``2:num``, bden (bvarimm32 "sy_SP_process")),
+
+  ble (bden (bvarimm64 "sy_countw"), bconstimm ``Imm64 0xFFFFFFFFFF000000w``),
+  ble (bplus (bden (bvarimm64 "sy_countw"), bden (bvarimm64 "sy_countw_l")), bden (bvarimm64 "sy_countw_0")),
+  ble (bden (bvarimm64 "sy_countw_0"), bplus (bden (bvarimm64 "sy_countw"), bden (bvarimm64 "sy_countw_h"))),
+  ble (bden (bvarimm64 "sy_countw_0"), bconstimm ``Imm64 0xFFFFFFFFFFFFFF00w``)
+];
+
+
+
 (* TODO: add a sanity check here that all the variables of the program are included in birenvtyl! *)
 val birs_state_init_ = ``<|
   bsst_pc       := ^birs_state_init_lbl;
-  bsst_environ  := bir_senv_GEN_list birenvtyl;
+  bsst_environ  := ("countw" =+ SOME (BExp_Den (BVar "sy_countw_0" (BType_Imm Bit64)))) (bir_senv_GEN_list birenvtyl);
   bsst_status   := BST_Running;
-  bsst_pcond    := (BExp_BinPred BIExp_LessOrEqual
-                       (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-                       (BExp_Const (Imm64 0xFFFFFFFFFFFFFF00w)))
+  bsst_pcond    := ^birs_state_init_pcond
 |>``;
 (* TODO: probably need this later in the path condition: 
   ``BExp_UnaryExp BIExp_Not (BExp_Den (BVar "ModeHandler" BType_Bool))``;
  *)
-
-
+(*
+`` (bir_senv_GEN_list birenvtyl)``
+computeLib.RESTR_EVAL_CONV [``birs_gen_env:(string#bir_exp_t)list->string->bir_exp_t option``] birs_state_init_
+("countw" =+ SOME (BExp_Den (BVar "sy_countw_0" (BType_Imm Bit64))))
+*)
 
 (* ........................... *)
 
@@ -89,6 +106,18 @@ val result = birs_execute bprog_tm_ birs_state_init_ birs_stop_lbls_
 val _ = bir_miscLib.timer_stop (fn delta_s => print ("\n======\n > exec_until took " ^ delta_s ^ "\n")) timer;
 *)
 
+
+val birs_state_final_pcond = bandl [
+  ble (bconst32 0x10001A00, bden (bvarimm32 "sy_SP_process")),
+  ble (bden (bvarimm32 "sy_SP_process"), bconst32 0x10001FF0),
+  balignedi 32 (``2:num``, bden (bvarimm32 "sy_SP_process")),
+
+  ble (bden (bvarimm64 "sy_countw"), bconstimm ``Imm64 0xFFFFFFFFFF000000w``),
+  ble (bplusl [bden (bvarimm64 "sy_countw"), bden (bvarimm64 "sy_countw_l"), bconst64 0], bden (bvarimm64 "sy_countw_1")),
+  ble (bden (bvarimm64 "sy_countw_1"), bplusl [bden (bvarimm64 "sy_countw"), bden (bvarimm64 "sy_countw_h"), bconst64 242])
+];
+
+
 val birs_state_final_ = ``<|
              bsst_pc :=
                <|bpc_label := BL_Address (Imm32 0x100000fcw);
@@ -96,7 +125,7 @@ val birs_state_final_ = ``<|
              bsst_environ :=
                birs_gen_env
                  [("countw",
-                   BExp_Den (BVar "sy_countw_0" (BType_Imm Bit64))
+                   BExp_Den (BVar "sy_countw_1" (BType_Imm Bit64))
                      );
                   ("R0",BExp_Den (BVar "sy_R0_0" (BType_Imm Bit32)));
                   ("R1",BExp_Den (BVar "sy_R1_0" (BType_Imm Bit32)));
@@ -161,18 +190,8 @@ val birs_state_final_ = ``<|
                   ("tmp_countw",
                    BExp_Den (BVar "sy_tmp_countw" (BType_Imm Bit64)))];
              bsst_status := BST_Running;
-             bsst_pcond :=
-               BExp_BinExp BIExp_And
-                 (BExp_BinPred BIExp_LessOrEqual
-                    (BExp_BinExp BIExp_Plus
-                       (BExp_Den (BVar "sy_countw_0" (BType_Imm Bit64)))
-                       (BExp_Const (Imm64 0w)))
-                    (BExp_Den (BVar "sy_countw" (BType_Imm Bit64))))
-                 (BExp_BinPred BIExp_LessOrEqual
-                    (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
-                    (BExp_BinExp BIExp_Plus
-                       (BExp_Den (BVar "sy_countw_0" (BType_Imm Bit64)))
-                       (BExp_Const (Imm64 242w))))|>
+             bsst_pcond := ^birs_state_final_pcond
+|>
 ``;
 
 
