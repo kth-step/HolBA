@@ -11,6 +11,9 @@ open HolKernel boolLib liteLib simpLib Parse bossLib bslSyntax;
 val shadow_begin_fencepost = beq (bconst64 41, bconst64 41);
 val shadow_end_fencepost = beq (bconst64 42, bconst64 42);
 
+fun problem_gen fname t msg = 
+    raise ERR fname (msg ^ (term_to_string t));
+
 local
     open bir_obs_modelTheory;
 in
@@ -94,19 +97,48 @@ open bir_cfgLib;
     fun mk_key_from_address64 i addr = (mk_BL_Address o bir_immSyntax.mk_Imm64 o wordsSyntax.mk_word) (addr, Arbnum.fromInt i);
 
     fun get_bir_successors bb =
-	      let
+	let
+	  fun get_bir_addr s =
+	    if is_BLE_Label s then
+                SOME (dest_BLE_Label s)
+            else NONE
           val (_, _, bbes) = dest_bir_block bb;
-	        val successor =
+	  val successor =
               if is_BStmt_Jmp bbes then
                 let val s = dest_BStmt_Jmp bbes
-                in if is_BLE_Label s then
-                     SOME (dest_BLE_Label s)
-                   else NONE
+                in [get_bir_addr s]
                 end
-			        else 
-                NONE
-	      in successor end;
-    
+	      else 
+                if is_BStmt_CJmp bbes then
+		  ((fn (_, t1, t2) => [get_bir_addr t1, get_bir_addr t2]) (dest_BStmt_CJmp bbes))
+		else
+		  [NONE]
+	in successor end;
+
+    fun get_cjmp_predecessors baddr blocks =
+	let
+	  val predecessors = List.filter
+				 (fn bb =>
+				     let
+				       val (_,_,bbes) = dest_bir_block bb;
+				       val jaddr = if is_BStmt_Jmp bbes then
+						       let val bbesl = dest_BStmt_Jmp bbes;
+						       in
+							 if is_BLE_Label bbesl then
+							   SOME (dest_BLE_Label bbesl)
+							 else NONE
+						       end
+						   else
+						     NONE
+				     in
+				       isSome jaddr andalso identical (valOf jaddr) baddr
+				     end) blocks;
+	in
+	  case predecessors of
+	    [p] => p
+	  | _ => raise ERR "get_cjmp_predecessors" "predecessor not found"
+	end;
+
     (* single entry recursion, stop at first revisit or exit *)
     fun traverse_graph (g:cfg_graph) entry visited acc callstack =
 	let
@@ -168,6 +200,19 @@ open bir_cfgLib;
                   val (_, statements, _) = dest_bir_block block;
                   (* statements is a HOL list of BIR statements *)
               in statements end;
+	  fun get_bir_successors bb =
+	      let
+		val (_, _, bbes) = dest_bir_block bb;
+	        val successor =
+		  if is_BStmt_Jmp bbes then
+                    let val s = dest_BStmt_Jmp bbes
+                    in if is_BLE_Label s then
+			 SOME (dest_BLE_Label s)
+                       else NONE
+                    end
+		  else 
+                    NONE
+	      in successor end;
 
           val first_block = Redblackmap.find (bl_dict, branch)
 
@@ -397,6 +442,306 @@ open bir_cfgLib;
           go stmts
         end
 
+    open bir_expSyntax bir_immSyntax bir_envSyntax bir_exp_immSyntax bir_exp_memSyntax;
+    open bir_valuesSyntax;
+    open wordsSyntax;
+
+    fun primed_word_literal wv =
+	let
+	  open stringSyntax numSyntax;
+	  val vstr =
+	      if is_word_literal wv then
+		  (Arbnum.toString o dest_word_literal) wv
+	      else raise ERR "primed_word_literal" "can only handle word literals";
+        in
+	  (lift_string string_ty (vstr ^ "*"))
+	end
+
+    fun mk_shadow_addr exp =
+	if is_BL_Address exp then
+            let
+		val (sz, wv) = (gen_dest_Imm o dest_BL_Address) exp;
+		val primed_wv = primed_word_literal wv;
+            in
+		mk_BL_Label primed_wv
+            end
+	else
+	    raise ERR "mk_shadow_addr" "the expression is not a bir address"
+
+    fun mk_shadow_label lbl =
+	let
+	  fun problem exp msg = problem_gen "mk_shadow_label" exp msg;
+	in
+	  if is_BL_Address lbl then
+	    mk_shadow_addr lbl
+	  else if is_BL_Label lbl then
+	    let
+	      open stringSyntax numSyntax;
+	      val str = (dest_BL_Label_string) lbl;
+	    in
+	      mk_BL_Label (lift_string string_ty (str ^ "*"))
+	    end
+	  else
+	    problem lbl "unknown bir label: "
+	end
+
+    fun mk_shadow_blabelexp exp =
+	let
+	  fun problem exp msg = problem_gen "mk_shadow_blabelexp" exp msg;
+	in
+	  if is_BLE_Label exp then
+	    (mk_BLE_Label o mk_shadow_addr) (dest_BLE_Label exp)
+	  else if is_BLE_Exp exp then
+	    primed_term exp
+	  else
+	    problem exp "unknown bir expression: "
+	end
+
+    fun mk_shadow_estmt estmt =
+	if is_BStmt_Halt estmt then estmt
+	  (*let
+	    val e = dest_BStmt_Halt estmt;
+	    val v = dest_BExp_Const e;
+	    val addr = mk_BL_Address v;
+	  in
+	    mk_BStmt_Jmp ((mk_BLE_Label o mk_shadow_addr) addr)
+	  end*)
+	else if is_BStmt_Jmp estmt then
+	  let
+	    val e = dest_BStmt_Jmp estmt;
+	  in
+	    mk_BStmt_Jmp (mk_shadow_blabelexp e)
+	  end
+	else if is_BStmt_CJmp estmt then
+	  let
+	    val (cnd_tm, lblet_tm, lblef_tm) = dest_BStmt_CJmp estmt;
+	    val reverse_cnd = bnot (primed_term cnd_tm);
+	  in
+	    mk_BStmt_CJmp (reverse_cnd, mk_shadow_blabelexp lblet_tm, mk_shadow_blabelexp lblef_tm)
+	  end
+	else
+	    raise ERR "mk_shadow_estmt" "unknown bir end statement"
+
+(*
+val prog =
+   “BirProgram
+      [<|bb_label := BL_Address_HC (Imm64 0w) "EB02003F (cmp x1, x2)";
+         bb_statements :=
+           [BStmt_Assign (BVar "ProcState_C" BType_Bool)
+              (BExp_nzcv_SUB_C (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                 (BExp_Den (BVar "R2" (BType_Imm Bit64))));
+            BStmt_Assign (BVar "ProcState_N" BType_Bool)
+              (BExp_nzcv_SUB_N Bit64 (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                 (BExp_Den (BVar "R2" (BType_Imm Bit64))));
+            BStmt_Assign (BVar "ProcState_V" BType_Bool)
+              (BExp_nzcv_SUB_V Bit64 (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                 (BExp_Den (BVar "R2" (BType_Imm Bit64))));
+            BStmt_Assign (BVar "ProcState_Z" BType_Bool)
+              (BExp_nzcv_SUB_Z (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                 (BExp_Den (BVar "R2" (BType_Imm Bit64))))];
+         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 4w)))|>;
+       <|bb_label :=
+           BL_Address_HC (Imm64 4w)
+             "54000082 (b.cs 14 <.text+0x14>  // b.hs, b.nlast)";
+         bb_statements := [];
+         bb_last_statement :=
+           BStmt_CJmp (BExp_Den (BVar "ProcState_C" BType_Bool))
+             (BLE_Label (BL_Address (Imm64 20w)))
+             (BLE_Label (BL_Address (Imm64 8w)))|>;
+       <|bb_label := BL_Address_HC (Imm64 8w) "F8616864 (ldr x4, [x3, x1])";
+         bb_statements :=
+           [BStmt_Assert
+              (BExp_Aligned Bit64 3
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R3" (BType_Imm Bit64)))));
+            BStmt_Assign (BVar "R4" (BType_Imm Bit64))
+              (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R1" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R3" (BType_Imm Bit64))))
+                 BEnd_LittleEndian Bit64)];
+         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 12w)))|>;
+       <|bb_label := BL_Address_HC (Imm64 12w) "D37FF884 (lsl x4, x4, #1)";
+         bb_statements :=
+           [BStmt_Assign (BVar "R4" (BType_Imm Bit64))
+              (BExp_BinExp BIExp_And (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFFw))
+                 (BExp_BinExp BIExp_LeftShift
+                    (BExp_Den (BVar "R4" (BType_Imm Bit64)))
+                    (BExp_Const (Imm64 1w))))];
+         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 16w)))|>;
+       <|bb_label := BL_Address_HC (Imm64 16w) "F86468A6 (ldr x6, [x5, x4])";
+         bb_statements :=
+           [BStmt_Assert
+              (BExp_Aligned Bit64 3
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R5" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R4" (BType_Imm Bit64)))));
+            BStmt_Assign (BVar "R6" (BType_Imm Bit64))
+              (BExp_Load (BExp_Den (BVar "MEM" (BType_Mem Bit64 Bit8)))
+                 (BExp_BinExp BIExp_Plus
+                    (BExp_Den (BVar "R5" (BType_Imm Bit64)))
+                    (BExp_Den (BVar "R4" (BType_Imm Bit64))))
+                 BEnd_LittleEndian Bit64)];
+         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 20w)))|>;
+       <|bb_label := BL_Address (Imm64 20w); bb_statements := [];
+         bb_last_statement :=
+           BStmt_Jmp (BLE_Exp (BExp_Den (BVar "R30" (BType_Imm Bit64))))|>]
+   :bir_val_t bir_program_t”
+*)
+
+    fun mk_shadow_block block =
+	let
+	  open listSyntax;
+	  val (tm_lbl, tm_stmts, tm_last_stmt) = dest_bir_block block;
+	  val (stmt_list, obs_ty) = (dest_list) tm_stmts;
+	  val lbl_shadow =  mk_shadow_label tm_lbl;
+	  val stmts_starred = map primed_term stmt_list;
+	  val estmt_shadow = mk_shadow_estmt tm_last_stmt;
+	in
+	  mk_bir_block (lbl_shadow, mk_list (stmts_starred, obs_ty), estmt_shadow)
+	end
+
+    fun mk_shadow_target block pt =
+	let
+	  val (tm_lbl, tm_stmts, tm_last_stmt) = dest_bir_block block;
+	  val estmt_shadow =
+	    if is_BStmt_Jmp tm_last_stmt then
+	      if identical tm_lbl pt then
+		let
+		  val e = dest_BStmt_Jmp tm_last_stmt
+		in
+		  mk_BStmt_Jmp (mk_shadow_blabelexp e)
+		end
+	      else
+		tm_last_stmt
+	    else
+	    if is_BStmt_CJmp tm_last_stmt then
+	      let
+		val (cnd_tm, lblet_tm, lblef_tm) = dest_BStmt_CJmp tm_last_stmt;
+	      in
+		if identical tm_lbl pt then
+		  mk_BStmt_CJmp (cnd_tm, mk_shadow_blabelexp lblef_tm, mk_shadow_blabelexp lblet_tm)
+		else
+		  tm_last_stmt
+	      end
+	    else
+	      raise ERR "mk_shadow_target" "end statement is not a cjmp"
+	in
+	  mk_bir_block (tm_lbl, tm_stmts, estmt_shadow)
+	end
+
+    fun extract_blocks depth branch bl_dict =
+	let
+	  fun get_block_from_dict baddr =
+	      Redblackmap.find (bl_dict, baddr)
+	      handle e => raise ERR "extract_blocks::get_block_from_dict" "block not found"
+	  val shadow_block_fun = (mk_shadow_block o (snd o dest_eq o concl o EVAL))
+	  fun fix_jmp_back bb =
+	    let
+	      val (bbl, bbs, bbes) = dest_bir_block bb;
+	      val estmt = if is_BStmt_Jmp bbes then
+			    mk_BStmt_Jmp (mk_BLE_Label branch)
+			  else
+			    raise ERR "fix_jmp_back" ""
+	    in
+              mk_bir_block (bbl, bbs, estmt)
+	    end
+
+          val first_block = get_block_from_dict branch;
+
+          fun collect_blocks 0 block = [(fix_jmp_back o shadow_block_fun) block]
+            | collect_blocks n block =
+              case get_bir_successors block of
+                  [NONE] => [(fix_jmp_back o shadow_block_fun) block]
+                | [SOME lbl] =>
+                  let val b = get_block_from_dict lbl
+                  in
+                    (shadow_block_fun block) :: collect_blocks (n-1) b
+                  end
+		| [SOME lbl1, SOME lbl2] =>
+		  let
+		    val b1 = get_block_from_dict lbl1
+		    val b2 = get_block_from_dict lbl2
+                  in
+                    ((shadow_block_fun block) :: collect_blocks (n-1) b1 @ collect_blocks (n-1) b2)
+                  end
+		| _ => raise ERR "extract_blocks::collect_blocks" "unknown bir successor type"
+        in
+          collect_blocks (depth-1) first_block
+        end
+
+    fun add_obs_refined obs_fun sblocks =
+	let
+	  open listSyntax;
+	  fun add_obs_reined_to_block bb =
+	      let
+		val (bbl,bbs,bbes) = dest_bir_block bb;
+		val (stmt_list, obs_ty) = (dest_list) bbs;
+		val stmts_without_pc = filter (not o const_obs) stmt_list;
+		val stmts_obs_tagged = obs_fun stmts_without_pc;
+	      in
+		mk_bir_block (bbl, mk_list(stmts_obs_tagged, obs_ty), bbes)
+	      end
+	in
+	  List.map add_obs_reined_to_block sblocks
+	end
+
+    fun save_shadow_state sblocks =
+        let
+	  open listSyntax;
+	  open stringSyntax;
+          val free_vars = nub_with (uncurry identical)
+                                   (List.concat (map bir_free_vars sblocks));
+          fun not_starred_var var =
+	      let val var_char = String.explode (fromHOLstring var);
+	      in
+		  if last var_char = #"*" then
+		      String.implode (List.take (var_char, (List.length var_char)-1))
+		  else
+		      raise ERR "save_shadow_state::not_starred_var" "a starred variable was expected"
+	      end
+          fun mk_assignment var =
+              let val var_type = (* Note: also bring the variable type from bir_free_vars? *)
+                      if fromHOLstring var = "MEM*"
+                      then “BType_Mem Bit64 Bit8”
+                      else if String.isSubstring "ProcState" (fromHOLstring var)
+		      then “BType_Imm Bit1”
+		      else “BType_Imm Bit64”
+                  val var_tm = bden (bvar (not_starred_var var) var_type)
+              in inst [Type.alpha |-> Type`:bir_val_t`]
+                      (mk_BStmt_Assign (“BVar ^var ^var_type”, var_tm))
+              end;
+          val fencepost_begin = if null free_vars
+                                then []
+                                else [inst [Type.alpha |-> Type‘:bir_val_t’]
+                                           (bassert shadow_begin_fencepost)];
+	  val preamble = fencepost_begin @ List.map mk_assignment free_vars;
+        in
+          (let
+             val (bbl,bbs,bbes) = dest_bir_block (hd sblocks);
+	     val (stmts, _) = dest_list bbs;
+	   in
+	     mk_bir_block (bbl, mk_list (preamble@stmts, ``:bir_val_t bir_stmt_basic_t``), bbes)
+	   end
+	  )::(tl sblocks)
+        end;
+
+    fun mk_shadow_prog obs_fun bprog bl_dict target ptarget depth =
+	let
+	  open listSyntax;
+	  (* val prog_t = (snd o dest_eq o concl o EVAL) bprog; *)
+	  val (blocks, obs_ty) = (dest_list o dest_BirProgram) bprog;
+
+	  val shadow_blocks = extract_blocks depth target bl_dict;
+	  val shadow_blocks_w_obs = add_obs_refined obs_fun shadow_blocks;
+	  val complete_shadow_blocks = save_shadow_state shadow_blocks_w_obs;
+
+	  val link_blocks = map (fn b => mk_shadow_target ((rand o concl) (EVAL b)) ptarget) blocks;
+	in
+	  mk_BirProgram (mk_list (link_blocks@complete_shadow_blocks, obs_ty))
+	end
+
  fun branch_instrumentation obs_fun prog entry depth =
      let (* build the dictionaries using the library under test *)
        open bir_programSyntax listSyntax;
@@ -406,7 +751,7 @@ open bir_cfgLib;
        fun map_pair f (x,y) = (f x, f y);
 
        fun get_targets block =
-           let val (_, _, bbes) = dest_bir_block block
+           let val (bbl, _, bbes) = dest_bir_block block
            in if is_BStmt_CJmp bbes
               then let val (_,left,right) = dest_BStmt_CJmp bbes
                    in SOME (left,right)
@@ -420,18 +765,18 @@ open bir_cfgLib;
                    andalso is_BLE_Label right
                    andalso not (identical left right)
                  | NONE => false;
-       val targets = List.map (map_pair dest_BLE_Label
-                               o valOf o get_targets)
-                              (List.filter block_filter blocks)
+       fun get_block_label block =
+           let val (lbl,_,_) = dest_bir_block block
+           in (rand o concl) (EVAL lbl) end;
+       val targets = List.map get_block_label (List.filter block_filter blocks);
+       val target = hd targets;
+       val preced_target = get_block_label (get_cjmp_predecessors target blocks);
      in
 	 if depth < 1
 	 then
 	     raise ERR "branch_instrumentation" "the depth cannot be less than 1"
 	 else
-	     foldl (fn (t, p) =>
-                 add_shadow_branches obs_fun depth bl_dict t p)
-             prog
-             targets
+	     mk_shadow_prog obs_fun prog bl_dict target preced_target depth
      end
          
  fun jmp_to_cjmp t = (rand o concl) (EVAL “jmp_to_cjmp_prog ^t”);
@@ -444,7 +789,7 @@ in
   structure bir_arm8_cache_speculation_model : OBS_MODEL =
     struct
       val obs_hol_type = ``:bir_val_t``;
-      val pipeline_depth = 10;
+      val pipeline_depth = 20;
       fun add_obs mb t en =
         branch_instrumentation obs_all_refined (bir_arm8_mem_addr_pc_model.add_obs mb t en) en pipeline_depth;
     end;
@@ -452,7 +797,7 @@ in
   structure bir_arm8_cache_speculation_first_model : OBS_MODEL =
   struct
   val obs_hol_type = ``:bir_val_t``;
-  val pipeline_depth = 10;
+  val pipeline_depth = 20;
   fun add_obs mb t en =
       branch_instrumentation obs_all_refined_but_first (bir_arm8_mem_addr_pc_model.add_obs mb t en) en pipeline_depth;
   end;
@@ -460,7 +805,7 @@ in
   structure bir_arm8_cache_straight_line_model : OBS_MODEL =
   struct
   val obs_hol_type = ``:bir_val_t``;
-  val pipeline_depth = 10;
+  val pipeline_depth = 20;
   fun add_obs mb t en =
       let val obs_term = bir_arm8_mem_addr_pc_model.add_obs mb t en;
           val jmp_to_cjmp_term = jmp_to_cjmp obs_term;
