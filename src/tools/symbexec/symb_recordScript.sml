@@ -105,6 +105,7 @@ val _ = Datatype `symb_rec_t =
       sr_val_true        : 'c_val;
 
       sr_mk_exp_symb_f   : 'e_symbol -> 'f_symbexpr;
+      sr_mk_exp_neg_f    : 'f_symbexpr -> 'f_symbexpr;
       sr_mk_exp_conj_f   : 'f_symbexpr -> 'f_symbexpr -> 'f_symbexpr;
       sr_mk_exp_eq_f     : 'f_symbexpr -> 'f_symbexpr -> 'f_symbexpr;
 
