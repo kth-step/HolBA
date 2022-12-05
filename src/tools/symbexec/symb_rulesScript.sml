@@ -593,11 +593,6 @@ val symb_rule_SUBST_thm = store_thm(
 (* ************************* *)
 (*        RULE FRESH         *)
 (* ************************* *)
-val symb_fresh_simplification_def = Define `
-    symb_fresh_simplification sr pcond symb symb_exp symbexp symbexp' =
-    symb_simplification sr (symb_expr_conj_eq sr (sr.sr_mk_exp_symb_f symb) symb_exp pcond) symbexp symbexp'
-`;
-
 (* TODO: split this into two *)
 val symb_FRESH_matchstate_IMP_matchstate_ext_thm = store_thm(
    "symb_FRESH_matchstate_IMP_matchstate_ext_thm", ``
@@ -783,10 +778,7 @@ val symb_rule_FRESH_thm = store_thm(
   (~(symb IN symb_symbols sr sys )) ==>
   (~(symb IN symb_symbols sr sys2)) ==>
 
-  (symb_fresh_simplification sr (symb_symbst_pcond sys2) symb symb_exp symbexp symbexp') ==>
-
   (* the symbol we choose has to be associated with the right type *)
-  (* TODO: do we still need this after generalizing the theorem together with simplification? *)
   (sr.sr_typeof_exp symb_exp = SOME (sr.sr_typeof_symb symb)) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
@@ -797,6 +789,9 @@ val symb_rule_FRESH_thm = store_thm(
      (symb_symbst_store_update var symbexp' sys2)
    = sys2'
   ) ==>
+
+  (symb_simplification sr (symb_symbst_pcond sys2') symbexp symbexp') ==>
+
   (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2'}))
 )
 ``,
@@ -1270,6 +1265,18 @@ val symb_rule_INST_thm = store_thm(
 (* ************************* *)
 (*        RULE SPLIT         *)
 (* ************************* *)
+val symb_weak_bool_def = Define `
+    symb_weak_bool sr symbexp =
+    (!H.
+       (symb_interpr_welltyped sr H) ==>
+       (symb_interpr_for_symbs (sr.sr_symbols_f symbexp) H) ==>
+
+       (sr.sr_interpret_f H symbexp = SOME sr.sr_val_true
+        \/
+        sr.sr_interpret_f H (sr.sr_mk_exp_neg_f symbexp) = SOME sr.sr_val_true)
+    )
+`;
+
 val symb_rule_SPLIT_thm = store_thm(
    "symb_rule_SPLIT_thm", ``
 !sr.
@@ -1277,7 +1284,7 @@ val symb_rule_SPLIT_thm = store_thm(
 (symb_mk_exp_conj_f_sound sr) ==>
 
 !sys L Pi sys2 symbexp sys2t sys2f.
-  (* TODO: do we need to require something about the symbols in symbexp? *)
+  (symb_weak_bool sr symbexp) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
 
@@ -1287,7 +1294,7 @@ val symb_rule_SPLIT_thm = store_thm(
    = sys2t
   ) ==>
   (symb_symbst_pcond_update
-     (sr.sr_mk_exp_conj_f (BExp_UnaryExp BIExp_Not symbexp))
+     (sr.sr_mk_exp_conj_f (sr.sr_mk_exp_neg_f symbexp))
      (sys2)
    = sys2f
   ) ==>
@@ -1312,7 +1319,7 @@ val symb_rule_SRENAME_thm = store_thm(
 
   (sr.sr_typeof_symb symb_new = sr.sr_typeof_symb symb) ==>
 
-  (* exclude the freshly introduced symbols between sys and Pi in the expression symb_inst *)
+  (* exclude the new symbol from all symbols that are in use *)
   (symb_new NOTIN ((symb_symbols sr sys) UNION (symb_symbols_set sr Pi))) ==>
 
   (symb_hl_step_in_L_sound sr (sys, L, Pi)) ==>
@@ -1320,6 +1327,46 @@ val symb_rule_SRENAME_thm = store_thm(
 ``,
   cheat
 );
+
+
+(* ************************* *)
+(*        STRENGTHEN         *)
+(* ************************* *)
+val symb_rule_STRENGTHEN_thm = store_thm(
+   "symb_rule_STRENGTHEN_thm", ``
+!sr.
+!sys1 L Pi pcond sys2 sys2'.
+
+  (* TODO: maybe need more or less of these assumptions *)
+  (symb_typeof_exp_sound sr) ==>
+  (symb_subst_f_sound sr) ==>
+  (symb_symbols_f_sound sr) ==>
+
+
+  (symb_pcondwiden sr (symb_symbst_pcond sys1) pcond) ==>
+  ((sr.sr_symbols_f pcond) SUBSET (sr.sr_symbols_f (symb_symbst_pcond sys1))) ==> (* this assumption simplifies the proof but is not really needed *)
+  (* ALTERNATIVE: sys1 /\ sys2 ==> sys2' *)
+
+  (symb_symbst_pcond_update
+     (sr.sr_mk_exp_conj_f pcond)
+     (sys2)
+   = sys2'
+  ) ==>
+
+  (symb_hl_step_in_L_sound sr (sys1, L, Pi)) ==>
+  (symb_hl_step_in_L_sound sr (sys1, L, (Pi DIFF {sys2}) UNION {sys2'}))
+``,
+  cheat
+);
+
+(*
+  next step, adjust CONS rule:
+    - S1' -> Pi, S2
+    - S1 ==> S1'
+    - S2 ==> S2'
+    ====>>>>
+    - S1 -> Pi, (S2' pcond/\ S1[']pcond)
+ *)
 
 
 
