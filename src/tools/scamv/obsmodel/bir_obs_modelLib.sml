@@ -458,15 +458,19 @@ open bir_cfgLib;
 	end
 
     fun mk_shadow_addr exp =
-	if is_BL_Address exp then
-            let
-		val (sz, wv) = (gen_dest_Imm o dest_BL_Address) exp;
-		val primed_wv = primed_word_literal wv;
+	let
+	  fun problem exp msg = problem_gen "mk_shadow_addr" exp msg;
+	in
+	  if is_BL_Address exp then
+	    let
+	      val (sz, wv) = (gen_dest_Imm o dest_BL_Address) exp;
+	      val primed_wv = primed_word_literal wv;
             in
-		mk_BL_Label primed_wv
+	      mk_BL_Label primed_wv
             end
-	else
-	    raise ERR "mk_shadow_addr" "the expression is not a bir address"
+	  else
+	    problem exp "the expression is not a bir address: "
+	end
 
     fun mk_shadow_label lbl =
 	let
@@ -604,6 +608,7 @@ val prog =
 
     fun mk_shadow_target block pt =
 	let
+	  fun problem exp msg = problem_gen "mk_shadow_target" exp msg;
 	  val (tm_lbl, tm_stmts, tm_last_stmt) = dest_bir_block block;
 	  val estmt_shadow =
 	    if is_BStmt_Jmp tm_last_stmt then
@@ -626,7 +631,7 @@ val prog =
 		  tm_last_stmt
 	      end
 	    else
-	      raise ERR "mk_shadow_target" "end statement is not a cjmp"
+	      problem tm_last_stmt "unknown bir end statement: "
 	in
 	  mk_bir_block (tm_lbl, tm_stmts, estmt_shadow)
 	end
@@ -634,16 +639,27 @@ val prog =
     fun extract_blocks depth branch bl_dict =
 	let
 	  fun get_block_from_dict baddr =
-	      Redblackmap.find (bl_dict, baddr)
-	      handle e => raise ERR "extract_blocks::get_block_from_dict" "block not found"
+	      let
+		fun problem exp msg = problem_gen "extract_blocks::get_block_from_dict" exp msg;
+	      in
+		Redblackmap.find (bl_dict, baddr)
+		handle e => problem baddr "block not found with label: "
+	      end
 	  val shadow_block_fun = (mk_shadow_block o (snd o dest_eq o concl o EVAL))
 	  fun fix_jmp_back bb =
 	    let
 	      val (bbl, bbs, bbes) = dest_bir_block bb;
-	      val estmt = if is_BStmt_Jmp bbes then
-			    mk_BStmt_Jmp (mk_BLE_Label branch)
-			  else
-			    raise ERR "fix_jmp_back" ""
+	      val estmt =
+		  let
+		    fun problem exp msg = problem_gen "extract_blocks::fix_jmp_back" exp msg;
+		  in
+		    if is_BStmt_Jmp bbes then
+		      mk_BStmt_Jmp (mk_BLE_Label branch)
+		    else if is_BStmt_Halt bbes then
+		      bbes
+		    else
+		      problem bbes "can't handle the end statement: "
+		  end
 	    in
               mk_bir_block (bbl, bbs, estmt)
 	    end
@@ -730,12 +746,11 @@ val prog =
     fun mk_shadow_prog obs_fun bprog bl_dict target ptarget depth =
 	let
 	  open listSyntax;
-	  (* val prog_t = (snd o dest_eq o concl o EVAL) bprog; *)
 	  val (blocks, obs_ty) = (dest_list o dest_BirProgram) bprog;
 
-	  val shadow_blocks = extract_blocks depth target bl_dict;
-	  val shadow_blocks_w_obs = add_obs_refined obs_fun shadow_blocks;
-	  val complete_shadow_blocks = save_shadow_state shadow_blocks_w_obs;
+	  val shadow_blocks = nub_with (fn (x,y) => identical x y) (extract_blocks depth target bl_dict);
+	  val shadow_blocks_w_refobs = add_obs_refined obs_fun shadow_blocks;
+	  val complete_shadow_blocks = save_shadow_state shadow_blocks_w_refobs;
 
 	  val link_blocks = map (fn b => mk_shadow_target ((rand o concl) (EVAL b)) ptarget) blocks;
 	in
