@@ -503,7 +503,23 @@ val symb_subst_store_sound_NOTIN_thm = store_thm(
   (symb NOTIN symb_symbols_store sr store) ==>
   (symb_subst_store sr (symb, symb_inst) store = store)
 ``,
-  cheat
+  REPEAT STRIP_TAC >>
+  REWRITE_TAC [boolTheory.FUN_EQ_THM] >>
+  REPEAT STRIP_TAC >>
+
+  Cases_on `store' x` >- (
+    FULL_SIMP_TAC std_ss [symb_subst_store_thm]
+  ) >>
+
+  `symb NOTIN sr.sr_symbols_f x'` by (
+    `sr.sr_symbols_f x' SUBSET symb_symbols_store sr store'` by (
+      METIS_TAC [symb_symbols_SUBSET_store_exps_thm]
+    ) >>
+    IMP_RES_TAC SUBSET_THM >>
+    METIS_TAC []
+  ) >>
+
+  METIS_TAC [symb_subst_f_sound_NOTIN_def, symb_subst_store_thm]
 );
 
 val symb_subst_sound_NOTIN_thm = store_thm(
@@ -516,7 +532,20 @@ val symb_subst_sound_NOTIN_thm = store_thm(
   (symb NOTIN symb_symbols sr sys) ==>
   (symb_subst sr (symb,symb_inst) sys = sys)
 ``,
-  cheat
+  REPEAT STRIP_TAC >>
+
+  Cases_on `sys` >>
+  FULL_SIMP_TAC std_ss [symb_subst_def, symb_symbst_pc_def, symb_symbst_store_def, symb_symbst_pcond_def, symb_symbst_extra_def, symb_symbst_t_11] >>
+
+  `symb NOTIN symb_symbols_store sr f` by (
+    METIS_TAC [symb_symbols_SUBSET_store_thm, symb_symbst_store_def, SUBSET_THM]
+  ) >>
+
+  `symb NOTIN sr.sr_symbols_f c` by (
+    METIS_TAC [symb_symbols_SUBSET_pcond_thm, symb_symbst_pcond_def, SUBSET_THM]
+  ) >>
+
+  METIS_TAC [symb_subst_f_sound_NOTIN_def, symb_subst_store_sound_NOTIN_thm]
 );
 
 (* move on with the actual substitutions *)
