@@ -879,7 +879,10 @@ val symb_matchstate_UPDATE_indep_thm = store_thm(
 !sr.
 !sys s symb v H H'.
   (symb_symbols_f_sound sr) ==>
+
+  (* we need this assumption because an instantiation only in the reachable states requires some assumption that guarantees to not loose concrete states *)
   (~(symb IN symb_symbols sr sys)) ==>
+
   (sr.sr_typeof_val v = sr.sr_typeof_symb symb) ==>
   (H' = symb_interpr_update H (symb,SOME v)) ==>
   (symb_matchstate sr sys H  s) ==>
@@ -1433,6 +1436,7 @@ val symb_rule_SRENAME_thm = store_thm(
   (* TODO: maybe need more or less of these assumptions *)
   (symb_typeof_exp_sound sr) ==>
   (symb_subst_f_sound sr) ==>
+  (symb_subst_f_sound_NOTIN sr) ==>
   (symb_symbols_f_sound sr) ==>
 
   (sr.sr_typeof_symb symb_new = sr.sr_typeof_symb symb) ==>
@@ -1444,23 +1448,74 @@ val symb_rule_SRENAME_thm = store_thm(
   (symb_hl_step_in_L_sound sr (symb_subst sr (symb, sr.sr_mk_exp_symb_f symb_new) sys, L, symb_subst_set sr (symb, sr.sr_mk_exp_symb_f symb_new) Pi))
 ``,
   REPEAT STRIP_TAC >>
-  `(sr.sr_typeof_exp (sr.sr_mk_exp_symb_f symb_new) = SOME (sr.sr_typeof_symb symb))` by (
+
+  Q.ABBREV_TAC `symb_inst = sr.sr_mk_exp_symb_f symb_new` >>
+  `(sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb))` by (
     cheat (* ??????? *)
 (*
 symb_typeof_exp_sound_def
 symb_mk_exp_symb_f_sound_def  ---- fix here
 *)
   ) >>
-
+  `(sr.sr_symbols_f symb_inst = {symb_new})` by (
+    cheat (* ??????? *)
 (*
-symb_subst_sound_thm1
+symb_mk_exp_symb_f_sound_def  ---- also fix here
+*)
+  ) >>
+
+
+  Cases_on `symb IN symb_symbols sr sys` >- (
+    `sr.sr_symbols_f symb_inst INTER (symb_symbols_set sr Pi DIFF symb_symbols sr sys) = EMPTY` by (
+      cheat (* maybe need to fix set of symbols of mk_exp_symb_f in soundness definition also, see above *)
+    ) >>
+    METIS_TAC [symb_rule_INST_thm]
+  ) >>
+
+(* do we have theorem that substition has no effect if substituted symbol is not present? then this part of the proof will be relatively simple and just needs a bit argument for the last step *)
+  FULL_SIMP_TAC std_ss [symb_hl_step_in_L_sound_def, conc_step_n_in_L_def] >>
+  REPEAT STRIP_TAC >>
+
+  `symb_subst sr (symb,symb_inst) sys = sys` by (
+    METIS_TAC [symb_subst_sound_NOTIN_thm]
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  PAT_X_ASSUM ``!s H. symb_minimal_interpretation sr sys H ==> A`` (IMP_RES_TAC) >>
+  Q.EXISTS_TAC `n` >> Q.EXISTS_TAC `s'` >>
+  ASM_SIMP_TAC (std_ss) [] >>
+
+  Q.ABBREV_TAC `sys_s = symb_subst sr (symb,symb_inst) sys'` >>
+  Q.ABBREV_TAC `Pi_s = symb_subst_set sr (symb,symb_inst) Pi` >>
+  Q.EXISTS_TAC `sys_s` >>
+  `sys_s IN Pi_s` by (
+    METIS_TAC [symb_subst_set_def, IN_IMAGE]
+  ) >>
+  FULL_SIMP_TAC std_ss [symb_matchstate_ext_def] >>
+
+  Cases_on `symb NOTIN symb_symbols sr sys'` >- (
+    `symb_subst sr (symb,symb_inst) sys' = sys'` by (
+      METIS_TAC [symb_subst_sound_NOTIN_thm]
+    ) >>
+    METIS_TAC []
+  ) >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  `symb_new NOTIN symb_symbols sr sys /\ symb_new NOTIN symb_symbols sr sys'` by (
+    cheat
+  ) >>
+
+  cheat
+(*
 symb_subst_sound_thm2
 *)
+
+(*
+(* ============================= *)
 
   FULL_SIMP_TAC std_ss [symb_hl_step_in_L_sound_def, conc_step_n_in_L_def] >>
   REPEAT STRIP_TAC >>
 
-  Q.ABBREV_TAC `symb_inst = sr.sr_mk_exp_symb_f symb_new` >>
   Q.ABBREV_TAC `sys_s = symb_subst sr (symb,symb_inst) sys` >>
   Q.ABBREV_TAC `Pi_s = symb_subst_set sr (symb,symb_inst) Pi` >>
 
@@ -1550,6 +1605,7 @@ symb_subst_sound_thm2
 
   Q.ABBREV_TAC `H_4v = symb_interpr_update H_3_m (symb,SOME v)` >>
   `symb_matchstate sr sys' H_4v s'` by (
+    cheat (*>>
     Cases_on `~(symb IN symb_symbols sr sys')` >- (
       METIS_TAC [symb_matchstate_UPDATE_indep_thm]
     ) >>
@@ -1591,6 +1647,7 @@ symb_subst_sound_thm2
     ) >>
 
     METIS_TAC []
+*)
   ) >>
 
   Q.ABBREV_TAC `H_4 = symb_interpr_extend H_2_m H_4v` >>
@@ -1668,6 +1725,7 @@ symb_subst_sound_thm2
   ) >>
 
   `symb_interprs_eq_for H H_6 (sr.sr_symbols_f symb_inst DELETE symb)` by (
+    cheat (*>>
     `symb_interprs_eq_for H H_2 (sr.sr_symbols_f symb_inst DELETE symb)` by (
       METIS_TAC [symb_interprs_eq_for_update_thm, symb_interprs_eq_for_ID_thm]
     ) >>
@@ -1732,6 +1790,7 @@ symb_subst_sound_thm2
       METIS_TAC [symb_interprs_eq_for_update_thm, symb_interprs_eq_for_ID_thm, DELETE_INTER, DELETE_DELETE]
     ) >>
     METIS_TAC [symb_interprs_eq_for_TRANS_thm]
+*)
   ) >>
   (* ... *)
 
@@ -1809,6 +1868,7 @@ symb_subst_sound_thm2
 
   Q.EXISTS_TAC `H_6` >>
   ASM_REWRITE_TAC []
+*)
 
 );
 

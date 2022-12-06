@@ -462,6 +462,64 @@ val symb_subst_f_sound_def = Define `
       )
 `;
 
+(*
+val symb_subst_f_SYMBNOTIN_thm = store_thm(
+   "symb_subst_f_SYMBNOTIN_thm", ``
+!sr.
+!symb symb_inst symbexp symbexp_r.
+  (symb_symbols_f_sound sr) ==>
+  (symb_subst_f_sound sr) ==>
+
+  (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
+  (symb NOTIN sr.sr_symbols_f symbexp) ==>
+
+  (sr.sr_subst_f (symb, symb_inst) symbexp = symbexp_r) ==>
+
+  (sr.sr_interpret_f H symbexp_r =
+   sr.sr_interpret_f H symbexp)
+``,
+  (* symb_symbols_f_sound_def *)
+  cheat
+);
+*)
+
+(* this soundness definition is to avoid proving the SYMBNOTIN theorem above and lift it all the way up to states *)
+val symb_subst_f_sound_NOTIN_def = Define `
+    symb_subst_f_sound_NOTIN sr =
+      (!symb symb_inst symbexp.
+          (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
+          (symb NOTIN sr.sr_symbols_f symbexp) ==>
+          (sr.sr_subst_f (symb, symb_inst) symbexp = symbexp)
+      )
+`;
+
+val symb_subst_store_sound_NOTIN_thm = store_thm(
+   "symb_subst_store_sound_NOTIN_thm", ``
+!sr.
+!symb symb_inst store.
+  (symb_subst_f_sound_NOTIN sr) ==>
+
+  (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
+  (symb NOTIN symb_symbols_store sr store) ==>
+  (symb_subst_store sr (symb, symb_inst) store = store)
+``,
+  cheat
+);
+
+val symb_subst_sound_NOTIN_thm = store_thm(
+   "symb_subst_sound_NOTIN_thm", ``
+!sr.
+!symb symb_inst sys.
+  (symb_subst_f_sound_NOTIN sr) ==>
+
+  (sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb)) ==>
+  (symb NOTIN symb_symbols sr sys) ==>
+  (symb_subst sr (symb,symb_inst) sys = sys)
+``,
+  cheat
+);
+
+(* move on with the actual substitutions *)
 val symb_subst_store_sound_thm = store_thm(
    "symb_subst_store_sound_thm", ``
 !sr.
