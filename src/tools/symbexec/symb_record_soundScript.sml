@@ -435,6 +435,12 @@ val symb_mk_exp_symb_f_sound_def = Define `
        (!symb. sr.sr_symbols_f (sr.sr_mk_exp_symb_f symb) = {symb}))
 `;
 
+val symb_mk_exp_symb_f_sound_typeof_def = Define `
+    symb_mk_exp_symb_f_sound_typeof sr =
+      (!symb.
+         sr.sr_typeof_exp (sr.sr_mk_exp_symb_f symb) = SOME (sr.sr_typeof_symb symb))
+`;
+
 
 
 
