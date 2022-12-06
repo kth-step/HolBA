@@ -1438,6 +1438,8 @@ val symb_rule_SRENAME_thm = store_thm(
   (symb_subst_f_sound sr) ==>
   (symb_subst_f_sound_NOTIN sr) ==>
   (symb_symbols_f_sound sr) ==>
+  (symb_mk_exp_symb_f_sound sr) ==>
+  (symb_mk_exp_symb_f_sound_typeof sr) ==>
 
   (sr.sr_typeof_symb symb_new = sr.sr_typeof_symb symb) ==>
 
@@ -1451,17 +1453,10 @@ val symb_rule_SRENAME_thm = store_thm(
 
   Q.ABBREV_TAC `symb_inst = sr.sr_mk_exp_symb_f symb_new` >>
   `(sr.sr_typeof_exp symb_inst = SOME (sr.sr_typeof_symb symb))` by (
-    cheat (* ??????? *)
-(*
-symb_typeof_exp_sound_def
-symb_mk_exp_symb_f_sound_def  ---- fix here
-*)
+    METIS_TAC [symb_mk_exp_symb_f_sound_typeof_def]
   ) >>
   `(sr.sr_symbols_f symb_inst = {symb_new})` by (
-    cheat (* ??????? *)
-(*
-symb_mk_exp_symb_f_sound_def  ---- also fix here
-*)
+    METIS_TAC [symb_mk_exp_symb_f_sound_def]
   ) >>
 
 
@@ -1505,9 +1500,59 @@ symb_mk_exp_symb_f_sound_def  ---- also fix here
     cheat
   ) >>
 
-  cheat
+  `?H2. (* minimize to sys and then extend with sys' to match sys' *)
+     symb_interpr_ext H2 H /\
+     symb_matchstate sr sys' H2 s' /\
+     symb_new NOTIN symb_interpr_dom H2 (* /\
+     ?v. (interpret H2 symb = SOME v /\ sr.sr_typeof_val v = sr.sr_typeof_symb symb) (* symb_typeof_exp_sound_def, maybe just have a lookup and use welltypedness of H2, from matchstate_def *) *)
+  ` by (
 (*
-symb_subst_sound_thm2
+   `symb_interprs_eq_for H' H2 (symb_symbols sr sys')` by 
+     proves symb_matchstate sr sys' H2 s'
+*)
+    cheat
+  ) >>
+
+  `?v. symb_interpr_get H2 symb = SOME v /\ sr.sr_typeof_val v = sr.sr_typeof_symb symb` by (
+    cheat (* we know that symb is mapped in H2 (via the symbol set of sys') and that H2 is welltyped *)
+  ) >>
+
+  Q.ABBREV_TAC `H3 = symb_interpr_update H2 (symb_new,SOME v)` >>
+
+  `symb_interpr_get H3 symb = SOME v` by (
+    (* maybe need symb <> symb_new, but actually it hold also if they were not because both are mapped to v *)
+    cheat
+  ) >> (* also allows (together with equalities in the assumptions) to satisfy welltypedness requirement of symb_subst_sound_thm2 later *)
+
+  `H2 = symb_interpr_update H3 (symb,SOME v)` by (
+    cheat
+  ) >>
+
+  `symb_interpr_ext H3 H` by (
+    cheat
+  ) >>
+
+  `symb_matchstate sr sys_s H3 s'` by (
+    `sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H3` by (
+      cheat
+    ) >>
+    `sr.sr_interpret_f H3 symb_inst = SOME v` by (
+      `symb_interpr_get H3 symb_new = SOME v` by (
+        cheat
+      ) >>
+      METIS_TAC [symb_mk_exp_symb_f_sound_def]
+    ) >>
+    `!v'.
+          symb_interpr_get H3 symb = SOME v' ==>
+          sr.sr_typeof_symb symb = sr.sr_typeof_val v'` by (
+      cheat
+    ) >>
+    METIS_TAC [symb_subst_sound_thm2]
+  ) >>
+
+  METIS_TAC []
+(*
+
 *)
 
 (*
