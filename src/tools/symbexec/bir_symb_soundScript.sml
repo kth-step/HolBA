@@ -363,6 +363,36 @@ val birs_symb_mk_exp_symb_f_sound_thm = store_thm(
 
 (*
 =========================================================================
+symb_mk_exp_symb_f_sound_typeof sr
+=========================================================================
+ *)
+
+val birs_symb_mk_exp_symb_f_sound_typeof_thm = store_thm(
+   "birs_symb_mk_exp_symb_f_sound_typeof_thm", ``
+!prog.
+  symb_mk_exp_symb_f_sound_typeof (bir_symb_rec_sbir prog)
+``,
+  cheat
+);
+
+
+(*
+=========================================================================
+symb_mk_exp_neg_f_sound sr
+=========================================================================
+ *)
+
+val birs_symb_mk_exp_neg_f_sound_thm = store_thm(
+   "birs_symb_mk_exp_neg_f_sound_thm", ``
+!prog.
+  symb_mk_exp_neg_f_sound (bir_symb_rec_sbir prog)
+``,
+  cheat
+);
+
+
+(*
+=========================================================================
 symb_subst_f_sound sr
 =========================================================================
  *)
@@ -410,6 +440,21 @@ val birs_symb_subst_f_sound_thm = store_thm(
 
   (* variable set *)
   METIS_TAC [bir_exp_subst1_USED_VARS]
+);
+
+
+(*
+=========================================================================
+symb_subst_f_sound_NOTIN sr
+=========================================================================
+ *)
+
+val birs_symb_subst_f_sound_NOTIN_thm = store_thm(
+   "birs_symb_subst_f_sound_NOTIN_thm", ``
+!prog.
+  symb_subst_f_sound_NOTIN (bir_symb_rec_sbir prog)
+``,
+  cheat
 );
 
 
