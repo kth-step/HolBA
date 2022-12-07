@@ -651,6 +651,15 @@ in
 `;
 end;
 
+val matchstate_IMP_symbols_SUBSET_interpr_dom_thm = store_thm(
+   "matchstate_IMP_symbols_SUBSET_interpr_dom_thm", ``
+!sr sys H s.
+  (symb_matchstate sr sys H s) ==>
+  ((symb_symbols sr sys) SUBSET symb_interpr_dom H)
+``,
+  METIS_TAC [symb_matchstate_def, symb_suitable_interpretation_def, symb_interpr_for_symbs_def]
+);
+
 val symb_symbst_store_update_IMP_matchstate_EQ_thm = store_thm(
    "symb_symbst_store_update_IMP_matchstate_EQ_thm", ``
 !sr.
