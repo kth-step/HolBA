@@ -1504,21 +1504,66 @@ val symb_rule_SRENAME_thm = store_thm(
     METIS_TAC [symb_symbols_set_SUBSET_thm, SUBSET_THM]
   ) >>
 
-  `?H2. (* minimize to sys and then extend with sys' to match sys' *)
+  `?H2.
      symb_interpr_ext H2 H /\
      symb_matchstate sr sys' H2 s' /\
-     symb_new NOTIN symb_interpr_dom H2 (* /\
-     ?v. (interpret H2 symb = SOME v /\ sr.sr_typeof_val v = sr.sr_typeof_symb symb) (* symb_typeof_exp_sound_def, maybe just have a lookup and use welltypedness of H2, from matchstate_def *) *)
+     symb_new NOTIN symb_interpr_dom H2
   ` by (
-(*
-   `symb_interprs_eq_for H' H2 (symb_symbols sr sys')` by 
-     proves symb_matchstate sr sys' H2 s'
-*)
-    cheat
+    Q.ABBREV_TAC `H2 = symb_interpr_update H' (symb_new, NONE)` >>
+    Q.EXISTS_TAC `H2` >>
+    `symb_interprs_eq_for H2 H' (symb_interpr_dom H' DELETE symb_new)` by (
+      METIS_TAC [symb_interprs_eq_for_UPDATE_dom_thm]
+    ) >>
+
+    `symb_interpr_ext H2 H` by (
+      FULL_SIMP_TAC std_ss [symb_interpr_ext_def] >>
+      `symb_symbols sr sys = symb_interpr_dom H` by (
+        METIS_TAC [symb_minimal_interpretation_def, symb_interpr_for_symbs_min_def]
+      ) >>
+      FULL_SIMP_TAC std_ss [] >>
+
+      `symb_interprs_eq_for H2 H' (symb_interpr_dom H)` by (
+        `symb_interpr_dom H SUBSET symb_interpr_dom H' DELETE symb_new` by (
+          FULL_SIMP_TAC std_ss [GSYM symb_interpr_ext_def] >>
+          METIS_TAC [symb_interpr_ext_IMP_dom_thm, SUBSET_DELETE]
+        ) >>
+        METIS_TAC [symb_interprs_eq_for_SUBSET_thm]
+      ) >>
+
+      METIS_TAC [symb_interprs_eq_for_COMM_thm, symb_interprs_eq_for_TRANS_thm]
+    ) >>
+
+    `symb_matchstate sr sys' H2 s'` by (
+      `symb_interprs_eq_for H2 H' (symb_symbols sr sys')` by (
+        `symb_symbols sr sys' SUBSET symb_interpr_dom H'` by (
+          METIS_TAC [matchstate_IMP_symbols_SUBSET_interpr_dom_thm]
+        ) >>
+
+        METIS_TAC [symb_interprs_eq_for_SUBSET_thm, SUBSET_DELETE]
+      ) >>
+
+      `symb_interpr_welltyped sr H2` by (
+        METIS_TAC [symb_interpr_update_NONE_IMP_welltyped_thm, symb_matchstate_def]
+      ) >>
+
+      METIS_TAC [symb_interprs_eq_for_matchstate_IMP_matchstate_thm, symb_matchstate_def]
+    ) >>
+
+    ASM_REWRITE_TAC [symb_interpr_dom_thm] >>
+    METIS_TAC [symb_interpr_get_update_id_thm]
   ) >>
 
   `?v. symb_interpr_get H2 symb = SOME v /\ sr.sr_typeof_val v = sr.sr_typeof_symb symb` by (
-    cheat (* we know that symb is mapped in H2 (via the symbol set of sys') and that H2 is welltyped *)
+    `symb_interpr_welltyped sr H2` by (
+      METIS_TAC [symb_matchstate_def]
+    ) >>
+
+    (* we know that symb is mapped in H2 (via the symbol set of sys') *)
+    `symb IN symb_interpr_dom H2` by (
+      METIS_TAC [matchstate_IMP_symbols_SUBSET_interpr_dom_thm, SUBSET_THM]
+    ) >>
+
+    METIS_TAC [symb_interpr_welltyped_def]
   ) >>
 
   Q.ABBREV_TAC `H3 = symb_interpr_update H2 (symb_new,SOME v)` >>
