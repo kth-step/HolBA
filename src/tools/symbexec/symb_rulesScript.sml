@@ -1648,8 +1648,8 @@ val symb_rule_SRENAME_thm = store_thm(
 val symb_strengthen_TRANSF_matchstate_ext_thm = store_thm(
    "symb_strengthen_TRANSF_matchstate_ext_thm", ``
 !sr.
-(* TODO: do we need the following here, and some more? ( symb_symbols_f_sound sr) ==>*)
 (symb_mk_exp_conj_f_sound sr) ==>
+(symb_symbols_f_sound sr) ==>
 
 !sys1 L Pi sys2 pcond sys2'.
   (symb_pcondwiden sr (symb_symbst_pcond sys1) pcond) ==>
@@ -1679,9 +1679,44 @@ symb_matchstate_def
 symb_pcondwiden_def
 *)
 
-  (* TODO: not true, need to play with H' first *)
+  (* TODO: not true if we remove the assumption on the symbols of pcond, then need to play with H' first *)
   `symb_interpr_symbpcond sr H' sys2'` by (
-    cheat
+    `symb_interpr_welltyped sr H'` by (
+      METIS_TAC [symb_matchstate_def]
+    ) >>
+
+    `symb_interpr_symbpcond sr H' sys2` by (
+      METIS_TAC [symb_matchstate_def]
+    ) >>
+
+    FULL_SIMP_TAC std_ss [symb_interpr_symbpcond_def] >>
+
+    `sr.sr_mk_exp_conj_f pcond (symb_symbst_pcond sys2) = (symb_symbst_pcond sys2')` by (
+      METIS_TAC [symb_symbst_pcond_update_READ_thm]
+    ) >>
+
+    `sr.sr_interpret_f H' pcond = SOME sr.sr_val_true` by (
+      `symb_interpr_for_symbs
+             (sr.sr_symbols_f (symb_symbst_pcond sys1) UNION sr.sr_symbols_f pcond) H'` by (
+        METIS_TAC [symb_interpr_for_symbs_def, symb_interpr_ext_IMP_dom_thm, matchstate_IMP_symbols_SUBSET_interpr_dom_thm, symb_symbols_SUBSET_pcond_thm, SUBSET_TRANS, UNION_SUBSET]
+      ) >>
+
+      `sr.sr_interpret_f H' (symb_symbst_pcond sys1) = SOME sr.sr_val_true` by (
+        `sr.sr_interpret_f H (symb_symbst_pcond sys1) = SOME sr.sr_val_true` by (
+          METIS_TAC [symb_matchstate_def, symb_interpr_symbpcond_def]
+        ) >>
+        `symb_interprs_eq_for H H' (sr.sr_symbols_f (symb_symbst_pcond sys1))` by (
+          METIS_TAC [symb_symbols_SUBSET_pcond_thm,
+                     SUBSET_TRANS, symb_interpr_ext_IMP_eq_for_thm,
+                     matchstate_IMP_symbols_SUBSET_interpr_dom_thm]
+        ) >>
+        METIS_TAC [symb_symbols_f_sound_def]
+      ) >>
+
+      METIS_TAC [symb_pcondwiden_def]
+    ) >>
+
+    METIS_TAC [symb_mk_exp_conj_f_sound_def]
   ) >>
 
 (*
@@ -1689,7 +1724,21 @@ symb_symbst_pcond_update_IMP_matchstate_EQ_thm
 *)
 
   `symb_symbols sr sys2 UNION sr.sr_symbols_f ((sr.sr_mk_exp_conj_f pcond) (symb_symbst_pcond sys2)) SUBSET symb_interpr_dom H'` by (
-    cheat
+    FULL_SIMP_TAC std_ss [symb_mk_exp_conj_f_sound_def] >>
+
+    `symb_symbols sr sys2 SUBSET symb_interpr_dom H'` by (
+      METIS_TAC [matchstate_IMP_symbols_SUBSET_interpr_dom_thm]
+    ) >>
+
+    `sr.sr_symbols_f (symb_symbst_pcond sys2) SUBSET symb_interpr_dom H'` by (
+      METIS_TAC [symb_symbols_SUBSET_pcond_thm, SUBSET_TRANS]
+    ) >>
+
+    `sr.sr_symbols_f pcond SUBSET symb_interpr_dom H'` by (
+      METIS_TAC [symb_interpr_ext_IMP_dom_thm, matchstate_IMP_symbols_SUBSET_interpr_dom_thm, symb_symbols_SUBSET_pcond_thm, SUBSET_TRANS]
+    ) >>
+
+    METIS_TAC [UNION_SUBSET]
   ) >>
 
   PAT_X_ASSUM ``symb_symbst_pcond_update A B = C`` (ASSUME_TAC o GSYM) >>
