@@ -328,6 +328,50 @@ val symb_interpr_extend_symbs_sr_IMP_welltyped_thm = store_thm(
   )
 );
 
+val symb_interpr_extend_symbs_sr_IS_interpr_ext_thm = store_thm(
+   "symb_interpr_extend_symbs_sr_IS_interpr_ext_thm", ``
+!sr.
+!H symbs.
+  (symb_interpr_ext (symb_interpr_extend_symbs_sr sr symbs H) H)
+``,
+  FULL_SIMP_TAC std_ss [symb_interpr_extend_symbs_sr_def, symb_interpr_extend_symbs_IMP_ext_thm]
+);
+
+val symb_interpr_extend_symbs_sr_IS_interpr_for_symbs_thm = store_thm(
+   "symb_interpr_extend_symbs_sr_IS_interpr_for_symbs_thm", ``
+!sr.
+!H symbs.
+  (symb_interpr_for_symbs symbs (symb_interpr_extend_symbs_sr sr symbs H))
+``,
+  REPEAT STRIP_TAC >>
+
+  FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, symb_interpr_extend_symbs_sr_def, symb_interpr_extend_symbs_IMP_dom_thm, SUBSET_UNION]
+);
+
+val symb_interpr_extend_symbs_sr_IMP_matchstate_thm = store_thm(
+   "symb_interpr_extend_symbs_sr_IMP_matchstate_thm", ``
+!sr.
+!H symbs sys s.
+  (symb_ARB_val_sound sr) ==>
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_matchstate sr sys H s) ==>
+  (symb_matchstate sr sys (symb_interpr_extend_symbs_sr sr symbs H) s)
+``,
+  REPEAT STRIP_TAC >>
+
+  `symb_interprs_eq_for H (symb_interpr_extend_symbs_sr sr symbs H) (symb_symbols sr sys)` by (
+    METIS_TAC [symb_interpr_extend_symbs_sr_IS_interpr_ext_thm,
+    matchstate_IMP_symbols_SUBSET_interpr_dom_thm,
+    symb_interpr_ext_def,
+    symb_interprs_eq_for_SUBSET_thm,
+    symb_interprs_eq_for_COMM_thm]
+  ) >>
+
+  METIS_TAC [symb_interprs_eq_for_matchstate_IMP_matchstate_thm, symb_matchstate_def, symb_interpr_extend_symbs_sr_IMP_welltyped_thm]
+);
+
+
 (*
 SOUND EXPRESSION TYPES
 =======================================================
