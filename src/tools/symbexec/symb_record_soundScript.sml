@@ -487,6 +487,11 @@ val symb_mk_exp_symb_f_sound_typeof_def = Define `
 
 
 
+val symb_mk_exp_neg_f_sound_def = Define `
+    symb_mk_exp_neg_f_sound sr =
+       (!symbexp. sr.sr_symbols_f (sr.sr_mk_exp_neg_f symbexp) = sr.sr_symbols_f symbexp)
+`;
+
 
 (*
 ASBTRACT SUBSTITUTION OF SYMBOLS FOR EXPRESSIONS IN EXPRESSIONS
