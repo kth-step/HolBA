@@ -1354,10 +1354,10 @@ val symb_weak_bool_def = Define `
 val symb_split_TRANSF_matchstate_ext_thm = store_thm(
    "symb_split_TRANSF_matchstate_ext_thm", ``
 !sr.
-(* TODO: do we need the following here, and some more? ( symb_symbols_f_sound sr) ==>*)
-(*(symb_mk_exp_conj_f_sound sr) ==>*)
+(symb_mk_exp_conj_f_sound sr) ==>
 (symb_ARB_val_sound sr) ==>
 (symb_symbols_f_sound sr) ==>
+(symb_mk_exp_neg_f_sound sr) ==>
 
 !sys L Pi sys2 symbexp sys2t sys2f.
   (symb_weak_bool sr symbexp) ==>
@@ -1388,8 +1388,11 @@ val symb_split_TRANSF_matchstate_ext_thm = store_thm(
   `symb_interpr_welltyped sr H2` by (
     METIS_TAC [symb_interpr_extend_symbs_sr_IMP_welltyped_thm, symb_matchstate_def]
   ) >>
+  `symb_interpr_ext H2 H'` by (
+    METIS_TAC [symb_interpr_extend_symbs_sr_IS_interpr_ext_thm]
+  ) >>
   `symb_interpr_ext H2 H` by (
-    METIS_TAC [symb_interpr_ext_TRANS_thm, symb_interpr_extend_symbs_sr_IS_interpr_ext_thm]
+    METIS_TAC [symb_interpr_ext_TRANS_thm]
   ) >>
   `symb_matchstate sr sys2 H2 s'` by (
     METIS_TAC [symb_interpr_extend_symbs_sr_IMP_matchstate_thm]
@@ -1405,11 +1408,37 @@ val symb_split_TRANSF_matchstate_ext_thm = store_thm(
     FULL_SIMP_TAC std_ss [] >>
 
     `symb_interpr_symbpcond sr H2 sys2t` by (
-      cheat
+      PAT_X_ASSUM ``symb_symbst_pcond_update A B = C`` (K ALL_TAC) >>
+      PAT_X_ASSUM ``symb_symbst_pcond_update A B = C`` (ASSUME_TAC o GSYM) >>
+
+      FULL_SIMP_TAC std_ss [] >>
+      Cases_on `sys2` >>
+      FULL_SIMP_TAC std_ss [symb_symbst_pcond_update_def, symb_interpr_symbpcond_def, symb_symbst_pcond_def] >>
+
+      `sr.sr_interpret_f H2 c = SOME sr.sr_val_true` by (
+        METIS_TAC [symb_matchstate_def, symb_interpr_symbpcond_def, symb_symbst_pcond_def]
+      ) >>
+
+      METIS_TAC [symb_mk_exp_conj_f_sound_def]
     ) >>
 
     `symb_suitable_interpretation sr sys2t H2` by (
-      cheat
+      `symb_symbols sr sys2t SUBSET symb_symbols sr sys2 UNION sr.sr_symbols_f symbexp` by (
+        `symb_symbols sr sys2t SUBSET symb_symbols sr sys2 UNION (sr.sr_symbols_f symbexp UNION sr.sr_symbols_f (symb_symbst_pcond sys2))` by (
+          METIS_TAC [symb_symbols_of_symb_symbst_pcond_update_SUBSET1_thm, symb_mk_exp_conj_f_sound_def]
+        ) >>
+
+        METIS_TAC [symb_symbols_SUBSET_pcond_thm,
+         SUBSET_UNION_ABSORPTION,
+         UNION_COMM,
+         UNION_ASSOC]
+      ) >>
+
+      FULL_SIMP_TAC std_ss [symb_suitable_interpretation_SUBSET_dom_thm] >>
+
+      METIS_TAC [symb_interpr_for_symbs_def,
+        matchstate_IMP_symbols_SUBSET_interpr_dom_thm,
+        UNION_SUBSET, SUBSET_TRANS]
     ) >>
 
     PAT_X_ASSUM ``symb_symbst_pcond_update A B = C`` (K ALL_TAC) >>
@@ -1419,15 +1448,57 @@ val symb_split_TRANSF_matchstate_ext_thm = store_thm(
     METIS_TAC []
   ,
     DISJ2_TAC >>
-    cheat
+    FULL_SIMP_TAC std_ss [symb_matchstate_ext_def] >>
+    Q.EXISTS_TAC `H2` >>
+    FULL_SIMP_TAC std_ss [] >>
+
+    `symb_interpr_symbpcond sr H2 sys2f` by (
+      PAT_X_ASSUM ``symb_symbst_pcond_update A B = C`` (ASSUME_TAC o GSYM) >>
+
+      FULL_SIMP_TAC std_ss [] >>
+      Cases_on `sys2` >>
+      FULL_SIMP_TAC std_ss [symb_symbst_pcond_update_def, symb_interpr_symbpcond_def, symb_symbst_pcond_def] >>
+
+      `sr.sr_interpret_f H2 c = SOME sr.sr_val_true` by (
+        METIS_TAC [symb_matchstate_def, symb_interpr_symbpcond_def, symb_symbst_pcond_def]
+      ) >>
+
+      METIS_TAC [symb_mk_exp_conj_f_sound_def]
+    ) >>
+
+    `symb_suitable_interpretation sr sys2f H2` by (
+      `symb_symbols sr sys2f SUBSET symb_symbols sr sys2 UNION sr.sr_symbols_f symbexp` by (
+        `symb_symbols sr sys2f SUBSET symb_symbols sr sys2 UNION (sr.sr_symbols_f symbexp UNION sr.sr_symbols_f (symb_symbst_pcond sys2))` by (
+          METIS_TAC [symb_symbols_of_symb_symbst_pcond_update_SUBSET1_thm, symb_mk_exp_conj_f_sound_def, symb_mk_exp_neg_f_sound_def]
+        ) >>
+
+        METIS_TAC [symb_symbols_SUBSET_pcond_thm,
+         SUBSET_UNION_ABSORPTION,
+         UNION_COMM,
+         UNION_ASSOC]
+      ) >>
+
+      FULL_SIMP_TAC std_ss [symb_suitable_interpretation_SUBSET_dom_thm] >>
+
+      METIS_TAC [symb_interpr_for_symbs_def,
+        matchstate_IMP_symbols_SUBSET_interpr_dom_thm,
+        UNION_SUBSET, SUBSET_TRANS]
+    ) >>
+
+    PAT_X_ASSUM ``symb_symbst_pcond_update A B = C`` (ASSUME_TAC o GSYM) >>
+    Cases_on `sys2` >> Cases_on `sys2f` >>
+    FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_symbst_pcond_update_READ_thm, symb_symbst_pc_def, symb_symbst_store_def, symb_symbst_pcond_def, symb_symbst_extra_def, symb_symbst_pcond_update_def, symb_symbst_t_11] >>
+    METIS_TAC []
   ]
 );
 
 val symb_rule_SPLIT_thm = store_thm(
    "symb_rule_SPLIT_thm", ``
 !sr.
+(symb_mk_exp_conj_f_sound sr) ==>
 (symb_ARB_val_sound sr) ==>
 (symb_symbols_f_sound sr) ==>
+(symb_mk_exp_neg_f_sound sr) ==>
 
 !sys L Pi sys2 symbexp sys2t sys2f.
   (symb_weak_bool sr symbexp) ==>
