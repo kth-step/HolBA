@@ -1568,33 +1568,72 @@ val symb_rule_SRENAME_thm = store_thm(
 
   Q.ABBREV_TAC `H3 = symb_interpr_update H2 (symb_new,SOME v)` >>
 
+  (* also allows (together with equalities in the assumptions) to satisfy welltypedness requirement of symb_subst_sound_thm2 later *)
   `symb_interpr_get H3 symb = SOME v` by (
-    (* maybe need symb <> symb_new, but actually it hold also if they were not because both are mapped to v *)
-    cheat
-  ) >> (* also allows (together with equalities in the assumptions) to satisfy welltypedness requirement of symb_subst_sound_thm2 later *)
+    Cases_on `symb = symb_new` >- (
+      FULL_SIMP_TAC std_ss []
+    ) >>
 
-  `H2 = symb_interpr_update H3 (symb,SOME v)` by (
-    cheat
+    Q.UNABBREV_TAC `H3` >>
+    FULL_SIMP_TAC std_ss [symb_interpr_get_update_thm]
+  ) >>
+
+(*
+  Q.ABBREV_TAC `H4 = symb_interpr_update H3 (symb,SOME v)` >>
+*)
+  `symb_interpr_update H3 (symb,SOME v) = H3` by (
+    Q.UNABBREV_TAC `H3` >>
+    Q.ABBREV_TAC `abc = symb_interpr_update H2 (symb_new,SOME v)` >>
+    REWRITE_TAC [symb_interpr_EQ_thm] >>
+    REPEAT STRIP_TAC >>
+
+    Cases_on `symb = symb'` >> (
+      FULL_SIMP_TAC std_ss [symb_interpr_get_update_thm]
+    )
   ) >>
 
   `symb_interpr_ext H3 H` by (
-    cheat
+    Q.UNABBREV_TAC `H3` >>
+    METIS_TAC [symb_interpr_ext_TRANS_thm, symb_interpr_ext_UPDATE_thm]
+  ) >>
+
+  `symb_matchstate sr sys' H3 s'` by (
+    `symb_interprs_eq_for H2 H3 (symb_symbols sr sys')` by (
+      FULL_SIMP_TAC std_ss [symb_interprs_eq_for_def] >>
+      REPEAT STRIP_TAC >>
+      Q.UNABBREV_TAC `H3` >>
+
+      Cases_on `symb_new = symb'` >> (
+        FULL_SIMP_TAC std_ss [symb_interpr_get_update_thm]
+      )
+    ) >>
+
+    `symb_interpr_welltyped sr H3` by (
+      METIS_TAC [symb_interpr_update_SOME_IMP_welltyped_thm, symb_matchstate_def]
+    ) >>
+
+    METIS_TAC [symb_interprs_eq_for_matchstate_IMP_matchstate_thm, symb_matchstate_def]
   ) >>
 
   `symb_matchstate sr sys_s H3 s'` by (
     `sr.sr_symbols_f symb_inst SUBSET symb_interpr_dom H3` by (
-      cheat
+      Q.UNABBREV_TAC `H3` >>
+      Q.UNABBREV_TAC `symb_inst` >>
+      FULL_SIMP_TAC std_ss [symb_mk_exp_symb_f_sound_def, symb_interpr_dom_UPDATE_SOME_thm] >>
+
+      FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) []
     ) >>
     `sr.sr_interpret_f H3 symb_inst = SOME v` by (
       `symb_interpr_get H3 symb_new = SOME v` by (
-        cheat
+        METIS_TAC [symb_interpr_get_update_id_thm]
       ) >>
       METIS_TAC [symb_mk_exp_symb_f_sound_def]
     ) >>
     `!v'.
           symb_interpr_get H3 symb = SOME v' ==>
           sr.sr_typeof_symb symb = sr.sr_typeof_val v'` by (
-      cheat
+      REPEAT STRIP_TAC >>
+      FULL_SIMP_TAC std_ss []
     ) >>
     METIS_TAC [symb_subst_sound_thm2]
   ) >>
