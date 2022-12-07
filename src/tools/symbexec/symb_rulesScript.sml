@@ -1355,7 +1355,9 @@ val symb_split_TRANSF_matchstate_ext_thm = store_thm(
    "symb_split_TRANSF_matchstate_ext_thm", ``
 !sr.
 (* TODO: do we need the following here, and some more? ( symb_symbols_f_sound sr) ==>*)
-(symb_mk_exp_conj_f_sound sr) ==>
+(*(symb_mk_exp_conj_f_sound sr) ==>*)
+(symb_ARB_val_sound sr) ==>
+(symb_symbols_f_sound sr) ==>
 
 !sys L Pi sys2 symbexp sys2t sys2f.
   (symb_weak_bool sr symbexp) ==>
@@ -1377,14 +1379,55 @@ val symb_split_TRANSF_matchstate_ext_thm = store_thm(
   (symb_matchstate_ext sr sys2 H s') ==>
   ((symb_matchstate_ext sr sys2t H s') \/ (symb_matchstate_ext sr sys2f H s'))
 ``,
-  cheat
+  REPEAT STRIP_TAC >>
+
+  PAT_X_ASSUM ``symb_matchstate_ext A B C D`` (ASSUME_TAC o REWRITE_RULE [symb_matchstate_ext_def]) >>
+  FULL_SIMP_TAC std_ss [] >>
+
+  Q.ABBREV_TAC `H2 = symb_interpr_extend_symbs_sr sr (sr.sr_symbols_f symbexp) H'` >>
+  `symb_interpr_welltyped sr H2` by (
+    METIS_TAC [symb_interpr_extend_symbs_sr_IMP_welltyped_thm, symb_matchstate_def]
+  ) >>
+  `symb_interpr_ext H2 H` by (
+    METIS_TAC [symb_interpr_ext_TRANS_thm, symb_interpr_extend_symbs_sr_IS_interpr_ext_thm]
+  ) >>
+  `symb_matchstate sr sys2 H2 s'` by (
+    METIS_TAC [symb_interpr_extend_symbs_sr_IMP_matchstate_thm]
+  ) >>
+  `symb_interpr_for_symbs (sr.sr_symbols_f symbexp) H2` by (
+    METIS_TAC [symb_interpr_extend_symbs_sr_IS_interpr_for_symbs_thm]
+  ) >>
+
+  IMP_RES_TAC symb_weak_bool_def >| [
+    DISJ1_TAC >>
+    FULL_SIMP_TAC std_ss [symb_matchstate_ext_def] >>
+    Q.EXISTS_TAC `H2` >>
+    FULL_SIMP_TAC std_ss [] >>
+
+    `symb_interpr_symbpcond sr H2 sys2t` by (
+      cheat
+    ) >>
+
+    `symb_suitable_interpretation sr sys2t H2` by (
+      cheat
+    ) >>
+
+    PAT_X_ASSUM ``symb_symbst_pcond_update A B = C`` (K ALL_TAC) >>
+    PAT_X_ASSUM ``symb_symbst_pcond_update A B = C`` (ASSUME_TAC o GSYM) >>
+    Cases_on `sys2` >> Cases_on `sys2t` >>
+    FULL_SIMP_TAC std_ss [symb_matchstate_def, symb_symbst_pcond_update_READ_thm, symb_symbst_pc_def, symb_symbst_store_def, symb_symbst_pcond_def, symb_symbst_extra_def, symb_symbst_pcond_update_def, symb_symbst_t_11] >>
+    METIS_TAC []
+  ,
+    DISJ2_TAC >>
+    cheat
+  ]
 );
 
 val symb_rule_SPLIT_thm = store_thm(
    "symb_rule_SPLIT_thm", ``
 !sr.
-(* TODO: do we need the following here, and some more? ( symb_symbols_f_sound sr) ==>*)
-(symb_mk_exp_conj_f_sound sr) ==>
+(symb_ARB_val_sound sr) ==>
+(symb_symbols_f_sound sr) ==>
 
 !sys L Pi sys2 symbexp sys2t sys2f.
   (symb_weak_bool sr symbexp) ==>
