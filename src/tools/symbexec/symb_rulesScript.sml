@@ -647,7 +647,7 @@ val symb_fresh_simplification_matchstate_IMP_matchstate_thm = store_thm(
 
   (symb NOTIN symb_interpr_dom H) ==>
   (symb NOTIN symb_symbols sr sys) ==>
-  (sr.sr_symbols_f symb_exp SUBSET symb_interpr_dom H) ==>
+  (sr.sr_symbols_f symb_exp SUBSET symb_interpr_dom H) ==> (* TODO: maybe don't need this assumption? but it seems like we do, otherwise need other assumptions (like symb NOTIN symb_exp) and the proof will be more complicated *)
 
   (sr.sr_typeof_exp symb_exp = SOME (sr.sr_typeof_symb symb)) ==>
 
@@ -667,29 +667,59 @@ val symb_fresh_simplification_matchstate_IMP_matchstate_thm = store_thm(
 
   ((symb_interpr_extend_symbs_sr sr (symb_symbols sr sys') (symb_interpr_update H (symb, sr.sr_interpret_f H symb_exp))) = H') ==>
 
-  (symb_matchstate sr sys' H' s)
+  (symb_matchstate sr sys' H' s /\
+   symb_interpr_ext H' H)
 ``,
-  REPEAT STRIP_TAC >>
+  REPEAT GEN_TAC >>
+  REPEAT DISCH_TAC >>
+
+  `symb_interpr_ext H' H` by (
+    cheat (* ,
+      symb_interpr_extend_symbs_IMP_ext_thm, symb_interpr_extend_symbs_sr_def *)
+     (* note: symb ∉ symb_interpr_dom H, so it doesn't matter if sr.sr_interpret_f H symb_exp is SOME or NONE, but it should evaluate to SOME  *)
+  ) >>
+  ASM_REWRITE_TAC [] >>
+
+(*
+symb NOTIN sr.sr_symbols_f symb_exp, because symb ∉ symb_interpr_dom H, and sr.sr_symbols_f symb_exp ⊆ symb_interpr_dom H
+*)
+
+(*
+sr.sr_interpret_f H symb_exp = SOME v, with sr.sr_typeof_symb symb
+because
+symb_typeof_exp_sound_def
+*)
 
   `symb_interpr_welltyped sr H'` by (
-    cheat (*
-    METIS_TAC [symb_interpr_extend_symbs_sr_IMP_welltyped_thm, symb_matchstate_def]*)
+    `symb_interpr_welltyped sr H` by (
+      METIS_TAC [symb_matchstate_def]
+    ) >>
+    METIS_TAC [symb_interpr_update_interpret_f_IMP_welltyped_thm, symb_interpr_extend_symbs_sr_IMP_welltyped_thm, symb_matchstate_def]
   ) >>
 
   `symb_matchstate sr sys H' s` by (
-    cheat (*
-    METIS_TAC [symb_interpr_ext_matchstate_IMP_matchstate_thm,
-      symb_interpr_extend_symbs_IMP_ext_thm, symb_interpr_extend_symbs_sr_def] *)
+    METIS_TAC [symb_interpr_ext_matchstate_IMP_matchstate_thm]
   ) >>
 
   `symb_interpr_for_symbs
      ((symb_symbols sr sys ) UNION
       (symb_symbols sr sys')) H'` by (
+    FULL_SIMP_TAC std_ss [symb_interpr_for_symbs_def, UNION_SUBSET] >>
+
+    STRIP_TAC >- (
+      METIS_TAC [matchstate_IMP_symbols_SUBSET_interpr_dom_thm, symb_interpr_ext_def,
+                 symb_interpr_ext_IMP_dom_thm, SUBSET_TRANS]
+    ) >>
+
+(*
+TODO: what if symb is in sys', for example in symbexp'? no problem if we can establish that sr.sr_interpret_f H symb_exp evaluates to SOME
+*)
+
     cheat (*
     METIS_TAC
       ( [symb_interpr_extend_symbs_IMP_for_symbs_thm, symb_interpr_extend_symbs_sr_def,
-         symb_suitable_interpretation_SUBSET_dom_thm, symb_matchstate_def]
-       @[symb_interpr_for_symbs_def, SUBSET_TRANS, UNION_SUBSET, SUBSET_UNION]) *)
+         ]
+       @[, SUBSET_TRANS, , SUBSET_UNION]) *)
   ) >>
 
   `symb_interpr_for_symbs
@@ -704,6 +734,11 @@ val symb_fresh_simplification_matchstate_IMP_matchstate_thm = store_thm(
   ) >>
 
   `sr.sr_interpret_f H' (symb_expr_conj_eq sr (sr.sr_mk_exp_symb_f symb) symb_exp (symb_symbst_pcond sys)) = SOME sr.sr_val_true` by (
+(*
+symb_expr_conj_eq_thm
+
+symb_mk_exp_symb_f_sound_def
+*)
     cheat
   ) >>
 
@@ -721,14 +756,26 @@ val symb_fresh_simplification_matchstate_IMP_matchstate_thm = store_thm(
     METIS_TAC [symb_simplification_def]
   ) >>
 
-(*
-  `sr.sr_symbols_f symbexp UNION sr.sr_symbols_f symbexp' SUBSET
-       symb_interpr_dom H'` by (
-    METIS_TAC [symb_interpr_for_symbs_def, SUBSET_UNION, SUBSET_TRANS, UNION_ASSOC]
+  Q.ABBREV_TAC `sys2 = symb_symbst_store_update var symbexp' sys` >>
+  `symb_matchstate sr sys2 H' s` by (
+    `sr.sr_symbols_f symbexp UNION sr.sr_symbols_f symbexp' SUBSET
+         symb_interpr_dom H'` by (
+      cheat (*
+      METIS_TAC [symb_interpr_for_symbs_def, SUBSET_UNION, SUBSET_TRANS, UNION_ASSOC]
+      *)
+    ) >>
+    METIS_TAC [symb_symbst_store_update_IMP_matchstate_EQ_thm, symb_interpr_symbpcond_def]
   ) >>
-*)
 
-  (* METIS_TAC [symb_symbst_store_update_IMP_matchstate_EQ_thm, symb_interpr_symbpcond_def] *)
+(*
+via symb_matchstate sr sys H' s, get sr.sr_interpret_f H pcond = sr.sr_interpret_f H (pcond_f pcond
+
+via symb_interpr_for_symbs (symb_symbols sr sys ∪ symb_symbols sr sys')
+          H', get sr.sr_symbols_f pcond ∪ sr.sr_symbols_f (pcond_f pcond) ⊆
+       symb_interpr_dom H
+
+symb_symbst_pcond_update_IMP_matchstate_EQ_thm
+*)
   cheat
 );
 
@@ -753,6 +800,11 @@ val symb_FRESH_simplification_TRANSF_matchstate_ext_thm = store_thm(
   (symb NOTIN symb_symbols sr sys ) ==>
   (symb NOTIN symb_symbols sr sys2) ==>
 
+(*
+for this theorem, and using the theorem above, it should be sufficient to require symb NOTIN symbols of symb_exp, then we can extend the interpretation for all the symbols in symb_exp
+*)
+  (sr.sr_symbols_f symb_exp SUBSET symb_symbols sr sys UNION symb_symbols sr sys2) ==>
+
   (sr.sr_typeof_exp symb_exp = SOME (sr.sr_typeof_symb symb)) ==>
 
   ((symb_symbst_store sys2) var = SOME symbexp) ==>
@@ -773,52 +825,75 @@ val symb_FRESH_simplification_TRANSF_matchstate_ext_thm = store_thm(
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [symb_matchstate_ext_def] >>
 
-  (* from H', make an H_m minimal wrt sys2, added with sys mappings *)
+  (* from H', make an H_e restricted to the symbols of sys and sys2 *)
   (* this is an extension from H *)
-  `symb_interpr_ext H_e H` by (
-(*
-    METIS_TAC [symb_interpr_extend_symbs_IMP_ext_thm, symb_interpr_ext_TRANS_thm,
-      symb_interpr_extend_symbs_sr_def]
-*)
-    cheat
+  `?H_e. symb_interpr_ext H_e H /\
+         symb NOTIN symb_interpr_dom H_e /\
+         symb_matchstate sr sys2 H_e s' /\
+         sr.sr_symbols_f symb_exp SUBSET symb_interpr_dom H_e` by (
+    Q.ABBREV_TAC `syssymbs = symb_symbols sr sys UNION symb_symbols sr sys2` >>
+    Q.ABBREV_TAC `H_e = symb_interpr_restr syssymbs H'` >>
+    Q.EXISTS_TAC `H_e` >>
+    (* H_e is equal to H' for all symbols of sys and sys2, and has all symbols of sys and sys2 *)
+    `symb_interprs_eq_for H' H_e syssymbs` by (
+      METIS_TAC [symb_interpr_restr_IS_eq_for_thm]
+    ) >>
+    `symb_interpr_dom H_e = syssymbs` by (
+      `symb_interpr_dom H' INTER syssymbs = syssymbs` by (
+        `syssymbs SUBSET symb_interpr_dom H'` by (
+          (* via matchstate and interpr_ext dom subsets *)
+          Q.UNABBREV_TAC `syssymbs` >>
+          REWRITE_TAC [UNION_SUBSET] >>
+
+          METIS_TAC [matchstate_IMP_symbols_SUBSET_interpr_dom_thm,
+               symb_interpr_ext_IMP_dom_thm, SUBSET_TRANS]
+        ) >>
+
+        REWRITE_TAC [FUN_EQ_THM] >>
+        METIS_TAC [INTER_applied, IN_APP, SUBSET_applied]
+      ) >>
+
+      METIS_TAC [symb_interpr_restr_dom_thm, INTER_UNION]
+    ) >>
+
+    (* because has all symbols, also the symbols of symb_exp are included *)
+    `sr.sr_symbols_f symb_exp SUBSET symb_interpr_dom H_e` by (
+      METIS_TAC [](*SUBSET_TRANS]*)
+    ) >>
+    (* symb is in neither states' symbol set *)
+    `symb NOTIN symb_interpr_dom H_e` by (
+      METIS_TAC [IN_UNION]
+    ) >>
+    ASM_SIMP_TAC std_ss [] >>
+
+    (* H is minimal in sys, therefore equal for all symbols of sys makes it an ext *)
+    `symb_interpr_ext H_e H` by (
+      `symb_interprs_eq_for H H_e ((symb_interpr_dom H) INTER (symb_interpr_dom H_e))` by (
+        METIS_TAC [symb_interpr_restr_ext_thm, symb_interpr_ext_IMP_interprs_eq_for_INTER_thm, symb_interprs_eq_for_INTER_def]
+      ) >>
+      `(symb_interpr_dom H) INTER (symb_interpr_dom H_e) = (symb_interpr_dom H)` by (
+        (* domain of H is exactly sys, because of minimal_interpr sys H *)
+        METIS_TAC [INTER_UNION, symb_minimal_interpretation_EQ_dom_thm]
+      ) >>
+      FULL_SIMP_TAC std_ss [] >>
+
+      METIS_TAC [symb_interpr_ext_def, symb_interprs_eq_for_COMM_thm]
+    ) >>
+    ASM_SIMP_TAC std_ss [] >>
+
+    (* match sys2 because H_e is equal for all symbols of this state, modify: symb_matchstate_TO_min_RESTR_thm *)
+    METIS_TAC [symb_matchstate_TO_min_RESTR_UNION_thm, UNION_COMM]
   ) >>
 
-  `symb NOTIN symb_interpr_dom H_e` by (
-    cheat
-  ) >>
-
-  `symb_matchstate sr sys2 H_e s'` by (
-    cheat
-  ) >>
-
-
-  (* have to proof that we can match with an extension of H for sys' *)
-  (* start with H', rename to H_m *)
-(*  rename1 `symb_matchstate sr sys' H_m s'` >> *)
+  (* have to proof that we can match with an extension of H for sys2' *)
   Q.ABBREV_TAC `H_m = symb_interpr_extend_symbs_sr sr (symb_symbols sr sys2') (symb_interpr_update H_e (symb, sr.sr_interpret_f H_e symb_exp))` >>
   Q.EXISTS_TAC `H_m` >>
 
-  (* this is also an extension from H *)
-  `symb_interpr_ext H_m H` by (
-(*
-    METIS_TAC [symb_interpr_extend_symbs_IMP_ext_thm, symb_interpr_ext_TRANS_thm,
-      symb_interpr_extend_symbs_sr_def]
-*)
-    cheat
-  ) >>
-  FULL_SIMP_TAC std_ss [] >>
-
-(*
-  `symb_interpr_welltyped sr H` by (
-    cheat
-  ) >>
-*)
-
-  `sr.sr_symbols_f symb_exp SUBSET symb_interpr_dom H_e` by (
-    cheat (* TODO: need to add proper assumption *)
+  `symb_interpr_ext H_m H_e /\ symb_matchstate sr sys2' H_m s'` by (
+    METIS_TAC [symb_fresh_simplification_matchstate_IMP_matchstate_thm]
   ) >>
 
-  METIS_TAC [symb_fresh_simplification_matchstate_IMP_matchstate_thm]
+  METIS_TAC [symb_interpr_ext_TRANS_thm]
 );
 
 (* rule to introduce fresh symbols as values of store variables
@@ -839,7 +914,7 @@ val symb_rule_FRESH_thm = store_thm(
   (~(symb IN symb_symbols sr sys )) ==>
   (~(symb IN symb_symbols sr sys2)) ==>
   (* and the abbreviated expression must only use symbols that are already in sys2 *)
-  (sr.sr_symbols_f symb_exp SUBSET symb_symbols sr sys2) ==>
+  (sr.sr_symbols_f symb_exp SUBSET symb_symbols sr sys2) ==> (* TODO: maybe don't need this assumption? check this! *)
 
   (* the symbol we choose has to be associated with the right type *)
   (sr.sr_typeof_exp symb_exp = SOME (sr.sr_typeof_symb symb)) ==>
@@ -858,17 +933,14 @@ val symb_rule_FRESH_thm = store_thm(
   (symb_hl_step_in_L_sound sr (sys, L, (Pi DIFF {sys2}) UNION {sys2'}))
 )
 ``,
+  REPEAT STRIP_TAC >>
+
+  `sr.sr_symbols_f symb_exp SUBSET symb_symbols sr sys UNION symb_symbols sr sys2` by (
+    METIS_TAC [SUBSET_applied, UNION_applied, IN_APP]
+  ) >>
+
   METIS_TAC [symb_rule_TRANSF_GEN_thm, symb_FRESH_simplification_TRANSF_matchstate_ext_thm]
 );
-(*
-
-symb_rule_SUBST_thm
-
-  METIS_TAC [symb_rule_TRANSF_GEN_thm, symb_simplification_TRANSF_matchstate_ext_thm]
-
-  cheat
-(*  METIS_TAC [symb_rule_TRANSF_GEN_thm, symb_FRESH_TRANSF_matchstate_ext_thm]*)
-*)
 
 
 (* ************************* *)
