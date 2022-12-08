@@ -770,7 +770,29 @@ val symb_fresh_simplification_matchstate_IMP_matchstate_thm = store_thm(
       METIS_TAC [symb_mk_exp_symb_f_sound_def]
     ) >>
     `sr.sr_interpret_f H' symb_exp = SOME v` by (
-      cheat (*  *)
+      FULL_SIMP_TAC std_ss [] >>
+      Q.ABBREV_TAC `H2 = symb_interpr_update H (symb,SOME v)` >>
+
+      `symb_interprs_eq_for H H2 (sr.sr_symbols_f symb_exp) /\
+       sr.sr_symbols_f symb_exp SUBSET symb_interpr_dom H2` by (
+        `symb_interpr_dom H DELETE symb = symb_interpr_dom H` by (
+          REWRITE_TAC [FUN_EQ_THM] >>
+
+          METIS_TAC [IN_DELETE, IN_APP]
+        ) >>
+
+        `symb_interpr_dom H SUBSET symb_interpr_dom H2` by (
+          METIS_TAC [symb_interpr_dom_UPDATE_SOME_thm, SUBSET_OF_INSERT]
+        ) >>
+
+        METIS_TAC [symb_interprs_eq_for_UPDATE_dom_thm, symb_interprs_eq_for_COMM_thm, symb_interprs_eq_for_SUBSET_thm, SUBSET_TRANS]
+      ) >>
+
+      `symb_interprs_eq_for H2 H' (sr.sr_symbols_f symb_exp)` by (
+        METIS_TAC [symb_interpr_extend_symbs_sr_def,  symb_interpr_extend_symbs_IMP_eq_for_thm, symb_interprs_eq_for_COMM_thm, symb_interprs_eq_for_SUBSET_thm]
+      ) >>
+
+      METIS_TAC [symb_symbols_f_sound_def, symb_interprs_eq_for_TRANS_thm, symb_interprs_eq_for_COMM_thm]
     ) >>
 
     Q.UNABBREV_TAC `pcond_f` >>
