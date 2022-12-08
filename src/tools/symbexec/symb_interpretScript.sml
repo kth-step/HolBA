@@ -687,6 +687,32 @@ val symb_interpr_extend_symbs_IMP_dom_thm = store_thm(
   )
 );
 
+val symb_interpr_extend_symbs_IMP_eq_for_thm = store_thm(
+   "symb_interpr_extend_symbs_IMP_eq_for_thm", ``
+!valfun symbs H.
+  (symb_interprs_eq_for H (symb_interpr_extend_symbs valfun symbs H) (symb_interpr_dom H))
+``,
+  REPEAT STRIP_TAC >>
+  Cases_on `H` >>
+  FULL_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [symb_interprs_eq_for_def, symb_interpr_extend_symbs_def, symb_interpr_for_symbs_def, symb_interpr_dom_def, symb_interpr_get_def, SUBSET_DEF, EXTENSION]
+);
+
+val symb_interpr_extend_symbs_IMP_get_thm = store_thm(
+   "symb_interpr_extend_symbs_IMP_get_thm", ``
+!valfun symbs H symb.
+  (?v. symb_interpr_get H symb = SOME v) ==>
+  (symb_interpr_get (symb_interpr_extend_symbs valfun symbs H) symb = symb_interpr_get H symb)
+``,
+  REPEAT STRIP_TAC >>
+
+  `symb IN symb_interpr_dom H` by (
+    FULL_SIMP_TAC std_ss [symb_interpr_dom_thm]
+  ) >>
+
+  METIS_TAC [symb_interpr_extend_symbs_IMP_eq_for_thm, symb_interprs_eq_for_def]
+);
+
+
 
 
 val _ = export_theory();
