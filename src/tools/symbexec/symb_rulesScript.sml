@@ -722,10 +722,12 @@ TODO: what if symb is in sys', for example in symbexp'? no problem if we can est
        @[, SUBSET_TRANS, , SUBSET_UNION]) *)
   ) >>
 
+  Q.ABBREV_TAC `pcond_f = symb_expr_conj_eq sr (sr.sr_mk_exp_symb_f symb) symb_exp` >>
   `symb_interpr_for_symbs
-              (sr.sr_symbols_f (symb_expr_conj_eq sr (sr.sr_mk_exp_symb_f symb) symb_exp (symb_symbst_pcond sys)) UNION
+              (sr.sr_symbols_f (pcond_f (symb_symbst_pcond sys)) UNION
                sr.sr_symbols_f symbexp UNION sr.sr_symbols_f symbexp') H'` by (
-    cheat (*
+    cheat (* the symbols are in sys and sys', in the stores and in the precond of sys' *)
+ (*
     METIS_TAC
       [symb_interpr_for_symbs_def, UNION_SUBSET, SUBSET_TRANS,
        symb_symbols_SUBSET_store_exps_thm2,
@@ -733,13 +735,13 @@ TODO: what if symb is in sys', for example in symbexp'? no problem if we can est
        symb_symbols_SUBSET_pcond_thm]*)
   ) >>
 
-  `sr.sr_interpret_f H' (symb_expr_conj_eq sr (sr.sr_mk_exp_symb_f symb) symb_exp (symb_symbst_pcond sys)) = SOME sr.sr_val_true` by (
+  `sr.sr_interpret_f H' (pcond_f (symb_symbst_pcond sys)) = SOME sr.sr_val_true` by (
 (*
 symb_expr_conj_eq_thm
 
 symb_mk_exp_symb_f_sound_def
 *)
-    cheat
+    cheat (* from symb_matchstate sr sys H' s, path cond of sys is true, and symb_exp evaluates to true and the same like lookup of symb in H' *)
   ) >>
 
 
@@ -757,26 +759,30 @@ symb_mk_exp_symb_f_sound_def
   ) >>
 
   Q.ABBREV_TAC `sys2 = symb_symbst_store_update var symbexp' sys` >>
+  `symb_symbst_pcond sys = symb_symbst_pcond sys2` by (
+    METIS_TAC [symb_symbst_store_update_UNCHANGED_thm]
+  ) >>
+
   `symb_matchstate sr sys2 H' s` by (
     `sr.sr_symbols_f symbexp UNION sr.sr_symbols_f symbexp' SUBSET
          symb_interpr_dom H'` by (
-      cheat (*
       METIS_TAC [symb_interpr_for_symbs_def, SUBSET_UNION, SUBSET_TRANS, UNION_ASSOC]
-      *)
     ) >>
     METIS_TAC [symb_symbst_store_update_IMP_matchstate_EQ_thm, symb_interpr_symbpcond_def]
   ) >>
 
-(*
-via symb_matchstate sr sys H' s, get sr.sr_interpret_f H pcond = sr.sr_interpret_f H (pcond_f pcond
+  `sr.sr_interpret_f H' (symb_symbst_pcond sys2) = sr.sr_interpret_f H' (pcond_f (symb_symbst_pcond sys2))` by (
+    cheat (* via symb_matchstate sr sys H' s, because pcond sys = pcond sys2 *)
+  ) >>
 
-via symb_interpr_for_symbs (symb_symbols sr sys ∪ symb_symbols sr sys')
-          H', get sr.sr_symbols_f pcond ∪ sr.sr_symbols_f (pcond_f pcond) ⊆
-       symb_interpr_dom H
+  `sr.sr_symbols_f (symb_symbst_pcond sys2) UNION
+   sr.sr_symbols_f (pcond_f (symb_symbst_pcond sys2))
+   SUBSET symb_interpr_dom H'` by (
+    (* via symb_interpr_for_symbs (symb_symbols sr sys ∪ symb_symbols sr sys') H' *)
+    cheat
+  ) >>
 
-symb_symbst_pcond_update_IMP_matchstate_EQ_thm
-*)
-  cheat
+  METIS_TAC [symb_symbst_pcond_update_IMP_matchstate_EQ_thm]
 );
 
 
