@@ -37,23 +37,30 @@ val _ = QUse.use "testcases/prog_6.sml";
 val _ = QUse.use "testcases/prog_7.sml";
 val _ = QUse.use "testcases/prog_8.sml";
 val _ = QUse.use "testcases/prog_9.sml";
-
-
+val _ = QUse.use "testcases/prog_10.sml";
+val _ = QUse.use "testcases/prog_11.sml";
+val _ = QUse.use "testcases/prog_12.sml";
+val _ = QUse.use "testcases/prog_13.sml";
+val _ = QUse.use "testcases/prog_14.sml";
 
 
 (* =========================== test case list to process ============================ *)
 
 val test_cases =
   [prog_1_test,
-   prog_2_test,
+   (* prog_2_test, *)
    prog_3_test,
-   prog_4_test,
-   prog_5_test,
-   prog_6_test,
-   prog_7_test,
-   prog_8_test,
-   prog_9_test]
-
+   (* prog_4_test, *)
+   (* prog_5_test, *)
+   (* prog_6_test, *)
+   (* prog_7_test, *)
+   (* prog_8_test, *)
+   (* prog_9_test, *)
+   (* prog_10_test, *)
+   (* prog_11_test, *)
+   (* prog_12_test, *)
+   (* prog_13_test, *)
+   prog_14_test]
 
 (* =========================== run and compare test cases ============================ *)
 

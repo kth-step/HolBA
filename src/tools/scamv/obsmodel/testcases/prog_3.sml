@@ -148,7 +148,7 @@ BirProgram
               (BExp_BinPred BIExp_Equal
                  (BExp_Den (BVar "R1" (BType_Imm Bit64)))
                  (BExp_Den (BVar "R2" (BType_Imm Bit64))))];
-         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "4*"))|>;
+         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "0x4*"))|>;
        <|bb_label := BL_Address (Imm64 4w);
          bb_statements :=
            [BStmt_Observe 0 (BExp_Const (Imm1 1w)) [BExp_Const (Imm64 4w)] HD];
@@ -169,7 +169,7 @@ BirProgram
             BStmt_Assert
               (BExp_BinExp BIExp_And
                  (BExp_BinPred BIExp_LessOrEqual
-                    (BExp_Const (Imm64 0x80100000w))
+                    (BExp_Const (Imm64 0xFFCC0000w))
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R1" (BType_Imm Bit64)))
                        (BExp_Den (BVar "R3" (BType_Imm Bit64)))))
@@ -177,7 +177,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R1" (BType_Imm Bit64)))
                        (BExp_Den (BVar "R3" (BType_Imm Bit64))))
-                    (BExp_Const (Imm64 0x801FFF80w))));
+                    (BExp_Const (Imm64 0xFFCCFF80w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R1" (BType_Imm Bit64)))
@@ -213,7 +213,7 @@ BirProgram
             BStmt_Assert
               (BExp_BinExp BIExp_And
                  (BExp_BinPred BIExp_LessOrEqual
-                    (BExp_Const (Imm64 0x80100000w))
+                    (BExp_Const (Imm64 0xFFCC0000w))
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R5" (BType_Imm Bit64)))
                        (BExp_Den (BVar "R4" (BType_Imm Bit64)))))
@@ -221,7 +221,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R5" (BType_Imm Bit64)))
                        (BExp_Den (BVar "R4" (BType_Imm Bit64))))
-                    (BExp_Const (Imm64 0x801FFF80w))));
+                    (BExp_Const (Imm64 0xFFCCFF80w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R5" (BType_Imm Bit64)))
@@ -236,10 +236,8 @@ BirProgram
        <|bb_label := BL_Address (Imm64 20w);
          bb_statements :=
            [BStmt_Observe 0 (BExp_Const (Imm1 1w)) [BExp_Const (Imm64 20w)]
-              HD];
-         bb_last_statement :=
-           BStmt_Jmp (BLE_Exp (BExp_Den (BVar "R30" (BType_Imm Bit64))))|>;
-       <|bb_label := BL_Label "4*";
+              HD]; bb_last_statement := BStmt_Halt (BExp_Const (Imm32 0w))|>;
+       <|bb_label := BL_Label "0x4*";
          bb_statements :=
            [BStmt_Assert
               (BExp_BinPred BIExp_Equal (BExp_Const (Imm64 41w))
@@ -260,10 +258,8 @@ BirProgram
            BStmt_CJmp
              (BExp_UnaryExp BIExp_Not
                 (BExp_Den (BVar "ProcState_C*" (BType_Imm Bit1))))
-             (BLE_Label (BL_Label "20*")) (BLE_Label (BL_Label "8*"))|>;
-       <|bb_label := BL_Label "20*"; bb_statements := [];
-         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 4w)))|>;
-       <|bb_label := BL_Label "8*";
+             (BLE_Label (BL_Label "0x14*")) (BLE_Label (BL_Label "0x8*"))|>;
+       <|bb_label := BL_Label "0x8*";
          bb_statements :=
            [BStmt_Assert
               (BExp_BinPred BIExp_Equal
@@ -275,7 +271,7 @@ BirProgram
             BStmt_Assert
               (BExp_BinExp BIExp_And
                  (BExp_BinPred BIExp_LessOrEqual
-                    (BExp_Const (Imm64 0x80100000w))
+                    (BExp_Const (Imm64 0xFFCC0000w))
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R1*" (BType_Imm Bit64)))
                        (BExp_Den (BVar "R3*" (BType_Imm Bit64)))))
@@ -283,7 +279,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R1*" (BType_Imm Bit64)))
                        (BExp_Den (BVar "R3*" (BType_Imm Bit64))))
-                    (BExp_Const (Imm64 0x801FFF80w))));
+                    (BExp_Const (Imm64 0xFFCCFF80w))));
             BStmt_Observe 1 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R1*" (BType_Imm Bit64)))
@@ -294,16 +290,16 @@ BirProgram
                     (BExp_Den (BVar "R1*" (BType_Imm Bit64)))
                     (BExp_Den (BVar "R3*" (BType_Imm Bit64))))
                  BEnd_LittleEndian Bit64)];
-         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "12*"))|>;
-       <|bb_label := BL_Label "12*";
+         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "0xC*"))|>;
+       <|bb_label := BL_Label "0xC*";
          bb_statements :=
            [BStmt_Assign (BVar "R4*" (BType_Imm Bit64))
               (BExp_BinExp BIExp_And (BExp_Const (Imm64 0xFFFFFFFFFFFFFFFFw))
                  (BExp_BinExp BIExp_LeftShift
                     (BExp_Den (BVar "R4*" (BType_Imm Bit64)))
                     (BExp_Const (Imm64 1w))))];
-         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "16*"))|>;
-       <|bb_label := BL_Label "16*";
+         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "0x10*"))|>;
+       <|bb_label := BL_Label "0x10*";
          bb_statements :=
            [BStmt_Assert
               (BExp_BinPred BIExp_Equal
@@ -315,7 +311,7 @@ BirProgram
             BStmt_Assert
               (BExp_BinExp BIExp_And
                  (BExp_BinPred BIExp_LessOrEqual
-                    (BExp_Const (Imm64 0x80100000w))
+                    (BExp_Const (Imm64 0xFFCC0000w))
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R5*" (BType_Imm Bit64)))
                        (BExp_Den (BVar "R4*" (BType_Imm Bit64)))))
@@ -323,7 +319,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R5*" (BType_Imm Bit64)))
                        (BExp_Den (BVar "R4*" (BType_Imm Bit64))))
-                    (BExp_Const (Imm64 0x801FFF80w))));
+                    (BExp_Const (Imm64 0xFFCCFF80w))));
             BStmt_Observe 1 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R5*" (BType_Imm Bit64)))
@@ -334,8 +330,8 @@ BirProgram
                     (BExp_Den (BVar "R5*" (BType_Imm Bit64)))
                     (BExp_Den (BVar "R4*" (BType_Imm Bit64))))
                  BEnd_LittleEndian Bit64)];
-         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "20*"))|>;
-       <|bb_label := BL_Label "20*"; bb_statements := [];
+         bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "0x14*"))|>;
+       <|bb_label := BL_Label "0x14*"; bb_statements := [];
          bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 4w)))|>]
 :bir_val_t bir_program_t
 ``;
