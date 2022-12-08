@@ -141,6 +141,27 @@ val symb_matchstate_TO_min_RESTR_thm = store_thm(
   METIS_TAC [symb_interpr_restr_IS_eq_for_thm, symb_interprs_eq_for_matchstate_IMP_matchstate_thm,
              symb_interpr_ext_welltyped_IMP_thm, symb_matchstate_def, symb_interpr_restr_ext_thm]
 );
+val symb_matchstate_TO_min_RESTR_UNION_thm = store_thm(
+   "symb_matchstate_TO_min_RESTR_UNION_thm", ``
+!sr.
+!H sys s symbs H'.
+  (symb_symbols_f_sound sr) ==>
+
+  (symb_matchstate sr sys H  s) ==>
+
+  (symb_interpr_restr (symb_symbols sr sys UNION symbs) H = H') ==>
+
+  (symb_matchstate sr sys H' s)
+``,
+  REPEAT STRIP_TAC >>
+
+  `symb_interpr_welltyped sr H'` by (
+    METIS_TAC [symb_interpr_ext_welltyped_IMP_thm, symb_matchstate_def, symb_interpr_restr_ext_thm]
+  ) >>
+
+  METIS_TAC [symb_interpr_restr_IS_eq_for_thm, symb_interprs_eq_for_matchstate_IMP_matchstate_thm,
+             symb_matchstate_def, symb_interprs_eq_for_UNION_thm]
+);
 
 (* matching implies matching a minimal interpretation *)
 val symb_matchstate_TO_minimal_thm = store_thm(
