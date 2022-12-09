@@ -141,6 +141,12 @@ val (mem_region_stack_start, mem_region_stack_sz) = binariesDefsLib.mem_region_s
         => (92, 2038)
      | "imu_handler_pid_entry"
         => (204, 8312)
+
+     | "_mymodexp"
+        => (100, 0x10000)
+     | "__aeabi_uidivmod"
+        => (50, 0x800)
+
      | _ => raise Fail "get_fun_usage: don't know function";
 
 end
