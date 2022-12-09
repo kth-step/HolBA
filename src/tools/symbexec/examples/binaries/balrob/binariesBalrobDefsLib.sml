@@ -35,7 +35,12 @@ val configs          = [("balrob",
 ((Arbnum.fromInt 0), (Arbnum.fromInt 0x10001574)),
 [
     "_mymodexp",
-    "__aeabi_uidivmod"
+    "l6",
+    "l10",
+    "l12",
+    "__aeabi_uidivmod",
+    "__udivsi3",
+    "__aeabi_idiv0"
 ]
                         )];
 
