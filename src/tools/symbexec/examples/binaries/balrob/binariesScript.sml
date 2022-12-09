@@ -15,8 +15,13 @@ val _ = new_theory "binaries";
 (*
 val (prog_id, (da_file_lift, da_file_mem, mem_file), thm_name, (mem_region_const, mem_region_data, mem_region_stack)) = hd configs;
 *)
-fun lift_da_file_to_thm (prog_id, (da_file_lift, da_file_mem, mem_file), thm_name, (mem_region_const, mem_region_data, mem_region_stack)) =
+fun lift_da_file_to_thm (prog_id, (da_file_lift, da_file_mem, mem_file), thm_name, (mem_region_const, mem_region_data, mem_region_stack), prog_range, symbs_sec_text) =
   let
+    val symb_filter_lift = fn secname =>
+      case secname of
+          ".text" => (fn symbname => List.exists (fn x => x = symbname) symbs_sec_text)
+        | _       => (Lib.K false);
+
     val _ = print_with_style_ [Bold, Underline] ("Lifting " ^ da_file_lift ^ " (" ^ arch_str ^ ")\n");
 
     val (region_map, sections) = read_disassembly_file_regions_filter symb_filter_lift da_file_lift;
