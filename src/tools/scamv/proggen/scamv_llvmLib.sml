@@ -287,12 +287,19 @@ fun llvm_initial_phase filebc llvm_option =
 				    (* val name = String.extract (fbc, ((List.length o String.explode) tempdir)+1, NONE); *)
 				    val fname = (String.extract(fbc, 0, SOME (String.size fbc-3)));
 				    val linkedfilebc = link_missing_funs fname fbc filebc;
-				    (* val globs = get_glob_names filebc; *)
-				    (* val finalfilebc = link_missing_globs fname linkedfilebc filebc globs; *)
 				  in
 				    ((f, fd,
-				      fbc,
-				      SOME (compile_and_link_armv8_llvm_bc fname finalfilebc "rpi4"))
+				      linkedfilebc,
+				      SOME (compile_and_link_armv8_llvm_bc fname linkedfilebc "rpi4"))
+				     handle HOL_ERR e =>
+					    let
+					      val globs = get_glob_names filebc;
+					      val finalfilebc = link_missing_globs fname linkedfilebc filebc globs;
+					    in
+					      (f, fd,
+					       finalfilebc,
+					       SOME (compile_and_link_armv8_llvm_bc fname finalfilebc "rpi4"))
+					    end
 				     handle HOL_ERR e => (print ("Compilation error:" ^ fd ^ " \n");
 							  (f, fd, fbc, NONE)))
 				  end) sliced_fun_bcs;
