@@ -331,7 +331,11 @@ BirProgram
                     (BExp_Den (BVar "R4*" (BType_Imm Bit64))))
                  BEnd_LittleEndian Bit64)];
          bb_last_statement := BStmt_Jmp (BLE_Label (BL_Label "0x14*"))|>;
-       <|bb_label := BL_Label "0x14*"; bb_statements := [];
+       <|bb_label := BL_Label "0x14*";
+         bb_statements :=
+           [BStmt_Assert
+              (BExp_BinPred BIExp_Equal (BExp_Const (Imm64 42w))
+                 (BExp_Const (Imm64 42w)))];
          bb_last_statement := BStmt_Jmp (BLE_Label (BL_Address (Imm64 4w)))|>]
 :bir_val_t bir_program_t
 ``;

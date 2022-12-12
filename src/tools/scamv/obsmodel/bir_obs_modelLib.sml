@@ -136,6 +136,7 @@ open bir_cfgLib;
 	in
 	  case predecessors of
 	    [p] => p
+	  | (p::ps) => raise ERR "get_cjmp_predecessors" "more than one predecessor"
 	  | _ => raise ERR "get_cjmp_predecessors" "predecessor not found"
 	end;
 
@@ -583,7 +584,10 @@ open bir_cfgLib;
 	  val shadow_block_fun = (mk_shadow_block o (snd o dest_eq o concl o EVAL))
 	  fun fix_jmp_back bb =
 	    let
+	      open listSyntax;
 	      val (bbl, bbs, bbes) = dest_bir_block bb;
+	      val (stmts, ty) = dest_list bbs;
+	      val fencepost_assertion = [inst [Type.alpha |-> bir_val_t_ty] (bassert shadow_end_fencepost)];
 	      val estmt =
 		  let
 		    fun problem exp msg = problem_gen "extract_blocks::fix_jmp_back" exp msg;
@@ -596,7 +600,7 @@ open bir_cfgLib;
 		      problem bbes "can't handle the end statement: "
 		  end
 	    in
-              mk_bir_block (bbl, bbs, estmt)
+              mk_bir_block (bbl, mk_list (stmts@fencepost_assertion, ty), estmt)
 	    end
 
           val first_block = get_block_from_dict branch;
