@@ -207,7 +207,8 @@ fun scamv_phase_symb_exec () =
 	  (valOf (!current_prog_entry_and_exits))
 	  (!angr_symbexec);
       val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths;
-      val ps = initialise paths;
+      val ps_init = initialise paths;
+      val ps = filter_feasible_naive_paths ps_init;
       val _ = current_pathstruct := SOME ps;
       val _ = min_verb 4 (fn () => (print_path_struct ps; print (PolyML.makestring ps)));
     in
@@ -760,7 +761,7 @@ fun scamv_run { max_iter = m, prog_size = sz, max_tests = tests, enumerate = enu
         val _ = run_log config_str;
         val _ = min_verb 1 (fn () => print config_str);
 
-        fun skipProgExText e = "Skipping program due to exception in pipleline:\n" ^ PolyML.makestring e ^ "\n***\n";
+        fun skipProgExText e = "Skipping program due to exception in pipeline:\n" ^ PolyML.makestring e ^ "\n***\n";
         
         fun main_loop 0 = ()
          |  main_loop n =

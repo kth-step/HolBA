@@ -9,6 +9,7 @@ sig
 
   val extract_obs_variables: path_repr list -> term list
   val filter: (int * term -> bool) -> path_repr list -> path_repr list
+  val filter_feasible_naive_paths: path_repr list -> path_repr list
   val gen_obs_ids:
       (unit -> int) -> (term * term * term) list -> cobs_repr list
   val gen_path_ids:

@@ -102,6 +102,36 @@ fun filter pred ps =
 fun get_distinct_path path_id ps =
     filter (fn (id,_) => not (id = path_id)) ps;
 
+fun filter_feasible_naive_paths ps =
+    let
+      val debug_z3_taut_on = false;
+      fun z3_is_taut wtm =
+	  let val wtm_fixed = subst [mk_var ("MEM", ``:word64|->word8``) |-> Term`MEMV:word64|->word8`] wtm; in
+	      ((HolSmtLib.Z3_ORACLE_PROVE wtm_fixed; true)
+	       handle HOL_ERR e => (
+		      if not debug_z3_taut_on then () else
+		      let
+			val _ = print "--- not a tautology:\n";
+			val _ = print_term wtm_fixed;
+			val _ = print ">>> generating a model\n";
+			val model = Z3_SAT_modelLib.Z3_GET_SAT_MODEL (mk_neg wtm_fixed);
+			(*val _ = PolyML.print model;*)
+			val _ = print "<<< done generating a model\n";
+		      in () end;
+		      false))
+	  end;
+
+	fun check_path_infeasability p =
+	    let
+	      val path_cond = path_cond_of p;
+	      val wtm = bir_exp_to_wordsLib.bir2bool path_cond;
+	    in
+	      z3_is_taut (mk_neg wtm)
+	    end
+    in
+      List.filter (not o (fn p => check_path_infeasability p)) ps
+    end;
+
 fun extract_obs_variables ps =
     List.concat (
       List.map (fn (path (_,_,obs_list)) =>
