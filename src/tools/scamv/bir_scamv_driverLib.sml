@@ -121,7 +121,8 @@ fun reset () =
      current_pathstruct := NONE;
      current_visited_map := init_visited ();
      current_full_specs := [];
-     current_word_rel := NONE);
+     current_word_rel := NONE;
+     scamv_trainingLib.current_training_states := NONE);
 
 fun observe_line e =
     brshift (band (e, blshift (bconst64 0x7f, bconst64 6)), bconst64 6);
@@ -208,7 +209,9 @@ fun scamv_phase_symb_exec () =
 	  (!angr_symbexec);
       val _ = List.map (Option.map (List.map (fn (a,b,c) => print_term b)) o snd) paths;
       val ps_init = initialise paths;
-      val ps = filter_feasible_naive_paths ps_init;
+      val ps = case filter_feasible_naive_paths ps_init of
+		   [] => raise ERR "scamv_phase_symb_exec" "no feasible path"
+		 | paths => paths ;
       val _ = current_pathstruct := SOME ps;
       val _ = min_verb 4 (fn () => (print_path_struct ps; print (PolyML.makestring ps)));
     in
@@ -405,7 +408,8 @@ fun next_experiment all_exps next_relation (entry,exits) =
 
 	(* ------------------------- training start ------------------------- *)
         val paths = valOf (!current_pathstruct);
-        val st_o =
+	(* list of training states *)
+        val sts_o =
             if !do_training
             then
               SOME (
@@ -432,22 +436,46 @@ fun next_experiment all_exps next_relation (entry,exits) =
           in () end);
 
 	(* show time *)
+	(* Note: the first iteration takes longer if training states have to be computed, consider moving it *)
 	val d_s = Time.- (Time.now(), timer) |> Time.toString;
 	val _ = print ("Time to generate the experiment : "^d_s^"\n");
 
         (* create experiment files *)
-        val exp_id  =
-          run_create_exp
-            prog_id
-            ExperimentTypeStdTwo
-            (!hw_obs_model_id)
-            ([("1", s1), ("2", s2)]@(Portable.the_list (Option.map (fn st => ("train", st)) st_o)))
-            entry
-	    exits
-            [("state_gen_id", !current_obs_model_id), ("time", d_s)];
-        val exp_gen_message = "Generated experiment: " ^ (embexp_logsLib.exp_handle_toString exp_id);
-        val _ = run_log_prog exp_gen_message;
-
+	fun saving sts_o =
+	  let
+	    fun save_experiment (id, st_o) =
+	      let
+		val exp_id  =
+		  run_create_exp
+		    prog_id
+		    ExperimentTypeStdTwo
+		    (!hw_obs_model_id)
+		    ([("1", s1), ("2", s2)]@(Portable.the_list (Option.map (fn st => ("train", st)) st_o)))
+		    entry
+		    exits
+		    [("state_gen_id", !current_obs_model_id), ("time", d_s)];
+		val exp_gen_message = "Generated experiment: " ^ (embexp_logsLib.exp_handle_toString exp_id);
+		val _ = if isSome st_o then
+			  let
+			    val _ = min_verb 1 (fn () =>
+						 ((min_verb 2 (fn () =>
+								print ("Train state path ID: " ^ (Int.toString id) ^ "\n")));
+						  print "s_train:\n";
+						  machstate_print (valOf st_o);
+						  print "\n"));
+			  in () end
+			else ();
+		val _ = run_log_prog exp_gen_message;
+	      in () end
+	  in
+	    case sts_o of
+		NONE => save_experiment (0, NONE)
+	      | SOME [] => ()
+	      | SOME ((id,st_o)::nil) => save_experiment (id, st_o)
+	      | SOME ((id,st_o)::sts) => (save_experiment (id, st_o);
+					  saving (SOME sts))
+	  end
+	val _ = saving sts_o;
     in ()
     end;
 
