@@ -20,13 +20,13 @@ fun compute_training_state current_full_specs current_obs_projection
       open bir_utilLib;
       open experimentsLib;
 	    fun training_input_mining  tries =
-		if tries > 0
+		if tries >= 0
 		then
 		    let val new_path = case get_distinct_path current_path_id path_struct of
 					   [] => raise ERR "training_branch_predictor"
                                                ("no paths found distinct from path "
                                                 ^ PolyML.makestring current_path_id)
-					 | p::_ => p
+					 | ps => List.nth (ps, tries-2);
 			val new_spec =  lookup_spec (path_id_of new_path) (path_id_of new_path) current_full_specs;
 			val new_spec = case new_spec of
 					   NONE => raise ERR "training_branch_predictor"
@@ -34,11 +34,13 @@ fun compute_training_state current_full_specs current_obs_projection
                                                   ^ PolyML.makestring (path_id_of new_path))
 					 | SOME s => s
 			val new_word_relation =  make_word_relation (rel_synth_jit new_spec current_obs_projection path_struct true) false;
-			    
 			val _ =  min_verb 4 (fn () =>
 						(print ("Training path: " ^ PolyML.makestring new_path))
 					    )
 			val training_relation = mk_conj (new_word_relation, current_word_rel);
+			val _ = min_verb 5 (fn () =>
+					       (print (term_to_string training_relation);
+						print "\n"));
 			val _ = print ("Calling Z3 to get training state\n")
 		    in
 			(Z3_SAT_modelLib.Z3_GET_SAT_MODEL training_relation)
