@@ -370,11 +370,11 @@ in (* outermost local *)
             end;
           val _ = print ("\nstack  max = " ^ (mem_stack_max) ^ "\n");
           val syst_merged_countw = get_state_symbv "obtain_summary" bv_countw syst_merged;
-          val countw_max_tm =
+          val (countw_min_tm, countw_max_tm) =
             case syst_merged_countw of
-               SymbValInterval ((_, max), _) => max
+               SymbValInterval ((min, max), _) => (min, max)
              | _ => raise ERR "obtain_summary" "should be an interval";
-          val countw_inc = ((fn add_tm =>
+          fun countwaddtm_imm_tostring add_tm =
             let
               val match_tm = ``BExp_BinExp BIExp_Plus
                                (BExp_Den (BVar "sy_countw" (BType_Imm Bit64)))
@@ -382,9 +382,10 @@ in (* outermost local *)
               val (vs, _) = hol88Lib.match match_tm add_tm;
               val inc_val = fst (List.nth (vs, 0));
             in term_to_string inc_val end
-            ) countw_max_tm)
-            handle _ => raise ERR "obtain_summary" ("countw max expression not as expected" ^ (term_to_string countw_max_tm))
-          val _ = print ("countw max = " ^ countw_inc ^ "\n");
+            handle _ => raise ERR "obtain_summary" ("countw interval expression not as expected" ^ (term_to_string countw_max_tm));
+          val countw_min = (countwaddtm_imm_tostring countw_min_tm);
+          val countw_max = (countwaddtm_imm_tostring countw_max_tm);
+          val _ = print ("countw minmax = " ^ countw_min ^  ", " ^ countw_max ^ "\n");
         in () end) sum_systs;
       val _ = print ("\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n");
     in
