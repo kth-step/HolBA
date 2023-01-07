@@ -2,6 +2,7 @@ structure aeabi_uidivmod_Lib =
 struct
 
 local
+(*
   open HolKernel Parse
 
   open bir_miscLib;
@@ -152,7 +153,7 @@ val sum___aeabi_uidivmod =
 *)
 
       val _ = timer_stop (fn s => print("time for " ^ entry_label ^ ": " ^ s ^ "\n")) timer_meas;
-
+*)
 
 in (* outermost local *)
 
