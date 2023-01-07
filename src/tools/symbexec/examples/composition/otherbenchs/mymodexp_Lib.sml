@@ -49,13 +49,17 @@ val sum__mymodexp_uidivmod_assmpt =
       val bv_pre = “BVar "sy_countw" (BType_Imm Bit64)”;
       val bv_fr = (get_bvar_fresh) bv;
 
-      val exp   = ``
+      val exp_l   = ``
+        BExp_BinExp BIExp_Plus
+          ^(bir_expSyntax.mk_BExp_Den bv_pre)
+          (BExp_Const (Imm64 0w))``;
+      val exp_u   = ``
         BExp_BinExp BIExp_Plus
           ^(bir_expSyntax.mk_BExp_Den bv_pre)
           (BExp_Const (Imm64 242w))``;
 
       val deps  = Redblackset.add (symbvalbe_dep_empty, bv_pre);
-      val symbv = SymbValInterval ((exp, exp), deps);
+      val symbv = SymbValInterval ((exp_l, exp_u), deps);
 
       val systarget_countw =
         (update_envvar bv bv_fr o insert_symbval bv_fr symbv) systarget_new;
@@ -134,7 +138,7 @@ val _ = print_summary_info sum__mymodexp_loop "sum__mymodexp_loop";
 *)
 
 val sums        = [sum__mymodexp_uidivmod_assmpt];
-val entry_label = "_mymodexp";
+val entry_label = "sum__mymodexp_loop_1";
 (*
 val sum__mymodexp =
       create_func_summary n_dict bl_dict_ sums entry_label;
@@ -150,8 +154,60 @@ val _ = print_summary_info sum__mymodexp_loop_1 "sum__mymodexp_loop_1";
 
 
 
+(*
+val idx = 2;
+val summary = sum__mymodexp_loop_1;
+*)
+fun execute_an_iteration idx summary =
+  let
 
-val end_lbl_tms = [];
+val sums        = [summary];
+(*
+val sum__mymodexp =
+      create_func_summary n_dict bl_dict_ sums entry_label;
+*)
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (0x100014f0))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (0x10001504))))``];
+val usage = (100, 500);
+
+val sum__mymodexp_loop_idx1 =
+      obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
+
+val _ = print_summary_info sum__mymodexp_loop_idx1 ("sum__mymodexp_loop_p1_" ^ (Int.toString idx));
+
+val sums        = [sum__mymodexp_loop_idx1, sum__mymodexp_uidivmod_assmpt];
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (0x1000155a))))``,
+                   ``BL_Address (Imm32 (n2w ^(int_to_numterm (0x1000156c))))``];
+val sum__mymodexp_loop_idx2 =
+      obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
+
+val _ = print_summary_info sum__mymodexp_loop_idx2 ("sum__mymodexp_loop_" ^ (Int.toString idx));
+
+  in
+    sum__mymodexp_loop_idx2
+  end;
+
+
+val sum__mymodexp_loop_2 = execute_an_iteration 2 sum__mymodexp_loop_1;
+val sum__mymodexp_loop_3 = execute_an_iteration 3 sum__mymodexp_loop_2;
+val sum__mymodexp_loop_4 = execute_an_iteration 4 sum__mymodexp_loop_3;
+val sum__mymodexp_loop_5 = execute_an_iteration 5 sum__mymodexp_loop_4;
+val sum__mymodexp_loop_6 = execute_an_iteration 6 sum__mymodexp_loop_5;
+val sum__mymodexp_loop_7 = execute_an_iteration 7 sum__mymodexp_loop_6;
+val sum__mymodexp_loop_8 = execute_an_iteration 8 sum__mymodexp_loop_7;
+
+
+val sums        = [sum__mymodexp_loop_8];
+val entry_label = "_mymodexp";
+val lbl_tm      =  ``BL_Address (Imm32 (n2w ^(int_to_numterm (0x100014f0))))``;
+val end_lbl_tms = [``BL_Address (Imm32 (n2w ^(int_to_numterm (0x1000156c))))``,
+                   ``BL_Address (Imm32 (n2w ^(int_to_numterm (0x1000010c))))``];
+
+val sum__mymodexp =
+      obtain_summary n_dict bl_dict_ sums usage lbl_tm end_lbl_tms;
+
+val _ = print_summary_info sum__mymodexp "sum__mymodexp";
+
 
       val _ = timer_stop (fn s => print("time for " ^ entry_label ^ ": " ^ s ^ "\n")) timer_meas;
 
