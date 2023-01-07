@@ -148,6 +148,8 @@ fun mem_symbol_to_prog_lbl name =
     handle Option => raise ERR "mem_symbol_to_prog_lbl" ("cannot find addr for label: " ^ name);
 
 
+val symbs_sec_text = ["_mymodexp", "__aeabi_idiv0", "__aeabi_uidivmod"];
+
 val prog_fun_entry_lbl_tms = List.foldr (fn (symb, l) =>
       (mem_symbol_to_prog_lbl symb)::l handle HOL_ERR _ => l
 ) [] symbs_sec_text;
