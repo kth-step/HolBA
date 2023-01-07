@@ -184,14 +184,15 @@ Disassembly of section .text:
 10001354:	46c0      	nop			; (mov r8, r8)
 10001356:	46c0      	nop			; (mov r8, r8)
 10001358:	46c0      	nop			; (mov r8, r8)
-1000135a:	0000      	.short	0x0000
-1000135c:	00000000 	.word	0x00000000
+1000135a:	46c0      	nop			; (mov r8, r8)
+1000135c:	46c0      	nop			; (mov r8, r8)
+1000135e:	46c0      	nop			; (mov r8, r8)
 
 10001360 <_alignmenttestfun_b16>:
 10001360:	4288      	cmp	r0, r1
 10001362:	d001      	beq.n	10001368 <ait_e1>
 10001364:	e009      	b.n	1000137a <ait_e2>
-	...
+10001366:	46c0      	nop			; (mov r8, r8)
 
 10001368 <ait_e1>:
 10001368:	46c0      	nop			; (mov r8, r8)
@@ -199,8 +200,9 @@ Disassembly of section .text:
 1000136c:	46c0      	nop			; (mov r8, r8)
 1000136e:	46c0      	nop			; (mov r8, r8)
 10001370:	e00a      	b.n	10001388 <finished>
-10001372:	0000      	.short	0x0000
-10001374:	00000000 	.word	0x00000000
+10001372:	46c0      	nop			; (mov r8, r8)
+10001374:	46c0      	nop			; (mov r8, r8)
+10001376:	46c0      	nop			; (mov r8, r8)
 10001378:	46c0      	nop			; (mov r8, r8)
 
 1000137a <ait_e2>:
@@ -217,12 +219,14 @@ Disassembly of section .text:
 
 1000138a <_start>:
 1000138a:	e7fe      	b.n	1000138a <_start>
-1000138c:	00000000 	.word	0x00000000
+1000138c:	46c0      	nop			; (mov r8, r8)
+1000138e:	46c0      	nop			; (mov r8, r8)
 
 10001390 <_reffunc_test0>:
 10001390:	46c0      	nop			; (mov r8, r8)
 10001392:	4770      	bx	lr
-10001394:	00000000 	.word	0x00000000
+10001394:	46c0      	nop			; (mov r8, r8)
+10001396:	46c0      	nop			; (mov r8, r8)
 
 10001398 <_reffunc_test1>:
 10001398:	46c0      	nop			; (mov r8, r8)
@@ -232,7 +236,7 @@ Disassembly of section .text:
 100013a0:	46c0      	nop			; (mov r8, r8)
 100013a2:	46c0      	nop			; (mov r8, r8)
 100013a4:	4770      	bx	lr
-	...
+100013a6:	46c0      	nop			; (mov r8, r8)
 
 100013a8 <_reffunc_test2>:
 100013a8:	46c0      	nop			; (mov r8, r8)
@@ -254,8 +258,9 @@ Disassembly of section .text:
 100013c4:	1840      	adds	r0, r0, r1
 100013c6:	1a89      	subs	r1, r1, r2
 100013c8:	4770      	bx	lr
-100013ca:	0000      	.short	0x0000
-100013cc:	00000000 	.word	0x00000000
+100013ca:	46c0      	nop			; (mov r8, r8)
+100013cc:	46c0      	nop			; (mov r8, r8)
+100013ce:	46c0      	nop			; (mov r8, r8)
 
 100013d0 <_reffunc_test4_9nopsubadd>:
 100013d0:	46c0      	nop			; (mov r8, r8)
@@ -268,7 +273,8 @@ Disassembly of section .text:
 100013de:	1a89      	subs	r1, r1, r2
 100013e0:	1ad2      	subs	r2, r2, r3
 100013e2:	4770      	bx	lr
-100013e4:	00000000 	.word	0x00000000
+100013e4:	46c0      	nop			; (mov r8, r8)
+100013e6:	46c0      	nop			; (mov r8, r8)
 
 100013e8 <_reffunc_test5>:
 100013e8:	46c0      	nop			; (mov r8, r8)
@@ -282,23 +288,25 @@ Disassembly of section .text:
 100013f8:	1ad2      	subs	r2, r2, r3
 100013fa:	1b1b      	subs	r3, r3, r4
 100013fc:	4770      	bx	lr
-	...
+100013fe:	46c0      	nop			; (mov r8, r8)
 
 10001400 <_reffunc_st>:
 10001400:	9000      	str	r0, [sp, #0]
 10001402:	4770      	bx	lr
-10001404:	00000000 	.word	0x00000000
+10001404:	46c0      	nop			; (mov r8, r8)
+10001406:	46c0      	nop			; (mov r8, r8)
 
 10001408 <_reffunc_ld>:
 10001408:	9800      	ldr	r0, [sp, #0]
 1000140a:	4770      	bx	lr
-1000140c:	00000000 	.word	0x00000000
+1000140c:	46c0      	nop			; (mov r8, r8)
+1000140e:	46c0      	nop			; (mov r8, r8)
 
 10001410 <_reffunc_ld2_ldnop>:
 10001410:	9800      	ldr	r0, [sp, #0]
 10001412:	46c0      	nop			; (mov r8, r8)
 10001414:	4770      	bx	lr
-	...
+10001416:	46c0      	nop			; (mov r8, r8)
 
 10001418 <_reffunc_ld3>:
 10001418:	46c0      	nop			; (mov r8, r8)
@@ -310,13 +318,15 @@ Disassembly of section .text:
 10001424:	9800      	ldr	r0, [sp, #0]
 10001426:	9800      	ldr	r0, [sp, #0]
 10001428:	e002      	b.n	10001430 <_reffunc_ld3_jumphere>
-1000142a:	0000      	.short	0x0000
-1000142c:	00000000 	.word	0x00000000
+1000142a:	46c0      	nop			; (mov r8, r8)
+1000142c:	46c0      	nop			; (mov r8, r8)
+1000142e:	46c0      	nop			; (mov r8, r8)
 
 10001430 <_reffunc_ld3_jumphere>:
 10001430:	46c0      	nop			; (mov r8, r8)
 10001432:	4770      	bx	lr
-10001434:	00000000 	.word	0x00000000
+10001434:	46c0      	nop			; (mov r8, r8)
+10001436:	46c0      	nop			; (mov r8, r8)
 
 10001438 <_reffunc_ld4>:
 10001438:	46c0      	nop			; (mov r8, r8)
@@ -336,61 +346,63 @@ Disassembly of section .text:
 10001454:	46c0      	nop			; (mov r8, r8)
 10001456:	46c0      	nop			; (mov r8, r8)
 10001458:	4770      	bx	lr
-1000145a:	0000      	.short	0x0000
-1000145c:	00000000 	.word	0x00000000
+1000145a:	46c0      	nop			; (mov r8, r8)
+1000145c:	46c0      	nop			; (mov r8, r8)
+1000145e:	46c0      	nop			; (mov r8, r8)
 
 10001460 <_reffunc_ld5_ldldbr8>:
 10001460:	9800      	ldr	r0, [sp, #0]
 10001462:	9800      	ldr	r0, [sp, #0]
 10001464:	e000      	b.n	10001468 <_reffunc_ld3_j1>
-	...
+10001466:	46c0      	nop			; (mov r8, r8)
 
 10001468 <_reffunc_ld3_j1>:
 10001468:	9800      	ldr	r0, [sp, #0]
 1000146a:	9800      	ldr	r0, [sp, #0]
 1000146c:	e000      	b.n	10001470 <_reffunc_ld3_j2>
-	...
+1000146e:	46c0      	nop			; (mov r8, r8)
 
 10001470 <_reffunc_ld3_j2>:
 10001470:	9800      	ldr	r0, [sp, #0]
 10001472:	9800      	ldr	r0, [sp, #0]
 10001474:	e000      	b.n	10001478 <_reffunc_ld3_j3>
-	...
+10001476:	46c0      	nop			; (mov r8, r8)
 
 10001478 <_reffunc_ld3_j3>:
 10001478:	9800      	ldr	r0, [sp, #0]
 1000147a:	9800      	ldr	r0, [sp, #0]
 1000147c:	e000      	b.n	10001480 <_reffunc_ld3_j4>
-	...
+1000147e:	46c0      	nop			; (mov r8, r8)
 
 10001480 <_reffunc_ld3_j4>:
 10001480:	9800      	ldr	r0, [sp, #0]
 10001482:	9800      	ldr	r0, [sp, #0]
 10001484:	e000      	b.n	10001488 <_reffunc_ld3_j5>
-	...
+10001486:	46c0      	nop			; (mov r8, r8)
 
 10001488 <_reffunc_ld3_j5>:
 10001488:	9800      	ldr	r0, [sp, #0]
 1000148a:	9800      	ldr	r0, [sp, #0]
 1000148c:	e000      	b.n	10001490 <_reffunc_ld3_j6>
-	...
+1000148e:	46c0      	nop			; (mov r8, r8)
 
 10001490 <_reffunc_ld3_j6>:
 10001490:	9800      	ldr	r0, [sp, #0]
 10001492:	9800      	ldr	r0, [sp, #0]
 10001494:	e000      	b.n	10001498 <_reffunc_ld3_j7>
-	...
+10001496:	46c0      	nop			; (mov r8, r8)
 
 10001498 <_reffunc_ld3_j7>:
 10001498:	9800      	ldr	r0, [sp, #0]
 1000149a:	9800      	ldr	r0, [sp, #0]
 1000149c:	e000      	b.n	100014a0 <_reffunc_ld3_j8>
-	...
+1000149e:	46c0      	nop			; (mov r8, r8)
 
 100014a0 <_reffunc_ld3_j8>:
 100014a0:	46c0      	nop			; (mov r8, r8)
 100014a2:	4770      	bx	lr
-100014a4:	00000000 	.word	0x00000000
+100014a4:	46c0      	nop			; (mov r8, r8)
+100014a6:	46c0      	nop			; (mov r8, r8)
 
 100014a8 <_reffunc_bx>:
 100014a8:	46c0      	nop			; (mov r8, r8)
@@ -399,43 +411,48 @@ Disassembly of section .text:
 100014ae:	46c0      	nop			; (mov r8, r8)
 100014b0:	46c0      	nop			; (mov r8, r8)
 100014b2:	46c0      	nop			; (mov r8, r8)
-100014b4:	482e      	ldr	r0, [pc, #184]	; (10001570 <l12+0x14>)
+100014b4:	4830      	ldr	r0, [pc, #192]	; (10001578 <_reffunc_cjmp_jumphere+0x4>)
 100014b6:	2101      	movs	r1, #1
 100014b8:	4308      	orrs	r0, r1
-100014ba:	4a2d      	ldr	r2, [pc, #180]	; (10001570 <l12+0x14>)
+100014ba:	4a2f      	ldr	r2, [pc, #188]	; (10001578 <_reffunc_cjmp_jumphere+0x4>)
 100014bc:	4700      	bx	r0
-	...
+100014be:	46c0      	nop			; (mov r8, r8)
 
 100014c0 <_reffunc_bx_jumphere>:
 100014c0:	46c0      	nop			; (mov r8, r8)
 100014c2:	4770      	bx	lr
-100014c4:	00000000 	.word	0x00000000
+100014c4:	46c0      	nop			; (mov r8, r8)
+100014c6:	46c0      	nop			; (mov r8, r8)
 
 100014c8 <_reffunc_b16_00>:
 100014c8:	e006      	b.n	100014d8 <_reffunc_b16_00_j>
-100014ca:	0000      	.short	0x0000
-100014cc:	00000000 	.word	0x00000000
+100014ca:	46c0      	nop			; (mov r8, r8)
+100014cc:	46c0      	nop			; (mov r8, r8)
+100014ce:	46c0      	nop			; (mov r8, r8)
 
 100014d0 <_reffunc_b16_10>:
 100014d0:	e007      	b.n	100014e2 <_reffunc_b16_10_j>
-100014d2:	0000      	.short	0x0000
-100014d4:	00000000 	.word	0x00000000
+100014d2:	46c0      	nop			; (mov r8, r8)
+100014d4:	46c0      	nop			; (mov r8, r8)
+100014d6:	46c0      	nop			; (mov r8, r8)
 
 100014d8 <_reffunc_b16_00_j>:
 100014d8:	46c0      	nop			; (mov r8, r8)
 100014da:	e005      	b.n	100014e8 <_reffunc_b16_finished>
-100014dc:	00000000 	.word	0x00000000
+100014dc:	46c0      	nop			; (mov r8, r8)
+100014de:	46c0      	nop			; (mov r8, r8)
 100014e0:	46c0      	nop			; (mov r8, r8)
 
 100014e2 <_reffunc_b16_10_j>:
 100014e2:	46c0      	nop			; (mov r8, r8)
 100014e4:	e000      	b.n	100014e8 <_reffunc_b16_finished>
-	...
+100014e6:	46c0      	nop			; (mov r8, r8)
 
 100014e8 <_reffunc_b16_finished>:
 100014e8:	4770      	bx	lr
-100014ea:	0000      	.short	0x0000
-100014ec:	00000000 	.word	0x00000000
+100014ea:	46c0      	nop			; (mov r8, r8)
+100014ec:	46c0      	nop			; (mov r8, r8)
+100014ee:	46c0      	nop			; (mov r8, r8)
 
 100014f0 <_mymodexp>:
 100014f0:	9600      	str	r6, [sp, #0]
@@ -469,7 +486,7 @@ Disassembly of section .text:
 10001524:	469b      	mov	fp, r3
 10001526:	1c30      	adds	r0, r6, #0
 10001528:	1c11      	adds	r1, r2, #0
-1000152a:	f7ff fffe 	bl	1000152a <l6+0x26>
+1000152a:	f7fe fdef 	bl	1000010c <__aeabi_uidivmod>
 1000152e:	1c0e      	adds	r6, r1, #0
 10001530:	4640      	mov	r0, r8
 10001532:	4649      	mov	r1, r9
@@ -486,7 +503,7 @@ Disassembly of section .text:
 10001544:	469b      	mov	fp, r3
 10001546:	1c30      	adds	r0, r6, #0
 10001548:	1c11      	adds	r1, r2, #0
-1000154a:	f7ff fffe 	bl	1000154a <l10+0x10>
+1000154a:	f7fe fddf 	bl	1000010c <__aeabi_uidivmod>
 1000154e:	1c0e      	adds	r6, r1, #0
 10001550:	4640      	mov	r0, r8
 10001552:	4649      	mov	r1, r9
@@ -505,5 +522,14 @@ Disassembly of section .text:
 10001568:	9e00      	ldr	r6, [sp, #0]
 1000156a:	469e      	mov	lr, r3
 1000156c:	4770      	bx	lr
-1000156e:	0000      	.short	0x0000
-10001570:	00000170 	.word	0x00000170
+1000156e:	46c0      	nop			; (mov r8, r8)
+
+10001570 <_reffunc_cjmp>:
+10001570:	4288      	cmp	r0, r1
+10001572:	d0ff      	beq.n	10001574 <_reffunc_cjmp_jumphere>
+
+10001574 <_reffunc_cjmp_jumphere>:
+10001574:	4770      	bx	lr
+10001576:	0000      	.short	0x0000
+10001578:	100014c0 	.word	0x100014c0
+
