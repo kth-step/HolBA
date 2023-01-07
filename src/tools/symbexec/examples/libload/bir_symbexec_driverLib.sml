@@ -170,6 +170,7 @@ in (* outermost local *)
 
       val _ = List.map (fn syst_merged =>
         let
+          val _ = print_term (SYST_get_pc syst_merged);
           (* print sp and mem *)
           val _ =
             let
@@ -182,7 +183,7 @@ in (* outermost local *)
               val syst_merged_mem_symbv = get_state_symbv "merge_to_summary" bv_mem syst_merged;
               val _ = print ("\nMEM = " ^ (symbv_to_string_raw true syst_merged_mem_symbv) ^ "\n\n");
             in () end
-            handle _ => print "\nSP  = n/a\n\n";
+            handle _ => print "\nMEM  = n/a\n\n";
 
           val syst_merged_countw = get_state_symbv "merge_to_summary" bv_countw syst_merged;
 
@@ -241,6 +242,30 @@ in (* outermost local *)
                    "init_pred"
                    (pred_conjs usage)
                    syst;
+
+      (* hotfix to make SP appear in vals *)
+      val syst =
+        let
+          val bv = “BVar "SP_process" (BType_Imm Bit32)”;
+          val env    = SYST_get_env syst;
+          val bv_val = find_bv_val "hotfix_sp_in_vals" env bv;
+          val _ = if is_bvar_init bv_val then () else
+                  raise ERR "hotfix_sp_in_vals" "need sp as initial variable";
+
+          val exp   = ``
+        BExp_BinExp BIExp_Minus
+          ^(bir_expSyntax.mk_BExp_Den bv_val)
+          (BExp_Const (Imm32 0w))``;
+
+          val deps  = Redblackset.add (symbvalbe_dep_empty, bv_val);
+          val symbv = SymbValBE (exp, deps);
+
+          val bv_fresh = (get_bvar_fresh) bv;
+        in
+          (update_envvar bv bv_fresh o
+           insert_symbval bv_fresh symbv
+          ) syst
+        end;
 
       val _ = if check_feasible syst then () else
               raise ERR "init_summary" "initial state infeasible, check path condition";
