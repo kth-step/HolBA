@@ -37,9 +37,12 @@ in (* outermost local *)
       open bir_cfgLib;
 
       val stop_lbl_tms = (List.map #CFGN_lbl_tm o
-                          List.filter (fn n => node_to_rel_symbol n = entry_label andalso
-                                               cfg_node_type_eq (#CFGN_type n, CFGNT_Return))
+                          List.filter (fn n => cfg_node_type_eq (#CFGN_type n, CFGNT_Return))
                          ) (List.map snd (Redblackmap.listItems n_dict));
+
+      val _ = print "stop detection:\n";
+      val _ = List.map (print_term) stop_lbl_tms;
+      val _ = print "stop detection finished.\n";
     in
       stop_lbl_tms
     end;

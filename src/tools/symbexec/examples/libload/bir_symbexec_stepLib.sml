@@ -234,6 +234,7 @@ local
     let
       val n:cfg_node = binariesCfgLib.find_node n_dict lbl_tm;
       val n_type  = #CFGN_type n;
+      val _ = if cfg_node_type_eq (CFGNT_Return, n_type) then print "return type\n" else print "don't know type\n";
       val _       = if cfg_nodetype_is_call n_type orelse
                        cfg_node_type_eq (n_type, CFGNT_Jump) then () else
                     raise ERR "symb_exec_endstmt" ("can only handle a call or a jump here, problem at " ^ (term_to_string lbl_tm));
