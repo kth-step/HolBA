@@ -20,7 +20,7 @@ val current_training_states: (training_state list option ref) = ref NONE;
 
 fun get_training_states current_path_id =
     let
-      val st_list = List.filter (fn (id,_) => not (id = current_path_id))
+      val st_list = List.filter (fn (id,st) => (not (id = current_path_id) andalso isSome st))
 				(valOf (!current_training_states))
     in
       case st_list of

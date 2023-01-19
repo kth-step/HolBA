@@ -54,9 +54,9 @@ fun compile_and_link_armv8_llvm_bc binfilename bcfile bt =
 		   else if bt = "rpi4" then "-target aarch64-linux-gnu -march=armv8-a -mcpu=cortex-a72"
 		   else raise ERR "compile_and_link_armv8_llvm_bc" "unknown board type"
       val linker_opt = "-Xlinker -T " ^ "/home/tiziano/llvm-project/llvm/build/tiziano-tests" ^ "/linker.ld ";
-      val cmd_static_link = ("/home/tiziano/llvm-project/llvm/build/bin/" ^
-			     "clang " ^ bt_opt ^
-			     " -Wall -g -mgeneral-regs-only -static -nostartfiles " ^ linker_opt ^
+      val compiler_opt = "-O0 -Wall -g -mgeneral-regs-only -static -nostartfiles -fno-stack-protector -nostdlib -ffreestanding -fno-builtin --specs=nosys.specs";
+      val cmd_static_link = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "clang " ^
+			     bt_opt ^ " " ^ compiler_opt ^ " " ^ linker_opt ^
 			     bcfile ^ " -o " ^ binfilename);
     in
       if OS.Process.isSuccess (OS.Process.system cmd_static_link)
@@ -199,7 +199,7 @@ fun analyze_func (fun_name, fun_bc) threshold_ninst =
  fun peel_and_delete_loops (fun_name, filebc) =
     let
       val cmd_unroll_loops = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt" ^
-			      " -mem2reg -simplifycfg -loops -loop-simplify -loop-unroll -unroll-peel-count=2 -unroll-allow-partial -simplifycfg " ^
+			      " -mem2reg -loops -loop-simplify -loop-unroll -unroll-peel-count=2 " ^
 			      filebc ^ " -o " ^ filebc);
       val cmd_delete_loops = ("/home/tiziano/llvm-project/llvm/build/bin/" ^ "opt -reg2mem -enable-new-pm=0 -load " ^
 			      "/home/tiziano/llvm-project/llvm/build/lib/LLVMScamv.so" ^ " -extend-loop-deletion " ^
@@ -265,21 +265,31 @@ fun llvm_initial_phase filebc llvm_option =
       val extracted_fun_bcs = List.map (fn f => extract_fun_with_recursive filebc f) func_names;
       val fun_w_loops_del_bcs = List.map (fn f => peel_and_delete_loops f) extracted_fun_bcs;
       val fun_renamed_bcs = List.map (fn f => metarenamer_bbs f) fun_w_loops_del_bcs;
+      val bt = "rpi4";
 
       val sliced_fun_bcs = let val manually = isSome llvm_option;
 			in
 			  if manually
 			  then
-			    let val fun_specified = hd (String.tokens (fn c => c = #":") (valOf llvm_option));
+			    let val (fun_specified, blocks_specified) =
+				  case (String.tokens (fn c => c = #":") (valOf llvm_option)) of
+				    (f::nil) => (f, NONE)
+				  | (f::bbs) => (f, SOME bbs)
+				  | _ => raise ERR "llvm_initial_phase" "error in llvm_option parsing"
 				val f = List.find (fn (fnm,fbc) => fnm = fun_specified) fun_renamed_bcs;
-			    in (if isSome f
-				then
-				  [extract_bbs_from_fun (valOf f) (valOf llvm_option)]
-				else
-				  raise ERR "llvm_initial_phase" "the specified function was not found")
+			    in
+			      case f of
+				SOME (fnm,fbc) =>
+				  if isSome blocks_specified then
+				      [extract_bbs_from_fun (fnm,fbc) (valOf llvm_option)]
+				  else
+				      [((fnm,NONE),fbc)]
+			      | NONE =>
+				raise ERR "llvm_initial_phase" "the specified function was not found"
 			    end
-			  else (List.concat (List.map (fn f => slice_func f 3000) fun_renamed_bcs))
+			  else (List.concat (List.map (fn f => slice_func f 150) fun_renamed_bcs))
 			end;
+      (* val fun_w_loops_del_bcs = List.map (fn f => peel_and_delete_loops f) sliced_fun_bcs; *)
 
       val binfiles = List.map (fn ((f,fd), fbc) =>
 				  let
@@ -290,7 +300,7 @@ fun llvm_initial_phase filebc llvm_option =
 				  in
 				    ((f, fd,
 				      linkedfilebc,
-				      SOME (compile_and_link_armv8_llvm_bc fname linkedfilebc "rpi4"))
+				      SOME (compile_and_link_armv8_llvm_bc fname linkedfilebc bt))
 				     handle HOL_ERR e =>
 					    let
 					      val globs = get_glob_names filebc;
@@ -298,9 +308,9 @@ fun llvm_initial_phase filebc llvm_option =
 					    in
 					      (f, fd,
 					       finalfilebc,
-					       SOME (compile_and_link_armv8_llvm_bc fname finalfilebc "rpi4"))
+					       SOME (compile_and_link_armv8_llvm_bc fname finalfilebc bt))
 					    end
-				     handle HOL_ERR e => (print ("Compilation error:" ^ fd ^ " \n");
+				     handle HOL_ERR e => (print ("Compilation error: " ^ fd ^ " \n\n");
 							  (f, fd, fbc, NONE)))
 				  end) sliced_fun_bcs;
       val _ = print "LLVM phase finished.\n";
@@ -324,10 +334,16 @@ fun llvm_insert_fence fun_name filebc =
     in
       if isSome res
       then
-	case (valOf res) of
+	(case (valOf res) of
 	    1 => (print "fence added\n"; SOME filebc)
 	  | 0 => (print "no fence added (you may have reached the maximum fencing)\n"; NONE)
-	  | _ => raise ERR "llvm_insert_fence" "result unknown"
+	  | 23 => (case get_fun_names filebc of
+		    fnm::nil => if String.isSubstring fun_name fnm
+				then llvm_insert_fence fnm filebc
+				else raise ERR "llvm_insert_fence" "function name unknown"
+		  | (_::_) => raise ERR "llvm_insert_fence" "more than one function name"
+		  | _ => raise ERR "llvm_insert_fence" "unknown error")
+	  | _ => raise ERR "llvm_insert_fence" "result unknown")
        else raise ERR "llvm_insert_fence" "cmd_insert_fence"
     end
 

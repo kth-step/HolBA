@@ -453,7 +453,7 @@ fun next_experiment all_exps next_relation (entry,exits) =
 		    ([("1", s1), ("2", s2)]@(Portable.the_list (Option.map (fn st => ("train", st)) st_o)))
 		    entry
 		    exits
-		    [("state_gen_id", !current_obs_model_id), ("time", d_s)];
+		    [("state_gen_id", !current_obs_model_id), ("time", d_s)(* , ("obs_rel", term_to_string_sel word_relation) *)];
 		val exp_gen_message = "Generated experiment: " ^ (embexp_logsLib.exp_handle_toString exp_id);
 		val _ = if isSome st_o then
 			  let
