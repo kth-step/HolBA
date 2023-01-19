@@ -90,7 +90,14 @@ val add_obs_constr_sp_block_def = Define`
 
 val constrain_mem_def = Define`
 constrain_mem (mem_min, mem_max) e =
-    BStmt_Assert
+case check_sp e of
+  T =>
+  BStmt_Assert
+     (BExp_BinExp BIExp_And
+       (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 (mem_max + ^(mk_wordi (Arbnum.fromInt 128, 64))))) (e))
+       (BExp_BinPred BIExp_LessThan (e) (BExp_Const (Imm64 (mem_max + ^(mk_wordi (Arbnum.fromInt (0x100000 + 128), 64)))))))
+| F =>
+  BStmt_Assert
      (BExp_BinExp BIExp_And
        (BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm64 mem_min)) (e))
        (BExp_BinPred BIExp_LessThan (e) (BExp_Const (Imm64 mem_max))))
