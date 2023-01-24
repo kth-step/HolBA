@@ -12,11 +12,22 @@ val mem_bounds =
         open wordsSyntax;
         val (mem_base, mem_len) = (Arbnum.fromHexString "0xFFCC0000",
                                    Arbnum.fromHexString  "0x10000");
-        val mem_end = (Arbnum.- (Arbnum.+ (mem_base, mem_len), Arbnum.fromInt 128));
+	val mem_max = Arbnum.+ (mem_base, mem_len);
+	val sp_len = Arbnum.fromHexString  "0x5000";
+        val mem_end = (Arbnum.- (Arbnum.- (mem_max, sp_len), Arbnum.fromInt 16));
+	val (sp_start, sp_end) = (Arbnum.- (mem_max,sp_len),
+				  Arbnum.- (mem_max, Arbnum.fromInt 16));
       in
-        pairSyntax.mk_pair
-            (mk_wordi (mem_base, 64),
-             mk_wordi (mem_end, 64))
+	if Arbnum.< (Arbnum.+ (mem_base,sp_len), Arbnum.- (mem_max,sp_len)) then
+          pairSyntax.mk_pair
+            (pairSyntax.mk_pair
+		 (mk_wordi (mem_base, 64),
+		  mk_wordi (mem_end, 64)),
+	     pairSyntax.mk_pair
+		 (mk_wordi (sp_start, 64),
+		  mk_wordi (sp_end, 64)))
+	else
+	  raise Fail "the experiment memory is not properly set"
       end;
 
 

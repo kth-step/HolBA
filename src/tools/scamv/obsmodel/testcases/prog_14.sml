@@ -209,7 +209,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R1" (BType_Imm Bit64)))
                        (BExp_Den (BVar "R3" (BType_Imm Bit64))))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R1" (BType_Imm Bit64)))
@@ -265,7 +265,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R5" (BType_Imm Bit64)))
                        (BExp_Den (BVar "R6" (BType_Imm Bit64))))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R5" (BType_Imm Bit64)))
@@ -331,7 +331,7 @@ BirProgram
                     (BExp_Den (BVar "R7" (BType_Imm Bit64))))
                  (BExp_BinPred BIExp_LessThan
                     (BExp_Den (BVar "R7" (BType_Imm Bit64)))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_Den (BVar "R7" (BType_Imm Bit64))] HD;
             BStmt_Assign (BVar "R10" (BType_Imm Bit64))
@@ -377,7 +377,7 @@ BirProgram
                     (BExp_Den (BVar "R7*" (BType_Imm Bit64))))
                  (BExp_BinPred BIExp_LessThan
                     (BExp_Den (BVar "R7*" (BType_Imm Bit64)))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 1 (BExp_Const (Imm1 1w))
               [BExp_Den (BVar "R7*" (BType_Imm Bit64))] HD;
             BStmt_Assign (BVar "R10*" (BType_Imm Bit64))

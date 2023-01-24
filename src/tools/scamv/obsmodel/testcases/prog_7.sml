@@ -62,7 +62,7 @@ BirProgram
                  (BExp_BinExp BIExp_Plus
                     (BExp_Den (BVar "R24" (BType_Imm Bit64)))
                     (BExp_Den (BVar "R14" (BType_Imm Bit64))))
-                 (BExp_Const (Imm64 (0xFFCCFF80w :word64))))) :
+                 (BExp_Const (Imm64 (0xFFCCAFF0w :word64))))) :
          load_store_pc_t bir_stmt_basic_t);
         BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_BinExp BIExp_Plus (BExp_Den (BVar "R24" (BType_Imm Bit64)))
@@ -93,7 +93,7 @@ BirProgram
                  (BExp_Den (BVar "R17" (BType_Imm Bit64))))
               (BExp_BinPred BIExp_LessThan
                  (BExp_Den (BVar "R17" (BType_Imm Bit64)))
-                 (BExp_Const (Imm64 (0xFFCCFF80w :word64))))) :
+                 (BExp_Const (Imm64 (0xFFCCAFF0w :word64))))) :
          load_store_pc_t bir_stmt_basic_t);
         BStmt_Observe (0 :num) (BExp_Const (Imm1 (1w :word1)))
           [BExp_Den (BVar "R17" (BType_Imm Bit64))] gen_LSPC_Store;

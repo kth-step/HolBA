@@ -396,7 +396,7 @@ BirProgram
             BStmt_Assert
               (BExp_BinExp BIExp_And
                  (BExp_BinPred BIExp_LessOrEqual
-                    (BExp_Const (Imm64 0xFFCD0000w))
+                    (BExp_Const (Imm64 0xFFCCB000w))
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 8w))))
@@ -404,7 +404,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 8w)))
-                    (BExp_Const (Imm64 0xFFDD0000w))));
+                    (BExp_Const (Imm64 0xFFCCFFF0w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
@@ -446,7 +446,7 @@ BirProgram
                     (BExp_Den (BVar "R8" (BType_Imm Bit64))))
                  (BExp_BinPred BIExp_LessThan
                     (BExp_Den (BVar "R8" (BType_Imm Bit64)))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_Den (BVar "R8" (BType_Imm Bit64))] HD;
             BStmt_Assign (BVar "R8" (BType_Imm Bit64))
@@ -514,7 +514,7 @@ BirProgram
             BStmt_Assert
               (BExp_BinExp BIExp_And
                  (BExp_BinPred BIExp_LessOrEqual
-                    (BExp_Const (Imm64 0xFFCD0000w))
+                    (BExp_Const (Imm64 0xFFCCB000w))
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 8w))))
@@ -522,7 +522,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 8w)))
-                    (BExp_Const (Imm64 0xFFDD0000w))));
+                    (BExp_Const (Imm64 0xFFCCFFF0w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
@@ -574,7 +574,7 @@ BirProgram
             BStmt_Assert
               (BExp_BinExp BIExp_And
                  (BExp_BinPred BIExp_LessOrEqual
-                    (BExp_Const (Imm64 0xFFCD0000w))
+                    (BExp_Const (Imm64 0xFFCCB000w))
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 8w))))
@@ -582,7 +582,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 8w)))
-                    (BExp_Const (Imm64 0xFFDD0000w))));
+                    (BExp_Const (Imm64 0xFFCCFFF0w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "SP_EL0" (BType_Imm Bit64)))
@@ -645,7 +645,7 @@ BirProgram
                        (BExp_BinExp BIExp_LeftShift
                           (BExp_Den (BVar "R9" (BType_Imm Bit64)))
                           (BExp_Const (Imm64 3w))))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R8" (BType_Imm Bit64)))
@@ -712,7 +712,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R9" (BType_Imm Bit64)))
                        (BExp_Den (BVar "R8" (BType_Imm Bit64))))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R9" (BType_Imm Bit64)))
@@ -753,7 +753,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R9" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 136w)))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R9" (BType_Imm Bit64)))
@@ -825,7 +825,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R9" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 136w)))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 0 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R9" (BType_Imm Bit64)))
@@ -900,7 +900,7 @@ BirProgram
             BStmt_Assert
               (BExp_BinExp BIExp_And
                  (BExp_BinPred BIExp_LessOrEqual
-                    (BExp_Const (Imm64 0xFFCD0000w))
+                    (BExp_Const (Imm64 0xFFCCB000w))
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "SP_EL0*" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 8w))))
@@ -908,7 +908,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "SP_EL0*" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 8w)))
-                    (BExp_Const (Imm64 0xFFDD0000w))));
+                    (BExp_Const (Imm64 0xFFCCFFF0w))));
             BStmt_Observe 1 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "SP_EL0*" (BType_Imm Bit64)))
@@ -966,7 +966,7 @@ BirProgram
             BStmt_Assert
               (BExp_BinExp BIExp_And
                  (BExp_BinPred BIExp_LessOrEqual
-                    (BExp_Const (Imm64 0xFFCD0000w))
+                    (BExp_Const (Imm64 0xFFCCB000w))
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "SP_EL0*" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 8w))))
@@ -974,7 +974,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "SP_EL0*" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 8w)))
-                    (BExp_Const (Imm64 0xFFDD0000w))));
+                    (BExp_Const (Imm64 0xFFCCFFF0w))));
             BStmt_Observe 1 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "SP_EL0*" (BType_Imm Bit64)))
@@ -1028,7 +1028,7 @@ BirProgram
                        (BExp_BinExp BIExp_LeftShift
                           (BExp_Den (BVar "R9*" (BType_Imm Bit64)))
                           (BExp_Const (Imm64 3w))))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 1 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R8*" (BType_Imm Bit64)))
@@ -1083,7 +1083,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R9*" (BType_Imm Bit64)))
                        (BExp_Den (BVar "R8*" (BType_Imm Bit64))))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 1 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R9*" (BType_Imm Bit64)))
@@ -1118,7 +1118,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R9*" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 136w)))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 1 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R9*" (BType_Imm Bit64)))
@@ -1185,7 +1185,7 @@ BirProgram
                     (BExp_BinExp BIExp_Plus
                        (BExp_Den (BVar "R9*" (BType_Imm Bit64)))
                        (BExp_Const (Imm64 136w)))
-                    (BExp_Const (Imm64 0xFFCCFF80w))));
+                    (BExp_Const (Imm64 0xFFCCAFF0w))));
             BStmt_Observe 1 (BExp_Const (Imm1 1w))
               [BExp_BinExp BIExp_Plus
                  (BExp_Den (BVar "R9*" (BType_Imm Bit64)))

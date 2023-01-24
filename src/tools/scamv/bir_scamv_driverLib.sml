@@ -185,11 +185,21 @@ let
   val mem_bounds =
       let
         val (mem_base, mem_len) = embexp_params_memory;
-        val mem_end = (Arbnum.- (Arbnum.+ (mem_base, mem_len), Arbnum.fromInt 128));
+	val mem_max = Arbnum.+ (mem_base, mem_len);
+	val mem_end = (Arbnum.- (Arbnum.- (mem_max, stack_pointer_portion), Arbnum.fromInt 16));
+	val (sp_start, sp_end) = (Arbnum.- (mem_max, stack_pointer_portion),
+				  Arbnum.- (mem_max, Arbnum.fromInt 16));
       in
-        pairSyntax.mk_pair
-            (mk_wordi (embexp_params_cacheable mem_base, 64),
-             mk_wordi (embexp_params_cacheable mem_end, 64))
+	if Arbnum.< (Arbnum.+ (mem_base,stack_pointer_portion), Arbnum.- (mem_max,stack_pointer_portion)) then
+          pairSyntax.mk_pair
+	    (pairSyntax.mk_pair
+		 (mk_wordi (embexp_params_cacheable mem_base, 64),
+		  mk_wordi (embexp_params_cacheable mem_end, 64)),
+	     pairSyntax.mk_pair
+		 (mk_wordi (embexp_params_cacheable sp_start, 64),
+		  mk_wordi (embexp_params_cacheable sp_end, 64)))
+	else
+	  raise ERR "scamv_phase_add_obs" "the experiment memory is not properly set"
       end;
   val lifted_prog_w_obs = add_obs mem_bounds (proginst_fun (valOf (!current_prog))) entry;
   val _ = printv 1 "Obs added\n";

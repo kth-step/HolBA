@@ -47,6 +47,7 @@ signature experimentsLib = sig
   (* ======================================== *)
   val embexp_params_code   : Arbnum.num; (* base address for placement *)
   val embexp_params_memory : Arbnum.num * Arbnum.num; (* base, length *)
+  val stack_pointer_portion : Arbnum.num; (* length *)
 
   val embexp_params_cacheable : Arbnum.num -> Arbnum.num;
 
