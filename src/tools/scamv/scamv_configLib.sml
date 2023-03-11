@@ -29,6 +29,7 @@ datatype obs_model = mem_address_pc
                    | cache_tag_index_part
                    | cache_tag_index_part_page
                    | cache_speculation
+		   | cache_speculation_idx
                    | cache_speculation_first
                    | cache_straightline
 
@@ -97,6 +98,7 @@ fun obs_model_fromString om =
       | "cache_tag_index_part"      => SOME cache_tag_index_part
       | "cache_tag_index_part_page" => SOME cache_tag_index_part_page
       | "cache_speculation"         => SOME cache_speculation
+      | "cache_speculation_idx"     => SOME cache_speculation_idx
       | "cache_speculation_first"   => SOME cache_speculation_first
       | "cache_straightline"        => SOME cache_straightline
       | _                           => NONE
@@ -518,7 +520,7 @@ fun print_scamv_opt_usage () =
         print "Scam-V Usage:\n\n";
         List.map print_entry opt_table;
         print ("\ngenerator arg should be one of: rand, prefetch_strides, qc, slice, file, list, binary, llvm\n");
-        print ("\nobs_model arg should be one of: mem_address_pc, mem_address_pc_lspc, cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page, cache_speculation, cache_speculation_first, cache_straightline\n");
+        print ("\nobs_model arg should be one of: mem_address_pc, mem_address_pc_lspc, cache_tag_index, cache_tag_only, cache_index_only, cache_tag_index_part, cache_tag_index_part_page, cache_speculation, cache_speculation_idx, cache_speculation_first, cache_straightline\n");
         print ("\nrefined_obs_model arg is like obs_model\n");
         print ("\nobs_projection is an observation id as a number\n");
         print ("\nhw_obs_model arg should be one of: hw_cache_tag_index, hw_cache_index_numvalid, hw_cache_tag_index_part, hw_cache_tag_index_part_page\n");

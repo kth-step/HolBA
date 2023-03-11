@@ -727,6 +727,8 @@ fun match_obs_model obs_model =
         "cache_tag_index_part"
       | cache_speculation =>
         "cache_speculation"
+      | cache_speculation_idx =>
+        "cache_speculation_idx"
       | cache_speculation_first =>
         "cache_speculation_first"
       | cache_straightline =>

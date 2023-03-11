@@ -40,6 +40,12 @@ val obs_hol_type = ``:bir_val_t``;
 fun add_obs mb t en = rand (concl (EVAL ``add_obs_mem_addr_pc_armv8 ^mb ^t``));
 end
 
+structure bir_arm8_mem_addr_pc_r0_model : OBS_MODEL =
+struct
+val obs_hol_type = ``:bir_val_t``;
+fun add_obs mb t en = rand (concl (EVAL ``add_obs_mem_addr_pc_r0_armv8 ^mb ^t``));
+end
+
 structure bir_arm8_mem_addr_pc_lspc_model : OBS_MODEL =
 struct
 val obs_hol_type = ``:load_store_pc_t``;
@@ -751,6 +757,14 @@ in
         branch_instrumentation obs_all_refined (bir_arm8_mem_addr_pc_model.add_obs mb t en) en pipeline_depth;
     end;
 
+  structure bir_arm8_cache_speculation_idx_model : OBS_MODEL =
+    struct
+      val obs_hol_type = ``:bir_val_t``;
+      val pipeline_depth = 25;
+      fun add_obs mb t en =
+        branch_instrumentation obs_all_refined (bir_arm8_mem_addr_pc_r0_model.add_obs mb t en) en pipeline_depth;
+    end;
+
   structure bir_arm8_cache_speculation_first_model : OBS_MODEL =
   struct
   val obs_hol_type = ``:bir_val_t``;
@@ -793,7 +807,9 @@ fun get_obs_model id =
           bir_arm8_cache_line_subset_page_model.obs_hol_type
         else if id = "cache_speculation" then
                bir_arm8_cache_speculation_model.obs_hol_type
-        else if id = "cache_speculation_first" then
+	else if id = "cache_speculation_idx" then
+               bir_arm8_cache_speculation_idx_model.obs_hol_type
+	else if id = "cache_speculation_first" then
                bir_arm8_cache_speculation_first_model.obs_hol_type
         else if id = "cache_straightline" then
                bir_arm8_cache_straight_line_model.obs_hol_type
@@ -817,7 +833,9 @@ fun get_obs_model id =
           bir_arm8_cache_line_subset_page_model.add_obs
         else if id = "cache_speculation" then
                bir_arm8_cache_speculation_model.add_obs
-        else if id = "cache_speculation_first" then
+	else if id = "cache_speculation_idx" then
+               bir_arm8_cache_speculation_idx_model.add_obs
+	else if id = "cache_speculation_first" then
                bir_arm8_cache_speculation_first_model.add_obs
         else if id = "cache_straightline" then
                bir_arm8_cache_straight_line_model.add_obs

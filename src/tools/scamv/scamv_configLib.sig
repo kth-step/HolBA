@@ -18,6 +18,7 @@ sig
                        | cache_tag_index_part
                        | cache_tag_index_part_page
                        | cache_speculation
+		       | cache_speculation_idx
                        | cache_speculation_first
                        | cache_straightline
 
