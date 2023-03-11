@@ -26,6 +26,9 @@ val map_obs_prog_def = Define `
 map_obs_prog f (BirProgram xs) = BirProgram (MAP f xs)
 `;
 
+val hd_obs_prog_def = Define `
+hd_obs_prog f (BirProgram (x::xs)) = BirProgram ((f x)::xs)
+`;
 
 val _ = Datatype `select_mem_t =
    select_mem_LD bir_exp_t
@@ -183,6 +186,22 @@ val add_obs_pc_def = Define`
     add_obs_pc p = map_obs_prog add_obs_pc_block p
 `;
 
+(* observe R0 *)
+(* ============================================================================== *)
+val observe_r0_def = Define`
+    observe_r0 =
+      BStmt_Observe 0
+                    (BExp_Const (Imm1 1w))
+                    [(BExp_Den (BVar "R0" (BType_Imm Bit64)))]
+                    HD
+`;
+
+val add_obs_r0_block_def = Define`
+    add_obs_r0_block block =
+      block with bb_statements :=
+        observe_r0 :: block.bb_statements
+`;
+
 (* observe whole memory address *)
 (* ============================================================================== *)
 val observe_mem_addr_def = Define`
@@ -213,6 +232,12 @@ val add_obs_mem_addr_pc_armv8_def = Define`
       map_obs_prog (add_obs_pc_block o (add_obs_constr_sp_block o (add_obs_constr_mem_block mem_bounds observe_mem_addr))) p
 `;
 
+(* observe whole memory address, pc and r0 *)
+(* ============================================================================== *)
+val add_obs_mem_addr_pc_r0_armv8_def = Define`
+    add_obs_mem_addr_pc_r0_armv8 mem_bounds p = 
+      (hd_obs_prog (add_obs_r0_block) (map_obs_prog (add_obs_pc_block o (add_obs_constr_sp_block o (add_obs_constr_mem_block mem_bounds observe_mem_addr))) p))
+`;
 
 (* observe whole memory address and pc (lspc type construction annototation) *)
 (* ============================================================================== *)
