@@ -500,7 +500,7 @@ fun main_loop 0 = ()
 			 (* val (prog_id, lifted_prog, bin, l_en_and_exs) = prog_gen_store_a_la_qc  "spectre_v1_mod2" 5 (); *)
 			 val (prog_id, lifted_prog, bin, l_en_and_exs) = prog_gen_store_a_la_qc  "spectre" 5 ();
 			 (* val (prog_id, lifted_prog, bin, l_en_and_exs) = prog_gen_store_a_la_qc  "xld" 5 (); *)
-			 (* val (prog_id, lifted_prog, bin, l_en_and_exs) = prog_gen_store_a_la_qc  "xld_br_yld_mod1" 2 (); *)
+			 (* val (prog_id, lifted_prog, bin, l_en_and_exs) = prog_gen_store_a_la_qc  "xld_br_yld_mod1" 10 (); *)
 			 (* val (prog_id, lifted_prog, bin, l_en_and_exs) = prog_gen_store_a_la_qc  "straightline_branch" 50 (); *)
 			 (* val (prog_id, lifted_prog, bin, l_en_and_exs) = prog_gen_store_a_la_qc  "previct1" 10 (); *)
                          (* val (prog_id, lifted_prog, bin, l_en_and_exs) = prog_gen_store_a_la_qc  "previct5" 20 (); *)
@@ -531,16 +531,26 @@ fun main_loop 0 = ()
          (* val obsmodel_id = "cache_speculation_first" *)
          local
            val mem_bounds =
-             let
-               open experimentsLib;
-               open wordsSyntax;
-               val (mem_base, mem_len) = embexp_params_memory;
-               val mem_end = (Arbnum.- (Arbnum.+ (mem_base, mem_len), Arbnum.fromInt 128));
-             in
-               pairSyntax.mk_pair
-                   (mk_wordi (embexp_params_cacheable mem_base, 64),
-                    mk_wordi (embexp_params_cacheable mem_end, 64))
-             end;
+	     let
+	       open experimentsLib;
+	       open wordsSyntax;
+	       val (mem_base, mem_len) = embexp_params_memory;
+	       val mem_max = Arbnum.+ (mem_base, mem_len);
+	       val mem_end = (Arbnum.- (Arbnum.- (mem_max, stack_pointer_portion), Arbnum.fromInt 16));
+	       val (sp_start, sp_end) = (Arbnum.- (mem_max, stack_pointer_portion),
+					 Arbnum.- (mem_max, Arbnum.fromInt 16));
+	     in
+	       if Arbnum.< (Arbnum.+ (mem_base,stack_pointer_portion), Arbnum.- (mem_max,stack_pointer_portion)) then
+		 pairSyntax.mk_pair
+		   (pairSyntax.mk_pair
+			(mk_wordi (embexp_params_cacheable mem_base, 64),
+			 mk_wordi (embexp_params_cacheable mem_end, 64)),
+		    pairSyntax.mk_pair
+			(mk_wordi (embexp_params_cacheable sp_start, 64),
+			 mk_wordi (embexp_params_cacheable sp_end, 64)))
+	       else
+		 raise ERR "scamv_phase_add_obs" "the experiment memory is not properly set"
+	     end;
 	   val obs_model = bir_obs_modelLib.get_obs_model obsmodel_id;
            val add_obs = #add_obs obs_model;
 	   val proginst_fun = bir_obs_modelLib.proginst_fun_gen (#obs_hol_type obs_model);
