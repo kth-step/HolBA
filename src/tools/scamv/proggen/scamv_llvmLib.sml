@@ -197,21 +197,39 @@ fun analyze_func (fun_name, fun_bc) threshold_ninst =
       else raise ERR "analyze_func" "Instruction counting doesn't work"
     end
 
+fun check_loops (fun_name, fun_bc) =
+    let
+      val cmd_check_loops = (llvm_prefix () ^ "opt -enable-new-pm=0 -load " ^
+			     llvm_scamv_lib ^ " -check-loops " ^
+			     fun_bc ^ " -o " ^ (get_simple_tempfile "delete.bc"));
+      val res = (get_exec_output_redirect false cmd_check_loops);
+      val _ = OS.Process.system ("rm " ^ (get_simple_tempfile "delete.bc"));
+    in
+      case (String.tokens (fn x => x = #"\n") res) of
+	  ["loops found"] => (print "loops found\n";
+		      true)
+	| _ => false
+    end
+
  fun peel_and_delete_loops (fun_name, filebc) =
     let
       val cmd_unroll_loops = (llvm_prefix () ^ "opt" ^
-			      " -mem2reg -loops -loop-simplify -loop-unroll -unroll-peel-count=2 " ^
+			      " -mem2reg -loops -loop-simplify -loop-unroll -unroll-peel-count=1 " ^
 			      filebc ^ " -o " ^ filebc);
       val cmd_delete_loops = (llvm_prefix () ^ "opt -reg2mem -enable-new-pm=0 -load " ^
-			      llvm_scamv_lib ^ " -extend-loop-deletion " ^
+			      llvm_scamv_lib ^ " -extend-loop-deletion -simplifycfg " ^
 			      filebc ^ " -o " ^ filebc);
     in
-      (if OS.Process.isSuccess (OS.Process.system cmd_unroll_loops)
-       then
-         if OS.Process.isSuccess (OS.Process.system cmd_delete_loops)
-	 then (fun_name, filebc)
-	 else raise ERR "peel_and_delete_loops" "cmd_delete_loops"
-       else raise ERR "peel_and_delete_loops" "cmd_unroll_loops")
+      if check_loops (fun_name, filebc)
+      then
+	(if OS.Process.isSuccess (OS.Process.system cmd_unroll_loops)
+	 then
+           if OS.Process.isSuccess (OS.Process.system cmd_delete_loops)
+	   then (fun_name, filebc)
+	   else raise ERR "peel_and_delete_loops" "cmd_delete_loops"
+	 else raise ERR "peel_and_delete_loops" "cmd_unroll_loops")
+      else
+	(fun_name, filebc)
     end
 
 fun get_extract_options (fun_name, fun_bc) threshold =
