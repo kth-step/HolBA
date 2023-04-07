@@ -453,6 +453,35 @@ open bir_cfgLib;
     open bir_valuesSyntax;
     open wordsSyntax;
 
+    fun swap_cnd_cjmp_shadow_blocks shadow_blocks cjmp_addrs =
+	let
+	  val cjmp_to_swap = List.map (fn addr => ("0x"^(Arbnum.toHexString o Arbnum.fromInt) addr)^"*") cjmp_addrs;
+	in
+	  List.map (fn bb =>
+		       let
+			 val (bbl,bbs,bbes) = dest_bir_block bb;
+		       in
+			 if is_BL_Label bbl
+			 then
+			   (let
+			      val bbla = dest_BL_Label_string bbl;
+			    in
+			      if List.exists (fn bba => bba=bbla) cjmp_to_swap
+			      then
+				let
+				  val (cnd,lblet,lblef) = if is_BStmt_CJmp bbes
+							  then dest_BStmt_CJmp bbes
+							  else raise ERR "swap_cnd_cjmp_shadow_blocks" "defined address is not a conditional branch"
+				  val fixed_cnd = bnot cnd;
+				in
+				  mk_bir_block (bbl,bbs,mk_BStmt_CJmp (fixed_cnd,lblet,lblef))
+				end
+			      else bb
+			    end)
+			 else raise ERR "swap_cnd_cjmp_shadow_blocks" "wrong shadow address type"
+		       end) shadow_blocks
+	end
+
     fun primed_word_literal wv =
 	let
 	  open stringSyntax numSyntax;
@@ -565,7 +594,7 @@ open bir_cfgLib;
 		val (cnd_tm, lblet_tm, lblef_tm) = dest_BStmt_CJmp tm_last_stmt;
 	      in
 		if identical tm_lbl pt then
-		  mk_BStmt_CJmp (cnd_tm, mk_shadow_blabelexp lblef_tm, mk_shadow_blabelexp lblet_tm)
+		  mk_BStmt_CJmp (cnd_tm, mk_shadow_blabelexp lblet_tm, mk_shadow_blabelexp lblef_tm)
 		else
 		  tm_last_stmt
 	      end
@@ -698,6 +727,9 @@ open bir_cfgLib;
 	  val complete_shadow_blocks = save_shadow_state shadow_blocks_w_refobs;
 
 	  val link_blocks = map (fn b => mk_shadow_target ((rand o concl) (EVAL b)) ptarget) blocks;
+
+	  (* val list_cjmp_to_swap = [0x4000ac, 0x4000d8, 0x4000ec]; *)
+	  (* val fixed_blocks = swap_cnd_cjmp_shadow_blocks complete_shadow_blocks list_cjmp_to_swap; *)
 	in
 	  mk_BirProgram (mk_list (link_blocks@complete_shadow_blocks, obs_ty))
 	end
