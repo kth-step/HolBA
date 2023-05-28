@@ -30,6 +30,12 @@ val linker_path =
           NONE => raise ERR "scamv_llvm_lib" "the environment variable HOLBA_LLVMSCAMV_DIR is not set"
         | SOME p => (p ^ "/linker.ld");
 
+fun rm_fence_script () =
+      case Option.mapPartial (fn p => if p <> "" then SOME p else NONE)
+                             (OS.Process.getEnv("HOLBA_LLVMSCAMV_DIR")) of
+          NONE => raise ERR "scamv_llvm_lib" "the environment variable HOLBA_LLVMSCAMV_DIR is not set"
+        | SOME p => (p ^ "/remove_fence.py");
+
 fun get_exec_output_redirect do_print exec_cmd =
     let
       val outputfile = get_tempfile "exec_output" ".txt";
@@ -193,7 +199,8 @@ fun analyze_func (fun_name, fun_bc) threshold_ninst =
       val _ = OS.Process.system ("rm " ^ (get_simple_tempfile "delete.bc"));
     in
       if isSome appx_inst_count then
-	if ((valOf appx_inst_count) >= threshold_ninst) then true else false
+	(print ("Num of instructions: " ^ Int.toString (valOf appx_inst_count) ^ "\n");
+	 if ((valOf appx_inst_count) >= threshold_ninst) then true else false)
       else raise ERR "analyze_func" "Instruction counting doesn't work"
     end
 
@@ -206,28 +213,28 @@ fun check_loops (fun_name, fun_bc) =
       val _ = OS.Process.system ("rm " ^ (get_simple_tempfile "delete.bc"));
     in
       case (String.tokens (fn x => x = #"\n") res) of
-	  ["loops found"] => (print "loops found\n";
+	  "loop found"::_ => (print "loop found\n";
 		      true)
 	| _ => false
     end
 
- fun peel_and_delete_loops (fun_name, filebc) =
+ fun unroll_and_delete_loops (fun_name, filebc) =
     let
       val cmd_unroll_loops = (llvm_prefix () ^ "opt" ^
-			      " -mem2reg -loops -loop-simplify -loop-unroll -unroll-peel-count=1 " ^
+			      " -loops -loop-simplify -loop-unroll -unroll-count=2 " ^
 			      filebc ^ " -o " ^ filebc);
-      val cmd_delete_loops = (llvm_prefix () ^ "opt -reg2mem -enable-new-pm=0 -load " ^
-			      llvm_scamv_lib ^ " -extend-loop-deletion -simplifycfg " ^
+      val cmd_delete_loops = (llvm_prefix () ^ "opt -enable-new-pm=0 -load " ^
+			      llvm_scamv_lib ^ " -extend-loop-deletion " ^
 			      filebc ^ " -o " ^ filebc);
     in
-      if check_loops (fun_name, filebc)
+      if (* check_loops (fun_name, filebc) *)false
       then
 	(if OS.Process.isSuccess (OS.Process.system cmd_unroll_loops)
 	 then
            if OS.Process.isSuccess (OS.Process.system cmd_delete_loops)
 	   then (fun_name, filebc)
-	   else raise ERR "peel_and_delete_loops" "cmd_delete_loops"
-	 else raise ERR "peel_and_delete_loops" "cmd_unroll_loops")
+	   else raise ERR "unroll_and_delete_loops" "cmd_delete_loops"
+	 else raise ERR "unroll_and_delete_loops" "cmd_unroll_loops")
       else
 	(fun_name, filebc)
     end
@@ -282,7 +289,7 @@ fun llvm_initial_phase filebc llvm_option =
       val _ = print "LLVM phase...\n";
       val func_names = get_fun_names filebc;
       val extracted_fun_bcs = List.map (fn f => extract_fun_with_recursive filebc f) func_names;
-      val fun_w_loops_del_bcs = List.map (fn f => peel_and_delete_loops f) extracted_fun_bcs;
+      val fun_w_loops_del_bcs = List.map (fn f => unroll_and_delete_loops f) extracted_fun_bcs;
       val fun_renamed_bcs = List.map (fn f => metarenamer_bbs f) fun_w_loops_del_bcs;
       val bt = "rpi4";
 
@@ -366,6 +373,61 @@ fun llvm_insert_fence fun_name filebc =
        else raise ERR "llvm_insert_fence" "cmd_insert_fence"
     end
 
+fun llvm_aarch64_slh binfilename bcfile bt =
+    let
+      val bcfile_o = binfilename ^ ".o";
+      val cmd_bc_compile = (llvm_prefix () ^
+			    "llc -O0 -mattr=+speculative-load-hardening -filetype=obj " ^
+			    bcfile ^ " -o " ^ bcfile_o);
+    in
+      if OS.Process.isSuccess (OS.Process.system cmd_bc_compile)
+      then SOME (compile_and_link_armv8_llvm_bc binfilename bcfile_o bt)
+      else raise ERR "llvm_aarch64_slh" "cmd_bc_compile"
+    end;
+
+fun add_slh_attribute filebc =
+    let
+      val cmd_slh_attribute = (llvm_prefix () ^ "opt -enable-new-pm=0 -load " ^
+			       llvm_scamv_lib ^ " -add-aarch64-slh-attribute " ^
+			       filebc ^ " -o " ^ filebc);
+    in
+      (if OS.Process.isSuccess (OS.Process.system cmd_slh_attribute)
+       then filebc
+       else raise ERR "add_slh_attribute" "cmd_slh_attribute")
+    end
+
+fun llvm_aarch64_slh_asm binfilename bcfile bt =
+    let
+      val bcfile_slh = add_slh_attribute bcfile;
+      val bt_opt = if bt = "rpi3" then "-target aarch64-linux-gnu -march=armv8-a -mcpu=cortex-a53"
+		   else if bt = "rpi4" then "-target aarch64-linux-gnu -march=armv8-a -mcpu=cortex-a72"
+		   else raise ERR "compile_and_link_armv8_llvm_bc" "unknown board type"
+      val compiler_opt = "-O0 -Wall -g -mspeculative-load-hardening -mgeneral-regs-only -static -nostartfiles -fno-stack-protector -nostdlib -ffreestanding -fno-builtin --specs=nosys.specs";
+      val cmd_slh_asm = (llvm_prefix () ^ "clang " ^
+			 bt_opt ^ " " ^ compiler_opt ^ " -S " ^
+			 bcfile_slh ^ " -o " ^ binfilename ^ ".S");
+    in
+      if OS.Process.isSuccess (OS.Process.system cmd_slh_asm)
+      then binfilename^".S"
+      else raise ERR "llvm_aarch64_slh_asm" "cmd_slh_asm"
+    end;
+
+fun get_num_of_fences binfilename bcfile bt =
+    let
+      val slh_asm = llvm_aarch64_slh_asm binfilename bcfile bt;
+      val nf = bir_exec_wrapLib.get_exec_output (rm_fence_script () ^ " " ^ slh_asm ^ " -nf");
+    in
+      Int.fromString nf
+    end;
+
+fun remove_fence_slh binfilename bcfile bt input =
+    let
+      val slh_asm = llvm_aarch64_slh_asm binfilename bcfile bt;
+      val rm_fence_out = bir_exec_wrapLib.get_exec_output (rm_fence_script () ^ " " ^ slh_asm ^ " " ^ input);
+      val outbin = compile_and_link_armv8_llvm_bc binfilename slh_asm bt;
+    in
+      (outbin, List.filter (fn c => c<>(#",") andalso c<>(#"\n")) (String.explode rm_fence_out))
+    end;
 
 end
 
