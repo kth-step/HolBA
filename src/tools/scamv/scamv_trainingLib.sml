@@ -67,13 +67,19 @@ fun compute_training_state current_full_specs current_obs_projection
 			|> (List.map (fn (r,v) => (remove_prime r,v)) o #1)
 			|> to_sml_Arbnums
 			|> (fn st =>
-			     if embexp_params_checkmemrange st then st else
-			     raise ERR "scamv_process_model"
+			     if embexp_params_checkmemrange st
+			     then SOME st
+			     else (print ("s_train" ^ " memory contains mapping out of experiment range." ^
+					  "is there a problem with the constraints?");
+				   NONE)
+			     (*raise ERR "scamv_process_model"
 				     ("s_train" ^ " memory contains mapping out of experiment range." ^
-				      "is there a problem with the constraints?")
+				      "is there a problem with the constraints?")*)
 			   )
 
 			|> (fn st =>
+			       case st of
+				   SOME st =>
 			     let
 			       val _ = min_verb 5 (fn () =>
 						    (print "s_train:\n";
@@ -81,7 +87,8 @@ fun compute_training_state current_full_specs current_obs_projection
 						     print "\n"));
 			     in
 			       (path_id_of np, SOME st)
-			     end))
+			     end
+				 | NONE => (path_id_of np, NONE)))
 	| NONE => (path_id_of np, NONE)
     end
   in
