@@ -464,6 +464,56 @@ fun run_db_a_ignore t vs =
       res
     end
 
+  fun check_exp_result (exp_id, exp_hndl) =
+    let
+      val exp_metadata: logs_meta list = get_exp_metadata exp_hndl;
+      val lm: logs_meta option = List.find
+				   (fn LogsMeta (mt,v)=>
+				       case (dest_exp_meta_handle mt) of
+					 (_, SOME r, _) => r="result"
+				       | _ => false
+				   )
+				   exp_metadata;
+    in
+      case lm of
+	  SOME _ => true
+	| NONE => false
+    end
+
+  fun get_last_exp_list_id () =
+    let
+      fun get_last_exp_list () =
+        case (query_all_exp_lists ()) of
+          [] => raise ERR "get_last_exp_list" "no list of experiments in the database"
+        | (x::nil) => x
+        | (x::xs) => List.last xs
+
+      val exp_list_id: exp_list_handle = get_last_exp_list ();
+    in
+      exp_list_id
+    end
+
+  fun filter_exp_list_executed exp_list =
+    let val exp_list_not_done = List.filter (not o check_exp_result) exp_list
+    in
+      case exp_list_not_done of
+	[] => NONE
+      | l => SOME l
+    end
+
+  fun check_exp_list_is_running () =
+    let
+      val exp_list_id = get_last_exp_list_id ();
+      val exp_list = get_exp_list_entries exp_list_id;
+      val still_running = ref (filter_exp_list_executed exp_list);
+      val wait = Time.fromString "100";
+    in
+      while isSome (!still_running) do
+	(print (PolyML.makestring (!still_running) ^ "\n");
+	 OS.Process.sleep (valOf wait);
+	 still_running := filter_exp_list_executed (valOf (!still_running)))
+    end
+
   fun get_exps_outside exp_ids =
       get_exps exp_ids;
 

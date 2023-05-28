@@ -79,6 +79,10 @@ sig
 
   (* retrieval of some data *)
   val get_cexamples : string -> string -> string list option
+  val check_exp_result : (int * exp_handle) -> bool
+  val get_last_exp_list_id : unit -> exp_list_handle;
+  (* val filter_exp_list_executed : (int * exp_handle) list -> (int * exp_handle) list option *)
+  val check_exp_list_is_running : unit -> unit
   val get_exps_outside : Arbnum.num list -> logs_exp list
 
   (* queries *)
