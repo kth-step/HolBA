@@ -135,7 +135,15 @@ open bir_cfgLib;
 							 else NONE
 						       end
 						   else
-						     NONE
+						     if is_BStmt_CJmp bbes then
+						       let val (_,bbeslt1,_) = dest_BStmt_CJmp bbes;
+						       in
+							 if is_BLE_Label bbeslt1 then
+							   SOME (dest_BLE_Label bbeslt1)
+							 else NONE
+						       end
+						     else
+						       NONE
 				     in
 				       isSome jaddr andalso identical (valOf jaddr) baddr
 				     end) blocks;
@@ -454,32 +462,36 @@ open bir_cfgLib;
     open wordsSyntax;
 
     fun swap_cnd_cjmp_shadow_blocks shadow_blocks cjmp_addrs =
-	let
-	  val cjmp_to_swap = List.map (fn addr => ("0x"^(Arbnum.toHexString o Arbnum.fromInt) addr)^"*") cjmp_addrs;
+	let val cjmp_to_swap = List.map
+				 (fn addr =>
+				   ("0x"^(Arbnum.toHexString o Arbnum.fromInt) addr)^"*")
+				 cjmp_addrs;
+	  fun check_block bb =
+	      let val (bbl,bbs,bbes) = dest_bir_block bb;
+		fun change_cnd () =
+		    let
+		      val bbla = dest_BL_Label_string bbl;
+		    in
+		      if List.exists (fn bba => bba=bbla) cjmp_to_swap
+		      then
+			let val (cnd,lblet,lblef) = if is_BStmt_CJmp bbes
+						    then dest_BStmt_CJmp bbes
+						    else raise ERR "swap_cnd_cjmp_shadow_blocks" "defined address is not a conditional branch"
+			    val fixed_cnd = bnot cnd;
+			in
+			  mk_bir_block (bbl,bbs,mk_BStmt_CJmp (fixed_cnd,lblet,lblef))
+			end
+		      else bb
+		    end
+	      in
+		if is_BL_Label bbl
+		then
+		  change_cnd ()
+		else raise ERR "swap_cnd_cjmp_shadow_blocks" "wrong shadow address type"
+	      end
+
 	in
-	  List.map (fn bb =>
-		       let
-			 val (bbl,bbs,bbes) = dest_bir_block bb;
-		       in
-			 if is_BL_Label bbl
-			 then
-			   (let
-			      val bbla = dest_BL_Label_string bbl;
-			    in
-			      if List.exists (fn bba => bba=bbla) cjmp_to_swap
-			      then
-				let
-				  val (cnd,lblet,lblef) = if is_BStmt_CJmp bbes
-							  then dest_BStmt_CJmp bbes
-							  else raise ERR "swap_cnd_cjmp_shadow_blocks" "defined address is not a conditional branch"
-				  val fixed_cnd = bnot cnd;
-				in
-				  mk_bir_block (bbl,bbs,mk_BStmt_CJmp (fixed_cnd,lblet,lblef))
-				end
-			      else bb
-			    end)
-			 else raise ERR "swap_cnd_cjmp_shadow_blocks" "wrong shadow address type"
-		       end) shadow_blocks
+	  List.map check_block shadow_blocks
 	end
 
     fun primed_word_literal wv =
@@ -594,7 +606,8 @@ open bir_cfgLib;
 		val (cnd_tm, lblet_tm, lblef_tm) = dest_BStmt_CJmp tm_last_stmt;
 	      in
 		if identical tm_lbl pt then
-		  mk_BStmt_CJmp (cnd_tm, mk_shadow_blabelexp lblet_tm, mk_shadow_blabelexp lblef_tm)
+		  (* make shadow address only for the true target of the predecessor block *)
+		  mk_BStmt_CJmp (cnd_tm, mk_shadow_blabelexp lblet_tm, (* mk_shadow_blabelexp *) lblef_tm)
 		else
 		  tm_last_stmt
 	      end
