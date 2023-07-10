@@ -20,15 +20,16 @@ in
 val (bt : string ref) = ref "";
 
 val (current_patch_count: int ref) = ref 0;
-val (current_fence_config: (int * bool) list option ref) = ref NONE;
+val (current_slh_config: (string * ((int * bool) list)) list option ref) = ref NONE;
 val current_counterexamples = ref NONE;
+val check_cexps = ref false;
 
 fun set_board_type btype =
     bt := btype
 
 fun reset () =
     (current_patch_count := 0;
-     current_fence_config := NONE;
+     current_slh_config := NONE;
      current_counterexamples := NONE);
 
 fun own_llvm_fence_insertion fname llvm_prog_bc binprog =
@@ -50,7 +51,7 @@ fun own_llvm_fence_insertion fname llvm_prog_bc binprog =
 fun aarch64_slh fname llvm_prog_bc binprog =
     let
       val patched_llvm_prog_bc = add_slh_attribute llvm_prog_bc;
-      val patched_bin_prog = llvm_aarch64_slh binprog llvm_prog_bc (!bt)
+      val patched_bin_prog = llvm_aarch64_slh binprog llvm_prog_bc (!bt) NONE
     in
       (SOME llvm_prog_bc, patched_bin_prog)
     end
@@ -144,31 +145,65 @@ fun patch_current_prog_on_cexamples cexamples =
 	stop
     end
 
-fun fence_reduction  binfilename bcfile =
+fun selective_llvm_slh  binfilename bcfile =
     let
-      fun set_fence_config (l::ls) =	
+      fun set_slh_config (l::ls) =
 	case (l::ls) of
-	    (1, false)::ls => (0,true)::ls
-	  | (0, false)::_ => raise ERR "fence_reduction::set_fence_config" "should never happen"
-	  | _::[] => raise ERR "fence_reduction::set_fence_config" "there are no more fences"
-	  | _::ls => l::(set_fence_config ls)
-      val _ = current_fence_config :=
-	      (case (!current_fence_config) of
-		   NONE => raise ERR "fence_reduction::fence_config" "should never happen"
-		 | SOME fl => SOME (set_fence_config fl));
+	    (0, false)::ls => (1,false)::ls
+	  | (1, false)::ls => if (!check_cexps) then (0,true)::ls else (1,true)::ls
+	  | _::[] => (l::ls)
+	  | _::ls => l::(set_slh_config ls)
+      fun check_slh_config (l::ls) =
+	case (l::ls) of
+	    (0, false)::ls => (0, false)::ls
+	  | (1, false)::ls => if (!check_cexps) then (0,true)::ls else (1,true)::ls
+	  | _::[] => (l::ls)
+	  | _::ls => l::(set_slh_config ls)
+      fun set_slh_enum (l::ls) =
+	  case (l::ls) of
+	      (f,fls)::ls => if List.exists (fn (_,b)=> b=false) fls
+			     then (f, set_slh_config fls)::ls
+			     else (f,fls)::(set_slh_enum ls)
+	    | _ => raise ERR "set_slh_enum" ""
+      fun check_slh_enum (l::ls) =
+	  case (l::ls) of
+	      (f,fls)::ls => if List.exists (fn (_,b)=> b=false) fls
+			     then (f, check_slh_config fls)::ls
+			     else (f,fls)::(check_slh_enum ls)
+	    | _ => raise ERR "check_slh_enum" ""
+      val _ = current_slh_config :=
+	      (case (!current_slh_config) of
+		   NONE => raise ERR "selective_llvm_slh::set_slh_config" "something wrong with slh config"
+		 | SOME ls => SOME (set_slh_enum ls));
 	    
-      val fence_config_str = "-fc " ^ List.foldr (fn (f,l) => (Int.toString (fst f)) ^ l) "" (valOf (!current_fence_config));
-      val (_,fc) = scamv_llvmLib.remove_fence_slh binfilename bcfile (!bt) fence_config_str;
-      val _ = print (PolyML.makestring (fc) ^ "\n");
+      val slh_config_str = List.foldr (fn ((f,fl),l1) =>
+					  ("-slh-config \"" ^ f ^ ":" ^ (
+					   List.foldr (fn (fl2,l2) => Int.toString (fst fl2) ^ l2) "" fl
+					  )) ^ "\"" ^ " " ^  l1) "" (valOf (!current_slh_config));
+      val _ = print ((slh_config_str) ^ "\n");
+      (* val (_,fc) = scamv_llvmLib.remove_fence_slh binfilename bcfile (!bt) fence_config_str; *)
+      val _ = llvm_aarch64_slh binfilename bcfile (!bt) (SOME slh_config_str);
   
       val check =
 	case (!current_llvm_prog) of
 	    SOME p => db_adding_patched_prog_w_cexps p (valOf (!current_counterexamples))
-	  | NONE => raise ERR "patch_current_prog_on_cexamples" "there is no program under analysis";
+	  | NONE => raise ERR "selective_llvm_slh" "there is no program under analysis";
       val mf_exp_list_name = get_last_exp_list_name ();
       val _ = print ("Last list exp: " ^ mf_exp_list_name ^ "\n");
       val _ = check_exp_list_is_running ();
       val still_cexps = get_cexamples mf_exp_list_name (!bt);
+      val _ = case still_cexps of
+		  NONE => (print "\nno counterexamples found\n";
+			   check_cexps := false)
+		| SOME cexps => (print ("\n" ^ ((Int.toString o List.length) cexps) ^ " counterexamples found\n");
+				 check_cexps := true);
+      val _ = current_slh_config :=
+	      (case (!current_slh_config) of
+		   NONE => raise ERR "selective_llvm_slh::set_slh_config" "should never happen"
+		 | SOME ls => (* SOME (List.map (fn (f,fl) => (f,(check_slh_config fl))) ls)) *)
+		   SOME (check_slh_enum ls));;
+
+val _ = print (PolyML.makestring (!current_slh_config) ^ "\n");
     in
       still_cexps
     end
@@ -197,25 +232,35 @@ fun test_last_exps board_type do_patching =
 	    let
 	      val _ = print ("\n" ^ ((Int.toString o List.length) cexps)  ^ " counterexamples found\n");
 	      val skip = if true then patch_current_prog_on_cexamples cexps
-			 else patch_current_prog_on_cexamples (List.take (cexps, 10)) (*FIX ME*)
+			 else patch_current_prog_on_cexamples (List.take (cexps, 6)) (*FIX ME*)
 	      val llvm_slh_exp_list_name = get_last_exp_list_name ();
 	      val _ = print ("LLVM SLH List exp: " ^ llvm_slh_exp_list_name ^ "\n");
 	      val _ = check_exp_list_is_running ();
 	      val still_cexps = get_cexamples llvm_slh_exp_list_name (!bt);
 
-	      val num_of_fences =
+	      val (llvm_prog_bc, binprog) =
 		case (!current_llvm_prog) of
-		    SOME ((_,_,llvm_prog_bc), binprog) =>
-		    (case scamv_llvmLib.get_num_of_fences binprog llvm_prog_bc (!bt) of
-			  NONE => raise ERR "test_last_exps::num_of_fences" "number is not a integer"
-			| SOME nf =>
-			  let fun init_fence_config 0 = [(1,false)]
-				| init_fence_config n =
-				  (1,false)::init_fence_config (n-1)
-			  in
-			    current_fence_config := SOME (init_fence_config nf)
-			  end)
-		  | NONE => raise ERR "test_last_exps::num_of_fences" "there is no llvm program under analysis";
+		    NONE => raise ERR "test_last_exps::count_hardening" "there is no llvm program under analysis"
+		  | SOME ((_,_,llvm_prog_bc), binprog) => (llvm_prog_bc, binprog);
+
+	      fun init_slh_enumeration () =
+                let
+		  fun count_hardening fun_harden_count =
+		    case fun_harden_count of
+			(_, NONE) => raise ERR "test_last_exps::count_hardening" "number is not a integer"
+		      | (fname, SOME hc) =>
+			let fun init_slh_config 0 = []
+			      | init_slh_config n =
+				(0,false)::init_slh_config (n-1)
+			in
+			  (fname, (init_slh_config hc))
+			end
+		in
+		  case count_llvm_hardening binprog llvm_prog_bc (!bt) NONE of
+		      ls => current_slh_config := SOME (List.map count_hardening ls)
+		    | [] => raise ERR "test_last_exps::init_slh_enumeration" "empty slh enumeration"
+		    | _ => raise ERR "test_last_exps::init_slh_enumeration" "unsuccessful slh enumeration"
+		end
 
 	      fun minimization () =
 		case still_cexps of
@@ -223,14 +268,15 @@ fun test_last_exps board_type do_patching =
 		  | NONE => case (!current_llvm_prog) of
 				SOME ((_,_,llvm_prog_bc), binprog) => (
 				print("BC: " ^ llvm_prog_bc ^ "\n" ^ "BIN: " ^ binprog ^ "\n");
-				fence_reduction binprog llvm_prog_bc;
+				selective_llvm_slh binprog llvm_prog_bc;
 				minimization ()
 				)
 			      | _ => raise ERR "minimization" ""    
 	    in
 	      case still_cexps of
 		  SOME cexps => raise ERR "" "LLVM SLH did not stop counterexamples" (*init_run_for_nex_prog ()*)
-		| NONE => minimization ()
+		| NONE => (init_slh_enumeration ();
+			   minimization ())
 	    end
 	  | NONE => init_run_for_nex_prog ()
 	end

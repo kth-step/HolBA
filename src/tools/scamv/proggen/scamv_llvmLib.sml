@@ -36,6 +36,8 @@ fun rm_fence_script () =
           NONE => raise ERR "scamv_llvm_lib" "the environment variable HOLBA_LLVMSCAMV_DIR is not set"
         | SOME p => (p ^ "/remove_fence.py");
 
+val opt = ref "-O2";
+
 fun get_exec_output_redirect do_print exec_cmd =
     let
       val outputfile = get_tempfile "exec_output" ".txt";
@@ -61,7 +63,7 @@ fun compile_and_link_armv8_llvm_bc binfilename bcfile bt =
 		   else if bt = "rpi4" then "-target aarch64-linux-gnu -march=armv8-a -mcpu=cortex-a72"
 		   else raise ERR "compile_and_link_armv8_llvm_bc" "unknown board type"
       val linker_opt = "-Xlinker -T " ^ linker_path;
-      val compiler_opt = "-O0 -Wall -g -mgeneral-regs-only -static -nostartfiles -fno-stack-protector -nostdlib -ffreestanding -fno-builtin --specs=nosys.specs";
+      val compiler_opt = (!opt) ^ " -Wall -g -mgeneral-regs-only -static -nostartfiles -fno-stack-protector -nostdlib -ffreestanding -fno-builtin --specs=nosys.specs";
       val cmd_static_link = (llvm_prefix () ^ "clang " ^
 			     bt_opt ^ " " ^ compiler_opt ^ " " ^ linker_opt ^ " " ^
 			     bcfile ^ " -o " ^ binfilename);
@@ -373,11 +375,14 @@ fun llvm_insert_fence fun_name filebc =
        else raise ERR "llvm_insert_fence" "cmd_insert_fence"
     end
 
-fun llvm_aarch64_slh binfilename bcfile bt =
+fun llvm_aarch64_slh binfilename bcfile bt slh_config =
     let
       val bcfile_o = binfilename ^ ".o";
+      val slh_config_opt = case slh_config of
+			       SOME sc => sc
+			     | NONE => ""
       val cmd_bc_compile = (llvm_prefix () ^
-			    "llc -O0 -mattr=+speculative-load-hardening -filetype=obj " ^
+			    "llc " ^ (!opt) ^ " -mattr=+speculative-load-hardening " ^ slh_config_opt ^ " -filetype=obj " ^
 			    bcfile ^ " -o " ^ bcfile_o);
     in
       if OS.Process.isSuccess (OS.Process.system cmd_bc_compile)
@@ -402,7 +407,7 @@ fun llvm_aarch64_slh_asm binfilename bcfile bt =
       val bt_opt = if bt = "rpi3" then "-target aarch64-linux-gnu -march=armv8-a -mcpu=cortex-a53"
 		   else if bt = "rpi4" then "-target aarch64-linux-gnu -march=armv8-a -mcpu=cortex-a72"
 		   else raise ERR "compile_and_link_armv8_llvm_bc" "unknown board type"
-      val compiler_opt = "-O0 -Wall -g -mspeculative-load-hardening -mgeneral-regs-only -static -nostartfiles -fno-stack-protector -nostdlib -ffreestanding -fno-builtin --specs=nosys.specs";
+      val compiler_opt = (!opt) ^ " -Wall -g -mspeculative-load-hardening -mgeneral-regs-only -static -nostartfiles -fno-stack-protector -nostdlib -ffreestanding -fno-builtin --specs=nosys.specs";
       val cmd_slh_asm = (llvm_prefix () ^ "clang " ^
 			 bt_opt ^ " " ^ compiler_opt ^ " -S " ^
 			 bcfile_slh ^ " -o " ^ binfilename ^ ".S");
@@ -427,6 +432,33 @@ fun remove_fence_slh binfilename bcfile bt input =
       val outbin = compile_and_link_armv8_llvm_bc binfilename slh_asm bt;
     in
       (outbin, List.filter (fn c => c<>(#",") andalso c<>(#"\n")) (String.explode rm_fence_out))
+    end;
+
+fun count_llvm_hardening binfilename bcfile bt slh_config =
+    let
+      val bcfile_o = binfilename ^ ".o";
+      val slh_config_opt = case slh_config of
+			       SOME sc => sc
+			     | NONE => ""
+      val cmd_bc_compile = (llvm_prefix () ^
+			    "llc " ^ (!opt) ^ " -mattr=+speculative-load-hardening " ^ slh_config_opt ^ " -filetype=obj " ^
+			    bcfile ^ " -o " ^ bcfile_o);
+      val llvm_slh_count_out = bir_exec_wrapLib.get_exec_output cmd_bc_compile;
+      val llvm_slh_count = String.tokens (fn x => x = #"\n") llvm_slh_count_out;
+    in
+      List.map
+	(fn s => if String.isPrefix "harden count: " s
+		 then
+		   let val out = String.extract (s, 14, NONE)
+		   in
+		     (case out of
+			 out_str => (case String.tokens (fn x => x = #":") out_str of
+					[fname, harden_num] => (fname, Int.fromString harden_num)
+				      | _ => raise ERR "count_llvm_hardening" "LLVM SLH output splitting is not as expected")
+		       | _ => raise ERR "count_llvm_hardening" "LLVM SLH output for single function is not as expected")
+		   end
+		 else raise ERR "count_llvm_hardening" "LLVM SLH output is not as expected")
+	llvm_slh_count
     end;
 
 end
