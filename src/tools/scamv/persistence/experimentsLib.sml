@@ -294,9 +294,9 @@ in
   (* embexp platform parameters *)
   (* ======================================== *)
   val embexp_params_code   = Arbnum.fromHexString    "0x2000";
-  val embexp_params_memory = (Arbnum.fromHexString "0x100000",
-                                  Arbnum.fromHexString  "0x100000");
-  val stack_pointer_portion = Arbnum.fromHexString "0x20000";
+  val embexp_params_memory = (Arbnum.fromHexString "0x200000",
+                                  Arbnum.fromHexString  "0x40000");
+  val stack_pointer_portion = Arbnum.fromHexString "0x10000";
 
   fun embexp_params_cacheable x = Arbnum.+ (Arbnum.fromInt 0x80000000, x);
 
