@@ -22,7 +22,9 @@ val (bt : string ref) = ref "";
 val (current_patch_count: int ref) = ref 0;
 val (current_slh_config: (string * ((int * bool) list)) list option ref) = ref NONE;
 val current_counterexamples = ref NONE;
-val check_cexps = ref false;
+val check_cexps = ref (SOME false);
+
+exception NoMoreSLHConfig;
 
 fun set_board_type btype =
     bt := btype
@@ -30,7 +32,8 @@ fun set_board_type btype =
 fun reset () =
     (current_patch_count := 0;
      current_slh_config := NONE;
-     current_counterexamples := NONE);
+     current_counterexamples := NONE;
+     check_cexps := NONE);
 
 fun own_llvm_fence_insertion fname llvm_prog_bc binprog =
     let
@@ -101,7 +104,6 @@ fun db_adding_patched_prog_w_cexps p cexamples =
 				[(en: Arbnum.num, ex: Arbnum.num list)] => (en, ex)
 			      | _ => raise ERR "patch_current_prog_on_cexamples" "error in defining entry and exit points")
 			   end;
-
       val exps = get_exps_outside (List.map (fn eid=> Arbnum.fromString eid) cexamples);
 
       val exp_ids = List.map (fn LogsExp (_,_,params,OBJECT inputs,_,_) =>
@@ -145,29 +147,55 @@ fun patch_current_prog_on_cexamples cexamples =
 	stop
     end
 
-fun selective_llvm_slh  binfilename bcfile =
+fun check_final_slh binfilename bcfile cexps =
+    let
+      val slh_config_str = List.foldr (fn ((f,fl),l1) =>
+					  ("-slh-config \"" ^ f ^ ":" ^ (
+					   List.foldr (fn (fl2,l2) => Int.toString (fst fl2) ^ l2) "" fl
+					  )) ^ "\"" ^ " " ^  l1) "" (valOf (!current_slh_config));
+      val _ = print ((slh_config_str) ^ "\n");
+      val _ = llvm_aarch64_slh binfilename bcfile (!bt) (SOME slh_config_str);
+
+      val check =
+	case (!current_llvm_prog) of
+	    SOME p => db_adding_patched_prog_w_cexps p cexps
+	  | NONE => raise ERR "selective_llvm_slh" "there is no program under analysis";
+      val mf_exp_list_name = get_last_exp_list_name ();
+      val _ = print ("Last list exp: " ^ mf_exp_list_name ^ "\n");
+      val _ = check_exp_list_is_running ();
+      val still_cexps = get_cexamples mf_exp_list_name (!bt);
+      val _ = case still_cexps of
+		  NONE => print "\nno counterexamples found\n"
+		| SOME cexps => print ("\n" ^ ((Int.toString o List.length) cexps) ^ " counterexamples found\n");
+    in
+      still_cexps
+    end
+
+fun selective_llvm_slh binfilename bcfile cexps =
     let
       fun set_slh_config (l::ls) =
 	case (l::ls) of
 	    (0, false)::ls => (1,false)::ls
-	  | (1, false)::ls => if (!check_cexps) then (0,true)::ls else (1,true)::ls
+	  | (1, false)::ls => if (valOf(!check_cexps)) then (0,true)::ls else (1,true)::ls
 	  | _::[] => (l::ls)
 	  | _::ls => l::(set_slh_config ls)
       fun check_slh_config (l::ls) =
 	case (l::ls) of
 	    (0, false)::ls => (0, false)::ls
-	  | (1, false)::ls => if (!check_cexps) then (0,true)::ls else (1,true)::ls
+	  | (1, false)::ls => if (valOf(!check_cexps)) then (0,true)::ls else (1,true)::ls
 	  | _::[] => (l::ls)
 	  | _::ls => l::(set_slh_config ls)
-      fun set_slh_enum (l::ls) =
-	  case (l::ls) of
-	      (f,fls)::ls => if List.exists (fn (_,b)=> b=false) fls
+      fun set_slh_enum l =
+	  case l of
+	      [] => (print "no further slh configuration\n"; raise NoMoreSLHConfig)
+	    | (f,fls)::ls => if List.exists (fn (_,b)=> b=false) fls
 			     then (f, set_slh_config fls)::ls
 			     else (f,fls)::(set_slh_enum ls)
 	    | _ => raise ERR "set_slh_enum" ""
-      fun check_slh_enum (l::ls) =
-	  case (l::ls) of
-	      (f,fls)::ls => if List.exists (fn (_,b)=> b=false) fls
+      fun check_slh_enum l =
+	  case l of
+	      [] => (print "no further slh configuration\n"; raise NoMoreSLHConfig)
+	    | (f,fls)::ls => if List.exists (fn (_,b)=> b=false) fls
 			     then (f, check_slh_config fls)::ls
 			     else (f,fls)::(check_slh_enum ls)
 	    | _ => raise ERR "check_slh_enum" ""
@@ -186,7 +214,7 @@ fun selective_llvm_slh  binfilename bcfile =
   
       val check =
 	case (!current_llvm_prog) of
-	    SOME p => db_adding_patched_prog_w_cexps p (valOf (!current_counterexamples))
+	    SOME p => db_adding_patched_prog_w_cexps p cexps
 	  | NONE => raise ERR "selective_llvm_slh" "there is no program under analysis";
       val mf_exp_list_name = get_last_exp_list_name ();
       val _ = print ("Last list exp: " ^ mf_exp_list_name ^ "\n");
@@ -194,9 +222,9 @@ fun selective_llvm_slh  binfilename bcfile =
       val still_cexps = get_cexamples mf_exp_list_name (!bt);
       val _ = case still_cexps of
 		  NONE => (print "\nno counterexamples found\n";
-			   check_cexps := false)
+			   check_cexps := SOME false)
 		| SOME cexps => (print ("\n" ^ ((Int.toString o List.length) cexps) ^ " counterexamples found\n");
-				 check_cexps := true);
+				 check_cexps := SOME true);
       val _ = current_slh_config :=
 	      (case (!current_slh_config) of
 		   NONE => raise ERR "selective_llvm_slh::set_slh_config" "should never happen"
@@ -231,8 +259,8 @@ fun test_last_exps board_type do_patching =
 	    SOME cexps =>
 	    let
 	      val _ = print ("\n" ^ ((Int.toString o List.length) cexps)  ^ " counterexamples found\n");
-	      val skip = if true then patch_current_prog_on_cexamples cexps
-			 else patch_current_prog_on_cexamples (List.take (cexps, 6)) (*FIX ME*)
+	      val skip = patch_current_prog_on_cexamples cexps;
+	      val cexps18 = if List.length cexps >= 18 then List.take (cexps, 18) else cexps;
 	      val llvm_slh_exp_list_name = get_last_exp_list_name ();
 	      val _ = print ("LLVM SLH List exp: " ^ llvm_slh_exp_list_name ^ "\n");
 	      val _ = check_exp_list_is_running ();
@@ -268,15 +296,27 @@ fun test_last_exps board_type do_patching =
 		  | NONE => case (!current_llvm_prog) of
 				SOME ((_,_,llvm_prog_bc), binprog) => (
 				print("BC: " ^ llvm_prog_bc ^ "\n" ^ "BIN: " ^ binprog ^ "\n");
-				selective_llvm_slh binprog llvm_prog_bc;
+				selective_llvm_slh binprog llvm_prog_bc cexps18;
 				minimization ()
 				)
-			      | _ => raise ERR "minimization" ""    
+			      | _ => raise ERR "minimization" ""
+
+	      fun check_final_patched_prog () =
+		case (!current_llvm_prog) of
+		    SOME ((_,_,llvm_prog_bc), binprog) => (
+		    print("\nFinal check\n");
+		    print("BC: " ^ llvm_prog_bc ^ "\n" ^ "BIN: " ^ binprog ^ "\n");
+		    check_final_slh binprog llvm_prog_bc cexps;
+		    ()
+		    )
+		  | _ => raise ERR "check_final_patched_prog" "final SLH did not stop all counterexamples"
+
 	    in
 	      case still_cexps of
 		  SOME cexps => raise ERR "" "LLVM SLH did not stop counterexamples" (*init_run_for_nex_prog ()*)
 		| NONE => (init_slh_enumeration ();
-			   minimization ())
+			   minimization () handle NoMoreSLHConfig =>
+						  check_final_patched_prog ())
 	    end
 	  | NONE => init_run_for_nex_prog ()
 	end
