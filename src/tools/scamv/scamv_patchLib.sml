@@ -104,6 +104,7 @@ fun db_adding_patched_prog_w_cexps p cexamples =
 				[(en: Arbnum.num, ex: Arbnum.num list)] => (en, ex)
 			      | _ => raise ERR "patch_current_prog_on_cexamples" "error in defining entry and exit points")
 			   end;
+
       val exps = get_exps_outside (List.map (fn eid=> Arbnum.fromString eid) cexamples);
 
       val exp_ids = List.map (fn LogsExp (_,_,params,OBJECT inputs,_,_) =>
@@ -184,7 +185,7 @@ fun selective_llvm_slh binfilename bcfile cexps =
 	    (0, false)::ls => (0, false)::ls
 	  | (1, false)::ls => if (valOf(!check_cexps)) then (0,true)::ls else (1,true)::ls
 	  | _::[] => (l::ls)
-	  | _::ls => l::(set_slh_config ls)
+	  | _::ls => l::(check_slh_config ls)
       fun set_slh_enum l =
 	  case l of
 	      [] => (print "no further slh configuration\n"; raise NoMoreSLHConfig)
@@ -238,8 +239,10 @@ val _ = print (PolyML.makestring (!current_slh_config) ^ "\n");
     
 fun test_last_exps board_type do_patching =
     let
+(* FIX ME: all persistence interactions to retrieve experiments *)
       val _ = set_board_type board_type;
       val exp_list_name = get_last_exp_list_name ();
+      val exp_list_id = get_last_exp_list_id ();
       val _ = print ("List exp: " ^ exp_list_name ^ "\n");
       val _ = check_exp_list_is_running ()
     in
@@ -302,14 +305,22 @@ fun test_last_exps board_type do_patching =
 			      | _ => raise ERR "minimization" ""
 
 	      fun check_final_patched_prog () =
-		case (!current_llvm_prog) of
-		    SOME ((_,_,llvm_prog_bc), binprog) => (
-		    print("\nFinal check\n");
-		    print("BC: " ^ llvm_prog_bc ^ "\n" ^ "BIN: " ^ binprog ^ "\n");
-		    check_final_slh binprog llvm_prog_bc cexps;
-		    ()
-		    )
-		  | _ => raise ERR "check_final_patched_prog" "final SLH did not stop all counterexamples"
+		let
+		  val exps = if List.all (fn (_,fls) =>
+					     List.all (fn (i,_) => i=1) fls)
+					 (valOf (!current_slh_config))
+			     then List.map Arbnum.toString (get_exps_as_string exp_list_id)
+			     else cexps;
+		in
+		  case (!current_llvm_prog) of
+		      SOME ((_,_,llvm_prog_bc), binprog) => (
+		      print("\nFinal check\n");
+		      print("BC: " ^ llvm_prog_bc ^ "\n" ^ "BIN: " ^ binprog ^ "\n");
+		      check_final_slh binprog llvm_prog_bc exps;
+		      ()
+		      )
+		    | _ => raise ERR "check_final_patched_prog" "final SLH did not stop all counterexamples"
+		end
 
 	    in
 	      case still_cexps of

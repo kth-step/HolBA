@@ -517,6 +517,8 @@ fun run_db_a_ignore t vs =
   fun get_exps_outside exp_ids =
       get_exps exp_ids;
 
+  fun get_exps_as_string exp_list_h =
+      List.map (fn (i,_) => Arbnum.fromInt i) (get_exp_list_entries_full exp_list_h);
 
 end (* local *)
 end (* struct *)
