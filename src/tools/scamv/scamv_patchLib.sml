@@ -37,7 +37,10 @@ fun reset () =
 
 fun own_llvm_fence_insertion fname llvm_prog_bc binprog =
     let
+      (* inserts dsb+isb at LLVM IR level *)
       val patched_llvm_prog_bc = llvm_insert_fence fname llvm_prog_bc;
+      (* inserts dsb+isb at LLVM Machine level, NOTE: uses the same interface of the slh *)
+      (* val patched_llvm_prog_bc = llvm_aarch64_slh binprog llvm_prog_bc (!bt) NONE *)
       val patched_bin_prog = case patched_llvm_prog_bc of
 			       SOME patch_llvm_bc =>
 			       let
@@ -334,8 +337,8 @@ fun test_last_exps board_type do_patching =
       else ())
     end;
 
-(*
-fun run_last_exps () =
+
+fun run_last_exps board_type do_patching =
     (* NOTE: A new run - (holba_run_refs (and exp_list_handle)) - for each program *)
     let
       val _ = set_board_type board_type;
@@ -364,13 +367,13 @@ fun run_last_exps () =
 	    in
 		if skip then
 		    init_run_for_nex_prog ()
-		else run_last_exps ()
+		else run_last_exps board_type do_patching
 	    end
 	  | NONE => init_run_for_nex_prog ()
 	end
       else ())
     end;
-*)
+
 
 
 end
