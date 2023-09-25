@@ -28,9 +28,9 @@ val abstract_weak_model_comp_rule_thm = store_thm("abstract_weak_model_comp_rule
     abstract_jgmt m l ls pre post ==>
     abstract_jgmt n l ls pre post``,
 
-REPEAT STRIP_TAC >>
+rpt strip_tac >>
 FULL_SIMP_TAC std_ss [abstract_jgmt_def] >>
-REPEAT STRIP_TAC >>
+rpt strip_tac >>
 QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
 QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
 REV_FULL_SIMP_TAC std_ss [] >>
@@ -80,9 +80,9 @@ val abstract_subset_rule_thm =
     abstract_jgmt m l (ls1 UNION ls2) pre post ==>
     abstract_jgmt m l ls1 pre post``,
 
-REPEAT STRIP_TAC >>
+rpt strip_tac >>
 REV_FULL_SIMP_TAC std_ss [abstract_jgmt_def] >>
-REPEAT STRIP_TAC >>
+rpt strip_tac >>
 QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
 METIS_TAC [weak_union_pc_not_in_thm]
 );
@@ -98,9 +98,9 @@ val abstract_seq_rule_thm = store_thm("abstract_seq_rule_thm",
     ) ==>
     abstract_jgmt m l ls2 pre post``,
 
-REPEAT STRIP_TAC >>
+rpt strip_tac >>
 SIMP_TAC std_ss [abstract_jgmt_def] >>
-REPEAT STRIP_TAC >>
+rpt strip_tac >>
 PAT_X_ASSUM ``abstract_jgmt m l (ls1 UNION ls2) pre post``
               (fn thm => ASSUME_TAC (SIMP_RULE std_ss [abstract_jgmt_def] thm)) >>
 QSPECL_X_ASSUM ``!ms. _`` [`ms`] >>
@@ -128,9 +128,9 @@ val abstract_conj_rule_thm = prove(``
   abstract_jgmt m l ls pre post2 ==>
   abstract_jgmt m l ls pre (\ms. (post1 ms) /\ (post2 ms))``,
 
-REPEAT STRIP_TAC >>
+rpt strip_tac >>
 FULL_SIMP_TAC std_ss [abstract_jgmt_def] >>
-REPEAT STRIP_TAC >>
+rpt strip_tac >>
 METIS_TAC [weak_unique_thm]
 );
 
@@ -173,12 +173,12 @@ WF_REL_TAC `(\(m, ms, wf_rel, var, l, le, invariant, C1).
               then wf_rel (var ms) (var' ms')
               else F)` >- (
   FULL_SIMP_TAC std_ss [Once relationTheory.WF_DEF] >>
-  REPEAT STRIP_TAC >>
+  rpt strip_tac >>
   Cases_on `?m ms wf_rel var l le invariant C1. B (m,ms,wf_rel,var,l,le,invariant,C1) /\ ~WF wf_rel` >| [
     FULL_SIMP_TAC std_ss [] >>
     Q.EXISTS_TAC `(m,ms,wf_rel,var,l,le,invariant,C1)` >>
     FULL_SIMP_TAC std_ss [] >>
-    REPEAT STRIP_TAC >>
+    rpt strip_tac >>
     PairCases_on `b` >>
     FULL_SIMP_TAC std_ss [] >>
     RW_TAC std_ss [] >>
@@ -186,7 +186,7 @@ WF_REL_TAC `(\(m, ms, wf_rel, var, l, le, invariant, C1).
 
     FULL_SIMP_TAC std_ss [] >>
     (* Define B' = {b in B| b.wf_rel = w.wf_rel} *)
-    Q.ABBREV_TAC `get_wf_rel = \loop_fun_st. FST(SND(SND (loop_fun_st:(α, β) bin_model_t #
+    Q.ABBREV_TAC `get_wf_rel = \loop_fun_st. FST(SND(SND (loop_fun_st:(α, β) abstract_model_t #
      α #
      (γ -> γ -> bool) # (α -> γ) # β # (β -> bool) # (α -> bool) # (α -> bool))))` >>
     Q.ABBREV_TAC `B' = \b. (b IN B /\ (get_wf_rel b = get_wf_rel w))` >>
@@ -198,10 +198,10 @@ WF_REL_TAC `(\(m, ms, wf_rel, var, l, le, invariant, C1).
       FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS, pred_setTheory.IN_APP]
     ) >>
     (* Define A' = {b.var b | b in B'} *)
-    Q.ABBREV_TAC `get_var = \loop_fun_st. FST(SND(SND(SND (loop_fun_st:(α, β) bin_model_t #
+    Q.ABBREV_TAC `get_var = \loop_fun_st. FST(SND(SND(SND (loop_fun_st:(α, β) abstract_model_t #
      α #
      (γ -> γ -> bool) # (α -> γ) # β # (β -> bool) # (α -> bool) # (α -> bool)))))` >>
-    Q.ABBREV_TAC `get_state = \loop_fun_st. FST(SND (loop_fun_st:(α, β) bin_model_t #
+    Q.ABBREV_TAC `get_state = \loop_fun_st. FST(SND (loop_fun_st:(α, β) abstract_model_t #
      α #
      (γ -> γ -> bool) # (α -> γ) # β # (β -> bool) # (α -> bool) # (α -> bool)))` >>
     Q.ABBREV_TAC `A' = IMAGE (\a. ((get_var a) (get_state a))) (\b. b IN B')` >>
@@ -257,7 +257,7 @@ WF_REL_TAC `(\(m, ms, wf_rel, var, l, le, invariant, C1).
       Q.UNABBREV_TAC `B''` >>
       Q.UNABBREV_TAC `B'` >>
       irule SELECT_ELIM_THM >>
-      REPEAT STRIP_TAC >| [
+      rpt strip_tac >| [
         FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS, pred_setTheory.IN_APP],
 
         FULL_SIMP_TAC std_ss [GSYM pred_setTheory.MEMBER_NOT_EMPTY] >>
@@ -265,7 +265,7 @@ WF_REL_TAC `(\(m, ms, wf_rel, var, l, le, invariant, C1).
         FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS]
       ],
 
-      REPEAT STRIP_TAC >>
+      rpt strip_tac >>
       PairCases_on `b` >>
       PairCases_on `min_wf` >>
       FULL_SIMP_TAC std_ss [] >>
@@ -296,7 +296,7 @@ WF_REL_TAC `(\(m, ms, wf_rel, var, l, le, invariant, C1).
     ]
   ]
 ) >>
-REPEAT STRIP_TAC >>
+rpt strip_tac >>
 FULL_SIMP_TAC std_ss [LET_DEF] >>
 IMP_RES_TAC pred_setTheory.CHOICE_DEF >>
 FULL_SIMP_TAC std_ss [pred_setTheory.CHOICE_DEF] >>
@@ -306,10 +306,10 @@ FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS]
 
 
 val abstract_loop_jgmt_def = Define `
-  abstract_loop_jgmt m l le invariant C1 wf_rel var =
+  abstract_loop_jgmt m l le invariant C1 wf_rel var <=>
     l NOTIN le /\ WF wf_rel /\
-    (!x. (abstract_jgmt m l ({l} UNION le) (\ms. invariant ms /\ C1 ms /\ (var ms = x))
-         (\ms. (m.pc ms = l) /\ invariant ms /\ (wf_rel (var ms) x))))
+    !x. abstract_jgmt m l ({l} UNION le) (\ms. invariant ms /\ C1 ms /\ var ms = x)
+         (\ms. m.pc ms = l /\ invariant ms /\ wf_rel (var ms) x)
 `;
 
 (* Note that due to loop_fun_ind relating states ms and ms' at loop points,
@@ -405,9 +405,9 @@ Q.SUBGOAL_THEN `l NOTIN le` (fn thm => fs [thm]) >- (
   fs [abstract_loop_jgmt_def, pred_setTheory.IN_SING]
 )
 *)
-REPEAT STRIP_TAC >>
+rpt strip_tac >>
 FULL_SIMP_TAC std_ss [] >>
-REPEAT STRIP_TAC >>
+rpt strip_tac >>
 (* We first prove that one iteration works *)
 subgoal `(weak_loop_step m ms wf_rel var l le invariant C1) <> {}`  >- (
   SIMP_TAC std_ss [weak_loop_step_def, LET_DEF] >>
@@ -493,13 +493,10 @@ val abstract_loop_rule_thm = store_thm("abstract_loop_rule_thm",
     abstract_jgmt m l le (\ms. invariant ms /\ ~C1 ms) post ==>
     abstract_jgmt m l le invariant post``,
 
-
-metis_tac [abstract_jgmt_def, abstract_loop_rule_tmp_thm]
-(* OLD:
-REPEAT STRIP_TAC >>
+rpt strip_tac >>
 SIMP_TAC std_ss [abstract_jgmt_def] >>
-REPEAT STRIP_TAC >>
-ASSUME_TAC (Q.SPECL [`m`, `ms`, `wf_rel`, `var`, `l`, `le`, `invariant`, `C1`] invariant_rule_tmp_thm) >>
+rpt strip_tac >>
+ASSUME_TAC (Q.SPECL [`m`, `ms`, `wf_rel`, `var`, `l`, `le`, `invariant`, `C1`] abstract_loop_rule_tmp_thm) >>
 FULL_SIMP_TAC std_ss [] >>
 REV_FULL_SIMP_TAC std_ss [] >>
 Cases_on `C1 ms` >- (
@@ -507,8 +504,7 @@ Cases_on `C1 ms` >- (
   Q.EXISTS_TAC `ms'`>>
   FULL_SIMP_TAC std_ss []
 ) >>
-FULL_SIMP_TAC std_ss [abstract_jgmt_def] 
-*)
+FULL_SIMP_TAC std_ss [abstract_jgmt_def]
 );
 
 val _ = export_theory();

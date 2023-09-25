@@ -518,12 +518,13 @@ REV_FULL_SIMP_TAC std_ss []
 val abstract_simp_loop_rule_thm = store_thm("abstract_simp_loop_rule_thm",
   ``!m.
     weak_model m ==>
-    !l wl bl invariant C1 var post.
+    !l wl bl invariant C1 wf_rel var post.
+    WF wf_rel ==>
     l NOTIN wl ==> 
     l NOTIN bl ==>
     (!x. abstract_simp_jgmt m invariant l ({l} UNION wl) bl
-      (\ms. C1 ms /\ (var ms = (x:num)))
-      (\ms. (m.pc ms = l) /\ var ms < x /\ var ms >= 0)) ==>
+      (\ms. C1 ms /\ var ms = x)
+      (\ms. m.pc ms = l /\ wf_rel (var ms) x)) ==>
     abstract_simp_jgmt m (\ms. T) l wl bl (\ms. ~(C1 ms) /\ invariant ms) post ==>
     abstract_simp_jgmt m (\ms. T) l wl bl invariant post``,
 
@@ -533,16 +534,17 @@ irule abstract_loop_rule_thm >>
 FULL_SIMP_TAC std_ss [] >>
 Q.EXISTS_TAC `C1` >>
 Q.EXISTS_TAC `var` >>
+Q.EXISTS_TAC `wf_rel` >>
 FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss)
   [abstract_loop_jgmt_def, Once boolTheory.CONJ_SYM] >>
 STRIP_TAC >>
 QSPECL_X_ASSUM ``!x. _`` [`x`] >>  
 irule abstract_conseq_rule_thm >>
 FULL_SIMP_TAC std_ss [] >>
-Q.EXISTS_TAC `(\ms.
-                m.pc ms NOTIN bl /\ ((m.pc ms = l) /\ var ms < x) /\
-                invariant ms)` >>
-Q.EXISTS_TAC `(\ms. (C1 ms /\ (var ms = x)) /\ invariant ms)` >>
+Q.EXISTS_TAC `\ms.
+                m.pc ms NOTIN bl /\ (m.pc ms = l /\ wf_rel (var ms) x) /\
+                invariant ms` >>
+Q.EXISTS_TAC `\ms. (C1 ms /\ var ms = x) /\ invariant ms` >>
 FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.UNION_ASSOC]
 );
 
