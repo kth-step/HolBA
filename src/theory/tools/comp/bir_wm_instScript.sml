@@ -777,7 +777,7 @@ Q.SUBGOAL_THEN `abstract_simp_jgmt (bir_etl_wm prog)
     FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def]
   )
 ) >>
-irule abstract_simp_loop_rule_thm >>
+Q.PAT_X_ASSUM `weak_model (bir_etl_wm prog)` (fn thm => irule (HO_MATCH_MP (HO_MATCH_MP abstract_simp_loop_rule_thm thm) prim_recTheory.WF_LESS)) >>
 FULL_SIMP_TAC std_ss [] >>
 Q.EXISTS_TAC `\s. bir_eval_exp C1 s.bst_environ = SOME bir_val_true` >>
 Q.EXISTS_TAC `\s. b2n (iv2i (THE (bir_eval_exp variant s.bst_environ)))` >>
@@ -931,7 +931,7 @@ Q.SUBGOAL_THEN `abstract_simp_jgmt (bir_etl_wm prog)
     FULL_SIMP_TAC std_ss [bir_exec_to_labels_triple_postcond_def]
   )
 ) >>
-irule abstract_simp_loop_rule_thm >>
+Q.PAT_X_ASSUM `weak_model (bir_etl_wm prog)` (fn thm => irule (HO_MATCH_MP (HO_MATCH_MP abstract_simp_loop_rule_thm thm) prim_recTheory.WF_LESS)) >>
 FULL_SIMP_TAC std_ss [] >>
 Q.EXISTS_TAC `\s. bir_eval_exp C1 s.bst_environ = SOME bir_val_true` >>
 Q.EXISTS_TAC `\s. b2n (iv2i (THE (bir_eval_exp variant s.bst_environ)))` >>

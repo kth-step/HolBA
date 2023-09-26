@@ -160,7 +160,6 @@ val loop_fun_defn =
 		 (loop_fun m ms' wf_rel var l le invariant C1)
 `;
 
-
 (* For debugging:
 Defn.tgoal loop_fun_defn
 *)
@@ -249,21 +248,15 @@ WF_REL_TAC `(\(m, ms, wf_rel, var, l, le, invariant, C1).
       FULL_SIMP_TAC std_ss []
     ) >>
     (* min = CHOICE(B'') *)
-    Q.ABBREV_TAC `min_wf = $@ B''` >>
+    Q.ABBREV_TAC `min_wf = CHOICE B''` >>
     (*********************************************************)
     Q.EXISTS_TAC `min_wf` >>
     CONJ_TAC >| [
       Q.UNABBREV_TAC `min_wf` >>
       Q.UNABBREV_TAC `B''` >>
       Q.UNABBREV_TAC `B'` >>
-      irule SELECT_ELIM_THM >>
-      rpt strip_tac >| [
-        FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS, pred_setTheory.IN_APP],
-
-        FULL_SIMP_TAC std_ss [GSYM pred_setTheory.MEMBER_NOT_EMPTY] >>
-        Q.EXISTS_TAC `x'''` >>
-        FULL_SIMP_TAC std_ss [pred_setTheory.IN_ABS]
-      ],
+      imp_res_tac pred_setTheory.CHOICE_DEF >>
+      gs[pred_setTheory.IN_ABS, pred_setTheory.IN_APP],
 
       rpt strip_tac >>
       PairCases_on `b` >>
@@ -271,10 +264,20 @@ WF_REL_TAC `(\(m, ms, wf_rel, var, l, le, invariant, C1).
       FULL_SIMP_TAC std_ss [] >>
       Q.UNABBREV_TAC `B''` >>
       subgoal `min_wf3 min_wf1 = x` >- (
-	cheat
+        fs[] >>
+        imp_res_tac pred_setTheory.CHOICE_DEF >>
+        gs[] >>
+        Q.UNABBREV_TAC `get_var` >>
+        Q.UNABBREV_TAC `get_state` >>
+        fs[]
       ) >>
       subgoal `get_wf_rel w = min_wf2` >- (
-	cheat
+        fs[] >>
+        imp_res_tac pred_setTheory.CHOICE_DEF >>
+        gs[] >>
+        Q.UNABBREV_TAC `get_wf_rel` >>
+        Q.UNABBREV_TAC `B'` >>
+        fs[]
       ) >>
       RW_TAC std_ss [] >>
       QSPECL_X_ASSUM ``!y. get_wf_rel w y (min_wf3 min_wf1) ==> ~A' y`` [`(b3 b1)`] >>
