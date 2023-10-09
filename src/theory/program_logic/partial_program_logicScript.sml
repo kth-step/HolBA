@@ -9,7 +9,7 @@ open transition_systemTheory total_program_logicTheory;
 val _ = new_theory "partial_program_logic";
 
 Definition p_jgmt_def:
- p_jgmt TS (l:'a) (ls:'a->bool) pre post =
+ p_jgmt TS (l:'b) (ls:'b->bool) pre post =
  !s s'.
   TS.ctrl s = l ==>
   pre s ==>
@@ -105,7 +105,7 @@ Proof
 rpt strip_tac >>
 simp [p_jgmt_def] >>
 rpt strip_tac >>
-subgoal `?s'. TS.weak (ls1 UNION ls2) s s'` >- (
+subgoal `?s''. TS.weak (ls1 UNION ls2) s s''` >- (
  (* There is at least s', possibly another state if ls1 is encountered before *)
  metis_tac [weak_superset_thm, pred_setTheory.UNION_COMM]
 ) >>
@@ -130,17 +130,17 @@ subgoal `?ls1'. ls1 UNION ls2 = ls1' UNION ls2 /\ DISJOINT ls1' ls2` >- (
  fs [pred_setTheory.DISJOINT_DIFF]
 ) >>
 fs [] >>
-subgoal `t_jgmt TS l (ls1' UNION ls2) (\s. s = s /\ pre s) (\s. (TS.ctrl s IN ls1' ==> s = s'') /\ (TS.ctrl s IN ls2 ==> post s))` >- (
+subgoal `t_jgmt TS l (ls1' UNION ls2) (\st. st = s /\ pre st) (\st. (TS.ctrl st IN ls1' ==> st = s'') /\ (TS.ctrl st IN ls2 ==> post st))` >- (
  fs [t_jgmt_def, p_jgmt_def] >>
  qexists_tac `s''` >>
  fs []
 ) >>
-subgoal `!l1'. (l1' IN ls1') ==> (t_jgmt TS l1' ls2 (\s. (TS.ctrl s IN ls1' ==> s = s'') /\ (TS.ctrl s IN ls2 ==> post s)) (\s. (TS.ctrl s IN ls1' ==> s = s'') /\ (TS.ctrl s IN ls2 ==> post s)))` >- (
+subgoal `!l1'. (l1' IN ls1') ==> (t_jgmt TS l1' ls2 (\st. (TS.ctrl st IN ls1' ==> st = s'') /\ (TS.ctrl st IN ls2 ==> post st)) (\st. (TS.ctrl st IN ls1' ==> st = s'') /\ (TS.ctrl st IN ls2 ==> post st)))` >- (
  rpt strip_tac >>
  fs [t_jgmt_def, p_jgmt_def] >>
  rpt strip_tac >>
  res_tac >>
- subgoal `s' = s''` >- (
+ subgoal `st' = s''` >- (
   (* Both reached by TS.weak s (ls1 UNION ls2) *)
   metis_tac [weak_unique]
  ) >>
@@ -155,7 +155,7 @@ subgoal `!l1'. (l1' IN ls1') ==> (t_jgmt TS l1' ls2 (\s. (TS.ctrl s IN ls1' ==> 
 ) >>
 imp_res_tac total_seq_rule_thm >>
 gs [t_jgmt_def] >>
-subgoal `s' = s'` >- (
+subgoal `s' = st'` >- (
  (* Both reached by TS.weak s ls2 *)
   metis_tac [weak_unique]
 ) >>
@@ -175,19 +175,19 @@ End
 
 (* Invariant: *)
 (* TODO: Is SING useful enough or do we need LEAST? *)
-val invariant = ``\s. (SING (\n. n < n_l /\ weak_exec_n TS s ({l} UNION le) n = SOME s)) /\ invariant s``;
+val invariant = ``\st. (SING (\n. n < n_l /\ weak_exec_n TS s ({l} UNION le) n = SOME st)) /\ invariant st``;
 
 
 (* Variant: *)
 (* TODO: Make different solution so that THE can be removed... *)
-val variant = ``\s. THE (ominus (SOME n_l) ($OLEAST (\n. weak_exec_n TS s ({l} UNION le) n = SOME s)))``;
+val variant = ``\st. THE (ominus (SOME n_l) ($OLEAST (\n. weak_exec_n TS s ({l} UNION le) n = SOME st)))``;
 
 Theorem partial_loop_rule_thm:
  !TS.
  first_enc TS ==>
  !l le invariant C1 var post.
  partial_loop_contract TS l le invariant C1 ==>
- p_jgmt TS l le (\s. invariant s /\ ~(C1 s)) post ==>
+ p_jgmt TS l le (\st. invariant st /\ ~(C1 st)) post ==>
  p_jgmt TS l le invariant post
 Proof
 rpt strip_tac >>
@@ -205,21 +205,21 @@ subgoal `?n_l. (OLEAST n. weak_exec_n TS s ({l} UNION le) n = SOME s') = SOME n_
 ) >>
 
 (* 1. Prove loop exit contract *)
-subgoal `t_jgmt TS l le (\s'. (^invariant) s' /\ ~(C1 s')) post` >- (
+subgoal `t_jgmt TS l le (\st. (^invariant) st /\ ~(C1 st)) post` >- (
  fs [t_jgmt_def] >>
  rpt strip_tac >>
- subgoal `s' <> s'` >- (
-  (* Since ctrl of s' is l, TS.weak s le s' and l NOTIN le *)
+ subgoal `st <> s'` >- (
+  (* Since ctrl of st is l, TS.weak le s st and l NOTIN le *)
   metis_tac [weak_ctrl_in, IN_NOT_IN_NEQ_thm]
  ) >>
- subgoal `TS.weak le s' s'` >- (
+ subgoal `TS.weak le st s'` >- (
   subgoal `DISJOINT {l} le` >- (
    fs []
   ) >>
   metis_tac [weak_inter_exec]
  ) >>
  fs [p_jgmt_def] >>
- QSPECL_X_ASSUM ``!s s'. TS.ctrl s = l ==> invariant s /\ ~C1 s ==> TS.weak le s s' ==> post s'`` [`s'`, `s'`] >>
+ QSPECL_X_ASSUM ``!st s'. TS.ctrl st = l ==> invariant st /\ ~C1 st ==> TS.weak le st s' ==> post s'`` [`st`, `s'`] >>
  gs [] >>
  qexists_tac `s'` >>
  metis_tac []
@@ -229,16 +229,16 @@ subgoal `t_jgmt TS l le (\s'. (^invariant) s' /\ ~(C1 s')) post` >- (
 subgoal `total_loop_jgmt TS l le (^invariant) C1 (^variant)` >- (
  fs [total_loop_jgmt_def, t_jgmt_def] >>
  rpt strip_tac >>
- subgoal `s <> s'` >- (
-  (* Since ctrl of s is l, TS.weak s le s' and l NOTIN le *)
+ subgoal `st <> s'` >- (
+  (* Since ctrl of st is l, TS.weak le st s' and l NOTIN le *)
   metis_tac [weak_ctrl_in, IN_NOT_IN_NEQ_thm]
  ) >>
- (* n_l': the number of encounters of l up to s *)
- subgoal `?n_l'. (OLEAST n. weak_exec_n TS s ({l} UNION le) n = SOME s) = SOME n_l' /\ n_l' < n_l` >- (
+ (* n_l': the number of encounters of l up to st *)
+ subgoal `?n_l'. (OLEAST n. weak_exec_n TS s ({l} UNION le) n = SOME st) = SOME n_l' /\ n_l' < n_l` >- (
   metis_tac [weak_exec_sing_least_less]
  ) >>
  (* s''': next loop point *)
- subgoal `?s'''. TS.weak ({l} UNION le) s s'''` >- (
+ subgoal `?s'''. TS.weak ({l} UNION le) st s'''` >- (
   ONCE_REWRITE_TAC [pred_setTheory.UNION_COMM] >>
   irule weak_superset_thm >>
   fs [] >>
