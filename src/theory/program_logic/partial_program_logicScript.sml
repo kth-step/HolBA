@@ -285,7 +285,7 @@ subgoal `total_loop_jgmt TS l le (^invariant) C1 (^variant)` >- (
 imp_res_tac total_loop_rule_thm >>
 fs [t_jgmt_def] >>
 (* TODO: Should be provable using trs_to_ls TS ({l} UNION le) s n (SUC n_l) = SOME s' *)
-QSPECL_X_ASSUM  ``!s. TS.ctrl s = l ==> _`` [`s`] >>
+QSPECL_X_ASSUM  ``!st. TS.ctrl st = l ==> _`` [`s`] >>
 subgoal `SING (\n. n < n_l /\ weak_exec_n TS s ({l} UNION le) n = SOME s)` >- (
  subgoal `weak_exec_n TS s ({l} UNION le) 0 = SOME s` >- (
   fs [weak_exec_n_def, FUNPOW_OPT_def]
