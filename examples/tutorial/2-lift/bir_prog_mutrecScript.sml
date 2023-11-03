@@ -2,6 +2,34 @@ open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 val _ = new_theory "bir_prog_mutrec";
 
+(* The below program can be written in more human-readable form as
+
+    0: Jmp (if n = 0 then 512 else 4)
+    4: n := n-1; Jmp 256
+
+    256: Jmp (if n = 0 then 516 else 260)
+    260: n := n-1; Jmp 0
+
+    512: r := T
+    516: r := F
+
+  Note that unlike the add_reg example, this program isn't actually lifted but manually written in BIR.
+
+  The verification goal is to prove that
+
+    [v1 = n] 0 -> {512, 516} [512 |-> v1 % 2 = 0, 516 |-> v1 % 2 = 1]
+
+  and
+
+    [v1 = n] 256 -> {512, 516} [512 |-> v1 % 2 = 1, 516 |-> v1 % 2 = 0]
+
+  where v1 is a HOL4 variable and n is a BIR variable.
+
+  The meaning of the contracts is that if is_even is called (0 is starting point), exit at 512 signifies
+  that the initial value of n was even, and exit at 516 signifies that the initial value of n was odd.
+  Vice versa holds for the entry point 256 associated with a call to is_odd.
+*)
+
 
 val mutrec_def = Define `
   mutrec = (BirProgram
