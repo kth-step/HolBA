@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib BasicProvers dep_rewrite;
+open HolKernel boolLib bossLib BasicProvers dep_rewrite prim_recTheory;
 
 open bir_auxiliaryLib;
 
@@ -226,7 +226,7 @@ subgoal `t_jgmt TS l le (\st. (^invariant) st /\ ~(C1 st)) post` >- (
 ) >>
 
 (* 2. Prove loop iteration contract *)
-subgoal `total_loop_jgmt TS l le (^invariant) C1 (^variant)` >- (
+subgoal `total_loop_jgmt TS l le (^invariant) C1 $< (^variant)` >- (
  fs [total_loop_jgmt_def, t_jgmt_def] >>
  rpt strip_tac >>
  subgoal `st <> s'` >- (
@@ -282,6 +282,7 @@ subgoal `total_loop_jgmt TS l le (^invariant) C1 (^variant)` >- (
  ]
 ) >>
 
+ASSUME_TAC WF_LESS >>
 imp_res_tac total_loop_rule_thm >>
 fs [t_jgmt_def] >>
 (* TODO: Should be provable using trs_to_ls TS ({l} UNION le) s n (SUC n_l) = SOME s' *)
