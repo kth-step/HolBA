@@ -11,7 +11,7 @@ open bir_inst_liftingTheory;
 open bir_lifting_machinesTheory;
 
 (* From comp: *)
-open total_program_logicTheory;
+open total_program_logicTheory partial_program_logicTheory;
 open total_ext_program_logicTheory;
 
 open HolBASimps;
@@ -70,6 +70,18 @@ val arm8_cont_def = Define `
       (\ms. (arm8_bmr.bmr_extra ms)  /\
             (EVERY (bmr_ms_mem_contains arm8_bmr ms) mms) /\
             (post ms))         
+`;
+
+(* Partial correctness version of the above *)
+val arm8_partial_cont_def = Define `
+  arm8_partial_cont mms l ls pre post =
+    p_jgmt arm_ts l ls
+      (\ms. (arm8_bmr.bmr_extra ms)  /\
+            (EVERY (bmr_ms_mem_contains arm8_bmr ms) mms) /\
+            (pre ms))
+      (\ms. (arm8_bmr.bmr_extra ms)  /\
+            (EVERY (bmr_ms_mem_contains arm8_bmr ms) mms) /\
+            (post ms))
 `;
 
 
@@ -517,6 +529,43 @@ FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss)
 REV_FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
+val bir_get_partial_ht_conseq_from_m_ante = prove(
+  ``!bs bs' p bpre bpost mpre ms ml mls.
+    bir_partial_cont p (BL_Address (Imm64 ml))
+      {BL_Address (Imm64 ml') | ml' IN mls} bpre bpost ==>
+    bir_pre_arm8_to_bir mpre bpre ==>
+    mpre ms ==>
+    bmr_rel arm8_bmr bs ms ==>
+    (bs.bst_status = BST_Running) ==>
+    bir_env_vars_are_initialised bs.bst_environ
+      (bir_vars_of_program p UNION bir_vars_of_exp bpre) ==>
+    (bs.bst_pc = bir_block_pc (BL_Address (Imm64 ml))) ==>
+    bir_weak_trs {BL_Address (Imm64 ml') | ml' IN mls} p bs =
+      SOME bs' ==>
+    (bir_eval_exp (bpost bs'.bst_pc.bpc_label) bs'.bst_environ =
+      SOME bir_val_true)
+    ``,
+
+REPEAT GEN_TAC >>
+REPEAT DISCH_TAC >>
+FULL_SIMP_TAC (std_ss++bir_wm_SS)
+  [bir_partial_cont_def, p_jgmt_def,
+   bir_exec_to_labels_triple_precond_def,
+   bir_exec_to_labels_triple_postcond_def, bir_ts_def] >>
+PAT_X_ASSUM ``!s. _``
+            (fn thm => ASSUME_TAC (SPEC ``bs:bir_state_t`` thm)) >>
+FULL_SIMP_TAC std_ss [bir_env_oldTheory.bir_env_vars_are_initialised_UNION] >>
+subgoal `bir_is_bool_exp_env bs.bst_environ bpre /\
+         (bir_eval_exp bpre bs.bst_environ = SOME bir_val_true)` >- (
+  METIS_TAC [bir_pre_arm8_to_bir_def, bir_bool_expTheory.bir_is_bool_exp_env_def]
+) >>
+FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss)
+  [bir_bool_expTheory.bir_eval_exp_TF,
+   bir_bool_expTheory.bir_is_bool_exp_env_REWRS,
+   bir_block_pc_def] >>
+REV_FULL_SIMP_TAC (std_ss++holBACore_ss) []
+);
+
 
 val bir_arm8_exec_in_end_label_set = prove(
   ``!c_addr_labels ms' bs bs' mls p n n' lo li.
@@ -733,6 +782,96 @@ REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
  *    all but arm_ts.weak ms mls ms', which is a statement on how ms
  *    and ms' are related through a weak transition *)
 Q.EXISTS_TAC `ms'` >>
+subgoal `arm8_bmr.bmr_extra ms'` >- (
+  FULL_SIMP_TAC std_ss [bmr_rel_def]
+) >>
+subgoal `mpost ms'` >- (
+  FULL_SIMP_TAC std_ss [bir_post_bir_to_arm8_def] >>
+  QSPECL_X_ASSUM ``!ms. _``
+    [`ms'`, `bs'`, `(bir_block_pc (BL_Address li)).bpc_label`] >>
+  REV_FULL_SIMP_TAC std_ss []
+) >>
+FULL_SIMP_TAC std_ss [] >>
+
+(* 5. Show that the weak transition in the goal exists *)
+SIMP_TAC (std_ss++bir_wm_SS) [arm_ts_def,
+                              arm_weak_trs_def] >>
+Q.EXISTS_TAC `c_addr_labels` >>
+(* 5a. Weak transition from initial state ms ends in final state ms':
+ *     Machine-stepping from ms to ms' already exists among assumptions,
+ *     PC of final state ms' must be in Ending label set mls due to BIR HT
+ *     execution, plus the fact that bs' and ms' are related *)
+IMP_RES_TAC bir_arm8_exec_in_end_label_set >>
+FULL_SIMP_TAC std_ss [] >>
+
+(* 5b. Machine steps from ms up until ms' is reached:
+ *     This part of the proof is complex, see proof of lemma used *)
+METIS_TAC [bir_state_is_terminated_def, bir_arm8_inter_exec]
+);
+
+val lift_partial_contract_thm = store_thm("lift_partial_contract_thm",
+  ``!p mms ml mls mu mpre mpost bpre bpost.
+      MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p) ==>
+      bir_partial_cont p (BL_Address (Imm64 ml))
+	{BL_Address (Imm64 ml') | ml' IN mls} bpre bpost ==>
+      bir_is_lifted_prog arm8_bmr mu mms p ==>
+      arm8_wf_varset (bir_vars_of_program p UNION bir_vars_of_exp bpre) ==>
+      bir_pre_arm8_to_bir mpre bpre ==>
+      bir_post_bir_to_arm8 mpost bpost {BL_Address (Imm64 ml') | ml' IN mls} ==>
+      arm8_partial_cont mms ml mls mpre mpost``,
+
+REPEAT STRIP_TAC >>
+FULL_SIMP_TAC std_ss [arm8_partial_cont_def, p_jgmt_def] >>
+NTAC 5 STRIP_TAC >>
+
+IMP_RES_TAC (SPECL [``ms:arm8_state``,
+                    ``(bir_vars_of_program p) UNION (bir_vars_of_exp bpre)``]
+                  exist_bir_of_arm8_thm) >>
+IMP_RES_TAC bir_arm8_block_pc >>
+(* TODO: We have that arm_ts.weak mls ms ms', what can be proved from this?
+ *       Does the lifter theory have anything on bmr_step_fun (or specifically in arm8_bmr)?
+ *       If we can obtain that there is a corresponding state bs' to ms', we don't need the
+ *       below case split. *)
+Cases_on `~?bs'. bir_weak_trs {BL_Address (Imm64 ml') | ml' IN mls} p bs = SOME bs'` >- (
+  (* Case BIR divergence *)
+  cheat
+) >>
+fs[] >>
+
+IMP_RES_TAC bir_get_ht_conseq_from_m_ante >>
+FULL_SIMP_TAC std_ss [bir_weak_trs_EQ] >>
+
+IMP_RES_TAC bir_exec_to_labels_TO_exec_to_addr_label_n >>
+IMP_RES_TAC bir_is_lifted_prog_MULTI_STEP_EXEC_compute >>
+REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [] >>
+
+subgoal `ms' = ms''` >- (
+  (* Follows if every BIR address label corresponds to one ARM8 instruction *)
+  cheat
+) >>
+FULL_SIMP_TAC std_ss [bmr_rel_def] >>
+(* Only postcondition of ARM8 contract left to prove now... *)
+
+FULL_SIMP_TAC std_ss [bir_post_bir_to_arm8_def] >>
+QSPECL_X_ASSUM ``!ms. _``
+  [`ms''`, `bs'`, `(bir_block_pc (BL_Address li)).bpc_label`] >>
+rfs [] >>
+fs[bir_partial_cont_def, p_jgmt_def] >>
+QSPECL_X_ASSUM ``!s s'. _`` [`bs`, `bs'`] >>
+fs[] >>
+subgoal `(bir_ts p).ctrl bs = BL_Address (Imm64 ml)` >- (
+  cheat
+) >>
+fs[] >>
+subgoal `bir_exec_to_labels_triple_precond bs bpre p` >- (
+  cheat
+) >>
+fs[] >>
+subgoal `bir_eval_exp (bpost (BL_Address (Imm64 ml'))) bs'.bst_environ = SOME bir_val_true` >- (
+  cheat
+) >>
+fs[bmr_rel_def] >>
+
 subgoal `arm8_bmr.bmr_extra ms'` >- (
   FULL_SIMP_TAC std_ss [bmr_rel_def]
 ) >>

@@ -102,6 +102,17 @@ val bir_cont_def = Define `
 `;
 
 
+(* Partial BIR contract, mirroring p_jgmt *)
+val bir_partial_cont_def = Define `
+  bir_partial_cont prog (l:bir_label_t) ls pre post =
+    p_jgmt (bir_ts prog)
+      l ls
+      (\s. bir_exec_to_labels_triple_precond s pre prog)
+      (\s'. bir_exec_to_labels_triple_postcond s' post prog)
+`;
+
+
+
 (******************************************************************)
 (*                            LEMMATA                             *)
 (******************************************************************)
