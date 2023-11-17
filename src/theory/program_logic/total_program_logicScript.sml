@@ -322,7 +322,7 @@ val loop_fun_ind_spec =
           WF wf_rel ==>
 	  total_loop_jgmt TS l le invariant C1 wf_rel var ==>
 	  t_jgmt TS l le (\s. invariant s /\ ~C1 s) post ==>
-	  (invariant s /\ TS.ctrl s = l /\ C1 s) ==> (* TODO: Why does this need "C1 s" as conjunct also? *)
+	  (invariant s /\ TS.ctrl s = l) ==>
 	  (?s'. TS.weak le s s' /\ post s')` loop_fun_ind;
 
 
@@ -332,59 +332,13 @@ val inductive_invariant_goal = fst $ dest_imp $ concl loop_fun_ind_spec;
 val inductive_invariant = prove(``
   ^inductive_invariant_goal
 ``,
-(*
+
 rpt strip_tac >>
 fs [] >>
 rpt strip_tac >>
 Cases_on `~C1 s` >- (
   fs [t_jgmt_def]
 ) >>
-(* We first prove that one iteration works (first antecedent of induction hypothesis):
- * OK since C1 holds in s, then use loop judgment to obtain
- * witness *)
-subgoal `loop_step TS s var l le invariant C1 <> {}` >- (
-  simp [loop_step_def, LET_DEF] >>
-  fs [total_loop_jgmt_def] >>
-  QSPECL_X_ASSUM ``!x. _`` [`(var s):num`] >>
-  fs [t_jgmt_def] >>
-  QSPECL_X_ASSUM ``!s. _`` [`s`] >>
-  rfs [] >>
-  fs [GSYM pred_setTheory.MEMBER_NOT_EMPTY] >>
-  qexists_tac `s'':'a` >>
-  fs [pred_setTheory.SPECIFICATION]
-) >>
-(* There first four antecedents of the induction hypothesis are now in place *)
-fs [] >>
-(* Let s' be the state at the next loop iteration *)
-Q.ABBREV_TAC `S' = loop_step TS s var l le invariant C1` >>
-Q.ABBREV_TAC `s' = CHOICE S'` >>
-subgoal `loop_step TS s var l le invariant C1 s'` >- (
-  fs [Abbr `s'`] >>
-  ONCE_REWRITE_TAC [GSYM pred_setTheory.SPECIFICATION] >>
-  metis_tac [pred_setTheory.CHOICE_DEF]
-) >>
-(* We then prove that the invariant is preserved and loop
- * point is l
- * (follows from s' being the result of a loop_step) *)
-subgoal `invariant s' /\ (TS.ctrl s') = l` >- (
-  fs [loop_step_def, LET_DEF]
-) >>
-fs [] >>
-(* For both cases, weak_comp_thm is used to connect s to s'' via s'. *)
-fs [loop_step_def, LET_DEF] >>
-`TS.weak le s s''` suffices_by (
-  metis_tac []
-) >>
-irule weak_comp >>
-fs [] >>
-qexistsl_tac [`{l}`, `s'`] >>
-Q.SUBGOAL_THEN `l NOTIN le` (fn thm => fs [thm]) >- (
-  fs [total_loop_jgmt_def, pred_setTheory.IN_SING]
-)
-*)
-rpt strip_tac >>
-fs [] >>
-rpt strip_tac >>
 (* We first prove that one iteration works (first antecedent of induction hypothesis):
  * OK since C1 holds in s, then use loop judgment to obtain
  * witness *)
@@ -454,18 +408,7 @@ Theorem total_loop_rule_thm:
   t_jgmt TS l le (\s. invariant s /\ ~C1 s) post ==>
   t_jgmt TS l le invariant post
 Proof
-rpt strip_tac >>
-simp [t_jgmt_def] >>
-rpt strip_tac >>
-ASSUME_TAC (Q.SPECL [`TS`, `s`, `wf_rel`, `var`, `l`, `le`, `invariant`, `C1`] total_loop_rule_thm_tmp) >>
-fs [] >>
-rfs [] >>
-Cases_on `C1 s` >- (
-  fs [] >>
-  qexists_tac `s'`>>
-  fs []
-) >>
-fs [t_jgmt_def]
+metis_tac [t_jgmt_def, total_loop_rule_thm_tmp]
 QED
 
 val _ = export_theory();
