@@ -927,8 +927,8 @@ fun get_patched_step_hex ms_v hex_code =
 (* For debugging (from compute_updates):
 
          val (full_rel_thm, vn_set) =
-           foldl add_imm_up (init_thm, vn_set) (List.take (imm_ups_tm_list, 62));
-         val (v_t, lf_t, SOME res_t) = el 63 imm_ups_tm_list;
+           foldl add_imm_up (init_thm, vn_set) (List.take (imm_ups_tm_list, 19));
+         val (v_t, lf_t, SOME res_t) = el 20 imm_ups_tm_list;
 *)
      fun add_imm_up ((v_t, lf_t, NONE), (full_rel_thm, vn_set)) =
          let
@@ -1211,7 +1211,6 @@ fun get_patched_step_hex ms_v hex_code =
        handle HOL_ERR _ => raiseErr "computing al_step and ms' failed";
 
      (* next compute imm_ups *)
-     (* Gives lots of stuff... Is this correct? *)
      val (imm_ups_t, imm_ups_thm) = compute_imm_ups ms'_t
        handle HOL_ERR _ => raiseErr "computing imm_ups failed";
 
@@ -1229,7 +1228,6 @@ fun get_patched_step_hex ms_v hex_code =
 
      (* Now we need to compute the updates. This involves lifting of all computed immediates
         in imm_ups and checking whether the vars don't interfere with each other. *)
-     (* TODO: Here, something fails... *)
      val (updates_t, eup_temp_t, updates_THM) = compute_updates mem_up_t imm_ups_t eup_t
        handle HOL_ERR _ => raiseErr "computing updates failed";
 

@@ -728,6 +728,41 @@ SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [arithmeticTheory.MIN_DEF] >>
 CCONTR_TAC >>
 FULL_SIMP_TAC arith_ss [])
 
+val ExtendValue_Signed_32_REWR_aux = prove (
+``!n w. n < 32 ==> (dimindex(:'b) <= 32) ==> (
+(v2w
+   (sign_extend 32 (shiftl (field (MIN (dimindex(:'b)) (32 - n) - 1) 0 (w2v (w:word32))) n)):word32 =
+ sw2sw ((w2w w):'b word) << n))``,
+
+REPEAT STRIP_TAC >>
+SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR] >>
+ONCE_REWRITE_TAC [fcpTheory.CART_EQ] >>
+REWRITE_TAC[word_index_v2w] >>
+ASM_SIMP_TAC (list_ss++wordsLib.SIZES_ss) [word_lsl_def, fcpTheory.FCP_BETA,
+  sw2sw, w2w, testbit, sign_extend_def, listTheory.PAD_LEFT,
+  shiftl_def, listTheory.PAD_RIGHT, length_field] >>
+Q.ABBREV_TAC `m = MIN (dimindex (:'b)) (32 - n)` >>
+`0 < m /\ m <= dimindex(:'b) /\ (n + m <= 32)` by (
+  Q.UNABBREV_TAC `m` >>
+  ASM_SIMP_TAC arith_ss [arithmeticTheory.MIN_DEF, DIMINDEX_GT_0]
+) >>
+`SUC (m - 1) = m` by DECIDE_TAC >>
+
+ASM_SIMP_TAC arith_ss [] >>
+ASM_SIMP_TAC (arith_ss++wordsLib.SIZES_ss) [LET_THM, listTheory.EL_APPEND_EQN, listTheory.LENGTH_GENLIST,
+  listTheory.LENGTH_APPEND, length_field, listTheory.EL_GENLIST,
+  el_field, length_w2v] >>
+REPEAT STRIP_TAC >>
+`(32 < i + 33 - n <=> (n <= i))` by DECIDE_TAC >>
+
+ASM_SIMP_TAC (arith_ss++boolSimps.EQUIV_EXTRACT_ss++wordsLib.SIZES_ss) [GSYM listTheory.EL,
+  el_field, listTheory.EL_APPEND_EQN, length_field, length_w2v, el_w2v,
+  word_msb_def, w2w] >>
+Q.UNABBREV_TAC `m` >>
+SIMP_TAC (arith_ss++boolSimps.LIFT_COND_ss) [arithmeticTheory.MIN_DEF] >>
+CCONTR_TAC >>
+FULL_SIMP_TAC arith_ss [])
+
 
 
 val ExtendValue_Signed_REWR = prove (
@@ -743,12 +778,25 @@ ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:64``] ExtendValue_Signed_REWR_aux) >>
 
 FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR, w2w_id, sw2sw_id]);
 
+(* Used for W-registers *)
+val ExtendValue_Signed_32_REWR = prove (
+``(!w n. n < 32 ==> (ExtendValue (w, ExtendType_SXTB, n) = ((sw2sw ((w2w w):word8):word32) << n))) /\
+  (!w n. n < 32 ==> (ExtendValue (w, ExtendType_SXTH, n) = ((sw2sw ((w2w w):word16):word32) << n))) /\
+  (!w:word32 n. n < 32 ==> (ExtendValue (w, ExtendType_SXTW, n) = (w << n)))``,
+
+ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:8``] ExtendValue_Signed_32_REWR_aux) >>
+ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:16``] ExtendValue_Signed_32_REWR_aux) >>
+ASSUME_TAC (INST_TYPE [``:'b`` |-> ``:32``] ExtendValue_Signed_32_REWR_aux) >>
+
+FULL_SIMP_TAC (std_ss++wordsLib.SIZES_ss) [ExtendValue_REWR, w2w_id, sw2sw_id]);
+
 
 val ExtendValue_REWRS = save_thm ("ExtendValue_REWRS", let
   val thm0 = CONJ (GEN_ALL ExtendValue_Unsigned_REWR) ExtendValue_Signed_REWR
   val thm1 = CONJ (GEN_ALL ExtendValue_Unsigned_32_REWR) thm0
-  val thm2 = SIMP_RULE std_ss [FORALL_AND_THM, GSYM CONJ_ASSOC] thm1
-in thm2 end);
+  val thm2 = CONJ (GEN_ALL ExtendValue_Signed_32_REWR) thm1
+  val thm3 = SIMP_RULE std_ss [FORALL_AND_THM, GSYM CONJ_ASSOC] thm2
+in thm3 end);
 
 
 

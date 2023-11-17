@@ -2090,6 +2090,27 @@ F2800080 (movk x0, #4) @ 0x10030 - OK
            bb_last_statement :=
              BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
+0B238020 (add w0, w1, w3, SXTB #0) @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog arm8_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[32w; 128w; 35w; 11w])
+     (BirProgram
+        [<|bb_label :=
+             BL_Address_HC (Imm64 0x10030w) "add w0, w1, w3, SXTB #0";
+           bb_statements :=
+             [BStmt_Assign (BVar "R0" (BType_Imm Bit64))
+                (BExp_Cast BIExp_UnsignedCast
+                   (BExp_BinExp BIExp_Plus
+                      (BExp_Cast BIExp_LowCast
+                         (BExp_Den (BVar "R1" (BType_Imm Bit64))) Bit32)
+                      (BExp_BinExp BIExp_LeftShift
+                         (BExp_Cast BIExp_SignedCast
+                            (BExp_Cast BIExp_LowCast
+                               (BExp_Den (BVar "R3" (BType_Imm Bit64))) Bit8)
+                            Bit32) (BExp_Const (Imm32 0w)))) Bit64)];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
 AB239020 (adds x0, x1, w3, SXTB #4) @ 0x10030 - OK
  []
 |- bir_is_lifted_inst_prog arm8_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
@@ -2223,6 +2244,27 @@ CB238820 (sub x0, x1, w3, SXTB #2) @ 0x10030 - OK
                          (BExp_Cast BIExp_LowCast
                             (BExp_Den (BVar "R3" (BType_Imm Bit64))) Bit8)
                          Bit64) (BExp_Const (Imm64 2w))))];
+           bb_last_statement :=
+             BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
+
+4B238020 (sub w0, w1, w3, SXTB #0) @ 0x10030 - OK
+ []
+|- bir_is_lifted_inst_prog arm8_bmr (Imm64 0x10030w) (WI_end 0w 0x1000000w)
+     (0x10030w,[32w; 128w; 35w; 75w])
+     (BirProgram
+        [<|bb_label :=
+             BL_Address_HC (Imm64 0x10030w) "sub w0, w1, w3, SXTB #0";
+           bb_statements :=
+             [BStmt_Assign (BVar "R0" (BType_Imm Bit64))
+                (BExp_Cast BIExp_UnsignedCast
+                   (BExp_BinExp BIExp_Minus
+                      (BExp_Cast BIExp_LowCast
+                         (BExp_Den (BVar "R1" (BType_Imm Bit64))) Bit32)
+                      (BExp_BinExp BIExp_LeftShift
+                         (BExp_Cast BIExp_SignedCast
+                            (BExp_Cast BIExp_LowCast
+                               (BExp_Den (BVar "R3" (BType_Imm Bit64))) Bit8)
+                            Bit32) (BExp_Const (Imm32 0w)))) Bit64)];
            bb_last_statement :=
              BStmt_Jmp (BLE_Label (BL_Address (Imm64 0x10034w)))|>])
 
@@ -4079,7 +4121,7 @@ B8617801 @ 0x10030 - OK
 SUMMARY FAILING HEXCODES ARM 8
 
 
-Instructions FAILED: 2/537
+Instructions FAILED: 2/539
 
    "9BC37C41" (* umulh x1, x2, x3; lifting of ``Imm64 ((127 >< 64) (w2w (ms.REG 3w) * w2w (ms.REG 2w)))`` failed *),
    "9B437C41" (* smulh x1, x2, x3; lifting of ``Imm64 ((127 >< 64) (sw2sw (ms.REG 3w) * sw2sw (ms.REG 2w)))`` failed *)

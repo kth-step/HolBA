@@ -475,6 +475,11 @@ val n = eln_default
 val n = eln_empty
 val n = eln_of_thms thms
 val n = eln_insert n elf_literal_imm
+(* From exp_lift_fn_raw: *)
+(*
+   val env_t = mk_bst_environ bs_v
+   val n = eln2
+*)
 
 
 bir_exp_lift env_t n ``(Imm32 (5w * w + w - 3w * w2 // (w + w2)))``
@@ -541,6 +546,11 @@ bir_exp_lift env_t n ``Imm32((((mem:word32 -> word8)
                     :word16))
                    :word24))
                  :word32)``;
+
+bir_exp_lift env_t n ``Imm64
+                (w2w
+                   (ExtendValue (w2w (ms.REG 12w),ExtendType_SXTB,0) +
+                    w2w (ms.REG 15w)))``
 
 *)
 
