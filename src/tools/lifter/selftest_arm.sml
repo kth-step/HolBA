@@ -97,12 +97,11 @@ structure test_m0_mod_be_main = test_bmr(structure MD = bmil_m0_mod_BigEnd_Main;
 );
 
 
-
 (**************************)
 (* SOME MANUAL TESTS ARM8 *)
 (**************************)
 
-fun arm8_hex_code_of_asm asm = hd (arm8AssemblerLib.arm8_code [QUOTE asm])
+fun arm8_hex_code_of_asm asm = StringCvt.padLeft #"0" 8 $ hd $ arm8AssemblerLib.arm8_code [QUOTE asm]
 fun arm8_lift_instr_asm mu_b mu_e pc asm =
   test_ARM8.lift_instr mu_b mu_e pc (arm8_hex_code_of_asm asm) (SOME asm);
 
@@ -220,10 +219,12 @@ val _ = if not test_arm8 then () else let
   val res = arm8_test_asm "uxtb w1, w2";
   val res = arm8_test_asm "add x0, x1, w3, UXTB #2";
   val res = arm8_test_asm "add x0, x1, w3, SXTB #2";
+  val res = arm8_test_asm "add w0, w1, w3, SXTB #0";
   val res = arm8_test_asm "adds x0, x1, w3, SXTB #4";
   val res = arm8_test_asm "adds x0, x1, w3, SXTB #0";
   val res = arm8_test_asm "sub x0, x1, w3, UXTB #2";
   val res = arm8_test_asm "sub x0, x1, w3, SXTB #2";
+  val res = arm8_test_asm "sub w0, w1, w3, SXTB #0";
   val res = arm8_test_asm "subs x0, x1, w3, SXTB #4";
   val res = arm8_test_asm "subs x0, x1, w3, SXTB #0";
   val res = arm8_test_asm "bic x1, x2, x3, LSL #2"
