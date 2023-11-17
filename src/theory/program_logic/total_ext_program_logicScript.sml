@@ -493,12 +493,13 @@ QED
 Theorem total_ext_loop_rule_thm:
  !TS.
   first_enc TS ==>
-  !l il el invariant C1 var post.
+  !l il el invariant C1 wf_rel var post.
+  WF wf_rel ==>
   l NOTIN il ==> 
   l NOTIN el ==>
   (!x. t_ext_jgmt TS invariant l ({l} UNION il) el
-    (\s. C1 s /\ (var s = (x:num)))
-    (\s. (TS.ctrl s = l) /\ var s < x /\ var s >= 0)) ==>
+    (\s. C1 s /\ (var s = x))
+    (\s. (TS.ctrl s = l) /\ wf_rel (var s) x)) ==>
   t_ext_jgmt TS (\s. T) l il el (\s. ~(C1 s) /\ invariant s) post ==>
   t_ext_jgmt TS (\s. T) l il el invariant post
 Proof
@@ -506,16 +507,16 @@ rpt strip_tac >>
 fs [t_ext_jgmt_def] >>
 irule total_loop_rule_thm >>
 fs [] >>
-qexistsl_tac [`C1`, `var`] >>
+qexistsl_tac [`C1`, `var`, `wf_rel`] >>
 fs [total_loop_jgmt_def, Once boolTheory.CONJ_SYM] >>
 strip_tac >>
 QSPECL_X_ASSUM ``!x. _`` [`x`] >>  
 irule total_conseq_rule_thm >>
 fs [] >>
 qexistsl_tac [`\s.
-                TS.ctrl s NOTIN el /\ ((TS.ctrl s = l) /\ var s < x) /\
+                TS.ctrl s NOTIN el /\ ((TS.ctrl s = l) /\ wf_rel (var s) x) /\
                 invariant s`,
-              `(\s. (C1 s /\ (var s = x)) /\ invariant s)`] >>
+              `\s. (C1 s /\ (var s = x)) /\ invariant s`] >>
 fs [pred_setTheory.UNION_ASSOC]
 QED
 
