@@ -385,4 +385,84 @@ conc_exec_obs_compare prog (s1,s2);
 val dot_path = "/home/xmate/Projects/HolBA/HolBA/src/tools/scamv/tempdir/cfg.dot";
 bir_cfgVizLib.bir_export_graph_from_prog prog dot_path;
 *)
+
+(*
+val progs = query_all_prog_lists ();
+val prog = last progs;
+(* val prog_d = get_prog_list_entries_full prog; *)
+val exps = query_all_exp_lists ();
+val exp = last exps;
+val exp_d = get_exp_list_entries_full exp;
+get_exp_lists
+val exp_dl = (last exp_d);
+val (s1, s2) = (fn (_, LogsExp (_,_,_,Json.OBJECT [i1,i2],_,_)) => (i1,i2)) exp_dl;
+val s1_m = (fn (s,j)=> (List.nth (String.tokens (fn x => x = #"_") s, 1), Json_to_machstate j)) s1;
+val s1_ms = snd s1_m
+val s2_m = (fn (s,j)=> (List.nth (String.tokens (fn x => x = #"_") s, 1), Json_to_machstate j)) s2;
+val s2_ms = snd s2_m
+
+val prog_le = get_prog_list_entries prog;
+
+open embexp_logsLib;
+val prog_lh = (hd prog_le);
+
+fun get_prog_asm_metadata (prog_id, prog_hndl) =
+    let
+      val prog_metadata: logs_meta list = get_prog_metadata prog_hndl;
+      val lm: logs_meta option = List.find
+				   (fn LogsMeta (mt,v)=>
+				       case (dest_prog_meta_handle mt) of
+					 (_, SOME c, _) => c="code"
+				       | _ => false
+				   )
+				   prog_metadata;
+    in
+      case lm of
+	  SOME (LogsMeta (_, SOME asm)) => SOME asm
+	| NONE => NONE
+    end
+
+val prog_asm = valOf (get_prog_asm_metadata prog_lh);
+val asm_lines = concat (String.tokens (fn x => x = #"\t") prog_asm);
+val asm_lines = String.tokens (fn x => x = #"\n") asm_lines;
+val (_,bprog,_,entries_and_exits) = bir_prog_genLib.prog_gen_store_fromlines asm_lines ();
+
+(* val entry_and_exits = (fn (_, LogsExp (_,_,_,_,en,Json.ARRAY [Json.NUMBER ex])) => (en,[ex])) exp_dl; *)
+val entry = (fst o hd) entries_and_exits;
+
+val obsmodel_id = "cache_tag_index_part"
+local
+    val mem_bounds =
+	let
+	    open experimentsLib;
+	    open wordsSyntax;
+	    val (mem_base, mem_len) = embexp_params_memory;
+	    val mem_max = Arbnum.+ (mem_base, mem_len);
+	    val mem_end = (Arbnum.- (Arbnum.- (mem_max, stack_pointer_portion), Arbnum.fromInt 16));
+	    val (sp_start, sp_end) = (Arbnum.- (mem_max, stack_pointer_portion),
+				      Arbnum.- (mem_max, Arbnum.fromInt 16));
+	in
+	    if Arbnum.< (Arbnum.+ (mem_base,stack_pointer_portion), Arbnum.- (mem_max,stack_pointer_portion)) then
+		pairSyntax.mk_pair
+		    (pairSyntax.mk_pair
+			 (mk_wordi (embexp_params_cacheable mem_base, 64),
+			  mk_wordi (embexp_params_cacheable mem_end, 64)),
+		     pairSyntax.mk_pair
+			 (mk_wordi (embexp_params_cacheable sp_start, 64),
+			  mk_wordi (embexp_params_cacheable sp_end, 64)))
+	    else
+		raise ERR "scamv_phase_add_obs" "the experiment memory is not properly set"
+	end;
+    val obs_model = bir_obs_modelLib.get_obs_model obsmodel_id;
+    val add_obs = #add_obs obs_model;
+    val proginst_fun = bir_obs_modelLib.proginst_fun_gen (#obs_hol_type obs_model);
+in
+val bprog_obs = add_obs mem_bounds (proginst_fun bprog) entry;
+end;
+
+conc_exec_obs_compute 0 bprog_obs s1_ms;
+conc_exec_obs_compute 0 bprog_obs s2_ms;
+
+
+*)
 end (* struct *)
