@@ -21,11 +21,16 @@ in
 fun proginst_fun_gen obs_type prog =
   inst [Type`:'obs_type` |-> obs_type] prog;
 
+structure bir_empty_model : OBS_MODEL =
+struct
+val obs_hol_type = ``:bir_val_t``;
+fun add_obs mb t en = rand (concl (EVAL ``add_obs_empty ^mb ^t``));
+end
 
 structure bir_pc_model : OBS_MODEL =
 struct
 val obs_hol_type = ``:bir_val_t``;
-fun add_obs mb t en = rand (concl (EVAL ``add_obs_pc ^mb ^t``));
+fun add_obs mb t en = rand (concl (EVAL ``(* add_obs_pc *) add_obs_pc_mem_bounds ^mb ^t``));
 end
 
 structure bir_arm8_mem_addr_model : OBS_MODEL =
@@ -858,7 +863,11 @@ fun get_obs_model id =
                bir_arm8_cache_speculation_first_model.obs_hol_type
         else if id = "cache_straightline" then
                bir_arm8_cache_straight_line_model.obs_hol_type
-        else
+	else if id = "pc_only" then
+               bir_pc_model.obs_hol_type
+	else if id = "empty" then
+               bir_empty_model.obs_hol_type
+	else
             raise ERR "get_obs_model" ("unknown obs_model selected: " ^ id);
 
     val add_obs =
@@ -884,7 +893,11 @@ fun get_obs_model id =
                bir_arm8_cache_speculation_first_model.add_obs
         else if id = "cache_straightline" then
                bir_arm8_cache_straight_line_model.add_obs
-        else
+	else if id = "pc_only" then
+               bir_pc_model.add_obs
+	else if id = "empty" then
+               bir_empty_model.add_obs
+	else
           raise ERR "get_obs_model" ("unknown obs_model selected: " ^ id);
   in
     { id = id,

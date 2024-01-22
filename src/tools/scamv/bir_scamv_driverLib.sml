@@ -613,6 +613,10 @@ fun match_obs_model obs_model =
         "cache_straightline"
       | cache_tag_index_part_page =>
         "cache_tag_index_part_page"
+      | pc_only =>
+        "pc_only"
+      | empty =>
+        "empty"
       | _ => raise ERR "match_obs_model" ("unknown obs_model " ^ PolyML.makestring obs_model);
 
 fun match_hw_obs_model hw_obs_model =

@@ -224,6 +224,54 @@ val add_obs_mem_addr_armv8_def = Define`
 map_obs_prog (add_obs_constr_sp_block o (add_obs_constr_mem_block mem_bounds observe_mem_addr)) p
 `;
 
+(* observe pc only with memory bounds *)
+(* ============================================================================== *)
+val add_obs_constr_mem_bounds_stmts_ls_def = Define `
+(add_obs_constr_mem_bounds_stmts_ls mem_bounds [] = []) /\
+(add_obs_constr_mem_bounds_stmts_ls mem_bounds (x :: xs) =
+ case x of
+     BStmt_Assign v e =>
+     (case select_mem e of
+          [] => x :: add_obs_constr_mem_bounds_stmts_ls mem_bounds xs
+        | lds => (APPEND (MAP (constrain_mem mem_bounds) (MAP select_mem_flatten lds))
+                      (APPEND [x] (add_obs_constr_mem_bounds_stmts_ls mem_bounds xs))))
+   | _ => x :: add_obs_constr_mem_bounds_stmts_ls mem_bounds xs)
+`;
+
+val add_obs_constr_mem_bounds_stmts_def = Define `
+    add_obs_constr_mem_bounds_stmts mem_bounds = add_obs_constr_mem_bounds_stmts_ls mem_bounds
+`;
+
+val add_obs_constr_mem_bounds_block_def = Define`
+    add_obs_constr_mem_bounds_block mem_bounds block =
+      block with bb_statements := add_obs_constr_mem_bounds_stmts mem_bounds block.bb_statements
+`;
+
+val add_obs_pc_mem_bounds_def = Define`
+    add_obs_pc_mem_bounds mem_bounds p =
+      map_obs_prog (add_obs_pc_block o (add_obs_constr_mem_bounds_block mem_bounds)) p
+`;
+
+(* observe empty *)
+(* ============================================================================== *)
+val observe_empty_def = Define`
+    observe_empty =
+      BStmt_Observe 0
+                    (BExp_Const (Imm1 1w))
+                    [(BExp_Const (Imm64 1w))]
+                    HD
+`;
+
+val add_obs_empty_block_def = Define`
+    add_obs_empty_block block =
+      block with bb_statements :=
+        observe_empty :: block.bb_statements
+`;
+
+val add_obs_empty_def = Define`
+    add_obs_empty mem_bounds p =
+      hd_obs_prog (add_obs_empty_block) (map_obs_prog (add_obs_constr_mem_bounds_block mem_bounds) p)
+`;
 
 (* observe whole memory address and pc *)
 (* ============================================================================== *)

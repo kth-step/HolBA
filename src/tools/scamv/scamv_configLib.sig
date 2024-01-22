@@ -21,6 +21,8 @@ sig
 		       | cache_speculation_idx
                        | cache_speculation_first
                        | cache_straightline
+		       | pc_only
+		       | empty
 
     datatype hw_obs_model = hw_cache_tag_index
                           | hw_cache_index_numvalid
