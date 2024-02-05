@@ -80,6 +80,12 @@ if [[ ! -d "${HOL4_DIR}" ]]; then
   git clone -b ${HOL4_VERSION} --single-branch ${GIT_URL} "${HOL4_DIR}"
   cd "${HOL4_DIR}"
 
+  # patch HOL4-kananaskis-14 to fix C++ issues
+  if [ "${HOL4_VERSION}" = "kananaskis-14" ]; then
+    sed -i 's/CFLAGS    = -Wall -ffloat-store -fno-strict-aliasing.*/& -std=c++14/g' src/HolSat/sat_solvers/minisat/Makefile
+    sed -i 's/g++ -O3 Proof.o File.o zc2hs.cpp -o zc2hs.*/& -std=c++14/g' src/HolSat/sat_solvers/zc2hs/Makefile
+  fi
+
   # compile HOL4
   poly < tools/smart-configure.sml
   bin/build --nograph
@@ -93,6 +99,7 @@ declare -a hol4_extrabuild=(
   "examples/l3-machine-code/common"
   "examples/l3-machine-code/arm8/model"
   "examples/l3-machine-code/arm8/step"
+  "examples/l3-machine-code/arm8/prog"
   "examples/l3-machine-code/m0/model"
   "examples/l3-machine-code/m0/step"
 )
