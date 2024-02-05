@@ -59,8 +59,14 @@ ${HOLBA_HOLMAKE}
 
 ### Software versions
 
-- HOL4 (`https://github.com/HOL-Theorem-Prover/HOL`)
-  - tag: kananaskis-14
+- HOL4, tag `kananaskis-14` (`https://github.com/HOL-Theorem-Prover/HOL`).
+  If you download it yourself, be sure to fix problems with modern C++
+  compilers by running the following commands in your HOL4 root directory
+  before you run `./bin/build`:
+  ```shell
+  sed -i 's/CFLAGS    = -Wall -ffloat-store -fno-strict-aliasing.*/& -std=c++14/g' src/HolSat/sat_solvers/minisat/Makefile
+  sed -i 's/g++ -O3 Proof.o File.o zc2hs.cpp -o zc2hs.*/& -std=c++14/g' src/HolSat/sat_solvers/zc2hs/Makefile
+  ```
 - Poly/ML 5.9
   - alternatively, Poly/ML 5.7.1 (version packaged for Ubuntu 20.04)
 - Z3 v4.8.4

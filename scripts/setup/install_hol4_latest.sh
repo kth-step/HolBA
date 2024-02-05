@@ -83,6 +83,7 @@ declare -a hol4_extrabuild=(
   "examples/l3-machine-code/common"
   "examples/l3-machine-code/arm8/model"
   "examples/l3-machine-code/arm8/step"
+  "examples/l3-machine-code/arm8/prog"
   "examples/l3-machine-code/m0/model"
   "examples/l3-machine-code/m0/step"
 )
