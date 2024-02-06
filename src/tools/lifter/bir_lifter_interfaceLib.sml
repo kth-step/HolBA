@@ -42,11 +42,11 @@ fun lift_da_and_store prog_name da_name prog_interval =
 
     val (region_map, aes_sections) = read_disassembly_file_regions da_name
 
-    val (thm_arm8, errors) = bmil_arm8.bir_lift_prog_gen
+    val (thm_riscv, errors) = bmil_riscv.bir_lift_prog_gen
 			       prog_interval
 			       aes_sections
 
-    val (lift_app_1_tm, bir_prog_tm) = (dest_comb o concl) thm_arm8;
+    val (lift_app_1_tm, bir_prog_tm) = (dest_comb o concl) thm_riscv;
     val (_, bir_progbin_tm) = dest_comb lift_app_1_tm;
 
     val _ = print "\n\n";
@@ -58,9 +58,9 @@ fun lift_da_and_store prog_name da_name prog_interval =
     val bir_x_progbin_def = Define `^bir_x_progbin_var = ^bir_progbin_tm`;
 
     (* now save the lifter theorem using the definitions *)
-    val bir_x_arm8_lift_THM = save_thm ("bir_"^prog_name^"_arm8_lift_THM",
+    val bir_x_riscv_lift_THM = save_thm ("bir_"^prog_name^"_riscv_lift_THM",
 	   REWRITE_RULE [GSYM bir_x_prog_def,
-			 GSYM bir_x_progbin_def] thm_arm8);
+			 GSYM bir_x_progbin_def] thm_riscv);
   in
     ()
   end;

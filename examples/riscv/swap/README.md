@@ -21,12 +21,12 @@ void swap(uint64_t * x, uint64_t * y) {
 Compile `swap.c` as a library, producing `swap.o`:
 
 ```shell
-/path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -fno-stack-protector -c -o swap.o -O0 swap.c
+/path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -std=gnu99 -Wall -fno-builtin -fno-stack-protector -march=rv64g -O0 -c -o swap.o swap.c
 ```
 
 Compile `swap.c` to assembly, producing `swap.s` (optional):
 ```shell
-/path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -fno-stack-protector -O0 -S -o swap.s swap.c
+/path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -std=gnu99 -Wall -fno-builtin -fno-stack-protector -march=rv64g -O0 -S -o swap.s swap.c
 ```
 
 Disassemble `swap.o`, producing `swap.da`:
