@@ -46,10 +46,12 @@ Parameters to the `lift_da_and_store` function are as follows:
 
 - `"swap"`: string representing the name of the HOL4 term that will be
  defined to be equal to the translated BIR program
-- `"./swap.da"`: path to the disassembled program
+- `"swap.da"`: path to the disassembled program
 - `((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))`: superset of the
   addresses that contains the program code. We call this memory region
   `UnmodifiableMemory`.
+
+See `swapScript.sml` for the source code for the HOL4 theory that does the lifting.
 
 ## BIR swap program and its properties
 
@@ -77,15 +79,17 @@ case, the block jumps to the next block, i.e. the block having label
 middle of a block. 
 
 `bir_swap_riscv_lift_THM` is the main theorem and states that the
-program has been correctly transpiled, and has this statement:
-
+program has been correctly translated to BIR, and has this statement:
 ```sml
 bir_is_lifted_prog riscv_bmr (WI_end 0w 0x1000000w) bir_swap_progbin bir_swap_prog
 ```
 
-See the definition of `bir_is_lifted_prog` for what the theorem means.
+See the definition of `bir_is_lifted_prog` for what the theorem means:
+```
+DB.find "bir_is_lifted_prog_def";
+```
 
-## Concrete execution of BIR program
+## Concrete execution of the BIR program
 
 To understand program behavior in BIR, we concretely execute the swap BIR program with
 different parameters, including the number of BIR steps to take. For this we use the
@@ -96,4 +100,4 @@ val exec_swap_thm =
  bir_exec_prog_print "swap" bir_prog_reg n_max validprog_o welltypedprog_o state_o;
 ```
 
-## Symbolic execution of BIR program
+## Symbolic execution of the BIR program

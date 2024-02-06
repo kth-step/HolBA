@@ -1,6 +1,6 @@
 # Prerequisites for RISC-V examples 
 
-## RISC-V cross-compilation toolchain
+## Intalling the RISC-V cross-compilation toolchain
 
 Clone the RISC-V GNU Compiler Toolchain:
 
@@ -21,7 +21,7 @@ Configure and build Linux cross-compiler:
 make linux
 ```
 
-## Install and build HolBA
+## Installing and building HolBA
 
 To bootstrap Poly/ML, HOL4, and HolBA (may take tens of minutes):
 
