@@ -16,38 +16,17 @@ void swap(uint64_t * x, uint64_t * y) {
 }
 ```
 
-## RISC-V cross-compilation
-
-Clone the RISC-V GNU Compiler Toolchain:
-
-```shell
-$ git clone https://github.com/riscv/riscv-gnu-toolchain
-```
-
-Install the prerequisites, e.g., on Ubuntu:
-
-```shell
-$ sudo apt-get install autoconf automake autotools-dev curl python3 python3-pip libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev ninja-build git cmake libglib2.0-dev
-```
-
-Configure and build Linux cross-compiler:
-
-```shell
-./configure --prefix=/path/to/riscv
-make linux
-```
-
 ## Compile and disassemble swap library
 
 Compile `swap.c` as a library, producing `swap.o`:
 
 ```shell
-/path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -fno-stack-protector -c -o swap.o -O1 swap.c
+/path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -fno-stack-protector -c -o swap.o -O0 swap.c
 ```
 
 Compile `swap.c` to assembly, producing `swap.s` (optional):
 ```shell
-/path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -fno-stack-protector -O1 -S -o swap.s swap.c
+/path/to/riscv/bin/riscv64-unknown-linux-gnu-gcc -fno-stack-protector -O0 -S -o swap.s swap.c
 ```
 
 Disassemble `swap.o`, producing `swap.da`:
@@ -60,7 +39,7 @@ Disassemble `swap.o`, producing `swap.da`:
 The following command inside SML/HOL4 lifts the disassembled code to BIR:
 
 ```sml
-val _ = lift_da_and_store "swap" "./swap.da" ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000));
+val _ = lift_da_and_store "swap" "swap.da" ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000));
 ```
 
 Parameters to the `lift_da_and_store` function are as follows:
@@ -72,7 +51,7 @@ Parameters to the `lift_da_and_store` function are as follows:
   addresses that contains the program code. We call this memory region
   `UnmodifiableMemory`.
 
-## BIR program and its properties
+## BIR swap program and its properties
 
 After lifting, the BIR program resides in the HOL4 term `bir_swap_prog`.
 The program's BIR statements can be obtained by:
