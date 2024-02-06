@@ -2,6 +2,9 @@
 
 ## swap program
 
+We consider the following program which swaps the
+content of two given pointers to unsigned 64-bit integers.
+
 ```c
 #include <stdint.h>
 
@@ -16,7 +19,7 @@ void swap(uint64_t * x, uint64_t * y) {
 }
 ```
 
-## Compile and disassemble swap program
+## Compile and disassemble the swap program
 
 Compile `swap.c` as a library, producing `swap.o`:
 ```shell
@@ -33,7 +36,7 @@ Disassemble `swap.o`, producing `swap.da`:
 /path/to/riscv/bin/riscv64-unknown-linux-gnu-objdump -d swap.o
 ```
 
-## Lifting swap library to BIR
+## Lifting the swap program to BIR
 
 The following command inside SML/HOL4 lifts the disassembled code to BIR:
 
