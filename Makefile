@@ -100,6 +100,7 @@ main:          $(SRCDIR)
 examples-base: main $(EXAMPLES_BASE)
 examples-all:  main $(EXAMPLES_ALL)
 benchmarks:    main $(BENCHMARKS)
+riscv:         main src/tools/symbexec/examples/riscv
 
 
 tests: $(TEST_EXES) $(TEST_DIRS)
