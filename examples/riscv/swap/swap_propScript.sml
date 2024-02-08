@@ -22,8 +22,12 @@ Definition swap_mem_spec_def:
     (riscv_mem_load_word ms.MEM8 (ms.c_gpr ms.procID 0w)) ms'_mem8)
 End
 
+Definition swap_spec_output_def:
+ swap_spec_output ms : riscv_state = ms with MEM8 := swap_mem_spec ms
+End
+
 Definition swap_spec_def:
- swap_spec ms = ms with MEM8 := swap_mem_spec ms
+ swap_spec ms ms' : bool = (ms'.MEM8 = swap_mem_spec ms)
 End
 
 (* run symbolic execution of BIR to get two symbolic states  *)

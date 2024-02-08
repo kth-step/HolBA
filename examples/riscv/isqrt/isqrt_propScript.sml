@@ -39,10 +39,10 @@ Definition wSQRT_def:
 End
 
 Definition isqrt_spec_def:
- isqrt_spec_def ms = 
- let input = ms.c_gpr ms.procID 0w in
- ms with c_gpr := 
-  (\x y. if x = ms.procID /\ y = 0w then (wSQRT input) else ms.c_gpr x y)
+ isqrt_spec_def ms ms' : bool =
+  let input = ms.c_gpr ms.procID 0w in
+  let output = ms'.c_gpr ms'.procID 0w in
+  output = wSQRT input
 End
 
 (* run symbolic execution of BIR to get two symbolic states  *)
