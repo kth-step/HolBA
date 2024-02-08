@@ -87,16 +87,3 @@ See the definition of `bir_is_lifted_prog` for what the theorem means:
 ```
 DB.find "bir_is_lifted_prog_def";
 ```
-
-## Concrete execution of the BIR program
-
-To understand program behavior in BIR, we concretely execute the swap BIR program with
-different parameters, including the number of BIR steps to take. For this we use the
-(non-proof-producing) SML function `bir_exec_prog_print`.
-
-```sml
-val exec_swap_thm =
- bir_exec_prog_print "swap" bir_prog_reg n_max validprog_o welltypedprog_o state_o;
-```
-
-## Symbolic execution of the BIR program
