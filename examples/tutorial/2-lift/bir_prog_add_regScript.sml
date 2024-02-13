@@ -10,6 +10,7 @@ val _ = new_theory "bir_prog_add_reg";
 
 val _ = lift_da_and_store "add_reg"
                           "../1-code/src/add_reg.da"
+                          da_arm8
                           ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000));
 
 val _ = export_theory();

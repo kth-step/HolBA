@@ -1,0 +1,15 @@
+
+swap.o:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000000000000 <swap>:
+   0:	00053783          	ld	a5,0(a0)
+   4:	0005b703          	ld	a4,0(a1)
+   8:	00e78663          	beq	a5,a4,14 <.L1>
+   c:	00e53023          	sd	a4,0(a0)
+  10:	00f5b023          	sd	a5,0(a1)
+
+0000000000000014 <.L1>:
+  14:	00008067          	ret

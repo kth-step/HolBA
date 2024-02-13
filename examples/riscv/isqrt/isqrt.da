@@ -1,0 +1,16 @@
+
+isqrt.o:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000000000000 <isqrt>:
+   0:	00050693          	mv	a3,a0
+   4:	00000793          	li	a5,0
+
+0000000000000008 <.L2>:
+   8:	00078513          	mv	a0,a5
+   c:	00178793          	addi	a5,a5,1
+  10:	02f78733          	mul	a4,a5,a5
+  14:	fee6fae3          	bgeu	a3,a4,8 <.L2>
+  18:	00008067          	ret
