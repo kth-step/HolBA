@@ -1,6 +1,10 @@
 structure bir_lifter_interfaceLib :> bir_lifter_interfaceLib =
 struct
 
+datatype da_isa =
+  da_arm8
+| da_riscv
+
 local
 
 
@@ -36,7 +40,7 @@ in
   val prog_name = "add_reg"
   val prog_interval = ((Arbnum.fromInt 0), (Arbnum.fromInt 0x1000000))
 *)
-fun lift_da_and_store prog_name da_name prog_interval =
+fun lift_da_and_store prog_name da_name da_isa prog_interval =
   let
     val _ = print_with_style_ [Bold, Underline] ("Lifting "^da_name^"\n");
 
