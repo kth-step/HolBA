@@ -1,4 +1,4 @@
-structure bir_lifter_interfaceLib =
+structure bir_lifter_interfaceLib :> bir_lifter_interfaceLib =
 struct
 
 local
