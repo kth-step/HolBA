@@ -1,10 +1,14 @@
-open HolKernel Parse
+open HolKernel Parse;
+
+(* FIXME: needed to avoid quse errors *)
+open m0_stepLib;
 
 open bir_lifter_simple_interfaceLib;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;
 
+val ERR = mk_HOL_ERR "binaries";
 
 val configuration = [
   ("arm8", "aes/aes-aarch64.da"                                         , "aes_arm8_program_THM"),

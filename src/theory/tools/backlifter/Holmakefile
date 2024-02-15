@@ -1,0 +1,9 @@
+INCLUDES = $(HOLBADIR)/src/theory/bir \
+           $(HOLBADIR)/src/theory/bir-support \
+           $(HOLBADIR)/src/theory/program_logic \
+           $(HOLBADIR)/src/theory/models/l3mod \
+           $(HOLBADIR)/src/theory/tools/lifter \
+           $(HOLBADIR)/src/theory/tools/comp
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

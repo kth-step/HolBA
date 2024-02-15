@@ -1,0 +1,6 @@
+INCLUDES = $(HOLBADIR)/src/tools/wp \
+           $(HOLBADIR)/src/tools/cfg \
+           $(HOLBADIR)/src/tools/wp/benchmark/binaries
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

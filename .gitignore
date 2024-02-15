@@ -10,9 +10,6 @@
 *.exe
 *-heap
 
-# Generated Holmake files
-Holmakefile
-
 # Makefile related stuff
 Makefile.local
 holba-tests.log

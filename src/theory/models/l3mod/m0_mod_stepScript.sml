@@ -4,6 +4,9 @@ open arithmeticTheory;
 open wordsTheory;
 open combinTheory;
 
+open m0Theory m0_stepTheory;
+open m0_stepLib;
+
 (* This theory contains the definition of the modified m0 step
    (, where clock cycles are counted with word64 instead if num). *)
 

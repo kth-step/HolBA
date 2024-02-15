@@ -1,0 +1,4 @@
+INCLUDES = $(HOLBADIR)/src/theory/bir
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

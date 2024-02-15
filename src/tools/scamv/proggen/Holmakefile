@@ -1,0 +1,11 @@
+INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
+           $(HOLDIR)/examples/l3-machine-code/arm8/model \
+           $(HOLDIR)/examples/l3-machine-code/arm8/step \
+           $(HOLBADIR)/src/theory/bir \
+           $(HOLBADIR)/src/theory/bir-support \
+           $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/tools/lifter \
+           $(HOLBADIR)/src/tools/scamv/persistence \
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

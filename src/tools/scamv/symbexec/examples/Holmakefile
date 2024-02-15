@@ -1,0 +1,5 @@
+INCLUDES = $(HOLBADIR)/src/tools/scamv/symbexec \
+           $(HOLBADIR)/src/tools/scamv/symbexec/examples/minimal
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
