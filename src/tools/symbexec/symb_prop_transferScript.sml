@@ -184,8 +184,9 @@ GOAL: PROPERTY TRANSFER COMPATIBILITY (BINARY HOARE LOGIC)
 =======================================================
 *)
 local
-  open abstract_hoare_logicTheory;
-  open abstract_hoare_logicSimps;
+  open total_program_logicTheory;
+  open transition_systemTheory;
+  open program_logicSimps;
 in
 
 (*
@@ -199,7 +200,7 @@ val symb_hl_trs_def = Define `
 `;
 
 val symb_hl_weak_def = Define `
-  symb_hl_weak sr st ls st' =
+  symb_hl_weak sr ls st st' =
     (?n. (conc_step_n_in_L_relaxed sr st n (COMPL ls) st' /\ (~((symb_concst_pc st') IN (COMPL ls)))))
 `;
 
@@ -207,7 +208,7 @@ val symb_hl_etl_wm_def =
   Define `symb_hl_etl_wm sr = <|
     trs  := symb_hl_trs sr;
     weak := symb_hl_weak sr;
-    pc   := symb_concst_pc
+    ctrl := symb_concst_pc
   |>`;
 
 val symb_prop_transfer_binHoare_thm = store_thm(
@@ -216,12 +217,12 @@ val symb_prop_transfer_binHoare_thm = store_thm(
 !Q' l L P Q.
   (Q' = \s. \s'. Q s' /\ (~((symb_concst_pc s') IN (COMPL L)))) ==>
   (prop_holds sr l (COMPL L) P Q') ==>
-  (abstract_jgmt (symb_hl_etl_wm sr) l L P Q)
+  (t_jgmt (symb_hl_etl_wm sr) l L P Q)
 ``,
-  REWRITE_TAC [prop_holds_def, abstract_jgmt_def] >>
+  REWRITE_TAC [prop_holds_def, t_jgmt_def] >>
   REPEAT STRIP_TAC >>
 
-  PAT_X_ASSUM ``!x. y`` (ASSUME_TAC o (Q.SPEC `ms`)) >>
+  PAT_X_ASSUM ``!x. y`` (ASSUME_TAC o (Q.SPEC `s`)) >>
 
   REV_FULL_SIMP_TAC (std_ss++bir_wm_SS) [symb_hl_etl_wm_def, symb_hl_weak_def] >>
 
@@ -245,8 +246,8 @@ val FUNPOW_OPT_SOME_symb_hl_trs_thm = store_thm(
 val symb_hl_is_weak = store_thm(
    "symb_hl_is_weak",
   ``!sr.
-      weak_model (symb_hl_etl_wm sr)``,
-  SIMP_TAC (std_ss++bir_wm_SS) [weak_model_def, symb_hl_etl_wm_def, symb_hl_weak_def, symb_hl_trs_def] >>
+      first_enc (symb_hl_etl_wm sr)``,
+  SIMP_TAC (std_ss++bir_wm_SS) [first_enc_def, symb_hl_etl_wm_def, symb_hl_weak_def, symb_hl_trs_def] >>
 
   REWRITE_TAC [conc_step_n_in_L_relaxed_def, step_n_in_L_relaxed_def, step_n_in_L_thm, step_n_def, FUNPOW_OPT_SOME_symb_hl_trs_thm] >>
 
