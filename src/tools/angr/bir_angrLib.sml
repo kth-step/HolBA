@@ -446,6 +446,21 @@ parse_obs obsrefmap json;
       ((mk_BirProgram o mk_list) (List.rev blocks_m, obs_ty), obsrefmap_m)
     end;
 
+  fun debug_obsrefmap obsrefmap =
+    let val obsrefmap_list = Redblackmap.listItems obsrefmap;
+
+	fun debug (x::xs) =
+	  let fun print_obsref (ref_num, (id_tm, obsf_tm)) =
+		  print ((Arbnum.toString ref_num) ^ " => " ^
+			 "(" ^ (term_to_string id_tm) ^ "," ^ (term_to_string obsf_tm) ^ ")\n");
+	  in
+	    (print_obsref x;
+	     if List.null xs then () else debug xs)
+	  end
+    in
+      if List.null obsrefmap_list then () else debug obsrefmap_list
+    end
+
 (*
   val bprog_t = bprog;
 *)
@@ -460,6 +475,7 @@ parse_obs obsrefmap json;
       val _ = print "DEBUG BEFORE\n\n\n";
 *)
       val (bprog_t_m, obsrefmap) = obsrefmap_conv_prog bprog_t;
+      (* val _ = debug_obsrefmap obsrefmap; *)
 (*
       val _ = print_term bprog_t_m;
       val _ = print (if identical bprog_t bprog_t_m then "EQUAL PROG\n\n" else "UNEQUAL PROG\n\n");
