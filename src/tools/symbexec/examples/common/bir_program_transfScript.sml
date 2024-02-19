@@ -974,8 +974,8 @@ val bir_step_n_in_L_jgmt_def = Define `
 val abstract_jgmt_rel_def = Define `
     abstract_jgmt_rel m (l:'a) (ls:'a->bool) pre post =
   !ms .
-   ((m.pc ms) = l) ==> (pre ms) ==>
-   ?ms'. ((m.weak ms ls ms') /\
+   ((m.ctrl ms) = l) ==> (pre ms) ==>
+   ?ms'. ((m.weak ls ms ms') /\
     (post ms ms'))
 `;
 
@@ -996,7 +996,7 @@ val bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_thm = store_thm(
 (!st st'. post st st' ==> (~bir_state_is_terminated st')) ==>
 
 (abstract_jgmt_rel
-  (bir_etl_wm bprog)
+  (bir_ts bprog)
   l
   ls
   pre
@@ -1007,8 +1007,8 @@ val bir_step_n_in_L_jgmt_TO_abstract_jgmt_rel_thm = store_thm(
   REPEAT STRIP_TAC >>
 
   REWRITE_TAC [abstract_jgmt_rel_def] >>
-  SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS) [bir_wm_instTheory.bir_etl_wm_def] >>
-  SIMP_TAC std_ss [bir_wm_instTheory.bir_weak_trs_def] >>
+  SIMP_TAC (std_ss++program_logicSimps.bir_wm_SS) [bir_tsTheory.bir_ts_def] >>
+  SIMP_TAC std_ss [bir_tsTheory.bir_weak_trs_def] >>
 
   REPEAT STRIP_TAC >>
   PAT_X_ASSUM ``!x. A ==> B ==> C`` (ASSUME_TAC o Q.SPEC `ms`) >>
@@ -1064,7 +1064,7 @@ TODO: go to didrik style m0_mod weak transition relation
 *)
 
 val m_weak_trs_def = Define `
-    m_weak_trs pcf stepf ms ls ms' = 
+    m_weak_trs pcf stepf ls ms ms' = 
         ?n.
           ((n > 0) /\
            (FUNPOW_OPT stepf n ms = SOME ms') /\
@@ -1080,7 +1080,7 @@ val m_weak_model_def = Define `
     m_weak_model pcf bmr  = <|
     trs  := bmr.bmr_step_fun;
     weak := m_weak_trs pcf bmr.bmr_step_fun;
-    pc   := pcf
+    ctrl := pcf
   |>`;
 (*
 val m0_mod_weak_trs_def = Define `
@@ -1195,10 +1195,10 @@ val backlift_contract_GEN_thm = store_thm(
   (!ms. pre ms ==> extra_ms ms) ==>
 
   (!ms. extra_ms ms ==> ?ms_a. (R_a ms ms_a /\ R_a_impl ms ms_a)) ==>
-  (!ms ms_a. R_a_impl ms ms_a ==> R_a ms ms_a ==> wm_a.pc ms_a = pcaf (wm.pc ms)) ==>
+  (!ms ms_a. R_a_impl ms ms_a ==> R_a ms ms_a ==> wm_a.ctrl ms_a = pcaf (wm.ctrl ms)) ==>
   (!ms ms_a. R_a ms ms_a ==> pre ms ==> R_a_impl ms ms_a ==> pre_a ms_a) ==>
 
-  (!ms ms_a ms_a' ls. pre ms ==> pre_a ms_a ==> ((wm_a.pc ms_a) = pcaf l) ==> post_a ms_a ms_a' ==> R_a ms ms_a ==> wm_a.weak ms_a (IMAGE pcaf ls) ms_a' ==> ?ms'. ((wm.weak ms ls ms') /\ (R_a ms' ms_a'))) ==>
+  (!ms ms_a ms_a' ls. pre ms ==> pre_a ms_a ==> ((wm_a.ctrl ms_a) = pcaf l) ==> post_a ms_a ms_a' ==> R_a ms ms_a ==> wm_a.weak (IMAGE pcaf ls) ms_a ms_a' ==> ?ms'. ((wm.weak ls ms ms') /\ (R_a ms' ms_a'))) ==>
   (!ms ms_a ms' ms_a'. R_a ms ms_a ==> R_a ms' ms_a' ==> post_a ms_a ms_a' ==> post ms ms') ==>
 
   (abstract_jgmt_rel
@@ -1437,7 +1437,7 @@ val backlift_bir_m0_mod_pc_rel_thm = store_thm(
 !p ms bs.
   (bs.bst_status = BST_Running) ==>
   (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
-  ((bir_etl_wm p).pc bs = (\l. BL_Address (Imm32 (l))) (m0_mod_weak_model.pc ms))
+  ((bir_ts p).ctrl bs = (\l. BL_Address (Imm32 (l))) (m0_mod_weak_model.ctrl ms))
 ``,
   REPEAT STRIP_TAC >>
   `bir_machine_lifted_pc (m0_mod_bmr (F,T)).bmr_pc bs ms` by (
@@ -1469,7 +1469,7 @@ open HolKernel Parse boolLib bossLib;
 
 open bir_immTheory;
 open bir_programTheory;
-open bir_wm_instTheory;
+open bir_tsTheory;
 open bir_program_multistep_propsTheory;
 open bir_auxiliaryTheory;
 
@@ -1478,12 +1478,12 @@ open bir_inst_liftingTheory;
 open bir_lifting_machinesTheory;
 
 (* From comp: *)
-open abstract_hoare_logicTheory;
-open abstract_simp_hoare_logicTheory;
+open total_program_logicTheory;
+open total_ext_program_logicTheory;
 
 open HolBASimps;
 open HolBACoreSimps;
-open abstract_hoare_logicSimps;
+open program_logicSimps;
 
 open bir_auxiliaryLib;
 in
@@ -1693,15 +1693,15 @@ val backlift_bir_m0_mod_SIM_thm = store_thm(
   (~(bir_state_is_terminated bs')) ==>
 
   (bmr_rel (m0_mod_bmr (F,T)) bs ms) ==>
-  ((bir_etl_wm p).weak bs (IMAGE (\l. BL_Address (Imm32 l)) ls) bs') ==>
-  ?ms'. ((m0_mod_weak_model.weak ms ls ms') /\
+  ((bir_ts p).weak (IMAGE (\l. BL_Address (Imm32 l)) ls) bs bs') ==>
+  ?ms'. ((m0_mod_weak_model.weak ls ms ms') /\
          (bmr_rel (m0_mod_bmr (F,T)) bs' ms'))
 ``,
   REPEAT STRIP_TAC >>
 
   POP_ASSUM MP_TAC >>
 
-  SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS) [bir_wm_instTheory.bir_etl_wm_def, m0_mod_weak_model_def, m_weak_model_def, m_weak_trs_def, bir_wm_instTheory.bir_weak_trs_EQ] >>
+  SIMP_TAC (std_ss++program_logicSimps.bir_wm_SS) [bir_tsTheory.bir_ts_def, m0_mod_weak_model_def, m_weak_model_def, m_weak_trs_def, bir_tsTheory.bir_weak_trs_EQ] >>
   REPEAT STRIP_TAC >>
 (*
 bir_weak_trs_EQ
@@ -1759,11 +1759,11 @@ bir_weak_trs_EQ
   IMP_RES_TAC bir_inter_exec_notin_end_label_set_m0 >>
 
   `bs''.bst_pc.bpc_label = (\l. BL_Address (Imm32 l)) (ms''.base.REG RName_PC)` by (
-    `(bir_etl_wm p).pc bs'' = (\l. BL_Address (Imm32 l)) (m0_mod_weak_model.pc ms'')` by (
+    `(bir_ts p).ctrl bs'' = (\l. BL_Address (Imm32 l)) (m0_mod_weak_model.ctrl ms'')` by (
       FULL_SIMP_TAC std_ss [bir_state_is_terminated_def] >>
       METIS_TAC [backlift_bir_m0_mod_pc_rel_thm]
     ) >>
-    FULL_SIMP_TAC (std_ss++holBACore_ss++abstract_hoare_logicSimps.bir_wm_SS) [bir_block_pc_def, bir_wm_instTheory.bir_etl_wm_def, m0_mod_weak_model_def, m_weak_model_def, m_weak_trs_def, bir_wm_instTheory.bir_weak_trs_def]
+    FULL_SIMP_TAC (std_ss++holBACore_ss++program_logicSimps.bir_wm_SS) [bir_block_pc_def, bir_tsTheory.bir_ts_def, m0_mod_weak_model_def, m_weak_model_def, m_weak_trs_def, bir_tsTheory.bir_weak_trs_def]
   ) >>
 
   FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) []
@@ -1806,7 +1806,7 @@ val backlift_bir_m0_mod_contract_thm = store_thm(
   (backlift_bir_m0_mod_post_concr post_bir post) ==>
 
   (abstract_jgmt_rel
-    (bir_etl_wm p)
+    (bir_ts p)
     (BL_Address (Imm32 l))
     (IMAGE (\x. (BL_Address (Imm32 x))) ls)
     (pre_bir)
@@ -1833,8 +1833,8 @@ val backlift_bir_m0_mod_contract_thm = store_thm(
   `!ms bs.
        (bs.bst_status = BST_Running /\ bir_envty_list_b birenvtyl bs.bst_environ) ==>
        bmr_rel (m0_mod_bmr (F,T)) bs ms ==>
-       (bir_etl_wm p).pc bs =
-       (\l. BL_Address (Imm32 l)) (m0_mod_weak_model.pc ms)` by (
+       (bir_ts p).ctrl bs =
+       (\l. BL_Address (Imm32 l)) (m0_mod_weak_model.ctrl ms)` by (
     METIS_TAC [backlift_bir_m0_mod_pc_rel_thm]
   ) >>
   POP_ASSUM (fn thm0 => POP_ASSUM (fn thm => ASSUME_TAC (MATCH_MP thm thm0))) >>
@@ -1854,13 +1854,13 @@ val backlift_bir_m0_mod_contract_thm = store_thm(
 *)
   `!ms bs bs' ls.
      pre ms ==> pre_bir bs ==>
-     (bir_etl_wm p).pc bs = (\l. BL_Address (Imm32 l)) l ==>
+     (bir_ts p).ctrl bs = (\l. BL_Address (Imm32 l)) l ==>
       post_bir bs bs' ==> bmr_rel (m0_mod_bmr (F,T)) bs ms ==>
-     (bir_etl_wm p).weak bs (IMAGE (\l. BL_Address (Imm32 l)) ls) bs' ==>
-     ?ms'. ((m0_mod_weak_model.weak ms ls ms') /\ (bmr_rel (m0_mod_bmr (F,T)) bs' ms'))` by (
+     (bir_ts p).weak (IMAGE (\l. BL_Address (Imm32 l)) ls) bs bs' ==>
+     ?ms'. ((m0_mod_weak_model.weak ls ms ms') /\ (bmr_rel (m0_mod_bmr (F,T)) bs' ms'))` by (
     REPEAT STRIP_TAC >>
     `bs.bst_pc = bir_block_pc (BL_Address (Imm32 l))` by (
-      FULL_SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS) [bir_wm_instTheory.bir_etl_wm_def] >>
+      FULL_SIMP_TAC (std_ss++program_logicSimps.bir_wm_SS) [bir_tsTheory.bir_ts_def] >>
 
       PAT_X_ASSUM ``!x. pre_bir x ==> ~(bir_state_is_terminated x)`` (IMP_RES_TAC) >>
       FULL_SIMP_TAC (std_ss) [bir_programTheory.bir_state_is_terminated_def] >>
@@ -2082,10 +2082,10 @@ val backlift_m0_mod_m0_pc_rel_thm = store_thm(
    "backlift_m0_mod_m0_pc_rel_thm", ``
 !ms mms.
   (m0_mod_R ms mms) ==>
-  (m0_mod_weak_model.pc mms = m0_weak_model.pc ms)
+  (m0_mod_weak_model.ctrl mms = m0_weak_model.ctrl ms)
 ``,
   SIMP_TAC std_ss [m0_mod_R_def, m0_mod_stepTheory.m0_mod_inv_def] >>
-  SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS) [m0_mod_weak_model_def, m0_weak_model_def, m_weak_model_def, m_weak_trs_def] >>
+  SIMP_TAC (std_ss++program_logicSimps.bir_wm_SS) [m0_mod_weak_model_def, m0_weak_model_def, m_weak_model_def, m_weak_trs_def] >>
   SIMP_TAC (std_ss++(rewrites (type_rws ``:m0_state``))) []
 );
 
@@ -2098,7 +2098,7 @@ val backlift_m0_mod_m0_pc_rel_EVAL_thm = store_thm(
   REPEAT STRIP_TAC >>
   IMP_RES_TAC backlift_m0_mod_m0_pc_rel_thm >>
 
-  FULL_SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS) [m0_mod_weak_model_def, m0_weak_model_def, m_weak_model_def, m_weak_trs_def]
+  FULL_SIMP_TAC (std_ss++program_logicSimps.bir_wm_SS) [m0_mod_weak_model_def, m0_weak_model_def, m_weak_model_def, m_weak_trs_def]
 );
 
 val backlift_m0_mod_m0_pre_abstr_def = Define `
@@ -2113,14 +2113,14 @@ val backlift_m0_mod_m0_SIM_thm = store_thm(
    "backlift_m0_mod_m0_SIM_thm", ``
 !ms mms mms' ls.
   (m0_mod_R ms mms) ==>
-  (m0_mod_weak_model.weak mms ls mms') ==>
-  (?ms'. m0_weak_model.weak ms ls ms' /\ m0_mod_R ms' mms')
+  (m0_mod_weak_model.weak ls mms mms') ==>
+  (?ms'. m0_weak_model.weak ls ms ms' /\ m0_mod_R ms' mms')
 ``,
   REPEAT STRIP_TAC >>
 
   POP_ASSUM MP_TAC >>
 
-  SIMP_TAC (std_ss++abstract_hoare_logicSimps.bir_wm_SS) [m0_mod_weak_model_def, m0_weak_model_def, m_weak_model_def, m_weak_trs_def] >>
+  SIMP_TAC (std_ss++program_logicSimps.bir_wm_SS) [m0_mod_weak_model_def, m0_weak_model_def, m_weak_model_def, m_weak_trs_def] >>
   SIMP_TAC (std_ss++(rewrites (type_rws ``:('a,'b,'c) bir_lifting_machine_rec_t``))) [bir_lifting_machinesTheory.m0_mod_bmr_def, bir_lifting_machinesTheory.m0_bmr_def] >>
   REPEAT STRIP_TAC >>
 
@@ -2197,11 +2197,11 @@ val backlift_m0_mod_m0_contract_thm = store_thm(
   `!ms mms mms' ls.
            pre ms ==>
            pre_mod mms ==>
-           m0_mod_weak_model.pc mms = l ==>
+           m0_mod_weak_model.ctrl mms = l ==>
            post_mod mms mms' ==>
            m0_mod_R ms mms ==>
-           m0_mod_weak_model.weak mms ls mms' ==>
-           ?ms'. m0_weak_model.weak ms ls ms' /\ m0_mod_R ms' mms'` by (
+           m0_mod_weak_model.weak ls mms mms' ==>
+           ?ms'. m0_weak_model.weak ls ms ms' /\ m0_mod_R ms' mms'` by (
     REPEAT STRIP_TAC >>
     METIS_TAC [backlift_m0_mod_m0_SIM_thm]
   ) >>
