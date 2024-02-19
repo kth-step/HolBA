@@ -1,5 +1,9 @@
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 
+open wordsTheory;
+
+open bir_programTheory;
+
 val _ = new_theory "bir_prog_mutrec";
 
 

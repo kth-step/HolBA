@@ -1,0 +1,13 @@
+INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
+           $(HOLDIR)/examples/l3-machine-code/arm8/model \
+           $(HOLDIR)/examples/l3-machine-code/arm8/step \
+           $(HOLDIR)/examples/l3-machine-code/m0/model \
+           $(HOLDIR)/examples/l3-machine-code/m0/step \
+           $(HOLDIR)/examples/l3-machine-code/riscv/model \
+           $(HOLDIR)/examples/l3-machine-code/riscv/step \
+           $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/examples/tutorial/support2 \
+           $(HOLBADIR)/examples/tutorial/2-lift
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

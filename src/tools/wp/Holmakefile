@@ -1,5 +1,8 @@
-INCLUDES = $(HOLBADIR)/src/theory/bir \
-           $(HOLBADIR)/src/theory/bir-support
+INCLUDES = $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/theory/bir \
+           $(HOLBADIR)/src/theory/bir-support \
+           $(HOLBADIR)/src/theory/tools/lifter \
+           $(HOLBADIR)/src/tools/lifter
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

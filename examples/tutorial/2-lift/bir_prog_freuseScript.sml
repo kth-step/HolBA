@@ -1,7 +1,10 @@
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 
-val _ = new_theory "bir_prog_freuse";
+open wordsTheory;
 
+open bir_programTheory;
+
+val _ = new_theory "bir_prog_freuse";
 
 val freuse_def = Define `
   freuse = (BirProgram
