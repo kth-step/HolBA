@@ -14,7 +14,7 @@ fun print_model model = List.foldl
   () (rev model);
 
 fun Z3_prove_or_print_model term =
-  HolSmtLib.Z3_ORACLE_PROVE term
+  HolBA_HolSmtLib.Z3_ORACLE_PROVE term
     handle HOL_ERR e =>
       (* Print a SAT model if the solver reports "SAT" *)
       let

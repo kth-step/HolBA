@@ -9,7 +9,7 @@ open pretty_exnLib;
 
 (* To simplify the life of our poor vim users *)
 if !Globals.interactive then let
-  val _ = load "HolSmtLib";
+  val _ = load "HolBA_HolSmtLib";
   val _ = load "tutorial_bir_to_armTheory";
   val _ = load "tutorial_wpTheory";
   val _ = load "tutorial_smtSupportLib";
@@ -24,14 +24,14 @@ if !Globals.interactive then let
   val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
   val _ = Globals.show_tags := true;
   val _ = Globals.linewidth := 100;
-  val _ = Feedback.set_trace "HolSmtLib" 2;
+  val _ = Feedback.set_trace "HolBA_HolSmtLib" 2;
   val _ = bir_ppLib.install_bir_pretty_printers ();
   (*
   val _ = bir_ppLib.remove_bir_pretty_printers ();
-  val _ = Feedback.set_trace "HolSmtLib" 0;
-  val _ = Feedback.set_trace "HolSmtLib" 1;
-  val _ = Feedback.set_trace "HolSmtLib" 3;
-  val _ = Feedback.set_trace "HolSmtLib" 4;
+  val _ = Feedback.set_trace "HolBA_HolSmtLib" 0;
+  val _ = Feedback.set_trace "HolBA_HolSmtLib" 1;
+  val _ = Feedback.set_trace "HolBA_HolSmtLib" 3;
+  val _ = Feedback.set_trace "HolBA_HolSmtLib" 4;
   *)
 in () end else ();
 

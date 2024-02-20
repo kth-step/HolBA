@@ -1,4 +1,8 @@
 open HolKernel Parse boolLib bossLib;
+
+(* FIXME: needed to avoid quse errors *)
+open m0_stepLib;
+
 open bslSyntax;
 open bir_tsTheory;
 

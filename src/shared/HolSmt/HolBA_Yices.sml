@@ -2,7 +2,7 @@
 
 (* Functions to invoke the Yices SMT solver *)
 
-structure Yices = struct
+structure HolBA_Yices = struct
 
   (* FIXME: Yices 1.0.29 only supports linear arithmetic, bit-vector shifts by
             a numeric constant, etc.  We do not check these side conditions on
@@ -177,14 +177,14 @@ structure Yices = struct
                       val ty_dict' = Redblackmap.insert (ty_dict, ty, name)
                       val defs' = "(define-type " ^ name ^ ")" :: defs
                   in
-                    if !Library.trace > 0 andalso Type.is_type ty then
+                    if !HolBA_Library.trace > 0 andalso Type.is_type ty then
                       Feedback.HOL_WARNING "Yices" "translate_type"
                         ("uninterpreted type " ^ Hol_pp.type_to_string ty)
                     else
                       ();
-                    if !Library.trace > 2 then
+                    if !HolBA_Library.trace > 2 then
                       Feedback.HOL_MESG
-                        ("HolSmtLib (Yices): inventing name '" ^ name ^
+                        ("HolBA_HolSmtLib (Yices): inventing name '" ^ name ^
                         "' for HOL type '" ^ Hol_pp.type_to_string ty ^ "'")
                     else
                       ();
@@ -690,14 +690,14 @@ structure Yices = struct
                       ((ty_dict, ty_fresh, defs), Term.type_of tm)
                     val defs = "(define " ^ name ^ "::" ^ ty_name ^ ")" :: defs
                 in
-                  if !Library.trace > 0 andalso Term.is_const rator then
+                  if !HolBA_Library.trace > 0 andalso Term.is_const rator then
                     Feedback.HOL_WARNING "Yices" "translate_term"
                       ("uninterpreted constant " ^ Hol_pp.term_to_string tm)
                   else
                     ();
-                  if !Library.trace > 2 then
+                  if !HolBA_Library.trace > 2 then
                     Feedback.HOL_MESG
-                      ("HolSmtLib (Yices): inventing name '" ^ name ^
+                      ("HolBA_HolSmtLib (Yices): inventing name '" ^ name ^
                       "' for HOL term '" ^ Hol_pp.term_to_string tm ^ "'")
                   else
                     ();
@@ -741,7 +741,7 @@ structure Yices = struct
     (* simplification: eliminates some HOL terms that are not supported by the
        Yices translation *)
     val SIMP_TAC = Tactical.THENL (Tactical.REPEAT Tactic.GEN_TAC,
-      [Tactical.THEN (Library.LET_SIMP_TAC,
+      [Tactical.THEN (HolBA_Library.LET_SIMP_TAC,
         Tactical.THEN
          (Tactic.CONV_TAC (Conv.DEPTH_CONV wordsLib.EXPAND_REDUCE_CONV),
           Tactical.THEN (simpLib.SIMP_TAC (simpLib.++ (simpLib.++
@@ -749,8 +749,8 @@ structure Yices = struct
             [wordsTheory.word_lsr_bv_def, wordsTheory.w2n_n2w,
              wordsTheory.word_lsb_def, wordsTheory.word_msb_def,
              wordsTheory.WORD_SLICE_THM, wordsTheory.WORD_BITS_EXTRACT],
-          Tactical.THEN (Library.SET_SIMP_TAC, Tactic.BETA_TAC))))])
-    val ((asl, g), _) = SolverSpec.simplify SIMP_TAC goal
+          Tactical.THEN (HolBA_Library.SET_SIMP_TAC, Tactic.BETA_TAC))))])
+    val ((asl, g), _) = HolBA_SolverSpec.simplify SIMP_TAC goal
     val (asl, g) = (List.map full_eta_long_conv asl, full_eta_long_conv g)
     val empty = Redblackmap.mkDict Term.compare
     val empty_ty = Redblackmap.mkDict Type.compare
@@ -769,11 +769,11 @@ structure Yices = struct
     in
       TextIO.closeIn instream;
       if line = SOME "sat\n" then
-        SolverSpec.SAT NONE
+        HolBA_SolverSpec.SAT NONE
       else if line = SOME "unsat\n" then
-        SolverSpec.UNSAT NONE
+        HolBA_SolverSpec.UNSAT NONE
       else
-        SolverSpec.UNKNOWN NONE
+        HolBA_SolverSpec.UNKNOWN NONE
     end
 
   fun is_configured () =
@@ -783,7 +783,7 @@ structure Yices = struct
   fun Yices_Oracle goal =
     case OS.Process.getEnv "HOL4_YICES_EXECUTABLE" of
       SOME file =>
-        SolverSpec.make_solver
+        HolBA_SolverSpec.make_solver
           (Lib.pair () o goal_to_Yices)
           (file ^ " -tc ")
           (Lib.K result_fn)

@@ -9,6 +9,9 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
            $(HOLBADIR)/src/theory/tools/lifter \
+           $(HOLBADIR)/src/tools/lifter \
+           $(HOLBADIR)/src/tools/comp \
+           $(HOLBADIR)/src/tools/backlifter \
            $(HOLBADIR)/examples/tutorial/2-lift \
            $(HOLBADIR)/examples/tutorial/4-bir-to-arm \
            $(HOLBADIR)/examples/tutorial/5-wp \

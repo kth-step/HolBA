@@ -2,15 +2,15 @@
 
 (* SMT-LIB 2 logics *)
 
-structure SmtLib_Logics =
+structure HolBA_SmtLib_Logics =
 struct
 
 local
 
-  val ERR = Feedback.mk_HOL_ERR "SmtLib_Logics"
+  val ERR = Feedback.mk_HOL_ERR "HolBA_SmtLib_Logics"
 
   fun union_dicts (x::xs) =
-    List.foldl (Lib.uncurry Library.union_dict o Lib.swap) x xs
+    List.foldl (Lib.uncurry HolBA_Library.union_dict o Lib.swap) x xs
     | union_dicts [] =
     raise ERR "union_dicts" "empty list"
 
@@ -33,7 +33,7 @@ local
 
   open SmtLib_Theories
 
-  val BV_extension_tmdict = Library.dict_from_list [
+  val BV_extension_tmdict = HolBA_Library.dict_from_list [
     (* bit-vector constants *)
     ("_", one_zero (fn token =>
       if String.isPrefix "bv" token then
@@ -113,7 +113,7 @@ in
          SMT-LIB language altogether, but this is not reflected in the
          SMT-LIB standard yet. *)
 
-      Library.dict_from_list [
+      HolBA_Library.dict_from_list [
         ("=", chainable (boolSyntax.mk_eq o one_int_to_real)),
         ("-", leftassoc (realSyntax.mk_minus o one_int_to_real)),
         ("+", leftassoc (realSyntax.mk_plus o one_int_to_real)),

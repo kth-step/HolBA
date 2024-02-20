@@ -2,14 +2,14 @@
 
 (* SMT-LIB 2 theories *)
 
-structure SmtLib_Theories =
+structure HolBA_SmtLib_Theories =
 struct
 
 local
 
   local open HolSmtTheory in end
 
-  val ERR = Feedback.mk_HOL_ERR "SmtLib_Theories"
+  val ERR = Feedback.mk_HOL_ERR "HolBA_SmtLib_Theories"
 
 in
 
@@ -132,12 +132,12 @@ in
   structure ArraysEx =
   struct
 
-    val tydict = Library.dict_from_list [
+    val tydict = HolBA_Library.dict_from_list [
       (* arrays are translated as functions *)
       ("Array", K_zero_two Type.-->)
     ]
 
-    val tmdict = Library.dict_from_list [
+    val tmdict = HolBA_Library.dict_from_list [
       (* array lookup is translated as function application *)
       ("select", K_zero_two Term.mk_comb),
       (* array update is translated as function update *)
@@ -152,11 +152,11 @@ in
   structure Fixed_Size_BitVectors =
   struct
 
-    val tydict = Library.dict_from_list [
+    val tydict = HolBA_Library.dict_from_list [
       ("BitVec", K_one_zero (wordsSyntax.mk_word_type o fcpLib.index_type))
     ]
 
-    val tmdict = Library.dict_from_list [
+    val tmdict = HolBA_Library.dict_from_list [
       (* bit-vector constants *)
       ("_", zero_zero (fn token =>
         if String.isPrefix "#b" token then
@@ -211,11 +211,11 @@ in
   structure Core =
   struct
 
-    val tydict = Library.dict_from_list [
+    val tydict = HolBA_Library.dict_from_list [
       ("Bool", K_zero_zero Type.bool)
     ]
 
-    val tmdict = Library.dict_from_list [
+    val tmdict = HolBA_Library.dict_from_list [
       ("true", K_zero_zero boolSyntax.T),
       ("false", K_zero_zero boolSyntax.F),
       ("not", K_zero_one boolSyntax.mk_neg),
@@ -247,11 +247,11 @@ in
   structure Ints =
   struct
 
-    val tydict = Library.dict_from_list [
+    val tydict = HolBA_Library.dict_from_list [
       ("Int", K_zero_zero intSyntax.int_ty)
     ]
 
-    val tmdict = Library.dict_from_list [
+    val tmdict = HolBA_Library.dict_from_list [
       (* numerals *)
       ("_", zero_zero (fn token =>
         if is_numeral token then
@@ -277,11 +277,11 @@ in
   structure Reals =
   struct
 
-    val tydict = Library.dict_from_list [
+    val tydict = HolBA_Library.dict_from_list [
       ("Real", K_zero_zero realSyntax.real_ty)
     ]
 
-    val tmdict = Library.dict_from_list [
+    val tmdict = HolBA_Library.dict_from_list [
       (* numerals *)
       ("_", zero_zero (fn token =>
         if is_numeral token then
@@ -308,12 +308,12 @@ in
   structure Reals_Ints =
   struct
 
-    val tydict = Library.dict_from_list [
+    val tydict = HolBA_Library.dict_from_list [
       ("Int", K_zero_zero intSyntax.int_ty),
       ("Real", K_zero_zero realSyntax.real_ty)
     ]
 
-    val tmdict = Library.dict_from_list [
+    val tmdict = HolBA_Library.dict_from_list [
       (* numerals *)
       ("_", zero_zero (fn token =>
         if is_numeral token then

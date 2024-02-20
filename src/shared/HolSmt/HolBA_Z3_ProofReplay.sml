@@ -2,7 +2,7 @@
 
 (* Proof reconstruction for Z3: replaying Z3's proofs in HOL *)
 
-structure Z3_ProofReplay =
+structure HolBA_Z3_ProofReplay =
 struct
 
 local
@@ -11,10 +11,10 @@ local
   fun profile name f x =
     Profile.profile_with_exn_name name f x
 
-  open Z3_Proof
+  open HolBA_Z3_Proof
 
-  val ERR = Feedback.mk_HOL_ERR "Z3_ProofReplay"
-  val WARNING = Feedback.HOL_WARNING "Z3_ProofReplay"
+  val ERR = Feedback.mk_HOL_ERR "HolBA_Z3_ProofReplay"
+  val WARNING = Feedback.HOL_WARNING "HolBA_Z3_ProofReplay"
 
   val ALL_DISTINCT_NIL = HolSmtTheory.ALL_DISTINCT_NIL
   val ALL_DISTINCT_CONS = HolSmtTheory.ALL_DISTINCT_CONS
@@ -185,7 +185,7 @@ local
     handle Feedback.HOL_ERR _ =>
       if Feq r then
         let
-          val l_imp_F = Thm.DISCH l (Library.gen_contradiction (Thm.ASSUME l))
+          val l_imp_F = Thm.DISCH l (HolBA_Library.gen_contradiction (Thm.ASSUME l))
         in
           Drule.EQF_INTRO (Thm.NOT_INTRO l_imp_F)
         end
@@ -208,7 +208,7 @@ local
     end
     handle Feedback.HOL_ERR _ =>
       if Teq r then
-        Drule.EQT_INTRO (Library.gen_excluded_middle l)
+        Drule.EQT_INTRO (HolBA_Library.gen_excluded_middle l)
       else
         raise ERR "rewrite_disj" ""
 
@@ -480,7 +480,7 @@ local
      in the collection. *)
 
   fun z3_and_elim (state, thm, t) =
-    (state, Library.conj_elim (thm, t))
+    (state, HolBA_Library.conj_elim (thm, t))
 
   fun z3_asserted (state, t) =
     (state_assert state t, Thm.ASSUME t)
@@ -527,18 +527,18 @@ local
      implementation below, however, is considerably faster.
   *)
   fun z3_def_axiom (state, t) =
-    (state, Z3_ProformaThms.prove Z3_ProformaThms.def_axiom_thms t)
+    (state, HolBA_Z3_ProformaThms.prove HolBA_Z3_ProformaThms.def_axiom_thms t)
     handle Feedback.HOL_ERR _ =>
     (* or (or ... p ...) (not p) *)
     (* or (or ... (not p) ...) p *)
-    (state, Library.gen_excluded_middle t)
+    (state, HolBA_Library.gen_excluded_middle t)
     handle Feedback.HOL_ERR _ =>
     (* (or (not (and ... p ...)) p) *)
     let
       val (lhs, rhs) = boolSyntax.dest_disj t
       val conj = boolSyntax.dest_neg lhs
       (* conj |- rhs *)
-      val thm = Library.conj_elim (Thm.ASSUME conj, rhs)  (* may fail *)
+      val thm = HolBA_Library.conj_elim (Thm.ASSUME conj, rhs)  (* may fail *)
     in
       (* |- lhs \/ rhs *)
       (state, Drule.IMP_ELIM (Thm.DISCH conj thm))
@@ -702,7 +702,7 @@ local
         (false, boolSyntax.mk_neg t)
     val disj = boolSyntax.dest_neg (Thm.concl thm)
     (* neg_t |- disj *)
-    val th1 = Library.disj_intro (Thm.ASSUME neg_t, disj)
+    val th1 = HolBA_Library.disj_intro (Thm.ASSUME neg_t, disj)
     (* |- ~disj ==> ~neg_t *)
     val th1 = Drule.CONTRAPOS (Thm.DISCH neg_t th1)
     (* |- ~neg_t *)
@@ -751,7 +751,7 @@ local
     else
       (* proforma theorems *)
       (state, profile "rewrite(01)(proforma)"
-        (Z3_ProformaThms.prove Z3_ProformaThms.rewrite_thms) t)
+        (HolBA_Z3_ProformaThms.prove HolBA_Z3_ProformaThms.rewrite_thms) t)
     handle Feedback.HOL_ERR _ =>
 
     (* cached theorems *)
@@ -817,7 +817,7 @@ local
     val (state, thm) = (state,
       (* proforma theorems *)
       profile ("th_lemma[" ^ name ^ "](1)(proforma)")
-        (Z3_ProformaThms.prove Z3_ProformaThms.th_lemma_thms) t'
+        (HolBA_Z3_ProformaThms.prove HolBA_Z3_ProformaThms.th_lemma_thms) t'
       handle Feedback.HOL_ERR _ =>
         (* cached theorems *)
         profile ("th_lemma[" ^ name ^ "](2)(cache)")
@@ -916,9 +916,9 @@ local
     if Thm.concl thm !~ concl then
       raise ERR "check_thm" (name ^ ": conclusion is " ^ Hol_pp.term_to_string
         (Thm.concl thm) ^ ", expected: " ^ Hol_pp.term_to_string concl)
-    else if !Library.trace > 2 then
+    else if !HolBA_Library.trace > 2 then
       Feedback.HOL_MESG
-        ("HolSmtLib: " ^ name ^ " proved: " ^ Hol_pp.thm_to_string thm)
+        ("HolBA_HolSmtLib: " ^ name ^ " proved: " ^ Hol_pp.thm_to_string thm)
     else ()
 
   fun zero_prems (state : state, proof : proof)
@@ -1059,9 +1059,9 @@ local
                  the theorem just derived *)
               (fn ((state, proof), thm) =>
                 (
-                  if !Library.trace > 2 then
+                  if !HolBA_Library.trace > 2 then
                     Feedback.HOL_MESG
-                      ("HolSmtLib: updating proof at ID " ^ Int.toString id)
+                      ("HolBA_HolSmtLib: updating proof at ID " ^ Int.toString id)
                   else ();
                   ((state, Redblackmap.insert (proof, id, THEOREM thm)), thm)
                 )))
@@ -1077,8 +1077,8 @@ in
      subset of) those asserted in the proof *)
   fun check_proof proof : Thm.thm =
   let
-    val _ = if !Library.trace > 1 then
-        Feedback.HOL_MESG "HolSmtLib: checking Z3 proof"
+    val _ = if !HolBA_Library.trace > 1 then
+        Feedback.HOL_MESG "HolBA_HolSmtLib: checking Z3 proof"
       else ()
 
     (* initial state *)

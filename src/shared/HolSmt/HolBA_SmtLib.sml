@@ -2,7 +2,7 @@
 
 (* Translation of HOL terms into SMT-LIB 2 format *)
 
-structure SmtLib = struct
+structure HolBA_SmtLib = struct
 
   val checkSatStatement = ref "(check-sat)"
 

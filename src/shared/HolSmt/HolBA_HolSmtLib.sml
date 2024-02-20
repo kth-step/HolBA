@@ -3,36 +3,36 @@
 (* Entry point into HolSmtLib. Provides GENERIC_SMT_TAC and derived tactics to
    call SMT solvers. *)
 
-structure HolSmtLib :> HolSmtLib = struct
+structure HolBA_HolSmtLib :> HolBA_HolSmtLib = struct
 
   open Abbrev
 
   fun GENERIC_SMT_TAC solver goal =
   let
-    val ERR = Feedback.mk_HOL_ERR "HolSmtLib" "GENERIC_SMT_TAC"
+    val ERR = Feedback.mk_HOL_ERR "HolBA_HolSmtLib" "GENERIC_SMT_TAC"
   in
     case solver goal of
-      SolverSpec.SAT NONE =>
+      HolBA_SolverSpec.SAT NONE =>
       raise ERR "solver reports negated term to be 'satisfiable'"
-    | SolverSpec.SAT (SOME _) =>
+    | HolBA_SolverSpec.SAT (SOME _) =>
       raise ERR
         "solver reports negated term to be 'satisfiable' (model returned)"
-    | SolverSpec.UNSAT NONE =>
-      ([], fn _ => Thm.mk_oracle_thm "HolSmtLib" goal)
-    | SolverSpec.UNSAT (SOME thm) =>
+    | HolBA_SolverSpec.UNSAT NONE =>
+      ([], fn _ => Thm.mk_oracle_thm "HolBA_HolSmtLib" goal)
+    | HolBA_SolverSpec.UNSAT (SOME thm) =>
       (* 'thm' should be of the form "A' |- concl", where A' \subseteq A, and
-         (A, concl) is the input goal (cf. SolverSpec.sml) *)
+         (A, concl) is the input goal (cf. HolBA_SolverSpec.sml) *)
       ([], fn _ => thm)
-    | SolverSpec.UNKNOWN NONE =>
+    | HolBA_SolverSpec.UNKNOWN NONE =>
       raise ERR
         "solver reports 'unknown' (solver not installed/problem too hard?)"
-    | SolverSpec.UNKNOWN (SOME message) =>
+    | HolBA_SolverSpec.UNKNOWN (SOME message) =>
       raise ERR ("solver reports 'unknown' (" ^ message ^ ")")
   end
 
-  val YICES_TAC = GENERIC_SMT_TAC Yices.Yices_Oracle
-  val Z3_ORACLE_TAC = GENERIC_SMT_TAC Z3.Z3_SMT_Oracle
-  val Z3_TAC = GENERIC_SMT_TAC Z3.Z3_SMT_Prover
+  val YICES_TAC = GENERIC_SMT_TAC HolBA_Yices.Yices_Oracle
+  val Z3_ORACLE_TAC = GENERIC_SMT_TAC HolBA_Z3.Z3_SMT_Oracle
+  val Z3_TAC = GENERIC_SMT_TAC HolBA_Z3.Z3_SMT_Prover
 
   fun prove (tm, tac) = Tactical.TAC_PROOF(([], tm), tac)
   fun YICES_PROVE tm = prove (tm, YICES_TAC)
@@ -45,24 +45,24 @@ structure HolSmtLib :> HolSmtLib = struct
       fun check_available prove_fn name =
         (
           prove_fn boolSyntax.T;  (* try to prove ``T`` *)
-          Feedback.HOL_MESG ("HolSmtLib: solver " ^ name ^ " is available.")
+          Feedback.HOL_MESG ("HolBA_HolSmtLib: solver " ^ name ^ " is available.")
         )
       fun provoke_err prove_fn =
         ignore (prove_fn boolSyntax.T)  (* should fail *)
           handle Feedback.HOL_ERR {message, ...} =>
-            Feedback.HOL_MESG ("HolSmtLib: " ^ message)
+            Feedback.HOL_MESG ("HolBA_HolSmtLib: " ^ message)
     in
-      Feedback.set_trace "HolSmtLib" 0;
-      if Yices.is_configured () then
+      Feedback.set_trace "HolBA_HolSmtLib" 0;
+      if HolBA_Yices.is_configured () then
         check_available YICES_PROVE "Yices"
       else
         provoke_err YICES_PROVE;
-      if Z3.is_configured () then (
+      if HolBA_Z3.is_configured () then (
         check_available Z3_ORACLE_PROVE "Z3 (oracle)";
         check_available Z3_PROVE "Z3 (with proofs)"
       ) else
         provoke_err Z3_ORACLE_PROVE;
-      Feedback.reset_trace "HolSmtLib"
+      Feedback.reset_trace "HolBA_HolSmtLib"
     end
 
 end

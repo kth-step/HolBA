@@ -9,7 +9,7 @@ open pretty_exnLib;
 
 (* To simplify the life of our poor vim users *)
 if !Globals.interactive then let
-  val _ = load "HolSmtLib";
+  val _ = load "HolBA_HolSmtLib";
   val _ = load "tutorial_smtSupportLib";
 in () end else ();
 
@@ -20,14 +20,14 @@ if !Globals.interactive then let
   val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
   val _ = Globals.show_tags := true;
   val _ = Globals.linewidth := 100;
-  val _ = Feedback.set_trace "HolSmtLib" 2;
+  val _ = Feedback.set_trace "HolBA_HolSmtLib" 2;
   val _ = bir_ppLib.install_bir_pretty_printers ();
   (*
   val _ = bir_ppLib.remove_bir_pretty_printers ();
-  val _ = Feedback.set_trace "HolSmtLib" 0;
-  val _ = Feedback.set_trace "HolSmtLib" 1;
-  val _ = Feedback.set_trace "HolSmtLib" 3;
-  val _ = Feedback.set_trace "HolSmtLib" 4;
+  val _ = Feedback.set_trace "HolBA_HolSmtLib" 0;
+  val _ = Feedback.set_trace "HolBA_HolSmtLib" 1;
+  val _ = Feedback.set_trace "HolBA_HolSmtLib" 3;
+  val _ = Feedback.set_trace "HolBA_HolSmtLib" 4;
   *)
 in () end else ();
 
@@ -36,11 +36,11 @@ in () end else ();
 (*****************************************************************************)
 (* 1. Prove the truth to check that Z3 is working                            *)
 
-val TRUTH = HolSmtLib.Z3_ORACLE_PROVE ``T``;
+val TRUTH = HolBA_HolSmtLib.Z3_ORACLE_PROVE ``T``;
 
 (* You can raise the trace level to see what is sent to Z3.
 
-val _ = Feedback.set_trace "HolSmtLib" 4;
+val _ = Feedback.set_trace "HolBA_HolSmtLib" 4;
 *)
 
 (*****************************************************************************)

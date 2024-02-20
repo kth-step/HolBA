@@ -2,7 +2,7 @@
 
 (* Definition of SMT solvers *)
 
-structure SolverSpec = struct
+structure HolBA_SolverSpec = struct
 
   datatype result = SAT of string option  (* model, should perhaps be a thm *)
                   | UNSAT of Thm.thm option  (* assumptions |- conclusion *)
@@ -24,26 +24,26 @@ structure SolverSpec = struct
     val infile = FileSys.tmpName ()
     val outfile = FileSys.tmpName ()
     fun work() = let
-      val _ = Library.write_strings_to_file infile inputs
+      val _ = HolBA_Library.write_strings_to_file infile inputs
       val cmd = cmd_stem ^ infile ^ " > " ^ outfile
       (* the actual system call to the SMT solver *)
-      val _ = if !Library.trace > 1 then
-                Feedback.HOL_MESG ("HolSmtLib: calling external command '" ^
+      val _ = if !HolBA_Library.trace > 1 then
+                Feedback.HOL_MESG ("HolBA_HolSmtLib: calling external command '" ^
                                    cmd ^ "'")
               else ()
       val _ = Systeml.system_ps cmd
       (* call 'post' to determine the result *)
       val result = post x outfile
       val _ =
-          if !Library.trace > 1 then
+          if !HolBA_Library.trace > 1 then
             Feedback.HOL_MESG(
-              "HolSmtLib: solver reports negated term to be '" ^
+              "HolBA_HolSmtLib: solver reports negated term to be '" ^
               (case result of
                    SAT NONE => "satisfiable' (no model given)"
                  | SAT (SOME _) => "satisfiable' (model given)"
                  | UNSAT NONE => "unsatisfiable' (no proof given)"
                  | UNSAT (SOME thm) =>
-                   if !Library.trace > 2 then
+                   if !HolBA_Library.trace > 2 then
                      "unsatisfiable' (theorem: " ^Hol_pp.thm_to_string thm ^ ")"
                    else
                      "unsatisfiable' (proof checked)"
@@ -52,7 +52,7 @@ structure SolverSpec = struct
           else ()
       (* if the SMT solver returned a theorem 'thm', then this should be of the
          form "A' |- g" with A' \subseteq A, where (A, g) is the input goal *)
-      val _ = if !Library.trace > 0 then
+      val _ = if !HolBA_Library.trace > 0 then
                 case result of
                     UNSAT (SOME thm) =>
                     let
@@ -60,11 +60,11 @@ structure SolverSpec = struct
                       val As = HOLset.fromList Term.compare As
                     in
                       if not (HOLset.isSubset (Thm.hypset thm, As)) then
-                        Feedback.HOL_WARNING "SolverSpec" "make_solver"
+                        Feedback.HOL_WARNING "HolBA_SolverSpec" "make_solver"
                                     "theorem contains additional hyp(s)"
                       else ();
                       if not (Term.aconv (Thm.concl thm) g) then
-                        Feedback.HOL_WARNING "SolverSpec" "make_solver"
+                        Feedback.HOL_WARNING "HolBA_SolverSpec" "make_solver"
                              "conclusion of theorem does not match goal"
                       else ()
                     end
@@ -75,7 +75,7 @@ structure SolverSpec = struct
     end
     fun finish () =
         (* delete all temporary files *)
-        if !Library.trace < 4 then
+        if !HolBA_Library.trace < 4 then
           List.app (fn path => OS.FileSys.remove path handle SysErr _ => ())
                    [infile, outfile]
         else ()
@@ -94,17 +94,17 @@ structure SolverSpec = struct
       | ([new_goal], validation) =>
         (new_goal, validation)
       | _ =>
-        raise Feedback.mk_HOL_ERR "SolverSpec" "simplify"
+        raise Feedback.mk_HOL_ERR "HolBA_SolverSpec" "simplify"
           "simplification produced more than one subgoal"
   in
-    if !Library.trace > 2 then
+    if !HolBA_Library.trace > 2 then
       let
         fun goal_to_string (asl, g) =
           "[" ^ String.concatWith ", " (List.map Hol_pp.term_to_string asl) ^
             "] |- " ^ Hol_pp.term_to_string g
       in
         Feedback.HOL_MESG
-          ("HolSmtLib: simplified goal is " ^ goal_to_string new_goal)
+          ("HolBA_HolSmtLib: simplified goal is " ^ goal_to_string new_goal)
       end
     else ();
     (new_goal, validation)

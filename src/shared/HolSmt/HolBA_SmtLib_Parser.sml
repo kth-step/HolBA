@@ -2,15 +2,15 @@
 
 (* Parsing of SMT-LIB 2 benchmarks *)
 
-structure SmtLib_Parser =
+structure HolBA_SmtLib_Parser =
 struct
 
   type 'a parse_fn = string -> Arbnum.num list -> 'a list -> 'a
 
 local
 
-  val ERR = Feedback.mk_HOL_ERR "SmtLib_Parser"
-  val WARNING = Feedback.HOL_WARNING "SmtLib_Parser"
+  val ERR = Feedback.mk_HOL_ERR "HolBA_SmtLib_Parser"
+  val WARNING = Feedback.HOL_WARNING "HolBA_SmtLib_Parser"
 
   (***************************************************************************)
   (* parsing of types/terms                                                  *)
@@ -101,7 +101,7 @@ local
   in
     case get_tokens [] of
       [] => raise ERR "parse_indexed_t" "'_' immediately followed by ')'"
-    | hd::tl => t_with_args dict hd (List.map Library.parse_arbnum tl)
+    | hd::tl => t_with_args dict hd (List.map HolBA_Library.parse_arbnum tl)
   end
 
   (***************************************************************************)
@@ -161,7 +161,7 @@ local
 
   fun parse_type_list get_token tydict : Type.hol_type list =
   (
-    Library.expect_token "(" (get_token ());
+    HolBA_Library.expect_token "(" (get_token ());
     parse_type_operands get_token tydict []
   )
 
@@ -172,7 +172,7 @@ local
   fun parse_var_bindings get_token (tydict, tmdict)
     : (string * Term.term) list =
   let
-    val _ = Library.expect_token "(" (get_token ())
+    val _ = HolBA_Library.expect_token "(" (get_token ())
     fun aux acc =
     let
       val token = get_token ()
@@ -181,10 +181,10 @@ local
         List.rev acc
       else
         let
-          val _ = Library.expect_token "(" token
+          val _ = HolBA_Library.expect_token "(" token
           val symbol = get_token ()
           val term = parse_term get_token (tydict, tmdict)
-          val _ = Library.expect_token ")" (get_token ())
+          val _ = HolBA_Library.expect_token ")" (get_token ())
         in
           aux ((symbol, term) :: acc)
         end
@@ -205,17 +205,17 @@ local
       else
         raise ERR ("<" ^ Hol_pp.term_to_string var ^ ">")
           "wrong number of arguments"
-    val tmdict = List.foldl Library.extend_dict tmdict
+    val tmdict = List.foldl HolBA_Library.extend_dict tmdict
       (List.map (fn (s, var, _) => (s, parsefn var)) bindings)
     val body = parse_term get_token (tydict, tmdict)
-    val _ = Library.expect_token ")" (get_token ())
+    val _ = HolBA_Library.expect_token ")" (get_token ())
   in
     pairSyntax.mk_anylet (List.map (fn (_, var, t) => (var, t)) bindings, body)
   end
 
   and parse_sorted_vars get_token tydict : (string * Type.hol_type) list =
   let
-    val _ = Library.expect_token "(" (get_token ())
+    val _ = HolBA_Library.expect_token "(" (get_token ())
     fun aux acc =
     let
       val token = get_token ()
@@ -224,10 +224,10 @@ local
         List.rev acc
       else
         let
-          val _ = Library.expect_token "(" token
+          val _ = HolBA_Library.expect_token "(" token
           val symbol = get_token ()
           val typ = parse_type get_token tydict
-          val _ = Library.expect_token ")" (get_token ())
+          val _ = HolBA_Library.expect_token ")" (get_token ())
         in
           aux ((symbol, typ) :: acc)
         end
@@ -247,10 +247,10 @@ local
       else
         raise ERR ("<" ^ Hol_pp.term_to_string var ^ ">")
           "wrong number of arguments"
-    val tmdict = List.foldl Library.extend_dict tmdict
+    val tmdict = List.foldl HolBA_Library.extend_dict tmdict
       (List.map (Lib.apsnd parsefn) vars)
     val body = parse_term get_token (tydict, tmdict)
-    val _ = Library.expect_token ")" (get_token ())
+    val _ = HolBA_Library.expect_token ")" (get_token ())
   in
     mk_binder (List.map Lib.snd vars, body)
   end
@@ -341,7 +341,7 @@ local
 
   fun parse_term_list get_token (tydict, tmdict) : Term.term list =
   (
-    Library.expect_token "(" (get_token ());
+    HolBA_Library.expect_token "(" (get_token ());
     parse_term_operands get_token (tydict, tmdict) []
   )
 
@@ -360,8 +360,8 @@ local
   fun parse_set_logic get_token =
   let
     val logic = get_token ()
-    val (tydict, tmdict) = SmtLib_Logics.parsedicts_of_logic logic
-    val _ = Library.expect_token ")" (get_token ())
+    val (tydict, tmdict) = HolBA_SmtLib_Logics.parsedicts_of_logic logic
+    val _ = HolBA_Library.expect_token ")" (get_token ())
   in
     (logic, tydict, tmdict)
   end
@@ -371,8 +371,8 @@ local
   fun parse_declare_sort get_token tydict =
   let
     val name = get_token ()
-    val _ = Library.expect_token "0" (get_token ())
-    val _ = Library.expect_token ")" (get_token ())
+    val _ = HolBA_Library.expect_token "0" (get_token ())
+    val _ = HolBA_Library.expect_token ")" (get_token ())
     val ty = Type.mk_vartype ("'" ^ name)
     fun parsefn token nums args =
       if List.null nums andalso List.null args then
@@ -380,7 +380,7 @@ local
       else
         raise ERR ("<" ^ name ^ ">") "wrong number of arguments"
   in
-    Library.extend_dict ((name, parsefn), tydict)
+    HolBA_Library.extend_dict ((name, parsefn), tydict)
   end
 
   (* returns an extended 'tmdict' *)
@@ -389,7 +389,7 @@ local
     val name = get_token ()
     val domain_types = parse_type_list get_token tydict
     val range_type = parse_type get_token tydict
-    val _ = Library.expect_token ")" (get_token ())
+    val _ = HolBA_Library.expect_token ")" (get_token ())
     val tm = Term.mk_var (name,
       boolSyntax.list_mk_fun (domain_types, range_type))
     val args_count = List.length domain_types
@@ -399,7 +399,7 @@ local
       else
         raise ERR ("<" ^ name ^ ">") "wrong number of arguments"
   in
-    Library.extend_dict ((name, parsefn), tmdict)
+    HolBA_Library.extend_dict ((name, parsefn), tmdict)
   end
 
   (* returns an extended 'tmdict', and the definition (as a formula) *)
@@ -417,10 +417,10 @@ local
       else
         raise ERR ("<" ^ Hol_pp.term_to_string var ^ ">")
           "wrong number of arguments"
-    val definiens_tmdict = List.foldl Library.extend_dict tmdict
+    val definiens_tmdict = List.foldl HolBA_Library.extend_dict tmdict
       (List.map (Lib.apsnd var_parsefn) vars)
     val definiens = parse_term get_token (tydict, definiens_tmdict)
-    val _ = Library.expect_token ")" (get_token ())
+    val _ = HolBA_Library.expect_token ")" (get_token ())
     (* 'name' from now on should be parsed as 'tm' *)
     val tm = Term.mk_var (name,
       boolSyntax.list_mk_fun (domain_types, range_type))
@@ -430,7 +430,7 @@ local
         Term.list_mk_comb (tm, args)
       else
         raise ERR ("<" ^ name ^ ">") "wrong number of arguments"
-    val tmdict = Library.extend_dict ((name, parsefn), tmdict)
+    val tmdict = HolBA_Library.extend_dict ((name, parsefn), tmdict)
     (* the semantics of define-fun: ``!x1...xn. f x1 ... xn = definiens`` *)
     val vars = List.map Lib.snd vars
     val definition = boolSyntax.list_mk_forall (vars,
@@ -447,7 +447,7 @@ local
       case state of
         SOME x => x
       | NONE   => raise ERR "parse_commands" (cmd ^ " issued before set-logic")
-    val _ = Library.expect_token "(" (get_token ())
+    val _ = HolBA_Library.expect_token "(" (get_token ())
     val command = get_token ()
   in
     case command of "set-info" =>
@@ -490,28 +490,28 @@ local
       let
         val (logic, tydict, tmdict, asserted) = dest_state "assert"
         val asserted = parse_term get_token (tydict, tmdict) :: asserted
-        val _ = Library.expect_token ")" (get_token ())
+        val _ = HolBA_Library.expect_token ")" (get_token ())
       in
         parse_commands get_token (SOME (logic, tydict, tmdict, asserted))
       end
     | "check-sat" =>
       let
         val _ = dest_state "check-sat"
-        val _ = Library.expect_token ")" (get_token ())
+        val _ = HolBA_Library.expect_token ")" (get_token ())
       in
         parse_commands get_token state
       end
     | "get-proof" =>
       let
         val _ = dest_state "get-proof"
-        val _ = Library.expect_token ")" (get_token ())
+        val _ = HolBA_Library.expect_token ")" (get_token ())
       in
         parse_commands get_token state
       end
     | "exit" =>
       let
         val (logic, tydict, tmdict, asserted) = dest_state "exit"
-        val _ = Library.expect_token ")" (get_token ())
+        val _ = HolBA_Library.expect_token ")" (get_token ())
       in
         (logic, tydict, tmdict, List.rev asserted)
       end
@@ -550,14 +550,14 @@ in
     (string, Term.term parse_fn list) Redblackmap.dict * Term.term list =
   let
     (* parse the file contents *)
-    val _ = if !Library.trace > 1 then
+    val _ = if !HolBA_Library.trace > 1 then
         Feedback.HOL_MESG
-          ("HolSmtLib: parsing SMT-LIB 2 benchmark file '" ^ path ^ "'")
+          ("HolBA_HolSmtLib: parsing SMT-LIB 2 benchmark file '" ^ path ^ "'")
       else ()
     val instream = TextIO.openIn path
-    val get_token = Library.get_token (Library.get_buffered_char instream)
+    val get_token = HolBA_Library.get_token (HolBA_Library.get_buffered_char instream)
     val result = parse_benchmark get_token
-    val _ = if !Library.trace > 0 then
+    val _ = if !HolBA_Library.trace > 0 then
         WARNING "parse_file" ("ignoring token '" ^ get_token () ^
           "' (and perhaps others) after benchmark")
           handle Feedback.HOL_ERR _ => ()  (* end of file, as expected *)

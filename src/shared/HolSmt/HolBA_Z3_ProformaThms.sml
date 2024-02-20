@@ -2,7 +2,7 @@
 
 (* Proforma theorems, used for Z3 proof reconstruction *)
 
-structure Z3_ProformaThms =
+structure HolBA_Z3_ProformaThms =
 struct
 
   fun thm_net_from_list thms =

@@ -2,7 +2,7 @@
 
 (* Common auxiliary functions, tracing *)
 
-structure Library =
+structure HolBA_Library =
 struct
 
   (***************************************************************************)
@@ -20,7 +20,7 @@ struct
      5 - all of the above, plus trace and debug information *)
   val trace = ref 2
 
-  val _ = Feedback.register_trace ("HolSmtLib", trace, 5)
+  val _ = Feedback.register_trace ("HolBA_HolSmtLib", trace, 5)
 
   (***************************************************************************)
   (* I/O, parsing                                                            *)
@@ -53,7 +53,7 @@ struct
         [] =>
         (case String.explode (TextIO.inputN (instream, 10000000)) of
           [] =>
-          raise Feedback.mk_HOL_ERR "Library" "get_buffered_char"
+          raise Feedback.mk_HOL_ERR "HolBA_Library" "get_buffered_char"
             "end of stream"
         | c::cs =>
           (buffer := cs; c))
@@ -106,11 +106,11 @@ struct
       (* | *)
       | aux [] #"|" = aux_symbol [] (get_char ())
       | aux _ #"|" =
-        raise Feedback.mk_HOL_ERR "Library" "get_token" "invalid '|'"
+        raise Feedback.mk_HOL_ERR "HolBA_Library" "get_token" "invalid '|'"
       (* " *)
       | aux [] #"\"" = aux_string [] (get_char ())
       | aux _ #"\"" =
-        raise Feedback.mk_HOL_ERR "Library" "get_token" "invalid '\"'"
+        raise Feedback.mk_HOL_ERR "HolBA_Library" "get_token" "invalid '\"'"
       (* ; *)
       | aux [] #";" = (line_comment (); aux [] (get_char ()))
       | aux cs #";" = (line_comment (); String.implode (List.rev cs))
@@ -127,7 +127,7 @@ struct
           | NONE => aux [] (get_char ())
       in
         if !trace > 2 then
-          Feedback.HOL_MESG ("HolSmtLib: next token is '" ^ token ^ "'")
+          Feedback.HOL_MESG ("HolBA_HolSmtLib: next token is '" ^ token ^ "'")
         else ();
         token
       end
@@ -136,14 +136,14 @@ struct
   fun parse_arbnum (s : string) =
     Arbnum.fromString s
       handle Option.Option =>
-        raise Feedback.mk_HOL_ERR "Library" "parse_arbnum"
+        raise Feedback.mk_HOL_ERR "HolBA_Library" "parse_arbnum"
           ("numeral expected, but '" ^ s ^ "' found")
 
   fun expect_token (expected : string) (actual : string) : unit =
     if expected = actual then
       ()
     else
-      raise Feedback.mk_HOL_ERR "Library" "expect_token"
+      raise Feedback.mk_HOL_ERR "HolBA_Library" "expect_token"
         ("'" ^ expected ^ "' expected, but '" ^ actual ^ "' found")
 
   (* extends a dictionary that maps keys to lists of values *)

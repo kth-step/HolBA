@@ -2,7 +2,7 @@
 
 (* Proof reconstruction for Z3: parsing of Z3's proofs *)
 
-structure Z3_ProofParser =
+structure HolBA_Z3_ProofParser =
 struct
 
   (* I tried to implement this parser in ML-Lex/ML-Yacc, but gave up
@@ -16,10 +16,10 @@ local
 
   local open HolSmtTheory in end
 
-  open Z3_Proof
+  open HolBA_Z3_Proof
 
-  val ERR = Feedback.mk_HOL_ERR "Z3_ProofParser"
-  val WARNING = Feedback.HOL_WARNING "Z3_ProofParser"
+  val ERR = Feedback.mk_HOL_ERR "HolBA_Z3_ProofParser"
+  val WARNING = Feedback.HOL_WARNING "HolBA_Z3_ProofParser"
 
   (***************************************************************************)
   (* auxiliary functions                                                     *)
@@ -67,11 +67,11 @@ local
   val pt_ty = Type.mk_vartype "'pt"
 
   fun zero_prems name =
-    SmtLib_Theories.K_zero_one (Lib.curry Term.mk_comb (Term.mk_var
+    HolBA_SmtLib_Theories.K_zero_one (Lib.curry Term.mk_comb (Term.mk_var
       (name, Type.--> (Type.bool, pt_ty))))
 
   fun one_prem name =
-    SmtLib_Theories.K_zero_two (Lib.uncurry (Lib.curry Term.mk_comb o
+    HolBA_SmtLib_Theories.K_zero_two (Lib.uncurry (Lib.curry Term.mk_comb o
       Lib.curry Term.mk_comb (Term.mk_var (name, boolSyntax.list_mk_fun
       ([pt_ty, Type.bool], pt_ty)))))
 
@@ -80,17 +80,17 @@ local
     val t = Term.mk_var (name,
       boolSyntax.list_mk_fun ([pt_ty, pt_ty, Type.bool], pt_ty))
   in
-    SmtLib_Theories.K_zero_three (fn (p1, p2, concl) =>
+    HolBA_SmtLib_Theories.K_zero_three (fn (p1, p2, concl) =>
       Term.list_mk_comb (t, [p1, p2, concl]))
   end
 
   fun list_prems name =
-    SmtLib_Theories.K_zero_list (Lib.uncurry (Lib.curry Term.mk_comb o
+    HolBA_SmtLib_Theories.K_zero_list (Lib.uncurry (Lib.curry Term.mk_comb o
       (Lib.curry Term.mk_comb (Term.mk_var (name, boolSyntax.list_mk_fun
       ([listSyntax.mk_list_type pt_ty, Type.bool], pt_ty))))) o
       Lib.apfst (Lib.C (Lib.curry listSyntax.mk_list) pt_ty) o Lib.front_last)
 
-  val z3_builtin_dict = Library.dict_from_list [
+  val z3_builtin_dict = HolBA_Library.dict_from_list [
     ("and-elim",        one_prem "and-elim"),
     ("asserted",        zero_prems "asserted"),
     ("commutativity",   zero_prems "commutativity"),
@@ -117,12 +117,12 @@ local
        changed to adhere to the SMT-LIB format more strictly, i.e.,
        also for the following operations/constants, so that these
        additional parsing functions are no longer necessary. *)
-    ("iff", SmtLib_Theories.K_zero_two boolSyntax.mk_eq),
-    ("implies", SmtLib_Theories.K_zero_two boolSyntax.mk_imp),
-    ("~", SmtLib_Theories.K_zero_one intSyntax.mk_negated),
-    ("~", SmtLib_Theories.K_zero_one realSyntax.mk_negated),
+    ("iff", HolBA_SmtLib_Theories.K_zero_two boolSyntax.mk_eq),
+    ("implies", HolBA_SmtLib_Theories.K_zero_two boolSyntax.mk_imp),
+    ("~", HolBA_SmtLib_Theories.K_zero_one intSyntax.mk_negated),
+    ("~", HolBA_SmtLib_Theories.K_zero_one realSyntax.mk_negated),
     (* bit-vector constants: bvm[n] *)
-    ("_", SmtLib_Theories.zero_zero (fn token =>
+    ("_", HolBA_SmtLib_Theories.zero_zero (fn token =>
       if String.isPrefix "bv" token then
         let
           val args = String.extract (token, 2, NONE)
@@ -132,15 +132,15 @@ local
             args)
           val _ = args = "" orelse
             raise ERR "<z3_builtin_dict._>" "not a bit-vector constant"
-          val value = Library.parse_arbnum value
-          val size = Library.parse_arbnum size
+          val value = HolBA_Library.parse_arbnum value
+          val size = HolBA_Library.parse_arbnum size
         in
           wordsSyntax.mk_word (value, size)
         end
       else
         raise ERR "<z3_builtin_dict._>" "not a bit-vector constant")),
     (* extract[m:n] t *)
-    ("_", SmtLib_Theories.zero_one (fn token =>
+    ("_", HolBA_SmtLib_Theories.zero_one (fn token =>
       if String.isPrefix "extract[" token then
         let
           val args = String.extract (token, 8, NONE)
@@ -148,8 +148,8 @@ local
           val (n, args) = Lib.pair_of_list (String.fields (Lib.equal #"]") args)
           val _ = args = "" orelse
             raise ERR "<z3_builtin_dict._>" "not extract[m:n]"
-          val m = Library.parse_arbnum m
-          val n = Library.parse_arbnum n
+          val m = HolBA_Library.parse_arbnum m
+          val n = HolBA_Library.parse_arbnum n
           val index_type = fcpLib.index_type (Arbnum.plus1 (Arbnum.- (m, n)))
           val m = numSyntax.mk_numeral m
           val n = numSyntax.mk_numeral n
@@ -159,10 +159,10 @@ local
       else
         raise ERR "<z3_builtin_dict._>" "not extract[m:n]")),
     (* (_ extractm n) t *)
-    ("_", SmtLib_Theories.one_one (fn token => fn n =>
+    ("_", HolBA_SmtLib_Theories.one_one (fn token => fn n =>
       if String.isPrefix "extract" token then
         let
-          val m = Library.parse_arbnum (String.extract (token, 7, NONE))
+          val m = HolBA_Library.parse_arbnum (String.extract (token, 7, NONE))
           val index_type = fcpLib.index_type (Arbnum.plus1 (Arbnum.- (m, n)))
           val m = numSyntax.mk_numeral m
           val n = numSyntax.mk_numeral n
@@ -171,34 +171,34 @@ local
         end
       else
         raise ERR "<z3_builtin_dict._>" "not extract<m> n")),
-    ("bvudiv_i", SmtLib_Theories.K_zero_two wordsSyntax.mk_word_div),
-    ("bvurem_i", SmtLib_Theories.K_zero_two wordsSyntax.mk_word_mod),
+    ("bvudiv_i", HolBA_SmtLib_Theories.K_zero_two wordsSyntax.mk_word_div),
+    ("bvurem_i", HolBA_SmtLib_Theories.K_zero_two wordsSyntax.mk_word_mod),
     (* bvudiv0 t *)
-    ("bvudiv0", SmtLib_Theories.K_zero_one (fn t =>
+    ("bvudiv0", HolBA_SmtLib_Theories.K_zero_one (fn t =>
       let
         val zero = wordsSyntax.mk_n2w (numSyntax.zero_tm, wordsSyntax.dim_of t)
       in
         wordsSyntax.mk_word_div (t, zero)
       end)),
     (* bvurem0 t *)
-    ("bvurem0", SmtLib_Theories.K_zero_one (fn t =>
+    ("bvurem0", HolBA_SmtLib_Theories.K_zero_one (fn t =>
       let
         val zero = wordsSyntax.mk_n2w (numSyntax.zero_tm, wordsSyntax.dim_of t)
       in
         wordsSyntax.mk_word_mod (t, zero)
       end)),
     (* array_extArray[m:n] t1 t2 *)
-    ("_", SmtLib_Theories.zero_two (fn token =>
+    ("_", HolBA_SmtLib_Theories.zero_two (fn token =>
       if String.isPrefix "array_ext" token then
         (fn (t1, t2) => Term.mk_comb (boolSyntax.mk_icomb
           (Term.prim_mk_const {Thy="HolSmt", Name="array_ext"}, t1), t2))
       else
         raise ERR "<z3_builtin_dict._>" "not array_ext...")),
     (* repeatn t *)
-    ("_", SmtLib_Theories.zero_one (fn token =>
+    ("_", HolBA_SmtLib_Theories.zero_one (fn token =>
       if String.isPrefix "repeat" token then
         let
-          val n = Library.parse_arbnum (String.extract (token, 6, NONE))
+          val n = HolBA_Library.parse_arbnum (String.extract (token, 6, NONE))
           val n = numSyntax.mk_numeral n
         in
           fn t => wordsSyntax.mk_word_replicate (n, t)
@@ -206,10 +206,10 @@ local
       else
         raise ERR "<z3_builtin_dict._>" "not repeat<n>")),
     (* zero_extendn t *)
-    ("_", SmtLib_Theories.zero_one (fn token =>
+    ("_", HolBA_SmtLib_Theories.zero_one (fn token =>
       if String.isPrefix "zero_extend" token then
         let
-          val n = Library.parse_arbnum (String.extract (token, 11, NONE))
+          val n = HolBA_Library.parse_arbnum (String.extract (token, 11, NONE))
         in
           fn t => wordsSyntax.mk_w2w (t, fcpLib.index_type
             (Arbnum.+ (fcpLib.index_to_num (wordsSyntax.dim_of t), n)))
@@ -217,10 +217,10 @@ local
       else
         raise ERR "<z3_builtin_dict._>" "not zero_extend<n>")),
     (* sign_extendn t *)
-    ("_", SmtLib_Theories.zero_one (fn token =>
+    ("_", HolBA_SmtLib_Theories.zero_one (fn token =>
       if String.isPrefix "sign_extend" token then
         let
-          val n = Library.parse_arbnum (String.extract (token, 11, NONE))
+          val n = HolBA_Library.parse_arbnum (String.extract (token, 11, NONE))
         in
           fn t => wordsSyntax.mk_sw2sw (t, fcpLib.index_type
             (Arbnum.+ (fcpLib.index_to_num (wordsSyntax.dim_of t), n)))
@@ -228,10 +228,10 @@ local
       else
         raise ERR "<z3_builtin_dict._>" "not sign_extend<n>")),
     (* rotate_leftn t *)
-    ("_", SmtLib_Theories.zero_one (fn token =>
+    ("_", HolBA_SmtLib_Theories.zero_one (fn token =>
       if String.isPrefix "rotate_left" token then
         let
-          val n = Library.parse_arbnum (String.extract (token, 11, NONE))
+          val n = HolBA_Library.parse_arbnum (String.extract (token, 11, NONE))
           val n = numSyntax.mk_numeral n
         in
           fn t => wordsSyntax.mk_word_rol (t, n)
@@ -260,15 +260,15 @@ local
         raise ERR "proofterm_of_term" "term does not encode a Z3 proofterm"
   end
 
-  val zero_prems_pt = SmtLib_Theories.one_arg
+  val zero_prems_pt = HolBA_SmtLib_Theories.one_arg
 
-  fun one_prem_pt f = SmtLib_Theories.two_args (f o Lib.apfst proofterm_of_term)
+  fun one_prem_pt f = HolBA_SmtLib_Theories.two_args (f o Lib.apfst proofterm_of_term)
 
-  fun two_prems_pt f = SmtLib_Theories.three_args (fn (t1, t2, t3) =>
+  fun two_prems_pt f = HolBA_SmtLib_Theories.three_args (fn (t1, t2, t3) =>
     f (proofterm_of_term t1, proofterm_of_term t2, t3))
 
   fun list_prems_pt f =
-    SmtLib_Theories.two_args (f o Lib.apfst
+    HolBA_SmtLib_Theories.two_args (f o Lib.apfst
       (List.map proofterm_of_term o Lib.fst o listSyntax.dest_list))
 
   val _ = pt_dict := List.foldl
@@ -305,7 +305,7 @@ local
   (* returns an extended proof; 't' must encode a proofterm *)
   fun extend_proof proof (id, t) =
   let
-    val _ = if !Library.trace > 0 andalso
+    val _ = if !HolBA_Library.trace > 0 andalso
       Option.isSome (Redblackmap.peek (proof, id)) then
         WARNING "extend_proof"
           ("proofterm ID " ^ Int.toString id ^ " defined more than once")
@@ -318,17 +318,17 @@ local
      definition; returns a (possibly extended) dictionary and proof *)
   fun parse_definition get_token (tydict, tmdict, proof) =
   let
-    val _ = Library.expect_token "(" (get_token ())
-    val _ = Library.expect_token "(" (get_token ())
+    val _ = HolBA_Library.expect_token "(" (get_token ())
+    val _ = HolBA_Library.expect_token "(" (get_token ())
     val name = get_token ()
-    val t = SmtLib_Parser.parse_term get_token (tydict, tmdict)
-    val _ = Library.expect_token ")" (get_token ())
-    val _ = Library.expect_token ")" (get_token ())
+    val t = HolBA_SmtLib_Parser.parse_term get_token (tydict, tmdict)
+    val _ = HolBA_Library.expect_token ")" (get_token ())
+    val _ = HolBA_Library.expect_token ")" (get_token ())
   in
     if String.isPrefix "@x" name then
       (* proofterm definition *)
       let
-        val tmdict = Library.extend_dict ((name, SmtLib_Theories.K_zero_zero
+        val tmdict = HolBA_Library.extend_dict ((name, HolBA_SmtLib_Theories.K_zero_zero
           (Term.mk_var (name, pt_ty))), tmdict)
         val proof = extend_proof proof (proofterm_id name, t)
       in
@@ -336,14 +336,14 @@ local
       end
     else
       (* term definition *)
-      (Library.extend_dict ((name, SmtLib_Theories.K_zero_zero t), tmdict),
+      (HolBA_Library.extend_dict ((name, HolBA_SmtLib_Theories.K_zero_zero t), tmdict),
         proof)
   end
 
   (* entry point into the parser (i.e., the grammar's start symbol) *)
   fun parse_proof get_token (tydict, tmdict, proof) (rpars : int) =
   let
-    val _ = Library.expect_token "(" (get_token ())
+    val _ = HolBA_Library.expect_token "(" (get_token ())
     val head = get_token ()
   in
     if head = "let" then
@@ -356,7 +356,7 @@ local
       (* some (otherwise valid) proofs are preceded by an error message,
          which we simply ignore *)
       get_token ();
-      Library.expect_token ")" (get_token ());
+      HolBA_Library.expect_token ")" (get_token ());
       parse_proof get_token (tydict, tmdict, proof) rpars
     ) else
       let
@@ -366,11 +366,11 @@ local
           case !buffer of
             [] => get_token ()
           | x::xs => (buffer := xs; x)
-        val t = SmtLib_Parser.parse_term get_token' (tydict, tmdict)
+        val t = HolBA_SmtLib_Parser.parse_term get_token' (tydict, tmdict)
       in
         (* Z3 assigns no ID to the final proof step; we use ID 0 *)
         extend_proof proof (0, t) before Lib.funpow rpars
-          (fn () => Library.expect_token ")" (get_token ())) ()
+          (fn () => HolBA_Library.expect_token ")" (get_token ())) ()
       end
   end
 
@@ -379,20 +379,20 @@ in
   (* Similar to 'parse_file' below, but for instreams.  Does not close
      the instream. *)
 
-  fun parse_stream (tydict : (string, Type.hol_type SmtLib_Parser.parse_fn list)
-    Redblackmap.dict, tmdict : (string, Term.term SmtLib_Parser.parse_fn list)
+  fun parse_stream (tydict : (string, Type.hol_type HolBA_SmtLib_Parser.parse_fn list)
+    Redblackmap.dict, tmdict : (string, Term.term HolBA_SmtLib_Parser.parse_fn list)
     Redblackmap.dict) (instream : TextIO.instream) : proof =
   let
     (* union of user-declared names and Z3's inference rule names *)
-    val tmdict = Library.union_dict tmdict z3_builtin_dict
+    val tmdict = HolBA_Library.union_dict tmdict z3_builtin_dict
     (* parse the stream *)
-    val _ = if !Library.trace > 1 then
-        Feedback.HOL_MESG "HolSmtLib: parsing Z3 proof"
+    val _ = if !HolBA_Library.trace > 1 then
+        Feedback.HOL_MESG "HolBA_HolSmtLib: parsing Z3 proof"
       else ()
-    val get_token = Library.get_token (Library.get_buffered_char instream)
+    val get_token = HolBA_Library.get_token (HolBA_Library.get_buffered_char instream)
     val proof = parse_proof get_token
       (tydict, tmdict, Redblackmap.mkDict Int.compare) 0
-    val _ = if !Library.trace > 0 then
+    val _ = if !HolBA_Library.trace > 0 then
         WARNING "parse_stream" ("ignoring token '" ^ get_token () ^
           "' (and perhaps others) after proof")
           handle Feedback.HOL_ERR _ => ()  (* end of stream, as expected *)
@@ -408,7 +408,7 @@ in
      October 2010).  'parse_file' takes three arguments: two
      dictionaries mapping names of types and terms (namely those
      declared in the SMT-LIB benchmark) to lists of parsing functions
-     (cf. 'SmtLib_Parser.parse_file'); and the name of the proof
+     (cf. 'HolBA_SmtLib_Parser.parse_file'); and the name of the proof
      file. *)
 
   fun parse_file (tydict, tmdict) (path : string) : proof =

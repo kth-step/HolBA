@@ -2,7 +2,7 @@
 
 (* Proof reconstruction for Z3: SML type of Z3 proofs *)
 
-structure Z3_Proof =
+structure HolBA_Z3_Proof =
 struct
 
   (* A single Z3 inference step is represented as a value of type

@@ -30,7 +30,7 @@ fun pdecide btm =
     val _ = if debug_on then print_term wtm else ();
     val _ = if debug_on then print "\n" else ();
 
-    val taut =     ((HolSmtLib.Z3_ORACLE_PROVE wtm; true)
+    val taut =     ((HolBA_HolSmtLib.Z3_ORACLE_PROVE wtm; true)
                        handle HOL_ERR e => false);
 
     val model = ((Z3_SAT_modelLib.Z3_GET_SAT_MODEL wtm; true)

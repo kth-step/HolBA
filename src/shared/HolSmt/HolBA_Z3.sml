@@ -2,14 +2,14 @@
 
 (* Functions to invoke the Z3 SMT solver *)
 
-structure Z3 = struct
+structure HolBA_Z3 = struct
 
   (* returns SAT if Z3 reported "sat", UNSAT if Z3 reported "unsat" *)
   fun is_sat_stream instream =
     case Option.map (String.tokens Char.isSpace) (TextIO.inputLine instream) of
-      NONE => SolverSpec.UNKNOWN NONE
-    | SOME ["sat"] => SolverSpec.SAT NONE
-    | SOME ["unsat"] => SolverSpec.UNSAT NONE
+      NONE => HolBA_SolverSpec.UNKNOWN NONE
+    | SOME ["sat"] => HolBA_SolverSpec.SAT NONE
+    | SOME ["unsat"] => HolBA_SolverSpec.UNSAT NONE
     | _ => is_sat_stream instream
 
   fun is_sat_file path =
@@ -26,7 +26,7 @@ structure Z3 = struct
   fun mk_Z3_fun name pre cmd_stem post goal =
     case OS.Process.getEnv "HOL4_Z3_EXECUTABLE" of
       SOME file =>
-        SolverSpec.make_solver pre (file ^ cmd_stem) post goal
+        HolBA_SolverSpec.make_solver pre (file ^ cmd_stem) post goal
     | NONE =>
         raise Feedback.mk_HOL_ERR "Z3" name
           "Z3 not configured: set the HOL4_Z3_EXECUTABLE environment variable to point to the Z3 executable file."
@@ -36,7 +36,7 @@ structure Z3 = struct
     mk_Z3_fun "Z3_SMT_Oracle"
       (fn goal =>
         let
-          val (goal, _) = SolverSpec.simplify (SmtLib.SIMP_TAC false) goal
+          val (goal, _) = HolBA_SolverSpec.simplify (SmtLib.SIMP_TAC false) goal
           val (_, strings) = SmtLib.goal_to_SmtLib goal
         in
           ((), strings)
@@ -82,7 +82,7 @@ structure Z3 = struct
     mk_Z3_fun "Z3_SMT_Prover"
       (fn goal =>
         let
-          val (goal, validation) = SolverSpec.simplify (SmtLib.SIMP_TAC true) goal
+          val (goal, validation) = HolBA_SolverSpec.simplify (SmtLib.SIMP_TAC true) goal
           val (ty_tm_dict, strings) = SmtLib.goal_to_SmtLib_with_get_proof goal
         in
           (((goal, validation), ty_tm_dict), strings)
@@ -95,7 +95,7 @@ structure Z3 = struct
             val result = is_sat_stream instream
           in
             case result of
-              SolverSpec.UNSAT NONE =>
+              HolBA_SolverSpec.UNSAT NONE =>
               let
                 (* invert 'ty_dict' and 'tm_dict', create parsing functions *)
                 val ty_dict = Redblackmap.foldl (fn (ty, s, dict) =>
@@ -112,24 +112,24 @@ structure Z3 = struct
                           "wrong number of arguments"))]))
                   (Redblackmap.mkDict String.compare) tm_dict
                 (* add relevant SMT-LIB types/terms to dictionaries *)
-                val ty_dict = Library.union_dict (Library.union_dict
-                  SmtLib_Logics.AUFNIRA.tydict SmtLib_Logics.QF_ABV.tydict)
+                val ty_dict = HolBA_Library.union_dict (HolBA_Library.union_dict
+                  HolBA_SmtLib_Logics.AUFNIRA.tydict HolBA_SmtLib_Logics.QF_ABV.tydict)
                   ty_dict
-                val tm_dict = Library.union_dict (Library.union_dict
-                  SmtLib_Logics.AUFNIRA.tmdict SmtLib_Logics.QF_ABV.tmdict)
+                val tm_dict = HolBA_Library.union_dict (HolBA_Library.union_dict
+                  HolBA_SmtLib_Logics.AUFNIRA.tmdict HolBA_SmtLib_Logics.QF_ABV.tmdict)
                   tm_dict
                 (* parse the proof and check it in HOL *)
-                val proof = Z3_ProofParser.parse_stream (ty_dict, tm_dict)
+                val proof = HolBA_Z3_ProofParser.parse_stream (ty_dict, tm_dict)
                   instream
                   handle err => raise Feedback.mk_HOL_ERR "Z3" "Z3_SMT_Prover"
                     ("failed to parse Z3 proof: [" ^ (exnName err) ^ "] " ^ (exnMessage err))
                 val _ = TextIO.closeIn instream
-                val thm = Z3_ProofReplay.check_proof proof
+                val thm = HolBA_Z3_ProofReplay.check_proof proof
                 val (As, g) = goal
                 val thm = Thm.CCONTR g thm
                 val thm = validation [thm]
               in
-                SolverSpec.UNSAT (SOME thm)
+                HolBA_SolverSpec.UNSAT (SOME thm)
               end
             | _ => (result before TextIO.closeIn instream)
           end)
