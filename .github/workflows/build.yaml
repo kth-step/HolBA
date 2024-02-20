@@ -56,11 +56,6 @@ jobs:
         timeout-minutes: 35
         run: |
           ./configure.sh
-          ./scripts/ci/run_make.sh main
-
-      - name: Run tests
-        timeout-minutes: 35
-        run: |
-          ./scripts/ci/run_make.sh tests
+          ./scripts/ci/run_holmake.sh
 
 
