@@ -1,3 +1,5 @@
+CLINE_OPTIONS = -r
+
 INCLUDES = $(HOLBADIR)/src/aux \
            $(HOLBADIR)/src/shared \
            $(HOLBADIR)/src/shared/HolSmt \
