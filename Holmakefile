@@ -1,0 +1,27 @@
+INCLUDES = $(HOLBADIR)/src/aux \
+           $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/shared/HolSmt \
+           $(HOLBADIR)/src/shared/sml-simplejson \
+           $(HOLBADIR)/src/theory/bir \
+           $(HOLBADIR)/src/theory/bir-support \
+           $(HOLBADIR)/src/theory/models/l3mod \
+           $(HOLBADIR)/src/theory/program_logic \
+           $(HOLBADIR)/src/theory/tools/lifter \
+           $(HOLBADIR)/src/theory/tools/wp \
+           $(HOLBADIR)/src/theory/tools/comp \
+           $(HOLBADIR)/src/theory/tools/backlifter \
+           $(HOLBADIR)/src/tools/lifter \
+           $(HOLBADIR)/src/tools/wp \
+           $(HOLBADIR)/src/tools/comp \
+           $(HOLBADIR)/src/tools/cfg \
+           $(HOLBADIR)/src/tools/backlifter \
+           $(HOLBADIR)/src/tools/exec \
+           $(HOLBADIR)/src/tools/pass \
+           $(HOLBADIR)/src/tools/scamv \
+           $(HOLBADIR)/src/tools/scamv/obsmodel \
+           $(HOLBADIR)/src/tools/scamv/persistence \
+           $(HOLBADIR)/src/tools/scamv/symbexec \
+           $(HOLBADIR)/src/tools/scamv/proggen
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
