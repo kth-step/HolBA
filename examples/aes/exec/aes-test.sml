@@ -1,5 +1,8 @@
 open HolKernel Parse;
 
+(* FIXME: needed to avoid quse errors *)
+open m0_stepLib;
+
 open bir_inst_liftingTheory;
 open bir_program_valid_stateTheory;
 

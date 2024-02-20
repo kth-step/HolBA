@@ -8,9 +8,11 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLBADIR)/src/shared \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
-           $(HOLBADIR)/src/theory/tools/lifter \
-           $(HOLBADIR)/src/theory/tools/wp \
-           $(HOLBADIR)/src/tools/lifter
+           $(HOLBADIR)/src/tools/wp \
+           $(HOLBADIR)/examples/aes/lifter
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
+
+aes-test.exe: aes-test.uo
+	$(HOLMOSMLC) -o $@ $<

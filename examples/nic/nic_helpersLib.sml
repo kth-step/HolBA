@@ -132,7 +132,7 @@ struct
 
       (* Prove it using an SMT solver *)
       val start_time = timer_start ();
-      val smt_thm = HolSmtLib.Z3_ORACLE_PROVE smt_ready_tm
+      val smt_thm = HolBA_HolSmtLib.Z3_ORACLE_PROVE smt_ready_tm
         handle sat_exn => (* Pretty-exn + try to show a SAT model if level_log=DEBUG *)
           let
             (* Wrap the exn, and pretty-print it to the user *)

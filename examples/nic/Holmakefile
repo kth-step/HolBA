@@ -5,12 +5,11 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLDIR)/examples/l3-machine-code/m0/step \
            $(HOLDIR)/examples/l3-machine-code/riscv/model \
            $(HOLDIR)/examples/l3-machine-code/riscv/step \
+           $(HOLBADIR)/src/shared/HolSmt \
            $(HOLBADIR)/src/shared \
            $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
-           $(HOLBADIR)/src/theory/tools/lifter \
-           $(HOLBADIR)/src/theory/tools/wp \
-           $(HOLBADIR)/src/tools/lifter
+           $(HOLBADIR)/src/tools/wp
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all
