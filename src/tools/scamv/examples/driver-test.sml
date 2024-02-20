@@ -3,7 +3,7 @@ open bir_rel_synthLib;
 
 (*
 (* trace that also controls whether temporary z3 input files are preserved *)
-val _ = Library.trace := 100;
+val _ = HolBA_Library.trace := 100;
 *)
 
 
