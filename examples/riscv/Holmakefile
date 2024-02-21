@@ -1,0 +1,14 @@
+INCLUDES = $(HOLBADIR)/examples/riscv/swap \
+           $(HOLBADIR)/examples/riscv/isqrt \
+           $(HOLBADIR)/examples/riscv/mod2
+
+all: $(DEFAULT_TARGETS) test-riscv.exe
+.PHONY: all
+
+test-riscv.exe: test-riscv.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-riscv.exe
+	./test-riscv.exe
+
+EXTRA_CLEANS = test-riscv.exe
