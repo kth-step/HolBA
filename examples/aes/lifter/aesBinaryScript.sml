@@ -1,7 +1,11 @@
-open HolKernel Parse
+open HolKernel Parse PPBackEnd;
+
+(* FIXME: needed to avoid quse errors *)
+open m0_stepLib;
 
 open bir_inst_liftingLib;
-open gcc_supportLib
+open gcc_supportLib;
+open bir_execLib;
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = set_trace "bir_inst_lifting.DEBUG_LEVEL" 2;

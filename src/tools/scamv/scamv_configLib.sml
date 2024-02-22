@@ -361,7 +361,7 @@ fun set_exec_conc (cfg : scamv_config) s =
       exec_conc = s };
 
 fun set_hsmtltl (cfg : scamv_config) s =
-    (Library.trace := s; cfg);
+    (HolBA_Library.trace := s; cfg);
 
 (* end boilerplate *)
 

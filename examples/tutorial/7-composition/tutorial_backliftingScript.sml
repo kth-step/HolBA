@@ -1,7 +1,9 @@
 open HolKernel Parse boolLib bossLib;
 
-open bir_prog_add_regTheory tutorial_bir_to_armTheory
-     add_reg_compositionTheory;
+(* FIXME: needed to avoid quse errors *)
+open m0_stepLib;
+
+open bir_prog_add_regTheory tutorial_bir_to_armTheory add_reg_compositionTheory;
 
 open bir_backlifterLib;
 

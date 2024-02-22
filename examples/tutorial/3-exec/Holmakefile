@@ -1,0 +1,5 @@
+INCLUDES = $(HOLBADIR)/src/tools/exec \
+           $(HOLBADIR)/examples/tutorial/2-lift
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

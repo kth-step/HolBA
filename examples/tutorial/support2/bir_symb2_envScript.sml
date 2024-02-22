@@ -5,6 +5,7 @@ app load ["bir_envTheory", "bir_valuesTheory"];
 
 open HolKernel Parse boolLib bossLib;
 open finite_mapTheory;
+open bir_expTheory;
 open bir_envTheory;
 open bir_valuesTheory;
 open listTheory;

@@ -1,0 +1,7 @@
+INCLUDES = $(HOLBADIR)/src/theory/bir \
+           $(HOLBADIR)/src/theory/bir-support \
+           $(HOLBADIR)/src/tools/lifter \
+           $(HOLBADIR)/src/tools/wp
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

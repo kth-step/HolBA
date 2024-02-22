@@ -32,24 +32,24 @@ struct
     (* call 'pre goal' to generate SMT solver input *)
     val (x, inputs) = pre goal
     val infile = FileSys.tmpName ()
-    val _ = Library.write_strings_to_file infile inputs
+    val _ = HolBA_Library.write_strings_to_file infile inputs
     val outfile = FileSys.tmpName ()
     val cmd = cmd_stem ^ infile ^ " > " ^ outfile
     (* the actual system call to the SMT solver *)
-    val _ = if !Library.trace > 1 then
+    val _ = if !HolBA_Library.trace > 1 then
         Feedback.HOL_MESG ("Z3_with_modelLib: calling external command '" ^ cmd ^ "'")
       else ()
     val _ = Systeml.system_ps cmd
     (* call 'post' to determine the result *)
     val result = post x outfile
-    val _ = if !Library.trace > 1 then
+    val _ = if !HolBA_Library.trace > 1 then
         Feedback.HOL_MESG ("Z3_with_modelLib: Z3 reports term to be '" ^
           (case result of
              SAT NONE => "satisfiable' (no model given)"
            | SAT (SOME _) => "satisfiable' (model given)"
            | UNSAT NONE => "unsatisfiable' (no proof given)"
            | UNSAT (SOME thm) =>
-             if !Library.trace > 2 then
+             if !HolBA_Library.trace > 2 then
                "unsatisfiable' (theorem: " ^ Hol_pp.thm_to_string thm ^ ")"
              else
                "unsatisfiable' (proof checked)"
@@ -58,7 +58,7 @@ struct
       else ()
     (* if the SMT solver returned a theorem 'thm', then this should be of the
        form "A' |- g" with A' \subseteq A, where (A, g) is the input goal *)
-    val _ = if !Library.trace > 0 then
+    val _ = if !HolBA_Library.trace > 0 then
         case result of
           UNSAT (SOME thm) =>
             let
@@ -78,7 +78,7 @@ struct
           ()
       else ()
     (* delete all temporary files *)
-    val _ = if !Library.trace < 4 then
+    val _ = if !HolBA_Library.trace < 4 then
         List.app (fn path => OS.FileSys.remove path handle SysErr _ => ())
           [infile, outfile]
       else ()
@@ -135,7 +135,7 @@ struct
     mk_Z3_fun "Z3_ORACLE_SOLVE_GOAL"
       (fn goal =>
         let
-          val (_, strings) = SmtLib.goal_to_SmtLib_unnegated goal
+          val (_, strings) = HolBA_SmtLib.goal_to_SmtLib_unnegated goal
         in
           ((), strings)
         end)
@@ -149,7 +149,7 @@ struct
       val ERR = ERR "Z3_ORACLE_SOLVE"
       val solver = Z3_ORACLE_SOLVE_GOAL
       val goal = ([], term)
-      val (simplified_goal, _) = SolverSpec.simplify (SmtLib.SIMP_TAC false) goal
+      val (simplified_goal, _) = HolBA_SolverSpec.simplify (HolBA_SmtLib.SIMP_TAC false) goal
       val negated_goal = ([], boolSyntax.mk_neg (snd simplified_goal))
     in
       case solver goal of
@@ -166,10 +166,10 @@ struct
     let
       val ERR = ERR "Z3_GET_SAT_MODEL"
       val goal = ([], term)
-      val (simplified_goal, _) = SolverSpec.simplify (SmtLib.SIMP_TAC false) goal
+      val (simplified_goal, _) = HolBA_SolverSpec.simplify (HolBA_SmtLib.SIMP_TAC false) goal
 
       val _ =
-        if !Library.trace > 4 then
+        if !HolBA_Library.trace > 4 then
         let
           val _ = print "simplified goal >>>\n";
           open HolKernel boolLib liteLib simpLib Parse bossLib;

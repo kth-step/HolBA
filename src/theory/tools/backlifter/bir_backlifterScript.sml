@@ -20,6 +20,8 @@ open program_logicSimps;
 
 open bir_auxiliaryLib;
 
+open m0_mod_stepLib;
+
 val _ = new_theory "bir_backlifter";
 
 (* This part should be generalized *)

@@ -5,14 +5,14 @@ open pretty_exnLib;
 (* Load dependencies in interactive sessions *)
 val _ = if !Globals.interactive then (
   load "easy_noproof_wpLib"; (* ../lib *)
-  load "HolSmtLib"; (* HOL/src/HolSmt *)
+  load "HolBA_HolSmtLib"; (* HOL/src/HolSmt *)
   ()) else ();
 
 val _ = Parse.current_backend := PPBackEnd.vt100_terminal;
 val _ = Globals.show_tags := true;
 
 val _ = if !Globals.interactive then () else (
-  Feedback.set_trace "HolSmtLib" 0;
+  Feedback.set_trace "HolBA_HolSmtLib" 0;
   Feedback.set_trace "bir_wpLib.DEBUG_LEVEL" 0;
   Feedback.set_trace "easy_noproof_wpLib" 2;
   Feedback.set_trace "Define.storage_message" 0;
@@ -24,8 +24,8 @@ val _ = Globals.linewidth := 100;
 val _ = Globals.show_types := true;
 val _ = Globals.show_assums := true;
 val _ = wordsLib.add_word_cast_printer ();
-val _ = Feedback.set_trace "HolSmtLib" 0;
-val _ = Feedback.set_trace "HolSmtLib" 4;
+val _ = Feedback.set_trace "HolBA_HolSmtLib" 0;
+val _ = Feedback.set_trace "HolBA_HolSmtLib" 4;
 val _ = Feedback.set_trace "bir_wpLib.DEBUG_LEVEL" 2;
 val _ = Feedback.set_trace "easy_noproof_wpLib" logLib.TRACE;
 val _ = Feedback.set_trace "Define.storage_message" 1;
@@ -112,7 +112,7 @@ val s3_thm =
 
     (* Prove it using an SMT solver *)
     val start_time = timer_start ();
-    val smt_thm = HolSmtLib.Z3_ORACLE_PROVE smt_ready_tm
+    val smt_thm = HolBA_HolSmtLib.Z3_ORACLE_PROVE smt_ready_tm
       handle e => raise pp_exn_s "Z3_ORACLE_PROVE failed" e
     val _ = print ("SMT solver took: " ^ (timer_stop start_time) ^ " sec\n");
   in
@@ -156,7 +156,7 @@ val s2_thm =
 
     (* Prove it using an SMT solver *)
     val start_time = timer_start ();
-    val smt_thm = HolSmtLib.Z3_ORACLE_PROVE smt_ready_tm
+    val smt_thm = HolBA_HolSmtLib.Z3_ORACLE_PROVE smt_ready_tm
       handle e => raise pp_exn_s "Z3_ORACLE_PROVE failed" e
     val _ = print ("SMT solver took: " ^ (timer_stop start_time) ^ " sec\n");
   in

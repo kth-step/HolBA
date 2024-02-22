@@ -1,8 +1,8 @@
 (* Copyright (c) 2009-2012 Tjark Weber. All rights reserved. *)
 
-(* Unit tests for HolSmtLib *)
+(* Unit tests for HolBA_HolSmtLib *)
 
-val _ = print "Testing HolSmtLib\n"
+val _ = print "Testing HolBA_HolSmtLib\n"
 
 (*****************************************************************************)
 (* tracing/pretty-printing options useful for debugging                      *)
@@ -15,20 +15,20 @@ val _ = Globals.show_types := true
 val _ = wordsLib.add_word_cast_printer ()
 *)
 
-val _ = Feedback.set_trace "HolSmtLib" 0
+val _ = Feedback.set_trace "HolBA_HolSmtLib" 0
 
 (*
-val _ = Feedback.set_trace "HolSmtLib" 4
+val _ = Feedback.set_trace "HolBA_HolSmtLib" 4
 *)
 
 (*****************************************************************************)
 (* check whether SMT solvers are installed                                   *)
 (*****************************************************************************)
 
-val _ = if Yices.is_configured () then () else
+val _ = if HolBA_Yices.is_configured () then () else
   print "(Yices not configured, some tests will be skipped.)\n"
 
-val _ = if Z3.is_configured () then () else
+val _ = if HolBA_Z3.is_configured () then () else
   print "(Z3 not configured, some tests will be skipped.)\n"
 
 (*****************************************************************************)
@@ -71,7 +71,7 @@ fun expect_sat name smt_tac t =
     die ("Test of solver '" ^ name ^ "' failed on term '" ^
       Hol_pp.term_to_string t ^ "': exception expected")
   end handle Feedback.HOL_ERR {origin_structure, origin_function, message} =>
-    if origin_structure = "HolSmtLib" andalso
+    if origin_structure = "HolBA_HolSmtLib" andalso
        origin_function = "GENERIC_SMT_TAC" andalso
        (message = "solver reports negated term to be 'satisfiable'" orelse
         message = "solver reports negated term to be 'satisfiable' (model returned)")
@@ -122,22 +122,22 @@ fun auto_tac (_, t) =
   end
 
 val thm_AUTO =
-  mk_test_fun true expect_thm "AUTO" (Tactical.THEN (Library.SET_SIMP_TAC, auto_tac))
+  mk_test_fun true expect_thm "AUTO" (Tactical.THEN (HolBA_Library.SET_SIMP_TAC, auto_tac))
 
 fun mk_Yices expect_fun =
-  mk_test_fun (Yices.is_configured ()) expect_fun "Yices" HolSmtLib.YICES_TAC
+  mk_test_fun (HolBA_Yices.is_configured ()) expect_fun "Yices" HolBA_HolSmtLib.YICES_TAC
 
 val thm_YO = mk_Yices expect_thm
 val sat_YO = mk_Yices expect_sat
 
 fun mk_Z3 expect_fun =
-  mk_test_fun (Z3.is_configured ()) expect_fun "Z3" HolSmtLib.Z3_ORACLE_TAC
+  mk_test_fun (HolBA_Z3.is_configured ()) expect_fun "Z3" HolBA_HolSmtLib.Z3_ORACLE_TAC
 
 val thm_Z3 = mk_Z3 expect_thm
 val sat_Z3 = mk_Z3 expect_sat
 
 fun mk_Z3p expect_fun =
-  mk_test_fun (Z3.is_configured ()) expect_fun "Z3 (proofs)" HolSmtLib.Z3_TAC
+  mk_test_fun (HolBA_Z3.is_configured ()) expect_fun "Z3 (proofs)" HolBA_HolSmtLib.Z3_TAC
 
 val thm_Z3p = mk_Z3p expect_thm
 val sat_Z3p = mk_Z3p expect_sat

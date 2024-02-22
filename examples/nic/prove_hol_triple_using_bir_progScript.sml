@@ -50,10 +50,14 @@
  *)
 
 open HolKernel Parse boolLib bossLib;
+
+(* FIXME: needed to avoid quse errors *)
+open m0_stepLib;
+
 open finite_mapTheory optionTheory;
 open wordsLib;
-open HolSmtLib;
-open bir_envTheory bir_programTheory;
+open HolBA_HolSmtLib;
+open bir_envTheory bir_programTheory bir_immTheory;
 open bir_program_no_assumeTheory bir_program_no_assumeLib;
 open bir_expTheory bir_bool_expTheory bir_valuesTheory;
 open bir_exp_equivTheory bir_typing_progTheory

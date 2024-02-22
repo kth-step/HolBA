@@ -1,7 +1,8 @@
 open HolKernel Parse;
 open PPBackEnd;
+open bir_update_blockTheory bir_inst_liftingTheory;
+open m0_stepLib;
 open bir_inst_liftingHelpersLib;
-
 open bir_inst_liftingLib;
 open gcc_supportLib
 

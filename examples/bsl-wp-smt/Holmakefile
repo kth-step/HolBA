@@ -1,0 +1,28 @@
+INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
+           $(HOLDIR)/examples/l3-machine-code/arm8/model \
+           $(HOLDIR)/examples/l3-machine-code/arm8/step \
+           $(HOLDIR)/examples/l3-machine-code/m0/model \
+           $(HOLDIR)/examples/l3-machine-code/m0/step \
+           $(HOLDIR)/examples/l3-machine-code/riscv/model \
+           $(HOLDIR)/examples/l3-machine-code/riscv/step \
+           $(HOLBADIR)/src/shared/HolSmt \
+           $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/tools/wp
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
+
+example-gauss-with-mem.exe: example-gauss-with-mem.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-addrs-eq-imp-x42.exe: test-addrs-eq-imp-x42.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-cjmp.exe: test-cjmp.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-gauss-no-mem.exe: test-gauss-no-mem.uo
+	$(HOLMOSMLC) -o $@ $<
+
+wpsimp_test-gauss-no-mult.exe: wpsimp_test-gauss-no-mult.uo
+	$(HOLMOSMLC) -o $@ $<

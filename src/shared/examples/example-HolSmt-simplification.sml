@@ -9,7 +9,7 @@ val _ = Globals.show_types := true;
 
 (*
 (* for debugging the z3 input and output (keep the temporary files) *)
-val _ = Library.trace := 5;
+val _ = HolBA_Library.trace := 5;
 *)
 
 val mem1_var = mk_var ("MEM", “:word64 |-> word8”);
@@ -126,7 +126,7 @@ val MEM_def = Define ‘MEM a b = T’;
 
 (*
 val goal = ([]:term list, “^term”);
-val (simplified_goals, _) = (Library.WORD_SIMP_TAC) goal;
+val (simplified_goals, _) = (HolBA_Library.WORD_SIMP_TAC) goal;
 val [([], sg_t)] = simplified_goals;
 val _ = print_term sg_t;
 *)

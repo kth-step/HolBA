@@ -1,0 +1,21 @@
+INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
+           $(HOLDIR)/examples/l3-machine-code/arm8/model \
+           $(HOLDIR)/examples/l3-machine-code/arm8/step \
+           $(HOLDIR)/examples/l3-machine-code/m0/model \
+           $(HOLDIR)/examples/l3-machine-code/m0/step \
+           $(HOLDIR)/examples/l3-machine-code/riscv/model \
+           $(HOLDIR)/examples/l3-machine-code/riscv/step \
+           $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/theory/bir \
+           $(HOLBADIR)/src/theory/bir-support \
+           $(HOLBADIR)/src/theory/tools/lifter \
+           $(HOLBADIR)/src/tools/lifter \
+           $(HOLBADIR)/src/tools/comp \
+           $(HOLBADIR)/src/tools/backlifter \
+           $(HOLBADIR)/examples/tutorial/2-lift \
+           $(HOLBADIR)/examples/tutorial/4-bir-to-arm \
+           $(HOLBADIR)/examples/tutorial/5-wp \
+           $(HOLBADIR)/examples/tutorial/6-smt
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

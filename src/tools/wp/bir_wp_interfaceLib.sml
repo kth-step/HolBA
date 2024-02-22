@@ -223,7 +223,7 @@ fun prove_imp_w_smt ante conseq =
     val bir_impl = bor (bnot ante, conseq)
     val w_tm = bir2bool bir_impl
   in
-    HolSmtLib.Z3_ORACLE_PROVE w_tm
+    HolBA_HolSmtLib.Z3_ORACLE_PROVE w_tm
 
     handle HOL_ERR e =>
       let

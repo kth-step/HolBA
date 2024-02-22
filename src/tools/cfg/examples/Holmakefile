@@ -1,0 +1,4 @@
+INCLUDES = $(HOLBADIR)/src/tools/cfg/examples/toy
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
