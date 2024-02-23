@@ -1,6 +1,6 @@
+open HolKernel boolLib Parse bossLib;
+
 open wordsTheory;
-
-
 
 val _ = new_theory "aes_spec";
 
