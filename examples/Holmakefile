@@ -1,0 +1,14 @@
+CLINE_OPTIONS = -r
+
+INCLUDES = $(HOLBADIR)/examples/bsl-wp-smt \
+           $(HOLBADIR)/examples/tutorial/2-lift \
+           $(HOLBADIR)/examples/tutorial/3-exec \
+           $(HOLBADIR)/examples/tutorial/4-bir-to-arm \
+           $(HOLBADIR)/examples/tutorial/5-wp \
+           $(HOLBADIR)/examples/tutorial/6-smt \
+           $(HOLBADIR)/examples/tutorial/7-composition \
+           $(HOLBADIR)/examples/riscv/swap \
+           $(HOLBADIR)/examples/riscv/isqrt
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

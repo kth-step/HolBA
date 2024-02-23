@@ -2,7 +2,13 @@
 
 [![Build Status](https://github.com/kth-step/HolBA/workflows/CI%20Build/badge.svg?branch=master)](https://github.com/kth-step/HolBA/actions?query=workflow%3A%22CI+Build%22)
 
-Be sure to check out the Wiki, which contains some useful general information about HolBA.
+HolBA is a library based on the HOL4 theorem prover that provides
+tools for analysis and formal proofs of properties of programs in binary
+format that use the ARMv8, RISC-V and Cortex-M0 instruction sets.
+
+## Building
+
+HolBA is built using the `Holmake` tool bundled with HOL4.
 
 ### Dependencies
 
@@ -18,14 +24,10 @@ Be sure to check out the Wiki, which contains some useful general information ab
   - alternatively, Poly/ML 5.7.1 (version packaged for Ubuntu 20.04)
 - [Z3](https://github.com/Z3Prover/z3), 4.8.4
 
-## Building
-
-HolBA is built using the `Holmake` tool bundled with HOL4.
-
 ### Build using existing HOL4 installation
 
 If you already have HOL4 installed and `Holmake` in your path,
-you can do the following to build the whole library:
+you can do the following to build the whole library, excluding examples:
 
 ```bash
 git clone https://github.com/kth-step/HolBA.git
@@ -33,10 +35,19 @@ cd HolBA
 Holmake
 ```
 
+To build examples, you need to set the path to the Z3
+binary and then run `Holmake` in the `examples` directory:
+
+```bash
+export HOL4_Z3_EXECUTABLE=/path/to/z3
+cd examples
+Holmake
+```
+
 ### Build from scratch
 
 For convenience, HolBA provides some scripts to bootstrap
-a HOL4 environment from a bash shell.
+an environment with HOL4 and Z3 from a bash shell.
 
 ```bash
 git clone https://github.com/kth-step/HolBA.git
@@ -60,11 +71,11 @@ cd HolBA
 # run properly. It has to be run for each new shell.
 source env.sh
 
-# This builds the whole library, without examples
+# This builds the whole library, excluding examples
 ${HOLBA_HOLMAKE}
 
-# This builds an example
-cd examples/tutorial/7-composition
+# This builds the examples
+cd examples
 ${HOLBA_HOLMAKE}
 ```
 
@@ -134,7 +145,7 @@ ${HOLBA_HOLMAKE}
   * Fairly stable
   * Includes prototype of substitution simplification
 
-## References
+## Related publications
 
 - D. Lundberg, R. Guanciale, A. Lindner and M. Dam, **"Hoare-Style Logic for Unstructured Programs"**, in Software Engineering and Formal Methods, pp. 193-213, 2020. [Link](https://doi.org/10.1007/978-3-030-58768-0_11). _(program logic used for decomposition of verification)_
 - H. Nemati, P. Buiras, A. Lindner, R. Guanciale and S. Jacobs, **"Validation of Abstract Side-Channel Models for Computer Architectures"**, in International Conference on Computer Aided Verification, pp. 225-248, 2020. [Link](https://doi.org/10.1007/978-3-030-53288-8_12). _(framework to validate abstract side-channel models)_
