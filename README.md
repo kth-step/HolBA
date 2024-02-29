@@ -109,7 +109,7 @@ ${HOLBA_HOLMAKE}
       └─ wp: Weakest precondition propagation
 ```
 
-### Tools status:
+### Tools status
 
 - `tools/backlifter`:
   * Proof-producing
@@ -144,6 +144,32 @@ ${HOLBA_HOLMAKE}
   * Interface in progress
   * Fairly stable
   * Includes prototype of substitution simplification
+
+### Using HolBA in your HOL4-based project
+
+To depend on HolBA in a project based on HOL4, we recommend setting up your project
+to build using `Holmake`, and then adding references in your `Holmakefile` to
+the directories where the modules from HolBA that you use reside in, relative to
+the variable `HOLBADIR`.
+
+For example, if you depend on modules in the `src/theory/bir` and
+`src/theory/bir-support` directories, your `Holmakefile` may be as follows:
+
+```make
+INCLUDES = $(HOLBADIR)/src/theory/bir $(HOLBADIR)/src/theory/bir-support
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
+```
+
+To then build your project, you can export the path to your copy of the HolBA repository
+and run `Holmake` in the directory with your `Holmakefile`, which will recursively
+build all required theories:
+
+```bash
+export HOLBADIR=/path/to/holba
+Holmake
+```
 
 ## Related publications
 
