@@ -1,4 +1,5 @@
-INCLUDES = $(HOLBADIR)/src/aux
+INCLUDES = $(HOLBADIR)/src/aux \
+           $(HOLBADIR)/src/theory/bir
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

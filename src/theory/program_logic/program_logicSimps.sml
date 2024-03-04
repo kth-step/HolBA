@@ -3,6 +3,7 @@ struct
 
 open HolKernel boolLib liteLib simpLib Parse bossLib;
 open transition_systemTheory;
+open bir_programTheory;
 
 val wm_type = mk_thy_type {Tyop="transition_system_t",
                            Thy="transition_system",
