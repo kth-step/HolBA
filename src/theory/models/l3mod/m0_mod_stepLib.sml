@@ -4,6 +4,7 @@ struct
   open HolKernel Parse boolLib bossLib;
 
   open m0_mod_stepTheory;
+  open m0_stepLib;
 
   val ERR = mk_HOL_ERR "m0_mod_stepLib"
 
@@ -71,7 +72,7 @@ bir_is_lifted_prog_def
   (* step function *)
   fun thumb_mod_step_hex (endian_fl, sel_fl) =
     let
-      val thumb_step_hex' = m0_stepLib.thumb_step_hex (endian_fl, sel_fl);
+      val thumb_step_hex' = thumb_step_hex (endian_fl, sel_fl);
 
       (*
       val [(thm, d)]    = thms_with_d;
