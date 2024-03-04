@@ -1,0 +1,7 @@
+INCLUDES = $(HOLBADIR)/src/aux \
+           $(HOLBADIR)/src/theory/bir \
+           $(HOLBADIR)/src/theory/bir-support \
+           $(HOLBADIR)/src/theory/program_logic
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

@@ -583,12 +583,12 @@ val symb_subst_store_sound_NOTIN_thm = store_thm(
   REWRITE_TAC [boolTheory.FUN_EQ_THM] >>
   REPEAT STRIP_TAC >>
 
-  Cases_on `store' x` >- (
+  Cases_on `store x` >- (
     FULL_SIMP_TAC std_ss [symb_subst_store_thm]
   ) >>
 
   `symb NOTIN sr.sr_symbols_f x'` by (
-    `sr.sr_symbols_f x' SUBSET symb_symbols_store sr store'` by (
+    `sr.sr_symbols_f x' SUBSET symb_symbols_store sr store` by (
       METIS_TAC [symb_symbols_SUBSET_store_exps_thm]
     ) >>
     IMP_RES_TAC SUBSET_THM >>
@@ -645,7 +645,7 @@ val symb_subst_store_sound_thm = store_thm(
 
   EQ_TAC >> (
     REPEAT STRIP_TAC >>
-    Cases_on `store' var` >- (
+    Cases_on `store var` >- (
       METIS_TAC [symb_subst_store_thm, optionTheory.option_CLAUSES]
     ) >>
 
@@ -768,7 +768,7 @@ val symb_subst_store_symbols_thm3 = store_thm(
 
   Cases_on `?s. symb IN s ∧
               ?symbexp.
-                s = sr.sr_symbols_f symbexp /\ ?var. store' var = SOME symbexp` >- (
+                s = sr.sr_symbols_f symbexp /\ ?var. store var = SOME symbexp` >- (
     FULL_SIMP_TAC std_ss [] >>
     `sr.sr_symbols_f (sr.sr_subst_f (symb,symb_inst) symbexp) =
        (sr.sr_symbols_f symbexp DIFF {symb}) UNION (if symb IN sr.sr_symbols_f symbexp then sr.sr_symbols_f symb_inst else EMPTY)` by (
