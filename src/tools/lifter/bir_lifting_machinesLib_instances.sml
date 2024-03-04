@@ -3,14 +3,14 @@ structure bir_lifting_machinesLib_instances :>
 struct
 (* For compilation: *)
 open HolKernel boolLib liteLib simpLib Parse bossLib;
+(* Function libraries from examples/l3-machine-code: *)
+open m0_stepLib arm8_stepLib riscv_stepLib
 (* Local theories: *)
 open bir_exp_liftingLib bir_lifting_machinesTheory
      bir_nzcv_introsTheory bir_arm8_extrasTheory bir_m0_extrasTheory
      bir_riscv_extrasTheory
 (* Local function libraries: *)
 open bir_lifting_machinesLib;
-(* Function libraries from examples/l3-machine-code: *)
-open arm8_stepLib m0_stepLib riscv_stepLib
 
 (* Abbreviations used in this file:
  * BMR: BIR machine record. *)

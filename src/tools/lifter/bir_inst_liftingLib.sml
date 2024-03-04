@@ -8,6 +8,10 @@ functor bir_inst_liftingFunctor (MD : sig val mr : bir_lifting_machinesLib.bmr_r
 (* dependencies *)
 (* ================================================ *)
 open HolKernel boolLib liteLib simpLib Parse bossLib;
+
+(* FIXME: needed to avoid quse errors *)
+open m0_stepLib;
+
 open bir_inst_liftingTheory
 open bir_lifting_machinesTheory
 open bir_lifting_machinesLib bir_lifting_machinesLib_instances;
