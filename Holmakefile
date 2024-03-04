@@ -23,7 +23,8 @@ INCLUDES = $(HOLBADIR)/src/aux \
            $(HOLBADIR)/src/tools/scamv/obsmodel \
            $(HOLBADIR)/src/tools/scamv/persistence \
            $(HOLBADIR)/src/tools/scamv/symbexec \
-           $(HOLBADIR)/src/tools/scamv/proggen
+           $(HOLBADIR)/src/tools/scamv/proggen \
+           $(HOLBADIR)/src/tools/symbexec
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

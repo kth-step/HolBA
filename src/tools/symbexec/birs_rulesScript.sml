@@ -139,19 +139,19 @@ val assert_spec_thm = store_thm(
     PAT_X_ASSUM ``!x. A`` (ASSUME_TAC o SPEC ``birs_symb_to_symbst <|bsst_pc := lbl2; bsst_environ := env2;
                   bsst_status := BST_AssertionViolated;
                   bsst_pcond :=
-                    BExp_BinExp BIExp_And pre (BExp_UnaryExp BIExp_Not cond')|>``) >>
+                    BExp_BinExp BIExp_And pre (BExp_UnaryExp BIExp_Not cond)|>``) >>
 
     FULL_SIMP_TAC (std_ss++birs_state_ss) [IMAGE_INSERT, IMAGE_EMPTY, birs_symb_to_symbst_def] >>
 
     `symb_pcondinf (bir_symb_rec_sbir bprog)
-          (BExp_BinExp BIExp_And pre (BExp_UnaryExp BIExp_Not cond'))` by (
+          (BExp_BinExp BIExp_And pre (BExp_UnaryExp BIExp_Not cond))` by (
       METIS_TAC [birs_pcondinf_thm, symb_symbst_pcond_def]
     ) >>
 
     FULL_SIMP_TAC (std_ss++symb_TYPES_ss) [symb_symbst_pcond_def, DIFF_INSERT, DIFF_EMPTY, DELETE_INSERT, EMPTY_DELETE] >>
     REV_FULL_SIMP_TAC (std_ss) [] >>
 
-    Q.ABBREV_TAC `sys2 = SymbSymbSt lbl1 env1 (BExp_BinExp BIExp_And pre cond') status` >>
+    Q.ABBREV_TAC `sys2 = SymbSymbSt lbl1 env1 (BExp_BinExp BIExp_And pre cond) status` >>
     Q.ABBREV_TAC `sys2' = SymbSymbSt lbl1 env1 pre status` >>
 
     ASSUME_TAC (

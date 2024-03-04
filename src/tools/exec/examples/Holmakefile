@@ -1,4 +1,0 @@
-INCLUDES = 
-
-all: $(DEFAULT_TARGETS)
-.PHONY: all
