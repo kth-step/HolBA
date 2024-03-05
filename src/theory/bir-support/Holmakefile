@@ -1,4 +1,11 @@
 INCLUDES = $(HOLBADIR)/src/theory/bir
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) selftest.exe
 .PHONY: all
+
+selftest.exe: selftest.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: selftest.exe
+	./selftest.exe
+.PHONY: test
