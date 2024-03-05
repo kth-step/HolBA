@@ -9,3 +9,5 @@ selftest.exe: selftest.uo
 test: selftest.exe
 	./selftest.exe
 .PHONY: test
+
+EXTRA_CLEANS = selftest.exe

@@ -1,6 +1,7 @@
 INCLUDES = $(HOLBADIR)/src/theory/bir \
            $(HOLBADIR)/src/theory/bir-support \
-           $(HOLBADIR)/src/shared
+           $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/tools/exec
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

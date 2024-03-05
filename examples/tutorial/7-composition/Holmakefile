@@ -17,5 +17,14 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLBADIR)/examples/tutorial/5-wp \
            $(HOLBADIR)/examples/tutorial/6-smt
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) test-composition.exe
 .PHONY: all
+
+test-composition.exe: test-composition.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-composition.exe
+	./test-composition.exe
+.PHONY: test
+
+EXTRA_CLEANS = test-composition.exe

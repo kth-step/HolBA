@@ -10,6 +10,7 @@ open HolKernel boolLib liteLib simpLib Parse bossLib;
 
 local
     open bir_obs_modelTheory;
+    open bir_block_collectionLib;
 in
 
 

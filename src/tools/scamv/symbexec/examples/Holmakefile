@@ -1,5 +1,14 @@
 INCLUDES = $(HOLBADIR)/src/tools/scamv/symbexec \
            $(HOLBADIR)/src/tools/scamv/symbexec/examples/minimal
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) test-minimal.exe
 .PHONY: all
+
+test-minimal.exe: test-minimal.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-minimal.exe
+	./test-minimal.exe
+.PHONY: test
+
+EXTRA_CLEANS = test-minimal.exe
