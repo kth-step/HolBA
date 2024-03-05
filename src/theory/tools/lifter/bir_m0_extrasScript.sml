@@ -1,7 +1,7 @@
 open HolKernel Parse boolLib bossLib;
 open wordsTheory
 open bir_exp_liftingTheory
-open m0Theory
+open m0Theory m0_stepTheory;
 open bir_lifter_general_auxTheory;
 open bir_interval_expTheory
 open bir_extra_expsTheory;
