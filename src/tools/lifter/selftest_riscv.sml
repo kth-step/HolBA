@@ -1,5 +1,9 @@
 open HolKernel Parse
 open testutils
+
+(* FIXME: needed to avoid quse errors *)
+open m0_stepLib;
+
 open bir_inst_liftingLib;
 open PPBackEnd
 open riscv_assemblerLib;

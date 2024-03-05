@@ -1,5 +1,12 @@
 open HolKernel Parse;
 open testutils;
+
+(* FIXME: needed to avoid quse errors *)
+open m0_stepLib;
+
+open bir_update_blockTheory;
+open bir_inst_liftingTheory;
+
 open bir_inst_liftingLib;
 open bir_inst_liftingLibTypes;
 open bir_inst_liftingHelpersLib;
