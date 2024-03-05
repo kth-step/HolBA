@@ -15,11 +15,11 @@ bir_swap_riscv_lift_THM;
 
 Definition swap_mem_spec_def:
  swap_mem_spec ms =
- let ms'_mem8 = (riscv_mem_store_word (ms.c_gpr ms.procID 0w)
-   (riscv_mem_load_word ms.MEM8 (ms.c_gpr ms.procID 1w)) ms.MEM8)
+ let ms'_mem8 = (riscv_mem_store_dword (ms.c_gpr ms.procID 0w)
+   (riscv_mem_load_dword ms.MEM8 (ms.c_gpr ms.procID 1w)) ms.MEM8)
  in
-   (riscv_mem_store_word (ms.c_gpr ms.procID 1w)
-    (riscv_mem_load_word ms.MEM8 (ms.c_gpr ms.procID 0w)) ms'_mem8)
+   (riscv_mem_store_dword (ms.c_gpr ms.procID 1w)
+    (riscv_mem_load_dword ms.MEM8 (ms.c_gpr ms.procID 0w)) ms'_mem8)
 End
 
 Definition swap_spec_output_def:

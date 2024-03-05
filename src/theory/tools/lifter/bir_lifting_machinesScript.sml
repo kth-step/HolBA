@@ -980,6 +980,15 @@ SIMP_TAC (list_ss++bmr_ss++stringSimps.STRING_ss++wordsLib.WORD_ss++holBACore_ss
           bmr_varnames_distinct_def]
 );
 
+val riscv_bmr_rel_EVAL = save_thm ("riscv_bmr_rel_EVAL",
+SIMP_CONV (list_ss++bmr_ss++holBACore_ss) [
+  bmr_rel_def, riscv_bmr_EVAL,
+  bir_machine_lifted_mem_def, bir_machine_lifted_imm_def,
+  bir_is_temp_var_name_def, BType_Bool_def, bir_temp_var_name_def,
+  bir_machine_lifted_pc_def, bir_temp_var_def,
+  GSYM CONJ_ASSOC]
+``bmr_rel riscv_bmr bs ms``);
+
 (**********************************************************************)
 (* 2. riscv_bmr_LIFTED                                                *)
 (**********************************************************************)
