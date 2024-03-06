@@ -29,13 +29,13 @@ BENCHMARKS    = $(SRCDIR)/tools/lifter/benchmark      \
 # recursive wildcard function
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
-HOLMAKEFILE_GENS = $(call rwildcard,$(SRCDIR)/,Holmakefile.gen) \
-                   $(call rwildcard,$(EXSDIR)/,Holmakefile.gen)
-HOLMAKEFILES     = $(HOLMAKEFILE_GENS:.gen=)
-
+HOLMAKEFILES     = $(call rwildcard,$(SRCDIR)/,Holmakefile) \
+                   $(call rwildcard,$(EXSDIR)/,Holmakefile)
 
 ifdef HOLBA_HOLMAKE
-HOLMAKEFILE_DIRS = $(patsubst %/,%,$(sort $(foreach file,$(HOLMAKEFILE_GENS),$(dir $(file)))))
+HOLMAKEFILE_DIRS = $(patsubst %/,%,$(sort $(foreach file,$(HOLMAKEFILES),$(dir $(file)))))
+
+HOLMAKEFILE_CLEANS = $(foreach holmfld,$(HOLMAKEFILE_DIRS),$(holmfld)_clean)
 
 SML_RUNS         = $(foreach sml,$(call rwildcard,$(SRCDIR)/,*.sml),$(sml)_run) \
                    $(foreach sml,$(call rwildcard,$(EXSDIR)/,*.sml),$(sml)_run)
@@ -55,7 +55,6 @@ all: show-rules
 
 show-rules:
 	@echo 'Available rules:'
-	@echo '     - Holmakefiles: generates `Holmakefile`s from `Holmakefile.gen` files.'
 ifdef HOLBA_HOLMAKE
 	@echo '     - theory: builds only src/theory/'
 	@echo '     - main: builds HolBA, but without the examples or documentation'
@@ -69,17 +68,13 @@ endif
 
 ##########################################################
 
-%Holmakefile: %Holmakefile.gen $(SRCDIR)/Holmakefile.inc
-	@./scripts/gen_Holmakefiles.py $<
-
-Holmakefiles: $(HOLMAKEFILES)
-
-
-$(HOLMAKEFILE_DIRS): Holmakefiles
+$(HOLMAKEFILE_DIRS): $(HOLMAKEFILES)
 	source ./scripts/setup/env_derive.sh && cd $@ && $(HOLBA_HOLMAKE) $(HOLBA_HOLMAKE_OPTS)
 
+$(HOLMAKEFILE_CLEANS):
+	cd $(patsubst %_clean,%,$@) && $(HOLBA_HOLMAKE) clean && $(HOLBA_HOLMAKE) cleanAll
 
-%.exe: %.sml Holmakefiles
+%.exe: %.sml $(HOLMAKEFILES)
 	@/usr/bin/env HOLBA_HOLMAKE="$(HOLBA_HOLMAKE)" ./scripts/mk-exe.sh $(@:.exe=.sml)
 
 # this is a target for all sml files to run as scripts,
@@ -123,8 +118,6 @@ cleanslate:
 	git clean -fdX examples
 
 ##########################################################
-
-.PHONY: Holmakefiles
 
 ifdef HOLBA_HOLMAKE
 .PHONY: $(HOLMAKEFILE_DIRS)
