@@ -6,6 +6,9 @@ open pred_setTheory;
   open bir_programTheory;
   open bir_inst_liftingTheory;
 
+open birs_auxTheory;
+open wordsLib;
+
 open HolBACoreSimps;
 
   val bir_state_ss = rewrites (type_rws ``:bir_state_t``);

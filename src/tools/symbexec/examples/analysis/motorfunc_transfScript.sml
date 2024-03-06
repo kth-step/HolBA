@@ -645,7 +645,7 @@ motor_analysis_L INTER
 
 val bir_abstract_jgmt_rel_motor_thm = prove(``
 abstract_jgmt_rel
-  (bir_etl_wm ^bprog_tm)
+  (bir_ts ^bprog_tm)
   (BL_Address (Imm32 ^bir_frag_l_ml_tm))
   {BL_Address (Imm32 ^bir_frag_l_exit_ml_tm)}
   pre_bir_nL
