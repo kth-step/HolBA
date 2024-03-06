@@ -1,5 +1,9 @@
 open HolKernel Parse boolLib bossLib;
 
+open wordsTheory;
+open bir_valuesTheory;
+open bir_programTheory;
+
 (*
 val _ = load "sml-simplejson/jsonparse";
 *)

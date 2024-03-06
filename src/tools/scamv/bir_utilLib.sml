@@ -4,7 +4,8 @@ struct
 local
   open HolKernel Parse;
   open bslSyntax;
-  open bir_exp_to_wordsLib stringSyntax wordsSyntax 
+  open bir_exp_to_wordsLib stringSyntax wordsSyntax;
+  open experimentsLib;
   
   (* error handling *)
   val libname  = "bir_utilLib"

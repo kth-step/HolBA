@@ -25,3 +25,5 @@ test: selftest_arm.exe selftest_riscv.exe
 	./selftest_arm.exe
 	./selftest_riscv.exe
 .PHONY: test
+
+EXTRA_CLEANS = selftest_arm.exe selftest_riscv.exe

@@ -1,4 +1,17 @@
 INCLUDES = $(HOLBADIR)/src/tools/wp
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) test-toy.exe test-wp.exe
 .PHONY: all
+
+test-toy.exe: test-toy.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-wp.exe: test-wp.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-toy.exe test-wp.exe
+	./test-toy.exe
+	./test-wp.exe
+.PHONY: test
+
+EXTRA_CLEANS = test-toy.exe test-wp.exe

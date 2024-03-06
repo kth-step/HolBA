@@ -1,5 +1,15 @@
 INCLUDES = $(HOLBADIR)/src/theory/bir \
-           $(HOLBADIR)/src/shared
+           $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/tools/cfg
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) test-bir_obs_model.exe
 .PHONY: all
+
+test-bir_obs_model.exe: test-bir_obs_model.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-bir_obs_model.exe
+	./test-bir_obs_model.exe
+.PHONY: test
+
+EXTRA_CLEANS = test-bir_obs_model.exe

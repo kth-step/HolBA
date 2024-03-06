@@ -7,9 +7,10 @@ INCLUDES = $(HOLDIR)/examples/l3-machine-code/common \
            $(HOLDIR)/examples/l3-machine-code/riscv/step \
            $(HOLBADIR)/src/shared/HolSmt \
            $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/tools/cfg \
            $(HOLBADIR)/src/tools/wp
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) test-addrs-eq-imp-x42.exe test-cjmp.exe test-gauss-no-mem.exe
 .PHONY: all
 
 example-gauss-with-mem.exe: example-gauss-with-mem.uo
@@ -26,3 +27,12 @@ test-gauss-no-mem.exe: test-gauss-no-mem.uo
 
 wpsimp_test-gauss-no-mult.exe: wpsimp_test-gauss-no-mult.uo
 	$(HOLMOSMLC) -o $@ $<
+
+test: test-addrs-eq-imp-x42.exe test-cjmp.exe test-gauss-no-mem.exe
+	./test-addrs-eq-imp-x42.exe
+	./test-cjmp.exe
+	./test-gauss-no-mem.exe
+.PHONY: test
+
+EXTRA_CLEANS = example-gauss-with-mem.exe test-addrs-eq-imp-x42.exe \
+               test-cjmp.exe test-gauss-no-mem.exe wpsimp_test-gauss-no-mult.exe
