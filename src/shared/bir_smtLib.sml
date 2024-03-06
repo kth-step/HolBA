@@ -221,8 +221,7 @@ in
         "((_ sign_extend " ^ (Int.toString (szi_to - szi_from)) ^ ") " ^ str ^ ")"
       else raise ERR "castt_to_smtlib" "don't know casttype";
 
-  val bir_smtLib_z3_prelude = read_from_file "bir_smtLib.z3_prelude";
-
+  val bir_smtLib_z3_prelude = read_from_file (holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/bir_smtLib.z3_prelude");
 
   fun bop_to_smtlib sty bop =
     if smt_type_is_bv sty then
