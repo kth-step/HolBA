@@ -1,5 +1,7 @@
 open HolKernel Parse;
 
+open m0_stepLib;
+
 open bin_rv_swapTheory;
 
 open bir_exec_envLib;
