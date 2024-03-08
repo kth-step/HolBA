@@ -1,4 +1,21 @@
-INCLUDES = $(HOLBADIR)/src/tools/cfg/examples/toy
+INCLUDES = $(HOLBADIR)/src/theory/bir \
+           $(HOLBADIR)/src/theory/bir-support \
+           $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/tools/cfg \
+           $(HOLBADIR)/src/tools/cfg/examples/toy
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) test-cfg.exe test-collections.exe
 .PHONY: all
+
+test-cfg.exe: test-cfg.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-collections.exe: test-collections.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-cfg.exe test-collections.exe
+	./test-cfg.exe
+	./test-collections.exe
+.PHONY: test
+
+EXTRA_CLEANS = test-cfg.exe test-collections.exe
