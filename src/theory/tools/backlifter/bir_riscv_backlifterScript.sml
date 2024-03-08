@@ -29,6 +29,7 @@ open bir_riscv_extrasTheory;
 
 val _ = new_theory "bir_riscv_backlifter";
 
+(* FIXME: procID must never change *)
 Definition riscv_weak_trs_def:
  riscv_weak_trs ls ms ms' = 
   ?n.
@@ -108,207 +109,343 @@ FULL_SIMP_TAC std_ss [bir_expTheory.bir_eval_load_FULL_REWRS, riscv_mem_load_dwo
 FULL_SIMP_TAC (srw_ss()) []
 QED
 
-(*
-val bool2w_and =
-  prove(``!a b. ((bool2w a) && (bool2w b)) = (bool2w (a /\ b))``,
-
+Theorem bool2w_and[local]:
+ !a b. ((bool2w a) && (bool2w b)) = (bool2w (a /\ b))
+Proof
 REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [bool2w_def] >>
 Cases_on `a` >>
 Cases_on `b` >>
 EVAL_TAC
-);
+QED
 
+Theorem imm_eq_to_val_eq[local]:
+ !a b . ((BVal_Imm(Imm1 a)) = (BVal_Imm(Imm1 b))) = (a = b)
+Proof
+REPEAT STRIP_TAC >> EVAL_TAC
+QED
 
-val imm_eq_to_val_eq =
-  prove(``!a b . ((BVal_Imm(Imm1 a)) = (BVal_Imm(Imm1 b))) = (a = b)``,
+(* TODO: handle floating-point registers *)
+Definition riscv_vars_def:
+ riscv_vars = {
+  (BVar "x0" (BType_Imm Bit64));
+  (BVar "tmp_x0" (BType_Imm Bit64));
+  (BVar "x1" (BType_Imm Bit64));
+  (BVar "tmp_x1" (BType_Imm Bit64));
+  (BVar "x2" (BType_Imm Bit64));
+  (BVar "tmp_x2" (BType_Imm Bit64));
+  (BVar "x3" (BType_Imm Bit64));
+  (BVar "tmp_x3" (BType_Imm Bit64));
+  (BVar "x4" (BType_Imm Bit64));
+  (BVar "tmp_x4" (BType_Imm Bit64));
+  (BVar "x5" (BType_Imm Bit64));
+  (BVar "tmp_x5" (BType_Imm Bit64));
+  (BVar "x6" (BType_Imm Bit64));
+  (BVar "tmp_x6" (BType_Imm Bit64));
+  (BVar "x7" (BType_Imm Bit64));
+  (BVar "tmp_x7" (BType_Imm Bit64));
+  (BVar "x8" (BType_Imm Bit64));
+  (BVar "tmp_x8" (BType_Imm Bit64));
+  (BVar "x9" (BType_Imm Bit64));
+  (BVar "tmp_x9" (BType_Imm Bit64));
+  (BVar "x10" (BType_Imm Bit64));
+  (BVar "tmp_x10" (BType_Imm Bit64));
+  (BVar "x11" (BType_Imm Bit64));
+  (BVar "tmp_x11" (BType_Imm Bit64));
+  (BVar "x12" (BType_Imm Bit64));
+  (BVar "tmp_x12" (BType_Imm Bit64));
+  (BVar "x13" (BType_Imm Bit64));
+  (BVar "tmp_x13" (BType_Imm Bit64));
+  (BVar "x14" (BType_Imm Bit64));
+  (BVar "tmp_x14" (BType_Imm Bit64));
+  (BVar "x15" (BType_Imm Bit64));
+  (BVar "tmp_x15" (BType_Imm Bit64));
+  (BVar "x16" (BType_Imm Bit64));
+  (BVar "tmp_x16" (BType_Imm Bit64));
+  (BVar "x17" (BType_Imm Bit64));
+  (BVar "tmp_x17" (BType_Imm Bit64));
+  (BVar "x18" (BType_Imm Bit64));
+  (BVar "tmp_x18" (BType_Imm Bit64));
+  (BVar "x19" (BType_Imm Bit64));
+  (BVar "tmp_x19" (BType_Imm Bit64));
+  (BVar "x20" (BType_Imm Bit64));
+  (BVar "tmp_x20" (BType_Imm Bit64));
+  (BVar "x21" (BType_Imm Bit64));
+  (BVar "tmp_x21" (BType_Imm Bit64));
+  (BVar "x22" (BType_Imm Bit64));
+  (BVar "tmp_x22" (BType_Imm Bit64));
+  (BVar "x23" (BType_Imm Bit64));
+  (BVar "tmp_x23" (BType_Imm Bit64));
+  (BVar "x24" (BType_Imm Bit64));
+  (BVar "tmp_x24" (BType_Imm Bit64));
+  (BVar "x25" (BType_Imm Bit64));
+  (BVar "tmp_x25" (BType_Imm Bit64));
+  (BVar "x26" (BType_Imm Bit64));
+  (BVar "tmp_x26" (BType_Imm Bit64));
+  (BVar "x27" (BType_Imm Bit64));
+  (BVar "tmp_x27" (BType_Imm Bit64));
+  (BVar "x28" (BType_Imm Bit64));
+  (BVar "tmp_x28" (BType_Imm Bit64));
+  (BVar "x29" (BType_Imm Bit64));
+  (BVar "tmp_x29" (BType_Imm Bit64));
+  (BVar "x30" (BType_Imm Bit64));
+  (BVar "tmp_x30" (BType_Imm Bit64));
+  (BVar "x31" (BType_Imm Bit64));
+  (BVar "tmp_x31" (BType_Imm Bit64));
 
-REPEAT STRIP_TAC >> EVAL_TAC);
+  (BVar "f0" (BType_Imm Bit64));
+  (BVar "tmp_f0" (BType_Imm Bit64));
+  (BVar "f1" (BType_Imm Bit64));
+  (BVar "tmp_f1" (BType_Imm Bit64));
+  (BVar "f2" (BType_Imm Bit64));
+  (BVar "tmp_f2" (BType_Imm Bit64));
+  (BVar "f3" (BType_Imm Bit64));
+  (BVar "tmp_f3" (BType_Imm Bit64));
+  (BVar "f4" (BType_Imm Bit64));
+  (BVar "tmp_f4" (BType_Imm Bit64));
+  (BVar "f5" (BType_Imm Bit64));
+  (BVar "tmp_f5" (BType_Imm Bit64));
+  (BVar "f6" (BType_Imm Bit64));
+  (BVar "tmp_f6" (BType_Imm Bit64));
+  (BVar "f7" (BType_Imm Bit64));
+  (BVar "tmp_f7" (BType_Imm Bit64));
+  (BVar "f8" (BType_Imm Bit64));
+  (BVar "tmp_f8" (BType_Imm Bit64));
+  (BVar "f9" (BType_Imm Bit64));
+  (BVar "tmp_f9" (BType_Imm Bit64));
+  (BVar "f10" (BType_Imm Bit64));
+  (BVar "tmp_f10" (BType_Imm Bit64));
+  (BVar "f11" (BType_Imm Bit64));
+  (BVar "tmp_f11" (BType_Imm Bit64));
+  (BVar "f12" (BType_Imm Bit64));
+  (BVar "tmp_f12" (BType_Imm Bit64));
+  (BVar "f13" (BType_Imm Bit64));
+  (BVar "tmp_f13" (BType_Imm Bit64));
+  (BVar "f14" (BType_Imm Bit64));
+  (BVar "tmp_f14" (BType_Imm Bit64));
+  (BVar "f15" (BType_Imm Bit64));
+  (BVar "tmp_f15" (BType_Imm Bit64));
+  (BVar "f16" (BType_Imm Bit64));
+  (BVar "tmp_f16" (BType_Imm Bit64));
+  (BVar "f17" (BType_Imm Bit64));
+  (BVar "tmp_f17" (BType_Imm Bit64));
+  (BVar "f18" (BType_Imm Bit64));
+  (BVar "tmp_f18" (BType_Imm Bit64));
+  (BVar "f19" (BType_Imm Bit64));
+  (BVar "tmp_f19" (BType_Imm Bit64));
+  (BVar "f20" (BType_Imm Bit64));
+  (BVar "tmp_f20" (BType_Imm Bit64));
+  (BVar "f21" (BType_Imm Bit64));
+  (BVar "tmp_f21" (BType_Imm Bit64));
+  (BVar "f22" (BType_Imm Bit64));
+  (BVar "tmp_f22" (BType_Imm Bit64));
+  (BVar "f23" (BType_Imm Bit64));
+  (BVar "tmp_f23" (BType_Imm Bit64));
+  (BVar "f24" (BType_Imm Bit64));
+  (BVar "tmp_f24" (BType_Imm Bit64));
+  (BVar "f25" (BType_Imm Bit64));
+  (BVar "tmp_f25" (BType_Imm Bit64));
+  (BVar "f26" (BType_Imm Bit64));
+  (BVar "tmp_f26" (BType_Imm Bit64));
+  (BVar "f27" (BType_Imm Bit64));
+  (BVar "tmp_f27" (BType_Imm Bit64));
+  (BVar "f28" (BType_Imm Bit64));
+  (BVar "tmp_f28" (BType_Imm Bit64));
+  (BVar "f29" (BType_Imm Bit64));
+  (BVar "tmp_f29" (BType_Imm Bit64));
+  (BVar "f30" (BType_Imm Bit64));
+  (BVar "tmp_f30" (BType_Imm Bit64));
+  (BVar "f31" (BType_Imm Bit64));
+  (BVar "tmp_f31" (BType_Imm Bit64));
 
-val arm8_vars_def = Define `
-  arm8_vars= {
-    (BVar "ProcState_C" (BType_Imm Bit1));
-    (BVar "tmp_ProcState_C" (BType_Imm Bit1));
-    (BVar "ProcState_N" (BType_Imm Bit1));
-    (BVar "tmp_ProcState_N" (BType_Imm Bit1));
-    (BVar "ProcState_V" (BType_Imm Bit1));
-    (BVar "tmp_ProcState_V" (BType_Imm Bit1));
-    (BVar "ProcState_Z" (BType_Imm Bit1));
-    (BVar "tmp_ProcState_Z" (BType_Imm Bit1));
-    (BVar "R0" (BType_Imm Bit64));
-    (BVar "tmp_R0" (BType_Imm Bit64));
-    (BVar "R1" (BType_Imm Bit64));
-    (BVar "tmp_R1" (BType_Imm Bit64));
-    (BVar "R2" (BType_Imm Bit64));
-    (BVar "tmp_R2" (BType_Imm Bit64));
-    (BVar "R3" (BType_Imm Bit64));
-    (BVar "tmp_R3" (BType_Imm Bit64));
-    (BVar "R4" (BType_Imm Bit64));
-    (BVar "tmp_R4" (BType_Imm Bit64));
-    (BVar "R5" (BType_Imm Bit64));
-    (BVar "tmp_R5" (BType_Imm Bit64));
-    (BVar "R6" (BType_Imm Bit64));
-    (BVar "tmp_R6" (BType_Imm Bit64));
-    (BVar "R7" (BType_Imm Bit64));
-    (BVar "tmp_R7" (BType_Imm Bit64));
-    (BVar "R8" (BType_Imm Bit64));
-    (BVar "tmp_R8" (BType_Imm Bit64));
-    (BVar "R9" (BType_Imm Bit64));
-    (BVar "tmp_R9" (BType_Imm Bit64));
-    (BVar "R10" (BType_Imm Bit64));
-    (BVar "tmp_R10" (BType_Imm Bit64));
-    (BVar "R11" (BType_Imm Bit64));
-    (BVar "tmp_R11" (BType_Imm Bit64));
-    (BVar "R12" (BType_Imm Bit64));
-    (BVar "tmp_R12" (BType_Imm Bit64));
-    (BVar "R13" (BType_Imm Bit64));
-    (BVar "tmp_R13" (BType_Imm Bit64));
-    (BVar "R14" (BType_Imm Bit64));
-    (BVar "tmp_R14" (BType_Imm Bit64));
-    (BVar "R15" (BType_Imm Bit64));
-    (BVar "tmp_R15" (BType_Imm Bit64));
-    (BVar "R16" (BType_Imm Bit64));
-    (BVar "tmp_R16" (BType_Imm Bit64));
-    (BVar "R17" (BType_Imm Bit64));
-    (BVar "tmp_R17" (BType_Imm Bit64));
-    (BVar "R18" (BType_Imm Bit64));
-    (BVar "tmp_R18" (BType_Imm Bit64));
-    (BVar "R19" (BType_Imm Bit64));
-    (BVar "tmp_R19" (BType_Imm Bit64));
-    (BVar "R20" (BType_Imm Bit64));
-    (BVar "tmp_R20" (BType_Imm Bit64));
-    (BVar "R21" (BType_Imm Bit64));
-    (BVar "tmp_R21" (BType_Imm Bit64));
-    (BVar "R22" (BType_Imm Bit64));
-    (BVar "tmp_R22" (BType_Imm Bit64));
-    (BVar "R23" (BType_Imm Bit64));
-    (BVar "tmp_R23" (BType_Imm Bit64));
-    (BVar "R24" (BType_Imm Bit64));
-    (BVar "tmp_R24" (BType_Imm Bit64));
-    (BVar "R25" (BType_Imm Bit64));
-    (BVar "tmp_R25" (BType_Imm Bit64));
-    (BVar "R26" (BType_Imm Bit64));
-    (BVar "tmp_R26" (BType_Imm Bit64));
-    (BVar "R27" (BType_Imm Bit64));
-    (BVar "tmp_R27" (BType_Imm Bit64));
-    (BVar "R28" (BType_Imm Bit64));
-    (BVar "tmp_R28" (BType_Imm Bit64));
-    (BVar "R29" (BType_Imm Bit64));
-    (BVar "tmp_R29" (BType_Imm Bit64));
-    (BVar "R30" (BType_Imm Bit64));
-    (BVar "tmp_R30" (BType_Imm Bit64));
-    (BVar "R31" (BType_Imm Bit64));
-    (BVar "tmp_R31" (BType_Imm Bit64));
-    (BVar "SP_EL0" (BType_Imm Bit64));
-    (BVar "tmp_SP_EL0" (BType_Imm Bit64));
-    (BVar "SP_EL1" (BType_Imm Bit64));
-    (BVar "tmp_SP_EL1" (BType_Imm Bit64));
-    (BVar "SP_EL2" (BType_Imm Bit64));
-    (BVar "tmp_SP_EL2" (BType_Imm Bit64));
-    (BVar "SP_EL3" (BType_Imm Bit64));
-    (BVar "tmp_SP_EL3" (BType_Imm Bit64));
-    (BVar "MEM" (BType_Mem Bit64 Bit8));
-    (BVar "tmp_MEM" (BType_Mem Bit64 Bit8));
-    (BVar "tmp_PC" (BType_Imm Bit64));
-    (BVar "tmp_COND" (BType_Imm Bit1))
-  }
-`;
+  (BVar "MEM8" (BType_Mem Bit64 Bit8));
+  (BVar "tmp_MEM8" (BType_Mem Bit64 Bit8));
 
-val arm8_wf_varset_def = Define `
-  arm8_wf_varset vset = (vset SUBSET arm8_vars)`;
+  (BVar "tmp_PC" (BType_Imm Bit64));
+  (BVar "tmp_COND" (BType_Imm Bit1))
+ }
+End
 
-val default_arm8_bir_state_def = Define `default_arm8_bir_state ms =
- <|bst_pc :=  bir_block_pc (BL_Address (Imm64 ms.PC)); 
- bst_environ := BEnv (
- ("ProcState_C" =+ SOME(BVal_Imm (bool2b ms.PSTATE.C)))
- (("tmp_ProcState_C" =+ SOME(BVal_Imm (bool2b ms.PSTATE.C)))
- (("ProcState_N" =+ SOME(BVal_Imm (bool2b ms.PSTATE.N)))
- (("tmp_ProcState_N" =+ SOME(BVal_Imm (bool2b ms.PSTATE.N)))
- (("ProcState_V" =+ SOME(BVal_Imm (bool2b ms.PSTATE.V)))
- (("tmp_ProcState_V" =+ SOME(BVal_Imm (bool2b ms.PSTATE.V)))
- (("ProcState_Z" =+ SOME(BVal_Imm (bool2b ms.PSTATE.Z)))
- (("tmp_ProcState_Z" =+ SOME(BVal_Imm (bool2b ms.PSTATE.Z)))
- (("R0" =+ SOME(BVal_Imm (Imm64 (ms.REG 0w))))
- (("tmp_R0" =+ SOME(BVal_Imm (Imm64 (ms.REG 0w))))
- (("R1" =+ SOME(BVal_Imm (Imm64 (ms.REG 1w))))
- (("tmp_R1" =+ SOME(BVal_Imm (Imm64 (ms.REG 1w))))
- (("R2" =+ SOME(BVal_Imm (Imm64 (ms.REG 2w))))
- (("tmp_R2" =+ SOME(BVal_Imm (Imm64 (ms.REG 2w))))
- (("R3" =+ SOME(BVal_Imm (Imm64 (ms.REG 3w))))
- (("tmp_R3" =+ SOME(BVal_Imm (Imm64 (ms.REG 3w))))
- (("R4" =+ SOME(BVal_Imm (Imm64 (ms.REG 4w))))
- (("tmp_R4" =+ SOME(BVal_Imm (Imm64 (ms.REG 4w))))
- (("R5" =+ SOME(BVal_Imm (Imm64 (ms.REG 5w))))
- (("tmp_R5" =+ SOME(BVal_Imm (Imm64 (ms.REG 5w))))
- (("R6" =+ SOME(BVal_Imm (Imm64 (ms.REG 6w))))
- (("tmp_R6" =+ SOME(BVal_Imm (Imm64 (ms.REG 6w))))
- (("R7" =+ SOME(BVal_Imm (Imm64 (ms.REG 7w))))
- (("tmp_R7" =+ SOME(BVal_Imm (Imm64 (ms.REG 7w))))
- (("R8" =+ SOME(BVal_Imm (Imm64 (ms.REG 8w))))
- (("tmp_R8" =+ SOME(BVal_Imm (Imm64 (ms.REG 8w))))
- (("R9" =+ SOME(BVal_Imm (Imm64 (ms.REG 9w))))
- (("tmp_R9" =+ SOME(BVal_Imm (Imm64 (ms.REG 9w))))
- (("R10" =+ SOME(BVal_Imm (Imm64 (ms.REG 10w))))
- (("tmp_R10" =+ SOME(BVal_Imm (Imm64 (ms.REG 10w))))
- (("R11" =+ SOME(BVal_Imm (Imm64 (ms.REG 11w))))
- (("tmp_R11" =+ SOME(BVal_Imm (Imm64 (ms.REG 11w))))
- (("R12" =+ SOME(BVal_Imm (Imm64 (ms.REG 12w))))
- (("tmp_R12" =+ SOME(BVal_Imm (Imm64 (ms.REG 12w))))
- (("R13" =+ SOME(BVal_Imm (Imm64 (ms.REG 13w))))
- (("tmp_R13" =+ SOME(BVal_Imm (Imm64 (ms.REG 13w))))
- (("R14" =+ SOME(BVal_Imm (Imm64 (ms.REG 14w))))
- (("tmp_R14" =+ SOME(BVal_Imm (Imm64 (ms.REG 14w))))
- (("R15" =+ SOME(BVal_Imm (Imm64 (ms.REG 15w))))
- (("tmp_R15" =+ SOME(BVal_Imm (Imm64 (ms.REG 15w))))
- (("R16" =+ SOME(BVal_Imm (Imm64 (ms.REG 16w))))
- (("tmp_R16" =+ SOME(BVal_Imm (Imm64 (ms.REG 16w))))
- (("R17" =+ SOME(BVal_Imm (Imm64 (ms.REG 17w))))
- (("tmp_R17" =+ SOME(BVal_Imm (Imm64 (ms.REG 17w))))
- (("R18" =+ SOME(BVal_Imm (Imm64 (ms.REG 18w))))
- (("tmp_R18" =+ SOME(BVal_Imm (Imm64 (ms.REG 18w))))
- (("R19" =+ SOME(BVal_Imm (Imm64 (ms.REG 19w))))
- (("tmp_R19" =+ SOME(BVal_Imm (Imm64 (ms.REG 19w))))
- (("R20" =+ SOME(BVal_Imm (Imm64 (ms.REG 20w))))
- (("tmp_R20" =+ SOME(BVal_Imm (Imm64 (ms.REG 20w))))
- (("R21" =+ SOME(BVal_Imm (Imm64 (ms.REG 21w))))
- (("tmp_R21" =+ SOME(BVal_Imm (Imm64 (ms.REG 21w))))
- (("R22" =+ SOME(BVal_Imm (Imm64 (ms.REG 22w))))
- (("tmp_R22" =+ SOME(BVal_Imm (Imm64 (ms.REG 22w))))
- (("R23" =+ SOME(BVal_Imm (Imm64 (ms.REG 23w))))
- (("tmp_R23" =+ SOME(BVal_Imm (Imm64 (ms.REG 23w))))
- (("R24" =+ SOME(BVal_Imm (Imm64 (ms.REG 24w))))
- (("tmp_R24" =+ SOME(BVal_Imm (Imm64 (ms.REG 24w))))
- (("R25" =+ SOME(BVal_Imm (Imm64 (ms.REG 25w))))
- (("tmp_R25" =+ SOME(BVal_Imm (Imm64 (ms.REG 25w))))
- (("R26" =+ SOME(BVal_Imm (Imm64 (ms.REG 26w))))
- (("tmp_R26" =+ SOME(BVal_Imm (Imm64 (ms.REG 26w))))
- (("R27" =+ SOME(BVal_Imm (Imm64 (ms.REG 27w))))
- (("tmp_R27" =+  SOME(BVal_Imm (Imm64 (ms.REG 27w))))
- (("R28" =+ SOME(BVal_Imm (Imm64 (ms.REG 28w))))
- (("tmp_R28" =+ SOME(BVal_Imm (Imm64 (ms.REG 28w))))
- (("R29" =+ SOME(BVal_Imm (Imm64 (ms.REG 29w))))
- (("tmp_R29" =+ SOME(BVal_Imm (Imm64 (ms.REG 29w))))
- (("R30" =+ SOME(BVal_Imm (Imm64 (ms.REG 30w))))
- (("tmp_R30" =+ SOME(BVal_Imm (Imm64 (ms.REG 30w))))
- (("R31" =+ SOME(BVal_Imm (Imm64 (ms.REG 31w))))
- (("tmp_R31" =+ SOME(BVal_Imm (Imm64 (ms.REG 31w))))
- (("SP_EL0" =+ SOME(BVal_Imm (Imm64 (ms.SP_EL0))))
- (("tmp_SP_EL0" =+ SOME(BVal_Imm (Imm64 (ms.SP_EL0))))
- (("SP_EL1" =+ SOME(BVal_Imm (Imm64 (ms.SP_EL1))))
- (("tmp_SP_EL1" =+ SOME(BVal_Imm (Imm64 (ms.SP_EL1))))
- (("SP_EL2" =+ SOME(BVal_Imm (Imm64 (ms.SP_EL2))))
- (("tmp_SP_EL2" =+ SOME(BVal_Imm (Imm64 (ms.SP_EL2))))
- (("SP_EL3" =+ SOME(BVal_Imm (Imm64 (ms.SP_EL3))))
- (("tmp_SP_EL3" =+ SOME(BVal_Imm (Imm64 (ms.SP_EL3))))
- (("tmp_PC" =+ SOME(BVal_Imm (Imm64 (ms.PC))))
- (("MEM" =+ SOME(BVal_Mem Bit64 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.MEM))))
- (("tmp_MEM" =+ SOME(BVal_Mem Bit64 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.MEM))))
- (* 83 parantheses!!! *)
- (("tmp_COND" =+ SOME(BVal_Imm (Imm1 0w))) bir_env_map_empty)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
- );
-  bst_status := BST_Running|>
-`;
+Definition riscv_wf_varset_def:
+ riscv_wf_varset vset = (vset SUBSET riscv_vars)
+End
 
+Definition default_riscv_bir_state_def:
+ default_riscv_bir_state ms =
+  <| bst_pc := bir_block_pc (BL_Address (Imm64 (ms.c_PC ms.procID))) ;
+     bst_environ := BEnv (
+       ("x0"        =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 0w))))
+       (("tmp_x0"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 0w))))
+       (("x1"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 1w))))
+       (("tmp_x1"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 1w))))
+       (("x2"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 2w))))
+       (("tmp_x2"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 2w))))
+       (("x3"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 3w))))
+       (("tmp_x3"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 3w))))
+       (("x4"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 4w))))
+       (("tmp_x4"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 4w))))
+       (("x5"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 5w))))
+       (("tmp_x5"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 5w))))
+       (("x6"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 6w))))
+       (("tmp_x6"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 6w))))
+       (("x7"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 7w))))
+       (("tmp_x7"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 7w))))
+       (("x8"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 8w))))
+       (("tmp_x8"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 8w))))
+       (("x9"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 9w))))
+       (("tmp_x9"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 9w))))
+       (("x10"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 10w))))
+       (("tmp_x10"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 10w))))
+       (("x11"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 11w))))
+       (("tmp_x11"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 11w))))
+       (("x12"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 12w))))
+       (("tmp_x12"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 12w))))
+       (("x13"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 13w))))
+       (("tmp_x13"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 13w))))
+       (("x14"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 14w))))
+       (("tmp_x14"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 14w))))
+       (("x15"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 15w))))
+       (("tmp_x15"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 15w))))
+       (("x16"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 16w))))
+       (("tmp_x16"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 16w))))
+       (("x17"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 17w))))
+       (("tmp_x17"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 17w))))
+       (("x18"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 18w))))
+       (("tmp_x18"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 18w))))
+       (("x19"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 19w))))
+       (("tmp_x19"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 19w))))
+       (("x20"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 20w))))
+       (("tmp_x20"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 20w))))
+       (("x21"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 21w))))
+       (("tmp_x21"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 21w))))
+       (("x22"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 22w))))
+       (("tmp_x22"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 22w))))
+       (("x23"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 23w))))
+       (("tmp_x23"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 23w))))
+       (("x24"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 24w))))
+       (("tmp_x24"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 24w))))
+       (("x25"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 25w))))
+       (("tmp_x25"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 25w))))
+       (("x26"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 26w))))
+       (("tmp_x26"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 26w))))
+       (("x27"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 27w))))
+       (("tmp_x27"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 27w))))
+       (("x28"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 28w))))
+       (("tmp_x28"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 28w))))
+       (("x29"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 29w))))
+       (("tmp_x29"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 29w))))
+       (("x30"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 30w))))
+       (("tmp_x30"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 30w))))
+       (("x31"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 31w))))
+       (("tmp_x31"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 31w))))
+
+       (("f0"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 0w))))
+       (("tmp_f0"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 0w))))
+       (("f1"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 1w))))
+       (("tmp_f1"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 1w))))
+       (("f2"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 2w))))
+       (("tmp_f2"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 2w))))
+       (("f3"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 3w))))
+       (("tmp_f3"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 3w))))
+       (("f4"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 4w))))
+       (("tmp_f4"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 4w))))
+       (("f5"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 5w))))
+       (("tmp_f5"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 5w))))
+       (("f6"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 6w))))
+       (("tmp_f6"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 6w))))
+       (("f7"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 7w))))
+       (("tmp_f7"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 7w))))
+       (("f8"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 8w))))
+       (("tmp_f8"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 8w))))
+       (("f9"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 9w))))
+       (("tmp_f9"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 9w))))
+       (("f10"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 10w))))
+       (("tmp_f10"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 10w))))
+       (("f11"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 11w))))
+       (("tmp_f11"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 11w))))
+       (("f12"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 12w))))
+       (("tmp_f12"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 12w))))
+       (("f13"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 13w))))
+       (("tmp_f13"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 13w))))
+       (("f14"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 14w))))
+       (("tmp_x14"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 14w))))
+       (("f15"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 15w))))
+       (("tmp_f15"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 15w))))
+       (("f16"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 16w))))
+       (("tmp_f16"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 16w))))
+       (("f17"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 17w))))
+       (("tmp_f17"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 17w))))
+       (("f18"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 18w))))
+       (("tmp_f18"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 18w))))
+       (("f19"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 19w))))
+       (("tmp_f19"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 19w))))
+       (("f20"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 20w))))
+       (("tmp_f20"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 20w))))
+       (("f21"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 21w))))
+       (("tmp_f21"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 21w))))
+       (("f22"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 22w))))
+       (("tmp_f22"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 22w))))
+       (("f23"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 23w))))
+       (("tmp_f23"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 23w))))
+       (("f24"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 24w))))
+       (("tmp_f24"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 24w))))
+       (("f25"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 25w))))
+       (("tmp_f25"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 25w))))
+       (("f26"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 26w))))
+       (("tmp_f26"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 26w))))
+       (("f27"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 27w))))
+       (("tmp_f27"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 27w))))
+       (("f28"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w))))
+       (("tmp_f28"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w))))
+       (("f29"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 29w))))
+       (("tmp_f29"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 29w))))
+       (("f30"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 30w))))
+       (("tmp_f30"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 30w))))
+       (("f31"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 31w))))
+       (("tmp_f31"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 31w))))
+
+       (("MEM8"     =+ SOME (BVal_Mem Bit64 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.MEM8))))
+       (("tmp_MEM8" =+ SOME (BVal_Mem Bit64 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.MEM8))))
+
+       (("tmp_PC"   =+ SOME (BVal_Imm (Imm64 (ms.c_PC ms.procID))))
+       (("tmp_COND" =+ SOME(BVal_Imm (Imm1 0w))) bir_env_map_empty))))
+        ))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+        )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+     );
+     bst_status := BST_Running
+   |>
+End
+
+(*
+
+Theorem default_riscv_bir_state_satisfies_rel_thm[local]:
+ !ms. riscv_bmr.bmr_extra ms ==>
+   bmr_rel riscv_bmr (default_riscv_bir_state ms) ms
+Proof
+FULL_SIMP_TAC std_ss [default_riscv_bir_state_def,
+  bir_lifting_machinesTheory.riscv_bmr_rel_EVAL,
+  bir_env_oldTheory.bir_env_var_is_declared_def,
+  bir_envTheory.bir_var_name_def] >>
+FULL_SIMP_TAC (srw_ss()) [
+              bir_envTheory.bir_env_read_UPDATE,
+              bir_envTheory.bir_var_name_def,
+              bir_envTheory.bir_env_lookup_UPDATE,
+              bir_envTheory.bir_var_type_def,
+              bir_envTheory.bir_env_lookup_type_def] >>
+FULL_SIMP_TAC std_ss [bir_valuesTheory.type_of_bir_val_def,
+                      type_of_bir_imm_def,
+                      bir_immTheory.type_of_bool2b] >>
+FULL_SIMP_TAC std_ss [bir_lifting_machinesTheory.bmr_extra_RISCV] >>
+FULL_SIMP_TAC (srw_ss()) [bir_exp_liftingTheory.bir_load_w2n_mf_simp_thm] >>
+METIS_TAC []
+QED
+
+bir_env_read (BVar "f28" (BType_Imm Bit64)) (default_riscv_bir_state ms) =
+SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w)))
+
+*)
+
+(*
 
 val default_arm8_bir_state_satisfies_rel_thm = prove(
   ``!ms.
