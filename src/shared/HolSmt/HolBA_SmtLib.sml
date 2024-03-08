@@ -14,16 +14,16 @@ local
      (RA).  Unfortunately, there is no actual SMT-LIB logic at the
      moment that contains all these features: AUFNIRA is missing
      bit-vectors, while QF_AUFBV is missing quantifiers and
-     arithmetic.  See SmtLib_{Theories,Logics}.sml for details.  At
+     arithmetic.  See HolBA_SmtLib_{Theories,Logics}.sml for details.  At
      present, we make no attempt to identify a less expressive SMT-LIB
      logic based on the constants that actually appear in the goal. *)
 
   (* For successful proof reconstruction, it is important that the
-     translation implemented in SmtLib_{Theories,Logics}.sml is an
+     translation implemented in HolBA_SmtLib_{Theories,Logics}.sml is an
      inverse of the translation implemented in this file. *)
 
-  val ERR = Feedback.mk_HOL_ERR "SmtLib"
-  val WARNING = Feedback.HOL_WARNING "SmtLib"
+  val ERR = Feedback.mk_HOL_ERR "HolBA_SmtLib"
+  val WARNING = Feedback.HOL_WARNING "HolBA_SmtLib"
 
   (* SMT-LIB type and function names are uniformly generated as "tN"
      and "vN", respectively, where N is a number. Prefixes must be
@@ -203,7 +203,7 @@ local
       else
         raise ERR "<builtin_symbols.x:'a word>" "not a word literal")),
     (wordsSyntax.word_concat_tm, fn (t, ts) =>
-      SmtLib_Theories.two_args (fn (w1, w2) =>
+      HolBA_SmtLib_Theories.two_args (fn (w1, w2) =>
         let
           (* make sure that the result in HOL has the expected width *)
           val dim1 = fcpSyntax.dest_numeric_type (wordsSyntax.dim_of w1)
@@ -224,7 +224,7 @@ local
           ("concat", ts)
         end) ts),
     (wordsSyntax.word_extract_tm, fn (t, ts) =>
-      SmtLib_Theories.three_args (fn (i, j, w) =>
+      HolBA_SmtLib_Theories.three_args (fn (i, j, w) =>
         let
           (* make sure that j <= i < dim(w) *)
           val i = numSyntax.dest_numeral i
@@ -292,7 +292,7 @@ local
     (wordsSyntax.word_lsr_bv_tm, apfst_fixed_width "bvlshr"),
     (wordsSyntax.word_asr_bv_tm, apfst_fixed_width "bvashr"),
     (wordsSyntax.word_replicate_tm, fn (t, ts) =>
-      SmtLib_Theories.two_args (fn (n, w) =>
+      HolBA_SmtLib_Theories.two_args (fn (n, w) =>
         let
           val n = numSyntax.dest_numeral n
           (* make sure that the result in HOL has the expected width *)
@@ -314,7 +314,7 @@ local
           ("(_ repeat " ^ Arbnum.toString n ^ ")", [w])
         end) ts),
     (wordsSyntax.w2w_tm, fn (t, ts) =>
-      SmtLib_Theories.one_arg (fn w =>
+      HolBA_SmtLib_Theories.one_arg (fn w =>
         let
           (* make sure that the result in HOL is at least as long as 'w' *)
           val dim = fcpSyntax.dest_numeric_type (wordsSyntax.dim_of w)
@@ -335,7 +335,7 @@ local
           ("(_ zero_extend " ^ Arbnum.toString n ^ ")", [w])
         end) ts),
     (wordsSyntax.sw2sw_tm, fn (t, ts) =>
-      SmtLib_Theories.one_arg (fn w =>
+      HolBA_SmtLib_Theories.one_arg (fn w =>
         let
           (* make sure that the result in HOL is at least as long as 'w' *)
           val dim = fcpSyntax.dest_numeric_type (wordsSyntax.dim_of w)
@@ -360,14 +360,14 @@ local
     (wordsSyntax.word_rol_tm, fn (t, ts) =>
       (
         apfst_fixed_width "rotate_left" (t, ());
-        SmtLib_Theories.two_args (fn (w, n) =>
+        HolBA_SmtLib_Theories.two_args (fn (w, n) =>
           ("(_ rotate_left " ^ Arbnum.toString (numSyntax.dest_numeral n)
             ^ ")", [w])) ts
       )),
     (wordsSyntax.word_ror_tm, fn (t, ts) =>
       (
         apfst_fixed_width "rotate_right" (t, ());
-        SmtLib_Theories.two_args (fn (w, n) =>
+        HolBA_SmtLib_Theories.two_args (fn (w, n) =>
           ("(_ rotate_right " ^ Arbnum.toString (numSyntax.dest_numeral n)
             ^ ")", [w])) ts
       )),
@@ -383,7 +383,7 @@ local
     (smtArraySyntax.store_tm, apfst_K "store"),
     (smtArraySyntax.select_tm, apfst_K "select"),
     (smtArraySyntax.const_array_tm, fn (t, ts) =>
-      SmtLib_Theories.one_arg (fn (v) =>
+      HolBA_SmtLib_Theories.one_arg (fn (v) =>
         let
           (*
           "K(BitVec(32), 0)"
@@ -621,7 +621,7 @@ local
   in
     (acc, [
       (* "(set-logic AUFBVNIRA)\n", *)
-      "(set-info :source |Automatically generated from HOL4 by SmtLib.goal_to_SmtLib.\n",
+      "(set-info :source |Automatically generated from HOL4 by HolBA_SmtLib.goal_to_SmtLib.\n",
       "Copyright (c) 2011 Tjark Weber. All rights reserved.|)\n",
       "(set-info :smt-lib-version 2.0)\n"
     ] @ smtlibs @ [
