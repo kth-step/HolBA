@@ -171,6 +171,18 @@ export HOLBADIR=/path/to/holba
 Holmake
 ```
 
+## Bug reports
+
+Please report any bug or feature request in the
+[issue tracker](https://github.com/kth-step/HolBA/issues).
+
+## Contributing
+
+Contributions such as new features and bugfixes are welcome as
+[pull requests](https://github.com/kth-step/HolBA/pulls),
+but be sure to read the [contribution guide](CONTRIBUTING.md)
+before submitting them.
+
 ## Related publications
 
 - D. Lundberg, R. Guanciale, A. Lindner and M. Dam, **"Hoare-Style Logic for Unstructured Programs"**, in Software Engineering and Formal Methods, pp. 193-213, 2020. [Link](https://doi.org/10.1007/978-3-030-58768-0_11). _(program logic used for decomposition of verification)_
