@@ -3,6 +3,9 @@ load "bir_symb_execLib";
 load "toyBinaryTheory";
 *)
 
+open bir_programTheory;
+open bir_program_labelsTheory;
+
 open bir_symb_masterLib;
 
 val maxdepth = (~1);

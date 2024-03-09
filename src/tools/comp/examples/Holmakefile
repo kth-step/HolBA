@@ -1,4 +1,17 @@
-INCLUDES = 
+INCLUDES = $(HOLBADIR)/src/theory/bir \
+           $(HOLBADIR)/src/theory/bir-support \
+           $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/tools/comp
 
-all: $(DEFAULT_TARGETS)
+all: $(DEFAULT_TARGETS) test-bir_populate_elist_predset.exe
 .PHONY: all
+
+test-bir_populate_elist_predset.exe: test-bir_populate_elist_predset.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-bir_populate_elist_predset.exe
+	./test-bir_populate_elist_predset.exe
+.PHONY: test
+
+EXTRA_CLEANS = test-bir_populate_elist_predset.exe
+

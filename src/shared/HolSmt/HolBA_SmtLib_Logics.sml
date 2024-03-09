@@ -31,7 +31,7 @@ local
     handle Feedback.HOL_ERR _ =>
       one_int_to_real (t1, t2)
 
-  open SmtLib_Theories
+  open HolBA_SmtLib_Theories
 
   val BV_extension_tmdict = HolBA_Library.dict_from_list [
     (* bit-vector constants *)

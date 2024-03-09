@@ -1,6 +1,9 @@
 open HolKernel Parse bossLib boolLib;
 open bslSyntax;
 
+(* FIXME: needed to avoid quse errors *)
+open m0_stepLib;
+
 open bir_execLib;
 val alpha = ``:'a``;
 

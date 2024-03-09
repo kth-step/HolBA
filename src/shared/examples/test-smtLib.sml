@@ -67,7 +67,16 @@ val exporting_exp_testcases = [
   (``BExp_Cast BIExp_HighCast (BExp_Const (Imm16 0x4480w)) Bit8``,
    ("((_ extract 15 8) (_ bv17536 16))", SMTTY_BV 8)),
   (``BExp_Cast BIExp_HighCast (BExp_Const (Imm8 0x80w)) Bit16``,
-   ("(concat #b00000000 (_ bv128 8))", SMTTY_BV 16))
+   ("(concat #b00000000 (_ bv128 8))", SMTTY_BV 16)),
+
+
+  (``BExp_BinPred BIExp_LessOrEqual (BExp_Const (Imm1 0x1w)) (BExp_Const (Imm1 0x0w))``,
+   ("(=> true false)", SMTTY_Bool)),
+
+  (``BExp_UnaryExp BIExp_Not (BExp_Cast BIExp_LowCast
+        (BExp_Den (BVar "xyz" (BType_Imm Bit32)))
+        Bit1)``,
+   ("(not (= ((_ extract 0 0) birv_xyz) (_ bv1 1)))", SMTTY_Bool))
 ];
 
 (*
@@ -84,3 +93,13 @@ val _ = List.map (fn (exp, expected) =>
             raise Fail ("unexpected export: " ^ (term_to_string exp)));
   in () end) exporting_exp_testcases;
 
+(* TODO: need a bunch of test cases that can be automatically checked,
+    such that we know what's supposed to come out.
+    maybe use EVAL and BIR semantics together with z3's simplify?
+*)
+
+(* TODO: addition to the last TODO. with a model importer we can check a full round:
+   - send query based on BIR expression
+   - get model satisfying BIR expression in terms of bir var assignments
+   - evaluate model on BIR expression
+*)

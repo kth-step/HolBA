@@ -1,5 +1,9 @@
 open HolKernel Parse;
 open PPBackEnd;
+
+(* FIXME: needed to avoid quse errors *)
+open m0_stepLib;
+
 open bir_update_blockTheory;
 open bir_inst_liftingTheory;
 open bir_inst_liftingHelpersLib;

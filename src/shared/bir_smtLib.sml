@@ -221,8 +221,7 @@ in
         "((_ sign_extend " ^ (Int.toString (szi_to - szi_from)) ^ ") " ^ str ^ ")"
       else raise ERR "castt_to_smtlib" "don't know casttype";
 
-  val bir_smtLib_z3_prelude = read_from_file "bir_smtLib.z3_prelude";
-
+  val bir_smtLib_z3_prelude = read_from_file (holpathdb.subst_pathvars "$(HOLBADIR)/src/shared/bir_smtLib.z3_prelude");
 
   fun bop_to_smtlib sty bop =
     if smt_type_is_bv sty then
@@ -256,16 +255,22 @@ in
       val sty = get_smtlib_type_args probfun args;
       fun gen_exp opstr = gen_smtlib_expr opstr args SMTTY_Bool;
     in
+    (* simple equality *)
     (* TODO: BinPred cannot be applied to memories! *)
     if is_BIExp_Equal bpredop then gen_exp "="
     else if is_BIExp_NotEqual bpredop then apply_smtlib_op (fn s => "(not " ^ s ^ ")")
                                                            (gen_exp "=")
-    (* TODO: BinPred can be applied to Imm1! *)
+    (* bitvectors *)
     else if smt_type_is_bv sty then
       if is_BIExp_LessThan bpredop then gen_exp "bvult"
       else if is_BIExp_SignedLessThan bpredop then gen_exp "bvslt"
       else if is_BIExp_LessOrEqual bpredop then gen_exp "bvule"
       else if is_BIExp_SignedLessOrEqual bpredop then gen_exp "bvsle"
+      else problem_gen_sty "bpredop_to_smtlib" bpredop sty
+    (* bools *)
+    (* TODO: BinPred can be applied to Imm1, handle remaining cases here! *)
+    else if smt_type_is_bool sty then
+      if is_BIExp_LessOrEqual bpredop then gen_exp "=>"
       else problem_gen_sty "bpredop_to_smtlib" bpredop sty
     else problem_gen_sty "bpredop_to_smtlib" bpredop sty
     end;
@@ -382,8 +387,15 @@ BExp_Cast BIExp_LowCast
 
       else if is_BExp_UnaryExp exp then
         let
-          val (uop, exp) = (dest_BExp_UnaryExp) exp;
-          val (conds1, vars1, (str, sty)) = bexp_to_smtlib conds vars exp;
+          val (uop, exp_) = (dest_BExp_UnaryExp) exp;
+
+          val (conds1, vars1, (str, sty)) = bexp_to_smtlib conds vars exp_;
+          val (str, sty) = if not (is_BIExp_Not uop) then (str, sty) else
+                         case sty of
+                           SMTTY_BV 1 => ("(= " ^ str ^ " (_ bv1 1))", SMTTY_Bool)
+                         | SMTTY_BV _ => problem exp "unsupported argument type: " ()
+                         | _ => (str, sty);
+
           val uopval = uop_to_smtlib uop (str, sty);
         in
           (conds1, vars1, uopval)
@@ -560,6 +572,8 @@ BExp_Store (BExp_Den (BVar "fr_269_MEM" (BType_Mem Bit32 Bit8)))
             problem exp "don't know BIR expression: "
         end
     end;
+
+(* TODO: add a model importer *)
 
 end (* local *)
 

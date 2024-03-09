@@ -84,11 +84,16 @@ in
       tempfile
     end;
 
+  val tempfile_randgen = Random.newgen ();
+  fun get_tempfile_randstr () =
+    Int.toString (Random.range (100000,999999) tempfile_randgen);
+
   fun get_tempfile prefix suffix =
     let
       val datestr = get_datestring();
+      val randstr = get_tempfile_randstr();
     in
-      get_simple_tempfile (prefix ^ "_" ^ datestr ^ "_" ^ suffix)
+      get_simple_tempfile (prefix ^ "_" ^ datestr ^ "_" ^ randstr ^ "_" ^ suffix)
     end;
 
 end (* local *)

@@ -36,8 +36,8 @@ structure HolBA_Z3 = struct
     mk_Z3_fun "Z3_SMT_Oracle"
       (fn goal =>
         let
-          val (goal, _) = HolBA_SolverSpec.simplify (SmtLib.SIMP_TAC false) goal
-          val (_, strings) = SmtLib.goal_to_SmtLib goal
+          val (goal, _) = HolBA_SolverSpec.simplify (HolBA_SmtLib.SIMP_TAC false) goal
+          val (_, strings) = HolBA_SmtLib.goal_to_SmtLib goal
         in
           ((), strings)
         end)
@@ -82,8 +82,8 @@ structure HolBA_Z3 = struct
     mk_Z3_fun "Z3_SMT_Prover"
       (fn goal =>
         let
-          val (goal, validation) = HolBA_SolverSpec.simplify (SmtLib.SIMP_TAC true) goal
-          val (ty_tm_dict, strings) = SmtLib.goal_to_SmtLib_with_get_proof goal
+          val (goal, validation) = HolBA_SolverSpec.simplify (HolBA_SmtLib.SIMP_TAC true) goal
+          val (ty_tm_dict, strings) = HolBA_SmtLib.goal_to_SmtLib_with_get_proof goal
         in
           (((goal, validation), ty_tm_dict), strings)
         end)
@@ -100,10 +100,10 @@ structure HolBA_Z3 = struct
                 (* invert 'ty_dict' and 'tm_dict', create parsing functions *)
                 val ty_dict = Redblackmap.foldl (fn (ty, s, dict) =>
                   (* types don't take arguments *)
-                  Redblackmap.insert (dict, s, [SmtLib_Theories.K_zero_zero ty]))
+                  Redblackmap.insert (dict, s, [HolBA_SmtLib_Theories.K_zero_zero ty]))
                   (Redblackmap.mkDict String.compare) ty_dict
                 val tm_dict = Redblackmap.foldl (fn ((tm, n), s, dict) =>
-                  Redblackmap.insert (dict, s, [Lib.K (SmtLib_Theories.zero_args
+                  Redblackmap.insert (dict, s, [Lib.K (HolBA_SmtLib_Theories.zero_args
                     (fn args =>
                       if List.length args = n then
                         Term.list_mk_comb (tm, args)
