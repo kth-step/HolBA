@@ -11,6 +11,10 @@ val prog_tm = ((snd o dest_comb o concl) lift_thm);
 
 (* build the dictionaries using the library under test *)
 val _ = print "Building dictionaries.\n";
+
+(* FIXME: needed to avoid quse errors *)
+open m0_stepLib;
+
 open bir_block_collectionLib;
 val bl_dict = gen_block_dict prog_tm;
 val lbl_tms = get_block_dict_keys bl_dict;

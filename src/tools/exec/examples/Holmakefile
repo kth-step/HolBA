@@ -1,0 +1,18 @@
+INCLUDES = $(HOLBADIR)/src/shared \
+           $(HOLBADIR)/src/tools/exec
+
+all: $(DEFAULT_TARGETS) test-basic.exe test-obs.exe
+.PHONY: all
+
+test-basic.exe: test-basic.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test-obs.exe: test-obs.uo
+	$(HOLMOSMLC) -o $@ $<
+
+test: test-basic.exe test-obs.exe
+	./test-basic.exe
+	./test-obs.exe
+.PHONY: test
+
+EXTRA_CLEANS = test-basic.exe test-obs.exe

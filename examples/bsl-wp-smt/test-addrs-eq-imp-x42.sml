@@ -1,5 +1,6 @@
 open HolKernel Parse boolLib bossLib;
 open pretty_exnLib;
+open bir_programTheory;
 
 (* Load dependencies in interactive sessions *)
 val _ = if !Globals.interactive then (

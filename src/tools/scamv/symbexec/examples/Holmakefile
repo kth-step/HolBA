@@ -1,4 +1,6 @@
-INCLUDES = $(HOLBADIR)/src/tools/scamv/symbexec \
+INCLUDES = $(HOLBADIR)/src/theory/bir \
+           $(HOLBADIR)/src/theory/bir-support \
+           $(HOLBADIR)/src/tools/scamv/symbexec \
            $(HOLBADIR)/src/tools/scamv/symbexec/examples/minimal
 
 all: $(DEFAULT_TARGETS) test-minimal.exe
