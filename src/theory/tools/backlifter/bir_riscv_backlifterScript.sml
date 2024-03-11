@@ -270,208 +270,866 @@ Definition riscv_wf_varset_def:
  riscv_wf_varset vset = (vset SUBSET riscv_vars)
 End
 
+Definition default_riscv_bir_env_basic_def:
+ default_riscv_bir_env_basic ms env_map =
+ (("MEM8"     =+ SOME (BVal_Mem Bit64 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.MEM8))))
+ (("tmp_MEM8" =+ SOME (BVal_Mem Bit64 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.MEM8))))
+ (("tmp_PC"   =+ SOME (BVal_Imm (Imm64 (ms.c_PC ms.procID))))
+ (("tmp_COND" =+ SOME (BVal_Imm (Imm1 0w))) env_map))))
+End
+
+Definition default_riscv_bir_env_FPRS_def:
+ default_riscv_bir_env_FPRS ms env_map =
+   ("f0"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 0w))))
+   (("tmp_f0"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 0w))))
+   (("f1"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 1w))))
+   (("tmp_f1"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 1w))))
+   (("f2"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 2w))))
+   (("tmp_f2"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 2w))))
+   (("f3"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 3w))))
+   (("tmp_f3"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 3w))))
+   (("f4"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 4w))))
+   (("tmp_f4"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 4w))))
+   (("f5"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 5w))))
+   (("tmp_f5"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 5w))))
+   (("f6"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 6w))))
+   (("tmp_f6"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 6w))))
+   (("f7"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 7w))))
+   (("tmp_f7"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 7w))))
+   (("f8"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 8w))))
+   (("tmp_f8"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 8w))))
+   (("f9"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 9w))))
+   (("tmp_f9"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 9w))))
+   (("f10"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 10w))))
+   (("tmp_f10"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 10w))))
+   (("f11"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 11w))))
+   (("tmp_f11"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 11w))))
+   (("f12"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 12w))))
+   (("tmp_f12"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 12w))))
+   (("f13"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 13w))))
+   (("tmp_f13"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 13w))))
+   (("f14"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 14w))))
+   (("tmp_f14"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 14w))))
+   (("f15"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 15w))))
+   (("tmp_f15"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 15w))))
+   (("f16"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 16w))))
+   (("tmp_f16"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 16w))))
+   (("f17"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 17w))))
+   (("tmp_f17"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 17w))))
+   (("f18"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 18w))))
+   (("tmp_f18"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 18w))))
+   (("f19"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 19w))))
+   (("tmp_f19"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 19w))))
+   (("f20"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 20w))))
+   (("tmp_f20"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 20w))))
+   (("f21"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 21w))))
+   (("tmp_f21"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 21w))))
+   (("f22"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 22w))))
+   (("tmp_f22"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 22w))))
+   (("f23"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 23w))))
+   (("tmp_f23"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 23w))))
+   (("f24"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 24w))))
+   (("tmp_f24"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 24w))))
+   (("f25"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 25w))))
+   (("tmp_f25"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 25w))))
+   (("f26"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 26w))))
+   (("tmp_f26"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 26w))))
+   (("f27"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 27w))))
+   (("tmp_f27"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 27w))))
+   (("f28"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w))))
+   (("tmp_f28"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w))))
+   (("f29"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 29w))))
+   (("tmp_f29"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 29w))))
+   (("f30"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 30w))))
+   (("tmp_f30"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 30w))))
+   (("f31"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 31w))))
+   (("tmp_f31"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 31w))))
+   env_map)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+End
+
+Definition default_riscv_bir_env_GPRS_def:
+ default_riscv_bir_env_GPRS ms env_map =
+  ("x0"        =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 0w))))
+  (("tmp_x0"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 0w))))
+  (("x1"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 1w))))
+  (("tmp_x1"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 1w))))
+  (("x2"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 2w))))
+  (("tmp_x2"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 2w))))
+  (("x3"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 3w))))
+  (("tmp_x3"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 3w))))
+  (("x4"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 4w))))
+  (("tmp_x4"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 4w))))
+  (("x5"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 5w))))
+  (("tmp_x5"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 5w))))
+  (("x6"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 6w))))
+  (("tmp_x6"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 6w))))
+  (("x7"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 7w))))
+  (("tmp_x7"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 7w))))
+  (("x8"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 8w))))
+  (("tmp_x8"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 8w))))
+  (("x9"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 9w))))
+  (("tmp_x9"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 9w))))
+  (("x10"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 10w))))
+  (("tmp_x10"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 10w))))
+  (("x11"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 11w))))
+  (("tmp_x11"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 11w))))
+  (("x12"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 12w))))
+  (("tmp_x12"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 12w))))
+  (("x13"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 13w))))
+  (("tmp_x13"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 13w))))
+  (("x14"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 14w))))
+  (("tmp_x14"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 14w))))
+  (("x15"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 15w))))
+  (("tmp_x15"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 15w))))
+  (("x16"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 16w))))
+  (("tmp_x16"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 16w))))
+  (("x17"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 17w))))
+  (("tmp_x17"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 17w))))
+  (("x18"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 18w))))
+  (("tmp_x18"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 18w))))
+  (("x19"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 19w))))
+  (("tmp_x19"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 19w))))
+  (("x20"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 20w))))
+  (("tmp_x20"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 20w))))
+  (("x21"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 21w))))
+  (("tmp_x21"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 21w))))
+  (("x22"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 22w))))
+  (("tmp_x22"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 22w))))
+  (("x23"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 23w))))
+  (("tmp_x23"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 23w))))
+  (("x24"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 24w))))
+  (("tmp_x24"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 24w))))
+  (("x25"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 25w))))
+  (("tmp_x25"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 25w))))
+  (("x26"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 26w))))
+  (("tmp_x26"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 26w))))
+  (("x27"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 27w))))
+  (("tmp_x27"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 27w))))
+  (("x28"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 28w))))
+  (("tmp_x28"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 28w))))
+  (("x29"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 29w))))
+  (("tmp_x29"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 29w))))
+  (("x30"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 30w))))
+  (("tmp_x30"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 30w))))
+  (("x31"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 31w))))
+  (("tmp_x31"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 31w))))
+  env_map)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+End
+
 Definition default_riscv_bir_state_def:
  default_riscv_bir_state ms =
   <| bst_pc := bir_block_pc (BL_Address (Imm64 (ms.c_PC ms.procID))) ;
-     bst_environ := BEnv (
-       ("x0"        =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 0w))))
-       (("tmp_x0"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 0w))))
-       (("x1"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 1w))))
-       (("tmp_x1"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 1w))))
-       (("x2"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 2w))))
-       (("tmp_x2"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 2w))))
-       (("x3"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 3w))))
-       (("tmp_x3"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 3w))))
-       (("x4"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 4w))))
-       (("tmp_x4"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 4w))))
-       (("x5"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 5w))))
-       (("tmp_x5"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 5w))))
-       (("x6"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 6w))))
-       (("tmp_x6"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 6w))))
-       (("x7"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 7w))))
-       (("tmp_x7"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 7w))))
-       (("x8"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 8w))))
-       (("tmp_x8"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 8w))))
-       (("x9"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 9w))))
-       (("tmp_x9"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 9w))))
-       (("x10"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 10w))))
-       (("tmp_x10"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 10w))))
-       (("x11"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 11w))))
-       (("tmp_x11"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 11w))))
-       (("x12"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 12w))))
-       (("tmp_x12"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 12w))))
-       (("x13"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 13w))))
-       (("tmp_x13"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 13w))))
-       (("x14"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 14w))))
-       (("tmp_x14"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 14w))))
-       (("x15"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 15w))))
-       (("tmp_x15"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 15w))))
-       (("x16"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 16w))))
-       (("tmp_x16"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 16w))))
-       (("x17"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 17w))))
-       (("tmp_x17"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 17w))))
-       (("x18"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 18w))))
-       (("tmp_x18"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 18w))))
-       (("x19"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 19w))))
-       (("tmp_x19"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 19w))))
-       (("x20"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 20w))))
-       (("tmp_x20"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 20w))))
-       (("x21"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 21w))))
-       (("tmp_x21"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 21w))))
-       (("x22"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 22w))))
-       (("tmp_x22"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 22w))))
-       (("x23"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 23w))))
-       (("tmp_x23"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 23w))))
-       (("x24"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 24w))))
-       (("tmp_x24"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 24w))))
-       (("x25"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 25w))))
-       (("tmp_x25"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 25w))))
-       (("x26"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 26w))))
-       (("tmp_x26"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 26w))))
-       (("x27"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 27w))))
-       (("tmp_x27"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 27w))))
-       (("x28"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 28w))))
-       (("tmp_x28"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 28w))))
-       (("x29"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 29w))))
-       (("tmp_x29"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 29w))))
-       (("x30"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 30w))))
-       (("tmp_x30"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 30w))))
-       (("x31"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 31w))))
-       (("tmp_x31"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 31w))))
-
-       (("f0"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 0w))))
-       (("tmp_f0"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 0w))))
-       (("f1"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 1w))))
-       (("tmp_f1"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 1w))))
-       (("f2"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 2w))))
-       (("tmp_f2"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 2w))))
-       (("f3"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 3w))))
-       (("tmp_f3"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 3w))))
-       (("f4"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 4w))))
-       (("tmp_f4"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 4w))))
-       (("f5"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 5w))))
-       (("tmp_f5"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 5w))))
-       (("f6"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 6w))))
-       (("tmp_f6"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 6w))))
-       (("f7"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 7w))))
-       (("tmp_f7"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 7w))))
-       (("f8"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 8w))))
-       (("tmp_f8"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 8w))))
-       (("f9"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 9w))))
-       (("tmp_f9"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 9w))))
-       (("f10"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 10w))))
-       (("tmp_f10"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 10w))))
-       (("f11"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 11w))))
-       (("tmp_f11"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 11w))))
-       (("f12"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 12w))))
-       (("tmp_f12"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 12w))))
-       (("f13"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 13w))))
-       (("tmp_f13"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 13w))))
-       (("f14"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 14w))))
-       (("tmp_x14"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 14w))))
-       (("f15"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 15w))))
-       (("tmp_f15"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 15w))))
-       (("f16"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 16w))))
-       (("tmp_f16"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 16w))))
-       (("f17"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 17w))))
-       (("tmp_f17"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 17w))))
-       (("f18"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 18w))))
-       (("tmp_f18"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 18w))))
-       (("f19"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 19w))))
-       (("tmp_f19"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 19w))))
-       (("f20"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 20w))))
-       (("tmp_f20"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 20w))))
-       (("f21"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 21w))))
-       (("tmp_f21"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 21w))))
-       (("f22"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 22w))))
-       (("tmp_f22"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 22w))))
-       (("f23"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 23w))))
-       (("tmp_f23"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 23w))))
-       (("f24"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 24w))))
-       (("tmp_f24"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 24w))))
-       (("f25"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 25w))))
-       (("tmp_f25"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 25w))))
-       (("f26"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 26w))))
-       (("tmp_f26"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 26w))))
-       (("f27"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 27w))))
-       (("tmp_f27"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 27w))))
-       (("f28"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w))))
-       (("tmp_f28"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w))))
-       (("f29"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 29w))))
-       (("tmp_f29"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 29w))))
-       (("f30"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 30w))))
-       (("tmp_f30"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 30w))))
-       (("f31"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 31w))))
-       (("tmp_f31"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 31w))))
-
-       (("MEM8"     =+ SOME (BVal_Mem Bit64 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.MEM8))))
-       (("tmp_MEM8" =+ SOME (BVal_Mem Bit64 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.MEM8))))
-
-       (("tmp_PC"   =+ SOME (BVal_Imm (Imm64 (ms.c_PC ms.procID))))
-       (("tmp_COND" =+ SOME(BVal_Imm (Imm1 0w))) bir_env_map_empty))))
-        ))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
-        )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
-     );
+     bst_environ := BEnv
+       (default_riscv_bir_env_GPRS ms
+        (default_riscv_bir_env_FPRS ms
+         (default_riscv_bir_env_basic ms bir_env_map_empty)));
      bst_status := BST_Running
    |>
 End
 
-(*
+Theorem default_riscv_bir_state_GPRS_read[local]:
+ !ms.
+  bir_env_read (BVar "x0" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 0w))) /\
+  bir_env_read (BVar "x1" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 1w))) /\
+  bir_env_read (BVar "x2" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 2w))) /\
+  bir_env_read (BVar "x3" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 3w))) /\
+  bir_env_read (BVar "x4" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 4w))) /\
+  bir_env_read (BVar "x5" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 5w))) /\
+  bir_env_read (BVar "x6" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 6w))) /\
+  bir_env_read (BVar "x7" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 7w))) /\
+  bir_env_read (BVar "x8" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 8w))) /\
+  bir_env_read (BVar "x9" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 9w))) /\
+  bir_env_read (BVar "x10" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 10w))) /\
+  bir_env_read (BVar "x11" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 11w))) /\
+  bir_env_read (BVar "x12" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 12w))) /\
+  bir_env_read (BVar "x13" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 13w))) /\
+  bir_env_read (BVar "x14" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 14w))) /\
+  bir_env_read (BVar "x15" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 15w))) /\
+  bir_env_read (BVar "x16" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 16w))) /\
+  bir_env_read (BVar "x17" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 17w))) /\
+  bir_env_read (BVar "x18" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 18w))) /\
+  bir_env_read (BVar "x19" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 19w))) /\
+  bir_env_read (BVar "x20" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 20w))) /\
+  bir_env_read (BVar "x21" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 21w))) /\
+  bir_env_read (BVar "x22" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 22w))) /\
+  bir_env_read (BVar "x23" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 23w))) /\
+  bir_env_read (BVar "x24" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 24w))) /\
+  bir_env_read (BVar "x25" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 25w))) /\
+  bir_env_read (BVar "x26" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 26w))) /\
+  bir_env_read (BVar "x27" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 27w))) /\
+  bir_env_read (BVar "x28" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 28w))) /\
+  bir_env_read (BVar "x29" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 29w))) /\
+  bir_env_read (BVar "x30" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 30w))) /\
+  bir_env_read (BVar "x31" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 31w)))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_GPRS_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+      type_of_bir_imm_def,
+      bir_immTheory.type_of_bool2b]
+QED
+
+Theorem default_riscv_bir_state_GPRS_read_tmp[local]:
+ !ms.
+  bir_env_read (BVar "tmp_x0" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 0w))) /\
+  bir_env_read (BVar "tmp_x1" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 1w))) /\
+  bir_env_read (BVar "tmp_x2" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 2w))) /\
+  bir_env_read (BVar "tmp_x3" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 3w))) /\
+  bir_env_read (BVar "tmp_x4" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 4w))) /\
+  bir_env_read (BVar "tmp_x5" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 5w))) /\
+  bir_env_read (BVar "tmp_x6" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 6w))) /\
+  bir_env_read (BVar "tmp_x7" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 7w))) /\
+  bir_env_read (BVar "tmp_x8" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 8w))) /\
+  bir_env_read (BVar "tmp_x9" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 9w))) /\
+  bir_env_read (BVar "tmp_x10" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 10w))) /\
+  bir_env_read (BVar "tmp_x11" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 11w))) /\
+  bir_env_read (BVar "tmp_x12" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 12w))) /\
+  bir_env_read (BVar "tmp_x13" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 13w))) /\
+  bir_env_read (BVar "tmp_x14" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 14w))) /\
+  bir_env_read (BVar "tmp_x15" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 15w))) /\
+  bir_env_read (BVar "tmp_x16" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 16w))) /\
+  bir_env_read (BVar "tmp_x17" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 17w))) /\
+  bir_env_read (BVar "tmp_x18" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 18w))) /\
+  bir_env_read (BVar "tmp_x19" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 19w))) /\
+  bir_env_read (BVar "tmp_x20" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 20w))) /\
+  bir_env_read (BVar "tmp_x21" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 21w))) /\
+  bir_env_read (BVar "tmp_x22" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 22w))) /\
+  bir_env_read (BVar "tmp_x23" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 23w))) /\
+  bir_env_read (BVar "tmp_x24" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 24w))) /\
+  bir_env_read (BVar "tmp_x25" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 25w))) /\
+  bir_env_read (BVar "tmp_x26" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 26w))) /\
+  bir_env_read (BVar "tmp_x27" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 27w))) /\
+  bir_env_read (BVar "tmp_x28" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 28w))) /\
+  bir_env_read (BVar "tmp_x29" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 29w))) /\
+  bir_env_read (BVar "tmp_x30" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 30w))) /\
+  bir_env_read (BVar "tmp_x31" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 31w)))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_GPRS_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+      type_of_bir_imm_def,
+      bir_immTheory.type_of_bool2b]
+QED
+
+Theorem default_riscv_bir_state_GPRS_lookup_type[local]:
+  !ms.
+  bir_env_lookup_type "x0" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x0" (BType_Imm Bit64)))  /\
+  bir_env_lookup_type "x1" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x1" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x2" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x2" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x3" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x3" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x4" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x4" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x5" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x5" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x6" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x6" (BType_Imm Bit64))) /\
+    bir_env_lookup_type "x7" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x7" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x8" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x8" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x9" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x9" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x10" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x10" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x11" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x11" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x12" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x12" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x13" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x13" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x14" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x14" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x15" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x15" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x16" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x16" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x17" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x17" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x18" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x18" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x19" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x19" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x20" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x20" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x21" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x21" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x22" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x22" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x23" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x23" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x24" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x24" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x25" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x25" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x26" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x26" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x27" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x27" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x28" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x28" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x29" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x29" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x30" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x30" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "x31" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "x31" (BType_Imm Bit64)))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_GPRS_def,
+      bir_env_oldTheory.bir_env_var_is_declared_def,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_envTheory.bir_env_lookup_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+     type_of_bir_imm_def]
+QED
+
+Theorem default_riscv_bir_state_GPRS_lookup_type_tmp[local]:
+  !ms.
+  bir_env_lookup_type "tmp_x0" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x0" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x1" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x1" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x2" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x2" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x3" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x3" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x4" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x4" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x5" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x5" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x6" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x6" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x7" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x7" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x8" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x8" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x9" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x9" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x10" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x10" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x11" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x11" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x12" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x12" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x13" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x13" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x14" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x14" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x15" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x15" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x16" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x16" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x17" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x17" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x18" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x18" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x19" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x19" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x20" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x20" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x21" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x21" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x22" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x22" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x23" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x23" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x24" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x24" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x25" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x25" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x26" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x26" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x27" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x27" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x28" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x28" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x29" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x29" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x30" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x30" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_x31" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_x31" (BType_Imm Bit64)))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_GPRS_def,
+      bir_env_oldTheory.bir_env_var_is_declared_def,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_envTheory.bir_env_lookup_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+     type_of_bir_imm_def]
+QED
+
+Theorem default_riscv_bir_state_FPRS_read[local]:
+ !ms.
+  bir_env_read (BVar "f0" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 0w))) /\
+  bir_env_read (BVar "f1" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 1w))) /\
+  bir_env_read (BVar "f2" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 2w))) /\
+  bir_env_read (BVar "f3" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 3w))) /\
+  bir_env_read (BVar "f4" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 4w))) /\
+  bir_env_read (BVar "f5" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 5w))) /\
+  bir_env_read (BVar "f6" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 6w))) /\
+  bir_env_read (BVar "f7" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 7w))) /\
+  bir_env_read (BVar "f8" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 8w))) /\
+  bir_env_read (BVar "f9" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 9w))) /\
+  bir_env_read (BVar "f10" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 10w))) /\
+  bir_env_read (BVar "f11" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 11w))) /\
+  bir_env_read (BVar "f12" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 12w))) /\
+  bir_env_read (BVar "f13" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 13w))) /\
+  bir_env_read (BVar "f14" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 14w))) /\
+  bir_env_read (BVar "f15" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 15w))) /\
+  bir_env_read (BVar "f16" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 16w))) /\
+  bir_env_read (BVar "f17" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 17w))) /\
+  bir_env_read (BVar "f18" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 18w))) /\
+  bir_env_read (BVar "f19" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 19w))) /\
+  bir_env_read (BVar "f20" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 20w))) /\
+  bir_env_read (BVar "f21" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 21w))) /\
+  bir_env_read (BVar "f22" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 22w))) /\
+  bir_env_read (BVar "f23" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 23w))) /\
+  bir_env_read (BVar "f24" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 24w))) /\
+  bir_env_read (BVar "f25" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 25w))) /\
+  bir_env_read (BVar "f26" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 26w))) /\
+  bir_env_read (BVar "f27" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 27w))) /\
+  bir_env_read (BVar "f28" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w))) /\
+  bir_env_read (BVar "f29" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 29w))) /\
+  bir_env_read (BVar "f30" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 30w))) /\
+  bir_env_read (BVar "f31" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 31w)))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_FPRS_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+      type_of_bir_imm_def,
+      bir_immTheory.type_of_bool2b]
+QED
+
+Theorem default_riscv_bir_state_FPRS_read_tmp[local]:
+ !ms.
+  bir_env_read (BVar "tmp_f0" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 0w))) /\
+  bir_env_read (BVar "tmp_f1" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 1w))) /\
+  bir_env_read (BVar "tmp_f2" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 2w))) /\
+  bir_env_read (BVar "tmp_f3" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 3w))) /\
+  bir_env_read (BVar "tmp_f4" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 4w))) /\
+  bir_env_read (BVar "tmp_f5" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 5w))) /\
+  bir_env_read (BVar "tmp_f6" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 6w))) /\
+  bir_env_read (BVar "tmp_f7" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 7w))) /\
+  bir_env_read (BVar "tmp_f8" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 8w))) /\
+  bir_env_read (BVar "tmp_f9" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 9w))) /\
+  bir_env_read (BVar "tmp_f10" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 10w))) /\
+  bir_env_read (BVar "tmp_f11" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 11w))) /\
+  bir_env_read (BVar "tmp_f12" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 12w))) /\
+  bir_env_read (BVar "tmp_f13" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 13w))) /\
+  bir_env_read (BVar "tmp_f14" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 14w))) /\
+  bir_env_read (BVar "tmp_f15" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 15w))) /\
+  bir_env_read (BVar "tmp_f16" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 16w))) /\
+  bir_env_read (BVar "tmp_f17" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 17w))) /\
+  bir_env_read (BVar "tmp_f18" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 18w))) /\
+  bir_env_read (BVar "tmp_f19" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 19w))) /\
+  bir_env_read (BVar "tmp_f20" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 20w))) /\
+  bir_env_read (BVar "tmp_f21" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 21w))) /\
+  bir_env_read (BVar "tmp_f22" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 22w))) /\
+  bir_env_read (BVar "tmp_f23" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 23w))) /\
+  bir_env_read (BVar "tmp_f24" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 24w))) /\
+  bir_env_read (BVar "tmp_f25" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 25w))) /\
+  bir_env_read (BVar "tmp_f26" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 26w))) /\
+  bir_env_read (BVar "tmp_f27" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 27w))) /\
+  bir_env_read (BVar "tmp_f28" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w))) /\
+  bir_env_read (BVar "tmp_f29" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 29w))) /\
+  bir_env_read (BVar "tmp_f30" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 30w))) /\
+  bir_env_read (BVar "tmp_f31" (BType_Imm Bit64)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 31w)))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_FPRS_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+      type_of_bir_imm_def,
+      bir_immTheory.type_of_bool2b]
+QED
+
+Theorem default_riscv_bir_state_FPRS_lookup_type[local]:
+  !ms.
+  bir_env_lookup_type "f0" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f0" (BType_Imm Bit64)))  /\
+  bir_env_lookup_type "f1" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f1" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f2" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f2" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f3" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f3" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f4" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f4" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f5" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f5" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f6" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f6" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f7" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f7" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f8" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f8" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f9" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f9" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f10" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f10" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f11" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f11" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f12" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f12" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f13" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f13" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f14" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f14" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f15" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f15" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f16" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f16" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f17" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f17" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f18" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f18" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f19" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f19" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f20" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f20" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f21" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f21" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f22" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f22" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f23" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f23" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f24" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f24" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f25" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f25" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f26" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f26" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f27" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f27" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f28" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f28" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f29" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f29" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f30" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f30" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "f31" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "f31" (BType_Imm Bit64)))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_FPRS_def,
+      bir_env_oldTheory.bir_env_var_is_declared_def,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_envTheory.bir_env_lookup_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+     type_of_bir_imm_def]
+QED
+
+Theorem default_riscv_bir_state_FPRS_lookup_type_tmp[local]:
+  !ms.
+  bir_env_lookup_type "tmp_f0" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f0" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f1" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f1" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f2" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f2" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f3" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f3" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f4" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f4" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f5" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f5" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f6" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f6" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f7" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f7" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f8" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f8" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f9" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f9" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f10" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f10" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f11" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f11" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f12" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f12" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f13" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f13" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f14" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f14" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f15" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f15" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f16" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f16" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f17" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f17" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f18" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f18" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f19" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f19" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f20" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f20" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f21" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f21" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f22" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f22" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f23" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f23" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f24" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f24" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f25" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f25" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f26" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f26" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f27" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f27" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f28" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f28" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f29" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f29" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f30" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f30" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_f31" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_f31" (BType_Imm Bit64)))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_FPRS_def,
+      bir_env_oldTheory.bir_env_var_is_declared_def,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_envTheory.bir_env_lookup_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+     type_of_bir_imm_def]
+QED
+
+Theorem default_riscv_bir_state_basic_env_read[local]:
+ !ms.
+ bir_env_read (BVar "MEM8" (BType_Mem Bit64 Bit8)) (default_riscv_bir_state ms).bst_environ =
+   SOME (BVal_Mem Bit64 Bit8 (bir_mmap_w_w2n (bir_mf2mm ms.MEM8)))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_FPRS_def,
+      default_riscv_bir_env_basic_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+      type_of_bir_imm_def,
+      bir_immTheory.type_of_bool2b]
+QED
+
+Theorem default_riscv_bir_state_basic_lookup_type[local]:
+ !ms.
+  bir_env_lookup_type "tmp_MEM8" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_MEM8" (BType_Mem Bit64 Bit8))) /\
+  bir_env_lookup_type "tmp_PC" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_PC" (BType_Imm Bit64))) /\
+  bir_env_lookup_type "tmp_COND" (default_riscv_bir_state ms).bst_environ =
+   SOME (bir_var_type (BVar "tmp_COND" (BType_Imm Bit1)))
+Proof
+  rw [default_riscv_bir_state_def,
+      default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_FPRS_def,
+      default_riscv_bir_env_basic_def,
+      bir_env_oldTheory.bir_env_var_is_declared_def,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_read_UPDATE,
+      bir_envTheory.bir_var_name_def,
+      bir_envTheory.bir_env_lookup_UPDATE,
+      bir_envTheory.bir_var_type_def,
+      bir_envTheory.bir_env_lookup_type_def,
+      bir_valuesTheory.type_of_bir_val_def,
+     type_of_bir_imm_def]
+QED
 
 Theorem default_riscv_bir_state_satisfies_rel_thm[local]:
  !ms. riscv_bmr.bmr_extra ms ==>
    bmr_rel riscv_bmr (default_riscv_bir_state ms) ms
 Proof
-FULL_SIMP_TAC std_ss [default_riscv_bir_state_def,
-  bir_lifting_machinesTheory.riscv_bmr_rel_EVAL,
-  bir_env_oldTheory.bir_env_var_is_declared_def,
-  bir_envTheory.bir_var_name_def] >>
-FULL_SIMP_TAC (srw_ss()) [
-              bir_envTheory.bir_env_read_UPDATE,
-              bir_envTheory.bir_var_name_def,
-              bir_envTheory.bir_env_lookup_UPDATE,
-              bir_envTheory.bir_var_type_def,
-              bir_envTheory.bir_env_lookup_type_def] >>
-FULL_SIMP_TAC std_ss [bir_valuesTheory.type_of_bir_val_def,
-                      type_of_bir_imm_def,
-                      bir_immTheory.type_of_bool2b] >>
-FULL_SIMP_TAC std_ss [bir_lifting_machinesTheory.bmr_extra_RISCV] >>
+strip_tac >> strip_tac >>
+FULL_SIMP_TAC std_ss [bir_lifting_machinesTheory.riscv_bmr_rel_EVAL,
+ bir_env_oldTheory.bir_env_var_is_declared_def,bir_envTheory.bir_var_name_def] >>
+fs [
+  default_riscv_bir_state_GPRS_read,
+  default_riscv_bir_state_GPRS_read_tmp,
+  default_riscv_bir_state_GPRS_lookup_type,
+  default_riscv_bir_state_GPRS_lookup_type_tmp,
+  default_riscv_bir_state_FPRS_read,
+  default_riscv_bir_state_FPRS_read_tmp,
+  default_riscv_bir_state_FPRS_lookup_type,
+  default_riscv_bir_state_FPRS_lookup_type_tmp,
+  default_riscv_bir_state_basic_env_read,
+  default_riscv_bir_state_basic_lookup_type
+ ] >>
+FULL_SIMP_TAC std_ss [default_riscv_bir_state_def,bir_lifting_machinesTheory.bmr_extra_RISCV] >>
 FULL_SIMP_TAC (srw_ss()) [bir_exp_liftingTheory.bir_load_w2n_mf_simp_thm] >>
 METIS_TAC []
 QED
 
-bir_env_read (BVar "f28" (BType_Imm Bit64)) (default_riscv_bir_state ms) =
-SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w)))
-
-*)
-
 (*
-
-val default_arm8_bir_state_satisfies_rel_thm = prove(
-  ``!ms.
-    arm8_bmr.bmr_extra ms ==>
-    bmr_rel arm8_bmr (default_arm8_bir_state ms) ms``,
-
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [default_arm8_bir_state_def,
-  bir_lifting_machinesTheory.arm8_bmr_rel_EVAL,
-  bir_env_oldTheory.bir_env_var_is_declared_def,
-  bir_envTheory.bir_var_name_def] >>
-FULL_SIMP_TAC (srw_ss()) [
-              bir_envTheory.bir_env_read_UPDATE,
-              bir_envTheory.bir_var_name_def,
-              bir_envTheory.bir_env_lookup_UPDATE,
-              bir_envTheory.bir_var_type_def,
-              bir_envTheory.bir_env_lookup_type_def] >>
-FULL_SIMP_TAC std_ss [bir_valuesTheory.type_of_bir_val_def,
-                      type_of_bir_imm_def,
-                      bir_immTheory.type_of_bool2b] >>
-FULL_SIMP_TAC std_ss [bir_lifting_machinesTheory.bmr_extra_ARM8] >>
-FULL_SIMP_TAC (srw_ss()) [bir_exp_liftingTheory.bir_load_w2n_mf_simp_thm] >>
-METIS_TAC []
-);
-
-
 val exist_bir_of_arm8_thm = prove(
   ``!ms vars.
     arm8_wf_varset vars ==>
