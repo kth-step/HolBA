@@ -38,6 +38,7 @@ open bir_inst_liftingHelpersLib;
 (* ================================================ *)
 
     open bir_backlifterTheory;
+    open bir_riscv_backlifterTheory;
     open bir_compositionLib;
   in
 
@@ -104,8 +105,72 @@ fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_p
 
   in
     arm8_contract_thm
-  end
-;
+  end;
+
+  fun get_riscv_contract_sing bir_ct prog_bin riscv_pre riscv_post bir_prog_def bir_pre_defs bir_pre1_def riscv_pre_imp_bir_pre_thm bir_post_defs riscv_post_imp_bir_post_thm bir_is_lifted_prog_thm =
+  let
+    val word_from_address = bir_immSyntax.dest_Imm64 o bir_programSyntax.dest_BL_Address
+
+    val bir_prog = get_bir_cont_prog bir_ct
+    val l =
+      word_from_address (get_bir_cont_start_label bir_ct)
+    val ls = pred_setSyntax.mk_set (map word_from_address (pred_setSyntax.strip_set (get_bir_cont_ilist bir_ct)))
+    (* TODO: Note that the proof below assumes ls is a singleton *)
+    val ls_sing = el 1 (pred_setSyntax.strip_set ls)
+
+    val add_lift_thm =
+      ISPECL [bir_prog,
+	      prog_bin,
+	      l,
+	      ls,
+	      (((el 2) o snd o strip_comb o concl) bir_is_lifted_prog_thm),
+	      riscv_pre, riscv_post,
+	      get_bir_cont_pre bir_ct,
+	      get_bir_cont_post bir_ct] lift_contract_thm;
+
+    (* Prove the ARM triple by supplying the antecedents of lift_contract_thm *)
+    val riscv_contract_thm = prove(
+      ``riscv_cont ^prog_bin ^l ^ls ^riscv_pre
+		^riscv_post``,
+
+    irule add_lift_thm >>
+    REPEAT STRIP_TAC >| [
+      (* 1. Prove that the union of variables in the program and precondition are a well-founded variable
+       *    set *)
+      (* TODO: This subset computation is slooow... *)
+      FULL_SIMP_TAC (std_ss++HolBACoreSimps.holBACore_ss++HolBASimps.VARS_OF_PROG_ss
+			   ++pred_setLib.PRED_SET_ss)
+	([bir_prog_def, riscv_wf_varset_def, riscv_vars_def]@bir_pre_defs),
+
+      (* 2. Starting address exists in program *)
+      FULL_SIMP_TAC std_ss
+	[EVAL ``MEM (^(get_bir_cont_start_label bir_ct))
+		    (bir_labels_of_program ^(bir_prog))``],
+
+      (* 3. Provide translation of the RISC-V precondition to the BIR precondition *)
+      FULL_SIMP_TAC std_ss [bir_pre1_def, riscv_pre_imp_bir_pre_thm],
+
+      (* 4. Provide translation of the RISC-V postcondition to BIR postcondition *)
+      FULL_SIMP_TAC std_ss bir_post_defs >>
+      ASSUME_TAC (Q.SPEC `{BL_Address (Imm64 ml') | ml' IN ^ls}` riscv_post_imp_bir_post_thm) >>
+      FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [bir_post_bir_to_riscv_def] >>
+      FULL_SIMP_TAC std_ss [],
+
+      (* 5. Provide the lifter theorem of the program *)
+      FULL_SIMP_TAC std_ss [bir_is_lifted_prog_thm],
+
+      (* 6. Provide the BIR triple in the requisite format *)
+      ASSUME_TAC bir_ct >>
+      `{BL_Address (Imm64 ml') | ml' IN {72w}} = {BL_Address (Imm64 72w)}` suffices_by (
+              FULL_SIMP_TAC std_ss []
+      ) >>
+      FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.EXTENSION]
+    ]
+    );
+
+  in
+    riscv_contract_thm
+  end;
 
   end
 end
