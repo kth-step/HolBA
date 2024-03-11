@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         polyml: [{version: 'v5.7.1'}, {version: 'v5.9.1', heapless: '1'}]
-        z3: ['4.13.0']
+        z3: ['4.12.2']
         hol4: ['trindemossen-1']
 
     env:
