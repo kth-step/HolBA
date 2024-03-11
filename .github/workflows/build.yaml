@@ -15,7 +15,7 @@ env:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
@@ -27,7 +27,7 @@ jobs:
       HOLBA_POLYML_VERSION: ${{ matrix.polyml.version }}
       HOLBA_POLYML_HEAPLESS: ${{ matrix.polyml.heapless }}
       HOLBA_Z3_VERSION: ${{ matrix.z3 }}
-      HOLBA_Z3_ASSET_SUFFIX: '-x64-glibc-2.35.zip'
+      HOLBA_Z3_ASSET_SUFFIX: '-x64-glibc-2.31.zip'
       HOLBA_HOL4_VERSION: ${{ matrix.hol4 }}
 
     steps:
