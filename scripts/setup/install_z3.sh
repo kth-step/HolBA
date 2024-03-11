@@ -21,7 +21,7 @@ if [[ ! -z "${HOLBA_Z3_VERSION}" ]]; then
   Z3_VERSION=${HOLBA_Z3_VERSION}
 fi
 
-Z3_ASSET_SUFFIX="-x64-glibc-2.35.zip"
+Z3_ASSET_SUFFIX="-x64-glibc-2.31.zip"
 if [[ ! -z "${HOLBA_Z3_ASSET_SUFFIX}" ]]; then
   Z3_ASSET_SUFFIX=${HOLBA_Z3_ASSET_SUFFIX}
 fi
