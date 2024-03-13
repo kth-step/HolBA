@@ -116,7 +116,7 @@ QED
 
 Theorem bir_cont_swap:
   bir_cont bir_swap_prog bir_exp_true
-   (BL_Address (Imm64 28w)) {BL_Address (Imm64 0w)} {}
+   (BL_Address (Imm64 0w)) {BL_Address (Imm64 20w)} {}
   bir_swap_pre
   (\l. if l = BL_Address (Imm64 20w) then bir_swap_post else bir_exp_false)
 Proof
@@ -125,10 +125,6 @@ Proof
 QED
 
 (*
-HOL_ERR
-     {message = "can't type-instantiate input theorem", origin_function =
-      "ISPECL", origin_structure = "Drule"} raised
-
 val riscv_swap_contract_thm =
    save_thm("riscv_swap_contract_thm",
     get_riscv_contract_sing

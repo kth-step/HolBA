@@ -126,12 +126,11 @@ fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_p
 	      (((el 2) o snd o strip_comb o concl) bir_is_lifted_prog_thm),
 	      riscv_pre, riscv_post,
 	      get_bir_cont_pre bir_ct,
-	      get_bir_cont_post bir_ct] lift_contract_thm;
+	      get_bir_cont_post bir_ct] riscv_lift_contract_thm;
 
     (* Prove the ARM triple by supplying the antecedents of lift_contract_thm *)
     val riscv_contract_thm = prove(
-      ``riscv_cont ^prog_bin ^l ^ls ^riscv_pre
-		^riscv_post``,
+      ``riscv_cont ^prog_bin ^l ^ls ^riscv_pre ^riscv_post``,
 
     irule add_lift_thm >>
     REPEAT STRIP_TAC >| [
@@ -152,7 +151,7 @@ fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_p
 
       (* 4. Provide translation of the RISC-V postcondition to BIR postcondition *)
       FULL_SIMP_TAC std_ss bir_post_defs >>
-      ASSUME_TAC (Q.SPEC `{BL_Address (Imm64 ml') | ml' IN ^ls}` riscv_post_imp_bir_post_thm) >>
+      ASSUME_TAC (Q.ISPEC `{BL_Address (Imm64 ml') | ml' IN ^ls}` riscv_post_imp_bir_post_thm) >>
       FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [bir_post_bir_to_riscv_def] >>
       FULL_SIMP_TAC std_ss [],
 
@@ -161,7 +160,7 @@ fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_p
 
       (* 6. Provide the BIR triple in the requisite format *)
       ASSUME_TAC bir_ct >>
-      `{BL_Address (Imm64 ml') | ml' IN {72w}} = {BL_Address (Imm64 72w)}` suffices_by (
+      `{BL_Address (Imm64 ml') | ml' IN {20w}} = {BL_Address (Imm64 20w)}` suffices_by (
               FULL_SIMP_TAC std_ss []
       ) >>
       FULL_SIMP_TAC (std_ss++pred_setLib.PRED_SET_ss) [pred_setTheory.EXTENSION]
