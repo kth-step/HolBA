@@ -9,51 +9,57 @@ val _ = new_theory "bir_imm";
 (* ------------------------------------------------------------------------- *)
 
 (* Immediates can be words of various sizes *)
-val _ = Datatype `bir_imm_t =
+Datatype:
+  bir_imm_t =
     Imm1   (bool[1])
   | Imm8   (bool[8])
   | Imm16  (bool[16])
   | Imm32  (bool[32])
   | Imm64  (bool[64])
   | Imm128 (bool[128])
-`;
+End
 
 
 (* It is handy to keep track of the size via both a special datatype and a number *)
-val _ = Datatype `bir_immtype_t =
+Datatype:
+  bir_immtype_t =
   | Bit1
   | Bit8
   | Bit16
   | Bit32
   | Bit64
   | Bit128
-`;
+End
 
 val bir_imm_ss = rewrites ((type_rws ``:bir_imm_t``) @ (type_rws ``:bir_immtype_t``));
 
 
-val fold_bir_immtype_THM = store_thm ("fold_bir_immtype_THM",
-  ``!P. ((P Bit1 /\ P Bit8 /\ P Bit16 /\ P Bit32 /\ P Bit64 /\ P Bit128) <=> (!ty. P ty))``,
-    SIMP_TAC (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``]) []);
+Theorem fold_bir_immtype_THM:
+  !P. ((P Bit1 /\ P Bit8 /\ P Bit16 /\ P Bit32 /\ P Bit64 /\ P Bit128) <=> (!ty. P ty))
+Proof
+SIMP_TAC (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``]) []
+QED
 
 
-val type_of_bir_imm_def = Define `
+Definition type_of_bir_imm_def:
   (type_of_bir_imm (Imm1  _)  = Bit1) /\
   (type_of_bir_imm (Imm8  _)  = Bit8) /\
   (type_of_bir_imm (Imm16 _)  = Bit16) /\
   (type_of_bir_imm (Imm32 _)  = Bit32) /\
   (type_of_bir_imm (Imm64 _)  = Bit64) /\
-  (type_of_bir_imm (Imm128 _) = Bit128)`;
+  (type_of_bir_imm (Imm128 _) = Bit128)
+End
 
-val size_of_bir_immtype_def = Define `
+Definition size_of_bir_immtype_def:
   (size_of_bir_immtype Bit1   = 1) /\
   (size_of_bir_immtype Bit8   = 8) /\
   (size_of_bir_immtype Bit16  = 16) /\
   (size_of_bir_immtype Bit32  = 32) /\
   (size_of_bir_immtype Bit64  = 64) /\
-  (size_of_bir_immtype Bit128 = 128)`
+  (size_of_bir_immtype Bit128 = 128)
+End
 
-val bir_immtype_of_size_def = Define `
+Definition bir_immtype_of_size_def:
   bir_immtype_of_size n = (
          if n = 1   then SOME Bit1
     else if n = 8   then SOME Bit8
@@ -61,19 +67,25 @@ val bir_immtype_of_size_def = Define `
     else if n = 32  then SOME Bit32
     else if n = 64  then SOME Bit64
     else if n = 128 then SOME Bit128
-    else NONE)`;
+    else NONE)
+End
 
-val is_valid_bir_immtype_size_def = Define `
-  is_valid_bir_immtype_size n = ?b. n = size_of_bir_immtype b`;
+Definition is_valid_bir_immtype_size_def:
+  is_valid_bir_immtype_size n = ?b. n = size_of_bir_immtype b
+End
 
 (* A few sanity checks *)
-val size_of_bir_immtype_INJ = store_thm ("size_of_bir_immtype_INJ",
-  ``!b1 b2. (size_of_bir_immtype b1 = size_of_bir_immtype b2) <=> (b1 = b2)``,
-Cases >> Cases >> SIMP_TAC (std_ss++bir_imm_ss) [size_of_bir_immtype_def]);
+Theorem size_of_bir_immtype_INJ:
+  !b1 b2. (size_of_bir_immtype b1 = size_of_bir_immtype b2) <=> (b1 = b2)
+Proof
+Cases >> Cases >> SIMP_TAC (std_ss++bir_imm_ss) [size_of_bir_immtype_def]
+QED
 
-val size_of_bir_immtype_NEQ_0 = store_thm ("size_of_bir_immtype_NEQ_0",
-  ``!b. size_of_bir_immtype b <> 0``,
-Cases >> SIMP_TAC arith_ss [size_of_bir_immtype_def])
+Theorem size_of_bir_immtype_NEQ_0:
+  !b. size_of_bir_immtype b <> 0
+Proof
+Cases >> SIMP_TAC arith_ss [size_of_bir_immtype_def]
+QED
 
 val is_valid_bir_immtype_size_REWRS = save_thm ("is_valid_bir_immtype_size_REWRS",
   SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``]) [size_of_bir_immtype_def] is_valid_bir_immtype_size_def);
@@ -95,21 +107,25 @@ val size_of_bir_immtype_EQ_REWRS = save_thm("size_of_bir_immtype_EQ_REWRS",
 val is_valid_bir_immtype_size_IMP = save_thm ("is_valid_bir_immtype_size_IMP",
   snd (EQ_IMP_RULE (SPEC_ALL is_valid_bir_immtype_size_REWRS)));
 
-val is_valid_bir_immtype_size_IS_SOME = store_thm ("is_valid_bir_immtype_size_IS_SOME",
-  ``!n. is_valid_bir_immtype_size n <=> IS_SOME (bir_immtype_of_size n)``,
+Theorem is_valid_bir_immtype_size_IS_SOME:
+  !n. is_valid_bir_immtype_size n <=> IS_SOME (bir_immtype_of_size n)
+Proof
 SIMP_TAC std_ss [is_valid_bir_immtype_size_REWRS, bir_immtype_of_size_def] >>
-METIS_TAC[optionTheory.IS_SOME_DEF]);
+METIS_TAC[optionTheory.IS_SOME_DEF]
+QED
 
-val bir_immtype_of_num_inv = store_thm ("bir_immtype_of_num_inv",
-  ``(!brt. bir_immtype_of_size (size_of_bir_immtype brt) = SOME brt) /\
+Theorem bir_immtype_of_num_inv:
+  (!brt. bir_immtype_of_size (size_of_bir_immtype brt) = SOME brt) /\
     (!n brt. (bir_immtype_of_size n = SOME brt) ==>
-             (size_of_bir_immtype brt = n))``,
+             (size_of_bir_immtype brt = n))
+Proof
 REPEAT CONJ_TAC >| [
   Cases >> SIMP_TAC std_ss [size_of_bir_immtype_def, bir_immtype_of_size_def],
 
   SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss) [bir_immtype_of_size_def, DISJ_IMP_THM, FORALL_AND_THM,
     COND_EXPAND_OR, LEFT_AND_OVER_OR, size_of_bir_immtype_def]
-]);
+]
+QED
 
 
 val bir_immtype_of_size_REWRS_SOME = save_thm ("bir_immtype_of_size_REWRS_SOME",
@@ -130,29 +146,42 @@ end);
 (* ------------------------------------------------------------------------- *)
 (*  Transformation between immediates and numbers                            *)
 (* ------------------------------------------------------------------------- *)
-val b2n_def = Define `
+Definition b2n_def:
   (b2n ( Imm1   w ) = w2n w) /\
   (b2n ( Imm8   w ) = w2n w) /\
   (b2n ( Imm16  w ) = w2n w) /\
   (b2n ( Imm32  w ) = w2n w) /\
   (b2n ( Imm64  w ) = w2n w) /\
   (b2n ( Imm128 w ) = w2n w)
-`;
+End
 
-val n2bs_def = Define `
+Definition n2bs_def:
   (n2bs n Bit1   = Imm1   (n2w n)) /\
   (n2bs n Bit8   = Imm8   (n2w n)) /\
   (n2bs n Bit16  = Imm16  (n2w n)) /\
   (n2bs n Bit32  = Imm32  (n2w n)) /\
   (n2bs n Bit64  = Imm64  (n2w n)) /\
-  (n2bs n Bit128 = Imm128 (n2w n))`
+  (n2bs n Bit128 = Imm128 (n2w n))
+End
 
-val n2b_1_def   = Define `n2b_1  n  = n2bs n Bit1`;
-val n2b_8_def   = Define `n2b_8  n  = n2bs n Bit8`;
-val n2b_16_def  = Define `n2b_16 n  = n2bs n Bit16`;
-val n2b_32_def  = Define `n2b_32 n  = n2bs n Bit32`;
-val n2b_64_def  = Define `n2b_64 n  = n2bs n Bit64`;
-val n2b_128_def = Define `n2b_128 n = n2bs n Bit128`;
+Definition n2b_1_def:
+  n2b_1  n  = n2bs n Bit1
+End
+Definition n2b_8_def:
+  n2b_8  n  = n2bs n Bit8
+End
+Definition n2b_16_def:
+  n2b_16 n  = n2bs n Bit16
+End
+Definition n2b_32_def:
+  n2b_32 n  = n2bs n Bit32
+End
+Definition n2b_64_def:
+  n2b_64 n  = n2bs n Bit64
+End
+Definition n2b_128_def:
+  n2b_128 n = n2bs n Bit128
+End
 
 val _ = add_bare_numeral_form (#"y", SOME "n2b_128");
 val _ = add_bare_numeral_form (#"x", SOME "n2b_64");
@@ -164,24 +193,27 @@ val _ = add_bare_numeral_form (#"b", SOME "n2b_1");
 val n2b_fixed_DEFS = save_thm ("n2b_fixed_DEFS",
     LIST_CONJ [n2b_1_def, n2b_8_def, n2b_16_def, n2b_32_def, n2b_64_def, n2b_128_def]);
 
-val b2n_n2bs = store_thm ("b2n_n2bs",
-  ``!bt n. b2n (n2bs n bt) = MOD_2EXP (size_of_bir_immtype bt) n``,
+Theorem b2n_n2bs:
+  !bt n. b2n (n2bs n bt) = MOD_2EXP (size_of_bir_immtype bt) n
+Proof
 Cases >> (
   SIMP_TAC (std_ss++wordsLib.WORD_ss) [b2n_def, n2bs_def, w2n_n2w,
     size_of_bir_immtype_def, bitTheory.MOD_2EXP_def]
-));
+)
+QED
 
-val b2n_n2b_fixed = store_thm ("b2n_n2b_fixed",
-  ``(!n. b2n (n2b_1 n)  = n MOD 2) /\
+Theorem b2n_n2b_fixed:
+  (!n. b2n (n2b_1 n)  = n MOD 2) /\
     (!n. b2n (n2b_8 n)  = n MOD 2**8) /\
     (!n. b2n (n2b_16 n) = n MOD 2**16) /\
     (!n. b2n (n2b_32 n) = n MOD 2**32) /\
     (!n. b2n (n2b_64 n) = n MOD 2**64) /\
     (!n. b2n (n2b_128 n) = n MOD 2**128) /\
-    (!n bt. b2n (n2bs n bt) = n MOD 2**(size_of_bir_immtype bt))``,
-
+    (!n bt. b2n (n2bs n bt) = n MOD 2**(size_of_bir_immtype bt))
+Proof
 SIMP_TAC std_ss [n2b_fixed_DEFS, b2n_n2bs, size_of_bir_immtype_def,
-  bitTheory.MOD_2EXP_def]);
+  bitTheory.MOD_2EXP_def]
+QED
 
 val b2n_n2w_REWRS = save_thm ("b2n_n2w_REWRS",
 SIMP_RULE std_ss [n2b_fixed_DEFS, n2bs_def] (
@@ -193,22 +225,26 @@ prove (``(!n. b2n (n2b_1 n)  = n MOD 2) /\
     (!n. b2n (n2b_128 n) = n MOD 2**128)``, SIMP_TAC std_ss [b2n_n2b_fixed])))
 
 
-val n2bs_b2n = store_thm ("n2bs_b2n",
-  ``!b s. (s = type_of_bir_imm b) ==> (n2bs (b2n b) s = b)``,
+Theorem n2bs_b2n:
+  !b s. (s = type_of_bir_imm b) ==> (n2bs (b2n b) s = b)
+Proof
 Cases >> (
   SIMP_TAC std_ss [b2n_def, n2bs_def, type_of_bir_imm_def, n2w_w2n]
-));
+)
+QED
 
 val w2n_lt_trans = prove (``!w:'a word. dimword (:'a) <= m ==> (w2n w < m)``,
 METIS_TAC[w2n_lt, arithmeticTheory.LESS_LESS_EQ_TRANS]);
 
-val b2n_lt = store_thm ("b2n_lt",
-  ``!b. b2n b < 2 ** (size_of_bir_immtype (type_of_bir_imm b))``,
+Theorem b2n_lt:
+  !b. b2n b < 2 ** (size_of_bir_immtype (type_of_bir_imm b))
+Proof
 Cases >> (
   SIMP_TAC std_ss [b2n_def, type_of_bir_imm_def, size_of_bir_immtype_def] >>
   MATCH_MP_TAC w2n_lt_trans >>
   SIMP_TAC (std_ss++wordsLib.SIZES_ss) []
-));
+)
+QED
 
 
 val b2n_lt_REWRS = save_thm ("b2n_lt_REWRS",
@@ -216,15 +252,19 @@ SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_imm_t``]) [
   type_of_bir_imm_def, size_of_bir_immtype_def] b2n_lt);
 
 
-val b2n_MOD_2EXP = store_thm ("b2n_MOD_2EXP",
-  ``!i n. ((size_of_bir_immtype (type_of_bir_imm i)) = n) ==>
-          (MOD_2EXP n (b2n i) = b2n i)``,
-SIMP_TAC std_ss [bitTheory.MOD_2EXP_def, b2n_lt]);
+Theorem b2n_MOD_2EXP:
+  !i n. ((size_of_bir_immtype (type_of_bir_imm i)) = n) ==>
+          (MOD_2EXP n (b2n i) = b2n i)
+Proof
+SIMP_TAC std_ss [bitTheory.MOD_2EXP_def, b2n_lt]
+QED
 
 
-val type_of_n2bs = store_thm ("type_of_n2bs",
-``!s n. type_of_bir_imm (n2bs n s) = s``,
-Cases >> SIMP_TAC std_ss [n2bs_def, type_of_bir_imm_def]);
+Theorem type_of_n2bs:
+  !s n. type_of_bir_imm (n2bs n s) = s
+Proof
+Cases >> SIMP_TAC std_ss [n2bs_def, type_of_bir_imm_def]
+QED
 
 
 val type_of_n2b_fixed = save_thm ("type_of_n2b_fixed",
@@ -232,34 +272,37 @@ SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_immtype_t``]) [
   GSYM n2b_fixed_DEFS] type_of_n2bs);
 
 
-val type_of_bir_imm_n2bs_INTRO = store_thm ("type_of_bir_imm_n2bs_INTRO",
-  ``!s b. (type_of_bir_imm b = s) <=> (?n. b = n2bs n s)``,
-
+Theorem type_of_bir_imm_n2bs_INTRO:
+  !s b. (type_of_bir_imm b = s) <=> (?n. b = n2bs n s)
+Proof
 REPEAT GEN_TAC >> EQ_TAC >> STRIP_TAC >| [
   Q.EXISTS_TAC `b2n b` >>
   ASM_SIMP_TAC std_ss [n2bs_b2n],
 
   ASM_SIMP_TAC std_ss [type_of_n2bs]
-]);
+]
+QED
 
 
-val n2bs_MOD_size_of_bir_immtype = store_thm ("n2bs_MOD_size_of_bir_immtype",
-  ``!s n. n2bs (MOD_2EXP (size_of_bir_immtype s) n) s = n2bs n s``,
-
+Theorem n2bs_MOD_size_of_bir_immtype:
+  !s n. n2bs (MOD_2EXP (size_of_bir_immtype s) n) s = n2bs n s
+Proof
 REPEAT STRIP_TAC >>
 Q.SUBGOAL_THEN `n2bs n s = n2bs (b2n (n2bs n s)) s` SUBST1_TAC >- METIS_TAC[n2bs_b2n, type_of_n2bs] >>
-SIMP_TAC std_ss [b2n_n2bs]);
+SIMP_TAC std_ss [b2n_n2bs]
+QED
 
 
 
-val n2bs_CASE = store_thm ("n2bs_CASE",
-  ``!b. (?n. (n < 2 ** (size_of_bir_immtype (type_of_bir_imm b))) /\
-             (b = n2bs n (type_of_bir_imm b)))``,
-
+Theorem n2bs_CASE:
+  !b. (?n. (n < 2 ** (size_of_bir_immtype (type_of_bir_imm b))) /\
+             (b = n2bs n (type_of_bir_imm b)))
+Proof
 REPEAT STRIP_TAC >>
 `?n. b = n2bs n (type_of_bir_imm b)` by METIS_TAC[type_of_bir_imm_n2bs_INTRO] >>
 Q.EXISTS_TAC `(MOD_2EXP (size_of_bir_immtype (type_of_bir_imm b)) n)` >>
-ASM_SIMP_TAC std_ss [n2bs_MOD_size_of_bir_immtype, bitTheory.MOD_2EXP_def]);
+ASM_SIMP_TAC std_ss [n2bs_MOD_size_of_bir_immtype, bitTheory.MOD_2EXP_def]
+QED
 
 
 
@@ -267,74 +310,97 @@ ASM_SIMP_TAC std_ss [n2bs_MOD_size_of_bir_immtype, bitTheory.MOD_2EXP_def]);
 (*  finiteness of the datatypes *)
 (* ---------------------------- *)
 
-val bir_immtype_t_LIST_def = Define `bir_immtype_t_LIST = ^(listSyntax.mk_list (TypeBase.constructors_of ``:bir_immtype_t``, ``:bir_immtype_t``))`;
+Definition bir_immtype_t_LIST_def:
+  bir_immtype_t_LIST = ^(listSyntax.mk_list (TypeBase.constructors_of ``:bir_immtype_t``, ``:bir_immtype_t``))
+End
 
 
-val bir_immtype_t_LIST_THM = store_thm ("bir_immtype_t_LIST_THM",
-  ``!s. MEM s bir_immtype_t_LIST``,
-Cases >> SIMP_TAC list_ss [bir_immtype_t_LIST_def]);
+Theorem bir_immtype_t_LIST_THM:
+  !s. MEM s bir_immtype_t_LIST
+Proof
+Cases >> SIMP_TAC list_ss [bir_immtype_t_LIST_def]
+QED
 
-val bir_immtype_t_UNIV_SPEC = store_thm ("bir_immtype_t_UNIV_SPEC",
-  ``(UNIV:bir_immtype_t set) = set bir_immtype_t_LIST``,
-SIMP_TAC list_ss [EXTENSION, bir_immtype_t_LIST_THM, IN_UNIV]);
+Theorem bir_immtype_t_UNIV_SPEC:
+  (UNIV:bir_immtype_t set) = set bir_immtype_t_LIST
+Proof
+SIMP_TAC list_ss [EXTENSION, bir_immtype_t_LIST_THM, IN_UNIV]
+QED
 
-val bir_immtype_t_FINITE_UNIV = store_thm ("bir_immtype_t_FINITE_UNIV",
-  ``FINITE (UNIV : (bir_immtype_t set))``,
-REWRITE_TAC[bir_immtype_t_UNIV_SPEC, listTheory.FINITE_LIST_TO_SET]);
+Theorem bir_immtype_t_FINITE_UNIV:
+  FINITE (UNIV : (bir_immtype_t set))
+Proof
+REWRITE_TAC[bir_immtype_t_UNIV_SPEC, listTheory.FINITE_LIST_TO_SET]
+QED
 
 
-val bir_imm_t_LIST_def = Define `
+Definition bir_imm_t_LIST_def:
   bir_imm_t_LIST =
-     FLAT (MAP (\s. MAP (\n. n2bs n s) (COUNT_LIST (2 ** size_of_bir_immtype s))) bir_immtype_t_LIST)`
+     FLAT (MAP (\s. MAP (\n. n2bs n s) (COUNT_LIST (2 ** size_of_bir_immtype s))) bir_immtype_t_LIST)
+End
 
 
-val bir_imm_t_LIST_THM = store_thm ("bir_imm_t_LIST_THM",
-  ``!i. MEM i bir_imm_t_LIST``,
-
+Theorem bir_imm_t_LIST_THM:
+  !i. MEM i bir_imm_t_LIST
+Proof
 SIMP_TAC list_ss [bir_imm_t_LIST_def, MEM_FLAT, MEM_MAP,
   PULL_EXISTS, rich_listTheory.MEM_COUNT_LIST, bir_immtype_t_LIST_THM] >>
-METIS_TAC [n2bs_CASE]);
+METIS_TAC [n2bs_CASE]
+QED
 
 
-val bir_imm_t_UNIV_SPEC = store_thm ("bir_imm_t_UNIV_SPEC",
-  ``(UNIV:bir_imm_t set) = set bir_imm_t_LIST``,
-SIMP_TAC list_ss [EXTENSION, bir_imm_t_LIST_THM, IN_UNIV]);
+Theorem bir_imm_t_UNIV_SPEC:
+  (UNIV:bir_imm_t set) = set bir_imm_t_LIST
+Proof
+SIMP_TAC list_ss [EXTENSION, bir_imm_t_LIST_THM, IN_UNIV]
+QED
 
-val bir_imm_t_FINITE_UNIV = store_thm ("bir_imm_t_FINITE_UNIV",
-  ``FINITE (UNIV : (bir_imm_t set))``,
-REWRITE_TAC[bir_imm_t_UNIV_SPEC, listTheory.FINITE_LIST_TO_SET]);
+Theorem bir_imm_t_FINITE_UNIV:
+  FINITE (UNIV : (bir_imm_t set))
+Proof
+REWRITE_TAC[bir_imm_t_UNIV_SPEC, listTheory.FINITE_LIST_TO_SET]
+QED
 
 
 (* ------------------------------------------------------------------------- *)
 (*  transformation between immediates and words                              *)
 (* ------------------------------------------------------------------------- *)
 
-val b2w_def = Define `b2w bi = n2w (b2n bi)`;
+Definition b2w_def:
+  b2w bi = n2w (b2n bi)
+End
 
-val b2w_REWRS = store_thm ("b2w_REWRS",
-``(!w. (b2w ( Imm1  w )  = w2w w)) /\
+Theorem b2w_REWRS:
+  (!w. (b2w ( Imm1  w )  = w2w w)) /\
   (!w. (b2w ( Imm8  w )  = w2w w)) /\
   (!w. (b2w ( Imm16 w )  = w2w w)) /\
   (!w. (b2w ( Imm32 w )  = w2w w)) /\
   (!w. (b2w ( Imm64 w )  = w2w w)) /\
-  (!w. (b2w ( Imm128 w ) = w2w w))``,
-REWRITE_TAC[b2w_def, b2n_def, w2w_def]);
+  (!w. (b2w ( Imm128 w ) = w2w w))
+Proof
+REWRITE_TAC[b2w_def, b2n_def, w2w_def]
+QED
 
-val w2bs_def = Define `w2bs w s = n2bs (w2n w) s`
+Definition w2bs_def:
+  w2bs w s = n2bs (w2n w) s
+End
 
-val w2bs_REWRS = store_thm ("w2bs_REWRS",
-``(!w. (w2bs w Bit1   = Imm1   (w2w w))) /\
+Theorem w2bs_REWRS:
+  (!w. (w2bs w Bit1   = Imm1   (w2w w))) /\
   (!w. (w2bs w Bit8   = Imm8   (w2w w))) /\
   (!w. (w2bs w Bit16  = Imm16  (w2w w))) /\
   (!w. (w2bs w Bit32  = Imm32  (w2w w))) /\
   (!w. (w2bs w Bit64  = Imm64  (w2w w))) /\
-  (!w. (w2bs w Bit128 = Imm128 (w2w w)))``,
-SIMP_TAC std_ss [w2bs_def,n2bs_def, w2w_def]);
+  (!w. (w2bs w Bit128 = Imm128 (w2w w)))
+Proof
+SIMP_TAC std_ss [w2bs_def,n2bs_def, w2w_def]
+QED
 
 
-val w2bs_b2w = store_thm ("w2bs_b2w",
-  ``!b s. ((s = type_of_bir_imm b) /\ size_of_bir_immtype (type_of_bir_imm b) <= dimindex (:'a)) ==>
-          (w2bs ((b2w b):'a word) s = b)``,
+Theorem w2bs_b2w:
+  !b s. ((s = type_of_bir_imm b) /\ size_of_bir_immtype (type_of_bir_imm b) <= dimindex (:'a)) ==>
+          (w2bs ((b2w b):'a word) s = b)
+Proof
 SIMP_TAC std_ss [w2bs_def, b2w_def, w2n_n2w] >>
 REPEAT STRIP_TAC >>
 `b2n b MOD (dimword (:'a)) = b2n b` by (
@@ -345,63 +411,79 @@ REPEAT STRIP_TAC >>
      METIS_TAC[bitTheory.TWOEXP_MONO2] >>
   DECIDE_TAC
 ) >>
-ASM_SIMP_TAC std_ss [n2bs_b2n])
+ASM_SIMP_TAC std_ss [n2bs_b2n]
+QED
 
-val type_of_w2bs = store_thm ("type_of_w2bs",
-``!s w. type_of_bir_imm (w2bs w s) = s``,
-SIMP_TAC std_ss [w2bs_def, type_of_n2bs]);
+Theorem type_of_w2bs:
+  !s w. type_of_bir_imm (w2bs w s) = s
+Proof
+SIMP_TAC std_ss [w2bs_def, type_of_n2bs]
+QED
 
 
 (* ------------------------------------------------------------------------- *)
 (*  transformation between immediates and bool                               *)
 (* ------------------------------------------------------------------------- *)
 
-val b2bool_def = Define `b2bool bi = (b2n bi <> 0)`;
+Definition b2bool_def:
+  b2bool bi = (b2n bi <> 0)
+End
 
 val b2bool_REWRS = save_thm ("b2bool_REWRS",
   SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_imm_t``]) [
     b2n_def, w2n_eq_0]
     b2bool_def);
 
-val bool2w_def = Define `bool2w b = (if b then 1w else 0w):word1`;
-val bool2b_def = Define `bool2b b = Imm1 (bool2w b)`;
+Definition bool2w_def:
+  bool2w b = (if b then 1w else 0w):word1
+End
+Definition bool2b_def:
+  bool2b b = Imm1 (bool2w b)
+End
 
-val bool2b_inv = store_thm ("bool2b_inv",
-  ``(!b. (b2bool (bool2b b) = b)) /\
-    (!w. ((bool2b (b2bool (Imm1 w))) = Imm1 w))``,
-
+Theorem bool2b_inv:
+  (!b. (b2bool (bool2b b) = b)) /\
+    (!w. ((bool2b (b2bool (Imm1 w))) = Imm1 w))
+Proof
 SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++wordsLib.WORD_ss)
   [b2bool_def, bool2b_def, b2n_def, w2n_eq_0, bool2w_def] >>
 Cases >>
 FULL_SIMP_TAC (std_ss++wordsLib.WORD_ss) [] >>
 `(n = 0) \/ (n = 1)` by DECIDE_TAC >> (
   ASM_SIMP_TAC std_ss []
-));
+)
+QED
 
-val type_of_bool2b = store_thm ("type_of_bool2b",
-  ``!b. type_of_bir_imm (bool2b b) = Bit1``,
-SIMP_TAC std_ss [bool2b_def, type_of_bir_imm_def]);
+Theorem type_of_bool2b:
+  !b. type_of_bir_imm (bool2b b) = Bit1
+Proof
+SIMP_TAC std_ss [bool2b_def, type_of_bir_imm_def]
+QED
 
-val bool2w_EQ_ELIMS = store_thm ("bool2w_EQ_ELIMS",
-  ``(!b. (bool2w b = 1w) <=> b) /\
+Theorem bool2w_EQ_ELIMS:
+  (!b. (bool2w b = 1w) <=> b) /\
     (!b. (bool2w b = 0w) <=> ~b) /\
     (!b. (1w = bool2w b) <=> b) /\
-    (!b. (0w = bool2w b) <=> ~b)``,
+    (!b. (0w = bool2w b) <=> ~b)
+Proof
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_imm_ss++wordsLib.WORD_ss) [bool2w_def]
+QED
 
-SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_imm_ss++wordsLib.WORD_ss) [bool2w_def]);
+Theorem bool2w_11:
+  !b1 b2. (bool2w b1 = bool2w b2) <=> (b1 = b2)
+Proof
+SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_imm_ss++wordsLib.WORD_ss) [bool2w_def]
+QED
 
-val bool2w_11 = store_thm ("bool2w_11",
-  ``!b1 b2. (bool2w b1 = bool2w b2) <=> (b1 = b2)``,
-SIMP_TAC (std_ss++boolSimps.LIFT_COND_ss++bir_imm_ss++wordsLib.WORD_ss) [bool2w_def]);
 
-
-val bool2b_EQ_IMM1_ELIMS = store_thm ("bool2b_EQ_IMM1_ELIMS",
-  ``(!b. (bool2b b = Imm1 1w) <=> b) /\
+Theorem bool2b_EQ_IMM1_ELIMS:
+  (!b. (bool2b b = Imm1 1w) <=> b) /\
     (!b. (bool2b b = Imm1 0w) <=> ~b) /\
     (!b. (Imm1 1w = bool2b b) <=> b) /\
-    (!b. (Imm1 0w = bool2b b) <=> ~b)``,
-
-SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def, bool2w_EQ_ELIMS]);
+    (!b. (Imm1 0w = bool2b b) <=> ~b)
+Proof
+SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def, bool2w_EQ_ELIMS]
+QED
 
 
 val bool2b_NEQ_IMM_ELIMS_AUX = prove (
@@ -413,85 +495,101 @@ val bool2b_NEQ_IMM_ELIMS = save_thm ("bool2b_NEQ_IMM_ELIMS",
     type_of_bir_imm_def]
     bool2b_NEQ_IMM_ELIMS_AUX);
 
-val bool2b_11 = store_thm ("bool2b_11",
-``!b1 b2. (bool2b b1 = bool2b b2) <=> (b1 = b2)``,
-SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def, bool2w_11]);
+Theorem bool2b_11:
+  !b1 b2. (bool2b b1 = bool2b b2) <=> (b1 = b2)
+Proof
+SIMP_TAC (std_ss++bir_imm_ss) [bool2b_def, bool2w_11]
+QED
 
 
 (* ------------------------------------------------------------------------- *)
 (*  transformation between immediates and bitstrings                         *)
 (* ------------------------------------------------------------------------- *)
 
-val v2bs_def = Define `v2bs v s = n2bs (v2n v) s`;
+Definition v2bs_def:
+  v2bs v s = n2bs (v2n v) s
+End
 
 val v2bs_REWRS = save_thm ("v2bs_REWRS",
   SIMP_RULE (std_ss++DatatypeSimps.expand_type_quants_ss[``:bir_immtype_t``]) [
     n2bs_def, FORALL_AND_THM, n2w_v2n] v2bs_def);
 
-val b2v_def = Define `
+Definition b2v_def:
   (b2v ( Imm1   w ) = w2v w) /\
   (b2v ( Imm8   w ) = w2v w) /\
   (b2v ( Imm16  w ) = w2v w) /\
   (b2v ( Imm32  w ) = w2v w) /\
   (b2v ( Imm64  w ) = w2v w) /\
   (b2v ( Imm128 w ) = w2v w)
-`;
+End
 
-val b2v_LENGTH = store_thm ("b2v_LENGTH",
-  ``!r. LENGTH (b2v r) = size_of_bir_immtype (
-        type_of_bir_imm r)``,
+Theorem b2v_LENGTH:
+  !r. LENGTH (b2v r) = size_of_bir_immtype (
+        type_of_bir_imm r)
+Proof
 Cases >> (
   SIMP_TAC (std_ss++wordsLib.WORD_ss) [b2v_def, type_of_bir_imm_def,
     size_of_bir_immtype_def, length_w2v]
-));
+)
+QED
 
-val v2n_w2v = store_thm ("v2n_w2v",
-``!w:'a word. (v2n (w2v w) = w2n w)``,
+Theorem v2n_w2v:
+  !w:'a word. (v2n (w2v w) = w2n w)
+Proof
 GEN_TAC >>
 bitstringLib.Cases_on_v2w `w` >>
 ASM_SIMP_TAC std_ss [w2n_v2w, w2v_v2w,
   fixwidth_id_imp, bitTheory.MOD_2EXP_def, v2n_lt]
-);
+QED
 
-val v2n_b2v = store_thm ("v2n_b2v",
-  ``!r. v2n (b2v r) = b2n r``,
+Theorem v2n_b2v:
+  !r. v2n (b2v r) = b2n r
+Proof
 Cases >> (
   SIMP_TAC (std_ss++wordsLib.WORD_ss) [b2n_def, b2v_def, v2n_w2v]
-));
+)
+QED
 
 
-val type_of_v2bs = store_thm ("type_of_v2bs",
-``!s v. type_of_bir_imm (v2bs v s) = s``,
-SIMP_TAC std_ss [v2bs_def, type_of_n2bs]);
+Theorem type_of_v2bs:
+  !s v. type_of_bir_imm (v2bs v s) = s
+Proof
+SIMP_TAC std_ss [v2bs_def, type_of_n2bs]
+QED
 
 
-val v2w_fixwidth_imp = store_thm ("v2w_fixwidth_imp",
-  ``!v w. ((dimindex (:'a)) <= w) ==>
-          ((v2w (fixwidth w v) = ((v2w v):'a word)))``,
+Theorem v2w_fixwidth_imp:
+  !v w. ((dimindex (:'a)) <= w) ==>
+          ((v2w (fixwidth w v) = ((v2w v):'a word)))
+Proof
 REPEAT STRIP_TAC >>
 `fixwidth (dimindex (:'a)) (fixwidth w v) = fixwidth (dimindex (:'a)) v` by (
   METIS_TAC[fixwidth_fixwidth_le]
 ) >>
-METIS_TAC[v2w_fixwidth]);
+METIS_TAC[v2w_fixwidth]
+QED
 
 
-val v2bs_fixwidth = store_thm ("v2bs_fixwidth",
-``!v vty w. (size_of_bir_immtype vty <= w) ==>
-            (v2bs (fixwidth w v) vty = v2bs v vty)``,
-
+Theorem v2bs_fixwidth:
+  !v vty w. (size_of_bir_immtype vty <= w) ==>
+            (v2bs (fixwidth w v) vty = v2bs v vty)
+Proof
 GEN_TAC >> Cases >>
 SIMP_TAC (std_ss++wordsLib.WORD_ss) [v2bs_def, n2bs_def, n2w_v2n,
-  v2w_fixwidth_imp, size_of_bir_immtype_def]);
+  v2w_fixwidth_imp, size_of_bir_immtype_def]
+QED
 
-val v2bs_n2v = store_thm ("v2bs_n2v",
-  ``!n. v2bs (n2v n) = n2bs n``,
-SIMP_TAC std_ss [FUN_EQ_THM, v2bs_def, v2n_n2v]);
+Theorem v2bs_n2v:
+  !n. v2bs (n2v n) = n2bs n
+Proof
+SIMP_TAC std_ss [FUN_EQ_THM, v2bs_def, v2n_n2v]
+QED
 
 
 
-val n2v_v2n = store_thm ("n2v_v2n",
-``!v n. (LENGTH v = n) ==> (fixwidth n (n2v (v2n v)) = v)``,
-
+Theorem n2v_v2n:
+  !v n. (LENGTH v = n) ==> (fixwidth n (n2v (v2n v)) = v)
+Proof
 GEN_TAC >>
 SIMP_TAC list_ss [v2n_def, n2v_def, numposrepTheory.num_from_bin_list_def,
     numposrepTheory.num_to_bin_list_def] >>
@@ -564,7 +662,8 @@ COND_CASES_TAC >| [
   `LENGTH (dropWhile (\b. ~b) v) <= LENGTH v` by MATCH_ACCEPT_TAC listTheory.LENGTH_dropWhile_LESS_EQ >>
   `LENGTH (dropWhile (\b. ~b) v) = LENGTH v` by DECIDE_TAC >>
   ASM_SIMP_TAC list_ss [rich_listTheory.LASTN_LENGTH_ID]
-]);
+]
+QED
 
 
 

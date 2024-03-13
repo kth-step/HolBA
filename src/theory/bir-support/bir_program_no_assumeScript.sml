@@ -11,19 +11,19 @@ open bir_program_multistep_propsTheory;
 
 val _ = new_theory "bir_program_no_assume";
 
-val bir_stmtB_is_not_assume_def = Define `
+Definition bir_stmtB_is_not_assume_def:
   (bir_stmtB_is_not_assume (BStmt_Assume ex) = F) /\
   (bir_stmtB_is_not_assume _ = T)
-`;
+End
 
-val bir_stmtB_not_assume_never_assumviol =
-  store_thm ("bir_stmtB_not_assume_never_assumviol",
-  ``!stmtb st obs st'.
+Theorem bir_stmtB_not_assume_never_assumviol:
+  !stmtb st obs st'.
     bir_stmtB_is_not_assume stmtb ==>
     (st.bst_status <> BST_AssumptionViolated) ==>
     (bir_exec_stmtB stmtb st = (obs, st')) ==>
-    (st'.bst_status <> BST_AssumptionViolated)``,
-  REPEAT STRIP_TAC >>
+    (st'.bst_status <> BST_AssumptionViolated)
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `st` >>
   Cases_on `st'` >>
   Cases_on `stmtb` >> (
@@ -87,23 +87,23 @@ val bir_stmtB_not_assume_never_assumviol =
       )
     )
   ]
-);
+QED
 
-val bir_stmtsB_has_no_assumes_def = Define `
+Definition bir_stmtsB_has_no_assumes_def:
   (bir_stmtsB_has_no_assumes [] = T) /\
   (bir_stmtsB_has_no_assumes (h::t) =
     ((bir_stmtB_is_not_assume h) /\ (bir_stmtsB_has_no_assumes t))
   )
-`;
+End
 
-val bir_stmtsB_not_assume_never_assumviol =
-  store_thm ("bir_stmtsB_not_assume_never_assumviol",
-  ``!stmtsB l c st l' c' st'.
+Theorem bir_stmtsB_not_assume_never_assumviol:
+  !stmtsB l c st l' c' st'.
     bir_stmtsB_has_no_assumes stmtsB ==>
     (st.bst_status <> BST_AssumptionViolated) ==>
     (bir_exec_stmtsB stmtsB (l, c, st) = (l', c', st')) ==>
-    (st'.bst_status <> BST_AssumptionViolated)``,
-  Induct_on `stmtsB` >- (
+    (st'.bst_status <> BST_AssumptionViolated)
+Proof
+Induct_on `stmtsB` >- (
     REPEAT STRIP_TAC >>
     FULL_SIMP_TAC (std_ss++holBACore_ss)
                   [bir_stmtsB_has_no_assumes_def,
@@ -134,20 +134,20 @@ val bir_stmtsB_not_assume_never_assumviol =
                 ) >>
     REV_FULL_SIMP_TAC std_ss []
   ]
-);
+QED
 
-val bir_block_has_no_assumes_def = Define `
+Definition bir_block_has_no_assumes_def:
   bir_block_has_no_assumes block =
     bir_stmtsB_has_no_assumes block.bb_statements
-`;
+End
 
-val bir_exec_stmtE_not_assumviol =
-  store_thm ("bir_exec_stmtE_not_assumviol",
-  ``!prog stmtE st.
+Theorem bir_exec_stmtE_not_assumviol:
+  !prog stmtE st.
       (st.bst_status <> BST_AssumptionViolated) ==>
       ((bir_exec_stmtE prog stmtE st).bst_status <>
-         BST_AssumptionViolated)``,
-  REPEAT STRIP_TAC >>
+         BST_AssumptionViolated)
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `stmtE` >| [
     (* Jmp *)
     FULL_SIMP_TAC std_ss [bir_exec_stmtE_def,
@@ -219,16 +219,16 @@ val bir_exec_stmtE_not_assumviol =
       FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_set_typeerror_def, LET_DEF]
     )
   ]
-);
+QED
 
-val bir_block_not_assume_never_assumviol =
-  store_thm ("bir_block_not_assume_never_assumviol",
-  ``!prog bl st l' c' st'.
+Theorem bir_block_not_assume_never_assumviol:
+  !prog bl st l' c' st'.
     bir_block_has_no_assumes bl ==>
     (st.bst_status <> BST_AssumptionViolated) ==>
     (bir_exec_block prog bl st = (l', c', st')) ==>
-    (st'.bst_status <> BST_AssumptionViolated)``,
-  FULL_SIMP_TAC std_ss [bir_block_has_no_assumes_def,
+    (st'.bst_status <> BST_AssumptionViolated)
+Proof
+FULL_SIMP_TAC std_ss [bir_block_has_no_assumes_def,
                         bir_exec_block_def] >>
   REPEAT STRIP_TAC >>
   IMP_RES_TAC bir_stmtsB_not_assume_never_assumviol >>
@@ -276,23 +276,23 @@ val bir_block_not_assume_never_assumviol =
                         [bir_state_t_fn_updates]
     )
   ]
-);
+QED
 
-val bir_prog_has_no_assumes_def = Define `
+Definition bir_prog_has_no_assumes_def:
   (bir_prog_has_no_assumes (BirProgram []) = T) /\
   (bir_prog_has_no_assumes (BirProgram (h::t)) =
     ((bir_block_has_no_assumes h) /\
     (bir_prog_has_no_assumes (BirProgram t)))
   )
-`;
+End
 
-val bir_prog_to_block_no_assumes =
-  store_thm ("bir_prog_to_block_no_assumes",
-  ``!prog st bl.
+Theorem bir_prog_to_block_no_assumes:
+  !prog st bl.
     (bir_get_current_block prog st.bst_pc = SOME bl) ==>
     bir_prog_has_no_assumes prog ==>
-    bir_block_has_no_assumes bl``,
-  Cases_on `prog` >>
+    bir_block_has_no_assumes bl
+Proof
+Cases_on `prog` >>
   Induct_on `l` >| [
     FULL_SIMP_TAC std_ss [bir_get_current_block_def,
                           bir_get_program_block_info_by_label_def,
@@ -330,17 +330,17 @@ val bir_prog_to_block_no_assumes =
       FULL_SIMP_TAC std_ss []
     ]
   ]
-);
+QED
 
-val bir_prog_not_assume_never_assumviol_exec_block_n =
-  store_thm ("bir_prog_not_assume_never_assumviol_exec_block_n",
-  ``!prog st n bl ol nstep npc st'.
+Theorem bir_prog_not_assume_never_assumviol_exec_block_n:
+  !prog st n bl ol nstep npc st'.
     (bir_get_current_block prog st.bst_pc = SOME bl) ==>
     bir_prog_has_no_assumes prog ==>
     (st.bst_status <> BST_AssumptionViolated) ==>
     (bir_exec_block_n prog st n = (ol, nstep, npc, st')) ==>
-    (st'.bst_status <> BST_AssumptionViolated)``,
-  Induct_on `n` >| [
+    (st'.bst_status <> BST_AssumptionViolated)
+Proof
+Induct_on `n` >| [
     FULL_SIMP_TAC std_ss [bir_exec_block_n_def,
                           bir_exec_steps_GEN_REWR_no_steps,
                           valOf_BER_Ended_def],
@@ -396,25 +396,25 @@ val bir_prog_not_assume_never_assumviol_exec_block_n =
       ]
     )
   ]
-);
+QED
 
-val bir_prog_not_assume_never_assumviol_exec_to_labels =
-  store_thm ("bir_prog_not_assume_never_assumviol_exec_to_labels",
-  ``!ls prog st bl ol c_st c_l st'.
+Theorem bir_prog_not_assume_never_assumviol_exec_to_labels:
+  !ls prog st bl ol c_st c_l st'.
     (bir_get_current_block prog st.bst_pc = SOME bl) ==>
     bir_prog_has_no_assumes prog ==>
     (st.bst_status <> BST_AssumptionViolated) ==>
     (bir_exec_to_labels ls prog st =
        BER_Ended ol c_st c_l st'
     ) ==>
-    (st'.bst_status <> BST_AssumptionViolated)``,
-  REPEAT STRIP_TAC >>
+    (st'.bst_status <> BST_AssumptionViolated)
+Proof
+REPEAT STRIP_TAC >>
   subgoal `bir_exec_to_labels_n ls prog st 1 =
              BER_Ended ol c_st c_l st'` >- (
     FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_exec_to_labels_def]
   ) >>
   IMP_RES_TAC bir_exec_to_labels_n_TO_bir_exec_block_n >>
   IMP_RES_TAC bir_prog_not_assume_never_assumviol_exec_block_n
-);
+QED
 
 val _ = export_theory();

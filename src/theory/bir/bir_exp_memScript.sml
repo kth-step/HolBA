@@ -12,22 +12,22 @@ val bir_imm_ss = rewrites ((type_rws ``:bir_imm_t``) @ (type_rws ``:bir_immtype_
 (* access of memory map                                                      *)
 (* ------------------------------------------------------------------------- *)
 
-val bir_load_mmap_def = Define `
-    bir_load_mmap (mmap: num |-> num) a =
+Definition bir_load_mmap_def:
+  bir_load_mmap (mmap: num |-> num) a =
       case FLOOKUP mmap a of
         | NONE => 0
         | SOME v => v
-    `;
+End
 
 
-val bir_load_mmap_FUPDATE_THM = store_thm("bir_load_mmap_FUPDATE_THM", ``
+Theorem bir_load_mmap_FUPDATE_THM:
   !mmap a b x. bir_load_mmap (FUPDATE mmap (a,b)) x = if x = a then b else bir_load_mmap mmap x
-``,
-  REPEAT STRIP_TAC >>
+Proof
+REPEAT STRIP_TAC >>
   Cases_on `x = a` >> (
     ASM_SIMP_TAC (std_ss++pred_setSimps.PRED_SET_ss) [bir_load_mmap_def, FDOM_FUPDATE, FLOOKUP_UPDATE]
   )
-);
+QED
 
     
 
@@ -37,16 +37,20 @@ val bir_load_mmap_FUPDATE_THM = store_thm("bir_load_mmap_FUPDATE_THM", ``
 (* Endian for memory                                                         *)
 (* ------------------------------------------------------------------------- *)
 
-val _ = Datatype `bir_endian_t =
+Datatype:
+  bir_endian_t =
   | BEnd_BigEndian
   | BEnd_LittleEndian
-  | BEnd_NoEndian`
+  | BEnd_NoEndian
+End
 
 val bir_endian_ss = rewrites (type_rws ``:bir_endian_t``);
 
-val fold_bir_endian_THM = store_thm ("fold_bir_endian_THM",
-  ``!P. (P BEnd_BigEndian /\ P BEnd_LittleEndian /\ P BEnd_NoEndian) <=> (!en. P en)``,
-    SIMP_TAC (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_endian_t``]) []);
+Theorem fold_bir_endian_THM:
+  !P. (P BEnd_BigEndian /\ P BEnd_LittleEndian /\ P BEnd_NoEndian) <=> (!en. P en)
+Proof
+SIMP_TAC (std_ss++DatatypeSimps.expand_type_quants_ss [``:bir_endian_t``]) []
+QED
 
 (* ------------------------------------------------------------------------- *)
 (*  How many splits are needed                                               *)
@@ -55,14 +59,16 @@ val fold_bir_endian_THM = store_thm ("fold_bir_endian_THM",
 (* given a value- and a result_type, compute how many values are needed to
    form a result. If the length of the result is not devidable by the value size
    return NONE. *)
-val bir_number_of_mem_splits_def = Define `bir_number_of_mem_splits
+Definition bir_number_of_mem_splits_def:
+  bir_number_of_mem_splits
    (value_ty : bir_immtype_t) (result_ty : bir_immtype_t) (a_ty : bir_immtype_t) =
    if ((size_of_bir_immtype result_ty) MOD (size_of_bir_immtype value_ty) = 0) then
       (if ((size_of_bir_immtype result_ty) DIV (size_of_bir_immtype value_ty) <=
            2 ** (size_of_bir_immtype a_ty)) then
         SOME ((size_of_bir_immtype result_ty) DIV (size_of_bir_immtype value_ty))
        else NONE)
-   else NONE`;
+   else NONE
+End
 
 
 fun remove_quant_from_thm vn thm = let
@@ -73,18 +79,24 @@ in
   (v, thm')
 end;
 
-val bir_number_of_mem_splits_NEQ_SOME0 = store_thm ("bir_number_of_mem_splits_NEQ_SOME0",
-  ``!vt rt at. bir_number_of_mem_splits vt rt at <> SOME 0``,
-Cases >> Cases >> Cases >> SIMP_TAC std_ss [bir_number_of_mem_splits_def, size_of_bir_immtype_def]);
+Theorem bir_number_of_mem_splits_NEQ_SOME0:
+  !vt rt at. bir_number_of_mem_splits vt rt at <> SOME 0
+Proof
+Cases >> Cases >> Cases >> SIMP_TAC std_ss [bir_number_of_mem_splits_def, size_of_bir_immtype_def]
+QED
 
-val bir_number_of_mem_splits_EQ_SOME1 = store_thm ("bir_number_of_mem_splits_EQ_SOME1",
-  ``!vt rt at. (bir_number_of_mem_splits vt rt at = SOME 1) <=> (vt = rt)``,
+Theorem bir_number_of_mem_splits_EQ_SOME1:
+  !vt rt at. (bir_number_of_mem_splits vt rt at = SOME 1) <=> (vt = rt)
+Proof
 Cases >> Cases >> Cases >>
-  SIMP_TAC (std_ss++bir_imm_ss) [bir_number_of_mem_splits_def, size_of_bir_immtype_def]);
+  SIMP_TAC (std_ss++bir_imm_ss) [bir_number_of_mem_splits_def, size_of_bir_immtype_def]
+QED
 
-val bir_number_of_mem_splits_ID = store_thm ("bir_number_of_mem_splits_ID",
-  ``!rt at. bir_number_of_mem_splits rt rt at = SOME 1``,
-SIMP_TAC std_ss [bir_number_of_mem_splits_EQ_SOME1]);
+Theorem bir_number_of_mem_splits_ID:
+  !rt at. bir_number_of_mem_splits rt rt at = SOME 1
+Proof
+SIMP_TAC std_ss [bir_number_of_mem_splits_EQ_SOME1]
+QED
 
 
 val bir_number_of_mem_splits_REWRS = save_thm ("bir_number_of_mem_splits_REWRS",
@@ -120,63 +132,78 @@ end);
 (*  Loading                                                                  *)
 (* ------------------------------------------------------------------------- *)
 
-val bir_mem_concat_def = Define `bir_mem_concat vl rty = v2bs (FLAT vl) rty`
+Definition bir_mem_concat_def:
+  bir_mem_concat vl rty = v2bs (FLAT vl) rty
+End
 
-val type_of_bir_mem_concat = store_thm ("type_of_bir_mem_concat",
-  ``!vl ty. type_of_bir_imm (bir_mem_concat vl ty) = ty``,
-SIMP_TAC std_ss [bir_mem_concat_def, type_of_v2bs]);
+Theorem type_of_bir_mem_concat:
+  !vl ty. type_of_bir_imm (bir_mem_concat vl ty) = ty
+Proof
+SIMP_TAC std_ss [bir_mem_concat_def, type_of_v2bs]
+QED
 
-val bir_load_bitstring_from_mmap_def = Define `
+Definition bir_load_bitstring_from_mmap_def:
   bir_load_bitstring_from_mmap value_ty mmap (a:num) =
-    fixwidth (size_of_bir_immtype value_ty) (n2v (bir_load_mmap mmap a))`
+    fixwidth (size_of_bir_immtype value_ty) (n2v (bir_load_mmap mmap a))
+End
 
-val bir_load_bitstring_from_mmap_w2v = store_thm ("bir_load_bitstring_from_mmap_w2v",
-  ``!value_ty mmap a. (size_of_bir_immtype value_ty = dimindex (:'a)) ==>
+Theorem bir_load_bitstring_from_mmap_w2v:
+  !value_ty mmap a. (size_of_bir_immtype value_ty = dimindex (:'a)) ==>
       (bir_load_bitstring_from_mmap value_ty mmap a =
-       (w2v ((n2w (bir_load_mmap mmap a)):'a word)))``,
-SIMP_TAC std_ss [bir_load_bitstring_from_mmap_def, GSYM w2v_v2w, v2w_n2v]);
+       (w2v ((n2w (bir_load_mmap mmap a)):'a word)))
+Proof
+SIMP_TAC std_ss [bir_load_bitstring_from_mmap_def, GSYM w2v_v2w, v2w_n2v]
+QED
 
 
 val bir_load_bitstring_from_mmap_w2v_SIZES = save_thm ("bir_load_bitstring_from_mmap_w2v_SIZES",
   LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex bir_load_bitstring_from_mmap_w2v));
 
 
-val bir_mem_addr_def = Define `
-  bir_mem_addr aty a = MOD_2EXP (size_of_bir_immtype aty) a`;
+Definition bir_mem_addr_def:
+  bir_mem_addr aty a = MOD_2EXP (size_of_bir_immtype aty) a
+End
 
 
-val bir_mem_addr_id = store_thm ("bir_mem_addr_id",
-  ``!s a. a < 2 ** size_of_bir_immtype s ==> (bir_mem_addr s a = a)``,
+Theorem bir_mem_addr_id:
+  !s a. a < 2 ** size_of_bir_immtype s ==> (bir_mem_addr s a = a)
+Proof
 REPEAT STRIP_TAC >>
-ASM_SIMP_TAC std_ss [bir_mem_addr_def, bitTheory.MOD_2EXP_def]);
+ASM_SIMP_TAC std_ss [bir_mem_addr_def, bitTheory.MOD_2EXP_def]
+QED
 
 
-val bir_mem_addr_w2n = store_thm ("bir_mem_addr_w2n",
- ``!s. (size_of_bir_immtype s = dimindex (:'a)) ==>
-      !c. (bir_mem_addr s (w2n (c:'a word)) = w2n c)``,
+Theorem bir_mem_addr_w2n:
+  !s. (size_of_bir_immtype s = dimindex (:'a)) ==>
+      !c. (bir_mem_addr s (w2n (c:'a word)) = w2n c)
+Proof
 GEN_TAC >> STRIP_TAC >>
 Cases_on `c` >>
-FULL_SIMP_TAC std_ss [bir_mem_addr_def, w2n_n2w, dimword_def, bitTheory.MOD_2EXP_def]);
+FULL_SIMP_TAC std_ss [bir_mem_addr_def, w2n_n2w, dimword_def, bitTheory.MOD_2EXP_def]
+QED
 
 
 val bir_mem_addr_w2n_SIZES = save_thm ("bir_mem_addr_w2n_SIZES",
   LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex bir_mem_addr_w2n));
 
 
-val bir_mem_addr_w2n_add = store_thm ("bir_mem_addr_w2n_add",
- ``!s. (size_of_bir_immtype s = dimindex (:'a)) ==>
-      !c n. (bir_mem_addr s (w2n (c:'a word) + n) = w2n (c + n2w n))``,
+Theorem bir_mem_addr_w2n_add:
+  !s. (size_of_bir_immtype s = dimindex (:'a)) ==>
+      !c n. (bir_mem_addr s (w2n (c:'a word) + n) = w2n (c + n2w n))
+Proof
 GEN_TAC >> STRIP_TAC >>
 Cases_on `c` >>
 ASM_SIMP_TAC std_ss [bir_mem_addr_def, w2n_n2w, wordsTheory.word_add_n2w,
-  dimword_def, bitTheory.MOD_2EXP_def]);
+  dimword_def, bitTheory.MOD_2EXP_def]
+QED
 
 
 val bir_mem_addr_w2n_add_SIZES = save_thm ("bir_mem_addr_w2n_add_SIZES",
   LIST_CONJ (MP_size_of_bir_immtype_t_EQ_dimindex bir_mem_addr_w2n_add));
 
 
-val bir_load_from_mem_def = Define `bir_load_from_mem
+Definition bir_load_from_mem_def:
+  bir_load_from_mem
   (value_ty : bir_immtype_t) (result_ty : bir_immtype_t) (a_ty : bir_immtype_t) (mmap : num |-> num) (en: bir_endian_t) (a:num) =
 
    case (bir_number_of_mem_splits value_ty result_ty a_ty) of
@@ -188,26 +215,28 @@ val bir_load_from_mem_def = Define `bir_load_from_mem
                           |  BEnd_NoEndian => if (n = 1) then SOME vs else NONE) in
         case vs' of NONE => NONE
                  |  SOME vs'' => SOME (bir_mem_concat vs'' result_ty)
-   )`;
+   )
+End
 
-val bir_load_from_mem_SINGLE = store_thm ("bir_load_from_mem_SINGLE",
-  ``!en a vty aty mmap. bir_load_from_mem vty vty aty mmap en a =
-    SOME (n2bs (bir_load_mmap mmap (bir_mem_addr aty a)) vty)``,
-
+Theorem bir_load_from_mem_SINGLE:
+  !en a vty aty mmap. bir_load_from_mem vty vty aty mmap en a =
+    SOME (n2bs (bir_load_mmap mmap (bir_mem_addr aty a)) vty)
+Proof
 SIMP_TAC list_ss [bir_load_from_mem_def, bir_number_of_mem_splits_ID, LET_THM,
   rich_listTheory.count_list_sub1, rich_listTheory.COUNT_LIST_def] >>
 Cases_on `en` >> (
   SIMP_TAC (list_ss++bir_endian_ss) [bir_mem_concat_def, v2bs_fixwidth,
     v2bs_n2v, bir_load_bitstring_from_mmap_def]
-));
+)
+QED
 
 
-val bir_load_from_mem_NO_ENDIAN = store_thm ("bir_load_from_mem_NO_ENDIAN",
-  ``!a vty rty aty mmap. bir_load_from_mem vty rty aty mmap BEnd_NoEndian a =
+Theorem bir_load_from_mem_NO_ENDIAN:
+  !a vty rty aty mmap. bir_load_from_mem vty rty aty mmap BEnd_NoEndian a =
     (if vty = rty then
       SOME (n2bs (bir_load_mmap mmap (bir_mem_addr aty a)) vty)
-     else NONE)``,
-
+     else NONE)
+Proof
 REPEAT GEN_TAC >>
 Cases_on `vty = rty` >> (
   ASM_SIMP_TAC std_ss [bir_load_from_mem_SINGLE]
@@ -217,14 +246,15 @@ Cases_on `vty = rty` >> (
 ) >>
 Cases_on `bir_number_of_mem_splits vty rty aty` >> (
   FULL_SIMP_TAC (std_ss++bir_endian_ss) [bir_load_from_mem_def, LET_DEF]
-));
+)
+QED
 
 
-val bir_load_from_mem_EQ_NONE = store_thm ("bir_load_from_mem_EQ_NONE",
-  ``!a en vty rty aty mmap. (bir_load_from_mem vty rty aty mmap en a = NONE) <=>
+Theorem bir_load_from_mem_EQ_NONE:
+  !a en vty rty aty mmap. (bir_load_from_mem vty rty aty mmap en a = NONE) <=>
       ((bir_number_of_mem_splits vty rty aty = NONE) \/
-      ((vty <> rty) /\ (en = BEnd_NoEndian)))``,
-
+      ((vty <> rty) /\ (en = BEnd_NoEndian)))
+Proof
 REPEAT GEN_TAC >>
 Q.SUBGOAL_THEN `(vty <> rty) <=> (bir_number_of_mem_splits vty rty aty <> SOME 1)`
   SUBST1_TAC >- (
@@ -236,26 +266,29 @@ Cases_on `bir_number_of_mem_splits vty rty aty` >> (
 Cases_on `en` >> (
   ASM_SIMP_TAC (std_ss++bir_endian_ss) []
 ) >>
-Cases_on `x=1` >> ASM_SIMP_TAC std_ss []);
+Cases_on `x=1` >> ASM_SIMP_TAC std_ss []
+QED
 
 
-val bir_load_from_mem_EQ_NONE_IMP = store_thm ("bir_load_from_mem_EQ_NONE_IMP",
-  ``!a en vty rty aty mmap.
+Theorem bir_load_from_mem_EQ_NONE_IMP:
+  !a en vty rty aty mmap.
       ((bir_number_of_mem_splits vty rty aty = NONE) \/
       ((vty <> rty) /\ (en = BEnd_NoEndian))) ==>
-      (bir_load_from_mem vty rty aty mmap en a = NONE)``,
-METIS_TAC[bir_load_from_mem_EQ_NONE]);
+      (bir_load_from_mem vty rty aty mmap en a = NONE)
+Proof
+METIS_TAC[bir_load_from_mem_EQ_NONE]
+QED
 
 
-val bir_load_from_mem_EQ_SOME = store_thm ("bir_load_from_mem_EQ_SOME",
-  ``!a en vty rty aty mmap res. (bir_load_from_mem vty rty aty mmap en a = SOME res) <=>
+Theorem bir_load_from_mem_EQ_SOME:
+  !a en vty rty aty mmap res. (bir_load_from_mem vty rty aty mmap en a = SOME res) <=>
       (?n vs vs'. (bir_number_of_mem_splits vty rty aty = SOME n) /\
                   (vs = MAP (\n. bir_load_bitstring_from_mmap vty mmap (bir_mem_addr aty (a+n))) (COUNT_LIST n)) /\
                   ((en = BEnd_BigEndian) /\ (vs' = vs) \/
                    (en = BEnd_LittleEndian) /\ (vs' = REVERSE vs) \/
                    (en = BEnd_NoEndian) /\ (n = 1) /\ (vs' = vs)) /\
-                   (res = bir_mem_concat vs' rty))``,
-
+                   (res = bir_mem_concat vs' rty))
+Proof
 SIMP_TAC std_ss [bir_load_from_mem_def] >>
 REPEAT GEN_TAC >>
 Cases_on `bir_number_of_mem_splits vty rty aty` >> (
@@ -265,16 +298,18 @@ Cases_on `en` >> (
   ASM_SIMP_TAC (std_ss++bir_endian_ss++boolSimps.EQUIV_EXTRACT_ss) []
 ) >>
 Cases_on `x=1` >>
-ASM_SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) []);
+ASM_SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) []
+QED
 
 
 
-val type_of_bir_load_from_mem = store_thm ("type_of_bir_load_from_mem",
-  ``!a en vty rty aty mmap res. (bir_load_from_mem vty rty aty mmap en a = SOME res) ==>
-      (type_of_bir_imm res = rty)``,
-
+Theorem type_of_bir_load_from_mem:
+  !a en vty rty aty mmap res. (bir_load_from_mem vty rty aty mmap en a = SOME res) ==>
+      (type_of_bir_imm res = rty)
+Proof
 SIMP_TAC std_ss [bir_load_from_mem_EQ_SOME, GSYM LEFT_FORALL_IMP_THM,
-  type_of_bir_mem_concat]);
+  type_of_bir_mem_concat]
+QED
 
 
 val bir_load_from_mem_NONE_REWRS = save_thm ("bir_load_from_mem_NONE_REWRS",
@@ -336,20 +371,21 @@ end);
 
 
 (* Important addresses *)
-val bir_load_from_mem_used_addrs_def = Define
-  `bir_load_from_mem_used_addrs tv tr ta en a =
+Definition bir_load_from_mem_used_addrs_def:
+  bir_load_from_mem_used_addrs tv tr ta en a =
    case (bir_number_of_mem_splits tv tr ta) of
     | NONE => {}
     | SOME (n:num) => (if (n <> 1) /\ (en = BEnd_NoEndian) then {} else
-        set (MAP (\n. (bir_mem_addr ta (a + n))) (COUNT_LIST n)))`;
+        set (MAP (\n. (bir_mem_addr ta (a + n))) (COUNT_LIST n)))
+End
 
-val bir_load_from_mem_used_addrs_THM = store_thm ("bir_load_from_mem_used_addrs_THM",
-  ``!vt rt at mmap mmap' en a.
+Theorem bir_load_from_mem_used_addrs_THM:
+  !vt rt at mmap mmap' en a.
       (!addr. addr IN (bir_load_from_mem_used_addrs vt rt at en a) ==>
               (bir_load_mmap mmap addr = bir_load_mmap mmap' addr)) ==>
       (bir_load_from_mem vt rt at mmap en a =
-       bir_load_from_mem vt rt at mmap' en a)``,
-
+       bir_load_from_mem vt rt at mmap' en a)
+Proof
 SIMP_TAC std_ss [bir_load_from_mem_def, bir_load_from_mem_used_addrs_def] >>
 REPEAT GEN_TAC >>
 Cases_on `bir_number_of_mem_splits vt rt at` >- (
@@ -367,7 +403,8 @@ STRIP_TAC >>
 ) >>
 
 FULL_SIMP_TAC list_ss [listTheory.MAP_EQ_f, listTheory.MEM_MAP,
-  GSYM LEFT_FORALL_IMP_THM, bir_load_bitstring_from_mmap_def]);
+  GSYM LEFT_FORALL_IMP_THM, bir_load_bitstring_from_mmap_def]
+QED
 
 
 val bir_load_from_mem_used_addrs_REWRS = save_thm ("bir_load_from_mem_used_addrs_REWRS",
@@ -394,20 +431,22 @@ in thm4
 end);
 
 
-val bir_load_from_mem_used_addrs_FINITE = store_thm ("bir_load_from_mem_used_addrs_FINITE",
-  ``!tv tr ta en a.
-      FINITE (bir_load_from_mem_used_addrs tv tr ta en a)``,
+Theorem bir_load_from_mem_used_addrs_FINITE:
+  !tv tr ta en a.
+      FINITE (bir_load_from_mem_used_addrs tv tr ta en a)
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bir_load_from_mem_used_addrs_def] >>
 Cases_on `bir_number_of_mem_splits tv tr ta` >> ASM_SIMP_TAC std_ss [pred_setTheory.FINITE_EMPTY] >>
-COND_CASES_TAC >> ASM_SIMP_TAC std_ss [pred_setTheory.FINITE_EMPTY, listTheory.FINITE_LIST_TO_SET]);
+COND_CASES_TAC >> ASM_SIMP_TAC std_ss [pred_setTheory.FINITE_EMPTY, listTheory.FINITE_LIST_TO_SET]
+QED
 
 
-val bir_load_from_mem_used_addrs_EMPTY = store_thm ("bir_load_from_mem_used_addrs_EMPTY",
-  ``!mmap tv tr ta en a.
+Theorem bir_load_from_mem_used_addrs_EMPTY:
+  !mmap tv tr ta en a.
       (bir_load_from_mem_used_addrs tv tr ta en a = {}) <=>
-      (bir_load_from_mem tv tr ta mmap en a = NONE)``,
-
+      (bir_load_from_mem tv tr ta mmap en a = NONE)
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bir_load_from_mem_EQ_NONE, bir_load_from_mem_used_addrs_def] >>
 Cases_on `bir_number_of_mem_splits tv tr ta` >> ASM_SIMP_TAC std_ss [] >>
@@ -417,20 +456,22 @@ Q.SUBGOAL_THEN `(tv <> tr) <=> (bir_number_of_mem_splits tv tr ta <> SOME 1)`
 
 COND_CASES_TAC >> ASM_SIMP_TAC list_ss [] >>
 Cases_on `n` >> FULL_SIMP_TAC list_ss [rich_listTheory.COUNT_LIST_def,
-  bir_number_of_mem_splits_NEQ_SOME0]);
+  bir_number_of_mem_splits_NEQ_SOME0]
+QED
 
 
-val bir_load_from_mem_used_addrs_NoEndian = store_thm ("bir_load_from_mem_used_addrs_NoEndian",
-  ``!tv tr ta a.
+Theorem bir_load_from_mem_used_addrs_NoEndian:
+  !tv tr ta a.
       (bir_load_from_mem_used_addrs tv tr ta BEnd_NoEndian a = {}) \/
-      (bir_load_from_mem_used_addrs tv tr ta BEnd_NoEndian a = {bir_mem_addr ta a})``,
-
+      (bir_load_from_mem_used_addrs tv tr ta BEnd_NoEndian a = {bir_mem_addr ta a})
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bir_load_from_mem_EQ_NONE, bir_load_from_mem_used_addrs_def] >>
 Cases_on `bir_number_of_mem_splits tv tr ta` >> ASM_SIMP_TAC std_ss [] >>
 COND_CASES_TAC >> ASM_SIMP_TAC std_ss [] >>
 SIMP_TAC list_ss [rich_listTheory.count_list_sub1,
-  rich_listTheory.COUNT_LIST_def])
+  rich_listTheory.COUNT_LIST_def]
+QED
 
 
 
@@ -455,7 +496,9 @@ val (bitstring_split_aux_def, bitstring_split_aux_ind) = Defn.tstore_defn (bitst
   WF_REL_TAC `measure (\ (_, _, l). LENGTH l)` >>
   SIMP_TAC list_ss []);
 
-val bitstring_split_def = Define `bitstring_split n bs = bitstring_split_aux n [] bs`
+Definition bitstring_split_def:
+  bitstring_split n bs = bitstring_split_aux n [] bs
+End
 
 val bitstring_split_aux_REWR1 = SIMP_RULE std_ss [] (prove (``!n (_ : 'a list list) bs.
   (!acc. (n <> 0) ==> (bitstring_split_aux n acc (bs:'a list) =
@@ -478,51 +521,54 @@ val bitstring_split_aux_REWR2 = prove (``!n acc x xs.
 REWRITE_TAC[bitstring_split_aux_def]);
 
 
-val bitstring_split_REWRS = store_thm ("bitstring_split_REWRS",
-  ``(!n. n <> 0 ==> (bitstring_split n [] = [])) /\
-    (!n bs. n <> 0 /\ bs <> [] ==> (bitstring_split n bs = (TAKE n bs) :: (bitstring_split n (DROP n bs))))``,
-
+Theorem bitstring_split_REWRS:
+  (!n. n <> 0 ==> (bitstring_split n [] = [])) /\
+    (!n bs. n <> 0 /\ bs <> [] ==> (bitstring_split n bs = (TAKE n bs) :: (bitstring_split n (DROP n bs))))
+Proof
 SIMP_TAC std_ss [bitstring_split_def] >>
 CONJ_TAC >- (
   Cases >> REWRITE_TAC [bitstring_split_aux_def, listTheory.REVERSE_DEF]
 ) >>
 Cases >> Cases >> SIMP_TAC list_ss [bitstring_split_aux_REWR2] >>
-SIMP_TAC list_ss [Once bitstring_split_aux_REWR1]);
+SIMP_TAC list_ss [Once bitstring_split_aux_REWR1]
+QED
 
 
-val bitstring_split_REWRS_LENGTH = store_thm ("bitstring_split_REWRS_LENGTH",
-  ``(!n bs. n <> 0 /\ (LENGTH bs = 0) ==> (bitstring_split n bs = [])) /\
-    (!n bs. n <> 0 /\ 0 < LENGTH bs ==> (bitstring_split n bs = (TAKE n bs) :: (bitstring_split n (DROP n bs))))``,
-
+Theorem bitstring_split_REWRS_LENGTH:
+  (!n bs. n <> 0 /\ (LENGTH bs = 0) ==> (bitstring_split n bs = [])) /\
+    (!n bs. n <> 0 /\ 0 < LENGTH bs ==> (bitstring_split n bs = (TAKE n bs) :: (bitstring_split n (DROP n bs))))
+Proof
 REPEAT STRIP_TAC >> (
   Cases_on `bs` >>
   FULL_SIMP_TAC list_ss [bitstring_split_REWRS]
-));
+)
+QED
 
 
-val bitstring_split_INDUCT = store_thm ("bitstring_split_INDUCT",
-``!n P. (n <> 0 /\
+Theorem bitstring_split_INDUCT:
+  !n P. (n <> 0 /\
         (P [] /\ (!l. (l <> [] /\ P (DROP n l)) ==> P l))) ==>
-        (!l. P l)``,
-
+        (!l. P l)
+Proof
 REPEAT STRIP_TAC >>
 completeInduct_on `LENGTH l` >>
 Cases_on `v` >> Cases_on `l` >> ASM_SIMP_TAC list_ss []
-)
+QED
 
-val bitstring_split_FLAT = store_thm ("bitstring_split_FLAT",
-  ``!n. n <> 0 ==> !bs. (FLAT (bitstring_split n bs) = bs)``,
-
+Theorem bitstring_split_FLAT:
+  !n. n <> 0 ==> !bs. (FLAT (bitstring_split n bs) = bs)
+Proof
 GEN_TAC >> STRIP_TAC >>
 HO_MATCH_MP_TAC (Q.SPEC `n` bitstring_split_INDUCT) >>
-ASM_SIMP_TAC list_ss [bitstring_split_REWRS]);
+ASM_SIMP_TAC list_ss [bitstring_split_REWRS]
+QED
 
 
-val bitstring_split_LENGTHS = store_thm ("bitstring_split_LENGTHS",
-  ``!n m bs. n <> 0 /\ (LENGTH bs = m*n) ==> (
+Theorem bitstring_split_LENGTHS:
+  !n m bs. n <> 0 /\ (LENGTH bs = m*n) ==> (
       (EVERY (\l. LENGTH l = n) (bitstring_split n bs)) /\
-      (LENGTH (bitstring_split n bs) = m))``,
-
+      (LENGTH (bitstring_split n bs) = m))
+Proof
 GEN_TAC >>
 Induct >- (
   Cases >> SIMP_TAC list_ss [bitstring_split_REWRS]
@@ -533,47 +579,52 @@ GEN_TAC >> STRIP_TAC >>
   REPEAT STRIP_TAC >>
   FULL_SIMP_TAC list_ss []
 ) >>
-ASM_SIMP_TAC list_ss [bitstring_split_REWRS]);
+ASM_SIMP_TAC list_ss [bitstring_split_REWRS]
+QED
 
 
-val bitstring_split_LENGTHS_MODDIV = store_thm ("bitstring_split_LENGTHS_MODDIV",
-  ``!n bs. n <> 0 /\ (LENGTH bs MOD n = 0) ==> (
+Theorem bitstring_split_LENGTHS_MODDIV:
+  !n bs. n <> 0 /\ (LENGTH bs MOD n = 0) ==> (
       (EVERY (\l. LENGTH l = n) (bitstring_split n bs)) /\
-      (LENGTH (bitstring_split n bs) = LENGTH bs DIV n))``,
-
+      (LENGTH (bitstring_split n bs) = LENGTH bs DIV n))
+Proof
 REPEAT STRIP_TAC >>
 `0 < n` by DECIDE_TAC >>
 `?m. LENGTH bs = m * n `by METIS_TAC[arithmeticTheory.MOD_EQ_0_DIVISOR] >>
 ASM_SIMP_TAC std_ss [arithmeticTheory.MULT_DIV] >>
-METIS_TAC [bitstring_split_LENGTHS]);
+METIS_TAC [bitstring_split_LENGTHS]
+QED
 
 
-val bitstring_split_LENGTHS_b2v = store_thm ("bitstring_split_LENGTHS_b2v",
-  ``!n v vty aty. (bir_number_of_mem_splits vty (type_of_bir_imm v) aty = SOME n) ==>
+Theorem bitstring_split_LENGTHS_b2v:
+  !n v vty aty. (bir_number_of_mem_splits vty (type_of_bir_imm v) aty = SOME n) ==>
       (EVERY (\l. LENGTH l = (size_of_bir_immtype vty)) (bitstring_split (size_of_bir_immtype vty) (b2v v)) /\
-      (LENGTH (bitstring_split (size_of_bir_immtype vty) (b2v v)) = n))``,
-
+      (LENGTH (bitstring_split (size_of_bir_immtype vty) (b2v v)) = n))
+Proof
 SIMP_TAC std_ss [bir_number_of_mem_splits_def] >>
 METIS_TAC[bitstring_split_LENGTHS_MODDIV, size_of_bir_immtype_NEQ_0,
-  b2v_LENGTH]);
+  b2v_LENGTH]
+QED
 
-val bitstring_split_SINGLE = store_thm ("bitstring_split_SINGLE",
-  ``!n bs. n <> 0 ==>
+Theorem bitstring_split_SINGLE:
+  !n bs. n <> 0 ==>
       (LENGTH bs = n) ==>
-      (bitstring_split n bs = [bs])``,
-
+      (bitstring_split n bs = [bs])
+Proof
 REPEAT STRIP_TAC >>
 `bs <> []` by (Cases_on `bs` >> FULL_SIMP_TAC list_ss []) >>
 ASM_SIMP_TAC list_ss [bitstring_split_REWRS, listTheory.TAKE_LENGTH_TOO_LONG,
-  listTheory.DROP_LENGTH_TOO_LONG]);
+  listTheory.DROP_LENGTH_TOO_LONG]
+QED
 
 
-val bir_mem_concat_bitstring_split = store_thm ("bir_mem_concat_bitstring_split",
-``!v n rty.
+Theorem bir_mem_concat_bitstring_split:
+  !v n rty.
       (n <> 0) ==>
-      (bir_mem_concat (bitstring_split n (b2v v)) rty = n2bs (b2n v) rty)``,
-
-SIMP_TAC std_ss [bir_mem_concat_def, bitstring_split_FLAT, v2bs_def, v2n_b2v, n2bs_def]);
+      (bir_mem_concat (bitstring_split n (b2v v)) rty = n2bs (b2n v) rty)
+Proof
+SIMP_TAC std_ss [bir_mem_concat_def, bitstring_split_FLAT, v2bs_def, v2n_b2v, n2bs_def]
+QED
 
 
 val bitstring_split_num_REWRS = save_thm ("bitstring_split_num_REWRS",
@@ -609,16 +660,17 @@ end);
 (* update_mmap       *)
 (* ================= *)
 
-val bir_update_mmap_def = Define `
-    (!mmap aty a.      (bir_update_mmap aty mmap a [] = mmap)) /\
-    (!mmap aty a v vs. (bir_update_mmap aty mmap a (v::vs) =
-                        bir_update_mmap aty (FUPDATE mmap ((bir_mem_addr aty a), v2n v)) (SUC a) vs))`;
+Definition bir_update_mmap_def:
+  (bir_update_mmap aty mmap a [] = mmap) /\
+  (bir_update_mmap aty mmap a (v::vs) =
+                        bir_update_mmap aty (FUPDATE mmap ((bir_mem_addr aty a), v2n v)) (SUC a) vs)
+End
 
-val bir_update_mmap_UNCHANGED = store_thm ("bir_update_mmap_UNCHANGED",
-  ``!aty mmap a vs a'.
+Theorem bir_update_mmap_UNCHANGED:
+  !aty mmap a vs a'.
       (!n. n < LENGTH vs ==> (a' <> bir_mem_addr aty (a+n))) ==>
-      (bir_load_mmap (bir_update_mmap aty mmap a vs) a' = bir_load_mmap mmap a')``,
-
+      (bir_load_mmap (bir_update_mmap aty mmap a vs) a' = bir_load_mmap mmap a')
+Proof
 GEN_TAC >>
 Induct_on `vs` >> (
   SIMP_TAC list_ss [bir_update_mmap_def]
@@ -632,14 +684,16 @@ REPEAT STRIP_TAC >>
    ASM_SIMP_TAC arith_ss [arithmeticTheory.ADD_CLAUSES]
 ) >>
 Q.PAT_X_ASSUM `!n. n < SUC _ ==> _` (MP_TAC o Q.SPEC `0`) >>
-ASM_SIMP_TAC arith_ss [bir_load_mmap_FUPDATE_THM]);
+ASM_SIMP_TAC arith_ss [bir_load_mmap_FUPDATE_THM]
+QED
 
 
 (* ================= *)
 (* bir_store_in_mmap *)
 (* ================= *)
 
-val bir_store_in_mem_def = Define `bir_store_in_mem
+Definition bir_store_in_mem_def:
+  bir_store_in_mem
   (value_ty : bir_immtype_t) (a_ty : bir_immtype_t) (result : bir_imm_t) (mmap : num |-> num) (en: bir_endian_t) (a:num) =
 
    let result_ty = type_of_bir_imm result in
@@ -653,27 +707,29 @@ val bir_store_in_mem_def = Define `bir_store_in_mem
 
         case vs' of NONE => NONE
                  |  SOME vs'' => SOME (bir_update_mmap a_ty mmap a vs'')
-   )`;
+   )
+End
 
 
-val bir_store_in_mem_SINGLE = store_thm ("bir_store_in_mem_SINGLE",
-  ``!en a vty aty mmap v.
+Theorem bir_store_in_mem_SINGLE:
+  !en a vty aty mmap v.
      (type_of_bir_imm v = vty) ==>
-     (bir_store_in_mem vty aty v mmap en a = SOME (FUPDATE mmap ((bir_mem_addr aty a), b2n v)))``,
-
+     (bir_store_in_mem vty aty v mmap en a = SOME (FUPDATE mmap ((bir_mem_addr aty a), b2n v)))
+Proof
 Cases_on `en` >> (
   SIMP_TAC (list_ss++bir_endian_ss) [bir_store_in_mem_def, bir_number_of_mem_splits_ID, LET_DEF,
     bitstring_split_SINGLE, b2v_LENGTH, size_of_bir_immtype_NEQ_0, v2n_b2v,
     bir_update_mmap_def]
-));
+)
+QED
 
 
-val bir_store_in_mem_NO_ENDIAN = store_thm ("bir_store_in_mem_NO_ENDIAN",
-  ``!a vty aty v mmap. bir_store_in_mem vty aty v mmap BEnd_NoEndian a =
+Theorem bir_store_in_mem_NO_ENDIAN:
+  !a vty aty v mmap. bir_store_in_mem vty aty v mmap BEnd_NoEndian a =
     (if vty = (type_of_bir_imm v) then
       SOME (FUPDATE mmap ((bir_mem_addr aty a), b2n v))
-     else NONE)``,
-
+     else NONE)
+Proof
 REPEAT GEN_TAC >>
 Cases_on `vty = type_of_bir_imm v` >> (
   ASM_SIMP_TAC std_ss [bir_store_in_mem_SINGLE]
@@ -683,14 +739,15 @@ Cases_on `vty = type_of_bir_imm v` >> (
 ) >>
 Cases_on `bir_number_of_mem_splits vty (type_of_bir_imm v) aty` >> (
   FULL_SIMP_TAC (std_ss++bir_endian_ss) [bir_store_in_mem_def, LET_DEF]
-));
+)
+QED
 
 
-val bir_store_in_mem_EQ_NONE = store_thm ("bir_store_in_mem_EQ_NONE",
-  ``!a en vty aty v mmap. (bir_store_in_mem vty aty v mmap en a = NONE) <=>
+Theorem bir_store_in_mem_EQ_NONE:
+  !a en vty aty v mmap. (bir_store_in_mem vty aty v mmap en a = NONE) <=>
       ((bir_number_of_mem_splits vty (type_of_bir_imm v) aty = NONE) \/
-      ((vty <> (type_of_bir_imm v)) /\ (en = BEnd_NoEndian)))``,
-
+      ((vty <> (type_of_bir_imm v)) /\ (en = BEnd_NoEndian)))
+Proof
 REPEAT GEN_TAC >>
 Q.SUBGOAL_THEN `(vty <> (type_of_bir_imm v)) <=> (bir_number_of_mem_splits vty (type_of_bir_imm v) aty <> SOME 1)`
   SUBST1_TAC >- (
@@ -703,26 +760,29 @@ Cases_on `en` >> (
   ASM_SIMP_TAC (std_ss++bir_endian_ss) []
 ) >>
 rename1 `_ = SOME n` >>
-Cases_on `n=1` >> FULL_SIMP_TAC std_ss []);
+Cases_on `n=1` >> FULL_SIMP_TAC std_ss []
+QED
 
 
-val bir_store_in_mem_EQ_NONE_IMP = store_thm ("bir_store_in_mem_EQ_NONE_IMP",
-  ``!a en vty aty v mmap.
+Theorem bir_store_in_mem_EQ_NONE_IMP:
+  !a en vty aty v mmap.
       ((bir_number_of_mem_splits vty (type_of_bir_imm v) aty = NONE) \/
        ((vty <> (type_of_bir_imm v)) /\ (en = BEnd_NoEndian))) ==>
-      (bir_store_in_mem vty aty v mmap en a = NONE)``,
-METIS_TAC[bir_store_in_mem_EQ_NONE]);
+      (bir_store_in_mem vty aty v mmap en a = NONE)
+Proof
+METIS_TAC[bir_store_in_mem_EQ_NONE]
+QED
 
 
-val bir_store_in_mem_EQ_SOME = store_thm ("bir_store_in_mem_EQ_SOME",
-  ``!a en vty aty v mmap res. (bir_store_in_mem vty aty v mmap en a = SOME res) <=>
+Theorem bir_store_in_mem_EQ_SOME:
+  !a en vty aty v mmap res. (bir_store_in_mem vty aty v mmap en a = SOME res) <=>
       (?n vs vs'. (bir_number_of_mem_splits vty (type_of_bir_imm v) aty = SOME n) /\
                   (vs = (bitstring_split (size_of_bir_immtype vty) (b2v v))) /\
                   ((en = BEnd_BigEndian) /\ (vs' = vs) \/
                    (en = BEnd_LittleEndian) /\ (vs' = REVERSE vs) \/
                    (en = BEnd_NoEndian) /\ (n = 1) /\ (vs' = vs)) /\
-                   (res = bir_update_mmap aty mmap a vs'))``,
-
+                   (res = bir_update_mmap aty mmap a vs'))
+Proof
 REPEAT GEN_TAC >>
 Cases_on `bir_number_of_mem_splits vty (type_of_bir_imm v) aty` >> (
   ASM_SIMP_TAC std_ss [bir_store_in_mem_def, LET_DEF]
@@ -732,7 +792,8 @@ Cases_on `en` >> (
 ) >>
 rename1 `_ = SOME n` >>
 Cases_on `n=1` >>
-  ASM_SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) []);
+  ASM_SIMP_TAC (std_ss++boolSimps.EQUIV_EXTRACT_ss) []
+QED
 
 
 
@@ -783,17 +844,18 @@ end);
 
 
 
-val bir_store_in_mem_used_addrs_def = Define `
+Definition bir_store_in_mem_used_addrs_def:
   bir_store_in_mem_used_addrs vty v aty en a =
-  bir_load_from_mem_used_addrs vty (type_of_bir_imm v) aty en a`;
+  bir_load_from_mem_used_addrs vty (type_of_bir_imm v) aty en a
+End
 
 
-val bir_store_in_mem_used_addrs_THM = store_thm ("bir_store_in_mem_used_addrs_THM",
-  ``!a en vty aty v mmap mmap'.
+Theorem bir_store_in_mem_used_addrs_THM:
+  !a en vty aty v mmap mmap'.
        (bir_store_in_mem vty aty v mmap en a = SOME mmap') ==>
        (!addr. ~(addr IN bir_store_in_mem_used_addrs vty v aty en a) ==>
-               (bir_load_mmap mmap' addr = bir_load_mmap mmap addr))``,
-
+               (bir_load_mmap mmap' addr = bir_load_mmap mmap addr))
+Proof
 SIMP_TAC std_ss [bir_store_in_mem_used_addrs_def, bir_load_from_mem_used_addrs_def,
   bir_store_in_mem_EQ_SOME, GSYM LEFT_FORALL_IMP_THM] >>
 SIMP_TAC (list_ss++bir_endian_ss) [DISJ_IMP_THM, LEFT_AND_OVER_OR, FORALL_AND_THM,
@@ -801,7 +863,8 @@ SIMP_TAC (list_ss++bir_endian_ss) [DISJ_IMP_THM, LEFT_AND_OVER_OR, FORALL_AND_TH
 REPEAT STRIP_TAC >> (
   MATCH_MP_TAC bir_update_mmap_UNCHANGED >>
   METIS_TAC[bitstring_split_LENGTHS_b2v, listTheory.LENGTH_REVERSE]
-));
+)
+QED
 
 
 
@@ -815,17 +878,19 @@ let
 in thm1
 end);
 
-val bir_store_in_mem_used_addrs_FINITE = store_thm ("bir_store_in_mem_used_addrs_FINITE",
-  ``!tv v ta en a.
-      FINITE (bir_store_in_mem_used_addrs tv v ta en a)``,
-SIMP_TAC std_ss [bir_store_in_mem_used_addrs_def, bir_load_from_mem_used_addrs_FINITE])
+Theorem bir_store_in_mem_used_addrs_FINITE:
+  !tv v ta en a.
+      FINITE (bir_store_in_mem_used_addrs tv v ta en a)
+Proof
+SIMP_TAC std_ss [bir_store_in_mem_used_addrs_def, bir_load_from_mem_used_addrs_FINITE]
+QED
 
 
-val bir_store_in_mem_used_addrs_EMPTY = store_thm ("bir_store_in_mem_used_addrs_EMPTY",
-  ``!mmap tv v ta en a.
+Theorem bir_store_in_mem_used_addrs_EMPTY:
+  !mmap tv v ta en a.
       (bir_store_in_mem_used_addrs tv v ta en a = {}) <=>
-      (bir_store_in_mem tv ta v mmap en a = NONE)``,
-
+      (bir_store_in_mem tv ta v mmap en a = NONE)
+Proof
 REPEAT GEN_TAC >>
 SIMP_TAC std_ss [bir_store_in_mem_used_addrs_def, bir_store_in_mem_EQ_NONE,
   bir_load_from_mem_used_addrs_def] >>
@@ -838,16 +903,18 @@ POP_ASSUM (K ALL_TAC) >>
 Cases_on `n` >- (
   FULL_SIMP_TAC std_ss [bir_number_of_mem_splits_NEQ_SOME0]
 ) >>
-SIMP_TAC list_ss [rich_listTheory.COUNT_LIST_def]);
+SIMP_TAC list_ss [rich_listTheory.COUNT_LIST_def]
+QED
 
 
-val bir_store_in_mem_used_addrs_NoEndian = store_thm ("bir_store_in_mem_used_addrs_NoEndian",
-  ``!tv v ta a.
+Theorem bir_store_in_mem_used_addrs_NoEndian:
+  !tv v ta a.
       (bir_store_in_mem_used_addrs tv v ta BEnd_NoEndian a = {}) \/
-      (bir_store_in_mem_used_addrs tv v ta BEnd_NoEndian a = {bir_mem_addr ta a})``,
-
+      (bir_store_in_mem_used_addrs tv v ta BEnd_NoEndian a = {bir_mem_addr ta a})
+Proof
 SIMP_TAC std_ss [bir_store_in_mem_used_addrs_def] >>
-METIS_TAC[bir_load_from_mem_used_addrs_NoEndian]);
+METIS_TAC[bir_load_from_mem_used_addrs_NoEndian]
+QED
 
 
 
@@ -855,15 +922,16 @@ METIS_TAC[bir_load_from_mem_used_addrs_NoEndian]);
 (*  Loading and storing fit                                                  *)
 (* ------------------------------------------------------------------------- *)
 
-val bir_load_bitstring_from_updated_mmap = store_thm ("bir_load_bitstring_from_updated_mmap",
-  ``!aty vty vs n mmap a. (
+Theorem bir_load_bitstring_from_updated_mmap:
+  !aty vty vs n mmap a. (
       (LENGTH vs = n) /\
       (!v. MEM v vs ==> (LENGTH v = (size_of_bir_immtype vty))) /\
       (n <= 2 ** (size_of_bir_immtype aty))) ==>
    (MAP (\n.
     bir_load_bitstring_from_mmap vty
              (bir_update_mmap aty mmap a vs)
-             (bir_mem_addr aty (a + n))) (COUNT_LIST n) = vs)``,
+             (bir_mem_addr aty (a + n))) (COUNT_LIST n) = vs)
+Proof
 NTAC 2 GEN_TAC >>
 Induct_on `vs` >- (
   SIMP_TAC list_ss [rich_listTheory.COUNT_LIST_def]
@@ -890,15 +958,16 @@ Tactical.REVERSE CONJ_TAC >- (
 ) >>
 UNABBREV_ALL_TAC >>
 ASM_SIMP_TAC arith_ss [bir_load_bitstring_from_mmap_def,
-  bir_load_mmap_FUPDATE_THM, n2v_v2n]);
+  bir_load_mmap_FUPDATE_THM, n2v_v2n]
+QED
 
 
 
-val bir_store_load_mem_THM = store_thm ("bir_store_load_mem_THM",
-  ``!a en vty aty v mmap mmap'.
+Theorem bir_store_load_mem_THM:
+  !a en vty aty v mmap mmap'.
        (bir_store_in_mem vty aty v mmap en a = SOME mmap') ==>
-       (bir_load_from_mem vty (type_of_bir_imm v) aty mmap' en a = SOME v)``,
-
+       (bir_load_from_mem vty (type_of_bir_imm v) aty mmap' en a = SOME v)
+Proof
 SIMP_TAC (pure_ss) [bir_store_in_mem_EQ_SOME, GSYM LEFT_FORALL_IMP_THM,
   bir_load_from_mem_EQ_SOME] >>
 REPEAT GEN_TAC >>
@@ -925,17 +994,18 @@ CONJ_TAC >- (
   METIS_TAC [bitstring_split_LENGTHS_b2v]
 ) >>
 FULL_SIMP_TAC std_ss [bir_number_of_mem_splits_def] >>
-FULL_SIMP_TAC std_ss []);
+FULL_SIMP_TAC std_ss []
+QED
 
 
-val bir_store_load_mem_disjoint_THM = store_thm ("bir_store_load_mem_disjoint_THM",
-  ``!a en vty aty v mmap mmap' a' en' vty' aty' rty'.
+Theorem bir_store_load_mem_disjoint_THM:
+  !a en vty aty v mmap mmap' a' en' vty' aty' rty'.
        (DISJOINT (bir_store_in_mem_used_addrs vty v aty en a)
                  (bir_load_from_mem_used_addrs vty' aty' rty' en' a')) ==>
        (bir_store_in_mem vty aty v mmap en a = SOME mmap') ==>
        (bir_load_from_mem vty' aty' rty' mmap' en' a' =
-        bir_load_from_mem vty' aty' rty' mmap en' a')``,
-
+        bir_load_from_mem vty' aty' rty' mmap en' a')
+Proof
 REPEAT STRIP_TAC >>
 MATCH_MP_TAC (bir_load_from_mem_used_addrs_THM) >>
 REPEAT STRIP_TAC >>
@@ -943,7 +1013,8 @@ REPEAT STRIP_TAC >>
   FULL_SIMP_TAC std_ss [pred_setTheory.IN_DISJOINT] >>
   METIS_TAC[]
 ) >>
-METIS_TAC[bir_store_in_mem_used_addrs_THM]);
+METIS_TAC[bir_store_in_mem_used_addrs_THM]
+QED
 
 
 
@@ -960,9 +1031,10 @@ METIS_TAC[bir_store_in_mem_used_addrs_THM]);
 (*  Memory equality                                                          *)
 (* ------------------------------------------------------------------------- *)
 
-val bir_memeq_def = Define `
+Definition bir_memeq_def:
   (bir_memeq aty vty mmap1 mmap2 = !a. (n2bs (bir_load_mmap mmap1 (bir_mem_addr aty a)) vty) =
-                                       (n2bs (bir_load_mmap mmap2 (bir_mem_addr aty a)) vty))`;
+                                       (n2bs (bir_load_mmap mmap2 (bir_mem_addr aty a)) vty))
+End
 
 
 
