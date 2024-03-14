@@ -282,139 +282,149 @@ End
 Definition default_riscv_bir_env_FPRS_def:
  default_riscv_bir_env_FPRS ms env_map =
    ("f0"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 0w))))
-   (("tmp_f0"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 0w))))
    (("f1"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 1w))))
-   (("tmp_f1"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 1w))))
    (("f2"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 2w))))
-   (("tmp_f2"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 2w))))
    (("f3"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 3w))))
-   (("tmp_f3"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 3w))))
    (("f4"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 4w))))
-   (("tmp_f4"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 4w))))
    (("f5"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 5w))))
-   (("tmp_f5"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 5w))))
    (("f6"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 6w))))
-   (("tmp_f6"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 6w))))
    (("f7"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 7w))))
-   (("tmp_f7"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 7w))))
    (("f8"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 8w))))
-   (("tmp_f8"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 8w))))
    (("f9"       =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 9w))))
-   (("tmp_f9"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 9w))))
    (("f10"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 10w))))
-   (("tmp_f10"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 10w))))
    (("f11"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 11w))))
-   (("tmp_f11"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 11w))))
    (("f12"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 12w))))
-   (("tmp_f12"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 12w))))
    (("f13"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 13w))))
-   (("tmp_f13"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 13w))))
    (("f14"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 14w))))
-   (("tmp_f14"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 14w))))
    (("f15"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 15w))))
-   (("tmp_f15"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 15w))))
    (("f16"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 16w))))
-   (("tmp_f16"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 16w))))
    (("f17"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 17w))))
-   (("tmp_f17"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 17w))))
    (("f18"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 18w))))
-   (("tmp_f18"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 18w))))
    (("f19"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 19w))))
-   (("tmp_f19"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 19w))))
    (("f20"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 20w))))
-   (("tmp_f20"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 20w))))
    (("f21"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 21w))))
-   (("tmp_f21"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 21w))))
    (("f22"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 22w))))
-   (("tmp_f22"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 22w))))
    (("f23"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 23w))))
-   (("tmp_f23"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 23w))))
    (("f24"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 24w))))
-   (("tmp_f24"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 24w))))
    (("f25"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 25w))))
-   (("tmp_f25"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 25w))))
    (("f26"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 26w))))
-   (("tmp_f26"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 26w))))
    (("f27"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 27w))))
-   (("tmp_f27"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 27w))))
    (("f28"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w))))
-   (("tmp_f28"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w))))
    (("f29"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 29w))))
-   (("tmp_f29"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 29w))))
    (("f30"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 30w))))
-   (("tmp_f30"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 30w))))
    (("f31"      =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 31w))))
+   env_map)))))))))))))))))))))))))))))))
+End
+
+Definition default_riscv_bir_env_FPRS_tmp_def:
+ default_riscv_bir_env_FPRS_tmp ms env_map =
+   ("tmp_f0"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 0w))))
+   (("tmp_f1"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 1w))))
+   (("tmp_f2"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 2w))))
+   (("tmp_f3"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 3w))))
+   (("tmp_f4"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 4w))))
+   (("tmp_f5"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 5w))))
+   (("tmp_f6"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 6w))))
+   (("tmp_f7"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 7w))))
+   (("tmp_f8"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 8w))))
+   (("tmp_f9"   =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 9w))))
+   (("tmp_f10"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 10w))))
+   (("tmp_f11"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 11w))))
+   (("tmp_f12"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 12w))))
+   (("tmp_f13"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 13w))))
+   (("tmp_f14"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 14w))))
+   (("tmp_f15"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 15w))))
+   (("tmp_f16"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 16w))))
+   (("tmp_f17"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 17w))))
+   (("tmp_f18"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 18w))))
+   (("tmp_f19"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 19w))))
+   (("tmp_f20"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 20w))))
+   (("tmp_f21"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 21w))))
+   (("tmp_f22"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 22w))))
+   (("tmp_f23"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 23w))))
+   (("tmp_f24"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 24w))))
+   (("tmp_f25"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 25w))))
+   (("tmp_f26"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 26w))))
+   (("tmp_f27"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 27w))))
+   (("tmp_f28"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 28w))))
+   (("tmp_f29"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 29w))))
+   (("tmp_f30"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 30w))))
    (("tmp_f31"  =+ SOME (BVal_Imm (Imm64 (ms.c_fpr ms.procID 31w))))
-   env_map)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+   env_map)))))))))))))))))))))))))))))))
 End
 
 Definition default_riscv_bir_env_GPRS_def:
  default_riscv_bir_env_GPRS ms env_map =
   ("x0"        =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 0w))))
-  (("tmp_x0"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 0w))))
   (("x1"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 1w))))
-  (("tmp_x1"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 1w))))
   (("x2"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 2w))))
-  (("tmp_x2"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 2w))))
   (("x3"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 3w))))
-  (("tmp_x3"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 3w))))
   (("x4"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 4w))))
-  (("tmp_x4"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 4w))))
   (("x5"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 5w))))
-  (("tmp_x5"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 5w))))
   (("x6"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 6w))))
-  (("tmp_x6"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 6w))))
   (("x7"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 7w))))
-  (("tmp_x7"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 7w))))
   (("x8"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 8w))))
-  (("tmp_x8"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 8w))))
   (("x9"       =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 9w))))
-  (("tmp_x9"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 9w))))
   (("x10"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 10w))))
-  (("tmp_x10"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 10w))))
   (("x11"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 11w))))
-  (("tmp_x11"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 11w))))
   (("x12"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 12w))))
-  (("tmp_x12"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 12w))))
   (("x13"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 13w))))
-  (("tmp_x13"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 13w))))
   (("x14"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 14w))))
-  (("tmp_x14"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 14w))))
   (("x15"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 15w))))
-  (("tmp_x15"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 15w))))
   (("x16"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 16w))))
-  (("tmp_x16"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 16w))))
   (("x17"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 17w))))
-  (("tmp_x17"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 17w))))
   (("x18"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 18w))))
-  (("tmp_x18"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 18w))))
   (("x19"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 19w))))
-  (("tmp_x19"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 19w))))
   (("x20"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 20w))))
-  (("tmp_x20"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 20w))))
   (("x21"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 21w))))
-  (("tmp_x21"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 21w))))
   (("x22"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 22w))))
-  (("tmp_x22"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 22w))))
   (("x23"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 23w))))
-  (("tmp_x23"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 23w))))
   (("x24"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 24w))))
-  (("tmp_x24"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 24w))))
   (("x25"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 25w))))
-  (("tmp_x25"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 25w))))
   (("x26"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 26w))))
-  (("tmp_x26"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 26w))))
   (("x27"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 27w))))
-  (("tmp_x27"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 27w))))
   (("x28"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 28w))))
-  (("tmp_x28"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 28w))))
   (("x29"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 29w))))
-  (("tmp_x29"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 29w))))
   (("x30"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 30w))))
-  (("tmp_x30"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 30w))))
   (("x31"      =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 31w))))
+  env_map)))))))))))))))))))))))))))))))
+End
+
+Definition default_riscv_bir_env_GPRS_tmp_def:
+ default_riscv_bir_env_GPRS_tmp ms env_map =
+  ("tmp_x0"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 0w))))
+  (("tmp_x1"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 1w))))
+  (("tmp_x2"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 2w))))
+  (("tmp_x3"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 3w))))
+  (("tmp_x4"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 4w))))
+  (("tmp_x5"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 5w))))
+  (("tmp_x6"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 6w))))
+  (("tmp_x7"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 7w))))
+  (("tmp_x8"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 8w))))
+  (("tmp_x9"   =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 9w))))
+  (("tmp_x10"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 10w))))
+  (("tmp_x11"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 11w))))
+  (("tmp_x12"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 12w))))
+  (("tmp_x13"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 13w))))
+  (("tmp_x14"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 14w))))
+  (("tmp_x15"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 15w))))
+  (("tmp_x16"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 16w))))
+  (("tmp_x17"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 17w))))
+  (("tmp_x18"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 18w))))
+  (("tmp_x19"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 19w))))
+  (("tmp_x20"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 20w))))
+  (("tmp_x21"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 21w))))
+  (("tmp_x22"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 22w))))
+  (("tmp_x23"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 23w))))
+  (("tmp_x24"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 24w))))
+  (("tmp_x25"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 25w))))
+  (("tmp_x26"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 26w))))
+  (("tmp_x27"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 27w))))
+  (("tmp_x28"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 28w))))
+  (("tmp_x29"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 29w))))
+  (("tmp_x30"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 30w))))
   (("tmp_x31"  =+ SOME (BVal_Imm (Imm64 (ms.c_gpr ms.procID 31w))))
-  env_map)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+  env_map)))))))))))))))))))))))))))))))
 End
 
 Definition default_riscv_bir_state_def:
@@ -422,8 +432,10 @@ Definition default_riscv_bir_state_def:
   <| bst_pc := bir_block_pc (BL_Address (Imm64 (ms.c_PC ms.procID))) ;
      bst_environ := BEnv
        (default_riscv_bir_env_GPRS ms
-        (default_riscv_bir_env_FPRS ms
-         (default_riscv_bir_env_basic ms bir_env_map_empty)));
+        (default_riscv_bir_env_GPRS_tmp ms
+         (default_riscv_bir_env_FPRS ms
+          (default_riscv_bir_env_FPRS_tmp ms
+           (default_riscv_bir_env_basic ms bir_env_map_empty)))));
      bst_status := BST_Running
    |>
 End
@@ -575,6 +587,7 @@ Theorem default_riscv_bir_state_GPRS_read_tmp[local]:
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_GPRS_tmp_def,
       bir_envTheory.bir_env_read_UPDATE,
       bir_envTheory.bir_var_name_def,
       bir_envTheory.bir_env_lookup_UPDATE,
@@ -733,6 +746,7 @@ Theorem default_riscv_bir_state_GPRS_lookup_type_tmp[local]:
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_GPRS_tmp_def,
       bir_env_oldTheory.bir_env_var_is_declared_def,
       bir_envTheory.bir_var_name_def,
       bir_envTheory.bir_env_read_UPDATE,
@@ -813,6 +827,7 @@ Theorem default_riscv_bir_state_FPRS_read[local]:
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_GPRS_tmp_def,
       default_riscv_bir_env_FPRS_def,
       bir_envTheory.bir_env_read_UPDATE,
       bir_envTheory.bir_var_name_def,
@@ -892,7 +907,9 @@ Theorem default_riscv_bir_state_FPRS_read_tmp[local]:
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_GPRS_tmp_def,
       default_riscv_bir_env_FPRS_def,
+      default_riscv_bir_env_FPRS_tmp_def,
       bir_envTheory.bir_env_read_UPDATE,
       bir_envTheory.bir_var_name_def,
       bir_envTheory.bir_env_lookup_UPDATE,
@@ -971,6 +988,7 @@ Theorem default_riscv_bir_state_FPRS_lookup_type[local]:
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_GPRS_tmp_def,
       default_riscv_bir_env_FPRS_def,
       bir_env_oldTheory.bir_env_var_is_declared_def,
       bir_envTheory.bir_var_name_def,
@@ -1052,7 +1070,9 @@ Theorem default_riscv_bir_state_FPRS_lookup_type_tmp[local]:
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_GPRS_tmp_def,
       default_riscv_bir_env_FPRS_def,
+      default_riscv_bir_env_FPRS_tmp_def,
       bir_env_oldTheory.bir_env_var_is_declared_def,
       bir_envTheory.bir_var_name_def,
       bir_envTheory.bir_env_read_UPDATE,
@@ -1071,7 +1091,9 @@ Theorem default_riscv_bir_state_basic_env_read[local]:
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_GPRS_tmp_def,
       default_riscv_bir_env_FPRS_def,
+      default_riscv_bir_env_FPRS_tmp_def,
       default_riscv_bir_env_basic_def,
       bir_envTheory.bir_env_read_UPDATE,
       bir_envTheory.bir_var_name_def,
@@ -1093,7 +1115,9 @@ Theorem default_riscv_bir_state_basic_lookup_type[local]:
 Proof
   rw [default_riscv_bir_state_def,
       default_riscv_bir_env_GPRS_def,
+      default_riscv_bir_env_GPRS_tmp_def,
       default_riscv_bir_env_FPRS_def,
+      default_riscv_bir_env_FPRS_tmp_def,
       default_riscv_bir_env_basic_def,
       bir_env_oldTheory.bir_env_var_is_declared_def,
       bir_envTheory.bir_var_name_def,
