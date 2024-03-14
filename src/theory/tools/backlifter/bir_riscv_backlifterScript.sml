@@ -27,7 +27,7 @@ open m0_mod_stepLib;
 
 open bir_riscv_extrasTheory;
 
-open bir_arm8_backlifterTheory;
+open bir_common_backlifterTheory;
 
 val _ = new_theory "bir_riscv_backlifter";
 
@@ -109,22 +109,6 @@ Q.SUBGOAL_THEN
 ) >>
 FULL_SIMP_TAC std_ss [bir_expTheory.bir_eval_load_FULL_REWRS, riscv_mem_load_dword_def] >>
 FULL_SIMP_TAC (srw_ss()) []
-QED
-
-Theorem bool2w_and[local]:
- !a b. ((bool2w a) && (bool2w b)) = (bool2w (a /\ b))
-Proof
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [bool2w_def] >>
-Cases_on `a` >>
-Cases_on `b` >>
-EVAL_TAC
-QED
-
-Theorem imm_eq_to_val_eq[local]:
- !a b . ((BVal_Imm(Imm1 a)) = (BVal_Imm(Imm1 b))) = (a = b)
-Proof
-REPEAT STRIP_TAC >> EVAL_TAC
 QED
 
 Definition riscv_vars_def:
@@ -1184,44 +1168,6 @@ FULL_SIMP_TAC std_ss [bir_valuesTheory.bir_val_t_11,
                       bir_valuesTheory.type_of_bir_val_EQ_ELIMS]
 QED
 
-Theorem set_of_address_in_all_address_labels_thm[local]:
-!l adds.
-    l IN {BL_Address (Imm64 ml') | ml' IN adds} ==>
-    l IN {l | IS_BL_Address l}
-Proof
-REPEAT STRIP_TAC >>
-FULL_SIMP_TAC std_ss [pred_setTheory.GSPECIFICATION, bir_program_labelsTheory.IS_BL_Address_def]
-QED
-
-Theorem bir_is_lifted_prog_MULTI_STEP_EXEC_compute[local]:
-!mu bs bs' ms ml (p:'a bir_program_t) (r:(64, 8, 'b) bir_lifting_machine_rec_t)
-      mms n' lo c_st c_addr_labels.
-    bir_is_lifted_prog r mu mms p ==>
-    bmr_rel r bs ms ==>
-    MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p) ==>
-    (bs.bst_pc = bir_block_pc (BL_Address (Imm64 ml))) ==>
-    EVERY (bmr_ms_mem_contains r ms) mms ==>
-    (bir_exec_to_addr_label_n p bs n' =
-         BER_Ended lo c_st c_addr_labels bs') ==>
-    ~bir_state_is_terminated bs ==>
-    ~bir_state_is_terminated bs' ==>
-    ?ms' li.
-    (FUNPOW_OPT r.bmr_step_fun c_addr_labels ms = SOME ms') /\
-    bmr_ms_mem_unchanged r ms ms' mu /\
-    EVERY (bmr_ms_mem_contains r ms') mms /\
-    (bs'.bst_pc = bir_block_pc (BL_Address li)) /\
-    MEM (BL_Address li) (bir_labels_of_program p) /\
-    bmr_rel r bs' ms'
-Proof
-REPEAT STRIP_TAC >>
-ASSUME_TAC (ISPECL [``r:(64, 8, 'b) bir_lifting_machine_rec_t``, ``mu:64 word_interval_t``,
-                    ``mms:(word64# word8 list) list``,
-                    ``p:'a bir_program_t``] bir_is_lifted_prog_MULTI_STEP_EXEC) >>
-REV_FULL_SIMP_TAC std_ss [] >>
-QSPECL_X_ASSUM ``!n ms bs. _`` [`n'`, `ms`, `bs`] >>
-REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def]
-QED
-
 Theorem bir_riscv_block_pc[local]:
  !bs ms ml.
     bmr_rel riscv_bmr bs ms ==>
@@ -1308,48 +1254,6 @@ subgoal `(ms'.c_PC ms'.procID) IN mls` >- (
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 ) >>
 FULL_SIMP_TAC std_ss []
-QED
-
-Theorem bir_inter_exec_notin_end_label_set[local]:
- !mls p bs l n0 n' n'' lo lo' c_st c_st' bs' bs''.
-    (bir_exec_to_labels {BL_Address (Imm64 ml') | ml' IN mls} p bs =
-       BER_Ended l c_st n0 bs') ==>
-    (bir_exec_to_addr_label_n p bs n'' = BER_Ended lo' c_st' n'' bs'') ==>
-    c_st' < c_st ==>
-    n'' > 0 ==>
-    ~bir_state_is_terminated bs'' ==>
-    bs''.bst_pc.bpc_label NOTIN
-      {BL_Address (Imm64 ml') | ml' IN mls}
-Proof
-REPEAT STRIP_TAC >>
-subgoal `~bir_state_COUNT_PC (F,
-	  (\pc.
-	       (pc.bpc_index = 0) /\
-	       pc.bpc_label IN {BL_Address (Imm64 ml') | ml' IN mls}))
-	      (bir_exec_infinite_steps_fun p bs c_st')` >- (
-  FULL_SIMP_TAC std_ss [bir_exec_to_labels_def, bir_exec_to_labels_n_def,
-			bir_exec_steps_GEN_SOME_EQ_Ended] >>
-  QSPECL_X_ASSUM ``!(n:num). (n < c_st) ==> _`` [`c_st'`] >>
-  REV_FULL_SIMP_TAC std_ss [] >>
-  subgoal `c_st' > 0` >- (
-    METIS_TAC [bir_exec_to_addr_label_n_def, bir_exec_to_labels_n_def,
-	       bir_exec_steps_GEN_SOME_EQ_Ended_Running_steps,
-	       bir_state_is_terminated_def]
-  ) >>
-  FULL_SIMP_TAC std_ss [NUM_LSONE_EQZ, bir_exec_infinite_steps_fun_COUNT_PCs_EQ_0] >>
-  QSPECL_X_ASSUM ``!j. _`` [`PRE c_st'`] >>
-  SUBGOAL_THEN ``SUC (PRE (c_st':num)) = c_st'`` (fn thm => FULL_SIMP_TAC std_ss [thm]) >- (
-    FULL_SIMP_TAC arith_ss []
-  ) >>
-  METIS_TAC [NUM_PRE_LT]
-) >>
-subgoal `bs''.bst_pc.bpc_index = 0` >- (
-  METIS_TAC [bir_exec_to_addr_label_n_ended_running, bir_state_is_terminated_def]
-) >>
-FULL_SIMP_TAC std_ss [bir_state_COUNT_PC_def, bir_exec_to_addr_label_n_def,
-		      bir_exec_to_labels_n_def,
-		      bir_exec_steps_GEN_SOME_EQ_Ended] >>
-REV_FULL_SIMP_TAC (std_ss++holBACore_ss) [bir_state_is_terminated_def]
 QED
 
 Theorem bir_riscv_inter_exec[local]:
