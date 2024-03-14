@@ -1,4 +1,4 @@
-"bir_backlifterTheory.bir_is_lifted_prog_MULTI_STEP_EXEC_compute"
+"bir_arm8_backlifterTheory.bir_is_lifted_prog_MULTI_STEP_EXEC_compute"
 
 
 bmr_rel r bs ms
@@ -6,8 +6,8 @@ bmr_rel r bs ms
 
 bir_lifting_machinesTheory.bmr_rel_def
 
-bir_backlifterTheory.bir_pre_arm8_to_bir_def
-bir_backlifterTheory.bir_post_bir_to_arm8_def
+bir_arm8_backlifterTheory.bir_pre_arm8_to_bir_def
+bir_arm8_backlifterTheory.bir_post_bir_to_arm8_def
 
 
 ***** number of addr label steps (c_addr_labels?), but n' is the number of bir steps??? *****
@@ -37,13 +37,13 @@ bir_program_terminationTheory???
 
 
 
-bir_backlifterTheory.arm8_triple_def
+bir_arm8_backlifterTheory.arm8_triple_def
 
 abstract_hoare_logicTheory.abstract_jgmt_def
 abstract_simp_hoare_logicTheory.abstract_simp_jgmt_def
 
-bir_backlifterTheory.arm_weak_model_def
-bir_backlifterTheory.arm_weak_trs_def
+bir_arm8_backlifterTheory.arm_weak_model_def
+bir_arm8_backlifterTheory.arm_weak_trs_def
 
 bir_wm_instTheory.bir_simp_jgmt_def
 bir_wm_instTheory.bir_etl_wm_def

@@ -37,7 +37,7 @@ open PPBackEnd Parse
 open bir_inst_liftingHelpersLib;
 (* ================================================ *)
 
-    open bir_backlifterTheory;
+    open bir_arm8_backlifterTheory;
     open bir_riscv_backlifterTheory;
     open bir_compositionLib;
   in
@@ -61,7 +61,7 @@ fun get_arm8_contract_sing bir_ct prog_bin arm8_pre arm8_post bir_prog_def bir_p
 	      (((el 2) o snd o strip_comb o concl) bir_is_lifted_prog_thm),
 	      arm8_pre, arm8_post,
 	      get_bir_cont_pre bir_ct,
-	      get_bir_cont_post bir_ct] lift_contract_thm;
+	      get_bir_cont_post bir_ct] arm8_lift_contract_thm;
 
     (* Prove the ARM triple by supplying the antecedents of lift_contract_thm *)
     val arm8_contract_thm = prove(

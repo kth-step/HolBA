@@ -1116,9 +1116,9 @@ val m0_mod_triple_rel_def = Define `
 (* TODO: translate to pure Cortex-M0 property *)
 (* =================================================================================== *)
 (*
-bir_backlifterTheory.bir_post_bir_to_arm8_def
+bir_arm8_backlifterTheory.bir_post_bir_to_arm8_def
 lift_contract_thm
-src/tools/backlifter/bir_backlifterLib.sml
+src/tools/backlifter/bir_arm8_backlifterLib.sml
 
 get_arm8_contract_sing
 
@@ -1126,7 +1126,7 @@ examples/tutorial/7-composition/tutorial_backliftingScript.sml
 *)
 (* =================================================================================== *)
 
-(* TODO: stolen and adjusted/generalized from "bir_backlifterTheory.bir_is_lifted_prog_MULTI_STEP_EXEC_compute" *)
+(* TODO: stolen and adjusted/generalized from "bir_arm8_backlifterTheory.bir_is_lifted_prog_MULTI_STEP_EXEC_compute" *)
 (* =================================================================================== *)
 val bir_is_lifted_prog_MULTI_STEP_EXEC_compute_GEN_thm =
   prove(
@@ -1169,9 +1169,9 @@ val bir_is_lifted_prog_MULTI_STEP_EXEC_compute_32_8_thm =
 (*
 
 TODO: this is probably in precondition lifting
-"bir_backlifterTheory.exist_bir_of_arm8_thm"
-bir_backlifterTheory.bir_pre_arm8_to_bir_def
-bir_backlifterTheory.bir_post_bir_to_arm8_def
+"bir_arm8_backlifterTheory.exist_bir_of_arm8_thm"
+bir_arm8_backlifterTheory.bir_pre_arm8_to_bir_def
+bir_arm8_backlifterTheory.bir_post_bir_to_arm8_def
 ((
 !ms.
 ?bs.
@@ -1501,7 +1501,7 @@ REPEAT STRIP_TAC >>
 FULL_SIMP_TAC std_ss [pred_setTheory.GSPECIFICATION, bir_program_labelsTheory.IS_BL_Address_def, IMAGE_DEF]
 );
 
-(* TODO: copied and adjusted "bir_backlifterTheory.bir_exec_to_labels_TO_exec_to_addr_label_n" *)
+(* TODO: copied and adjusted "bir_arm8_backlifterTheory.bir_exec_to_labels_TO_exec_to_addr_label_n" *)
 val bir_exec_to_labels_TO_exec_to_addr_label_n_GEN =
   store_thm("bir_exec_to_labels_TO_exec_to_addr_label_n_GEN",
   ``!bs' ls p bs lo0 n n0.
@@ -1612,7 +1612,7 @@ REPEAT DISCH_TAC >>
   FULL_SIMP_TAC (std_ss++holBACore_ss) []
 );
 
-(* TODO: this is copied "bir_backlifterTheory.bir_arm8_inter_exec_notin_end_label_set" and adapted *)
+(* TODO: this is copied "bir_arm8_backlifterTheory.bir_arm8_inter_exec_notin_end_label_set" and adapted *)
 val bir_inter_exec_notin_end_label_set_GEN = prove(
   ``!mls p bs l n0 n' n'' lo lo' c_st c_st' bs' bs''.
     (bir_exec_to_labels (IMAGE (\l. BL_Address l) mls) p bs = BER_Ended l c_st n0 bs') ==>

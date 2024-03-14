@@ -25,7 +25,7 @@ open bir_auxiliaryLib;
 
 open m0_mod_stepLib;
 
-val _ = new_theory "bir_backlifter";
+val _ = new_theory "bir_arm8_backlifter";
 
 (* This part should be generalized *)
 (*
@@ -694,7 +694,7 @@ FULL_SIMP_TAC (std_ss++holBACore_ss++bir_wm_SS++pred_setLib.PRED_SET_ss)
 );
 
 
-val lift_contract_thm = store_thm("lift_contract_thm",
+val arm8_lift_contract_thm = store_thm("arm8_lift_contract_thm",
   ``!p mms ml mls mu mpre mpost bpre bpost.
       MEM (BL_Address (Imm64 ml)) (bir_labels_of_program p) ==>
       bir_cont p bir_exp_true (BL_Address (Imm64 ml))

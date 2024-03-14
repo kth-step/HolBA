@@ -27,7 +27,7 @@ open m0_mod_stepLib;
 
 open bir_riscv_extrasTheory;
 
-open bir_backlifterTheory;
+open bir_arm8_backlifterTheory;
 
 val _ = new_theory "bir_riscv_backlifter";
 
